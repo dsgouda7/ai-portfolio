@@ -1,0 +1,133 @@
+{
+    // Legacy extensions
+    "vscode-nmake-tools.installRazzleSourcesFormatterExtension": false,
+    "vscode-nmake-tools.installOsRepoRustHelperExtension": false,
+
+    // ===== PYTHON ENVIRONMENT =====
+    // Point to root .venv for all Python work
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+    "python.terminal.activateEnvironment": true,
+    "python.terminal.activateEnvInCurrentTerminal": true,
+    "jupyter.notebookFileRoot": "${workspaceFolder}",
+    "jupyter.interactiveWindow.textEditor.executeSelection": true,
+    "notebook.defaultFormatter": "ms-python.black-formatter",
+    "notebook.formatOnSave.enabled": true,
+    "notebook.output.textLineLimit": 500,
+
+    // ===== PYTHON FORMATTING & LINTING =====
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit"
+        },
+        "editor.rulers": [88]  // Black's line length
+    },
+    "black-formatter.args": [
+        "--line-length=88"
+    ],
+    "isort.args": [
+        "--profile=black"
+    ],
+
+    // ===== MARKDOWN =====
+    "[markdown]": {
+        "editor.wordWrap": "on",
+        "editor.quickSuggestions": {
+            "comments": "off",
+            "strings": "off",
+            "other": "off"
+        },
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": false  // Preserve authoring style
+    },
+    "markdown.preview.breaks": true,
+    "markdown.preview.linkify": true,
+
+    // ===== FILE ASSOCIATIONS =====
+    "files.associations": {
+        "*.md": "markdown",
+        "*.agent.md": "markdown",
+        "*.instructions.md": "markdown",
+        ".prompt.md": "markdown",
+        "SKILL.md": "markdown"
+    },
+
+    // ===== SEARCH & FILES =====
+    "search.exclude": {
+        "**/.venv": true,
+        "**/__pycache__": true,
+        "**/*.pyc": true,
+        "**/node_modules": true,
+        "**/.pytest_cache": true,
+        "**/.mypy_cache": true,
+        "**/*.egg-info": true,
+        "**/site": true  // mkdocs build output
+    },
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/*.pyc": true,
+        "**/.pytest_cache": true,
+        "**/.mypy_cache": true,
+        "**/*.egg-info": true
+    },
+    "files.watcherExclude": {
+        "**/.venv/**": true,
+        "**/node_modules/**": true,
+        "**/__pycache__/**": true,
+        "**/site/**": true
+    },
+
+    // ===== TERMINAL =====
+    "terminal.integrated.defaultProfile.windows": "PowerShell",
+    "terminal.integrated.profiles.windows": {
+        "PowerShell": {
+            "source": "PowerShell",
+            "icon": "terminal-powershell",
+            "args": [
+                "-NoExit",
+                "-Command",
+                "Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned; & '${workspaceFolder}\\.venv\\Scripts\\Activate.ps1'"
+            ]
+        }
+    },
+    "terminal.integrated.env.windows": {
+        "PYTHONPATH": "${workspaceFolder}"
+    },
+
+    // ===== EDITOR BEHAVIOR =====
+    "editor.rulers": [88, 120],
+    "editor.renderWhitespace": "boundary",
+    "editor.trimAutoWhitespace": true,
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    "files.eol": "\n",
+
+    // ===== GITHUB COPILOT =====
+    // Enable for all file types in this AI/ML repo
+    "github.copilot.enable": {
+        "*": true,
+        "markdown": true,
+        "plaintext": false
+    },
+    "github.copilot.editor.enableAutoCompletions": true,
+
+    // ===== TESTING =====
+    "python.testing.pytestEnabled": true,
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestArgs": [
+        "."
+    ],
+
+    // ===== PERFORMANCE =====
+    "files.autoSave": "afterDelay",
+    "files.autoSaveDelay": 1000,
+    "editor.minimap.enabled": false,  // Better for long notebooks
+
+    // ===== GIT =====
+    "git.ignoreLimitWarning": true,
+    "git.autofetch": true,
+    "jupyter.kernels.excludePythonEnvironments": [
+        "${workspaceFolder}/.venv/Scripts/python.exe"
+    ]
+}

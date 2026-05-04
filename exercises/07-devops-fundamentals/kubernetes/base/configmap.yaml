@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ml-api-config
+data:
+  environment: "dev"
+  log_level: "INFO"
+  app_name: "ml-devops-demo"

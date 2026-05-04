@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ml-config
+  namespace: ml-production
+data:
+  model_name: "production_model"
+  model_version: "latest"
+  mlflow_tracking_uri: "http://mlflow-service:5000"
+  log_level: "INFO"
+  batch_size: "32"
+  timeout_seconds: "30"
+  max_workers: "4"

@@ -1,0 +1,70 @@
+---
+# Ansible Deployment Playbook
+- name: Deploy ML API to Kubernetes
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+  
+  vars:
+    app_name: "ml-devops-demo"
+    environment: "{{ lookup('env', 'ENVIRONMENT') | default('dev', true) }}"
+    docker_image: "{{ app_name }}:{{ image_tag | default('latest') }}"
+    namespace: "ml-{{ environment }}"
+  
+  tasks:
+    - name: Print deployment info
+      debug:
+        msg: "Deploying {{ docker_image }} to {{ namespace }}"
+    
+    - name: Create namespace if not exists
+      kubernetes.core.k8s:
+        name: "{{ namespace }}"
+        api_version: v1
+        kind: Namespace
+        state: present
+    
+    - name: Apply Kubernetes manifests
+      kubernetes.core.k8s:
+        state: present
+        src: "{{ item }}"
+        namespace: "{{ namespace }}"
+      loop:
+        - ../kubernetes/base/configmap.yaml
+        - ../kubernetes/base/secret.yaml
+        - ../kubernetes/base/deployment.yaml
+        - ../kubernetes/base/service.yaml
+    
+    - name: Wait for deployment to be ready
+      kubernetes.core.k8s_info:
+        kind: Deployment
+        name: ml-api
+        namespace: "{{ namespace }}"
+      register: deployment_status
+      until: deployment_status.resources[0].status.readyReplicas == deployment_status.resources[0].spec.replicas
+      retries: 30
+      delay: 10
+    
+    - name: Get service endpoint
+      kubernetes.core.k8s_info:
+        kind: Service
+        name: ml-api
+        namespace: "{{ namespace }}"
+      register: service_info
+    
+    - name: Display service endpoint
+      debug:
+        msg: "Service deployed at: {{ service_info.resources[0].spec.clusterIP }}"
+    
+    - name: Run health check
+      uri:
+        url: "http://{{ service_info.resources[0].spec.clusterIP }}/health"
+        method: GET
+        status_code: 200
+      register: health_check
+      retries: 5
+      delay: 5
+      until: health_check.status == 200
+    
+    - name: Deployment successful
+      debug:
+        msg: "✅ Deployment completed successfully!"

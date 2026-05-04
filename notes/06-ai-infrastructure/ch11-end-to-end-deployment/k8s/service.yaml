@@ -1,0 +1,29 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# InferenceBase — vLLM Service
+# Namespace: inferencebase
+# ─────────────────────────────────────────────────────────────────────────────
+# ClusterIP service on port 8000. Traffic from within the cluster reaches
+# the vLLM pod(s) via this stable DNS name:
+#   http://vllm-llama3.inferencebase.svc.cluster.local:8000
+#
+# To expose externally, add an Ingress or change type to LoadBalancer.
+# For the InferenceBase architecture, the Ingress controller handles TLS
+# termination and rate limiting — see DevOps Ch.4 (CI/CD & Ingress).
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: Service
+metadata:
+  name: vllm-llama3
+  namespace: inferencebase
+  labels:
+    app: vllm-llama3
+    track: ai-infrastructure
+spec:
+  type: ClusterIP
+  selector:
+    app: vllm-llama3
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+      protocol: TCP

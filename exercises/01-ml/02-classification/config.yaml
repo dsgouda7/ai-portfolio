@@ -1,0 +1,68 @@
+# FaceAI Configuration
+# Purpose: Centralized hyperparameters and production settings
+
+data:
+  test_size: 0.2
+  val_size: 0.1
+  random_state: 42
+  n_classes: 10  # Number of face classes
+  
+features:
+  hog_orientations: 9
+  hog_pixels_per_cell: [8, 8]
+  hog_cells_per_block: [2, 2]
+  scale_features: true
+  pca_components: 50  # Dimensionality reduction (null = no PCA)
+
+models:
+  logistic_regression:
+    C: 1.0
+    max_iter: 1000
+    solver: 'lbfgs'
+    multi_class: 'multinomial'
+    penalty: 'l2'
+  
+  svm:
+    C: 1.0
+    kernel: 'rbf'
+    gamma: 'scale'
+    max_iter: 1000
+  
+  random_forest:
+    n_estimators: 100
+    max_depth: 10
+    min_samples_split: 5
+    random_state: 42
+
+hyperparameter_tuning:
+  enabled: false
+  n_trials: 50  # Optuna trials
+  cv_folds: 5
+  
+evaluation:
+  cv_folds: 5
+  metrics:
+    - accuracy
+    - precision
+    - recall
+    - f1
+  plot_confusion_matrix: true
+  plot_roc_curves: true
+  
+api:
+  host: '0.0.0.0'
+  port: 5000
+  debug: false
+  max_workers: 4
+  timeout_seconds: 30
+  max_image_size_mb: 5
+  
+monitoring:
+  enabled: true
+  metrics_port: 9090
+  log_level: 'INFO'
+  
+mlflow:
+  experiment_name: 'faceai-classification'
+  tracking_uri: 'file:./mlruns'
+  log_model: true

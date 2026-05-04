@@ -1,0 +1,46 @@
+# Generic AI Service Dockerfile
+# Usage: docker build -f _infrastructure/docker/Dockerfile.api -t <project-name> .
+# Supports: transformers, langchain, OpenAI, Flask APIs
+
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install AI service dependencies
+RUN pip install --no-cache-dir \
+    transformers>=4.35.0 \
+    langchain>=0.0.300 \
+    openai>=1.0.0 \
+    flask>=3.0.0 \
+    pydantic>=2.4.0 \
+    prometheus-client>=0.18.0 \
+    tiktoken>=0.5.0 \
+    pyyaml>=6.0 \
+    requests>=2.31.0
+
+# Copy project code
+COPY src/ ./src/
+COPY config.yaml ./config.yaml
+
+# Create non-root user
+RUN useradd -m -u 1000 aiuser && \
+    chown -R aiuser:aiuser /app
+
+# Create directories
+RUN mkdir -p logs cache && \
+    chown -R aiuser:aiuser logs cache
+
+USER aiuser
+
+EXPOSE 5000
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"
+
+CMD ["python", "-m", "src.api"]

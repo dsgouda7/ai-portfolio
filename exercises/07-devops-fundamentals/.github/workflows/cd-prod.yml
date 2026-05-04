@@ -1,0 +1,75 @@
+name: CD - Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to deploy'
+        required: true
+
+env:
+  ENVIRONMENT: prod
+  NAMESPACE: ml-prod
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: 
+      name: production
+      url: https://ml-api.example.com
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Manual approval gate
+      uses: trstringer/manual-approval@v1
+      with:
+        secret: ${{ github.TOKEN }}
+        approvers: devops-team
+        minimum-approvals: 2
+    
+    - name: Download Docker image
+      uses: actions/download-artifact@v3
+      with:
+        name: docker-image
+    
+    - name: Load Docker image
+      run: |
+        docker load < ml-devops-demo.tar.gz
+    
+    - name: Configure kubectl
+      uses: azure/k8s-set-context@v3
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.KUBE_CONFIG_PROD }}
+    
+    - name: Blue-Green deployment
+      run: |
+        # Deploy to green environment
+        kubectl apply -k kubernetes/overlays/prod/
+        kubectl set image deployment/ml-api ml-api=ml-devops-demo:${{ github.event.inputs.version }} -n ${{ env.NAMESPACE }}
+    
+    - name: Wait for deployment
+      run: |
+        kubectl rollout status deployment/ml-api -n ${{ env.NAMESPACE }} --timeout=10m
+    
+    - name: Run production health checks
+      run: |
+        kubectl run test-pod --rm -i --restart=Never --image=curlimages/curl -- \
+          curl -f http://ml-api.${NAMESPACE}.svc.cluster.local/health
+    
+    - name: Monitor metrics
+      run: |
+        echo "Monitoring metrics for 5 minutes..."
+        sleep 300
+    
+    - name: Deployment successful
+      run: echo "✅ Deployed to Production environment"
+    
+    - name: Rollback on failure
+      if: failure()
+      run: |
+        echo "⚠️ Deployment failed, rolling back..."
+        kubectl rollout undo deployment/ml-api -n ${{ env.NAMESPACE }}
+        kubectl rollout status deployment/ml-api -n ${{ env.NAMESPACE }}

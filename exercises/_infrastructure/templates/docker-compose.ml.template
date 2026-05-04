@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  {SERVICE_NAME}:
+    build:
+      context: .
+      dockerfile: ../../_infrastructure/docker/Dockerfile.ml
+    container_name: {SERVICE_NAME}
+    ports:
+      - "{EXTERNAL_PORT}:5000"
+    volumes:
+      - ./src:/app/src:ro
+      - ./config.yaml:/app/config.yaml:ro
+      - ./models:/app/models:ro
+      - ./logs:/app/logs
+    environment:
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+    networks:
+      - ml-network
+    restart: unless-stopped
+
+networks:
+  ml-network:
+    external: true

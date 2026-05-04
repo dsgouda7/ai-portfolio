@@ -1,0 +1,10 @@
+# Placeholder for Volume Mounts Diagram
+
+This is a placeholder. To generate the actual diagram, run:
+
+```bash
+cd gen_scripts
+python gen_ch01_volume_mounts.py
+```
+
+The diagram will show host filesystem vs container filesystem with volume mounting.

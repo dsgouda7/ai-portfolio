@@ -1,0 +1,12 @@
+# Placeholder for Container Lifecycle Diagram
+
+This is a placeholder. To generate the actual diagram, run:
+
+```bash
+cd gen_scripts
+python gen_ch01_container_lifecycle.py
+```
+
+The diagram will show: Build → Run → Stop → Remove flow.
+
+For the animation, this same image is referenced as ch01-container-lifecycle.gif in the README.

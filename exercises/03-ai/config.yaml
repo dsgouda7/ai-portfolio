@@ -1,0 +1,101 @@
+# PizzaBot RAG Configuration
+# Purpose: Centralized settings for conversational AI system
+
+# Model Configuration
+models:
+  embedding_model: "all-MiniLM-L6-v2"  # Sentence transformer for embeddings
+  llm_model: "gpt-3.5-turbo"  # Can switch to local models like "gpt2"
+  llm_provider: "openai"  # Options: openai, huggingface, local
+  fallback_model: "gpt-3.5-turbo"  # Fallback if primary fails
+
+# RAG Configuration
+rag:
+  chunk_size: 500  # Characters per text chunk
+  chunk_overlap: 50  # Overlap between chunks
+  top_k: 3  # Number of relevant chunks to retrieve
+  similarity_threshold: 0.7  # Minimum similarity score for retrieval
+  max_context_length: 2000  # Max characters in context
+  
+# LLM Generation Settings
+generation:
+  max_tokens: 500
+  temperature: 0.7
+  top_p: 0.9
+  frequency_penalty: 0.0
+  presence_penalty: 0.0
+
+# Vector Database
+vector_db:
+  type: "chromadb"
+  persist_directory: "./data/chroma_db"
+  collection_name: "pizzabot_knowledge"
+  distance_metric: "cosine"
+
+# Conversation Settings
+conversation:
+  max_history: 10  # Max messages to keep in context
+  session_timeout: 1800  # 30 minutes in seconds
+  enable_memory: true
+  
+# Intent Detection
+intents:
+  confidence_threshold: 0.6
+  supported_intents:
+    - "order_pizza"
+    - "check_menu"
+    - "ask_question"
+    - "track_order"
+    - "cancel_order"
+    - "complain"
+    - "general_chat"
+
+# Order Validation
+orders:
+  min_quantity: 1
+  max_quantity: 10
+  max_pizzas_per_order: 5
+  require_delivery_address: true
+  
+# Safety & Content Filtering
+safety:
+  enable_content_filter: true
+  jailbreak_detection: true
+  pii_detection: true
+  max_retries: 3
+  
+# Performance Settings
+performance:
+  cache_embeddings: true
+  batch_size: 8
+  max_concurrent_requests: 10
+  request_timeout: 30  # seconds
+  
+# Monitoring & Logging
+monitoring:
+  enable_prometheus: true
+  metrics_port: 9090
+  log_level: "INFO"
+  log_conversations: true
+  track_latency: true
+  
+# Evaluation Metrics
+evaluation:
+  intent_accuracy_target: 0.90
+  response_relevance_target: 0.85
+  latency_target_ms: 500
+  cost_per_conversation_target: 0.08
+  
+# API Configuration
+api:
+  host: '0.0.0.0'
+  port: 5000
+  debug: false
+  enable_cors: true
+  rate_limit: 100  # requests per minute per IP
+  
+# MLflow Tracking
+mlflow:
+  tracking_uri: "file:./logs/mlruns"
+  experiment_name: "pizzabot_rag"
+  log_models: true
+  log_metrics: true

@@ -1,0 +1,67 @@
+---
+# Ansible Rollback Playbook
+- name: Rollback ML API deployment
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+  
+  vars:
+    app_name: "ml-devops-demo"
+    environment: "{{ lookup('env', 'ENVIRONMENT') | default('dev', true) }}"
+    namespace: "ml-{{ environment }}"
+    previous_version: "{{ rollback_version | default('previous') }}"
+  
+  tasks:
+    - name: Print rollback info
+      debug:
+        msg: "Rolling back {{ app_name }} in {{ namespace }} to {{ previous_version }}"
+    
+    - name: Get deployment history
+      command: kubectl rollout history deployment/ml-api -n {{ namespace }}
+      register: rollout_history
+    
+    - name: Display rollout history
+      debug:
+        var: rollout_history.stdout_lines
+    
+    - name: Confirm rollback
+      pause:
+        prompt: "Are you sure you want to rollback? (yes/no)"
+      register: rollback_confirm
+    
+    - name: Rollback deployment
+      command: kubectl rollout undo deployment/ml-api -n {{ namespace }}
+      when: rollback_confirm.user_input | bool
+    
+    - name: Wait for rollback to complete
+      kubernetes.core.k8s_info:
+        kind: Deployment
+        name: ml-api
+        namespace: "{{ namespace }}"
+      register: deployment_status
+      until: deployment_status.resources[0].status.readyReplicas == deployment_status.resources[0].spec.replicas
+      retries: 30
+      delay: 10
+      when: rollback_confirm.user_input | bool
+    
+    - name: Run health check
+      uri:
+        url: "http://{{ item }}/health"
+        method: GET
+        status_code: 200
+      with_items:
+        - "{{ deployment_status.resources[0].status.loadBalancer.ingress[0].ip | default('localhost') }}"
+      register: health_check
+      retries: 5
+      delay: 5
+      when: rollback_confirm.user_input | bool
+    
+    - name: Rollback successful
+      debug:
+        msg: "✅ Rollback completed successfully!"
+      when: rollback_confirm.user_input | bool
+    
+    - name: Rollback cancelled
+      debug:
+        msg: "⚠️ Rollback cancelled by user"
+      when: not (rollback_confirm.user_input | bool)

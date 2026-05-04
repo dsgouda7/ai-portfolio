@@ -1,0 +1,148 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# InferenceBase — vLLM Deployment
+# Namespace: inferencebase
+# ─────────────────────────────────────────────────────────────────────────────
+# Deploys one vLLM replica on a GPU node with:
+#   - Non-root security context (matches Dockerfile USER 1001)
+#   - GPU resource requests/limits (1x RTX 4090 / A100)
+#   - Startup + liveness + readiness probes (model loading takes ~90s)
+#   - HuggingFace token injected from Secret — never hardcoded here
+#   - Prometheus annotations so the scraper finds /metrics automatically
+#
+# Pre-requisites:
+#   kubectl create namespace inferencebase
+#   kubectl create secret generic hf-credentials \
+#     --namespace inferencebase \
+#     --from-literal=token=<YOUR_HF_TOKEN>
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm-llama3
+  namespace: inferencebase
+  labels:
+    app: vllm-llama3
+    version: "1.0.0"
+    track: ai-infrastructure
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vllm-llama3
+  template:
+    metadata:
+      labels:
+        app: vllm-llama3
+        version: "1.0.0"
+      annotations:
+        # Prometheus auto-discovery — scrapes /metrics on port 8000
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      # ── Security context: enforce non-root at pod level ──────────────────
+      # Matches uid/gid 1001 created in the Dockerfile.
+      # runAsNonRoot rejects the pod if the image tries to run as root.
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+
+      # ── GPU node scheduling ───────────────────────────────────────────────
+      # Tolerate the taint that GPU nodes carry in most managed K8s clusters.
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
+
+      # ── Model cache volume ────────────────────────────────────────────────
+      # HuggingFace downloads the model here on first start (~8GB for INT4).
+      # Use a PersistentVolumeClaim in production to survive pod restarts.
+      volumes:
+        - name: model-cache
+          emptyDir: {}
+
+      containers:
+        - name: vllm
+          image: inferencebase/llama3-vllm:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+
+          volumeMounts:
+            - name: model-cache
+              mountPath: /home/vllm/.cache
+
+          # ── Resource requests/limits ───────────────────────────────────────
+          # WARNING: omitting limits causes OOM evictions under load.
+          # The GPU limit must equal the request — fractional GPU sharing is
+          # not supported by the NVIDIA device plugin.
+          resources:
+            requests:
+              memory: "20Gi"
+              cpu: "4"
+              nvidia.com/gpu: "1"
+            limits:
+              memory: "32Gi"
+              cpu: "8"
+              nvidia.com/gpu: "1"
+
+          # ── Environment: model config ──────────────────────────────────────
+          env:
+            - name: MODEL_ID
+              value: "meta-llama/Meta-Llama-3-8B-Instruct"
+            - name: QUANTIZATION
+              value: "awq"
+            - name: MAX_MODEL_LEN
+              value: "4096"
+            - name: GPU_MEMORY_UTILIZATION
+              value: "0.90"
+            - name: HF_HOME
+              value: "/home/vllm/.cache/huggingface"
+
+            # ── Secret injection: HuggingFace token ─────────────────────────
+            # Token lives in the hf-credentials Secret, not in this manifest.
+            # Create it before applying: see the pre-requisites block above.
+            - name: HUGGING_FACE_HUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: hf-credentials
+                  key: token
+
+          # ── Probes ─────────────────────────────────────────────────────────
+          # startupProbe: buys time for the model to load before liveness kicks
+          # in. Without this, liveness kills the pod during the ~90s load time.
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            failureThreshold: 20   # allows up to 60 + 20×15 = 360s to load
+            timeoutSeconds: 10
+
+          # livenessProbe: kills and restarts a pod that has become a zombie
+          # (e.g., CUDA deadlock, out-of-memory state that didn't crash).
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 180
+            periodSeconds: 30
+            failureThreshold: 3
+            timeoutSeconds: 10
+
+          # readinessProbe: removes the pod from Service endpoints until the
+          # model is fully loaded. Without this, Kubernetes routes requests
+          # to the pod before vLLM is ready, causing 502s for ~2 minutes.
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 90
+            periodSeconds: 10
+            failureThreshold: 5
+            timeoutSeconds: 5

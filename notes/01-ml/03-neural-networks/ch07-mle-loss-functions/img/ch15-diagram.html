@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>* { box-sizing: border-box; margin: 0; padding: 0; } body { background: white; font-family: "Segoe UI", Arial, sans-serif; }</style>
+</head>
+<body>
+<svg width="1400" height="900" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1400" height="900" fill="white"/>
+  <defs>
+    <marker id="arr"   markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#2C3E50"/></marker>
+    <marker id="arr-b" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#2E86C1"/></marker>
+    <marker id="arr-r" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#C0392B"/></marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="700" y="42" text-anchor="middle" font-size="26" font-weight="bold" fill="#1A1A2E">MLE &amp; Loss Functions</text>
+
+  <!-- Vertical divider -->
+  <line x1="680" y1="58" x2="680" y2="858" stroke="#BDC3C7" stroke-width="1.5"/>
+
+  <!-- ═══════════════════════════════════════
+       PANEL 1 — MLE Derivation Chain (left)
+  ═══════════════════════════════════════ -->
+  <text x="340" y="70" text-anchor="middle" font-size="16" font-weight="bold" fill="#2C3E50">From MLE to Loss Function</text>
+
+  <!-- ─── Step boxes ─── -->
+  <!-- Helper: centered box with track labels at y positions 112, 228, 344, 460, 576 -->
+
+  <!-- Step 1: Output type -->
+  <rect x="220" y="82" width="240" height="56" rx="10" fill="#F0F0F0" stroke="#7F8C8D" stroke-width="1.5"/>
+  <text x="340" y="106" text-anchor="middle" font-size="13" font-weight="bold" fill="#2C3E50">Output type</text>
+  <text x="340" y="126" text-anchor="middle" font-size="11" fill="#555">What does the model predict?</text>
+
+  <!-- Step 2: Noise assumption -->
+  <line x1="340" y1="138" x2="340" y2="155" stroke="#2C3E50" stroke-width="1.8" marker-end="url(#arr)"/>
+  <rect x="160" y="155" width="140" height="56" rx="10" fill="#D6EAF8" stroke="#2E86C1" stroke-width="1.5"/>
+  <text x="230" y="178" text-anchor="middle" font-size="11" font-weight="bold" fill="#1A5276">Gaussian noise</text>
+  <text x="230" y="197" text-anchor="middle" font-size="10" fill="#2E86C1">y ~ N(ŷ, σ²)</text>
+  <rect x="360" y="155" width="140" height="56" rx="10" fill="#FDEDEC" stroke="#C0392B" stroke-width="1.5"/>
+  <text x="430" y="178" text-anchor="middle" font-size="11" font-weight="bold" fill="#78281F">Bernoulli noise</text>
+  <text x="430" y="197" text-anchor="middle" font-size="10" fill="#C0392B">y ~ Bern(p̂)</text>
+
+  <!-- Step label row -->
+  <text x="340" y="150" text-anchor="middle" font-size="10" font-weight="bold" fill="#7F8C8D">Noise assumption</text>
+
+  <!-- Step 3: Likelihood -->
+  <line x1="230" y1="211" x2="230" y2="228" stroke="#2E86C1" stroke-width="1.5" marker-end="url(#arr-b)"/>
+  <line x1="430" y1="211" x2="430" y2="228" stroke="#C0392B" stroke-width="1.5" marker-end="url(#arr-r)"/>
+  <rect x="110" y="228" width="240" height="58" rx="10" fill="#D6EAF8" stroke="#2E86C1" stroke-width="1.5"/>
+  <text x="230" y="252" text-anchor="middle" font-size="11" font-weight="bold" fill="#1A5276">L(θ) = Π N(yᵢ; ŷᵢ, σ²)</text>
+  <text x="230" y="270" text-anchor="middle" font-size="10" fill="#2E86C1">Product of Gaussians</text>
+  <rect x="360" y="228" width="240" height="58" rx="10" fill="#FDEDEC" stroke="#C0392B" stroke-width="1.5"/>
+  <text x="480" y="252" text-anchor="middle" font-size="11" font-weight="bold" fill="#78281F">L(θ) = Π p̂ᵢʸⁱ(1−p̂ᵢ)¹⁻ʸⁱ</text>
+  <text x="480" y="270" text-anchor="middle" font-size="10" fill="#C0392B">Product of Bernoullis</text>
+
+  <!-- Step label -->
+  <text x="340" y="224" text-anchor="middle" font-size="10" font-weight="bold" fill="#7F8C8D">Likelihood L(θ)</text>
+
+  <!-- Step 4: -log L -->
+  <line x1="230" y1="286" x2="230" y2="302" stroke="#2E86C1" stroke-width="1.5" marker-end="url(#arr-b)"/>
+  <line x1="480" y1="286" x2="480" y2="302" stroke="#C0392B" stroke-width="1.5" marker-end="url(#arr-r)"/>
+  <rect x="110" y="302" width="240" height="58" rx="10" fill="#D6EAF8" stroke="#2E86C1" stroke-width="1.5"/>
+  <text x="230" y="326" text-anchor="middle" font-size="11" font-weight="bold" fill="#1A5276">−log L ∝ Σ(yᵢ−ŷᵢ)²</text>
+  <text x="230" y="344" text-anchor="middle" font-size="10" fill="#2E86C1">÷ 2σ² (constant dropped)</text>
+  <rect x="360" y="302" width="240" height="58" rx="10" fill="#FDEDEC" stroke="#C0392B" stroke-width="1.5"/>
+  <text x="480" y="326" text-anchor="middle" font-size="11" font-weight="bold" fill="#78281F">−log L = −Σ[y log p̂</text>
+  <text x="480" y="344" text-anchor="middle" font-size="11" font-weight="bold" fill="#78281F">+ (1−y) log(1−p̂)]</text>
+
+  <!-- Step label -->
+  <text x="340" y="298" text-anchor="middle" font-size="10" font-weight="bold" fill="#7F8C8D">−log L(θ)  (negative log-likelihood)</text>
+
+  <!-- Step 5: Loss -->
+  <line x1="230" y1="360" x2="230" y2="377" stroke="#2E86C1" stroke-width="1.5" marker-end="url(#arr-b)"/>
+  <line x1="480" y1="360" x2="480" y2="377" stroke="#C0392B" stroke-width="1.5" marker-end="url(#arr-r)"/>
+  <rect x="110" y="377" width="240" height="52" rx="10" fill="#1A5276" stroke="#1A5276" stroke-width="1.5"/>
+  <text x="230" y="400" text-anchor="middle" font-size="14" font-weight="bold" fill="white">Mean Squared Error</text>
+  <text x="230" y="418" text-anchor="middle" font-size="12" fill="#AED6F1">MSE = (1/n) Σ(yᵢ−ŷᵢ)²</text>
+  <rect x="360" y="377" width="240" height="52" rx="10" fill="#78281F" stroke="#78281F" stroke-width="1.5"/>
+  <text x="480" y="400" text-anchor="middle" font-size="14" font-weight="bold" fill="white">Binary Cross-Entropy</text>
+  <text x="480" y="418" text-anchor="middle" font-size="11" fill="#F5B7B1">BCE = −(1/n) Σ[y log p̂ + ...]</text>
+
+  <!-- Step label -->
+  <text x="340" y="372" text-anchor="middle" font-size="10" font-weight="bold" fill="#7F8C8D">Loss function</text>
+
+  <!-- Converge lines -->
+  <line x1="230" y1="429" x2="230" y2="450" stroke="#2E86C1" stroke-width="1.5"/>
+  <line x1="480" y1="429" x2="480" y2="450" stroke="#C0392B" stroke-width="1.5"/>
+  <line x1="230" y1="450" x2="480" y2="450" stroke="#2C3E50" stroke-width="1.5"/>
+  <line x1="355" y1="450" x2="355" y2="468" stroke="#2C3E50" stroke-width="1.8" marker-end="url(#arr)"/>
+
+  <!-- Track labels (REGRESSION / CLASSIFICATION) -->
+  <text x="230" y="443" text-anchor="middle" font-size="9" font-weight="bold" fill="#2E86C1">REGRESSION</text>
+  <text x="480" y="443" text-anchor="middle" font-size="9" font-weight="bold" fill="#C0392B">CLASSIFICATION</text>
+
+  <!-- Key insight box -->
+  <rect x="90" y="468" width="550" height="52" rx="8" fill="#1A1A2E" stroke="#2C3E50" stroke-width="1.5"/>
+  <text x="365" y="490" text-anchor="middle" font-size="12" font-weight="bold" fill="white">The loss IS the negative log-likelihood.</text>
+  <text x="365" y="510" text-anchor="middle" font-size="11" fill="#AED6F1">Wrong loss = wrong noise model. Not just a style preference.</text>
+
+  <!-- Mapping table -->
+  <text x="340" y="545" text-anchor="middle" font-size="12" font-weight="bold" fill="#2C3E50">Noise Model → Loss Mapping</text>
+  <rect x="70" y="553" width="589" height="30" rx="4" fill="#2C3E50"/>
+  <text x="155" y="573" text-anchor="middle" font-size="11" font-weight="bold" fill="white">Output type</text>
+  <text x="295" y="573" text-anchor="middle" font-size="11" font-weight="bold" fill="white">Noise model</text>
+  <text x="445" y="573" text-anchor="middle" font-size="11" font-weight="bold" fill="white">Likelihood</text>
+  <text x="605" y="573" text-anchor="middle" font-size="11" font-weight="bold" fill="white">Loss</text>
+  <rect x="70" y="583" width="589" height="26" fill="#EBF5FB"/>
+  <text x="155" y="601" text-anchor="middle" font-size="11" fill="#1A5276">Continuous (ŷ)</text>
+  <text x="295" y="601" text-anchor="middle" font-size="11" fill="#1A5276">Gaussian</text>
+  <text x="445" y="601" text-anchor="middle" font-size="11" fill="#1A5276">Π N(yᵢ|ŷᵢ, σ²)</text>
+  <text x="605" y="601" text-anchor="middle" font-size="11" fill="#1A5276">MSE</text>
+  <rect x="70" y="609" width="589" height="26" fill="white"/>
+  <text x="155" y="627" text-anchor="middle" font-size="11" fill="#78281F">Binary (0/1)</text>
+  <text x="295" y="627" text-anchor="middle" font-size="11" fill="#78281F">Bernoulli</text>
+  <text x="445" y="627" text-anchor="middle" font-size="11" fill="#78281F">Π p̂ʸ(1−p̂)¹⁻ʸ</text>
+  <text x="605" y="627" text-anchor="middle" font-size="11" fill="#78281F">BCE</text>
+  <rect x="70" y="635" width="589" height="26" fill="#EBF5FB"/>
+  <text x="155" y="653" text-anchor="middle" font-size="11" fill="#555">Categorical (k classes)</text>
+  <text x="295" y="653" text-anchor="middle" font-size="11" fill="#555">Categorical</text>
+  <text x="445" y="653" text-anchor="middle" font-size="11" fill="#555">Π Π p̂ₖʸₖ</text>
+  <text x="605" y="653" text-anchor="middle" font-size="11" fill="#555">CCE (softmax)</text>
+  <line x1="70"  y1="583" x2="659" y2="583" stroke="#BDC3C7" stroke-width="1"/>
+  <line x1="70"  y1="609" x2="659" y2="609" stroke="#BDC3C7" stroke-width="1"/>
+  <line x1="70"  y1="635" x2="659" y2="635" stroke="#BDC3C7" stroke-width="1"/>
+  <line x1="70"  y1="661" x2="659" y2="661" stroke="#BDC3C7" stroke-width="1"/>
+  <rect x="70" y="553" width="589" height="108" rx="4" fill="none" stroke="#BDC3C7" stroke-width="1"/>
+  <line x1="210" y1="553" x2="210" y2="661" stroke="#BDC3C7" stroke-width="1"/>
+  <line x1="370" y1="553" x2="370" y2="661" stroke="#BDC3C7" stroke-width="1"/>
+  <line x1="530" y1="553" x2="530" y2="661" stroke="#BDC3C7" stroke-width="1"/>
+
+  <!-- ═══════════════════════════════════════
+       PANEL 2 — Loss Curves (right)
+  ═══════════════════════════════════════ -->
+  <text x="1040" y="70" text-anchor="middle" font-size="16" font-weight="bold" fill="#2C3E50">Loss Function Shapes</text>
+
+  <!-- Plot area: x 710–1370, y 80–580 -->
+  <!-- Axes -->
+  <line x1="760" y1="570" x2="760" y2="90"  stroke="#2C3E50" stroke-width="1.8" marker-end="url(#arr)"/>
+  <line x1="760" y1="570" x2="1370" y2="570" stroke="#2C3E50" stroke-width="1.8" marker-end="url(#arr)"/>
+  <text x="1067" y="600" text-anchor="middle" font-size="12" fill="#555">Prediction error  (ŷ − y)</text>
+  <text x="720"  y="330" text-anchor="middle" font-size="12" fill="#555" transform="rotate(-90,720,330)">Loss value</text>
+
+  <!-- x-axis tick labels: -3 to +3 -->
+  <!-- x=760 is 0. Each unit = (1370-760-50)/6 ≈ 93px. Let's use 90px per unit -->
+  <!-- origin x_0=1060, y_0=570 -->
+  <!-- x = 1060 + err*90, y = 570 - loss*40 -->
+  <text x="1060" y="590" text-anchor="middle" font-size="10" fill="#555">0</text>
+  <text x="970"  y="590" text-anchor="middle" font-size="10" fill="#555">−1</text>
+  <text x="880"  y="590" text-anchor="middle" font-size="10" fill="#555">−2</text>
+  <text x="790"  y="590" text-anchor="middle" font-size="10" fill="#555">−3</text>
+  <text x="1150" y="590" text-anchor="middle" font-size="10" fill="#555">1</text>
+  <text x="1240" y="590" text-anchor="middle" font-size="10" fill="#555">2</text>
+  <text x="1330" y="590" text-anchor="middle" font-size="10" fill="#555">3</text>
+  <!-- tick marks -->
+  <line x1="1060" y1="565" x2="1060" y2="575" stroke="#555" stroke-width="1"/>
+  <line x1="970"  y1="565" x2="970"  y2="575" stroke="#555" stroke-width="1"/>
+  <line x1="880"  y1="565" x2="880"  y2="575" stroke="#555" stroke-width="1"/>
+  <line x1="790"  y1="565" x2="790"  y2="575" stroke="#555" stroke-width="1"/>
+  <line x1="1150" y1="565" x2="1150" y2="575" stroke="#555" stroke-width="1"/>
+  <line x1="1240" y1="565" x2="1240" y2="575" stroke="#555" stroke-width="1"/>
+  <line x1="1330" y1="565" x2="1330" y2="575" stroke="#555" stroke-width="1"/>
+  <!-- y-axis ticks -->
+  <text x="747" y="570" text-anchor="end" font-size="10" fill="#555">0</text>
+  <text x="747" y="530" text-anchor="end" font-size="10" fill="#555">1</text>
+  <text x="747" y="410" text-anchor="end" font-size="10" fill="#555">4</text>
+  <text x="747" y="290" text-anchor="end" font-size="10" fill="#555">7</text>
+  <line x1="755" y1="530" x2="765" y2="530" stroke="#555" stroke-width="1"/>
+  <line x1="755" y1="450" x2="765" y2="450" stroke="#555" stroke-width="1"/>
+  <line x1="755" y1="370" x2="765" y2="370" stroke="#555" stroke-width="1"/>
+  <line x1="755" y1="290" x2="765" y2="290" stroke="#555" stroke-width="1"/>
+
+  <!-- MSE: parabola L=e². x=-3->3, e^2=0->9. y_scale: 1unit=40px. y=570-e²*40 -->
+  <!-- points: e=-3:y=570-360=210, e=-2:y=570-160=410, e=-1:y=570-40=530, e=0:y=570, e=1:530, e=2:410, e=3:210 -->
+  <polyline points="790,210 880,410 970,530 1060,570 1150,530 1240,410 1330,210"
+    fill="none" stroke="#2E86C1" stroke-width="3" stroke-linejoin="round"/>
+
+  <!-- MAE: V-shape L=|e|. y=570-|e|*40 -->
+  <!-- e=-3:y=570-120=450, e=-2:y=570-80=490, e=-1:y=570-40=530, e=0:570, e=1:530, e=2:490, e=3:450 -->
+  <polyline points="790,450 880,490 970,530 1060,570 1150,530 1240,490 1330,450"
+    fill="none" stroke="#E67E22" stroke-width="3" stroke-linejoin="round"/>
+
+  <!-- Huber: parabola for |e|<delta=1.5, linear beyond. delta=1.5 -->
+  <!-- For |e|<=1.5: L=e²/2 (scaled by 40, so L*40=e²*20). y=570-e²*20 -->
+  <!-- For |e|>1.5:  L=delta*(|e|-delta/2)=1.5*(|e|-0.75). y=570-1.5*(|e|-0.75)*40 -->
+  <!-- e=-3: L=1.5*(3-0.75)=1.5*2.25=3.375. y=570-3.375*40=570-135=435 -->
+  <!-- e=-2: L=1.5*(2-0.75)=1.875. y=570-75=495 -->
+  <!-- e=-1.5: L=1.5*(1.5-0.75)=1.125. y=570-45=525 -->
+  <!-- e=-1: |e|<1.5: L=0.5. y=570-20=550 -->
+  <!-- e=0: L=0. y=570 -->
+  <polyline points="790,435 880,495 925,525 970,550 1060,570 1150,550 1195,525 1240,495 1330,435"
+    fill="none" stroke="#1E8449" stroke-width="2.5" stroke-dasharray="10,5"/>
+
+  <!-- Hinge loss removed from this plot: its natural axis is the margin y·ŷ, not the regression residual ŷ−y. See ch11 (SVM) for the correct margin-based plot. -->
+
+  <!-- Legend -->
+  <rect x="1070" y="115" width="280" height="110" rx="8" fill="#F8F9FA" stroke="#BDC3C7" stroke-width="1"/>
+  <text x="1210" y="135" text-anchor="middle" font-size="12" font-weight="bold" fill="#2C3E50">Legend (regression losses)</text>
+  <line x1="1085" y1="154" x2="1125" y2="154" stroke="#2E86C1" stroke-width="3"/>
+  <text x="1135" y="159" font-size="11" fill="#333">MSE — squared (parabola)</text>
+  <line x1="1085" y1="177" x2="1125" y2="177" stroke="#E67E22" stroke-width="3"/>
+  <text x="1135" y="182" font-size="11" fill="#333">MAE — absolute (V-shape)</text>
+  <line x1="1085" y1="200" x2="1125" y2="200" stroke="#1E8449" stroke-width="2.5" stroke-dasharray="8,4"/>
+  <text x="1135" y="205" font-size="11" fill="#333">Huber — hybrid</text>
+
+  <!-- Annotations on curves -->
+  <text x="1290" y="205" font-size="10" fill="#2E86C1" font-style="italic">Penalises outliers</text>
+  <text x="1290" y="225" font-size="10" fill="#2E86C1" font-style="italic">heavily</text>
+  <text x="1295" y="445" font-size="10" fill="#E67E22" font-style="italic">Robust to</text>
+  <text x="1295" y="460" font-size="10" fill="#E67E22" font-style="italic">outliers</text>
+  <text x="780" y="260" font-size="10" fill="#8E44AD" font-style="italic">Hinge loss uses the margin</text>
+  <text x="780" y="274" font-size="10" fill="#8E44AD" font-style="italic">axis y·ŷ — not ŷ−y.</text>
+  <text x="780" y="288" font-size="10" fill="#8E44AD" font-style="italic">See ch11 (SVM).</text>
+
+  <!-- Comparison table below plot -->
+  <text x="1060" y="625" text-anchor="middle" font-size="12" font-weight="bold" fill="#2C3E50">Quick Comparison</text>
+  <rect x="720" y="633" width="630" height="30" rx="4" fill="#2C3E50"/>
+  <text x="820"  y="653" text-anchor="middle" font-size="11" font-weight="bold" fill="white">Loss</text>
+  <text x="955"  y="653" text-anchor="middle" font-size="11" font-weight="bold" fill="white">Task</text>
+  <text x="1100" y="653" text-anchor="middle" font-size="11" font-weight="bold" fill="white">Outlier-robust</text>
+  <text x="1270" y="653" text-anchor="middle" font-size="11" font-weight="bold" fill="white">Gradient at 0</text>
+  <line x1="720" y1="663" x2="1350" y2="663" stroke="#BDC3C7" stroke-width="1"/>
+  <!-- MSE row -->
+  <rect x="720" y="663" width="630" height="26" fill="#EBF5FB"/>
+  <text x="820"  y="681" text-anchor="middle" font-size="11" fill="#1A5276">MSE</text>
+  <text x="955"  y="681" text-anchor="middle" font-size="11" fill="#555">Regression</text>
+  <text x="1100" y="681" text-anchor="middle" font-size="11" fill="#C0392B">No</text>
+  <text x="1270" y="681" text-anchor="middle" font-size="11" fill="#555">0 (smooth)</text>
+  <!-- MAE row -->
+  <rect x="720" y="689" width="630" height="26" fill="white"/>
+  <text x="820"  y="707" text-anchor="middle" font-size="11" fill="#E67E22">MAE</text>
+  <text x="955"  y="707" text-anchor="middle" font-size="11" fill="#555">Regression</text>
+  <text x="1100" y="707" text-anchor="middle" font-size="11" fill="#1E8449">Yes</text>
+  <text x="1270" y="707" text-anchor="middle" font-size="11" fill="#555">Undefined (kink)</text>
+  <!-- BCE row -->
+  <rect x="720" y="715" width="630" height="26" fill="#EBF5FB"/>
+  <text x="820"  y="733" text-anchor="middle" font-size="11" fill="#78281F">BCE</text>
+  <text x="955"  y="733" text-anchor="middle" font-size="11" fill="#555">Classification</text>
+  <text x="1100" y="733" text-anchor="middle" font-size="11" fill="#555">N/A</text>
+  <text x="1270" y="733" text-anchor="middle" font-size="11" fill="#555">Smooth</text>
+  <!-- Hinge row -->
+  <rect x="720" y="741" width="630" height="26" fill="white"/>
+  <text x="820"  y="759" text-anchor="middle" font-size="11" fill="#8E44AD">Hinge</text>
+  <text x="955"  y="759" text-anchor="middle" font-size="11" fill="#555">SVM (margin)</text>
+  <text x="1100" y="759" text-anchor="middle" font-size="11" fill="#555">N/A</text>
+  <text x="1270" y="759" text-anchor="middle" font-size="11" fill="#555">0 when margin &gt; 1</text>
+  <!-- Huber row -->
+  <rect x="720" y="767" width="630" height="26" fill="#EBF5FB"/>
+  <text x="820"  y="785" text-anchor="middle" font-size="11" fill="#1E8449">Huber</text>
+  <text x="955"  y="785" text-anchor="middle" font-size="11" fill="#555">Regression</text>
+  <text x="1100" y="785" text-anchor="middle" font-size="11" fill="#1E8449">Yes (hybrid)</text>
+  <text x="1270" y="785" text-anchor="middle" font-size="11" fill="#555">0 (smooth)</text>
+  <rect x="720" y="633" width="630" height="160" rx="4" fill="none" stroke="#BDC3C7" stroke-width="1"/>
+  <line x1="880" y1="633" x2="880" y2="793" stroke="#BDC3C7" stroke-width="1"/>
+  <line x1="1040" y1="633" x2="1040" y2="793" stroke="#BDC3C7" stroke-width="1"/>
+  <line x1="1200" y1="633" x2="1200" y2="793" stroke="#BDC3C7" stroke-width="1"/>
+
+  <!-- Bottom caption -->
+  <rect x="30" y="843" width="1340" height="48" rx="8" fill="#F8F9FA" stroke="#BDC3C7" stroke-width="1"/>
+  <text x="700" y="863" text-anchor="middle" font-size="11" font-weight="bold" fill="#2C3E50">Key Insight</text>
+  <text x="700" y="879" text-anchor="middle" font-size="11" fill="#555" font-style="italic">Every loss function is derived from a noise model via MLE. MSE assumes Gaussian noise; BCE assumes Bernoulli. Choosing the wrong loss is a modelling error, not a style preference.</text>
+</svg>
+</body>
+</html>

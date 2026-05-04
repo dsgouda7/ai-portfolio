@@ -1,0 +1,50 @@
+name: CD - Deploy to Dev
+
+on:
+  push:
+    branches: [ develop ]
+  workflow_dispatch:
+
+env:
+  ENVIRONMENT: dev
+  NAMESPACE: ml-dev
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: development
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Download Docker image
+      uses: actions/download-artifact@v3
+      with:
+        name: docker-image
+    
+    - name: Load Docker image
+      run: |
+        docker load < ml-devops-demo.tar.gz
+    
+    - name: Configure kubectl
+      uses: azure/k8s-set-context@v3
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.KUBE_CONFIG_DEV }}
+    
+    - name: Deploy to Kubernetes
+      run: |
+        kubectl apply -k kubernetes/overlays/dev/
+    
+    - name: Wait for deployment
+      run: |
+        kubectl rollout status deployment/ml-api -n ${{ env.NAMESPACE }} --timeout=5m
+    
+    - name: Run smoke tests
+      run: |
+        kubectl run test-pod --rm -i --restart=Never --image=curlimages/curl -- \
+          curl -f http://ml-api.${NAMESPACE}.svc.cluster.local/health
+    
+    - name: Deployment successful
+      run: echo "✅ Deployed to Dev environment"

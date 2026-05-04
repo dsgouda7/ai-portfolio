@@ -1,0 +1,62 @@
+# Multi-Agent System Configuration
+
+system:
+  name: "task_coordination_system"
+  version: "1.0.0"
+  log_level: "INFO"
+
+agents:
+  planner_agent:
+    name: "PlannerAgent"
+    role: "Task decomposition and planning"
+    max_iterations: 5
+    enabled: true
+  
+  executor_agent:
+    name: "ExecutorAgent"
+    role: "Execute atomic tasks"
+    max_parallel_tasks: 3
+    enabled: true
+  
+  critic_agent:
+    name: "CriticAgent"
+    role: "Evaluate results and provide feedback"
+    threshold_score: 0.7
+    enabled: true
+  
+  researcher_agent:
+    name: "ResearcherAgent"
+    role: "Gather information and context"
+    max_search_depth: 3
+    enabled: true
+
+communication:
+  message_queue: "redis"
+  redis_host: "localhost"
+  redis_port: 6379
+  redis_db: 0
+  max_retries: 3
+  retry_delay: 2
+  message_ttl: 3600
+
+llm:
+  provider: "openai"
+  model: "gpt-3.5-turbo"
+  temperature: 0.7
+  max_tokens: 1000
+  timeout: 30
+  
+coordination:
+  max_concurrent_agents: 4
+  task_timeout: 300
+  checkpoint_interval: 60
+  
+monitoring:
+  prometheus_port: 9090
+  metrics_prefix: "multiagent"
+  
+api:
+  host: "0.0.0.0"
+  port: 5000
+  debug: false
+  max_content_length: 16777216  # 16MB

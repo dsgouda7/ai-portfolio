@@ -1,0 +1,21 @@
+# Shared Prometheus Configuration for All Exercises
+# Scrapes metrics from all ML/AI services
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'ai-portfolio'
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # ML exercises (dynamically add targets in per-exercise compose files)
+  - job_name: 'ml-exercises'
+    static_configs:
+      - targets: []  # Override in per-exercise docker-compose.yml
+    metrics_path: '/metrics'
+    scrape_interval: 10s

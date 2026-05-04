@@ -1,0 +1,50 @@
+name: CD - Deploy to Staging
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  ENVIRONMENT: staging
+  NAMESPACE: ml-staging
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: staging
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Download Docker image
+      uses: actions/download-artifact@v3
+      with:
+        name: docker-image
+    
+    - name: Load Docker image
+      run: |
+        docker load < ml-devops-demo.tar.gz
+    
+    - name: Configure kubectl
+      uses: azure/k8s-set-context@v3
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.KUBE_CONFIG_STAGING }}
+    
+    - name: Deploy to Kubernetes
+      run: |
+        kubectl apply -k kubernetes/overlays/staging/
+    
+    - name: Wait for deployment
+      run: |
+        kubectl rollout status deployment/ml-api -n ${{ env.NAMESPACE }} --timeout=5m
+    
+    - name: Run integration tests
+      run: |
+        # Add integration test commands
+        echo "Running integration tests..."
+    
+    - name: Deployment successful
+      run: echo "✅ Deployed to Staging environment"

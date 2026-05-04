@@ -1,0 +1,86 @@
+# ── Python ─────────────────────────────────────────────────────────────────
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# ── Virtual environments ────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+.env/
+*.venv
+
+# ── Secrets / environment files ─────────────────────────────────────────────
+.env
+.env.*
+*.env
+!*.env.example
+
+# ── Jupyter ──────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+
+# ── Data files (never commit training data or raw CSVs) ─────────────────────
+data/
+**/data/
+*.csv
+*.tsv
+*.parquet
+*.jsonl
+*.feather
+*.pkl
+*.pickle
+
+# ── Build / dist ─────────────────────────────────────────────────────────────
+build/
+dist/
+*.egg-info/
+*.egg
+*.whl
+
+# ── Node / PDF gen tooling ───────────────────────────────────────────────────
+pdf-gen/
+node_modules/
+
+# ── VS Code workspace settings ───────────────────────────────────────────────
+# Commit: settings.json (workspace config for .venv, formatters, etc.)
+# Ignore: user-specific settings, logs, and temporary files
+.vscode/*.code-workspace
+.vscode/launch.json
+.vscode/tasks.json
+.vscode/*.log
+.vscode/.ropeproject
+.vscode/settings.local.json
+
+# ── OS artifacts ─────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Model weights / checkpoints (often large + proprietary) ─────────────────
+*.pt
+*.pth
+*.safetensors
+*.gguf
+*.bin
+checkpoints/
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+*.err
+logs/
+runs/
+
+# ── Local server runtime (Ollama / Jupyter / MkDocs) ────────────────────────
+.ollama.pid
+.jupyter.pid
+.mkdocs.pid
+.mkdocs-site/
+
+# CCE (code-context-engine)
+# CCE local cache (per-machine, not for version control)
+.cce/
+# Claude Code local settings written by cce init
+.claude/settings.local.json

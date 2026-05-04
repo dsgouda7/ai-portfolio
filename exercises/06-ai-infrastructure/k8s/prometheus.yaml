@@ -1,0 +1,21 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ml-model-monitor
+  namespace: ml-production
+  labels:
+    app: ml-model
+    prometheus: kube-prometheus
+spec:
+  selector:
+    matchLabels:
+      app: ml-model
+      component: serving
+  endpoints:
+  - port: http
+    path: /metrics
+    interval: 15s
+    scrapeTimeout: 10s
+  namespaceSelector:
+    matchNames:
+    - ml-production

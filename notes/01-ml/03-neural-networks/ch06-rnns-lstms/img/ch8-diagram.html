@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: white; font-family: "Segoe UI", Arial, sans-serif; }
+svg { display: block; }
+</style>
+</head>
+<body>
+<svg width="1400" height="900" xmlns="http://www.w3.org/2000/svg">
+  <!-- ── Background ── -->
+  <rect width="1400" height="900" fill="white"/>
+
+  <!-- ── Title ── -->
+  <text x="700" y="42" text-anchor="middle" font-size="26" font-weight="bold" fill="#1A1A2E">RNNs, LSTMs &amp; GRUs</text>
+
+  <!-- ═══════════════════════════════════════════════
+       PANEL 1 — Unrolled RNN (top half)
+  ════════════════════════════════════════════════ -->
+  <text x="700" y="82" text-anchor="middle" font-size="14" font-weight="bold" fill="#2C3E50">Unrolled RNN  ·  hₜ = tanh(Wₕ hₜ₋₁  +  Wₓ xₜ  +  b)</text>
+
+  <!-- Time-step cells  (cx = 200, 420, 640, 860)  cy = 200 -->
+  <!-- Arrow defs -->
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2C3E50"/>
+    </marker>
+    <marker id="arr-red" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#E74C3C"/>
+    </marker>
+    <marker id="arr-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#1E8449"/>
+    </marker>
+    <marker id="arr-purple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#7D3C98"/>
+    </marker>
+    <marker id="arr-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2E86C1"/>
+    </marker>
+  </defs>
+
+  <!-- 4 cells at t-2, t-1, t, t+1 -->
+  <!-- cell box helper: rx=18 -->
+
+  <!-- Cell t-2 at x=175 -->
+  <rect x="130" y="145" width="110" height="70" rx="12" fill="#AED6F1" stroke="#1A5276" stroke-width="2"/>
+  <text x="185" y="182" text-anchor="middle" font-size="15" font-weight="bold" fill="#1A2C48">h(t-2)</text>
+  <!-- input x(t-2) -->
+  <line x1="185" y1="215" x2="185" y2="260" stroke="#2C3E50" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="185" y="278" text-anchor="middle" font-size="12" fill="#555">x(t-2)</text>
+  <!-- output up -->
+  <line x1="185" y1="145" x2="185" y2="110" stroke="#2C3E50" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="185" y="102" text-anchor="middle" font-size="11" fill="#555">h(t-2)</text>
+
+  <!-- Cell t-1 at x=390 -->
+  <rect x="345" y="145" width="110" height="70" rx="12" fill="#AED6F1" stroke="#1A5276" stroke-width="2"/>
+  <text x="400" y="182" text-anchor="middle" font-size="15" font-weight="bold" fill="#1A2C48">h(t-1)</text>
+  <line x1="400" y1="215" x2="400" y2="260" stroke="#2C3E50" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="400" y="278" text-anchor="middle" font-size="12" fill="#555">x(t-1)</text>
+  <line x1="400" y1="145" x2="400" y2="110" stroke="#2C3E50" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="400" y="102" text-anchor="middle" font-size="11" fill="#555">h(t-1)</text>
+
+  <!-- Cell t at x=605 -->
+  <rect x="560" y="145" width="110" height="70" rx="12" fill="#AED6F1" stroke="#1A5276" stroke-width="2"/>
+  <text x="615" y="182" text-anchor="middle" font-size="15" font-weight="bold" fill="#1A2C48">h(t)</text>
+  <line x1="615" y1="215" x2="615" y2="260" stroke="#2C3E50" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="615" y="278" text-anchor="middle" font-size="12" fill="#555">x(t)</text>
+  <line x1="615" y1="145" x2="615" y2="95" stroke="#E74C3C" stroke-width="2.5" marker-end="url(#arr-red)"/>
+  <text x="650" y="88" font-size="12" fill="#E74C3C" font-weight="bold">ŷ(t)</text>
+
+  <!-- Cell t+1 at x=820 -->
+  <rect x="775" y="145" width="110" height="70" rx="12" fill="#AED6F1" stroke="#1A5276" stroke-width="2"/>
+  <text x="830" y="182" text-anchor="middle" font-size="15" font-weight="bold" fill="#1A2C48">h(t+1)</text>
+  <line x1="830" y1="215" x2="830" y2="260" stroke="#2C3E50" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="830" y="278" text-anchor="middle" font-size="12" fill="#555">x(t+1)</text>
+  <line x1="830" y1="145" x2="830" y2="110" stroke="#2C3E50" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="830" y="102" text-anchor="middle" font-size="11" fill="#555">h(t+1)</text>
+
+  <!-- h→h arrows -->
+  <line x1="240" y1="180" x2="345" y2="180" stroke="#2C3E50" stroke-width="2.5" marker-end="url(#arr)"/>
+  <line x1="455" y1="180" x2="560" y2="180" stroke="#2C3E50" stroke-width="2.5" marker-end="url(#arr)"/>
+  <line x1="670" y1="180" x2="775" y2="180" stroke="#2C3E50" stroke-width="2.5" marker-end="url(#arr)"/>
+
+  <!-- Dots indicating sequence continues -->
+  <text x="910" y="187" font-size="24" fill="#888">···</text>
+
+  <!-- Shared W brace -->
+  <line x1="130" y1="308" x2="885" y2="308" stroke="#E74C3C" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <text x="508" y="326" text-anchor="middle" font-size="12" fill="#E74C3C" font-weight="bold">Same weights W shared across all time steps</text>
+
+  <!-- Vanishing gradient warning -->
+  <rect x="960" y="130" width="410" height="120" rx="10" fill="#FEF9E7" stroke="#F39C12" stroke-width="1.5"/>
+  <text x="1165" y="158" text-anchor="middle" font-size="13" font-weight="bold" fill="#7D6608">⚠ Vanishing Gradient Problem</text>
+  <text x="1165" y="178" text-anchor="middle" font-size="11" fill="#7D6608">Gradients shrink as they backpropagate</text>
+  <text x="1165" y="196" text-anchor="middle" font-size="11" fill="#7D6608">through many time steps: the RNN</text>
+  <text x="1165" y="214" text-anchor="middle" font-size="11" fill="#7D6608">forgets long-range dependencies.</text>
+  <text x="1165" y="234" text-anchor="middle" font-size="11" fill="#E74C3C" font-weight="bold">→  Solution: LSTM &amp; GRU gating</text>
+
+  <!-- ══════════════════════════════════════════
+       Divider
+  ══════════════════════════════════════════ -->
+  <line x1="30" y1="350" x2="1370" y2="350" stroke="#BDC3C7" stroke-width="1.5"/>
+
+  <!-- ═══════════════════════════════════════════════
+       PANEL 2 — LSTM Cell (bottom-left)
+  ════════════════════════════════════════════════ -->
+  <text x="380" y="385" text-anchor="middle" font-size="16" font-weight="bold" fill="#2C3E50">LSTM Cell — Gated Memory</text>
+
+  <!-- Cell state highway arrow -->
+  <line x1="40" y1="430" x2="720" y2="430" stroke="#117A65" stroke-width="3" marker-end="url(#arr-green)"/>
+  <text x="380" y="420" text-anchor="middle" font-size="12" font-weight="bold" fill="#117A65">Cell state  cₜ  (long-term memory)</text>
+
+  <!-- Gate circles: f at 120, i at 250, g at 380, o at 510 -->
+  <!-- Forget gate -->
+  <circle cx="120" cy="540" r="48" fill="#E74C3C" opacity="0.9"/>
+  <text x="120" y="536" text-anchor="middle" font-size="22" font-weight="bold" fill="white">f</text>
+  <text x="120" y="555" text-anchor="middle" font-size="11" fill="white">gate</text>
+  <line x1="120" y1="492" x2="120" y2="432" stroke="#E74C3C" stroke-width="2" marker-end="url(#arr-red)"/>
+  <rect x="50" y="600" width="140" height="95" rx="8" fill="#FDEDEC" stroke="#E74C3C" stroke-width="1.2"/>
+  <text x="120" y="622" text-anchor="middle" font-size="11" font-weight="bold" fill="#E74C3C">Forget gate</text>
+  <text x="120" y="640" text-anchor="middle" font-size="10" fill="#444">σ(Wf·[hₜ₋₁, xₜ] + bf)</text>
+  <text x="120" y="658" text-anchor="middle" font-size="10" fill="#444">0 = forget,  1 = keep</text>
+  <text x="120" y="676" text-anchor="middle" font-size="10" fill="#E74C3C">Erases old memory</text>
+  <line x1="120" y1="588" x2="120" y2="600" stroke="#E74C3C" stroke-width="1.5"/>
+
+  <!-- Input gate -->
+  <circle cx="270" cy="540" r="48" fill="#2E86C1" opacity="0.9"/>
+  <text x="270" y="536" text-anchor="middle" font-size="22" font-weight="bold" fill="white">i</text>
+  <text x="270" y="555" text-anchor="middle" font-size="11" fill="white">gate</text>
+  <line x1="270" y1="492" x2="270" y2="432" stroke="#2E86C1" stroke-width="2" marker-end="url(#arr-blue)"/>
+  <rect x="200" y="600" width="140" height="95" rx="8" fill="#EBF5FB" stroke="#2E86C1" stroke-width="1.2"/>
+  <text x="270" y="622" text-anchor="middle" font-size="11" font-weight="bold" fill="#2E86C1">Input gate</text>
+  <text x="270" y="640" text-anchor="middle" font-size="10" fill="#444">σ(Wi·[hₜ₋₁, xₜ] + bi)</text>
+  <text x="270" y="658" text-anchor="middle" font-size="10" fill="#444">Controls write strength</text>
+  <text x="270" y="676" text-anchor="middle" font-size="10" fill="#2E86C1">How much to write</text>
+  <line x1="270" y1="588" x2="270" y2="600" stroke="#2E86C1" stroke-width="1.5"/>
+
+  <!-- Cell gate (g/candidate) -->
+  <circle cx="420" cy="540" r="48" fill="#1E8449" opacity="0.9"/>
+  <text x="420" y="536" text-anchor="middle" font-size="22" font-weight="bold" fill="white">g</text>
+  <text x="420" y="555" text-anchor="middle" font-size="11" fill="white">gate</text>
+  <line x1="420" y1="492" x2="420" y2="432" stroke="#1E8449" stroke-width="2" marker-end="url(#arr-green)"/>
+  <rect x="350" y="600" width="140" height="95" rx="8" fill="#E9F7EF" stroke="#1E8449" stroke-width="1.2"/>
+  <text x="420" y="622" text-anchor="middle" font-size="11" font-weight="bold" fill="#1E8449">Cell gate</text>
+  <text x="420" y="640" text-anchor="middle" font-size="10" fill="#444">tanh(Wg·[hₜ₋₁, xₜ] + bg)</text>
+  <text x="420" y="658" text-anchor="middle" font-size="10" fill="#444">New candidate values</text>
+  <text x="420" y="676" text-anchor="middle" font-size="10" fill="#1E8449">What to add</text>
+  <line x1="420" y1="588" x2="420" y2="600" stroke="#1E8449" stroke-width="1.5"/>
+
+  <!-- Output gate -->
+  <circle cx="570" cy="540" r="48" fill="#7D3C98" opacity="0.9"/>
+  <text x="570" y="536" text-anchor="middle" font-size="22" font-weight="bold" fill="white">o</text>
+  <text x="570" y="555" text-anchor="middle" font-size="11" fill="white">gate</text>
+  <line x1="570" y1="492" x2="570" y2="432" stroke="#7D3C98" stroke-width="2" marker-end="url(#arr-purple)"/>
+  <rect x="500" y="600" width="140" height="95" rx="8" fill="#F5EEF8" stroke="#7D3C98" stroke-width="1.2"/>
+  <text x="570" y="622" text-anchor="middle" font-size="11" font-weight="bold" fill="#7D3C98">Output gate</text>
+  <text x="570" y="640" text-anchor="middle" font-size="10" fill="#444">σ(Wo·[hₜ₋₁, xₜ] + bo)</text>
+  <text x="570" y="658" text-anchor="middle" font-size="10" fill="#444">hₜ = o ⊙ tanh(cₜ)</text>
+  <text x="570" y="676" text-anchor="middle" font-size="10" fill="#7D3C98">What to expose</text>
+  <line x1="570" y1="588" x2="570" y2="600" stroke="#7D3C98" stroke-width="1.5"/>
+
+  <!-- hₜ output arrow (from output gate down) -->
+  <line x1="570" y1="695" x2="570" y2="740" stroke="#7D3C98" stroke-width="2" marker-end="url(#arr-purple)"/>
+  <text x="570" y="760" text-anchor="middle" font-size="12" fill="#7D3C98" font-weight="bold">hₜ (output to next step)</text>
+
+  <!-- ══════════════════════════════════════════
+       PANEL 3 — GRU vs LSTM table (bottom-right)
+  ══════════════════════════════════════════ -->
+  <text x="1050" y="385" text-anchor="middle" font-size="16" font-weight="bold" fill="#2C3E50">GRU vs LSTM Comparison</text>
+
+  <!-- Table headers -->
+  <rect x="760" y="400" width="200" height="36" rx="4" fill="#2C3E50"/>
+  <rect x="960" y="400" width="200" height="36" rx="4" fill="#2E86C1"/>
+  <rect x="1160" y="400" width="200" height="36" rx="4" fill="#1E8449"/>
+  <text x="860" y="423" text-anchor="middle" font-size="13" font-weight="bold" fill="white">Property</text>
+  <text x="1060" y="423" text-anchor="middle" font-size="13" font-weight="bold" fill="white">LSTM</text>
+  <text x="1260" y="423" text-anchor="middle" font-size="13" font-weight="bold" fill="white">GRU</text>
+
+  <!-- Table rows -->
+  <!-- row data: [property, lstm, gru, rowY, bgColor] -->
+  <!-- Row 1 -->
+  <rect x="760" y="436" width="600" height="40" fill="#F2F3F4"/>
+  <text x="770" y="460" font-size="12" fill="#333" font-weight="bold">Gates</text>
+  <text x="970" y="460" font-size="12" fill="#333">4  (forget, input, cell, output)</text>
+  <text x="1170" y="460" font-size="12" fill="#333">2  (reset  r,  update  z)</text>
+
+  <!-- Row 2 -->
+  <rect x="760" y="476" width="600" height="40" fill="white"/>
+  <text x="770" y="500" font-size="12" fill="#333" font-weight="bold">State</text>
+  <text x="970" y="500" font-size="12" fill="#333">Separate  cₜ  and  hₜ</text>
+  <text x="1170" y="500" font-size="12" fill="#333">Single  hₜ  only</text>
+
+  <!-- Row 3 -->
+  <rect x="760" y="516" width="600" height="40" fill="#F2F3F4"/>
+  <text x="770" y="540" font-size="12" fill="#333" font-weight="bold">Parameters</text>
+  <text x="970" y="540" font-size="12" fill="#333">More  (4 × W matrices)</text>
+  <text x="1170" y="540" font-size="12" fill="#333">Fewer  (3 × W matrices)</text>
+
+  <!-- Row 4 -->
+  <rect x="760" y="556" width="600" height="40" fill="white"/>
+  <text x="770" y="580" font-size="12" fill="#333" font-weight="bold">Long-range</text>
+  <text x="970" y="580" font-size="12" fill="#2E86C1">★★★  Excellent</text>
+  <text x="1170" y="580" font-size="12" fill="#1E8449">★★☆  Good</text>
+
+  <!-- Row 5 -->
+  <rect x="760" y="596" width="600" height="40" fill="#F2F3F4"/>
+  <text x="770" y="620" font-size="12" fill="#333" font-weight="bold">Train speed</text>
+  <text x="970" y="620" font-size="12" fill="#333">Slower</text>
+  <text x="1170" y="620" font-size="12" fill="#333">Faster</text>
+
+  <!-- Row 6 -->
+  <rect x="760" y="636" width="600" height="50" fill="white"/>
+  <text x="770" y="658" font-size="12" fill="#333" font-weight="bold">Best for</text>
+  <text x="970" y="655" font-size="11" fill="#333">Long sequences,</text>
+  <text x="970" y="673" font-size="11" fill="#333">translation, generation</text>
+  <text x="1170" y="655" font-size="11" fill="#333">Shorter seqs,</text>
+  <text x="1170" y="673" font-size="11" fill="#333">resource-limited tasks</text>
+
+  <!-- GRU gates explanation box -->
+  <rect x="760" y="700" width="600" height="90" rx="8" fill="#EAF2FF" stroke="#2E86C1" stroke-width="1.2"/>
+  <text x="1060" y="722" text-anchor="middle" font-size="12" font-weight="bold" fill="#1A5276">GRU Gate Equations</text>
+  <text x="770" y="743" font-size="11" fill="#333">Reset gate:   r = σ(Wr·[hₜ₋₁, xₜ])  ← how much past to forget</text>
+  <text x="770" y="761" font-size="11" fill="#333">Update gate:  z = σ(Wz·[hₜ₋₁, xₜ])  ← blend old vs new state</text>
+  <text x="770" y="779" font-size="11" fill="#333">New state:    hₜ = (1−z)⊙hₜ₋₁  +  z⊙tanh(Wh·[r⊙hₜ₋₁, xₜ])</text>
+
+  <!-- ━━━ Bottom caption ━━━ -->
+  <rect x="30" y="840" width="1340" height="45" rx="8" fill="#F8F9F9" stroke="#BDC3C7" stroke-width="1"/>
+  <text x="700" y="860" text-anchor="middle" font-size="12" fill="#555" font-style="italic">RNNs process sequences via recurrent hidden states. LSTMs add a gated cell state to capture long-range dependencies.</text>
+  <text x="700" y="878" text-anchor="middle" font-size="12" fill="#555" font-style="italic">GRUs simplify LSTM with two gates and a single state vector — fewer parameters, similar performance on many tasks.</text>
+</svg>
+</body>
+</html>

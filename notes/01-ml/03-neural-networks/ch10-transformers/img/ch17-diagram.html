@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+body { margin: 0; padding: 0; background: #FAFAF6; }
+canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="../../../../pdf-gen/node_modules/roughjs/bundled/rough.js"></script>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+const W = 1400, H = 920, S = 2;
+canvas.width = W * S;
+canvas.height = H * S;
+canvas.style.width = W + 'px';
+canvas.style.height = H + 'px';
+ctx.scale(S, S);
+
+const rc = rough.canvas(canvas);
+
+ctx.fillStyle = '#FAFAF6';
+ctx.fillRect(0, 0, W, H);
+
+// ─── Style constants ───
+const FONT = '"Segoe Print", "Ink Free", "Comic Sans MS", cursive';
+const INK  = '#2B2B2B';
+const R    = 0.9;   // global roughness — subtle wobble
+const SW   = 1.4;   // default stroke width
+const FW   = 0.8;   // fill weight — light hachure
+const HG   = 7;     // hachure gap
+
+function txt(text, x, y, opts = {}) {
+  const { size = 13, color = INK, bold = false, italic = false, align = 'center' } = opts;
+  ctx.font = `${italic ? 'italic ' : ''}${bold ? 'bold ' : ''}${size}px ${FONT}`;
+  ctx.fillStyle = color;
+  ctx.textAlign = align;
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x, y);
+}
+
+function arrow(x1, y1, x2, y2, opts = {}) {
+  const { stroke = INK, strokeWidth = SW } = opts;
+  rc.line(x1, y1, x2, y2, { stroke, strokeWidth, roughness: R });
+  const a = Math.atan2(y2 - y1, x2 - x1), l = 9, s = Math.PI / 6;
+  rc.line(x2, y2, x2 - l * Math.cos(a - s), y2 - l * Math.sin(a - s), { stroke, strokeWidth, roughness: 0.4 });
+  rc.line(x2, y2, x2 - l * Math.cos(a + s), y2 - l * Math.sin(a + s), { stroke, strokeWidth, roughness: 0.4 });
+}
+
+function box(x, y, w, h, opts = {}) {
+  rc.rectangle(x, y, w, h, {
+    fill: opts.fill || 'transparent',
+    stroke: opts.stroke || INK,
+    fillStyle: opts.fillStyle || 'hachure',
+    roughness: opts.roughness ?? R,
+    strokeWidth: opts.strokeWidth ?? SW,
+    fillWeight: opts.fillWeight ?? FW,
+    hachureGap: opts.hachureGap ?? HG,
+  });
+}
+
+// ═══════════════════════════════════
+//  TITLE
+// ═══════════════════════════════════
+txt('Transformers & Attention', 700, 32, { size: 24, bold: true, color: '#1A1A2E' });
+
+// divider
+for (let y = 55; y < 860; y += 20)
+  rc.line(680, y, 680, y + 12, { stroke: '#BBB', strokeWidth: 1, roughness: 1.2 });
+
+// ═══════════════════════════════════
+//  LEFT — Scaled Dot-Product Attention
+// ═══════════════════════════════════
+txt('Scaled Dot-Product Attention', 335, 60, { size: 14, bold: true });
+
+// Input X
+box(185, 78, 300, 40, { fill: '#DDD', fillStyle: 'cross-hatch', hachureGap: 6, fillWeight: 0.5 });
+txt('Input  X', 335, 92, { size: 13, bold: true });
+txt('T \u00d7 d_model', 335, 106, { size: 10, color: '#666' });
+
+// fan-out
+rc.line(335, 118, 335, 138, { stroke: INK, strokeWidth: SW, roughness: R });
+rc.line(115, 138, 555, 138, { stroke: INK, strokeWidth: SW, roughness: R });
+arrow(115, 138, 115, 158);
+arrow(335, 138, 335, 158);
+arrow(555, 138, 555, 158);
+
+// W^Q, W^K, W^V projection boxes
+box(50,  158, 130, 34, { fill: '#C8E6C9', hachureGap: 6 });
+txt('\u00d7 W\u1d40', 115, 175, { size: 12, bold: true, color: '#2E7D32' });
+box(268, 158, 134, 34, { fill: '#BBDEFB', hachureGap: 6 });
+txt('\u00d7 W\u1d37', 335, 175, { size: 12, bold: true, color: '#1565C0' });
+box(490, 158, 130, 34, { fill: '#FFE0B2', hachureGap: 6 });
+txt('\u00d7 W\u1d5b', 555, 175, { size: 12, bold: true, color: '#E65100' });
+
+// arrows to Q K V
+arrow(115, 192, 115, 214);
+arrow(335, 192, 335, 214);
+arrow(555, 192, 555, 214);
+
+// Q, K, V result boxes
+box(50,  214, 130, 50, { fill: '#66BB6A', hachureGap: 5, fillWeight: 1 });
+txt('Q', 115, 230, { size: 18, bold: true, color: '#1B5E20' });
+txt('Queries  T\u00d7d\u2096', 115, 250, { size: 9, color: '#2E7D32' });
+
+box(268, 214, 134, 50, { fill: '#42A5F5', hachureGap: 5, fillWeight: 1 });
+txt('K', 335, 230, { size: 18, bold: true, color: '#0D47A1' });
+txt('Keys  T\u00d7d\u2096', 335, 250, { size: 9, color: '#1565C0' });
+
+box(490, 214, 130, 50, { fill: '#FFA726', hachureGap: 5, fillWeight: 1 });
+txt('V', 555, 230, { size: 18, bold: true, color: '#BF360C' });
+txt('Values  T\u00d7d\u1d65', 555, 250, { size: 9, color: '#E65100' });
+
+txt('\u2190 three parallel projections from X (not sequential) \u2192', 335, 278, { size: 9, italic: true, color: '#888' });
+
+// Q+K converge to dot product
+rc.line(115, 264, 115, 304, { stroke: '#66BB6A', strokeWidth: 1.3, roughness: R });
+rc.line(335, 264, 335, 304, { stroke: '#42A5F5', strokeWidth: 1.3, roughness: R });
+rc.line(115, 304, 335, 304, { stroke: INK, strokeWidth: 1.3, roughness: R });
+arrow(225, 304, 225, 322);
+
+// QK^T / sqrt(dk)
+box(115, 322, 220, 44, { fill: '#F5F5F5', hachureGap: 8, fillWeight: 0.4 });
+txt('QK\u1d40 / \u221Ad\u2096', 225, 338, { size: 14, bold: true });
+txt('scaled dot-product scores', 225, 356, { size: 9, color: '#777' });
+
+arrow(225, 366, 225, 388);
+
+// Softmax
+box(145, 388, 160, 40, { fill: '#C8E6C9', hachureGap: 6 });
+txt('Softmax', 225, 403, { size: 13, bold: true, color: '#2E7D32' });
+txt('(row-wise)', 225, 419, { size: 9, color: '#555' });
+
+arrow(225, 428, 225, 448);
+
+// Attention heatmap label
+txt('Attention weights  (T\u00d7T)', 225, 444, { size: 9, color: '#888' });
+
+// T\u00d7T heatmap — 5\u00d75 grid
+const gx = 150, gy = 456, cs = 30;
+const shades = ['#0D47A1', '#1565C0', '#1E88E5', '#64B5F6', '#BBDEFB', '#E3F2FD'];
+const gv = [[0,1,3,4,5],[4,0,5,2,1],[2,5,0,1,3],[5,3,1,0,2],[3,1,4,2,0]];
+for (let r = 0; r < 5; r++)
+  for (let c = 0; c < 5; c++)
+    rc.rectangle(gx + c * cs, gy + r * cs, cs, cs, {
+      fill: shades[gv[r][c]], fillStyle: 'solid',
+      stroke: '#888', strokeWidth: 0.8, roughness: 0.7
+    });
+const tl = ['t\u2081','t\u2082','t\u2083','t\u2084','t\u2085'];
+for (let i = 0; i < 5; i++) {
+  txt(tl[i], gx + i * cs + cs/2, gy - 9, { size: 8, color: '#555' });
+  txt(tl[i], gx - 14, gy + i * cs + cs/2, { size: 8, color: '#555' });
+}
+txt('each row sums to 1 (probability distribution)', 225, gy + 5*cs + 16, { size: 9, italic: true, color: '#999' });
+
+// V line comes down and across to multiply node
+rc.line(555, 264, 555, 510, { stroke: '#FFA726', strokeWidth: 1.5, roughness: R });
+rc.line(555, 510, 390, 510, { stroke: '#FFA726', strokeWidth: 1.5, roughness: R });
+arrow(390, 510, 360, 510, { stroke: '#E65100' });
+
+// multiply node
+rc.circle(345, 510, 26, { fill: '#F5F5F5', fillStyle: 'hachure', stroke: INK, roughness: R, hachureGap: 8, fillWeight: 0.4 });
+txt('\u00d7', 345, 510, { size: 15, bold: true });
+
+// line from heatmap to multiply
+rc.line(300, 500, 332, 500, { stroke: INK, strokeWidth: 1.3, roughness: R });
+
+// arrow to output
+arrow(345, 523, 345, 548);
+
+// Output
+box(235, 548, 220, 44, { fill: '#263238', fillStyle: 'solid', stroke: '#263238' });
+txt('Output', 345, 563, { size: 13, bold: true, color: 'white' });
+txt('T \u00d7 d\u1d65  (context-aware)', 345, 581, { size: 9, color: '#90CAF9' });
+
+// comparison box
+box(25, 616, 640, 48, { fill: '#E3F2FD', hachureGap: 10, fillWeight: 0.3 });
+txt('Every position attends to ALL others — no sequential bottleneck', 345, 632, { size: 11, bold: true, color: '#1565C0' });
+txt('RNN: x\u2081\u2192x\u2082\u2192x\u2083\u2192x\u209c (sequential \u2717)     Transformer: all T in parallel \u2713', 345, 650, { size: 10, color: '#555' });
+
+// ═══════════════════════════════════
+//  RIGHT — Multi-Head & Encoder Block
+// ═══════════════════════════════════
+txt('Multi-Head Attention & Encoder Block', 1040, 60, { size: 14, bold: true });
+
+// Heads
+const hCols = ['#EF9A9A','#A5D6A7','#90CAF9','#CE93D8'];
+const hStrk = ['#C62828','#2E7D32','#1565C0','#6A1B9A'];
+const hLbl  = ['head 1','head 2','head 3','head H'];
+const hXs   = [720, 838, 956, 1180];
+
+txt('Q, K, V', 705, 82, { size: 8, italic: true, color: '#999', align: 'left' });
+hXs.forEach((hx, i) => {
+  box(hx, 90, 108, 36, { fill: hCols[i], hachureGap: 5, fillWeight: 0.9, stroke: hStrk[i] });
+  txt(hLbl[i], hx + 54, 108, { size: 10, bold: true, color: hStrk[i] });
+});
+txt('\u00b7 \u00b7 \u00b7', 1110, 108, { size: 16, color: '#999' });
+
+// concat + W_O
+hXs.forEach(hx => rc.line(hx + 54, 126, hx + 54, 142, { stroke: INK, strokeWidth: 1, roughness: R }));
+rc.line(774, 142, 1234, 142, { stroke: INK, strokeWidth: 1.2, roughness: R });
+arrow(1004, 142, 1004, 158);
+txt('Concat', 1004, 150, { size: 8, color: '#888' });
+
+box(895, 160, 218, 34, { fill: '#F5F5F5', hachureGap: 8, fillWeight: 0.4 });
+txt('\u00d7 W\u2092', 1004, 177, { size: 12, bold: true });
+
+arrow(1004, 194, 1004, 214);
+
+// Multi-Head Output
+box(850, 214, 308, 36, { fill: '#263238', fillStyle: 'solid', stroke: '#263238' });
+txt('Multi-Head Output   (T \u00d7 d_model)', 1004, 232, { size: 11, bold: true, color: 'white' });
+
+box(710, 260, 560, 24, { fill: '#E8F5E9', hachureGap: 10, fillWeight: 0.3, stroke: '#66BB6A' });
+txt('Each head captures a different relationship type (syntax, coreference, semantics \u2026)', 990, 272, { size: 9, italic: true, color: '#2E7D32' });
+
+// ═══════════════════════════════════
+//  Encoder Block Stack
+// ═══════════════════════════════════
+txt('Encoder Block  (stacked N\u00d7)', 1004, 305, { size: 13, bold: true });
+
+const bx = 765, bw = 450;
+let by = 322;
+
+// 1. Input Embedding
+box(bx, by, bw, 36, { fill: '#E0E0E0', fillStyle: 'cross-hatch', hachureGap: 6, fillWeight: 0.4 });
+txt('Input Embedding', 990, by + 18, { size: 11, bold: true });
+by += 36; arrow(990, by, 990, by + 16); by += 16;
+
+// 2. Positional Encoding
+box(bx, by, bw, 42, { fill: '#E1BEE7', hachureGap: 6, fillWeight: 0.7, stroke: '#7B1FA2' });
+txt('+ Positional Encoding', 990, by + 15, { size: 12, bold: true, color: '#4A148C' });
+txt('PE(pos, 2i) = sin( pos / 10000^(2i/d) )', 990, by + 33, { size: 9, color: '#6A1B9A' });
+by += 42; arrow(990, by, 990, by + 14); by += 14;
+
+// 3. MHA
+const mhaY = by;
+box(bx, by, bw, 36, { fill: '#BBDEFB', hachureGap: 6, fillWeight: 0.7, stroke: '#1565C0' });
+txt('Multi-Head Attention', 990, by + 18, { size: 11, bold: true, color: '#0D47A1' });
+by += 36; arrow(990, by, 990, by + 14); by += 14;
+
+// 4. Add & Norm
+const an1Y = by;
+box(bx, by, bw, 30, { fill: '#FAFAFA', hachureGap: 9, fillWeight: 0.3 });
+txt('Add & LayerNorm', 990, by + 15, { size: 11, color: '#555' });
+by += 30; arrow(990, by, 990, by + 14); by += 14;
+
+// residual 1
+rc.line(bx - 4, mhaY + 8, bx - 18, mhaY + 8, { stroke: '#E53935', strokeWidth: 1.2, roughness: R });
+rc.line(bx - 18, mhaY + 8, bx - 18, an1Y + 15, { stroke: '#E53935', strokeWidth: 1.2, roughness: R });
+arrow(bx - 18, an1Y + 15, bx, an1Y + 15, { stroke: '#E53935' });
+txt('skip', bx - 30, (mhaY + an1Y) / 2 + 10, { size: 8, color: '#E53935' });
+
+// 5. FFN
+const ffnY = by;
+box(bx, by, bw, 42, { fill: '#FFE0B2', hachureGap: 6, fillWeight: 0.7, stroke: '#E65100' });
+txt('Feed-Forward Network (FFN)', 990, by + 14, { size: 11, bold: true, color: '#BF360C' });
+txt('Linear \u2192 ReLU / GELU \u2192 Linear   (per token)', 990, by + 32, { size: 9, color: '#E65100' });
+by += 42; arrow(990, by, 990, by + 14); by += 14;
+
+// 6. Add & Norm 2
+const an2Y = by;
+box(bx, by, bw, 30, { fill: '#FAFAFA', hachureGap: 9, fillWeight: 0.3 });
+txt('Add & LayerNorm', 990, by + 15, { size: 11, color: '#555' });
+by += 30; arrow(990, by, 990, by + 14); by += 14;
+
+// residual 2
+rc.line(bx - 4, ffnY + 8, bx - 32, ffnY + 8, { stroke: '#E53935', strokeWidth: 1.2, roughness: R });
+rc.line(bx - 32, ffnY + 8, bx - 32, an2Y + 15, { stroke: '#E53935', strokeWidth: 1.2, roughness: R });
+arrow(bx - 32, an2Y + 15, bx, an2Y + 15, { stroke: '#E53935' });
+txt('skip', bx - 44, (ffnY + an2Y) / 2 + 10, { size: 8, color: '#E53935' });
+
+// 7. Encoder Output
+box(bx, by, bw, 38, { fill: '#263238', fillStyle: 'solid', stroke: '#263238' });
+txt('Encoder Output', 990, by + 13, { size: 12, bold: true, color: 'white' });
+txt('T \u00d7 d_model', 990, by + 29, { size: 9, color: '#90CAF9' });
+by += 38;
+
+// stack shadows
+rc.rectangle(bx + 6, by + 3, bw - 12, 12, { fill: '#BDBDBD', fillStyle: 'solid', stroke: '#999', roughness: 1.2, strokeWidth: 0.6 });
+rc.rectangle(bx + 12, by + 17, bw - 24, 7, { fill: '#D5D5D5', fillStyle: 'solid', stroke: '#AAA', roughness: 1.2, strokeWidth: 0.4 });
+txt('\u00d7N  (original: 6, BERT: 12 or 24)', bx + bw + 14, by + 12, { size: 9, color: '#666', align: 'left' });
+
+// ═══════════════════════════════════
+//  Bottom caption
+// ═══════════════════════════════════
+box(30, 870, 1340, 40, { fill: '#F0F0EC', hachureGap: 12, fillWeight: 0.2 });
+txt('Transformers replace sequential recurrence with parallel self-attention.', 500, 888, { size: 10, italic: true, color: '#555' });
+txt('Multi-head attention lets the model learn multiple relationship patterns simultaneously.', 1070, 888, { size: 10, italic: true, color: '#555' });
+
+</script>
+</body>
+</html>

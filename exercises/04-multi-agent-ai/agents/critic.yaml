@@ -1,0 +1,31 @@
+# Critic Agent Configuration
+
+name: "CriticAgent"
+role: "Evaluate results and provide feedback"
+description: "Evaluates task results against quality criteria and provides constructive feedback"
+
+threshold_score: 0.7
+enabled: true
+
+evaluation_criteria:
+  completeness:
+    weight: 0.3
+    description: "Checks if all required outputs are present"
+  
+  quality:
+    weight: 0.3
+    description: "Assesses output quality and error handling"
+  
+  accuracy:
+    weight: 0.25
+    description: "Validates correctness against expected results"
+  
+  efficiency:
+    weight: 0.15
+    description: "Measures execution efficiency"
+
+feedback_style: "constructive"
+
+improvement_suggestions:
+  max_suggestions: 3
+  include_examples: true

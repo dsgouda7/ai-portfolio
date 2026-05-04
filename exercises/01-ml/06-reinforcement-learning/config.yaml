@@ -1,0 +1,52 @@
+# AgentAI Configuration
+# Purpose: Centralized hyperparameters and production settings for RL
+
+environment:
+  env_name: 'CartPole-v1'
+  max_steps: 500
+  render_mode: null  # Set to 'human' for visualization
+  random_seed: 42
+
+training:
+  episodes: 1000
+  learning_rate: 0.001
+  gamma: 0.99  # Discount factor
+  batch_size: 32
+  replay_buffer_size: 10000
+  target_update_frequency: 10  # For DQN
+  epsilon_start: 1.0
+  epsilon_end: 0.01
+  epsilon_decay: 0.995
+  early_stopping_patience: 100  # Stop if no improvement
+
+policy_network:
+  algorithm: 'REINFORCE'  # Options: REINFORCE, DQN
+  hidden_units: [128, 64]
+  activation: 'relu'
+  optimizer: 'adam'
+  loss_function: 'mse'  # For DQN
+
+evaluation:
+  eval_episodes: 100
+  success_threshold: 195.0  # Average reward for CartPole-v1
+  plot_learning_curves: true
+  plot_episode_rewards: true
+  
+api:
+  host: '0.0.0.0'
+  port: 5000
+  debug: false
+  max_workers: 4
+  timeout_seconds: 30
+  
+monitoring:
+  enabled: true
+  metrics_port: 9090
+  log_level: 'INFO'
+  track_episode_rewards: true
+  
+mlflow:
+  experiment_name: 'agentai-reinforcement-learning'
+  tracking_uri: 'file:./mlruns'
+  log_model: true
+  log_hyperparameters: true

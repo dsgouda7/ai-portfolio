@@ -1,0 +1,90 @@
+# AI Infrastructure Configuration
+
+mlflow:
+  tracking_uri: "http://localhost:5000"
+  artifact_store: "s3://ml-artifacts-bucket"
+  model_registry_uri: "http://localhost:5000"
+  experiment_name: "production-model"
+  default_artifact_root: "./mlruns"
+
+airflow:
+  dags_folder: "./src/dags"
+  schedule_interval: "0 2 * * *"  # Daily at 2 AM
+  catchup: false
+  max_active_runs: 1
+  default_args:
+    owner: "ml-team"
+    retries: 2
+    retry_delay: 300  # 5 minutes
+
+feature_store:
+  project_name: "ml_features"
+  online_store: "redis"
+  offline_store: "parquet"
+  redis_host: "localhost"
+  redis_port: 6379
+  offline_store_path: "./data/feature_store"
+
+data_validation:
+  expectations_dir: "./data/expectations"
+  checkpoint_name: "production_checkpoint"
+  batch_size: 10000
+  validation_store: "./data/validations"
+
+model_monitoring:
+  drift_threshold: 0.15
+  reference_window_days: 7
+  monitoring_interval_hours: 6
+  alert_on_drift: true
+  metrics_store: "./data/monitoring"
+
+kubernetes:
+  namespace: "ml-production"
+  replicas: 3
+  autoscaling:
+    enabled: true
+    min_replicas: 2
+    max_replicas: 10
+    target_cpu_percent: 70
+  resources:
+    limits:
+      cpu: "1000m"
+      memory: "2Gi"
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+  health_check:
+    path: "/health"
+    initial_delay: 10
+    period: 10
+    timeout: 5
+
+serving:
+  model_name: "production_model"
+  model_version: "latest"
+  batch_size: 32
+  timeout_seconds: 30
+  max_workers: 4
+  port: 8000
+
+load_testing:
+  target_host: "http://localhost:8000"
+  users: 100
+  spawn_rate: 10
+  run_time: "5m"
+
+logging:
+  level: "INFO"
+  format: "json"
+  destination: "stdout"
+  logger_name: "ai-infra"
+
+prometheus:
+  port: 9090
+  scrape_interval: "15s"
+  evaluation_interval: "15s"
+
+cloud:
+  provider: "aws"
+  region: "us-west-2"
+  environment: "production"

@@ -1,0 +1,26 @@
+# Researcher Agent Configuration
+
+name: "ResearcherAgent"
+role: "Gather information and context"
+description: "Researches topics and provides contextual information for task execution"
+
+max_search_depth: 3
+enabled: true
+
+data_sources:
+  - "knowledge_base"
+  - "context"
+  - "web"  # Requires API keys in production
+
+search_strategy:
+  relevance_threshold: 0.5
+  max_results_per_source: 5
+  enable_deep_dive: true
+
+knowledge_base:
+  updateable: true
+  persist_findings: true
+  
+synthesis:
+  confidence_threshold: 0.6
+  include_recommendations: true

@@ -1,0 +1,70 @@
+# FraudShield Configuration
+# Purpose: Centralized hyperparameters and production settings for anomaly detection
+
+data:
+  n_samples: 10000
+  n_features: 20
+  contamination: 0.1  # 10% anomalies in dataset
+  test_size: 0.2
+  val_size: 0.1
+  random_state: 42
+  
+features:
+  scale_features: true
+  feature_selection: false
+  n_components_pca: null  # Set to integer for PCA dimensionality reduction
+
+models:
+  isolation_forest:
+    n_estimators: 100
+    max_samples: 'auto'
+    contamination: 0.1
+    max_features: 1.0
+    random_state: 42
+  
+  one_class_svm:
+    kernel: 'rbf'
+    gamma: 'scale'
+    nu: 0.1  # Upper bound on fraction of outliers
+  
+  autoencoder:
+    encoding_dim: 10
+    epochs: 50
+    batch_size: 32
+    learning_rate: 0.001
+    validation_split: 0.1
+    contamination_threshold: 0.1  # Reconstruction error threshold
+
+hyperparameter_tuning:
+  enabled: false
+  n_trials: 30  # Optuna trials
+  cv_folds: 3
+  
+evaluation:
+  metrics:
+    - precision
+    - recall
+    - f1
+    - roc_auc
+  precision_at_k: [10, 20, 50]  # Top-k predictions to evaluate
+  plot_roc_curve: true
+  plot_confusion_matrix: true
+  
+api:
+  host: '0.0.0.0'
+  port: 5000
+  debug: false
+  max_workers: 4
+  timeout_seconds: 30
+  explanation_enabled: true  # Enable SHAP explanations
+  
+monitoring:
+  enabled: true
+  metrics_port: 9090
+  log_level: 'INFO'
+  alert_threshold: 0.15  # Alert if anomaly rate exceeds 15%
+  
+mlflow:
+  experiment_name: 'fraudshield-anomaly-detection'
+  tracking_uri: 'file:./mlruns'
+  log_model: true

@@ -1,0 +1,74 @@
+# PixelSmith Configuration
+
+# Model Configuration
+models:
+  clip:
+    model_name: "openai/clip-vit-base-patch32"
+    device: "cuda"  # or "cpu"
+    cache_dir: "./models/clip"
+  
+  whisper:
+    model_name: "openai/whisper-base"
+    device: "cuda"
+    cache_dir: "./models/whisper"
+    language: "en"
+  
+  stable_diffusion:
+    model_name: "runwayml/stable-diffusion-v1-5"
+    device: "cuda"
+    cache_dir: "./models/stable-diffusion"
+    num_inference_steps: 50
+    guidance_scale: 7.5
+  
+  blip:
+    model_name: "Salesforce/blip-image-captioning-base"
+    device: "cuda"
+    cache_dir: "./models/blip"
+
+# Image Configuration
+image:
+  max_width: 512
+  max_height: 512
+  supported_formats: ["jpg", "jpeg", "png", "webp"]
+  max_file_size_mb: 10
+  generation:
+    default_width: 512
+    default_height: 512
+    num_images: 1
+
+# Audio Configuration
+audio:
+  sample_rate: 16000
+  max_duration_sec: 30
+  supported_formats: ["wav", "mp3", "ogg", "flac"]
+  max_file_size_mb: 50
+
+# API Configuration
+api:
+  host: "0.0.0.0"
+  port: 5000
+  debug: false
+  max_content_length: 52428800  # 50MB
+  upload_folder: "./uploads"
+  allowed_origins: ["*"]
+
+# Monitoring Configuration
+monitoring:
+  mlflow_uri: "file:./mlruns"
+  experiment_name: "pixelsmith"
+  prometheus_port: 8000
+  log_level: "INFO"
+
+# Performance Configuration
+performance:
+  batch_size: 1
+  num_workers: 4
+  timeout_sec: 60
+  cache_predictions: true
+
+# Thresholds
+thresholds:
+  clip_score_min: 0.7
+  wer_max: 0.15  # 15% Word Error Rate
+  caption_bleu_min: 0.3
+  generation_time_max_sec: 30

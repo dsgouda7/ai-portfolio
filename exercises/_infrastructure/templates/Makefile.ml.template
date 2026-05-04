@@ -1,0 +1,11 @@
+# {PROJECT_NAME} - Exercise {EXERCISE_NUM}
+# Uses shared infrastructure from ../../_infrastructure/
+
+PROJECT_NAME = {PROJECT_NAME}
+DOCKERFILE = Dockerfile.ml
+
+include ../../_infrastructure/Makefile.include
+
+# Exercise-specific target
+train:
+	python main.py

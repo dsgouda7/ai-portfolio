@@ -1,0 +1,85 @@
+# GitLab CI/CD Pipeline
+stages:
+  - test
+  - build
+  - deploy-dev
+  - deploy-staging
+  - deploy-prod
+
+variables:
+  PYTHON_VERSION: "3.11"
+  DOCKER_IMAGE: "ml-devops-demo"
+
+# Test stage
+test:
+  stage: test
+  image: python:${PYTHON_VERSION}
+  before_script:
+    - pip install -r requirements.txt
+  script:
+    - flake8 src tests --max-line-length=100
+    - black --check src tests
+    - pytest tests/ -v --cov=src --cov-report=term
+  coverage: '/TOTAL.*\s+(\d+%)$/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+
+# Build stage
+build:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - docker build -f docker/Dockerfile.prod -t ${DOCKER_IMAGE}:${CI_COMMIT_SHA} .
+    - docker save ${DOCKER_IMAGE}:${CI_COMMIT_SHA} | gzip > ml-devops-demo.tar.gz
+  artifacts:
+    paths:
+      - ml-devops-demo.tar.gz
+    expire_in: 1 week
+  only:
+    - main
+    - develop
+
+# Deploy to Dev
+deploy-dev:
+  stage: deploy-dev
+  image: bitnami/kubectl:latest
+  script:
+    - kubectl apply -k kubernetes/overlays/dev/
+    - kubectl rollout status deployment/ml-api -n ml-dev
+  environment:
+    name: development
+    url: https://dev.ml-api.example.com
+  only:
+    - develop
+
+# Deploy to Staging
+deploy-staging:
+  stage: deploy-staging
+  image: bitnami/kubectl:latest
+  script:
+    - kubectl apply -k kubernetes/overlays/staging/
+    - kubectl rollout status deployment/ml-api -n ml-staging
+  environment:
+    name: staging
+    url: https://staging.ml-api.example.com
+  only:
+    - main
+
+# Deploy to Production
+deploy-prod:
+  stage: deploy-prod
+  image: bitnami/kubectl:latest
+  script:
+    - kubectl apply -k kubernetes/overlays/prod/
+    - kubectl rollout status deployment/ml-api -n ml-prod
+  environment:
+    name: production
+    url: https://ml-api.example.com
+  when: manual
+  only:
+    - main

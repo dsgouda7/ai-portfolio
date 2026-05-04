@@ -1,0 +1,1805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ML Chronicles</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]})"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true,theme:'dark'});</script>
+<style>
+:root {
+  --kai:#0984e3; --oracle:#6c5ce7; --gini:#00b894; --knight:#c0392b;
+  --bag:#e67e22; --boost:#e91e63; --alc:#1abc9c; --gate:#ff5722;
+  /* deep-learning arc characters (Ch.11–Ch.19) */
+  --seer:#3498db;     /* young Oracle / Linear Regression */
+  --judge:#8e44ad;    /* Judge-Priest / Logistic Regression */
+  --riddle:#d35400;   /* Puzzle Box / XOR */
+  --council:#2980b9;  /* Council of Oracles / Neural Networks */
+  --forge:#b7410e;    /* Forge-Smith / Backprop */
+  --monk:#555d50;     /* Monk of Restraint / Regularisation */
+  --scribe:#16a085;   /* Scribe of Patterns / CNNs */
+  --keeper:#f39c12;   /* Keepers of Memory / RNNs */
+  --herald:#4a1c80;   /* Parliament of Heralds / Transformers */
+  --gold:#f1c40f; --ink:#1a1a2e; --paper:#f5f0e8; --panel:#fff;
+  --gutter:6px; --radius:4px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--ink);font-family:'Georgia',serif;color:#222;}
+
+/* ── PAGE ── */
+.page{
+  width:210mm; min-height:297mm; margin:8mm auto; background:var(--paper);
+  padding:8mm; break-after:page; position:relative; overflow:hidden;
+}
+@media print{
+  body{background:#fff;}
+  .page{margin:0;width:210mm;min-height:297mm;padding:8mm;break-after:page;}
+}
+
+/* ── MANGA GRID ── */
+.mg{display:grid;gap:var(--gutter);width:100%;height:100%;}
+.g1{grid-template-columns:1fr;}
+.g2{grid-template-columns:1fr 1fr;}
+.g3{grid-template-columns:1fr 1fr 1fr;}
+.g21{grid-template-columns:2fr 1fr;}
+.g12{grid-template-columns:1fr 2fr;}
+.g211{grid-template-columns:2fr 1fr 1fr;}
+.g31{grid-template-columns:3fr 1fr;}
+.rspan2{grid-row:span 2;}
+.cspan2{grid-column:span 2;}
+.cspan3{grid-column:span 3;}
+
+/* ── PANEL ── */
+.pnl{
+  background:var(--panel); border:2.5px solid #111; border-radius:var(--radius);
+  position:relative; overflow:hidden; padding:8px; min-height:60px;
+  display:flex; flex-direction:column; justify-content:flex-start;
+}
+.pnl.dark{background:#111;color:#eee;}
+.pnl.ink{background:var(--ink);color:#eee;}
+
+/* ── SPEED LINES ── */
+.spd::before{
+  content:''; position:absolute; inset:0;
+  background:conic-gradient(from 0deg,transparent 0deg,rgba(0,0,0,.08) 1deg,transparent 2deg,
+    transparent 10deg,rgba(0,0,0,.08) 11deg,transparent 12deg,
+    transparent 20deg,rgba(0,0,0,.08) 21deg,transparent 22deg,
+    transparent 30deg,rgba(0,0,0,.08) 31deg,transparent 32deg,
+    transparent 40deg,rgba(0,0,0,.08) 41deg,transparent 42deg,
+    transparent 50deg,rgba(0,0,0,.08) 51deg,transparent 52deg,
+    transparent 60deg,rgba(0,0,0,.08) 61deg,transparent 62deg,
+    transparent 70deg,rgba(0,0,0,.08) 71deg,transparent 72deg,
+    transparent 80deg,rgba(0,0,0,.08) 81deg,transparent 82deg,
+    transparent 90deg,rgba(0,0,0,.08) 91deg,transparent 92deg,
+    transparent 100deg,rgba(0,0,0,.08) 101deg,transparent 102deg,
+    transparent 110deg,rgba(0,0,0,.08) 111deg,transparent 112deg,
+    transparent 120deg,rgba(0,0,0,.08) 121deg,transparent 122deg,
+    transparent 130deg,rgba(0,0,0,.08) 131deg,transparent 132deg,
+    transparent 140deg,rgba(0,0,0,.08) 141deg,transparent 142deg,
+    transparent 150deg,rgba(0,0,0,.08) 151deg,transparent 152deg,
+    transparent 160deg,rgba(0,0,0,.08) 161deg,transparent 162deg,
+    transparent 170deg,rgba(0,0,0,.08) 171deg,transparent 172deg,
+    transparent 180deg,rgba(0,0,0,.08) 181deg,transparent 182deg,
+    transparent 190deg,rgba(0,0,0,.08) 191deg,transparent 192deg,
+    transparent 200deg,rgba(0,0,0,.08) 201deg,transparent 202deg,
+    transparent 210deg,rgba(0,0,0,.08) 211deg,transparent 212deg,
+    transparent 220deg,rgba(0,0,0,.08) 221deg,transparent 222deg,
+    transparent 230deg,rgba(0,0,0,.08) 231deg,transparent 232deg,
+    transparent 240deg,rgba(0,0,0,.08) 241deg,transparent 242deg,
+    transparent 250deg,rgba(0,0,0,.08) 251deg,transparent 252deg,
+    transparent 260deg,rgba(0,0,0,.08) 261deg,transparent 262deg,
+    transparent 270deg,rgba(0,0,0,.08) 271deg,transparent 272deg,
+    transparent 280deg,rgba(0,0,0,.08) 281deg,transparent 282deg,
+    transparent 290deg,rgba(0,0,0,.08) 291deg,transparent 292deg,
+    transparent 300deg,rgba(0,0,0,.08) 301deg,transparent 302deg,
+    transparent 310deg,rgba(0,0,0,.08) 311deg,transparent 312deg,
+    transparent 320deg,rgba(0,0,0,.08) 321deg,transparent 322deg,
+    transparent 330deg,rgba(0,0,0,.08) 331deg,transparent 332deg,
+    transparent 340deg,rgba(0,0,0,.08) 341deg,transparent 342deg,
+    transparent 350deg,rgba(0,0,0,.08) 351deg,transparent 352deg);
+  pointer-events:none; z-index:0;
+}
+
+/* ── SCREENTONE ── */
+.tone::after{
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:0;
+  background-image:radial-gradient(circle,rgba(0,0,0,.15) 1px,transparent 1px);
+  background-size:6px 6px;
+}
+
+/* ── SPEECH BUBBLES ── */
+.bbl{
+  background:#fff; border:2px solid #111; border-radius:12px;
+  padding:6px 10px; font-size:.78rem; line-height:1.4; position:relative;
+  max-width:88%; z-index:2; margin:4px 2px;
+}
+.bbl.fl{align-self:flex-start;}
+.bbl.fr{align-self:flex-end;}
+.bbl.fl::before{
+  content:''; position:absolute; bottom:-10px; left:14px;
+  border:8px solid transparent; border-top:10px solid #111;
+}
+.bbl.fl::after{
+  content:''; position:absolute; bottom:-7px; left:16px;
+  border:6px solid transparent; border-top:8px solid #fff;
+}
+.bbl.fr::before{
+  content:''; position:absolute; bottom:-10px; right:14px;
+  border:8px solid transparent; border-top:10px solid #111;
+}
+.bbl.fr::after{
+  content:''; position:absolute; bottom:-7px; right:16px;
+  border:6px solid transparent; border-top:8px solid #fff;
+}
+.bbl.thought{border-radius:40px; border-style:dashed;}
+
+/* ── SPEAKER LABEL ── */
+.spk{font-size:.65rem;font-weight:700;letter-spacing:.05em;margin-bottom:2px;}
+.spk.kai{color:var(--kai);}
+.spk.oracle{color:var(--oracle);}
+.spk.gini{color:var(--gini);}
+.spk.knight{color:var(--knight);}
+.spk.bag{color:var(--bag);}
+.spk.boost{color:var(--boost);}
+.spk.alc{color:var(--alc);}
+.spk.gate{color:var(--gate);}
+.spk.db{color:#9b59b6;}
+.spk.seer{color:var(--seer);}
+.spk.judge{color:var(--judge);}
+.spk.riddle{color:var(--riddle);}
+.spk.council{color:var(--council);}
+.spk.forge{color:var(--forge);}
+.spk.monk{color:var(--monk);}
+.spk.scribe{color:var(--scribe);}
+.spk.keeper{color:var(--keeper);}
+.spk.herald{color:var(--herald);}
+
+/* ── SFX ── */
+.sfx{
+  font-size:2.4rem; font-weight:900; letter-spacing:.04em; line-height:1;
+  text-transform:uppercase; z-index:3; position:relative;
+  text-shadow:3px 3px 0 #111,-1px -1px 0 #111,1px -1px 0 #111,-1px 1px 0 #111;
+}
+.sfx.sm{font-size:1.4rem;}
+
+/* ── INFO BOXES ── */
+.lock{background:#fffde7;border-left:4px solid var(--gold);padding:8px 10px;margin:6px 0;border-radius:0 4px 4px 0;font-size:.8rem;}
+.note{background:#e8f4fd;border-left:4px solid var(--kai);padding:8px 10px;margin:6px 0;border-radius:0 4px 4px 0;font-size:.8rem;}
+.correct{background:#e8fdf0;border-left:4px solid var(--gini);padding:8px 10px;margin:6px 0;border-radius:0 4px 4px 0;font-size:.8rem;}
+.check{background:#fdeaea;border-left:4px solid var(--knight);padding:8px 10px;margin:6px 0;border-radius:0 4px 4px 0;font-size:.8rem;}
+.warn{background:#fff3e0;border-left:4px solid var(--bag);padding:8px 10px;margin:6px 0;border-radius:0 4px 4px 0;font-size:.8rem;}
+
+/* ── SPLASH ── */
+.splash{
+  background:var(--ink); color:#fff; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; text-align:center;
+  min-height:100%; padding:20mm; position:relative;
+}
+.splash h1{font-size:3.2rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;line-height:1.1;margin-bottom:.4em;}
+.splash h2{font-size:1.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:1em;}
+.splash .sub{font-size:.9rem;color:#aaa;max-width:120mm;font-style:italic;}
+.chapter-tag{font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);margin-bottom:.5em;}
+
+/* ── BRIDGE ── */
+.bridge{
+  background:linear-gradient(135deg,#0d0d1a,#1a1a2e);
+  border:2px solid #333; color:#eee; padding:10px 14px;
+  border-radius:4px; font-size:.78rem; font-style:italic;
+  text-align:center; position:relative;
+}
+.bridge::before{content:'⟶ ';color:var(--gold);}
+
+/* ── CHARACTER AVATAR ── */
+.ava{font-size:2rem;display:block;text-align:center;margin:.2em 0;}
+
+/* ── TABLE ── */
+table{width:100%;border-collapse:collapse;font-size:.72rem;margin:6px 0;}
+th{background:#222;color:#fff;padding:5px 6px;text-align:left;}
+td{padding:4px 6px;border-bottom:1px solid #ddd;}
+tr:nth-child(even){background:#f9f9f9;}
+
+/* ── CAPTION ── */
+.cap{font-size:.65rem;color:#555;text-align:center;margin-top:3px;font-style:italic;}
+
+/* ── MATH BLOCK ── */
+.math-block{background:#f0f4ff;border:1px solid #c5cfe8;padding:8px 12px;border-radius:4px;margin:6px 0;font-size:.82rem;}
+
+/* ── CHAPTER NAV ── */
+.ch-nav{font-size:.6rem;color:#999;text-align:right;position:absolute;top:4px;right:8px;letter-spacing:.05em;}
+
+/* ── WORKED EXAMPLE ── */
+.worked{background:#f8f8f8;border:2px solid #222;border-radius:4px;padding:10px;margin:6px 0;font-size:.76rem;}
+.worked .step{margin-bottom:4px;padding-left:8px;border-left:3px solid var(--gini);}
+
+/* ── UTIL ── */
+.bold{font-weight:700;}
+.center{text-align:center;}
+.small{font-size:.72rem;}
+.mt{margin-top:8px;}
+.mb{margin-bottom:8px;}
+h3{font-size:.95rem;margin:.5em 0 .3em;}
+h4{font-size:.82rem;margin:.4em 0 .2em;color:#333;}
+ul,ol{padding-left:1.2em;font-size:.78rem;}
+li{margin-bottom:2px;}
+p{font-size:.78rem;line-height:1.5;margin:.3em 0;}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     COVER
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="splash">
+    <div style="font-size:4rem;margin-bottom:.2em;">🕵️</div>
+    <div class="chapter-tag">A Machine Learning Graphic Novel</div>
+    <h1>ML<br>Chronicles</h1>
+    <h2>The Pattern Codex</h2>
+    <p class="sub">
+      Kai investigates the world's hidden structure — one algorithm at a time.<br><br>
+      <strong style="color:#ddd;">Classical arc:</strong> KNN · Decision Trees · Ensembles · SVM · Clustering · DBSCAN · Feature Engineering · Evaluation · Activations<br>
+      <strong style="color:#ddd;">Deep-learning arc:</strong> Linear &amp; Logistic Regression · XOR · Neural Networks · Backprop &amp; Optimisers · Regularisation · CNNs · RNNs · Transformers
+    </p>
+    <div style="margin-top:2em;font-size:.7rem;color:#666;letter-spacing:.15em;">LEARN ML THROUGH STORY</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PROLOGUE
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="ch-nav">PROLOGUE</div>
+  <div class="mg g1" style="height:100%;">
+    <div class="pnl dark spd" style="min-height:80px;">
+      <span class="sfx" style="color:var(--kai);">BRIEFING</span>
+    </div>
+    <div class="pnl" style="flex:1;">
+      <p class="bold">The city of Datum never sleeps. Data floods in from every corner — transactions, signals, images, text — and somebody has to make sense of it.</p>
+      <p class="mt">That somebody is <span class="bold" style="color:var(--kai);">Kai</span>, a pattern detective with no patience for noise and a compulsion for understanding <em>why</em> things cluster the way they do.</p>
+      <p class="mt">Kai's toolkit is growing. Each case brings a new algorithm, a new mentor, a new lesson about the geometry of information. The hard part isn't learning the math. The hard part is knowing <em>when to use what</em>.</p>
+    </div>
+    <div class="pnl" style="background:#1a1a2e;color:#eee;padding:14px;">
+      <h3 style="color:var(--gold);text-align:center;">Cast of Characters</h3>
+      <div class="mg g2" style="gap:4px;margin-top:6px;">
+        <div><span class="ava">🕵️</span><p class="center small bold" style="color:var(--kai);">KAI</p><p class="center small">The Detective</p></div>
+        <div><span class="ava">👁️</span><p class="center small bold" style="color:var(--oracle);">THE ORACLE</p><p class="center small">Nearest-Neighbour</p></div>
+        <div><span class="ava">🌳</span><p class="center small bold" style="color:var(--gini);">ELDER GINI</p><p class="center small">Decision Trees</p></div>
+        <div><span class="ava">📦</span><p class="center small bold" style="color:var(--bag);">GEN. BAGGING</p><p class="center small">Random Forests</p></div>
+        <div><span class="ava">🎯</span><p class="center small bold" style="color:var(--boost);">GEN. BOOSTING</p><p class="center small">Gradient Boosting</p></div>
+        <div><span class="ava">⚔️</span><p class="center small bold" style="color:var(--knight);">THE KNIGHT</p><p class="center small">SVM</p></div>
+        <div><span class="ava">🗺️</span><p class="center small bold" style="color:#00cec9;">CARTOGRAPHER</p><p class="center small">t-SNE / UMAP</p></div>
+        <div><span class="ava">🦠</span><p class="center small bold" style="color:#9b59b6;">DR. DENSITY</p><p class="center small">DBSCAN / HDBSCAN</p></div>
+        <div><span class="ava">⚗️</span><p class="center small bold" style="color:var(--alc);">THE ALCHEMIST</p><p class="center small">Feature Engineering</p></div>
+        <div><span class="ava">⚖️</span><p class="center small bold" style="color:#888;">THE JUDGES</p><p class="center small">Evaluation Metrics</p></div>
+        <div><span class="ava">⚡</span><p class="center small bold" style="color:var(--gate);">GATE KEEPER</p><p class="center small">Activation Functions</p></div>
+        <div><span class="ava">📏</span><p class="center small bold" style="color:var(--seer);">THE YOUNG SEER</p><p class="center small">Linear Regression</p></div>
+        <div><span class="ava">⚖️</span><p class="center small bold" style="color:var(--judge);">JUDGE-PRIEST</p><p class="center small">Logistic Regression</p></div>
+        <div><span class="ava">🧩</span><p class="center small bold" style="color:var(--riddle);">THE PUZZLE BOX</p><p class="center small">XOR Problem</p></div>
+        <div><span class="ava">🏛️</span><p class="center small bold" style="color:var(--council);">THE COUNCIL</p><p class="center small">Neural Networks</p></div>
+        <div><span class="ava">🔨</span><p class="center small bold" style="color:var(--forge);">FORGE-SMITH</p><p class="center small">Backprop &amp; Optimisers</p></div>
+        <div><span class="ava">🧘</span><p class="center small bold" style="color:var(--monk);">MONK OF RESTRAINT</p><p class="center small">Regularisation</p></div>
+        <div><span class="ava">📜</span><p class="center small bold" style="color:var(--scribe);">SCRIBE OF PATTERNS</p><p class="center small">CNNs</p></div>
+        <div><span class="ava">🏮</span><p class="center small bold" style="color:var(--keeper);">LANTERN-BEARERS</p><p class="center small">RNNs / LSTMs</p></div>
+        <div><span class="ava">👁️‍🗨️</span><p class="center small bold" style="color:var(--herald);">PARLIAMENT OF HERALDS</p><p class="center small">Transformers</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     CH 1: KNN
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="splash">
+    <div style="font-size:3rem;">👁️</div>
+    <div class="chapter-tag">Chapter 1</div>
+    <h1 style="font-size:2.4rem;">The Oracle's<br>First Law</h1>
+    <h2 style="font-size:1rem;">K-Nearest Neighbours</h2>
+    <p class="sub">
+      "You are who you stand next to." — The Oracle
+    </p>
+    <div style="margin-top:1.5em;font-size:.75rem;color:#888;">
+      algorithm · distance metrics · the K dial · curse of dimensionality
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="ch-nav">CH.1 — KNN</div>
+  <div class="mg g21" style="height:100%;grid-template-rows:auto auto 1fr;">
+    <div class="pnl spd cspan2" style="min-height:70px;">
+      <span class="sfx" style="color:var(--oracle);">KNOCK KNOCK</span>
+    </div>
+    <div class="pnl dark rspan2" style="padding:14px;">
+      <span class="ava">👁️</span>
+      <p class="spk oracle">THE ORACLE</p>
+      <div class="bbl fl">You have a new point. No label. You want to know what it is.</div>
+      <div class="bbl fl" style="margin-top:12px;">Look around it. Find its <strong>K nearest neighbours</strong>. Vote. Take the majority.</div>
+      <div class="bbl fl" style="margin-top:12px;">That is all there is.</div>
+    </div>
+    <div class="pnl">
+      <p class="spk kai">KAI</p>
+      <div class="bbl fr">How do you measure "nearest"?</div>
+    </div>
+    <div class="pnl">
+      <p class="spk oracle">THE ORACLE</p>
+      <div class="bbl fl">Euclidean distance for most cases. Manhattan when features have different scales. Cosine when direction matters more than magnitude.</div>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="ch-nav">CH.1 — KNN</div>
+  <div class="mg g1">
+    <div class="pnl">
+      <div class="pnl" style="background:#1e1e2e;border:1px solid #444;border-radius:4px;padding:8px;margin-bottom:6px;">
+        <pre style="color:#a6e3a1;font-size:.68rem;line-height:1.5;margin:0;"><code>from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+X_scaled = StandardScaler().fit_transform(X_train)
+knn = KNeighborsClassifier(n_neighbors=5, metric='euclidean')
+knn.fit(X_scaled, y_train)</code></pre>
+      </div>
+      <h3>How KNN Works</h3>
+      <div class="mermaid">
+graph LR
+  A[New point X] --> B[Compute distance to all training points]
+  B --> C[Sort by distance]
+  C --> D[Take K nearest]
+  D --> E{Task?}
+  E -->|Classification| F[Majority vote]
+  E -->|Regression| G[Average value]
+      </div>
+    </div>
+    <div class="pnl">
+      <h3 style="color:var(--gold);">⚙️ The K Dial — Your First Bias-Variance Tradeoff</h3>
+      <p>K is the lever that controls how much the model trusts its local neighbourhood.</p>
+      <div class="mg g2" style="gap:4px;margin-top:6px;">
+        <div class="check">
+          <strong>K=1 (too small)</strong><br>
+          Memorises every training point. Perfect training accuracy. Falls apart on new data. High variance.
+        </div>
+        <div class="note">
+          <strong>K=N (too large)</strong><br>
+          Averages everything. Always predicts the majority class regardless of position. High bias.
+        </div>
+      </div>
+      <div class="correct" style="margin-top:6px;">
+        <strong>Sweet spot:</strong> Use cross-validation. Try K = 1, 3, 5, 7, 11, 21. Pick the K that minimises validation error.
+      </div>
+      <div class="lock" style="margin-top:6px;">
+        <strong>🔒 Intuition Lock:</strong> K is the first dial you'll encounter in ML. Every algorithm has one. Tree depth (Ch.2), n_estimators (Ch.3), C (Ch.4) — all the same tradeoff. Small = overfit, large = underfit. Remember this.
+      </div>
+    </div>
+    <div class="pnl" style="background:#fff8e1;">
+      <h3>The Curse of Dimensionality</h3>
+      <p>When you have many features, all points become approximately equidistant. "Nearest" stops meaning anything.</p>
+      <div class="note" style="margin-top:6px;">
+        <strong>Rule of thumb:</strong> KNN degrades badly beyond ~20 features without dimensionality reduction first (see Ch.6).
+      </div>
+      <p class="spk kai" style="margin-top:8px;">KAI</p>
+      <div class="bbl fr">So K is a lever. High K = smooth but blind. Low K = sharp but fragile. I need to calibrate it.</div>
+      <p class="spk oracle" style="margin-top:8px;">THE ORACLE</p>
+      <div class="bbl fl">Now you're thinking like a detective. Cross-validate. The data tells you the answer.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     CH 2: DECISION TREES
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="splash">
+    <div style="font-size:3rem;">🌳</div>
+    <div class="chapter-tag">Chapter 2</div>
+    <h1 style="font-size:2.4rem;">The Elder's<br>Splitting Art</h1>
+    <h2 style="font-size:1rem;">Decision Trees</h2>
+    <p class="sub">
+      "A tree that grows without restraint explains everything and predicts nothing." — Elder Gini
+    </p>
+    <div style="margin-top:1.5em;font-size:.75rem;color:#888;">
+      Gini impurity · information gain · depth · pruning · the same dial, different name
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="ch-nav">CH.2 — DECISION TREES</div>
+  <div class="mg g21" style="height:100%;grid-template-rows:auto 1fr auto;">
+    <div class="pnl dark cspan2 spd" style="min-height:60px;">
+      <span class="sfx" style="color:var(--gini);">THE GROVE</span>
+    </div>
+    <div class="pnl dark rspan2 tone">
+      <span class="ava">🌳</span>
+      <p class="spk gini">ELDER GINI</p>
+      <div class="bbl fl">Detective. K's voting worked — but it can't explain <em>why</em> it voted that way. My trees can.</div>
+      <div class="bbl fl" style="margin-top:10px;">At each node, I ask a question that most <em>separates</em> the classes. I measure separation with Gini impurity.</div>
+    </div>
+    <div class="pnl">
+      <p class="spk kai">KAI</p>
+      <div class="bbl fr">You keep splitting until it's pure?</div>
+      <p class="spk gini" style="margin-top:8px;">ELDER GINI</p>
+      <div class="bbl fl">Until it's pure — or until I stop it. That's the depth limit. Your second dial, detective. Same tradeoff as K.</div>
+    </div>
+    <div class="pnl cspan2">
+      <div class="lock">
+        <strong>🔒 Callback — The Dial Returns:</strong> K's tradeoff (Ch.1) and tree depth are the same thing wearing different clothes. Small depth = high bias, misses patterns. Unlimited depth = memorises noise. <em>The optimal is always somewhere in between.</em>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="ch-nav">CH.2 — DECISION TREES</div>
+  <div class="mg g1">
+    <div class="pnl">
+      <h3>Gini Impurity — The Splitting Criterion</h3>
+      <p>At each candidate split, Elder Gini computes how "mixed" each resulting group is:</p>
+      <div class="math-block">
+        $$\text{Gini}(S) = 1 - \sum_{i=1}^{C} p_i^2$$
+      </div>
+      <p>A node is <strong>pure</strong> (Gini = 0) when all samples belong to one class. Mixed 50/50 gives Gini = 0.5 (worst).</p>
+    </div>
+
+    <!-- Worked Example — NEW: full arithmetic -->
+    <div class="pnl" style="border:2px solid var(--gini);">
+      <h3 style="color:var(--gini);">📐 Worked Gini Calculation</h3>
+      <p class="small">Four data points: A🟢, B🟢, C🔴, D🔴. Two candidate splits on feature "height > 5cm":</p>
+      <div class="worked">
+        <div class="step"><strong>Split 1:</strong> Left={A,B,C}, Right={D}<br>
+          Left: 2 green, 1 red → Gini = 1 − [(2/3)² + (1/3)²] = 1 − [0.444 + 0.111] = <strong>0.444</strong><br>
+          Right: 0 green, 1 red → Gini = 1 − [0² + 1²] = <strong>0.000</strong><br>
+          Weighted: (3/4)×0.444 + (1/4)×0.000 = <strong>0.333</strong>
+        </div>
+        <div class="step"><strong>Split 2:</strong> Left={A,B}, Right={C,D}<br>
+          Left: 2 green, 0 red → Gini = 1 − [1² + 0²] = <strong>0.000</strong><br>
+          Right: 0 green, 2 red → Gini = 1 − [0² + 1²] = <strong>0.000</strong><br>
+          Weighted: (2/4)×0.000 + (2/4)×0.000 = <strong>0.000</strong>
+        </div>
+        <div class="step"><strong>Winner:</strong> Split 2. Perfect purity. The tree uses this question.</div>
+      </div>
+    </div>
+
+    <div class="pnl">
+      <h3>The Tree-Building Loop</h3>
+      <div class="mermaid">
+graph TD
+  A[All training data at root] --> B[Try every possible split on every feature]
+  B --> C[Pick split with lowest weighted Gini]
+  C --> D{Pure enough or max depth?}
+  D -->|No| E[Recurse on each child]
+  D -->|Yes| F[Leaf — assign majority class]
+  E --> B
+      </div>
+      <div class="pnl" style="background:#1e1e2e;border:1px solid #444;border-radius:4px;padding:8px;margin-top:6px;">
+        <pre style="color:#a6e3a1;font-size:.68rem;line-height:1.5;margin:0;"><code>from sklearn.tree import DecisionTreeClassifier, export_text
+tree = DecisionTreeClassifier(max_depth=4, criterion='gini')
+tree.fit(X_train, y_train)
+print(export_text(tree, feature_names=feature_names))</code></pre>
+      </div>
+    </div>
+
+    <div class="pnl">
+      <h3>Strengths and Weaknesses</h3>
+      <div class="mg g2" style="gap:4px;">
+        <div class="correct">
+          ✅ Interpretable — you can draw it<br>
+          ✅ Handles mixed feature types<br>
+          ✅ No feature scaling needed<br>
+          ✅ Naturally handles multi-class
+        </div>
+        <div class="check">
+          ❌ Overfits aggressively without pruning<br>
+          ❌ Unstable — small data changes = different tree<br>
+          ❌ Axis-aligned splits only<br>
+          ❌ Biased toward high-cardinality features
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     CH 3: ENSEMBLES
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="splash">
+    <div style="font-size:3rem;">📦🎯</div>
+    <div class="chapter-tag">Chapter 3</div>
+    <h1 style="font-size:2.4rem;">The Two<br>Generals</h1>
+    <h2 style="font-size:1rem;">Random Forests &amp; Gradient Boosting</h2>
+    <p class="sub">
+      Two solutions to Elder Gini's instability problem.<br>
+      One builds a democracy. The other builds a correction chain.
+    </p>
+    <div style="margin-top:1.5em;font-size:.75rem;color:#888;">
+      bagging · feature randomisation · boosting · residuals · learning rate · n_estimators
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="ch-nav">CH.3 — ENSEMBLES</div>
+  <div class="mg g2" style="height:100%;grid-template-rows:auto 1fr 1fr auto;">
+    <div class="pnl dark spd cspan2" style="min-height:60px;">
+      <span class="sfx" style="color:var(--bag);">THE BARRACKS</span>
+    </div>
+    <div class="pnl dark tone">
+      <span class="ava">📦</span>
+      <p class="spk bag">GEN. BAGGING</p>
+      <div class="bbl fl">Elder Gini's trees are brittle. Mine aren't. I bootstrap — sample the data with replacement — and grow each tree on a different random subset.</div>
+      <div class="bbl fl" style="margin-top:8px;">Then I also randomise which features each tree may consider at each split. Independent errors cancel out.</div>
+    </div>
+    <div class="pnl dark tone">
+      <span class="ava">🎯</span>
+      <p class="spk boost">GEN. BOOSTING</p>
+      <div class="bbl fl">My approach is different. I build trees sequentially. Each tree looks at what the previous ones got <em>wrong</em> — the residuals — and specialises in fixing those mistakes.</div>
+      <div class="bbl fl" style="margin-top:8px;">Learning rate controls how much each tree contributes. Slow learning, many trees = better generalisation.</div>
+    </div>
+    <div class="pnl">
+      <p class="spk kai">KAI</p>
+      <div class="bbl fr" style="margin-bottom:8px;">n_estimators — that's the dial again. More trees, more time, but diminishing returns after some point.</div>
+      <div class="lock">
+        <strong>🔒 Callback — Third Manifestation:</strong> K in Ch.1. Depth in Ch.2. n_estimators here. Every algorithm has this control. Low = underfit, high = overfit or just wasteful. <em>Same dial. Different label.</em>
+      </div>
+    </div>
+    <div class="pnl">
+      <div class="mermaid">
+graph TD
+  subgraph Bagging
+    D1[Data] --> B1[Bootstrap 1] & B2[Bootstrap 2] & B3[Bootstrap N]
+    B1 --> T1[Tree 1]
+    B2 --> T2[Tree 2]
+    B3 --> TN[Tree N]
+    T1 & T2 & TN --> V[Majority Vote]
+  end
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="ch-nav">CH.3 — ENSEMBLES</div>
+  <div class="mg g1">
+    <div class="pnl">
+      <h3>Boosting: The Residual Chain</h3>
+      <div class="mermaid">
+graph LR
+  A[Data] --> T1[Tree 1: predict Y]
+  T1 --> R1[Residuals = Y - pred1]
+  R1 --> T2[Tree 2: predict residuals]
+  T2 --> R2[New residuals]
+  R2 --> T3[Tree 3]
+  T3 --> F[Final = sum of all trees x lr]
+      </div>
+    </div>
+    <div class="mg g2" style="gap:4px;">
+      <div class="pnl">
+        <h4>Random Forest — Key Hyperparams</h4>
+        <ul>
+          <li><strong>n_estimators</strong> — number of trees (100–500 typical)</li>
+          <li><strong>max_features</strong> — features per split (√p for classification)</li>
+          <li><strong>max_depth</strong> — tree depth limit (None is common)</li>
+          <li><strong>min_samples_leaf</strong> — prevents tiny leaves</li>
+        </ul>
+        <div class="correct" style="margin-top:6px;">Out-of-bag (OOB) samples give free validation — no separate val set needed.</div>
+        <div class="pnl" style="background:#1e1e2e;border:1px solid #444;border-radius:4px;padding:8px;margin-top:6px;">
+          <pre style="color:#a6e3a1;font-size:.68rem;line-height:1.5;margin:0;"><code>from sklearn.ensemble import RandomForestClassifier
+rf = RandomForestClassifier(n_estimators=200,
+    max_features='sqrt', oob_score=True)
+rf.fit(X_train, y_train)
+print(rf.feature_importances_)</code></pre>
+        </div>
+      </div>
+      <div class="pnl">
+        <h4>Gradient Boosting — Key Hyperparams</h4>
+        <ul>
+          <li><strong>n_estimators</strong> — number of boosting rounds</li>
+          <li><strong>learning_rate</strong> — shrinkage (0.01–0.3)</li>
+          <li><strong>max_depth</strong> — shallow trees (3–6) work best</li>
+          <li><strong>subsample</strong> — row sampling per round (stochastic GB)</li>
+        </ul>
+        <div class="warn" style="margin-top:6px;">High learning_rate with many trees = overfitting. Lower lr + more trees almost always wins.</div>
+      </div>
+    </div>
+    <div class="pnl">
+      <div class="correct">
+        <strong>Feature Importance:</strong> Both models provide feature importance scores — how often / how much each feature contributed across all trees. Free feature selection signal.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     CH 4: SVM
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="splash">
+    <div style="font-size:3rem;">⚔️</div>
+    <div class="chapter-tag">Chapter 4</div>
+    <h1 style="font-size:2.4rem;">The Knight<br>of Margins</h1>
+    <h2 style="font-size:1rem;">Support Vector Machines</h2>
+    <p class="sub">
+      "I do not care about all the points. I care only about the ones that define the boundary." — The Knight
+    </p>
+    <div style="margin-top:1.5em;font-size:.75rem;color:#888;">
+      hyperplane · margin · support vectors · C parameter · kernel trick · RBF
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="ch-nav">CH.4 — SVM</div>
+  <div class="mg g12" style="height:100%;grid-template-rows:auto 1fr 1fr;">
+    <div class="pnl dark spd cspan2" style="min-height:60px;">
+      <span class="sfx" style="color:var(--knight);">THE BOUNDARY</span>
+    </div>
+    <div class="pnl dark tone">
+      <span class="ava">⚔️</span>
+      <p class="spk knight">THE KNIGHT</p>
+      <div class="bbl fl">The forests trust numbers. I trust geometry. My goal is a hyperplane that separates classes with the <em>maximum possible margin</em>.</div>
+      <div class="bbl fl" style="margin-top:8px;">Wider margin = more confident separation = better generalisation. The points that define the margin are the <strong>support vectors</strong>. Everything else is irrelevant.</div>
+    </div>
+    <div class="pnl">
+      <h4>The Optimisation Problem</h4>
+      <div class="math-block">
+        $$\min_{w,b} \frac{1}{2}\|w\|^2 + C\sum_i \xi_i$$
+        $$\text{subject to: } y_i(w \cdot x_i + b) \geq 1 - \xi_i$$
+      </div>
+      <p class="small">$\xi_i$ are slack variables — they allow some misclassification. C controls the penalty.</p>
+    </div>
+    <div class="pnl">
+      <p class="spk kai">KAI</p>
+      <div class="bbl fr">C is the dial.</div>
+      <p class="spk knight" style="margin-top:8px;">THE KNIGHT</p>
+      <div class="bbl fl">Yes. High C — I tolerate no misclassification. Narrow margin, risk of overfit. Low C — I allow errors to keep the margin wide. Smoother boundary.</div>
+      <div class="lock" style="margin-top:8px;">
+        <strong>🔒 Callback — Fourth Dial:</strong> Ch.1: K. Ch.2: depth. Ch.3: n_estimators. Now C. Every algorithm has a regularisation knob. The physics is always the same: tighter fit to training = worse generalisation.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="ch-nav">CH.4 — SVM</div>
+  <div class="mg g1">
+    <div class="pnl">
+      <h3>The Kernel Trick — Escaping Linearity</h3>
+      <p>When classes are not linearly separable, the kernel maps data to a higher-dimensional space where they become separable — without computing coordinates explicitly.</p>
+      <div class="mermaid">
+graph LR
+  A[2D data — not separable] -->|Kernel φ| B[High-dim feature space]
+  B --> C[Linear hyperplane found]
+  C -->|Map back| D[Curved boundary in 2D]
+      </div>
+    </div>
+    <div class="mg g2" style="gap:4px;">
+      <div class="pnl">
+        <h4>Common Kernels</h4>
+        <ul>
+          <li><strong>Linear:</strong> $K(x,z) = x \cdot z$ — fast, works well when features &gt;&gt; samples</li>
+          <li><strong>RBF (Gaussian):</strong> $K(x,z) = e^{-\gamma\|x-z\|^2}$ — most versatile, two params (C, γ)</li>
+          <li><strong>Polynomial:</strong> $K(x,z) = (x\cdot z + r)^d$ — good for image features</li>
+        </ul>
+      </div>
+      <div class="pnl">
+        <h4>When to Use SVM</h4>
+        <div class="correct">✅ High-dimensional data (text, genomics)</div>
+        <div class="correct">✅ Small-to-medium datasets</div>
+        <div class="correct">✅ Clear margin of separation exists</div>
+        <div class="check">❌ Slow on &gt;100k samples</div>
+        <div class="check">❌ Sensitive to feature scale — always normalise</div>
+        <div class="check">❌ No native probability output</div>
+      </div>
+    </div>
+    <div class="pnl">
+      <div class="note">
+        <strong>Practical Note:</strong> Always standardise features before SVM. The margin depends on distances — unscaled features will dominate.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     CH 5: ALGORITHM COMPARISON
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="splash">
+    <div style="font-size:3rem;">🗂️</div>
+    <div class="chapter-tag">Chapter 5</div>
+    <h1 style="font-size:2.4rem;">When to Send<br>Which Agent</h1>
+    <h2 style="font-size:1rem;">Algorithm Selection Guide</h2>
+    <p class="sub">
+      Kai reviews the case files. KNN, Trees, Forests, Boosting, SVM. Five tools. Different strengths. The detective must know which to reach for.
+    </p>
+  </div>
+</div>
+
+<div class="page">
+  <div class="ch-nav">CH.5 — COMPARISON</div>
+  <div class="mg g1">
+    <div class="pnl">
+      <h3>Decision Flowchart — Which Algorithm?</h3>
+      <div class="mermaid">
+flowchart TD
+  A[New classification problem] --> B{How many samples?}
+  B -->|"< 1k"| C{Need interpretability?}
+  B -->|"1k – 100k"| D{Feature type?}
+  B -->|"> 100k"| E[Consider neural nets or linear models]
+  C -->|Yes| F[Decision Tree — visual & explainable]
+  C -->|No| G{High-dimensional?}
+  G -->|Yes| H[SVM with RBF kernel]
+  G -->|No| I[KNN as baseline]
+  D -->|Mixed types, tabular| J[Random Forest or GBM]
+  D -->|High-dim / sparse| K[SVM Linear kernel]
+  D -->|Low-dim, clean| L[Try KNN first]
+      </div>
+    </div>
+
+    <div class="pnl">
+      <p class="spk kai">KAI</p>
+      <div class="bbl fr">The flowchart first. The numbers second. Don't reach for the table until the flowchart has already narrowed it down.</div>
+    </div>
+
+    <!-- Table demoted: "for reference" -->
+    <div class="pnl" style="border:1px dashed #aaa;">
+      <h4 style="color:#666;">For Reference — Detailed Comparison</h4>
+      <table>
+        <tr><th>Algorithm</th><th>Speed (train)</th><th>Interpretable</th><th>Scale needed</th><th>Best for</th></tr>
+        <tr><td>KNN</td><td>Instant</td><td>✅ (sort of)</td><td>Yes</td><td>Baseline, anomaly detection</td></tr>
+        <tr><td>Decision Tree</td><td>Fast</td><td>✅ Visual</td><td>No</td><td>Explainability required</td></tr>
+        <tr><td>Random Forest</td><td>Medium</td><td>⚠️ Partial</td><td>No</td><td>Tabular data, robustness</td></tr>
+        <tr><td>Gradient Boosting</td><td>Slow</td><td>⚠️ Partial</td><td>No</td><td>Kaggle, high accuracy</td></tr>
+        <tr><td>SVM (RBF)</td><td>Slow on large N</td><td>❌</td><td>Yes</td><td>High-dim, small datasets</td></tr>
+      </table>
+      <p class="cap">Table: quick comparison. Treat as a rough guide, not a rule.</p>
+    </div>
+
+    <div class="pnl">
+      <div class="lock">
+        <strong>🔒 The Pattern:</strong> All five algorithms are solving the same problem — find a function $f(x) \rightarrow y$ that generalises. They differ in the <em>geometry they assume</em> about the decision boundary: local vote (KNN), axis splits (trees), margins (SVM). When your geometry assumption is wrong, the algorithm fails, no matter how well tuned.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     CH 6: t-SNE / UMAP
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="splash">
+    <div style="font-size:3rem;">🗺️</div>
+    <div class="chapter-tag">Chapter 6</div>
+    <h1 style="font-size:2.4rem;">The Cartographer's<br>Projection</h1>
+    <h2 style="font-size:1rem;">t-SNE &amp; UMAP — Dimensionality Reduction</h2>
+    <p class="sub">
+      The data had 512 dimensions. Nobody could see it.<br>
+      The Cartographer folded it into two.
+    </p>
+    <div style="margin-top:1.5em;font-size:.75rem;color:#888;">
+      manifold · perplexity · neighbourhood preservation · UMAP vs t-SNE
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="ch-nav">CH.6 — t-SNE / UMAP</div>
+  <div class="mg g1">
+    <div class="pnl dark spd" style="min-height:60px;">
+      <span class="sfx" style="color:var(--oracle);">FOLDING SPACE</span>
+    </div>
+    <div class="mg g21" style="gap:4px;">
+      <div class="pnl dark tone" style="padding:14px;">
+        <span class="ava">🗺️</span>
+        <p class="spk oracle">CARTOGRAPHER</p>
+        <div class="bbl fl">Detective. Your five classifiers are blind. They work in spaces they cannot see. I will show you what the data <em>actually looks like</em>.</div>
+        <div class="bbl fl" style="margin-top:8px;">High-dimensional data lives on a low-dimensional manifold. I find that manifold and project it to 2D — preserving local neighbourhood structure.</div>
+      </div>
+      <div class="pnl">
+        <p class="spk kai">KAI</p>
+        <div class="bbl fr">Is this for analysis or for building a model?</div>
+        <p class="spk oracle" style="margin-top:8px;">CARTOGRAPHER</p>
+        <div class="bbl fl">Analysis only. Never feed t-SNE coordinates into a downstream model. The distances between clusters are meaningless. Only local structure is preserved.</div>
+        <div class="check" style="margin-top:8px;">
+          <strong>Critical:</strong> t-SNE axes have no units. Cluster size and inter-cluster distance are artifacts of perplexity, not the data.
+        </div>
+      </div>
+    </div>
+    <div class="pnl">
+      <h3>t-SNE vs UMAP</h3>
+      <div class="mg g2" style="gap:4px;">
+        <div class="note">
+          <strong>t-SNE</strong><br>
+          Preserves local structure extremely well. Cluster shapes meaningful. Slow on &gt;10k points. Non-deterministic. Perplexity is the main knob (5–50). Random seed matters.
+        </div>
+        <div class="correct">
+          <strong>UMAP</strong><br>
+          Faster, scales to millions. Preserves both local AND some global structure. n_neighbors (local) + min_dist (compactness). More stable across runs. Preferred for most modern use.
+        </div>
+      </div>
+    </div>
+    <div class="pnl">
+      <h3>The Workflow</h3>
+      <div class="mermaid">
+graph LR
+  A[High-dim data, e.g. 512-d] --> B[Reduce with PCA to 50-d]
+  B --> C[Apply t-SNE or UMAP to 2-d]
+  C --> D[Scatter plot — colour by label]
+  D --> E{Clusters visible?}
+  E -->|Yes| F[Data has exploitable structure — classifiers will work]
+  E -->|No| G[Overlapping → harder problem, more features needed]
+      </div>
+      <div class="note" style="margin-top:6px;">
+        PCA first (to 50-d) dramatically speeds up t-SNE with minimal information loss.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     K-MEANS INTERLUDE (bridge before DBSCAN)
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="ch-nav">INTERLUDE — K-MEANS</div>
+  <div class="mg g1">
+    <div class="pnl dark spd" style="min-height:60px;">
+      <span class="sfx" style="color:var(--gold);">UNSUPERVISED</span>
+    </div>
+    <div class="pnl" style="border:2px solid var(--gold);">
+      <h3 style="color:var(--gold);">⚙️ K-Means: What Came Before</h3>
+      <p>Before Dr. Density arrives, Kai encountered K-Means — the simplest clustering algorithm. Know it, because the chapters ahead argue against it.</p>
+      <div class="mg g21" style="gap:4px;margin-top:6px;">
+        <div>
+          <h4>How K-Means Works</h4>
+          <div class="mermaid">
+graph TD
+  A[Choose K — number of clusters] --> B[Place K centroids randomly]
+  B --> C[Assign each point to nearest centroid]
+  C --> D[Recompute centroid as mean of assigned points]
+  D --> E{Centroids changed?}
+  E -->|Yes| C
+  E -->|No| F[Done — K clusters found]
+          </div>
+        </div>
+        <div>
+          <div class="note">
+            <strong>What it needs:</strong><br>
+            ✅ Fast — O(n·K·iterations)<br>
+            ✅ Works well on globular, similar-sized clusters<br>
+            ✅ Scales to large datasets
+          </div>
+          <div class="check" style="margin-top:6px;">
+            <strong>Where it breaks:</strong><br>
+            ❌ <strong>You must specify K upfront</strong><br>
+            ❌ Non-spherical cluster shapes<br>
+            ❌ Clusters of very different density<br>
+            ❌ No concept of noise — every point gets assigned<br>
+            ❌ Sensitive to centroid initialisation
+          </div>
+          <div class="pnl" style="background:#1e1e2e;border:1px solid #444;border-radius:4px;padding:8px;margin-top:6px;">
+            <pre style="color:#a6e3a1;font-size:.68rem;line-height:1.5;margin:0;"><code>from sklearn.cluster import KMeans
+km = KMeans(n_clusters=3, n_init=10, random_state=42)
+km.fit(X)
+labels = km.labels_     # cluster per point
+centers = km.cluster_centers_</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pnl">
+      <div class="bridge">K-Means draws round boundaries on a jagged world. Dr. Density has a different answer.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     CH 7: DBSCAN / HDBSCAN  (NEW CHAPTER)
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="splash" style="background:linear-gradient(160deg,#0d001a,#1a0033);">
+    <div style="font-size:3rem;">🦠</div>
+    <div class="chapter-tag">Chapter 7</div>
+    <h1 style="font-size:2.4rem;">The Shapeless<br>Plague</h1>
+    <h2 style="font-size:1rem;">DBSCAN &amp; HDBSCAN — Density Clustering</h2>
+    <p class="sub">
+      K-Means needed to know the answer before it started.<br>
+      Dr. Density asks only one question: <em>is this region dense?</em>
+    </p>
+    <div style="margin-top:1.5em;font-size:.75rem;color:#888;">
+      core points · border points · noise · eps · min_samples · HDBSCAN hierarchy
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="ch-nav">CH.7 — DBSCAN / HDBSCAN</div>
+  <div class="mg g1">
+    <div class="pnl dark spd" style="min-height:60px;">
+      <span class="sfx" style="color:#9b59b6;">DENSITY RISING</span>
+    </div>
+    <div class="mg g21" style="gap:4px;">
+      <div class="pnl ink tone" style="padding:14px;">
+        <span class="ava">🦠</span>
+        <p class="spk db">DR. DENSITY</p>
+        <div class="bbl fl" style="background:#1a0033;color:#eee;border-color:#9b59b6;">Detective. The Cartographer showed you the map. But maps have shapes K-Means cannot follow. K-Means needs a K. K-Means needs round blobs. Real data has neither.</div>
+        <div class="bbl fl" style="background:#1a0033;color:#eee;border-color:#9b59b6;margin-top:8px;">I find clusters of arbitrary shape. I reject noise as outliers. I need no prior knowledge of how many clusters exist.</div>
+      </div>
+      <div class="pnl">
+        <p class="spk kai">KAI</p>
+        <div class="bbl fr">Then what do you need?</div>
+        <p class="spk db" style="margin-top:8px;">DR. DENSITY</p>
+        <div class="bbl fl">Two things. A neighbourhood radius — <strong>eps</strong>. And a minimum density — <strong>min_samples</strong>. That's all.</div>
+        <div class="note" style="margin-top:8px;">
+          <strong>eps:</strong> How close two points must be to be "neighbours."<br>
+          <strong>min_samples:</strong> How many neighbours a core point needs.
+        </div>
+      </div>
+    </div>
+
+    <div class="pnl" style="border:2px solid #9b59b6;">
+      <h3 style="color:#9b59b6;">DBSCAN — Point Classification</h3>
+      <div class="mg g3" style="gap:4px;">
+        <div class="pnl" style="background:#1a0033;color:#eee;text-align:center;">
+          <div style="font-size:1.5rem;">🔵</div>
+          <strong>Core Point</strong>
+          <p class="small">Has ≥ min_samples neighbours within eps. Backbone of a cluster.</p>
+        </div>
+        <div class="pnl" style="background:#2a1a0a;color:#eee;text-align:center;">
+          <div style="font-size:1.5rem;">🟡</div>
+          <strong>Border Point</strong>
+          <p class="small">Within eps of a core point but not dense enough itself. Attached to cluster edge.</p>
+        </div>
+        <div class="pnl" style="background:#1a0000;color:#eee;text-align:center;">
+          <div style="font-size:1.5rem;">🔴</div>
+          <strong>Noise Point</strong>
+          <p class="small">Not reachable from any core point. Labelled −1. This is DBSCAN's superpower — explicit outlier detection.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="ch-nav">CH.7 — DBSCAN / HDBSCAN</div>
+  <div class="mg g1">
+    <div class="pnl">
+      <h3>DBSCAN Algorithm</h3>
+      <div class="mermaid">
+graph TD
+  A[Pick an unvisited point P] --> B{Neighbours within eps ≥ min_samples?}
+  B -->|No| C[Mark as Noise — label=-1]
+  B -->|Yes| D[Start new cluster — P is core point]
+  D --> E[Add all density-reachable points to cluster]
+  E --> F[Move to next unvisited point]
+  C --> F
+  F --> G{Any unvisited left?}
+  G -->|Yes| A
+  G -->|No| H[Done — clusters + noise identified]
+      </div>
+    </div>
+
+    <div class="pnl" style="border:2px solid #9b59b6;">
+      <h3 style="color:#9b59b6;">HDBSCAN — The Upgrade</h3>
+      <div class="mg g21" style="gap:4px;">
+        <div>
+          <p class="spk db">DR. DENSITY</p>
+          <div class="bbl fl" style="background:#1a0033;color:#eee;border-color:#9b59b6;">DBSCAN has one critical weakness. <strong>eps</strong> is a global parameter. If your data has clusters of varying density — dense downtown, sparse suburbs — a single eps fails both regions simultaneously.</div>
+          <div class="bbl fl" style="background:#1a0033;color:#eee;border-color:#9b59b6;margin-top:8px;">HDBSCAN removes eps entirely. It builds a <em>hierarchy</em> of clusters across all density levels, then extracts the most stable ones. Variable-density clusters, handled automatically.</div>
+        </div>
+        <div>
+          <div class="correct" style="margin-bottom:6px;">
+            <strong>HDBSCAN advantages:</strong><br>
+            ✅ No eps to tune<br>
+            ✅ Handles variable density<br>
+            ✅ Soft cluster membership scores<br>
+            ✅ Better outlier scores<br>
+            ✅ Usually more stable results
+          </div>
+          <div class="warn">
+            <strong>Only param that matters:</strong><br>
+            <strong>min_cluster_size</strong> — minimum points to form a persistent cluster.<br>
+            Start with 5% of dataset size.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pnl">
+      <h3>DBSCAN vs HDBSCAN vs K-Means</h3>
+      <div class="pnl" style="background:#1e1e2e;border:1px solid #444;border-radius:4px;padding:8px;margin-bottom:6px;">
+        <pre style="color:#a6e3a1;font-size:.68rem;line-height:1.5;margin:0;"><code>from sklearn.cluster import DBSCAN
+import hdbscan
+# DBSCAN
+db = DBSCAN(eps=0.5, min_samples=5)
+labels = db.fit_predict(X)  # -1 = noise
+# HDBSCAN
+hdb = hdbscan.HDBSCAN(min_cluster_size=50)
+labels = hdb.fit_predict(X)</code></pre>
+      </div>
+      <table>
+        <tr><th>Property</th><th>K-Means</th><th>DBSCAN</th><th>HDBSCAN</th></tr>
+        <tr><td>Requires K upfront</td><td>✅ Yes</td><td>❌ No</td><td>❌ No</td></tr>
+        <tr><td>Arbitrary cluster shapes</td><td>❌ Spherical only</td><td>✅ Yes</td><td>✅ Yes</td></tr>
+        <tr><td>Noise / outlier detection</td><td>❌ No</td><td>✅ Yes</td><td>✅ Better</td></tr>
+        <tr><td>Variable density clusters</td><td>❌ No</td><td>⚠️ Struggles</td><td>✅ Yes</td></tr>
+        <tr><td>Key parameter</td><td>K</td><td>eps + min_samples</td><td>min_cluster_size</td></tr>
+        <tr><td>Speed on large data</td><td>Fast</td><td>Medium</td><td>Slower (but scales)</td></tr>
+      </table>
+    </div>
+
+    <div class="pnl">
+      <div class="bridge">The plague is mapped. Now Kai must decide which features to hand the classifiers. He heads to the Alchemist's lab.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     CH 8: FEATURE ENGINEERING
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="splash">
+    <div style="font-size:3rem;">⚗️</div>
+    <div class="chapter-tag">Chapter 8</div>
+    <h1 style="font-size:2.4rem;">The Alchemist's<br>Laboratory</h1>
+    <h2 style="font-size:1rem;">Feature Engineering &amp; Selection</h2>
+    <p class="sub">
+      "The model is only as smart as the features you give it. Bad features, brilliant algorithm — still bad results." — The Alchemist
+    </p>
+    <div style="margin-top:1.5em;font-size:.75rem;color:#888;">
+      scaling · encoding · polynomial features · selection · leakage
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="ch-nav">CH.8 — FEATURE ENGINEERING</div>
+  <div class="mg g1">
+    <div class="pnl dark spd" style="min-height:60px;">
+      <span class="sfx" style="color:var(--alc);">THE LAB</span>
+    </div>
+    <div class="mg g21" style="gap:4px;">
+      <div class="pnl dark tone" style="padding:14px;">
+        <span class="ava">⚗️</span>
+        <p class="spk alc">THE ALCHEMIST</p>
+        <div class="bbl fl">Detective. You're feeding raw ore to precision instruments. No wonder they struggle. Let me show you transformation.</div>
+        <div class="bbl fl" style="margin-top:8px;">Every feature must be examined. What is its range? Its distribution? Its relationship to the target? Raw data almost never speaks the algorithm's language.</div>
+      </div>
+      <div class="pnl">
+        <p class="spk kai">KAI</p>
+        <div class="bbl fr">K and SVM both needed scaled features. The ensemble methods didn't. So scaling isn't universal.</div>
+        <p class="spk alc" style="margin-top:8px;">THE ALCHEMIST</p>
+        <div class="bbl fl">Correct. Know your algorithm. Know what it assumes about the input space.</div>
+      </div>
+    </div>
+
+    <div class="pnl">
+      <h3>The Transformation Toolkit</h3>
+      <div class="mermaid">
+graph LR
+  A[Raw Feature] --> B{What type?}
+  B -->|Numerical| C{Distribution?}
+  B -->|Categorical| D{Cardinality?}
+  B -->|DateTime| E[Extract: hour, day, month, is_weekend]
+  C -->|Normal| F[StandardScaler: mean=0, std=1]
+  C -->|Skewed| G[Log / BoxCox transform first]
+  C -->|Unknown| H[RobustScaler if outliers present]
+  D -->|Low: ≤10 categories| I[OneHotEncoder]
+  D -->|High: >10 categories| J[Target / Ordinal encoding]
+      </div>
+    </div>
+
+    <div class="mg g2" style="gap:4px;">
+      <div class="pnl">
+        <h4>Feature Selection Methods</h4>
+        <ul>
+          <li><strong>Variance threshold:</strong> Drop near-zero variance features</li>
+          <li><strong>Correlation filter:</strong> Drop features correlated &gt;0.95 with each other</li>
+          <li><strong>Random Forest importance:</strong> Rank by mean decrease in impurity</li>
+          <li><strong>Permutation importance:</strong> More reliable, model-agnostic</li>
+          <li><strong>RFE:</strong> Recursive feature elimination</li>
+          <li><strong>L1 (Lasso):</strong> Drives weak feature weights to zero</li>
+        </ul>
+      </div>
+      <div class="pnl">
+        <h4>The Leakage Trap</h4>
+        <div class="check">
+          <strong>Data leakage:</strong> Including information in your features that would not be available at prediction time. The model looks impressive in validation but collapses in production.
+        </div>
+        <div class="check" style="margin-top:6px;">
+          <strong>Leakage via scaling:</strong> Fitting StandardScaler on the full dataset before train/test split. The test set's statistics contaminate the scaler. Always fit on train, transform both.
+        </div>
+      </div>
+    </div>
+
+    <div class="pnl">
+      <div class="lock">
+        <strong>🔒 Pipeline Rule:</strong> Every transformation that uses training data statistics (scaler, imputer, encoder) must be inside a sklearn Pipeline or fitted only on training data. If it sees the test set during fit, you have leakage.
+      </div>
+      <div class="pnl" style="background:#1e1e2e;border:1px solid #444;border-radius:4px;padding:8px;margin-top:6px;">
+        <pre style="color:#a6e3a1;font-size:.68rem;line-height:1.5;margin:0;"><code>from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import GradientBoostingClassifier
+pipe = Pipeline([
+    ('scaler', StandardScaler()),
+    ('clf', GradientBoostingClassifier(n_estimators=100))
+])
+pipe.fit(X_train, y_train)  # scaler sees only X_train</code></pre>
+      </div>
+    </div>
+    <div class="pnl">
+      <div class="bridge">Features refined. Now Kai must confront a harder question: how do you know when any of these models is actually working?</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     CH 9: EVALUATION METRICS
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="splash">
+    <div style="font-size:3rem;">⚖️</div>
+    <div class="chapter-tag">Chapter 9</div>
+    <h1 style="font-size:2.4rem;">The Court<br>of Judgment</h1>
+    <h2 style="font-size:1rem;">Evaluation Metrics</h2>
+    <p class="sub">
+      Kai had five classifiers. All claimed 95% accuracy. The Judges showed that accuracy, alone, is almost never enough.
+    </p>
+    <div style="margin-top:1.5em;font-size:.75rem;color:#888;">
+      confusion matrix · precision · recall · F1 · ROC-AUC · cross-validation
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="ch-nav">CH.9 — EVALUATION</div>
+  <div class="mg g1">
+    <div class="pnl dark spd" style="min-height:60px;">
+      <span class="sfx" style="color:#aaa;">THE VERDICT</span>
+    </div>
+    <!-- Story motivation — NEW -->
+    <div class="pnl" style="border:2px solid #888;">
+      <div class="mg g21" style="gap:4px;">
+        <div class="pnl dark tone" style="padding:10px;">
+          <p class="spk kai" style="color:#eee;">KAI</p>
+          <div class="bbl fr" style="background:#333;color:#eee;border-color:#888;">Five classifiers. All say 95% accurate on the fraud dataset. But 95 out of 100 transactions are legitimate anyway. What does 95% even mean?</div>
+          <div class="bbl thought fr" style="background:#222;color:#eee;border-color:#888;margin-top:8px;">If my model always predicts "not fraud," it gets 95% accuracy for free. And catches zero criminals.</div>
+        </div>
+        <div class="pnl">
+          <div class="check">
+            <strong>The Accuracy Trap:</strong><br>
+            In imbalanced datasets, accuracy is misleading. A classifier that always predicts the majority class can achieve high accuracy while being completely useless.
+          </div>
+          <div class="note" style="margin-top:6px;">
+            This is why the Judges exist. Accuracy reports the total score. The Judges examine <em>what kind</em> of errors were made.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pnl">
+      <h3>The Confusion Matrix</h3>
+      <div class="mg g2" style="gap:4px;">
+        <div>
+          <table>
+            <tr><th></th><th>Predicted Positive</th><th>Predicted Negative</th></tr>
+            <tr><td><strong>Actually Positive</strong></td><td style="background:#c8e6c9;">TP</td><td style="background:#ffcdd2;">FN</td></tr>
+            <tr><td><strong>Actually Negative</strong></td><td style="background:#ffcdd2;">FP</td><td style="background:#c8e6c9;">TN</td></tr>
+          </table>
+        </div>
+        <div>
+          <div class="math-block">
+            $$\text{Precision} = \frac{TP}{TP+FP}$$
+            $$\text{Recall} = \frac{TP}{TP+FN}$$
+            $$F_1 = \frac{2 \cdot P \cdot R}{P + R}$$
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mg g2" style="gap:4px;">
+      <div class="pnl">
+        <h4>Precision vs Recall Trade-off</h4>
+        <div class="note">
+          <strong>High Precision, lower Recall:</strong> When you predict positive, you're usually right — but you miss many positives. Good when false alarms are costly (spam filter).
+        </div>
+        <div class="warn" style="margin-top:4px;">
+          <strong>High Recall, lower Precision:</strong> You catch almost all positives — but generate false alarms. Better when missing a positive is catastrophic (cancer screening, fraud).
+        </div>
+      </div>
+      <div class="pnl">
+        <h4>ROC-AUC</h4>
+        <p class="small">Plots True Positive Rate vs False Positive Rate at all thresholds. AUC = area under the curve.</p>
+        <div class="math-block">
+          $$AUC = 0.5 \text{ (random)} \quad AUC = 1.0 \text{ (perfect)}$$
+        </div>
+        <div class="correct">
+          AUC is threshold-agnostic. Use it when comparing models before choosing an operating threshold. Use F1 when the threshold and class balance are fixed.
+        </div>
+      </div>
+    </div>
+
+    <div class="pnl">
+      <h3>Cross-Validation — Honest Evaluation</h3>
+      <div class="pnl" style="background:#1e1e2e;border:1px solid #444;border-radius:4px;padding:8px;margin-top:6px;">
+        <pre style="color:#a6e3a1;font-size:.68rem;line-height:1.5;margin:0;"><code>from sklearn.model_selection import StratifiedKFold, cross_val_score
+from sklearn.metrics import f1_score, make_scorer
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+scores = cross_val_score(model, X, y,
+    cv=cv, scoring=make_scorer(f1_score))
+print(f'F1: {scores.mean():.3f} ± {scores.std():.3f}')</code></pre>
+      </div>
+    </div>
+    <div class="pnl">
+      <div class="bridge">Kai knows how to measure. One question remains: when the boundary cannot be described explicitly, what does the model learn from?</div>
+      <div class="mermaid">
+graph LR
+  A[Full Dataset] --> B[Split into K folds]
+  B --> C[Fold 1 = val, rest = train]
+  C --> D[Train model, measure metric]
+  D --> E[Fold 2 = val, rest = train]
+  E --> F[...]
+  F --> G[Average K metrics = CV score]
+  G --> H[More reliable than single train/test split]
+      </div>
+      <div class="note" style="margin-top:4px;">
+        Stratified K-Fold for imbalanced classes — each fold preserves the class ratio.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     CH 10: ACTIVATION FUNCTIONS
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="splash">
+    <div style="font-size:3rem;">⚡</div>
+    <div class="chapter-tag">Chapter 10</div>
+    <h1 style="font-size:2.4rem;">The Gate<br>Keeper</h1>
+    <h2 style="font-size:1rem;">Activation Functions &amp; Neural Network Fundamentals</h2>
+    <p class="sub">
+      Kai had mastered pattern detection without neural nets. But some problems required a different kind of architecture. He needed to understand what makes a network actually <em>learn</em>.
+    </p>
+    <div style="margin-top:1.5em;font-size:.75rem;color:#888;">
+      sigmoid · ReLU · tanh · Leaky ReLU · Softmax · vanishing gradients · backprop
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="ch-nav">CH.10 — ACTIVATIONS</div>
+  <div class="mg g1">
+    <!-- NEW: Story motivation for Ch10 -->
+    <div class="pnl" style="border:2px solid var(--gate);">
+      <div class="mg g21" style="gap:4px;">
+        <div class="pnl dark tone" style="padding:10px;">
+          <span class="ava">⚡</span>
+          <p class="spk gate">GATE KEEPER</p>
+          <div class="bbl fl" style="background:#1a0900;color:#eee;border-color:var(--gate);">You built five classical models. All of them make one assumption: the boundary can be described explicitly — by distance, by split, by margin. What happens when no explicit description exists?</div>
+          <div class="bbl fl" style="background:#1a0900;color:#eee;border-color:var(--gate);margin-top:8px;">Neural networks learn representations. They don't need you to engineer features or describe the boundary. They discover it — layer by layer. But only if the activations are correctly chosen.</div>
+        </div>
+        <div class="pnl">
+          <p class="spk kai">KAI</p>
+          <div class="bbl fr">What's an activation function?</div>
+          <p class="spk gate" style="margin-top:8px;">GATE KEEPER</p>
+          <div class="bbl fl">The gate at each neuron. Without it, the entire network collapses to a single linear transformation — no matter how many layers you stack. The activation is what gives the network its power to model non-linearity.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pnl">
+      <h3>Why Activations Exist — The Linear Collapse Problem</h3>
+      <div class="math-block">
+        $$\text{No activation: } y = W_3(W_2(W_1 x)) = W_{combined} \cdot x \quad \text{(still linear)}$$
+        $$\text{With activation: } y = W_3\sigma(W_2\sigma(W_1 x)) \quad \text{(non-linear)}$$
+      </div>
+      <p class="small">Without a non-linear activation, stacking layers gives you nothing. The whole network is equivalent to a single matrix multiplication.</p>
+    </div>
+
+    <div class="pnl">
+      <h3>The Four Activations Kai Needs to Know</h3>
+      <div class="mg g2" style="gap:4px;">
+        <div class="pnl" style="background:#fff8e1;">
+          <strong>Sigmoid</strong>
+          <div class="math-block">$\sigma(x) = \frac{1}{1+e^{-x}}$</div>
+          <div class="correct">✅ Output in (0,1) — good for binary output layer</div>
+          <div class="check">❌ Vanishing gradients for deep networks</div>
+          <div class="check">❌ Not zero-centred</div>
+        </div>
+        <div class="pnl" style="background:#e8f5e9;">
+          <strong>ReLU — Rectified Linear Unit</strong>
+          <div class="math-block">$f(x) = \max(0, x)$</div>
+          <div class="correct">✅ Default for hidden layers</div>
+          <div class="correct">✅ Sparse activation, computationally cheap</div>
+          <div class="check">❌ Dying ReLU: if neuron always outputs 0, gradient = 0, weights freeze permanently</div>
+        </div>
+        <div class="pnl" style="background:#fce4ec;">
+          <strong>Leaky ReLU</strong>
+          <div class="math-block">$f(x) = \max(\alpha x, x), \; \alpha=0.01$</div>
+          <div class="correct">✅ Fixes dying ReLU — small negative slope</div>
+          <div class="correct">✅ Good for deep networks</div>
+        </div>
+        <div class="pnl" style="background:#e8eaf6;">
+          <strong>Softmax</strong>
+          <div class="math-block">$\sigma(z)_j = \frac{e^{z_j}}{\sum_k e^{z_k}}$</div>
+          <div class="correct">✅ Multi-class output layer — converts logits to probabilities</div>
+          <div class="check">❌ Sensitive to large logit values — use with proper initialisation</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pnl">
+      <div class="lock">
+        <strong>🔒 Vanishing Gradient:</strong> In deep networks with sigmoid/tanh, gradients shrink exponentially as they backpropagate through layers. Early layers learn almost nothing. ReLU largely solves this by having a constant gradient of 1 for positive inputs. Batch normalisation and residual connections solve it for very deep architectures.
+      </div>
+    </div>
+    <!-- tanh + backprop panels -->
+    <div class="pnl">
+      <div class="mg g2" style="gap:4px;">
+        <div class="pnl" style="background:#f3e5f5;">
+          <strong>tanh — Hyperbolic Tangent</strong>
+          <div class="math-block">$f(x) = \tanh(x) = \frac{e^x - e^{-x}}{e^x + e^{-x}}$</div>
+          <div class="correct">✅ Zero-centred — better gradient flow than sigmoid</div>
+          <div class="correct">✅ Output in (−1, 1) — useful for bounded representations</div>
+          <div class="check">❌ Still saturates for large |x| — use ReLU for deep hidden layers</div>
+          <p class="small" style="margin-top:4px;">Common in RNNs and LSTM gates where bounded output matters.</p>
+        </div>
+        <div class="pnl" style="background:#e0f7fa;">
+          <strong>Backpropagation — How Weights Actually Update</strong>
+          <p class="small">After every forward pass, the network computes a loss and pushes error <em>backward</em> through every layer via the chain rule:</p>
+          <div class="math-block" style="font-size:.72rem;">$$\frac{\partial L}{\partial w} = \frac{\partial L}{\partial a} \cdot \frac{\partial a}{\partial z} \cdot \frac{\partial z}{\partial w}$$</div>
+          <p class="small">The term $\frac{\partial a}{\partial z}$ is the activation's derivative. For sigmoid/tanh this approaches 0 at saturation — gradients vanish. For ReLU it is exactly 1 when $z > 0$ — gradients flow freely.</p>
+        </div>
+      </div>
+      <div class="pnl" style="background:#1e1e2e;border:1px solid #444;border-radius:4px;padding:8px;margin-top:6px;">
+        <pre style="color:#a6e3a1;font-size:.68rem;line-height:1.5;margin:0;"><code>import torch.nn as nn
+model = nn.Sequential(
+    nn.Linear(128, 64),
+    nn.ReLU(),          # hidden: ReLU default
+    nn.Linear(64, 32),
+    nn.ReLU(),
+    nn.Linear(32, 10),
+    nn.Softmax(dim=1)   # output: Softmax for multi-class
+)</code></pre>
+      </div>
+    </div>
+    <div class="pnl dark" style="padding:14px;">
+      <p class="spk kai" style="color:#eee;">KAI</p>
+      <div class="bbl thought fr" style="background:#222;color:#eee;border-color:#555;">
+        K. Depth. n_estimators. C. eps. min_cluster_size. Perplexity. Learning rate. Precision vs recall.<br><br>
+        Different names. Same question. How tightly do I trust this data?<br><br>
+        The gate is open. I know what's on the other side now.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     DEEP-LEARNING ARC — Ch.11 through Ch.19
+     Each chapter currently has: splash + 1 placeholder content page.
+     TODO: replace each TODO panel with 2–4 authored manga pages +
+     interview Q&A page, using notes/ML/chNN-*/ as the source material.
+     Rules: keep Kai as POV, land the "same dial" callback in a .lock box,
+     reuse manga CSS (.mg, .pnl, .spd, .tone, .bbl, .spk, .sfx).
+══════════════════════════════════════════════════════════ -->
+
+<!-- ── CH 11: LINEAR REGRESSION ── -->
+<div class="page">
+  <div class="splash">
+    <div style="font-size:3rem;">📏</div>
+    <div class="chapter-tag">Chapter 11</div>
+    <h1 style="font-size:2.4rem;">The First<br>Prophecy</h1>
+    <h2 style="font-size:1rem;">Linear Regression</h2>
+    <p class="sub">
+      Before the Oracle voted with its neighbours, a younger seer drew a single line through the world and called it fate.<br>
+      "You are who you stand next to" began as "you are the line that passes through."
+    </p>
+    <div style="margin-top:1.5em;font-size:.75rem;color:#888;">
+      ŷ = wx + b · MSE · gradient descent · R² · assumptions · feature scaling
+    </div>
+  </div>
+</div>
+<div class="page">
+  <div class="ch-nav">CH.11 — LINEAR REGRESSION</div>
+  <div class="mg g1" style="height:100%;">
+    <div class="pnl dark spd" style="min-height:70px;">
+      <span class="sfx" style="color:var(--seer);">THE ELDEST ARCHIVE</span>
+    </div>
+    <div class="pnl" style="flex:1;">
+      <p class="spk seer">THE YOUNG SEER</p>
+      <div class="bbl fl">Before I became the Oracle, I could only predict numbers — never categories. Give me points, I gave you a line. MSE was my whole universe.</div>
+      <p class="spk kai" style="margin-top:10px;">KAI</p>
+      <div class="bbl fr">So you were the original dial? Learning rate, not K?</div>
+      <div class="lock" style="margin-top:10px;">
+        <strong>🔒 The Dial Returns — first appearance:</strong> learning rate in gradient descent. Same tradeoff Kai will meet again as K, depth, n_estimators, C. TODO: expand this chapter with a full GD walkthrough, a loss-bowl panel, the R²-vs-Adj-R² trap, feature scaling warning, and the sklearn <code>LinearRegression</code> snippet from <code>notes/ML/ch01-linear-regression/</code>.
+      </div>
+      <p class="small" style="margin-top:10px;color:#888;font-style:italic;">TODO: Ch.11 body — 2–4 pages, pull math + code from <code>notes/ML/ch01-linear-regression/</code>.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── CH 12: LOGISTIC REGRESSION ── -->
+<div class="page">
+  <div class="splash">
+    <div style="font-size:3rem;">⚖️</div>
+    <div class="chapter-tag">Chapter 12</div>
+    <h1 style="font-size:2.4rem;">The Verdict<br>Stone</h1>
+    <h2 style="font-size:1rem;">Logistic Regression</h2>
+    <p class="sub">
+      The Seer's line could not answer "yes or no" — only "how much."<br>
+      Enter the Judge-Priest, who pressed every prophecy through a sigmoid and rendered a verdict.
+    </p>
+    <div style="margin-top:1.5em;font-size:.75rem;color:#888;">
+      sigmoid · log-loss · decision boundary · class imbalance · calibration
+    </div>
+  </div>
+</div>
+<div class="page">
+  <div class="ch-nav">CH.12 — LOGISTIC REGRESSION</div>
+  <div class="mg g1" style="height:100%;">
+    <div class="pnl dark spd" style="min-height:70px;">
+      <span class="sfx" style="color:var(--judge);">THE VERDICT STONE</span>
+    </div>
+    <div class="pnl" style="flex:1;">
+      <p class="spk judge">JUDGE-PRIEST</p>
+      <div class="bbl fl">The Seer gave you numbers. I give you <em>probabilities</em>. σ(wx+b) maps any real number into (0,1). Cross a threshold, pronounce a verdict.</div>
+      <p class="spk kai" style="margin-top:10px;">KAI</p>
+      <div class="bbl fr">And the loss function? Not MSE anymore?</div>
+      <p class="spk judge" style="margin-top:8px;">JUDGE-PRIEST</p>
+      <div class="bbl fl">Log-loss. Punish confident wrong answers exponentially. MSE would let you be lazy.</div>
+      <div class="lock" style="margin-top:10px;">
+        <strong>🔒 Bridge to Ch.10:</strong> the Gate Keeper's sigmoid has always lived here — this is where it was born, on the output layer of a one-neuron network. TODO: expand with decision-boundary panel, log-loss derivation, class-imbalance discussion, and the <code>LogisticRegression(class_weight='balanced')</code> hyperparameter table from <code>notes/ML/ch02-logistic-regression/</code>.
+      </div>
+      <p class="small" style="margin-top:10px;color:#888;font-style:italic;">TODO: Ch.12 body — 2–4 pages, pull math + code from <code>notes/ML/ch02-logistic-regression/</code>.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── CH 13: XOR ── -->
+<div class="page">
+  <div class="splash">
+    <div style="font-size:3rem;">🧩</div>
+    <div class="chapter-tag">Chapter 13</div>
+    <h1 style="font-size:2.4rem;">The Twin-Mirror<br>Riddle</h1>
+    <h2 style="font-size:1rem;">The XOR Problem</h2>
+    <p class="sub">
+      Four points on a plane. No straight line could separate them. The Seer failed. The Judge-Priest failed.<br>
+      The Puzzle Box laughed.
+    </p>
+    <div style="margin-top:1.5em;font-size:.75rem;color:#888;">
+      linear non-separability · hidden layer · feature transformation · why depth matters
+    </div>
+  </div>
+</div>
+<div class="page">
+  <div class="ch-nav">CH.13 — XOR</div>
+  <div class="mg g1" style="height:100%;">
+    <div class="pnl dark spd" style="min-height:70px;">
+      <span class="sfx" style="color:var(--riddle);">THE LATTICE ROOM</span>
+    </div>
+    <div class="pnl" style="flex:1;">
+      <p class="spk riddle">THE PUZZLE BOX</p>
+      <div class="bbl fl">(0,0)→0. (0,1)→1. (1,0)→1. (1,1)→0. Draw me a single line, Detective. I'll wait.</div>
+      <p class="spk kai" style="margin-top:10px;">KAI</p>
+      <div class="bbl fr">…no single line works. I need two lines. I need a <em>transformation</em>.</div>
+      <p class="spk riddle" style="margin-top:8px;">THE PUZZLE BOX</p>
+      <div class="bbl fl">Then you need a hidden layer. One neuron cannot solve me. Two can.</div>
+      <div class="lock" style="margin-top:10px;">
+        <strong>🔒 The First Case for Depth:</strong> this is the historic Minsky–Papert result that froze neural nets for a decade. Solving XOR requires at least one hidden layer with a non-linear activation — the same Gate Keeper wisdom from Ch.10, dramatized. TODO: expand with 2-hidden-neuron diagram, the feature-space rotation panel, and the PyTorch snippet from <code>notes/ML/ch03-xor-problem/</code>.
+      </div>
+      <p class="small" style="margin-top:10px;color:#888;font-style:italic;">TODO: Ch.13 body — 2–4 pages, pull math + code from <code>notes/ML/ch03-xor-problem/</code>.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── CH 14: NEURAL NETWORKS ── -->
+<div class="page">
+  <div class="splash">
+    <div style="font-size:3rem;">🏛️</div>
+    <div class="chapter-tag">Chapter 14</div>
+    <h1 style="font-size:2.4rem;">The Council<br>Assembles</h1>
+    <h2 style="font-size:1rem;">Neural Networks</h2>
+    <p class="sub">
+      One seer is a line. Two are a plane. A whole council, arranged in layers, can bend reality into any shape needed.<br>
+      Kai had cracked the riddle. Now he met the architecture that answered all such riddles.
+    </p>
+    <div style="margin-top:1.5em;font-size:.75rem;color:#888;">
+      forward pass · layers · weights &amp; biases · universal approximation · width vs depth
+    </div>
+  </div>
+</div>
+<div class="page">
+  <div class="ch-nav">CH.14 — NEURAL NETWORKS</div>
+  <div class="mg g1" style="height:100%;">
+    <div class="pnl dark spd" style="min-height:70px;">
+      <span class="sfx" style="color:var(--council);">THE COUNCIL CHAMBER</span>
+    </div>
+    <div class="pnl" style="flex:1;">
+      <p class="spk council">THE COUNCIL</p>
+      <div class="bbl fl">We are the Seer, multiplied. Each of us computes wx+b, squashes it through the Gate Keeper's sigil, and passes the answer to the next bench.</div>
+      <p class="spk kai" style="margin-top:10px;">KAI</p>
+      <div class="bbl fr">Width vs depth — which matters more?</div>
+      <p class="spk council" style="margin-top:8px;">THE COUNCIL</p>
+      <div class="bbl fl">Width buys representation capacity. Depth buys compositional abstraction. Deep networks can express functions shallow ones would need exponentially more width to mimic.</div>
+      <div class="lock" style="margin-top:10px;">
+        <strong>🔒 The Dial Now:</strong> number of hidden units + number of layers. Too small = can't fit. Too large = memorises, overfits, takes forever. Same dial, new clothing. TODO: expand with a forward-pass diagram, the universal-approximation note, the Keras <code>Sequential</code> snippet, and an initialisation warning from <code>notes/ML/ch04-neural-networks/</code>.
+      </div>
+      <p class="small" style="margin-top:10px;color:#888;font-style:italic;">TODO: Ch.14 body — 2–4 pages, pull math + code from <code>notes/ML/ch04-neural-networks/</code>.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── CH 15: BACKPROP & OPTIMISERS ── -->
+<div class="page">
+  <div class="splash">
+    <div style="font-size:3rem;">🔨</div>
+    <div class="chapter-tag">Chapter 15</div>
+    <h1 style="font-size:2.4rem;">The Backforge</h1>
+    <h2 style="font-size:1rem;">Backpropagation &amp; Optimisers</h2>
+    <p class="sub">
+      The Council could speak. It could not yet <em>learn</em>. Kai descended into the Backforge where the Smith hammered every wrong answer backward through the chain rule.
+    </p>
+    <div style="margin-top:1.5em;font-size:.75rem;color:#888;">
+      chain rule · gradient descent · SGD · momentum · Adam · learning-rate schedules
+    </div>
+  </div>
+</div>
+<div class="page">
+  <div class="ch-nav">CH.15 — BACKPROP &amp; OPTIMISERS</div>
+  <div class="mg g1" style="height:100%;">
+    <div class="pnl dark spd" style="min-height:70px;">
+      <span class="sfx" style="color:var(--forge);">THE BACKFORGE</span>
+    </div>
+    <div class="pnl" style="flex:1;">
+      <p class="spk forge">FORGE-SMITH</p>
+      <div class="bbl fl">Forward pass is only half the work. When the loss is wrong, I push the error <em>backward</em> — layer by layer — hammering each weight until the chain rule's anvil reshapes it.</div>
+      <p class="spk kai" style="margin-top:10px;">KAI</p>
+      <div class="bbl fr">And Adam is… what exactly?</div>
+      <p class="spk forge" style="margin-top:8px;">FORGE-SMITH</p>
+      <div class="bbl fl">Momentum remembers which direction you were falling. RMSProp scales each weight's step by its recent gradient magnitude. Adam is both at once. It's not magic — it's two accumulators.</div>
+      <div class="lock" style="margin-top:10px;">
+        <strong>🔒 The Dial Returns:</strong> learning rate — the loudest knob in the entire Codex. Too high: the Smith's hammer smashes through the anvil. Too low: the iron cools before it's shaped. TODO: expand with chain-rule walkthrough, momentum/RMSProp/Adam comparison table, the vanishing/exploding gradient panels, and LR-schedule curves from <code>notes/ML/ch05-backprop-optimisers/</code>.
+      </div>
+      <p class="small" style="margin-top:10px;color:#888;font-style:italic;">TODO: Ch.15 body — 2–4 pages, pull math + code from <code>notes/ML/ch05-backprop-optimisers/</code>.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── CH 16: REGULARISATION ── -->
+<div class="page">
+  <div class="splash">
+    <div style="font-size:3rem;">🧘</div>
+    <div class="chapter-tag">Chapter 16</div>
+    <h1 style="font-size:2.4rem;">The Vow<br>of Less</h1>
+    <h2 style="font-size:1rem;">Regularisation</h2>
+    <p class="sub">
+      The Council could now learn. It learned too well — fitting every grain of noise in the training data.<br>
+      The Monk of Restraint offered three vows: L2, L1, and Dropout. Each asks the model to give something up.
+    </p>
+    <div style="margin-top:1.5em;font-size:.75rem;color:#888;">
+      L1 / L2 · dropout · early stopping · data augmentation · batch norm · overfitting
+    </div>
+  </div>
+</div>
+<div class="page">
+  <div class="ch-nav">CH.16 — REGULARISATION</div>
+  <div class="mg g1" style="height:100%;">
+    <div class="pnl dark spd" style="min-height:70px;">
+      <span class="sfx" style="color:var(--monk);">THE CLOISTER</span>
+    </div>
+    <div class="pnl" style="flex:1;">
+      <p class="spk monk">MONK OF RESTRAINT</p>
+      <div class="bbl fl">You can fit every point in the training set, Detective. You will also fit every mistake in it. That is not wisdom — that is memory.</div>
+      <p class="spk kai" style="margin-top:10px;">KAI</p>
+      <div class="bbl fr">So the penalty terms in the loss — they're a tax on complexity?</div>
+      <p class="spk monk" style="margin-top:8px;">MONK OF RESTRAINT</p>
+      <div class="bbl fl">L2 shrinks all weights toward zero. L1 snaps the weakest to zero entirely — a monk's sparse cell. Dropout removes random neurons during training so the network cannot lean on any single one.</div>
+      <div class="lock" style="margin-top:10px;">
+        <strong>🔒 The Dial Returns:</strong> regularisation strength (λ for L1/L2, p for Dropout). Too strong: the model is too humble to learn. Too weak: it memorises. TODO: expand with L1-vs-L2 contour panel, the dropout-during-training diagram, the early-stopping loss-curve example, and the <code>keras.regularizers.l2</code> snippet from <code>notes/ML/ch06-regularisation/</code>.
+      </div>
+      <p class="small" style="margin-top:10px;color:#888;font-style:italic;">TODO: Ch.16 body — 2–4 pages, pull math + code from <code>notes/ML/ch06-regularisation/</code>.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── CH 17: CNNs ── -->
+<div class="page">
+  <div class="splash">
+    <div style="font-size:3rem;">📜</div>
+    <div class="chapter-tag">Chapter 17</div>
+    <h1 style="font-size:2.4rem;">The Tile<br>Reader</h1>
+    <h2 style="font-size:1rem;">Convolutional Neural Networks</h2>
+    <p class="sub">
+      The Council could weigh every pixel independently — and drowned. The Scribe read images the way a human reads text: one small tile at a time, reusing the same kernel across the page.
+    </p>
+    <div style="margin-top:1.5em;font-size:.75rem;color:#888;">
+      convolution · kernels · stride · padding · pooling · translation invariance · parameter sharing
+    </div>
+  </div>
+</div>
+<div class="page">
+  <div class="ch-nav">CH.17 — CNNs</div>
+  <div class="mg g1" style="height:100%;">
+    <div class="pnl dark spd" style="min-height:70px;">
+      <span class="sfx" style="color:var(--scribe);">THE SCRIPTORIUM</span>
+    </div>
+    <div class="pnl" style="flex:1;">
+      <p class="spk scribe">SCRIBE OF PATTERNS</p>
+      <div class="bbl fl">A dense layer reading a 224×224 image needs fifty thousand weights per neuron. I use one 3×3 kernel — nine weights — and slide it across the whole image. Same edge detector, everywhere.</div>
+      <p class="spk kai" style="margin-top:10px;">KAI</p>
+      <div class="bbl fr">Parameter sharing. And stacking kernels builds up from edges, to textures, to shapes, to objects.</div>
+      <p class="spk scribe" style="margin-top:8px;">SCRIBE OF PATTERNS</p>
+      <div class="bbl fl">Exactly. Add pooling to coarsen. Add stride to skip. The hierarchy writes itself.</div>
+      <div class="lock" style="margin-top:10px;">
+        <strong>🔒 The Dial Now:</strong> kernel size, stride, channel count, depth. Same tradeoff — bigger channels and deeper stacks buy capacity at the cost of memory and overfitting risk. TODO: expand with a 3×3 convolution animation panel, a receptive-field diagram, a Conv→Pool→Conv→Pool stack, and the Keras snippet from <code>notes/ML/ch07-cnns/</code>.
+      </div>
+      <p class="small" style="margin-top:10px;color:#888;font-style:italic;">TODO: Ch.17 body — 2–4 pages, pull math + code from <code>notes/ML/ch07-cnns/</code>.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── CH 18: RNNs / LSTMs ── -->
+<div class="page">
+  <div class="splash">
+    <div style="font-size:3rem;">🏮</div>
+    <div class="chapter-tag">Chapter 18</div>
+    <h1 style="font-size:2.4rem;">The Lantern-<br>Bearers</h1>
+    <h2 style="font-size:1rem;">RNNs, LSTMs, and GRUs</h2>
+    <p class="sub">
+      Images lay flat. Sentences unfold in time. The Keepers of Memory walked each token's lantern forward, passing a hidden state from one step to the next.
+    </p>
+    <div style="margin-top:1.5em;font-size:.75rem;color:#888;">
+      hidden state · BPTT · vanishing gradients · LSTM gates · GRU · teacher forcing
+    </div>
+  </div>
+</div>
+<div class="page">
+  <div class="ch-nav">CH.18 — RNNs / LSTMs</div>
+  <div class="mg g1" style="height:100%;">
+    <div class="pnl dark spd" style="min-height:70px;">
+      <span class="sfx" style="color:var(--keeper);">THE LANTERN ROAD</span>
+    </div>
+    <div class="pnl" style="flex:1;">
+      <p class="spk keeper">LANTERN-BEARERS</p>
+      <div class="bbl fl">We hand the lantern forward. At each step: read the next token, update the hidden state, pass the flame along.</div>
+      <p class="spk kai" style="margin-top:10px;">KAI</p>
+      <div class="bbl fr">And when the sequence is long, the flame dims — gradients vanish.</div>
+      <p class="spk keeper" style="margin-top:8px;">LANTERN-BEARERS</p>
+      <div class="bbl fl">Which is why we built the LSTM. A forget gate to drop old ash. An input gate to catch new sparks. An output gate to decide what the next bearer sees. A cell state that travels along an express path, barely touched.</div>
+      <div class="lock" style="margin-top:10px;">
+        <strong>🔒 The Backforge Returns:</strong> backpropagation through time is the Forge-Smith working a chain that stretches across every token. Gradients either vanish (sigmoid saturation) or explode (no clipping) — both are the same dial, badly tuned. TODO: expand with unrolled-RNN diagram, LSTM-gate equations, the GRU-vs-LSTM comparison table, and the <code>nn.LSTM</code> snippet from <code>notes/ML/ch08-rnns-lstms/</code>.
+      </div>
+      <p class="small" style="margin-top:10px;color:#888;font-style:italic;">TODO: Ch.18 body — 2–4 pages, pull math + code from <code>notes/ML/ch08-rnns-lstms/</code>.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── CH 19: TRANSFORMERS ── -->
+<div class="page">
+  <div class="splash">
+    <div style="font-size:3rem;">👁️‍🗨️</div>
+    <div class="chapter-tag">Chapter 19</div>
+    <h1 style="font-size:2.4rem;">The Many-Eyed<br>Court</h1>
+    <h2 style="font-size:1rem;">From Sequences to Transformers</h2>
+    <p class="sub">
+      The Lantern-Bearers walked in single file. The Parliament of Heralds looked at everyone at once, each Herald trained to attend to a different thread of meaning.<br>
+      This is where every modern model lives.
+    </p>
+    <div style="margin-top:1.5em;font-size:.75rem;color:#888;">
+      attention as soft dictionary · Q/K/V · scaled dot-product · multi-head · positional encoding · residuals + LayerNorm
+    </div>
+  </div>
+</div>
+<div class="page">
+  <div class="ch-nav">CH.19 — TRANSFORMERS</div>
+  <div class="mg g1" style="height:100%;">
+    <div class="pnl dark spd" style="min-height:70px;">
+      <span class="sfx" style="color:var(--herald);">THE MANY-EYED COURT</span>
+    </div>
+    <div class="pnl" style="flex:1;">
+      <p class="spk herald">PARLIAMENT OF HERALDS</p>
+      <div class="bbl fl">Every token raises three banners: a Query, a Key, and a Value. Every Herald reads every other token's Key, scores the match against their own Query, softmaxes the scores, and takes a weighted sum of the Values.</div>
+      <p class="spk kai" style="margin-top:10px;">KAI</p>
+      <div class="bbl fr">A soft dictionary lookup. No recurrence. Everything in parallel.</div>
+      <p class="spk herald" style="margin-top:8px;">PARLIAMENT OF HERALDS</p>
+      <div class="bbl fl">Multi-head so different Heralds specialise. Positional encoding so order is not lost. Residuals and LayerNorm so gradients travel freely. That is the whole Court.</div>
+      <div class="lock" style="margin-top:10px;">
+        <strong>🔒 The Final Dial:</strong> attention heads × layers × hidden dim. The same old tension — capacity against overfit, cost against signal — just at scale. Every model you will meet for the rest of your career is built from this chapter's primitives. TODO: expand with the Q·Kᵀ/√dₖ scaled-dot-product panel, the multi-head concat-project diagram, sinusoidal positional-encoding curves, encoder-vs-decoder-only comparison, and the <code>nn.MultiheadAttention</code> snippet — pulling from both <code>notes/ML/ch17-sequences-to-attention/</code> and <code>notes/ML/ch18-transformers/</code>.
+      </div>
+      <p class="small" style="margin-top:10px;color:#888;font-style:italic;">TODO: Ch.19 body — 2–4 pages; merges <code>notes/ML/ch17-sequences-to-attention/</code> (bridge) and <code>notes/ML/ch18-transformers/</code> (architecture).</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     EPILOGUE
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="splash">
+    <div style="font-size:3rem;">🕵️</div>
+    <div class="chapter-tag">Epilogue</div>
+    <h1 style="font-size:2rem;">The Codex<br>Closes</h1>
+    <p class="sub">
+      Kai had not finished learning. He had finished accumulating tools blindly.<br><br>
+      Every algorithm had revealed the same underlying tension: <em>fit tightly, generalise badly; fit loosely, miss everything</em>. K in Ch.1, depth in Ch.2, n_estimators in Ch.3, C in Ch.4, learning rate in Ch.15, dropout rate in Ch.16, attention heads in Ch.19 — always the same dial.<br><br>
+      The Cartographer had shown that high-dimensional data hides structure humans cannot see. Dr. Density had shown that clusters have no obligation to be round. The Alchemist had reminded him that models are only as good as their inputs. The Judges had shown that the wrong metric is worse than no metric. The Gate Keeper had revealed that even unlimited layers are powerless without non-linearity.<br><br>
+      Then the deep-learning arc widened the Codex. The Young Seer drew the first line. The Judge-Priest rendered the first verdict. The Puzzle Box forced the first hidden layer. The Council gave it voice, the Forge-Smith gave it learning, the Monk gave it restraint. The Scribe read pictures, the Lantern-Bearers read sequences, and the Parliament of Heralds learned to read everything at once.<br><br>
+      The city of Datum was no quieter. But Kai was a better detective.
+    </p>
+    <div style="margin-top:1.5em;">
+      <div class="lock" style="text-align:left;max-width:155mm;margin:0 auto;">
+        <strong>The Codex — Principles Kai Earned (Ch.1–Ch.19):</strong>
+        <ol style="margin-top:6px;font-size:.74rem;line-height:1.65;">
+          <li>Every algorithm has a complexity dial. Tune it with cross-validation, not intuition.</li>
+          <li>The bias-variance tradeoff is not a problem to solve — it is a constraint to navigate.</li>
+          <li>Interpretability and accuracy are a spectrum, not a binary choice.</li>
+          <li>High-dimensional data requires projection before visualisation.</li>
+          <li>Real clusters have arbitrary shapes. K-Means is a starting point, not a law.</li>
+          <li>Garbage features produce garbage predictions regardless of algorithm quality.</li>
+          <li>Accuracy is almost always the wrong metric. Start with the confusion matrix.</li>
+          <li>Data leakage is the most common cause of surprisingly good results.</li>
+          <li>Non-linearity is the foundation of representation learning. Activations are not optional.</li>
+          <li>A single line cannot separate XOR. One hidden layer can. Depth is how models compose abstraction.</li>
+          <li>Backpropagation is just the chain rule, repeated. Optimisers are just momentum plus per-parameter scaling.</li>
+          <li>Regularisation is a vow of less. L2 shrinks, L1 selects, Dropout randomises — all trade training fit for generalisation.</li>
+          <li>Parameter sharing (CNN kernels) and sequential state (RNN cells) are two escapes from the curse of dimensionality.</li>
+          <li>Attention is a soft dictionary lookup. Every modern model is stacks of it with residuals and LayerNorm around each layer.</li>
+          <li>The model is not the answer. The model is the question crystallised into arithmetic.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     QUICK REFERENCE
+══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="ch-nav">QUICK REFERENCE</div>
+  <h3 style="margin-bottom:8px;text-align:center;">ML Algorithms — Quick Reference Card</h3>
+  <table>
+    <tr><th>Algorithm</th><th>Type</th><th>Key Param</th><th>Scale?</th><th>Interpretable?</th><th>Best Use</th></tr>
+    <tr><td>KNN</td><td>Lazy</td><td>K</td><td>Yes</td><td>Partial</td><td>Baseline, anomaly detection</td></tr>
+    <tr><td>Decision Tree</td><td>Eager</td><td>max_depth</td><td>No</td><td>Yes</td><td>Explainability</td></tr>
+    <tr><td>Random Forest</td><td>Ensemble</td><td>n_estimators</td><td>No</td><td>Partial</td><td>Tabular data</td></tr>
+    <tr><td>Gradient Boosting</td><td>Ensemble</td><td>n_estimators, lr</td><td>No</td><td>Partial</td><td>Competition accuracy</td></tr>
+    <tr><td>SVM</td><td>Geometric</td><td>C, kernel, γ</td><td>Yes</td><td>No</td><td>High-dim, small N</td></tr>
+    <tr><td>t-SNE</td><td>Visualisation</td><td>perplexity</td><td>Yes</td><td>N/A</td><td>Explore structure</td></tr>
+    <tr><td>UMAP</td><td>Dim Reduction</td><td>n_neighbors</td><td>Yes</td><td>N/A</td><td>Faster t-SNE</td></tr>
+    <tr><td>DBSCAN</td><td>Clustering</td><td>eps, min_samples</td><td>Yes</td><td>Partial</td><td>Arbitrary shapes + outliers</td></tr>
+    <tr><td>HDBSCAN</td><td>Clustering</td><td>min_cluster_size</td><td>Yes</td><td>Partial</td><td>Variable density clusters</td></tr>
+    <tr><td>Linear Regression</td><td>Parametric</td><td>learning rate</td><td>Yes</td><td>Yes</td><td>Continuous target, linear relationship</td></tr>
+    <tr><td>Logistic Regression</td><td>Parametric</td><td>C (inverse λ)</td><td>Yes</td><td>Yes</td><td>Binary output with calibrated probs</td></tr>
+    <tr><td>MLP / NN</td><td>Neural</td><td>width, depth, lr</td><td>Yes</td><td>No</td><td>Non-linear boundaries, tabular DL</td></tr>
+    <tr><td>CNN</td><td>Neural</td><td>kernel, stride, channels</td><td>Yes</td><td>Partial (Grad-CAM)</td><td>Images, spatial data</td></tr>
+    <tr><td>RNN / LSTM</td><td>Neural</td><td>hidden size, lr</td><td>Yes</td><td>No</td><td>Sequences where order matters</td></tr>
+    <tr><td>Transformer</td><td>Neural</td><td>heads × layers × dim</td><td>Yes</td><td>Partial (attn maps)</td><td>Any sequence, at scale</td></tr>
+  </table>
+
+  <h3 style="margin:12px 0 6px;text-align:center;">Evaluation Metrics — When to Use What</h3>
+  <table>
+    <tr><th>Metric</th><th>Use When</th><th>Avoids</th></tr>
+    <tr><td>Accuracy</td><td>Balanced classes, roughly equal error cost</td><td>Nothing — too optimistic</td></tr>
+    <tr><td>Precision</td><td>False positives costly (spam, legal)</td><td>Missing true positives is ok</td></tr>
+    <tr><td>Recall</td><td>False negatives costly (cancer, fraud)</td><td>False alarms are acceptable</td></tr>
+    <tr><td>F1</td><td>Imbalanced classes, both errors matter</td><td>Threshold-specific</td></tr>
+    <tr><td>AUC-ROC</td><td>Comparing models across thresholds</td><td>Threshold-agnostic</td></tr>
+    <tr><td>PR-AUC</td><td>Severe class imbalance (&lt;5% positive)</td><td>ROC can be optimistic here</td></tr>
+  </table>
+
+  <h3 style="margin:12px 0 6px;text-align:center;">The Bias-Variance Tradeoff — Universal Form</h3>
+  <div class="math-block" style="margin:4px 0;">
+    $$\text{Expected Error} = \text{Bias}^2 + \text{Variance} + \text{Irreducible Noise}$$
+  </div>
+  <div class="mg g3" style="gap:4px;margin-top:8px;">
+    <div class="check center"><strong>High Bias</strong><br>Underfit<br>Model too simple<br>K large, depth small</div>
+    <div class="correct center"><strong>Sweet Spot</strong><br>Cross-validate<br>Tune your dial<br>Measure on val set</div>
+    <div class="warn center"><strong>High Variance</strong><br>Overfit<br>Model too complex<br>K=1, depth=∞</div>
+  </div>
+</div>
+
+</body>
+</html>

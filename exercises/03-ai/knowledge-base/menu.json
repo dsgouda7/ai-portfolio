@@ -1,0 +1,58 @@
+{
+  "Margherita": {
+    "price": 12.99,
+    "description": "Classic Italian pizza with fresh tomato sauce, mozzarella cheese, and basil",
+    "ingredients": ["tomato sauce", "mozzarella", "fresh basil", "olive oil", "garlic"],
+    "sizes": ["small", "medium", "large"],
+    "category": "vegetarian"
+  },
+  "Pepperoni": {
+    "price": 14.99,
+    "description": "America's favorite with tomato sauce, mozzarella, and premium pepperoni",
+    "ingredients": ["tomato sauce", "mozzarella", "pepperoni"],
+    "sizes": ["small", "medium", "large"],
+    "category": "meat"
+  },
+  "Vegetarian": {
+    "price": 13.99,
+    "description": "Garden-fresh vegetables with mozzarella cheese",
+    "ingredients": ["tomato sauce", "mozzarella", "bell peppers", "mushrooms", "onions", "black olives", "cherry tomatoes"],
+    "sizes": ["small", "medium", "large"],
+    "category": "vegetarian"
+  },
+  "Hawaiian": {
+    "price": 14.99,
+    "description": "Sweet and savory combination of ham and pineapple",
+    "ingredients": ["tomato sauce", "mozzarella", "ham", "pineapple"],
+    "sizes": ["small", "medium", "large"],
+    "category": "meat"
+  },
+  "Meat Lovers": {
+    "price": 16.99,
+    "description": "Loaded with pepperoni, Italian sausage, bacon, and ham",
+    "ingredients": ["tomato sauce", "mozzarella", "pepperoni", "Italian sausage", "bacon", "ham"],
+    "sizes": ["small", "medium", "large"],
+    "category": "meat"
+  },
+  "BBQ Chicken": {
+    "price": 15.99,
+    "description": "Grilled chicken with BBQ sauce, red onions, and cilantro",
+    "ingredients": ["BBQ sauce", "mozzarella", "grilled chicken", "red onions", "cilantro"],
+    "sizes": ["small", "medium", "large"],
+    "category": "meat"
+  },
+  "Four Cheese": {
+    "price": 14.99,
+    "description": "Cheese lover's dream with mozzarella, parmesan, gorgonzola, and provolone",
+    "ingredients": ["tomato sauce", "mozzarella", "parmesan", "gorgonzola", "provolone"],
+    "sizes": ["small", "medium", "large"],
+    "category": "vegetarian"
+  },
+  "Spicy Italian": {
+    "price": 15.99,
+    "description": "Hot Italian sausage, jalapeños, and red pepper flakes",
+    "ingredients": ["tomato sauce", "mozzarella", "hot Italian sausage", "jalapeños", "red pepper flakes", "onions"],
+    "sizes": ["small", "medium", "large"],
+    "category": "meat"
+  }
+}

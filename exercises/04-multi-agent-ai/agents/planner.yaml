@@ -1,0 +1,22 @@
+# Planner Agent Configuration
+
+name: "PlannerAgent"
+role: "Task decomposition and planning"
+description: "Breaks down complex tasks into executable subtasks with dependency tracking"
+
+max_iterations: 5
+enabled: true
+
+planning_strategy:
+  decomposition_method: "hierarchical"
+  dependency_analysis: true
+  parallel_detection: true
+  
+output:
+  include_execution_plan: true
+  include_complexity_estimate: true
+  include_critical_path: true
+  
+constraints:
+  max_subtasks: 20
+  max_dependency_depth: 5

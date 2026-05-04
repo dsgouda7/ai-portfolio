@@ -1,0 +1,115 @@
+# EnsembleAI Configuration
+# Purpose: Centralized hyperparameters and production settings for ensemble methods
+
+data:
+  dataset: 'credit_fraud'  # or 'make_classification'
+  test_size: 0.2
+  val_size: 0.1
+  random_state: 42
+  n_samples: 10000  # for synthetic data
+  n_features: 20
+  class_weights: 'balanced'  # handle class imbalance
+  
+features:
+  scale_features: true
+  feature_selection: true
+  selection_method: 'mutual_info'  # mutual information for classification
+  top_k_features: 15
+
+base_models:
+  xgboost:
+    n_estimators: 100
+    max_depth: 6
+    learning_rate: 0.1
+    subsample: 0.8
+    colsample_bytree: 0.8
+    scale_pos_weight: 1
+    random_state: 42
+  
+  lightgbm:
+    n_estimators: 100
+    max_depth: 6
+    learning_rate: 0.1
+    subsample: 0.8
+    colsample_bytree: 0.8
+    random_state: 42
+  
+  catboost:
+    iterations: 100
+    depth: 6
+    learning_rate: 0.1
+    random_state: 42
+    verbose: false
+  
+  random_forest:
+    n_estimators: 100
+    max_depth: 10
+    min_samples_split: 5
+    min_samples_leaf: 2
+    random_state: 42
+  
+  logistic_regression:
+    C: 1.0
+    max_iter: 1000
+    solver: 'lbfgs'
+    random_state: 42
+
+ensemble:
+  voting:
+    strategy: 'soft'  # soft voting for probability averaging
+    weights: null  # null = equal weights, or specify [1, 1, 1, 2, 1]
+  
+  stacking:
+    meta_learner: 'logistic_regression'
+    cv_folds: 5
+    use_probabilities: true
+  
+  boosting_cascade:
+    enabled: false  # advanced: sequential boosting ensemble
+    stages: 3
+
+hyperparameter_tuning:
+  enabled: false
+  n_trials: 50  # Optuna trials
+  cv_folds: 5
+  
+evaluation:
+  cv_folds: 5
+  metrics:
+    - accuracy
+    - precision
+    - recall
+    - f1
+    - roc_auc
+  plot_confusion_matrix: true
+  plot_roc_curves: true
+  plot_feature_importance: true
+  compare_individual_vs_ensemble: true
+  
+diversity_analysis:
+  enabled: true
+  metrics:
+    - q_statistic  # pairwise diversity
+    - disagreement_measure
+    - double_fault_measure
+
+api:
+  host: '0.0.0.0'
+  port: 5000
+  debug: false
+  max_workers: 4
+  timeout_seconds: 30
+  return_individual_predictions: true
+  return_confidence_scores: true
+  
+monitoring:
+  enabled: true
+  metrics_port: 9090
+  log_level: 'INFO'
+  track_ensemble_agreement: true
+  
+mlflow:
+  experiment_name: 'ensembleai-classification'
+  tracking_uri: 'file:./mlruns'
+  log_model: true
+  log_ensemble_components: true

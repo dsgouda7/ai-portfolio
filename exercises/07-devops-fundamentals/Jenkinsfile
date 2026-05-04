@@ -1,0 +1,103 @@
+// Jenkins Declarative Pipeline
+pipeline {
+    agent any
+    
+    environment {
+        PYTHON_VERSION = '3.11'
+        DOCKER_IMAGE = 'ml-devops-demo'
+        DOCKER_REGISTRY = 'docker.io'
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        
+        stage('Test') {
+            steps {
+                script {
+                    sh '''
+                        python3 -m venv venv
+                        . venv/bin/activate
+                        pip install -r requirements.txt
+                        flake8 src tests --max-line-length=100
+                        black --check src tests
+                        pytest tests/ -v --cov=src --cov-report=xml
+                    '''
+                }
+            }
+            post {
+                always {
+                    junit 'test-results/*.xml'
+                    cobertura coberturaReportFile: 'coverage.xml'
+                }
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                script {
+                    docker.build("${DOCKER_IMAGE}:${env.BUILD_NUMBER}", "-f docker/Dockerfile.prod .")
+                }
+            }
+        }
+        
+        stage('Deploy to Dev') {
+            when {
+                branch 'develop'
+            }
+            steps {
+                script {
+                    sh '''
+                        kubectl apply -k kubernetes/overlays/dev/
+                        kubectl rollout status deployment/ml-api -n ml-dev --timeout=5m
+                    '''
+                }
+            }
+        }
+        
+        stage('Deploy to Staging') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    sh '''
+                        kubectl apply -k kubernetes/overlays/staging/
+                        kubectl rollout status deployment/ml-api -n ml-staging --timeout=5m
+                    '''
+                }
+            }
+        }
+        
+        stage('Deploy to Production') {
+            when {
+                branch 'main'
+            }
+            steps {
+                input message: 'Deploy to Production?', ok: 'Deploy'
+                script {
+                    sh '''
+                        kubectl apply -k kubernetes/overlays/prod/
+                        kubectl rollout status deployment/ml-api -n ml-prod --timeout=10m
+                    '''
+                }
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo '✅ Pipeline completed successfully!'
+        }
+        failure {
+            echo '❌ Pipeline failed!'
+            // Add notification logic here
+        }
+        always {
+            cleanWs()
+        }
+    }
+}

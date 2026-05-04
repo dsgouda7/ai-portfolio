@@ -1,0 +1,54 @@
+# FlixAI Configuration
+# Purpose: Centralized hyperparameters and production settings
+
+data:
+  test_size: 0.2
+  val_size: 0.1
+  random_state: 42
+  min_ratings_per_user: 5
+  min_ratings_per_item: 3
+  
+features:
+  n_factors: 50  # Number of latent factors for matrix factorization
+  embedding_dim: 50  # Embedding dimension for neural CF
+  
+models:
+  matrix_factorization:
+    n_factors: 50
+    regularization: 0.1
+    learning_rate: 0.01
+    n_epochs: 20
+    verbose: true
+  
+  neural_cf:
+    embedding_dim: 50
+    hidden_layers: [128, 64, 32]
+    dropout_rate: 0.2
+    learning_rate: 0.001
+    batch_size: 256
+    n_epochs: 10
+  
+  faiss:
+    n_neighbors: 10
+    similarity_metric: 'cosine'  # cosine, euclidean
+
+hyperparameter_tuning:
+  enabled: false
+  n_trials: 50  # Optuna trials
+  cv_folds: 5
+  
+evaluation:
+  cv_folds: 5
+  metrics:
+    - rmse
+    - mae
+    - precision_at_k
+    - recall_at_k
+    - ndcg
+  top_k: [5, 10, 20]  # K values for ranking metrics
+  
+api:
+  host: '0.0.0.0'
+  port: 5000
+  debug: false
+  default_k: 10  # Default number of recommendations

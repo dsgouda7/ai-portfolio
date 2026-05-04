@@ -1,0 +1,40 @@
+# Application Configuration
+application:
+  name: "ml-devops-demo"
+  version: "1.0.0"
+  port: 5000
+  workers: 4
+  
+# Environment Settings
+deployment:
+  environments:
+    - dev
+    - staging
+    - prod
+  
+# CI/CD Configuration
+ci_cd:
+  test_on_pr: true
+  deploy_on_merge: true
+  require_approval_prod: true
+  rollback_on_failure: true
+
+# Model Configuration
+model:
+  type: "random_forest"
+  n_estimators: 100
+  max_depth: 10
+  random_state: 42
+
+# Monitoring
+monitoring:
+  prometheus_enabled: true
+  metrics_port: 9090
+  health_check_path: "/health"
+  readiness_path: "/ready"
+
+# Logging
+logging:
+  level: "INFO"
+  format: "json"
+  output: "stdout"

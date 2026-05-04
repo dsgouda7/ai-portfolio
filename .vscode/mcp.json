@@ -1,0 +1,12 @@
+{
+  "servers": {
+    "context-engine": {
+      "command": "C:\\repos\\ai-portfolio\\.venv\\Scripts\\cce.EXE",
+      "args": [
+        "serve",
+        "--project-dir",
+        "C:\\repos\\ai-portfolio"
+      ]
+    }
+  }
+}

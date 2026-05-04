@@ -1,0 +1,145 @@
+pipeline {
+    agent any
+    
+    environment {
+        PYTHON_VERSION = '3.11'
+        DOCKER_REGISTRY = 'docker.io'
+        IMAGE_NAME = 'ml-model-serving'
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        
+        stage('Setup Python') {
+            steps {
+                sh '''
+                    python${PYTHON_VERSION} -m venv venv
+                    . venv/bin/activate
+                    pip install --upgrade pip
+                    pip install -r requirements.txt
+                '''
+            }
+        }
+        
+        stage('Lint') {
+            steps {
+                sh '''
+                    . venv/bin/activate
+                    pip install black flake8
+                    black --check src/ tests/
+                    flake8 src/ tests/ --max-line-length=120
+                '''
+            }
+        }
+        
+        stage('Test') {
+            steps {
+                sh '''
+                    . venv/bin/activate
+                    pytest tests/ --cov=src --cov-report=xml --cov-report=html --junitxml=test-results.xml
+                '''
+            }
+            post {
+                always {
+                    junit 'test-results.xml'
+                    publishHTML([
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'htmlcov',
+                        reportFiles: 'index.html',
+                        reportName: 'Coverage Report'
+                    ])
+                }
+            }
+        }
+        
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    docker.build("${IMAGE_NAME}:${BUILD_NUMBER}")
+                }
+            }
+        }
+        
+        stage('Push Docker Image') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    docker.withRegistry('https://${DOCKER_REGISTRY}', 'docker-credentials') {
+                        docker.image("${IMAGE_NAME}:${BUILD_NUMBER}").push()
+                        docker.image("${IMAGE_NAME}:${BUILD_NUMBER}").push('latest')
+                    }
+                }
+            }
+        }
+        
+        stage('Deploy to Staging') {
+            when {
+                branch 'develop'
+            }
+            steps {
+                sh '''
+                    kubectl apply -f k8s/ --namespace=ml-staging
+                    kubectl rollout status deployment/ml-model-serving --namespace=ml-staging
+                '''
+            }
+        }
+        
+        stage('Load Test Staging') {
+            when {
+                branch 'develop'
+            }
+            steps {
+                sh '''
+                    . venv/bin/activate
+                    locust -f src/load_test.py --host=http://staging-endpoint --users=50 --spawn-rate=10 --run-time=2m --headless
+                '''
+            }
+        }
+        
+        stage('Deploy to Production') {
+            when {
+                branch 'main'
+            }
+            steps {
+                input message: 'Deploy to production?', ok: 'Deploy'
+                sh '''
+                    kubectl apply -f k8s/ --namespace=ml-production
+                    kubectl rollout status deployment/ml-model-serving --namespace=ml-production
+                '''
+            }
+        }
+        
+        stage('Smoke Test Production') {
+            when {
+                branch 'main'
+            }
+            steps {
+                sh '''
+                    curl -f http://production-endpoint/health || exit 1
+                    curl -f http://production-endpoint/ready || exit 1
+                '''
+            }
+        }
+    }
+    
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
+            // Send notification to Slack/email
+        }
+    }
+}

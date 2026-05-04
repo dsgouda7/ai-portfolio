@@ -1,0 +1,78 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# InferenceBase — HorizontalPodAutoscaler
+# Namespace: inferencebase
+# ─────────────────────────────────────────────────────────────────────────────
+# Scales the vllm-llama3 Deployment between 1 and 4 replicas based on:
+#   1. CPU utilization (built-in metrics — always available)
+#   2. vllm_num_requests_running (custom metric via Prometheus Adapter)
+#
+# Pre-requisite for custom metrics:
+#   Prometheus Adapter must be installed and configured to expose
+#   vllm_num_requests_running as a pod metric. Without this, the HPA
+#   falls back to CPU utilization only (no error — it just ignores missing
+#   metrics if using "Any" metric selection).
+#
+#   Install Prometheus Adapter:
+#     helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+#     helm install prometheus-adapter prometheus-community/prometheus-adapter \
+#       --namespace monitoring \
+#       --set prometheus.url=http://prometheus.monitoring.svc.cluster.local
+#
+# Scale-up: aggressive (1 pod every 120s) — GPU provisioning is slow.
+# Scale-down: conservative (5-min window) — avoid thrashing during burst decay.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: vllm-llama3
+  namespace: inferencebase
+  labels:
+    app: vllm-llama3
+    track: ai-infrastructure
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: vllm-llama3
+  minReplicas: 1
+  maxReplicas: 4
+
+  metrics:
+    # ── Primary signal: CPU utilization ───────────────────────────────────
+    # Available without Prometheus Adapter. At 70% CPU the model is near
+    # saturation — scale before latency climbs past the 2s target.
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+
+    # ── Secondary signal: vLLM request queue depth ────────────────────────
+    # vllm_num_requests_running is the number of active generation sequences.
+    # When average > 10 per pod, token-generation latency increases linearly.
+    # Requires Prometheus Adapter — see pre-requisite block above.
+    - type: Pods
+      pods:
+        metric:
+          name: vllm_num_requests_running
+        target:
+          type: AverageValue
+          averageValue: "10"
+
+  behavior:
+    scaleUp:
+      # Wait 60s before scaling up — avoids overreacting to a single burst.
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Pods
+          value: 1
+          # Add at most 1 pod every 120s — GPU nodes take time to attach.
+          periodSeconds: 120
+    scaleDown:
+      # Wait 300s before scaling down — prevents thrashing during busy periods.
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 300

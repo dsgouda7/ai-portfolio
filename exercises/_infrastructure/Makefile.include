@@ -1,0 +1,55 @@
+# Shared Makefile Targets for All Exercises
+# Usage: include ../../_infrastructure/Makefile.include
+# Then define PROJECT_NAME and DOCKERFILE in your exercise Makefile
+
+.PHONY: help setup test lint format clean serve docker-build docker-up docker-down docker-logs
+
+help:
+	@echo "$(PROJECT_NAME) — Available Commands:"
+	@echo "  make setup        - Create venv and install dependencies"
+	@echo "  make test         - Run test suite with coverage"
+	@echo "  make lint         - Check code style (black, flake8)"
+	@echo "  make format       - Auto-format code with black"
+	@echo "  make clean        - Remove cache and generated files"
+	@echo "  make serve        - Start local development server"
+	@echo "  make docker-build - Build Docker image"
+	@echo "  make docker-up    - Start containers (API + monitoring)"
+	@echo "  make docker-down  - Stop containers"
+	@echo "  make docker-logs  - View container logs"
+
+setup:
+	python -m venv venv
+	. venv/bin/activate && pip install --upgrade pip
+	. venv/bin/activate && pip install -r requirements.txt
+	@echo "✓ Setup complete. Activate venv: source venv/bin/activate (Linux/Mac) or .\venv\Scripts\Activate.ps1 (Windows)"
+
+test:
+	pytest tests/ -v --cov=src --cov-report=html --cov-report=term
+
+lint:
+	black src/ tests/ --check
+	flake8 src/ tests/ --max-line-length=100 --exclude=venv
+
+format:
+	black src/ tests/
+
+clean:
+	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	find . -type f -name "*.pyc" -delete 2>/dev/null || true
+	rm -rf .pytest_cache htmlcov .coverage
+	rm -rf logs/*.log 2>/dev/null || true
+
+serve:
+	python -m src.api
+
+docker-build:
+	docker build -f ../../_infrastructure/docker/$(DOCKERFILE) -t $(PROJECT_NAME):latest .
+
+docker-up:
+	docker-compose up -d
+
+docker-down:
+	docker-compose down
+
+docker-logs:
+	docker-compose logs -f $(PROJECT_NAME)

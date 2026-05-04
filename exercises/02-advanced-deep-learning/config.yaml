@@ -1,0 +1,105 @@
+# ProductionCV Configuration
+# Purpose: Configuration for edge-deployable computer vision system
+
+model:
+  base_model: "resnet50"
+  architecture: "faster_rcnn"  # Options: faster_rcnn, yolov8, mask_rcnn
+  pretrained: true
+  num_classes: 80  # COCO dataset
+  
+  # Compression targets
+  target_size_mb: 100
+  target_map: 0.85
+  target_inference_ms: 50
+
+compression:
+  # Knowledge distillation
+  distillation:
+    enabled: true
+    temperature: 3.0
+    alpha: 0.5  # Weight between hard and soft targets
+    teacher_model: "resnet101"
+  
+  # Pruning
+  pruning:
+    enabled: true
+    pruning_ratio: 0.3
+    pruning_schedule: "polynomial"
+    begin_step: 0
+    end_step: 10000
+  
+  # Quantization
+  quantization:
+    enabled: true
+    quantization_type: "int8"  # Options: int8, float16
+    per_channel: true
+
+dataset:
+  name: "coco_subset"
+  data_dir: "data/coco"
+  num_images: 1000
+  num_classes: 80
+  train_split: 0.8
+  val_split: 0.1
+  test_split: 0.1
+  
+  # Data augmentation
+  augmentation:
+    horizontal_flip: 0.5
+    vertical_flip: 0.0
+    rotation_range: 10
+    brightness_range: 0.2
+    contrast_range: 0.2
+
+training:
+  epochs: 50
+  batch_size: 32
+  learning_rate: 0.001
+  optimizer: "adam"
+  momentum: 0.9
+  weight_decay: 0.0001
+  
+  # Learning rate schedule
+  lr_schedule:
+    type: "cosine"
+    warmup_epochs: 5
+  
+  # Early stopping
+  early_stopping:
+    enabled: true
+    patience: 10
+    min_delta: 0.001
+
+preprocessing:
+  image_size: [640, 640]
+  normalize_mean: [0.485, 0.456, 0.406]
+  normalize_std: [0.229, 0.224, 0.225]
+
+edge_deployment:
+  export_formats: ["onnx", "tflite"]
+  target_platform: "jetson_nano"  # Options: jetson_nano, raspberry_pi, coral
+  optimize_for_inference: true
+  
+  # TensorRT optimization
+  tensorrt:
+    enabled: false
+    precision: "fp16"
+
+api:
+  host: "0.0.0.0"
+  port: 5000
+  debug: false
+  max_upload_size_mb: 10
+
+monitoring:
+  metrics_port: 9090
+  log_level: "INFO"
+  log_file: "logs/productioncv.log"
+  mlflow_tracking_uri: "file:./mlruns"
+
+paths:
+  model_dir: "models"
+  checkpoint_dir: "models/checkpoints"
+  onnx_dir: "models/onnx"
+  logs_dir: "logs"
+  data_dir: "data"

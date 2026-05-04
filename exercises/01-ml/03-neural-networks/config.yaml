@@ -1,0 +1,60 @@
+# UnifiedAI Configuration
+# Purpose: Centralized hyperparameters and production settings for neural networks
+
+data:
+  test_size: 0.2
+  val_size: 0.1
+  random_state: 42
+  n_samples: 10000
+  n_features: 20
+  n_classes: 10
+  
+features:
+  scale_features: true
+  pca_components: null  # null = no PCA, or set to int for dimensionality reduction
+
+models:
+  dense_nn:
+    architecture: [128, 64, 32]  # Hidden layer sizes
+    activation: 'relu'
+    dropout: 0.3
+    learning_rate: 0.001
+    batch_size: 32
+    epochs: 50
+    early_stopping_patience: 5
+    validation_split: 0.2
+  
+  cnn_1d:
+    filters: [64, 32, 16]  # Conv1D filters per layer
+    kernel_size: 3
+    pool_size: 2
+    dropout: 0.3
+    learning_rate: 0.001
+    batch_size: 32
+    epochs: 50
+    early_stopping_patience: 5
+
+hyperparameter_tuning:
+  enabled: false
+  n_trials: 50  # Optuna trials
+  cv_folds: 5
+  
+evaluation:
+  cv_folds: 5
+  metrics:
+    - accuracy
+    - precision
+    - recall
+    - f1
+  plot_confusion_matrix: true
+  plot_learning_curves: true
+  plot_roc_curves: false  # Multi-class ROC is complex
+  
+api:
+  host: '0.0.0.0'
+  port: 5000
+  debug: false
+
+monitoring:
+  metrics_port: 8000
+  log_predictions: true
