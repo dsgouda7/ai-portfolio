@@ -207,7 +207,7 @@ $$\text{backend\_index} = \text{hash}(\text{client\_IP}) \mod N$$
 > ➡️ Algorithm choice locked in; proceed to Health Checks phase.
 
 > 💡 **Industry Standard:** `Nginx upstream module`
-> 
+>
 > ```nginx
 > upstream backend {
 >     least_conn;  # or ip_hash; or leave blank for round-robin
@@ -216,7 +216,7 @@ $$\text{backend\_index} = \text{hash}(\text{client\_IP}) \mod N$$
 >     server backend3:5000;
 > }
 > ```
-> 
+>
 > **When to use:** Production deployments. Always specify algorithm explicitly (even `# round-robin` comment) for maintainability.
 > **Common alternatives:** HAProxy (more features, steeper learning curve), Envoy (service mesh, complex), AWS ALB (managed, cloud-only), Traefik (Docker native, automatic service discovery)
 > **See also:** [Nginx upstream docs](http://nginx.org/en/docs/http/ngx_http_upstream_module.html), [HAProxy config guide](http://www.haproxy.org/)
@@ -264,18 +264,18 @@ Nginx passive health check: after 2 consecutive timeouts, mark backend2 as down.
 > ➡️ Failure detection in place; proceed to Resilience phase to verify failover end-to-end.
 
 > 💡 **Industry Standard:** `Nginx Plus active health checks` (commercial) or `nginx-health-check module` (open-source)
-> 
+>
 > ```nginx
 > upstream backend {
 >     server backend1:5000;
 >     server backend2:5000;
 >     server backend3:5000;
->     
+>
 >     # Nginx Plus only
 >     health_check interval=5s fails=2 passes=2 uri=/health;
 > }
 > ```
-> 
+>
 > **When to use:** Mission-critical systems (payments, medical, financial) where even 1-2 failed user requests are unacceptable. Active checks detect failures in 5-10 seconds vs 30-60 seconds for passive.
 > **Common alternatives:** HAProxy (active checks in free version), AWS ALB (automatic health checks every 30s), Kubernetes readiness probes (kubelet checks every 10s)
 > **See also:** [Nginx Plus health checks](https://docs.nginx.com/nginx/admin-guide/load-balancer/http-health-check/), [HAProxy health checks](http://cbonte.github.io/haproxy-dconv/2.4/configuration.html#5.2-check)
@@ -294,7 +294,7 @@ Nginx Reverse Proxy (port 80)
   ├─ Selects backend from upstream pool (round-robin)
   ├─ Forwards to backend (proxy_pass http://backend)
   └─ Returns backend response to client
-  
+
 Upstream Pool
   ├─ backend1:5000 (healthy)
   ├─ backend2:5000 (down — health check failed)
@@ -326,7 +326,7 @@ http {
         server backend1:5000;
         server backend2:5000;
         server backend3:5000;
-        
+
         # Health check (passive)
         # Mark server down after 2 failures, retry after 30 seconds
         server backend1:5000 max_fails=2 fail_timeout=30s;
@@ -336,7 +336,7 @@ http {
 
     server {
         listen 80;
-        
+
         location / {
             proxy_pass http://backend;
             proxy_set_header Host $host;
@@ -434,7 +434,7 @@ docker compose stop backend2
 > ➡️ HA confirmed at 3 replicas; scale to 4–5 for >50% capacity retention after any single failure.
 
 > 💡 **Industry Standard:** `Kubernetes readiness probes` (built-in active health checks)
-> 
+>
 > ```yaml
 > # Kubernetes Deployment with readiness probe (equivalent to Nginx Plus active checks)
 > apiVersion: apps/v1
@@ -454,7 +454,7 @@ docker compose stop backend2
 >           periodSeconds: 10        # Probe every 10 seconds
 >           failureThreshold: 2      # Mark down after 2 failures
 > ```
-> 
+>
 > **When to use:** Production Kubernetes deployments. Kubelet probes every pod's `/health`, removes from Service endpoints if failing — equivalent to Nginx Plus but free and declarative.
 > **Common alternatives:** AWS ALB target groups (30s health checks), GCP backend services (configurable intervals), Consul health checks (agent-based)
 > **See also:** [Kubernetes Probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/), [AWS ALB Target Health](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health-checks.html)
@@ -546,12 +546,12 @@ if __name__ == "__main__":
 > ➡️ Backends isolated and discoverable by name; proceed to Proxy phase.
 
 > 💡 **Industry Standard:** `docker-compose scale` (deprecated) → `docker compose up --scale backend=N`
-> 
+>
 > ```bash
 > # Scale to 5 replicas dynamically (requires single service definition)
 > docker compose up --scale backend=5 -d
 > ```
-> 
+>
 > **When to use:** Testing load distribution with varying replica counts. Production: Use Kubernetes Deployments with `replicas: N` for declarative scaling.
 > **Common alternatives:** `docker swarm mode` (built-in orchestration), `Kubernetes` (industry standard), `Nomad` (HashiCorp, simpler than K8s)
 > **See also:** [Docker Compose scale docs](https://docs.docker.com/compose/reference/), [Kubernetes Deployments](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/)
@@ -603,7 +603,7 @@ server {
     listen 443 ssl;
     ssl_certificate /etc/nginx/certs/cert.pem;
     ssl_certificate_key /etc/nginx/certs/key.pem;
-    
+
     location / {
         proxy_pass http://backend;  # Forward HTTP internally
         proxy_set_header X-Forwarded-Proto https;  # Tell backend original protocol
@@ -622,7 +622,7 @@ server {
 ```nginx
 http {
     limit_req_zone $binary_remote_addr zone=one:10m rate=10r/s;
-    
+
     server {
         location / {
             limit_req zone=one burst=20;  # Max 10 req/sec, burst up to 20
@@ -643,26 +643,26 @@ upstream backend {
 ```
 
 > 💡 **Industry Standard:** `Redis for shared sessions` (externalize state)
-> 
+>
 > ```python
 > # Flask with Redis session store (production pattern)
 > from flask import Flask, session
 > from flask_session import Session
 > import redis
-> 
+>
 > app = Flask(__name__)
 > app.config["SESSION_TYPE"] = "redis"
 > app.config["SESSION_REDIS"] = redis.from_url("redis://redis:6379")
 > app.config["SESSION_PERMANENT"] = False
 > app.config["SESSION_USE_SIGNER"] = True  # Sign cookies for security
 > Session(app)
-> 
+>
 > @app.route("/login")
 > def login():
 >     session["user_id"] = 123  # Stored in Redis, not memory
 >     return "Logged in"
 > ```
-> 
+>
 > **When to use:** Always in production multi-backend deployments. Eliminates need for sticky sessions (ip_hash) — any backend can serve any request.
 > **Common alternatives:** `Memcached` (faster, no persistence), `PostgreSQL` (ACID guarantees, overkill for sessions), `DynamoDB` (AWS managed, serverless)
 > **See also:** [Flask-Session docs](https://flask-session.readthedocs.io/), [Redis session patterns](https://redis.io/docs/manual/patterns/session-store/)

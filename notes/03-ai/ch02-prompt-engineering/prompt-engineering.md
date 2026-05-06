@@ -326,21 +326,21 @@ I can only help with Mamma Rosa's Pizza orders and menu questions.
 ```
 
 > 💡 **Industry Standard:** `langchain.prompts.ChatPromptTemplate`
-> 
+>
 > ```python
 > from langchain.prompts import ChatPromptTemplate
-> 
+>
 > # LangChain provides reusable prompt templates with variable substitution
 > template = ChatPromptTemplate.from_messages([
 >     ("system", """You are {bot_name}, an ordering assistant for {business_name}.
-> 
+>
 > TASK SCOPE: {allowed_topics}
 > CONSTRAINTS: {constraints}
 > OUTPUT FORMAT: {output_format}
 > """),
 >     ("user", "{user_message}")
 > ])
-> 
+>
 > # Instantiate with specific values
 > prompt = template.format_messages(
 >     bot_name="PizzaBot",
@@ -351,14 +351,14 @@ I can only help with Mamma Rosa's Pizza orders and menu questions.
 >     user_message="What sizes do you have?"
 > )
 > ```
-> 
+>
 > **When to use:** Production systems with multiple prompt variants (A/B testing, localization, persona switching). LangChain's templating separates prompt logic from content.
-> 
-> **Common alternatives:** 
+>
+> **Common alternatives:**
 > - `jinja2` templates for complex conditional logic
 > - `promptfoo` for prompt evaluation and regression testing
 > - `guidance` library for structured generation (constrained sampling)
-> 
+>
 > **See also:** [LangChain Prompt Templates docs](https://python.langchain.com/docs/modules/model_io/prompts/)
 
 > 💡 **System verdict:** System prompt lifts conversion from 8% to 10% and cuts error rate to 30% — scope constraints stop off-topic responses 95% of the time.
@@ -416,19 +416,19 @@ For order confirmations, respond with valid JSON only — no other text."""
 # Key: Show 3 examples covering (1) simple case, (2) edge case, (3) decline scenario
 messages = [
     {"role": "system", "content": system_prompt},
-    
+
     # Example 1: Simple order (establishes baseline format)
     {"role": "user", "content": "I'd like one large Margherita pizza for delivery to 456 Elm St"},
     {"role": "assistant", "content": '{"items": [{"name": "Margherita", "size": "large", "quantity": 1}], "total": 15.99, "delivery_address": "456 Elm St", "order_type": "delivery"}'},
-    
+
     # Example 2: Edge case (multiple items, special instructions)
     {"role": "user", "content": "Two medium pepperoni and one personal veggie, pickup, extra cheese on the pepperoni"},
     {"role": "assistant", "content": '{"items": [{"name": "Pepperoni", "size": "medium", "quantity": 2, "modifications": "extra cheese"}, {"name": "Veggie", "size": "personal", "quantity": 1}], "total": 34.97, "order_type": "pickup"}'},
-    
+
     # Example 3: Decline off-topic (shows how to say "no" in the same structured way)
     {"role": "user", "content": "What's the weather like today?"},
     {"role": "assistant", "content": '{"error": "off_topic", "message": "I can only help with Mamma Rosa\'s Pizza orders and menu questions."}'},
-    
+
     # Now the actual user query
     {"role": "user", "content": "I want three large Hawaiian pizzas delivered to 789 Oak Avenue"}
 ]
@@ -472,22 +472,22 @@ except json.JSONDecodeError as e:
 - **Temperature=0** — deterministic output for production (sampling randomness eliminated)
 
 > 💡 **Industry Standard:** `instructor` library for structured output
-> 
+>
 > ```python
 > import instructor
 > from openai import OpenAI
 > from pydantic import BaseModel
-> 
+>
 > # Patch OpenAI client to add response_model support
 > client = instructor.from_openai(OpenAI())
-> 
+>
 > # Define schema as Pydantic model (type-safe, validated)
 > class PizzaOrder(BaseModel):
 >     items: list[dict]
 >     total: float
 >     delivery_address: str
 >     order_type: str
-> 
+>
 > # Model outputs are automatically validated against schema
 > order = client.chat.completions.create(
 >     model="gpt-4",
@@ -497,18 +497,18 @@ except json.JSONDecodeError as e:
 >         {"role": "user", "content": "Two large pepperoni delivered to 123 Main St"}
 >     ]
 > )
-> 
+>
 > # Guaranteed to be valid PizzaOrder object or raises ValidationError
 > print(f"Total: ${order.total}")  # Type-safe access
 > ```
-> 
+>
 > **When to use:** Production systems requiring strict schema adherence with validation. `instructor` combines OpenAI function calling with Pydantic validation — parse failures trigger automatic retries.
-> 
+>
 > **Common alternatives:**
 > - `marvin` — simpler API for structured extraction tasks
 > - `outlines` — constrained generation for open-source models (guarantees valid JSON at sampling level)
 > - `jsonformer` — decoding-time constraint (only generates tokens matching schema)
-> 
+>
 > **See also:** [instructor GitHub](https://github.com/jxnl/instructor), [Pydantic docs](https://docs.pydantic.dev/)
 
 > 💡 **Examples verdict:** Three (input, output) pairs push format consistency from 88% to 96% — conversational preambles eliminated, conversion rises to 11%.
@@ -545,7 +545,7 @@ For complex queries requiring multiple steps, think through your reasoning befor
 # Example: "cheapest gluten-free pizza under 600 calories"
 cot_messages = [
     {"role": "system", "content": system_prompt},
-    
+
     # Few-shot example showing reasoning structure
     {"role": "user", "content": "What's the cheapest pizza with meat and under 500 calories?"},
     {"role": "assistant", "content": """Let me work through this step by step:
@@ -565,7 +565,7 @@ cot_messages = [
    - Hawaiian (personal): $8.99
 
 Answer: Hawaiian pizza (personal size) — $8.99, 420 calories"""},
-    
+
     # Now the actual complex query
     {"role": "user", "content": "What's the cheapest gluten-free option under 600 calories?"}
 ]
@@ -624,10 +624,10 @@ Final answer: Margherita pizza with gluten-free crust (personal size) — $9.99,
 - **Cost tradeoff**: 2× token output (reasoning + answer), but worth it for complex queries
 
 > 💡 **Industry Standard:** DSPy (Stanford NLP) for prompt optimization
-> 
+>
 > ```python
 > import dspy
-> 
+>
 > # DSPy automatically optimizes prompts via few-shot learning
 > # Define signature (input/output types)
 > class PizzaQuery(dspy.Signature):
@@ -635,23 +635,23 @@ Final answer: Margherita pizza with gluten-free crust (personal size) — $9.99,
 >     query = dspy.InputField(desc="User's multi-constraint query")
 >     reasoning = dspy.OutputField(desc="Step-by-step reasoning")
 >     answer = dspy.OutputField(desc="Final answer")
-> 
+>
 > # ChainOfThought module automatically adds "Let's think step by step"
 > cot_module = dspy.ChainOfThought(PizzaQuery)
-> 
+>
 > # DSPy optimizes the prompt using training examples
 > # (compiles few-shot examples, tunes instruction phrasing)
 > prediction = cot_module(query="Cheapest gluten-free under 600 cal")
 > print(prediction.answer)
 > ```
-> 
+>
 > **When to use:** When you have 50-200 labeled examples and want to automatically find the optimal prompt structure. DSPy treats prompts as learnable parameters — it searches over instruction phrasings and few-shot example selections to maximize task accuracy.
-> 
+>
 > **Common alternatives:**
 > - Manual prompt engineering (this chapter's approach) — best for <50 examples or when you understand the task deeply
 > - `PROMPTBREEDER` (Google DeepMind) — evolutionary algorithm for prompt search
 > - `APE` (Automatic Prompt Engineer) — LLM-generated prompt proposals scored on validation set
-> 
+>
 > **See also:** [DSPy GitHub](https://github.com/stanfordnlp/dspy), [DSPy paper (Stanford NLP, 2023)](https://arxiv.org/abs/2310.03714)
 
 > 💡 **Reasoning verdict:** Chain-of-thought raises multi-constraint query accuracy from 20% to 85% — "cheapest gluten-free under 600 cal" now resolves correctly.
@@ -738,25 +738,25 @@ print()
 def validate_order_schema(data: dict) -> list[str]:
     """Validate order JSON against expected schema."""
     errors = []
-    
+
     if "items" not in data:
         errors.append("Missing required field: items")
     elif not isinstance(data["items"], list) or len(data["items"]) == 0:
         errors.append("items must be non-empty list")
-    
+
     if "total" not in data:
         errors.append("Missing required field: total")
     elif not isinstance(data["total"], (int, float)):
         errors.append("total must be number")
-    
+
     if "order_type" not in data:
         errors.append("Missing required field: order_type")
     elif data["order_type"] not in ["delivery", "pickup"]:
         errors.append("order_type must be 'delivery' or 'pickup'")
-    
+
     if data["order_type"] == "delivery" and "delivery_address" not in data:
         errors.append("delivery orders require delivery_address")
-    
+
     return errors
 
 validation_errors = validate_order_schema(parsed)
@@ -787,11 +787,11 @@ else:
 - **Schema still requires validation** — JSON mode doesn't check that required keys exist or types are correct
 
 > 💡 **Industry Standard:** RAGAS (Retrieval-Augmented Generation Assessment) for prompt evaluation
-> 
+>
 > ```python
 > from ragas import evaluate
 > from ragas.metrics import faithfulness, answer_correctness
-> 
+>
 > # RAGAS evaluates prompt quality against ground truth using LLM-as-judge
 > dataset = {
 >     "question": ["What sizes do you have?", "Cheapest gluten-free under 600 cal"],
@@ -799,24 +799,24 @@ else:
 >     "ground_truth": [correct_answer_1, correct_answer_2],  # Expected answers
 >     "contexts": [retrieved_menu_chunks_1, retrieved_menu_chunks_2]  # RAG context
 > }
-> 
+>
 > # Automatic evaluation of prompt effectiveness
 > result = evaluate(dataset, metrics=[
 >     faithfulness,  # Did answer stay grounded in provided context?
 >     answer_correctness,  # Is answer factually correct vs ground truth?
 > ])
-> 
+>
 > print(f"Faithfulness: {result['faithfulness']:.2f}")  # 0.95 = 95% grounded
 > print(f"Correctness: {result['answer_correctness']:.2f}")  # 0.88 = 88% correct
 > ```
-> 
+>
 > **When to use:** Production RAG systems requiring rigorous prompt evaluation. RAGAS automates measurement of grounding (faithfulness), correctness, relevance, and other prompt-quality metrics — no manual labeling needed.
-> 
+>
 > **Common alternatives:**
 > - Manual evaluation with rubrics (gold standard but expensive)
 > - `PromptTools` for A/B testing prompt variants
 > - `TruLens` for LLM observability and prompt debugging
-> 
+>
 > **See also:** [RAGAS GitHub](https://github.com/explodinggradients/ragas), [RAGAS paper (2023)](https://arxiv.org/abs/2309.15217)
 
 > 💡 **Structure verdict:** JSON mode raises format reliability from 96% to 100% — zero parse errors in production, zero failed order submissions from malformed JSON.

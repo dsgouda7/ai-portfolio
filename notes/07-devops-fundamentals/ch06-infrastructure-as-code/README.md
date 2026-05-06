@@ -67,8 +67,8 @@ resource "aws_lb" "main" {
 }
 ```
 
-Run `terraform apply` once: creates 2 instances + 1 load balancer.  
-Run `terraform apply` again: **no changes** (already matches desired state).  
+Run `terraform apply` once: creates 2 instances + 1 load balancer.
+Run `terraform apply` again: **no changes** (already matches desired state).
 Change `count = 3`: Terraform adds 1 instance (doesn't destroy and recreate everything).
 
 **Key insight:** Terraform maintains a **state file** (`terraform.tfstate`) that records what it's managing. Every `terraform apply` compares *desired state* (your `.tf` files) against *current state* (the state file + reality check) and applies only the necessary changes.
@@ -144,16 +144,16 @@ resource "docker_network" "private_network" {
 resource "docker_container" "web" {
   name  = "${var.environment}-nginx"
   image = "nginx:${var.nginx_version}"
-  
+
   ports {
     internal = 80
     external = var.external_port
   }
-  
+
   networks_advanced {
     name = docker_network.private_network.name
   }
-  
+
   volumes {
     host_path      = "${path.cwd}/html"
     container_path = "/usr/share/nginx/html"
@@ -285,23 +285,23 @@ $ infracost breakdown --path .
 Project: example-infrastructure
 
  Name                                   Monthly Qty  Unit    Monthly Cost
- 
- aws_instance.web[0]                                                     
+
+ aws_instance.web[0]
  ├─ Instance usage (Linux, on-demand)          730  hours         $7.30
  └─ EBS storage (gp3)                            30  GB            $2.40
- 
- aws_instance.web[1]                                                     
+
+ aws_instance.web[1]
  ├─ Instance usage (Linux, on-demand)          730  hours         $7.30
  └─ EBS storage (gp3)                            30  GB            $2.40
- 
- aws_lb.main                                                             
+
+ aws_lb.main
  ├─ Load balancer usage                         730  hours        $16.20
  └─ Load balancer data processed                100  GB            $0.80
- 
- aws_db_instance.postgres                                                
+
+ aws_db_instance.postgres
  ├─ Database instance (db.t3.medium)            730  hours        $60.74
  └─ Storage (gp3, 100 GB)                       100  GB           $11.50
- 
+
  OVERALL TOTAL                                                   $116.64
 
 ──────────────────────────────────
@@ -321,9 +321,9 @@ Plan output shows:
   + 2 EC2 instances (web servers)
   + 1 RDS instance (PostgreSQL)
   + 1 Application Load Balancer
-  
+
   Plan: 12 to add, 0 to change, 0 to destroy
-  
+
 Infracost estimate: $145/month
   - EC2: $14.60
   - RDS: $60.74
@@ -337,7 +337,7 @@ Review checklist:
   ✅ Cost within budget?                      YES ($145 < $200 budget)
   ✅ Breaking changes flagged?                NO (-/+ symbols would indicate recreation)
   ✅ Peer review approved?                    YES (pull request approved by 2 engineers)
-  
+
 DECISION: APPROVED → Proceed to terraform apply
 ```
 
@@ -474,13 +474,13 @@ DECISION TREE:
     → Kill conflicting process or change external_port variable
     → Run: terraform apply  # Resumes from where it stopped
     → Result: Creates web + cache, preserves network + db
-  
+
   Option B: Rollback all changes
     → Run: terraform destroy
     → Fix root cause in configuration
     → Run: terraform apply (clean start)
     → Result: All resources created consistently
-  
+
   Recommended: OPTION A (partial state is valid, just fix and continue)
 ```
 
@@ -582,16 +582,16 @@ Investigation steps:
   1. Check if container is listening on expected port
      $ docker exec <container_id> netstat -tuln | grep 80
      tcp  0  0  0.0.0.0:80  0.0.0.0:*  LISTEN  ← Container listening on port 80 ✅
-  
+
   2. Check if port mapping is correct
      $ docker port <container_id>
      (empty output)  ← Port NOT mapped! ❌
-  
+
   3. Check Terraform configuration
      resource "docker_container" "web" {
        # ... ports block MISSING!
      }
-  
+
 Root cause: Forgot to add ports block in Terraform config
 
 DECISION: FIX AND REAPPLY
@@ -653,13 +653,13 @@ terraform {
     bucket         = "my-company-terraform-state"
     key            = "infrastructure/prod/terraform.tfstate"
     region         = "us-west-2"
-    
+
     # State locking to prevent concurrent applies
     dynamodb_table = "terraform-state-lock"
-    
+
     # Encryption at rest
     encrypt        = true
-    
+
     # Versioning for rollback
     # (enable on S3 bucket separately)
   }
@@ -719,11 +719,11 @@ elif [ $EXIT_CODE -eq 2 ]; then
   echo "⚠️  DRIFT DETECTED — manual changes outside Terraform!"
   echo "Plan output:"
   cat /tmp/plan.log
-  
+
   # Alert team (Slack, PagerDuty, etc.)
   curl -X POST https://hooks.slack.com/services/YOUR/WEBHOOK/URL \
     -d "{\"text\": \"🚨 Terraform drift detected in production! Check drift_detection log.\"}"
-  
+
   exit 2
 else
   echo "❌ Error running drift detection"
@@ -757,13 +757,13 @@ DECISION TREE:
     → Run: terraform apply  # Removes the 0.0.0.0/0 rule
     → Result: Drift eliminated, security restored
     → Post-mortem: Why did engineer bypass Terraform?
-  
+
   Option B: Update code to match reality (if change was valid)
     → Update Terraform config with new rule
     → Commit to Git (with justification in PR)
     → Run: terraform apply (no changes, just syncs state)
     → Result: Drift eliminated, change preserved
-  
+
   Recommended: OPTION A (0.0.0.0/0 on SSH is never valid for production)
 ```
 
@@ -809,13 +809,13 @@ Decision matrix: Which state backend for your team?
 RECOMMENDATION BY SCENARIO:
   Solo developer / learning Terraform:
     → Local file (simplicity, no overhead)
-  
+
   Team of 2-10 engineers, AWS-based:
     → S3 + DynamoDB (cost-effective, battle-tested)
-  
+
   Team >10 engineers, need RBAC / policy enforcement:
     → Terraform Cloud (centralized, audit logs, policy as code)
-  
+
   Azure-native environment:
     → Azure Blob Storage + State Lock (native integration)
 ```
@@ -911,7 +911,7 @@ resource "docker_network" "private_network" {
 resource "docker_container" "web" {
   name  = "nginx"
   image = "nginx:latest"
-  
+
   networks_advanced {
     name = docker_network.private_network.name  # Explicit dependency
   }
@@ -1075,7 +1075,7 @@ output "db_password" {
 ```hcl
 resource "aws_db_instance" "main" {
   # ... config ...
-  
+
   lifecycle {
     prevent_destroy = true  # Terraform will refuse to destroy this
   }
@@ -1104,7 +1104,7 @@ Before moving to Ch.7, verify you can:
      }
    }
    ```
-   What does `terraform plan` show?  
+   What does `terraform plan` show?
    **Answer:** `~ update in-place` (container image changed) — Terraform will recreate the container (can't update image on running container).
 
 2. **Debug state mismatch:** You run `terraform plan` and see:
@@ -1112,7 +1112,7 @@ Before moving to Ch.7, verify you can:
    ~ docker_container.app
      ~ ports[0].external: 8080 → 9090
    ```
-   But your code shows `external = 8080`. What happened?  
+   But your code shows `external = 8080`. What happened?
    **Answer:** Drift — someone manually changed the port outside Terraform. Run `terraform apply` to revert, or update code to match reality.
 
 3. **Identify dependency order:** Given these resources:
@@ -1126,7 +1126,7 @@ Before moving to Ch.7, verify you can:
      depends_on = [docker_container.db]
    }
    ```
-   What's the creation order?  
+   What's the creation order?
    **Answer:** `docker_network.net` → `docker_container.db` → `docker_container.app` (network first, then db and app in parallel, but app explicitly waits for db).
 
 **Common mistakes:**

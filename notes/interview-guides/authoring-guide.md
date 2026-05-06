@@ -1,7 +1,7 @@
 # InterviewGuides — Authoring Guide
 
-> **Purpose**: This guide defines how to write, review, and extend the interview preparation documents under `notes/InterviewGuides/`.  
-> These are not chapter notes — they are **structured interview primers** designed to get a senior AI/ML engineer from zero to confident in a specific domain within 2–4 hours.  
+> **Purpose**: This guide defines how to write, review, and extend the interview preparation documents under `notes/InterviewGuides/`.
+> These are not chapter notes — they are **structured interview primers** designed to get a senior AI/ML engineer from zero to confident in a specific domain within 2–4 hours.
 > Read this before editing any guide to keep tone, structure, and coverage consistent.
 >
 > **📚 Updated:** Now includes comprehensive pedagogical patterns, mathematical style conventions, and visual standards aligned with the ML track authoring guide.
@@ -129,17 +129,17 @@ The reader is treated as a capable engineer who doesn't need flattery, gets impa
 > ✅ "Use RAG when the LLM needs private/recent data it wasn't trained on. Use fine-tuning when you need to change style, format, or domain-specific inference patterns — not facts."
 
 **Second person inside interview scenarios:**
-> *"The interviewer asks: 'How would you reduce hallucination in production?' What do you say?"*  
+> *"The interviewer asks: 'How would you reduce hallucination in production?' What do you say?"*
 > *"You mention RAG. The follow-up is immediate: 'How do you evaluate whether your retrieved documents are actually relevant?' This is where candidates fail."*
 
 **Contractions and em-dashes are used freely** when they tighten a sentence:
-> *"That's it."*  
+> *"That's it."*
 > *"RAG gives grounding — but it can fail silently when retrieval misses."*
 
 **Academic register is forbidden.** Phrases like "In this section we demonstrate", "It can be shown that", "The reader may note", "we present", "we propose" do not appear in interview guides and must not appear in any new guide.
 
 **One wry sentence per section maximum.**
-> *"The interviewer asks: 'How would you reduce hallucination in production?' What do you say?"*  
+> *"The interviewer asks: 'How would you reduce hallucination in production?' What do you say?"*
 > *"You mention RAG. The follow-up is immediate: 'How do you evaluate whether your retrieved documents are actually relevant?' This is where candidates fail."*
 
 **One wry sentence per section maximum.**
@@ -159,10 +159,10 @@ Weak answer → why it signals junior → what's missing → strong answer → w
 
 > Q: "How do you prevent an agent from getting stuck in a loop?"
 >
-> ❌ **Weak**: "You can add a maximum step limit."  
+> ❌ **Weak**: "You can add a maximum step limit."
 > *Why it signals junior:* Correct but minimal — shows you know the band-aid, not the root cause.
 >
-> ✅ **Strong**: "Max steps is the floor, not the ceiling. More importantly, you should detect semantic loops — repeated intents with different surface forms — using embedding similarity on recent actions. If `cos_sim(action_t, action_{t-k}) > 0.92`, the agent is cycling. From there: exponential backoff + alternative tool selection, then escalate to human if still stuck after 3 cycles."  
+> ✅ **Strong**: "Max steps is the floor, not the ceiling. More importantly, you should detect semantic loops — repeated intents with different surface forms — using embedding similarity on recent actions. If `cos_sim(action_t, action_{t-k}) > 0.92`, the agent is cycling. From there: exponential backoff + alternative tool selection, then escalate to human if still stuck after 3 cycles."
 > *Why it signals senior:* Names the mechanism (semantic loop detection), gives a specific threshold, describes the recovery strategy, includes human-in-the-loop escalation.
 
 This pattern must appear for every major concept in every guide.
@@ -198,9 +198,9 @@ Math in interview guides appears only as:
 - Note the interview-specific interpretation
 
 **Example:**
-> **Formula:** Attention score = `softmax(QKᵀ/√d_k)V`  
-> **In English:** Query matches Keys via dot product, scaled by √dimensionality to prevent gradient vanishing, normalized to probabilities, then retrieves Values.  
-> **Numerical example:** If `d_k = 64`, scaling factor = `√64 = 8`. Without it, dot products can hit 500+, making softmax gradients vanish.  
+> **Formula:** Attention score = `softmax(QKᵀ/√d_k)V`
+> **In English:** Query matches Keys via dot product, scaled by √dimensionality to prevent gradient vanishing, normalized to probabilities, then retrieves Values.
+> **Numerical example:** If `d_k = 64`, scaling factor = `√64 = 8`. Without it, dot products can hit 500+, making softmax gradients vanish.
 > **Interview interpretation:** *"When an interviewer asks 'why divide by √d_k?', the expected answer is: prevents dot product magnitude explosion as dimensionality grows, keeping gradients healthy."*
 
 **Never include proofs or derivations** unless the interview specifically tests them (e.g., "derive backpropagation"). Even then, show the key steps without full rigor — the interview tests understanding, not calculus.
@@ -215,7 +215,7 @@ Math in interview guides appears only as:
 
 ```css
 Primary/data:     fill:#1e3a8a (dark blue)
-Success/achieved: fill:#15803d (dark green)  
+Success/achieved: fill:#15803d (dark green)
 Caution/partial:  fill:#b45309 (amber)
 Danger/blocked:   fill:#b91c1c (dark red)
 Info/neutral:     fill:#1d4ed8 (medium blue)
@@ -395,7 +395,7 @@ Each guide is anchored to the real-world system from its parent track:
 
 **Formatting for rapid-fire:**
 ```markdown
-**Q: What's the difference between RAG and fine-tuning?**  
+**Q: What's the difference between RAG and fine-tuning?**
 A: RAG retrieves at inference time (always current, no retraining); fine-tuning bakes knowledge into weights (fast inference, can't update without retraining). Use RAG for facts, fine-tuning for style/format.
 ```
 
@@ -420,10 +420,10 @@ Weak answer → why it signals junior → what's missing → strong answer → w
 
 > Q: "How do you prevent an agent from getting stuck in a loop?"
 >
-> ❌ **Weak**: "You can add a maximum step limit."  
+> ❌ **Weak**: "You can add a maximum step limit."
 > *Why it signals junior:* Correct but minimal — shows you know the band-aid, not the root cause.
 >
-> ✅ **Strong**: "Max steps is the floor, not the ceiling. More importantly, you should detect semantic loops — repeated intents with different surface forms — using embedding similarity on recent actions. If `cos_sim(action_t, action_{t-k}) > 0.92`, the agent is cycling. From there: exponential backoff + alternative tool selection, then escalate to human if still stuck after 3 cycles."  
+> ✅ **Strong**: "Max steps is the floor, not the ceiling. More importantly, you should detect semantic loops — repeated intents with different surface forms — using embedding similarity on recent actions. If `cos_sim(action_t, action_{t-k}) > 0.92`, the agent is cycling. From there: exponential backoff + alternative tool selection, then escalate to human if still stuck after 3 cycles."
 > *Why it signals senior:* Names the mechanism (semantic loop detection), gives a specific threshold, describes the recovery strategy, includes human-in-the-loop escalation.
 
 This pattern must appear for every major concept in every guide.
@@ -563,65 +563,65 @@ This pattern must appear for every major concept in every guide.
 
 ### Content Anti-Patterns
 
-❌ **Vague "it depends" without completion**  
+❌ **Vague "it depends" without completion**
 Example: "RAG vs fine-tuning depends on your use case" (STOP — what specifically does it depend on?)
 
-❌ **Textbook definitions without interview angle**  
+❌ **Textbook definitions without interview angle**
 Example: "RAG is a technique that retrieves..." (MISSING — when does an interviewer ask about RAG? What are they really testing?)
 
-❌ **Listing methods without failure modes**  
+❌ **Listing methods without failure modes**
 Example: "Here are five agent architectures: ReAct, Reflexion, Chain-of-Thought, Tree-of-Thoughts, Graph-of-Thoughts" (MISSING — when does each one fail? What's the decision tree?)
 
-❌ **Academic register**  
+❌ **Academic register**
 Example: "We can demonstrate that...", "It has been shown that...", "Research indicates..."
 
-❌ **Missing production angle**  
+❌ **Missing production angle**
 Example: Explaining a concept only at demo scale without addressing: "What breaks at 10k req/day?"
 
-❌ **No tradeoff analysis**  
+❌ **No tradeoff analysis**
 Example: Presenting approach X as simply better than Y without showing when Y wins
 
-❌ **Rapid-fire answers longer than 3 sentences**  
+❌ **Rapid-fire answers longer than 3 sentences**
 Example: A 2-paragraph essay for a question that should take 20 seconds to answer
 
-❌ **No concrete numbers**  
+❌ **No concrete numbers**
 Example: "Significantly faster" instead of "18× throughput improvement"
 
-❌ **Improvised emoji**  
+❌ **Improvised emoji**
 Example: Using 🔍🎯✨🚀 as callouts (only 💡⚠️⚡📖➡️ allowed)
 
 ### Structural Anti-Patterns
 
-❌ **Missing Junior vs Senior comparison**  
+❌ **Missing Junior vs Senior comparison**
 Every major concept needs this structure — it's the core teaching device
 
-❌ **No "what they're really testing" analysis**  
+❌ **No "what they're really testing" analysis**
 Every Q&A section needs to explain the underlying competency probe
 
-❌ **Incomplete tradeoff matrices**  
+❌ **Incomplete tradeoff matrices**
 If you list options, you must include: when each wins, when each loses, decision criteria
 
-❌ **No diagnostic strategy for failure modes**  
+❌ **No diagnostic strategy for failure modes**
 Listing what breaks without explaining how to detect/fix it
 
-❌ **Missing signal words section**  
+❌ **Missing signal words section**
 Every guide needs vocabulary that distinguishes senior answers
 
-❌ **No anchor example**  
+❌ **No anchor example**
 Abstract concepts without a concrete recurring scenario
 
 ### Voice Anti-Patterns
 
-❌ **Hedging language**  
+❌ **Hedging language**
 Example: "You might want to consider possibly using..."
 
-❌ **Tutorial-style hand-holding**  
+❌ **Tutorial-style hand-holding**
 Example: "First we'll learn about X, then we'll explore Y..." (this is interview prep, not a course)
 
-❌ **Excessive humor or personality**  
+❌ **Excessive humor or personality**
 Example: Jokes, memes, or casual asides that dilute density
 
-❌ **Missing second-person framing**  
+❌ **Missing second-person framing**
 Example: "One could..." instead of "You should..."
 
 ---

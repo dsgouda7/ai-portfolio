@@ -234,33 +234,33 @@ class PredictionResponse(BaseModel):
 @app.post("/predict", response_model=PredictionResponse)
 async def predict(tx: Transaction):
     start_time = time.perf_counter()
-    
+
     # Phase 1a: Feature store lookup (cached, <5ms)
     features = fetch_precomputed_features(tx.card_id)  # Redis lookup
-    
+
     # Phase 1b: Real-time feature computation (<30ms)
     features["z_score"] = (tx.amount - features["mean_amount"]) / features["std_amount"]
     features["velocity_ratio"] = features["tx_count_1h"] / features["baseline_rate"]
-    
+
     # Phase 1c: Ensemble inference (<45ms total)
     X = np.array([[features[f] for f in FEATURE_ORDER]])
-    
+
     iso_score = isolation_forest.decision_function(X)[0]
     ae_score = autoencoder_reconstruction_error(X)  # ONNX runtime
     svm_score = ocsvm.decision_function(X)[0]
-    
+
     # Weighted fusion (Ch.5 calibrated weights)
     ensemble_score = 0.35 * iso_score + 0.40 * ae_score + 0.25 * svm_score
-    
+
     # Phase 1d: Decision + SHAP (<15ms)
     decision = "BLOCK" if ensemble_score > 0.63 else "APPROVE"
     shap_values = compute_shap_if_blocked(X) if decision == "BLOCK" else {}
-    
+
     latency_ms = (time.perf_counter() - start_time) * 1000
-    
+
     # Async logging (non-blocking)
     log_transaction_async(tx, ensemble_score, decision, latency_ms)
-    
+
     return PredictionResponse(
         score=float(ensemble_score),
         decision=decision,
@@ -347,78 +347,78 @@ class ProductionMonitor:
         self.reference = reference_distribution
         self.hourly_buffer = defaultdict(list)  # Rolling 1h window per feature
         self.last_psi_compute = datetime.now()
-    
+
     def log_transaction(self, features: dict, score: float, decision: str, latency_ms: float):
         """Called after every prediction — async, non-blocking"""
         # Update counters
         predictions_total.labels(decision=decision).inc()
         prediction_latency.observe(latency_ms)
-        
+
         # Buffer features for PSI computation
         for feature_name, value in features.items():
             if feature_name in self.reference:
                 self.hourly_buffer[feature_name].append(value)
-    
+
     def compute_hourly_psi(self):
         """Scheduled every hour via cron or Airflow"""
         for feature_name, values in self.hourly_buffer.items():
             if len(values) < 100:  # Need min sample size
                 continue
-            
+
             ref = self.reference[feature_name]
             bins = ref["bins"]
             expected = np.array(ref["expected"])
-            
+
             # Compute actual distribution
             counts, _ = np.histogram(values, bins=bins)
             actual = counts / counts.sum()
-            
+
             # PSI formula
             psi = np.sum((actual - expected) * np.log((actual + 1e-10) / (expected + 1e-10)))
-            
+
             # Push to Prometheus
             feature_psi.labels(feature_name=feature_name).set(psi)
-            
+
             # Alert if breach
             if psi > 0.25:
                 send_alert(f"PSI breach: {feature_name} = {psi:.3f}")
-        
+
         # Clear buffer for next hour
         self.hourly_buffer.clear()
         self.last_psi_compute = datetime.now()
-    
+
     def compute_weekly_recall(self, delayed_holdout_path: str):
         """Scheduled every Sunday via Airflow DAG"""
         # Load delayed-label holdout (30-60 days old, labels now settled)
         holdout = load_delayed_holdout(delayed_holdout_path)
-        
+
         # Run inference on all holdout transactions
         y_true = holdout["is_fraud"]
         y_scores = [predict(tx) for tx in holdout["transactions"]]
         y_pred = (np.array(y_scores) > 0.63).astype(int)  # Threshold from Ch.5
-        
+
         # Compute recall
         tp = np.sum((y_true == 1) & (y_pred == 1))
         fn = np.sum((y_true == 1) & (y_pred == 0))
         recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
-        
+
         # Push to Prometheus
         recall_holdout.set(recall)
-        
+
         # Alert if breach
         if recall < 0.78:
             send_alert(f"Recall degraded: {recall:.3f} < 0.78 threshold")
-        
+
         return recall
 
 # Start Prometheus metrics server (scraped by Grafana)
 if __name__ == "__main__":
     start_http_server(8001)  # Metrics available at http://localhost:8001/metrics
     monitor = ProductionMonitor(load_reference_distributions())
-    
+
     # Hourly PSI check (run via cron: 0 * * * *)
     monitor.compute_hourly_psi()
-    
+
     # Weekly recall check (run via cron: 0 0 * * SUN)
     monitor.compute_weekly_recall("data/holdout_delayed_labels.parquet")
 ```
@@ -495,7 +495,7 @@ class DriftSignal:
     threshold: float
     breached: bool
     timestamp: datetime
-    
+
     def alert_message(self) -> str:
         if self.breached:
             return f"[DRIFT ALERT] {self.name} = {self.value:.3f} > {self.threshold} threshold"
@@ -507,7 +507,7 @@ class DriftDetector:
         self.recall_threshold = recall_threshold
         self.last_retrain = datetime.now()
         self.min_retrain_interval = timedelta(days=14)
-    
+
     def check_psi_breach(self, feature_psi_scores: dict) -> Tuple[bool, list]:
         """
         Args:
@@ -517,7 +517,7 @@ class DriftDetector:
         """
         signals = []
         breach = False
-        
+
         for feature, psi in feature_psi_scores.items():
             signal = DriftSignal(
                 name=f"PSI_{feature}",
@@ -529,9 +529,9 @@ class DriftDetector:
             signals.append(signal)
             if signal.breached:
                 breach = True
-        
+
         return breach, signals
-    
+
     def check_recall_breach(self, holdout_recall: float) -> DriftSignal:
         """Check if recall on delayed-label holdout has degraded"""
         signal = DriftSignal(
@@ -542,7 +542,7 @@ class DriftDetector:
             timestamp=datetime.now()
         )
         return signal
-    
+
     def should_trigger_retrain(self, psi_signals: list, recall_signal: DriftSignal) -> Tuple[bool, str]:
         """
         Retrain trigger logic: PSI breach OR recall breach, subject to min interval
@@ -552,23 +552,23 @@ class DriftDetector:
         days_since_retrain = (datetime.now() - self.last_retrain).days
         if days_since_retrain < self.min_retrain_interval.days:
             return False, f"Too soon (last retrain {days_since_retrain}d ago, min {self.min_retrain_interval.days}d)"
-        
+
         # Check PSI breach
         psi_breaches = [s for s in psi_signals if s.breached]
         if psi_breaches:
             features = ", ".join([s.name for s in psi_breaches])
             return True, f"PSI breach on features: {features}"
-        
+
         # Check recall breach
         if recall_signal.breached:
             return True, f"Recall degraded to {recall_signal.value:.3f} < {self.recall_threshold}"
-        
+
         return False, "No breach detected"
 
 # Example usage (run hourly via Airflow)
 if __name__ == "__main__":
     detector = DriftDetector(psi_threshold=0.25, recall_threshold=0.78)
-    
+
     # Fetch latest metrics from Prometheus
     feature_psi = {
         "Amount": 0.31,
@@ -577,14 +577,14 @@ if __name__ == "__main__":
         # ... other 26 features
     }
     holdout_recall = 0.768  # From weekly evaluation
-    
+
     # Check both signals
     psi_breach, psi_signals = detector.check_psi_breach(feature_psi)
     recall_signal = detector.check_recall_breach(holdout_recall)
-    
+
     # Decision logic
     should_retrain, reason = detector.should_trigger_retrain(psi_signals, recall_signal)
-    
+
     if should_retrain:
         print(f"✅ TRIGGER RETRAINING: {reason}")
         # Fire Airflow DAG: airflow dags trigger fraud_model_retrain
@@ -661,36 +661,36 @@ class BlueGreenDeployment:
         self.namespace = namespace
         self.shadow_duration_hours = 48
         self.cutover_approved = False
-    
+
     def trigger_retraining(self, training_window_days: int = 30):
         """
         Triggered by drift detector. Pulls labeled data, retrains ensemble, stages as green.
         """
         print(f"[RETRAIN] Starting retraining pipeline...")
-        
+
         # Step 1: Pull labeled data (last N days with settled labels)
         end_date = datetime.now() - timedelta(days=30)  # 30-day label delay
         start_date = end_date - timedelta(days=training_window_days)
-        
+
         training_data = fetch_labeled_transactions(start_date, end_date)
         print(f"[RETRAIN] Loaded {len(training_data)} transactions ({start_date.date()} to {end_date.date()})")
-        
+
         # Step 2: Retrain ensemble (same architecture as Ch.5)
         print("[RETRAIN] Training Isolation Forest...")
         iso_model = train_isolation_forest(training_data)
-        
+
         print("[RETRAIN] Training Autoencoder...")
         ae_model = train_autoencoder(training_data)
-        
+
         print("[RETRAIN] Training One-Class SVM...")
         svm_model = train_ocsvm(training_data)
-        
+
         # Step 3: Evaluate on held-out validation set (20% of training window)
         val_recall, val_fpr, val_latency = evaluate_ensemble(
             iso_model, ae_model, svm_model, training_data
         )
         print(f"[RETRAIN] Validation metrics: Recall={val_recall:.3f}, FPR={val_fpr:.4f}, p99={val_latency:.1f}ms")
-        
+
         # Step 4: Save to MLflow with version tag
         new_version = mlflow.register_model(
             model_uri=f"models:/fraud_ensemble/staging",
@@ -698,16 +698,16 @@ class BlueGreenDeployment:
             tags={"retrain_date": datetime.now().isoformat(), "val_recall": val_recall}
         )
         print(f"[RETRAIN] Model registered as v{new_version} in MLflow")
-        
+
         # Step 5: Deploy green to Kubernetes (shadow mode)
         self.deploy_green_shadow(new_version)
-        
+
         return new_version
-    
+
     def deploy_green_shadow(self, model_version: str):
         """Deploy green model in shadow mode — receives traffic copy but doesn't make decisions"""
         print(f"[DEPLOY] Deploying green model v{model_version} in shadow mode...")
-        
+
         # Update Kubernetes deployment with new model version
         kubectl_cmd = f"""
         kubectl set image deployment/fraud-api-green \\
@@ -715,7 +715,7 @@ class BlueGreenDeployment:
             -n {self.namespace}
         """
         subprocess.run(kubectl_cmd, shell=True, check=True)
-        
+
         # Configure Istio to mirror 100% of traffic to green (shadow)
         istio_config = f"""
 apiVersion: networking.istio.io/v1beta1
@@ -743,16 +743,16 @@ spec:
         with open("/tmp/fraud-api-mirror.yaml", "w") as f:
             f.write(istio_config)
         subprocess.run("kubectl apply -f /tmp/fraud-api-mirror.yaml", shell=True, check=True)
-        
+
         print(f"[DEPLOY] Green shadow active. Will evaluate for {self.shadow_duration_hours}h.")
-    
+
     def evaluate_shadow_metrics(self) -> Dict[str, float]:
         """
         After 48h shadow run, compare green vs blue on live traffic.
         Queries Prometheus for metrics collected during shadow period.
         """
         print(f"[EVAL] Evaluating shadow metrics (last {self.shadow_duration_hours}h)...")
-        
+
         # Query Prometheus for green and blue metrics
         blue_metrics = query_prometheus(
             f'fraud_recall_live{{deployment="blue"}}[{self.shadow_duration_hours}h]'
@@ -760,7 +760,7 @@ spec:
         green_metrics = query_prometheus(
             f'fraud_recall_shadow{{deployment="green"}}[{self.shadow_duration_hours}h]'
         )
-        
+
         comparison = {
             "blue_recall": blue_metrics["recall"],
             "green_recall": green_metrics["recall"],
@@ -769,12 +769,12 @@ spec:
             "blue_p99_latency": blue_metrics["p99_latency_ms"],
             "green_p99_latency": green_metrics["p99_latency_ms"],
         }
-        
+
         print(f"[EVAL] Blue: Recall={comparison['blue_recall']:.3f}, FPR={comparison['blue_fpr']:.4f}, p99={comparison['blue_p99_latency']:.1f}ms")
         print(f"[EVAL] Green: Recall={comparison['green_recall']:.3f}, FPR={comparison['green_fpr']:.4f}, p99={comparison['green_p99_latency']:.1f}ms")
-        
+
         return comparison
-    
+
     def decide_cutover(self, comparison: Dict[str, float]) -> bool:
         """
         Cutover decision logic:
@@ -785,9 +785,9 @@ spec:
         recall_ok = comparison["green_recall"] >= comparison["blue_recall"]
         latency_ok = comparison["green_p99_latency"] <= 100.0
         fpr_ok = comparison["green_fpr"] <= (comparison["blue_fpr"] + 0.0005)
-        
+
         cutover = recall_ok and latency_ok and fpr_ok
-        
+
         if cutover:
             print("✅ [DECISION] APPROVE CUTOVER — All criteria met")
         else:
@@ -799,13 +799,13 @@ spec:
             if not fpr_ok:
                 reasons.append(f"FPR increased ({comparison['green_fpr']:.4f} > {comparison['blue_fpr']:.4f} + 0.05%)")
             print(f"❌ [DECISION] REJECT CUTOVER — {'; '.join(reasons)}")
-        
+
         return cutover
-    
+
     def execute_cutover(self):
         """Flip Istio traffic from blue → green (green becomes new live model)"""
         print("[CUTOVER] Switching live traffic to green...")
-        
+
         # Update Istio VirtualService to route 100% to green
         istio_config = f"""
 apiVersion: networking.istio.io/v1beta1
@@ -827,9 +827,9 @@ spec:
         with open("/tmp/fraud-api-live.yaml", "w") as f:
             f.write(istio_config)
         subprocess.run("kubectl apply -f /tmp/fraud-api-live.yaml", shell=True, check=True)
-        
+
         print("✅ [CUTOVER] Complete. Green is now live. Blue archived.")
-        
+
         # Scale down old blue deployment (keep for rollback if needed)
         subprocess.run(
             f"kubectl scale deployment/fraud-api-blue --replicas=1 -n {self.namespace}",
@@ -839,16 +839,16 @@ spec:
 # Full Phase 4 workflow (orchestrated by Airflow DAG)
 if __name__ == "__main__":
     deployer = BlueGreenDeployment(namespace="fraud-detection")
-    
+
     # 1. Retrain triggered by drift detector
     new_version = deployer.trigger_retraining(training_window_days=30)
-    
+
     # 2. Shadow deployment (48h)
     time.sleep(48 * 3600)  # Wait for shadow evaluation period
-    
+
     # 3. Evaluate shadow metrics
     comparison = deployer.evaluate_shadow_metrics()
-    
+
     # 4. Cutover decision
     if deployer.decide_cutover(comparison):
         deployer.execute_cutover()
@@ -866,7 +866,7 @@ if __name__ == "__main__":
 | 3 | PSI (V14=0.34) | Feb 1–Mar 2 | 80% < 82% Blue | ❌ No | N/A (rollback) |
 | 4 | Recall (77%) | Mar 20–Apr 19 | 84% > 80% Blue | ✅ Yes | 51h |
 
-**Rollback reasons (Retrain #3):**  
+**Rollback reasons (Retrain #3):**
 Green model showed 80% recall on shadow traffic vs 82% blue — a 2pp degradation. Investigation revealed training data included a 3-day holiday period with atypical transaction patterns, biasing the model. Fix: exclude holiday periods from training windows going forward.
 
 > 💡 **Industry callout: MLflow Model Registry + Kubernetes** — This is the production standard for versioned model deployment. MLflow tracks model lineage (which data trained it, validation metrics, hyperparameters). Kubernetes + Istio handle traffic routing and shadow evaluation. For teams without Kubernetes, **AWS SageMaker** or **Azure ML** provide managed equivalents with built-in blue-green deployment.

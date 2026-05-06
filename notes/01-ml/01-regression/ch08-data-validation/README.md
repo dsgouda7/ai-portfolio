@@ -308,14 +308,14 @@ where $E_b\%$ is the expected (training) fraction in bin $b$ and $A_b\%$ is the 
 > ```python
 > from pydantic import BaseModel, Field, confloat
 > from typing import List
-> 
+>
 > class HousingBatch(BaseModel):
 >     """Schema contract for California Housing production batches."""
 >     MedInc: List[confloat(ge=0.5, le=15.0)]  # Median income [0.5, 15.0]
 >     HouseAge: List[confloat(ge=1.0, le=52.0)]  # House age [1, 52]
 >     AveRooms: List[confloat(ge=0.0)]           # Average rooms >= 0
 >     # ... define all 8 features
-> 
+>
 >     def check_distribution_drift(self, reference_stats: dict) -> dict:
 >         """Compute PSI for each feature against reference."""
 >         drift_scores = {}
@@ -324,7 +324,7 @@ where $E_b\%$ is the expected (training) fraction in bin $b$ and $A_b\%$ is the 
 >                 reference_stats[feature], getattr(self, feature))
 >             drift_scores[feature] = psi
 >         return drift_scores
-> 
+>
 > # Usage at inference time
 > try:
 >     batch = HousingBatch(**production_data)  # Schema check
@@ -355,7 +355,7 @@ The industry-standard PSI thresholds (from credit risk, now universal in ML moni
 # Phase 3: Alert threshold logic with graduated responses
 def route_by_psi(psi_score: float, feature: str, batch_id: str) -> str:
     """Convert PSI score to routing decision with structured logging."""
-    
+
     # DECISION LOGIC (threshold evaluation)
     if psi_score < 0.10:
         severity = "INFO"
@@ -369,7 +369,7 @@ def route_by_psi(psi_score: float, feature: str, batch_id: str) -> str:
         severity = "CRITICAL"
         action = "BLOCK"
         reason = f"Severe drift (PSI={psi_score:.3f}) - retrain required"
-    
+
     # Structured audit event (logged to monitoring system)
     alert = {
         "timestamp": datetime.utcnow().isoformat(),
@@ -382,13 +382,13 @@ def route_by_psi(psi_score: float, feature: str, batch_id: str) -> str:
         "reason": reason
     }
     log_to_monitoring_system(alert)  # → Datadog / Prometheus / CloudWatch
-    
+
     return action
 
 # Usage on Portland batch
 action = route_by_psi(psi_score=0.339, feature="MedInc", batch_id="pdx-2024-01-15")
 # Output: "BLOCK"
-# Alert logged: {"severity": "CRITICAL", "action": "BLOCK", 
+# Alert logged: {"severity": "CRITICAL", "action": "BLOCK",
 #                "reason": "Severe drift (PSI=0.339) - retrain required"}
 ```
 
@@ -406,16 +406,16 @@ action = route_by_psi(psi_score=0.339, feature="MedInc", batch_id="pdx-2024-01-1
 def validate_batch_robust(df_prod, df_train, feature='MedInc'):
     """Multi-metric validation: PSI + KS test + GE suite (defense in depth)."""
     from scipy.stats import ks_2samp
-    
+
     # Metric 1: PSI (population shift detector)
     psi = compute_psi(df_train[feature].values, df_prod[feature].values)
-    
+
     # Metric 2: KS test (distribution shape detector)
     ks_stat, ks_p = ks_2samp(df_train[feature], df_prod[feature])
-    
+
     # Metric 3: GE mean/std bounds (moment detector)
     mean_ok = df_train[feature].mean() * 0.85 <= df_prod[feature].mean() <= df_train[feature].mean() * 1.15
-    
+
     # DECISION LOGIC (consensus voting)
     if psi >= 0.25 or ks_p < 0.01 or not mean_ok:
         return "BLOCK", f"PSI={psi:.3f}, KS_p={ks_p:.2e}, mean_ok={mean_ok}"
@@ -433,7 +433,7 @@ action, reason = validate_batch_robust(df_pdx, df_ca, feature='MedInc')
 > ```python
 > from evidently.report import Report
 > from evidently.metric_preset import DataDriftPreset, DataQualityPreset
-> 
+>
 > # Generate drift report comparing reference vs current data
 > report = Report(metrics=[
 >     DataDriftPreset(),        # PSI + KS for all features
@@ -441,7 +441,7 @@ action, reason = validate_batch_robust(df_pdx, df_ca, feature='MedInc')
 > ])
 > report.run(reference_data=df_ca, current_data=df_pdx)
 > report.save_html("drift_report_portland_2024-01-15.html")
-> 
+>
 > # Programmatic access to drift scores
 > drift_scores = report.as_dict()['metrics'][0]['result']['drift_by_columns']
 > for feature, stats in drift_scores.items():
@@ -618,10 +618,10 @@ def retrain_on_drift(action: str, batch_metadata: dict, model_config: dict):
     if action == "BLOCK":
         # Step 1: Collect production labels (2-week manual review for Portland)
         prod_labels = collect_labels_for_batch(batch_metadata['batch_id'])
-        
+
         # Step 2: Merge with training data (CA + Portland combined)
         df_combined = pd.concat([df_train, prod_labels])
-        
+
         # Step 3: Trigger retraining pipeline
         retrain_job = mlflow.projects.run(
             uri=".",
@@ -632,23 +632,23 @@ def retrain_on_drift(action: str, batch_metadata: dict, model_config: dict):
                 "parent_run_id": model_config['run_id']
             }
         )
-        
+
         # Step 4: Re-validate on Portland holdout
         new_model = mlflow.sklearn.load_model(f"runs:/{retrain_job.run_id}/model")
         portland_mae = evaluate_mae(new_model, df_pdx_holdout)
-        
+
         # Step 5: Log drift-correction outcome
         mlflow.log_metric("portland_mae_before_retrain", 128_000)
         mlflow.log_metric("portland_mae_after_retrain", portland_mae)
         mlflow.log_param("retrain_trigger", f"PSI={psi:.3f}_KS_p={ks_p:.2e}")
-        
+
         return portland_mae  # → 89k (below 95k target ✅)
-    
+
     elif action == "WARN":
         # Schedule review, increase monitoring frequency
         schedule_model_review(days=7)
         increase_validation_cadence(from_daily_to_hourly=True)
-    
+
     # DEPLOY: no action needed, audit logged automatically
 
 # Execute on Portland drift event
@@ -665,7 +665,7 @@ final_mae = retrain_on_drift(
 > ```python
 > import mlflow
 > from mlflow.models import make_metric
-> 
+>
 > # Define custom drift metric for model validation
 > def psi_metric(eval_df, builtin_metrics):
 >     reference_data = mlflow.artifacts.load_table("reference_distribution")
@@ -674,11 +674,11 @@ final_mae = retrain_on_drift(
 >         psi = compute_psi(reference_data[col], eval_df[col])
 >         psi_scores[f"drift_psi_{col}"] = psi
 >     return psi_scores
-> 
+>
 > # Register model with drift validation gate
 > with mlflow.start_run() as run:
 >     mlflow.sklearn.log_model(model, "model")
->     
+>
 >     # Evaluate on production data with drift checks
 >     results = mlflow.evaluate(
 >         model=f"runs:/{run.info.run_id}/model",
@@ -688,7 +688,7 @@ final_mae = retrain_on_drift(
 >         evaluators=["default"],
 >         extra_metrics=[make_metric(eval_fn=psi_metric)]
 >     )
->     
+>
 >     # Conditional model promotion based on drift + accuracy
 >     if results.metrics["mae"] < 95_000 and all(
 >         results.metrics[k] < 0.25 for k in results.metrics if k.startswith("drift_psi_")

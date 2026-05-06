@@ -261,7 +261,7 @@ def after_request(response):
             route=request.path,
             status=response.status_code
         ).inc()
-    
+
     ACTIVE_CONNECTIONS.dec()
     return response
 
@@ -274,12 +274,12 @@ def health():
 def payment():
     """Simulate payment processing with variable latency."""
     time.sleep(0.05)  # Simulate 50ms processing time
-    
+
     # DECISION LOGIC: Simulate 5% error rate
     import random
     if random.random() < 0.05:
         return jsonify({"error": "Payment gateway timeout"}), 503
-    
+
     return jsonify({"status": "processed", "amount": 100.00}), 200
 
 @app.route('/api/refund', methods=['POST'])
@@ -304,17 +304,17 @@ if __name__ == '__main__':
 4. **Exclude /metrics from recording** — Prevents self-measurement noise
 
 > 💡 **Industry Standard:** `prometheus_client`
-> 
+>
 > This is the canonical Python library maintained by the Prometheus project. Use it for all metric instrumentation in Python services.
-> 
+>
 > **When to use:** Always in production Python services. For other languages, use the official Prometheus client libraries:
 > - **Go**: `github.com/prometheus/client_golang`
 > - **Java**: `io.prometheus:simpleclient`
 > - **Node.js**: `prom-client`
 > - **Rust**: `prometheus` crate
-> 
+>
 > **Common alternatives:** Datadog's `ddtrace` (vendor lock-in), StatsD (no labels, push-based), OpenTelemetry SDK (vendor-neutral but more complex setup)
-> 
+>
 > **See also:** [Prometheus client library best practices](https://prometheus.io/docs/instrumenting/writing_clientlibs/)
 
 > 💡 **Instrument verdict:** Flask `/metrics` exposes Counter, Histogram, and Gauge; labels enable per-route error rate and p95 latency queries without redeployment.
@@ -451,17 +451,17 @@ open http://localhost:9090/targets
 ```
 
 > 💡 **Industry Standard:** Prometheus + Grafana OSS + Comparison with paid alternatives
-> 
+>
 > This open-source stack is the de facto standard for Kubernetes monitoring. Over 80% of CNCF Kubernetes deployments use Prometheus.
-> 
+>
 > **When to use:** Always for self-hosted infrastructure. For cloud environments, consider managed alternatives only after validating the open-source stack locally.
-> 
+>
 > **Common alternatives:**
 > - **Datadog** (SaaS, $$$ — full APM + metrics + logs in one platform, vendor lock-in)
 > - **New Relic** (SaaS, $$$ — similar to Datadog, easier onboarding but less flexible)
 > - **AWS CloudWatch** (AWS-only, integrates with AWS services but limited PromQL-like query language)
 > - **Azure Monitor** (Azure-only, similar to CloudWatch)
-> 
+>
 > **Comparison:**
 > | Feature | Prometheus | Datadog | New Relic | CloudWatch |
 > |---------|-----------|---------|-----------|------------|
@@ -470,7 +470,7 @@ open http://localhost:9090/targets
 > | **Query language** | PromQL | Custom | NRQL | CloudWatch Insights |
 > | **Label dimensions** | Unlimited | 10 tags/metric | Limited | 10 dimensions |
 > | **Retention (default)** | 15 days | 15 months | 8 days | 15 months |
-> 
+>
 > **When to pay for SaaS:** When you don't want to manage Prometheus scaling (federation, Thanos) or need integrated log/trace correlation. Otherwise, Prometheus is production-ready and free.
 
 > 💡 **Collect verdict:** Prometheus scraping every 15 seconds; 30-day TSDB retention; PromQL `rate(http_requests_total[5m])` returns live requests/sec.
@@ -543,10 +543,10 @@ The **RED method** (Rate, Errors, Duration) is the minimum viable dashboard for 
   ```promql
   # p50 (median)
   histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket[5m])) by (route, le))
-  
+
   # p95 (95th percentile)
   histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (route, le))
-  
+
   # p99 (99th percentile)
   histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (route, le))
   ```
@@ -621,33 +621,33 @@ Grafana dashboards can be exported as JSON and version-controlled. Here's a mini
 4. Save
 
 > 💡 **Industry Standard:** OpenTelemetry for vendor-neutral instrumentation
-> 
+>
 > While `prometheus_client` is the standard for Prometheus-specific monitoring, **OpenTelemetry** is the emerging cross-vendor standard for metrics, logs, and traces.
-> 
+>
 > **When to use:** When you want flexibility to switch between Prometheus, Datadog, New Relic, or AWS X-Ray without re-instrumenting your code.
-> 
+>
 > **Setup:**
 > ```python
 > from opentelemetry import metrics
 > from opentelemetry.sdk.metrics import MeterProvider
 > from opentelemetry.exporter.prometheus import PrometheusMetricReader
-> 
+>
 > # Configure OpenTelemetry to export Prometheus format
 > reader = PrometheusMetricReader()
 > provider = MeterProvider(metric_readers=[reader])
 > metrics.set_meter_provider(provider)
-> 
+>
 > meter = metrics.get_meter(__name__)
 > request_counter = meter.create_counter("http_requests_total")
-> 
+>
 > @app.route('/api/payment')
 > def payment():
 >     request_counter.add(1, {"route": "/api/payment", "status": "200"})
 >     return jsonify({"status": "processed"})
 > ```
-> 
+>
 > **Trade-off:** OpenTelemetry is more verbose but future-proof. Use `prometheus_client` for simple setups; switch to OpenTelemetry when you need multi-backend support.
-> 
+>
 > **See also:** [OpenTelemetry Python docs](https://opentelemetry.io/docs/instrumentation/python/)
 
 > 💡 **Visualize verdict:** RED dashboard shows request rate, error rate, and p95 latency panels; latency trend visible 6 hours back without PromQL knowledge.
@@ -737,14 +737,14 @@ global:
 route:
   # Default receiver for all alerts
   receiver: 'slack-general'
-  
+
   # Route critical alerts to PagerDuty
   routes:
     - match:
         severity: critical
       receiver: 'pagerduty-oncall'
       continue: true  # Also send to Slack
-    
+
     - match:
         severity: warning
       receiver: 'slack-warnings'
@@ -785,7 +785,7 @@ Here's a complete incident response flow showing decision logic at each step:
 def handle_alert(alert):
     """
     Handle incoming alert from Alertmanager.
-    
+
     DECISION LOGIC:
     1. Parse alert labels and annotations
     2. Check severity and route to correct team
@@ -798,7 +798,7 @@ def handle_alert(alert):
     route = alert['labels'].get('route', 'unknown')
     description = alert['annotations']['description']
     runbook_url = alert['annotations'].get('runbook_url', '')
-    
+
     # DECISION 1: Route by severity
     if severity == 'critical':
         # Page on-call engineer via PagerDuty
@@ -808,25 +808,25 @@ def handle_alert(alert):
             urgency='high',
             runbook_url=runbook_url
         )
-        
+
         # DECISION 2: Auto-remediation for known issues
         if alert_name == 'HighLatency' and route == '/api/payment':
             # Known fix: Scale up payment service
             print(f"Auto-scaling payment service from 3 to 6 replicas...")
             scale_kubernetes_deployment('payment-service', replicas=6)
-            
+
         elif alert_name == 'HighErrorRate' and '503' in description:
             # Known fix: Restart hung workers
             print(f"Restarting Flask workers...")
             restart_service('flask-app')
-    
+
     elif severity == 'warning':
         # Post to Slack warnings channel
         post_to_slack(
             channel='#alerts-warnings',
             message=f"⚠️ {alert_name}: {description}\nRunbook: {runbook_url}"
         )
-        
+
         # Create Jira ticket for investigation
         create_jira_ticket(
             project='OPS',
@@ -834,7 +834,7 @@ def handle_alert(alert):
             description=description,
             priority='Medium'
         )
-    
+
     # DECISION 3: Log all alerts to central audit trail
     log_to_datadog(alert)
 
@@ -888,30 +888,30 @@ handle_alert(alert_payload)
 ```
 
 > 💡 **Industry Standard:** Loki for log aggregation + Jaeger for distributed tracing
-> 
+>
 > Metrics tell you *that* something is broken. Logs tell you *why* (error messages, stack traces). Traces tell you *where* (which service in the request path is slow).
-> 
+>
 > **Loki** (Grafana Labs, 2018) is a log aggregation system designed to work with Prometheus and Grafana:
 > - **Architecture:** Pull logs from services, index only metadata (labels), store log content in object storage (S3, GCS)
 > - **Query language:** LogQL (similar to PromQL) — `{job="flask-app"} |= "error" | json | status_code="500"`
 > - **When to use:** When you need to search logs for specific error messages or trace IDs
-> 
+>
 > **Jaeger** (Uber, 2017, now CNCF) is a distributed tracing system:
 > - **Architecture:** Instrument code with OpenTelemetry spans, export to Jaeger collector, query trace tree
 > - **Use case:** "This request took 2 seconds — which of the 10 microservices was slow?"
 > - **Integration:** Jaeger spans include trace IDs that you can link to Loki logs and Prometheus metrics
-> 
+>
 > **The full observability stack:**
 > ```
 > Metrics (Prometheus) + Logs (Loki) + Traces (Jaeger) = Complete observability
-> 
+>
 > Example workflow:
 > 1. Grafana dashboard shows p95 latency spike at 3:15pm
 > 2. Click spike → query Loki for logs: `{job="flask-app",trace_id="abc123"} |= "error"`
 > 3. See error: "Database timeout after 5s"
 > 4. Click trace_id → Jaeger shows: API (50ms) → DB query (5000ms) ← bottleneck found
 > ```
-> 
+>
 > **See also:**
 > - [Loki documentation](https://grafana.com/docs/loki/latest/)
 > - [Jaeger documentation](https://www.jaegertracing.io/docs/)
@@ -1060,20 +1060,20 @@ graph TB
         B --> D[Histogram: http_request_duration_seconds]
         B --> E[Gauge: active_connections]
     end
-    
+
     subgraph "Phase 2: COLLECT"
         F[Prometheus] -->|scrape every 15s| B
         F --> G[TSDB Storage]
         G -->|30 day retention| H[Time-series data]
     end
-    
+
     subgraph "Phase 3: VISUALIZE"
         I[Grafana] -->|PromQL queries| F
         I --> J[Dashboard: Request Rate]
         I --> K[Dashboard: Error Rate]
         I --> L[Dashboard: Latency p95/p99]
     end
-    
+
     subgraph "Phase 4: ALERT"
         M[Alertmanager] -->|evaluate rules| F
         M --> N{Error rate > 5%?}
@@ -1081,7 +1081,7 @@ graph TB
         N -->|Yes| P[Slack #alerts]
         N -->|Yes| Q[Runbook: Scale service]
     end
-    
+
     style A fill:#1e3a8a,color:#fff
     style F fill:#15803d,color:#fff
     style I fill:#b45309,color:#fff
@@ -1242,13 +1242,13 @@ You just deployed Prometheus + Grafana manually with `docker-compose.yml`. **But
 
 ## Key Diagrams
 
-![Prometheus Architecture](img/prometheus_architecture.png)  
+![Prometheus Architecture](img/prometheus_architecture.png)
 *Figure 1: Prometheus scrapes `/metrics` endpoints from targets, stores time-series data in a local TSDB, and exposes PromQL for queries.*
 
-![Metrics Types](img/metrics_types.png)  
+![Metrics Types](img/metrics_types.png)
 *Figure 2: Counter (monotonic), Gauge (instant snapshot), Histogram (bucketed distribution), Summary (client-side percentiles).*
 
-![Grafana Dashboard](img/grafana_dashboard.png)  
+![Grafana Dashboard](img/grafana_dashboard.png)
 *Figure 3: Grafana visualizes Prometheus queries with time-series graphs, stat panels, and heatmaps.*
 
 ---

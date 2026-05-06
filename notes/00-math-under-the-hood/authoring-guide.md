@@ -1,7 +1,7 @@
 # Math Under the Hood — Authoring Guide
 
-> **This document tracks the chapter-by-chapter build of the Math Under the Hood track.**  
-> Each chapter lives under `notes/00-math_under_the_hood/` in its own folder, containing a README and a Jupyter notebook with interactive widgets.  
+> **This document tracks the chapter-by-chapter build of the Math Under the Hood track.**
+> Each chapter lives under `notes/00-math_under_the_hood/` in its own folder, containing a README and a Jupyter notebook with interactive widgets.
 > Read this before starting any chapter to keep tone, structure, and the knuckleball free-kick running example consistent.
 >
 > **📚 Updated:** Now includes comprehensive pedagogical patterns, voice guidelines, and conformance standards aligned with ML track (see §"Style Ground Truth" and §"Pedagogical Patterns" below).
@@ -58,7 +58,7 @@ At the root of `notes/00-math_under_the_hood/`, two special files consolidate th
   - Production patterns demonstrated (Scale→Engineer→Fit, Forward/Backward passes, etc.)
   - Complete trajectory visualization
   - Summary cell linking to ML track
-  
+
   **Usage:** Readers can run this notebook top-to-bottom to see the complete solution in action without navigating individual chapter notebooks. Each code cell is brief (10-30 lines), focused on demonstrating the core concept, and includes inline comments referencing the chapter it came from.
 
 **Naming conventions:**
@@ -100,7 +100,7 @@ Each chapter gives us ONE new mathematical tool to solve ONE piece of the challe
 
 When adding a new chapter, extend this thread — do not introduce an unrelated example. Every chapter should explicitly state:
 - **What constraint(s) we're working toward**
-- **What we can now solve**  
+- **What we can now solve**
 - **What's still blocked (and which future chapter unlocks it)**
 
 ---
@@ -123,10 +123,10 @@ Every chapter README follows this **extended structure**:
 ## 0 · The Challenge — Where We Are
 
 > 🎯 **The goal**: Score a free kick that clears a 1.8m wall and dips under a 2.44m crossbar while beating the keeper's reaction time.
-> 
+>
 > **THREE constraints:**
 > 1. 🧱 WALL CLEARANCE: Ball height > 1.8m at 9.15m distance
-> 2. 🎯 CROSSBAR CLEARANCE: Ball height < 2.44m at 20m distance  
+> 2. 🎯 CROSSBAR CLEARANCE: Ball height < 2.44m at 20m distance
 > 3. ⚡ KEEPER-BEATING SPEED: Flight time or arrival velocity sufficient
 
 **What we know so far:**
@@ -280,19 +280,19 @@ The reader is treated as a capable engineer who doesn't need flattery, gets impa
 
 **Second person is the default.** The reader is placed inside the scenario at all times:
 
-> *"You're lining up the free kick. 20 meters out. One shot."*  
-> *"You just did calculus. By hand. And it worked."*  
+> *"You're lining up the free kick. 20 meters out. One shot."*
+> *"You just did calculus. By hand. And it worked."*
 > *"The striker asks: 'What angle gives maximum range?' You can't answer yet."*
 
 **Dry, brief humour appears exactly once per major concept.** It is never laboured. Examples:
-> *"The ball doesn't care about our coordinate system."*  
+> *"The ball doesn't care about our coordinate system."*
 > *"Newton and Leibniz spent 20 years fighting about who invented this. You'll master it in 20 minutes."*
 
 The register: wry, businesslike, never cute.
 
 **Contractions and em-dashes are used freely** when they tighten a sentence:
-> *"That's the derivative."*  
-> *"Parabolas curve — lines don't."*  
+> *"That's the derivative."*
+> *"Parabolas curve — lines don't."*
 > *"Full stop."*
 
 **Academic register is forbidden.** Phrases like "In this section we demonstrate", "It can be shown that", "The reader may note", "we present", "we propose" do not appear in these chapters and must not appear in any new chapter.
@@ -356,7 +356,7 @@ A · x                                              (2×2) · (2×1) → (2×1)
   A                            x
   ┌  2   3  ┐                 ┌  1  ┐
   └  4   1  ┘  ×              └  2  ┘
-  
+
 = ┌  2×1 + 3×2  ┐  =  ┌  8  ┐
   └  4×1 + 1×2  ┘     └  6  ┘
 ```
@@ -376,7 +376,7 @@ A · x                                              (2×2) · (2×1) → (2×1)
 
 **Example:**
 ```markdown
-**Scenario:** v₀ = 20 m/s, θ = 30°, t = 0.6s  
+**Scenario:** v₀ = 20 m/s, θ = 30°, t = 0.6s
 **Formula:** h(t) = v₀sin(θ)·t - ½g·t²
 
 **Step-by-step:**
@@ -463,7 +463,7 @@ Whichever template you pick, every chapter must end with **Progress Check**, **B
 
 **Image naming convention:**
 - `chNN-[topic]-[type].png/.gif` for chapter-specific generated images
-- `[concept]_generated.gif/.png` for algorithmically generated animations  
+- `[concept]_generated.gif/.png` for algorithmically generated animations
 - Descriptive alt-text is mandatory: `![Parabolic trajectory showing three launch angles (20°, 35°, 45°) with wall and crossbar constraints highlighted](img/ch02-trajectory-comparison.png)`
 
 **Generated plots use dark background `facecolor="#1a1a2e"`** — matching the chapter's rendered dark theme. Light-background plots are not used.
@@ -625,7 +625,7 @@ Act 4: Decision framework (when to use which)
 
 **Template:**
 ```markdown
-> **The story:** [Name] ([Year]) solved [specific problem] using [this technique]. 
+> **The story:** [Name] ([Year]) solved [specific problem] using [this technique].
 > [One sentence on lasting impact]. [One sentence connecting to free kick].
 >
 > **Where you are:** Ch.[N-1] achieved [specific capability]. This chapter fixes [named blocker].
@@ -733,28 +733,28 @@ Map tone to pedagogical purpose:
 
 ### Anti-Patterns (What NOT to Do)
 
-❌ **Listing formulas without demonstrating need**  
+❌ **Listing formulas without demonstrating need**
 Example: "Here are five trajectory formulas: parabolic, ballistic, drag-adjusted..." (without showing when/why)
 
-❌ **Formulas without verbal glossing**  
+❌ **Formulas without verbal glossing**
 Example: Dropping LaTeX `h(t) = v₀t - ½gt²` with no "In English:" paragraph
 
-❌ **Vague capability claims**  
+❌ **Vague capability claims**
 Example: "The model got better" instead of "Can now verify wall clearance: 1.92m > 1.8m ✅"
 
-❌ **Academic register**  
+❌ **Academic register**
 Example: "We demonstrate that...", "It can be shown that...", "In this section we will present..."
 
-❌ **Synthetic toy scenarios**  
+❌ **Synthetic toy scenarios**
 Example: Using `h(t) = 5t - 2t²` without physical grounding instead of actual knuckleball kinematics
 
-❌ **Improvised emoji**  
+❌ **Improvised emoji**
 Example: Using 🔍🎯✨🚀 as inline callouts (only 💡⚠️⚡📖➡️ allowed)
 
-❌ **Topic-label section headings**  
+❌ **Topic-label section headings**
 Example: "## 3 · Math" instead of "## 3 · Math — How Parabolas Encode Initial Conditions"
 
-❌ **Skipping numerical verification**  
+❌ **Skipping numerical verification**
 Example: Showing formula, then immediately generalizing without computing a specific example
 
 ---
@@ -940,7 +940,7 @@ graph TD
     C --> D[Ch.4-6: Optimize Parameters]
     D --> E[Ch.7: Handle Uncertainty]
     E --> F[✅ Complete Solution]
-    
+
     B --> G[h_t = v₀ᵧt - ½gt²]
     C --> H[h' = 0 for apex]
     D --> I[∇f for multi-variable]

@@ -79,7 +79,7 @@ Parallel serving setup:     Track performance:          Shadow mode testing:    
 → DECISION:                 → DECISION:                 → DECISION:                 → DECISION:
   Architecture passes         PSI threshold breached      Shadow beats incumbent      Cutover or rollback
   latency benchmark?          (>0.20)?                    by ≥3% MAE?                 based on shadow MAE
-  
+
   YES: Proceed to monitor     YES: Trigger retrain        YES: Enter cutover          SUCCESS: Promote new
   NO: Optimize parallel       NO: Continue monitoring     NO: Keep incumbent          FAIL: Rollback + debug
 ```
@@ -112,9 +112,9 @@ Day 9:   Blue-green switch → new model promoted → Phase 2 monitoring resumes
 
 **Scenario**: You're the ML Platform Lead at a major real-estate platform. The product: a **real-time home valuation API** serving agents, lenders, and buyers.
 
-**Traffic**: 1,000 pricing requests per second  
-**SLA**: 50ms P99 latency (from HTTP request to response with price + SHAP explanation)  
-**Model**: 3-model stack trained in Ch.5 — Linear Regression + Random Forest + XGBoost + Ridge meta-learner  
+**Traffic**: 1,000 pricing requests per second
+**SLA**: 50ms P99 latency (from HTTP request to response with price + SHAP explanation)
+**Model**: 3-model stack trained in Ch.5 — Linear Regression + Random Forest + XGBoost + Ridge meta-learner
 **Dataset**: California Housing (proxy for production; production uses live MLS, Zillow feeds, etc.)
 
 **Achieved in Ch.5**:
@@ -220,31 +220,31 @@ async def predict_ensemble_async(feature_vector):
     """
     import time
     start = time.perf_counter()
-    
+
     # Step 1: Feature store lookup (5ms)
     X = await fetch_features(feature_vector)  # async I/O call
-    
+
     # Step 2: Launch all 3 base models in parallel (wall-clock = max latency)
     with ThreadPoolExecutor(max_workers=3) as executor:
         loop = asyncio.get_event_loop()
         lr_pred  = loop.run_in_executor(executor, lr_model.predict, X)
         rf_pred  = loop.run_in_executor(executor, rf_model.predict, X)
         xgb_pred = loop.run_in_executor(executor, xgb_model.predict, X)
-        
+
         # Wait for all 3 to finish (blocking = max of the three)
         base_preds = await asyncio.gather(lr_pred, rf_pred, xgb_pred)
-    
+
     # Step 3: Meta-learner (sequential — needs all base predictions)
     meta_input = np.array(base_preds).reshape(1, -1)
     final_price = meta_model.predict(meta_input)[0]
-    
+
     # Step 4: SHAP explanation (XGBoost only, 3ms)
     shap_values = xgb_explainer.shap_values(X)
     top3_features = get_top3_features(shap_values, X)
-    
+
     # Step 5: Async logging (non-blocking — returns immediately)
     asyncio.create_task(log_prediction(X, final_price, base_preds))
-    
+
     latency_ms = (time.perf_counter() - start) * 1000
     return {
         "price_estimate": int(final_price * 100000),  # Convert to dollars
@@ -258,10 +258,10 @@ async def predict_ensemble_async(feature_vector):
 ```
 
 > 💡 **Industry Standard:** `Ray Serve` for production ML serving
-> 
+>
 > ```python
 > from ray import serve
-> 
+>
 > @serve.deployment(num_replicas=4, max_concurrent_queries=100)
 > class EnsembleModel:
 >     def __init__(self):
@@ -269,14 +269,14 @@ async def predict_ensemble_async(feature_vector):
 >         self.rf = load_model("rf_model.pkl")
 >         self.xgb = load_model("xgb_model.pkl")
 >         self.meta = load_model("meta_ridge.pkl")
->     
+>
 >     async def __call__(self, request):
 >         # Ray automatically handles parallelism across replicas
 >         return await predict_ensemble_async(request)
-> 
+>
 > serve.run(EnsembleModel.bind())
 > ```
-> 
+>
 > **When to use:** Production deployments at scale (>100 req/s). Ray Serve handles load balancing, auto-scaling, and GPU orchestration.
 > **Common alternatives:** TensorFlow Serving (GPU-optimized), Triton Inference Server (NVIDIA, multi-framework), BentoML (model packaging)
 > **See also:** [Ray Serve docs](https://docs.ray.io/en/latest/serve/index.html)
@@ -377,7 +377,7 @@ def route_request(user_id, feature_vector):
     """
     # Deterministic assignment (same user always gets same variant)
     hash_val = hash(f"{ab_test.test_id}:{user_id}") % 100
-    
+
     if hash_val < ab_test.treatment_pct * 100:
         # Treatment: Full ensemble
         variant = "treatment"
@@ -386,7 +386,7 @@ def route_request(user_id, feature_vector):
         # Control: XGBoost only
         variant = "control"
         prediction = predict_xgboost_only(feature_vector)
-    
+
     # Log result for analysis
     ab_results[variant].append({
         "user_id": user_id,
@@ -394,22 +394,22 @@ def route_request(user_id, feature_vector):
         "actual": None,  # filled in later when ground truth available
         "timestamp": time.time()
     })
-    
+
     return prediction, variant
 
 # Analysis after 2 weeks:
 # from scipy.stats import ttest_ind
-# 
+#
 # control_errors = [abs(r["predicted"] - r["actual"]) for r in ab_results["control"] if r["actual"]]
 # treatment_errors = [abs(r["predicted"] - r["actual"]) for r in ab_results["treatment"] if r["actual"]]
-# 
+#
 # t_stat, p_val = ttest_ind(control_errors, treatment_errors)
-# 
+#
 # print(f"Control MAE:   ${np.mean(control_errors):.0f}")
 # print(f"Treatment MAE: ${np.mean(treatment_errors):.0f}")
 # print(f"t-statistic:   {t_stat:.2f}")
 # print(f"p-value:       {p_val:.4f}")
-# 
+#
 # if p_val < 0.05 and np.mean(treatment_errors) < np.mean(control_errors):
 #     print("✅ Treatment significantly better → proceed to cutover")
 # else:
@@ -417,24 +417,24 @@ def route_request(user_id, feature_vector):
 ```
 
 > 💡 **Industry Standard:** `LaunchDarkly` or `Unleash` for feature flags and A/B testing
-> 
+>
 > ```python
 > from ldclient import LDClient, Config
-> 
+>
 > ld_client = LDClient(config=Config(sdk_key="your-sdk-key"))
-> 
+>
 > def route_with_launchdarkly(user_id, feature_vector):
 >     user = {"key": user_id}
->     
+>
 >     # LaunchDarkly handles traffic splitting, rollout %, and targeting rules
 >     variant = ld_client.variation("ensemble-rollout", user, default="control")
->     
+>
 >     if variant == "treatment":
 >         return predict_ensemble(feature_vector)
 >     else:
 >         return predict_xgboost_only(feature_vector)
 > ```
-> 
+>
 > **When to use:** Production A/B testing at scale. LaunchDarkly provides instant rollback, gradual rollout (5% → 25% → 50% → 100%), and user targeting.
 > **Common alternatives:** Optimizely (full experimentation platform), Statsig (ML-focused A/B testing), Split.io (developer-first feature flags)
 > **See also:** [LaunchDarkly A/B testing guide](https://launchdarkly.com/ab-testing/)
@@ -501,45 +501,45 @@ drift_alert_counter = Counter('ensemble_drift_alerts', 'Drift threshold breaches
 def compute_psi(reference_dist, live_dist, feature_name, bins=10):
     """
     Compute PSI between reference (training) and live (production) distributions.
-    
+
     Args:
         reference_dist: np.array of feature values from training data
         live_dist: np.array of feature values from last 24h production
         feature_name: str, for logging/alerting
         bins: int, number of bins for discretization
-    
+
     Returns:
         psi_score: float, PSI value (0=stable, >0.2=retrain)
     """
     # Step 1: Define bin edges from reference distribution quantiles
     bin_edges = np.percentile(reference_dist, np.linspace(0, 100, bins+1))
-    
+
     # Step 2: Compute frequency in each bin for both distributions
     ref_counts, _ = np.histogram(reference_dist, bins=bin_edges)
     live_counts, _ = np.histogram(live_dist, bins=bin_edges)
-    
+
     # Step 3: Convert to percentages (add small epsilon to avoid log(0))
     epsilon = 1e-5
     ref_pct = (ref_counts + epsilon) / (ref_counts.sum() + epsilon * bins)
     live_pct = (live_counts + epsilon) / (live_counts.sum() + epsilon * bins)
-    
+
     # Step 4: PSI formula
     psi = np.sum((live_pct - ref_pct) * np.log(live_pct / ref_pct))
-    
+
     # Step 5: Log metric to Prometheus
     psi_gauge.labels(feature=feature_name).set(psi)
-    
+
     # Step 6: Alert if threshold breached
     if psi > 0.20:
         drift_alert_counter.inc()
         send_alert(f"⚠️ PSI = {psi:.3f} on {feature_name} → Retrain triggered")
-    
+
     return psi
 
 # Example daily job (runs via cron at 2 AM):
 # reference_data = load_training_features()  # cached from training time
 # live_data = query_production_log(last_24h=True)
-# 
+#
 # for feature in ['MedInc', 'Latitude', 'Longitude', 'HouseAge']:
 #     psi = compute_psi(reference_data[feature], live_data[feature], feature)
 #     print(f"{feature}: PSI = {psi:.3f}")
@@ -552,12 +552,12 @@ def compute_psi(reference_dist, live_dist, feature_name, bins=10):
 ```
 
 > 💡 **Industry Standard:** `Prometheus + Grafana` for ML monitoring
-> 
+>
 > ```python
 > # Grafana dashboard query (PromQL):
 > # Panel 1: PSI timeseries for all features
 > ensemble_psi{feature=~"MedInc|Latitude|Longitude|HouseAge"}
-> 
+>
 > # Panel 2: Alert rule (fires PagerDuty when PSI > 0.20)
 > ALERT EnsembleDrift
 >   IF ensemble_psi > 0.20
@@ -568,7 +568,7 @@ def compute_psi(reference_dist, live_dist, feature_name, bins=10):
 >     description="PSI = {{ $value }} exceeded 0.20 threshold. Retraining required."
 >   }
 > ```
-> 
+>
 > **When to use:** Always in production. Prometheus is the industry standard for time-series metrics; Grafana provides visualization and alerting.
 > **Common alternatives:** Datadog (SaaS, easier setup), New Relic (full APM), InfluxDB + Telegraf (open-source stack)
 > **See also:** [Prometheus docs](https://prometheus.io/docs/), [Evidently AI](https://evidentlyai.com/) for ML-specific drift detection
@@ -837,24 +837,24 @@ spec:
 ```
 
 > 💡 **Industry Standard:** `Kubernetes` for blue-green deployments
-> 
+>
 > **Automated cutover with health checks:**
 > ```bash
 > # Deploy green environment
 > kubectl apply -f ensemble-green.yaml
-> 
+>
 > # Wait for green to be ready
 > kubectl wait --for=condition=available --timeout=300s deployment/ensemble-green
-> 
+>
 > # Run smoke tests against green
 > ./smoke_test.sh http://ensemble-green-service/predict
-> 
+>
 > # Switch traffic (atomic operation)
 > kubectl patch service ensemble-api -p '{"spec":{"selector":{"version":"green"}}}'
-> 
+>
 > # Monitor for 1 hour
 > ./monitor_errors.sh --duration=3600 --threshold=0.01
-> 
+>
 > # If error rate > 1%, auto-rollback:
 > if [ $? -ne 0 ]; then
 >   kubectl patch service ensemble-api -p '{"spec":{"selector":{"version":"blue"}}}'
@@ -864,7 +864,7 @@ spec:
 >   kubectl delete deployment ensemble-blue  # Clean up old version
 > fi
 > ```
-> 
+>
 > **When to use:** Always for production ML deployments. Blue-green eliminates downtime and provides instant rollback.
 > **Common alternatives:** Canary deployment (gradual 5%→25%→50%→100%), Rolling update (pod-by-pod replacement), Istio traffic mirroring
 > **See also:** [Kubernetes deployment strategies](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/), [ArgoCD for GitOps](https://argo-cd.readthedocs.io/)

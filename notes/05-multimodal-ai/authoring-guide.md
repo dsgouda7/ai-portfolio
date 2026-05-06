@@ -457,8 +457,8 @@ The Grand Challenge is not a distraction from learning — **it is the motivatio
 The reader is the **Lead ML Engineer at VisualForge Studio**. They are replacing $600k/year of freelancer costs with a local AI pipeline — every second of generation time and every unusable image matters to the bottom line. Every section should feel like: "Here's the generation failure, here's the diffusion mechanism that fixes it, here's how it moves our quality/speed metrics."
 
 **Second person default:**
-> *"You're the Lead ML Engineer at VisualForge Studio. The client wants 20 variations of a spring collection hero image by tomorrow morning. Your diffusion pipeline is generating blurry, prompt-agnostic noise."*  
-> *"Guidance scale 1.0 — the model ignores your text prompt entirely. You can watch it happen, epoch by epoch."*  
+> *"You're the Lead ML Engineer at VisualForge Studio. The client wants 20 variations of a spring collection hero image by tomorrow morning. Your diffusion pipeline is generating blurry, prompt-agnostic noise."*
+> *"Guidance scale 1.0 — the model ignores your text prompt entirely. You can watch it happen, epoch by epoch."*
 > *"Your RTX 4090 is generating one image every 47 seconds. The client needs 100 variations. You have 90 minutes."*
 
 **Dry humour register:** one instance per major concept.
@@ -718,7 +718,7 @@ Act 4: Decision framework (when to use which)
 
 **Template:**
 ```markdown
-> **The story:** [Name] ([Year]) solved [specific problem] using [this technique]. 
+> **The story:** [Name] ([Year]) solved [specific problem] using [this technique].
 > [One sentence on lasting impact]. [One sentence connecting to reader's daily work].
 >
 > **Where you are:** Ch.[N-1] achieved [specific metric]. This chapter fixes [named blocker].
@@ -815,7 +815,7 @@ Visual: "Spring dress, café" → retrieves correct image from 1000 candidates
 
 **Template:**
 ```markdown
-> ➡️ **[Topic] goes deeper in [Chapter].** This chapter covers [what's needed now]. 
+> ➡️ **[Topic] goes deeper in [Chapter].** This chapter covers [what's needed now].
 > For [advanced topic] — [specific capability] — see [link]. For now: [continue with current concept].
 ```
 
@@ -912,7 +912,7 @@ Ch.4 (full schedule):     x_t = √ᾱ_t x_0 + √(1-ᾱ_t) ε   ← cumulative 
 **Rule:** For key concepts, let readers manipulate before explaining.
 
 **Example from MultimodalAI CFG:**
-> "Before any formulas: here's a slider — CFG scale 1.0 to 15.0. Same prompt ('spring dress, café'). Watch how the model responds." 
+> "Before any formulas: here's a slider — CFG scale 1.0 to 15.0. Same prompt ('spring dress, café'). Watch how the model responds."
 > Shows interactive GIF with CFG scale slider, prompt adherence changing live.
 
 **Then:** "Scale 1.0 ignores you. Scale 7.5 listens. Scale 15.0 over-listens (artifacts). Now let's see the math that makes this happen."
@@ -1167,34 +1167,34 @@ for t in reversed(range(T)):
 
 ### Anti-Patterns (What NOT to Do)
 
-❌ **Listing methods without demonstrating failure**  
+❌ **Listing methods without demonstrating failure**
 Example: "Here are five schedulers: DDPM, DDIM, DPM++, PNDM, LMS" (table without motivation)
 
-❌ **Formulas without verbal glossing**  
+❌ **Formulas without verbal glossing**
 Example: Dropping LaTeX block with no "In English:" follow-up paragraph
 
-❌ **Vague improvement claims**  
+❌ **Vague improvement claims**
 Example: "The model got faster" instead of "2min → 8s (15× speedup)"
 
-❌ **Academic register**  
+❌ **Academic register**
 Example: "We demonstrate that...", "It can be shown that...", "In this section we will discuss..."
 
-❌ **Generic prompts for walkthroughs**  
+❌ **Generic prompts for walkthroughs**
 Example: Using "a photo of a dog" instead of VisualForge campaign briefs
 
-❌ **Improvised emoji**  
+❌ **Improvised emoji**
 Example: Using 🔍🎯✨🚀 as inline callouts (only 💡⚠️⚡📖➡️ allowed)
 
-❌ **Topic-label section headings**  
+❌ **Topic-label section headings**
 Example: "## 3 · Math" instead of "## 3 · Math — How CFG Scale Controls Prompt Adherence"
 
-❌ **Skipping numerical/visual verification**  
+❌ **Skipping numerical/visual verification**
 Example: Showing formula, then immediately generalizing without showing 3-generation example
 
-❌ **GPU notebook without runtime estimates**  
+❌ **GPU notebook without runtime estimates**
 Example: `image = pipe(prompt)` without comment like `# ~8s on RTX 4090`
 
-❌ **Quality claim without metric**  
+❌ **Quality claim without metric**
 Example: "The images look better now" instead of "HPSv2 score improved from 3.5 to 4.1"
 
 ---
@@ -1468,10 +1468,10 @@ Here's the complete end-to-end pipeline integrating all [N] chapters.
 def production_pipeline(input_data):
     """
     Complete [Grand Challenge] pipeline integrating all chapters.
-    
+
     Args:
         input_data: [Description]
-    
+
     Returns:
         [Description]
     """
@@ -1613,9 +1613,9 @@ Delete the stage-mapping block and strip `[Stage N: LABEL]` appendages from sect
 
 **Callout discipline for multimodal chapters:**
 
-- `> 💡 **[Stage] verdict:**` — one line after each generation/conditioning stage; states quality score delta and latency impact.  
+- `> 💡 **[Stage] verdict:**` — one line after each generation/conditioning stage; states quality score delta and latency impact.
   *Example:* `> 💡 **Conditioning verdict:** CFG scale 1.0 → 7.5 improves CLIP similarity score 0.21 → 0.34 while adding only 0.4s/image. VisualForge now tracks the prompt.`
-- `> ➡️` — forward pointer when a parameter feeds the next chapter.  
+- `> ➡️` — forward pointer when a parameter feeds the next chapter.
   *Example:* `> ➡️ Guidance scale saturates above 12 — Ch.8 ControlNet replaces it with spatial masks for precise layout control.`
 - **Never:** a `GENERATION CHECKPOINT`, `CONDITIONING CHECKPOINT`, or `DECISION CHECKPOINT` block.
 - **Never:** a section listing `Stage N → §X, §Y` or `Phase N (LABEL) → §X`.

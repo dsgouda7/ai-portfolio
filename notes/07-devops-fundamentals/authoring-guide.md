@@ -1,7 +1,7 @@
 # DevOps Fundamentals Track — Authoring Guide
 
-> **This document tracks the chapter-by-chapter build of the DevOps Fundamentals notes library.**  
-> Each chapter lives under `notes/07-devops_fundamentals/` in its own folder, containing a README and a Jupyter notebook.  
+> **This document tracks the chapter-by-chapter build of the DevOps Fundamentals notes library.**
+> Each chapter lives under `notes/07-devops_fundamentals/` in its own folder, containing a README and a Jupyter notebook.
 > Read this before starting any chapter to keep tone, structure, and the running example consistent.
 >
 > **📚 Updated:** Adapted from ML authoring guide with infrastructure-focused conventions.
@@ -326,8 +326,8 @@ The reader is treated as a capable engineer who doesn't need flattery, gets impa
 
 **Second person is the default.** The reader is placed inside the scenario at all times:
 
-> *"You're an engineer deploying a Python Flask web application, and your constraint is simple but absolute: it must run identically on your dev laptop and the production server."*  
-> *"Your manager's requirement: the app must run identically on dev, staging, and production with zero manual setup."*  
+> *"You're an engineer deploying a Python Flask web application, and your constraint is simple but absolute: it must run identically on your dev laptop and the production server."*
+> *"Your manager's requirement: the app must run identically on dev, staging, and production with zero manual setup."*
 > *"By step 5, you have a production-ready deployment: two containers (Flask + Redis), networked together, with persistent storage."*
 
 ---
@@ -520,7 +520,7 @@ Act 4: Decision framework (when to use which)
 
 Every chapter opens with:
 ```markdown
-> **The story:** [Name] ([Year]) created [tool] to solve [specific problem]. 
+> **The story:** [Name] ([Year]) created [tool] to solve [specific problem].
 > [One sentence on impact]. [One sentence connecting to production work].
 >
 > **Where you are:** Ch.[N-1] achieved [capability]. This chapter fixes [named blocker].

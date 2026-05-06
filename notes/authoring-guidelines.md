@@ -1,8 +1,8 @@
 # Notes — Universal Authoring Guidelines
 
-> **This is the master authoring reference for all tracks under `notes/`.**  
-> Every chapter across every track — AI, AIInfrastructure, ML, MultiAgentAI, MultimodalAI, and InterviewGuides — follows the principles here.  
-> Track-specific `AUTHORING_GUIDE.md` files adapt these principles to their domain, running example, and grand challenge.  
+> **This is the master authoring reference for all tracks under `notes/`.**
+> Every chapter across every track — AI, AIInfrastructure, ML, MultiAgentAI, MultimodalAI, and InterviewGuides — follows the principles here.
+> Track-specific `AUTHORING_GUIDE.md` files adapt these principles to their domain, running example, and grand challenge.
 > When a track-specific guide conflicts with this document, the track guide wins within its scope.
 
 <!-- STYLE-FINGERPRINT-V1
@@ -78,15 +78,15 @@ The reader is a capable engineer who doesn't need flattery, gets impatient with 
 **1. Second person is the default.**
 
 The reader is placed inside the scenario at all times:
-> *"You're the Lead AI Engineer at Mamma Rosa's Pizza."*  
-> *"Your manager calls: the luxury coastal segment is haemorrhaging client trust."*  
+> *"You're the Lead AI Engineer at Mamma Rosa's Pizza."*
+> *"Your manager calls: the luxury coastal segment is haemorrhaging client trust."*
 > *"You just did gradient descent. Very slowly. And by feel."*
 
 **2. Dry, brief humour appears at most once per major concept.** Never laboured. Never cute. "By feel." "The CEO is not amused." "That's it." — these illustrate the register.
 
 **3. Contractions and em-dashes are correct.**
-> *"That's it."*  
-> *"MSE gives urgency — but it can panic over the wrong things."*  
+> *"That's it."*
+> *"MSE gives urgency — but it can panic over the wrong things."*
 > *"Full stop."*
 
 **4. Academic register is forbidden.** Do not write:
@@ -107,7 +107,7 @@ Every chapter opens with three specific items **in a blockquote**, in this order
 
 **Item 2: Where you are in the curriculum** — one paragraph precisely describing what previous chapter(s) gave the reader and what gap this chapter fills. Must name specific constraint statuses or metric numbers from preceding chapters.
 
-**Item 3: Notation in this chapter** — a single inline sentence with all symbols before the first section. Not a table — a sentence. Example from ML Ch.01:  
+**Item 3: Notation in this chapter** — a single inline sentence with all symbols before the first section. Not a table — a sentence. Example from ML Ch.01:
 *"$x$ — input feature (`MedInc`); $y$ — true target (`MedHouseVal`); $\hat{y}=wx+b$ — model prediction; $w$ — weight; $b$ — bias; $N$ — samples; $L$ — MSE loss; $\eta$ — learning rate."*
 
 ---
@@ -197,10 +197,10 @@ Xᵀ · e                                 (2×3) · (3×1) → (2×1)
 
 **Rule 6: Intuition first, formalism second.** Explain the **why** before the **what**. A formula without motivation is decoration.
 
-❌ **Wrong (formalism first):**  
+❌ **Wrong (formalism first):**
 > "The gradient is computed as ∇L = Xᵀ(ŷ - y). This gives us the direction to update weights."
 
-✅ **Right (intuition first):**  
+✅ **Right (intuition first):**
 > "We need to know which direction makes loss smaller. If predictions are too high, reduce the weights. If too low, increase them. This 'which direction' question is answered by the gradient: ∇L = Xᵀ(ŷ - y)."
 
 **Rule 7: Prioritize geometric intuition over algebraic manipulation.** Use diagrams, analogies, and plain-English explanations. Save the algebra for optional depth boxes.
@@ -230,7 +230,7 @@ Numerical examples are powerful pedagogical tools — but only when they **build
 4. State the outcome with a metric: "MSE dropped from 8.167 → 1.233: an 85% reduction in one epoch"
 5. **Close with what this demonstrates:** "This shows gradient descent finds the downhill direction — even with crude α = 0.1 — without trying every possible weight."
 
-**Priority: Intuition over calculation.**  
+**Priority: Intuition over calculation.**
 If a reader finishes a section thinking "I can do the arithmetic" instead of "I understand when to use this," the section failed.
 
 **Examples of intuition-building vs calculation-showing:**
@@ -250,15 +250,15 @@ If a reader finishes a section thinking "I can do the arithmetic" instead of "I 
 
 Every new concept links to where it was first introduced and where it will matter again. This is not optional.
 
-**Backward link pattern:**  
+**Backward link pattern:**
 *"This is the same update rule from Ch.1 — the only difference is that Xᵀ now accumulates contributions from all d features."*
 
-**Forward link pattern:**  
+**Forward link pattern:**
 *"This is the conceptual foundation of neural network backpropagation. Every time you call `loss.backward()` in PyTorch, this matrix multiply is running — one per layer."*
 
 **The `> ➡️` callout** plants seeds for concepts introduced in later chapters without derailing the current section.
 
-**Cross-track links** to MathUnderTheHood are standard for rigorous derivations. Always reference the specific chapter:  
+**Cross-track links** to MathUnderTheHood are standard for rigorous derivations. Always reference the specific chapter:
 `[MathUnderTheHood ch06 — Gradient & Chain Rule](../math_under_the_hood/ch06_gradient_chain_rule)`
 
 ---
@@ -290,7 +290,7 @@ The meaning of every callout symbol is fixed. Do not improvise with new emoji or
 
 **Dark background requirement:** All generated plots use `facecolor="#1a1a2e"`. Light-background plots are not used in chapters.
 
-**Alt-text is mandatory.** Descriptive, not "Figure 1":  
+**Alt-text is mandatory.** Descriptive, not "Figure 1":
 `![MSE(w) parabola (left) and its linear derivative dL/dw (right), making the residual-to-gradient link explicit](img/loss_parabola_generated.png)`
 
 **Every chapter has a needle GIF** — the chapter-level animation showing which constraint needle moved. Appears immediately after § 0 under `## Animation`.

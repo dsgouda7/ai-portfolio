@@ -1,6 +1,6 @@
 # Ch.12 — Testing AI Systems: Catching the 14% Wrong-Order Bug
 
-**Track**: AI (03-ai) | **Chapter**: 12 | **Grand Challenge**: Mamma Rosa's PizzaBot  
+**Track**: AI (03-ai) | **Chapter**: 12 | **Grand Challenge**: Mamma Rosa's PizzaBot
 **Previous**: [ch11_advanced_agentic_patterns](../ch11_advanced_agentic_patterns/) | **Next**: Production deployment
 
 ---
@@ -9,7 +9,7 @@
 >
 > **Where you are in the curriculum.** Ch.1–11 built PizzaBot end-to-end: from tokenization (Ch.1) through prompt engineering (Ch.2), reasoning (Ch.3), RAG grounding (Ch.4–5), tool orchestration (Ch.6), safety guardrails (Ch.7), evaluation metrics (Ch.8), cost/latency optimization (Ch.9), fine-tuning (Ch.10), and advanced agentic patterns (Ch.11). **PizzaBot v2.0 achieves 99.2% edge-case accuracy and $0.18/conversation in Ch.11. The CEO says it's ready to launch.** This chapter asks: *how do you prove that?* Specifically: if production is showing a 14% wrong-order rate and you need to diagnose and fix it before launch, what tests do you write? Ch.8 gave you evaluation metrics — RAGAS, conversion rate, hallucination rate. This chapter turns those metrics into **executable tests** that run in CI/CD on every pull request.
 >
-> **Notation in this chapter:**  
+> **Notation in this chapter:**
 > `assert_output` — test assertion on model output; `retrieval_hit_rate` — fraction of queries where correct document is retrieved; `rag_pipeline` — full chain: ingestion → embedding → retrieval → generation; `pytest.fixture` — reusable test setup; `@hypothesis.given` — property-based test decorator; `wrong_order_rate` — fraction of orders with wrong items/price; `invariant` — test input where output should not change; `directional` — test where output should change monotonically with input.
 
 ---
@@ -18,10 +18,10 @@
 
 > 🎯 **The mission**: Launch **Mamma Rosa's PizzaBot** — satisfying 6 production constraints:
 > 1. **BUSINESS VALUE**: >25% conversion + +$2.50 AOV + 70% labor savings
-> 2. **ACCURACY**: <5% error rate on menu queries + order placement  
-> 3. **LATENCY**: <3s p95 response time  
-> 4. **COST**: <$0.08 per conversation average  
-> 5. **SAFETY**: Zero successful prompt injections + appropriate refusals  
+> 2. **ACCURACY**: <5% error rate on menu queries + order placement
+> 3. **LATENCY**: <3s p95 response time
+> 4. **COST**: <$0.08 per conversation average
+> 5. **SAFETY**: Zero successful prompt injections + appropriate refusals
 > 6. **RELIABILITY**: >99% uptime + graceful degradation when tools fail
 
 **What we know so far:**
@@ -105,7 +105,7 @@ The PizzaBot 14% wrong-order rate isn't a model bug. It's a **retrieval bug**: w
 
 **The key shift:** Ch.8 measured *accuracy* (aggregate). This chapter tests *correctness* (specific, executable assertions). Accuracy is a number. Tests are runnable proof.
 
-> 💡 **Insight:** A RAGAS context precision of 0.86 doesn't tell you *which* documents are wrong. A `test_retrieval_time_of_day` test tells you exactly which query-document pair breaks.  
+> 💡 **Insight:** A RAGAS context precision of 0.86 doesn't tell you *which* documents are wrong. A `test_retrieval_time_of_day` test tells you exactly which query-document pair breaks.
 > **Rule:** For every aggregate metric that drops in production, there should be a targeted test that reproduces it.
 
 ---
@@ -205,7 +205,7 @@ Add property-based tests:
 → System is production-hardened
 ```
 
-> 💡 **Industry Standard: pytest + CI/CD integration**  
+> 💡 **Industry Standard: pytest + CI/CD integration**
 > ```python
 > # pytest.ini
 > [pytest]
@@ -220,7 +220,7 @@ Add property-based tests:
 > pytest -m "integration"       # Push to main only ($0.05/run)
 > pytest -m "adversarial"       # Nightly (front-loaded cost)
 > ```
-> **When to use:** Always. This is the industry-standard pattern for test organization in AI systems.  
+> **When to use:** Always. This is the industry-standard pattern for test organization in AI systems.
 > **See also:** [pytest markers documentation](https://docs.pytest.org/en/stable/example/markers.html)
 
 ---
@@ -283,7 +283,7 @@ That's the bug. The retrieval isn't filtering by `menu_type`. The fix adds one l
 
 This is the failure-first pattern for AI testing: **write the failing test, confirm it names the bug exactly, then fix it.**
 
-> ⚠️ **Warning:** The temptation is to write tests *after* fixing the bug. Don't. Write the test first so you can confirm it fails for the right reason — not because of an unrelated error. If your test passes before the fix, it's not testing what you think.  
+> ⚠️ **Warning:** The temptation is to write tests *after* fixing the bug. Don't. Write the test first so you can confirm it fails for the right reason — not because of an unrelated error. If your test passes before the fix, it's not testing what you think.
 > **Rule:** A test that has never been seen to fail is a test you can't trust.
 
 ---
@@ -339,7 +339,7 @@ def sample_menu_docs():
     ]
 ```
 
-> 💡 **Insight:** `scope="session"` on the `rag_client` fixture builds the vector index once per test run, not once per test. On a 1,000-doc corpus this saves ~40s per test run.  
+> 💡 **Insight:** `scope="session"` on the `rag_client` fixture builds the vector index once per test run, not once per test. On a 1,000-doc corpus this saves ~40s per test run.
 > **Rule:** Use `scope="session"` for fixtures that are expensive to build (vector indexes, DB connections). Use default (function) scope for anything that mutates state.
 
 ### 3.2 — Ingestion Tests
@@ -351,7 +351,7 @@ import pytest
 def test_all_menu_items_are_indexed(rag_client, sample_menu_docs):
     """Every document must be retrievable after ingestion."""
     rag_client.ingest(sample_menu_docs)
-    
+
     for doc in sample_menu_docs:
         item_name = doc["metadata"]["item"]
         results = rag_client.retrieve(query=item_name, top_k=5)
@@ -364,7 +364,7 @@ def test_ingestion_preserves_metadata(rag_client, sample_menu_docs):
     """Metadata fields must survive ingestion unchanged."""
     rag_client.ingest(sample_menu_docs)
     results = rag_client.retrieve(query="pepperoni", top_k=5)
-    
+
     for result in results:
         assert "menu_type" in result.metadata, "menu_type metadata dropped during ingestion"
         assert result.metadata["menu_type"] in ("lunch", "dinner"), (
@@ -375,7 +375,7 @@ def test_chunk_size_within_bounds(rag_client, sample_menu_docs):
     """Chunks must not exceed context window limit."""
     MAX_CHUNK_TOKENS = 512
     chunks = rag_client.chunk(sample_menu_docs, chunk_size=MAX_CHUNK_TOKENS)
-    
+
     for chunk in chunks:
         # Rough estimate: 1 token ≈ 4 chars
         estimated_tokens = len(chunk.content) // 4
@@ -396,12 +396,12 @@ def test_retrieval_returns_dinner_menu_at_7pm(rag_client, sample_menu_docs):
     This test was RED before the fix, GREEN after.
     """
     rag_client.ingest(sample_menu_docs)
-    
+
     docs = rag_client.retrieve(
         query="pepperoni pizza price",
         metadata_filter={"menu_type": "dinner"}
     )
-    
+
     assert len(docs) > 0, "No dinner menu documents retrieved"
     assert all(d.metadata["menu_type"] == "dinner" for d in docs), (
         f"Lunch document returned in dinner query: "
@@ -414,19 +414,19 @@ def test_retrieval_hit_rate(rag_client, sample_menu_docs):
     Hit rate < 90% means embeddings or chunking strategy needs rework.
     """
     rag_client.ingest(sample_menu_docs)
-    
+
     test_queries = [
         ("pepperoni pizza price dinner",    "pepperoni"),
         ("margherita large how much",       "margherita"),
         ("gluten free pepperoni",           "pepperoni"),
     ]
-    
+
     hits = 0
     for query, expected_item in test_queries:
         results = rag_client.retrieve(query=query, top_k=1)
         if results and results[0].metadata["item"] == expected_item:
             hits += 1
-    
+
     hit_rate = hits / len(test_queries)
     assert hit_rate >= 0.90, (
         f"Retrieval hit@1 = {hit_rate:.0%} — below 90% threshold"
@@ -459,9 +459,9 @@ def test_generated_price_matches_retrieved_document(mock_llm, rag_client, sample
     Checks the joint between retrieval and generation.
     """
     rag_client.ingest(sample_menu_docs)
-    
+
     from src.rag_pipeline import generate_with_rag
-    
+
     response, retrieved_docs = generate_with_rag(
         query="How much is a large pepperoni pizza for dinner?",
         rag_client=rag_client,
@@ -469,10 +469,10 @@ def test_generated_price_matches_retrieved_document(mock_llm, rag_client, sample
         llm=mock_llm,
         return_sources=True,
     )
-    
+
     # Extract price from retrieved doc
     retrieved_price = extract_price(retrieved_docs[0].content)  # "$14.99"
-    
+
     # Price in response must match
     assert retrieved_price in response, (
         f"Response price doesn't match retrieved doc. "
@@ -485,20 +485,20 @@ def test_response_is_deterministic_at_temperature_zero(rag_client, sample_menu_d
     Non-determinism means you can't write reliable assertions.
     """
     rag_client.ingest(sample_menu_docs)
-    
+
     from src.rag_pipeline import generate_with_rag
     from src.llm_client import LLMClient
-    
+
     llm = LLMClient(
         api_key=os.environ["OPENAI_API_KEY"],
         model="gpt-4o-mini",
         temperature=0,
     )
-    
+
     query = "What is the price of a large pepperoni pizza?"
     response_1 = generate_with_rag(query, rag_client, llm=llm)
     response_2 = generate_with_rag(query, rag_client, llm=llm)
-    
+
     assert response_1 == response_2, (
         f"Non-deterministic response at temperature=0:\n"
         f"  Run 1: {response_1}\n"
@@ -511,7 +511,7 @@ def test_response_is_deterministic_at_temperature_zero(rag_client, sample_menu_d
 > - **Non-deterministic responses** (test_response_is_deterministic_at_temperature_zero) → Catches when temperature=0 doesn't produce identical outputs (breaks assertion-based testing)
 > - **RAG-generation disconnect** → Validates that the LLM actually uses retrieved context instead of generating from memorized training data
 
-> ⚠️ **Warning:** `test_response_is_deterministic_at_temperature_zero` will **fail** for some LLM providers even at `temperature=0`. OpenAI's gpt-4o produces identical outputs at temperature=0 for the same input on the same API version — but Anthropic's Claude and open-source models with batching may not. Always validate this assumption for your provider before building tests that depend on it.  
+> ⚠️ **Warning:** `test_response_is_deterministic_at_temperature_zero` will **fail** for some LLM providers even at `temperature=0`. OpenAI's gpt-4o produces identical outputs at temperature=0 for the same input on the same API version — but Anthropic's Claude and open-source models with batching may not. Always validate this assumption for your provider before building tests that depend on it.
 > **Rule:** Mock the LLM in unit tests; reserve real API calls for integration tests only.
 
 ---
@@ -577,7 +577,7 @@ def test_e2e_dinner_order_returns_correct_price(e2e_rag):
         query="How much is a large pepperoni pizza?",
         metadata_filter={"menu_type": "dinner"},
     )
-    
+
     assert "$14.99" in response, (
         f"Expected dinner price $14.99 in response, got:\n{response}"
     )
@@ -592,7 +592,7 @@ def test_e2e_allergen_query_mentions_allergen_source(e2e_rag):
     response = e2e_rag.answer(
         query="Is the pepperoni pizza gluten-free?",
     )
-    
+
     gluten_keywords = ["gluten", "wheat", "crust"]
     assert any(kw in response.lower() for kw in gluten_keywords), (
         f"Allergen response didn't mention gluten/wheat/crust:\n{response}"
@@ -606,7 +606,7 @@ def test_e2e_out_of_stock_item_not_offered(e2e_rag):
         query="Do you have the Volcano Special pizza?",
         metadata_filter={"out_of_stock": False},
     )
-    
+
     # The Volcano Special is out of stock in our test corpus
     assert "volcano special" not in response.lower() or "not available" in response.lower(), (
         f"Out-of-stock item offered in response:\n{response}"
@@ -618,11 +618,11 @@ def test_e2e_latency_under_3s(e2e_rag):
     This integration test measures a single call — use load testing for p95.
     """
     import time
-    
+
     start = time.perf_counter()
     _ = e2e_rag.answer(query="Large pepperoni pizza for delivery")
     elapsed = time.perf_counter() - start
-    
+
     assert elapsed < 3.0, (
         f"Response time {elapsed:.2f}s exceeded 3s target"
     )
@@ -635,10 +635,10 @@ def test_e2e_latency_under_3s(e2e_rag):
 > 💡 **Integration test verdict:** 8 tests covering dinner-time ordering, allergen queries, out-of-stock, latency (<3s), case invariance — `test_e2e_dinner_order_returns_correct_price` catches the 14% wrong-order production bug.
 > ➡️ If the dinner-time test fails, check the metadata filter in `rag_client.retrieve()` — it must include `{"menu_type": "dinner"}` for evening queries; then move to Tier 3 adversarial tests.
 
-> 💡 **Industry Standard: LangChain Callbacks for Test Observability**  
+> 💡 **Industry Standard: LangChain Callbacks for Test Observability**
 > ```python
 > from langchain.callbacks import StdOutCallbackHandler
-> 
+>
 > # In integration tests, add callback to see exactly what LLM receives/returns
 > llm = ChatOpenAI(
 >     model="gpt-4o-mini",
@@ -646,8 +646,8 @@ def test_e2e_latency_under_3s(e2e_rag):
 >     callbacks=[StdOutCallbackHandler()],  # Prints every LLM call in test output
 > )
 > ```
-> **When to use:** Integration test debugging. When a test fails and you need to see the exact prompt sent to the LLM and the raw response.  
-> **Common alternatives:** `langfuse` (cloud tracing), `langsmith` (LangChain-native tracing), `wandb` (experiment tracking)  
+> **When to use:** Integration test debugging. When a test fails and you need to see the exact prompt sent to the LLM and the raw response.
+> **Common alternatives:** `langfuse` (cloud tracing), `langsmith` (LangChain-native tracing), `wandb` (experiment tracking)
 > **See also:** [LangChain Callbacks documentation](https://python.langchain.com/docs/modules/callbacks/)
 
 ---
@@ -697,7 +697,7 @@ import pytest
 def test_response_is_non_empty_string(e2e_rag):
     """Model must return a non-empty string for any valid query."""
     response = e2e_rag.answer(query="Large pepperoni for delivery")
-    
+
     assert isinstance(response, str), f"Expected str, got {type(response)}"
     assert len(response.strip()) > 0, "Response is empty string"
 
@@ -707,7 +707,7 @@ def test_response_length_within_bounds(e2e_rag):
     Verbosity > 500 chars correlates with hallucination in our fine-tuned model.
     """
     response = e2e_rag.answer(query="Large pepperoni for delivery")
-    
+
     assert len(response) >= 20, f"Response too short ({len(response)} chars): '{response}'"
     assert len(response) <= 500, f"Response too long ({len(response)} chars) — hallucination risk"
 
@@ -718,7 +718,7 @@ def test_response_contains_price_for_order_query(e2e_rag):
     """
     import re
     response = e2e_rag.answer(query="I want a large margherita pizza delivered")
-    
+
     price_pattern = r"\$\d+\.\d{2}"
     assert re.search(price_pattern, response), (
         f"No price found in order response: '{response}'"
@@ -741,11 +741,11 @@ def test_case_invariance(e2e_rag):
         query="LARGE PEPPERONI PIZZA",
         metadata_filter={"menu_type": "dinner"}
     )
-    
+
     # Both must mention the same price
     price_lower = extract_price(response_lower)
     price_upper = extract_price(response_upper)
-    
+
     assert price_lower == price_upper, (
         f"Case changed the price: lower='{price_lower}', upper='{price_upper}'"
     )
@@ -762,7 +762,7 @@ def test_name_invariance_does_not_change_price(e2e_rag):
     price_with_name = extract_price(
         e2e_rag.answer("Hi, I'm Maria and I want a large pepperoni pizza")
     )
-    
+
     assert price_without_name == price_with_name, (
         f"Customer name changed price: without='{price_without_name}', "
         f"with='{price_with_name}'"
@@ -775,7 +775,7 @@ def test_polite_phrasing_invariance(e2e_rag):
     """
     item_rude = extract_item(e2e_rag.answer("Give me a large pepperoni"))
     item_polite = extract_item(e2e_rag.answer("Could I please have a large pepperoni pizza?"))
-    
+
     assert item_rude == item_polite, (
         f"Phrasing changed item: rude='{item_rude}', polite='{item_polite}'"
     )
@@ -795,7 +795,7 @@ def test_more_items_means_higher_price(e2e_rag):
     price_two = extract_price(
         e2e_rag.answer("I want 2 large pepperoni pizzas")
     )
-    
+
     assert price_two > price_one, (
         f"2 pizzas (${price_two}) is not more expensive than 1 pizza (${price_one})"
     )
@@ -805,7 +805,7 @@ def test_larger_size_means_higher_price(e2e_rag):
     price_small = extract_price(e2e_rag.answer("1 small pepperoni pizza"))
     price_medium = extract_price(e2e_rag.answer("1 medium pepperoni pizza"))
     price_large = extract_price(e2e_rag.answer("1 large pepperoni pizza"))
-    
+
     assert price_small < price_medium < price_large, (
         f"Size pricing not monotonic: small=${price_small}, "
         f"medium=${price_medium}, large=${price_large}"
@@ -819,13 +819,13 @@ def test_delivery_adds_to_pickup_price(e2e_rag):
     price_delivery = extract_price(
         e2e_rag.answer("1 large pepperoni pizza for delivery")
     )
-    
+
     assert price_delivery > price_pickup, (
         f"Delivery (${price_delivery}) is not more than pickup (${price_pickup})"
     )
 ```
 
-> 💡 **Insight:** Directional tests catch pricing bugs that shape tests miss. If a "buy 2 get 1 free" promo is incorrectly applied to every order, your shape test (price is a valid dollar amount) passes but your directional test (2 > 1) fails.  
+> 💡 **Insight:** Directional tests catch pricing bugs that shape tests miss. If a "buy 2 get 1 free" promo is incorrectly applied to every order, your shape test (price is a valid dollar amount) passes but your directional test (2 > 1) fails.
 > **Rule:** Write at least one directional test for every numerical output your system produces.
 
 ---
@@ -863,14 +863,14 @@ def test_valid_order_always_parses_without_error(size, topping, quantity):
     """
     For any valid (size, topping, quantity) combination,
     the order parser must return a structured order — never raise.
-    
+
     This catches: IndexErrors, KeyErrors, AttributeErrors hiding in the parser.
     """
     query = f"I want {quantity} {size} {topping} pizza"
-    
+
     # Must not raise
     order = parse_order(query)
-    
+
     assert order is not None
     assert order["quantity"] == quantity
     assert order["size"] == size
@@ -887,9 +887,9 @@ def test_order_total_is_always_positive(size, topping, quantity):
     Zero or negative price means pricing logic is broken.
     """
     from src.pricing import calculate_total
-    
+
     total = calculate_total(size=size, topping=topping, quantity=quantity)
-    
+
     assert total > 0, (
         f"Negative/zero price for {quantity}x {size} {topping}: ${total:.2f}"
     )
@@ -908,13 +908,13 @@ def test_order_total_monotone_in_quantity(size, topping, quantity_1, quantity_2)
     hypothesis will try to find a counter-example — if it doesn't, we're confident.
     """
     from src.pricing import calculate_total
-    
+
     if quantity_1 == quantity_2:
         return  # vacuously true
-    
+
     total_1 = calculate_total(size=size, topping=topping, quantity=quantity_1)
     total_2 = calculate_total(size=size, topping=topping, quantity=quantity_2)
-    
+
     if quantity_1 < quantity_2:
         assert total_1 < total_2, (
             f"Total not monotone: {quantity_1}x {size} {topping} = ${total_1:.2f}, "
@@ -922,14 +922,14 @@ def test_order_total_monotone_in_quantity(size, topping, quantity_1, quantity_2)
         )
 ```
 
-> 📖 **Optional:** hypothesis uses *shrinking* to find the minimal failing example. If `test_order_total_is_always_positive` fails on a generated input like `quantity=7, size="xl", topping="bbq chicken"`, hypothesis automatically shrinks the counterexample to the smallest values that still fail — often revealing the real bug is `quantity=1, size="small"` with a specific topping. This is why property-based tests catch bugs unit tests miss.  
+> 📖 **Optional:** hypothesis uses *shrinking* to find the minimal failing example. If `test_order_total_is_always_positive` fails on a generated input like `quantity=7, size="xl", topping="bbq chicken"`, hypothesis automatically shrinks the counterexample to the smallest values that still fail — often revealing the real bug is `quantity=1, size="small"` with a specific topping. This is why property-based tests catch bugs unit tests miss.
 > See the [hypothesis docs on shrinking](https://hypothesis.readthedocs.io/en/latest/details.html#shrinking) for rigorous treatment.
 
-> 💡 **Industry Standard: OpenAI Evals Framework**  
+> 💡 **Industry Standard: OpenAI Evals Framework**
 > ```python
 > # For production AI systems, extend property-based testing with OpenAI Evals
 > from evals import run_eval
-> 
+>
 > # Define evaluation template (YAML or Python)
 > eval_spec = {
 >     "eval_name": "pizzabot.order-accuracy",
@@ -939,7 +939,7 @@ def test_order_total_monotone_in_quantity(size, topping, quantity_1, quantity_2)
 >         # ... 100+ samples
 >     ],
 > }
-> 
+>
 > # Run evaluation against your model
 > results = run_eval(
 >     model="gpt-4o-mini",
@@ -947,38 +947,38 @@ def test_order_total_monotone_in_quantity(size, topping, quantity_1, quantity_2)
 >     output_dir="./eval_results",
 > )
 > ```
-> **When to use:** Regression testing for fine-tuned models. Track accuracy across model versions. Compare base model vs. fine-tuned model on your domain-specific tasks.  
-> **Common alternatives:** `promptfoo` (CLI-based eval), `langfuse` (tracing + eval), `braintrust` (eval platform)  
+> **When to use:** Regression testing for fine-tuned models. Track accuracy across model versions. Compare base model vs. fine-tuned model on your domain-specific tasks.
+> **Common alternatives:** `promptfoo` (CLI-based eval), `langfuse` (tracing + eval), `braintrust` (eval platform)
 > **See also:** [OpenAI Evals GitHub](https://github.com/openai/evals)
 
-> 💡 **Industry Standard: Giskard for Automated Test Generation**  
+> 💡 **Industry Standard: Giskard for Automated Test Generation**
 > ```python
 > import giskard as gsk
-> 
+>
 > # Wrap your RAG model
 > wrapped_model = gsk.Model(
 >     model=your_rag_pipeline,
 >     model_type="text_generation",
 >     feature_names=["user_query"],
 > )
-> 
+>
 > # Wrap test dataset
 > test_dataset = gsk.Dataset(
 >     df=test_queries_df,
 >     target="expected_response",
 > )
-> 
+>
 > # Automatically generate 50+ adversarial tests
 > test_suite = gsk.scan(wrapped_model, test_dataset)
 > # Generates: prompt injection tests, bias tests, robustness tests,
 > #            performance tests, data leakage tests
-> 
+>
 > # Run generated tests
 > test_results = test_suite.run()
 > test_results.to_html("giskard_report.html")
 > ```
-> **When to use:** Don't have time to write 100+ adversarial tests manually. Giskard automatically generates test cases for: prompt injections, fairness/bias, hallucination detection, robustness to typos, PII leakage.  
-> **Common alternatives:** `rebuff` (prompt injection only), `nemo-guardrails` (safety rails), `guardrails-ai` (structured output validation)  
+> **When to use:** Don't have time to write 100+ adversarial tests manually. Giskard automatically generates test cases for: prompt injections, fairness/bias, hallucination detection, robustness to typos, PII leakage.
+> **Common alternatives:** `rebuff` (prompt injection only), `nemo-guardrails` (safety rails), `guardrails-ai` (structured output validation)
 > **See also:** [Giskard documentation](https://docs.giskard.ai/)
 
 ---
@@ -1154,7 +1154,7 @@ jobs:
 | `model-tests` | Every PR (after unit) | ~$0.01 | Shape, invariance, directional, property-based |
 | `integration-tests` | Push to main only | ~$0.05 | Full pipeline E2E, latency, retrieval accuracy |
 
-> ⚠️ **Warning:** Store `OPENAI_API_KEY` in GitHub Secrets (`Settings → Secrets → Actions`), never in the workflow YAML. A leaked API key in a public repo can generate thousands of dollars in charges within hours.  
+> ⚠️ **Warning:** Store `OPENAI_API_KEY` in GitHub Secrets (`Settings → Secrets → Actions`), never in the workflow YAML. A leaked API key in a public repo can generate thousands of dollars in charges within hours.
 > **Rule:** Every secret in CI goes in `${{ secrets.SECRET_NAME }}`. Zero exceptions.
 
 > ➡️ **Forward pointer:** The `docker compose -f docker-compose.test.yml up -d --wait` pattern provisions a disposable Chroma instance per CI run. [DevOps Ch.4 — CI/CD Pipelines](../../07-devops_fundamentals/) covers the full pattern: healthchecks, test isolation, and teardown-on-failure to avoid orphaned containers accumulating cost.

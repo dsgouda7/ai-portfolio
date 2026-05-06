@@ -1,7 +1,7 @@
 # AI Track — Authoring Guide
 
-> **This document tracks the chapter-by-chapter structure of the AI notes library.**  
-> Each chapter lives under `notes/03-ai/` in its own folder, containing a .md file and a Jupyter notebook.  
+> **This document tracks the chapter-by-chapter structure of the AI notes library.**
+> Each chapter lives under `notes/03-ai/` in its own folder, containing a .md file and a Jupyter notebook.
 > Read this before editing any chapter to keep tone, structure, and the running example consistent.
 >
 > **📚 Updated:** Now includes comprehensive pedagogical patterns extracted from cross-track analysis (see §"Pedagogical Patterns & Teaching DNA" below).
@@ -687,19 +687,19 @@ This is five simultaneous navigation systems: section numbers, stage labels, act
 
 ## FAQ
 
-**Q: Should every chapter have a § 0 Challenge section?**  
+**Q: Should every chapter have a § 0 Challenge section?**
 A: Yes. Even foundation chapters (Ch.1) should set up the business context and show why we're building this.
 
-**Q: What if a chapter doesn't improve any constraint?**  
+**Q: What if a chapter doesn't improve any constraint?**
 A: That's fine (e.g., Ch.7 Evaluating AI just builds measurement infrastructure). Still show the constraint table with no changes, and explain that this chapter enables us to measure the others.
 
-**Q: Can a chapter achieve multiple constraints at once?**  
+**Q: Can a chapter achieve multiple constraints at once?**
 A: Yes (e.g., Ch.10 Cost & Latency achieves #1, #3, #4 simultaneously via multiple optimizations).
 
-**Q: Should supplement docs (e.g., RAGAndEmbeddings_Supplement.md) get Challenge sections?**  
+**Q: Should supplement docs (e.g., RAGAndEmbeddings_Supplement.md) get Challenge sections?**
 A: No. Supplements are deep-dives for advanced readers. Keep them focused on technical depth without the business narrative.
 
-**Q: How strict are the business metric targets?**  
+**Q: How strict are the business metric targets?**
 A: They're realistic but aspirational. If your evidence shows 24% conversion instead of 25%, that's acceptable as long as it's above the 22% baseline and you explain the gap.
 
 ---
@@ -738,7 +738,7 @@ This creates:
 
 ---
 
-**Last updated**: April 2026  
+**Last updated**: April 2026
 **Status**: Active — 10 core chapters in AI track
 
 ---
@@ -757,15 +757,15 @@ The reader is treated as a capable engineer who doesn't need flattery, gets impa
 
 **Second person is the default.** The reader is placed inside the scenario at all times:
 
-> *"You're the Lead AI Engineer at Mamma Rosa's Pizza. The CEO demands proof that AI chatbots deliver better business outcomes than traditional phone orders."*  
-> *"Your bot just told a customer the Margherita pizza comes with anchovies. It doesn't. Customer lost."*  
+> *"You're the Lead AI Engineer at Mamma Rosa's Pizza. The CEO demands proof that AI chatbots deliver better business outcomes than traditional phone orders."*
+> *"Your bot just told a customer the Margherita pizza comes with anchovies. It doesn't. Customer lost."*
 > *"You have a 10,000 conversation/day bill and 6 seconds of latency. Pick one to fix first."*
 
 **Dry, brief humour appears exactly once per major concept.** It is never laboured. The examples above — "Customer lost", "Pick one to fix first" — illustrate the register: wry, businesslike, never cute.
 
 **Contractions and em-dashes are used freely** when they tighten a sentence:
-> *"That's it."*  
-> *"RAG grounds your answers — but it adds 3 seconds of latency."*  
+> *"That's it."*
+> *"RAG grounds your answers — but it adds 3 seconds of latency."*
 > *"Full stop."*
 
 **Academic register is forbidden.** Phrases like "In this section we demonstrate", "It can be shown that", "The reader may note", "we present", "we propose" do not appear in these chapters and must not appear in any new chapter.
@@ -802,8 +802,8 @@ Every chapter opens with three specific items, in order, in a blockquote:
 ```markdown
 Cosine similarity: sim(a,b) = (a·b) / (‖a‖ × ‖b‖)
 
-**In business terms:** Higher similarity → better retrieval → lower error rate. 
-Moving from BM25 (keyword match) to dense embeddings (cosine similarity) reduced error from 15% → 4.2%, 
+**In business terms:** Higher similarity → better retrieval → lower error rate.
+Moving from BM25 (keyword match) to dense embeddings (cosine similarity) reduced error from 15% → 4.2%,
 improving conversion from 15% → 18%.
 ```
 
@@ -837,10 +837,10 @@ Total: $0.006012, 1.25s
 
 ```markdown
 > 📖 **Optional: Scaled Dot-Product Attention Derivation**
-> 
+>
 > [Full mathematical treatment]
-> 
-> For the rigorous treatment of attention as a differentiable soft dictionary lookup, 
+>
+> For the rigorous treatment of attention as a differentiable soft dictionary lookup,
 > see [Vaswani et al. 2017](link).
 ```
 
@@ -987,7 +987,7 @@ Act 4: Decision framework (when to use which)
 
 **Template:**
 ```markdown
-> **The story:** [Name] ([Year]) solved [specific problem] using [this technique]. 
+> **The story:** [Name] ([Year]) solved [specific problem] using [this technique].
 > [One sentence on lasting impact]. [One sentence connecting to reader's daily work].
 >
 > **Where you are:** Ch.[N-1] achieved [specific metric]. This chapter fixes [named blocker].
@@ -995,7 +995,7 @@ Act 4: Decision framework (when to use which)
 > **Business context:** [Current PizzaBot constraint status]
 ```
 
-**Example:** 
+**Example:**
 > "Hinton et al. (2012) showed that deep learning could learn features from raw pixels. By 2017, attention mechanisms (Vaswani et al.) revolutionized how models process sequences. Today, every time PizzaBot ranks menu items by relevance, it uses attention over embedded documents."
 
 **Why effective:** Establishes lineage (authority) + contemporary relevance + production stakes in 3 sentences.
@@ -1080,7 +1080,7 @@ Act 4: Decision framework (when to use which)
 
 **Template:**
 ```markdown
-> ➡️ **[Topic] goes deeper in [Chapter].** This chapter covers [what's needed now]. 
+> ➡️ **[Topic] goes deeper in [Chapter].** This chapter covers [what's needed now].
 > For [advanced topic] — [specific capability] — see [link]. For now: [continue].
 ```
 
@@ -1423,28 +1423,28 @@ for query in user_queries:
 
 ### Anti-Patterns (What NOT to Do)
 
-❌ **Listing techniques without demonstrating failure**  
+❌ **Listing techniques without demonstrating failure**
 Example: "Here are five retrieval methods: BM25, Dense, Hybrid, Reranking, Late Interaction" (table without motivation)
 
-❌ **Generic chatbot examples**  
+❌ **Generic chatbot examples**
 Example: "User: 'What's the weather?' Bot: 'It's sunny!'" (use PizzaBot canonical queries only)
 
-❌ **Vague improvement claims**  
+❌ **Vague improvement claims**
 Example: "RAG makes responses better" instead of "RAG reduces error rate from 15% → 4.2%"
 
-❌ **Security anti-patterns in code**  
+❌ **Security anti-patterns in code**
 Example: `api_key = "sk-proj-..."` (hardcoded key) instead of `os.getenv("OPENAI_API_KEY")`
 
-❌ **Formulas without business consequences**  
+❌ **Formulas without business consequences**
 Example: Showing cosine similarity formula without connecting it to error rate or conversion
 
-❌ **Skipping numerical verification**  
+❌ **Skipping numerical verification**
 Example: Explaining embeddings without tracing a real PizzaBot query through the retrieval pipeline
 
-❌ **Improvised emoji**  
+❌ **Improvised emoji**
 Example: Using 🔍🎯✨🚀 as inline callouts (only 💡⚠️⚡📖➡️ allowed)
 
-❌ **Topic-label section headings**  
+❌ **Topic-label section headings**
 Example: "## 3 · RAG" instead of "## 3 · RAG — How Retrieval Eliminates Hallucinations"
 
 ---
@@ -1655,6 +1655,6 @@ Understanding what the chapters deliberately avoid is as important as the positi
 
 ---
 
-**Last updated**: April 2026  
+**Last updated**: April 2026
 **Track status**: 10 core chapters — all standards unified with ML track pedagogical patterns
 

@@ -224,22 +224,22 @@ writer.close()
 - `writer.close()` — flushes the event file buffer. Always call this or use `writer` as a context manager (`with SummaryWriter(...) as writer:`).
 
 > 💡 **Industry Standard:** `torch.utils.tensorboard.SummaryWriter`
-> 
+>
 > ```python
 > from torch.utils.tensorboard import SummaryWriter
-> 
+>
 > # Production pattern: unique directory per run
 > from datetime import datetime
 > run_name = f"adam_lr{lr}_bs{batch_size}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 > writer = SummaryWriter(f'runs/{run_name}')
-> 
+>
 > # Context manager pattern (auto-flush on exit)
 > with SummaryWriter(f'runs/{run_name}') as writer:
 >     for epoch in range(epochs):
 >         # ... training loop ...
 >         writer.add_scalar('Loss/train', train_loss, epoch)
 > ```
-> 
+>
 > **When to use:** Always for local training. For cloud/team workflows, migrate to Weights & Biases (`wandb.log()`) or MLflow (`mlflow.log_metric()`) — same scalar logging API, hosted backend with experiment comparison UI.
 > **Common alternatives:** Weights & Biases (hosted, collaborative), MLflow (self-hosted, model registry), TensorBoardX (older PyTorch versions)
 > **See also:** [PyTorch TensorBoard tutorial](https://pytorch.org/tutorials/recipes/recipes/tensorboard_with_pytorch.html)
@@ -310,12 +310,12 @@ for epoch in range(1, 51):
 | Weight-norm / grad-norm ratio | $10^2$ – $10^4$ | > $10^6$ | Dying layer — check activation and initialisation |
 
 > 💡 **Industry Standard:** `torch.nn.utils.clip_grad_norm_` + TensorBoard histograms
-> 
+>
 > ```python
 > # Production gradient monitoring pattern
 > for epoch in range(epochs):
 >     loss.backward()
->     
+>
 >     # Log pre-clip gradients for diagnostics
 >     if epoch % 5 == 0:
 >         for name, param in model.named_parameters():
@@ -323,12 +323,12 @@ for epoch in range(1, 51):
 >                 writer.add_histogram(f'grads/{name}', param.grad, epoch)
 >                 grad_norm = param.grad.norm().item()
 >                 writer.add_scalar(f'grad_norm/{name}', grad_norm, epoch)
->     
+>
 >     # Clip gradients before optimizer step
 >     torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
 >     optimizer.step()
 > ```
-> 
+>
 > **When to use:** Always clip gradients for RNNs/LSTMs (exploding gradients common). For feedforward networks, add clipping only if you see NaN losses or histogram spikes >100.
 > **Common alternatives:** Per-parameter clipping (`clip_grad_value_`), adaptive clipping (scales with average grad norm)
 > **Gradient anomaly detection:** PyTorch 1.9+ has `torch.autograd.detect_anomaly()` context manager — catches NaN/Inf gradients with full backward stack trace
@@ -395,15 +395,15 @@ writer.add_embedding(
 - Single undifferentiated cloud → model capacity or training duration insufficient; or label noise is too high.
 
 > 💡 **Industry Standard:** TensorBoard Projector + UMAP for large datasets
-> 
+>
 > ```python
 > # Production embedding validation pattern
 > import umap
-> 
+>
 > # For datasets > 10k samples, use UMAP instead of t-SNE (faster, preserves global structure)
 > reducer = umap.UMAP(n_neighbors=15, min_dist=0.1, metric='cosine')
 > embedding_2d = reducer.fit_transform(embeddings.cpu().numpy())
-> 
+>
 > # Log to TensorBoard
 > writer.add_embedding(
 >     embeddings,
@@ -412,7 +412,7 @@ writer.add_embedding(
 >     tag='layer3_embeddings',
 >     global_step=epoch
 > )
-> 
+>
 > # Alternative: Weights & Biases 3D interactive scatter
 > import wandb
 > wandb.log({
@@ -422,7 +422,7 @@ writer.add_embedding(
 >     )
 > })
 > ```
-> 
+>
 > **When to use:** Always validate embeddings for the final trained model. For iterative monitoring, log every 10 epochs to watch cluster formation (costs disk space).
 > **Common alternatives:** UMAP (faster than t-SNE, preserves global structure), PCA (linear, fast baseline), Isomap (manifold learning)
 > **Embedding libraries:** `umap-learn`, `scikit-learn.manifold`, `tensorboard.plugins.projector`
@@ -465,38 +465,38 @@ for lr in [1e-2, 1e-3, 1e-4]:
 **In the HParams tab:** sortable table showing `lr × optimiser → final_val_mae_k`. At a glance you see that Adam at 1e-3 dominates on California Housing. The parallel coordinates view reveals that low learning rates hurt both optimisers but hurt SGD more — a second-order insight that individual loss curves would not surface unless you plotted all six manually.
 
 > 💡 **Industry Standard:** Optuna + TensorBoard HParams for automated hyperparameter optimization
-> 
+>
 > ```python
 > import optuna
 > from torch.utils.tensorboard import SummaryWriter
-> 
+>
 > def objective(trial):
 >     # Optuna suggests hyperparameters
 >     lr = trial.suggest_float('lr', 1e-5, 1e-1, log=True)
 >     batch_size = trial.suggest_categorical('batch_size', [32, 64, 128, 256])
 >     optimizer_name = trial.suggest_categorical('optimizer', ['sgd', 'adam', 'adamw'])
->     
+>
 >     # Train model with suggested hyperparameters
 >     writer = SummaryWriter(f'runs/trial_{trial.number}')
 >     final_mae = train_model(lr, batch_size, optimizer_name, writer)
->     
+>
 >     # Log to TensorBoard HParams
 >     writer.add_hparams(
 >         {'lr': lr, 'batch_size': batch_size, 'optimizer': optimizer_name},
 >         {'hparam/final_mae': final_mae}
 >     )
 >     writer.close()
->     
+>
 >     return final_mae  # Optuna minimizes this
-> 
+>
 > # Run Bayesian optimization (Optuna finds best params automatically)
 > study = optuna.create_study(direction='minimize')
 > study.optimize(objective, n_trials=50)
-> 
+>
 > print(f"Best MAE: {study.best_value:.2f} with {study.best_params}")
 > # TensorBoard HParams tab now shows all 50 trials — sortable, filterable
 > ```
-> 
+>
 > **When to use:** Manual grid search for <10 hyperparameter combinations. For larger spaces (10+ combinations), use Optuna (Bayesian optimization), Ray Tune (distributed search), or Weights & Biases Sweeps (hosted).
 > **Common alternatives:** Ray Tune (distributed, multi-GPU), Weights & Biases Sweeps (hosted, collaborative), Hydra (config management + sweeps)
 > **Experiment tracking:** For team environments, migrate to W&B (`wandb.log()`) or MLflow (`mlflow.log_param()`, `mlflow.log_metric()`) — both integrate with TensorBoard event files for backward compatibility

@@ -1,7 +1,7 @@
 # Multi-Agent AI Track — Authoring Guide
 
-> **This document tracks the chapter-by-chapter build of the Multi-Agent AI notes library.**  
-> Each chapter lives under `notes/04-multi_agent_ai/` in its own folder, containing a README.  
+> **This document tracks the chapter-by-chapter build of the Multi-Agent AI notes library.**
+> Each chapter lives under `notes/04-multi_agent_ai/` in its own folder, containing a README.
 > Read this before starting any chapter to keep tone, structure, and the running example consistent.
 >
 > **📚 Updated:** Now includes comprehensive pedagogical patterns and style standards aligned with ML track authoring-guide.md.
@@ -275,7 +275,7 @@ What we know so far:
 
 What's blocking us:
   [2–4 sentences: the concrete, named gap. Not abstract ("we need better coordination")
-   but specific ("Single ReAct agent hit 8k context limit on 3rd supplier negotiation. 
+   but specific ("Single ReAct agent hit 8k context limit on 3rd supplier negotiation.
    PO #2024-1847 stuck. Your on-call phone is ringing.")]
 
 What this chapter unlocks:
@@ -324,7 +324,7 @@ Problems:
 - **Error rate**: [before → after]
 - **[Constraint achieved]**: [Evidence]
 
-**Constraint status after Ch.X**: 
+**Constraint status after Ch.X**:
 - #1 (Throughput): [Status]
 - #2 (Latency): [Status]
 - #3 (Accuracy): [Status]
@@ -375,8 +375,8 @@ The reader is treated as the **Lead Architect at OrderFlow**. They are solving a
 
 **Second person is the default.** The reader is placed inside the scenario at all times:
 
-> *"You're the Lead Architect at OrderFlow. You just inherited a procurement workflow that processes 50 POs/day. The business needs 1,000."*  
-> *"Your single ReAct agent hit the 8k context window limit on the third supplier negotiation. The PO is stuck. Your on-call phone is ringing."*  
+> *"You're the Lead Architect at OrderFlow. You just inherited a procurement workflow that processes 50 POs/day. The business needs 1,000."*
+> *"Your single ReAct agent hit the 8k context window limit on the third supplier negotiation. The PO is stuck. Your on-call phone is ringing."*
 > *"You have 10 agents running in parallel. They all need the current inventory state. Who owns it?"*
 
 **Dry, brief humour appears exactly once per major concept.** It is never laboured. Examples:
@@ -384,7 +384,7 @@ The reader is treated as the **Lead Architect at OrderFlow**. They are solving a
 > *"The supplier API responded in 847 milliseconds. Your synchronous agent waited for it. So did the 49 other POs in the queue. Sequentiality is a $420,000/year problem."*
 
 **Contractions and em-dashes are used freely** when they tighten a sentence:
-> *"That's the protocol."*  
+> *"That's the protocol."*
 > *"MCP collapses N×M to N+M — one integration per agent, one per system."*
 
 **Academic register is forbidden.** Phrases like "In this section we demonstrate", "It can be shown that", "The reader may note", "we present", "we propose" do not appear in these chapters and must not appear in any new chapter.
@@ -417,7 +417,7 @@ What we know so far:
 
 What's blocking us:
   [2–4 sentences: the concrete, named gap. Not abstract ("we need better coordination")
-   but specific ("Single ReAct agent hit 8k context limit on 3rd supplier negotiation. 
+   but specific ("Single ReAct agent hit 8k context limit on 3rd supplier negotiation.
    PO #2024-1847 stuck. Your on-call phone is ringing.")]
 
 What this chapter unlocks:
@@ -484,7 +484,7 @@ Anchor every technical concept to a single canonical purchase order flowing thro
 PO #2024-1847: Office supplies for Engineering team
 
 Requester: Sarah Chen, Sr. Engineer
-Request:   "Need 10 standing desks, delivery by end of month, 
+Request:   "Need 10 standing desks, delivery by end of month,
             budget $8,000, check TechFurnish and OfficeDepot"
 
 Expected flow:
@@ -733,16 +733,16 @@ Example diagram naming:
 
 ## FAQ
 
-**Q: What if my chapter doesn't directly improve a business metric?**  
+**Q: What if my chapter doesn't directly improve a business metric?**
 A: Infrastructure chapters (e.g., Ch.1 MessageFormats) lay groundwork. Mark constraints as "⚡ Foundation" and explain what future chapters will unlock.
 
-**Q: Can I exceed the 6 constraints or add new ones?**  
+**Q: Can I exceed the 6 constraints or add new ones?**
 A: No. The 6 constraints are fixed for consistency. If your chapter addresses something outside these (e.g., "developer experience"), frame it as supporting one of the 6 (e.g., "better DX → fewer bugs → improves #3 Accuracy").
 
-**Q: How strict are the target numbers (1,000 POs/day, <4hr, etc.)?**  
+**Q: How strict are the target numbers (1,000 POs/day, <4hr, etc.)?**
 A: They're realistic but aspirational. If your evidence shows 950 POs/day instead of 1,000, that's acceptable as long as it's close and you explain the gap.
 
-**Q: Should I delete existing technical content to fit this framework?**  
+**Q: Should I delete existing technical content to fit this framework?**
 A: No! Add § 0 Challenge and Progress Check sections around existing content. The technical depth is the value — we're adding business context, not replacing it.
 
 ---
@@ -771,8 +771,8 @@ Create these diagrams to visualize OrderFlow progression:
 The reader is the **Lead Architect at OrderFlow**. They are solving a B2B automation problem with real financial stakes — wrong PO = wrong supplier commitment = potential $500k error. The CTO is watching every agent call. Every section should feel like: "Here's the coordination problem, here's where the single-agent approach fails, here's the multi-agent protocol that fixes it."
 
 **Second person default:**
-> *"You're the Lead Architect at OrderFlow. You just inherited a procurement workflow that processes 50 POs/day. The business needs 1,000."*  
-> *"Your single ReAct agent hit the 8k context window limit on the third supplier negotiation. The PO is stuck. Your on-call phone is ringing."*  
+> *"You're the Lead Architect at OrderFlow. You just inherited a procurement workflow that processes 50 POs/day. The business needs 1,000."*
+> *"Your single ReAct agent hit the 8k context window limit on the third supplier negotiation. The PO is stuck. Your on-call phone is ringing."*
 > *"You have 10 agents running in parallel. They all need the current inventory state. Who owns it?"*
 
 **Dry humour register:** one instance per major concept.
@@ -804,7 +804,7 @@ Anchor every technical concept to a single canonical purchase order flowing thro
 PO #2024-1847: Office supplies for Engineering team
 
 Requester: Sarah Chen, Sr. Engineer
-Request:   "Need 10 standing desks, delivery by end of month, 
+Request:   "Need 10 standing desks, delivery by end of month,
             budget $8,000, check TechFurnish and OfficeDepot"
 
 Expected flow:
@@ -996,7 +996,7 @@ The Progress Check is the last substantive section before the Bridge. It has a f
 Progress toward constraints:
   [table: Constraint | Status | Current State]
 
-[Mermaid LR flowchart showing all chapters from Ch.1 to Ch.7, 
+[Mermaid LR flowchart showing all chapters from Ch.1 to Ch.7,
  with current chapter highlighted and throughput/latency values annotated]
 ```
 
@@ -1069,7 +1069,7 @@ Act 4: Decision framework (when to use which)
 
 **Template:**
 ```markdown
-> **The story:** [System/Person] ([Year]) solved [specific problem] using [this technique]. 
+> **The story:** [System/Person] ([Year]) solved [specific problem] using [this technique].
 > [One sentence on lasting impact]. [One sentence connecting to OrderFlow mission].
 >
 > **Where you are:** Ch.[N-1] achieved [specific metric]. This chapter fixes [named blocker].
@@ -1148,7 +1148,7 @@ Act 4: Decision framework (when to use which)
 
 **Template:**
 ```markdown
-> ➡️ **[Topic] goes deeper in [Chapter].** This chapter covers [what's needed now]. 
+> ➡️ **[Topic] goes deeper in [Chapter].** This chapter covers [what's needed now].
 > For [advanced topic] — [specific capability] — see [link]. For now: [continue with current concept].
 ```
 
@@ -1181,7 +1181,7 @@ Act 4: Decision framework (when to use which)
 PO #2024-1847: Office supplies for Engineering team
 
 Requester: Sarah Chen, Sr. Engineer
-Request:   "Need 10 standing desks, delivery by end of month, 
+Request:   "Need 10 standing desks, delivery by end of month,
             budget $8,000, check TechFurnish and OfficeDepot"
 ```
 
@@ -1246,7 +1246,7 @@ Ch.2 (MCP-wrapped):         tool_call = {"method": "execute", "params": {"messag
 **Rule:** For key concepts, let readers manipulate before explaining.
 
 **Example from Ch.1:**
-> "Before any schema: ignore protocols. You have Agent A sending a message to Agent B. What fields would YOU include?"  
+> "Before any schema: ignore protocols. You have Agent A sending a message to Agent B. What fields would YOU include?"
 > Shows interactive editor with message structure, adding fields, seeing what breaks.
 
 **Then:** "This works for 2 agents. What about 10 agents with 50 messages in flight? You need correlation IDs, timestamps, type safety — you need a protocol."
@@ -1479,28 +1479,28 @@ agent.send(response)
 
 ### Anti-Patterns (What NOT to Do)
 
-❌ **Listing patterns without demonstrating failure**  
+❌ **Listing patterns without demonstrating failure**
 Example: "Here are four coordination patterns: point-to-point, hub-and-spoke, event-driven, actor model" (table without motivation)
 
-❌ **Protocols without verbal glossing**  
+❌ **Protocols without verbal glossing**
 Example: Dropping message schema with no "In English:" follow-up paragraph
 
-❌ **Vague improvement claims**  
+❌ **Vague improvement claims**
 Example: "The system got faster" instead of "Latency: 36hr → 3.2hr (91% reduction)"
 
-❌ **Academic register**  
+❌ **Academic register**
 Example: "We demonstrate that...", "It can be shown that...", "In this section we will discuss..."
 
-❌ **Synthetic scenarios for walkthroughs**  
+❌ **Synthetic scenarios for walkthroughs**
 Example: Using "Agent A talks to Agent B" instead of "PricingAgent queries InventoryAgent for PO #2024-1847"
 
-❌ **Improvised emoji**  
+❌ **Improvised emoji**
 Example: Using 🔍🎯✨🚀 as inline callouts (only 💡⚠️⚡📖➡️ allowed)
 
-❌ **Topic-label section headings**  
+❌ **Topic-label section headings**
 Example: "## 3 · Protocol" instead of "## 3 · The Protocol — How Message Schemas Prevent Context Overflow"
 
-❌ **Skipping scenario verification**  
+❌ **Skipping scenario verification**
 Example: Showing architecture, then immediately generalizing without tracing PO #2024-1847 through it
 
 ---
@@ -1799,7 +1799,7 @@ The `grand_solution_reference.ipynb` (reference) or `grand_solution_exercise.ipy
 ```markdown
 # [Track Name] Grand Solution — [Grand Challenge Name]
 
-> **Consolidated Notebook:** This notebook brings together all code examples 
+> **Consolidated Notebook:** This notebook brings together all code examples
 > from the [Track Name] track into a single executable demonstration.
 
 **The Challenge:** [Brief statement of the grand challenge]
@@ -1849,7 +1849,7 @@ class ConceptDemo:
     def __init__(self):
         # Implementation
         pass
-    
+
     def demonstrate(self):
         # Demo the concept
         pass
@@ -1875,7 +1875,7 @@ class CompleteSystem:
     def __init__(self):
         # Initialize all components from Ch.1-N
         pass
-    
+
     def validate_constraints(self):
         """Validate all N constraints"""
         return {
@@ -2005,16 +2005,16 @@ See `notes/04-multi_agent_ai/grand_solution.ipynb` for reference implementation:
 
 ## FAQ
 
-**Q: What if my chapter doesn't directly improve a business metric?**  
+**Q: What if my chapter doesn't directly improve a business metric?**
 A: Infrastructure chapters (e.g., Ch.1 MessageFormats) lay groundwork. Mark constraints as "⚡ Foundation" and explain what future chapters will unlock.
 
-**Q: Can I exceed the 8 constraints or add new ones?**  
+**Q: Can I exceed the 8 constraints or add new ones?**
 A: No. The 8 constraints are fixed for consistency. If your chapter addresses something outside these (e.g., "developer experience"), frame it as supporting one of the 8 (e.g., "better DX → fewer bugs → improves #3 Accuracy").
 
-**Q: How strict are the target numbers (1,000 POs/day, <4hr, etc.)?**  
+**Q: How strict are the target numbers (1,000 POs/day, <4hr, etc.)?**
 A: They're realistic but aspirational. If your evidence shows 950 POs/day instead of 1,000, that's acceptable as long as it's close and you explain the gap.
 
-**Q: Should I delete existing technical content to fit this framework?**  
+**Q: Should I delete existing technical content to fit this framework?**
 A: No! Add § 0 Challenge and Progress Check sections around existing content. The technical depth is the value — we're adding business context, not replacing it.
 
 ---

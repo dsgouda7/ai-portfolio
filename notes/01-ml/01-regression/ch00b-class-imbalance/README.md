@@ -250,7 +250,7 @@ class_weights = compute_class_weight(
 weight_dict = {0: class_weights[0], 1: class_weights[1]}
 ```
 
-> **Industry Standard:** `class_weight='balanced'` in sklearn  
+> **Industry Standard:** `class_weight='balanced'` in sklearn
 > Manual weight calculation teaches the inverse frequency formula $w_j = n/(C \times n_j)$. In production, most sklearn classifiers accept `class_weight='balanced'` parameter, which automatically computes and applies these weights. No need to manually calculate — use `LogisticRegression(class_weight='balanced')`, `RandomForestClassifier(class_weight='balanced')`, or `SVC(class_weight='balanced')`. Handles edge cases (empty classes, multi-class with more than 2 classes) automatically.
 
 ---
@@ -517,7 +517,7 @@ macro avg         0.78      0.80      0.79      4128
 
 **Final result:** High-value recall = 71%, F₁ = 0.68. The model now *finds* luxury properties effectively, ensuring balanced performance across all market segments when you build regression models in Ch.01-07.
 
-> **Industry Standard:** Threshold tuning with `sklearn.metrics.precision_recall_curve`  
+> **Industry Standard:** Threshold tuning with `sklearn.metrics.precision_recall_curve`
 > Manual threshold search (sweeping τ ∈ [0.1, 0.9] and computing F₁ at each point) teaches the precision-recall tradeoff. In production, use `precision_recall_curve(y_true, y_score)` which returns precision, recall, and thresholds arrays in one call. Find optimal operating point with `thresholds[np.argmax(f1_scores)]`. For business-specific cost functions (e.g., false negative costs 10× false positive), replace F₁ maximization with custom cost function: `cost = FN_cost * fn_count + FP_cost * fp_count` and minimize over threshold sweep.
 
 > 💡 **Validate verdict:** SMOTE + threshold tuning (τ* = 0.38) raised minority-class recall from 20% to 71% at 66% precision (F₁ = 0.68) — balanced training across 75%/25% class split achieved.
@@ -597,7 +597,7 @@ Both synthetic points lie strictly *between* their parent points. SMOTE guarante
 
 > 📖 **SMOTE with k=5 in practice:** The default `k_neighbors=5` means each source point has 5 candidates for `x_nn`. One of the 5 is chosen randomly per synthetic sample. More candidates → synthetic points are distributed more broadly across the minority region, reducing clustering around a single neighbour.
 
-> **Industry Standard:** `imblearn.over_sampling.SMOTE`  
+> **Industry Standard:** `imblearn.over_sampling.SMOTE`
 > Manual SMOTE implementation teaches the k-nearest-neighbor interpolation concept ($x_{\text{new}} = x_i + \lambda \cdot (x_{\text{nn}} - x_i)$). In production, use `from imblearn.over_sampling import SMOTE` with `sampling_strategy='auto'` which handles edge cases automatically: (1) raises error if minority class < `k_neighbors + 1` samples, (2) supports categorical features via `SMOTENC`, (3) offers adaptive variants like `ADASYN` for boundary-focused synthesis. Always apply via `Pipeline` with `imblearn.pipeline.Pipeline` to prevent train/test leakage.
 
 ---

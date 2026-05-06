@@ -31,7 +31,7 @@ PizzaBot (Ch.3 CoT reasoning only):
 Thought: "I need calorie information for Margherita, large size."
 Action: retrieve_from_rag("Margherita large calories")
 Observation: [No tool execution yet — this is a placeholder!]
-Thought: "Based on typical pizza sizes, a large Margherita is approximately 
+Thought: "Based on typical pizza sizes, a large Margherita is approximately
          850-900 calories."
 Answer: "A large Margherita is approximately 880 calories."
 
@@ -82,7 +82,7 @@ Current state:
 - **Latency**: 3-5s → 2-3s p95 (retrieval is fast, reduces need for long reasoning chains)
 - **Customer complaints**: ~20/week → ~2/week (wrong info eliminated)
 
-**Constraint status after Ch.4**: 
+**Constraint status after Ch.4**:
 - #1 (Business Value): 18% conversion — approaching phone baseline, but need proactive upselling (Ch.6)
 - #2 (Accuracy): ~5% error — **TARGET HIT!** All menu fact errors eliminated
 - #3 (Latency): 2-3s p95 — excellent, retrieval faster than long CoT chains
@@ -283,9 +283,9 @@ print(f"Vector magnitude (after normalization): {np.linalg.norm(embeddings[0]):.
 np.save('menu_embeddings.npy', embeddings)
 ```
 
-> 💡 **Industry Standard:** `sentence-transformers` library  
-> **When to use:** Always for local/free embeddings. SOTA models: `all-MiniLM-L6-v2` (fast, 384-dim), `all-mpnet-base-v2` (higher quality, 768-dim), or `BGE` models (multilingual, SOTA).  
-> **Common alternatives:** OpenAI `text-embedding-3-small` (API, $0.02/1M tokens), Cohere `embed-v3` (multilingual), `voyage-2` (high-quality retrieval).  
+> 💡 **Industry Standard:** `sentence-transformers` library
+> **When to use:** Always for local/free embeddings. SOTA models: `all-MiniLM-L6-v2` (fast, 384-dim), `all-mpnet-base-v2` (higher quality, 768-dim), or `BGE` models (multilingual, SOTA).
+> **Common alternatives:** OpenAI `text-embedding-3-small` (API, $0.02/1M tokens), Cohere `embed-v3` (multilingual), `voyage-2` (high-quality retrieval).
 > **Production pattern:** sentence-transformers for prototyping → OpenAI API for production if budget allows.
 
 > 💡 **Embed verdict:** 1,500 menu chunks converted to normalized 384-dim vectors — dot product now equals cosine similarity, enabling fast ANN index queries.
@@ -338,7 +338,7 @@ Many embedding models output normalized vectors by default — check your model'
 **PizzaBot doesn't need image embeddings yet** — but if Mamma Rosa's marketing team wants to add "show me pizzas that look like this photo" or "find menu items matching this Instagram post," you'll need multimodal embeddings. For now, this is optional depth; skip to § 4 if you're focused on the core RAG pipeline.
 
 > 📖 **Optional: Multimodal Embeddings for Future Features**
-> 
+>
 > While text embeddings are the primary focus of most RAG systems, the concept extends to other modalities. If your roadmap includes visual search ("show me pizzas that look like this") or audio transcription search ("find the training video where we explain gluten-free prep"), you'll need these techniques.
 
 ### Image Embeddings (CLIP and Multimodal Models)
@@ -543,8 +543,8 @@ results = collection.query(
 
 # Display retrieved chunks
 for i, (doc, meta, dist) in enumerate(zip(
-    results['documents'][0], 
-    results['metadatas'][0], 
+    results['documents'][0],
+    results['metadatas'][0],
     results['distances'][0]
 )):
     similarity = 1 - dist  # Convert L2 distance to similarity
@@ -776,10 +776,10 @@ For a 500-token chunk, that means **50 to 100 tokens** of overlap with adjacent 
  Chunk 1: [─────────────────────|====]
  Chunk 2: [====|─────────────────────|====]
  Chunk 3: [====|─────────────────────]
- 
+
  ──── = unique content per chunk
  ==== = overlapping region (10-20% of chunk size)
- 
+
  If a key sentence falls in an overlap zone,
  it appears in BOTH adjacent chunks → retrieval succeeds.
 ```
@@ -903,7 +903,7 @@ You picked recursive for production (fast, good enough), and documented semantic
 ```plaintext
 INGESTION PATH (Offline)
 ========================
- 
+
  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐
  │ Raw Docs│───▶│ Clean & │───▶│ Chunk │───▶│ Embed │───▶│ Vector │
  │ (PDF, │ │ Extract │ │ (400-512 │ │ (Model: │ │ DB + │
@@ -951,7 +951,7 @@ results = collection.query(
 
 # Phase 5: Compose prompt with retrieved context
 retrieved_chunks = results['documents'][0]
-context = "\n\n".join([f"[Source {i+1}]\n{chunk}" 
+context = "\n\n".join([f"[Source {i+1}]\n{chunk}"
                        for i, chunk in enumerate(retrieved_chunks)])
 
 # DECISION LOGIC: Prompt template with citation requirement

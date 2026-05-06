@@ -170,17 +170,17 @@ graph TD
     B -->|Lint passes| C{Build Docker image}
     C -->|Build fails| X2[❌ Alert team]
     C -->|Build succeeds| D{Phase 2: TEST}
-    
+
     D -->|Tests fail| X3[❌ Block deploy<br/>Report coverage]
     D -->|Coverage <80%| X4[⚠️ Warning<br/>Proceed anyway]
     D -->|Tests pass| E{Phase 3: DEPLOY}
-    
+
     E --> F[Push image to Docker Hub]
     F --> G[Deploy to staging]
     G --> H{Staging healthy?}
     H -->|No| X5[❌ Keep in staging<br/>Alert on-call]
     H -->|Yes| I[Deploy to production]
-    
+
     I --> J{Phase 4: VERIFY}
     J --> K[Run health checks]
     K --> L{/health returns 200?}
@@ -189,12 +189,12 @@ graph TD
     N --> O{Metrics within SLA?}
     O -->|No| M
     O -->|Yes| P[✅ Deploy complete]
-    
+
     P --> Q[Phase 5: MONITOR]
     Q --> R[Track build time]
     Q --> S[Track test pass rate]
     Q --> T[Track DORA metrics]
-    
+
     style X1 fill:#b91c1c
     style X2 fill:#b91c1c
     style X3 fill:#b91c1c
@@ -289,7 +289,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps: [...]
-  
+
   build:
     needs: test  # Wait for test job to succeed
     runs-on: ubuntu-latest
@@ -347,50 +347,50 @@ jobs:
   lint-and-build:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    
+
     steps:
       # Step 1: Get the code
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       # Step 2: Set up Python
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       # Step 3: Lint code (DECISION GATE)
       - name: Install linting tools
         run: |
           pip install flake8 black
-      
+
       - name: Run flake8
         run: |
           flake8 app/ --max-line-length=100 --count --statistics
           # DECISION: Exit code 0 = pass, >0 = fail (blocks pipeline)
-      
+
       - name: Check code formatting with black
         run: |
           black --check app/
           # DECISION: If formatting issues found, fail the build
-      
+
       # Step 4: Build Docker image
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      
+
       - name: Build Docker image
         run: |
           # Tag with commit SHA for traceability
           docker build -t myapp:${{ github.sha }} .
           docker tag myapp:${{ github.sha }} myapp:latest
-      
+
       # Step 5: Log in to Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
-      
+
       # Step 6: Push to registry
       - name: Push to Docker Hub
         run: |
@@ -422,14 +422,14 @@ jobs:
 ```
 
 > 💡 **Industry Tool — GitHub Actions vs GitLab CI vs Jenkins:**
-> 
+>
 > | Platform | Best for | Pricing | Setup complexity |
 > |----------|----------|---------|------------------|
 > | **GitHub Actions** | Open-source projects, teams already on GitHub | 2,000 min/month free | Low — YAML in repo |
 > | **GitLab CI** | Teams wanting all-in-one (Git + CI + registry + K8s) | 400 min/month free | Low — `.gitlab-ci.yml` |
 > | **Jenkins** | Enterprises with complex compliance, on-prem requirements | Free (self-hosted) | High — server setup, plugin management |
 > | **CircleCI** | Fast builds with Docker layer caching | 6,000 min/month free | Medium — config + integrations |
-> 
+>
 > **This chapter uses GitHub Actions because:** (1) Zero setup — works in any GitHub repo, (2) 2,000 free minutes/month, (3) Largest action marketplace (10,000+ pre-built actions). The concepts transfer 1:1 to other platforms.
 
 > 💡 **Build verdict:** Pipeline runs in 2m15s with layer caching; deployment frequency 8×/day, zero manual rollouts.
@@ -487,40 +487,40 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       # Install dependencies
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
           pip install pytest pytest-cov
-      
+
       # DECISION GATE 1: Unit tests
       - name: Run unit tests
         run: |
           pytest tests/unit/ -v --tb=short
           # DECISION: Any test failure stops pipeline here
-      
+
       # DECISION GATE 2: Integration tests
       - name: Run integration tests
         run: |
           pytest tests/integration/ -v --tb=short
           # Tests API endpoints, database connections
-      
+
       # DECISION GATE 3: Code coverage
       - name: Measure code coverage
         run: |
           pytest --cov=app --cov-report=term --cov-report=xml tests/
           coverage_pct=$(coverage report | grep TOTAL | awk '{print $4}' | sed 's/%//')
-          
+
           # DECISION: Fail if coverage <80%
           if (( $(echo "$coverage_pct < 80" | bc -l) )); then
             echo "❌ Coverage $coverage_pct% is below 80% threshold"
@@ -528,7 +528,7 @@ jobs:
           else
             echo "✅ Coverage $coverage_pct% meets threshold"
           fi
-      
+
       # Upload coverage to Codecov (optional)
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -536,7 +536,7 @@ jobs:
           file: ./coverage.xml
           flags: unittests
           name: codecov-umbrella
-      
+
       # DECISION GATE 4: Security scan
       - name: Run security scan with Safety
         run: |
@@ -571,18 +571,18 @@ TOTAL                      123      10   92%
 ```
 
 > 💡 **Industry Tool — Codecov for Test Coverage Tracking:**
-> 
+>
 > **What it does:** Visualizes test coverage trends over time, shows which lines are untested, blocks PRs below coverage threshold.
-> 
+>
 > **When to use:** After your first working pipeline (Phase 2 complete). Free for open-source projects.
-> 
+>
 > **Setup:**
 > 1. Sign up at codecov.io with GitHub account
 > 2. Add repository
 > 3. Get upload token from Codecov dashboard
 > 4. Add `CODECOV_TOKEN` to GitHub repository secrets
 > 5. Add upload step to workflow (shown above)
-> 
+>
 > **Alternatives:**
 > - **Coveralls** — Similar to Codecov, free tier for public repos
 > - **SonarCloud** — Coverage + code quality + security (more comprehensive)
@@ -616,78 +616,78 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps: [...]  # Phase 2 steps
-  
+
   build:
     needs: test
     runs-on: ubuntu-latest
     steps: [...]  # Phase 1 build steps
-  
+
   deploy-staging:
     needs: build
     runs-on: ubuntu-latest
     environment:
       name: staging
       url: https://staging.myapp.com
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       # Deploy to staging K8s cluster
       - name: Set up kubectl
         uses: azure/setup-kubectl@v3
-      
+
       - name: Configure kubectl for staging
         run: |
           mkdir -p $HOME/.kube
           echo "${{ secrets.KUBECONFIG_STAGING }}" | base64 -d > $HOME/.kube/config
-      
+
       - name: Update staging deployment
         run: |
           kubectl set image deployment/myapp \
             myapp=${{ secrets.DOCKER_USERNAME }}/myapp:${{ github.sha }} \
             --namespace=staging
-          
+
           # DECISION: Wait for rollout to complete
           kubectl rollout status deployment/myapp --namespace=staging --timeout=5m
-          
+
           echo "✅ DEPLOY STAGE (Staging): Rollout completed with image SHA ${{ github.sha }}"
-      
+
       - name: Run staging smoke tests
         run: |
           # DECISION GATE: Is staging healthy?
           curl -f https://staging.myapp.com/health || exit 1
           curl -f https://staging.myapp.com/api/v1/predict -d '{"input": "test"}' || exit 1
           echo "✅ Staging smoke tests passed"
-  
+
   deploy-production:
     needs: deploy-staging
     runs-on: ubuntu-latest
     environment:
       name: production
       url: https://myapp.com
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Set up kubectl
         uses: azure/setup-kubectl@v3
-      
+
       - name: Configure kubectl for production
         run: |
           mkdir -p $HOME/.kube
           echo "${{ secrets.KUBECONFIG_PROD }}" | base64 -d > $HOME/.kube/config
-      
+
       - name: Update production deployment
         run: |
           kubectl set image deployment/myapp \
             myapp=${{ secrets.DOCKER_USERNAME }}/myapp:${{ github.sha }} \
             --namespace=production
-          
+
           # DECISION: Wait for rollout to complete (with longer timeout for prod)
           kubectl rollout status deployment/myapp --namespace=production --timeout=10m
-          
+
           echo "✅ DEPLOY STAGE (Production): Rollout completed, zero downtime achieved"
 ```
 
@@ -710,11 +710,11 @@ kubectl rollout status deployment/myapp --timeout=5m
 ```
 
 > 💡 **Industry Tool — Argo CD for GitOps:**
-> 
+>
 > **What it does:** Continuously monitors git repo for K8s manifests, automatically syncs cluster state to match git. "Git is the source of truth."
-> 
+>
 > **GitHub Actions vs Argo CD:**
-> 
+>
 > | Aspect | GitHub Actions (this chapter) | Argo CD (GitOps) |
 > |--------|------------------------------|-------------------|
 > | **Deployment trigger** | Push to main → Action runs | Push to main → Argo detects, syncs |
@@ -722,9 +722,9 @@ kubectl rollout status deployment/myapp --timeout=5m
 > | **Drift detection** | No — manual `kubectl` changes persist | Yes — reverts manual changes automatically |
 > | **Rollback** | Re-run previous workflow | `git revert` → Argo syncs automatically |
 > | **Best for** | Simple apps, learning, <5 clusters | Multi-cluster, regulated industries, teams >10 |
-> 
+>
 > **When to adopt Argo CD:** When you have >3 Kubernetes clusters (dev, staging, prod, regional) or regulatory requirements for audit trails. GitHub Actions suffices for most startups.
-> 
+>
 > **Setup:** Install Argo CD in your cluster (`kubectl apply -f argocd.yaml`), point it at your git repo, define `Application` resources. Full guide: [argo-cd.readthedocs.io](https://argo-cd.readthedocs.io/)
 
 > 💡 **Deploy verdict:** Blue-green swap with zero downtime; staging validated in 1m25s, production rollout in 2m10s.
@@ -778,16 +778,16 @@ def check_health():
                 print(f"⚠️ Health check returned {response.status_code} (attempt {attempt + 1})")
         except requests.RequestException as e:
             print(f"❌ Health check failed: {e} (attempt {attempt + 1})")
-        
+
         if attempt < MAX_RETRIES - 1:
             time.sleep(RETRY_DELAY)
-    
+
     return False
 
 def smoke_test():
     """DECISION GATE 2: Do critical API endpoints work?"""
     test_payload = {"input": [1, 2, 3, 4, 5]}
-    
+
     try:
         response = requests.post(PREDICT_ENDPOINT, json=test_payload, timeout=10)
         if response.status_code == 200 and "prediction" in response.json():
@@ -804,13 +804,13 @@ def check_metrics():
     """DECISION GATE 3: Are metrics within SLA?"""
     # Example: Check average response time from Prometheus
     # In real scenarios, query your monitoring system
-    
+
     try:
         # Simulate Prometheus query for p95 latency
         # response = requests.get("http://prometheus:9090/api/v1/query?query=...")
         p95_latency = 150  # milliseconds (from monitoring system)
         SLA_THRESHOLD = 200  # milliseconds
-        
+
         if p95_latency < SLA_THRESHOLD:
             print(f"✅ Metrics check passed: p95 latency {p95_latency}ms < {SLA_THRESHOLD}ms")
             return True
@@ -824,7 +824,7 @@ def check_metrics():
 def rollback():
     """DECISION: Automatic rollback to previous version."""
     print(f"🔄 Rolling back from {CURRENT_IMAGE} to {PREVIOUS_IMAGE}")
-    
+
     try:
         # Rollback command
         subprocess.run([
@@ -833,7 +833,7 @@ def rollback():
             f"myapp={PREVIOUS_IMAGE}",
             "--namespace=production"
         ], check=True)
-        
+
         # Wait for rollback to complete
         subprocess.run([
             "kubectl", "rollout", "status",
@@ -841,7 +841,7 @@ def rollback():
             "--namespace=production",
             "--timeout=5m"
         ], check=True)
-        
+
         print(f"✅ Rollback complete: Now running {PREVIOUS_IMAGE}")
         return True
     except subprocess.CalledProcessError as e:
@@ -851,26 +851,26 @@ def rollback():
 def main():
     """Run all Phase 4 validation checks."""
     print(f"Starting Phase 4 validation for {CURRENT_IMAGE}...")
-    
+
     # Run checks in sequence
     health_ok = check_health()
     if not health_ok:
         print("❌ Health check failed after 3 retries → ROLLBACK")
         rollback()
         sys.exit(1)
-    
+
     smoke_ok = smoke_test()
     if not smoke_ok:
         print("❌ Smoke test failed → ROLLBACK")
         rollback()
         sys.exit(1)
-    
+
     metrics_ok = check_metrics()
     if not metrics_ok:
         print("❌ Metrics check failed → ROLLBACK")
         rollback()
         sys.exit(1)
-    
+
     print("✅ All Phase 4 checks passed — deployment validated")
     sys.exit(0)
 
@@ -883,7 +883,7 @@ if __name__ == "__main__":
 ```yaml
 deploy-production:
   # ... (deployment steps from Phase 3)
-  
+
   - name: Phase 4 - Verify deployment
     env:
       PREVIOUS_IMAGE: ${{ needs.build.outputs.previous_sha }}
@@ -894,23 +894,23 @@ deploy-production:
 ```
 
 > 💡 **Industry Tool — Spinnaker for Advanced Deployment Strategies:**
-> 
+>
 > **What it does:** Multi-cloud deployment orchestrator with built-in canary analysis, blue/green deployments, automated rollback.
-> 
+>
 > **Deployment strategies comparison:**
-> 
+>
 > | Strategy | What it does | Rollback speed | Risk | When to use |
 > |----------|--------------|----------------|------|-------------|
 > | **Rolling update** (this chapter) | Replace pods gradually | 2-5 min | Medium | Default for most apps |
 > | **Blue/green** (Spinnaker) | Run new version alongside old, switch traffic instantly | Instant | Low | Zero-downtime critical apps |
 > | **Canary** (Spinnaker) | Route 5% traffic to new version, monitor, gradually increase to 100% | Instant | Very low | High-traffic apps, unknowngood behavior |
-> 
+>
 > **GitHub Actions (this chapter) gives you:** Rolling updates with health checks.
-> 
+>
 > **Spinnaker adds:** Canary analysis (automated metrics comparison between versions), multi-cloud (deploy to AWS + GCP + Azure from one pipeline), advanced rollback triggers (revert if error rate >1%).
-> 
+>
 > **When to adopt:** When you have >1M requests/day or deploy to multiple clouds. GitHub Actions suffices for <100K requests/day.
-> 
+>
 > **Setup:** Deploy Spinnaker to K8s cluster (requires 4+ GB RAM), configure cloud providers, define pipelines in Spinnaker UI. Full guide: [spinnaker.io/setup](https://spinnaker.io/setup/)
 
 > 💡 **Verify verdict:** Health, smoke, and p95 latency (150ms < 200ms SLA) all passed — no rollback needed.
@@ -936,8 +936,8 @@ The DevOps Research and Assessment (DORA) team identified four metrics that corr
 
 > "How often do we deploy to production?"
 
-**High performers:** Multiple deployments per day  
-**Medium performers:** Weekly to monthly  
+**High performers:** Multiple deployments per day
+**Medium performers:** Weekly to monthly
 **Low performers:** Monthly to every 6 months
 
 **How to track:**
@@ -960,19 +960,19 @@ def get_deployment_frequency():
         "branch": "main",
         "created": f">={(datetime.now() - timedelta(days=7)).isoformat()}"
     }
-    
+
     response = requests.get(url, headers=headers, params=params)
     workflow_runs = response.json()["workflow_runs"]
-    
+
     # Filter for successful deployments that reached production
     successful_deploys = [
         run for run in workflow_runs
         if run["conclusion"] == "success"
     ]
-    
+
     print(f"✅ Deployment Frequency: {len(successful_deploys)} deploys in last 7 days")
     print(f"   Average: {len(successful_deploys) / 7:.1f} deploys/day")
-    
+
     return len(successful_deploys)
 ```
 
@@ -980,8 +980,8 @@ def get_deployment_frequency():
 
 > "How long from commit to production?"
 
-**High performers:** <1 hour  
-**Medium performers:** 1 day to 1 week  
+**High performers:** <1 hour
+**Medium performers:** 1 day to 1 week
 **Low performers:** 1 month to 6 months
 
 **How to track:**
@@ -990,10 +990,10 @@ def get_lead_time():
     """Calculate average time from commit to production deploy."""
     url = f"{GITHUB_API}/repos/{REPO}/actions/runs"
     headers = {"Authorization": f"Bearer {TOKEN}"}
-    
+
     response = requests.get(url, headers=headers, params={"per_page": 10})
     workflow_runs = response.json()["workflow_runs"]
-    
+
     lead_times = []
     for run in workflow_runs:
         if run["conclusion"] == "success":
@@ -1002,10 +1002,10 @@ def get_lead_time():
             completed = datetime.fromisoformat(run["updated_at"].replace("Z", "+00:00"))
             lead_time = (completed - started).total_seconds() / 60  # minutes
             lead_times.append(lead_time)
-    
+
     avg_lead_time = sum(lead_times) / len(lead_times)
     print(f"✅ Lead Time: {avg_lead_time:.1f} minutes (median of last 10 deploys)")
-    
+
     return avg_lead_time
 ```
 
@@ -1013,8 +1013,8 @@ def get_lead_time():
 
 > "What % of deployments require rollback or hotfix?"
 
-**High performers:** <15%  
-**Medium performers:** 16-30%  
+**High performers:** <15%
+**Medium performers:** 16-30%
 **Low performers:** >30%
 
 **How to track:**
@@ -1024,16 +1024,16 @@ def get_change_failure_rate():
     url = f"{GITHUB_API}/repos/{REPO}/actions/runs"
     headers = {"Authorization": f"Bearer {TOKEN}"}
     params = {"created": f">={(datetime.now() - timedelta(days=30)).isoformat()}"}
-    
+
     response = requests.get(url, headers=headers, params=params)
     workflow_runs = response.json()["workflow_runs"]
-    
+
     total_deploys = len(workflow_runs)
     failed_deploys = len([run for run in workflow_runs if run["conclusion"] == "failure"])
-    
+
     failure_rate = (failed_deploys / total_deploys) * 100 if total_deploys > 0 else 0
     print(f"✅ Change Failure Rate: {failure_rate:.1f}% ({failed_deploys}/{total_deploys} deploys failed)")
-    
+
     return failure_rate
 ```
 
@@ -1041,8 +1041,8 @@ def get_change_failure_rate():
 
 > "How quickly do we recover from incidents?"
 
-**High performers:** <1 hour  
-**Medium performers:** <1 day  
+**High performers:** <1 hour
+**Medium performers:** <1 day
 **Low performers:** 1 week to 1 month
 
 **How to track:**
@@ -1051,23 +1051,23 @@ def get_time_to_restore():
     """Calculate average time from rollback trigger to service restoration."""
     # This requires tracking incident timestamps in your monitoring system
     # Example: Parse GitHub Actions logs for "Rolling back" → "Rollback complete"
-    
+
     # Simulated example:
     incidents = [
         {"started": "2024-01-15T14:32:00Z", "resolved": "2024-01-15T14:47:00Z"},  # 15 min
         {"started": "2024-01-20T09:15:00Z", "resolved": "2024-01-20T09:58:00Z"},  # 43 min
     ]
-    
+
     restore_times = []
     for incident in incidents:
         started = datetime.fromisoformat(incident["started"].replace("Z", "+00:00"))
         resolved = datetime.fromisoformat(incident["resolved"].replace("Z", "+00:00"))
         restore_time = (resolved - started).total_seconds() / 60  # minutes
         restore_times.append(restore_time)
-    
+
     avg_restore_time = sum(restore_times) / len(restore_times) if restore_times else 0
     print(f"✅ Time to Restore: {avg_restore_time:.0f} minutes (average of last {len(restore_times)} incidents)")
-    
+
     return avg_restore_time
 ```
 
@@ -1086,14 +1086,14 @@ python scripts/dora_metrics.py
 ```
 
 > 💡 **Industry Standard — DORA Metrics Benchmarking:**
-> 
+>
 > **Where these metrics come from:** The DORA (DevOps Research and Assessment) team at Google surveyed 30,000+ engineering organizations over 7 years (2014-2021). They found that these four metrics are the strongest predictors of:
 > - Software delivery performance
 > - Business outcomes (profitability, productivity, market share)
 > - Team well-being (burnout rates, job satisfaction)
-> 
+>
 > **Why they matter:** High-performing teams using DORA metrics ship faster, recover faster from incidents, and report higher job satisfaction. Low-performing teams using the same metrics can identify bottlenecks (e.g., "our lead time is 3 weeks, but 90% of that is waiting for manual approval → automate it").
-> 
+>
 > **How to improve your DORA score:**
 > | Metric | Current (your team) | Target | How to improve |
 > |--------|---------------------|--------|----------------|
@@ -1101,7 +1101,7 @@ python scripts/dora_metrics.py
 > | Lead Time | 45 min | <10 min | Cache dependencies, parallelize jobs, faster tests |
 > | Failure Rate | 20% | <15% | More integration tests, canary deployments, better staging |
 > | Restore Time | 2 hours | <30 min | Automated rollback, better monitoring, runbooks |
-> 
+>
 > **Tools that track DORA automatically:**
 > - **Sleuth** (sleuth.io) — Connects to GitHub/Jira/PagerDuty, auto-calculates DORA
 > - **LinearB** (linearb.io) — Engineering metrics dashboard, includes DORA
@@ -1211,30 +1211,30 @@ from collections import defaultdict
 def run_tests_multiple_times(iterations=10):
     """Run test suite N times, track failures."""
     results = defaultdict(lambda: {"passed": 0, "failed": 0})
-    
+
     for i in range(iterations):
         print(f"Running test suite iteration {i + 1}/{iterations}...")
         result = subprocess.run(
             ["pytest", "tests/", "--json-report", "--json-report-file=report.json"],
             capture_output=True
         )
-        
+
         with open("report.json") as f:
             report = json.load(f)
-        
+
         for test in report["tests"]:
             test_name = test["nodeid"]
             if test["outcome"] == "passed":
                 results[test_name]["passed"] += 1
             else:
                 results[test_name]["failed"] += 1
-    
+
     # Identify flaky tests (passed sometimes, failed sometimes)
     flaky_tests = []
     for test_name, counts in results.items():
         total = counts["passed"] + counts["failed"]
         pass_rate = (counts["passed"] / total) * 100
-        
+
         if 5 < pass_rate < 95:  # Neither always passes nor always fails
             flaky_tests.append({
                 "test": test_name,
@@ -1242,19 +1242,19 @@ def run_tests_multiple_times(iterations=10):
                 "passed": counts["passed"],
                 "failed": counts["failed"]
             })
-    
+
     return flaky_tests
 
 if __name__ == "__main__":
     print("🔍 Running flaky test detection (10 iterations)...")
     flaky = run_tests_multiple_times(iterations=10)
-    
+
     if flaky:
         print(f"\n❌ Found {len(flaky)} flaky tests:")
         for test in sorted(flaky, key=lambda x: x["pass_rate"]):
             print(f"  • {test['test']}")
             print(f"    Pass rate: {test['pass_rate']:.0f}% ({test['passed']}/10 runs)")
-        
+
         print("\n🔧 Recommended actions:")
         print("  1. Quarantine flaky tests: @pytest.mark.skip(reason='flaky - #123')")
         print("  2. Investigate root causes: race conditions? external dependencies?")
@@ -1497,7 +1497,7 @@ kubectl rollout status deployment/myapp --namespace=production --timeout=5m
    @app.route('/health')
    def health():
        return {'status': 'ok'}, 200  # Only checks if server responds
-   
+
    # FIX: Add critical endpoint checks
    @app.route('/health')
    def health():

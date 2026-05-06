@@ -200,12 +200,12 @@ def estimate_cost(prompt: str, model: str, expected_output_tokens: int = 200) ->
     """Estimate cost for a single API call."""
     # OpenAI's tiktoken would be more accurate, but rough estimate:
     input_tokens = len(prompt.split()) * 1.3  # ~1.3 tokens per word
-    
+
     pricing = MODELS[model]
     input_cost = (input_tokens / 1_000_000) * pricing["input"]
     output_cost = (expected_output_tokens / 1_000_000) * pricing["output"]
     total_cost = input_cost + output_cost
-    
+
     return {
         "model": model,
         "input_tokens": int(input_tokens),
@@ -251,15 +251,15 @@ gpt-4o-mini:
 ```
 
 > 💡 **Industry Standard:** `LiteLLM` for multi-provider cost tracking
-> 
+>
 > ```python
 > from litellm import completion, cost_per_token
-> 
+>
 > response = completion(
 >     model="gpt-4o-mini",
 >     messages=[{"role": "user", "content": prompt}]
 > )
-> 
+>
 > # Automatic cost calculation with exact token counts
 > cost = cost_per_token(
 >     model="gpt-4o-mini",
@@ -268,7 +268,7 @@ gpt-4o-mini:
 > )
 > print(f"Actual cost: ${cost:.6f}")
 > ```
-> 
+>
 > **When to use:** Always in production. LiteLLM supports 100+ providers (OpenAI, Anthropic, Azure, AWS Bedrock, open-source) with unified API.
 > **Common alternatives:** `OpenAI.usage` (native), custom token counters (error-prone)
 > **See also:** [LiteLLM docs](https://docs.litellm.ai/docs/completion/cost_tracking)
@@ -368,11 +368,11 @@ Streaming (progressive rendering):
 ```
 
 > 💡 **Industry Standard:** `OpenAI` streaming with async for production
-> 
+>
 > ```python
 > import asyncio
 > from openai import AsyncOpenAI
-> 
+>
 > async def stream_response(prompt: str):
 >     client = AsyncOpenAI()
 >     stream = await client.chat.completions.create(
@@ -380,17 +380,17 @@ Streaming (progressive rendering):
 >         messages=[{"role": "user", "content": prompt}],
 >         stream=True
 >     )
->     
+>
 >     async for chunk in stream:
 >         if chunk.choices[0].delta.content:
 >             yield chunk.choices[0].delta.content  # Send to frontend in real-time
-> 
+>
 > # Usage in production (FastAPI endpoint)
 > from fastapi import FastAPI
 > from fastapi.responses import StreamingResponse
-> 
+>
 > app = FastAPI()
-> 
+>
 > @app.post("/chat/stream")
 > async def chat_stream(prompt: str):
 >     return StreamingResponse(
@@ -398,7 +398,7 @@ Streaming (progressive rendering):
 >         media_type="text/event-stream"
 >     )
 > ```
-> 
+>
 > **When to use:** Always for user-facing chat interfaces. Reduces perceived latency by 5-10×.
 > **Common alternatives:** Anthropic streaming (same pattern), Replicate streaming (open-source models)
 > **See also:** [OpenAI streaming docs](https://platform.openai.com/docs/api-reference/streaming)
@@ -466,19 +466,19 @@ def call_with_caching(user_message: str, use_cache: bool = True):
         {"role": "system", "content": SYSTEM_PROMPT},  # Will be cached
         {"role": "user", "content": user_message}
     ]
-    
+
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=messages
     )
-    
+
     # Check token usage (OpenAI reports cached tokens separately)
     usage = response.usage
     print(f"Input tokens: {usage.prompt_tokens}")
     if hasattr(usage, 'prompt_tokens_details'):
         cached = getattr(usage.prompt_tokens_details, 'cached_tokens', 0)
         print(f"  Cached: {cached} tokens (saved ${cached * 0.15 / 1_000_000:.6f})")
-    
+
     return response.choices[0].message.content
 
 print("=== PHASE 2: PROMPT CACHING ===\n")
@@ -519,12 +519,12 @@ Input tokens: 28
 ```
 
 > 💡 **Industry Standard:** `Anthropic` prompt caching with explicit cache_control
-> 
+>
 > ```python
 > import anthropic
-> 
+>
 > client = anthropic.Anthropic()
-> 
+>
 > response = client.messages.create(
 >     model="claude-3-5-sonnet-20241022",
 >     max_tokens=1024,
@@ -539,17 +539,17 @@ Input tokens: 28
 >         {"role": "user", "content": "I want a large Margherita"}
 >     ]
 > )
-> 
+>
 > # Anthropic reports cache hits/writes explicitly
 > usage = response.usage
 > print(f"Input tokens: {usage.input_tokens}")
 > print(f"Cache creation tokens: {usage.cache_creation_input_tokens}")  # First call only
 > print(f"Cache read tokens: {usage.cache_read_input_tokens}")  # Subsequent calls
-> 
+>
 > # Pricing: cache writes = 1.25× input price, cache reads = 0.1× input price
 > # Net savings: 90% cost reduction on cached content after first call
 > ```
-> 
+>
 > **When to use:** Always for stable system prompts and few-shot examples. Anthropic offers explicit control; OpenAI caches automatically.
 > **Common alternatives:** `vLLM` prefix caching for self-hosted models (automatic, no API changes)
 > **See also:** [Anthropic prompt caching](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching), [OpenAI prompt caching](https://platform.openai.com/docs/guides/prompt-caching)
@@ -669,31 +669,31 @@ Conceptual batching (self-hosted with vLLM):
 ```
 
 > 💡 **Industry Standard:** `vLLM` for batched self-hosted inference
-> 
+>
 > ```python
 > from vllm import LLM, SamplingParams
-> 
+>
 > # Initialize vLLM with continuous batching enabled
 > llm = LLM(
 >     model="meta-llama/Llama-3-8B",
 >     tensor_parallel_size=1,
 >     max_model_len=8192
 > )
-> 
+>
 > # Batch 100 requests together (processed in single forward pass)
 > prompts = [f"Process order: {order}" for order in orders]
 > sampling_params = SamplingParams(temperature=0.7, max_tokens=200)
-> 
+>
 > # vLLM automatically batches and schedules for maximum GPU utilization
 > outputs = llm.generate(prompts, sampling_params)
-> 
+>
 > for output in outputs:
 >     print(output.outputs[0].text)
-> 
+>
 > # Throughput: 10-50× faster than sequential OpenAI API calls
 > # Latency per request: Similar to single request (shared overhead)
 > ```
-> 
+>
 > **When to use:** Self-hosted deployments with >10 concurrent requests. Batching improves GPU utilization from 30-40% to 80-90%.
 > **Common alternatives:** `TensorRT-LLM` (NVIDIA-optimized), `Text Generation Inference` (Hugging Face)
 > **See also:** [vLLM docs](https://docs.vllm.ai/en/latest/), [Continuous batching paper](https://arxiv.org/abs/2209.01667)
@@ -754,27 +754,27 @@ print("→ DECISION: INT8 quantization enabled (0.8s vs. 1.5s latency, <1% accur
 ```
 
 > 💡 **Industry Standard:** `LiteLLM` for cost tracking across providers
-> 
+>
 > ```python
 > from litellm import completion, cost_per_token
-> 
+>
 > # LiteLLM abstracts provider differences (OpenAI, Anthropic, AWS Bedrock, self-hosted)
 > response = completion(
 >     model="gpt-4o-mini",
 >     messages=[{"role": "user", "content": "Process order: Large Margherita"}]
 > )
-> 
+>
 > # Automatic cost calculation
 > cost = cost_per_token(
 >     model="gpt-4o-mini",
 >     prompt_tokens=response.usage.prompt_tokens,
 >     completion_tokens=response.usage.completion_tokens
 > )
-> 
+>
 > print(f"Cost: ${cost:.6f}")
 > print(f"Monthly at 10k requests: ${cost * 10000:.2f}")
 > ```
-> 
+>
 > **When to use:** Production deployments with multiple LLM providers. Unified API + automatic cost tracking.
 > **Common alternatives:** Provider-specific SDKs (OpenAI, Anthropic), custom wrappers
 > **See also:** [LiteLLM cost tracking](https://docs.litellm.ai/docs/completion/cost_tracking)

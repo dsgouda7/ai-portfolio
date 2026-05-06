@@ -139,7 +139,7 @@ docker run --rm -v $(pwd):/repo zricethezav/gitleaks:latest detect \
 
 # Output format:
 # Finding:     AWS Access Key
-# Secret:      AKIA****************EXAMPLE  
+# Secret:      AKIA****************EXAMPLE
 # File:        docker-compose.yml
 # Line:        14
 # Commit:      a3f8d92 (2023-04-15)
@@ -162,7 +162,7 @@ fi
 > ```bash
 > # Install locally (macOS)
 > brew install gitleaks
-> 
+>
 > # Run scan
 > gitleaks detect --source . --verbose
 > ```
@@ -381,15 +381,15 @@ if not DB_PASSWORD:
 > ```bash
 > # Create secret from file
 > echo "my_secure_password" | docker secret create db_password -
-> 
+>
 > # Create secret from stdin (more secure — doesn't write to disk)
 > docker secret create api_key -
 > [paste secret]
 > [Ctrl+D]
-> 
+>
 > # List secrets
 > docker secret ls
-> 
+>
 > # Deploy stack with secrets
 > docker stack deploy -c docker-compose.yml myapp
 > ```
@@ -450,7 +450,7 @@ spec:
 > ```bash
 > # Install External Secrets Operator (syncs from cloud secret stores)
 > helm install external-secrets external-secrets/external-secrets -n external-secrets-system
-> 
+>
 > # Create SecretStore pointing to Azure Key Vault
 > kubectl apply -f - <<EOF
 > apiVersion: external-secrets.io/v1beta1
@@ -486,7 +486,7 @@ if os.getenv('AZURE_KEY_VAULT_URL'):
     vault_url = os.getenv('AZURE_KEY_VAULT_URL')
     credential = DefaultAzureCredential()  # Uses managed identity in Azure
     client = SecretClient(vault_url=vault_url, credential=credential)
-    
+
     DB_PASSWORD = client.get_secret('db-password').value
     API_KEY = client.get_secret('api-key').value
     print(f"✅ Loaded secrets from Azure Key Vault: {vault_url}")
@@ -514,7 +514,7 @@ if not DB_PASSWORD:
 >   --vault-name my-vault \
 >   --name db-password \
 >   --value "my_secure_password"
-> 
+>
 > # Grant access to managed identity (for app running in Azure)
 > az keyvault set-policy \
 >   --name my-vault \
@@ -642,13 +642,13 @@ Commit blocked. Remove secrets before committing.
 > ```bash
 > # Install
 > pip install detect-secrets pre-commit
-> 
+>
 > # Generate baseline (initial scan, creates .secrets.baseline)
 > detect-secrets scan > .secrets.baseline
-> 
+>
 > # Install git hooks
 > pre-commit install
-> 
+>
 > # Test hook (runs on all files)
 > pre-commit run --all-files
 > ```
@@ -681,13 +681,13 @@ CMD ["node", "server.js"]
 <summary>Click to reveal answers</summary>
 
 **Issues:**
-1. **Hardcoded database password in `ENV DATABASE_URL`**  
+1. **Hardcoded database password in `ENV DATABASE_URL`**
    → **Fix:** Remove `ENV` line, pass `DATABASE_URL` at runtime via `-e` or Docker Secrets
 
-2. **Hardcoded API key in `ENV API_KEY`**  
+2. **Hardcoded API key in `ENV API_KEY`**
    → **Fix:** Store in secret manager (Key Vault, Secrets Manager), fetch at container startup
 
-3. **Secrets are visible in image history**  
+3. **Secrets are visible in image history**
    → **Fix:** Run `docker history <image>` and you'll see both secrets in plaintext
 
 **Secure version:**

@@ -1,7 +1,7 @@
 # AI Infrastructure Track — Authoring Guide
 
-> **This document tracks the chapter-by-chapter build of the AI Infrastructure notes library.**  
-> Each chapter lives under `notes/06-ai_infrastructure/` in its own folder, containing a README and supporting materials.  
+> **This document tracks the chapter-by-chapter build of the AI Infrastructure notes library.**
+> Each chapter lives under `notes/06-ai_infrastructure/` in its own folder, containing a README and supporting materials.
 > Read this before starting any chapter to keep tone, structure, and the running example consistent.
 >
 > **📚 Updated:** Now includes comprehensive pedagogical patterns, voice/register rules, and conformance standards aligned with ML track best practices.
@@ -133,7 +133,7 @@ Every chapter follows this structure to maintain consistency:
 ## 0 · The Challenge — Where We Are
 
 > 🎯 **The mission**: Self-host Llama-3-8B for <$15k/month, replacing $80k OpenAI API costs
-> 
+>
 > **6 Constraints**: #1 Cost (<$15k/mo) • #2 Latency (≤2s) • #3 Throughput (≥10k req/day) • #4 Memory (fit in VRAM) • #5 Quality (≥95% accuracy) • #6 Reliability (>99% uptime)
 
 **What we know so far**:
@@ -336,7 +336,7 @@ Mitigation: Checkpoint every 10 min → <10 min recovery time
 ## 0 · The Challenge — Where We Are
 
 > 🎯 **The mission**: Self-host Llama-3-8B for <$15k/month, replacing $80k OpenAI API costs
-> 
+>
 > **6 Constraints**: #1 Cost (<$15k/mo) • #2 Latency (≤2s) • #3 Throughput (≥10k req/day) • #4 Memory (fit in VRAM) • #5 Quality (≥95% accuracy) • #6 Reliability (>99% uptime)
 
 **What we know so far**:
@@ -380,7 +380,7 @@ Current performance:
 
 🚀 **Quantization techniques to shrink model footprint**:
 1. **INT8 quantization**: 16GB → 8GB params (50% reduction)
-2. **INT4 quantization**: 16GB → 4GB params (75% reduction) 
+2. **INT4 quantization**: 16GB → 4GB params (75% reduction)
 3. **GPTQ/AWQ**: Post-training quantization (no retraining needed)
 4. **Perplexity benchmarking**: Validate quality doesn't collapse
 
@@ -449,8 +449,8 @@ Every chapter solves one specific bottleneck on the path from "$80k problem" to 
 The reader is the **founding Platform Engineer at InferenceBase**. They are solving a cost/latency crisis — not studying GPU architecture theory. The CEO just forwarded the $80k AWS bill. Every section should feel like: "Here's the hardware constraint, here's where it breaks our deployment, here's the engineering fix."
 
 **Second person default:**
-> *"You're the founding Platform Engineer at InferenceBase. The CEO just forwarded the AWS bill: $80,000/month in OpenAI API charges."*  
-> *"Your RTX 4090 has 24GB VRAM. Llama-3-8B FP16 needs 16GB for parameters alone. Do the arithmetic."*  
+> *"You're the founding Platform Engineer at InferenceBase. The CEO just forwarded the AWS bill: $80,000/month in OpenAI API charges."*
+> *"Your RTX 4090 has 24GB VRAM. Llama-3-8B FP16 needs 16GB for parameters alone. Do the arithmetic."*
 > *"You're running batch=1 with 83% VRAM utilisation. One traffic spike and you OOM-crash. The CEO wants a timeline."*
 
 **Dry humour register:** one instance per major concept.
@@ -640,8 +640,8 @@ The reader is treated as the **founding Platform Engineer at InferenceBase**. Th
 
 **Second person is the default.** The reader is placed inside the InferenceBase scenario at all times:
 
-> *"You're the founding Platform Engineer at InferenceBase. The CEO just forwarded the AWS bill: $80,000/month in OpenAI API charges."*  
-> *"Your RTX 4090 has 24GB VRAM. Llama-3-8B FP16 needs 16GB for parameters alone. Do the arithmetic."*  
+> *"You're the founding Platform Engineer at InferenceBase. The CEO just forwarded the AWS bill: $80,000/month in OpenAI API charges."*
+> *"Your RTX 4090 has 24GB VRAM. Llama-3-8B FP16 needs 16GB for parameters alone. Do the arithmetic."*
 > *"You're running batch=1 with 83% VRAM utilisation. One traffic spike and you OOM-crash. The CEO wants a timeline."*
 
 **Dry, brief humour appears exactly once per major concept.** It is never laboured:
@@ -649,7 +649,7 @@ The reader is treated as the **founding Platform Engineer at InferenceBase**. Th
 > *"INT4 quantization trades 1.2% accuracy for 75% VRAM reduction. The CEO will not notice the accuracy delta. They will notice the $78k/month savings."*
 
 **Contractions and em-dashes are used freely** when they tighten a sentence:
-> *"That's the bottleneck."*  
+> *"That's the bottleneck."*
 > *"Tensor Cores deliver 165 TFLOP/s — but compute isn't the bottleneck, memory bandwidth is."*
 
 **Academic register is forbidden.** Phrases like "In this section we demonstrate", "It can be shown that", "The reader may note", "we present", "we propose" do not appear in infrastructure chapters and must not appear in any new chapter.
@@ -941,7 +941,7 @@ The Progress Check is the last substantive section before the Bridge. It has a f
 Progress toward constraints:
   [table: Constraint | Status | Current State]
 
-[Mermaid LR flowchart showing all chapters from Ch.1 to Ch.10, 
+[Mermaid LR flowchart showing all chapters from Ch.1 to Ch.10,
  with current chapter highlighted and key metrics annotated]
 ```
 
@@ -1321,7 +1321,7 @@ Act 4: Measurement and business impact (cost, latency, throughput)
 
 **Template:**
 ```markdown
-> **The story:** [Company] ([Year]) launched [hardware/technique] to solve [specific problem]. 
+> **The story:** [Company] ([Year]) launched [hardware/technique] to solve [specific problem].
 > [One sentence on industry impact]. [One sentence connecting to reader's deployment work].
 >
 > **Where you are:** Ch.[N-1] achieved [specific metric]. This chapter fixes [named bottleneck].
@@ -1419,7 +1419,7 @@ Improvement: 4× throughput (300% increase), cost per request: $0.003
 
 **Template:**
 ```markdown
-> ➡️ **[Hardware feature] goes deeper in [Chapter].** This chapter covers [what's needed now]. 
+> ➡️ **[Hardware feature] goes deeper in [Chapter].** This chapter covers [what's needed now].
 > For [advanced optimization] — [specific capability] — see [link]. For now: [continue with current concept].
 ```
 
@@ -1519,7 +1519,7 @@ Single RTX 4090:  12k req/day
 **Rule:** For key infrastructure optimizations, measure baseline before explaining the optimization.
 
 **Example from Inference Optimization:**
-> "Before any optimization: benchmark the baseline. RTX 4090 + FP16 + batch=1 → 3,000 req/day, 2.8s p95 latency." 
+> "Before any optimization: benchmark the baseline. RTX 4090 + FP16 + batch=1 → 3,000 req/day, 2.8s p95 latency."
 > Shows benchmark script output.
 
 **Then:** "This throughput is 30% of target. What's the bottleneck? Profile shows memory re-allocation per request — PagedAttention fixes this."
@@ -1774,31 +1774,31 @@ for request in request_queue:
 
 ### Anti-Patterns (What NOT to Do)
 
-❌ **Listing hardware specs without deployment impact**  
+❌ **Listing hardware specs without deployment impact**
 Example: "RTX 4090 has 24GB VRAM, 16,384 CUDA cores, 1,008 GB/s bandwidth" (table without InferenceBase implications)
 
-❌ **Optimizations without before/after measurements**  
+❌ **Optimizations without before/after measurements**
 Example: "Quantization improves throughput" instead of "3k → 12k req/day (4× measured improvement)"
 
-❌ **Vague cost claims**  
+❌ **Vague cost claims**
 Example: "Self-hosting is cheaper" instead of "$1,095/month vs. $80k OpenAI (98.6% reduction)"
 
-❌ **Academic register**  
+❌ **Academic register**
 Example: "We demonstrate that...", "It can be shown that...", "In this section we will discuss..."
 
-❌ **Synthetic workloads for benchmarks**  
+❌ **Synthetic workloads for benchmarks**
 Example: Using random tensors instead of ACME Corp Q3 earnings report (InferenceBase canonical test document)
 
-❌ **Improvised emoji**  
+❌ **Improvised emoji**
 Example: Using 🔍🎯✨🚀 as inline callouts (only 💡⚠️⚡📖➡️ allowed)
 
-❌ **Topic-label section headings**  
+❌ **Topic-label section headings**
 Example: "## 3 · Hardware" instead of "## 3 · RTX 4090 Specs — Why 24GB VRAM Is the Deployment Ceiling"
 
-❌ **Skipping VRAM breakdown**  
+❌ **Skipping VRAM breakdown**
 Example: Claiming "model fits in 24GB" without showing params + KV cache + activations arithmetic
 
-❌ **Batch=1-only benchmarks**  
+❌ **Batch=1-only benchmarks**
 Example: Reporting 0.8s latency from single-request test when production uses batch=4 (1.2s actual)
 
 ---
