@@ -1874,3 +1874,45 @@ Before publishing any infrastructure chapter, verify each item:
 4. Keep the InferenceBase scenario in focus: every hardware spec and optimization should tie back to the $15k/month mission.
 5. After completing a chapter, verify against the conformance checklist.
 
+---
+
+## Anti-Pattern: Meta-Navigation Overload
+
+> **Rule:** A chapter has exactly one narrative thread. Never create a section that maps one navigation model to another.
+
+**What it looks like (wrong):**
+
+```markdown
+## How to Use This Chapter
+
+- **Phase 1 (PROFILE)** → §3.12 Profiling Baseline, Code Snippet 1
+- **Phase 2 (IDENTIFY)** → §3.13 Bottleneck Analysis, Code Snippet 2
+- **Phase 3 (OPTIMIZE)** → §3 Continuous Batching, §4 PagedAttention, Code Snippet 3
+- **Phase 4 (VALIDATE)** → §9 Benchmarking, Code Snippet 4
+```
+
+This forces four context switches before the reader has read a single line of content. The phases, section numbers, and code snippet numbers are three independent navigation models running simultaneously — none of them is the story.
+
+**The fix:**
+
+Delete the mapping block. Let the section headers carry the stage context naturally:
+
+```markdown
+## 3 · Profile the Baseline — What's Actually Slow?
+```
+
+The heading already tells the reader they are in the profiling stage. There is no need to announce "Phase 1 (PROFILE) → §3.12".
+
+**Callout discipline for infrastructure chapters:**
+
+- `> 💡 **[Stage] verdict:**` — one line after each optimization stage, states the VRAM/latency/cost delta.
+
+  Example: `> 💡 **Quantization verdict:** INT4 reduces VRAM from 16GB → 5.5GB, enabling batch=8 vs batch=1 — throughput 340 → 2,100 req/hr, p95 latency 4.1s → 1.7s ✅.`
+
+- `> ➡️` — forward pointer when a configuration feeds the next chapter.
+
+  Example: `> ➡️ vLLM uses this INT4 checkpoint directly — no re-quantization needed (Ch.6).`
+
+- **Never:** a `DEPLOYMENT CHECKPOINT` or `OPTIMIZATION CHECKPOINT` block.
+- **Never:** a section listing `Phase N → §X, §Y` or `Stage N → §X, Walkthrough B`.
+

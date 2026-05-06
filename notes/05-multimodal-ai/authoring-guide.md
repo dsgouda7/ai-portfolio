@@ -1581,3 +1581,41 @@ When adding a new chapter to a track:
 ## Final Reminder
 
 The Grand Challenge is not a distraction from learning — **it is the motivation**. Readers want to know: "Why does this math matter? What can I build with it?" VisualForge Studio shows them: $600k/year savings, 40× faster turnaround, 2.5-month payback. That's the story they'll remember.
+
+---
+
+## Anti-Pattern: Meta-Navigation Overload
+
+> **Rule:** A chapter has exactly one narrative thread. Never create a section mapping one navigation model to another.
+
+**What it looks like (wrong):**
+
+A chapter introduces a "Generation Pipeline Stages" meta-section that maps a separate navigation model onto section numbers:
+
+```markdown
+### Generation Pipeline Stages
+
+The chapter follows a 4-stage conditioning workflow:
+
+- **Stage 1 (BASELINE)** → §2 Running Example (unconditioned generation)
+- **Stage 2 (CONDITIONING)** → §3 The Math (CLIP embeddings, CFG formula)
+- **Stage 3 (TUNING)** → §5 Production Example (guidance scale sweep)
+- **Stage 4 (VALIDATE)** → §11.5 Progress Check (quality score + latency)
+```
+
+Section headers then echo it: `## 5 · Production Example **[Stage 3: TUNING]**`. Each stage ends with a `**Decision checkpoint (Stage 2: CONDITIONING):**` block — "What you just measured / What the CFG scale means / What to tune next" (~20 lines).
+
+Result: the reader tracks five parallel threads — section numbers, stage numbers, stage labels, decision checkpoints, and the constraint table — instead of the VisualForge failure→fix story.
+
+**The fix:**
+
+Delete the stage-mapping block and strip `[Stage N: LABEL]` appendages from section headers. The VisualForge failure→fix arc in §0 already frames the chapter; section titles name what they do without an overlay. Replace every "Decision checkpoint" block with a one-liner verdict callout placed immediately after the stage's result.
+
+**Callout discipline for multimodal chapters:**
+
+- `> 💡 **[Stage] verdict:**` — one line after each generation/conditioning stage; states quality score delta and latency impact.  
+  *Example:* `> 💡 **Conditioning verdict:** CFG scale 1.0 → 7.5 improves CLIP similarity score 0.21 → 0.34 while adding only 0.4s/image. VisualForge now tracks the prompt.`
+- `> ➡️` — forward pointer when a parameter feeds the next chapter.  
+  *Example:* `> ➡️ Guidance scale saturates above 12 — Ch.8 ControlNet replaces it with spatial masks for precise layout control.`
+- **Never:** a `GENERATION CHECKPOINT`, `CONDITIONING CHECKPOINT`, or `DECISION CHECKPOINT` block.
+- **Never:** a section listing `Stage N → §X, §Y` or `Phase N (LABEL) → §X`.

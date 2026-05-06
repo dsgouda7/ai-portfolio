@@ -107,13 +107,7 @@ Most teams only do Level 1 and are surprised when Level 3 fails. The metrics at 
 
 ## 1.5 · The Practitioner Workflow — Your 3-Scope Evaluation Diagnostic
 
-> ⚠️ **Two ways to read this chapter:**
-> - **Theory-first (recommended for learning):** Read §0→§8 sequentially to understand the concepts, then use this workflow as your reference
-> - **Workflow-first (practitioners with existing knowledge):** Use this diagram as a jump-to guide when working with real production systems
->
-> **Note:** Section numbers don't follow scope order because the chapter teaches concepts pedagogically (theory before application). The workflow below shows how to APPLY those concepts.
-
-**What you'll build by the end:** A 3-tier evaluation dashboard covering Component → Pipeline → User metrics, with automated regression tests, LLM-as-judge scoring, and production monitoring. This is the complete testing infrastructure that prevents the 2-3 regressions/week problem described in §0.
+**What you'll build by the end:** A 3-tier evaluation dashboard covering Component → Pipeline → User metrics, with automated regression tests, LLM-as-judge scoring, and production monitoring — the complete testing infrastructure that prevents the 2–3 regressions/week problem.
 
 ```
 Scope 1: COMPONENT         Scope 2: PIPELINE           Scope 3: USER
@@ -136,18 +130,13 @@ Test pieces in isolation:  Test end-to-end pipeline:   Test real user impact:
     More training data         System-wide issue           Insufficient data
 ```
 
-**The workflow maps to these sections:**
-- **Scope 1 (Component)** → §4 Component-Level Evaluation, §5 Hallucination Detection
-- **Scope 2 (Pipeline)** → §2 RAGAS Metrics, §3 Agent Traces, §6 PizzaBot Connection
-- **Scope 3 (User)** → §8 Minimal Evaluation Setup, §7 Benchmark Trap
-
 > 💡 **How to use this workflow:** Start with Scope 1 when building/replacing components. Run Scope 2 after every code change (automated CI/CD). Run Scope 3 before major releases or when changing core user experience. All three scopes together form your regression prevention system.
 
 > 📖 **Workflow pattern vs. concept-based chapters:** This is a **procedural chapter** teaching a diagnostic workflow, not a single concept. The 3 evaluation scopes are decision checkpoints, not sequential steps — you iterate between scopes based on what breaks. Compare to Ch.4 (RAG & Embeddings) which is concept-based: one core idea (retrieval augmentation) taught start-to-finish.
 
 ---
 
-## 2 · **[Scope 1: COMPONENT]** Evaluating RAG Pipelines — RAGAS
+## 2 · Evaluating RAG Pipelines — RAGAS
 
 **RAGAS** (Retrieval Augmented Generation Assessment) is the standard framework for evaluating RAG systems without manually labelling every output. It uses an LLM-as-judge approach: a separate LLM scores each component of the RAG response.
 
@@ -228,7 +217,7 @@ print(result)
 
 ---
 
-## 3 · **[Scope 2: PIPELINE]** Evaluating Reasoning Agents (ReAct Traces)
+## 3 · Evaluating Reasoning Agents (ReAct Traces)
 
 For agents that produce Thought → Action → Observation traces, evaluate at the **trace level**, not just the final answer.
 
@@ -754,7 +743,7 @@ Standard LLM benchmarks (MMLU, HumanEval, MATH) measure model capability in isol
 
 ---
 
-## 8 · **[Scope 3: USER]** What a Minimal Evaluation Setup Looks Like
+## 8 · What a Minimal Evaluation Setup Looks Like
 
 For a production RAG pipeline, a minimum viable evaluation setup:
 

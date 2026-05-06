@@ -83,12 +83,6 @@ Declare service topology:  Inject runtime config:      Control lifecycle:       
     persistence
 ```
 
-**The workflow maps to these sections:**
-- **Phase 1 (DEFINE)** → §2 Running Example, §3 Mental Model (Services, Networks, Volumes)
-- **Phase 2 (CONFIGURE)** → §2.1 Environment & Secrets, §3.1 Configuration Management
-- **Phase 3 (ORCHESTRATE)** → §2.2 Dependency Ordering, §3.2 Multi-Container Lifecycle
-- **Phase 4 (OBSERVE)** → §2.3 Health Checks & Logs, §4 What Can Go Wrong
-
 > 💡 **How to use this workflow:** Phase 1→2 define your stack architecture (run once per project). Phase 3→4 are iterative — run every deployment cycle. When a service fails to start (Phase 3), Phase 4 diagnostics (logs + health checks) identify the root cause before you modify Phase 1 or 2.
 
 ### The 4-Phase Decision Flow
@@ -126,7 +120,7 @@ graph TD
 
 ---
 
-## 2 · Running Example — Flask + PostgreSQL + Redis **[Phase 1: DEFINE]**
+## 2 · Running Example — Flask + PostgreSQL + Redis
 
 **The system**: A Flask REST API (`/users` endpoint) that:
 - Stores user records in **PostgreSQL** (persistent data)
@@ -234,28 +228,12 @@ Without this, Flask would crash with "connection refused" errors on startup.
 > **When to use:** Always use declarative YAML instead of imperative `docker run` commands. YAML is version-controlled, reviewable, and reproducible.
 > **Common alternatives:** Docker Swarm (deprecated), Kubernetes (multi-node orchestration), Nomad (HashiCorp)
 
-### 2.1 DECISION CHECKPOINT — Phase 1 Complete
-
-**What you just saw:**
-- 3 services defined: `web` (Flask), `db` (Postgres), `cache` (Redis)
-- Service dependencies declared via `depends_on` with health check conditions
-- Named volumes ensure Postgres data persists across `docker compose down`
-- Custom network `app-network` isolates services from external clients
-
-**What it means:**
-- The stack topology is complete — web tier depends on both cache and database
-- Health checks prevent race conditions where Flask starts before Postgres is ready
-- Volume persistence means database survives container restarts (critical for stateful services)
-- DNS-based service discovery (`db:5432`, `cache:6379`) eliminates hardcoded IPs
-
-**What to do next:**
-→ **Phase 2:** Add environment configuration (.env files, secrets management)
-→ **For production:** Never commit secrets to YAML — use Docker secrets or external vaults (AWS Secrets Manager, HashiCorp Vault)
-→ **For development:** Start the stack: `docker compose up -d` and verify services with `docker compose ps`
+> 💡 **Define verdict:** 3-tier stack (web + cache + db) declared with health-check dependency ordering — `service_healthy` prevents Flask/Postgres race condition.
+> ➡️ Topology complete; proceed to Configure phase to externalize secrets.
 
 ---
 
-## 2.1 · Environment & Secrets Management **[Phase 2: CONFIGURE]**
+## 2.1 · Environment & Secrets Management — Configure
 
 Services need runtime configuration: database URLs, API keys, feature flags. Hardcoding these in `docker-compose.yml` creates three problems:
 
@@ -324,26 +302,12 @@ services:
 > **When to use:** Production deployments. Never use .env files in production — they're unencrypted files on disk.
 > **Common alternatives:** AWS Secrets Manager, HashiCorp Vault, Azure Key Vault, Kubernetes Secrets
 
-### 2.2 DECISION CHECKPOINT — Phase 2 Complete
-
-**What you just saw:**
-- Environment variables moved from YAML to `.env` file
-- Secrets (passwords, API keys) externalized and never committed to Git
-- Variable interpolation (`${POSTGRES_USER}`) makes YAML environment-agnostic
-
-**What it means:**
-- Same `docker-compose.yml` works across dev/staging/prod with different .env files
-- Rotating credentials only requires changing .env and restarting (`docker compose up -d` — Compose detects changes)
-- Security audit trail: secrets stored in vaults, not version control
-
-**What to do next:**
-→ **Phase 3:** Define startup ordering, restart policies, and resource limits
-→ **For production:** Migrate from .env to Docker secrets or cloud-native secret stores
-→ **For compliance:** Encrypt secrets at rest (Vault Transit engine, AWS KMS)
+> 💡 **Configure verdict:** Secrets moved from YAML to `.env` — same `docker-compose.yml` works across dev/staging/prod with different `.env` files.
+> ➡️ Credentials out of git history; proceed to Orchestrate phase.
 
 ---
 
-## 2.2 · Multi-Container Lifecycle Management **[Phase 3: ORCHESTRATE]**
+## 2.2 · Multi-Container Lifecycle Management — Orchestrate
 
 You've defined services and configuration. Now control *how* they start, scale, and recover from failures.
 
@@ -438,28 +402,12 @@ docker compose ps
 > **When to use:** When scaling beyond 1 replica of a web service. Traefik auto-discovers containers via Docker socket.
 > **Common alternatives:** Nginx, HAProxy, AWS ALB, Kubernetes Ingress
 
-### 2.3 DECISION CHECKPOINT — Phase 3 Complete
-
-**What you just saw:**
-- Health checks ensure database is ready before web service starts
-- Restart policies (`unless-stopped`) automatically recover from crashes
-- Resource limits prevent runaway containers from killing the host
-- Horizontal scaling demonstrated with `--scale` flag (requires load balancer for production)
-
-**What it means:**
-- No more race condition crashes — web waits for `db` health check to pass
-- Services self-heal from transient failures (network blip, OOM kill, segfault)
-- Resource limits provide predictable performance and cost control
-- Stateless services (web) can scale horizontally; stateful services (db) cannot (need replication, not covered in Compose)
-
-**What to do next:**
-→ **Phase 4:** Set up observability (logs, health monitoring, service discovery)
-→ **When a service fails to start:** Check `docker compose logs <service>` for error messages
-→ **For production:** Use Kubernetes for advanced orchestration (rolling updates, multi-node scaling, auto-healing)
+> 💡 **Orchestrate verdict:** Health-check ordering eliminates startup races; `unless-stopped` auto-heals crashes; resource limits cap memory at 1 GB per service.
+> ➡️ Services self-heal; horizontal scaling via `--scale` ready for load balancer; proceed to Observe phase.
 
 ---
 
-## 2.3 · Logs & Health Monitoring **[Phase 4: OBSERVE]**
+## 2.3 · Logs & Health Monitoring — Observe
 
 Orchestration without observability is flying blind. When a service crashes at 3am, you need:
 1. **Centralized logs** — view all services in one stream
@@ -599,24 +547,8 @@ docker compose exec web env
 docker compose exec db psql -U user -d appdb -c "SELECT COUNT(*) FROM users;"
 ```
 
-### 2.4 DECISION CHECKPOINT — Phase 4 Complete
-
-**What you just saw:**
-- Centralized log viewing with `docker compose logs -f` across all services
-- Health check implementation for database, cache, and web tiers
-- Service discovery via DNS (containers reference each other by name)
-- Debugging workflow: logs → health status → network inspection → exec into container
-
-**What it means:**
-- When a service fails, `docker compose ps` immediately shows which service is unhealthy
-- Health checks provide automated readiness verification (no more "wait 30 seconds and hope")
-- Built-in DNS means services auto-discover each other without hardcoded IPs
-- Log aggregation provides audit trail for debugging and compliance
-
-**What to do next:**
-→ **Typical debug flow:** Service fails → `docker compose ps` (see status) → `docker compose logs <service>` (see error) → `docker compose exec <service> sh` (investigate interactively)
-→ **For production:** Export logs to centralized system (ELK, Loki, Splunk)
-→ **For compliance:** Retain logs for audit requirements (HIPAA, SOC2, PCI-DSS)
+> 💡 **Observe verdict:** `docker compose ps` shows unhealthy services instantly; centralized logs surface root cause without `docker exec` in most cases.
+> ➡️ Observability complete; chapter ready for Kubernetes orchestration in Ch.3.
 
 ---
 

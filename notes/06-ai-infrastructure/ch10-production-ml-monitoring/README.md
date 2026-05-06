@@ -149,14 +149,10 @@ Execute intervention:        Confirm recovery:
     SCALE/FIX servers
 ```
 
-**The workflow maps to these sections:**
-- **Phase 1 (DEPLOY)** → §2 Step 1: Deploy Model v1
-- **Phase 2 (DETECT)** → §2 Step 2: Monitor Data Drift + Step 3: Monitor Prediction Drift
-- **Phase 3 (TRIAGE)** → §3 Mental Model, §4 What Can Go Wrong
-- **Phase 4 (REMEDIATE)** → §2 Step 4: Deploy Model v2 (A/B Test)
-- **Phase 5 (VALIDATE)** → §2 Step 5: Compare Business Metrics + Step 6: Gradual Rollout
-
 > 💡 **Usage note:** Phases 1-2 run continuously in production. Phase 3 is triggered by alerts from Phase 2. Phases 4-5 execute when Phase 3 identifies a fixable degradation (not just noise). The cycle repeats: after Phase 5, return to Phase 2 monitoring with the new model as your baseline.
+
+> 💡 **Monitoring verdict:** Drift detected at day 14, v2 rolled out via A/B test — accuracy recovered from 91% → 96.2%, zero customer-facing downtime ✅.
+> ➡️ Ch.11 wraps monitoring into the end-to-end deployment pipeline — drift triggers automatic retraining.
 
 ### Workflow Decision Tree
 

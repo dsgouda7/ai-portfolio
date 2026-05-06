@@ -84,12 +84,6 @@ Parallel serving setup:     Track performance:          Shadow mode testing:    
   NO: Optimize parallel       NO: Continue monitoring     NO: Keep incumbent          FAIL: Rollback + debug
 ```
 
-**The workflow maps to these sections:**
-- **Phase 1 (DEPLOY)** → §3 Parallel Serving Architecture, §4.1 Latency Budget
-- **Phase 2 (MONITOR)** → §4.3 PSI Drift Detection, §6 Production Timeline  
-- **Phase 3 (VALIDATE)** → §4.2 A/B Testing, §5 Act 3 Shadow Mode
-- **Phase 4 (CUTOVER)** → §5 Act 4 Blue-Green Deployment, §4.5 Model Versioning
-
 > 💡 **Usage note:** Phases 1–2 run continuously for the incumbent model. Phase 3 activates when Phase 2 detects drift (PSI > 0.20). Phase 4 executes only after Phase 3 shadow mode validates the new model. This is not a linear pipeline — it's a continuous monitoring loop with conditional retraining.
 
 **How long each phase takes in the wild:**
@@ -152,7 +146,7 @@ Day 9:   Blue-green switch → new model promoted → Phase 2 monitoring resumes
 
 ---
 
-## 3 · **[Phase 1: DEPLOY]** Ensemble Serving Architecture
+## 3 · Deploy: Ensemble Serving Architecture
 
 The full request lifecycle from HTTP call to response with explanation:
 
@@ -289,23 +283,8 @@ async def predict_ensemble_async(feature_vector):
 
 ---
 
-### 3.1 DECISION CHECKPOINT — Phase 1 Complete
-
-**What you just saw:**
-- Parallel inference reduced total latency from 56ms → 35ms (37.5% improvement)
-- P50 latency = 33ms, P99 = 38ms — both under 50ms SLA with 15ms headroom
-- SHAP explanations add only 3ms per request (TreeSHAP on XGBoost alone)
-- Async logging does not block the response path
-
-**What it means:**
-- The ensemble architecture meets the real-time serving constraint (<50ms)
-- The 15ms SLA headroom buffers against network jitter and cold starts
-- The model is ready for production traffic load testing (1,000 req/s target)
-
-**What to do next:**
-→ **Load test:** Run Apache Bench or Locust at 1,000 req/s for 10 minutes → validate P99 stays <45ms
-→ **Canary deploy:** Route 5% of traffic to the new stack for 24 hours → confirm no error spikes
-→ **For our scenario:** Latency passes → proceed to Phase 2 (continuous monitoring setup)
+> 💡 **Deploy verdict:** Parallel inference cut latency 56ms → 35ms (P99 = 38ms), 15ms below the 50ms SLA with headroom for jitter.
+> ➡️ Load-test at 1,000 req/s and canary-deploy 5% of traffic before Phase 2 continuous monitoring.
 
 ---
 
@@ -339,7 +318,7 @@ $$L_{\text{parallel,total}} = 25 + 5 + 5 = 35\text{ms} < 50\text{ms SLA} \quad �
 
 ---
 
-### 4.2 **[Phase 3: VALIDATE]** A/B Test — Is the Ensemble Significantly Better?
+### 4.2 A/B Test — Validate: Is the Ensemble Significantly Better?
 
 We've deployed the ensemble (treatment B) to 50% of traffic, XGBoost alone (control A) to the other 50%. After collecting n = 1,000 predictions each:
 
@@ -685,7 +664,7 @@ model_v1.2.0/
 
 ---
 
-## 5 · **[Phase 4: CUTOVER]** Production Release — Blue-Green Deployment
+## 5 · Cutover: Production Release — Blue-Green Deployment
 
 ### Act 1: Offline Victory (Ch.5 Outcome)
 
@@ -892,26 +871,8 @@ spec:
 
 ---
 
-### 5.1 DECISION CHECKPOINT — Phase 4 Complete
-
-**What you just saw:**
-- Green environment deployed with v1.2.0 (retrained model) alongside blue v1.1.0
-- Shadow mode ran for 7 days → green MAE = $20.1k, blue MAE = $23.8k
-- Cutover executed: traffic switched from blue → green in <15 minutes
-- Post-cutover monitoring (1 hour) showed no error spike
-- Production MAE restored from $24.8k → $20.2k
-
-**What it means:**
-- Retraining successfully recalibrated the model to post-drift market conditions
-- Blue-green deployment allowed zero-downtime cutover with instant rollback capability
-- The full drift → retrain → validate → cutover cycle took 3 weeks (acceptable for quarterly drift)
-- EnsembleAI constraint #5 (MONITORING) fully validated in production
-
-**What to do next:**
-→ **Resume Phase 2:** Return to continuous PSI monitoring (daily checks)
-→ **Decommission blue:** After 48 hours with no issues, delete blue deployment to free resources
-→ **Document incident:** Write postmortem on drift episode → update runbooks for next retrain
-→ **For our scenario:** Cutover successful → all 5 EnsembleAI constraints satisfied ✅
+> 💡 **Cutover verdict:** Blue-green switch successful — production MAE restored from $24.8k to $20.2k; all 5 EnsembleAI constraints satisfied.
+> ➡️ Resume Phase 2 PSI monitoring and decommission blue deployment after 48h.
 
 ---
 

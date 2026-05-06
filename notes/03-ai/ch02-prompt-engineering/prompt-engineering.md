@@ -102,8 +102,6 @@ The goal is a distribution that puts high probability on correct, structured, sa
 > ⚠️ **Two ways to read this chapter:**
 > - **Theory-first (recommended for learning):** Read §0→§11 sequentially to understand the concepts, then use this workflow as your reference
 > - **Workflow-first (practitioners with existing knowledge):** Use this diagram as a jump-to guide when working with real prompts
->
-> **Note:** Section numbers don't follow phase order because the chapter teaches concepts pedagogically (theory before application). The workflow below shows how to APPLY those concepts in production.
 
 **What you'll build by the end:** A production-ready prompt template that takes PizzaBot from 8% conversion (raw GPT-3.5) to ~12% with reliable JSON output for order processing. This progression demonstrates each phase's contribution: Phase 1 scopes the bot, Phase 2 shows format examples, Phase 3 enforces structure, Phase 4 enables multi-step reasoning.
 
@@ -123,12 +121,6 @@ Define role + constraints:   Show desired behavior:       Enforce output format:
   • Decline off-topic            format                     • No: Schema + retry         • Multi-step: YES
   • Keep responses short       • 1 example if standard      • Validate + re-prompt       • Add CoT template
 ```
-
-**The workflow maps to these sections:**
-- **Phase 1 (SYSTEM)** → §2 System Prompts
-- **Phase 2 (EXAMPLES)** → §3 Few-Shot Prompting
-- **Phase 3 (STRUCTURE)** → §5 Structured Output
-- **Phase 4 (REASONING)** → §4 Chain-of-Thought Elicitation
 
 > 💡 **Execution order matters:** Always complete Phase 1→2→3 before adding Phase 4. Chain-of-thought reasoning amplifies whatever behavior is established in Phases 1-3 — if the system prompt and examples are poorly scoped, CoT will reliably produce well-structured nonsense. Get the foundation right first.
 
@@ -224,7 +216,7 @@ Typical production prompt for structured output task (e.g., PizzaBot order proce
 
 ---
 
-## 2 · System Prompts **[Phase 1: SYSTEM] Role and Constraints**
+## 2 · System Prompts — Role and Constraints
 
 Your system prompt runs before the user message and is your single highest-leverage place to shape model behaviour. Everything you put here affects every subsequent interaction — make it count.
 
@@ -369,34 +361,12 @@ I can only help with Mamma Rosa's Pizza orders and menu questions.
 > 
 > **See also:** [LangChain Prompt Templates docs](https://python.langchain.com/docs/modules/model_io/prompts/)
 
-### 2.1 ✓ DECISION CHECKPOINT: Phase 1 Complete
-
-**What you just saw:**
-- System prompt reduced conversational fluff (no more "Great question!" preambles)
-- Off-topic query correctly declined: "I can only help with Mamma Rosa's Pizza"
-- Order attempt produced JSON-like structure (but not guaranteed valid JSON yet)
-- Conversion improved from 8% (baseline) to ~10% (scope adherence helps users stay on track)
-
-**What it means:**
-- **Scope constraint works** for simple off-topic attempts, but not adversarial injection (e.g., "Ignore previous instructions")
-- **Format suggestion** ("respond ONLY with valid JSON") improves structure but doesn't guarantee it — still seeing occasional text before/after JSON
-- **Tone constraint** successfully eliminated fluff, saving ~20 tokens per response
-
-**What to do next:**
-→ **If format is stable (>95% parseable):** Skip Phase 2, move to Phase 3 (JSON mode enforcement)
-→ **If format drifts (seeing preambles, apologies, explanations mixed with JSON):** Add Phase 2 few-shot examples showing exact desired format
-→ **If off-topic responses still appearing:** Strengthen system prompt: add "CRITICAL: Decline ALL queries unrelated to [topic]" and test with 20 adversarial examples
-→ **For PizzaBot:** Format is 88% consistent but not reliable enough for backend parsing → **Proceed to Phase 2** to stabilize output structure with demonstrations
-
-**Metrics after Phase 1:**
-- Conversion: 8% → 10% (+25% relative improvement)
-- Error rate: 40% → 30% (still hallucinating menu items without grounding)
-- Format parseability: 88% (needs improvement)
-- Scope adherence: 95% for non-adversarial queries
+> 💡 **System verdict:** System prompt lifts conversion from 8% to 10% and cuts error rate to 30% — scope constraints stop off-topic responses 95% of the time.
+> ➡️ Format is still 88% consistent; without few-shot examples the model occasionally adds preambles before JSON — Phase 2 demonstrations fix this.
 
 ---
 
-## 3 · Few-Shot Prompting **[Phase 2: EXAMPLES] Demonstration Selection**
+## 3 · Few-Shot Prompting — Demonstration Selection
 
 Include 2–5 examples of `(input, desired output)` pairs directly in your prompt. This is your fastest way to teach the model a specific output format or reasoning style without fine-tuning — and it works remarkably well for most production tasks.
 
@@ -541,36 +511,12 @@ except json.JSONDecodeError as e:
 > 
 > **See also:** [instructor GitHub](https://github.com/jxnl/instructor), [Pydantic docs](https://docs.pydantic.dev/)
 
-### 3.1 ✓ DECISION CHECKPOINT: Phase 2 Complete
-
-**What you just saw:**
-- Format consistency jumped from 88% → 96% (only 4 parse failures per 100 queries)
-- No more "Sure! I'd be happy to help..." preambles — model learned to output JSON directly
-- Edge case handling improved: multi-item orders and special modifications now render correctly
-- Off-topic queries now return structured error JSON instead of conversational decline
-
-**What it means:**
-- **Few-shot examples are the highest-leverage technique for format control** — 3 examples (250 tokens) improved parseability more than any amount of system prompt instruction
-- **Last example matters most** — the off-topic decline example being last means model now defaults to structured responses even for edge cases
-- **Temperature=0 is critical** — deterministic sampling eliminates format drift across repeated queries with same input
-- **Still 4% failure rate** — occasional text before/after JSON, or missing keys (e.g., `order_type` omitted for pickup orders)
-
-**What to do next:**
-→ **If format failures are acceptable (<5% and caught by validation):** Skip Phase 3, rely on retry logic
-→ **If format must be guaranteed (backend has no fallback):** Proceed to Phase 3 — use JSON mode API flag to eliminate all parse failures
-→ **If specific keys are missing:** Add a 4th few-shot example showing that edge case explicitly
-→ **If multi-item orders still malformed:** Include more complex examples with 5+ items, showing how to structure nested arrays
-→ **For PizzaBot:** 96% is close but not acceptable for production (4% = 40 failed orders per 1000 queries) → **Proceed to Phase 3** for guaranteed structure
-
-**Metrics after Phase 2:**
-- Conversion: 10% → 11% (+10% relative improvement from consistent UX)
-- Error rate: 30% → 25% (examples reduce ambiguity)
-- Format parseability: 88% → 96% (+9% absolute improvement)
-- Token cost per query: +250 tokens (few-shot examples), but acceptable within budget
+> 💡 **Examples verdict:** Three (input, output) pairs push format consistency from 88% to 96% — conversational preambles eliminated, conversion rises to 11%.
+> ➡️ The 4% residual parse failures (40 failed orders per 1,000 queries) are too costly for production; Phase 3 JSON mode eliminates all parse failures at API level.
 
 ---
 
-## 4 · Chain-of-Thought Elicitation **[Phase 4: REASONING] Eliciting Step-by-Step Thinking**
+## 4 · Chain-of-Thought Elicitation — Eliciting Step-by-Step Thinking
 
 Covered deeply in `CoTReasoning.md`. The one-line version: append `"Think step by step."` or include a few-shot example with reasoning steps. The model will generate intermediate reasoning before the final answer, which dramatically improves accuracy on multi-step problems.
 
@@ -708,51 +654,12 @@ Final answer: Margherita pizza with gluten-free crust (personal size) — $9.99,
 > 
 > **See also:** [DSPy GitHub](https://github.com/stanfordnlp/dspy), [DSPy paper (Stanford NLP, 2023)](https://arxiv.org/abs/2310.03714)
 
-### 4.1 ✓ DECISION CHECKPOINT: Phase 4 Complete
-
-**What you just saw:**
-- Multi-constraint query ("cheapest gluten-free under 600 cal") answered correctly 85% of the time (vs 20% without CoT)
-- Reasoning trace shows explicit step-by-step filtering: gluten-free filter → calorie filter → price sort
-- Output structure separates reasoning from answer — easy to parse final answer programmatically
-- Token cost doubled (reasoning adds ~400 tokens), but accuracy gain justifies it for complex queries
-
-**What it means:**
-- **Chain-of-thought is not for simple queries** — "What sizes do you have?" doesn't benefit from reasoning steps
-- **Intermediate steps reduce compounding errors** — without CoT, model might forget "gluten-free" constraint by the time it's filtering calories
-- **Few-shot CoT example is critical** — the "Let's work through this step by step" template must be demonstrated, not just instructed
-- **Parsing requirement** — production systems need to extract final answer from reasoning trace (split on "Answer:" delimiter)
-
-**What to do next:**
-→ **If task is simple lookup (menu item price, store hours):** Do NOT use Phase 4 — wasted tokens and added latency
-→ **If task requires 2+ filters or sort operations:** Use CoT — accuracy improvement outweighs cost
-→ **If reasoning traces are verbose (>500 tokens):** Add instruction "Keep reasoning concise: 3-5 steps maximum"
-→ **If final answer extraction is fragile:** Use structured output (Phase 3) to separate `reasoning` and `answer` fields in JSON
-→ **For PizzaBot:** Complex queries are <10% of traffic but high-value (these customers order more) → **Enable CoT for queries with 2+ constraints**, use simple prompts for everything else
-
-**Metrics after Phase 4 (applied selectively to complex queries only):**
-- Conversion: 11% → 12% overall (+9% relative improvement)
-- Conversion for complex queries: 5% → 15% (+200% improvement for this segment!)
-- Error rate (complex queries): 60% → 25% (CoT dramatically reduces multi-step reasoning failures)
-- Token cost per complex query: $0.002 → $0.006 (3× increase, still well within $0.08 budget)
-- Latency (complex queries): 2s → 4s (CoT output generation slower, but acceptable)
-
-**Production decision rule:**
-```python
-def should_use_cot(query: str) -> bool:
-    """Decide whether to use chain-of-thought reasoning."""
-    constraints = count_constraints(query)  # "cheapest", "gluten-free", "under X cal"
-    return constraints >= 2
-
-# Route to appropriate prompt template
-if should_use_cot(user_query):
-    messages = build_cot_prompt(user_query)
-else:
-    messages = build_simple_prompt(user_query)
-```
+> 💡 **Reasoning verdict:** Chain-of-thought raises multi-constraint query accuracy from 20% to 85% — "cheapest gluten-free under 600 cal" now resolves correctly.
+> ➡️ CoT doubles token cost per complex query ($0.002 → $0.006); applying it selectively (queries with 2+ filters, <10% of traffic) caps the overhead while preserving the accuracy gain.
 
 ---
 
-## 5 · Structured Output **[Phase 3: STRUCTURE] JSON Mode and Schemas**
+## 5 · Structured Output — JSON Mode and Schemas
 
 Your hardest prompt engineering challenge: getting models to reliably produce machine-parseable output (JSON, XML, specific delimited text) without extra prose, apologies, or format deviations. PizzaBot's order processing depends entirely on this — a single format violation breaks the backend.
 
@@ -912,66 +819,8 @@ else:
 > 
 > **See also:** [RAGAS GitHub](https://github.com/explodinggradients/ragas), [RAGAS paper (2023)](https://arxiv.org/abs/2309.15217)
 
-### 5.1 ✓ DECISION CHECKPOINT: Phase 3 Complete
-
-**What you just saw:**
-- Format parseability jumped from 96% → **100%** — JSON mode eliminates all parse failures
-- Zero `JSONDecodeError` exceptions in production — backend integration is now reliable
-- Schema validation still required — JSON mode guarantees structure but not content (e.g., missing `order_type` key still possible)
-- No added latency — JSON mode is sampling-level constraint, not post-processing
-
-**What it means:**
-- **JSON mode is the production standard for structured output** — use it whenever provider supports it (OpenAI, Anthropic Claude 3+, Cohere, many open-source models)
-- **Validation layer is mandatory** — always check that required keys exist and types match expected schema
-- **Retry logic simplified** — no need to re-prompt on parse failure; only retry on schema validation failure (rare: ~1%)
-- **Token efficiency** — no more "No other text before or after the JSON" instructions needed in prompt (saves ~30 tokens)
-
-**What to do next:**
-→ **If provider doesn't support JSON mode:** Use Phase 2 few-shot examples + retry loop (96% success rate acceptable with fallback)
-→ **If schema violations persist (>2%):** Add more specific schema constraints in system prompt (e.g., "total must be positive float")
-→ **If output has correct structure but wrong values:** Format is solved — need grounding (Ch.4 RAG) or reasoning (Phase 4 CoT) improvements
-→ **For PizzaBot:** JSON mode + schema validation achieves 100% format reliability → **Phase 3 complete, format problem solved**
-
-**Metrics after Phase 3:**
-- Format parseability: 96% → **100%** ✅ Constraint met!
-- Schema validation pass rate: 99% (1% missing optional fields like `modifications`)
-- Backend integration failures: 4% → **0%** (no more malformed order JSONs)
-- Conversion: 11% → 12% (+9% relative improvement from zero format errors frustrating users)
-- Token cost: No change (JSON mode is free, schema prompt adds +50 tokens but removes +30 tokens of format instructions)
-
-**Production implementation:**
-```python
-from openai import OpenAI
-import json
-
-def get_order_with_guaranteed_structure(user_query: str, system_prompt: str) -> dict:
-    """Call OpenAI with JSON mode, validate schema, retry once if invalid."""
-    client = OpenAI()
-    
-    for attempt in range(2):  # Try twice
-        response = client.chat.completions.create(
-            model="gpt-4-turbo",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_query}
-            ],
-            response_format={"type": "json_object"},
-            temperature=0
-        )
-        
-        # Guaranteed parseable (JSON mode)
-        data = json.loads(response.choices[0].message.content)
-        
-        # Validate schema
-        errors = validate_order_schema(data)
-        if not errors:
-            return data
-        
-        # Retry with errors feedback
-        system_prompt += f"\n\nPrevious attempt had errors: {errors}. Fix them."
-    
-    raise ValueError("Schema validation failed after 2 attempts")
-```
+> 💡 **Structure verdict:** JSON mode raises format reliability from 96% to 100% — zero parse errors in production, zero failed order submissions from malformed JSON.
+> ➡️ JSON mode guarantees structure, not content; schema validation still catches missing keys (1% of calls) — add a retry loop for those before backend hand-off.
 
 ---
 

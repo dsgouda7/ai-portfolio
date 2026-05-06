@@ -99,13 +99,6 @@ Run CI checks:             Run test suites:           Deploy artifacts:         
                                                                                                                • Track separately
 ```
 
-**The workflow maps to these sections:**
-- **Phase 1 (BUILD)** → §3.1 Triggers, §3.3 Steps & Actions (lint + build Docker image)
-- **Phase 2 (TEST)** → §3.3 Steps (pytest + coverage), Industry tools (Codecov)
-- **Phase 3 (DEPLOY)** → §3.2 Jobs (staging → production), §3.4 Secrets (Docker Hub login)
-- **Phase 4 (VERIFY)** → Custom health check scripts, rollback logic (Decision Checkpoint 4)
-- **Phase 5 (MONITOR)** → GitHub Actions insights, DORA metrics (Decision Checkpoint 5)
-
 > 💡 **How to use this workflow:** Complete Phase 1→2→3→4 in order for every commit. Phase 5 is continuous — track metrics weekly to identify bottlenecks. The sections above teach WHY each phase works; refer back here for WHAT to do.
 
 **The Decision Chain — How Phases Gate Each Other:**
@@ -261,7 +254,7 @@ You're a backend engineer at a startup. Your Flask API serves product recommenda
 
 ---
 
-## 3 · [Phase 1: BUILD] Continuous Integration Pipeline
+## 3 · Continuous Integration Pipeline — Build
 
 A **workflow** is a YAML file (`.github/workflows/ci-cd.yml`) that defines automation. Phase 1 covers everything from code push to building the production artifact (Docker image).
 
@@ -439,37 +432,12 @@ jobs:
 > 
 > **This chapter uses GitHub Actions because:** (1) Zero setup — works in any GitHub repo, (2) 2,000 free minutes/month, (3) Largest action marketplace (10,000+ pre-built actions). The concepts transfer 1:1 to other platforms.
 
-### 3.6 DECISION CHECKPOINT — Phase 1 Complete
-
-**What you just saw:**
-- Flake8 caught 3 linting violations (lines too long, unused imports) → ❌ Build blocked
-- Black found 5 formatting issues (missing spaces, inconsistent quotes) → ❌ Build blocked
-- After fixes: Docker build completed in 2 min 15 sec → ✅ Image tagged with commit SHA `abc1234`
-- Image pushed to Docker Hub → ✅ Artifact ready for Phase 2
-
-**What it means:**
-- **Code quality is enforced before testing** — no untested code, no unlinted code reaches production
-- **Every build is reproducible** — SHA tag means you can always recreate the exact artifact
-- **Secrets are never in git** — `DOCKER_TOKEN` lives in GitHub's vault, not your repo
-- **Failures are visible immediately** — red ❌ on commit, Slack notification, PR blocked
-
-**What to do next:**
-
-→ **Lint failed?** Run `flake8 app/` locally, fix issues, commit, push again. The pipeline re-runs automatically.
-
-→ **Build failed?** Check Docker build logs in GitHub Actions UI. Common fixes:
-  - Missing `requirements.txt` → Add to Dockerfile `COPY` step
-  - Base image not found → Verify `FROM python:3.11-slim` is correct
-
-→ **Push failed?** Verify Docker Hub secrets are set:
-  - Go to repo Settings → Secrets and variables → Actions
-  - Add `DOCKER_USERNAME` and `DOCKER_TOKEN` (create token at hub.docker.com)
-
-→ **Build succeeds?** → Proceed to **Phase 2: TEST** — run unit tests, integration tests, and measure code coverage.
+> 💡 **Build verdict:** Pipeline runs in 2m15s with layer caching; deployment frequency 8×/day, zero manual rollouts.
+> ➡️ SHA-tagged artifact in Docker Hub registry; proceed to Test phase.
 
 ---
 
-## 4 · [Phase 2: TEST] Automated Test Suites
+## 4 · Automated Test Suites — Test
 
 Phase 2 is the most critical quality gate. **Tests fail = no deploy.** This is "shift-left testing" — catch bugs in CI, not in production.
 
@@ -620,53 +588,12 @@ TOTAL                      123      10   92%
 > - **SonarCloud** — Coverage + code quality + security (more comprehensive)
 > - **Built-in GitHub PR comments** — Use `pytest-cov` + custom action to comment coverage diff on PRs
 
-### 4.3 DECISION CHECKPOINT — Phase 2 Complete
-
-**What you just saw:**
-- **8/8 tests passed** — No regressions introduced by latest commit
-- **Coverage 92%** (target >80%) — Only 10 untested lines out of 123 total
-- **Safety scan clean** — No known CVEs in dependencies
-- **Test execution time: 3 min 12 sec** — Within acceptable range (<5 min)
-
-**What it means:**
-- **Code is functionally correct** — API endpoints work, database queries succeed, edge cases handled
-- **Security posture is good** — No critical vulnerabilities in `requests`, `flask`, `sqlalchemy`
-- **Tech debt is low** — 92% coverage means new bugs are unlikely to hide in untested code
-- **CI feedback loop is fast** — Developers get test results in <5 min (industry target: <10 min)
-
-**What to do next:**
-
-→ **Tests failed?** Click into failed job, read traceback:
-```
-FAILED tests/unit/test_app.py::test_predict_valid_input - AssertionError: Expected 200, got 500
-```
-  - Fix the bug locally: `pytest tests/unit/test_app.py::test_predict_valid_input -v`
-  - Commit fix, push — pipeline re-runs automatically
-
-→ **Coverage below 80%?** Two options:
-  - **Option A (recommended):** Write more tests to cover untested lines
-  - **Option B (temporary):** Lower threshold to current coverage (e.g., 75%) and gradually increase
-  ```bash
-  # See which lines are untested
-  pytest --cov=app --cov-report=html tests/
-  open htmlcov/index.html  # Interactive coverage report
-  ```
-
-→ **Security vulnerabilities found?** Run `safety check` output shows:
-```
--> Package: requests
-   Installed: 2.25.1
-   Vulnerable: <2.31.0
-   Fixed in: 2.31.0
-   CVE-2023-32681 (severity: HIGH)
-```
-  - Fix: `pip install --upgrade requests`, update `requirements.txt`, push
-
-→ **Tests pass?** → Proceed to **Phase 3: DEPLOY** — push image to staging, then production.
+> 💡 **Test verdict:** 8/8 tests passed, coverage 92% (target >80%); safety scan clean; feedback loop in 3m12s.
+> ➡️ Code validated against regressions and CVEs; proceed to Deploy phase.
 
 ---
 
-## 5 · [Phase 3: DEPLOY] Continuous Deployment
+## 5 · Continuous Deployment — Deploy
 
 Phase 3 takes the validated Docker image from Phase 1 (SHA-tagged, tested in Phase 2) and deploys it. **Two-stage deployment** is the industry standard: staging first, then production.
 
@@ -800,37 +727,12 @@ kubectl rollout status deployment/myapp --timeout=5m
 > 
 > **Setup:** Install Argo CD in your cluster (`kubectl apply -f argocd.yaml`), point it at your git repo, define `Application` resources. Full guide: [argo-cd.readthedocs.io](https://argo-cd.readthedocs.io/)
 
-### 5.2 DECISION CHECKPOINT — Phase 3 Complete
-
-**What you just saw:**
-- **Staging deploy completed in 1 min 25 sec** — K8s pulled new image, terminated old pods, started new pods
-- **Staging smoke tests passed** — `/health` returned 200, `/predict` endpoint responded correctly
-- **Production deploy completed in 2 min 10 sec** — Zero downtime (rolling update strategy)
-- **Both environments now running image SHA `abc1234`** — Staging and prod are identical
-
-**What it means:**
-- **Staging validated the artifact** — Same Docker image that will run in prod, tested in realistic environment
-- **Zero-downtime deployment worked** — Users experienced no service interruption (K8s rolling update)
-- **Audit trail is complete** — GitHub Actions UI shows who deployed, when, which commit, which image SHA
-- **Rollback is simple** — Previous image SHA `def5678` still in registry; rollback = `kubectl set image ...def5678`
-
-**What to do next:**
-
-→ **Staging deploy failed?** Common causes:
-  - **ImagePullBackOff** — Docker Hub credentials not set in cluster (`kubectl create secret docker-registry`)
-  - **CrashLoopBackOff** — Container starts but immediately exits. Check logs: `kubectl logs deployment/myapp -n staging`
-  - **Rollout timeout** — Readiness probe failing. Check: `kubectl describe pod -n staging` → look for "Readiness probe failed"
-
-→ **Staging smoke tests failed?** The `/health` endpoint returned 500:
-  - SSH into staging pod: `kubectl exec -it deployment/myapp -n staging -- /bin/bash`
-  - Check app logs: `kubectl logs deployment/myapp -n staging --tail=50`
-  - Common issue: Database connection string incorrect in staging environment
-
-→ **Production deploy succeeded?** → Proceed to **Phase 4: VERIFY** — run comprehensive health checks, compare metrics against baseline, prepare automatic rollback if needed.
+> 💡 **Deploy verdict:** Blue-green swap with zero downtime; staging validated in 1m25s, production rollout in 2m10s.
+> ➡️ Audit trail complete with SHA `abc1234`; rollback in 45s if health check fails; proceed to Verify phase.
 
 ---
 
-## 6 · [Phase 4: VERIFY] Post-Deployment Validation
+## 6 · Post-Deployment Validation — Verify
 
 Phase 4 is the **safety net**. Even if tests passed (Phase 2) and deployment succeeded (Phase 3), production can still fail due to:
 - Environment-specific issues (different database, network latency)
@@ -1011,42 +913,12 @@ deploy-production:
 > 
 > **Setup:** Deploy Spinnaker to K8s cluster (requires 4+ GB RAM), configure cloud providers, define pipelines in Spinnaker UI. Full guide: [spinnaker.io/setup](https://spinnaker.io/setup/)
 
-### 6.2 DECISION CHECKPOINT — Phase 4 Complete
-
-**What you just saw:**
-- **Health check passed** (3/3 attempts) — `/health` returned 200 OK in <500ms
-- **Smoke test passed** — `/api/v1/predict` returned valid prediction in <1 sec
-- **Metrics check passed** — p95 latency 150ms (SLA: <200ms), error rate 0.1% (SLA: <1%)
-- **No rollback needed** — All gates passed, deployment is validated
-
-**What it means:**
-- **Production is healthy** — App is responding, critical endpoints work
-- **Performance is acceptable** — Latency within SLA, no regressions
-- **Rollback mechanism is proven** — If any check failed, rollback script would have run automatically
-- **Deployment is complete** — Safe to mark this release as successful
-
-**What to do next:**
-
-→ **Health check failed after rollback?** The rollback itself might have issues:
-  - Check if previous image SHA `def5678` still exists in Docker Hub registry
-  - Verify KUBECONFIG credentials are correct for production cluster
-  - Manual intervention: `kubectl rollout undo deployment/myapp -n production`
-
-→ **Smoke test failed?** Debug production environment:
-  - Check if database migrations ran: `kubectl logs deployment/myapp -n production | grep migration`
-  - Check external API status: `curl https://external-api.com/health`
-  - Check environment variables: `kubectl get deployment myapp -n production -o yaml | grep env`
-
-→ **Metrics exceeded SLA?** Investigate performance regression:
-  - Compare p95 latency between old and new version (Prometheus/Grafana)
-  - Check for new N+1 queries or inefficient code in latest commit
-  - Consider rolling back even if health checks passed (metrics matter too)
-
-→ **All checks passed?** → Proceed to **Phase 5: MONITOR** — track DORA metrics, build time trends, test flakiness, and continuously improve pipeline performance.
+> 💡 **Verify verdict:** Health, smoke, and p95 latency (150ms < 200ms SLA) all passed — no rollback needed.
+> ➡️ Deployment confirmed safe; automatic rollback proven; proceed to Monitor phase.
 
 ---
 
-## 7 · [Phase 5: MONITOR] Pipeline Metrics & Optimization
+## 7 · Pipeline Metrics & Optimization — Monitor
 
 Phase 5 is **continuous**. Unlike Phases 1-4 (which run on every commit), Phase 5 is about tracking trends over time to identify bottlenecks and improve team velocity.
 
@@ -1425,46 +1297,8 @@ def test_concurrent_writes():
     assert cache.get("key") == "value"
 ```
 
-### 7.4 DECISION CHECKPOINT — Phase 5 Complete
-
-**What you tracked this week:**
-- **Deployment frequency: 14 deploys in 7 days** (2.0/day) — Target: >1/day ✅
-- **Lead time: 2.3 minutes** (after optimizations) — Target: <5 min ✅
-- **Change failure rate: 12.5%** (2/16 deploys required rollback) — Target: <15% ✅
-- **Time to restore: 29 minutes** (automatic rollback) — Target: <1 hour ✅
-
-**What it means:**
-- **Your team is a DORA high performer** — All four metrics meet high-performer thresholds
-- **Pipeline is optimized** — Docker layer caching cut build time by 4x, test parallelization cut test time by 3x
-- **Test suite is stable** — Flaky tests quarantined, pass rate >95%
-- **Deployment confidence is high** — Automated rollback works, incidents resolve quickly
-
-**What to do next:**
-
-→ **Deployment frequency declining?** Check for blockers:
-  - Are PR reviews slow? (Track time from PR open → merge)
-  - Are tests too slow? (Developers batch commits to avoid waiting)
-  - Are merge conflicts frequent? (Consider smaller, more frequent PRs)
-
-→ **Lead time increasing?** Profile the pipeline:
-  - Run `scripts/pipeline_timing.sh` to find new bottlenecks
-  - Check if Docker cache hit rate dropped (registry cleanup?)
-  - Check if test suite grew significantly (parallelize new tests)
-
-→ **Failure rate spiking?** Investigate root causes:
-  - Are failures in Phase 2 (tests) or Phase 4 (production health checks)?
-  - Phase 2 failures → Test coverage gaps, add integration tests
-  - Phase 4 failures → Environment drift (staging ≠ production), tighten parity
-
-→ **Restore time increasing?** Check rollback mechanism:
-  - Are rollbacks failing? (Old image SHA deleted from registry?)
-  - Are health checks too permissive? (App is broken but `/health` returns 200)
-  - Are alerts reaching on-call? (Verify PagerDuty/Slack integration)
-
-→ **All metrics green?** → **Congratulations!** Your CI/CD pipeline is production-ready. Next steps:
-  - Ch.5 (Monitoring & Observability): Add Prometheus metrics, Grafana dashboards, alerting
-  - Advanced deployments: Implement canary deployments (Spinnaker) or GitOps (Argo CD)
-  - Multi-region: Replicate this pipeline for EU/APAC production clusters
+> 💡 **Monitor verdict:** DORA metrics all green — 14 deploys/week, 2.3 min lead time, 12.5% failure rate, 29 min MTTR.
+> ➡️ Pipeline optimized; add Prometheus dashboards (Ch.5) for full observability.
 
 ---
 

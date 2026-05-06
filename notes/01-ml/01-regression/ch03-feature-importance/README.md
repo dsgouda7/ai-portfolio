@@ -62,8 +62,6 @@ Each method can give a completely different ranking for the same dataset. Unders
 > ⚠️ **Two ways to read this chapter:**
 > - **Theory-first (recommended for learning):** Read §0→§3 sequentially to understand the concepts, then use this workflow as your reference
 > - **Workflow-first (practitioners with existing knowledge):** Use this diagram as a jump-to guide when working with real data
->
-> **Note:** Section numbers don't follow phase order because the chapter teaches concepts pedagogically (theory before application). The workflow below shows how to APPLY those concepts.
 
 **What you'll build by the end:** A 3-view diagnostic dashboard ranking all features by Univariate R², Standardized Weights, and Permutation Importance — with VIF scores flagging collinear pairs. This is the table from §3.11 that answers "which features matter, which overlap, and which should be dropped."
 
@@ -83,12 +81,6 @@ Look at distributions:     Check redundancy:           Build pipeline:          
     RobustScaler             • VIF < 5: Keep               consistently              drop redundant one
   • Symmetric: Standard
 ```
-
-**The workflow maps to these sections:**
-- **Phase 1 (Inspect)** → §3A Feature Scaling, §3A.1 Understanding Skew, §3A.2 Log Transform
-- **Phase 2 (Audit)** → §3.8 Multicollinearity, §3.9 VIF
-- **Phase 3 (Transform)** → §3.6 ColumnTransformer pipeline
-- **Phase 4 (Validate)** → §3.2 Method 1, §3.3 Method 2, §3.5 Method 3
 
 > 💡 **How to use this workflow:** Complete Phase 1→2→3 in order on your data, then run all three Phase 4 methods (M1, M2, M3) on the transformed data to build the final dashboard. The sections above teach WHY each phase works; refer back here for WHAT to do.
 
@@ -391,7 +383,7 @@ For California Housing: run both. Where they agree, the ranking is reliable. Whe
 
 ---
 
-### 3.2 Method 1 — Univariate R² **[Phase 4: VALIDATE]**
+### 3.2 Method 1 — Validate: Univariate R²
 
 > **How ŷ is determined here:** A **separate, single-feature model** is fitted from scratch for each feature — 8 features means 8 independent mini-models, each with only one predictor. The ŷ from a MedInc model has never seen Latitude; the ŷ from a Latitude model has never seen MedInc. This is what makes the R² "univariate" — every score is measured in pure isolation.
 
@@ -481,7 +473,7 @@ for feat, r2 in univariate_r2_sorted.items():
 
 ---
 
-## 3A · Prerequisite: Feature Scaling **[Phase 1: INSPECT]**
+## 3A · Inspect: Feature Scaling
 
 > ⚠️ **This is NOT a feature importance method** — it's a data preparation step required before comparing feature weights. Methods 1 and 3 don't need scaling; Method 2 (Standardised Weights) requires it. This section explains why and how.
 
@@ -620,26 +612,12 @@ for col in X.columns:
 > **When to use:** Always in production. Manual z-score calculation shown above is for learning only.
 > **Common alternatives:** `RobustScaler` (outlier-resistant), `MinMaxScaler` (bounded [0,1]), `PowerTransformer` (Box-Cox/Yeo-Johnson)
 
-### 3A.3 DECISION CHECKPOINT — Phase 1 Complete
-
-**What you just saw:**
-- 8 features with different distributional shapes (skew, outliers, range)
-- `AveRooms`, `AveBedrms`, `Population` all have positive skew > 1.0
-- `MedInc` has moderate skew (~1.0); others near-symmetric
-
-**What it means:**
-- Right-skewed features will have 95% of values compressed near zero after StandardScaler
-- The few extreme values (Population = 35,682 in one district) will dominate gradient updates
-- Log transform first, then standardize → balanced gradient contributions
-
-**What to do next:**
-→ Apply `np.log1p()` to features with skew > 1.0 before scaling
-→ Build a `ColumnTransformer` to handle mixed transformations (Phase 3)
-→ Check for feature-feature correlations (Phase 2) before finalizing pipeline
+> 💡 **Inspect verdict:** Three features (AveRooms, AveBedrms, Population) have skew > 1.0 and require log1p before scaling.
+> ➡️ Build a ColumnTransformer applying log1p+scale to skewed features, then check inter-feature correlations (Phase 2).
 
 ---
 
-### 3.3 Method 2 — Standardised Weights (Partial Contribution) **[Phase 4: VALIDATE]**
+### 3.3 Method 2 — Validate: Standardised Weights (Partial Contribution)
 
 > **How ŷ is determined here:** There is **one model containing all features simultaneously** — the same Ch.2 model. No features are removed. ŷ = $w_1 x_1 + w_2 x_2 + \cdots + w_p x_p + b$. The standardised weight $|w_j^{\text{std}}|$ measures the **marginal (partial) effect** of feature $j$: how much ŷ shifts for a 1-σ change in $x_j$ while all other features are held fixed at their current values. This is why rankings can flip versus Method 1 — a feature that was absorbing shared signal alone now only gets credit for what it adds *above and beyond* all other features.
 
@@ -728,7 +706,7 @@ M1 and M2 together already reveal a lot, but they share a blind spot: both rely 
 
 ---
 
-### 3.5 Method 3 — Permutation Importance **[Phase 4: VALIDATE]**
+### 3.5 Method 3 — Validate: Permutation Importance
 
 > **How ŷ is determined here:** The **original full model is used unchanged — it is never retrained**. ŷ still equals $w_1 x_1 + w_2 x_2 + \cdots + w_p x_p + b$ with the same fitted weights from training. What changes is the **input**: for feature $j$, its column is randomly shuffled across all test rows, destroying its correlation with $y$ while keeping its marginal distribution intact. The model then makes predictions with the same weights but scrambled signal for that one feature. The rise in MAE reveals how badly those fixed weights are handicapped — i.e., how much the model was genuinely relying on that feature's ordering. **Critically, this is not the same as removing the feature and retraining.** Retraining would allow correlated features to compensate; permutation does not — it tests the trained model's reliance, not the feature's replaceability.
 
@@ -833,29 +811,12 @@ for _, row in perm_importance.iterrows():
 > **When to use:** Post-training model interpretation. Works with any scikit-learn model (Linear, RF, XGBoost). Integrated in many AutoML libraries.
 > **Key parameters:** `n_repeats=30` for stable estimates, `random_state=42` for reproducibility
 
-### 3.5.1 DECISION CHECKPOINT — Phase 4 Partial Complete
-
-**What you just saw:**
-- MedInc permutation importance: 0.334 (∆MAE = +$18.4k when shuffled)
-- Latitude: 0.165 (∆MAE = +$9.1k), Longitude: 0.133 (∆MAE = +$7.3k)
-- Population: 0.002 (∆MAE = +$0.1k — near zero)
-- AveBedrms: 0.005 (∆MAE = +$0.3k — redundant with AveRooms)
-
-**What it means:**
-- Model relies heavily on MedInc — removing it causes 33% MAE increase
-- Latitude + Longitude together are critical (geographic segmentation)
-- Population contributes nothing that other features don't already capture
-- AveBedrms' signal is almost entirely duplicated by AveRooms (check VIF next)
-
-**What to do next:**
-→ Flag Population as drop candidate (permutation ≈ 0)
-→ Check VIF for AveRooms/AveBedrms pair (Phase 2 audit)
-→ Compare all three methods (M1, M2, M3) in convergence table (§3.6)
-→ Run joint permutation for Lat/Lon to measure interaction uplift (§3.10)
+> 💡 **Validate verdict:** MedInc dominates (permutation ∆MAE = +$18.4k); Population is near-zero (∆MAE = +$0.1k).
+> ➡️ Flag Population as drop candidate; check VIF for AveRooms/AveBedrms pair before finalising the feature set.
 
 ---
 
-### 3.6 Three-Method Convergence — Reading the Full Picture **[Phase 3: TRANSFORM]**
+### 3.6 Three-Method Convergence — Transform: Reading the Full Picture
 
 ![Three-method reveal animation](img/three-method-reveal.gif)
 
@@ -952,23 +913,8 @@ print(f"  X_test shape: {X_test_transformed.shape}")
 > **When to use:** Always when features need different transformations. Standard in production ML pipelines.
 > **Best practice:** Wrap in `Pipeline` with model for atomic fit/predict: `Pipeline([('preprocess', preprocessor), ('model', LinearRegression())])`
 
-### 3.6.1 DECISION CHECKPOINT — Phase 3 Complete
-
-**What you just saw:**
-- Built `ColumnTransformer` applying log1p+scale to skewed features, scale-only to others
-- Fitted on train set only (no test leakage)
-- Verified transformed shapes match (train: 16,512 × 8, test: 4,128 × 8)
-
-**What it means:**
-- All features now have mean=0, std=1 → fair comparison in model weights
-- Skewed features compressed to symmetric range → balanced gradient updates
-- Pipeline is reusable: `preprocessor.transform(new_data)` works on future data
-
-**What to do next:**
-→ Fit model on transformed data: `model = LinearRegression().fit(X_train_transformed, y_train)`
-→ Compute all three importance methods (M1, M2, M3) — Phase 4 validation
-→ Build three-view dashboard table (§3.11) to reconcile rankings
-→ Make final keep/drop decisions per feature
+> 💡 **Transform verdict:** ColumnTransformer fitted on train only; all 8 features at mean=0, std=1 with log1p applied to 3 skewed features.
+> ➡️ Run all three importance methods (M1, M2, M3) on transformed data to build the ranking dashboard (§3.11).
 
 ![Univariate R² and permutation importance side-by-side bar chart for top-6 features](img/ch03-importance-comparison.png)
 
@@ -1015,7 +961,7 @@ For California Housing: none of the 8 base features hits this threshold, but eng
 
 ---
 
-### 3.8 Multicollinearity — When Features Compete for the Same Signal **[Phase 2: AUDIT]**
+### 3.8 Multicollinearity — Audit: When Features Compete for the Same Signal
 
 Multicollinearity is the condition where two or more features are strongly correlated with each other. When this happens:
 
@@ -1093,24 +1039,8 @@ for _, row in vif_data.iterrows():
 > **When to use:** Part of standard feature engineering pipelines before training. Run after scaling, before model fitting.
 > **Interpretation:** VIF > 5 → consider dropping one feature or using Ridge regularization (Ch.5)
 
-### 3.8.1 DECISION CHECKPOINT — Phase 2 Complete
-
-**What you just saw:**
-- AveRooms VIF = 7.2, AveBedrms VIF = 6.8 (both > 5 threshold)
-- Correlation heatmap shows ρ = +0.85 between the pair
-- All other features have VIF < 3.5 (acceptable)
-
-**What it means:**
-- AveRooms and AveBedrms measure the same "dwelling size" signal
-- Model has ~7 near-equally-good ways to split 0.20 units of weight between them
-- Individual weights are unstable (change with random seed), but predictions stay stable
-- This is a collinearity problem, not a prediction problem
-
-**What to do next:**
-→ **Option 1 (Simple):** Drop AveBedrms (weaker of the two per Method 3)
-→ **Option 2 (Merge):** Create `rooms_per_bedroom = AveRooms / AveBedrms` composite feature
-→ **Option 3 (Regularize):** Keep both, apply Ridge in Ch.5 (shrinks correlated weights toward each other)
-→ For SmartVal AI: **Choose Option 3** (preserve information, let regularization handle it)
+> 💡 **Audit verdict:** AveRooms/AveBedrms VIF = 7.2/6.8 with inter-feature ρ = 0.85 — collinear pair flagged for regularisation.
+> ➡️ For SmartVal AI: keep both and apply Ridge in Ch.5 to stabilise the correlated weights.
 
 ---
 
@@ -1303,28 +1233,8 @@ Checking all $\binom{p}{2}$ pairs for joint permutation importance is $O(p^2)$ �
 | **AveBedrms** | 0.002 | 0.10 | 0.005 | 6.8 | ⚡ Collinear with AveRooms — weakest of the pair |
 | **Population** | 0.001 | 0.01 | 0.002 | 2.1 | ❌ Near-zero contribution |
 
-### 3.11.1 FINAL DECISION CHECKPOINT — All 4 Phases Complete
-
-**What you just saw:**
-- **Phase 1 (Inspect):** 3 features need log1p, 5 are symmetric
-- **Phase 2 (Audit):** AveRooms/AveBedrms pair has VIF ≈ 7 (collinear)
-- **Phase 3 (Transform):** Built `ColumnTransformer` pipeline (log+scale vs scale-only)
-- **Phase 4 (Validate):** Ran all 3 importance methods, built dashboard
-
-**What it means:**
-- MedInc is the dominant signal (all 3 methods agree: high M1, high M2, high M3)
-- Lat/Lon are jointly irreplaceable (low M1, high M2/M3 → cooperation pattern)
-- AveBedrms is redundant with AveRooms (high VIF, low M3 → competition pattern)
-- Population contributes nothing (near-zero on all metrics)
-
-**Final actions for SmartVal AI:**
-→ **Keep 6 core features:** MedInc, Latitude, Longitude, AveOccup, HouseAge, AveRooms
-→ **Drop 2 features:** Population (permutation ≈ 0), AveBedrms (redundant with AveRooms)
-→ **Result:** 6-feature model with MAE ≈ $55k (unchanged from 8-feature), but cleaner weights for compliance reporting
-→ **Alternative:** Keep all 8, apply Ridge regularization in Ch.5 (preserves information, stabilizes collinear weights)
-
-**Bridge to Ch.4:**
-Feature importance diagnostic complete. MAE unchanged at $55k — this was a *diagnostic* chapter, not a performance improvement. Ch.4 adds polynomial features (`MedInc²`, `Lat×Long`) to capture non-linearity → ~$48k MAE (13% improvement).
+> 💡 **Final verdict:** MedInc dominates (R²=0.47, permutation #1); AveBedrms redundant with AveRooms (VIF ≈ 7); Population near-zero on all metrics.
+> ➡️ Drop Population and AveBedrms — 6-feature model keeps MAE at $55k with stable weights for compliance; Ch.4 adds polynomials for the next improvement.
 
 ---
 

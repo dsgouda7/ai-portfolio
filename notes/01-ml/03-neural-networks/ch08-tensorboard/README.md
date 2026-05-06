@@ -74,12 +74,6 @@ TensorBoard is a web UI for training metrics that reads structured event files w
 
 ## 1.5 · The Practitioner Workflow — Your 4-Phase Instrumentation
 
-> ⚠️ **Two ways to read this chapter:**
-> - **Theory-first (recommended for learning):** Read §0→§6 sequentially to understand TensorBoard architecture and instrumentation patterns, then use this workflow as your reference
-> - **Workflow-first (practitioners with production experience):** Use this diagram as a jump-to guide when instrumenting real training loops
->
-> **Note:** Section numbers don't follow phase order because the chapter teaches concepts pedagogically (theory before application). The workflow below shows how to APPLY those concepts in production.
-
 **What you'll build by the end:** A fully instrumented training loop with scalar loss tracking (Phase 1), automatic overfitting detection (Phase 2), gradient health monitoring (Phase 3), and embedding space validation (Phase 4) — the complete observability stack that transforms blind training into debuggable, production-grade ML development.
 
 ```
@@ -99,12 +93,6 @@ Add scalar logging:         Watch loss curves:          Add histogram tracking: 
   • Embeddings: end only      • No improvement 5 epochs:  • Exploding (>100):         • Random cloud:
                                 restore best checkpoint     gradient clipping           increase capacity/epochs
 ```
-
-**The workflow maps to these sections:**
-- **Phase 1 (INSTRUMENT)** → §4.1 Scalar Logging
-- **Phase 2 (DIAGNOSE)** → §5 Production Monitoring Arc (Act 2)
-- **Phase 3 (TUNE)** → §4.2 Histogram Logging  
-- **Phase 4 (VALIDATE)** → §4.4 Embedding Projector
 
 > 💡 **How to use this workflow:** Always start with Phase 1 (scalars are cheap and immediately actionable). Add Phase 2 early stopping logic after 10+ epochs of baseline training. Only add Phase 3 histograms if training dynamics look unusual (loss plateau, NaN values). Use Phase 4 as final validation that the model learned meaningful representations, not as a per-epoch diagnostic.
 
@@ -256,22 +244,8 @@ writer.close()
 > **Common alternatives:** Weights & Biases (hosted, collaborative), MLflow (self-hosted, model registry), TensorBoardX (older PyTorch versions)
 > **See also:** [PyTorch TensorBoard tutorial](https://pytorch.org/tutorials/recipes/recipes/tensorboard_with_pytorch.html)
 
-### ✓ DECISION CHECKPOINT: Phase 1 Complete
-
-**What you just saw:**
-- Training loop now writes `Loss/train`, `Loss/val`, `MAE_k/val`, and `LR` scalars to `runs/adam_lr1e-3_seed42/` event file
-- TensorBoard dashboard at `localhost:6006` updates in real time as training progresses
-- All four metrics appear on the Scalars tab with epoch on x-axis
-
-**What it means:**
-- You now have the minimum viable observability layer — can see if loss is decreasing, if train/val diverge, and if LR scheduler is active
-- Scalar logging is cheap (<1ms per call) — no excuse not to have it in every training loop
-- This is the foundation all other instrumentation builds on
-
-**What to do next:**
-→ **Run training for 10–20 epochs:** Establish baseline loss curve behavior before adding more expensive instrumentation
-→ **Check Scalars tab:** If train and val losses track closely → healthy training, proceed to Phase 2. If val loss is flat while train drops → immediate overfitting signal, add early stopping before continuing
-→ **For our UnifiedAI scenario:** After 50 epochs, you'll see train loss = 0.19, val loss = 0.56 — a clear overfitting signal. Phase 2 will catch this automatically at epoch 22, saving 28 wasted epochs.
+> 💡 **Instrument verdict:** Scalar logging (<1ms/call) added for Loss/train, Loss/val, MAE, and LR; TensorBoard Scalars tab live at localhost:6006 — minimum viable observability established.
+> ➡️ Run 10–20 epochs to establish baseline curve; if val loss is flat while train loss drops, add early stopping before proceeding.
 
 ---
 
@@ -359,24 +333,8 @@ for epoch in range(1, 51):
 > **Common alternatives:** Per-parameter clipping (`clip_grad_value_`), adaptive clipping (scales with average grad norm)
 > **Gradient anomaly detection:** PyTorch 1.9+ has `torch.autograd.detect_anomaly()` context manager — catches NaN/Inf gradients with full backward stack trace
 
-### ✓ DECISION CHECKPOINT: Phase 3 Complete
-
-**What you just saw:**
-- Weight histograms logged every 5 epochs showing distribution evolution across training
-- Gradient histograms captured immediately after `backward()` but before `zero_grad()`
-- Histograms/Distributions tabs now populate in TensorBoard with layer-wise tensor distributions
-
-**What it means:**
-- Weight histogram with spike at 0 = dead neurons (ReLU saturation, too many negative inputs)
-- Gradient histogram spike at 0 = vanishing gradients (early layers not learning)
-- Gradient histogram spreading to ±100 or beyond = exploding gradients (imminent NaN)
-- Histograms reveal problems scalars can't detect — same final loss, very different internal dynamics
-
-**What to do next:**
-→ **Healthy histograms (all layers showing broad, shifting distributions):** Proceed to Phase 4 embedding validation — training dynamics are sound
-→ **Layer 1 gradients tiny spike at 0:** Add `nn.BatchNorm1d` before layer 1, or switch from Sigmoid to ReLU activations
-→ **Layer 3 gradients spreading >100:** Add `torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)` before `optimizer.step()`
-→ **For our UnifiedAI scenario:** After adding BatchNorm (Act 3 in §5), layer 1 weight histograms evolve healthily to epoch 50, and MAE drops from $48k → $45k with zero architecture capacity changes
+> 💡 **Tune verdict:** Weight histogram spike at 0 = dead neurons; gradient spike at 0 = vanishing; gradient spread >100 = exploding — histograms expose internal failures that loss curves cannot.
+> ➡️ If layer 1 gradients are near-zero, add BatchNorm before layer 1; if gradients exceed 100, apply `clip_grad_norm_(model.parameters(), 1.0)` before `optimizer.step()`.
 
 ---
 
@@ -469,23 +427,8 @@ writer.add_embedding(
 > **Common alternatives:** UMAP (faster than t-SNE, preserves global structure), PCA (linear, fast baseline), Isomap (manifold learning)
 > **Embedding libraries:** `umap-learn`, `scikit-learn.manifold`, `tensorboard.plugins.projector`
 
-### ✓ DECISION CHECKPOINT: Phase 4 Complete
-
-**What you just saw:**
-- Layer 3 output (16-dim embeddings) extracted for validation set and logged to TensorBoard Projector
-- t-SNE/PCA projection reduces 16D → 2D/3D for visualization
-- Points colored by price tier (Low/Mid/High) show cluster structure
-
-**What it means:**
-- **Clear cluster separation (3 distinct regions):** Model learned meaningful value-related features — high-income coastal districts separate from inland low-value districts even though network never saw explicit geographic coordinates
-- **Single undifferentiated cloud:** Model did not learn discriminative features — either undertrained (too few epochs), undercapacity (network too small), or label noise too high (check data quality)
-- **Clusters exist but mislabeled:** Embedding space is meaningful but classification head is weak — increase classifier capacity or retrain head only
-
-**What to do next:**
-→ **Clusters match expected categories:** Training was successful — model representations are production-ready. Proceed to hyperparameter tuning (Ch.19) or deploy with confidence
-→ **No cluster structure visible:** Increase model capacity (wider layers), train longer (50 → 100 epochs), or check data quality (mislabeled samples corrupt embeddings)
-→ **Clusters exist but are weak/overlapping:** Add contrastive loss (pushes same-class samples together, different-class apart) or try metric learning approaches
-→ **For our UnifiedAI scenario:** After Act 4 in §5, the projector shows three separable regions — low-value inland, mid-tier suburban, high-value coastal. This confirms the network learned geography-correlated features without explicit lat/lon, validating the $43k MAE as genuine learned signal, not memorization.
+> 💡 **Validate verdict:** t-SNE of 16-dim layer-3 embeddings shows three separable tiers (low/mid/high-value districts) — model learned geography-correlated features without explicit lat/lon coordinates.
+> ➡️ If embeddings show a single undifferentiated cloud, the model is undertrained or undercapacity — increase epochs or layer width before deployment.
 
 ---
 
@@ -583,23 +526,8 @@ You add `writer.add_scalar('Loss/train', ...)` and `writer.add_scalar('Loss/val'
 
 **Action:** Add early stopping (save checkpoint at min val loss). New final MAE: **$48k** — a $6k gain at zero architecture cost.
 
-### ✓ DECISION CHECKPOINT: Phase 2 Complete
-
-**What you just saw:**
-- Train loss = 0.31, val loss = 0.48 at epoch 25 — the gap widened from 0.02 (epoch 15) to 0.17
-- Validation loss stopped decreasing at epoch 22 while training loss continued dropping
-- By epoch 50, the gap reached 0.56 - 0.19 = 0.37 — classic overfitting signature
-
-**What it means:**
-- Model started memorizing training districts after epoch 22 — learning patterns that don't generalize
-- Continuing to train past this point actively hurts validation performance (final MAE $54k vs best $48k)
-- Early stopping would have saved 28 wasted epochs (56% of total compute budget)
-
-**What to do next:**
-→ **Implement early stopping logic:** Save checkpoint whenever `val_loss < best_val_loss`, restore best checkpoint after training
-→ **If gap opens before epoch 10:** Model capacity too high or learning rate too aggressive — reduce network size or LR by 2x
-→ **If train and val both plateau (no gap):** Underfitting — increase model capacity, train longer, or check data preprocessing
-→ **For our UnifiedAI scenario:** Adding early stopping with patience=5 (stop if no improvement for 5 epochs) restores the $48k checkpoint automatically. Combined with Act 3 BatchNorm fix, final MAE reaches $43k — 20% improvement from instrumentation alone, zero architecture changes.
+> 💡 **Diagnose verdict:** Train/val loss gap opened at epoch 22 (0.02 → 0.17); early stopping at epoch 22 recovers the $48k MAE checkpoint vs. $54k at epoch 50 — 28 wasted epochs and a better model for free.
+> ➡️ Implement early stopping with patience=5: save checkpoint when val_loss improves, restore best after training — zero architecture cost, $6k MAE gain.
 
 ---
 

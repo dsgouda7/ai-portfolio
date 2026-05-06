@@ -1237,3 +1237,62 @@ Before publishing any chapter, verify each item:
 5. Keep the knuckleball arc continuous — every chapter must state what constraints it advances
 
 **Remember:** The goal is not documentation — it's building mathematical intuition through failure-first discovery, numerical grounding, and a coherent physical challenge that threads through all 7 chapters.
+
+---
+
+## Anti-Pattern: Meta-Navigation Overload
+
+> **Rule:** A chapter has exactly one narrative thread. Never create a section mapping one navigation model to another.
+
+**What it looks like (wrong):**
+
+A "Derivation Roadmap" or "Practitioner Workflow" block that maps phase labels onto section numbers:
+
+```markdown
+**The derivation maps to these sections:**
+- **Step 1 (Setup — Define the loss)** → §3.1 Scalar loss, §3.2 Worked example
+- **Step 2 (Derive — Differentiate)** → §4 Chain rule, §4.1 Matrix form
+- **Step 3 (Apply — Update weights)** → §1 Gradient descent rule, §7 Convergence
+```
+
+This forces three context-switches simultaneously: phase order (1–3), section order (§1, §3, §4, §7 — non-sequential), and workflow order (Setup→Derive→Apply). The reader must maintain three parallel models.
+
+The same anti-pattern appears as a "Where this theorem appears" navigation map:
+
+```markdown
+**This result is used in:**
+- §5.2 of Ch.01-regression (normal equations)
+- §3.4 of Ch.03-neural-networks (backprop weight update)
+- §2.1 of Ch.06-gradient-chain-rule (Jacobian composition)
+```
+
+This is a navigation index, not a narrative. It tells the reader *where* to look, not *why* it matters.
+
+**The fix:**
+
+Derivation steps should be numbered sub-sections within a single proof section — not cross-referenced from a meta-table:
+
+```markdown
+## 4 · Deriving the Normal Equations
+
+**Step 1 — Set up the loss.** Define $\mathcal{L}(w) = \|Xw - y\|^2$. Every term is a scalar squared — gravity-analogy: the higher the loss, the farther the ball lands from target.
+
+**Step 2 — Differentiate with respect to w.** Applying the matrix chain rule (same machinery as §4, just extended to vectors): $\nabla_w \mathcal{L} = 2X^\top(Xw - y)$.
+
+**Step 3 — Set gradient to zero and solve.** Setting $\nabla_w \mathcal{L} = 0$ gives $\hat{w} = (X^\top X)^{-1} X^\top y$.
+```
+
+Each step is its own paragraph under the same section. No meta-table. No phase label. The flow is the section.
+
+For forward links to other chapters and tracks, use `> ➡️` callouts in-place — never a compiled list:
+
+> ➡️ This result appears in ML Ch.01-Regression as the closed-form solver for linear regression weights. You will see it again in Ch.05-Matrices (§3.7) when the feature matrix grows beyond 3×3.
+
+**Callout discipline for math chapters:**
+
+- `> 💡 **[concept] verdict:**` — one line after a proof or derivation, states the engineering implication; e.g.:
+  > 💡 **Gradient verdict:** The partial derivative isolates each weight's contribution — this is why backprop scales to 175B parameters without computing all cross-derivatives simultaneously.
+- `> ➡️` — forward pointer to the ML/AI chapter or later math section where this formula appears in code
+- `> ⚡` — constraint connection when a derivation result advances one of the three free-kick constraints
+- **Never:** a "PROOF STAGE" or "DERIVATION PHASE" block with "What you just derived / What it means / Where it appears"
+- **Never:** a bullet list mapping "Step N → §X in Ch.Y" — embed the section reference as prose or a `> ➡️` callout

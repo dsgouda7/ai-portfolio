@@ -161,13 +161,10 @@ Baseline measurement          Bottleneck analysis           Apply techniques    
 
 **Loop structure**: After Phase 4, if SLA not met or ROI diminishing, return to Phase 2 with new profile → re-identify next bottleneck → re-optimize → re-validate. Typically converges in 2–3 iterations.
 
-**The workflow maps to these sections:**
-- **Phase 1 (PROFILE)** → §3.12 Profiling Baseline, Code Snippet 1
-- **Phase 2 (IDENTIFY)** → §3.13 Bottleneck Analysis, Code Snippet 2
-- **Phase 3 (OPTIMIZE)** → §3 Continuous Batching, §4 PagedAttention, §5 Speculative Decoding, Code Snippet 3
-- **Phase 4 (VALIDATE)** → §9 Benchmarking, Code Snippet 4
-
 > 💡 **How to use this workflow:** Run Phase 1 once to establish baseline metrics. Then loop Phase 2→3→4 until latency SLA is met or throughput target is achieved. The sections below teach WHY each technique works; refer back here for WHAT to do.
+
+> 💡 **Inference verdict:** PagedAttention + continuous batching — p95 latency 2.8s → 1.2s, throughput 3,000 → 12,000 req/day on 1× RTX 4090 ✅.
+> ➡️ This optimized serving configuration feeds into Ch.9 experiment tracking for reproducible benchmarking.
 
 **Typical iteration example (InferenceBase):**
 

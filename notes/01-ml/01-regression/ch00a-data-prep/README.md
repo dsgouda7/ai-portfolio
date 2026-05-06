@@ -46,43 +46,6 @@ Three plausible data quality issues to check:
 
 ---
 
-## 1.5 · The Practitioner Workflow — Your 4-Phase Data Quality Audit
-
-> ⚠️ **Two ways to read this chapter:**
-> - **Theory-first (recommended for learning):** Read §0→§6 sequentially to understand the concepts, then use this workflow as your reference
-> - **Workflow-first (practitioners with existing knowledge):** Use this diagram as a jump-to guide when working with real data
->
-> **Note:** Section numbers don't follow phase order because the chapter teaches concepts pedagogically (theory before application). The workflow below shows how to APPLY those concepts.
-
-**What you'll build by the end:** A complete data quality audit report documenting every outlier, missing value, and distribution issue — with quantified MAE impact for each cleaning decision. This is the foundation for production data validation pipelines.
-
-```
-Phase 1: INSPECT            Phase 2: AUDIT              Phase 3: TRANSFORM          Phase 4: VALIDATE
-─────────────────────────────────────────────────────────────────────────────────────────────────────────
-Look at raw data:           Check data integrity:       Apply cleaning:             Measure impact:
-
-• df.describe()             • IQR outlier detection     • KNN imputation            • Train/test split
-• df.info() dtypes          • Z-score (if Gaussian)     • Cap 99th percentile       • Baseline model MAE
-• df.isnull().sum()         • Correlation matrix        • Log transform skew        • Before/after metrics
-• Histograms + boxplots     • Domain knowledge check    • StandardScaler            • Document every change
-
-→ DECISION:                 → DECISION:                 → DECISION:                 → DECISION:
-  Red flags found?            Outlier = artifact          Which impute strategy?      Keep this cleaning?
-  • Max > plausible           or real signal?             • <5% missing: median       • Did MAE improve?
-  • Mean ≠ median (2+σ)       • IQR fence: remove         • 5-30%: test KNN vs mean   • Cost/benefit: rows
-  • Zeros in non-zero col     • Z-score: investigate      • >30%: drop column           dropped vs gain
-```
-
-**The workflow maps to these sections:**
-- **Phase 1 (Inspect)** → §3 EDA Workflow at a Glance (steps 1-3), §5 Act 1, §6 Walkthrough A
-- **Phase 2 (Audit)** → §4.1 Z-Score, §4.2 IQR, §4.3 Correlation, §5 Act 2, §6 Walkthrough A
-- **Phase 3 (Transform)** → §5 Act 3, §6 Walkthrough B
-- **Phase 4 (Validate)** → §5 Act 4, §6 Walkthrough B, §11 Progress Check
-
-> 💡 **How to use this workflow:** Complete Phase 1→2→3 in order on your data. Phase 4 validates every decision with metrics — if MAE doesn't improve, roll back that cleaning step. The sections above teach WHY each phase works; refer back here for WHAT to do.
-
----
-
 ## 2 · Running Example: What You Discover
 
 You load the California Housing data and run `df.describe()`. Line four of the output reveals immediate problems:
@@ -322,7 +285,7 @@ MedHouseVal    [+0.69    +0.11     +0.15      -0.05       -0.03      -0.02    -0
 
 > This is how Sarah actually works. Each act is one hour of forensic investigation.
 
-### **[Phase 1: INSPECT]** Act 1 — First Look: The `describe()` Horror Show
+### Act 1 — Inspect: First Look at the Data
 
 Sarah opens a terminal at 9:47am. She has never touched this dataset. The contractor's code is 3,000 lines of undocumented Python. She starts where every EDA starts:
 
@@ -370,7 +333,7 @@ AveOccup      0.69     3.07  1243.33     2.61
 MedHouseVal   0.15     2.07     5.00     1.15
 
 ⚠️  AveRooms: max=141.91 is 26.1x the mean
-⚠️  AveBedrms: max=34.07 is 31.0x the mean  
+⚠️  AveBedrms: max=34.07 is 31.0x the mean
 ⚠️  Population: max=35682.00 is 25.0x the mean
 ⚠️  AveOccup: max=1243.33 is 405.0x the mean
 ```
@@ -387,26 +350,11 @@ df.fillna(0, inplace=True)  # Fix missing values
 
 > ⚠️ **The silent corruption.** `fillna(0)` doesn't raise an error, doesn't cause a NaN warning, and silently teaches your model that missing data means "zero bedrooms." In a house price model, "zero bedrooms" can spuriously correlate with certain districts that also happen to have high prices, creating a phantom relationship that won't generalize.
 
-#### DECISION CHECKPOINT 1 — Phase 1 Complete
-
-**What you just saw:**
-- Max values: `AveRooms` = 141.91, `AveBedrms` = 34.07, `AveOccup` = 1243.33 (physically implausible averages)
-- Missing values: 0 reported, but zero-filling detected (`df.fillna(0)` in preprocessing script)
-- Target distribution: `MedHouseVal` hard-capped at 5.0001 ($500,100) for 965 rows
-
-**What it means:**
-- Aggregation artifacts from tiny-population districts create nonsense averages (141 rooms per household)
-- Zero-fill corruption teaches model phantom patterns (0 bedrooms = high value)
-- Target ceiling limits model's high-value prediction range (systematic underestimation risk)
-
-**What to do next:**
-→ **Phase 2 (AUDIT):** Run IQR detection on all columns to quantify outlier counts
-→ **Flag for investigation:** Any row with `AveRooms` > 15, `AveBedrms` < 0.5, `Population` < 10
-→ **Document ceiling:** Log that 4.7% of training targets are censored at $500k
+> 💡 **Inspect verdict:** Zero-fill corruption confirmed (`fillna(0)` at line 47) — `AveBedrms` zeros are phantom values, not real signal. Target ceiling found: 965 rows capped at $500k. Next: IQR sweep to quantify how many rows are affected before touching anything.
 
 ---
 
-### **[Phase 2: AUDIT]** Act 2 — The IQR Sweep: Outliers Exposed
+### Act 2 — Audit: The IQR Sweep
 
 Sarah runs IQR detection on every column:
 
@@ -444,27 +392,11 @@ The `AveBedrms` fence [0.96, 1.34] catches all zero-filled rows: any district wi
 
 > ⚡ **Constraint #3 check — DATA QUALITY:** 1,066 outliers in `AveRooms`, 1,211 in `AveBedrms` (including all zero-fills). These must be investigated before any training begins.
 
-#### DECISION CHECKPOINT 2 — Phase 2 Complete
-
-**What you just saw:**
-- `AveRooms`: 1,066 outliers (5.2% of data) above upper fence 8.47
-- `AveBedrms`: 1,211 outliers (5.9%) — includes all zero-fills plus extreme values
-- `AveOccup`: 795 outliers above 5.68 occupants per household
-- `MedHouseVal`: 965 rows at target ceiling ($500k)
-
-**What it means:**
-- **Aggregation artifacts confirmed:** Low-population districts (3-8 people) create extreme per-household averages
-- **Zero-fill impact quantified:** IQR fence [0.96, 1.34] for `AveBedrms` catches every corrupted row
-- **Correlation insight:** `AveRooms` ↔ `AveBedrms` r = 0.85 (nearly redundant signals)
-
-**What to do next:**
-→ **Phase 3 (TRANSFORM):** Cap `AveRooms`/`AveOccup` at 99th percentile (preserves 99% data)
-→ **Restore NaN:** Convert `AveBedrms` < 0.5 back to NaN, then test imputation strategies
-→ **Test strategies:** Compare mean vs median vs KNN imputation on baseline model MAE
+> 💡 **Audit verdict:** IQR caught 1,066 artifact rows in `AveRooms` and 1,211 in `AveBedrms` (including every zero-fill, since the fence [0.96, 1.34] is below any `fillna(0)` value). Plan: cap at 99th percentile, restore zeros to NaN, then compare imputation strategies.
 
 ---
 
-### **[Phase 3: TRANSFORM]** Act 3 — The Imputation Dilemma
+### Act 3 — Transform: The Imputation Dilemma
 
 Sarah faces the zero-fill rows and 900+ additional implausible `AveBedrms` values. Remove them? Cap them? Replace them?
 
@@ -497,26 +429,11 @@ For legitimate missing `AveBedrms` values, she tests three strategies (splitting
 > **When to use:** Production inference pipelines (validate incoming data), CI/CD data quality gates, retraining workflows.
 > **Common alternative:** Pydantic for schema validation, Pandera for DataFrame contracts.
 
-#### DECISION CHECKPOINT 3 — Phase 3 Complete
-
-**What you just saw:**
-- **Imputation MAE comparison:** Zero-fill $67k → Mean $54.8k → Median $54.1k → **KNN $52.1k (winner)**
-- **Domain decisions applied:** Cap 99th percentile for `AveRooms`/`AveOccup` (preserves 99% data while removing artifacts)
-- **Restoration complete:** 195 zero-filled `AveBedrms` values restored to NaN and properly imputed
-
-**What it means:**
-- KNN exploits feature correlation (r = 0.85) to predict missing values more accurately than marginal statistics
-- Capping preserves rare-but-real signal while removing physically impossible aggregation artifacts
-- $15k MAE improvement from data quality alone (zero-fill $67k → cleaned $52k) — no model changes
-
-**What to do next:**
-→ **Phase 4 (VALIDATE):** Train baseline model on cleaned data, measure MAE before/after
-→ **Sanity check:** Plot distributions post-cleaning — verify no new artifacts introduced
-→ **Document pipeline:** Record exact cleaning steps for production inference replication
+> 💡 **Transform verdict:** KNN ($52.1k) beats mean ($54.8k) by exploiting `AveRooms` ↔ `AveBedrms` r = 0.85. $15k MAE recovered from cleaning alone — no model changes yet.
 
 ---
 
-### **[Phase 4: VALIDATE]** Act 4 — The Distribution Insight
+### Act 4 — Validate: Distribution Check
 
 With outliers flagged and imputation strategy selected, Sarah turns to histograms:
 
@@ -547,22 +464,9 @@ Key observations:
 
 Data is now clean and ready for modeling. Ch.01-07 will build models on this solid foundation to achieve the <$40k MAE target.
 
-#### DECISION CHECKPOINT 4 — Phase 4 Complete
+> 💡 **Validate verdict:** Data quality foundation complete. Cleaned baseline $52k MAE — $15k better than the contractor's zero-filled $67k with no architecture changes.
 
-**What you just saw:**
-- **Distribution audit complete:** `MedInc` right-skewed with hard cap at 15.0, `Population` heavily right-skewed, target capped at $500k
-- **Final cleaning summary:** 4 findings addressed (zero-fill, artifacts, ceiling, skew) with quantified impact
-- **Baseline established:** Cleaned data achieves $52k MAE — ready for modeling track
-
-**What it means:**
-- Data quality foundation secured — every downstream model will train on clean, validated data
-- $15k MAE recovered from data cleaning alone (contractor's $67k → $52k) before touching architecture
-- Documented limitations (target ceiling) provide realistic expectations for production performance
-
-**What to do next:**
-→ **Bridge to Modeling:** Ch.01 Linear Regression will start from this $52k baseline
-→ **Replicate in production:** Package cleaning pipeline (IQR caps, KNN imputer) for inference
-→ **Monitor drift:** Track incoming data for distribution shifts vs training data characteristics
+> ➡️ **Ch.01 Linear Regression** starts from this $52k baseline. The cleaning pipeline (IQR caps + `KNNImputer` fitted on `X_train`) must be serialized for inference — different preprocessing at serve time is the #1 cause of train/serve skew.
 
 > 💡 **Phase 4 Validation Pattern — Train/Test Split with Data Quality Checks**
 > ```python
@@ -570,12 +474,12 @@ Data is now clean and ready for modeling. Ch.01-07 will build models on this sol
 > from sklearn.model_selection import train_test_split
 > from sklearn.linear_model import LinearRegression
 > from sklearn.metrics import mean_absolute_error
-> 
+>
 > # Split BEFORE any transformations (prevents data leakage)
 > X_train, X_test, y_train, y_test = train_test_split(
 >     X_cleaned, y, test_size=0.2, random_state=42, stratify=y_binned
 > )
-> 
+>
 > # DECISION LOGIC: Validate data quality on both splits
 > print("=== POST-SPLIT QUALITY CHECKS ===")
 > for split_name, X_split in [("Train", X_train), ("Test", X_test)]:
@@ -583,13 +487,13 @@ Data is now clean and ready for modeling. Ch.01-07 will build models on this sol
 >     # Check 1: No missing values post-imputation
 >     missing = X_split.isnull().sum().sum()
 >     print(f"  Missing values: {missing} (should be 0)")
->     
+>
 >     # Check 2: No extreme outliers post-capping
 >     for col in ['AveRooms', 'AveOccup']:
 >         p99 = X_split[col].quantile(0.99)
 >         above_p99 = (X_split[col] > p99).sum()
 >         print(f"  {col} > p99: {above_p99} rows (should be ~1%)")
-> 
+>
 > # Baseline model on cleaned data
 > model = LinearRegression().fit(X_train, y_train)
 > mae = mean_absolute_error(y_test, model.predict(X_test))
@@ -602,7 +506,7 @@ Data is now clean and ready for modeling. Ch.01-07 will build models on this sol
 
 ## 6 · Step-by-Step — Two Complete Walkthroughs
 
-### **[Phase 2: AUDIT]** Walkthrough A: Full IQR Outlier Pipeline on `AveRooms`
+### Walkthrough A — IQR Pipeline on `AveRooms`
 
 ```python
 import pandas as pd
@@ -684,7 +588,7 @@ print(f"Rows modified: {(df['AveRooms'] > p99).sum()}")           # 206 rows
 
 ---
 
-### **[Phase 3: TRANSFORM]** Walkthrough B: Missing Value Analysis and Imputation Comparison
+### Walkthrough B — Imputation Comparison
 
 ```python
 # Step 1: Restore contractor's zero-fill to NaN
@@ -723,7 +627,7 @@ for name, imp in [
     # transform() on X_test uses X_train statistics
     X_tr = imp.fit_transform(X_train)   # Fit on train ONLY
     X_te = imp.transform(X_test)         # Apply train statistics to test
-    
+
     model = LinearRegression().fit(X_tr, y_train)
     mae = mean_absolute_error(y_test, model.predict(X_te))
     results[name] = mae
@@ -893,7 +797,7 @@ imputer = KNNImputer(n_neighbors=k)  # ← k is the dial
 > from sklearn.pipeline import Pipeline
 > from sklearn.preprocessing import StandardScaler
 > from sklearn.impute import KNNImputer
-> 
+>
 > cleaning_pipeline = Pipeline([
 >     ('imputer', KNNImputer(n_neighbors=5)),
 >     ('scaler', StandardScaler()),
@@ -928,7 +832,7 @@ imputer = KNNImputer(n_neighbors=k)  # ← k is the dial
 > from evidently import ColumnMapping
 > from evidently.report import Report
 > from evidently.metric_preset import DataDriftPreset, DataQualityPreset
-> 
+>
 > report = Report(metrics=[DataDriftPreset(), DataQualityPreset()])
 > report.run(reference_data=df_train, current_data=df_production)
 > report.save_html("drift_report.html")
@@ -945,11 +849,11 @@ EDA findings cascade through every subsequent step:
 
 | Later Chapter | How This Chapter Enables It |
 |---------------|----------------------------|
-| [Ch.00b — Class Imbalance](../ch00b_class_imbalance) | Distribution analysis reveals 75% training = median-value homes; Ch.00b addresses class balance before modeling |
-| [Ch.3 — Data Validation](../ch03_data_validation) | The audit trail started here becomes the formal validation schema: expected ranges, outlier alert thresholds, missing value rules |
-| [Regression → Linear Regression](../../01_regression/ch01_linear_regression) | r = 0.69 MedInc correlation explains why single-feature regression works at all; cleaned data from this chapter is what that baseline trains on |
-| [Regression → Multiple Regression](../../01_regression/ch02_multiple_regression) | VIF analysis (detecting multicollinearity) is the formal follow-up to the r = 0.85 pair flagged here |
-| [Neural Networks track](../../03_neural_networks) | Z-score normalization of features before neural network training is the model-building application of §4.1's formula |
+| [Ch.00b — Class Imbalance](../ch00b-class-imbalance/) | Distribution analysis reveals 75% training = median-value homes; Ch.00b addresses class balance before modeling |
+| [Ch.08 — Data Validation](../ch08-data-validation/) | The audit trail started here becomes the formal validation schema: expected ranges, outlier alert thresholds, missing value rules |
+| [Ch.01 — Linear Regression](../ch01-linear-regression/) | r = 0.69 MedInc correlation explains why single-feature regression works at all; cleaned data from this chapter is what that baseline trains on |
+| [Ch.02 — Multiple Regression](../ch02-multiple-regression/) | VIF analysis (detecting multicollinearity) is the formal follow-up to the r = 0.85 pair flagged here |
+| [Neural Networks track](../../03-neural-networks/) | Z-score normalization of features before neural network training is the model-building application of §4.1's formula |
 
 > ➡️ **The EDA-to-production pipeline.** Data cleaning decisions made here must be replicated exactly in the inference pipeline — the same imputer (fitted on training data) must transform incoming production data identically. This is the origin of the `sklearn.pipeline.Pipeline` pattern used throughout the regression and neural network tracks.
 
@@ -989,4 +893,4 @@ EDA findings cascade through every subsequent step:
 
 This chapter cleaned the raw data — removed outliers, analyzed missing patterns, selected optimal imputation strategies. The next chapter, **Ch.00b — Class Imbalance**, examines the training distribution: the California Housing dataset has 75% median-value homes and only 25% high-value ones. A perfectly clean dataset with skewed class distribution still produces a biased model. Ch.00b teaches you SMOTE, class weighting, and stratified sampling to ensure all market segments are properly represented before building any models.
 
-> ➡️ **[Ch.2 — Class Imbalance →](../ch02_class_imbalance)** — When the data is clean but the distribution is wrong.
+> ➡️ **[Ch.00b — Class Imbalance →](../ch00b-class-imbalance/)** — When the data is clean but the distribution is wrong.

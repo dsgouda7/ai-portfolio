@@ -75,12 +75,6 @@ At training time:            Per batch validation:       Threshold evaluation:  
     (mean ±15%, std ±20%)                                 • PSI < 0.10: DEPLOY         • REJECT: data invalid
 ```
 
-**The workflow maps to this chapter:**
-- **Phase 1 (DEFINE)** → §4.1 Schema Validation, §5 Act 2 (GE suite creation), §6 PSI Setup
-- **Phase 2 (MONITOR)** → §4.2 Distribution Drift (KL/KS/PSI), §5 Act 3 (drift scoring)
-- **Phase 3 (DETECT)** → §4.3 PSI thresholds, §7.2 Alert Decision Tree, §8 Hyperparameter Dial
-- **Phase 4 (RESPOND)** → §5 Act 4 (automated routing), §7.1 Pipeline Architecture
-
 > 💡 **Usage note:** Execute phases sequentially on first model deployment (DEFINE once at training time, then MONITOR→DETECT→RESPOND runs continuously). After retraining, rebuild Phase 1 contracts to keep reference distributions current. Version the GE suite JSON alongside the model artifact.
 
 **The 4-phase diagnostic in practice:**
@@ -156,7 +150,7 @@ The five training-distribution facts that will define the validation contract:
 
 ---
 
-## 3 · [Phase 1: DEFINE] The Validation Pipeline at a Glance
+## 3 · Define: The Validation Pipeline at a Glance
 
 Before the math, here is the full four-stage pipeline Sarah will build. Each numbered step has a deep-dive in the sections that follow — treat this as your map.
 
@@ -211,28 +205,12 @@ Before the math, here is the full four-stage pipeline Sarah will build. Each num
 
 > 📖 **Great Expectations vs Pandera vs raw asserts.** GE stores suites as JSON, integrates with Airflow/dbt, and auto-generates HTML data-docs for auditors. Pandera offers Pydantic-style schema classes that feel more Pythonic. Raw `assert` statements are fine for notebooks but break silently the moment a check is removed or skipped. For production, prefer GE or Pandera — the *audit trail* is the whole point, not just the check.
 
-### 3.1 DECISION CHECKPOINT — Phase 1 Complete
-
-**What you just built:**
-- Schema contract: `MedInc` must be `float64`, non-null, within [0.5, 10.68] (99th percentile)
-- Distribution contract: mean 3.87 ±15% → [3.29, 4.45], std 1.90 ±20% → [1.52, 2.28]
-- Versioned JSON suite saved alongside model artifact (e.g., `v1.2.3-california-housing.json`)
-- Four validation layers: schema → statistical → KS test → PSI score
-
-**What it means:**
-- Every future batch now has a machine-checkable promise to satisfy
-- Contract violations become structured audit events (feature · timestamp · observed vs expected)
-- The Portland deployment's 37% income shift would have **failed** the mean check immediately
-
-**What to do next:**
-→ **Deploy the contract:** Integrate GE validation into inference pipeline (run before `model.predict()`)
-→ **Version the suite:** Store in model registry alongside model weights (same version tag)
-→ **Set tolerance bands:** Stricter for regulated features (±10%), looser for auxiliary features (±25%)
-→ **For SmartVal AI:** Use ±15% mean tolerance for all financial features (income, value, occupancy)
+> 💡 **Define verdict:** GE expectation suite declared (schema + distribution checks) with MedInc mean tolerance ±15% — Portland’s 37% shift would have failed immediately.
+> ➡️ Integrate suite into inference pipeline and version alongside model artifact before proceeding to drift monitoring.
 
 ---
 
-## 4 · [Phase 2: MONITOR] The Math — Three Drift Metrics, Three Complementary Views
+## 4 · Monitor: The Math — Three Drift Metrics, Three Complementary Views
 
 Three mathematically distinct tools each catch a different facet of drift. Use all three; they are not redundant.
 
@@ -362,29 +340,12 @@ where $E_b\%$ is the expected (training) fraction in bin $b$ and $A_b\%$ is the 
 > **Common alternatives:** `marshmallow` (serialization), `cerberus` (dict validation), `attrs` + `cattrs` (dataclasses)
 > **See also:** [Pydantic docs](https://docs.pydantic.dev/)
 
-### 4.4 DECISION CHECKPOINT — Phase 2 Complete
-
-**What you just computed:**
-- KL divergence: D_KL(CA || PDX) = 0.275 for `MedInc` (> 0.20 threshold → investigate zone)
-- KS statistic: D = 0.385, p = 2.3e-41 (< 0.05 → distributions are significantly different)
-- PSI score: 0.339 for `MedInc` (≥ 0.25 → severe drift, retrain required)
-- All three metrics agree: Portland income distribution has shifted drastically from California
-
-**What it means:**
-- Drift is not marginal — it is **severe** across all three metrics
-- The mean shifted +37% (5.30 vs 3.87), but that’s just one symptom
-- The **entire shape** changed: low-income bins lost mass, high-income bins gained mass
-- Model trained on "3.9-unit income → $X" is now extrapolating to 5.3-unit districts it never saw
-
-**What to do next:**
-→ **Log drift scores:** Record PSI + KS + D_KL per feature, per batch, with timestamp
-→ **Set alert thresholds:** Use PSI ≥ 0.25 for BLOCK, 0.10 ≤ PSI < 0.25 for WARN, < 0.10 for DEPLOY
-→ **Track over time:** Plot PSI weekly → detects gradual drift before it crosses block threshold
-→ **For Portland:** PSI = 0.339 triggers immediate **BLOCK** + retrain pipeline (Phase 4)
+> 💡 **Monitor verdict:** PSI = 0.339 (severe), KS D = 0.385 (p = 2.3e-41) — Portland income shifted +37%, all three drift metrics confirm severity.
+> ➡️ Log scores per batch and set PSI ≥ 0.25 = BLOCK threshold before routing to Phase 3 alert configuration.
 
 ---
 
-## 4.5 · [Phase 3: DETECT] Threshold Configuration and Alert Routing
+## 4.5 · Detect: Threshold Configuration and Alert Routing
 
 **The routing decision:** Now that you can compute PSI, KS, and KL divergence for any batch, you need rules that convert those scores into actions. This is where statistical monitoring becomes an operational system.
 
@@ -493,25 +454,8 @@ action, reason = validate_batch_robust(df_pdx, df_ca, feature='MedInc')
 > **Common alternatives:** `whylabs` (enterprise SaaS), `arize` (observability platform), `fiddler` (explainability + monitoring)
 > **See also:** [Evidently AI docs](https://docs.evidentlyai.com/)
 
-### 4.5.1 DECISION CHECKPOINT — Phase 3 Complete
-
-**What you just configured:**
-- PSI threshold ladder: < 0.10 (DEPLOY) | 0.10–0.25 (WARN) | ≥ 0.25 (BLOCK)
-- Multi-metric consensus: PSI **and** KS test **and** GE suite must all pass for clean DEPLOY
-- Structured logging: every validation emits JSON audit event with timestamp, feature, score, action
-- Escalation path: INFO → logs only | WARNING → Slack alert + 1-week review | CRITICAL → PagerDuty + block deployment
-
-**What it means:**
-- No batch reaches production without passing three independent drift detectors
-- Moderate drift (0.10 ≤ PSI < 0.25) deploys with monitoring, doesn't block business
-- Severe drift (PSI ≥ 0.25) automatically triggers retraining — no human needed
-- Audit trail satisfies regulatory requirements: "show us why you accepted/rejected batch X"
-
-**What to do next:**
-→ **Calibrate thresholds:** Run validation on holdout set (same population as training) → PSI should be ~0.02
-→ **Test graduated responses:** Simulate 10% shift (mild) and 37% shift (Portland) → verify WARN vs BLOCK
-→ **Integrate with CI/CD:** Validation runs as pre-deployment gate in model serving pipeline
-→ **For Portland:** PSI = 0.339 triggers Phase 4 (automated retraining + re-validation)
+> 💡 **Detect verdict:** Three-tier alert ladder set (PSI < 0.10 → DEPLOY, 0.10–0.25 → WARN, ≥ 0.25 → BLOCK) with structured JSON audit events.
+> ➡️ Test thresholds against holdout and integrate as CI/CD gate — Portland’s PSI = 0.339 triggers BLOCK immediately.
 
 ---
 
@@ -758,27 +702,8 @@ final_mae = retrain_on_drift(
 > **Common alternatives:** `kubeflow` (Kubernetes-native ML), `sagemaker pipelines` (AWS-native), `vertex ai` (GCP-native)
 > **See also:** [MLflow Model Registry docs](https://mlflow.org/docs/latest/model-registry.html)
 
-### 5.4.1 DECISION CHECKPOINT — Phase 4 Complete
-
-**What you just automated:**
-- **REJECT** path: Schema/null violations → batch rejected in <1s, logged, on-call paged
-- **BLOCK** path: PSI ≥ 0.25 → deployment blocked, retraining triggered, CA + Portland merged → new model trained → Portland MAE: 128k → **89k ✅**
-- **WARN** path: 0.10 ≤ PSI < 0.25 → deployed with flag, monitoring cadence increased (daily → hourly), 1-week review scheduled
-- **DEPLOY** path: PSI < 0.10 → predictions served, audit logged, no alerts
-
-**What it means:**
-- The Portland disaster (174k → 128k → stuck) is now **impossible**
-  - PSI = 0.339 would have blocked deployment on day 1
-  - Automated retrain on CA + PDX combined closes the gap: **89k < 95k target ✅**
-- No human in the loop for routine drift → engineering team focuses on edge cases only
-- Audit trail satisfies SOX/GDPR: every batch has timestamp, features checked, scores, routing decision
-- Drift-corrected retraining happens automatically — drift detection and model updates are coupled
-
-**What to do next:**
-→ **Monitor retrain outcomes:** Track "drift-triggered retrains" vs "scheduled retrains" → optimize retrain cadence
-→ **Version control:** Store GE suite JSON + model weights + PSI thresholds in same registry (MLflow / W&B)
-→ **Expand to streaming:** Batch validation here; streaming validation (Kafka + Flink) in AI Infrastructure track
-→ **For SmartVal AI:** System now production-ready with automated quality gates — Constraint #5 (PRODUCTION-READY) ✅
+> 💡 **Respond verdict:** Drift-triggered retrain cut Portland MAE 128k → 89k (below 95k target ✅); REJECT/BLOCK/WARN/DEPLOY paths fully automated.
+> ➡️ Monitor retrain outcomes and expand to streaming validation — SmartVal AI Constraint #5 (PRODUCTION-READY) satisfied.
 
 ---
 

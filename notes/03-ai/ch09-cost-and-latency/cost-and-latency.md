@@ -129,12 +129,6 @@ Choose model tier:         Cache repeated content:    Stream responses:         
     Open-source self-hosted    (measure savings)          KV-cache                   Quantize to INT8
 ```
 
-**The workflow maps to this chapter:**
-- **Phase 1 (SELECT)** → §3 Model Cost Tiers, §5 Accuracy vs. Cost Tradeoff
-- **Phase 2 (CACHE)** → §6.1 Prompt Caching (new section below)
-- **Phase 3 (STREAM)** → §4 Latency Components, §6.2 Streaming (new section below)
-- **Phase 4 (OPTIMIZE)** → §6.3 Batching & Quantization (new section below)
-
 > 💡 **Usage note:** Phases 1-2 are sequential (choose model, then enable caching). Phases 3-4 can be applied independently — streaming improves perceived latency, batching/quantization improve throughput.
 
 **Typical optimization impact (PizzaBot example):**
@@ -177,7 +171,7 @@ In a RAG + agent pipeline, the token budget breaks down roughly as:
 
 ---
 
-## 3 · **[Phase 1: SELECT]** Model Tier Selection
+## 3 · Model Tier Selection
 
 | Model tier | Cost range | When to use |
 |---|---|---|
@@ -279,28 +273,12 @@ gpt-4o-mini:
 > **Common alternatives:** `OpenAI.usage` (native), custom token counters (error-prone)
 > **See also:** [LiteLLM docs](https://docs.litellm.ai/docs/completion/cost_tracking)
 
-### 3.2 DECISION CHECKPOINT — Phase 1 Complete
-
-**What you just saw:**
-- GPT-4o costs $0.000163/call vs. GPT-4o-mini $0.000012/call (13× difference)
-- At 10,000 orders/month: $1,200 (frontier) vs. $90 (mid-tier) = $1,110/month savings
-- PizzaBot order confirmation is structured task → mid-tier sufficient (validated with Ch.8 eval metrics)
-
-**What it means:**
-- Model selection is the **highest-leverage cost decision** (10-50× impact)
-- Structured tasks (order confirmation, JSON extraction, classification) rarely need frontier models
-- Complex reasoning (math, code generation, multi-step planning) justifies frontier cost
-- Always validate with evaluation metrics before committing to cheaper model
-
-**What to do next:**
-→ **Run evaluation suite** (Ch.8 metrics) on both models with 100-sample test set
-→ **For PizzaBot scenario:** gpt-4o-mini achieves 95% accuracy vs. gpt-4o 96% → **choose mid-tier** (1% accuracy loss acceptable for 13× cost savings)
-→ **For complex reasoning tasks:** If accuracy drops >5% with mid-tier → **stay with frontier**
-→ **For high-volume (>100k calls/month):** Consider **open-source self-hosted** (Llama 3, Mistral) for 50-100× cost savings vs. frontier
+> 💡 **Select verdict:** GPT-4o costs 13× more than GPT-4o-mini ($0.000163 vs $0.000012/call); PizzaBot structured order confirmation at 95% vs 96% accuracy — mid-tier saves $1,110/month at 10,000 orders.
+> ➡️ Run evaluation suite on both models with a 100-sample test set before committing; if accuracy drops >5% with mid-tier, stay with frontier.
 
 ---
 
-## 4 · **[Phase 3: STREAM]** Latency Components and Streaming
+## 4 · Latency Components and Streaming
 
 ```
 Total latency = network RTT
@@ -437,29 +415,12 @@ With prefix caching:      every call pays only new_tokens × prefill cost
 
 **Implication:** put your system prompt and few-shot examples at the beginning of the context. Keep them identical across calls. Most major providers (OpenAI, Anthropic) offer prefix caching automatically or explicitly. Savings of 50–80% on input token costs for chat applications are typical.
 
-### 4.2 DECISION CHECKPOINT — Phase 3 Complete
-
-**What you just saw:**
-- Non-streaming: 2.18s wait → user sees loading spinner for 2+ seconds
-- Streaming: 0.42s to first token → user sees text immediately, **5× faster perceived latency**
-- Total generation time similar (2.18s vs. 2.21s), but UX dramatically better
-- KV-cache automatically reuses system prompt computation across requests
-
-**What it means:**
-- Streaming is **free latency win** for user-facing apps — no cost increase, massive UX improvement
-- Time-to-first-token (TTFT) is the **only metric that matters** for perceived responsiveness
-- Total latency still matters for completion, but users tolerate it if progress is visible
-- KV-cache is transparent optimization — works automatically when prompts share prefix
-
-**What to do next:**
-→ **For interactive chat:** Always enable streaming (OpenAI `stream=True`, Anthropic `stream=True`)
-→ **For agent tool calls:** Disable streaming (need full JSON response before parsing)
-→ **For batch processing:** Disable streaming (no user watching, total throughput matters)
-→ **Optimize TTFT:** Reduce input token count (see Phase 2: CACHE), use smaller models, or self-host with vLLM
+> 💡 **Stream verdict:** Streaming reduces perceived latency from 2.18s to 0.42s time-to-first-token (5× faster) with identical total generation time — free UX win, no cost increase.
+> ➡️ Enable streaming for all user-facing chat responses; disable for agent tool calls that require full JSON before parsing.
 
 ---
 
-## 5 · **[Phase 2: CACHE]** Prompt Caching Strategies
+## 5 · Prompt Caching Strategies
 
 Keep system prompts and few-shot examples structurally identical across calls. Any content the provider can cache doesn't get billed again.
 
@@ -630,29 +591,12 @@ def cached_llm_call(prompt: str, model: str, temperature: float) -> str:
     return result
 ```
 
-### 5.5 DECISION CHECKPOINT — Phase 2 Complete
-
-**What you just saw:**
-- First call: 412 input tokens, no cache → full cost
-- Second call: 25 new tokens + 387 cached tokens (94% cached!) → 90% cost savings
-- Third call: Same pattern → consistent savings across session
-- Caching works automatically when system prompt stays identical
-
-**What it means:**
-- Prompt caching is **highest ROI optimization** after model selection (50-90% input cost reduction)
-- System prompt and few-shot examples should be **fixed at deployment** — any dynamic content breaks cache
-- Cache hit rate determines savings: >70% hit rate → enable caching, <30% → skip overhead
-- Anthropic charges 1.25× for cache writes, 0.1× for cache reads → breaks even after 2nd call
-
-**What to do next:**
-→ **Measure cache hit rate:** Track `cached_tokens / total_input_tokens` across 1,000 requests
-→ **For PizzaBot scenario:** 90% cache hit rate (stable system prompt) → **enable caching** (saves $0.002/conv)
-→ **For dynamic prompts:** Cache hit <30% → **skip caching** (overhead > savings)
-→ **Optimize for caching:** Move dynamic content (user message, RAG context) to end of prompt (preserve prefix)
+> 💡 **Cache verdict:** 94% cache hit rate reduces input cost 90% (387 of 412 input tokens cached); system prompt must be identical across calls — move dynamic content to prompt end to preserve the prefix cache.
+> ➡️ Track `cached_tokens / total_input_tokens` across 1,000 requests; skip caching overhead if hit rate < 30%.
 
 ---
 
-## 6 · **[Phase 4: OPTIMIZE]** Batching and Quantization
+## 6 · Batching and Quantization
 
 ### 6.1 Batch processing
 
@@ -835,26 +779,8 @@ print("→ DECISION: INT8 quantization enabled (0.8s vs. 1.5s latency, <1% accur
 > **Common alternatives:** Provider-specific SDKs (OpenAI, Anthropic), custom wrappers
 > **See also:** [LiteLLM cost tracking](https://docs.litellm.ai/docs/completion/cost_tracking)
 
-### 6.5 DECISION CHECKPOINT — Phase 4 Complete
-
-**What you just saw:**
-- Sequential processing: 10.82s for 5 requests = 0.46 req/sec throughput
-- Batched processing: ~2.5s for 5 requests = 2 req/sec throughput (**2× improvement**)
-- INT8 quantization: 1.5s → 0.8s latency per request (**47% faster**), <1% accuracy loss
-- Combined impact: 2× throughput + 47% faster = handles 4× traffic on same hardware
-
-**What it means:**
-- Batching is **pure throughput win** for concurrent requests — no cost increase, 2× more requests/sec
-- Quantization is **pure latency win** — 40-50% faster inference, <1% accuracy loss (validated)
-- Both require self-hosted infrastructure (vLLM, TensorRT-LLM) — not available in OpenAI/Anthropic APIs
-- Break-even: Self-hosting at >10 req/sec throughput costs same as API but with batching/quantization wins
-
-**What to do next:**
-→ **For <10 req/sec traffic:** Stay with OpenAI/Anthropic API (simpler, no infrastructure overhead)
-→ **For >10 req/sec traffic:** Self-host with vLLM + INT8 quantization (2× throughput, 47% faster)
-→ **For PizzaBot scenario (current):** 50 visitors/day = 0.6 req/hour → **stay with API** (too low volume)
-→ **For PizzaBot scenario (scale):** 500 visitors/day = 6 req/hour → **still API** (borderline, evaluate at 1,000/day)
-→ **For PizzaBot scenario (peak):** Friday rush 100 concurrent → **self-host vLLM** (batching essential for peak traffic)
+> 💡 **Optimize verdict:** INT8 quantization cuts inference latency 47% (1.5s → 0.8s); batching 5 concurrent requests gives 2× throughput — both require self-hosted vLLM, not available via OpenAI/Anthropic APIs.
+> ➡️ Self-hosting breaks even vs API at >10 req/sec sustained traffic; PizzaBot at 50 visitors/day stays on API until scaling to 1,000+ visitors/day.
 
 ---
 

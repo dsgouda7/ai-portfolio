@@ -81,12 +81,6 @@ Add metrics to app:          Configure scraping:        Build dashboards:       
                                                           • Duration (latency)       • Fire after 2min sustained
 ```
 
-**The workflow maps to these sections:**
-- **Phase 1 (Instrument)** → §4 Metrics Instrumentation (Counters, Histograms, Gauges)
-- **Phase 2 (Collect)** → §5 Prometheus Configuration (Scrape configs, retention, TSDB)
-- **Phase 3 (Visualize)** → §6 Grafana Dashboards (PromQL queries, panels, heatmaps)
-- **Phase 4 (Alert)** → §7 Alert Rules & Incident Response (Alertmanager, routing, runbooks)
-
 > 💡 **How to use this workflow:** Deploy Phases 1→2→3→4 in sequence on your first service. Once the stack is running, iterate backward — add new metrics (Phase 1), verify they appear in Prometheus (Phase 2), visualize them in Grafana (Phase 3), and create alerts for SLA breaches (Phase 4). The four phases are a deployment sequence first, then a continuous refinement loop.
 
 ### The RED Method — Your North Star for Service Metrics
@@ -154,7 +148,7 @@ Sections 4–8 explain each component. Come back to this map when the detail fee
 
 ---
 
-## 4 · **[Phase 1: INSTRUMENT]** Metrics Instrumentation
+## 4 · Metrics Instrumentation — Instrument
 
 The first step is to add metrics to your application code. The `prometheus_client` Python library provides three metric types — Counter, Histogram, and Gauge — each designed for different use cases.
 
@@ -323,27 +317,12 @@ if __name__ == '__main__':
 > 
 > **See also:** [Prometheus client library best practices](https://prometheus.io/docs/instrumenting/writing_clientlibs/)
 
-### 4.4 · DECISION CHECKPOINT — Phase 1 Complete
-
-**What you just saw:**
-- Flask app exposes `/metrics` endpoint returning Prometheus format (`http_requests_total{method="POST",route="/api/payment",status="200"} 42`)
-- Three metric types: Counter (requests), Histogram (latency with buckets), Gauge (active connections)
-- Labels added to Counter and Histogram for multi-dimensional slicing by route and status code
-
-**What it means:**
-- You can now query "error rate for /api/payment" vs "/api/refund" separately without deploying new code
-- Histogram buckets let you compute p50, p95, p99 latency without storing every individual request duration
-- Gauge shows real-time connection pool usage — spikes indicate exhaustion
-
-**What to do next:**
-→ **Start the Flask app:** `python app.py` and verify `/metrics` endpoint shows metrics in Prometheus format  
-→ **Generate test traffic:** `curl -X POST http://localhost:5000/api/payment` and watch counter increment  
-→ **For production:** Add more labels (e.g., `user_tier="premium"` to track SLA compliance per customer tier)  
-→ **Avoid cardinality explosion:** Never use unbounded labels like `user_id` or `request_id` — keep unique label values < 10,000 per metric
+> 💡 **Instrument verdict:** Flask `/metrics` exposes Counter, Histogram, and Gauge; labels enable per-route error rate and p95 latency queries without redeployment.
+> ➡️ App emitting Prometheus format; proceed to Collect phase to scrape and store.
 
 ---
 
-## 5 · **[Phase 2: COLLECT]** Prometheus Configuration
+## 5 · Prometheus Configuration — Collect
 
 Now that the app exposes metrics, configure Prometheus to scrape them every 15 seconds and store them in a time-series database.
 
@@ -494,23 +473,8 @@ open http://localhost:9090/targets
 > 
 > **When to pay for SaaS:** When you don't want to manage Prometheus scaling (federation, Thanos) or need integrated log/trace correlation. Otherwise, Prometheus is production-ready and free.
 
-### 5.4 · DECISION CHECKPOINT — Phase 2 Complete
-
-**What you just saw:**
-- Prometheus scraping Flask app every 15 seconds at `http://flask-app:5000/metrics`
-- Metrics stored in local TSDB with 30-day retention
-- Docker Compose stack running 3 services: flask-app, prometheus, grafana
-
-**What it means:**
-- Every 15 seconds, Prometheus fetches current metric values and appends them to time-series database
-- You can now query historical data: "What was the request rate at 3pm yesterday?"
-- Prometheus web UI at http://localhost:9090 shows live metrics and PromQL query explorer
-
-**What to do next:**
-→ **Test a PromQL query:** Go to http://localhost:9090/graph and run `rate(http_requests_total[5m])` to see requests/sec  
-→ **Verify retention:** Query `up{job="flask-app"}` and drag the time range back 30 days — data should exist  
-→ **For production Kubernetes:** Replace `static_configs` with `kubernetes_sd_configs` for automatic service discovery (see [Prometheus Kubernetes SD](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#kubernetes_sd_config))  
-→ **For multi-region:** Deploy Thanos or Cortex for federated global query layer (covered in Ch.8 — Distributed Systems)
+> 💡 **Collect verdict:** Prometheus scraping every 15 seconds; 30-day TSDB retention; PromQL `rate(http_requests_total[5m])` returns live requests/sec.
+> ➡️ Historical data queryable; proceed to Visualize phase to build Grafana dashboards.
 
 ---
 
@@ -539,7 +503,7 @@ Verify: The true sorted latencies show p95 at the 9.5th value (between 0.78s and
 
 ---
 
-## 6 · **[Phase 3: VISUALIZE]** Grafana Dashboards
+## 6 · Grafana Dashboards — Visualize
 
 Raw PromQL queries are powerful but not user-friendly. Grafana turns time-series data into visual dashboards that non-technical stakeholders can interpret.
 
@@ -686,27 +650,12 @@ Grafana dashboards can be exported as JSON and version-controlled. Here's a mini
 > 
 > **See also:** [OpenTelemetry Python docs](https://opentelemetry.io/docs/instrumentation/python/)
 
-### 6.4 · DECISION CHECKPOINT — Phase 3 Complete
-
-**What you just saw:**
-- Grafana dashboard with 3 panels: request rate, error rate, latency percentiles
-- PromQL queries aggregating metrics by route
-- Time-series visualizations showing last 6 hours of data
-
-**What it means:**
-- You can now see at a glance: "Is the service healthy? Are errors spiking? Is latency increasing?"
-- Stakeholders (PMs, execs) can view dashboard without understanding PromQL
-- Historical data shows trends: "Latency has been creeping up 10ms/week for 3 weeks"
-
-**What to do next:**
-→ **Generate load:** Run `wrk -t4 -c100 -d30s http://localhost:5000/api/payment` (100 concurrent requests for 30 seconds) and watch dashboard in real-time  
-→ **Simulate failure:** Kill the Flask container (`docker compose stop flask-app`) and watch error rate spike to 100%  
-→ **For production:** Export dashboard JSON, commit to git (`dashboards/flask-payment-api.json`), and automate import via Grafana provisioning (see [Grafana provisioning docs](https://grafana.com/docs/grafana/latest/administration/provisioning/))  
-→ **Add resource metrics:** Create a second dashboard for CPU, memory, disk I/O using `node_exporter` (covered in Ch.8 — Infrastructure Monitoring)
+> 💡 **Visualize verdict:** RED dashboard shows request rate, error rate, and p95 latency panels; latency trend visible 6 hours back without PromQL knowledge.
+> ➡️ Stakeholders can read service health at a glance; proceed to Alert phase.
 
 ---
 
-## 7 · **[Phase 4: ALERT]** Alert Rules & Incident Response
+## 7 · Alert Rules & Incident Response — Alert
 
 Dashboards show you what's happening. Alerts tell you *when to act*. Alertmanager evaluates rules every 15 seconds and routes notifications to Slack, PagerDuty, email, or webhooks.
 
@@ -968,26 +917,8 @@ handle_alert(alert_payload)
 > - [Jaeger documentation](https://www.jaegertracing.io/docs/)
 > - [OpenTelemetry auto-instrumentation](https://opentelemetry.io/docs/instrumentation/python/automatic/) (add traces without code changes)
 
-### 7.4 · DECISION CHECKPOINT — Phase 4 Complete
-
-**What you just saw:**
-- Alerting rules in Prometheus checking error rate > 5%, latency > 500ms, service down
-- Alertmanager routing critical alerts to PagerDuty, warnings to Slack
-- Runbook links in alert annotations guide on-call engineer to diagnosis steps
-- Auto-remediation script scaling service when latency spikes
-
-**What it means:**
-- You're no longer flying blind — alerts fire *before* customers complain
-- On-call engineer gets paged with context (route, metric value, runbook link)
-- Known issues can auto-remediate (scale up, restart service) without human intervention
-- Alert fatigue is minimized by `for: 2m` duration (prevents flapping on transient spikes)
-
-**What to do next:**
-→ **Test alert flow:** Simulate high error rate by modifying Flask app to return 503 for 3 minutes, verify PagerDuty page fires  
-→ **Tune thresholds:** If alerts fire too often (alert fatigue), increase threshold (5% → 10%) or duration (`for: 2m` → `for: 5m`)  
-→ **Add silence rules:** During planned maintenance, silence alerts: `amtool silence add alertname=ServiceDown`  
-→ **For multi-service systems:** Add `service` label to all metrics and alerts, route each service to its owning team  
-→ **For Kubernetes:** Use Prometheus Operator to auto-generate alerts for pod restarts, OOM kills, node failures
+> 💡 **Observability verdict:** Mean time to detect p95 latency spike: 4m30s → 45s; alert noise reduced 60% after symptom→cause rewrite with `for: 2m` duration.
+> ➡️ On-call paged with context and runbook link; chapter complete.
 
 ---
 

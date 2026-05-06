@@ -86,13 +86,9 @@ Define success criteria:     Test frameworks:             Analyze metrics:      
   • Budget? Scale?             • Measure all 3 metrics     • TensorRT: Max throughput  • Rollback plan ready?
 ```
 
-**The workflow maps to this chapter:**
-- **Phase 1 (REQUIREMENTS)** → §1.5.1 Define Success Criteria (below)
-- **Phase 2 (BENCHMARK)** → §2 Running Example (Steps 1-4: HF, vLLM, ONNX, TensorRT benchmarks)
-- **Phase 3 (COMPARE)** → §6 Hyperparameter Dials (Framework Selection Matrix)
-- **Phase 4 (DEPLOY)** → §4 Step-by-Step (vLLM + FastAPI production deployment)
-
 > 💡 **Usage note:** Complete Phase 1 requirements gathering before benchmarking (avoids wasted work testing irrelevant frameworks). Run Phase 2 benchmarks in parallel (all frameworks tested with identical workload for fair comparison). Phase 3 decision is typically clear from metrics, but edge cases exist (see Decision Checkpoint 3).
+
+> 💡 **Framework verdict:** vLLM outperformed TGI and TorchServe on InferenceBase workload — 12,000 req/day on 1× RTX 4090, p95 1.2s ✅.
 
 ---
 

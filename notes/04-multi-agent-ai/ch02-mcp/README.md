@@ -123,12 +123,6 @@ Connect to server:         List available tools:      Execute tool:             
                                                                                     reconnect + replay
 ```
 
-**The workflow maps to these sections:**
-- **Phase 1 (INITIALIZE)** → §3 Protocol Specification (Handshake), §6 Transport Options
-- **Phase 2 (DISCOVER)** → §3 The Three Primitives (Resources, Tools, Prompts)
-- **Phase 3 (CALL)** → §4 How It Works — Step by Step
-- **Phase 4 (HANDLE)** → §6 Production Considerations (Error handling, Retry logic)
-
 > 💡 **Usage note:** Phases 1-2 happen once per agent startup or server connection. Phase 3 executes on every tool call. Phase 4 is continuous monitoring — every phase can fail and must be handled.
 
 **Real-world integration timeline:**
@@ -250,7 +244,7 @@ MCP is an open standard published by Anthropic (November 2024). It is built on *
 **Critical validation checkpoint:**
 
 ```python
-# ✅ DECISION CHECKPOINT: Protocol version compatibility
+# validate protocol version compatibility — reject incompatible servers early
 if server_version != client_version:
     if is_backward_compatible(server_version, client_version):
         log.warning(f"Protocol version mismatch: {client_version} → {server_version} (compatible)")
@@ -363,7 +357,7 @@ The critical detail: the server's `tools/list` response includes the full JSON S
 **Client-side caching (Phase 2 best practice):**
 
 ```python
-# ✅ DECISION CHECKPOINT: Cache tool schemas on discovery
+# cache tool schemas on discovery — avoid re-discovering on every call
 class MCPClient:
     def __init__(self):
         self._tool_registry: dict[str, dict] = {}  # Cache schemas here
@@ -420,7 +414,7 @@ messages = await mcp_client.get_prompt("negotiate_price_prompt",
 **Choosing transport — Decision tree:**
 
 ```python
-# ✅ DECISION CHECKPOINT: Which transport?
+# choose transport: stdio for local single-client, http+sse for remote/multi-client
 def choose_transport(tool_properties: dict) -> str:
     if tool_properties["requires_local_filesystem"]:
         return "stdio"  # e.g., code execution sandbox, Git operations
@@ -491,7 +485,7 @@ async def call_tool(client: MCPClient, tool_name: str, arguments: dict) -> dict:
         ValidationError: Arguments don't match schema
         ToolExecutionError: Server returned error response
     """
-    # ✅ DECISION CHECKPOINT: Always validate before sending
+    # validate arguments against cached schema before sending to server
     schema = client.get_tool_schema(tool_name)  # Cached from Phase 2
     try:
         jsonschema.validate(instance=arguments, schema=schema)
@@ -602,7 +596,7 @@ class MCPClient:
 
         for attempt in range(max_retries):
             try:
-                # ✅ DECISION CHECKPOINT: Validate + call (Phase 3 logic)
+                # validate then execute tool call
                 result = await self.call_tool(tool_name, arguments)
 
                 # Success: log and return

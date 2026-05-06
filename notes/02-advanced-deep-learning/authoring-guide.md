@@ -578,6 +578,61 @@ You now understand the full production CV pipeline from architecture design to e
 
 ---
 
+## Anti-Pattern: Meta-Navigation Overload
+
+> **Rule:** A chapter has exactly one narrative thread. Never create a section that maps one navigation model to another.
+
+**What it looks like (wrong):**
+
+```markdown
+## Training Phases
+
+| Phase | What Happens | Sections |
+|-------|--------------|----------|
+| Phase 1: Pretrain | SimCLR backbone on 50k unlabeled | §3.1, §3.2, §4 Act 1 |
+| Phase 2: Fine-tune | Supervised detection head | §5.1, §5.2 Act 2 |
+| Phase 3: Compress | Distillation + pruning | §6, §7 Act 3 |
+
+### **[Phase 2: FINE-TUNE]** Act 2 — Detection Head Training
+
+...
+
+**PHASE CHECKPOINT 2**
+**What you just saw:** Fine-tuning unfroze block4+ and trained the detection head for 10 epochs.
+**What it means:** Validation loss dropped 8% vs. frozen baseline.
+**What to do next:** See §6 for knowledge distillation.
+```
+
+Every element above imposes a second navigation layer: the `Training Phases` table re-maps acts to section numbers, the `[Phase 2: FINE-TUNE]` prefix duplicates the act label, and the PHASE CHECKPOINT block re-summarizes content the reader just finished.
+
+**The fix:**
+
+Remove the `Training Phases` mapping table entirely. Embed the stage name in the act title. Replace the checkpoint block with two callout lines:
+
+```markdown
+### Act 2 — Fine-tune: Detection Head Training
+
+> 💡 **Fine-tune verdict:** Unfreezing block4+ yields −8% validation loss vs. frozen baseline —
+> the ProductionCV backbone has already learned shelf-edge features in block3.
+> ➡️ This fine-tuned backbone is the teacher model for Ch.9 knowledge distillation.
+```
+
+**Callout discipline for deep learning chapters:**
+
+- `> 💡 **[Stage] verdict:**` — one line after each training/architecture stage; always states the metric impact on ProductionCV (e.g., `−8% val loss`, `+2.1% mAP`, `14× compression`)
+- `> ➡️` — forward pointer when the output of a stage carries into the next chapter (e.g., "This compression ratio feeds directly into Ch.11 Grad-CAM sensitivity analysis")
+- Never: a "PHASE CHECKPOINT" or "STAGE CHECKPOINT" block with sub-headings "What you just saw / What it means / What to do next"
+- Never: a table or section that lists "Phase N → §X, §Y Act Z"
+- Never: `[Stage N: LABEL]` or `[Phase N: LABEL]` prefixes on act/section headers — embed the stage name in the title naturally
+
+**High-risk chapter patterns to audit:**
+
+- Chapters with Pretrain → Fine-tune → Evaluate stages (Ch.7, Ch.8) — watch for a "Self-Supervised Training Phases" mapping table
+- Chapters with Teacher → Student → Compress stages (Ch.9, Ch.10) — watch for "Distillation Phases" or "Compression Stages" meta-sections
+- Architecture-walkthrough chapters (Ch.1–Ch.3, Ch.6) — watch for "Architecture Stages" tables that list "Stage 1: Backbone → §3.1, §3.2"
+
+---
+
 ## Grand Solution Notebook (grand_solution.ipynb)
 
 > **New pattern (2026):** Alongside `grand_solution.md`, each track now includes `grand_solution_reference.ipynb` (reference) or `grand_solution_exercise.ipynb` (practice) — an executable Jupyter notebook that consolidates all code examples from the track into a single runnable demonstration.

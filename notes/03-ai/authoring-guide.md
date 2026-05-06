@@ -624,6 +624,63 @@ When adding a new chapter to a track:
 
 ---
 
+## Anti-Pattern: Meta-Navigation Overload
+
+> **Rule:** A chapter has exactly one narrative thread. Never create a section that maps one navigation model to another.
+
+**What it looks like (wrong):**
+
+```markdown
+## Pipeline Stages
+
+This chapter is organized into four pipeline stages:
+- **Stage 1: Baseline** → §3, §4
+- **Stage 2: Retrieval** → §5 Act 1, §6 Act 2
+- **Stage 3: Reranking** → §7–§8 Walkthrough A
+- **Stage 4: Measure** → §9 Walkthrough B, Decision Checkpoint 3
+
+### **[Stage 2: RETRIEVAL]** Act 2 — Building the Knowledge Base
+
+...
+
+> **PIPELINE CHECKPOINT**
+> **What you just saw:** BM25 keyword retrieval over the menu corpus.
+> **What it means:** High precision on exact matches, poor recall on semantic queries.
+> **What to do next:** Add dense embeddings and rerank with MMR → see §7 Act 3.
+```
+
+This is five simultaneous navigation systems: section numbers, stage labels, act labels, walkthrough labels, and checkpoint blocks. Each forces a context switch.
+
+**The fix:**
+
+1. **Delete** any section that maps stage labels to section numbers.
+2. **Embed** the stage name in the section title naturally: `### Act 2 — Retrieval: Building the Knowledge Base` — not `### **[Stage 2: RETRIEVAL]** Act 2`.
+3. **Replace** every "PIPELINE CHECKPOINT" block with two callout lines.
+4. **Fix** any cross-references like "see §5 Act 2" with a `> ➡️` inline pointer.
+
+**Callout discipline for AI/LLM chapters:**
+
+- `> 💡 **[Stage] verdict:**` — one line after each pipeline stage, states the metric impact (conversion rate, error rate, latency, cost/conv). Example:
+  ```
+  > 💡 **Retrieval verdict:** BM25 alone gives 68% context precision; adding MMR reranking brings it to 89% — the PizzaBot now cites the right menu items.
+  ```
+- `> ➡️` — forward pointer when a stage result directly motivates the next chapter or section. Example:
+  ```
+  > ➡️ 89% precision still means 1 in 9 answers cites a wrong item — Ch.7 introduces RAGAS faithfulness scoring to track this automatically.
+  ```
+- **Never:** a "PIPELINE CHECKPOINT" block with "What you just saw / What it means / What to do next" — 20 lines of meta-commentary that restates what the reader just read.
+- **Never:** a section whose only content is `Stage N → §X, §Y, §Z Act N` mappings.
+
+**PizzaBot-specific signals to watch:**
+
+| Wrong | Right |
+|-------|-------|
+| `**[Stage 1: BASELINE]** §3 — Naive LLM` | `### Act 1 — Baseline: Raw GPT Without Grounding` |
+| Checkpoint block: "What it means: high hallucination rate" | `> 💡 **Baseline verdict:** 15% error rate — the bot invents menu items.` |
+| "Continue to §5 Walkthrough A for the fix" | `> ➡️ RAG (Ch.4) grounds every answer in the retrieved corpus.` |
+
+---
+
 **Note:** Interview checklists are maintained in the centralized [Interview_guide.md](interview-guide.md) file, not in individual chapters.
 
 ---

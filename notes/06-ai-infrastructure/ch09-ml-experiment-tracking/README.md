@@ -117,13 +117,10 @@ Initialize tracking:       Log during training:        Analyze experiments:     
                                checkpoints (use TB)
 ```
 
-**The workflow maps to these sections:**
-- **Phase 1 (Setup)** → §2 Step 1 (MLflow initialization), §2 Step 5 (DVC init)
-- **Phase 2 (Track)** → §2 Step 2 (log params/metrics during training loop)
-- **Phase 3 (Compare)** → §2 Step 3 (MLflow UI, programmatic search)
-- **Phase 4 (Promote)** → §2 Step 4 (model registry lifecycle)
-
 > 💡 **How to use this workflow:** Phase 1 is one-time setup per project. Phase 2→3→4 is your daily loop: train experiments (Phase 2), compare results (Phase 3), deploy winners (Phase 4). The sections below teach WHY each phase works; refer back here for WHAT to do.
+
+> 💡 **Tracking verdict:** MLflow registry promoted INT4-AWQ checkpoint — experiment audit trail confirmed 96.2% accuracy before production registration ✅.
+> ➡️ Ch.10 monitors this registered model in production and detects when accuracy drifts below threshold.
 
 ---
 

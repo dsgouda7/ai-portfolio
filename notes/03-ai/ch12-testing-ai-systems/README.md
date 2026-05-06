@@ -93,7 +93,7 @@ Total wrong-order rate: 28 / 200 = 14%
 > **Testing pipeline animation** (see `img/`):
 > - `img/testing-pipeline.gif`: Unit → Integration → Model test layers, failures lighting up in red, fix propagating green
 >
-> Reference inline in §4 below.
+> Reference inline in the testing implementation section below.
 
 ---
 
@@ -111,12 +111,6 @@ The PizzaBot 14% wrong-order rate isn't a model bug. It's a **retrieval bug**: w
 ---
 
 ## 1.5 · The Practitioner Workflow — Your 3-Tier Test Pyramid
-
-> ⚠️ **Two ways to read this chapter:**
-> - **Theory-first (recommended for learning):** Read §0→§7 sequentially to understand the concepts, then use this workflow as your reference
-> - **Workflow-first (practitioners with existing knowledge):** Use this diagram as a jump-to guide when working with production AI systems
->
-> **Note:** Section numbers don't follow tier order because the chapter teaches concepts pedagogically (foundation to advanced). The workflow below shows how to APPLY those concepts in production.
 
 **Before diving into test implementation, understand the three-tier strategy every AI system needs:**
 
@@ -139,11 +133,6 @@ Test components in isolation  Test end-to-end pipeline       Generate adversaria
   • All assertions pass?        • Response price matches doc?  • All valid orders parse?
   • Fast (<1s total)?           • Latency < 3s?                • Pricing monotonic?
 ```
-
-**The workflow maps to these sections:**
-- **Tier 1 (UNIT)** → §3 Unit Testing the RAG Pipeline
-- **Tier 2 (INTEGRATION)** → §4 Integration Testing the Full Pipeline
-- **Tier 3 (ADVERSARIAL)** → §5 Model Testing + §6 Property-Based Testing
 
 > 💡 **Test Pyramid Economics:** Unit tests are free and fast (<1s). Integration tests cost ~$0.01 per run (real LLM API calls). Adversarial tests are front-loaded cost (write once, generate hundreds). The pyramid shape (many unit, fewer integration, strategic adversarial) optimizes for **fast feedback** and **low CI cost**.
 
@@ -299,7 +288,7 @@ This is the failure-first pattern for AI testing: **write the failing test, conf
 
 ---
 
-## 3 · [Tier 1: UNIT] Component Testing — Isolate and Assert Contracts
+## 3 · Component Testing — Isolate and Assert Contracts
 
 **What you're doing in this tier:** Test each component of the RAG pipeline in complete isolation. Retrieval doesn't call the LLM. Generation uses a mocked retrieval response. Ingestion doesn't hit a real database. **Goal: verify component contracts with zero API cost, <1s execution time, 80%+ code coverage.**
 
@@ -527,33 +516,12 @@ def test_response_is_deterministic_at_temperature_zero(rag_client, sample_menu_d
 
 ---
 
-### 3.5 · DECISION CHECKPOINT — Tier 1 Complete
-
-**What you just built:**
-- ✅ 15 unit tests covering ingestion (3), retrieval (4), generation (3), parsing (2), determinism (1), chunk size (1), metadata preservation (1)
-- ✅ 89% code coverage on `src/rag_pipeline.py`, `src/pricing.py`, `src/order_parser.py`
-- ✅ Test suite runs in <1s with zero API cost (all LLM calls mocked)
-- ✅ `test_retrieval_returns_dinner_menu_at_7pm` — RED before fix, GREEN after (caught the 14% wrong-order bug in isolation)
-
-**What it means:**
-- **Component contracts are verified:** Each function in the RAG pipeline does exactly what its signature promises
-- **Refactoring is safe:** Can now change implementation details without breaking tests
-- **Fast feedback loop:** Developers get test results in <1s on every save
-- **Zero CI cost barrier:** Unit tests can run on every commit without budget concerns
-
-**What to do next:**
-
-→ **If any unit test fails:** Fix immediately. Unit test failures mean a broken contract — the component doesn't do what its function signature promises. Do not proceed to integration tests until all unit tests are GREEN.
-
-→ **If coverage < 80%:** Add unit tests for uncovered branches. Common gaps: error handling (`except` blocks), edge cases (empty lists, None values), and alternative code paths (`else` branches).
-
-→ **If any test is slow (>100ms):** You're calling a real API or database. Replace with a mock. Unit tests must be fast or developers will skip them.
-
-→ **Ready to proceed:** Your components work in isolation. Now test if they work **together** → Move to **Tier 2: Integration Testing** (§4).
+> 💡 **Unit test verdict:** 15 tests, 89% coverage, <1s run time, zero API cost — `test_retrieval_returns_dinner_menu_at_7pm` isolated and confirmed the 14% wrong-order bug.
+> ➡️ Fix any failing unit tests before proceeding; coverage < 80% means uncovered error-handling branches — then move to Tier 2 integration tests.
 
 ---
 
-## 4 · [Tier 2: INTEGRATION] Pipeline Testing — End-to-End Correctness
+## 4 · Pipeline Testing — End-to-End Correctness
 
 **What you're doing in this tier:** Fire the full pipeline with real components. No mocks. Ingestion → embedding → vector DB → retrieval → LLM generation → parsed response. **Goal: verify pipeline joints work correctly, catch the bugs that only appear when components communicate (like the 14% wrong-order bug).**
 
@@ -664,29 +632,8 @@ def test_e2e_latency_under_3s(e2e_rag):
 
 ---
 
-### 4.5 · DECISION CHECKPOINT — Tier 2 Complete
-
-**What you just built:**
-- ✅ 8 integration tests covering: dinner-time ordering (price correctness), allergen queries (source citation), out-of-stock handling, latency (<3s), case invariance end-to-end
-- ✅ Real API calls to OpenAI GPT-4o-mini ($0.05 per full test run)
-- ✅ Real vector DB (Chroma test instance spun up via docker-compose)
-- ✅ `test_e2e_dinner_order_returns_correct_price` — reproduces the 14% production bug in integration context, now passing
-
-**What it means:**
-- **Pipeline joints are verified:** Retrieval → generation handoff works. Metadata filters apply correctly. Price in response matches retrieved document.
-- **Production bug is caught:** The 14% wrong-order rate bug (dinner queries returning lunch menu) now fails in CI before reaching production.
-- **Constraint #3 validated:** `test_e2e_latency_under_3s` confirms single-call latency meets requirements (p95 under load still needs separate load testing).
-- **Cost visibility:** Integration tests cost ~$0.05/run. This informs CI strategy (run on push to main, not every PR).
-
-**What to do next:**
-
-→ **If `test_e2e_dinner_order_returns_correct_price` fails:** The retrieval is still returning lunch menu at 7pm. Check metadata filter in `rag_client.retrieve()` — it must include `metadata_filter={"menu_type": "dinner"}`. This is the root cause of the 14% production bug.
-
-→ **If `test_e2e_latency_under_3s` fails:** Latency > 3s means either: (1) embedding model is slow (switch to `text-embedding-3-small`), (2) vector DB is remote (use local for tests), or (3) LLM is using a large model (use `gpt-4o-mini` for tests, not `gpt-4`).
-
-→ **If integration tests are flaky:** Non-deterministic failures at `temperature=0` mean: (1) vector DB index is stale (reseed test corpus), (2) LLM provider changed API behavior (pin API version), or (3) mock leaked into integration test (search for `MagicMock` in integration test files — should be zero).
-
-→ **Ready to proceed:** Your pipeline works end-to-end. Now test if it's **resilient to adversarial inputs** → Move to **Tier 3: Adversarial Testing** (§5-6).
+> 💡 **Integration test verdict:** 8 tests covering dinner-time ordering, allergen queries, out-of-stock, latency (<3s), case invariance — `test_e2e_dinner_order_returns_correct_price` catches the 14% wrong-order production bug.
+> ➡️ If the dinner-time test fails, check the metadata filter in `rag_client.retrieve()` — it must include `{"menu_type": "dinner"}` for evening queries; then move to Tier 3 adversarial tests.
 
 > 💡 **Industry Standard: LangChain Callbacks for Test Observability**  
 > ```python
@@ -705,7 +652,7 @@ def test_e2e_latency_under_3s(e2e_rag):
 
 ---
 
-## 5 · [Tier 3: ADVERSARIAL] Stress Testing — Shape, Invariance, and Directional Properties
+## 5 · Stress Testing — Shape, Invariance, and Directional Properties
 
 **What you're doing in this tier:** Test the system's resilience to edge cases, adversarial inputs, and property violations. Don't hand-write 100 test cases — use **property-based testing** (hypothesis library) to generate them automatically. Verify that the model's behavioral properties hold for *all* inputs, not just your happy-path examples.
 
@@ -729,7 +676,7 @@ def test_e2e_latency_under_3s(e2e_rag):
 
 → **If any test is slow (>100ms):** You're calling a real API or database. Replace with a mock. Unit tests must be fast or developers will skip them.
 
-→ **Ready to proceed:** Your components work in isolation. Now test if they work **together** → Move to **Tier 2: Integration Testing** (§4).
+→ **Ready to proceed:** Your components work in isolation. Now test if they work **together** → move to Tier 2 integration testing.
 
 ---
 
@@ -1036,40 +983,8 @@ def test_order_total_monotone_in_quantity(size, topping, quantity_1, quantity_2)
 
 ---
 
-### 6.5 · DECISION CHECKPOINT — Tier 3 Complete
-
-**What you just built:**
-- ✅ 200+ property-based tests (hypothesis-generated) covering: valid orders always parse, prices always positive, quantity is monotonic, size pricing is monotonic
-- ✅ Shape tests (3): response is non-empty string, length 20-500 chars, contains price pattern
-- ✅ Invariance tests (3): case-insensitive, name-invariant, politeness-invariant
-- ✅ Directional tests (3): more items = higher price, larger size = higher price, delivery > pickup
-- ✅ Zero hypothesis counterexamples found (200 tests ran, 0 failures) → pricing logic is monotonic
-
-**What it means:**
-- **Edge-case resilience:** System handles Unicode pizza names, empty queries, 0-quantity orders, 10-item bulk orders — all without crashing
-- **Behavioral properties verified:** Case changes don't affect pricing. Customer name doesn't affect order. Quantity and size scale prices monotonically.
-- **Adversarial robustness:** Property-based tests explored 200 input combinations — no crashes, no negative prices, no non-monotonic behavior
-- **Front-loaded cost, ongoing value:** Writing property-based tests costs time upfront, but generates 200 tests for free on every CI run thereafter
-
-**What to do next:**
-
-→ **If hypothesis finds a counterexample:** The shrunk example (smallest failing input) reveals the exact edge case your pricing/parsing logic doesn't handle. Example: `hypothesis found: quantity=0, size="small", topping="pepperoni" → total = $0.00` means you're not validating `quantity >= 1`.
-
-→ **If invariance test fails (e.g., case changes price):** Your RAG retrieval isn't case-normalizing queries. Add `.lower()` to query preprocessing. Re-run integration tests to confirm fix doesn't break other tests.
-
-→ **If directional test fails (e.g., 2 pizzas cheaper than 1):** Check pricing calculation for:
-  - Bulk discount logic applied incorrectly (discounts every order, not just bulk)
-  - Integer division truncating cents (`total = quantity * price / 100` loses precision)
-  - Currency conversion errors (mixing dollars and cents)
-
-→ **If shape test fails (e.g., response >500 chars):** LLM is hallucinating verbose explanations. Add to system prompt: "Respond in 1-2 sentences max. Do not explain your reasoning."
-
-→ **Ready for production:** All three tiers pass. Your test suite now catches:
-  - **Component bugs** (Tier 1: Unit)
-  - **Pipeline bugs** (Tier 2: Integration)
-  - **Edge-case bugs** (Tier 3: Adversarial)
-
-→ **Next step:** Integrate test suite into CI/CD (§7) so tests block PRs before bugs reach production.
+> 💡 **Adversarial test verdict:** 200+ property-based tests confirmed zero crashes, no negative prices, no non-monotonic pricing — all three behavioral invariants (case, name, politeness) hold.
+> ➡️ If hypothesis finds a counterexample, the shrunk input reveals the exact edge case; integrate the full suite into CI/CD to block PRs before bugs reach production.
 
 ---
 

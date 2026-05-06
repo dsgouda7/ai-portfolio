@@ -447,3 +447,38 @@ Each track's `AUTHORING_GUIDE.md` extends this document with:
 ---
 
 *Last updated: April 2026 — applies to all tracks under `notes/`*
+
+---
+
+## 18 · Anti-Pattern: Meta-Navigation Overload
+
+> **Red line:** A chapter has exactly one narrative thread. Never create a section that maps one navigation model (phases, stages, acts) to another (section numbers). Readers cannot context-switch that fast.
+
+### The five specific violations (in order of severity)
+
+1. **Meta-navigation section** — a section whose only purpose is to map phases/acts to section numbers (e.g., "Phase 2 → §4.1, §4.2, §5 Act 2"). Delete it. The sequential narrative is self-navigating. If orientation is needed, one sentence in § 0 suffices.
+2. **Tagged prefix headers** — `### **[Phase 2: AUDIT]** Act 2`. Embed the stage in the title naturally: `### Act 2 — Audit: The IQR Sweep`. One title, one meaning.
+3. **DECISION CHECKPOINT blocks** — ~20-line structured summaries with sub-headings "What you just saw / What it means / What to do next". They repeat content just covered and pre-announce the next section. Replace with exactly two callouts:
+   ```
+   > 💡 **[Stage] verdict:** [one-sentence decision + metric impact]
+   > ➡️ [forward pointer to next step or chapter, with named consequence]
+   ```
+4. **Section-number cross-references** — "see §5 Act 2" or "covered in §4.2". Section numbers shift when content moves. Use `> ➡️` callouts at the point where a concept reappears, or use relative file paths for inter-chapter links.
+5. **Unverified link paths** — cross-references with wrong directory depth (`../../` vs `../`) or wrong separator (`_` vs `-`). Every path must be verified to exist before writing it.
+
+### The diagnostic test
+
+Read any section of a chapter. Count how many navigation models the reader must track simultaneously (section numbers, phase labels, act labels, walkthrough labels, checkpoint numbers, etc.).
+
+**One is the target.** The current section title tells you exactly where you are. Nothing else required.
+
+### Correct callout usage
+
+After each act or stage concludes, use at most one of each type:
+
+```
+> 💡 **[Stage] verdict:** [decision + metric impact in one sentence]
+> ➡️ [what this enables next, with named consequence]
+```
+
+Never chain these together to recreate a checkpoint block. One `💡` per act. One `➡️` per act.

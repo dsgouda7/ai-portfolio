@@ -80,12 +80,6 @@ Deploy N Flask replicas:   Configure Nginx upstream:  Enable failure detection: 
                                ip_hash (sticky)
 ```
 
-**The workflow maps to this chapter:**
-- **Phase 1 (BACKENDS)** → §6.2 Docker Compose Stack, §6.3 Flask Backend with Health Check
-- **Phase 2 (PROXY)** → §6.1 Nginx Configuration Template, §4.1–4.3 Load Balancing Algorithms
-- **Phase 3 (HEALTH CHECKS)** → §4.2 Health Check Math, §6.1 max_fails + fail_timeout directives
-- **Phase 4 (RESILIENCE)** → §8 Progress Check — Debug a Backend Not Receiving Traffic
-
 > 💡 **Usage note:** Complete Phase 1→2→3 sequentially (backends must exist before Nginx can proxy to them). Phase 4 is validation — run after full stack is deployed to verify failover works as expected. Return to this workflow when debugging production issues (start at Phase 4, work backward to identify misconfiguration).
 
 **Industry context:** This is the same pattern AWS Elastic Load Balancer (ELB) and Google Cloud Load Balancer implement internally — backends register with target groups, load balancer distributes traffic based on algorithm + health checks. You're building the open-source equivalent with Nginx + Docker Compose.
@@ -145,7 +139,7 @@ Sections 4–8 explain each component. Come back to this map when the detail fee
 
 ## 4 · The Math Defines Load Distribution and Failure Detection
 
-### 4.1 · **[Phase 2: PROXY]** Round-Robin Distributes Requests Evenly Across Backends
+### 4.1 · Round-Robin Distributes Requests Evenly Across Backends
 
 The simplest load balancing algorithm: cycle through backends in order.
 
@@ -170,7 +164,7 @@ def select_backend():
 
 **When to use:** Backends are identical (same CPU, same code, same data).
 
-### 4.2 · **[Phase 2: PROXY]** Least-Conn Sends Requests to Backend with Fewest Active Connections
+### 4.2 · Least-Conn Sends Requests to Backend with Fewest Active Connections
 
 For long-polling or WebSocket connections, round-robin fails — one backend might have 100 active connections while others have 10. Least-conn sends new requests to the backend with the fewest active connections.
 
@@ -190,7 +184,7 @@ def select_backend():
 
 **When to use:** Long-lived connections (WebSockets, SSE, streaming).
 
-### 4.3 · **[Phase 2: PROXY]** IP-Hash Provides Sticky Sessions (Session Affinity)
+### 4.3 · IP-Hash Provides Sticky Sessions (Session Affinity)
 
 For stateful apps (e.g., Flask sessions stored in memory), the same client must hit the same backend every time. IP-hash computes:
 
@@ -209,22 +203,8 @@ $$\text{backend\_index} = \text{hash}(\text{client\_IP}) \mod N$$
 
 **When to use:** Legacy stateful apps that can't use external session stores (Redis, Memcached).
 
-### 4.3.1 DECISION CHECKPOINT — Phase 2 Complete
-
-**What you just saw:**
-- Round-robin distributes 9 requests perfectly evenly: 3 per backend (100% utilization when backends process at equal speed)
-- Least-conn adapts dynamically: sends new requests to backend with lowest active connection count (prevents overload)
-- IP-hash provides sticky sessions: same client IP → same backend every time (hash(192.168.1.50) % 3 = backend2)
-
-**What it means:**
-- **For stateless REST APIs:** Round-robin or least_conn both work — choose round-robin for simplicity, least_conn for long-lived connections (WebSocket, SSE)
-- **For stateful apps with in-memory sessions:** ip_hash is required unless you externalize sessions to Redis/Memcached (which you should do in production)
-- **Trade-off:** ip_hash sacrifices even load distribution for session persistence — 10 clients with 1 heavy user means 1 backend gets 90% of load
-
-**What to do next:**
-→ **For this Flask API (stateless):** Use `round-robin` (default) — no configuration needed, perfectly even distribution
-→ **If you add WebSocket support later:** Switch to `least_conn` in nginx.conf upstream block
-→ **If you must preserve in-memory sessions:** Add `ip_hash;` directive (but better: refactor to use Redis sessions as shown in §7.1)
+> 💡 **Proxy verdict:** Round-robin distributes 9 requests 3-per-backend; ip-hash gives sticky sessions at cost of uneven load; least-conn adapts to long-lived connections.
+> ➡️ Algorithm choice locked in; proceed to Health Checks phase.
 
 > 💡 **Industry Standard:** `Nginx upstream module`
 > 
@@ -280,24 +260,8 @@ Nginx passive health check: after 2 consecutive timeouts, mark backend2 as down.
 | 10      | backend1| Success |
 | 11      | backend3| Success |
 
-### 4.4.1 DECISION CHECKPOINT — Phase 3 Complete
-
-**What you just saw:**
-- Passive health checks: Nginx marks backend down after `max_fails=2` consecutive timeouts (no proactive probing)
-- Failure detection takes 2 real user requests to trigger (requests 5 and 8 in the table above both failed)
-- After marking backend2 down, Nginx skips it entirely — requests 9, 10, 11 only hit backend1 and backend3
-- Nginx retries backend2 after `fail_timeout=30s` expires (automatic recovery if backend comes back)
-
-**What it means:**
-- **Detection latency:** Passive checks require 2-3 real user requests to fail before Nginx removes a backend — those users experience timeouts (typically 30-60 seconds per request)
-- **Zero overhead:** No extra network probes — Nginx only monitors real traffic
-- **Acceptable for most deployments:** 2-3 failed requests out of thousands is negligible if you have retry logic in clients
-
-**What to do next:**
-→ **For production APIs with retry logic:** Use passive checks (`max_fails=3 fail_timeout=30s`) — 3 strikes balances false positives (transient network blips) vs detection speed
-→ **For zero-tolerance deployments (payments, health records):** Upgrade to Nginx Plus for active health checks — probes `/health` every 5-10 seconds, detects failures before user traffic hits
-→ **Tune thresholds based on traffic:** Low traffic (10 req/min) → lower max_fails (1-2) so failures are detected faster; High traffic (1000 req/sec) → higher max_fails (5+) to avoid false positives from transient spikes
-→ **Next phase:** Test failover by intentionally killing backend2, verify Nginx reroutes traffic with zero dropped requests after detection window (Phase 4)
+> 💡 **Health Checks verdict:** Passive checks mark backend down after 2 real-user failures; `fail_timeout=30s` auto-retry with zero probe overhead.
+> ➡️ Failure detection in place; proceed to Resilience phase to verify failover end-to-end.
 
 > 💡 **Industry Standard:** `Nginx Plus active health checks` (commercial) or `nginx-health-check module` (open-source)
 > 
@@ -347,7 +311,7 @@ Upstream Pool
 
 ## 6 · The Code Explains Nginx Configuration and Docker Compose
 
-### 6.1 · **[Phase 2: PROXY]** Nginx Configuration Template
+### 6.1 · Nginx Configuration Template
 
 `nginx.conf`:
 ```nginx
@@ -389,7 +353,7 @@ http {
 - `max_fails=2` — mark server down after 2 consecutive failures
 - `fail_timeout=30s` — retry server after 30 seconds
 
-### 6.1.1 **[Phase 3: HEALTH CHECKS]** Enabling Failure Detection
+### 6.1.1 Enabling Failure Detection
 
 The configuration above already includes passive health checks via the `max_fails` and `fail_timeout` parameters. Here's how to tune them for different scenarios:
 
@@ -425,7 +389,7 @@ upstream backend {
 - **API with 100-1000 req/min:** `max_fails=3`, `fail_timeout=30s` (balanced)
 - **API with >1000 req/min:** `max_fails=5`, `fail_timeout=60s` (tolerate transient spikes)
 
-### 6.1.2 **[Phase 4: RESILIENCE]** Testing Failover
+### 6.1.2 Testing Failover
 
 Now verify that Nginx actually reroutes traffic when a backend fails. This code snippet runs a continuous load test while killing backend2:
 
@@ -466,24 +430,8 @@ docker compose stop backend2
 - **Requests 24+:** Traffic automatically reroutes to backend1 and backend3 only — no more timeouts
 - **After fail_timeout expires (30s):** Nginx retries backend2 once, marks it down again if still failing
 
-### 6.1.3 DECISION CHECKPOINT — Phase 4 Complete
-
-**What you just saw:**
-- Failover works: Killing backend2 causes 2 user requests to timeout (22, 23), then Nginx removes backend2 from rotation
-- Remaining backends absorb load: backend1 and backend3 now handle 50% each (was 33% before)
-- Detection window: ~60 seconds elapsed from kill to full failover (2 timeouts × 30s each)
-- Automatic recovery: Nginx will retry backend2 after `fail_timeout=30s`, reintegrate if it comes back
-
-**What it means:**
-- **High availability achieved:** System survives single backend failure with <1% requests impacted (2 timeouts out of 100 requests)
-- **Trade-off accepted:** Passive health checks sacrifice 2-3 user requests for zero probe overhead — acceptable for most APIs
-- **Scaling works:** With 3 replicas, losing 1 backend reduces capacity by 33% but doesn't cause outage (remaining backends handle load)
-
-**What to do next:**
-→ **Production deployment:** Use `max_fails=3 fail_timeout=30s` as baseline, tune based on observed false positive rate
-→ **Zero-tolerance systems:** Invest in Nginx Plus for active health checks (5-10s detection, zero user-facing failures) or migrate to managed load balancers (AWS ALB, GCP Load Balancer)
-→ **Horizontal scaling:** If CPU reaches 70%+ after losing 1 backend, add more replicas (4-5 backends = lose 1, still at 60-75% capacity)
-→ **Monitoring:** Set up Prometheus + Grafana (Ch.5) to alert when backend count drops — Nginx exposes `upstream_peers` metric showing active vs down backends
+> 💡 **Resilience verdict:** Backend failure triggers rerouting in <60s; 2/100 requests impacted; surviving replicas absorb full load with no outage.
+> ➡️ HA confirmed at 3 replicas; scale to 4–5 for >50% capacity retention after any single failure.
 
 > 💡 **Industry Standard:** `Kubernetes readiness probes` (built-in active health checks)
 > 
@@ -513,7 +461,7 @@ docker compose stop backend2
 
 ---
 
-### 6.2 · **[Phase 1: BACKENDS]** Docker Compose Stack
+### 6.2 · Docker Compose Stack
 
 `docker-compose.yml`:
 ```yaml
@@ -565,7 +513,7 @@ networks:
 - All services on same Docker network (can resolve `backend1:5000` via DNS)
 - Backends have unique IDs (so logs show which backend handled request)
 
-### 6.3 · **[Phase 1: BACKENDS]** Flask Backend with Health Check
+### 6.3 · Flask Backend with Health Check
 
 `app.py`:
 ```python
@@ -594,24 +542,8 @@ if __name__ == "__main__":
 
 **Why BACKEND_ID?** So we can verify load distribution — send 10 requests, confirm they hit different backends.
 
-### 6.3.1 DECISION CHECKPOINT — Phase 1 Complete
-
-**What you just saw:**
-- Deployed 3 Flask replicas as separate Docker Compose services (backend1, backend2, backend3)
-- Each backend exposes `/health` endpoint returning `{"status": "healthy", "backend": "1/2/3"}`
-- Backends run on internal Docker network (no public ports) — only accessible via service names `backend1:5000`, etc.
-- Each backend has unique `BACKEND_ID` environment variable for traceability
-
-**What it means:**
-- **Backends are isolated:** No single point of failure — losing backend2 doesn't affect backend1/backend3
-- **Health checks work:** Nginx (or any service) can probe `/health` to verify backend availability before routing traffic
-- **Horizontal scaling is trivial:** Add `backend4` to docker-compose.yml, redeploy — Nginx automatically discovers it via DNS
-
-**What to do next:**
-→ **Verify each backend individually:** `docker compose exec nginx curl http://backend1:5000/health` (repeat for backend2, backend3)
-→ **Check all backends are running:** `docker compose ps` — all 3 should show status "Up"
-→ **If any backend fails health check:** Check logs with `docker compose logs backend1` — common issues: port already in use, missing dependencies, syntax errors in app.py
-→ **Next phase:** Configure Nginx upstream block to distribute load across all 3 backends (Phase 2)
+> 💡 **Backends verdict:** Three Flask replicas on internal Docker network; `/health` returns backend ID in 5ms with zero single-point-of-failure risk.
+> ➡️ Backends isolated and discoverable by name; proceed to Proxy phase.
 
 > 💡 **Industry Standard:** `docker-compose scale` (deprecated) → `docker compose up --scale backend=N`
 > 

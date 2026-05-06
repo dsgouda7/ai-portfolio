@@ -82,12 +82,6 @@ Craft text description:     Configure diffusion:        Add spatial guidance:   
                               • Seed random: explore        strict → loose             tweak needed
 ```
 
-**The workflow maps to these sections:**
-- **Phase 1 (PROMPT)** → §3.1 Prompt Engineering, §3.2 Negative Prompts
-- **Phase 2 (GENERATE)** → §3.2 Negative Prompts (CFG extension), §5 Production Example
-- **Phase 3 (CONTROL)** → §3.5 ControlNet, §5 Production Example
-- **Phase 4 (REFINE)** → §3.3 img2img, §3.4 Inpainting
-
 > 💡 **Typical iteration pattern:** Most briefs need Phase 1→2 only (text-to-image). Add Phase 3 when composition must be guaranteed (product shots, character poses). Use Phase 4 for post-approval edits (client requests color change, higher resolution, style variation).
 
 ---
@@ -447,7 +441,7 @@ Result: Generated image respects both the angle (from edge map) and the brand de
 
 ## 3 · The Math
 
-### 3.1 · **[Phase 1: PROMPT]** Prompt Engineering — Weighted Token Embeddings
+### 3.1 · Prompt Engineering — Weighted Token Embeddings
 
 CLIP text encoder output is an average over token positions. Each token occupies one position in the 77-length context. Practical implications:
 
@@ -461,7 +455,7 @@ $$\mathbf{e}_{\text{weighted}} = w \cdot \mathbf{e}_{\text{token}}$$
 
 This is just scalar multiplication of the embedding vector before the diffusion U-Net receives it via cross-attention.
 
-### 3.2 · **[Phase 2: GENERATE]** Negative Prompts & CFG Configuration
+### 3.2 · Negative Prompts & CFG Configuration
 
 Extend the CFG equation with a negative prompt $c^-$:
 
@@ -486,7 +480,7 @@ Only **two** calls per step: one for positive, one for negative (negative acts a
 
 > 💡 **VisualForge tuning:** CFG 7-9 for product shots (precise), CFG 5-7 for artistic briefs (creative freedom). Always use 20 steps minimum for client deliverables (15 steps shows artifacts under scrutiny).
 
-### 3.3 · **[Phase 4: REFINE]** img2img — Start from Partial Noise
+### 3.3 · img2img — Start from Partial Noise
 
 Unlike text-to-image which starts from $x_T \sim \mathcal{N}(0, I)$, img2img:
 
@@ -512,7 +506,7 @@ $$t_\text{start} = \lfloor s \cdot T \rfloor$$
 
 > ⚠️ **VisualForge lesson:** `strength > 0.7` often changes subject identity. For "same product, different style" briefs, use `strength=0.5` + strong style keywords in prompt.
 
-### 3.4 · **[Phase 4: REFINE]** Inpainting — Mask-Constrained Generation
+### 3.4 · Inpainting — Mask-Constrained Generation
 
 At every denoising step, the known pixels (outside the mask) are re-noised and composited back:
 
@@ -531,7 +525,7 @@ This forces the unmasked region to remain consistent with the original while the
 
 > 💡 **VisualForge metric:** Inpainting with feathered masks reduces revision requests by 60% (seam artifacts are the #1 client complaint for hard-edge masks).
 
-### 3.5 · **[Phase 3: CONTROL]** ControlNet — Spatial Conditioning
+### 3.5 · ControlNet — Spatial Conditioning
 
 ControlNet (Zhang et al. 2023) adds a control signal (Canny edges, depth map, skeleton, etc.) as an additional input to the U-Net. Architecture:
 

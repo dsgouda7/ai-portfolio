@@ -121,7 +121,7 @@ When the model's visible chain of thought does not causally determine its final 
 
 ---
 
-## SECTION 2 — ReAct & Agent Architecture
+## ReAct & Agent Architecture — What They're Testing
 
 ### ReAct & Agent Architecture — What They're Testing
 
@@ -224,7 +224,7 @@ The LLM never executes anything. The prompt includes an **action language** — 
 
 ---
 
-## SECTION 3 — Orchestration Frameworks
+## Orchestration Frameworks — What They're Testing
 
 ### LangChain vs. Semantic Kernel — What They're Testing
 
@@ -267,7 +267,7 @@ SK's `invoke_prompt` automatically runs the ReAct loop internally via the model'
 
 ---
 
-## SECTION 4 — Embeddings
+## Embeddings — What They're Testing
 
 ### Embeddings — What They're Testing
 
@@ -325,7 +325,7 @@ You **cannot** use different embedding models for ingestion and query. Each mode
 
 ---
 
-## SECTION 5 — RAG Pipelines
+## RAG Pipelines — What They're Testing
 
 ### RAG Pipelines — What They're Testing
 
@@ -403,7 +403,7 @@ LLMs attend primarily to the beginning and end of long contexts — middle chunk
 
 ---
 
-## SECTION 6 — Vector Databases & ANN Indexing
+## Vector Databases & ANN Indexing — What They're Testing
 
 ### Vector Databases — What They're Testing
 
@@ -480,7 +480,7 @@ Run BM25 sparse search and dense vector search in parallel. Merge via **Reciproc
 
 ---
 
-## SECTION 7 — Multi-Agent Systems
+## Multi-Agent Systems — What They're Testing
 
 ### Multi-Agent Systems — What They're Testing
 
@@ -518,7 +518,7 @@ Insert approval checkpoints before irreversible actions (delete, send, transact)
 
 ---
 
-## SECTION 8 — Cost & Latency Optimization
+## Cost & Latency Optimization — What They're Testing
 
 ### Cost & Latency Optimization — What They're Testing
 
@@ -583,7 +583,7 @@ The KV cache stores attention keys and values from already-processed tokens. If 
 
 ---
 
-## SECTION 9 — Safety & Hallucination Mitigation
+## Safety & Hallucination Mitigation — What They're Testing
 
 ### Safety & Hallucination — What They're Testing
 
@@ -653,7 +653,7 @@ The model tells the user what they want to hear rather than what is correct. Cau
 
 ---
 
-## SECTION 10 — Quick-Fire Conceptual Distinctions
+## Quick-Fire Conceptual Distinctions — What They're Testing
 
 | Question | Answer |
 |----------|--------|

@@ -82,12 +82,6 @@ Create Dockerfile:          Build optimized image:      Launch container:       
   • Full (800MB, avoid)       • Check with Dive tool      • Secrets: Env vars         • Layers: Use Dive
 ```
 
-**The workflow maps to these sections:**
-- **Phase 1 (WRITE)** → §4.1 Dockerfile Best Practices
-- **Phase 2 (BUILD)** → §4.2 Image Build & Optimization
-- **Phase 3 (RUN)** → §4.3 Container Execution
-- **Phase 4 (DEBUG)** → §4.4 Troubleshooting Containers
-
 > 💡 **How to use this workflow:** Complete Phase 1→2→3→4 in order on your first deployment. For subsequent updates, you'll typically iterate between Phase 1 (modify Dockerfile), Phase 2 (rebuild), and Phase 4 (verify). The sections below teach WHY each phase works; refer back here for WHAT to do.
 
 ### The 4-Phase Decision Flow
@@ -167,7 +161,7 @@ Dockerfile → build → Image → run → Container
 
 ## 4 · The Four-Phase Docker Workflow
 
-## [Phase 1: WRITE] Dockerfile Best Practices
+## Dockerfile Best Practices — Write
 
 Every containerized application starts with a Dockerfile — the blueprint that defines how your image is built. The order of instructions matters: Docker caches each layer, and changing one instruction invalidates all subsequent layers. Write your Dockerfile strategically to maximize cache hits and minimize image size.
 
@@ -264,28 +258,12 @@ Dockerfile
 docker-compose.yml
 ```
 
-### 4.1.1 DECISION CHECKPOINT — Phase 1 Complete
-
-**What you just saw:**
-- Multi-stage Dockerfile separates build dependencies (gcc, build tools) from runtime image
-- Builder stage: 300 MB with all compilation tools
-- Runtime stage: 120 MB with only Python packages and application code
-- 60% size reduction by discarding build artifacts
-
-**What it means:**
-- Faster deployments — smaller images pull faster from registry
-- Better security — fewer attack surface (no gcc, make, or build tools in production image)
-- Layer caching — changing `app.py` doesn't rebuild `pip install` layer (saved 45 seconds on rebuild)
-
-**What to do next:**
-→ **Verify layer order:** Run `docker history flask-app:v1` — ensure dependencies layer appears before code copy
-→ **Check .dockerignore:** Build context should be <10 MB (run `docker build` and check "Sending build context" line)
-→ **For Python projects:** Always use `python:3.11-slim` as base — Alpine causes package compilation issues
-→ **For compiled languages (Go, Rust):** Multi-stage is mandatory — final image can be <20 MB
+> 💡 **Write verdict:** Dockerfile uses multi-stage build — image size 300 MB → 120 MB; layer caching eliminates `pip install` on code-only changes.
+> ➡️ Enables faster CI/CD pulls and reduced attack surface; proceed to Build phase.
 
 ---
 
-## [Phase 2: BUILD] Image Build & Optimization
+## Image Build & Optimization — Build
 
 Building the image transforms your Dockerfile into a runnable artifact. BuildKit (Docker's new build engine) enables parallel layer building, better caching, and secret mounting. Build time matters in CI/CD pipelines — a 10-minute build blocks every deployment.
 
@@ -380,28 +358,12 @@ docker build -t flask-app:$(git rev-parse --short HEAD) .
 docker build -t flask-app:staging-1.2.3 .
 ```
 
-### 4.2.1 DECISION CHECKPOINT — Phase 2 Complete
-
-**What you just saw:**
-- Build time: 1m 38s with BuildKit (was 4m 12s with legacy builder)
-- Image size: 122 MB (multi-stage build discarded 178 MB of build tools)
-- Layer cache hit on `pip install` — dependencies only rebuild when `requirements.txt` changes
-- Two tags applied: `flask-app:v1` (specific version) and `flask-app:latest` (always points to newest)
-
-**What it means:**
-- **2.5x faster builds** — BuildKit parallelizes independent stages (apt-get update + pip install)
-- **90% faster rebuilds** — changing `app.py` doesn't trigger `pip install` (cache hit saved 8.2s)
-- **Registry-ready** — tagged with semantic version for rollback capability
-
-**What to do next:**
-→ **If build time >2 min:** Analyze slow layers with `docker build --progress=plain` — look for `RUN` commands taking >30s
-→ **If image size >150 MB:** Use [Dive tool](https://github.com/wagoodman/dive) to analyze layer contents: `dive flask-app:v1`
-→ **For CI/CD:** Add `--cache-from myregistry.com/flask-app:latest` to leverage remote cache
-→ **Acceptable thresholds:** Build time <2 min, image size <150 MB for Python web apps
+> 💡 **Build verdict:** BuildKit cuts build time 4m12s → 1m38s; cached `requirements.txt` layer makes code-only rebuilds 22s.
+> ➡️ Registry-ready artifact with SHA tag for rollback; proceed to Run phase.
 
 ---
 
-## [Phase 3: RUN] Container Execution
+## Container Execution — Run
 
 Running the container launches an isolated process with its own filesystem, network, and process space. Port mapping exposes container services to the host. Volume mounts provide persistent storage. Environment variables configure runtime behavior without rebuilding the image.
 
@@ -540,30 +502,12 @@ docker run -p 127.0.0.1:5000:5000 flask-app:v1  # Only localhost can access
 docker run -p 5000 flask-app:v1  # Docker assigns random port (e.g., 32768)
 ```
 
-### 4.3.1 DECISION CHECKPOINT — Phase 3 Complete
-
-**What you just saw:**
-- Two containers running: Flask app (port 5000) and Redis (internal port 6379)
-- Custom network `flask-net` enables Flask to resolve `redis` by name (automatic DNS)
-- Named volume `flask-data` persists uploads/cache across container restarts
-- Resource limits: 512 MB RAM, 1 CPU core (prevents runaway processes)
-- Health check: `curl localhost:5000/health` returns `{"status": "ok"}`
-
-**What it means:**
-- **Portable deployment** — same `docker run` command works on dev, staging, production
-- **Isolated processes** — Flask and Redis run in separate namespaces (can't interfere with host)
-- **Persistent data** — stopping containers doesn't lose Redis cache or uploaded files
-- **Automatic DNS** — Flask code uses `redis://redis:6379` (no hardcoded IPs)
-
-**What to do next:**
-→ **Persistent data needed?** Use named volumes (`-v mydata:/app/data`) for databases, uploads, caches
-→ **Development workflow?** Use bind mounts (`-v $(pwd):/app`) for live code reloading (avoid in production)
-→ **Secrets (API keys, passwords)?** Use environment variables (`-e SECRET_KEY=${SECRET_KEY}`) — NEVER bake into image
-→ **Multi-container app?** Move to Docker Compose (Ch.2) — managing `docker run` commands doesn't scale
+> 💡 **Run verdict:** Flask + Redis running with 512 MB memory cap, named volume persistence, and bridge-network DNS — same `docker run` works on dev, staging, and production.
+> ➡️ Persistent data and automatic restarts ready; proceed to Debug phase.
 
 ---
 
-## [Phase 4: DEBUG] Troubleshooting Containers
+## Troubleshooting Containers — Debug
 
 Debugging containers requires different tools than debugging local processes. The container filesystem is isolated, logs go to stdout, and network issues require inspecting Docker's virtual networking. Master these four commands: `logs`, `exec`, `inspect`, and `dive`.
 
@@ -704,26 +648,8 @@ docker inspect flask-api --format='{{.State.Health.Status}}'
 # healthy
 ```
 
-### 4.4.1 DECISION CHECKPOINT — Phase 4 Complete
-
-**What you just saw:**
-- Container crashed with `KeyError: 'REDIS_HOST'` — logs revealed missing environment variable
-- Fixed by adding `-e REDIS_HOST=redis` to `docker run` command
-- Exec'd into running container to verify: files present, dependencies installed, network connectivity works
-- Layer analysis showed image is well-optimized: 120 MB total (75 MB base + 45 MB packages + 1.2 KB code)
-- Dive tool confirmed no wasted space (no accidentally copied `venv/` or `.git/`)
-
-**What it means:**
-- **Logs are your first stop** — 80% of issues visible in `docker logs` (missing env vars, port conflicts, startup errors)
-- **Exec for live inspection** — verify files, test network connectivity, check running processes
-- **History for size issues** — identify bloated layers (usually: base image choice, missing `.dockerignore`, leftover build tools)
-- **Dive for deep analysis** — see exactly what files each layer added (catches accidentally copied secrets)
-
-**What to do next:**
-→ **Container won't start?** Check logs first: `docker logs <container>` — 80% of issues are here
-→ **Network issues?** Exec and ping: `docker exec <container> ping <other-container>` — verify DNS resolution
-→ **Image too large (>200 MB)?** Run `dive <image>` — look for `node_modules/`, `.git/`, `venv/` in layers
-→ **Build too slow?** Check cache hits: `docker build --progress=plain` — look for `CACHED` vs `RUN` messages
+> 💡 **Debug verdict:** Container logs and exec access identified missing env var in 90s — no local Python environment needed.
+> ➡️ Four-command toolkit (logs/exec/inspect/dive) covers 95% of container failures; chapter complete.
 
 ---
 

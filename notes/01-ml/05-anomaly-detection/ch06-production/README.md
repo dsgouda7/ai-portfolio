@@ -81,12 +81,6 @@ Containerize & serve:        Track live metrics:         Spot degradation:      
   • Prometheus metrics        • p99 > 100ms → SLA miss    • Min 14d interval          • → Cutover or alert
 ```
 
-**The workflow maps to this chapter:**
-- **Phase 1 (DEPLOY)** → §3 Production Pipeline, §4.1 Latency Budget
-- **Phase 2 (MONITOR)** → §4.2 PSI, §6 Full Monitoring Walkthrough, §7 Key Diagrams
-- **Phase 3 (DETECT)** → §4.3 Recall Degradation, §5 Act 1–2 (Drift Revealed)
-- **Phase 4 (RETRAIN)** → §4.4 Trigger Logic, §5 Act 3–4 (Retraining & Blue-Green)
-
 > 💡 **Usage note:** Phases 1–3 run continuously in production. Phase 4 fires only when drift/degradation triggers cross thresholds. Each phase has explicit decision criteria — no manual judgment calls during incidents.
 
 **Industry tooling reference:**
@@ -119,7 +113,7 @@ FraudShield handles **1,000 transactions per second** at peak (e.g., Black Frida
 
 ---
 
-## 3 · **[Phase 1: DEPLOY]** Production Pipeline at a Glance
+## 3 · Deploy: Production Pipeline at a Glance
 
 Before diving into the math, here is the full production data flow. Each numbered step has a deep-dive in the sections that follow.
 
@@ -172,7 +166,7 @@ Before diving into the math, here is the full production data flow. Each numbere
 
 ## 4 · The Math — Every Number Shown
 
-### 4.1 · **[Phase 1: DEPLOY]** Latency Budget: Allocating 100ms
+### 4.1 · Latency Budget: Allocating 100ms
 
 The end-to-end latency SLA is $T_{\text{budget}} = 100\text{ms}$. The pipeline has three sequential phases, each with a hard sub-budget:
 
@@ -205,11 +199,7 @@ You have a **15ms deficit**. Three options, evaluated in order of cost:
 
 **Rule of thumb**: allocate model inference at most 50% of the total budget. Feature computation and post-processing always consume more wall-clock time than expected once you add network round-trips to the feature store.
 
-> **Decision Checkpoint #1: Latency budget exceeded**  
-> **Scenario:** Model inference balloons from 45ms → 70ms after adding more trees to Isolation Forest.  
-> **Data:** Budget deficit = 70 + 30 + 15 = 115ms (15ms over SLA).  
-> **Decision:** Apply ONNX INT8 quantization to autoencoder (saves 9ms) + move 3 cross-features to feature store pre-compute (saves 8ms). New total: 115 − 17 = 98ms ✅ Within budget.  
-> **Why this matters:** Missing the 100ms SLA by even 20ms triggers card network penalties. Quantization trades 0.3% recall for 9ms — always worth it at this scale.
+> 💡 **Latency verdict:** 115ms → 98ms via INT8 quantization (−9ms) + pre-computing 3 cross-features to feature store (−8ms); 100ms SLA met with 2ms headroom.
 
 **Code Snippet — Phase 1: FastAPI Model Serving Endpoint**
 
@@ -297,7 +287,7 @@ async def health_check():
 
 ---
 
-### 4.2 · **[Phase 2: MONITOR]** PSI — Measuring Feature Drift
+### 4.2 · PSI — Measuring Feature Drift
 
 The **Population Stability Index** measures how much the distribution of a feature has shifted between training time (reference) and now (current):
 
@@ -332,11 +322,7 @@ $$\text{PSI} = 0.0705 + 0.0014 + 0.0268 + 0.0372 + 0.0141 = \mathbf{0.150}$$
 
 > 💡 **Why the log ratio?** $\ln(A_b/E_b)$ measures the relative entropy direction — positive when $A > E$ (current has more in this bin than expected), negative when $A < E$. Multiplying by $(A_b - E_b)$ ensures both overshoots and undershoots contribute positively to PSI. The structure is: $\text{PSI} \approx \text{KL}(A \| E) + \text{KL}(E \| A)$ — a symmetric measure of distributional distance, the same idea as Jensen–Shannon divergence.
 
-> **Decision Checkpoint #2: PSI threshold breach**  
-> **Scenario:** Month 2 monitoring shows Amount feature PSI = 0.31 (> 0.25 threshold).  
-> **Data:** Distribution shifted toward higher-value transactions — bins 3–5 (€200–€2000+) gained 17% share, bins 1–2 (< €200) lost share.  
-> **Decision:** Fire retraining trigger immediately. Do not wait for weekly recall evaluation — feature drift of this magnitude will degrade recall within 7–10 days.  
-> **Why this matters:** PSI is the **early warning**. Recall drops are the **damage report**. By the time recall hits 78%, you've already lost days of fraud detection quality. Act on PSI.
+> 💡 **Monitor verdict:** Amount feature PSI = 0.31 (> 0.25 threshold) at month 2; distribution shifted toward higher-value transactions — trigger retraining immediately, before recall falls below 78%.
 
 **Code Snippet — Phase 2: Prometheus Metrics Collection**
 
@@ -464,7 +450,7 @@ rate(fraud_predictions_total{decision="BLOCK"}[1h]) / rate(fraud_predictions_tot
 
 ---
 
-### 4.3 · **[Phase 3: DETECT]** Recall Degradation Model
+### 4.3 · Recall Degradation Model
 
 When fraud patterns shift, recall decays exponentially. A simplified model: if fraud tactics change by 20% per month, the fraction of current fraud that our training-time model has "seen" decays geometrically:
 
@@ -491,11 +477,7 @@ $$R(14) = 82\% \times (0.80)^{14/30} = 82\% \times 0.905 = 74.2\%$$
 
 > ⚠️ **This model is a planning tool, not a physical law.** Real drift rates depend on fraud ecosystem dynamics. The key insight is the shape: recall degrades fastest in the first weeks, then the rate slows as the remaining overlap between training and current fraud is more stable.
 
-> **Decision Checkpoint #3: Recall degradation detected**  
-> **Scenario:** Week 7 holdout evaluation shows recall = 76.8% (below 78% threshold). PSI for Amount = 0.24 (borderline). V14 (PCA component) PSI = 0.33 (significant).  
-> **Data:** Two signals converging — both PSI and recall thresholds breached within 3 days.  
-> **Decision:** Trigger retraining immediately. Investigation shows new fraud vector (account takeover) not present in training data. Model is blind to 15% of current fraud patterns.  
-> **Why this matters:** The 78% recall threshold is the safety margin before SLA breach (80% target). Once you hit 78%, you have ~5–7 days before falling below contract minimum. Delay = business impact.
+> 💡 **Detect verdict:** Week 7 recall = 76.8% (< 78% threshold) + V14 PSI = 0.33; new account-takeover fraud vector caused 15% recall blind spot — retrain triggered immediately.
 
 **Code Snippet — Phase 3: Drift Detection & Alert Logic**
 
@@ -625,7 +607,7 @@ if __name__ == "__main__":
 
 ---
 
-### 4.4 · **[Phase 4: RETRAIN]** Retraining Trigger Logic
+### 4.4 · Retraining Trigger Logic
 
 Two independent signals can fire the retraining pipeline. Either alone is sufficient:
 
@@ -663,11 +645,7 @@ retrain = should_retrain(psi_month2, recall_month2)
 
 PSI fires when feature distributions change, even before recall measurably degrades (labels are delayed). Recall fires even when PSI looks stable (concept drift — same feature distribution, but fraud behaviour within the distribution has changed). Together they cover both **covariate shift** and **concept drift**.
 
-> **Decision Checkpoint #4: Blue-green deployment decision**  
-> **Scenario:** Retraining complete. Shadow deployment runs for 48h. Green model: 81% recall @ 0.48% FPR, p99 latency = 91ms. Blue model: 71% recall @ 0.51% FPR, p99 latency = 87ms.  
-> **Data:** Green wins on both detection metrics (recall +10pp, FPR −0.03pp). Latency delta = +4ms (within 10ms tolerance).  
-> **Decision:** **Approve cutover.** Green becomes live at hour 50. Archive blue model to MLflow with tag "superseded_by_v1.4.0".  
-> **Why this matters:** The 48h shadow window provides 172k transaction samples — statistically significant. If green had shown recall < blue or p99 > 100ms, rollback to blue with alert for manual review. Never deploy a model worse than what's running.
+> 💡 **Retrain verdict:** Green model (81% recall @ 0.48% FPR, p99 = 91ms) beat blue (71% recall, 87ms) after 48h shadow on 172k transactions — cutover approved, blue archived to MLflow.
 
 **Code Snippet — Phase 4: Blue-Green Deployment with Kubernetes**
 

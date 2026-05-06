@@ -94,8 +94,6 @@ $$\boldsymbol{\theta}_{k+1} = \boldsymbol{\theta}_k - \eta \nabla f(\boldsymbol{
 > ⚠️ **Two ways to read this chapter:**
 > - **Theory-first (recommended for learning):** Read §0→§7 sequentially to understand gradients, Jacobians, and the chain rule, then use this workflow as your implementation reference
 > - **Workflow-first (practitioners with existing knowledge):** Use this diagram as a jump-to guide when implementing backpropagation from scratch or debugging autodiff issues
->
-> **Note:** Section numbers don't follow phase order because the chapter teaches concepts pedagogically (theory before application). The workflow below shows how to APPLY those concepts.
 
 **What you'll build by the end:** A complete training loop that computes forward activations layer-by-layer, caches intermediate values, then backpropagates gradients through the chain rule to update all weights simultaneously. This is the pattern underlying PyTorch's `.forward()` and `.backward()` methods.
 
@@ -121,12 +119,6 @@ CACHE: Store u₁, h₁, u₂, h₂, u₃        UPDATE: Wₗ ← Wₗ - η·∂
 ────────────────────────────────────────────────────────────────────────
                         LOOP: Repeat for each training batch
 ```
-
-**The workflow maps to these sections:**
-- **Phase 1 (FORWARD — Activation Computation)** → §5 Layer forward pass, §5.1 Numerical walkthrough (steps 1-3)
-- **Phase 1 (FORWARD — Intermediate Value Storage)** → §5.1 Caching u and h values (step 3 note)
-- **Phase 2 (BACKWARD — Gradient Computation via Chain Rule)** → §4 Matrix chain rule, §5 Layer backward pass, §5.1 Numerical walkthrough (steps 4-7)
-- **Phase 2 (BACKWARD — Parameter Updates)** → §1 Gradient descent update rule, §7 Hessian/curvature
 
 > 💡 **How to use this workflow:** Implement Phase 1 first (forward pass with caching). Verify your activations match expected shapes and values. Then implement Phase 2 (backward pass). Use numerical gradient checking (`(L(θ+ε) - L(θ-ε))/(2ε)`) to verify your analytic gradients before trusting the training loop. The sections above teach WHY each phase works; refer back here for WHAT to do when implementing.
 

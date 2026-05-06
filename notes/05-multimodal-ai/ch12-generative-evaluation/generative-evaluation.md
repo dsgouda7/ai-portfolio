@@ -96,17 +96,11 @@ Define evaluation goals:   Choose metric suite:        Run evaluation pipeline: 
                                                                                      model ignores prompts
 ```
 
-**The workflow maps to these sections:**
-- **Phase 1 (Identify)** → §2 Running Example (use case), §3 The Math (metric definitions)
-- **Phase 2 (Select)** → §3.1 FID, §3.3 CLIP Score, §3.4 LPIPS, §3.5 Precision/Recall, §7 When to Use This vs Alternatives
-- **Phase 3 (Compute)** → §5 Production Example (VisualForge evaluation pipeline)
-- **Phase 4 (Interpret)** → §5 (scorecard table), §6 Common Failure Modes
-
 > 💡 **How to use this workflow:** Complete Phase 1→2 to define your evaluation strategy, then run Phase 3 once you have generated images. Phase 4 is where you make the production decision — refer back to §6 Failure Modes if metrics contradict each other.
 
 ---
 
-### Phase 1: IDENTIFY — What to Measure
+### What to Measure
 
 **Goal:** Define evaluation priorities based on your use case and business constraints.
 
@@ -153,7 +147,7 @@ START: What's your use case?
 **Code snippet — Metric selection helper:**
 
 ```python
-# Phase 1: Define evaluation strategy based on use case
+# Define evaluation strategy based on use case
 def plan_evaluation(use_case: str,
                     primary_concern: str,
                     sample_count: int,
@@ -225,19 +219,12 @@ for warning in vf_plan['warnings']:
 
 > 🏭 **Industry standard:** OpenAI's DALL-E 3 evaluation uses FID (N=30k) + CLIP Score + human preference ratings (n=1000 human comparisons). Midjourney V6 uses HPSv2 + Aesthetic Predictor + manual QA on 500-image batches. Stability AI (SDXL) reports FID (N=50k) + CLIP Score + FID-CLIP harmonic mean.
 
-**Checkpoint 1: Metric selection validation**
-
-| Your goal | Metrics chosen | Sample budget | Ready? |
-|-----------|----------------|---------------|--------|
-| VisualForge: prove AI = freelancer quality | FID + CLIP + HPSv2 | N=500 initially | ⚠️ FID unstable — need N≥5k OR accept ±10 variance and use for relative comparison only |
-| Inpainting quality for product defect removal | LPIPS + CLIP | N=50 spot check | ✅ LPIPS works per-image, no large N needed |
-| Video ad generation (15s clips) | FVD + VBench temporal consistency | N=100 videos | ⚠️ FVD needs N≥1k for stability — spot-check only OR use VBench per-video metrics |
-
-**Decision:** If you have **N<5000 samples**, FID is unreliable in absolute terms but still valid for **relative comparisons** (e.g., Model A vs Model B, or same model with different guidance scales). Proceed to Phase 2 if your metric suite is determined.
+> 💡 **Metric selection verdict:** FID + CLIP Score + HPSv2 covers VisualForge quality, alignment, and preference goals — FID is unstable at N=500; use for relative comparisons only until N ≥ 5,000.
+> ➡️ Stable metric implementations are selected next to ensure reproducible cross-experiment comparisons.
 
 ---
 
-### Phase 2: SELECT — Choose Metric Implementations
+### Choose Metric Implementations
 
 **Goal:** Select stable, validated implementations for your chosen metrics from Phase 1.
 
@@ -256,7 +243,7 @@ for warning in vf_plan['warnings']:
 **Code snippet — Environment setup and implementation validation:**
 
 ```python
-# Phase 2: Install and validate metric implementations
+# Install and validate metric implementations
 import subprocess
 import sys
 
@@ -309,19 +296,12 @@ setup_metrics_env(['FID', 'CLIP Score', 'HPSv2'])
 
 > 🏭 **Industry standard:** Weights & Biases (W&B) provides unified metric tracking with `wandb.log({'fid': fid_score, 'clip_score': clip_mean})`. Google's Imagen paper uses `clean-fid` with Inception-v3 pool3 features at 299×299 resolution. Stable Diffusion XL evaluation uses `torch-fidelity` with 50k samples.
 
-**Checkpoint 2: Implementation validation**
-
-| Metric | Implementation | Validated? | Cross-check |
-|--------|----------------|------------|-------------|
-| FID | `torch-fidelity==0.3.0` | ✅ Inception-v3 pool3, 299×299 | Run on CIFAR-10 (known FID≈3.2 for real vs real) |
-| CLIP Score | `transformers`, `openai/clip-vit-base-patch32` | ✅ CLIP ViT-B/32 | Score "a photo of a dog" with dog image (expect >0.30) |
-| HPSv2 | Official checkpoint from GitHub | ✅ `HPS_v2_compressed.pt` loaded | Run on sample image (expect 3.5–4.5 range) |
-
-**Decision:** If validation checks pass, proceed to Phase 3. If cross-checks fail (e.g., CIFAR-10 real vs real gives FID>10), debug preprocessing — likely mismatch in image normalization or resize interpolation.
+> 💡 **Implementation verdict:** torch-fidelity FID, CLIP ViT-B/32, and HPSv2 checkpoint validated — all cross-checks pass, consistent implementations locked for all experiments.
+> ➡️ Evaluation pipeline is run on the full VisualForge spring-collection batch in the next section.
 
 ---
 
-### Phase 3: COMPUTE — Run Evaluation Pipeline
+### Run Evaluation Pipeline
 
 **Goal:** Generate evaluation dataset, compute metrics, and log results for reproducibility.
 
@@ -334,7 +314,7 @@ setup_metrics_env(['FID', 'CLIP Score', 'HPSv2'])
 **Code snippet — Production evaluation pipeline (VisualForge):**
 
 ```python
-# Phase 3: Full evaluation pipeline for VisualForge campaign batch
+# Full evaluation pipeline for VisualForge campaign batch
 import torch
 from torch_fidelity import calculate_metrics
 from transformers import CLIPProcessor, CLIPModel
@@ -527,20 +507,12 @@ print(json.dumps(results, indent=2))
 
 > 🏭 **Industry standard:** Stability AI's SDXL evaluation pipeline uses `torch-fidelity` with 50k samples, CLIP ViT-L/14 (not ViT-B/32), and Aesthetic Predictor v2.1. Images resized to 512×512 for FID (original training resolution). All metrics logged to Weights & Biases with per-checkpoint comparisons.
 
-**Checkpoint 3: Sanity checks before interpreting results**
-
-| Check | Expected | Actual | Status |
-|-------|----------|--------|--------|
-| FID sample count | N≥5000 for stable estimate | N=500 | ⚠️ Unstable (±10 variance) — use for relative comparison only |
-| CLIP Score distribution | Mean >0.25, std <0.15 | Mean=0.31, std=0.08 | ✅ Normal distribution, no outliers |
-| Image resolution match | Real and generated both 512×512 | Both 512×512 | ✅ Consistent preprocessing |
-| Prompt coverage | All generated images have prompts | 500/500 matched | ✅ Complete metadata |
-
-**Decision:** If sanity checks pass, proceed to Phase 4 interpretation. If FID sample count warning appears, note that absolute FID value has ±10 uncertainty — use only for comparing this model to alternatives, not as an absolute quality measure.
+> 💡 **Compute verdict:** FID=42.3, CLIP=0.31 (σ=0.08) on 500 images — preprocessing consistent, prompt coverage complete; FID sample-size warning noted for relative comparison use only.
+> ➡️ Metric scores are interpreted against quality thresholds in the go/no-go section.
 
 ---
 
-### Phase 4: INTERPRET — Make Go/No-Go Decision
+### Make Go/No-Go Decision
 
 **Goal:** Interpret metric scores against thresholds, identify failure modes, and make the production decision.
 
@@ -574,7 +546,7 @@ print(json.dumps(results, indent=2))
 **Code snippet — Interpret results and generate report:**
 
 ```python
-# Phase 4: Interpret evaluation results and make go/no-go decision
+# Interpret evaluation results and make go/no-go decision
 def interpret_results(results: dict, use_case: str = 'visualforge') -> dict:
     """
     Interpret evaluation metrics and generate actionable recommendations.
@@ -671,16 +643,8 @@ for rec in decision['recommendations']:
 
 > 🏭 **Industry standard:** Midjourney V6 uses HPSv2>4.2 + manual QA pass rate >90% as the release gate. OpenAI DALL-E 3 uses FID<20 (against LAION-5B subset) + CLIP Score>0.32 + human preference win rate >60% vs. DALL-E 2. Stable Diffusion XL uses FID<25 + Aesthetic Score>6.0/10 as the checkpoint selection criterion.
 
-**Checkpoint 4: Final decision with evidence**
-
-| Scenario | FID | CLIP | HPSv2 | Decision | Action |
-|----------|-----|------|-------|----------|--------|
-| VisualForge spring collection (actual) | 42.3 | 0.31 | 4.1 | ✅ PASS | Ship to creative director for manual QA spot-check (expect >80% approval) |
-| Undertrained model (hypothetical) | 87.5 | 0.18 | 3.2 | ❌ FAIL | Do not ship — retrain with more steps or better dataset |
-| High CFG overfitting (hypothetical) | 38.2 | 0.35 | 3.6 | ⚠️ MIXED | Technically correct but aesthetically poor → reduce CFG from 12.0 to 7.5, retest |
-| Prompt-agnostic model (hypothetical) | 44.1 | 0.21 | 4.0 | ⚠️ MIXED | Realistic images but ignores prompts → increase CFG guidance, verify CLIP conditioning |
-
-**Decision:** VisualForge spring collection **PASSES** automated quality gate (FID=42.3<50, CLIP=0.31>0.25, HPSv2=4.1>4.0). Proceed to manual creative director review (expect 80–90% approval rate based on historical correlation). Estimated time saved: 2 hours of manual review per 100-image batch.
+> 💡 **FID verdict:** FID 42.3 → CLIP 0.31 → HPSv2 4.1 — VisualForge spring collection passes all thresholds; ship to creative director for spot-check (expect ≥80% approval).
+> ➡️ CLIP similarity and HPSv2 confirm prompt alignment and aesthetic quality alongside distribution realism.
 
 ---
 
@@ -698,11 +662,9 @@ for rec in decision['recommendations']:
 
 ---
 
-## [Phase 1: IDENTIFY] 3 · The Math — What Each Metric Measures
+## 3 · The Math — What Each Metric Measures
 
 **Why evaluation math matters for VisualForge:** You need proof that your AI outputs match freelancer quality before replacing $600k/year of human work. "Looks good" isn't evidence. These metrics give you objective numbers you can defend to the CEO.
-
-> 💡 **Phase 1 mapping:** This section defines WHAT each metric measures — use it to identify which metrics answer your evaluation question from §1.5 Phase 1.
 
 ### 3.1 Fréchet Inception Distance (FID)
 
@@ -787,9 +749,7 @@ $$
 
 ---
 
-## [Phase 2: SELECT] 4 · Visual Intuition — Choosing the Right Metric
-
-> 💡 **Phase 2 mapping:** This section shows the trade-offs between metrics — use it to SELECT which metrics best fit your use case from §1.5 Phase 2.
+## 4 · Visual Intuition — Choosing the Right Metric
 
 ```
  GENERATIVE EVALUATION LANDSCAPE
@@ -836,9 +796,7 @@ True FID attained only at large N; small N inflates FID.
 
 ---
 
-## [Phase 3: COMPUTE] 5 · Production Example — Running the Evaluation Pipeline
-
-> 💡 **Phase 3 mapping:** This section shows HOW to compute metrics in production — implements the pipeline from §1.5 Phase 3.
+## 5 · Production Example — Running the Evaluation Pipeline
 
 **Automated quality gate for spring-collection batch (100 product images)**
 
@@ -897,9 +855,7 @@ print(f"Mean CLIP Score: {sum(clip_scores)/len(clip_scores):.3f} (target >0.25)"
 
 ---
 
-## [Phase 4: INTERPRET] 6 · Common Failure Modes — When Metrics Mislead
-
-> 💡 **Phase 4 mapping:** This section shows how to INTERPRET conflicting metrics — essential for making the go/no-go decision from §1.5 Phase 4.
+## 6 · Common Failure Modes — When Metrics Mislead
 
 **Failure-first pattern:** Evaluation metrics can mislead you — here's how they break and what to watch for.
 

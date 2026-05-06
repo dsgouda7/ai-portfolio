@@ -66,8 +66,6 @@ The only question is **how big a step?** The answer is the subject of this chapt
 > ⚠️ **Two ways to read this chapter:**
 > - **Theory-first (recommended for learning):** Read §0→§3 sequentially to understand the mathematical foundations, then use this workflow as your implementation reference
 > - **Workflow-first (practitioners with existing knowledge):** Use this diagram as a jump-to guide when implementing optimization algorithms
->
-> **Note:** Section numbers don't follow phase order because the chapter teaches concepts pedagogically (theory before application). The workflow below shows how to APPLY gradient descent in practice.
 
 **What you'll build by the end:** An optimization loop that converges to the best parameter value, with stopping criteria and learning rate validation. This is the algorithm that trains every ML model in this curriculum.
 
@@ -89,13 +87,7 @@ Pick starting point:         Evaluate gradient:          Apply update rule:     
     knowledge (e.g., 45°)      • Always verify sign
 ```
 
-**The workflow maps to these sections:**
-- **Phase 1 (INITIALIZE)** → §3.1 The update rule, §3.4 When the step is too large
-- **Phase 2 (COMPUTE)** → §3.2 Worked Example, §3.3 Why small steps work
-- **Phase 3 (UPDATE)** → §3.1 The update rule (application), §3.4 Step size analysis
-- **Phase 4 (CONVERGE)** → §3.6 Stopping criteria
-
-> 💡 **How to use this workflow:** Execute Phase 1 once at the start, then loop Phase 2→3→4 until Phase 4's stopping criteria trigger. The sections above teach WHY each phase works; refer back here for WHAT to do. Every ML optimizer (SGD, Adam, RMSprop) follows this exact 4-phase loop — only the Phase 3 update rule changes.
+> 💡 **How to use this workflow:** Execute Phase 1 once at the start, then loop Phase 2→3→4 until Phase 4's stopping criteria trigger. Every ML optimizer (SGD, Adam, RMSprop) follows this exact 4-phase loop — only the Phase 3 update rule changes.
 
 ---
 

@@ -2159,3 +2159,64 @@ Before publishing any chapter, verify each item:
 - [ ] Voice: second person, no academic register, dry humour once per major section maximum
 - [ ] Section headings: descriptive (state the conclusion, not just the topic)
 - [ ] Dataset: California Housing only — no synthetic data except toy 3–5 row subsets derived from real features
+
+---
+
+## Anti-Pattern: Meta-Navigation Overload
+
+> **Rule:** A chapter has exactly one narrative thread. Never create a section that maps one navigation model to another.
+
+**What it looks like (wrong):**
+
+A data-prep chapter (e.g., SmartVal AI's `ch00a`) running Acts 1–4 (Inspect → Audit → Transform → Validate) also adds:
+
+```markdown
+### 1.5 · The 4-Phase Practitioner Workflow
+
+**The workflow maps to this chapter:**
+- **Phase 1 (INSPECT)** → §3 Act 1, §3A.1 Understanding Skew
+- **Phase 2 (AUDIT)**   → §3 Act 2, §3.8 Multicollinearity, §3.9 VIF
+- **Phase 3 (TRANSFORM)** → §3.6 ColumnTransformer pipeline
+- **Phase 4 (VALIDATE)** → §3.2 Method 1, §3.3 Method 2, §3.5 Method 3
+```
+
+…plus headers like `### **[Phase 2: AUDIT]** Act 2 — The IQR Sweep`, plus a 20-line DECISION CHECKPOINT block after every act:
+
+```markdown
+### 3A.3 DECISION CHECKPOINT — Phase 1 Complete
+
+**What you just saw:**
+- `MedInc` skew = 1.47 → flagged for log transform
+
+**What it means:**
+- Two features need non-linear scaling before the model can train reliably
+
+**What to do next:**
+→ Apply `log1p` to `MedInc`, `AveRooms` before StandardScaler
+```
+
+The reader now tracks five indexes simultaneously: act numbers, phase numbers, phase labels, section numbers, and checkpoint numbers. The §1.5 mapping section is a table-of-contents inside the chapter body — it exists only because the chapter already has two competing navigation systems.
+
+**The fix:**
+
+Remove §1.5 entirely. Embed the stage name directly in the act title:
+
+```markdown
+### Act 2 — Audit: IQR Sweep on AveRooms and Population
+```
+
+Replace each DECISION CHECKPOINT block with two callout lines:
+
+```markdown
+> 💡 **Audit verdict:** `AveRooms` (IQR/σ = 4.1) and `Population` (skew = 18.6) need `log1p`. Expected MAE impact: −$3–5k.
+
+> ➡️ Act 3 applies the `log1p` + `StandardScaler` pipeline before Ch.01's linear regression baseline.
+```
+
+Fix broken section-number cross-references: replace `→ §5 Act 2` with a relative path (`→ [../ch01-linear-regression/](../ch01-linear-regression/)`).
+
+**Callout discipline for ML chapters:**
+- `> 💡 **[Stage] verdict:**` — one line after each act/stage concludes, states the decision and its metric impact (e.g., "Expected MAE impact: −$3–5k")
+- `> ➡️` — forward pointer when a transform or finding carries directly into the next chapter, with a named MAE or metric consequence
+- Never: a "DECISION CHECKPOINT" block with "What you just saw / What it means / What to do next" sub-headings
+- Never: a section that lists "Phase N → §X, §Y Act Z"

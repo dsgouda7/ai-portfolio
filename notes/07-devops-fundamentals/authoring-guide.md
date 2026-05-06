@@ -656,6 +656,44 @@ Before publishing any chapter:
 **Optional cloud sections:**
 - Labeled clearly: "Optional: Azure Deployment"
 - In supplemental notebooks: `notebook_supplement.ipynb_solution.ipynb` (reference) or `notebook_supplement.ipynb_exercise.ipynb` (practice)
+
+---
+
+## Anti-Pattern: Meta-Navigation Overload
+
+> **Rule:** A chapter has exactly one narrative thread. Never create a section mapping one navigation model to another.
+
+A chapter already has stage labels (WRITE → BUILD → RUN → DEBUG), section numbers (§4, §5), and the failure-first discovery arc. Mapping those models onto each other in a meta-section forces the reader to decode the map before reading the content. That's a context switch that doesn't teach anything.
+
+**What it looks like (wrong):**
+
+```markdown
+## CI/CD Pipeline Stages — Section Guide
+- **Phase 1 (BUILD)** → §3.1 Triggers, §3.3 Steps & Actions (lint + build Docker image)
+- **Phase 2 (TEST)** → §3.3 Steps (pytest + coverage), Industry tools (Codecov)
+- **Phase 3 (DEPLOY)** → §3.2 Jobs (staging → production), §3.4 Secrets
+
+## 3.3 · Steps & Actions **[Phase 1: BUILD]**
+```
+
+Two parallel navigation systems — the phase map redundantly describes what the section titles already say.
+
+**The fix:**
+
+Drop the phase→§ mapping block entirely. Drop the `[Phase N: LABEL]` suffix from section headers — the section title already names the stage. Replace each `DECISION CHECKPOINT` block (~20 lines of "What you just saw / What it means / What to do next") with a two-line callout:
+
+```markdown
+> 💡 **Containerization verdict:** Image build time 4m12s → 58s with layer caching; 0 "works on my machine" incidents across last 30 deploys.
+> ➡️ This layer cache strategy carries into the CI/CD build job in ch04.
+```
+
+**Callout discipline for DevOps chapters:**
+
+- `> 💡 **[Stage] verdict:**` — one line after each pipeline stage; states the measurable outcome (build time, deployment frequency, MTTR, incident count)
+- `> ➡️` — forward pointer when a pattern feeds the next chapter
+- Never: a "PIPELINE CHECKPOINT" or "DECISION CHECKPOINT" block
+- Never: a section listing "Phase N → §X, §Y Walkthrough B"
+- The section title is the stage name. `## Dockerfile Best Practices` does not need `[Phase 1: WRITE]` appended.
 - Never required for core learning outcomes
 
 ---

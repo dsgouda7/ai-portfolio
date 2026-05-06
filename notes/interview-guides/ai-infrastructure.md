@@ -174,20 +174,8 @@ Do you know the difference between TTFT (user-visible latency) and throughput (c
 
 ---
 
-### Quick Reference — Section 2 Summary
-
-| Topic | Key Insight | Common Mistake |
-|-------|-------------|----------------|
-| GPU Architecture | Bandwidth > compute for LLM inference | "More CUDA cores = faster" |
-| Memory | 7B BF16 = 14 GB + KV cache + activations | Forgetting KV cache growth |
-| Quantization | INT4 ~8× VRAM savings vs FP32 | "Quantization is free" (perplexity loss) |
-| Parallelism | Data parallel = gradient sync; Tensor parallel = weight shard | "More GPUs = linear speedup" |
-| Inference | KV cache avoids recomputing past tokens | Confusing prefill (compute-bound) with decode (memory-bound) |
-| Serving | vLLM for production, Ollama for dev | "Just use Ollama in production" |
-| Networking | All-reduce critical for DDP; NVLink >> PCIe | Forgetting inter-node bandwidth limits scaling |
-| Cloud | $/token at SLA, not $/GPU-hour | On-demand GPU for training = 60–80% waste |
-| MLOps | Checkpoint early and often on spot | "We'll add checkpointing later" |
-| Production | TTFT and P99 latency = user metrics; throughput = cost metric | Optimising throughput at cost of P99 |
+> 💡 **GPU sizing verdict:** TTFT is what users complain about; throughput is what accountants complain about. Optimize TTFT first.
+> ➡️ The Rapid-Fire Round at the end covers the most common follow-up questions interviewers use to probe depth.
 
 ---
 

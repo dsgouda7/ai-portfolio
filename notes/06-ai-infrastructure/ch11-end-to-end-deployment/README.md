@@ -156,15 +156,10 @@ Set up observability:          Load test production:          Configure autoscal
   • Alerts firing correctly      • Error rate: 0.1% ✅           • Under $15k budget ✅
 ```
 
-**The workflow maps to this chapter:**
-- **Phase 1 (CONTAINERIZE)** → §2 Dockerfile
-- **Phase 2 (KUBERNETES)** → §3 Kubernetes Manifests
-- **Phase 3 (DEPLOY)** → §7 Smoke Test + §3 (blue-green rollout details)
-- **Phase 4 (MONITOR)** → §4 Monitoring Setup
-- **Phase 5 (VALIDATE)** → §5 Performance Validation
-- **Phase 6 (SCALE)** → §3.3 HPA + §6 Cost Calculation
-
 > 💡 **Usage note:** Phases 1–3 are sequential (must containerize before deploying). Phases 4–6 can overlap — set up monitoring during deployment, run validation after first smoke test, configure HPA once baseline metrics are visible. The checkpoint after each phase tells you when to proceed.
+
+> 💡 **Deployment verdict:** Blue-green rollout completed in 8 min with zero dropped requests — all 6 constraints met in production ✅.
+> ➡️ This is the final chapter — all InferenceBase constraints satisfied. See grand-challenge.md for the constraint scorecard.
 
 ---
 

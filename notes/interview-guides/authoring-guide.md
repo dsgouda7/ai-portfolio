@@ -791,4 +791,48 @@ Each guide is anchored to a production system from its parent track:
 
 ---
 
+---
+
+## Anti-Pattern: Meta-Navigation Overload
+
+> **Rule:** Each guide has exactly one preparation thread. Never create a section that maps study phases to section numbers.
+
+**What it looks like (wrong):**
+
+```markdown
+## How to Study This Guide
+
+- **Week 1:** §1 Fundamentals, §3 ReAct & Agent Architecture, §5 RAG Pipelines
+- **Week 2:** §4 Orchestration Frameworks, §6 Vector Databases, §9 Safety
+- **Week 3 (mock sprint):** §10 Rapid-Fire, §8 Cost Optimization
+
+## SECTION 3 — ReAct & Agent Architecture
+
+### Quick Reference — Section 3 Summary
+| Topic | Key Insight | Common Mistake |
+| ReAct | ... | ... |
+```
+
+Three navigation models running simultaneously: week labels, `SECTION N` numbers, and a summary recap table after each section. Each forces a context switch before the reader reaches the content.
+
+**The fix:**
+
+Fold the study sequence into one "How to use this guide" paragraph at the top — delete it everywhere else. Replace `## SECTION N — Title` with plain descriptive headers: `## ReAct & Agent Architecture — What They're Testing`. Replace "Quick Reference — Section N Summary" tables with a single verdict callout at the close of the section:
+
+> 💡 **Gradient descent verdict:** If asked "explain backprop to a product manager", the answer is: "We measure how wrong the model is, then nudge every weight slightly in the direction that makes it less wrong. Do that 10,000 times."
+
+> ➡️ For the production angle on learning rate schedules, see [Cost & Latency Optimization](#cost--latency-optimization).
+
+**Callout discipline for interview guides:**
+
+- `> 💡 **[concept] verdict:**` — the one-sentence answer a hiring manager would want to hear
+- `> ➡️` — forward pointer to related concepts or deeper chapters
+- Never: a "STUDY CHECKPOINT" or "Quick Reference — Section N Summary" block with multiple sub-headings
+- Never: "Week N → §X, §Y, §Z" cross-reference tables
+- Never: `## SECTION N` or `## Ch.N` prefixes — ordinal tracking crowds out concept recall
+
+*Files currently affected: [agentic-ai.md](agentic-ai.md) (`## SECTION N` headers throughout), [ai-infrastructure.md](ai-infrastructure.md) (`### Quick Reference — Section 2 Summary` block), [interview-guide.md](interview-guide.md) (`## Ch.N` prefixes on all 19 sections).*
+
+---
+
 *Last updated: April 2026 — applies to all documents under `notes/InterviewGuides/`*

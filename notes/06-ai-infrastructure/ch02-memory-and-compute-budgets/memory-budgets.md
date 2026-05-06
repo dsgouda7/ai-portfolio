@@ -123,11 +123,6 @@ for each component:                                            quantization, or 
   and gradients                   fragmentation + safety         tradeoff — validate after!
 ```
 
-**The workflow maps to this chapter:**
-- **Phase 1 (CALCULATE)** → §3–6 (Parameter, KV Cache, Activation, Optimizer Memory)
-- **Phase 2 (CHECK)** → §7–9 (VRAM Budget Calculators + Step-by-Step)
-- **Phase 3 (OPTIMIZE)** → §11.5 (Hyperparameter Dial: batch, precision, seq_len)
-
 > ⚠️ **Two ways to read this chapter:**
 >
 > **Option A (Workflow-first)**: Read §1.5 → follow phase markers → run code snippets → hit decision checkpoints as they appear. Best for practitioners deploying models NOW.
@@ -137,6 +132,8 @@ for each component:                                            quantization, or 
 > **Both paths teach the same content** — workflow just reorganizes it by practitioner decision sequence.
 
 > 💡 **Usage note:** Phases 1–2 are always sequential (can't check fit without calculating first). Phase 3 is iterative — you may cycle through multiple optimizations (quantize → check → reduce batch → check) until model fits.
+
+> 💡 **Memory verdict:** 16GB params + 4GB KV cache + 2GB activations = 22GB — fits RTX 4090 24GB with 2GB headroom (batch=1 only; quantization needed for batch growth) ✅.
 
 ---
 
@@ -917,12 +914,6 @@ Result: ✅ Realistic throughput expectations set!
 ```
 
 **🔄 How the workflow helped:**
-
-The **3-phase workflow** (§1.5) transformed this chapter from formula memorization into actionable deployment process:
-
-1. **Phase 1 (CALCULATE)**: Broke down mysterious "model doesn't fit" errors into specific components (params, KV cache, activations)
-2. **Phase 2 (CHECK)**: Provided go/no-go decision points BEFORE ordering expensive hardware
-3. **Phase 3 (OPTIMIZE)**: Gave concrete levers (batch, precision, seq_len) with quantified tradeoffs
 
 **Before workflow approach:**
 - "Model OOMs — no idea why or how to fix"

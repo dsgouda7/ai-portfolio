@@ -2019,6 +2019,48 @@ A: No! Add § 0 Challenge and Progress Check sections around existing content. T
 
 ---
 
+## Anti-Pattern: Meta-Navigation Overload
+
+> **Rule:** A chapter has exactly one narrative thread. Never create a section mapping one navigation model to another.
+
+**What it looks like (wrong):**
+
+```markdown
+## 1.5 · The Practitioner Workflow — Your 5-Phase Messaging Architecture
+
+> **Note:** Section numbers don't follow phase order because the chapter teaches
+> concepts pedagogically. The workflow below shows how to APPLY those concepts.
+
+- **Phase 1 (TOPOLOGY)** → §3 The Architecture, §2 Running Example
+- **Phase 2 (BROKER)**   → §3 Message Bus Options
+- **Phase 3 (PRODUCERS)** → §4 How It Works
+...
+
+### [Phase 2: BROKER] Configure the Message Bus
+```
+
+This forces readers to maintain two coordinate systems (phases vs. section numbers) simultaneously. When the section text then says "as we discussed in Phase 1" it adds a third lookup.
+
+**The fix:**
+
+Remove the phase→section mapping block entirely. Embed stage context directly in the section title and a single forward pointer:
+
+```markdown
+## 3 · The Message Bus — Choose Your Broker Before Writing a Single Producer
+
+> ➡️ Once you've chosen the broker topology (here), producers (§4) and consumers (§5) wire directly to it.
+```
+
+**Callout discipline for multi-agent chapters:**
+
+- `> 💡 **Decomposition verdict:**` — one line after each orchestration stage; states throughput/SLA impact
+  - Example: `> 💡 **Decomposition verdict:** Single-agent baseline processed 120 POs/day hitting 8k context limit; three-agent decomposition (intake + negotiation + approval) reaches 890 POs/day — 7.4× throughput, context per agent stays <2k.`
+- `> ➡️` — forward pointer when a pattern feeds the next chapter
+- Never: a named "ORCHESTRATION CHECKPOINT" or "DECISION CHECKPOINT" subsection header
+- Never: a section listing "Phase N → §X, §Y" (this is a second navigation model grafted onto the first)
+
+---
+
 ## See Also
 
 - [notes/authoring-guidelines.md](../authoring-guidelines.md) — Universal authoring conventions

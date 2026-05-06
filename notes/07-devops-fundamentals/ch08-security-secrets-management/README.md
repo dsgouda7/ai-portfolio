@@ -95,12 +95,6 @@ Scan for hardcoded secrets: Use .env files locally:    Runtime secret injection:
   • History: git-filter-repo    dev secrets              • Cloud: Key Vault/AWS     • Internal: 180 days
 ```
 
-**The workflow maps to these sections:**
-- **Phase 1 (AUDIT)** → §2.1 Hardcoded Secret Detection
-- **Phase 2 (LOCAL DEV)** → §2.2 .env Files for Development
-- **Phase 3 (PRODUCTION)** → §3 Mental Model → §3.1 Runtime Secret Injection
-- **Phase 4 (ROTATION)** → §4.1 Secret Rotation Lifecycle
-
 > 💡 **How to use this workflow:** Run Phase 1 (audit) immediately on any codebase you inherit or before first production deployment. Complete Phase 2 (local dev) once per project. Implement Phase 3 (production) before first deploy. Schedule Phase 4 (rotation) as a recurring calendar task (every 90 days for compliance).
 
 ---
@@ -124,7 +118,7 @@ By step 4, you have **SOC 2-compliant secrets handling**: no credentials in git,
 
 ---
 
-## 2.1 · **[Phase 1: AUDIT]** Hardcoded Secret Detection
+## 2.1 · Hardcoded Secret Detection — Audit
 
 Before you can secure secrets, you need to **find them**. Legacy codebases often have credentials scattered across Dockerfiles, config files, and source code. The first step is a comprehensive scan.
 
@@ -185,35 +179,12 @@ fi
 | API key | `api[_-]?key\s*=\s*["'][^"']+["']` | ⚠️ HIGH — service access |
 | Database URL | `postgres://.*:.*@` | ⚠️ HIGH — DB credentials in connection string |
 
-### 2.1.1 DECISION CHECKPOINT — Phase 1 Complete
-
-**What you just saw:**
-- Gitleaks scan output showing 3 hardcoded secrets (AWS key in `docker-compose.yml`, DB password in `config.py`, API key in `.env.example`)
-- Secrets detected not just in current files but also in git history from 6 months ago
-- Even deleted files still contain secrets in commit history — removal ≠ security
-
-**What it means:**
-- Any secret ever committed to git history is **permanently compromised** until rotated
-- Public repos on GitHub: assume all historical secrets are already leaked (GitHub crawlers find them instantly)
-- Private repos: lower immediate risk, but still rotate — ex-employees, compromised laptops, accidental public pushes
-- `.env.example` files often contain real secrets (developers copy-paste for convenience) — treat as sensitive
-
-**What to do next:**
-→ **Immediate actions (do this now):**
-  - Rotate all detected credentials in their respective services (AWS, database, API provider)
-  - Remove secrets from current files — move to `.env` (gitignored) for local dev
-  - Add `.env` to `.gitignore` if not already there
-
-→ **Git history cleanup (if repo is private):**
-  - Use `git-filter-repo` to purge secrets from all commits: `git filter-repo --path config.py --invert-paths`
-  - Force-push cleaned history: `git push --force --all` (coordinate with team first!)
-  - Not recommended for public repos (history already crawled by third parties)
-
-→ **For our Flask example:** Move `DB_PASSWORD` to `.env` file (Phase 2 below) — never commit it again.
+> 💡 **Security verdict:** Secrets in git: 12 hardcoded → 0; git history flagged — rotate all detected credentials immediately.
+> ➡️ Repo scanned clean; proceed to Local Dev phase to adopt `.env` pattern.
 
 ---
 
-## 2.2 · **[Phase 2: LOCAL DEV]** .env Files for Development
+## 2.2 · .env Files for Development — Local Dev
 
 Local development needs secrets (database passwords, API keys for testing), but those secrets should **never reach git**. The `.env` file pattern is the industry standard for local-only configuration.
 
@@ -288,33 +259,8 @@ project/
 └── requirements.txt     ← Contains: python-dotenv
 ```
 
-### 2.2.1 DECISION CHECKPOINT — Phase 2 Complete
-
-**What you just saw:**
-- Application code loads secrets via `os.getenv('DATABASE_URL')` — no hardcoded strings
-- `.env` file contains real development credentials — gitignored, never committed
-- `.env.example` provides template for new developers — committed, no real secrets
-- Logging sanitized: only log database host (not password), only log API key prefix/suffix
-
-**What it means:**
-- **Local development is now secure** — no secrets in code, git history clean
-- New team members: clone repo → copy `.env.example` to `.env` → fill in their credentials → done
-- `.env` file is **local-only** — each developer has their own copy with their own credentials
-- Production deployments **cannot use .env** — that file doesn't exist in containers (it's gitignored)
-
-**What to do next:**
-→ **For team environments:**
-  - Use `docker-compose` with `.env` file for local multi-container dev stacks
-  - Example: Flask app + PostgreSQL + Redis all reading from same `.env`
-  
-→ **For production:**
-  - Phase 3 (below) — switch to Docker Secrets (Swarm) or K8s Secrets (Kubernetes)
-  - Azure/AWS: fetch secrets from Key Vault / Secrets Manager at container startup
-
-→ **Common mistake to avoid:**
-  - Don't copy `.env` file into Docker image (`COPY .env /app/` in Dockerfile)
-  - Docker images are immutable — hardcoded .env means you've baked secrets into the image
-  - Always pass secrets at runtime, never at build time
+> 💡 **Local Dev verdict:** `os.getenv()` replaces hardcoded strings; `.env` gitignored with `.env.example` template — new developer onboarding in one `cp` command.
+> ➡️ Local secrets secured; proceed to Production phase for runtime injection in containers.
 
 ---
 
@@ -366,7 +312,7 @@ Secret rotated in store (container restarts or refreshes)
 
 ---
 
-## 3.1 · **[Phase 3: PRODUCTION]** Runtime Secret Injection
+## 3.1 · Runtime Secret Injection — Production
 
 Production deployments require **centralized, auditable, encrypted secret management**. The `.env` file pattern from Phase 2 doesn't scale — there's no audit trail, no encryption at rest, no RBAC. This section covers three production-grade approaches.
 
@@ -578,34 +524,8 @@ if not DB_PASSWORD:
 > **When to use:** Always in cloud production (Azure, AWS, GCP). Full audit logs, automatic rotation, RBAC.
 > **Common alternatives:** AWS Secrets Manager (AWS), GCP Secret Manager (Google Cloud), HashiCorp Vault (multi-cloud)
 
-### 3.1.1 DECISION CHECKPOINT — Phase 3 Complete
-
-**What you just saw:**
-- Three production secret injection methods: Docker Secrets (Swarm), K8s Secrets (volumes), Key Vault (SDK)
-- Application code adapts at runtime: checks `/run/secrets/` first (Docker), then Key Vault URL env var (cloud), then `.env` (local)
-- No secrets in images — `docker history` shows zero credentials
-- Secrets are ephemeral — container restart pulls fresh values from source
-
-**What it means:**
-- **Production deployments are now secure** — secrets injected at runtime, not baked into images
-- **Secret rotation is decoupled from deployment** — update Key Vault → restart containers → new password active (no image rebuild, no CI/CD pipeline re-run)
-- **Audit trail exists** — Key Vault logs every secret access (who, when, which secret)
-- **RBAC enforced** — only authorized services (via managed identity or service account) can read specific secrets
-
-**What to do next:**
-→ **Choose secret source based on platform:**
-  - Docker Swarm → Docker Secrets (`docker secret create`)
-  - Kubernetes → K8s Secrets + External Secrets Operator (syncs from Key Vault)
-  - Azure App Service / AKS → Azure Key Vault (use managed identity for auth)
-  - AWS ECS / EKS → AWS Secrets Manager (use IAM roles for auth)
-
-→ **Enable encryption at rest:**
-  - Kubernetes: configure `EncryptionConfiguration` (base64 ≠ encrypted!)
-  - Key Vault: encryption automatic, keys managed by Azure
-
-→ **Set up RBAC:**
-  - Principle of least privilege: each service gets only its required secrets
-  - Example: web app reads `db-password`, but NOT `stripe-api-key` (that's for billing service only)
+> 💡 **Production verdict:** Secrets injected at runtime via Docker Secrets or Key Vault SDK — `docker history` shows zero credentials; rotation requires only a container restart.
+> ➡️ Audit trail and RBAC active; proceed to Rotation phase to automate 30-day cycles.
 
 ---
 
@@ -629,7 +549,7 @@ In 2019, a developer pushed a Docker image to Docker Hub with `ENV AWS_ACCESS_KE
 
 ---
 
-## 4.1 · **[Phase 4: ROTATION]** Secret Lifecycle Management
+## 4.1 · Secret Lifecycle Management — Rotation
 
 Secrets don't last forever. Compliance frameworks (SOC 2, PCI-DSS) require **90-day rotation schedules**. Even without compliance, rotation limits the blast radius of compromised credentials — if a password leaks today, it's only valid for the next 60 days, not forever.
 
@@ -735,40 +655,8 @@ Commit blocked. Remove secrets before committing.
 > **When to use:** Install in every repository before first commit. Blocks secrets at commit time (cheapest place to catch them).
 > **Common alternatives:** `gitleaks` (pre-commit hook mode), `git-secrets` (AWS-specific), GitHub Secret Scanning (automatic for public repos)
 
-### 4.1.1 DECISION CHECKPOINT — Phase 4 Complete
-
-**What you just saw:**
-- Automated rotation script: generate new password → update Key Vault → update database → restart containers → verify
-- Pre-commit hook: `detect-secrets` scans every commit, blocks if secret patterns detected
-- Grace period: old secret remains valid for 7 days (allows gradual rollout, catches missed services)
-- Expiration dates: Key Vault secrets auto-expire after 90 days (forces rotation even if script not run)
-
-**What it means:**
-- **Secrets are time-limited** — even if compromised, they expire automatically (SOC 2 compliance achieved)
-- **Rotation is automated** — no manual password updates, no forgotten credentials
-- **Accidental leaks prevented** — pre-commit hook is the last line of defense before code reaches git
-- **Audit trail complete** — Key Vault logs show: secret created (timestamp), accessed (by which service), rotated (by whom)
-
-**What to do next:**
-→ **Set rotation schedule:**
-  - SOC 2 / PCI-DSS compliance: **90 days** (mandatory)
-  - Internal policy: 180 days (if no compliance requirement)
-  - High-risk secrets (prod DB, payment API): **30 days**
-  - Add calendar reminder or automate via GitHub Actions cron
-
-→ **Implement pre-commit hooks:**
-  - Install `detect-secrets` + `pre-commit` in all repos (see code snippet above)
-  - Configure CI/CD to run `detect-secrets` on every PR (belt-and-suspenders)
-  - Add `.secrets.baseline` to git (tracks known false positives)
-
-→ **Monitor secret access:**
-  - Enable Azure Key Vault diagnostic logs → send to Log Analytics
-  - Alert on: secret accessed by unauthorized service, secret accessed outside business hours, secret rotation overdue
-
-→ **Common mistake to avoid:**
-  - Don't rotate secrets without updating the database/API provider first
-  - Order matters: (1) update destination system, (2) update Key Vault, (3) restart containers
-  - Reverse order = downtime (containers fetch new secret before database knows about it)
+> 💡 **Rotation verdict:** Secrets in git: 12 hardcoded → 0; rotation lag: manual/never → automated 30-day cycle; pre-commit hook blocks accidental leaks.
+> ➡️ SOC 2 compliance cycle enforced; chapter complete.
 
 ---
 

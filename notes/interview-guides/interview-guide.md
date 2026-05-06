@@ -18,7 +18,7 @@ This guide mirrors the progression of the ML track chapters. For deeper context 
 
 > 💡 **How to use the junior/senior answer comparisons** — Each question below includes a junior-level answer and a senior-level answer. Junior answers are technically correct but surface-level. Senior answers demonstrate production experience, failure awareness, and trade-off reasoning. Hiring managers at FAANG and growth-stage AI companies distinguish these instantly. Study the DIFFERENCE between the two, not just the senior answer.
 
-## Ch.1 — Linear Regression
+## Linear Regression
 
 | Must know | Likely asked | Trap to avoid |
 |---|---|---|
@@ -31,7 +31,7 @@ This guide mirrors the progression of the ML track chapters. For deeper context 
 
 ---
 
-## Ch.2 — Logistic Regression
+## Logistic Regression
 
 | Must know | Likely asked | Trap to avoid |
 |---|---|---|
@@ -45,7 +45,7 @@ This guide mirrors the progression of the ML track chapters. For deeper context 
 
 ---
 
-## Ch.3 — The XOR Problem
+## The XOR Problem
 
 | Must know | Likely asked | Trap to avoid |
 |---|---|---|
@@ -57,7 +57,7 @@ This guide mirrors the progression of the ML track chapters. For deeper context 
 
 ---
 
-## Ch.4 — Neural Networks
+## Neural Networks
 
 | Must know | Likely asked | Trap to avoid |
 |---|---|---|
@@ -71,7 +71,7 @@ This guide mirrors the progression of the ML track chapters. For deeper context 
 
 ---
 
-## Ch.5 — Backprop & Optimisers
+## Backprop & Optimisers
 
 | Must know | Likely asked | Trap to avoid |
 |---|---|---|
@@ -85,7 +85,7 @@ This guide mirrors the progression of the ML track chapters. For deeper context 
 
 ---
 
-## Ch.6 — Regularisation
+## Regularisation
 
 | Must know | Likely asked | Trap to avoid |
 |---|---|---|
@@ -99,7 +99,7 @@ This guide mirrors the progression of the ML track chapters. For deeper context 
 
 ---
 
-## Ch.7 — Convolutional Neural Networks
+## Convolutional Neural Networks
 
 | Must know | Likely asked | Trap to avoid |
 |---|---|---|
@@ -113,7 +113,7 @@ This guide mirrors the progression of the ML track chapters. For deeper context 
 
 ---
 
-## Ch.8 — RNNs & LSTMs
+## RNNs & LSTMs
 
 | Must know | Likely asked | Trap to avoid |
 |---|---|---|
@@ -126,7 +126,7 @@ This guide mirrors the progression of the ML track chapters. For deeper context 
 
 ---
 
-## Ch.9 — Metrics
+## Metrics
 
 | Must know | Likely asked | Trap to avoid |
 |---|---|---|
@@ -139,7 +139,7 @@ This guide mirrors the progression of the ML track chapters. For deeper context 
 
 ---
 
-## Ch.10 — Classical Classifiers
+## Classical Classifiers
 
 | Must know | Likely asked | Trap to avoid |
 |---|---|---|
@@ -152,7 +152,7 @@ This guide mirrors the progression of the ML track chapters. For deeper context 
 
 ---
 
-## Ch.11 — SVM & Ensembles
+## SVM & Ensembles
 
 | Must know | Likely asked | Trap to avoid |
 |---|---|---|
@@ -165,7 +165,7 @@ This guide mirrors the progression of the ML track chapters. For deeper context 
 
 ---
 
-## Ch.12 — Clustering
+## Clustering
 
 | Must know | Likely asked | Trap to avoid |
 |---|---|---|
@@ -178,7 +178,7 @@ This guide mirrors the progression of the ML track chapters. For deeper context 
 
 ---
 
-## Ch.13 — Dimensionality Reduction
+## Dimensionality Reduction
 
 | Must know | Likely asked | Trap to avoid |
 |---|---|---|
@@ -190,7 +190,7 @@ This guide mirrors the progression of the ML track chapters. For deeper context 
 
 ---
 
-## Ch.14 — Unsupervised Metrics
+## Unsupervised Metrics
 
 | Must know | Likely asked | Trap to avoid |
 |---|---|---|
@@ -202,7 +202,7 @@ This guide mirrors the progression of the ML track chapters. For deeper context 
 
 ---
 
-## Ch.15 — MLE & Loss Functions
+## MLE & Loss Functions
 
 | Must know | Likely asked | Trap to avoid |
 |---|---|---|
@@ -214,7 +214,7 @@ This guide mirrors the progression of the ML track chapters. For deeper context 
 
 ---
 
-## Ch.16 — TensorBoard
+## TensorBoard
 
 | Must know | Likely asked | Trap to avoid |
 |---|---|---|
@@ -226,7 +226,7 @@ This guide mirrors the progression of the ML track chapters. For deeper context 
 
 ---
 
-## Ch.17 — Sequences to Attention
+## Sequences to Attention
 
 | Must know | Likely asked | Trap to avoid |
 |---|---|---|
@@ -238,7 +238,7 @@ This guide mirrors the progression of the ML track chapters. For deeper context 
 
 ---
 
-## Ch.18 — Transformers
+## Transformers
 
 | Must know | Likely asked | Trap to avoid |
 |---|---|---|
@@ -253,7 +253,7 @@ This guide mirrors the progression of the ML track chapters. For deeper context 
 
 ---
 
-## Ch.19 — Hyperparameter Tuning
+## Hyperparameter Tuning
 
 | Must know | Likely asked | Trap to avoid |
 |---|---|---|

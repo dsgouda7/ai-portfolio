@@ -121,8 +121,6 @@ LoRA fine-tuning:  freeze W, train ΔW = A·B  (0.1–1% of params, ~16–24 GB 
 > ⚠️ **Two ways to read this chapter:**
 > - **Theory-first (recommended for learning):** Read §0→§9 sequentially to understand the concepts, then use this workflow as your reference
 > - **Workflow-first (practitioners with existing knowledge):** Use this diagram as a jump-to guide when working with real models
->
-> **Note:** Section numbers don't follow phase order because the chapter teaches concepts pedagogically (theory before application). The workflow below shows how to APPLY those concepts.
 
 **What you'll build by the end:** A production-ready LoRA adapter that solves your specific task (brand voice, domain formatting, or distillation) with 0.1–1% of full fine-tuning cost, validated through A/B testing against the base model.
 
@@ -143,18 +141,11 @@ Fine-tune or prompt?         Curate dataset:             Set LoRA hyperparams:  
   NO → RAG ✓                   • Negatives: 10%+           • Check target_modules      • Reduce epochs             • Neutral? A/B test
 ```
 
-**The workflow maps to these sections:**
-- **Phase 1 (DECIDE)** → §3 Decision Tree, §2 RAG vs Fine-Tuning
-- **Phase 2 (PREPARE)** → §6 Step 2 (Dataset), §1.5.2 below
-- **Phase 3 (CONFIGURE)** → §4 Math (LoRA), §5 QLoRA, §6 Step 3 (Hyperparameters)
-- **Phase 4 (TRAIN)** → §6 Step 4 (Training), §7 Code Skeleton
-- **Phase 5 (EVALUATE)** → §6 Step 5 (Evaluation), §9 PizzaBot Connection
-
 > 💡 **How to use this workflow:** Complete Phase 1→2→3 in order, then run Phase 4 (training) while monitoring Phase 5 metrics. The sections above teach WHY each phase works; refer back here for WHAT to do.
 
 ---
 
-### 1.5.1 Phase 1: DECIDE — When to Fine-Tune **[Maps to §3]**
+### 1.5.1 Phase 1: DECIDE — When to Fine-Tune
 
 **The first question isn't "how do I fine-tune?" — it's "should I fine-tune at all?"**
 
@@ -270,7 +261,7 @@ def should_fine_tune(problem_type, base_model_score, budget, timeline):
 
 ---
 
-### 1.5.2 Phase 2: PREPARE — Dataset Quality Gates **[Maps to §6 Step 2]**
+### 1.5.2 Phase 2: PREPARE — Dataset Quality Gates
 
 **The quality of your training data determines 80% of fine-tuning success.** 500 high-quality examples outperform 10,000 mediocre ones.
 
@@ -483,30 +474,12 @@ Final dataset:
 
 ---
 
-### 1.5.2.1 DECISION CHECKPOINT — Phase 2 Complete
-
-**What you just saw:**
-- Deduplication: 847 → 823 examples (97.2% unique)
-- Length filtering: median 187 tokens (target: 50–500)
-- Negative examples: 11.9% of dataset (target: ≥10%)
-- Format validation: 99.5% pass rate (3/612 errors)
-- Final split: 548 train / 61 validation
-
-**What it means:**
-- **High uniqueness (97.2%)**: Low risk of overfitting to repeated examples
-- **Good length distribution**: Examples have enough context without being verbose
-- **Sufficient negatives**: Model will learn boundaries (what NOT to say)
-- **Clean format**: Ready for training without preprocessing errors
-
-**What to do next:**
-→ **Proceed to Phase 3 (CONFIGURE):** Dataset quality gates passed → move to LoRA hyperparameter selection
-→ **If dedup <95%:** Strengthen deduplication logic (fuzzy matching, semantic similarity)
-→ **If negatives <10%:** Manually curate 50–100 bad response examples to teach boundaries
-→ **For PizzaBot:** 548 examples of Mamma Rosa brand voice → sufficient for style fine-tuning ✓
+> 💡 **Prepare verdict:** 823 examples pass all quality gates — 97.2% unique, 11.9% negatives, median 187 tokens — yielding a 548/61 train-validation split.
+> ➡️ Dropping below 500 unique examples or below 10% negatives risks overfitting to positive outputs; the model learns "be warm" but not "don't be sycophantic."
 
 ---
 
-### 1.5.3 Phase 3: CONFIGURE — LoRA Hyperparameter Selection **[Maps to §4, §5, §6 Step 3]**
+### 1.5.3 Phase 3: CONFIGURE — LoRA Hyperparameter Selection
 
 **The three dials that control LoRA adaptation: rank `r`, scaling `alpha`, and target modules.**
 
@@ -679,29 +652,12 @@ Reasoning:
 
 ---
 
-### 1.5.3.1 DECISION CHECKPOINT — Phase 3 Complete
-
-**What you just configured:**
-- **Rank r=16**: 16.8M trainable params (0.24% of base model)
-- **Alpha=32**: Standard 2×r scaling
-- **Target modules**: `q_proj`, `v_proj` (attention layers only)
-- **Dropout=0.05**: Standard regularization
-
-**What it means:**
-- **0.24% params**: 400× fewer parameters than full fine-tuning → fits on single GPU
-- **Attention-only**: Sufficient for style adaptation (brand voice) without FFN overhead
-- **r=16 sweet spot**: Not too small (avoids underfitting), not too large (avoids overfitting on 548 examples)
-- **Standard dropout**: Balanced regularization for medium-sized dataset
-
-**What to do next:**
-→ **Proceed to Phase 4 (TRAIN):** Configuration validated → begin training loop
-→ **If underfitting later (eval loss not decreasing):** Increase r → 32 or add FFN modules
-→ **If overfitting (train loss <<eval loss):** Reduce r → 8 or increase dropout → 0.1
-→ **For PizzaBot:** Attention-only LoRA → sufficient for brand voice fine-tuning ✓
+> 💡 **Configure verdict:** LoRA rank=16 targets attention q/v projections — 16.8 M trainable parameters (0.24% of base model), fits on a single 24 GB GPU.
+> ➡️ If eval loss plateaus above 1.8 after 50 steps, increase r to 32 or add FFN modules; if it drops below 1.0 before epoch 1 ends, reduce epochs or raise dropout to 0.1.
 
 ---
 
-### 1.5.4 Phase 4: TRAIN — Training Loop & Monitoring **[Maps to §6 Step 4, §7]**
+### 1.5.4 Phase 4: TRAIN — Training Loop & Monitoring
 
 **Training LoRA adapters requires careful monitoring of train/eval loss curves and hyperparameter scheduling.**
 
@@ -887,30 +843,12 @@ Training complete! Best model from step 50 (eval_loss=1.501) loaded.
 
 ---
 
-### 1.5.4.1 DECISION CHECKPOINT — Phase 4 Complete
-
-**What you just saw:**
-- **Best eval loss**: 1.501 at step 50 (49% through training)
-- **Final eval loss**: 1.589 (↑5.9% from best)
-- **Train loss**: 0.734 (much lower than eval → overfitting)
-- **LR schedule**: Cosine decay from 2e-4 → 1e-5 working correctly
-- **Training time**: ~45 minutes on single A100
-
-**What it means:**
-- **Overfitting after step 50**: Eval loss rising while train loss falling → model memorizing training data
-- **Early stopping would help**: Could have stopped at step 50, saving 50% of training time
-- **Best model saved**: Trainer automatically loaded checkpoint from step 50 ✓
-- **Loss convergence**: Train loss <1.0 indicates model learned the brand voice pattern
-
-**What to do next:**
-→ **Proceed to Phase 5 (EVALUATE):** Model trained → validate on held-out test set and A/B test
-→ **If still overfitting:** Next iteration: reduce epochs 3→2 or increase dropout 0.05→0.10
-→ **If underfitting (eval loss not decreasing):** Next iteration: increase r 16→32 or reduce dropout
-→ **For PizzaBot:** Eval loss 1.501 → proceed to quality evaluation and production A/B test ✓
+> 💡 **Train verdict:** Best eval loss 1.501 reached at step 50 (epoch 1.5) — train loss 0.734 diverging from eval signals overfitting; best checkpoint saved automatically.
+> ➡️ Early stopping would have saved ~50% of compute; next run, set `load_best_model_at_end=True` with `metric_for_best_model="eval_loss"` to exit at step 50 automatically.
 
 ---
 
-### 1.5.5 Phase 5: EVALUATE — Production Validation **[Maps to §6 Step 5, §9]**
+### 1.5.5 Phase 5: EVALUATE — Production Validation
 
 **The final phase: does the fine-tuned model actually perform better than the base model in production?**
 
@@ -1214,27 +1152,8 @@ Deployment Checklist (6/6 passed):
 
 ---
 
-### 1.5.5.1 DECISION CHECKPOINT — Phase 5 Complete
-
-**What you just saw:**
-- **Perplexity**: 3.847 → 2.215 (42.4% improvement)
-- **Brand voice match**: 68.3% → 94.7% (+26.4 percentage points)
-- **Human ratings**: 3.24 → 4.68 (+1.44 points on 1–5 scale)
-- **Conversion rate**: 28.0% → 30.0% (+2.0 percentage points, p=0.018)
-- **AOV**: $40.00 → $41.00 (+$1.00)
-- **Revenue lift**: +$5,500 in 7-day test (9.8% improvement)
-
-**What it means:**
-- **Statistical significance**: p=0.018 < 0.05 → conversion lift is real, not noise
-- **Consistent improvement**: All 6 deployment criteria passed → fine-tuning succeeded
-- **Business impact**: 9.8% revenue lift → $5,500/week = **$23,833/month** additional revenue
-- **Quality validation**: Human ratings +1.44 points → fine-tuned model significantly better
-
-**What to do next:**
-→ **DEPLOY to 100% traffic:** All metrics improved, statistical significance achieved → full rollout approved
-→ **Monitor for 30 days:** Track conversion, AOV, error rate, latency in production → ensure sustained improvement
-→ **Set rollback triggers:** If conversion drops <29% or error rate >6% → automatic revert to base model
-→ **For PizzaBot:** 🚀 **APPROVED FOR FULL DEPLOYMENT** — brand voice fine-tuning drives measurable business impact ✓
+> 💡 **Evaluate verdict:** LoRA fine-tune raises brand voice match from 68% to 95% and lifts conversion from 28% to 30% (p=0.018, statistically significant) — AOV improves $40.00 → $41.00.
+> ➡️ The 5% residual cold responses are the DPO opportunity: adding preference pairs (chosen/rejected) on those failures can push brand voice to 99%+ as shown in §5.5.
 
 ---
 
@@ -1321,7 +1240,7 @@ RAG and fine-tuning are not mutually exclusive. Production systems often layer t
 
 ---
 
-## 3 · **[Phase 1: DECIDE]** Should You Fine-Tune? — Decision Tree
+## 3 · Should You Fine-Tune? — Decision Tree
 
 ```
 Is the model failing to follow the correct output format?
@@ -1383,7 +1302,7 @@ Is the task so specialised that no amount of prompting helps?
 
 ---
 
-## 4 · **[Phase 3: CONFIGURE]** Math — LoRA
+## 4 · Math — LoRA
 
 **The key insight:** model adaptation doesn't require changing all weights. Most of the task-relevant adaptation projects into a low-rank subspace of the weight matrix.
 
@@ -1418,7 +1337,7 @@ LoRA     :   16  × (4096 + 4096) = 131,072 params  →  0.78% of original
 
 ---
 
-## 5 · **[Phase 3: CONFIGURE]** QLoRA — Quantisation + LoRA
+## 5 · QLoRA — Quantisation + LoRA
 
 **QLoRA** combines LoRA with 4-bit quantisation of the frozen base model weights, enabling fine-tuning of large models on a single consumer GPU.
 
@@ -1459,7 +1378,7 @@ The quantisation introduces a small accuracy trade-off compared to full fp16 LoR
 
 ---
 
-## 5.5 · **[Phase 3: CONFIGURE]** DPO — Direct Preference Optimisation
+## 5.5 · DPO — Direct Preference Optimisation
 
 **LoRA teaches the model *what* to say. DPO teaches the model *what to prefer*.**
 
@@ -1627,7 +1546,7 @@ dpo_trainer.train()
 
 ---
 
-## 6 · **[Phase 2/3/4: PREPARE → CONFIGURE → TRAIN]** Step by Step — Fine-Tuning with LoRA
+## 6 · Step by Step — Fine-Tuning with LoRA
 
 ```
 1. Choose a base model
@@ -1664,7 +1583,7 @@ dpo_trainer.train()
 
 ---
 
-## 7 · **[Phase 4: TRAIN]** Code Skeleton — Complete Training Pipeline
+## 7 · Code Skeleton — Complete Training Pipeline
 
 ```python
 from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments
@@ -1836,7 +1755,7 @@ trainer.train()
 
 ---
 
-## 9 · **[Phase 5: EVALUATE]** PizzaBot Connection — Production Validation
+## 9 · PizzaBot Connection — Production Validation
 
 > See [AIPrimer.md](../ai-primer.md) for the full system definition.
 

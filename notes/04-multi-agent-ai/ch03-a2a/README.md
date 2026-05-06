@@ -48,47 +48,6 @@ Intake agent (Pod 1) needs to delegate to Negotiation agent (Pod 3) across Kuber
 
 A tool is a stateless function (milliseconds, no state). An agent has its own reasoning loop (minutes/hours, can spawn sub-agents, lives in a different trust domain). **A2A standardises agent delegation:** discovery via Agent Cards, async task lifecycle (submitted → working → completed/failed), and SSE streaming for progress — so one agent can delegate to another without blocking or coupling to implementation details.
 
----
-
-## § 1.5 · The Practitioner Workflow — Your 4-Phase A2A Integration
-
-> ⚠️ **Two ways to read this chapter:**
-> - **Theory-first (recommended for learning):** Read §0→§3 sequentially to understand the protocol concepts, then use this workflow as your reference
-> - **Workflow-first (practitioners with existing A2A knowledge):** Use this diagram as a jump-to guide when integrating agents in production
->
-> **Note:** Section numbers don't follow phase order because the chapter teaches concepts pedagogically (protocol first, then implementation). The workflow below shows how to APPLY those concepts in production.
-
-**What you'll build by the end:** An A2A-compliant agent integration with capability discovery, async task delegation, lifecycle monitoring, and real-time progress streaming — the pattern from OrderFlow's Intake→Negotiation delegation that scaled from 10 to 24 POs/day.
-
-```
-Phase 1: PUBLISH          Phase 2: SUBMIT            Phase 3: TRACK            Phase 4: STREAM
-──────────────────────────────────────────────────────────────────────────────────────────────
-Expose capabilities:      Delegate tasks:            Monitor lifecycle:        Real-time updates:
-
-• Serve Agent Card at     • POST /a2a/tasks with     • Poll /tasks/{id} for    • Connect to SSE stream
-  /.well-known/agent.json   skill_id + inputs          status transitions        /tasks/{id}/stream
-• Declare skills with     • Include correlation_id   • Persist task_id in      • Handle incremental
-  input/output formats      in metadata                parent system state       progress events
-• Specify auth schemes    • Return task_id to caller • Implement timeout       • Auto-reconnect with
-• Version your agent                                   handling                  Last-Event-ID
-
-→ DECISION:               → DECISION:                → DECISION:               → DECISION:
-  What auth to require?     Which agent to call?       Polling vs Streaming?     How to handle reconnects?
-  • Bearer token (OAuth)    • Fetch Agent Card         • Low-latency → SSE       • SSE: Last-Event-ID header
-  • API key (simpler)       • Validate skill_id          streaming               • Store last event offset
-  • Managed identity          exists in Card           • Simple task → polling   • Exponential backoff on
-    (prod best practice)    • Check version              with exp backoff          connection failures
-```
-
-**The workflow maps to these sections:**
-- **Phase 1 (PUBLISH)** → §3 The Protocol/Architecture (Agent Card)
-- **Phase 2 (SUBMIT)** → §3 Sending a Task, §4 How It Works (Steps 1-2)
-- **Phase 3 (TRACK)** → §3 Task Lifecycle State Machine
-- **Phase 4 (STREAM)** → §3 Streaming Progress (SSE), §4 How It Works (Step 3)
-
-> 💡 **How to use this workflow:** Complete Phase 1→2→3 in order when building your integration. Use Phase 4 (SSE streaming) for long-running tasks (>30s); use Phase 3 polling for quick tasks (<10s). The sections below teach WHY each phase works; refer back here for WHAT to do.
-
-> 🏭 **Industry Note — A2A Protocol Adoption (2025):** Google announced A2A at Cloud Next (April 2025) with launch partners Anthropic, MongoDB, Salesforce, and SAP. The protocol standardizes three architectural pain points that plagued multi-agent systems before 2025: (1) capability discovery without hardcoded schemas, (2) async task lifecycle without ad hoc polling, and (3) incremental progress streaming without WebSocket overhead. OpenAI's Swarm framework (October 2024) demonstrated lightweight agent orchestration but lacked cross-service delegation — A2A fills that gap. Compare to MCP (September 2024), which standardized agent→tool calls; A2A standardizes agent→agent calls. The two protocols were explicitly designed to compose: agents use MCP internally for tool access, expose A2A externally for delegation.
 
 ---
 
@@ -104,7 +63,7 @@ The compliance team added a new requirement mid-project: all delegated tasks mus
 
 ## § 3 · The Protocol / Architecture
 
-### **[Phase 1: PUBLISH]** Agent Capability Manifest
+### 3.1 · Agent Capability Manifest — Publishing for Discovery
 
 Every A2A-compliant agent publishes an **Agent Card** at a well-known URL:
 
@@ -139,11 +98,11 @@ GET https://supplier-negotiation.orderflow.internal/.well-known/agent.json
 
 The Agent Card answers: what can this agent do, what formats does it accept, what authentication does it require, and does it support streaming? A calling agent can make an informed delegation decision from this card alone — no human configuration required.
 
-> ⚡ **Decision Checkpoint — Which Authentication Scheme to Require:** **Use Bearer tokens** (OAuth 2.0 with managed identity) for production multi-tenant systems — tokens rotate automatically, scope to specific agents, no static secrets in code. **Use API keys** for internal single-tenant systems where OAuth overhead isn't justified. **Avoid basic auth** (username/password) — credentials don't rotate, require secure storage. **OrderFlow pattern:** All cross-pod A2A calls use Azure Managed Identity → exchange for short-lived Bearer tokens (1-hour TTL) via MSAL library.
+> 💡 **Auth scheme verdict:** **Use Bearer tokens** (OAuth 2.0 with managed identity) for production multi-tenant systems — tokens rotate automatically, scope to specific agents, no static secrets in code. **Use API keys** for internal single-tenant systems where OAuth overhead isn't justified. **Avoid basic auth** (username/password) — credentials don't rotate, require secure storage. **OrderFlow pattern:** All cross-pod A2A calls use Azure Managed Identity → exchange for short-lived Bearer tokens (1-hour TTL) via MSAL library.
 
 > 🏭 **Industry Note — Agent Card Schema Standards:** Agent Cards use JSON Schema for skill input/output validation. OpenAPI 3.1 and AsyncAPI 2.6+ both support Agent Card embedding — Salesforce's Einstein Agent and SAP's Joule use OpenAPI extensions (`x-agent-card`) to declare A2A compatibility alongside REST APIs. MongoDB Atlas uses AsyncAPI for event-driven agent skills. The IETF draft RFC-9512 ("Well-Known URIs for Agent Discovery") formalizes the `/.well-known/agent.json` convention, following the same pattern as `/.well-known/openid-configuration` (OAuth 2.0) and `/.well-known/security.txt` (security contact info).
 
-### **[Phase 3: TRACK]** Task Lifecycle Monitoring
+### 3.2 · Task Lifecycle Monitoring — Tracking State
 
 A2A tasks follow a strict state machine. This is the core semantic difference from a tool call, which has no lifecycle — it either returns or throws.
 
@@ -165,7 +124,7 @@ A2A tasks follow a strict state machine. This is the core semantic difference fr
 
 Each state transition is observable by the calling agent through polling or SSE streaming.
 
-### **[Phase 2: SUBMIT]** Task Delegation
+### 3.3 · Task Delegation — Submitting Work
 
 ```python
 import httpx
@@ -190,11 +149,11 @@ async def delegate_to_negotiation_agent(order_details: dict, auth_token: str) ->
         return response.json()["task_id"]
 ```
 
-> ⚡ **Decision Checkpoint — Which Agent to Call:** **Always fetch the Agent Card first** — validate that the `skill_id` you need exists in the `skills` array, check that your input format matches one of the skill's `inputModes`, and verify the agent's `version` is compatible with your integration. **Never hardcode agent URLs** — use service discovery (Kubernetes DNS, Consul) so agents can move between pods/clusters without breaking callers. **OrderFlow pattern:** Orchestrator maintains a registry cache of Agent Cards (refreshed every 5 minutes) — lookup by `skill_id`, validate compatibility, then delegate.
+> 💡 **Agent selection verdict:** **Always fetch the Agent Card first** — validate that the `skill_id` you need exists in the `skills` array, check that your input format matches one of the skill's `inputModes`, and verify the agent's `version` is compatible with your integration. **Never hardcode agent URLs** — use service discovery (Kubernetes DNS, Consul) so agents can move between pods/clusters without breaking callers. **OrderFlow pattern:** Orchestrator maintains a registry cache of Agent Cards (refreshed every 5 minutes) — lookup by `skill_id`, validate compatibility, then delegate.
 
-> ⚡ **Decision Checkpoint — When to Use Polling vs Streaming:** **Use SSE streaming** when task duration >30s, progress updates matter (e.g., "Contacting supplier..."), or when orchestrator needs to display real-time status to users. **Use polling** for quick tasks (<10s), batch processing where individual task progress doesn't matter, or when SSE support is unavailable (firewalls blocking long-lived connections). **OrderFlow pattern:** Negotiation tasks (1-2 hours) → SSE streaming; Pricing lookups (<5s) → poll once after 3s delay.
+> 💡 **Polling vs streaming verdict:** **Use SSE streaming** when task duration >30s, progress updates matter (e.g., "Contacting supplier..."), or when orchestrator needs to display real-time status to users. **Use polling** for quick tasks (<10s), batch processing where individual task progress doesn't matter, or when SSE support is unavailable (firewalls blocking long-lived connections). **OrderFlow pattern:** Negotiation tasks (1-2 hours) → SSE streaming; Pricing lookups (<5s) → poll once after 3s delay.
 
-### **[Phase 4: STREAM]** Real-Time Progress Updates
+### 3.4 · Real-Time Progress Updates — SSE Streaming
 
 ```python
 async def stream_task_progress(task_id: str, auth_token: str):
@@ -217,7 +176,7 @@ SSE streaming means the calling agent does not poll in a loop and does not block
 
 > 🏭 **Industry Note — SSE vs WebSocket Trade-offs:** A2A specifies **Server-Sent Events (SSE)** for streaming, not WebSockets. **Why SSE?** (1) Unidirectional — server pushes updates, client doesn't need to send messages mid-stream (simpler protocol), (2) Auto-reconnect — browsers/clients retry SSE connections automatically with `Last-Event-ID` header to resume, (3) HTTP/2 multiplexing — SSE streams multiplex over a single connection without head-of-line blocking, (4) Firewall-friendly — standard HTTP, no special ports or upgrade handshake. **When WebSocket wins:** bidirectional real-time (e.g., collaborative editing, gaming) where client needs to send frequent updates. **A2A's choice:** Task delegation is server→client updates only, so SSE is the right fit. Google's A2A spec references RFC-8895 (SSE over HTTP/2) for implementation details.
 
-> ⚡ **Decision Checkpoint — How to Handle SSE Reconnects:** **Always store the last received event offset** (use the `id` field in SSE messages or maintain your own sequence counter). On reconnection, send `Last-Event-ID: <offset>` header — the server resumes from that point, avoiding duplicate processing. **Implement exponential backoff:** 1s, 2s, 4s, 8s, max 60s between reconnect attempts. **OrderFlow pattern:** SSE client stores `last_event_id` in Redis (shared across orchestrator replicas) — if orchestrator pod crashes, new pod reads offset from Redis and reconnects without missing events.
+> 💡 **SSE reconnect verdict:** **Always store the last received event offset** (use the `id` field in SSE messages or maintain your own sequence counter). On reconnection, send `Last-Event-ID: <offset>` header — the server resumes from that point, avoiding duplicate processing. **Implement exponential backoff:** 1s, 2s, 4s, 8s, max 60s between reconnect attempts. **OrderFlow pattern:** SSE client stores `last_event_id` in Redis (shared across orchestrator replicas) — if orchestrator pod crashes, new pod reads offset from Redis and reconnects without missing events.
 
 ### MCP and A2A — Complementary, Not Competing
 

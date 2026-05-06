@@ -94,13 +94,6 @@ Create Deployment:           Create Service:            Inject config:          
                                  or LoadBalancer pending                                                        fix image name
 ```
 
-**The workflow maps to these sections:**
-- **Phase 1 (DEPLOY)** → §4 [Phase 1: DEPLOY] Deployment & Pod Configuration
-- **Phase 2 (EXPOSE)** → §5 [Phase 2: EXPOSE] Service Discovery & Routing
-- **Phase 3 (CONFIG)** → §6 [Phase 3: CONFIG] ConfigMaps & Secrets
-- **Phase 4 (SCALE)** → §7 [Phase 4: SCALE] Horizontal Pod Autoscaling
-- **Phase 5 (TROUBLESHOOT)** → §8 [Phase 5: TROUBLESHOOT] Debugging Workloads
-
 > 💡 **How to use this workflow:** Start with Phase 1 (deploy a basic pod), verify it runs, then layer on Phase 2 (expose via Service), Phase 3 (inject configuration), Phase 4 (enable autoscaling), and Phase 5 (troubleshoot any issues that arise). Each phase builds on the previous — don't skip ahead until the current phase succeeds.
 
 ---
@@ -268,7 +261,7 @@ If Pod 2 crashes, the Deployment's ReplicaSet immediately spawns a new Pod 2, an
 
 ---
 
-## 4 · [Phase 1: DEPLOY] Deployment & Pod Configuration
+## 4 · Deployment & Pod Configuration — Deploy
 
 > **Phase marker:** This section teaches Phase 1 of the practitioner workflow — creating Deployments that declare your application's desired state (image, replicas, resource requirements, health checks).
 
@@ -343,30 +336,8 @@ spec:
 - **Readiness:** Check dependencies (DB, Redis, external API) — return 503 if any are down
 - **Liveness:** Check only internal process health (is Flask responding at all?) — return 500 only if the app is truly hung
 
-### DECISION CHECKPOINT — Phase 1 Complete
-
-**What you just did:**
-- Wrote `deployment.yaml` with image, replicas, resource requests, probes
-- Applied it: `kubectl apply -f deployment.yaml`
-- Checked status: `kubectl get pods`
-
-**What to check:**
-```bash
-kubectl get pods
-# Expected output:
-# NAME                                   READY   STATUS    RESTARTS   AGE
-# productionstack-api-7d8f9b5c4-abc12   1/1     Running   0          30s
-# productionstack-api-7d8f9b5c4-def34   1/1     Running   0          30s
-# productionstack-api-7d8f9b5c4-ghi56   1/1     Running   0          30s
-```
-
-**Decision logic:**
-- ✅ **All pods `Running` with READY `1/1`** → Proceed to Phase 2 (create Service)
-- ⚠️ **Pods `Pending`** → Check: `kubectl describe pod <name>` for "Insufficient CPU/memory" events → reduce resource requests or add more nodes
-- ❌ **Pods `CrashLoopBackOff`** → Jump to Phase 5 (debugging): `kubectl logs <pod-name>` to see application crash reason
-- ❌ **Pods `ImagePullBackOff`** → Check: `kubectl describe pod <name>` Events section → likely wrong image name or missing imagePullSecret for private registry
-
-> 💡 **Pro tip:** Don't wait for all 3 replicas to run before debugging. If one pod crashes, all 3 will crash for the same reason. Debug the first failure immediately.
+> 💡 **Deploy verdict:** 3 replicas Running with `READY 1/1`; readiness/liveness probes prevent traffic to unhealthy pods.
+> ➡️ Pods self-heal on crash; proceed to Expose phase to route external traffic.
 
 ---
 
@@ -480,7 +451,7 @@ Writing raw YAML files for every deployment is error-prone and doesn't scale. In
 
 ---
 
-## 5 · [Phase 2: EXPOSE] Service Discovery & Routing
+## 5 · Service Discovery & Routing — Expose
 
 > **Phase marker:** This section teaches Phase 2 of the practitioner workflow — creating Services that provide stable network endpoints for your pods (load balancing, DNS names, external access).
 
@@ -528,39 +499,8 @@ Service selector: app=productionstack
 
 If no pods match the selector, the Service has **zero endpoints** — traffic goes nowhere.
 
-### DECISION CHECKPOINT — Phase 2 Complete
-
-**What you just did:**
-- Wrote `service.yaml` with type ClusterIP or LoadBalancer
-- Applied it: `kubectl apply -f service.yaml`
-- Checked endpoints: `kubectl get endpoints productionstack-api`
-
-**What to check:**
-```bash
-kubectl get service productionstack-api
-# NAME                  TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
-# productionstack-api   LoadBalancer   10.96.45.123    <pending>     80:31234/TCP   1m
-
-kubectl get endpoints productionstack-api
-# NAME                  ENDPOINTS                                         AGE
-# productionstack-api   10.244.0.5:5000,10.244.0.6:5000,10.244.0.7:5000   1m
-```
-
-**Decision logic:**
-- ✅ **Endpoints shows 3 IPs (one per pod)** → Service is routing correctly → Proceed to Phase 3
-- ⚠️ **Endpoints is empty** → Selector doesn't match pod labels:
-  ```bash
-  kubectl describe service productionstack-api  # Check selector
-  kubectl get pods --show-labels                # Check pod labels
-  # Fix: Update service.yaml selector to match pod labels exactly
-  ```
-- ⚠️ **LoadBalancer EXTERNAL-IP stuck `<pending>`** → Cloud provider issue or MetalLB not installed:
-  ```bash
-  # Temporary fix: Use port-forward to test
-  kubectl port-forward service/productionstack-api 8080:80
-  curl localhost:8080  # Should return Flask response
-  ```
-- ❌ **Service exists but curl times out** → Firewall blocking, or readinessProbe failing → Check: `kubectl describe pod <name>` for probe failures
+> 💡 **Expose verdict:** Service endpoints show 3 pod IPs; stable ClusterIP DNS name survives pod restarts and rolling updates.
+> ➡️ External traffic routing confirmed; proceed to Config phase to inject environment variables.
 
 ---
 
@@ -670,7 +610,7 @@ spec:
 
 ---
 
-## 6 · [Phase 3: CONFIG] ConfigMaps & Secrets
+## 6 · ConfigMaps & Secrets — Config
 
 > **Phase marker:** This section teaches Phase 3 of the practitioner workflow — injecting configuration (environment variables, config files, credentials) into pods without hardcoding them in images.
 
@@ -783,37 +723,8 @@ Why? Environment variables are:
 
 File mounts are more secure — the app reads `/var/secrets/DATABASE_PASSWORD` at startup.
 
-### DECISION CHECKPOINT — Phase 3 Complete
-
-**What you just did:**
-- Created ConfigMap and Secret with `kubectl apply -f configmap.yaml` and `kubectl apply -f secret.yaml`
-- Updated Deployment to reference them
-- Applied updated Deployment: `kubectl apply -f deployment.yaml`
-
-**What to check:**
-```bash
-kubectl get configmaps
-kubectl get secrets
-
-kubectl describe pod <pod-name>  # Check "Environment" section shows injected vars
-
-# Verify inside pod:
-kubectl exec -it <pod-name> -- env | grep DATABASE_HOST
-kubectl exec -it <pod-name> -- cat /var/secrets/DATABASE_PASSWORD
-```
-
-**Decision logic:**
-- ✅ **Env vars appear in pod, app starts correctly** → Proceed to Phase 4
-- ❌ **Pod crashes after config change** → Check logs: `kubectl logs <pod-name>` for "missing environment variable" errors
-- ⚠️ **Changes not reflected** → K8s doesn't auto-restart pods when ConfigMaps change:
-  ```bash
-  kubectl rollout restart deployment productionstack-api
-  # Forces all pods to restart with new config
-  ```
-- ⚠️ **Secret value wrong** → Check base64 encoding:
-  ```bash
-  echo "cGFzc3dvcmQxMjM=" | base64 -d  # Should output "password123"
-  ```
+> 💡 **Config verdict:** ConfigMap env vars and Secret volume mounts visible inside pods; `rollout restart` applies changes without manual pod deletion.
+> ➡️ Runtime config decoupled from image; proceed to Scale phase to enable autoscaling.
 
 ---
 
@@ -950,7 +861,7 @@ spec:
 
 ---
 
-## 7 · [Phase 4: SCALE] Horizontal Pod Autoscaling
+## 7 · Horizontal Pod Autoscaling — Scale
 
 > **Phase marker:** This section teaches Phase 4 of the practitioner workflow — enabling HorizontalPodAutoscaler (HPA) to automatically adjust replica count based on CPU/memory metrics.
 
@@ -1010,44 +921,8 @@ Example: 3 replicas, current CPU 85%, target 70%
   → desired = 3 × (85/70) = 3.64 → rounds to 4 replicas
 ```
 
-### DECISION CHECKPOINT — Phase 4 Complete
-
-**What you just did:**
-- Verified metrics-server is installed: `kubectl get deployment metrics-server -n kube-system`
-- Created HPA: `kubectl apply -f hpa.yaml`
-- Generated load to trigger scaling: `kubectl run -it --rm load-generator --image=busybox -- /bin/sh -c "while true; do wget -q -O- http://productionstack-api; done"`
-
-**What to check:**
-```bash
-kubectl get hpa
-# NAME                       REFERENCE                     TARGETS         MINPODS   MAXPODS   REPLICAS
-# productionstack-api-hpa    Deployment/productionstack-api   45%/70%        3         10        3
-
-kubectl top pods  # Shows current CPU/memory usage
-# NAME                                   CPU(cores)   MEMORY(bytes)
-# productionstack-api-7d8f9b5c4-abc12   120m         180Mi
-```
-
-**Decision logic:**
-- ✅ **TARGETS shows `45%/70%`, replicas stable at 3** → HPA is working, waiting for load
-- ✅ **Load spike → CPU rises to 85% → replicas increase to 5** → Autoscaling successful → Done!
-- ⚠️ **TARGETS shows `<unknown>/70%`** → metrics-server not installed or not ready:
-  ```bash
-  kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
-  # Wait 1-2 minutes for metrics-server to start collecting data
-  ```
-- ⚠️ **Scales up but immediately scales down (flapping)** → `stabilizationWindowSeconds` too short:
-  ```yaml
-  behavior:
-    scaleDown:
-      stabilizationWindowSeconds: 600  # Increase to 10min
-  ```
-- ❌ **HPA shows replicas 3/3 but pods still OOMKilled** → Memory limit too low, not a scaling problem:
-  ```yaml
-  resources:
-    limits:
-      memory: 1Gi  # Increase memory limit in Deployment
-  ```
+> 💡 **Reliability verdict:** Pod restart on crash: 0 manual interventions; MTTR 45 min → 90s with liveness probes; HPA scales 3→10 replicas at 70% CPU.
+> ➡️ Autoscaling confirmed; use Phase 5 troubleshooting commands for any remaining failures.
 
 ---
 
@@ -1167,7 +1042,7 @@ KEDA can scale deployments to 0 replicas when idle (HPA minimum is 1). When an e
 
 ---
 
-## 8 · [Phase 5: TROUBLESHOOT] Debugging Workloads
+## 8 · Debugging Workloads — Troubleshoot
 
 > **Phase marker:** This section teaches Phase 5 of the practitioner workflow — the systematic 3-step debugging process for any Kubernetes failure (check status → inspect details → read logs).
 
@@ -1346,30 +1221,8 @@ kubectl edit deployment productionstack-api
 # To:     template.metadata.labels.app: productionstack
 ```
 
-### DECISION CHECKPOINT — Phase 5 Complete
-
-**What you just did:**
-- Diagnosed a failing deployment using the 3-step workflow
-- Fixed the root cause (image name, missing dependency, label mismatch)
-- Verified pods are Running and Service has endpoints
-
-**What to check:**
-```bash
-# Final verification checklist:
-kubectl get pods                      # All pods "Running", READY 1/1
-kubectl get endpoints <service-name>  # Shows 3+ pod IPs
-kubectl logs <pod-name> | tail        # No errors in recent logs
-curl http://<service-ip>              # Returns expected response
-```
-
-**Decision logic:**
-- ✅ **All checks pass** → Deployment is stable → Done!
-- ⚠️ **Pods Running but logs show warnings** → Non-critical, but document for future debugging
-- ❌ **New errors after fix** → Roll back:
-  ```bash
-  kubectl rollout undo deployment/productionstack-api
-  # Reverts to previous working version
-  ```
+> 💡 **Troubleshoot verdict:** 3-step debug workflow (get pods → describe → logs) resolves 90% of K8s failures; `rollout undo` restores previous version in <60s.
+> ➡️ Deployment stable and observable; chapter complete.
 
 ---
 

@@ -104,13 +104,6 @@ Write Terraform modules:  Preview changes:           Provision infrastructure:  
   • Databases                                                                                                   concurrent changes
 ```
 
-**The workflow maps to these sections:**
-- **Phase 1 (Define)** → §3 Terraform Workflow (init, write configs)
-- **Phase 2 (Plan)** → §4.2 State Reconciliation, §3 (terraform plan)
-- **Phase 3 (Apply)** → §4.1 Dependency Graph, §3 (terraform apply)
-- **Phase 4 (Validate)** → §5 What Can Go Wrong
-- **Phase 5 (Maintain)** → §4.3 Drift Detection, §5.1 State File Management
-
 > 💡 **How to use this workflow:** Complete Phase 1→2→3→4→5 in order on your infrastructure. The sections above teach WHY each phase works; refer back here for WHAT to do at each step.
 
 ### Phase 1: DEFINE — Write Terraform Configuration
@@ -848,7 +841,7 @@ You're a platform engineer at a SaaS startup. Your team needs reproducible envir
 
 ---
 
-## [Phase 1: DEFINE] 3 · The Terraform Workflow at a Glance
+## 3 · The Terraform Workflow at a Glance — Define
 
 Before diving into `.tf` file syntax, here's the full workflow you'll follow. Each numbered step has a corresponding section below.
 
@@ -901,11 +894,11 @@ Sections 4–7 explain each component. Come back to this map when the detail fee
 
 ---
 
-## [Phase 3: APPLY] 4 · The Math Defines State Reconciliation and Resource Dependencies
+## 4 · The Math Defines State Reconciliation and Resource Dependencies — Apply
 
 > 💡 **Phase context:** This section explains the mathematical foundations that power Phase 2 (PLAN — computing diffs) and Phase 3 (APPLY — executing changes in correct order). Understanding dependency graphs and set operations helps you debug "resource X depends on Y" errors and predict terraform plan output.
 
-### [Phase 3: APPLY] 4.1 · Terraform Computes a Directed Acyclic Graph of Resource Dependencies
+### 4.1 · Terraform Computes a Directed Acyclic Graph of Resource Dependencies
 
 Terraform parses your `.tf` files and builds a dependency graph. Resources that don't depend on each other are provisioned in parallel.
 
@@ -936,7 +929,7 @@ Terraform ensures the network is created *before* the container. If you try to c
 
 **What does the graph mean?** Each node is a resource. An edge from A → B means "B depends on A". Terraform uses topological sort to determine the creation order. Resources at the same level (no dependencies) are created in parallel.
 
-### [Phase 2: PLAN] 4.2 · State Reconciliation Uses Set Difference to Compute Changes
+### 4.2 · State Reconciliation Uses Set Difference to Compute Changes
 
 > 💡 **Phase context:** This is the mathematical core of `terraform plan` — how Terraform computes the diff between what you want (code) and what exists (state + reality).
 
@@ -965,7 +958,7 @@ $$\text{Update} = \{r \in D \cap C \mid r_D \neq r_C\} \quad \text{(resources wi
 
 The state file is the **source of truth** for what Terraform manages. If you delete it, Terraform thinks all resources are new (tries to create duplicates, fails on name conflicts).
 
-### [Phase 5: MAINTAIN] 4.3 · Drift Detection Compares State File Against Reality
+### 4.3 · Drift Detection Compares State File Against Reality
 
 > 💡 **Phase context:** This section explains how Phase 5 (MAINTAIN) detects manual changes outside Terraform. Production teams run drift detection daily to catch unauthorized infrastructure modifications.
 
@@ -987,11 +980,11 @@ When you run `terraform plan`, Terraform:
 
 ---
 
-## [Phase 4: VALIDATE] 5 · What Can Go Wrong — Production Pitfalls and How to Avoid Them
+## 5 · What Can Go Wrong — Production Pitfalls and How to Avoid Them
 
 > 💡 **Phase context:** This section covers common failure modes you'll encounter in Phase 3 (APPLY), Phase 4 (VALIDATE), and Phase 5 (MAINTAIN). Each pitfall includes detection steps and remediation strategies.
 
-### [Phase 5: MAINTAIN] 5.1 · State File Corruption
+### 5.1 · State File Corruption
 
 **Symptom:** `terraform apply` fails with "resource already exists" or tries to recreate everything.
 
@@ -1014,7 +1007,7 @@ terraform {
 }
 ```
 
-### [Phase 1: DEFINE] 5.2 · Provider Version Conflicts
+### 5.2 · Provider Version Conflicts
 
 **Symptom:** `terraform init` fails with "no matching version" or code works on your machine but fails in CI.
 
@@ -1035,7 +1028,7 @@ terraform {
 
 **Best practice:** Commit `.terraform.lock.hcl` to Git — locks exact provider versions across team.
 
-### [Phase 5: MAINTAIN] 5.3 · Drift Detection Ignored
+### 5.3 · Drift Detection Ignored
 
 **Symptom:** Infrastructure behaves differently than code suggests — manual changes not tracked.
 
@@ -1052,7 +1045,7 @@ terraform plan -detailed-exitcode
 # Exit code 2 = changes detected (drift or unmerged code)
 ```
 
-### [Phase 5: MAINTAIN] 5.4 · Secrets in State File
+### 5.4 · Secrets in State File
 
 **Symptom:** `terraform.tfstate` contains database passwords, API keys in plaintext.
 
@@ -1071,7 +1064,7 @@ output "db_password" {
 
 **Best practice:** Use separate state files per environment (dev, prod) — limits blast radius if state leaks.
 
-### [Phase 3: APPLY] 5.5 · Terraform Destroy in Production
+### 5.5 · Terraform Destroy in Production
 
 **Symptom:** Someone runs `terraform destroy` in production by mistake — deletes all infrastructure.
 

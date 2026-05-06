@@ -57,12 +57,6 @@ The California Housing dataset has 75% median-value districts (<$265k) and only 
 
 ## 1.5 · The Practitioner Workflow — Your 3-Phase Diagnostic
 
-> ⚠️ **Two ways to read this chapter:**
-> - **Theory-first (recommended for learning):** Read §0→§12 sequentially to understand the concepts, then use this workflow as your reference
-> - **Workflow-first (practitioners with existing knowledge):** Use this diagram as a jump-to guide when working with real data
->
-> **Note:** Section numbers don't follow phase order because the chapter teaches concepts pedagogically (theory before application). The workflow below shows how to APPLY those concepts.
-
 **What you'll build by the end:** A production-ready classification pipeline with balanced training data, optimized decision thresholds, and per-class performance validation. This workflow prevents the "high accuracy, zero minority recall" trap that breaks imbalanced classifiers.
 
 ```
@@ -81,11 +75,6 @@ Compute class distribution:   Choose rebalancing strategy:  Precision/recall by 
   • Ratio <3:1: NO, skip        • ≥50 minority: SMOTE        • Maximize minority F₁
                                 • Huge dataset: undersample   • Validate on test set
 ```
-
-**The workflow maps to these sections:**
-- **Phase 1 (DETECT)** → §2 Running Example, §3 Imbalance Problem at a Glance
-- **Phase 2 (REBALANCE)** → §4.1 Class Weights, §4.3 SMOTE, §5 Act 2
-- **Phase 3 (VALIDATE)** → §4.2 Precision and Recall, §5 Act 3-4, §8 Hyperparameter Dial
 
 > 💡 **How to use this workflow:** Execute Phase 1 first — if imbalance ratio < 3:1, stop here and proceed to modeling. If ≥ 3:1, apply Phase 2 rebalancing ONLY to training data, then validate with Phase 3 metrics. Never apply SMOTE before the train/test split.
 
@@ -166,17 +155,8 @@ In training, every 3 median homes teach the model 1 high-value home (75/25 split
 
 > ⚠️ **The luxury tier gap**: Using a higher "luxury" absolute threshold (the top ~8% by California standards — roughly equivalent to homes >$450k today), the imbalance becomes even more extreme: ~18,989 median vs ~1,651 luxury in the training set. If production queries skew toward luxury homes, these become the most expensive mispredictions because luxury homes have the largest absolute price differences.
 
-### ✓ DECISION CHECKPOINT: Phase 1 Complete
-
-**What you saw**: Class distribution shows 75:25 split (15,480 median vs 5,160 high-value) — imbalance ratio 3:1  
-**What it means**: Severe imbalance will bias model toward majority class (median homes) — naïve classifier achieves 75% accuracy by predicting "median" for everything while missing 100% of high-value homes  
-**What to do next**: 
-- If imbalance ratio < 3:1 → Proceed to modeling with standard evaluation
-- If 3:1 ≤ ratio < 10:1 (your case) → Apply Phase 2 rebalancing
-  - Dataset < 1,000 samples → Use `class_weight='balanced'` only (SMOTE needs ≥50 minority samples)
-  - Dataset 1K-100K → Use SMOTE (you have 5,160 minority samples — safe for k=5)
-  - Dataset > 100K → Consider random undersampling to preserve compute
-- If ratio ≥ 10:1 → Combine SMOTE + class weights for strongest correction
+> 💡 **Detect verdict:** 75:25 imbalance ratio (3:1) confirmed — naïve classifier achieves 75% accuracy predicting “median” while missing all high-value homes; SMOTE with k=5 is safe (5,160 minority samples available).
+> ➡️ Apply SMOTE only to the training split to avoid leakage; if ratio ≥ 10:1 combine SMOTE with `class_weight='balanced'`.
 
 ---
 
@@ -464,15 +444,8 @@ High-Value        0.65      0.67      0.66   ← recall: 20% → 67%
 
 Minority-class recall jumps from 20% to 67%. The model now *sees* high-value homes properly during training.
 
-### ✓ DECISION CHECKPOINT: Phase 2 Complete
-
-**What you saw**: Applied SMOTE to training set — minority class expanded from 4,128 real samples to 12,384 total (4,128 real + 8,256 synthetic) — training distribution now balanced 50:50  
-**What it means**: Model will now see equal representation of both classes during training — gradient updates no longer dominated by majority class — synthetic samples fill gaps in minority feature space using k-nearest-neighbor interpolation  
-**What to do next**: 
-- Validate that SMOTE was applied ONLY to training data (test set must remain untouched — zero leakage)
-- Proceed to Phase 3: Train classifier on balanced data and evaluate with precision/recall metrics
-- Consider combining SMOTE with `class_weight='balanced'` for maximum correction (each synthetic minority sample still weighted 2× vs majority samples)
-- If minority recall still low after SMOTE → Try threshold tuning (Phase 3) or increase `sampling_strategy` beyond 1.0
+> 💡 **Rebalance verdict:** SMOTE expanded minority training class from 4,128 → 12,384 samples (50:50 balanced); minority-class recall jumped from 20% to 67% — gradient updates no longer dominated by majority class.
+> ➡️ Validate SMOTE was applied only to training data, then proceed to threshold tuning (τ sweep) to maximize minority-class F₁.
 
 ---
 
@@ -547,15 +520,8 @@ macro avg         0.78      0.80      0.79      4128
 > **Industry Standard:** Threshold tuning with `sklearn.metrics.precision_recall_curve`  
 > Manual threshold search (sweeping τ ∈ [0.1, 0.9] and computing F₁ at each point) teaches the precision-recall tradeoff. In production, use `precision_recall_curve(y_true, y_score)` which returns precision, recall, and thresholds arrays in one call. Find optimal operating point with `thresholds[np.argmax(f1_scores)]`. For business-specific cost functions (e.g., false negative costs 10× false positive), replace F₁ maximization with custom cost function: `cost = FN_cost * fn_count + FP_cost * fp_count` and minimize over threshold sweep.
 
-### ✓ DECISION CHECKPOINT: Phase 3 Complete
-
-**What you saw**: Validation metrics show minority-class recall = 71%, precision = 66%, F₁ = 0.68 after SMOTE + threshold tuning (τ* = 0.38) — compared to baseline recall = 20% before rebalancing  
-**What it means**: Model successfully detects 71% of high-value homes (vs 20% baseline) with 66% precision — balanced performance across both classes achieved — decision threshold lowered from default 0.50 to 0.38 recovers additional minority samples without excessive false positives  
-**What to do next**: 
-- **Production deployment**: Use τ* = 0.38 for inference — predict class 1 when `P(class=1) ≥ 0.38` instead of default 0.50
-- **Monitoring**: Track class distribution in production traffic — if shifts from 25% high-value to 40% high-value, retrain with updated SMOTE `sampling_strategy` and recalibrate threshold
-- **Model comparison**: This balanced classifier is now ready as the classification component for SmartVal AI — regression models (Ch.01-07) will build on this foundation
-- **Next steps**: Proceed to Ch.01 Linear Regression with confidence that training data quality (Ch.00) and class balance (Ch.00b) are both solved
+> 💡 **Validate verdict:** SMOTE + threshold tuning (τ* = 0.38) raised minority-class recall from 20% to 71% at 66% precision (F₁ = 0.68) — balanced training across 75%/25% class split achieved.
+> ➡️ Use τ* = 0.38 in production inference; monitor class distribution drift — if high-value fraction exceeds 35%, retrain SMOTE and recalibrate threshold.
 
 ---
 
