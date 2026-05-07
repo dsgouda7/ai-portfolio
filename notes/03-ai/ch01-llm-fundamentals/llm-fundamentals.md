@@ -182,6 +182,15 @@ The model outputs a probability distribution over the vocabulary at each step. *
 
 $$p'_i = \frac{e^{z_i / T}}{\sum_j e^{z_j / T}}$$
 
+| Symbol | Meaning |
+|---|---|
+| $z_i$ | Raw **logit** (unnormalised score) the model assigns to token $i$ |
+| $T$ | **Temperature** — the scalar you set at inference time |
+| $p'_i$ | **Rescaled probability** of token $i$ after applying temperature |
+| $\sum_j$ | Sum over **all tokens** in the vocabulary $V$ (normalisation) |
+
+*Reading the formula:* dividing each logit by $T$ before the softmax shrinks ($T<1$) or stretches ($T>1$) the gap between high- and low-scoring tokens. When $T→0$ the highest logit dominates completely; when $T→\infty$ all tokens become equally likely.
+
 | Temperature $T$ | Effect |
 |---|---|
 | $T → 0$ | Deterministic: always pick the highest-probability token (greedy) |
@@ -257,6 +266,19 @@ The DPO loss for a preference triple $(x, y_w, y_l)$ — prompt, preferred respo
 
 $$\mathcal{L}_{DPO} = -\mathbb{E}\!\left[\log\sigma\!\left(\beta\log\frac{\pi_\theta(y_w|x)}{\pi_{ref}(y_w|x)} - \beta\log\frac{\pi_\theta(y_l|x)}{\pi_{ref}(y_l|x)}\right)\right]$$
 
+| Symbol | Meaning |
+|---|---|
+| $\mathcal{L}_{DPO}$ | The **DPO training loss** — minimise this to align the model |
+| $\mathbb{E}[\cdot]$ | **Expectation** over all preference triples in the training set |
+| $\sigma$ | **Sigmoid** function $\sigma(t) = 1/(1+e^{-t})$ — maps any real number to $(0,1)$ |
+| $\pi_\theta$ | The **model being trained** (policy with learnable weights $\theta$) |
+| $\pi_{ref}$ | The **frozen SFT model** — acts as a baseline to prevent over-optimisation |
+| $\beta$ | **KL penalty weight** — how far $\pi_\theta$ is allowed to drift from $\pi_{ref}$ (typical: 0.1–0.5) |
+| $y_w$ | The **preferred** (winning) response chosen by the human annotator |
+| $y_l$ | The **rejected** (losing) response not preferred by the annotator |
+
+*Reading the formula:* the log-ratio $\log\frac{\pi_\theta(y_w|x)}{\pi_{ref}(y_w|x)}$ measures how much more (or less) likely the trained model makes the preferred response relative to the baseline. The loss pushes this gap to be positive — preferred response probability goes up, rejected goes down — weighted by $\beta$ to stay close to the SFT model.
+
 where $\pi_{ref}$ is the frozen SFT model and $\beta$ controls how far the trained policy can deviate from it (typical: 0.1–0.5). Full derivation, PizzaBot training data, and TRL code in [ch10 §5.5](../ch10-fine-tuning/fine-tuning.md).
 
 **RLVR (Reinforcement Learning from Verifiable Rewards):** the training recipe behind o1, o3, and DeepSeek-R1. Instead of human preference pairs, RLVR uses automatically verifiable correctness signals — math answer checking, unit test pass/fail, formal proof verification — as the reward. The model generates a chain-of-thought reasoning trace; the final answer is checked against ground truth; RL updates reinforce traces that led to correct answers. This is why reasoning models excel at math and code: those domains have cheap, automatic verifiers. See [ch03 §8](../ch03-cot-reasoning/cot-reasoning.md) for reasoning token inference behavior.
@@ -291,6 +313,19 @@ Three dominant methods, each placing the adapter at a different point in the arc
 
 $$h = Wx + \frac{\alpha}{r} BAx$$
 
+| Symbol | Meaning |
+|---|---|
+| $x$ | **Input activation** vector to this layer ($\in \mathbb{R}^k$) |
+| $h$ | **Output activation** vector — what this layer passes to the next ($\in \mathbb{R}^d$) |
+| $W$ | **Frozen pretrained weight** matrix — never updated |
+| $B \in \mathbb{R}^{d \times r}$ | Low-rank **up-projection** matrix (trained; initialised to zero) |
+| $A \in \mathbb{R}^{r \times k}$ | Low-rank **down-projection** matrix (trained; random init) |
+| $r$ | **Rank** — the bottleneck dimension. $r=8$ means only $8 \times (d+k)$ new params per layer |
+| $\alpha$ | **Scaling hyperparameter** — controls the magnitude of the adapter's contribution |
+| $\frac{\alpha}{r}$ | **Effective scale factor** — set $\alpha = r$ to get scale $= 1$ and match the pretrained weight magnitude |
+
+*Reading the formula:* $Wx$ is the original frozen layer; $\frac{\alpha}{r}BAx$ is the low-rank update added on top. Because $B$ starts at zero, the adapter contributes nothing at the start of training — the model trains from the pretrained checkpoint, not from random noise.
+
 where $\alpha$ is a scaling hyperparameter (default: $\alpha = r$, giving $\frac{\alpha}{r} = 1$). During training only $A$ and $B$ are updated; $W$ is frozen. At the start of training, $B$ is initialised to zero so the adapter contributes nothing — training starts from the pretrained model's behaviour.
 
 **The intuition.** Weight updates in fine-tuning are empirically low-rank: the gradient matrix has many near-zero singular values, meaning the "useful update" lives in a small subspace. LoRA captures that subspace directly without ever computing the full update.
@@ -314,6 +349,16 @@ PizzaBot use: Ch.8 brand-voice adapter → $0.008/conv (vs $0.07 with generic GP
 
 $$\text{Attention}(Q,\ [K_{prefix};K_{input}],\ [V_{prefix};V_{input}])$$
 
+| Symbol | Meaning |
+|---|---|
+| $Q$ | **Query** matrix — derived from the current input tokens (frozen) |
+| $K_{input},\ V_{input}$ | **Key / Value** matrices from the actual input tokens (frozen) |
+| $K_{prefix} \in \mathbb{R}^{L_p \times d_k}$ | **Learned key prefix** — $L_p$ virtual context keys, trained end-to-end |
+| $V_{prefix} \in \mathbb{R}^{L_p \times d_v}$ | **Learned value prefix** — $L_p$ virtual context values, trained end-to-end |
+| $[\cdot\,;\cdot]$ | **Row-wise concatenation** — the prefix is prepended to the real keys/values |
+
+*Reading the formula:* standard attention computes $Q$ against $K_{input}$ only; prefix tuning extends the key-value sequence with $L_p$ learnable rows at every layer, letting every attention head attend to a learned "steering context" regardless of what the actual input tokens are.
+
 where $K_{prefix} \in \mathbb{R}^{L_p \times d_k}$ and $V_{prefix} \in \mathbb{R}^{L_p \times d_v}$ are the learned parameters. The model's own weights never change — only these injected context pairs are trained.
 
 **The intuition.** Every attention head can now "see" a learned context at every layer. Forcing representations to attend to this context at every depth steers the model's internal activations toward the target distribution — without touching any weights.
@@ -336,6 +381,14 @@ use case: serve one frozen model with multiple swappable prefixes (one per task/
 **Technical definition.** Prompt tuning freezes all model weights — including the embedding table — and trains a short sequence of $L_p$ continuous *soft token* embeddings that are prepended to the input before the first layer only. The soft tokens $P \in \mathbb{R}^{L_p \times d_{model}}$ are not constrained to the vocabulary; they are free-floating vectors in embedding space, optimised directly by gradient descent.
 
 $$\text{input to layer 1} = [P;\ \text{embed}(x_1),\ \text{embed}(x_2),\ \ldots]$$
+
+| Symbol | Meaning |
+|---|---|
+| $P \in \mathbb{R}^{L_p \times d_{model}}$ | **Soft token matrix** — $L_p$ learned embedding vectors, not constrained to the vocabulary |
+| $\text{embed}(x_i)$ | **Standard token embedding** of the $i$-th real input token |
+| $[\cdot\,;\cdot]$ | **Row-wise concatenation** — soft tokens are prepended to the real token embeddings |
+
+*Reading the formula:* the model sees $L_p$ extra "virtual" tokens at the front of the sequence before layer 1. These vectors can be anything in embedding space — they are not words. Everything from layer 1 onward processes them as if they were regular tokens.
 
 Nothing downstream changes — the soft tokens propagate through all layers as normal token representations.
 
@@ -405,12 +458,19 @@ Standard transformer layers activate **all** parameters for every token. MoE rep
 
 $$y = \sum_{i=1}^{k} G(x)_i \cdot E_i(x) \qquad G(x) = \text{TopK}\!\left(\text{Softmax}(W_g\, x),\; k\right)$$
 
-| Term | Meaning |
+| Symbol | Meaning |
 |---|---|
-| $N$ | Total experts (e.g., 8, 16, 64) |
-| $k$ | Active experts per token (typically 1 or 2) |
-| $G(x)$ | Router — gating weights over experts for input $x$ |
-| $E_i(x)$ | Expert $i$'s FFN output |
+| $x$ | **Input token representation** — the hidden state passed into this MoE layer |
+| $y$ | **Output** of the MoE layer — weighted sum of the selected experts' outputs |
+| $N$ | **Total experts** in this layer (e.g., 8, 16, 64) |
+| $k$ | **Active experts per token** — only $k$ of the $N$ experts run (typically 1 or 2) |
+| $E_i(x)$ | **Expert $i$'s FFN output** — a standard feed-forward sub-network |
+| $G(x)_i$ | **Gating weight** for expert $i$ — how much this expert contributes to the output |
+| $W_g$ | **Gating weight matrix** — learned linear projection that maps token $x$ to expert scores |
+| $\text{Softmax}(W_g x)$ | Normalised probability distribution over all $N$ experts for this token |
+| $\text{TopK}(\cdot,\, k)$ | Keep only the $k$ highest-scoring experts; zero out the rest (sparse activation) |
+
+*Reading the formula:* for each token, the router computes $W_g x$ (a score per expert), takes the top-$k$ by probability, and returns a weighted sum of only those $k$ experts' outputs. The other $N-k$ experts do not execute — that's the compute saving.
 
 **Why MoE matters:**
 - **Scale at fraction of cost:** GPT-4's 1.8T parameters → only ~200–400B active per token (roughly a dense 200B forward pass cost)
