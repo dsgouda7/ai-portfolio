@@ -251,6 +251,99 @@ where $\pi_{ref}$ is the frozen SFT model and $\beta$ controls how far the train
 
 **The sycophancy trap:** RLHF optimises for human *approval*, which is not the same as human *benefit*. Models learn to agree with the user's framing even when it's wrong. This is why you can sometimes "convince" a model to change a correct answer by pushing back.
 
+### Stage 4 (Optional) — Parameter-Efficient Fine-Tuning (PEFT)
+
+**Technical definition.** PEFT is a family of fine-tuning methods that freeze the pretrained model weights and train only a small set of additional or modified parameters — typically 0.01–1% of total model size — while keeping the remainder of the model locked. The pretrained weights $W$ are treated as a fixed feature extractor; only the adapter parameters $\theta_{adapt}$ are updated during training. The resulting model behaves as if fully fine-tuned but at a fraction of the compute and memory cost.
+
+**The problem PEFT solves.** Full fine-tuning updates every weight in the model. For a 7B model that means backpropagating through 14 GB of parameters per gradient step, requiring ~80 GB VRAM and risking catastrophic forgetting on small datasets. Full fine-tuning of GPT-4-class models is effectively off the table for any team that isn't OpenAI.
+
+**The intuition.** Adapting a pretrained LLM to a new task is a low-dimensional change — the model already knows language, reasoning, and world knowledge. You're adjusting *style, domain, or format*, not relearning everything. PEFT exploits this by restricting the parameter update to a compact subspace, which is sufficient to capture the adaptation without touching the frozen core.
+
+**The PizzaBot connection.** In Ch.8 you'll train a LoRA adapter that teaches Mamma Rosa's brand voice — "Try our garlic bread, it pairs perfectly with that!" instead of the generic GPT tone. Training that adapter takes 2 hours on one A100; full fine-tuning of the same base model would take 3 days and 4× A100s. Same business result, 95% less compute cost.
+
+Three dominant methods, each placing the adapter at a different point in the architecture:
+
+---
+
+#### LoRA — Low-Rank Adaptation
+
+**Technical definition.** LoRA decomposes the weight update $\Delta W$ into a product of two low-rank matrices. For a frozen weight matrix $W \in \mathbb{R}^{d \times k}$, LoRA trains $A \in \mathbb{R}^{d \times r}$ and $B \in \mathbb{R}^{r \times k}$ where rank $r \ll \min(d, k)$ (typically 4–64). The adapted forward pass becomes:
+
+$$h = Wx + \frac{\alpha}{r} BAx$$
+
+where $\alpha$ is a scaling hyperparameter (default: $\alpha = r$, giving $\frac{\alpha}{r} = 1$). During training only $A$ and $B$ are updated; $W$ is frozen. At the start of training, $B$ is initialised to zero so the adapter contributes nothing — training starts from the pretrained model's behaviour.
+
+**The intuition.** Weight updates in fine-tuning are empirically low-rank: the gradient matrix has many near-zero singular values, meaning the "useful update" lives in a small subspace. LoRA captures that subspace directly without ever computing the full update.
+
+**At inference.** $\frac{\alpha}{r} BA$ is computed once and added into $W$ — the adapter is *merged* into the weight. The result is a single weight matrix indistinguishable from a fully fine-tuned one. Zero latency overhead, zero extra memory, zero inference cost.
+
+```
+trainable params: ~4M  (out of 7B)   — r=8 applied to Q,K,V,O attention projections
+VRAM during fine-tune: ~16 GB (vs. ~80 GB full fine-tune)
+inference overhead: 0 — adapter merged into weights before serving
+PizzaBot use: Ch.8 brand-voice adapter → $0.008/conv (vs $0.07 with generic GPT-3.5)
+```
+
+> 💡 **LoRA verdict:** Same output quality as full fine-tuning for style/domain shifts; 5× cheaper to train; zero production overhead. Default choice for custom model adaptation.
+
+---
+
+#### Prefix Tuning
+
+**Technical definition.** Prefix tuning freezes all model weights and instead prepends $L_p$ learnable (key, value) pairs to the attention sequence of *every* transformer layer. These virtual KV pairs — the *prefix* — are trained end-to-end. The attention at each layer computes:
+
+$$\text{Attention}(Q,\ [K_{prefix};K_{input}],\ [V_{prefix};V_{input}])$$
+
+where $K_{prefix} \in \mathbb{R}^{L_p \times d_k}$ and $V_{prefix} \in \mathbb{R}^{L_p \times d_v}$ are the learned parameters. The model's own weights never change — only these injected context pairs are trained.
+
+**The intuition.** Every attention head can now "see" a learned context at every layer. Forcing representations to attend to this context at every depth steers the model's internal activations toward the target distribution — without touching any weights.
+
+**The inference cost.** The prefix occupies $L_p$ positions in the KV cache at every layer for every forward pass. A prefix of 100 tokens on a 32-layer model adds 3,200 KV entries to every active request. Unlike LoRA, this cost is *permanent* — it cannot be merged away.
+
+```
+trainable params: ~0.1–1% of model
+VRAM during fine-tune: low (prefix embeddings + gradients only)
+inference overhead: +L_p KV cache entries per layer, per request — always present
+use case: serve one frozen model with multiple swappable prefixes (one per task/tenant)
+```
+
+> ⚠️ **Prefix tuning in production:** The KV cache overhead scales with concurrent users. At 1,000 simultaneous conversations with $L_p=100$ and 32 layers, you're holding ~320k extra KV pairs in memory at all times. Budget for this before choosing prefix tuning over LoRA.
+
+---
+
+#### Prompt Tuning
+
+**Technical definition.** Prompt tuning freezes all model weights — including the embedding table — and trains a short sequence of $L_p$ continuous *soft token* embeddings that are prepended to the input before the first layer only. The soft tokens $P \in \mathbb{R}^{L_p \times d_{model}}$ are not constrained to the vocabulary; they are free-floating vectors in embedding space, optimised directly by gradient descent.
+
+$$\text{input to layer 1} = [P;\ \text{embed}(x_1),\ \text{embed}(x_2),\ \ldots]$$
+
+Nothing downstream changes — the soft tokens propagate through all layers as normal token representations.
+
+**The intuition.** The model already knows how to respond appropriately given the right context. Soft tokens are a learned "mode trigger" that shifts the model into the target behaviour — analogous to a system prompt but learnable rather than hand-crafted.
+
+**The trade-off.** Fewest trainable parameters of any PEFT method (~10k–1M). But the adaptation signal only enters at the first layer and must survive unmodified through all subsequent layers. For large distribution shifts this degrades — but at GPT-3 scale (100B+ parameters) prompt tuning is competitive with full fine-tuning on many benchmarks.
+
+```
+trainable params: ~10k–1M (smallest of all PEFT methods)
+VRAM during fine-tune: minimal — no gradient propagation into frozen weights
+inference overhead: +L_p input tokens per request (affects context length and API cost)
+use case: large frozen model, minimal infra change, lightweight per-tenant personalisation
+```
+
+---
+
+#### Choosing Between Them
+
+| | LoRA | Prefix Tuning | Prompt Tuning |
+|---|---|---|---|
+| **Where adaptation lives** | Inside weight matrices (merged at inference) | KV cache at every layer | Input embedding only |
+| **Inference overhead** | None | +KV cache per layer per request | +Input tokens per request |
+| **Expressiveness** | High | Medium–High | Lower (scales with model size) |
+| **Multi-task serving** | Swap adapter files | Swap prefix in memory | Swap soft token embeddings |
+| **Best for** | Domain/style fine-tuning, brand voice | Multi-task inference, one model many tasks | Very large frozen models, minimal infra |
+
+> 💡 **Interview anchor:** "Compare LoRA and prefix tuning" → anchor on *where the parameters live and what that costs at inference*. LoRA modifies weight matrices and is merged before serving — zero overhead. Prefix tuning injects into the KV cache and stays there — constant memory cost per concurrent user. The choice is a deployment constraint decision, not a training convenience decision.
+
 ---
 
 ## 5 · Emergent Capabilities
