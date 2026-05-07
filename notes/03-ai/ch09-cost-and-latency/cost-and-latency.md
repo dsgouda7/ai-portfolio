@@ -95,6 +95,8 @@ CEO: "And customers would wait even longer. I'm seeing 2.5-second delays in your
 
 ## 1 · Core Idea
 
+The CEO's ultimatum from §0 was precise: 18-month payback is unacceptable, and "Fix the latency or we're not launching." Both failures share a single root cause — too many tokens, processed too slowly. Every optimization lever in this chapter maps to one of the two numbers in the formulas below.
+
 Every LLM API call costs money and time. Both are functions of one thing: **the number of tokens processed**.
 
 ```
@@ -104,9 +106,13 @@ Latency = time_to_first_token (TTFT)   + tokens_generated × ms/token
 
 Every architectural decision — which model, how much context, how many calls, whether to stream — maps directly to these two formulas.
 
+> 💡 **Core idea verdict:** PizzaBot's 18-month payback and 2.2s latency are both token problems in disguise. Halving input tokens via caching and cutting inference time 47% via quantization closes the ROI gap to 10.9 months at 120 visitors/day — zero additional marketing spend required.
+
 ---
 
 ## 1.5 · The Practitioner Workflow — Your 4-Phase Optimization
+
+The §0 gap is $11,673/month in missing benefit to hit the CEO's 10.6-month target. This workflow sequences the four decisions that close it — each phase maps one lever in the formulas above to a measurable business outcome.
 
 **Before diving into theory, understand the workflow you'll follow with every production deployment:**
 
@@ -131,7 +137,7 @@ Choose model tier:         Cache repeated content:    Stream responses:         
     Open-source self-hosted    (measure savings)          KV-cache                   Quantize to INT8
 ```
 
-> 💡 **Usage note:** Phases 1-2 are sequential (choose model, then enable caching). Phases 3-4 can be applied independently — streaming improves perceived latency, batching/quantization improve throughput.
+> 💡 **Workflow verdict:** Running all four phases takes PizzaBot from $0.010/conv + 2.2s to $0.005/conv + 1.5s — a 50% cost reduction and 32% latency improvement that moves ROI payback from 18 to 10.9 months at 120 visitors/day, with no additional infrastructure investment.
 
 **Typical optimization impact (PizzaBot example):**
 ```
@@ -157,6 +163,8 @@ ROI: $300k investment → 10.9 months payback (vs. 18 months without optimizatio
 
 ## 2 · Where Tokens Come From
 
+Before you can cut the $0.010/conv, you need to know which line item is the problem. The §0 cost breakdown named five components — the token ledger below shows the model-level source for each and which entries are fixed versus shrinkable.
+
 In a RAG + agent pipeline, the token budget breaks down roughly as:
 
 | Component | Typical token count | Notes |
@@ -171,9 +179,25 @@ In a RAG + agent pipeline, the token budget breaks down roughly as:
 
 **The biggest cost leak in production:** conversation history. A chat app that passes the full conversation history to every API call has linearly growing costs per session. Solutions: summarise older turns, truncate aggressively, or store history in a vector DB and retrieve only the relevant parts.
 
+**PizzaBot token breakdown** (mid-tier model, per order):
+
+| Component | Tokens | Notes |
+|---|---|---|
+| System prompt | ~300 | Fixed; prefix-cached after first request |
+| Conversation history | ~400 | ~4 prior turns summarised |
+| Retrieved RAG chunks (k=3) | ~450 | Menu item + allergen entry + FAQ section |
+| User message | ~40 | "Large Margherita + 2 garlic breads to 42 Maple St" |
+| Tool call outputs (3 calls) | ~200 | Location + availability ×2 + order total |
+| **Total input** | **~1,390** | Well within 8k context; cheap per call |
+| Model output | ~150 | Order confirmation JSON + natural language summary |
+
+> 💡 **Token ledger verdict:** PizzaBot's ~1,390-token input at GPT-4o-mini pricing costs $0.00030/conv — 99.6% under the $0.08 ceiling. Conversation history is the only entry that grows unboundedly; §5.3 caps it at ~400 tokens via rolling summarisation regardless of session length.
+
 ---
 
 ## 3 · Model Tier Selection
+
+In §0, PizzaBot already runs on self-hosted Llama-3-8B ($0.004/conv) — but was that the right tier for a structured order-confirmation task, or did cost-familiarity drive the decision? This section is the explicit decision record that prevents over-spending on frontier capability for structured tasks.
 
 | Model tier | Cost range | When to use |
 |---|---|---|
@@ -281,6 +305,8 @@ gpt-4o-mini:
 ---
 
 ## 4 · Latency Components and Streaming
+
+The CEO's exact words from §0: *"2 seconds feels slow. Fix the latency or we're not launching."* Total latency is a sum of four distinct components — only one (generation throughput) responds to model size. Identifying the dominant component determines which lever eliminates the most delay.
 
 ```
 Total latency = network RTT
@@ -447,6 +473,8 @@ Latency reduction: 30–40% on typical generation tasks
 ---
 
 ## 5 · Prompt Caching Strategies
+
+The §0 cost stack charged $0.002/conv for RAG retrieval — but the system prompt prefix (~300 tokens, static across every order) was being re-billed on every single call. Prompt caching converts that recurring per-call expense into a one-time charge; every subsequent call with the same prefix is 90% cheaper.
 
 Keep system prompts and few-shot examples structurally identical across calls. Any content the provider can cache doesn't get billed again.
 
@@ -641,6 +669,8 @@ def cached_llm_call(prompt: str, model: str, temperature: float) -> str:
 ---
 
 ## 6 · Batching and Quantization
+
+Two blockers from §0 remain after caching: the CEO's concern that Friday dinner rush at 100 concurrent users would force 10× infrastructure scaling, and 1.5s inference time still dominated by GPU memory bandwidth on the Llama-3-8B weights. Batching addresses the throughput ceiling; quantization cuts inference time directly.
 
 ### 6.1 Batch processing
 
@@ -839,6 +869,8 @@ print("→ DECISION: INT8 quantization enabled (0.8s vs. 1.5s latency, <1% accur
 
 ## 7 · The Accuracy vs. Cost Tradeoff
 
+PizzaBot already hit <5% error rate in earlier chapters via RAG and fine-tuning — neither was free. Before adding another accuracy layer, the table below makes the cost multiplier for each technique explicit so you can evaluate whether the margin in §0's $0.08 budget justifies the addition.
+
 Every accuracy-improving technique adds cost. Knowing the magnitude helps you decide what to afford.
 
 | Technique | Accuracy gain | Cost multiplier | Latency multiplier |
@@ -852,9 +884,14 @@ Every accuracy-improving technique adds cost. Knowing the magnitude helps you de
 
 **The hierarchy:** reach for cheaper techniques first. Self-consistency at 5× cost rarely beats a better prompt at 1× cost. An NLI model for hallucination detection costs 0.1× what an LLM judge costs.
 
+> 💡 **Tradeoff verdict:** Self-consistency at 5× cost produces only 3–8% accuracy gain — adding $0.025/conv to PizzaBot's $0.005 baseline and erasing the entire 94%-under-budget margin. NLI claim verification at 1.1× is the cheapest hallucination guard. PizzaBot's error rate is already at target; add nothing until evaluation shows regression.
+> ➡️ Run the evaluation suite from [Ch.8](../ch08-evaluating-ai-systems/evaluating-ai-systems.md) before adding any accuracy layer — the cost multiplier is only worth paying when the eval delta is real and statistically significant.
+
 ---
 
 ## 8 · Real Numbers — Cost Estimation
+
+The CEO needs a number for the budget deck, not a formula. The model below applies the §2 token ledger to realistic traffic levels — with and without prompt caching — converting the optimization stack into a monthly line item.
 
 ```
 Per query:
@@ -877,34 +914,7 @@ Cloud GPU (A100 40GB): ~$1.5/hour → ~$1,080/month at 100% utilisation
 Break-even vs. API: ~same, but with full data privacy and no per-token billing
 ```
 
----
-
-## 8 · PizzaBot Connection
-
-> See [AIPrimer.md](../ai-primer.md) for the full system definition.
-
-**Token budget per order request** (approximate, mid-tier model):
-
-| Component | Tokens | Notes |
-|---|---|---|
-| System prompt | ~300 | Fixed; prefix-cached after first request |
-| Conversation history | ~400 | ~4 prior turns summarised |
-| Retrieved RAG chunks (k=3) | ~450 | Menu item + allergen entry + FAQ section |
-| User message | ~40 | "Large Margherita + 2 garlic breads to 42 Maple St" |
-| Tool call outputs (3 calls) | ~200 | Location + availability ×2 + order total |
-| **Total input** | **~1,390** | Well within 8k context; cheap per call |
-| Model output | ~150 | Order confirmation JSON + natural language summary |
-
-**Cost at scale** (GPT-4o-mini at $0.15/1M input, $0.60/1M output):
-```
-Per order: (1390 × 0.00000015) + (150 × 0.00000060) ≈ $0.00021 + $0.00009 = $0.00030
-10,000 orders/day: ~$3.00/day  (~$90/month)
-```
-
-**Optimisations applied:**
-- **Prefix caching** on the system prompt — 300 tokens cached after the first call per session (saves ~$0.00004/call)
-- **Semantic caching** on frequently repeated queries ("Is the Margherita gluten-free?") — cache hit rate ~30% for a menu of 20 items
-- **Mid-tier model** selected over frontier after eval showed quality parity on structured order confirmation
+> 💡 **Real numbers verdict:** At 10,000 orders/day with prompt caching, monthly LLM cost is ~$875 — $0.000088/order, 99.9% under the $0.08/conv budget. Self-hosted Llama-3-8B (~$1,080/month) only wins over the API when data privacy or per-token billing is the binding constraint; PizzaBot at 50 visitors/day ($4.20/month) doesn't reach self-hosting break-even until 1,000+ visitors/day.
 
 ---
 

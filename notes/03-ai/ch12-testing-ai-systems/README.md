@@ -103,6 +103,8 @@ Total wrong-order rate: 28 / 200 = 14%
 
 ## 1 · The Core Idea
 
+The CEO's §0 ultimatum — *"Pull the plug until it's provably fixed"* — exposes a gap: Ch.8's RAGAS context precision of 0.88 never flagged the dinner/lunch retrieval mismatch, because aggregate metrics don't fail when a specific query-document pair breaks. That shift — from *measuring* accuracy to *asserting* correctness — is what this section establishes.
+
 **Plain English:** Traditional software tests check *deterministic* functions — `add(2, 3) == 5`. AI systems are probabilistic: the same input can produce different outputs. But most AI bugs aren't in the randomness — they're in the **pipeline joints**: the transition from document ingestion to retrieval, from retrieval to generation, from generation to order confirmation.
 
 The PizzaBot 14% wrong-order rate isn't a model bug. It's a **retrieval bug**: when a customer orders at 7pm, the RAG retrieval returns lunch-menu documents (because both menus use "pepperoni pizza" and the embedding doesn't capture time-of-day). The fix is one line. The test that would have caught it is four lines. Neither existed.
@@ -115,6 +117,8 @@ The PizzaBot 14% wrong-order rate isn't a model bug. It's a **retrieval bug**: w
 ---
 
 ## 1.5 · The Practitioner Workflow — Your 3-Tier Test Pyramid
+
+The §0 14% wrong-order bug was invisible to aggregate metrics — RAGAS context precision 0.88, above threshold — yet 28 orders per week were wrong. The three-tier pyramid below maps each §0 failure mode to the test tier that would have caught it before the soft launch.
 
 **Before diving into test implementation, understand the three-tier strategy every AI system needs:**
 
@@ -290,9 +294,13 @@ This is the failure-first pattern for AI testing: **write the failing test, conf
 > ⚠️ **Warning:** The temptation is to write tests *after* fixing the bug. Don't. Write the test first so you can confirm it fails for the right reason — not because of an unrelated error. If your test passes before the fix, it's not testing what you think.
 > **Rule:** A test that has never been seen to fail is a test you can't trust.
 
+> 💡 **Failing-test-first → zero wrong orders:** Writing the test before the fix confirmed it failed for the right reason — not for a coincidental error. At §0's launch scale of 10,000 orders/day, a missing metadata filter is a $35,000/day liability. One four-line test, written RED first, eliminates that exposure permanently once the fix turns it GREEN.
+
 ---
 
 ## 3 · Component Testing — Isolate and Assert Contracts
+
+The §0 retrieval bug — lunch menu returned at 7pm — was invisible at the pipeline level: retrieval returned *a* document, generation produced *a* price, and no aggregate metric failed. Unit tests expose the exact contract each component broke: the metadata filter that was never applied.
 
 **What you're doing in this tier:** Test each component of the RAG pipeline in complete isolation. Retrieval doesn't call the LLM. Generation uses a mocked retrieval response. Ingestion doesn't hit a real database. **Goal: verify component contracts with zero API cost, <1s execution time, 80%+ code coverage.**
 
@@ -535,6 +543,8 @@ def test_response_is_deterministic_at_temperature_zero(rag_client, sample_menu_d
 
 ## 4 · Pipeline Testing — End-to-End Correctness
 
+Unit tests in §3 confirmed each component's contract independently — but the §0 bug only appeared when retrieval and generation *communicated*: retrieval returned the right document count, generation used the wrong one because no metadata filter was threaded end-to-end. Pipeline tests are the only tier that catches joint failures.
+
 **What you're doing in this tier:** Fire the full pipeline with real components. No mocks. Ingestion → embedding → vector DB → retrieval → LLM generation → parsed response. **Goal: verify pipeline joints work correctly, catch the bugs that only appear when components communicate (like the 14% wrong-order bug).**
 
 Integration tests fire the full pipeline: ingestion → retrieval → generation. They don't mock anything. They use a real (small) test corpus and real API calls.
@@ -665,6 +675,8 @@ def test_e2e_latency_under_3s(e2e_rag):
 ---
 
 ## 5 · Stress Testing — Shape, Invariance, and Directional Properties
+
+§3–4 diagnosed and fixed the 28 named wrong orders from §0. But the §0 production sample was only 200 orders — at 10,000/day launch scale the real threat is failure modes that never appeared in that sample: users typing in caps, appending their name, or ordering two pizzas when the pricing logic assumed one. Property tests in this section probe that unexplored surface automatically.
 
 **What you're doing in this tier:** Test the system's resilience to edge cases, adversarial inputs, and property violations. Don't hand-write 100 test cases — use **property-based testing** (hypothesis library) to generate them automatically. Verify that the model's behavioral properties hold for *all* inputs, not just your happy-path examples.
 
@@ -850,6 +862,8 @@ def test_delivery_adds_to_pickup_price(e2e_rag):
 
 ## 6 · Property-Based Testing with hypothesis
 
+§5's invariance and directional tests covered three behavioral properties by hand — case, name, politeness. The §0 wrong-order breakdown (19 wrong-item, 5 wrong-price, 4 wrong-zone) suggests at least a dozen more failure axes in the menu and pricing logic. Property-based testing inverts the approach: write *properties* and let hypothesis generate hundreds of adversarial inputs automatically to falsify them.
+
 Unit tests check specific inputs. Property-based tests ask: *for all inputs satisfying property P, does the output satisfy property Q?* The hypothesis library generates hundreds of adversarial inputs automatically.
 
 ```python
@@ -1007,6 +1021,8 @@ def test_order_total_monotone_in_quantity(size, topping, quantity_1, quantity_2)
 ---
 
 ## 7 · Putting It Together — The Complete CI/CD Test Pipeline
+
+§3–6 built the test suite that would have caught the §0 wrong-order bug before the soft launch. But the bug reached production precisely because no automated gate blocked the bad retrieval change. This section assembles all three tiers into a GitHub Actions workflow where a failing test blocks a merge — preventing a rerun of the §0 incident.
 
 ```bash
 # Install test dependencies
@@ -1177,9 +1193,13 @@ jobs:
 
 > ➡️ **Forward pointer:** The `docker compose -f docker-compose.test.yml up -d --wait` pattern provisions a disposable Chroma instance per CI run. [DevOps Ch.4 — CI/CD Pipelines](../../07-devops_fundamentals/) covers the full pattern: healthchecks, test isolation, and teardown-on-failure to avoid orphaned containers accumulating cost.
 
+> 💡 **CI/CD gate ROI:** Unit tests run on every PR at $0 and under 1 second. Integration tests cost ~$0.05 per run on push to main only. Adversarial tests run nightly. At 100 PRs/week that is $5/week in test costs — against the §0 baseline of $700/week in wrong-order refunds, or $35,000/day at launch scale. The gate pays for itself in the first wrong order it intercepts.
+
 ---
 
 ## 8 · What Can Go Wrong: Testing Traps
+
+The §0 wrong-order bug reached production past a team that thought they had working components. The traps below describe the patterns that produce passing tests while production burns — starting with the one most likely responsible for the §0 incident: tests that verify mocks, not the system.
 
 ### Trap #1: Testing the Mock, Not the System
 
@@ -1257,6 +1277,10 @@ def test_retrieval_time_of_day_14pct_wrong_order_bug():
     """
     # ... the test from §3.3
 ```
+
+> 💡 **Testing-trap cost:** Each trap in this section describes a variant of the §0 outcome: passing tests, a live production bug, a 14% wrong-order rate. All four fixes require one-line changes in test architecture — the avoidance cost is near zero. The cost of not avoiding them is $700/week in refunds at soft-launch scale, $35,000/day at full launch.
+
+> ➡️ **Next:** §9 confirms all six production constraints are met by evidence, not just measurement — and identifies the two remaining gaps (p95 load testing, drift detection) that testing alone cannot close.
 
 ---
 

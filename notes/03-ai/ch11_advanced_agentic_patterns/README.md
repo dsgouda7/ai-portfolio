@@ -154,6 +154,8 @@ Four patterns that trade tokens for reliability:
 
 ## 1 · The Core Idea
 
+The three §0 failures — contradictory constraints (8% customer abandonment), pricing conflicts (15% dispute rate), and catering complexity (85% capture vs. 95% target) — all share the same root cause: a single-pass agent has exactly one attempt to produce a correct answer. This section names the token-for-reliability trade-off that all four patterns in this chapter exploit.
+
 **Plain English:** Iterative refinement beats one-shot prediction for complex reasoning tasks. Trade tokens for reliability. When a single-pass agent would fail (contradictions, ambiguity, complexity), a refinement pattern succeeds:
 
 - **Reflection**: The agent critiques its own output and revises it. Cost: 3× tokens. Gain: 6× error reduction on ambiguous inputs.
@@ -180,6 +182,8 @@ Four patterns that trade tokens for reliability:
 ---
 
 ## 2 · Running Example: PizzaBot v2.0 — Edge Case Handling
+
+The three §0 failures are traced through their full conversation below — each one showing precisely where single-pass reasoning breaks and which pattern in §3–§5 closes the gap.
 
 **Scenario:** PizzaBot v1.0 (Ch.1–10) handles 92% of orders perfectly but fails on edge cases. We need 99%+ accuracy for production launch.
 
@@ -382,9 +386,13 @@ verifier = LLM(f"Plan: {plan}
 
 **Cost:** 1 planner (1,200 tokens) + 4 workers (800 tokens each) + 1 verifier (950 tokens) = **5,350 tokens** ($0.50). **Worth it:** Captures $157 order that v1.0 would have lost (31,400% ROI).
 
+> 💡 **Three edge cases, three recoveries:** Edge case #1 (contradictions): customer abandonment 8% → 1.5%. Edge case #2 (pricing disputes): dispute rate 15% → 3%. Edge case #3 (catering): complex order capture 85% → 96%. Together they close the 7-point escalation gap from §0 at $0.24–$0.50 per complex conversation — the overall average stays at $0.18 because the 92% of simple orders running single-pass at $0.08 anchor the mean below the $0.25 cap.
+
 ---
 
 ## 3 · Pattern #1 — Reflection (Self-Critique)
+
+Edge case #1 in §0 — eight percent of customers abandoning after "dairy-free + extra cheese" produced a blunt error instead of an alternative — fails because the single-pass agent had no mechanism to question a technically-correct-but-unhelpful answer. Reflection adds that second chance.
 
 ### What It Is
 
@@ -708,9 +716,13 @@ def smart_routing(user_input):
         return debate_agent(user_input)
 ```
 
+> 💡 **Reflection's business case in §0 terms:** The 6.5-point edge-case accuracy gain (92% → 98.5%) converts abandoned-order errors into clarifying prompts. At PizzaBot's volume that is $161 net daily gain on $1.04 of extra token spend — a 15,621% ROI — but only because the routing function above reserves reflection for genuinely ambiguous inputs. Applied to all 1,000 daily orders, reflection would cost $160/day in wasted tokens while improving already-correct answers by zero.
+
 ---
 
 ## 4 · Pattern #2 — Debate & Consensus (Multi-Agent Reasoning)
+
+Edge case #2 in §0 — the pricing conflict where PizzaBot v1.0 charged $22.49 by defaulting to BOGO without comparing paths, when $18.98 (coupon + loyalty) was the correct answer — fails because a single agent reasoning alone commits to the first valid interpretation it finds. Debate forces that comparison by assigning adversarial stances to separate agents.
 
 ### What It Is
 
@@ -1061,9 +1073,13 @@ def classify_query_stakes(user_input):
 - If single-pass fails, try reflection (3× cost)
 - If reflection doesn't converge, escalate to debate (6× cost)
 
+> 💡 **Debate's business case in §0 terms:** Pricing disputes cost $25 per refund plus chargeback fees; debate prevents each for $0.45 — 5,556% ROI per dispute avoided. That ROI holds only because the escalation path above reserves debate for the 2–3% of orders with genuine policy ambiguity. Routing all 1,000 daily orders through debate would spend $450/day to prevent 15 disputes worth $375 — a net loss.
+
 ---
 
 ## 5 · Pattern #3 — Hierarchical Orchestration (Planner → Workers → Verifier)
+
+Edge case #3 in §0 — the $200 catering order refused with "over budget by $24.85" while a $156.92 solution existed — fails because a single-pass agent must explore the solution space and produce an answer within the same token budget. Hierarchical orchestration separates those two jobs: the planner explores first, workers execute in parallel second, the verifier confirms last.
 
 ### What It Is
 
@@ -1400,9 +1416,13 @@ def hierarchical_plan_smart(user_input):
 - **Sequential**: "Book flight → Book hotel → Book rental car" (each depends on previous)
 - **Hierarchical**: "Plan trip → [Book flight ‖ Book hotel ‖ Book car] → Verify itinerary" (subtasks parallel)
 
+> 💡 **Hierarchical's business case in §0 terms:** The $157 catering order lost in §0 to a single-pass refusal represents an 11-point complex-order capture improvement (85% → 96%) for $0.50 of orchestration overhead — 31,400% ROI. The operative metric is not token cost but complex-order capture rate: hierarchical finds solutions that single-pass structurally cannot explore within its token budget.
+
 ---
 
 ## 6 · Pattern #4 — Tool Selection Strategies
+
+§0's performance table shows tool failure recovery at 60% — every DB timeout or API error that a single-pass agent hit became a customer escalation. The 35-point gap to the 95% target is what tool selection closes, not by making tools more reliable, but by giving the agent a rehearsed fallback plan before the first failure occurs.
 
 ### What It Is
 
@@ -1694,9 +1714,13 @@ def process_payment_with_fallback(card_info):
     return escalate_to_manual_payment(card_info)
 ```
 
+> 💡 **Tool selection's business case in §0 terms:** The 35-point recovery improvement (60% → 95%) eliminates roughly 4.2% of all escalations. Unlike the other three patterns, the ROI here is a cost-reduction metric, not a revenue-capture metric: each avoided escalation removes a fraction of the $157,680 annual labor cost from §0 rather than recovering an abandoned order. That makes tool selection the lowest-drama, highest-consistency investment in the pattern stack.
+
 ---
 
 ## 7 · Mental Model: Trading Tokens for Reliability
+
+With all four patterns defined, the §0 constraints give a concrete decision surface: $0.25/conversation budget, <15s latency, and 99%+ accuracy. §3–§6 each justified one pattern in isolation; this section collapses them into a single routing decision that satisfies all three constraints simultaneously.
 
 Every agentic pattern is a trade-off: **tokens ↔ reliability**.
 
@@ -1765,9 +1789,13 @@ Reliability (%)
 
 **Key insight:** Even expensive patterns (6× tokens) pay for themselves if they prevent order abandonment or disputes.
 
+> 💡 **The routing rule in §0 terms:** The §0 cost constraint is $0.25/conversation *average*, not per-call. The decision tree keeps that average intact by routing 92% of simple orders to $0.08 single-pass while spending $0.18–$0.50 on the 8% that need pattern support — landing at $0.18 average, well under cap. Routing all orders through the most expensive pattern would cost $0.50 average, doubling the constraint, while improving already-correct simple orders by zero.
+
 ---
 
 ## 8 · What Can Go Wrong: Common Traps Across All Patterns
+
+Each pattern in §3–§6 introduced at least one failure mode, and the failures are not independent: an uncapped reflection loop drives cost past the §0 $0.25/conversation cap; groupthink in debate produces the same wrong answer the single-pass agent would have given at 6× the cost. This section consolidates the six cross-pattern traps and their fixes.
 
 ### Trap #1: Infinite Loops (Reflection, Debate)
 
@@ -1894,6 +1922,8 @@ if is_simple(user_input):
 else:
     return debate_agent(user_input)  # 6× cost
 ```
+
+> 💡 **Traps compound in production:** An uncapped reflection loop (Trap #1) combined with expensive-pattern overuse (Trap #6) can turn a $0.24 edge-case call into a $2.40 runaway — ten times the §0 budget cap with no improvement in answer quality. The fixes here are not optional hardening; they are the boundary conditions that keep the cost model in §7 valid and the $0.25/conversation cap enforceable.
 
 ---
 
@@ -2109,6 +2139,8 @@ verify = ManagerAgent.verify(results)
 5. **Multi-Agent Ch.4** — Hierarchical Multi-Agent Systems (manager-worker coordination)
 6. **Multi-Agent Ch.5** — Tool Specialization & Negotiation (agents own tools, negotiate usage)
 7. **Multi-Agent Ch.6** — Production Multi-Agent Systems (AutoGPT, MetaGPT, CrewAI)
+
+> ➡️ **What Ch.11 patterns cannot do alone:** All four patterns operate within a single conversation — agent state resets each turn, agents are ephemeral, and coordination is hard-coded into the prompt. The multi-agent track adds persistence (agents retain memory across conversations), specialization (agents develop task expertise over time), and asynchronous coordination (agents message each other without a human turn in the loop). Start with [Multi-Agent Ch.1](../../04-multi-agent-ai/ch01-intro-to-multi-agent-systems/README.md) for agent types and communication protocols.
 
 ---
 

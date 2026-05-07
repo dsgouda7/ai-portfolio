@@ -105,6 +105,8 @@ Fine-tuning drives brand differentiation → conversion uplift AND cost reductio
 
 ## 1 · Core Idea
 
+Failures 1–4 in §0 — generic corporate tone, missing brand storytelling, inconsistent personality, prompt-engineering plateau at 70% — all trace to the same root cause: style behaviour is encoded in model weights, not prompt text. No 500-token system prompt can fully override a model's default register; LoRA's insight is that only 0.24% of those weights need to change to encode "be Mamma Rosa."
+
 **Full fine-tuning** retrains all parameters of a pretrained model on a new dataset. For a 7B parameter model, this requires ~140 GB VRAM and hours of GPU time. For a 70B model, it requires a cluster.
 
 **PEFT (Parameter-Efficient Fine-Tuning)** adapts a model by training only a small number of additional parameters while keeping the original weights frozen. The main PEFT method in production is **LoRA**.
@@ -123,6 +125,8 @@ LoRA fine-tuning:  freeze W, train ΔW = A·B  (0.1–1% of params, ~16–24 GB 
 ---
 
 ## 1.5 · The Practitioner Workflow — Your 5-Phase Fine-Tuning Journey
+
+§0 identified a concrete five-step fix — curate 500 phone transcripts, LoRA fine-tune Llama-3-8B, encode warmth at weight level, shrink the system prompt from 500 to 50 tokens, cut cost to $0.008/conv. The five phases below map each of those steps to a reproducible engineering process with explicit go/no-go decisions.
 
 > ⚠️ **Two ways to read this chapter:**
 > - **Theory-first (recommended for learning):** Read §0→§9 sequentially to understand the concepts, then use this workflow as your reference
@@ -152,6 +156,8 @@ Fine-tune or prompt?         Curate dataset:             Set LoRA hyperparams:  
 ---
 
 ### 1.5.1 Phase 1: DECIDE — When to Fine-Tune
+
+§0's prompt-engineering plateau — 70% brand voice match despite a 500-token system prompt, with 30% reversion under complex queries — is the primary trigger for Phase 1. The decision matrix below confirms whether that plateau justifies two weeks of fine-tuning effort, or whether RAG or structured output gets there cheaper.
 
 **The first question isn't "how do I fine-tune?" — it's "should I fine-tune at all?"**
 
@@ -237,6 +243,8 @@ def should_fine_tune(problem_type, base_model_score, budget, timeline):
 
 **Final verdict:** Fine-tune for brand voice (style problem), use RAG for menu facts.
 
+> 💡 **Business consequence.** Correctly routing the style problem to fine-tuning — rather than layering more prompt engineering — eliminates the 500-token brand voice overhead ($0.075/1,000 requests in wasted input tokens) while closing the 70% → 95% consistency gap that exhausts the prompt-engineering ceiling. Routing factual failures to fine-tuning instead costs two weeks of training and a model that's wrong the day after the next menu update.
+
 > 💡 **Industry Standard:** `OpenAI Fine-Tuning API`
 >
 > ```python
@@ -268,6 +276,8 @@ def should_fine_tune(problem_type, base_model_score, budget, timeline):
 ---
 
 ### 1.5.2 Phase 2: PREPARE — Dataset Quality Gates
+
+Phase 1 confirmed that 500 phone staff transcripts — the gold standard behind phone conversion at 32% vs. the bot's 28% plateau from §0 — are the raw training signal. Phase 2 is the quality gate: those transcripts only convert the brand voice gap if they survive deduplication, length filtering, and negative-example checks before training starts.
 
 **The quality of your training data determines 80% of fine-tuning success.** 500 high-quality examples outperform 10,000 mediocre ones.
 
@@ -487,6 +497,8 @@ Final dataset:
 
 ### 1.5.3 Phase 3: CONFIGURE — LoRA Hyperparameter Selection
 
+Phase 2 validated 548 examples. Phase 3 answers the question §0 raised — "only 0.1% of parameters" — by selecting which 0.1%: the rank `r`, scaling `alpha`, and target layers that fit the style adaptation onto a single 24 GB GPU at minimum trainable parameter count.
+
 **The three dials that control LoRA adaptation: rank `r`, scaling `alpha`, and target modules.**
 
 **Hyperparameter Decision Tree:**
@@ -664,6 +676,8 @@ Reasoning:
 ---
 
 ### 1.5.4 Phase 4: TRAIN — Training Loop & Monitoring
+
+Configuration locked at r=16, alpha=32, attention q/v projections. Phase 4 is where the 500-transcript investment either pays off or fails: the train/eval loss curves reveal whether the adapter is learning "be Mamma Rosa" (eval loss falling) or memorising training examples (eval loss diverging) — the difference between 95% brand voice consistency and 68%.
 
 **Training LoRA adapters requires careful monitoring of train/eval loss curves and hyperparameter scheduling.**
 
@@ -855,6 +869,8 @@ Training complete! Best model from step 50 (eval_loss=1.501) loaded.
 ---
 
 ### 1.5.5 Phase 5: EVALUATE — Production Validation
+
+Phase 4 saved the best checkpoint at step 50. Phase 5 is the test of whether the 0.24% parameter delta actually moves the metric the CEO cares about: the 28% conversion plateau from §0. Three evaluation layers — automated metrics, human quality rating, seven-day A/B test — confirm or reject that claim before a single production request routes to the new model.
 
 **The final phase: does the fine-tuned model actually perform better than the base model in production?**
 
@@ -1179,6 +1195,8 @@ Deployment Checklist (6/6 passed):
 
 ## 2 · RAG vs Fine-Tuning — What Each Approach Actually Changes
 
+§0 showed two distinct failures: the model hallucinating menu facts (a knowledge failure — the model doesn't have Mamma Rosa's current prices) and the model sounding generic despite a 500-token prompt (a behaviour failure — the model's default register overrides instructions 30% of the time). These look the same from a product perspective but require entirely different fixes.
+
 > **The common confusion.** Building a RAG pipeline does not teach the model anything — its weights remain completely frozen. RAG and fine-tuning fix different failure modes. Reaching for the wrong tool wastes weeks of engineering time and GPU budget.
 
 ### The fundamental distinction
@@ -1244,9 +1262,13 @@ RAG and fine-tuning are not mutually exclusive. Production systems often layer t
 
 ![RAG vs Fine-Tuning — architecture flows, failure-mode table, combined pattern](img/RAG-vs-FT.png)
 
+> 💡 **Business consequence.** The RAG/fine-tuning split maps directly to the §0 targets: RAG grounds menu facts and drives hallucination errors below 5%, while fine-tuning locks in the brand tone that lifts conversion from 28% to 30%. Using fine-tuning for facts instead produces a model that degrades the moment the menu changes — and no amount of retraining closes that gap as fast as a RAG re-index.
+
 ---
 
 ## 3 · Should You Fine-Tune? — Decision Tree
+
+§0's failures break into two categories the decision tree routes differently: factual failures (menu hallucinations, stale prices) belong to RAG — already deployed in Ch.4; behavioural failures (generic tone, prompt plateau) require fine-tuning. §3 is the diagnostic that prevents spending two weeks training a model for a problem a JSON mode setting would have solved in five minutes.
 
 ```
 Is the model failing to follow the correct output format?
@@ -1306,9 +1328,13 @@ Is the task so specialised that no amount of prompting helps?
 → **Set success criteria:** Target 90%+ brand voice match, <$0.010/conv cost to justify fine-tuning investment
 → **For PizzaBot:** Style problem confirmed → fine-tune on 500 phone transcripts ✓
 
+> 💡 **Business consequence.** The decision tree correctly routes all four §0 failures: RAG (Ch.4) handles menu hallucinations, JSON mode handles format drift, LoRA fine-tuning handles brand voice (70% → 95% consistency), and distillation handles cost ($0.015 → $0.008/conv). Misrouting — training to memorise menu facts — costs two weeks of GPU time plus a model that goes stale within 24 hours of the next menu update.
+
 ---
 
 ## 4 · Math — LoRA
+
+§0 claimed fine-tuning would use "only 0.1% of the model's parameters." §4 is the mathematical proof of why that holds: weight updates during style adaptation are intrinsically low-rank, meaning the information needed to encode Mamma Rosa's voice occupies only a tiny subspace of the full 7B weight matrix.
 
 **The key insight:** model adaptation doesn't require changing all weights. Most of the task-relevant adaptation projects into a low-rank subspace of the weight matrix.
 
@@ -1345,9 +1371,13 @@ LoRA     :   16  × (4096 + 4096) = 131,072 params  →  0.78% of original
 
 > 💡 **Why $\mathbf{B}$ starts at zero.** At initialisation, $\Delta\mathbf{W} = \mathbf{B}\mathbf{A} = \mathbf{0}$ because $\mathbf{B} = \mathbf{0}$. The LoRA-adapted model makes *identical* predictions to the base model at step 0. You are not gambling on a random starting point — you start from a model that already handles allergen queries, price calculations, and multi-turn conversation correctly, then nudge it toward Mamma Rosa's voice. For PizzaBot, that means the brand voice delta converges reliably rather than fighting the pre-existing instruction-following behaviour.
 
+> 💡 **Business consequence.** Merging W' = W + BA at serving time means the 33 MB LoRA adapter adds zero inference latency overhead — the 2.0s p95 target from §0 is preserved. The zero-initialisation of B guarantees training starts from a stable, instruction-following base, making the 70% → 95% brand voice jump reproducible rather than dependent on random adapter initialisation.
+
 ---
 
 ## 5 · QLoRA — Quantisation + LoRA
+
+§0 budgeted a single A100 for self-hosting, targeting $0.008/conv. Standard fp16 LoRA on a 7B model needs ~14 GB VRAM — manageable on an A100 40GB but too tight for a 13B or 30B model. QLoRA is what makes the §0 cost target achievable on one card: 4-bit quantisation of the frozen base drops the memory footprint from ~14 GB to ~6 GB.
 
 **QLoRA** combines LoRA with 4-bit quantisation of the frozen base model weights, enabling fine-tuning of large models on a single consumer GPU.
 
@@ -1393,6 +1423,8 @@ The quantisation introduces a small accuracy trade-off compared to full fp16 LoR
 ---
 
 ## 5.5 · DPO — Direct Preference Optimisation
+
+After LoRA closes failures 1, 2, and 4 from §0 (generic tone, missing brand storytelling, prompt plateau), failure 3 persists: 5% of responses still revert to cold, generic phrasing under complex queries — the "inconsistent personality" the CEO flagged in §0. LoRA treats all training examples with equal loss weight and cannot distinguish a warm from a cold correct answer; DPO adds the preference layer that directly raises the probability of warm over cold.
 
 **LoRA teaches the model *what* to say. DPO teaches the model *what to prefer*.**
 
@@ -1440,6 +1472,10 @@ DPO:   SFT (= π_ref) → [DPO loss on (x, y_w, y_l) triples] → Aligned model
 ```
 
 > 💡 **Key insight (Rafailov et al.):** The RLHF optimal policy is a function of the reference model's log-ratios. DPO reparameterises the objective so the reward model is implicit — no separate training step required.
+
+> 💡 **Business consequence.** DPO's preference layer targets the residual failure 3 from §0 (5% cold responses under complex queries): brand voice rises from 95% to 99%+, AOV moves from $41.00 to $42.50 (+3.7%), adding ~$2,250/month. The preference pairs come from the same A/B test signal that validated fine-tuning — responses that closed sales become `chosen`, responses that didn't become `rejected`.
+
+> ➡️ DPO requires a good SFT base to converge reliably — the LoRA adapter from §1.5 is that base. Skipping LoRA and jumping straight to DPO means the reference model is too far from the target voice distribution.
 
 ### DPO vs LoRA: Complementary, Not Competing
 
@@ -1562,6 +1598,8 @@ dpo_trainer.train()
 
 ## 6 · Step by Step — Fine-Tuning with LoRA
 
+§0 outlined five concrete steps to close the brand voice gap. §6 is the engineer's checklist that executes them — a six-point sequence from base model selection through production serving that maps directly to the five-phase practitioner workflow.
+
 ```
 1. Choose a base model
    └─ Instruct-tuned (not base) — SFT+RLHF makes fine-tuning more sample-efficient
@@ -1595,9 +1633,13 @@ dpo_trainer.train()
    └─ Adapter: serve base model + load adapter at request time → swap adapters per user/tenant
 ```
 
+> 💡 **Business consequence.** Step 6 (merge vs. serve with adapter) is the latency decision: merging W' = W + BA before deployment preserves the 2.0s p95 target from §0 with zero inference overhead; serving base + adapter at request time adds ~5ms per request but enables swapping adapters per tenant — one base Llama-3-8B serving multiple restaurant brands simultaneously.
+
 ---
 
 ## 7 · Code Skeleton — Complete Training Pipeline
+
+§6 described what to do. §7 shows the code — the direct implementation of §0's plan: QLoRA on Llama-3-8B-Instruct, SFTTrainer with chat template formatting, the phone transcript training data that encodes Mamma Rosa's voice using 0.17% trainable parameters.
 
 ```python
 from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments
@@ -1735,6 +1777,8 @@ trainer.train()
 > **Key feature:** Built-in Flash Attention, DeepSpeed integration, multi-GPU support.
 > **See also:** [Axolotl GitHub](https://github.com/OpenAccess-AI-Collective/axolotl)
 
+> 💡 **Business consequence.** The `DataCollatorForCompletionOnlyLM` detail has a direct quality impact: masking prompt tokens means the model only trains on the completion (the "Oh, you've gotta try..." response), not on the question. Without it, the model learns to reproduce the question format instead of the brand voice — and the 70% → 95% voice improvement from §0 fails to materialise.
+
 ---
 
 ### 7.1 DECISION CHECKPOINT — Training Configuration
@@ -1761,28 +1805,21 @@ trainer.train()
 
 ## 8 · **[What Can Go Wrong]** Common Failure Modes & Mitigations
 
+§0 identified failure 3 as "inconsistent personality — sometimes warm, sometimes cold." That inconsistency survives fine-tuning in specific failure patterns that look successful on the surface: training loss near zero, eval examples passing, but edge cases still reverting to generic phrasing. §8 catalogues the five engineering mistakes that produce this outcome.
+
 - **Catastrophic forgetting.** If the fine-tuning dataset is narrow, the model may lose general capabilities. Mitigation: include a small sample (~5%) of general-purpose examples mixed into the training data ("data mixing").
 - **Overfitting to format, not behaviour.** The model learns to produce the right-looking output for training examples but fails to generalise the underlying reasoning. Sign: near-zero training loss but poor eval task metric. Fix: more diverse examples or higher dropout.
 - **Dataset contamination.** Training examples that are too similar to eval examples make metrics look better than they are. Deduplicate across train and eval splits.
 - **Wrong `target_modules`.** Only applying LoRA to attention layers (`q_proj`, `v_proj`) is standard; for some tasks, applying it to FFN layers (`up_proj`, `down_proj`) significantly helps. Ablate both.
 - **Forgetting to test the untuned baseline.** Always compare against the untuned model on the same prompts. Many engineers discover that fine-tuning wasn't necessary after they measure the baseline.
 
+> 💡 **Business consequence.** Catastrophic forgetting is the highest-risk failure for PizzaBot: a narrowly trained style adapter can degrade the allergen safety knowledge that keeps error rate below 5%. Including ~5% general-purpose examples in training prevents this — preserving the <5% error rate constraint from §0 while achieving the 95%+ voice consistency target that closes the 28% → 30% conversion gap.
+
 ---
 
 ## 9 · PizzaBot Connection — Production Validation
 
-> See [AIPrimer.md](../ai-primer.md) for the full system definition.
-
-The PizzaBot decision tree applied:
-
-| Question from decision tree | PizzaBot answer | Verdict |
-|---|---|---|
-| Is the model failing to follow the correct output format? | Order confirmations consistently drift from the JSON schema | Prompt engineering first (JSON mode). Fine-tune only if structured output mode fails. |
-| Is the model missing domain-specific facts? | Menu changes weekly. New items, seasonal specials, price updates. | **RAG, not fine-tuning.** Retraining weekly is impractical. RAG re-index takes minutes. |
-| Is this a style/behaviour failure? | The bot occasionally sounds terse; Mamma Rosa's brand needs warmth. | **Fine-tune candidate.** Tone is weight-level behaviour. RAG can't fix it. |
-| Is the model correct but too slow/expensive? | 10k orders/day at GPT-4o prices → ~$150/day in agent calls alone. | **Distillation candidate.** Fine-tune a 7B model on GPT-4o traces for the order-placement path. |
-
-**Practical split:** use RAG for all factual content (menu, allergens, locations), fine-tune for the conversational persona layer.
+The §3 decision tree already diagnosed PizzaBot's four failures: format drift (JSON mode solved it, Ch.7), menu hallucinations (RAG handles it, Ch.4), brand voice inconsistency (LoRA fine-tune, this chapter), and production cost ($0.015 → $0.008/conv via self-hosting). The practical outcome: RAG supplies *what to say* (current menu, allergens, delivery zones), fine-tuning encodes *how to say it* (Mamma Rosa's warm Italian voice that the CEO said was missing from every bot response in §0).
 
 ### 9.1 DECISION CHECKPOINT — Production Deployment Decision
 

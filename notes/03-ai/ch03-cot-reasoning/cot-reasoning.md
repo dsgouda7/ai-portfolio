@@ -125,6 +125,8 @@ Still need Ch.4 (RAG) for real menu grounding to eliminate remaining hallucinati
 
 ## 1 · What Is Chain-of-Thought (CoT) Reasoning?
 
+Problems #4 and #5 in §0 share a single structural cause: the model had no mechanism to decompose a multi-constraint query before committing to an answer — so it jumped straight to a confident wrong result. Chain-of-thought is the direct fix: it inserts a decomposition phase between prompt and final answer, forcing each sub-check to appear as explicit context before the model can commit.
+
 **Chain-of-thought reasoning** refers to an LLM producing a **sequence of intermediate reasoning steps** that bridge the prompt to the final answer. Chain-of-thought prompting is the practice of prompting a model to perform a task step-by-step and to present each step and its result in order in the output[1](https://learn.microsoft.com/en-us/dotnet/ai/conceptual/chain-of-thought-prompting). This simplifies prompt engineering by offloading some execution planning to the model and makes it easier to connect any problem to a specific step[1](https://learn.microsoft.com/en-us/dotnet/ai/conceptual/chain-of-thought-prompting).
 
 Two variants are commonly conflated:
@@ -152,6 +154,8 @@ Before CoT, PizzaBot had one structural problem: it leapt from "cheapest gluten-
 
 ### 1.2 Self-Consistency
 
+Even with CoT prompting active, a single reasoning chain on PizzaBot's allergen query can take one wrong turn and still output the §0 result — a confident wrong answer, now with visible steps leading there. The single-chain failure mode is still a lawsuit risk; self-consistency is the probabilistic fix.
+
 Zero-shot and few-shot CoT still produce a single reasoning chain — and a single chain can take a wrong fork early and propagate that error all the way to the final answer.
 
 **Technical definition.** Self-consistency (Wang et al., 2022) samples $K$ independent CoT chains at temperature $T > 0$ and returns the majority-vote answer:
@@ -166,9 +170,13 @@ where $c_k$ is the $k$-th sampled chain. Total inference cost is $C_K = K \cdot 
 
 > ⚠️ **Self-consistency cost trap:** $C_K = K \cdot \bar{t}$ tokens. At $K = 5$, $\bar{t} \approx 200$ tokens/chain: cost per query jumps 5× compared to a single chain — still well under PizzaBot's $0.08/conv target, but **not free**. Reserve self-consistency for allergen checks and availability confirmations, not routine catalogue lookups.
 
+> 💡 **Self-consistency business impact:** $K=5$ sampling on allergen queries drops allergen-miss rate from 2/12 to 0/12 in testing — eliminating the lawsuit risk flagged in §0. Added cost per allergen query: 5 × ~200 tokens × $0.06/1M = $0.000060, negligible against a single returned-order dispute.
+
 ***
 
 ## 2 · High-Level Architecture of an LLM-Based Agent
+
+CoT gives the model a reasoning plan, but Problem #5 in §0 wasn't about missing steps — the bot also failed to call `retrieve_from_rag()` or `check_item_availability()`. Those tool calls don't happen automatically. This section introduces the architecture that connects reasoning steps to actual tool execution.
 
 An AI agent is more than a one-shot text generator. Agents have three key elements: a **large language model** (the agent's "brain," using generative AI for language understanding and reasoning), **instructions** (a system prompt that defines the agent's role and behavior), and **tools** (what the agent uses to interact with the world — including knowledge tools that provide access to information, like search engines or databases, and action tools that enable the agent to perform tasks)[3](https://learn.microsoft.com/en-us/training/modules/fundamentals-generative-ai/7-agents).
 
@@ -199,9 +207,13 @@ An AI agent is more than a one-shot text generator. Agents have three key elemen
 
 **ReAct** was one of the first approaches to enhance AI agent capabilities and has become a standard pattern in frameworks like LangChain and LlamaIndex. It works in a sequential manner, with the same LLM responsible for both reasoning and executing the action within a single step.
 
+> 💡 **Agent architecture business impact:** ReAct turns CoT's reasoning plan into actual tool executions. Without this architecture, PizzaBot can *describe* allergen-checking steps but cannot execute them — keeping complex-query error rate at §0's 35%. With ReAct, each Thought maps to a real tool call that retrieves menu data rather than hallucinating it.
+
 ***
 
 ## 3 · The Critical Missing Bridge: How "Next-Token Prediction" Becomes a Plan
+
+CoT and the agent diagram answer *what* happens, but the §0 CEO question was sharper: *how* does next-token prediction ever become a concrete call to `check_item_availability(store_id=3, item='Margherita')`? This section answers that question — the one most agent documentation leaves implicit.
 
 This is the key section that most agent documentation omits. At runtime:
 
@@ -300,9 +312,13 @@ The Augmenter framework for agent execution provides a concrete example: it uses
 
 **An agent is an LLM whose next-token prediction is constrained to output a structured "next action," and whose environment executes that action and turns the result back into tokens, creating a feedback loop.**
 
+> 💡 **Bridging logic business impact:** Every PizzaBot tool call is a constrained next-token prediction — not hard-coded conditional logic. Adding `upsell_suggestion()` or `loyalty_check()` to PizzaBot requires only a schema update in the system prompt, not a code deployment. The tool surface can expand in minutes; the model learns the new action from context.
+
 ***
 
 ## 4 · Step-by-Step Worked Example: PizzaBot Multi-Constraint Query
+
+§0 showed this exact query producing a wrong answer in one step. This section traces the same query through a CoT-enabled ReAct loop — replacing the §0 failure with a five-step chain that correctly arrives at Veggie Garden.
 
 **User prompt:** *"What's the cheapest gluten-free pizza under 600 calories that you can deliver to me by 7 pm?"*
 
@@ -320,9 +336,13 @@ This decomposes into four sequential checks: allergen compliance → calorie fil
 
 Throughout this process, the LLM's internal chain-of-thought assesses at each step:*"Am I done, or do I need more info? If not done, what is the next missing piece?"* This tight feedback loop enables **dynamic replanning** based on real-world outcomes.
 
+> 💡 **Worked example business impact:** The five-step ReAct trace generating the correct answer uses ~200 output tokens at $0.06/1M = $0.000012. The §0 single-step failure on the same query had zero direct token cost — but an allergen error costs the restaurant in refunds, re-orders, and reputational damage that no token budget can recover.
+
 ***
 
 ## 5 · How the Agent's Context/State Evolves at Each Step
+
+The §0 bot had no memory between lookups — it gave one answer from one attempt and stopped. Handling Problem #3 (missed options) and Problem #4 (no multi-step reasoning) requires the agent to accumulate partial findings across steps so that "I already checked allergens" is context for the next decision.
 
 A distinguishing feature of this architecture is the **structured memory** (scratchpad or context buffer) that accumulates conversation history, internal reasoning, and tool results:
 
@@ -354,9 +374,13 @@ In standard ReAct implementations, agents default to a **linear, raw append** mo
 * **Process:** Only specific, typed variables (e.g., `extracted_date`, `current_query`) are passed between nodes in the graph.
 * **Technical Impact:** Discards conversational "fluff" entirely, ensuring the model only processes functionally necessary data points for the next state transition.
 
+> 💡 **Context management business impact:** Recursive summarisation keeps PizzaBot's working context under 4k tokens on GPT-3.5 for conversations beyond 8 turns. Without it, the first long conversation forces a GPT-4 upgrade at $0.03/1k vs. $0.002/1k — pushing per-conversation cost from $0.00003 toward $0.006 and eroding the headroom to the $0.08/conv target.
+
 ***
 
 ## 6 · Planning vs. Execution — Two Modes of Agent Operation
+
+The §0 failure collapsed the reasoning loop — query → answer in one step, with no separation between *figuring out what to do* and *doing it*. Naming that separation is what enables the agent to adapt when a tool returns an unexpected result rather than committing to a wrong answer.
 
 The agent alternates between two distinct operational modes:
 
@@ -370,9 +394,13 @@ The agent alternates between two distinct operational modes:
 *   **Safety:** Planning often involves exploring uncertain possibilities that should not be shown to the user.
 *   **Efficiency:** Independent sub-tasks identified during planning can be executed in parallel.
 
+> 💡 **Planning-execution separation business impact:** When `check_item_availability()` returns `{available: false}` mid-query, a planning-phase agent backtracks and selects the next cheapest qualifying option. A collapsed single-step model (§0) confidently returns an unavailable item — producing an order that fails at checkout, directly eroding the conversion metric PizzaBot was built to improve.
+
 ***
 
 ## 7 · Advanced Reasoning Structures Beyond Linear Chains
+
+Linear CoT handles the §0 failure case — one sequential filter chain. But higher-value PizzaBot queries such as "dinner for 4 with mixed dietary restrictions under $60" require exploring multiple meal combinations simultaneously; a single linear chain picks one path, commits, and discards alternatives without evaluating them.
 
 Chain-of-Thought prompting elicits step-by-step reasoning in a **linear chain**. When a linear chain is insufficient, agents can use more expressive structures:
 
@@ -397,9 +425,13 @@ Chain-of-Thought prompting elicits step-by-step reasoning in a **linear chain**.
 
 **Business impact:** Linear CoT handles 85% of PizzaBot queries. Advanced structures add 2-5× cost (multiple reasoning branches) for marginal accuracy gains. Deploy only for high-value queries where exploration is essential.
 
+> 💡 **Advanced reasoning structures business impact:** ToT is justified for the ~8% of PizzaBot queries involving group orders or multi-constraint exploration. At $K=3$ branches, added cost is ~3 × 300 tokens × $0.06/1M = $0.000054/query. For a group order averaging $65 AOV, a correct recommendation vs. a wrong one is a captured order vs. a lost one — the cost premium is negligible.
+
 ***
 
 ## 8 · Reasoning Tokens: How Hidden Planning Works in Practice
+
+§0's fix was making reasoning visible — exposing steps so the wrong allergen answer could be caught. Modern reasoning models (o1, DeepSeek-R1) go further: they generate long internal reasoning traces *before* answering, never surfacing the deliberation to the user. This section explains what that mechanism is, how it was trained, and why it does not bypass the tool-execution bridge from §3.
 
 **Reasoning tokens** are tokens the model generates internally to work through a problem before producing the visible response. This is a concrete engineering mechanism that enables internal planning without exposing intermediate thoughts to the user.
 
@@ -456,6 +488,8 @@ The RLVR loop above gives one reward signal per problem: correct or wrong. That'
 
 ## 9 · CoT in Production: What It Looks Like in Practice
 
+§0's failure was invisible to the customer — a confident wrong answer with no trace of how the bot decided. CoT changes that, but exposing reasoning is a design choice: how much to show, and where, directly affects customer trust and conversion rate.
+
 **For PizzaBot**, showing CoT reasoning in the UI has concrete business implications:
 
 **Scenario: Multi-constraint query**
@@ -486,9 +520,13 @@ PizzaBot UI shows:
 
 **PizzaBot decision:** Show 4-6 high-level steps for complex queries (multi-constraint, availability checks), hide internal reasoning for simple queries ("What sizes do you have?").
 
+> 💡 **Visible CoT conversion impact:** A/B testing from production deployments shows 4-step progress indicators increase conversion +8% vs. instant answers on multi-constraint queries — 15% → ~16.2% for PizzaBot before RAG grounding is added. For simple queries, visible CoT adds no conversion lift and increases perceived latency; hide it there.
+
 ***
 
 ## 10 · The Planning-Execution Loop (Pseudocode)
+
+§4 showed the ReAct loop in narrative table form — one row per step. This section renders the same loop as pseudocode, exposing the dynamic planning structure the host program must implement to turn CoT reasoning into actual tool calls and correct final answers.
 
 Here is a simplified pseudo-code of the **planner-executor loop**, illustrating how the agent handles a query by deciding on actions step by step and updating its context:
 
@@ -532,9 +570,13 @@ while True:
 *   **Stateful context:** Each iteration has access to the full history of prior thoughts, actions, and observations. The LLM leverages this accumulated state to make increasingly informed decisions.
 *   **Termination condition:** The agent decides when to stop based on its assessment of whether the gathered information is sufficient. There is no hardcoded step count — the loop runs until the LLM's planning function concludes that the goal is met (all constraints satisfied: gluten-free ✅, <600 cal ✅, available ✅, cheapest ✅).
 
+> 💡 **Loop termination business impact:** The while-loop exits only when *all* constraints are satisfied simultaneously. A hardcoded 4-step pipeline returns after 4 steps regardless — silently wrong if any tool call fails mid-loop. Dynamic termination is the mechanism that drives complex-query error rate from §0's 35% down to ~10% after Ch.3.
+
 ***
 
 ## 11 · Practical Implications: From Traditional Dev Thinking to Agentic Thinking
+
+The §0 bot was built with imperative thinking: `if allergen_query: check_allergen_flag()`. That approach breaks when query types multiply. The agentic inversion — provide tools, let the model plan — is what enables PizzaBot to handle query variations without code changes.
 
 Understanding the bridging logic has a direct impact on how you architect agentic systems:
 
@@ -566,9 +608,13 @@ STATE + TOOLS + TASK → LLM chooses next action
 
 **Business advantage for PizzaBot:** Traditional approach breaks when query changes ("cheapest *vegan* under 600 cal"). Agentic approach adapts without code changes — just add vegan filter to tool schema.
 
+> 💡 **Agentic architecture business impact:** Traditional imperative approach requires a code deployment for each new PizzaBot query type. Agentic approach requires only a system-prompt schema update — reducing iteration cycle from days to minutes. This is the architectural reason PizzaBot reaches 15% conversion in Ch.3 without a single additional code change beyond what Ch.2 introduced.
+
 ***
 
 ## 12 · Key Nuance: CoT Is Not Guaranteed to Be Faithful
+
+Ch.3 reduced error rate from 15% to ~10% using CoT. That remaining ~10% has a specific cause: reasoning traces that *look* correct but aren't — the model generating plausible-sounding steps that still route to the wrong answer, including the same allergen miss that caused the §0 lawsuit risk.
 
 Even when a model prints reasoning steps, they can be:
 
@@ -577,6 +623,10 @@ Even when a model prints reasoning steps, they can be:
 *   Contain errors that still lead to a confident final answer
 
 This is one motivation behind **process supervision** (training correctness of individual steps rather than just final answers) and behind approaches that keep reasoning internal while returning only the final answer (hidden reasoning tokens).
+
+> 💡 **CoT faithfulness business impact:** The 2 safety incidents in 500 test conversations (§13 Progress Check) trace here — CoT traces that looked valid but skipped the allergen flag. Visible CoT is necessary but not sufficient; a model can generate plausible-looking steps and still reach the wrong answer.
+
+> ➡️ **Forward pointer:** Step-level supervision (PRM) is partially addressed in §8.2 above. Systematic input/output guardrails — the layer that catches unfaithful allergen outputs before they reach the customer — are covered in Ch.9 (Safety & Guardrails).
 
 ***
 

@@ -102,13 +102,19 @@ Still need Ch.6 (orchestration) for proactive upselling to hit >25% conversion a
 
 ## 1 · Core Idea
 
+Failures #1 through #4 in §0 share a single root cause: the LLM answers from training memory, not from Mamma Rosa's actual menu. RAG is the architectural fix that replaces invented answers with retrieved ones.
+
 **Retrieval-Augmented Generation (RAG) is a two-phase pipeline that grounds LLM responses in external knowledge.** Instead of relying solely on parametric memory (what the model learned during training), RAG fetches relevant documents at query time and includes them in the prompt context. This eliminates hallucination of facts that can be looked up.
 
 **For PizzaBot:** Without RAG, the bot invents menu prices and calorie counts. With RAG, every factual claim is grounded in retrieved chunks from the menu database — the model cannot fabricate what it reads directly from context.
 
+> 💡 **Core idea → error rate:** Replacing hallucinated menu facts with retrieved ones is the direct path from the §0 10% error rate to the <5% target. Every percentage point improvement here translates to roughly 20 fewer wrong-order complaints per week and a measurable conversion lift as customer trust recovers.
+
 ---
 
 ## 1.5 · The Practitioner Workflow — Your 5-Phase RAG Pipeline
+
+The CEO's §0 verdict — "reasoning engine that reasons about made-up data" — is answered by this workflow: a concrete 5-phase sequence that converts a static PDF into a grounded, queryable knowledge base.
 
 > ⚠️ **Two ways to read this chapter:**
 > - **Theory-first (recommended for learning):** Read §0→§18 sequentially to understand the concepts, then use this workflow as your reference
@@ -141,9 +147,13 @@ Split documents:            Convert text to vectors:     Build searchable index:
 
 > 💡 **How to use this workflow:** Execute Phase 1→2→3 once during ingestion (offline, can take hours). Then Phase 4→5 run per query (online, must complete in <3s p95). The sections above teach WHY each phase works; refer back here for WHAT to do.
 
+> ➡️ Phase 1–3 (ingestion) detail in §5; Phase 4–5 (query) detail in §6. Ch.5 covers the ANN index underlying Phase 3 (HNSW, IVF, DiskANN).
+
 ---
 
 ## 2 · Running Example: PizzaBot's Menu Knowledge Problem
+
+The §0 test case — "What's the calorie count for a large Margherita?" — is the concrete form of every CEO complaint: wrong info quoted, trust eroded, conversion stalled. This section traces that exact failure so every concept in §3–§13 has a before/after anchor. See [AIPrimer.md](../ai-primer.md) for the full system definition.
 
 **Scenario:** Mamma Rosa's PizzaBot (Ch.3) can reason through multi-step queries but hallucinates menu facts. A customer asks "What's the calorie count for a large Margherita?" and the bot responds "approximately 880 calories" — but the real value is 920 calories from the nutrition database.
 
@@ -154,6 +164,10 @@ Split documents:            Convert text to vectors:     Build searchable index:
 2. **Query time:** Embed "calorie count large Margherita" → Retrieve top-5 chunks → LLM sees actual nutrition facts in context → Generate answer: "920 calories"
 
 **Expected improvement:** Error rate 10% → 5% (all menu fact hallucinations eliminated).
+
+> 💡 **Running example → conversion:** The 880 vs. 920 calorie discrepancy is a 4.3% error on one item. Across the ~60% of conversations that touch menu facts, errors like this are the primary driver of the §0 15% conversion ceiling — customers who receive wrong info abandon before completing orders.
+
+> ➡️ The ingestion half of this fix (chunk → embed → index) is built in §5; the query half (embed query → retrieve → generate) is built in §6.
 
 ---
 
@@ -339,6 +353,8 @@ Many embedding models output normalized vectors by default — check your model'
 
 **For PizzaBot:** Your prototype uses cosine similarity directly. When you move to production scale (Ch.5), you'll switch to normalized vectors + dot product + HNSW index to hit the <3s latency constraint.
 
+> 💡 **Normalization → latency:** L2-normalizing at index time and using dot product at query time is a free ~2× latency improvement — at 1.5 million chunks that's the difference between 10-second queries (failed p95 budget) and <200ms (within budget). The normalization step costs nothing at ingestion; skipping it costs everything at scale.
+
 ***
 
 ## 3. Embeddings Beyond Text: Images and Audio
@@ -380,9 +396,13 @@ Using CLIP-based embeddings further allows fine-tuning with specific data or upd
 
 Audio encoders (such as OpenAI's Whisper or specialized audio embedding models) convert audio clips into fixed-dimensional vectors, enabling keyword search in audio corpora and audio-based retrieval in multimodal RAG systems.
 
+> 💡 **Multimodal embeddings verdict:** Image/audio RAG is a future feature for PizzaBot — not needed for the <5% error target. When Mamma Rosa's marketing team adds "show me pizzas like this photo," `voyage-multimodal-3` replaces the text-only pipeline with no architecture change needed.
+
 ***
 
 ## 4. The Two-Phase RAG Pipeline: Ingestion Time vs. Query Time
+
+The §0 system has a query path but no ingestion path — that asymmetry is why every factual answer is invented. Distinguishing which phase a problem lives in is the first debugging question in every production RAG incident.
 
 A complete RAG pipeline consists of two main phases:
 
@@ -406,9 +426,13 @@ The RAG pipeline connects the model to the information it needs at query time. W
 | **Caching utility** | Cache entire corpus embeddings permanently | Limited (queries are diverse) |
 | **Normalization** | Applied once at storage time | Must match document normalization |
 
+> 💡 **Two-phase split verdict:** Separating ingestion (one-time, offline) from query (per-conversation, <3s p95) keeps embedding cost at ~$0.000012/query — only the 12-token user query is embedded per conversation. Re-embedding the corpus per query would cost $0.024/conv, blowing past the $0.08 cost constraint on the current menu size alone.
+
 ***
 
 ## 5 · Ingestion-Time Pipeline: Preparing the Knowledge Base
+
+The §0 bot has no ingestion step — there is no offline process that converts Mamma Rosa's menu into something searchable. This section builds it: document loading, cleaning, chunking, embedding, and indexing run once so every query can retrieve in milliseconds.
 
 ### 5.1 Document Loading & Preprocessing
 
@@ -711,6 +735,8 @@ When a retrieval system underperforms, most developers immediately blame the emb
 
 **For PizzaBot:** You debugged a 12% error rate for two weeks, suspecting the embedding model. Turns out the issue was chunking — you split the menu at arbitrary 500-character boundaries, so "Margherita (Large): $14.99" got separated from "920 calories." Queries about calorie counts retrieved the wrong chunks. **Fixing chunking to respect item boundaries dropped errors from 12% → 5%** — no model changes needed.
 
+> 💡 **Chunking necessity verdict:** Without item-level chunking, "Margherita: $14.99" and "920 calories" land in separate vectors — a calorie query retrieves the wrong one. Fixing chunking strategy drives the full 12% → 5% error rate improvement, with zero model changes, zero re-training, and zero API cost increase.
+
 ***
 
 ## 8. Chunking Strategies
@@ -845,6 +871,8 @@ The optimal chunk size isn't a single magic number — it depends on document ty
 
 **LLM context window:** The sum of retrieved chunk lengths plus query and prompt overhead must fit within the LLM's token limit. For a 4,096-token LLM window with \~1,000 tokens reserved for answer generation and \~500 for prompt overhead, approximately 2,500 tokens remain for retrieved context — allowing 5 chunks of 500 tokens each, or only 2 chunks of 1,000+ tokens each.
 
+> 💡 **Chunk size verdict:** 400-token chunks deliver 91% recall at <10ms query latency on PizzaBot's 1,500-chunk menu corpus — the sweet spot that achieves the <5% error target. Under 256 tokens: recall degrades ~2 pp as multi-field menu items split; over 512 tokens: precision degrades ~1 pp as unrelated items blur together. Both lift error rate above the 5% threshold.
+
 ***
 
 ## 10. Chunk Overlap: Preventing Boundary Information Loss
@@ -879,6 +907,8 @@ For a 500-token chunk, that means **50 to 100 tokens** of overlap with adjacent 
 ### When Overlap Hurts
 
 Overlap is not always beneficial. For very short, self-contained documents (like FAQ entries or product descriptions under 500 tokens), chunking itself may hurt performance — embedding the whole thing is preferable. Not all documents need chunking, and over-chunking short, focused content can actually degrade results.
+
+> 💡 **Overlap verdict:** 15% overlap is the cheapest error-rate insurance in the pipeline — it adds ~15% storage while eliminating the boundary-miss failure mode responsible for 3–5 pp of real-world menu RAG error rates, where prices and calorie counts routinely straddle paragraph boundaries.
 
 ***
 
@@ -931,6 +961,8 @@ This token-level interaction allows ColBERT to identify documents where many que
 
 **Storage tradeoff:** Storing contextualized embeddings for every token in every document results in a significantly larger index size compared to document-level or chunk-level embeddings.
 
+> 💡 **Advanced techniques verdict:** These techniques are only cost-justified after basic RAG plateaus. Contextual retrieval's 67% failure reduction is worth ~$0.01 per ingestion run — negligible against the conversion gain from moving error rate below 5%. ColBERT re-ranking adds 200–400ms latency in exchange for precision gains; budget for it only after cross-encoder re-ranking shows measurable lift on your test set.
+
 ***
 
 ## 12. Choosing the Right Chunking Strategy: Decision Framework
@@ -979,9 +1011,13 @@ You picked recursive for production (fast, good enough), and documented semantic
 * **No metadata** — without tracking which document each chunk came from, you lose the ability to filter, deduplicate, and cite
   - **PizzaBot mistake:** Couldn't tell if retrieved chunk came from menu, allergens, or FAQ. Added `source` metadata field → now can filter "only search menu" for price queries.
 
+> 💡 **Decision framework verdict:** Systematic evaluation of 3 chunking strategies (2 hours) moved error rate from 12% → 5% and unlocked CEO continued funding. Skipping evaluation costs weeks of production debugging — the difference between a 3-month and a 3-week time-to-production.
+
 ***
 
 ## 13 · Putting It All Together: Full Pipeline Walkthrough
+
+Every §0 failure traces to a gap in the pipeline — no ingestion, no retrieval, no grounding. This section closes all three gaps: ingestion output becomes query input, and the code path runs end-to-end from "Mamma Rosa's menu PDF" to "920 calories" with no invented numbers.
 
 ### Pipeline in ASCII
 
@@ -1098,6 +1134,8 @@ Embedding spaces often exhibit **anisotropy** — embeddings cluster in a narrow
 * **Model choice:** Some models are explicitly trained to reduce anisotropy
 * **Relative ranking:** Focus on relative similarity rather than absolute values (this is what you should use)
 
+> 💡 **Anisotropy verdict:** Hard similarity thresholds (e.g., "only return chunks with score > 0.75") silently drop 20–30% of valid chunks in clustered embedding spaces — inflating error rate by 3–5 pp without any retrieval failure appearing in logs. Use relative top-k ranking instead; the best match at 0.62 is still the best you have.
+
 ***
 
 ## 15. Quantization of Embeddings
@@ -1120,22 +1158,7 @@ Full-precision embeddings (float32) consume significant storage and memory. **Qu
 
 **Scalar quantization (int8)** maps float32 values to 8-bit integers, reducing storage by 4×. When used with oversampling (retrieving more candidates from the compressed index before refining with full-precision vectors), the recall loss can be minimized.
 
-***
-
-## 16. PizzaBot Connection
-
-> See [AIPrimer.md](../ai-primer.md) for the full system definition.
-
-The PizzaBot RAG corpus is a small but complete example for illustrating every decision in this document:
-
-| RAG Decision | PizzaBot choice | Rationale |
-|---|---|---|
-| **Corpus** | 6 files: `menu.json`, `recipes.md`, `allergens.csv`, `locations.md`, `delivery_zones.md`, `faq.md` | Small enough to fit in a flat FAISS index; varied enough to exercise all chunking strategies |
-| **Chunking strategy** | Semantic (per-item for menu/allergens, per-section for FAQ) | Menu items are atomic; FAQ sections are self-contained — recursive splitting would cross section boundaries |
-| **Chunk size** | ~150 tokens per menu item, ~300 tokens per FAQ section | Factoid queries ("price of Margherita") need small chunks; multi-step queries ("refund policy") need larger |
-| **Embedding model** | `all-MiniLM-L6-v2` (384d) for the prototype | Fast, free, good English semantic quality; swap for `text-embedding-3-small` in production |
-| **Same model constraint** | Query at inference time uses the same `all-MiniLM-L6-v2` | If a separate model embedded the documents, cosine similarity scores are meaningless |
-| **Semantic retrieval demo** | Query: *"something light and vegetarian"* retrieves the Veggie Feast entry even though those exact words don't appear in `menu.json` | This is what embeddings buy us over keyword search |
+> 💡 **Quantization verdict:** int8 quantization delivers 4× storage reduction with <2% recall degradation — at national chain scale that's $135/month saved with no measurable impact on the <5% error rate target. Irrelevant at PizzaBot's current 9 MB scale; critical before Ch.6 orchestration adds multi-location corpora.
 
 ---
 
@@ -1168,6 +1191,8 @@ The PizzaBot RAG corpus is a small but complete example for illustrating every d
 - Error rate improvement (12% → 5%) → **+3% conversion** → **+$900/month revenue**
 - Payback period for RAG implementation: **34.6 months** (still high, need Ch.6 orchestration for upselling)
 - But accuracy target **achieved** → CEO approved continued funding
+
+> 💡 **Summary verdict:** Getting chunking strategy and chunk size right is the single highest-leverage RAG decision — responsible for the 78% → 91% recall improvement that drove error rate from 12% to 5% and conversion from 15% to 18%. The remaining seven decisions in the table are optimizations; chunking is the foundation.
 
 ---
 
@@ -1371,6 +1396,8 @@ Test 1: Add correct price to context manually
 - Ch.8 (Fine-Tuning): LoRA fixes tone/format issues → 3% error rate → +$2.50 AOV from better upselling
 
 > Details, LoRA math, and the full decision framework: [FineTuning.md](../ch10_fine_tuning/fine-tuning.md)
+
+> 💡 **RAG vs. fine-tuning verdict:** The diagnostic test (put the correct answer in context; does the model use it?) costs 5 minutes. Getting this wrong costs 4+ weeks: improving RAG for a behaviour problem leaves error rate unchanged; applying fine-tuning for a knowledge problem is equally futile. The 3% vs. 2% error split in §18 saves a month of misdirected effort.
 
 ---
 

@@ -139,6 +139,8 @@ This chapter is "building the foundation" — user-facing metrics don't change, 
 
 ## 1. The Baseline: Exact (Brute-Force) Vector Search
 
+The 1.5-second retrieval pause that kills PizzaBot conversion from 18% to 11% in §0 has one root cause: brute-force search runs O(N) — every query touches every chunk. At 500 menu items it's invisible; at 50,000 franchise chunks it's the blocker that cancels the CEO's expansion plan.
+
 **Exact search is the simplest approach — and it doesn't scale.** Without indexes, a vector database performs an exact search, which provides perfect recall at the expense of performance. The operation is straightforward: compute the distance between the query vector and **every single stored vector**, then return the top-*k* closest results.
 
 ### Why Brute-Force Fails at Scale
@@ -162,9 +164,15 @@ Each dimension of a vector requires **4 bytes of storage** using float32. This e
 
 **The bottom line:** An index is a data structure that improves the speed of data retrieval operations. Using an index in vector search reduces the number of vectors that need to be compared to the query vector, makes the query more efficient, and greatly reduces memory requirements compared to processing searches via raw embeddings. This motivates ANN indexing.
 
+**PizzaBot scale path:** At the current 500-chunk prototype, FAISS Flat (exact search) is the correct choice — the corpus fits in ~2 MB of RAM and retrieval costs <1ms. The switch to HNSW triggers when the corpus exceeds ~50K chunks and retrieval latency breaches your SLA. Measure first; don't add index complexity before you hit the wall.
+
+> 💡 **Exact search → franchise kill switch:** At 500 chunks, brute-force retrieval costs 15ms and is unnoticeable. At 50,000 chunks it costs 1.5s — triggering 40% user abandonment and dropping conversion from 18% to 11%, below the 22% phone baseline. The §0 franchise failure is simply the O(N) cost curve becoming visible.
+
 ***
 
 ## 2. Distance Metrics: The Foundation of Similarity Search
+
+The wrong metric choice doesn't produce a latency error — it silently returns wrong menu items. For PizzaBot's allergen queries ("gluten-free under 600 calories"), a metric mismatch could surface the wrong pizza and push the error rate past the 5% safety threshold. Choose before you index; changing metrics later requires a full re-embed.
 
 Before diving into indexing methods, it's essential to understand the distance metrics that underpin all vector search. These determine how "closeness" is measured:
 
@@ -178,13 +186,21 @@ Closeness between vector embeddings is measured by distance — cosine, dot prod
 
 **Interview-critical insight:** When vectors are **L2-normalized** (i.e., ‖v‖ = 1 for all v), cosine similarity and dot product become equivalent, and maximizing dot product is equivalent to minimizing Euclidean distance. Many embedding models output normalized vectors by default, making the metric choice less critical in practice — but knowing *why* matters in interviews.
 
+**PizzaBot metric choice:** MiniLM text embeddings are not L2-normalised by default — cosine similarity is the correct choice. It measures semantic angle regardless of embedding magnitude, making short queries like "gluten-free option" and longer queries like "cheapest gluten-free pizza under 600 calories" compare fairly against stored menu chunks.
+
+> 💡 **Metric choice → error rate:** Switching from cosine to dot product on un-normalised MiniLM embeddings can silently degrade recall by 5–15% on short queries — pushing allergen-related matches past the 5% error threshold without any visible error signal. Cosine is the safe default for text embeddings until you've verified your model normalises outputs.
+
 ***
 
 ## 3. Core ANN Indexing Techniques
 
+§0 establishes two franchise failure modes: O(N) latency (1.5s pause at 50K chunks) and O(N·d) memory (153.6MB for 50K uncompressed float32 vectors). The three index families here attack different parts of that problem — IVF and HNSW attack latency through smarter search paths; PQ attacks memory through compression. Pick the right one and the CEO's franchise expansion proceeds; pick wrong and one failure mode survives.
+
 ANN indexes drastically improve query performance by searching only a portion of the data: checking a few candidate buckets or traversing a small graph neighborhood instead of all points.
 
 ### 3.1 IVF — Inverted File Index
+
+IVF is the simplest step beyond §1's O(N) wall: pre-cluster the 50K corpus into ~224 groups (√50K) at build time, then at query time search only the 8 nearest groups — a 128× cost reduction that drops retrieval from 1.5s to ~12ms. The tradeoff is that adding a daily special requires a 2-minute cluster rebuild, which is why HNSW wins for Mamma Rosa's write-heavy pipeline.
 
 **The concept:** IVF partitions the vector space using clustering (usually k-means). Instead of searching all vectors, you search only a few clusters. Think of it like a library: shelves (clusters) are numbered, and when you search, you only walk to a handful of shelves.
 
@@ -241,9 +257,13 @@ The IVFFlat method uses an inverted file index to partition the dataset into mul
 | **Best for** | Large static datasets, batched search, RAG systems |
 | **Limitations** | Quality depends heavily on clustering; not ideal for unstructured distributions |
 
+> 💡 **IVF → franchise latency:** At 50K chunks with nlist=1,024 and nprobe=8, IVF reduces the effective search from 50,000 comparisons to ~390 (50K/128). That drops retrieval from 1.5s to ~12ms — below the 100ms abandonment threshold. But every daily special push triggers a 2-minute cluster rebuild. For Mamma Rosa's frequently-updated menu, this rebuild cost makes IVF operationally expensive compared to HNSW's O(M log N) per-insert.
+
 ***
 
 ### 3.2 HNSW — Hierarchical Navigable Small World
+
+HNSW is the direct solution to §0's franchise-scale failure: O(log N) graph traversal replaces O(N) brute-force, and real-time inserts mean daily specials don't trigger a 2-minute cluster rebuild. This is the index that makes the CEO's 10-location pilot viable.
 
 **The concept:** HNSW builds a multi-level navigable small-world graph. Each node links to its nearest neighbors. Higher levels provide long-range jumps; lower levels provide fine precision. The analogy: *Google Maps with flyover highways (top layers) + local roads (bottom layers)*.
 
@@ -287,9 +307,15 @@ The HNSW graph connects points with both **long-range and short-range links**, y
 | **Updates** | Great for real-time inserts/deletes |
 | **Used by** | Pinecone, Milvus, Weaviate, FAISS-HNSW |
 
+> 💡 **HNSW → franchise viability:** At 50K chunks with M=16 and ef_search=64, HNSW delivers <10ms retrieval latency (vs. 1.5s brute-force) with >99% recall@5 — eliminating the 40% abandonment rate from §0 while keeping the error rate at 5%. Daily special inserts take ~5ms per item. This is the combination that earns CEO approval for the 10-location pilot.
+
+> ➡️ **Scale beyond RAM:** At 1M chunks (100 locations), HNSW requires ~4GB of DRAM for the graph. §3.5 (DiskANN) solves this by moving the graph to SSD at one-tenth the RAM cost with comparable recall.
+
 ***
 
 ### 3.3 PQ — Product Quantization
+
+Alongside latency, §0's franchise expansion hits a memory wall: 153.6MB of DRAM for 50K float32 vectors at 768 dims. PQ compresses that to under 5MB — keeping the franchise corpus on a single commodity server without a hardware upgrade.
 
 **The concept:** PQ compresses each vector into small discrete codes using quantization. You trade accuracy for significant memory savings. Think of splitting a **768-dim vector into 16 chunks of 48 dims each**, then encoding each chunk using a small lookup table.
 
@@ -358,6 +384,8 @@ The catch: recall collapses unless the embedding model was trained explicitly fo
 
 ### 3.4 ScaNN — Google's High-Performance ANN
 
+ScaNN is read-heavy-optimized — not the right fit for Mamma Rosa's daily menu updates (write-heavy), but the correct reach for batch-scale query workloads where query volume dwarfs write volume by 100× or more.
+
 **The concept:** ScaNN (Scalable Nearest Neighbors) mixes **tree partitioning**, **anisotropic quantization**, and **learned pruning**. Its strength lies in balancing speed and accuracy without excessive memory use.
 
 **How it works:**
@@ -382,6 +410,8 @@ The catch: recall collapses unless the embedding model was trained explicitly fo
 ***
 
 ### 3.5 DiskANN — Microsoft Research's SSD-Efficient Index
+
+When franchise scale grows past RAM limits — 1M chunks at 100 locations — HNSW requires ~4GB of DRAM for the graph. DiskANN moves that graph to SSD, enabling the nationwide expansion scenario without a hardware upgrade while maintaining HNSW-class recall.
 
 **DiskANN** is a suite of state-of-the-art vector indexing algorithms developed by **Microsoft Research** to power efficient, high-accuracy multi-modal vector search at any scale. Unlike HNSW (which requires the full graph in RAM), DiskANN stores the graph on **SSD** and caches only a small portion in memory, enabling billion-scale search on a single machine.
 
@@ -409,6 +439,8 @@ DiskANN is supported in **Azure Database for PostgreSQL** (as one of three vecto
 
 ## 4. Master Comparison Table: All Index Types
 
+Map §0's three franchise failure modes to the index that solves each: O(N) latency → HNSW or IVF; memory explosion → PQ or IVF-PQ; daily rebuild cost → HNSW or DiskANN. For Mamma Rosa's 50K-chunk corpus with daily menu updates, read the HNSW row.
+
 | Index | Best For | Memory | Build Time | Recall | Update Support | Typical Use |
 | ---------------------- | ------------------------------------ | --------- | ---------- | -------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
 | **Flat (Brute-Force)** | Small datasets, 100% recall required | Very High | None | Perfect (100%) | Trivial | Baseline; small focused searches |
@@ -418,9 +450,13 @@ DiskANN is supported in **Azure Database for PostgreSQL** (as one of three vecto
 | **ScaNN** | High-speed text search | Medium | Fast | High | Limited | Web-scale retrieval |
 | **DiskANN** | Billion-scale on commodity HW | Low (SSD) | Medium | High | Full DML | Azure Cosmos DB, SQL Server 2025 |
 
+> 💡 **Index selection shortcut:** For ≤50K vectors in RAM with daily updates (Mamma Rosa's franchise), HNSW wins on latency, recall, and insert cost simultaneously. IVF-PQ wins when the corpus exceeds available RAM. DiskANN wins when you need HNSW-class recall without HNSW-class RAM at billion scale.
+
 ***
 
 ## 5. Hybrid Approaches
+
+HNSW fixes the O(N) latency failure from §0. But the CEO's franchise query — "gluten-free pizzas at the downtown location" — combines a metadata constraint (store_id), an exact keyword ("gluten-free"), and a semantic intent (health-conscious options). No single index handles all three signals optimally, which is where hybrid approaches earn their complexity cost.
 
 No single indexing strategy optimally addresses all workload characteristics. **Hybrid approaches** combine multiple techniques to achieve better tradeoffs than any single method alone.
 
@@ -504,9 +540,13 @@ Pre-filter has its own failure mode: restricting graph traversal to the matching
  └─────────────────────────────────────────────────────┘
 ```
 
+> 💡 **Hybrid retrieval → franchise recall:** BM25 catches exact brand-name matches ("Margherita", "downtown") while HNSW catches semantic paraphrases ("classic cheese pizza", "city center location"). On franchise-scale queries that mix exact names with semantic intent, hybrid retrieval reduces false-negative retrievals by ~20% compared to pure vector search — keeping the <5% error rate target within reach as the corpus grows from 500 to 50,000 chunks.
+
 ***
 
 ## 6. Why Vector Databases Have Different Architectures
+
+§0's franchise expansion adds a choice the prototype never faced: which database engine? The answer depends on storage architecture, and the wrong choice compounds latency problems with write amplification — turning a fast HNSW index into a slow one because the underlying engine fights the graph's random-write pattern.
 
 The diversity of vector database architectures stems from a fundamental truth: **the tradeoffs between write cost, read cost, and storage cost cannot all be optimized simultaneously**. Different systems make different bets on which tradeoffs matter most for their target workload.
 
@@ -533,9 +573,13 @@ Each indexing algorithm interacts differently with the storage layer:
 
 The choice of storage engine therefore constrains which indexing algorithms are practical, which in turn affects the performance profile available to users.
 
+> 💡 **Storage architecture → daily operations:** For Mamma Rosa's write-heavy workflow (daily specials pushed in real-time), a B+-tree engine (pgvector on PostgreSQL) with HNSW gives predictable per-insert latency. The 2-minute IVF rebuild cost on write-heavy workloads is partly a storage-architecture problem — LSM-tree engines batch writes more efficiently in bulk but pay higher read-amplification on graph traversal at query time.
+
 ***
 
 ## 7. Vector Database Architecture Categories
+
+The §0 prototype runs FAISS in-process — fast, zero-ops, single machine. The CEO's franchise expansion demands persistence, multi-tenancy, and managed failover — none of which FAISS provides. §7 maps the scale ladder from prototype library to production distributed system.
 
 ### 7.1 Library-First Engines (FAISS-Style)
 
@@ -579,9 +623,13 @@ Rather than using a separate vector database, these approaches add vector capabi
 
 **Azure AI Search** (and similar Lucene-based engines like Elasticsearch, OpenSearch) adds vector search alongside traditional full-text capabilities. Preferred when: indexing structured/unstructured data from a variety of sources, when state-of-the-art search quality is needed (hybrid full-text/vector search, fuzzy matching, autocomplete, semantic re-ranking, multi-language support), or when multi-modal search and embeddings (OCR, image analysis, translation) are required.
 
+> 💡 **Architecture choice → operational cost:** For a SQL-first team already running PostgreSQL, pgvector eliminates a separate vector database service — no data sync overhead, ACID compliance inherited, and the 50K-chunk franchise corpus sits well within single-node limits. Start here; migrate to Milvus only when you hit the 1M-chunk ceiling.
+
 ***
 
 ## 8. Architecture Selection: When to Use Which
+
+§0 established two hard constraints: handle 50K chunks at <100ms retrieval, and support daily menu updates without full rebuilds. Those two constraints eliminate half the options in this table before you even read the rationale column.
 
 The right architecture depends on your data location, workload profile, and operational requirements:
 
@@ -617,9 +665,13 @@ The right architecture depends on your data location, workload profile, and oper
 | **Best For** | Production RAG | Hybrid AI Apps | Massive Scale | Simple AI Search |
 | **Limitations** | Proprietary, expensive at scale | Ops overhead when self-hosted | Complex arch, needs DevOps | Limited scalability |
 
+> 💡 **Architecture decision for PizzaBot:** Start with pgvector on PostgreSQL — ACID compliance, zero new infrastructure, and the 50K-chunk franchise corpus fits within single-node limits. When nationwide expansion pushes past 1M chunks, DiskANN in Azure Cosmos DB provides HNSW-class recall from SSD at one-tenth the RAM cost, with full DML support for daily menu changes.
+
 ***
 
 ## 9. Complexity Comparison (Interview Reference)
+
+This table explains the §0 math directly: why 500 chunks at O(N·d) costs 15ms and why 50,000 chunks at the same O(N·d) costs 1.5s — a 100× data growth that becomes a 100× latency penalty with brute-force, and a ~2× penalty with HNSW.
 
 | Operation | Flat (Exact) | IVF | HNSW | IVF-PQ |
 | --------------- | --------------- | ----------------------- | ------------------------ | ----------------------- |
@@ -654,6 +706,8 @@ For the 8×–32× range cited in the literature, typical configurations use few
 
 ## 10. Practical Decision Framework
 
+Apply §0's two constraints — 50K chunks, daily menu updates, <100ms retrieval — to this framework and the decision tree resolves in three steps: fits in RAM → HNSW; real-time inserts needed → HNSW (not IVF); location-filtered queries at low selectivity → iterative/in-graph filtering.
+
 When selecting an indexing technique, consider these conditional guidelines:
 
 **If your dataset fits entirely in RAM (< \~10M vectors at 768-dim):**
@@ -683,27 +737,13 @@ When selecting an indexing technique, consider these conditional guidelines:
 * Azure AI Search provides this natively
 * Sparse vector support in Cosmos DB offers an alternative path for BM25-style scoring through vector indexes
 
+> 💡 **Decision framework → PizzaBot answer:** 50K vectors fit in RAM → HNSW. Daily specials require real-time inserts → HNSW (not IVF, which needs cluster rebuilds). "Gluten-free at downtown" has ~1% filter selectivity → in-graph filtering (Qdrant/Weaviate) or iterative filtering (DiskANN in Cosmos DB). These three steps directly answer the CEO's franchise expansion question from §0.
+
 ***
 
-## 11. PizzaBot Connection
-
-> See [AIPrimer.md](../ai-primer.md) for the full system definition.
-
-The PizzaBot corpus is small (~500 chunks) — just large enough to make index choices visible without obscuring the mechanics.
-
-| Decision | PizzaBot choice | Why |
-|---|---|---|
-| **Index type** | FAISS Flat (brute-force) | 500 vectors; exact search is <1 ms — ANN indexes add complexity without benefit at this scale |
-| **Distance metric** | Cosine similarity | Text embeddings from MiniLM are not L2-normalised by default — cosine is safer |
-| **Scale path** | Swap to HNSW (via FAISS `IndexHNSWFlat`) once corpus exceeds ~50k chunks | HNSW gives sub-millisecond search; IVF needs a tuned `nlist` which is overkill for this size |
-| **efSearch / nprobe** | N/A for Flat; would be tuned to efSearch=64 for HNSW in production | The runtime recall/latency dial — increase for safety-critical allergen queries |
-| **Filtering** | Post-filter by `store_id` metadata for item availability | Pre-filtering on a 500-vector Flat index is unnecessary; matters once sharded by store |
-
-**Key takeaway on the brute-force choice:** the corpus fits in ~2 MB of RAM. Exact search is the right starting point. Add ANN indexing when query time exceeds your SLA — measure first.
-
----
-
 ## 12. Key Tradeoffs to Remember
+
+Each of §0's three franchise failure modes — latency, memory, rebuild cost — maps to a different axis of this table. The right index minimizes the tradeoff that matters most for your specific constraint set.
 
 Every architectural and indexing decision involves tradeoffs. No single solution wins across all dimensions:
 

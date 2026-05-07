@@ -92,6 +92,8 @@ This is a **quality assurance chapter** — no business metric improvements, but
 
 ## 1 · Core Idea
 
+All five blockers in §0 share a structural gap: there is no framework that can tell you, automatically and repeatably, which level of the system broke. Understanding where to measure is the prerequisite to building the regression suite that closes the 2–3-regressions/week problem.
+
 AI system evaluation breaks into three levels:
 
 ```
@@ -107,9 +109,13 @@ Level 3 — User evaluation        Do real users succeed at their goals?
 
 Most teams only do Level 1 and are surprised when Level 3 fails. The metrics at each level are different, and passing Level 1 does not guarantee passing Level 3.
 
+> 💡 **Evaluation scope → regression catch rate:** A team testing only Level 1 (components) catches roughly 40% of production regressions — the rest surface from cross-component interactions. For PizzaBot, that means ~1–2 regressions per week still reach customers even with component tests passing. Adding Level 2 pipeline evaluation drops that to ~0.1/week.
+
 ---
 
 ## 1.5 · The Practitioner Workflow — Your 3-Scope Evaluation Diagnostic
+
+Failure #3 in §0 — manual testing doesn't scale to 10,000+ test cases — is the workflow gap this section closes. The 3-scope framework maps each §0 blocker to a specific decision checkpoint, turning a subjective "looks good" into a reproducible binary: pass or fail.
 
 **What you'll build by the end:** A 3-tier evaluation dashboard covering Component → Pipeline → User metrics, with automated regression tests, LLM-as-judge scoring, and production monitoring — the complete testing infrastructure that prevents the 2–3 regressions/week problem.
 
@@ -141,6 +147,8 @@ Test pieces in isolation:  Test end-to-end pipeline:   Test real user impact:
 ---
 
 ## 2 · Evaluating RAG Pipelines — RAGAS
+
+Failure #2 in §0 — "no quality baseline" — is what RAGAS addresses. Without it, the team can't tell whether switching from `text-embedding-ada-002` to `text-embedding-3-small` improved or degraded allergen accuracy; with RAGAS scores, faithfulness and context precision give a before/after comparison in under two minutes.
 
 **RAGAS** (Retrieval Augmented Generation Assessment) is the standard framework for evaluating RAG systems without manually labelling every output. It uses an LLM-as-judge approach: a separate LLM scores each component of the RAG response.
 
@@ -201,6 +209,14 @@ print(result)
 | High | Low | LLM is grounded but working with useless context — lucky or question is easy |
 | High | High | System is working correctly |
 
+**PizzaBot query examples — RAGAS diagnostic:**
+
+| Query | Expected Behaviour | Failure Mode if Broken |
+|---|---|---|
+| "Does the Margherita contain gluten?" | Retrieves allergen chunk; faithfulness = 1.0 | Faithfulness < 1.0 → LLM added information not in chunk |
+| "What is the cheapest GF pizza under 600 kcal?" | Retrieves calorie + price chunks; combines both | Context recall < 1.0 → calorie chunk missed |
+| "Can I get delivery by 7 pm?" | Checks availability tool, not RAG | Answer relevance low → answered about ingredients instead |
+
 > ⚡ **DECISION CHECKPOINT #1 — Pipeline failure diagnosis:**
 >
 > **Scenario:** PizzaBot answer quality degrades after switching from `text-embedding-ada-002` to `text-embedding-3-small`
@@ -223,6 +239,8 @@ print(result)
 
 ## 3 · Evaluating Reasoning Agents (ReAct Traces)
 
+Failure #1 in §0 — regression risk on every code change — extends beyond RAG responses to agent planning. A prompt change that causes the ReAct agent to take 10 steps instead of 6 passes manual spot-checks but silently pushes p95 latency from 2.5s toward 4s, crossing the 3s target before any customer complaint surfaces.
+
 For agents that produce Thought → Action → Observation traces, evaluate at the **trace level**, not just the final answer.
 
 ### Metrics for Agent Traces
@@ -235,6 +253,33 @@ For agents that produce Thought → Action → Observation traces, evaluate at t
 | **Tool call accuracy** | Were all tool calls made with correct arguments? |
 | **Context window utilisation** | Did the agent run out of context before completing? |
 | **Faithfulness of final answer** | Does the final answer follow from the observation trail? |
+
+**PizzaBot order trace targets** (6-step trace for "Large Margherita and Garlic Bread to 42 Maple Street"):
+
+| Metric | Target | How to Measure |
+|---|---|---|
+| Task completion rate | ≥ 95 % | Run 100 synthetic orders; count successful `FINAL_ANSWER` emissions |
+| Step efficiency | ≤ 6 steps | LLM-as-judge on traces; flag traces > 6 steps as over-planning |
+| Tool groundedness | 100 % | Every price/availability claim must map to a tool `Observation` token |
+| Hallucination rate | < 1 % | Self-consistency sampling: 5 chains per query, flag diverging price claims |
+
+```python
+PIZZABOT_EVAL_FIXTURES = [
+    {
+        "question": "What is the total for a Large Margherita and Garlic Bread delivered to 42 Maple Street?",
+        "ground_truth": "£22.96 (Margherita £13.99 + Garlic Bread £3.49 + delivery £1.99)",
+        "expected_tools": ["find_nearest_location", "check_item_availability",
+                           "retrieve_from_rag", "calculate_order_total"],
+    },
+    {
+        "question": "Which gluten-free pizza has the fewest calories?",
+        "ground_truth": "Veggie Feast GF at 490 kcal",
+        "expected_tools": ["retrieve_from_rag"],
+    },
+]
+```
+
+Use these fixtures as the `ground_truth` column when running RAGAS `context_recall` evaluations. A passing suite requires faithfulness ≥ 0.95 and context recall ≥ 0.90 on all fixtures.
 
 ### Trace Evaluation with LLM-as-Judge
 
@@ -300,9 +345,15 @@ Respond in JSON: {"faithfulness": int, "efficiency": int, "groundedness": int, "
 >
 > **Lesson:** High task completion rate does NOT mean efficient traces. Always measure step efficiency separately — redundant tool calls burn latency and API costs even when the final answer is correct.
 
+> 💡 **Step efficiency → latency and cost:** Each redundant tool call adds ~0.3–0.5s. An agent averaging 10 steps instead of the optimal 6 pushes p95 latency from 2.5s toward 4s — past the 3s target — while doubling LLM token costs for those traces. Step efficiency is not a vanity metric: it protects both the latency SLA and the $0.015/conv cost ceiling from §0 simultaneously.
+
+> ➡️ **Ch.10 (Fine-Tuning)** trains the agent’s planning model directly on domain traces, reducing average steps from ~10 to ~6 more reliably than prompt engineering — and closes the “planning regression” class that prompt changes routinely introduce.
+
 ---
 
 ## 4 · Component-Level Evaluation
+
+Failure #3 in §0 — manual testing doesn't scale — bites hardest at the component level. The embedding model sets the ceiling for every downstream RAGAS score: a Recall@10 of 0.60 means the allergen chunk the retriever silently dropped cannot be recovered by any amount of prompt engineering.
 
 ### Embedding Model Evaluation
 
@@ -628,6 +679,8 @@ else:
 
 ## 5 · Hallucination Detection
 
+The silent regression in §0 — a friendly-tone prompt change turning "540 calories" into "around 500-550 calories" — passed manual testing and reached production because there was no hallucination detection layer. The 5% error-rate target from §0 is directly determined by how often the LLM fabricates claims beyond its retrieved context.
+
 Hallucination is the biggest reliability problem in deployed LLM systems. Detection strategies:
 
 ### Self-consistency sampling
@@ -682,52 +735,7 @@ else:
     print("Deliver response")
 ```
 
-> 💼 **Connection to Ch.7 safety guardrails.** The safety chapter defines what to filter; toxicity scoring is the measurement layer that implements the filter. A guardrail that blocks inputs is only as good as its toxicity score threshold — tune this on your domain's false-positive/false-negative trade-off, just as you tuned precision/recall for FaceAI's Bald classifier. For PizzaBot, severe toxicity and threats are hard blocks; general toxicity > 0.70 routes to a "We're sorry, we can only help with pizza orders" fallback.
-
----
-
-## 6 · PizzaBot Connection
-
-Mamma Rosa's PizzaBot is the running example throughout this portfolio. Here is how each evaluation layer applies to it directly.
-
-### RAGAS metrics on the PizzaBot RAG pipeline
-
-| Query | Expected Behaviour | Failure Mode if Broken |
-|---|---|---|
-| "Does the Margherita contain gluten?" | Retrieves allergen chunk; answers faithfulness = 1.0 | Faithfulness < 1.0 → LLM added information not in chunk |
-| "What is the cheapest GF pizza under 600 kcal?" | Retrieves calorie + price chunks; combines both | Context recall < 1.0 → calorie chunk missed |
-| "Can I get delivery by 7 pm?" | Checks availability tool, not RAG | Answer relevance low → answered about ingredients instead |
-
-### Agent trace evaluation
-
-A PizzaBot order trace for "Large Margherita and Garlic Bread to 42 Maple Street" should produce a 6-step ReAct trace. Evaluation targets:
-
-| Metric | Target | How to Measure |
-|---|---|---|
-| Task completion rate | ≥ 95 % | Run 100 synthetic orders; count successful `FINAL_ANSWER` emissions |
-| Step efficiency | ≤ 6 steps | LLM-as-judge on traces; flag traces > 6 steps as over-planning |
-| Tool groundedness | 100 % | Every price/availability claim must map to a tool `Observation` token |
-| Hallucination rate | < 1 % | Self-consistency sampling: 5 chains per query, flag diverging price claims |
-
-### Canonical prices for evaluation fixtures
-
-```python
-PIZZABOT_EVAL_FIXTURES = [
-    {
-        "question": "What is the total for a Large Margherita and Garlic Bread delivered to 42 Maple Street?",
-        "ground_truth": "£22.96 (Margherita £13.99 + Garlic Bread £3.49 + delivery £1.99)",
-        "expected_tools": ["find_nearest_location", "check_item_availability",
-                           "retrieve_from_rag", "calculate_order_total"],
-    },
-    {
-        "question": "Which gluten-free pizza has the fewest calories?",
-        "ground_truth": "Veggie Feast GF at 490 kcal",
-        "expected_tools": ["retrieve_from_rag"],
-    },
-]
-```
-
-Use these fixtures as the `ground_truth` column when running RAGAS `context_recall` evaluations. A passing suite requires faithfulness ≥ 0.95 and context recall ≥ 0.90 on all fixtures.
+### Self-consistency detection
 
 ```python
 def detect_hallucination_by_consistency(llm, question, n=5, threshold=0.7):
@@ -755,9 +763,16 @@ NLI label:         NEUTRAL     →  claim has no support in context → potentia
 
 Open-source NLI models: `cross-encoder/nli-deberta-v3-base`, `vectara/hallucination_evaluation_model`.
 
+> 💡 **Hallucination rate → error rate:** The 5% error-rate target from §0 maps directly to hallucination frequency — 1 fabricated claim per 20 responses = 5% error rate; 1 per 10 = 10%. Self-consistency sampling (5 chains at temperature 0.7) costs ~5× API tokens on flagged queries but catches hallucination clusters before they trigger the 4-hour rollback cycle.
+
+> 💼 **Connection to Ch.7 safety guardrails.** The safety chapter defines what to filter; toxicity scoring is the measurement layer that implements the filter. A guardrail that blocks inputs is only as good as its toxicity score threshold — tune this on your domain's false-positive/false-negative trade-off, just as you tuned precision/recall for FaceAI's Bald classifier. For PizzaBot, severe toxicity and threats are hard blocks; general toxicity > 0.70 routes to a "We're sorry, we can only help with pizza orders" fallback.
+
 ---
 
+
 ## 7 · The Evaluation Benchmark Trap
+
+Failure #2 in §0 — "no quality baseline" — tempts teams toward a shortcut: use public MMLU or HumanEval scores to select models. This section explains why a model that aces benchmarks still hallucinates allergen claims in Mamma Rosa's private-data pipeline, and why that shortcut destroys customer trust.
 
 **The trap.** Standard LLM benchmarks — **MMLU** (57-subject knowledge test), **HumanEval** (Python coding), **MATH** (competition math) — measure model capability on fixed, curated test sets. They do not predict application performance. A model that scores 85 on MMLU may still hallucinate your specific domain's terminology at high rates because that terminology was underrepresented in its training data.
 
@@ -774,6 +789,8 @@ Open-source NLI models: `cross-encoder/nli-deberta-v3-base`, `vectara/hallucinat
 ---
 
 ## 8 · What a Minimal Evaluation Setup Looks Like
+
+All five blockers from §0 can be substantially reduced with a single artefact: a 50–100 question golden dataset run on every commit. This is the minimum viable version that eliminates the "test 3 queries and hope" anti-pattern without requiring a dedicated evaluation engineering team.
 
 For a production RAG pipeline, a minimum viable evaluation setup:
 
