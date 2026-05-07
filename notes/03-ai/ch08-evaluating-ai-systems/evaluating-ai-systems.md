@@ -1,6 +1,10 @@
 # Evaluating AI Systems — Measuring What Actually Matters
 
-> **The story.** Translation evaluation was the trailhead. **BLEU** (Papineni et al., IBM, **2002**) gave us the first widely-adopted automatic n-gram overlap metric — useful but famously brittle. **ROUGE** (Lin, 2004) followed for summarisation; **BERTScore** (Zhang et al., 2019) replaced n-gram overlap with embedding similarity. The LLM era forced a rethink because outputs are now free-form, multi-paragraph, and don't have one correct answer. The breakthrough was **LLM-as-judge**: **Zheng et al.'s "Judging LLM-as-a-Judge"** (NeurIPS 2023, the **MT-Bench** paper) showed that GPT-4 agrees with human raters ~80% of the time — cheap and scalable enough to evaluate a fleet of agents. **RAGAS** (Es et al., 2023) productised this for RAG pipelines (faithfulness, answer relevancy, context precision/recall). **TruLens** (TruEra, 2023) and **DeepEval** (Confident AI, 2024) built it into developer tooling. By 2024 the standard production stack was: unit tests for retrievers, LLM-judge for generators, golden datasets curated from production traces. Today, every time you deploy a prompt change to PizzaBot, an automated test suite validates faithfulness before production.
+> **The story.** In 2002, Kishore Papineni and three colleagues at IBM Research handed their manager a single number — 0.38 — and claimed it could predict whether a machine translation was any good. The manager was skeptical: how could a floating-point score capture whether a French paragraph was correctly rendered in English? But when they validated it against thousands of human judgments, the correlation held. They called it **BLEU** — Bilingual Evaluation Understudy — and the NLP field built two decades of evaluation on top of it.
+>
+> The cracks showed early. BLEU worked when an output had exactly one correct form: a translated sentence, a parsed token, a fixed summary. It broke the moment correct answers could be phrased multiple ways. "The gluten-free base is available" and "We offer a GF crust option" score nearly zero against each other on BLEU — same meaning, different words. **Chin-Yew Lin** patched the recall side with **ROUGE** in 2004; **Tianyi Zhang et al.** dissolved the surface-form problem entirely with **BERTScore** in 2019 by comparing embedding vectors instead of token sequences. But all three still assumed you had a reference answer to compare against.
+>
+> The LLM era destroyed that assumption. In 2023, **Lianmin Zheng and colleagues** at UC Berkeley ran a bold experiment: let **GPT-4 judge model outputs** rather than hiring human annotators. Their **MT-Bench** paper showed GPT-4 preferences agreed with human preferences ~80% of the time — good enough, cheap enough, fast enough to evaluate hundreds of models at once. That same year, **Shahul Es et al.** productized the idea for RAG pipelines as **RAGAS**: four metrics (faithfulness, answer relevancy, context precision, context recall) that pinpoint exactly which component of a retrieval-generation system is broken.
 >
 > **Where you are.** Ch.1 (LLM Fundamentals) gave you 8% conversion with raw GPT-3.5. Ch.2 (Prompt Engineering) reached 12% via structured prompts. Ch.3 (CoT Reasoning) hit 15% with step-by-step planning. Ch.4 (RAG & Embeddings) achieved 18% and <5% error via grounded retrieval ✅. Ch.5 (Vector DBs) maintained 18% with faster search. Ch.6 (ReAct & Semantic Kernel) unlocked **28% conversion** via tool orchestration + proactive upselling — beating the 22% phone baseline! But every prompt change risks regression without automated testing. ML had its [own metrics chapter](../../ml/02_classification/ch03_metrics) for supervised learning. AI needs one too — because "correctness" in free-form text is fuzzy, context-dependent, and often requires another LLM to evaluate.
 >
@@ -311,6 +315,24 @@ The retrieval quality is bounded by the embedding model's ability to separate re
 | **Recall@k** | `# relevant chunks in top-k / # total relevant chunks` |
 
 **How to measure:** use a test set of `(query, expected_chunk_ids)` pairs. Run retrieval. Compute the above. MTEB (Massive Text Embedding Benchmark) provides standardised benchmarks for comparing embedding models.
+
+#### Why NDCG@k beats Recall@k for production retrieval
+
+**Recall@k** asks only: "Did we find the relevant chunks somewhere in the top k?" A retriever that buries the allergen chunk at rank 9 out of 10 scores the same Recall@10 as one that returns it first.
+
+**NDCG@k** (Normalised Discounted Cumulative Gain) goes further: it rewards finding relevant chunks *earlier*. Each position is discounted by its rank — position 1 gets full credit; position $i$ contributes $1/\log_2(i+1)$.
+
+$$\text{DCG@k} = \sum_{i=1}^{k} \frac{\text{rel}_i}{\log_2(i+1)}$$
+
+$$\text{NDCG@k} = \frac{\text{DCG@k}}{\text{IDCG@k}}$$
+
+where $\text{IDCG@k}$ is the ideal DCG — the score you would get if every relevant chunk appeared at the top. Normalising by IDCG brings the metric into $[0, 1]$ regardless of how many relevant chunks exist.
+
+**Plain-English reading.** NDCG@k = 0.90 means your retriever captures 90% of the value of a perfect retriever. A chunk at rank 1 contributes $1/\log_2(2) = 1.0$; the same chunk at rank 4 contributes only $1/\log_2(5) \approx 0.43$ — less than half the credit for the same piece of information.
+
+**PizzaBot grounding.** The query "Does the Margherita contain gluten?" needs the allergen chunk. If it appears at rank 1, NDCG@10 is near 1.0. If it appears at rank 8, Recall@10 is still 1.0 — chunk found! — but NDCG@10 drops to ~0.28. The LLM reads top chunks first; a buried allergen fact is effectively invisible to it. That is the failure mode NDCG@k catches and Recall@k misses entirely.
+
+> 💡 **Business metric consequence.** A retriever with Recall@10 = 1.0 but NDCG@10 = 0.55 will still cause allergen errors — not because the correct chunk is absent, but because it arrives too late for the LLM to weight it correctly. In the pizza ordering context, a buried allergen disclaimer means a customer with a wheat allergy places an order the bot should have warned against. Always report NDCG@k alongside Recall@k when benchmarking your embedding model.
 
 #### Code Snippet #1 — BLEU & ROUGE Calculation for LLM Summaries
 
@@ -737,9 +759,17 @@ Open-source NLI models: `cross-encoder/nli-deberta-v3-base`, `vectara/hallucinat
 
 ## 7 · The Evaluation Benchmark Trap
 
-Standard LLM benchmarks (MMLU, HumanEval, MATH) measure model capability in isolation. They do not predict application performance. A model that scores 85 on MMLU may still hallucinate your specific domain's terminology at high rates because that domain was underrepresented in its training data.
+**The trap.** Standard LLM benchmarks — **MMLU** (57-subject knowledge test), **HumanEval** (Python coding), **MATH** (competition math) — measure model capability on fixed, curated test sets. They do not predict application performance. A model that scores 85 on MMLU may still hallucinate your specific domain's terminology at high rates because that terminology was underrepresented in its training data.
 
-**The rule:** always evaluate on your own data, in your own pipeline, with your own queries. Benchmark scores are useful for model selection; they are not a substitute for domain evaluation.
+**Why they diverge.** Benchmarks are closed-domain, multiple-choice or exact-match tasks compiled once. Your production pipeline is open-domain, free-form, run over private data the model has never seen. The distribution gap is fundamental, not incidental.
+
+**PizzaBot grounding.** GPT-4o scores near the ceiling on MMLU (~86%) and HumanEval (~90%). That tells you it has broad knowledge and writes solid Python. It tells you nothing about whether it faithfully cites allergen data from Mamma Rosa's private menu corpus, stays within the "pizza orders only" persona, or correctly chains `check_item_availability()` for a multi-item order. A smaller model fine-tuned on 500 PizzaBot traces (Ch.8) can easily beat GPT-4o on your RAGAS faithfulness score while sitting 15 points lower on MMLU.
+
+**The rule:** always evaluate on your own data, in your own pipeline, with your own queries. Benchmark scores are useful for initial model shortlisting; they are not a substitute for domain evaluation.
+
+> 💡 **Business metric consequence.** A team that selects models purely by benchmark ranking risks shipping a 90th-percentile MMLU model that fails 12% of allergen queries — destroying customer trust — while rejecting a 75th-percentile model that would have handled them perfectly. Your golden dataset (50–200 PizzaBot queries with RAGAS scores) is a more honest predictor of production quality than any public leaderboard position.
+
+> ⚠️ **Common interview trap.** When asked "how would you choose a base model?", answering "pick the highest MMLU score" signals you haven't shipped production AI. The right answer: shortlist by benchmark, validate on your domain data, and always report RAGAS / task-success rates alongside public leaderboard positions.
 
 ---
 

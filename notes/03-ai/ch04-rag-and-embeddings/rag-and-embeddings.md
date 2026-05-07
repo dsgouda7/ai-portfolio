@@ -1,6 +1,14 @@
 ﻿# End-to-End Guide to Embeddings in RAG Pipelines: From Ingestion to Query
 
-> **The story.** **Word2vec** (**Tomas Mikolov** and colleagues, Google, **2013**) was the moment text became vectors you could do arithmetic on — famously, *king − man + woman ≈ queen*. **GloVe** (Pennington, Socher, Manning, Stanford 2014) and **fastText** (Bojanowski et al., Facebook 2016) refined the recipe. **Sentence-BERT** (Reimers & Gurevych, 2019) lifted embeddings from words to whole sentences using a siamese transformer trained with contrastive loss — the foundation of every modern embedding model. **Retrieval-Augmented Generation** itself was named in a **2020** paper by **Patrick Lewis et al. at Facebook AI** — the architecture that staples a vector retriever in front of a generative LLM, letting the model cite documents instead of hallucinating from parametric memory. By 2023, **OpenAI's `text-embedding-ada-002`**, **Cohere's embed-v3**, and open-source models like **BGE** had made embedding-based retrieval the default architecture for any LLM application that touches private data.
+> In the spring of 2013, a young Google researcher named **Tomas Mikolov** was running out of patience with neural language models that couldn't generalize. He had an idea that felt almost too simple: train a shallow network not to *understand* language, but just to *predict neighbors* — what words tend to appear near this word? The result was **Word2vec**. What surprised even Mikolov was that the learned vectors had geometry: *king − man + woman ≈ queen*. Meaning had become arithmetic.
+>
+> The field spent the next six years refining the recipe. **GloVe** (Pennington, Socher, Manning, Stanford 2014) combined global co-occurrence statistics with local prediction. **fastText** (Bojanowski et al., Facebook 2016) added subword structure so "gluten-free" and "glutenfree" stopped being strangers. But all of these were word-level: each word got one fixed vector regardless of context. *Bank* in "river bank" and *bank* in "bank account" were given the exact same number. The vectors were beautiful, but brittle.
+>
+> The fix came in 2019 when **Nils Reimers and Iryna Gurevych** at TU Darmstadt published **Sentence-BERT**: a siamese transformer trained with contrastive loss to push semantically similar sentences together and dissimilar ones apart. For the first time, a model could reliably answer *"are these two paragraphs about the same thing?"* — and return a number you could actually trust.
+>
+> Then **Patrick Lewis and a team at Facebook AI** connected the final wire. In their **2020 RAG paper**, they asked: what if you plugged a retriever into the front of a generative model? Instead of making the LLM memorize every fact during training, let it *look things up* at inference time — search a corpus, read the relevant chunks, then answer. The model could now cite sources instead of hallucinating. By 2023, this pattern — embed a corpus offline, retrieve the nearest chunks at query time, hand them to the LLM — had become the default architecture for any AI system that touches private data.
+>
+> **You are now building that architecture.** The menu facts PizzaBot hallucinated in Ch.3 — wrong prices, invented calorie counts — exist because the model has no mechanism to look things up. This chapter fixes that. You will embed Mamma Rosa's entire menu corpus, build a vector index, and wire a semantic retriever in front of the LLM. By the end, PizzaBot will ground every factual claim in retrieved documents and your error rate will fall from 10% to 5%.
 >
 > **Where you are in the curriculum.** This is the chapter where you learn what *exactly* gets stored in a vector index, how an embedding model decides two pieces of text are similar, and how a query is matched against millions of chunks. The next chapter — [VectorDBs](../ch05_vector_dbs) — takes the index itself apart (HNSW, IVF, DiskANN). Together they are the foundation for everything else: agents that retrieve before they answer, evaluation pipelines that check grounding, and the entire RAG project under [`projects/ai/rag-pipeline`](../../../projects/ai/rag_pipeline).
 >
@@ -589,12 +597,89 @@ for i, (doc, meta, dist) in enumerate(zip(
 
 **Step 2 — Similarity Search:** The query vector is used to perform **nearest neighbor search** in the vector database, retrieving the top *k* most similar chunk vectors. The distance metric used must match how embeddings were stored. For normalized embeddings, use dot product (which equals cosine similarity).
 
-**Step 3 — (Optional) Re-ranking:** Some RAG pipelines add a re-ranking step using a more precise but slower method (cross-encoder, ColBERT, or an LLM-based re-ranker) to refine the ordering of retrieved chunks.
+**Step 3 — (Optional) Re-ranking:** Bi-encoder retrieval is fast but approximate — the query and document are embedded independently and compared by cosine similarity alone. A **cross-encoder** reads the query and candidate chunk *together* as a single sequence, letting every token attend to every other token, then outputs a scalar relevance score. It is slower but far more accurate.
+
+**Technical definition:** A cross-encoder takes `[CLS] query [SEP] chunk [SEP]` as input and produces a relevance score in [0, 1]. Because the model sees both texts simultaneously, it catches subtleties cosine similarity cannot — a question asking about a *process* versus a *definition* of the same term, or a chunk that is semantically adjacent but contextually useless.
+
+**Intuition:** Bi-encoder retrieval is like matching resumes by keyword: fast, scalable, but it misses nuance. Cross-encoder re-ranking is like having a senior engineer actually read each candidate: slower, but far more accurate about fit.
+
+**For PizzaBot:** After retrieving 20 chunks for "gluten-free options under 800 calories," a cross-encoder re-ranks them so chunks about *available gluten-free crusts with calorie counts* rise above generic chunks that merely mention "gluten" in the kitchen disclaimer. The bi-encoder returned the 20 most *semantically similar* chunks; the cross-encoder re-ranks to the 5 most *relevant* ones.
+
+**Architecture pattern:** Use bi-encoder for top-100 recall (milliseconds), cross-encoder to re-rank to top-5 (adds ~200–400 ms per query). Never run a cross-encoder against the full corpus — at 1.5 million chunks that is a 10-minute query.
+
+> ⚠️ **Re-ranking trap:** High cosine similarity ≠ high relevance. A chunk reading "our menu includes gluten-free options" scores 0.82 similarity against "gluten-free options under 800 calories," but it contains no calorie data — it is useless to the LLM. The cross-encoder catches this; the bi-encoder does not. See § 11 (ColBERT) for token-level late interaction as an alternative re-ranker.
 
 **Step 4 — LLM Prompt Composition:** The top relevant chunks are inserted into the LLM's prompt as reference context. The LLM then generates a grounded answer.
 
 > 💡 **Retrieve verdict:** Semantic search returns Veggie Garden Pizza (similarity 0.89) as top match for "gluten-free under 800 calories" — 91% recall at 10 ms on 1,500 chunks.
-> ➡️ The remaining 9% miss rate comes from items with non-standard descriptions; hybrid BM25 + dense retrieval (§11) closes that gap by catching exact-wording cases dense search misses.
+> ➡️ The remaining 9% miss rate comes from items with non-standard descriptions; hybrid BM25 + dense retrieval (§ 6.5) closes that gap by catching exact-wording cases dense search misses.
+
+***
+
+## 6.5 · Hybrid Search: BM25 + Dense Retrieval
+
+**PizzaBot's failure mode you haven't hit yet:** A customer types "SKU-MRG-LRG" — the internal stock-keeping code for the large Margherita. Dense retrieval returns nothing useful because no embedding model was trained on that code. A keyword search returns an exact match in milliseconds. You need both.
+
+### BM25: Sparse Retrieval
+
+**Technical definition:** BM25 (Best Match 25) is a probabilistic ranking function that scores documents by term frequency (how often a query term appears in the document) and inverse document frequency (how rare that term is across the full corpus), with a saturation term to prevent long documents from dominating:
+
+$$\text{BM25}(q, d) = \sum_{t \in q} \text{IDF}(t) \cdot \frac{f(t,d) \cdot (k_1 + 1)}{f(t,d) + k_1 \cdot \left(1 - b + b \cdot \frac{|d|}{\text{avgdl}}\right)}$$
+
+Where $f(t,d)$ = term frequency of token $t$ in document $d$, $k_1 = 1.2$ controls term-frequency saturation (diminishing returns from repeated terms), $b = 0.75$ controls length normalization, and $\text{avgdl}$ = average document length across the corpus.
+
+**Intuition:** BM25 is keyword search done right. It rewards documents containing your exact query terms, penalizes documents that repeat them obsessively, and adjusts scores so short FAQ entries aren't drowned out by long menu descriptions. It requires no training, no GPU, and no warm-up — just an inverted index built once at ingestion time.
+
+**For PizzaBot:** BM25 excels when a customer uses exact menu language: "Margherita," "SKU-1034," "extra virgin olive oil," or "gluten-free crust (+$3.00)." Dense retrieval misses these because embedding models map rare tokens to generic representations. BM25 catches them through exact term matching.
+
+| Retriever | Strengths | Weaknesses |
+|-----------|-----------|------------|
+| **BM25 (sparse)** | Exact matches, rare terms, acronyms, SKUs, proper nouns; no training required | Misses paraphrases: "low-calorie" vs. "light option" |
+| **Dense (bi-encoder)** | Semantic similarity, paraphrases, intent; handles out-of-vocabulary gracefully | Struggles with rare proper nouns, exact model numbers, domain-specific codes |
+
+### Reciprocal Rank Fusion (RRF)
+
+**Technical definition:** RRF merges two rank lists by replacing raw scores with rank-based weights. For each document, sum its contribution across all rankers:
+
+$$\text{RRF}(d) = \sum_{\text{ranker}} \frac{1}{k + \text{rank}_i(d)}$$
+
+Where $k = 60$ is a smoothing constant that prevents top-ranked documents from dominating, and $\text{rank}_i(d)$ is the 1-indexed position of document $d$ in ranker $i$'s result list.
+
+**Intuition:** BM25 returns a TF-IDF-weighted score that might range from 0 to 80. Dense search returns a cosine similarity between 0 and 1. You cannot add these directly — the scales are incompatible. RRF sidesteps the problem entirely by caring only about *rank order*, not raw score. A document that ranks 3rd in BM25 and 5th in dense search gets a stable combined score regardless of what either raw value was.
+
+**For PizzaBot:** Hybrid search finds "Veggie Garden Pizza (Large): $14.49, 780 calories. Gluten-free crust available" even when the customer types "cheap light vegetarian with no wheat." BM25 catches "gluten-free" (exact match); dense search catches "light vegetarian" (semantic similarity). RRF merges both lists — the chunk that ranks high in *both* floats to the top.
+
+```python
+from rank_bm25 import BM25Okapi
+import numpy as np
+
+def hybrid_rrf(
+    query: str,
+    dense_ranking: list,   # list of doc IDs ordered by dense similarity (best first)
+    corpus: list,          # list of raw text strings indexed by doc ID
+    k: int = 60,
+    top_n: int = 5
+) -> list:
+    """Merge dense retrieval and BM25 results with Reciprocal Rank Fusion."""
+    # BM25 retrieval
+    tokenized_corpus = [doc.lower().split() for doc in corpus]
+    bm25 = BM25Okapi(tokenized_corpus)
+    bm25_scores = bm25.get_scores(query.lower().split())
+    bm25_ranking = list(np.argsort(bm25_scores)[::-1])  # descending
+
+    # RRF scoring: accumulate 1/(k + rank) across both rankers
+    rrf_scores: dict = {}
+    for rank, idx in enumerate(bm25_ranking):
+        rrf_scores[idx] = rrf_scores.get(idx, 0.0) + 1.0 / (k + rank + 1)
+    for rank, idx in enumerate(dense_ranking):
+        rrf_scores[idx] = rrf_scores.get(idx, 0.0) + 1.0 / (k + rank + 1)
+
+    # Return top-n doc IDs sorted by combined RRF score
+    return sorted(rrf_scores, key=rrf_scores.get, reverse=True)[:top_n]
+```
+
+> 💡 **Hybrid search verdict:** BM25 handles "SKU-1034" and exact price lookups; dense retrieval handles "something light and vegetarian." RRF combines both rank lists without score normalization — no calibration step needed. PizzaBot's 91% semantic-only recall becomes 94% with hybrid, closing the gap on brand-name, allergen-code, and exact-match queries.
+> ➡️ Production stacks: Elasticsearch or OpenSearch (BM25) + Pinecone/Qdrant (dense) with RRF at the application layer — or Weaviate/Qdrant with built-in hybrid search that handles both in a single API call.
 
 ***
 

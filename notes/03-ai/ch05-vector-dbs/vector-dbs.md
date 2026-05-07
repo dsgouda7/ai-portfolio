@@ -1,6 +1,10 @@
 ﻿# Vector Database Indexing Techniques and Architectures
 
-> **The story.** Approximate Nearest Neighbour search has a long pre-LLM history. **Locality-Sensitive Hashing** (Indyk & Motwani, 1998) was the first practical sublinear ANN algorithm. **Inverted File Index (IVF)** with product quantisation came from **Hervé Jégou** and colleagues at Inria, packaged into Facebook's **FAISS** library in **2017**. The big shift was **HNSW** — *Hierarchical Navigable Small World graphs* by **Yu. A. Malkov and D. A. Yashunin**, **2016** — which used multi-layer proximity graphs to deliver near-exact recall at far better latency, and now powers most production vector DBs. Microsoft's **DiskANN** (NeurIPS 2019) extended HNSW-style graphs onto SSDs, allowing billion-scale indexes that don't fit in RAM. The vector-database product wave — **Pinecone** (founded 2019), **Weaviate** (2019), **Milvus** (2019), **Qdrant** (2021), **Chroma** (2022), and **pgvector** (2021) — wrapped these algorithms in production-grade APIs once the LLM era made dense retrieval mainstream.
+> **A brief history.** In 1998, Piotr Indyk and Rajeev Motwani sat down at Cornell with a problem that felt intractable: find the nearest neighbor to a query point among ten million high-dimensional vectors — in milliseconds, not minutes. Their paper on *Locality-Sensitive Hashing* was the first algorithm to break the O(N) barrier. It worked, but barely: you needed dozens of hash tables to hit decent recall, and the memory overhead was punishing. Researchers filed it away as a theoretical win with a practical asterisk.
+>
+> The breakthrough that mattered came out of Inria in Grenoble. Hervé Jégou and colleagues were building large-scale image retrieval systems and kept hitting RAM walls. Their 2010 work on *Product Quantization* showed that a 128-dim descriptor could be split into tiny sub-vectors, each encoded against a small codebook, yielding a 64× memory reduction with near-zero recall loss. Facebook packaged the technique into **FAISS** in 2017, and overnight a billion-scale ANN index fit on a single GPU server.
+>
+> But the field still needed speed. In 2016, Yu. A. Malkov and D. A. Yashunin published *HNSW* — a deceptively simple idea: build a multi-layer graph where top layers are highways for long-range jumps and bottom layers are local streets for precision. Start at the top, greedily descend, return the neighbors. The result was near-exact recall at latencies that left IVF-based methods behind. Within three years, every production vector database adopted it. Microsoft Research answered the billion-scale problem with **DiskANN** (NeurIPS 2019), which moved the HNSW-style graph onto SSD so indexes that don't fit in RAM no longer required a room full of DRAM. The product wave — Pinecone, Weaviate, Milvus, Qdrant, pgvector — wrapped these algorithms in managed APIs the moment the LLM era made dense retrieval a default engineering primitive. Now you're inheriting that history: your PizzaBot prototype hit a wall at 50K chunks, and this chapter explains exactly which index to reach for and why.
 >
 > **Where you are in the curriculum.** [RAGAndEmbeddings](../ch04_rag_and_embeddings) explained *what* is stored (embeddings) and *why*. This document explains *how* it is searched at scale: the index structures (Flat, IVF, HNSW, DiskANN), distance metrics (cosine, dot product, L2), and the production architecture choices (filters, hybrid retrieval, sharding) that determine whether your RAG pipeline serves 10 users or 10 million.
 >
@@ -38,14 +42,14 @@ You run the math:
 # Current PizzaBot RAG implementation (prototype)
 def retrieve_menu_chunks(query: str, top_k=5):
     query_embedding = embed(query)  # 768-dim vector
-    
+
     # Brute-force search: compare query to ALL chunks
     similarities = []
     for chunk in menu_corpus:  # Currently 500, CEO wants 50,000
         chunk_embedding = chunk.vector  # 768-dim
         similarity = cosine(query_embedding, chunk_embedding)
         similarities.append((chunk, similarity))
-    
+
     # Sort and return top-k
     similarities.sort(key=lambda x: x[1], reverse=True)
     return [chunk for chunk, _ in similarities[:top_k]]
@@ -73,7 +77,7 @@ Bot: [1.5 second pause... user sees loading spinner again]
 
 **Why brute-force won't scale:**
 
-✅ **Works fine NOW**: 500 menu chunks, 50 daily users, 15ms retrieval latency  
+✅ **Works fine NOW**: 500 menu chunks, 50 daily users, 15ms retrieval latency
 ❌ **Breaks at franchise scale**:
 - **50,000 chunks** (10 locations + recipes + reviews) → **1.5s latency** → 40% abandonment
 - **500 concurrent users** (Friday dinner rush) → **server CPU maxed out** → timeouts
@@ -123,7 +127,7 @@ Ch.5 is a **pure infrastructure chapter** — no business metric improvements, b
 - Without Ch.5: Prototype works for 1 location, crashes at 10 locations → **no franchise expansion**
 - With Ch.5: Ready for 100+ locations, millions of queries/month → **CEO approves franchise rollout**
 
-**Constraint status after Ch.5**: 
+**Constraint status after Ch.5**:
 - #1-6: **All user-facing metrics unchanged** (18% conversion, 5% error, 2-3s latency, $0.008/conv)
 - **Infrastructure de-risked**: HNSW index deployed, can now scale to 50K+ chunks without latency degradation
 - **CEO approval**: Franchise expansion greenlit (infrastructure proven)
@@ -198,10 +202,10 @@ ANN indexes drastically improve query performance by searching only a portion of
  │ ★ → [IDs]│ ★ → [IDs]│ ★ → [IDs]│ nlist │
  │(centroid)│(centroid)│(centroid)│ │
  └──────────┴──────────┴──────────┴──────────┘
- 
+
  ★ = centroid (coarse quantizer)
  [IDs] = inverted list of vectors assigned to that cluster
- 
+
  QUERY TIME:
  Query → Compare to centroids → Pick nprobe closest → Search only those lists
 ```
@@ -245,11 +249,11 @@ The IVFFlat method uses an inverted file index to partition the dataset into mul
 
 ```plaintext
  Layer 3 (sparse): A ─────────────────── D
- 
+
  Layer 2: A ───── C ───── D ───── F
- 
+
  Layer 1: A ── B ── C ── D ── E ── F
- 
+
  Layer 0 (dense): A─B─C─D─E─F─G─H─I─J─K─L
 
  SEARCH: Start at top layer → greedy walk toward query
@@ -301,7 +305,7 @@ The HNSW graph connects points with both **long-range and short-range links**, y
  │ │ │
  ▼ ▼ ▼
  Code: 42 Code: 117 Code: 203
- 
+
  Compressed vector: [42, 117, ..., 203] (16 bytes if m=16, 1 byte each)
  Compression ratio: 3,072 / 16 = 192×
 ```
@@ -330,6 +334,26 @@ The HNSW graph connects points with both **long-range and short-range links**, y
 * **OPQ (Optimized Product Quantization):** Applies a rotation to the vectors before splitting, aligning the subspaces with the data distribution for better codebook quality.
 * **Half-precision compression (float16):** Introduced by pgvector from version **0.7.0**, this method uses float16 to store vectors in the index. With half-precision, vectors can have up to **4,000 dimensions** (vs. 2,000 for float32 on an 8KB PostgreSQL page). Supported by both HNSW and IVF indexes.
 
+#### Scalar Quantization (SQ8 / INT8)
+
+**Scalar quantization** maps every float32 component of a vector to an 8-bit integer by linearly rescaling the observed value range to [0, 255]. Each dimension drops from 4 bytes to 1 byte: a **4× memory reduction** with a recall drop typically under 1%.
+
+The intuition: rounding GPS coordinates from six decimal places to two. You lose a sliver of precision, but for nearly every navigation decision the answer stays correct.
+
+**PizzaBot grounding:** At 50K menu chunks, SQ8 drops the HNSW memory footprint from 153.6 MB to 38.4 MB. At 1M chunks (full nationwide expansion), the index stays under 768 MB — still on a single commodity server, no upgrade required.
+
+> 💡 SQ8 is the first quantization upgrade to reach for. You almost always capture the 4× memory win with ≤1% recall loss — a far better risk-reward ratio than PQ for most production deployments. Try SQ8 before PQ.
+
+#### Binary Quantization (BQ)
+
+**Binary quantization** takes SQ to its extreme: each float32 component becomes a single bit (positive → 1, zero/negative → 0). A 768-dim vector shrinks from 3 KB to 96 bytes — **32× compression** — computed with a single bitwise XOR per dimension instead of a floating-point multiply.
+
+The catch: recall collapses unless the embedding model was trained explicitly for binary outputs (e.g., Cohere Embed v3 with `embedding_types=["binary"]`). For general-purpose models, BQ requires heavy oversampling — retrieve 10–50× candidates, then re-rank with full-precision vectors — to recover acceptable recall.
+
+**PizzaBot grounding:** BQ is the wrong choice for Mamma Rosa's allergen queries. The safety constraint demands >97% recall@5, which BQ without a purpose-trained model cannot guarantee. Reserve BQ for deduplication pipelines or large-scale image search where occasional missed matches are acceptable.
+
+> ⚠️ Applying BQ to a general-purpose text embedding model without oversampling will quietly destroy recall. A 10% recall drop on allergen queries means the bot occasionally returns the wrong ingredient — a direct path to customer complaints and legal exposure.
+
 ***
 
 ### 3.4 ScaNN — Google's High-Performance ANN
@@ -350,6 +374,10 @@ The HNSW graph connects points with both **long-range and short-range links**, y
 | **Pros** | Great for text embeddings; strong batch-mode performance |
 | **Cons** | Harder to tune; not as common in production as HNSW |
 | **Used in** | Google Search, Vertex Matching Engine |
+
+**PizzaBot grounding:** ScaNN's batch-oriented build process makes incremental menu updates costly — not a fit for Mamma Rosa's daily specials. HNSW wins for write-heavy RAG pipelines. ScaNN becomes relevant if you pre-batch all franchise queries offline (e.g., overnight analytics across the full recipe corpus where update frequency is low).
+
+> 💡 ScaNN excels on read-heavy, infrequently-updated datasets. For write-heavy RAG pipelines where menu items change daily, HNSW's O(M log N) per-insert wins. Reach for ScaNN when your query volume dwarfs your write volume by 100× or more.
 
 ***
 
@@ -372,6 +400,10 @@ DiskANN is supported in **Azure Database for PostgreSQL** (as one of three vecto
 | **Build time** | Medium |
 | **Updates** | Full DML support (insert/update/delete) |
 | **Best for** | Billion-scale workloads on commodity hardware |
+
+**PizzaBot grounding:** Mamma Rosa's 50K-chunk franchise corpus fits comfortably in RAM — DiskANN is overkill today. But at 1M chunks (100 locations, full recipe archives, customer reviews), a pure HNSW index needs ~4 GB of DRAM. DiskANN serves the same graph from NVMe SSD with ~400 MB of in-memory cache: same recall, one-tenth the RAM cost.
+
+> 💡 DiskANN is the correct answer when an interviewer asks "how do you handle billion-scale on a budget?" Commodity NVMe SSDs are 10× cheaper per GB than DRAM, and DiskANN's graph layout was explicitly designed to minimize the number of random seeks — making SSD latency acceptable without sacrificing recall.
 
 ***
 
@@ -425,6 +457,16 @@ This is the principle behind DiskANN's **oversampling**: if oversampling=1.5 and
 **What it solves:** Many real-world queries combine metadata constraints (e.g., "category = 'electronics' AND price < 100") with vector similarity. Without integration, you either pre-filter (potentially eliminating good vector matches) or post-filter (wasting compute on irrelevant vectors).
 
 **How it works:** Azure Cosmos DB for MongoDB vCore **pre-filtering on IVF and DiskANN** enables metadata or attribute filters to be applied **before** vector similarity search execution, reducing the candidate set that the ANN algorithms must evaluate. DiskANN's new **iterative filtering** applies predicates **during** the search itself rather than as a post-filtering step, eliminating the need to over-fetch vectors.
+
+**The selectivity trap — why neither naive strategy is safe:**
+
+Post-filter lets ANN search run unobstructed, then discards non-matching results. Sounds efficient — but with 1% filter selectivity (1 in 100 vectors passes the metadata condition), you need to retrieve 100× more ANN candidates to guarantee the top-k matching results appear. At low selectivity, post-filter silently degrades to a near-full-scan.
+
+Pre-filter has its own failure mode: restricting graph traversal to the matching subset destroys HNSW connectivity. If only 200 of 50K vectors match, the graph has almost no edges linking those 200 nodes — traversal gets stuck and recall collapses even at high `ef_search`.
+
+**PizzaBot grounding:** Query: "gluten-free pizzas at the downtown location" — from 50K total chunks, ~500 match `store_id=downtown` and only ~50 are gluten-free. Post-filtering 50K ANN results wastes compute on irrelevant chunks. Pre-filtering to the 50-vector subset loses graph connectivity. The right answer is **iterative filtering** (DiskANN in Cosmos DB) or **in-graph filtering** (Weaviate, Qdrant), which interleave the metadata check with graph traversal to stay efficient regardless of selectivity.
+
+> ⚠️ There is no universally safe filter strategy. Rule of thumb: filter selectivity > 10% → pre-filter is fine. Below 5% → use iterative/in-graph filtering, or accept the compute cost of heavy oversampling with post-filter and a re-rank step.
 
 ### 5.5 Keyword/BM25 + Vector Hybrid Retrieval
 

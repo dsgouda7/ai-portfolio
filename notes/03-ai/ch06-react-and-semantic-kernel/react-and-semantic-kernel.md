@@ -1,6 +1,6 @@
 ﻿# ReAct, LangChain, and Semantic Kernel – Patterns and Frameworks for LLM-Based Agents
 
-> **The story.** **ReAct** ("Reason + Act") was published by **Shunyu Yao** and colleagues from Princeton + Google at **ICLR 2023** (the paper appeared on arXiv in October 2022) and was a top-5% paper at that conference. The insight was simple: interleave chain-of-thought reasoning with tool actions in a tight Thought → Action → Observation loop, and the LLM stops hallucinating tool outputs because it can *actually call* the tool. ReAct beat imitation-learning baselines by 34% on ALFWorld. The frameworks followed almost immediately: **Harrison Chase** open-sourced **LangChain** in **October 2022** and it became the default agent library by 2023; **Microsoft's Semantic Kernel** (open-sourced May 2023) brought the same idea to .NET with a stronger emphasis on plugins and telemetry; **LangGraph** (LangChain Inc., 2024) added explicit state machines for production-grade agent loops. Every "agent" you will deploy in 2026 — hosted Foundry agent, OpenAI Assistants, Anthropic Computer Use — is a ReAct-shaped loop in some configuration.
+> **The story.** In October 2022, **Shunyu Yao** at Princeton was staring at a failure that nagged him: chain-of-thought prompting let GPT-3 reason step-by-step through complex problems, but the moment it needed a real fact mid-thought — "is this store open right now?", "what is 230 divided by 4?" — it fabricated the answer from training data. The model was brilliant but blind. Yao's fix was almost embarrassingly simple: let the model call a tool mid-thought, receive the result as an observation, then keep reasoning with that grounded fact in hand. He called the pattern **ReAct** — Reason + Act — and submitted it to ICLR in October 2022. When the reviewers scored it, ReAct landed in the **top 5% of submissions**. On ALFWorld, a benchmark where agents navigate simulated household environments, ReAct beat the best imitation-learning baseline by **34 percentage points** — not because it used a bigger model, but because it stopped asking the LLM to remember facts it couldn't know and started letting it *ask for them in real time*. **Harrison Chase** had released **LangChain** that same month — a thin Python wrapper that within a year became the default agent library with 50,000 GitHub stars and integrations for nearly every API. **Microsoft followed with Semantic Kernel** in May 2023, aimed at .NET enterprise teams who needed compliance filters, stable versioned APIs, and telemetry that LangChain's rapid release cadence couldn't guarantee. In 2024, LangChain Inc. released **LangGraph** — the same Thought→Action→Observation loop now modelled as a state machine, where branching paths and human approval checkpoints are first-class operations. Every hosted agent you will build in 2026 — Azure AI Foundry, OpenAI Assistants, Anthropic Computer Use — runs a variant of Yao's original loop.
 >
 > **Where you are in the curriculum.** [CoTReasoning](../ch03_cot_reasoning) gave you the reasoning half. This document gives you the *acting* half — how the LLM's structured output becomes a tool call, how the tool's response becomes the next observation, and how frameworks like LangChain and Semantic Kernel automate the loop. After this chapter you can build the kind of agent that powers the [PizzaBot](../ai-primer.md), and you have the conceptual scaffolding for the entire [Multi-Agent track](../../03-multi_agent_ai), where these single-agent loops compose into protoco...
 >
@@ -75,8 +75,8 @@ Current state: **Knowledgeable but passive assistant**
 Phone staff behavior: **Proactive sales agent**
 ```
 Customer: "What gluten-free pizzas do you have?"
-Staff: "Our Veggie Garden is most popular with gluten-free crust. 
-       It's $14.99 for medium, $17.99 for large — just $3 more and 
+Staff: "Our Veggie Garden is most popular with gluten-free crust.
+       It's $14.99 for medium, $17.99 for large — just $3 more and
        you get 40% more pizza. Plus I can add garlic bread for $4.99.
        Would you like the large with garlic bread?"
 Customer: "Sure, sounds good."
@@ -286,14 +286,14 @@ The term **"interleaved"** is central to ReAct. It means reasoning and acting ar
 # Phase 2: REASON - Agent reasoning loop (pseudocode)
 def reason_and_plan(context: str, available_tools: list) -> dict:
     """LLM analyzes context and decides next action.
-    
+
     Args:
         context: Current conversation state (all previous Thought/Action/Obs)
         available_tools: List of tool schemas (name, description, parameters)
-    
+
     Returns:
-        {"thought": "I need X to answer Y", 
-         "action": "tool_name", 
+        {"thought": "I need X to answer Y",
+         "action": "tool_name",
          "action_input": {...}}
     """
     # System prompt includes:
@@ -301,7 +301,7 @@ def reason_and_plan(context: str, available_tools: list) -> dict:
     # - Available tools with descriptions
     # - Scratchpad (all previous steps)
     # - Instruction: "Decide next action or provide final answer"
-    
+
     prompt = f"""
 You are a helpful agent. You have access to these tools:
 {format_tool_schemas(available_tools)}
@@ -322,9 +322,9 @@ Or if you have enough information:
 Thought: [final reasoning]
 Final Answer: [complete response to user]
 """
-    
+
     response = llm.generate(prompt)
-    
+
     # DECISION LOGIC - parse response to determine next phase
     if "Final Answer:" in response:
         phase = "ANSWER"  # → Go to Phase 4
@@ -359,7 +359,7 @@ Action Input: {"item_ids": ["gf_margherita", "gf_veggie"]}
 
 Step 4 (REASON - after observing prices):
 Thought: GF Margherita is $13.99, GF Veggie is $14.99. Margherita is cheapest.
-Final Answer: The cheapest gluten-free pizza under 600 calories is the 
+Final Answer: The cheapest gluten-free pizza under 600 calories is the
 Margherita (medium, 540 cal, $13.99).
 ```
 
@@ -367,7 +367,7 @@ Margherita (medium, 540 cal, $13.99).
 > ```python
 > # OpenAI native function calling (no framework needed)
 > import openai
-> 
+>
 > tools = [
 >     {
 >         "type": "function",
@@ -385,14 +385,14 @@ Margherita (medium, 540 cal, $13.99).
 >         }
 >     }
 > ]
-> 
+>
 > response = openai.chat.completions.create(
 >     model="gpt-4",
 >     messages=[{"role": "user", "content": "Find gluten-free pizzas"}],
 >     tools=tools,
 >     tool_choice="auto"  # Let model decide when to call tools
 > )
-> 
+>
 > # Model returns: {"tool_calls": [{"function": {"name": "menu_search", "arguments": {...}}}]}
 > ```
 > **When to use:** Production systems where you need precise control over tool invocation. Frameworks like LangChain abstract this, but native API gives you full observability.
@@ -443,51 +443,51 @@ Context **grows monotonically**. Once the agent has confirmed the store and item
 # Phase 3: ACT - Execute tool call with error handling
 def execute_tool(tool_name: str, tool_input: dict, tools: dict, max_retries: int = 3) -> str:
     """Execute a tool call with retry logic and error handling.
-    
+
     Args:
         tool_name: Name of tool to invoke
         tool_input: Arguments to pass to tool (already parsed from LLM output)
         tools: Registry mapping tool names to callable functions
         max_retries: Number of retry attempts for transient failures
-    
+
     Returns:
         Observation string to feed back to agent
     """
     if tool_name not in tools:
         # DECISION LOGIC: Invalid tool name
         return f"Error: Tool '{tool_name}' not found. Available tools: {list(tools.keys())}"
-    
+
     tool_func = tools[tool_name]
-    
+
     for attempt in range(max_retries):
         try:
             # Validate tool_input matches expected schema
             validate_tool_input(tool_name, tool_input)
-            
+
             # Execute tool with timeout
             result = timeout_wrapper(tool_func, tool_input, timeout_sec=10)
-            
+
             # DECISION LOGIC: Success
             if result["status"] == "success":
                 return format_observation(result["data"])
-            
+
             # DECISION LOGIC: Retriable error (API timeout, rate limit)
             elif result["status"] == "retry" and attempt < max_retries - 1:
                 time.sleep(2 ** attempt)  # Exponential backoff
                 continue
-            
+
             # DECISION LOGIC: Non-retriable error (invalid input, not found)
             else:
                 return f"Error: {result['error_message']}"
-                
+
         except TimeoutError:
             if attempt < max_retries - 1:
                 continue
             return f"Error: Tool '{tool_name}' timed out after {max_retries} attempts"
-        
+
         except Exception as e:
             return f"Error: Tool '{tool_name}' raised exception: {str(e)}"
-    
+
     return f"Error: Tool '{tool_name}' failed after {max_retries} attempts"
 
 # Example usage in ReAct loop
@@ -495,22 +495,22 @@ step = 1
 while step <= max_steps:
     # Phase 2: REASON
     plan = reason_and_plan(context, available_tools)
-    
+
     if plan["phase"] == "ANSWER":
         return plan["content"]
-    
+
     # Phase 3: ACT
     observation = execute_tool(
         tool_name=plan["action"],
         tool_input=plan["action_input"],
         tools=tool_registry
     )
-    
+
     # Update context for next iteration
     context += f"\nThought {step}: {plan['thought']}"
     context += f"\nAction {step}: {plan['action']}({plan['action_input']})"
     context += f"\nObservation {step}: {observation}"
-    
+
     step += 1
 
 # If we exit loop without final answer
@@ -530,7 +530,7 @@ return "Error: Max steps reached without completing task"
 > ```python
 > from langchain.agents import AgentExecutor
 > from langchain.callbacks import StdOutCallbackHandler
-> 
+>
 > # Production-grade executor with error handling, logging, and retry
 > executor = AgentExecutor(
 >     agent=agent,
@@ -542,7 +542,7 @@ return "Error: Max steps reached without completing task"
 >     return_intermediate_steps=True, # Return full trace for analysis
 >     callbacks=[StdOutCallbackHandler()]  # Stream progress to stdout
 > )
-> 
+>
 > try:
 >     result = executor.invoke({"input": user_query})
 >     print(f"Final answer: {result['output']}")
@@ -563,7 +563,7 @@ Without a framework, a developer would implement the ReAct loop as follows:
 ```python
 class ReActAgent:
     """A simple ReAct agent that interleaves reasoning and acting."""
-    
+
     def __init__(self, tools: dict, max_steps: int = 5):
         self.tools = tools
         self.max_steps = max_steps
@@ -571,28 +571,28 @@ class ReActAgent:
 
     def run(self, task: str) -> str:
         context = f"Task: {task}\n"
-        
+
         for step in range(self.max_steps):
             # 1. THOUGHT: LLM reasons about current state
             thought = LLM.generate(context + "Thought:")
             context += f"Thought {step+1}: {thought}\n"
-            
+
             # 2. Check if the model indicates a final answer
             if "Final Answer:" in thought:
                 return extract_answer(thought)
-            
+
             # 3. ACTION: LLM selects a tool and arguments
             action_str = LLM.generate(context + "Action:")
             tool_name, tool_input = parse_action(action_str)
             context += f"Action {step+1}: {tool_name}({tool_input})\n"
-            
+
             # 4. OBSERVATION: Execute tool and get result
             if tool_name in self.tools:
                 observation = self.toolstool_input
             else:
                 observation = f"Error: Tool '{tool_name}' not found."
             context += f"Observation {step+1}: {observation}\n"
-            
+
             # Record trace for debugging
             self.trace.append({
                 "step": step + 1,
@@ -600,7 +600,7 @@ class ReActAgent:
                 "action": tool_name,
                 "observation": observation
             })
-        
+
         return "Max steps reached without final answer."
 ```
 
@@ -658,15 +658,23 @@ A fundamental conceptual question arises: **if an LLM is "just" next-token predi
 
 ## 7. Planning vs. Execution: Two Modes of Agent Operation
 
-💡 **Key distinction:** Planning (what to do) and Execution (doing it) are separate phases. The plan adjusts if a tool result is unexpected — making the agent adaptive, not rigidly scripted.
+**Technical definition.** In a ReAct agent, *planning* is the LLM's Thought step — it reads the full current context (task description + all prior Thought/Action/Observation steps) and outputs the next action as structured text. *Execution* is the host program's responsibility — it parses that structured text, dispatches the tool call, captures the result, and appends the observation to context before invoking the LLM again. The two modes are separated by a hard boundary: the LLM never directly executes a tool; the host program never decides what to do next.
 
-Both ReAct and framework-powered agents alternate between two distinct operational modes:
+**Intuition.** Picture a chess grandmaster who can analyse the full board and plan the next move but cannot physically pick up a piece. The grandmaster's assistant makes the physical move, updates the board, and shows the new position. The grandmaster never touches the board; the assistant never chooses the strategy. That same separation is what makes agents debuggable — you can log every planning step and every execution result independently, replay them, and pinpoint exactly where the agent went wrong.
+
+Both ReAct and framework-powered agents alternate between these two modes:
 
 **Why separate the two?**
 
-*   **Adaptability:** The plan adjusts if a tool result was unexpected or if the question needs clarification.
-*   **Safety:** Planning often involves exploring uncertain possibilities that should not be shown to the user.
-*   **Efficiency:** Independent sub-tasks identified during planning can sometimes be executed in parallel.
+*   **Adaptability:** The plan adjusts if a tool result was unexpected or if the question needs clarification. If the store is closed, the agent plans a new approach — it doesn't crash.
+*   **Safety:** Planning often involves reasoning through uncertain possibilities that should not be acted on immediately (e.g., "I could charge the card or ask for confirmation — let me ask first").
+*   **Efficiency:** Independent sub-tasks identified during planning can sometimes be executed in parallel — checking item availability and looking up pricing do not depend on each other.
+
+**PizzaBot grounding.** When a customer asks "cheapest gluten-free pizza under 600 calories," the LLM plans: *"I need to search the menu, filter by calories, then get prices."* That plan exists entirely as text tokens — no code runs yet. The host executes `menu_search("gluten_free")`, gets back 5 items, and appends the observation. If two items turn out to be unavailable (discovered by `check_item_availability`), the LLM's *next* plan revises: *"Three available items. Filter by 600 cal limit from those three."* The plan adapted because execution returned an unexpected observation. A hardcoded `if/else` decision tree has no mechanism to handle this gracefully.
+
+> 💡 **Business metric consequence.** The planning/execution separation is the mechanism behind the PizzaBot's -10pp cart abandonment improvement (15% → 5%). Every graceful recovery from a failed tool call — RAG corpus unavailable? plan a BM25 fallback. Store closed? plan the next nearest location — keeps the customer in the conversation instead of hitting a dead end.
+
+> ⚠️ **Trap: Plan-then-Execute agents.** Generating the full plan upfront before executing any step looks efficient but breaks when intermediate steps return unexpected results. The LLM planned step 3 before it saw step 2's output — so step 3 may now be wrong. ReAct's interleaved approach — plan one step, execute it, observe the result, plan the next step — avoids stale plans.
 
 ***
 
@@ -717,10 +725,10 @@ from langchain.llms import OpenAI
 # Phase 1: TOOLS - Define function signatures with semantic descriptions
 def get_distance(query: str) -> str:
     """Get rail distance between two cities.
-    
+
     Args:
         query: Natural language query like "Seattle to Vancouver"
-    
+
     Returns:
         Distance in km as a string
     """
@@ -729,10 +737,10 @@ def get_distance(query: str) -> str:
 
 def calculate(expression: str) -> str:
     """Evaluate a math expression.
-    
+
     Args:
         expression: Math expression string, e.g., "230/4"
-    
+
     Returns:
         Result as a string, or error message
     """
@@ -807,16 +815,16 @@ LangChain's `ZERO_SHOT_REACT_DESCRIPTION` agent uses a built-in ReAct prompt tem
 > ```python
 > from langchain.agents import Tool
 > from langchain.tools import StructuredTool  # For typed arguments
-> 
+>
 > # Simple tool - string input/output
 > simple_tool = Tool(name="search", func=search_fn, description="Search the menu")
-> 
+>
 > # Structured tool - typed Pydantic schema
 > from pydantic import BaseModel, Field
 > class SearchInput(BaseModel):
 >     query: str = Field(description="Search query")
 >     limit: int = Field(default=5, description="Max results")
-> 
+>
 > structured_tool = StructuredTool.from_function(
 >     func=search_fn,
 >     name="menu_search",
@@ -838,6 +846,55 @@ Based on an internal Microsoft competitive analysis, LangChain's key strengths i
 *   **Rapid release cadence** — frequent releases, though this can introduce backward-compatibility risks
 
 **Tradeoff:** LangChain's rapid evolution means APIs can change between versions, creating maintenance overhead for long-lived production systems. An internal Microsoft assessment noted that LangChain "has too many security issues" and recommended migration to Semantic Kernel for certain production workloads.
+
+### 8.2 LangGraph: When Linear Chains Are Not Enough
+
+**LangChain `AgentExecutor`** runs the ReAct loop as a linear chain: Thought → Action → Observation → Thought → ... It executes steps sequentially until the model emits "Final Answer:" or `max_iterations` is reached. This is sufficient for most single-turn, well-defined tasks.
+
+**LangGraph** (LangChain Inc., 2024) models the agent as a **directed state machine graph** instead of a linear chain. Nodes can be LLM calls, tool executions, human review checkpoints, or arbitrary Python functions. Edges can be conditional — the next node is selected based on current state. Cycles are first-class: the agent can loop between nodes until a condition is satisfied without hacking the step counter.
+
+**The critical difference: human-in-the-loop (HITL).** `AgentExecutor` has no mechanism to pause execution and wait for a human decision. LangGraph adds **interrupt points** between any two nodes — the agent pauses, surfaces its current state for human review, waits for approval or correction, then resumes from exactly where it stopped.
+
+```python
+from langgraph.graph import StateGraph
+from langgraph.checkpoint.memory import MemorySaver
+
+graph = StateGraph(AgentState)
+
+# Nodes: LLM reasoning, tool execution, human checkpoint
+graph.add_node("reason", llm_reason_step)
+graph.add_node("act", execute_tool_step)
+graph.add_node("human_review", await_human_approval)  # HITL pause
+
+# Conditional routing: high-value actions require human approval
+graph.add_conditional_edges(
+    "reason",
+    requires_human_approval,   # Returns "human_review" or "act"
+    {"human_review": "human_review", "act": "act"})
+
+graph.add_edge("act", "reason")        # Normal ReAct loop
+graph.add_edge("human_review", "act")  # Resume after approval
+
+# Compile with checkpointing: agent state survives across requests
+agent = graph.compile(
+    checkpointer=MemorySaver(),
+    interrupt_before=["human_review"])
+```
+
+**When to use LangGraph over `AgentExecutor`:**
+
+| Situation | AgentExecutor | LangGraph |
+|-----------|:---:|:---:|
+| Simple queries (1–5 tool calls) | ✅ Sufficient | Overkill |
+| Multi-step order workflow | ✅ Works | ✅ Better for branching |
+| Human approval before payment | ❌ Not supported | ✅ Native HITL |
+| Branching paths per customer type | ❌ Hard to express | ✅ Conditional edges |
+| Resume after pause or error | ❌ Must restart | ✅ Checkpointing |
+| Long-running tasks (minutes+) | ❌ No persistence | ✅ Persistent state |
+
+**PizzaBot grounding.** For standard PizzaBot queries ("find cheapest GF pizza"), `AgentExecutor` is sufficient — 4–6 steps, no branching needed. For catering orders over $200, you want a HITL checkpoint before charging the card. LangGraph lets you set `interrupt_before=["charge_payment"]`: the agent pauses, a manager sees the full order summary, approves, and the agent resumes from that exact node. Reimplementing that approval gate inside `AgentExecutor` requires restructuring the entire control flow.
+
+> ⚠️ **Interview trap.** LangGraph is not "a newer version of AgentExecutor." It is a fundamentally different execution model — directed state machine graph vs. linear chain. Both coexist in the LangChain ecosystem and target different task complexity levels. `AgentExecutor` remains the right choice for the majority of production tasks in 2026.
 
 ***
 
@@ -934,22 +991,22 @@ print(result)
 > from semantic_kernel import Kernel
 > from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion
 > from semantic_kernel.contents import ChatHistory
-> 
+>
 > # Production setup with Azure OpenAI + telemetry
 > kernel = Kernel()
-> 
+>
 > # Add Azure OpenAI service
 > kernel.add_service(AzureChatCompletion(
 >     deployment_name="gpt-4",
 >     endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
 >     api_key=os.environ["AZURE_OPENAI_KEY"]
 > ))
-> 
+>
 > # Add plugins
 > kernel.add_plugin(MenuSearchPlugin(), plugin_name="MenuSearch")
 > kernel.add_plugin(InventoryPlugin(), plugin_name="Inventory")
 > kernel.add_plugin(OrderPlugin(), plugin_name="Order")
-> 
+>
 > # Add filters for logging and compliance
 > @kernel.filter(filter_type="function")
 > async def log_function_calls(context, next):
@@ -957,23 +1014,23 @@ print(result)
 >     result = await next(context)
 >     logger.info(f"Function result: {result}")
 >     return result
-> 
+>
 > # Production settings with safety guards
 > settings = kernel.get_prompt_execution_settings_class()()
 > settings.function_choice_behavior = "auto"
 > settings.max_tokens = 1000
 > settings.temperature = 0.0  # Deterministic for production
-> 
+>
 > # Maintain chat history across turns
 > history = ChatHistory()
 > history.add_user_message("I need a gluten-free pizza")
-> 
+>
 > result = await kernel.invoke_prompt(
 >     prompt_template="{{$history}}\n{{$input}}",
 >     arguments={"history": history, "input": user_message},
 >     settings=settings
 > )
-> 
+>
 > history.add_assistant_message(str(result))
 > ```
 > **When to use:** Enterprise production systems requiring Azure integration, compliance logging, and multi-turn conversations with persistent context.
@@ -1065,31 +1122,31 @@ def synthesize_final_answer(
     validation_checks: dict
 ) -> str:
     """Generate final answer from accumulated observations.
-    
+
     Args:
         original_query: User's initial request
         intermediate_steps: List of (thought, action, observation) tuples
         validation_checks: Dict of required info with completion status
-    
+
     Returns:
         Final answer string, or error if incomplete
     """
     # DECISION LOGIC: Check all required info is present
     missing_info = [k for k, v in validation_checks.items() if not v]
-    
+
     if missing_info:
         # Incomplete - shouldn't reach Phase 4
         return f"Error: Cannot generate answer. Missing: {', '.join(missing_info)}"
-    
+
     # Extract key facts from observations
     observations = [step[2] for step in intermediate_steps]
-    
+
     store_info = parse_observation(observations[0], schema="store_location")
-    item_availability = [parse_observation(obs, schema="item_check") 
+    item_availability = [parse_observation(obs, schema="item_check")
                          for obs in observations[1:3]]
     pricing = parse_observation(observations[3], schema="pricing")
     total = parse_observation(observations[4], schema="order_total")
-    
+
     # Structure response with clear sections
     response = f"""
 Great news! I can deliver your order to {original_query['address']}:
@@ -1102,18 +1159,18 @@ Great news! I can deliver your order to {original_query['address']}:
 
 **Estimated arrival:** {total['eta_minutes']} minutes ({format_time(total['eta_timestamp'])})
 
-Your order will be prepared at our {store_info['name']} location 
+Your order will be prepared at our {store_info['name']} location
 ({store_info['distance_miles']:.1f} miles away).
 
 Ready to confirm? Just say "confirm order" and I'll process your payment.
 """
-    
+
     return response.strip()
 
 # Example usage in ReAct agent
 if agent_thought.startswith("Final Answer:"):
     # Agent signaled readiness for Phase 4
-    
+
     # Validate all info gathered
     validation = {
         "store_location": bool(store_info),
@@ -1121,13 +1178,13 @@ if agent_thought.startswith("Final Answer:"):
         "pricing": bool(pricing),
         "total_calculated": bool(total)
     }
-    
+
     final_answer = synthesize_final_answer(
         original_query=user_query,
         intermediate_steps=agent_trace,
         validation_checks=validation
     )
-    
+
     return final_answer
 ```
 
@@ -1144,7 +1201,7 @@ if agent_thought.startswith("Final Answer:"):
 > 💡 **Industry Standard:** Structured Output with OpenAI JSON Mode
 > ```python
 > from pydantic import BaseModel, Field
-> 
+>
 > # Define response schema
 > class OrderResponse(BaseModel):
 >     """Structured final answer for order query."""
@@ -1155,7 +1212,7 @@ if agent_thought.startswith("Final Answer:"):
 >     eta_minutes: int = Field(description="Estimated delivery time in minutes")
 >     store_name: str = Field(description="Fulfillment location name")
 >     next_action: str = Field(description="What user should do next")
-> 
+>
 > # Use JSON mode to guarantee schema compliance
 > response = openai.chat.completions.create(
 >     model="gpt-4",
@@ -1165,10 +1222,10 @@ if agent_thought.startswith("Final Answer:"):
 >     ],
 >     response_format={"type": "json_object"}
 > )
-> 
+>
 > # Parse and validate
 > order_response = OrderResponse.parse_raw(response.choices[0].message.content)
-> 
+>
 > # Format for user display
 > final_message = format_order_response(order_response)
 > ```
@@ -1274,20 +1331,20 @@ The basic ReAct idea has inspired several extensions that address different limi
 >         self.objective = objective
 >         self.task_queue = []  # Dynamic task list
 >         self.completed_tasks = []
->     
+>
 >     def run(self):
 >         # 1. TASK CREATION: Generate initial tasks for objective
 >         self.task_queue = self.create_tasks(self.objective)
->         
+>
 >         while self.task_queue:
 >             # 2. PRIORITIZATION: Rank tasks by importance
 >             self.task_queue = self.prioritize_tasks(self.task_queue)
->             
+>
 >             # 3. EXECUTION: Execute highest priority task (ReAct loop)
 >             current_task = self.task_queue.pop(0)
 >             result = self.execute_task(current_task)
 >             self.completed_tasks.append((current_task, result))
->             
+>
 >             # 4. TASK GENERATION: Create new tasks based on result
 >             new_tasks = self.generate_follow_up_tasks(
 >                 objective=self.objective,
@@ -1296,7 +1353,7 @@ The basic ReAct idea has inspired several extensions that address different limi
 >                 task_queue=self.task_queue
 >             )
 >             self.task_queue.extend(new_tasks)
->         
+>
 >         return self.synthesize_results(self.completed_tasks)
 > ```
 >
@@ -1309,7 +1366,7 @@ The basic ReAct idea has inspired several extensions that address different limi
 > **Example: "Research and write a blog post about ReAct agents"**
 > ```
 > Initial objective: "Research and write a blog post about ReAct agents"
-> 
+>
 > Task Queue (generated by agent):
 > 1. Search academic papers for "ReAct LLM agents"
 > 2. Summarize key findings from papers
@@ -1320,15 +1377,15 @@ The basic ReAct idea has inspired several extensions that address different limi
 > 7. Write technical deep-dive section
 > 8. Write conclusion
 > 9. Review and edit for clarity
-> 
+>
 > [Agent executes Task 1]
 > Result: Found 3 papers (Yao et al. 2023, ...)
-> 
+>
 > [Agent generates new tasks based on result]
 > New tasks:
 > - 1a. Deep-dive into Yao et al. methodology
 > - 1b. Compare ReAct vs CoT performance metrics
-> 
+>
 > [Task queue updated, agent continues...]
 > ```
 >
@@ -1356,7 +1413,7 @@ The basic ReAct idea has inspired several extensions that address different limi
 > - **LangChain Plan-and-Execute Agent**: Structured variant with explicit planner/executor separation
 > - **Microsoft AutoGen**: Multi-agent autonomous collaboration with code execution
 >
-> **See also:** 
+> **See also:**
 > - [AutoGPT docs](https://docs.agpt.co/)
 > - [BabyAGI original implementation](https://github.com/yoheinakajima/babyagi)
 > - [LangChain Plan-and-Execute](https://python.langchain.com/docs/modules/agents/agent_types/plan_and_execute)
@@ -1367,7 +1424,7 @@ The basic ReAct idea has inspired several extensions that address different limi
 
 ```plaintext
     CoT (Linear)          ToT (Tree)              GoT (Graph)
-    
+
     Step 1                  Step 1                  Step 1
       ↓                   /   |   \               /   |   \
     Step 2             2a    2b    2c           2a    2b    2c
@@ -1398,6 +1455,52 @@ The basic ReAct idea has inspired several extensions that address different limi
 
 **Practical implication:** For the SEA→YVR example — a task with clearly independent sub-tasks — a simple linear ReAct loop is sufficient. ToT and GoT become valuable for tasks requiring **exploration** (e.g., puzzle-solving, creative writing, or problems with uncertain intermediate steps where backtracking is beneficial).
 
+### Multi-Agent Coordination Architectures
+
+A single ReAct agent handles one user query with a fixed tool set. When the problem space grows — too many tools for one context window, too many domains for one LLM, or tasks requiring parallel sub-work — you coordinate multiple agents. Three patterns dominate production systems.
+
+**Technical definition.** A multi-agent system is a set of $N$ agents $\{A_1, A_2, \ldots, A_N\}$ where each agent runs its own ReAct loop with its own tool set and context window. The system requires a *coordination mechanism* to route tasks between agents, aggregate results, and resolve conflicts.
+
+**Pattern 1: Orchestrator-Worker.** One *orchestrator* LLM decomposes the user goal into subtasks and assigns each to a specialized *worker* agent. Workers complete their subtask and return results; the orchestrator synthesizes the final response. The orchestrator must know each worker's specialization — worker selection is itself a planning step in the orchestrator's own ReAct loop.
+
+```
+User → Orchestrator (decomposes, assigns subtasks)
+         ├── MenuSearchAgent   (RAG + menu corpus)
+         ├── InventoryAgent    (real-time stock check)
+         └── PricingAgent      (totals, discounts)
+               ↓
+         Orchestrator synthesizes → Final response
+```
+
+*Use when:* Tasks decompose cleanly into independent subtasks handled by domain specialists. Most production PizzaBot deployments start here.
+
+**Pattern 2: Peer-to-Peer.** Agents communicate via a **shared message bus** with no central coordinator. Each agent subscribes to the message types it handles, processes them, and publishes new messages that other agents consume. No single agent needs the full picture.
+
+```
+MessageBus ← {order.created, payment.pending, delivery.scheduled}
+  OrderAgent    subscribes to "order.created"
+  PaymentAgent  subscribes to "payment.pending"
+  DeliveryAgent subscribes to "delivery.scheduled"
+```
+
+*Use when:* Tasks are event-driven and agents are loosely coupled. Works well with microservice architectures where each agent is independently deployable.
+
+**Pattern 3: Hierarchical.** Recursive layers of orchestrators, each managing a pool of specialists. An outer "strategy" orchestrator manages inner "tactic" orchestrators, which in turn manage worker agents. Each layer only sees the agents beneath it, keeping context windows bounded.
+
+```
+Strategy Orchestrator
+  ├── Sales Orchestrator     → [UpsellAgent, RecommendationAgent]
+  └── Operations Orchestrator → [InventoryAgent, DeliveryAgent]
+```
+
+*Use when:* The system is large enough that a single orchestrator's context would overflow if it tracked all agents. Hierarchical decomposition limits each node's context to its domain.
+
+**PizzaBot grounding.** For Ch.6 scope (one restaurant, ~5 tools), a single orchestrator-worker pattern — a main agent delegating to a MenuSearchAgent and an InventoryAgent — is sufficient. The full Multi-Agent track ([04-multi-agent-ai](../../04-multi-agent-ai)) shows how this scales to fleet-wide ordering across hundreds of locations, multiple LLM tiers, and human escalation paths.
+
+> 💡 **Business metric consequence.** Each coordination hop adds ~0.3–0.5s latency and ~$0.003/conv cost (one extra LLM call for the orchestrator). For the PizzaBot, a 3-agent orchestrator-worker pattern stays within the <3s/<$0.08 constraints. Above ~5 agents, parallelize worker calls to keep latency acceptable.
+
+> ⚠️ **Trap.** "Multi-agent just means running multiple LLMs." No — multi-agent is about the *coordination model*. Two LLMs with no shared context or message passing are just two independent chatbots. The coordination mechanism (orchestrator assignment, message bus subscriptions, hierarchy routing) defines the architecture and determines what failure modes exist.
+
 ***
 
 ## 15. From Traditional Dev Thinking to Agentic Thinking
@@ -1421,6 +1524,8 @@ The agent will only plan correctly if:
 *   **State** is summarized each turn
 
 This is why SK's plugin system requires each function to have a **semantic description** — without it, the AI cannot correctly determine when to use the function. And it is why LangChain's `Tool` objects take a `description` parameter. In both frameworks, the quality of the agent's planning is directly determined by **what tokens are placed in the model's context window**.
+
+> ⚠️ **The "more tools = smarter agent" trap.** Adding tools inflates the system prompt and dilutes the model's attention across all tool schemas simultaneously. Empirically, hallucinated and misrouted tool calls increase sharply above ~10 tools per agent — the model struggles to pick the right schema when confronted with dozens of similar-sounding options. The fix is not to give one agent 30 tools. Use **tool routing** (a lightweight classifier selects the 3–5 relevant tools for the current query and passes only those to the reasoning agent) or **hierarchical agents** (§14 above — a top-level orchestrator delegates to specialist agents each holding a small, focused tool set). The mental model: a surgeon handed 5 relevant instruments performs better than one staring at a tray of 200.
 
 ***
 

@@ -1,6 +1,12 @@
 ﻿# Chain-of-Thought Reasoning — How LLMs Think Out Loud
 
-> **The story.** In **January 2022**, **Jason Wei** and colleagues at Google published *"Chain-of-Thought Prompting Elicits Reasoning in Large Language Models."* The trick was almost embarrassingly simple: ask the model to *show its work* before giving the final answer, and accuracy on multi-step arithmetic and commonsense reasoning jumped by 10–40 points — but only on models above ~62 B parameters, where the ability seemed to *emerge*. **Self-Consistency** (Wang et al., Google, **March 2022**) sampled multiple chains and took the majority vote, squeezing out more accuracy. **Tree of Thoughts** (Yao et al., Princeton + DeepMind, **May 2023**) generalised the chain to a search tree. The big jump came in **September 2024** with OpenAI's **o1** model: instead of prompting CoT, OpenAI *trained* the model with reinforcement learning to produce long internal reasoning traces before answering — "reasoning tokens" that the user never sees. **DeepSeek-R1** (Jan 2025) replicated the recipe openly. Every "reasoning" model from 2024 onwards is a CoT descendant. Today, every time PizzaBot decomposes a multi-constraint query ("cheapest gluten-free under 600 cal"), it's using CoT to bridge from natural language to tool calls.
+> **A brief history.** In the autumn of 2021, a researcher at Google Brain named **Jason Wei** was staring at a failure. GPT-3 could write poetry, translate French, and summarise documents — but ask it *"Roger has 5 apples, gives away 3, then buys 7 more. How many does he have?"* and the 175-billion-parameter model would confidently answer wrong. The problem was structural: the model was jumping from prompt to final answer in a single decoding step, with no room to catch its own reasoning errors.
+>
+> What happened next was almost accidental. Wei's team tried inserting *worked examples* into the prompt — showing each arithmetic step before asking the actual question. The model's accuracy corrected itself immediately. In **January 2022**, the paper *"Chain-of-Thought Prompting Elicits Reasoning in Large Language Models"* made it official: worked-example prompts pushed accuracy on a standard math benchmark from under 20% to over 58%. The catch: the ability only emerged on models above roughly 62 billion parameters — below that threshold, the reasoning steps came out as incoherent noise.
+>
+> The field moved fast. Wang et al. (March 2022) noticed that different CoT chains reached different answers, so why not sample many and take the majority vote? **Self-Consistency** added another tier of accuracy with almost no engineering. By May 2023, **Tree of Thoughts** was branching the chain and backtracking from dead ends. Then in September 2024 came the conceptual leap: OpenAI's **o1** stopped prompting for CoT and instead *trained* models with reinforcement learning to generate long internal reasoning traces before answering — traces the user never sees. **DeepSeek-R1** replicated the recipe openly four months later. Every reasoning model today — o1, o3, R1 — is a descendant of Wei's embarrassingly simple trick.
+>
+> When PizzaBot decomposes "cheapest gluten-free pizza under 600 calories" into four sequential checks before answering, it's running the same mechanism Wei stumbled onto in 2021.
 >
 > **Where you are.** Ch.1 (LLM Fundamentals) taught tokenization and sampling → but raw GPT-3.5 gave 15% error rate. Ch.2 (Prompt Engineering) added system prompts and few-shot → 12% conversion, but multi-step queries failed completely ("cheapest gluten-free pizza under 600 cal" → wrong answer). This chapter unlocks step-by-step reasoning that connects language to tool execution.
 >
@@ -131,6 +137,34 @@ Two variants are commonly conflated:
 **Reasoning tokens** (also called thinking tokens) are tokens the model generates internally to work through a problem before producing the visible response.
 
 You can instruct the model to include its chain of thought — that is, the steps it took to follow an instruction, along with the results of each step — either via explicit instructions or by providing examples that demonstrate how to break down tasks[1](https://learn.microsoft.com/en-us/dotnet/ai/conceptual/chain-of-thought-prompting).
+
+### 1.1 Zero-shot vs Few-shot CoT
+
+Before CoT, PizzaBot had one structural problem: it leapt from "cheapest gluten-free under 600 cal" straight to a confident wrong answer, skipping every intermediate check. The fix comes in two flavours depending on how much guidance you give the model.
+
+**Technical definition.** *Few-shot CoT* prepends $n$ worked examples to the prompt — each example is a (question, reasoning trace, answer) triple. Formally the prompt is $P = [e_1, \ldots, e_n, q]$ where $e_i = (\text{question}_i, \text{steps}_i, \text{answer}_i)$. *Zero-shot CoT* (Kojima et al., 2022) adds no examples at all — it appends a single instruction such as "Let's think step by step" to the user query. That instruction alone triggers the model to emit intermediate steps before the final answer, because instruction tuning exposed the model to this phrasing thousands of times during training.
+
+**Intuition.** Few-shot CoT shows the model the *format* it should use — concrete examples of how multi-step reasoning should look. Zero-shot CoT trusts the model to infer the format from the instruction alone. Zero-shot works on large models and is noisier than few-shot, but it costs zero extra prompt tokens.
+
+**PizzaBot grounding.** Without CoT the system prompt ends with `"Answer the user's question."` — the bot hallucinates, jumping straight to an answer. Add zero-shot CoT: `"Think through each step before answering."` The bot starts listing steps. Add two worked examples of multi-constraint queries as few-shot CoT in the system prompt, and the bot reliably formats its reasoning in the right structure on every complex query.
+
+> 💡 **Zero-shot vs few-shot verdict:** Zero-shot CoT adds ~0 tokens; two-shot CoT adds ~400 tokens at $0.015/1\text{M} = \$0.000006$ per query — negligible cost for a measurable format improvement. For PizzaBot, start with zero-shot; upgrade to two-shot if multi-constraint accuracy stays below 90%.
+
+### 1.2 Self-Consistency
+
+Zero-shot and few-shot CoT still produce a single reasoning chain — and a single chain can take a wrong fork early and propagate that error all the way to the final answer.
+
+**Technical definition.** Self-consistency (Wang et al., 2022) samples $K$ independent CoT chains at temperature $T > 0$ and returns the majority-vote answer:
+
+$$\hat{a} = \operatorname{argmax}_{a} \sum_{k=1}^{K} \mathbf{1}[\operatorname{answer}(c_k) = a]$$
+
+where $c_k$ is the $k$-th sampled chain. Total inference cost is $C_K = K \cdot \bar{t}$ tokens, where $\bar{t}$ is the mean token count per chain. Because chains are sampled independently with different random seeds, they tend to make *different* errors — so the majority answer is more reliable than any single chain.
+
+**Intuition.** Ask five colleagues the same question without letting them confer. If four reason their way to "Veggie Garden" and one says "Margherita," you go with Veggie Garden. Unanimous agreement among independent reasoners is strong evidence. Disagreement tells you the query is hard and you should escalate.
+
+**PizzaBot grounding.** For a high-stakes allergen query — "Is this pizza gluten-free?" — a wrong single-chain answer risks a customer lawsuit. With $K = 5$ chains, if four independently reason to "No — this pizza uses regular wheat dough," return that answer with high confidence. For simple queries ("What sizes do you have?"), $K = 1$ is fine; the extra chains would agree anyway and just add cost.
+
+> ⚠️ **Self-consistency cost trap:** $C_K = K \cdot \bar{t}$ tokens. At $K = 5$, $\bar{t} \approx 200$ tokens/chain: cost per query jumps 5× compared to a single chain — still well under PizzaBot's $0.08/conv target, but **not free**. Reserve self-consistency for allergen checks and availability confirmations, not routine catalogue lookups.
 
 ***
 
@@ -373,7 +407,7 @@ Chain-of-Thought prompting elicits step-by-step reasoning in a **linear chain**.
 
 **Important:** Whether reasoning is visible or hidden does **not** change the tool-execution bridge described in Section 3. Tools still require a structured action token sequence, and the host program still executes the tool call and appends observations.
 
-### How Reasoning Models Are Trained — RLVR
+### 8.1 How Reasoning Models Are Trained — RLVR
 
 Section 8 covers what reasoning tokens look like at **inference time**. The training recipe that produces models capable of extended hidden reasoning is distinct from standard RLHF.
 
@@ -405,6 +439,18 @@ Section 8 covers what reasoning tokens look like at **inference time**. The trai
 > 💡 **Key consequence:** Models trained with RLVR learn to allocate more reasoning tokens on harder problems. The training signal naturally produces **compute-difficulty scaling** — observed in o3's reported behaviour where harder math problems receive proportionally longer hidden traces.
 
 > ⚠️ **PizzaBot note:** RLVR applies to domains with verifiable outcomes (math, code, formal logic). For PizzaBot's brand voice problem — open-ended language quality — **DPO with human preference pairs** (see [ch10 §5.5](../ch10-fine-tuning/fine-tuning.md)) is more appropriate than RLVR.
+
+### 8.2 Process vs Outcome Reward Models (PRM / ORM)
+
+The RLVR loop above gives one reward signal per problem: correct or wrong. That's an **Outcome Reward Model**. Its blind spot matters when intermediate reasoning steps contain errors that happen to produce a correct final answer.
+
+**Technical definition.** An **Outcome Reward Model (ORM)** assigns a scalar reward to the final answer only: $r = \text{Verify}(a_{\text{final}}) \in \{0, 1\}$. A **Process Reward Model (PRM)** assigns a scalar reward $r_t$ to each intermediate reasoning step $s_t$, with the training signal $R = \sum_{t} \gamma^t r_t$ (a discounted sum over all steps). Human annotators — or a trained step-level verifier — label each step as correct, incorrect, or neutral. The policy is updated to maximise whichever reward signal is used.
+
+**Intuition.** ORM is blind to how you reached the answer. A model can output "Veggie Garden, $14.99" by memorising the answer from training data and still receive full ORM reward — it has learned nothing about *why* Veggie Garden is correct. PRM requires every step to be correct, forcing the model to learn the *reasoning procedure* (filter allergens → check calories → sort by price). That procedure generalises when the menu changes.
+
+**PizzaBot grounding.** Fine-tune PizzaBot on 1,000 query-answer pairs with ORM: it achieves 92% accuracy on the test set. Now Mamma Rosa adds three new gluten-free options — accuracy drops back to 70% because the model memorised final answers rather than filtering logic. A PRM-trained model learns step-level rules: first check allergen flags, then apply the calorie cap, then sort by price. When new items appear, each step still executes correctly.
+
+> 💡 **PRM vs ORM verdict:** PRM requires annotating every intermediate step — roughly 10× more annotation effort than ORM. For PizzaBot's current scale and menu stability, ORM is sufficient. Consider PRM when intermediate steps must be independently auditable: medical diagnosis, legal reasoning, or multi-step financial calculations where a correct-looking answer via flawed reasoning creates liability.
 
 ***
 

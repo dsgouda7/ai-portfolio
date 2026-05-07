@@ -1,6 +1,8 @@
 # Cost & Latency — Running AI Systems in Production
 
-> **The story.** When the OpenAI API launched in June **2020**, GPT-3 cost $0.06 per 1 K tokens and almost nobody worried about it because almost nobody had production traffic. By **2023** the picture had inverted: every serious AI deployment was a finance problem. The optimisation stack was built fast. **KV-cache reuse** — keeping the attention key/value tensors hot across decoding steps — became standard once **Flash Attention** (Tri Dao, **2022**) made long contexts feasible. **Continuous batching** from the **Orca** paper (Yu et al., OSDI **2022**) replaced static batching and lifted serving throughput ~10×. **Speculative decoding** (Leviathan et al., Google, **2022**) slashed latency by drafting tokens with a small model and verifying with a large one. **Prompt caching** appeared in the **Anthropic** API in August 2024 and **OpenAI** in October 2024, cutting input-token cost ~90% for repeated prefixes. Open-source pricing collapsed in parallel — a 2026 query against a hosted Llama-class or DeepSeek model costs a small fraction of a 2023 GPT-4 call — and the cost-and-latency budget is what decides whether your system ships or stalls.
+> **The bill arrives.** In late 2022, a marketing-copy startup called Jasper quietly became one of OpenAI's largest API customers, burning through GPT-3 tokens at a rate nobody had anticipated. The API had launched at $0.06 per 1,000 tokens in 2020; nobody thought hard about cost because nobody had real traffic. That changed the week ChatGPT launched. A hundred million users arrived in two months. Enterprises started building. Finance teams opened cloud billing dashboards and found six-figure monthly surprises materialising faster than their procurement processes could react. The optimisation sprint that followed assembled most of the modern LLM efficiency stack in under 24 months.
+>
+> The foundational papers arrived in quick succession. **Tri Dao**, then a Stanford PhD student, published *FlashAttention* in 2022 — a CUDA kernel that rewrote the memory-access pattern of the attention mechanism and made 100k-token contexts practical for the first time; without it, prefix caching wouldn't be feasible. The **Orca** paper (Yu et al., OSDI 2022) showed that static batching — the way every inference server had always worked — was leaving 70% of GPU cycles idle while the system waited for the longest request to finish; their fix, *continuous batching*, lifted serving throughput ~10×. **Yaniv Leviathan** and colleagues at Google showed you could shave 30–40% off generation latency by drafting tokens cheaply with a small model and only calling the large model to *verify*, not *generate* — speculative decoding. Anthropic and OpenAI shipped prompt caching in late 2024, and overnight 90% of input tokens became free on any call with a stable prefix. Open-source model pricing collapsed in parallel — a 2026 query against a Llama or DeepSeek model costs a small fraction of a 2023 GPT-4 call. The budget is what decides whether your system ships.
 >
 > **Where you are in the curriculum.** The gap between a demo and a production system is almost entirely cost and latency. A prototype that calls GPT-4 with a 50 K-token context, runs self-consistency 5×, and uses an LLM judge to evaluate every response works beautifully at zero users. At 10 000 users it costs thousands of dollars per day and responds in 30 seconds. This document maps the levers — model tier, context length, caching, streaming, batching, quantisation, speculative decoding — that turn that demo into something you can run on a budget. It is the closing chapter of the AI track and the bridge to the [AIInfrastructure](../../ai_infrastructure) track where these levers become hardware decisions.
 >
@@ -418,6 +420,30 @@ With prefix caching:      every call pays only new_tokens × prefill cost
 > 💡 **Stream verdict:** Streaming reduces perceived latency from 2.18s to 0.42s time-to-first-token (5× faster) with identical total generation time — free UX win, no cost increase.
 > ➡️ Enable streaming for all user-facing chat responses; disable for agent tool calls that require full JSON before parsing.
 
+### 4.2 Speculative Decoding
+
+**Technical definition.** Speculative decoding splits generation into two stages: a small *draft model* generates $K$ candidate tokens in a single cheap forward pass, then the *target model* evaluates all $K$ tokens in one pass — accepting each token where the draft probability closely matches the target distribution and rejecting the first mismatch. Accepted tokens are kept; the rejected position is resampled from the target model, and decoding restarts from there. The target model still controls quality; most of the sequential forward passes shift to the draft model.
+
+```
+Speculative decoding loop (K = 4 draft tokens per round):
+  1. Draft model generates tokens [t1, t2, t3, t4] — fast, cheap
+  2. Target model evaluates all 4 in ONE forward pass
+  3. Accept tokens where draft ≈ target probability
+  4. Reject first mismatch → resample that position from target
+  Repeat.
+
+Cost per round: ~1 draft forward pass + 1 target forward pass
+Baseline cost:  K target forward passes (one per token)
+Latency reduction: 30–40% on typical generation tasks
+```
+
+**Intuition.** The bottleneck in autoregressive generation is that every token requires a full forward pass through the large model — sequential and expensive. Speculative decoding batches that bottleneck: the small model guesses the next four tokens quickly, and the large model checks all four at once. On easy, predictable tokens — function words, templated phrases, common patterns — the guess is right almost every time. You only pay full target-model cost for the surprises.
+
+**PizzaBot grounding.** Mamma Rosa's order confirmations follow predictable templates: *"Your order of [items] to [address] totals $[amount]. Estimated delivery: 30–40 minutes."* The draft model (Llama-3-1B) guesses the templated tokens — "Your order of", "totals", "Estimated delivery" — correctly on almost every call. The target model (Llama-3-8B) verifies in a single pass. For a 120-token confirmation, speculative decoding eliminates roughly 30–40 expensive forward passes, shaving ~200ms off generation time.
+
+> 💡 **Speculative decoding verdict:** 30–40% latency reduction on templated outputs (order confirmations, structured JSON) with zero quality loss — the draft model never controls final token selection, only proposes. Requires two models in memory simultaneously; worth it when the draft model fits in the GPU headroom already available on your inference node.
+> ➡️ In PizzaBot's self-hosted vLLM stack, Llama-3-1B (2 GB INT8) runs as draft alongside Llama-3-8B (8 GB INT8) on the same A100, reducing generation from ~1.0s to ~0.7s per confirmation.
+
 ---
 
 ## 5 · Prompt Caching Strategies
@@ -556,6 +582,15 @@ Input tokens: 28
 
 ### 5.2 Tiered model routing
 
+**Technical definition.** Tiered routing sends each request to the least-expensive model capable of handling it — mid-tier by default, escalating to a frontier model when a confidence classifier flags low certainty or detects a complexity signal. The cost saving comes directly from the price ratio between tiers: mid-tier models cost 10–50× less per token than frontier models for the same input volume.
+
+**Intuition.** Think of it as triage at a clinic: a nurse handles routine cases and only the specialist sees complex ones. Routing is the nurse — it reads the query, makes a fast judgment call, and sends most traffic to the cheaper path. You pay specialist prices only when they're genuinely needed.
+
+**PizzaBot grounding.** Mamma Rosa's daily query mix breaks down roughly as: 60% simple order placements (*"Large Margherita to 42 Maple St"*) that any mid-tier model handles reliably, 30% menu questions answered well with RAG, and 10% allergen or safety queries where a wrong answer causes real harm. Running the full mix on GPT-4o costs ~$90/month; tiered routing — mid-tier by default, GPT-4o only for flagged allergen queries — brings that to ~$12/month. The escalated 10% still get the best model; the other 90% get a fast, cheap one.
+
+> 💡 **Routing verdict:** Tiered routing cuts API costs 80–90% on mixed-complexity workloads. The risk is miscalibration: too-aggressive escalation erases the savings; too-conservative escalation handles safety queries on a model not equipped for them. Always escalate on allergen or medical mentions, regardless of confidence score.
+> ➡️ Track escalation rate for 1,000 requests in production; if >40% escalate, tune the confidence threshold upward or improve mid-tier prompting before accepting the higher cost.
+
 Route requests to the cheapest model that can handle them; escalate to a stronger model only on failure or low-confidence signal.
 
 ```python
@@ -568,6 +603,15 @@ def route_query(query: str) -> str:
 ```
 
 ### 5.3 Context window discipline
+
+**Technical definition.** Context window discipline is the practice of bounding total input token count per call. Input token cost is linear: every extra token adds to the bill on every request. Conversation history is the largest unbounded variable — an uncapped chat application grows from ~200 tokens per call on turn 1 to 50,000 tokens per call after a long session. Bounding it requires active truncation, summarisation, or retrieval-based compression.
+
+**Intuition.** Imagine charging a consultant by the page for every fax you send them, and attaching the complete prior correspondence to each new fax. By page 50 of the conversation, you're paying for 49 pages the consultant has already read. The fix: send a one-paragraph summary of what was agreed so far, then the new question. Context discipline is exactly that discipline applied to token counts.
+
+**PizzaBot grounding.** PizzaBot conversations typically close an order in 4–6 turns. Edge cases exist — a customer comparing every pizza on the menu, or asking ten allergen questions before committing. Without truncation, turn 10's context can cost 4× turn 2's. Mamma Rosa's fix: summarise turns older than 4 into a compact JSON blob (`{"items_discussed": ["Margherita L"], "delivery_address": "42 Maple St"}`) — 40 tokens instead of 400 — keeping input cost stable at ~1,390 tokens regardless of session length.
+
+> 💡 **Context discipline verdict:** Conversation history is the most common cost runaway in production chat apps — it grows silently and compounds with every turn. A 4-turn cap plus rolling summarisation keeps PizzaBot's token count stable and prevents a long-session outlier from costing 10× a normal session.
+> ➡️ Log `input_token_count` per request for the first 24 hours post-launch; a long tail above 5,000 tokens means history trimming is not working.
 
 Aggressively trim the context before each call:
 1. Summarise conversation history older than N turns
@@ -599,6 +643,15 @@ def cached_llm_call(prompt: str, model: str, temperature: float) -> str:
 ## 6 · Batching and Quantization
 
 ### 6.1 Batch processing
+
+**Technical definition.** Batch processing groups multiple independent LLM requests into a single asynchronous job submitted to the provider's batch API. Most major providers process batch jobs within 24 hours and charge 50% of the synchronous per-token price. The tradeoff is explicit: you surrender real-time response latency in exchange for half the cost per token.
+
+**Intuition.** Think of it as economy shipping vs. express delivery. PizzaBot's live ordering must be express — the customer is waiting at the keyboard. But the nightly job that re-embeds all 200 menu items because you updated descriptions? That can ship economy. The tokens are identical; the urgency is not. The batch API is simply the mechanism for telling the provider: *"I'll wait until tomorrow morning."*
+
+**PizzaBot grounding.** Mamma Rosa's non-interactive nightly jobs include: re-embedding updated menu descriptions (1,200 tokens × 200 items = 240k tokens), generating weekly loyalty-customer digest emails (500 tokens × 1,000 customers = 500k tokens), and evaluating 100 sampled conversations for quality review. None require real-time response. Running all three via the batch API instead of the synchronous API cuts that 740k-token overnight workload from ~$0.11 to ~$0.055. Trivial at this scale — but the habit compounds as the deployment grows.
+
+> 💡 **Batch verdict:** 50% cost reduction on all non-interactive workloads with zero changes to model calls — only the submission mechanism changes (async job vs. synchronous call). Use it for: embedding jobs, nightly summarisation, evaluation runs, fine-tuning data preparation.
+> ➡️ Audit every LLM call in your codebase: if the caller can tolerate >30 minutes to response, it is a batch job and should be routed accordingly.
 
 For non-interactive workloads (nightly summaries, document ingestion), use batch APIs (50% cost reduction on most providers). Latency is irrelevant; throughput is not.
 

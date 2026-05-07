@@ -5,7 +5,11 @@
 
 ---
 
-> **The story.** AI testing as a discipline crystallised in 2019–2021, born from embarrassing production failures. Google's Photos classifier labelled Black people as gorillas. Amazon's hiring AI penalised résumés that included the word "women's." Microsoft's Tay chatbot learned to tweet hate speech in 16 hours. These weren't model failures — they were **testing failures**: nobody checked what the model would do on the inputs it would actually see. The field responded with a vocabulary: *behavioural testing* (does the model do the right thing?), *invariance testing* (does swapping irrelevant words break it?), and *directional testing* (does more of X cause more of Y?). The seminal paper — Ribeiro et al., "Beyond Accuracy: Behavioral Testing of NLP Models" (ACL 2020) — gave practitioners a checklist framework called CheckList. At the same time, ML Engineering at Google codified *model cards*, *data cards*, and the *ML Test Score* (Breck et al., 2017): a 28-point rubric that production ML systems should pass before launch. The insight was uncomfortable: production AI systems need *more* testing infrastructure than traditional software, not less — because the bugs are statistical, not deterministic.
+> **A brief history.** In June 2015, a Google Photos engineer opened the app to review a new feature and noticed the autocreated album label: *"Gorillas."* Inside: photos of two Black users. The classifier had labelled real people with an animal category — not because the engineers had trained something malicious, but because the test set had never included enough dark-skinned faces for anyone to notice the failure mode. The fix Google shipped was a search index band-aid: remove "gorilla" from the label vocabulary. There was nothing to prevent the next version from making the same class of mistake, because the *discipline* of testing AI systems for adversarial and underrepresented inputs didn't yet exist.
+>
+> The pattern repeated. Amazon's hiring AI quietly penalised résumés that included the word "women's" — trained on a decade of historical hiring data, it had learned that women were hired less often and then *optimised for exactly that signal*. Nobody caught it because the evaluation used random holdout, not adversarial test cases. In March 2017, Microsoft's Tay chatbot learned to tweet hate speech within sixteen hours of public availability; the test suite had never simulated users actively trying to poison the model. Each incident shared the same root cause: nobody had checked what the model would do on the inputs it would actually see in production.
+>
+> The field's answer arrived in 2020. Marco Ribeiro and colleagues at Microsoft Research published *"Beyond Accuracy: Behavioral Testing of NLP Models"* (ACL 2020) — a framework called **CheckList** that gave practitioners three concrete test types: *behavioural* (does the model do the right thing?), *invariance* (does swapping irrelevant words break it?), and *directional* (does more of X produce more of Y?). Simultaneously, the ML Engineering team at Google formalised the **ML Test Score** (Breck et al., 2017) — a 28-point rubric that production ML systems must pass before launch. The conclusion both papers reached: production AI systems need *more* testing infrastructure than traditional software, not less — because the bugs are statistical and silent, not deterministic and loud.
 >
 > **Where you are in the curriculum.** Ch.1–11 built PizzaBot end-to-end: from tokenization (Ch.1) through prompt engineering (Ch.2), reasoning (Ch.3), RAG grounding (Ch.4–5), tool orchestration (Ch.6), safety guardrails (Ch.7), evaluation metrics (Ch.8), cost/latency optimization (Ch.9), fine-tuning (Ch.10), and advanced agentic patterns (Ch.11). **PizzaBot v2.0 achieves 99.2% edge-case accuracy and $0.18/conversation in Ch.11. The CEO says it's ready to launch.** This chapter asks: *how do you prove that?* Specifically: if production is showing a 14% wrong-order rate and you need to diagnose and fix it before launch, what tests do you write? Ch.8 gave you evaluation metrics — RAGAS, conversion rate, hallucination rate. This chapter turns those metrics into **executable tests** that run in CI/CD on every pull request.
 >
@@ -386,6 +390,14 @@ def test_chunk_size_within_bounds(rag_client, sample_menu_docs):
 
 ### 3.3 — Retrieval Tests: The Bug We Found
 
+**Retrieval correctness** is measured by **Hit@K** — the fraction of known queries that return the correct document in the top K retrieved results:
+
+$$\text{Hit@K} = \frac{1}{|Q|}\sum_{q \in Q} \mathbf{1}[\text{relevant doc} \in \text{top-}K \text{ results for } q]$$
+
+*Verbal gloss:* For each query $q$, check whether the relevant document appears in the first $K$ retrieved results. Summing the binary hits and dividing by the number of queries gives the fraction that "hit." Hit@1 = 0.90 means 90% of queries surface the correct document at rank 1 — the position that matters most because generation quality degrades when the relevant document isn't first.
+
+> 💡 **Business consequence of Hit@K dropping:** If Hit@1 falls from 90% to 75%, 25% of queries retrieve the wrong menu document before the LLM generates a single token. At 10,000 orders/day that is 2,500 wrong-document retrievals — responses where the quoted price or item may come from the wrong context chunk. Every point of Hit@K below your threshold directly inflates your wrong-order rate.
+
 ```python
 # tests/test_retrieval.py
 import pytest
@@ -725,6 +737,9 @@ def test_response_contains_price_for_order_query(e2e_rag):
     )
 ```
 
+> 💡 **Shape tests are the floor.** They tell you the system is alive and producing structurally valid output — non-empty string, valid `$X.XX` price format, length within expected bounds. A response that is `None`, empty, or missing a price in an order confirmation is a hard failure, not a statistical accuracy question.
+> **Business consequence:** A missing price means the customer cannot confirm their order — a direct, binary conversion loss. At 10,000 orders/day, even a 0.5% shape failure rate is 50 lost orders per day.
+
 ### 5.2 — Invariance Tests
 
 ```python
@@ -780,6 +795,9 @@ def test_polite_phrasing_invariance(e2e_rag):
         f"Phrasing changed item: rude='{item_rude}', polite='{item_polite}'"
     )
 ```
+
+> 💡 **What invariance tests catch:** Every failing invariance test is a conversion leak. If `"LARGE PEPPERONI"` returns a different price than `"large pepperoni"`, the system silently fails a real fraction of users. These bugs are invisible in aggregate RAGAS scores — a context precision of 0.88 won't surface case-sensitive pricing — but they show up immediately as customer chargebacks when someone typed their order in capitals.
+> **Rule:** Write at least one invariance test for each axis of natural user variation: letter case, punctuation, politeness level, name inclusion.
 
 ### 5.3 — Directional Expectation Tests
 

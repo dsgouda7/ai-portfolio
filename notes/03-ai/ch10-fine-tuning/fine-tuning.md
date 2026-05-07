@@ -1,6 +1,6 @@
 # Fine-Tuning, PEFT & LoRA — Adapting Models Without Retraining From Scratch
 
-> **The story.** Until 2019, "fine-tuning a language model" meant updating *every* weight — fine for BERT-base (110 M params), prohibitive for GPT-3-class (175 B). **Adapter modules** (Houlsby et al., Google, **2019**) inserted small trainable bottlenecks into a frozen backbone, the first widely-used **parameter-efficient fine-tuning (PEFT)** trick. **Prefix-Tuning** (Li & Liang, Stanford, 2021) and **Prompt-Tuning** (Lester et al., Google, 2021) explored learnable soft prompts. The watershed was **LoRA** — *Low-Rank Adaptation of Large Language Models* by **Edward Hu** and colleagues at Microsoft, **June 2021**. The thesis: weight updates during fine-tuning are intrinsically low-rank, so represent $\Delta W$ as $BA$ where $B$ and $A$ are skinny matrices. Result: 10 000× fewer trainable parameters with negligible quality loss. **QLoRA** (Dettmers et al., U-Washington, **May 2023**) added 4-bit quantisation of the frozen base model so a single 24 GB consumer GPU could fine-tune a 65 B model. Every "custom model" Hugging Face Hub serves today is, almost without exception, a LoRA adapter on top of a frozen base.
+> **The story.** In the summer of 2021, every AI team that wanted a model with a specific voice, format, or domain style faced the same grim arithmetic: fine-tuning a 7-billion-parameter model meant retraining all 7 billion weights, which required GPU memory most companies couldn't afford. At Microsoft Research, **Edward Hu** and his colleagues had a different hypothesis — weight updates during fine-tuning are intrinsically low-rank. Most of those billions of numbers barely move. So instead of updating the full weight matrix $\mathbf{W}$ directly, why not learn a low-rank residual $\Delta\mathbf{W} = \mathbf{B}\mathbf{A}$ where $\mathbf{B}$ and $\mathbf{A}$ together hold a fraction of the parameters? When **LoRA** (*Low-Rank Adaptation of Large Language Models*, June 2021) shipped, fine-tuning a GPT-3-class model dropped from a multi-GPU cluster to a single card — 10,000× fewer trainable parameters, negligible quality loss. Two years later, **Tim Dettmers** at the University of Washington pushed it further: add 4-bit quantisation of the frozen base weights and a 65-billion-parameter model fits on a single 24 GB consumer GPU. That was **QLoRA** (May 2023). Today every "custom model" on the Hugging Face Hub — the one that speaks legalese, generates Bash scripts, or sounds like a Michelin-starred chef — is a LoRA adapter riding a frozen base. The technique that made custom AI affordable to a one-person team is the same one you will use to give Mamma Rosa's bot its voice.
 >
 > **Where you are in the curriculum.** The decision of *when* to fine-tune is more important than *how*. Most applications that reach for fine-tuning too early could have solved their problem with better [prompting](../ch02_prompt_engineering) or [RAG](../ch04_rag_and_embeddings) at a fraction of the cost. This document covers the decision framework first, then the efficient methods (LoRA, QLoRA, adapters) that make fine-tuning a Llama-class model on a laptop a realistic engineering option.
 >
@@ -113,6 +113,12 @@ Fine-tuning drives brand differentiation → conversion uplift AND cost reductio
 Full fine-tuning:  retrain all W  (7B params, ~140 GB VRAM, hours)
 LoRA fine-tuning:  freeze W, train ΔW = A·B  (0.1–1% of params, ~16–24 GB VRAM, minutes)
 ```
+
+**The intuition.** Think of a pretrained model as an expert chef who spent years mastering every cuisine on earth. Full fine-tuning is like sending them back to culinary school from scratch to learn Sicilian food — expensive, slow, and risks forgetting everything else. LoRA is like giving them a small notebook of Mamma Rosa's recipes to consult: the encyclopaedic knowledge stays intact, only the specific adaptations are new.
+
+**PizzaBot grounding.** The brand voice problem is a style problem, not a knowledge problem — GPT-4o-mini already knows how to be warm and conversational; it just doesn't know it should be for every Mamma Rosa response. LoRA trains the "be Mamma Rosa warm" delta onto the existing knowledge using 0.24% of the model's parameters. That delta takes 30 minutes to train on a single A100 and is stored as a 33 MB file alongside the original 14 GB base model.
+
+> 💡 **Business consequence.** The 0.24% parameter delta is the difference between 68% and 95% brand voice consistency — and between 28% and 30% conversion. At 50 orders/day, those 2 percentage points equal $5,745/month in additional revenue. A 33 MB adapter file outperforms any amount of brand voice prompt-engineering because it operates at weight level, not token level.
 
 ---
 
@@ -1335,6 +1341,10 @@ LoRA     :   16  × (4096 + 4096) = 131,072 params  →  0.78% of original
 
 **At inference time:** merge $\mathbf{W}' = \mathbf{W} + \mathbf{B}\mathbf{A}$ back into the original matrix — zero inference overhead compared to the base model.
 
+**PizzaBot grounding.** For Llama-3-8B with $d = k = 4096$ and $r = 16$, the LoRA matrices on the query and value projections hold $2 \times 16 \times (4096 + 4096) = 262{,}144$ parameters — 0.003% of the 8B base. Training propagates gradient through only those matrices; the base model's knowledge of cooking, language, and world context stays frozen. At serving time, merge $\mathbf{W}' = \mathbf{W} + \mathbf{B}\mathbf{A}$ once and the adapter disappears — no runtime overhead.
+
+> 💡 **Why $\mathbf{B}$ starts at zero.** At initialisation, $\Delta\mathbf{W} = \mathbf{B}\mathbf{A} = \mathbf{0}$ because $\mathbf{B} = \mathbf{0}$. The LoRA-adapted model makes *identical* predictions to the base model at step 0. You are not gambling on a random starting point — you start from a model that already handles allergen queries, price calculations, and multi-turn conversation correctly, then nudge it toward Mamma Rosa's voice. For PizzaBot, that means the brand voice delta converges reliably rather than fighting the pre-existing instruction-following behaviour.
+
 ---
 
 ## 5 · QLoRA — Quantisation + LoRA
@@ -1348,6 +1358,10 @@ QLoRA on 70B model:          ~48 GB VRAM  (fine-tunable on 2× A100 40GB)
 ```
 
 The quantisation introduces a small accuracy trade-off compared to full fp16 LoRA, but the quality gap is negligible for most tasks. QLoRA is the standard method for fine-tuning open-source models.
+
+**PizzaBot grounding.** The PizzaBot LoRA experiment ran on a single NVIDIA A100 40 GB (~$1.50/hour on Azure). Without QLoRA, a 7B model in fp16 occupies ~14 GB VRAM — workable but tight with batch size 4. With QLoRA, the base model footprint drops to ~6 GB, which means the same GPU can serve a 13B or 30B model. For a 70B model, QLoRA makes the difference between needing an 8× A100 cluster (fp16, ~$24/hour) and a 2× A100 pair (QLoRA, ~$3/hour).
+
+> 💡 **The accuracy trade-off is real but small.** NF4 quantisation loses roughly 1–2% quality vs. fp16 LoRA on standard benchmarks. For brand voice fine-tuning — where success is "sounds like Mamma Rosa" not "0.3% higher MMLU score" — this trade-off is negligible. It matters most in distillation scenarios (§3 decision tree, cost-optimization path) where small perplexity gaps compound into measurable task failure rates at production scale.
 
 > 💡 **Industry Standard:** `bitsandbytes` (Quantization Library)
 >
