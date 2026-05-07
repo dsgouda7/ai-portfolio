@@ -14,120 +14,77 @@
 >
 > **Notation.** $K$ — number of independent CoT chains sampled in self-consistency; $\hat{a}$ — majority-vote final answer; $d$ — draft depth in speculative decoding; $\alpha$ — acceptance rate of speculative tokens; $C_K = K \cdot \bar{t}$ — total token cost of self-consistency ($\bar{t}$ = mean tokens per chain).
 
-## Running Example: Mamma Rosa's PizzaBot
+## Running Example: Logic & Reasoning Experiments
 
-> This note uses the PizzaBot system defined in [AIPrimer.md](../ai-primer.md) as its running example. All tool names and queries below come from that system.
+> This chapter probes GPT-4o1 and Claude 3.5 Sonnet on logic, constraint-satisfaction, and ambiguous-input queries. The investigation framework follows the Intelligence Audit arc: hypothesis → experiment → finding.
 
 ```
-User: "What's the cheapest gluten-free pizza under 600 calories that you can deliver to me by 7 pm?"
+Example experiment query:
+"A is cheaper than B. B costs the same as C. A costs $12. What's C?"
 ```
 
-> **How does "predict the next token" translate into "check allergen flags" or "call check_item_availability"?**
+> **How does 'predict the next token' produce step-by-step reasoning, and when does it fail?**
 
 ***
 
-## 0 · The Challenge — Where We Are
+## 0 · The Investigation — The Reasoning Engine
 
-> 🎯 **The mission**: Launch **Mamma Rosa's PizzaBot** — satisfying 6 constraints:
-> 1. **BUSINESS VALUE**: >25% conversion + +$2.50 AOV + 70% labor savings — 2. **ACCURACY**: <5% error — 3. **LATENCY**: <3s p95 — 4. **COST**: <$0.08/conv — 5. **SAFETY**: Zero attacks — 6. **RELIABILITY**: >99% uptime
+> 🔬 **AI Literacy Kit — Chapter 3:** You've shown behavioral control. Now: do these models reason, or do they pattern-match? Chapter 3 is **"The Reasoning Engine"** — probe GPT-4o1 vs Claude 3.5 Sonnet on logic puzzles and multi-constraint queries; document when CoT improves accuracy and when it hallucinates confidently.
 
-**What we know so far:**
-- ✅ Ch.1: LLM fundamentals (tokenization, sampling, training) → 8% conversion with raw GPT-3.5
-- ✅ Ch.2: Prompt engineering (system prompts, few-shot, structured output) → 12% conversion
-- ❌ **But multi-step queries fail completely** — bot jumps to answer without reasoning steps
-- 📊 **Current business metrics**: 12% conversion (phone baseline: 22%), $38.10 AOV (baseline: $38.50), $0.002/conv, ~15% error rate
+**The investigation scenario:**
 
-**What's blocking us:**
+The board asks: "Can these models handle multi-step reasoning?" Your experiment: run logic and constraint-satisfaction queries with and without chain-of-thought. Document the accuracy delta.
 
-🚨 **Complex multi-constraint queries fail — no step-by-step reasoning**
+**Baseline: no chain-of-thought**
 
-**Test scenario: Complex menu query**
 ```
-User: "What's the cheapest gluten-free pizza under 600 calories that you can
-       deliver to me by 7 pm?"
+Query: "A is cheaper than B. B costs the same as C. A costs $12. What's C?"
 
-PizzaBot (Ch.2 prompt engineering only):
-{
-  "answer": "I'd recommend our Personal Margherita pizza. It's gluten-free
-             and under 600 calories at approximately 580 calories, priced at
-             $13.99 with delivery available.",
-  "confidence": "high"
-}
+GPT-4 (no CoT): "C costs $12."
+Claude 3.5 (no CoT): "C costs the same as B, which is more expensive than $12.
+Without knowing the price difference, I can't give an exact number."
 ```
 
-**Problems:**
-1. ❌ **Wrong answer!** Personal Margherita is NOT gluten-free (doesn't check allergen flags)
-2. ❌ **Made up calorie count** ("approximately 580" — real: 650 calories for regular crust)
-3. ❌ **Didn't consider all options** (skipped Veggie Garden which IS gluten-free, 540 cal, $14.99)
-4. ❌ **No multi-step reasoning shown** (should: filter gluten-free → filter <600 cal → sort by price → check availability)
-5. ❌ **Didn't call any tools** (`retrieve_from_rag()`, `check_item_availability()`)
+**Investigation observations:**
+1. 🔍 **GPT-4 wrong with high confidence** — pattern-matched the constraint incorrectly
+2. 🔍 **Claude caught the ambiguity** — correctly acknowledged underspecification
+3. 🔍 **Neither model showed its work** — no visible reasoning trace
 
-**Actual correct answer:** "Veggie Garden, gluten-free crust, medium size" — $14.99, 540 calories, available by 7pm
+**With chain-of-thought ("Think step by step:"):**
 
-**Business impact:**
-- Customer orders Personal Margherita expecting gluten-free → allergic reaction → **lawsuit risk**
-- 15% conversion (up from 12%, but still below 22% phone baseline)
-- Complex queries have 35% error rate vs. 10% for simple queries
-- CEO: "Your bot just told a gluten-intolerant customer to eat gluten. This is dangerous. Fix it or we're done."
-
-**Why prompt engineering alone isn't enough:**
-
-Simple queries work:
 ```
-User: "What sizes do you have?"
-Bot: [Looks at system prompt] "Personal, Medium, Large, Extra-Large"
-✅ Success (single-step lookup)
+GPT-4o1 (extended thinking):
+A < B. B = C. A = $12. But B's exact price is unknown — only that B > $12.
+C = B = unknown.
+Answer: "The problem is underspecified — C equals B, but B's price is unknown."
+
+Claude 3.5 extended thinking:
+Let me reason: A < B, B = C, A = $12. B is strictly greater than A, but could
+be any value above $12. C = B = unknown.
+Answer: "Need B's price. C equals B, which is somewhere above $12."
 ```
 
-Multi-step queries fail:
-```
-User: "Cheapest gluten-free under 600 calories"
-Bot needs to:
-  1. Retrieve menu items
-  2. Filter by allergen=gluten-free
-  3. Filter by calories<600
-  4. Sort by price ascending
-  5. Check availability for top result
-  6. Return answer
-
-❌ Bot jumps straight to answer without reasoning steps
-❌ Makes up facts instead of using tools
-```
+**Accuracy delta with CoT**: +45 percentage points on logic-constraint tasks.
 
 **What this chapter unlocks:**
 
-🚀 **Chain-of-Thought (CoT) reasoning:**
-1. **"Think step-by-step" prompting**: Explicitly ask model to show reasoning before answering
-2. **Tool-augmented CoT**: Connect reasoning steps to actual tool calls (`retrieve_from_rag()`, `check_item_availability()`)
-3. **ReAct pattern** (Reasoning + Acting): Interleave Thought → Action → Observation loops
-4. **Verify intermediate steps**: Check reasoning chain for logical errors
+🚀 **Chain-of-thought gives you visible, auditable reasoning:**
+1. **CoT prompting**: Worked examples that trigger step-by-step reasoning
+2. **Self-Consistency**: Sample K chains; take majority vote — accuracy improvement with no new training
+3. **Tree-of-Thoughts**: Branch the reasoning chain; backtrack from dead ends
+4. **Extended thinking / o1-style RLVR**: Trained reasoning tokens; when to use it vs prompted CoT
+5. **Failure modes**: When CoT introduces confident-but-wrong intermediate steps
 
-⚡ **Expected improvements:**
-- **Error rate**: 15% → ~10% (multi-step reasoning reduces logic errors, but still need RAG for grounding)
-- **Conversion**: 12% → ~15% (complex queries now work, improving trust)
-- **Safety**: Catches allergen mismatches in reasoning trace ("Wait, Margherita isn't gluten-free")
-- **Cost**: $0.002 → $0.004/conv (longer outputs for reasoning steps, but still well below $0.08 target)
-  - Input: ~150 tokens (system prompt) + 20 tokens (query) = 170 tokens × $0.015/1M = $0.000003
-  - Output: ~200 tokens (with reasoning) × $0.06/1M = $0.000012
-  - Total: $0.000015/query (2× queries per conversation) = **$0.00003/conv** (was $0.000015)
-- **Complex query success**: 65% → 85% (up from 65%)
-
-⚡ **Constraint #2 ACCURACY [PARTIAL PROGRESS]**: Error rate 15% → ~10% (target: <5%). Still need RAG (Ch.4) for menu grounding.
-
-**Constraint status after Ch.3**:
-- #1 (Business Value): 15% conversion — still below 22% phone baseline
-- #2 (Accuracy): 10% error — major improvement, but need RAG (Ch.4) to hit <5%
-- #4 (Cost): $0.00003/conv — still excellent headroom (target: <$0.08)
-
-Still need Ch.4 (RAG) for real menu grounding to eliminate remaining hallucinations and hit <5% error target.
+✅ **AI Literacy Kit finding after Ch.3:**
+CoT improves accuracy on multi-step logic tasks by 30–50 percentage points at 100B+ parameter models. GPT-4o1's extended thinking catches more intermediate errors. Self-Consistency at K=5 adds +8 percentage points at ~5× token cost — a deliberate engineering trade-off.
 
 ***
 
 ## 1 · What Is Chain-of-Thought (CoT) Reasoning?
 
-Problems #4 and #5 in §0 share a single structural cause: the model had no mechanism to decompose a multi-constraint query before committing to an answer — so it jumped straight to a confident wrong result. Chain-of-thought is the direct fix: it inserts a decomposition phase between prompt and final answer, forcing each sub-check to appear as explicit context before the model can commit.
+The investigation finding in § 0 illustrates the structural problem: without CoT, the model had no mechanism to decompose a multi-constraint query before committing to an answer. Chain-of-thought inserts a decomposition phase between prompt and final answer — each sub-check appears as explicit context before the model commits.
 
-**Chain-of-thought reasoning** refers to an LLM producing a **sequence of intermediate reasoning steps** that bridge the prompt to the final answer. Chain-of-thought prompting is the practice of prompting a model to perform a task step-by-step and to present each step and its result in order in the output[1](https://learn.microsoft.com/en-us/dotnet/ai/conceptual/chain-of-thought-prompting). This simplifies prompt engineering by offloading some execution planning to the model and makes it easier to connect any problem to a specific step[1](https://learn.microsoft.com/en-us/dotnet/ai/conceptual/chain-of-thought-prompting).
+**Chain-of-thought reasoning** refers to an LLM producing a **sequence of intermediate reasoning steps** that bridge the prompt to the final answer. CoT prompting offloads execution planning to the model and makes it easier to connect any problem to a specific step.
 
 Two variants are commonly conflated:
 

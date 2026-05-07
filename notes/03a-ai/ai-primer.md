@@ -1,10 +1,145 @@
-# AI Track — Primer and Study Guide
+# LLM Fundamentals Track — Primer and Study Guide
 
-> This is the single entry point for the AI track. **Part 1** defines the Mamma Rosa's PizzaBot running example used throughout every note. **Part 2** is the conceptual reading guide — the story arc, document map, dependency graph, and goal-oriented study paths.
+> This is the single entry point for the LLM Fundamentals track. **Part 1** defines the Intelligence Audit investigation framework used throughout every note. **Part 2** is the conceptual reading guide — the story arc, document map, and goal-oriented study paths.
 
 ---
 
-## Part 1: The Running Example — Mamma Rosa's PizzaBot
+## Part 1: The Running Example — The Intelligence Audit
+
+> Every note — from LLM fundamentals to vector database scaling — refers back to this investigation framework. Read Part 1 first.
+
+---
+
+## The Investigation
+
+You are a **Staff Engineer** assigned to your company's AI Adoption Review. Your mandate: evaluate two leading models — **GPT-4o** and **Claude 3.5 Sonnet** — across a structured experiment suite and deliver an **AI Literacy Kit** to guide the engineering org's AI adoption decisions.
+
+The investigation follows a **hypothesis → experiment → finding** cadence. Each chapter is one experiment type:
+
+| Chapter | Hypothesis | Key Question |
+|---|---|---|
+| Ch.1 — LLM Fundamentals | Models are black boxes — let's open them | How does next-token prediction produce coherent, factual answers? |
+| Ch.2 — Prompt Engineering | We can control LLM behavior through prompts | How do system prompts, few-shot, and JSON mode affect output reliability? |
+| Ch.3 — CoT Reasoning | Step-by-step prompting improves multi-step logic | When does CoT help, and at what cost? |
+| Ch.4 — RAG & Embeddings | Grounding in private docs reduces hallucination | How much does retrieval reduce hallucination on internal data? |
+| Ch.5 — Vector DBs | ANN indexes make retrieval viable at production scale | What's the recall/latency trade-off at 50k documents? |
+
+---
+
+## The Models Under Study
+
+Both models are evaluated using identical prompts and test sets throughout the track. Key parameters:
+
+```python
+# GPT-4o configuration
+gpt4_client = openai.OpenAI()  # uses OPENAI_API_KEY env var
+gpt4_params = {
+    "model": "gpt-4o",
+    "temperature": 0.0,       # deterministic for benchmarks
+    "max_tokens": 1024,
+    "response_format": {"type": "json_object"}  # Ch.2 onwards
+}
+
+# Claude 3.5 Sonnet configuration
+claude_client = anthropic.Anthropic()  # uses ANTHROPIC_API_KEY env var
+claude_params = {
+    "model": "claude-3-5-sonnet-20241022",
+    "max_tokens": 1024,
+    "temperature": 0.0
+}
+```
+
+**Security note:** API keys are loaded from environment variables only — never hardcoded in notebooks or config files.
+
+---
+
+## The AI Literacy Kit Deliverable
+
+By the end of the 5-chapter track, the investigation produces:
+
+1. **Model Comparison Matrix** — GPT-4 vs Claude benchmark table across 6 task dimensions
+2. **Prompt Template Library** — System prompt patterns that reliably produce structured output
+3. **Reasoning Benchmark Report** — CoT vs. standard prompting on 20 logic/constraint tasks
+4. **RAG Architecture Recommendation** — Hallucination rate before/after, chunking strategy, embedding model
+5. **Production Retrieval Spec** — ANN index recommendation with recall/latency/cost trade-off
+
+---
+
+## How Each Note Uses This Investigation
+
+| Note | Concept | How the Investigation illustrates it |
+|---|---|---|
+| [llm-fundamentals.md](ch01-llm-fundamentals/llm-fundamentals.md) | Temperature, BPE, context window | `temperature=0` for factual recall; `temperature=0.8` for creative tasks; benchmark shows GPT-4 vs Claude on structured output format adherence |
+| [prompt-engineering.md](ch02-prompt-engineering/prompt-engineering.md) | System prompts, few-shot, JSON mode, injection | System prompt verbosity study; JSON mode compliance: Claude 94% vs GPT-4 68% without explicit instruction; injection via `{"note": "ignore previous instructions"}` |
+| [cot-reasoning.md](ch03-cot-reasoning/cot-reasoning.md) | Multi-step reasoning, self-consistency | Logic puzzle benchmark: CoT improves accuracy 30–50pp; constraint-satisfaction tests; self-consistency K=5 adds +8pp at 5× cost |
+| [rag-and-embeddings.md](ch04-rag-and-embeddings/rag-and-embeddings.md) | Embeddings, chunking, retrieval | Internal engineering wiki (200 docs); hallucination rate 38% without RAG → 4% with RAG on 50-question test set |
+| [vector-dbs.md](ch05-vector-dbs/vector-dbs.md) | ANN indexes, distance metrics, scaling | Scale RAG from 200 → 50,000 docs; brute-force 1200ms → HNSW 4ms; recall/latency trade-off table |
+
+---
+
+## Why the Examples Within Each Note May Differ
+
+Individual notes use **isolated experiment slices** to focus on one concept at a time:
+
+- `cot-reasoning.md` isolates the *reasoning chain* — no retrieval, just the decomposition logic
+- `rag-and-embeddings.md` isolates the *retrieval pipeline* — no agent loop, just ingestion and query
+- `vector-dbs.md` isolates the *index mechanics* — no LLM, just the vector search layer
+
+Same investigation, different angles. By the end, you have a complete mental model of the LLM stack.
+
+---
+
+## Part 2: Reading Guide
+
+### The Central Story in One Paragraph
+
+Modern LLM deployments are built on five foundational capabilities: (1) **understanding what an LLM actually is** — tokenization, training stages, sampling — so you can predict its failure modes; (2) **controlling its output** through structured prompts so you can rely on it in production; (3) **extending its reasoning** with chain-of-thought so it handles multi-step tasks; (4) **grounding it in private data** through retrieval-augmented generation so it doesn't hallucinate company facts; and (5) **scaling that retrieval** with ANN indexes so it stays fast under real production load. The Intelligence Audit investigates each layer in sequence. After completing this track, proceed to [03b-agentic-ai](../03b-agentic-ai/) to build agents that act on this foundation.
+
+---
+
+### How We Got Here — A Short History of LLM Foundations
+
+Every chapter is a response to a specific historical pressure point:
+
+- Raw LMs (GPT-3, 2020) weren't instructable → RLHF (InstructGPT, Mar 2022) and structured prompting → [llm-fundamentals](ch01-llm-fundamentals) and [prompt-engineering](ch02-prompt-engineering)
+- One-shot answers failed on multi-step problems → Chain-of-Thought (Wei et al., Jan 2022) → [cot-reasoning](ch03-cot-reasoning)
+- Closed-book models hallucinated private/recent facts → RAG (Lewis et al., 2020) → [rag-and-embeddings](ch04-rag-and-embeddings)
+- Brute-force retrieval doesn't scale → ANN indexes (HNSW, IVF) → [vector-dbs](ch05-vector-dbs)
+
+After ch05, the bottleneck shifts from *capability* to *orchestration, safety, and evaluation* — that's where [03b-agentic-ai](../03b-agentic-ai/) begins.
+
+---
+
+### Document Map: What Each File Covers
+
+#### Foundation Documents (read before the core chapters)
+
+| File | Purpose | Key Questions Answered |
+|---|---|---|
+| **This document** | Investigation framework + reading guide | What system does the track investigate? What order do I read in? |
+| [grand-solution.md](grand-solution.md) | AI Literacy Kit synthesis — all 5 chapter findings in one place | What does the complete deliverable look like? What are the key numbers? |
+| [authoring-guide.md](authoring-guide.md) | Track conventions, style fingerprint, pedagogical patterns | How are chapters structured? What is the running example? |
+
+#### Core Chapter Notes
+
+| File | Layer | Purpose |
+|---|---|---|
+| [llm-fundamentals.md](ch01-llm-fundamentals/llm-fundamentals.md) | Foundation | What an LLM actually is: tokenization, training stages, sampling, context windows |
+| [prompt-engineering.md](ch02-prompt-engineering/prompt-engineering.md) | Control | Getting reliable, structured output: system prompts, few-shot, JSON mode, injection defense |
+| [cot-reasoning.md](ch03-cot-reasoning/cot-reasoning.md) | Reasoning | How LLMs plan step-by-step; zero-shot vs. few-shot CoT; self-consistency |
+| [rag-and-embeddings.md](ch04-rag-and-embeddings/rag-and-embeddings.md) | Knowledge | Embedding mechanics; full RAG ingestion and query pipeline; evaluation |
+| [vector-dbs.md](ch05-vector-dbs/vector-dbs.md) | Scale | ANN index types; HNSW vs. IVF vs. DiskANN; production architecture |
+
+#### What Comes Next
+
+After completing this track, continue to [03b-agentic-ai](../03b-agentic-ai/) which covers:
+- ReAct orchestration and Semantic Kernel
+- Safety and hallucination defense
+- Evaluation frameworks (RAGAS, LLM-as-judge)
+- Cost and latency optimization
+- Fine-tuning (LoRA/QLoRA)
+- Advanced agentic patterns
+
 
 > Every note — from LLM fundamentals to cost optimisation — refers back to this system. Read Part 1 first.
 

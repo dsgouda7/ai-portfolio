@@ -57,7 +57,8 @@ flowchart TB
     end
 
     subgraph Stage5[Stage 5: Specialization - Choose ONE]
-        AI[03-ai<br/>RAG, agents, tool use]
+        LLM[03a-ai<br/>LLM Fundamentals]
+        Agentic[03b-agentic-ai<br/>PizzaBot Agent]
         Multimodal[05-multimodal_ai<br/>Diffusion, CLIP, Stable Diffusion]
         Infra[06-ai_infrastructure<br/>GPU, quantization, serving]
     end
@@ -71,10 +72,12 @@ flowchart TB
     Math --> Data
     Data --> Regression
     Classification --> NeuralNets
-    NeuralNets --> AI
+    NeuralNets --> LLM
+    NeuralNets --> Agentic
     NeuralNets --> Multimodal
     NeuralNets --> Infra
-    AI --> Advanced
+    LLM --> Agentic
+    Agentic --> Advanced
     Multimodal --> Advanced
     Infra --> Advanced
 
@@ -83,7 +86,8 @@ flowchart TB
     style Regression fill:#fff4e1
     style Classification fill:#fff4e1
     style NeuralNets fill:#fff4e1
-    style AI fill:#e8f5e9
+    style LLM fill:#e8f5e9
+    style Agentic fill:#e8f5e9
     style Multimodal fill:#e8f5e9
     style Infra fill:#e8f5e9
     style Advanced fill:#ffe1e1
@@ -100,7 +104,8 @@ flowchart TB
 | **01-ml/02_classification** | Regression | Binary/multi-class classifiers with precision/recall tuning |
 | **01-ml/03_neural_networks** | Regression + Classification | Transformer implementation from scratch |
 | **01-ml/04-08** (specializations) | Neural Networks Ch.1-6 | Recommender systems, anomaly detection, RL, clustering, ensembles |
-| **03-ai** | **ML Ch.18 (Transformers)** — MANDATORY | PizzaBot RAG pipeline with tool use |
+| **03a-ai** | **ML Ch.18 (Transformers)** — MANDATORY | LLM Literacy Kit (GPT-4 vs Claude benchmarks) |
+| **03b-agentic-ai** | **03a-ai complete** | PizzaBot RAG pipeline with tool use (8%→32% conversion) |
 | **04-multi_agent_ai** | AI track Ch.1-6 | OrderFlow multi-agent purchase-order system |
 | **05-multimodal_ai** | **ML Ch.18 (Transformers)** + AI Ch.4 (Embeddings) | PixelSmith local image generation studio |
 | **06-ai_infrastructure** | ML Ch.4-8 (Neural Networks, CNNs, RNNs) | InferenceBase cost optimization (API $80k/mo → self-hosted) |
@@ -143,8 +148,9 @@ flowchart TB
 | **01-ml/00_data_fundamentals** | Math → Data |
 | **01-ml (core: regression, classification, neural nets)** | Data → Regression → Classification → Neural Nets |
 | **01-ml (specializations: recommender, anomaly, RL, clustering, ensembles)** | Neural Nets → pick any |
-| **03-ai** | **ML Ch.18 Transformers** → AI |
-| **04-multi_agent_ai** | AI Ch.1-6 → Multi-Agent |
+| **03a-ai** | **ML Ch.18 Transformers** → 03a-ai |
+| **03b-agentic-ai** | 03a-ai → 03b-agentic-ai |
+| **04-multi_agent_ai** | 03b-agentic-ai Ch.1-6 → Multi-Agent |
 | **05-multimodal_ai** | **ML Ch.18 Transformers** + AI Ch.4 → Multimodal |
 | **06-ai_infrastructure** | ML Ch.4-8 → Infrastructure |
 | **07-devops_fundamentals** | Can start anytime (no ML prereqs) |
@@ -182,7 +188,8 @@ Utility folders that appear alongside chapters:
 notes/
 ├── 00-math_under_the_hood/ ← Math foundations: linear & non-linear algebra, calculus, 1-D optimisation, matrices, gradients & chain rule, probability
 ├── 01-ml/               ← Machine Learning: topics grouped by domain (Regression, Classification, …)
-├─03-ai/               ← Agentic AI: reasoning, retrieval, orchestration (+ notebooks)
+├── 03a-ai/              ← LLM Fundamentals: GPT-4 vs Claude investigation, prompting, CoT, RAG (5 chapters)
+├── 03b-agentic-ai/      ← Agentic AI: PizzaBot Grand Challenge — tool use, safety, eval, cost, fine-tuning (6 chapters)
 ├── 04-multi_agent_ai/   ← Multi-agent protocols and coordination patterns (+ notebooks)
 ├── 05-multimodal_ai/    ← Diffusion, CLIP, vision transformers, text-to-video (+ notebooks)
 ├── 06-ai_infrastructure/ ← GPU hardware to production serving platforms (+ notebooks)
@@ -229,26 +236,35 @@ bash scripts/setup.sh
 
 ---
 
-## Track 2 — Agentic AI 03-ai/`)
+## Track 2a — LLM Fundamentals (`03a-ai/`)
 
-Deep-dive notes explaining how LLMs become agents — from token prediction through tool use, retrieval, and orchestration. Running example: **Mamma Rosa's PizzaBot**.
+Five chapters investigating GPT-4 and Claude 3.5 Sonnet through the **Intelligence Audit** arc — producing an AI Literacy Kit.
 
 | Document | What it covers |
 |---|---|
-| [AIPrimer.md03-ai/ai-primer.md) | Entry point — PizzaBot running example, conceptual arc, document map, and reading paths |
-| [LLMFundamentals/03-ai/ch01_llm_fundamentals) | BPE tokenisation, pretraining → SFT → RLHF, temperature, context windows |
-| [PromptEngineering/03-ai/ch02_prompt_engineering) | System prompts, few-shot, structured output, prompt injection |
-| [CoTReasoning/03-ai/ch03_cot_reasoning) | Chain-of-Thought, hidden reasoning tokens, Self-Consistency, Tree of Thoughts |
-| [RAGAndEmbeddings/03-ai/ch04_rag_and_embeddings) | Transformer encoders, contrastive training, chunking, full RAG pipeline |
-| [VectorDBs/03-ai/ch05_vector_dbs) | ANN index types (HNSW, IVF, DiskANN), distance metrics, production architecture |
-| [ReActAndSemanticKernel/03-ai/ch06_react_and_semantic_kernel) | ReAct loop, LangChain vs Semantic Kernel, LangGraph, Plan-and-Execute |
-| [EvaluatingAISystems/03-ai/ch08_evaluating_ai_systems) | RAGAS metrics, LLM-as-judge, hallucination detection, pipeline evaluation |
-| [FineTuning/03-ai/ch10_fine_tuning) | When to fine-tune vs RAG vs prompting, LoRA math, QLoRA |
-| [SafetyAndHallucination/03-ai/ch07_safety_and_hallucination) | Hallucination types, mitigation stack, jailbreaks, alignment failures |
-| [CostAndLatency/03-ai/ch09_cost_and_latency) | Token budgets, model cost tiers, KV caching, streaming |
-| [InterviewGuides/](interview_guides) | Consolidated interview prep — rapid-fire Q&A plus index of every per-chapter Interview Checklist across all tracks |
+| [ai-primer.md](03a-ai/ai-primer.md) | Entry point — Intelligence Audit investigation framework, document map, reading paths |
+| [llm-fundamentals](03a-ai/ch01-llm-fundamentals) | BPE tokenisation, pretraining → SFT → RLHF, temperature, context windows |
+| [prompt-engineering](03a-ai/ch02-prompt-engineering) | System prompts, few-shot, structured output, prompt injection |
+| [cot-reasoning](03a-ai/ch03-cot-reasoning) | Chain-of-Thought, hidden reasoning tokens, Self-Consistency, Tree of Thoughts |
+| [rag-and-embeddings](03a-ai/ch04-rag-and-embeddings) | Transformer encoders, contrastive training, chunking, full RAG pipeline |
+| [vector-dbs](03a-ai/ch05-vector-dbs) | ANN index types (HNSW, IVF, DiskANN), distance metrics, production architecture |
 
-Every core note has a companion `_Supplement.md` for production-depth details. Read the core note first.
+---
+
+## Track 2b — Agentic AI (`03b-agentic-ai/`)
+
+Six chapters taking Mamma Rosa's PizzaBot from broken prototype (8% conversion) to production agent (32% conversion). Requires completing **03a-ai** first.
+
+| Document | What it covers |
+|---|---|
+| [react-and-semantic-kernel](03b-agentic-ai/ch01-react-and-semantic-kernel) | ReAct loop, LangChain vs Semantic Kernel, LangGraph, Plan-and-Execute |
+| [safety-and-hallucination](03b-agentic-ai/ch02-safety-and-hallucination) | Hallucination types, mitigation stack, jailbreaks, alignment failures |
+| [evaluating-ai-systems](03b-agentic-ai/ch03-evaluating-ai-systems) | RAGAS metrics, LLM-as-judge, hallucination detection, pipeline evaluation |
+| [cost-and-latency](03b-agentic-ai/ch04-cost-and-latency) | Token budgets, model cost tiers, KV caching, streaming |
+| [fine-tuning](03b-agentic-ai/ch05-fine-tuning) | When to fine-tune vs RAG vs prompting, LoRA math, QLoRA |
+| [advanced-agentic-patterns](03b-agentic-ai/ch06-advanced-agentic-patterns) | Reflection, multi-agent debate, hierarchical orchestration, HITL |
+
+Every core note has a companion `_Supplement.md` for production-depth details.
 
 ---
 

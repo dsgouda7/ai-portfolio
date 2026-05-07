@@ -2,7 +2,7 @@
 
 > **The story.** In October 2022, **Shunyu Yao** at Princeton was staring at a failure that nagged him: chain-of-thought prompting let GPT-3 reason step-by-step through complex problems, but the moment it needed a real fact mid-thought — "is this store open right now?", "what is 230 divided by 4?" — it fabricated the answer from training data. The model was brilliant but blind. Yao's fix was almost embarrassingly simple: let the model call a tool mid-thought, receive the result as an observation, then keep reasoning with that grounded fact in hand. He called the pattern **ReAct** — Reason + Act — and submitted it to ICLR in October 2022. When the reviewers scored it, ReAct landed in the **top 5% of submissions**. On ALFWorld, a benchmark where agents navigate simulated household environments, ReAct beat the best imitation-learning baseline by **34 percentage points** — not because it used a bigger model, but because it stopped asking the LLM to remember facts it couldn't know and started letting it *ask for them in real time*. **Harrison Chase** had released **LangChain** that same month — a thin Python wrapper that within a year became the default agent library with 50,000 GitHub stars and integrations for nearly every API. **Microsoft followed with Semantic Kernel** in May 2023, aimed at .NET enterprise teams who needed compliance filters, stable versioned APIs, and telemetry that LangChain's rapid release cadence couldn't guarantee. In 2024, LangChain Inc. released **LangGraph** — the same Thought→Action→Observation loop now modelled as a state machine, where branching paths and human approval checkpoints are first-class operations. Every hosted agent you will build in 2026 — Azure AI Foundry, OpenAI Assistants, Anthropic Computer Use — runs a variant of Yao's original loop.
 >
-> **Where you are in the curriculum.** [CoTReasoning](../ch03_cot_reasoning) gave you the reasoning half. This document gives you the *acting* half — how the LLM's structured output becomes a tool call, how the tool's response becomes the next observation, and how frameworks like LangChain and Semantic Kernel automate the loop. After this chapter you can build the kind of agent that powers the [PizzaBot](../ai-primer.md), and you have the conceptual scaffolding for the entire [Multi-Agent track](../../03-multi_agent_ai), where these single-agent loops compose into protoco...
+> **Where you are in the curriculum.** [LLM Fundamentals (03a-ai)](../../03a-ai/) gave you the foundation: tokenization, prompting, CoT reasoning, and RAG grounding. This chapter gives you the *acting* half — how the LLM's structured output becomes a tool call, how the tool's response becomes the next observation, and how frameworks like LangChain and Semantic Kernel automate the loop. After this chapter you can build the kind of agent that powers the [PizzaBot](../../03a-ai/ai-primer.md), and you have the conceptual scaffolding for the entire [Multi-Agent track](../../04-multi-agent-ai), where these single-agent loops compose into protoco...
 >
 > **Notation.** $t$ — reasoning step index; $\text{Thought}_t$ — natural-language reasoning at step $t$; $\text{Action}_t$ — structured tool call; $\text{Obs}_t$ — tool response (observation); $T_\text{max}$ — maximum iterations before forced termination.
 
@@ -13,12 +13,11 @@
 > 🎯 **The mission**: Launch **Mamma Rosa's PizzaBot** — a production AI ordering system satisfying 6 constraints:
 > 1. **BUSINESS VALUE**: >25% conversion + +$2.50 AOV + 70% labor savings — 2. **ACCURACY**: <5% error — 3. **LATENCY**: <3s p95 — 4. **COST**: <$0.08/conv — 5. **SAFETY**: Zero attacks — 6. **RELIABILITY**: >99% uptime
 
-**What we know so far:**
-- ✅ Ch.1-3: LLM fundamentals, prompt engineering, CoT reasoning → 15% conversion, 10% error
-- ✅ Ch.4: RAG grounding → **Constraint #2 (Accuracy) ACHIEVED** — 4.2% error < 5% target
-- ✅ Ch.5: Vector indexing (HNSW) → Fast retrieval at scale, latency improved to <2s
-- ✅ **Constraints achieved so far**: #2 (Accuracy) ✅, partial progress on #3 (Latency) and #4 (Cost)
-- 📊 **Current metrics**: 18% conversion (target: >25%), 4.2% error (✅), $0.008/conv (✅), <2s p95 latency (✅)
+**What we know so far (from 03a-ai LLM Fundamentals):**
+- ✅ Prompting, CoT reasoning → structured output, multi-step logic
+- ✅ RAG grounding → **<5% hallucination rate** on internal documents
+- ✅ Vector indexing (HNSW) → fast retrieval at scale, latency <2s
+- ✅ **Starting metrics for this track**: 18% conversion (target: >25%), 4.2% error (✅), $0.008/conv (✅), <2s p95 latency (✅)
 
 **What's blocking us:**
 

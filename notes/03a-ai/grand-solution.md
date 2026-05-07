@@ -1,6 +1,81 @@
-# Agentic AI Grand Solution — Mamma Rosa's PizzaBot Production System
+# LLM Fundamentals — Foundation Summary
 
-> **For readers short on time:** This document synthesizes all 11 AI chapters into a single narrative arc showing how we went from **8% conversion → 32% conversion** and what each concept contributes to production agentic AI systems. Read this first for the big picture, then dive into individual chapters for depth.
+> **For readers short on time:** This document synthesizes the 5 LLM Fundamentals chapters into a single narrative arc — showing what each chapter contributes to your organization's AI Literacy Kit. Read this first for the big picture, then dive into individual chapters for depth.
+
+---
+
+## How to Read This Track
+
+This document provides the **conceptual overview** of the LLM Fundamentals track. For hands-on learning:
+
+### Reading Paths
+
+**📖 Conceptual learners (start here):**
+1. Read this document for the complete narrative
+2. Understand the progression: Ch.1 (black box) → Ch.5 (production-scale retrieval)
+3. See how each chapter contributes to the AI Literacy Kit deliverable
+
+**💻 Hands-on learners:**
+1. Open the chapter notebook and run cells sequentially
+2. Experiment with model parameters and prompts
+3. Re-run experiments with your own API keys
+
+**🎯 Sequential chapter learners:**
+1. Start with [ch01-llm-fundamentals](ch01-llm-fundamentals/llm-fundamentals.md)
+2. Progress through chapters 1-5 in order
+3. Each chapter builds on previous concepts
+
+**🔍 Problem-driven learners:**
+- **"How do I get structured output?"** → [Ch.2 Prompt Engineering](ch02-prompt-engineering/)
+- **"How do I handle multi-step queries?"** → [Ch.3 CoT Reasoning](ch03-cot-reasoning/)
+- **"How do I eliminate hallucinations on private data?"** → [Ch.4 RAG](ch04-rag-and-embeddings/)
+- **"How do I scale retrieval to 50k+ docs?"** → [Ch.5 Vector DBs](ch05-vector-dbs/)
+
+### Companion Resources
+
+- **[authoring-guide.md](authoring-guide.md)** — Track structure, conventions, pedagogical patterns
+- **[ai-primer.md](ai-primer.md)** — Investigation framework and mental models
+- **[03b-agentic-ai](../03b-agentic-ai/)** — Next track: agents, tools, and orchestration
+
+---
+
+## The Intelligence Audit: Chapter-by-Chapter Contributions
+
+**The Investigation**: A Staff Engineer conducting an AI Adoption Review evaluates GPT-4 and Claude 3.5 Sonnet across 5 experiment types to produce an AI Literacy Kit.
+
+**The AI Literacy Kit findings:**
+
+| Chapter | Experiment Type | Key Finding | Deliverable |
+|---|---|---|---|
+| Ch.1 — LLM Fundamentals | Black-box probing (knowledge, creative, logic) | GPT-4 vs Claude differ most on **structured output format adherence** (68% vs 94%) | Model comparison matrix |
+| Ch.2 — Prompt Engineering | System prompt style, few-shot, JSON mode | System prompt verbosity matters less than **explicit output format instruction**; Claude follows JSON constraints more strictly | Prompt template library |
+| Ch.3 — CoT Reasoning | Logic puzzles, constraint satisfaction | CoT improves multi-step accuracy **30–50 pp** at 100B+ scale; Self-Consistency K=5 adds +8pp at 5× cost | Reasoning benchmark report |
+| Ch.4 — RAG & Embeddings | Internal wiki grounding (200 docs) | RAG cuts hallucination rate **38% → 4%** on private documents; remaining 4% are retrieval failures | RAG architecture recommendation |
+| Ch.5 — Vector DBs | ANN index benchmark (50k docs) | HNSW at M=16: **98.6% recall at 4ms** — 300× faster than brute-force | Production retrieval spec |
+
+**The Progression:**
+
+```
+Ch.1: Raw model probing        → Baseline established, black box opened
+Ch.2: Prompt engineering       → Structured output reliable; prompt template library ready
+Ch.3: CoT reasoning            → Multi-step logic solved; reasoning benchmark complete
+Ch.4: RAG grounding            → Hallucination cut 38%→4%; RAG architecture validated
+Ch.5: Vector DB scaling        → HNSW 98.6% recall at 4ms; production spec ready ✅
+```
+
+---
+
+## AI Literacy Kit — Complete Deliverable
+
+After completing all 5 chapters, the AI Literacy Kit contains:
+
+1. **Model Comparison Matrix** (Ch.1) — GPT-4 vs Claude across task types with numeric benchmarks
+2. **Prompt Template Library** (Ch.2) — System prompt patterns and few-shot examples that reliably produce structured output
+3. **Reasoning Benchmark Report** (Ch.3) — CoT vs. standard prompting on 20 logic/constraint tasks
+4. **RAG Architecture Recommendation** (Ch.4) — Chunking strategy, embedding model choice, hallucination rate before/after
+5. **Production Retrieval Spec** (Ch.5) — ANN index recommendation with recall/latency/cost trade-off table
+
+**What comes next:** Take this foundation into [03b-agentic-ai](../03b-agentic-ai/) to build agents that act on the knowledge you've established here — tool calling, orchestration, safety, and fine-tuning.
 
 ---
 
@@ -282,35 +357,35 @@ Here's how all 11 concepts integrate into a deployed Mamma Rosa's PizzaBot:
 ```mermaid
 flowchart TD
     USER["Customer Query<br/>('cheapest gluten-free<br/>under 600 cal')"] --> SAFETY_IN["Input Validation<br/>Ch.7: Azure Content Safety<br/>Prompt injection detection"]
-    
+
     SAFETY_IN --> EMBED["Embedding Model<br/>Ch.4: Text → 768-dim vector<br/>$0.0001/query"]
-    
+
     EMBED --> VECTOR_DB["Vector DB Search<br/>Ch.5: HNSW index<br/>50K menu chunks<br/><10ms retrieval"]
-    
+
     VECTOR_DB --> CACHE_CHECK["Cache Check<br/>Ch.9: Prompt caching<br/>90% hit rate → 10× savings"]
-    
+
     CACHE_CHECK --> LLM["Fine-Tuned Model<br/>Ch.10: Llama-3-8B + LoRA<br/>Brand voice specialized<br/>$0.004/query"]
-    
+
     LLM --> COT["Chain-of-Thought<br/>Ch.3: Multi-step reasoning<br/>Filter → Sort → Check"]
-    
+
     COT --> REACT["ReAct Orchestration<br/>Ch.6: Tool calls<br/>check_availability()<br/>calculate_total()"]
-    
+
     REACT --> REFINE{Complex<br/>order?}
-    
+
     REFINE -->|No| DIRECT["Direct Response<br/>Ch.2: Structured JSON<br/>850 tokens"]
-    
+
     REFINE -->|Yes| REFLECTION["Reflection Loop<br/>Ch.11: Draft → Critique → Revise<br/>2,550 tokens"]
-    
+
     REFLECTION --> VERIFY["Output Validation<br/>Ch.7: Allergen DB check<br/>Pricing verification"]
-    
+
     DIRECT --> VERIFY
-    
+
     VERIFY --> STREAM["Streaming Response<br/>Ch.9: First token <500ms<br/>Perceived instant UX"]
-    
+
     STREAM --> MONITOR["Production Monitoring<br/>Ch.8: RAGAS metrics<br/>Error rate, latency, conversion<br/>Alert on drift"]
-    
+
     MONITOR --> OUTPUT["Customer receives:<br/>{pizza: 'Veggie Garden',<br/>price: $14.99,<br/>confidence: 99.2%,<br/>delivery_time: '35 min'}"]
-    
+
     style USER fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
     style LLM fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
     style OUTPUT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
@@ -356,28 +431,28 @@ assert ragas_scores['faithfulness'] > 0.95  # Quality gate
 @app.route('/chat', methods=['POST'])
 async def chat():
     user_query = request.json['message']
-    
+
     # Ch.7: Input validation
     if content_safety.is_harmful(user_query):
         return {"error": "Query violates content policy"}, 400
-    
+
     # Ch.4: RAG retrieval
     query_embedding = embed_model.encode(user_query)
     relevant_chunks = vector_db.search(query_embedding, k=5)  # Ch.5: HNSW
-    
+
     # Ch.9: Prompt caching (system prompt cached)
     prompt = build_prompt(
         system_prompt=CACHED_SYSTEM_PROMPT,  # 90% cache hit
         context=relevant_chunks,
         user_query=user_query
     )
-    
+
     # Ch.6: ReAct agent loop
     agent_state = {"cart": [], "context": relevant_chunks}
     for step in range(max_steps=5):
         # Ch.3: Chain-of-thought reasoning
         thought = llm.generate(prompt + "\nThought:", max_tokens=100)
-        
+
         # Ch.6: Tool selection and execution
         if "Action:" in thought:
             action, tool_input = parse_action(thought)
@@ -385,7 +460,7 @@ async def chat():
             prompt += f"\nThought: {thought}\nObservation: {observation}"
         else:
             break  # Agent finished reasoning
-    
+
     # Ch.11: Reflection on complex orders
     if is_complex(user_query):
         draft = llm.generate(prompt)
@@ -393,11 +468,11 @@ async def chat():
         response = llm.generate(f"Revise based on critique: {draft}\n{critique}")
     else:
         response = llm.generate(prompt)  # Simple order, single-pass
-    
+
     # Ch.7: Output validation
     if contains_allergen_claim(response):
         validated_response = validate_allergen_claims(response, allergen_db)
-    
+
     # Ch.9: Streaming response
     return stream_response(validated_response)  # First token <500ms
 
@@ -411,7 +486,7 @@ def log_metrics(response):
         "cost": calculate_cost(request, response),
         "ragas_faithfulness": evaluate_faithfulness(response)
     })
-    
+
     # Alert on drift
     if latency > 3.0 or monitor.error_rate() > 0.05:
         alert("Production metrics degraded")

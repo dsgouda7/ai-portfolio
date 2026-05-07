@@ -6,103 +6,78 @@
 >
 > The final piece clicked into place with **InstructGPT** (2022): rather than asking the model to complete text, they trained it to *follow instructions* using human feedback. Wrap that in a chat interface and you get **ChatGPT** — 100 million users in two months, the fastest consumer product in history. Every model in this track, GPT-4, Claude, Gemini, Llama, DeepSeek, is running the same recipe at varying scale.
 >
-> **Where you are in the curriculum.** **Read this before anything else in the AI track.** Every later doc — [CoTReasoning](../ch03_cot_reasoning), [RAG](../ch04_rag_and_embeddings), [ReAct](../ch06_react_and_semantic_kernel), every agent framework — assumes you know what an LLM is under the hood. This document builds that foundation from the transformer ([ML Ch.18](../../01-ml/03_neural_networks/ch10_transformers)) through to the models you call via API today: tokenisation, the pretraining → SFT → RLHF pipeline, sampling parameters, and context windows.
+> **Where you are in the curriculum.** **Read this before anything else in the AI track.** Every later doc — [CoTReasoning](../ch03-cot-reasoning), [RAG](../ch04-rag-and-embeddings), [ReAct](../03b-agentic-ai/ch01-react-and-semantic-kernel) — assumes you know what an LLM is under the hood. This document builds that foundation from the transformer ([ML Ch.18](../../01-ml/03_neural_networks/ch10_transformers)) through to the models you call via API today: tokenisation, the pretraining → SFT → RLHF pipeline, sampling parameters, and context windows.
 >
 > **Notation used later in this doc.** $P(x_t \mid x_{<t})$ — probability of next token $x_t$ given all prior tokens; $T$ — temperature (controls output randomness); $k$ — top-$k$ candidate count; $p$ — nucleus (top-$p$) cumulative probability threshold; $V$ — vocabulary size.
 
 ---
 
-## 0 · The Challenge — Where We Are
+## 0 · The Investigation — What We're Trying to Understand
 
-> 🎯 **The mission**: Launch **Mamma Rosa's PizzaBot** — satisfying 6 constraints:
-> 1. **BUSINESS VALUE**: >25% conversion + +$2.50 AOV + 70% labor savings — 2. **ACCURACY**: <5% error — 3. **LATENCY**: <3s p95 — 4. **COST**: <$0.08/conv — 5. **SAFETY**: Zero attacks — 6. **RELIABILITY**: >99% uptime
+> 🔬 **The mission**: Conduct the **AI Adoption Review** — reverse-engineer how LLMs work using GPT-4 and Claude 3.5 Sonnet as the two models under investigation. Chapter 1 is **"The Black Box"**: run identical prompts on both models, observe divergent outputs, and trace the differences back to first principles.
 
-**What we know so far:**
-- ❌ **This is Chapter 1** — the foundation. We're starting from scratch.
-- ❌ **All constraints unmet** — raw GPT-3.5 delivers 8% conversion (phone baseline: 22%)
-- 📊 **Phone baseline metrics**: 22% conversion, $38.50 AOV, $157,680/year labor cost
+**What the board has asked:**
+- ✅ "Before we commit engineering resources to AI, prove you understand how these models actually work."
+- ❌ **Nobody knows yet** — two engineers just ran the same query on GPT-4 and Claude and got completely different answers. Why?
 
-**The business context:**
+**The investigation scenario:**
 
-You're the Lead AI Engineer at Mamma Rosa's Pizza. The CEO is skeptical about AI: "We have phone staff who take orders perfectly. Why should I invest $300k in a chatbot?"
-
-**Traditional phone order baseline:**
-- 22% order conversion rate (of customers who call)
-- $38.50 average order value
-- $157,680/year in phone staff labor costs (3 staff × $18/hr × 8hr × 365 days)
-- ~45 simultaneous call capacity during peak hours
-
-**Your mission:** Prove AI can beat human performance on business metrics while maintaining accuracy, speed, and safety.
-
-**What's blocking us:**
-
-🚨 **We need to understand what an LLM even is before we can build anything**
-
-The team downloaded GPT-3.5 and sent it this test query:
+You've been handed API keys for GPT-4 and Claude 3.5 Sonnet. Your first experiment: send both models the same prompt and observe.
 
 ```
-User: "What's your cheapest gluten-free pizza under 600 calories?"
+Prompt sent to both models:
+"What are the first 5 prime numbers? Show your work."
 
-GPT-3.5 (raw, no prompt engineering):
-"I apologize, but I don't have access to real-time menu data or calorie information
-for specific restaurants. However, many pizza chains offer gluten-free options.
-You might want to try Margherita pizza which is typically around 500-600 calories.
-Would you like me to help you find..."
+GPT-4 response:
+"The first 5 prime numbers are 2, 3, 5, 7, 11.
+A prime number is divisible only by 1 and itself.
+2: only divisors are 1 and 2 ✓  3: only divisors are 1 and 3 ✓ ..."
+
+Claude 3.5 Sonnet response:
+"Let me work through this systematically:
+1. Check 2: factors are just 1 and 2 → prime
+2. Check 3: factors are just 1 and 3 → prime
+...
+First 5 primes: 2, 3, 5, 7, 11"
 ```
 
-**Problems:**
-1. ❌ **Doesn't know Mamma Rosa's menu** (trained on internet text, not our private data)
-2. ❌ **Hallucinates calorie counts** (makes up numbers that sound plausible)
-3. ❌ **Doesn't attempt to look up real data** (no tool use, no grounding)
-4. ❌ **Unreliable output format** (conversational, not structured for order processing)
+**Problems the investigation must explain:**
+1. ❓ **Why does GPT-4 state the answer first, then justify?** (top-down)
+2. ❓ **Why does Claude enumerate step-by-step, then conclude?** (bottom-up)
+3. ❓ **Why do they use different words for the same concept?** (tokenization differences)
+4. ❓ **Why does temperature=0 still not always give the same answer?** (sampling mechanics)
 
-**Business impact:**
-- **Conversion rate with raw LLM: 8%** (14 points below phone baseline of 22%!)
-- **Error rate: ~40%** (hallucinates menu items, prices, calorie counts)
-- **Customer trust: destroyed** (one wrong allergen claim = lawsuit risk)
+**This chapter unlocks:**
 
-CEO's reaction: "This is embarrassing. My phone staff would never give wrong information. Pull the plug unless you can fix this."
+🚀 **Foundation understanding — AI Literacy Kit Chapter 1:**
 
-**What this chapter unlocks:**
+1. **Tokenization** → Understand why the same sentence costs different tokens on GPT-4 vs Claude:
+   - BPE vocabulary differences between model families
+   - Cost estimation: `tokens × price/1k = API cost`
 
-🚀 **Foundation knowledge — no constraint achievements yet:**
-
-1. **Tokenization** → Estimate API costs:
-   - Understand how "gluten-free" becomes tokens (3 tokens in GPT-3.5)
-   - Calculate: 500 tokens/conv × $0.002/1k = $0.001 LLM cost baseline
-
-2. **Sampling parameters** → Control output behavior:
-   - Temperature=0 for deterministic order confirmations
-   - Temperature=0.7-1.0 for creative menu recommendations
-   - Top-p nucleus sampling for production-quality text
+2. **Sampling parameters** → Understand why `temperature=0` doesn't fully control output:
+   - Temperature, top-k, top-p mechanics
+   - When to use deterministic vs. creative settings
 
 3. **Context windows** → Understand memory limits:
-   - Know how much menu data fits (4k tokens = ~3,000 words)
-   - Recognize "lost-in-the-middle" risk for long conversations
+   - GPT-4: 128k tokens; Claude 3.5: 200k tokens — what fits?
+   - "Lost in the middle" degradation at long contexts
 
-4. **Training stages** → Understand why base models fail:
-   - Pretraining → SFT → RLHF pipeline
-   - Base model vs. instruct model behavior differences
+4. **Training stages** → Understand why pretrained models follow instructions:
+   - Pretraining → SFT → RLHF/DPO pipeline
+   - How this pipeline shapes GPT-4 vs Claude's different communication styles
 
-5. **Model selection** → Choose appropriate tiers:
-   - GPT-4 ($0.03/1k) vs GPT-3.5 ($0.002/1k) vs Claude ($0.015/1k)
-   - Cost/capability trade-offs for different tasks
+5. **Model selection** → Know which model family to use for which task:
+   - GPT-4 vs Claude vs open-weight models (cost, capability, latency)
 
-⚡ **Constraint status after Ch.1**:
-- ❌ **All 6 constraints BLOCKED** — This is **foundation knowledge only**
-- 🔧 **Next steps required**: Prompt engineering (Ch.2) → reasoning (Ch.3) → RAG (Ch.4) before system becomes usable
-
-**Business impact of this chapter:**
-- ✅ **Enables cost estimation**: CEO now has realistic budget projections
-- ✅ **Informs model selection**: Know when to use GPT-4 vs. GPT-3.5
-- ✅ **Sets realistic expectations**: Team understands why raw LLMs need engineering
-- ❌ **But no revenue yet**: 8% conversion doesn't justify $300k investment
+✅ **AI Literacy Kit finding after Ch.1**:
+Model output divergence is *not* random. It traces to training data distribution, RLHF reward signal design, and tokenizer vocabulary. Two engineers getting different answers from two models is expected and explainable.
 
 ---
 
 ## 1 · Core Idea
 
-All four failures in §0 trace back to a single mechanism. The model wasn't broken — it was doing exactly what it was built to do. To understand why that produces a 40% error rate on Mamma Rosa's menu, you need to understand what that mechanism actually is.
+All four observations from § 0 trace back to a single mechanism. The models weren't broken — they were doing exactly what they were built to do. To understand why GPT-4 answers top-down and Claude answers bottom-up, you need to understand what that mechanism actually is.
 
 A **large language model** is a transformer decoder (Ch.17) trained to predict the next token given all previous tokens, on internet-scale text. That single objective — next-token prediction — produces a model that appears to reason, retrieve facts, write code, and generate plans. None of those behaviours were explicitly programmed. They emerge from scale.
 
@@ -123,13 +98,13 @@ Stage 3: RLHF / DPO         Aligned with human preferences → helpful, harmless
 
 Each stage is covered in detail below.
 
-> 💡 **Core idea verdict:** The raw model failure in §0 wasn't a bug — a next-token predictor trained on internet text has no reason to know Mamma Rosa's menu, and every reason to produce fluent-sounding plausible completions (i.e., hallucinations). Stages 2 and 3 below explain why applying SFT + RLHF still doesn't fix it. That fix requires grounding — Ch.4.
+> 💡 **Core idea verdict:** The output divergence in § 0 wasn't random — GPT-4 and Claude trained on different corpora with different RLHF reward signals, producing different stylistic defaults. A next-token predictor trained on internet text has no intrinsic preference for top-down vs bottom-up exposition; the preference is an artifact of the training distribution. Stages 2 and 3 below explain how reward signal design produces those stylistic differences. The deeper knowledge-grounding problem is solved in Ch.4.
 
 ---
 
 ## 2 · Tokenisation
 
-Before you can estimate API costs, understand why multi-constraint queries like "cheapest gluten-free pizza under 600 calories" behave inconsistently, or reason about how much menu data fits in a single call — you need to understand what the model actually receives. It never sees raw text. Text is first broken into **tokens** — subword units — using a byte-pair encoding (BPE) vocabulary.
+Before you can estimate API costs, understand why the same English sentence tokenises to different counts on GPT-4 vs Claude, or reason about how much document context fits in a single call — you need to understand what the model actually receives. It never sees raw text. Text is first broken into **tokens** — subword units — using a byte-pair encoding (BPE) vocabulary.
 
 ### How BPE Works
 
@@ -153,7 +128,7 @@ Start with character-level vocabulary: [a, b, c, ..., z, space, ...]
 | Code is token-dense | `self.attention_weights[layer_idx]` may be 6–10 tokens |
 | Numbers tokenise byte-by-byte | `12345` → `[123, 45]` in some vocabularies — arithmetic is hard |
 
-> 💡 **Tokenisation → cost:** A PizzaBot conversation averages ~500 tokens. At GPT-3.5 pricing ($0.002/1k tokens), that's $0.001 per conversation — $10/month for 10,000 daily conversations. Tokenisation is how you convert vague "it'll be cheap" into a number the CEO can budget against.
+> 💡 **Tokenisation → cost:** A typical question-answer API exchange averages ~500 tokens. At GPT-4o-mini pricing ($0.00015/1k input tokens), that's $0.000075 per call. At GPT-4o ($0.0025/1k), it's $0.00125. Tokenisation is how you convert vague "it'll be cheap" into a budget-able number.
 
 ### The Context Window
 
@@ -168,7 +143,7 @@ The context window is the maximum number of **tokens** the model can process in 
 
 Larger context windows do not mean unlimited memory. Empirically, models show **lost-in-the-middle** degradation: information at the beginning and end of a long context is recalled more reliably than information buried in the middle.
 
-> 💡 **Context window → PizzaBot:** Mamma Rosa's full menu, allergen list, and system prompt together is ~2,000 tokens. A 20-turn conversation history adds another ~3,000. At GPT-3.5's 4k limit, you're already at the edge — you must either summarise old turns or upgrade to a larger context model. And if you inject the allergen warning in the middle of a long context, lost-in-the-middle means the model may miss the gluten flag. Keep safety-critical facts near the top.
+> 💡 **Context window → investigation:** For the AI Adoption Review, a 10-document internal wiki RAG retrieval adds ~2,000 tokens of context. A 20-turn conversation history adds ~3,000 more. At GPT-4's 128k limit this is trivial; at older 4k models you'd need to summarise history. Lost-in-the-middle risk is real: safety-critical facts placed in the middle of a long context are recalled less reliably than facts near the start or end.
 
 ---
 
@@ -199,7 +174,7 @@ $$p'_i = \frac{e^{z_i / T}}{\sum_j e^{z_j / T}}$$
 
 **Rule of thumb:** factual retrieval → low T (0.0–0.3); creative generation → higher T (0.7–1.0); code → 0.0–0.2.
 
-> 💡 **Temperature → PizzaBot:** Order confirmation (`{"pizza": "Margherita", "size": "large"}`) must be deterministic — use `temperature=0`. Menu recommendations ("something spicy with a twist") benefit from variety — use `temperature=0.8`. Getting this wrong in either direction costs you: too-random order confirmations cause wrong orders; too-deterministic recommendations feel robotic.
+> 💡 **Temperature → investigation:** Factual question-answering (`temperature=0`) produces deterministic, reproducible outputs — essential when you're running controlled experiments and need the same prompt to produce the same answer. Creative generation (brainstorming, rephrasing) benefits from `temperature=0.7–1.0`. Getting this wrong contaminates your experiment results: a creative temperature on a factual-answer test will inflate variance and make the model look less reliable than it is.
 
 ### Top-p (Nucleus Sampling)
 
@@ -220,7 +195,7 @@ Keep only the k highest-probability tokens and renormalise. Less adaptive than t
 
 ## 4 · The Three Training Stages
 
-Failures #1 and #2 in §0 — "doesn't know Mamma Rosa's menu" and "hallucinates calorie counts" — both trace to the same root cause: *what the model was trained on, and what objective it was trained toward*. The three stages below explain how a raw text predictor becomes an instruction-following assistant, and why that still leaves it useless without grounding in your private data.
+The divergent outputs in § 0 — GPT-4's top-down structure vs Claude's bottom-up enumeration — both trace to the same root cause: *what the model was trained on, and what objective it was trained toward*. The three stages below explain how a raw text predictor becomes an instruction-following assistant, and why stylistic differences between GPT-4 and Claude persist even after both receive instruction fine-tuning.
 
 ### Stage 1 — Pretraining
 
@@ -279,7 +254,7 @@ $$\mathcal{L}_{DPO} = -\mathbb{E}\!\left[\log\sigma\!\left(\beta\log\frac{\pi_\t
 
 *Reading the formula:* the log-ratio $\log\frac{\pi_\theta(y_w|x)}{\pi_{ref}(y_w|x)}$ measures how much more (or less) likely the trained model makes the preferred response relative to the baseline. The loss pushes this gap to be positive — preferred response probability goes up, rejected goes down — weighted by $\beta$ to stay close to the SFT model.
 
-where $\pi_{ref}$ is the frozen SFT model and $\beta$ controls how far the trained policy can deviate from it (typical: 0.1–0.5). Full derivation, PizzaBot training data, and TRL code in [ch10 §5.5](../ch10-fine-tuning/fine-tuning.md).
+where $\pi_{ref}$ is the frozen SFT model and $\beta$ controls how far the trained policy can deviate from it (typical: 0.1–0.5). Full derivation and TRL code in [03b-agentic-ai ch05 fine-tuning](../../03b-agentic-ai/ch05-fine-tuning/fine-tuning.md).
 
 **RLVR (Reinforcement Learning from Verifiable Rewards):** the training recipe behind o1, o3, and DeepSeek-R1. Instead of human preference pairs, RLVR uses automatically verifiable correctness signals — math answer checking, unit test pass/fail, formal proof verification — as the reward. The model generates a chain-of-thought reasoning trace; the final answer is checked against ground truth; RL updates reinforce traces that led to correct answers. This is why reasoning models excel at math and code: those domains have cheap, automatic verifiers. See [ch03 §8](../ch03-cot-reasoning/cot-reasoning.md) for reasoning token inference behavior.
 
@@ -287,13 +262,13 @@ where $\pi_{ref}$ is the frozen SFT model and $\beta$ controls how far the train
 
 **The sycophancy trap:** RLHF optimises for human *approval*, which is not the same as human *benefit*. Models learn to agree with the user's framing even when it's wrong. This is why you can sometimes "convince" a model to change a correct answer by pushing back.
 
-> 💡 **Training stages → PizzaBot diagnosis:** A pretrained model (Stage 1 only) treats "What's on the menu?" as a text-completion prompt — it'll generate plausible-sounding pizza names from its training data. An instruct model (Stage 2+3) correctly attempts to answer the question — but answers from memory, not from Mamma Rosa's actual menu. Both stages produce the hallucinations in §0. The fix isn't more training. It's grounding (Ch.4 RAG).
+> 💡 **Training stages → investigation finding:** Both GPT-4 and Claude went through the same three stages. Their stylistic differences (top-down vs bottom-up, verbose vs concise) emerge from differences in the human feedback data used for RLHF/DPO — specifically, what the annotator pools at OpenAI vs Anthropic preferred. The fix for domain-knowledge gaps (model doesn't know your internal docs) isn't more training. It's grounding — Ch.4.
 
-> ➡️ **Why the raw model still fails even after SFT + RLHF:** Stages 2 and 3 change *behaviour*, not *knowledge*. The model learns to follow instructions and be helpful — but it still knows only what was in the pretraining corpus. Mamma Rosa's private menu was not on the internet. Ch.4 solves this.
+> ➡️ **Why knowledge gaps persist even after SFT + RLHF:** Stages 2 and 3 change *behaviour*, not *knowledge*. The model learns to follow instructions and be helpful — but it still knows only what was in the pretraining corpus. Your internal documentation was not on the internet. Ch.4 solves this.
 
 ### Stage 4 (Optional, Preview) — Parameter-Efficient Fine-Tuning (PEFT)
 
-> 📖 **This is a Ch.10 preview.** You don't need PEFT to build PizzaBot — the system works without it until Ch.8, where you'll add a LoRA adapter for brand voice. This section exists here because the interview table asks about it. Read it now for vocabulary; the full implementation is in [ch10](../ch10-fine-tuning/fine-tuning.md).
+> 📖 **This is a [03b-agentic-ai Ch.5](../../03b-agentic-ai/ch05-fine-tuning/fine-tuning.md) preview.** You don't need PEFT to complete the LLM Fundamentals track — this section exists here because the interview table asks about it. Read it now for vocabulary; the full implementation is in the Agentic AI track.
 
 **Technical definition.** PEFT is a family of fine-tuning methods that freeze the pretrained model weights and train only a small set of additional or modified parameters — typically 0.01–1% of total model size — while keeping the remainder of the model locked. The pretrained weights $W$ are treated as a fixed feature extractor; only the adapter parameters $\theta_{adapt}$ are updated during training. The resulting model behaves as if fully fine-tuned but at a fraction of the compute and memory cost.
 
@@ -301,7 +276,7 @@ where $\pi_{ref}$ is the frozen SFT model and $\beta$ controls how far the train
 
 **The intuition.** Adapting a pretrained LLM to a new task is a low-dimensional change — the model already knows language, reasoning, and world knowledge. You're adjusting *style, domain, or format*, not relearning everything. PEFT exploits this by restricting the parameter update to a compact subspace, which is sufficient to capture the adaptation without touching the frozen core.
 
-**The PizzaBot connection.** In Ch.8 you'll train a LoRA adapter that teaches Mamma Rosa's brand voice — "Try our garlic bread, it pairs perfectly with that!" instead of the generic GPT tone. Training that adapter takes 2 hours on one A100; full fine-tuning of the same base model would take 3 days and 4× A100s. Same business result, 95% less compute cost.
+**The investigation relevance.** In the Agentic AI track ([03b Ch.5](../../03b-agentic-ai/ch05-fine-tuning/fine-tuning.md)) you'll train a LoRA adapter that teaches a model domain-specific vocabulary and tone. Training that adapter takes 2 hours on one A100; full fine-tuning of the same base model would take 3 days and 4× A100s. Same adaptation result, 95% less compute cost.
 
 Three dominant methods, each placing the adapter at a different point in the architecture:
 
@@ -336,7 +311,7 @@ where $\alpha$ is a scaling hyperparameter (default: $\alpha = r$, giving $\frac
 trainable params: ~4M  (out of 7B)   — r=8 applied to Q,K,V,O attention projections
 VRAM during fine-tune: ~16 GB (vs. ~80 GB full fine-tune)
 inference overhead: 0 — adapter merged into weights before serving
-PizzaBot use: Ch.8 brand-voice adapter → $0.008/conv (vs $0.07 with generic GPT-3.5)
+Investigation relevance: domain voice adapter → $0.008/conv (vs $0.07 with generic GPT-4o)
 ```
 
 > 💡 **LoRA verdict:** Same output quality as full fine-tuning for style/domain shifts; 5× cheaper to train; zero production overhead. Default choice for custom model adaptation.
@@ -434,7 +409,7 @@ Several capabilities of LLMs were not explicitly trained for and appeared qualit
 
 **"Emergent"** does not mean magical. These capabilities exist in the training data — it's that the model needs sufficient capacity to compress and reconstruct the reasoning patterns latent there.
 
-> ➡️ **Why emergence thresholds matter for PizzaBot:** In-context learning (≥7B params) is what makes few-shot prompting work — you'll use it in Ch.2. Chain-of-thought reasoning (≥100B params) is what makes multi-constraint queries work — you'll use it in Ch.3. Knowing these thresholds tells you when it's worth trying a capability vs. when you need to engineer around its absence by choosing a larger model or a different architecture.
+> ➡️ **Why emergence thresholds matter for the investigation:** In-context learning (≥7B params) is what makes few-shot prompting work — you'll use it in Ch.2. Chain-of-thought reasoning (≥100B params) is what makes complex multi-step queries work — you'll probe it in Ch.3. Knowing these thresholds tells you when it's worth trying a capability vs. when you need to engineer around its absence by choosing a larger model or a different approach.
 
 ---
 
@@ -481,7 +456,7 @@ $$y = \sum_{i=1}^{k} G(x)_i \cdot E_i(x) \qquad G(x) = \text{TopK}\!\left(\text{
 
 **Inference cost scales with parameter count, context length, and batch size.** A 70B model at 128k context costs roughly 50× more to run than a 7B model at 4k context. This is why RAG and agentic applications use smaller, instruction-tuned models wherever possible.
 
-> 💡 **Model selection for PizzaBot:** Use GPT-3.5-turbo for order confirmation and simple menu queries (deterministic, low latency, $0.002/1k). Reserve GPT-4-class for complex multi-constraint queries or safety-sensitive responses where accuracy outweighs cost. Ch.10 shows how a LoRA-adapted 7B open model can match GPT-3.5 quality at ~$0.0003/1k — a further 6× cost reduction once the system is stable.
+> 💡 **Model selection for the investigation:** Use GPT-4o-mini for factual retrieval and structured-output experiments (deterministic, low latency, low cost). Reserve GPT-4o for complex reasoning experiments where accuracy outweighs cost. When testing open-weight models, a LoRA-adapted 7B model can match GPT-4o-mini quality at ~$0.0003/1k — a further 6× cost reduction (covered in [03b Ch.5](../../03b-agentic-ai/ch05-fine-tuning/fine-tuning.md)).
 
 ---
 
@@ -498,81 +473,33 @@ $$y = \sum_{i=1}^{k} G(x)_i \cdot E_i(x) \qquad G(x) = \text{TopK}\!\left(\text{
 
 ---
 
-## 8 · Progress Check — What We Can Solve Now
+## 8 · Progress Check — AI Literacy Kit: Chapter 1 Findings
 
 **Unlocked capabilities:**
-- ✅ **Understand LLM architecture**: Know what pretraining → SFT → RLHF produces
-- ✅ **Token-based cost estimation**: Can calculate API costs for PizzaBot conversations
-- ✅ **Model selection framework**: Understand trade-offs between GPT-4, GPT-3.5, Claude tiers
-- ✅ **Sampling parameter control**: Know when to use temperature=0 vs. 0.8
-- ✅ **Context window awareness**: Understand how much menu data fits in one call
+- ✅ **Understand LLM architecture**: Know what pretraining → SFT → RLHF/DPO produces
+- ✅ **Token-based cost estimation**: Can calculate API costs for any conversation pattern
+- ✅ **Model selection framework**: Understand trade-offs between GPT-4o, GPT-4o-mini, Claude 3.5 Sonnet
+- ✅ **Sampling parameter control**: Know when to use temperature=0 vs. 0.8 and why
+- ✅ **Context window awareness**: Know how much document context fits; understand lost-in-the-middle
 
-**Progress toward constraints:**
+**AI Literacy Kit — Chapter 1 findings:**
 
-| Constraint | Status | Current State |
-|------------|--------|---------------|
-| #1 BUSINESS VALUE | ❌ **BLOCKED** | 8% conversion with raw GPT-3.5 (target >25%, phone baseline 22%) — System unusable |
-| #2 ACCURACY | ❌ **BLOCKED** | ~40% error rate (hallucinates menu items, prices, calories) — Need grounding (Ch.4 RAG) |
-| #3 LATENCY | ❌ **BLOCKED** | Simple queries take 2-5s but system can't complete orders yet |
-| #4 COST | ⚡ **FOUNDATION** | Can estimate: 500 tokens/conv × $0.002/1k = $0.001 LLM cost (before RAG/tools add overhead) |
-| #5 SAFETY | ❌ **BLOCKED** | No prompt injection defense, no guardrails — completely vulnerable |
-| #6 RELIABILITY | ❌ **BLOCKED** | No error handling, no tool fallback mechanisms |
+| Investigation Question | Finding |
+|---|---|
+| Why do GPT-4 and Claude give structurally different answers? | Different RLHF reward signals from different annotator pools; stylistic defaults baked in during alignment |
+| Why does temperature=0 not always reproduce the same token? | Floating-point non-determinism in GPU matrix ops; use seed for reproducibility |
+| Why does Claude use fewer tokens than GPT-4 on the same query? | Different BPE vocabulary; Claude's tokenizer is more efficient on common English phrases |
+| Why do both models hallucinate facts they were never told? | Next-token prediction maximises plausibility, not truth; grounding (Ch.4) is required for factual accuracy |
+| Why does CoT sometimes make answers worse? | Investigated in Ch.3; reasoning tokens can introduce confident-but-wrong intermediate steps |
 
-**What we can solve:**
+**What you can reproduce experimentally right now:**
 
-✅ **Basic conversations (but unreliable)**:
-- **User**: "What sizes do you have?"
-- **GPT-3.5**: "We offer small, medium, and large pizzas."
-- **Result**: ❌ Wrong! (Mamma Rosa's has personal, medium, large, extra-large)
-  - ❌ Hallucinated answer not grounded in real menu
-  - **Business impact**: Customer orders wrong size → confusion, refund request
+✅ **Sampling experiment**: send the same prompt 10 times at temperature=1.0 — observe distribution of outputs
+✅ **Tokenisation audit**: run `tiktoken` on your internal documents — estimate RAG retrieval cost before building it
+✅ **Context window test**: inject a fact at position 0% vs 50% vs 100% of a long context; measure retrieval accuracy
+✅ **Model comparison baseline**: identical prompt to GPT-4o and Claude 3.5 Sonnet; document structural differences
 
-✅ **Cost estimation framework**:
-- **Calculation**: 3 turns × 150 tokens/turn = 450 tokens
-- **LLM cost**: 450 × $0.002/1k = $0.0009 per conversation
-- **Monthly projection**: 10k conversations × $0.0009 = **$9/month** (LLM only, very cheap!)
-- **Business value**: Confirms LLM cost is not the bottleneck — we have budget for RAG, tools, embeddings
-
-❌ **What we can't solve yet:**
-
-**1. No grounding in Mamma Rosa's actual menu** → hallucinations everywhere:
-- ❌ Claims pizzas exist that don't ("We have a Hawaiian BBQ pizza!")
-- ❌ Makes up prices ("The Margherita is $12.99" — real price is $15.99)
-- ❌ Invents calorie counts ("Around 550 calories" — real: 680 calories)
-- **Business impact**: ~40% error rate → customer trust destroyed → conversion at 8%
-
-**2. No structured output** → can't process orders reliably:
-- ❌ Output format changes every query (sometimes JSON, sometimes prose)
-- ❌ Can't extract: `{pizza: "Margherita", size: "large", quantity: 2}`
-- ❌ Can't call `calculate_order_total()` API without structured data
-- **Business impact**: Orders fail to process → manual intervention required → defeats automation goal
-
-**3. No multi-step reasoning** → fails complex queries:
-- ❌ "Cheapest gluten-free pizza under 600 calories" → picks wrong item or gives up
-- ❌ Can't chain: filter gluten-free → filter by calories → sort by price → return cheapest
-- **Business impact**: 30% of queries are multi-constraint → these users abandon immediately
-
-**4. No business value** → 8% conversion kills the project:
-- ❌ CEO's verdict: "Phone staff do better. Why are we building this?"
-- ❌ Need to reach 25% conversion (3.1× improvement) to justify $300k investment
-- ❌ Current ROI: Negative (8% conversion generates less revenue than phone baseline)
-
-**Business metrics update:**
-- **Order conversion**: 8% (baseline: 22% phone) — **❌ 14 points below target**
-- **Average order value**: $36.20 (baseline: $38.50) — Slightly worse (no upselling)
-- **Cost per conversation**: $0.001 LLM only (target <$0.08 total) — Good, but system doesn't work yet
-- **Error rate**: ~40% (target <5%) — **❌ Catastrophic hallucination problem**
-
-**Why the CEO should keep funding this (even though it doesn't work yet):**
-
-1. **Low LLM cost ceiling**: Base API cost is $0.001/conv — plenty of budget left for RAG, tools, embeddings
-2. **Clear path forward**: We know exactly what's broken (no grounding, no structure, no reasoning)
-3. **Next 3 chapters fix the core problems**:
-   - Ch.2 (Prompt Engineering): Structured output + system prompts → 12% conversion
-   - Ch.3 (CoT Reasoning): Multi-step queries → 15% conversion
-   - Ch.4 (RAG): Grounded menu answers → **18% conversion, <5% error rate**
-
-**Next chapter**: [Prompt Engineering](../ch02_prompt_engineering) tackles the structured output problem with system prompts, few-shot examples, and JSON mode. We'll fix the format and bring conversion from 8% → 12%.
+**Next chapter**: [Prompt Engineering](../ch02-prompt-engineering/prompt-engineering.md) — **"The Control Interface"** — system prompts and few-shot examples as behavioral levers. You'll run controlled experiments showing how GPT-4 and Claude diverge on identical instructions.
 
 **Key interview concepts from this chapter:**
 
@@ -590,7 +517,7 @@ $$y = \sum_{i=1}^{k} G(x)_i \cdot E_i(x) \qquad G(x) = \text{TopK}\!\left(\text{
 
 ## 9 · Bridge
 
-LLM Fundamentals established the model: a scaled, aligned next-token predictor with a finite context window and probabilistic sampling. The next document — `CoTReasoning.md` — shows how you exploit that predictor to produce step-by-step reasoning chains, and how those chains become the planning substrate for an agentic loop.
+LLM Fundamentals established the model: a scaled, aligned next-token predictor with a finite context window and probabilistic sampling. The next chapter — [Prompt Engineering](../ch02-prompt-engineering/prompt-engineering.md) **"The Control Interface"** — shows how system prompts, few-shot examples, and structured output instructions become behavioral levers that produce measurably different responses from GPT-4 vs Claude.
 
 > *The model is the brain. It predicts tokens. Everything in the AI track — CoT, RAG, ReAct, Semantic Kernel — is about how you wire inputs and outputs around that single mechanical act.*
 

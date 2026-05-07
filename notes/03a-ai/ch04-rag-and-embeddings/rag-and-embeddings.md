@@ -16,68 +16,43 @@
 
 ***
 
-## 0 · The Challenge — Where We Are
+***
 
-> 🎯 **The mission**: Launch **Mamma Rosa's PizzaBot** — a production AI ordering system satisfying 6 constraints:
-> 1. **BUSINESS VALUE**: >25% conversion + +$2.50 AOV + 70% labor savings — 2. **ACCURACY**: <5% error — 3. **LATENCY**: <3s p95 — 4. **COST**: <$0.08/conv — 5. **SAFETY**: Zero attacks — 6. **RELIABILITY**: >99% uptime
+## 0 · The Investigation — The Memory Problem
 
-**What we know so far:**
-- ✅ Ch.1: LLM fundamentals (tokenization, sampling, training)
-- ✅ Ch.2: Prompt engineering (system prompts, structured output)
-- ✅ Ch.3: Chain-of-thought reasoning (multi-step query logic)
-- ⚡ **Current metrics**: 15% conversion, ~10% error rate, $0.004/conv, 85% complex query success
+> 🔬 **AI Literacy Kit — Chapter 4:** You've shown that LLMs reason step-by-step. Now: what happens when they don't know your data? Chapter 4 is **"The Memory Problem"** — build a RAG experiment over an internal document corpus; measure hallucination rate before vs. after grounding; prove that retrieval is the answer to domain knowledge gaps.
 
-**What's blocking us:**
+**The investigation scenario:**
 
-🚨 **Still hallucinating menu facts — no real data grounding**
+You load your company's internal engineering wiki (200 Markdown files, ~80k words) and ask GPT-4 and Claude questions from it — first without RAG, then with a full retrieval pipeline. You measure the hallucination rate on a 50-question test set.
 
-**Test scenario: Menu fact verification**
+**Baseline: no grounding**
+
 ```
-User: "What's the calorie count for a large Margherita pizza?"
+Query: "What's the SLA for our authentication service?"
 
-PizzaBot (Ch.3 CoT reasoning only):
-Thought: "I need calorie information for Margherita, large size."
-Action: retrieve_from_rag("Margherita large calories")
-Observation: [No tool execution yet — this is a placeholder!]
-Thought: "Based on typical pizza sizes, a large Margherita is approximately
-         850-900 calories."
-Answer: "A large Margherita is approximately 880 calories."
+GPT-4 (no RAG):
+"Typical SLA targets for authentication services are 99.9% uptime (three nines),
+with p99 latency under 200ms."
 
-User receives: "880 calories"
+Actual company SLA (from wiki): 99.95% uptime, p99 under 50ms, MTTR < 5 minutes
 ```
 
-**Problems:**
-1. ❌ **Made up the number!** Real value: 920 calories (from actual menu database)
-2. ❌ **CoT reasoning trace lies** — says "Action: retrieve_from_rag()" but doesn't actually execute
-3. ❌ **No embedding-based retrieval** — bot has no way to search menu corpus
-4. ❌ **10% error rate** — all errors are menu fact hallucinations (prices, calories, ingredients)
-5. ❌ **Customer trust eroding** — "Your bot told me 880 cal, but the nutrition PDF says 920. Why should I trust it?"
-
-**Business impact:**
-- 15% conversion (up from 12%, but still below 22% phone baseline)
-- **10% of orders have wrong info** (wrong price quoted, wrong calorie count, wrong ingredients listed)
-- Customer complaints: "Bot said $12.99, checkout showed $14.99"
-- CEO: "You've built a reasoning engine that reasons about made-up data. This is useless until it's grounded in our actual menu."
-
-**Why CoT reasoning alone isn't enough:**
-
-CoT helps with **logic**, not **facts**:
-```
-✅ CoT can solve: "If pizza A is $12 and pizza B is $15, which is cheaper?"
-   (Logic: compare two numbers)
-
-❌ CoT cannot solve: "What is the actual price of pizza A?"
-   (Fact: requires lookup in menu database)
-```
-
-Current state:
-- Bot has perfect reasoning chain: filter → sort → check availability
-- But reasoning operates on hallucinated facts: "Margherita is $12.99" (wrong!)
-- **Garbage in, garbage out** — perfect logic applied to wrong data
+**Test results across 50 questions:**
+- Without RAG: **38%** of factual answers contain at least one hallucinated number or claim
+- With RAG (after this chapter): **4%** hallucination rate
 
 **What this chapter unlocks:**
 
-🚀 **Retrieval-Augmented Generation (RAG):**
+🚀 **Retrieval-Augmented Generation solves the domain knowledge problem:**
+1. **Embeddings**: Convert documents to dense vectors capturing semantic meaning
+2. **Chunking strategy**: Fixed-size vs. sentence vs. semantic chunking trade-offs
+3. **Retrieval pipeline**: Embed query → cosine similarity → top-k chunks → pass to LLM
+4. **Grounding prompt**: "Answer only from the provided context; say I don't know if not found"
+5. **Evaluation**: Hallucination rate, answer faithfulness, context precision/recall
+
+✅ **AI Literacy Kit finding after Ch.4:**
+RAG reduces hallucination rate from 38% → 4% on internal documents. The remaining 4% are retrieval failures — the relevant document wasn't retrieved. Fixing retrieval is the focus of Ch.5.
 1. **Embed menu corpus at ingestion time**: Convert 500+ menu items, prices, nutrition facts, allergen info into vectors
 2. **Vector similarity search**: Query "Margherita large calories" retrieves nearest menu chunks
 3. **Ground LLM answer in retrieved docs**: Model sees actual menu data in context, can't make up facts

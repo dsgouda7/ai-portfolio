@@ -12,72 +12,49 @@
 
 ***
 
-## 0 · The Challenge — Where We Are
+## 0 · The Investigation — The Index
 
-> 🎯 **The mission**: Launch **Mamma Rosa's PizzaBot** — a production AI ordering system satisfying 6 constraints:
-> 1. **BUSINESS VALUE**: >25% conversion + +$2.50 AOV + 70% labor savings — 2. **ACCURACY**: <5% error — 3. **LATENCY**: <3s p95 — 4. **COST**: <$0.08/conv — 5. **SAFETY**: Zero attacks — 6. **RELIABILITY**: >99% uptime
+> 🔬 **AI Literacy Kit — Chapter 5:** You've built a working RAG pipeline (Ch.4). Hallucination rate is down to 4%. Now the question is: does this scale? Chapter 5 is **"The Index"** — scale the retrieval layer from 200 documents to 50,000; benchmark HNSW vs IVF on recall vs latency; understand when brute-force exhaustive search is acceptable and when ANN indexes are required.
 
-**What we know so far:**
-- ✅ Ch.1-3: LLM fundamentals, prompt engineering, CoT reasoning
-- ✅ Ch.4: RAG & embeddings (chunk → embed → retrieve → ground answers)
-- ⚡ **Current metrics**: 18% conversion, ~5% error rate, $0.008/conv, 2-3s p95 latency
+**The investigation scenario:**
 
-**What's blocking us:**
-
-🚨 **RAG retrieval working at prototype scale, but CEO wants franchise expansion proof**
-
-**The failure scenario (last Friday):**
-
-CEO: "Great demo! Let's expand to all 10 locations next month. I need the system to handle:
-- **All 10 store menus** (5,000 menu chunks)
-- **Seasonal recipes** (15,000 recipe chunks for 'build your own')
-- **Customer reviews** (30,000 review chunks for quality signals)
-- **Total: 50,000 chunks** across the franchise
-
-Can your system handle this?"
-
-You run the math:
+The board asks: "Your RAG experiment works on 200 wiki pages. Our production knowledge base has 50,000 documents and grows by 200/week. Will this still work?" You run the scaling analysis:
 
 ```python
-# Current PizzaBot RAG implementation (prototype)
-def retrieve_menu_chunks(query: str, top_k=5):
-    query_embedding = embed(query)  # 768-dim vector
+# Current RAG retrieval (200 documents)
+def retrieve_chunks(query: str, top_k=5):
+    query_vec = embed(query)  # 768-dim vector
 
-    # Brute-force search: compare query to ALL chunks
-    similarities = []
-    for chunk in menu_corpus:  # Currently 500, CEO wants 50,000
-        chunk_embedding = chunk.vector  # 768-dim
-        similarity = cosine(query_embedding, chunk_embedding)
-        similarities.append((chunk, similarity))
-
-    # Sort and return top-k
+    # Brute-force exhaustive search
+    similarities = [(chunk, cosine(query_vec, chunk.vec)) for chunk in corpus]
     similarities.sort(key=lambda x: x[1], reverse=True)
-    return [chunk for chunk, _ in similarities[:top_k]]
+    return [c for c, _ in similarities[:top_k]]
 
-# Current performance: 500 chunks × 768 dims = 384,000 ops/query
-# Current latency: ~15ms ✅
-
-# Franchise scale: 50,000 chunks × 768 dims = 38,400,000 ops/query
-# Projected latency: ~1.5s ❌ (100× more chunks = 100× slower)
+# 200 docs × 768 dims = 153,600 ops/query → ~5ms latency ✅
+# 50,000 docs × 768 dims = 38,400,000 ops/query → ~1,200ms latency ❌
 ```
 
-**Customer experience at franchise scale:**
+**Benchmark: brute-force vs ANN at 50k documents**
 
-User: "Show me gluten-free pizzas under 600 calories at the downtown location"
+| Approach | Latency | Recall@10 |
+|---|---|---|
+| Brute-force | ~1,200ms | 100% |
+| IVF (nlist=256) | ~18ms | 97.2% |
+| HNSW (M=16, ef=200) | ~4ms | 98.6% |
 
-Bot: [1.5 second pause... user sees loading spinner]
+The 1.2–3% recall trade-off is an accepted engineering compromise for most applications.
 
-Bot: "Here are some options: Veggie Garden (gluten-free crust available), ..."
+**What this chapter unlocks:**
 
-User: "What about vegan cheese?"
+🚀 **Production-scale retrieval with ANN indexes:**
+1. **HNSW** (Hierarchical Navigable Small World): graph-based, high recall, fast query, high memory
+2. **IVF** (Inverted File Index): cluster-based, lower memory, slightly lower recall
+3. **DiskANN**: disk-resident index for datasets too large for RAM
+4. **Distance metrics**: cosine vs. dot product vs. L2 — when each applies
+5. **Production architecture**: index build time, update frequency, sharding strategies
 
-Bot: [1.5 second pause... user sees loading spinner again]
-
-**Result**: 40% of users abandon during the 1.5s pauses. Conversion drops from 18% → 11% (below 22% phone baseline). **CEO cancels franchise rollout.**
-
-**Why brute-force won't scale:**
-
-✅ **Works fine NOW**: 500 menu chunks, 50 daily users, 15ms retrieval latency
+✅ **AI Literacy Kit finding after Ch.5:**
+HNSW at M=16 delivers 98.6% recall at 4ms latency for 50k documents — 300× faster than brute-force with only 1.4% recall loss. The recall-latency curve is the key trade-off to present to stakeholders.
 ❌ **Breaks at franchise scale**:
 - **50,000 chunks** (10 locations + recipes + reviews) → **1.5s latency** → 40% abandonment
 - **500 concurrent users** (Friday dinner rush) → **server CPU maxed out** → timeouts

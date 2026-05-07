@@ -1,18 +1,18 @@
-# AI Track — Authoring Guide
+# LLM Fundamentals Track — Authoring Guide
 
-> **This document tracks the chapter-by-chapter structure of the AI notes library.**
-> Each chapter lives under `notes/03-ai/` in its own folder, containing a .md file and a Jupyter notebook.
+> **This document tracks the chapter-by-chapter structure of the LLM Fundamentals notes library.**
+> Each chapter lives under `notes/03a-ai/` in its own folder, containing a .md file and a Jupyter notebook.
 > Read this before editing any chapter to keep tone, structure, and the running example consistent.
 >
-> **📚 Updated:** Now includes comprehensive pedagogical patterns extracted from cross-track analysis (see §"Pedagogical Patterns & Teaching DNA" below).
+> **📚 Updated:** Track split from 03-ai into 03a-ai (LLM Fundamentals) and 03b-agentic-ai (Agentic AI).
 
 <!-- LLM-STYLE-FINGERPRINT-V1
-canonical_chapters: ["notes/03-ai/ch01_llm_fundamentals/llm-fundamentals.md", "notes/03-ai/ch02_prompt_engineering/prompt-engineering.md"]
+canonical_chapters: ["notes/03a-ai/ch01-llm-fundamentals/llm-fundamentals.md", "notes/03a-ai/ch02-prompt-engineering/prompt-engineering.md"]
 voice: second_person_practitioner
 register: technical_but_conversational_business_focused
 formula_motivation: required_before_each_formula
-numerical_walkthroughs: judicious_pizzabot_traces_when_clarifying
-dataset: mamma_rosa_pizzabot_only_no_generic_chatbot_examples
+numerical_walkthroughs: judicious_investigation_traces_when_clarifying
+dataset: intelligence_audit_investigation_arc_no_generic_chatbot_examples
 failure_first_pedagogy: true
 callout_system: {insight:"💡", warning:"⚠️", constraint:"⚡", optional_depth:"📖", forward_pointer:"➡️"}
 mermaid_color_palette: {primary:"#1e3a8a", success:"#15803d", caution:"#b45309", danger:"#b91c1c", info:"#1d4ed8"}
@@ -22,61 +22,56 @@ conversation_trace_style: step_by_step_with_token_counts_and_costs
 security_pattern: environment_variables_only_no_hardcoded_keys
 forward_backward_links: every_concept_links_to_where_it_was_introduced_and_where_it_reappears
 conformance_check: compare_new_chapter_against_ch01_llm_fundamentals_and_ch02_prompt_engineering_before_publishing
-red_lines: [no_formula_without_business_metric_consequence, no_concept_without_pizzabot_grounding, no_generic_chatbot_examples, no_section_without_forward_backward_context, no_code_with_security_antipatterns, no_callout_box_without_actionable_content]
+red_lines: [no_formula_without_business_metric_consequence, no_generic_chatbot_examples, no_section_without_forward_backward_context, no_code_with_security_antipatterns, no_callout_box_without_actionable_content]
 -->
 
 ---
 
 ## The Plan
 
-The AI track is currently 10 core chapters covering the full LLM agent stack from fundamentals to production. We're maintaining them as standalone, interconnected learning modules with a unified Grand Challenge arc:
+The LLM Fundamentals track (03a-ai) covers 5 core chapters: everything from how LLMs work internally to RAG-grounded retrieval at scale. This track is the prerequisite for the Agentic AI track (03b-agentic-ai).
 
 ```
-notes/03-ai/
-├── ch01_llm_fundamentals/
+notes/03a-ai/
+├── ch01-llm-fundamentals/
 │   ├── llm-fundamentals.md          ← Technical deep-dive + diagrams
 │   └── notebook.ipynb              ← Runnable code examples
-├── ch02_prompt_engineering/
+├── ch02-prompt-engineering/
 │   ├── prompt-engineering.md
 │   └── notebook.ipynb
-├── ch03_cot_reasoning/
+├── ch03-cot-reasoning/
 │   ├── cot-reasoning.md
 │   └── notebook.ipynb
-... (10 chapters total)
+├── ch04-rag-and-embeddings/
+│   ├── rag-and-embeddings.md
+│   └── notebook.ipynb
+├── ch05-vector-dbs/
+│   ├── vector-dbs.md
+│   └── notebook.ipynb
 ```
 
-Each module is self-contained but builds on previous chapters. The running example (Mamma Rosa's PizzaBot) threads through all 10 chapters, showing progressive capability unlocks toward a production-ready conversational AI system.
+Each module is self-contained but builds on previous chapters. The running example (Intelligence Audit) threads through all 5 chapters, showing progressive capability understanding toward an AI Literacy Kit deliverable.
 
 ---
 
-## The Running Example — Mamma Rosa's PizzaBot
+## The Running Example — The Intelligence Audit
 
-Every chapter uses **one consistent system**: **Mamma Rosa's Pizza** — a regional pizza chain replacing phone-based ordering with an AI chatbot.
+Every chapter uses **one consistent investigation framework**: a **Staff Engineer leading an AI Adoption Review** — evaluating GPT-4 and Claude 3.5 Sonnet for use in their organization's internal tooling.
 
-**The scenario**: *You're the Lead AI Engineer at Mamma Rosa's Pizza, and the CEO demands proof that AI chatbots deliver better business outcomes than traditional phone orders.*
+**The scenario**: *You're the Staff Engineer assigned to the AI Adoption Review at a mid-size tech company. Your deliverable: an "AI Literacy Kit" — a set of findings, benchmarks, and recommendations that will guide the engineering org's AI adoption decisions.*
 
-The system is defined in [AIPrimer.md](ai-primer.md) and includes:
-- **User interface**: Web widget + SMS
-- **RAG corpus**: Menu, recipes, allergens, locations, delivery zones, FAQ, pricing (all private company data)
-- **External tools**: `find_nearest_location()`, `check_item_availability()`, `calculate_order_total()`
-- **Example queries**: "cheapest gluten-free pizza under 600 calories, available now"
+The investigation framework follows a hypothesis → experiment → finding cadence:
 
-This one system threads naturally through all 10 chapters:
+| Chapter | Hypothesis | Experiment | Finding |
+|---|---|---|---|
+| Ch.1 — LLM Fundamentals | "Black box" — how does next-token prediction become coherent answers? | Side-by-side GPT-4 vs. Claude on knowledge/creative/logic tasks | Sampling strategy and context window explain output quality variance |
+| Ch.2 — Prompt Engineering | "We can control LLM behavior through prompts" | System prompts, few-shot, JSON output mode on each model | Structured prompting reduces output variance; models respond differently to system prompt style |
+| Ch.3 — CoT Reasoning | "Step-by-step prompting improves multi-step logic" | Logic puzzles, constraint satisfaction, ambiguous queries | CoT improves accuracy 30-50 pp at 100B+ scale; self-consistency adds +8pp at 5× cost |
+| Ch.4 — RAG & Embeddings | "Grounding in private docs reduces hallucination" | Internal wiki (200 docs) → RAG pipeline | Hallucination rate drops 38% → 4%; remaining errors are retrieval failures |
+| Ch.5 — Vector DBs | "ANN indexes scale RAG to production corpus size" | Brute-force vs. IVF vs. HNSW on 50k-doc corpus | HNSW at M=16: 98.6% recall at 4ms (300× faster than brute-force) |
 
-| Chapter | What We Build / Learn |
-|---|---|
-| Ch.1 — LLM Fundamentals | Understand tokenization, sampling, context windows — but raw GPT gives unreliable answers |
-| Ch.2 — Prompt Engineering | System prompts + few-shot → structured outputs, but still 15% error rate |
-| Ch.3 — CoT Reasoning | Step-by-step reasoning → can handle multi-constraint queries ("cheapest gluten-free <600 cal") |
-| Ch.4 — RAG & Embeddings | Semantic search over menu corpus → grounded answers, <5% error rate ✅ |
-| Ch.5 — Vector DBs | HNSW/IVF indexes → faster retrieval (5s → 4s response time) |
-| Ch.6 — ReAct & Semantic Kernel | Tool orchestration → can call APIs + proactive upselling ("add garlic bread?") |
-| Ch.7 — Evaluating AI Systems | RAGAS metrics, conversion tracking → measure accuracy, business impact, hallucination rate |
-| Ch.8 — Fine-Tuning | LoRA adapter for Mamma Rosa's brand voice → cost reduction + better upsells |
-| Ch.9 — Safety & Hallucination | Prompt injection defense, guardrails → zero successful attacks ✅ |
-| Ch.10 — Cost & Latency | KV caching, model tiers, streaming → optimized for <3s, <$0.08/conv |
+> **Why this works:** The investigation arc demonstrates LLM behavior (ch1), control surfaces (ch2), reasoning (ch3), grounding (ch4), and scale (ch5) — the five foundational questions any engineering team must answer before deploying LLMs in production.
 
-> **Why this works:** The system demonstrates RAG (private menu data), tool use (external APIs), reasoning (multi-step queries), safety (adversarial users), and cost optimization (business constraints) — all the production challenges real AI engineers face.
 
 ---
 
