@@ -75,11 +75,11 @@ Step 3 — Search the vector store with this embedding
 
 ```
 Generation in progress:
-"The Veggie Feast contains dairy and gluten. For a nut-free option, the [LOW CONFIDENCE →
+"The service handles authentication and session management. For a zero-downtime deploy, the [LOW CONFIDENCE →
                                                                          PAUSE AND RETRIEVE]"
-→ Retrieval query: "Mamma Rosa nut allergen kitchen policy"
-→ Retrieved: "All Mamma Rosa pizzas are prepared in a nut-free kitchen."
-→ Continue: "...entire Mamma Rosa kitchen is nut-free, so cross-contamination risk is minimal."
+→ Retrieval query: "zero-downtime deployment procedure for auth service"
+→ Retrieved: "Auth service supports blue-green deployment via the deploy.sh --blue-green flag."
+→ Continue: "...auth service supports blue-green deployment, enabling zero-downtime releases."
 ```
 
 **When to use:** Long-form document generation (reports, summaries) where different sections require different grounding evidence.
