@@ -102,6 +102,8 @@ CEO's reaction: "This is embarrassing. My phone staff would never give wrong inf
 
 ## 1 · Core Idea
 
+All four failures in §0 trace back to a single mechanism. The model wasn't broken — it was doing exactly what it was built to do. To understand why that produces a 40% error rate on Mamma Rosa's menu, you need to understand what that mechanism actually is.
+
 A **large language model** is a transformer decoder (Ch.17) trained to predict the next token given all previous tokens, on internet-scale text. That single objective — next-token prediction — produces a model that appears to reason, retrieve facts, write code, and generate plans. None of those behaviours were explicitly programmed. They emerge from scale.
 
 ```
@@ -121,11 +123,13 @@ Stage 3: RLHF / DPO         Aligned with human preferences → helpful, harmless
 
 Each stage is covered in detail below.
 
+> 💡 **Core idea verdict:** The raw model failure in §0 wasn't a bug — a next-token predictor trained on internet text has no reason to know Mamma Rosa's menu, and every reason to produce fluent-sounding plausible completions (i.e., hallucinations). Stages 2 and 3 below explain why applying SFT + RLHF still doesn't fix it. That fix requires grounding — Ch.4.
+
 ---
 
 ## 2 · Tokenisation
 
-The model never sees raw text. Text is first broken into **tokens** — subword units — using a byte-pair encoding (BPE) vocabulary.
+Before you can estimate API costs, understand why multi-constraint queries like "cheapest gluten-free pizza under 600 calories" behave inconsistently, or reason about how much menu data fits in a single call — you need to understand what the model actually receives. It never sees raw text. Text is first broken into **tokens** — subword units — using a byte-pair encoding (BPE) vocabulary.
 
 ### How BPE Works
 
@@ -149,6 +153,8 @@ Start with character-level vocabulary: [a, b, c, ..., z, space, ...]
 | Code is token-dense | `self.attention_weights[layer_idx]` may be 6–10 tokens |
 | Numbers tokenise byte-by-byte | `12345` → `[123, 45]` in some vocabularies — arithmetic is hard |
 
+> 💡 **Tokenisation → cost:** A PizzaBot conversation averages ~500 tokens. At GPT-3.5 pricing ($0.002/1k tokens), that's $0.001 per conversation — $10/month for 10,000 daily conversations. Tokenisation is how you convert vague "it'll be cheap" into a number the CEO can budget against.
+
 ### The Context Window
 
 The context window is the maximum number of **tokens** the model can process in a single forward pass — both input (prompt + retrieved chunks + history) and output (generated tokens).
@@ -162,9 +168,13 @@ The context window is the maximum number of **tokens** the model can process in 
 
 Larger context windows do not mean unlimited memory. Empirically, models show **lost-in-the-middle** degradation: information at the beginning and end of a long context is recalled more reliably than information buried in the middle.
 
+> 💡 **Context window → PizzaBot:** Mamma Rosa's full menu, allergen list, and system prompt together is ~2,000 tokens. A 20-turn conversation history adds another ~3,000. At GPT-3.5's 4k limit, you're already at the edge — you must either summarise old turns or upgrade to a larger context model. And if you inject the allergen warning in the middle of a long context, lost-in-the-middle means the model may miss the gluten flag. Keep safety-critical facts near the top.
+
 ---
 
 ## 3 · Sampling — Temperature, Top-p, Top-k
+
+Failure #4 in §0 — "unreliable output format" — is a direct consequence of how the model picks the next token. The model doesn't output one answer; it outputs a probability distribution over all ~50,000 vocabulary tokens. Sampling parameters are the dial that controls which token you draw from that distribution.
 
 The model outputs a probability distribution over the vocabulary at each step. **Sampling parameters** control how you select the next token from that distribution.
 
@@ -179,6 +189,8 @@ $$p'_i = \frac{e^{z_i / T}}{\sum_j e^{z_j / T}}$$
 | $T > 1$ | Distribution flattens — more randomness, less coherent |
 
 **Rule of thumb:** factual retrieval → low T (0.0–0.3); creative generation → higher T (0.7–1.0); code → 0.0–0.2.
+
+> 💡 **Temperature → PizzaBot:** Order confirmation (`{"pizza": "Margherita", "size": "large"}`) must be deterministic — use `temperature=0`. Menu recommendations ("something spicy with a twist") benefit from variety — use `temperature=0.8`. Getting this wrong in either direction costs you: too-random order confirmations cause wrong orders; too-deterministic recommendations feel robotic.
 
 ### Top-p (Nucleus Sampling)
 
@@ -198,6 +210,8 @@ Keep only the k highest-probability tokens and renormalise. Less adaptive than t
 ---
 
 ## 4 · The Three Training Stages
+
+Failures #1 and #2 in §0 — "doesn't know Mamma Rosa's menu" and "hallucinates calorie counts" — both trace to the same root cause: *what the model was trained on, and what objective it was trained toward*. The three stages below explain how a raw text predictor becomes an instruction-following assistant, and why that still leaves it useless without grounding in your private data.
 
 ### Stage 1 — Pretraining
 
@@ -251,7 +265,13 @@ where $\pi_{ref}$ is the frozen SFT model and $\beta$ controls how far the train
 
 **The sycophancy trap:** RLHF optimises for human *approval*, which is not the same as human *benefit*. Models learn to agree with the user's framing even when it's wrong. This is why you can sometimes "convince" a model to change a correct answer by pushing back.
 
-### Stage 4 (Optional) — Parameter-Efficient Fine-Tuning (PEFT)
+> 💡 **Training stages → PizzaBot diagnosis:** A pretrained model (Stage 1 only) treats "What's on the menu?" as a text-completion prompt — it'll generate plausible-sounding pizza names from its training data. An instruct model (Stage 2+3) correctly attempts to answer the question — but answers from memory, not from Mamma Rosa's actual menu. Both stages produce the hallucinations in §0. The fix isn't more training. It's grounding (Ch.4 RAG).
+
+> ➡️ **Why the raw model still fails even after SFT + RLHF:** Stages 2 and 3 change *behaviour*, not *knowledge*. The model learns to follow instructions and be helpful — but it still knows only what was in the pretraining corpus. Mamma Rosa's private menu was not on the internet. Ch.4 solves this.
+
+### Stage 4 (Optional, Preview) — Parameter-Efficient Fine-Tuning (PEFT)
+
+> 📖 **This is a Ch.10 preview.** You don't need PEFT to build PizzaBot — the system works without it until Ch.8, where you'll add a LoRA adapter for brand voice. This section exists here because the interview table asks about it. Read it now for vocabulary; the full implementation is in [ch10](../ch10-fine-tuning/fine-tuning.md).
 
 **Technical definition.** PEFT is a family of fine-tuning methods that freeze the pretrained model weights and train only a small set of additional or modified parameters — typically 0.01–1% of total model size — while keeping the remainder of the model locked. The pretrained weights $W$ are treated as a fixed feature extractor; only the adapter parameters $\theta_{adapt}$ are updated during training. The resulting model behaves as if fully fine-tuned but at a fraction of the compute and memory cost.
 
@@ -348,6 +368,8 @@ use case: large frozen model, minimal infra change, lightweight per-tenant perso
 
 ## 5 · Emergent Capabilities
 
+The training stages above explain what a model is *taught*. This section explains what it *develops on its own* at scale — capabilities that matter directly for what you'll build in the next three chapters.
+
 Several capabilities of LLMs were not explicitly trained for and appeared qualitatively at sufficient scale:
 
 | Capability | Approximate threshold |
@@ -359,9 +381,13 @@ Several capabilities of LLMs were not explicitly trained for and appeared qualit
 
 **"Emergent"** does not mean magical. These capabilities exist in the training data — it's that the model needs sufficient capacity to compress and reconstruct the reasoning patterns latent there.
 
+> ➡️ **Why emergence thresholds matter for PizzaBot:** In-context learning (≥7B params) is what makes few-shot prompting work — you'll use it in Ch.2. Chain-of-thought reasoning (≥100B params) is what makes multi-constraint queries work — you'll use it in Ch.3. Knowing these thresholds tells you when it's worth trying a capability vs. when you need to engineer around its absence by choosing a larger model or a different architecture.
+
 ---
 
 ## 6 · What "Model Size" Actually Means
+
+The CEO's model selection question — GPT-4 at \$0.03/1k tokens vs. GPT-3.5 at \$0.002/1k — is a 15× cost difference. Whether that's worth it depends on what parameter count actually buys you, and what it costs to run.
 
 ```
 Parameters = weights in all attention and FFN matrices
@@ -395,6 +421,8 @@ $$y = \sum_{i=1}^{k} G(x)_i \cdot E_i(x) \qquad G(x) = \text{TopK}\!\left(\text{
 
 **Inference cost scales with parameter count, context length, and batch size.** A 70B model at 128k context costs roughly 50× more to run than a 7B model at 4k context. This is why RAG and agentic applications use smaller, instruction-tuned models wherever possible.
 
+> 💡 **Model selection for PizzaBot:** Use GPT-3.5-turbo for order confirmation and simple menu queries (deterministic, low latency, $0.002/1k). Reserve GPT-4-class for complex multi-constraint queries or safety-sensitive responses where accuracy outweighs cost. Ch.10 shows how a LoRA-adapted 7B open model can match GPT-3.5 quality at ~$0.0003/1k — a further 6× cost reduction once the system is stable.
+
 ---
 
 ## 7 · Key Distinctions Every Engineer Gets Asked
@@ -410,21 +438,7 @@ $$y = \sum_{i=1}^{k} G(x)_i \cdot E_i(x) \qquad G(x) = \text{TopK}\!\left(\text{
 
 ---
 
-## 8 · PizzaBot Connection
-
-> See [AIPrimer.md](../ai-primer.md) for the full system definition.
-
-| Concept | Where it shows up in PizzaBot |
-|---|---|
-| **Temperature** | `temperature=0` for the JSON order confirmation (no hallucinated prices). `temperature=0.8` for the "surprise me with a pizza" recommendation path. |
-| **BPE tokenisation** | `"pepperoni"` → 3 tokens; `"gluten-free"` → 3 tokens. Matters when estimating the cost of embedding the menu corpus and when counting context window usage per turn. |
-| **Context window** | A long SMS session (20+ back-and-forth turns) plus 5 retrieved chunks plus the system prompt approaches 8k tokens. This is why the agent must summarise older turns rather than pass the full history. |
-| **Lost-in-the-middle** | If the allergen chunk is injected in the middle of a long context, the model may miss the gluten flag. Keep critical safety facts (allergens) near the system prompt or in a separate grounding block. |
-| **RLHF sycophancy** | User: "I was told the Margherita is £8 today." Model (RLHF-aligned) may agree even if the RAG corpus says £13.99. Mitigation: grounding constraint + fact-check against retrieved price. |
-
----
-
-## 9 · Progress Check — What We Can Solve Now
+## 8 · Progress Check — What We Can Solve Now
 
 **Unlocked capabilities:**
 - ✅ **Understand LLM architecture**: Know what pretraining → SFT → RLHF produces
@@ -514,7 +528,7 @@ $$y = \sum_{i=1}^{k} G(x)_i \cdot E_i(x) \qquad G(x) = \text{TopK}\!\left(\text{
 
 ---
 
-## 10 · Bridge
+## 9 · Bridge
 
 LLM Fundamentals established the model: a scaled, aligned next-token predictor with a finite context window and probabilistic sampling. The next document — `CoTReasoning.md` — shows how you exploit that predictor to produce step-by-step reasoning chains, and how those chains become the planning substrate for an agentic loop.
 
