@@ -1,6 +1,6 @@
 # RAG & Embeddings — Advanced Patterns, Evaluation, and Failure Modes
 
-> **Companion to:** [RAGAndEmbeddings.md](rag-and-embeddings.md)  
+> **Companion to:** [RAGAndEmbeddings.md](rag-and-embeddings.md)
 > This document adds: advanced RAG patterns (HyDE, FLARE, query decomposition), evaluation frameworks (RAGAS), sparse vs. dense embeddings, common failure modes, and a structured interview Q&A.
 
 ---
@@ -93,12 +93,12 @@ Generation in progress:
 **The solution:** Decompose the user query into atomic sub-queries, retrieve for each independently, then synthesize:
 
 ```
-Original: "Compare the chunking strategy and distance metric defaults used by 
+Original: "Compare the chunking strategy and distance metric defaults used by
            LangChain vs. Semantic Kernel for RAG applications."
 
 Decomposed:
   Q1: "LangChain default chunking strategy"
-  Q2: "Semantic Kernel default chunking strategy"  
+  Q2: "Semantic Kernel default chunking strategy"
   Q3: "LangChain distance metric defaults for vector search"
   Q4: "Semantic Kernel distance metric defaults for vector search"
 
@@ -132,8 +132,8 @@ Before embedding each chunk, prefix it with an LLM-generated statement that situ
 ```
 Original chunk: "Revenue grew by 3% over the previous quarter."
 
-Contextualized chunk: 
-"This excerpt is from ACME Corp's Q2 2023 SEC filing (Section 4: Financial Highlights). 
+Contextualized chunk:
+"This excerpt is from ACME Corp's Q2 2023 SEC filing (Section 4: Financial Highlights).
 Revenue grew by 3% over the previous quarter."
 ```
 
@@ -194,12 +194,12 @@ User Query
     ├─► Dense (semantic) search → ranked list A
     └─► Sparse (BM25/lexical) search → ranked list B
            │
-    Reciprocal Rank Fusion (RRF)  
+    Reciprocal Rank Fusion (RRF)
            │
     └─► Merged ranked list → Top-K chunks → LLM
 ```
 
-**RRF formula:** `score(d) = Σ 1 / (k + rank_i(d))` where k=60 is standard.  
+**RRF formula:** `score(d) = Σ 1 / (k + rank_i(d))` where k=60 is standard.
 This is robust to outlier rank positions and doesn't require score normalization across methods.
 
 ---
@@ -221,7 +221,7 @@ You cannot improve what you don't measure. RAGAS (Retrieval-Augmented Generation
 
 ```
 High Faithfulness, Low Context Recall → Retrieval problem: relevant chunks not retrieved
-Low Faithfulness, High Context Recall → Generation problem: LLM ignoring retrieved context  
+Low Faithfulness, High Context Recall → Generation problem: LLM ignoring retrieved context
 Low Context Precision              → Too many irrelevant chunks retrieved (reduce k or add re-ranking)
 Low Answer Relevancy               → LLM is answering a different question than what was asked
 ```
@@ -324,7 +324,7 @@ Are you dealing with multi-hop questions?
     NO  → Single-step retrieval is fine
 
 Is your document set updating frequently?
-    YES → Streaming ingestion + HNSW (supports real-time inserts) 
+    YES → Streaming ingestion + HNSW (supports real-time inserts)
     NO  → Batch ingestion + IVF or DiskANN
 ```
 
@@ -332,29 +332,29 @@ Is your document set updating frequently?
 
 ## 8. Interview Q&A — RAG and Embeddings
 
-**Q: Explain the difference between the ingestion pipeline and the query pipeline in RAG.**  
+**Q: Explain the difference between the ingestion pipeline and the query pipeline in RAG.**
 A: The ingestion pipeline runs offline: load documents → clean → chunk → embed → store in vector DB. The query pipeline runs at inference time: embed the user query → similarity search → retrieve top-k chunks → compose a prompt with retrieved context → LLM generates a grounded answer. The critical constraint is that both pipelines must use the same embedding model and normalization.
 
-**Q: What is semantic dilution and how does chunking address it?**  
+**Q: What is semantic dilution and how does chunking address it?**
 A: Embedding models produce a single fixed-size vector regardless of input length. A 3,000-word document chunk and a 100-word chunk both produce one vector. The long chunk's vector is an "average" over all its topics, making it less discriminative for similarity search. Chunking breaks the document into focused segments so each vector represents a narrower, more searchable concept.
 
-**Q: What is HyDE and why does it improve retrieval?**  
+**Q: What is HyDE and why does it improve retrieval?**
 A: HyDE generates a hypothetical answer to the user's query, then embeds that answer for retrieval. This resolves the semantic asymmetry between short interrogative queries and long declarative documents — the hypothetical answer lives in the same linguistic register as real document chunks.
 
-**Q: Explain hybrid retrieval. Why is it better than pure vector search?**  
+**Q: Explain hybrid retrieval. Why is it better than pure vector search?**
 A: Hybrid retrieval combines dense (semantic) vector search with sparse (BM25/lexical) search, merging results via Reciprocal Rank Fusion. It excels because dense search finds paraphrases and conceptual matches while sparse search finds exact keyword matches. Neither alone handles all query types — hybrid covers both.
 
-**Q: What are the four RAGAS metrics? What does each diagnose?**  
+**Q: What are the four RAGAS metrics? What does each diagnose?**
 A: Faithfulness (are claims grounded in context?), Answer Relevancy (does the answer address the question?), Context Precision (are retrieved chunks all relevant?), Context Recall (was all necessary information retrieved?). Together they pinpoint whether failures are in retrieval or generation.
 
-**Q: What is the lost-in-the-middle problem?**  
+**Q: What is the lost-in-the-middle problem?**
 A: LLMs attend disproportionately to content at the beginning and end of long contexts. Relevant information in the middle of a large context window is often underweighted, degrading answer quality. Fix: reorder retrieved chunks so the most important are placed first and last.
 
-**Q: What is the difference between CLS pooling and mean pooling?**  
+**Q: What is the difference between CLS pooling and mean pooling?**
 A: CLS pooling uses the final hidden state of the `[CLS]` token as the sentence representation — efficient but depends on the model being trained with this objective. Mean pooling averages all token embeddings (excluding padding) — often outperforms CLS because it incorporates signal from every token. Most modern embedding models (SentenceTransformers) use mean pooling.
 
-**Q: When should you use contextual retrieval vs. standard chunking?**  
+**Q: When should you use contextual retrieval vs. standard chunking?**
 A: Use contextual retrieval when your corpus has many chunks that are meaningful only in the context of the broader document (e.g., "Revenue grew by 3% quarter-over-quarter" is meaningless without knowing which company and which quarter). The extra LLM call per chunk costs money but can reduce retrieval failures by ~67%.
 
-**Q: How does chunk size affect ANN recall and LLM context window usage?**  
+**Q: How does chunk size affect ANN recall and LLM context window usage?**
 A: Smaller chunks → more vectors in the index → higher chance a relevant chunk is in top-k (better recall) but each chunk has less context for answer generation. Larger chunks → fewer vectors → possibly lower recall but each chunk contains more context. You must also ensure total retrieved context (k × chunk_size) fits within the LLM's context window minus prompt/answer overhead.
