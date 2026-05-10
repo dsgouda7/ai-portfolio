@@ -622,7 +622,7 @@ $$
 - **pos** = where the token sits in the sentence (1st word, 2nd word, etc.)
 - **i** = which "frequency band" we're in (like different clock hands: hour hand moves slowly, second hand moves fast)
 - **2i** and **2i+1** = we alternate between sine and cosine for each dimension
-- **10000^(2i/d_model)** = the "speed" of the wave — early dimensions oscillate slowly (like position "1" vs "100" look different), late dimensions oscillate fast (like position "1" vs "2" look different)
+- **10000^(2i/d\_model)** = the "speed" of the wave — early dimensions oscillate slowly (like position "1" vs "100" look different), late dimensions oscillate fast (like position "1" vs "2" look different)
 
 | Symbol | Meaning |
 |--------|---------|
