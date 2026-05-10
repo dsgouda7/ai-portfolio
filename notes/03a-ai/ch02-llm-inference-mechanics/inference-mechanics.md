@@ -109,7 +109,7 @@ You're re-reading the same 100-word prompt **500 times**. And each time the essa
 **Key insight:** In causal attention, token $t$ computes attention scores with tokens $1 \ldots t$ using:
 
 $$
-\text{attention\_weights}[t] = \text{softmax}\left(\frac{q_t K^T}{\sqrt{d_k}}\right)
+\mathrm{attention\_weights}[t] = \text{softmax}\left(\frac{q_t K^T}{\sqrt{d_k}}\right)
 $$
 
 where $K = [k_1, k_2, \ldots, k_t]$ (the key matrix for all prior tokens). Since tokens $1 \ldots t-1$ are **frozen** (we're not changing the prompt or already-generated tokens), their keys and values never change.
@@ -205,7 +205,7 @@ This is why **quantization helps decode more than prefill** — int8 weights are
 **The math (if you're capacity planning):**
 
 $$
-\text{Cache size per layer} = 2 \times (\text{seq\_len} \times d_{\text{model}}) \times \text{precision}
+\text{Cache size per layer} = 2 \times (\text{seq-len} \times d_\text{model}) \times \text{precision}
 $$
 
 **Concrete example (LLaMA 2 7B, fp16, seq_len=2048):**
@@ -213,7 +213,7 @@ $$
 - Per layer: $2 \times 2048 \times 4096 \times 2 = 33.5$ MB
 - Total (32 layers): $32 \times 33.5 = 1{,}073$ MB ≈ **1 GB per request**
 
-For a 70B model with $d_{\text{model}} = 8192$:
+For a 70B model with $d_\text{model} = 8192$:
 - Per layer: $2 \times 2048 \times 8192 \times 2 = 134$ MB
 - Total (80 layers): $80 \times 134 = 10{,}752$ MB ≈ **10.7 GB per request**
 
@@ -253,14 +253,14 @@ For a 70B model with $d_{\text{model}} = 8192$:
 
 **The detailed breakdown (for capacity planning):**
 
-For a 7B-parameter decoder model (32 layers, $d_{\text{model}} = 4096$, $d_{\text{ffn}} = 11008$):
+For a 7B-parameter decoder model (32 layers, $d_\text{model} = 4096$, $d_\text{ffn} = 11008$):
 
 | Phase | Operation | FLOPs per Token | What it means |
 |-------|-----------|-----------------|---------------|
-| **Prefill** | Attention ($QK^T$) | $n^2 \times d_{\text{model}}$ | Compare every prompt token to every other |
-| | Feed-forward | $d_{\text{model}} \times d_{\text{ffn}}$ | 90M (constant per token) |
-| **Decode** (with KV cache) | Attention | $t \times d_{\text{model}}$ | Compare new token to cached ones (linear, not quadratic) |
-| | Feed-forward | $d_{\text{model}} \times d_{\text{ffn}}$ | 90M (dominates — 10× more than attention) |
+| **Prefill** | Attention ($QK^T$) | $n^2 \times d_\text{model}$ | Compare every prompt token to every other |
+| | Feed-forward | $d_\text{model} \times d_\text{ffn}$ | 90M (constant per token) |
+| **Decode** (with KV cache) | Attention | $t \times d_\text{model}$ | Compare new token to cached ones (linear, not quadratic) |
+| | Feed-forward | $d_\text{model} \times d_\text{ffn}$ | 90M (dominates — 10× more than attention) |
 
 > **Math-Free Summary:** Without KV caching, generating a 500-token response requires recomputing attention 175,000 times. With KV caching, you compute once and reuse. This is why real LLM inference is 10-20× faster than the naive approach.
 
@@ -432,8 +432,8 @@ If GPT-4 serves 100M requests/day at 500 tokens/request:
 
 **Reading the diagram:**
 1. **Prefill (top):** Process all prompt tokens in parallel; compute full $(n \times n)$ attention matrix; cache all $K, V$
-2. **Decode step 1 (middle):** Generate token 1; compute $q_1 \cdot K_{\text{cached}}$; append $k_1, v_1$ to cache
-3. **Decode step 2 (bottom):** Generate token 2; compute $q_2 \cdot K_{\text{cached}}$ (now includes $k_1$); append $k_2, v_2$
+2. **Decode step 1 (middle):** Generate token 1; compute $q_1 \cdot K_\text{cached}$; append $k_1, v_1$ to cache
+3. **Decode step 2 (bottom):** Generate token 2; compute $q_2 \cdot K_\text{cached}$ (now includes $k_1$); append $k_2, v_2$
 4. **KV cache grows incrementally** — no recomputation of past tokens
 
 ---
