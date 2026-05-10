@@ -835,7 +835,7 @@ The **cross-attention** layer is the key innovation. In standard self-attention,
 - $K$, $V$ come from the **encoder** (the input sequence)
 
 $$
-\mathrm{cross\_attn\_output}[i] = \sum_{j=1}^{n_{\text{encoder}}} \mathrm{softmax}\left(\frac{q_i^{\text{decoder}} \cdot k_j^{\text{encoder}}}{\sqrt{d_k}}\right) \cdot v_j^{\text{encoder}}
+\mathrm{cross\_attn\_output}[i] = \sum_{j=1}^{n_{\mathrm{encoder}}} \mathrm{softmax}\left(\frac{q_{i}^{\mathrm{decoder}} \cdot k_{j}^{\mathrm{encoder}}}{\sqrt{d_k}}\right) \cdot v_{j}^{\mathrm{encoder}}
 $$
 
 Each decoder token queries the entire encoded input — "which parts of the input are relevant for generating this output token?"
