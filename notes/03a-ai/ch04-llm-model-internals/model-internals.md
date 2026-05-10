@@ -350,7 +350,7 @@ Training requires **backward passes** to compute gradients. **Memory cost explod
 
 ### Model Architecture Comparison (VRAM Perspective)
 
-| Model | Parameters | $d_{\text{model}}$ | Layers | VRAM (fp16) | VRAM (int8) | VRAM (int4) |
+| Model | Parameters | $d_\text{model}$ | Layers | VRAM (fp16) | VRAM (int8) | VRAM (int4) |
 |-------|------------|---------------------|--------|-------------|-------------|-------------|
 | **GPT-2** | 1.5B | 1600 | 48 | 3 GB | 1.5 GB | 0.75 GB |
 | **LLaMA 2 7B** | 6.7B | 4096 | 32 | 13.4 GB | 6.7 GB | 3.4 GB |
