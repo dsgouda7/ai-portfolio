@@ -1,5 +1,7 @@
 # Ch.4 · LLM Model Internals — Parameters, Memory, Quantization
 
+> **The story.** In May 2020, OpenAI released GPT-3 and watched in astonishment as it performed few-shot learning—a capability they never explicitly trained. By 2021, the question haunting AI labs wasn't "can we build bigger models?" but "do we understand what we built?" Anthropic researchers published *Toy Models of Superposition* (2022), revealing that models compress hundreds of features into dozens of neurons—like storing a library in a shoebox. The race was on: reverse-engineer the black box before it gets too powerful to control.
+>
 > **Why this matters:** You can prompt the smartest model in the world, but if you don't understand parameter counts, VRAM constraints, and quantization trade-offs, you'll ship applications that crash on deployment or cost 10× more than necessary. This chapter gives you the engineering vocabulary to make informed decisions about model selection, inference optimization, and deployment architecture.
 
 ---

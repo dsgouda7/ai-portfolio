@@ -1,5 +1,7 @@
 # LLM Inference Mechanics — Sampling, KV Cache, and Production Serving
 
+> **The story.** In February 2019, OpenAI's _GPT-2_ could write coherent essays — but inference was glacially slow. Every new token required recomputing attention over all previous tokens, making a 500-word generation take minutes. Six months later, researchers at Google and Hugging Face independently discovered the same breakthrough: **cache the key-value matrices** from past tokens, avoiding redundant computation. This single optimization — storing ~1 MB per sequence — made interactive chatbots economically viable. Today's ChatGPT responses feel instant because they reuse 99% of their attention computation.
+>
 > **Where you are:** You've learned what transformers are (ch01 §1, §2) and how attention works (ch01 §2A). Now you'll learn **how text generation actually works at inference time** — the autoregressive loop, KV caching (the optimization that makes modern LLM serving viable), and the production tradeoffs between throughput and latency. This chapter answers: *When you type a prompt into ChatGPT and it generates 500 tokens, what's actually happening?*
 
 ---

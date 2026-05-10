@@ -1,5 +1,7 @@
 # LLM Training Pipeline
 
+> **The story.** In June 2020, OpenAI released GPT-3—a model that could write poetry, code, and essays with stunning fluency—but couldn't reliably answer "What's 2+2?" if you asked it directly. The model completed text beautifully but refused to be an assistant. Eighteen months later, *InstructGPT* (January 2022) solved the puzzle with RLHF, teaching the same architecture to follow instructions by learning from human preferences. By November 2022, *ChatGPT* brought this alignment breakthrough to millions, proving that the final 1% of training—learning what humans actually want—matters as much as the first 99%.
+>
 > **How raw text predictors become instruction-following assistants.** This chapter explains the three-stage training pipeline (pretraining, supervised fine-tuning, alignment) that transforms a next-token predictor trained on raw internet text into a helpful, harmless assistant like GPT-4 or Claude. You'll understand why models from different companies exhibit different personalities despite identical architectures, how RLHF/DPO shapes model behavior, and why certain capabilities only emerge at specific scale thresholds. Includes optional PEFT preview (LoRA, prefix tuning) for domain adaptation without full retraining.
 
 ---
