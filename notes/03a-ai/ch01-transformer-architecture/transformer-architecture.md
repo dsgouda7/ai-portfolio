@@ -415,7 +415,7 @@ After softmax, $-\infty$ scores become zero — token $i$ assigns zero attention
 **Why not just use the raw scores?** Raw scores can be arbitrarily large or negative. Softmax squashes them into a 0–1 range where they sum to 1, making them interpretable as "how much attention to pay to each token."
 
 $$
-\text{attention\_weights} = \text{softmax}(\text{scores\_masked})
+\mathrm{attention\_weights} = \mathrm{softmax}(\mathrm{scores\_masked})
 $$
 
 Each row of the resulting matrix sums to 1.0 — token $i$ distributes 1.0 units of attention across all tokens $j \leq i$.
@@ -439,12 +439,12 @@ Token "bank" attention weights (after softmax):
 **Concrete example:** If "bank" assigned 62% attention to "river", 25% to itself, and 8% to "the", its output representation becomes: 0.62×value_river + 0.25×value_bank + 0.08×value_the. It's now "colored" mostly by "river", disambiguating it as a geographic feature.
 
 $$
-\text{output} = \text{attention\_weights} \cdot V
+\mathrm{output} = \mathrm{attention\_weights} \cdot V
 $$
 
 | Symbol | Shape | Meaning |
 |--------|-------|---------|
-| $\text{attention\_weights}$ | $(n, n)$ | Normalized weights — how much each token attends to every other token |
+| $\mathrm{attention\_weights}$ | $(n, n)$ | Normalized weights — how much each token attends to every other token |
 | $V$ | $(n, d_k)$ | Value matrix — information each token carries |
 | $\text{output}$ | $(n, d_k)$ | Updated representations — each token is now a weighted mix of all attended tokens' values |
 
@@ -622,7 +622,7 @@ $$
 - **pos** = where the token sits in the sentence (1st word, 2nd word, etc.)
 - **i** = which "frequency band" we're in (like different clock hands: hour hand moves slowly, second hand moves fast)
 - **2i** and **2i+1** = we alternate between sine and cosine for each dimension
-- **10000^(2i/d\_model)** = the "speed" of the wave — early dimensions oscillate slowly (like position "1" vs "100" look different), late dimensions oscillate fast (like position "1" vs "2" look different)
+- **10000^(2i/d_model)** = the "speed" of the wave — early dimensions oscillate slowly (like position "1" vs "100" look different), late dimensions oscillate fast (like position "1" vs "2" look different)
 
 | Symbol | Meaning |
 |--------|---------|
@@ -636,7 +636,7 @@ Each dimension oscillates at a different frequency — low dimensions change slo
 
 #### Learned Positional Embeddings (BERT, GPT-2)
 
-Instead of sinusoids, train a lookup table: each position (0 to $\text{max\_len}-1$) gets a learnable $d_{\text{model}}$-dimensional vector. This is what BERT and GPT-2 use. **No extrapolation** — if the model was trained with max length 1024, it cannot process sequences longer than 1024 without retraining.
+Instead of sinusoids, train a lookup table: each position (0 to $\mathrm{max\_len}-1$) gets a learnable $d_{\text{model}}$-dimensional vector. This is what BERT and GPT-2 use. **No extrapolation** — if the model was trained with max length 1024, it cannot process sequences longer than 1024 without retraining.
 
 #### Rotary Position Embedding (RoPE, used in LLaMA, GPT-Neo)
 
@@ -689,7 +689,7 @@ The single most important difference between architectures is the **attention ma
 Stack transformer blocks where every token can attend to **every other token in the sequence** — no masking. The attention matrix is fully populated:
 
 $$
-\text{attention\_weights}[i, j] = \text{softmax}\left(\frac{q_i \cdot k_j}{\sqrt{d_k}}\right) \quad \text{for all } i, j
+\mathrm{attention\_weights}[i, j] = \mathrm{softmax}\left(\frac{q_i \cdot k_j}{\sqrt{d_k}}\right) \quad \text{for all } i, j
 $$
 
 No $-\infty$ masking. Token 1 sees token 100. Token 100 sees token 1. Full bidirectional context.
@@ -750,8 +750,8 @@ outputs = encoder(input_ids)  # shape: (batch, seq_len, d_model)
 Stack transformer blocks where each token can only attend to **itself and prior tokens** — causal masking. The attention matrix is lower-triangular:
 
 $$
-\text{attention\_weights}[i, j] = \begin{cases}
-\text{softmax}\left(\frac{q_i \cdot k_j}{\sqrt{d_k}}\right) & \text{if } j \leq i \\
+\mathrm{attention\_weights}[i, j] = \begin{cases}
+\mathrm{softmax}\left(\frac{q_i \cdot k_j}{\sqrt{d_k}}\right) & \text{if } j \leq i \\
 0 & \text{if } j > i
 \end{cases}
 $$
@@ -835,7 +835,7 @@ The **cross-attention** layer is the key innovation. In standard self-attention,
 - $K$, $V$ come from the **encoder** (the input sequence)
 
 $$
-\text{cross\_attn\_output}[i] = \sum_{j=1}^{n_{\text{encoder}}} \text{softmax}\left(\frac{q_i^{\text{decoder}} \cdot k_j^{\text{encoder}}}{\sqrt{d_k}}\right) \cdot v_j^{\text{encoder}}
+\mathrm{cross\_attn\_output}[i] = \sum_{j=1}^{n_{\text{encoder}}} \mathrm{softmax}\left(\frac{q_i^{\text{decoder}} \cdot k_j^{\text{encoder}}}{\sqrt{d_k}}\right) \cdot v_j^{\text{encoder}}
 $$
 
 Each decoder token queries the entire encoded input — "which parts of the input are relevant for generating this output token?"
