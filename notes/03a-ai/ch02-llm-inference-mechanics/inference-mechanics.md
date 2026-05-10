@@ -25,7 +25,9 @@ The model doesn't output one answer; it outputs a probability distribution over 
 <details>
 <summary>For the mathematically curious: Temperature formula</summary>
 
-$$p'_i = \frac{e^{z_i / T}}{\sum_j e^{z_j / T}}$$
+$$
+p'_i = \frac{e^{z_i / T}}{\sum_j e^{z_j / T}}
+$$
 
 Dividing each logit $z_i$ by temperature $T$ before softmax either sharpens ($T<1$) or flattens ($T>1$) the probability distribution. When $T→0$, the top token gets probability ≈1; when $T→\infty$, all tokens become equally likely.
 
@@ -106,7 +108,9 @@ You're re-reading the same 100-word prompt **500 times**. And each time the essa
 
 **Key insight:** In causal attention, token $t$ computes attention scores with tokens $1 \ldots t$ using:
 
-$$\text{attention\_weights}[t] = \text{softmax}\left(\frac{q_t K^T}{\sqrt{d_k}}\right)$$
+$$
+\text{attention_weights}[t] = \text{softmax}\left(\frac{q_t K^T}{\sqrt{d_k}}\right)
+$$
 
 where $K = [k_1, k_2, \ldots, k_t]$ (the key matrix for all prior tokens). Since tokens $1 \ldots t-1$ are **frozen** (we're not changing the prompt or already-generated tokens), their keys and values never change.
 
@@ -200,7 +204,9 @@ This is why **quantization helps decode more than prefill** — int8 weights are
 
 **The math (if you're capacity planning):**
 
-$$\text{Cache size per layer} = 2 \times (\text{seq\_len} \times d_{\text{model}}) \times \text{precision}$$
+$$
+\text{Cache size per layer} = 2 \times (\text{seq_len} \times d_{\text{model}}) \times \text{precision}
+$$
 
 **Concrete example (LLaMA 2 7B, fp16, seq_len=2048):**
 
