@@ -279,11 +279,13 @@ A GPT-3-scale model has **L = 96 layers** (96 transformer blocks stacked). Each 
 
 Every token starts as a **d_model-dimensional vector** (e.g., 768-d for BERT-base, 4096-d for LLaMA 7B, 12,288-d for GPT-4 scale). For each attention head, three linear projections create:
 
-$$\begin{aligned}
+$$
+\begin{aligned}
 Q &= X W_Q \quad \text{(query: "what am I looking for?")} \\
 K &= X W_K \quad \text{(key: "what do I offer?")} \\
 V &= X W_V \quad \text{(value: "what information do I carry?")}
-\end{aligned}$$
+\end{aligned}
+$$
 
 **Plain English first:** We're creating three different "views" of each token. Imagine every word in a sentence wearing three hats: a "what I'm searching for" hat (Q), a "what I'm advertising" hat (K), and a "what I contain" hat (V). The formulas above just describe how we mathematically project each token into these three spaces.
 
@@ -307,7 +309,9 @@ V &= X W_V \quad \text{(value: "what information do I carry?")}
 
 For each token, compute its similarity to every other token by taking the dot product of its query with all keys:
 
-$$\text{scores} = \frac{Q K^T}{\sqrt{d_k}}$$
+$$
+\text{scores} = \frac{Q K^T}{\sqrt{d_k}}
+$$
 
 | Symbol | Shape | Meaning |
 |--------|-------|---------|
@@ -393,10 +397,12 @@ sat:    [0.14   0.23   0.63]   # Mostly self-attention, moderate to "cat"
 
 In **decoder models** (GPT, Claude, LLaMA), each token can only attend to **prior tokens** — this is called **causal masking**. Set all scores where $j > i$ to $-\infty$ before the softmax:
 
-$$\text{scores}_{\text{masked}}[i, j] = \begin{cases}
+$$
+\text{scores}_{\text{masked}}[i, j] = \begin{cases}
 \text{scores}[i, j] & \text{if } j \leq i \\
 -\infty & \text{if } j > i
-\end{cases}$$
+\end{cases}
+$$
 
 After softmax, $-\infty$ scores become zero — token $i$ assigns zero attention weight to any token $j > i$. This enforces left-to-right generation: the model cannot "peek ahead" at future tokens.
 
@@ -408,7 +414,9 @@ After softmax, $-\infty$ scores become zero — token $i$ assigns zero attention
 
 **Why not just use the raw scores?** Raw scores can be arbitrarily large or negative. Softmax squashes them into a 0–1 range where they sum to 1, making them interpretable as "how much attention to pay to each token."
 
-$$\text{attention\_weights} = \text{softmax}(\text{scores\_masked})$$
+$$
+\text{attention_weights} = \text{softmax}(\text{scores_masked})
+$$
 
 Each row of the resulting matrix sums to 1.0 — token $i$ distributes 1.0 units of attention across all tokens $j \leq i$.
 
@@ -430,11 +438,13 @@ Token "bank" attention weights (after softmax):
 
 **Concrete example:** If "bank" assigned 62% attention to "river", 25% to itself, and 8% to "the", its output representation becomes: 0.62×value_river + 0.25×value_bank + 0.08×value_the. It's now "colored" mostly by "river", disambiguating it as a geographic feature.
 
-$$\text{output} = \text{attention\_weights} \cdot V$$
+$$
+\text{output} = \text{attention_weights} \cdot V
+$$
 
 | Symbol | Shape | Meaning |
 |--------|-------|---------|
-| $\text{attention\_weights}$ | $(n, n)$ | Normalized weights — how much each token attends to every other token |
+| $\text{attention_weights}$ | $(n, n)$ | Normalized weights — how much each token attends to every other token |
 | $V$ | $(n, d_k)$ | Value matrix — information each token carries |
 | $\text{output}$ | $(n, d_k)$ | Updated representations — each token is now a weighted mix of all attended tokens' values |
 
@@ -452,10 +462,12 @@ $$\text{output} = \text{attention\_weights} \cdot V$$
 
 A single attention mechanism learns **one way** to relate tokens. Multi-head attention runs $h$ parallel attention operations, each with its own $W_Q, W_K, W_V$ matrices, then concatenates the results:
 
-$$\begin{aligned}
+$$
+\begin{aligned}
 \text{head}_i &= \text{Attention}(X W_Q^{(i)}, X W_K^{(i)}, X W_V^{(i)}) \\
 \text{MultiHead}(X) &= \text{Concat}(\text{head}_1, \text{head}_2, \ldots, \text{head}_h) W_O
-\end{aligned}$$
+\end{aligned}
+$$
 
 **Breaking down the formula:**
 - **head_i** = one specialist's analysis (e.g., "syntactic patterns I found")
@@ -599,10 +611,12 @@ Attention is **permutation-equivariant** — shuffle the input tokens, the atten
 
 **Why sine and cosine?** They're periodic functions with a special property: you can express the encoding at position (pos + k) as a linear function of the encoding at position (pos). This means the model can learn relative positions ("5 tokens apart") rather than just absolute positions ("token 47 and token 52").
 
-$$\begin{aligned}
+$$
+\begin{aligned}
 PE_{(\text{pos}, 2i)} &= \sin\left(\frac{\text{pos}}{10000^{2i/d_{\text{model}}}}\right) \\
 PE_{(\text{pos}, 2i+1)} &= \cos\left(\frac{\text{pos}}{10000^{2i/d_{\text{model}}}}\right)
-\end{aligned}$$
+\end{aligned}
+$$
 
 **Plain English breakdown:**
 - **pos** = where the token sits in the sentence (1st word, 2nd word, etc.)
@@ -622,7 +636,7 @@ Each dimension oscillates at a different frequency — low dimensions change slo
 
 #### Learned Positional Embeddings (BERT, GPT-2)
 
-Instead of sinusoids, train a lookup table: each position (0 to $\text{max\_len}-1$) gets a learnable $d_{\text{model}}$-dimensional vector. This is what BERT and GPT-2 use. **No extrapolation** — if the model was trained with max length 1024, it cannot process sequences longer than 1024 without retraining.
+Instead of sinusoids, train a lookup table: each position (0 to $\text{max_len}-1$) gets a learnable $d_{\text{model}}$-dimensional vector. This is what BERT and GPT-2 use. **No extrapolation** — if the model was trained with max length 1024, it cannot process sequences longer than 1024 without retraining.
 
 #### Rotary Position Embedding (RoPE, used in LLaMA, GPT-Neo)
 
@@ -674,7 +688,9 @@ The single most important difference between architectures is the **attention ma
 
 Stack transformer blocks where every token can attend to **every other token in the sequence** — no masking. The attention matrix is fully populated:
 
-$$\text{attention\_weights}[i, j] = \text{softmax}\left(\frac{q_i \cdot k_j}{\sqrt{d_k}}\right) \quad \text{for all } i, j$$
+$$
+\text{attention_weights}[i, j] = \text{softmax}\left(\frac{q_i \cdot k_j}{\sqrt{d_k}}\right) \quad \text{for all } i, j
+$$
 
 No $-\infty$ masking. Token 1 sees token 100. Token 100 sees token 1. Full bidirectional context.
 
@@ -733,10 +749,12 @@ outputs = encoder(input_ids)  # shape: (batch, seq_len, d_model)
 
 Stack transformer blocks where each token can only attend to **itself and prior tokens** — causal masking. The attention matrix is lower-triangular:
 
-$$\text{attention\_weights}[i, j] = \begin{cases}
+$$
+\text{attention_weights}[i, j] = \begin{cases}
 \text{softmax}\left(\frac{q_i \cdot k_j}{\sqrt{d_k}}\right) & \text{if } j \leq i \\
 0 & \text{if } j > i
-\end{cases}$$
+\end{cases}
+$$
 
 Token 100 sees tokens 1–100. Token 1 sees only itself. This enforces **left-to-right** information flow — the model cannot peek ahead.
 
@@ -816,7 +834,9 @@ The **cross-attention** layer is the key innovation. In standard self-attention,
 - $Q$ comes from the **decoder** (the token being generated)
 - $K$, $V$ come from the **encoder** (the input sequence)
 
-$$\text{cross\_attn\_output}[i] = \sum_{j=1}^{n_{\text{encoder}}} \text{softmax}\left(\frac{q_i^{\text{decoder}} \cdot k_j^{\text{encoder}}}{\sqrt{d_k}}\right) \cdot v_j^{\text{encoder}}$$
+$$
+\text{cross_attn_output}[i] = \sum_{j=1}^{n_{\text{encoder}}} \text{softmax}\left(\frac{q_i^{\text{decoder}} \cdot k_j^{\text{encoder}}}{\sqrt{d_k}}\right) \cdot v_j^{\text{encoder}}
+$$
 
 Each decoder token queries the entire encoded input — "which parts of the input are relevant for generating this output token?"
 
