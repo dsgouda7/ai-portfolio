@@ -26,7 +26,7 @@ In the summer of 2017, eight Google engineers published a twelve-page paper with
 
 The original transformer had two stacks: an **encoder** (reads the source sentence with bidirectional attention) and a **decoder** (generates the target sentence one token at a time, with causal attention to prevent looking ahead). Built for machine translation. Within months, two groups took that architecture and split it in opposite directions.
 
-> 💡 **Checkpoint:** RNNs couldn't parallelize training (sequential dependency bottleneck) and couldn't learn long-range patterns (vanishing gradients beyond 100-200 tokens). Bahdanau attention (2014) introduced the attend-to-all-tokens mechanism, but recurrence remained. The 2017 Transformer dropped recurrence entirely, enabling parallelization and solving both problems simultaneously. This unlocked the scaling path that led directly to GPT and BERT.
+> **Checkpoint:** RNNs couldn't parallelize training (sequential dependency bottleneck) and couldn't learn long-range patterns (vanishing gradients beyond 100-200 tokens). Bahdanau attention (2014) introduced the attend-to-all-tokens mechanism, but recurrence remained. The 2017 Transformer dropped recurrence entirely, enabling parallelization and solving both problems simultaneously. This unlocked the scaling path that led directly to GPT and BERT.
 
 ---
 
@@ -97,23 +97,23 @@ Every model you call via API today — GPT-4, Claude, Gemini, LLaMA, Mistral —
 A **large language model** is a transformer decoder trained to predict the next token given all previous tokens, on internet-scale text. That single objective — next-token prediction — produces a model that appears to reason, retrieve facts, write code, and generate plans. None of those behaviors were explicitly programmed. They emerge from scale.
 
 ```
-Training objective:   maximize P(token_t | token_1, token_2, ..., token_{t-1})
-Training data:        ~10–100 trillion tokens scraped from the web, books, code
-Training compute:     10²³–10²⁵ FLOP  (millions of GPU-hours)
-Result:               a model with 7B–1T parameters that can perform most language tasks
+Training objective: maximize P(token_t | token_1, token_2, ..., token_{t-1})
+Training data: ~10–100 trillion tokens scraped from the web, books, code
+Training compute: 10²³–10²⁵ FLOP (millions of GPU-hours)
+Result: a model with 7B–1T parameters that can perform most language tasks
 ```
 
 Three stages turn a raw next-token predictor into the assistant you actually use:
 
 ```
-Stage 1: Pretraining        Raw transformer on internet text → learns language + world knowledge
-Stage 2: SFT                Fine-tuned on (instruction, good response) pairs → follows instructions
-Stage 3: RLHF / DPO         Aligned with human preferences → helpful, harmless, honest
+Stage 1: Pretraining Raw transformer on internet text → learns language + world knowledge
+Stage 2: SFT Fine-tuned on (instruction, good response) pairs → follows instructions
+Stage 3: RLHF / DPO Aligned with human preferences → helpful, harmless, honest
 ```
 
 Each stage is covered in detail in [Ch.2 §4](../ch02-llm-inference-mechanics/inference-mechanics.md).
 
-> 💡 **Core idea:** The model predicts tokens. Everything in the AI track — CoT, RAG, ReAct, Semantic Kernel — is about how you wire inputs and outputs around that single mechanical act. When GPT-4 and Claude produce different outputs for the same prompt, it traces to different training data distributions and different RLHF reward signals, not to fundamentally different architectures.
+> **Core idea:** The model predicts tokens. Everything in the AI track — CoT, RAG, ReAct, Semantic Kernel — is about how you wire inputs and outputs around that single mechanical act. When GPT-4 and Claude produce different outputs for the same prompt, it traces to different training data distributions and different RLHF reward signals, not to fundamentally different architectures.
 
 ---
 
@@ -143,7 +143,7 @@ Start with character-level vocabulary: [a, b, c, ..., z, space, ...]
 | Code is token-dense | `self.attention_weights[layer_idx]` may be 6–10 tokens |
 | Numbers tokenize byte-by-byte | `12345` → `[123, 45]` in some vocabularies — arithmetic is hard |
 
-> 💡 **Tokenization → cost:** A typical question-answer API exchange averages ~500 tokens. At GPT-4o-mini pricing ($0.00015/1k input tokens), that's $0.000075 per call. At GPT-4o ($0.0025/1k), it's $0.00125. Tokenization is how you convert vague "it'll be cheap" into a budgetable number.
+> **Tokenization → cost:** A typical question-answer API exchange averages ~500 tokens. At GPT-4o-mini pricing ($0.00015/1k input tokens), that's $0.000075 per call. At GPT-4o ($0.0025/1k), it's $0.00125. Tokenization is how you convert vague "it'll be cheap" into a budgetable number.
 
 ### The Context Window
 
@@ -162,33 +162,33 @@ The transformer architecture didn't emerge in isolation — it built on decades 
 
 ```mermaid
 timeline
-    title Transformer Architecture Evolution
-    1990s-2010s : RNNs/LSTMs dominant
-                : Sequential processing
-                : Gradient vanishing
-    2014 : Bahdanau Attention
-         : First attention mechanism
-         : Still uses RNN backbone
-    2017 : Transformer ("Attention Is All You Need")
-         : Removes recurrence entirely
-         : Parallel processing
-         : Scaled dot-product attention
-    2018 : BERT (Encoder) + GPT-1 (Decoder)
-         : Architecture fork begins
-         : Bidirectional vs Causal
-    2019 : GPT-2 (1.5B params)
-         : Delayed release concerns
-         : Coherent generation
-    2020 : GPT-3 (175B params)
-         : In-context learning emerges
-         : Few-shot capabilities
-    2022 : ChatGPT
-         : RLHF alignment
-         : Mainstream adoption
-    2023-2025 : Modern LLMs (GPT-4, Claude, Gemini)
-              : Mixture-of-Experts
-              : Multimodal capabilities
-              : 1M+ token contexts
+ title Transformer Architecture Evolution
+ 1990s-2010s : RNNs/LSTMs dominant
+ : Sequential processing
+ : Gradient vanishing
+ 2014 : Bahdanau Attention
+ : First attention mechanism
+ : Still uses RNN backbone
+ 2017 : Transformer ("Attention Is All You Need")
+ : Removes recurrence entirely
+ : Parallel processing
+ : Scaled dot-product attention
+ 2018 : BERT (Encoder) + GPT-1 (Decoder)
+ : Architecture fork begins
+ : Bidirectional vs Causal
+ 2019 : GPT-2 (1.5B params)
+ : Delayed release concerns
+ : Coherent generation
+ 2020 : GPT-3 (175B params)
+ : In-context learning emerges
+ : Few-shot capabilities
+ 2022 : ChatGPT
+ : RLHF alignment
+ : Mainstream adoption
+ 2023-2025 : Modern LLMs (GPT-4, Claude, Gemini)
+ : Mixture-of-Experts
+ : Multimodal capabilities
+ : 1M+ token contexts
 ```
 
 **Key architectural turning points:**
@@ -199,7 +199,7 @@ timeline
 
 Larger context windows do not mean unlimited memory. Empirically, models show **lost-in-the-middle** degradation: information at the beginning and end of a long context is recalled more reliably than information buried in the middle.
 
-> ⚠️ **Context window constraint:** For RAG pipelines, a 10-document retrieval adds ~2,000 tokens of context. A 20-turn conversation history adds ~3,000 more. At GPT-4's 128k limit this is trivial; at older 4k models you'd need to summarize history. Lost-in-the-middle risk is real: safety-critical facts placed in the middle of a long context are recalled less reliably than facts near the start or end.
+> **Warning — Context window constraint:** For RAG pipelines, a 10-document retrieval adds ~2,000 tokens of context. A 20-turn conversation history adds ~3,000 more. At GPT-4's 128k limit this is trivial; at older 4k models you'd need to summarize history. Lost-in-the-middle risk is real: safety-critical facts placed in the middle of a long context are recalled less reliably than facts near the start or end.
 
 ---
 
@@ -232,9 +232,9 @@ Before you can reason about why GPT-4 behaves differently from Claude, or why a 
 **Step 3: Compute attention scores** → For "cat", compute how relevant each other token is:
 ```
 "cat" attention scores (after softmax):
-    "The": 0.20  (20% attention)
-    "cat": 0.55  (55% attention - tokens attend heavily to themselves)
-    "sat": 0.25  (25% attention)
+ "The": 0.20 (20% attention)
+ "cat": 0.55 (55% attention - tokens attend heavily to themselves)
+ "sat": 0.25 (25% attention)
 ```
 
 **Step 4: Weighted sum** → Blend information from all tokens:
@@ -256,13 +256,13 @@ Every modern LLM — GPT, Claude, LLaMA, Mistral — is built from stacked **tra
 Between these, there are **residual connections** (skip connections that let gradients flow directly through the network) and **layer normalization** (stabilizes training by normalizing activations).
 
 ```
-Input: [token_1, token_2, ..., token_n]  (each token is a d_model-dimensional vector)
+Input: [token_1, token_2, ..., token_n] (each token is a d_model-dimensional vector)
 
 For each transformer block (repeated L times):
-    1. x_attn   = MultiHeadAttention(x)
-    2. x        = LayerNorm(x + x_attn)           ← residual connection
-    3. x_ffn    = FeedForward(x)
-    4. x        = LayerNorm(x + x_ffn)            ← residual connection
+ 1. x_attn = MultiHeadAttention(x)
+ 2. x = LayerNorm(x + x_attn) ← residual connection
+ 3. x_ffn = FeedForward(x)
+ 4. x = LayerNorm(x + x_ffn) ← residual connection
 
 Output: [updated_token_1, updated_token_2, ..., updated_token_n]
 ```
@@ -277,7 +277,7 @@ A GPT-3-scale model has **L = 96 layers** (96 transformer blocks stacked). Each 
 
 #### Step 1: Project Each Token into Query, Key, and Value Spaces
 
-💡 **Intuition:** Think of Q, K, V like a library catalog system. **Q (query)** is your search question ("show me books about climate change"), **K (key)** is the index label on each book's spine ("Science - Climate - 2020"), and **V (value)** is the actual content inside the book. The attention mechanism matches your query against all the labels, then retrieves a blend of the relevant book contents.
+**Intuition:** Think of Q, K, V like a library catalog system. **Q (query)** is your search question ("show me books about climate change"), **K (key)** is the index label on each book's spine ("Science - Climate - 2020"), and **V (value)** is the actual content inside the book. The attention mechanism matches your query against all the labels, then retrieves a blend of the relevant book contents.
 
 Every token starts as a **d_model-dimensional vector** (e.g., 768-d for BERT-base, 4096-d for LLaMA 7B, 12,288-d for GPT-4 scale). For each attention head, three linear projections create:
 
@@ -301,11 +301,11 @@ $$
 
 **Intuition:** Think of $Q$ as "questions each token asks", $K$ as "labels each token advertises", and $V$ as "information each token carries". Attention is a lookup: for the query "show me geographic features", the key "river" scores high, so we retrieve that token's value.
 
-> 💡 **Checkpoint:** So far: every token asks questions (Q), advertises what it offers (K), and carries information (V). Next: we'll compute which tokens match each query.
+> **Checkpoint:** So far: every token asks questions (Q), advertises what it offers (K), and carries information (V). Next: we'll compute which tokens match each query.
 
 #### Step 2: Compute Attention Scores (Which Tokens Are Relevant?)
 
-💡 **Intuition:** Imagine scoring how well each book title matches your search. You compare your query against every title (dot product = similarity measure). Books with titles closer to your search terms get higher scores. The division by √d_k is like normalizing scores so a 100-word title doesn't automatically outscore a 5-word title just because it's longer.
+**Intuition:** Imagine scoring how well each book title matches your search. You compare your query against every title (dot product = similarity measure). Books with titles closer to your search terms get higher scores. The division by √d_k is like normalizing scores so a 100-word title doesn't automatically outscore a 5-word title just because it's longer.
 
 **Concrete example:** Query = "find geographic features". Keys = ["the", "river", "bank", "was"]. The dot product q·k_river will be large (high similarity), while q·k_the will be small (low similarity).
 
@@ -320,8 +320,7 @@ $$
 | $Q K^T$ | $(n, n)$ | Dot product of every query with every key — raw similarity scores |
 | $\sqrt{d_k}$ | **Scaling factor** — prevents scores from growing too large as $d_k$ increases |
 | $\text{scores}$ | $(n, n)$ | Scaled similarity matrix — row $i$, col $j$ = how much token $i$ should attend to token $j$ |
-
-💡 **What does the table mean?** Row $i$, column $j$ in the scores matrix tells you: "How relevant is token $j$ when processing token $i$?" In our "river bank" example, the score at row="bank", col="river" would be high because "river" helps disambiguate "bank".
+**What does the table mean?** Row $i$, column $j$ in the scores matrix tells you: "How relevant is token $j$ when processing token $i$?" In our "river bank" example, the score at row="bank", col="river" would be high because "river" helps disambiguate "bank".
 
 **Why divide by $\sqrt{d_k}$?** Without scaling, dot products grow with dimension (high-dimensional random vectors have large dot products). This pushes the softmax into saturation — gradients vanish. The $\sqrt{d_k}$ normalization keeps scores in a stable range.
 
@@ -331,28 +330,28 @@ $$
 - With 32 heads × 32 layers = 1,024 attention operations per forward pass
 
 <details>
-<summary><strong>📊 Worked Example: Full Attention Computation for "The cat sat"</strong> (Click to expand)</summary>
+<summary><strong>Worked Example: Full Attention Computation for "The cat sat"</strong> (Click to expand)</summary>
 
 **This example shows every step of attention with actual numbers.** Assume $d_k = 4$ (tiny for illustration). After projection, suppose we have:
 
 ```
-Q = [[1.0, 0.5, 0.2, 0.1],   # "The"
-     [0.3, 1.2, 0.8, 0.4],   # "cat"
-     [0.6, 0.9, 1.5, 0.7]]   # "sat"
+Q = [[1.0, 0.5, 0.2, 0.1], # "The"
+ [0.3, 1.2, 0.8, 0.4], # "cat"
+ [0.6, 0.9, 1.5, 0.7]] # "sat"
 
-K = [[0.8, 0.3, 0.1, 0.2],   # "The"
-     [0.5, 1.1, 0.6, 0.3],   # "cat"
-     [0.4, 0.7, 1.2, 0.5]]   # "sat"
+K = [[0.8, 0.3, 0.1, 0.2], # "The"
+ [0.5, 1.1, 0.6, 0.3], # "cat"
+ [0.4, 0.7, 1.2, 0.5]] # "sat"
 ```
 
 **Step 2: Compute Q·K^T**
 
 ```
 Q·K^T (row i, col j = query_i · key_j):
-         The    cat    sat
-The:    [1.19   1.37   1.36]
-cat:    [1.05   1.95   1.98]
-sat:    [1.43   2.40   3.24]
+ The cat sat
+The: [1.19 1.37 1.36]
+cat: [1.05 1.95 1.98]
+sat: [1.43 2.40 3.24]
 ```
 
 For example, "cat" attending to "sat": $(0.3)(0.4) + (1.2)(0.7) + (0.8)(1.2) + (0.4)(0.5) = 0.12 + 0.84 + 0.96 + 0.20 = 2.12$ (rounding to 1.98 for brevity).
@@ -361,30 +360,30 @@ For example, "cat" attending to "sat": $(0.3)(0.4) + (1.2)(0.7) + (0.8)(1.2) + (
 
 ```
 Scaled scores:
-         The    cat    sat
-The:    [0.60   0.69   0.68]
-cat:    [0.53   0.98   0.99]
-sat:    [0.72   1.20   1.62]
+ The cat sat
+The: [0.60 0.69 0.68]
+cat: [0.53 0.98 0.99]
+sat: [0.72 1.20 1.62]
 ```
 
 **Step 4: Apply causal mask**
 
 ```
 Masked scores (set future to -∞):
-         The    cat    sat
-The:    [0.60  -∞    -∞  ]
-cat:    [0.53   0.98  -∞  ]
-sat:    [0.72   1.20   1.62]
+ The cat sat
+The: [0.60 -∞ -∞ ]
+cat: [0.53 0.98 -∞ ]
+sat: [0.72 1.20 1.62]
 ```
 
 **Step 5: Softmax (attention weights)**
 
 ```
 Attention weights (each row sums to 1.0):
-         The    cat    sat
-The:    [1.00   0.00   0.00]   # Only sees itself
-cat:    [0.38   0.62   0.00]   # Attends mostly to itself, some to "The"
-sat:    [0.14   0.23   0.63]   # Mostly self-attention, moderate to "cat"
+ The cat sat
+The: [1.00 0.00 0.00] # Only sees itself
+cat: [0.38 0.62 0.00] # Attends mostly to itself, some to "The"
+sat: [0.14 0.23 0.63] # Mostly self-attention, moderate to "cat"
 ```
 
 **Step 6: Weighted sum with V** → output vectors are linear combinations weighted by these attention scores.
@@ -393,7 +392,7 @@ sat:    [0.14   0.23   0.63]   # Mostly self-attention, moderate to "cat"
 
 #### Step 3: Mask (Decoder-Only Models Only)
 
-💡 **Intuition:** Causal masking is like reading a mystery novel — you can only see the pages you've already read, not the ones ahead. When the model generates "The river bank was...", it knows about [The, river, bank, was] but must not peek at "flooded" (the next word). If it could see the future, generation would be cheating — it would already know the answer before "predicting" it.
+**Intuition:** Causal masking is like reading a mystery novel — you can only see the pages you've already read, not the ones ahead. When the model generates "The river bank was...", it knows about [The, river, bank, was] but must not peek at "flooded" (the next word). If it could see the future, generation would be cheating — it would already know the answer before "predicting" it.
 
 **Concrete example:** At generation step 4 (producing the 4th token), the model can attend to tokens 1-3 but not tokens 5+. This forces it to learn genuine next-token prediction, not just memorization.
 
@@ -412,7 +411,7 @@ After softmax, $-\infty$ scores become zero — token $i$ assigns zero attention
 
 #### Step 4: Softmax (Convert Scores to Weights)
 
-💡 **Intuition:** Softmax is like converting exam scores (raw numbers) into a probability distribution. If three students scored 85, 72, and 63, softmax converts these to percentages that sum to 100%: maybe 52%, 31%, 17%. Higher scores get more weight, but everyone gets *some* attention. This prevents the model from being too rigid — even low-scoring tokens contribute slightly.
+**Intuition:** Softmax is like converting exam scores (raw numbers) into a probability distribution. If three students scored 85, 72, and 63, softmax converts these to percentages that sum to 100%: maybe 52%, 31%, 17%. Higher scores get more weight, but everyone gets *some* attention. This prevents the model from being too rigid — even low-scoring tokens contribute slightly.
 
 **Why not just use the raw scores?** Raw scores can be arbitrarily large or negative. Softmax squashes them into a 0–1 range where they sum to 1, making them interpretable as "how much attention to pay to each token."
 
@@ -426,17 +425,17 @@ Each row of the resulting matrix sums to 1.0 — token $i$ distributes 1.0 units
 
 ```
 Token "bank" attention weights (after softmax):
-    The:     0.08
-    river:   0.62    ← high weight: "river" is relevant context
-    bank:    0.25    ← moderate weight: self-attention
-    flooded: 0.00    ← zero weight: causal mask (future token)
+ The: 0.08
+ river: 0.62 ← high weight: "river" is relevant context
+ bank: 0.25 ← moderate weight: self-attention
+ flooded: 0.00 ← zero weight: causal mask (future token)
 ```
 
 "River" dominates because during training, the model learned that nouns adjacent to geographic verbs ("flooded") help disambiguate polysemous words like "bank."
 
 #### Step 5: Weighted Sum (Retrieve Information)
 
-💡 **Intuition:** This is where the "retrieval" happens. Imagine you scored 5 books as 60%, 25%, 10%, 3%, 2% relevant. Now you read a weighted blend: 60% of book 1's content + 25% of book 2's content + tiny bits of the others. The output isn't any single book — it's a custom-mixed summary weighted by relevance.
+**Intuition:** This is where the "retrieval" happens. Imagine you scored 5 books as 60%, 25%, 10%, 3%, 2% relevant. Now you read a weighted blend: 60% of book 1's content + 25% of book 2's content + tiny bits of the others. The output isn't any single book — it's a custom-mixed summary weighted by relevance.
 
 **Concrete example:** If "bank" assigned 62% attention to "river", 25% to itself, and 8% to "the", its output representation becomes: 0.62×value_river + 0.25×value_bank + 0.08×value_the. It's now "colored" mostly by "river", disambiguating it as a geographic feature.
 
@@ -450,15 +449,15 @@ $$
 | $V$ | $(n, d_k)$ | Value matrix — information each token carries |
 | $\text{output}$ | $(n, d_k)$ | Updated representations — each token is now a weighted mix of all attended tokens' values |
 
-💡 **Plain English:** Each token's output is a smoothie. You blend together the values (information) from other tokens, using the attention weights as the recipe. High attention weight = more of that ingredient. Low weight = just a tiny bit.
+**Plain English:** Each token's output is a smoothie. You blend together the values (information) from other tokens, using the attention weights as the recipe. High attention weight = more of that ingredient. Low weight = just a tiny bit.
 
 **Intuition:** Token $i$'s output is a **weighted average** of all tokens' value vectors, where the weights came from the attention scores. If "bank" assigned 0.62 weight to "river", its output is 62% the value vector of "river" + 25% its own value + 8% "the"'s value.
 
-> 💡 **Checkpoint:** We've computed attention weights showing which tokens matter most. Next: we'll use these weights to extract relevant information.
+> **Checkpoint:** We've computed attention weights showing which tokens matter most. Next: we'll use these weights to extract relevant information.
 
 ### Multi-Head Attention — Why Not Just One Head?
 
-💡 **Intuition:** Multi-head attention is like having multiple expert readers analyze the same sentence simultaneously. One expert focuses on grammar ("which word is the subject?"), another on semantics ("which words mean similar things?"), another on distance ("which words are nearby?"). Each "head" is a specialist. Then you combine all their insights.
+**Intuition:** Multi-head attention is like having multiple expert readers analyze the same sentence simultaneously. One expert focuses on grammar ("which word is the subject?"), another on semantics ("which words mean similar things?"), another on distance ("which words are nearby?"). Each "head" is a specialist. Then you combine all their insights.
 
 **Why this beats single-head attention:** A single attention pattern can't capture all relationships. "The river bank was flooded" needs: syntactic attention ("bank" ← "river" for noun phrase), semantic attention ("flooded" ← "river" for context), and positional attention ("was" ← "bank" as local dependency). No single attention pattern can do all three well.
 
@@ -502,19 +501,19 @@ These patterns were **not programmed** — they emerged from training on next-to
 
 ```python
 def transformer_block(x, W_Q, W_K, W_V, W_O, W_ff1, W_ff2):
-    """
-    x: (batch, n_tokens, d_model) — input sequence
-    Returns: (batch, n_tokens, d_model) — refined representation
-    """
-    # 1. Multi-head self-attention
-    attn_output = multi_head_attention(x, W_Q, W_K, W_V, W_O)
-    x = layer_norm(x + attn_output)  # residual connection + normalize
+ """
+ x: (batch, n_tokens, d_model) — input sequence
+ Returns: (batch, n_tokens, d_model) — refined representation
+ """
+ # 1. Multi-head self-attention
+ attn_output = multi_head_attention(x, W_Q, W_K, W_V, W_O)
+ x = layer_norm(x + attn_output) # residual connection + normalize
 
-    # 2. Feed-forward network (applied to each token independently)
-    ffn_output = relu(x @ W_ff1) @ W_ff2  # two-layer MLP
-    x = layer_norm(x + ffn_output)  # residual connection + normalize
+ # 2. Feed-forward network (applied to each token independently)
+ ffn_output = relu(x @ W_ff1) @ W_ff2 # two-layer MLP
+ x = layer_norm(x + ffn_output) # residual connection + normalize
 
-    return x
+ return x
 ```
 
 **Attention Computation Flow**
@@ -523,30 +522,30 @@ The attention mechanism transforms input tokens into refined representations thr
 
 ```mermaid
 flowchart TD
-    A["Input Tokens<br/>(batch, n_tokens, d_model)"] --> B["Linear Projections"]
-    B --> C["Q = X × W_Q<br/>(batch, n_tokens, d_k)"]
-    B --> D["K = X × W_K<br/>(batch, n_tokens, d_k)"]
-    B --> E["V = X × W_V<br/>(batch, n_tokens, d_k)"]
+ A["Input Tokens<br/>(batch, n_tokens, d_model)"] --> B["Linear Projections"]
+ B --> C["Q = X × W_Q<br/>(batch, n_tokens, d_k)"]
+ B --> D["K = X × W_K<br/>(batch, n_tokens, d_k)"]
+ B --> E["V = X × W_V<br/>(batch, n_tokens, d_k)"]
 
-    C --> F["Compute Scores<br/>Q × K^T / √d_k"]
-    D --> F
-    F --> G["Attention Scores<br/>(batch, n_tokens, n_tokens)"]
+ C --> F["Compute Scores<br/>Q × K^T / √d_k"]
+ D --> F
+ F --> G["Attention Scores<br/>(batch, n_tokens, n_tokens)"]
 
-    G --> H["Apply Softmax<br/>(row-wise normalization)"]
-    H --> I["Attention Weights<br/>(sum to 1 per row)"]
+ G --> H["Apply Softmax<br/>(row-wise normalization)"]
+ H --> I["Attention Weights<br/>(sum to 1 per row)"]
 
-    I --> J["Weighted Sum<br/>Weights × V"]
-    E --> J
-    J --> K["Attention Output<br/>(batch, n_tokens, d_k)"]
+ I --> J["Weighted Sum<br/>Weights × V"]
+ E --> J
+ J --> K["Attention Output<br/>(batch, n_tokens, d_k)"]
 
-    K --> L["Multi-Head:<br/>Concat all heads"]
-    L --> M["Output Projection<br/>× W_O"]
-    M --> N["Final Output<br/>(batch, n_tokens, d_model)"]
+ K --> L["Multi-Head:<br/>Concat all heads"]
+ L --> M["Output Projection<br/>× W_O"]
+ M --> N["Final Output<br/>(batch, n_tokens, d_model)"]
 
-    style F fill:#e1f5ff
-    style H fill:#ffe1e1
-    style J fill:#e1ffe1
-    style M fill:#fff4e1
+ style F fill:#e1f5ff
+ style H fill:#ffe1e1
+ style J fill:#e1ffe1
+ style M fill:#fff4e1
 ```
 
 **Key computational steps:**
@@ -565,22 +564,22 @@ Suppose we're processing the sentence "The quick brown fox jumps" and inspect tw
 **Head 12 (syntactic head):** Attends to grammatical structure
 ```
 "jumps" attention weights:
-    The:     0.02
-    quick:   0.05
-    brown:   0.08
-    fox:     0.85   ← High weight on subject of verb
-    jumps:   0.00   (causal mask)
+ The: 0.02
+ quick: 0.05
+ brown: 0.08
+ fox: 0.85 ← High weight on subject of verb
+ jumps: 0.00 (causal mask)
 ```
 This head learned to find subjects of verbs during training.
 
 **Head 23 (semantic head):** Attends to meaning
 ```
 "jumps" attention weights:
-    The:     0.10
-    quick:   0.45   ← High weight on related action descriptor
-    brown:   0.15
-    fox:     0.30
-    jumps:   0.00   (causal mask)
+ The: 0.10
+ quick: 0.45 ← High weight on related action descriptor
+ brown: 0.15
+ fox: 0.30
+ jumps: 0.00 (causal mask)
 ```
 This head learned that motion verbs correlate with speed adjectives.
 
@@ -601,7 +600,7 @@ For a single transformer block in LLaMA 7B ($d_{\text{model}} = 4096$, $h = 32$,
 
 LLaMA 7B has **32 layers** → $32 \times 158$M ≈ **5.1B parameters** in transformer blocks (the other ~2B are in embeddings and output projection).
 
-> 💡 **Why parameters ≈ compute:** In the absence of sparsity or quantization, FLOPs scale linearly with parameter count. A 70B model costs roughly 10× the compute of a 7B model per token. This is why inference cost dominates production budgets.
+> **Why parameters ≈ compute:** In the absence of sparsity or quantization, FLOPs scale linearly with parameter count. A 70B model costs roughly 10× the compute of a 7B model per token. This is why inference cost dominates production budgets.
 
 ### Positional Encoding — Telling Tokens Where They Are
 
@@ -609,7 +608,7 @@ Attention is **permutation-equivariant** — shuffle the input tokens, the atten
 
 #### Sinusoidal Positional Encoding (Original Transformer, 2017)
 
-💡 **Intuition:** Think of position encoding like a barcode. Each position (0, 1, 2, ...) gets a unique pattern of stripes (sin/cos waves at different frequencies). Position 0 might be [low, high, low, low], position 1 is [low-ish, high, low, low-ish]. Nearby positions have similar patterns, distant positions have different patterns. The model learns to recognize "these two tokens are 3 positions apart" by comparing their barcode patterns.
+**Intuition:** Think of position encoding like a barcode. Each position (0, 1, 2, ...) gets a unique pattern of stripes (sin/cos waves at different frequencies). Position 0 might be [low, high, low, low], position 1 is [low-ish, high, low, low-ish]. Nearby positions have similar patterns, distant positions have different patterns. The model learns to recognize "these two tokens are 3 positions apart" by comparing their barcode patterns.
 
 **Why sine and cosine?** They're periodic functions with a special property: you can express the encoding at position (pos + k) as a linear function of the encoding at position (pos). This means the model can learn relative positions ("5 tokens apart") rather than just absolute positions ("token 47 and token 52").
 
@@ -641,8 +640,7 @@ Each dimension oscillates at a different frequency — low dimensions change slo
 Instead of sinusoids, train a lookup table: each position (0 to $\mathrm{max\_len}-1$) gets a learnable $d_{\text{model}}$-dimensional vector. This is what BERT and GPT-2 use. **No extrapolation** — if the model was trained with max length 1024, it cannot process sequences longer than 1024 without retraining.
 
 #### Rotary Position Embedding (RoPE, used in LLaMA, GPT-Neo)
-
-💡 **Intuition: The clock analogy.** Imagine each position in the sequence is a clock hand. Position 0 points straight up (12 o'clock), position 1 rotates slightly clockwise, position 2 rotates further, etc. RoPE rotates each token's query and key vectors by an angle proportional to its position.
+**Intuition: The clock analogy.** Imagine each position in the sequence is a clock hand. Position 0 points straight up (12 o'clock), position 1 rotates slightly clockwise, position 2 rotates further, etc. RoPE rotates each token's query and key vectors by an angle proportional to its position.
 
 **Why this works:** When computing $q_i \cdot k_j$, the dot product between two rotated vectors depends only on the *difference* in their rotation angles — i.e., $i - j$ (relative position), not absolute positions $i$ and $j$ separately. This is the key insight.
 
@@ -652,9 +650,9 @@ Instead of sinusoids, train a lookup table: each position (0 to $\mathrm{max\_le
 
 **Why RoPE won:** It extrapolates gracefully — models trained at 2k context can handle 8k+ with minimal degradation. It's computationally cheap (rotations are fast). And it outperforms learned embeddings empirically.
 
-> 💡 **Position encoding choice determines context window scaling.** Models with learned position embeddings (BERT, GPT-2) cannot extend context without retraining the position embeddings. Models with RoPE (LLaMA, Mistral) can extend context via **context length interpolation** or **YaRN** with minimal fine-tuning.
+> **Position encoding choice determines context window scaling.** Models with learned position embeddings (BERT, GPT-2) cannot extend context without retraining the position embeddings. Models with RoPE (LLaMA, Mistral) can extend context via **context length interpolation** or **YaRN** with minimal fine-tuning.
 
-> 💡 **Checkpoint:** Multiple attention heads let the model track different patterns simultaneously. Next: we'll see how these fit into the full transformer block.
+> **Checkpoint:** Multiple attention heads let the model track different patterns simultaneously. Next: we'll see how these fit into the full transformer block.
 
 ### Visualization: Multi-Head Attention Data Flow
 
@@ -699,8 +697,8 @@ No $-\infty$ masking. Token 1 sees token 100. Token 100 sees token 1. Full bidir
 #### Training Objective: Masked Language Modeling (MLM)
 
 ```
-Input:  "The [MASK] bank was flooded by the [MASK]."
-Target:  Predict "river" and "storm" from bidirectional context
+Input: "The [MASK] bank was flooded by the [MASK]."
+Target: Predict "river" and "storm" from bidirectional context
 ```
 
 During training:
@@ -715,7 +713,7 @@ During training:
 Encoder models **cannot generate text**. There is no autoregressive sampling loop. One forward pass produces:
 
 ```python
-outputs = encoder(input_ids)  # shape: (batch, seq_len, d_model)
+outputs = encoder(input_ids) # shape: (batch, seq_len, d_model)
 ```
 
 - **Token-level representations:** `outputs[i]` is a contextualized embedding of token $i$
@@ -730,7 +728,7 @@ outputs = encoder(input_ids)  # shape: (batch, seq_len, d_model)
 | **Semantic search / retrieval** | Encode queries and documents into vectors, compute cosine similarity | RAG retrieval ([Ch.4](../ch07-rag-and-embeddings)) |
 | **Embeddings** | Use token or `[CLS]` representation as a dense vector | Clustering, recommendation, similarity |
 
-> 💡 **Why BERT still dominates embeddings in 2025:** Bidirectional attention produces **richer semantic representations** than causal attention. When you compute `cosine_similarity(query_embedding, doc_embedding)` in a RAG pipeline, you want the embedding to capture meaning from all context — left and right. Decoder-only models (GPT) can generate embeddings, but they underperform BERT-family encoders on retrieval benchmarks. See [Ch.4 §3](../ch07-rag-and-embeddings/rag-and-embeddings.md) for the RAG embedding comparison.
+> **Why BERT still dominates embeddings in 2025:** Bidirectional attention produces **richer semantic representations** than causal attention. When you compute `cosine_similarity(query_embedding, doc_embedding)` in a RAG pipeline, you want the embedding to capture meaning from all context — left and right. Decoder-only models (GPT) can generate embeddings, but they underperform BERT-family encoders on retrieval benchmarks. See [Ch.4 §3](../ch07-rag-and-embeddings/rag-and-embeddings.md) for the RAG embedding comparison.
 
 #### Concrete Example: BERT-base
 
@@ -763,11 +761,11 @@ Token 100 sees tokens 1–100. Token 1 sees only itself. This enforces **left-to
 #### Training Objective: Causal Language Modeling (CLM)
 
 ```
-Input:  "The river bank was"
-Target:  Predict "flooded" (next token)
+Input: "The river bank was"
+Target: Predict "flooded" (next token)
 
-Input:  "The river bank was flooded"
-Target:  Predict "by" (next token)
+Input: "The river bank was flooded"
+Target: Predict "by" (next token)
 ```
 
 Training is **autoregressive**: for a sequence of length $n$, compute loss on all $n-1$ next-token predictions simultaneously. Teacher forcing: during training, feed the ground-truth token at position $t$ even if the model's prediction at $t-1$ was wrong. This parallelizes training.
@@ -779,12 +777,12 @@ Decoder models **generate text autoregressively** — one token at a time:
 ```python
 tokens = [prompt_token_ids]
 for _ in range(max_new_tokens):
-    logits = decoder(tokens)          # shape: (1, len(tokens), vocab_size)
-    next_token_logits = logits[-1]    # last position only
-    next_token = sample(next_token_logits, temperature, top_p)
-    tokens.append(next_token)
-    if next_token == EOS_TOKEN:
-        break
+ logits = decoder(tokens) # shape: (1, len(tokens), vocab_size)
+ next_token_logits = logits[-1] # last position only
+ next_token = sample(next_token_logits, temperature, top_p)
+ tokens.append(next_token)
+ if next_token == EOS_TOKEN:
+ break
 ```
 
 Each generation step requires a **full forward pass** through all $L$ layers. This is why generation is slow and why KV caching (covered in [Ch.2 §3A](../ch02-llm-inference-mechanics/inference-mechanics.md)) is critical for production inference.
@@ -845,7 +843,7 @@ Each decoder token queries the entire encoded input — "which parts of the inpu
 #### Training Objective: Sequence-to-Sequence
 
 ```
-Encoder input:  "Translate to French: The river bank was flooded."
+Encoder input: "Translate to French: The river bank was flooded."
 Decoder target: "La rive du fleuve a été inondée."
 ```
 
@@ -857,12 +855,12 @@ Train with teacher forcing: feed the ground-truth French tokens to the decoder d
 2. **Decode autoregressively:** Generate output tokens one at a time, cross-attending to the cached encoder outputs at each step
 
 ```python
-encoder_outputs = encoder(input_ids)  # (batch, src_len, d_model) — computed once
+encoder_outputs = encoder(input_ids) # (batch, src_len, d_model) — computed once
 decoder_tokens = [BOS_TOKEN]
 for _ in range(max_new_tokens):
-    decoder_outputs = decoder(decoder_tokens, encoder_outputs)  # cross-attention here
-    next_token = sample(decoder_outputs[-1])
-    decoder_tokens.append(next_token)
+ decoder_outputs = decoder(decoder_tokens, encoder_outputs) # cross-attention here
+ next_token = sample(decoder_outputs[-1])
+ decoder_tokens.append(next_token)
 ```
 
 #### What Encoder-Decoders Are Used For
@@ -880,7 +878,7 @@ for _ in range(max_new_tokens):
 
 ```
 Prompt: "Translate to French: The river bank was flooded.\n\nFrench translation:"
-Model:  "La rive du fleuve a été inondée."
+Model: "La rive du fleuve a été inondée."
 ```
 
 No separate encoder needed. The decoder processes the prompt causally, then generates the output. One architecture for all tasks — simpler training, simpler inference, easier to scale.
@@ -904,33 +902,33 @@ The choice of attention masking determines what each architecture can do:
 
 ```mermaid
 flowchart TD
-    A["Transformer Block<br/>(Universal Building Block)"] --> B{"Attention Masking Strategy"}
+ A["Transformer Block<br/>(Universal Building Block)"] --> B{"Attention Masking Strategy"}
 
-    B -->|"No Mask<br/>(Full Visibility)"| C["Encoder-Only<br/>(BERT, RoBERTa, E5)"]
-    B -->|"Causal Mask<br/>(Lower Triangular)"| D["Decoder-Only<br/>(GPT, LLaMA, Claude)"]
-    B -->|"Mixed<br/>(Bidirectional + Causal)"| E["Encoder-Decoder<br/>(T5, BART, Whisper)"]
+ B -->|"No Mask<br/>(Full Visibility)"| C["Encoder-Only<br/>(BERT, RoBERTa, E5)"]
+ B -->|"Causal Mask<br/>(Lower Triangular)"| D["Decoder-Only<br/>(GPT, LLaMA, Claude)"]
+ B -->|"Mixed<br/>(Bidirectional + Causal)"| E["Encoder-Decoder<br/>(T5, BART, Whisper)"]
 
-    C --> C1["Bidirectional Context<br/>Token i sees all tokens"]
-    C1 --> C2["Training: Masked Language Modeling<br/>Predict [MASK] from context"]
-    C2 --> C3["Use Cases:<br/>• Text classification<br/>• Named entity recognition<br/>• Embeddings/Retrieval<br/>• Semantic search"]
-    C3 --> C4["Cannot Generate:<br/>No autoregressive mechanism"]
+ C --> C1["Bidirectional Context<br/>Token i sees all tokens"]
+ C1 --> C2["Training: Masked Language Modeling<br/>Predict [MASK] from context"]
+ C2 --> C3["Use Cases:<br/>• Text classification<br/>• Named entity recognition<br/>• Embeddings/Retrieval<br/>• Semantic search"]
+ C3 --> C4["Cannot Generate:<br/>No autoregressive mechanism"]
 
-    D --> D1["Causal Context<br/>Token i sees only tokens ≤ i"]
-    D1 --> D2["Training: Next Token Prediction<br/>Predict x_t given x_<t"]
-    D2 --> D3["Use Cases:<br/>• Text generation<br/>• Chatbots<br/>• Code completion<br/>• Creative writing"]
-    D3 --> D4["Can Understand:<br/>GPT-3 showed decoders<br/>match encoders on classification"]
+ D --> D1["Causal Context<br/>Token i sees only tokens ≤ i"]
+ D1 --> D2["Training: Next Token Prediction<br/>Predict x_t given x_<t"]
+ D2 --> D3["Use Cases:<br/>• Text generation<br/>• Chatbots<br/>• Code completion<br/>• Creative writing"]
+ D3 --> D4["Can Understand:<br/>GPT-3 showed decoders<br/>match encoders on classification"]
 
-    E --> E1["Split Architecture:<br/>Encoder (bidirectional)<br/>+ Decoder (causal + cross-attention)"]
-    E1 --> E2["Training: Sequence-to-Sequence<br/>Input → Encoder → Decoder → Output"]
-    E2 --> E3["Use Cases:<br/>• Machine translation<br/>• Summarization<br/>• Speech-to-text<br/>• Multimodal tasks"]
-    E3 --> E4["Why Less Popular:<br/>Decoder-only simpler,<br/>scales better for generalist models"]
+ E --> E1["Split Architecture:<br/>Encoder (bidirectional)<br/>+ Decoder (causal + cross-attention)"]
+ E1 --> E2["Training: Sequence-to-Sequence<br/>Input → Encoder → Decoder → Output"]
+ E2 --> E3["Use Cases:<br/>• Machine translation<br/>• Summarization<br/>• Speech-to-text<br/>• Multimodal tasks"]
+ E3 --> E4["Why Less Popular:<br/>Decoder-only simpler,<br/>scales better for generalist models"]
 
-    style C fill:#e1f5ff
-    style D fill:#ffe1e1
-    style E fill:#e1ffe1
-    style C4 fill:#fff4e1
-    style D4 fill:#fff4e1
-    style E4 fill:#fff4e1
+ style C fill:#e1f5ff
+ style D fill:#ffe1e1
+ style E fill:#e1ffe1
+ style C4 fill:#fff4e1
+ style D4 fill:#fff4e1
+ style E4 fill:#fff4e1
 ```
 
 **Key architectural tradeoffs:**
@@ -944,8 +942,8 @@ flowchart TD
 |-----------|--------------|--------------|-----------------|
 | **Attention mask** | None (bidirectional) | Causal (lower-triangular) | Bidirectional (encoder) + causal (decoder) + cross-attention |
 | **Training objective** | Masked language modeling | Causal language modeling | Sequence-to-sequence |
-| **Can generate text?** | ❌ No | ✅ Yes | ✅ Yes |
-| **Can encode semantics?** | ✅ Best | ⚠️ Worse than encoder | ✅ Best (encoder half) |
+| **Can generate text?** | No | Yes | Yes |
+| **Can encode semantics?** | Best | Worse than encoder | Best (encoder half) |
 | **Inference cost** | $O(n^2)$ one-time | $O(n \cdot m)$ for $m$ new tokens | $O(n^2) + O(n \cdot m)$ |
 | **Best for** | Retrieval, classification, embeddings | General-purpose generation | Translation, summarization |
 | **Examples** | BERT, RoBERTa, DeBERTa, E5, BGE | GPT, Claude, LLaMA, Mistral, Gemini | T5, BART, Whisper |
@@ -967,7 +965,7 @@ flowchart TD
 - You have a dedicated sequence-to-sequence task (translation, summarization)
 - You can afford the extra complexity (two separate stacks)
 
-> 💡 **The 2025 production pattern:** Decoder-only LLM (GPT-4, Claude) for generation and reasoning + encoder-only embedding model (E5, BGE, `text-embedding-3-large`) for retrieval. The two architectures are complementary. See [Ch.4](../ch07-rag-and-embeddings) for the full RAG pipeline implementation.
+> **The 2025 production pattern:** Decoder-only LLM (GPT-4, Claude) for generation and reasoning + encoder-only embedding model (E5, BGE, `text-embedding-3-large`) for retrieval. The two architectures are complementary. See [Ch.4](../ch07-rag-and-embeddings) for the full RAG pipeline implementation.
 
 ### Visualization: Attention Patterns Across Architectures
 
@@ -997,7 +995,7 @@ These are the concepts interviewers expect you to know cold. Each row represents
 | **Q/K/V intuition = library catalog:** Q is your search query, K is the label on each book's spine, V is the content inside the book. Attention matches queries against keys (dot product similarity), then retrieves a weighted blend of values. High attention weight = more of that book's content in the output. | "How do you explain Q/K/V to a non-technical person?" | Using only math notation — interviewers want to see if you can explain it intuitively before the formulas |
 | **Softmax converts scores to probability distribution:** Raw attention scores can be arbitrarily large or negative. Softmax squashes them into [0, 1] range where each row sums to 1.0, making them interpretable as "how much attention to pay." Division by √d_k prevents saturation (vanishing gradients). | "Why do we apply softmax to attention scores?" | Forgetting to mention the scaling factor √d_k — interviewers expect you to know why it's needed (prevents softmax saturation as d_k grows) |
 
-> 💡 **Interview Tip:** Start every answer with plain English, then add the formula. If asked "Explain attention," say "It's a lookup mechanism where each word searches all other words for relevant context" before diving into Q·K^T. Interviewers test whether you understand the intuition, not just the math.
+> **Interview Tip:** Start every answer with plain English, then add the formula. If asked "Explain attention," say "It's a lookup mechanism where each word searches all other words for relevant context" before diving into Q·K^T. Interviewers test whether you understand the intuition, not just the math.
 
 ---
 

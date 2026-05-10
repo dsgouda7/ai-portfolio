@@ -15,17 +15,17 @@ This document provides the **conceptual overview** of the LLM Fundamentals track
 2. Understand the progression: Ch.1 (black box) → Ch.5 (production-scale retrieval)
 3. See how each chapter contributes to the AI Literacy Kit deliverable
 
-**💻 Hands-on learners:**
+** Hands-on learners:**
 1. Open the chapter notebook and run cells sequentially
 2. Experiment with model parameters and prompts
 3. Re-run experiments with your own API keys
 
-**🎯 Sequential chapter learners:**
+** Sequential chapter learners:**
 1. Start with [ch01-llm-fundamentals](ch01-llm-fundamentals/llm-fundamentals.md)
 2. Progress through chapters 1-5 in order
 3. Each chapter builds on previous concepts
 
-**🔍 Problem-driven learners:**
+** Problem-driven learners:**
 - **"How do I get structured output?"** → [Ch.2 Prompt Engineering](ch02-prompt-engineering)
 - **"How do I handle multi-step queries?"** → [Ch.3 CoT Reasoning](ch03-cot-reasoning)
 - **"How do I eliminate hallucinations on private data?"** → [Ch.4 RAG](ch04-rag-and-embeddings)
@@ -56,11 +56,11 @@ This document provides the **conceptual overview** of the LLM Fundamentals track
 **The Progression:**
 
 ```
-Ch.1: Raw model probing        → Baseline established, black box opened
-Ch.2: Prompt engineering       → Structured output reliable; prompt template library ready
-Ch.3: CoT reasoning            → Multi-step logic solved; reasoning benchmark complete
-Ch.4: RAG grounding            → Hallucination cut 38%→4%; RAG architecture validated
-Ch.5: Vector DB scaling        → HNSW 98.6% recall at 4ms; production spec ready ✅
+Ch.1: Raw model probing → Baseline established, black box opened
+Ch.2: Prompt engineering → Structured output reliable; prompt template library ready
+Ch.3: CoT reasoning → Multi-step logic solved; reasoning benchmark complete
+Ch.4: RAG grounding → Hallucination cut 38%→4%; RAG architecture validated
+Ch.5: Vector DB scaling → HNSW 98.6% recall at 4ms; production spec ready
 ```
 
 ---
@@ -90,17 +90,17 @@ This document provides the **conceptual overview** of the entire AI track. For h
 2. Understand the progression: Ch.1 (8% conv) → Ch.11 (32% conv)
 3. See how each concept unlocks business value
 
-**💻 Hands-on learners:**
+** Hands-on learners:**
 1. Open [grand_solution.ipynb (reference)](grand_solution_reference.ipynb) | [grand_solution.ipynb (exercise)](grand_solution_exercise.ipynb) — executable Jupyter notebook
 2. Run code cells sequentially to see the complete integration
 3. Experiment with parameters and test cases
 
-**🎯 Sequential chapter learners:**
+** Sequential chapter learners:**
 1. Start with [ch01_llm_fundamentals](ch01_llm_fundamentals/llm-fundamentals.md)
 2. Progress through chapters 1-11 in order
 3. Each chapter builds on previous concepts
 
-**🔍 Problem-driven learners:**
+** Problem-driven learners:**
 - **"How do I eliminate hallucinations?"** → [Ch.4 RAG](ch04_rag_embeddings)
 - **"How do I add tool-calling?"** → [Ch.6 ReAct](ch06_react_semantic_kernel)
 - **"How do I defend against attacks?"** → [Ch.7 Safety](ch07_evaluating_ai_systems)
@@ -114,27 +114,27 @@ This document provides the **conceptual overview** of the entire AI track. For h
 
 ---
 
-## Mission Accomplished: All 6 Constraints Satisfied ✅
+## Mission Accomplished: All 6 Constraints Satisfied
 
 **The Challenge:** Build Mamma Rosa's PizzaBot — a production AI ordering system that beats human phone staff on business metrics while maintaining safety and reliability.
 
-**The Result:** **32% conversion** (>25% target ✅), **$41.80 AOV** (+$3.30 vs. $38.50 baseline ✅), **1.8s p95 latency** (<3s ✅), **$0.06/conv** (<$0.08 ✅), **0 successful attacks** (✅), **>99% uptime** (✅)
+**The Result:** **32% conversion** (>25% target ), **$41.80 AOV** (+$3.30 vs. $38.50 baseline ), **1.8s p95 latency** (<3s ), **$0.06/conv** (<$0.08 ), **0 successful attacks** (), **>99% uptime** ()
 
 **The Progression:**
 
 ```
-Ch.1: Raw LLM baseline          → 8% conv, 40% errors  (unusable — hallucinating menu items)
-Ch.2: Prompt engineering        → 12% conv, 15% errors (structured output, but no grounding)
-Ch.3: Chain-of-thought          → 15% conv, 10% errors (multi-step logic, still hallucinating facts)
-Ch.4: RAG grounding             → 18% conv, 5% errors  (menu facts grounded ✅ #2 ACCURACY)
-Ch.5: Vector DBs (HNSW)         → 18% conv (infra: scales to 50K+ chunks, fast retrieval)
-Ch.6: ReAct orchestration       → 27% conv, +$2.80 AOV (proactive upselling ✅ #1 BUSINESS VALUE)
-Ch.7: Safety hardening          → 27% conv (0 attacks ✅ #5 SAFETY)
-Ch.8: Evaluation framework      → 30% conv (quality assurance, faster iteration)
-Ch.9: Cost/latency optimization → 32% conv, 1.5s p95   (streaming, caching ✅ #3 LATENCY, #4 COST)
-Ch.10: Fine-tuning              → 32% conv, $41.00 AOV (brand voice, cost reduction ✅ #6 RELIABILITY)
-Ch.11: Advanced patterns        → 32% conv, 0.7% edge errors (reflection, debate, orchestration — mastery!)
-                                  ✅ ALL 6 CONSTRAINTS SATISFIED!
+Ch.1: Raw LLM baseline → 8% conv, 40% errors (unusable — hallucinating menu items)
+Ch.2: Prompt engineering → 12% conv, 15% errors (structured output, but no grounding)
+Ch.3: Chain-of-thought → 15% conv, 10% errors (multi-step logic, still hallucinating facts)
+Ch.4: RAG grounding → 18% conv, 5% errors (menu facts grounded #2 ACCURACY)
+Ch.5: Vector DBs (HNSW) → 18% conv (infra: scales to 50K+ chunks, fast retrieval)
+Ch.6: ReAct orchestration → 27% conv, +$2.80 AOV (proactive upselling #1 BUSINESS VALUE)
+Ch.7: Safety hardening → 27% conv (0 attacks #5 SAFETY)
+Ch.8: Evaluation framework → 30% conv (quality assurance, faster iteration)
+Ch.9: Cost/latency optimization → 32% conv, 1.5s p95 (streaming, caching #3 LATENCY, #4 COST)
+Ch.10: Fine-tuning → 32% conv, $41.00 AOV (brand voice, cost reduction #6 RELIABILITY)
+Ch.11: Advanced patterns → 32% conv, 0.7% edge errors (reflection, debate, orchestration — mastery!)
+ALL 6 CONSTRAINTS SATISFIED!
 ```
 
 ---
@@ -204,7 +204,7 @@ Ch.11: Advanced patterns        → 32% conv, 0.7% edge errors (reflection, deba
 
 **What it unlocked:**
 - **18% conversion:** Customers trust accurate info, complete more orders
-- **~5% error rate:** ✅ **Constraint #2 (ACCURACY) ACHIEVED!** All menu fact errors eliminated
+- **~5% error rate:** **Constraint #2 (ACCURACY) ACHIEVED!** All menu fact errors eliminated
 - **Embedding pipeline:** Text → 768-dim vectors, cosine similarity search
 - **Two-phase architecture:** Ingestion (chunk → embed → index) + Query (embed query → retrieve → generate)
 
@@ -241,7 +241,7 @@ Ch.11: Advanced patterns        → 32% conv, 0.7% edge errors (reflection, deba
 **What it is:** ReAct (Reason + Act) loop — Thought → Action → Observation. LangChain/Semantic Kernel frameworks automate agent loop, tool orchestration, stateful conversations.
 
 **What it unlocked:**
-- **27% conversion:** ✅ **Constraint #1 (BUSINESS VALUE) ACHIEVED!** Beats 22% phone baseline
+- **27% conversion:** **Constraint #1 (BUSINESS VALUE) ACHIEVED!** Beats 22% phone baseline
 - **$40.60 AOV:** +$2.50 vs. $38.50 baseline via proactive upselling ("add garlic bread?")
 - **Proactive dialogue:** Bot drives conversation, doesn't just react (guides customer through order)
 - **Tool orchestration:** Coordinates RAG retrieval, inventory check, payment processing in sequence
@@ -260,7 +260,7 @@ Ch.11: Advanced patterns        → 32% conv, 0.7% edge errors (reflection, deba
 **What it is:** Layered safety defense — input validation (Azure Content Safety), output validation (allergen DB checks), prompt injection detection (LakeraAI), adversarial testing, guardrails (NeMo).
 
 **What it unlocked:**
-- **0 successful attacks:** ✅ **Constraint #5 (SAFETY) ACHIEVED!** 98% jailbreak resistance
+- **0 successful attacks:** **Constraint #5 (SAFETY) ACHIEVED!** 98% jailbreak resistance
 - **100% allergen validation:** Every allergen claim checked against DB before returning (zero false claims)
 - **Compliance:** Pass PCI adversarial testing requirements (launch approved)
 - **Monitoring:** Log all flagged attempts, alert on >5 attempts/hour
@@ -299,8 +299,8 @@ Ch.11: Advanced patterns        → 32% conv, 0.7% edge errors (reflection, deba
 
 **What it unlocked:**
 - **32% conversion:** 2.2s → 1.5s latency improves UX, reduces abandonment
-- **1.5s p95 latency:** ✅ **Constraint #3 (LATENCY) ACHIEVED!** 50% under target
-- **$0.005/conv:** ✅ **Constraint #4 (COST) ACHIEVED!** 94% under budget
+- **1.5s p95 latency:** **Constraint #3 (LATENCY) ACHIEVED!** 50% under target
+- **$0.005/conv:** **Constraint #4 (COST) ACHIEVED!** 94% under budget
 - **Streaming UX:** First token <500ms feels instant, customers stay engaged
 
 **Production value:**
@@ -320,7 +320,7 @@ Ch.11: Advanced patterns        → 32% conv, 0.7% edge errors (reflection, deba
 - **32% conversion maintained:** Brand voice consistency 70% → 95%
 - **$41.00 AOV:** Brand storytelling drives +$1.00 upsell effectiveness
 - **$0.008/conv:** Self-hosted fine-tuned model cheaper than GPT-4o-mini API
-- **>99% uptime:** ✅ **Constraint #6 (RELIABILITY) ACHIEVED!** Production polish complete
+- **>99% uptime:** **Constraint #6 (RELIABILITY) ACHIEVED!** Production polish complete
 
 **Production value:**
 - **Brand differentiation:** "Nonna's recipe since 1987" warmth vs. generic corporate tone
@@ -356,40 +356,40 @@ Here's how all 11 concepts integrate into a deployed Mamma Rosa's PizzaBot:
 
 ```mermaid
 flowchart TD
-    USER["Customer Query<br/>('cheapest gluten-free<br/>under 600 cal')"] --> SAFETY_IN["Input Validation<br/>Ch.7: Azure Content Safety<br/>Prompt injection detection"]
+ USER["Customer Query<br/>('cheapest gluten-free<br/>under 600 cal')"] --> SAFETY_IN["Input Validation<br/>Ch.7: Azure Content Safety<br/>Prompt injection detection"]
 
-    SAFETY_IN --> EMBED["Embedding Model<br/>Ch.4: Text → 768-dim vector<br/>$0.0001/query"]
+ SAFETY_IN --> EMBED["Embedding Model<br/>Ch.4: Text → 768-dim vector<br/>$0.0001/query"]
 
-    EMBED --> VECTOR_DB["Vector DB Search<br/>Ch.5: HNSW index<br/>50K menu chunks<br/><10ms retrieval"]
+ EMBED --> VECTOR_DB["Vector DB Search<br/>Ch.5: HNSW index<br/>50K menu chunks<br/><10ms retrieval"]
 
-    VECTOR_DB --> CACHE_CHECK["Cache Check<br/>Ch.9: Prompt caching<br/>90% hit rate → 10× savings"]
+ VECTOR_DB --> CACHE_CHECK["Cache Check<br/>Ch.9: Prompt caching<br/>90% hit rate → 10× savings"]
 
-    CACHE_CHECK --> LLM["Fine-Tuned Model<br/>Ch.10: Llama-3-8B + LoRA<br/>Brand voice specialized<br/>$0.004/query"]
+ CACHE_CHECK --> LLM["Fine-Tuned Model<br/>Ch.10: Llama-3-8B + LoRA<br/>Brand voice specialized<br/>$0.004/query"]
 
-    LLM --> COT["Chain-of-Thought<br/>Ch.3: Multi-step reasoning<br/>Filter → Sort → Check"]
+ LLM --> COT["Chain-of-Thought<br/>Ch.3: Multi-step reasoning<br/>Filter → Sort → Check"]
 
-    COT --> REACT["ReAct Orchestration<br/>Ch.6: Tool calls<br/>check_availability()<br/>calculate_total()"]
+ COT --> REACT["ReAct Orchestration<br/>Ch.6: Tool calls<br/>check_availability()<br/>calculate_total()"]
 
-    REACT --> REFINE{Complex<br/>order?}
+ REACT --> REFINE{Complex<br/>order?}
 
-    REFINE -->|No| DIRECT["Direct Response<br/>Ch.2: Structured JSON<br/>850 tokens"]
+ REFINE -->|No| DIRECT["Direct Response<br/>Ch.2: Structured JSON<br/>850 tokens"]
 
-    REFINE -->|Yes| REFLECTION["Reflection Loop<br/>Ch.11: Draft → Critique → Revise<br/>2,550 tokens"]
+ REFINE -->|Yes| REFLECTION["Reflection Loop<br/>Ch.11: Draft → Critique → Revise<br/>2,550 tokens"]
 
-    REFLECTION --> VERIFY["Output Validation<br/>Ch.7: Allergen DB check<br/>Pricing verification"]
+ REFLECTION --> VERIFY["Output Validation<br/>Ch.7: Allergen DB check<br/>Pricing verification"]
 
-    DIRECT --> VERIFY
+ DIRECT --> VERIFY
 
-    VERIFY --> STREAM["Streaming Response<br/>Ch.9: First token <500ms<br/>Perceived instant UX"]
+ VERIFY --> STREAM["Streaming Response<br/>Ch.9: First token <500ms<br/>Perceived instant UX"]
 
-    STREAM --> MONITOR["Production Monitoring<br/>Ch.8: RAGAS metrics<br/>Error rate, latency, conversion<br/>Alert on drift"]
+ STREAM --> MONITOR["Production Monitoring<br/>Ch.8: RAGAS metrics<br/>Error rate, latency, conversion<br/>Alert on drift"]
 
-    MONITOR --> OUTPUT["Customer receives:<br/>{pizza: 'Veggie Garden',<br/>price: $14.99,<br/>confidence: 99.2%,<br/>delivery_time: '35 min'}"]
+ MONITOR --> OUTPUT["Customer receives:<br/>{pizza: 'Veggie Garden',<br/>price: $14.99,<br/>confidence: 99.2%,<br/>delivery_time: '35 min'}"]
 
-    style USER fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style LLM fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style OUTPUT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style REFINE fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style USER fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style LLM fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style OUTPUT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style REFINE fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### Deployment Pipeline (How Ch.1-11 Connect in Production)
@@ -397,16 +397,16 @@ flowchart TD
 **1. Ingestion Pipeline (runs weekly):**
 ```python
 # Ch.4: Embed menu corpus
-menu_chunks = chunk_menu_data(chunk_size=512)  # 50K chunks
-embeddings = embed_model.encode(menu_chunks)   # 768-dim vectors
+menu_chunks = chunk_menu_data(chunk_size=512) # 50K chunks
+embeddings = embed_model.encode(menu_chunks) # 768-dim vectors
 
 # Ch.5: Build HNSW index
 index = hnswlib.Index(space='cosine', dim=768)
-index.add_items(embeddings)                     # O(N log N) build time
-index.set_ef(50)                                # Query-time beam width
+index.add_items(embeddings) # O(N log N) build time
+index.set_ef(50) # Query-time beam width
 
 # Ch.3: VIF audit on feature importance (if using structured features)
-vif_audit(menu_features)  # Ensure no multicollinearity
+vif_audit(menu_features) # Ensure no multicollinearity
 ```
 
 **2. Training Pipeline (runs monthly):**
@@ -423,95 +423,95 @@ trainer.train(train_dataset=phone_transcripts)
 
 # Ch.8: Validate with RAGAS before deploying
 ragas_scores = evaluate(model, golden_dataset)
-assert ragas_scores['faithfulness'] > 0.95  # Quality gate
+assert ragas_scores['faithfulness'] > 0.95 # Quality gate
 ```
 
 **3. Inference API (handles user requests):**
 ```python
 @app.route('/chat', methods=['POST'])
 async def chat():
-    user_query = request.json['message']
+ user_query = request.json['message']
 
-    # Ch.7: Input validation
-    if content_safety.is_harmful(user_query):
-        return {"error": "Query violates content policy"}, 400
+ # Ch.7: Input validation
+ if content_safety.is_harmful(user_query):
+ return {"error": "Query violates content policy"}, 400
 
-    # Ch.4: RAG retrieval
-    query_embedding = embed_model.encode(user_query)
-    relevant_chunks = vector_db.search(query_embedding, k=5)  # Ch.5: HNSW
+ # Ch.4: RAG retrieval
+ query_embedding = embed_model.encode(user_query)
+ relevant_chunks = vector_db.search(query_embedding, k=5) # Ch.5: HNSW
 
-    # Ch.9: Prompt caching (system prompt cached)
-    prompt = build_prompt(
-        system_prompt=CACHED_SYSTEM_PROMPT,  # 90% cache hit
-        context=relevant_chunks,
-        user_query=user_query
-    )
+ # Ch.9: Prompt caching (system prompt cached)
+ prompt = build_prompt(
+ system_prompt=CACHED_SYSTEM_PROMPT, # 90% cache hit
+ context=relevant_chunks,
+ user_query=user_query
+ )
 
-    # Ch.6: ReAct agent loop
-    agent_state = {"cart": [], "context": relevant_chunks}
-    for step in range(max_steps=5):
-        # Ch.3: Chain-of-thought reasoning
-        thought = llm.generate(prompt + "\nThought:", max_tokens=100)
+ # Ch.6: ReAct agent loop
+ agent_state = {"cart": [], "context": relevant_chunks}
+ for step in range(max_steps=5):
+ # Ch.3: Chain-of-thought reasoning
+ thought = llm.generate(prompt + "\nThought:", max_tokens=100)
 
-        # Ch.6: Tool selection and execution
-        if "Action:" in thought:
-            action, tool_input = parse_action(thought)
-            observation = execute_tool(action, tool_input)
-            prompt += f"\nThought: {thought}\nObservation: {observation}"
-        else:
-            break  # Agent finished reasoning
+ # Ch.6: Tool selection and execution
+ if "Action:" in thought:
+ action, tool_input = parse_action(thought)
+ observation = execute_tool(action, tool_input)
+ prompt += f"\nThought: {thought}\nObservation: {observation}"
+ else:
+ break # Agent finished reasoning
 
-    # Ch.11: Reflection on complex orders
-    if is_complex(user_query):
-        draft = llm.generate(prompt)
-        critique = llm.generate(f"Critique this answer: {draft}")
-        response = llm.generate(f"Revise based on critique: {draft}\n{critique}")
-    else:
-        response = llm.generate(prompt)  # Simple order, single-pass
+ # Ch.11: Reflection on complex orders
+ if is_complex(user_query):
+ draft = llm.generate(prompt)
+ critique = llm.generate(f"Critique this answer: {draft}")
+ response = llm.generate(f"Revise based on critique: {draft}\n{critique}")
+ else:
+ response = llm.generate(prompt) # Simple order, single-pass
 
-    # Ch.7: Output validation
-    if contains_allergen_claim(response):
-        validated_response = validate_allergen_claims(response, allergen_db)
+ # Ch.7: Output validation
+ if contains_allergen_claim(response):
+ validated_response = validate_allergen_claims(response, allergen_db)
 
-    # Ch.9: Streaming response
-    return stream_response(validated_response)  # First token <500ms
+ # Ch.9: Streaming response
+ return stream_response(validated_response) # First token <500ms
 
 # Ch.8: Production monitoring
 @app.after_request
 def log_metrics(response):
-    latency = time.time() - request.start_time
-    monitor.log({
-        "latency": latency,
-        "tokens": count_tokens(response),
-        "cost": calculate_cost(request, response),
-        "ragas_faithfulness": evaluate_faithfulness(response)
-    })
+ latency = time.time() - request.start_time
+ monitor.log({
+ "latency": latency,
+ "tokens": count_tokens(response),
+ "cost": calculate_cost(request, response),
+ "ragas_faithfulness": evaluate_faithfulness(response)
+ })
 
-    # Alert on drift
-    if latency > 3.0 or monitor.error_rate() > 0.05:
-        alert("Production metrics degraded")
+ # Alert on drift
+ if latency > 3.0 or monitor.error_rate() > 0.05:
+ alert("Production metrics degraded")
 ```
 
 **4. Monitoring Dashboard (tracks production health):**
 ```python
 # Ch.8: Real-time metrics
 if production_error_rate > 0.05:
-    alert("Error rate exceeded 5% threshold")
+ alert("Error rate exceeded 5% threshold")
 
 # Ch.9: Cost tracking
 daily_cost = sum(conv.cost for conv in today_conversations)
 if daily_cost > budget_per_day:
-    alert("Daily cost budget exceeded")
+ alert("Daily cost budget exceeded")
 
 # Ch.6: Business metrics
 conversion_rate = orders_placed / total_conversations
 if conversion_rate < 0.25:
-    alert("Conversion rate below 25% target")
+ alert("Conversion rate below 25% target")
 
 # Ch.10: Model drift detection
 current_brand_voice_score = evaluate_brand_voice(recent_responses)
 if abs(current_brand_voice_score - baseline_score) > 0.1:
-    trigger_retraining()  # Brand voice drifting, retrain LoRA
+ trigger_retraining() # Brand voice drifting, retrain LoRA
 ```
 
 ---
@@ -554,24 +554,24 @@ if abs(current_brand_voice_score - baseline_score) > 0.1:
 
 | # | Constraint | Target | Status | How We Achieved It |
 |---|------------|--------|--------|-------------------|
-| **#1** | **BUSINESS VALUE** | >25% conversion + +$2.50 AOV + 70% labor savings | ✅ **32% conversion, $41.80 AOV** | Ch.6: ReAct orchestration + proactive upselling<br/>Ch.8: Quality assurance enables iteration<br/>Ch.9: Latency optimization reduces abandonment<br/>Ch.10: Brand voice drives emotional connection |
-| **#2** | **ACCURACY** | <5% error rate on menu facts | ✅ **~4% error (99.2% on Ch.11 edge cases)** | Ch.4: RAG eliminates hallucinated menu items<br/>Ch.7: Output validation on allergen claims<br/>Ch.11: Reflection handles contradictions |
-| **#3** | **LATENCY** | <3s p95 response time | ✅ **1.8s p95** | Ch.5: HNSW fast retrieval (<10ms)<br/>Ch.9: Streaming (first token <500ms)<br/>Ch.9: Prompt caching, KV-cache reuse |
-| **#4** | **COST** | <$0.08 per conversation | ✅ **$0.06/conv** | Ch.9: Prompt caching (90% hit → 10× savings)<br/>Ch.10: Self-hosted fine-tuned model<br/>Ch.9: INT8 quantization, batched inference |
-| **#5** | **SAFETY** | Zero successful attacks | ✅ **0 attacks (98% jailbreak resistance)** | Ch.7: Layered defense (input + output validation)<br/>Ch.7: Prompt injection detection (95% precision)<br/>Ch.7: Adversarial testing (500-query red team) |
-| **#6** | **RELIABILITY** | >99% uptime + graceful degradation | ✅ **>99% uptime** | Ch.6: Error recovery (tool failure fallbacks)<br/>Ch.8: Regression testing prevents breakage<br/>Ch.10: Production polish, monitoring thresholds<br/>Ch.11: Graceful degradation (ask vs. hallucinate) |
+| **#1** | **BUSINESS VALUE** | >25% conversion + +$2.50 AOV + 70% labor savings | **32% conversion, $41.80 AOV** | Ch.6: ReAct orchestration + proactive upselling<br/>Ch.8: Quality assurance enables iteration<br/>Ch.9: Latency optimization reduces abandonment<br/>Ch.10: Brand voice drives emotional connection |
+| **#2** | **ACCURACY** | <5% error rate on menu facts | **~4% error (99.2% on Ch.11 edge cases)** | Ch.4: RAG eliminates hallucinated menu items<br/>Ch.7: Output validation on allergen claims<br/>Ch.11: Reflection handles contradictions |
+| **#3** | **LATENCY** | <3s p95 response time | **1.8s p95** | Ch.5: HNSW fast retrieval (<10ms)<br/>Ch.9: Streaming (first token <500ms)<br/>Ch.9: Prompt caching, KV-cache reuse |
+| **#4** | **COST** | <$0.08 per conversation | **$0.06/conv** | Ch.9: Prompt caching (90% hit → 10× savings)<br/>Ch.10: Self-hosted fine-tuned model<br/>Ch.9: INT8 quantization, batched inference |
+| **#5** | **SAFETY** | Zero successful attacks | **0 attacks (98% jailbreak resistance)** | Ch.7: Layered defense (input + output validation)<br/>Ch.7: Prompt injection detection (95% precision)<br/>Ch.7: Adversarial testing (500-query red team) |
+| **#6** | **RELIABILITY** | >99% uptime + graceful degradation | **>99% uptime** | Ch.6: Error recovery (tool failure fallbacks)<br/>Ch.8: Regression testing prevents breakage<br/>Ch.10: Production polish, monitoring thresholds<br/>Ch.11: Graceful degradation (ask vs. hallucinate) |
 
 ---
 
 ## What's Next: Beyond Single-Agent Systems
 
 **This track taught:**
-- ✅ LLM fundamentals (Ch.1: tokenization, sampling, training)
-- ✅ Prompt engineering (Ch.2: system prompts, few-shot, structured output)
-- ✅ Reasoning patterns (Ch.3: CoT, Ch.11: Reflection, Debate, ToT)
-- ✅ Retrieval-Augmented Generation (Ch.4-5: RAG, vector DBs)
-- ✅ Agent orchestration (Ch.6: ReAct, tool-calling, stateful conversations)
-- ✅ Production hardening (Ch.7-10: safety, evaluation, optimization, fine-tuning)
+- LLM fundamentals (Ch.1: tokenization, sampling, training)
+- Prompt engineering (Ch.2: system prompts, few-shot, structured output)
+- Reasoning patterns (Ch.3: CoT, Ch.11: Reflection, Debate, ToT)
+- Retrieval-Augmented Generation (Ch.4-5: RAG, vector DBs)
+- Agent orchestration (Ch.6: ReAct, tool-calling, stateful conversations)
+- Production hardening (Ch.7-10: safety, evaluation, optimization, fine-tuning)
 
 **What remains for enterprise AI:**
 - **Multi-Agent AI** (Track 04): Agent-to-agent delegation, shared memory, event-driven coordination
@@ -611,13 +611,13 @@ if abs(current_brand_voice_score - baseline_score) > 0.1:
 Master these 11 chapters, and you've mastered 80% of production AI engineering. The rest is domain-specific tooling.
 
 **You now have:**
-- A production-ready agentic system (32% conversion ✅, all 6 constraints satisfied)
+- A production-ready agentic system (32% conversion , all 6 constraints satisfied)
 - A mental model for systematic AI development (foundation → grounding → orchestration → hardening → optimization)
 - The vocabulary to read any AI paper (RAG, ReAct, HNSW, LoRA, RAGAS, prompt injection)
 - 10 advanced patterns for edge case handling (Reflection, Debate, Hierarchical, ToT, CoV, Memory, etc.)
 
 **ROI Delivered:**
-- **$300k development investment** → **10.6 month payback** ✅
+- **$300k development investment** → **10.6 month payback**
 - **Monthly benefit**: $28,302 (revenue lift + labor savings)
 - **32% conversion** vs. 22% phone baseline (+10 points)
 - **$41.80 AOV** vs. $38.50 baseline (+$3.30)
@@ -659,7 +659,7 @@ Wait — we said 10.6 months in the intro! What happened?
 - **Revenue lift**: $129,720/month
 - Labor savings: $94,800/month (10 locations)
 - **Total benefit**: $224,520/month
-- **Payback**: $300,000 ÷ $224,520 = **1.3 months** 🚀
+- **Payback**: $300,000 ÷ $224,520 = **1.3 months**
 
 **Lesson:** AI systems have near-zero marginal cost. The more you scale, the better the ROI. Single-location payback: 17.8 months. Ten-location payback: 1.3 months. Economics of software.
 
@@ -667,20 +667,20 @@ Wait — we said 10.6 months in the intro! What happened?
 
 ```
 Month 1-2 (Ch.1-4): Foundation + RAG grounding
-  → 18% conversion, <5% error (Constraint #2 ✅)
+ → 18% conversion, <5% error (Constraint #2 )
 
 Month 3 (Ch.5-6): Infrastructure + orchestration
-  → 27% conversion (Constraint #1 ✅ partial), fast retrieval
+ → 27% conversion (Constraint #1 partial), fast retrieval
 
 Month 4 (Ch.7-8): Safety + evaluation
-  → 0 attacks (Constraint #5 ✅), regression prevention
+ → 0 attacks (Constraint #5 ), regression prevention
 
 Month 5 (Ch.9-10): Optimization + fine-tuning
-  → 32% conversion, 1.8s latency (Constraints #3, #4 ✅)
-  → >99% uptime (Constraint #6 ✅)
+ → 32% conversion, 1.8s latency (Constraints #3, #4 )
+ → >99% uptime (Constraint #6 )
 
 Month 6 (Ch.11): Edge case mastery
-  → 99.2% accuracy on complex orders, production launch ✅
+ → 99.2% accuracy on complex orders, production launch
 
 All 6 constraints satisfied in 6 months. CEO approves franchise expansion.
 ```

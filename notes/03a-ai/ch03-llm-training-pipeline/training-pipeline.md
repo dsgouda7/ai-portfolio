@@ -23,8 +23,7 @@ A standard transformer decoder is trained on a massive corpus with the cross-ent
 A pretrained model responds to `"What is the capital of France?"` by continuing the text in a plausible direction — which might be `"?"` or `"A: Paris"` or `"Who is the king of France?"` depending on what it has seen. It does not reliably answer the question.
 
 ### Stage 2 — Supervised Fine-Tuning (SFT)
-
-🏗️ **Building analogy:** You've got a chef who knows ingredients (pretraining), now teach them your restaurant's specific menu format and plating style. Show them examples: "When a customer orders X, serve it like Y."
+**Building analogy:** You've got a chef who knows ingredients (pretraining), now teach them your restaurant's specific menu format and plating style. Show them examples: "When a customer orders X, serve it like Y."
 
 Fine-tune the pretrained model on a curated dataset of `(instruction, response)` pairs written by human annotators.
 
@@ -41,8 +40,7 @@ SFT teaches the model to follow instruction format and stay on task. Even a few 
 **The risk:** the model learns what annotators wrote, not what is correct. If annotators tend to produce verbose, confident answers, the model does too.
 
 ### Stage 3 — RLHF / DPO (Alignment)
-
-🍽️ **Restaurant analogy:** Your chef can now follow menu formats (SFT), but you need them to match *your customers' taste preferences*. Show them two dishes for the same order — customers consistently prefer one. The chef learns: "Ah, THIS is what 'good' means here."
+**Restaurant analogy:** Your chef can now follow menu formats (SFT), but you need them to match *your customers' taste preferences*. Show them two dishes for the same order — customers consistently prefer one. The chef learns: "Ah, THIS is what 'good' means here."
 
 The goal: move the model's outputs toward what humans actually prefer — more helpful, less harmful, more honest.
 
@@ -54,7 +52,7 @@ The goal: move the model's outputs toward what humans actually prefer — more h
 2. Human judge picks: "Response A is better than Response B"
 3. Train a separate "reward model" — like a food critic that scores dishes
 4. Fine-tune the chef model to cook dishes the critic will score highly
-   (with a safety rope: don't drift too far from your training)
+ (with a safety rope: don't drift too far from your training)
 ```
 
 **What's actually happening:** You're building a proxy judge (reward model) that mimics human preferences, then training the model to please that judge. It's indirect — like learning to cook by optimizing for a food critic's scores rather than tasting feedback directly.
@@ -63,9 +61,9 @@ The goal: move the model's outputs toward what humans actually prefer — more h
 
 🔄 **Process Flow (DPO):**
 ```
-1. Show model a preference pair: (prompt, ✅ preferred, ❌ rejected)
-2. Increase the model's internal probability of generating ✅
-3. Decrease the model's internal probability of generating ❌
+1. Show model a preference pair: (prompt, preferred, rejected)
+2. Increase the model's internal probability of generating
+3. Decrease the model's internal probability of generating
 4. Keep a "safety rope" — don't change so much you forget your original training
 ```
 
@@ -75,7 +73,7 @@ The goal: move the model's outputs toward what humans actually prefer — more h
 
 **The sycophancy trap:** RLHF optimizes for human *approval*, which is not the same as human *benefit*. Models learn to agree with the user's framing even when it's wrong. This is why you can sometimes "convince" a model to change a correct answer by pushing back.
 
-> 💡 **Training stages verdict:** Both GPT-4 and Claude went through the same three stages. Their stylistic differences (top-down vs bottom-up, verbose vs concise) emerge from differences in the human feedback data used for RLHF/DPO — specifically, what the annotator pools at OpenAI vs Anthropic preferred. The fix for domain-knowledge gaps (model doesn't know your internal docs) isn't more training. It's grounding — [Ch.4](../ch07-rag-and-embeddings).
+> **Training stages verdict:** Both GPT-4 and Claude went through the same three stages. Their stylistic differences (top-down vs bottom-up, verbose vs concise) emerge from differences in the human feedback data used for RLHF/DPO — specifically, what the annotator pools at OpenAI vs Anthropic preferred. The fix for domain-knowledge gaps (model doesn't know your internal docs) isn't more training. It's grounding — [Ch.4](../ch07-rag-and-embeddings).
 
 **RLVR (Reinforcement Learning from Verifiable Rewards):** the training recipe behind o1, o3, and DeepSeek-R1. Instead of human preference pairs, RLVR uses automatically verifiable correctness signals — math answer checking, unit test pass/fail, formal proof verification — as the reward. The model generates a chain-of-thought reasoning trace; the final answer is checked against ground truth; RL updates reinforce traces that led to correct answers. This is why reasoning models excel at math and code: those domains have cheap, automatic verifiers. See [ch03 §8](../ch06-cot-reasoning/cot-reasoning.md) for reasoning token inference behavior.
 
@@ -83,11 +81,11 @@ The goal: move the model's outputs toward what humans actually prefer — more h
 
 ### Stage 4 (Optional Preview) — Parameter-Efficient Fine-Tuning (PEFT)
 
-> ⏭️ **Optional preview — skip if impatient.** PEFT is covered deeply in [03b-agentic-ai Ch.5](../../03b-agentic-ai/ch05-fine-tuning/fine-tuning.md). This section exists because the interview table asks about LoRA vs prefix tuning. Read now for vocabulary; return later for implementation.
+> **Optional preview — skip if impatient.** PEFT is covered deeply in [03b-agentic-ai Ch.5](../../03b-agentic-ai/ch05-fine-tuning/fine-tuning.md). This section exists because the interview table asks about LoRA vs prefix tuning. Read now for vocabulary; return later for implementation.
 
 **PEFT** freezes pretrained weights and trains only a small set of adapter parameters (0.01–1% of model size). The model behaves as if fully fine-tuned but at 5–10× lower compute cost. Three methods dominate:
 
-**LoRA (Low-Rank Adaptation)**: 🛤️ **Visual metaphor:** Imagine the model's massive weight matrix as a 100-lane highway. Instead of repaving the entire highway (expensive!), LoRA injects a skinny 2-lane shortcut path that routes a small detour. The shortcut is built from two small "connector" matrices — one shrinks traffic down to 2 lanes, the other expands back to 100 lanes.
+**LoRA (Low-Rank Adaptation)**: **Visual metaphor:** Imagine the model's massive weight matrix as a 100-lane highway. Instead of repaving the entire highway (expensive!), LoRA injects a skinny 2-lane shortcut path that routes a small detour. The shortcut is built from two small "connector" matrices — one shrinks traffic down to 2 lanes, the other expands back to 100 lanes.
 
 **What's actually happening:** LoRA adds a lightweight "correction" to existing weights by factoring the change through two small matrices (instead of updating millions of parameters, you train maybe 10,000). At inference, the shortcut merges back into the main highway — zero speed penalty. Default choice for domain/style adaptation.
 
@@ -100,7 +98,7 @@ The goal: move the model's outputs toward what humans actually prefer — more h
 | **Inference overhead** | None (merged) | +KV cache per layer | +Input tokens |
 | **Best for** | Style/domain tuning | Multi-task serving | Minimal infra change |
 
-> 💡 **Interview anchor:** "Compare LoRA and prefix tuning" → LoRA merges at inference (zero overhead); prefix tuning lives in KV cache (constant memory cost per user). The choice is deployment economics, not training convenience.
+> **Interview anchor:** "Compare LoRA and prefix tuning" → LoRA merges at inference (zero overhead); prefix tuning lives in KV cache (constant memory cost per user). The choice is deployment economics, not training convenience.
 
 ---
 
@@ -117,7 +115,7 @@ Several capabilities of LLMs were not explicitly trained for and appeared qualit
 
 **"Emergent"** does not mean magical. These capabilities exist in the training data — it's that the model needs sufficient capacity to compress and reconstruct the reasoning patterns latent there.
 
-> ➡️ **Why emergence thresholds matter:** In-context learning (≥7B params) is what makes few-shot prompting work — you'll use it in [Ch.2](../ch05-prompt-engineering). Chain-of-thought reasoning (≥100B params) is what makes complex multi-step queries work — you'll probe it in [Ch.3](../ch06-cot-reasoning). Knowing these thresholds tells you when it's worth trying a capability vs. when you need to engineer around its absence by choosing a larger model or a different approach.
+> ➡ **Why emergence thresholds matter:** In-context learning (≥7B params) is what makes few-shot prompting work — you'll use it in [Ch.2](../ch05-prompt-engineering). Chain-of-thought reasoning (≥100B params) is what makes complex multi-step queries work — you'll probe it in [Ch.3](../ch06-cot-reasoning). Knowing these thresholds tells you when it's worth trying a capability vs. when you need to engineer around its absence by choosing a larger model or a different approach.
 
 ---
 

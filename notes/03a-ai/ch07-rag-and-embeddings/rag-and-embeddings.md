@@ -48,7 +48,7 @@ The model returned a *reasonable* industry baseline, but it is wrong for this or
 
 The remaining 4% are retrieval failures — the relevant document exists but wasn't retrieved. Fixing retrieval is the focus of Ch.8.
 
-> 💡 **Problem statement:** LLMs hallucinate because the pretraining corpus is frozen and private data was never in it. Retrieval is the grounding fix: don't train the knowledge in, look it up at query time.
+> **Problem statement:** LLMs hallucinate because the pretraining corpus is frozen and private data was never in it. Retrieval is the grounding fix: don't train the knowledge in, look it up at query time.
 
 ***
 
@@ -61,8 +61,7 @@ The remaining 4% are retrieval failures — the relevant document exists but was
 **The retrieval problem:** You need to find documents about "service uptime targets" when the wiki says "99.95% availability" — different words, same meaning. Keyword search fails. You need semantic similarity.
 
 **Embeddings solve this** by transforming text into vectors where meaning becomes measurable. Similar concepts cluster together in high-dimensional space, so "uptime" and "availability" become neighbors even with different exact wording. **Text → fixed vector where semantic distance is measurable.**
-
-📚 **Real-World Example:**
+**Real-World Example:**
 Imagine organizing books in a library. Instead of alphabetical order, you place books by *meaning* — all authentication guides cluster together, all database tutorials in another corner, all deployment docs nearby. When someone asks "How do I secure user logins?", you don't search for exact words. You walk to the authentication cluster because that's where semantically similar concepts live. That's what embeddings do: they create a map where related ideas are physical neighbors.
 
 Word2vec (2013) proved that word vectors could encode meaning: *king − man + woman ≈ queen*. But these were word-level — one vector per word regardless of context. *Bank* in "river bank" and *bank* in "bank account" got the same vector. GloVe (2014) and fastText (2016) refined the approach but kept the word-level limitation.
@@ -105,7 +104,7 @@ Most modern RAG systems use **mean pooling** because it's simple and effective �
 embedding = mean(all_token_vectors * attention_mask)
 
 # CLS pooling (BERT-style)
-embedding = first_token_vector  # [CLS] token
+embedding = first_token_vector # [CLS] token
 
 # Max pooling (capture strongest signals)
 embedding = max(all_token_vectors, dim=0)
@@ -125,17 +124,16 @@ With a modern transformer encoder (e.g., BERT, Sentence-BERT), the word "bank" g
 
 ```
 Sentence 1 embedding for "bank":
-  → Lands near: river, shore, erosion, flood, waterway
-  → Far from: money, finance, deposit, ATM
+ → Lands near: river, shore, erosion, flood, waterway
+ → Far from: money, finance, deposit, ATM
 
 Sentence 2 embedding for "bank":
-  → Lands near: money, account, deposit, financial, ATM
-  → Far from: river, shore, flood, waterway
+ → Lands near: money, account, deposit, financial, ATM
+ → Far from: river, shore, flood, waterway
 
 The angle between the two "bank" vectors: nearly 90° (almost perpendicular = very different meaning)
 ```
-
-📚 **Real-World Example:**
+**Real-World Example:**
 A user searches your company knowledge base for "How do I check my account balance?" The embedding model produces a vector that points toward the "financial services" region of the embedding space — far from geography documents. Even though both "river bank" and "bank account" use the word "bank", the retrieval system returns only financial docs because contextual embeddings understand *which* meaning of "bank" you're asking about.
 
 **Why this matters for RAG:** When a user asks "How do I check my account balance?", the retrieval system can distinguish financial documents ("bank account") from geography documents ("river bank") because the embedding model learned to represent "bank" differently based on surrounding context. This context-awareness is why modern RAG pipelines reliably retrieve the right documents even with ambiguous query terms.
@@ -147,7 +145,7 @@ A user searches your company knowledge base for "How do I check my account balan
 
 Without contextual embeddings, a search for "Python tutorials" would return both programming guides AND reptile care instructions. With contextual embeddings, the model understands from context ("tutorials") that you mean the programming language, not the snake.
 
-> 💡 **Contextual embeddings solve disambiguation:** Word2vec gave "bank" one vector for all contexts. Transformer encoders with bidirectional attention produce different vectors for "river bank" vs "bank account" by incorporating surrounding context. This is the core capability that makes semantic search work for ambiguous queries.
+> **Contextual embeddings solve disambiguation:** Word2vec gave "bank" one vector for all contexts. Transformer encoders with bidirectional attention produce different vectors for "river bank" vs "bank account" by incorporating surrounding context. This is the core capability that makes semantic search work for ambiguous queries.
 
 ***
 
@@ -172,8 +170,7 @@ Without contextual embeddings, a search for "Python tutorials" would return both
 - **Analogy:** Reading "The bank is by the river" all at once, understanding "bank" from both "the" (before) and "river" (after)
 
 Modern embedding models (Sentence-BERT, E5, BGE) are **encoder-based** because bidirectional attention produces richer representations. A decoder can generate text but struggles to compare semantic similarity — it sees "The bank is by the river" token-by-token, never having future context to disambiguate "bank." An encoder sees the full sentence simultaneously and can encode that this "bank" relates to rivers, not money.
-
-📚 **Real-World Example:**
+**Real-World Example:**
 You're building a customer support chatbot that needs to match user questions to help articles:
 
 **With a decoder (GPT-style) embedding:** When embedding "How do I reset my password?", the model processes "How" first (no context), then "do" (only saw "How"), then "I" (only saw "How do I"), and so on. By the time it reaches "password", it has limited context. The resulting embedding is biased toward recent words.
@@ -184,7 +181,7 @@ You're building a customer support chatbot that needs to match user questions to
 
 **Why this matters for RAG:** Your retriever needs to answer "are these two pieces of text about the same thing?" — a bidirectional task. Encoders are architecturally designed for it; decoders are not.
 
-> 💡 **BERT vs GPT for embeddings:** BERT-family (encoders) are ideal for RAG retrieval because bidirectional attention sees full context. GPT-family (decoders) excel at generation but produce weaker embeddings due to causal masking. Use encoders for retrieval, decoders for generation.
+> **BERT vs GPT for embeddings:** BERT-family (encoders) are ideal for RAG retrieval because bidirectional attention sees full context. GPT-family (decoders) excel at generation but produce weaker embeddings due to causal masking. Use encoders for retrieval, decoders for generation.
 
 ***
 
@@ -207,8 +204,7 @@ After thousands of examples, the child learns that "fruit" means "edible, grows 
 - **Negative examples:** "Database schema design", "JavaScript arrays tutorial" (different topics)
 
 The training objective is simple: **Make the query embedding point in the same direction as the positive, and in different directions from the negatives.**
-
-📚 **Real-World Example:**
+**Real-World Example:**
 Suppose you're training an embedding model for a company wiki. You feed it:
 - Query: "What's our service uptime SLA?"
 - Positive: "Authentication service SLA: 99.95% uptime"
@@ -225,7 +221,7 @@ After seeing millions of such examples, the embedding space organizes itself: al
 **The training process (InfoNCE):** The model gets rewarded when it correctly identifies which of many candidates is the true match. If you show it a query and 100 candidate answers (1 correct, 99 wrong), and the model ranks the correct one first, the loss is near zero. If the model ranks a wrong answer higher than the correct one, the loss is high and the model adjusts its weights.
 
 <details>
-<summary>📐 <b>For the mathematically curious: InfoNCE loss formula</b></summary>
+<summary> <b>For the mathematically curious: InfoNCE loss formula</b></summary>
 
 The training objective is to maximize the similarity between query and positive while minimizing similarity to negatives:
 
@@ -256,10 +252,10 @@ Training batch:
 
 After embedding, imagine arrows:
 ```
-Query arrow       →→→→ (points toward "authentication" region)
-Positive arrow    →→→  (points same direction — small angle!)
-Negative 1 arrow  ↗    (points toward "database" region — medium angle)
-Negative 2 arrow  ↑    (points toward "programming" region — large angle)
+Query arrow →→→→ (points toward "authentication" region)
+Positive arrow →→→ (points same direction — small angle!)
+Negative 1 arrow ↗ (points toward "database" region — medium angle)
+Negative 2 arrow ↑ (points toward "programming" region — large angle)
 ```
 
 The model learns to maximize the similarity (minimize the angle) between query and positive, while minimizing similarity (maximizing the angle) to negatives. Over millions of training examples, semantically related text clusters together in embedding space.
@@ -273,11 +269,10 @@ Imagine every piece of text as an arrow pointing in 768-dimensional space:
 - Retrieval → find the arrows that point most similarly to your query arrow
 
 You don't need to understand the math — just remember that embeddings turn the question "are these similar?" into geometry: **similar = small angle, different = large angle.**
-
-📚 **Real-World Example:**
+**Real-World Example:**
 When you ask "What's our authentication service SLA?", the embedding is an arrow pointing toward the "service reliability" region of the space. Documents about "99.95% uptime" and "availability targets" have arrows pointing in similar directions, so they get retrieved. Documents about "database migration" or "frontend styling" point in completely different directions, so they're ignored. Retrieval is just finding the nearest arrows.
 
-> 💡 **Contrastive learning:** Training teaches embeddings to cluster semantically similar text by showing millions of examples of "these are similar" and "these are different." This is why RAG retrieval can find "authentication SLA" documents even when the query uses different wording ("service uptime targets") — the embedding space learned that these concepts are related.
+> **Contrastive learning:** Training teaches embeddings to cluster semantically similar text by showing millions of examples of "these are similar" and "these are different." This is why RAG retrieval can find "authentication SLA" documents even when the query uses different wording ("service uptime targets") — the embedding space learned that these concepts are related.
 
 **Contrastive Learning: Pushing Similar Text Together, Different Text Apart**
 
@@ -285,39 +280,39 @@ InfoNCE training teaches embedding models to cluster semantically similar text t
 
 ```mermaid
 flowchart TD
-    A["📝 Training Batch"] --> B["Query Embedding<br/>(q)"]
-    A --> C["Positive Embedding<br/>(p+)<br/>Similar meaning"]
-    A --> D["Negative Embedding 1<br/>(p1-)<br/>Different meaning"]
-    A --> E["Negative Embedding 2<br/>(p2-)"]
-    A --> F["Negative Embedding 3<br/>(p3-)"]
+ A[" Training Batch"] --> B["Query Embedding<br/>(q)"]
+ A --> C["Positive Embedding<br/>(p+)<br/>Similar meaning"]
+ A --> D["Negative Embedding 1<br/>(p1-)<br/>Different meaning"]
+ A --> E["Negative Embedding 2<br/>(p2-)"]
+ A --> F["Negative Embedding 3<br/>(p3-)"]
 
-    B --> G["Compute Similarities<br/>sim(q, p+), sim(q, p1-), ..."]
-    C --> G
-    D --> G
-    E --> G
-    F --> G
+ B --> G["Compute Similarities<br/>sim(q, p+), sim(q, p1-), ..."]
+ C --> G
+ D --> G
+ E --> G
+ F --> G
 
-    G --> H["InfoNCE Loss<br/>L = -log(exp(sim(q,p+)/τ) / Σ exp(sim(q,pi)/τ))"]
-    H --> I["Gradient Update<br/>Pull q closer to p+<br/>Push q away from negatives"]
+ G --> H["InfoNCE Loss<br/>L = -log(exp(sim(q,p+)/τ) / Σ exp(sim(q,pi)/τ))"]
+ H --> I["Gradient Update<br/>Pull q closer to p+<br/>Push q away from negatives"]
 
-    subgraph "Embedding Space (2D Projection)"
-        J(("q<br/>query")) -."maximize<br/>similarity".-> K(("p+<br/>positive"))
-        J -."minimize<br/>similarity".-> L(("p1-"))
-        J -."minimize<br/>similarity".-> M(("p2-"))
-        J -."minimize<br/>similarity".-> N(("p3-"))
-    end
+ subgraph "Embedding Space (2D Projection)"
+ J(("q<br/>query")) -."maximize<br/>similarity".-> K(("p+<br/>positive"))
+ J -."minimize<br/>similarity".-> L(("p1-"))
+ J -."minimize<br/>similarity".-> M(("p2-"))
+ J -."minimize<br/>similarity".-> N(("p3-"))
+ end
 
-    I --> O["After Training:<br/>Semantically similar text<br/>clusters together"]
+ I --> O["After Training:<br/>Semantically similar text<br/>clusters together"]
 
-    style B fill:#ffe1e1
-    style C fill:#e1ffe1
-    style D fill:#f0f0f0
-    style E fill:#f0f0f0
-    style F fill:#f0f0f0
-    style K fill:#e1ffe1
-    style L fill:#f0f0f0
-    style M fill:#f0f0f0
-    style N fill:#f0f0f0
+ style B fill:#ffe1e1
+ style C fill:#e1ffe1
+ style D fill:#f0f0f0
+ style E fill:#f0f0f0
+ style F fill:#f0f0f0
+ style K fill:#e1ffe1
+ style L fill:#f0f0f0
+ style M fill:#f0f0f0
+ style N fill:#f0f0f0
 ```
 
 **Training example:**
@@ -351,8 +346,7 @@ RAG is a **two-phase architecture** that separates offline corpus preparation fr
 2. **Retrieve:** ANN search finds top-k most similar chunks by measuring angles between vectors
 3. **Augment:** Insert retrieved chunks into LLM prompt as context
 4. **Generate:** LLM answers from retrieved context, grounding the response
-
-📚 **Real-World Example:**
+**Real-World Example:**
 **Ingestion (done once):**
 You have 500 internal wiki pages about your company's services. You split them into ~5,000 chunks, embed each one, and store the embeddings in a vector database. This is like cataloging every book in your library — expensive upfront, but you only do it once (or when documents change).
 
@@ -361,11 +355,11 @@ User asks: "What's the authentication service SLA?"
 1. Embed the question → get a 768-dimensional arrow
 2. Search the vector DB → find the 5 chunks whose arrows point most similarly
 3. Retrieved chunks might be:
-   - "Authentication Service SLA: 99.95% uptime, p99 latency <50ms"
-   - "The auth service handles 10M requests/day"
-   - "SLA violations trigger PagerDuty alerts"
-   - "Our auth system uses OAuth 2.0 with JWT tokens"
-   - "Uptime is measured as successful auth attempts / total attempts"
+ - "Authentication Service SLA: 99.95% uptime, p99 latency <50ms"
+ - "The auth service handles 10M requests/day"
+ - "SLA violations trigger PagerDuty alerts"
+ - "Our auth system uses OAuth 2.0 with JWT tokens"
+ - "Uptime is measured as successful auth attempts / total attempts"
 4. Hand these 5 chunks to the LLM along with the original question
 5. LLM reads the chunks and answers: "The authentication service SLA is 99.95% uptime with p99 latency under 50ms."
 
@@ -377,28 +371,28 @@ The separation between offline ingestion and online query execution is fundament
 
 ```mermaid
 flowchart TB
-    subgraph "Phase 1: INGESTION (Offline)"
-        A["📄 Source Documents<br/>(Wiki, Docs, PDFs)"] --> B["✂️ Chunking<br/>Split into 400-512 token chunks<br/>10-20% overlap"]
-        B --> C["🔢 Embedding Model<br/>(BERT-family encoder)<br/>e.g., text-embedding-3-small"]
-        C --> D["📦 Vector Database<br/>Store embeddings + metadata<br/>(Chroma, Pinecone, FAISS)"]
-        D --> E["⚡ Index Building<br/>(HNSW, IVF, DiskANN)"]
-    end
+ subgraph "Phase 1: INGESTION (Offline)"
+ A[" Source Documents<br/>(Wiki, Docs, PDFs)"] --> B[" Chunking<br/>Split into 400-512 token chunks<br/>10-20% overlap"]
+ B --> C["🔢 Embedding Model<br/>(BERT-family encoder)<br/>e.g., text-embedding-3-small"]
+ C --> D["📦 Vector Database<br/>Store embeddings + metadata<br/>(Chroma, Pinecone, FAISS)"]
+ D --> E[" Index Building<br/>(HNSW, IVF, DiskANN)"]
+ end
 
-    subgraph "Phase 2: QUERY (Runtime)"
-        F["❓ User Query<br/>'What is our auth SLA?'"] --> G["🔢 Same Embedding Model<br/>Must match ingestion model"]
-        G --> H["🔍 ANN Search<br/>cosine_similarity(query, chunks)<br/>Return top-k"]
-        E -."indexed vectors".-> H
-        H --> I["📝 Retrieved Chunks<br/>Top-5 most similar<br/>+ metadata"]
-        I --> J["🔗 Prompt Augmentation<br/>Context: [chunk1, chunk2, ...]<br/>Query: [user question]"]
-        J --> K["🤖 LLM Generation<br/>(GPT-4, Claude)<br/>Answer from context"]
-        K --> L["✅ Grounded Response<br/>Reduced hallucination<br/>Source citations"]
-    end
+ subgraph "Phase 2: QUERY (Runtime)"
+ F["❓ User Query<br/>'What is our auth SLA?'"] --> G["🔢 Same Embedding Model<br/>Must match ingestion model"]
+ G --> H[" ANN Search<br/>cosine_similarity(query, chunks)<br/>Return top-k"]
+ E -."indexed vectors".-> H
+ H --> I[" Retrieved Chunks<br/>Top-5 most similar<br/>+ metadata"]
+ I --> J["🔗 Prompt Augmentation<br/>Context: [chunk1, chunk2, ...]<br/>Query: [user question]"]
+ J --> K[" LLM Generation<br/>(GPT-4, Claude)<br/>Answer from context"]
+ K --> L[" Grounded Response<br/>Reduced hallucination<br/>Source citations"]
+ end
 
-    style A fill:#e1f5ff
-    style D fill:#e1ffe1
-    style F fill:#ffe1e1
-    style K fill:#fff4e1
-    style L fill:#d4edda
+ style A fill:#e1f5ff
+ style D fill:#e1ffe1
+ style F fill:#ffe1e1
+ style K fill:#fff4e1
+ style L fill:#d4edda
 ```
 
 **Key architectural decisions:**
@@ -410,22 +404,22 @@ flowchart TB
 **Pipeline diagram:**
 
 ```
-INGESTION (Offline)                    QUERY (Runtime)
-══════════════════════                 ═══════════════
+INGESTION (Offline) QUERY (Runtime)
+══════════════════════ ═══════════════
 
-Documents                              User Query
-    ↓                                      ↓
-Chunk (400 tokens)                     Embed Query
-    ↓                                  (same model!)
-Embed All Chunks                           ↓
-    ↓                                  ANN Search
-Store in Vector DB                     (top-k chunks)
-                                           ↓
-                                       Augment Prompt
-                                           ↓
-                                       LLM Generate
-                                           ↓
-                                       Grounded Answer
+Documents User Query
+ ↓ ↓
+Chunk (400 tokens) Embed Query
+ ↓ (same model!)
+Embed All Chunks ↓
+ ↓ ANN Search
+Store in Vector DB (top-k chunks)
+ ↓
+ Augment Prompt
+ ↓
+ LLM Generate
+ ↓
+ Grounded Answer
 ```
 
 **Critical constraint:** Query and document embeddings **must use the exact same model**. `text-embedding-3-small` and `text-embedding-ada-002` both output 1,536-dimensional vectors, but those dimensions mean completely different things — the axes of each model's space are independent. Mixing models produces numerically meaningless similarity scores.
@@ -454,15 +448,14 @@ The problem: BM25 scores might be 0-50, while cosine similarity scores are 0-1. 
 - If a document appears in only one list → it still gets considered
 
 The actual formula gives higher weight to top-ranked items (rank 1 scores higher than rank 10), but you don't need to memorize the math. Just remember: **RRF merges rankings, not raw scores**.
-
-📚 **Real-World Example:**
+**Real-World Example:**
 User searches: "What's the auth service error code 401?"
 - **BM25 retriever:** Finds docs with exact match "401" → ranks "HTTP Status Codes" #1
 - **Dense retriever:** Finds docs about authentication problems → ranks "Auth Troubleshooting" #1, "HTTP Status Codes" #8
 
 **RRF merges them:** "HTTP Status Codes" appears high in both lists → final rank #1. "Auth Troubleshooting" appears in only dense search → final rank #2. The document that's relevant to BOTH keyword and semantic search wins.
 
-> 💡 **RAG pipeline:** Chunk → embed → store (offline), then embed query → retrieve → augment → generate (online). Mixing embedding models breaks retrieval; chunking strategy determines recall; hybrid search combines exact + semantic matching.
+> **RAG pipeline:** Chunk → embed → store (offline), then embed query → retrieve → augment → generate (online). Mixing embedding models breaks retrieval; chunking strategy determines recall; hybrid search combines exact + semantic matching.
 
 ***
 
@@ -485,12 +478,12 @@ User searches: "What's the auth service error code 401?"
 **Cost tradeoff:** HyDE adds one extra LLM call per query (hypothetical answer generation). For a 50-token generation at $0.03/1M tokens (GPT-4-mini), that's $0.0000015 per query — negligible. The retrieval quality improvement (2-5 percentage points in recall) often justifies the cost.
 
 **When to use HyDE:**
-- ✅ Questions phrased differently than documents (Q&A style vs. declarative docs)
-- ✅ Queries where semantic gap reduces retrieval quality
-- ❌ Exact keyword searches (BM25 already handles these)
-- ❌ Ultra-low-latency requirements (<100ms p95)
+- Questions phrased differently than documents (Q&A style vs. declarative docs)
+- Queries where semantic gap reduces retrieval quality
+- Exact keyword searches (BM25 already handles these)
+- Ultra-low-latency requirements (<100ms p95)
 
-> 💡 **HyDE:** Embed a hypothetical answer instead of the raw question, closing the phrasing gap between queries and documents. Adds one LLM call per query but improves recall by 2-5 percentage points when questions and documents have structural mismatches.
+> **HyDE:** Embed a hypothetical answer instead of the raw question, closing the phrasing gap between queries and documents. Adds one LLM call per query but improves recall by 2-5 percentage points when questions and documents have structural mismatches.
 
 **HyDE Workflow: Closing the Query-Document Phrasing Gap**
 
@@ -498,25 +491,25 @@ HyDE improves retrieval by transforming questions into declarative statements th
 
 ```mermaid
 sequenceDiagram
-    participant User
-    participant LLM as LLM<br/>(Generation)
-    participant Embed as Embedding Model<br/>(Encoder)
-    participant VDB as Vector Database
-    participant Retrieve as Retrieval<br/>(ANN Search)
-    participant Final as Final LLM<br/>(Answer)
+ participant User
+ participant LLM as LLM<br/>(Generation)
+ participant Embed as Embedding Model<br/>(Encoder)
+ participant VDB as Vector Database
+ participant Retrieve as Retrieval<br/>(ANN Search)
+ participant Final as Final LLM<br/>(Answer)
 
-    User->>LLM: ❓ Query: "What's our auth service SLA?"
-    Note over LLM: Generate hypothetical answer<br/>(may contain hallucinations)
-    LLM->>Embed: 📝 HyDE Answer:<br/>"The authentication service SLA<br/>is 99.9% uptime with p99 <200ms"
-    Note over Embed: Embed hypothetical answer<br/>(structurally similar to docs)
-    Embed->>Retrieve: 🔢 HyDE Embedding Vector
-    Retrieve->>VDB: 🔍 ANN Search<br/>(cosine similarity)
-    VDB-->>Retrieve: 📄 Top-k Similar Chunks<br/>(actual documents)
-    Retrieve->>Final: 📚 Retrieved Context:<br/>"Auth SLA: 99.95% uptime, p99 <50ms"<br/>(corrects hallucinated numbers)
-    User->>Final: ❓ Original Query
-    Final->>User: ✅ Grounded Answer<br/>(based on retrieved docs,<br/>not hypothetical answer)
+ User->>LLM: ❓ Query: "What's our auth service SLA?"
+ Note over LLM: Generate hypothetical answer<br/>(may contain hallucinations)
+ LLM->>Embed: HyDE Answer:<br/>"The authentication service SLA<br/>is 99.9% uptime with p99 <200ms"
+ Note over Embed: Embed hypothetical answer<br/>(structurally similar to docs)
+ Embed->>Retrieve: 🔢 HyDE Embedding Vector
+ Retrieve->>VDB: ANN Search<br/>(cosine similarity)
+ VDB-->>Retrieve: Top-k Similar Chunks<br/>(actual documents)
+ Retrieve->>Final: Retrieved Context:<br/>"Auth SLA: 99.95% uptime, p99 <50ms"<br/>(corrects hallucinated numbers)
+ User->>Final: ❓ Original Query
+ Final->>User: Grounded Answer<br/>(based on retrieved docs,<br/>not hypothetical answer)
 
-    Note over User,Final: Cost: 1 extra LLM call (~50 tokens)<br/>Benefit: 2-5% recall improvement
+ Note over User,Final: Cost: 1 extra LLM call (~50 tokens)<br/>Benefit: 2-5% recall improvement
 ```
 
 **Why HyDE improves retrieval:**
@@ -533,10 +526,10 @@ sequenceDiagram
 - **Cosine similarity:** HyDE embedding is closer to document embedding than raw question
 
 **When to use HyDE:**
-- ✅ Large phrasing gap between queries and documents (Q&A vs technical docs)
-- ✅ Budget allows 1 extra LLM call per query (~$0.0000015 at GPT-4-mini pricing)
-- ❌ Skip for keyword-heavy queries (BM25 already handles "error code 500")
-- ❌ Skip for ultra-low-latency requirements (<100ms p95)
+- Large phrasing gap between queries and documents (Q&A vs technical docs)
+- Budget allows 1 extra LLM call per query (~$0.0000015 at GPT-4-mini pricing)
+- Skip for keyword-heavy queries (BM25 already handles "error code 500")
+- Skip for ultra-low-latency requirements (<100ms p95)
 
 ***
 
@@ -561,7 +554,7 @@ RAG reduces hallucination from 38% → 4%, but the remaining 4% traces to specif
 2. **Test with manual context:** Put the correct answer in the prompt manually. If the model still fails, fine-tune for instruction following. If it succeeds, improve retrieval.
 3. **Measure recall@k:** What fraction of test queries retrieve the relevant chunk in top-k? If <90%, focus on chunking, embedding model, or hybrid search.
 
-> 💡 **Failure modes:** The 4% residual errors split into retrieval failures (3%) and generation failures (1%). Fix retrieval with better chunking/hybrid search/re-ranking. Fix generation with fine-tuning for instruction following.
+> **Failure modes:** The 4% residual errors split into retrieval failures (3%) and generation failures (1%). Fix retrieval with better chunking/hybrid search/re-ranking. Fix generation with fine-tuning for instruction following.
 
 ***
 

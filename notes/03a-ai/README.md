@@ -31,16 +31,16 @@ This is not a tutorial. Every chapter follows an investigative arc: you are a St
 | **2** | [LLM Inference Mechanics](ch02-llm-inference-mechanics/inference-mechanics.md) | **"The Controls"** — tokenization, sampling, and generation parameters | Run identical prompts with different temperatures; measure output diversity | 🚧 In Progress |
 | **3** | [LLM Training Pipeline](ch03-llm-training-pipeline/training-pipeline.md) | **"The Learning Process"** — pre-training, fine-tuning, and alignment | Compare base vs instruction-tuned model outputs on task prompts | 🚧 In Progress |
 | **4** | [LLM Model Internals](ch04-llm-model-internals/model-internals.md) | **"The Black Box"** — why GPT-4 and Claude behave differently | Side-by-side comparison on identical prompts; trace divergence to architecture | 🚧 In Progress |
-| **5** | [Prompt Engineering](ch05-prompt-engineering/prompt-engineering.md) | **"The Control Interface"** — system prompts and few-shot as behavioral levers | Compare GPT-4 vs Claude on identical instructions; map where they diverge | ✅ Complete |
-| **6** | [Chain-of-Thought Reasoning](ch06-cot-reasoning/cot-reasoning.md) | **"The Reasoning Engine"** — when step-by-step thinking helps vs. when it hallucinates confidently | GPT-4o1 vs Claude extended thinking on logic puzzles and ambiguous queries | ✅ Complete |
-| **7** | [RAG & Embeddings](ch07-rag-and-embeddings/rag-and-embeddings.md) | **"The Memory Problem"** — LLMs don't know your data; grounding changes everything | Hallucination rate on internal docs: 38% before RAG → 4% after | ✅ Complete |
-| **8** | [Vector Databases](ch08-vector-dbs/vector-dbs.md) | **"The Index"** — scaling retrieval from 200 docs to 50,000 | HNSW vs IVF benchmark: recall at 1ms, 10ms, 100ms latency budgets | ✅ Complete |
+| **5** | [Prompt Engineering](ch05-prompt-engineering/prompt-engineering.md) | **"The Control Interface"** — system prompts and few-shot as behavioral levers | Compare GPT-4 vs Claude on identical instructions; map where they diverge | Complete |
+| **6** | [Chain-of-Thought Reasoning](ch06-cot-reasoning/cot-reasoning.md) | **"The Reasoning Engine"** — when step-by-step thinking helps vs. when it hallucinates confidently | GPT-4o1 vs Claude extended thinking on logic puzzles and ambiguous queries | Complete |
+| **7** | [RAG & Embeddings](ch07-rag-and-embeddings/rag-and-embeddings.md) | **"The Memory Problem"** — LLMs don't know your data; grounding changes everything | Hallucination rate on internal docs: 38% before RAG → 4% after | Complete |
+| **8** | [Vector Databases](ch08-vector-dbs/vector-dbs.md) | **"The Index"** — scaling retrieval from 200 docs to 50,000 | HNSW vs IVF benchmark: recall at 1ms, 10ms, 100ms latency budgets | Complete |
 
 ---
 
 ## Narrative Arc: The Intelligence Audit
 
-### 🔬 Phase 1: Foundational Knowledge (Ch.1-4)
+### Phase 1: Foundational Knowledge (Ch.1-4)
 **Understand how LLMs actually work from the ground up**
 
 - **Ch.1**: Transformer Architecture → self-attention, positional encoding, decoder-only design
@@ -52,7 +52,7 @@ This is not a tutorial. Every chapter follows an investigative arc: you are a St
 
 ---
 
-### 🛠️ Phase 2: Applications & Control (Ch.5-8)
+### Phase 2: Applications & Control (Ch.5-8)
 **Apply foundational knowledge to steer models and ground them in real data**
 
 - **Ch.5**: Prompt Engineering → system prompts, few-shot, structured output across model families
@@ -85,15 +85,15 @@ After Ch.8: Can choose the right ANN index for a given latency/recall trade-off
 
 By the end of this track, you'll have:
 
-1. ✅ **Transformer understanding** — can explain self-attention, positional encoding, and decoder-only architecture
-2. ✅ **Inference mastery** — control tokenization, sampling, and generation parameters with precision
-3. ✅ **Training pipeline knowledge** — understand pre-training, fine-tuning, and RLHF alignment
-4. ✅ **Model comparison framework** — experiment log comparing GPT-4 vs Claude 3.5 Sonnet behavior
-5. ✅ **Prompt experiment library** documenting system prompt divergence across model families
-6. ✅ **Reasoning audit** — which tasks benefit from CoT; which tasks it hurts
-7. ✅ **Working RAG pipeline** grounding a 50k-document corpus with <5% hallucination rate
-8. ✅ **Retrieval benchmark** — HNSW vs IVF recall/latency at three document scales
-9. 🎓 **AI Literacy Kit** — a deliverable proving deep understanding of LLM mechanics to any technical audience
+1. **Transformer understanding** — can explain self-attention, positional encoding, and decoder-only architecture
+2. **Inference mastery** — control tokenization, sampling, and generation parameters with precision
+3. **Training pipeline knowledge** — understand pre-training, fine-tuning, and RLHF alignment
+4. **Model comparison framework** — experiment log comparing GPT-4 vs Claude 3.5 Sonnet behavior
+5. **Prompt experiment library** documenting system prompt divergence across model families
+6. **Reasoning audit** — which tasks benefit from CoT; which tasks it hurts
+7. **Working RAG pipeline** grounding a 50k-document corpus with <5% hallucination rate
+8. **Retrieval benchmark** — HNSW vs IVF recall/latency at three document scales
+9. **AI Literacy Kit** — a deliverable proving deep understanding of LLM mechanics to any technical audience
 
 ---
 
@@ -154,16 +154,15 @@ Every chapter follows the same template:
 1. **§0 The Challenge** — Current constraint status, what's blocked, what this unlocks
 2. **§1 Core Idea** — Plain-English intuition
 3. **§2-N** — Detailed sections on concepts, techniques, code
-4. **Progress Check** — ✅ Unlocked capabilities, ❌ Still blocked, next preview
+4. **Progress Check** — Unlocked capabilities, Still blocked, next preview
 
 Plus a **Jupyter notebook** with runnable code and diagrams.
-
-📚 **Start here**: [AIPrimer.md](ai-primer.md) — running example, conceptual overview, and complete reading guide in one place.
+**Start here**: [AIPrimer.md](ai-primer.md) — running example, conceptual overview, and complete reading guide in one place.
 
 ---
 
 ## Let's Build
 
-🔬 **Your mission**: Transform from "I can call GPT" (Day 1) to "I can explain exactly why any LLM behaves the way it does — and ground it in real data" (Ch.8).
+ **Your mission**: Transform from "I can call GPT" (Day 1) to "I can explain exactly why any LLM behaves the way it does — and ground it in real data" (Ch.8).
 
 Start here: **[Ch.1 — Transformer Architecture](ch01-transformer-architecture/transformer-architecture.md)**

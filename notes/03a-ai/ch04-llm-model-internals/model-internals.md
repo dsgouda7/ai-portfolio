@@ -7,8 +7,7 @@
 ---
 
 ## 6 · Model Size & Mixture of Experts (MoE)
-
-📊 **Quick Estimate:**
+**Quick Estimate:**
 > **Model size → VRAM needed (fp16):**
 > - 7B model: ~14 GB VRAM minimum
 > - 13B model: ~26 GB
@@ -39,12 +38,12 @@ Suppose an MoE layer has 8 experts and activates top-2 per token. Watch who gets
 **Token: "Python"**
 ```
 Router scores (like confidence levels):
-✓ Expert 0 (code):        42%  ← Selected! High confidence
-✓ Expert 1 (syntax):      31%  ← Selected! Medium confidence
-  Expert 2 (philosophy):   8%
-  Expert 3 (literature):   5%
-  Expert 4 (math):         4%
-  (others):               10%
+✓ Expert 0 (code): 42% ← Selected! High confidence
+✓ Expert 1 (syntax): 31% ← Selected! Medium confidence
+ Expert 2 (philosophy): 8%
+ Expert 3 (literature): 5%
+ Expert 4 (math): 4%
+ (others): 10%
 
 Result: Blend 42% of Expert 0's output + 31% of Expert 1's output
 ```
@@ -52,12 +51,12 @@ Result: Blend 42% of Expert 0's output + 31% of Expert 1's output
 **Token: "philosophy"**
 ```
 Router scores:
-  Expert 0 (code):         2%
-  Expert 1 (syntax):       1%
-✓ Expert 2 (philosophy):  53%  ← Selected! Obvious choice
-✓ Expert 3 (literature):  24%  ← Selected! Related field
-  Expert 4 (math):         7%
-  (others):               13%
+ Expert 0 (code): 2%
+ Expert 1 (syntax): 1%
+✓ Expert 2 (philosophy): 53% ← Selected! Obvious choice
+✓ Expert 3 (literature): 24% ← Selected! Related field
+ Expert 4 (math): 7%
+ (others): 13%
 
 Result: Blend 53% of Expert 2's output + 24% of Expert 3's output
 ```
@@ -68,20 +67,18 @@ Result: Blend 53% of Expert 2's output + 24% of Expert 3's output
 - **Scale without pain:** GPT-4's 1.8T parameters → only ~200-400B active per token (~10-20% of total). You get a 1.8T model's capacity at roughly a 200B model's compute cost per inference
 - **Specialization for free:** Different experts naturally specialize during training — some light up for code, others for natural language, others for structured data
 - **Training efficiency:** Model capacity scales with total experts; compute cost scales with active experts per token
-
-📊 **Quick Estimate:**
+**Quick Estimate:**
 > **MoE memory trap:** Mixtral-8×7B has 8 experts × 7B each = **~93 GB VRAM needed** (fp16) to load all experts, but only **~12.9B parameters active** per token (so inference feels like a 13B model).
 >
 > **Translation:** You pay full memory cost, but only partial compute cost. Still need the huge GPU, but inference is much faster than a dense 93B model.
-
-📊 **Quick Estimate:**
+**Quick Estimate:**
 > **MoE memory trap:** Mixtral-8×7B has 8 experts × 7B each = **~93 GB VRAM needed** (fp16) to load all experts, but only **~12.9B parameters active** per token (so inference feels like a 13B model).
 >
 > **Translation:** You pay full memory cost, but only partial compute cost. Still need the huge GPU, but inference is much faster than a dense 93B model.
 
 **Inference cost factors:** Cost scales with (parameter count) × (context length) × (batch size). A 70B model at 128k context costs **~50× more** to run than a 7B model at 4k context. This is why production systems use smaller models wherever possible.
 
-> 💡 **Model selection strategy:**
+> **Model selection strategy:**
 > **Cheap experiments:** GPT-4o-mini for factual retrieval, structured output, testing (fast, low cost)
 > **Complex reasoning:** GPT-4o when accuracy matters more than cost
 > **Self-hosted:** LoRA-adapted 7B can match GPT-4o-mini quality at ~$0.0003/1k tokens (6× cheaper)
@@ -95,19 +92,19 @@ You've seen the transformer block (§2A), attention mechanisms (§2A), and infer
 ### The Data Flow — Token to Logits
 
 ```
-Input:  Token ID (integer)         e.g., 5812
-   ↓
-1. Token Embedding:                5812 → [0.21, -0.45, 0.67, ..., 0.12]  (4096-dim vector)
-   ↓
-2. Positional Encoding:            Add position information to embedding
-   ↓
-3. Transformer Blocks (L layers):  Attention + FFN + residuals + layer norm (repeated L times)
-   ↓
-4. Final Layer Norm:               Normalize final hidden state
-   ↓
-5. Output Projection (LM Head):    (4096-dim) → (vocab_size-dim) logits
-   ↓
-Output: Logits over vocabulary     [2.3, -1.1, 4.5, ..., -0.8]  (50,000-dim for 50k vocab)
+Input: Token ID (integer) e.g., 5812
+ ↓
+1. Token Embedding: 5812 → [0.21, -0.45, 0.67, ..., 0.12] (4096-dim vector)
+ ↓
+2. Positional Encoding: Add position information to embedding
+ ↓
+3. Transformer Blocks (L layers): Attention + FFN + residuals + layer norm (repeated L times)
+ ↓
+4. Final Layer Norm: Normalize final hidden state
+ ↓
+5. Output Projection (LM Head): (4096-dim) → (vocab_size-dim) logits
+ ↓
+Output: Logits over vocabulary [2.3, -1.1, 4.5, ..., -0.8] (50,000-dim for 50k vocab)
 ```
 
 Each stage has **learnable parameters**. Their sum is the model's parameter count.
@@ -128,8 +125,7 @@ Each stage has **learnable parameters**. Their sum is the model's parameter coun
 | **All 32 blocks** | **5,050M** | **76%** | **Most of your budget** |
 | **Output LM head** (prediction layer) | 131M | 2% | Final decision-making board |
 | **Total** | **6.7B** | 100% | Full model budget |
-
-📊 **Quick Estimate:**
+**Quick Estimate:**
 > **Rule of thumb:** ~75% of parameters live in the FFN layers. If you see "7B parameters," think "~5B are in the FFN layers, doing the heavy lifting."
 >
 > **Why this matters:** When optimizing, focus on FFN layers first — they're where the compute actually happens.
@@ -146,10 +142,9 @@ Each stage has **learnable parameters**. Their sum is the model's parameter coun
 ```python
 # Not a formula — just a lookup!
 token_id = 5812
-embedding = embedding_matrix[token_id]  # Grab row 5812 → (4096 numbers)
+embedding = embedding_matrix[token_id] # Grab row 5812 → (4096 numbers)
 ```
-
-📊 **Quick Estimate:**
+**Quick Estimate:**
 > **Cost:** Essentially free (~0.01% of total inference time)
 > **Why:** Just grabbing a row from a table, not doing matrix math
 >
@@ -168,7 +163,7 @@ embedding = embedding_matrix[token_id]  # Grab row 5812 → (4096 numbers)
 
 Nobody told the model to organize this way. It emerged from billions of "predict the next token" exercises.
 
-> ⏸️ **Checkpoint:** Your 7B budget is mostly spent on FFN layers (~75% total across all blocks). Attention gets ~20%, embeddings are ~4%. Token embeddings are just a lookup table — no heavy math, just "find token 5812, grab its vector." Similar words cluster together automatically during training, not because anyone told them to.
+> **Checkpoint:** Your 7B budget is mostly spent on FFN layers (~75% total across all blocks). Attention gets ~20%, embeddings are ~4%. Token embeddings are just a lookup table — no heavy math, just "find token 5812, grab its vector." Similar words cluster together automatically during training, not because anyone told them to.
 
 ---
 
@@ -192,8 +187,7 @@ Your model's parameters are like **furniture that stays in place**. Size depends
 | **fp16 / bf16** (half precision) | 2 bytes | 13.4 GB | 140 GB | **Compact furniture** (standard) |
 | **int8** (quantized) | 1 byte | 6.7 GB | 70 GB | **IKEA flat-pack** — 50% less space |
 | **int4** (aggressive quantization) | 0.5 bytes | 3.35 GB | 35 GB | **Minimalist studio** — 75% savings |
-
-📊 **Quick Estimate:**
+**Quick Estimate:**
 > **Shortcut:** For a 7B model, just remember:
 > - **fp16 = ~14 GB** (double the parameter count in billions)
 > - **int8 = half that** (~7 GB)
@@ -211,8 +205,7 @@ During a forward pass, the model creates temporary work areas:
 - Attention scores: scratchpad for comparing tokens
 - Intermediate FFN outputs: calculation workspace
 - Residual buffers, softmax outputs: temporary storage
-
-📊 **Quick Estimate:**
+**Quick Estimate:**
 > **For typical single-request inference:**
 > - 7B model: **~1 GB** workspace
 > - 70B model: **~3-5 GB** workspace
@@ -230,31 +223,30 @@ For LLaMA 7B, fp16, seq_len=2048: **~1 GB per conversation**.
 **Total VRAM Budget (single conversation, LLaMA 7B, fp16):**
 
 ```
-Furniture (weights):     13.4 GB  | Fixed cost — same for all conversations
-Workspace (activations):  1.0 GB  | Temporary — cleans up after each turn
-Storage (KV cache):       1.0 GB  | One box per conversation
+Furniture (weights): 13.4 GB | Fixed cost — same for all conversations
+Workspace (activations): 1.0 GB | Temporary — cleans up after each turn
+Storage (KV cache): 1.0 GB | One box per conversation
 --------------------------------------------------------
-Total apartment:         15.4 GB  → fits in RTX 4090 (24 GB)
+Total apartment: 15.4 GB → fits in RTX 4090 (24 GB)
 ```
 
 **Serving 16 simultaneous conversations:**
 
 ```
-Furniture (weights):     13.4 GB  | Still just one set — everyone shares
-Workspace (activations):  1.0 GB  | Still temporary — still cleans up
-Storage (KV cache):      16.0 GB  | 16 boxes × 1 GB each = 16 GB!
+Furniture (weights): 13.4 GB | Still just one set — everyone shares
+Workspace (activations): 1.0 GB | Still temporary — still cleans up
+Storage (KV cache): 16.0 GB | 16 boxes × 1 GB each = 16 GB!
 --------------------------------------------------------
-Total apartment:         45.4 GB  → needs 2× A40 (48 GB) or 1× A100 (80 GB)
+Total apartment: 45.4 GB → needs 2× A40 (48 GB) or 1× A100 (80 GB)
 ```
-
-📊 **Quick Estimate:**
+**Quick Estimate:**
 > **Storage grows with conversations:** Each new conversation adds **~1 GB** (7B model) or **~3-5 GB** (70B model).
 >
 > **Why servers hit limits fast:** At 100 conversations × 1 GB = 100 GB just for storage boxes — more than the model weights! **KV cache is the throughput killer**, not the model size.
 
-> ⚠️ **The scaling trap:** Your apartment (GPU memory) is fixed, but storage boxes (KV cache) multiply with every conversation. That's why batch size plateaus fast.
+> **Warning — The scaling trap:** Your apartment (GPU memory) is fixed, but storage boxes (KV cache) multiply with every conversation. That's why batch size plateaus fast.
 
-> ⏸️ **Checkpoint:** Your VRAM apartment has three categories: furniture (model weights, ~14 GB for 7B), workspace (activations, ~1 GB, temporary), and storage boxes (KV cache, ~1 GB per conversation). Furniture is fixed. Workspace cleans itself. **Storage boxes multiply with every conversation** — that's why serving 100 users needs 100 GB just for cache, making KV cache the bottleneck, not model size.
+> **Checkpoint:** Your VRAM apartment has three categories: furniture (model weights, ~14 GB for 7B), workspace (activations, ~1 GB, temporary), and storage boxes (KV cache, ~1 GB per conversation). Furniture is fixed. Workspace cleans itself. **Storage boxes multiply with every conversation** — that's why serving 100 users needs 100 GB just for cache, making KV cache the bottleneck, not model size.
 
 ---
 
@@ -283,8 +275,7 @@ Imagine your weights range from -1.2 to 0.8:
 - **fp16:** 0.567 (exact)
 - **int8:** 0.564 (rounded to nearest bucket — error = 0.003)
 - **int4:** 0.55 (rounded to coarser bucket — error = 0.017)
-
-📊 **Quick Estimate:**
+**Quick Estimate:**
 > **Accuracy impact by precision:**
 > - **int8:** Loses **<1%** accuracy on most tasks (you won't notice)
 > - **int4:** Loses **2-5%** on complex reasoning (noticeable on math/code, fine for chat)
@@ -303,8 +294,7 @@ Imagine your weights range from -1.2 to 0.8:
 - **Weight-only (GPTQ, AWQ):** Compress the furniture, but work in full precision — saves space, modest speed gain
 - **Full quantization (int8):** Compress weights AND workspace — saves space AND speeds up math (int8 ops are 4× faster)
 - **Mixed-precision (QLoRA):** Base model in int4 (tiny), adapters in fp16 (precise) — lets you fine-tune 70B on a gaming PC
-
-📊 **Quick Estimate:**
+**Quick Estimate:**
 > **Choosing your precision level:**
 > - **Need maximum quality?** fp16 (standard production)
 > - **Need to fit in memory?** int8 first (nearly free quality-wise)
@@ -313,11 +303,10 @@ Imagine your weights range from -1.2 to 0.8:
 
 ### Gradient Flow & Training Memory (Optional Preview)
 
-> ⏭️ **Optional — skip if focused on inference only.** Covered fully in [03b-agentic-ai Ch.5](../../03b-agentic-ai/ch05-fine-tuning/fine-tuning.md).
+> **Optional — skip if focused on inference only.** Covered fully in [03b-agentic-ai Ch.5](../../03b-agentic-ai/ch05-fine-tuning/fine-tuning.md).
 
 Training requires **backward passes** to compute gradients. **Memory cost explodes** because you can't throw anything away until the end.
-
-📊 **Quick Estimate:**
+**Quick Estimate:**
 > **Training memory = 4-6× inference memory**
 >
 > **The apartment analogy:**
@@ -335,8 +324,7 @@ Training requires **backward passes** to compute gradients. **Memory cost explod
 **The problem:** Standard attention creates a massive scratchpad — for an 8k-token sequence, that's 8,000 × 8,000 = 64 million numbers **per attention head**. With 32 heads, you're storing 2 billion numbers just to compute attention scores.
 
 **The insight:** You don't need to write all that to slow memory (VRAM). You can **compute attention in chunks using fast on-chip memory (SRAM)** and never materialize the full matrix.
-
-📊 **Quick Estimate:**
+**Quick Estimate:**
 > **Memory reduction:** O(n²) → O(n) for attention scores
 > **Translation:** 8k context on standard attention = ~4 GB just for attention
 > **Flash Attention:** Same context = ~64 MB (60× reduction)
@@ -359,8 +347,7 @@ Training requires **backward passes** to compute gradients. **Memory cost explod
 | **LLaMA 2 13B** | 13B | 5120 | 40 | 26 GB | 13 GB | 6.5 GB |
 | **LLaMA 2 70B** | 70B | 8192 | 80 | 140 GB | 70 GB | 35 GB |
 | **GPT-4 (est.)** | 1.8T (MoE) | ~16384 | ~120 | ~3.6 TB | — | — |
-
-📊 **Quick Estimate:**
+**Quick Estimate:**
 > **Hardware requirements by model size:**
 > - **7B model:** One gaming GPU (RTX 4090, 24 GB) — int4 or int8
 > - **13B model:** One datacenter GPU (A40, 48 GB) or two gaming GPUs — int8

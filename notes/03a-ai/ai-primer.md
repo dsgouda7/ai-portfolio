@@ -32,20 +32,20 @@ Both models are evaluated using identical prompts and test sets throughout the t
 
 ```python
 # GPT-4o configuration
-gpt4_client = openai.OpenAI()  # uses OPENAI_API_KEY env var
+gpt4_client = openai.OpenAI() # uses OPENAI_API_KEY env var
 gpt4_params = {
-    "model": "gpt-4o",
-    "temperature": 0.0,       # deterministic for benchmarks
-    "max_tokens": 1024,
-    "response_format": {"type": "json_object"}  # Ch.2 onwards
+ "model": "gpt-4o",
+ "temperature": 0.0, # deterministic for benchmarks
+ "max_tokens": 1024,
+ "response_format": {"type": "json_object"} # Ch.2 onwards
 }
 
 # Claude 3.5 Sonnet configuration
-claude_client = anthropic.Anthropic()  # uses ANTHROPIC_API_KEY env var
+claude_client = anthropic.Anthropic() # uses ANTHROPIC_API_KEY env var
 claude_params = {
-    "model": "claude-3-5-sonnet-20241022",
-    "max_tokens": 1024,
-    "temperature": 0.0
+ "model": "claude-3-5-sonnet-20241022",
+ "max_tokens": 1024,
+ "temperature": 0.0
 }
 ```
 
@@ -165,23 +165,23 @@ This gives us both a **RAG layer** (private static knowledge) and a **tool layer
 
 ```
 User query
-    │
-    ▼
+ │
+ ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                     LLM — PizzaBot                               │
-│  system prompt scopes it to pizza only                           │
-│                                                                  │
-│  Thought → Action → Observe → Thought → Action → Observe → ...  │
-│                  (the ReAct loop)                                │
+│ LLM — PizzaBot │
+│ system prompt scopes it to pizza only │
+│ │
+│ Thought → Action → Observe → Thought → Action → Observe → ... │
+│ (the ReAct loop) │
 └───────────────────────┬─────────────────────────────────────────┘
-                        │
-          ┌─────────────┴──────────────────┐
-          │                                │
-          ▼                                ▼
-  RAG corpus (internal)          External tool APIs
-  menu, recipes, allergens,      find_nearest_location()
-  locations, delivery zones,     check_item_availability()
-  FAQ, pricing structure         calculate_order_total()
+ │
+ ┌─────────────┴──────────────────┐
+ │ │
+ ▼ ▼
+ RAG corpus (internal) External tool APIs
+ menu, recipes, allergens, find_nearest_location()
+ locations, delivery zones, check_item_availability()
+ FAQ, pricing structure calculate_order_total()
 ```
 
 ---
@@ -205,16 +205,16 @@ All documents are chunked, embedded, and stored in a local vector index. The LLM
 
 ```python
 def find_nearest_location(address: str) -> dict:
-    # Geocodes address, finds the closest open store
-    # Returns: {store_id, name, distance_miles, is_open, phone}
+ # Geocodes address, finds the closest open store
+ # Returns: {store_id, name, distance_miles, is_open, phone}
 
 def check_item_availability(store_id: int, item: str) -> dict:
-    # Queries the store's live inventory system
-    # Returns: {available: bool, eta_minutes: int, alternative: str | None}
+ # Queries the store's live inventory system
+ # Returns: {available: bool, eta_minutes: int, alternative: str | None}
 
 def calculate_order_total(items: list[str], address: str) -> dict:
-    # Calculates delivery fee (distance-based), local tax, subtotal
-    # Returns: {subtotal, tax, delivery_fee, total, currency}
+ # Calculates delivery fee (distance-based), local tax, subtotal
+ # Returns: {subtotal, tax, delivery_fee, total, currency}
 ```
 
 ---
@@ -225,39 +225,39 @@ def calculate_order_total(items: list[str], address: str) -> dict:
 
 ```
 Thought: I need the nearest open store, item availability, pricing from the
-         menu corpus, and the order total.
+ menu corpus, and the order total.
 
-Action:      find_nearest_location("42 Maple Street")
+Action: find_nearest_location("42 Maple Street")
 Observation: {store_id: 3, name: "Mamma Rosa's Westside",
-              distance_miles: 1.2, is_open: true, phone: "555-0192"}
+ distance_miles: 1.2, is_open: true, phone: "555-0192"}
 
 Thought: Store 3 is open and nearby. Check item availability.
 
-Action:      check_item_availability(store_id=3, item="Large Margherita")
+Action: check_item_availability(store_id=3, item="Large Margherita")
 Observation: {available: true, eta_minutes: 25, alternative: null}
 
-Action:      check_item_availability(store_id=3, item="Garlic Bread")
+Action: check_item_availability(store_id=3, item="Garlic Bread")
 Observation: {available: true, eta_minutes: 25, alternative: null}
 
 Thought: Both items available. Retrieve pricing from RAG, then calculate total.
 
-Action:      retrieve_from_rag("Large Margherita price, Garlic Bread price")
+Action: retrieve_from_rag("Large Margherita price, Garlic Bread price")
 Observation: Large Margherita £13.99, Garlic Bread £3.49 each
 
-Action:      calculate_order_total(
-                 items=["Large Margherita", "Garlic Bread x2"],
-                 address="42 Maple Street"
-             )
+Action: calculate_order_total(
+ items=["Large Margherita", "Garlic Bread x2"],
+ address="42 Maple Street"
+ )
 Observation: {subtotal: 20.97, tax: 0.00, delivery_fee: 1.99, total: 22.96}
 
 Thought: I have everything. Compose a clear confirmation.
 
 Answer: "Here's your order from our Westside store (1.2 miles away):
-         • Large Margherita — £13.99
-         • Garlic Bread × 2 — £6.98
-         • Delivery fee — £1.99
-         Total: £22.96 (VAT included). Estimated arrival: ~25 minutes.
-         Want me to confirm? You can also call us on 555-0192."
+ • Large Margherita — £13.99
+ • Garlic Bread × 2 — £6.98
+ • Delivery fee — £1.99
+ Total: £22.96 (VAT included). Estimated arrival: ~25 minutes.
+ Want me to confirm? You can also call us on 555-0192."
 ```
 
 This trace is the concrete instance of the **ReAct pattern** covered in `ReActAndSemanticKernel/ReActAndSemanticKernel.md`. Four tools, interleaved reasoning, and self-correcting behaviour — if store 3 were closed, the next `Thought` would call `find_nearest_location` with a different radius or try the next store in the result set.
@@ -315,33 +315,33 @@ Every chapter in this track is a response to a specific historical pressure poin
 
 ```
 +---------------------------------------------------------------------------+
-|                       AGENTIC AI SYSTEM                                   |
-|                                                                            |
-|  +-------------------------------------------------------------------+   |
-|  |                    ORCHESTRATION LAYER                             |   |
-|  |  ReAct Loop . LangChain . Semantic Kernel . Multi-Agent Patterns   |   |
-|  |                  [ReActAndSemanticKernel.md]                       |   |
-|  +---------------------------+---------------------------------------+   |
-|                               |                                           |
-|          +--------------------+------------------+                       |
-|          |                                        |                       |
-|  +-------+-------------+          +--------------+----------+            |
-|  |    REASONING LAYER   |          |      KNOWLEDGE LAYER    |            |
-|  |                      |          |                         |            |
-|  |  How the LLM thinks  |          |   How the agent         |            |
-|  |  step by step before |          |   retrieves facts it    |            |
-|  |  choosing an action  |          |   wasn't trained on     |            |
-|  |                      |          |                         |            |
-|  |  [CoTReasoning.md]   |          |  +------------------+  |            |
-|  |                      |          |  |  Embeddings + RAG |  |            |
-|  |                      |          |  | [RAGAndEmbeddings]|  |            |
-|  +----------------------+          |  +------------------+  |            |
-|                                     |                         |            |
-|                                     |  +------------------+  |            |
-|                                     |  | Vector Index     |  |            |
-|                                     |  | [VectorDBs.md]   |  |            |
-|                                     |  +------------------+  |            |
-|                                     +-------------------------+            |
+| AGENTIC AI SYSTEM |
+| |
+| +-------------------------------------------------------------------+ |
+| | ORCHESTRATION LAYER | |
+| | ReAct Loop . LangChain . Semantic Kernel . Multi-Agent Patterns | |
+| | [ReActAndSemanticKernel.md] | |
+| +---------------------------+---------------------------------------+ |
+| | |
+| +--------------------+------------------+ |
+| | | |
+| +-------+-------------+ +--------------+----------+ |
+| | REASONING LAYER | | KNOWLEDGE LAYER | |
+| | | | | |
+| | How the LLM thinks | | How the agent | |
+| | step by step before | | retrieves facts it | |
+| | choosing an action | | wasn't trained on | |
+| | | | | |
+| | [CoTReasoning.md] | | +------------------+ | |
+| | | | | Embeddings + RAG | | |
+| | | | | [RAGAndEmbeddings]| | |
+| +----------------------+ | +------------------+ | |
+| | | |
+| | +------------------+ | |
+| | | Vector Index | | |
+| | | [VectorDBs.md] | | |
+| | +------------------+ | |
+| +-------------------------+ |
 +---------------------------------------------------------------------------+
 ```
 
@@ -404,72 +404,72 @@ Every chapter in this track is a response to a specific historical pressure poin
 
 ```
 START HERE
-    |
-    v
+ |
+ v
 Step 0: GROUND YOURSELF IN THE BASICS
-        LLMFundamentals.md (complete)
-        PromptEngineering.md (complete)
-        Part 1 of this document (complete)
+ LLMFundamentals.md (complete)
+ PromptEngineering.md (complete)
+ Part 1 of this document (complete)
 
-        Key insight: Before reasoning about agents, understand
-        what an LLM actually is (tokenisation, sampling, RLHF,
-        context windows), how to communicate with one reliably
-        (prompt engineering, structured output, injection
-        defense), and what concrete system the AI track builds
-        toward (Mamma Rosa's PizzaBot).
-    |
-    v
+ Key insight: Before reasoning about agents, understand
+ what an LLM actually is (tokenisation, sampling, RLHF,
+ context windows), how to communicate with one reliably
+ (prompt engineering, structured output, injection
+ defense), and what concrete system the AI track builds
+ toward (Mamma Rosa's PizzaBot).
+ |
+ v
 Step 1: UNDERSTAND THE CORE MECHANISM
-        CoTReasoning.md s1-3
+ CoTReasoning.md s1-3
 
-        Key insight: An LLM is a next-token predictor.
-        A ReAct agent is that same predictor, but its valid
-        "next tokens" include structured tool calls. The host
-        program executes those calls and feeds results back
-        as tokens. This is the entire bridge from "language
-        model" to "autonomous agent."
-    |
-    v
+ Key insight: An LLM is a next-token predictor.
+ A ReAct agent is that same predictor, but its valid
+ "next tokens" include structured tool calls. The host
+ program executes those calls and feeds results back
+ as tokens. This is the entire bridge from "language
+ model" to "autonomous agent."
+ |
+ v
 Step 2: SEE THE FULL LOOP IN ACTION
-        ReActAndSemanticKernel.md s1-5
+ ReActAndSemanticKernel.md s1-5
 
-        Key insight: The ReAct Thought->Action->Observation
-        loop is the practical embodiment of Step 1.
-    |
-    v
+ Key insight: The ReAct Thought->Action->Observation
+ loop is the practical embodiment of Step 1.
+ |
+ v
 Step 3: UNDERSTAND HOW AGENTS GET EXTERNAL KNOWLEDGE
-        RAGAndEmbeddings.md s1-6
+ RAGAndEmbeddings.md s1-6
 
-        Key insight: The corpus must be embedded with the
-        same model used at query time, and those embeddings
-        must be stored and searched efficiently.
-    |
-    v
+ Key insight: The corpus must be embedded with the
+ same model used at query time, and those embeddings
+ must be stored and searched efficiently.
+ |
+ v
 Step 4: UNDERSTAND THE STORAGE LAYER BENEATH RAG
-        VectorDBs.md s1-5
+ VectorDBs.md s1-5
 
-        Key insight: The index type (HNSW, IVF, DiskANN)
-        determines the speed, recall, and memory profile.
-    |
-    v
+ Key insight: The index type (HNSW, IVF, DiskANN)
+ determines the speed, recall, and memory profile.
+ |
+ v
 Step 5: DEEPEN WITH FRAMEWORKS
-        ReActAndSemanticKernel.md s7-13
+ ReActAndSemanticKernel.md s7-13
 
-        Semantic Kernel adds telemetry and filters;
-        LangChain adds ecosystem breadth.
-    |
-    v
+ Semantic Kernel adds telemetry and filters;
+ LangChain adds ecosystem breadth.
+ |
+ v
 Step 6: ENRICH EACH LAYER WITH ITS SUPPLEMENT
-        Read the four _Supplement.md files, one per core doc.
-    |
-    v
+ Read the four _Supplement.md files, one per core doc.
+ |
+ v
 Step 7: APPLY PRODUCTION & OPERATIONS KNOWLEDGE
-        EvaluatingAISystems.md -> FineTuning.md ->
-        SafetyAndHallucination.md -> CostAndLatency.md
-    |
-    v
+ EvaluatingAISystems.md -> FineTuning.md ->
+ SafetyAndHallucination.md -> CostAndLatency.md
+ |
+ v
 Step 8: CONSOLIDATE FOR INTERVIEWS
-        ../InterviewGuides/AgenticAI.md
+ ../InterviewGuides/AgenticAI.md
 ```
 
 ---
@@ -494,26 +494,26 @@ The core notes also contain smaller, self-contained examples to isolate a single
 
 ```
 CoTReasoning.md
-  +-- "reasoning tokens" -----------> needed to understand SK's hidden plan steps
-  +-- "action language" ------------> core of ReAct in ReActAndSemanticKernel.md
-  +-- "context window as scratchpad" > needed to understand RAG context injection
-  +-- "CoT failure modes" ----------> directly informs agent failure modes in SK_Supplement
+ +-- "reasoning tokens" -----------> needed to understand SK's hidden plan steps
+ +-- "action language" ------------> core of ReAct in ReActAndSemanticKernel.md
+ +-- "context window as scratchpad" > needed to understand RAG context injection
+ +-- "CoT failure modes" ----------> directly informs agent failure modes in SK_Supplement
 
 RAGAndEmbeddings.md
-  +-- "embedding vectors" ----------- prerequisite for VectorDBs.md (what is being indexed)
-  +-- "cosine similarity" -----------> used throughout VectorDBs.md for distance metrics
-  +-- "chunking" -------------------> defines the data structures that go into vector DBs
-  +-- "same model constraint" -------> a VectorDBs operational pitfall (Pitfall #2)
+ +-- "embedding vectors" ----------- prerequisite for VectorDBs.md (what is being indexed)
+ +-- "cosine similarity" -----------> used throughout VectorDBs.md for distance metrics
+ +-- "chunking" -------------------> defines the data structures that go into vector DBs
+ +-- "same model constraint" -------> a VectorDBs operational pitfall (Pitfall #2)
 
 VectorDBs.md
-  +-- "HNSW, IVF, DiskANN" ---------> referenced in RAGAndEmbeddings.md s5.4 (indexing step)
-  +-- "hybrid BM25 + vector" -------> referenced in RAGAndEmbeddings_Supplement.md s3
-  +-- "ANN recall" -----------------> RAGAS's context recall metric in RAGAndEmbeddings_Supplement
+ +-- "HNSW, IVF, DiskANN" ---------> referenced in RAGAndEmbeddings.md s5.4 (indexing step)
+ +-- "hybrid BM25 + vector" -------> referenced in RAGAndEmbeddings_Supplement.md s3
+ +-- "ANN recall" -----------------> RAGAS's context recall metric in RAGAndEmbeddings_Supplement
 
 ReActAndSemanticKernel.md
-  +-- "tool schemas" ---------------> the action language described in CoTReasoning.md s3.1
-  +-- "context grows monotonically" > CoTReasoning.md s5 (context management)
-  +-- "memory via vector DB" -------> connects back to VectorDBs.md (RAG-based memory)
+ +-- "tool schemas" ---------------> the action language described in CoTReasoning.md s3.1
+ +-- "context grows monotonically" > CoTReasoning.md s5 (context management)
+ +-- "memory via vector DB" -------> connects back to VectorDBs.md (RAG-based memory)
 ```
 
 ---

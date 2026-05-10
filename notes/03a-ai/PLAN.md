@@ -37,7 +37,7 @@ Each agent reads the existing chapter `.md`, rewrites with the historical arc, w
 ### Agent brief template
 
 ```
-Read:  notes/03a-ai/ch{N}-{name}/{name}.md
+Read: notes/03a-ai/ch{N}-{name}/{name}.md
 Write: same file
 
 Arc: [chapter-specific causal chain, see below]
@@ -48,9 +48,9 @@ Rules:
 - Keep: callout box style, section headers, interview table at end
 - Replace DPO full formula + symbol table with 3-sentence plain-English + link to ch10
 - Replace entire PEFT deep-dive (LoRA/prefix/prompt tuning math) with:
-    > "Three PEFT methods matter here — LoRA, prefix tuning, prompt tuning.
-    > Full derivations and tradeoffs in [Ch.10](../ch10-fine-tuning/fine-tuning.md)
-    > when you actually run one."
+ > "Three PEFT methods matter here — LoRA, prefix tuning, prompt tuning.
+ > Full derivations and tradeoffs in [Ch.10](../ch10-fine-tuning/fine-tuning.md)
+ > when you actually run one."
 - Do NOT read other chapter files
 ```
 
@@ -128,73 +128,73 @@ Each agent reads the first 60 lines of the Phase 1 `.md` for section context, re
 ### Ch01 cells
 
 1. **Tokenizer cross-model comparison**: encode `"gluten-free pepperoni with dairy-free mozzarella"`
-   with `cl100k_base` (GPT-3.5/4) and `o200k_base` (GPT-4o) via `tiktoken` → print token
-   boundaries side-by-side, count difference, compute cost delta at $0.002/1k vs $0.01/1k
+ with `cl100k_base` (GPT-3.5/4) and `o200k_base` (GPT-4o) via `tiktoken` → print token
+ boundaries side-by-side, count difference, compute cost delta at $0.002/1k vs $0.01/1k
 
 2. **Temperature sweep**: send "Recommend a pizza" 5× at T=0, 5× at T=0.8, 5× at T=1.5 via
-   Ollama → print all 15 → student counts unique responses per tier
+ Ollama → print all 15 → student counts unique responses per tier
 
 3. **Lost-in-middle**: inject target fact at 0% / 50% / 100% position in a padded ~2000-token
-   context, ask retrieval question, 5 runs per position → print hit/miss table
+ context, ask retrieval question, 5 runs per position → print hit/miss table
 
 4. **Base vs instruct framing**: send `"Customer: What sizes do you have?\nAI:"` as raw
-   completion vs proper chat message → print both → observe one continues a script, one answers
+ completion vs proper chat message → print both → observe one continues a script, one answers
 
 ### Ch02 cells
 
 1. **System prompt delta**: same user query, vague vs structured system prompt → print both,
-   highlight format/scope difference
+ highlight format/scope difference
 
 2. **Few-shot precision**: 0 examples vs 3 examples, extract an order as JSON → print both →
-   observe compliance rate
+ observe compliance rate
 
 3. **Schema enforcement**: ask-for-JSON vs JSON-schema-in-prompt vs Ollama `format="json"` →
-   print outputs → measure parse success (`json.loads` try/except)
+ print outputs → measure parse success (`json.loads` try/except)
 
 4. **Injection test**: attack string with and without defense layers in the system prompt → print
-   what leaks vs what's blocked
+ what leaks vs what's blocked
 
 ### Ch03 cells
 
 1. **Direct vs CoT**: multi-constraint query sent direct, then with "think step by step" →
-   print both → observe intermediate reasoning depth
+ print both → observe intermediate reasoning depth
 
 2. **Self-consistency**: N=1 vs N=5 majority vote on same query at T=0.7 → print all chains +
-   voted answer → observe variance reduction
+ voted answer → observe variance reduction
 
 3. **Reasoning model trace**: same arithmetic problem via phi3:mini vs deepseek-r1:8b (Ollama)
-   → print response + token count → observe `<think>` block length
+ → print response + token count → observe `<think>` block length
 
 4. **Sycophancy demo**: correct answer, then user pushback → print whether model flips →
-   observe RLHF alignment side effect
+ observe RLHF alignment side effect
 
 ### Ch04 cells
 
 1. **Embedding similarity**: embed 5 pizza descriptions + 1 query with `all-MiniLM-L6-v2` →
-   print cosine scores sorted → observe semantic proximity without keyword match
+ print cosine scores sorted → observe semantic proximity without keyword match
 
 2. **RAG grounding**: same menu question, no context vs top-3 retrieved chunks in prompt →
-   print both answers → observe hallucination vs grounded response
+ print both answers → observe hallucination vs grounded response
 
 3. **HyDE vs raw query**: embed raw query vs LLM-generated hypothetical answer → print top-3
-   retrieved chunks for each → observe retrieval precision difference
+ retrieved chunks for each → observe retrieval precision difference
 
 4. **Lost-in-middle RAG**: allergen chunk at position 1 vs 3 (of 5 retrieved) → run 5× per
-   position → print whether model catches the flag each time
+ position → print whether model catches the flag each time
 
 ### Ch05 cells
 
 1. **Distance metrics**: same 3 vectors, compute L2 / cosine / dot → print all rankings →
-   observe they agree when L2-normalized, diverge when not
+ observe they agree when L2-normalized, diverge when not
 
 2. **Brute-force timing**: exact search at 1K / 10K / 100K vectors (numpy) → print time per
-   query → observe O(N) growth
+ query → observe O(N) growth
 
 3. **IVF nprobe sweep**: FAISS IVF, nprobe=1 vs 4 vs 16 → print recall@10 + query time →
-   observe recall-speed tradeoff
+ observe recall-speed tradeoff
 
 4. **HNSW efSearch sweep**: ChromaDB, efSearch=16 vs 64 vs 128 → print recall + query time →
-   observe same tradeoff with different characteristics
+ observe same tradeoff with different characteristics
 
 ---
 
@@ -208,37 +208,37 @@ chapters where GPU meaningfully changes what can be observed. Three chapters onl
 ```python
 import torch
 if not torch.cuda.is_available():
-    raise SystemExit(
-        "No GPU detected — run the CPU notebook instead: notebook-exercise.ipynb\n"
-        "To provision a GPU machine: see notes/06-ai-infrastructure/ch01-gpu-architecture/"
-    )
+ raise SystemExit(
+ "No GPU detected — run the CPU notebook instead: notebook-exercise.ipynb\n"
+ "To provision a GPU machine: see notes/06-ai-infrastructure/ch01-gpu-architecture/"
+ )
 device = torch.cuda.get_device_name(0)
 vram = torch.cuda.get_device_properties(0).total_memory / 1e9
-print(f"GPU: {device}  |  VRAM: {vram:.1f} GB")
+print(f"GPU: {device} | VRAM: {vram:.1f} GB")
 assert vram >= 10, f"Need ≥10 GB VRAM, got {vram:.1f} GB — use a smaller model tier"
 ```
 
 ### Ch01 supplement — Model scale behavioral comparison (min: RTX 3090 24 GB)
 
 - Same temperature sweep (cell 2 from Phase 2) but phi3:mini vs llama3.2:70b via Ollama →
-  observe how model size affects output consistency at T=0 and at T=1.0
+ observe how model size affects output consistency at T=0 and at T=1.0
 
 - Same lost-in-middle experiment with large context (32k token padding via a long filler
-  document) → observe whether larger model degrades less or similarly
+ document) → observe whether larger model degrades less or similarly
 
 ### Ch03 supplement — Reasoning depth vs model size (min: RTX 3080 12 GB)
 
 - deepseek-r1:7b vs deepseek-r1:14b on same AIME-style multi-step problem → print reasoning
-  trace length, final answer, token count → observe how model size affects reasoning quality
+ trace length, final answer, token count → observe how model size affects reasoning quality
 
 - Overthinking demo: send trivial query ("What is 2+2?") to deepseek-r1:14b → print reasoning
-  token count → quantify the compute waste on simple problems
+ token count → quantify the compute waste on simple problems
 
 ### Ch04 supplement — Embedding model precision comparison (min: any CUDA GPU)
 
 - `all-MiniLM-L6-v2` (384d, CPU-viable) vs `bge-large-en-v1.5` (1024d, GPU-beneficial) →
-  embed identical corpus → measure retrieval precision@5 on 10 held-out test queries → print
-  comparison table → observe quality vs cost tradeoff
+ embed identical corpus → measure retrieval precision@5 on 10 held-out test queries → print
+ comparison table → observe quality vs cost tradeoff
 
 ---
 
@@ -258,31 +258,31 @@ assert vram >= 10, f"Need ≥10 GB VRAM, got {vram:.1f} GB — use a smaller mod
 
 ```
 notes/03a-ai/
-  ch01-llm-fundamentals/
-    llm-fundamentals.md                  ← Phase 1 rewrite
-    notebook-exercise.ipynb              ← Phase 2 implement
-    notebook-supplement-exercise.ipynb   ← Phase 3 create
-    notebook-supplement-solution.ipynb   ← Phase 3 create
+ ch01-llm-fundamentals/
+ llm-fundamentals.md ← Phase 1 rewrite
+ notebook-exercise.ipynb ← Phase 2 implement
+ notebook-supplement-exercise.ipynb ← Phase 3 create
+ notebook-supplement-solution.ipynb ← Phase 3 create
 
-  ch02-prompt-engineering/
-    prompt-engineering.md                ← Phase 1 rewrite
-    notebook-exercise.ipynb              ← Phase 2 implement
+ ch02-prompt-engineering/
+ prompt-engineering.md ← Phase 1 rewrite
+ notebook-exercise.ipynb ← Phase 2 implement
 
-  ch03-cot-reasoning/
-    cot-reasoning.md                     ← Phase 1 rewrite
-    notebook-exercise.ipynb              ← Phase 2 implement
-    notebook-supplement-exercise.ipynb   ← Phase 3 create
-    notebook-supplement-solution.ipynb   ← Phase 3 create
+ ch03-cot-reasoning/
+ cot-reasoning.md ← Phase 1 rewrite
+ notebook-exercise.ipynb ← Phase 2 implement
+ notebook-supplement-exercise.ipynb ← Phase 3 create
+ notebook-supplement-solution.ipynb ← Phase 3 create
 
-  ch04-rag-and-embeddings/
-    rag-and-embeddings.md                ← Phase 1 rewrite
-    notebook-exercise.ipynb              ← Phase 2 implement
-    notebook-supplement-exercise.ipynb   ← Phase 3 create
-    notebook-supplement-solution.ipynb   ← Phase 3 create
+ ch04-rag-and-embeddings/
+ rag-and-embeddings.md ← Phase 1 rewrite
+ notebook-exercise.ipynb ← Phase 2 implement
+ notebook-supplement-exercise.ipynb ← Phase 3 create
+ notebook-supplement-solution.ipynb ← Phase 3 create
 
-  ch05-vector-dbs/
-    vector-dbs.md                        ← Phase 1 rewrite
-    notebook-exercise.ipynb              ← Phase 2 implement
+ ch05-vector-dbs/
+ vector-dbs.md ← Phase 1 rewrite
+ notebook-exercise.ipynb ← Phase 2 implement
 ```
 
 ---
@@ -291,8 +291,8 @@ notes/03a-ai/
 
 - `notes/03-ai/` (PizzaBot arc) — archive/delete decision deferred to user
 - Supplement `.md` files (`cot-reasoning-supplement.md`, etc.) — Phase 1 agent flags
-  contradictions if found, no proactive rewrite
+ contradictions if found, no proactive rewrite
 - Solution notebooks (`notebook-solution.ipynb`) — generated from exercise notebooks after
-  Phase 2 in a separate pass
+ Phase 2 in a separate pass
 - `notes/03b-agentic-ai/` — this is where a scenario/grand challenge arc belongs; not touched
-  by this plan
+ by this plan

@@ -48,12 +48,12 @@ Before advancing to sophisticated techniques, understand where vanilla RAG (chun
 **The solution:** Instead of embedding the raw query, ask the LLM to generate a **hypothetical document** that would answer the query, then embed that hypothetical document for retrieval.
 
 ```
-User Query:  "Does the Veggie Feast pizza contain any nuts?"
+User Query: "Does the Veggie Feast pizza contain any nuts?"
 
 Step 1 — Generate hypothetical answer:
 LLM: "The Veggie Feast pizza does not contain nuts. Its allergens include
-      dairy (mozzarella) and gluten (standard base). A gluten-free base is
-      available on request."
+ dairy (mozzarella) and gluten (standard base). A gluten-free base is
+ available on request."
 
 Step 2 — Embed the hypothetical answer (not the query)
 embed("The Veggie Feast pizza does not contain nuts...dairy...gluten...")
@@ -76,7 +76,7 @@ Step 3 — Search the vector store with this embedding
 ```
 Generation in progress:
 "The service handles authentication and session management. For a zero-downtime deploy, the [LOW CONFIDENCE →
-                                                                         PAUSE AND RETRIEVE]"
+ PAUSE AND RETRIEVE]"
 → Retrieval query: "zero-downtime deployment procedure for auth service"
 → Retrieved: "Auth service supports blue-green deployment via the deploy.sh --blue-green flag."
 → Continue: "...auth service supports blue-green deployment, enabling zero-downtime releases."
@@ -94,13 +94,13 @@ Generation in progress:
 
 ```
 Original: "Compare the chunking strategy and distance metric defaults used by
-           LangChain vs. Semantic Kernel for RAG applications."
+ LangChain vs. Semantic Kernel for RAG applications."
 
 Decomposed:
-  Q1: "LangChain default chunking strategy"
-  Q2: "Semantic Kernel default chunking strategy"
-  Q3: "LangChain distance metric defaults for vector search"
-  Q4: "Semantic Kernel distance metric defaults for vector search"
+ Q1: "LangChain default chunking strategy"
+ Q2: "Semantic Kernel default chunking strategy"
+ Q3: "LangChain distance metric defaults for vector search"
+ Q4: "Semantic Kernel distance metric defaults for vector search"
 
 → Retrieve top-3 for each sub-query (12 chunks total)
 → Synthesize across all chunks
@@ -159,10 +159,10 @@ Sparse embeddings represent text as a **bag-of-weighted-terms** — similar to T
 > **BM25 vs SPLADE:** BM25 is a probabilistic term-frequency scoring *function* with no trainable parameters. SPLADE is a true learned sparse embedding model that produces vocabulary-dimension vectors via a masked-LM head. They are not the same kind of thing.
 
 ```
-Dense vector (1536 dims):  [0.12, -0.33, 0.04, ..., 0.87]  ← 1536 floats
+Dense vector (1536 dims): [0.12, -0.33, 0.04, ..., 0.87] ← 1536 floats
 
-Sparse vector (50k vocab): {"cat": 2.1, "feline": 1.8,       ← only non-zero terms
-                             "mammal": 0.9, "purring": 0.4}    stored
+Sparse vector (50k vocab): {"cat": 2.1, "feline": 1.8, ← only non-zero terms
+ "mammal": 0.9, "purring": 0.4} stored
 ```
 
 **Key differences:**
@@ -190,13 +190,13 @@ Production RAG systems (Azure AI Search, Pinecone, Weaviate) combine both in a *
 
 ```
 User Query
-    │
-    ├─► Dense (semantic) search → ranked list A
-    └─► Sparse (BM25/lexical) search → ranked list B
-           │
-    Reciprocal Rank Fusion (RRF)
-           │
-    └─► Merged ranked list → Top-K chunks → LLM
+ │
+ ├─► Dense (semantic) search → ranked list A
+ └─► Sparse (BM25/lexical) search → ranked list B
+ │
+ Reciprocal Rank Fusion (RRF)
+ │
+ └─► Merged ranked list → Top-K chunks → LLM
 ```
 
 **RRF formula:** `score(d) = Σ 1 / (k + rank_i(d))` where k=60 is standard.
@@ -222,8 +222,8 @@ You cannot improve what you don't measure. RAGAS (Retrieval-Augmented Generation
 ```
 High Faithfulness, Low Context Recall → Retrieval problem: relevant chunks not retrieved
 Low Faithfulness, High Context Recall → Generation problem: LLM ignoring retrieved context
-Low Context Precision              → Too many irrelevant chunks retrieved (reduce k or add re-ranking)
-Low Answer Relevancy               → LLM is answering a different question than what was asked
+Low Context Precision → Too many irrelevant chunks retrieved (reduce k or add re-ranking)
+Low Answer Relevancy → LLM is answering a different question than what was asked
 ```
 
 ### Implementing a Basic RAGAS Evaluation Loop
@@ -236,8 +236,8 @@ from ragas.metrics import faithfulness, answer_relevancy, context_precision, con
 dataset = load_your_evaluation_dataset()
 
 results = evaluate(
-    dataset=dataset,
-    metrics=[faithfulness, answer_relevancy, context_precision, context_recall]
+ dataset=dataset,
+ metrics=[faithfulness, answer_relevancy, context_precision, context_recall]
 )
 
 print(results.to_pandas())
@@ -253,16 +253,16 @@ A 2023 Stanford study ("Lost in the Middle") found that LLMs perform significant
 
 ```
 Recall (%)
-    ▲
-100 │█                                                   █
- 90 │  █                                               █
- 80 │    █                                           █
- 70 │      ████                               ████
- 60 │          ████                       ████
- 50 │              ████████████████████
-    └──────────────────────────────────────────────────►
-    Position 1   Position 5    Position 10   Position 20 (last)
-    (beginning)                               (end)
+ ▲
+100 │█ █
+ 90 │ █ █
+ 80 │ █ █
+ 70 │ ████ ████
+ 60 │ ████ ████
+ 50 │ ████████████████████
+ └──────────────────────────────────────────────────►
+ Position 1 Position 5 Position 10 Position 20 (last)
+ (beginning) (end)
 ```
 
 **Practical fix:** Place the most relevant retrieved chunk **first and last**. Less critical context goes in the middle. This is called **"Lost-in-Middle-aware reordering."**
@@ -292,9 +292,9 @@ reordered_docs = reorder.transform_documents(docs)
 ```python
 # Request 256-dim instead of full 1536-dim
 response = openai.embeddings.create(
-    input="your text",
-    model="text-embedding-3-small",
-    dimensions=256  # truncate to 256 dims
+ input="your text",
+ model="text-embedding-3-small",
+ dimensions=256 # truncate to 256 dims
 )
 ```
 
@@ -304,28 +304,28 @@ response = openai.embeddings.create(
 
 ```
 Is your corpus > 10M tokens?
-    YES → You need a vector database (not just in-memory or pgvector)
-    NO  → pgvector or in-memory FAISS may suffice
+ YES → You need a vector database (not just in-memory or pgvector)
+ NO → pgvector or in-memory FAISS may suffice
 
 Do queries mix exact keywords with semantic meaning?
-    YES → Hybrid retrieval (dense + sparse / BM25 + vector)
-    NO  → Dense-only may suffice
+ YES → Hybrid retrieval (dense + sparse / BM25 + vector)
+ NO → Dense-only may suffice
 
 Do you need answer faithfulness guarantees?
-    YES → Add a citation/source requirement in the prompt + RAGAS evaluation
-    NO  → Standard RAG prompt
+ YES → Add a citation/source requirement in the prompt + RAGAS evaluation
+ NO → Standard RAG prompt
 
 Is retrieval quality currently poor?
-    YES → Try in order: larger chunks → smaller chunks → semantic chunking → HyDE → query decomposition
-    NO  → Optimize for cost
+ YES → Try in order: larger chunks → smaller chunks → semantic chunking → HyDE → query decomposition
+ NO → Optimize for cost
 
 Are you dealing with multi-hop questions?
-    YES → Add query decomposition + multi-step retrieval
-    NO  → Single-step retrieval is fine
+ YES → Add query decomposition + multi-step retrieval
+ NO → Single-step retrieval is fine
 
 Is your document set updating frequently?
-    YES → Streaming ingestion + HNSW (supports real-time inserts)
-    NO  → Batch ingestion + IVF or DiskANN
+ YES → Streaming ingestion + HNSW (supports real-time inserts)
+ NO → Batch ingestion + IVF or DiskANN
 ```
 
 ---

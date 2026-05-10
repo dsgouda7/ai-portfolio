@@ -14,7 +14,7 @@ register: technical_direct_conversational_within_precision
 formula_motivation: required_with_symbol_table_and_reading_guidance
 pedagogical_pattern: historical_walkthrough_causal_concept_emergence
 failure_first: each_concept_solves_limitation_of_previous
-callout_system: {insight:"💡", warning:"⚠️", optional_depth:"📖", forward_pointer:"➡️"}
+callout_system: {insight:"", warning:"", optional_depth:"📖", forward_pointer:"➡"}
 section_template: [historical_hook, where_you_are, problem_statement_0, core_idea_1, technical_content, key_distinctions_7, bridge_8]
 security_pattern: environment_variables_only_no_hardcoded_keys
 forward_backward_links: every_concept_links_to_where_introduced_and_where_reappears
@@ -32,11 +32,11 @@ The 03a-ai track follows a **historical walkthrough** pattern where each concept
 
 ```
 notes/03a-ai/
-├── ch01-llm-fundamentals/     → RNNs fail → attention → transformer → GPT/BERT fork → scale → alignment
-├── ch02-prompt-engineering/   → Base models won't follow instructions → system prompts → few-shot → structured output
-├── ch03-cot-reasoning/       → Single-pass fails on logic → CoT → self-consistency → tree search → trained reasoning
-├── ch04-rag-and-embeddings/  → LLMs hallucinate private data → retrieval → embeddings → RAG pipeline
-├── ch05-vector-dbs/          → Brute-force fails at scale → curse of dimensionality → IVF → HNSW → DiskANN
+├── ch01-llm-fundamentals/ → RNNs fail → attention → transformer → GPT/BERT fork → scale → alignment
+├── ch02-prompt-engineering/ → Base models won't follow instructions → system prompts → few-shot → structured output
+├── ch03-cot-reasoning/ → Single-pass fails on logic → CoT → self-consistency → tree search → trained reasoning
+├── ch04-rag-and-embeddings/ → LLMs hallucinate private data → retrieval → embeddings → RAG pipeline
+├── ch05-vector-dbs/ → Brute-force fails at scale → curse of dimensionality → IVF → HNSW → DiskANN
 ```
 
 **Why this works**: Each chapter answers "what problem did this concept solve?" before diving into the technical details. Readers understand *why* the field moved in each direction, not just *what* the current state is.
@@ -94,7 +94,7 @@ Every chapter must include these sections in this order:
 
 **Empirical evidence:** [Concrete numbers showing the problem]
 
-> 💡 **Problem statement:** [One-sentence crystallization of the gap this chapter fills]
+> **Problem statement:** [One-sentence crystallization of the gap this chapter fills]
 ```
 
 **Pattern:**
@@ -125,10 +125,10 @@ $$[formula]$$
 ```
 
 **Callout patterns:**
-- `> 💡 **[Topic]:**` — Key insight, one concept per callout
-- `> ⚠️ **[Warning]:**` — Common pitfall or anti-pattern
+- `> **[Topic]:**` — Key insight, one concept per callout
+- `> **Warning — [Warning]:**` — Common pitfall or anti-pattern
 - `> 📖 **Optional: [Topic]**` — Deep-dive for advanced readers
-- `> ➡️` — Forward pointer to where concept reappears
+- `> ➡` — Forward pointer to where concept reappears
 
 **Code examples:**
 - Must be runnable (no pseudocode)
@@ -216,12 +216,10 @@ Supplement docs (e.g., `cot-reasoning-supplement.md`) provide deep-dives for adv
 - Em-dashes for emphasis ("RAG grounds answers — but adds latency")
 
 **Examples:**
-
-✅ **Good:** "Temperature=0 produces deterministic output. Use it for production APIs."
-❌ **Bad:** "In this section, we will explore how temperature affects output variability, which might be useful for certain production scenarios."
-
-✅ **Good:** "The model predicts tokens. Full stop."
-❌ **Bad:** "We can think of the model as performing next-token prediction, which is an important concept to understand."
+**Good:** "Temperature=0 produces deterministic output. Use it for production APIs."
+**Bad:** "In this section, we will explore how temperature affects output variability, which might be useful for certain production scenarios."
+**Good:** "The model predicts tokens. Full stop."
+**Bad:** "We can think of the model as performing next-token prediction, which is an important concept to understand."
 
 ### Technical Precision
 
@@ -292,8 +290,7 @@ Before marking a chapter complete:
 ## Anti-Patterns to Avoid
 
 ### Navigation Overload
-
-❌ **Don't create meta-navigation sections:**
+**Don't create meta-navigation sections:**
 ```markdown
 ## Pipeline Stages
 
@@ -301,35 +298,30 @@ This chapter is organized into four pipeline stages:
 - Stage 1: Baseline → §3, §4
 - Stage 2: Retrieval → §5 Act 1, §6 Act 2
 ```
-
-✅ **Instead:** Embed stage context naturally in section titles and use inline forward pointers.
+**Instead:** Embed stage context naturally in section titles and use inline forward pointers.
 
 ### Checkpoint Blocks
-
-❌ **Don't use "CHECKPOINT" blocks:**
+**Don't use "CHECKPOINT" blocks:**
 ```markdown
 > **PIPELINE CHECKPOINT**
 > **What you just saw:** [Summary]
 > **What it means:** [Interpretation]
 > **What to do next:** [Forward pointer]
 ```
-
-✅ **Instead:** Use single-line callouts:
+**Instead:** Use single-line callouts:
 ```markdown
-> 💡 **Retrieval verdict:** BM25 gives 68% precision; MMR reranking brings it to 89%.
-> ➡️ 89% precision still means 1 in 9 errors — Ch.7 introduces RAGAS to track this.
+> **Retrieval verdict:** BM25 gives 68% precision; MMR reranking brings it to 89%.
+> ➡ 89% precision still means 1 in 9 errors — Ch.7 introduces RAGAS to track this.
 ```
 
 ### Academic Register
-
-❌ **Forbidden phrases:**
+**Forbidden phrases:**
 - "In this section we will demonstrate..."
 - "It can be shown that..."
 - "The reader may note..."
 - "We present a novel approach..."
 - "This is an important concept..."
-
-✅ **Use instead:**
+**Use instead:**
 - Direct statements: "Temperature rescales the distribution."
 - Imperative when appropriate: "Use temperature=0 for deterministic output."
 - Questions for transitions: "Why does this fail at scale?"
@@ -418,18 +410,18 @@ Total: $0.004509, 0.95s
 **ASCII diagrams for data flow:**
 ```
 User Query
-    ↓
+ ↓
 ┌──────────────┐
-│  Embed (Q)   │  → 1536-dim vector
+│ Embed (Q) │ → 1536-dim vector
 └──────────────┘
-    ↓
+ ↓
 ┌──────────────┐
-│ Vector DB    │  → Retrieve top-k docs
-│ (cosine)     │
+│ Vector DB │ → Retrieve top-k docs
+│ (cosine) │
 └──────────────┘
-    ↓
+ ↓
 ┌──────────────┐
-│ LLM Generate │  → Response with citations
+│ LLM Generate │ → Response with citations
 └──────────────┘
 ```
 
@@ -445,7 +437,7 @@ Every AI concept emerges from a specific technical limitation:
 | Ch.2 Prompt Engineering | Base models produce inconsistent outputs | System prompts + few-shot → instruct models | Single-pass fails on logic puzzles |
 | Ch.3 CoT Reasoning | Direct answers fail on multi-step problems | Chain-of-thought → trained reasoning (o1/R1) | LLMs hallucinate private data |
 | Ch.4 RAG & Embeddings | Parametric memory limited and static | Retrieval → ground in external documents | Brute-force retrieval too slow |
-| Ch.5 Vector DBs | Exact search doesn't scale | ANN indexes (HNSW, IVF, DiskANN) | ✅ Foundation complete |
+| Ch.5 Vector DBs | Exact search doesn't scale | ANN indexes (HNSW, IVF, DiskANN) | Foundation complete |
 
 ---
 
@@ -494,18 +486,18 @@ Query trace (Ch.4 RAG):
 Query: "What's the SLA for our authentication service?"
 
 Step 1 — Embed query
-  query_vector = embed("What's the SLA for our authentication service?")
-  shape: (1, 1536) — OpenAI text-embedding-3-small
+ query_vector = embed("What's the SLA for our authentication service?")
+ shape: (1, 1536) — OpenAI text-embedding-3-small
 
 Step 2 — Retrieve top-3 from internal wiki
-  cosine scores:
-    "Authentication Service SLA: 99.9% uptime":  0.876 ✅
-    "Auth Service Configuration Guide":          0.841 ✅
-    "Service Health Dashboard":                   0.803 ✅
+ cosine scores:
+ "Authentication Service SLA: 99.9% uptime": 0.876
+ "Auth Service Configuration Guide": 0.841
+ "Service Health Dashboard": 0.803
 
 Step 3 — Generate response with citations
-  Input: [system_prompt 120 tokens] + [retrieved_context 340 tokens] + [query 9 tokens] = 469 tokens
-  Output: "The authentication service SLA is 99.9% uptime, measured as..." [38 tokens]
+ Input: [system_prompt 120 tokens] + [retrieved_context 340 tokens] + [query 9 tokens] = 469 tokens
+ Output: "The authentication service SLA is 99.9% uptime, measured as..." [38 tokens]
 
 Result: Accurate answer with source attribution
 Hallucination rate: 38% (no grounding) → 4% (with RAG)
@@ -612,7 +604,7 @@ Act 4: Decision framework (when to use which)
 2. Concrete PizzaBot query ("cheapest gluten-free pizza under 600 cal")
 3. Step-by-step trace (embed → retrieve → filter → generate)
 4. Token count and cost calculation
-5. Confirmation: "Error rate before: 15%. After: 4.2%. ✅ Constraint #2 achieved."
+5. Confirmation: "Error rate before: 15%. After: 4.2%. Constraint #2 achieved."
 ```
 
 **Why effective:** Builds trust before moving to abstraction. Readers verify claims themselves.
@@ -625,10 +617,10 @@ Act 4: Decision framework (when to use which)
 
 | Approach | Error Rate | Latency | Cost/conv | Status |
 |----------|------------|---------|-----------|--------|
-| Raw GPT-3.5 | 15% | 2s | $0.04 | ❌ Too many errors |
-| + Few-shot | 10% | 2.5s | $0.06 | ⚠️ Better but slow |
-| + RAG | 4.2% | 5s | $0.12 | ✅ Accurate but slow |
-| + Vector DB | 4.2% | 1.2s | $0.08 | ✅✅ Fast + accurate |
+| Raw GPT-3.5 | 15% | 2s | $0.04 | Too many errors |
+| + Few-shot | 10% | 2.5s | $0.06 | Better but slow |
+| + RAG | 4.2% | 5s | $0.12 | Accurate but slow |
+| + Vector DB | 4.2% | 1.2s | $0.08 | Fast + accurate |
 
 **Then** explain why (semantic search, approximate nearest neighbors, index structures).
 
@@ -640,7 +632,7 @@ Act 4: Decision framework (when to use which)
 
 **Template:**
 ```markdown
-> ➡️ **[Topic] goes deeper in [Chapter].** This chapter covers [what's needed now].
+> ➡ **[Topic] goes deeper in [Chapter].** This chapter covers [what's needed now].
 > For [advanced topic] — [specific capability] — see [link]. For now: [continue].
 ```
 
@@ -707,22 +699,22 @@ Act 4: Decision framework (when to use which)
 Query: "[canonical query from table above]"
 
 Step 1 — Embed query
-  Input: query string
-  Output: 1536-dim vector
-  Tokens: 12
-  Cost: $0.000012
+ Input: query string
+ Output: 1536-dim vector
+ Tokens: 12
+ Cost: $0.000012
 
 Step 2 — Retrieve top-3 from corpus
-  Cosine scores:
-    Doc 1: 0.847 ✅
-    Doc 2: 0.831 ✅
-    Doc 3: 0.812 ✅
+ Cosine scores:
+ Doc 1: 0.847
+ Doc 2: 0.831
+ Doc 3: 0.812
 
 Step 3 — Generate response
-  Input tokens: system (150) + retrieved (400) + query (12) = 562
-  Output tokens: 45
-  Cost: $0.004 (input) + $0.002 (output) = $0.006
-  Latency: 1.2s
+ Input tokens: system (150) + retrieved (400) + query (12) = 562
+ Output tokens: 45
+ Cost: $0.004 (input) + $0.002 (output) = $0.006
+ Latency: 1.2s
 
 Result: "[generated response]"
 Error rate: 4.2% (measured on 1000-query test set)
@@ -741,11 +733,11 @@ Error rate: 4.2% (measured on 1000-query test set)
 **Example for AI track (Attention mechanism):**
 - **Metaphor:** "Attention is a soft dictionary lookup"
 - **Mapping:**
-  - Query → the question you're asking
-  - Keys → labels on dictionary entries
-  - Values → the payloads you want to retrieve
-  - Dot product → similarity score
-  - Softmax → weighted average (not hard selection)
+ - Query → the question you're asking
+ - Keys → labels on dictionary entries
+ - Values → the payloads you want to retrieve
+ - Dot product → similarity score
+ - Softmax → weighted average (not hard selection)
 
 **Anti-pattern:** "Attention is like focusing on important words" with no further elaboration.
 
@@ -823,13 +815,13 @@ Map tone to pedagogical purpose:
 **Purpose:** Let readers triage sections visually before reading text.
 
 **System:**
-- 💡 = Key insight (power users skim these first)
-- ⚠️ = Common trap (practitioners jump here when debugging)
-- ⚡ = PizzaBot constraint advancement (tracks quest progress)
+- = Key insight (power users skim these first)
+- = Common trap (practitioners jump here when debugging)
+- = PizzaBot constraint advancement (tracks quest progress)
 - 📖 = Optional depth (safe to skip)
-- ➡️ = Forward pointer (where this reappears)
+- ➡ = Forward pointer (where this reappears)
 
-**Rule:** No other emoji as inline callouts. (✅❌🎯 are structural markers for Challenge/Progress sections only.)
+**Rule:** No other emoji as inline callouts. ( are structural markers for Challenge/Progress sections only.)
 
 ---
 
@@ -843,12 +835,12 @@ Map tone to pedagogical purpose:
 
 | Constraint | Status | Evidence |
 |------------|--------|----------|
-| #1 BUSINESS VALUE | ⚠️ **IN PROGRESS** | 18% conversion (target >25%) |
-| #2 ACCURACY | ✅ **ACHIEVED** | 4.2% error < 5% target |
-| #3 LATENCY | ❌ **BLOCKED** | 5s > 3s target |
-| #4 COST | ⚠️ **PARTIAL** | $0.12/conv > $0.08 target |
-| #5 SAFETY | ❌ **BLOCKED** | No guardrails yet |
-| #6 RELIABILITY | ❌ **BLOCKED** | No graceful degradation |
+| #1 BUSINESS VALUE | **IN PROGRESS** | 18% conversion (target >25%) |
+| #2 ACCURACY | **ACHIEVED** | 4.2% error < 5% target |
+| #3 LATENCY | **BLOCKED** | 5s > 3s target |
+| #4 COST | **PARTIAL** | $0.12/conv > $0.08 target |
+| #5 SAFETY | **BLOCKED** | No guardrails yet |
+| #6 RELIABILITY | **BLOCKED** | No graceful degradation |
 
 **Why effective:** Orange/green shifts signal tangible progress. Creates long-term momentum across chapters.
 
@@ -914,8 +906,8 @@ Conversation trace (40 lines)
 
 **System:**
 - `---` horizontal rules between acts
-- `> 💡` insight callouts mark concept payoffs
-- `> ⚠️` warning callouts flag common traps
+- `> ` insight callouts mark concept payoffs
+- `> ` warning callouts flag common traps
 - `####` subsection headers for digestible units
 
 **Frequency:** ~1 visual break per 50-80 lines.
@@ -942,10 +934,10 @@ Conversation trace (40 lines)
 **Rule:** Every chapter updates the 6-constraint progress table.
 
 **Example progression:**
-- Ch.1: All ❌ (foundation only)
-- Ch.2: #2 ⚠️ (error improved but not at target)
-- Ch.4: #2 ✅ (RAG achieves <5% error!)
-- Ch.5: #2 ✅, #3 ⚠️ (accuracy maintained, latency improved)
+- Ch.1: All (foundation only)
+- Ch.2: #2 (error improved but not at target)
+- Ch.4: #2 (RAG achieves <5% error!)
+- Ch.5: #2 , #3 (accuracy maintained, latency improved)
 
 **Why effective:** Gamification. Orange→green shifts feel like quest completion.
 
@@ -955,14 +947,14 @@ Conversation trace (40 lines)
 
 **Pattern:**
 ```python
-# ✅ COMPLETE — runs as-is
+# COMPLETE — runs as-is
 import os
 from openai import OpenAI
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 response = client.chat.completions.create(
-    model="gpt-3.5-turbo",
-    messages=[{"role": "user", "content": "Hello"}]
+ model="gpt-3.5-turbo",
+ messages=[{"role": "user", "content": "Hello"}]
 )
 print(response.choices[0].message.content)
 ```
@@ -972,9 +964,9 @@ vs
 ```python
 # Conceptual structure (not runnable)
 for query in user_queries:
-    embedding = embed(query)
-    docs = retrieve(embedding, k=3)
-    response = generate(docs, query)
+ embedding = embed(query)
+ docs = retrieve(embedding, k=3)
+ response = generate(docs, query)
 ```
 
 **Why effective:** Readers can verify claims themselves. Trust through falsifiability.
@@ -982,29 +974,21 @@ for query in user_queries:
 ---
 
 ### Anti-Patterns (What NOT to Do)
-
-❌ **Listing techniques without demonstrating failure**
+**Listing techniques without demonstrating failure**
 Example: "Here are five retrieval methods: BM25, Dense, Hybrid, Reranking, Late Interaction" (table without motivation)
-
-❌ **Generic chatbot examples**
+**Generic chatbot examples**
 Example: "User: 'What's the weather?' Bot: 'It's sunny!'" (use PizzaBot canonical queries only)
-
-❌ **Vague improvement claims**
+**Vague improvement claims**
 Example: "RAG makes responses better" instead of "RAG reduces error rate from 15% → 4.2%"
-
-❌ **Security anti-patterns in code**
+**Security anti-patterns in code**
 Example: `api_key = "sk-proj-..."` (hardcoded key) instead of `os.getenv("OPENAI_API_KEY")`
-
-❌ **Formulas without business consequences**
+**Formulas without business consequences**
 Example: Showing cosine similarity formula without connecting it to error rate or conversion
-
-❌ **Skipping numerical verification**
+**Skipping numerical verification**
 Example: Explaining embeddings without tracing a real PizzaBot query through the retrieval pipeline
-
-❌ **Improvised emoji**
-Example: Using 🔍🎯✨🚀 as inline callouts (only 💡⚠️⚡📖➡️ allowed)
-
-❌ **Topic-label section headings**
+**Improvised emoji**
+Example: Using ✨ as inline callouts (only 📖➡ allowed)
+**Topic-label section headings**
 Example: "## 3 · RAG" instead of "## 3 · RAG — How Retrieval Eliminates Hallucinations"
 
 ---
@@ -1035,11 +1019,11 @@ The universal callout system applies. Track-specific usage:
 
 | Symbol | Typical use in AI track |
 |--------|------------------------|
-| `💡` | "This is why RAG beats fine-tuning for factual grounding — retrieval is always up-to-date, the weights aren't" |
-| `⚠️` | "Never use the same embedding model for indexing and retrieval at different versions — dimensions may match but similarity space shifts" |
-| `⚡` | Constraint achievement: "Error rate 4.2% → Constraint #2 ACCURACY ✅ ACHIEVED" |
+| `` | "This is why RAG beats fine-tuning for factual grounding — retrieval is always up-to-date, the weights aren't" |
+| `` | "Never use the same embedding model for indexing and retrieval at different versions — dimensions may match but similarity space shifts" |
+| `` | Constraint achievement: "Error rate 4.2% → Constraint #2 ACCURACY ACHIEVED" |
 | `📖` | Full derivation of attention mechanism, BM25 formula, or RAGAS faithfulness calculation |
-| `➡️` | "Temperature and sampling are revisited in Ch.10 when we build model tier routing based on query complexity" |
+| `➡` | "Temperature and sampling are revisited in Ch.10 when we build model tier routing based on query complexity" |
 
 ---
 
@@ -1049,7 +1033,7 @@ The universal callout system applies. Track-specific usage:
 ```python
 from openai import OpenAI
 import numpy as np
-client = OpenAI()  # uses OPENAI_API_KEY env var — never hardcode keys
+client = OpenAI() # uses OPENAI_API_KEY env var — never hardcode keys
 ```
 
 **Variable naming conventions:**
@@ -1070,14 +1054,14 @@ client = OpenAI()  # uses OPENAI_API_KEY env var — never hardcode keys
 **Security:** API keys via environment variables only. Never hardcode. Show:
 ```python
 import os
-api_key = os.getenv("OPENAI_API_KEY")  # set in .env — never commit to git
+api_key = os.getenv("OPENAI_API_KEY") # set in .env — never commit to git
 ```
 
 **Educational vs Production labels:**
 ```python
 # Educational: cosine similarity from scratch
 def cosine_sim(a, b):
-    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+ return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
 # Production: use a vector DB (Chroma, Pinecone, Weaviate)
 # See Ch.5 for full vector DB setup
@@ -1141,7 +1125,7 @@ Before marking a chapter complete, verify each item:
 - [ ] Forward/backward links: concepts link to where introduced and where they reappear
 
 ### Pedagogical Elements
-- [ ] Callout boxes: only `💡 ⚠️ ⚡ 📖 ➡️` — no improvised emoji
+- [ ] Callout boxes: only ` 📖 ➡` — no improvised emoji
 - [ ] Numerical anchors: exact numbers (4.2% not "around 5%"), used consistently
 - [ ] Comparative tables: show before/after behavior before explaining mechanism
 - [ ] "The Match Is Exact" pattern: traced examples prove techniques work
@@ -1149,9 +1133,9 @@ Before marking a chapter complete, verify each item:
 ### Progress Check (§N)
 - [ ] Progress Check section exists at end
 - [ ] Constraint status table with current measurements
-- [ ] ✅/❌ capabilities: specific things now possible vs. still blocked
+- [ ] / capabilities: specific things now possible vs. still blocked
 - [ ] Business metrics updated (conversion, error rate, cost/conv, latency, AOV)
-- [ ] Evidence for any constraint marked ✅ (test set results, A/B tests, measurements)
+- [ ] Evidence for any constraint marked (test set results, A/B tests, measurements)
 - [ ] Next chapter motivation: explicitly preview what's blocked and what unlocks next
 
 ### Visuals & Diagrams

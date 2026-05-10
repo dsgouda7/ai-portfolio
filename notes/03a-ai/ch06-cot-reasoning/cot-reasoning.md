@@ -34,7 +34,7 @@ In a single-pass architecture, there is no mechanism for the model to *catch its
 
 The failure was not a lack of knowledge — GPT-3 had seen arithmetic during training. The failure was *architectural*: no intermediate reasoning steps meant no opportunity to decompose the problem into manageable sub-tasks.
 
-> 💡 **Key insight:** Single-pass generation treats every problem as a pattern-completion task. Multi-step reasoning requires *visible intermediate context* that the model can condition on for subsequent steps — something the standard prompt-answer format did not provide.
+> **Key insight:** Single-pass generation treats every problem as a pattern-completion task. Multi-step reasoning requires *visible intermediate context* that the model can condition on for subsequent steps — something the standard prompt-answer format did not provide.
 
 ***
 
@@ -51,7 +51,7 @@ The failure was not a lack of knowledge — GPT-3 had seen arithmetic during tra
 ```
 Q: Roger has 5 apples. He gives 3 to Nancy and buys 7 more. How many does he have?
 A: Roger starts with 5 apples. He gives away 3, leaving him with 5 - 3 = 2.
-   He then buys 7 more, so 2 + 7 = 9. The answer is 9.
+ He then buys 7 more, so 2 + 7 = 9. The answer is 9.
 
 Q: [actual user question]
 A: [model continues in the same format]
@@ -87,7 +87,7 @@ A: [model continues in the same format]
 
 **Tradeoff:** Zero-shot CoT adds ~5 tokens to the prompt. Few-shot CoT adds 200–400 tokens (depending on example complexity). For cost-sensitive applications at scale, zero-shot CoT is nearly free; few-shot CoT provides better format control but at measurable cost.
 
-> 💡 **Key insight:** CoT works because it transforms an implicit reasoning problem into an explicit sequential generation task. The model generates each step *as text*, and that text becomes part of the context window for the next step — turning compressed multi-step inference into tractable one-step-at-a-time prediction.
+> **Key insight:** CoT works because it transforms an implicit reasoning problem into an explicit sequential generation task. The model generates each step *as text*, and that text becomes part of the context window for the next step — turning compressed multi-step inference into tractable one-step-at-a-time prediction.
 
 ***
 
@@ -108,7 +108,7 @@ You tally the final answers: three say "9", one says "7", one says "11". You tru
 
 Self-consistency is exactly this: sample $K$ independent reasoning chains (at temperature $T > 0$ for diversity), then **count votes** — whichever final answer appears most often wins.
 
-🤔 **Example Reasoning:**
+ **Example Reasoning:**
 
 **Problem:** *Roger has 5 apples. He gives 3 to Nancy and buys 7 more. How many does he have?*
 
@@ -158,7 +158,7 @@ Self-consistency is exactly this: sample $K$ independent reasoning chains (at te
 - **Categorical answers:** Tasks where the final answer is one of a discrete set (multiple choice, yes/no, classification)
 - **Not for open-ended generation:** Majority voting does not apply to creative writing or long-form answers with no canonical correct output
 
-> 💡 **Key insight:** Self-consistency exploits the fact that errors are *independent* across sampled chains. If the correct reasoning path has probability $p = 0.6$ and the wrong path has $p = 0.4$, the probability that the majority of $K = 5$ chains reach the correct answer is $\approx 0.68$ — higher than any single chain.
+> **Key insight:** Self-consistency exploits the fact that errors are *independent* across sampled chains. If the correct reasoning path has probability $p = 0.6$ and the wrong path has $p = 0.4$, the probability that the majority of $K = 5$ chains reach the correct answer is $\approx 0.68$ — higher than any single chain.
 
 ***
 
@@ -177,7 +177,7 @@ Chain-of-thought produces a *linear* reasoning trace: Step 1 → Step 2 → Step
 
 They mentally explore a **tree of possibilities**, evaluate which branches look promising, and prune branches that lead nowhere. ToT does this for reasoning.
 
-🤔 **Example Reasoning:**
+ **Example Reasoning:**
 
 **Problem:** *Game of 24 — Use (4, 5, 6, 8) with +, −, ×, ÷ to make 24.*
 
@@ -189,16 +189,16 @@ They mentally explore a **tree of possibilities**, evaluate which branches look 
 **Branch 1:** Try multiplying large numbers first
 - Step 1a: 8 × 5 = 40 → *Evaluate: "40 is far from 24, and I only have 4 and 6 left. Unlikely."* → **Prune this branch**
 - Step 1b: 8 × 4 = 32 → *Evaluate: "32 - 6 = 26, close to 24. Keep exploring."*
-  - Step 2: 32 - 6 = 26, then 26 - 5 = 21 → **Dead end (not 24)**
+ - Step 2: 32 - 6 = 26, then 26 - 5 = 21 → **Dead end (not 24)**
 
 **Branch 2:** Try division to create fractions
 - Step 1: 6 ÷ 5 = 1.2 → *Evaluate: "Decimals make this messy. Low priority."* → **Deprioritize**
 
 **Branch 3:** Try creating intermediate targets
 - Step 1: 8 - 4 = 4 → *Evaluate: "Now I have (4, 5, 6) and made a 4. Interesting..."*
-  - Step 2: 6 ÷ 4 = 1.5 → *"Hmm, 1.5 seems off..."* → **Backtrack**
-  - Step 2 (retry): 5 - 4 = 1 → *"Now I have 6 and 1 left..."*
-    - Step 3: 6 × (5 - 4) = 6 × 1 = 6 → *"Wait, let me restructure..."*
+ - Step 2: 6 ÷ 4 = 1.5 → *"Hmm, 1.5 seems off..."* → **Backtrack**
+ - Step 2 (retry): 5 - 4 = 1 → *"Now I have 6 and 1 left..."*
+ - Step 3: 6 × (5 - 4) = 6 × 1 = 6 → *"Wait, let me restructure..."*
 
 **Branch 4:** Try (8 - 4) × 6 structure
 - Step 1: 8 - 4 = 4
@@ -273,7 +273,7 @@ They mentally explore a **tree of possibilities**, evaluate which branches look 
 | **Graph of Thoughts** | DAG with merge/split | Complex multi-stage workflows | $O(n \cdot m)$ (50–200×) |
 | **Reflexion** | Retry with self-reflection | Tasks with verifiable correctness | 2–5× (depends on retry count) |
 
-> 💡 **Key insight:** Linear CoT handles 80–85% of reasoning tasks. Advanced structures (ToT, GoT, Reflexion) add significant cost and complexity — only justified when the problem explicitly requires exploration, backtracking, or iterative refinement.
+> **Key insight:** Linear CoT handles 80–85% of reasoning tasks. Advanced structures (ToT, GoT, Reflexion) add significant cost and complexity — only justified when the problem explicitly requires exploration, backtracking, or iterative refinement.
 
 ***
 
@@ -290,7 +290,7 @@ CoT prompting unlocked multi-step reasoning, but researchers quickly realized a 
 
 An **Outcome Reward Model (ORM)** is that teacher: it assigns **+1 reward if the final answer is correct**, **0 if wrong**. It never looks at the intermediate reasoning steps.
 
-🤔 **Example Reasoning (ORM Training):**
+ **Example Reasoning (ORM Training):**
 
 **Problem:** *A train travels 60 miles in 2 hours. How fast is it going?*
 
@@ -344,7 +344,7 @@ If the student had written:
 
 A **Process Reward Model (PRM)** is that detail-oriented teacher: it assigns **a reward to each reasoning step**, then sums them up. The model learns: **"To get high reward, every step must be correct — not just the final answer."**
 
-🤔 **Example Reasoning (PRM Training):**
+ **Example Reasoning (PRM Training):**
 
 **Problem:** *A train travels 60 miles in 2 hours. How fast is it going?*
 
@@ -413,7 +413,7 @@ A **Process Reward Model (PRM)** is that detail-oriented teacher: it assigns **a
 - **ORM training:** Model sees 75,000 final answers → learns patterns like "geometry problems often have answers involving π" or "probability answers are between 0 and 1"
 - **PRM training:** Model sees 750,000+ intermediate steps (10 steps per problem × 75,000 problems) → learns *procedures* like "area of a circle = πr²" and "chain rule for derivatives applies when you have nested functions"
 
-🤔 **Concrete example of the difference:**
+ **Concrete example of the difference:**
 
 **Problem:** *"A circle has radius 5. What is its area?"*
 
@@ -460,7 +460,7 @@ Both get the right answer. But when the problem changes:
 | **Reward hacking risk** | High — correct answer via wrong reasoning | Low — every step must be correct |
 | **Use case** | Stable, well-defined domains | High-stakes, multi-step reasoning |
 
-> 💡 **Key insight:** PRM forces the model to learn *how to reason*, not just *what answers look correct*. The cost is 10× higher annotation effort — justified when step-level auditability matters (medical, legal, financial domains).
+> **Key insight:** PRM forces the model to learn *how to reason*, not just *what answers look correct*. The cost is 10× higher annotation effort — justified when step-level auditability matters (medical, legal, financial domains).
 
 ***
 
@@ -553,7 +553,7 @@ By mid-2024, a new paradigm emerged: instead of *prompting* models to generate r
 | **DeepSeek-R1** | Jan 2025 | Hidden (internal tokens) | Pure RL (no SFT) | Open-weights reasoning model |
 | **o3** | Dec 2024 | Hidden (internal tokens) | RLVR + high-compute mode | State-of-the-art on AIME, Codeforces |
 
-> 💡 **Key insight:** Trained reasoning (o1/R1) is not a replacement for CoT prompting — it's a complementary approach. CoT prompting gives users *visible, auditable reasoning*. Trained reasoning gives *adaptive test-time compute* and eliminates prompt overhead. Both have valid use cases.
+> **Key insight:** Trained reasoning (o1/R1) is not a replacement for CoT prompting — it's a complementary approach. CoT prompting gives users *visible, auditable reasoning*. Trained reasoning gives *adaptive test-time compute* and eliminates prompt overhead. Both have valid use cases.
 
 ***
 
@@ -657,7 +657,7 @@ Answer: "Authentication service violates SLA"
 | **Overthinking** | Excessive reasoning tokens on simple queries | RL training does not distinguish simple from hard | Adaptive compute control, prompt framing |
 | **Hallucinated tool results** | Model generates plausible tool output that was never returned | Tool results are text; model cannot verify authenticity | Structured output, verification layer |
 
-> 💡 **Key insight:** CoT and trained reasoning are not silver bullets. They introduce new failure modes (unfaithful reasoning, sycophancy, overthinking, hallucination) that require explicit mitigation strategies. For production deployment, assume *all* reasoning traces are potentially unfaithful until verified.
+> **Key insight:** CoT and trained reasoning are not silver bullets. They introduce new failure modes (unfaithful reasoning, sycophancy, overthinking, hallucination) that require explicit mitigation strategies. For production deployment, assume *all* reasoning traces are potentially unfaithful until verified.
 
 ***
 

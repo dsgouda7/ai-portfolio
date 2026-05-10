@@ -8,8 +8,8 @@
 
 ## Executive Summary
 
-**Status**: ✅ **Chapters are internally consistent and well-executed**
-**Issue**: ❌ **Authoring guide describes different framework (PizzaBot) than implemented (Historical Walkthrough)**
+**Status**: **Chapters are internally consistent and well-executed**
+**Issue**: **Authoring guide describes different framework (PizzaBot) than implemented (Historical Walkthrough)**
 
 The 5 chapters follow a coherent "historical walkthrough" pattern where each concept emerges to solve limitations of the previous one. This differs from the authoring guide's prescribed "PizzaBot/constraint-driven" framework, but represents a deliberate architectural choice made during the track's redesign.
 
@@ -17,7 +17,7 @@ The 5 chapters follow a coherent "historical walkthrough" pattern where each con
 
 ## What Adheres Excellently
 
-### ✅ Historical Hooks (Universal Requirement)
+### Historical Hooks (Universal Requirement)
 
 **All 5 chapters** open with engaging narrative hooks featuring:
 - Named researchers with dates (Vaswani et al. 2017, Jason Wei 2021, Tomas Mikolov 2013)
@@ -30,11 +30,11 @@ The 5 chapters follow a coherent "historical walkthrough" pattern where each con
 - **Ch03**: "In the autumn of 2021, a researcher at Google Brain named **Jason Wei** was staring at a failure..."
 - **Ch04**: "In the spring of 2013, a young Google researcher named **Tomas Mikolov** was running out of patience..."
 
-**Assessment**: 🌟 **Best-in-class**. These hooks are memorable, accurate, and set perfect tone.
+**Assessment**: **Best-in-class**. These hooks are memorable, accurate, and set perfect tone.
 
 ---
 
-### ✅ Formula Explanations (Universal Requirement)
+### Formula Explanations (Universal Requirement)
 
 **All technical formulas** include "Reading the formula" explanations with symbol tables:
 
@@ -47,11 +47,11 @@ The 5 chapters follow a coherent "historical walkthrough" pattern where each con
 *Reading the formula:* dividing each logit by $T$ before softmax...
 ```
 
-**Assessment**: 🌟 **Excellent**. Removes formula intimidation, interview-ready.
+**Assessment**: **Excellent**. Removes formula intimidation, interview-ready.
 
 ---
 
-### ✅ Interview Tables (Universal Requirement)
+### Interview Tables (Universal Requirement)
 
 **All 5 chapters** include §7 "Key Distinctions" sections with interview-focused tables:
 - "Must know / Likely asked / Trap to avoid" format
@@ -61,22 +61,22 @@ The 5 chapters follow a coherent "historical walkthrough" pattern where each con
 **Example** (Ch03):
 > "Saying CoT works because the model 'thinks harder' — it works because each step is usable context, not because there is a separate reasoning system"
 
-**Assessment**: 🌟 **Career-defining content**. Pre-loads interview answers.
+**Assessment**: **Career-defining content**. Pre-loads interview answers.
 
 ---
 
-### ✅ Bridge Sections (Just Added)
+### Bridge Sections (Just Added)
 
 **All 5 chapters** now have §8 "Bridge" sections connecting to next chapter:
 - Current unlock → remaining limitation → next chapter solves it
 - Specific metric or capability gaps stated
 - Natural narrative flow
 
-**Assessment**: ✅ **Complete**. Just implemented per priority fix #1.
+**Assessment**: **Complete**. Just implemented per priority fix #1.
 
 ---
 
-### ✅ Pedagogical Flow (Causal Chain)
+### Pedagogical Flow (Causal Chain)
 
 **Historical walkthrough pattern** creates strong causal chain:
 1. **Ch01**: RNNs fail → attention → transformer → GPT/BERT fork → scale → alignment
@@ -85,11 +85,11 @@ The 5 chapters follow a coherent "historical walkthrough" pattern where each con
 4. **Ch04**: LLMs hallucinate → retrieval → embeddings → contrastive learning → RAG pipeline
 5. **Ch05**: Brute-force fails → curse of dimensionality → IVF → HNSW → DiskANN
 
-**Assessment**: ✅ **Strong**. Each chapter answers "what limitation did this solve?"
+**Assessment**: **Strong**. Each chapter answers "what limitation did this solve?"
 
 ---
 
-### ✅ Direct, Pragmatic Tone (Universal Requirement)
+### Direct, Pragmatic Tone (Universal Requirement)
 
 **Voice consistency across all chapters:**
 - Second-person practitioner tone ("You now understand...")
@@ -97,11 +97,11 @@ The 5 chapters follow a coherent "historical walkthrough" pattern where each con
 - Conversational within precision ("That's it.", "Full stop.")
 - Business-grounded when relevant
 
-**Assessment**: ✅ **Consistent with authoring guide tone requirements**.
+**Assessment**: **Consistent with authoring guide tone requirements**.
 
 ---
 
-### ✅ "Where You Are" Context (Universal Requirement)
+### "Where You Are" Context (Universal Requirement)
 
 **All chapters** include curriculum context in opening blockquote:
 - What previous chapters provided
@@ -111,19 +111,19 @@ The 5 chapters follow a coherent "historical walkthrough" pattern where each con
 **Example** (Ch03):
 > "Ch.1 showed token-by-token generation → but single-step fails on multi-constraint logic. Ch.2 gave behavioral control → but deeper question remains..."
 
-**Assessment**: ✅ **Clear navigation**. Reader always knows position in arc.
+**Assessment**: **Clear navigation**. Reader always knows position in arc.
 
 ---
 
 ## What Differs from Authoring Guide
 
-### ❌ No "§0 · The Challenge — Where We Are" (PizzaBot Framework)
+### No "§0 · The Challenge — Where We Are" (PizzaBot Framework)
 
 **What guide prescribes:**
 ```markdown
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Launch **Mamma Rosa's PizzaBot** — satisfying 6 constraints:
+> **The mission**: Launch **Mamma Rosa's PizzaBot** — satisfying 6 constraints:
 > 1. BUSINESS VALUE: >25% conversion...
 > [Constraint tracking table]
 ```
@@ -139,21 +139,21 @@ The 5 chapters follow a coherent "historical walkthrough" pattern where each con
 
 ---
 
-### ❌ No Constraint Tracking Tables
+### No Constraint Tracking Tables
 
 **Guide prescribes:**
 ```markdown
 | Constraint | Status | Current State |
 |------------|--------|---------------|
-| #1 BUSINESS VALUE | ❌ | 8% conversion (target >25%) |
-| #2 ACCURACY | ⚡ PARTIAL | 15% error (target <5%) |
+| #1 BUSINESS VALUE | | 8% conversion (target >25%) |
+| #2 ACCURACY | PARTIAL | 15% error (target <5%) |
 ```
 
 **What chapters have**: No constraint tables anywhere.
 
 ---
 
-### ❌ No "Progress Check" Sections
+### No "Progress Check" Sections
 
 **Guide prescribes**: §N "Progress Check — What We Can Solve Now" with:
 - Constraint status updates
@@ -164,7 +164,7 @@ The 5 chapters follow a coherent "historical walkthrough" pattern where each con
 
 ---
 
-### ❌ No PizzaBot Running Example
+### No PizzaBot Running Example
 
 **Guide prescribes**: Every chapter uses Mamma Rosa's PizzaBot scenario throughout.
 
@@ -188,15 +188,15 @@ Per conversation history, user **explicitly pivoted** from scenario-driven to hi
 ### Framework A: Historical Walkthrough (Current Implementation)
 
 **Strengths:**
-- ✅ Strong causal flow (each concept solves limitation of previous)
-- ✅ Clean technical focus without business distraction
-- ✅ Works well for foundational "prerequisite vocabulary" content
-- ✅ Memorable opening narratives
+- Strong causal flow (each concept solves limitation of previous)
+- Clean technical focus without business distraction
+- Works well for foundational "prerequisite vocabulary" content
+- Memorable opening narratives
 
 **Weaknesses:**
-- ❌ No business context for why concepts matter
-- ❌ No measurable progress tracking
-- ❌ Harder to connect to real-world applications
+- No business context for why concepts matter
+- No measurable progress tracking
+- Harder to connect to real-world applications
 
 **Best for**: Theoretical foundations, interview prep, academic understanding
 
@@ -205,15 +205,15 @@ Per conversation history, user **explicitly pivoted** from scenario-driven to hi
 ### Framework B: Grand Challenge / PizzaBot (Authoring Guide)
 
 **Strengths:**
-- ✅ Clear business motivation at every step
-- ✅ Measurable progress (conversion, cost, latency)
-- ✅ Concrete scenarios readers can relate to
-- ✅ Strong ROI narrative for stakeholders
+- Clear business motivation at every step
+- Measurable progress (conversion, cost, latency)
+- Concrete scenarios readers can relate to
+- Strong ROI narrative for stakeholders
 
 **Weaknesses:**
-- ❌ Can feel contrived when forcing business metrics onto foundational concepts
-- ❌ "Structural lie" problem (nothing works until Ch4 RAG, poor emotional arc)
-- ❌ Business metrics may overshadow technical understanding
+- Can feel contrived when forcing business metrics onto foundational concepts
+- "Structural lie" problem (nothing works until Ch4 RAG, poor emotional arc)
+- Business metrics may overshadow technical understanding
 
 **Best for**: Applied tracks (Agentic AI, production systems), stakeholder buy-in
 
@@ -221,7 +221,7 @@ Per conversation history, user **explicitly pivoted** from scenario-driven to hi
 
 ## Recommendations
 
-### Option 1: Update Authoring Guide to Match Current Implementation ✅ **RECOMMENDED**
+### Option 1: Update Authoring Guide to Match Current Implementation **RECOMMENDED**
 
 **Action**: Revise `authoring-guide.md` to document the Historical Walkthrough pattern as the standard for 03a-ai track.
 
@@ -239,7 +239,7 @@ Per conversation history, user **explicitly pivoted** from scenario-driven to hi
 
 ---
 
-### Option 2: Revert Chapters to PizzaBot Framework ❌ **NOT RECOMMENDED**
+### Option 2: Revert Chapters to PizzaBot Framework **NOT RECOMMENDED**
 
 **Action**: Add §0 Challenge, constraint tables, progress checks, PizzaBot examples throughout.
 
@@ -253,7 +253,7 @@ Per conversation history, user **explicitly pivoted** from scenario-driven to hi
 
 ---
 
-### Option 3: Hybrid Approach ⚡ **MIDDLE GROUND**
+### Option 3: Hybrid Approach **MIDDLE GROUND**
 
 **Action**: Keep historical walkthrough but add lightweight business context:
 - Add 1-2 sentence "Why this matters" callouts per major concept
@@ -261,7 +261,7 @@ Per conversation history, user **explicitly pivoted** from scenario-driven to hi
 - Keep constraint tracking out of main narrative
 
 **Example addition** (Ch04):
-> 💡 **Production impact:** RAG reduces hallucination 38% → 4%. For a customer support bot handling 10k queries/day, that's 3,400 fewer wrong answers — difference between customer trust and project shutdown.
+> **Production impact:** RAG reduces hallucination 38% → 4%. For a customer support bot handling 10k queries/day, that's 3,400 fewer wrong answers — difference between customer trust and project shutdown.
 
 **Effort**: 30-60 minutes per chapter, preserves current structure.
 
@@ -303,14 +303,14 @@ client = OpenAI()
 
 prompt = "Explain transformers in one sentence."
 for temp in [0.0, 1.0]:
-    print(f"\nTemperature = {temp}")
-    for i in range(3):
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=temp
-        )
-        print(f"{i+1}. {response.choices[0].message.content}")
+ print(f"\nTemperature = {temp}")
+ for i in range(3):
+ response = client.chat.completions.create(
+ model="gpt-4o-mini",
+ messages=[{"role": "user", "content": prompt}],
+ temperature=temp
+ )
+ print(f"{i+1}. {response.choices[0].message.content}")
 ```
 
 **Effort**: 20 minutes per chapter = 100 minutes total
@@ -319,7 +319,7 @@ for temp in [0.0, 1.0]:
 
 ## Final Verdict
 
-### Current Track Quality: 🌟 **Excellent (85/100)**
+### Current Track Quality: **Excellent (85/100)**
 
 **Strengths:**
 - Historical hooks are best-in-class

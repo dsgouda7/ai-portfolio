@@ -39,7 +39,7 @@ Each dimension of a vector requires **4 bytes of storage** using float32. This e
 
 **The bottom line:** An index is a data structure that improves the speed of data retrieval operations. Using an index in vector search reduces the number of vectors that need to be compared to the query vector, makes the query more efficient, and greatly reduces memory requirements compared to processing searches via raw embeddings. This motivates ANN indexing.
 
-> 💡 **The scaling wall:** At 200 documents, brute-force retrieval costs ~5ms and is unnoticeable. At 50,000 documents it costs ~1,200ms — triggering query timeouts and making real-time RAG unusable. At 100M documents, brute-force becomes physically impossible. The O(N) cost curve is the problem every ANN algorithm exists to solve.
+> **The scaling wall:** At 200 documents, brute-force retrieval costs ~5ms and is unnoticeable. At 50,000 documents it costs ~1,200ms — triggering query timeouts and making real-time RAG unusable. At 100M documents, brute-force becomes physically impossible. The O(N) cost curve is the problem every ANN algorithm exists to solve.
 
 ***
 
@@ -47,7 +47,7 @@ Each dimension of a vector requires **4 bytes of storage** using float32. This e
 
 Before diving into indexing methods, it's essential to understand the distance metrics that underpin all vector search. These determine how "closeness" is measured. The wrong metric choice doesn't produce a latency error — it silently returns wrong documents.
 
-### 🗺️ **Navigation Analogy: Three Ways to Measure "Close"**
+### 🗺 **Navigation Analogy: Three Ways to Measure "Close"**
 
 Think of finding nearby locations on a map. Three different travelers might measure "closeness" differently:
 
@@ -79,7 +79,7 @@ SQL Server 2025 supports all three: cosine (ideal for text and semantic similari
 
 **Critical insight:** When vectors are **normalized** (scaled to unit length), cosine similarity and dot product become equivalent — the angle is all that matters. Many embedding models output normalized vectors by default, making the metric choice less critical in practice — but knowing *why* matters in interviews.
 
-> 💡 **Metric choice → recall:** Switching from cosine to dot product on un-normalised embeddings can silently degrade recall by 5–15% on short queries — degrading retrieval quality without any visible error signal. Cosine is the safe default for text embeddings until you've verified your model normalises outputs.
+> **Metric choice → recall:** Switching from cosine to dot product on un-normalised embeddings can silently degrade recall by 5–15% on short queries — degrading retrieval quality without any visible error signal. Cosine is the safe default for text embeddings until you've verified your model normalises outputs.
 
 ***
 
@@ -97,7 +97,7 @@ SQL Server 2025 supports all three: cosine (ideal for text and semantic similari
 
 **The historical response:** LSH (Locality-Sensitive Hashing) emerged in 1998 as the first theoretical breakthrough, but required maintaining dozens of hash tables to achieve acceptable recall — making it a memory hog. The field needed algorithms that could navigate high-dimensional space *efficiently* without relying on spatial partitioning. This led to two dominant approaches: **IVF** (cluster-based partitioning) and **HNSW** (graph-based navigation).
 
-> 💡 **Curse of dimensionality:** Traditional spatial indexes (kd-trees, ball trees) perform nearly as badly as brute-force in high dimensions. In 768-dim space, almost all points are equidistant, and partition boundaries convey no useful signal. This is why vector search required entirely new algorithms — not just tuning traditional indexes.
+> **Curse of dimensionality:** Traditional spatial indexes (kd-trees, ball trees) perform nearly as badly as brute-force in high dimensions. In 768-dim space, almost all points are equidistant, and partition boundaries convey no useful signal. This is why vector search required entirely new algorithms — not just tuning traditional indexes.
 
 ***
 
@@ -158,7 +158,7 @@ The IVFFlat method uses an inverted file index to partition the dataset into mul
 | **Best for** | Large static datasets, batched search, RAG systems |
 | **Limitations** | Quality depends heavily on clustering; not ideal for unstructured distributions; updates require cluster rebuild |
 
-> 💡 **IVF → latency improvement:** At 50K vectors with nlist=1,024 and nprobe=8, IVF reduces the effective search from 50,000 comparisons to ~390 (50K/128). That drops retrieval from 1.5s to ~12ms. But adding new vectors triggers a cluster rebuild. For frequently-updated document pipelines, this rebuild cost makes IVF operationally expensive compared to HNSW's O(M log N) per-insert.
+> **IVF → latency improvement:** At 50K vectors with nlist=1,024 and nprobe=8, IVF reduces the effective search from 50,000 comparisons to ~390 (50K/128). That drops retrieval from 1.5s to ~12ms. But adding new vectors triggers a cluster rebuild. For frequently-updated document pipelines, this rebuild cost makes IVF operationally expensive compared to HNSW's O(M log N) per-insert.
 
 **IVF Clustering: Partitioning Vector Space with nprobe Control**
 
@@ -166,41 +166,41 @@ IVF partitions the vector space into clusters, then searches only the nearest `n
 
 ```mermaid
 flowchart TD
-    subgraph "Index Building (Offline)"
-        A["📊 50K Vectors"] --> B["K-Means Clustering<br/>nlist = 1,024 clusters"]
-        B --> C1["Cluster 1<br/>★ centroid<br/>[48 vectors]"]
-        B --> C2["Cluster 2<br/>★ centroid<br/>[51 vectors]"]
-        B --> C3["Cluster 3<br/>★ centroid<br/>[49 vectors]"]
-        B --> C4["...<br/>1,021 more clusters"]
-    end
+ subgraph "Index Building (Offline)"
+ A[" 50K Vectors"] --> B["K-Means Clustering<br/>nlist = 1,024 clusters"]
+ B --> C1["Cluster 1<br/>★ centroid<br/>[48 vectors]"]
+ B --> C2["Cluster 2<br/>★ centroid<br/>[51 vectors]"]
+ B --> C3["Cluster 3<br/>★ centroid<br/>[49 vectors]"]
+ B --> C4["...<br/>1,021 more clusters"]
+ end
 
-    subgraph "Query Time (Runtime)"
-        D["❓ Query Vector"] --> E["Compare to All Centroids<br/>(1,024 comparisons)"]
-        E --> F["Select nprobe=8<br/>Nearest Centroids"]
+ subgraph "Query Time (Runtime)"
+ D["❓ Query Vector"] --> E["Compare to All Centroids<br/>(1,024 comparisons)"]
+ E --> F["Select nprobe=8<br/>Nearest Centroids"]
 
-        F --> G1["Search Cluster 47<br/>(48 vectors)"]
-        F --> G2["Search Cluster 103<br/>(51 vectors)"]
-        F --> G3["Search Cluster 891<br/>(49 vectors)"]
-        F --> G4["... 5 more clusters<br/>(~390 total vectors)"]
+ F --> G1["Search Cluster 47<br/>(48 vectors)"]
+ F --> G2["Search Cluster 103<br/>(51 vectors)"]
+ F --> G3["Search Cluster 891<br/>(49 vectors)"]
+ F --> G4["... 5 more clusters<br/>(~390 total vectors)"]
 
-        G1 --> H["Collect Top-k Results<br/>from searched clusters"]
-        G2 --> H
-        G3 --> H
-        G4 --> H
+ G1 --> H["Collect Top-k Results<br/>from searched clusters"]
+ G2 --> H
+ G3 --> H
+ G4 --> H
 
-        H --> I["✅ Return Top-5<br/>Most Similar Vectors"]
-    end
+ H --> I[" Return Top-5<br/>Most Similar Vectors"]
+ end
 
-    J["Speedup Calculation:<br/>50,000 → ~390 comparisons<br/>128× reduction<br/>1.5s → 12ms latency"] -.-> I
+ J["Speedup Calculation:<br/>50,000 → ~390 comparisons<br/>128× reduction<br/>1.5s → 12ms latency"] -.-> I
 
-    style A fill:#e1f5ff
-    style C1 fill:#e1ffe1
-    style C2 fill:#e1ffe1
-    style C3 fill:#e1ffe1
-    style D fill:#ffe1e1
-    style F fill:#fff4e1
-    style I fill:#d4edda
-    style J fill:#f0f0f0
+ style A fill:#e1f5ff
+ style C1 fill:#e1ffe1
+ style C2 fill:#e1ffe1
+ style C3 fill:#e1ffe1
+ style D fill:#ffe1e1
+ style F fill:#fff4e1
+ style I fill:#d4edda
+ style J fill:#f0f0f0
 ```
 
 **Key parameters:**
@@ -219,10 +219,10 @@ flowchart TD
 - **Cold start:** Needs enough vectors to make clustering meaningful (typically >1K vectors)
 
 **When to use IVF:**
-- ✅ Large static datasets (100K+ vectors, infrequent updates)
-- ✅ Batch search workloads (offline document processing)
-- ❌ Real-time ingestion pipelines (rebuild cost too high)
-- ❌ Datasets with highly irregular density (some dense regions, some sparse)
+- Large static datasets (100K+ vectors, infrequent updates)
+- Batch search workloads (offline document processing)
+- Real-time ingestion pipelines (rebuild cost too high)
+- Datasets with highly irregular density (some dense regions, some sparse)
 
 ***
 
@@ -230,7 +230,7 @@ flowchart TD
 
 ### 3.1 · HNSW — Hierarchical Navigable Small World
 
-### 🗺️ **Navigation Analogy: The Highway System**
+### 🗺 **Navigation Analogy: The Highway System**
 
 **Think of HNSW like the US Interstate Highway System:**
 
@@ -251,16 +251,16 @@ flowchart TD
 
 ```plaintext
  Layer 3 (Interstate): A ══════════════════════ D
-                       sparse, long jumps
+ sparse, long jumps
 
- Layer 2 (State Hwy):  A ═════ C ═════ D ═════ F
-                       moderate jumps
+ Layer 2 (State Hwy): A ═════ C ═════ D ═════ F
+ moderate jumps
 
- Layer 1 (County Rd):  A ══ B ══ C ══ D ══ E ══ F
-                       short jumps
+ Layer 1 (County Rd): A ══ B ══ C ══ D ══ E ══ F
+ short jumps
 
- Layer 0 (Local St):   A─B─C─D─E─F─G─H─I─J─K─L
-                       dense, precise
+ Layer 0 (Local St): A─B─C─D─E─F─G─H─I─J─K─L
+ dense, precise
 
  🚗 SEARCH: Interstate → State Highway → County Road → Local Street
 ```
@@ -291,7 +291,7 @@ flowchart TD
 
 **Why HNSW dominates production:** Within three years of publication, HNSW became the default index for nearly every production vector database. The reason: it solves both the latency problem (O(log N) graph traversal) and the update problem (new vectors insert in O(M log N) without rebuilding the entire index). IVF requires cluster rebuilds on writes; HNSW accepts real-time inserts at millisecond cost.
 
-> 💡 **HNSW → production viability:** At 50K vectors with M=16 and ef_search=64, HNSW delivers <10ms retrieval latency (vs. 1.5s brute-force) with >99% recall@5 — eliminating query timeouts. New vector inserts take ~5ms per item. This is the combination that made real-time RAG systems viable at scale.
+> **HNSW → production viability:** At 50K vectors with M=16 and ef_search=64, HNSW delivers <10ms retrieval latency (vs. 1.5s brute-force) with >99% recall@5 — eliminating query timeouts. New vector inserts take ~5ms per item. This is the combination that made real-time RAG systems viable at scale.
 
 **HNSW Multi-Layer Graph: Highways to Local Roads**
 
@@ -299,58 +299,58 @@ HNSW builds a hierarchical graph where higher layers provide long-range jumps an
 
 ```mermaid
 flowchart TD
-    subgraph "Layer 3 (Highway - Sparse)"
-        L3A(("A")) ---|"long jump"| L3D(("D"))
-        L3D ---|"long jump"| L3J(("J"))
-    end
+ subgraph "Layer 3 (Highway - Sparse)"
+ L3A(("A")) ---|"long jump"| L3D(("D"))
+ L3D ---|"long jump"| L3J(("J"))
+ end
 
-    subgraph "Layer 2 (Regional Roads)"
-        L2A(("A")) --- L2C(("C"))
-        L2C --- L2D(("D"))
-        L2D --- L2F(("F"))
-        L2F --- L2J(("J"))
-    end
+ subgraph "Layer 2 (Regional Roads)"
+ L2A(("A")) --- L2C(("C"))
+ L2C --- L2D(("D"))
+ L2D --- L2F(("F"))
+ L2F --- L2J(("J"))
+ end
 
-    subgraph "Layer 1 (Local Streets)"
-        L1A(("A")) --- L1B(("B"))
-        L1B --- L1C(("C"))
-        L1C --- L1D(("D"))
-        L1D --- L1E(("E"))
-        L1E --- L1F(("F"))
-        L1F --- L1G(("G"))
-        L1G --- L1J(("J"))
-    end
+ subgraph "Layer 1 (Local Streets)"
+ L1A(("A")) --- L1B(("B"))
+ L1B --- L1C(("C"))
+ L1C --- L1D(("D"))
+ L1D --- L1E(("E"))
+ L1E --- L1F(("F"))
+ L1F --- L1G(("G"))
+ L1G --- L1J(("J"))
+ end
 
-    subgraph "Layer 0 (Ground - Dense)"
-        L0A(("A")) --- L0B(("B"))
-        L0B --- L0C(("C"))
-        L0C --- L0D(("D"))
-        L0D --- L0E(("E"))
-        L0E --- L0F(("F"))
-        L0F --- L0G(("G"))
-        L0G --- L0H(("H"))
-        L0H --- L0I(("I"))
-        L0I --- L0J(("J"))
-        L0J --- L0K(("K"))
-        L0K --- L0L(("L"))
-    end
+ subgraph "Layer 0 (Ground - Dense)"
+ L0A(("A")) --- L0B(("B"))
+ L0B --- L0C(("C"))
+ L0C --- L0D(("D"))
+ L0D --- L0E(("E"))
+ L0E --- L0F(("F"))
+ L0F --- L0G(("G"))
+ L0G --- L0H(("H"))
+ L0H --- L0I(("I"))
+ L0I --- L0J(("J"))
+ L0J --- L0K(("K"))
+ L0K --- L0L(("L"))
+ end
 
-    Q{{"🔍 Query<br/>(near J)"}} -."1. Start Layer 3".-> L3A
-    L3A -."2. Greedy walk".-> L3D
-    L3D -."3. Drop to Layer 2".-> L2D
-    L2D -."4. Refine".-> L2F
-    L2F -."5. Drop to Layer 1".-> L1F
-    L1F -."6. Refine".-> L1G
-    L1G -."7. Drop to Layer 0".-> L0G
-    L0G -."8. Explore neighbors".-> L0J
-    L0J -."9. Return top-k".-> R["✅ Results:<br/>J, I, K, H, G"]
+ Q{{" Query<br/>(near J)"}} -."1. Start Layer 3".-> L3A
+ L3A -."2. Greedy walk".-> L3D
+ L3D -."3. Drop to Layer 2".-> L2D
+ L2D -."4. Refine".-> L2F
+ L2F -."5. Drop to Layer 1".-> L1F
+ L1F -."6. Refine".-> L1G
+ L1G -."7. Drop to Layer 0".-> L0G
+ L0G -."8. Explore neighbors".-> L0J
+ L0J -."9. Return top-k".-> R[" Results:<br/>J, I, K, H, G"]
 
-    style Q fill:#ffe1e1
-    style L3D fill:#fff4e1
-    style L2F fill:#fff4e1
-    style L1G fill:#fff4e1
-    style L0J fill:#e1ffe1
-    style R fill:#d4edda
+ style Q fill:#ffe1e1
+ style L3D fill:#fff4e1
+ style L2F fill:#fff4e1
+ style L1G fill:#fff4e1
+ style L0J fill:#e1ffe1
+ style R fill:#d4edda
 ```
 
 **Search algorithm:**
@@ -381,9 +381,9 @@ flowchart TD
 - **HNSW:** Better for real-time inserts, higher recall, higher memory cost
 - **IVF:** Better for static datasets, lower memory, requires rebuild on updates
 
-> ➡️ **Scale beyond RAM:** At 1M vectors (typical enterprise knowledge base), HNSW requires ~4GB of DRAM for the graph. §3.2 (compression) and §3.3 (specialized variants) solve this by compressing vectors or moving the graph to SSD, keeping billion-scale search on commodity hardware.
+> ➡ **Scale beyond RAM:** At 1M vectors (typical enterprise knowledge base), HNSW requires ~4GB of DRAM for the graph. §3.2 (compression) and §3.3 (specialized variants) solve this by compressing vectors or moving the graph to SSD, keeping billion-scale search on commodity hardware.
 
-> ⏸️ **Checkpoint — When to Optimize Further:** IVF and HNSW handle most production workloads up to 1M vectors. IVF wins on static datasets with infrequent updates; HNSW wins on real-time write-heavy pipelines. Both fit comfortably in RAM at 50K-500K scale. **Reach for advanced techniques (§3.2 compression, §3.3 specialized variants) only when:**
+> **Checkpoint — When to Optimize Further:** IVF and HNSW handle most production workloads up to 1M vectors. IVF wins on static datasets with infrequent updates; HNSW wins on real-time write-heavy pipelines. Both fit comfortably in RAM at 50K-500K scale. **Reach for advanced techniques (§3.2 compression, §3.3 specialized variants) only when:**
 >
 > - **Memory constraint:** Index exceeds available DRAM (>100GB at 10M+ vectors, 768-dim fp32)
 > - **Cost optimization:** Cloud DRAM costs exceed compression overhead ($10/GB/month × 100GB = $1,000/month vs. compressed at $200/month)
@@ -401,7 +401,7 @@ When HNSW’s memory footprint becomes the constraint — typically at 1M+ vecto
 
 Alongside latency, scaling to 50K documents hits a memory wall: 153.6MB of DRAM for 50K float32 vectors at 768 dims. PQ compresses that to under 5MB — keeping the full document corpus on a single commodity server without a hardware upgrade.
 
-### 🗺️ **Compression Analogy: Address Lookup Instead of GPS Coordinates**
+### 🗺 **Compression Analogy: Address Lookup Instead of GPS Coordinates**
 
 **Original (Full Precision):** Every house has GPS coordinates: (37.7749295, -122.4194155) — 8 bytes per coordinate, extremely precise.
 
@@ -411,8 +411,8 @@ Alongside latency, scaling to 50K documents hits a memory wall: 153.6MB of DRAM 
 
 ```plaintext
  Original vector: 3,072 bytes of precise floating-point numbers
-      ↓ Break into 16 chunks of 48 numbers each
-      ↓ Find closest dictionary match for each chunk
+ ↓ Break into 16 chunks of 48 numbers each
+ ↓ Find closest dictionary match for each chunk
  Compressed: 16 bytes (one dictionary ID per chunk)
 
  Compression: 3,072 → 16 bytes = 192× smaller
@@ -449,7 +449,7 @@ Alongside latency, scaling to 50K documents hits a memory wall: 153.6MB of DRAM 
 
 ### Scalar Quantization (SQ8 / INT8)
 
-### 🗺️ **Rounding Analogy: Measuring Distance to the Nearest Foot Instead of Millimeters**
+### 🗺 **Rounding Analogy: Measuring Distance to the Nearest Foot Instead of Millimeters**
 
 **The intuition:** Instead of storing temperature as a precise floating-point number (72.384765°F), round it to the nearest whole degree (72°F). You lose a tiny bit of precision, but for almost all decisions ("is it comfortable?") the answer stays the same.
 
@@ -462,7 +462,7 @@ Alongside latency, scaling to 50K documents hits a memory wall: 153.6MB of DRAM 
 
 **Investigation grounding:** At 50K wiki documents, SQ8 drops the HNSW memory footprint from 153.6 MB to 38.4 MB. At 1M documents (full corpus expansion), the index stays under 768 MB — still on a single commodity server, no upgrade required.
 
-> 💡 **Start here first:** SQ8 is the first quantization upgrade to reach for. You almost always capture the 4× memory win with ≤1% recall loss — a far better risk-reward ratio than PQ for most production deployments. Try SQ8 before PQ.
+> **Start here first:** SQ8 is the first quantization upgrade to reach for. You almost always capture the 4× memory win with ≤1% recall loss — a far better risk-reward ratio than PQ for most production deployments. Try SQ8 before PQ.
 
 ### Binary Quantization (BQ)
 
@@ -472,7 +472,7 @@ The catch: recall collapses unless the embedding model was trained explicitly fo
 
 **Investigation grounding:** BQ is the wrong choice for high-precision document retrieval. The accuracy constraint demands >97% recall@5, which BQ without a purpose-trained model cannot guarantee. Reserve BQ for deduplication pipelines or large-scale image search where occasional missed matches are acceptable.
 
-> ⚠️ Applying BQ to a general-purpose text embedding model without oversampling will quietly destroy recall. A 10% recall drop on precision-sensitive queries means the retrieval pipeline silently returns wrong documents — a direct path to hallucinated answers that no amount of prompt engineering can fix.
+> Applying BQ to a general-purpose text embedding model without oversampling will quietly destroy recall. A 10% recall drop on precision-sensitive queries means the retrieval pipeline silently returns wrong documents — a direct path to hallucinated answers that no amount of prompt engineering can fix.
 
 ---
 
@@ -503,7 +503,7 @@ ScaNN is read-heavy-optimized — not the right fit for frequently-updated docum
 
 **Investigation grounding:** ScaNN's batch-oriented build process makes incremental document updates costly — not a fit for pipelines where content changes frequently. HNSW wins for write-heavy RAG pipelines. ScaNN becomes relevant when you pre-batch queries offline (e.g., overnight analytics across a stable archived corpus where update frequency is low).
 
-> 💡 ScaNN excels on read-heavy, infrequently-updated datasets. For write-heavy RAG pipelines where documents change frequently, HNSW's O(M log N) per-insert wins. Reach for ScaNN when your query volume dwarfs your write volume by 100× or more.
+> ScaNN excels on read-heavy, infrequently-updated datasets. For write-heavy RAG pipelines where documents change frequently, HNSW's O(M log N) per-insert wins. Reach for ScaNN when your query volume dwarfs your write volume by 100× or more.
 
 ### DiskANN — Microsoft Research’s SSD-Efficient Index
 
@@ -529,7 +529,7 @@ DiskANN is supported in **Azure Database for PostgreSQL** (as one of three vecto
 
 **Investigation grounding:** The §0 50K-document corpus fits comfortably in RAM — DiskANN is overkill for the investigation scale. But at 1M chunks (full enterprise knowledge base, document archives), a pure HNSW index needs ~4 GB of DRAM. DiskANN serves the same graph from NVMe SSD with ~400 MB of in-memory cache: same recall, one-tenth the RAM cost.
 
-> 💡 DiskANN is the correct answer when an interviewer asks "how do you handle billion-scale on a budget?" Commodity NVMe SSDs are 10× cheaper per GB than DRAM, and DiskANN's graph layout was explicitly designed to minimize the number of random seeks — making SSD latency acceptable without sacrificing recall.
+> DiskANN is the correct answer when an interviewer asks "how do you handle billion-scale on a budget?" Commodity NVMe SSDs are 10× cheaper per GB than DRAM, and DiskANN's graph layout was explicitly designed to minimize the number of random seeks — making SSD latency acceptable without sacrificing recall.
 
 ### Master Comparison Table: All Index Types
 
@@ -542,7 +542,7 @@ DiskANN is supported in **Azure Database for PostgreSQL** (as one of three vecto
 | **ScaNN** | High-speed text search | Medium | Fast | High | Limited | Web-scale retrieval |
 | **DiskANN** | Billion-scale on commodity HW | Low (SSD) | Medium | High | Full DML | Azure Cosmos DB, SQL Server 2025 |
 
-> 💡 **Index selection shortcut:** For ≤50K vectors in RAM with frequent updates, HNSW wins on latency, recall, and insert cost simultaneously. IVF-PQ wins when the corpus exceeds available RAM. DiskANN wins when you need HNSW-class recall without HNSW-class RAM at billion scale.
+> **Index selection shortcut:** For ≤50K vectors in RAM with frequent updates, HNSW wins on latency, recall, and insert cost simultaneously. IVF-PQ wins when the corpus exceeds available RAM. DiskANN wins when you need HNSW-class recall without HNSW-class RAM at billion scale.
 
 ---
 
@@ -584,7 +584,7 @@ Pre-filter has its own failure mode: restricting graph traversal to the matching
 
 **Investigation grounding:** Query: "authentication SLA for EU region services" — from 50K total chunks, ~500 match `region=EU` and only ~50 are authentication-specific. Post-filtering 50K ANN results wastes compute on irrelevant chunks. Pre-filtering to the 50-vector subset loses graph connectivity. The right answer is **iterative filtering** (DiskANN in Cosmos DB) or **in-graph filtering** (Weaviate, Qdrant), which interleave the metadata check with graph traversal to stay efficient regardless of selectivity.
 
-> ⚠️ There is no universally safe filter strategy. Rule of thumb: filter selectivity > 10% → pre-filter is fine. Below 5% → use iterative/in-graph filtering, or accept the compute cost of heavy oversampling with post-filter and a re-rank step.
+> There is no universally safe filter strategy. Rule of thumb: filter selectivity > 10% → pre-filter is fine. Below 5% → use iterative/in-graph filtering, or accept the compute cost of heavy oversampling with post-filter and a re-rank step.
 
 **Filter Strategy Decision Tree: Avoiding the Selectivity Trap**
 
@@ -592,45 +592,45 @@ Choosing the wrong filter strategy can silently destroy recall or waste compute:
 
 ```mermaid
 flowchart TD
-    A["🔍 Query with Metadata Filter<br/>e.g., region='EU' AND category='auth'"] --> B{"Estimate Filter<br/>Selectivity"}
+ A[" Query with Metadata Filter<br/>e.g., region='EU' AND category='auth'"] --> B{"Estimate Filter<br/>Selectivity"}
 
-    B -->|"High Selectivity<br/>(>10% of vectors match)"| C["✅ Pre-Filter Strategy<br/>Apply WHERE clause before ANN"]
-    C --> C1["Filter dataset to matching subset<br/>(e.g., 5K of 50K vectors)"]
-    C1 --> C2["Run ANN search on subset<br/>(5K vectors)"]
-    C2 --> C3["Graph connectivity preserved<br/>Good recall expected"]
-    C3 --> C4["✅ Return Top-k Results"]
+ B -->|"High Selectivity<br/>(>10% of vectors match)"| C[" Pre-Filter Strategy<br/>Apply WHERE clause before ANN"]
+ C --> C1["Filter dataset to matching subset<br/>(e.g., 5K of 50K vectors)"]
+ C1 --> C2["Run ANN search on subset<br/>(5K vectors)"]
+ C2 --> C3["Graph connectivity preserved<br/>Good recall expected"]
+ C3 --> C4[" Return Top-k Results"]
 
-    B -->|"Low Selectivity<br/>(<5% of vectors match)"| D["⚠️ Selectivity Trap<br/>Both naive strategies fail"]
-    D --> D1["Pre-filter: Graph breaks<br/>(250 of 50K = 0.5% selectivity)<br/>HNSW edges mostly disconnected"]
-    D --> D2["Post-filter: Must oversample<br/>(need 100× more results to hit quota)<br/>Near-full-scan cost"]
+ B -->|"Low Selectivity<br/>(<5% of vectors match)"| D[" Selectivity Trap<br/>Both naive strategies fail"]
+ D --> D1["Pre-filter: Graph breaks<br/>(250 of 50K = 0.5% selectivity)<br/>HNSW edges mostly disconnected"]
+ D --> D2["Post-filter: Must oversample<br/>(need 100× more results to hit quota)<br/>Near-full-scan cost"]
 
-    D --> E["✅ Iterative Filtering<br/>(DiskANN in Cosmos DB)"]
-    E --> E1["Apply filter DURING graph traversal<br/>Check metadata at each hop"]
-    E1 --> E2["Skip non-matching nodes<br/>Continue traversal"]
-    E2 --> E3["No graph disconnection<br/>No oversample waste"]
-    E3 --> E4["✅ Return Top-k Filtered Results"]
+ D --> E[" Iterative Filtering<br/>(DiskANN in Cosmos DB)"]
+ E --> E1["Apply filter DURING graph traversal<br/>Check metadata at each hop"]
+ E1 --> E2["Skip non-matching nodes<br/>Continue traversal"]
+ E2 --> E3["No graph disconnection<br/>No oversample waste"]
+ E3 --> E4[" Return Top-k Filtered Results"]
 
-    D --> F["✅ In-Graph Filtering<br/>(Weaviate, Qdrant)"]
-    F --> F1["Embed filter in graph structure<br/>Metadata-aware edges"]
-    F1 --> F2["Traverse only matching subgraph<br/>Efficient for any selectivity"]
-    F2 --> F3["✅ Return Top-k Filtered Results"]
+ D --> F[" In-Graph Filtering<br/>(Weaviate, Qdrant)"]
+ F --> F1["Embed filter in graph structure<br/>Metadata-aware edges"]
+ F1 --> F2["Traverse only matching subgraph<br/>Efficient for any selectivity"]
+ F2 --> F3[" Return Top-k Filtered Results"]
 
-    B -->|"Medium Selectivity<br/>(5-10% of vectors match)"| G["⚙️ Tunable<br/>Either strategy works"]
-    G --> G1["Pre-filter: Acceptable if graph<br/>connectivity still sufficient"]
-    G --> G2["Post-filter + oversample:<br/>Retrieve 2-5× more, then filter"]
-    G1 --> C4
-    G2 --> C4
+ B -->|"Medium Selectivity<br/>(5-10% of vectors match)"| G[" Tunable<br/>Either strategy works"]
+ G --> G1["Pre-filter: Acceptable if graph<br/>connectivity still sufficient"]
+ G --> G2["Post-filter + oversample:<br/>Retrieve 2-5× more, then filter"]
+ G1 --> C4
+ G2 --> C4
 
-    style A fill:#ffe1e1
-    style C fill:#e1ffe1
-    style C4 fill:#d4edda
-    style D fill:#fff4e1
-    style D1 fill:#f8d7da
-    style D2 fill:#f8d7da
-    style E fill:#e1ffe1
-    style E4 fill:#d4edda
-    style F fill:#e1ffe1
-    style F3 fill:#d4edda
+ style A fill:#ffe1e1
+ style C fill:#e1ffe1
+ style C4 fill:#d4edda
+ style D fill:#fff4e1
+ style D1 fill:#f8d7da
+ style D2 fill:#f8d7da
+ style E fill:#e1ffe1
+ style E4 fill:#d4edda
+ style F fill:#e1ffe1
+ style F3 fill:#d4edda
 ```
 
 **Example scenarios:**
@@ -687,7 +687,7 @@ flowchart TD
  └─────────────────────────────────────────────────────┘
 ```
 
-> 💡 **Hybrid retrieval → investigation recall:** BM25 catches exact keyword matches ("authentication", "EU") while HNSW catches semantic paraphrases ("login service requirements", "European region policies"). On queries that mix exact terms with semantic intent, hybrid retrieval reduces false-negative retrievals by ~20% compared to pure vector search — keeping the 97% recall@5 target within reach as the corpus grows from 200 to 50,000 documents.
+> **Hybrid retrieval → investigation recall:** BM25 catches exact keyword matches ("authentication", "EU") while HNSW catches semantic paraphrases ("login service requirements", "European region policies"). On queries that mix exact terms with semantic intent, hybrid retrieval reduces false-negative retrievals by ~20% compared to pure vector search — keeping the 97% recall@5 target within reach as the corpus grows from 200 to 50,000 documents.
 
 ---
 
@@ -720,7 +720,7 @@ Each indexing algorithm interacts differently with the storage layer:
 
 The choice of storage engine therefore constrains which indexing algorithms are practical, which in turn affects the performance profile available to users.
 
-> 💡 **Storage architecture → daily operations:** For write-heavy document pipelines (new content pushed in real-time), a B+-tree engine (pgvector on PostgreSQL) with HNSW gives predictable per-insert latency. The 2-minute IVF rebuild cost on write-heavy workloads is partly a storage-architecture problem — LSM-tree engines batch writes more efficiently in bulk but pay higher read-amplification on graph traversal at query time.
+> **Storage architecture → daily operations:** For write-heavy document pipelines (new content pushed in real-time), a B+-tree engine (pgvector on PostgreSQL) with HNSW gives predictable per-insert latency. The 2-minute IVF rebuild cost on write-heavy workloads is partly a storage-architecture problem — LSM-tree engines batch writes more efficiently in bulk but pay higher read-amplification on graph traversal at query time.
 
 ---
 
@@ -770,7 +770,7 @@ Rather than using a separate vector database, these approaches add vector capabi
 
 **Azure AI Search** (and similar Lucene-based engines like Elasticsearch, OpenSearch) adds vector search alongside traditional full-text capabilities. Preferred when: indexing structured/unstructured data from a variety of sources, when state-of-the-art search quality is needed (hybrid full-text/vector search, fuzzy matching, autocomplete, semantic re-ranking, multi-language support), or when multi-modal search and embeddings (OCR, image analysis, translation) are required.
 
-> 💡 **Architecture choice → operational cost:** For a SQL-first team already running PostgreSQL, pgvector eliminates a separate vector database service — no data sync overhead, ACID compliance inherited, and the 50K-document corpus sits well within single-node limits. Start here; migrate to Milvus only when you hit the 1M-chunk ceiling.
+> **Architecture choice → operational cost:** For a SQL-first team already running PostgreSQL, pgvector eliminates a separate vector database service — no data sync overhead, ACID compliance inherited, and the 50K-document corpus sits well within single-node limits. Start here; migrate to Milvus only when you hit the 1M-chunk ceiling.
 
 ---
 
@@ -812,7 +812,7 @@ The right architecture depends on your data location, workload profile, and oper
 | **Best For** | Production RAG | Hybrid AI Apps | Massive Scale | Simple AI Search |
 | **Limitations** | Proprietary, expensive at scale | Ops overhead when self-hosted | Complex arch, needs DevOps | Limited scalability |
 
-> 💡 **Architecture decision for investigation scale:** Start with pgvector on PostgreSQL — ACID compliance, zero new infrastructure, and the 50K-document corpus fits within single-node limits. When the corpus grows past 1M chunks, DiskANN in Azure Cosmos DB provides HNSW-class recall from SSD at one-tenth the RAM cost, with full DML support for continuous document ingestion.
+> **Architecture decision for investigation scale:** Start with pgvector on PostgreSQL — ACID compliance, zero new infrastructure, and the 50K-document corpus fits within single-node limits. When the corpus grows past 1M chunks, DiskANN in Azure Cosmos DB provides HNSW-class recall from SSD at one-tenth the RAM cost, with full DML support for continuous document ingestion.
 
 ***
 
@@ -820,7 +820,7 @@ The right architecture depends on your data location, workload profile, and oper
 
 This table explains the §0 scaling problem directly: why 500 chunks takes 15ms and 50,000 chunks takes 1.5s with brute-force — a 100× data growth becomes a 100× latency penalty. With HNSW, the same 100× growth only causes a ~2× penalty.
 
-### 🗺️ **Speed vs. Accuracy Trade-offs**
+### 🗺 **Speed vs. Accuracy Trade-offs**
 
 | Index Type | Query Speed Intuition | Memory Intuition | Recall Intuition | Update Intuition |
 | --------------- | ---------------------------------------- | --------------------------------- | ---------------------------- | ----------------------------------------- |
@@ -850,10 +850,10 @@ This table explains the §0 scaling problem directly: why 500 chunks takes 15ms 
 ```
 100M vectors at 768 dimensions:
 
- Flat:    100M × 768 × 4 bytes = 307 GB    (full precision)
- IVF:     100M × 768 × 4 bytes = 307 GB    (same — just clustered)
- HNSW:    307 GB + graph (~50%) = ~450 GB  (vectors + highway map)
- IVF-PQ:  100M × 16 × 1 byte = 1.6 GB      (compressed codes)
+ Flat: 100M × 768 × 4 bytes = 307 GB (full precision)
+ IVF: 100M × 768 × 4 bytes = 307 GB (same — just clustered)
+ HNSW: 307 GB + graph (~50%) = ~450 GB (vectors + highway map)
+ IVF-PQ: 100M × 16 × 1 byte = 1.6 GB (compressed codes)
 ```
 
 **Update Cost (Adding New Vectors):**
@@ -897,7 +897,7 @@ When selecting an indexing technique, consider these conditional guidelines:
 * Azure AI Search provides this natively
 * Sparse vector support in Cosmos DB offers an alternative path for BM25-style scoring through vector indexes
 
-> 💡 **Decision framework → investigation answer:** 50K vectors fit in RAM → HNSW. Frequent document additions require real-time inserts → HNSW (not IVF, which needs cluster rebuilds). "Authentication SLA for EU region" has ~1% filter selectivity → in-graph filtering (Qdrant/Weaviate) or iterative filtering (DiskANN in Cosmos DB). These three steps directly answer the board's scaling question from §0.
+> **Decision framework → investigation answer:** 50K vectors fit in RAM → HNSW. Frequent document additions require real-time inserts → HNSW (not IVF, which needs cluster rebuilds). "Authentication SLA for EU region" has ~1% filter selectivity → in-graph filtering (Qdrant/Weaviate) or iterative filtering (DiskANN in Cosmos DB). These three steps directly answer the board's scaling question from §0.
 
 ***
 
