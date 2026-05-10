@@ -108,25 +108,25 @@ exercises/
 
 | Exercise | Topics | Time |
 |----------|--------|------|
-| [01-regression](01-ml/01-regression/) | Ridge, Lasso, XGBoost | 5-6h |
-| [02-classification](01-ml/02-classification/) | Logistic, SVM, RandomForest | 5-6h |
-| [07-unsupervised](01-ml/07-unsupervised-learning/) | K-means, DBSCAN, PCA | 4-5h |
+| [01-regression](01-ml/01-regression) | Ridge, Lasso, XGBoost | 5-6h |
+| [02-classification](01-ml/02-classification) | Logistic, SVM, RandomForest | 5-6h |
+| [07-unsupervised](01-ml/07-unsupervised-learning) | K-means, DBSCAN, PCA | 4-5h |
 
 ### **🟡 Intermediate Track**
 
 | Exercise | Topics | Time |
 |----------|--------|------|
-| [03-neural-networks](01-ml/03-neural-networks/) | MLP, CNN, backprop | 6-8h |
-| [04-recommenders](01-ml/04-recommender-systems/) | Collaborative filtering | 5-6h |
-| [08-ensemble](01-ml/08-ensemble-methods/) | Bagging, boosting | 5-6h |
+| [03-neural-networks](01-ml/03-neural-networks) | MLP, CNN, backprop | 6-8h |
+| [04-recommenders](01-ml/04-recommender-systems) | Collaborative filtering | 5-6h |
+| [08-ensemble](01-ml/08-ensemble-methods) | Bagging, boosting | 5-6h |
 
 ### **🔴 Advanced Track**
 
 | Exercise | Topics | Time |
 |----------|--------|------|
-| [02-adv-dl](02-advanced_deep_learning/) | ResNet, Transformers | 10-12h |
-| [03-ai](03-ai/) | LLM fine-tuning, RAG | 10-12h |
-| [05-multimodal](05-multimodal_ai/) | CLIP, image-text | 10-12h |
+| [02-adv-dl](02-advanced_deep_learning) | ResNet, Transformers | 10-12h |
+| [03-ai](03-ai) | LLM fine-tuning, RAG | 10-12h |
+| [05-multimodal](05-multimodal_ai) | CLIP, image-text | 10-12h |
 
 **Total:** ~100-120 hours (2-3 weeks full-time)
 

@@ -17,7 +17,7 @@ Self-contained notebooks with:
 
 ### 01. LLM Basics ([01-llm-basics.ipynb](01-llm-basics.ipynb))
 **Topics:** OpenAI, Google Gemini, Groq, prompt engineering, data extraction
-**Related Theory:** [AI Fundamentals](../../notes/03-ai/README.md), [Prompt Engineering](../../notes/03-ai/ch02_prompt_engineering/)
+**Related Theory:** [AI Fundamentals](../../notes/03-ai/README.md), [Prompt Engineering](../../notes/03-ai/ch02_prompt_engineering)
 
 Learn to:
 - Authenticate with multiple LLM providers
@@ -37,7 +37,7 @@ Learn to:
 
 ### 03. RAG Basics ([03-rag-basics.ipynb](03-rag-basics.ipynb))
 **Topics:** Embeddings, vector stores, semantic search, ChromaDB
-**Related Theory:** [Vector Databases](../../notes/03-ai/ch05_vector_dbs/), [RAG](../../notes/03-ai/ch04_rag_and_embeddings/)
+**Related Theory:** [Vector Databases](../../notes/03-ai/ch05_vector_dbs), [RAG](../../notes/03-ai/ch04_rag_and_embeddings)
 
 Learn to:
 - Create embeddings from text documents
@@ -47,7 +47,7 @@ Learn to:
 
 ### 04. Advanced RAG ([04-advanced-rag.ipynb](04-advanced-rag.ipynb))
 **Topics:** Document splitting, chunk overlap, FAISS, performance optimization
-**Related Theory:** [Vector Databases](../../notes/03-ai/ch05_vector_dbs/)
+**Related Theory:** [Vector Databases](../../notes/03-ai/ch05_vector_dbs)
 
 Learn to:
 - Split long documents into manageable chunks
@@ -57,7 +57,7 @@ Learn to:
 
 ### 05. Agentic AI ([05-agentic-ai.ipynb](05-agentic-ai.ipynb))
 **Topics:** Tool creation, agent architecture, function calling, decision-making
-**Related Theory:** [ReAct & Semantic Kernel](../../notes/03-ai/ch06_react_and_semantic_kernel/), [Advanced Agentic Patterns](../../notes/03-ai/ch11_advanced_agentic_patterns/)
+**Related Theory:** [ReAct & Semantic Kernel](../../notes/03-ai/ch06_react_and_semantic_kernel), [Advanced Agentic Patterns](../../notes/03-ai/ch11_advanced_agentic_patterns)
 
 Learn to:
 - Create custom tools for agents
@@ -67,7 +67,7 @@ Learn to:
 
 ### 06. Agent Memory ([06-agent-memory.ipynb](06-agent-memory.ipynb))
 **Topics:** Conversation history, SQLite persistence, thread management
-**Related Theory:** [Advanced Agentic Patterns](../../notes/03-ai/ch11_advanced_agentic_patterns/)
+**Related Theory:** [Advanced Agentic Patterns](../../notes/03-ai/ch11_advanced_agentic_patterns)
 
 Learn to:
 - Implement in-memory and persistent memory
@@ -77,7 +77,7 @@ Learn to:
 
 ### 07. LangGraph ([07-langgraph.ipynb](07-langgraph.ipynb))
 **Topics:** State machines, conditional routing, workflow graphs, multi-agent systems
-**Related Theory:** [Advanced Agentic Patterns](../../notes/03-ai/ch11_advanced_agentic_patterns/)
+**Related Theory:** [Advanced Agentic Patterns](../../notes/03-ai/ch11_advanced_agentic_patterns)
 
 Learn to:
 - Build state machines with nodes and edges
@@ -210,8 +210,8 @@ playground/rag-agents/
 Each notebook references relevant chapters in the `notes/` directory:
 
 - **AI Fundamentals:** [notes/03-ai/](../../notes/03-ai/README.md)
-- **Prompt Engineering:** [notes/03-ai/ch02_prompt_engineering/](../../notes/03-ai/ch02_prompt_engineering/)
-- **Vector Databases:** [notes/03-ai/ch05_vector_dbs/](../../notes/03-ai/ch05_vector_dbs/)
+- **Prompt Engineering:** [notes/03-ai/ch02_prompt_engineering/](../../notes/03-ai/ch02_prompt_engineering)
+- **Vector Databases:** [notes/03-ai/ch05_vector_dbs/](../../notes/03-ai/ch05_vector_dbs)
 - **Multi-Agent AI:** [notes/04-multi_agent_ai/](../../notes/04-multi_agent_ai/README.md)
 
 ## Troubleshooting

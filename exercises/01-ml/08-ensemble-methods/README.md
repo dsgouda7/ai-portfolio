@@ -1,7 +1,7 @@
 # Exercise 08: EnsembleAI — Interactive Ensemble Method System
 
 > **Learning Goal:** Implement Bagging, Boosting, and Stacking with plug-and-play experimentation and feature importance analysis  
-> **Prerequisites:** Completed [notes/01-ml/08-ensemble-methods/](../../../notes/01-ml/08-ensemble-methods/)  
+> **Prerequisites:** Completed [notes/01-ml/08-ensemble-methods/](../../../notes/01-ml/08-ensemble-methods)  
 > **Time Estimate:** 6-8 hours (coding) + 1 hour (deployment, optional)  
 > **Difficulty:** ⭐⭐⭐ Advanced
 
@@ -471,14 +471,14 @@ After completing this exercise:
 
 4. **Deploy to production:**
    - Run the Flask API locally: `python main.py`
-   - See [../../_infrastructure/](../../_infrastructure/) for additional deployment options
+   - See [../../_infrastructure/](../../_infrastructure) for additional deployment options
 
 ---
 
 ## 🤝 **Getting Help**
 
 - **Stuck on a TODO?** Re-read the inline instructions (they have step-by-step code)
-- **Ensemble theory unclear?** Review [notes/01-ml/08-ensemble-methods/](../../../notes/01-ml/08-ensemble-methods/)
+- **Ensemble theory unclear?** Review [notes/01-ml/08-ensemble-methods/](../../../notes/01-ml/08-ensemble-methods)
 - **Want to compare?** Check `_REFERENCE/models_complete.py` (but try yourself first!)
 
 **Remember:** Ensembles are complex! Take breaks, experiment with hyperparameters, and enjoy seeing multiple models work together. 🎉

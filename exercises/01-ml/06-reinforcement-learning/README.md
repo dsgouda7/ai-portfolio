@@ -1,7 +1,7 @@
 # Exercise 06: AgentAI — Interactive Reinforcement Learning System
 
 > **Learning Goal:** Implement Q-Learning and Deep Q-Network (DQN) with plug-and-play experimentation and episode-by-episode feedback  
-> **Prerequisites:** Completed [notes/01-ml/06-reinforcement-learning/](../../../notes/01-ml/06-reinforcement-learning/)  
+> **Prerequisites:** Completed [notes/01-ml/06-reinforcement-learning/](../../../notes/01-ml/06-reinforcement-learning)  
 > **Time Estimate:** 6-8 hours (coding) + 1 hour (deployment, optional)  
 > **Difficulty:** ⭐⭐⭐ Advanced
 

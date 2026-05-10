@@ -146,7 +146,7 @@ class LLMFineTuner(AIModel):
         """
         TODO: Implement LLM fine-tuning with LoRA/QLoRA (load model, apply LoRA config, train, evaluate with perplexity/BLEU)
 
-        📖 See: notes/03-ai/ch10_fine_tuning/ (LoRA, QLoRA, parameter-efficient fine-tuning)
+        📖 See: notes/03a-ai/ch03-llm-training-pipeline/ (LoRA, QLoRA, parameter-efficient fine-tuning)
         🎯 Unlocks: Constraint #1 BUSINESS VALUE (domain adaptation → pizza ordering style)
                     Constraint #6 RELIABILITY (consistent responses → production quality)
         """
@@ -162,8 +162,8 @@ class LLMFineTuner(AIModel):
         """
         TODO: Generate text using fine-tuned model (tokenize, generate, decode)
 
-        📖 See: notes/03-ai/ch01_llm_fundamentals/ (tokenization, sampling, generation)
-                notes/03-ai/ch10_fine_tuning/ (using fine-tuned models)
+        📖 See: notes/03a-ai/ch02-llm-inference-mechanics/ (tokenization, sampling, generation)
+                notes/03a-ai/ch03-llm-training-pipeline/ (using fine-tuned models)
         🎯 Unlocks: Constraint #1 BUSINESS VALUE (domain-adapted generation)
         """
         # TODO: Your implementation here
@@ -220,7 +220,7 @@ class DPOTrainer(AIModel):
           - Ensure minimum token length (≥10 tokens each)
           - Shuffle and return
 
-        📖 See: notes/03-ai/ch10_fine_tuning/fine-tuning.md §5.5
+        📖 See: notes/03a-ai/ch03-llm-training-pipeline/ §5.5
                 (DPO data collection strategy, PizzaBot preference examples)
         🎯 Unlocks: Constraint #1 BUSINESS VALUE (brand voice alignment)
         """
@@ -243,7 +243,7 @@ class DPOTrainer(AIModel):
           4. Call trainer.train()
           5. Return metrics: rewards/chosen, rewards/rejected, rewards/margins
 
-        📖 See: notes/03-ai/ch10_fine_tuning/fine-tuning.md §5.5
+        📖 See: notes/03a-ai/ch03-llm-training-pipeline/ §5.5
                 (DPO loss derivation, TRL DPOTrainer code skeleton)
         🎯 Unlocks: Constraint #1 BUSINESS VALUE (AOV lift $41 → $42.50)
         """
@@ -266,7 +266,7 @@ class DPOTrainer(AIModel):
 
         Target: accuracy > 0.80 before deploying.
 
-        📖 See: notes/03-ai/ch10_fine_tuning/fine-tuning.md §5.5.1
+        📖 See: notes/03a-ai/ch03-llm-training-pipeline/ §5.5.1
                 (DPO decision checkpoint, brand voice score measurement)
         🎯 Unlocks: Constraint #2 ACCURACY (verify alignment quality)
         """
@@ -320,8 +320,8 @@ class RAGPipeline(AIModel):
         """
         TODO: Build RAG pipeline with vector database (load LLM, create embedder, index documents, evaluate retrieval + generation)
 
-        📖 See: notes/03-ai/ch04_rag_and_embeddings/ (RAG architecture, retrieval + generation)
-                notes/03-ai/ch05_vector_dbs/ (vector database integration)
+        📖 See: notes/03a-ai/ch07-rag-and-embeddings/ (RAG architecture, retrieval + generation)
+                notes/03a-ai/ch08-vector-dbs/ (vector database integration)
         🎯 Unlocks: Constraint #2 ACCURACY (ground answers in menu facts → <5% error rate)
         """
         # TODO: Your implementation here
@@ -336,7 +336,7 @@ class RAGPipeline(AIModel):
         """
         TODO: Generate response with retrieved context (encode query, retrieve docs, build augmented prompt, generate)
 
-        📖 See: notes/03-ai/ch04_rag_and_embeddings/ (RAG pipeline: retrieve → augment → generate)
+        📖 See: notes/03a-ai/ch07-rag-and-embeddings/ (RAG pipeline: retrieve → augment → generate)
         🎯 Unlocks: Constraint #2 ACCURACY (context-grounded generation prevents hallucination)
         """
         # TODO: Your implementation here
@@ -379,8 +379,7 @@ class PromptEngineer(AIModel):
         """
         TODO: Build few-shot prompt with best examples (load LLM, select diverse examples, evaluate with BLEU/ROUGE)
 
-        📖 See: notes/03-ai/ch02_prompt_engineering/ (few-shot learning, example selection)
-                notes/03-ai/ch08_evaluating_ai_systems/ (BLEU, ROUGE metrics)
+        📖 See: notes/03a-ai/ch05-prompt-engineering/ (few-shot learning, example selection)
         🎯 Unlocks: Constraint #1 BUSINESS VALUE (few-shot examples → better ordering patterns)
                     Constraint #4 COST (no training overhead, just prompt engineering)
         """
@@ -396,7 +395,7 @@ class PromptEngineer(AIModel):
         """
         TODO: Generate with few-shot examples (build prompt with examples, generate, extract answer)
 
-        📖 See: notes/03-ai/ch02_prompt_engineering/ (few-shot prompting patterns)
+        📖 See: notes/03a-ai/ch05-prompt-engineering/ (few-shot prompting patterns)
         🎯 Unlocks: Constraint #1 BUSINESS VALUE (in-context learning for ordering)
         """
         # TODO: Your implementation here

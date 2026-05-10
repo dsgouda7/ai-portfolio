@@ -47,7 +47,7 @@ Every session follows this pattern:
 ### Week 1: Mathematical Foundations (Days 1-7)
 
 #### Day 1: Linear Algebra Basics
-- **Chapter:** [00-math_under_the_hood/ch01_linear_algebra](00-math_under_the_hood/ch01_linear_algebra/)
+- **Chapter:** [00-math_under_the_hood/ch01_linear_algebra](00-math_under_the_hood/ch01_linear_algebra)
 - **Focus:** Lines, slopes, dot products
 - **Key Concept:** $y = wx + b$ is how ML models make predictions
 - **Hands-On:** Calculate knuckleball trajectory at t=0.1s by hand
@@ -61,7 +61,7 @@ Every session follows this pattern:
 ---
 
 #### Day 2: Polynomials and Feature Engineering
-- **Chapter:** [00-math_under_the_hood/ch02_nonlinear_algebra](00-math_under_the_hood/ch02_nonlinear_algebra/)
+- **Chapter:** [00-math_under_the_hood/ch02_nonlinear_algebra](00-math_under_the_hood/ch02_nonlinear_algebra)
 - **Focus:** Parabolas, polynomial features, feature expansion
 - **Key Concept:** Turn $y = ax^2 + bx + c$ into linear form via feature engineering
 - **Hands-On:** Fit parabola to 4 trajectory points, measure error
@@ -75,7 +75,7 @@ Every session follows this pattern:
 ---
 
 #### Day 3: Derivatives and Optimization
-- **Chapter:** [00-math_under_the_hood/ch03_calculus_intro](00-math_under_the_hood/ch03_calculus_intro/)
+- **Chapter:** [00-math_under_the_hood/ch03_calculus_intro](00-math_under_the_hood/ch03_calculus_intro)
 - **Focus:** Derivatives as slopes, finding peaks/valleys
 - **Key Concept:** $f'(x) = 0$ finds the apex (maximum height)
 - **Hands-On:** Calculate derivative at 3 different points on knuckleball trajectory
@@ -89,7 +89,7 @@ Every session follows this pattern:
 ---
 
 #### Day 4: Gradient Descent
-- **Chapter:** [00-math_under_the_hood/ch04_small_steps](00-math_under_the_hood/ch04_small_steps/)
+- **Chapter:** [00-math_under_the_hood/ch04_small_steps](00-math_under_the_hood/ch04_small_steps)
 - **Focus:** Taking small steps downhill to find minimum
 - **Key Concept:** $w_{new} = w_{old} - \eta \cdot \frac{\partial L}{\partial w}$
 - **Hands-On:** Manually take 5 gradient descent steps
@@ -103,7 +103,7 @@ Every session follows this pattern:
 ---
 
 #### Day 5: Matrices and Multi-Dimensional Data
-- **Chapter:** [00-math_under_the_hood/ch05_matrices](00-math_under_the_hood/ch05_matrices/)
+- **Chapter:** [00-math_under_the_hood/ch05_matrices](00-math_under_the_hood/ch05_matrices)
 - **Focus:** Matrix multiplication, handling 8 features at once
 - **Key Concept:** $\mathbf{y} = X \mathbf{w}$ (matrix form of linear regression)
 - **Hands-On:** Multiply 3×8 matrix by 8×1 vector by hand
@@ -117,7 +117,7 @@ Every session follows this pattern:
 ---
 
 #### Day 6: Chain Rule and Backpropagation
-- **Chapter:** [00-math_under_the_hood/ch06_gradient_chain_rule](00-math_under_the_hood/ch06_gradient_chain_rule/)
+- **Chapter:** [00-math_under_the_hood/ch06_gradient_chain_rule](00-math_under_the_hood/ch06_gradient_chain_rule)
 - **Focus:** Derivatives of nested functions, multi-parameter optimization
 - **Key Concept:** $\frac{\partial L}{\partial w} = \frac{\partial L}{\partial \hat{y}} \cdot \frac{\partial \hat{y}}{\partial w}$
 - **Hands-On:** Compute gradient for 3-variable function
@@ -131,7 +131,7 @@ Every session follows this pattern:
 ---
 
 #### Day 7: Probability and Uncertainty
-- **Chapter:** [00-math_under_the_hood/ch07_probability_statistics](00-math_under_the_hood/ch07_probability_statistics/)
+- **Chapter:** [00-math_under_the_hood/ch07_probability_statistics](00-math_under_the_hood/ch07_probability_statistics)
 - **Focus:** Handling noise, uncertainty, distributions
 - **Key Concept:** Maximum Likelihood Estimation (MLE)
 - **Hands-On:** Calculate probability of clearing wall with 10% velocity variance
@@ -148,7 +148,7 @@ Every session follows this pattern:
 ### Week 2-3: Data Engineering Foundations (Days 8-14)
 
 #### Day 8: Pandas and Exploratory Data Analysis
-- **Chapter:** [01-ml/00_data_fundamentals/ch01_pandas_eda](01-ml/00_data_fundamentals/ch01_pandas_eda/)
+- **Chapter:** [01-ml/00_data_fundamentals/ch01_pandas_eda](01-ml/00_data_fundamentals/ch01_pandas_eda)
 - **Focus:** Loading data, detecting outliers, EDA workflows
 - **Key Concept:** 80% of ML failures are data quality issues
 - **Hands-On:** Load California Housing dataset, compute basic statistics
@@ -162,7 +162,7 @@ Every session follows this pattern:
 ---
 
 #### Day 9: Class Imbalance and Resampling
-- **Chapter:** [01-ml/00_data_fundamentals/ch02_class_imbalance](01-ml/00_data_fundamentals/ch02_class_imbalance/)
+- **Chapter:** [01-ml/00_data_fundamentals/ch02_class_imbalance](01-ml/00_data_fundamentals/ch02_class_imbalance)
 - **Focus:** Handling skewed datasets (99:1 fraud vs. normal)
 - **Key Concept:** Accuracy is useless with imbalance — use precision/recall
 - **Hands-On:** Apply SMOTE to generate synthetic minority samples
@@ -176,7 +176,7 @@ Every session follows this pattern:
 ---
 
 #### Day 10: Data Validation and Drift Detection
-- **Chapter:** [01-ml/00_data_fundamentals/ch03_data_validation](01-ml/00_data_fundamentals/ch03_data_validation/)
+- **Chapter:** [01-ml/00_data_fundamentals/ch03_data_validation](01-ml/00_data_fundamentals/ch03_data_validation)
 - **Focus:** Detecting distribution shifts, validating new data
 - **Key Concept:** PSI (Population Stability Index) catches drift
 - **Hands-On:** Compute PSI for feature shift, set up validation pipeline
@@ -211,7 +211,7 @@ Every session follows this pattern:
 ### Week 4: Regression Fundamentals (Days 15-21)
 
 #### Day 15: Linear Regression from Scratch
-- **Chapter:** [01-ml/01_regression/ch01_linear_regression](01-ml/01_regression/ch01_linear_regression/)
+- **Chapter:** [01-ml/01_regression/ch01_linear_regression](01-ml/01_regression/ch01_linear_regression)
 - **Focus:** SmartVal AI — predict California housing prices
 - **Key Concept:** Minimize MSE loss with gradient descent
 - **Hands-On:** Train single-feature model (MedInc → MedHouseVal)
@@ -225,7 +225,7 @@ Every session follows this pattern:
 ---
 
 #### Day 16: Multiple Regression (8 Features)
-- **Chapter:** [01-ml/01_regression/ch02_multiple_regression](01-ml/01_regression/ch02_multiple_regression/)
+- **Chapter:** [01-ml/01_regression/ch02_multiple_regression](01-ml/01_regression/ch02_multiple_regression)
 - **Focus:** Use all 8 housing features simultaneously
 - **Key Concept:** $\hat{y} = w_1 x_1 + w_2 x_2 + ... + w_8 x_8 + b$
 - **Hands-On:** Train vectorized gradient descent on full feature set
@@ -239,7 +239,7 @@ Every session follows this pattern:
 ---
 
 #### Day 17: Feature Scaling and Importance
-- **Chapter:** [01-ml/01_regression/ch03_feature_importance](01-ml/01_regression/ch03_feature_importance/)
+- **Chapter:** [01-ml/01_regression/ch03_feature_importance](01-ml/01_regression/ch03_feature_importance)
 - **Focus:** Which features matter most? Detect multicollinearity
 - **Key Concept:** VIF (Variance Inflation Factor) detects redundant features
 - **Hands-On:** Run permutation importance, compute VIF for 8 features
@@ -253,7 +253,7 @@ Every session follows this pattern:
 ---
 
 #### Day 18: Polynomial Features
-- **Chapter:** [01-ml/01_regression/ch04_polynomial_features](01-ml/01_regression/ch04_polynomial_features/)
+- **Chapter:** [01-ml/01_regression/ch04_polynomial_features](01-ml/01_regression/ch04_polynomial_features)
 - **Focus:** Capture non-linear relationships (income vs. price curves)
 - **Key Concept:** Feature expansion: 8 features → 44 features (degree=2)
 - **Hands-On:** Apply `PolynomialFeatures`, train on expanded feature set
@@ -267,7 +267,7 @@ Every session follows this pattern:
 ---
 
 #### Day 19: Regularization (Ridge, Lasso, Elastic Net)
-- **Chapter:** [01-ml/01_regression/ch05_regularization](01-ml/01_regression/ch05_regularization/)
+- **Chapter:** [01-ml/01_regression/ch05_regularization](01-ml/01_regression/ch05_regularization)
 - **Focus:** Prevent overfitting, automatic feature selection
 - **Key Concept:** $L_{\text{Ridge}} = \text{MSE} + \alpha \sum w_j^2$
 - **Hands-On:** Tune $\alpha$ parameter, compare Ridge vs. Lasso
@@ -281,7 +281,7 @@ Every session follows this pattern:
 ---
 
 #### Day 20: Evaluation Metrics (Cross-Validation, Residual Analysis)
-- **Chapter:** [01-ml/01_regression/ch06_metrics](01-ml/01_regression/ch06_metrics/)
+- **Chapter:** [01-ml/01_regression/ch06_metrics](01-ml/01_regression/ch06_metrics)
 - **Focus:** Validate generalization, diagnose failure modes
 - **Key Concept:** Test set is not enough — use CV and residual plots
 - **Hands-On:** Run 5-fold CV, analyze residual distribution
@@ -295,7 +295,7 @@ Every session follows this pattern:
 ---
 
 #### Day 21: Hyperparameter Tuning (Optuna + XGBoost)
-- **Chapter:** [01-ml/01_regression/ch07_hyperparameter_tuning](01-ml/01_regression/ch07_hyperparameter_tuning/)
+- **Chapter:** [01-ml/01_regression/ch07_hyperparameter_tuning](01-ml/01_regression/ch07_hyperparameter_tuning)
 - **Focus:** Systematic search for best hyperparameters
 - **Key Concept:** Bayesian optimization beats grid search
 - **Hands-On:** Use Optuna to tune XGBoost, achieve final target
@@ -318,7 +318,7 @@ Every session follows this pattern:
 ### Week 5-6: Classification (Days 22-35)
 
 #### Days 22-24: Logistic Regression and Binary Classification
-- **Chapter:** [01-ml/02_classification/ch01_logistic_regression](01-ml/02_classification/ch01_logistic_regression/)
+- **Chapter:** [01-ml/02_classification/ch01_logistic_regression](01-ml/02_classification/ch01_logistic_regression)
 - **Focus:** FaceAI — predict binary attributes (Smiling, Young, etc.)
 - **Key Concept:** Sigmoid function squashes output to [0, 1]
 - **Hands-On:** Train logistic regression on CelebA dataset
@@ -336,7 +336,7 @@ Every session follows this pattern:
 ---
 
 #### Days 25-27: Classical Classifiers (Decision Trees, Random Forests)
-- **Chapter:** [01-ml/02_classification/ch02_classical_classifiers](01-ml/02_classification/ch02_classical_classifiers/)
+- **Chapter:** [01-ml/02_classification/ch02_classical_classifiers](01-ml/02_classification/ch02_classical_classifiers)
 - **Focus:** Non-linear decision boundaries, ensemble methods
 - **Key Concept:** Decision trees split data recursively
 - **Hands-On:** Train Random Forest, visualize decision boundaries
@@ -350,7 +350,7 @@ Every session follows this pattern:
 ---
 
 #### Days 28-30: Precision/Recall Trade-offs and Metrics
-- **Chapter:** [01-ml/02_classification/ch03_metrics](01-ml/02_classification/ch03_metrics/)
+- **Chapter:** [01-ml/02_classification/ch03_metrics](01-ml/02_classification/ch03_metrics)
 - **Focus:** When to prioritize precision vs. recall
 - **Key Concept:** F1 score balances precision and recall
 - **Hands-On:** Tune classification threshold for business needs
@@ -364,7 +364,7 @@ Every session follows this pattern:
 ---
 
 #### Days 31-33: Support Vector Machines (SVMs)
-- **Chapter:** [01-ml/02_classification/ch04_svm](01-ml/02_classification/ch04_svm/)
+- **Chapter:** [01-ml/02_classification/ch04_svm](01-ml/02_classification/ch04_svm)
 - **Focus:** Maximum margin classification, kernel trick
 - **Key Concept:** Find hyperplane with largest margin
 - **Hands-On:** Train linear SVM, then RBF kernel SVM
@@ -378,7 +378,7 @@ Every session follows this pattern:
 ---
 
 #### Days 34-35: Hyperparameter Tuning for Classifiers
-- **Chapter:** [01-ml/02_classification/ch05_hyperparameter_tuning](01-ml/02_classification/ch05_hyperparameter_tuning/)
+- **Chapter:** [01-ml/02_classification/ch05_hyperparameter_tuning](01-ml/02_classification/ch05_hyperparameter_tuning)
 - **Focus:** GridSearchCV, RandomizedSearchCV
 - **Key Concept:** Tune C, gamma, max_depth systematically
 - **Hands-On:** Run 5-fold CV with 50 hyperparameter combinations
@@ -394,7 +394,7 @@ Every session follows this pattern:
 ### Week 7-10: Neural Networks and Deep Learning (Days 36-60)
 
 #### Days 36-37: The XOR Problem
-- **Chapter:** [01-ml/03_neural_networks/ch01_xor_problem](01-ml/03_neural_networks/ch01_xor_problem/)
+- **Chapter:** [01-ml/03_neural_networks/ch01_xor_problem](01-ml/03_neural_networks/ch01_xor_problem)
 - **Focus:** Why linear models fail, need for hidden layers
 - **Key Concept:** XOR is not linearly separable
 - **Hands-On:** Fail with linear model, succeed with 1 hidden layer
@@ -408,7 +408,7 @@ Every session follows this pattern:
 ---
 
 #### Days 38-40: Feedforward Networks and Backpropagation
-- **Chapter:** [01-ml/03_neural_networks/ch02_neural_networks](01-ml/03_neural_networks/ch02_neural_networks/)
+- **Chapter:** [01-ml/03_neural_networks/ch02_neural_networks](01-ml/03_neural_networks/ch02_neural_networks)
 - **Focus:** Multi-layer perceptrons, forward/backward pass
 - **Key Concept:** Backpropagation = chain rule applied layer by layer
 - **Hands-On:** Implement 3-layer network from scratch
@@ -422,7 +422,7 @@ Every session follows this pattern:
 ---
 
 #### Days 41-43: Optimizers (SGD, Momentum, Adam)
-- **Chapter:** [01-ml/03_neural_networks/ch03_backprop_optimisers](01-ml/03_neural_networks/ch03_backprop_optimisers/)
+- **Chapter:** [01-ml/03_neural_networks/ch03_backprop_optimisers](01-ml/03_neural_networks/ch03_backprop_optimisers)
 - **Focus:** Faster convergence with adaptive learning rates
 - **Key Concept:** Adam combines momentum + RMSProp
 - **Hands-On:** Train same network with SGD, momentum, Adam
@@ -436,7 +436,7 @@ Every session follows this pattern:
 ---
 
 #### Days 44-46: Regularization (Dropout, Batch Norm)
-- **Chapter:** [01-ml/03_neural_networks/ch04_regularisation](01-ml/03_neural_networks/ch04_regularisation/)
+- **Chapter:** [01-ml/03_neural_networks/ch04_regularisation](01-ml/03_neural_networks/ch04_regularisation)
 - **Focus:** Prevent overfitting in deep networks
 - **Key Concept:** Dropout randomly disables neurons during training
 - **Hands-On:** Add dropout (0.5) and batch norm to network
@@ -450,7 +450,7 @@ Every session follows this pattern:
 ---
 
 #### Days 47-50: Convolutional Neural Networks (CNNs)
-- **Chapter:** [01-ml/03_neural_networks/ch05_cnns](01-ml/03_neural_networks/ch05_cnns/)
+- **Chapter:** [01-ml/03_neural_networks/ch05_cnns](01-ml/03_neural_networks/ch05_cnns)
 - **Focus:** Image classification with spatial structure
 - **Key Concept:** Convolutions detect local patterns (edges, textures)
 - **Hands-On:** Build CNN for CelebA face attribute prediction
@@ -464,7 +464,7 @@ Every session follows this pattern:
 ---
 
 #### Days 51-53: RNNs and LSTMs
-- **Chapter:** [01-ml/03_neural_networks/ch06_rnns_lstms](01-ml/03_neural_networks/ch06_rnns_lstms/)
+- **Chapter:** [01-ml/03_neural_networks/ch06_rnns_lstms](01-ml/03_neural_networks/ch06_rnns_lstms)
 - **Focus:** Sequential data, time series, language
 - **Key Concept:** Hidden state carries information across time steps
 - **Hands-On:** Train LSTM for sequence prediction
@@ -478,7 +478,7 @@ Every session follows this pattern:
 ---
 
 #### Days 54-56: Loss Functions and MLE
-- **Chapter:** [01-ml/03_neural_networks/ch07_mle_loss_functions](01-ml/03_neural_networks/ch07_mle_loss_functions/)
+- **Chapter:** [01-ml/03_neural_networks/ch07_mle_loss_functions](01-ml/03_neural_networks/ch07_mle_loss_functions)
 - **Focus:** Principled loss function design
 - **Key Concept:** Cross-entropy comes from maximum likelihood
 - **Hands-On:** Derive loss functions from probability distributions
@@ -492,7 +492,7 @@ Every session follows this pattern:
 ---
 
 #### Days 57-58: TensorBoard and Experiment Tracking
-- **Chapter:** [01-ml/03_neural_networks/ch08_tensorboard](01-ml/03_neural_networks/ch08_tensorboard/)
+- **Chapter:** [01-ml/03_neural_networks/ch08_tensorboard](01-ml/03_neural_networks/ch08_tensorboard)
 - **Focus:** Visualize training, debug models
 - **Key Concept:** Log metrics, histograms, graphs
 - **Hands-On:** Set up TensorBoard for UnifiedAI project
@@ -506,7 +506,7 @@ Every session follows this pattern:
 ---
 
 #### Days 59-60: Attention Mechanism
-- **Chapter:** [01-ml/03_neural_networks/ch09_sequences_to_attention](01-ml/03_neural_networks/ch09_sequences_to_attention/)
+- **Chapter:** [01-ml/03_neural_networks/ch09_sequences_to_attention](01-ml/03_neural_networks/ch09_sequences_to_attention)
 - **Focus:** Seq2Seq models, attention weights
 - **Key Concept:** Attention: $\alpha_t = \text{softmax}(score(h_t, h_s))$
 - **Hands-On:** Implement attention for sequence-to-sequence
@@ -528,7 +528,7 @@ Every session follows this pattern:
 ### Week 11-12: Transformers (Days 61-75)
 
 #### Days 61-67: Transformer Implementation (7 days)
-- **Chapter:** [01-ml/03_neural_networks/ch10_transformers](01-ml/03_neural_networks/ch10_transformers/)
+- **Chapter:** [01-ml/03_neural_networks/ch10_transformers](01-ml/03_neural_networks/ch10_transformers)
 - **Focus:** Self-attention, multi-head attention, positional encoding
 - **Key Concept:** Attention is all you need
 - **Hands-On:** Implement Transformer from scratch
@@ -568,14 +568,14 @@ Every session follows this pattern:
 
 ## Specialization Option A: AI Engineering (Days 68-120)
 
-**Track:** [03-ai](03-ai/)  
+**Track:** [03-ai](03-ai)  
 **Grand Challenge:** PizzaBot — Conversational AI for Mamma Rosa's Pizza  
 **Final Constraint:** >32% conversion, <$0.07/conv, <3s latency, 0 successful attacks
 
 ### Week 13-14: LLM Foundations (Days 68-82)
 
 #### Days 68-70: LLM Fundamentals
-- **Chapter:** [03-ai/ch01_llm_fundamentals](03-ai/ch01_llm_fundamentals/)
+- **Chapter:** [03-ai/ch01_llm_fundamentals](03-ai/ch01_llm_fundamentals)
 - **Focus:** Tokenization, sampling, context windows
 - **Hands-On:** Use GPT API, understand token limits
 
@@ -588,7 +588,7 @@ Every session follows this pattern:
 ---
 
 #### Days 71-73: Prompt Engineering
-- **Chapter:** [03-ai/ch02_prompt_engineering](03-ai/ch02_prompt_engineering/)
+- **Chapter:** [03-ai/ch02_prompt_engineering](03-ai/ch02_prompt_engineering)
 - **Focus:** System prompts, few-shot learning
 - **Hands-On:** Reduce error rate from 15% → 10% with better prompts
 
@@ -601,7 +601,7 @@ Every session follows this pattern:
 ---
 
 #### Days 74-76: Chain-of-Thought Reasoning
-- **Chapter:** [03-ai/ch03_cot_reasoning](03-ai/ch03_cot_reasoning/)
+- **Chapter:** [03-ai/ch03_cot_reasoning](03-ai/ch03_cot_reasoning)
 - **Focus:** Multi-step queries, reasoning traces
 - **Hands-On:** Solve "cheapest gluten-free pizza <600 cal" query
 
@@ -614,7 +614,7 @@ Every session follows this pattern:
 ---
 
 #### Days 77-82: RAG and Embeddings (6 days)
-- **Chapter:** [03-ai/ch04_rag_and_embeddings](03-ai/ch04_rag_and_embeddings/)
+- **Chapter:** [03-ai/ch04_rag_and_embeddings](03-ai/ch04_rag_and_embeddings)
 - **Focus:** Semantic search, retrieval-augmented generation
 - **Hands-On:** Build RAG pipeline for PizzaBot menu corpus
 
@@ -636,7 +636,7 @@ Every session follows this pattern:
 ### Week 15-16: Agents and Production (Days 83-97)
 
 #### Days 83-87: Vector Databases (5 days)
-- **Chapter:** [03-ai/ch05_vector_dbs](03-ai/ch05_vector_dbs/)
+- **Chapter:** [03-ai/ch05_vector_dbs](03-ai/ch05_vector_dbs)
 - **Focus:** HNSW, IVF indexing for fast retrieval
 - **Hands-On:** Optimize retrieval time: 5s → 0.4s
 
@@ -649,7 +649,7 @@ Every session follows this pattern:
 ---
 
 #### Days 88-92: ReAct and Semantic Kernel (5 days)
-- **Chapter:** [03-ai/ch06_react_and_semantic_kernel](03-ai/ch06_react_and_semantic_kernel/)
+- **Chapter:** [03-ai/ch06_react_and_semantic_kernel](03-ai/ch06_react_and_semantic_kernel)
 - **Focus:** Tool calling, agent orchestration
 - **Hands-On:** Build ReAct agent that calls APIs
 
@@ -662,9 +662,9 @@ Every session follows this pattern:
 ---
 
 #### Days 93-97: Safety, Evaluation, Cost Optimization (5 days)
-- **Chapter:** [03-ai/ch07_safety_and_hallucination](03-ai/ch07_safety_and_hallucination/)
-- **Chapter:** [03-ai/ch08_evaluating_ai_systems](03-ai/ch08_evaluating_ai_systems/)
-- **Chapter:** [03-ai/ch09_cost_and_latency](03-ai/ch09_cost_and_latency/)
+- **Chapter:** [03-ai/ch07_safety_and_hallucination](03-ai/ch07_safety_and_hallucination)
+- **Chapter:** [03-ai/ch08_evaluating_ai_systems](03-ai/ch08_evaluating_ai_systems)
+- **Chapter:** [03-ai/ch09_cost_and_latency](03-ai/ch09_cost_and_latency)
 
 **5-Day Checklist:**
 - [ ] Implemented prompt injection defense (0 successful attacks) ✅
@@ -677,8 +677,8 @@ Every session follows this pattern:
 ### Week 17-19: Advanced Patterns (Days 98-120)
 
 #### Days 98-105: Fine-Tuning and Advanced Patterns (8 days)
-- **Chapter:** [03-ai/ch10_fine_tuning](03-ai/ch10_fine_tuning/)
-- **Chapter:** [03-ai/ch11_advanced_agentic_patterns](03-ai/ch11_advanced_agentic_patterns/)
+- **Chapter:** [03-ai/ch10_fine_tuning](03-ai/ch10_fine_tuning)
+- **Chapter:** [03-ai/ch11_advanced_agentic_patterns](03-ai/ch11_advanced_agentic_patterns)
 
 **8-Day Checklist:**
 - [ ] Trained LoRA adapter for Mamma Rosa's brand voice
@@ -689,7 +689,7 @@ Every session follows this pattern:
 ---
 
 #### Days 106-120: Testing and Production (15 days)
-- **Chapter:** [03-ai/ch12_testing_ai_systems](03-ai/ch12_testing_ai_systems/)
+- **Chapter:** [03-ai/ch12_testing_ai_systems](03-ai/ch12_testing_ai_systems)
 - **Grand Solution:** [03-ai/grand_solution.ipynb](03-ai/grand_solution.ipynb)
 
 **Final Project — PizzaBot Production Deployment:**
@@ -710,14 +710,14 @@ Every session follows this pattern:
 
 ## Specialization Option B: Multimodal AI (Days 68-120)
 
-**Track:** [05-multimodal_ai](05-multimodal_ai/)  
+**Track:** [05-multimodal_ai](05-multimodal_ai)  
 **Grand Challenge:** VisualForge Studio — Local image generation pipeline  
 **Final Constraint:** ≥4.0/5.0 quality, <30s/image, <$5k hardware
 
 ### Week 13-15: Diffusion Foundations (Days 68-90)
 
 #### Days 68-72: CLIP (5 days)
-- **Chapter:** [05-multimodal_ai/ch03_clip](05-multimodal_ai/ch03_clip/)
+- **Chapter:** [05-multimodal_ai/ch03_clip](05-multimodal_ai/ch03_clip)
 - **Focus:** Text-image embeddings, contrastive learning
 - **Hands-On:** Compute CLIP similarity for image-text pairs
 
@@ -730,8 +730,8 @@ Every session follows this pattern:
 ---
 
 #### Days 73-82: Diffusion Models (10 days)
-- **Chapter:** [05-multimodal_ai/ch04_diffusion_models](05-multimodal_ai/ch04_diffusion_models/)
-- **Chapter:** [05-multimodal_ai/ch05_schedulers](05-multimodal_ai/ch05_schedulers/)
+- **Chapter:** [05-multimodal_ai/ch04_diffusion_models](05-multimodal_ai/ch04_diffusion_models)
+- **Chapter:** [05-multimodal_ai/ch05_schedulers](05-multimodal_ai/ch05_schedulers)
 
 **10-Day Checklist:**
 - [ ] Understand forward diffusion: gradually add noise
@@ -743,8 +743,8 @@ Every session follows this pattern:
 ---
 
 #### Days 83-90: Latent Diffusion (8 days)
-- **Chapter:** [05-multimodal_ai/ch06_latent_diffusion](05-multimodal_ai/ch06_latent_diffusion/)
-- **Chapter:** [05-multimodal_ai/ch07_guidance_conditioning](05-multimodal_ai/ch07_guidance_conditioning/)
+- **Chapter:** [05-multimodal_ai/ch06_latent_diffusion](05-multimodal_ai/ch06_latent_diffusion)
+- **Chapter:** [05-multimodal_ai/ch07_guidance_conditioning](05-multimodal_ai/ch07_guidance_conditioning)
 
 **8-Day Checklist:**
 - [ ] Understand VAE: encode image to latent (512×512 → 64×64)
@@ -757,8 +757,8 @@ Every session follows this pattern:
 ### Week 16-18: Production Deployment (Days 91-120)
 
 #### Days 91-105: Text-to-Image and Video (15 days)
-- **Chapter:** [05-multimodal_ai/ch08_text_to_image](05-multimodal_ai/ch08_text_to_image/)
-- **Chapter:** [05-multimodal_ai/ch09_text_to_video](05-multimodal_ai/ch09_text_to_video/)
+- **Chapter:** [05-multimodal_ai/ch08_text_to_image](05-multimodal_ai/ch08_text_to_image)
+- **Chapter:** [05-multimodal_ai/ch09_text_to_video](05-multimodal_ai/ch09_text_to_video)
 
 **15-Day Checklist:**
 - [ ] Ran Stable Diffusion 1.5 — 512×512 images, 25s/image
@@ -769,8 +769,8 @@ Every session follows this pattern:
 ---
 
 #### Days 106-120: Local Diffusion Lab (15 days)
-- **Chapter:** [05-multimodal_ai/ch12_generative_evaluation](05-multimodal_ai/ch12_generative_evaluation/)
-- **Chapter:** [05-multimodal_ai/ch13_local_diffusion_lab](05-multimodal_ai/ch13_local_diffusion_lab/)
+- **Chapter:** [05-multimodal_ai/ch12_generative_evaluation](05-multimodal_ai/ch12_generative_evaluation)
+- **Chapter:** [05-multimodal_ai/ch13_local_diffusion_lab](05-multimodal_ai/ch13_local_diffusion_lab)
 - **Grand Solution:** [05-multimodal_ai/grand_solution.ipynb](05-multimodal_ai/grand_solution.ipynb)
 
 **Final Project — VisualForge Studio Deployment:**
@@ -791,15 +791,15 @@ Every session follows this pattern:
 
 ## Specialization Option C: AI Infrastructure (Days 68-120)
 
-**Track:** [06-ai_infrastructure](06-ai_infrastructure/)  
+**Track:** [06-ai_infrastructure](06-ai_infrastructure)  
 **Grand Challenge:** InferenceBase — Self-host Llama-3-8B  
 **Final Constraint:** <$15k/mo, ≤2s p95, ≥10k req/day
 
 ### Week 13-16: GPU Optimization (Days 68-97)
 
 #### Days 68-75: GPU Architecture and Memory (8 days)
-- **Chapter:** [06-ai_infrastructure/ch01_gpu_architecture](06-ai_infrastructure/ch01_gpu_architecture/)
-- **Chapter:** [06-ai_infrastructure/ch02_memory_and_compute_budgets](06-ai_infrastructure/ch02_memory_and_compute_budgets/)
+- **Chapter:** [06-ai_infrastructure/ch01_gpu_architecture](06-ai_infrastructure/ch01_gpu_architecture)
+- **Chapter:** [06-ai_infrastructure/ch02_memory_and_compute_budgets](06-ai_infrastructure/ch02_memory_and_compute_budgets)
 
 **8-Day Checklist:**
 - [ ] Understand CUDA cores, Tensor Cores, memory hierarchy
@@ -810,9 +810,9 @@ Every session follows this pattern:
 ---
 
 #### Days 76-90: Quantization and Serving (15 days)
-- **Chapter:** [06-ai_infrastructure/ch03_quantization_and_precision](06-ai_infrastructure/ch03_quantization_and_precision/)
-- **Chapter:** [06-ai_infrastructure/ch05_inference_optimization](06-ai_infrastructure/ch05_inference_optimization/)
-- **Chapter:** [06-ai_infrastructure/ch06_model_serving_frameworks](06-ai_infrastructure/ch06_model_serving_frameworks/)
+- **Chapter:** [06-ai_infrastructure/ch03_quantization_and_precision](06-ai_infrastructure/ch03_quantization_and_precision)
+- **Chapter:** [06-ai_infrastructure/ch05_inference_optimization](06-ai_infrastructure/ch05_inference_optimization)
+- **Chapter:** [06-ai_infrastructure/ch06_model_serving_frameworks](06-ai_infrastructure/ch06_model_serving_frameworks)
 
 **15-Day Checklist:**
 - [ ] Applied INT4 quantization: 16GB → 4GB (4× compression)
@@ -825,8 +825,8 @@ Every session follows this pattern:
 ### Week 17-19: Production Deployment (Days 91-120)
 
 #### Days 91-110: Monitoring and MLOps (20 days)
-- **Chapter:** [06-ai_infrastructure/ch09_ml_experiment_tracking](06-ai_infrastructure/ch09_ml_experiment_tracking/)
-- **Chapter:** [06-ai_infrastructure/ch10_production_ml_monitoring](06-ai_infrastructure/ch10_production_ml_monitoring/)
+- **Chapter:** [06-ai_infrastructure/ch09_ml_experiment_tracking](06-ai_infrastructure/ch09_ml_experiment_tracking)
+- **Chapter:** [06-ai_infrastructure/ch10_production_ml_monitoring](06-ai_infrastructure/ch10_production_ml_monitoring)
 
 **20-Day Checklist:**
 - [ ] Set up MLflow for experiment tracking
@@ -837,7 +837,7 @@ Every session follows this pattern:
 ---
 
 #### Days 111-120: End-to-End Deployment (10 days)
-- **Chapter:** [06-ai_infrastructure/ch11_end_to_end_deployment](06-ai_infrastructure/ch11_end_to_end_deployment/)
+- **Chapter:** [06-ai_infrastructure/ch11_end_to_end_deployment](06-ai_infrastructure/ch11_end_to_end_deployment)
 - **Grand Solution:** [06-ai_infrastructure/grand_solution.ipynb](06-ai_infrastructure/grand_solution.ipynb)
 
 **Final Project — InferenceBase Production:**
@@ -885,7 +885,7 @@ Every session follows this pattern:
 ### Week 23-25: Interview Preparation (Days 136-165)
 
 #### Days 136-150: Technical Interview Prep (15 days)
-- **Exercises:** [exercises/01-ml/01-regression](../exercises/01-ml/01-regression/), [exercises/03-ai](../exercises/03-ai/)
+- **Exercises:** [exercises/01-ml/01-regression](../exercises/01-ml/01-regression), [exercises/03-ai](../exercises/03-ai)
 - **Focus:** Implement algorithms from scratch, explain trade-offs
 
 **Daily routine:**
@@ -896,7 +896,7 @@ Every session follows this pattern:
 ---
 
 #### Days 151-165: System Design and Behavioral (15 days)
-- **Chapter:** [interview_guides](interview_guides/)
+- **Chapter:** [interview_guides](interview_guides)
 - **Focus:** ML system design, behavioral stories
 
 **Topics to master:**

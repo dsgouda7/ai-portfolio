@@ -2213,7 +2213,7 @@ Replace each DECISION CHECKPOINT block with two callout lines:
 > ➡️ Act 3 applies the `log1p` + `StandardScaler` pipeline before Ch.01's linear regression baseline.
 ```
 
-Fix broken section-number cross-references: replace `→ §5 Act 2` with a relative path (`→ [../ch01-linear-regression/](../ch01-linear-regression/)`).
+Fix broken section-number cross-references: replace `→ §5 Act 2` with a relative path (`→ [../ch01-linear-regression/](../ch01_linear_regression)`).
 
 **Callout discipline for ML chapters:**
 - `> 💡 **[Stage] verdict:**` — one line after each act/stage concludes, states the decision and its metric impact (e.g., "Expected MAE impact: −$3–5k")

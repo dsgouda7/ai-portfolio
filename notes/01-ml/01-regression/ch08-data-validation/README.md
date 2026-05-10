@@ -266,7 +266,7 @@ where $F_1$ is the training CDF and $F_2$ is the production CDF.
 
 **How to read it.** Sort both samples and compute their empirical CDFs. At every data point, measure how far apart the two CDFs sit. $D_{KS}$ is the single largest gap. If both samples come from the same distribution, the CDFs overlap closely ($D_{KS} \approx 0$). If they diverge sharply, $D_{KS} \to 1$.
 
-The associated **p-value** uses the asymptotic distribution of $D_{KS}$ under the null hypothesis “both samples share the same underlying distribution.” A p-value < 0.05 means: if the populations were truly identical, seeing this large a gap by random sampling would happen fewer than 5% of the time. (For the full null-hypothesis framework behind this interpretation, see [ch06-metrics §8b](../ch06-metrics/README.md#8b--statistical-significance-of-regression-coefficients-p-values).)
+The associated **p-value** uses the asymptotic distribution of $D_{KS}$ under the null hypothesis “both samples share the same underlying distribution.” A p-value < 0.05 means: if the populations were truly identical, seeing this large a gap by random sampling would happen fewer than 5% of the time. (For the full null-hypothesis framework behind this interpretation, see [ch06-metrics §8b](../ch06_metrics/README.md#8b--statistical-significance-of-regression-coefficients-p-values).)
 
 ```python
 from scipy.stats import ks_2samp

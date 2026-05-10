@@ -186,4 +186,4 @@ Each exercise includes `setup.ps1` (Windows) and `setup.sh` (Unix) for automatic
 
 - [notes/01-ml/README.md](../../notes/01-ml/README.md) — Topic-based ML curriculum (theory and detailed explanations)
 - [exercises/README.md](../README.md) — All exercise tracks across AI portfolio
-- [exercises/02-advanced_deep_learning/](../02-advanced_deep_learning/) — Advanced neural architectures (GANs, VAEs, Transformers)
+- [exercises/02-advanced_deep_learning/](../02-advanced_deep_learning) — Advanced neural architectures (GANs, VAEs, Transformers)

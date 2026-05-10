@@ -27,7 +27,7 @@ red_lines: [no_formula_without_business_metric_consequence, no_concept_without_p
 
 ## The Plan
 
-The Agentic AI track covers 6 core chapters: everything from tool-calling orchestration to multi-agent production architecture. This track builds directly on [LLM Fundamentals (03a-ai)](../03a-ai/).
+The Agentic AI track covers 6 core chapters: everything from tool-calling orchestration to multi-agent production architecture. This track builds directly on [LLM Fundamentals (03a-ai)](../03a-ai).
 
 ```
 notes/03b-agentic-ai/

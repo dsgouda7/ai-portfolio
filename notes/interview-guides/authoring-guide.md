@@ -263,7 +263,7 @@ All Mermaid nodes use `stroke:#e2e8f0,stroke-width:2px,color:#ffffff` for text l
 **Forward link pattern:** *"If the interviewer follows up with 'how does this scale?', see the [Production Scaling] section below."*
 
 **Cross-guide links:** When a concept in one interview guide relates to another domain:
-> *"➡️ For the infrastructure angle on serving these models, see [AIInfrastructure.md](AIInfrastructure.md#model-serving)"*
+> *"➡️ For the infrastructure angle on serving these models, see [AIInfrastructure.md](ai-infrastructure.md#model-serving)"*
 
 **External reference links:** Link to official docs, papers, or blog posts for deep dives:
 > *"📖 For the full attention mechanism derivation, see [Vaswani et al. 2017 — 'Attention Is All You Need'](https://arxiv.org/abs/1706.03762)"*

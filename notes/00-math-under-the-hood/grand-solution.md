@@ -15,16 +15,16 @@
 
 2. **⚡ Quick overview (this document)**: Read the synthesis below to understand the complete progression, then jump to specific chapters for details
 
-3. **💻 Hands-on code walkthrough**: Open [`grand_solution.ipynb`](./grand_solution.ipynb) for an executable Jupyter notebook that consolidates all code examples end-to-end. Run it top-to-bottom to see the complete solution in action.
+3. **💻 Hands-on code walkthrough**: Open [`grand_solution.ipynb`](grand_solution.ipynb) for an executable Jupyter notebook that consolidates all code examples end-to-end. Run it top-to-bottom to see the complete solution in action.
 
 **Chapter roadmap:**
-- [Ch.1: Linear Algebra](./ch01_linear_algebra/README.md) — Lines, weights, and biases
-- [Ch.2: Non-Linear Algebra](./ch02_nonlinear_algebra/README.md) — Polynomials and feature expansion
-- [Ch.3: Calculus Intro](./ch03_calculus_intro/README.md) — Derivatives and integrals
-- [Ch.4: Small Steps](./ch04_small_steps/README.md) — Gradient descent
-- [Ch.5: Matrices](./ch05_matrices/README.md) — Linear systems and batch operations
-- [Ch.6: Chain Rule + Gradients](./ch06_gradient_chain_rule/README.md) — Backpropagation unlocked
-- [Ch.7: Probability & Statistics](./ch07_probability_statistics/README.md) — Noise, likelihood, and MLE
+- [Ch.1: Linear Algebra](ch01_linear_algebra/README.md) — Lines, weights, and biases
+- [Ch.2: Non-Linear Algebra](ch02_nonlinear_algebra/README.md) — Polynomials and feature expansion
+- [Ch.3: Calculus Intro](ch03_calculus_intro/README.md) — Derivatives and integrals
+- [Ch.4: Small Steps](ch04_small_steps/README.md) — Gradient descent
+- [Ch.5: Matrices](ch05_matrices/README.md) — Linear systems and batch operations
+- [Ch.6: Chain Rule + Gradients](ch06_gradient_chain_rule/README.md) — Backpropagation unlocked
+- [Ch.7: Probability & Statistics](ch07_probability_statistics/README.md) — Noise, likelihood, and MLE
 
 ---
 

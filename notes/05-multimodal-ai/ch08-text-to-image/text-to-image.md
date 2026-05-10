@@ -788,21 +788,21 @@ image.save("vf_product_45deg.png")
 
 ## 8 · Connection to Prior Chapters
 
-**From [Ch.3 CLIP](../ch03_clip/)**: Text embeddings from CLIP text encoder are the conditioning signal for all prompts in this chapter. Without CLIP's text-image alignment, prompt engineering wouldn't work.
+**From [Ch.3 CLIP](../ch03_clip)**: Text embeddings from CLIP text encoder are the conditioning signal for all prompts in this chapter. Without CLIP's text-image alignment, prompt engineering wouldn't work.
 
-**From [Ch.4 Diffusion Models](../ch04_diffusion_models/)**: The forward/reverse diffusion process is the foundation. img2img starts at step $t_{\text{start}} < T$ instead of $t = T$.
+**From [Ch.4 Diffusion Models](../ch04_diffusion_models)**: The forward/reverse diffusion process is the foundation. img2img starts at step $t_{\text{start}} < T$ instead of $t = T$.
 
-**From [Ch.5 Schedulers](../ch05_schedulers/)**: DDIM/DPM-Solver schedulers enable 20-step generation. Without schedulers, ControlNet would take 5 minutes instead of 18 seconds.
+**From [Ch.5 Schedulers](../ch05_schedulers)**: DDIM/DPM-Solver schedulers enable 20-step generation. Without schedulers, ControlNet would take 5 minutes instead of 18 seconds.
 
-**From [Ch.6 Latent Diffusion](../ch06_latent_diffusion/)**: VAE latent space compression enables real-time generation. Pixel-space ControlNet would be 8× slower.
+**From [Ch.6 Latent Diffusion](../ch06_latent_diffusion)**: VAE latent space compression enables real-time generation. Pixel-space ControlNet would be 8× slower.
 
-**From [Ch.7 Guidance & Conditioning](../ch07_guidance_conditioning/)**: Classifier-free guidance (CFG) is extended by negative prompts. CFG scale 7.5 is standard for all workflows in this chapter.
+**From [Ch.7 Guidance & Conditioning](../ch07_guidance_conditioning)**: Classifier-free guidance (CFG) is extended by negative prompts. CFG scale 7.5 is standard for all workflows in this chapter.
 
-**To [Ch.9 Text-to-Video](../ch09_text_to_video/)**: ControlNet's spatial conditioning extends to temporal domain. AnimateDiff adds temporal attention → 16-frame video clips.
+**To [Ch.9 Text-to-Video](../ch09_text_to_video)**: ControlNet's spatial conditioning extends to temporal domain. AnimateDiff adds temporal attention → 16-frame video clips.
 
-**To [Ch.10 Multimodal LLMs](../ch10_multimodal_llms/)**: Generated images need QA verification. VLMs like LLaVA check if output matches client brief.
+**To [Ch.10 Multimodal LLMs](../ch10_multimodal_llms)**: Generated images need QA verification. VLMs like LLaVA check if output matches client brief.
 
-**To [Ch.11 Evaluation](../evaluation/)**: ControlNet improves composition → measurable via FID, CLIP score, human preference (HPSv2). Evaluation chapter quantifies what "95% success rate" means.
+**To [Ch.11 Evaluation](../evaluation)**: ControlNet improves composition → measurable via FID, CLIP score, human preference (HPSv2). Evaluation chapter quantifies what "95% success rate" means.
 
 ---
 
@@ -935,7 +935,7 @@ image.save("vf_product_45deg.png")
 
 **The blocker**: Text-to-image generates one frame at a time. Applying it frame-by-frame produces flickering, inconsistent motion. **Temporal coherence** is the missing piece.
 
-**The unlock in [Ch.9 Text-to-Video](../ch09_text_to_video/)**: AnimateDiff extends Stable Diffusion with **temporal attention layers** and **motion modules** trained on video datasets. You'll learn:
+**The unlock in [Ch.9 Text-to-Video](../ch09_text_to_video)**: AnimateDiff extends Stable Diffusion with **temporal attention layers** and **motion modules** trained on video datasets. You'll learn:
 - How temporal self-attention enforces frame-to-frame consistency
 - Why motion modules are trained separately from the base diffusion model
 - How to generate 16-frame 512×512 clips in ~3 minutes

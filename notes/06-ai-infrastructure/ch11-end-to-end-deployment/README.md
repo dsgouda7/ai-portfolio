@@ -1,7 +1,7 @@
 # Ch.11 — Production Deployment Walkthrough
 
 **Track**: AI Infrastructure (06-ai_infrastructure) | **Chapter**: 11 | **Grand Challenge**: InferenceBase
-**Previous**: [ch10_production_ml_monitoring](../ch10_production_ml_monitoring/) | **Status**: Grand Challenge Complete ✅
+**Previous**: [ch10_production_ml_monitoring](../ch10_production_ml_monitoring) | **Status**: Grand Challenge Complete ✅
 
 > **The story.** In **2014**, Docker shipped version 1.0 and changed the question "does it work on your machine?" to a solved problem. In **2015**, Google open-sourced **Kubernetes**, and suddenly the question became "does it scale on *any* machine?" — automatically. For ML teams, the combination took years to click. Early LLM deployments (2022–2023) were notoriously fragile: a single vLLM process running in a `tmux` session on a rented A100, restarted by hand after crashes, with latency that spiked whenever traffic surged past the single-pod limit. Then teams started applying the Docker + Kubernetes playbook that backend engineers had perfected for stateless web services. The insight: **a vLLM server is just a stateless HTTP service with a GPU dependency** — it containerises exactly like any other service, and Kubernetes manages scheduling, health checks, and autoscaling the same way. The only special ingredient is the NVIDIA device plugin, which teaches Kubernetes how to claim GPU slots as resources. Once that's installed, `kubectl apply -f k8s/` is the entire deployment.
 >
@@ -114,7 +114,7 @@ flowchart TD
 **The control path**: HPA watches Prometheus metrics → adjusts replica count → Service load-balances across replicas.
 **The secrets path**: K8s Secret → pod env var at container start → vLLM passes it to HuggingFace Hub for model download.
 
-> ➡️ The Ingress controller configuration (TLS certificates, rate-limit annotations) is covered in [DevOps Ch.4 — CI/CD & Ingress](../../07-devops_fundamentals/ch04_cicd/). This chapter focuses on the workload layer: Deployment, Service, HPA.
+> ➡️ The Ingress controller configuration (TLS certificates, rate-limit annotations) is covered in [DevOps Ch.4 — CI/CD & Ingress](../../07-devops_fundamentals/ch04_cicd). This chapter focuses on the workload layer: Deployment, Service, HPA.
 
 ---
 
@@ -229,11 +229,11 @@ CMD python -m vllm.entrypoints.openai.api_server \
         ...
 ```
 
-This lets you swap models (`meta-llama/Meta-Llama-3-70B-Instruct`) by updating the K8s ConfigMap without rebuilding the image — an important property for the [A/B testing rollout](../ch10_production_ml_monitoring/) you built in Ch.10.
+This lets you swap models (`meta-llama/Meta-Llama-3-70B-Instruct`) by updating the K8s ConfigMap without rebuilding the image — an important property for the [A/B testing rollout](../ch10_production_ml_monitoring) you built in Ch.10.
 
 ### Full Dockerfile
 
-See [`Dockerfile`](./Dockerfile) at the root of this chapter. The full file is 60 lines; the key design decisions are above.
+See [`Dockerfile`](Dockerfile) at the root of this chapter. The full file is 60 lines; the key design decisions are above.
 
 ```bash
 # Build and verify
@@ -259,7 +259,7 @@ docker run --rm inferencebase/llama3-vllm:latest id
 >
 > **When to use:** Always in CI/CD pipelines. Reduces 10-minute builds to 30 seconds when only requirements.txt changes.
 > **Common alternatives:** Kaniko (for in-cluster builds), Buildah (rootless builds)
-> **See also:** [DevOps Ch.2 — Docker & Containers](../../07-devops_fundamentals/ch02_docker/)
+> **See also:** [DevOps Ch.2 — Docker & Containers](../../07-devops_fundamentals/ch02_docker)
 
 ### 2.1 DECISION CHECKPOINT — Phase 1 Complete
 
@@ -430,7 +430,7 @@ The HPA watches two metrics:
 >
 > **When to use:** Always for production workloads with variable traffic. HPA prevents overload (autoscale up) and reduces cost during off-peak (autoscale down).
 > **Common alternatives:** KEDA (event-driven autoscaling), Cluster Autoscaler (node-level scaling), VPA (VerticalPodAutoscaler for resource requests)
-> **See also:** [DevOps Ch.3 — Kubernetes Deep Dive](../../07-devops_fundamentals/ch03_kubernetes/)
+> **See also:** [DevOps Ch.3 — Kubernetes Deep Dive](../../07-devops_fundamentals/ch03_kubernetes)
 
 ### 3.4 DECISION CHECKPOINT — Phase 2 Complete
 
@@ -780,7 +780,7 @@ annotations:
   description: "Current p95 = {{ $value }}s. Check queue depth and GPU cache utilization."
 ```
 
-> ➡️ The Evidently AI drift detection from [Ch.10 — Production Monitoring](../ch10_production_ml_monitoring/) sits alongside this Prometheus stack. Latency and throughput live in Prometheus; input-distribution drift lives in Evidently. Both dashboards should be open in production.
+> ➡️ The Evidently AI drift detection from [Ch.10 — Production Monitoring](../ch10_production_ml_monitoring) sits alongside this Prometheus stack. Latency and throughput live in Prometheus; input-distribution drift lives in Evidently. Both dashboards should be open in production.
 
 > 💡 **Industry Standard:** `Prometheus + Grafana` stack for metrics observability
 >
@@ -803,7 +803,7 @@ annotations:
 >
 > **When to use:** Always in production. Prometheus is the de facto standard for Kubernetes metrics; Grafana provides visualization and alerting.
 > **Common alternatives:** Datadog (SaaS), New Relic (SaaS), OpenTelemetry + Jaeger (distributed tracing focus)
-> **See also:** [DevOps Ch.5 — Monitoring & Observability](../../07-devops_fundamentals/ch05_monitoring/)
+> **See also:** [DevOps Ch.5 — Monitoring & Observability](../../07-devops_fundamentals/ch05_monitoring)
 
 ### 5.1 DECISION CHECKPOINT — Phase 4 Complete
 
@@ -881,7 +881,7 @@ p99 = 1.9s   ← rare: request arrives just as GPU cache hit 85%,
 
 The p99 spikes correlate with `vllm:gpu_cache_usage_perc` exceeding 0.80. Fix: lower `GPU_MEMORY_UTILIZATION` to 0.80 in `deployment.yaml`, which reserves 10% more VRAM for headroom.
 
-> ➡️ The PagedAttention KV-cache eviction mechanism is explained in detail in [Ch.5 — Inference Optimization](../ch05_inference_optimization/). The `GPU_MEMORY_UTILIZATION` knob is the most direct lever for p99 tail latency.
+> ➡️ The PagedAttention KV-cache eviction mechanism is explained in detail in [Ch.5 — Inference Optimization](../ch05_inference_optimization). The `GPU_MEMORY_UTILIZATION` knob is the most direct lever for p99 tail latency.
 
 ### Automated Canary Analysis Script
 
@@ -1286,13 +1286,13 @@ InferenceBase is deployed. All six constraints are met. The CEO has the cost red
 
 But production systems don't stay still. Three realistic next problems:
 
-**1. Traffic grows 5× (to 60k req/day)** — current single-replica handles 12k; HPA scales to 4× = 48k. Not enough. Next step: [DevOps Ch.3 — Kubernetes Cluster Autoscaler](../../07-devops_fundamentals/ch03_kubernetes/) to provision new GPU nodes automatically, plus [Ch.7 — AI-Specific Networking](../ch07_ai_specific_networking/) for NVLink to maintain throughput across multi-node pods.
+**1. Traffic grows 5× (to 60k req/day)** — current single-replica handles 12k; HPA scales to 4× = 48k. Not enough. Next step: [DevOps Ch.3 — Kubernetes Cluster Autoscaler](../../07-devops_fundamentals/ch03_kubernetes) to provision new GPU nodes automatically, plus [Ch.7 — AI-Specific Networking](../ch07_ai_specific_networking) for NVLink to maintain throughput across multi-node pods.
 
-**2. A new model version (Llama-3-70B) needs evaluation** — the [Ch.10 A/B testing framework](../ch10_production_ml_monitoring/) handles this: deploy v2 at 10% traffic, compare latency/accuracy, promote or rollback. The HPA manifest supports this via `version` labels.
+**2. A new model version (Llama-3-70B) needs evaluation** — the [Ch.10 A/B testing framework](../ch10_production_ml_monitoring) handles this: deploy v2 at 10% traffic, compare latency/accuracy, promote or rollback. The HPA manifest supports this via `version` labels.
 
 **3. Data privacy requirements tighten** — the current setup sends document data to a cloud GPU provider. The next evolution is an on-premise GPU cluster (on-prem Kubernetes with NVIDIA DGX) or a private cloud VPC with no data egress. The same Dockerfile and manifests work in any Kubernetes cluster — that's the portability guarantee of the container abstraction.
 
-> ➡️ For CI/CD automation of the deployment pipeline (automated image builds, canary deployments, GitOps with ArgoCD), see [DevOps Ch.4 — CI/CD & Continuous Deployment](../../07-devops_fundamentals/ch04_cicd/).
+> ➡️ For CI/CD automation of the deployment pipeline (automated image builds, canary deployments, GitOps with ArgoCD), see [DevOps Ch.4 — CI/CD & Continuous Deployment](../../07-devops_fundamentals/ch04_cicd).
 
 ---
 
@@ -1300,8 +1300,8 @@ But production systems don't stay still. Three realistic next problems:
 
 | Chapter | What to revisit |
 |---|---|
-| [Ch.5 — Inference Optimization](../ch05_inference_optimization/) | PagedAttention, KV cache tuning, `GPU_MEMORY_UTILIZATION` knob |
-| [Ch.6 — Serving Frameworks](../ch06_model_serving_frameworks/) | vLLM benchmark methodology, continuous batching internals |
-| [Ch.10 — Production Monitoring](../ch10_production_ml_monitoring/) | Evidently drift detection, Grafana alert rules, A/B test rollout |
-| [DevOps Ch.3 — Kubernetes](../../07-devops_fundamentals/ch03_kubernetes/) | Cluster autoscaler, MIG configuration, NVIDIA device plugin setup |
-| [DevOps Ch.4 — CI/CD](../../07-devops_fundamentals/ch04_cicd/) | GitOps, automated image builds, ArgoCD canary deployments |
+| [Ch.5 — Inference Optimization](../ch05_inference_optimization) | PagedAttention, KV cache tuning, `GPU_MEMORY_UTILIZATION` knob |
+| [Ch.6 — Serving Frameworks](../ch06_model_serving_frameworks) | vLLM benchmark methodology, continuous batching internals |
+| [Ch.10 — Production Monitoring](../ch10_production_ml_monitoring) | Evidently drift detection, Grafana alert rules, A/B test rollout |
+| [DevOps Ch.3 — Kubernetes](../../07-devops_fundamentals/ch03_kubernetes) | Cluster autoscaler, MIG configuration, NVIDIA device plugin setup |
+| [DevOps Ch.4 — CI/CD](../../07-devops_fundamentals/ch04_cicd) | GitOps, automated image builds, ArgoCD canary deployments |

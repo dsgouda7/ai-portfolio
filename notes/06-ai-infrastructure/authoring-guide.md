@@ -1555,7 +1555,7 @@ Single RTX 4090:  12k req/day
 
 **Mix these modes fluidly:**
 - **Urgency:** "You're two weeks from the board meeting. The CEO wants a recommendation: self-host or stay on OpenAI?"
-- **Precision:** Hardware specs with vendor documentation links: "RTX 4090 (AD102 GPU, 16,384 CUDA cores, [NVIDIA spec sheet](...))"
+- **Precision:** Hardware specs with vendor documentation links: "RTX 4090 (AD102 GPU, 16,384 CUDA cores, [NVIDIA spec sheet](.))"
 - **Pragmatism:** "INT4 quantization trades 1.2% accuracy for $78k/month savings. The CEO will take that trade."
 
 **Why effective:** Signals "this is for engineers with business constraints who also need to justify technical decisions." LaTeX for specs, code for benchmarks, urgency for stakeholders.

@@ -93,7 +93,7 @@ Same investigation, different angles. By the end, you have a complete mental mod
 
 ### The Central Story in One Paragraph
 
-Modern LLM deployments are built on five foundational capabilities: (1) **understanding what an LLM actually is** — tokenization, training stages, sampling — so you can predict its failure modes; (2) **controlling its output** through structured prompts so you can rely on it in production; (3) **extending its reasoning** with chain-of-thought so it handles multi-step tasks; (4) **grounding it in private data** through retrieval-augmented generation so it doesn't hallucinate company facts; and (5) **scaling that retrieval** with ANN indexes so it stays fast under real production load. The Intelligence Audit investigates each layer in sequence. After completing this track, proceed to [03b-agentic-ai](../03b-agentic-ai/) to build agents that act on this foundation.
+Modern LLM deployments are built on five foundational capabilities: (1) **understanding what an LLM actually is** — tokenization, training stages, sampling — so you can predict its failure modes; (2) **controlling its output** through structured prompts so you can rely on it in production; (3) **extending its reasoning** with chain-of-thought so it handles multi-step tasks; (4) **grounding it in private data** through retrieval-augmented generation so it doesn't hallucinate company facts; and (5) **scaling that retrieval** with ANN indexes so it stays fast under real production load. The Intelligence Audit investigates each layer in sequence. After completing this track, proceed to [03b-agentic-ai](../03b-agentic-ai) to build agents that act on this foundation.
 
 ---
 
@@ -106,7 +106,7 @@ Every chapter is a response to a specific historical pressure point:
 - Closed-book models hallucinated private/recent facts → RAG (Lewis et al., 2020) → [rag-and-embeddings](ch04-rag-and-embeddings)
 - Brute-force retrieval doesn't scale → ANN indexes (HNSW, IVF) → [vector-dbs](ch05-vector-dbs)
 
-After ch05, the bottleneck shifts from *capability* to *orchestration, safety, and evaluation* — that's where [03b-agentic-ai](../03b-agentic-ai/) begins.
+After ch05, the bottleneck shifts from *capability* to *orchestration, safety, and evaluation* — that's where [03b-agentic-ai](../03b-agentic-ai) begins.
 
 ---
 
@@ -132,7 +132,7 @@ After ch05, the bottleneck shifts from *capability* to *orchestration, safety, a
 
 #### What Comes Next
 
-After completing this track, continue to [03b-agentic-ai](../03b-agentic-ai/) which covers:
+After completing this track, continue to [03b-agentic-ai](../03b-agentic-ai) which covers:
 - ReAct orchestration and Semantic Kernel
 - Safety and hallucination defense
 - Evaluation frameworks (RAGAS, LLM-as-judge)

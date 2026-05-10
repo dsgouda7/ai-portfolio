@@ -334,11 +334,11 @@ curl http://localhost:5000/metrics
 ## Resources
 
 **Concept Review:**
-- [notes/01-ml/07_unsupervised_learning/](../../notes/01-ml/07_unsupervised_learning/) — Complete track (when available)
+- [notes/01-ml/07_unsupervised_learning/](../../notes/01-ml/07_unsupervised_learning) — Complete track (when available)
 - Scikit-learn clustering: https://scikit-learn.org/stable/modules/clustering.html
 
 **Implementation Guides:**
-- [exercises/01-ml/01-regression/](../01-regression/) — Reference supervised learning patterns
+- [exercises/01-ml/01-regression/](../01-regression) — Reference supervised learning patterns
 - UMAP documentation: https://umap-learn.readthedocs.io/
 - HDBSCAN documentation: https://hdbscan.readthedocs.io/
 

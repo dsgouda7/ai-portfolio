@@ -1,7 +1,7 @@
 # Exercise 05: FraudShield — Interactive Anomaly Detection System
 
 > **Learning Goal:** Implement IsolationForest/LOF/Autoencoder with plug-and-play experimentation and immediate feedback  
-> **Prerequisites:** Completed [notes/01-ml/05-anomaly-detection/](../../../notes/01-ml/05-anomaly-detection/)  
+> **Prerequisites:** Completed [notes/01-ml/05-anomaly-detection/](../../../notes/01-ml/05-anomaly-detection)  
 > **Time Estimate:** 5-6 hours (coding) + 1 hour (deployment, optional)  
 > **Difficulty:** ⭐⭐⭐ Intermediate-Advanced
 
@@ -369,10 +369,10 @@ After completing this exercise:
 
 ## 🔗 **Related Exercises**
 
-- **Exercise 01:** [Regression](../01-regression/) - Learn plug-and-play pattern
-- **Exercise 02:** [Neural Networks](../02-neural-networks/) - Deep learning basics
-- **Exercise 03:** [Classification](../03-classification/) - Binary classification
-- **Exercise 04:** [Clustering](../04-clustering/) - Unsupervised learning
+- **Exercise 01:** [Regression](../01-regression) - Learn plug-and-play pattern
+- **Exercise 02:** [Neural Networks](../02-neural-networks) - Deep learning basics
+- **Exercise 03:** [Classification](../03-classification) - Binary classification
+- **Exercise 04:** [Clustering](../04-clustering) - Unsupervised learning
 
 ---
 
@@ -531,12 +531,12 @@ Services:
 ## Resources
 
 **Concept Review:**
-- [notes/01-ml/](../../notes/01-ml/) — ML fundamentals
+- [notes/01-ml/](../../notes/01-ml) — ML fundamentals
 - Anomaly detection resources (external)
 
 **Implementation Patterns:**
-- [exercises/01-ml/01_regression/](../01_regression/) — Production patterns
-- [exercises/01-ml/02_classification/](../02_classification/) — Classification metrics
+- [exercises/01-ml/01_regression/](../01_regression) — Production patterns
+- [exercises/01-ml/02_classification/](../02_classification) — Classification metrics
 
 ---
 

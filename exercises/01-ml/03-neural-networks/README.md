@@ -1,7 +1,7 @@
 # Exercise 03: UnifiedAI — Neural Network Classification System
 
 > **Learning Goal:** Implement MLP and CNN architectures with backpropagation, live training feedback, and architectural comparison  
-> **Prerequisites:** Completed [notes/01-ml/03-neural-networks/](../../../notes/01-ml/03-neural-networks/) and exercises/01-ml/01-regression/  
+> **Prerequisites:** Completed [notes/01-ml/03-neural-networks/](../../../notes/01-ml/03-neural-networks) and exercises/01-ml/01-regression/  
 > **Time Estimate:** 6-8 hours (coding) + 1-2 hours (experiments)  
 > **Difficulty:** ⭐⭐⭐ Advanced
 
@@ -266,7 +266,7 @@ for lr in [0.0001, 0.001, 0.01]:
 ## 📚 Resources
 
 - [TensorFlow/Keras Documentation](https://www.tensorflow.org/api_docs/python/tf/keras)
-- [notes/01-ml/03-neural-networks/](../../../notes/01-ml/03-neural-networks/)
+- [notes/01-ml/03-neural-networks/](../../../notes/01-ml/03-neural-networks)
 - [Deep Learning Book](https://www.deeplearningbook.org/)
 - [CS231n Neural Networks Notes](http://cs231n.github.io/neural-networks-1/)
 

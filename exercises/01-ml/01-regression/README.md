@@ -3,7 +3,7 @@
 > **Infrastructure Note:** Docker, Docker Compose, and Makefiles have been centralized to `exercises/_infrastructure/`. Run `setup.ps1` (Windows) or `setup.sh` (Linux/Mac) for local development.
 
 > **Learning Goal:** Implement Ridge/Lasso/XGBoost with plug-and-play experimentation and immediate feedback  
-> **Prerequisites:** Completed [notes/01-ml/01-regression/](../../../notes/01-ml/01-regression/)  
+> **Prerequisites:** Completed [notes/01-ml/01-regression/](../../../notes/01-ml/01-regression)  
 > **Time Estimate:** 5-6 hours (coding) + 1 hour (deployment, optional)  
 > **Difficulty:** ⭐⭐ Intermediate
 
@@ -374,7 +374,7 @@ After attempting TODOs, compare your solution to:
 - `_REFERENCE/api_complete.py` — Full Flask API
 
 ### **Related Notes**
-- [notes/01-ml/01-regression/](../../../notes/01-ml/01-regression/) — Theory and concepts
+- [notes/01-ml/01-regression/](../../../notes/01-ml/01-regression) — Theory and concepts
 - [_infrastructure/README.md](../../_infrastructure/README.md) — Shared infrastructure guide
 
 ---
