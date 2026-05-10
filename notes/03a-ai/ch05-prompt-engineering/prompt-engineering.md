@@ -7,8 +7,22 @@
 > The techniques covered in this chapter — system prompts, few-shot examples, structured output, injection defenses — were all discovered between 2020 and 2024 through trial and error in production systems. They are now standard practice.
 >
 > **Where you are in the curriculum.** This is the most immediately applicable skill in the entire LLM Fundamentals track. Every other capability — [RAG](../ch07-rag-and-embeddings), [agents](../../03b-agentic-ai/ch01-react-and-semantic-kernel), [evaluation](../../03b-agentic-ai/ch03-evaluating-ai-systems) — depends on prompts that reliably produce structured, predictable output. This chapter covers the techniques that separate production-grade prompting from trial-and-error.
+
+> **💰 Why prompt engineering matters for costs:** Effective prompts directly impact your LLM bills. Poor prompts lead to:
+> - **Failed generations** → wasted tokens + retries (2-5× multiplier)
+> - **Excessive verbosity** → unnecessary output tokens (20-40% cost inflation)
+> - **Missing context** → multi-turn clarifications (3-10× conversation length)
+> - **Trial-and-error debugging** → burning tokens during development
 >
-> **Key Terms:**
+> **Cost optimization hierarchy:**
+> 1. **Structured prompts** (this chapter) → reduce retries, control output length
+> 2. **Caching system prompts** → reuse static instructions (50-80% token savings)
+> 3. **Few-shot efficiency** → 3-5 good examples > 10-20 mediocre ones
+> 4. **Output constraints** → JSON schemas prevent rambling (30% shorter responses)
+>
+> A well-engineered prompt can cut costs **60-80%** compared to naive prompting while improving quality.
+
+**Key Terms:**
 > - **Few-shot examples** — Sample input/output pairs you show the model (typically 2–5)
 > - **System prompt** — The instructions that run before every user message
 > - **Context window** — Total space for your instructions + examples + user query
@@ -163,6 +177,24 @@ Each component addresses a specific failure mode:
 | Grounding constraint | Hallucination (model inventing facts not present in retrieved docs) |
 | Tone and style | Verbosity, unnecessary politeness, conversational fluff |
 | Negative constraints | Prompt injection attacks (§4) where user tries to override your instructions |
+
+> **💰 System prompt cost optimization:**
+>
+> **Prompt caching** (supported by Claude, GPT-4 Turbo): System prompts are sent with *every* request, but most APIs now cache them automatically. A 500-token system prompt costs:
+> - **Without caching:** 500 input tokens × $0.03/1K = **$0.015 per request**
+> - **With caching:** 500 tokens cached (90% discount) = **$0.0015 per request** (10× cheaper)
+>
+> **At scale:** 1M requests/month:
+> - Without caching: $15,000/month on system prompt alone
+> - With caching: $1,500/month (saves $13,500)
+>
+> **Best practices for cacheable system prompts:**
+> 1. Keep system prompt static — dynamic content goes in user message
+> 2. Put frequently-changing context (retrieved docs) in user message, not system
+> 3. Use provider-specific cache headers (Anthropic: `anthropic-cache-control`)
+> 4. Monitor cache hit rates in API dashboards
+>
+> **Token length matters:** Shorter system prompts mean faster processing and lower latency even with caching. Aim for 200-500 tokens for production systems.
 
 ### Example: System prompt for a technical documentation assistant
 
@@ -434,6 +466,31 @@ except json.JSONDecodeError as e:
 | 3 examples outperform 1; 10 rarely outperform 3 | Diminishing returns kick in fast; excessive examples eat your context budget |
 | Labels can be random for classification | Surprisingly, the *format* of the label matters more than its correctness in few-shot classification — but don't exploit this in production |
 
+> **💰 Few-shot cost optimization:**
+>
+> **Token budget math:** Each example adds input tokens. Poor few-shot design wastes money:
+>
+> **Bad example (10 verbose examples, 250 tokens each):**
+> - Few-shot examples: 2,500 tokens
+> - User query: 100 tokens
+> - Total input: 2,600 tokens × $0.03/1K = **$0.078 per request**
+> - At 100k requests/month: **$7,800/month**
+>
+> **Good example (3 concise examples, 80 tokens each):**
+> - Few-shot examples: 240 tokens
+> - User query: 100 tokens
+> - Total input: 340 tokens × $0.03/1K = **$0.010 per request**
+> - At 100k requests/month: **$1,000/month** (saves $6,800)
+>
+> **Cost optimization strategies:**
+> 1. **Use 3-5 examples, not 10-20** — diminishing returns after 5 examples
+> 2. **Make examples concise** — remove fluff, keep only signal
+> 3. **Cache examples with system prompt** — put examples in system prompt for caching (if static)
+> 4. **Consider fine-tuning** — if you need >10 examples consistently, fine-tuning costs less long-term
+> 5. **Zero-shot for simple tasks** — try zero-shot first (add "Let's think step by step" for reasoning)
+>
+> **Break-even analysis:** Fine-tuning costs ~$5-20 upfront but eliminates few-shot tokens. Break-even at ~500k-2M requests depending on model.
+
 ### What makes good examples
 
 **Think of it like teaching someone to match your writing style:**
@@ -631,6 +688,34 @@ The next chapter — [Chain-of-Thought Reasoning](../ch06-cot-reasoning/cot-reas
 §0 failure #1 was the clearest business blocker: 0% of orders could be processed because the model returned conversational text instead of parseable JSON. Phase 2 few-shot examples raised consistency to 96% — but four failed parses per 100 orders is still four lost orders. Structured output mode closes that gap at the API level.
 
 Your hardest prompt engineering challenge: getting models to reliably produce machine-parseable output (JSON, XML, specific delimited text) without extra prose, apologies, or format deviations. Structured output parsing depends entirely on this — a single format violation breaks the downstream parser.
+
+> **💰 Structured output cost optimization:**
+>
+> **Problem:** Unstructured responses waste tokens and require retries:
+> - **Verbose model:** "Sure! Here's the information you requested: {data: ...} I hope this helps!"
+>   - 40% extra output tokens (you pay for the fluff)
+> - **Parse failures:** 5-10% of responses fail JSON validation → retry loop → 2× cost
+> - **Multi-turn clarifications:** "Please format as JSON" → wasted turn → 3× conversation cost
+>
+> **Solution cost impact:**
+>
+> | Approach | Reliability | Output Token Overhead | Retry Rate | Total Cost Multiplier |
+> |----------|-------------|----------------------|------------|---------------------|
+> | Naive (no constraints) | 50-60% | +60% verbose | 40% retry | **2.4×** |
+> | Schema in prompt | 80-90% | +20% prose | 10% retry | **1.3×** |
+> | JSON mode (API) | 99%+ | +5% minor | 1% retry | **1.05×** |
+>
+> **Real cost example (1M requests/month):**
+> - Naive: $50k baseline × 2.4 = **$120k/month**
+> - Structured (JSON mode): $50k baseline × 1.05 = **$52.5k/month**
+> - **Savings: $67.5k/month**
+>
+> **Best practices:**
+> 1. Use native JSON mode when available (OpenAI, Anthropic, Cohere)
+> 2. Add explicit schema + example in prompt
+> 3. Specify max output length to prevent rambling
+> 4. Use stop sequences (`"stop": ["}"]`) to cut off after JSON closes
+> 5. Validate and log parse failures to optimize schema over time
 
 ### Option 1 — JSON Mode (API-level)
 

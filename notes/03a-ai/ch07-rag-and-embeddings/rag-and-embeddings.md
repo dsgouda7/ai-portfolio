@@ -64,11 +64,16 @@ The remaining 4% are retrieval failures — the relevant document exists but was
 
 ### 1A · From Word2vec to Sentence Embeddings
 
+> 💡 **Quick Intuition:** Embeddings are like GPS coordinates for meaning. "Service uptime" and "availability" have different letters but point to nearly the same location in semantic space—just like San Francisco (37.77°N, 122.42°W) and SF (same coordinates) refer to the same place despite different spellings.
+
 **The retrieval problem:** You need to find documents about "service uptime targets" when the wiki says "99.95% availability" — different words, same meaning. Keyword search fails. You need semantic similarity.
 
 **Embeddings solve this** by transforming text into vectors where meaning becomes measurable. Similar concepts cluster together in high-dimensional space, so "uptime" and "availability" become neighbors even with different exact wording. **Text → fixed vector where semantic distance is measurable.**
+
 **Real-World Example:**
 Imagine organizing books in a library. Instead of alphabetical order, you place books by *meaning* — all authentication guides cluster together, all database tutorials in another corner, all deployment docs nearby. When someone asks "How do I secure user logins?", you don't search for exact words. You walk to the authentication cluster because that's where semantically similar concepts live. That's what embeddings do: they create a map where related ideas are physical neighbors.
+
+**TL;DR:** Embeddings = GPS coordinates for text. Similar meanings = nearby coordinates. Retrieval = find the nearest neighbors.
 
 Word2vec (2013) proved that word vectors could encode meaning: *king − man + woman ≈ queen*. But these were word-level — one vector per word regardless of context. *Bank* in "river bank" and *bank* in "bank account" got the same vector. GloVe (2014) and fastText (2016) refined the approach but kept the word-level limitation.
 
@@ -226,23 +231,37 @@ After seeing millions of such examples, the embedding space organizes itself: al
 
 **The training process (InfoNCE):** The model gets rewarded when it correctly identifies which of many candidates is the true match. If you show it a query and 100 candidate answers (1 correct, 99 wrong), and the model ranks the correct one first, the loss is near zero. If the model ranks a wrong answer higher than the correct one, the loss is high and the model adjusts its weights.
 
+> 💡 **Quick Intuition:** InfoNCE training is like teaching a dog to fetch YOUR tennis ball from a pile of 100 balls. At first, the dog brings back random balls (high loss). As it learns to recognize YOUR ball's unique features (color, wear marks, scent), it reliably fetches the right one (low loss). The training reward is proportional to how confidently the dog picks YOUR ball over all the wrong ones.
+
 <details>
 <summary> <b>For the mathematically curious: InfoNCE loss formula</b></summary>
 
-The training objective is to maximize the similarity between query and positive while minimizing similarity to negatives:
+**Intuition first:** InfoNCE maximizes the probability that the model picks the correct match (positive) from a crowd of distractors (negatives).
 
+**The formula:**
 ```
 L = -log(exp(sim(q,p+)/τ) / Σ exp(sim(q,pi)/τ))
 ```
 
-Where:
+**What each part means:**
+- **Numerator:** `exp(sim(q,p+)/τ)` — How much the model "likes" the correct answer
+- **Denominator:** `Σ exp(sim(q,pi)/τ)` — Sum of how much the model "likes" ALL candidates (correct + wrong)
+- **The fraction:** What fraction of the total "confidence" goes to the correct answer
+- **The log:** Converts probability to loss (higher probability → lower loss)
+
+**Parameters:**
 - `q` = query embedding
 - `p+` = positive (correct match) embedding
 - `pi` = negative (incorrect) embeddings
-- `τ` = temperature parameter (typically 0.05–0.1)
+- `τ` = temperature (0.05–0.1). Lower τ = model must be MORE confident to get low loss
 - `sim()` = cosine similarity
 
-**Translation to plain English:** "Make the query-to-positive similarity stand out compared to query-to-negative similarities." Lower temperature makes the model more confident in picking the positive over negatives.
+**Concrete example:**
+If the model gives the correct answer 0.9 similarity and all wrong answers 0.1 similarity:
+- High confidence → numerator is large, denominator is small → fraction near 1 → log near 0 → low loss ✓
+
+If the model gives correct answer 0.5 and a wrong answer 0.6:
+- Low confidence → numerator is small, denominator is large → fraction < 0.5 → negative log is large → high loss ✗
 
 **You don't need this formula to understand RAG.** The arrow/angle intuition above is sufficient.
 
@@ -498,6 +517,118 @@ HyDE improves retrieval by transforming questions into declarative statements th
 ```mermaid
 sequenceDiagram
  participant User
+ participant System
+ participant LLM as "LLM (for hypothesis)"
+ participant Embed as "Embedding Model"
+ participant VectorDB as "Vector Database"
+ participant GenLLM as "LLM (for generation)"
+
+ User->>System: ❓ Query<br/>"What's our authentication service SLA?"
+ System->>LLM: Generate hypothetical answer
+ LLM-->>System: "The auth service SLA is 99.9% uptime<br/>with p99 latency under 200ms"<br/>(may be hallucinated)
+ System->>Embed: Embed hypothetical answer
+ Embed-->>System: Vector (structurally similar to docs)
+ System->>VectorDB: Search using hypothetical embedding
+ VectorDB-->>System: Top-5 retrieved chunks<br/>(actual documents with correct values)
+ System->>GenLLM: Context: [retrieved chunks]<br/>Query: [original question]
+ GenLLM-->>User: "The authentication service SLA is<br/>99.95% uptime with p99 latency under 50ms"<br/>(✓ grounded in actual documents)
+
+ Note over System,GenLLM: Hypothetical answer improved retrieval<br/>by matching document structure,<br/>then real LLM corrected hallucinations
+```
+
+**Key insight:** The hypothetical answer in step 2 can be completely wrong (hallucinated numbers) — it doesn't matter! Its purpose is purely to improve retrieval by matching the structural patterns of actual documents. Step 5 reads the correct values from retrieved chunks.
+
+**Cost analysis:**
+- **Without HyDE:** 1 embedding + 1 LLM call per query
+- **With HyDE:** 1 LLM call (hypothesis) + 1 embedding + 1 LLM call (generation) per query
+- **Extra cost:** One additional LLM call (~50 tokens)
+- **At GPT-4 mini prices:** $0.03/1M tokens × 50 = **$0.0000015 per query** (negligible)
+- **Recall improvement:** Typically 2-5 percentage points
+
+**When HyDE helps:**
+✓ Questions vs declarative documents ("What is X?" vs "X is Y")
+✓ Colloquial queries vs formal documentation
+✓ Short queries that need expansion
+✓ Domain-specific jargon mismatches
+
+**When HyDE doesn't help:**
+✗ Already using exact keyword matches (BM25 handles this)
+✗ Embeddings already trained on your exact domain
+✗ Ultra-low latency requirements (<50ms p95)
+✗ Cost-sensitive applications (extra LLM call matters)
+
+***
+
+## Summary: Key Takeaways
+
+### 🎯 Core Concepts
+
+1. **Embeddings = GPS coordinates for meaning**
+   - Similar concepts → nearby points in high-dimensional space
+   - Contextual embeddings (BERT) > static embeddings (Word2vec)
+   - Mean pooling converts token vectors → single chunk vector
+
+2. **Encoders > Decoders for retrieval**
+   - Bidirectional attention (BERT) sees full context
+   - Causal attention (GPT) only sees past tokens
+   - Use encoders for retrieval, decoders for generation
+
+3. **Contrastive learning = teaching similarity**
+   - Pull positive pairs together, push negatives apart
+   - InfoNCE loss = "make correct answer stand out"
+   - Training on domain data → better domain embeddings
+
+4. **RAG = lookup before answering**
+   - Ingestion (offline): chunk → embed → index
+   - Query (runtime): embed → retrieve → augment → generate
+   - 38% hallucination → 4% with proper retrieval
+
+### ⚙️ Practical Patterns
+
+**Chunking strategy:**
+- **256 tokens:** High precision, may fragment content
+- **400-512 tokens:** Sweet spot (80% of production systems)
+- **1024+ tokens:** Better for analytical queries
+- Always use 10-20% overlap to prevent boundary loss
+
+**Hybrid search (BM25 + dense):**
+- Keyword matching for exact terms (error codes, names)
+- Semantic matching for paraphrases and concepts
+- RRF merges rankings without score normalization
+
+**HyDE (Hypothetical Document Embeddings):**
+- Generate hypothetical answer → embed it → retrieve
+- Closes query-document phrasing gap
+- 2-5% recall improvement for ~$0.000002/query
+
+### 🚫 Common Pitfalls
+
+1. **Mixing embedding models** (ingestion vs query) → broken retrieval
+2. **No chunk overlap** → information lost at boundaries
+3. **Using decoder models for embeddings** → poor similarity scores
+4. **Skipping BM25** → missing exact keyword matches
+5. **Over-relying on parametric memory** → hallucinations
+
+### 📊 Decision Framework
+
+| Your Situation | Action |
+|----------------|--------|
+| Building first RAG system | Start with 400-token chunks, BERT-family embeddings, HNSW index |
+| Hallucinations on factual queries | Implement RAG with proper retrieval (target <5% hallucination rate) |
+| Missing paraphrased queries | Use hybrid search (BM25 + dense retrieval + RRF) |
+| Query-document phrasing mismatch | Try HyDE (measure recall improvement) |
+| Need exact keyword matches | Add BM25 to your retrieval pipeline |
+| <10K documents | Brute-force search works fine, skip complex indexes |
+
+### 🔗 Next Steps
+
+- **[Chapter 8: Vector Databases](../ch08-vector-dbs)** — Index structures (HNSW, IVF, DiskANN), compression, production architecture
+- **[RAG Pipeline Project](../../../projects/ai/rag_pipeline)** — End-to-end implementation with chunking, hybrid search, evaluation
+- **[Exercises: RAG Implementation](../../../exercises/03-ai/ch07-rag-exercises)** — Hands-on practice with embeddings, retrieval, and evaluation
+
+***
+
+> **The fundamental insight:** LLMs have incredible reasoning machinery but frozen parametric memory. RAG doesn't try to improve the reasoning — it improves the *inputs* to that reasoning by retrieving relevant facts at query time. The model still generates the answer, but now it reads from your actual documents instead of guessing from training data.
  participant LLM as LLM<br/>(Generation)
  participant Embed as Embedding Model<br/>(Encoder)
  participant VDB as Vector Database

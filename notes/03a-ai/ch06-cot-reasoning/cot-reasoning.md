@@ -24,6 +24,37 @@
 
 Before January 2022, the dominant approach to LLM prompting was direct question-answering: feed the model a question, get an answer in one forward pass. This worked well for factual recall and simple pattern completion, but failed catastrophically on multi-step reasoning tasks.
 
+```mermaid
+graph TD
+    A["Question: A < B, B = C, A = $12<br/>What does C cost?"] --> B[Single Forward Pass]
+    B --> C{Compressed Reasoning}
+    C -->|Step 1| D[Parse 3 constraints]
+    C -->|Step 2| E[Infer B's price]
+    C -->|Step 3| F[Infer C's price]
+    C -->|All at once| G["Answer: $15"]
+
+    G -.->|Wrong!| H[No Error Correction]
+
+    style C fill:#ffcccc
+    style G fill:#ffcccc
+    style H fill:#ff6666,color:#fff
+
+    I["Question: A < B, B = C, A = $12<br/>What does C cost?"] --> J[Step 1: Parse]
+    J --> K["A < B (cheaper)"]
+    K --> L[Step 2: Check B]
+    L --> M["B = C, A = $12<br/>Can't determine B yet"]
+    M --> N[Step 3: Reconsider]
+    N --> O["Wait - A < B means A ≠ B<br/>A = $12, so B > $12"]
+    O --> P[Step 4: Conclude]
+    P --> Q["B = C, so C > $12<br/>But exact value unknown"]
+
+    style J fill:#ccffcc
+    style L fill:#ccffcc
+    style N fill:#ccffcc
+    style P fill:#ccffcc
+    style Q fill:#66ff66
+```
+
 **The structural failure:** Consider the query *"A is cheaper than B. B costs the same as C. A costs $12. What does C cost?"* A single forward pass from question to answer compresses all intermediate reasoning into one decoding step. The model must:
 
 1. Parse three constraints (A < B, B = C, A = $12)
@@ -52,6 +83,30 @@ The failure was not a lack of knowledge — GPT-3 had seen arithmetic during tra
 
 **Technical definition.** *Few-shot CoT* prepends $n$ worked examples to the prompt — each example is a (question, reasoning trace, answer) triple. Formally the prompt is $P = [e_1, \ldots, e_n, q]$ where $e_i = (\text{question}_i, \text{steps}_i, \text{answer}_i)$.
 
+```mermaid
+graph LR
+    A[Example 1] --> B[Question]
+    B --> C[Step 1:<br/>Roger starts<br/>with 5 apples]
+    C --> D[Step 2:<br/>Gives 3 away<br/>5 - 3 = 2]
+    D --> E[Step 3:<br/>Buys 7 more<br/>2 + 7 = 9]
+    E --> F[Answer: 9]
+
+    G[Example 2] --> H[...]
+    H --> I[...]
+
+    J[User Question] --> K[Model generates<br/>similar reasoning]
+    K --> L[Step 1]
+    L --> M[Step 2]
+    M --> N[Step 3]
+    N --> O[Final Answer]
+
+    style A fill:#e1f5ff
+    style G fill:#e1f5ff
+    style J fill:#fff4e1
+    style K fill:#d4edda
+    style O fill:#66ff66
+```
+
 **Example from the paper:**
 
 ```
@@ -79,6 +134,28 @@ A: [model continues in the same format]
 ### 1.2 Zero-Shot Chain-of-Thought (Kojima et al., 2022)
 
 **May 2022** — Kojima, Gu, Reid, et al. discovered that CoT could be elicited *without any examples*. Adding the phrase **"Let's think step by step"** to the end of a question was sufficient to trigger multi-step reasoning in large models.
+
+```mermaid
+graph TD
+    A["User Question:<br/>What is 15% of 80?"] --> B["+ Magic phrase:<br/>'Let's think step by step'"]
+    B --> C[Model activates<br/>reasoning mode]
+    C --> D["Step 1:<br/>15% = 0.15"]
+    D --> E["Step 2:<br/>0.15 × 80 = 12"]
+    E --> F["Answer: 12"]
+
+    G["Without magic phrase"] --> H[Model generates<br/>direct answer]
+    H --> I["12"]
+
+    style B fill:#fff4e1
+    style C fill:#d4edda
+    style D fill:#cce5ff
+    style E fill:#cce5ff
+    style F fill:#66ff66
+    style I fill:#ffcccc
+
+    classDef magicPhrase fill:#ffd700,stroke:#ff8c00,stroke-width:3px
+    class B magicPhrase
+```
 
 **Technical definition.** Zero-shot CoT appends a single instruction to the user query: $P = [q, \text{"Let's think step by step"}]$. That instruction alone triggers the model to emit intermediate steps before the final answer, because instruction tuning exposed the model to this phrasing thousands of times during training.
 
@@ -113,6 +190,39 @@ A: [model continues in the same format]
 You tally the final answers: three say "9", one says "7", one says "11". You trust the **consensus answer (9)** more than any single tutor's answer.
 
 Self-consistency is exactly this: sample $K$ independent reasoning chains (at temperature $T > 0$ for diversity), then **count votes** — whichever final answer appears most often wins.
+
+```mermaid
+graph TD
+    A[Question: Roger has 5 apples...<br/>How many does he have?] --> B["Sample K=5 chains<br/>(temperature = 0.7)"]
+
+    B --> C1["Chain 1:<br/>5 - 3 = 2<br/>2 + 7 = 9<br/>Answer: 9 ✓"]
+    B --> C2["Chain 2:<br/>5 - 2 = 3<br/>3 + 7 = 10<br/>Answer: 10 ✗"]
+    B --> C3["Chain 3:<br/>5 - 3 = 2<br/>2 + 7 = 9<br/>Answer: 9 ✓"]
+    B --> C4["Chain 4:<br/>5 - 3 = 2<br/>2 + 6 = 8<br/>Answer: 8 ✗"]
+    B --> C5["Chain 5:<br/>5 - 3 = 2<br/>2 + 7 = 9<br/>Answer: 9 ✓"]
+
+    C1 --> D{Majority Vote}
+    C2 --> D
+    C3 --> D
+    C4 --> D
+    C5 --> D
+
+    D --> E["9 appears 3 times ← Winner!<br/>10 appears 1 time<br/>8 appears 1 time"]
+    E --> F["Final Answer: 9"]
+
+    style B fill:#fff4e1
+    style C1 fill:#d4edda
+    style C2 fill:#ffcccc
+    style C3 fill:#d4edda
+    style C4 fill:#ffcccc
+    style C5 fill:#d4edda
+    style D fill:#cce5ff
+    style F fill:#66ff66
+
+    G["Cost: K × tokens per chain<br/>K=5 → 5× cost<br/>K=10 → 10× cost<br/>Accuracy ↑ as K increases"]
+
+    style G fill:#fff0f0
+```
 
  **Example Reasoning:**
 
