@@ -1,11 +1,11 @@
 # Exercise 02: Advanced Deep Learning — Transfer Learning & Model Comparison
 
 > **Learning Goal:** Implement ResNet, Vision Transformer, and EfficientNet with transfer learning, mixed precision training, and advanced data augmentation  
-> **Prerequisites:** Completed [notes/02-advanced_deep_learning/](../../notes/02-advanced_deep_learning/)  
+> **Prerequisites:** Completed [notes/02-advanced_deep_learning/](../../notes/02-advanced_deep_learning)  
 > **Time Estimate:** 6-8 hours (coding) + 2-3 hours (experimentation)  
 > **Difficulty:** ⭐⭐⭐ Advanced
 
-> **📦 Infrastructure Note:** This exercise uses simplified infrastructure. Docker and containerization features have been removed to focus on core deep learning concepts. For production deployment patterns, see [exercises/06-ai_infrastructure/](../06-ai_infrastructure/).
+> **📦 Infrastructure Note:** This exercise uses simplified infrastructure. Docker and containerization features have been removed to focus on core deep learning concepts. For production deployment patterns, see [exercises/06-ai_infrastructure/](../06-ai_infrastructure).
 
 ---
 

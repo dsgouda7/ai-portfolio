@@ -15,7 +15,7 @@
 - Use this to decide which chapters deserve deep study
 
 **2. Hands-On Learning (2-4 hours) — Recommended**
-- Open [**grand_solution.ipynb**](./grand_solution.ipynb) in Jupyter
+- Open [**grand_solution.ipynb**](grand_solution.ipynb) in Jupyter
 - Run code cells top-to-bottom to see concepts in action
 - Each section demonstrates a chapter's core pattern with executable Python
 - Experiment by modifying parameters and observing behavior
@@ -51,9 +51,9 @@ Ch.7: Agent Frameworks        → Orchestration layer (production deployment)
 ### Resources
 
 - **This document**: High-level synthesis + production metrics
-- **[grand_solution.ipynb](./grand_solution.ipynb)**: Executable code demonstrating all concepts
+- **[grand_solution.ipynb](grand_solution.ipynb)**: Executable code demonstrating all concepts
 - **Individual chapters**: Deep dives with extended examples, diagrams, production gotchas
-- **[authoring-guide.md](./authoring-guide.md)**: Track conventions and patterns (for contributors)
+- **[authoring-guide.md](authoring-guide.md)**: Track conventions and patterns (for contributors)
 
 ---
 

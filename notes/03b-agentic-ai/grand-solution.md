@@ -1,6 +1,6 @@
 # Agentic AI Grand Solution — Mamma Rosa's PizzaBot Production System
 
-> **Prerequisites:** Complete [LLM Fundamentals (03a-ai)](../03a-ai/) before reading this. The PizzaBot Grand Challenge builds on the foundation established there.
+> **Prerequisites:** Complete [LLM Fundamentals (03a-ai)](../03a-ai) before reading this. The PizzaBot Grand Challenge builds on the foundation established there.
 >
 > **For readers short on time:** This document synthesizes all 6 Agentic AI chapters into a single narrative arc showing how we went from **8% conversion → 32% conversion** and what each concept contributes to production agentic AI systems.
 
@@ -113,12 +113,12 @@ Ch.6: Advanced patterns         → Production-grade multi-agent franchise syste
 
 **Conceptual overview:** Read this document first, then dive into individual chapters.
 
-**Hands-on:** Start with [ch01-react-and-semantic-kernel](ch01-react-and-semantic-kernel/) and work sequentially — each chapter builds on the previous.
+**Hands-on:** Start with [ch01-react-and-semantic-kernel](ch01-react-and-semantic-kernel) and work sequentially — each chapter builds on the previous.
 
 **Problem-driven:**
-- "How do I add tool-calling?" → [Ch.1 ReAct](ch01-react-and-semantic-kernel/)
-- "How do I defend against attacks?" → [Ch.2 Safety](ch02-safety-and-hallucination/)
-- "How do I measure quality?" → [Ch.3 Evaluation](ch03-evaluating-ai-systems/)
-- "How do I optimize costs?" → [Ch.4 Cost/Latency](ch04-cost-and-latency/)
-- "When should I fine-tune?" → [Ch.5 Fine-Tuning](ch05-fine-tuning/)
-- "How do I scale to multi-agent?" → [Ch.6 Advanced Patterns](ch06-advanced-agentic-patterns/)
+- "How do I add tool-calling?" → [Ch.1 ReAct](ch01-react-and-semantic-kernel)
+- "How do I defend against attacks?" → [Ch.2 Safety](ch02-safety-and-hallucination)
+- "How do I measure quality?" → [Ch.3 Evaluation](ch03-evaluating-ai-systems)
+- "How do I optimize costs?" → [Ch.4 Cost/Latency](ch04-cost-and-latency)
+- "When should I fine-tune?" → [Ch.5 Fine-Tuning](ch05-fine-tuning)
+- "How do I scale to multi-agent?" → [Ch.6 Advanced Patterns](ch06-advanced-agentic-patterns)

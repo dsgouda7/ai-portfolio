@@ -52,7 +52,7 @@ A **10-chapter production CV pipeline** that progressively optimizes a retail sh
 ## Track Position
 
 **Advanced Deep Learning (Track 7)** sits at the intersection of Machine Learning foundations (Track 1) and Production AI Infrastructure (Track 5). It assumes you understand:
-- Neural network fundamentals ([01-ml/03_neural_networks](../01-ml/03_neural_networks/))
+- Neural network fundamentals ([01-ml/03_neural_networks](../01-ml/03_neural_networks))
 - Convolutional layers, backpropagation, regularization
 - Basic PyTorch/Keras usage
 

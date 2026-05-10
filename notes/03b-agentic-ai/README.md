@@ -1,6 +1,6 @@
 # Agentic AI Track — 03b
 
-> **Prerequisites:** Complete [LLM Fundamentals (03a-ai)](../03a-ai/) before starting this track. You need a solid understanding of prompting, chain-of-thought reasoning, and RAG before building agents.
+> **Prerequisites:** Complete [LLM Fundamentals (03a-ai)](../03a-ai) before starting this track. You need a solid understanding of prompting, chain-of-thought reasoning, and RAG before building agents.
 
 This track is the **PizzaBot Grand Challenge** — 6 chapters taking Mamma Rosa's pizza ordering bot from a broken prototype (8% conversion) to a production-grade agent (32% conversion) satisfying all 6 business constraints.
 
@@ -25,12 +25,12 @@ The CEO has set 6 non-negotiable requirements:
 
 | Chapter | Capability Unlocked | Constraint Met | Conversion |
 |---|---|---|---|
-| [Ch.1 — ReAct & Semantic Kernel](ch01-react-and-semantic-kernel/) | Tool orchestration + proactive upselling | #1 Business Value | 8% → 27% |
-| [Ch.2 — Safety & Hallucination](ch02-safety-and-hallucination/) | Prompt injection defense, guardrails | #5 Safety | 27% → 27% (hardened) |
-| [Ch.3 — Evaluating AI Systems](ch03-evaluating-ai-systems/) | RAGAS metrics, LLM-as-judge, hallucination rate | #2 Accuracy | 27% → 30% |
-| [Ch.4 — Cost & Latency](ch04-cost-and-latency/) | KV caching, model tiers, streaming | #3 Latency + #4 Cost | 30% → 32% |
-| [Ch.5 — Fine-Tuning](ch05-fine-tuning/) | LoRA adapter for brand voice | #6 Reliability | 32% → 32% (optimized) |
-| [Ch.6 — Advanced Agentic Patterns](ch06-advanced-agentic-patterns/) | Multi-agent, LangGraph, HITL | System maturity | Full production |
+| [Ch.1 — ReAct & Semantic Kernel](ch01-react-and-semantic-kernel) | Tool orchestration + proactive upselling | #1 Business Value | 8% → 27% |
+| [Ch.2 — Safety & Hallucination](ch02-safety-and-hallucination) | Prompt injection defense, guardrails | #5 Safety | 27% → 27% (hardened) |
+| [Ch.3 — Evaluating AI Systems](ch03-evaluating-ai-systems) | RAGAS metrics, LLM-as-judge, hallucination rate | #2 Accuracy | 27% → 30% |
+| [Ch.4 — Cost & Latency](ch04-cost-and-latency) | KV caching, model tiers, streaming | #3 Latency + #4 Cost | 30% → 32% |
+| [Ch.5 — Fine-Tuning](ch05-fine-tuning) | LoRA adapter for brand voice | #6 Reliability | 32% → 32% (optimized) |
+| [Ch.6 — Advanced Agentic Patterns](ch06-advanced-agentic-patterns) | Multi-agent, LangGraph, HITL | System maturity | Full production |
 
 ---
 
@@ -67,7 +67,7 @@ Ch.6: Advanced patterns         → Production-grade multi-agent system
 
 ## Navigation
 
-- **Previous track:** [LLM Fundamentals (03a-ai)](../03a-ai/) — complete before starting here
-- **Next track:** [Multi-Agent AI (04-multi-agent-ai)](../04-multi-agent-ai/)
+- **Previous track:** [LLM Fundamentals (03a-ai)](../03a-ai) — complete before starting here
+- **Next track:** [Multi-Agent AI (04-multi-agent-ai)](../04-multi-agent-ai)
 - **Grand Solution:** [grand-solution.md](grand-solution.md) — full synthesis
 - **Authoring Guide:** [authoring-guide.md](authoring-guide.md)

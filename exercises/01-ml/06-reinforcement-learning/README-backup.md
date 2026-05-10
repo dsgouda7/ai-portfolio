@@ -168,7 +168,7 @@ Health check.
 ## Resources
 
 **Concept Review:**
-- [notes/01-ml/06-reinforcement-learning/](../../notes/01-ml/06-reinforcement-learning/) — Complete track (if available)
+- [notes/01-ml/06-reinforcement-learning/](../../notes/01-ml/06-reinforcement-learning) — Complete track (if available)
 - Gymnasium docs: https://gymnasium.farama.org/
 
 **Implementation Guides:**

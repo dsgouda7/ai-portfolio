@@ -19,7 +19,7 @@
    - Each cell includes concise markdown explaining what problem it solves
 
 3. **Sequential deep dive (recommended for complete mastery):**
-   - Start with [Ch.1 XOR Problem](ch01_xor_problem/) → understand why neural networks are needed
+   - Start with [Ch.1 XOR Problem](ch01_xor_problem) → understand why neural networks are needed
    - Progress through Ch.2–10 in order → each chapter builds on previous concepts
    - Return to this document for synthesis and production patterns
 
@@ -34,16 +34,16 @@
 
 | Read if you want to... | Start here |
 |------------------------|------------|
-| Understand why linear models fail | [Ch.1 XOR Problem](ch01_xor_problem/) |
-| Build your first neural network | [Ch.2 Neural Networks](ch02_neural_networks/) |
-| Master efficient training | [Ch.3 Backprop & Optimizers](ch03_backprop_optimisers/) |
-| Prevent overfitting | [Ch.4 Regularization](ch04_regularisation/) |
-| Process images | [Ch.5 CNNs](ch05_cnns/) |
-| Handle sequences | [Ch.6 RNNs/LSTMs](ch06_rnns_lstms/) |
-| Choose the right loss function | [Ch.7 MLE & Loss Functions](ch07_mle_loss_functions/) |
-| Monitor training effectively | [Ch.8 TensorBoard](ch08_tensorboard/) |
-| Implement attention | [Ch.9 Sequences to Attention](ch09_sequences_to_attention/) |
-| Build modern transformers | [Ch.10 Transformers](ch10_transformers/) |
+| Understand why linear models fail | [Ch.1 XOR Problem](ch01_xor_problem) |
+| Build your first neural network | [Ch.2 Neural Networks](ch02_neural_networks) |
+| Master efficient training | [Ch.3 Backprop & Optimizers](ch03_backprop_optimisers) |
+| Prevent overfitting | [Ch.4 Regularization](ch04_regularisation) |
+| Process images | [Ch.5 CNNs](ch05_cnns) |
+| Handle sequences | [Ch.6 RNNs/LSTMs](ch06_rnns_lstms) |
+| Choose the right loss function | [Ch.7 MLE & Loss Functions](ch07_mle_loss_functions) |
+| Monitor training effectively | [Ch.8 TensorBoard](ch08_tensorboard) |
+| Implement attention | [Ch.9 Sequences to Attention](ch09_sequences_to_attention) |
+| Build modern transformers | [Ch.10 Transformers](ch10_transformers) |
 
 ---
 

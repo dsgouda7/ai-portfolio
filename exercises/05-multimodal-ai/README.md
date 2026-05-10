@@ -1,7 +1,7 @@
 # Exercise 05: PixelSmith AI — Multimodal Learning System
 
 > **Learning Goal:** Implement CLIP contrastive learning and image captioning with zero-shot classification  
-> **Prerequisites:** Completed [notes/05-multimodal_ai/](../../notes/05-multimodal_ai/)  
+> **Prerequisites:** Completed [notes/05-multimodal_ai/](../../notes/05-multimodal_ai)  
 > **Time Estimate:** 8-10 hours (coding) + 2 hours (experimentation)  
 > **Difficulty:** ⭐⭐⭐⭐ Advanced
 
@@ -333,7 +333,7 @@ Try 0.7, 1.0, 1.5 for caption generation
 - [PyTorch Vision](https://pytorch.org/vision/stable/transforms.html)
 
 ### **Internal Notes**
-- [notes/05-multimodal_ai/](../../notes/05-multimodal_ai/)
+- [notes/05-multimodal_ai/](../../notes/05-multimodal_ai)
 
 ---
 

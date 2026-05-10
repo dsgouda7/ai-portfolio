@@ -1,7 +1,7 @@
 # Exercise 04: FlixAI — Interactive Recommender System
 
 > **Learning Goal:** Implement Collaborative Filtering and Matrix Factorization with plug-and-play experimentation and immediate feedback  
-> **Prerequisites:** Completed [notes/01-ml/04-recommender-systems/](../../../notes/01-ml/04-recommender-systems/)  
+> **Prerequisites:** Completed [notes/01-ml/04-recommender-systems/](../../../notes/01-ml/04-recommender-systems)  
 > **Time Estimate:** 4-5 hours (coding) + 1 hour (evaluation)  
 > **Difficulty:** ⭐⭐⭐ Intermediate-Advanced
 

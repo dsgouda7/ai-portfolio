@@ -380,7 +380,7 @@ Some implementations use empty string `""`, others use learnable null token, oth
 ## 11 · Notebook
 
 **Interactive Jupyter notebook:**
-📓 [guidance-conditioning.ipynb](./guidance-conditioning.ipynb)
+📓 [guidance-conditioning.ipynb](guidance-conditioning.ipynb)
 
 **What you'll build:**
 1. **CFG scale sweep** — Generate same prompt at guidance scales 1.0, 5.0, 7.5, 10.0, 12.0 and compare outputs

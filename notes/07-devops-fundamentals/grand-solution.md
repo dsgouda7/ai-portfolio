@@ -36,7 +36,7 @@ Advanced Topics (Week 4):
 
 **Prerequisites:** Basic command-line familiarity, understanding of web applications (HTTP, APIs). No prior DevOps experience required.
 
-**Interactive Notebook:** For a consolidated, executable demonstration of all concepts, see [`grand_solution_reference.ipynb` (reference) or `grand_solution_exercise.ipynb` (practice)](./grand_solution.ipynb) — contains code examples and configuration snippets from all 8 chapters in a single notebook.
+**Interactive Notebook:** For a consolidated, executable demonstration of all concepts, see [`grand_solution_reference.ipynb` (reference) or `grand_solution_exercise.ipynb` (practice)](grand_solution.ipynb) — contains code examples and configuration snippets from all 8 chapters in a single notebook.
 
 ---
 

@@ -26,16 +26,16 @@ This document provides the **conceptual overview** of the LLM Fundamentals track
 3. Each chapter builds on previous concepts
 
 **🔍 Problem-driven learners:**
-- **"How do I get structured output?"** → [Ch.2 Prompt Engineering](ch02-prompt-engineering/)
-- **"How do I handle multi-step queries?"** → [Ch.3 CoT Reasoning](ch03-cot-reasoning/)
-- **"How do I eliminate hallucinations on private data?"** → [Ch.4 RAG](ch04-rag-and-embeddings/)
-- **"How do I scale retrieval to 50k+ docs?"** → [Ch.5 Vector DBs](ch05-vector-dbs/)
+- **"How do I get structured output?"** → [Ch.2 Prompt Engineering](ch02-prompt-engineering)
+- **"How do I handle multi-step queries?"** → [Ch.3 CoT Reasoning](ch03-cot-reasoning)
+- **"How do I eliminate hallucinations on private data?"** → [Ch.4 RAG](ch04-rag-and-embeddings)
+- **"How do I scale retrieval to 50k+ docs?"** → [Ch.5 Vector DBs](ch05-vector-dbs)
 
 ### Companion Resources
 
 - **[authoring-guide.md](authoring-guide.md)** — Track structure, conventions, pedagogical patterns
 - **[ai-primer.md](ai-primer.md)** — Investigation framework and mental models
-- **[03b-agentic-ai](../03b-agentic-ai/)** — Next track: agents, tools, and orchestration
+- **[03b-agentic-ai](../03b-agentic-ai)** — Next track: agents, tools, and orchestration
 
 ---
 
@@ -75,7 +75,7 @@ After completing all 5 chapters, the AI Literacy Kit contains:
 4. **RAG Architecture Recommendation** (Ch.4) — Chunking strategy, embedding model choice, hallucination rate before/after
 5. **Production Retrieval Spec** (Ch.5) — ANN index recommendation with recall/latency/cost trade-off table
 
-**What comes next:** Take this foundation into [03b-agentic-ai](../03b-agentic-ai/) to build agents that act on the knowledge you've established here — tool calling, orchestration, safety, and fine-tuning.
+**What comes next:** Take this foundation into [03b-agentic-ai](../03b-agentic-ai) to build agents that act on the knowledge you've established here — tool calling, orchestration, safety, and fine-tuning.
 
 ---
 
@@ -101,10 +101,10 @@ This document provides the **conceptual overview** of the entire AI track. For h
 3. Each chapter builds on previous concepts
 
 **🔍 Problem-driven learners:**
-- **"How do I eliminate hallucinations?"** → [Ch.4 RAG](ch04_rag_embeddings/)
-- **"How do I add tool-calling?"** → [Ch.6 ReAct](ch06_react_semantic_kernel/)
-- **"How do I defend against attacks?"** → [Ch.7 Safety](ch07_evaluating_ai_systems/)
-- **"How do I optimize costs?"** → [Ch.9 Cost/Latency](ch09_cost_latency_optimization/)
+- **"How do I eliminate hallucinations?"** → [Ch.4 RAG](ch04_rag_embeddings)
+- **"How do I add tool-calling?"** → [Ch.6 ReAct](ch06_react_semantic_kernel)
+- **"How do I defend against attacks?"** → [Ch.7 Safety](ch07_evaluating_ai_systems)
+- **"How do I optimize costs?"** → [Ch.9 Cost/Latency](ch09_cost_latency_optimization)
 
 ### Companion Resources
 

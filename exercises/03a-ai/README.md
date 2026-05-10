@@ -10,7 +10,7 @@
 
 > 🎯 **The Mission**: Build **Mamma Rosa's PizzaBot** — a conversational AI ordering system that beats human phone staff on business metrics while maintaining safety and reliability.
 
-**What PizzaBot is:**  
+**What PizzaBot is:**
 An AI ordering assistant that must outperform the existing phone staff. The CEO is skeptical that AI can deliver superior business value. This isn't a demo chatbot — you're proving AI can handle real production constraints: conversion rate, accuracy, latency, cost, safety, and uptime.
 
 **Phone baseline (what we're competing against):**
@@ -36,19 +36,45 @@ An AI ordering assistant that must outperform the existing phone staff. The CEO 
 
 ---
 
+## Track Structure — 8 Chapters
+
+Complete **Chapters 1-8** in the AI track (`notes/03a-ai/`) to unlock all techniques needed for PizzaBot:
+
+1. **Transformer Architecture** — Foundation: attention mechanisms, tokenization, embedding spaces
+2. **LLM Inference Mechanics** — How models generate text, sampling strategies, latency optimization
+3. **LLM Training Pipeline** — Fine-tuning workflows, LoRA/QLoRA, training metrics
+4. **LLM Model Internals** — Quantization, memory optimization, model compression techniques
+5. **Prompt Engineering** — Zero-shot, few-shot, instruction tuning, safety guardrails
+6. **CoT Reasoning** — Chain-of-thought prompting, reasoning patterns, multi-step logic
+7. **RAG & Embeddings** — Retrieval-augmented generation, semantic search, grounding
+8. **Vector Databases** — ChromaDB/FAISS, indexing strategies, retrieval optimization
+
+**Mapping PizzaBot Constraints to Chapters:**
+
+| Constraint | Chapters | Techniques Unlocked |
+|------------|----------|---------------------|
+| **#2 Accuracy** | Ch.7 (RAG), Ch.8 (Vector DBs) | Grounding eliminates hallucinations: 40% → <5% error rate |
+| **#1 Business Value** | Ch.3 (Fine-tuning), Ch.5 (Prompt Eng), Ch.7 (RAG) | Domain adaptation + grounding → 27% conversion, +$2.80 AOV |
+| **#5 Safety** | Ch.5 (Prompt Engineering) | Guardrails, input validation, prompt injection defense |
+| **#3 Latency** | Ch.2 (Inference), Ch.8 (Vector DBs) | Optimized sampling + fast retrieval → <2s p95 response |
+| **#4 Cost** | Ch.2 (Inference), Ch.4 (Model Internals) | Quantization, efficient batching → $0.06/conv (25% savings) |
+| **#6 Reliability** | All chapters | Comprehensive evaluation, monitoring, failure analysis |
+
+---
+
 ### What's Blocking Us
 
-**Without the techniques in this exercise track:**
+**Without completing Chapters 1-8:**
 
-1. **No grounding → hallucinations**: Base LLM has 40% error rate on menu facts (prices, specials, ingredients). Customers receive wrong information → trust destroyed → 8% conversion (vs 22% phone baseline).
+1. **No grounding (Ch.7, Ch.8) → hallucinations**: Base LLM has 40% error rate on menu facts (prices, specials, ingredients). Customers receive wrong information → trust destroyed → 8% conversion (vs 22% phone baseline).
 
-2. **No domain adaptation → generic responses**: Without prompt engineering or fine-tuning, LLM doesn't understand pizza ordering patterns → sounds like a help desk, not an order-taker → low conversion.
+2. **No domain adaptation (Ch.3, Ch.5) → generic responses**: Without prompt engineering or fine-tuning, LLM doesn't understand pizza ordering patterns → sounds like a help desk, not an order-taker → low conversion.
 
 3. **No tool orchestration → can't process orders**: LLM can chat but can't execute actions (check inventory, calculate totals, apply coupons, confirm orders) → conversational dead-end.
 
-4. **No safety hardening → vulnerable to attacks**: Prompt injection can leak customer data, bypass business rules, or generate harmful content → PR disaster + regulatory risk.
+4. **No safety hardening (Ch.5) → vulnerable to attacks**: Prompt injection can leak customer data, bypass business rules, or generate harmful content → PR disaster + regulatory risk.
 
-5. **No optimization → too slow and expensive**: Naive API calls cost $0.15/conv (87% over budget) and take 5-8s → customers hang up, economics don't work.
+5. **No optimization (Ch.2, Ch.4) → too slow and expensive**: Naive API calls cost $0.15/conv (87% over budget) and take 5-8s → customers hang up, economics don't work.
 
 6. **No monitoring → production blindness**: Can't measure reliability, detect regressions, or debug failures → can't ship to production with confidence.
 
@@ -56,50 +82,51 @@ An AI ordering assistant that must outperform the existing phone staff. The CEO 
 
 ### What This Exercise Unlocks
 
-This track teaches 11 chapters of AI techniques, progressively unlocking each constraint:
+**After completing Chapters 1-8, this exercise demonstrates:**
 
-| Chapters | What You'll Learn | Constraints Unlocked | Metrics Achieved |
-|----------|-------------------|----------------------|------------------|
-| **1-3** | LLM fundamentals, prompt engineering, chain-of-thought | Foundation knowledge | 15% conv, 10% errors |
-| **4-5** | RAG & embeddings, vector databases | **#2 Accuracy ✅** | 18% conv, **<5% errors** |
-| **6-7** | ReAct agents, safety & guardrails | **#1 Business Value ✅, #5 Safety ✅** | **27% conv, +$2.80 AOV**, zero attacks |
-| **8-10** | Evaluation, cost/latency optimization, fine-tuning | **#3 Latency ✅, #4 Cost ✅, #6 Reliability ✅** | **<2s p95, $0.06/conv, >99% uptime** |
-| **11** | Advanced agentic patterns | Edge case mastery | 0.7% edge case errors (11× improvement) |
+| Knowledge Foundation | Exercise Implementation | Metrics Achieved |
+|----------------------|-------------------------|------------------|
+| **Ch.1-2**: LLM architecture + inference | Base model selection, sampling strategies | 12% conv, 15% errors |
+| **Ch.3**: Fine-tuning pipeline | LoRA/QLoRA domain adaptation | 18% conv, **<5% errors** (+ Ch.7) |
+| **Ch.4**: Model internals | Quantization for cost/memory optimization | **$0.06/conv** (25% under budget) |
+| **Ch.5-6**: Prompt engineering + CoT | Few-shot prompting, reasoning patterns | 15% conv, 8% errors |
+| **Ch.7-8**: RAG + vector databases | Grounded retrieval, semantic search | **<5% errors, 27% conv** |
+| **All chapters combined** | Production-ready PizzaBot | **All 6 constraints met ✅** |
 
-**After completing this exercise track:**
+**After completing this exercise:**
 - You'll understand **why RAG matters** (grounding prevents hallucination → trust → conversion)
 - You'll compare **three approaches** (fine-tuning vs RAG vs few-shot prompting) on real metrics (BLEU >0.3, perplexity <50, retrieval accuracy >70%)
 - You'll build **production-ready AI systems** that beat human baselines on business metrics
-- You'll know **when to use** each technique (RAG for facts, fine-tuning for style, agents for actions)
+- You'll know **when to use** each technique (RAG for facts, fine-tuning for style, prompting for rapid iteration)
 
 **The CEO's verdict progression:**
 
 ```
-Start:        8% conv, 40% errors → "This is embarrassing. Phone staff never give wrong info."
-After Ch.2:  12% conv, 15% errors → "Better, but still unreliable. Can't deploy this."
-After Ch.4:  18% conv,  5% errors → "Okay, we're approaching parity. What about upselling?"
-After Ch.6:  27% conv, +$2.80 AOV → "Wait... this is BETTER than phone staff?!"
-After Ch.9:  <2s p95, $0.06/conv → "And it's faster AND cheaper?! Let's deploy."
-After Ch.10: >99% uptime         → 🎉 "Best decision we made. Scaling to all locations."
-After Ch.11: 0.7% edge cases     → 🧠 "Handles complex scenarios that stump phone staff!"
+Start:           8% conv, 40% errors → "This is embarrassing. Phone staff never give wrong info."
+After Ch.1-2:   12% conv, 15% errors → "Better, but still unreliable. Can't deploy this."
+After Ch.5-6:   15% conv,  8% errors → "Prompting helps, but inconsistent. Need more reliability."
+After Ch.7-8:   18% conv,  5% errors → "RAG works! Accuracy is there. What about upselling?"
+With Fine-tuning: 27% conv, +$2.80 AOV → "Wait... this is BETTER than phone staff?!"
+With Optimization: <2s p95, $0.06/conv → "And it's faster AND cheaper?! Let's deploy."
+Production:     >99% uptime         → 🎉 "Best decision we made. Scaling to all locations."
 ```
 
 ---
 
-**What's blocking us:**
-1. **Knowledge grounding**: Without RAG, bot hallucinates menu prices (15% error rate) → customer trust breaks → 12% conversion
-2. **Domain adaptation**: Base LLM doesn't understand pizza ordering patterns → generic responses → low conversion
-3. **Prompt optimization**: No systematic approach to few-shot examples → inconsistent quality → unreliable performance
+**What this exercise demonstrates:**
 
-**What this exercise unlocks:**
-- **Constraint #2 (Accuracy)**: RAG pipeline → <5% error rate (from current 15%)
-- **Foundation for Constraint #1 (Business Value)**: Fine-tuned model + RAG → 18% conversion (from 12%), approaching 22% baseline
-- **Technical capabilities**: Evaluation metrics (BLEU, perplexity, retrieval accuracy) to measure progress
+| Approach | Chapters Applied | Key Strength | Metrics |
+|----------|------------------|--------------|----------|
+| **Fine-tuning** | Ch.3 (Training), Ch.4 (Optimization) | Domain adaptation, consistent style | Perplexity <50, BLEU >0.3 |
+| **RAG** | Ch.7 (RAG), Ch.8 (Vector DBs) | Grounded facts, no hallucinations | Retrieval accuracy >70%, <5% errors |
+| **Few-shot** | Ch.5 (Prompting), Ch.6 (CoT) | Rapid iteration, no training needed | BLEU >0.25, 8% errors |
 
-**After completing this exercise:**
-- You'll understand *why* RAG matters (grounding prevents hallucination → trust → conversion)
-- You'll compare *three approaches* (fine-tuning vs RAG vs few-shot prompting) on real metrics
-- You'll know *how to evaluate* AI systems (perplexity <50, BLEU >0.3, retrieval accuracy >70%)
+**By implementing all three approaches, you'll discover:**
+- RAG eliminates hallucinations (40% → <5% error rate) but adds retrieval latency
+- Fine-tuning excels at consistent tone/style but requires retraining for menu updates
+- Few-shot prompting enables fast iteration but lacks reliability at scale
+
+**Production recommendation:** Hybrid approach using RAG (Ch.7-8) for grounding + fine-tuning (Ch.3) for domain style + prompt engineering (Ch.5) for safety guardrails = 27% conversion, <5% errors, $0.06/conv.
 
 ---
 
@@ -188,7 +215,7 @@ class LLMFineTuner(AIModel):
         # 4. Evaluate with perplexity and BLEU
 ```
 
-**Time Estimate:** 60-90 minutes  
+**Time Estimate:** 60-90 minutes
 **Metrics:** Perplexity (lower better), BLEU (0.3+ target)
 
 ---
@@ -246,7 +273,7 @@ class VectorDatabase:
         # Return top-k most similar documents
 ```
 
-**Time Estimate:** 45-60 minutes  
+**Time Estimate:** 45-60 minutes
 **Metrics:** Retrieval accuracy (70%+ target), BLEU, ROUGE-L
 
 ---
@@ -267,7 +294,7 @@ Few-Shot (3 examples):
   "Example 1: Input: What's on the menu? Output: We have...
    Example 2: Input: I want pepperoni. Output: Great! That's...
    Example 3: Input: Delivery time? Output: 30-45 minutes...
-   
+
    Now respond: Input: What pizzas do you have?"
 
 Many-Shot (10+ examples):
@@ -294,7 +321,7 @@ class PromptEngineer(AIModel):
         # Generate with base LLM (no training)
 ```
 
-**Time Estimate:** 30-45 minutes  
+**Time Estimate:** 30-45 minutes
 **Metrics:** BLEU, ROUGE-L (compare to fine-tuning)
 
 ---
@@ -514,12 +541,12 @@ use_gpu=False
 
 ## Support
 
-- **Concepts from**: [notes/03-ai/](../../notes/03-ai/) Ch.1-12
+- **Concepts from**: [notes/03-ai/](../../notes/03-ai) Ch.1-12
 - **Reference solution**: `_REFERENCE/models_complete.py` (chatbot implementation)
 - **Issues**: Check TODO comments for step-by-step instructions
 - **Stuck?**: Focus on one model first (start with `PromptEngineer`)
 
 ---
 
-**Time Estimate:** 4-6 hours for complete implementation  
+**Time Estimate:** 4-6 hours for complete implementation
 **Learning Outcome:** Deep understanding of LLM fine-tuning, RAG, prompt engineering, and evaluation metrics

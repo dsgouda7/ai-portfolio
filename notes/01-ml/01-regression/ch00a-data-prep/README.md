@@ -849,11 +849,11 @@ EDA findings cascade through every subsequent step:
 
 | Later Chapter | How This Chapter Enables It |
 |---------------|----------------------------|
-| [Ch.00b — Class Imbalance](../ch00b-class-imbalance/) | Distribution analysis reveals 75% training = median-value homes; Ch.00b addresses class balance before modeling |
-| [Ch.08 — Data Validation](../ch08-data-validation/) | The audit trail started here becomes the formal validation schema: expected ranges, outlier alert thresholds, missing value rules |
-| [Ch.01 — Linear Regression](../ch01-linear-regression/) | r = 0.69 MedInc correlation explains why single-feature regression works at all; cleaned data from this chapter is what that baseline trains on |
-| [Ch.02 — Multiple Regression](../ch02-multiple-regression/) | VIF analysis (detecting multicollinearity) is the formal follow-up to the r = 0.85 pair flagged here |
-| [Neural Networks track](../../03-neural-networks/) | Z-score normalization of features before neural network training is the model-building application of §4.1's formula |
+| [Ch.00b — Class Imbalance](../ch00b-class-imbalance) | Distribution analysis reveals 75% training = median-value homes; Ch.00b addresses class balance before modeling |
+| [Ch.08 — Data Validation](../ch08-data-validation) | The audit trail started here becomes the formal validation schema: expected ranges, outlier alert thresholds, missing value rules |
+| [Ch.01 — Linear Regression](../ch01_linear_regression) | r = 0.69 MedInc correlation explains why single-feature regression works at all; cleaned data from this chapter is what that baseline trains on |
+| [Ch.02 — Multiple Regression](../ch02_multiple_regression) | VIF analysis (detecting multicollinearity) is the formal follow-up to the r = 0.85 pair flagged here |
+| [Neural Networks track](../../03-neural-networks) | Z-score normalization of features before neural network training is the model-building application of §4.1's formula |
 
 > ➡️ **The EDA-to-production pipeline.** Data cleaning decisions made here must be replicated exactly in the inference pipeline — the same imputer (fitted on training data) must transform incoming production data identically. This is the origin of the `sklearn.pipeline.Pipeline` pattern used throughout the regression and neural network tracks.
 
@@ -893,4 +893,4 @@ EDA findings cascade through every subsequent step:
 
 This chapter cleaned the raw data — removed outliers, analyzed missing patterns, selected optimal imputation strategies. The next chapter, **Ch.00b — Class Imbalance**, examines the training distribution: the California Housing dataset has 75% median-value homes and only 25% high-value ones. A perfectly clean dataset with skewed class distribution still produces a biased model. Ch.00b teaches you SMOTE, class weighting, and stratified sampling to ensure all market segments are properly represented before building any models.
 
-> ➡️ **[Ch.00b — Class Imbalance →](../ch00b-class-imbalance/)** — When the data is clean but the distribution is wrong.
+> ➡️ **[Ch.00b — Class Imbalance →](../ch00b-class-imbalance)** — When the data is clean but the distribution is wrong.

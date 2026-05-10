@@ -525,4 +525,4 @@ make health-check
 ## Resources
 
 **Concept Review:**
-- [notes/07-devops_fundamentals/](../../notes/07-devops_fundamentals/)
+- [notes/07-devops_fundamentals/](../../notes/07-devops_fundamentals)

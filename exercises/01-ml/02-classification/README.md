@@ -1,7 +1,7 @@
 # Exercise 02: FaceAI — Interactive Classification System
 
 > **Learning Goal:** Implement Logistic Regression/SVM/RandomForest with plug-and-play experimentation and immediate feedback  
-> **Prerequisites:** Completed [notes/01-ml/02-classification/](../../../notes/01-ml/02-classification/)  
+> **Prerequisites:** Completed [notes/01-ml/02-classification/](../../../notes/01-ml/02-classification)  
 > **Time Estimate:** 4-5 hours (coding) + 1 hour (deployment, optional)  
 > **Difficulty:** ⭐⭐ Intermediate
 
@@ -178,7 +178,7 @@ Your exercise is complete when:
 ## Resources
 
 **Concept Review:**
-- [notes/01-ml/02_classification/](../../notes/01-ml/02_classification/) — Complete track
+- [notes/01-ml/02_classification/](../../notes/01-ml/02_classification) — Complete track
 - [notes/01-ml/02_classification/grand-challenge.md](../../notes/01-ml/02_classification/grand-challenge.md) — Constraints
 
 **Implementation Guides:**

@@ -731,7 +731,7 @@ Add "How to Use This Track" section at the top of `grand_solution.md`:
 2. **⚡ Quick overview (this document)**: Read the synthesis below to understand
    the complete ProductionCV progression, then jump to specific chapters for details
 
-3. **💻 Hands-on code walkthrough**: Open [`grand_solution_reference.ipynb` (reference) or `grand_solution_exercise.ipynb` (practice)](./grand_solution.ipynb)
+3. **💻 Hands-on code walkthrough**: Open [`grand_solution_reference.ipynb` (reference) or `grand_solution_exercise.ipynb` (practice)](grand_solution.ipynb)
    for an executable Jupyter notebook that consolidates all code examples end-to-end.
    Run it top-to-bottom to see the complete training pipeline.
 ```
@@ -743,9 +743,9 @@ Track README should mention both resources:
 ```markdown
 ## Learning Resources
 
-- **Chapter-by-chapter:** Start with [Ch.1: Residual Networks](./ch01_residual_networks/README.md)
-- **Quick synthesis:** [grand_solution.md](./grand_solution.md) — all 10 chapters in one document
-- **Executable walkthrough:** [grand_solution.ipynb](./grand_solution.ipynb) — consolidated code notebook
+- **Chapter-by-chapter:** Start with [Ch.1: Residual Networks](ch01_residual_networks/README.md)
+- **Quick synthesis:** [grand_solution.md](grand_solution.md) — all 10 chapters in one document
+- **Executable walkthrough:** [grand_solution.ipynb](grand_solution.ipynb) — consolidated code notebook
 ```
 
 ### Maintenance Guidelines

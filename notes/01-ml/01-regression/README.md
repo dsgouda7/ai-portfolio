@@ -187,7 +187,7 @@ Before starting this track, you should have:
 
 - **Python programming**: NumPy, Pandas, Matplotlib basics
 - **Basic statistics**: Mean, variance, correlation
-- **Linear algebra**: Vectors, dot products, matrices — see [Math Under The Hood](../../00-math-under-the-hood/ch01-linear-algebra)
+- **Linear algebra**: Vectors, dot products, matrices — see [Math Under The Hood](../../00-math-under-the-hood/ch01_linear_algebra)
 
 **Recommended** (but not required):
 - Calculus (derivatives, gradients) — covered in [Math Ch.3-6](../../00-math-under-the-hood)

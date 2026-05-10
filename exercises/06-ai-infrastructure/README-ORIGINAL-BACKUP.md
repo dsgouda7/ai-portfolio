@@ -606,7 +606,7 @@ kubectl scale deployment ml-model-serving --replicas=5 -n ml-production
 ## Resources
 
 **Concept Review:**
-- [notes/06-ai_infrastructure/](../../notes/06-ai_infrastructure/)
+- [notes/06-ai_infrastructure/](../../notes/06-ai_infrastructure)
 
 **Infrastructure Components:**
 - MLflow: Experiment tracking and model registry
