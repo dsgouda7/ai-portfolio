@@ -209,6 +209,43 @@ Now that you understand *what* the model receives (tokens), let's see *how* it p
 
 Before you can reason about why GPT-4 behaves differently from Claude, or why a 70B model outperforms a 7B model on complex reasoning, you need to understand what these models **are** at the level of matrix operations and data flow. This section opens the black box.
 
+### A Complete Example: "The cat sat" Through One Attention Head
+
+**Let's walk through the entire attention mechanism with a concrete 3-token example before diving into the formulas.** This will give you intuition for what all the math is doing.
+
+**Input:** "The cat sat" (3 tokens)
+
+**Step 1: Token embeddings** → Each word becomes a vector (suppose 4-dimensional for simplicity):
+```
+"The" → [1.0, 0.2, 0.5, 0.1]
+"cat" → [0.5, 1.5, 0.8, 0.3]
+"sat" → [0.3, 0.9, 1.2, 0.6]
+```
+
+**Step 2: Create Q, K, V** → Linear projections give each token three "views":
+- Q (query): "what am I looking for?"
+- K (key): "what do I offer?"
+- V (value): "what information do I carry?"
+
+**Step 3: Compute attention scores** → For "cat", compute how relevant each other token is:
+```
+"cat" attention scores (after softmax):
+    "The": 0.20  (20% attention)
+    "cat": 0.55  (55% attention - tokens attend heavily to themselves)
+    "sat": 0.25  (25% attention)
+```
+
+**Step 4: Weighted sum** → Blend information from all tokens:
+```
+"cat" output = 0.20 × V_The + 0.55 × V_cat + 0.25 × V_sat
+```
+
+**Result:** "cat"'s output representation is now influenced by its neighbors. It knows it's a noun (from "The"), it's the subject (from "sat"), and retains its original meaning. This updated representation flows to the next layer.
+
+**Key insight:** Every token updates itself by looking at all other tokens and deciding how much to "copy" from each one. The attention weights are learned during training. Now let's see the math that makes this work.
+
+---
+
 Every modern LLM — GPT, Claude, LLaMA, Mistral — is built from stacked **transformer blocks**. Each block performs the same two operations:
 
 1. **Multi-head self-attention** — every token attends to every other token (or to prior tokens only, in decoder models)
@@ -287,26 +324,10 @@ $$\text{scores} = \frac{Q K^T}{\sqrt{d_k}}$$
 - For a 512-token sequence: $Q K^T$ is a $(512, 512)$ matrix — 262,144 similarity scores computed **per head**
 - With 32 heads × 32 layers = 1,024 attention operations per forward pass
 
-#### Step 3: Mask (Decoder-Only Models Only)
+<details>
+<summary><strong>📊 Worked Example: Full Attention Computation for "The cat sat"</strong> (Click to expand)</summary>
 
-💡 **Intuition:** Causal masking is like reading a mystery novel — you can only see the pages you've already read, not the ones ahead. When the model generates "The river bank was...", it knows about [The, river, bank, was] but must not peek at "flooded" (the next word). If it could see the future, generation would be cheating — it would already know the answer before "predicting" it.
-
-**Concrete example:** At generation step 4 (producing the 4th token), the model can attend to tokens 1-3 but not tokens 5+. This forces it to learn genuine next-token prediction, not just memorization.
-
-In **decoder models** (GPT, Claude, LLaMA), each token can only attend to **prior tokens** — this is called **causal masking**. Set all scores where $j > i$ to $-\infty$ before the softmax:
-
-$$\text{scores}_{\text{masked}}[i, j] = \begin{cases}
-\text{scores}[i, j] & \text{if } j \leq i \\
--\infty & \text{if } j > i
-\end{cases}$$
-
-After softmax, $-\infty$ scores become zero — token $i$ assigns zero attention weight to any token $j > i$. This enforces left-to-right generation: the model cannot "peek ahead" at future tokens.
-
-**Encoder models** (BERT) skip this step — every token can attend to every other token (bidirectional attention).
-
-**Worked Example: 3-Token Sequence "The cat sat"**
-
-Assume $d_k = 4$ (tiny for illustration). After projection, suppose we have:
+**This example shows every step of attention with actual numbers.** Assume $d_k = 4$ (tiny for illustration). After projection, suppose we have:
 
 ```
 Q = [[1.0, 0.5, 0.2, 0.1],   # "The"
@@ -361,6 +382,25 @@ sat:    [0.14   0.23   0.63]   # Mostly self-attention, moderate to "cat"
 ```
 
 **Step 6: Weighted sum with V** → output vectors are linear combinations weighted by these attention scores.
+
+</details>
+
+#### Step 3: Mask (Decoder-Only Models Only)
+
+💡 **Intuition:** Causal masking is like reading a mystery novel — you can only see the pages you've already read, not the ones ahead. When the model generates "The river bank was...", it knows about [The, river, bank, was] but must not peek at "flooded" (the next word). If it could see the future, generation would be cheating — it would already know the answer before "predicting" it.
+
+**Concrete example:** At generation step 4 (producing the 4th token), the model can attend to tokens 1-3 but not tokens 5+. This forces it to learn genuine next-token prediction, not just memorization.
+
+In **decoder models** (GPT, Claude, LLaMA), each token can only attend to **prior tokens** — this is called **causal masking**. Set all scores where $j > i$ to $-\infty$ before the softmax:
+
+$$\text{scores}_{\text{masked}}[i, j] = \begin{cases}
+\text{scores}[i, j] & \text{if } j \leq i \\
+-\infty & \text{if } j > i
+\end{cases}$$
+
+After softmax, $-\infty$ scores become zero — token $i$ assigns zero attention weight to any token $j > i$. This enforces left-to-right generation: the model cannot "peek ahead" at future tokens.
+
+**Encoder models** (BERT) skip this step — every token can attend to every other token (bidirectional attention).
 
 #### Step 4: Softmax (Convert Scores to Weights)
 
@@ -915,6 +955,27 @@ flowchart TD
 - **Left (Encoder):** Full attention matrix — every token attends to every other token
 - **Center (Decoder):** Lower-triangular attention matrix — token $i$ attends only to tokens $\leq i$
 - **Right (Encoder-Decoder):** Encoder is bidirectional, decoder is causal, plus cross-attention from decoder to encoder outputs
+
+---
+
+## 7 · Key Distinctions Every Engineer Gets Asked
+
+These are the concepts interviewers expect you to know cold. Each row represents a common interview question.
+
+| Must know | Likely asked | Trap to avoid |
+|---|---|---|
+| **Attention mechanism in one sentence:** Each token computes a weighted sum of all other tokens' values, where weights come from query-key similarity. Q/K/V are three learned linear projections of the input. | "Explain attention in simple terms" | Diving straight into formulas without the retrieval analogy — start with "it's a lookup mechanism" |
+| **Multi-head attention = parallel specialists:** Running 32 attention heads in parallel, each with different Q/K/V weights, lets the model track different patterns simultaneously (syntax, semantics, position). Concatenate outputs, project back to d_model. | "Why do we need multiple attention heads?" | Saying "it's just for parallelism" — the key is specialization: different heads learn different relationships |
+| **Causal masking (decoder-only):** Token i can only attend to tokens ≤ i. Implemented by setting scores[i, j] = -∞ for j > i before softmax. This enforces autoregressive generation — the model cannot peek at future tokens. Encoder models (BERT) skip this step (bidirectional attention). | "What's the difference between encoder and decoder attention?" | Forgetting to mention that encoders see the full sequence simultaneously while decoders see only past tokens |
+| **Positional encoding:** Attention is permutation-equivariant — shuffle inputs, outputs shuffle identically. Without position info, "dog bites man" = "man bites dog". Sinusoidal (original), learned (GPT-2/BERT), or RoPE (LLaMA/Mistral) injects position into embeddings. RoPE wins for context window scaling. | "Why do transformers need positional encoding?" | Not explaining the permutation problem with a concrete example — interviewers expect you to show why order matters |
+| **Three architectural families:** Encoder-only (BERT, RoBERTa — bidirectional, understanding tasks), Decoder-only (GPT, Claude, LLaMA — causal, generation tasks), Encoder-Decoder (T5, BART — seq2seq tasks like translation). Modern production uses decoder for LLMs + encoder for embeddings/retrieval. | "When would you use an encoder vs decoder architecture?" | Saying "decoders are strictly better" — encoders dominate retrieval/embeddings because bidirectional attention captures richer context |
+| **Compute scales with parameters:** In dense models, FLOPs ≈ parameter count per token. A 70B model costs ~10× the compute of a 7B model. This is why inference cost dominates production budgets. LLaMA 7B: ~158M params/layer × 32 layers ≈ 5B in transformer blocks. | "How much does it cost to run inference on a 70B model vs 7B?" | Guessing wildly — remember the linear scaling rule, then adjust for batch size and KV cache overhead |
+| **Residual connections + LayerNorm:** Each transformer block has two residual connections: after attention and after FFN. These let gradients flow directly through 96+ layers without vanishing. LayerNorm stabilizes training by normalizing activations. Without residuals, deep transformers don't train. | "Why do transformers use residual connections?" | Not mentioning gradient flow — the key insight is training stability in deep networks (96 layers for GPT-3 scale) |
+| **Attention is O(n²) in sequence length:** For a 512-token sequence, one attention head computes a 512×512 score matrix (262K scores). With 32 heads × 32 layers = 1,024 attention operations. This is why context windows are expensive. Long-context models (100K+ tokens) use sparse attention or sliding windows. | "Why are long context windows expensive?" | Saying "it's exponential" — it's quadratic, not exponential. Get the complexity class right. |
+| **Q/K/V intuition = library catalog:** Q is your search query, K is the label on each book's spine, V is the content inside the book. Attention matches queries against keys (dot product similarity), then retrieves a weighted blend of values. High attention weight = more of that book's content in the output. | "How do you explain Q/K/V to a non-technical person?" | Using only math notation — interviewers want to see if you can explain it intuitively before the formulas |
+| **Softmax converts scores to probability distribution:** Raw attention scores can be arbitrarily large or negative. Softmax squashes them into [0, 1] range where each row sums to 1.0, making them interpretable as "how much attention to pay." Division by √d_k prevents saturation (vanishing gradients). | "Why do we apply softmax to attention scores?" | Forgetting to mention the scaling factor √d_k — interviewers expect you to know why it's needed (prevents softmax saturation as d_k grows) |
+
+> 💡 **Interview Tip:** Start every answer with plain English, then add the formula. If asked "Explain attention," say "It's a lookup mechanism where each word searches all other words for relevant context" before diving into Q·K^T. Interviewers test whether you understand the intuition, not just the math.
 
 ---
 
