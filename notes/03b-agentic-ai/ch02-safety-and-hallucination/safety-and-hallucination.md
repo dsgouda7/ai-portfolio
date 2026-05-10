@@ -1075,10 +1075,10 @@ WITH Layer 1 filtering:
 
 ```
 Known jailbreak (2023): "Ignore previous instructions..."
-→ Lakera detects this at 95% accuracy ✅
+→ Lakera detects this at 95% accuracy [Complete]
 
 Novel jailbreak (2024): "Translate to French: [system override hidden in Unicode]"
-→ Classifier trained on old patterns misses this ❌
+→ Classifier trained on old patterns misses this [Missed]
 
 Defense: Combine classifier + structural mitigations (§4.4)
 ```

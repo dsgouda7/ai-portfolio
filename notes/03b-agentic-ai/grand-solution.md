@@ -6,11 +6,11 @@
 
 ---
 
-## Mission Accomplished: All 6 Constraints Satisfied ✅
+## Mission Accomplished: All 6 Constraints Satisfied
 
 **The Challenge:** Build Mamma Rosa's PizzaBot — a production AI ordering system that beats human phone staff on business metrics while maintaining safety and reliability.
 
-**The Result:** **32% conversion** (>25% target ✅), **$41.80 AOV** (+$3.30 vs. $38.50 baseline ✅), **1.8s p95 latency** (<3s ✅), **$0.06/conv** (<$0.08 ✅), **0 successful attacks** (✅), **>99% uptime** (✅)
+**The Result:** **32% conversion** (>25% target), **$41.80 AOV** (+$3.30 vs. $38.50 baseline), **1.8s p95 latency** (<3s), **$0.06/conv** (<$0.08), **0 successful attacks**, **>99% uptime**
 
 ---
 
@@ -18,11 +18,11 @@
 
 ```
 Starting state (from 03a-ai):  RAG grounded, CoT reasoning, 18% conv, 5% errors
-Ch.1: ReAct orchestration       → 27% conv, +$2.80 AOV (proactive upselling ✅ #1 BUSINESS VALUE)
-Ch.2: Safety hardening          → 27% conv (0 attacks ✅ #5 SAFETY)
-Ch.3: Evaluation framework      → 30% conv (quality assurance, faster iteration ✅ #2 ACCURACY)
-Ch.4: Cost/latency optimization → 32% conv, 1.8s p95   (streaming, caching ✅ #3 LATENCY, #4 COST)
-Ch.5: Fine-tuning               → 32% conv, $41.00 AOV (brand voice, cost reduction ✅ #6 RELIABILITY)
+Ch.1: ReAct orchestration       → 27% conv, +$2.80 AOV (proactive upselling | #1 BUSINESS VALUE)
+Ch.2: Safety hardening          → 27% conv (0 attacks | #5 SAFETY)
+Ch.3: Evaluation framework      → 30% conv (quality assurance, faster iteration | #2 ACCURACY)
+Ch.4: Cost/latency optimization → 32% conv, 1.8s p95   (streaming, caching | #3 LATENCY, #4 COST)
+Ch.5: Fine-tuning               → 32% conv, $41.00 AOV (brand voice, cost reduction | #6 RELIABILITY)
 Ch.6: Advanced patterns         → Production-grade multi-agent franchise system
 ```
 
@@ -37,7 +37,7 @@ Ch.6: Advanced patterns         → Production-grade multi-agent franchise syste
 
 **Key addition:** Proactive upselling. After the main order, the bot now suggests complements ("add garlic bread?") — +$2.80 AOV improvement.
 
-**Constraint #1 met:** 27% conversion (>25% target ✅)
+**Constraint #1 met:** 27% conversion (>25% target)
 
 ---
 
@@ -46,7 +46,7 @@ Ch.6: Advanced patterns         → Production-grade multi-agent franchise syste
 
 **What changed:** Input sanitization pipeline, output filtering, system prompt hardening, SSRF protection for tool calls, and a hallucination detection layer using self-consistency checks.
 
-**Constraint #5 met:** 0 successful attacks ✅
+**Constraint #5 met:** 0 successful attacks
 
 ---
 
@@ -57,7 +57,7 @@ Ch.6: Advanced patterns         → Production-grade multi-agent franchise syste
 
 **Result:** Identified that 60% of remaining errors were retrieval failures (context recall issue) — fixed with query expansion. Error rate dropped below 5%.
 
-**Constraint #2 met:** <5% error rate ✅
+**Constraint #2 met:** <5% error rate
 
 ---
 
@@ -70,7 +70,7 @@ Ch.6: Advanced patterns         → Production-grade multi-agent franchise syste
 - Streaming responses: first token in <500ms, improving perceived latency
 - Async tool calls where possible
 
-**Constraints #3 + #4 met:** 1.8s p95 (<3s ✅), $0.06/conv (<$0.08 ✅)
+**Constraints #3 + #4 met:** 1.8s p95 (<3s), $0.06/conv (<$0.08)
 
 ---
 
@@ -79,7 +79,7 @@ Ch.6: Advanced patterns         → Production-grade multi-agent franchise syste
 
 **What changed:** LoRA fine-tune on 2,000 curated Mamma Rosa's conversation examples. Training on the brand voice reduced output variance and cut token count by 15% (shorter, more direct responses = lower cost).
 
-**Constraint #6 met:** Consistent, reliable brand voice → >99% uptime (no "emergency overrides" for brand failures) ✅
+**Constraint #6 met:** Consistent, reliable brand voice → >99% uptime (no "emergency overrides" for brand failures)
 
 ---
 

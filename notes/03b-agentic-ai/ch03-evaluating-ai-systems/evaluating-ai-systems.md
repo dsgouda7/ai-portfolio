@@ -57,7 +57,7 @@ Simple change, hidden regression:
 ```
 Change: Update system prompt to be "more friendly"
 Before: "Our Veggie Garden pizza has 540 calories."
-After:  "You'll love our Veggie Garden pizza! It's around 500-550 calories." ❌
+After:  "You'll love our Veggie Garden pizza! It's around 500-550 calories." [WRONG]
 
 Problem: "around 500-550" is hallucination! Real value: 540 calories
 Manual test: Passed (tester didn't check exact number)
@@ -1293,9 +1293,9 @@ jobs:
 ```
 Before Ch.7: Manual testing only
 Scenario: Developer updates system prompt for "friendlier tone"
-- Manual test: 3 queries tested, all pass ✅
+- Manual test: 3 queries tested, all pass [Complete]
 - Push to production
-- Next day: Customer reports "Bot said Margherita is gluten-free!" ❌
+- Next day: Customer reports "Bot said Margherita is gluten-free!" [Failed]
 - Root cause: Friendly tone prompt caused hallucination on edge case
 - Cost: 4 hours debugging + rollback + hotfix
 
@@ -1303,10 +1303,10 @@ After Ch.7: Automated regression testing
 Scenario: Same prompt change
 - Pre-commit hook triggers test suite
 - 200 queries run in 90 seconds
-- RAGAS faithfulness score: 0.89 (down from 0.95) ❌
+- RAGAS faithfulness score: 0.89 (down from 0.95) [Below threshold]
 - Test fails: "Allergen claim not grounded in retrieval context"
 - Commit blocked, developer notified with exact failing query
-- Fix prompt, re-test, score returns to 0.95 ✅
+- Fix prompt, re-test, score returns to 0.95 [Complete]
 - Push to production (no regression!)
 
 Result: ✅ Regression caught before production!
