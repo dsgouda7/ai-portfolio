@@ -248,6 +248,25 @@ Brief bullets on what each chapter covers:
 - Concept: Multi-container applications with service dependencies
 - Tools: Docker Compose, docker-compose.yml, networks, volumes
 - Dial: Service restart policies, resource limits
+
+---
+
+## Style Guidelines
+
+### No Emojis
+
+**Do not use emojis in technical content.** All emoji-based callouts have been systematically removed from the repository (27,921 emojis removed across 168 files as of May 2026).
+
+Use text-only formatting:
+- **Checkpoint:** (not 💡 **Checkpoint:**)
+- **Warning:** (not ⚠️ **Warning:**)
+- **Rule of Thumb:** (not 🎯 **Rule of Thumb:**)
+- [Complete] or Complete (not ✅)
+- [WRONG] or [Failed] (not ❌)
+
+**Rationale:** Emojis create visual clutter, reduce professionalism, and can render inconsistently across platforms. Technical documentation should rely on clear text formatting.
+
+---
 - Trap: Services start before dependencies ready → add health checks
 
 ### Ch.3 — Kubernetes Basics

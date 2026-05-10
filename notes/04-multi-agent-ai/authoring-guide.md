@@ -1989,6 +1989,23 @@ See `notes/04-multi_agent_ai/grand_solution.ipynb` for reference implementation:
 
 ---
 
+## Style Guidelines
+
+### No Emojis
+
+**Do not use emojis in technical content.** All emoji-based callouts have been systematically removed from the repository (27,921 emojis removed across 168 files as of May 2026).
+
+Use text-only formatting:
+- **Checkpoint:** (not 💡 **Checkpoint:**)
+- **Warning:** (not ⚠️ **Warning:**)
+- **Rule of Thumb:** (not 🎯 **Rule of Thumb:**)
+- [Complete] or Complete (not ✅)
+- [WRONG] or [Failed] (not ❌)
+
+**Rationale:** Emojis create visual clutter, reduce professionalism, and can render inconsistently across platforms. Technical documentation should rely on clear text formatting.
+
+---
+
 ## FAQ
 
 **Q: What if my chapter doesn't directly improve a business metric?**

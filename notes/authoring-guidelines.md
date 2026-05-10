@@ -97,6 +97,19 @@ The reader is placed inside the scenario at all times:
 - "Let us explore..."
 - "This section introduces..."
 
+### No Emojis
+
+**Do not use emojis in technical content.** All emoji-based callouts have been systematically removed from the repository (27,921 emojis removed across 168 files as of May 2026).
+
+Use text-only formatting:
+- **Checkpoint:** (not 💡 **Checkpoint:**)
+- **Warning:** (not ⚠️ **Warning:**)
+- **Rule of Thumb:** (not 🎯 **Rule of Thumb:**)
+- [Complete] or Complete (not ✅)
+- [WRONG] or [Failed] (not ❌)
+
+**Rationale:** Emojis create visual clutter, reduce professionalism, and can render inconsistently across platforms. Technical documentation should rely on clear text formatting.
+
 ---
 
 ## 4 · Story Header Pattern
