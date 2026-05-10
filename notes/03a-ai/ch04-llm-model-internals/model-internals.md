@@ -4,6 +4,12 @@
 >
 > **Why this matters:** You can prompt the smartest model in the world, but if you don't understand parameter counts, VRAM constraints, and quantization trade-offs, you'll ship applications that crash on deployment or cost 10× more than necessary. This chapter gives you the engineering vocabulary to make informed decisions about model selection, inference optimization, and deployment architecture.
 
+**What You'll Learn:**
+- Parameter counts and VRAM requirements for different model sizes
+- Quantization trade-offs (fp16, int8, int4) and when to use each
+- Mixture of Experts (MoE) architecture and how it saves compute
+- How to select models for deployment constraints
+
 ---
 
 ## 6 · Model Size & Mixture of Experts (MoE)

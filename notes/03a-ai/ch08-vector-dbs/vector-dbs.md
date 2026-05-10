@@ -12,6 +12,12 @@
 >
 > **Notation.** $M$ — HNSW maximum connections per node; $ef_\text{construction}$ — dynamic candidate list size during index build; $ef_\text{search}$ — beam width during query; $n_\text{probe}$ — IVF clusters to search; $\text{recall@}k$ — fraction of true $k$-nearest neighbours returned by approximate search.
 
+**What You'll Learn:**
+- Why brute-force vector search doesn't scale beyond 10k documents
+- ANN index structures: Flat, IVF, HNSW, DiskANN and when to use each
+- Distance metrics: cosine, dot product, L2 and their trade-offs
+- Production architecture: metadata filters, hybrid retrieval, sharding strategies
+
 ***
 
 ## 0 · The Scaling Problem

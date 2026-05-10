@@ -14,6 +14,12 @@
 > - **Context window** — Total space for your instructions + examples + user query
 > - **Confidence** — How certain the model is about its answer (low/medium/high)
 
+**What You'll Learn:**
+- System prompts vs. user prompts and when to use each
+- Few-shot learning with in-context examples
+- Structured output with JSON mode
+- Prompt injection: what it is and how to defend against it
+
 ---
 
 ## 0 · Opening — Base Models vs Instruct Models

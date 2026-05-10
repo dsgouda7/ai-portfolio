@@ -4,6 +4,12 @@
 >
 > **Where you are:** You've learned what transformers are (ch01 §1, §2) and how attention works (ch01 §2A). Now you'll learn **how text generation actually works at inference time** — the autoregressive loop, KV caching (the optimization that makes modern LLM serving viable), and the production tradeoffs between throughput and latency. This chapter answers: *When you type a prompt into ChatGPT and it generates 500 tokens, what's actually happening?*
 
+**What You'll Learn:**
+- The autoregressive loop: how models generate text one token at a time
+- Sampling parameters: temperature, top-p, top-k and when to use each
+- KV caching: the optimization that makes chatbots fast
+- Production tradeoffs: throughput vs. latency
+
 ---
 
 ## 3 · Sampling — Temperature, Top-p, Top-k

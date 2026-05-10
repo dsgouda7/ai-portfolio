@@ -12,6 +12,12 @@
 >
 > **Notation.** $K$ — number of independent CoT chains sampled in self-consistency; $\hat{a}$ — majority-vote final answer; $d$ — draft depth in speculative decoding; $\alpha$ — acceptance rate of speculative tokens; $C_K = K \cdot \bar{t}$ — total token cost of self-consistency ($\bar{t}$ = mean tokens per chain).
 
+**What You'll Learn:**
+- Chain-of-thought prompting: forcing step-by-step reasoning
+- Self-consistency: sampling multiple reasoning chains and taking majority vote
+- When CoT helps (and when it doesn't)
+- Trained reasoning models (o1, DeepSeek-R1) vs. prompted reasoning
+
 ***
 
 ## § 0 · The Problem — Why Single-Pass Fails on Multi-Step Reasoning

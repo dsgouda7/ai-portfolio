@@ -1,10 +1,17 @@
 # Transformer Architecture — From Tokens to Attention
 
-> **The story.** In June **2017**, eight Google engineers submitted a twelve-page paper with a title that was either arrogant or prophetic: *"Attention Is All You Need."* The entire field of natural language processing ran on **recurrent neural networks** — architectures that processed words sequentially, one token at a time, unable to parallelize training and plagued by vanishing gradients beyond 100-200 tokens. The authors proposed throwing out recurrence entirely and replacing it with a single mechanism called **attention**. Reviewers were skeptical; the NeurIPS acceptance email arrived in September with mild praise. Within two years, every major language model — **BERT**, **GPT-2**, **T5** — was a variant of their architecture, and by 2025 the transformer had become so dominant that "neural network" and "transformer" were nearly synonymous in production systems.
+> **The story.** In June **2017**, eight Google engineers submitted a twelve-page paper with a title that was either arrogant or prophetic: *"Attention Is All You Need."* The entire field of natural language processing ran on **recurrent neural networks** — architectures that processed words sequentially, one token at a time, unable to parallelize training (process tokens in parallel) and plagued by vanishing gradients (weakening learning signals in deep networks; see Appendix A) beyond 100-200 tokens. The authors proposed throwing out recurrence entirely and replacing it with a single mechanism called **attention**. Reviewers were skeptical; the NeurIPS acceptance email arrived in September with mild praise. Within two years, every major language model — **BERT**, **GPT-2**, **T5** — was a variant of their architecture, and by 2025 the transformer had become so dominant that "neural network" and "transformer" were nearly synonymous in production systems.
 >
 > **Where you are in the curriculum.** **Read this before anything else in the AI track.** This chapter builds the foundation you need for every later document — [LLM Inference Mechanics](../ch02-llm-inference-mechanics), [CoT Reasoning](../ch06-cot-reasoning), [RAG](../ch07-rag-and-embeddings), [ReAct](../../03b-agentic-ai/ch01-react-and-semantic-kernel). You'll learn the historical path from RNNs to transformers, what an LLM actually is, how tokenization works, the mechanics of attention (Q/K/V, multi-head attention, positional encoding), and the three architectural families (encoder-only, decoder-only, encoder-decoder).
 >
-> **Notation.** This chapter uses minimal math. When formulas appear, we provide intuition first and formulas second.
+> **Notation.** This chapter uses minimal math. When formulas appear, we provide intuition first and formulas second. **New to ML?** See Appendix A at the end for definitions of essential terms (training, gradients, embeddings, etc.).
+
+**What You'll Learn:**
+- What attention is and why it replaced RNNs
+- How tokenization splits text into manageable pieces
+- The mechanics of Q/K/V matrices and multi-head attention
+- Why encoder-only, decoder-only, and encoder-decoder architectures exist
+- Essential ML terminology (see Appendix A for definitions)
 
 ---
 
@@ -44,7 +51,7 @@ The original transformer had two stacks: an **encoder** (reads the source senten
 
 **Why the decoder fork won for generation:** bidirectional attention sees future context, making it ideal for understanding tasks but incompatible with left-to-right generation. Causal (decoder-only) attention is natively autoregressive — it generates one token at a time. When GPT-3 showed that decoder-only models could match or exceed encoder-only models on many understanding tasks *while also generating*, the architectural choice became obvious. Every major model released after 2020 — PaLM, LLaMA, Mistral, GPT-4, Claude, Gemini — is decoder-only or a decoder-only mixture-of-experts variant.
 
-**Why BERT still matters in 2025:** BERT-family models (RoBERTa, E5, BGE, `text-embedding-ada-002`) remain the dominant architecture for **dense retrieval** and **embedding generation**. Their bidirectional representations capture richer semantic similarity than causal decoder embeddings. In a RAG pipeline ([Ch.4](../ch07-rag-and-embeddings)), the embedding model is a BERT-derived encoder; the generation model is a decoder-only LLM. The two architectures are complementary.
+**Why BERT still matters in 2025:** BERT-family models (RoBERTa, E5, BGE, `text-embedding-ada-002`) remain the dominant architecture for **dense retrieval** (finding relevant documents using vector similarity) and **embedding generation** (converting text into vector representations; see Appendix A). Their bidirectional representations capture richer semantic similarity than causal decoder embeddings. In a RAG pipeline ([Ch.4](../ch07-rag-and-embeddings)), the embedding model is a BERT-derived encoder; the generation model is a decoder-only LLM. The two architectures are complementary.
 
 ---
 
@@ -203,7 +210,7 @@ Larger context windows do not mean unlimited memory. Empirically, models show **
 
 ---
 
-Now that you understand *what* the model receives (tokens), let's see *how* it processes them. The transformer block is the engine that transforms raw token embeddings into contextualized representations. We'll build it step-by-step, starting with the core attention mechanism.
+Now that you understand *what* the model receives (tokens), let's see *how* it processes them. The transformer block is the engine that transforms raw token embeddings (vector representations; see Appendix A) into contextualized representations (vectors enriched with information from surrounding tokens). We'll build it step-by-step, starting with the core attention mechanism.
 
 ## 2A · Transformer Architecture — The Machinery Under the Hood
 
@@ -715,6 +722,54 @@ Encoder models **cannot generate text**. There is no autoregressive sampling loo
 ```python
 outputs = encoder(input_ids) # shape: (batch, seq_len, d_model)
 ```
+
+---
+
+## Appendix A: Essential ML Terminology
+
+> **For readers new to machine learning:** This glossary defines the core ML concepts used throughout this chapter. If you're already familiar with neural network training, skip ahead. If a term is new, find its definition here.
+
+### Training and Model Fundamentals
+
+**Training**: The process of adjusting a model's internal numbers (parameters) by showing it many examples until it learns patterns. Analogous to practicing a skill until you get good at it.
+
+**Parameters** (also called **weights**): The internal numbers in a neural network that get adjusted during training. GPT-3 has 175 billion parameters. These determine what the model "knows."
+
+**Embeddings**: Dense vector representations of tokens (words/subwords). Instead of treating "cat" as a discrete symbol, embeddings represent it as a 768-dimensional vector where similar words have similar vectors.
+
+### Training Mechanics
+
+**Gradients**: Mathematical signals that indicate how to adjust each parameter to improve performance. Think of gradients as arrows pointing "uphill" toward better predictions.
+
+**Backpropagation**: The algorithm for computing gradients by working backward through the network layers, from output to input.
+
+**Loss function**: A number measuring how wrong the model's predictions are. Training tries to minimize this number. For language models, it's typically cross-entropy loss.
+
+**Optimizer**: The algorithm that uses gradients to update parameters. Common optimizers: SGD, Adam, AdamW.
+
+**Learning rate**: How big a step to take when updating parameters. Too large → unstable training. Too small → extremely slow learning.
+
+### Architecture Components
+
+**Activation function**: A nonlinear transformation applied after linear operations. Without these, neural networks would just be glorified linear regression. Common functions: ReLU, GELU, Sigmoid.
+
+**Softmax**: Converts a vector of numbers into a probability distribution (all values sum to 1). Used in attention weights and final token prediction.
+
+**Attention mechanism**: The core innovation in transformers. Allows each token to "look at" other tokens and decide which ones are most relevant for understanding context.
+
+**Feedforward network** (FFN): A simple 2-layer neural network applied after attention. In transformers, it's typically: Linear → Activation → Linear, with the middle layer expanded 4× wider than the input.
+
+**Layer normalization**: A technique to stabilize training by normalizing activations. Applied before attention and before the feedforward network in each transformer layer.
+
+### Training Challenges
+
+**Vanishing gradients**: When gradients become extremely small as they propagate backward through many layers, making early layers learn very slowly. Layer normalization and residual connections help mitigate this.
+
+**Overfitting**: When a model memorizes training data instead of learning general patterns. Prevented through regularization, dropout, and large diverse datasets.
+
+---
+
+**Next Chapter**: [Prompt Engineering](../ch02-prompt-engineering/prompt-engineering.md) — Now that you understand what an LLM is, learn how to control its behavior through structured prompts.
 
 - **Token-level representations:** `outputs[i]` is a contextualized embedding of token $i$
 - **Sequence-level representation:** `outputs[0]` (the `[CLS]` token in BERT) aggregates the entire sequence

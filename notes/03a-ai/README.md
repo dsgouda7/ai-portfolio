@@ -136,14 +136,19 @@ Work through Ch.1 → Ch.8 in order. The first 4 chapters build foundational kno
 
 ## Prerequisites
 
-**Recommended before starting:**
+**What you need:**
 - Python programming (all code examples use Python)
-- Basic ML concepts (Ch.1 assumes you know what "training" and "parameters" mean)
 - HTTP APIs (you'll call OpenAI/Anthropic/Cohere APIs)
 
-**Not required but helpful:**
-- [ML Track](../01-ml/README.md) — especially Ch.18 (Transformers)
-- [Math Under The Hood](../00-math_under_the_hood) — for deeper transformer understanding
+**What you DON'T need:**
+- Prior ML/deep learning experience — essential ML concepts (training, gradients, embeddings, etc.) are defined in Ch.1's glossary appendix
+- Math background — transformer architecture is explained conceptually, not mathematically
+
+**This track is self-contained.** Start here if you want to understand LLMs from a practitioner's perspective.
+
+**Optional enrichment** (for readers who want deeper mathematical/architectural understanding):
+- [ML Track](../01-ml/README.md) — especially Ch.18 (Transformers) for mathematical treatment
+- [Math Under The Hood](../00-math-under-the-hood) — for linear algebra and calculus foundations
 
 ---
 

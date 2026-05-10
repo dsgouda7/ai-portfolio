@@ -4,7 +4,7 @@ Remove unnecessary emojis from markdown files.
 
 Usage:
     python remove-emojis.py [directory]
-    
+
 If no directory specified, processes all files under notes/
 
 Rules:

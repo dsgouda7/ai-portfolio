@@ -13,6 +13,12 @@
 > **This chapter explains why that architecture works.** The hallucinated facts you saw in Ch.3 exist because the model answers from parametric memory, not from the organization's actual documents. This chapter traces the path from *"LLMs hallucinate private data"* to *"retrieval fixes the gap"* — embeddings as the bridge, encoder vs. decoder models, contrastive learning as the secret sauce, and the full RAG pipeline from chunking to generation.
 >
 > **Where you are in the curriculum.** This is the chapter where you learn what *exactly* gets stored in a vector index, how an embedding model decides two pieces of text are similar, and how a query is matched against millions of chunks. The next chapter — [VectorDBs](../ch08-vector-dbs) — takes the index itself apart (HNSW, IVF, DiskANN). Together they are the foundation for everything else: agents that retrieve before they answer, evaluation pipelines that check grounding, and the entire RAG project under [`projects/ai/rag-pipeline`](../../../projects/ai/rag_pipeline).
+
+**What You'll Learn:**
+- What embeddings are and how they represent semantic meaning
+- Why retrieval beats pure parametric memory for private data
+- The full RAG pipeline: chunking, retrieval, generation
+- Encoder vs. decoder models for embeddings
 >
 > **Think of RAG as a library search system:** You walk into a massive library (your document corpus) with a specific question. Instead of reading every book (parametric memory), you ask the librarian (embedding model) to find the 3-5 most relevant sections (retrieval). Then you read just those sections (context) and answer your question (generation). RAG makes LLMs smart by giving them the right reference material at the right time.
 

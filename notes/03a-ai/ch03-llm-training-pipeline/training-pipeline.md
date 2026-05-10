@@ -4,6 +4,12 @@
 >
 > **How raw text predictors become instruction-following assistants.** This chapter explains the three-stage training pipeline (pretraining, supervised fine-tuning, alignment) that transforms a next-token predictor trained on raw internet text into a helpful, harmless assistant like GPT-4 or Claude. You'll understand why models from different companies exhibit different personalities despite identical architectures, how RLHF/DPO shapes model behavior, and why certain capabilities only emerge at specific scale thresholds. Includes optional PEFT preview (LoRA, prefix tuning) for domain adaptation without full retraining.
 
+**What You'll Learn:**
+- The three training stages: pretraining, supervised fine-tuning, RLHF/DPO
+- Why models from different companies have different personalities
+- How alignment (RLHF/DPO) shapes model behavior
+- PEFT techniques (LoRA, prefix tuning) for domain adaptation without full retraining
+
 ---
 
 ## 4 · The Three Training Stages
@@ -14,7 +20,7 @@ The three stages below explain how a raw text predictor becomes an instruction-f
 
 🍳 **Cooking analogy:** Learning to predict the next ingredient by reading thousands of recipes. The model learns what flavors go together, typical cooking sequences, and ingredient combinations — but not how to follow your specific dinner request.
 
-A standard transformer decoder is trained on a massive corpus with the cross-entropy loss over next-token prediction. No human labels — the text itself is the supervision.
+A standard transformer decoder is trained on a massive corpus with the cross-entropy loss (a measure of prediction error; see Ch.1 Appendix A) over next-token prediction. No human labels — the text itself is the supervision.
 
 **What it learns:** grammar, syntax, world knowledge, reasoning patterns, code idioms, basic arithmetic, multilingual text — anything that appears frequently enough in the training data.
 
