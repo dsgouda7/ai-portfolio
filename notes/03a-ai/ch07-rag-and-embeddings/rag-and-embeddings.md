@@ -222,6 +222,28 @@ After seeing millions of such examples, the embedding space organizes itself: al
 
 **The training process (InfoNCE):** The model gets rewarded when it correctly identifies which of many candidates is the true match. If you show it a query and 100 candidate answers (1 correct, 99 wrong), and the model ranks the correct one first, the loss is near zero. If the model ranks a wrong answer higher than the correct one, the loss is high and the model adjusts its weights.
 
+<details>
+<summary>📐 <b>For the mathematically curious: InfoNCE loss formula</b></summary>
+
+The training objective is to maximize the similarity between query and positive while minimizing similarity to negatives:
+
+```
+L = -log(exp(sim(q,p+)/τ) / Σ exp(sim(q,pi)/τ))
+```
+
+Where:
+- `q` = query embedding
+- `p+` = positive (correct match) embedding
+- `pi` = negative (incorrect) embeddings
+- `τ` = temperature parameter (typically 0.05–0.1)
+- `sim()` = cosine similarity
+
+**Translation to plain English:** "Make the query-to-positive similarity stand out compared to query-to-negative similarities." Lower temperature makes the model more confident in picking the positive over negatives.
+
+**You don't need this formula to understand RAG.** The arrow/angle intuition above is sufficient.
+
+</details>
+
 **Worked Example:**
 
 Training batch:

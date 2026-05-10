@@ -2,7 +2,7 @@
 
 > **Where you are in the curriculum.** **Read this before anything else in the AI track.** This chapter builds the foundation you need for every later document — [LLM Inference Mechanics](../ch02-llm-inference-mechanics), [CoT Reasoning](../ch06-cot-reasoning), [RAG](../ch07-rag-and-embeddings), [ReAct](../../03b-agentic-ai/ch01-react-and-semantic-kernel). You'll learn the historical path from RNNs to transformers, what an LLM actually is, how tokenization works, the mechanics of attention (Q/K/V, multi-head attention, positional encoding), and the three architectural families (encoder-only, decoder-only, encoder-decoder).
 >
-> **Notation used in this doc.** $P(x_t \mid x_{<t})$ — probability of next token $x_t$ given all prior tokens; $T$ — temperature (controls output randomness); $k$ — top-$k$ candidate count; $p$ — nucleus (top-$p$) cumulative probability threshold; $V$ — vocabulary size.
+> **Notation.** This chapter uses minimal math. When formulas appear, we provide intuition first and formulas second.
 
 ---
 
@@ -201,7 +201,11 @@ Larger context windows do not mean unlimited memory. Empirically, models show **
 
 ---
 
+Now that you understand *what* the model receives (tokens), let's see *how* it processes them. The transformer block is the engine that transforms raw token embeddings into contextualized representations. We'll build it step-by-step, starting with the core attention mechanism.
+
 ## 2A · Transformer Architecture — The Machinery Under the Hood
+
+> **TL;DR for engineers:** Attention is a lookup mechanism. Each word searches all other words for relevant context, retrieves a weighted blend, and updates its representation. Multi-head attention runs 32 parallel lookups, each specializing in different patterns (grammar, meaning, distance). The formulas below formalize this intuition.
 
 Before you can reason about why GPT-4 behaves differently from Claude, or why a 70B model outperforms a 7B model on complex reasoning, you need to understand what these models **are** at the level of matrix operations and data flow. This section opens the black box.
 
@@ -255,6 +259,8 @@ V &= X W_V \quad \text{(value: "what information do I carry?")}
 | $n$ | scalar | **Sequence length** — number of tokens in the input |
 
 **Intuition:** Think of $Q$ as "questions each token asks", $K$ as "labels each token advertises", and $V$ as "information each token carries". Attention is a lookup: for the query "show me geographic features", the key "river" scores high, so we retrieve that token's value.
+
+> 💡 **Checkpoint:** So far: every token asks questions (Q), advertises what it offers (K), and carries information (V). Next: we'll compute which tokens match each query.
 
 #### Step 2: Compute Attention Scores (Which Tokens Are Relevant?)
 
@@ -395,6 +401,8 @@ $$\text{output} = \text{attention\_weights} \cdot V$$
 💡 **Plain English:** Each token's output is a smoothie. You blend together the values (information) from other tokens, using the attention weights as the recipe. High attention weight = more of that ingredient. Low weight = just a tiny bit.
 
 **Intuition:** Token $i$'s output is a **weighted average** of all tokens' value vectors, where the weights came from the attention scores. If "bank" assigned 0.62 weight to "river", its output is 62% the value vector of "river" + 25% its own value + 8% "the"'s value.
+
+> 💡 **Checkpoint:** We've computed attention weights showing which tokens matter most. Next: we'll use these weights to extract relevant information.
 
 ### Multi-Head Attention — Why Not Just One Head?
 
@@ -589,6 +597,8 @@ Instead of sinusoids, train a lookup table: each position (0 to $\text{max\_len}
 **Why RoPE won:** It extrapolates gracefully — models trained at 2k context can handle 8k+ with minimal degradation. It's computationally cheap (rotations are fast). And it outperforms learned embeddings empirically.
 
 > 💡 **Position encoding choice determines context window scaling.** Models with learned position embeddings (BERT, GPT-2) cannot extend context without retraining the position embeddings. Models with RoPE (LLaMA, Mistral) can extend context via **context length interpolation** or **YaRN** with minimal fine-tuning.
+
+> 💡 **Checkpoint:** Multiple attention heads let the model track different patterns simultaneously. Next: we'll see how these fit into the full transformer block.
 
 ### Visualization: Multi-Head Attention Data Flow
 

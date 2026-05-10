@@ -22,11 +22,14 @@ The model doesn't output one answer; it outputs a probability distribution over 
 - General chat, summarization → `T = 0.7` (natural variation)
 - Creative writing, brainstorming → `T = 1.0+` (explore weird options)
 
-**The math (if you're curious):**
+<details>
+<summary>For the mathematically curious: Temperature formula</summary>
 
 $$p'_i = \frac{e^{z_i / T}}{\sum_j e^{z_j / T}}$$
 
 Dividing each logit $z_i$ by temperature $T$ before softmax either sharpens ($T<1$) or flattens ($T>1$) the probability distribution. When $T→0$, the top token gets probability ≈1; when $T→\infty$, all tokens become equally likely.
+
+</details>
 
 > 💡 **Temperature control:** Factual question-answering (`temperature=0`) produces deterministic, reproducible outputs — essential when you're running controlled experiments and need the same prompt to produce the same answer. Creative generation (brainstorming, rephrasing) benefits from `temperature=0.7–1.0`. Getting this wrong contaminates experiment results: a creative temperature on a factual-answer test will inflate variance and make the model look less reliable than it is.
 
@@ -51,6 +54,8 @@ top_p = 0.9 → keep [0.40, 0.25, 0.15, 0.10] (cumsum = 0.90) → sample only th
 Keep only the k highest-probability tokens and renormalize. Less adaptive than top-p (fixed k regardless of confidence); rarely preferred in practice.
 
 ---
+
+Understanding how the model picks tokens is only half the story. Now let's see *how* generation actually happens under the hood — and why naive implementations are catastrophically slow.
 
 ## 3A · Inference Mechanics — How Generation Actually Works
 
@@ -178,6 +183,8 @@ Cost:   O(t * d_model * L) per token  (linear in sequence length so far)
 
 This is why **quantization helps decode more than prefill** — int8 weights are half the size of fp16, so you fetch data 2× faster. But prefill was already maxing out compute anyway, so smaller data doesn't help as much.
 
+> **⚠️ Checkpoint:** Before moving on, make sure you understand: (1) Prefill processes all prompt tokens in parallel, (2) Decode generates one token at a time, (3) Prefill is compute-bound, decode is memory-bound. If unclear, re-read the speed-reading analogy.
+
 ### KV Cache Memory Cost
 
 **The grocery list analogy:** Imagine you're following a recipe with 20 steps. Instead of re-reading steps 1-19 every time you finish a new step, you keep a **grocery list of what you've already gathered** (ingredients = keys/values). The list grows with each step, but you never re-scan the entire recipe. That's KV caching.
@@ -222,6 +229,8 @@ For a 70B model with $d_{\text{model}} = 8192$:
 
 **The prefix-sharing magic:** If 100 requests all start with the same system prompt ("You are a helpful assistant..."), PagedAttention stores that prompt's KV cache **once** and shares it across all 100 requests. Traditional caching would store it 100 times.
 
+> **⚠️ Checkpoint:** Before moving on, make sure you understand: (1) KV cache stores past attention keys/values, (2) This avoids recomputing for every token, (3) Memory grows linearly with sequence length. If unclear, re-read the grocery list analogy.
+
 ### Computational Cost Breakdown — Where the Time Goes
 
 **The intuition:** Think of inference as two different jobs:
@@ -246,6 +255,8 @@ For a 7B-parameter decoder model (32 layers, $d_{\text{model}} = 4096$, $d_{\tex
 | | Feed-forward | $d_{\text{model}} \times d_{\text{ffn}}$ | 90M (constant per token) |
 | **Decode** (with KV cache) | Attention | $t \times d_{\text{model}}$ | Compare new token to cached ones (linear, not quadratic) |
 | | Feed-forward | $d_{\text{model}} \times d_{\text{ffn}}$ | 90M (dominates — 10× more than attention) |
+
+> **Math-Free Summary:** Without KV caching, generating a 500-token response requires recomputing attention 175,000 times. With KV caching, you compute once and reuse. This is why real LLM inference is 10-20× faster than the naive approach.
 
 ### Batching — The Challenge
 
