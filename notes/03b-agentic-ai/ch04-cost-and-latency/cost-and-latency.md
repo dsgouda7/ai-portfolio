@@ -12,14 +12,14 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Launch **Mamma Rosa's PizzaBot** — a production AI ordering system satisfying 6 constraints:
+> **The mission**: Launch **Mamma Rosa's PizzaBot** — a production AI ordering system satisfying 6 constraints:
 > 1. **BUSINESS VALUE**: >25% conversion + +$2.50 AOV + 70% labor savings — 2. **ACCURACY**: <5% error — 3. **LATENCY**: <3s p95 — 4. **COST**: <$0.08/conv — 5. **SAFETY**: Zero attacks — 6. **RELIABILITY**: >99% uptime
 
 **What we know so far:**
-- ✅ Ch.1-9: All technical targets hit! 30% conversion (>25% ✅), $40.60 AOV (+$2.10 ✅), 2.2s latency (<3s ✅), $0.010/conv (<$0.08 ✅), safety validated (0 attacks ✅)
-- ✅ Constraints #2 ACCURACY (4.2% error <5% ✅), #5 SAFETY (0 attacks ✅), #6 RELIABILITY (>99% uptime ✅) **ACHIEVED**
-- ⚡ Constraints #1 BUSINESS VALUE, #3 LATENCY, #4 COST **PARTIAL** — working but not optimized
-- 📊 **Current business metrics**: 30% conversion (phone baseline: 22%), $40.60 AOV (baseline: $38.50), $0.010/conv cost, 2.2s latency
+- Ch.1-9: All technical targets hit! 30% conversion (>25% ), $40.60 AOV (+$2.10 ), 2.2s latency (<3s ), $0.010/conv (<$0.08 ), safety validated (0 attacks )
+- Constraints #2 ACCURACY (4.2% error <5% ), #5 SAFETY (0 attacks ), #6 RELIABILITY (>99% uptime ) **ACHIEVED**
+- Constraints #1 BUSINESS VALUE, #3 LATENCY, #4 COST **PARTIAL** — working but not optimized
+- **Current business metrics**: 30% conversion (phone baseline: 22%), $40.60 AOV (baseline: $38.50), $0.010/conv cost, 2.2s latency
 
 **What's blocking us:**
 
@@ -38,7 +38,7 @@ Total: $0.010/conv
 
 Monthly cost at 50 visitors/day:
 - 50 visitors × 28% conversion = 14 orders/day = 420 orders/month
-- 420 conv/month × $0.010 = $4.20/month infrastructure cost ✅
+- 420 conv/month × $0.010 = $4.20/month infrastructure cost
 
 Current ROI:
 - Revenue: 30% × $40.60 × 50 = $609/day = $18,270/month
@@ -77,19 +77,18 @@ CEO: "And customers would wait even longer. I'm seeing 2.5-second delays in your
 
 **What this chapter unlocks:**
 
-🚀 **Cost & latency optimization stack:**
+ **Cost & latency optimization stack:**
 1. **Prompt caching**: Cache system prompt across requests (90% cache hit → $0.002 → $0.0002 RAG cost)
 2. **Streaming responses**: First token <500ms (perceived instant UX)
 3. **KV-cache reuse**: Reuse attention tensors (-200ms latency)
 4. **Speculative decoding**: Draft with small model, verify with large (30% faster generation)
 5. **Batched inference**: Process concurrent requests together (2× throughput for peak traffic)
 6. **INT8 quantization**: Model 16GB → 8GB (faster memory, -700ms inference time)
-
-⚡ **Constraints #1 + #3 + #4 [ACHIEVED]**:
-- **Latency**: 2.2s → **1.5s p95** (target <3s ✅, beats by 50%) → 32% conversion
-- **Cost**: $0.010 → **$0.005/conv** (target <$0.08 ✅, 94% under budget) → infrastructure headroom
-- **Business Value**: 32% conversion (>25% ✅), +$2.10 AOV, 70% labor savings (✅) → $17,847/month benefit
-- **ROI payback**: 16.8 months at current traffic → **10.9 months at 120 visitors/day** ✅
+**Constraints #1 + #3 + #4 [ACHIEVED]**:
+- **Latency**: 2.2s → **1.5s p95** (target <3s , beats by 50%) → 32% conversion
+- **Cost**: $0.010 → **$0.005/conv** (target <$0.08 , 94% under budget) → infrastructure headroom
+- **Business Value**: 32% conversion (>25% ), +$2.10 AOV, 70% labor savings () → $17,847/month benefit
+- **ROI payback**: 16.8 months at current traffic → **10.9 months at 120 visitors/day**
 
 ---
 
@@ -100,13 +99,13 @@ The CEO's ultimatum from §0 was precise: 18-month payback is unacceptable, and 
 Every LLM API call costs money and time. Both are functions of one thing: **the number of tokens processed**.
 
 ```
-Cost    = (input_tokens  × $/1M input)  + (output_tokens × $/1M output)
-Latency = time_to_first_token (TTFT)   + tokens_generated × ms/token
+Cost = (input_tokens × $/1M input) + (output_tokens × $/1M output)
+Latency = time_to_first_token (TTFT) + tokens_generated × ms/token
 ```
 
 Every architectural decision — which model, how much context, how many calls, whether to stream — maps directly to these two formulas.
 
-> 💡 **Core idea verdict:** PizzaBot's 18-month payback and 2.2s latency are both token problems in disguise. Halving input tokens via caching and cutting inference time 47% via quantization closes the ROI gap to 10.9 months at 120 visitors/day — zero additional marketing spend required.
+> **Core idea verdict:** PizzaBot's 18-month payback and 2.2s latency are both token problems in disguise. Halving input tokens via caching and cutting inference time 47% via quantization closes the ROI gap to 10.9 months at 120 visitors/day — zero additional marketing spend required.
 
 ---
 
@@ -116,45 +115,45 @@ The §0 gap is $11,673/month in missing benefit to hit the CEO's 10.6-month targ
 
 **Before diving into theory, understand the workflow you'll follow with every production deployment:**
 
-> 📊 **What you'll build by the end:** A cost-optimized production LLM system with sub-2s latency, 50% cost reduction via caching, and 2× throughput through batching — validated with real token counts and cost breakdowns.
+> **What you'll build by the end:** A cost-optimized production LLM system with sub-2s latency, 50% cost reduction via caching, and 2× throughput through batching — validated with real token counts and cost breakdowns.
 
 ```
-Phase 1: SELECT            Phase 2: CACHE             Phase 3: STREAM            Phase 4: OPTIMIZE
+Phase 1: SELECT Phase 2: CACHE Phase 3: STREAM Phase 4: OPTIMIZE
 ────────────────────────────────────────────────────────────────────────────────────────────────────
-Choose model tier:         Cache repeated content:    Stream responses:          Batch & quantize:
+Choose model tier: Cache repeated content: Stream responses: Batch & quantize:
 
-• Frontier ($3-15/1M)      • System prompt            • Time-to-first-token      • Continuous batching
-• Mid-tier ($0.15-1/1M)    • Few-shot examples        • Progressive rendering    • INT8 quantization
-• Open-source ($0-0.3/1M)  • RAG context              • KV-cache reuse           • Speculative decoding
+• Frontier ($3-15/1M) • System prompt • Time-to-first-token • Continuous batching
+• Mid-tier ($0.15-1/1M) • Few-shot examples • Progressive rendering • INT8 quantization
+• Open-source ($0-0.3/1M) • RAG context • KV-cache reuse • Speculative decoding
 
-→ DECISION:                → DECISION:                → DECISION:                → DECISION:
-  Task complexity?           Cache hit rate?            Interactive vs batch?      Scale requirements?
-  • Complex reasoning:       • >70% hit rate:           • User-facing: Stream      • >10 req/sec: Batch
-    Frontier model             Enable prefix cache        (perceived <1s)            (2× throughput)
-  • Structured tasks:        • <30% hit rate:           • Async tasks: Sync        • <10 req/sec: Single
-    Mid-tier model             Skip caching overhead      (wait for full response)   (simpler infra)
-  • High-volume:             • 30-70% hit: Test         • Always: Enable           • Memory-bound:
-    Open-source self-hosted    (measure savings)          KV-cache                   Quantize to INT8
+→ DECISION: → DECISION: → DECISION: → DECISION:
+ Task complexity? Cache hit rate? Interactive vs batch? Scale requirements?
+ • Complex reasoning: • >70% hit rate: • User-facing: Stream • >10 req/sec: Batch
+ Frontier model Enable prefix cache (perceived <1s) (2× throughput)
+ • Structured tasks: • <30% hit rate: • Async tasks: Sync • <10 req/sec: Single
+ Mid-tier model Skip caching overhead (wait for full response) (simpler infra)
+ • High-volume: • 30-70% hit: Test • Always: Enable • Memory-bound:
+ Open-source self-hosted (measure savings) KV-cache Quantize to INT8
 ```
 
-> 💡 **Workflow verdict:** Running all four phases takes PizzaBot from $0.010/conv + 2.2s to $0.005/conv + 1.5s — a 50% cost reduction and 32% latency improvement that moves ROI payback from 18 to 10.9 months at 120 visitors/day, with no additional infrastructure investment.
+> **Workflow verdict:** Running all four phases takes PizzaBot from $0.010/conv + 2.2s to $0.005/conv + 1.5s — a 50% cost reduction and 32% latency improvement that moves ROI payback from 18 to 10.9 months at 120 visitors/day, with no additional infrastructure investment.
 
 **Typical optimization impact (PizzaBot example):**
 ```
 Baseline (no optimizations):
-  Cost: $0.010/conv, Latency: 2.2s p95
+ Cost: $0.010/conv, Latency: 2.2s p95
 
 After Phase 1 (SELECT mid-tier):
-  Cost: $0.010/conv (already using Llama-3-8B), Latency: 2.2s
+ Cost: $0.010/conv (already using Llama-3-8B), Latency: 2.2s
 
 After Phase 2 (CACHE system prompt):
-  Cost: $0.008/conv (-20%), Latency: 2.2s
+ Cost: $0.008/conv (-20%), Latency: 2.2s
 
 After Phase 3 (STREAM responses):
-  Cost: $0.008/conv, Latency: 1.8s perceived (<1s to first token)
+ Cost: $0.008/conv, Latency: 1.8s perceived (<1s to first token)
 
 After Phase 4 (OPTIMIZE with INT8 + batching):
-  Cost: $0.005/conv (-50% total), Latency: 1.5s p95, Throughput: 2×
+ Cost: $0.005/conv (-50% total), Latency: 1.5s p95, Throughput: 2×
 
 ROI: $300k investment → 10.9 months payback (vs. 18 months without optimization)
 ```
@@ -191,7 +190,7 @@ In a RAG + agent pipeline, the token budget breaks down roughly as:
 | **Total input** | **~1,390** | Well within 8k context; cheap per call |
 | Model output | ~150 | Order confirmation JSON + natural language summary |
 
-> 💡 **Token ledger verdict:** PizzaBot's ~1,390-token input at GPT-4o-mini pricing costs $0.00030/conv — 99.6% under the $0.08 ceiling. Conversation history is the only entry that grows unboundedly; §5.3 caps it at ~400 tokens via rolling summarisation regardless of session length.
+> **Token ledger verdict:** PizzaBot's ~1,390-token input at GPT-4o-mini pricing costs $0.00030/conv — 99.6% under the $0.08 ceiling. Conversation history is the only entry that grows unboundedly; §5.3 caps it at ~400 tokens via rolling summarisation regardless of session length.
 
 ---
 
@@ -218,27 +217,27 @@ client = OpenAI()
 
 # Define models with pricing ($/1M tokens)
 MODELS = {
-    "gpt-4o": {"input": 2.50, "output": 10.00},
-    "gpt-4o-mini": {"input": 0.15, "output": 0.60},
+ "gpt-4o": {"input": 2.50, "output": 10.00},
+ "gpt-4o-mini": {"input": 0.15, "output": 0.60},
 }
 
 def estimate_cost(prompt: str, model: str, expected_output_tokens: int = 200) -> dict:
-    """Estimate cost for a single API call."""
-    # OpenAI's tiktoken would be more accurate, but rough estimate:
-    input_tokens = len(prompt.split()) * 1.3  # ~1.3 tokens per word
+ """Estimate cost for a single API call."""
+ # OpenAI's tiktoken would be more accurate, but rough estimate:
+ input_tokens = len(prompt.split()) * 1.3 # ~1.3 tokens per word
 
-    pricing = MODELS[model]
-    input_cost = (input_tokens / 1_000_000) * pricing["input"]
-    output_cost = (expected_output_tokens / 1_000_000) * pricing["output"]
-    total_cost = input_cost + output_cost
+ pricing = MODELS[model]
+ input_cost = (input_tokens / 1_000_000) * pricing["input"]
+ output_cost = (expected_output_tokens / 1_000_000) * pricing["output"]
+ total_cost = input_cost + output_cost
 
-    return {
-        "model": model,
-        "input_tokens": int(input_tokens),
-        "output_tokens": expected_output_tokens,
-        "cost_usd": total_cost,
-        "cost_per_1k_calls": total_cost * 1000
-    }
+ return {
+ "model": model,
+ "input_tokens": int(input_tokens),
+ "output_tokens": expected_output_tokens,
+ "cost_usd": total_cost,
+ "cost_per_1k_calls": total_cost * 1000
+ }
 
 # Phase 1 DECISION LOGIC: Compare models for PizzaBot order confirmation task
 prompt = """You are PizzaBot, an AI ordering assistant for Mamma Rosa's Pizzeria.
@@ -250,11 +249,11 @@ Generate order confirmation JSON with: items, quantities, delivery address, esti
 
 print("=== PHASE 1: MODEL SELECTION ===\n")
 for model_name in ["gpt-4o", "gpt-4o-mini"]:
-    estimate = estimate_cost(prompt, model_name, expected_output_tokens=150)
-    print(f"{model_name}:")
-    print(f"  Cost per call: ${estimate['cost_usd']:.6f}")
-    print(f"  Cost per 1,000 calls: ${estimate['cost_per_1k_calls']:.2f}")
-    print()
+ estimate = estimate_cost(prompt, model_name, expected_output_tokens=150)
+ print(f"{model_name}:")
+ print(f" Cost per call: ${estimate['cost_usd']:.6f}")
+ print(f" Cost per 1,000 calls: ${estimate['cost_per_1k_calls']:.2f}")
+ print()
 
 # DECISION: For structured order confirmation (not complex reasoning),
 # gpt-4o-mini is sufficient and 10-15× cheaper than gpt-4o.
@@ -265,32 +264,32 @@ Expected output:
 === PHASE 1: MODEL SELECTION ===
 
 gpt-4o:
-  Cost per call: $0.000163
-  Cost per 1,000 calls: $0.16
+ Cost per call: $0.000163
+ Cost per 1,000 calls: $0.16
 
 gpt-4o-mini:
-  Cost per call: $0.000012
-  Cost per 1,000 calls: $0.01
+ Cost per call: $0.000012
+ Cost per 1,000 calls: $0.01
 
 → DECISION: gpt-4o-mini selected (13× cheaper, quality validated with eval metrics)
 """
 ```
 
-> 💡 **Industry Standard:** `LiteLLM` for multi-provider cost tracking
+> **Industry Standard:** `LiteLLM` for multi-provider cost tracking
 >
 > ```python
 > from litellm import completion, cost_per_token
 >
 > response = completion(
->     model="gpt-4o-mini",
->     messages=[{"role": "user", "content": prompt}]
+> model="gpt-4o-mini",
+> messages=[{"role": "user", "content": prompt}]
 > )
 >
 > # Automatic cost calculation with exact token counts
 > cost = cost_per_token(
->     model="gpt-4o-mini",
->     prompt_tokens=response.usage.prompt_tokens,
->     completion_tokens=response.usage.completion_tokens
+> model="gpt-4o-mini",
+> prompt_tokens=response.usage.prompt_tokens,
+> completion_tokens=response.usage.completion_tokens
 > )
 > print(f"Actual cost: ${cost:.6f}")
 > ```
@@ -299,8 +298,8 @@ gpt-4o-mini:
 > **Common alternatives:** `OpenAI.usage` (native), custom token counters (error-prone)
 > **See also:** [LiteLLM docs](https://docs.litellm.ai/docs/completion/cost_tracking)
 
-> 💡 **Select verdict:** GPT-4o costs 13× more than GPT-4o-mini ($0.000163 vs $0.000012/call); PizzaBot structured order confirmation at 95% vs 96% accuracy — mid-tier saves $1,110/month at 10,000 orders.
-> ➡️ Run evaluation suite on both models with a 100-sample test set before committing; if accuracy drops >5% with mid-tier, stay with frontier.
+> **Select verdict:** GPT-4o costs 13× more than GPT-4o-mini ($0.000163 vs $0.000012/call); PizzaBot structured order confirmation at 95% vs 96% accuracy — mid-tier saves $1,110/month at 10,000 orders.
+> ➡ Run evaluation suite on both models with a 100-sample test set before committing; if accuracy drops >5% with mid-tier, stay with frontier.
 
 ---
 
@@ -310,12 +309,12 @@ The CEO's exact words from §0: *"2 seconds feels slow. Fix the latency or we're
 
 ```
 Total latency = network RTT
-              + time_to_first_token (TTFT)
-              + (tokens_to_generate × ms_per_token)
-              + (optional: NLI verification, self-consistency, judge call)
+ + time_to_first_token (TTFT)
+ + (tokens_to_generate × ms_per_token)
+ + (optional: NLI verification, self-consistency, judge call)
 
-TTFT scales with:    input_token_count  (larger context → longer prefill → longer TTFT)
-ms_per_token scales with:  model size    (larger model → lower tokens/sec)
+TTFT scales with: input_token_count (larger context → longer prefill → longer TTFT)
+ms_per_token scales with: model size (larger model → lower tokens/sec)
 ```
 
 ### Streaming
@@ -340,14 +339,14 @@ print("=== PHASE 3: STREAMING RESPONSES ===\n")
 print("Non-streaming (wait for full response):")
 start = time.time()
 response = client.chat.completions.create(
-    model="gpt-4o-mini",
-    messages=[{"role": "user", "content": prompt}],
-    stream=False
+ model="gpt-4o-mini",
+ messages=[{"role": "user", "content": prompt}],
+ stream=False
 )
 end = time.time()
-print(f"  Time to first token: {end - start:.2f}s")
-print(f"  Total time: {end - start:.2f}s")
-print(f"  Response: {response.choices[0].message.content[:100]}...")
+print(f" Time to first token: {end - start:.2f}s")
+print(f" Total time: {end - start:.2f}s")
+print(f" Response: {response.choices[0].message.content[:100]}...")
 print()
 
 # STREAMING: Progressive rendering
@@ -355,22 +354,22 @@ print("Streaming (progressive rendering):")
 start = time.time()
 first_token_time = None
 stream = client.chat.completions.create(
-    model="gpt-4o-mini",
-    messages=[{"role": "user", "content": prompt}],
-    stream=True
+ model="gpt-4o-mini",
+ messages=[{"role": "user", "content": prompt}],
+ stream=True
 )
 
 response_text = ""
 for chunk in stream:
-    if chunk.choices[0].delta.content:
-        if first_token_time is None:
-            first_token_time = time.time()
-            print(f"  Time to first token: {first_token_time - start:.2f}s")
-        response_text += chunk.choices[0].delta.content
-        print(chunk.choices[0].delta.content, end="", flush=True)
+ if chunk.choices[0].delta.content:
+ if first_token_time is None:
+ first_token_time = time.time()
+ print(f" Time to first token: {first_token_time - start:.2f}s")
+ response_text += chunk.choices[0].delta.content
+ print(chunk.choices[0].delta.content, end="", flush=True)
 
 end = time.time()
-print(f"\n  Total time: {end - start:.2f}s")
+print(f"\n Total time: {end - start:.2f}s")
 print()
 
 # DECISION: For user-facing responses, streaming provides "instant" feel
@@ -382,36 +381,36 @@ Expected output:
 === PHASE 3: STREAMING RESPONSES ===
 
 Non-streaming (wait for full response):
-  Time to first token: 2.18s
-  Total time: 2.18s
-  Response: 1. **Pepperoni**: A classic favorite, Mamma Rosa's pepperoni is thinly sliced and perfectly...
+ Time to first token: 2.18s
+ Total time: 2.18s
+ Response: 1. **Pepperoni**: A classic favorite, Mamma Rosa's pepperoni is thinly sliced and perfectly...
 
 Streaming (progressive rendering):
-  Time to first token: 0.42s
+ Time to first token: 0.42s
 1. **Pepperoni**: A classic favorite, Mamma Rosa's pepperoni is thinly sliced and perfectly seasoned...
-  Total time: 2.21s
+ Total time: 2.21s
 
 → DECISION: Streaming enabled (perceived latency 0.42s vs. 2.18s, 5× faster UX)
 """
 ```
 
-> 💡 **Industry Standard:** `OpenAI` streaming with async for production
+> **Industry Standard:** `OpenAI` streaming with async for production
 >
 > ```python
 > import asyncio
 > from openai import AsyncOpenAI
 >
 > async def stream_response(prompt: str):
->     client = AsyncOpenAI()
->     stream = await client.chat.completions.create(
->         model="gpt-4o-mini",
->         messages=[{"role": "user", "content": prompt}],
->         stream=True
->     )
+> client = AsyncOpenAI()
+> stream = await client.chat.completions.create(
+> model="gpt-4o-mini",
+> messages=[{"role": "user", "content": prompt}],
+> stream=True
+> )
 >
->     async for chunk in stream:
->         if chunk.choices[0].delta.content:
->             yield chunk.choices[0].delta.content  # Send to frontend in real-time
+> async for chunk in stream:
+> if chunk.choices[0].delta.content:
+> yield chunk.choices[0].delta.content # Send to frontend in real-time
 >
 > # Usage in production (FastAPI endpoint)
 > from fastapi import FastAPI
@@ -421,10 +420,10 @@ Streaming (progressive rendering):
 >
 > @app.post("/chat/stream")
 > async def chat_stream(prompt: str):
->     return StreamingResponse(
->         stream_response(prompt),
->         media_type="text/event-stream"
->     )
+> return StreamingResponse(
+> stream_response(prompt),
+> media_type="text/event-stream"
+> )
 > ```
 >
 > **When to use:** Always for user-facing chat interfaces. Reduces perceived latency by 5-10×.
@@ -436,15 +435,15 @@ Streaming (progressive rendering):
 Transformers cache the key-value matrices of previously computed tokens (the KV cache). For a repeated prefix (system prompt + few-shot examples), the provider can reuse the cached computation rather than recomputing it on every call.
 
 ```
-Without prefix caching:   every call pays input_tokens × full prefill cost
-With prefix caching:      every call pays only new_tokens × prefill cost
-                          (cached prefix is free or deeply discounted)
+Without prefix caching: every call pays input_tokens × full prefill cost
+With prefix caching: every call pays only new_tokens × prefill cost
+ (cached prefix is free or deeply discounted)
 ```
 
 **Implication:** put your system prompt and few-shot examples at the beginning of the context. Keep them identical across calls. Most major providers (OpenAI, Anthropic) offer prefix caching automatically or explicitly. Savings of 50–80% on input token costs for chat applications are typical.
 
-> 💡 **Stream verdict:** Streaming reduces perceived latency from 2.18s to 0.42s time-to-first-token (5× faster) with identical total generation time — free UX win, no cost increase.
-> ➡️ Enable streaming for all user-facing chat responses; disable for agent tool calls that require full JSON before parsing.
+> **Stream verdict:** Streaming reduces perceived latency from 2.18s to 0.42s time-to-first-token (5× faster) with identical total generation time — free UX win, no cost increase.
+> ➡ Enable streaming for all user-facing chat responses; disable for agent tool calls that require full JSON before parsing.
 
 ### 4.2 Speculative Decoding
 
@@ -452,14 +451,14 @@ With prefix caching:      every call pays only new_tokens × prefill cost
 
 ```
 Speculative decoding loop (K = 4 draft tokens per round):
-  1. Draft model generates tokens [t1, t2, t3, t4] — fast, cheap
-  2. Target model evaluates all 4 in ONE forward pass
-  3. Accept tokens where draft ≈ target probability
-  4. Reject first mismatch → resample that position from target
-  Repeat.
+ 1. Draft model generates tokens [t1, t2, t3, t4] — fast, cheap
+ 2. Target model evaluates all 4 in ONE forward pass
+ 3. Accept tokens where draft ≈ target probability
+ 4. Reject first mismatch → resample that position from target
+ Repeat.
 
 Cost per round: ~1 draft forward pass + 1 target forward pass
-Baseline cost:  K target forward passes (one per token)
+Baseline cost: K target forward passes (one per token)
 Latency reduction: 30–40% on typical generation tasks
 ```
 
@@ -467,8 +466,8 @@ Latency reduction: 30–40% on typical generation tasks
 
 **PizzaBot grounding.** Mamma Rosa's order confirmations follow predictable templates: *"Your order of [items] to [address] totals $[amount]. Estimated delivery: 30–40 minutes."* The draft model (Llama-3-1B) guesses the templated tokens — "Your order of", "totals", "Estimated delivery" — correctly on almost every call. The target model (Llama-3-8B) verifies in a single pass. For a 120-token confirmation, speculative decoding eliminates roughly 30–40 expensive forward passes, shaving ~200ms off generation time.
 
-> 💡 **Speculative decoding verdict:** 30–40% latency reduction on templated outputs (order confirmations, structured JSON) with zero quality loss — the draft model never controls final token selection, only proposes. Requires two models in memory simultaneously; worth it when the draft model fits in the GPU headroom already available on your inference node.
-> ➡️ In PizzaBot's self-hosted vLLM stack, Llama-3-1B (2 GB INT8) runs as draft alongside Llama-3-8B (8 GB INT8) on the same A100, reducing generation from ~1.0s to ~0.7s per confirmation.
+> **Speculative decoding verdict:** 30–40% latency reduction on templated outputs (order confirmations, structured JSON) with zero quality loss — the draft model never controls final token selection, only proposes. Requires two models in memory simultaneously; worth it when the draft model fits in the GPU headroom already available on your inference node.
+> ➡ In PizzaBot's self-hosted vLLM stack, Llama-3-1B (2 GB INT8) runs as draft alongside Llama-3-8B (8 GB INT8) on the same A100, reducing generation from ~1.0s to ~0.7s per confirmation.
 
 ---
 
@@ -512,28 +511,28 @@ Guidelines:
 """
 
 def call_with_caching(user_message: str, use_cache: bool = True):
-    """
-    Phase 2 DECISION LOGIC: Enable prompt caching for repeated system prompts.
-    OpenAI automatically caches system messages when identical.
-    """
-    messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},  # Will be cached
-        {"role": "user", "content": user_message}
-    ]
+ """
+ Phase 2 DECISION LOGIC: Enable prompt caching for repeated system prompts.
+ OpenAI automatically caches system messages when identical.
+ """
+ messages = [
+ {"role": "system", "content": SYSTEM_PROMPT}, # Will be cached
+ {"role": "user", "content": user_message}
+ ]
 
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=messages
-    )
+ response = client.chat.completions.create(
+ model="gpt-4o-mini",
+ messages=messages
+ )
 
-    # Check token usage (OpenAI reports cached tokens separately)
-    usage = response.usage
-    print(f"Input tokens: {usage.prompt_tokens}")
-    if hasattr(usage, 'prompt_tokens_details'):
-        cached = getattr(usage.prompt_tokens_details, 'cached_tokens', 0)
-        print(f"  Cached: {cached} tokens (saved ${cached * 0.15 / 1_000_000:.6f})")
+ # Check token usage (OpenAI reports cached tokens separately)
+ usage = response.usage
+ print(f"Input tokens: {usage.prompt_tokens}")
+ if hasattr(usage, 'prompt_tokens_details'):
+ cached = getattr(usage.prompt_tokens_details, 'cached_tokens', 0)
+ print(f" Cached: {cached} tokens (saved ${cached * 0.15 / 1_000_000:.6f})")
 
-    return response.choices[0].message.content
+ return response.choices[0].message.content
 
 print("=== PHASE 2: PROMPT CACHING ===\n")
 
@@ -558,21 +557,21 @@ Expected output:
 
 First call (cold start - no cache):
 Input tokens: 412
-  Cached: 0 tokens (saved $0.000000)
+ Cached: 0 tokens (saved $0.000000)
 
 Second call (cache hit - system prompt cached):
 Input tokens: 25
-  Cached: 387 tokens (saved $0.000058) ← 94% of system prompt cached!
+ Cached: 387 tokens (saved $0.000058) ← 94% of system prompt cached!
 
 Third call (another cache hit):
 Input tokens: 28
-  Cached: 387 tokens (saved $0.000058)
+ Cached: 387 tokens (saved $0.000058)
 
 → DECISION: Prompt caching enabled (90-95% token savings on system prompt)
 """
 ```
 
-> 💡 **Industry Standard:** `Anthropic` prompt caching with explicit cache_control
+> **Industry Standard:** `Anthropic` prompt caching with explicit cache_control
 >
 > ```python
 > import anthropic
@@ -580,25 +579,25 @@ Input tokens: 28
 > client = anthropic.Anthropic()
 >
 > response = client.messages.create(
->     model="claude-3-5-sonnet-20241022",
->     max_tokens=1024,
->     system=[
->         {
->             "type": "text",
->             "text": SYSTEM_PROMPT,
->             "cache_control": {"type": "ephemeral"}  # Explicit cache marker
->         }
->     ],
->     messages=[
->         {"role": "user", "content": "I want a large Margherita"}
->     ]
+> model="claude-3-5-sonnet-20241022",
+> max_tokens=1024,
+> system=[
+> {
+> "type": "text",
+> "text": SYSTEM_PROMPT,
+> "cache_control": {"type": "ephemeral"} # Explicit cache marker
+> }
+> ],
+> messages=[
+> {"role": "user", "content": "I want a large Margherita"}
+> ]
 > )
 >
 > # Anthropic reports cache hits/writes explicitly
 > usage = response.usage
 > print(f"Input tokens: {usage.input_tokens}")
-> print(f"Cache creation tokens: {usage.cache_creation_input_tokens}")  # First call only
-> print(f"Cache read tokens: {usage.cache_read_input_tokens}")  # Subsequent calls
+> print(f"Cache creation tokens: {usage.cache_creation_input_tokens}") # First call only
+> print(f"Cache read tokens: {usage.cache_read_input_tokens}") # Subsequent calls
 >
 > # Pricing: cache writes = 1.25× input price, cache reads = 0.1× input price
 > # Net savings: 90% cost reduction on cached content after first call
@@ -616,18 +615,18 @@ Input tokens: 28
 
 **PizzaBot grounding.** Mamma Rosa's daily query mix breaks down roughly as: 60% simple order placements (*"Large Margherita to 42 Maple St"*) that any mid-tier model handles reliably, 30% menu questions answered well with RAG, and 10% allergen or safety queries where a wrong answer causes real harm. Running the full mix on GPT-4o costs ~$90/month; tiered routing — mid-tier by default, GPT-4o only for flagged allergen queries — brings that to ~$12/month. The escalated 10% still get the best model; the other 90% get a fast, cheap one.
 
-> 💡 **Routing verdict:** Tiered routing cuts API costs 80–90% on mixed-complexity workloads. The risk is miscalibration: too-aggressive escalation erases the savings; too-conservative escalation handles safety queries on a model not equipped for them. Always escalate on allergen or medical mentions, regardless of confidence score.
-> ➡️ Track escalation rate for 1,000 requests in production; if >40% escalate, tune the confidence threshold upward or improve mid-tier prompting before accepting the higher cost.
+> **Routing verdict:** Tiered routing cuts API costs 80–90% on mixed-complexity workloads. The risk is miscalibration: too-aggressive escalation erases the savings; too-conservative escalation handles safety queries on a model not equipped for them. Always escalate on allergen or medical mentions, regardless of confidence score.
+> ➡ Track escalation rate for 1,000 requests in production; if >40% escalate, tune the confidence threshold upward or improve mid-tier prompting before accepting the higher cost.
 
 Route requests to the cheapest model that can handle them; escalate to a stronger model only on failure or low-confidence signal.
 
 ```python
 def route_query(query: str) -> str:
-    # Try the cheap model first
-    result = cheap_model.generate(query)
-    if low_confidence(result) or contains_complex_reasoning(query):
-        result = frontier_model.generate(query)
-    return result
+ # Try the cheap model first
+ result = cheap_model.generate(query)
+ if low_confidence(result) or contains_complex_reasoning(query):
+ result = frontier_model.generate(query)
+ return result
 ```
 
 ### 5.3 Context window discipline
@@ -638,8 +637,8 @@ def route_query(query: str) -> str:
 
 **PizzaBot grounding.** PizzaBot conversations typically close an order in 4–6 turns. Edge cases exist — a customer comparing every pizza on the menu, or asking ten allergen questions before committing. Without truncation, turn 10's context can cost 4× turn 2's. Mamma Rosa's fix: summarise turns older than 4 into a compact JSON blob (`{"items_discussed": ["Margherita L"], "delivery_address": "42 Maple St"}`) — 40 tokens instead of 400 — keeping input cost stable at ~1,390 tokens regardless of session length.
 
-> 💡 **Context discipline verdict:** Conversation history is the most common cost runaway in production chat apps — it grows silently and compounds with every turn. A 4-turn cap plus rolling summarisation keeps PizzaBot's token count stable and prevents a long-session outlier from costing 10× a normal session.
-> ➡️ Log `input_token_count` per request for the first 24 hours post-launch; a long tail above 5,000 tokens means history trimming is not working.
+> **Context discipline verdict:** Conversation history is the most common cost runaway in production chat apps — it grows silently and compounds with every turn. A 4-turn cap plus rolling summarisation keeps PizzaBot's token count stable and prevents a long-session outlier from costing 10× a normal session.
+> ➡ Log `input_token_count` per request for the first 24 hours post-launch; a long tail above 5,000 tokens means history trimming is not working.
 
 Aggressively trim the context before each call:
 1. Summarise conversation history older than N turns
@@ -655,16 +654,16 @@ import hashlib
 _cache = {}
 
 def cached_llm_call(prompt: str, model: str, temperature: float) -> str:
-    key = hashlib.sha256(f"{prompt}|{model}|{temperature}".encode()).hexdigest()
-    if key in _cache:
-        return _cache[key]
-    result = llm_api.generate(prompt, model=model, temperature=temperature)
-    _cache[key] = result
-    return result
+ key = hashlib.sha256(f"{prompt}|{model}|{temperature}".encode()).hexdigest()
+ if key in _cache:
+ return _cache[key]
+ result = llm_api.generate(prompt, model=model, temperature=temperature)
+ _cache[key] = result
+ return result
 ```
 
-> 💡 **Cache verdict:** 94% cache hit rate reduces input cost 90% (387 of 412 input tokens cached); system prompt must be identical across calls — move dynamic content to prompt end to preserve the prefix cache.
-> ➡️ Track `cached_tokens / total_input_tokens` across 1,000 requests; skip caching overhead if hit rate < 30%.
+> **Cache verdict:** 94% cache hit rate reduces input cost 90% (387 of 412 input tokens cached); system prompt must be identical across calls — move dynamic content to prompt end to preserve the prefix cache.
+> ➡ Track `cached_tokens / total_input_tokens` across 1,000 requests; skip caching overhead if hit rate < 30%.
 
 ---
 
@@ -680,8 +679,8 @@ Two blockers from §0 remain after caching: the CEO's concern that Friday dinner
 
 **PizzaBot grounding.** Mamma Rosa's non-interactive nightly jobs include: re-embedding updated menu descriptions (1,200 tokens × 200 items = 240k tokens), generating weekly loyalty-customer digest emails (500 tokens × 1,000 customers = 500k tokens), and evaluating 100 sampled conversations for quality review. None require real-time response. Running all three via the batch API instead of the synchronous API cuts that 740k-token overnight workload from ~$0.11 to ~$0.055. Trivial at this scale — but the habit compounds as the deployment grows.
 
-> 💡 **Batch verdict:** 50% cost reduction on all non-interactive workloads with zero changes to model calls — only the submission mechanism changes (async job vs. synchronous call). Use it for: embedding jobs, nightly summarisation, evaluation runs, fine-tuning data preparation.
-> ➡️ Audit every LLM call in your codebase: if the caller can tolerate >30 minutes to response, it is a batch job and should be routed accordingly.
+> **Batch verdict:** 50% cost reduction on all non-interactive workloads with zero changes to model calls — only the submission mechanism changes (async job vs. synchronous call). Use it for: embedding jobs, nightly summarisation, evaluation runs, fine-tuning data preparation.
+> ➡ Audit every LLM call in your codebase: if the caller can tolerate >30 minutes to response, it is a batch job and should be routed accordingly.
 
 For non-interactive workloads (nightly summaries, document ingestion), use batch APIs (50% cost reduction on most providers). Latency is irrelevant; throughput is not.
 
@@ -695,11 +694,11 @@ client = OpenAI()
 
 # Simulate 5 concurrent order requests (e.g., Friday dinner rush)
 orders = [
-    "Large Margherita to 10 Oak St",
-    "2 medium Pepperoni to 23 Elm Ave",
-    "Small Mushroom and garlic bread to 45 Pine Rd",
-    "3 large Margherita to 67 Maple Dr",
-    "Medium Pepperoni, no cheese (allergy) to 89 Cedar Ln"
+ "Large Margherita to 10 Oak St",
+ "2 medium Pepperoni to 23 Elm Ave",
+ "Small Mushroom and garlic bread to 45 Pine Rd",
+ "3 large Margherita to 67 Maple Dr",
+ "Medium Pepperoni, no cheese (allergy) to 89 Cedar Ln"
 ]
 
 print("=== PHASE 4: BATCHED INFERENCE ===\n")
@@ -709,24 +708,24 @@ print("Sequential processing (one request at a time):")
 start = time.time()
 results_sequential = []
 for order in orders:
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "user", "content": f"Process order: {order}"}]
-    )
-    results_sequential.append(response.choices[0].message.content)
+ response = client.chat.completions.create(
+ model="gpt-4o-mini",
+ messages=[{"role": "user", "content": f"Process order: {order}"}]
+ )
+ results_sequential.append(response.choices[0].message.content)
 end = time.time()
-print(f"  Total time: {end - start:.2f}s")
-print(f"  Throughput: {len(orders) / (end - start):.2f} requests/sec")
+print(f" Total time: {end - start:.2f}s")
+print(f" Throughput: {len(orders) / (end - start):.2f} requests/sec")
 print()
 
 # BATCHING: For self-hosted models (vLLM, TensorRT-LLM)
 # OpenAI API doesn't expose batching directly, but shows the pattern
 print("Conceptual batching (self-hosted with vLLM):")
-print("  With continuous batching:")
-print("    - All 5 requests processed in single forward pass")
-print("    - Shared overhead (attention compute, memory access)")
-print("    - Total time: ~2.5s (vs. 10s sequential)")
-print("    - Throughput: ~2 requests/sec (2× improvement)")
+print(" With continuous batching:")
+print(" - All 5 requests processed in single forward pass")
+print(" - Shared overhead (attention compute, memory access)")
+print(" - Total time: ~2.5s (vs. 10s sequential)")
+print(" - Throughput: ~2 requests/sec (2× improvement)")
 print()
 
 # DECISION: For peak traffic (>10 concurrent requests), batching doubles throughput
@@ -737,30 +736,30 @@ Expected output:
 === PHASE 4: BATCHED INFERENCE ===
 
 Sequential processing (one request at a time):
-  Total time: 10.82s
-  Throughput: 0.46 requests/sec
+ Total time: 10.82s
+ Throughput: 0.46 requests/sec
 
 Conceptual batching (self-hosted with vLLM):
-  With continuous batching:
-    - All 5 requests processed in single forward pass
-    - Shared overhead (attention compute, memory access)
-    - Total time: ~2.5s (vs. 10s sequential)
-    - Throughput: ~2 requests/sec (2× improvement)
+ With continuous batching:
+ - All 5 requests processed in single forward pass
+ - Shared overhead (attention compute, memory access)
+ - Total time: ~2.5s (vs. 10s sequential)
+ - Throughput: ~2 requests/sec (2× improvement)
 
 → DECISION: For >10 concurrent requests, enable batching with vLLM (2× throughput)
 """
 ```
 
-> 💡 **Industry Standard:** `vLLM` for batched self-hosted inference
+> **Industry Standard:** `vLLM` for batched self-hosted inference
 >
 > ```python
 > from vllm import LLM, SamplingParams
 >
 > # Initialize vLLM with continuous batching enabled
 > llm = LLM(
->     model="meta-llama/Llama-3-8B",
->     tensor_parallel_size=1,
->     max_model_len=8192
+> model="meta-llama/Llama-3-8B",
+> tensor_parallel_size=1,
+> max_model_len=8192
 > )
 >
 > # Batch 100 requests together (processed in single forward pass)
@@ -771,7 +770,7 @@ Conceptual batching (self-hosted with vLLM):
 > outputs = llm.generate(prompts, sampling_params)
 >
 > for output in outputs:
->     print(output.outputs[0].text)
+> print(output.outputs[0].text)
 >
 > # Throughput: 10-50× faster than sequential OpenAI API calls
 > # Latency per request: Similar to single request (shared overhead)
@@ -805,25 +804,25 @@ print("=== PHASE 4: QUANTIZATION ===\n")
 
 # BASELINE: FP16 (full precision)
 print("FP16 model (full precision):")
-print("  Model size: 16GB")
-print("  Memory bandwidth: 2 TB/s (A100 GPU)")
-print("  Inference latency: 1.5s per request")
+print(" Model size: 16GB")
+print(" Memory bandwidth: 2 TB/s (A100 GPU)")
+print(" Inference latency: 1.5s per request")
 print()
 
 # INT8 QUANTIZATION
 print("INT8 quantized model:")
-print("  Model size: 8GB (50% reduction)")
-print("  Memory bandwidth: 2 TB/s (same GPU)")
-print("  Inference latency: 0.8s per request (47% faster!)")
-print("  Accuracy loss: <1% (validated on eval suite)")
+print(" Model size: 8GB (50% reduction)")
+print(" Memory bandwidth: 2 TB/s (same GPU)")
+print(" Inference latency: 0.8s per request (47% faster!)")
+print(" Accuracy loss: <1% (validated on eval suite)")
 print()
 
 # Code to load INT8 model (requires bitsandbytes or AWQ)
 """
 llm = LLM(
-    model="meta-llama/Llama-3-8B",
-    quantization="awq",  # or "gptq" or "bitsandbytes"
-    tensor_parallel_size=1
+ model="meta-llama/Llama-3-8B",
+ quantization="awq", # or "gptq" or "bitsandbytes"
+ tensor_parallel_size=1
 )
 
 # Usage identical to FP16 — quantization is transparent
@@ -836,22 +835,22 @@ outputs = llm.generate(prompts, sampling_params)
 print("→ DECISION: INT8 quantization enabled (0.8s vs. 1.5s latency, <1% accuracy loss)")
 ```
 
-> 💡 **Industry Standard:** `LiteLLM` for cost tracking across providers
+> **Industry Standard:** `LiteLLM` for cost tracking across providers
 >
 > ```python
 > from litellm import completion, cost_per_token
 >
 > # LiteLLM abstracts provider differences (OpenAI, Anthropic, AWS Bedrock, self-hosted)
 > response = completion(
->     model="gpt-4o-mini",
->     messages=[{"role": "user", "content": "Process order: Large Margherita"}]
+> model="gpt-4o-mini",
+> messages=[{"role": "user", "content": "Process order: Large Margherita"}]
 > )
 >
 > # Automatic cost calculation
 > cost = cost_per_token(
->     model="gpt-4o-mini",
->     prompt_tokens=response.usage.prompt_tokens,
->     completion_tokens=response.usage.completion_tokens
+> model="gpt-4o-mini",
+> prompt_tokens=response.usage.prompt_tokens,
+> completion_tokens=response.usage.completion_tokens
 > )
 >
 > print(f"Cost: ${cost:.6f}")
@@ -862,8 +861,8 @@ print("→ DECISION: INT8 quantization enabled (0.8s vs. 1.5s latency, <1% accur
 > **Common alternatives:** Provider-specific SDKs (OpenAI, Anthropic), custom wrappers
 > **See also:** [LiteLLM cost tracking](https://docs.litellm.ai/docs/completion/cost_tracking)
 
-> 💡 **Optimize verdict:** INT8 quantization cuts inference latency 47% (1.5s → 0.8s); batching 5 concurrent requests gives 2× throughput — both require self-hosted vLLM, not available via OpenAI/Anthropic APIs.
-> ➡️ Self-hosting breaks even vs API at >10 req/sec sustained traffic; PizzaBot at 50 visitors/day stays on API until scaling to 1,000+ visitors/day.
+> **Optimize verdict:** INT8 quantization cuts inference latency 47% (1.5s → 0.8s); batching 5 concurrent requests gives 2× throughput — both require self-hosted vLLM, not available via OpenAI/Anthropic APIs.
+> ➡ Self-hosting breaks even vs API at >10 req/sec sustained traffic; PizzaBot at 50 visitors/day stays on API until scaling to 1,000+ visitors/day.
 
 ---
 
@@ -884,8 +883,8 @@ Every accuracy-improving technique adds cost. Knowing the magnitude helps you de
 
 **The hierarchy:** reach for cheaper techniques first. Self-consistency at 5× cost rarely beats a better prompt at 1× cost. An NLI model for hallucination detection costs 0.1× what an LLM judge costs.
 
-> 💡 **Tradeoff verdict:** Self-consistency at 5× cost produces only 3–8% accuracy gain — adding $0.025/conv to PizzaBot's $0.005 baseline and erasing the entire 94%-under-budget margin. NLI claim verification at 1.1× is the cheapest hallucination guard. PizzaBot's error rate is already at target; add nothing until evaluation shows regression.
-> ➡️ Run the evaluation suite from [Ch.8](../ch08-evaluating-ai-systems/evaluating-ai-systems.md) before adding any accuracy layer — the cost multiplier is only worth paying when the eval delta is real and statistically significant.
+> **Tradeoff verdict:** Self-consistency at 5× cost produces only 3–8% accuracy gain — adding $0.025/conv to PizzaBot's $0.005 baseline and erasing the entire 94%-under-budget margin. NLI claim verification at 1.1× is the cheapest hallucination guard. PizzaBot's error rate is already at target; add nothing until evaluation shows regression.
+> ➡ Run the evaluation suite from [Ch.8](../ch08-evaluating-ai-systems/evaluating-ai-systems.md) before adding any accuracy layer — the cost multiplier is only worth paying when the eval delta is real and statistically significant.
 
 ---
 
@@ -895,17 +894,17 @@ The CEO needs a number for the budget deck, not a formula. The model below appli
 
 ```
 Per query:
-  Input tokens:  system_prompt(500) + chunks(2000) + query(100) = 2600 tokens
-  Output tokens: answer ≈ 250 tokens
+ Input tokens: system_prompt(500) + chunks(2000) + query(100) = 2600 tokens
+ Output tokens: answer ≈ 250 tokens
 
 Daily cost (mid-tier model at $1/1M input, $3/1M output):
-  Input:  10,000 × 2,600 × ($1/1,000,000)  = $26/day
-  Output: 10,000 × 250  × ($3/1,000,000)   = $7.50/day
-  Total:  ~$33/day  ≈  $1,000/month
+ Input: 10,000 × 2,600 × ($1/1,000,000) = $26/day
+ Output: 10,000 × 250 × ($3/1,000,000) = $7.50/day
+ Total: ~$33/day ≈ $1,000/month
 
 With prefix caching on the 500-token system prompt:
-  Cached 500 tokens free → saves $5/day → $150/month
-  Total after caching:  ~$875/month
+ Cached 500 tokens free → saves $5/day → $150/month
+ Total after caching: ~$875/month
 ```
 
 **Same workload on a self-hosted Llama 3 8B:**
@@ -914,7 +913,7 @@ Cloud GPU (A100 40GB): ~$1.5/hour → ~$1,080/month at 100% utilisation
 Break-even vs. API: ~same, but with full data privacy and no per-token billing
 ```
 
-> 💡 **Real numbers verdict:** At 10,000 orders/day with prompt caching, monthly LLM cost is ~$875 — $0.000088/order, 99.9% under the $0.08/conv budget. Self-hosted Llama-3-8B (~$1,080/month) only wins over the API when data privacy or per-token billing is the binding constraint; PizzaBot at 50 visitors/day ($4.20/month) doesn't reach self-hosting break-even until 1,000+ visitors/day.
+> **Real numbers verdict:** At 10,000 orders/day with prompt caching, monthly LLM cost is ~$875 — $0.000088/order, 99.9% under the $0.08/conv budget. Self-hosted Llama-3-8B (~$1,080/month) only wins over the API when data privacy or per-token billing is the binding constraint; PizzaBot at 50 visitors/day ($4.20/month) doesn't reach self-hosting break-even until 1,000+ visitors/day.
 
 ---
 
@@ -931,30 +930,29 @@ Break-even vs. API: ~same, but with full data privacy and no per-token billing
 
 ## 11 · Progress Check — What We Can Solve Now
 
-🎉 **FINAL MILESTONE**: All 6 constraints exceeded! Ready for production!
+ **FINAL MILESTONE**: All 6 constraints exceeded! Ready for production!
 
 **Unlocked capabilities:**
-- ✅ **Prompt caching**: 90% token reuse for system prompts
-- ✅ **Streaming responses**: First tokens in <500ms (perceived instant)
-- ✅ **KV-cache reuse**: Attention tensors cached across requests
-- ✅ **Speculative decoding**: Llama-3-1B drafts, Llama-3-8B verifies (30% faster)
-- ✅ **Batched inference**: 2× throughput for concurrent requests
-- ✅ **INT8 quantization**: Model size 16GB → 8GB (faster memory access)
+- **Prompt caching**: 90% token reuse for system prompts
+- **Streaming responses**: First tokens in <500ms (perceived instant)
+- **KV-cache reuse**: Attention tensors cached across requests
+- **Speculative decoding**: Llama-3-1B drafts, Llama-3-8B verifies (30% faster)
+- **Batched inference**: 2× throughput for concurrent requests
+- **INT8 quantization**: Model size 16GB → 8GB (faster memory access)
 
 **Final progress toward constraints:**
 
 | Constraint | Status | Final State |
 |------------|--------|---------------|
-| #1 BUSINESS VALUE | ✅ **TARGET MOSTLY HIT** | **32% conversion** (>25% ✅, beats phone 22%!), **+$2.10 AOV** (target +$2.50, 84% achieved), 70% labor savings (✅) |
-| #2 ACCURACY | ✅ **TARGET HIT!** | ~5% error rate (target <5% ✅) — maintained through optimizations |
-| #3 LATENCY | ✅ **TARGET CRUSHED!** | **1.5s p95** (target <3s ✅) — **beats target by 50%!** |
-| #4 COST | ✅ **TARGET CRUSHED!** | **$0.005/conv** (target <$0.08 ✅) — **94% under budget!** |
-| #5 SAFETY | ✅ **TARGET HIT!** | <2% jailbreak vulnerability, 100% allergen validation (✅) |
-| #6 RELIABILITY | ✅ **TARGET HIT!** | >99% uptime, graceful degradation (✅) |
+| #1 BUSINESS VALUE | **TARGET MOSTLY HIT** | **32% conversion** (>25% , beats phone 22%!), **+$2.10 AOV** (target +$2.50, 84% achieved), 70% labor savings () |
+| #2 ACCURACY | **TARGET HIT!** | ~5% error rate (target <5% ) — maintained through optimizations |
+| #3 LATENCY | **TARGET CRUSHED!** | **1.5s p95** (target <3s ) — **beats target by 50%!** |
+| #4 COST | **TARGET CRUSHED!** | **$0.005/conv** (target <$0.08 ) — **94% under budget!** |
+| #5 SAFETY | **TARGET HIT!** | <2% jailbreak vulnerability, 100% allergen validation () |
+| #6 RELIABILITY | **TARGET HIT!** | >99% uptime, graceful degradation () |
 
 **What we can solve:**
-
-✅ **Sub-2-second latency (1.5s p95) → phone-like UX**:
+**Sub-2-second latency (1.5s p95) → phone-like UX**:
 ```
 Latency breakdown before Ch.9 (2.2s p95):
 - LLM inference: 1.5s
@@ -977,8 +975,7 @@ User experience:
 - 2.2s: "Noticeable delay" (30% conversion)
 - 1.5s: "Fast" (32% conversion) ← **phone-like responsiveness!**
 ```
-
-✅ **50% cost reduction ($0.010 → $0.005/conv)**:
+**50% cost reduction ($0.010 → $0.005/conv)**:
 ```
 Cost breakdown before Ch.10 ($0.010/conv):
 - Fine-tuned Llama-3-8B inference: $0.004
@@ -1000,8 +997,7 @@ Monthly savings at 50 visitors/day:
 - 420 orders/month × $0.005 savings = $2.10/month infrastructure savings
 - (Minimal absolute savings, but massive % improvement and headroom for scale)
 ```
-
-✅ **Streaming responses (perceived <1s latency)**:
+**Streaming responses (perceived <1s latency)**:
 ```
 Before streaming (2.2s total latency):
 User: "What's your most popular pizza?"
@@ -1012,14 +1008,13 @@ After streaming (1.5s total, <500ms to first token):
 User: "What's your most popular pizza?"
 [<500ms wait]
 Bot: "Our Pepperoni pizza" [visible immediately]
-     "is the most popular choice. It features..." [streams in real-time]
+ "is the most popular choice. It features..." [streams in real-time]
 
 Perceived latency: <1s (user sees progress immediately)
 Actual latency: 1.5s (unchanged)
 UX impact: "Instant" feeling → conversion 30% → 32% (+2 points)
 ```
-
-✅ **2× throughput with batched inference**:
+**2× throughput with batched inference**:
 ```
 Before batching (sequential processing):
 - Request 1: 1.5s latency
@@ -1033,17 +1028,17 @@ After batching (parallel processing):
 - Each still completes in ~1.5s (shared overhead)
 Throughput: 3 requests / 1.5s = 2 requests/sec
 
-Result: ✅ 2× throughput! Can handle peak traffic (holiday ordering rush)
+Result: 2× throughput! Can handle peak traffic (holiday ordering rush)
 ```
 
 **Final business metrics:**
-- **Order conversion**: **32%** (target >25% ✅, beats phone 22% ✅)
-- **Average order value**: **$40.60** (+$2.10 vs. baseline $38.50 ✅)
-- **Cost per conversation**: **$0.005** (target <$0.08 ✅, 94% under budget!)
-- **Error rate**: **~5%** (target <5% ✅)
-- **Latency**: **1.5s p95** (target <3s ✅, beats by 50%!)
+- **Order conversion**: **32%** (target >25% , beats phone 22% )
+- **Average order value**: **$40.60** (+$2.10 vs. baseline $38.50 )
+- **Cost per conversation**: **$0.005** (target <$0.08 , 94% under budget!)
+- **Error rate**: **~5%** (target <5% )
+- **Latency**: **1.5s p95** (target <3s , beats by 50%!)
 - **Throughput**: **20 orders/sec** (vs. 10 before, 2× improvement)
-- **Security**: <2% jailbreak vulnerability, 100% allergen validation ✅
+- **Security**: <2% jailbreak vulnerability, 100% allergen validation
 
 **Final ROI calculation:**
 
@@ -1080,22 +1075,22 @@ Revenue lift: $46,771 - $30,420 = $16,351/month
 Labor savings: $11,064/month
 
 Total monthly benefit: $16,351 + $11,064 = $27,415/month
-Payback period: $300,000 / $27,415 = **10.9 months ✅ (beats 10.6 month target!)**
+Payback period: $300,000 / $27,415 = **10.9 months (beats 10.6 month target!)**
 ```
 
-**VERDICT: READY FOR PRODUCTION LAUNCH** ✅
+**VERDICT: READY FOR PRODUCTION LAUNCH**
 
 All 6 constraints satisfied:
-1. ✅ **BUSINESS VALUE**: 32% conversion (>25%), +$2.10 AOV (target +$2.50, 84% achieved), 70% labor savings
-2. ✅ **ACCURACY**: ~5% error rate (<5%)
-3. ✅ **LATENCY**: 1.5s p95 (<3s, beats by 50%!)
-4. ✅ **COST**: $0.005/conv (<$0.08, 94% under budget!)
-5. ✅ **SAFETY**: <2% jailbreak, 100% allergen validation
-6. ✅ **RELIABILITY**: >99% uptime, graceful degradation
+1. **BUSINESS VALUE**: 32% conversion (>25%), +$2.10 AOV (target +$2.50, 84% achieved), 70% labor savings
+2. **ACCURACY**: ~5% error rate (<5%)
+3. **LATENCY**: 1.5s p95 (<3s, beats by 50%!)
+4. **COST**: $0.005/conv (<$0.08, 94% under budget!)
+5. **SAFETY**: <2% jailbreak, 100% allergen validation
+6. **RELIABILITY**: >99% uptime, graceful degradation
 
 ROI achievable:
 - **Conservative** (88 visitors/day): 13 months
-- **Target** (120 visitors/day): 10.9 months ✅
+- **Target** (120 visitors/day): 10.9 months
 - **Aggressive** (150+ visitors/day): <9 months
 
 **System comparison: Final vs. Baseline**
@@ -1125,8 +1120,7 @@ ROI achievable:
 - A/B testing: Safe experimentation with automated regression detection
 - Advanced upselling: Personalized recommendations based on order history
 - Voice interface: <1.5s latency enables phone integration
-
-❌ **What we can't solve yet:**
+**What we can't solve yet:**
 
 **Nothing for PizzaBot!** All 6 constraints achieved. The system is production-ready.
 
@@ -1139,12 +1133,12 @@ ROI achievable:
 → See **[AI Infrastructure track](../../ai_infrastructure/README.md)** for the next level: hardware decisions, memory hierarchies, and distributed systems.
 
 **Business metrics update:**
-- **Order conversion**: **32%** (baseline: 22% phone orders) — **+45% improvement** ✅
-- **Average order value**: **$40.60** (baseline: $38.50 phone) — **+5.5% improvement** ✅
-- **Cost per conversation**: **$0.005** (target: <$0.08) — **94% under budget** ✅
-- **Error rate**: **~5%** (target: <5%) — **maintained accuracy through optimizations** ✅
-- **Latency**: **1.5s p95** (target: <3s) — **beats target by 50%** ✅
-- **ROI payback**: **10.9 months at 120 visitors/day** (target: 10.6 months) — **achievable** ✅
+- **Order conversion**: **32%** (baseline: 22% phone orders) — **+45% improvement**
+- **Average order value**: **$40.60** (baseline: $38.50 phone) — **+5.5% improvement**
+- **Cost per conversation**: **$0.005** (target: <$0.08) — **94% under budget**
+- **Error rate**: **~5%** (target: <5%) — **maintained accuracy through optimizations**
+- **Latency**: **1.5s p95** (target: <3s) — **beats target by 50%**
+- **ROI payback**: **10.9 months at 120 visitors/day** (target: 10.6 months) — **achievable**
 
 **Next step**: AI Infrastructure track — where these algorithmic levers (quantization, batching, caching) become hardware and systems decisions (GPU memory bandwidth, distributed inference, custom accelerators).
 

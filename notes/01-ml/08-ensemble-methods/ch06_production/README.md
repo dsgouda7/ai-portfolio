@@ -13,27 +13,27 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 💡 **EnsembleAI**: Beat any single model by >5% MAE via intelligent combination. 5 constraints must all be satisfied in production.
+> **EnsembleAI**: Beat any single model by >5% MAE via intelligent combination. 5 constraints must all be satisfied in production.
 
 **EnsembleAI — 5 Constraints Status After Ch.5:**
 
 | # | Constraint | Target | Status After Ch.5 |
 |---|------------|--------|-------------------|
-| **#1** | **IMPROVEMENT** | Beat single model by >5% MAE | ✅ **ACHIEVED** — MAE = $20k vs XGBoost $34k (+41%) |
-| **#2** | **DIVERSITY** | Diverse model families in the stack | ✅ **ACHIEVED** — LR + RF + XGBoost stacked (Ch.5) |
-| **#3** | **LATENCY** | Real-time pricing: <50ms per request | ⚡ **UNVALIDATED** — stacking = 3 models in sequence |
-| **#4** | **EXPLAINABILITY** | SHAP explanation per prediction | ⚡ **UNVALIDATED** — offline SHAP done (Ch.4), not in API |
-| **#5** | **MONITORING** | Detect drift, trigger retraining | ❌ **MISSING** — no production monitor exists yet |
+| **#1** | **IMPROVEMENT** | Beat single model by >5% MAE | **ACHIEVED** — MAE = $20k vs XGBoost $34k (+41%) |
+| **#2** | **DIVERSITY** | Diverse model families in the stack | **ACHIEVED** — LR + RF + XGBoost stacked (Ch.5) |
+| **#3** | **LATENCY** | Real-time pricing: <50ms per request | **UNVALIDATED** — stacking = 3 models in sequence |
+| **#4** | **EXPLAINABILITY** | SHAP explanation per prediction | **UNVALIDATED** — offline SHAP done (Ch.4), not in API |
+| **#5** | **MONITORING** | Detect drift, trigger retraining | **MISSING** — no production monitor exists yet |
 
 **What's blocking us:**
 We have great offline accuracy. But the real-estate platform needs **1,000 pricing requests per second** with a **50ms SLA**. The stacked ensemble (LR + RF + XGBoost) takes longer sequentially. We need parallel inference, latency benchmarking, an explanation API, and drift monitoring before we can call EnsembleAI complete.
 
 **What this chapter unlocks:**
-- ✅ Parallel ensemble serving under 50ms
-- ✅ Per-prediction SHAP explanations in the API response
-- ✅ PSI-based drift detection with retraining trigger
-- ✅ A/B test validating ensemble beats baseline in production
-- ✅ **All 5 EnsembleAI constraints satisfied → Mission Complete**
+- Parallel ensemble serving under 50ms
+- Per-prediction SHAP explanations in the API response
+- PSI-based drift detection with retraining trigger
+- A/B test validating ensemble beats baseline in production
+- **All 5 EnsembleAI constraints satisfied → Mission Complete**
 
 ---
 
@@ -54,37 +54,37 @@ Four principles govern production ensemble deployment:
 3. **Drift = retraining trigger**: Feature distributions shift over time (market inflation, new neighborhoods, housing market cycles). PSI > 0.2 on any key feature triggers a retraining pipeline.
 4. **Shadow mode before cutover**: New model versions run in parallel, receive live traffic, but don't serve results until validated. Prevents silent regressions.
 
-> 💡 **The key insight:** Accuracy (offline benchmark) × Reliability (uptime, latency) ÷ Cost (compute, engineering) is the production objective function — not just accuracy alone. The Netflix Prize winner maximized the numerator while making the denominator unbounded.
+> **The key insight:** Accuracy (offline benchmark) × Reliability (uptime, latency) ÷ Cost (compute, engineering) is the production objective function — not just accuracy alone. The Netflix Prize winner maximized the numerator while making the denominator unbounded.
 
 ---
 
 ## 1.5 · The Practitioner Workflow — Your 4-Phase Deployment
 
-> ⚠️ **Two ways to read this chapter:**
+> **Warning — Two ways to read this chapter:**
 > - **Theory-first (recommended for learning):** Read §0→§4 sequentially to understand the concepts, then use this workflow as your reference
 > - **Workflow-first (practitioners with existing knowledge):** Use this diagram as a jump-to guide when deploying production ensembles
 
 **What you'll build by the end:** A production ensemble serving API with parallel inference (<50ms SLA), real-time SHAP explanations, PSI-based drift monitoring, and blue-green deployment with shadow mode validation.
 
 ```
-Phase 1: DEPLOY             Phase 2: MONITOR            Phase 3: VALIDATE           Phase 4: CUTOVER
+Phase 1: DEPLOY Phase 2: MONITOR Phase 3: VALIDATE Phase 4: CUTOVER
 ────────────────────────────────────────────────────────────────────────────────────────────────────
-Parallel serving setup:     Track performance:          Shadow mode testing:        Production release:
+Parallel serving setup: Track performance: Shadow mode testing: Production release:
 
-• Base models async         • P50/P99 latency           • Run new + old in parallel • Blue-green switch
-• Meta-learner sequential   • Per-model timing          • Compare MAE on live       • Rollback strategy
-• SHAP per request          • Feature PSI daily         • A/B test (n≥3,300)        • Version tracking
-• Response <50ms SLA        • Accuracy degradation      • Validate explanations     • Incident response
+• Base models async • P50/P99 latency • Run new + old in parallel • Blue-green switch
+• Meta-learner sequential • Per-model timing • Compare MAE on live • Rollback strategy
+• SHAP per request • Feature PSI daily • A/B test (n≥3,300) • Version tracking
+• Response <50ms SLA • Accuracy degradation • Validate explanations • Incident response
 
-→ DECISION:                 → DECISION:                 → DECISION:                 → DECISION:
-  Architecture passes         PSI threshold breached      Shadow beats incumbent      Cutover or rollback
-  latency benchmark?          (>0.20)?                    by ≥3% MAE?                 based on shadow MAE
+→ DECISION: → DECISION: → DECISION: → DECISION:
+ Architecture passes PSI threshold breached Shadow beats incumbent Cutover or rollback
+ latency benchmark? (>0.20)? by ≥3% MAE? based on shadow MAE
 
-  YES: Proceed to monitor     YES: Trigger retrain        YES: Enter cutover          SUCCESS: Promote new
-  NO: Optimize parallel       NO: Continue monitoring     NO: Keep incumbent          FAIL: Rollback + debug
+ YES: Proceed to monitor YES: Trigger retrain YES: Enter cutover SUCCESS: Promote new
+ NO: Optimize parallel NO: Continue monitoring NO: Keep incumbent FAIL: Rollback + debug
 ```
 
-> 💡 **Usage note:** Phases 1–2 run continuously for the incumbent model. Phase 3 activates when Phase 2 detects drift (PSI > 0.20). Phase 4 executes only after Phase 3 shadow mode validates the new model. This is not a linear pipeline — it's a continuous monitoring loop with conditional retraining.
+> **Usage note:** Phases 1–2 run continuously for the incumbent model. Phase 3 activates when Phase 2 detects drift (PSI > 0.20). Phase 4 executes only after Phase 3 shadow mode validates the new model. This is not a linear pipeline — it's a continuous monitoring loop with conditional retraining.
 
 **How long each phase takes in the wild:**
 
@@ -98,12 +98,12 @@ Parallel serving setup:     Track performance:          Shadow mode testing:    
 **Example timeline for a drift-triggered retrain:**
 
 ```
-Day 0:   Phase 2 detects PSI = 0.22 on MedInc feature
-Day 1:   Alert fires → ML engineer kicks off retrain (45 min)
-Day 1:   New model ready → enters Phase 3 shadow mode
-Day 8:   Shadow results: New MAE $20.1k vs Incumbent $24.8k → passes 3% threshold
-Day 9:   Phase 4 cutover scheduled (off-peak hours)
-Day 9:   Blue-green switch → new model promoted → Phase 2 monitoring resumes
+Day 0: Phase 2 detects PSI = 0.22 on MedInc feature
+Day 1: Alert fires → ML engineer kicks off retrain (45 min)
+Day 1: New model ready → enters Phase 3 shadow mode
+Day 8: Shadow results: New MAE $20.1k vs Incumbent $24.8k → passes 3% threshold
+Day 9: Phase 4 cutover scheduled (off-peak hours)
+Day 9: Blue-green switch → new model promoted → Phase 2 monitoring resumes
 ```
 
 ---
@@ -142,7 +142,7 @@ Day 9:   Blue-green switch → new model promoted → Phase 2 monitoring resumes
 | TreeSHAP (XGBoost) | 3 | 3 | Runs after meta — needs prediction first |
 | Async logging | 0 | 0 | Non-blocking: does not add to P50 |
 | Overhead | 10 | 5 | Async logging removes ~5ms sync overhead |
-| **Total** | **59ms ❌** | **38ms ✅** | Well under 50ms SLA |
+| **Total** | **59ms ** | **38ms ** | Well under 50ms SLA |
 
 ---
 
@@ -152,58 +152,58 @@ The full request lifecycle from HTTP call to response with explanation:
 
 ```
 HTTP Request (pricing query: 8 features)
-     │
-     ▼
+ │
+ ▼
 ┌─────────────────────────────────────────┐
-│  FEATURE STORE                          │
-│  • Validate input (schema check)        │
-│  • Join with cached district features   │
-│  • Produce normalized feature vector    │
-│  Latency budget: ~5ms                   │
+│ FEATURE STORE │
+│ • Validate input (schema check) │
+│ • Join with cached district features │
+│ • Produce normalized feature vector │
+│ Latency budget: ~5ms │
 └─────────────┬───────────────────────────┘
-              │
-              ▼
+ │
+ ▼
 ┌──────────────────────────────────────────────┐
-│  PARALLEL MODEL INFERENCE                    │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐   │
-│  │    LR    │  │    RF    │  │  XGBoost │   │
-│  │  ~1ms    │  │  ~15ms   │  │  ~20ms   │   │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘   │
-│       └─────────────┴─────────────┘          │
-│  Wall-clock time = max(1, 15, 20) = ~20ms    │
+│ PARALLEL MODEL INFERENCE │
+│ ┌──────────┐ ┌──────────┐ ┌──────────┐ │
+│ │ LR │ │ RF │ │ XGBoost │ │
+│ │ ~1ms │ │ ~15ms │ │ ~20ms │ │
+│ └────┬─────┘ └────┬─────┘ └────┬─────┘ │
+│ └─────────────┴─────────────┘ │
+│ Wall-clock time = max(1, 15, 20) = ~20ms │
 └─────────────┬────────────────────────────────┘
-              │
-              ▼
+ │
+ ▼
 ┌─────────────────────────────────────────┐
-│  META-LEARNER (Ridge)                   │
-│  • Concatenate 3 base predictions       │
-│  • Apply learned meta weights           │
-│  • Produce final price estimate         │
-│  Latency budget: ~5ms                   │
+│ META-LEARNER (Ridge) │
+│ • Concatenate 3 base predictions │
+│ • Apply learned meta weights │
+│ • Produce final price estimate │
+│ Latency budget: ~5ms │
 └─────────────┬───────────────────────────┘
-              │
-              ▼
+ │
+ ▼
 ┌─────────────────────────────────────────┐
-│  SHAP EXPLANATION (TreeSHAP)            │
-│  • Run TreeSHAP on XGBoost only         │
-│  • Scale by meta-weight of XGBoost      │
-│  • Return top-3 contributing features   │
-│  Latency budget: ~3ms (cached)          │
+│ SHAP EXPLANATION (TreeSHAP) │
+│ • Run TreeSHAP on XGBoost only │
+│ • Scale by meta-weight of XGBoost │
+│ • Return top-3 contributing features │
+│ Latency budget: ~3ms (cached) │
 └─────────────┬───────────────────────────┘
-              │
-              ▼
+ │
+ ▼
 ┌─────────────────────────────────────────┐
-│  LOGGING & MONITORING                   │
-│  • Async write: features + prediction   │
-│  • Does NOT block response              │
-│  • PSI computed in background hourly    │
+│ LOGGING & MONITORING │
+│ • Async write: features + prediction │
+│ • Does NOT block response │
+│ • PSI computed in background hourly │
 └─────────────┬───────────────────────────┘
-              │
-              ▼
+ │
+ ▼
 HTTP Response: { price: 340500, top_features: [...], latency_ms: 33 }
 ```
 
-**Total wall-clock**: 5ms (features) + 20ms (parallel inference) + 5ms (meta) + 3ms (SHAP) = **33ms** + ~2ms overhead = **35ms < 50ms SLA** ✅
+**Total wall-clock**: 5ms (features) + 20ms (parallel inference) + 5ms (meta) + 3ms (SHAP) = **33ms** + ~2ms overhead = **35ms < 50ms SLA**
 
 **Code snippet — Phase 1: Parallel inference with asyncio:**
 
@@ -214,65 +214,65 @@ from concurrent.futures import ThreadPoolExecutor
 
 # Phase 1: DEPLOY — Parallel base model inference
 async def predict_ensemble_async(feature_vector):
-    """
-    Parallel inference for 3-model stack.
-    Returns: (price_estimate, latency_ms, shap_top3)
-    """
-    import time
-    start = time.perf_counter()
+ """
+ Parallel inference for 3-model stack.
+ Returns: (price_estimate, latency_ms, shap_top3)
+ """
+ import time
+ start = time.perf_counter()
 
-    # Step 1: Feature store lookup (5ms)
-    X = await fetch_features(feature_vector)  # async I/O call
+ # Step 1: Feature store lookup (5ms)
+ X = await fetch_features(feature_vector) # async I/O call
 
-    # Step 2: Launch all 3 base models in parallel (wall-clock = max latency)
-    with ThreadPoolExecutor(max_workers=3) as executor:
-        loop = asyncio.get_event_loop()
-        lr_pred  = loop.run_in_executor(executor, lr_model.predict, X)
-        rf_pred  = loop.run_in_executor(executor, rf_model.predict, X)
-        xgb_pred = loop.run_in_executor(executor, xgb_model.predict, X)
+ # Step 2: Launch all 3 base models in parallel (wall-clock = max latency)
+ with ThreadPoolExecutor(max_workers=3) as executor:
+ loop = asyncio.get_event_loop()
+ lr_pred = loop.run_in_executor(executor, lr_model.predict, X)
+ rf_pred = loop.run_in_executor(executor, rf_model.predict, X)
+ xgb_pred = loop.run_in_executor(executor, xgb_model.predict, X)
 
-        # Wait for all 3 to finish (blocking = max of the three)
-        base_preds = await asyncio.gather(lr_pred, rf_pred, xgb_pred)
+ # Wait for all 3 to finish (blocking = max of the three)
+ base_preds = await asyncio.gather(lr_pred, rf_pred, xgb_pred)
 
-    # Step 3: Meta-learner (sequential — needs all base predictions)
-    meta_input = np.array(base_preds).reshape(1, -1)
-    final_price = meta_model.predict(meta_input)[0]
+ # Step 3: Meta-learner (sequential — needs all base predictions)
+ meta_input = np.array(base_preds).reshape(1, -1)
+ final_price = meta_model.predict(meta_input)[0]
 
-    # Step 4: SHAP explanation (XGBoost only, 3ms)
-    shap_values = xgb_explainer.shap_values(X)
-    top3_features = get_top3_features(shap_values, X)
+ # Step 4: SHAP explanation (XGBoost only, 3ms)
+ shap_values = xgb_explainer.shap_values(X)
+ top3_features = get_top3_features(shap_values, X)
 
-    # Step 5: Async logging (non-blocking — returns immediately)
-    asyncio.create_task(log_prediction(X, final_price, base_preds))
+ # Step 5: Async logging (non-blocking — returns immediately)
+ asyncio.create_task(log_prediction(X, final_price, base_preds))
 
-    latency_ms = (time.perf_counter() - start) * 1000
-    return {
-        "price_estimate": int(final_price * 100000),  # Convert to dollars
-        "shap_top3": top3_features,
-        "latency_ms": round(latency_ms, 1)
-    }
+ latency_ms = (time.perf_counter() - start) * 1000
+ return {
+ "price_estimate": int(final_price * 100000), # Convert to dollars
+ "shap_top3": top3_features,
+ "latency_ms": round(latency_ms, 1)
+ }
 
 # Example call:
 # response = await predict_ensemble_async({"MedInc": 3.5, "Latitude": 37.8, ...})
 # → {"price_estimate": 340500, "shap_top3": [...], "latency_ms": 33.2}
 ```
 
-> 💡 **Industry Standard:** `Ray Serve` for production ML serving
+> **Industry Standard:** `Ray Serve` for production ML serving
 >
 > ```python
 > from ray import serve
 >
 > @serve.deployment(num_replicas=4, max_concurrent_queries=100)
 > class EnsembleModel:
->     def __init__(self):
->         self.lr = load_model("lr_model.pkl")
->         self.rf = load_model("rf_model.pkl")
->         self.xgb = load_model("xgb_model.pkl")
->         self.meta = load_model("meta_ridge.pkl")
+> def __init__(self):
+> self.lr = load_model("lr_model.pkl")
+> self.rf = load_model("rf_model.pkl")
+> self.xgb = load_model("xgb_model.pkl")
+> self.meta = load_model("meta_ridge.pkl")
 >
->     async def __call__(self, request):
->         # Ray automatically handles parallelism across replicas
->         return await predict_ensemble_async(request)
+> async def __call__(self, request):
+> # Ray automatically handles parallelism across replicas
+> return await predict_ensemble_async(request)
 >
 > serve.run(EnsembleModel.bind())
 > ```
@@ -283,14 +283,14 @@ async def predict_ensemble_async(feature_vector):
 
 ---
 
-> 💡 **Deploy verdict:** Parallel inference cut latency 56ms → 35ms (P99 = 38ms), 15ms below the 50ms SLA with headroom for jitter.
-> ➡️ Load-test at 1,000 req/s and canary-deploy 5% of traffic before Phase 2 continuous monitoring.
+> **Deploy verdict:** Parallel inference cut latency 56ms → 35ms (P99 = 38ms), 15ms below the 50ms SLA with headroom for jitter.
+> ➡ Load-test at 1,000 req/s and canary-deploy 5% of traffic before Phase 2 continuous monitoring.
 
 ---
 
 ## 4 · The Math — All Arithmetic Shown
 
-> ⚡ **All numbers in §4 are fully worked out with explicit arithmetic** — no "plug into the formula and trust me." Read through each calculation once; you'll be able to reproduce it for any ensemble with different latencies, effect sizes, or drift profiles. That ability is what separates a production engineer from a notebook practitioner.
+> **All numbers in §4 are fully worked out with explicit arithmetic** — no "plug into the formula and trust me." Read through each calculation once; you'll be able to reproduce it for any ensemble with different latencies, effect sizes, or drift profiles. That ability is what separates a production engineer from a notebook practitioner.
 
 ### 4.1 Latency Budget: Parallel vs Sequential
 
@@ -300,7 +300,7 @@ $$L_{\text{seq}} = L_{\text{LR}} + L_{\text{RF}} + L_{\text{XGB}} + L_{\text{met
 
 Add feature computation (5ms) and overhead (10ms):
 
-$$L_{\text{seq,total}} = 41 + 5 + 10 = 56\text{ms} > 50\text{ms SLA} \quad ❌$$
+$$L_{\text{seq,total}} = 41 + 5 + 10 = 56\text{ms} > 50\text{ms SLA} \quad $$
 
 **Parallel serving** (correct approach): LR, RF, XGBoost launch simultaneously and return when all finish.
 
@@ -308,13 +308,13 @@ $$L_{\text{parallel}} = \max(L_{\text{LR}},\, L_{\text{RF}},\, L_{\text{XGB}}) +
 
 Add feature computation (5ms) and overhead (5ms, reduced by async logging):
 
-$$L_{\text{parallel,total}} = 25 + 5 + 5 = 35\text{ms} < 50\text{ms SLA} \quad ✅$$
+$$L_{\text{parallel,total}} = 25 + 5 + 5 = 35\text{ms} < 50\text{ms SLA} \quad $$
 
 **Metric outcome achieved:** Parallel inference architecture **reduced P95 latency from 85ms → 35ms** (59% reduction), bringing the ensemble comfortably under the 50ms SLA with 15ms of headroom for network jitter and P99 tail cases. This unlocks real-time pricing at scale — the 1,000 requests/second target is now achievable without sacrificing ensemble accuracy.
 
 **Savings**: $56 - 35 = 21\text{ms}$ — a 37.5% latency reduction from one architectural change.
 
-> ⚡ **SLA headroom**: We have 50 − 35 = **15ms budget** remaining for network jitter, cold starts, and P99 tail latency. Monitor the P99 percentile; if it climbs above 45ms, alert.
+> **SLA headroom**: We have 50 − 35 = **15ms budget** remaining for network jitter, cold starts, and P99 tail latency. Monitor the P99 percentile; if it climbs above 45ms, alert.
 
 ---
 
@@ -351,7 +351,7 @@ $$n \approx \frac{2 \times (1.96 + 0.84)^2 \times 1{,}150^2}{2{,}000^2} = \frac{
 
 **Rule**: Run the A/B test until n ≥ 3,300 per arm (about 6,600 total pricing requests), then evaluate.
 
-> 💡 **Business context**: With 1,000 requests/second, 6,600 requests takes under 7 seconds of traffic. But "requests" here means unique properties priced, and you want 1–2 week exposure to capture weekly seasonality in the housing market. Set minimum run time: **2 weeks**, minimum n: **3,300 per arm**.
+> **Business context**: With 1,000 requests/second, 6,600 requests takes under 7 seconds of traffic. But "requests" here means unique properties priced, and you want 1–2 week exposure to capture weekly seasonality in the housing market. Set minimum run time: **2 weeks**, minimum n: **3,300 per arm**.
 
 **Code snippet — Phase 3: A/B test traffic splitting with feature flags:**
 
@@ -362,40 +362,40 @@ from dataclasses import dataclass
 # Phase 3: VALIDATE — A/B test with LaunchDarkly feature flags
 @dataclass
 class ABTestConfig:
-    test_id: str = "ensemble_vs_xgboost_v2"
-    treatment_pct: float = 0.50  # 50% get ensemble
-    min_samples: int = 3300       # per arm
-    runtime_days: int = 14
+ test_id: str = "ensemble_vs_xgboost_v2"
+ treatment_pct: float = 0.50 # 50% get ensemble
+ min_samples: int = 3300 # per arm
+ runtime_days: int = 14
 
 ab_test = ABTestConfig()
 ab_results = {"control": [], "treatment": []}
 
 def route_request(user_id, feature_vector):
-    """
-    Route incoming request to control (XGBoost) or treatment (Ensemble).
-    Uses consistent hashing on user_id for stable assignment.
-    """
-    # Deterministic assignment (same user always gets same variant)
-    hash_val = hash(f"{ab_test.test_id}:{user_id}") % 100
+ """
+ Route incoming request to control (XGBoost) or treatment (Ensemble).
+ Uses consistent hashing on user_id for stable assignment.
+ """
+ # Deterministic assignment (same user always gets same variant)
+ hash_val = hash(f"{ab_test.test_id}:{user_id}") % 100
 
-    if hash_val < ab_test.treatment_pct * 100:
-        # Treatment: Full ensemble
-        variant = "treatment"
-        prediction = predict_ensemble(feature_vector)
-    else:
-        # Control: XGBoost only
-        variant = "control"
-        prediction = predict_xgboost_only(feature_vector)
+ if hash_val < ab_test.treatment_pct * 100:
+ # Treatment: Full ensemble
+ variant = "treatment"
+ prediction = predict_ensemble(feature_vector)
+ else:
+ # Control: XGBoost only
+ variant = "control"
+ prediction = predict_xgboost_only(feature_vector)
 
-    # Log result for analysis
-    ab_results[variant].append({
-        "user_id": user_id,
-        "predicted": prediction,
-        "actual": None,  # filled in later when ground truth available
-        "timestamp": time.time()
-    })
+ # Log result for analysis
+ ab_results[variant].append({
+ "user_id": user_id,
+ "predicted": prediction,
+ "actual": None, # filled in later when ground truth available
+ "timestamp": time.time()
+ })
 
-    return prediction, variant
+ return prediction, variant
 
 # Analysis after 2 weeks:
 # from scipy.stats import ttest_ind
@@ -405,18 +405,18 @@ def route_request(user_id, feature_vector):
 #
 # t_stat, p_val = ttest_ind(control_errors, treatment_errors)
 #
-# print(f"Control MAE:   ${np.mean(control_errors):.0f}")
+# print(f"Control MAE: ${np.mean(control_errors):.0f}")
 # print(f"Treatment MAE: ${np.mean(treatment_errors):.0f}")
-# print(f"t-statistic:   {t_stat:.2f}")
-# print(f"p-value:       {p_val:.4f}")
+# print(f"t-statistic: {t_stat:.2f}")
+# print(f"p-value: {p_val:.4f}")
 #
 # if p_val < 0.05 and np.mean(treatment_errors) < np.mean(control_errors):
-#     print("✅ Treatment significantly better → proceed to cutover")
+# print(" Treatment significantly better → proceed to cutover")
 # else:
-#     print("❌ Not significant → keep control")
+# print(" Not significant → keep control")
 ```
 
-> 💡 **Industry Standard:** `LaunchDarkly` or `Unleash` for feature flags and A/B testing
+> **Industry Standard:** `LaunchDarkly` or `Unleash` for feature flags and A/B testing
 >
 > ```python
 > from ldclient import LDClient, Config
@@ -424,15 +424,15 @@ def route_request(user_id, feature_vector):
 > ld_client = LDClient(config=Config(sdk_key="your-sdk-key"))
 >
 > def route_with_launchdarkly(user_id, feature_vector):
->     user = {"key": user_id}
+> user = {"key": user_id}
 >
->     # LaunchDarkly handles traffic splitting, rollout %, and targeting rules
->     variant = ld_client.variation("ensemble-rollout", user, default="control")
+> # LaunchDarkly handles traffic splitting, rollout %, and targeting rules
+> variant = ld_client.variation("ensemble-rollout", user, default="control")
 >
->     if variant == "treatment":
->         return predict_ensemble(feature_vector)
->     else:
->         return predict_xgboost_only(feature_vector)
+> if variant == "treatment":
+> return predict_ensemble(feature_vector)
+> else:
+> return predict_xgboost_only(feature_vector)
 > ```
 >
 > **When to use:** Production A/B testing at scale. LaunchDarkly provides instant rollback, gradual rollout (5% → 25% → 50% → 100%), and user targeting.
@@ -486,7 +486,7 @@ $$\text{PSI} = 0.095 + 0.011 + 0.009 + 0.054 = 0.169$$
 
 **Result**: PSI = 0.169 → in the **monitor zone** (0.1–0.2). After month 4 PSI exceeds 0.2 → retraining triggered.
 
-> ⚠️ **PSI pitfall**: The log term requires $A_b > 0$ and $E_b > 0$ in every bin. A new neighborhood type that didn't exist in training data will have $E_b = 0$ → PSI undefined. Fix: add a small floor (e.g., $\min(E_b, 0.001)$) or use an additional "new category" flag.
+> **PSI pitfall**: The log term requires $A_b > 0$ and $E_b > 0$ in every bin. A new neighborhood type that didn't exist in training data will have $E_b = 0$ → PSI undefined. Fix: add a small floor (e.g., $\min(E_b, 0.001)$) or use an additional "new category" flag.
 
 **Code snippet — Phase 2: PSI monitoring with Prometheus metrics:**
 
@@ -499,59 +499,59 @@ psi_gauge = Gauge('ensemble_psi', 'Population Stability Index', ['feature'])
 drift_alert_counter = Counter('ensemble_drift_alerts', 'Drift threshold breaches')
 
 def compute_psi(reference_dist, live_dist, feature_name, bins=10):
-    """
-    Compute PSI between reference (training) and live (production) distributions.
+ """
+ Compute PSI between reference (training) and live (production) distributions.
 
-    Args:
-        reference_dist: np.array of feature values from training data
-        live_dist: np.array of feature values from last 24h production
-        feature_name: str, for logging/alerting
-        bins: int, number of bins for discretization
+ Args:
+ reference_dist: np.array of feature values from training data
+ live_dist: np.array of feature values from last 24h production
+ feature_name: str, for logging/alerting
+ bins: int, number of bins for discretization
 
-    Returns:
-        psi_score: float, PSI value (0=stable, >0.2=retrain)
-    """
-    # Step 1: Define bin edges from reference distribution quantiles
-    bin_edges = np.percentile(reference_dist, np.linspace(0, 100, bins+1))
+ Returns:
+ psi_score: float, PSI value (0=stable, >0.2=retrain)
+ """
+ # Step 1: Define bin edges from reference distribution quantiles
+ bin_edges = np.percentile(reference_dist, np.linspace(0, 100, bins+1))
 
-    # Step 2: Compute frequency in each bin for both distributions
-    ref_counts, _ = np.histogram(reference_dist, bins=bin_edges)
-    live_counts, _ = np.histogram(live_dist, bins=bin_edges)
+ # Step 2: Compute frequency in each bin for both distributions
+ ref_counts, _ = np.histogram(reference_dist, bins=bin_edges)
+ live_counts, _ = np.histogram(live_dist, bins=bin_edges)
 
-    # Step 3: Convert to percentages (add small epsilon to avoid log(0))
-    epsilon = 1e-5
-    ref_pct = (ref_counts + epsilon) / (ref_counts.sum() + epsilon * bins)
-    live_pct = (live_counts + epsilon) / (live_counts.sum() + epsilon * bins)
+ # Step 3: Convert to percentages (add small epsilon to avoid log(0))
+ epsilon = 1e-5
+ ref_pct = (ref_counts + epsilon) / (ref_counts.sum() + epsilon * bins)
+ live_pct = (live_counts + epsilon) / (live_counts.sum() + epsilon * bins)
 
-    # Step 4: PSI formula
-    psi = np.sum((live_pct - ref_pct) * np.log(live_pct / ref_pct))
+ # Step 4: PSI formula
+ psi = np.sum((live_pct - ref_pct) * np.log(live_pct / ref_pct))
 
-    # Step 5: Log metric to Prometheus
-    psi_gauge.labels(feature=feature_name).set(psi)
+ # Step 5: Log metric to Prometheus
+ psi_gauge.labels(feature=feature_name).set(psi)
 
-    # Step 6: Alert if threshold breached
-    if psi > 0.20:
-        drift_alert_counter.inc()
-        send_alert(f"⚠️ PSI = {psi:.3f} on {feature_name} → Retrain triggered")
+ # Step 6: Alert if threshold breached
+ if psi > 0.20:
+ drift_alert_counter.inc()
+ send_alert(f" PSI = {psi:.3f} on {feature_name} → Retrain triggered")
 
-    return psi
+ return psi
 
 # Example daily job (runs via cron at 2 AM):
-# reference_data = load_training_features()  # cached from training time
+# reference_data = load_training_features() # cached from training time
 # live_data = query_production_log(last_24h=True)
 #
 # for feature in ['MedInc', 'Latitude', 'Longitude', 'HouseAge']:
-#     psi = compute_psi(reference_data[feature], live_data[feature], feature)
-#     print(f"{feature}: PSI = {psi:.3f}")
+# psi = compute_psi(reference_data[feature], live_data[feature], feature)
+# print(f"{feature}: PSI = {psi:.3f}")
 #
 # Output (month 4):
-# MedInc: PSI = 0.085  ← stable
-# Latitude: PSI = 0.012  ← stable
-# Longitude: PSI = 0.019  ← stable
-# HouseAge: PSI = 0.231  ← ⚠️ ALERT FIRED → retrain
+# MedInc: PSI = 0.085 ← stable
+# Latitude: PSI = 0.012 ← stable
+# Longitude: PSI = 0.019 ← stable
+# HouseAge: PSI = 0.231 ← ALERT FIRED → retrain
 ```
 
-> 💡 **Industry Standard:** `Prometheus + Grafana` for ML monitoring
+> **Industry Standard:** `Prometheus + Grafana` for ML monitoring
 >
 > ```python
 > # Grafana dashboard query (PromQL):
@@ -560,13 +560,13 @@ def compute_psi(reference_dist, live_dist, feature_name, bins=10):
 >
 > # Panel 2: Alert rule (fires PagerDuty when PSI > 0.20)
 > ALERT EnsembleDrift
->   IF ensemble_psi > 0.20
->   FOR 1h
->   LABELS { severity="critical", team="ml-platform" }
->   ANNOTATIONS {
->     summary="Feature drift detected on {{ $labels.feature }}",
->     description="PSI = {{ $value }} exceeded 0.20 threshold. Retraining required."
->   }
+> IF ensemble_psi > 0.20
+> FOR 1h
+> LABELS { severity="critical", team="ml-platform" }
+> ANNOTATIONS {
+> summary="Feature drift detected on {{ $labels.feature }}",
+> description="PSI = {{ $value }} exceeded 0.20 threshold. Retraining required."
+> }
 > ```
 >
 > **When to use:** Always in production. Prometheus is the industry standard for time-series metrics; Grafana provides visualization and alerting.
@@ -608,16 +608,16 @@ For each API call, we return SHAP explanations alongside the price estimate. The
 
 ```json
 {
-  "price_estimate": 340500,
-  "shap_explanation": {
-    "base_value": 206800,
-    "top_features": [
-      { "feature": "MedInc",     "contribution": +94200, "direction": "up"   },
-      { "feature": "Longitude",  "contribution": +31800, "direction": "up"   },
-      { "feature": "AveRooms",   "contribution": -12900, "direction": "down" }
-    ]
-  },
-  "latency_ms": 33
+ "price_estimate": 340500,
+ "shap_explanation": {
+ "base_value": 206800,
+ "top_features": [
+ { "feature": "MedInc", "contribution": +94200, "direction": "up" },
+ { "feature": "Longitude", "contribution": +31800, "direction": "up" },
+ { "feature": "AveRooms", "contribution": -12900, "direction": "down" }
+ ]
+ },
+ "latency_ms": 33
 }
 ```
 
@@ -634,33 +634,33 @@ Every deployed model version must be reproducible. Three months from now, when a
 ```
 model_v1.2.0/
 ├── artifacts/
-│   ├── lr_model.pkl           (Linear Regression, joblib serialized)
-│   ├── rf_model.pkl           (Random Forest, 200 trees, joblib)
-│   ├── xgb_model.json         (XGBoost, native JSON format — preferred)
-│   └── meta_ridge.pkl         (Ridge meta-learner, joblib)
+│ ├── lr_model.pkl (Linear Regression, joblib serialized)
+│ ├── rf_model.pkl (Random Forest, 200 trees, joblib)
+│ ├── xgb_model.json (XGBoost, native JSON format — preferred)
+│ └── meta_ridge.pkl (Ridge meta-learner, joblib)
 │
 ├── metadata/
-│   ├── training_data_hash.txt (SHA-256 of training + val CSV)
-│   ├── hyperparameters.json   (all model hyperparameters, explicit)
-│   ├── metrics.json           (train/val/test MAE, RMSE, R²)
-│   ├── feature_names.json     (feature order + dtypes — critical!)
-│   └── requirements.txt       (exact package versions: sklearn, xgb, etc.)
+│ ├── training_data_hash.txt (SHA-256 of training + val CSV)
+│ ├── hyperparameters.json (all model hyperparameters, explicit)
+│ ├── metrics.json (train/val/test MAE, RMSE, R²)
+│ ├── feature_names.json (feature order + dtypes — critical!)
+│ └── requirements.txt (exact package versions: sklearn, xgb, etc.)
 │
 ├── explainability/
-│   ├── shap_beeswarm.png      (SHAP beeswarm on 500 test samples)
-│   └── shap_feature_order.json (mean |SHAP| ranking for audit)
+│ ├── shap_beeswarm.png (SHAP beeswarm on 500 test samples)
+│ └── shap_feature_order.json (mean |SHAP| ranking for audit)
 │
 └── deployment/
-    ├── git_commit_hash.txt    (exact git SHA at training time)
-    ├── training_date.txt      (ISO timestamp)
-    └── deployed_by.txt        (engineer + deployment ID)
+ ├── git_commit_hash.txt (exact git SHA at training time)
+ ├── training_date.txt (ISO timestamp)
+ └── deployed_by.txt (engineer + deployment ID)
 ```
 
 **Why `feature_names.json` is the most dangerous file to miss**: If the production feature pipeline reorders two features and the model was saved without feature names, the model will silently use `AveRooms` where it expects `AveOccup` — predictions degrade without any error. Always serialize feature names alongside the model.
 
 **Versioning the meta-learner separately**: The meta-learner (Ridge) is fit on the **out-of-fold predictions** of the base models. If you retrain only the base models (e.g., a micro-update), the meta-learner's calibration is stale — it was trained to trust different prediction scales. Either retrain both together, or flag the meta-learner as "stale" and monitor its residuals.
 
-> ⚡ **Git LFS or model registry?** For models under 100MB, Git LFS (Large File Storage) works. For larger models or teams, a dedicated model registry (MLflow, Weights & Biases, Vertex AI Model Registry) is worth the setup. The key invariant: model artifact + metadata + git commit must be co-versioned so rollback is a single operation.
+> **Git LFS or model registry?** For models under 100MB, Git LFS (Large File Storage) works. For larger models or teams, a dedicated model registry (MLflow, Weights & Biases, Vertex AI Model Registry) is worth the setup. The key invariant: model artifact + metadata + git commit must be co-versioned so rollback is a single operation.
 
 ---
 
@@ -673,10 +673,10 @@ The stack is trained on 80% of California Housing. Validation set: MAE = $20,000
 **Challenge**: The validation MAE is computed on held-out data from the **same distribution** as training. Production data will drift.
 
 ```
-Offline MAE:   $20,000  ← what we measured in Ch.5
-Production MAE month 1:  $21,400  ← slight increase from distribution mismatch
-Production MAE month 3:  $24,800  ← PSI drift detected (0.169)
-Production MAE month 6*: $20,200  ← after retraining and cutover
+Offline MAE: $20,000 ← what we measured in Ch.5
+Production MAE month 1: $21,400 ← slight increase from distribution mismatch
+Production MAE month 3: $24,800 ← PSI drift detected (0.169)
+Production MAE month 6*: $20,200 ← after retraining and cutover
 ```
 
 ### Act 2: Serving Under 50ms (Ch.6 §3–4)
@@ -689,17 +689,17 @@ Key infrastructure change: thread pool or async executor for base model inferenc
 from concurrent.futures import ThreadPoolExecutor
 
 def predict_parallel(X):
-    with ThreadPoolExecutor(max_workers=3) as executor:
-        f_lr  = executor.submit(lr_model.predict,  X)
-        f_rf  = executor.submit(rf_model.predict,  X)
-        f_xgb = executor.submit(xgb_model.predict, X)
-        preds = np.column_stack([
-            f_lr.result(), f_rf.result(), f_xgb.result()
-        ])
-    return meta_model.predict(preds)
+ with ThreadPoolExecutor(max_workers=3) as executor:
+ f_lr = executor.submit(lr_model.predict, X)
+ f_rf = executor.submit(rf_model.predict, X)
+ f_xgb = executor.submit(xgb_model.predict, X)
+ preds = np.column_stack([
+ f_lr.result(), f_rf.result(), f_xgb.result()
+ ])
+ return meta_model.predict(preds)
 ```
 
-**Constraint #3 LATENCY** ✅: 35ms < 50ms SLA.
+**Constraint #3 LATENCY** : 35ms < 50ms SLA.
 
 ### Act 3: Drift Detected at Month 3
 
@@ -718,33 +718,33 @@ Six months post-deployment. The 2020–2021 California housing boom inflates med
 # Triggered when daily PSI check returns PSI > 0.20
 
 def retrain_pipeline(production_log_path, incumbent_metrics):
-    # 1. Pull last 12 months of logged feature+label pairs
-    df = load_production_log(production_log_path, months=12)
+ # 1. Pull last 12 months of logged feature+label pairs
+ df = load_production_log(production_log_path, months=12)
 
-    # 2. Retrain base models + meta-learner from scratch
-    lr, rf, xgb = train_base_models(df)
-    meta = train_meta_learner(lr, rf, xgb, df)
+ # 2. Retrain base models + meta-learner from scratch
+ lr, rf, xgb = train_base_models(df)
+ meta = train_meta_learner(lr, rf, xgb, df)
 
-    # 3. Evaluate on held-out temporal slice (last 4 weeks)
-    candidate_mae = evaluate_on_holdout(lr, rf, xgb, meta, df)
-    incumbent_mae = incumbent_metrics["mae"]
+ # 3. Evaluate on held-out temporal slice (last 4 weeks)
+ candidate_mae = evaluate_on_holdout(lr, rf, xgb, meta, df)
+ incumbent_mae = incumbent_metrics["mae"]
 
-    # 4. Only proceed if new model is meaningfully better
-    if candidate_mae > incumbent_mae * 0.97:
-        log("Candidate not better than incumbent. Keeping incumbent.")
-        return
+ # 4. Only proceed if new model is meaningfully better
+ if candidate_mae > incumbent_mae * 0.97:
+ log("Candidate not better than incumbent. Keeping incumbent.")
+ return
 
-    # 5. Enter shadow mode: serve both, compare for 1 week
-    shadow_results = run_shadow_mode(lr, rf, xgb, meta, duration_days=7)
+ # 5. Enter shadow mode: serve both, compare for 1 week
+ shadow_results = run_shadow_mode(lr, rf, xgb, meta, duration_days=7)
 
-    if shadow_results["shadow_mae"] < shadow_results["incumbent_mae"]:
-        deploy_new_model(lr, rf, xgb, meta)
-        log(f"Cutover: MAE {shadow_results['shadow_mae']:.0f}")
-    else:
-        log("Shadow mode failed validation. Keeping incumbent.")
+ if shadow_results["shadow_mae"] < shadow_results["incumbent_mae"]:
+ deploy_new_model(lr, rf, xgb, meta)
+ log(f"Cutover: MAE {shadow_results['shadow_mae']:.0f}")
+ else:
+ log("Shadow mode failed validation. Keeping incumbent.")
 ```
 
-**Constraint #5 MONITORING** ✅: PSI-triggered retraining catches market drift.
+**Constraint #5 MONITORING** : PSI-triggered retraining catches market drift.
 
 ### Act 4: Mission Complete — All 5 Constraints Satisfied
 
@@ -752,13 +752,13 @@ After 6-month deployment cycle, all constraints validated in production:
 
 | # | Constraint | Production Evidence |
 |---|------------|---------------------|
-| #1 IMPROVEMENT | ✅ | A/B test (post n=3,300): ensemble MAE $20k vs XGBoost $34k |
-| #2 DIVERSITY | ✅ | LR + RF + XGBoost: Spearman correlation of errors < 0.4 pairwise |
-| #3 LATENCY | ✅ | P99 = 38ms, P50 = 33ms — both < 50ms SLA |
-| #4 EXPLAINABILITY | ✅ | Every API response includes SHAP top-3 features in dollars |
-| #5 MONITORING | ✅ | PSI monitor → retraining triggered month 4 → MAE restored |
+| #1 IMPROVEMENT | | A/B test (post n=3,300): ensemble MAE $20k vs XGBoost $34k |
+| #2 DIVERSITY | | LR + RF + XGBoost: Spearman correlation of errors < 0.4 pairwise |
+| #3 LATENCY | | P99 = 38ms, P50 = 33ms — both < 50ms SLA |
+| #4 EXPLAINABILITY | | Every API response includes SHAP top-3 features in dollars |
+| #5 MONITORING | | PSI monitor → retraining triggered month 4 → MAE restored |
 
-**EnsembleAI: COMPLETE** 🎉
+**EnsembleAI: COMPLETE**
 
 **Code snippet — Phase 4: Blue-green deployment with Kubernetes:**
 
@@ -767,65 +767,65 @@ After 6-month deployment cycle, all constraints validated in production:
 apiVersion: v1
 kind: Service
 metadata:
-  name: ensemble-api
+ name: ensemble-api
 spec:
-  selector:
-    app: ensemble
-    version: blue  # ← Traffic routes here initially
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 8000
+ selector:
+ app: ensemble
+ version: blue # ← Traffic routes here initially
+ ports:
+ - protocol: TCP
+ port: 80
+ targetPort: 8000
 
 ---
 # Blue environment (current/incumbent)
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ensemble-blue
+ name: ensemble-blue
 spec:
-  replicas: 4
-  selector:
-    matchLabels:
-      app: ensemble
-      version: blue
-  template:
-    metadata:
-      labels:
-        app: ensemble
-        version: blue
-    spec:
-      containers:
-      - name: ensemble
-        image: ensemble-api:v1.1.0  # ← Old model
-        env:
-        - name: MODEL_VERSION
-          value: "v1.1.0"
+ replicas: 4
+ selector:
+ matchLabels:
+ app: ensemble
+ version: blue
+ template:
+ metadata:
+ labels:
+ app: ensemble
+ version: blue
+ spec:
+ containers:
+ - name: ensemble
+ image: ensemble-api:v1.1.0 # ← Old model
+ env:
+ - name: MODEL_VERSION
+ value: "v1.1.0"
 
 ---
 # Green environment (new/candidate)
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ensemble-green
+ name: ensemble-green
 spec:
-  replicas: 4
-  selector:
-    matchLabels:
-      app: ensemble
-      version: green
-  template:
-    metadata:
-      labels:
-        app: ensemble
-        version: green
-    spec:
-      containers:
-      - name: ensemble
-        image: ensemble-api:v1.2.0  # ← New model (retrained on month 4 data)
-        env:
-        - name: MODEL_VERSION
-          value: "v1.2.0"
+ replicas: 4
+ selector:
+ matchLabels:
+ app: ensemble
+ version: green
+ template:
+ metadata:
+ labels:
+ app: ensemble
+ version: green
+ spec:
+ containers:
+ - name: ensemble
+ image: ensemble-api:v1.2.0 # ← New model (retrained on month 4 data)
+ env:
+ - name: MODEL_VERSION
+ value: "v1.2.0"
 
 # Cutover process:
 # 1. Deploy green (new model) → runs in parallel with blue
@@ -836,7 +836,7 @@ spec:
 # 6. Rollback if needed: kubectl patch svc ensemble-api -p '{"spec":{"selector":{"version":"blue"}}}'
 ```
 
-> 💡 **Industry Standard:** `Kubernetes` for blue-green deployments
+> **Industry Standard:** `Kubernetes` for blue-green deployments
 >
 > **Automated cutover with health checks:**
 > ```bash
@@ -857,11 +857,11 @@ spec:
 >
 > # If error rate > 1%, auto-rollback:
 > if [ $? -ne 0 ]; then
->   kubectl patch service ensemble-api -p '{"spec":{"selector":{"version":"blue"}}}'
->   echo "❌ Rollback executed — green had elevated errors"
+> kubectl patch service ensemble-api -p '{"spec":{"selector":{"version":"blue"}}}'
+> echo " Rollback executed — green had elevated errors"
 > else
->   echo "✅ Cutover successful — green is now live"
->   kubectl delete deployment ensemble-blue  # Clean up old version
+> echo " Cutover successful — green is now live"
+> kubectl delete deployment ensemble-blue # Clean up old version
 > fi
 > ```
 >
@@ -871,8 +871,8 @@ spec:
 
 ---
 
-> 💡 **Cutover verdict:** Blue-green switch successful — production MAE restored from $24.8k to $20.2k; all 5 EnsembleAI constraints satisfied.
-> ➡️ Resume Phase 2 PSI monitoring and decommission blue deployment after 48h.
+> **Cutover verdict:** Blue-green switch successful — production MAE restored from $24.8k to $20.2k; all 5 EnsembleAI constraints satisfied.
+> ➡ Resume Phase 2 PSI monitoring and decommission blue deployment after 48h.
 
 ---
 
@@ -882,13 +882,13 @@ Even in production, ensembles of gradient-boosted trees remain the industry stan
 
 | Factor | Tree Ensemble Stack | Neural Network (TabNet / FT-Transformer) |
 |--------|--------------------|-----------------------------------------|
-| **Training time** | ✅ 10–30 min on CPU | ❌ 2–8 hours on GPU |
-| **Inference latency** | ✅ 20ms parallel | ⚠️ 5–15ms GPU / 40–80ms CPU |
-| **Tabular features** | ✅ Handles mixed types natively | ❌ Needs careful embedding design |
-| **Explainability** | ✅ TreeSHAP — exact, 3ms | ❌ Approximate SHAP — slower, less reliable |
-| **Cold-start retraining** | ✅ Stable training — same result each run | ❌ Sensitive to seed, learning rate, init |
-| **>1M rows** | ✅ LightGBM scales well | ✅ Slight edge on very large datasets |
-| **Regulatory audit** | ✅ TreeSHAP satisfies "right to explanation" | ⚠️ Approximate explanations less defensible |
+| **Training time** | 10–30 min on CPU | 2–8 hours on GPU |
+| **Inference latency** | 20ms parallel | 5–15ms GPU / 40–80ms CPU |
+| **Tabular features** | Handles mixed types natively | Needs careful embedding design |
+| **Explainability** | TreeSHAP — exact, 3ms | Approximate SHAP — slower, less reliable |
+| **Cold-start retraining** | Stable training — same result each run | Sensitive to seed, learning rate, init |
+| **>1M rows** | LightGBM scales well | Slight edge on very large datasets |
+| **Regulatory audit** | TreeSHAP satisfies "right to explanation" | Approximate explanations less defensible |
 
 **Bottom line for this use case**: The California Housing dataset and real-estate domain have structured features, moderate data size, and regulatory explainability requirements. Tree ensemble stacking is the right architecture. Neural networks become relevant when you add unstructured data (photos, text descriptions) or need joint modeling with vision/language signals — which belongs in [02-Advanced Deep Learning](../../02-advanced_deep_learning).
 
@@ -904,11 +904,11 @@ Even in production, ensembles of gradient-boosted trees remain the industry stan
 | **3** | Housing market inflation. PSI on `MedHouseVal` = 0.169. | $24,800 | 0.169 | Alert: monitor |
 | **4** | PSI exceeds 0.20. Retraining triggered. New model trained on live data. | $24,200 | 0.22 | **Retrain** |
 | **5** | New model enters shadow mode. Shadow MAE = $20,100. Incumbent: $23,800. | $23,800 | 0.18 | Shadow → validate |
-| **6** | Cutover. New model promoted. Production MAE restored. | **$20,200** | 0.12 | **Cutover ✅** |
+| **6** | Cutover. New model promoted. Production MAE restored. | **$20,200** | 0.12 | **Cutover ** |
 
 **Key insight**: Without monitoring (Constraint #5), production MAE would have silently degraded from $21k → $25k+ over 4 months. The PSI alarm caught it. The retraining pipeline restored accuracy. This is the full production lifecycle.
 
-> 💡 **Retraining isn't free.** Each full retrain of the 3-model stack + meta-learner on 12 months of production data takes ~45 minutes on a 4-vCPU server. Budget for 4–6 retraining cycles per year, or set up incremental boosting (XGBoost supports adding new trees to a trained model) for faster micro-updates between full retrains.
+> **Retraining isn't free.** Each full retrain of the 3-model stack + meta-learner on 12 months of production data takes ~45 minutes on a 4-vCPU server. Budget for 4–6 retraining cycles per year, or set up incremental boosting (XGBoost supports adding new trees to a trained model) for faster micro-updates between full retrains.
 
 ---
 
@@ -918,28 +918,28 @@ Even in production, ensembles of gradient-boosted trees remain the industry stan
 
 ```mermaid
 flowchart LR
-    REQ["HTTP Request\n(8 features)"]:::info
-    FS["Feature Store\n~5ms"]:::primary
-    LR["Linear Regression\n~1ms"]:::success
-    RF["Random Forest\n~15ms"]:::success
-    XGB["XGBoost\n~20ms"]:::success
-    META["Ridge Meta-Learner\n~5ms"]:::primary
-    SHAP["TreeSHAP\n~3ms"]:::caution
-    LOG["Async Logger\n(non-blocking)"]:::info
-    RESP["HTTP Response\n{price, shap, ms}"]:::primary
+ REQ["HTTP Request\n(8 features)"]:::info
+ FS["Feature Store\n~5ms"]:::primary
+ LR["Linear Regression\n~1ms"]:::success
+ RF["Random Forest\n~15ms"]:::success
+ XGB["XGBoost\n~20ms"]:::success
+ META["Ridge Meta-Learner\n~5ms"]:::primary
+ SHAP["TreeSHAP\n~3ms"]:::caution
+ LOG["Async Logger\n(non-blocking)"]:::info
+ RESP["HTTP Response\n{price, shap, ms}"]:::primary
 
-    REQ --> FS
-    FS --> LR & RF & XGB
-    LR & RF & XGB --> META
-    META --> SHAP
-    META --> LOG
-    SHAP --> RESP
+ REQ --> FS
+ FS --> LR & RF & XGB
+ LR & RF & XGB --> META
+ META --> SHAP
+ META --> LOG
+ SHAP --> RESP
 
-    classDef primary fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    classDef success fill:#15803d,color:#fff,stroke:#15803d
-    classDef caution fill:#b45309,color:#fff,stroke:#b45309
-    classDef danger  fill:#b91c1c,color:#fff,stroke:#b91c1c
-    classDef info    fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ classDef primary fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ classDef success fill:#15803d,color:#fff,stroke:#15803d
+ classDef caution fill:#b45309,color:#fff,stroke:#b45309
+ classDef danger fill:#b91c1c,color:#fff,stroke:#b91c1c
+ classDef info fill:#1d4ed8,color:#fff,stroke:#1d4ed8
 ```
 
 *Wall-clock: 5 + max(1,15,20) + 5 + 3 = **33ms**. Under 50ms SLA with 17ms headroom.*
@@ -950,37 +950,37 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    LIVE["Live Traffic\n(predictions + features)"]:::info
-    LOG2["Feature + Prediction\nLog (hourly batch)"]:::primary
-    PSI_CHECK{"PSI > 0.20\non any feature?"}:::caution
-    ALERT["Alert: Drift Detected\n(PagerDuty / Slack)"]:::danger
-    RETRAIN["Trigger Retraining\n• Pull 12-month data\n• Retrain base + meta"]:::caution
-    VALIDATE{"New model MAE\n< incumbent MAE − 3%?"}:::primary
-    SHADOW["Shadow Mode\n(1 week: log only)"]:::info
-    SHADOW_CHECK{"Shadow MAE\n< incumbent MAE?"}:::primary
-    CUTOVER["Promote New Model\n(blue-green cutover)"]:::success
-    ROLLBACK["Rollback\n(keep incumbent)"]:::danger
-    MONITOR["Continue Monitoring\n(PSI every hour)"]:::success
+ LIVE["Live Traffic\n(predictions + features)"]:::info
+ LOG2["Feature + Prediction\nLog (hourly batch)"]:::primary
+ PSI_CHECK{"PSI > 0.20\non any feature?"}:::caution
+ ALERT["Alert: Drift Detected\n(PagerDuty / Slack)"]:::danger
+ RETRAIN["Trigger Retraining\n• Pull 12-month data\n• Retrain base + meta"]:::caution
+ VALIDATE{"New model MAE\n< incumbent MAE − 3%?"}:::primary
+ SHADOW["Shadow Mode\n(1 week: log only)"]:::info
+ SHADOW_CHECK{"Shadow MAE\n< incumbent MAE?"}:::primary
+ CUTOVER["Promote New Model\n(blue-green cutover)"]:::success
+ ROLLBACK["Rollback\n(keep incumbent)"]:::danger
+ MONITOR["Continue Monitoring\n(PSI every hour)"]:::success
 
-    LIVE --> LOG2
-    LOG2 --> PSI_CHECK
-    PSI_CHECK -->|No| MONITOR
-    PSI_CHECK -->|Yes| ALERT
-    ALERT --> RETRAIN
-    RETRAIN --> VALIDATE
-    VALIDATE -->|No| MONITOR
-    VALIDATE -->|Yes| SHADOW
-    SHADOW --> SHADOW_CHECK
-    SHADOW_CHECK -->|Yes| CUTOVER
-    SHADOW_CHECK -->|No| ROLLBACK
-    CUTOVER --> MONITOR
-    ROLLBACK --> MONITOR
+ LIVE --> LOG2
+ LOG2 --> PSI_CHECK
+ PSI_CHECK -->|No| MONITOR
+ PSI_CHECK -->|Yes| ALERT
+ ALERT --> RETRAIN
+ RETRAIN --> VALIDATE
+ VALIDATE -->|No| MONITOR
+ VALIDATE -->|Yes| SHADOW
+ SHADOW --> SHADOW_CHECK
+ SHADOW_CHECK -->|Yes| CUTOVER
+ SHADOW_CHECK -->|No| ROLLBACK
+ CUTOVER --> MONITOR
+ ROLLBACK --> MONITOR
 
-    classDef primary fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    classDef success fill:#15803d,color:#fff,stroke:#15803d
-    classDef caution fill:#b45309,color:#fff,stroke:#b45309
-    classDef danger  fill:#b91c1c,color:#fff,stroke:#b91c1c
-    classDef info    fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ classDef primary fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ classDef success fill:#15803d,color:#fff,stroke:#15803d
+ classDef caution fill:#b45309,color:#fff,stroke:#b45309
+ classDef danger fill:#b91c1c,color:#fff,stroke:#b91c1c
+ classDef info fill:#1d4ed8,color:#fff,stroke:#1d4ed8
 ```
 
 ---
@@ -991,10 +991,10 @@ flowchart TD
 
 | Dial | Too Conservative | Sweet Spot | Too Aggressive |
 |------|-----------------|------------|----------------|
-| **Inference mode** | Sequential (56ms, violates SLA) | Parallel thread pool (35ms ✅) | Async microservices (adds orchestration overhead) |
+| **Inference mode** | Sequential (56ms, violates SLA) | Parallel thread pool (35ms ) | Async microservices (adds orchestration overhead) |
 | **Base model cache** | No cache (full inference every call) | Cache predictions for identical feature vectors (saves 15ms on cache hit) | Cache staleness >1hr (stale prices served) |
 | **SHAP computation** | Skip SHAP (no explanations — compliance risk) | TreeSHAP on XGBoost per request (3ms) | Full SHAP all 3 models (8ms, pushes P99 >50ms) |
-| **Meta-learner complexity** | Ridge (5ms, interpretable, generalizes) | Ridge ✅ | Deep meta-learner (20ms, prone to overfitting on stack) |
+| **Meta-learner complexity** | Ridge (5ms, interpretable, generalizes) | Ridge | Deep meta-learner (20ms, prone to overfitting on stack) |
 | **Ensemble size K** | K=1 (not an ensemble) | K=3 (LR + RF + XGB) | K=8+ (marginal accuracy, 4× latency budget blown) |
 
 ### 8.2 Monitoring and Retraining
@@ -1037,7 +1037,7 @@ flowchart TD
 | **Shadow mode / blue-green deployment** | [07-DevOps Fundamentals](../../../07-devops_fundamentals) — blue-green is a general deployment pattern |
 | **Retraining pipeline triggers** | [06-AI Infrastructure → MLOps](../../../06-ai_infrastructure) — Vertex AI / SageMaker pipelines implement exactly this loop |
 
-> ➡️ **The monitoring stack** — PSI + shadow mode + A/B testing + blue-green cutover — is not specific to ensembles. It is the general production ML lifecycle. Everything you've built here is the template you'll apply to deep learning models, LLM deployments, and multi-agent systems.
+> ➡ **The monitoring stack** — PSI + shadow mode + A/B testing + blue-green cutover — is not specific to ensembles. It is the general production ML lifecycle. Everything you've built here is the template you'll apply to deep learning models, LLM deployments, and multi-agent systems.
 
 ---
 
@@ -1046,26 +1046,21 @@ flowchart TD
 ![Progress check](img/ch06-production-progress-check.png)
 
 **What Ch.6 unlocked:**
+**Constraint #1 — IMPROVEMENT**: Ensemble MAE = $20,000 vs XGBoost alone $34,000 — a **41% improvement**. A/B test (n=3,300 per arm) confirmed significance in production.
+**Constraint #2 — DIVERSITY**: Stack uses LR + RF + XGBoost — three distinct families. Pairwise error correlation < 0.4. Diversity validated by contribution analysis: removing any base model increases MAE by ≥5%.
+**Constraint #3 — LATENCY**: Parallel inference: P50 = 33ms, P99 = 38ms. **Both under 50ms SLA**. Latency budget arithmetic: max(1,15,20) + 5 + 5 + 5 = 35ms .
+**Constraint #4 — EXPLAINABILITY**: Every API response includes TreeSHAP-derived top-3 features with dollar contributions. Audit trail maintained. Compliance-ready.
+**Constraint #5 — MONITORING**: PSI computed daily. Threshold 0.20 → retraining triggered at month 4. Shadow mode validated new model before cutover. Production MAE restored from $25k to $20k.
 
-✅ **Constraint #1 — IMPROVEMENT**: Ensemble MAE = $20,000 vs XGBoost alone $34,000 — a **41% improvement**. A/B test (n=3,300 per arm) confirmed significance in production.
-
-✅ **Constraint #2 — DIVERSITY**: Stack uses LR + RF + XGBoost — three distinct families. Pairwise error correlation < 0.4. Diversity validated by contribution analysis: removing any base model increases MAE by ≥5%.
-
-✅ **Constraint #3 — LATENCY**: Parallel inference: P50 = 33ms, P99 = 38ms. **Both under 50ms SLA**. Latency budget arithmetic: max(1,15,20) + 5 + 5 + 5 = 35ms ✅.
-
-✅ **Constraint #4 — EXPLAINABILITY**: Every API response includes TreeSHAP-derived top-3 features with dollar contributions. Audit trail maintained. Compliance-ready.
-
-✅ **Constraint #5 — MONITORING**: PSI computed daily. Threshold 0.20 → retraining triggered at month 4. Shadow mode validated new model before cutover. Production MAE restored from $25k to $20k.
-
-**EnsembleAI Mission: ALL 5 CONSTRAINTS SATISFIED** 🎉
+**EnsembleAI Mission: ALL 5 CONSTRAINTS SATISFIED**
 
 | What you can build now | What still lies beyond |
 |------------------------|------------------------|
-| ✅ Production-grade ensemble serving at 1k req/s | ❌ Online/streaming learning (ensembles are batch) |
-| ✅ Real-time SHAP explanations per prediction | ❌ Causal inference (ensembles capture correlation, not causation) |
-| ✅ PSI-based drift detection and retraining pipelines | ❌ Truly imbalanced multi-class at 1:10,000 ratio |
-| ✅ A/B testing with proper power analysis | ❌ Image/text/audio — neural networks dominate |
-| ✅ Shadow mode blue-green deployments | ❌ Federated learning (privacy-preserving cross-institution) |
+| Production-grade ensemble serving at 1k req/s | Online/streaming learning (ensembles are batch) |
+| Real-time SHAP explanations per prediction | Causal inference (ensembles capture correlation, not causation) |
+| PSI-based drift detection and retraining pipelines | Truly imbalanced multi-class at 1:10,000 ratio |
+| A/B testing with proper power analysis | Image/text/audio — neural networks dominate |
+| Shadow mode blue-green deployments | Federated learning (privacy-preserving cross-institution) |
 
 **Track Record — Ensemble Methods Ch.1–6:**
 
@@ -1074,9 +1069,9 @@ flowchart TD
 | Ch.1 — Bagging & Random Forest | Averaging decorrelated trees | #1 partial (RF MAE $29k) |
 | Ch.2 — AdaBoost & Gradient Boosting | Sequential error correction | #1 advancing (GBDT MAE $24k) |
 | Ch.3 — XGBoost, LightGBM, CatBoost | Industrial boosting + regularization | #1 #4 advancing (XGB MAE $22k, SHAP intro) |
-| Ch.4 — SHAP Interpretability | Per-prediction Shapley values | #4 EXPLAINABILITY ✅ |
-| Ch.5 — Stacking & Blending | Meta-learner on diverse base models | #1 #2 ✅ (Stack MAE $20k, +41%) |
-| **Ch.6 — Production Ensembles** | **Parallel serving, PSI, A/B, SHAP API** | **#3 #5 ✅ — ALL 5 COMPLETE** |
+| Ch.4 — SHAP Interpretability | Per-prediction Shapley values | #4 EXPLAINABILITY |
+| Ch.5 — Stacking & Blending | Meta-learner on diverse base models | #1 #2 (Stack MAE $20k, +41%) |
+| **Ch.6 — Production Ensembles** | **Parallel serving, PSI, A/B, SHAP API** | **#3 #5 — ALL 5 COMPLETE** |
 
 ---
 
@@ -1114,8 +1109,8 @@ The gap between tabular ML and deep learning is smaller than it looks. Everythin
 | Diversity → better generalization | Ch.5 stacking | Dropout (random ensemble of sub-networks); multi-head attention |
 | Parallel serving, PSI, shadow mode | **Ch.6** | Every production ML system regardless of model family |
 
-> ➡️ **[Start Advanced Deep Learning →](../../02-advanced_deep_learning)**
+> ➡ **[Start Advanced Deep Learning →](../../02-advanced_deep_learning)**
 >
-> ➡️ **[Return to ML Track Index →](../../README.md)**
+> ➡ **[Return to ML Track Index →](../../README.md)**
 
 

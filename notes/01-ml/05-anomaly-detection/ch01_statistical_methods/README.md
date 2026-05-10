@@ -10,7 +10,7 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 💡 **The mission**: Launch **FraudShield** — a production fraud detection system satisfying 5 constraints:
+> **The mission**: Launch **FraudShield** — a production fraud detection system satisfying 5 constraints:
 > 1. **DETECTION**: ≥80% recall — catch at least 4 in 5 fraud cases
 > 2. **PRECISION**: ≤0.5% FPR — no more than 5 false alarms per 1,000 legitimate transactions
 > 3. **REAL-TIME**: <100ms inference — decision must arrive before the merchant times out
@@ -18,8 +18,8 @@
 > 5. **EXPLAINABILITY**: Justify each flag — regulatory and customer-service requirement
 
 **What we know so far:**
-- ⚡ We have the Credit Card Fraud dataset (284,807 transactions, 31 features)
-- ⚡ We understand the business problem (detect fraudulent transactions)
+- We have the Credit Card Fraud dataset (284,807 transactions, 31 features)
+- We understand the business problem (detect fraudulent transactions)
 - **But we have NO detector yet!**
 
 **What is blocking us:**
@@ -49,16 +49,16 @@ The **statistical anomaly baseline** — use distributional assumptions to score
 
 ```mermaid
 flowchart LR
-    DATA["284,807\ntransactions\n0.17% fraud"] --> SCORE["Statistical\nScoring\n(Z / IQR / Mahal)"]
-    SCORE --> THRESH["Threshold τ\ncalibrated @\n0.5% FPR"]
-    THRESH --> DEC{"score > τ?"}
-    DEC -->|"Yes"| FLAG["Fraud Alert\n~45% TPR"]
-    DEC -->|"No"| PASS["Legitimate\n~55% fraud missed"]
+ DATA["284,807\ntransactions\n0.17% fraud"] --> SCORE["Statistical\nScoring\n(Z / IQR / Mahal)"]
+ SCORE --> THRESH["Threshold τ\ncalibrated @\n0.5% FPR"]
+ THRESH --> DEC{"score > τ?"}
+ DEC -->|"Yes"| FLAG["Fraud Alert\n~45% TPR"]
+ DEC -->|"No"| PASS["Legitimate\n~55% fraud missed"]
 
-    style DATA fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style FLAG fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style PASS fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style THRESH fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style DATA fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style FLAG fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style PASS fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style THRESH fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -117,16 +117,16 @@ The decision pipeline: apply each method → get a score → set a threshold tha
 
 ```
 Raw transaction
-      |
-      +-- Z-score:     z_j = (x_j - mu_j) / sigma_j     score = max_j |z_j|
-      |
-      +-- IQR:         outside [Q1 - k*IQR, Q3 + k*IQR]?  score = # features flagged
-      |
-      +-- Mahalanobis: D_M = sqrt((x - mu)' * Sigma_inv * (x - mu))
-                                         |
-                                  score > tau (@0.5% FPR)?
-                                    +-- Yes --> FRAUD ALERT
-                                    +-- No  --> Legitimate
+ |
+ +-- Z-score: z_j = (x_j - mu_j) / sigma_j score = max_j |z_j|
+ |
+ +-- IQR: outside [Q1 - k*IQR, Q3 + k*IQR]? score = # features flagged
+ |
+ +-- Mahalanobis: D_M = sqrt((x - mu)' * Sigma_inv * (x - mu))
+ |
+ score > tau (@0.5% FPR)?
+ +-- Yes --> FRAUD ALERT
+ +-- No --> Legitimate
 ```
 
 ---
@@ -167,7 +167,7 @@ $$= \sqrt{\frac{160000 + 122500 + 144400 + 2250000 + 136900}{5}} = \sqrt{\frac{2
 
 At $\tau = 2$: the 2000 transaction is flagged. Lower the threshold to $\tau = 1.5$ and you catch it more confidently — but you also flag more normal transactions.
 
-> ⚠️ **The masking problem**: Including the outlier (2000) when computing $\mu$ and $\sigma$ inflates both, making $z$ for the outlier smaller than if we had computed statistics on clean data. In production, always compute $\mu$ and $\sigma$ on training data (not including test-time transactions), or use **robust statistics** (median and MAD instead of mean and std).
+> **The masking problem**: Including the outlier (2000) when computing $\mu$ and $\sigma$ inflates both, making $z$ for the outlier smaller than if we had computed statistics on clean data. In production, always compute $\mu$ and $\sigma$ on training data (not including test-time transactions), or use **robust statistics** (median and MAD instead of mean and std).
 
 **On the real dataset** (Amount feature, full 284,315 legitimate training transactions):
 - $\mu_{\text{Amount}} = 88.35$ EUR, $\sigma_{\text{Amount}} = 250.12$ EUR
@@ -284,7 +284,7 @@ At $\alpha = 0.05$, $n = 5$: $G_{\text{crit}} \approx 1.67$. Since $G = 2.0 > 1.
 
 **Limitation**: Grubbs' test is designed to detect **one outlier at a time**. To catch multiple outliers, you must remove the detected outlier and retest iteratively — called the **sequential Grubbs procedure**. With 284k transactions this iterative approach is impractical; Grubbs is most useful as a diagnostic tool on small samples rather than a production detector.
 
-> 💡 **Lineage checkpoint**: Grubbs (1950) formalised the Z-score intuition into a calibrated hypothesis test. The critical value translates directly into a threshold $\tau$ — the Z-score at which $P(|z| > \tau) = \alpha$ under the $t$-distribution. This is precisely what we do when we calibrate $\tau$ to achieve 0.5% FPR.
+> **Lineage checkpoint**: Grubbs (1950) formalised the Z-score intuition into a calibrated hypothesis test. The critical value translates directly into a threshold $\tau$ — the Z-score at which $P(|z| > \tau) = \alpha$ under the $t$-distribution. This is precisely what we do when we calibrate $\tau$ to achieve 0.5% FPR.
 
 ### 4.5 · ROC/Threshold Tradeoff
 
@@ -301,20 +301,20 @@ The threshold $\tau$ is the single dial controlling the recall/precision tradeof
 
 ```
 TPR (recall)
-100% |                                * (tau=1.0: 72% TPR, 3.1% FPR) -- over budget
-     |                          *
+100% | * (tau=1.0: 72% TPR, 3.1% FPR) -- over budget
+ | *
  80% |
-     |               * (tau=1.5: 60% TPR, 1.2% FPR) -- still over budget
- 60% |         *
-     |    * (tau=2.0: 45% TPR, 0.3% FPR)  <-- OPERATING POINT
+ | * (tau=1.5: 60% TPR, 1.2% FPR) -- still over budget
+ 60% | *
+ | * (tau=2.0: 45% TPR, 0.3% FPR) <-- OPERATING POINT
  40% |
-     | * (tau=3.0: 28% TPR, 0.05% FPR)
+ | * (tau=3.0: 28% TPR, 0.05% FPR)
  20% |
-     |
-  0% +------+---------------------------------------------> FPR
-            0%  0.5%   1%    2%    3%
-                 ^
-            FPR budget
+ |
+ 0% +------+---------------------------------------------> FPR
+ 0% 0.5% 1% 2% 3%
+ ^
+ FPR budget
 ```
 
 Set $\tau$ at the **highest score value** such that $\text{FPR} \leq 0.5\%$. Concretely: sort all training transactions by anomaly score (descending). Walk down the list until the fraction of legitimate transactions flagged reaches 0.5%. The score at that position is your threshold $\tau$.
@@ -447,53 +447,53 @@ Mahalanobis correctly identifies T4 as the outlier. In this 2D case, the dominan
 
 ```mermaid
 flowchart TD
-    TX["Transaction\nx = [V1...V28, Time, Amount]"]
-    TX --> Z["Z-Score (per feature)\nz_j = (x_j - mu_j) / sigma_j"]
-    TX --> IQR["IQR Check (per feature)\noutside [Q1 - k*IQR, Q3 + k*IQR]?"]
-    TX --> MAH["Mahalanobis\nD_M = sqrt((x-mu)' * Sigma_inv * (x-mu))"]
+ TX["Transaction\nx = [V1...V28, Time, Amount]"]
+ TX --> Z["Z-Score (per feature)\nz_j = (x_j - mu_j) / sigma_j"]
+ TX --> IQR["IQR Check (per feature)\noutside [Q1 - k*IQR, Q3 + k*IQR]?"]
+ TX --> MAH["Mahalanobis\nD_M = sqrt((x-mu)' * Sigma_inv * (x-mu))"]
 
-    Z --> MAXZ["score = max_j |z_j|"]
-    IQR --> COUNT["score = # features\noutside fence"]
-    MAH --> DIST["score = D_M"]
+ Z --> MAXZ["score = max_j |z_j|"]
+ IQR --> COUNT["score = # features\noutside fence"]
+ MAH --> DIST["score = D_M"]
 
-    MAXZ --> BEST["Select best\nscore"]
-    COUNT --> BEST
-    DIST --> BEST
+ MAXZ --> BEST["Select best\nscore"]
+ COUNT --> BEST
+ DIST --> BEST
 
-    BEST --> THRESH{"score > tau?\ncalibrated @ 0.5% FPR"}
-    THRESH -->|"Yes"| FRAUD["Fraud Alert\n~45% TPR"]
-    THRESH -->|"No"| LEGIT["Legitimate"]
+ BEST --> THRESH{"score > tau?\ncalibrated @ 0.5% FPR"}
+ THRESH -->|"Yes"| FRAUD["Fraud Alert\n~45% TPR"]
+ THRESH -->|"No"| LEGIT["Legitimate"]
 
-    style TX fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style FRAUD fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style LEGIT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style THRESH fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style BEST fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style TX fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style FRAUD fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style LEGIT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style THRESH fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style BEST fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### Method Selection: Assumptions, Strengths, Failure Modes
 
 ```mermaid
 flowchart LR
-    PROB["Is the feature\nGaussian?"] -->|"Yes"| ZSCORE["Z-score\nz = (x-mu)/sigma\n\nPro: Interpretable\nCon: Assumes normality"]
-    PROB -->|"No — skewed"| IQRBOX["IQR Method\nQ3 + k*IQR fence\n\nPro: Robust\nCon: Univariate only"]
+ PROB["Is the feature\nGaussian?"] -->|"Yes"| ZSCORE["Z-score\nz = (x-mu)/sigma\n\nPro: Interpretable\nCon: Assumes normality"]
+ PROB -->|"No — skewed"| IQRBOX["IQR Method\nQ3 + k*IQR fence\n\nPro: Robust\nCon: Univariate only"]
 
-    ZSCORE --> CORR{"Are features\ncorrelated?"}
-    IQRBOX --> CORR
+ ZSCORE --> CORR{"Are features\ncorrelated?"}
+ IQRBOX --> CORR
 
-    CORR -->|"No (PCA output)"| AGG["Aggregated Z-scores\nsum of z^2\napprox Mahalanobis (diagonal Sigma)"]
-    CORR -->|"Yes (raw features)"| MAH2["Mahalanobis\nD_M = sqrt(d' * Sigma_inv * d)\n\nPro: Multivariate\nCon: Needs Sigma_inv"]
+ CORR -->|"No (PCA output)"| AGG["Aggregated Z-scores\nsum of z^2\napprox Mahalanobis (diagonal Sigma)"]
+ CORR -->|"Yes (raw features)"| MAH2["Mahalanobis\nD_M = sqrt(d' * Sigma_inv * d)\n\nPro: Multivariate\nCon: Needs Sigma_inv"]
 
-    AGG --> THRESH2["Threshold @ 0.5% FPR\n~45% recall"]
-    MAH2 --> THRESH2
+ AGG --> THRESH2["Threshold @ 0.5% FPR\n~45% recall"]
+ MAH2 --> THRESH2
 
-    THRESH2 -->|"Still < 80% recall"| NEXT["Ch.2: Isolation Forest\nlearns multivariate structure\nno distribution assumption"]
+ THRESH2 -->|"Still < 80% recall"| NEXT["Ch.2: Isolation Forest\nlearns multivariate structure\nno distribution assumption"]
 
-    style PROB fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style THRESH2 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style NEXT fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style AGG fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style MAH2 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style PROB fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style THRESH2 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style NEXT fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style AGG fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style MAH2 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -548,9 +548,9 @@ Rather than a raw $D_M$ threshold, calibrate using the $\chi^2$ distribution wit
 
 ```python
 from scipy.stats import chi2
-d = X_train.shape[1]          # number of features
-alpha = 0.005                 # target FPR = 0.5%
-tau_mahal = chi2.ppf(1 - alpha, df=d)  # chi2 inverse CDF
+d = X_train.shape[1] # number of features
+alpha = 0.005 # target FPR = 0.5%
+tau_mahal = chi2.ppf(1 - alpha, df=d) # chi2 inverse CDF
 ```
 
 ---
@@ -640,7 +640,7 @@ Ch.1 established the baseline: flag statistically extreme transactions. But the 
 
 Isolation Forest asks a completely different question: **how many random cuts does it take to isolate this transaction from all others?** Rare, anomalous points get isolated in very few cuts regardless of whether they are in any tail. It requires no distributional assumption, handles non-linear anomaly structure naturally, and scales to 284k transactions in seconds.
 
-> ➡️ **[Ch.2 — Isolation Forest](../ch02_isolation_forest)**: from 45% recall (statistical threshold) to ~72% recall. The scoring paradigm is identical — what changes is the scoring function.
+> ➡ **[Ch.2 — Isolation Forest](../ch02_isolation_forest)**: from 45% recall (statistical threshold) to ~72% recall. The scoring paradigm is identical — what changes is the scoring function.
 
 **What stays the same in Ch.2:**
 - The same `feature → score → threshold → decision` loop

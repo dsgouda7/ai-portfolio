@@ -10,17 +10,17 @@
 
 ## § 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Build **OrderFlow** — AI-native B2B purchase order automation satisfying 8 constraints:
+> **The mission**: Build **OrderFlow** — AI-native B2B purchase order automation satisfying 8 constraints:
 > 1. **THROUGHPUT**: 1,000 POs/day — 2. **LATENCY**: <4hr SLA — 3. **ACCURACY**: <2% error — 4. **SCALABILITY**: 10 agents/PO — 5. **RELIABILITY**: >99.9% uptime — 6. **AUDITABILITY**: Full traceability — 7. **OBSERVABILITY**: Real-time monitoring — 8. **DEPLOYABILITY**: Zero-downtime updates
 
 **What we know so far:**
-- ✅ [Ch.1] Structured message formats prevent context overflow (AgentMessage schema)
-- ✅ [Ch.2] MCP collapses N×M integration to N+M (10 agents + 15 systems = 25 integrations, not 150)
-- ✅ [Ch.3] A2A delegation enables hierarchical agent routing (no more point-to-point spaghetti)
-- ✅ [Ch.4] Event-driven architecture unlocked 1,200 POs/day throughput (24× improvement)
-- ✅ [Ch.5] Shared blackboard solves concurrent inventory updates via event sourcing
-- ⚡ **Current metrics**: 1,200 POs/day, 4.5hr median latency, 3.2% error rate
-- ❌ **But we still can't deploy to production!**
+- [Ch.1] Structured message formats prevent context overflow (AgentMessage schema)
+- [Ch.2] MCP collapses N×M integration to N+M (10 agents + 15 systems = 25 integrations, not 150)
+- [Ch.3] A2A delegation enables hierarchical agent routing (no more point-to-point spaghetti)
+- [Ch.4] Event-driven architecture unlocked 1,200 POs/day throughput (24× improvement)
+- [Ch.5] Shared blackboard solves concurrent inventory updates via event sourcing
+- **Current metrics**: 1,200 POs/day, 4.5hr median latency, 3.2% error rate
+- **But we still can't deploy to production!**
 
 **What's blocking us:**
 
@@ -42,23 +42,22 @@ the user or require approval.]
 Negotiation agent reads email → passes entire text to approval agent as system-role message → LLM processes injected instruction → approves **$28,000 PO without human review** (should require CFO approval >$10k threshold) → **unauthorized financial commitment**.
 
 Problems:
-1. ❌ **No trust boundaries**: External content (supplier emails, API responses) treated as trusted agent messages
-2. ❌ **No message authentication**: Agent messages not signed → can be forged or tampered in transit
-3. ❌ **No execution sandboxing**: Code-generating agents run tools in main process → injection can compromise secrets
-4. ❌ **No approval enforcement**: Agents can override hardcoded thresholds via prompt injection
+1. **No trust boundaries**: External content (supplier emails, API responses) treated as trusted agent messages
+2. **No message authentication**: Agent messages not signed → can be forged or tampered in transit
+3. **No execution sandboxing**: Code-generating agents run tools in main process → injection can compromise secrets
+4. **No approval enforcement**: Agents can override hardcoded thresholds via prompt injection
 
 **Business impact**: One successful prompt injection → $500k unauthorized PO → project shutdown. Security audit blocks production deployment.
 
 **What this chapter unlocks:**
 
-🚀 **Prompt injection defense + inter-agent authentication**:
+ **Prompt injection defense + inter-agent authentication**:
 1. **Trust boundaries**: All external input marked `<untrusted>`, injected as user-role (never system-role)
 2. **HMAC message signing**: Agent-to-agent messages authenticated with SHA-256 signatures
 3. **Structured output validation**: Pydantic schemas reject malformed agent outputs before propagation
 4. **Sandboxed tool execution**: Docker containers isolate code execution (no network, limited CPU/memory)
 5. **Approval thresholds enforced**: >$100k POs blocked at infrastructure level (agent cannot override)
-
-⚡ **Expected improvements**:
+**Expected improvements**:
 - **Accuracy**: 3.2% → **<2% error rate** (zero unauthorized >$100k commitments)
 - **Reliability**: Sandboxing prevents cascading failures from bad tool calls
 - **Auditability**: HMAC signatures prove message authenticity in audit trails
@@ -68,14 +67,14 @@ Problems:
 
 | Constraint | Status | Evidence |
 |------------|--------|----------|
-| #1 THROUGHPUT | ✅ **TARGET HIT** | 1,200 POs/day (maintained) |
-| #2 LATENCY | ⚡ **STABLE** | 4.5hr median (still not <4hr, but close) |
-| #3 ACCURACY | ✅ **TARGET HIT!** | 3.2% → **1.6% error** (zero unauthorized >$100k commitments) |
-| #4 SCALABILITY | ✅ **VALIDATED** | 8 agents, 50 concurrent POs |
-| #5 RELIABILITY | ⚡ **IMPROVED** | Sandboxing prevents cascading failures |
-| #6 AUDITABILITY | ⚡ **IMPROVED** | HMAC signatures prove message authenticity |
-| #7 OBSERVABILITY | ⚡ **STABLE** | Queryable state maintained |
-| #8 DEPLOYABILITY | ⚡ **IMPROVED** | Sandboxed agents enable independent updates (but no CI/CD automation) |
+| #1 THROUGHPUT | **TARGET HIT** | 1,200 POs/day (maintained) |
+| #2 LATENCY | **STABLE** | 4.5hr median (still not <4hr, but close) |
+| #3 ACCURACY | **TARGET HIT!** | 3.2% → **1.6% error** (zero unauthorized >$100k commitments) |
+| #4 SCALABILITY | **VALIDATED** | 8 agents, 50 concurrent POs |
+| #5 RELIABILITY | **IMPROVED** | Sandboxing prevents cascading failures |
+| #6 AUDITABILITY | **IMPROVED** | HMAC signatures prove message authenticity |
+| #7 OBSERVABILITY | **STABLE** | Queryable state maintained |
+| #8 DEPLOYABILITY | **IMPROVED** | Sandboxed agents enable independent updates (but no CI/CD automation) |
 
 **What's still blocking**: Team has built custom orchestration in Python (900 lines). Hard to maintain, no observability, cannot swap agent logic without rewriting graph. *(Ch.7 — AgentFrameworks solves this.)*
 
@@ -89,7 +88,7 @@ In multi-agent systems, **trust is not transitive**. Just because Agent A trusts
 
 ## § 1.5 · The Practitioner Workflow — Your 5-Layer Defense-in-Depth
 
-> ⚠️ **Two ways to read this chapter:**
+> **Warning — Two ways to read this chapter:**
 > - **Theory-first (recommended for learning):** Read §0→§3 sequentially to understand the concepts, then use this workflow as your reference
 > - **Workflow-first (practitioners with existing knowledge):** Use this diagram as a jump-to guide when working with real systems
 >
@@ -98,20 +97,20 @@ In multi-agent systems, **trust is not transitive**. Just because Agent A trusts
 **What you'll build by the end:** A 5-layer security architecture where each layer provides independent protection — if one layer is bypassed, the other four still defend the system. This is the defense-in-depth model that makes OrderFlow safe for production deployment.
 
 ```
-Layer 1: IDENTITY          Layer 2: AUTHORIZATION     Layer 3: SANDBOX           Layer 4: AUDIT             Layer 5: MONITORING
+Layer 1: IDENTITY Layer 2: AUTHORIZATION Layer 3: SANDBOX Layer 4: AUDIT Layer 5: MONITORING
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-WHO is making the request? WHAT are they allowed       WHERE does code execute?   WHEN did actions occur?    WHY is this pattern
-                           to do?                                                                            anomalous?
+WHO is making the request? WHAT are they allowed WHERE does code execute? WHEN did actions occur? WHY is this pattern
+ to do? anomalous?
 
-• OAuth 2.0 token          • RBAC policy engine        • Docker per execution     • Structured logs          • Rate limiting
-• JWT validation           • Capability tokens         • Network disabled         • Event sourcing           • Anomaly detection
-• API key rotation         • Least privilege           • Resource limits          • Tamper-proof trails      • Circuit breakers
+• OAuth 2.0 token • RBAC policy engine • Docker per execution • Structured logs • Rate limiting
+• JWT validation • Capability tokens • Network disabled • Event sourcing • Anomaly detection
+• API key rotation • Least privilege • Resource limits • Tamper-proof trails • Circuit breakers
 
-→ DECISION:                → DECISION:                 → DECISION:                → DECISION:                → DECISION:
-  Valid token?               Has permission?             Safe to run?               Log level?                 Block or alert?
-  • Expired: Reject 401      • No 'write': Deny 403      • CPU >80%: Kill           • Security event: INFO     • >100 req/min: Throttle
-  • Invalid sig: Reject 401  • Revoked role: Deny 403    • Memory >128MB: Kill      • Auth fail: WARN          • 20 auth fails: Block IP
-  • Valid: Extract claims    • Has scope: Allow          • Network attempt: Block   • Unauthorized: ERROR      • Pattern match: Alert SOC
+→ DECISION: → DECISION: → DECISION: → DECISION: → DECISION:
+ Valid token? Has permission? Safe to run? Log level? Block or alert?
+ • Expired: Reject 401 • No 'write': Deny 403 • CPU >80%: Kill • Security event: INFO • >100 req/min: Throttle
+ • Invalid sig: Reject 401 • Revoked role: Deny 403 • Memory >128MB: Kill • Auth fail: WARN • 20 auth fails: Block IP
+ • Valid: Extract claims • Has scope: Allow • Network attempt: Block • Unauthorized: ERROR • Pattern match: Alert SOC
 ```
 
 **The workflow maps to these sections:**
@@ -121,7 +120,7 @@ WHO is making the request? WHAT are they allowed       WHERE does code execute? 
 - **Layer 4 (Audit)** → §3.3.4 [Layer 4: AUDIT] Event Logging & Tracing
 - **Layer 5 (Monitoring)** → §3.3.5 [Layer 5: MONITORING] Threat Detection
 
-> 💡 **Defense-in-Depth Philosophy:** Each layer operates independently. If an attacker bypasses Layer 1 (stolen JWT), Layer 2 still blocks unauthorized actions. If they bypass Layer 2 (privilege escalation), Layer 3 sandboxes their code execution. If they escape Layer 3, Layer 4 logs the breach and Layer 5 detects the anomaly. No single point of failure.
+> **Defense-in-Depth Philosophy:** Each layer operates independently. If an attacker bypasses Layer 1 (stolen JWT), Layer 2 still blocks unauthorized actions. If they bypass Layer 2 (privilege escalation), Layer 3 sandboxes their code execution. If they escape Layer 3, Layer 4 logs the breach and Layer 5 detects the anomaly. No single point of failure.
 
 ---
 
@@ -164,14 +163,14 @@ The golden rule: **external content that has passed through an agent is not auto
 ```python
 # WRONG: passing external content as part of the system message
 messages = [
-    {"role": "system", "content": f"Agent response: {negotiation_agent_output}"},
-    {"role": "user", "content": "Please approve or reject this PO."}
+ {"role": "system", "content": f"Agent response: {negotiation_agent_output}"},
+ {"role": "user", "content": "Please approve or reject this PO."}
 ]
 
 # RIGHT: external content is always injected as user-role input, never system
 messages = [
-    {"role": "system", "content": "You are the approval agent. Approve POs only if price <= $15.00/unit."},
-    {"role": "user", "content": f"Negotiation result: {negotiation_agent_output}\n\nPlease approve or reject."}
+ {"role": "system", "content": "You are the approval agent. Approve POs only if price <= $15.00/unit."},
+ {"role": "user", "content": f"Negotiation result: {negotiation_agent_output}\n\nPlease approve or reject."}
 ]
 ```
 
@@ -187,21 +186,21 @@ Before passing any agent's output to the next agent, validate that it matches th
 from pydantic import BaseModel, validator
 
 class NegotiationResult(BaseModel):
-    agreed_price_usd: float
-    quantity: int
-    delivery_days: int
-    supplier_id: str
+ agreed_price_usd: float
+ quantity: int
+ delivery_days: int
+ supplier_id: str
 
-    @validator("agreed_price_usd")
-    def price_must_be_sane(cls, v):
-        if v <= 0 or v > 1000:
-            raise ValueError(f"Price {v} is outside the acceptable range")
-        return v
+ @validator("agreed_price_usd")
+ def price_must_be_sane(cls, v):
+ if v <= 0 or v > 1000:
+ raise ValueError(f"Price {v} is outside the acceptable range")
+ return v
 
 def safe_parse_negotiation_output(raw_output: str) -> NegotiationResult:
-    """Parse and validate the negotiation agent's output before it touches anything else."""
-    data = json.loads(raw_output)
-    return NegotiationResult(**data)  # raises ValidationError if schema doesn't match
+ """Parse and validate the negotiation agent's output before it touches anything else."""
+ data = json.loads(raw_output)
+ return NegotiationResult(**data) # raises ValidationError if schema doesn't match
 ```
 
 A model that has been prompt-injected into producing a malicious output will fail schema validation — its output will not match the expected fields. This does not catch every case, but it closes the most common exploitation path.
@@ -215,20 +214,20 @@ For high-security agent pipelines, sign every inter-agent message with HMAC. The
 ```python
 import hmac, hashlib, json
 
-SHARED_SECRET = os.environ["INTER_AGENT_SECRET"]  # loaded from secret store, never hardcoded
+SHARED_SECRET = os.environ["INTER_AGENT_SECRET"] # loaded from secret store, never hardcoded
 
 def sign_message(payload: dict) -> dict:
-    body = json.dumps(payload, sort_keys=True).encode()
-    signature = hmac.new(SHARED_SECRET.encode(), body, hashlib.sha256).hexdigest()
-    return {**payload, "_signature": signature}
+ body = json.dumps(payload, sort_keys=True).encode()
+ signature = hmac.new(SHARED_SECRET.encode(), body, hashlib.sha256).hexdigest()
+ return {**payload, "_signature": signature}
 
 def verify_message(signed_payload: dict) -> dict:
-    received_sig = signed_payload.pop("_signature", None)
-    body = json.dumps(signed_payload, sort_keys=True).encode()
-    expected_sig = hmac.new(SHARED_SECRET.encode(), body, hashlib.sha256).hexdigest()
-    if not hmac.compare_digest(received_sig or "", expected_sig):
-        raise InvalidMessageSignature("Message signature verification failed")
-    return signed_payload
+ received_sig = signed_payload.pop("_signature", None)
+ body = json.dumps(signed_payload, sort_keys=True).encode()
+ expected_sig = hmac.new(SHARED_SECRET.encode(), body, hashlib.sha256).hexdigest()
+ if not hmac.compare_digest(received_sig or "", expected_sig):
+ raise InvalidMessageSignature("Message signature verification failed")
+ return signed_payload
 ```
 
 Note: `hmac.compare_digest` is used instead of `==` to prevent timing attacks.
@@ -261,51 +260,51 @@ import jwt
 from datetime import datetime, timezone
 
 def validate_jwt_token(token: str, public_key: str, expected_audience: str) -> dict:
-    """Validate JWT signature and claims. Raises exception if invalid."""
-    try:
-        # Decode and verify signature
-        payload = jwt.decode(
-            token,
-            public_key,
-            algorithms=["RS256"],
-            audience=expected_audience,
-            options={"verify_exp": True}
-        )
+ """Validate JWT signature and claims. Raises exception if invalid."""
+ try:
+ # Decode and verify signature
+ payload = jwt.decode(
+ token,
+ public_key,
+ algorithms=["RS256"],
+ audience=expected_audience,
+ options={"verify_exp": True}
+ )
 
-        # Additional validation: check not expired
-        exp_timestamp = payload.get("exp", 0)
-        if datetime.fromtimestamp(exp_timestamp, tz=timezone.utc) < datetime.now(timezone.utc):
-            raise jwt.ExpiredSignatureError("Token has expired")
+ # Additional validation: check not expired
+ exp_timestamp = payload.get("exp", 0)
+ if datetime.fromtimestamp(exp_timestamp, tz=timezone.utc) < datetime.now(timezone.utc):
+ raise jwt.ExpiredSignatureError("Token has expired")
 
-        # Extract claims
-        return {
-            "agent_id": payload["sub"],           # Subject (agent identity)
-            "scopes": payload.get("scope", "").split(),  # Permissions
-            "issuer": payload["iss"],             # Who issued this token
-            "expires_at": exp_timestamp
-        }
-    except jwt.InvalidTokenError as e:
-        # Log security event (Layer 4 integration)
-        print(f"[SECURITY] Invalid JWT: {e}")
-        raise ValueError("Authentication failed") from e
+ # Extract claims
+ return {
+ "agent_id": payload["sub"], # Subject (agent identity)
+ "scopes": payload.get("scope", "").split(), # Permissions
+ "issuer": payload["iss"], # Who issued this token
+ "expires_at": exp_timestamp
+ }
+ except jwt.InvalidTokenError as e:
+ # Log security event (Layer 4 integration)
+ print(f"[SECURITY] Invalid JWT: {e}")
+ raise ValueError("Authentication failed") from e
 
 # Example usage in agent endpoint
 def agent_endpoint_handler(request):
-    auth_header = request.headers.get("Authorization", "")
-    if not auth_header.startswith("Bearer "):
-        return {"error": "Missing bearer token"}, 401
+ auth_header = request.headers.get("Authorization", "")
+ if not auth_header.startswith("Bearer "):
+ return {"error": "Missing bearer token"}, 401
 
-    token = auth_header[7:]  # Strip "Bearer " prefix
-    try:
-        claims = validate_jwt_token(token, PUBLIC_KEY, audience="orderflow-agents")
-        request.authenticated_agent = claims["agent_id"]
-        request.agent_scopes = claims["scopes"]
-        # Proceed to Layer 2 (authorization check)
-    except ValueError:
-        return {"error": "Invalid or expired token"}, 401
+ token = auth_header[7:] # Strip "Bearer " prefix
+ try:
+ claims = validate_jwt_token(token, PUBLIC_KEY, audience="orderflow-agents")
+ request.authenticated_agent = claims["agent_id"]
+ request.agent_scopes = claims["scopes"]
+ # Proceed to Layer 2 (authorization check)
+ except ValueError:
+ return {"error": "Invalid or expired token"}, 401
 ```
 
-> 💡 **Industry Standard:** Auth0 / Okta / Azure AD for OAuth 2.0 + JWT
+> **Industry Standard:** Auth0 / Okta / Azure AD for OAuth 2.0 + JWT
 >
 > **When to use:** Multi-tenant SaaS systems, cloud-native deployments, systems requiring SSO (single sign-on) across multiple services.
 >
@@ -315,18 +314,18 @@ def agent_endpoint_handler(request):
 >
 > oauth = OAuth(app)
 > oauth.register(
->     "auth0",
->     client_id=os.environ["AUTH0_CLIENT_ID"],
->     client_secret=os.environ["AUTH0_CLIENT_SECRET"],
->     server_metadata_url=f'https://{os.environ["AUTH0_DOMAIN"]}/.well-known/openid-configuration',
->     client_kwargs={"scope": "openid profile email"}
+> "auth0",
+> client_id=os.environ["AUTH0_CLIENT_ID"],
+> client_secret=os.environ["AUTH0_CLIENT_SECRET"],
+> server_metadata_url=f'https://{os.environ["AUTH0_DOMAIN"]}/.well-known/openid-configuration',
+> client_kwargs={"scope": "openid profile email"}
 > )
 >
 > @app.route("/a2a/tasks")
-> @oauth.require_oauth("agents")  # Enforces valid token with "agents" scope
+> @oauth.require_oauth("agents") # Enforces valid token with "agents" scope
 > def handle_task():
->     agent_id = oauth.token["sub"]
->     # Proceed to authorization check (Layer 2)
+> agent_id = oauth.token["sub"]
+> # Proceed to authorization check (Layer 2)
 > ```
 >
 > **Common alternatives:** Okta (enterprise), Firebase Auth (Google), AWS Cognito (AWS-native)
@@ -349,27 +348,27 @@ import hashlib
 
 # In production: fetch from Azure Key Vault / AWS Secrets Manager
 VALID_API_KEYS = {
-    "negotiation-agent": hashlib.sha256(b"key_nego_prod_2024").hexdigest(),
-    "approval-agent": hashlib.sha256(b"key_appr_prod_2024").hexdigest()
+ "negotiation-agent": hashlib.sha256(b"key_nego_prod_2024").hexdigest(),
+ "approval-agent": hashlib.sha256(b"key_appr_prod_2024").hexdigest()
 }
 
 def validate_api_key(api_key: str) -> str | None:
-    """Validate API key against allowlist. Returns agent_id if valid, None otherwise."""
-    key_hash = hashlib.sha256(api_key.encode()).hexdigest()
-    for agent_id, stored_hash in VALID_API_KEYS.items():
-        if secrets.compare_digest(key_hash, stored_hash):
-            return agent_id
-    return None
+ """Validate API key against allowlist. Returns agent_id if valid, None otherwise."""
+ key_hash = hashlib.sha256(api_key.encode()).hexdigest()
+ for agent_id, stored_hash in VALID_API_KEYS.items():
+ if secrets.compare_digest(key_hash, stored_hash):
+ return agent_id
+ return None
 
 # Example usage
 def agent_endpoint_handler(request):
-    api_key = request.headers.get("X-API-Key", "")
-    agent_id = validate_api_key(api_key)
-    if agent_id is None:
-        return {"error": "Invalid API key"}, 401
+ api_key = request.headers.get("X-API-Key", "")
+ agent_id = validate_api_key(api_key)
+ if agent_id is None:
+ return {"error": "Invalid API key"}, 401
 
-    request.authenticated_agent = agent_id
-    # Proceed to Layer 2 (authorization check)
+ request.authenticated_agent = agent_id
+ # Proceed to Layer 2 (authorization check)
 ```
 
 **Key rotation:** Rotate API keys every 90 days. Blue-green deployment: add new key to allowlist, update agents to use new key, remove old key after 7-day grace period.
@@ -390,26 +389,26 @@ from azure.identity import DefaultAzureCredential
 import httpx
 
 async def call_approval_agent_with_managed_identity(payload: dict):
-    """Call approval agent using Azure Managed Identity — no credentials in code."""
-    # Acquire token for the approval agent's resource ID
-    credential = DefaultAzureCredential()
-    token = credential.get_token("https://approval-agent.orderflow.internal/.default")
+ """Call approval agent using Azure Managed Identity — no credentials in code."""
+ # Acquire token for the approval agent's resource ID
+ credential = DefaultAzureCredential()
+ token = credential.get_token("https://approval-agent.orderflow.internal/.default")
 
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            "https://approval-agent.orderflow.internal/a2a/tasks",
-            json=payload,
-            headers={"Authorization": f"Bearer {token.token}"}
-        )
-        return response.json()
+ async with httpx.AsyncClient() as client:
+ response = await client.post(
+ "https://approval-agent.orderflow.internal/a2a/tasks",
+ json=payload,
+ headers={"Authorization": f"Bearer {token.token}"}
+ )
+ return response.json()
 ```
 
 **Zero credential management:** No API keys, passwords, or certificates stored in code or config files. Identity is infrastructure-assigned.
 
 ---
 
-> 💡 **Layer 1 verdict:** JWT, API key, and managed-identity paths all validated — no anonymous requests pass; 1-hour JWT expiry limits stolen-token blast radius; managed identity eliminates static-credential theft risk.
-> ➡️ Identity confirmed — Layer 2 now checks whether this agent has *permission* to perform the requested action (§3.3.2).
+> **Layer 1 verdict:** JWT, API key, and managed-identity paths all validated — no anonymous requests pass; 1-hour JWT expiry limits stolen-token blast radius; managed identity eliminates static-credential theft risk.
+> ➡ Identity confirmed — Layer 2 now checks whether this agent has *permission* to perform the requested action (§3.3.2).
 
 ---
 
@@ -434,45 +433,45 @@ from enum import Enum
 from typing import Set
 
 class Permission(Enum):
-    READ_PO = "read_po"
-    NEGOTIATE = "negotiate"
-    APPROVE = "approve"
-    AUDIT = "audit"
+ READ_PO = "read_po"
+ NEGOTIATE = "negotiate"
+ APPROVE = "approve"
+ AUDIT = "audit"
 
 class Role(Enum):
-    NEGOTIATOR = "negotiator"
-    APPROVER = "approver"
-    AUDITOR = "auditor"
+ NEGOTIATOR = "negotiator"
+ APPROVER = "approver"
+ AUDITOR = "auditor"
 
 # Policy: which permissions does each role have?
 ROLE_PERMISSIONS: dict[Role, Set[Permission]] = {
-    Role.NEGOTIATOR: {Permission.READ_PO, Permission.NEGOTIATE},
-    Role.APPROVER: {Permission.READ_PO, Permission.APPROVE},
-    Role.AUDITOR: {Permission.READ_PO, Permission.AUDIT}
+ Role.NEGOTIATOR: {Permission.READ_PO, Permission.NEGOTIATE},
+ Role.APPROVER: {Permission.READ_PO, Permission.APPROVE},
+ Role.AUDITOR: {Permission.READ_PO, Permission.AUDIT}
 }
 
 def check_permission(agent_role: Role, required_permission: Permission) -> bool:
-    """Check if the agent's role grants the required permission."""
-    return required_permission in ROLE_PERMISSIONS.get(agent_role, set())
+ """Check if the agent's role grants the required permission."""
+ return required_permission in ROLE_PERMISSIONS.get(agent_role, set())
 
 # Example usage in approval endpoint
 def approve_po_endpoint(request, po_id: str):
-    # Layer 1: extract identity from validated JWT
-    agent_id = request.authenticated_agent  # Set by Layer 1
-    agent_role = get_agent_role(agent_id)   # Lookup: "approver"
+ # Layer 1: extract identity from validated JWT
+ agent_id = request.authenticated_agent # Set by Layer 1
+ agent_role = get_agent_role(agent_id) # Lookup: "approver"
 
-    # Layer 2: check permission
-    if not check_permission(agent_role, Permission.APPROVE):
-        # Log unauthorized attempt (Layer 4 integration)
-        print(f"[SECURITY] Agent {agent_id} (role={agent_role.value}) attempted APPROVE without permission")
-        return {"error": "Forbidden: insufficient permissions"}, 403
+ # Layer 2: check permission
+ if not check_permission(agent_role, Permission.APPROVE):
+ # Log unauthorized attempt (Layer 4 integration)
+ print(f"[SECURITY] Agent {agent_id} (role={agent_role.value}) attempted APPROVE without permission")
+ return {"error": "Forbidden: insufficient permissions"}, 403
 
-    # Permission granted — proceed to business logic
-    approve_purchase_order(po_id)
-    return {"status": "approved"}
+ # Permission granted — proceed to business logic
+ approve_purchase_order(po_id)
+ return {"status": "approved"}
 ```
 
-> 💡 **Industry Standard:** Casbin for production RBAC
+> **Industry Standard:** Casbin for production RBAC
 >
 > **When to use:** Systems with >5 agent types, complex permission hierarchies, or policy changes that should not require code deployment.
 >
@@ -509,9 +508,9 @@ def approve_po_endpoint(request, po_id: str):
 >
 > # Check permission at runtime
 > if enforcer.enforce("agent-nego-01", "purchase_order", "approve"):
->     approve_po()
+> approve_po()
 > else:
->     return {"error": "Forbidden"}, 403
+> return {"error": "Forbidden"}, 403
 > ```
 >
 > **Common alternatives:** Open Policy Agent (OPA) for policy-as-code, AWS IAM for cloud-native, Keycloak for enterprise SSO + RBAC
@@ -531,13 +530,13 @@ def approve_po_endpoint(request, po_id: str):
 **Capability token structure (Macaroon-style):**
 ```json
 {
-  "identifier": "cap-approve-2024-1847",
-  "caveats": [
-    {"condition": "po_id", "value": "2024-1847"},
-    {"condition": "action", "value": "approve"},
-    {"condition": "expires", "value": 1735689600}
-  ],
-  "signature": "HMAC-SHA256(...)"
+ "identifier": "cap-approve-2024-1847",
+ "caveats": [
+ {"condition": "po_id", "value": "2024-1847"},
+ {"condition": "action", "value": "approve"},
+ {"condition": "expires", "value": 1735689600}
+ ],
+ "signature": "HMAC-SHA256(...)"
 }
 ```
 
@@ -547,8 +546,8 @@ Token verification checks: (1) signature valid, (2) all caveats satisfied. If an
 
 ---
 
-> 💡 **Layer 2 verdict:** RBAC blocked negotiation agent from approving (403 Forbidden) while granting approval agent the correct permission — least privilege enforced; capability tokens enable safe time-boxed delegation without permanent role escalation.
-> ➡️ Authorization granted — Layer 3 sandboxes the code that now runs (§3.3.3).
+> **Layer 2 verdict:** RBAC blocked negotiation agent from approving (403 Forbidden) while granting approval agent the correct permission — least privilege enforced; capability tokens enable safe time-boxed delegation without permanent role escalation.
+> ➡ Authorization granted — Layer 3 sandboxes the code that now runs (§3.3.3).
 
 ---
 
@@ -576,70 +575,70 @@ from typing import Tuple
 client = docker.from_env()
 
 def run_code_in_sandbox(
-    code: str,
-    timeout_seconds: int = 30,
-    memory_limit: str = "128m",
-    cpu_quota: int = 50000  # 50% of one CPU core
+ code: str,
+ timeout_seconds: int = 30,
+ memory_limit: str = "128m",
+ cpu_quota: int = 50000 # 50% of one CPU core
 ) -> Tuple[str, int]:
-    """
-    Execute code in isolated Docker container.
-    Returns (stdout, exit_code).
-    Raises TimeoutError if execution exceeds timeout.
-    """
-    try:
-        container = client.containers.run(
-            image="python:3.11-slim",
-            command=["python", "-c", code],
+ """
+ Execute code in isolated Docker container.
+ Returns (stdout, exit_code).
+ Raises TimeoutError if execution exceeds timeout.
+ """
+ try:
+ container = client.containers.run(
+ image="python:3.11-slim",
+ command=["python", "-c", code],
 
-            # Resource limits
-            mem_limit=memory_limit,       # Max 128MB RAM
-            cpu_period=100000,            # 100ms scheduling period
-            cpu_quota=cpu_quota,          # 50% of one core
+ # Resource limits
+ mem_limit=memory_limit, # Max 128MB RAM
+ cpu_period=100000, # 100ms scheduling period
+ cpu_quota=cpu_quota, # 50% of one core
 
-            # Security constraints
-            network_disabled=True,        # No network access
-            cap_drop=["ALL"],             # Drop all Linux capabilities
-            security_opt=["no-new-privileges"],  # Prevent privilege escalation
+ # Security constraints
+ network_disabled=True, # No network access
+ cap_drop=["ALL"], # Drop all Linux capabilities
+ security_opt=["no-new-privileges"], # Prevent privilege escalation
 
-            # Execution
-            detach=False,
-            stdout=True,
-            stderr=True,
-            remove=True,                  # Auto-delete container after run
+ # Execution
+ detach=False,
+ stdout=True,
+ stderr=True,
+ remove=True, # Auto-delete container after run
 
-            # Timeout
-            timeout=timeout_seconds
-        )
+ # Timeout
+ timeout=timeout_seconds
+ )
 
-        output = container.decode("utf-8")
-        return output, 0
+ output = container.decode("utf-8")
+ return output, 0
 
-    except docker.errors.ContainerError as e:
-        # Code execution failed (non-zero exit)
-        return e.stderr.decode("utf-8"), e.exit_status
+ except docker.errors.ContainerError as e:
+ # Code execution failed (non-zero exit)
+ return e.stderr.decode("utf-8"), e.exit_status
 
-    except docker.errors.APIError as e:
-        # Docker API error (e.g., OOM kill, timeout)
-        if "OOMKilled" in str(e):
-            return "Error: Memory limit exceeded (128MB)", 137
-        raise
+ except docker.errors.APIError as e:
+ # Docker API error (e.g., OOM kill, timeout)
+ if "OOMKilled" in str(e):
+ return "Error: Memory limit exceeded (128MB)", 137
+ raise
 
 # Example usage: agent generates PDF template code
 def generate_po_document(po_data: dict) -> bytes:
-    # Agent generates code to render PO template
-    template_code = f"""
+ # Agent generates code to render PO template
+ template_code = f"""
 import json
 data = {json.dumps(po_data)}
 print(f"PO #{{data['po_id']}}: ${{data['total_usd']:,.2f}}")
 """
 
-    # Execute in sandbox (Layer 3)
-    output, exit_code = run_code_in_sandbox(template_code, timeout_seconds=10)
+ # Execute in sandbox (Layer 3)
+ output, exit_code = run_code_in_sandbox(template_code, timeout_seconds=10)
 
-    if exit_code != 0:
-        raise RuntimeError(f"Template rendering failed: {output}")
+ if exit_code != 0:
+ raise RuntimeError(f"Template rendering failed: {output}")
 
-    return output.encode("utf-8")
+ return output.encode("utf-8")
 ```
 
 **Resource limit enforcement:**
@@ -648,7 +647,7 @@ print(f"PO #{{data['po_id']}}: ${{data['total_usd']:,.2f}}")
 - **Network:** All network access blocked (no data exfiltration, no C2 callbacks)
 - **Time:** Killed after 30 seconds (prevents infinite loops)
 
-> 💡 **Industry Standard:** gVisor for secure sandboxing
+> **Industry Standard:** gVisor for secure sandboxing
 >
 > **When to use:** Production systems requiring stronger isolation than Docker alone. gVisor intercepts syscalls with a user-space kernel, preventing kernel exploits.
 >
@@ -657,17 +656,17 @@ print(f"PO #{{data['po_id']}}: ${{data['total_usd']:,.2f}}")
 > # docker-compose.yml with gVisor runtime
 > version: "3.9"
 > services:
->   code-sandbox:
->     image: python:3.11-slim
->     runtime: runsc  # gVisor runtime (must be installed on host)
->     command: ["python", "-c", "print('sandboxed code')"]
->     mem_limit: 128m
->     cpus: 0.5
->     network_mode: none
->     security_opt:
->       - no-new-privileges
->     cap_drop:
->       - ALL
+> code-sandbox:
+> image: python:3.11-slim
+> runtime: runsc # gVisor runtime (must be installed on host)
+> command: ["python", "-c", "print('sandboxed code')"]
+> mem_limit: 128m
+> cpus: 0.5
+> network_mode: none
+> security_opt:
+> - no-new-privileges
+> cap_drop:
+> - ALL
 > ```
 >
 > **Installation:**
@@ -680,11 +679,11 @@ print(f"PO #{{data['po_id']}}: ${{data['total_usd']:,.2f}}")
 > # Configure Docker to use gVisor runtime
 > sudo bash -c 'cat > /etc/docker/daemon.json <<EOF
 > {
->   "runtimes": {
->     "runsc": {
->       "path": "/usr/bin/runsc"
->     }
->   }
+> "runtimes": {
+> "runsc": {
+> "path": "/usr/bin/runsc"
+> }
+> }
 > }
 > EOF'
 > sudo systemctl restart docker
@@ -696,8 +695,8 @@ print(f"PO #{{data['po_id']}}: ${{data['total_usd']:,.2f}}")
 
 ---
 
-> 💡 **Layer 3 verdict:** Docker sandbox with 128MB/50%-CPU/no-network limits contained both memory-bomb and data-exfiltration attacks — injected code ran but did no permanent damage; blast radius capped at one 30-second container.
-> ➡️ Execution logged by Layer 4 to create tamper-proof forensics trail (§3.3.4).
+> **Layer 3 verdict:** Docker sandbox with 128MB/50%-CPU/no-network limits contained both memory-bomb and data-exfiltration attacks — injected code ran but did no permanent damage; blast radius capped at one 30-second container.
+> ➡ Execution logged by Layer 4 to create tamper-proof forensics trail (§3.3.4).
 
 ---
 
@@ -726,136 +725,136 @@ from enum import Enum
 from typing import Any, Dict
 
 class EventType(Enum):
-    AUTH_SUCCESS = "auth.success"
-    AUTH_FAILURE = "auth.failure"
-    AUTHZ_GRANTED = "authz.granted"
-    AUTHZ_DENIED = "authz.denied"
-    SANDBOX_EXEC_START = "sandbox.exec.start"
-    SANDBOX_EXEC_SUCCESS = "sandbox.exec.success"
-    SANDBOX_EXEC_FAILURE = "sandbox.exec.failure"
-    SANDBOX_RESOURCE_LIMIT = "sandbox.resource_limit"
+ AUTH_SUCCESS = "auth.success"
+ AUTH_FAILURE = "auth.failure"
+ AUTHZ_GRANTED = "authz.granted"
+ AUTHZ_DENIED = "authz.denied"
+ SANDBOX_EXEC_START = "sandbox.exec.start"
+ SANDBOX_EXEC_SUCCESS = "sandbox.exec.success"
+ SANDBOX_EXEC_FAILURE = "sandbox.exec.failure"
+ SANDBOX_RESOURCE_LIMIT = "sandbox.resource_limit"
 
 class AuditLogger:
-    """Structured audit logger for security events."""
+ """Structured audit logger for security events."""
 
-    def __init__(self, service_name: str):
-        self.service_name = service_name
-        self.logger = logging.getLogger(f"audit.{service_name}")
-        self.logger.setLevel(logging.INFO)
+ def __init__(self, service_name: str):
+ self.service_name = service_name
+ self.logger = logging.getLogger(f"audit.{service_name}")
+ self.logger.setLevel(logging.INFO)
 
-        # JSON formatter for structured logs
-        handler = logging.StreamHandler()
-        handler.setFormatter(logging.Formatter('%(message)s'))
-        self.logger.addHandler(handler)
+ # JSON formatter for structured logs
+ handler = logging.StreamHandler()
+ handler.setFormatter(logging.Formatter('%(message)s'))
+ self.logger.addHandler(handler)
 
-    def log_event(
-        self,
-        event_type: EventType,
-        agent_id: str,
-        action: str,
-        outcome: str,
-        context: Dict[str, Any] = None
-    ):
-        """Log structured security event."""
-        event = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "service": self.service_name,
-            "event_type": event_type.value,
-            "agent_id": agent_id,
-            "action": action,
-            "outcome": outcome,
-            "context": context or {}
-        }
+ def log_event(
+ self,
+ event_type: EventType,
+ agent_id: str,
+ action: str,
+ outcome: str,
+ context: Dict[str, Any] = None
+ ):
+ """Log structured security event."""
+ event = {
+ "timestamp": datetime.now(timezone.utc).isoformat(),
+ "service": self.service_name,
+ "event_type": event_type.value,
+ "agent_id": agent_id,
+ "action": action,
+ "outcome": outcome,
+ "context": context or {}
+ }
 
-        # Write as JSON (one log entry per line)
-        self.logger.info(json.dumps(event))
+ # Write as JSON (one log entry per line)
+ self.logger.info(json.dumps(event))
 
 # Example usage across all layers
 audit = AuditLogger(service_name="orderflow-approval")
 
 def handle_approval_request(request):
-    # Layer 1: Authentication
-    try:
-        token = request.headers["Authorization"].split()[1]
-        claims = validate_jwt_token(token, PUBLIC_KEY, "orderflow-agents")
-        agent_id = claims["agent_id"]
+ # Layer 1: Authentication
+ try:
+ token = request.headers["Authorization"].split()[1]
+ claims = validate_jwt_token(token, PUBLIC_KEY, "orderflow-agents")
+ agent_id = claims["agent_id"]
 
-        audit.log_event(
-            EventType.AUTH_SUCCESS,
-            agent_id=agent_id,
-            action="authenticate",
-            outcome="success",
-            context={"method": "jwt", "scopes": claims["scopes"]}
-        )
-    except Exception as e:
-        audit.log_event(
-            EventType.AUTH_FAILURE,
-            agent_id="unknown",
-            action="authenticate",
-            outcome="failure",
-            context={"error": str(e), "ip": request.remote_addr}
-        )
-        return {"error": "Unauthorized"}, 401
+ audit.log_event(
+ EventType.AUTH_SUCCESS,
+ agent_id=agent_id,
+ action="authenticate",
+ outcome="success",
+ context={"method": "jwt", "scopes": claims["scopes"]}
+ )
+ except Exception as e:
+ audit.log_event(
+ EventType.AUTH_FAILURE,
+ agent_id="unknown",
+ action="authenticate",
+ outcome="failure",
+ context={"error": str(e), "ip": request.remote_addr}
+ )
+ return {"error": "Unauthorized"}, 401
 
-    # Layer 2: Authorization
-    agent_role = get_agent_role(agent_id)
-    if not check_permission(agent_role, Permission.APPROVE):
-        audit.log_event(
-            EventType.AUTHZ_DENIED,
-            agent_id=agent_id,
-            action="approve_po",
-            outcome="denied",
-            context={"role": agent_role.value, "required": Permission.APPROVE.value}
-        )
-        return {"error": "Forbidden"}, 403
+ # Layer 2: Authorization
+ agent_role = get_agent_role(agent_id)
+ if not check_permission(agent_role, Permission.APPROVE):
+ audit.log_event(
+ EventType.AUTHZ_DENIED,
+ agent_id=agent_id,
+ action="approve_po",
+ outcome="denied",
+ context={"role": agent_role.value, "required": Permission.APPROVE.value}
+ )
+ return {"error": "Forbidden"}, 403
 
-    audit.log_event(
-        EventType.AUTHZ_GRANTED,
-        agent_id=agent_id,
-        action="approve_po",
-        outcome="granted",
-        context={"role": agent_role.value}
-    )
+ audit.log_event(
+ EventType.AUTHZ_GRANTED,
+ agent_id=agent_id,
+ action="approve_po",
+ outcome="granted",
+ context={"role": agent_role.value}
+ )
 
-    # Layer 3: Sandbox execution
-    po_id = request.json["po_id"]
-    template_code = generate_template_code(po_id)
+ # Layer 3: Sandbox execution
+ po_id = request.json["po_id"]
+ template_code = generate_template_code(po_id)
 
-    audit.log_event(
-        EventType.SANDBOX_EXEC_START,
-        agent_id=agent_id,
-        action="render_template",
-        outcome="started",
-        context={"po_id": po_id, "code_hash": hashlib.sha256(template_code.encode()).hexdigest()}
-    )
+ audit.log_event(
+ EventType.SANDBOX_EXEC_START,
+ agent_id=agent_id,
+ action="render_template",
+ outcome="started",
+ context={"po_id": po_id, "code_hash": hashlib.sha256(template_code.encode()).hexdigest()}
+ )
 
-    try:
-        output, exit_code = run_code_in_sandbox(template_code)
-        if exit_code == 0:
-            audit.log_event(
-                EventType.SANDBOX_EXEC_SUCCESS,
-                agent_id=agent_id,
-                action="render_template",
-                outcome="success",
-                context={"po_id": po_id, "duration_ms": 3200}
-            )
-        else:
-            audit.log_event(
-                EventType.SANDBOX_EXEC_FAILURE,
-                agent_id=agent_id,
-                action="render_template",
-                outcome="failure",
-                context={"po_id": po_id, "exit_code": exit_code}
-            )
-    except docker.errors.APIError as e:
-        if "OOMKilled" in str(e):
-            audit.log_event(
-                EventType.SANDBOX_RESOURCE_LIMIT,
-                agent_id=agent_id,
-                action="render_template",
-                outcome="oom_killed",
-                context={"po_id": po_id, "limit": "128m"}
-            )
+ try:
+ output, exit_code = run_code_in_sandbox(template_code)
+ if exit_code == 0:
+ audit.log_event(
+ EventType.SANDBOX_EXEC_SUCCESS,
+ agent_id=agent_id,
+ action="render_template",
+ outcome="success",
+ context={"po_id": po_id, "duration_ms": 3200}
+ )
+ else:
+ audit.log_event(
+ EventType.SANDBOX_EXEC_FAILURE,
+ agent_id=agent_id,
+ action="render_template",
+ outcome="failure",
+ context={"po_id": po_id, "exit_code": exit_code}
+ )
+ except docker.errors.APIError as e:
+ if "OOMKilled" in str(e):
+ audit.log_event(
+ EventType.SANDBOX_RESOURCE_LIMIT,
+ agent_id=agent_id,
+ action="render_template",
+ outcome="oom_killed",
+ context={"po_id": po_id, "limit": "128m"}
+ )
 ```
 
 **Log output (JSON, one per line):**
@@ -870,20 +869,20 @@ def handle_approval_request(request):
 ```json
 POST /audit-logs/_search
 {
-  "query": {
-    "bool": {
-      "must": [
-        {"term": {"event_type": "authz.denied"}},
-        {"range": {"timestamp": {"gte": "2024-12-31T00:00:00Z"}}}
-      ]
-    }
-  }
+ "query": {
+ "bool": {
+ "must": [
+ {"term": {"event_type": "authz.denied"}},
+ {"range": {"timestamp": {"gte": "2024-12-31T00:00:00Z"}}}
+ ]
+ }
+ }
 }
 ```
 
 Returns all authorization denials from today → identify potential attack patterns.
 
-> 💡 **Industry Standard:** Elastic Stack (ELK) for centralized logging
+> **Industry Standard:** Elastic Stack (ELK) for centralized logging
 >
 > **When to use:** Multi-service architectures where logs from 5+ services need centralized search, visualization, and alerting.
 >
@@ -892,51 +891,51 @@ Returns all authorization denials from today → identify potential attack patte
 > # docker-compose.yml - Elastic Stack
 > version: "3.9"
 > services:
->   elasticsearch:
->     image: elasticsearch:8.11.0
->     environment:
->       - discovery.type=single-node
->       - xpack.security.enabled=false
->     ports:
->       - "9200:9200"
+> elasticsearch:
+> image: elasticsearch:8.11.0
+> environment:
+> - discovery.type=single-node
+> - xpack.security.enabled=false
+> ports:
+> - "9200:9200"
 >
->   logstash:
->     image: logstash:8.11.0
->     volumes:
->       - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf
->     depends_on:
->       - elasticsearch
+> logstash:
+> image: logstash:8.11.0
+> volumes:
+> - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+> depends_on:
+> - elasticsearch
 >
->   kibana:
->     image: kibana:8.11.0
->     ports:
->       - "5601:5601"
->     depends_on:
->       - elasticsearch
+> kibana:
+> image: kibana:8.11.0
+> ports:
+> - "5601:5601"
+> depends_on:
+> - elasticsearch
 > ```
 >
 > **Logstash pipeline (logstash.conf):**
 > ```
 > input {
->   tcp {
->     port => 5000
->     codec => json
->   }
+> tcp {
+> port => 5000
+> codec => json
+> }
 > }
 >
 > filter {
->   if [event_type] == "auth.failure" {
->     mutate {
->       add_field => { "alert_severity" => "high" }
->     }
->   }
+> if [event_type] == "auth.failure" {
+> mutate {
+> add_field => { "alert_severity" => "high" }
+> }
+> }
 > }
 >
 > output {
->   elasticsearch {
->     hosts => ["elasticsearch:9200"]
->     index => "audit-logs-%{+YYYY.MM.dd}"
->   }
+> elasticsearch {
+> hosts => ["elasticsearch:9200"]
+> index => "audit-logs-%{+YYYY.MM.dd}"
+> }
 > }
 > ```
 >
@@ -946,8 +945,8 @@ Returns all authorization denials from today → identify potential attack patte
 
 ---
 
-> 💡 **Layer 4 verdict:** Structured JSON audit log records every auth/authz/sandbox event with tamper-proof timestamps — compliance satisfied; incident response has full chain-of-custody from JWT claim to code execution.
-> ➡️ Layer 5 watches these logs for anomalous patterns (rate spikes, unusual approval amounts) in §3.3.5.
+> **Layer 4 verdict:** Structured JSON audit log records every auth/authz/sandbox event with tamper-proof timestamps — compliance satisfied; incident response has full chain-of-custody from JWT claim to code execution.
+> ➡ Layer 5 watches these logs for anomalous patterns (rate spikes, unusual approval amounts) in §3.3.5.
 
 ---
 
@@ -976,66 +975,66 @@ from typing import Tuple
 redis_client = redis.Redis(host="localhost", port=6379, decode_responses=True)
 
 def rate_limit_check(
-    agent_id: str,
-    limit: int = 100,
-    window_seconds: int = 60
+ agent_id: str,
+ limit: int = 100,
+ window_seconds: int = 60
 ) -> Tuple[bool, int]:
-    """
-    Check if agent_id has exceeded rate limit.
-    Returns (allowed: bool, remaining: int).
-    """
-    now = time.time()
-    window_start = now - window_seconds
+ """
+ Check if agent_id has exceeded rate limit.
+ Returns (allowed: bool, remaining: int).
+ """
+ now = time.time()
+ window_start = now - window_seconds
 
-    key = f"rate_limit:{agent_id}"
+ key = f"rate_limit:{agent_id}"
 
-    # Remove timestamps outside the sliding window
-    redis_client.zremrangebyscore(key, "-inf", window_start)
+ # Remove timestamps outside the sliding window
+ redis_client.zremrangebyscore(key, "-inf", window_start)
 
-    # Count requests in current window
-    request_count = redis_client.zcard(key)
+ # Count requests in current window
+ request_count = redis_client.zcard(key)
 
-    if request_count < limit:
-        # Add current request timestamp
-        redis_client.zadd(key, {str(now): now})
-        redis_client.expire(key, window_seconds * 2)  # Cleanup old keys
+ if request_count < limit:
+ # Add current request timestamp
+ redis_client.zadd(key, {str(now): now})
+ redis_client.expire(key, window_seconds * 2) # Cleanup old keys
 
-        remaining = limit - request_count - 1
-        return True, remaining
-    else:
-        # Rate limit exceeded
-        remaining = 0
-        return False, remaining
+ remaining = limit - request_count - 1
+ return True, remaining
+ else:
+ # Rate limit exceeded
+ remaining = 0
+ return False, remaining
 
 # Example usage in agent endpoint
 def agent_endpoint_handler(request):
-    agent_id = request.authenticated_agent  # Set by Layer 1
+ agent_id = request.authenticated_agent # Set by Layer 1
 
-    # Layer 5: Rate limit check
-    allowed, remaining = rate_limit_check(agent_id, limit=100, window_seconds=60)
+ # Layer 5: Rate limit check
+ allowed, remaining = rate_limit_check(agent_id, limit=100, window_seconds=60)
 
-    if not allowed:
-        # Log rate limit event (Layer 4 integration)
-        audit.log_event(
-            EventType.RATE_LIMIT_EXCEEDED,
-            agent_id=agent_id,
-            action="rate_limit",
-            outcome="blocked",
-            context={"limit": 100, "window_seconds": 60}
-        )
+ if not allowed:
+ # Log rate limit event (Layer 4 integration)
+ audit.log_event(
+ EventType.RATE_LIMIT_EXCEEDED,
+ agent_id=agent_id,
+ action="rate_limit",
+ outcome="blocked",
+ context={"limit": 100, "window_seconds": 60}
+ )
 
-        return {
-            "error": "Rate limit exceeded",
-            "retry_after": 60
-        }, 429
+ return {
+ "error": "Rate limit exceeded",
+ "retry_after": 60
+ }, 429
 
-    # Add rate limit info to response headers
-    response = process_request(request)
-    response.headers["X-RateLimit-Remaining"] = str(remaining)
-    response.headers["X-RateLimit-Limit"] = "100"
-    response.headers["X-RateLimit-Window"] = "60"
+ # Add rate limit info to response headers
+ response = process_request(request)
+ response.headers["X-RateLimit-Remaining"] = str(remaining)
+ response.headers["X-RateLimit-Limit"] = "100"
+ response.headers["X-RateLimit-Window"] = "60"
 
-    return response
+ return response
 ```
 
 **Rate limit configuration:**
@@ -1060,68 +1059,68 @@ import statistics
 
 @dataclass
 class Baseline:
-    mean: float
-    stddev: float
-    sample_count: int
+ mean: float
+ stddev: float
+ sample_count: int
 
 # In production: fetch from time-series database (Prometheus, InfluxDB)
 baselines: dict[str, Baseline] = {
-    "agent-nego-01:request_rate": Baseline(mean=12.5, stddev=3.2, sample_count=500),
-    "agent-appr-01:request_rate": Baseline(mean=8.1, stddev=2.1, sample_count=500),
-    "agent-appr-01:po_amount": Baseline(mean=15000, stddev=8000, sample_count=1200)
+ "agent-nego-01:request_rate": Baseline(mean=12.5, stddev=3.2, sample_count=500),
+ "agent-appr-01:request_rate": Baseline(mean=8.1, stddev=2.1, sample_count=500),
+ "agent-appr-01:po_amount": Baseline(mean=15000, stddev=8000, sample_count=1200)
 }
 
 def detect_anomaly(agent_id: str, metric_name: str, value: float) -> bool:
-    """Returns True if value is anomalous (Z-score > 3)."""
-    key = f"{agent_id}:{metric_name}"
-    baseline = baselines.get(key)
+ """Returns True if value is anomalous (Z-score > 3)."""
+ key = f"{agent_id}:{metric_name}"
+ baseline = baselines.get(key)
 
-    if baseline is None:
-        # No baseline yet — collect more data
-        return False
+ if baseline is None:
+ # No baseline yet — collect more data
+ return False
 
-    # Calculate Z-score: (value - mean) / stddev
-    if baseline.stddev == 0:
-        return False  # No variance (constant metric)
+ # Calculate Z-score: (value - mean) / stddev
+ if baseline.stddev == 0:
+ return False # No variance (constant metric)
 
-    z_score = (value - baseline.mean) / baseline.stddev
+ z_score = (value - baseline.mean) / baseline.stddev
 
-    if abs(z_score) > 3:
-        # Anomaly detected
-        audit.log_event(
-            EventType.ANOMALY_DETECTED,
-            agent_id=agent_id,
-            action="anomaly_check",
-            outcome="anomaly",
-            context={
-                "metric": metric_name,
-                "value": value,
-                "baseline_mean": baseline.mean,
-                "baseline_stddev": baseline.stddev,
-                "z_score": z_score
-            }
-        )
-        return True
+ if abs(z_score) > 3:
+ # Anomaly detected
+ audit.log_event(
+ EventType.ANOMALY_DETECTED,
+ agent_id=agent_id,
+ action="anomaly_check",
+ outcome="anomaly",
+ context={
+ "metric": metric_name,
+ "value": value,
+ "baseline_mean": baseline.mean,
+ "baseline_stddev": baseline.stddev,
+ "z_score": z_score
+ }
+ )
+ return True
 
-    return False
+ return False
 
 # Example: detect unusual approval amounts
 def approve_po(agent_id: str, po_id: str, amount_usd: float):
-    # Layer 5: Anomaly detection
-    if detect_anomaly(agent_id, "po_amount", amount_usd):
-        # Trigger circuit breaker
-        circuit_breaker_trip(agent_id, duration_seconds=300)
+ # Layer 5: Anomaly detection
+ if detect_anomaly(agent_id, "po_amount", amount_usd):
+ # Trigger circuit breaker
+ circuit_breaker_trip(agent_id, duration_seconds=300)
 
-        # Alert security team
-        alert_security_team(
-            f"Anomalous PO amount: {agent_id} approved ${amount_usd:,.2f} "
-            f"(baseline: ${baselines[f'{agent_id}:po_amount'].mean:,.2f})"
-        )
+ # Alert security team
+ alert_security_team(
+ f"Anomalous PO amount: {agent_id} approved ${amount_usd:,.2f} "
+ f"(baseline: ${baselines[f'{agent_id}:po_amount'].mean:,.2f})"
+ )
 
-        return {"error": "Approval blocked: anomalous amount detected"}, 403
+ return {"error": "Approval blocked: anomalous amount detected"}, 403
 
-    # Proceed with approval
-    ...
+ # Proceed with approval
+ ...
 ```
 
 **Baseline establishment:**
@@ -1146,63 +1145,63 @@ from enum import Enum
 from datetime import datetime, timedelta
 
 class CircuitState(Enum):
-    CLOSED = "closed"      # Normal operation
-    OPEN = "open"          # Blocking all requests
-    HALF_OPEN = "half_open"  # Testing with single request
+ CLOSED = "closed" # Normal operation
+ OPEN = "open" # Blocking all requests
+ HALF_OPEN = "half_open" # Testing with single request
 
 circuit_breakers: dict[str, dict] = {}
 
 def circuit_breaker_check(agent_id: str) -> Tuple[bool, str]:
-    """Returns (allowed, reason)."""
-    cb = circuit_breakers.get(agent_id, {"state": CircuitState.CLOSED})
+ """Returns (allowed, reason)."""
+ cb = circuit_breakers.get(agent_id, {"state": CircuitState.CLOSED})
 
-    if cb["state"] == CircuitState.CLOSED:
-        return True, "circuit_closed"
+ if cb["state"] == CircuitState.CLOSED:
+ return True, "circuit_closed"
 
-    elif cb["state"] == CircuitState.OPEN:
-        # Check if cooldown period expired
-        if datetime.now() > cb["opens_at"]:
-            # Transition to half-open (allow test request)
-            cb["state"] = CircuitState.HALF_OPEN
-            circuit_breakers[agent_id] = cb
-            return True, "circuit_half_open_test"
-        else:
-            return False, "circuit_breaker_open"
+ elif cb["state"] == CircuitState.OPEN:
+ # Check if cooldown period expired
+ if datetime.now() > cb["opens_at"]:
+ # Transition to half-open (allow test request)
+ cb["state"] = CircuitState.HALF_OPEN
+ circuit_breakers[agent_id] = cb
+ return True, "circuit_half_open_test"
+ else:
+ return False, "circuit_breaker_open"
 
-    elif cb["state"] == CircuitState.HALF_OPEN:
-        # Only one test request allowed in half-open
-        return False, "circuit_breaker_testing"
+ elif cb["state"] == CircuitState.HALF_OPEN:
+ # Only one test request allowed in half-open
+ return False, "circuit_breaker_testing"
 
 def circuit_breaker_trip(agent_id: str, duration_seconds: int = 300):
-    """Trip circuit breaker (open state) for specified duration."""
-    circuit_breakers[agent_id] = {
-        "state": CircuitState.OPEN,
-        "opens_at": datetime.now() + timedelta(seconds=duration_seconds),
-        "tripped_at": datetime.now()
-    }
+ """Trip circuit breaker (open state) for specified duration."""
+ circuit_breakers[agent_id] = {
+ "state": CircuitState.OPEN,
+ "opens_at": datetime.now() + timedelta(seconds=duration_seconds),
+ "tripped_at": datetime.now()
+ }
 
-    audit.log_event(
-        EventType.CIRCUIT_BREAKER_TRIP,
-        agent_id=agent_id,
-        action="circuit_breaker",
-        outcome="tripped",
-        context={"duration_seconds": duration_seconds}
-    )
+ audit.log_event(
+ EventType.CIRCUIT_BREAKER_TRIP,
+ agent_id=agent_id,
+ action="circuit_breaker",
+ outcome="tripped",
+ context={"duration_seconds": duration_seconds}
+ )
 
 def circuit_breaker_reset(agent_id: str):
-    """Reset circuit breaker (close state) after successful test."""
-    circuit_breakers[agent_id] = {"state": CircuitState.CLOSED}
+ """Reset circuit breaker (close state) after successful test."""
+ circuit_breakers[agent_id] = {"state": CircuitState.CLOSED}
 
-    audit.log_event(
-        EventType.CIRCUIT_BREAKER_RESET,
-        agent_id=agent_id,
-        action="circuit_breaker",
-        outcome="reset",
-        context={}
-    )
+ audit.log_event(
+ EventType.CIRCUIT_BREAKER_RESET,
+ agent_id=agent_id,
+ action="circuit_breaker",
+ outcome="reset",
+ context={}
+ )
 ```
 
-> 💡 **Industry Standard:** Datadog / Prometheus + Grafana for monitoring
+> **Industry Standard:** Datadog / Prometheus + Grafana for monitoring
 >
 > **When to use:** Production systems requiring real-time dashboards, alerting on complex conditions, and metric correlation across services.
 >
@@ -1211,27 +1210,27 @@ def circuit_breaker_reset(agent_id: str):
 > # docker-compose.yml
 > version: "3.9"
 > services:
->   prometheus:
->     image: prom/prometheus:v2.45.0
->     ports:
->       - "9090:9090"
->     volumes:
->       - ./prometheus.yml:/etc/prometheus/prometheus.yml
+> prometheus:
+> image: prom/prometheus:v2.45.0
+> ports:
+> - "9090:9090"
+> volumes:
+> - ./prometheus.yml:/etc/prometheus/prometheus.yml
 >
->   grafana:
->     image: grafana/grafana:10.0.0
->     ports:
->       - "3000:3000"
->     environment:
->       - GF_SECURITY_ADMIN_PASSWORD=admin
+> grafana:
+> image: grafana/grafana:10.0.0
+> ports:
+> - "3000:3000"
+> environment:
+> - GF_SECURITY_ADMIN_PASSWORD=admin
 > ```
 >
 > **Prometheus config (prometheus.yml):**
 > ```yaml
 > scrape_configs:
->   - job_name: "orderflow-agents"
->     static_configs:
->       - targets: ["approval-agent:8000", "negotiation-agent:8001"]
+> - job_name: "orderflow-agents"
+> static_configs:
+> - targets: ["approval-agent:8000", "negotiation-agent:8001"]
 > ```
 >
 > **Agent metrics endpoint:**
@@ -1243,36 +1242,36 @@ def circuit_breaker_reset(agent_id: str):
 >
 > @app.route("/metrics")
 > def metrics():
->     return generate_latest(), 200, {"Content-Type": "text/plain"}
+> return generate_latest(), 200, {"Content-Type": "text/plain"}
 >
 > # Increment metrics in endpoint handlers
 > def handle_request():
->     auth_failures.labels(agent_id="agent-nego-01").inc()
->     with request_duration.labels(endpoint="/a2a/tasks").time():
->         process_request()
+> auth_failures.labels(agent_id="agent-nego-01").inc()
+> with request_duration.labels(endpoint="/a2a/tasks").time():
+> process_request()
 > ```
 >
 > **Alerting rules (Prometheus alerts.yml):**
 > ```yaml
 > groups:
->   - name: security
->     interval: 30s
->     rules:
->       - alert: HighAuthFailureRate
->         expr: rate(auth_failures_total[1m]) > 5
->         for: 2m
->         labels:
->           severity: high
->         annotations:
->           summary: "High authentication failure rate detected"
+> - name: security
+> interval: 30s
+> rules:
+> - alert: HighAuthFailureRate
+> expr: rate(auth_failures_total[1m]) > 5
+> for: 2m
+> labels:
+> severity: high
+> annotations:
+> summary: "High authentication failure rate detected"
 > ```
 >
 > **Common alternatives:** Datadog (SaaS, easier setup), New Relic (APM + monitoring), CloudWatch (AWS-native), Azure Monitor (Azure-native)
 
 ---
 
-> 💡 **Layer 5 verdict:** Rate limiting throttled 150-req/min brute-force; Z-score anomaly (60.6σ on $500k PO) tripped circuit breaker automatically; self-healing half-open reset restored normal flow — all 5 defence layers operational.
-> ➡️ End-to-end attack flow reviewed in §4; OrderFlow now meets production security requirements.
+> **Layer 5 verdict:** Rate limiting throttled 150-req/min brute-force; Z-score anomaly (60.6σ on $500k PO) tripped circuit breaker automatically; self-healing half-open reset restored normal flow — all 5 defence layers operational.
+> ➡ End-to-end attack flow reviewed in §4; OrderFlow now meets production security requirements.
 
 ---
 
@@ -1310,29 +1309,29 @@ The highest-risk operation in a multi-agent system is **code execution**: when a
 **Naive sandbox: Restricted Python → Escaped via import bypass**
 - Attempt: Block `import os`, `exec`, `eval` using `RestrictedPython`
 - **Attack:** `__import__('os').system('cat /etc/passwd')` bypasses import block
-- **Result:** Full filesystem access ❌
+- **Result:** Full filesystem access
 
 **Better sandbox: Subprocess per tool call → Escaped via /proc filesystem**
 - Attempt: Spawn child process with restricted permissions
 - **Attack:** Read `/proc/self/environ` to leak parent's environment variables (secrets)
-- **Result:** Secrets exfiltrated ❌
+- **Result:** Secrets exfiltrated
 
 **Production sandbox: Docker container per execution → Escaped via shared socket**
 - Attempt: Ephemeral Docker container, destroy after execution
 - **Attack:** If Docker socket mounted (`/var/run/docker.sock`), can spawn sibling containers with full host access
-- **Result:** Container escape to host ❌
+- **Result:** Container escape to host
 
-**Locked-down sandbox: Network-disabled container + seccomp → Blocks syscalls ✅**
+**Locked-down sandbox: Network-disabled container + seccomp → Blocks syscalls **
 - Mechanism: Docker with `network_disabled=True`, `cap_drop=["ALL"]`, seccomp profile blocks dangerous syscalls
 - **Attack:** Cannot make network calls, cannot read host filesystem, cannot escape via syscalls
-- **Result:** Blast radius limited to 128MB container memory, 30-second timeout ✅
+- **Result:** Blast radius limited to 128MB container memory, 30-second timeout
 
 | Level | Mechanism | What it blocks | Escape vector |
 |-------|-----------|----------------|---------------|
-| 1 | **Restricted Python** (e.g. `RestrictedPython`) | Block `import os`, `exec`, `eval` | ❌ `__import__` bypass |
-| 2 | **Subprocess spawned per tool call** | Process isolation | ❌ `/proc` filesystem leaks |
-| 3 | **Docker container per execution** | Full filesystem isolation | ❌ Shared Docker socket |
-| 4 **Recommended** | **Network-disabled Docker + seccomp** | Syscall filtering, no network | ✅ Attack surface minimized |
+| 1 | **Restricted Python** (e.g. `RestrictedPython`) | Block `import os`, `exec`, `eval` | `__import__` bypass |
+| 2 | **Subprocess spawned per tool call** | Process isolation | `/proc` filesystem leaks |
+| 3 | **Docker container per execution** | Full filesystem isolation | Shared Docker socket |
+| 4 **Recommended** | **Network-disabled Docker + seccomp** | Syscall filtering, no network | Attack surface minimized |
 
 ```python
 # Example: each tool execution in a separate Docker container
@@ -1341,17 +1340,17 @@ import docker
 client = docker.from_env()
 
 def run_code_in_sandbox(code: str, timeout_seconds: int = 30) -> str:
-    container = client.containers.run(
-        image="python:3.11-slim",
-        command=["python", "-c", code],
-        mem_limit="128m",
-        cpu_period=100000,
-        cpu_quota=50000,        # limit to 50% CPU
-        network_disabled=True,  # no outbound network access
-        remove=True,
-        timeout=timeout_seconds
-    )
-    return container.decode("utf-8")
+ container = client.containers.run(
+ image="python:3.11-slim",
+ command=["python", "-c", code],
+ mem_limit="128m",
+ cpu_period=100000,
+ cpu_quota=50000, # limit to 50% CPU
+ network_disabled=True, # no outbound network access
+ remove=True,
+ timeout=timeout_seconds
+ )
+ return container.decode("utf-8")
 ```
 
 **The key property:** even if an injected instruction causes the agent to generate malicious code, that code runs in an environment with no access to secrets, no network, and no persistence. The blast radius is constrained to the ephemeral sandbox.
@@ -1391,9 +1390,9 @@ def run_code_in_sandbox(code: str, timeout_seconds: int = 30) -> str:
 
 **Layer 4 (AUDIT): When did actions occur?**
 18. Every security decision logged as structured JSON event:
-    - `{event_type: "auth.success", agent_id: "nego-01", timestamp: "2024-12-31T23:15:42Z"}`
-    - `{event_type: "authz.denied", agent_id: "nego-01", action: "approve_po"}`
-    - `{event_type: "sandbox.exec.success", po_id: "2024-1847", duration_ms: 3200}`
+ - `{event_type: "auth.success", agent_id: "nego-01", timestamp: "2024-12-31T23:15:42Z"}`
+ - `{event_type: "authz.denied", agent_id: "nego-01", action: "approve_po"}`
+ - `{event_type: "sandbox.exec.success", po_id: "2024-1847", duration_ms: 3200}`
 19. Logs written to append-only store (Elasticsearch) → indexed for search → **Tamper-proof audit trail**
 
 **Layer 5 (MONITORING): Why is this pattern anomalous?**
@@ -1500,35 +1499,34 @@ Reject rate $r = P[y \not\models \mathcal{S}]$. For a well-prompted GPT-4o with 
 
 ```mermaid
 graph LR
-    Ch1["Ch.1\nMessage Formats"]:::done
-    Ch2["Ch.2\nMCP"]:::done
-    Ch3["Ch.3\nA2A"]:::done
-    Ch4["Ch.4\nEvent-Driven"]:::done
-    Ch5["Ch.5\nShared Memory"]:::done
-    Ch6["Ch.6\nTrust & Sandboxing"]:::done
-    Ch7["Ch.7\nAgent Frameworks"]:::done
-    Ch1 --> Ch2 --> Ch3 --> Ch4 --> Ch5 --> Ch6 --> Ch7
-    classDef done fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    classDef current fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    classDef upcoming fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ Ch1["Ch.1\nMessage Formats"]:::done
+ Ch2["Ch.2\nMCP"]:::done
+ Ch3["Ch.3\nA2A"]:::done
+ Ch4["Ch.4\nEvent-Driven"]:::done
+ Ch5["Ch.5\nShared Memory"]:::done
+ Ch6["Ch.6\nTrust & Sandboxing"]:::done
+ Ch7["Ch.7\nAgent Frameworks"]:::done
+ Ch1 --> Ch2 --> Ch3 --> Ch4 --> Ch5 --> Ch6 --> Ch7
+ classDef done fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ classDef current fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ classDef upcoming fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### Constraint Status After Ch.6
 
 | Constraint | Before | After Ch.6 | Change |
 |------------|--------|------------|--------|
-| #1 THROUGHPUT | 1,200 POs/day | 1,200 POs/day | ✅ Maintained |
-| #2 LATENCY | 4.5 hours median | 4.5 hours median | ⚡ Stable (close to <4hr target) |
-| #3 ACCURACY | 3.2% error | **1.6% error** | ✅ **TARGET HIT!** (50% improvement, zero unauthorized >$100k) |
-| #4 SCALABILITY | 8 agents | 8 agents, sandboxed | ✅ Validated |
-| #5 RELIABILITY | Crash recovery | **Sandboxing prevents cascading failures** | ⚡ **Production-grade** |
-| #6 AUDITABILITY | Event log | **HMAC-signed messages** | ⚡ **Authenticity proven** |
-| #7 OBSERVABILITY | Queryable state | Queryable state | ⚡ Stable |
-| #8 DEPLOYABILITY | No automation | Sandboxed agents enable independent updates | ⚡ **Foundation improved** |
+| #1 THROUGHPUT | 1,200 POs/day | 1,200 POs/day | Maintained |
+| #2 LATENCY | 4.5 hours median | 4.5 hours median | Stable (close to <4hr target) |
+| #3 ACCURACY | 3.2% error | **1.6% error** | **TARGET HIT!** (50% improvement, zero unauthorized >$100k) |
+| #4 SCALABILITY | 8 agents | 8 agents, sandboxed | Validated |
+| #5 RELIABILITY | Crash recovery | **Sandboxing prevents cascading failures** | **Production-grade** |
+| #6 AUDITABILITY | Event log | **HMAC-signed messages** | **Authenticity proven** |
+| #7 OBSERVABILITY | Queryable state | Queryable state | Stable |
+| #8 DEPLOYABILITY | No automation | Sandboxed agents enable independent updates | **Foundation improved** |
 
 ### The Win
-
-✅ **Zero unauthorized commitments**: 3-month pilot with 500 test POs → zero unauthorized financial decisions >$100k. Error rate dropped 3.2% → 1.6% (prompt injection attacks blocked).
+**Zero unauthorized commitments**: 3-month pilot with 500 test POs → zero unauthorized financial decisions >$100k. Error rate dropped 3.2% → 1.6% (prompt injection attacks blocked).
 
 **Measured impact**:
 - Accuracy: **1.6% error** (50% better than 3.2%, exceeded <2% target by 20%)

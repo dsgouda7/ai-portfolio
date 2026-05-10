@@ -10,7 +10,7 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Launch **UnifiedAI** — prove neural networks unify regression and classification, satisfying 5 constraints:
+> **The mission**: Launch **UnifiedAI** — prove neural networks unify regression and classification, satisfying 5 constraints:
 > 1. **ACCURACY**: ≤$28k MAE (regression) + ≥95% accuracy (classification)
 > 2. **GENERALIZATION**: Work on unseen districts + future expansion (CA → nationwide)
 > 3. **MULTI-TASK**: Same architecture predicts value **and** classifies attributes
@@ -18,16 +18,15 @@
 > 5. **PRODUCTION**: <100ms inference, TensorBoard monitoring, handle missing data
 
 **What we know so far:**
-- ✅ [Ch.1–2 XOR Problem](../ch01_xor_problem): Built feedforward networks — same hidden layers for regression and classification
-- ✅ [Ch.3 Backprop & Optimisers](../ch03_backprop_optimisers): Backprop + Adam work identically for both tasks
-- ✅ [Ch.4 Regularisation](../ch04_regularisation): Dropout, L2, BatchNorm prevent overfitting in both
-- ✅ [Ch.5 CNNs](../ch05_cnns): CNNs extract spatial features for image regression and classification
-- ✅ [Ch.6 RNNs/LSTMs](../ch06_rnns_lstms): RNNs/LSTMs handle sequences for both tasks
-- 💡 **But why MSE for regression and cross-entropy for classification? These choices have never been derived.**
+- [Ch.1–2 XOR Problem](../ch01_xor_problem): Built feedforward networks — same hidden layers for regression and classification
+- [Ch.3 Backprop & Optimisers](../ch03_backprop_optimisers): Backprop + Adam work identically for both tasks
+- [Ch.4 Regularisation](../ch04_regularisation): Dropout, L2, BatchNorm prevent overfitting in both
+- [Ch.5 CNNs](../ch05_cnns): CNNs extract spatial features for image regression and classification
+- [Ch.6 RNNs/LSTMs](../ch06_rnns_lstms): RNNs/LSTMs handle sequences for both tasks
+- **But why MSE for regression and cross-entropy for classification? These choices have never been derived.**
 
 **What's blocking us:**
-
-⚠️ **Loss functions have been chosen by convention, not principled understanding.**
+**Loss functions have been chosen by convention, not principled understanding.**
 
 Your Lead Engineer asks during code review: *"Why MSE for house prices? Why not MAE? Why cross-entropy for classification and not MSE? Can you derive it or are you just copying the sklearn default?"*
 
@@ -43,15 +42,13 @@ Your Lead Engineer asks during code review: *"Why MSE for house prices? Why not 
 - **Unification proof**: MSE and BCE both derive from the **same MLE framework** — different noise models, same principle. Demonstrating this proves that UnifiedAI's shared architecture is theoretically sound, not just empirically lucky.
 
 **What this chapter unlocks:**
-
-⚡ **Theoretical foundation for every loss choice in the curriculum:**
+**Theoretical foundation for every loss choice in the curriculum:**
 1. **MLE framework**: Given a noise model, the loss follows by necessity. No more guesswork.
 2. **Gaussian → MSE**: Six algebra steps. The derivation fits on half a page.
 3. **Bernoulli → BCE**: Six algebra steps. Same structure as the Gaussian case.
 4. **Laplacian → MAE**: Two steps. Why robust regression works as it does.
 5. **Unification proof**: Change the noise assumption → change the loss. Everything else stays the same.
-
-💡 **Outcome**: MSE and BCE are not arbitrary conventions — they are **MLE estimators** under different noise assumptions. You can now derive the correct loss for any production problem by asking: *what is the right noise model for my outputs?*
+**Outcome**: MSE and BCE are not arbitrary conventions — they are **MLE estimators** under different noise assumptions. You can now derive the correct loss for any production problem by asking: *what is the right noise model for my outputs?*
 
 ---
 
@@ -79,10 +76,10 @@ Consider three candidate noise models for the regression target `MedHouseVal`:
 
 | Question | Gaussian $\mathcal{N}(\hat{y}, \sigma^2)$ | Laplacian $\text{Laplace}(\hat{y}, b)$ | Asymmetric |
 |---|---|---|---|
-| Are errors symmetric? | ✅ Yes by assumption | ✅ Yes by assumption | ❌ Probably not |
-| Are large errors rare? | ✅ Exponential tail decay | ❌ Heavier tails than Gaussian | — |
+| Are errors symmetric? | Yes by assumption | Yes by assumption | Probably not |
+| Are large errors rare? | Exponential tail decay | Heavier tails than Gaussian | — |
 | Loss implied | **MSE** | **MAE** | Custom quantile loss |
-| Sensitive to outliers? | ⚠️ Yes — quadratic penalty | ✅ No — linear penalty | — |
+| Sensitive to outliers? | Yes — quadratic penalty | No — linear penalty | — |
 
 For the binary classification target (`high_value = MedHouseVal > median`):
 
@@ -102,7 +99,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats
 
-residuals = y_val - model.predict(X_val)  # in units of $100k
+residuals = y_val - model.predict(X_val) # in units of $100k
 
 # 1. Visual check: should look like a bell curve centred on 0
 plt.hist(residuals, bins=50, density=True)
@@ -119,8 +116,8 @@ print(f"Shapiro-Wilk p-value: {p_value:.4f}")
 # much non-normality by chance if H₀ were true. Full framework: ch06-metrics §8b.
 
 # 4. Check skewness and kurtosis
-print(f"Skewness: {stats.skew(residuals):.3f}")   # target: near 0
-print(f"Kurtosis: {stats.kurtosis(residuals):.3f}")  # target: near 0 (excess)
+print(f"Skewness: {stats.skew(residuals):.3f}") # target: near 0
+print(f"Kurtosis: {stats.kurtosis(residuals):.3f}") # target: near 0 (excess)
 # Positive excess kurtosis -> heavier tails than Gaussian -> consider Huber/MAE
 ```
 
@@ -134,22 +131,22 @@ The path from a noise assumption to a loss function has exactly four steps:
 
 ```
 Step 1 — Choose a noise model
-         "House price errors are Gaussian with fixed variance sigma^2"
-         p(y_i | x_i; theta) = N(f(x_i;theta), sigma^2)
+ "House price errors are Gaussian with fixed variance sigma^2"
+ p(y_i | x_i; theta) = N(f(x_i;theta), sigma^2)
 
 Step 2 — Write the likelihood (probability of ALL observed data)
-         L(theta) = prod_i p(y_i | x_i; theta)    <- product over N independent samples
+ L(theta) = prod_i p(y_i | x_i; theta) <- product over N independent samples
 
 Step 3 — Take the log (convert product to sum, easier to differentiate)
-         ell(theta) = sum_i log p(y_i | x_i; theta)
+ ell(theta) = sum_i log p(y_i | x_i; theta)
 
 Step 4 — Flip the sign (maximise log-likelihood = minimise NLL)
-         Loss(theta) = -ell(theta) = -sum_i log p(y_i | x_i; theta)  <- THIS IS YOUR LOSS FUNCTION
+ Loss(theta) = -ell(theta) = -sum_i log p(y_i | x_i; theta) <- THIS IS YOUR LOSS FUNCTION
 ```
 
-> 💡 **Why take the log?** The likelihood is a product of N probabilities, each between 0 and 1. With $N = 20{,}640$ California districts, the raw product underflows to zero in floating-point arithmetic. The log converts $\prod$ to $\sum$, which is numerically stable, and the $\arg\max$ is unchanged because $\log$ is monotone increasing.
+> **Why take the log?** The likelihood is a product of N probabilities, each between 0 and 1. With $N = 20{,}640$ California districts, the raw product underflows to zero in floating-point arithmetic. The log converts $\prod$ to $\sum$, which is numerically stable, and the $\arg\max$ is unchanged because $\log$ is monotone increasing.
 
-> ⚡ **Why flip the sign?** Gradient descent *minimises*. Log-likelihood is something we want to *maximise*. Negating converts the maximisation to a standard minimisation: $\arg\max_\theta \ell(\theta) \equiv \arg\min_\theta -\ell(\theta)$.
+> **Why flip the sign?** Gradient descent *minimises*. Log-likelihood is something we want to *maximise*. Negating converts the maximisation to a standard minimisation: $\arg\max_\theta \ell(\theta) \equiv \arg\min_\theta -\ell(\theta)$.
 
 ---
 
@@ -225,7 +222,7 @@ $$\mathcal{L}_\text{BCE}(\boldsymbol{\theta}) = -\frac{1}{N}\sum_{i=1}^{N}\Bigl[
 
 **This is binary cross-entropy.** No assumptions, no heuristics — it falls directly out of the negative log-likelihood under a Bernoulli noise model.
 
-> 💡 **The two-term intuition**: When $y_i = 1$, only the first term $-\log \hat{p}_i$ is active — it penalises assigning low probability to the positive class. When $y_i = 0$, only the second term $-\log(1 - \hat{p}_i)$ is active — it penalises assigning high probability to the positive class. BCE naturally handles both cases with a single formula.
+> **The two-term intuition**: When $y_i = 1$, only the first term $-\log \hat{p}_i$ is active — it penalises assigning low probability to the positive class. When $y_i = 0$, only the second term $-\log(1 - \hat{p}_i)$ is active — it penalises assigning high probability to the positive class. BCE naturally handles both cases with a single formula.
 
 ---
 
@@ -305,11 +302,11 @@ $$\ell(\theta_2) = -0.572 - 0.652 - 0.752 = \mathbf{-1.976} \qquad \text{MSE}(\t
 
 | | θ₁ | θ₂ | Winner |
 |---|---|---|---|
-| Log-likelihood $\ell$ | **−3.036** | **−1.976** | ✅ θ₂ (higher ℓ = more probable) |
-| MSE | **0.220** | **0.043** | ✅ θ₂ (lower MSE = better fit) |
-| MLE winner | — | ✅ **θ₂** | — |
+| Log-likelihood $\ell$ | **−3.036** | **−1.976** | θ₂ (higher ℓ = more probable) |
+| MSE | **0.220** | **0.043** | θ₂ (lower MSE = better fit) |
+| MLE winner | — | **θ₂** | — |
 
-> ⚡ **The key observation**: the parameter that maximises likelihood is *exactly* the parameter that minimises MSE. The MLE optimisation and the MSE minimisation are the same problem — two descriptions of the same underlying computation. The Gaussian constant $-\frac{N}{2}\log(2\pi\sigma^2)$ shifts both log-likelihoods equally and plays no role in choosing between θ₁ and θ₂. The $\frac{1}{2\sigma^2}$ multiplier scales the MSE term equally for both and also plays no role in the comparison. What remains is the sum of squared errors — which is MSE (up to a positive constant).
+> **The key observation**: the parameter that maximises likelihood is *exactly* the parameter that minimises MSE. The MLE optimisation and the MSE minimisation are the same problem — two descriptions of the same underlying computation. The Gaussian constant $-\frac{N}{2}\log(2\pi\sigma^2)$ shifts both log-likelihoods equally and plays no role in choosing between θ₁ and θ₂. The $\frac{1}{2\sigma^2}$ multiplier scales the MSE term equally for both and also plays no role in the comparison. What remains is the sum of squared errors — which is MSE (up to a positive constant).
 
 ---
 
@@ -376,13 +373,13 @@ The BCE gradient is **50× larger** for a near-perfect prediction. With MSE, the
 This is not just a numerical inconvenience. MSE near a correct prediction has gradient ≈ 0, so the model cannot distinguish between $\hat{p} = 0.99$ (near-correct) and $\hat{p} = 0.95$ (slightly less correct) — both produce nearly zero gradient. BCE has a gradient of $-1.01$ and $-1.05$ respectively — the model continues to refine its probability estimates throughout training.
 
 ```
-Prediction  Target  MSE gradient  BCE gradient  Signal ratio BCE/MSE
-0.50        1       -1.00         -2.00         2.0x
-0.75        1       -0.50         -1.33         2.7x
-0.90        1       -0.20         -1.11         5.6x
-0.95        1       -0.10         -1.05         10.5x
-0.99        1       -0.02         -1.01         50.5x    <- far more dramatic at high confidence
-0.999       1       -0.002        -1.001        500x     <- MSE is nearly silent here
+Prediction Target MSE gradient BCE gradient Signal ratio BCE/MSE
+0.50 1 -1.00 -2.00 2.0x
+0.75 1 -0.50 -1.33 2.7x
+0.90 1 -0.20 -1.11 5.6x
+0.95 1 -0.10 -1.05 10.5x
+0.99 1 -0.02 -1.01 50.5x <- far more dramatic at high confidence
+0.999 1 -0.002 -1.001 500x <- MSE is nearly silent here
 ```
 
 The problem compounds near-optimality: as the model gets better at classification, MSE provides an ever-weaker training signal while BCE maintains strong gradients throughout.
@@ -453,30 +450,30 @@ $$\hat{\theta}_\text{MLE} = \arg\min_\theta\ \underbrace{-\frac{1}{N}\sum_{i=1}^
 
 ```mermaid
 flowchart TD
-    NOISE["Choose a noise model\nfor the outputs"] --> G & B & L
+ NOISE["Choose a noise model\nfor the outputs"] --> G & B & L
 
-    G["Gaussian noise\ny ~ N(y_hat, sigma^2)\nSymmetric, light tails"]
-    B["Bernoulli noise\ny ~ Bern(p_hat)\ny in {0, 1}"]
-    L["Laplace noise\ny ~ Laplace(y_hat, b)\nSymmetric, heavy tails"]
+ G["Gaussian noise\ny ~ N(y_hat, sigma^2)\nSymmetric, light tails"]
+ B["Bernoulli noise\ny ~ Bern(p_hat)\ny in {0, 1}"]
+ L["Laplace noise\ny ~ Laplace(y_hat, b)\nSymmetric, heavy tails"]
 
-    G --> GLL["log p = -0.5*log(2*pi*sigma^2) - (y-y_hat)^2 / 2*sigma^2"]
-    B --> BLL["log p = y*log(p_hat) + (1-y)*log(1-p_hat)"]
-    L --> LLL["log p = -log(2b) - |y - y_hat| / b"]
+ G --> GLL["log p = -0.5*log(2*pi*sigma^2) - (y-y_hat)^2 / 2*sigma^2"]
+ B --> BLL["log p = y*log(p_hat) + (1-y)*log(1-p_hat)"]
+ L --> LLL["log p = -log(2b) - |y - y_hat| / b"]
 
-    GLL --> GNLL["Negate -> MSE\nL = (1/N) sum (y_i - y_hat_i)^2"]
-    BLL --> BNLL["Negate -> BCE\nL = -(1/N) sum [y*log(p_hat) + (1-y)*log(1-p_hat)]"]
-    LLL --> LNLL["Negate -> MAE\nL = (1/N) sum |y_i - y_hat_i|"]
+ GLL --> GNLL["Negate -> MSE\nL = (1/N) sum (y_i - y_hat_i)^2"]
+ BLL --> BNLL["Negate -> BCE\nL = -(1/N) sum [y*log(p_hat) + (1-y)*log(1-p_hat)]"]
+ LLL --> LNLL["Negate -> MAE\nL = (1/N) sum |y_i - y_hat_i|"]
 
-    style NOISE fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style G fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style B fill:#15803d,color:#fff,stroke:#15803d
-    style L fill:#b45309,color:#fff,stroke:#b45309
-    style GLL fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style BLL fill:#15803d,color:#fff,stroke:#15803d
-    style LLL fill:#b45309,color:#fff,stroke:#b45309
-    style GNLL fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style BNLL fill:#15803d,color:#fff,stroke:#15803d
-    style LNLL fill:#b45309,color:#fff,stroke:#b45309
+ style NOISE fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style G fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style B fill:#15803d,color:#fff,stroke:#15803d
+ style L fill:#b45309,color:#fff,stroke:#b45309
+ style GLL fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style BLL fill:#15803d,color:#fff,stroke:#15803d
+ style LLL fill:#b45309,color:#fff,stroke:#b45309
+ style GNLL fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style BNLL fill:#15803d,color:#fff,stroke:#15803d
+ style LNLL fill:#b45309,color:#fff,stroke:#b45309
 ```
 
 ---
@@ -485,27 +482,27 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    START(["New California Housing Task"]) --> TYPE{"Output type?"}
+ START(["New California Housing Task"]) --> TYPE{"Output type?"}
 
-    TYPE -->|"Continuous\nMedHouseVal"| RESID{"Inspect residuals\n(plot histogram of errors)"}
-    TYPE -->|"Binary\nhigh_value = 0 or 1"| BCE_PATH["Bernoulli assumption\nUse Binary Cross-Entropy\nmodel outputs sigmoid(f(x;theta))"]
+ TYPE -->|"Continuous\nMedHouseVal"| RESID{"Inspect residuals\n(plot histogram of errors)"}
+ TYPE -->|"Binary\nhigh_value = 0 or 1"| BCE_PATH["Bernoulli assumption\nUse Binary Cross-Entropy\nmodel outputs sigmoid(f(x;theta))"]
 
-    RESID -->|"Bell-shaped,\nsymmetric, light tails"| MSE_PATH["Gaussian assumption\nUse MSE\nL = (1/N) sum (y - y_hat)^2"]
-    RESID -->|"Heavy-tailed,\noutliers > 10%"| MAE_PATH["Laplacian assumption\nUse MAE\nL = (1/N) sum |y - y_hat|"]
-    RESID -->|"Few outliers\n5-10% of rows"| HUBER_PATH["Mixture assumption\nUse Huber (delta ~ 1 std dev)\nQuadratic for |e| <= delta, linear for |e| > delta"]
+ RESID -->|"Bell-shaped,\nsymmetric, light tails"| MSE_PATH["Gaussian assumption\nUse MSE\nL = (1/N) sum (y - y_hat)^2"]
+ RESID -->|"Heavy-tailed,\noutliers > 10%"| MAE_PATH["Laplacian assumption\nUse MAE\nL = (1/N) sum |y - y_hat|"]
+ RESID -->|"Few outliers\n5-10% of rows"| HUBER_PATH["Mixture assumption\nUse Huber (delta ~ 1 std dev)\nQuadratic for |e| <= delta, linear for |e| > delta"]
 
-    MSE_PATH --> WARN["Luxury mansion outliers\nmay distort MSE — recheck\nresiduals after first run"]
-    MAE_PATH --> GRAD["MAE gradient = +/-1 everywhere\nnon-differentiable at e=0\nuse subgradient or smooth approx"]
+ MSE_PATH --> WARN["Luxury mansion outliers\nmay distort MSE — recheck\nresiduals after first run"]
+ MAE_PATH --> GRAD["MAE gradient = +/-1 everywhere\nnon-differentiable at e=0\nuse subgradient or smooth approx"]
 
-    style START fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style TYPE fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style RESID fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style BCE_PATH fill:#15803d,color:#fff,stroke:#15803d
-    style MSE_PATH fill:#15803d,color:#fff,stroke:#15803d
-    style MAE_PATH fill:#b45309,color:#fff,stroke:#b45309
-    style HUBER_PATH fill:#b45309,color:#fff,stroke:#b45309
-    style WARN fill:#b91c1c,color:#fff,stroke:#b91c1c
-    style GRAD fill:#b91c1c,color:#fff,stroke:#b91c1c
+ style START fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style TYPE fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style RESID fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style BCE_PATH fill:#15803d,color:#fff,stroke:#15803d
+ style MSE_PATH fill:#15803d,color:#fff,stroke:#15803d
+ style MAE_PATH fill:#b45309,color:#fff,stroke:#b45309
+ style HUBER_PATH fill:#b45309,color:#fff,stroke:#b45309
+ style WARN fill:#b91c1c,color:#fff,stroke:#b91c1c
+ style GRAD fill:#b91c1c,color:#fff,stroke:#b91c1c
 ```
 
 ---
@@ -523,9 +520,9 @@ Loss functions have no conventional "hyperparameter" in the way learning rates d
 | **Label smoothing ε (classification)** | [0, 0.2] | Replaces hard 0/1 labels with ε/2 and 1−ε/2; prevents overconfidence | 0.1 is standard; improves calibration without hurting classification accuracy |
 | **Class weight in BCE** | Any positive ratio | Re-weights positive/negative BCE terms | Set $w_+ = N_- / N_+$ when classes are imbalanced (e.g., 80/20 split) |
 
-> 💡 **The most important dial is the noise assumption itself.** Choosing between Gaussian, Laplacian, and Student-t is a modelling decision that should be grounded in residual analysis, not default settings. Plot a histogram of your training residuals before committing to a loss.
+> **The most important dial is the noise assumption itself.** Choosing between Gaussian, Laplacian, and Student-t is a modelling decision that should be grounded in residual analysis, not default settings. Plot a histogram of your training residuals before committing to a loss.
 
-> ⚠️ **σ² and the likelihood value**: although σ² does not affect the $\arg\min$ of MSE, it *does* affect the absolute value of the log-likelihood. When comparing models using BIC, AIC, or likelihood-ratio tests, you must fix σ² or estimate it jointly. Reporting raw MSE values as "the likelihood" without accounting for σ² is a common error.
+> **σ² and the likelihood value**: although σ² does not affect the $\arg\min$ of MSE, it *does* affect the absolute value of the log-likelihood. When comparing models using BIC, AIC, or likelihood-ratio tests, you must fix σ² or estimate it jointly. Reporting raw MSE values as "the likelihood" without accounting for σ² is a common error.
 
 ---
 
@@ -569,36 +566,36 @@ Loss functions have no conventional "hyperparameter" in the way learning rates d
 
 ```mermaid
 flowchart TD
-    START(["Loss function chosen"]) --> Q1{"Output type?"}
+ START(["Loss function chosen"]) --> Q1{"Output type?"}
 
-    Q1 -->|"Continuous"| Q2{"Check residuals\n(histogram / Q-Q plot)"}
-    Q2 -->|"Normal distribution"| MSE_OK["Use MSE\n(Gaussian MLE)\nL = (1/N) sum (y-y_hat)^2"]
-    Q2 -->|"Few outliers < 10%"| HUBER_OK["Use Huber\n(delta ~= 1 std dev)"]
-    Q2 -->|"Many outliers > 10%"| MAE_OK["Use MAE\n(Laplacian MLE)\nL = (1/N) sum |y-y_hat|"]
+ Q1 -->|"Continuous"| Q2{"Check residuals\n(histogram / Q-Q plot)"}
+ Q2 -->|"Normal distribution"| MSE_OK["Use MSE\n(Gaussian MLE)\nL = (1/N) sum (y-y_hat)^2"]
+ Q2 -->|"Few outliers < 10%"| HUBER_OK["Use Huber\n(delta ~= 1 std dev)"]
+ Q2 -->|"Many outliers > 10%"| MAE_OK["Use MAE\n(Laplacian MLE)\nL = (1/N) sum |y-y_hat|"]
 
-    Q1 -->|"Binary"| Q3{"Class balance?"}
-    Q3 -->|"Balanced (~50/50)"| BCE_OK["Use BCE\n(Bernoulli MLE)"]
-    Q3 -->|"Imbalanced (e.g. 95/5)"| BCEW_OK["Use BCE + class_weight\n(weighted Bernoulli)"]
+ Q1 -->|"Binary"| Q3{"Class balance?"}
+ Q3 -->|"Balanced (~50/50)"| BCE_OK["Use BCE\n(Bernoulli MLE)"]
+ Q3 -->|"Imbalanced (e.g. 95/5)"| BCEW_OK["Use BCE + class_weight\n(weighted Bernoulli)"]
 
-    Q1 -->|"Multi-class"| Q4{"Mutually exclusive?"}
-    Q4 -->|"Yes"| CCE_OK["Use Categorical CE\n(Categorical MLE)"]
-    Q4 -->|"No (multi-label)"| MULTI["Use per-class BCE\n(N independent Bernoullis)"]
+ Q1 -->|"Multi-class"| Q4{"Mutually exclusive?"}
+ Q4 -->|"Yes"| CCE_OK["Use Categorical CE\n(Categorical MLE)"]
+ Q4 -->|"No (multi-label)"| MULTI["Use per-class BCE\n(N independent Bernoullis)"]
 
-    style START fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style Q1 fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style Q2 fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style Q3 fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style Q4 fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style MSE_OK fill:#15803d,color:#fff,stroke:#15803d
-    style HUBER_OK fill:#15803d,color:#fff,stroke:#15803d
-    style MAE_OK fill:#b45309,color:#fff,stroke:#b45309
-    style BCE_OK fill:#15803d,color:#fff,stroke:#15803d
-    style BCEW_OK fill:#b45309,color:#fff,stroke:#b45309
-    style CCE_OK fill:#15803d,color:#fff,stroke:#15803d
-    style MULTI fill:#b45309,color:#fff,stroke:#b45309
+ style START fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style Q1 fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style Q2 fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style Q3 fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style Q4 fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style MSE_OK fill:#15803d,color:#fff,stroke:#15803d
+ style HUBER_OK fill:#15803d,color:#fff,stroke:#15803d
+ style MAE_OK fill:#b45309,color:#fff,stroke:#b45309
+ style BCE_OK fill:#15803d,color:#fff,stroke:#15803d
+ style BCEW_OK fill:#b45309,color:#fff,stroke:#b45309
+ style CCE_OK fill:#15803d,color:#fff,stroke:#15803d
+ style MULTI fill:#b45309,color:#fff,stroke:#b45309
 ```
 
-> 💡 **For regression loss selection with concrete California Housing dollar examples**, see [Regression Ch.1 §5 "Loss Function Evolution"](../../01_regression/ch01_linear_regression/README.md#5--loss-functions--a-discovery-story). That section walks through District A/B/C scenarios showing numerical impact of outliers on MSE vs MAE vs Huber — read it alongside the derivations in this chapter.
+> **For regression loss selection with concrete California Housing dollar examples**, see [Regression Ch.1 §5 "Loss Function Evolution"](../../01_regression/ch01_linear_regression/README.md#5--loss-functions--a-discovery-story). That section walks through District A/B/C scenarios showing numerical impact of outliers on MSE vs MAE vs Huber — read it alongside the derivations in this chapter.
 
 ---
 
@@ -623,23 +620,21 @@ The MLE framework introduced here is the theoretical skeleton behind every loss 
 ![Progress Check](img/ch07-mle-loss-functions-progress-check.png)
 
 **UnifiedAI constraint scorecard after Ch.7:**
-
-✅ **Unlocked capabilities:**
+**Unlocked capabilities:**
 - **Theoretical foundation**: Can derive any standard loss from first principles given a noise assumption (Gaussian → MSE, Bernoulli → BCE, Laplacian → MAE)
 - **MSE justified**: Residual analysis on California Housing regression confirms approximately Gaussian noise; MSE is the statistically correct choice
 - **BCE justified**: Bernoulli noise assumption derivation — no more "because the default is cross-entropy"
 - **Loss selection framework**: Given any output type and residual distribution, can choose and justify the correct loss for any new UnifiedAI task
 - **Regulatory compliance**: Every loss choice is now a defensible probabilistic claim with a testable residual-analysis condition
-
-❌ **Still can't solve:**
-- ❌ **Constraint #5 (PRODUCTION — Monitoring)**: Training runs produce no persistent diagnostic output. Cannot diagnose loss curves after the fact, compare runs across hyperparameter sweeps, or inspect weight histograms for dead neurons.
-- ❌ No shared experiment-tracking infrastructure — the ML team has no way to compare which loss configuration performed best on held-out data.
+**Still can't solve:**
+- **Constraint #5 (PRODUCTION — Monitoring)**: Training runs produce no persistent diagnostic output. Cannot diagnose loss curves after the fact, compare runs across hyperparameter sweeps, or inspect weight histograms for dead neurons.
+- No shared experiment-tracking infrastructure — the ML team has no way to compare which loss configuration performed best on held-out data.
 
 **Real-world status**: The platform can now *choose* and *justify* every loss function from first principles. The Gaussian→MSE and Bernoulli→BCE derivations are complete and auditable. What we cannot yet do: monitor multiple training runs systematically, compare hyperparameter sweeps, or share training diagnostics across the team. That requires instrumentation.
 
 **Next up:** Ch.8 — **TensorBoard** — instruments the training loop with real-time loss curves, weight histograms, and embedding projections. Every NLL quantity from this chapter becomes a named scalar in TensorBoard, making the "did the noise assumption hold?" question answerable from a dashboard, not just from first principles.
 
-> ➡️ **Recommended reading order**: if you want to understand *why* the loss values you log to TensorBoard mean what they mean, re-read §4.2 (Gaussian → MSE) and §4.3 (Bernoulli → BCE) after completing Ch.8. The two chapters are designed to be read as a pair: this chapter provides the derivation, Ch.8 provides the instrumentation.
+> ➡ **Recommended reading order**: if you want to understand *why* the loss values you log to TensorBoard mean what they mean, re-read §4.2 (Gaussian → MSE) and §4.3 (Bernoulli → BCE) after completing Ch.8. The two chapters are designed to be read as a pair: this chapter provides the derivation, Ch.8 provides the instrumentation.
 
 ---
 
@@ -649,4 +644,4 @@ This chapter established that training loss = negative log-likelihood = a probab
 
 The monitoring question TensorBoard enables: if validation NLL grows while training NLL shrinks, the model's noise assumption is *over-fitted* — it has learned to describe the training noise distribution but not the true underlying one. This is the loss-function perspective on generalisation: a model that over-fits has learned a noise model that only applies to its training data.
 
-> ⚡ **One-liner takeaway**: every number you ever log to a TensorBoard scalar is the negative log-likelihood of a noise model you chose — explicitly or by default. Ch.7 chose it; Ch.8 monitors it.
+> **One-liner takeaway**: every number you ever log to a TensorBoard scalar is the negative log-likelihood of a noise model you chose — explicitly or by default. Ch.7 chose it; Ch.8 monitors it.

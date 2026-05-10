@@ -10,14 +10,14 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 💡 **The mission**: Launch **SmartVal AI** — a production home valuation system satisfying 5 constraints:
+> **The mission**: Launch **SmartVal AI** — a production home valuation system satisfying 5 constraints:
 > 1. **ACCURACY**: <$40k MAE — 2. **GENERALIZATION**: Unseen districts — 3. **MULTI-TASK**: Value + Segment — 4. **INTERPRETABILITY**: Explainable — 5. **PRODUCTION**: Scale + Monitor
 
 **What we know so far:**
-- ✅ Ch.1: Built a single-feature linear model (MedInc → MedHouseVal)
-- ✅ Core loop: loss → gradient → update
-- ✅ Baseline: ~$70k MAE with 1 feature
-- ❌ **But we're ignoring 7 perfectly good features!**
+- Ch.1: Built a single-feature linear model (MedInc → MedHouseVal)
+- Core loop: loss → gradient → update
+- Baseline: ~$70k MAE with 1 feature
+- **But we're ignoring 7 perfectly good features!**
 
 **What's blocking us:**
 The Ch.1 model achieves ~$70k MAE using one feature — median income. But California house prices are driven by far more than income. A house in Bakersfield and a house in San Jose can have the same median income and differ in value by $200k or more. Location, house age, household crowding — seven features sit unused. Adding them all at once requires treating inputs as a matrix and asking the same gradient-descent question in higher dimensions.
@@ -32,31 +32,31 @@ Use all 8 features simultaneously → **~$55k MAE** (from $70k → 21% improveme
 
 ```mermaid
 flowchart LR
-    subgraph "Ch.1 — Single Feature"
-        A["MedInc"] -->|"w₁"| P1["ŷ = w₁x + b"]
-    end
+ subgraph "Ch.1 — Single Feature"
+ A["MedInc"] -->|"w₁"| P1["ŷ = w₁x + b"]
+ end
 
-    subgraph "Ch.2 — All 8 Features"
-        B1["MedInc"] -->|"w₁"| SUM(("+"))
-        B2["HouseAge"] -->|"w₂"| SUM
-        B3["AveRooms"] -->|"w₃"| SUM
-        B4["AveBedrms"] -->|"w₄"| SUM
-        B5["Population"] -->|"w₅"| SUM
-        B6["AveOccup"] -->|"w₆"| SUM
-        B7["Latitude"] -->|"w₇"| SUM
-        B8["Longitude"] -->|"w₈"| SUM
-        BIAS["b"] -->|"+1"| SUM
-        SUM --> P2["ŷ"]
-    end
+ subgraph "Ch.2 — All 8 Features"
+ B1["MedInc"] -->|"w₁"| SUM(("+"))
+ B2["HouseAge"] -->|"w₂"| SUM
+ B3["AveRooms"] -->|"w₃"| SUM
+ B4["AveBedrms"] -->|"w₄"| SUM
+ B5["Population"] -->|"w₅"| SUM
+ B6["AveOccup"] -->|"w₆"| SUM
+ B7["Latitude"] -->|"w₇"| SUM
+ B8["Longitude"] -->|"w₈"| SUM
+ BIAS["b"] -->|"+1"| SUM
+ SUM --> P2["ŷ"]
+ end
 
-    P1 -..->|"$70k MAE"| GAP["Gap: $15k"]
-    P2 -..->|"$55k MAE"| GAP
-    GAP --> TARGET["$40k target"]
+ P1 -..->|"$70k MAE"| GAP["Gap: $15k"]
+ P2 -..->|"$55k MAE"| GAP
+ GAP --> TARGET["$40k target"]
 
-    style A fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style P1 fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style P2 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style TARGET fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style A fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style P1 fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style P2 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style TARGET fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### 0.1 · Animation
@@ -100,18 +100,18 @@ The denominator is the total squared error of predicting the training-set mean $
 
 MAE tells us the improvement is real; R² names *what* it is: a 14-point gain in explained variance, mostly from Latitude and Longitude encoding the coastal premium that income alone can't see.
 
-> 💡 **Why wasn't R² introduced in Ch.1?** With a single model, R² is just an isolated number — 0.47. Its power is *comparison*. The question "does adding features help?" only exists once you have a second model. That moment is now.
+> **Why wasn't R² introduced in Ch.1?** With a single model, R² is just an isolated number — 0.47. Its power is *comparison*. The question "does adding features help?" only exists once you have a second model. That moment is now.
 
-> ⚡ **Constraint #4 (INTERPRETABILITY):** The Ch.1 model achieves R² = 0.47 — income alone explains 47% of price variation. Ch.2 raises this to 0.61 with 8 interpretable weights. Interpretability isn't just readable weights; it's knowing what fraction of reality those weights account for.
+> **Constraint #4 (INTERPRETABILITY):** The Ch.1 model achieves R² = 0.47 — income alone explains 47% of price variation. Ch.2 raises this to 0.61 with 8 interpretable weights. Interpretability isn't just readable weights; it's knowing what fraction of reality those weights account for.
 
 #### Adjusted R² — the fair comparison when feature counts differ
 
 R² has one well-known failure mode: adding *any* feature — even pure random noise — raises it on the training set. More parameters give the model more axes to fit the training data, capturing noise alongside signal:
 
 ```
-Ch.1 (1 feature):                 R² = 0.47
-Ch.2 (8 features):                R² = 0.61   ← real improvement
-Ch.2 + 5 random noise features:   R² = 0.63   ← went up, but the model is worse
+Ch.1 (1 feature): R² = 0.47
+Ch.2 (8 features): R² = 0.61 ← real improvement
+Ch.2 + 5 random noise features: R² = 0.63 ← went up, but the model is worse
 ```
 
 Adjusted R² penalises the score for each additional parameter:
@@ -121,8 +121,8 @@ $$\bar{R}^2 = 1 - (1 - R^2) \cdot \frac{n-1}{n-p-1}$$
 where $n$ is training samples and $p$ is the number of features. Every feature that doesn't genuinely explain variance now *costs* Adjusted R²:
 
 ```
-Ch.2 (8 features):                Adj. R² = 0.605
-Ch.2 + 5 random noise features:   Adj. R² = 0.601   ← correctly went down
+Ch.2 (8 features): Adj. R² = 0.605
+Ch.2 + 5 random noise features: Adj. R² = 0.601 ← correctly went down
 ```
 
 **Rule:** use R² when comparing models with the same feature count; use Adjusted R² when feature counts differ.
@@ -239,17 +239,17 @@ $$\frac{\partial L}{\partial w_2} = \frac{2}{3}\left[(-1.5)(1.0) + (-2.5)(0.0) +
 Now compute $\mathbf{X}^\top \mathbf{e}$ directly:
 
 ```
-Xᵀ · e                                            (2×3) · (3×1) → (2×1)
+Xᵀ · e (2×3) · (3×1) → (2×1)
 
-  Xᵀ                          e
-  ┌  0.5   1.5   2.0  ┐      ┌  -1.5  ┐
-  └  1.0   0.0  -1.0  ┘  ×   │  -2.5  │
-                              └  -4.0  ┘
+ Xᵀ e
+ ┌ 0.5 1.5 2.0 ┐ ┌ -1.5 ┐
+ └ 1.0 0.0 -1.0 ┘ × │ -2.5 │
+ └ -4.0 ┘
 
-  row 1 (→ ∂L/∂w₁):  0.5(-1.5) + 1.5(-2.5) + 2.0(-4.0)  =  -0.75 - 3.75 - 8.00  =  -12.5
-  row 2 (→ ∂L/∂w₂):  1.0(-1.5) + 0.0(-2.5) - 1.0(-4.0)  =  -1.50 + 0.00 + 4.00  =    2.5
+ row 1 (→ ∂L/∂w₁): 0.5(-1.5) + 1.5(-2.5) + 2.0(-4.0) = -0.75 - 3.75 - 8.00 = -12.5
+ row 2 (→ ∂L/∂w₂): 1.0(-1.5) + 0.0(-2.5) - 1.0(-4.0) = -1.50 + 0.00 + 4.00 = 2.5
 
-  Xᵀe  =  [-12.5,  2.5]ᵀ
+ Xᵀe = [-12.5, 2.5]ᵀ
 ```
 
 **The match is exact.** Row $j$ of $\mathbf{X}^\top$ is the column of all $x_{ij}$ values across samples. Multiplying it against **e** produces $\sum_i e_i x_{ij}$ — which is exactly $\frac{\partial L}{\partial w_j}$ (up to the $\frac{2}{n}$ factor). The transpose is not arbitrary notation: it is the compact way to write "for each weight, dot its feature column against the error vector."
@@ -273,7 +273,7 @@ Xᵀ · e                                            (2×3) · (3×1) → (2×1)
 >
 > 📖 **Jacobians and the full matrix chain rule** are derived in [MathUnderTheHood ch06 — Gradient & Chain Rule](../../../00-math-under-the-hood/ch06_gradient_chain_rule).
 
-> 💡 **The transpose is the backprop rule.** In a neural network, `Xᵀ @ error` is exactly what the backward pass through a linear layer computes. Every time you call `loss.backward()` in PyTorch, this matrix multiply is running — one per layer. Understanding it here, for a 3-row California Housing dataset, is the entire conceptual foundation of neural network backpropagation.
+> **The transpose is the backprop rule.** In a neural network, `Xᵀ @ error` is exactly what the backward pass through a linear layer computes. Every time you call `loss.backward()` in PyTorch, this matrix multiply is running — one per layer. Understanding it here, for a 3-row California Housing dataset, is the entire conceptual foundation of neural network backpropagation.
 
 **Key insight:** The gradient formula is *identical* in structure to Ch.1. The only difference is that $\mathbf{X}^\top$ automatically accumulates contributions from all $d$ features. Backprop through a linear layer in a neural network (Ch.4) does exactly this.
 
@@ -314,13 +314,13 @@ All predictions are zero — every district is underpredicted. The model has lea
 ```
 Xᵀ · e:
 
-  Xᵀ                          e
-  ┌  0.5   1.5   2.0  ┐      ┌  -1.5  ┐
-  └  1.0   0.0  -1.0  ┘  ×   │  -2.5  │
-                              └  -4.0  ┘
+ Xᵀ e
+ ┌ 0.5 1.5 2.0 ┐ ┌ -1.5 ┐
+ └ 1.0 0.0 -1.0 ┘ × │ -2.5 │
+ └ -4.0 ┘
 
-  row 1 → w₁:  0.5(-1.5) + 1.5(-2.5) + 2.0(-4.0)  =  -12.5
-  row 2 → w₂:  1.0(-1.5) + 0.0(-2.5) - 1.0(-4.0)  =    2.5
+ row 1 → w₁: 0.5(-1.5) + 1.5(-2.5) + 2.0(-4.0) = -12.5
+ row 2 → w₂: 1.0(-1.5) + 0.0(-2.5) - 1.0(-4.0) = 2.5
 ```
 
 $$\frac{\partial L}{\partial \mathbf{w}} = \frac{2}{3}\begin{bmatrix}-12.5\\2.5\end{bmatrix} = \begin{bmatrix}\mathbf{-8.333}\\\mathbf{1.667}\end{bmatrix} \qquad \frac{\partial L}{\partial b} = \frac{2}{3}(-1.5 - 2.5 - 4.0) = \mathbf{-5.333}$$
@@ -354,13 +354,13 @@ MSE dropped from 8.167 → 1.233: an **85% reduction in one epoch**. The errors 
 ```
 Xᵀ · e:
 
-  Xᵀ                          e
-  ┌  0.5   1.5   2.0  ┐      ┌  -0.717  ┐
-  └  1.0   0.0  -1.0  ┘  ×   │  -0.717  │
-                              └  -1.634  ┘
+ Xᵀ e
+ ┌ 0.5 1.5 2.0 ┐ ┌ -0.717 ┐
+ └ 1.0 0.0 -1.0 ┘ × │ -0.717 │
+ └ -1.634 ┘
 
-  row 1 → w₁:  0.5(-0.717) + 1.5(-0.717) + 2.0(-1.634)  ≈  -4.624
-  row 2 → w₂:  1.0(-0.717) + 0.0(-0.717) - 1.0(-1.634)  ≈   0.917
+ row 1 → w₁: 0.5(-0.717) + 1.5(-0.717) + 2.0(-1.634) ≈ -4.624
+ row 2 → w₂: 1.0(-0.717) + 0.0(-0.717) - 1.0(-1.634) ≈ 0.917
 ```
 
 $$\frac{\partial L}{\partial \mathbf{w}} = \frac{2}{3}\begin{bmatrix}-4.624\\0.917\end{bmatrix} = \begin{bmatrix}\mathbf{-3.083}\\\mathbf{0.611}\end{bmatrix}$$
@@ -386,11 +386,11 @@ $$b = 0.533 - 0.1 \times (-3.067) = \mathbf{0.840}$$
 
 The **self-braking property scales to every weight simultaneously**: each gradient component shrinks proportionally to how close its weight is to optimal. This is the quadratic loss surface at work — it has a convex bowl shape in all $d$ dimensions, and gradient descent rolls down each dimension in parallel.
 
-> 💡 **Compare to Ch.1 §6.3:** The scalar case had $\partial L/\partial w$ shrink from 8.000 → 0.799 across two epochs. Here $\partial L/\partial w_1$ shrinks from 8.333 → 3.083. The *mechanism is identical*; $\mathbf{X}^\top\mathbf{e}$ just computes all $d$ scalar gradients *simultaneously* rather than one at a time.
+> **Compare to Ch.1 §6.3:** The scalar case had $\partial L/\partial w$ shrink from 8.000 → 0.799 across two epochs. Here $\partial L/\partial w_1$ shrinks from 8.333 → 3.083. The *mechanism is identical*; $\mathbf{X}^\top\mathbf{e}$ just computes all $d$ scalar gradients *simultaneously* rather than one at a time.
 
 ![Vectorized epoch walk — X matrix, error vector, Xᵀe multiply, and weight update animated step-by-step](img/epoch_walk_2d.gif)
 
-> ⚡ **Constraint #1 check (ACCURACY):** After two epochs our toy-dataset MSE dropped from 8.167 → 1.233. On the full 8-feature California Housing run (~300 epochs), this same loop delivers ~$55k MAE — a 21% improvement over the Ch.1 single-feature baseline, but still $15k short of the <$40k target.
+> **Constraint #1 check (ACCURACY):** After two epochs our toy-dataset MSE dropped from 8.167 → 1.233. On the full 8-feature California Housing run (~300 epochs), this same loop delivers ~$55k MAE — a 21% improvement over the Ch.1 single-feature baseline, but still $15k short of the <$40k target.
 
 ### 4.5 · The Loss Surface in 2D — Why Scaling Matters
 
@@ -415,31 +415,31 @@ The **eigenvalues of $\mathbf{A}$** determine the loss bowl's shape:
 If `MedInc` has range 0–15 and `Population` has range 0–35,682 (raw, unstandardized), then $\sum x_{\text{Pop}}^2$ is roughly $(35{,}000/15)^2 \approx 5{,}000\times$ larger than $\sum x_{\text{Inc}}^2$. The $\mathbf{A}$ matrix has diagonal entries differing by 5,000×. Its eigenvalues follow the same ratio — creating a loss bowl so elongated that every gradient step toward the minimum also bounces sideways:
 
 ```
-Unscaled features — loss contours (w₁ vs w₂):     Scaled features:
+Unscaled features — loss contours (w₁ vs w₂): Scaled features:
 
-     w₂ ↑                                               w₂ ↑
-        │  · · · · · · · ·                                 │  · · ·
-        │· · · · · · · · · ·                               │· · · · ·
-        │· · ★(min) · · · · ·   ← zigzag path            │· ★(min) ·
-        │· · · · · · · · · ·      (thousands of steps)    │· · · · ·
-        │  · · · · · · · · ·                               │  · · ·
-        └────────────────────→w₁                          └──────────→w₁
+ w₂ ↑ w₂ ↑
+ │ · · · · · · · · │ · · ·
+ │· · · · · · · · · · │· · · · ·
+ │· · ★(min) · · · · · ← zigzag path │· ★(min) ·
+ │· · · · · · · · · · (thousands of steps) │· · · · ·
+ │ · · · · · · · · · │ · · ·
+ └────────────────────→w₁ └──────────→w₁
 
-   Eigenvalue ratio ≈ 5,000                           Eigenvalue ratio ≈ 2–10
-   Slow, oscillating convergence                       Fast, smooth convergence
+ Eigenvalue ratio ≈ 5,000 Eigenvalue ratio ≈ 2–10
+ Slow, oscillating convergence Fast, smooth convergence
 ```
 
 **Concrete numbers from the California Housing dataset (standardized features, so eigenvalues are close):**
 
 ```
-A = (1/3) XᵀX,  where XᵀX entries are:
+A = (1/3) XᵀX, where XᵀX entries are:
 
-  [1,1] = Σx²ᵢ₁           =  0.5² + 1.5² + 2.0²                 =  0.25 + 2.25 + 4.00  =   6.5
-  [1,2] = [2,1] = Σxᵢ₁xᵢ₂  =  0.5(1.0) + 1.5(0.0) + 2.0(-1.0)  =  0.50 + 0.00 - 2.00  =  -1.5
-  [2,2] = Σx²ᵢ₂           =  1.0² + 0.0² + (-1.0)²              =  1.00 + 0.00 + 1.00  =   2.0
+ [1,1] = Σx²ᵢ₁ = 0.5² + 1.5² + 2.0² = 0.25 + 2.25 + 4.00 = 6.5
+ [1,2] = [2,1] = Σxᵢ₁xᵢ₂ = 0.5(1.0) + 1.5(0.0) + 2.0(-1.0) = 0.50 + 0.00 - 2.00 = -1.5
+ [2,2] = Σx²ᵢ₂ = 1.0² + 0.0² + (-1.0)² = 1.00 + 0.00 + 1.00 = 2.0
 
-  A = (1/3) × ┌  6.5  -1.5 ┐
-              └ -1.5   2.0 ┘
+ A = (1/3) × ┌ 6.5 -1.5 ┐
+ └ -1.5 2.0 ┘
 ```
 
 Eigenvalues: $\lambda_1 \approx 2.39$, $\lambda_2 \approx 0.28$ → ratio ≈ 8.5. A mildly elongated bowl — gradient descent converges reasonably fast. This is the geometry you get **because** we standardized the features.
@@ -461,8 +461,8 @@ $$\hat{\mathbf{w}} = (\mathbf{X}^\top\mathbf{X})^{-1}\mathbf{X}^\top\mathbf{y}$$
 Inverting a near-singular matrix *amplifies* small perturbations in **y** into enormous swings in **ŵ**:
 
 ```
-If XᵀX is well-conditioned   →   small change in y   →   small change in ŵ
-If XᵀX is near-singular      →   small change in y   →   huge change in ŵ
+If XᵀX is well-conditioned → small change in y → small change in ŵ
+If XᵀX is near-singular → small change in y → huge change in ŵ
 ```
 
 In California Housing, `AveRooms` and `AveBedrms` (ρ ≈ 0.85) both represent house size. Their columns in **X** point in nearly the same direction. There is no unique way to partition the "house-size" signal between the two weights — the normal equation distributes it arbitrarily, and small changes in the data tip that distribution in completely different directions.
@@ -471,11 +471,11 @@ In California Housing, `AveRooms` and `AveBedrms` (ρ ≈ 0.85) both represent h
 
 | Seed | AveRooms | AveBedrms | Predicted (row 0) |
 |------|----------|-----------|-------------------|
-| 42   | +1.21    | −0.83     | ✅ consistent     |
-| 7    | +0.38    | +0.17     | ✅ consistent     |
-| 99   | +2.04    | −1.51     | ✅ consistent     |
-| 13   | −0.11    | +0.81     | ✅ consistent     |
-| 55   | +0.95    | −0.47     | ✅ consistent     |
+| 42 | +1.21 | −0.83 | consistent |
+| 7 | +0.38 | +0.17 | consistent |
+| 99 | +2.04 | −1.51 | consistent |
+| 13 | −0.11 | +0.81 | consistent |
+| 55 | +0.95 | −0.47 | consistent |
 
 The individual weights jump wildly — including negative weights on bedrooms. Predictions remain stable because the "house-size" signal leaks from one weight into the other to compensate. **Multicollinearity does not break predictions; it breaks interpretation.**
 
@@ -509,9 +509,9 @@ Regress `AveRooms` on the remaining 7 features. Suppose the fit gives $R^2_\text
 
 ```
 VIF_AveRooms = 1 / (1 − R²_AveRooms)
-             = 1 / (1 − 0.86)
-             = 1 / 0.14
-             ≈ 7.14
+ = 1 / (1 − 0.86)
+ = 1 / 0.14
+ ≈ 7.14
 ```
 
 Running the model on different random 80/20 splits can produce estimates anywhere from +2.0 to −0.5 for `AveRooms` — not because the relationship changed, but because the correlated `AveBedrms` absorbs more or less of the shared signal in each split.
@@ -520,37 +520,37 @@ Running the model on different random 80/20 splits can produce estimates anywher
 
 | Feature | VIF | Signal |
 |---------|-----|--------|
-| MedInc | 1.2 | ✅ Low — clean, unique signal |
-| HouseAge | 1.3 | ✅ Low |
-| AveRooms | **7.2** | ⚠️ High — correlated with AveBedrms |
-| AveBedrms | **6.8** | ⚠️ High — correlated with AveRooms |
-| Population | 2.1 | ✅ Low |
-| AveOccup | 1.4 | ✅ Low |
-| Latitude | 3.8 | ⚠️ Moderate — correlated with Longitude |
-| Longitude | 3.9 | ⚠️ Moderate — correlated with Latitude |
+| MedInc | 1.2 | Low — clean, unique signal |
+| HouseAge | 1.3 | Low |
+| AveRooms | **7.2** | High — correlated with AveBedrms |
+| AveBedrms | **6.8** | High — correlated with AveRooms |
+| Population | 2.1 | Low |
+| AveOccup | 1.4 | Low |
+| Latitude | 3.8 | Moderate — correlated with Longitude |
+| Longitude | 3.9 | Moderate — correlated with Latitude |
 
 | VIF | Interpretation | Action |
 |-----|----------------|--------|
-| 1 | No collinearity | ✅ Safe |
-| 1–5 | Moderate | ⚠️ Monitor |
-| 5–10 | High | ⚡ Consider dropping |
-| >10 | Severe | ❌ Drop or regularize (Ch.5) |
+| 1 | No collinearity | Safe |
+| 1–5 | Moderate | Monitor |
+| 5–10 | High | Consider dropping |
+| >10 | Severe | Drop or regularize (Ch.5) |
 
 ```python
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 import pandas as pd
 
 vif_data = pd.DataFrame({
-    'Feature': data.feature_names,
-    'VIF': [variance_inflation_factor(X_train_s, i)
-            for i in range(X_train_s.shape[1])]
+ 'Feature': data.feature_names,
+ 'VIF': [variance_inflation_factor(X_train_s, i)
+ for i in range(X_train_s.shape[1])]
 })
 print(vif_data.sort_values('VIF', ascending=False))
 ```
 
 Multicollinearity is exactly why you cannot read raw weights as a trustworthy ranking of feature importance. A weight of −0.8 on `AveBedrms` does not mean bedrooms *hurt* house value — it means bedrooms overlap so heavily with rooms that the model has distributed the shared signal arbitrarily between the two.
 
-> 💡 **Feature importance and why standardization is the prerequisite for it** are covered in full in Ch.3. The headline result: after standardizing, standardized weight magnitudes and univariate R² give two complementary (and often surprising) rankings of which features matter.
+> **Feature importance and why standardization is the prerequisite for it** are covered in full in Ch.3. The headline result: after standardizing, standardized weight magnitudes and univariate R² give two complementary (and often surprising) rankings of which features matter.
 
 ---
 
@@ -581,19 +581,19 @@ If any of these are violated, linear regression is still valid for prediction �
 #### What residual plots reveal
 
 ```
-     e_i                          e_i                          e_i
-      |  x x x                     | x x x x x x               | x    x x
-      |x x x x x                   |     x   x   x              |   x
-      | x x x x x                  |       x       x            |x       x x
-------+------------ ŷ       -------+---------------- ŷ  --------+------------ ŷ
-      | x x x x x                  |       x       x            |   x         x
-      |x x x x x                   |     x   x   x              |x         x
-      |  x x x                     | x x x x x x                |       x
+ e_i e_i e_i
+ | x x x | x x x x x x | x x x
+ |x x x x x | x x x | x
+ | x x x x x | x x |x x x
+------+------------ ŷ -------+---------------- ŷ --------+------------ ŷ
+ | x x x x x | x x | x x
+ |x x x x x | x x x |x x
+ | x x x | x x x x x x | x
 
-   Random scatter                U-shape curve             Funnel (widening)
- ✅ No systematic error        ❌ Non-linearity            ❌ Heteroscedasticity
- Model is well-specified       Add polynomial             Log-transform y
-                               features (→ Ch.4)
+ Random scatter U-shape curve Funnel (widening)
+No systematic error Non-linearity Heteroscedasticity
+ Model is well-specified Add polynomial Log-transform y
+ features (→ Ch.4)
 ```
 
 **Beyond the standard residual plot ($e$ vs $\hat{y}$):** With multiple features, also plot $e_i$ against each feature $x_{ij}$ separately. If you see a pattern against `HouseAge` but not `MedInc`, you know `HouseAge` needs a polynomial term or binning.
@@ -623,13 +623,13 @@ This adds back feature $j$'s contribution to the residual, letting you see if th
 - But test MAE is still high
 - Suspect one specific feature needs transformation
 
-**Example:** California Housing with 8 features. Standard residual plot shows random scatter (✅), but MAE is stuck at $50k. Partial residual plot for `Latitude` shows a strong U-shape → add `Latitude²` → MAE drops to $42k.
+**Example:** California Housing with 8 features. Standard residual plot shows random scatter (), but MAE is stuck at $50k. Partial residual plot for `Latitude` shows a strong U-shape → add `Latitude²` → MAE drops to $42k.
 
 #### Code for residual analysis
 
 ```python
 y_pred = model.predict(X_test_s)
-residuals = y_test - y_pred             # e_i = y_i − ŷ_i
+residuals = y_test - y_pred # e_i = y_i − ŷ_i
 
 import matplotlib.pyplot as plt
 
@@ -639,12 +639,12 @@ fig, axes = plt.subplots(1, 2, figsize=(12, 5))
 axes[0].scatter(y_pred, residuals, alpha=0.3, s=10)
 axes[0].axhline(0, color='red', linestyle='--')
 axes[0].set_xlabel('Fitted values ŷ')
-axes[0].set_ylabel('Residuals  e = y − ŷ')
+axes[0].set_ylabel('Residuals e = y − ŷ')
 axes[0].set_title('Residuals vs Fitted')
 
 # Plot 2: residual distribution
 axes[1].hist(residuals, bins=50, edgecolor='black')
-axes[1].set_xlabel('Residual  e = y − ŷ')
+axes[1].set_xlabel('Residual e = y − ŷ')
 axes[1].set_title('Residual Distribution')
 
 plt.tight_layout()
@@ -669,9 +669,9 @@ plt.axhline(0, linestyle='--', color='red')
 plt.show()
 ```
 
-> 💡 **If the residual vs fitted plot shows a U-shape**, your linear model is systematically wrong in a predictable way — adding polynomial features (Ch.4) directly corrects this. **If it shows a funnel (variance grows with ŷ)**, try `np.log1p(y)` before fitting — log-transforming the target often stabilises variance for house-price or income-style targets.
+> **If the residual vs fitted plot shows a U-shape**, your linear model is systematically wrong in a predictable way — adding polynomial features (Ch.4) directly corrects this. **If it shows a funnel (variance grows with ŷ)**, try `np.log1p(y)` before fitting — log-transforming the target often stabilises variance for house-price or income-style targets.
 
-> ⚡ **Multiple regression diagnosis checklist:**
+> **Multiple regression diagnosis checklist:**
 > 1. Plot $e$ vs $\hat{y}$ → checks overall model specification
 > 2. Plot $e$ vs each $x_j$ → finds which feature needs transformation
 > 3. Partial residual plots → isolates non-linearity when many features interact
@@ -687,54 +687,54 @@ plt.show()
 1. Load all 8 features → X ∈ ℝ^(20640 × 8)
 
 2. Standardize features
-   └─ X_scaled = (X - μ) / σ  (per-feature mean and std)
-   └─ WHY: features on different scales → gradients differ wildly
-   └─ MedInc range [0.5, 15] vs Population range [3, 35682]
+ └─ X_scaled = (X - μ) / σ (per-feature mean and std)
+ └─ WHY: features on different scales → gradients differ wildly
+ └─ MedInc range [0.5, 15] vs Population range [3, 35682]
 
 3. Split: 80% train / 20% test
-   └─ random_state=42 for reproducibility
+ └─ random_state=42 for reproducibility
 
 4. Fit via Normal Equation (instant for d=8)
-   └─ w* = (XᵀX)⁻¹ Xᵀy
-   └─ OR fit via gradient descent (educational)
+ └─ w* = (XᵀX)⁻¹ Xᵀy
+ └─ OR fit via gradient descent (educational)
 
 5. Evaluate on test set
-   └─ MAE ≈ $55k  (down from $70k — 21% better!)
-   └─ R² ≈ 0.61  (up from 0.47 — explains 14% more variance)
-   └─ Adjusted R² ≈ 0.60  (slight penalty for 8 features vs 1)
+ └─ MAE ≈ $55k (down from $70k — 21% better!)
+ └─ R² ≈ 0.61 (up from 0.47 — explains 14% more variance)
+ └─ Adjusted R² ≈ 0.60 (slight penalty for 8 features vs 1)
 
 6. Inspect feature importance (standardized weights)
-   └─ Top 3: MedInc (0.83), Latitude (-0.89), Longitude (-0.87)
-   └─ Surprise: Location features are as important as income!
+ └─ Top 3: MedInc (0.83), Latitude (-0.89), Longitude (-0.87)
+ └─ Surprise: Location features are as important as income!
 
 7. Check multicollinearity (VIF)
-   └─ AveRooms VIF=7.2, AveBedrms VIF=6.8 → correlated pair
-   └─ Decision: Keep both for now, Ridge (Ch.5) handles this
+ └─ AveRooms VIF=7.2, AveBedrms VIF=6.8 → correlated pair
+ └─ Decision: Keep both for now, Ridge (Ch.5) handles this
 ```
 
 ```mermaid
 flowchart TD
-    DATA["California Housing<br/>20,640 × 8"] --> SCALE["StandardScaler<br/>μ=0, σ=1 per feature"]
-    SCALE --> SPLIT["Train/Test Split<br/>80% / 20%"]
-    SPLIT --> FIT{"Fitting method?"}
+ DATA["California Housing<br/>20,640 × 8"] --> SCALE["StandardScaler<br/>μ=0, σ=1 per feature"]
+ SCALE --> SPLIT["Train/Test Split<br/>80% / 20%"]
+ SPLIT --> FIT{"Fitting method?"}
 
-    FIT -->|"d < 10k"| NORMAL["Normal Equation<br/>w* = (XᵀX)⁻¹Xᵀy<br/>⏱️ Instant"]
-    FIT -->|"d ≥ 10k"| GD["Gradient Descent<br/>Iterative updates<br/>⏱️ Tune η, epochs"]
+ FIT -->|"d < 10k"| NORMAL["Normal Equation<br/>w* = (XᵀX)⁻¹Xᵀy<br/>⏱ Instant"]
+ FIT -->|"d ≥ 10k"| GD["Gradient Descent<br/>Iterative updates<br/>⏱ Tune η, epochs"]
 
-    NORMAL --> EVAL["Evaluate on Test Set"]
-    GD --> EVAL
+ NORMAL --> EVAL["Evaluate on Test Set"]
+ GD --> EVAL
 
-    EVAL --> METRICS["MAE ≈ $55k<br/>R² ≈ 0.61<br/>Adj R² ≈ 0.60"]
+ EVAL --> METRICS["MAE ≈ $55k<br/>R² ≈ 0.61<br/>Adj R² ≈ 0.60"]
 
-    METRICS --> DIAGNOSE{"Diagnostics"}
-    DIAGNOSE --> VIF["VIF Check<br/>AveRooms=7.2 ⚠️"]
-    DIAGNOSE --> IMPORTANCE["Feature Importance<br/>MedInc, Lat, Long"]
-    DIAGNOSE --> RESIDUAL["Residual Plot<br/>Curved? → Ch.3"]
+ METRICS --> DIAGNOSE{"Diagnostics"}
+ DIAGNOSE --> VIF["VIF Check<br/>AveRooms=7.2 "]
+ DIAGNOSE --> IMPORTANCE["Feature Importance<br/>MedInc, Lat, Long"]
+ DIAGNOSE --> RESIDUAL["Residual Plot<br/>Curved? → Ch.3"]
 
-    style DATA fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style METRICS fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style VIF fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style RESIDUAL fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style DATA fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style METRICS fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style VIF fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style RESIDUAL fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -744,19 +744,19 @@ flowchart TD
 ### Feature Correlation Heatmap
 
 ```
-                MedInc  HouseAge  AveRooms  AveBedrms  Pop   AveOccup  Lat    Long
-MedInc          1.00     -0.12     0.33      -0.06    -0.00   -0.02   -0.08   -0.02
-HouseAge       -0.12      1.00    -0.15      -0.08    -0.30    0.01    0.01   -0.11
-AveRooms        0.33     -0.15     1.00       0.85    -0.07   -0.00   -0.08    0.03
-AveBedrms      -0.06     -0.08     0.85 ← ⚠️  1.00    -0.07    0.00   -0.07    0.01
-Population     -0.00     -0.30    -0.07      -0.07     1.00    0.07   -0.11    0.10
-AveOccup       -0.02      0.01    -0.00       0.00     0.07    1.00   -0.00    0.00
-Latitude       -0.08      0.01    -0.08      -0.07    -0.11   -0.00    1.00   -0.92
-Longitude      -0.02     -0.11     0.03       0.01     0.10    0.00   -0.92 ←⚠️ 1.00
-                                    ↑                                    ↑
-                            Rooms/Bedrooms              Latitude/Longitude
-                            highly correlated            highly correlated
-                            (both measure size)          (both measure location)
+ MedInc HouseAge AveRooms AveBedrms Pop AveOccup Lat Long
+MedInc 1.00 -0.12 0.33 -0.06 -0.00 -0.02 -0.08 -0.02
+HouseAge -0.12 1.00 -0.15 -0.08 -0.30 0.01 0.01 -0.11
+AveRooms 0.33 -0.15 1.00 0.85 -0.07 -0.00 -0.08 0.03
+AveBedrms -0.06 -0.08 0.85 ← 1.00 -0.07 0.00 -0.07 0.01
+Population -0.00 -0.30 -0.07 -0.07 1.00 0.07 -0.11 0.10
+AveOccup -0.02 0.01 -0.00 0.00 0.07 1.00 -0.00 0.00
+Latitude -0.08 0.01 -0.08 -0.07 -0.11 -0.00 1.00 -0.92
+Longitude -0.02 -0.11 0.03 0.01 0.10 0.00 -0.92 ← 1.00
+ ↑ ↑
+ Rooms/Bedrooms Latitude/Longitude
+ highly correlated highly correlated
+ (both measure size) (both measure location)
 ```
 
 **Two collinear pairs:**
@@ -767,20 +767,20 @@ Longitude      -0.02     -0.11     0.03       0.01     0.10    0.00   -0.92 ←�
 
 ```mermaid
 flowchart LR
-    subgraph "Normal Equation"
-        NE1["Compute XᵀX"] --> NE2["Invert (XᵀX)⁻¹"] --> NE3["Multiply (XᵀX)⁻¹Xᵀy"] --> NE4["Done ✅<br/>One step"]
-    end
+ subgraph "Normal Equation"
+ NE1["Compute XᵀX"] --> NE2["Invert (XᵀX)⁻¹"] --> NE3["Multiply (XᵀX)⁻¹Xᵀy"] --> NE4["Done <br/>One step"]
+ end
 
-    subgraph "Gradient Descent"
-        GD1["Init w,b"] --> GD2["Forward pass<br/>ŷ = Xw + b"] --> GD3["Compute loss<br/>MSE"] --> GD4["Backward pass<br/>∂L/∂w"] --> GD5["Update<br/>w ← w − η∇"]
-        GD5 -->|"Repeat 200×"| GD2
-    end
+ subgraph "Gradient Descent"
+ GD1["Init w,b"] --> GD2["Forward pass<br/>ŷ = Xw + b"] --> GD3["Compute loss<br/>MSE"] --> GD4["Backward pass<br/>∂L/∂w"] --> GD5["Update<br/>w ← w − η∇"]
+ GD5 -->|"Repeat 200×"| GD2
+ end
 
-    NE4 -.->|"O(d³)"| COMP["Complexity"]
-    GD5 -.->|"O(ndk)"| COMP
+ NE4 -.->|"O(d³)"| COMP["Complexity"]
+ GD5 -.->|"O(ndk)"| COMP
 
-    style NE4 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style COMP fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style NE4 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style COMP fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### Xᵀe Breakdown — One Weight, One Row
@@ -811,7 +811,7 @@ flowchart LR
 |------|---------|------------|----------|
 | **Number of features** | Underfits (missing signals) | 8 features (all available) | N/A (no extra features here) |
 | **Learning rate** (if using GD) | Training is painfully slow | `1e-3` (Adam), `0.01` (SGD) | Loss oscillates / diverges |
-| **Standardization** | ❌ Never skip this | `StandardScaler` | N/A |
+| **Standardization** | Never skip this | `StandardScaler` | N/A |
 
 **New dial introduced: Feature selection.**
 Ch.1 used 1 feature. Ch.2 uses 8. But what if some features are noise? Adding garbage features increases training cost, may hurt generalization, and inflates R² (see §3 Multicollinearity). We won't systematically select features until Ch.5 (Lasso does automatic feature selection), but for now: use all 8 and monitor VIF.
@@ -832,62 +832,60 @@ Ch.1 used 1 feature. Ch.2 uses 8. But what if some features are noise? Adding ga
 
 ```mermaid
 flowchart TD
-    CHECK["Multiple Regression Diagnostics"] --> Q1{"Residuals<br/>show pattern?"}
+ CHECK["Multiple Regression Diagnostics"] --> Q1{"Residuals<br/>show pattern?"}
 
-    Q1 -->|"U-shaped"| FIX1["✅ Add polynomial features<br/>→ Ch.4"]
-    Q1 -->|"Random scatter"| Q2{"VIF > 10<br/>for any feature?"}
+ Q1 -->|"U-shaped"| FIX1[" Add polynomial features<br/>→ Ch.4"]
+ Q1 -->|"Random scatter"| Q2{"VIF > 10<br/>for any feature?"}
 
-    Q2 -->|"Yes"| FIX2["✅ Drop correlated feature<br/>OR use Ridge (Ch.5)"]
-    Q2 -->|"No"| Q3{"Adj R² < R²<br/>by large gap?"}
+ Q2 -->|"Yes"| FIX2[" Drop correlated feature<br/>OR use Ridge (Ch.5)"]
+ Q2 -->|"No"| Q3{"Adj R² < R²<br/>by large gap?"}
 
-    Q3 -->|"Yes (>0.05 gap)"| FIX3["✅ Too many features<br/>Use Lasso (Ch.5) for selection"]
-    Q3 -->|"No (≈ same)"| OK["✅ Model is reasonable<br/>Check MAE vs target"]
+ Q3 -->|"Yes (>0.05 gap)"| FIX3[" Too many features<br/>Use Lasso (Ch.5) for selection"]
+ Q3 -->|"No (≈ same)"| OK[" Model is reasonable<br/>Check MAE vs target"]
 
-    style CHECK fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style FIX1 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style FIX2 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style FIX3 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style OK fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CHECK fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style FIX1 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style FIX2 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style FIX3 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style OK fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
 
 ## 9 · Progress Check — What We Can Solve Now
-
-✅ **Unlocked capabilities:**
+**Unlocked capabilities:**
 - **Multi-feature model**: Uses all 8 California Housing features simultaneously
 - **MAE improved**: ~$55k (down from $70k — 21% improvement!)
 - **Feature importance**: Know that MedInc, Latitude, Longitude are the top 3 predictors
 - **Vectorized computation**: Understand matrix form $\hat{\mathbf{y}} = \mathbf{X}\mathbf{w} + b$
 - **Diagnostics**: VIF for multicollinearity, Adjusted R² for fair comparison, residual analysis
-
-❌ **Still can't solve:**
-- ❌ **$55k > $40k target** — Linear model with 8 features still not accurate enough
-- ❌ **Can't capture non-linear patterns** — Income-to-value relationship curves at high incomes (diminishing returns)
-- ❌ **No interaction effects** — Model doesn't know that high income + coastal location = premium (Latitude × MedInc interaction)
-- ❌ **Collinear features** — AveRooms/AveBedrms instability unresolved
+**Still can't solve:**
+- **$55k > $40k target** — Linear model with 8 features still not accurate enough
+- **Can't capture non-linear patterns** — Income-to-value relationship curves at high incomes (diminishing returns)
+- **No interaction effects** — Model doesn't know that high income + coastal location = premium (Latitude × MedInc interaction)
+- **Collinear features** — AveRooms/AveBedrms instability unresolved
 
 **Progress toward constraints:**
 | Constraint | Status | Current State |
 |------------|--------|---------------|
-| #1 ACCURACY | ❌ Improved | $55k MAE (need <$40k) — 21% better than Ch.1 |
-| #2 GENERALIZATION | ❌ Not tested | No regularization yet |
-| #3 MULTI-TASK | ❌ Blocked | Still regression only |
-| #4 INTERPRETABILITY | ⚡ Improved | 8 feature weights (but collinearity muddies interpretation) |
-| #5 PRODUCTION | ❌ Blocked | Research code |
+| #1 ACCURACY | Improved | $55k MAE (need <$40k) — 21% better than Ch.1 |
+| #2 GENERALIZATION | Not tested | No regularization yet |
+| #3 MULTI-TASK | Blocked | Still regression only |
+| #4 INTERPRETABILITY | Improved | 8 feature weights (but collinearity muddies interpretation) |
+| #5 PRODUCTION | Blocked | Research code |
 
 ```mermaid
 flowchart LR
-    CH1["Ch.1<br/>$70k MAE<br/>1 feature"] -->|"+7 features"| CH2["Ch.2<br/>$55k MAE<br/>8 features"]
-    CH2 -->|"+feature diagnostics"| CH3["Ch.3<br/>$55k MAE<br/>Interpretability"]
-    CH3 -->|"+polynomials"| CH4["Ch.4<br/>$48k MAE<br/>Non-linear"]
-    CH4 -->|"+regularization"| CH5["Ch.5<br/>$38k ✅<br/>Generalized"]
+ CH1["Ch.1<br/>$70k MAE<br/>1 feature"] -->|"+7 features"| CH2["Ch.2<br/>$55k MAE<br/>8 features"]
+ CH2 -->|"+feature diagnostics"| CH3["Ch.3<br/>$55k MAE<br/>Interpretability"]
+ CH3 -->|"+polynomials"| CH4["Ch.4<br/>$48k MAE<br/>Non-linear"]
+ CH4 -->|"+regularization"| CH5["Ch.5<br/>$38k <br/>Generalized"]
 
-    style CH1 fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH2 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH3 fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH4 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH5 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH1 fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH2 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH3 fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH4 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH5 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---

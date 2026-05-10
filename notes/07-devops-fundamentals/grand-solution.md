@@ -15,23 +15,22 @@ Read this `grand_solution.md` for the complete narrative arc — understand how 
 Follow the recommended sequence below, working through each chapter's README and notebook:
 
 ```
-📚 Recommended Reading Order:
+Recommended Reading Order:
 
 Foundation (Weeks 1-2):
-  Ch.1: Docker Fundamentals           → Containerization basics
-  Ch.2: Container Orchestration       → Multi-service coordination
-  Ch.3: Kubernetes Basics            → Distributed orchestration
+ Ch.1: Docker Fundamentals → Containerization basics
+ Ch.2: Container Orchestration → Multi-service coordination
+ Ch.3: Kubernetes Basics → Distributed orchestration
 
 Automation & Visibility (Week 3):
-  Ch.4: CI/CD Pipelines              → Automated deployments
-  Ch.5: Monitoring & Observability   → Metrics and alerts
+ Ch.4: CI/CD Pipelines → Automated deployments
+ Ch.5: Monitoring & Observability → Metrics and alerts
 
 Advanced Topics (Week 4):
-  Ch.6: Infrastructure as Code       → Reproducible infrastructure
-  Ch.7: Networking & Load Balancing  → High availability
-  Ch.8: Security & Secrets Management → Production security
-
-🎯 After each chapter: Complete the "Progress Check" exercises to verify understanding.
+ Ch.6: Infrastructure as Code → Reproducible infrastructure
+ Ch.7: Networking & Load Balancing → High availability
+ Ch.8: Security & Secrets Management → Production security
+After each chapter: Complete the "Progress Check" exercises to verify understanding.
 ```
 
 **Prerequisites:** Basic command-line familiarity, understanding of web applications (HTTP, APIs). No prior DevOps experience required.
@@ -40,7 +39,7 @@ Advanced Topics (Week 4):
 
 ---
 
-## Mission Accomplished: Production-Ready Deployment ✅
+## Mission Accomplished: Production-Ready Deployment
 
 **The Challenge:** Build ProductionStack — a production-grade Flask web application deployment system achieving:
 - **PORTABILITY**: Identical deployment across dev/staging/production
@@ -54,15 +53,15 @@ Advanced Topics (Week 4):
 **The Progression:**
 
 ```
-Ch.1: Docker containerization     → Portability achieved (same image everywhere)
-Ch.2: Docker Compose              → Multi-service orchestration (one command startup)
-Ch.3: Kubernetes self-healing     → Reliability foundation (auto-restart pods)
-Ch.4: GitHub Actions CI/CD        → Automation complete (zero-touch deploy in 30s)
-Ch.5: Prometheus + Grafana        → Observability unlocked (<5min detection)
-Ch.6: Terraform IaC               → Reproducible infrastructure (version-controlled)
-Ch.7: Nginx load balancing        → High availability (99%+ uptime)
-Ch.8: Secrets management          → Security complete (no leaked credentials)
-                                   ✅ ALL CONSTRAINTS SATISFIED
+Ch.1: Docker containerization → Portability achieved (same image everywhere)
+Ch.2: Docker Compose → Multi-service orchestration (one command startup)
+Ch.3: Kubernetes self-healing → Reliability foundation (auto-restart pods)
+Ch.4: GitHub Actions CI/CD → Automation complete (zero-touch deploy in 30s)
+Ch.5: Prometheus + Grafana → Observability unlocked (<5min detection)
+Ch.6: Terraform IaC → Reproducible infrastructure (version-controlled)
+Ch.7: Nginx load balancing → High availability (99%+ uptime)
+Ch.8: Secrets management → Security complete (no leaked credentials)
+ALL CONSTRAINTS SATISFIED
 ```
 
 ---
@@ -276,57 +275,57 @@ Here's how all 8 concepts integrate into a deployed ProductionStack system:
 
 ```mermaid
 flowchart TB
-    subgraph "Developer Workflow"
-        DEV["Developer<br/>git push to main"] --> CICD["GitHub Actions<br/>Ch.4: CI/CD Pipeline"]
-    end
-    
-    subgraph "CI/CD Pipeline"
-        CICD --> TEST["Run Tests<br/>pytest, flake8"]
-        TEST --> BUILD["Build Docker Image<br/>Ch.1: Multi-stage build"]
-        BUILD --> PUSH["Push to Registry<br/>Docker Hub / ECR"]
-    end
-    
-    subgraph "Infrastructure Provisioning (Ch.6: Terraform)"
-        TERRAFORM["Terraform Apply<br/>terraform.tfstate"] --> K8S_INFRA["K8s Cluster<br/>+ Load Balancer<br/>+ Secrets"]
-    end
-    
-    subgraph "Production Cluster (Ch.3: Kubernetes)"
-        PUSH --> DEPLOY["Update Deployment<br/>Rolling update"]
-        K8S_INFRA --> DEPLOY
-        
-        DEPLOY --> POD1["Pod 1<br/>Flask + Redis<br/>+ PostgreSQL"]
-        DEPLOY --> POD2["Pod 2<br/>Flask + Redis<br/>+ PostgreSQL"]
-        DEPLOY --> POD3["Pod 3<br/>Flask + Redis<br/>+ PostgreSQL"]
-        
-        SECRETS["Secrets Store<br/>Ch.8: Key Vault"] --> POD1
-        SECRETS --> POD2
-        SECRETS --> POD3
-        
-        POD1 --> SVC["Kubernetes Service<br/>Load balancer"]
-        POD2 --> SVC
-        POD3 --> SVC
-    end
-    
-    subgraph "Reverse Proxy (Ch.7: Nginx)"
-        SVC --> NGINX["Nginx<br/>SSL termination<br/>Health checks"]
-    end
-    
-    subgraph "Monitoring (Ch.5: Prometheus + Grafana)"
-        POD1 --> PROM["Prometheus<br/>/metrics scraping"]
-        POD2 --> PROM
-        POD3 --> PROM
-        PROM --> GRAFANA["Grafana Dashboard<br/>Request rate, latency, errors"]
-        PROM --> ALERTS["Alertmanager<br/>Slack notifications"]
-    end
-    
-    NGINX --> USERS["Users<br/>https://api.example.com"]
-    
-    style DEV fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CICD fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style DEPLOY fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style NGINX fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style GRAFANA fill:#7c3aed,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style USERS fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ subgraph "Developer Workflow"
+ DEV["Developer<br/>git push to main"] --> CICD["GitHub Actions<br/>Ch.4: CI/CD Pipeline"]
+ end
+
+ subgraph "CI/CD Pipeline"
+ CICD --> TEST["Run Tests<br/>pytest, flake8"]
+ TEST --> BUILD["Build Docker Image<br/>Ch.1: Multi-stage build"]
+ BUILD --> PUSH["Push to Registry<br/>Docker Hub / ECR"]
+ end
+
+ subgraph "Infrastructure Provisioning (Ch.6: Terraform)"
+ TERRAFORM["Terraform Apply<br/>terraform.tfstate"] --> K8S_INFRA["K8s Cluster<br/>+ Load Balancer<br/>+ Secrets"]
+ end
+
+ subgraph "Production Cluster (Ch.3: Kubernetes)"
+ PUSH --> DEPLOY["Update Deployment<br/>Rolling update"]
+ K8S_INFRA --> DEPLOY
+
+ DEPLOY --> POD1["Pod 1<br/>Flask + Redis<br/>+ PostgreSQL"]
+ DEPLOY --> POD2["Pod 2<br/>Flask + Redis<br/>+ PostgreSQL"]
+ DEPLOY --> POD3["Pod 3<br/>Flask + Redis<br/>+ PostgreSQL"]
+
+ SECRETS["Secrets Store<br/>Ch.8: Key Vault"] --> POD1
+ SECRETS --> POD2
+ SECRETS --> POD3
+
+ POD1 --> SVC["Kubernetes Service<br/>Load balancer"]
+ POD2 --> SVC
+ POD3 --> SVC
+ end
+
+ subgraph "Reverse Proxy (Ch.7: Nginx)"
+ SVC --> NGINX["Nginx<br/>SSL termination<br/>Health checks"]
+ end
+
+ subgraph "Monitoring (Ch.5: Prometheus + Grafana)"
+ POD1 --> PROM["Prometheus<br/>/metrics scraping"]
+ POD2 --> PROM
+ POD3 --> PROM
+ PROM --> GRAFANA["Grafana Dashboard<br/>Request rate, latency, errors"]
+ PROM --> ALERTS["Alertmanager<br/>Slack notifications"]
+ end
+
+ NGINX --> USERS["Users<br/>https://api.example.com"]
+
+ style DEV fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CICD fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style DEPLOY fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style NGINX fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style GRAFANA fill:#7c3aed,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style USERS fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### Deployment Pipeline (How Ch.1-8 Connect in Production)
@@ -336,8 +335,8 @@ flowchart TB
 # Developer workflow (local)
 # Ch.1: Dockerfile defines build
 # Ch.2: docker-compose.yml for local testing
-docker compose up  # Flask + PostgreSQL + Redis running locally
-pytest tests/      # Run tests before commit
+docker compose up # Flask + PostgreSQL + Redis running locally
+pytest tests/ # Run tests before commit
 git commit -m "Add feature X"
 git push origin main
 ```
@@ -346,37 +345,37 @@ git push origin main
 ```yaml
 # .github/workflows/deploy.yml
 on:
-  push:
-    branches: [main]
+ push:
+ branches: [main]
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run tests
-        run: pytest tests/
-  
-  build:
-    needs: test
-    steps:
-      # Ch.1: Build multi-stage Docker image
-      - name: Build image
-        run: docker build -t myapp:${{ github.sha }} .
-      
-      # Ch.4: Push to registry
-      - name: Push image
-        run: docker push myapp:${{ github.sha }}
-  
-  deploy:
-    needs: build
-    steps:
-      # Ch.3: Update Kubernetes deployment
-      - name: Deploy to K8s
-        run: |
-          kubectl set image deployment/myapp \
-            myapp=myapp:${{ github.sha }}
-          kubectl rollout status deployment/myapp
+ test:
+ runs-on: ubuntu-latest
+ steps:
+ - uses: actions/checkout@v4
+ - name: Run tests
+ run: pytest tests/
+
+ build:
+ needs: test
+ steps:
+ # Ch.1: Build multi-stage Docker image
+ - name: Build image
+ run: docker build -t myapp:${{ github.sha }} .
+
+ # Ch.4: Push to registry
+ - name: Push image
+ run: docker push myapp:${{ github.sha }}
+
+ deploy:
+ needs: build
+ steps:
+ # Ch.3: Update Kubernetes deployment
+ - name: Deploy to K8s
+ run: |
+ kubectl set image deployment/myapp \
+ myapp=myapp:${{ github.sha }}
+ kubectl rollout status deployment/myapp
 ```
 
 **3. Infrastructure Provisioning (Ch.6: Terraform):**
@@ -384,40 +383,40 @@ jobs:
 # main.tf
 # Ch.6: Provision K8s cluster + networking
 resource "kubernetes_deployment" "app" {
-  metadata {
-    name = "productionstack"
-  }
-  
-  spec {
-    replicas = 3  # Ch.3: High availability
-    
-    template {
-      spec {
-        container {
-          image = var.app_image
-          
-          # Ch.8: Inject secrets at runtime
-          env {
-            name = "DB_PASSWORD"
-            value_from {
-              secret_key_ref {
-                name = "db-credentials"
-                key  = "password"
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+ metadata {
+ name = "productionstack"
+ }
+
+ spec {
+ replicas = 3 # Ch.3: High availability
+
+ template {
+ spec {
+ container {
+ image = var.app_image
+
+ # Ch.8: Inject secrets at runtime
+ env {
+ name = "DB_PASSWORD"
+ value_from {
+ secret_key_ref {
+ name = "db-credentials"
+ key = "password"
+ }
+ }
+ }
+ }
+ }
+ }
+ }
 }
 
 # Ch.7: Load balancer
 resource "kubernetes_service" "app" {
-  type = "LoadBalancer"
-  selector = {
-    app = "productionstack"
-  }
+ type = "LoadBalancer"
+ selector = {
+ app = "productionstack"
+ }
 }
 ```
 
@@ -426,10 +425,10 @@ resource "kubernetes_service" "app" {
 # Ch.3: Self-healing in action
 # Pod crashes → K8s auto-restarts within 10s
 kubectl get pods
-# NAME                    READY   STATUS    RESTARTS
-# productionstack-1       1/1     Running   0
-# productionstack-2       0/1     CrashLoop 3  # Auto-restarting
-# productionstack-3       1/1     Running   0
+# NAME READY STATUS RESTARTS
+# productionstack-1 1/1 Running 0
+# productionstack-2 0/1 CrashLoop 3 # Auto-restarting
+# productionstack-3 1/1 Running 0
 
 # Ch.7: Load balancer routes around failed pod
 # Nginx health checks detect failure → removes from rotation
@@ -443,7 +442,7 @@ kubectl get pods
 ```bash
 # Create secret in Kubernetes
 kubectl create secret generic db-credentials \
-  --from-literal=password='prod_secret_2024'
+ --from-literal=password='prod_secret_2024'
 
 # Pods automatically mount secret
 # Application reads from /run/secrets/db_password
@@ -457,8 +456,8 @@ kubectl create secret generic db-credentials \
 rate(http_requests_total{route="/api/predict"}[5m])
 
 # Latency p95
-histogram_quantile(0.95, 
-  rate(http_request_duration_seconds_bucket[5m]))
+histogram_quantile(0.95,
+ rate(http_request_duration_seconds_bucket[5m]))
 
 # Error percentage
 rate(http_requests_total{status=~"5.."}[5m]) /
@@ -495,23 +494,23 @@ docker push myregistry.io/myapp:v1.2.3
 ```yaml
 # Docker Compose (local)
 services:
-  web:
-    image: myapp:latest
-    replicas: 3
-    depends_on:
-      db:
-        condition: service_healthy
+ web:
+ image: myapp:latest
+ replicas: 3
+ depends_on:
+ db:
+ condition: service_healthy
 
 # Kubernetes (production)
 apiVersion: apps/v1
 kind: Deployment
 spec:
-  replicas: 3
-  template:
-    spec:
-      containers:
-      - name: web
-        image: myapp:latest
+ replicas: 3
+ template:
+ spec:
+ containers:
+ - name: web
+ image: myapp:latest
 ```
 
 ### 3. The Zero-Touch Deployment Pattern (Ch.4)
@@ -524,15 +523,15 @@ spec:
 **Example workflow:**
 ```
 Developer: git push origin main
-  ↓ (GitHub webhook triggers)
+ ↓ (GitHub webhook triggers)
 GitHub Actions: Run pytest (30s)
-  ↓ (tests pass)
+ ↓ (tests pass)
 GitHub Actions: Build Docker image (60s)
-  ↓ (build succeeds)
+ ↓ (build succeeds)
 GitHub Actions: Push to registry (20s)
-  ↓ (push completes)
+ ↓ (push completes)
 GitHub Actions: kubectl set image (10s)
-  ↓ (rolling update)
+ ↓ (rolling update)
 Production: New version live (total: 2min)
 ```
 
@@ -548,17 +547,17 @@ Production: New version live (total: 2min)
 # Instrument Flask app
 from prometheus_client import Counter, Histogram
 
-http_requests = Counter('http_requests_total', 
-                        'Total requests',
-                        ['route', 'status'])
+http_requests = Counter('http_requests_total',
+ 'Total requests',
+ ['route', 'status'])
 http_duration = Histogram('http_request_duration_seconds',
-                          'Request latency')
+ 'Request latency')
 
 @app.route('/api/predict')
 @http_duration.time()
 def predict():
-    http_requests.labels(route='/api/predict', status=200).inc()
-    return jsonify(prediction)
+ http_requests.labels(route='/api/predict', status=200).inc()
+ return jsonify(prediction)
 ```
 
 ### 5. The Infrastructure as Code Pattern (Ch.6)
@@ -571,7 +570,7 @@ def predict():
 **Example workflow:**
 ```bash
 # Make infrastructure change
-vim main.tf  # Change replicas: 3 → 5
+vim main.tf # Change replicas: 3 → 5
 
 # Preview impact
 terraform plan
@@ -592,18 +591,18 @@ terraform apply
 **Example Nginx config:**
 ```nginx
 upstream backend {
-    least_conn;  # Send to least-loaded backend
-    server backend1:5000 max_fails=3 fail_timeout=30s;
-    server backend2:5000 max_fails=3 fail_timeout=30s;
-    server backend3:5000 max_fails=3 fail_timeout=30s;
+ least_conn; # Send to least-loaded backend
+ server backend1:5000 max_fails=3 fail_timeout=30s;
+ server backend2:5000 max_fails=3 fail_timeout=30s;
+ server backend3:5000 max_fails=3 fail_timeout=30s;
 }
 
 server {
-    listen 80;
-    location / {
-        proxy_pass http://backend;
-        health_check interval=5s;
-    }
+ listen 80;
+ location / {
+ proxy_pass http://backend;
+ health_check interval=5s;
+ }
 }
 ```
 
@@ -617,7 +616,7 @@ server {
 **Example:**
 ```bash
 # WRONG: Hardcoded in Dockerfile
-ENV DB_PASSWORD=secret123  # ❌ Leaked in image layers
+ENV DB_PASSWORD=secret123 # Leaked in image layers
 
 # CORRECT: Runtime injection
 # Docker Compose:
@@ -634,11 +633,11 @@ kubectl create secret generic db-creds --from-literal=password=secret123
 
 | # | Constraint | Target | Status | How We Achieved It |
 |---|------------|--------|--------|-------------------|
-| **#1** | **PORTABILITY** | Same deployment dev → prod | ✅ **Achieved** | Ch.1: Docker containers run identically everywhere |
-| **#2** | **AUTOMATION** | Zero-touch deployment | ✅ **Achieved** | Ch.4: GitHub Actions CI/CD (30s commit → prod) |
-| **#3** | **RELIABILITY** | 99%+ uptime, self-healing | ✅ **Achieved** | Ch.3: K8s auto-restart + Ch.7: Load balancing |
-| **#4** | **OBSERVABILITY** | <5min mean time to detect | ✅ **Achieved** | Ch.5: Prometheus alerts fire within minutes |
-| **#5** | **SECURITY** | Zero secrets in git/images | ✅ **Achieved** | Ch.8: Runtime injection + pre-commit hooks |
+| **#1** | **PORTABILITY** | Same deployment dev → prod | **Achieved** | Ch.1: Docker containers run identically everywhere |
+| **#2** | **AUTOMATION** | Zero-touch deployment | **Achieved** | Ch.4: GitHub Actions CI/CD (30s commit → prod) |
+| **#3** | **RELIABILITY** | 99%+ uptime, self-healing | **Achieved** | Ch.3: K8s auto-restart + Ch.7: Load balancing |
+| **#4** | **OBSERVABILITY** | <5min mean time to detect | **Achieved** | Ch.5: Prometheus alerts fire within minutes |
+| **#5** | **SECURITY** | Zero secrets in git/images | **Achieved** | Ch.8: Runtime injection + pre-commit hooks |
 
 ---
 

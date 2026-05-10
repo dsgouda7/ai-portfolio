@@ -22,57 +22,57 @@ This is not a Kaggle leaderboard chase. Every chapter builds toward a single pro
 
 | Ch | Title | What Unlocks | Hit Rate@10 | Constraints | Status |
 |----|-------|--------------|-------------|-------------|--------|
-| **1** | [Fundamentals](ch01_fundamentals) | Popularity baseline, evaluation metrics | 42% | #1 Partial | 🔧 |
-| **2** | [Collaborative Filtering](ch02_collaborative_filtering) | User-based & item-based CF | 68% | #1 Improved | 🔧 |
-| **3** | [Matrix Factorization](ch03_matrix_factorization) | SVD, ALS, latent factors | 78% | #1 Close! | 🔧 |
-| **4** | [Neural Collaborative Filtering](ch04_neural_cf) | Deep learning embeddings, NCF | 83% | #1 Almost | 🔧 |
-| **5** | [Hybrid Systems](ch05_hybrid_systems) | Content + collaborative fusion | **87%** | **#1 ✅ #4 ✅ #5 ✅** | 🔧 |
-| **6** | [Cold Start & Production](ch06_cold_start_production) | Bandits, A/B testing, deployment | 87% | **#2 ✅ #3 ✅** | 🔧 |
+| **1** | [Fundamentals](ch01_fundamentals) | Popularity baseline, evaluation metrics | 42% | #1 Partial | |
+| **2** | [Collaborative Filtering](ch02_collaborative_filtering) | User-based & item-based CF | 68% | #1 Improved | |
+| **3** | [Matrix Factorization](ch03_matrix_factorization) | SVD, ALS, latent factors | 78% | #1 Close! | |
+| **4** | [Neural Collaborative Filtering](ch04_neural_cf) | Deep learning embeddings, NCF | 83% | #1 Almost | |
+| **5** | [Hybrid Systems](ch05_hybrid_systems) | Content + collaborative fusion | **87%** | **#1 #4 #5 ** | |
+| **6** | [Cold Start & Production](ch06_cold_start_production) | Bandits, A/B testing, deployment | 87% | **#2 #3 ** | |
 
-> *Status key: ✅ Complete · 🔧 In progress (README written, notebook pending) · 📋 Planned*
+> *Status key: Complete · In progress (README written, notebook pending) · Planned*
 
 ---
 
 ## Narrative Arc: From 42% Popularity Baseline to 87% Hybrid System
 
-### 🎬 Act 1: Foundations (Ch.1–2)
+### Act 1: Foundations (Ch.1–2)
 **Build simple baselines, understand their limits**
 
 - **Ch.1**: Can we just recommend popular movies? → Yes, but only 42% hit rate
-  - *"Everyone gets the same 10 movies? That's not personalisation, that's a billboard." — VP Product*
+ - *"Everyone gets the same 10 movies? That's not personalisation, that's a billboard." — VP Product*
 
 - **Ch.2**: Use similar users' ratings? → Better (68%), but sparse data limits us
-  - *"We're personalising now, but the system can't recommend anything it hasn't seen a similar user rate." — Head of Data*
+ - *"We're personalising now, but the system can't recommend anything it hasn't seen a similar user rate." — Head of Data*
 
-**Status**: ❌ Accuracy target unmet. Need latent representations.
+**Status**: Accuracy target unmet. Need latent representations.
 
 ---
 
-### ⚡ Act 2: Latent Factors & Deep Learning (Ch.3–4)
+### Act 2: Latent Factors & Deep Learning (Ch.3–4)
 **Discover hidden taste dimensions, learn non-linear interactions**
 
 - **Ch.3**: Matrix factorization discovers latent factors → 78% hit rate
-  - *"Now we're capturing something deeper — users who like 'cerebral sci-fi' even if they never rated the same movies." — Lead Data Scientist*
+ - *"Now we're capturing something deeper — users who like 'cerebral sci-fi' even if they never rated the same movies." — Lead Data Scientist*
 
 - **Ch.4**: Neural collaborative filtering learns non-linear patterns → 83% hit rate
-  - *"The neural model is catching taste interactions that linear factorization misses. We're 2 points away!" — VP Engineering*
+ - *"The neural model is catching taste interactions that linear factorization misses. We're 2 points away!" — VP Engineering*
 
-**Status**: ❌ Still below 85%. Need content features to close the gap.
+**Status**: Still below 85%. Need content features to close the gap.
 
-> 💡 **Content-based note for Act 3**: Rather than a standalone content-based filtering chapter, we introduce content features directly in the context of hybrid fusion (Ch.5) — where their practical value is most apparent. Ch.5 opens with pure content-based filtering before showing how fusion amplifies it.
+> **Content-based note for Act 3**: Rather than a standalone content-based filtering chapter, we introduce content features directly in the context of hybrid fusion (Ch.5) — where their practical value is most apparent. Ch.5 opens with pure content-based filtering before showing how fusion amplifies it.
 
 ---
 
-### 🏆 Act 3: Hybrid & Production (Ch.5–6)
+### Act 3: Hybrid & Production (Ch.5–6)
 **Fuse content + collaborative signals, deploy to production**
 
-- **Ch.5**: Hybrid content + collaborative → **87% hit rate ✅ Target achieved!**
-  - *"Combining genre/director metadata with collaborative signals did it. And we're surfacing niche films now!" — VP Product*
+- **Ch.5**: Hybrid content + collaborative → **87% hit rate Target achieved!**
+ - *"Combining genre/director metadata with collaborative signals did it. And we're surfacing niche films now!" — VP Product*
 
 - **Ch.6**: Cold start handling + production deployment → Production-ready system
-  - *"New users get decent recommendations from day one, and we can A/B test improvements safely." — CTO*
+ - *"New users get decent recommendations from day one, and we can A/B test improvements safely." — CTO*
 
-**Status**: ✅✅✅✅✅ **ALL CONSTRAINTS SATISFIED!**
+**Status**: **ALL CONSTRAINTS SATISFIED!**
 
 ---
 
@@ -82,7 +82,7 @@ This is not a Kaggle leaderboard chase. Every chapter builds toward a single pro
 |------------|--------|-------------------|----------|
 | **#1 ACCURACY** | Hit Rate @ 10 | % of users with ≥1 click in top-10 recs | >85% |
 | **#2 COLD START** | New user HR@10<br>New item discovery | Test on users with ≤5 ratings<br>% items recommended on day 1 | >60%<br>>30% |
-| **#3 SCALABILITY** | P95 latency<br>Dataset size | 95th percentile API response time<br>MovieLens 100k → 25M transition | <200ms<br>✅ |
+| **#3 SCALABILITY** | P95 latency<br>Dataset size | 95th percentile API response time<br>MovieLens 100k → 25M transition | <200ms<br> |
 | **#4 DIVERSITY** | Catalog coverage<br>Long-tail % | Unique items in recs / total catalog<br>% recs from bottom 50% popularity | >40%<br>>25% |
 | **#5 EXPLAINABILITY** | Explanation rate<br>User helpfulness | % recs with "Because you liked..."<br>User survey rating (1-5 scale) | >70%<br>>75% |
 
@@ -115,12 +115,12 @@ data = Dataset.load_builtin('ml-100k')
 ```
 
 **Why this progression?**
-- ✅ **Pedagogical clarity**: 100k trains in seconds, easy to iterate and debug
-- ✅ **Production realism**: 25M mirrors real-world scale (Netflix has billions, but principles are identical)
-- ✅ **Industry benchmark**: Both are standard datasets for recommender systems research
-- ✅ **Rich metadata**: 19 genre flags, timestamps, user demographics
-- ✅ **Real sparsity**: 93.7% (100k) and 99.7% (25M) sparsity — mirrors production
-- ✅ **Cold start examples**: Can simulate new users/items by holding out data
+- **Pedagogical clarity**: 100k trains in seconds, easy to iterate and debug
+- **Production realism**: 25M mirrors real-world scale (Netflix has billions, but principles are identical)
+- **Industry benchmark**: Both are standard datasets for recommender systems research
+- **Rich metadata**: 19 genre flags, timestamps, user demographics
+- **Real sparsity**: 93.7% (100k) and 99.7% (25M) sparsity — mirrors production
+- **Cold start examples**: Can simulate new users/items by holding out data
 
 ---
 
@@ -132,7 +132,7 @@ data = Dataset.load_builtin('ml-100k')
 4. **Check the Progress Table** — each chapter's §10 shows which constraints are met
 5. **Follow the bridge** — each chapter's §11 explains what the next chapter solves
 
-> 💡 **Tip**: The hit rate numbers (42% → 68% → 78% → 83% → 87%) are approximate targets, not exact values. Your results will vary slightly based on random seeds and train/test splits. The progression pattern matters more than the exact numbers.
+> **Tip**: The hit rate numbers (42% → 68% → 78% → 83% → 87%) are approximate targets, not exact values. Your results will vary slightly based on random seeds and train/test splits. The progression pattern matters more than the exact numbers.
 
 ---
 

@@ -10,16 +10,16 @@
 
 ## 0 · The Challenge — Manual Deployments Are Slow and Error-Prone
 
-> 💡 **The mission**: Deploy a Flask web app automatically on every push to `main` — satisfying 3 constraints:
+> **The mission**: Deploy a Flask web app automatically on every push to `main` — satisfying 3 constraints:
 > 1. **AUTOMATED**: Zero manual steps from commit to production
 > 2. **VALIDATED**: All tests must pass before deployment
 > 3. **FREE**: Use only GitHub's free tier (2,000 CI/CD minutes/month)
 
 **What we know so far:**
-- ✅ We can containerize apps (Ch.1: Docker)
-- ✅ We can orchestrate multi-container stacks (Ch.2: Docker Compose)
-- ✅ We can deploy to Kubernetes (Ch.3: Kind)
-- ❌ **But every deployment is still manual!**
+- We can containerize apps (Ch.1: Docker)
+- We can orchestrate multi-container stacks (Ch.2: Docker Compose)
+- We can deploy to Kubernetes (Ch.3: Kind)
+- **But every deployment is still manual!**
 
 **What's blocking us:**
 Manual deployments have three problems:
@@ -33,24 +33,23 @@ Without automation, deployments are the bottleneck. With CI/CD, deployments beco
 A **GitHub Actions pipeline** that runs on every `git push`:
 ```
 Trigger (push to main)
-  ↓
+ ↓
 Job: Test
-  → Run pytest
-  → Lint with flake8
-  ✅ TEST STAGE: Caught 8 bugs before production (3 logic errors, 2 API contract violations, 3 style issues)
-  ↓
+ → Run pytest
+ → Lint with flake8
+TEST STAGE: Caught 8 bugs before production (3 logic errors, 2 API contract violations, 3 style issues)
+ ↓
 Job: Build
-  → Build Docker image
-  → Push to Docker Hub
-  ✅ BUILD STAGE: Created production-ready artifact, validated image builds in 2min 15s
-  ↓
+ → Build Docker image
+ → Push to Docker Hub
+BUILD STAGE: Created production-ready artifact, validated image builds in 2min 15s
+ ↓
 Job: Deploy
-  → Update Kubernetes deployment
-  → Verify rollout success
-  ✅ DEPLOY STAGE: Zero-downtime rollout completed, health checks passed, traffic cutover in 45s
+ → Update Kubernetes deployment
+ → Verify rollout success
+DEPLOY STAGE: Zero-downtime rollout completed, health checks passed, traffic cutover in 45s
 ```
-
-✅ **This is modern software delivery** — ship confidently, ship often, ship automatically. **Each stage acts as a quality gate**: test failures block builds, build failures block deployments, deployment failures trigger automated rollback.
+**This is modern software delivery** — ship confidently, ship often, ship automatically. **Each stage acts as a quality gate**: test failures block builds, build failures block deployments, deployment failures trigger automated rollback.
 
 ---
 
@@ -71,7 +70,7 @@ This pattern is universal — GitHub Actions, GitLab CI, Azure Pipelines, Jenkin
 
 ## 1.5 · The Practitioner Workflow — Your 5-Phase Pipeline
 
-> ⚠️ **Two ways to read this chapter:**
+> **Warning — Two ways to read this chapter:**
 > - **Theory-first (recommended for learning):** Read §0→§5 sequentially to understand the concepts, then use this workflow as your reference
 > - **Workflow-first (practitioners with existing knowledge):** Use this diagram as a jump-to guide when building pipelines
 >
@@ -80,42 +79,42 @@ This pattern is universal — GitHub Actions, GitLab CI, Azure Pipelines, Jenkin
 **What you'll build by the end:** A complete CI/CD pipeline that runs on every push — linting → testing → building → deploying → monitoring. This is the automated delivery system from §3 that eliminates manual deployment errors.
 
 ```
-Phase 1: BUILD             Phase 2: TEST              Phase 3: DEPLOY            Phase 4: VERIFY           Phase 5: MONITOR
+Phase 1: BUILD Phase 2: TEST Phase 3: DEPLOY Phase 4: VERIFY Phase 5: MONITOR
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-Run CI checks:             Run test suites:           Deploy artifacts:          Validate deployment:       Track pipeline health:
+Run CI checks: Run test suites: Deploy artifacts: Validate deployment: Track pipeline health:
 
-• Checkout code            • Unit tests (pytest)      • Push to staging          • Health checks            • Build duration
-• Lint (flake8/black)      • Integration tests        • Update K8s deployment    • Smoke tests              • Test pass rate
-• Build Docker image       • Code coverage >80%       • Wait for rollout         • Compare metrics          • Deployment frequency
-• Tag with commit SHA      • Security scan            • Promote to production    • Automatic rollback       • Change failure rate
-                                                                                   if checks fail
+• Checkout code • Unit tests (pytest) • Push to staging • Health checks • Build duration
+• Lint (flake8/black) • Integration tests • Update K8s deployment • Smoke tests • Test pass rate
+• Build Docker image • Code coverage >80% • Wait for rollout • Compare metrics • Deployment frequency
+• Tag with commit SHA • Security scan • Promote to production • Automatic rollback • Change failure rate
+ if checks fail
 
-→ DECISION:                → DECISION:                → DECISION:                → DECISION:                → DECISION:
-  Lint fails?                Tests fail?                Staging healthy?           Health check passes?       Build time >10min?
-  • BLOCK merge              • BLOCK build              • YES: Promote to prod     • YES: Complete deploy     • Cache dependencies
-  • Developer fixes          • Report coverage gap      • NO: Keep in staging      • NO: Auto-rollback        • Parallelize jobs
-  Lint passes?               Tests pass?                • Alert on-call           • Alert team               Flaky tests (>5%)?
-  • Proceed to build         • Proceed to deploy                                                              • Quarantine them
-                                                                                                               • Track separately
+→ DECISION: → DECISION: → DECISION: → DECISION: → DECISION:
+ Lint fails? Tests fail? Staging healthy? Health check passes? Build time >10min?
+ • BLOCK merge • BLOCK build • YES: Promote to prod • YES: Complete deploy • Cache dependencies
+ • Developer fixes • Report coverage gap • NO: Keep in staging • NO: Auto-rollback • Parallelize jobs
+ Lint passes? Tests pass? • Alert on-call • Alert team Flaky tests (>5%)?
+ • Proceed to build • Proceed to deploy • Quarantine them
+ • Track separately
 ```
 
-> 💡 **How to use this workflow:** Complete Phase 1→2→3→4 in order for every commit. Phase 5 is continuous — track metrics weekly to identify bottlenecks. The sections above teach WHY each phase works; refer back here for WHAT to do.
+> **How to use this workflow:** Complete Phase 1→2→3→4 in order for every commit. Phase 5 is continuous — track metrics weekly to identify bottlenecks. The sections above teach WHY each phase works; refer back here for WHAT to do.
 
 **The Decision Chain — How Phases Gate Each Other:**
 
 Every phase acts as a quality gate. If any phase fails, the pipeline stops immediately and alerts the team. This is the core of "fail fast" philosophy — catch problems early when they're cheap to fix.
 
 ```
-┌─────────┐  PASS   ┌──────┐  PASS   ┌────────┐  PASS   ┌────────┐  PASS   ┌─────────┐
-│ PHASE 1 │────────>│  P2  │────────>│   P3   │────────>│   P4   │────────>│   P5    │
-│  BUILD  │         │ TEST │         │ DEPLOY │         │ VERIFY │         │ MONITOR │
-└─────────┘         └──────┘         └────────┘         └────────┘         └─────────┘
-     │                  │                 │                  │                    │
-    FAIL               FAIL              FAIL               FAIL                  │
-     │                  │                 │                  │                    │
-     ▼                  ▼                 ▼                  ▼                    ▼
-  Block              Block           Keep in           Automatic            Weekly
-  merge             build           staging           rollback             review
+┌─────────┐ PASS ┌──────┐ PASS ┌────────┐ PASS ┌────────┐ PASS ┌─────────┐
+│ PHASE 1 │────────>│ P2 │────────>│ P3 │────────>│ P4 │────────>│ P5 │
+│ BUILD │ │ TEST │ │ DEPLOY │ │ VERIFY │ │ MONITOR │
+└─────────┘ └──────┘ └────────┘ └────────┘ └─────────┘
+ │ │ │ │ │
+ FAIL FAIL FAIL FAIL │
+ │ │ │ │ │
+ ▼ ▼ ▼ ▼ ▼
+ Block Block Keep in Automatic Weekly
+ merge build staging rollback review
 ```
 
 **Common Decision Paths:**
@@ -165,43 +164,43 @@ By the end of this chapter, you'll measure all four. High performers ship daily,
 
 ```mermaid
 graph TD
-    A[Developer pushes to main] --> B{Phase 1: BUILD}
-    B -->|Lint fails| X1[❌ Block PR]
-    B -->|Lint passes| C{Build Docker image}
-    C -->|Build fails| X2[❌ Alert team]
-    C -->|Build succeeds| D{Phase 2: TEST}
+ A[Developer pushes to main] --> B{Phase 1: BUILD}
+ B -->|Lint fails| X1[ Block PR]
+ B -->|Lint passes| C{Build Docker image}
+ C -->|Build fails| X2[ Alert team]
+ C -->|Build succeeds| D{Phase 2: TEST}
 
-    D -->|Tests fail| X3[❌ Block deploy<br/>Report coverage]
-    D -->|Coverage <80%| X4[⚠️ Warning<br/>Proceed anyway]
-    D -->|Tests pass| E{Phase 3: DEPLOY}
+ D -->|Tests fail| X3[ Block deploy<br/>Report coverage]
+ D -->|Coverage <80%| X4[ Warning<br/>Proceed anyway]
+ D -->|Tests pass| E{Phase 3: DEPLOY}
 
-    E --> F[Push image to Docker Hub]
-    F --> G[Deploy to staging]
-    G --> H{Staging healthy?}
-    H -->|No| X5[❌ Keep in staging<br/>Alert on-call]
-    H -->|Yes| I[Deploy to production]
+ E --> F[Push image to Docker Hub]
+ F --> G[Deploy to staging]
+ G --> H{Staging healthy?}
+ H -->|No| X5[ Keep in staging<br/>Alert on-call]
+ H -->|Yes| I[Deploy to production]
 
-    I --> J{Phase 4: VERIFY}
-    J --> K[Run health checks]
-    K --> L{/health returns 200?}
-    L -->|No| M[🔄 Auto-rollback<br/>Restore previous]
-    L -->|Yes| N[Run smoke tests]
-    N --> O{Metrics within SLA?}
-    O -->|No| M
-    O -->|Yes| P[✅ Deploy complete]
+ I --> J{Phase 4: VERIFY}
+ J --> K[Run health checks]
+ K --> L{/health returns 200?}
+ L -->|No| M[🔄 Auto-rollback<br/>Restore previous]
+ L -->|Yes| N[Run smoke tests]
+ N --> O{Metrics within SLA?}
+ O -->|No| M
+ O -->|Yes| P[ Deploy complete]
 
-    P --> Q[Phase 5: MONITOR]
-    Q --> R[Track build time]
-    Q --> S[Track test pass rate]
-    Q --> T[Track DORA metrics]
+ P --> Q[Phase 5: MONITOR]
+ Q --> R[Track build time]
+ Q --> S[Track test pass rate]
+ Q --> T[Track DORA metrics]
 
-    style X1 fill:#b91c1c
-    style X2 fill:#b91c1c
-    style X3 fill:#b91c1c
-    style X4 fill:#b45309
-    style X5 fill:#b91c1c
-    style M fill:#b45309
-    style P fill:#15803d
+ style X1 fill:#b91c1c
+ style X2 fill:#b91c1c
+ style X3 fill:#b91c1c
+ style X4 fill:#b45309
+ style X5 fill:#b91c1c
+ style M fill:#b45309
+ style P fill:#15803d
 ```
 
 **Reading the Workflow:**
@@ -224,7 +223,7 @@ graph TD
 | **Spinnaker** | 3,4 | Advanced deployment strategies (canary, blue/green) | When basic staging→prod is insufficient |
 | **Prometheus / Grafana** | 5 (MONITOR) | Pipeline metrics dashboards | Ch.5 (next chapter) |
 
-> ⚡ **Constraint check:** By Phase 4, you've satisfied all three mission constraints from §0: **AUTOMATED** (no manual steps), **VALIDATED** (tests gate every deploy), **FREE** (GitHub Actions free tier = 2,000 min/month).
+> **Constraint check:** By Phase 4, you've satisfied all three mission constraints from §0: **AUTOMATED** (no manual steps), **VALIDATED** (tests gate every deploy), **FREE** (GitHub Actions free tier = 2,000 min/month).
 
 ---
 
@@ -268,12 +267,12 @@ A **workflow** is a YAML file (`.github/workflows/ci-cd.yml`) that defines autom
 
 ```yaml
 on:
-  push:
-    branches: [main]  # Run on every push to main
-  pull_request:       # Run on PRs (before merge)
-  schedule:
-    - cron: '0 2 * * *'  # Run daily at 2 AM UTC
-  workflow_dispatch:  # Allow manual trigger
+ push:
+ branches: [main] # Run on every push to main
+ pull_request: # Run on PRs (before merge)
+ schedule:
+ - cron: '0 2 * * *' # Run daily at 2 AM UTC
+ workflow_dispatch: # Allow manual trigger
 ```
 
 **Common triggers:**
@@ -286,14 +285,14 @@ on:
 
 ```yaml
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps: [...]
+ test:
+ runs-on: ubuntu-latest
+ steps: [...]
 
-  build:
-    needs: test  # Wait for test job to succeed
-    runs-on: ubuntu-latest
-    steps: [...]
+ build:
+ needs: test # Wait for test job to succeed
+ runs-on: ubuntu-latest
+ steps: [...]
 ```
 
 Jobs run on separate VMs. By default they run in parallel. Use `needs` to enforce ordering (e.g., don't build until tests pass).
@@ -302,18 +301,18 @@ Jobs run on separate VMs. By default they run in parallel. Use `needs` to enforc
 
 ```yaml
 steps:
-  - uses: actions/checkout@v4       # Action: clone repo
-  - name: Install dependencies
-    run: pip install -r requirements.txt  # Shell command
-  - uses: docker/build-push-action@v5    # Action: build Docker image
+ - uses: actions/checkout@v4 # Action: clone repo
+ - name: Install dependencies
+ run: pip install -r requirements.txt # Shell command
+ - uses: docker/build-push-action@v5 # Action: build Docker image
 ```
 
 **Step types:**
 1. **Shell commands** (`run:`) — Any bash command
 2. **Actions** (`uses:`) — Reusable components from GitHub Marketplace
-   - `actions/checkout` — Clone your repo
-   - `actions/setup-python` — Install Python
-   - `docker/build-push-action` — Build and push Docker images
+ - `actions/checkout` — Clone your repo
+ - `actions/setup-python` — Install Python
+ - `docker/build-push-action` — Build and push Docker images
 
 ### 3.4 · Secrets — Encrypted Environment Variables
 
@@ -321,12 +320,12 @@ Never commit API keys or passwords to Git. Store them as **repository secrets** 
 
 ```yaml
 - name: Push to Docker Hub
-  env:
-    DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-    DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
-  run: |
-    echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
-    docker push myapp:latest
+ env:
+ DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+ DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+ run: |
+ echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin
+ docker push myapp:latest
 ```
 
 **Mental model:** Secrets live in GitHub's encrypted vault. Workflows access them via `${{ secrets.NAME }}`. They never appear in logs.
@@ -339,64 +338,64 @@ Here's the complete Phase 1 workflow that combines all the concepts above:
 name: Phase 1 - Build Pipeline
 
 on:
-  push:
-    branches: [main]
-  pull_request:
+ push:
+ branches: [main]
+ pull_request:
 
 jobs:
-  lint-and-build:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+ lint-and-build:
+ runs-on: ubuntu-latest
+ timeout-minutes: 10
 
-    steps:
-      # Step 1: Get the code
-      - name: Checkout repository
-        uses: actions/checkout@v4
+ steps:
+ # Step 1: Get the code
+ - name: Checkout repository
+ uses: actions/checkout@v4
 
-      # Step 2: Set up Python
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+ # Step 2: Set up Python
+ - name: Set up Python 3.11
+ uses: actions/setup-python@v5
+ with:
+ python-version: '3.11'
 
-      # Step 3: Lint code (DECISION GATE)
-      - name: Install linting tools
-        run: |
-          pip install flake8 black
+ # Step 3: Lint code (DECISION GATE)
+ - name: Install linting tools
+ run: |
+ pip install flake8 black
 
-      - name: Run flake8
-        run: |
-          flake8 app/ --max-line-length=100 --count --statistics
-          # DECISION: Exit code 0 = pass, >0 = fail (blocks pipeline)
+ - name: Run flake8
+ run: |
+ flake8 app/ --max-line-length=100 --count --statistics
+ # DECISION: Exit code 0 = pass, >0 = fail (blocks pipeline)
 
-      - name: Check code formatting with black
-        run: |
-          black --check app/
-          # DECISION: If formatting issues found, fail the build
+ - name: Check code formatting with black
+ run: |
+ black --check app/
+ # DECISION: If formatting issues found, fail the build
 
-      # Step 4: Build Docker image
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+ # Step 4: Build Docker image
+ - name: Set up Docker Buildx
+ uses: docker/setup-buildx-action@v3
 
-      - name: Build Docker image
-        run: |
-          # Tag with commit SHA for traceability
-          docker build -t myapp:${{ github.sha }} .
-          docker tag myapp:${{ github.sha }} myapp:latest
+ - name: Build Docker image
+ run: |
+ # Tag with commit SHA for traceability
+ docker build -t myapp:${{ github.sha }} .
+ docker tag myapp:${{ github.sha }} myapp:latest
 
-      # Step 5: Log in to Docker Hub
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_TOKEN }}
+ # Step 5: Log in to Docker Hub
+ - name: Log in to Docker Hub
+ uses: docker/login-action@v3
+ with:
+ username: ${{ secrets.DOCKER_USERNAME }}
+ password: ${{ secrets.DOCKER_TOKEN }}
 
-      # Step 6: Push to registry
-      - name: Push to Docker Hub
-        run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/myapp:${{ github.sha }}
-          docker push ${{ secrets.DOCKER_USERNAME }}/myapp:latest
-          echo "✅ BUILD STAGE: Image pushed with SHA ${{ github.sha }}"
+ # Step 6: Push to registry
+ - name: Push to Docker Hub
+ run: |
+ docker push ${{ secrets.DOCKER_USERNAME }}/myapp:${{ github.sha }}
+ docker push ${{ secrets.DOCKER_USERNAME }}/myapp:latest
+ echo " BUILD STAGE: Image pushed with SHA ${{ github.sha }}"
 ```
 
 **Key Phase 1 decisions embedded in code:**
@@ -404,24 +403,24 @@ jobs:
 ```yaml
 # DECISION 1: Lint fails → Stop immediately
 - name: Run flake8
-  run: flake8 app/ --max-line-length=100
-  # Exit code >0 stops the workflow here
-  # GitHub marks the commit with ❌ red X
-  # PR cannot merge until fixed
+ run: flake8 app/ --max-line-length=100
+ # Exit code >0 stops the workflow here
+ # GitHub marks the commit with red X
+ # PR cannot merge until fixed
 
 # DECISION 2: Build fails → No image to deploy
 - name: Build Docker image
-  run: docker build -t myapp:${{ github.sha }} .
-  # Docker build errors stop the workflow
-  # Common causes: missing dependencies, syntax errors in Dockerfile
+ run: docker build -t myapp:${{ github.sha }} .
+ # Docker build errors stop the workflow
+ # Common causes: missing dependencies, syntax errors in Dockerfile
 
 # DECISION 3: Push fails → Alert but don't block (transient registry issues)
 - name: Push to Docker Hub
-  continue-on-error: true  # Optional: allow retry
-  run: docker push myapp:${{ github.sha }}
+ continue-on-error: true # Optional: allow retry
+ run: docker push myapp:${{ github.sha }}
 ```
 
-> 💡 **Industry Tool — GitHub Actions vs GitLab CI vs Jenkins:**
+> **Industry Tool — GitHub Actions vs GitLab CI vs Jenkins:**
 >
 > | Platform | Best for | Pricing | Setup complexity |
 > |----------|----------|---------|------------------|
@@ -432,8 +431,8 @@ jobs:
 >
 > **This chapter uses GitHub Actions because:** (1) Zero setup — works in any GitHub repo, (2) 2,000 free minutes/month, (3) Largest action marketplace (10,000+ pre-built actions). The concepts transfer 1:1 to other platforms.
 
-> 💡 **Build verdict:** Pipeline runs in 2m15s with layer caching; deployment frequency 8×/day, zero manual rollouts.
-> ➡️ SHA-tagged artifact in Docker Hub registry; proceed to Test phase.
+> **Build verdict:** Pipeline runs in 2m15s with layer caching; deployment frequency 8×/day, zero manual rollouts.
+> ➡ SHA-tagged artifact in Docker Hub registry; proceed to Test phase.
 
 ---
 
@@ -454,21 +453,21 @@ You can structure test jobs two ways:
 **Option A: Parallel (faster)** — Tests and build run simultaneously
 ```yaml
 jobs:
-  test:
-    runs-on: ubuntu-latest
-  build:
-    runs-on: ubuntu-latest
-  # Both start at the same time
+ test:
+ runs-on: ubuntu-latest
+ build:
+ runs-on: ubuntu-latest
+ # Both start at the same time
 ```
 
 **Option B: Sequential (fail fast)** — Tests run first, build only if tests pass
 ```yaml
 jobs:
-  test:
-    runs-on: ubuntu-latest
-  build:
-    needs: test  # Wait for test job to succeed
-    runs-on: ubuntu-latest
+ test:
+ runs-on: ubuntu-latest
+ build:
+ needs: test # Wait for test job to succeed
+ runs-on: ubuntu-latest
 ```
 
 **Best practice:** Option B (sequential) for small projects. Option A (parallel) when build time >5 min.
@@ -479,98 +478,97 @@ jobs:
 name: Phase 2 - Test Suite
 
 on:
-  push:
-    branches: [main]
-  pull_request:
+ push:
+ branches: [main]
+ pull_request:
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+ test:
+ runs-on: ubuntu-latest
+ timeout-minutes: 15
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+ steps:
+ - name: Checkout repository
+ uses: actions/checkout@v4
 
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+ - name: Set up Python 3.11
+ uses: actions/setup-python@v5
+ with:
+ python-version: '3.11'
 
-      # Install dependencies
-      - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install pytest pytest-cov
+ # Install dependencies
+ - name: Install dependencies
+ run: |
+ pip install -r requirements.txt
+ pip install pytest pytest-cov
 
-      # DECISION GATE 1: Unit tests
-      - name: Run unit tests
-        run: |
-          pytest tests/unit/ -v --tb=short
-          # DECISION: Any test failure stops pipeline here
+ # DECISION GATE 1: Unit tests
+ - name: Run unit tests
+ run: |
+ pytest tests/unit/ -v --tb=short
+ # DECISION: Any test failure stops pipeline here
 
-      # DECISION GATE 2: Integration tests
-      - name: Run integration tests
-        run: |
-          pytest tests/integration/ -v --tb=short
-          # Tests API endpoints, database connections
+ # DECISION GATE 2: Integration tests
+ - name: Run integration tests
+ run: |
+ pytest tests/integration/ -v --tb=short
+ # Tests API endpoints, database connections
 
-      # DECISION GATE 3: Code coverage
-      - name: Measure code coverage
-        run: |
-          pytest --cov=app --cov-report=term --cov-report=xml tests/
-          coverage_pct=$(coverage report | grep TOTAL | awk '{print $4}' | sed 's/%//')
+ # DECISION GATE 3: Code coverage
+ - name: Measure code coverage
+ run: |
+ pytest --cov=app --cov-report=term --cov-report=xml tests/
+ coverage_pct=$(coverage report | grep TOTAL | awk '{print $4}' | sed 's/%//')
 
-          # DECISION: Fail if coverage <80%
-          if (( $(echo "$coverage_pct < 80" | bc -l) )); then
-            echo "❌ Coverage $coverage_pct% is below 80% threshold"
-            exit 1
-          else
-            echo "✅ Coverage $coverage_pct% meets threshold"
-          fi
+ # DECISION: Fail if coverage <80%
+ if (( $(echo "$coverage_pct < 80" | bc -l) )); then
+ echo " Coverage $coverage_pct% is below 80% threshold"
+ exit 1
+ else
+ echo " Coverage $coverage_pct% meets threshold"
+ fi
 
-      # Upload coverage to Codecov (optional)
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          file: ./coverage.xml
-          flags: unittests
-          name: codecov-umbrella
+ # Upload coverage to Codecov (optional)
+ - name: Upload coverage to Codecov
+ uses: codecov/codecov-action@v4
+ with:
+ file: ./coverage.xml
+ flags: unittests
+ name: codecov-umbrella
 
-      # DECISION GATE 4: Security scan
-      - name: Run security scan with Safety
-        run: |
-          pip install safety
-          safety check --json
-          # DECISION: Fail on high/critical vulnerabilities
+ # DECISION GATE 4: Security scan
+ - name: Run security scan with Safety
+ run: |
+ pip install safety
+ safety check --json
+ # DECISION: Fail on high/critical vulnerabilities
 ```
 
 **Example test output:**
 
 ```
-tests/unit/test_app.py::test_health_endpoint PASSED                     [ 12%]
-tests/unit/test_app.py::test_predict_valid_input PASSED                 [ 25%]
-tests/unit/test_app.py::test_predict_invalid_input PASSED               [ 37%]
-tests/integration/test_api.py::test_end_to_end_prediction PASSED        [ 50%]
-tests/integration/test_database.py::test_db_connection PASSED           [ 62%]
-tests/integration/test_database.py::test_query_performance PASSED       [ 75%]
+tests/unit/test_app.py::test_health_endpoint PASSED [ 12%]
+tests/unit/test_app.py::test_predict_valid_input PASSED [ 25%]
+tests/unit/test_app.py::test_predict_invalid_input PASSED [ 37%]
+tests/integration/test_api.py::test_end_to_end_prediction PASSED [ 50%]
+tests/integration/test_database.py::test_db_connection PASSED [ 62%]
+tests/integration/test_database.py::test_query_performance PASSED [ 75%]
 tests/integration/test_external_api.py::test_third_party_service PASSED [ 87%]
-tests/integration/test_external_api.py::test_timeout_handling PASSED    [100%]
+tests/integration/test_external_api.py::test_timeout_handling PASSED [100%]
 
 ---------- coverage: platform linux, python 3.11.5 -----------
-Name                     Stmts   Miss  Cover
+Name Stmts Miss Cover
 --------------------------------------------
-app/__init__.py             12      0   100%
-app/routes.py               45      3    93%
-app/models.py               38      2    95%
-app/utils.py                28      5    82%
+app/__init__.py 12 0 100%
+app/routes.py 45 3 93%
+app/models.py 38 2 95%
+app/utils.py 28 5 82%
 --------------------------------------------
-TOTAL                      123      10   92%
-
-✅ TEST STAGE: All 8 tests passed, coverage 92% (target: >80%)
+TOTAL 123 10 92%
+TEST STAGE: All 8 tests passed, coverage 92% (target: >80%)
 ```
 
-> 💡 **Industry Tool — Codecov for Test Coverage Tracking:**
+> **Industry Tool — Codecov for Test Coverage Tracking:**
 >
 > **What it does:** Visualizes test coverage trends over time, shows which lines are untested, blocks PRs below coverage threshold.
 >
@@ -588,8 +586,8 @@ TOTAL                      123      10   92%
 > - **SonarCloud** — Coverage + code quality + security (more comprehensive)
 > - **Built-in GitHub PR comments** — Use `pytest-cov` + custom action to comment coverage diff on PRs
 
-> 💡 **Test verdict:** 8/8 tests passed, coverage 92% (target >80%); safety scan clean; feedback loop in 3m12s.
-> ➡️ Code validated against regressions and CVEs; proceed to Deploy phase.
+> **Test verdict:** 8/8 tests passed, coverage 92% (target >80%); safety scan clean; feedback loop in 3m12s.
+> ➡ Code validated against regressions and CVEs; proceed to Deploy phase.
 
 ---
 
@@ -609,86 +607,86 @@ Phase 3 takes the validated Docker image from Phase 1 (SHA-tagged, tested in Pha
 name: Phase 3 - Deploy Pipeline
 
 on:
-  push:
-    branches: [main]
+ push:
+ branches: [main]
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps: [...]  # Phase 2 steps
+ test:
+ runs-on: ubuntu-latest
+ steps: [...] # Phase 2 steps
 
-  build:
-    needs: test
-    runs-on: ubuntu-latest
-    steps: [...]  # Phase 1 build steps
+ build:
+ needs: test
+ runs-on: ubuntu-latest
+ steps: [...] # Phase 1 build steps
 
-  deploy-staging:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: staging
-      url: https://staging.myapp.com
+ deploy-staging:
+ needs: build
+ runs-on: ubuntu-latest
+ environment:
+ name: staging
+ url: https://staging.myapp.com
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+ steps:
+ - name: Checkout repository
+ uses: actions/checkout@v4
 
-      # Deploy to staging K8s cluster
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v3
+ # Deploy to staging K8s cluster
+ - name: Set up kubectl
+ uses: azure/setup-kubectl@v3
 
-      - name: Configure kubectl for staging
-        run: |
-          mkdir -p $HOME/.kube
-          echo "${{ secrets.KUBECONFIG_STAGING }}" | base64 -d > $HOME/.kube/config
+ - name: Configure kubectl for staging
+ run: |
+ mkdir -p $HOME/.kube
+ echo "${{ secrets.KUBECONFIG_STAGING }}" | base64 -d > $HOME/.kube/config
 
-      - name: Update staging deployment
-        run: |
-          kubectl set image deployment/myapp \
-            myapp=${{ secrets.DOCKER_USERNAME }}/myapp:${{ github.sha }} \
-            --namespace=staging
+ - name: Update staging deployment
+ run: |
+ kubectl set image deployment/myapp \
+ myapp=${{ secrets.DOCKER_USERNAME }}/myapp:${{ github.sha }} \
+ --namespace=staging
 
-          # DECISION: Wait for rollout to complete
-          kubectl rollout status deployment/myapp --namespace=staging --timeout=5m
+ # DECISION: Wait for rollout to complete
+ kubectl rollout status deployment/myapp --namespace=staging --timeout=5m
 
-          echo "✅ DEPLOY STAGE (Staging): Rollout completed with image SHA ${{ github.sha }}"
+ echo " DEPLOY STAGE (Staging): Rollout completed with image SHA ${{ github.sha }}"
 
-      - name: Run staging smoke tests
-        run: |
-          # DECISION GATE: Is staging healthy?
-          curl -f https://staging.myapp.com/health || exit 1
-          curl -f https://staging.myapp.com/api/v1/predict -d '{"input": "test"}' || exit 1
-          echo "✅ Staging smoke tests passed"
+ - name: Run staging smoke tests
+ run: |
+ # DECISION GATE: Is staging healthy?
+ curl -f https://staging.myapp.com/health || exit 1
+ curl -f https://staging.myapp.com/api/v1/predict -d '{"input": "test"}' || exit 1
+ echo " Staging smoke tests passed"
 
-  deploy-production:
-    needs: deploy-staging
-    runs-on: ubuntu-latest
-    environment:
-      name: production
-      url: https://myapp.com
+ deploy-production:
+ needs: deploy-staging
+ runs-on: ubuntu-latest
+ environment:
+ name: production
+ url: https://myapp.com
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+ steps:
+ - name: Checkout repository
+ uses: actions/checkout@v4
 
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v3
+ - name: Set up kubectl
+ uses: azure/setup-kubectl@v3
 
-      - name: Configure kubectl for production
-        run: |
-          mkdir -p $HOME/.kube
-          echo "${{ secrets.KUBECONFIG_PROD }}" | base64 -d > $HOME/.kube/config
+ - name: Configure kubectl for production
+ run: |
+ mkdir -p $HOME/.kube
+ echo "${{ secrets.KUBECONFIG_PROD }}" | base64 -d > $HOME/.kube/config
 
-      - name: Update production deployment
-        run: |
-          kubectl set image deployment/myapp \
-            myapp=${{ secrets.DOCKER_USERNAME }}/myapp:${{ github.sha }} \
-            --namespace=production
+ - name: Update production deployment
+ run: |
+ kubectl set image deployment/myapp \
+ myapp=${{ secrets.DOCKER_USERNAME }}/myapp:${{ github.sha }} \
+ --namespace=production
 
-          # DECISION: Wait for rollout to complete (with longer timeout for prod)
-          kubectl rollout status deployment/myapp --namespace=production --timeout=10m
+ # DECISION: Wait for rollout to complete (with longer timeout for prod)
+ kubectl rollout status deployment/myapp --namespace=production --timeout=10m
 
-          echo "✅ DEPLOY STAGE (Production): Rollout completed, zero downtime achieved"
+ echo " DEPLOY STAGE (Production): Rollout completed, zero downtime achieved"
 ```
 
 **Key deployment decisions:**
@@ -696,20 +694,20 @@ jobs:
 ```yaml
 # DECISION 1: Don't deploy to production if staging fails
 deploy-production:
-  needs: deploy-staging  # This dependency enforces staging-first
+ needs: deploy-staging # This dependency enforces staging-first
 
 # DECISION 2: Use GitHub Environments for manual approval gates (optional)
 environment:
-  name: production
-  # Optional: require manual approval from team lead before production deploy
-  # Configure in repo Settings → Environments → production → Required reviewers
+ name: production
+ # Optional: require manual approval from team lead before production deploy
+ # Configure in repo Settings → Environments → production → Required reviewers
 
 # DECISION 3: Rollout timeout prevents hung deployments
 kubectl rollout status deployment/myapp --timeout=5m
 # If timeout exceeded, workflow fails → no partial rollout
 ```
 
-> 💡 **Industry Tool — Argo CD for GitOps:**
+> **Industry Tool — Argo CD for GitOps:**
 >
 > **What it does:** Continuously monitors git repo for K8s manifests, automatically syncs cluster state to match git. "Git is the source of truth."
 >
@@ -727,8 +725,8 @@ kubectl rollout status deployment/myapp --timeout=5m
 >
 > **Setup:** Install Argo CD in your cluster (`kubectl apply -f argocd.yaml`), point it at your git repo, define `Application` resources. Full guide: [argo-cd.readthedocs.io](https://argo-cd.readthedocs.io/)
 
-> 💡 **Deploy verdict:** Blue-green swap with zero downtime; staging validated in 1m25s, production rollout in 2m10s.
-> ➡️ Audit trail complete with SHA `abc1234`; rollback in 45s if health check fails; proceed to Verify phase.
+> **Deploy verdict:** Blue-green swap with zero downtime; staging validated in 1m25s, production rollout in 2m10s.
+> ➡ Audit trail complete with SHA `abc1234`; rollback in 45s if health check fails; proceed to Verify phase.
 
 ---
 
@@ -761,139 +759,139 @@ import time
 PROD_URL = "https://myapp.com"
 HEALTH_ENDPOINT = f"{PROD_URL}/health"
 PREDICT_ENDPOINT = f"{PROD_URL}/api/v1/predict"
-PREVIOUS_IMAGE = "myapp:def5678"  # Get from GitHub Actions context
-CURRENT_IMAGE = "myapp:abc1234"   # Current deployment
+PREVIOUS_IMAGE = "myapp:def5678" # Get from GitHub Actions context
+CURRENT_IMAGE = "myapp:abc1234" # Current deployment
 MAX_RETRIES = 3
-RETRY_DELAY = 10  # seconds
+RETRY_DELAY = 10 # seconds
 
 def check_health():
-    """DECISION GATE 1: Is /health endpoint returning 200?"""
-    for attempt in range(MAX_RETRIES):
-        try:
-            response = requests.get(HEALTH_ENDPOINT, timeout=5)
-            if response.status_code == 200:
-                print(f"✅ Health check passed (attempt {attempt + 1})")
-                return True
-            else:
-                print(f"⚠️ Health check returned {response.status_code} (attempt {attempt + 1})")
-        except requests.RequestException as e:
-            print(f"❌ Health check failed: {e} (attempt {attempt + 1})")
+ """DECISION GATE 1: Is /health endpoint returning 200?"""
+ for attempt in range(MAX_RETRIES):
+ try:
+ response = requests.get(HEALTH_ENDPOINT, timeout=5)
+ if response.status_code == 200:
+ print(f" Health check passed (attempt {attempt + 1})")
+ return True
+ else:
+ print(f" Health check returned {response.status_code} (attempt {attempt + 1})")
+ except requests.RequestException as e:
+ print(f" Health check failed: {e} (attempt {attempt + 1})")
 
-        if attempt < MAX_RETRIES - 1:
-            time.sleep(RETRY_DELAY)
+ if attempt < MAX_RETRIES - 1:
+ time.sleep(RETRY_DELAY)
 
-    return False
+ return False
 
 def smoke_test():
-    """DECISION GATE 2: Do critical API endpoints work?"""
-    test_payload = {"input": [1, 2, 3, 4, 5]}
+ """DECISION GATE 2: Do critical API endpoints work?"""
+ test_payload = {"input": [1, 2, 3, 4, 5]}
 
-    try:
-        response = requests.post(PREDICT_ENDPOINT, json=test_payload, timeout=10)
-        if response.status_code == 200 and "prediction" in response.json():
-            print(f"✅ Smoke test passed: {response.json()}")
-            return True
-        else:
-            print(f"❌ Smoke test failed: {response.status_code} {response.text}")
-            return False
-    except requests.RequestException as e:
-        print(f"❌ Smoke test exception: {e}")
-        return False
+ try:
+ response = requests.post(PREDICT_ENDPOINT, json=test_payload, timeout=10)
+ if response.status_code == 200 and "prediction" in response.json():
+ print(f" Smoke test passed: {response.json()}")
+ return True
+ else:
+ print(f" Smoke test failed: {response.status_code} {response.text}")
+ return False
+ except requests.RequestException as e:
+ print(f" Smoke test exception: {e}")
+ return False
 
 def check_metrics():
-    """DECISION GATE 3: Are metrics within SLA?"""
-    # Example: Check average response time from Prometheus
-    # In real scenarios, query your monitoring system
+ """DECISION GATE 3: Are metrics within SLA?"""
+ # Example: Check average response time from Prometheus
+ # In real scenarios, query your monitoring system
 
-    try:
-        # Simulate Prometheus query for p95 latency
-        # response = requests.get("http://prometheus:9090/api/v1/query?query=...")
-        p95_latency = 150  # milliseconds (from monitoring system)
-        SLA_THRESHOLD = 200  # milliseconds
+ try:
+ # Simulate Prometheus query for p95 latency
+ # response = requests.get("http://prometheus:9090/api/v1/query?query=...")
+ p95_latency = 150 # milliseconds (from monitoring system)
+ SLA_THRESHOLD = 200 # milliseconds
 
-        if p95_latency < SLA_THRESHOLD:
-            print(f"✅ Metrics check passed: p95 latency {p95_latency}ms < {SLA_THRESHOLD}ms")
-            return True
-        else:
-            print(f"❌ Metrics check failed: p95 latency {p95_latency}ms >= {SLA_THRESHOLD}ms")
-            return False
-    except Exception as e:
-        print(f"❌ Metrics check exception: {e}")
-        return False
+ if p95_latency < SLA_THRESHOLD:
+ print(f" Metrics check passed: p95 latency {p95_latency}ms < {SLA_THRESHOLD}ms")
+ return True
+ else:
+ print(f" Metrics check failed: p95 latency {p95_latency}ms >= {SLA_THRESHOLD}ms")
+ return False
+ except Exception as e:
+ print(f" Metrics check exception: {e}")
+ return False
 
 def rollback():
-    """DECISION: Automatic rollback to previous version."""
-    print(f"🔄 Rolling back from {CURRENT_IMAGE} to {PREVIOUS_IMAGE}")
+ """DECISION: Automatic rollback to previous version."""
+ print(f"🔄 Rolling back from {CURRENT_IMAGE} to {PREVIOUS_IMAGE}")
 
-    try:
-        # Rollback command
-        subprocess.run([
-            "kubectl", "set", "image",
-            "deployment/myapp",
-            f"myapp={PREVIOUS_IMAGE}",
-            "--namespace=production"
-        ], check=True)
+ try:
+ # Rollback command
+ subprocess.run([
+ "kubectl", "set", "image",
+ "deployment/myapp",
+ f"myapp={PREVIOUS_IMAGE}",
+ "--namespace=production"
+ ], check=True)
 
-        # Wait for rollback to complete
-        subprocess.run([
-            "kubectl", "rollout", "status",
-            "deployment/myapp",
-            "--namespace=production",
-            "--timeout=5m"
-        ], check=True)
+ # Wait for rollback to complete
+ subprocess.run([
+ "kubectl", "rollout", "status",
+ "deployment/myapp",
+ "--namespace=production",
+ "--timeout=5m"
+ ], check=True)
 
-        print(f"✅ Rollback complete: Now running {PREVIOUS_IMAGE}")
-        return True
-    except subprocess.CalledProcessError as e:
-        print(f"❌ Rollback failed: {e}")
-        return False
+ print(f" Rollback complete: Now running {PREVIOUS_IMAGE}")
+ return True
+ except subprocess.CalledProcessError as e:
+ print(f" Rollback failed: {e}")
+ return False
 
 def main():
-    """Run all Phase 4 validation checks."""
-    print(f"Starting Phase 4 validation for {CURRENT_IMAGE}...")
+ """Run all Phase 4 validation checks."""
+ print(f"Starting Phase 4 validation for {CURRENT_IMAGE}...")
 
-    # Run checks in sequence
-    health_ok = check_health()
-    if not health_ok:
-        print("❌ Health check failed after 3 retries → ROLLBACK")
-        rollback()
-        sys.exit(1)
+ # Run checks in sequence
+ health_ok = check_health()
+ if not health_ok:
+ print(" Health check failed after 3 retries → ROLLBACK")
+ rollback()
+ sys.exit(1)
 
-    smoke_ok = smoke_test()
-    if not smoke_ok:
-        print("❌ Smoke test failed → ROLLBACK")
-        rollback()
-        sys.exit(1)
+ smoke_ok = smoke_test()
+ if not smoke_ok:
+ print(" Smoke test failed → ROLLBACK")
+ rollback()
+ sys.exit(1)
 
-    metrics_ok = check_metrics()
-    if not metrics_ok:
-        print("❌ Metrics check failed → ROLLBACK")
-        rollback()
-        sys.exit(1)
+ metrics_ok = check_metrics()
+ if not metrics_ok:
+ print(" Metrics check failed → ROLLBACK")
+ rollback()
+ sys.exit(1)
 
-    print("✅ All Phase 4 checks passed — deployment validated")
-    sys.exit(0)
+ print(" All Phase 4 checks passed — deployment validated")
+ sys.exit(0)
 
 if __name__ == "__main__":
-    main()
+ main()
 ```
 
 **Add to GitHub Actions workflow:**
 
 ```yaml
 deploy-production:
-  # ... (deployment steps from Phase 3)
+ # ... (deployment steps from Phase 3)
 
-  - name: Phase 4 - Verify deployment
-    env:
-      PREVIOUS_IMAGE: ${{ needs.build.outputs.previous_sha }}
-      CURRENT_IMAGE: ${{ github.sha }}
-    run: |
-      python scripts/health_check_and_rollback.py
-      # DECISION: Script exits with code 1 → workflow fails, rollback triggered
+ - name: Phase 4 - Verify deployment
+ env:
+ PREVIOUS_IMAGE: ${{ needs.build.outputs.previous_sha }}
+ CURRENT_IMAGE: ${{ github.sha }}
+ run: |
+ python scripts/health_check_and_rollback.py
+ # DECISION: Script exits with code 1 → workflow fails, rollback triggered
 ```
 
-> 💡 **Industry Tool — Spinnaker for Advanced Deployment Strategies:**
+> **Industry Tool — Spinnaker for Advanced Deployment Strategies:**
 >
 > **What it does:** Multi-cloud deployment orchestrator with built-in canary analysis, blue/green deployments, automated rollback.
 >
@@ -913,8 +911,8 @@ deploy-production:
 >
 > **Setup:** Deploy Spinnaker to K8s cluster (requires 4+ GB RAM), configure cloud providers, define pipelines in Spinnaker UI. Full guide: [spinnaker.io/setup](https://spinnaker.io/setup/)
 
-> 💡 **Verify verdict:** Health, smoke, and p95 latency (150ms < 200ms SLA) all passed — no rollback needed.
-> ➡️ Deployment confirmed safe; automatic rollback proven; proceed to Monitor phase.
+> **Verify verdict:** Health, smoke, and p95 latency (150ms < 200ms SLA) all passed — no rollback needed.
+> ➡ Deployment confirmed safe; automatic rollback proven; proceed to Monitor phase.
 
 ---
 
@@ -948,32 +946,32 @@ from datetime import datetime, timedelta
 
 GITHUB_API = "https://api.github.com"
 REPO = "myorg/myapp"
-TOKEN = "ghp_yourtoken"  # GitHub Personal Access Token
+TOKEN = "ghp_yourtoken" # GitHub Personal Access Token
 
 def get_deployment_frequency():
-    """Count production deployments in last 7 days."""
-    url = f"{GITHUB_API}/repos/{REPO}/actions/runs"
-    headers = {"Authorization": f"Bearer {TOKEN}"}
-    params = {
-        "workflow_id": "ci-cd.yml",
-        "event": "push",
-        "branch": "main",
-        "created": f">={(datetime.now() - timedelta(days=7)).isoformat()}"
-    }
+ """Count production deployments in last 7 days."""
+ url = f"{GITHUB_API}/repos/{REPO}/actions/runs"
+ headers = {"Authorization": f"Bearer {TOKEN}"}
+ params = {
+ "workflow_id": "ci-cd.yml",
+ "event": "push",
+ "branch": "main",
+ "created": f">={(datetime.now() - timedelta(days=7)).isoformat()}"
+ }
 
-    response = requests.get(url, headers=headers, params=params)
-    workflow_runs = response.json()["workflow_runs"]
+ response = requests.get(url, headers=headers, params=params)
+ workflow_runs = response.json()["workflow_runs"]
 
-    # Filter for successful deployments that reached production
-    successful_deploys = [
-        run for run in workflow_runs
-        if run["conclusion"] == "success"
-    ]
+ # Filter for successful deployments that reached production
+ successful_deploys = [
+ run for run in workflow_runs
+ if run["conclusion"] == "success"
+ ]
 
-    print(f"✅ Deployment Frequency: {len(successful_deploys)} deploys in last 7 days")
-    print(f"   Average: {len(successful_deploys) / 7:.1f} deploys/day")
+ print(f" Deployment Frequency: {len(successful_deploys)} deploys in last 7 days")
+ print(f" Average: {len(successful_deploys) / 7:.1f} deploys/day")
 
-    return len(successful_deploys)
+ return len(successful_deploys)
 ```
 
 **Metric 2: Lead Time for Changes**
@@ -987,26 +985,26 @@ def get_deployment_frequency():
 **How to track:**
 ```python
 def get_lead_time():
-    """Calculate average time from commit to production deploy."""
-    url = f"{GITHUB_API}/repos/{REPO}/actions/runs"
-    headers = {"Authorization": f"Bearer {TOKEN}"}
+ """Calculate average time from commit to production deploy."""
+ url = f"{GITHUB_API}/repos/{REPO}/actions/runs"
+ headers = {"Authorization": f"Bearer {TOKEN}"}
 
-    response = requests.get(url, headers=headers, params={"per_page": 10})
-    workflow_runs = response.json()["workflow_runs"]
+ response = requests.get(url, headers=headers, params={"per_page": 10})
+ workflow_runs = response.json()["workflow_runs"]
 
-    lead_times = []
-    for run in workflow_runs:
-        if run["conclusion"] == "success":
-            # Time from commit (run_started_at) to deploy complete (updated_at)
-            started = datetime.fromisoformat(run["run_started_at"].replace("Z", "+00:00"))
-            completed = datetime.fromisoformat(run["updated_at"].replace("Z", "+00:00"))
-            lead_time = (completed - started).total_seconds() / 60  # minutes
-            lead_times.append(lead_time)
+ lead_times = []
+ for run in workflow_runs:
+ if run["conclusion"] == "success":
+ # Time from commit (run_started_at) to deploy complete (updated_at)
+ started = datetime.fromisoformat(run["run_started_at"].replace("Z", "+00:00"))
+ completed = datetime.fromisoformat(run["updated_at"].replace("Z", "+00:00"))
+ lead_time = (completed - started).total_seconds() / 60 # minutes
+ lead_times.append(lead_time)
 
-    avg_lead_time = sum(lead_times) / len(lead_times)
-    print(f"✅ Lead Time: {avg_lead_time:.1f} minutes (median of last 10 deploys)")
+ avg_lead_time = sum(lead_times) / len(lead_times)
+ print(f" Lead Time: {avg_lead_time:.1f} minutes (median of last 10 deploys)")
 
-    return avg_lead_time
+ return avg_lead_time
 ```
 
 **Metric 3: Change Failure Rate**
@@ -1020,21 +1018,21 @@ def get_lead_time():
 **How to track:**
 ```python
 def get_change_failure_rate():
-    """Calculate % of failed deployments (rollbacks or failed health checks)."""
-    url = f"{GITHUB_API}/repos/{REPO}/actions/runs"
-    headers = {"Authorization": f"Bearer {TOKEN}"}
-    params = {"created": f">={(datetime.now() - timedelta(days=30)).isoformat()}"}
+ """Calculate % of failed deployments (rollbacks or failed health checks)."""
+ url = f"{GITHUB_API}/repos/{REPO}/actions/runs"
+ headers = {"Authorization": f"Bearer {TOKEN}"}
+ params = {"created": f">={(datetime.now() - timedelta(days=30)).isoformat()}"}
 
-    response = requests.get(url, headers=headers, params=params)
-    workflow_runs = response.json()["workflow_runs"]
+ response = requests.get(url, headers=headers, params=params)
+ workflow_runs = response.json()["workflow_runs"]
 
-    total_deploys = len(workflow_runs)
-    failed_deploys = len([run for run in workflow_runs if run["conclusion"] == "failure"])
+ total_deploys = len(workflow_runs)
+ failed_deploys = len([run for run in workflow_runs if run["conclusion"] == "failure"])
 
-    failure_rate = (failed_deploys / total_deploys) * 100 if total_deploys > 0 else 0
-    print(f"✅ Change Failure Rate: {failure_rate:.1f}% ({failed_deploys}/{total_deploys} deploys failed)")
+ failure_rate = (failed_deploys / total_deploys) * 100 if total_deploys > 0 else 0
+ print(f" Change Failure Rate: {failure_rate:.1f}% ({failed_deploys}/{total_deploys} deploys failed)")
 
-    return failure_rate
+ return failure_rate
 ```
 
 **Metric 4: Time to Restore Service**
@@ -1048,27 +1046,27 @@ def get_change_failure_rate():
 **How to track:**
 ```python
 def get_time_to_restore():
-    """Calculate average time from rollback trigger to service restoration."""
-    # This requires tracking incident timestamps in your monitoring system
-    # Example: Parse GitHub Actions logs for "Rolling back" → "Rollback complete"
+ """Calculate average time from rollback trigger to service restoration."""
+ # This requires tracking incident timestamps in your monitoring system
+ # Example: Parse GitHub Actions logs for "Rolling back" → "Rollback complete"
 
-    # Simulated example:
-    incidents = [
-        {"started": "2024-01-15T14:32:00Z", "resolved": "2024-01-15T14:47:00Z"},  # 15 min
-        {"started": "2024-01-20T09:15:00Z", "resolved": "2024-01-20T09:58:00Z"},  # 43 min
-    ]
+ # Simulated example:
+ incidents = [
+ {"started": "2024-01-15T14:32:00Z", "resolved": "2024-01-15T14:47:00Z"}, # 15 min
+ {"started": "2024-01-20T09:15:00Z", "resolved": "2024-01-20T09:58:00Z"}, # 43 min
+ ]
 
-    restore_times = []
-    for incident in incidents:
-        started = datetime.fromisoformat(incident["started"].replace("Z", "+00:00"))
-        resolved = datetime.fromisoformat(incident["resolved"].replace("Z", "+00:00"))
-        restore_time = (resolved - started).total_seconds() / 60  # minutes
-        restore_times.append(restore_time)
+ restore_times = []
+ for incident in incidents:
+ started = datetime.fromisoformat(incident["started"].replace("Z", "+00:00"))
+ resolved = datetime.fromisoformat(incident["resolved"].replace("Z", "+00:00"))
+ restore_time = (resolved - started).total_seconds() / 60 # minutes
+ restore_times.append(restore_time)
 
-    avg_restore_time = sum(restore_times) / len(restore_times) if restore_times else 0
-    print(f"✅ Time to Restore: {avg_restore_time:.0f} minutes (average of last {len(restore_times)} incidents)")
+ avg_restore_time = sum(restore_times) / len(restore_times) if restore_times else 0
+ print(f" Time to Restore: {avg_restore_time:.0f} minutes (average of last {len(restore_times)} incidents)")
 
-    return avg_restore_time
+ return avg_restore_time
 ```
 
 **Run weekly:**
@@ -1076,16 +1074,15 @@ def get_time_to_restore():
 python scripts/dora_metrics.py
 
 # Output:
-✅ Deployment Frequency: 14 deploys in last 7 days (2.0 deploys/day)
-✅ Lead Time: 4.2 minutes (median of last 10 deploys)
-✅ Change Failure Rate: 12.5% (2/16 deploys failed)
-✅ Time to Restore: 29 minutes (average of last 2 incidents)
-
-🎯 DORA Category: HIGH PERFORMER
-   All four metrics meet high-performer thresholds
+Deployment Frequency: 14 deploys in last 7 days (2.0 deploys/day)
+Lead Time: 4.2 minutes (median of last 10 deploys)
+Change Failure Rate: 12.5% (2/16 deploys failed)
+Time to Restore: 29 minutes (average of last 2 incidents)
+DORA Category: HIGH PERFORMER
+ All four metrics meet high-performer thresholds
 ```
 
-> 💡 **Industry Standard — DORA Metrics Benchmarking:**
+> **Industry Standard — DORA Metrics Benchmarking:**
 >
 > **Where these metrics come from:** The DORA (DevOps Research and Assessment) team at Google surveyed 30,000+ engineering organizations over 7 years (2014-2021). They found that these four metrics are the strongest predictors of:
 > - Software delivery performance
@@ -1117,45 +1114,45 @@ python scripts/dora_metrics.py
 ```yaml
 # Add timing annotations to workflow
 - name: Phase 1 - Lint
-  id: lint
-  run: |
-    start_time=$(date +%s)
-    flake8 app/
-    end_time=$(date +%s)
-    echo "lint_duration=$((end_time - start_time))" >> $GITHUB_OUTPUT
+ id: lint
+ run: |
+ start_time=$(date +%s)
+ flake8 app/
+ end_time=$(date +%s)
+ echo "lint_duration=$((end_time - start_time))" >> $GITHUB_OUTPUT
 
 - name: Phase 1 - Build Docker image
-  id: build
-  run: |
-    start_time=$(date +%s)
-    docker build -t myapp:${{ github.sha }} .
-    end_time=$(date +%s)
-    echo "build_duration=$((end_time - start_time))" >> $GITHUB_OUTPUT
+ id: build
+ run: |
+ start_time=$(date +%s)
+ docker build -t myapp:${{ github.sha }} .
+ end_time=$(date +%s)
+ echo "build_duration=$((end_time - start_time))" >> $GITHUB_OUTPUT
 
 - name: Phase 2 - Run tests
-  id: test
-  run: |
-    start_time=$(date +%s)
-    pytest tests/
-    end_time=$(date +%s)
-    echo "test_duration=$((end_time - start_time))" >> $GITHUB_OUTPUT
+ id: test
+ run: |
+ start_time=$(date +%s)
+ pytest tests/
+ end_time=$(date +%s)
+ echo "test_duration=$((end_time - start_time))" >> $GITHUB_OUTPUT
 
 - name: Report timing
-  run: |
-    echo "⏱️ Pipeline Timing Breakdown:"
-    echo "  Lint:  ${{ steps.lint.outputs.lint_duration }}s"
-    echo "  Build: ${{ steps.build.outputs.build_duration }}s"
-    echo "  Test:  ${{ steps.test.outputs.test_duration }}s"
+ run: |
+ echo "⏱ Pipeline Timing Breakdown:"
+ echo " Lint: ${{ steps.lint.outputs.lint_duration }}s"
+ echo " Build: ${{ steps.build.outputs.build_duration }}s"
+ echo " Test: ${{ steps.test.outputs.test_duration }}s"
 ```
 
 **Example output:**
 ```
-⏱️ Pipeline Timing Breakdown:
-  Lint:  12s
-  Build: 145s  ← BOTTLENECK (cache Docker layers)
-  Test:  87s   ← BOTTLENECK (parallelize tests)
-  Deploy: 62s
-  Total: 306s (5.1 minutes)
+⏱ Pipeline Timing Breakdown:
+ Lint: 12s
+ Build: 145s ← BOTTLENECK (cache Docker layers)
+ Test: 87s ← BOTTLENECK (parallelize tests)
+ Deploy: 62s
+ Total: 306s (5.1 minutes)
 ```
 
 **Fix bottlenecks:**
@@ -1163,37 +1160,37 @@ python scripts/dora_metrics.py
 ```yaml
 # Optimization 1: Cache Docker layers
 - name: Build Docker image (with cache)
-  uses: docker/build-push-action@v5
-  with:
-    context: .
-    push: false
-    cache-from: type=gha  # GitHub Actions cache
-    cache-to: type=gha,mode=max
-    tags: myapp:${{ github.sha }}
-  # RESULT: Build time 145s → 35s (4x faster)
+ uses: docker/build-push-action@v5
+ with:
+ context: .
+ push: false
+ cache-from: type=gha # GitHub Actions cache
+ cache-to: type=gha,mode=max
+ tags: myapp:${{ github.sha }}
+ # RESULT: Build time 145s → 35s (4x faster)
 
 # Optimization 2: Parallelize tests
 - name: Run unit tests (parallel)
-  run: pytest tests/unit/ -n auto  # pytest-xdist: auto-detect CPU count
-  # RESULT: Test time 87s → 28s (3x faster)
+ run: pytest tests/unit/ -n auto # pytest-xdist: auto-detect CPU count
+ # RESULT: Test time 87s → 28s (3x faster)
 
 # Optimization 3: Cache Python dependencies
 - name: Cache pip packages
-  uses: actions/cache@v4
-  with:
-    path: ~/.cache/pip
-    key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
-  # RESULT: Dependency install 45s → 8s (5.6x faster)
+ uses: actions/cache@v4
+ with:
+ path: ~/.cache/pip
+ key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+ # RESULT: Dependency install 45s → 8s (5.6x faster)
 ```
 
 **After optimizations:**
 ```
-⏱️ Pipeline Timing Breakdown:
-  Lint:  12s
-  Build: 35s  ✅ (was 145s)
-  Test:  28s  ✅ (was 87s)
-  Deploy: 62s
-  Total: 137s (2.3 minutes)  🎯 Target achieved!
+⏱ Pipeline Timing Breakdown:
+ Lint: 12s
+ Build: 35s (was 145s)
+ Test: 28s (was 87s)
+ Deploy: 62s
+ Total: 137s (2.3 minutes) Target achieved!
 ```
 
 ### 7.3 · Flaky Test Detection
@@ -1209,74 +1206,73 @@ import json
 from collections import defaultdict
 
 def run_tests_multiple_times(iterations=10):
-    """Run test suite N times, track failures."""
-    results = defaultdict(lambda: {"passed": 0, "failed": 0})
+ """Run test suite N times, track failures."""
+ results = defaultdict(lambda: {"passed": 0, "failed": 0})
 
-    for i in range(iterations):
-        print(f"Running test suite iteration {i + 1}/{iterations}...")
-        result = subprocess.run(
-            ["pytest", "tests/", "--json-report", "--json-report-file=report.json"],
-            capture_output=True
-        )
+ for i in range(iterations):
+ print(f"Running test suite iteration {i + 1}/{iterations}...")
+ result = subprocess.run(
+ ["pytest", "tests/", "--json-report", "--json-report-file=report.json"],
+ capture_output=True
+ )
 
-        with open("report.json") as f:
-            report = json.load(f)
+ with open("report.json") as f:
+ report = json.load(f)
 
-        for test in report["tests"]:
-            test_name = test["nodeid"]
-            if test["outcome"] == "passed":
-                results[test_name]["passed"] += 1
-            else:
-                results[test_name]["failed"] += 1
+ for test in report["tests"]:
+ test_name = test["nodeid"]
+ if test["outcome"] == "passed":
+ results[test_name]["passed"] += 1
+ else:
+ results[test_name]["failed"] += 1
 
-    # Identify flaky tests (passed sometimes, failed sometimes)
-    flaky_tests = []
-    for test_name, counts in results.items():
-        total = counts["passed"] + counts["failed"]
-        pass_rate = (counts["passed"] / total) * 100
+ # Identify flaky tests (passed sometimes, failed sometimes)
+ flaky_tests = []
+ for test_name, counts in results.items():
+ total = counts["passed"] + counts["failed"]
+ pass_rate = (counts["passed"] / total) * 100
 
-        if 5 < pass_rate < 95:  # Neither always passes nor always fails
-            flaky_tests.append({
-                "test": test_name,
-                "pass_rate": pass_rate,
-                "passed": counts["passed"],
-                "failed": counts["failed"]
-            })
+ if 5 < pass_rate < 95: # Neither always passes nor always fails
+ flaky_tests.append({
+ "test": test_name,
+ "pass_rate": pass_rate,
+ "passed": counts["passed"],
+ "failed": counts["failed"]
+ })
 
-    return flaky_tests
+ return flaky_tests
 
 if __name__ == "__main__":
-    print("🔍 Running flaky test detection (10 iterations)...")
-    flaky = run_tests_multiple_times(iterations=10)
+ print(" Running flaky test detection (10 iterations)...")
+ flaky = run_tests_multiple_times(iterations=10)
 
-    if flaky:
-        print(f"\n❌ Found {len(flaky)} flaky tests:")
-        for test in sorted(flaky, key=lambda x: x["pass_rate"]):
-            print(f"  • {test['test']}")
-            print(f"    Pass rate: {test['pass_rate']:.0f}% ({test['passed']}/10 runs)")
+ if flaky:
+ print(f"\n Found {len(flaky)} flaky tests:")
+ for test in sorted(flaky, key=lambda x: x["pass_rate"]):
+ print(f" • {test['test']}")
+ print(f" Pass rate: {test['pass_rate']:.0f}% ({test['passed']}/10 runs)")
 
-        print("\n🔧 Recommended actions:")
-        print("  1. Quarantine flaky tests: @pytest.mark.skip(reason='flaky - #123')")
-        print("  2. Investigate root causes: race conditions? external dependencies?")
-        print("  3. Track in separate CI job: 'flaky-tests.yml' (doesn't block merges)")
-    else:
-        print("\n✅ No flaky tests detected! Test suite is stable.")
+ print("\n Recommended actions:")
+ print(" 1. Quarantine flaky tests: @pytest.mark.skip(reason='flaky - #123')")
+ print(" 2. Investigate root causes: race conditions? external dependencies?")
+ print(" 3. Track in separate CI job: 'flaky-tests.yml' (doesn't block merges)")
+ else:
+ print("\n No flaky tests detected! Test suite is stable.")
 ```
 
 **Example output:**
 ```
-🔍 Running flaky test detection (10 iterations)...
+ Running flaky test detection (10 iterations)...
+Found 2 flaky tests:
+ • tests/integration/test_external_api.py::test_third_party_timeout
+ Pass rate: 60% (6/10 runs)
+ • tests/unit/test_cache.py::test_concurrent_writes
+ Pass rate: 80% (8/10 runs)
 
-❌ Found 2 flaky tests:
-  • tests/integration/test_external_api.py::test_third_party_timeout
-    Pass rate: 60% (6/10 runs)
-  • tests/unit/test_cache.py::test_concurrent_writes
-    Pass rate: 80% (8/10 runs)
-
-🔧 Recommended actions:
-  1. Quarantine flaky tests: @pytest.mark.skip(reason='flaky - #123')
-  2. Investigate root causes: race conditions? external dependencies?
-  3. Track in separate CI job: 'flaky-tests.yml' (doesn't block merges)
+ Recommended actions:
+ 1. Quarantine flaky tests: @pytest.mark.skip(reason='flaky - #123')
+ 2. Investigate root causes: race conditions? external dependencies?
+ 3. Track in separate CI job: 'flaky-tests.yml' (doesn't block merges)
 ```
 
 **Fix the flaky tests:**
@@ -1285,20 +1281,20 @@ if __name__ == "__main__":
 # tests/integration/test_external_api.py
 @pytest.mark.skip(reason="Flaky due to third-party API timeouts - Issue #456")
 def test_third_party_timeout():
-    # Quarantine until API adds retry logic
-    ...
+ # Quarantine until API adds retry logic
+ ...
 
 # tests/unit/test_cache.py
 def test_concurrent_writes():
-    # Root cause: Race condition in cache writes
-    # Fix: Add proper locking
-    with cache.lock():
-        cache.set("key", "value")
-    assert cache.get("key") == "value"
+ # Root cause: Race condition in cache writes
+ # Fix: Add proper locking
+ with cache.lock():
+ cache.set("key", "value")
+ assert cache.get("key") == "value"
 ```
 
-> 💡 **Monitor verdict:** DORA metrics all green — 14 deploys/week, 2.3 min lead time, 12.5% failure rate, 29 min MTTR.
-> ➡️ Pipeline optimized; add Prometheus dashboards (Ch.5) for full observability.
+> **Monitor verdict:** DORA metrics all green — 14 deploys/week, 2.3 min lead time, 12.5% failure rate, 29 min MTTR.
+> ➡ Pipeline optimized; add Prometheus dashboards (Ch.5) for full observability.
 
 ---
 
@@ -1326,15 +1322,15 @@ def test_concurrent_writes():
 - Common mistake: `steps` must be indented under `jobs.<job_id>`
 
 ```yaml
-# ❌ WRONG
+# WRONG
 jobs:
-  test:
-  runs-on: ubuntu-latest
+ test:
+ runs-on: ubuntu-latest
 
-# ✅ CORRECT
+# CORRECT
 jobs:
-  test:
-    runs-on: ubuntu-latest
+ test:
+ runs-on: ubuntu-latest
 ```
 
 ### 5.3 · Runner Timeout (6 Hours Max)
@@ -1350,9 +1346,9 @@ jobs:
 
 ```yaml
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10  # Kill job if it takes >10 minutes
+ test:
+ runs-on: ubuntu-latest
+ timeout-minutes: 10 # Kill job if it takes >10 minutes
 ```
 
 ---
@@ -1369,18 +1365,18 @@ Your team pushed this workflow, but it's failing immediately. Identify and fix *
 name: Deploy App
 
 on:
-  push:
-  branches: [main]
+ push:
+ branches: [main]
 
 jobs:
-  build:
-  runs-on: ubuntu-latest
-  steps:
-    - uses: actions/checkout@v4
-    - name: Build image
-      run: docker build -t myapp .
-    - name: Push to Docker Hub
-      run: docker push myapp:latest
+ build:
+ runs-on: ubuntu-latest
+ steps:
+ - uses: actions/checkout@v4
+ - name: Build image
+ run: docker build -t myapp .
+ - name: Push to Docker Hub
+ run: docker push myapp:latest
 ```
 
 <details>
@@ -1388,44 +1384,44 @@ jobs:
 
 **Error 1:** Incorrect indentation for `branches` (Phase 1: Triggers)
 ```yaml
-# ❌ WRONG
+# WRONG
 on:
-  push:
-  branches: [main]
+ push:
+ branches: [main]
 
-# ✅ CORRECT
+# CORRECT
 on:
-  push:
-    branches: [main]
+ push:
+ branches: [main]
 ```
 
 **Error 2:** `runs-on` not indented under `build` (Phase 1: Jobs)
 ```yaml
-# ❌ WRONG
+# WRONG
 jobs:
-  build:
-  runs-on: ubuntu-latest
+ build:
+ runs-on: ubuntu-latest
 
-# ✅ CORRECT
+# CORRECT
 jobs:
-  build:
-    runs-on: ubuntu-latest
+ build:
+ runs-on: ubuntu-latest
 ```
 
 **Error 3:** Pushing to Docker Hub without logging in (Phase 1: Secrets)
 ```yaml
-# ❌ WRONG (missing login step)
+# WRONG (missing login step)
 - name: Push to Docker Hub
-  run: docker push myapp:latest
+ run: docker push myapp:latest
 
-# ✅ CORRECT
+# CORRECT
 - name: Log in to Docker Hub
-  uses: docker/login-action@v3
-  with:
-    username: ${{ secrets.DOCKER_USERNAME }}
-    password: ${{ secrets.DOCKER_TOKEN }}
+ uses: docker/login-action@v3
+ with:
+ username: ${{ secrets.DOCKER_USERNAME }}
+ password: ${{ secrets.DOCKER_TOKEN }}
 - name: Push to Docker Hub
-  run: docker push ${{ secrets.DOCKER_USERNAME }}/myapp:latest
+ run: docker push ${{ secrets.DOCKER_USERNAME }}/myapp:latest
 ```
 
 </details>
@@ -1450,23 +1446,23 @@ Your team just merged a 500-line feature. The Phase 2 test job is now **failing*
 
 **Fix:**
 1. **Identify untested code:**
-   ```bash
-   pytest --cov=app --cov-report=html tests/
-   open htmlcov/index.html  # Shows red/green coverage per file
-   ```
+ ```bash
+ pytest --cov=app --cov-report=html tests/
+ open htmlcov/index.html # Shows red/green coverage per file
+ ```
 
 2. **Write tests for uncovered lines:**
-   - Add unit tests for new functions (target: 90% coverage)
-   - Add integration tests for new API endpoints (target: 100% of endpoints)
+ - Add unit tests for new functions (target: 90% coverage)
+ - Add integration tests for new API endpoints (target: 100% of endpoints)
 
 3. **Alternative (temporary):** Lower threshold to 70% and create tech debt ticket:
-   ```yaml
-   # In Phase 2 workflow
-   if (( $(echo "$coverage_pct < 70" | bc -l) )); then
-     echo "⚠️ Coverage below 70% — technical debt tracked in #789"
-     # Allow merge but flag in review
-   fi
-   ```
+ ```yaml
+ # In Phase 2 workflow
+ if (( $(echo "$coverage_pct < 70" | bc -l) )); then
+ echo " Coverage below 70% — technical debt tracked in #789"
+ # Allow merge but flag in review
+ fi
+ ```
 
 **Industry practice:** Never lower coverage threshold without a plan to increase it. High-performing teams maintain >80% coverage and block merges below threshold.
 
@@ -1483,8 +1479,8 @@ Your Phase 3 deployment completed successfully. Phase 4 health checks passed. Bu
 ```bash
 # Manual rollback to previous version
 kubectl set image deployment/myapp \
-  myapp=myapp:def5678 \
-  --namespace=production
+ myapp=myapp:def5678 \
+ --namespace=production
 
 kubectl rollout status deployment/myapp --namespace=production --timeout=5m
 ```
@@ -1492,43 +1488,43 @@ kubectl rollout status deployment/myapp --namespace=production --timeout=5m
 **Root cause analysis (Phase 5 monitoring):**
 
 1. **Check Phase 4 validation:** Why didn't health checks catch this?
-   ```python
-   # Health check was too basic
-   @app.route('/health')
-   def health():
-       return {'status': 'ok'}, 200  # Only checks if server responds
+ ```python
+ # Health check was too basic
+ @app.route('/health')
+ def health():
+ return {'status': 'ok'}, 200 # Only checks if server responds
 
-   # FIX: Add critical endpoint checks
-   @app.route('/health')
-   def health():
-       try:
-           db.session.execute('SELECT 1')  # Database alive?
-           redis_client.ping()              # Cache alive?
-           payment_api.check_status()       # Payment service alive?
-           return {'status': 'ok'}, 200
-       except Exception as e:
-           return {'status': 'error', 'detail': str(e)}, 500
-   ```
+ # FIX: Add critical endpoint checks
+ @app.route('/health')
+ def health():
+ try:
+ db.session.execute('SELECT 1') # Database alive?
+ redis_client.ping() # Cache alive?
+ payment_api.check_status() # Payment service alive?
+ return {'status': 'ok'}, 200
+ except Exception as e:
+ return {'status': 'error', 'detail': str(e)}, 500
+ ```
 
 2. **Add smoke test for `/checkout` endpoint (Phase 4):**
-   ```python
-   # scripts/health_check_and_rollback.py
-   def smoke_test():
-       # Test critical business endpoint, not just /health
-       response = requests.post(
-           f"{PROD_URL}/api/v1/checkout",
-           json={"cart_id": "test_cart_123", "payment_method": "test"}
-       )
-       if response.status_code != 200:
-           print(f"❌ /checkout endpoint failed: {response.status_code}")
-           return False
-       return True
-   ```
+ ```python
+ # scripts/health_check_and_rollback.py
+ def smoke_test():
+ # Test critical business endpoint, not just /health
+ response = requests.post(
+ f"{PROD_URL}/api/v1/checkout",
+ json={"cart_id": "test_cart_123", "payment_method": "test"}
+ )
+ if response.status_code != 200:
+ print(f" /checkout endpoint failed: {response.status_code}")
+ return False
+ return True
+ ```
 
 3. **Track change failure rate (Phase 5):**
-   - This deploy counts as a "change failure" (required rollback)
-   - Update DORA metric: `change_failure_rate = 3/17 = 17.6%` (above 15% threshold)
-   - Root cause: Insufficient integration tests in Phase 2
+ - This deploy counts as a "change failure" (required rollback)
+ - Update DORA metric: `change_failure_rate = 3/17 = 17.6%` (above 15% threshold)
+ - Root cause: Insufficient integration tests in Phase 2
 
 **Prevent recurrence:**
 - **Phase 2 fix:** Add integration test for `/checkout` endpoint

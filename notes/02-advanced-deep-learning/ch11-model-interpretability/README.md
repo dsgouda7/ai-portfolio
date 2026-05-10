@@ -8,17 +8,17 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: ProductionCV is production-ready on metrics. Make it **auditable**.
+> **The mission**: ProductionCV is production-ready on metrics. Make it **auditable**.
 
 The 5 constraints from Ch.1–10 are all met:
-- ✅ mAP@0.5 = 82.1%
-- ✅ IoU = 71.2%
-- ✅ Latency = 35ms
-- ✅ Model size = 6.8 MB
-- ✅ Trained on 850 labeled images
+- mAP@0.5 = 82.1%
+- IoU = 71.2%
+- Latency = 35ms
+- Model size = 6.8 MB
+- Trained on 850 labeled images
 
 **New constraint:**
-- ❌ **Auditability:** Can you explain *which shelf regions* drove a specific detection decision? Without this, enterprise procurement won't sign off.
+- **Auditability:** Can you explain *which shelf regions* drove a specific detection decision? Without this, enterprise procurement won't sign off.
 
 **What this chapter unlocks:** Two families of auditing tools — one that reveals what the model *has learned*, and one that explains *why it made a specific call*:
 
@@ -89,5 +89,4 @@ After this chapter:
 ---
 
 ## Bridge
-
-➡️ This chapter completes the ProductionCV system. The full arc: ResNets (Ch.1) → Compression (Ch.10) → Auditability (Ch.11). A model that is fast, small, accurate, data-efficient, *and* explainable is production-ready in enterprise environments.
+This chapter completes the ProductionCV system. The full arc: ResNets (Ch.1) → Compression (Ch.10) → Auditability (Ch.11). A model that is fast, small, accurate, data-efficient, *and* explainable is production-ready in enterprise environments.

@@ -25,7 +25,7 @@ The Regression track achieved <$40k MAE with tabular models alone. **This track'
 
 > **Track Mission**: Achieve ≤$35k MAE on Ames Housing property valuation using **three modalities** — tabular features (dense encoder), natural language descriptions (Transformer encoder), and aerial images (CNN encoder). Each modality must contribute ≥$5k MAE improvement (ablation requirement).
 
-> ⚡ **Note on chapter numbering**: The AUTHORING_GUIDE references these chapters as Ch.3–Ch.10 in the old single-track layout. Within this track, they are numbered Ch.1–Ch.10.
+> **Note on chapter numbering**: The AUTHORING_GUIDE references these chapters as Ch.3–Ch.10 in the old single-track layout. Within this track, they are numbered Ch.1–Ch.10.
 
 ### TransformerUnify Constraints
 
@@ -87,14 +87,14 @@ Every chapter demonstrates unification using running examples that span regressi
 
 ```mermaid
 graph LR
-    A[Input Features] --> H1[Hidden 64<br/>ReLU]
-    H1 --> H2[Hidden 32<br/>ReLU]
-    H2 --> R[Linear → MSE<br/>Regression]
-    H2 --> C[Sigmoid → BCE<br/>Classification]
-    style R fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style C fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style H1 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style H2 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ A[Input Features] --> H1[Hidden 64<br/>ReLU]
+ H1 --> H2[Hidden 32<br/>ReLU]
+ H2 --> R[Linear → MSE<br/>Regression]
+ H2 --> C[Sigmoid → BCE<br/>Classification]
+ style R fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style C fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style H1 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style H2 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 **Status after Act 1**: You can build feedforward networks for any task. But how do you *train* them?
@@ -121,7 +121,7 @@ graph LR
 
 **Ch.8** instruments everything. TensorBoard's scalar/histogram/graph dashboards monitor training identically for regression and classification. Same `SummaryWriter`, same callbacks, same diagnostic workflow.
 
-> 💡 **Why TensorBoard is here (not in Act 2):** TensorBoard is taught after RNNs so you have a rich multi-task training scenario worth monitoring — scalars, histograms, and projector embeddings all become meaningful once you've seen sequence + image + tabular training in the same pipeline.
+> **Why TensorBoard is here (not in Act 2):** TensorBoard is taught after RNNs so you have a rich multi-task training scenario worth monitoring — scalars, histograms, and projector embeddings all become meaningful once you've seen sequence + image + tabular training in the same pipeline.
 
 **Status after Act 3**: You've seen RNNs, loss theory, and monitoring tooling — all task-agnostic.
 
@@ -141,48 +141,48 @@ graph LR
 
 ```mermaid
 graph TD
-    subgraph "Act 1: Foundation"
-        CH1[Ch.1 XOR Problem<br/>Why non-linearity?]
-        CH2[Ch.2 Neural Networks<br/>Dense layers + activations]
-    end
+ subgraph "Act 1: Foundation"
+ CH1[Ch.1 XOR Problem<br/>Why non-linearity?]
+ CH2[Ch.2 Neural Networks<br/>Dense layers + activations]
+ end
 
-    subgraph "Act 2: Training"
-        CH3[Ch.3 Backprop & Optimizers<br/>Chain rule + Adam]
-        CH4[Ch.4 Regularization<br/>Dropout, L2, BN]
-        CH5[Ch.5 CNNs<br/>Spatial features]
-    end
+ subgraph "Act 2: Training"
+ CH3[Ch.3 Backprop & Optimizers<br/>Chain rule + Adam]
+ CH4[Ch.4 Regularization<br/>Dropout, L2, BN]
+ CH5[Ch.5 CNNs<br/>Spatial features]
+ end
 
-    subgraph "Act 3: Specialization"
-        CH6[Ch.6 RNNs/LSTMs<br/>Sequential features]
-        CH7[Ch.7 MLE & Loss<br/>Probabilistic foundation]
-        CH8[Ch.8 TensorBoard<br/>Monitoring]
-    end
+ subgraph "Act 3: Specialization"
+ CH6[Ch.6 RNNs/LSTMs<br/>Sequential features]
+ CH7[Ch.7 MLE & Loss<br/>Probabilistic foundation]
+ CH8[Ch.8 TensorBoard<br/>Monitoring]
+ end
 
-    subgraph "Act 4: Attention"
-        CH9[Ch.9 Sequences → Attention<br/>Q/K/V mechanism]
-        CH10[Ch.10 Transformers<br/>Multi-head attention]
-    end
+ subgraph "Act 4: Attention"
+ CH9[Ch.9 Sequences → Attention<br/>Q/K/V mechanism]
+ CH10[Ch.10 Transformers<br/>Multi-head attention]
+ end
 
-    CH1 --> CH2
-    CH2 --> CH3
-    CH3 --> CH4
-    CH4 --> CH5
-    CH5 --> CH6
-    CH6 --> CH7
-    CH7 --> CH8
-    CH8 --> CH9
-    CH9 --> CH10
+ CH1 --> CH2
+ CH2 --> CH3
+ CH3 --> CH4
+ CH4 --> CH5
+ CH5 --> CH6
+ CH6 --> CH7
+ CH7 --> CH8
+ CH8 --> CH9
+ CH9 --> CH10
 
-    style CH1 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH2 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH3 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH4 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH5 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH6 fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH7 fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH8 fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH9 fill:#7c3aed,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH10 fill:#7c3aed,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH1 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH2 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH3 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH4 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH5 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH6 fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH7 fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH8 fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH9 fill:#7c3aed,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH10 fill:#7c3aed,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---

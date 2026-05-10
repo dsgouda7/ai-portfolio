@@ -10,21 +10,21 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Build **ProductionCV** — an autonomous retail shelf monitoring system satisfying 5 constraints:
+> **The mission**: Build **ProductionCV** — an autonomous retail shelf monitoring system satisfying 5 constraints:
 > 1. **DETECTION ACCURACY**: mAP@0.5 ≥ 85% — 2. **SEGMENTATION QUALITY**: IoU ≥ 70% — 3. **INFERENCE LATENCY**: <50ms per frame — 4. **MODEL SIZE**: <100 MB — 5. **DATA EFFICIENCY**: <1,000 labeled images
 
 **What we know so far:**
-- ✅ **Constraints #1, #2, #5 achieved!** ResNet-50 + Mask R-CNN + SimCLR pretraining: 85.4% mAP, 71.2% IoU, trained on 982 labeled images
-- ✅ Inference latency: 78ms per frame on NVIDIA Jetson Nano (close to <50ms target)
-- ❌ **Constraint #4 BLOCKED**: Model size = **97 MB** (target <100 MB, but ideally much smaller for edge deployment)
+- **Constraints #1, #2, #5 achieved!** ResNet-50 + Mask R-CNN + SimCLR pretraining: 85.4% mAP, 71.2% IoU, trained on 982 labeled images
+- Inference latency: 78ms per frame on NVIDIA Jetson Nano (close to <50ms target)
+- **Constraint #4 BLOCKED**: Model size = **97 MB** (target <100 MB, but ideally much smaller for edge deployment)
 
 **What's blocking us:**
 The **accuracy-size tradeoff**. We have two options, neither ideal:
 
 | Model | Size | mAP@0.5 | IoU | Latency | Problem |
 |-------|------|---------|-----|---------|---------|
-| ResNet-50 (teacher) | 97 MB | 85.4% | 71.2% | 78ms | ❌ Too large (barely fits in 100 MB budget) |
-| MobileNetV2 (student, trained from scratch) | 14 MB | 78.1% | 64.8% | 42ms | ❌ Accuracy too low (loses 7% mAP, 6% IoU) |
+| ResNet-50 (teacher) | 97 MB | 85.4% | 71.2% | 78ms | Too large (barely fits in 100 MB budget) |
+| MobileNetV2 (student, trained from scratch) | 14 MB | 78.1% | 64.8% | 42ms | Accuracy too low (loses 7% mAP, 6% IoU) |
 
 Training MobileNetV2 from scratch fails because:
 1. **Limited labeled data** (982 images) — large models can leverage self-supervised pretraining, small models can't
@@ -38,8 +38,7 @@ Training MobileNetV2 from scratch fails because:
 - **Temperature scaling**: Soften probabilities to amplify these subtle similarities (temperature $\tau=3$ or $\tau=5$)
 - **Dual loss**: Combine distillation loss (match teacher) + hard label loss (match ground truth)
 - **Result**: MobileNetV2 student achieves **83.2% mAP** (only 2.2% drop from teacher) at **10.7 MB** (9× smaller)
-
-✅ **This unlocks major progress on constraint #4** — model size drops from 97 MB → 10.7 MB while maintaining competitive accuracy.
+**This unlocks major progress on constraint #4** — model size drops from 97 MB → 10.7 MB while maintaining competitive accuracy.
 
 ---
 
@@ -104,7 +103,7 @@ Where:
 - $\mathcal{L}_{\text{hard}}(\tau=1)$ — Standard cross-entropy on ground truth labels
 - $\alpha \in [0.7, 0.9]$ — Weight favoring distillation loss
 
-> 💡 **Why combine both losses?** The teacher's soft targets provide rich supervision, but they can propagate the teacher's mistakes. The hard label loss anchors the student to ground truth, preventing error accumulation.
+> **Why combine both losses?** The teacher's soft targets provide rich supervision, but they can propagate the teacher's mistakes. The hard label loss anchors the student to ground truth, preventing error accumulation.
 
 ---
 
@@ -128,37 +127,37 @@ You're the lead ML engineer at ProductionCV. Your ResNet-50 model works perfectl
 
 **Step 1: Generate teacher's soft predictions**
 ```python
-teacher = resnet50_maskrcnn  # 97 MB, 85.4% mAP
+teacher = resnet50_maskrcnn # 97 MB, 85.4% mAP
 teacher.eval()
 
 for img, label in dataloader:
-    with torch.no_grad():
-        teacher_logits = teacher(img)  # [B, 20, H, W] for 20 classes
-        teacher_probs_soft = F.softmax(teacher_logits / tau, dim=1)  # tau=5
+ with torch.no_grad():
+ teacher_logits = teacher(img) # [B, 20, H, W] for 20 classes
+ teacher_probs_soft = F.softmax(teacher_logits / tau, dim=1) # tau=5
 ```
 
 **Step 2: Train student with dual loss**
 ```python
-student = mobilenetv2_maskrcnn  # 14 MB, untrained
+student = mobilenetv2_maskrcnn # 14 MB, untrained
 optimizer = Adam(student.parameters(), lr=1e-4)
 
 for img, label in dataloader:
-    # Student forward pass (two temperatures)
-    student_logits = student(img)
-    student_probs_soft = F.softmax(student_logits / tau, dim=1)    # tau=5
-    student_probs_hard = F.softmax(student_logits, dim=1)          # tau=1
-    
-    # Distillation loss (match teacher's soft predictions)
-    loss_distill = tau**2 * kl_divergence(teacher_probs_soft, student_probs_soft)
-    
-    # Hard label loss (match ground truth)
-    loss_hard = cross_entropy(student_probs_hard, label)
-    
-    # Combined loss
-    loss_total = 0.8 * loss_distill + 0.2 * loss_hard  # α=0.8
-    
-    loss_total.backward()
-    optimizer.step()
+ # Student forward pass (two temperatures)
+ student_logits = student(img)
+ student_probs_soft = F.softmax(student_logits / tau, dim=1) # tau=5
+ student_probs_hard = F.softmax(student_logits, dim=1) # tau=1
+
+ # Distillation loss (match teacher's soft predictions)
+ loss_distill = tau**2 * kl_divergence(teacher_probs_soft, student_probs_soft)
+
+ # Hard label loss (match ground truth)
+ loss_hard = cross_entropy(student_probs_hard, label)
+
+ # Combined loss
+ loss_total = 0.8 * loss_distill + 0.2 * loss_hard # α=0.8
+
+ loss_total.backward()
+ optimizer.step()
 ```
 
 **Result**: Student achieves **83.2% mAP** (only 2.2% drop) at **10.7 MB** (9× smaller).
@@ -227,7 +226,7 @@ $$
 
 **Result**: Distribution is **much softer** — all classes have meaningful probabilities.
 
-> 💡 **Why higher τ softens the distribution:** Dividing by $\tau$ compresses the logit range. Smaller differences in logits → smaller differences in probabilities after exp → flatter distribution.
+> **Why higher τ softens the distribution:** Dividing by $\tau$ compresses the logit range. Smaller differences in logits → smaller differences in probabilities after exp → flatter distribution.
 
 ![Temperature scaling effect](img/ch09-temperature-scaling.gif)
 
@@ -329,50 +328,50 @@ teacher.eval()
 teacher_predictions = {}
 
 for img_id, img, label in train_loader:
-    with torch.no_grad():
-        # Get teacher's logits (before final softmax)
-        teacher_output = teacher(img)
-        teacher_logits = teacher_output['logits']  # [B, 20, H, W]
-        
-        # Store for distillation
-        teacher_predictions[img_id] = teacher_logits.cpu()
+ with torch.no_grad():
+ # Get teacher's logits (before final softmax)
+ teacher_output = teacher(img)
+ teacher_logits = teacher_output['logits'] # [B, 20, H, W]
+
+ # Store for distillation
+ teacher_predictions[img_id] = teacher_logits.cpu()
 ```
 
 ### Step 3: Train Student with Distillation Loss
 
 ```python
-student = mobilenetv2_maskrcnn(num_classes=21)  # 14 MB
+student = mobilenetv2_maskrcnn(num_classes=21) # 14 MB
 optimizer = torch.optim.Adam(student.parameters(), lr=1e-4)
-tau = 5.0      # Temperature
-alpha = 0.8    # Distillation weight
+tau = 5.0 # Temperature
+alpha = 0.8 # Distillation weight
 
 for epoch in range(100):
-    for img_id, img, label in train_loader:
-        # Get teacher's soft targets
-        teacher_logits = teacher_predictions[img_id].to(device)
-        teacher_probs_soft = F.softmax(teacher_logits / tau, dim=1)
-        
-        # Student forward pass
-        student_logits = student(img)['logits']
-        student_probs_soft = F.softmax(student_logits / tau, dim=1)
-        student_probs_hard = F.softmax(student_logits, dim=1)
-        
-        # Distillation loss (KL divergence)
-        loss_distill = (tau ** 2) * F.kl_div(
-            student_probs_soft.log(),
-            teacher_probs_soft,
-            reduction='batchmean'
-        )
-        
-        # Hard label loss (ground truth)
-        loss_hard = F.cross_entropy(student_probs_hard, label)
-        
-        # Combined loss
-        loss = alpha * loss_distill + (1 - alpha) * loss_hard
-        
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+ for img_id, img, label in train_loader:
+ # Get teacher's soft targets
+ teacher_logits = teacher_predictions[img_id].to(device)
+ teacher_probs_soft = F.softmax(teacher_logits / tau, dim=1)
+
+ # Student forward pass
+ student_logits = student(img)['logits']
+ student_probs_soft = F.softmax(student_logits / tau, dim=1)
+ student_probs_hard = F.softmax(student_logits, dim=1)
+
+ # Distillation loss (KL divergence)
+ loss_distill = (tau ** 2) * F.kl_div(
+ student_probs_soft.log(),
+ teacher_probs_soft,
+ reduction='batchmean'
+ )
+
+ # Hard label loss (ground truth)
+ loss_hard = F.cross_entropy(student_probs_hard, label)
+
+ # Combined loss
+ loss = alpha * loss_distill + (1 - alpha) * loss_hard
+
+ optimizer.zero_grad()
+ loss.backward()
+ optimizer.step()
 ```
 
 ### Step 4: Evaluate and Compare
@@ -394,58 +393,58 @@ for epoch in range(100):
 ```
 Hard Labels (τ=1):
 Soda Can Image → [0.975, 0.014, 0.009, 0.001, 0.0003]
-                  ^^^^                                    (almost all probability on class 0)
+ ^^^^ (almost all probability on class 0)
 
 Teacher Soft Targets (τ=5):
 Soda Can Image → [0.65, 0.18, 0.12, 0.03, 0.02]
-                  ^^^^ ^^^^^ ^^^^^                        (dark knowledge: class similarities)
+ ^^^^ ^^^^^ ^^^^^ (dark knowledge: class similarities)
 
 Student learns: "Soda can is 65% can, 18% water bottle (similar shape),
-                 12% juice box (similar container), 3% cereal (different),
-                 2% milk carton (very different)"
+ 12% juice box (similar container), 3% cereal (different),
+ 2% milk carton (very different)"
 ```
 
 ### Diagram 2: Distillation Training Flow
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│ Training Image (Soda Can)                                       │
-│ [224×224×3 RGB]                                                 │
+│ Training Image (Soda Can) │
+│ [224×224×3 RGB] │
 └───────────────────────────┬─────────────────────────────────────┘
-                            │
-              ┌─────────────┴─────────────┐
-              ▼                           ▼
-    ┌──────────────────┐        ┌──────────────────┐
-    │ Teacher Model    │        │ Student Model    │
-    │ (ResNet-50)      │        │ (MobileNetV2)    │
-    │ 97 MB, frozen    │        │ 14 MB, training  │
-    └────────┬─────────┘        └────────┬─────────┘
-             │                           │
-             │ logits [5.0, 1.0, 0.5, -1.0]   │ logits [4.2, 1.5, 0.3, -0.8]
-             ▼                           ▼
-    ┌──────────────────┐        ┌──────────────────┐
-    │ Softmax (τ=5)    │        │ Softmax (τ=5)    │
-    │ [0.46, 0.21,     │        │ [0.45, 0.22,     │
-    │  0.19, 0.14]     │        │  0.19, 0.15]     │
-    └────────┬─────────┘        └────────┬─────────┘
-             │                           │
-             └────────┬──────────────────┘
-                      ▼
-            ┌──────────────────────┐
-            │ KL Divergence Loss   │
-            │ (Distillation Loss)  │
-            │ τ² × KL(p_T || p_S)  │
-            └──────────────────────┘
-                      +
-            ┌──────────────────────┐
-            │ Cross-Entropy Loss   │
-            │ (Hard Label Loss)    │
-            │ Ground Truth: [1,0,0]│
-            └──────────────────────┘
-                      ↓
-            α × L_distill + (1-α) × L_hard
-                      ↓
-                Backprop to Student
+ │
+ ┌─────────────┴─────────────┐
+ ▼ ▼
+ ┌──────────────────┐ ┌──────────────────┐
+ │ Teacher Model │ │ Student Model │
+ │ (ResNet-50) │ │ (MobileNetV2) │
+ │ 97 MB, frozen │ │ 14 MB, training │
+ └────────┬─────────┘ └────────┬─────────┘
+ │ │
+ │ logits [5.0, 1.0, 0.5, -1.0] │ logits [4.2, 1.5, 0.3, -0.8]
+ ▼ ▼
+ ┌──────────────────┐ ┌──────────────────┐
+ │ Softmax (τ=5) │ │ Softmax (τ=5) │
+ │ [0.46, 0.21, │ │ [0.45, 0.22, │
+ │ 0.19, 0.14] │ │ 0.19, 0.15] │
+ └────────┬─────────┘ └────────┬─────────┘
+ │ │
+ └────────┬──────────────────┘
+ ▼
+ ┌──────────────────────┐
+ │ KL Divergence Loss │
+ │ (Distillation Loss) │
+ │ τ² × KL(p_T || p_S) │
+ └──────────────────────┘
+ +
+ ┌──────────────────────┐
+ │ Cross-Entropy Loss │
+ │ (Hard Label Loss) │
+ │ Ground Truth: [1,0,0]│
+ └──────────────────────┘
+ ↓
+ α × L_distill + (1-α) × L_hard
+ ↓
+ Backprop to Student
 ```
 
 ### Diagram 3: Temperature Effect on Probability Distribution
@@ -457,7 +456,7 @@ Logits: [5.0, 1.0, 0.5, -1.0]
 Class 0: ████████████████████████████████████████ 96.9%
 Class 1: █ 1.8%
 Class 2: █ 1.1%
-Class 3:  0.2%
+Class 3: 0.2%
 
 τ=3 (Medium):
 Class 0: ███████████████████████ 73.2%
@@ -568,7 +567,7 @@ $$
 
 ## 8 · Progress Check — ProductionCV Constraints
 
-> ⚡ **Constraint tracking** — how does distillation push us toward the grand challenge?
+> **Constraint tracking** — how does distillation push us toward the grand challenge?
 
 ### Compression Tradeoff Analysis
 
@@ -580,16 +579,16 @@ $$
 
 | Constraint | Target | Before Ch.9 | After Ch.9 | Status |
 |------------|--------|-------------|------------|--------|
-| **#1 Detection Accuracy** | mAP@0.5 ≥ 85% | 85.4% (ResNet-50 teacher) | 83.2% (MobileNetV2 student) | ✅ Maintained |
-| **#2 Segmentation Quality** | IoU ≥ 70% | 71.2% | 68.9% | ⚠️ Slight drop (still close) |
-| **#3 Inference Latency** | <50ms | 78ms | 39ms | ✅ Major improvement! |
-| **#4 Model Size** | <100 MB | 97 MB | **10.7 MB** | ✅ 9× compression! |
-| **#5 Data Efficiency** | <1,000 labels | 982 labels | 982 labels | ✅ No change |
+| **#1 Detection Accuracy** | mAP@0.5 ≥ 85% | 85.4% (ResNet-50 teacher) | 83.2% (MobileNetV2 student) | Maintained |
+| **#2 Segmentation Quality** | IoU ≥ 70% | 71.2% | 68.9% | Slight drop (still close) |
+| **#3 Inference Latency** | <50ms | 78ms | 39ms | Major improvement! |
+| **#4 Model Size** | <100 MB | 97 MB | **10.7 MB** | 9× compression! |
+| **#5 Data Efficiency** | <1,000 labels | 982 labels | 982 labels | No change |
 
 **Key unlocks**:
-- ✅ **Constraint #4 (model size)**: 97 MB → 10.7 MB (9× smaller) while losing only 2.2% mAP
-- ✅ **Constraint #3 (latency)**: 78ms → 39ms (2× faster inference)
-- ⚠️ **Constraint #2**: IoU drops from 71.2% → 68.9% (still above 70% target if we round, but cutting it close)
+- **Constraint #4 (model size)**: 97 MB → 10.7 MB (9× smaller) while losing only 2.2% mAP
+- **Constraint #3 (latency)**: 78ms → 39ms (2× faster inference)
+- **Constraint #2**: IoU drops from 71.2% → 68.9% (still above 70% target if we round, but cutting it close)
 
 **What's left**: Constraints #2 and #3 need final optimization. Ch.10 (Pruning & Mixed Precision) will push model size even lower (10.7 MB → 5–8 MB) and latency below 50ms → 40ms, securing all 5 constraints.
 
@@ -612,4 +611,4 @@ The grand challenge is within reach. Let's finish it.
 
 ---
 
-> ➡️ **Next chapter**: [Ch.10 — Pruning & Mixed Precision Training](../ch10_pruning_mixed_precision/README.md) — Remove redundant weights, train 2× faster, achieve all 5 ProductionCV constraints.
+> ➡ **Next chapter**: [Ch.10 — Pruning & Mixed Precision Training](../ch10_pruning_mixed_precision/README.md) — Remove redundant weights, train 2× faster, achieve all 5 ProductionCV constraints.

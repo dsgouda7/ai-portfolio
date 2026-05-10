@@ -11,7 +11,7 @@
 
 ## § 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Build **OrderFlow** — AI-native B2B purchase order automation satisfying 8 constraints:
+> **The mission**: Build **OrderFlow** — AI-native B2B purchase order automation satisfying 8 constraints:
 > 1. **THROUGHPUT**: 1,000 POs/day — 2. **LATENCY**: <4hr SLA — 3. **ACCURACY**: <2% error — 4. **SCALABILITY**: 10 agents/PO — 5. **RELIABILITY**: >99.9% uptime — 6. **AUDITABILITY**: Full traceability — 7. **OBSERVABILITY**: Real-time monitoring — 8. **DEPLOYABILITY**: Zero-downtime updates
 
 **After Ch.6**: All security defenses in place. 1,200 POs/day, 4.5hr latency, 1.6% error rate (zero unauthorized >$100k).
@@ -24,25 +24,25 @@ Team has built custom Python orchestration (900 lines). Hard to maintain, no obs
 
 ### What We Unlock in This Chapter
 
-- ✅ Framework comparison: AutoGen (conversation-first), LangGraph (graph-first), Semantic Kernel (enterprise plugins)
-- ✅ OrderFlow decision: **LangGraph** (fixed workflow, auditable state machine, resume-on-failure)
-- ✅ Production orchestration: Explicit state graph, checkpointing, LangSmith tracing, human-in-the-loop approval
-- ✅ A/B testing: Run alternate negotiation strategies in parallel
+- Framework comparison: AutoGen (conversation-first), LangGraph (graph-first), Semantic Kernel (enterprise plugins)
+- OrderFlow decision: **LangGraph** (fixed workflow, auditable state machine, resume-on-failure)
+- Production orchestration: Explicit state graph, checkpointing, LangSmith tracing, human-in-the-loop approval
+- A/B testing: Run alternate negotiation strategies in parallel
 
 ### Progress on the 8 Constraints
 
 | Constraint | Status | Evidence |
 |------------|--------|----------|
-| #1 THROUGHPUT | ✅ **TARGET HIT** | 1,200 POs/day (maintained) |
-| #2 LATENCY | ✅ **TARGET HIT!** | 4.5hr → **3.2hr p95** (checkpointing eliminates retry overhead) |
-| #3 ACCURACY | ✅ **TARGET HIT** | 1.6% error (maintained) |
-| #4 SCALABILITY | ✅ **VALIDATED** | 8 agents/PO, 50 concurrent POs |
-| #5 RELIABILITY | ✅ **TARGET HIT!** | **99.95% uptime** (checkpointing + DLQ + graceful degradation) |
-| #6 AUDITABILITY | ✅ **TARGET HIT!** | LangSmith traces + blackboard event log = full decision chain |
-| #7 OBSERVABILITY | ✅ **TARGET HIT!** | LangSmith distributed tracing + Grafana metrics + ELK logs + PagerDuty alerts |
-| #8 DEPLOYABILITY | ✅ **TARGET HIT!** | Docker/K8s deployment + blue-green rollout + <5 min rollback + Terraform IaC |
+| #1 THROUGHPUT | **TARGET HIT** | 1,200 POs/day (maintained) |
+| #2 LATENCY | **TARGET HIT!** | 4.5hr → **3.2hr p95** (checkpointing eliminates retry overhead) |
+| #3 ACCURACY | **TARGET HIT** | 1.6% error (maintained) |
+| #4 SCALABILITY | **VALIDATED** | 8 agents/PO, 50 concurrent POs |
+| #5 RELIABILITY | **TARGET HIT!** | **99.95% uptime** (checkpointing + DLQ + graceful degradation) |
+| #6 AUDITABILITY | **TARGET HIT!** | LangSmith traces + blackboard event log = full decision chain |
+| #7 OBSERVABILITY | **TARGET HIT!** | LangSmith distributed tracing + Grafana metrics + ELK logs + PagerDuty alerts |
+| #8 DEPLOYABILITY | **TARGET HIT!** | Docker/K8s deployment + blue-green rollout + <5 min rollback + Terraform IaC |
 
-**All 8 constraints achieved!** 🎉
+**All 8 constraints achieved!**
 
 ---
 
@@ -59,17 +59,17 @@ A common mistake: treat framework selection as a dependency choice (pick one, st
 The three frameworks covered here sit at different points on two axes:
 
 ```
-                      CONTROL FLOW
-                  Explicit ◄──────► Emergent
-                       │               │
-                       │               │
-COUPLING:       LangGraph           AutoGen
-Graph-first              SK Group      (conversation-first)
-(deterministic)          Chat          (agent decides)
-                       │               │
-                       │               │
-               Tight (graph          Loose (agents
-               enforces order)        negotiate)
+ CONTROL FLOW
+ Explicit ◄──────► Emergent
+ │ │
+ │ │
+COUPLING: LangGraph AutoGen
+Graph-first SK Group (conversation-first)
+(deterministic) Chat (agent decides)
+ │ │
+ │ │
+ Tight (graph Loose (agents
+ enforces order) negotiate)
 ```
 
 Understanding where your use case sits on these axes is the decision:
@@ -91,26 +91,26 @@ from autogen import ConversableAgent
 llm_config = {"config_list": [{"model": "gpt-4o", "api_key": os.environ["OPENAI_API_KEY"]}]}
 
 pricing_proposer = ConversableAgent(
-    name="PricingProposer",
-    system_message="""You are a procurement specialist. Propose a purchase price for
-    the given item based on market data. Wait for the critic's feedback before finalising.""",
-    llm_config=llm_config,
-    human_input_mode="NEVER"
+ name="PricingProposer",
+ system_message="""You are a procurement specialist. Propose a purchase price for
+ the given item based on market data. Wait for the critic's feedback before finalising.""",
+ llm_config=llm_config,
+ human_input_mode="NEVER"
 )
 
 pricing_critic = ConversableAgent(
-    name="PricingCritic",
-    system_message="""You are a financial risk officer. Critique the proposed price.
-    If the price is within 5% of the 90-day average, output APPROVED. Otherwise, push back.""",
-    llm_config=llm_config,
-    human_input_mode="NEVER"
+ name="PricingCritic",
+ system_message="""You are a financial risk officer. Critique the proposed price.
+ If the price is within 5% of the 90-day average, output APPROVED. Otherwise, push back.""",
+ llm_config=llm_config,
+ human_input_mode="NEVER"
 )
 
 # Initiate conversation — flow is emergent
 result = pricing_critic.initiate_chat(
-    recipient=pricing_proposer,
-    message="We need a price for 500 units of widget SKU-8812.",
-    max_turns=6
+ recipient=pricing_proposer,
+ message="We need a price for 500 units of widget SKU-8812.",
+ max_turns=6
 )
 ```
 
@@ -126,10 +126,10 @@ legal_agent = ConversableAgent(name="Legal", ...)
 finance_agent = ConversableAgent(name="Finance", ...)
 
 group_chat = GroupChat(
-    agents=[negotiation_agent, legal_agent, finance_agent],
-    messages=[],
-    max_round=12,
-    speaker_selection_method="auto"  # LLM selects next speaker dynamically
+ agents=[negotiation_agent, legal_agent, finance_agent],
+ messages=[],
+ max_round=12,
+ speaker_selection_method="auto" # LLM selects next speaker dynamically
 )
 
 manager = GroupChatManager(groupchat=group_chat, llm_config=llm_config)
@@ -151,23 +151,23 @@ from langgraph.graph import StateGraph, END
 from typing import TypedDict, Literal
 
 class POWorkflowState(TypedDict):
-    po_id: str
-    inventory_ok: bool
-    negotiation_result: dict
-    approved: bool
-    po_document_url: str
+ po_id: str
+ inventory_ok: bool
+ negotiation_result: dict
+ approved: bool
+ po_document_url: str
 
 def run_inventory_check(state: POWorkflowState) -> POWorkflowState:
-    # Call inventory agent / MCP server
-    result = inventory_mcp_client.check(state["po_id"])
-    return {**state, "inventory_ok": result["available"]}
+ # Call inventory agent / MCP server
+ result = inventory_mcp_client.check(state["po_id"])
+ return {**state, "inventory_ok": result["available"]}
 
 def run_negotiation(state: POWorkflowState) -> POWorkflowState:
-    result = negotiation_agent.run(state["po_id"])
-    return {**state, "negotiation_result": result}
+ result = negotiation_agent.run(state["po_id"])
+ return {**state, "negotiation_result": result}
 
 def route_after_inventory(state: POWorkflowState) -> Literal["negotiate", "reject"]:
-    return "negotiate" if state["inventory_ok"] else "reject"
+ return "negotiate" if state["inventory_ok"] else "reject"
 
 # Build the graph explicitly
 workflow = StateGraph(POWorkflowState)
@@ -202,32 +202,32 @@ from semantic_kernel import Kernel
 kernel = Kernel()
 
 negotiation_agent = ChatCompletionAgent(
-    kernel=kernel,
-    name="NegotiationAgent",
-    instructions="You negotiate purchase order terms with suppliers..."
+ kernel=kernel,
+ name="NegotiationAgent",
+ instructions="You negotiate purchase order terms with suppliers..."
 )
 
 approval_agent = ChatCompletionAgent(
-    kernel=kernel,
-    name="ApprovalAgent",
-    instructions="You review negotiated terms and approve or reject..."
+ kernel=kernel,
+ name="ApprovalAgent",
+ instructions="You review negotiated terms and approve or reject..."
 )
 
 class ApprovalReachedTermination(TerminationStrategy):
-    async def should_agent_terminate(self, agent, history):
-        return any("APPROVED" in m.content for m in history[-2:])
+ async def should_agent_terminate(self, agent, history):
+ return any("APPROVED" in m.content for m in history[-2:])
 
 group_chat = AgentGroupChat(
-    agents=[negotiation_agent, approval_agent],
-    termination_strategy=ApprovalReachedTermination(maximum_iterations=8)
+ agents=[negotiation_agent, approval_agent],
+ termination_strategy=ApprovalReachedTermination(maximum_iterations=8)
 )
 
 await group_chat.add_chat_message(
-    ChatMessageContent(role=AuthorRole.USER, content="Process PO-4812.")
+ ChatMessageContent(role=AuthorRole.USER, content="Process PO-4812.")
 )
 
 async for message in group_chat.invoke():
-    print(f"{message.name}: {message.content}")
+ print(f"{message.name}: {message.content}")
 ```
 
 SK's key enterprise-specific features:
@@ -312,14 +312,14 @@ Optimisation: route the trace through minimum-cost paths using conditional edges
 
 ```
 OrderFlow PO lifecycle (fixed sequence — compliance requirement):
-  1. Intake        ← Parse email request
-  2. Inventory     ← Check stock availability
-  3. Pricing       ← Query 2+ suppliers
-  4. Negotiation   ← Get discount (conditional: skip if price < $15/unit)
-  5. Approval      ← Human checkpoint if >$100k
-  6. Drafting      ← Generate PO document
-  7. Sending       ← Email to supplier
-  8. Reconciliation← Wait for confirmation
+ 1. Intake ← Parse email request
+ 2. Inventory ← Check stock availability
+ 3. Pricing ← Query 2+ suppliers
+ 4. Negotiation ← Get discount (conditional: skip if price < $15/unit)
+ 5. Approval ← Human checkpoint if >$100k
+ 6. Drafting ← Generate PO document
+ 7. Sending ← Email to supplier
+ 8. Reconciliation← Wait for confirmation
 ```
 
 **Your requirements:**
@@ -340,16 +340,16 @@ from typing import TypedDict, Annotated
 from langgraph.graph import StateGraph, END
 
 class POState(TypedDict):
-    po_id: str
-    requester_email: str
-    items: list[dict]  # [{"sku": "...", "quantity": 10}]
-    inventory_status: str  # "available" | "out_of_stock"
-    pricing: dict  # {"TechFurnish": 749.0, "OfficeDepot": 842.0}
-    selected_supplier: str
-    final_price: float
-    approved: bool
-    po_document_url: str
-    messages: Annotated[list, "append-only message log"]
+ po_id: str
+ requester_email: str
+ items: list[dict] # [{"sku": "...", "quantity": 10}]
+ inventory_status: str # "available" | "out_of_stock"
+ pricing: dict # {"TechFurnish": 749.0, "OfficeDepot": 842.0}
+ selected_supplier: str
+ final_price: float
+ approved: bool
+ po_document_url: str
+ messages: Annotated[list, "append-only message log"]
 ```
 
 Every node reads from and writes to this shared state. LangGraph guarantees no node sees stale state (it is the blackboard from Ch.5, but framework-managed).
@@ -360,18 +360,18 @@ You implement each node as a function that transforms state:
 
 ```python
 def intake_node(state: POState) -> POState:
-    # Call IntakeAgent from Ch.1
-    parsed = intake_agent.parse_email(state["requester_email"])
-    return {**state, "items": parsed["items"], "messages": state["messages"] + ["intake_done"]}
+ # Call IntakeAgent from Ch.1
+ parsed = intake_agent.parse_email(state["requester_email"])
+ return {**state, "items": parsed["items"], "messages": state["messages"] + ["intake_done"]}
 
 def inventory_node(state: POState) -> POState:
-    # Call InventoryAgent via MCP (Ch.2)
-    status = inventory_mcp.check_availability(state["items"])
-    return {**state, "inventory_status": status, "messages": state["messages"] + ["inventory_checked"]}
+ # Call InventoryAgent via MCP (Ch.2)
+ status = inventory_mcp.check_availability(state["items"])
+ return {**state, "inventory_status": status, "messages": state["messages"] + ["inventory_checked"]}
 
 def route_after_inventory(state: POState) -> str:
-    # Conditional edge: if out of stock, go to rejection; else continue
-    return "pricing" if state["inventory_status"] == "available" else "reject"
+ # Conditional edge: if out of stock, go to rejection; else continue
+ return "pricing" if state["inventory_status"] == "available" else "reject"
 ```
 
 ### Step 4: Build the graph
@@ -417,14 +417,14 @@ You configure the graph to pause at the approval node:
 
 ```python
 app = workflow.compile(
-    checkpointer=checkpointer,
-    interrupt_before=["approval"]  # Block here until human confirms
+ checkpointer=checkpointer,
+ interrupt_before=["approval"] # Block here until human confirms
 )
 
 # Run the graph
 config = {"configurable": {"thread_id": "PO-2024-1847"}}
 for event in app.stream(initial_state, config):
-    print(event)
+ print(event)
 
 # Graph pauses at approval. CFO reviews, then:
 app.update_state(config, {"approved": True}, as_node="approval")
@@ -466,9 +466,9 @@ This satisfies **Constraint #7 (Observability)**.
 **The optimization:** Checkpoint only before expensive/risky nodes:
 ```python
 app = workflow.compile(
-    checkpointer=checkpointer,
-    interrupt_before=["approval"],  # human checkpoint
-    checkpoint_after=["negotiation", "drafting"]  # expensive nodes
+ checkpointer=checkpointer,
+ interrupt_before=["approval"], # human checkpoint
+ checkpoint_after=["negotiation", "drafting"] # expensive nodes
 )
 ```
 
@@ -487,24 +487,24 @@ Now: 3 checkpoints per PO instead of 7 → 6-second latency savings per PO → *
 **The fix:** Add a timeout + escalation:
 ```python
 def approval_node(state: POState) -> POState:
-    if state["final_price"] > 100_000:
-        # Block for human approval (framework handles this via interrupt_before)
-        # But: add application-level timeout in the caller
-        pass
-    else:
-        # Auto-approve
-        return {**state, "approved": True}
+ if state["final_price"] > 100_000:
+ # Block for human approval (framework handles this via interrupt_before)
+ # But: add application-level timeout in the caller
+ pass
+ else:
+ # Auto-approve
+ return {**state, "approved": True}
 
 # In orchestration:
 import asyncio
 try:
-    result = await asyncio.wait_for(
-        app.astream(state, config),
-        timeout=3600  # 1 hour timeout
-    )
+ result = await asyncio.wait_for(
+ app.astream(state, config),
+ timeout=3600 # 1 hour timeout
+ )
 except asyncio.TimeoutError:
-    # Escalate to VP or auto-approve with risk flag
-    app.update_state(config, {"approved": True, "risk_flag": "timeout_approval"}, as_node="approval")
+ # Escalate to VP or auto-approve with risk flag
+ app.update_state(config, {"approved": True, "risk_flag": "timeout_approval"}, as_node="approval")
 ```
 
 ### A/B Testing Negotiation Strategies
@@ -516,12 +516,12 @@ except asyncio.TimeoutError:
 **The implementation:**
 ```python
 def negotiation_node_A(state: POState) -> POState:
-    result = aggressive_negotiation_agent.run(state["po_id"])
-    return {**state, "final_price": result["price"], "strategy": "A"}
+ result = aggressive_negotiation_agent.run(state["po_id"])
+ return {**state, "final_price": result["price"], "strategy": "A"}
 
 def negotiation_node_B(state: POState) -> POState:
-    result = relationship_negotiation_agent.run(state["po_id"])
-    return {**state, "final_price": result["price"], "strategy": "B"}
+ result = relationship_negotiation_agent.run(state["po_id"])
+ return {**state, "final_price": result["price"], "strategy": "B"}
 
 # Deploy two graphs:
 workflow_A = StateGraph(POState)
@@ -547,27 +547,27 @@ app = app_A if random.random() < 0.5 else app_B
 ```
 Kubernetes Cluster
 ├── LangGraph Service (10 replicas)
-│   ├── Docker image: orderflow-langgraph:v2.4.1
-│   ├── Env: LANGCHAIN_API_KEY, POSTGRES_URL
-│   └── Health check: GET /health
+│ ├── Docker image: orderflow-langgraph:v2.4.1
+│ ├── Env: LANGCHAIN_API_KEY, POSTGRES_URL
+│ └── Health check: GET /health
 ├── Postgres (checkpointer)
-│   ├── Provisioned IOPS: 10,000 (handle 1,000 POs/day × 3 checkpoints)
-│   └── Backup: hourly snapshots
+│ ├── Provisioned IOPS: 10,000 (handle 1,000 POs/day × 3 checkpoints)
+│ └── Backup: hourly snapshots
 ├── Redis (message bus from Ch.4)
 └── MCP Servers (ERP, Pricing APIs, Email)
 
 Traffic Flow:
-  Requester email → Intake API → LangGraph Service → Postgres (checkpoint)
-                                                    → Redis (publish PO events)
-                                                    → MCP Servers (tool calls)
+ Requester email → Intake API → LangGraph Service → Postgres (checkpoint)
+ → Redis (publish PO events)
+ → MCP Servers (tool calls)
 
 Blue-Green Deployment:
-  1. Deploy v2.4.2 to 'green' environment
-  2. Route 10% traffic to green (canary)
-  3. Monitor error rate for 1 hour
-  4. If error rate < 2%, route 100% to green
-  5. If error rate > 2%, rollback: route 100% to blue
-  Rollback time: kubectl rollout undo → <5 minutes ✅
+ 1. Deploy v2.4.2 to 'green' environment
+ 2. Route 10% traffic to green (canary)
+ 3. Monitor error rate for 1 hour
+ 4. If error rate < 2%, route 100% to green
+ 5. If error rate > 2%, rollback: route 100% to blue
+ Rollback time: kubectl rollout undo → <5 minutes
 ```
 
 ---
@@ -581,16 +581,16 @@ Blue-Green Deployment:
 **The fix:** Version your state schema:
 ```python
 class POState(TypedDict):
-    schema_version: int  # increment on breaking changes
-    po_id: str
-    # ...
+ schema_version: int # increment on breaking changes
+ po_id: str
+ # ...
 
 # In each node:
 def pricing_node(state: POState) -> POState:
-    if state.get("schema_version", 1) < 2:
-        # Migrate old state to new schema
-        state = {**state, "schema_version": 2, "supplier_rating": 0.0}
-    # ...
+ if state.get("schema_version", 1) < 2:
+ # Migrate old state to new schema
+ state = {**state, "schema_version": 2, "supplier_rating": 0.0}
+ # ...
 ```
 
 ### 2. **Checkpointer unavailable**
@@ -601,9 +601,9 @@ def pricing_node(state: POState) -> POState:
 ```python
 from langgraph.checkpoint.memory import MemorySaver
 try:
-    checkpointer = PostgresSaver(conn_string=os.environ["POSTGRES_URL"])
+ checkpointer = PostgresSaver(conn_string=os.environ["POSTGRES_URL"])
 except Exception:
-    checkpointer = MemorySaver()  # In-memory fallback (no resume across restarts)
+ checkpointer = MemorySaver() # In-memory fallback (no resume across restarts)
 ```
 
 ### 3. **Human-in-the-loop abandonment**
@@ -625,10 +625,10 @@ except Exception:
 **The fix:** Sample traces in production:
 ```python
 import random
-if random.random() < 0.1:  # 10% sampling
-    os.environ["LANGCHAIN_TRACING_V2"] = "true"
+if random.random() < 0.1: # 10% sampling
+ os.environ["LANGCHAIN_TRACING_V2"] = "true"
 else:
-    os.environ["LANGCHAIN_TRACING_V2"] = "false"
+ os.environ["LANGCHAIN_TRACING_V2"] = "false"
 ```
 
 Now: $255/year (90% cost reduction, still get visibility into 100 POs/day).
@@ -651,35 +651,34 @@ Now: $255/year (90% cost reduction, still get visibility into 100 POs/day).
 
 ```mermaid
 graph LR
-    Ch1["Ch.1\nMessage Formats"]:::done
-    Ch2["Ch.2\nMCP"]:::done
-    Ch3["Ch.3\nA2A"]:::done
-    Ch4["Ch.4\nEvent-Driven"]:::done
-    Ch5["Ch.5\nShared Memory"]:::done
-    Ch6["Ch.6\nTrust & Sandboxing"]:::done
-    Ch7["Ch.7\nAgent Frameworks"]:::done
-    Ch1 --> Ch2 --> Ch3 --> Ch4 --> Ch5 --> Ch6 --> Ch7
-    classDef done fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    classDef current fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    classDef upcoming fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ Ch1["Ch.1\nMessage Formats"]:::done
+ Ch2["Ch.2\nMCP"]:::done
+ Ch3["Ch.3\nA2A"]:::done
+ Ch4["Ch.4\nEvent-Driven"]:::done
+ Ch5["Ch.5\nShared Memory"]:::done
+ Ch6["Ch.6\nTrust & Sandboxing"]:::done
+ Ch7["Ch.7\nAgent Frameworks"]:::done
+ Ch1 --> Ch2 --> Ch3 --> Ch4 --> Ch5 --> Ch6 --> Ch7
+ classDef done fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ classDef current fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ classDef upcoming fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### Constraint Status After Ch.7 (FINAL)
 
 | Constraint | Before | After Ch.7 | Change |
 |------------|--------|------------|--------|
-| #1 THROUGHPUT | 1,200 POs/day | **1,200 POs/day** | ✅ **TARGET HIT** (120% of 1,000 target) |
-| #2 LATENCY | 4.5 hours median | **3.2 hours p95** | ✅ **TARGET HIT** (20% better than <4hr target) |
-| #3 ACCURACY | 1.6% error | **1.6% error** | ✅ **TARGET HIT** (20% better than <2% target) |
-| #4 SCALABILITY | 8 agents/PO | **8 agents/PO** | ✅ **SUFFICIENT** (within 10 agent budget) |
-| #5 RELIABILITY | DLQ + sandboxing | **99.95% uptime** | ✅ **TARGET HIT** (5× better than 99.9%) |
-| #6 AUDITABILITY | HMAC + event log | **100% reconstructable** | ✅ **FULL COMPLIANCE** |
-| #7 OBSERVABILITY | Basic metrics | **Full stack observability** | ✅ **COMPLETE VISIBILITY** |
-| #8 DEPLOYABILITY | Manual updates | **<5 min rollback** | ✅ **FAST, SAFE DEPLOYMENTS** |
+| #1 THROUGHPUT | 1,200 POs/day | **1,200 POs/day** | **TARGET HIT** (120% of 1,000 target) |
+| #2 LATENCY | 4.5 hours median | **3.2 hours p95** | **TARGET HIT** (20% better than <4hr target) |
+| #3 ACCURACY | 1.6% error | **1.6% error** | **TARGET HIT** (20% better than <2% target) |
+| #4 SCALABILITY | 8 agents/PO | **8 agents/PO** | **SUFFICIENT** (within 10 agent budget) |
+| #5 RELIABILITY | DLQ + sandboxing | **99.95% uptime** | **TARGET HIT** (5× better than 99.9%) |
+| #6 AUDITABILITY | HMAC + event log | **100% reconstructable** | **FULL COMPLIANCE** |
+| #7 OBSERVABILITY | Basic metrics | **Full stack observability** | **COMPLETE VISIBILITY** |
+| #8 DEPLOYABILITY | Manual updates | **<5 min rollback** | **FAST, SAFE DEPLOYMENTS** |
 
 ### The Win
-
-✅ **ALL 8 CONSTRAINTS ACHIEVED!** LangGraph provides production-ready orchestration:
+**ALL 8 CONSTRAINTS ACHIEVED!** LangGraph provides production-ready orchestration:
 - Explicit state graph: Intake → Pricing → Negotiation → Approval → Drafting → Sending → Reconciliation
 - Checkpointing: Save state at each node → resume after failures (4.5hr → 3.2hr latency)
 - Observability: LangSmith traces every agent call + token usage + latency
@@ -699,27 +698,27 @@ graph LR
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                        ORDERFLOW SYSTEM                              │
-│                                                                       │
-│  ┌──────────┐  ┌──────────┐  ┌─────────────┐  ┌──────────┐        │
-│  │  Intake  │──│ Pricing  │──│ Negotiation │──│ Approval │──...    │
-│  │  Agent   │  │  Agent   │  │   Agent     │  │  Agent   │        │
-│  └────┬─────┘  └────┬─────┘  └──────┬──────┘  └────┬─────┘        │
-│       │             │                │              │               │
-│       │      MCP Servers (Ch.2)      │              │               │
-│       ▼             ▼                ▼              ▼               │
-│  ┌─────────────────────────────────────────────────────────┐       │
-│  │   ERP   │ Pricing API │  Email  │  Legal DB  │          │       │
-│  └─────────────────────────────────────────────────────────┘       │
-│                                                                       │
-│       Event Bus (Ch.4) + Blackboard (Ch.5) + Sandboxing (Ch.6)      │
-│                                                                       │
-│  ┌────────────────────────────────────────────────────────────┐    │
-│  │          LangGraph Orchestrator (Ch.7)                      │    │
-│  │  State: {po_id, status, pricing, negotiation, approval}     │    │
-│  │  Checkpoints: Redis (resume on failure)                     │    │
-│  │  Observability: LangSmith traces                            │    │
-│  └────────────────────────────────────────────────────────────┘    │
+│ ORDERFLOW SYSTEM │
+│ │
+│ ┌──────────┐ ┌──────────┐ ┌─────────────┐ ┌──────────┐ │
+│ │ Intake │──│ Pricing │──│ Negotiation │──│ Approval │──... │
+│ │ Agent │ │ Agent │ │ Agent │ │ Agent │ │
+│ └────┬─────┘ └────┬─────┘ └──────┬──────┘ └────┬─────┘ │
+│ │ │ │ │ │
+│ │ MCP Servers (Ch.2) │ │ │
+│ ▼ ▼ ▼ ▼ │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ ERP │ Pricing API │ Email │ Legal DB │ │ │
+│ └─────────────────────────────────────────────────────────┘ │
+│ │
+│ Event Bus (Ch.4) + Blackboard (Ch.5) + Sandboxing (Ch.6) │
+│ │
+│ ┌────────────────────────────────────────────────────────────┐ │
+│ │ LangGraph Orchestrator (Ch.7) │ │
+│ │ State: {po_id, status, pricing, negotiation, approval} │ │
+│ │ Checkpoints: Redis (resume on failure) │ │
+│ │ Observability: LangSmith traces │ │
+│ └────────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -780,7 +779,7 @@ In all three, MCP tools appear as callables that the agent framework can invoke.
 
 Ch.1 gave you message schemas. Ch.2 gave you MCP for universal tool access. Ch.3 gave you A2A for hierarchical delegation. Ch.4 gave you async pub/sub for throughput. Ch.5 gave you blackboard for shared state. Ch.6 gave you sandboxing for trust. Ch.7 gave you production orchestration. **All 8 constraints achieved:** 1,200 POs/day, 3.2hr latency, 1.6% error, 99.95% uptime, full observability, <5 min rollback.
 
-**OrderFlow is production-ready.** 🎉
+**OrderFlow is production-ready.**
 
 **What you've built:**
 - Distributed multi-agent system processing 24× more POs than manual baseline

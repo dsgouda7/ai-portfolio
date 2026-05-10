@@ -4,7 +4,7 @@
 > Each chapter lives under `notes/01-ml/` in its own folder, containing a README and a Jupyter notebook.
 > Read this before starting any chapter to keep tone, structure, and the running example consistent.
 >
-> **📚 Updated:** Now includes comprehensive pedagogical patterns extracted from cross-chapter analysis (see §"Pedagogical Patterns & Teaching DNA" below).
+> ** Updated:** Now includes comprehensive pedagogical patterns extracted from cross-chapter analysis (see §"Pedagogical Patterns & Teaching DNA" below).
 
 <!-- LLM-STYLE-FINGERPRINT-V1
 canonical_chapters: ["notes/01-ml/01_regression/ch01_linear_regression/README.md", "notes/01-ml/01_regression/ch02_multiple_regression/README.md"]
@@ -14,7 +14,7 @@ formula_motivation: required_before_each_formula
 numerical_walkthroughs: judicious_california_housing_examples_when_clarifying
 dataset: california_housing_only_no_synthetic_data_except_toy_subsets
 failure_first_pedagogy: true
-callout_system: {insight:"💡", warning:"⚠️", constraint:"⚡", optional_depth:"📖", forward_pointer:"➡️"}
+callout_system: {insight:"", warning:"", constraint:"", optional_depth:"📖", forward_pointer:"➡"}
 mermaid_color_palette: {primary:"#1e3a8a", success:"#15803d", caution:"#b45309", danger:"#b91c1c", info:"#1d4ed8"}
 image_background: dark_facecolor_1a1a2e_for_generated_plots
 section_template: [story_header, challenge_0, animation, core_idea_1, running_example_2, math_3, step_by_step_4, key_diagrams_5, hyperparameter_dial_6, what_can_go_wrong_7, progress_check_N, bridge_N1]
@@ -34,12 +34,12 @@ The notes library is currently 19 chapters. Ch.1–Ch.14 cover the classical / n
 ```
 notes/01-ml/
 ├── 01_regression/
-│   ├── ch01_linear_regression/
-│   │   ├── README.md          ← Technical deep-dive + diagrams
-│   │   └── notebook.ipynb     ← Runnable code that mirrors the README
-│   ├── ch02_multiple_regression/
-│   │   ├── README.md
-│   │   └── notebook.ipynb
+│ ├── ch01_linear_regression/
+│ │ ├── README.md ← Technical deep-dive + diagrams
+│ │ └── notebook.ipynb ← Runnable code that mirrors the README
+│ ├── ch02_multiple_regression/
+│ │ ├── README.md
+│ │ └── notebook.ipynb
 │ ... (17 chapters total)
 ```
 
@@ -49,7 +49,7 @@ Each module is self-contained. Read the README to understand the concept, run th
 
 ## The Running Example — California Housing
 
-> ⚠️ **Scope note (updated for 8-track structure):** The California Housing running example applies to the **01-Regression** and **03-NeuralNetworks** tracks. Other tracks use track-specific datasets optimised for their learning goals. See the [Grand Challenge per Track](#grand-challenge-per-track) section below for the authoritative mapping.
+> **Warning — Scope note (updated for 8-track structure):** The California Housing running example applies to the **01-Regression** and **03-NeuralNetworks** tracks. Other tracks use track-specific datasets optimised for their learning goals. See the [Grand Challenge per Track](#grand-challenge-per-track) section below for the authoritative mapping.
 
 Within the Regression and NeuralNetworks tracks, every chapter uses a **single consistent dataset**: the [California Housing dataset](https://scikit-learn.org/stable/datasets/real_world.html#california-housing-dataset) (`sklearn.datasets.fetch_california_housing`).
 
@@ -130,21 +130,21 @@ Every chapter explicitly tracks which constraints it helps solve:
 | 2 | Binary classification (high/low value) | #3 Partial | Classification unlocked |
 | 3 | Diagnose linear limits | None | Problem revealed |
 | 4 | Non-linear modeling ($55k MAE) | #1 Major step | But no training yet |
-| 5 | Backprop + optimizers | **#1 ✅ <$40k MAE achieved!** | Accuracy unlocked! |
-| 6 | Regularization (L1/L2/Dropout) | **#2 ✅ Generalization** | No memorization |
+| 5 | Backprop + optimizers | **#1 <$40k MAE achieved!** | Accuracy unlocked! |
+| 6 | Regularization (L1/L2/Dropout) | **#2 Generalization** | No memorization |
 | 7 | CNNs for aerial photos | #5 Partial | Image features |
 | 8 | RNNs for price trends | #5 Partial | Time series |
 | 9 | Metrics deep dive | Validation for #1 #2 #3 | Measurement |
 | 10 | Interpretable trees | #4 Partial | Accuracy vs interpretability tradeoff |
-| 11 | XGBoost + SHAP | **#4 ✅ Accuracy + explainability** | Best of both worlds |
-| 12 | Clustering (K-Means) | **#3 ✅ Market segmentation** | Unsupervised segments |
+| 11 | XGBoost + SHAP | **#4 Accuracy + explainability** | Best of both worlds |
+| 12 | Clustering (K-Means) | **#3 Market segmentation** | Unsupervised segments |
 | 13 | PCA/t-SNE | #5 Partial | Faster inference |
 | 14 | Unsupervised metrics | Validate #3 clusters | Cluster quality |
 | 15 | MLE + loss theory | Foundation | Understand all losses |
 | 16 | TensorBoard | **#5 Partial — Monitoring** | Production tooling |
 | 17 | Attention mechanics | #1 #4 | Interpretable weights |
 | 18 | Transformers | #1 #2 #3 all optimized | SOTA architecture |
-| 19 | Hyperparameter tuning | **#5 ✅ Production-ready!** | 🎉 **COMPLETE!** |
+| 19 | Hyperparameter tuning | **#5 Production-ready!** | **COMPLETE!** |
 
 ---
 
@@ -165,7 +165,7 @@ Every chapter README now follows this **extended structure** (adds §0 Challenge
 
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The goal**: Launch **[Grand Challenge Name]** — [one-sentence mission] satisfying 5 constraints:
+> **The goal**: Launch **[Grand Challenge Name]** — [one-sentence mission] satisfying 5 constraints:
 > 1. ACCURACY: [target metric and threshold]
 > 2. GENERALIZATION: [unseen-data target]
 > 3. MULTI-TASK / MULTI-LABEL: [multi-output target]
@@ -173,8 +173,8 @@ Every chapter README now follows this **extended structure** (adds §0 Challenge
 > 5. PRODUCTION: [latency / scale / monitoring target]
 
 **What we know so far:**
-- ✅ [Summary of previous chapters' achievements]
-- ❌ **But we still can't [X]!**
+- [Summary of previous chapters' achievements]
+- **But we still can't [X]!**
 
 **What's blocking us:**
 [Concrete description of the gap this chapter addresses]
@@ -210,14 +210,12 @@ Every chapter README now follows this **extended structure** (adds §0 Challenge
 ## N · Progress Check — What We Can Solve Now
 
 ![Progress visualization](img/chNN-progress-check.png) ← **Optional**: Visual dashboard showing constraint progress
-
-✅ **Unlocked capabilities:**
+**Unlocked capabilities:**
 - [Specific things you can now do]
-- [Constraint achievements: "Constraint #1 ✅ Achieved! <$40k MAE"]
-
-❌ **Still can't solve:**
-- ❌ [What's blocked — explicitly preview next chapter's unlock]
-- ❌ [Other remaining challenges]
+- [Constraint achievements: "Constraint #1 Achieved! <$40k MAE"]
+**Still can't solve:**
+- [What's blocked — explicitly preview next chapter's unlock]
+- [Other remaining challenges]
 
 **Real-world status**: [One-sentence summary: "We can now X, but we can't yet Y"]
 
@@ -240,10 +238,10 @@ Every chapter README now follows this **extended structure** (adds §0 Challenge
 ### Identifying Procedural Chapters
 
 A chapter is workflow-based if:
-- ✅ It teaches a **sequence of decisions** more than a single concept
-- ✅ Practitioner asks "what should I do next?" after each section
-- ✅ Multiple tools/techniques are chosen based on data characteristics
-- ✅ The chapter reads like a troubleshooting guide, not a concept introduction
+- It teaches a **sequence of decisions** more than a single concept
+- Practitioner asks "what should I do next?" after each section
+- Multiple tools/techniques are chosen based on data characteristics
+- The chapter reads like a troubleshooting guide, not a concept introduction
 
 **Examples:**
 - **Workflow-based:** Feature Engineering (inspect → decide scaler → check VIF → transform)
@@ -268,15 +266,15 @@ A chapter is workflow-based if:
 
 **Before diving into theory, understand the workflow you'll follow with every dataset:**
 
-> 📊 **What you'll build by the end:** [Description of final deliverable/dashboard]
+> **What you'll build by the end:** [Description of final deliverable/dashboard]
 
 ```
-Phase 1: [ACTION]           Phase 2: [ACTION]           Phase 3: [ACTION]
+Phase 1: [ACTION] Phase 2: [ACTION] Phase 3: [ACTION]
 ──────────────────────────────────────────────────────────────────────────
-[What you do]               [What you do]               [What you do]
+[What you do] [What you do] [What you do]
 
-→ DECISION:                 → DECISION:                 → DECISION:
-  [Choice criteria]           [Choice criteria]           [Choice criteria]
+→ DECISION: → DECISION: → DECISION:
+ [Choice criteria] [Choice criteria] [Choice criteria]
 ```
 
 **The workflow maps to this chapter:**
@@ -284,7 +282,7 @@ Phase 1: [ACTION]           Phase 2: [ACTION]           Phase 3: [ACTION]
 - **Phase 2 ([ACTION])** → §Y Section Name
 - **Phase 3 ([ACTION])** → §Z Section Name
 
-> 💡 **Usage note:** [Brief note on phase dependencies and execution order]
+> **Usage note:** [Brief note on phase dependencies and execution order]
 
 ---
 
@@ -302,21 +300,21 @@ Phase 1: [ACTION]           Phase 2: [ACTION]           Phase 3: [ACTION]
 ```python
 # Phase N: [Brief description]
 for item in dataset:
-    metric = compute_metric(item)
+ metric = compute_metric(item)
 
-    # DECISION LOGIC (inline annotation)
-    if metric > threshold:
-        action = "choice_A"
-    else:
-        action = "choice_B"
+ # DECISION LOGIC (inline annotation)
+ if metric > threshold:
+ action = "choice_A"
+ else:
+ action = "choice_B"
 
-    print(f"{item}: {metric:.2f} → {action}")
+ print(f"{item}: {metric:.2f} → {action}")
 ```
 
-> 💡 **Industry Standard:** `library.module.Function`
+> **Industry Standard:** `library.module.Function`
 > ```python
 > from sklearn.preprocessing import StandardScaler
-> result = StandardScaler().fit_transform(data)  # Production one-liner
+> result = StandardScaler().fit_transform(data) # Production one-liner
 > ```
 > **When to use:** Always in production. Manual implementation for learning only.
 > **Common alternatives:** [List alternatives]
@@ -367,30 +365,30 @@ for item in dataset:
 **Rule 1: Each phase ends with executable code showing that phase's workflow**
 
 ```python
-# ✅ Good: Phase 1 code snippet (inspection loop)
+# Good: Phase 1 code snippet (inspection loop)
 for col in numeric_cols:
-    skew = df[col].skew()
-    iqr = df[col].quantile(0.75) - df[col].quantile(0.25)
+ skew = df[col].skew()
+ iqr = df[col].quantile(0.75) - df[col].quantile(0.25)
 
-    # DECISION LOGIC
-    if abs(skew) > 1.0:
-        print(f"{col}: Skew={skew:.2f} → Apply log1p + StandardScaler")
-    elif iqr / df[col].std() > 2.5:
-        print(f"{col}: Heavy outliers (IQR/std={iqr/std:.2f}) → RobustScaler")
-    else:
-        print(f"{col}: Symmetric → StandardScaler")
+ # DECISION LOGIC
+ if abs(skew) > 1.0:
+ print(f"{col}: Skew={skew:.2f} → Apply log1p + StandardScaler")
+ elif iqr / df[col].std() > 2.5:
+ print(f"{col}: Heavy outliers (IQR/std={iqr/std:.2f}) → RobustScaler")
+ else:
+ print(f"{col}: Symmetric → StandardScaler")
 ```
 
 **Rule 2: Decision logic appears in code comments, not just prose**
 
 ```python
-# ✅ Good: Inline decision annotation
+# Good: Inline decision annotation
 if vif > 10:
-    verdict = "❌ SEVERE - Drop one of the pair"
+ verdict = " SEVERE - Drop one of the pair"
 elif vif > 5:
-    verdict = "⚠️ HIGH - Monitor or regularize (Ch.5)"
+ verdict = " HIGH - Monitor or regularize (Ch.5)"
 else:
-    verdict = "✅ SAFE"
+ verdict = " SAFE"
 ```
 
 **Rule 3: Code should be copy-paste executable**
@@ -402,7 +400,7 @@ else:
 **Rule 4: Show progressive building, not isolated snippets**
 
 ```python
-# ✅ Good: References earlier setup
+# Good: References earlier setup
 # Using X and y from the Phase 1 inspection above...
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 ```
@@ -441,12 +439,12 @@ Every checkpoint follows this **exact 3-part structure:**
 **Required callout box pattern:**
 
 ```markdown
-> 💡 **Industry Standard:** `library.module.Function`
+> **Industry Standard:** `library.module.Function`
 >
 > ```python
 > from sklearn.preprocessing import StandardScaler
 > scaler = StandardScaler()
-> X_scaled = scaler.fit_transform(X_train)  # Fit on train only!
+> X_scaled = scaler.fit_transform(X_train) # Fit on train only!
 > X_test_scaled = scaler.transform(X_test)
 > ```
 >
@@ -482,12 +480,12 @@ Every checkpoint follows this **exact 3-part structure:**
 
 | Chapter | Current Structure | Should Use Workflow? | Priority |
 |---------|------------------|---------------------|----------|
-| Ch.3 Feature Importance | Concept-based → **Workflow** | ✅ YES | **COMPLETE** (4-phase: Inspect → Audit → Transform → Validate) |
-| Ch.0 Data Prep | Concept-based | ✅ YES | HIGH (7-phase EDA workflow) |
-| Ch.7 Hyperparameter Tuning | Concept-based | ⚠️ CONSIDER | MEDIUM (has decision tree) |
-| Ch.8 Data Validation | Concept-based | ✅ YES | MEDIUM (validation workflow) |
-| Ch.1 Linear Regression | Concept-based | ❌ NO | - (single algorithm) |
-| Ch.2 Multiple Regression | Concept-based | ❌ NO | - (extension of Ch.1) |
+| Ch.3 Feature Importance | Concept-based → **Workflow** | YES | **COMPLETE** (4-phase: Inspect → Audit → Transform → Validate) |
+| Ch.0 Data Prep | Concept-based | YES | HIGH (7-phase EDA workflow) |
+| Ch.7 Hyperparameter Tuning | Concept-based | CONSIDER | MEDIUM (has decision tree) |
+| Ch.8 Data Validation | Concept-based | YES | MEDIUM (validation workflow) |
+| Ch.1 Linear Regression | Concept-based | NO | - (single algorithm) |
+| Ch.2 Multiple Regression | Concept-based | NO | - (extension of Ch.1) |
 
 ---
 
@@ -499,7 +497,7 @@ Every chapter that trains a model must follow this three-step sequence:
 2. **Induce the sharpest overfit you can.** This establishes that the model *can* learn the signal; the problem is memorisation, not incapacity.
 3. **Then regularise.** Add dropout, weight decay, early stopping, or data augmentation. The model now has proven capacity and you are controlling its generalisation.
 
-> 💡 Tie to SmartVal AI in every chapter that trains: "Do not add dropout to SmartVal until it has first proven it can memorise the training set."
+> Tie to SmartVal AI in every chapter that trains: "Do not add dropout to SmartVal until it has first proven it can memorise the training set."
 
 ---
 
@@ -534,11 +532,11 @@ Record this as a **Floor** row in the `## 0 · The Challenge` constraint table. 
 Add to markdown cells after each major concept explanation:
 
 ```markdown
-> 💡 **Industry Standard Pattern:** After implementing manually, use:
+> **Industry Standard Pattern:** After implementing manually, use:
 > ```python
 > from sklearn.preprocessing import StandardScaler
 > scaler = StandardScaler()
-> X_scaled = scaler.fit_transform(X_train)  # One-liner production approach
+> X_scaled = scaler.fit_transform(X_train) # One-liner production approach
 > ```
 > **When to use:** Always in production. Manual implementation shown for learning only.
 > **Common alternatives:** [List alternatives if applicable]
@@ -562,17 +560,17 @@ When you implement [technique], include threshold-based branching:
 
 \```python
 for item in data:
-    metric = compute_metric(item)
+ metric = compute_metric(item)
 
-    # DECISION LOGIC (add this pattern)
-    if metric > threshold_high:
-        action = "❌ SEVERE - [specific action]"
-    elif metric > threshold_medium:
-        action = "⚠️ HIGH - [specific action]"
-    else:
-        action = "✅ SAFE"
+ # DECISION LOGIC (add this pattern)
+ if metric > threshold_high:
+ action = " SEVERE - [specific action]"
+ elif metric > threshold_medium:
+ action = " HIGH - [specific action]"
+ else:
+ action = " SAFE"
 
-    print(f"{item:12s}  Metric={metric:.2f}  {action}")
+ print(f"{item:12s} Metric={metric:.2f} {action}")
 \```
 
 **Thresholds:**
@@ -594,12 +592,12 @@ Use consistent emoji/symbols for severity levels:
 
 | Indicator | Meaning | Use Case |
 |-----------|---------|----------|
-| ✅ | Safe/Good/Keep | Metric within acceptable range |
-| ⚠️ | Warning/Monitor | Metric concerning but acceptable |
-| ⚡ | Moderate/Caution | Metric requires attention |
-| ❌ | Severe/Bad/Drop | Metric requires immediate action |
-| 💡 | Industry standard | Production-ready pattern |
-| 🔍 | Investigation needed | Further analysis required |
+| | Safe/Good/Keep | Metric within acceptable range |
+| | Warning/Monitor | Metric concerning but acceptable |
+| | Moderate/Caution | Metric requires attention |
+| | Severe/Bad/Drop | Metric requires immediate action |
+| | Industry standard | Production-ready pattern |
+| | Investigation needed | Further analysis required |
 
 ### Implementation Checklist for Exercise Notebooks
 
@@ -607,22 +605,20 @@ When creating/updating exercise notebooks for workflow-based chapters:
 
 - [ ] **Industry callouts added** (3-5 locations showing manual → sklearn pattern)
 - [ ] **Decision logic templates added** (2-4 locations with specific thresholds)
-- [ ] **Visual indicators consistent** (✅ ❌ ⚠️ ⚡ 💡 used appropriately)
+- [ ] **Visual indicators consistent** ( used appropriately)
 - [ ] **Thresholds documented** (specific numbers, not vague like "high" without defining it)
 - [ ] **Code cells remain placeholder** (`# TODO: Implement...` preserved)
 - [ ] **Markdown cells expanded** (guidance added, not replaced)
 - [ ] **Cell count increased modestly** (typically +3-5 markdown cells for templates)
 
 ### Anti-Patterns to Avoid
-
-❌ **Don't:**
+**Don't:**
 - Add industry callouts to every single concept (3-5 is sufficient)
 - Include solution code in exercise notebook markdown
 - Remove existing content to add templates (always additive)
 - Use vague thresholds ("if value is high") without specific numbers
 - Mix multiple decision templates in one markdown cell
-
-✅ **Do:**
+**Do:**
 - Focus callouts on most commonly used production tools
 - Show both the pattern AND when to use it
 - Preserve all original exercise prompts
@@ -663,7 +659,7 @@ Every `grand_solution.md` follows this **7-section template**:
 
 ---
 
-## Mission Accomplished: [Final Metric] ✅
+## Mission Accomplished: [Final Metric]
 
 **The Challenge:** [One-sentence restatement of grand challenge]
 **The Result:** [Final metric achieved]
@@ -734,7 +730,7 @@ Every `grand_solution.md` follows this **7-section template**:
 
 | # | Constraint | Target | Status | How We Achieved It |
 |---|------------|--------|--------|--------------------|
-| #1 | ACCURACY | [target] | ✅ [metric] | [Chapter + technique] |
+| #1 | ACCURACY | [target] | [metric] | [Chapter + technique] |
 | ... | ... | ... | ... | ... |
 
 ---
@@ -775,12 +771,12 @@ Every `grand_solution.md` follows this **7-section template**:
 **Tone:** Executive summary meets technical reference. You're briefing a senior engineer who's smart but time-constrained.
 
 **Voice patterns:**
-- ✅ **Direct:** "Ch.3 unlocked VIF auditing. This prevents multicollinearity."
-- ❌ **Verbose:** "In Chapter 3, we learned about an important technique called VIF auditing, which is a method that helps us identify and prevent issues related to multicollinearity in our features."
-- ✅ **Metric-focused:** "$70k → $32k MAE (54% improvement)"
-- ❌ **Vague:** "Much better accuracy than before"
-- ✅ **Production-grounded:** "VIF audit runs before every training job. Alert if VIF > 5."
-- ❌ **Academic:** "VIF is a useful diagnostic statistic for assessing multicollinearity."
+- **Direct:** "Ch.3 unlocked VIF auditing. This prevents multicollinearity."
+- **Verbose:** "In Chapter 3, we learned about an important technique called VIF auditing, which is a method that helps us identify and prevent issues related to multicollinearity in our features."
+- **Metric-focused:** "$70k → $32k MAE (54% improvement)"
+- **Vague:** "Much better accuracy than before"
+- **Production-grounded:** "VIF audit runs before every training job. Alert if VIF > 5."
+- **Academic:** "VIF is a useful diagnostic statistic for assessing multicollinearity."
 
 **Content density:**
 - Each chapter summary: 150-200 words max
@@ -789,21 +785,21 @@ Every `grand_solution.md` follows this **7-section template**:
 - Mermaid diagrams: 1-2 per document (architecture + maybe progression)
 
 **What to include:**
-- ✅ Exact metrics at each stage ($70k, $55k, $48k, ...)
-- ✅ Specific hyperparameters that matter (α=1.0, degree=2, ...)
-- ✅ Production patterns (when/why to use each technique)
-- ✅ Chapter interdependencies ("Ch.4 requires Ch.3's scaling")
-- ✅ Mermaid flowchart showing full pipeline integration
+- Exact metrics at each stage ($70k, $55k, $48k, ...)
+- Specific hyperparameters that matter (α=1.0, degree=2, ...)
+- Production patterns (when/why to use each technique)
+- Chapter interdependencies ("Ch.4 requires Ch.3's scaling")
+- Mermaid flowchart showing full pipeline integration
 
 **What to exclude:**
-- ❌ Mathematical derivations (that's in individual chapters)
-- ❌ Historical context (who invented what, when)
-- ❌ Step-by-step tutorials (that's in chapter READMEs)
-- ❌ Exercise problems (that's in notebooks)
-- ❌ Duplicate content across sections (say it once, reference it later)
+- Mathematical derivations (that's in individual chapters)
+- Historical context (who invented what, when)
+- Step-by-step tutorials (that's in chapter READMEs)
+- Exercise problems (that's in notebooks)
+- Duplicate content across sections (say it once, reference it later)
 
 **Formatting conventions:**
-- Use checkmark bullets for capabilities unlocked: ✅ ❌ ⚡ ➡️
+- Use checkmark bullets for capabilities unlocked: ➡
 
 ---
 
@@ -830,13 +826,13 @@ Every `grand_solution_reference.ipynb` (reference) or `grand_solution_exercise.i
 2. Setup & imports cell: All libraries needed for the track
 3. Data loading cell: California Housing or track-specific dataset
 4. Chapter progression cells (one per chapter):
-   - Markdown cell: "Ch.X: [Concept] — [Problem it solves]"
-   - Code cell: Consolidated implementation from that chapter
-   - Output cell: Key metric or result achieved
+ - Markdown cell: "Ch.X: [Concept] — [Problem it solves]"
+ - Code cell: Consolidated implementation from that chapter
+ - Output cell: Key metric or result achieved
 5. Multi-chapter integration cells:
-   - Multi-modal fusion (if applicable)
-   - Complete training pipeline
-   - Production inference pattern
+ - Multi-modal fusion (if applicable)
+ - Complete training pipeline
+ - Production inference pattern
 6. Summary cell: Progression table, final metrics, key insights
 7. Next steps cell: Links to other tracks, production patterns demonstrated
 ```
@@ -844,219 +840,219 @@ Every `grand_solution_reference.ipynb` (reference) or `grand_solution_exercise.i
 ### Cell Organization Rules
 
 **Markdown cells:**
-- ✅ **Concise explanations:** 2-3 sentences max per concept
-- ✅ **Problem framing:** "**Problem:** [What's blocking us]"
-- ✅ **Solution statement:** "**Solution:** [How this chapter addresses it]"
-- ✅ **Result metric:** "**Result:** [Specific improvement achieved]"
-- ✅ **Key concept highlight:** "**Key concept:** [One-sentence insight]"
-- ✅ **Chapter header format:**
-  ```markdown
-  ## Chapter N: [Concept Name] — [One-Line Tagline]
+- **Concise explanations:** 2-3 sentences max per concept
+- **Problem framing:** "**Problem:** [What's blocking us]"
+- **Solution statement:** "**Solution:** [How this chapter addresses it]"
+- **Result metric:** "**Result:** [Specific improvement achieved]"
+- **Key concept highlight:** "**Key concept:** [One-sentence insight]"
+- **Chapter header format:**
+ ```markdown
+ ## Chapter N: [Concept Name] — [One-Line Tagline]
 
-  **Problem:** [What's broken or missing]
+ **Problem:** [What's broken or missing]
 
-  **Solution:** [Technique introduced in this chapter]
+ **Solution:** [Technique introduced in this chapter]
 
-  **Result:** [Metric improvement]
+ **Result:** [Metric improvement]
 
-  **Key concept:** [Core insight that matters]
-  ```
-- ❌ **Lengthy tutorials:** That's in chapter READMEs
-- ❌ **Mathematical derivations:** That's in chapter notebooks
-- ❌ **Historical context:** Keep focus on problem → solution → result
+ **Key concept:** [Core insight that matters]
+ ```
+- **Lengthy tutorials:** That's in chapter READMEs
+- **Mathematical derivations:** That's in chapter notebooks
+- **Historical context:** Keep focus on problem → solution → result
 
 **Code cells:**
-- ✅ **Self-contained:** Each cell runs independently (imports at top if needed)
-- ✅ **Commented:** Inline comments explain non-obvious decisions
-  ```python
-  # Bayesian average: (C*m + sum(ratings)) / (C + count)
-  # C=10 means "trust prior with weight of 10 ratings"
-  movie_stats['bayesian_avg'] = (C * m + movie_stats['rating_sum']) / (C + movie_stats['rating_count'])
-  ```
-- ✅ **Chapter references:** `# Ch.4: Dropout regularization`
-- ✅ **Production patterns:** Show actual deployment code, not toy examples
-- ✅ **Example usage blocks:** After defining functions/classes, demonstrate them
-  ```python
-  # Example usage
-  item_cf = ItemBasedCF(k_neighbors=20)
-  item_cf.fit(train)
-  recs = item_cf.recommend(user_id=1, k=10)
-  print(f"Ch.2 Item-Based CF — Hit Rate@10: {hr_cf:.1%}")
-  ```
-- ❌ **Incomplete snippets:** No `# ... rest of implementation ...`
-- ❌ **Overcomplicated:** Simplify for clarity, note "production would add X"
-- ❌ **Silent execution:** Always print key results after training/evaluation
+- **Self-contained:** Each cell runs independently (imports at top if needed)
+- **Commented:** Inline comments explain non-obvious decisions
+ ```python
+ # Bayesian average: (C*m + sum(ratings)) / (C + count)
+ # C=10 means "trust prior with weight of 10 ratings"
+ movie_stats['bayesian_avg'] = (C * m + movie_stats['rating_sum']) / (C + movie_stats['rating_count'])
+ ```
+- **Chapter references:** `# Ch.4: Dropout regularization`
+- **Production patterns:** Show actual deployment code, not toy examples
+- **Example usage blocks:** After defining functions/classes, demonstrate them
+ ```python
+ # Example usage
+ item_cf = ItemBasedCF(k_neighbors=20)
+ item_cf.fit(train)
+ recs = item_cf.recommend(user_id=1, k=10)
+ print(f"Ch.2 Item-Based CF — Hit Rate@10: {hr_cf:.1%}")
+ ```
+- **Incomplete snippets:** No `# ... rest of implementation ...`
+- **Overcomplicated:** Simplify for clarity, note "production would add X"
+- **Silent execution:** Always print key results after training/evaluation
 
 **Output cells:**
-- ✅ **Key metrics:** "✅ Ch.4 Regularized MAE: $43k"
-- ✅ **Progress indicators:** "Ch.2 → Ch.4: 55% improvement (68% → 83% HR@10)"
-- ✅ **Visual confirmation:** Loss curves, architecture summaries, progression charts
-- ✅ **Success markers:** Use checkmarks (✅) and arrows (→) to show progression
-- ❌ **Verbose logs:** Suppress training output (`verbose=0`)
-- ❌ **Unnecessary details:** Don't print full datasets, raw model weights, or debug info
+- **Key metrics:** " Ch.4 Regularized MAE: $43k"
+- **Progress indicators:** "Ch.2 → Ch.4: 55% improvement (68% → 83% HR@10)"
+- **Visual confirmation:** Loss curves, architecture summaries, progression charts
+- **Success markers:** Use checkmarks () and arrows (→) to show progression
+- **Verbose logs:** Suppress training output (`verbose=0`)
+- **Unnecessary details:** Don't print full datasets, raw model weights, or debug info
 
 ### Integration with grand_solution.md
 
 **Cross-references (required):**
 
 1. **In grand_solution.md header:**
-   ```markdown
-   ## How to Use This Document
+ ```markdown
+ ## How to Use This Document
 
-   **Three ways to learn this track:**
+ **Three ways to learn this track:**
 
-   1. **Big picture first (recommended for time-constrained readers):**
-      - Read this `grand_solution.md` → understand narrative
-      - Run [grand_solution.ipynb (reference)](grand_solution_reference.ipynb) | [grand_solution.ipynb (exercise)](grand_solution_exercise.ipynb) → see code consolidated
-      - Dive into individual chapters for depth
+ 1. **Big picture first (recommended for time-constrained readers):**
+ - Read this `grand_solution.md` → understand narrative
+ - Run [grand_solution.ipynb (reference)](grand_solution_reference.ipynb) | [grand_solution.ipynb (exercise)](grand_solution_exercise.ipynb) → see code consolidated
+ - Dive into individual chapters for depth
 
-   2. **Hands-on exploration:**
-      - Run [grand_solution.ipynb (reference)](grand_solution_reference.ipynb) | [grand_solution.ipynb (exercise)](grand_solution_exercise.ipynb) directly
-      - Code consolidates: setup → each chapter → integration
-      - Each cell includes markdown explaining what problem it solves
+ 2. **Hands-on exploration:**
+ - Run [grand_solution.ipynb (reference)](grand_solution_reference.ipynb) | [grand_solution.ipynb (exercise)](grand_solution_exercise.ipynb) directly
+ - Code consolidates: setup → each chapter → integration
+ - Each cell includes markdown explaining what problem it solves
 
-   3. **Sequential deep dive (recommended for mastery):**
-      - Start with Ch.1 → progress through Ch.N
-      - Return to this document for synthesis
-   ```
+ 3. **Sequential deep dive (recommended for mastery):**
+ - Start with Ch.1 → progress through Ch.N
+ - Return to this document for synthesis
+ ```
 
 2. **In grand_solution.ipynb first cell:**
-   ```markdown
-   > **Purpose:** This notebook consolidates all code from Chapters 1-N into an
-   > executable end-to-end demonstration. For conceptual explanations, see
-   > [grand_solution.md](grand_solution.md). For detailed tutorials, see individual
-   > chapter folders.
-   ```
+ ```markdown
+ > **Purpose:** This notebook consolidates all code from Chapters 1-N into an
+ > executable end-to-end demonstration. For conceptual explanations, see
+ > [grand_solution.md](grand_solution.md). For detailed tutorials, see individual
+ > chapter folders.
+ ```
 
 3. **In grand_solution.ipynb summary cell:**
-   ```markdown
-   ## Summary: The Complete Journey
+ ```markdown
+ ## Summary: The Complete Journey
 
-   [Progression table showing baseline → Ch.1 → ... → final metric]
+ [Progression table showing baseline → Ch.1 → ... → final metric]
 
-   **Continue learning:**
-   - [grand_solution.md](grand_solution.md) — Production patterns and synthesis
-   - Individual chapters — Deep dives with exercises
-   ```
+ **Continue learning:**
+ - [grand_solution.md](grand_solution.md) — Production patterns and synthesis
+ - Individual chapters — Deep dives with exercises
+ ```
 
 ### Code Consolidation Rules
 
 **From chapter notebooks to grand solution:**
 
 1. **Collapse repeated patterns:**
-   ```python
-   # Chapter notebooks might repeat data loading 10 times
-   # Grand solution: Load once at top, reference throughout
+ ```python
+ # Chapter notebooks might repeat data loading 10 times
+ # Grand solution: Load once at top, reference throughout
 
-   # ✅ Good:
-   X_train, X_test, y_train, y_test = load_and_split_housing()
-   # Ch.2 uses X_train...
-   # Ch.3 uses X_train...
+ # Good:
+ X_train, X_test, y_train, y_test = load_and_split_housing()
+ # Ch.2 uses X_train...
+ # Ch.3 uses X_train...
 
-   # ❌ Bad:
-   # Ch.2:
-   X_train, X_test, y_train, y_test = load_and_split_housing()
-   # Ch.3:
-   X_train, X_test, y_train, y_test = load_and_split_housing()  # Duplicate!
-   ```
+ # Bad:
+ # Ch.2:
+ X_train, X_test, y_train, y_test = load_and_split_housing()
+ # Ch.3:
+ X_train, X_test, y_train, y_test = load_and_split_housing() # Duplicate!
+ ```
 
 2. **Preserve chapter boundaries:**
-   ```python
-   # ✅ Good: Clear chapter markers with section headings
-   ## Chapter 2: Collaborative Filtering
-   # **Problem:** Baseline not personalized
-   # **Solution:** User-based and item-based CF
-   # **Result:** 68% HR@10 — 26-point jump
+ ```python
+ # Good: Clear chapter markers with section headings
+ ## Chapter 2: Collaborative Filtering
+ # **Problem:** Baseline not personalized
+ # **Solution:** User-based and item-based CF
+ # **Result:** 68% HR@10 — 26-point jump
 
-   baseline_model = build_dense_network()
+ baseline_model = build_dense_network()
 
-   ## Chapter 4: Neural CF
-   # **Problem:** Linear dot product can't capture complex tastes
-   # **Solution:** Neural network with GMF + MLP paths
-   # **Result:** 83% HR@10
+ ## Chapter 4: Neural CF
+ # **Problem:** Linear dot product can't capture complex tastes
+ # **Solution:** Neural network with GMF + MLP paths
+ # **Result:** 83% HR@10
 
-   reg_model = build_regularized_network()
+ reg_model = build_regularized_network()
 
-   # ❌ Bad: Everything in one giant cell
-   baseline_model = ...
-   reg_model = ...
-   final_model = ...  # Lost the narrative!
-   ```
+ # Bad: Everything in one giant cell
+ baseline_model = ...
+ reg_model = ...
+ final_model = ... # Lost the narrative!
+ ```
 
 3. **Show progressive refinement:**
-   ```python
-   # ✅ Good: Each chapter improves on previous with visible metrics
-   baseline_mae = 55000  # Ch.2
-   reg_mae = 43000       # Ch.4 (10% improvement)
-   cnn_mae = 38000       # Ch.5 (12% improvement)
+ ```python
+ # Good: Each chapter improves on previous with visible metrics
+ baseline_mae = 55000 # Ch.2
+ reg_mae = 43000 # Ch.4 (10% improvement)
+ cnn_mae = 38000 # Ch.5 (12% improvement)
 
-   # Plot progression
-   plt.plot([55, 43, 38], label='MAE per chapter')
+ # Plot progression
+ plt.plot([55, 43, 38], label='MAE per chapter')
 
-   # Print confirmation after each chapter
-   print(f"Ch.2 Baseline — MAE: ${baseline_mae:,}")
-   print(f"Ch.4 Regularized — MAE: ${reg_mae:,} (↓{100*(1-reg_mae/baseline_mae):.0f}%)")
+ # Print confirmation after each chapter
+ print(f"Ch.2 Baseline — MAE: ${baseline_mae:,}")
+ print(f"Ch.4 Regularized — MAE: ${reg_mae:,} (↓{100*(1-reg_mae/baseline_mae):.0f}%)")
 
-   # ❌ Bad: Only final result
-   final_mae = 28000  # Where did this come from?
-   ```
+ # Bad: Only final result
+ final_mae = 28000 # Where did this come from?
+ ```
 
 4. **Simplify for clarity:**
-   ```python
-   # ✅ Good: Demonstrate pattern, note production differences
-   # Simplified for demo - production would use actual images
-   X_images = np.random.rand(1000, 224, 224, 3)  # Placeholder
+ ```python
+ # Good: Demonstrate pattern, note production differences
+ # Simplified for demo - production would use actual images
+ X_images = np.random.rand(1000, 224, 224, 3) # Placeholder
 
-   # ❌ Bad: Full production complexity
-   # 500 lines of image preprocessing...
-   ```
+ # Bad: Full production complexity
+ # 500 lines of image preprocessing...
+ ```
 
 5. **Extract reusable functions:**
-   ```python
-   # ✅ Good: Define once, use in multiple chapters
-   def load_movielens_100k():
-       """Load MovieLens 100k dataset."""
-       ratings = pd.read_csv('ml-100k/u.data', ...)
-       movies = pd.read_csv('ml-100k/u.item', ...)
-       users = pd.read_csv('ml-100k/u.user', ...)
-       return ratings, movies, users
+ ```python
+ # Good: Define once, use in multiple chapters
+ def load_movielens_100k():
+ """Load MovieLens 100k dataset."""
+ ratings = pd.read_csv('ml-100k/u.data', ...)
+ movies = pd.read_csv('ml-100k/u.item', ...)
+ users = pd.read_csv('ml-100k/u.user', ...)
+ return ratings, movies, users
 
-   # Ch.1, Ch.2, Ch.3 all use this
-   ratings, movies, users = load_movielens_100k()
+ # Ch.1, Ch.2, Ch.3 all use this
+ ratings, movies, users = load_movielens_100k()
 
-   # ❌ Bad: Copy-paste same loading code in every chapter section
-   ```
+ # Bad: Copy-paste same loading code in every chapter section
+ ```
 
 6. **Add "Example usage" blocks:**
-   ```python
-   # ✅ Good: After defining classes, show how to use them
-   class MatrixFactorization:
-       # ... full implementation ...
+ ```python
+ # Good: After defining classes, show how to use them
+ class MatrixFactorization:
+ # ... full implementation ...
 
-   # Example usage
-   mf_model = MatrixFactorization(n_factors=50, learning_rate=0.01)
-   mf_model.fit(train)
-   print(f"Ch.3 Matrix Factorization — Hit Rate@10: {hr_mf:.1%}")
+ # Example usage
+ mf_model = MatrixFactorization(n_factors=50, learning_rate=0.01)
+ mf_model.fit(train)
+ print(f"Ch.3 Matrix Factorization — Hit Rate@10: {hr_mf:.1%}")
 
-   # ❌ Bad: Just define the class, no demonstration
-   ```
+ # Bad: Just define the class, no demonstration
+ ```
 
 ### File Naming Convention
 
 ```
 notes/01-ml/
 ├── 01_regression/
-│   ├── grand_solution.md      ← Conceptual synthesis
-│   ├── grand_solution.ipynb   ← Code consolidation
-│   └── ch01_linear_regression/
-│       ├── README.md
-│       └── notebook.ipynb
+│ ├── grand_solution.md ← Conceptual synthesis
+│ ├── grand_solution.ipynb ← Code consolidation
+│ └── ch01_linear_regression/
+│ ├── README.md
+│ └── notebook.ipynb
 ├── 03_neural_networks/
-│   ├── grand_solution.md
-│   ├── grand_solution.ipynb   ← Complete UnifiedAI demo
-│   └── ch01_xor_problem/
-│       ├── README.md
-│       └── notebook.ipynb
+│ ├── grand_solution.md
+│ ├── grand_solution.ipynb ← Complete UnifiedAI demo
+│ └── ch01_xor_problem/
+│ ├── README.md
+│ └── notebook.ipynb
 ```
 
 **File locations:**
@@ -1118,25 +1114,25 @@ Cell structure per notebook:
 [markdown] Chapter title + one-liner
 [markdown] ## The Core Idea
 [markdown] ## Running Example
-[code]     Load the track dataset (see track README for the running example dataset and scenario)
+[code] Load the track dataset (see track README for the running example dataset and scenario)
 [markdown] ## The Math
-[code]     Implement the math (numpy where practical, sklearn/tf for full models)
+[code] Implement the math (numpy where practical, sklearn/tf for full models)
 [markdown] ## Step by Step
-[code]     The step-by-step walkthrough as runnable code
-[code]     Plotting the key diagram
+[code] The step-by-step walkthrough as runnable code
+[code] Plotting the key diagram
 [markdown] ## The Hyperparameter Dial
-[code]     Sweep the dial, plot before/after
+[code] Sweep the dial, plot before/after
 [markdown] ## What Can Go Wrong
-[code]     Demonstrate one of the traps
+[code] Demonstrate one of the traps
 [markdown] ## Exercises
-[code]     Exercise scaffolds (partially filled)
+[code] Exercise scaffolds (partially filled)
 ```
 
 ---
 
 ## Build Tracker
 
-The ML track is organised into 8 independent topic-based folders, each with its own dataset, grand challenge, and chapter sequence. See each topic's README for chapter-level build status (README ✅, notebook ✅, done/in-progress).
+The ML track is organised into 8 independent topic-based folders, each with its own dataset, grand challenge, and chapter sequence. See each topic's README for chapter-level build status (README , notebook , done/in-progress).
 
 | # | Topic | Folder | Grand Challenge | Chapters |
 |---|-------|--------|----------------|----------|
@@ -1155,7 +1151,7 @@ The ML track is organised into 8 independent topic-based folders, each with its 
 
 ## Chapter Summaries (Quick Reference)
 
-> ⚠️ **Legacy reference** — these summaries describe chapters from the old single-track layout (`notes/ML/ch01-linear-regression` … `ch19-hyperparameter-tuning`), which has been reorganised into 8 independent topic-based tracks. For current chapter-level summaries, see each topic's own README.
+> **Legacy reference** — these summaries describe chapters from the old single-track layout (`notes/ML/ch01-linear-regression` … `ch19-hyperparameter-tuning`), which has been reorganised into 8 independent topic-based tracks. For current chapter-level summaries, see each topic's own README.
 
 Brief bullet on what each chapter covers — so you can pick up any chapter without re-reading the HTML book.
 
@@ -1322,7 +1318,7 @@ Brief bullet on what each chapter covers — so you can pick up any chapter with
 2. Pick the next ⬜ chapter from the tracker above.
 3. Use the README template and notebook template above — don't invent new structures.
 4. Keep the housing scenario in focus: every example should tie back to the real estate platform.
-5. After completing a chapter, mark its checkboxes ✅ in the tracker.
+5. After completing a chapter, mark its checkboxes in the tracker.
 
 ---
 
@@ -1372,19 +1368,19 @@ Every chapter opens with three specific items, in order, in a blockquote:
 **Required pattern — followed exactly in both chapters:**
 
 ```
-> 🎯 The mission: [one line, Grand Challenge name + constraint list]
+> The mission: [one line, Grand Challenge name + constraint list]
 
 What we know so far:
-  ✅ [summary of what previous chapters have established]
-  ❌ But we [specific capability that is still missing]
+[summary of what previous chapters have established]
+But we [specific capability that is still missing]
 
 What's blocking us:
-  [2–4 sentences: the concrete, named gap. Not abstract ("we need to address X")
-   but specific ("A house in Bakersfield and a house in San Jose can have the same
-   median income and differ in value by $200k or more. Location matters.")]
+ [2–4 sentences: the concrete, named gap. Not abstract ("we need to address X")
+ but specific ("A house in Bakersfield and a house in San Jose can have the same
+ median income and differ in value by $200k or more. Location matters.")]
 
 What this chapter unlocks:
-  [Specific capability bullet points with numbers where possible]
+ [Specific capability bullet points with numbers where possible]
 ```
 
 **Numbers are always named.** The gap is never "our model is not accurate enough" — it is "$55k MAE" vs. "$40k target". The blocker is never "non-linearity" — it is "income–value relationship curves at high incomes (diminishing returns)."
@@ -1428,12 +1424,12 @@ If a formula has no verbal gloss within three lines, it is incomplete.
 **Rule 5: ASCII matrix diagrams for matrix operations.** When showing a matrix multiply or a matrix structure, draw it in ASCII with aligned brackets, showing the dimensions of each operand and the result. The Ch.02 `Xᵀe` walkthrough is the canonical example:
 
 ```
-Xᵀ · e                                            (2×3) · (3×1) → (2×1)
+Xᵀ · e (2×3) · (3×1) → (2×1)
 
-  Xᵀ                          e
-  ┌  0.5   1.5   2.0  ┐      ┌  -1.5  ┐
-  └  1.0   0.0  -1.0  ┘  ×   │  -2.5  │
-                              └  -4.0  ┘
+ Xᵀ e
+ ┌ 0.5 1.5 2.0 ┐ ┌ -1.5 ┐
+ └ 1.0 0.0 -1.0 ┘ × │ -2.5 │
+ └ -4.0 ┘
 ```
 
 ---
@@ -1466,7 +1462,7 @@ Xᵀ · e                                            (2×3) · (3×1) → (2×1)
 
 **Forward link pattern:** *"This is the entire conceptual foundation of neural network backpropagation. Every time you call `loss.backward()` in PyTorch, this matrix multiply is running — one per layer."*
 
-**The forward pointer callout box** (`> ➡️`) is used for concepts that will be formally introduced later but need to be planted early. Ch.01 plants the seed for R² at the end of the loss section with a `> ➡️` callout that says R² will be introduced in Ch.02 §1.5 where comparing two models makes it meaningful.
+**The forward pointer callout box** (`> ➡`) is used for concepts that will be formally introduced later but need to be planted early. Ch.01 plants the seed for R² at the end of the loss section with a `> ➡` callout that says R² will be introduced in Ch.02 §1.5 where comparing two models makes it meaningful.
 
 **Cross-track links** to MathUnderTheHood are standard for rigorous derivations. Always reference the specific chapter: `[MathUnderTheHood ch06 — Gradient & Chain Rule](../00-math_under_the_hood/ch06_gradient_chain_rule)`.
 
@@ -1478,11 +1474,11 @@ Used consistently across both chapters. Must be used exactly this way — no imp
 
 | Symbol | Meaning | When to use |
 |---|---|---|
-| `💡` | Key insight / conceptual payoff | After a result that surprises or reframes something the reader thought they understood |
-| `⚠️` | Warning / common trap | Before or immediately after a pattern that is often done wrong |
-| `⚡` | Grand Challenge constraint connection | When content advances or validates one of the 5 SmartVal constraints |
+| `` | Key insight / conceptual payoff | After a result that surprises or reframes something the reader thought they understood |
+| `` | Warning / common trap | Before or immediately after a pattern that is often done wrong |
+| `` | Grand Challenge constraint connection | When content advances or validates one of the 5 SmartVal constraints |
 | `> 📖 **Optional:**` | Deeper derivation | Full proofs and matrix calculus that break the narrative flow |
-| `> ➡️` | Forward pointer | When a concept needs to be planted before its full treatment |
+| `> ➡` | Forward pointer | When a concept needs to be planted before its full treatment |
 
 The callout box content is always **actionable**: it ends with a Fix, a Rule, a What-to-do. No callout box that just says "this is interesting" without consequence.
 
@@ -1549,16 +1545,15 @@ All Mermaid nodes use `stroke:#e2e8f0,stroke-width:2px,color:#ffffff` for text l
 The Progress Check is the last substantive section before the Bridge. It has a fixed format:
 
 ```
-✅ Unlocked capabilities:
-  [bulleted list — specific capabilities with named metrics]
-  [e.g., "MAE improved: ~$55k (down from $70k — 21% improvement!)"]
-
-❌ Still can't solve:
-  [bulleted list — named, specific gaps]
-  [e.g., "❌ $55k > $40k target — Linear model with 8 features still not accurate enough"]
+Unlocked capabilities:
+ [bulleted list — specific capabilities with named metrics]
+ [e.g., "MAE improved: ~$55k (down from $70k — 21% improvement!)"]
+Still can't solve:
+ [bulleted list — named, specific gaps]
+ [e.g., " $55k > $40k target — Linear model with 8 features still not accurate enough"]
 
 Progress toward constraints:
-  [table: Constraint | Status | Current State]
+ [table: Constraint | Status | Current State]
 
 [Mermaid LR flowchart showing all chapters from Ch.1 to Ch.5+,
  with current chapter highlighted and MAE values annotated]
@@ -1652,7 +1647,7 @@ Act 4: Decision framework (when to use which)
 
 **Structure:** Open with success ($38k achieved!), then backtrack to show the journey. Reduces cognitive anxiety, allows focus on mechanics.
 
-**Example:** Ch.05 Regularization opens with "$38k MAE ✅" before explaining Ridge/Lasso paths.
+**Example:** Ch.05 Regularization opens with "$38k MAE " before explaining Ridge/Lasso paths.
 
 **Contrast with:** Standard structure (build suspense, reveal success at end). Victory-first works when the journey IS the learning goal.
 
@@ -1716,7 +1711,7 @@ Matrix: (2/3) × Xᵀe = (2/3) × -12.5 = -8.333
 | Degree | Train MAE | Test MAE | Features | Status |
 |--------|-----------|----------|----------|--------|
 | 1 | $55k | $55k | 8 | Underfit |
-| 2 | $48k | $48k | 44 | ✅ Sweet spot |
+| 2 | $48k | $48k | 44 | Sweet spot |
 | 3 | $35k | $62k | 164 | Overfit |
 
 **Then** explain why (polynomial complexity, curse of dimensionality).
@@ -1729,12 +1724,12 @@ Matrix: (2/3) × Xᵀe = (2/3) × -12.5 = -8.333
 
 **Template:**
 ```markdown
-> ➡️ **[Topic] goes deeper in [Chapter/Track].** This chapter covers [what's needed now].
+> ➡ **[Topic] goes deeper in [Chapter/Track].** This chapter covers [what's needed now].
 > For [advanced topic] — [specific capability] — see [link]. For now: [continue with current concept].
 ```
 
 **Example from Ch.01:**
-> "⚡ Gradient Descent goes deeper in Neural Networks Ch.3. This chapter uses it as the recipe. For momentum, Adam, SGD variants — see there. For now: follow the slope downhill."
+> " Gradient Descent goes deeper in Neural Networks Ch.3. This chapter uses it as the recipe. For momentum, Adam, SGD variants — see there. For now: follow the slope downhill."
 
 **Why effective:** Prevents derailment while acknowledging deeper material exists. Readers know where to go later.
 
@@ -1776,14 +1771,14 @@ Matrix: (2/3) × Xᵀe = (2/3) × -12.5 = -8.333
 
 **Template:**
 ```markdown
-Ch.[N-1] (scalar):  formula_scalar
-Ch.[N] (vector):    formula_vector   ← SAME STRUCTURE, different notation
+Ch.[N-1] (scalar): formula_scalar
+Ch.[N] (vector): formula_vector ← SAME STRUCTURE, different notation
 ```
 
 **Example from Ch.02:**
 ```
-Ch.1 (single feature):  ŷ = wx + b
-Ch.2 (multiple features): ŷ = wᵀx + b   ← dot product replaces multiply
+Ch.1 (single feature): ŷ = wx + b
+Ch.2 (multiple features): ŷ = wᵀx + b ← dot product replaces multiply
 ```
 
 **Why effective:** Reduces cognitive load. "You already know this, just higher dimension."
@@ -1812,10 +1807,10 @@ Ch.2 (multiple features): ŷ = wᵀx + b   ← dot product replaces multiply
 **Example from Ch.01 Gradient Descent:**
 - **Metaphor:** "You're standing on a hillside"
 - **Mapping:**
-  - Hillside → loss surface
-  - Slope underfoot → ∂L/∂w at current position
-  - Step opposite slide → negative gradient direction
-  - Gentle slope near bottom → self-braking property (explains why learning rate matters)
+ - Hillside → loss surface
+ - Slope underfoot → ∂L/∂w at current position
+ - Step opposite slide → negative gradient direction
+ - Gentle slope near bottom → self-braking property (explains why learning rate matters)
 
 **Anti-pattern:** "Gradient descent is like hiking downhill" with no further elaboration.
 
@@ -1896,13 +1891,13 @@ Map tone to pedagogical purpose:
 **Purpose:** Let readers triage sections visually before reading text.
 
 **System:**
-- 💡 = Key insight (power users skim these first)
-- ⚠️ = Common trap (practitioners jump here when debugging)
-- ⚡ = SmartVal constraint advancement (tracks quest progress)
+- = Key insight (power users skim these first)
+- = Common trap (practitioners jump here when debugging)
+- = SmartVal constraint advancement (tracks quest progress)
 - 📖 = Optional depth (safe to skip)
-- ➡️ = Forward pointer (where this reappears)
+- ➡ = Forward pointer (where this reappears)
 
-**Rule:** No other emoji as inline callouts. (✅❌🎯 are structural markers for Challenge/Progress sections only.)
+**Rule:** No other emoji as inline callouts. ( are structural markers for Challenge/Progress sections only.)
 
 ---
 
@@ -1951,11 +1946,11 @@ Map tone to pedagogical purpose:
 
 | Constraint | Status | Evidence |
 |------------|--------|----------|
-| #1 ACCURACY | ✅ **ACHIEVED** | $38k < $40k target |
-| #2 GENERALIZATION | ⚠️ **IN PROGRESS** | Learning curve shows mild variance |
-| #3 MULTI-TASK | ❌ **BLOCKED** | Regression only |
-| #4 INTERPRETABILITY | ⚠️ **PARTIAL** | VIF checks done, but not explainable |
-| #5 PRODUCTION | ❌ **BLOCKED** | No monitoring yet |
+| #1 ACCURACY | **ACHIEVED** | $38k < $40k target |
+| #2 GENERALIZATION | **IN PROGRESS** | Learning curve shows mild variance |
+| #3 MULTI-TASK | **BLOCKED** | Regression only |
+| #4 INTERPRETABILITY | **PARTIAL** | VIF checks done, but not explainable |
+| #5 PRODUCTION | **BLOCKED** | No monitoring yet |
 
 **Why effective:** Orange/green shifts signal tangible progress. Creates long-term momentum across chapters.
 
@@ -2001,8 +1996,8 @@ Animation GIF + caption (10 lines)
 
 **System:**
 - `---` horizontal rules between acts
-- `> 💡` insight callouts mark concept payoffs
-- `> ⚠️` warning callouts flag common traps
+- `> ` insight callouts mark concept payoffs
+- `> ` warning callouts flag common traps
 - `####` subsection headers for digestible units within major sections
 
 **Frequency:** ~1 visual break per 50-80 lines.
@@ -2040,10 +2035,10 @@ Animation GIF + caption (10 lines)
 **Rule:** Every chapter updates the 5-constraint progress table.
 
 **Example progression:**
-- Ch.1: All ❌ (no model yet)
-- Ch.2: #1 ⚠️ (MAE improved but still >target)
-- Ch.5: #1 ✅ (target hit!)
-- Ch.6: #1 ✅, #2 ✅ (validated with CV)
+- Ch.1: All (no model yet)
+- Ch.2: #1 (MAE improved but still >target)
+- Ch.5: #1 (target hit!)
+- Ch.6: #1 , #2 (validated with CV)
 
 **Why effective:** Gamification. Orange→green shifts feel like quest completion.
 
@@ -2053,7 +2048,7 @@ Animation GIF + caption (10 lines)
 
 **Pattern:**
 ```python
-# ✅ COMPLETE — runs as-is
+# COMPLETE — runs as-is
 from sklearn.linear_model import Ridge
 model = Ridge(alpha=1.0)
 model.fit(X_train_s, y_train)
@@ -2064,10 +2059,10 @@ vs
 ```python
 # Conceptual structure (not runnable)
 for epoch in range(n_epochs):
-    predictions = model.forward(X)
-    loss = compute_loss(predictions, y)
-    gradients = compute_gradients(loss)
-    model.update_weights(gradients)
+ predictions = model.forward(X)
+ loss = compute_loss(predictions, y)
+ gradients = compute_gradients(loss)
+ model.update_weights(gradients)
 ```
 
 **Why effective:** Readers can verify claims themselves. Trust through falsifiability.
@@ -2075,29 +2070,21 @@ for epoch in range(n_epochs):
 ---
 
 ### Anti-Patterns (What NOT to Do)
-
-❌ **Listing methods without demonstrating failure**
+**Listing methods without demonstrating failure**
 Example: "Here are five loss functions: MAE, MSE, RMSE, Huber, Log-Cosh" (table without motivation)
-
-❌ **Formulas without verbal glossing**
+**Formulas without verbal glossing**
 Example: Dropping LaTeX block with no "In English:" follow-up paragraph
-
-❌ **Vague improvement claims**
+**Vague improvement claims**
 Example: "The model got better" instead of "$70k → $55k (21% improvement)"
-
-❌ **Academic register**
+**Academic register**
 Example: "We demonstrate that...", "It can be shown that...", "In this section we will discuss..."
-
-❌ **Synthetic datasets for walkthroughs**
+**Synthetic datasets for walkthroughs**
 Example: Using `X = [1,2,3], y = [2,4,6]` instead of actual California Housing districts
-
-❌ **Improvised emoji**
-Example: Using 🔍🎯✨🚀 as inline callouts (only 💡⚠️⚡📖➡️ allowed)
-
-❌ **Topic-label section headings**
+**Improvised emoji**
+Example: Using ✨ as inline callouts (only 📖➡ allowed)
+**Topic-label section headings**
 Example: "## 3 · Math" instead of "## 3 · Math — How Weights Encode Feature Importance"
-
-❌ **Skipping numerical verification**
+**Skipping numerical verification**
 Example: Showing formula, then immediately generalizing without hand-computing 3-row example
 
 ---
@@ -2148,12 +2135,12 @@ Before publishing any chapter, verify each item:
 - [ ] Failure-first pedagogy: new concepts introduced because the simpler one broke, not listed a priori
 - [ ] Optional depth: full derivations behind `> 📖 Optional` callout boxes with MathUnderTheHood cross-reference
 - [ ] Forward/backward links: every concept links to where it was introduced and where it reappears
-- [ ] Callout boxes: only `💡 ⚠️ ⚡ 📖 ➡️` — no improvised emoji
+- [ ] Callout boxes: only ` 📖 ➡` — no improvised emoji
 - [ ] Mermaid diagrams: colour palette respected (dark blue / dark green / amber / dark red)
 - [ ] Images: dark background, descriptive alt-text, purposeful (not decorative)
 - [ ] Needle GIF: chapter-level progress animation present under `## Animation`
 - [ ] Code: `X_train_s`/`X_test_s` naming, fit-on-train-only scaler, manual GD loop + sklearn reference
-- [ ] Progress Check: ✅/❌ bullets with specific numbers + constraint table + Mermaid LR arc
+- [ ] Progress Check: / bullets with specific numbers + constraint table + Mermaid LR arc
 - [ ] What Can Go Wrong: 3–5 traps with Fix + diagnostic Mermaid flowchart
 - [ ] Bridge section: one clause what this chapter established + one clause what next chapter adds
 - [ ] Voice: second person, no academic register, dry humour once per major section maximum
@@ -2175,7 +2162,7 @@ A data-prep chapter (e.g., SmartVal AI's `ch00a`) running Acts 1–4 (Inspect �
 
 **The workflow maps to this chapter:**
 - **Phase 1 (INSPECT)** → §3 Act 1, §3A.1 Understanding Skew
-- **Phase 2 (AUDIT)**   → §3 Act 2, §3.8 Multicollinearity, §3.9 VIF
+- **Phase 2 (AUDIT)** → §3 Act 2, §3.8 Multicollinearity, §3.9 VIF
 - **Phase 3 (TRANSFORM)** → §3.6 ColumnTransformer pipeline
 - **Phase 4 (VALIDATE)** → §3.2 Method 1, §3.3 Method 2, §3.5 Method 3
 ```
@@ -2208,15 +2195,15 @@ Remove §1.5 entirely. Embed the stage name directly in the act title:
 Replace each DECISION CHECKPOINT block with two callout lines:
 
 ```markdown
-> 💡 **Audit verdict:** `AveRooms` (IQR/σ = 4.1) and `Population` (skew = 18.6) need `log1p`. Expected MAE impact: −$3–5k.
+> **Audit verdict:** `AveRooms` (IQR/σ = 4.1) and `Population` (skew = 18.6) need `log1p`. Expected MAE impact: −$3–5k.
 
-> ➡️ Act 3 applies the `log1p` + `StandardScaler` pipeline before Ch.01's linear regression baseline.
+> ➡ Act 3 applies the `log1p` + `StandardScaler` pipeline before Ch.01's linear regression baseline.
 ```
 
 Fix broken section-number cross-references: replace `→ §5 Act 2` with a relative path (`→ [../ch01-linear-regression/](../ch01_linear_regression)`).
 
 **Callout discipline for ML chapters:**
-- `> 💡 **[Stage] verdict:**` — one line after each act/stage concludes, states the decision and its metric impact (e.g., "Expected MAE impact: −$3–5k")
-- `> ➡️` — forward pointer when a transform or finding carries directly into the next chapter, with a named MAE or metric consequence
+- `> **[Stage] verdict:**` — one line after each act/stage concludes, states the decision and its metric impact (e.g., "Expected MAE impact: −$3–5k")
+- `> ➡` — forward pointer when a transform or finding carries directly into the next chapter, with a named MAE or metric consequence
 - Never: a "DECISION CHECKPOINT" block with "What you just saw / What it means / What to do next" sub-headings
 - Never: a section that lists "Phase N → §X, §Y Act Z"

@@ -16,19 +16,18 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 💡 **The mission**: Build **SegmentAI** — discover actionable customer segments with silhouette >0.5
+> **The mission**: Build **SegmentAI** — discover actionable customer segments with silhouette >0.5
 > 1. **SEGMENTATION**: k=4 distinct segments — 2. **INTERPRETABILITY**: Business-actionable labels — 3. **STABILITY**: Reproducible across runs — 4. **SCALABILITY**: Generalise to 10k+ customers — 5. **VALIDATION**: Silhouette >0.5
 
 **What we know so far:**
-- ✅ Ch.1: K-Means (k=4) found 4 interpretable segments — silhouette = **0.52** (already above 0.5!)
-- ✅ Ch.1: DBSCAN flagged 12 noise customers (extreme outlier spenders)
-- ✅ The 4 clusters have business meaning: HoReCa buyers, Retail buyers, Mixed-spend, Bulk buyers
-- ❌ **Can't show 6D clusters to stakeholders** — scatter plots need 2D
-- ⚡ **Silhouette can go higher** — correlated features add distance noise in 6D
+- Ch.1: K-Means (k=4) found 4 interpretable segments — silhouette = **0.52** (already above 0.5!)
+- Ch.1: DBSCAN flagged 12 noise customers (extreme outlier spenders)
+- The 4 clusters have business meaning: HoReCa buyers, Retail buyers, Mixed-spend, Bulk buyers
+- **Can't show 6D clusters to stakeholders** — scatter plots need 2D
+- **Silhouette can go higher** — correlated features add distance noise in 6D
 
 **What's blocking us:**
-
-⚠️ **The visualisation gap and the dimensionality noise problem**
+**The visualisation gap and the dimensionality noise problem**
 
 The marketing director asks: "Show me the 4 customer segments in a picture."
 
@@ -37,33 +36,31 @@ The marketing director asks: "Show me the 4 customer segments in a picture."
 - **Root cause**: The **curse of dimensionality** means all points start looking equally far apart as dimensions grow. PCA removes correlated variance (noise dimensions) before clustering.
 
 **What this chapter unlocks:**
-
-⚡ **Dimensionality reduction — compress 6D to 2D/3D while preserving structure:**
+**Dimensionality reduction — compress 6D to 2D/3D while preserving structure:**
 1. **PCA**: Linear projection preserving maximum variance. 2 components capture 85% of variance. Deterministic, fast, invertible, interpretable.
 2. **t-SNE**: Non-linear projection preserving local neighbourhoods. Reveals cluster topology. Not invertible; distances between clusters are meaningless; stochastic.
 3. **UMAP**: Non-linear topology-preserving method. Faster than t-SNE at scale, better global structure, has `transform()` for new data.
-
-💡 **Outcome**: UMAP 3D → K-Means silhouette **0.52 → 0.57**. PCA 2D → stakeholder scatter plots. Both goals met in one chapter.
+**Outcome**: UMAP 3D → K-Means silhouette **0.52 → 0.57**. PCA 2D → stakeholder scatter plots. Both goals met in one chapter.
 
 | Constraint | Before | After | This Chapter |
 |------------|--------|-------|--------------|
-| #1 SEGMENTATION | ✅ k=4, silhouette=0.52 | ✅ silhouette=0.57 | UMAP 3D re-clustering |
-| #2 INTERPRETABILITY | ⚡ Partial | ✅ Loadings explain axes | PCA loadings: PC1="total spend" |
-| #3 STABILITY | ❌ Not tested | ❌ Still pending | Ch.3 bootstrap |
-| #4 SCALABILITY | ✅ PCA O(nd²) | ✅ UMAP scales to 100k | Both confirmed |
-| #5 VALIDATION | ✅ 0.52 | ✅ 0.57 | Higher with UMAP 3D |
+| #1 SEGMENTATION | k=4, silhouette=0.52 | silhouette=0.57 | UMAP 3D re-clustering |
+| #2 INTERPRETABILITY | Partial | Loadings explain axes | PCA loadings: PC1="total spend" |
+| #3 STABILITY | Not tested | Still pending | Ch.3 bootstrap |
+| #4 SCALABILITY | PCA O(nd²) | UMAP scales to 100k | Both confirmed |
+| #5 VALIDATION | 0.52 | 0.57 | Higher with UMAP 3D |
 
 ```mermaid
 flowchart LR
-    A["440 customers\n6D spending\nsilhouette=0.52"] --> B["PCA\n6D→2D\n85% variance"]
-    A --> C["t-SNE\n6D→2D\nlocal topology"]
-    A --> D["UMAP\n6D→3D\nglobal+local"]
-    B --> E["2D scatter\nstakeholder view"]
-    C --> F["Cluster topology\n(distances lie!)"]
-    D --> G["K-Means on 3D\nsilhouette=0.57 ✅"]
-    style A fill:#b45309,stroke:#e2e8f0,color:#ffffff
-    style G fill:#15803d,stroke:#e2e8f0,color:#ffffff
-    style E fill:#1e3a8a,stroke:#e2e8f0,color:#ffffff
+ A["440 customers\n6D spending\nsilhouette=0.52"] --> B["PCA\n6D→2D\n85% variance"]
+ A --> C["t-SNE\n6D→2D\nlocal topology"]
+ A --> D["UMAP\n6D→3D\nglobal+local"]
+ B --> E["2D scatter\nstakeholder view"]
+ C --> F["Cluster topology\n(distances lie!)"]
+ D --> G["K-Means on 3D\nsilhouette=0.57 "]
+ style A fill:#b45309,stroke:#e2e8f0,color:#ffffff
+ style G fill:#15803d,stroke:#e2e8f0,color:#ffffff
+ style E fill:#1e3a8a,stroke:#e2e8f0,color:#ffffff
 ```
 
 ---
@@ -87,15 +84,15 @@ flowchart LR
 **UMAP (Uniform Manifold Approximation and Projection)** models the data topological structure using a weighted $k$-nearest-neighbour graph, then optimises a low-dimensional embedding by minimising the cross-entropy between the two graph distributions. UMAP preserves both local neighbourhoods (like t-SNE) and global topology (unlike t-SNE), runs 10–100x faster, and supports `transform()` — meaning you can embed new customers into the same space without re-training.
 
 ```
-Axis              PCA         t-SNE       UMAP
+Axis PCA t-SNE UMAP
 ─────────────────────────────────────────────────────
-Speed             fastest     slowest     fast
-Deterministic     yes         no          no
-Global structure  ✓✓✓         ✗           ✓✓
-Local structure   ✓✓          ✓✓✓         ✓✓✓
-Invertible        yes         no          no
-Distances valid   yes         ⚠ NO ⚠     topology only
-Downstream ML     yes         rarely      yes (transform)
+Speed fastest slowest fast
+Deterministic yes no no
+Global structure ✓✓✓ ✗ ✓✓
+Local structure ✓✓ ✓✓✓ ✓✓✓
+Invertible yes no no
+Distances valid yes NO topology only
+Downstream ML yes rarely yes (transform)
 ```
 
 ---
@@ -125,15 +122,15 @@ Downstream ML     yes         rarely      yes (transform)
 | **Objective** | Maximise retained variance | Minimise KL(P ‖ Q) | Minimise cross-entropy of fuzzy graphs |
 | **Speed (440 pts)** | < 1 ms | ~2–5 s | ~1–2 s |
 | **Speed (100k pts)** | seconds | minutes–hours | tens of seconds |
-| **Preserves global structure** | ✅✅✅ | ❌ | ✅✅ |
-| **Preserves local structure** | ✅✅ | ✅✅✅ | ✅✅✅ |
-| **Deterministic** | ✅ | ❌ stochastic | ❌ stochastic |
-| **Invertible** | ✅ | ❌ | ❌ |
-| **`transform()` on new data** | ✅ | ❌ | ✅ |
-| **Interpretable components** | ✅ (loadings) | ❌ | ❌ |
+| **Preserves global structure** | | | |
+| **Preserves local structure** | | | |
+| **Deterministic** | | stochastic | stochastic |
+| **Invertible** | | | |
+| **`transform()` on new data** | | | |
+| **Interpretable components** | (loadings) | | |
 | **Hyperparameters** | `n_components` | `perplexity`, `n_iter`, `lr` | `n_neighbors`, `min_dist` |
-| **Good for preprocessing** | ✅✅✅ | ❌ | ✅✅ |
-| **Good for visualisation** | ✅✅ | ✅✅✅ | ✅✅✅ |
+| **Good for preprocessing** | | | |
+| **Good for visualisation** | | | |
 
 **Rule of thumb for SegmentAI:**
 - **Preprocessing before clustering** → PCA (3 components, 93% EVR) or UMAP (3D)
@@ -169,9 +166,9 @@ $$X = \begin{bmatrix}2 & 1 \\ 0 & -1 \\ -2 & 0\end{bmatrix} \qquad X^\top = \beg
 
 $$X^\top X = \begin{bmatrix}2 & 0 & -2 \\ 1 & -1 & 0\end{bmatrix}\begin{bmatrix}2 & 1 \\ 0 & -1 \\ -2 & 0\end{bmatrix}$$
 
-Entry $(1,1)$: $2 \times 2 + 0 \times 0 + (-2) \times (-2) = 4 + 0 + 4 = 8$  
-Entry $(1,2)$: $2 \times 1 + 0 \times (-1) + (-2) \times 0 = 2 + 0 + 0 = 2$  
-Entry $(2,1)$: $1 \times 2 + (-1) \times 0 + 0 \times (-2) = 2 + 0 + 0 = 2$  
+Entry $(1,1)$: $2 \times 2 + 0 \times 0 + (-2) \times (-2) = 4 + 0 + 4 = 8$
+Entry $(1,2)$: $2 \times 1 + 0 \times (-1) + (-2) \times 0 = 2 + 0 + 0 = 2$
+Entry $(2,1)$: $1 \times 2 + (-1) \times 0 + 0 \times (-2) = 2 + 0 + 0 = 2$
 Entry $(2,2)$: $1 \times 1 + (-1) \times (-1) + 0 \times 0 = 1 + 1 + 0 = 2$
 
 $$X^\top X = \begin{bmatrix}8 & 2 \\ 2 & 2\end{bmatrix}$$
@@ -265,14 +262,14 @@ PC1 alone captures 86% of the total variance in the toy dataset. For 6 UCI Whole
 
 ```
 Cumulative EVR
-1.00 │                   ───────────────
-0.93 │             ─────╯
-0.85 │       ──────╯
+1.00 │ ───────────────
+0.93 │ ─────╯
+0.85 │ ──────╯
 0.49 │──────╯
-     └───────────────────────────────── component
-      PC1   PC2   PC3   PC4   PC5   PC6
-            ↑
-        85% with 2 PCs (visualisation)
+ └───────────────────────────────── component
+ PC1 PC2 PC3 PC4 PC5 PC6
+ ↑
+ 85% with 2 PCs (visualisation)
 ```
 
 ---
@@ -363,7 +360,7 @@ from sklearn.decomposition import PCA
 pca_full = PCA(n_components=6)
 pca_full.fit(X_scaled)
 evr = pca_full.explained_variance_ratio_
-# → [0.49, 0.36, 0.08, 0.04, 0.02, 0.01]  (approx)
+# → [0.49, 0.36, 0.08, 0.04, 0.02, 0.01] (approx)
 cumevr = np.cumsum(evr)
 # → [0.49, 0.85, 0.93, 0.97, 0.99, 1.00]
 ```
@@ -372,21 +369,21 @@ cumevr = np.cumsum(evr)
 
 ```
 PC1 loadings (sorted by absolute weight):
-  Fresh             +0.52   ← heavy spender: high fresh produce
-  Milk              +0.48   ← heavy spender: high dairy
-  Delicatessen      +0.44   ← heavy spender: specialty items
-  Grocery           +0.38   ← heavy spender: packaged goods
-  Frozen            +0.35   ← heavy spender: frozen foods
-  Detergents_Paper  +0.27   ← heavy spender: cleaning/paper
+ Fresh +0.52 ← heavy spender: high fresh produce
+ Milk +0.48 ← heavy spender: high dairy
+ Delicatessen +0.44 ← heavy spender: specialty items
+ Grocery +0.38 ← heavy spender: packaged goods
+ Frozen +0.35 ← heavy spender: frozen foods
+ Detergents_Paper +0.27 ← heavy spender: cleaning/paper
 → PC1 = "total spend magnitude" — all weights positive.
 
 PC2 loadings (sorted by signed weight):
-  Fresh             +0.60   ← HoReCa: perishables
-  Delicatessen      +0.52   ← HoReCa: specialty
-  Milk              −0.21   ← mild Retail signal
-  Grocery           −0.38   ← Retail: packaged goods
-  Detergents_Paper  −0.41   ← Retail: household supplies
-  Frozen            −0.08   ← near-neutral
+ Fresh +0.60 ← HoReCa: perishables
+ Delicatessen +0.52 ← HoReCa: specialty
+ Milk −0.21 ← mild Retail signal
+ Grocery −0.38 ← Retail: packaged goods
+ Detergents_Paper −0.41 ← Retail: household supplies
+ Frozen −0.08 ← near-neutral
 → PC2 = "HoReCa (perishables) vs Retail (packaged goods)" contrast.
 ```
 
@@ -394,10 +391,10 @@ PC2 loadings (sorted by signed weight):
 
 ```python
 pca_2d = PCA(n_components=2)
-Z_pca_2d = pca_2d.fit_transform(X_scaled)   # shape (440, 2) — 85% EVR
+Z_pca_2d = pca_2d.fit_transform(X_scaled) # shape (440, 2) — 85% EVR
 
 pca_3d = PCA(n_components=3)
-Z_pca_3d = pca_3d.fit_transform(X_scaled)   # shape (440, 3) — 93% EVR
+Z_pca_3d = pca_3d.fit_transform(X_scaled) # shape (440, 3) — 93% EVR
 ```
 
 **Step 5 — Silhouette comparison across representations:**
@@ -408,7 +405,7 @@ Z_pca_3d = pca_3d.fit_transform(X_scaled)   # shape (440, 3) — 93% EVR
 | PCA 2D | 0.51 | Slight loss: 15% variance dropped |
 | PCA 3D | 0.54 | Improvement: correlated noise removed |
 | t-SNE 2D | 0.43 | Lower: t-SNE distorts distances |
-| **UMAP 3D** | **0.57 ✅** | Best: non-linear structure captured |
+| **UMAP 3D** | **0.57 ** | Best: non-linear structure captured |
 
 **Key finding.** PCA 3D (0.54) already beats raw 6D (0.52) — removing correlated noise helps. UMAP 3D (0.57) goes further because it captures non-linear cluster boundaries that PCA (strictly linear) misses. For downstream clustering, **UMAP 3D is the preprocessing choice**. For visualisation and interpretability, **PCA 2D** is preferred.
 
@@ -416,9 +413,9 @@ Z_pca_3d = pca_3d.fit_transform(X_scaled)   # shape (440, 3) — 93% EVR
 
 ```python
 # Verify mean is near zero (already standardised)
-print(pca_2d.mean_)           # → [~0, ~0, ~0, ~0, ~0, ~0]
-print(pca_2d.components_[0])  # → PC1 loadings ≈ [0.52, 0.48, 0.38, 0.35, 0.27, 0.44]
-print(pca_2d.explained_variance_ratio_.sum())  # → ~0.85
+print(pca_2d.mean_) # → [~0, ~0, ~0, ~0, ~0, ~0]
+print(pca_2d.components_[0]) # → PC1 loadings ≈ [0.52, 0.48, 0.38, 0.35, 0.27, 0.44]
+print(pca_2d.explained_variance_ratio_.sum()) # → ~0.85
 ```
 
 ---
@@ -429,37 +426,37 @@ print(pca_2d.explained_variance_ratio_.sum())  # → ~0.85
 
 ```mermaid
 flowchart TD
-    A["Input: X ∈ ℝ^{440×6}\nlog-scaled + standardised"]
-    A --> B["Step 1: Subtract mean\nX_c = X − x̄"]
-    B --> C["Step 2: Covariance matrix\nC = (1/n) X_cᵀ X_c\n∈ ℝ^{6×6}"]
-    C --> D["Step 3: Eigendecomposition\nC = V Λ Vᵀ\nλ₁ ≥ λ₂ ≥ … ≥ λ₆"]
-    D --> E["Step 4: Choose k\n2 → 85% EVR (visualise)\n3 → 93% EVR (cluster)"]
-    E --> F["Step 5: Project\nZ = X_c · V_k\n∈ ℝ^{440×k}"]
-    F --> G["Output: Z\nPC1 = total spend\nPC2 = HoReCa vs Retail"]
-    style A fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style C fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style D fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style E fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style G fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ A["Input: X ∈ ℝ^{440×6}\nlog-scaled + standardised"]
+ A --> B["Step 1: Subtract mean\nX_c = X − x̄"]
+ B --> C["Step 2: Covariance matrix\nC = (1/n) X_cᵀ X_c\n∈ ℝ^{6×6}"]
+ C --> D["Step 3: Eigendecomposition\nC = V Λ Vᵀ\nλ₁ ≥ λ₂ ≥ … ≥ λ₆"]
+ D --> E["Step 4: Choose k\n2 → 85% EVR (visualise)\n3 → 93% EVR (cluster)"]
+ E --> F["Step 5: Project\nZ = X_c · V_k\n∈ ℝ^{440×k}"]
+ F --> G["Output: Z\nPC1 = total spend\nPC2 = HoReCa vs Retail"]
+ style A fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style C fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style D fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style E fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style G fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### 7.2 Method Selection Diagnostic
 
 ```mermaid
 flowchart TD
-    Q["Goal of dimensionality reduction?"]
-    Q -->|"Visualise clusters\nfor stakeholders"| VIS["Prefer UMAP 2D\nor t-SNE perplexity=30"]
-    Q -->|"Preprocess before\nclustering or ML"| PRE{"Linear or\nnon-linear\nstructure?"}
-    Q -->|"Interpret what\ndrives segments"| INT["PCA only\n(loadings are readable)"]
-    Q -->|"Embed new customers\nin production"| NEW["UMAP only\n(has transform())"]
-    PRE -->|"Linear\ncorrelated features"| PCA_N["PCA 3 components\n93% EVR\nsilhouette 0.54"]
-    PRE -->|"Non-linear\ncluster manifolds"| UMAP_N["UMAP 3D\nn_neighbors=15\nsilhouette 0.57 ✅"]
-    style Q fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style VIS fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style INT fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style NEW fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style PCA_N fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style UMAP_N fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ Q["Goal of dimensionality reduction?"]
+ Q -->|"Visualise clusters\nfor stakeholders"| VIS["Prefer UMAP 2D\nor t-SNE perplexity=30"]
+ Q -->|"Preprocess before\nclustering or ML"| PRE{"Linear or\nnon-linear\nstructure?"}
+ Q -->|"Interpret what\ndrives segments"| INT["PCA only\n(loadings are readable)"]
+ Q -->|"Embed new customers\nin production"| NEW["UMAP only\n(has transform())"]
+ PRE -->|"Linear\ncorrelated features"| PCA_N["PCA 3 components\n93% EVR\nsilhouette 0.54"]
+ PRE -->|"Non-linear\ncluster manifolds"| UMAP_N["UMAP 3D\nn_neighbors=15\nsilhouette 0.57 "]
+ style Q fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style VIS fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style INT fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style NEW fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style PCA_N fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style UMAP_N fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -552,27 +549,27 @@ Because t-SNE is stochastic, every run without a fixed seed produces a structura
 
 ```mermaid
 flowchart TD
-    A["Dimensionality reduction\nlooks wrong"] --> B{"Which method?"}
-    B -->|"PCA"| C{"EVR of\ntop 2 PCs?"}
-    C -->|"< 70%"| D["Add more components\nPC3 may hold cluster signal"]
-    C -->|"≥ 85%"| E{"Clusters overlap\nin 2D scatter?"}
-    E -->|"Yes"| F["Non-linear structure\ntry UMAP 2D"]
-    E -->|"No"| G["✅ PCA working\ncheck standardisation"]
-    B -->|"t-SNE"| H{"Tried 3+\nperplexities?"}
-    H -->|"No"| I["Run perplexity=10,30,50\nlook for persistent patterns"]
-    H -->|"Yes"| J{"Interpreting\ninter-cluster distances?"}
-    J -->|"Yes"| K["⚠️ STOP — t-SNE\ndistances are meaningless"]
-    J -->|"No"| L["✅ t-SNE valid for\nlocal topology only"]
-    B -->|"UMAP"| M{"random_state\nset?"}
-    M -->|"No"| N["Add random_state=42"]
-    M -->|"Yes"| O{"Model saved for\ntransform()?"}
-    O -->|"No"| P["joblib.dump(reducer)\nfor new customers"]
-    O -->|"Yes"| Q["✅ Production-ready"]
-    style A fill:#b91c1c,stroke:#e2e8f0,color:#ffffff
-    style K fill:#b91c1c,stroke:#e2e8f0,color:#ffffff
-    style G fill:#15803d,stroke:#e2e8f0,color:#ffffff
-    style L fill:#15803d,stroke:#e2e8f0,color:#ffffff
-    style Q fill:#15803d,stroke:#e2e8f0,color:#ffffff
+ A["Dimensionality reduction\nlooks wrong"] --> B{"Which method?"}
+ B -->|"PCA"| C{"EVR of\ntop 2 PCs?"}
+ C -->|"< 70%"| D["Add more components\nPC3 may hold cluster signal"]
+ C -->|"≥ 85%"| E{"Clusters overlap\nin 2D scatter?"}
+ E -->|"Yes"| F["Non-linear structure\ntry UMAP 2D"]
+ E -->|"No"| G[" PCA working\ncheck standardisation"]
+ B -->|"t-SNE"| H{"Tried 3+\nperplexities?"}
+ H -->|"No"| I["Run perplexity=10,30,50\nlook for persistent patterns"]
+ H -->|"Yes"| J{"Interpreting\ninter-cluster distances?"}
+ J -->|"Yes"| K[" STOP — t-SNE\ndistances are meaningless"]
+ J -->|"No"| L[" t-SNE valid for\nlocal topology only"]
+ B -->|"UMAP"| M{"random_state\nset?"}
+ M -->|"No"| N["Add random_state=42"]
+ M -->|"Yes"| O{"Model saved for\ntransform()?"}
+ O -->|"No"| P["joblib.dump(reducer)\nfor new customers"]
+ O -->|"Yes"| Q[" Production-ready"]
+ style A fill:#b91c1c,stroke:#e2e8f0,color:#ffffff
+ style K fill:#b91c1c,stroke:#e2e8f0,color:#ffffff
+ style G fill:#15803d,stroke:#e2e8f0,color:#ffffff
+ style L fill:#15803d,stroke:#e2e8f0,color:#ffffff
+ style Q fill:#15803d,stroke:#e2e8f0,color:#ffffff
 ```
 
 ---
@@ -600,8 +597,7 @@ Dimensionality reduction, explained variance, and embedding visualisation thread
 ## 11 · Progress Check — What We Can Solve Now
 
 ![Progress visualization](img/ch02-dimensionality-reduction-progress-check.png)
-
-✅ **Unlocked capabilities:**
+**Unlocked capabilities:**
 
 - **Visualisation unlocked** — 6D customer data compressed to 2D using PCA (85% variance retained) and to 3D using UMAP. Stakeholders can now *see* the 4 segments in scatter plots coloured by K-Means cluster label. The PCA 2D scatter shows 4 clearly separable groups with the horizontal axis = total spend and the vertical axis = HoReCa vs Retail.
 
@@ -612,37 +608,36 @@ Dimensionality reduction, explained variance, and embedding visualisation thread
 - **UMAP `transform()` for production** — Unlike t-SNE, the fitted UMAP object supports `.transform()` on new customers. Saved with `joblib.dump()`, new arrivals can be embedded into the same 3D space for consistent downstream clustering.
 
 - **Scree plot decision framework** — PC1+PC2 = 85% EVR (visualisation); PC1+PC2+PC3 = 93% EVR (preprocessing). Quantitative guidance for how many components to keep, not guesswork.
+**Still can't solve:**
 
-❌ **Still can't solve:**
-
-- ❌ **Are the 4 segments stable across bootstrap samples?** — K-Means is stochastic. A different random seed gives different cluster assignments. We have not yet tested whether the same 4 customers co-cluster across 100 random K-Means initialisations. Bootstrap stability is Ch.3.
-- ❌ **Is k=4 definitively optimal in UMAP space?** — Ch.1 used the elbow method to pick k=4 in raw 6D. Silhouette should be measured across k=2…8 with the UMAP 3D representation. The optimal k in UMAP space may differ. Systematic k-sweep is Ch.3.
-- ❌ **No Davies-Bouldin or Calinski-Harabasz validation** — Silhouette is one metric. DB index and CH index provide complementary views (intra-cluster compactness and inter-cluster separation) that help confirm whether 0.57 represents genuinely good structure. Ch.3 covers all three.
-- ❌ **Business validation pending** — A silhouette of 0.57 is statistically good, but can the marketing team name these segments and act on them? Need domain expert review and final constraint verification (Ch.3).
+- **Are the 4 segments stable across bootstrap samples?** — K-Means is stochastic. A different random seed gives different cluster assignments. We have not yet tested whether the same 4 customers co-cluster across 100 random K-Means initialisations. Bootstrap stability is Ch.3.
+- **Is k=4 definitively optimal in UMAP space?** — Ch.1 used the elbow method to pick k=4 in raw 6D. Silhouette should be measured across k=2…8 with the UMAP 3D representation. The optimal k in UMAP space may differ. Systematic k-sweep is Ch.3.
+- **No Davies-Bouldin or Calinski-Harabasz validation** — Silhouette is one metric. DB index and CH index provide complementary views (intra-cluster compactness and inter-cluster separation) that help confirm whether 0.57 represents genuinely good structure. Ch.3 covers all three.
+- **Business validation pending** — A silhouette of 0.57 is statistically good, but can the marketing team name these segments and act on them? Need domain expert review and final constraint verification (Ch.3).
 
 **Progress toward constraints:**
 
 | Constraint | Status | Current State | Evidence |
 |------------|--------|---------------|----------|
-| #1 SEGMENTATION | ✅ **IMPROVED** | k=4 clusters, silhouette=0.57 | Up from 0.52 in raw 6D |
-| #2 INTERPRETABILITY | ✅ **ACHIEVED** | PCA loadings label the axes | PC1="total spend", PC2="HoReCa/Retail" |
-| #3 STABILITY | ❌ Not tested | Stochastic K-Means + UMAP | Need Ch.3 bootstrap |
-| #4 SCALABILITY | ✅ **ACHIEVED** | PCA O(nd²), UMAP O(n log n) | Both confirmed |
-| #5 VALIDATION | ✅ **IMPROVED** | Silhouette = 0.57 | Above 0.5 target |
+| #1 SEGMENTATION | **IMPROVED** | k=4 clusters, silhouette=0.57 | Up from 0.52 in raw 6D |
+| #2 INTERPRETABILITY | **ACHIEVED** | PCA loadings label the axes | PC1="total spend", PC2="HoReCa/Retail" |
+| #3 STABILITY | Not tested | Stochastic K-Means + UMAP | Need Ch.3 bootstrap |
+| #4 SCALABILITY | **ACHIEVED** | PCA O(nd²), UMAP O(n log n) | Both confirmed |
+| #5 VALIDATION | **IMPROVED** | Silhouette = 0.57 | Above 0.5 target |
 
 **Real-world status:** "SegmentAI now has a 2D scatter plot suitable for the marketing deck, and silhouette improved to 0.57 by clustering in UMAP 3D. PCA loadings give the segments interpretable names. What's missing: bootstrap stability confirmation and a full three-metric validation suite. Those come in Ch.3."
 
 ```mermaid
 flowchart LR
-    A["Ch.1: Clustering\n6D raw space\nsilhouette=0.52\nk=4 ✅"] --> B["Ch.2: Dim Reduction\nPCA 2D (visual)\nUMAP 3D (cluster)\nsilhouette=0.57 ✅"]
-    B --> C["Ch.3: Metrics\nSilhouette + DB + CH\nBootstrap stability\nk-sweep validation"]
-    A -.->|"k=4 baseline"| B
-    B -.->|"UMAP 3D features\n+ 2D scatter plots"| C
-    C -.->|"All 5 constraints ✅\n+ production deployment"| D["🎉 SegmentAI\nProduction-Ready"]
-    style A fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style B fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style C fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style D fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ A["Ch.1: Clustering\n6D raw space\nsilhouette=0.52\nk=4 "] --> B["Ch.2: Dim Reduction\nPCA 2D (visual)\nUMAP 3D (cluster)\nsilhouette=0.57 "]
+ B --> C["Ch.3: Metrics\nSilhouette + DB + CH\nBootstrap stability\nk-sweep validation"]
+ A -.->|"k=4 baseline"| B
+ B -.->|"UMAP 3D features\n+ 2D scatter plots"| C
+ C -.->|"All 5 constraints \n+ production deployment"| D[" SegmentAI\nProduction-Ready"]
+ style A fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style B fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style C fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style D fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---

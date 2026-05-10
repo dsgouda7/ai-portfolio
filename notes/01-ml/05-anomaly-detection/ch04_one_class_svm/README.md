@@ -4,25 +4,25 @@
 >
 > **Where you are in the curriculum.** Ch.3 (autoencoders) reached ~75% recall using neural reconstruction error. This chapter introduces the last individual detector before ensemble fusion: One-Class SVM learns a **boundary** around normal data using the kernel trick, requiring no neural network and no labels. It captures a different geometric signal than isolation (Ch.2) or reconstruction (Ch.3), making it a valuable ensemble component in [Ch.5](../ch05_ensemble_anomaly). After Ch.4 you have four complementary detectors; Ch.5 fuses them into the 80%-recall target.
 >
-> **Notation in this chapter.**  $\mathbf{x}_i \in \mathbb{R}^d$ — training point; $\phi(\mathbf{x})$ — feature map into (possibly infinite-dimensional) kernel space; $K(\mathbf{x}_i, \mathbf{x}_j) = \phi(\mathbf{x}_i)^\top \phi(\mathbf{x}_j)$ — kernel function; $\rho$ — decision boundary offset (radius in SVDD framing); $\xi_i \geq 0$ — slack variable allowing point $i$ to violate the boundary; $\nu \in (0,1]$ — upper bound on the fraction of training outliers; $\alpha_i$ — Lagrange multipliers (dual variables); $\gamma$ — RBF bandwidth parameter; $m$ — number of training samples; $f(\mathbf{x}) = \text{sign}\!\left(\sum_i \alpha_i K(\mathbf{x}_i, \mathbf{x}) - \rho\right)$ — decision function.
+> **Notation in this chapter.** $\mathbf{x}_i \in \mathbb{R}^d$ — training point; $\phi(\mathbf{x})$ — feature map into (possibly infinite-dimensional) kernel space; $K(\mathbf{x}_i, \mathbf{x}_j) = \phi(\mathbf{x}_i)^\top \phi(\mathbf{x}_j)$ — kernel function; $\rho$ — decision boundary offset (radius in SVDD framing); $\xi_i \geq 0$ — slack variable allowing point $i$ to violate the boundary; $\nu \in (0,1]$ — upper bound on the fraction of training outliers; $\alpha_i$ — Lagrange multipliers (dual variables); $\gamma$ — RBF bandwidth parameter; $m$ — number of training samples; $f(\mathbf{x}) = \text{sign}\!\left(\sum_i \alpha_i K(\mathbf{x}_i, \mathbf{x}) - \rho\right)$ — decision function.
 
 ---
 
 ## 0 · The Challenge — Where We Are
 
-> 💡 **The mission**: Keep **FraudShield** — a real-time credit card fraud detection system — below **0.5% false positive rate** while achieving **80% recall** on the held-out fraud class.
+> **The mission**: Keep **FraudShield** — a real-time credit card fraud detection system — below **0.5% false positive rate** while achieving **80% recall** on the held-out fraud class.
 >
-> 1. ⚡ **DETECTION**: 80% recall @ 0.5% FPR
-> 2. ⚡ **LATENCY**: <10 ms per transaction in production
-> 3. ⚡ **DATA CONSTRAINT**: Only legitimate transactions available at train time (no fraud labels)
-> 4. ⚡ **SCALE**: 284,807 transactions; real system handles millions/day
-> 5. ⚡ **COMPLEMENTARITY**: Must capture a *different* anomaly signal than Ch.2 and Ch.3 detectors
+> 1. **DETECTION**: 80% recall @ 0.5% FPR
+> 2. **LATENCY**: <10 ms per transaction in production
+> 3. **DATA CONSTRAINT**: Only legitimate transactions available at train time (no fraud labels)
+> 4. **SCALE**: 284,807 transactions; real system handles millions/day
+> 5. **COMPLEMENTARITY**: Must capture a *different* anomaly signal than Ch.2 and Ch.3 detectors
 
 **What we know so far:**
-- ✅ Z-score (Ch.1): 45% recall — catches extreme outliers in individual features
-- ✅ Isolation Forest (Ch.2): 72% recall — catches geometrically isolated transactions
-- ✅ Autoencoder (Ch.3): ~75% recall — catches poorly-reconstructed transactions
-- ❌ **But 75% is still short of the 80% target — and each detector misses different fraud**
+- Z-score (Ch.1): 45% recall — catches extreme outliers in individual features
+- Isolation Forest (Ch.2): 72% recall — catches geometrically isolated transactions
+- Autoencoder (Ch.3): ~75% recall — catches poorly-reconstructed transactions
+- **But 75% is still short of the 80% target — and each detector misses different fraud**
 
 **What is blocking us:**
 Z-score misses fraud that hides within normal feature ranges. Isolation Forest misses structured fraud embedded in clusters. Autoencoders miss fraud that happens to reconstruct well (e.g., fraud mimicking the autoencoder's training distribution). We need a *boundary-based* method: a detector that explicitly asks "is this transaction geometrically inside the region occupied by legitimate data?"
@@ -32,14 +32,14 @@ One-Class SVM draws a tight hypersphere around normal data in a high-dimensional
 
 ```mermaid
 flowchart LR
-    CH2["Ch.2 · iForest\n72% recall"] --> CH3["Ch.3 · Autoencoder\n~75% recall"]
-    CH3 -->|"Add boundary-based\ndetector"| CH4["Ch.4 · OC-SVM\n~78% recall"]
-    CH4 -->|"Fuse all four\ndetectors"| CH5["Ch.5 · Ensemble\n≥80% recall"]
+ CH2["Ch.2 · iForest\n72% recall"] --> CH3["Ch.3 · Autoencoder\n~75% recall"]
+ CH3 -->|"Add boundary-based\ndetector"| CH4["Ch.4 · OC-SVM\n~78% recall"]
+ CH4 -->|"Fuse all four\ndetectors"| CH5["Ch.5 · Ensemble\n≥80% recall"]
 
-    style CH2 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH3 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH4 fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH5 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH2 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH3 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH4 fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH5 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -86,14 +86,14 @@ from sklearn.svm import OneClassSVM
 from sklearn.preprocessing import StandardScaler
 
 scaler = StandardScaler()
-X_train = scaler.fit_transform(X_normal_subsample)   # m=10,000 legit transactions
+X_train = scaler.fit_transform(X_normal_subsample) # m=10,000 legit transactions
 
 clf = OneClassSVM(kernel="rbf", gamma="scale", nu=0.01)
 clf.fit(X_train)
 
 X_test_scaled = scaler.transform(X_test)
 # decision_function: positive = inside sphere (normal), negative = outside (anomaly)
-scores = -clf.decision_function(X_test_scaled)       # negate: higher = more anomalous
+scores = -clf.decision_function(X_test_scaled) # negate: higher = more anomalous
 # Set threshold from ROC curve at target FPR=0.005
 ```
 
@@ -107,35 +107,35 @@ Before the math, here is the complete OCSVM pipeline. Each numbered step corresp
 ONE-CLASS SVM (SVDD framing) — TRAINING
 
 1. Collect normal data only
-   └─ X_normal ← all rows with Class = 0
-   └─ X_sub    ← random sample of m = 10,000 rows (seed=42)
+ └─ X_normal ← all rows with Class = 0
+ └─ X_sub ← random sample of m = 10,000 rows (seed=42)
 
 2. Standardize
-   └─ scaler.fit(X_sub)
-   └─ X_scaled ← scaler.transform(X_sub)
+ └─ scaler.fit(X_sub)
+ └─ X_scaled ← scaler.transform(X_sub)
 
 3. Build kernel matrix
-   └─ K[i,j] = exp(-γ · ||x_i - x_j||²)   for all i,j in {1..m}
-   └─ K is m×m, symmetric, positive semi-definite
+ └─ K[i,j] = exp(-γ · ||x_i - x_j||²) for all i,j in {1..m}
+ └─ K is m×m, symmetric, positive semi-definite
 
 4. Solve the QP (quadratic program)
-   └─ Find α* = argmin  ½ Σ_ij α_i α_j K(x_i,x_j)
-                s.t.    0 ≤ α_i ≤ 1/(νm),  Σ α_i = 1
-   └─ Support vectors: all i with α_i > 0
+ └─ Find α* = argmin ½ Σ_ij α_i α_j K(x_i,x_j)
+ s.t. 0 ≤ α_i ≤ 1/(νm), Σ α_i = 1
+ └─ Support vectors: all i with α_i > 0
 
 5. Compute offset ρ
-   └─ ρ = Σ_i α_i K(x_i, x_sv)  for any support vector x_sv on the boundary
+ └─ ρ = Σ_i α_i K(x_i, x_sv) for any support vector x_sv on the boundary
 
 ONE-CLASS SVM — SCORING A NEW TRANSACTION x
 
 6. Compute decision function
-   └─ score(x) = ρ - Σ_i α_i K(x_i, x)     (distance outside sphere)
-   └─ score > 0  →  anomaly (outside the sphere)
-   └─ score ≤ 0  →  normal  (inside the sphere)
+ └─ score(x) = ρ - Σ_i α_i K(x_i, x) (distance outside sphere)
+ └─ score > 0 → anomaly (outside the sphere)
+ └─ score ≤ 0 → normal (inside the sphere)
 
 7. Threshold on ROC curve
-   └─ Sweep threshold τ over validation set
-   └─ Pick τ that achieves recall ≥ 78% at FPR ≤ 0.5%
+ └─ Sweep threshold τ over validation set
+ └─ Pick τ that achieves recall ≥ 78% at FPR ≤ 0.5%
 ```
 
 **Notation re-cap:**
@@ -178,7 +178,7 @@ $$\|\phi(\mathbf{x}_3) - \mathbf{c}\|^2 \leq \rho^2 + \xi_3$$
 
 The penalty $\frac{10}{3}$ per slack unit means: if $\nu = 0.1$ and $m = 3$, allowing even one point to be a complete outlier ($\xi_i = \rho^2$) costs $\frac{10}{3}\rho^2$ extra — roughly 3.3 times the sphere radius squared. This discourages the solver from loosening the sphere unless doing so genuinely shrinks $\rho^2$ more than the slack cost.
 
-> 💡 **Insight**: $\nu$ is both an upper bound on the outlier fraction *and* a lower bound on the fraction of support vectors. Set $\nu = 0.01$ and at most 1% of training points will be outside the sphere — but at least 1% will be right on the boundary (support vectors).
+> **Insight**: $\nu$ is both an upper bound on the outlier fraction *and* a lower bound on the fraction of support vectors. Set $\nu = 0.01$ and at most 1% of training points will be outside the sphere — but at least 1% will be right on the boundary (support vectors).
 
 ### 4.2 · RBF Kernel Matrix: Explicit Arithmetic for 3 Toy Points
 
@@ -276,15 +276,15 @@ $\nu$ simultaneously controls:
 | $\nu$ | Max outlier count | Max outlier % | Effect |
 |-------|-------------------|--------------|--------|
 | 0.001 | 10 | 0.01% | Ultra-tight sphere, very sensitive, can increase FPR |
-| 0.01  | 100 | 1.0%  | Tight sphere, accounts for slightly noisy legit transactions |
-| 0.05  | 500 | 5.0%  | Looser sphere, more robust to contaminated training data |
-| 0.1   | 1000 | 10%  | Loose sphere, low FPR on train but may miss fraud |
+| 0.01 | 100 | 1.0% | Tight sphere, accounts for slightly noisy legit transactions |
+| 0.05 | 500 | 5.0% | Looser sphere, more robust to contaminated training data |
+| 0.1 | 1000 | 10% | Loose sphere, low FPR on train but may miss fraud |
 
 **With $\nu = 0.1$ and $m = 3$ (toy)**:
 
 At most $0.1 \times 3 = 0.3$ training points can have $\xi_i > 0$. Since we cannot have a fractional point, this rounds down to **0 outliers** — the solver must enclose all 3 points exactly. For larger $m$, $\nu = 0.1$ means at most 10% of $m$ points can protrude, giving meaningful slack.
 
-> ⚠️ **FraudShield tip**: Do not confuse training-data $\nu$ with the test-set fraud rate (0.17%). The $\nu$ controls how many *normal* training points are allowed to be "quirky normals" sitting just outside the sphere. Setting $\nu = 0.005$ matches the expected contamination rate if any fraud accidentally appears in training.
+> **FraudShield tip**: Do not confuse training-data $\nu$ with the test-set fraud rate (0.17%). The $\nu$ controls how many *normal* training points are allowed to be "quirky normals" sitting just outside the sphere. Setting $\nu = 0.005$ matches the expected contamination rate if any fraud accidentally appears in training.
 
 ---
 
@@ -372,13 +372,13 @@ $$K_{56} = \exp(-0.5 \times [0.09+0.09]) = \exp(-0.09) = 0.914$$
 Full matrix (symmetric):
 
 ```
-       x1      x2      x3      x4      x5      x6
-x1  [1.000,  0.607,  0.607,  0.368,  0.779,  0.712]
-x2  [0.607,  1.000,  0.368,  0.607,  0.779,  0.527]
-x3  [0.607,  0.368,  1.000,  0.607,  0.779,  0.961]
-x4  [0.368,  0.607,  0.607,  1.000,  0.779,  0.712]
-x5  [0.779,  0.779,  0.779,  0.779,  1.000,  0.914]
-x6  [0.712,  0.527,  0.961,  0.712,  0.914,  1.000]
+ x1 x2 x3 x4 x5 x6
+x1 [1.000, 0.607, 0.607, 0.368, 0.779, 0.712]
+x2 [0.607, 1.000, 0.368, 0.607, 0.779, 0.527]
+x3 [0.607, 0.368, 1.000, 0.607, 0.779, 0.961]
+x4 [0.368, 0.607, 0.607, 1.000, 0.779, 0.712]
+x5 [0.779, 0.779, 0.779, 0.779, 1.000, 0.914]
+x6 [0.712, 0.527, 0.961, 0.712, 0.914, 1.000]
 ```
 
 **Observation:** $K_{36} = 0.961$ — points $\mathbf{x}_3=(0,1)$ and $\mathbf{x}_6=(0.2,0.8)$ are very close (distance $\approx 0.283$), so their kernel similarity is high. $K_{14} = 0.368$ — points at opposite corners of the unit square have lower similarity.
@@ -422,7 +422,7 @@ $$K_6 = \exp(-0.5[0.16+0.04]) = \exp(-0.10) = 0.905$$
 $$\sum_i \alpha_i K_i = 0.18(0.698)+0.18(0.771)+0.18(0.771)+0.18(0.852)+0.10(0.990)+0.18(0.905)$$
 $$= 0.126+0.139+0.139+0.153+0.099+0.163 = 0.819$$
 
-Decision: $f = \text{sign}(0.819 - 0.670) = \text{sign}(+0.149) = +1$ → **normal** ✅
+Decision: $f = \text{sign}(0.819 - 0.670) = \text{sign}(+0.149) = +1$ → **normal**
 
 **Test B — fraud** $\mathbf{x}_B = (4.0, 4.0)$:
 
@@ -430,7 +430,7 @@ $$K_i \approx \exp(-0.5[16+16]) = \exp(-16) \approx 10^{-7} \approx 0$$
 
 $$\sum_i \alpha_i K_i \approx 0$$
 
-Decision: $f = \text{sign}(0 - 0.670) = \text{sign}(-0.670) = -1$ → **anomaly** ✅
+Decision: $f = \text{sign}(0 - 0.670) = \text{sign}(-0.670) = -1$ → **anomaly**
 
 ---
 
@@ -440,59 +440,59 @@ Decision: $f = \text{sign}(0 - 0.670) = \text{sign}(-0.670) = -1$ → **anomaly*
 
 ```mermaid
 flowchart TD
-    subgraph KERNEL["Kernel Space — the sphere lives here"]
-        CENTER["Center c\n(weighted mean of SVs)"]
-        SPHERE_INNER["Inside sphere:\nf(x) = +1  NORMAL\n● ● ● ● ●\nAll training points"]
-        SPHERE_OUTER["Outside sphere:\nf(x) = -1  ANOMALY\n✕  ✕"]
-        BOUNDARY["Support Vectors\n(on the sphere surface)\nDefine radius ρ"]
-    end
+ subgraph KERNEL["Kernel Space — the sphere lives here"]
+ CENTER["Center c\n(weighted mean of SVs)"]
+ SPHERE_INNER["Inside sphere:\nf(x) = +1 NORMAL\n● ● ● ● ●\nAll training points"]
+ SPHERE_OUTER["Outside sphere:\nf(x) = -1 ANOMALY\n✕ ✕"]
+ BOUNDARY["Support Vectors\n(on the sphere surface)\nDefine radius ρ"]
+ end
 
-    TX["New transaction x\n(30 PCA features)"] -->|"φ(x) via RBF\nkernel K"| KERNEL
-    SPHERE_OUTER -->|"score > τ"| FLAG["🚨 Flag as Fraud"]
-    SPHERE_INNER -->|"score ≤ τ"| PASS["✅ Pass as Normal"]
+ TX["New transaction x\n(30 PCA features)"] -->|"φ(x) via RBF\nkernel K"| KERNEL
+ SPHERE_OUTER -->|"score > τ"| FLAG["🚨 Flag as Fraud"]
+ SPHERE_INNER -->|"score ≤ τ"| PASS[" Pass as Normal"]
 
-    style CENTER fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style SPHERE_INNER fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style SPHERE_OUTER fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style BOUNDARY fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style TX fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style FLAG fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style PASS fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CENTER fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style SPHERE_INNER fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style SPHERE_OUTER fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style BOUNDARY fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style TX fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style FLAG fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style PASS fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### 7.2 · Effect of γ and ν on Boundary Shape
 
 ```mermaid
 flowchart LR
-    subgraph GS["Small γ (e.g. 0.001)"]
-        GS1["Wide RBF kernel\nAll points appear similar\nSphere is large and smooth\nLow FPR, may miss fraud"]
-    end
-    subgraph GM["Medium γ (e.g. 0.1–1.0)"]
-        GM1["Balanced kernel\nSphere wraps data shape well\nBest recall at target FPR"]
-    end
-    subgraph GL["Large γ (e.g. 100)"]
-        GL1["Narrow RBF kernel\nOnly near-identical points similar\nSphere overfits training\nHigh FPR on new legit data"]
-    end
+ subgraph GS["Small γ (e.g. 0.001)"]
+ GS1["Wide RBF kernel\nAll points appear similar\nSphere is large and smooth\nLow FPR, may miss fraud"]
+ end
+ subgraph GM["Medium γ (e.g. 0.1–1.0)"]
+ GM1["Balanced kernel\nSphere wraps data shape well\nBest recall at target FPR"]
+ end
+ subgraph GL["Large γ (e.g. 100)"]
+ GL1["Narrow RBF kernel\nOnly near-identical points similar\nSphere overfits training\nHigh FPR on new legit data"]
+ end
 
-    subgraph NS["Small ν (0.001)"]
-        NS1["Very tight sphere\nAlmost no slack\nSensitive to noise points"]
-    end
-    subgraph NM["Medium ν (0.01–0.05)"]
-        NM1["Sweet spot for FraudShield\nAllows ~1-5% quirky normals\n≈ 78% recall at 0.5% FPR"]
-    end
-    subgraph NL["Large ν (0.3)"]
-        NL1["Loose sphere\n30% of training outside\nLow recall — misses fraud"]
-    end
+ subgraph NS["Small ν (0.001)"]
+ NS1["Very tight sphere\nAlmost no slack\nSensitive to noise points"]
+ end
+ subgraph NM["Medium ν (0.01–0.05)"]
+ NM1["Sweet spot for FraudShield\nAllows ~1-5% quirky normals\n≈ 78% recall at 0.5% FPR"]
+ end
+ subgraph NL["Large ν (0.3)"]
+ NL1["Loose sphere\n30% of training outside\nLow recall — misses fraud"]
+ end
 
-    GS --> GM --> GL
-    NS --> NM --> NL
+ GS --> GM --> GL
+ NS --> NM --> NL
 
-    style GM1 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style NM1 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style GS1 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style GL1 fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style NS1 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style NL1 fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style GM1 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style NM1 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style GS1 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style GL1 fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style NS1 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style NL1 fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -532,14 +532,14 @@ from sklearn.svm import OneClassSVM
 from sklearn.model_selection import ParameterGrid
 
 param_grid = {
-    "gamma": ["scale", 0.01, 0.1, 1.0],
-    "nu":    [0.001, 0.005, 0.01, 0.05]
+ "gamma": ["scale", 0.01, 0.1, 1.0],
+ "nu": [0.001, 0.005, 0.01, 0.05]
 }
 # Score on validation recall @ 0.5% FPR (not accuracy!)
 # Use roc_curve to find threshold satisfying fpr <= 0.005
 ```
 
-> ⚡ **Constraint #2 (latency)**: After fitting, each prediction requires computing $|\text{SVs}|$ kernel evaluations. Keep $|\text{SVs}|$ small — do not set $\nu$ so large that all training points become support vectors.
+> **Constraint #2 (latency)**: After fitting, each prediction requires computing $|\text{SVs}|$ kernel evaluations. Keep $|\text{SVs}|$ small — do not set $\nu$ so large that all training points become support vectors.
 
 ---
 
@@ -589,13 +589,13 @@ param_grid = {
 | [04-MultiAgent AI — Trust Scoring](../../../04-multi_agent_ai) | Agent output anomaly detection uses the same one-class framing: train on "good" outputs, flag deviations |
 | [SVM (Ch.11 in 01-ML)](../../03_neural_networks) | Full two-class SVM uses the same kernel trick and QP; OCSVM is the one-class special case |
 
-> ➡️ **The kernel trick appears everywhere once you see it.** The RBF kernel's implicit infinite-dimensional mapping is the same machinery behind Gaussian Processes (GPs), kernel PCA, and the neural tangent kernel. The intuition — similarity without explicit coordinates — is one of the most reusable ideas in ML.
+> ➡ **The kernel trick appears everywhere once you see it.** The RBF kernel's implicit infinite-dimensional mapping is the same machinery behind Gaussian Processes (GPs), kernel PCA, and the neural tangent kernel. The intuition — similarity without explicit coordinates — is one of the most reusable ideas in ML.
 
 ---
 
 ## 11 · Progress Check
 
-> 📊 **FraudShield — Chapter 4 results**
+> **FraudShield — Chapter 4 results**
 
 | Detector | Recall | FPR | Notes |
 |----------|--------|-----|-------|
@@ -614,7 +614,7 @@ param_grid = {
 
 **How we break through 78%?** Ensembling. Ch.5 combines all four detectors' scores — each capturing different fraud patterns — and shows that the combination reliably achieves ≥80% recall at ≤0.5% FPR.
 
-> ⚡ **Constraint #1 check**: One-Class SVM (~78% recall) does not *alone* meet the 80% target, but it contributes a signal the other three detectors lack. Its score is the critical fourth ingredient in Ch.5's ensemble.
+> **Constraint #1 check**: One-Class SVM (~78% recall) does not *alone* meet the 80% target, but it contributes a signal the other three detectors lack. Its score is the critical fourth ingredient in Ch.5's ensemble.
 
 ---
 
@@ -632,26 +632,26 @@ The ensemble unlocks the **80% recall @ 0.5% FPR** target by exploiting the comp
 
 ```mermaid
 flowchart LR
-    ZS["Z-score\n45% recall\n(distribution extremes)"]
-    IF["iForest\n72% recall\n(isolated points)"]
-    AE["Autoencoder\n~75% recall\n(bad reconstruction)"]
-    OC["OC-SVM\n~78% recall\n(outside sphere)"]
+ ZS["Z-score\n45% recall\n(distribution extremes)"]
+ IF["iForest\n72% recall\n(isolated points)"]
+ AE["Autoencoder\n~75% recall\n(bad reconstruction)"]
+ OC["OC-SVM\n~78% recall\n(outside sphere)"]
 
-    ENS["Ensemble\nCh.5\n≥80% recall"]
+ ENS["Ensemble\nCh.5\n≥80% recall"]
 
-    ZS --> ENS
-    IF --> ENS
-    AE --> ENS
-    OC --> ENS
+ ZS --> ENS
+ IF --> ENS
+ AE --> ENS
+ OC --> ENS
 
-    ENS --> TARGET["🎯 FraudShield target\n80% recall @ 0.5% FPR"]
+ ENS --> TARGET[" FraudShield target\n80% recall @ 0.5% FPR"]
 
-    style ZS fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style IF fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style AE fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style OC fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style ENS fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style TARGET fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style ZS fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style IF fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style AE fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style OC fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style ENS fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style TARGET fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
-> ➡️ **Next up**: [Ch.5 — Ensemble Anomaly Detection](../ch05_ensemble_anomaly) — combining all four detectors to break the 80% barrier.
+> ➡ **Next up**: [Ch.5 — Ensemble Anomaly Detection](../ch05_ensemble_anomaly) — combining all four detectors to break the 80% barrier.

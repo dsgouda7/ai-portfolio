@@ -10,14 +10,14 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Build **ProductionCV** — an autonomous retail shelf monitoring system satisfying 5 constraints:
+> **The mission**: Build **ProductionCV** — an autonomous retail shelf monitoring system satisfying 5 constraints:
 > 1. **DETECTION ACCURACY**: mAP@0.5 ≥ 85% — 2. **SEGMENTATION QUALITY**: IoU ≥ 70% — 3. **INFERENCE LATENCY**: <50ms per frame — 4. **MODEL SIZE**: <100 MB — 5. **DATA EFFICIENCY**: <1,000 labeled images
 
 **What we know so far:**
-- ✅ Ch.1–2: ResNet-50 backbone (25M params, 80% mAP from scratch)
-- ✅ Ch.3–4: YOLOv5 detector (85% mAP with 10,000 labels, 95ms inference)
-- ✅ Ch.5–6: Mask R-CNN segmentation (IoU 71%)
-- ✅ **Ch.7: SimCLR contrastive pretraining (84% mAP with 1,000 labels)** ← just 1% short!
+- Ch.1–2: ResNet-50 backbone (25M params, 80% mAP from scratch)
+- Ch.3–4: YOLOv5 detector (85% mAP with 10,000 labels, 95ms inference)
+- Ch.5–6: Mask R-CNN segmentation (IoU 71%)
+- **Ch.7: SimCLR contrastive pretraining (84% mAP with 1,000 labels)** ← just 1% short!
 
 **What's blocking us:**
 We're **1% away** from the 85% mAP target! SimCLR gets us to 84% mAP with 1,000 labels (vs 72% from scratch), but:
@@ -32,11 +32,11 @@ Two methods surpassed contrastive learning:
 
 **What this chapter unlocks:**
 1. **DINO pretraining**: Student mimics teacher's outputs (no contrastive loss, no negatives)
-   - Emergent attention maps (objects segment automatically!)
-   - 86% mAP with 850 labels ✅ — **constraint #1 achieved!**
+ - Emergent attention maps (objects segment automatically!)
+ - 86% mAP with 850 labels — **constraint #1 achieved!**
 2. **MAE pretraining**: Mask 75% of patches, reconstruct pixels
-   - Simple reconstruction loss (no augmentations, no negatives)
-   - Enables Vision Transformers (ViT) → bridge to Multimodal AI
+ - Simple reconstruction loss (no augmentations, no negatives)
+ - Enables Vision Transformers (ViT) → bridge to Multimodal AI
 3. **Attention visualization**: Understand what the model learned (interpretability)
 
 **Why these methods are better than SimCLR:**
@@ -64,14 +64,14 @@ Two methods surpassed contrastive learning:
 **The architecture:**
 ```
 Image x
-    ↓
+ ↓
 Global crop (224×224) + Local crops (96×96) ← multi-crop strategy
-    ↓
+ ↓
 Student Network fₛ → pₛ (output distribution)
 Teacher Network fₜ → pₜ (output distribution)
-    ↓
+ ↓
 Loss: Cross-entropy H(pₜ, pₛ) = -pₜ log pₛ
-    ↓
+ ↓
 Update: θₛ ← gradient descent, θₜ ← 0.996·θₜ + 0.004·θₛ (momentum)
 ```
 
@@ -93,13 +93,13 @@ The teacher is a moving average of past student states → provides stable "soft
 **The architecture:**
 ```
 Image x → N patches {x₁, x₂, ..., xₙ}
-    ↓
+ ↓
 Randomly mask 75% of patches (M = masked indices)
-    ↓
+ ↓
 Encoder (ViT): Process only visible patches → latent representations
-    ↓
+ ↓
 Decoder: Add mask tokens, reconstruct all patches
-    ↓
+ ↓
 Loss: MSE(x_masked, x̂_masked) — only on masked patches
 ```
 
@@ -114,7 +114,7 @@ Masking 75% of patches is a hard task — model can't just interpolate from neig
 - Spatial relationships (shelf layout patterns)
 - Texture priors (packaging materials, logos)
 
-> 💡 **Key insight:** MAE's success proves that reconstruction is a better pretext task than contrastive learning for Vision Transformers. CNNs have strong inductive biases (locality, translation invariance) that make contrastive learning necessary. ViTs have weaker biases → masked autoencoding is simpler and more effective.
+> **Key insight:** MAE's success proves that reconstruction is a better pretext task than contrastive learning for Vision Transformers. CNNs have strong inductive biases (locality, translation invariance) that make contrastive learning necessary. ViTs have weaker biases → masked autoencoding is simpler and more effective.
 
 ![Self-supervised methods comparison](img/ch08-comparison.png)
 
@@ -131,29 +131,29 @@ You're the lead ML engineer at RetailVisionAI. After SimCLR (Ch.7) got you to 84
 **Stage 1 — Self-distillation pretraining on 50k unlabeled images**:
 
 1. **Multi-crop strategy**:
-   - Global crops: 2× at 224×224 resolution (teacher and student see these)
-   - Local crops: 8× at 96×96 resolution (only student sees these)
-   - Intuition: Student learns to match teacher's predictions on global views while also processing local details
+ - Global crops: 2× at 224×224 resolution (teacher and student see these)
+ - Local crops: 8× at 96×96 resolution (only student sees these)
+ - Intuition: Student learns to match teacher's predictions on global views while also processing local details
 
 2. **Forward pass**:
-   - Student processes all 10 crops → $\{p_s^{(1)}, p_s^{(2)}, \ldots, p_s^{(10)}\}$ (probability distributions)
-   - Teacher processes only 2 global crops → $\{p_t^{(1)}, p_t^{(2)}\}$
-   
+ - Student processes all 10 crops → $\{p_s^{(1)}, p_s^{(2)}, \ldots, p_s^{(10)}\}$ (probability distributions)
+ - Teacher processes only 2 global crops → $\{p_t^{(1)}, p_t^{(2)}\}$
+
 3. **Loss computation**:
-   $$
-   \mathcal{L}_{\text{DINO}} = \sum_{\substack{i \in \text{student crops} \\ j \in \text{teacher crops}}} H(p_t^{(j)}, p_s^{(i)})
-   $$
-   Where $H(p, q) = -\sum_k p_k \log q_k$ is cross-entropy.
+ $$
+ \mathcal{L}_{\text{DINO}} = \sum_{\substack{i \in \text{student crops} \\ j \in \text{teacher crops}}} H(p_t^{(j)}, p_s^{(i)})
+ $$
+ Where $H(p, q) = -\sum_k p_k \log q_k$ is cross-entropy.
 
 4. **Teacher update** (momentum, no gradient):
-   $$
-   \theta_t \gets 0.996 \cdot \theta_t + 0.004 \cdot \theta_s
-   $$
-   (Even slower than MoCo's 0.999 momentum!)
+ $$
+ \theta_t \gets 0.996 \cdot \theta_t + 0.004 \cdot \theta_s
+ $$
+ (Even slower than MoCo's 0.999 momentum!)
 
 5. **Collapse prevention**:
-   - **Centering**: Subtract running mean from teacher outputs (prevents mode collapse)
-   - **Sharpening**: Divide by temperature τ=0.04–0.07 (encourages peaked distributions)
+ - **Centering**: Subtract running mean from teacher outputs (prevents mode collapse)
+ - **Sharpening**: Divide by temperature τ=0.04–0.07 (encourages peaked distributions)
 
 **Training details:**
 - Backbone: ViT-Small or ResNet-50
@@ -165,7 +165,7 @@ You're the lead ML engineer at RetailVisionAI. After SimCLR (Ch.7) got you to 84
 1. Freeze student encoder (or fine-tune with small LR)
 2. Attach detection head (YOLO or Faster R-CNN)
 3. Train on 850 labeled shelf images
-4. **Result: 86% mAP** ✅ (vs 84% SimCLR, 72% from scratch)
+4. **Result: 86% mAP** (vs 84% SimCLR, 72% from scratch)
 
 **What emerges automatically — Attention Maps:**
 Without any labels, DINO's attention heads learn to focus on:
@@ -296,15 +296,15 @@ $$
 
 ```
 Input: 224×224 RGB image → 196 patches (14×14 grid, each patch 16×16 pixels)
-    ↓
+ ↓
 [1] Patchify: Linear projection → 196 tokens of dimension D=768
-    ↓
+ ↓
 [2] Random masking: Keep 25% (49 patches), mask 75% (147 patches)
-    ↓
+ ↓
 [3] Encoder (ViT): 12 Transformer blocks, process only 49 visible tokens → latents
-    ↓
+ ↓
 [4] Decoder: Add 147 mask tokens [MASK], process all 196 tokens → reconstructions
-    ↓
+ ↓
 [5] Loss: MSE between true and predicted pixels (only on masked patches)
 ```
 
@@ -376,8 +376,8 @@ Where $x_i$ is the true patch, $\hat{x}_i$ is the reconstruction.
 
 **Input:** 32×32 image → 4 patches (16×16 each).
 ```
-Patches:  [P1] [P2]
-          [P3] [P4]
+Patches: [P1] [P2]
+ [P3] [P4]
 ```
 
 **Masking:** Mask 75% → mask 3 patches (P2, P3, P4), keep P1 visible.
@@ -408,33 +408,33 @@ $$
 ```mermaid
 %%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#1e3a8a','primaryTextColor':'#fff','primaryBorderColor':'#1e40af','lineColor':'#3b82f6','secondaryColor':'#15803d','tertiaryColor':'#b45309','background':'#1a1a2e','mainBkg':'#1a1a2e','textColor':'#e5e7eb'}}}%%
 graph TD
-    A[Unlabeled Image x] --> B[Multi-Crop Augmentation]
-    B --> C[2× Global Crops 224×224]
-    B --> D[8× Local Crops 96×96]
-    
-    C --> E[Student Network fₛ]
-    D --> E
-    C --> F[Teacher Network fₜ momentum update]
-    
-    E --> G[Student Outputs pₛ⁽¹⁾...pₛ⁽¹⁰⁾]
-    F --> H[Teacher Outputs pₜ⁽¹⁾ pₜ⁽²⁾]
-    
-    G --> I{Cross-Entropy Loss}
-    H --> I
-    
-    I --> J[Match teacher on all crops]
-    J --> K[Update θₛ by gradient]
-    K --> L[Update θₜ by momentum]
-    L --> F
-    
-    M[Emergent Property] -.->|No labels needed!| N[Attention Maps]
-    F -.-> M
-    N --> O[Objects segment automatically]
-    
-    style A fill:#1e3a8a
-    style I fill:#b91c1c
-    style M fill:#15803d
-    style O fill:#15803d
+ A[Unlabeled Image x] --> B[Multi-Crop Augmentation]
+ B --> C[2× Global Crops 224×224]
+ B --> D[8× Local Crops 96×96]
+
+ C --> E[Student Network fₛ]
+ D --> E
+ C --> F[Teacher Network fₜ momentum update]
+
+ E --> G[Student Outputs pₛ⁽¹⁾...pₛ⁽¹⁰⁾]
+ F --> H[Teacher Outputs pₜ⁽¹⁾ pₜ⁽²⁾]
+
+ G --> I{Cross-Entropy Loss}
+ H --> I
+
+ I --> J[Match teacher on all crops]
+ J --> K[Update θₛ by gradient]
+ K --> L[Update θₜ by momentum]
+ L --> F
+
+ M[Emergent Property] -.->|No labels needed!| N[Attention Maps]
+ F -.-> M
+ N --> O[Objects segment automatically]
+
+ style A fill:#1e3a8a
+ style I fill:#b91c1c
+ style M fill:#15803d
+ style O fill:#15803d
 ```
 
 ### Diagram 2: MAE Architecture
@@ -442,20 +442,20 @@ graph TD
 **Encoder (lightweight, only visible patches):**
 ```
 Image → 196 patches
-    ↓ (random mask 75%)
+ ↓ (random mask 75%)
 49 visible patches → ViT Encoder (12 layers) → 49 latent tokens
-                                                    ↓
-                                        (encoder output: rich features)
+ ↓
+ (encoder output: rich features)
 ```
 
 **Decoder (reconstruct all patches):**
 ```
 49 latent tokens + 147 [MASK] tokens + positional encodings
-    ↓
+ ↓
 ViT Decoder (8 layers, lightweight)
-    ↓
+ ↓
 196 reconstructed patches (RGB pixels)
-    ↓
+ ↓
 Loss: MSE on 147 masked patches only
 ```
 
@@ -463,13 +463,13 @@ Loss: MSE on 147 masked patches only
 
 **What the network sees (no labels):**
 ```
-Input Image:        DINO Attention Map:
-┌──────────┐       ┌──────────────┐
-│ 🥤 🍫 🍪 │       │ ████░░░░████ │  ← Focuses on products
-│ 🥤 🍫 🍪 │  -->  │ ████░░░░████ │
-│ 🥤 🍫 🍪 │       │ ████░░░░████ │
-└──────────┘       └──────────────┘
-Retail shelf       Emergent object boundaries!
+Input Image: DINO Attention Map:
+┌──────────┐ ┌──────────────┐
+│ 🥤 🍫 🍪 │ │ ████░░░░████ │ ← Focuses on products
+│ 🥤 🍫 🍪 │ --> │ ████░░░░████ │
+│ 🥤 🍫 🍪 │ │ ████░░░░████ │
+└──────────┘ └──────────────┘
+Retail shelf Emergent object boundaries!
 ```
 
 The network learned to segment products from background without bounding box labels!
@@ -519,33 +519,27 @@ The network learned to segment products from background without bounding box lab
 ---
 
 ## 7 · What Can Go Wrong
-
-⚠️ **DINO: Collapse without centering**
+**DINO: Collapse without centering**
 - **Symptom**: All outputs become identical, loss = 0 but model learned nothing
 - **Why**: Teacher outputs uniform distribution → student copies it → trivial solution
 - **Fix**: Use centering (subtract running mean from teacher outputs)
-
-⚠️ **MAE: Masking ratio too low** (e.g., 25%)
+**MAE: Masking ratio too low** (e.g., 25%)
 - **Symptom**: Model reconstructs perfectly during training but poor downstream performance
 - **Why**: With only 25% masked, model just copies from neighboring visible patches → no high-level learning
 - **Fix**: Use 75% masking ratio (forces model to learn global structure)
-
-⚠️ **MAE: Applying loss to visible patches**
+**MAE: Applying loss to visible patches**
 - **Symptom**: Training converges instantly but representations are weak
 - **Why**: Visible patches are trivial to "reconstruct" (just copy input) → no learning
 - **Fix**: Compute loss only on masked patches
-
-⚠️ **DINO: Teacher and student temperatures equal**
+**DINO: Teacher and student temperatures equal**
 - **Symptom**: Poor downstream performance, model learns slowly
 - **Why**: Teacher should be sharper (confident) to provide strong signal for student
 - **Fix**: Use $\tau_t = 0.04$ (teacher) << $\tau_s = 0.1$ (student)
-
-⚠️ **Using MAE on small images** (<100×100)
+**Using MAE on small images** (<100×100)
 - **Symptom**: Reconstruction perfect but downstream task fails
 - **Why**: Too few patches (e.g., 36 for 96×96) → masking 75% leaves only 9 patches → insufficient context
 - **Fix**: Use smaller patch size (8×8 instead of 16×16) or lower masking ratio (60%)
-
-⚠️ **Forgetting to freeze BatchNorm during fine-tuning**
+**Forgetting to freeze BatchNorm during fine-tuning**
 - **Symptom**: Fine-tuning performance worse than linear evaluation
 - **Why**: BatchNorm statistics computed on small labeled batches differ from pretraining
 - **Fix**: Freeze BatchNorm layers (`model.eval()`) or use larger fine-tuning batches
@@ -580,13 +574,12 @@ The network learned to segment products from background without bounding box lab
 ## 9 · Progress Check — What We Can Solve Now
 
 ![Progress check dashboard](img/ch08-progress-check.png)
-
-✅ **Unlocked capabilities:**
-- ✅ **Constraint #1 ACHIEVED!** — Detection accuracy: mAP@0.5 ≥ 85%
-  - Baseline (from scratch, 850 labels): 72% mAP
-  - SimCLR pretrained (Ch.7): 84% mAP
-  - **DINO pretrained (Ch.8): 86% mAP** ✅ — **TARGET EXCEEDED!**
-- ✅ **Constraint #5 MAINTAINED** — Data efficiency: <1,000 labeled images
+**Unlocked capabilities:**
+- **Constraint #1 ACHIEVED!** — Detection accuracy: mAP@0.5 ≥ 85%
+ - Baseline (from scratch, 850 labels): 72% mAP
+ - SimCLR pretrained (Ch.7): 84% mAP
+ - **DINO pretrained (Ch.8): 86% mAP** — **TARGET EXCEEDED!**
+- **Constraint #5 MAINTAINED** — Data efficiency: <1,000 labeled images
 - Emergent attention maps: Understand what the model learned (interpretability)
 - Vision Transformer enabled: Bridge to Multimodal AI (CLIP, GPT-4V, Gemini)
 
@@ -594,11 +587,11 @@ The network learned to segment products from background without bounding box lab
 
 | Method | Labeled Images | mAP@0.5 | Constraint #1 | Constraint #5 |
 |--------|----------------|---------|---------------|---------------|
-| From scratch (Ch.4) | 1,000 | 72% | ❌ | ✅ |
-| From scratch (Ch.4) | 10,000 | 85% | ✅ | ❌ |
-| SimCLR (Ch.7) | 1,000 | 84% | ❌ (close!) | ✅ |
-| **DINO (Ch.8)** | **850** | **86%** | **✅ ✅** | **✅** |
-| MAE + ViT (Ch.8) | 850 | 87% | ✅ ✅ | ✅ |
+| From scratch (Ch.4) | 1,000 | 72% | | |
+| From scratch (Ch.4) | 10,000 | 85% | | |
+| SimCLR (Ch.7) | 1,000 | 84% | (close!) | |
+| **DINO (Ch.8)** | **850** | **86%** | ** ** | **** |
+| MAE + ViT (Ch.8) | 850 | 87% | | |
 
 **Key insight:** Self-supervised pretraining (DINO, MAE) bridges the gap between limited labels and production performance. We hit 86% mAP with just 850 labels — exceeding the 85% target!
 
@@ -606,19 +599,18 @@ The network learned to segment products from background without bounding box lab
 DINO's attention heads automatically focus on product boundaries without any bounding box labels:
 
 ```
-Input:                 DINO Attention:
-Shelf with products  → Object boundaries emerge!
+Input: DINO Attention:
+Shelf with products → Object boundaries emerge!
 ```
 
 This enables:
 - Zero-shot segmentation (no mask labels needed)
 - Interpretability (visualize what model learned)
 - Quality control (attention maps reveal model focus)
-
-❌ **Still can't solve:**
-- ❌ Constraint #3 (Latency): 95ms inference, need <50ms (Ch.9 distillation)
-- ❌ Constraint #4 (Model size): 25 MB (ResNet-50), need <100 MB (Ch.9–10 compression)
-- ❌ MAE pretraining is slower than DINO (encoder is lightweight but decoder adds compute)
+**Still can't solve:**
+- Constraint #3 (Latency): 95ms inference, need <50ms (Ch.9 distillation)
+- Constraint #4 (Model size): 25 MB (ResNet-50), need <100 MB (Ch.9–10 compression)
+- MAE pretraining is slower than DINO (encoder is lightweight but decoder adds compute)
 
 **Real-world status**: We can now build production CV systems that **exceed accuracy targets with <1,000 labeled images** by leveraging self-supervised pretraining. DINO and MAE are the state-of-the-art for vision pretraining and bridge to Vision Transformers — the foundation of multimodal AI.
 

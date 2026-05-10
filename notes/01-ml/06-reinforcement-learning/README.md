@@ -42,11 +42,11 @@ Before RL, every ML method you've learned assumes one of two setups:
 | Ch | Title | What Unlocks | Constraints | Key Concept |
 |----|-------|-------------|-------------|-------------|
 | **1** | [Markov Decision Processes](ch01_mdps) | Formal RL framework — states, actions, rewards, policies | Foundation | Bellman equations |
-| **2** | [Dynamic Programming](ch02_dynamic_programming) | Optimal policy when model is known | #1 Optimality ✅ | Value & policy iteration |
-| **3** | [Q-Learning & TD Learning](ch03_q_learning) | Learn without knowing transition probabilities | #1 ✅ #2 Partial | Temporal difference, ε-greedy |
-| **4** | [Deep Q-Networks](ch04_dqn) | Scale to large state spaces (Atari, CartPole) | #1 ✅ #3 ✅ | Experience replay, target networks |
-| **5** | [Policy Gradients](ch05_policy_gradients) | Direct policy optimization, unlocks continuous action spaces (Pendulum-v1) | #1 ✅ #3 ✅ #4 Partial | REINFORCE, actor-critic |
-| **6** | [Modern RL](ch06_modern_rl) | State-of-the-art stability & efficiency | #1 ✅ #2 ✅ #3 ✅ #4 ✅ #5 ⚠️ | PPO, SAC, A3C |
+| **2** | [Dynamic Programming](ch02_dynamic_programming) | Optimal policy when model is known | #1 Optimality | Value & policy iteration |
+| **3** | [Q-Learning & TD Learning](ch03_q_learning) | Learn without knowing transition probabilities | #1 #2 Partial | Temporal difference, ε-greedy |
+| **4** | [Deep Q-Networks](ch04_dqn) | Scale to large state spaces (Atari, CartPole) | #1 #3 | Experience replay, target networks |
+| **5** | [Policy Gradients](ch05_policy_gradients) | Direct policy optimization, unlocks continuous action spaces (Pendulum-v1) | #1 #3 #4 Partial | REINFORCE, actor-critic |
+| **6** | [Modern RL](ch06_modern_rl) | State-of-the-art stability & efficiency | #1 #2 #3 #4 #5 | PPO, SAC, A3C |
 
 ---
 
@@ -56,11 +56,11 @@ Before RL, every ML method you've learned assumes one of two setups:
 **Formalize the problem, solve it with perfect knowledge**
 
 - **Ch.1**: What *is* the RL problem? → MDPs, Bellman equations, value functions
-  - *"We can write down the math, but we can't solve it without knowing the environment's dynamics."*
+ - *"We can write down the math, but we can't solve it without knowing the environment's dynamics."*
 - **Ch.2**: Given perfect knowledge of the environment → Value iteration and policy iteration find optimal policies guaranteed
-  - *"Beautiful theory, but who gives us P(s'|s,a) in the real world? Nobody."*
+ - *"Beautiful theory, but who gives us P(s'|s,a) in the real world? Nobody."*
 
-**Status**: #1 Optimality ✅ (with perfect model). But useless in practice without known dynamics.
+**Status**: #1 Optimality (with perfect model). But useless in practice without known dynamics.
 
 ---
 
@@ -68,11 +68,11 @@ Before RL, every ML method you've learned assumes one of two setups:
 **Learn from experience alone, scale to real problems**
 
 - **Ch.3**: Drop the model requirement → Q-learning and SARSA learn from trial-and-error
-  - *"Now we're learning from experience! But a Q-table with 10⁹ entries for Atari? That's 4 GB per game."*
+ - *"Now we're learning from experience! But a Q-table with 10⁹ entries for Atari? That's 4 GB per game."*
 - **Ch.4**: Neural networks approximate Q-values → DQN plays Atari at superhuman level
-  - *"Experience replay + target networks = stability. But what about continuous actions?"*
+ - *"Experience replay + target networks = stability. But what about continuous actions?"*
 
-**Status**: #1 ✅ #2 Partial #3 ✅. Can handle large discrete action spaces.
+**Status**: #1 #2 Partial #3 . Can handle large discrete action spaces.
 
 ---
 
@@ -80,9 +80,9 @@ Before RL, every ML method you've learned assumes one of two setups:
 **Direct policy learning, modern algorithms**
 
 - **Ch.5**: Optimize the policy directly → REINFORCE, actor-critic, advantage functions
-  - *"Finally — continuous actions! But variance is killing us. We need better optimization."*
+ - *"Finally — continuous actions! But variance is killing us. We need better optimization."*
 - **Ch.6**: Modern algorithms → PPO (stable), SAC (sample-efficient), A3C (parallel)
-  - *"PPO is the workhorse of modern RL. Stable, general, and it just works."*
+ - *"PPO is the workhorse of modern RL. Stable, general, and it just works."*
 
 **Status**: **Constraints #1–#4 fully addressed.** Modern RL algorithms balance optimality, efficiency, scalability, and stability. #5 GENERALIZATION remains active research (sim-to-real transfer, meta-RL).
 
@@ -94,13 +94,13 @@ Before RL, every ML method you've learned assumes one of two setups:
 
 ```
 ┌─────┬─────┬─────┬─────┐
-│  S  │     │     │     │
+│ S │ │ │ │
 ├─────┼─────┼─────┼─────┤
-│     │  ██ │     │     │
+│ │ ██ │ │ │
 ├─────┼─────┼─────┼─────┤
-│     │     │     │     │
+│ │ │ │ │
 ├─────┼─────┼─────┼─────┤
-│     │     │     │  G  │
+│ │ │ │ G │
 └─────┴─────┴─────┴─────┘
 S = Start, G = Goal (+10), ██ = Wall
 Step cost: -1 per move
@@ -112,12 +112,12 @@ Simple, discrete, fully observable. Perfect for building intuition about MDPs, v
 ### CartPole (OpenAI Gym) — Chapters 4–5
 
 ```
-        ╱
-       ╱  ← pole (keep upright!)
-      ╱
-  ┌──────┐
-  │ cart │ ← push left/right
-  └──┬┬──┘
+ ╱
+ ╱ ← pole (keep upright!)
+ ╱
+ ┌──────┐
+ │ cart │ ← push left/right
+ └──┬┬──┘
 ═════╧╧══════ track
 ```
 
@@ -125,10 +125,10 @@ Continuous state space (position, velocity, angle, angular velocity). Perfect fo
 ### Pendulum-v1 (OpenAI Gym) — Chapter 5
 
 ```
-     ║ pivot
-      \
-       \
-        O  ← pendulum tip
+ ║ pivot
+ \
+ \
+ O ← pendulum tip
 ```
 
 Continuous state space (angle, angular velocity) **and** continuous action space (torque). Demonstrates why discrete argmax(Q) fails for continuous control and why policy gradients are required.
@@ -147,9 +147,9 @@ Atari represents the **scalability breakthrough** that launched modern deep RL. 
 
 **The challenge:**
 ```
-GridWorld Q-table:  16 states × 4 actions = 64 entries (256 bytes)
-Atari Q-table:      10⁹ states × 6 actions = 6 GB per game (infeasible!)
-DQN solution:       Neural network approximates Q(s,a) for all 10⁹ states
+GridWorld Q-table: 16 states × 4 actions = 64 entries (256 bytes)
+Atari Q-table: 10⁹ states × 6 actions = 6 GB per game (infeasible!)
+DQN solution: Neural network approximates Q(s,a) for all 10⁹ states
 ```
 
 **Training progression (Atari Pong — theoretical target):**
@@ -187,16 +187,16 @@ DQN solution:       Neural network approximates Q(s,a) for all 10⁹ states
 
 ```mermaid
 flowchart TD
-    A["Supervised Learning"] -->|"Has labels"| B["Direct gradient to correct answer"]
-    C["Reinforcement Learning"] -->|"Only reward signal"| D["Must explore to discover good actions"]
-    D --> E["Actions change the environment"]
-    E --> F["Data distribution shifts as policy improves"]
-    F --> G["Non-stationary optimization"]
-    G --> H["Instability & divergence risk"]
-    
-    D --> I["Sparse/delayed rewards"]
-    I --> J["Credit assignment problem"]
-    J --> K["Which of 1000 actions caused the reward?"]
+ A["Supervised Learning"] -->|"Has labels"| B["Direct gradient to correct answer"]
+ C["Reinforcement Learning"] -->|"Only reward signal"| D["Must explore to discover good actions"]
+ D --> E["Actions change the environment"]
+ E --> F["Data distribution shifts as policy improves"]
+ F --> G["Non-stationary optimization"]
+ G --> H["Instability & divergence risk"]
+
+ D --> I["Sparse/delayed rewards"]
+ I --> J["Credit assignment problem"]
+ J --> K["Which of 1000 actions caused the reward?"]
 ```
 
 ---

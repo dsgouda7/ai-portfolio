@@ -24,12 +24,12 @@
 
 | Constraint | Target | Status | Evidence |
 |------------|--------|--------|----------|
-| #1 Quality | ≥4.0/5.0 | ⚡ **~3.8/5.0** | Video quality matches images, temporal consistency good |
-| #2 Speed | <30 seconds | ✅ **~18s per image** | Video slower (10 clips/day) but acceptable |
-| #3 Cost | <$5k hardware | ✅ **$2.5k laptop** | AnimateDiff runs on same hardware |
-| #4 Control | <5% unusable | ✅ **~3% unusable** | ControlNet + temporal attention = consistent |
-| #5 Throughput | 100+ images/day | ⚡ **~85 images/day** | 10 video clips/day added to workflow |
-| #6 Versatility | 3 modalities | ⚡ **Text→Image + Video enabled** | Still need image understanding (auto-QA) |
+| #1 Quality | ≥4.0/5.0 | **~3.8/5.0** | Video quality matches images, temporal consistency good |
+| #2 Speed | <30 seconds | **~18s per image** | Video slower (10 clips/day) but acceptable |
+| #3 Cost | <$5k hardware | **$2.5k laptop** | AnimateDiff runs on same hardware |
+| #4 Control | <5% unusable | **~3% unusable** | ControlNet + temporal attention = consistent |
+| #5 Throughput | 100+ images/day | **~85 images/day** | 10 video clips/day added to workflow |
+| #6 Versatility | 3 modalities | **Text→Image + Video enabled** | Still need image understanding (auto-QA) |
 
 ---
 
@@ -236,12 +236,12 @@ adapter = MotionAdapter.from_pretrained("guoyww/animatediff-motion-adapter-v1-5"
 
 # Load SD 1.5 base + LoRA for VisualForge style
 pipe = AnimateDiffPipeline.from_pretrained(
-    "SG161222/Realistic_Vision_V5.1_noVAE",
-    motion_adapter=adapter,
-    torch_dtype=torch.float16
+ "SG161222/Realistic_Vision_V5.1_noVAE",
+ motion_adapter=adapter,
+ torch_dtype=torch.float16
 ).to("cuda")
 pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
-pipe.enable_vae_slicing()  # Reduce VRAM usage
+pipe.enable_vae_slicing() # Reduce VRAM usage
 
 # VisualForge client brief — Product Demo campaign type
 brief = """Woman in floral spring dress spinning slowly in Parisian café,
@@ -252,12 +252,12 @@ negative_prompt = "blurry, low quality, distorted, morphing, flicker, inconsiste
 
 # Generate 16-frame clip (~1 second at 15fps)
 video_frames = pipe(
-    prompt=brief,
-    negative_prompt=negative_prompt,
-    num_frames=16,
-    guidance_scale=7.5,
-    num_inference_steps=25,
-    generator=torch.Generator("cuda").manual_seed(42)
+ prompt=brief,
+ negative_prompt=negative_prompt,
+ num_frames=16,
+ guidance_scale=7.5,
+ num_inference_steps=25,
+ generator=torch.Generator("cuda").manual_seed(42)
 ).frames[0]
 
 # Export to MP4 for client review
@@ -272,10 +272,10 @@ imageio.mimsave("visualforge_spring_dress_demo.mp4", video_frames, fps=15)
 - **Client approval rate**: 4 of 5 variations approved on first iteration (80% success)
 
 **Constraint impact**:
-- **#5 Throughput**: ⚡ **~85 images/day + 10 video clips/day** — Video capability added, but slower than static images
-- **#6 Versatility**: ⚡ **Text→Image + Video enabled** — 2 of 3 modalities complete (image understanding still needed)
+- **#5 Throughput**: **~85 images/day + 10 video clips/day** — Video capability added, but slower than static images
+- **#6 Versatility**: **Text→Image + Video enabled** — 2 of 3 modalities complete (image understanding still needed)
 
-> 💡 **AnimateDiff architecture wins**: Spatial SD layers (frozen) provide photorealism; temporal modules (trained on video data) provide motion consistency. You get VisualForge style (via SD checkpoint) + natural motion (via motion adapter) without retraining the entire model.
+> **AnimateDiff architecture wins**: Spatial SD layers (frozen) provide photorealism; temporal modules (trained on video data) provide motion consistency. You get VisualForge style (via SD checkpoint) + natural motion (via motion adapter) without retraining the entire model.
 
 ---
 
@@ -291,14 +291,14 @@ imageio.mimsave("visualforge_spring_dress_demo.mp4", video_frames, fps=15)
 
 **Diagnostic**:
 ```python
-# ❌ BAD: Frame-by-frame SD generation
+# BAD: Frame-by-frame SD generation
 images = []
 for i in range(16):
-    img = sd_pipe(prompt, generator=torch.Generator().manual_seed(42+i)).images[0]
-    images.append(img)  # Each frame independent → flicker guaranteed
+ img = sd_pipe(prompt, generator=torch.Generator().manual_seed(42+i)).images[0]
+ images.append(img) # Each frame independent → flicker guaranteed
 
-# ✅ GOOD: Temporal attention enforces consistency
-video = animatediff_pipe(prompt, num_frames=16).frames[0]  # Frames attend to each other
+# GOOD: Temporal attention enforces consistency
+video = animatediff_pipe(prompt, num_frames=16).frames[0] # Frames attend to each other
 ```
 
 ---
@@ -313,12 +313,12 @@ video = animatediff_pipe(prompt, num_frames=16).frames[0]  # Frames attend to ea
 
 **Diagnostic**:
 ```python
-# ✅ Generate keyframes first, interpolate to target length
-keyframes = animatediff_pipe(prompt, num_frames=8).frames[0]  # 8 frames at 0.5s
-full_video = frame_interpolate(keyframes, target_fps=30)  # Interpolate to 30fps
+# Generate keyframes first, interpolate to target length
+keyframes = animatediff_pipe(prompt, num_frames=8).frames[0] # 8 frames at 0.5s
+full_video = frame_interpolate(keyframes, target_fps=30) # Interpolate to 30fps
 ```
 
-> ⚠️ **Rule**: AnimateDiff sweet spot is **8-16 frames**. Beyond 16 frames, quality degrades. For longer clips, generate overlapping windows and stitch.
+> **Rule**: AnimateDiff sweet spot is **8-16 frames**. Beyond 16 frames, quality degrades. For longer clips, generate overlapping windows and stitch.
 
 ---
 
@@ -332,10 +332,10 @@ full_video = frame_interpolate(keyframes, target_fps=30)  # Interpolate to 30fps
 
 **Diagnostic**:
 ```python
-# ❌ BAD: Too many elements compete for attention
+# BAD: Too many elements compete for attention
 prompt = "woman, floral dress, café, Eiffel Tower background, golden hour, birds flying, coffee cup, pastries, street musician"
 
-# ✅ GOOD: Focus on core subject + style
+# GOOD: Focus on core subject + style
 prompt = "woman in floral dress, Parisian café, golden hour, cinematic"
 ```
 
@@ -357,15 +357,15 @@ import numpy as np
 
 ssim_scores = []
 for i in range(len(frames) - 1):
-    score = ssim(frames[i], frames[i+1], multichannel=True)
-    ssim_scores.append(score)
+ score = ssim(frames[i], frames[i+1], multichannel=True)
+ ssim_scores.append(score)
 
 avg_ssim = np.mean(ssim_scores)
 if avg_ssim < 0.85:
-    print(f"⚠️ Low temporal consistency: {avg_ssim:.2f} — likely flicker")
+ print(f" Low temporal consistency: {avg_ssim:.2f} — likely flicker")
 ```
 
-> ⚠️ **Never evaluate video quality by watching 5 examples.** At 10 clips/day, you need automated metrics. Frame-to-frame SSIM, optical flow smoothness, and CLIP embedding drift are your production guardrails.
+> **Never evaluate video quality by watching 5 examples.** At 10 clips/day, you need automated metrics. Frame-to-frame SSIM, optical flow smoothness, and CLIP embedding drift are your production guardrails.
 
 ---
 
@@ -373,13 +373,13 @@ if avg_ssim < 0.85:
 
 | Need | Use Text-to-Video | Use Alternative |
 |------|-------------------|----------------|
-| **Short social media ads** (5-15s) | ✅ AnimateDiff, Stable Video Diffusion | ❌ Traditional video editing too slow |
-| **Animate a single image** (img→video) | ⚡ Stable Video Diffusion (img2vid mode) | ✅ Better control from reference image |
-| **Long-form content** (60s+) | ❌ Temporal drift, memory limits | ✅ Frame interpolation + stitching |
-| **Precise motion control** (specific hand gesture) | ❌ Text prompts lack precision | ✅ ControlNet + pose sequence |
-| **Product 360° rotation** | ✅ AnimateDiff with camera motion prompt | ⚡ 3D render pipeline (if CAD available) |
-| **Real-time generation** | ❌ 45s per 16-frame clip on RTX 4090 | ✅ Pre-rendered asset library |
-| **Physics simulation** (liquid pour) | ❌ 2024 models struggle with physics | ✅ Houdini/Blender simulation |
+| **Short social media ads** (5-15s) | AnimateDiff, Stable Video Diffusion | Traditional video editing too slow |
+| **Animate a single image** (img→video) | Stable Video Diffusion (img2vid mode) | Better control from reference image |
+| **Long-form content** (60s+) | Temporal drift, memory limits | Frame interpolation + stitching |
+| **Precise motion control** (specific hand gesture) | Text prompts lack precision | ControlNet + pose sequence |
+| **Product 360° rotation** | AnimateDiff with camera motion prompt | 3D render pipeline (if CAD available) |
+| **Real-time generation** | 45s per 16-frame clip on RTX 4090 | Pre-rendered asset library |
+| **Physics simulation** (liquid pour) | 2024 models struggle with physics | Houdini/Blender simulation |
 
 **Decision framework**:
 
@@ -388,7 +388,7 @@ if avg_ssim < 0.85:
 3. **Need precise motion control?** → ControlNet + pose sequence input
 4. **Need > 60 seconds?** → Generate keyframes, interpolate with RIFE
 
-> 💡 **VisualForge production rule**: Use text-to-video for **product demos and social ads** where speed > precision. For **hero brand films**, use text-to-video keyframes + manual cleanup in After Effects.
+> **VisualForge production rule**: Use text-to-video for **product demos and social ads** where speed > precision. For **hero brand films**, use text-to-video keyframes + manual cleanup in After Effects.
 
 ---
 
@@ -418,7 +418,7 @@ if avg_ssim < 0.85:
 - **Motion modules**: Learn motion priors from video datasets (WebVid-10M) separately from spatial priors
 - **3D tensor handling**: Batch dim includes time $(B \cdot T, C, H, W)$ or explicit $(B, T, C, H, W)$
 
-> ➡️ **Ch.10 Multimodal LLMs** extends this further: vision encoder + language model → enables **visual question answering** ("Is the dress color consistent across all 16 frames?") for automated QA.
+> ➡ **Ch.10 Multimodal LLMs** extends this further: vision encoder + language model → enables **visual question answering** ("Is the dress color consistent across all 16 frames?") for automated QA.
 
 ---
 
@@ -499,19 +499,19 @@ Builds temporal attention module from scratch, visualizes frame coherence on syn
 **GPU supplement**: [text_to_video_supplement.ipynb](notebooks/text_to_video_supplement.ipynb)
 Generate 16-frame 512×512 clips with AnimateDiff, test temporal consistency metrics (frame-to-frame SSIM, optical flow smoothness), compare AnimateDiff vs frame-by-frame SD generation.
 
-> ⚠️ **GPU supplement requires**: CUDA GPU with ≥12GB VRAM (RTX 3060 or better). Generation time: ~45 seconds per 16-frame clip on RTX 4090, ~8 minutes on Colab T4.
+> **GPU supplement requires**: CUDA GPU with ≥12GB VRAM (RTX 3060 or better). Generation time: ~45 seconds per 16-frame clip on RTX 4090, ~8 minutes on Colab T4.
 
 ---
 
 ## 11.5 · Progress Check — What Have We Unlocked?
 
 ### Before This Chapter
-- **Constraint #6 (Versatility)**: ⚡ Text→Image production-ready, no video capability
+- **Constraint #6 (Versatility)**: Text→Image production-ready, no video capability
 - **VisualForge Status**: Can only deliver static marketing images, clients want video ads
 
 ### After This Chapter
-- **Constraint #5 (Throughput)**: ⚡ **~85 images/day + 10 video clips/day** → Video capability added
-- **Constraint #6 (Versatility)**: ⚡ **Text→Image + Video enabled** → 2 of 3 modalities complete
+- **Constraint #5 (Throughput)**: **~85 images/day + 10 video clips/day** → Video capability added
+- **Constraint #6 (Versatility)**: **Text→Image + Video enabled** → 2 of 3 modalities complete
 - **VisualForge Status**: Can generate 15-second social media ads (product rotating, zoom effects)
 
 ---
@@ -536,14 +536,14 @@ Generate 16-frame 512×512 clips with AnimateDiff, test temporal consistency met
 
 | Constraint | Ch.6 | Ch.7 | Ch.8 | This Ch. | Target |
 |------------|------|------|------|----------|--------|
-| #1 Quality | ⚡ 3.5/5.0 | ⚡ 3.8/5.0 | ⚡ 3.8/5.0 | ⚡ 3.8/5.0 | ≥4.0/5.0 |
-| #2 Speed | ✅ 20s | ✅ 20s | ✅ 18s | ✅ 18s (image) | <30s |
-| #3 Cost | ✅ $2.5k | ✅ $2.5k | ✅ $2.5k | ✅ $2.5k laptop | <$5k |
-| #4 Control | ⚡ <15% | ⚡ <15% | ✅ 3% | ✅ 3% unusable | <5% |
-| #5 Throughput | ❌ | ❌ | ⚡ 80/day | ⚡ 85 imgs + 10 vids/day | 100+/day |
-| #6 Versatility | ⚡ T→I | ⚡ T→I | ⚡ T→I | ⚡ T→I + Video | 3 modalities |
+| #1 Quality | 3.5/5.0 | 3.8/5.0 | 3.8/5.0 | 3.8/5.0 | ≥4.0/5.0 |
+| #2 Speed | 20s | 20s | 18s | 18s (image) | <30s |
+| #3 Cost | $2.5k | $2.5k | $2.5k | $2.5k laptop | <$5k |
+| #4 Control | <15% | <15% | 3% | 3% unusable | <5% |
+| #5 Throughput | | | 80/day | 85 imgs + 10 vids/day | 100+/day |
+| #6 Versatility | T→I | T→I | T→I | T→I + Video | 3 modalities |
 
-**Key**: ❌ = Blocked | ⚡ = Foundation laid / partial progress | ✅ = Target hit
+**Key**: = Blocked | = Foundation laid / partial progress | = Target hit
 
 **Ch.9 progress**: Video generation capability unlocked → Versatility improved (2 of 3 modalities). Throughput increased but still below target (QA bottleneck remains). Quality plateau continues (needs evaluation infrastructure from Ch.11).
 

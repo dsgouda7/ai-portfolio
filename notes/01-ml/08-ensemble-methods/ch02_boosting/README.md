@@ -10,30 +10,30 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 💡 **EnsembleAI**: Beat any single model by >5% in MAE/accuracy via intelligent combination.
+> **EnsembleAI**: Beat any single model by >5% in MAE/accuracy via intelligent combination.
 >
 > **5 Constraints**: 1. IMPROVEMENT >5% — 2. DIVERSITY — 3. EFFICIENCY <5× latency — 4. INTERPRETABILITY (SHAP) — 5. ROBUSTNESS (stable across seeds)
 
 **What Ch.1 achieved:**
-- ✅ **Constraint #1 (IMPROVEMENT)**: Random Forest beats a single Decision Tree by >10% RMSE on California Housing
-- ✅ **Constraint #2 (DIVERSITY)**: Bootstrap sampling + feature randomization produces decorrelated trees
-- ✅ **Constraint #5 (ROBUSTNESS)**: Averaging 200 trees → stable predictions across different random seeds
+- **Constraint #1 (IMPROVEMENT)**: Random Forest beats a single Decision Tree by >10% RMSE on California Housing
+- **Constraint #2 (DIVERSITY)**: Bootstrap sampling + feature randomization produces decorrelated trees
+- **Constraint #5 (ROBUSTNESS)**: Averaging 200 trees → stable predictions across different random seeds
 
 **What is blocking us:**
 Random Forest reduces *variance* through parallel decorrelated trees, but it cannot reduce *bias*. A shallow ensemble of stumps still underfits systematically. The California Housing single-tree baseline achieves **MAE ≈ 35k** — we need to push below 30k to satisfy the EnsembleAI improvement constraint by a meaningful margin, and ultimately reach 25k to prove a 28.5%+ gain.
 
 **What this chapter unlocks:**
-- ✅ **Constraint #1 (IMPROVEMENT ✅)**: Gradient Boosting beats the single-tree baseline by **28.5%** — MAE drops from 35k (single tree) to 25k (100-round GBM)
-- ✅ **Constraint #2 (DIVERSITY ✅)**: Sequential residual correction ensures each tree adds unique information by targeting the errors of all previous trees
-- ⚠️ **New risk**: Boosting can *overfit* if run too long or with too high a learning rate — early stopping becomes essential
+- **Constraint #1 (IMPROVEMENT )**: Gradient Boosting beats the single-tree baseline by **28.5%** — MAE drops from 35k (single tree) to 25k (100-round GBM)
+- **Constraint #2 (DIVERSITY )**: Sequential residual correction ensures each tree adds unique information by targeting the errors of all previous trees
+- **New risk**: Boosting can *overfit* if run too long or with too high a learning rate — early stopping becomes essential
 
 ```mermaid
 flowchart LR
-    DT["Single Decision Tree\nMAE ≈ 35k\n(high bias)"]
-    RF["Random Forest (Ch.1)\n(↓ variance via bagging)"]
-    DT -->|"Parallel: bootstrap\n+ feature subset"| RF
-    RF -->|"Still has systematic bias"| BOOST["Gradient Boosting\nMAE ≈ 25k\n(↓ bias via residuals)"]
-    BOOST -->|"Ch.3"| XGB["XGBoost / LightGBM\n(production speed)"]
+ DT["Single Decision Tree\nMAE ≈ 35k\n(high bias)"]
+ RF["Random Forest (Ch.1)\n(↓ variance via bagging)"]
+ DT -->|"Parallel: bootstrap\n+ feature subset"| RF
+ RF -->|"Still has systematic bias"| BOOST["Gradient Boosting\nMAE ≈ 25k\n(↓ bias via residuals)"]
+ BOOST -->|"Ch.3"| XGB["XGBoost / LightGBM\n(production speed)"]
 ```
 
 ---
@@ -88,7 +88,7 @@ The key intuition: no single tree needs to be excellent. Each tree only needs to
 | **Training speed** | Fast (stumps are tiny) | Moderate (sequential) | Slightly faster per tree |
 | **Origin** | Freund & Schapire 1995 | Friedman 2001 | Friedman 2002 (stochastic extension) |
 
-> 💡 **The big picture**: AdaBoost is elegant theory. Gradient Boosting is the engineering workhorse. Stochastic GB is the practical compromise. Ch.3 (XGBoost/LightGBM) takes Gradient Boosting to production speed with histogram splits and second-order optimization.
+> **The big picture**: AdaBoost is elegant theory. Gradient Boosting is the engineering workhorse. Stochastic GB is the practical compromise. Ch.3 (XGBoost/LightGBM) takes Gradient Boosting to production speed with histogram splits and second-order optimization.
 
 ---
 
@@ -126,11 +126,11 @@ $$w_3^{(2)} \propto 0.200 \times \exp(-0.693 \times (-1)) = 0.200 \times \exp(+0
 
 | Sample | $y_i$ | $h_1(x_i)$ | Correct? | $w^{(1)}$ | Unnorm. $w^{(2)}$ | Normalized $w^{(2)}$ |
 |--------|--------|------------|----------|-----------|-------------------|----------------------|
-| 1 | +1 | +1 | ✅ | 0.200 | 0.100 | **0.125** |
-| 2 | −1 | −1 | ✅ | 0.200 | 0.100 | **0.125** |
-| 3 | +1 | −1 | ❌ | 0.200 | 0.400 | **0.500** |
-| 4 | −1 | −1 | ✅ | 0.200 | 0.100 | **0.125** |
-| 5 | +1 | +1 | ✅ | 0.200 | 0.100 | **0.125** |
+| 1 | +1 | +1 | | 0.200 | 0.100 | **0.125** |
+| 2 | −1 | −1 | | 0.200 | 0.100 | **0.125** |
+| 3 | +1 | −1 | | 0.200 | 0.400 | **0.500** |
+| 4 | −1 | −1 | | 0.200 | 0.100 | **0.125** |
+| 5 | +1 | +1 | | 0.200 | 0.100 | **0.125** |
 | **Sum** | | | | **1.000** | **0.800** | **1.000** |
 
 **Interpretation**: Example 3 jumps from 20% of the total weight to 50%. Round 2's learner is effectively trained on a dataset where example 3 appears as often as examples 1+2+4+5 *combined*. The algorithm forces the next weak learner to solve the hard case.
@@ -187,7 +187,7 @@ MSE at round 1: $\frac{1}{3}(0.920^2 + 0.910^2 + 0.010^2) = \frac{1}{3}(0.846 + 
 
 Loss decreased by $\frac{0.667 - 0.558}{0.667} \times 100\% = \mathbf{16.3\%}$ after one tree with $\gamma = 0.1$.
 
-> ⚡ **Why $\gamma = 0.1$ instead of $\gamma = 1.0$?** With $\gamma = 1.0$ and the same $h_1$, the update would push $F_1$ to $[2.8, 1.1, 2.1]$ — nearly at $[3, 1, 2]$ in one shot. But this fully commits to the tree's estimate of the residuals, including any noise. Small $\gamma$ nudges rather than jumps, keeping future rounds free to correct this round's mistakes.
+> **Why $\gamma = 0.1$ instead of $\gamma = 1.0$?** With $\gamma = 1.0$ and the same $h_1$, the update would push $F_1$ to $[2.8, 1.1, 2.1]$ — nearly at $[3, 1, 2]$ in one shot. But this fully commits to the tree's estimate of the residuals, including any noise. Small $\gamma$ nudges rather than jumps, keeping future rounds free to correct this round's mistakes.
 
 ---
 
@@ -261,15 +261,15 @@ INPUT: training data {(x_i, y_i)}, y_i ∈ {-1, +1}; M rounds
 INITIALIZE: w_i = 1/n for all i
 
 FOR m = 1 to M:
-  1. Train weak learner h_m on weighted data {(x_i, y_i, w_i)}
-  2. Compute weighted error:
-       ε_m = Σ_{i: h_m(x_i) ≠ y_i} w_i
-  3. Compute classifier weight:
-       α_m = 0.5 * ln((1 - ε_m) / ε_m)
-  4. Update sample weights:
-       w_i ← w_i * exp(-α_m * y_i * h_m(x_i))
-  5. Normalize:
-       w_i ← w_i / Σ_j w_j
+ 1. Train weak learner h_m on weighted data {(x_i, y_i, w_i)}
+ 2. Compute weighted error:
+ ε_m = Σ_{i: h_m(x_i) ≠ y_i} w_i
+ 3. Compute classifier weight:
+ α_m = 0.5 * ln((1 - ε_m) / ε_m)
+ 4. Update sample weights:
+ w_i ← w_i * exp(-α_m * y_i * h_m(x_i))
+ 5. Normalize:
+ w_i ← w_i / Σ_j w_j
 
 PREDICT: H(x) = sign(Σ_m α_m * h_m(x))
 ```
@@ -278,15 +278,15 @@ PREDICT: H(x) = sign(Σ_m α_m * h_m(x))
 
 ```
 INPUT: training data {(x_i, y_i)}; M rounds; learning rate γ
-INITIALIZE: F_0(x) = mean(y_train)  [or argmin of loss]
+INITIALIZE: F_0(x) = mean(y_train) [or argmin of loss]
 
 FOR m = 1 to M:
-  1. Compute pseudo-residuals:
-       r_i = y_i - F_{m-1}(x_i)          [= negative gradient for MSE]
-  2. Fit shallow tree h_m to {(x_i, r_i)}
-  3. Update ensemble:
-       F_m(x) = F_{m-1}(x) + γ * h_m(x)
-  4. [Optional] Check validation loss → early stopping
+ 1. Compute pseudo-residuals:
+ r_i = y_i - F_{m-1}(x_i) [= negative gradient for MSE]
+ 2. Fit shallow tree h_m to {(x_i, r_i)}
+ 3. Update ensemble:
+ F_m(x) = F_{m-1}(x) + γ * h_m(x)
+ 4. [Optional] Check validation loss → early stopping
 
 PREDICT: F_M(x)
 ```
@@ -312,9 +312,9 @@ After 50 trees, each fitting residuals of the previous 49, **MAE ≈ 28k**. The 
 After 100 trees, **MAE ≈ 25k** — a **28.5% improvement** over the single tree. The validation curve has flattened; early stopping fires at round ~120. The EnsembleAI constraint (>5% improvement) is exceeded by a factor of 5.7×.
 
 ```
-Round:     0      1     10     50    100    120 (early stop)
-MAE ($k): 35     33     30     28     25       25 (plateau)
-Delta:     —     -2     -3     -2     -3        0
+Round: 0 1 10 50 100 120 (early stop)
+MAE ($k): 35 33 30 28 25 25 (plateau)
+Delta: — -2 -3 -2 -3 0
 ```
 
 The curve is steep early (high-value, systematic corrections) and flattens as residuals become more random. This shape is diagnostic: a curve that never flattens means add more trees; a curve that flattens immediately means your trees are too weak.
@@ -400,7 +400,7 @@ $$\text{MAE}_1 = \frac{1}{5}(70.1 + 90.1 + 55.1 + 0.1 + 105.1) = \frac{320.5}{5}
 
 **Improvement**: $71.2 \to 64.1$, a **10.0% reduction** after a single stump.
 
-> 💡 **What happens next**: Round 2 sees residuals $[-70.1,\, -90.1,\, +55.1,\, -0.1,\, +105.1]$k. The next stump will concentrate on districts 2 and 5 (largest absolute residuals) and largely ignore district 4, which is already nearly perfect ($r_4^{(2)} = -0.1$k). This is the sequential correction mechanism: once the ensemble is accurate for a district, subsequent trees focus their capacity on what remains hard.
+> **What happens next**: Round 2 sees residuals $[-70.1,\, -90.1,\, +55.1,\, -0.1,\, +105.1]$k. The next stump will concentrate on districts 2 and 5 (largest absolute residuals) and largely ignore district 4, which is already nearly perfect ($r_4^{(2)} = -0.1$k). This is the sequential correction mechanism: once the ensemble is accurate for a district, subsequent trees focus their capacity on what remains hard.
 
 **Round 2 — Fit decision stump $h_2$ to residuals $[-70.1,\;-90.1,\;+55.1,\;-0.1,\;+105.1]$k:**
 
@@ -446,51 +446,51 @@ Notice the pattern: each round gives diminishing returns (10.0% → 6.7% → ...
 
 ```mermaid
 flowchart TD
-    classDef primary fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    classDef success fill:#15803d,color:#fff,stroke:#15803d
-    classDef caution fill:#b45309,color:#fff,stroke:#b45309
-    classDef danger fill:#b91c1c,color:#fff,stroke:#b91c1c
-    classDef info fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ classDef primary fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ classDef success fill:#15803d,color:#fff,stroke:#15803d
+ classDef caution fill:#b45309,color:#fff,stroke:#b45309
+ classDef danger fill:#b91c1c,color:#fff,stroke:#b91c1c
+ classDef info fill:#1d4ed8,color:#fff,stroke:#1d4ed8
 
-    DATA["Training Data\n5 CA Housing districts\ny = [210k,190k,350k,280k,400k]"]:::primary
-    F0["F₀ = mean(y) = 286k\nResiduals: [-76,-96,+64,-6,+114]k\nMAE = 71.2k"]:::caution
-    T1["Tree h₁  (stump)\nSplit: MedInc ≥ 10\nLeft leaf: -59.3k  Right: +89.0k"]:::info
-    F1["F₁ = F₀ + γ·h₁  (γ=0.1)\nNew residuals: [-70,-90,+55,-0,+105]k\nMAE = 64.1k  (↓10%)"]:::info
-    T2["Tree h₂  (stump)\nFits r⁽²⁾ — focuses on\ndistricts 2 and 5"]:::info
-    F2["F₂ = F₁ + γ·h₂\nMAE continues falling..."]:::info
-    DOTS["... 98 more shallow trees ...\nEach corrects remaining residuals"]:::primary
-    FM["F₁₀₀ = final ensemble\nMAE ≈ 25k  ✅  (−28.5%)"]:::success
+ DATA["Training Data\n5 CA Housing districts\ny = [210k,190k,350k,280k,400k]"]:::primary
+ F0["F₀ = mean(y) = 286k\nResiduals: [-76,-96,+64,-6,+114]k\nMAE = 71.2k"]:::caution
+ T1["Tree h₁ (stump)\nSplit: MedInc ≥ 10\nLeft leaf: -59.3k Right: +89.0k"]:::info
+ F1["F₁ = F₀ + γ·h₁ (γ=0.1)\nNew residuals: [-70,-90,+55,-0,+105]k\nMAE = 64.1k (↓10%)"]:::info
+ T2["Tree h₂ (stump)\nFits r⁽²⁾ — focuses on\ndistricts 2 and 5"]:::info
+ F2["F₂ = F₁ + γ·h₂\nMAE continues falling..."]:::info
+ DOTS["... 98 more shallow trees ...\nEach corrects remaining residuals"]:::primary
+ FM["F₁₀₀ = final ensemble\nMAE ≈ 25k (−28.5%)"]:::success
 
-    DATA --> F0
-    F0 --> T1
-    T1 --> F1
-    F1 --> T2
-    T2 --> F2
-    F2 --> DOTS
-    DOTS --> FM
+ DATA --> F0
+ F0 --> T1
+ T1 --> F1
+ F1 --> T2
+ T2 --> F2
+ F2 --> DOTS
+ DOTS --> FM
 ```
 
 ### Diagram 2 — AdaBoost Sample Weight Evolution
 
 ```mermaid
 flowchart LR
-    classDef primary fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    classDef success fill:#15803d,color:#fff,stroke:#15803d
-    classDef caution fill:#b45309,color:#fff,stroke:#b45309
-    classDef info fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ classDef primary fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ classDef success fill:#15803d,color:#fff,stroke:#15803d
+ classDef caution fill:#b45309,color:#fff,stroke:#b45309
+ classDef info fill:#1d4ed8,color:#fff,stroke:#1d4ed8
 
-    W1["Round 1\nAll weights = 0.20\nh₁ misclassifies\nexample 3"]:::primary
-    ALPHA1["α₁ = 0.693\n(ε₁ = 0.20)"]:::info
-    W2["Round 2\nw₁=w₂=w₄=w₅=0.125\nw₃=0.500\nh₂ focuses on\nexample 3"]:::caution
-    ALPHA2["α₂ from ε₂\n(new mistakes get\nnew weight)"]:::info
-    W3["Round 3\nWeights shift\nto round-2 errors"]:::info
-    VOTE["Final ensemble\nH(x) = sign(Σ αₘ·hₘ(x))\nWeighted majority vote"]:::success
+ W1["Round 1\nAll weights = 0.20\nh₁ misclassifies\nexample 3"]:::primary
+ ALPHA1["α₁ = 0.693\n(ε₁ = 0.20)"]:::info
+ W2["Round 2\nw₁=w₂=w₄=w₅=0.125\nw₃=0.500\nh₂ focuses on\nexample 3"]:::caution
+ ALPHA2["α₂ from ε₂\n(new mistakes get\nnew weight)"]:::info
+ W3["Round 3\nWeights shift\nto round-2 errors"]:::info
+ VOTE["Final ensemble\nH(x) = sign(Σ αₘ·hₘ(x))\nWeighted majority vote"]:::success
 
-    W1 -->|"upweight ❌"| ALPHA1
-    ALPHA1 --> W2
-    W2 -->|"upweight ❌"| ALPHA2
-    ALPHA2 --> W3
-    W3 --> VOTE
+ W1 -->|"upweight "| ALPHA1
+ ALPHA1 --> W2
+ W2 -->|"upweight "| ALPHA2
+ ALPHA2 --> W3
+ W3 --> VOTE
 ```
 
 ---
@@ -521,14 +521,14 @@ flowchart LR
 from sklearn.ensemble import GradientBoostingRegressor
 
 gb = GradientBoostingRegressor(
-    n_estimators=500,          # train long, let early stopping decide when
-    learning_rate=0.05,        # conservative shrinkage
-    max_depth=4,               # shallow trees — boosting needs weak learners
-    subsample=0.8,             # stochastic gradient boosting
-    min_samples_leaf=10,       # smooth leaf predictions
-    n_iter_no_change=20,       # early stopping: halt if no improvement for 20 rounds
-    validation_fraction=0.1,   # hold out 10% for early stopping signal
-    random_state=42,
+ n_estimators=500, # train long, let early stopping decide when
+ learning_rate=0.05, # conservative shrinkage
+ max_depth=4, # shallow trees — boosting needs weak learners
+ subsample=0.8, # stochastic gradient boosting
+ min_samples_leaf=10, # smooth leaf predictions
+ n_iter_no_change=20, # early stopping: halt if no improvement for 20 rounds
+ validation_fraction=0.1, # hold out 10% for early stopping signal
+ random_state=42,
 )
 ```
 
@@ -551,14 +551,14 @@ gb = GradientBoostingRegressor(
 
 ```mermaid
 flowchart TD
-    classDef danger fill:#b91c1c,color:#fff,stroke:#b91c1c
-    classDef success fill:#15803d,color:#fff,stroke:#15803d
-    classDef caution fill:#b45309,color:#fff,stroke:#b45309
+ classDef danger fill:#b91c1c,color:#fff,stroke:#b91c1c
+ classDef success fill:#15803d,color:#fff,stroke:#15803d
+ classDef caution fill:#b45309,color:#fff,stroke:#b45309
 
-    Q1{"Training loss falls.\nValidation loss...?"}
-    Q1 -->|"Also falls (both plateauing)"| A2["Early stopping working ✓\nStop here"]:::success
-    Q1 -->|"Rising after round ~N"| A3["OVERFITTING\n↓ learning_rate\n↓ max_depth\n↑ min_samples_leaf\nadd subsample=0.8"]:::danger
-    Q1 -->|"Both barely moving"| A4["UNDERFITTING\n↑ n_estimators\n↑ learning_rate\ncheck data quality"]:::caution
+ Q1{"Training loss falls.\nValidation loss...?"}
+ Q1 -->|"Also falls (both plateauing)"| A2["Early stopping working ✓\nStop here"]:::success
+ Q1 -->|"Rising after round ~N"| A3["OVERFITTING\n↓ learning_rate\n↓ max_depth\n↑ min_samples_leaf\nadd subsample=0.8"]:::danger
+ Q1 -->|"Both barely moving"| A4["UNDERFITTING\n↑ n_estimators\n↑ learning_rate\ncheck data quality"]:::caution
 ```
 
 ---
@@ -566,28 +566,23 @@ flowchart TD
 ## 10 · Where This Reappears
 
 The boosting principles from this chapter propagate forward through the entire curriculum:
-
-➡️ **Ch.3 (XGBoost/LightGBM/CatBoost)**: The same gradient boosting math, but with second-order (Newton) optimization, histogram-based split finding, and GPU acceleration. `learning_rate`, `max_depth`, and early stopping work identically — you will recognize every dial.
-
-➡️ **Ch.4 (SHAP)**: TreeSHAP computes exact feature contributions for boosted ensembles by decomposing the additive $F_M = F_0 + \sum_{m=1}^M \gamma h_m$ structure. Each tree's contribution is attributable to individual features because boosted trees are additive by construction.
-
-➡️ **Ch.5 (Stacking)**: Gradient Boosting is the most common meta-learner in stacked ensembles. Its low bias makes it ideal for combining predictions from diverse base models (RF + linear + neural net).
-
-➡️ **Ch.6 (Production)**: Early stopping (introduced here) is essential for production deployment. The `n_iter_no_change` pattern is used in every production GBM configuration to prevent overfitting without manual round selection.
-
-➡️ **Cross-track**: Residual fitting reappears in [Neural Networks track Ch.5 (Backprop)](../../03_neural_networks/ch05_backprop) — gradient descent in parameter space is mathematically isomorphic to gradient boosting in function space. The pseudo-residual IS the gradient; fitting a tree to it IS computing the gradient step.
+**Ch.3 (XGBoost/LightGBM/CatBoost)**: The same gradient boosting math, but with second-order (Newton) optimization, histogram-based split finding, and GPU acceleration. `learning_rate`, `max_depth`, and early stopping work identically — you will recognize every dial.
+**Ch.4 (SHAP)**: TreeSHAP computes exact feature contributions for boosted ensembles by decomposing the additive $F_M = F_0 + \sum_{m=1}^M \gamma h_m$ structure. Each tree's contribution is attributable to individual features because boosted trees are additive by construction.
+**Ch.5 (Stacking)**: Gradient Boosting is the most common meta-learner in stacked ensembles. Its low bias makes it ideal for combining predictions from diverse base models (RF + linear + neural net).
+**Ch.6 (Production)**: Early stopping (introduced here) is essential for production deployment. The `n_iter_no_change` pattern is used in every production GBM configuration to prevent overfitting without manual round selection.
+**Cross-track**: Residual fitting reappears in [Neural Networks track Ch.5 (Backprop)](../../03_neural_networks/ch05_backprop) — gradient descent in parameter space is mathematically isomorphic to gradient boosting in function space. The pseudo-residual IS the gradient; fitting a tree to it IS computing the gradient step.
 
 **Bagging vs Boosting — When to Reach for Each:**
 
 | Situation | Reach for Bagging (RF) | Reach for Boosting (GBM) |
 |-----------|----------------------|--------------------------|
-| Training data is small | ✅ OOB error is free validation | ⚠️ May overfit faster |
-| Labels are noisy | ✅ Averaging smooths noise | ⚠️ Re-focuses on noisy outliers |
-| Need parallel training | ✅ Trees are independent | ❌ Sequential by design |
-| High bias problem | ❌ Averaging doesn't fix bias | ✅ Residual fitting reduces bias |
-| Need feature importance | ✅ Global importance | ✅ Global + SHAP (Ch.4) |
-| Latency budget is tight | ✅ Faster (parallel at inference too) | ⚠️ More trees to evaluate |
-| Kaggle/competition | Good baseline | ✅ Usually wins with tuning |
+| Training data is small | OOB error is free validation | May overfit faster |
+| Labels are noisy | Averaging smooths noise | Re-focuses on noisy outliers |
+| Need parallel training | Trees are independent | Sequential by design |
+| High bias problem | Averaging doesn't fix bias | Residual fitting reduces bias |
+| Need feature importance | Global importance | Global + SHAP (Ch.4) |
+| Latency budget is tight | Faster (parallel at inference too) | More trees to evaluate |
+| Kaggle/competition | Good baseline | Usually wins with tuning |
 
 In practice, the right starting point is usually: **Random Forest first** (fast, robust, hard to overfit), then **GBM/XGBoost** if the RF plateaus. Both are essential tools in the production ML toolkit.
 
@@ -601,27 +596,25 @@ In practice, the right starting point is usually: **Random Forest first** (fast,
 
 | Constraint | Target | Ch.1 Status | Ch.2 Status |
 |------------|--------|-------------|-------------|
-| #1 IMPROVEMENT | Beat single model by >5% | ✅ RF beats DT | ✅ **GBM MAE 25k vs tree 35k = 28.5% gain** |
-| #2 DIVERSITY | Each model adds unique info | ✅ Decorrelated trees | ✅ Sequential residual correction |
-| #3 EFFICIENCY | <5× latency vs single model | ❌ Not measured | ❌ Sequential training is slow |
-| #4 INTERPRETABILITY | SHAP explanations | ❌ Global importance only | ❌ Per-prediction SHAP needs Ch.4 |
-| #5 ROBUSTNESS | Stable across seeds | ✅ Averaging 200 trees | ⚠️ Early stopping essential |
+| #1 IMPROVEMENT | Beat single model by >5% | RF beats DT | **GBM MAE 25k vs tree 35k = 28.5% gain** |
+| #2 DIVERSITY | Each model adds unique info | Decorrelated trees | Sequential residual correction |
+| #3 EFFICIENCY | <5× latency vs single model | Not measured | Sequential training is slow |
+| #4 INTERPRETABILITY | SHAP explanations | Global importance only | Per-prediction SHAP needs Ch.4 |
+| #5 ROBUSTNESS | Stable across seeds | Averaging 200 trees | Early stopping essential |
 
 **Concrete result on California Housing:**
 
 $$\text{Single Tree MAE} = 35\text{k} \quad\longrightarrow\quad \text{GBM (100 rounds) MAE} = 25\text{k}$$
 
 $$\text{Improvement} = \frac{35 - 25}{35} \times 100\% = \mathbf{28.5\%\ \checkmark} \quad (\text{target: } > 5\%)$$
-
-✅ **Unlocked in this chapter:**
+**Unlocked in this chapter:**
 - Sequential error correction via pseudo-residual fitting
 - AdaBoost weight rebalancing for hard-case classification
 - Gradient boosting for any differentiable loss (regression, classification, ranking)
 - Shrinkage regularization via learning rate
 - Early stopping to prevent overfitting automatically
 - EnsembleAI Constraint #1 exceeded by a factor of 5.7×
-
-❌ **Still blocked:**
+**Still blocked:**
 - **Constraint #3 (EFFICIENCY)**: sklearn `GradientBoostingRegressor` is single-threaded — no GPU, no parallelism. Inference is 50–100× slower than a single tree on large datasets.
 - **Constraint #4 (INTERPRETABILITY)**: Feature importance exists but is only global. True per-prediction explanations require TreeSHAP (Ch.4).
 - **Production readiness**: sklearn's GBM is too slow for real-time serving at scale — the fix is Ch.3.
@@ -640,11 +633,10 @@ You have now seen gradient boosting in its clean textbook form: pseudo-residuals
 |---------|-------------|---------|----------|
 | Split algorithm | Exhaustive search | Histogram bins | Histogram (leaf-wise) |
 | Training speed | 1× (baseline) | ~10× faster | ~20–50× faster |
-| GPU support | ❌ | ✅ | ✅ |
-| L1/L2 regularization | ❌ | ✅ (`alpha`, `lambda`) | ✅ (`lambda_l1`, `lambda_l2`) |
+| GPU support | | | |
+| L1/L2 regularization | | (`alpha`, `lambda`) | (`lambda_l1`, `lambda_l2`) |
 | Optimization order | First-order (gradient) | Second-order (Newton) | Second-order |
-| Built-in early stopping | ✅ (`n_iter_no_change`) | ✅ (`early_stopping_rounds`) | ✅ |
+| Built-in early stopping | (`n_iter_no_change`) | (`early_stopping_rounds`) | |
 
 The dial names change slightly (`eta` instead of `learning_rate`, `num_boost_round` instead of `n_estimators`) but the math you have mastered in this chapter is identical. Ch.3 is gradient boosting with the engine swapped for a production-grade one.
-
-➡️ **Next**: [Ch.3 — XGBoost, LightGBM & CatBoost](../ch03_xgboost_lightgbm/README.md)
+**Next**: [Ch.3 — XGBoost, LightGBM & CatBoost](../ch03_xgboost_lightgbm/README.md)

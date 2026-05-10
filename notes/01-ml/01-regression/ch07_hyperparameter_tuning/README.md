@@ -10,17 +10,17 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 💡 **The mission**: Launch **SmartVal AI** — a production home valuation system satisfying 5 constraints:
+> **The mission**: Launch **SmartVal AI** — a production home valuation system satisfying 5 constraints:
 > 1. **ACCURACY**: <$40k MAE — 2. **GENERALIZATION**: Unseen districts — 3. **MULTI-TASK**: Value + Segment — 4. **INTERPRETABILITY**: Explainable — 5. **PRODUCTION**: Scale + Monitor
 
 **What we know so far:**
-- ✅ Ch.1: $70k MAE → Ch.2: $55k → Ch.4: $48k → Ch.5: $38k ✅
-- ✅ Ch.6: Validated $38k ± $2k MAE across 5-fold CV
+- Ch.1: $70k MAE → Ch.2: $55k → Ch.4: $48k → Ch.5: $38k
+- Ch.6: Validated $38k ± $2k MAE across 5-fold CV
 - ❓ **But was α=1.0 optimal? Is degree=2 the best? Should we use Lasso instead?**
 
 **What's blocking us:**
 
-⚠️ **We guessed our hyperparameters:**
+**Warning — We guessed our hyperparameters:**
 
 | Hyperparameter | Current value | How we chose it | Optimal? |
 |---------------|---------------|-----------------|----------|
@@ -34,7 +34,7 @@
 - XGBoost might blow linear models away entirely
 
 **What this chapter unlocks:**
-⚡ **Systematic optimization:**
+**Systematic optimization:**
 1. **Grid Search**: Exhaustive sweep of small parameter spaces
 2. **Random Search**: Efficient for large spaces (Bergstra & Bengio proof)
 3. **Bayesian Optimization**: Smart trial selection using Optuna
@@ -45,26 +45,26 @@ Result: **~$32k MAE** (push well past the $40k target!)
 
 ```mermaid
 flowchart LR
-    subgraph "Before (guessing)"
-        GUESS["α=1.0, degree=2<br/>Ridge only<br/>$38k MAE"]
-    end
-    
-    subgraph "After (systematic tuning)"
-        GRID["Grid Search<br/>Small spaces"]
-        RANDOM["Random Search<br/>Large spaces"]
-        BAYES["Bayesian Opt<br/>Optuna"]
-    end
-    
-    GUESS --> GRID
-    GUESS --> RANDOM
-    GUESS --> BAYES
-    
-    GRID --> RESULT["$32k MAE ✅<br/>Optimized model"]
-    RANDOM --> RESULT
-    BAYES --> RESULT
-    
-    style GUESS fill:#b91c1c,stroke:#e2e8f0,stroke:#width:2px,color:#ffffff
-    style RESULT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ subgraph "Before (guessing)"
+ GUESS["α=1.0, degree=2<br/>Ridge only<br/>$38k MAE"]
+ end
+
+ subgraph "After (systematic tuning)"
+ GRID["Grid Search<br/>Small spaces"]
+ RANDOM["Random Search<br/>Large spaces"]
+ BAYES["Bayesian Opt<br/>Optuna"]
+ end
+
+ GUESS --> GRID
+ GUESS --> RANDOM
+ GUESS --> BAYES
+
+ GRID --> RESULT["$32k MAE <br/>Optimized model"]
+ RANDOM --> RESULT
+ BAYES --> RESULT
+
+ style GUESS fill:#b91c1c,stroke:#e2e8f0,stroke:#width:2px,color:#ffffff
+ style RESULT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -86,7 +86,7 @@ Think of α as a dial that controls how much the model trusts the training data:
 | α Value | What Happens | Training MAE | Test MAE |
 |---------|--------------|--------------|----------|
 | **α = 0** | No penalty — memorize training noise | $42k | $48k (overfitting) |
-| **α = 0.1** | Light penalty — most noise suppressed | $39k | **$38k** ✅ |
+| **α = 0.1** | Light penalty — most noise suppressed | $39k | **$38k** |
 | **α = 10** | Heavy penalty — even signal suppressed | $48k | $49k (underfitting) |
 | **α = 1000** | Extreme penalty — all weights → 0 | $65k | $65k (predicts mean) |
 
@@ -120,11 +120,11 @@ Instead of manually testing degree=2 with α=0.1, then degree=2 with α=1.0, the
 
 ```python
 param_grid = {
-    'poly__degree': [1, 2],
-    'model__alpha':  [0.1, 10.0]
+ 'poly__degree': [1, 2],
+ 'model__alpha': [0.1, 10.0]
 }
 grid_cv = GridSearchCV(ridge_pipe, param_grid, cv=3,
-                       scoring='neg_mean_absolute_error')
+ scoring='neg_mean_absolute_error')
 grid_cv.fit(X_train, y_train)
 ```
 
@@ -134,10 +134,10 @@ grid_cv.fit(X_train, y_train)
 
 | degree | α | Mean MAE | Winner? |
 |--------|------|----------|---------|
-| 1 | 0.1 | $56.5k | ❌ |
-| 1 | 10.0 | $61.4k | ❌ |
-| **2** | **0.1** | **$39.0k** | **✅ WINNER** |
-| 2 | 10.0 | $40.3k | ❌ |
+| 1 | 0.1 | $56.5k | |
+| 1 | 10.0 | $61.4k | |
+| **2** | **0.1** | **$39.0k** | ** WINNER** |
+| 2 | 10.0 | $40.3k | |
 
 ```python
 print(grid_cv.best_params_)
@@ -168,8 +168,8 @@ This is the critical insight: **degree and α must be tuned together.** Degree=3
 
 ```python
 param_grid = {
-    'poly__degree': [1, 2, 3],
-    'model__alpha': np.logspace(-3, 3, 7)
+ 'poly__degree': [1, 2, 3],
+ 'model__alpha': np.logspace(-3, 3, 7)
 }
 # 3 degrees × 7 alphas = 21 combinations
 ```
@@ -211,7 +211,7 @@ param_grid = {
 | `reg_alpha` | [0, 0.01, 0.1, 1] | L1 regularization on weights |
 | `reg_lambda` | [0, 0.01, 0.1, 1] | L2 regularization on weights |
 
-**Objective:** `reg:squarederror`  
+**Objective:** `reg:squarederror`
 **Eval metric:** `mae`
 
 Use `RandomizedSearchCV` with 100+ trials. Typical result: **$32k MAE** (vs $38k for Ridge).
@@ -228,12 +228,12 @@ Use `RandomizedSearchCV` with 100+ trials. Typical result: **$32k MAE** (vs $38k
 from sklearn.model_selection import GridSearchCV
 
 param_grid = {
-    'model__alpha': [0.001, 0.01, 0.1, 1, 10, 100],
-    'poly__degree': [1, 2, 3]
+ 'model__alpha': [0.001, 0.01, 0.1, 1, 10, 100],
+ 'poly__degree': [1, 2, 3]
 }
 # 6 × 3 = 18 combinations × 5 folds = 90 fits
 grid_cv = GridSearchCV(pipeline, param_grid, cv=5,
-                       scoring='neg_mean_absolute_error', n_jobs=-1)
+ scoring='neg_mean_absolute_error', n_jobs=-1)
 ```
 
 **When to use:** < 4 hyperparameters, < 100 total combinations.
@@ -247,11 +247,11 @@ from sklearn.model_selection import RandomizedSearchCV
 from scipy.stats import uniform, loguniform
 
 param_dist = {
-    'model__alpha': loguniform(0.001, 1000),
-    'poly__degree': [1, 2, 3]
+ 'model__alpha': loguniform(0.001, 1000),
+ 'poly__degree': [1, 2, 3]
 }
 random_cv = RandomizedSearchCV(pipeline, param_dist, n_iter=60, cv=5,
-                               scoring='neg_mean_absolute_error', n_jobs=-1)
+ scoring='neg_mean_absolute_error', n_jobs=-1)
 ```
 
 **When to use:** > 4 hyperparameters, or when some hyperparameters matter much more than others.
@@ -259,14 +259,14 @@ random_cv = RandomizedSearchCV(pipeline, param_dist, n_iter=60, cv=5,
 ### Why Random Beats Grid
 
 ```
-Grid Search (9 trials):          Random Search (9 trials):
-    ·───·───·                        ·  ·    ·
-    │   │   │                       ·     ·
-    ·───·───·   ← wastes trials    ·  ·  ·    ← covers more
-    │   │   │     on unimportant     ·
-    ·───·───·     axis
+Grid Search (9 trials): Random Search (9 trials):
+ ·───·───· · · ·
+ │ │ │ · ·
+ ·───·───· ← wastes trials · · · ← covers more
+ │ │ │ on unimportant ·
+ ·───·───· axis
 
-Important param ──→               Important param ──→
+Important param ──→ Important param ──→
 ```
 
 If α matters but degree doesn't, grid search tests only 3 unique α values. Random search tests **9 unique α values**.
@@ -281,18 +281,18 @@ If α matters but degree doesn't, grid search tests only 3 unique α values. Ran
 import optuna
 
 def objective(trial):
-    alpha = trial.suggest_float('alpha', 1e-3, 1e3, log=True)
-    degree = trial.suggest_int('degree', 1, 3)
-    
-    pipe = Pipeline([
-        ('poly', PolynomialFeatures(degree=degree, include_bias=False)),
-        ('scaler', StandardScaler()),
-        ('model', Ridge(alpha=alpha, max_iter=10000))
-    ])
-    
-    scores = cross_val_score(pipe, X_train, y_train,
-                             cv=5, scoring='neg_mean_absolute_error')
-    return -scores.mean()  # Optuna minimizes
+ alpha = trial.suggest_float('alpha', 1e-3, 1e3, log=True)
+ degree = trial.suggest_int('degree', 1, 3)
+
+ pipe = Pipeline([
+ ('poly', PolynomialFeatures(degree=degree, include_bias=False)),
+ ('scaler', StandardScaler()),
+ ('model', Ridge(alpha=alpha, max_iter=10000))
+ ])
+
+ scores = cross_val_score(pipe, X_train, y_train,
+ cv=5, scoring='neg_mean_absolute_error')
+ return -scores.mean() # Optuna minimizes
 
 study = optuna.create_study(direction='minimize')
 study.optimize(objective, n_trials=100)
@@ -372,14 +372,14 @@ XGBoost fits a shallow tree (stump = depth-1 tree) to predict **residuals**, not
 
 ```
 Tree 1:
-     [MedInc ≤ 4.0?]
-      /           \
-   YES             NO
-   ↓               ↓
-leaf₁            leaf₂
-mean(r₁,r₂)      mean(r₃)
-= mean(-1.667, -0.367)  = +2.033
-= −1.017               = +2.033
+ [MedInc ≤ 4.0?]
+ / \
+ YES NO
+ ↓ ↓
+leaf₁ leaf₂
+mean(r₁,r₂) mean(r₃)
+= mean(-1.667, -0.367) = +2.033
+= −1.017 = +2.033
 ```
 
 Leaf assignments: Sample 1 (MedInc=1.0) → leaf₁ = −1.017 · Sample 2 (MedInc=3.0) → leaf₁ = −1.017 · Sample 3 (MedInc=8.0) → leaf₂ = +2.033
@@ -421,7 +421,7 @@ Tree 2 fits these new (smaller) residuals. Each tree’s job is only to reduce w
 | **Interpretability** | Single coefficient per feature | SHAP values |
 | **Typical MAE, California Housing** | $38k (with tuning) | **$32k** (with tuning) — 15% better |
 
-**Why XGBoost wins on tabular data:**  
+**Why XGBoost wins on tabular data:**
 MedInc → MedHouseVal is NOT linear: a district earning $100k has roughly $400k homes, not $10M. The income effect has diminishing returns at the top. XGBoost’s tree splits naturally capture this step-function behavior. Ridge needs degree-3 polynomials to approximate the same curve.
 
 ---
@@ -440,31 +440,31 @@ MedInc → MedHouseVal is NOT linear: a district earning $100k has roughly $400k
 - Pick the right metric (`neg_mean_absolute_error` for MAE)
 
 **The progression:**
-- Ch.1: $70k MAE (no features) → Ch.2: $55k (basic features) → Ch.4: $48k (regularization) → Ch.5: $38k (polynomial + Ridge α=1.0) → **This chapter: $32k (XGBoost + systematic tuning) ✅**
+- Ch.1: $70k MAE (no features) → Ch.2: $55k (basic features) → Ch.4: $48k (regularization) → Ch.5: $38k (polynomial + Ridge α=1.0) → **This chapter: $32k (XGBoost + systematic tuning) **
 
 ```mermaid
 flowchart LR
-    subgraph "Before"
-        GUESS["Guessed α=1.0<br/>degree=2<br/>$38k MAE"]
-    end
-    
-    subgraph "After Tuning"
-        GRID["Grid Search<br/>Joint α × degree"]
-        RANDOM["Random Search<br/>XGBoost params"]
-        BAYES["Bayesian Opt<br/>Optuna"]
-    end
-    
-    GUESS --> GRID
-    GUESS --> RANDOM
-    GUESS --> BAYES
-    
-    GRID --> RESULT["Optimized Ridge/Lasso<br/>$36k MAE"]
-    RANDOM --> RESULT2["Optimized XGBoost<br/>$32k MAE ✅"]
-    BAYES --> RESULT2
-    
-    style GUESS fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style RESULT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style RESULT2 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ subgraph "Before"
+ GUESS["Guessed α=1.0<br/>degree=2<br/>$38k MAE"]
+ end
+
+ subgraph "After Tuning"
+ GRID["Grid Search<br/>Joint α × degree"]
+ RANDOM["Random Search<br/>XGBoost params"]
+ BAYES["Bayesian Opt<br/>Optuna"]
+ end
+
+ GUESS --> GRID
+ GUESS --> RANDOM
+ GUESS --> BAYES
+
+ GRID --> RESULT["Optimized Ridge/Lasso<br/>$36k MAE"]
+ RANDOM --> RESULT2["Optimized XGBoost<br/>$32k MAE "]
+ BAYES --> RESULT2
+
+ style GUESS fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style RESULT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style RESULT2 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -474,7 +474,7 @@ flowchart LR
 ### Pitfall 1: Optimizing the Wrong Metric
 
 ```python
-# ❌ WRONG: Optimizing RMSE when business cares about MAE
+# WRONG: Optimizing RMSE when business cares about MAE
 grid_cv = GridSearchCV(pipe, params, scoring='neg_mean_squared_error')
 ```
 
@@ -502,9 +502,9 @@ Degree is a discrete hyperparameter with massive impact:
 ### Pitfall 3: Not Tuning Regularization Jointly with Feature Engineering
 
 ```python
-# ❌ WRONG: Tune degree first, THEN tune α separately
-best_degree = grid_search_degree(...)  # degree=3
-best_alpha = grid_search_alpha(degree=3, ...)  # α=10
+# WRONG: Tune degree first, THEN tune α separately
+best_degree = grid_search_degree(...) # degree=3
+best_alpha = grid_search_alpha(degree=3, ...) # α=10
 ```
 
 **Fix:** Tune both simultaneously in a joint parameter grid — `{'poly__degree': [1, 2, 3], 'model__alpha': np.logspace(-3, 3, 7)}` finds the true optimum, not two independent optima.
@@ -512,8 +512,8 @@ best_alpha = grid_search_alpha(degree=3, ...)  # α=10
 ### Pitfall 4: Data Leakage in Cross-Validation
 
 ```python
-# ❌ WRONG: Fit scaler on full data, then cross-validate
-X_scaled = StandardScaler().fit_transform(X)  # Leaks test info!
+# WRONG: Fit scaler on full data, then cross-validate
+X_scaled = StandardScaler().fit_transform(X) # Leaks test info!
 cross_val_score(model, X_scaled, y, cv=5)
 ```
 
@@ -523,27 +523,27 @@ cross_val_score(model, X_scaled, y, cv=5)
 
 ```mermaid
 flowchart TD
-    START["🔍 Hyperparameter tuning is done.<br/>Something still looks wrong."] --> Q1{"What symptom?"}
+ START[" Hyperparameter tuning is done.<br/>Something still looks wrong."] --> Q1{"What symptom?"}
 
-    Q1 -->|"CV MAE differs a lot<br/>from test MAE"| LEAK["Pitfall 4: Data leakage<br/>Is your scaler fit on full data<br/>before the CV split?"]
-    Q1 -->|"Best params seem crazy<br/>(e.g. α=1000, degree=3)"| METRIC["Pitfall 1: Wrong metric<br/>Are you optimizing MAE or RMSE?<br/>They can pick different winners."]
-    Q1 -->|"Small grid gave great results<br/>Fine-grained search made it worse"| OVERTUNE["Pitfall 2: Over-tuned degree<br/>Did you tune degree and α jointly?<br/>Degree=3 with α too small → overfit"]
-    Q1 -->|"Optuna keeps suggesting<br/>same α regardless of degree"| JOINT["Pitfall 3: Not tuning jointly<br/>degree and α are coupled—<br/>must search the 2D joint space"]
-    Q1 -->|"XGBoost way worse<br/>than Ridge unexpectedly"| XGBWARN["XGBoost needs more trials<br/>Use n_iter≥100 + early_stopping_rounds<br/>XGBoost defaults underfit badly"]
+ Q1 -->|"CV MAE differs a lot<br/>from test MAE"| LEAK["Pitfall 4: Data leakage<br/>Is your scaler fit on full data<br/>before the CV split?"]
+ Q1 -->|"Best params seem crazy<br/>(e.g. α=1000, degree=3)"| METRIC["Pitfall 1: Wrong metric<br/>Are you optimizing MAE or RMSE?<br/>They can pick different winners."]
+ Q1 -->|"Small grid gave great results<br/>Fine-grained search made it worse"| OVERTUNE["Pitfall 2: Over-tuned degree<br/>Did you tune degree and α jointly?<br/>Degree=3 with α too small → overfit"]
+ Q1 -->|"Optuna keeps suggesting<br/>same α regardless of degree"| JOINT["Pitfall 3: Not tuning jointly<br/>degree and α are coupled—<br/>must search the 2D joint space"]
+ Q1 -->|"XGBoost way worse<br/>than Ridge unexpectedly"| XGBWARN["XGBoost needs more trials<br/>Use n_iter≥100 + early_stopping_rounds<br/>XGBoost defaults underfit badly"]
 
-    LEAK --> FIX_LEAK["✅ Fix: Use Pipeline so scaler<br/>fits on train fold only"]
-    METRIC --> FIX_METRIC["✅ Fix: scoring='neg_mean_absolute_error'<br/>always — matches business goal"]
-    OVERTUNE --> FIX_OVERTUNE["✅ Fix: Include both degree and α<br/>in the same param_grid"]
-    JOINT --> FIX_JOINT["✅ Fix: 2D search — param_grid has<br/>poly__degree AND model__alpha"]
-    XGBWARN --> FIX_XGB["✅ Fix: n_estimators≥300, lr≤0.05,<br/>early_stopping_rounds=50"]
+ LEAK --> FIX_LEAK[" Fix: Use Pipeline so scaler<br/>fits on train fold only"]
+ METRIC --> FIX_METRIC[" Fix: scoring='neg_mean_absolute_error'<br/>always — matches business goal"]
+ OVERTUNE --> FIX_OVERTUNE[" Fix: Include both degree and α<br/>in the same param_grid"]
+ JOINT --> FIX_JOINT[" Fix: 2D search — param_grid has<br/>poly__degree AND model__alpha"]
+ XGBWARN --> FIX_XGB[" Fix: n_estimators≥300, lr≤0.05,<br/>early_stopping_rounds=50"]
 
-    style START fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style Q1 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style FIX_LEAK fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style FIX_METRIC fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style FIX_OVERTUNE fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style FIX_JOINT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style FIX_XGB fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style START fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style Q1 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style FIX_LEAK fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style FIX_METRIC fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style FIX_OVERTUNE fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style FIX_JOINT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style FIX_XGB fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -556,20 +556,20 @@ This is the final chapter of the regression track. We've gone from a guessed str
 
 ```mermaid
 flowchart LR
-    CH1["Ch.1\n$70k MAE\n1 feature\nLinear"] -->|"+7 features"| CH2["Ch.2\n$55k MAE\n8 features\nMultiple linear"]
-    CH2 -->|"feature audit"| CH3["Ch.3\n$55k MAE\nSame accuracy\nBetter insight"]
-    CH3 -->|"+polynomials"| CH4["Ch.4\n$48k MAE\nDegree-2\nPolynomial"]
-    CH4 -->|"+regularization"| CH5["Ch.5\n$38k MAE ✅\nRidge L2\nGeneralized"]
-    CH5 -->|"CV validation"| CH6["Ch.6\n$38k ± 2k\nValidated\n5-fold"]
-    CH6 -->|"systematic tuning"| CH7["Ch.7\n$32k MAE ✅✅\nXGBoost\nOptimized"]
+ CH1["Ch.1\n$70k MAE\n1 feature\nLinear"] -->|"+7 features"| CH2["Ch.2\n$55k MAE\n8 features\nMultiple linear"]
+ CH2 -->|"feature audit"| CH3["Ch.3\n$55k MAE\nSame accuracy\nBetter insight"]
+ CH3 -->|"+polynomials"| CH4["Ch.4\n$48k MAE\nDegree-2\nPolynomial"]
+ CH4 -->|"+regularization"| CH5["Ch.5\n$38k MAE \nRidge L2\nGeneralized"]
+ CH5 -->|"CV validation"| CH6["Ch.6\n$38k ± 2k\nValidated\n5-fold"]
+ CH6 -->|"systematic tuning"| CH7["Ch.7\n$32k MAE \nXGBoost\nOptimized"]
 
-    style CH1 fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH2 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH3 fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH4 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH5 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH6 fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH7 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH1 fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH2 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH3 fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH4 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH5 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH6 fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH7 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 **What each chapter actually contributed to MAE:**
@@ -590,15 +590,15 @@ flowchart LR
 
 ### The 5 SmartVal Constraints — Final Status
 
-> 💡 **The mission**: Launch **SmartVal AI** — a production home valuation system satisfying 5 constraints:
+> **The mission**: Launch **SmartVal AI** — a production home valuation system satisfying 5 constraints:
 
 | Constraint | Target | Ch.1 | Ch.5 | **Ch.7 FINAL** | Status |
 |------------|--------|------|------|----------------|--------|
-| **#1 ACCURACY** | < $40k MAE | $70k ❌ | $38k ✅ | **$32k** ✅✅ | ✅ **EXCEEDED** ($32k < $35k stretch goal) |
-| **#2 GENERALIZATION** | Unseen districts | Not tested ❌ | Not CV'd ❌ | **5-fold CV: $32k ± 2k** ✅ | ✅ **ACHIEVED** |
-| **#3 MULTI-TASK** | Value + Segment | Regression only ❌ | Regression only ❌ | **Regression only** ❌ | ❌ **DEFERRED → Neural Networks track** |
-| **#4 INTERPRETABILITY** | Explainable | 1 weight ⚡ | 44 Ridge weights ⚡ | **SHAP values for XGBoost** ⚡ | ⚡ **Partial — SHAP explains each prediction** |
-| **#5 PRODUCTION** | Scale + Monitor | Research code ❌ | Research code ❌ | **Pipeline + CV + versioned model** ⚡ | ⚡ **Partial — see note below** |
+| **#1 ACCURACY** | < $40k MAE | $70k | $38k | **$32k** | **EXCEEDED** ($32k < $35k stretch goal) |
+| **#2 GENERALIZATION** | Unseen districts | Not tested | Not CV'd | **5-fold CV: $32k ± 2k** | **ACHIEVED** |
+| **#3 MULTI-TASK** | Value + Segment | Regression only | Regression only | **Regression only** | **DEFERRED → Neural Networks track** |
+| **#4 INTERPRETABILITY** | Explainable | 1 weight | 44 Ridge weights | **SHAP values for XGBoost** | **Partial — SHAP explains each prediction** |
+| **#5 PRODUCTION** | Scale + Monitor | Research code | Research code | **Pipeline + CV + versioned model** | **Partial — see note below** |
 
 **Notes on partial constraints:**
 
@@ -611,16 +611,14 @@ flowchart LR
 ---
 
 ### What We Can and Cannot Now Do
-
-✅ **Unlocked by the full regression track:**
+**Unlocked by the full regression track:**
 - Fit, tune, and validate any regression model on tabular data
 - Choose the right regularizer (Ridge/Lasso) for the sparsity pattern
 - Know when to use grid, random, and Bayesian search (and why)
 - Evaluate honestly: MAE, RMSE, R², 5-fold CV — and which to trust
 - Use XGBoost for non-linear tabular regression without manual feature engineering
 - Build a full tuning pipeline with no leakage via sklearn `Pipeline`
-
-❌ **Still cannot do (requires other tracks):**
+**Still cannot do (requires other tracks):**
 - Classify outputs (binary/multiclass) → **Classification track**
 - Handle image, audio, or text inputs → **MultimodalAI track**
 - Build deep learning models → **Neural Networks track**
@@ -653,13 +651,13 @@ The regression track ends with $32k MAE. We hit the <$40k target 6 chapters ago,
 
 The next class of improvement requires **stacked non-linearities** — what neural networks provide. Two things are now in the way:
 
-**1. Non-linearities are hard to engineer by hand.**  
+**1. Non-linearities are hard to engineer by hand.**
 Ch.4 added MedInc² and MedInc×Latitude to capture the coastal premium. But what about the triple interaction MedInc × Latitude × HouseAge? Or the threshold effect where MedInc > 8 suddenly signals a different market regime? Polynomial features explode in count; XGBoost captures them step-function-wise; neural networks learn them *continuously* through learned activation functions.
 
-**2. Constraint #3 (MULTI-TASK) is fundamentally blocked.**  
+**2. Constraint #3 (MULTI-TASK) is fundamentally blocked.**
 Ridge and XGBoost produce one real number per prediction. A neural net's output layer can be any shape: produce a house value AND a market segment (regression + classification) simultaneously, in a single forward pass, with shared feature representations.
 
-**The bridge in one line:**  
+**The bridge in one line:**
 A single neuron — $z = \sigma(\mathbf{w}^\top\mathbf{x} + b)$ — is exactly linear regression with a non-linearity $\sigma$ glued to the output. Three stacked layers give the Universal Approximation Theorem: your network can fit any continuous function. The training loop (forward pass → loss → gradient → weight update) is *identical* to what you built in Ch.1.
 
 **Everything in the regression track was preparation:**

@@ -9,13 +9,13 @@
 **Three ways to learn the Advanced Deep Learning track:**
 
 1. **📖 Sequential deep dive (recommended)**: Read chapters Ch.1–10 in order, each with:
-   - Full narrative in `chNN_*/README.md`
-   - Implementation details and experiments in chapter notebooks
-   - Each chapter builds on previous concepts and shows progressive constraint achievement
+ - Full narrative in `chNN_*/README.md`
+ - Implementation details and experiments in chapter notebooks
+ - Each chapter builds on previous concepts and shows progressive constraint achievement
 
-2. **⚡ Quick overview (this document)**: Read the synthesis below to understand the complete ProductionCV progression from 97 MB ResNet-50 to 6.8 MB production model, then jump to specific chapters for architectural details
+2. ** Quick overview (this document)**: Read the synthesis below to understand the complete ProductionCV progression from 97 MB ResNet-50 to 6.8 MB production model, then jump to specific chapters for architectural details
 
-3. **💻 Hands-on code walkthrough**: Open [`grand_solution_reference.ipynb` (reference) or `grand_solution_exercise.ipynb` (practice)](grand_solution.ipynb) for an executable Jupyter notebook that consolidates all code examples end-to-end. Run it top-to-bottom to see the complete training pipeline: self-supervised pretraining → supervised fine-tuning → knowledge distillation → pruning.
+3. ** Hands-on code walkthrough**: Open [`grand_solution_reference.ipynb` (reference) or `grand_solution_exercise.ipynb` (practice)](grand_solution.ipynb) for an executable Jupyter notebook that consolidates all code examples end-to-end. Run it top-to-bottom to see the complete training pipeline: self-supervised pretraining → supervised fine-tuning → knowledge distillation → pruning.
 
 **Chapter roadmap:**
 - [Ch.1: Residual Networks](ch01_residual_networks/README.md) — Skip connections unlock deep learning
@@ -32,7 +32,7 @@
 
 ---
 
-## Mission Accomplished: All 5 Constraints Satisfied ✅
+## Mission Accomplished: All 5 Constraints Satisfied
 
 **The Challenge:** Build ProductionCV — a production retail shelf monitoring system achieving 85%+ mAP detection, 70%+ IoU segmentation, <50ms latency, <100 MB model size, trained on <1,000 labeled images — and auditable enough for enterprise deployment.
 
@@ -41,17 +41,17 @@
 **The Progression:**
 
 ```
-Ch.1: ResNet-50 baseline         → 80.2% mAP, 97 MB, 187ms, 10k labels (classification only)
-Ch.2: MobileNetV2 backbone       → 76.8% mAP, 14 MB, 35ms (efficient but accuracy drop)
-Ch.3: Faster R-CNN detection     → 86.3% mAP, 167 MB, 180ms (high accuracy, too slow)
-Ch.4: YOLOv5 one-stage detector  → 82.1% mAP, 14 MB, 18ms (real-time detection!)
+Ch.1: ResNet-50 baseline → 80.2% mAP, 97 MB, 187ms, 10k labels (classification only)
+Ch.2: MobileNetV2 backbone → 76.8% mAP, 14 MB, 35ms (efficient but accuracy drop)
+Ch.3: Faster R-CNN detection → 86.3% mAP, 167 MB, 180ms (high accuracy, too slow)
+Ch.4: YOLOv5 one-stage detector → 82.1% mAP, 14 MB, 18ms (real-time detection!)
 Ch.5: U-Net semantic segmentation → 62.4% mIoU, 23 MB, 45ms (pixel-level masks)
-Ch.6: Mask R-CNN instance seg    → 87.3% mAP, 71.2% IoU, 178 MB, 95ms (constraint #2 ✅)
-Ch.7: SimCLR self-supervised     → 84% mAP, 14 MB, 18ms, 1k labels (data efficiency!)
-Ch.8: DINO pretraining           → 86% mAP, 850 labels (constraint #5 ✅)
-Ch.9: Knowledge distillation     → 83.2% mAP, 10.7 MB, 39ms (teacher → student)
+Ch.6: Mask R-CNN instance seg → 87.3% mAP, 71.2% IoU, 178 MB, 95ms (constraint #2 )
+Ch.7: SimCLR self-supervised → 84% mAP, 14 MB, 18ms, 1k labels (data efficiency!)
+Ch.8: DINO pretraining → 86% mAP, 850 labels (constraint #5 )
+Ch.9: Knowledge distillation → 83.2% mAP, 10.7 MB, 39ms (teacher → student)
 Ch.10: Pruning + mixed precision → 82.1% mAP, 71.2% IoU, 6.8 MB, 35ms, 850 labels
-                                   ✅ ALL 5 CONSTRAINTS ACHIEVED!
+ALL 5 CONSTRAINTS ACHIEVED!
 ```
 
 ---
@@ -84,7 +84,7 @@ Ch.10: Pruning + mixed precision → 82.1% mAP, 71.2% IoU, 6.8 MB, 35ms, 850 lab
 **What it unlocked:**
 - **8× fewer FLOPs:** MobileNetV2 reduces compute from 4.1 GFLOPs → 300 MFLOPs
 - **14 MB model:** Down from 97 MB ResNet-50 (7× compression)
-- **35ms inference:** Fits <50ms latency target on Jetson Nano ✅ **Constraint #3 achieved!**
+- **35ms inference:** Fits <50ms latency target on Jetson Nano **Constraint #3 achieved!**
 - **Edge viability:** Real-time detection on $99 hardware (vs $5,000 GPU workstation)
 
 **Production value:**
@@ -101,7 +101,7 @@ Ch.10: Pruning + mixed precision → 82.1% mAP, 71.2% IoU, 6.8 MB, 35ms, 850 lab
 **What it is:** Region Proposal Network (RPN) generates ~300 candidate boxes → RoI pooling extracts features → detection head classifies + refines boxes.
 
 **What it unlocked:**
-- **86.3% mAP:** Faster R-CNN on retail shelf dataset ✅ **Constraint #1 achieved!**
+- **86.3% mAP:** Faster R-CNN on retail shelf dataset **Constraint #1 achieved!**
 - **Multi-task learning:** Simultaneous classification + bounding box regression + objectness scoring
 - **End-to-end training:** RPN + detector trained jointly (no hand-crafted region proposals)
 - **Feature reuse:** Compute CNN features once, reuse for all 300 proposals
@@ -122,7 +122,7 @@ Ch.10: Pruning + mixed precision → 82.1% mAP, 71.2% IoU, 6.8 MB, 35ms, 850 lab
 **What it unlocked:**
 - **18ms inference:** YOLOv5 on RTX 3090 (10× faster than Faster R-CNN's 180ms)
 - **82.1% mAP:** Only 4% accuracy loss vs Faster R-CNN (acceptable trade-off)
-- **35ms on Jetson Nano:** Real-time edge deployment ✅ **Constraint #3 confirmed!**
+- **35ms on Jetson Nano:** Real-time edge deployment **Constraint #3 confirmed!**
 - **Dense prediction:** Fully parallelizable on GPU (no sequential RoI pooling bottleneck)
 
 **Production value:**
@@ -158,7 +158,7 @@ Ch.10: Pruning + mixed precision → 82.1% mAP, 71.2% IoU, 6.8 MB, 35ms, 850 lab
 **What it is:** Mask R-CNN extends Faster R-CNN with a third branch that predicts binary masks per detected object. RoIAlign replaces RoI pooling (no quantization).
 
 **What it unlocked:**
-- **87.3% mAP, 71.2% IoU:** Instance-level detection + segmentation ✅ **Constraint #2 achieved!**
+- **87.3% mAP, 71.2% IoU:** Instance-level detection + segmentation **Constraint #2 achieved!**
 - **SKU-level counting:** "How many cereal boxes are on shelf 3?" (can't count from semantic segmentation blobs)
 - **Overlap handling:** Distinguish overlapping products (separate masks for each instance)
 - **Multi-task loss:** $\mathcal{L} = \mathcal{L}_{\text{cls}} + \mathcal{L}_{\text{bbox}} + \mathcal{L}_{\text{mask}}$ (train classification, localization, segmentation jointly)
@@ -196,7 +196,7 @@ Ch.10: Pruning + mixed precision → 82.1% mAP, 71.2% IoU, 6.8 MB, 35ms, 850 lab
 **What it is:** DINO uses self-distillation (student mimics teacher's outputs, no negatives). MAE masks 75% of image patches, reconstructs pixels (BERT for vision).
 
 **What it unlocked:**
-- **86% mAP with 850 labels:** DINO pretraining (vs 84% from SimCLR) ✅ **Constraint #5 achieved!**
+- **86% mAP with 850 labels:** DINO pretraining (vs 84% from SimCLR) **Constraint #5 achieved!**
 - **Emergent attention maps:** DINO spontaneously segments objects without supervision
 - **Vision Transformer bridge:** MAE enables ViT pretraining (foundation for multimodal AI)
 - **Simplicity:** No contrastive loss, no momentum encoder, no negative sampling (MAE)
@@ -234,8 +234,8 @@ Ch.10: Pruning + mixed precision → 82.1% mAP, 71.2% IoU, 6.8 MB, 35ms, 850 lab
 **What it is:** Magnitude-based pruning removes 80% of smallest weights, structured pruning removes entire channels. Mixed precision training (FP16 compute, FP32 master weights) provides 2× speedup.
 
 **What it unlocked:**
-- **6.8 MB model:** 10.7 MB → 6.8 MB (36% further compression via 80% sparsity) ✅ **Constraint #4 achieved!**
-- **71.2% IoU:** Pruning provides regularization (fewer params → better generalization) ✅ **Constraint #2 reconfirmed!**
+- **6.8 MB model:** 10.7 MB → 6.8 MB (36% further compression via 80% sparsity) **Constraint #4 achieved!**
+- **71.2% IoU:** Pruning provides regularization (fewer params → better generalization) **Constraint #2 reconfirmed!**
 - **35ms inference:** Structured pruning enables standard dense operations (no sparse kernel overhead)
 - **2× training speedup:** AMP allows 10 epochs in time budget of 5 (better accuracy recovery)
 
@@ -254,46 +254,46 @@ Here's how all 10 concepts integrate into a deployed ProductionCV system:
 
 ```mermaid
 flowchart TD
-    START["📸 Retail Shelf Camera<br/>1920×1080 @ 30 FPS"]
+ START["📸 Retail Shelf Camera<br/>1920×1080 @ 30 FPS"]
 
-    START --> PREPROC["Preprocessing<br/>Resize to 640×640<br/>Normalize RGB"]
+ START --> PREPROC["Preprocessing<br/>Resize to 640×640<br/>Normalize RGB"]
 
-    PREPROC --> BACKBONE["Backbone (Ch.1+2)<br/>MobileNetV2 with ResNet shortcuts<br/>14 MB, 25ms<br/>Output: 20×20×1024 features"]
+ PREPROC --> BACKBONE["Backbone (Ch.1+2)<br/>MobileNetV2 with ResNet shortcuts<br/>14 MB, 25ms<br/>Output: 20×20×1024 features"]
 
-    BACKBONE --> NECK["Feature Pyramid Network (Ch.4)<br/>Multi-scale features<br/>P3: 80×80×256 (small objects)<br/>P4: 40×40×512 (medium)<br/>P5: 20×20×1024 (large)"]
+ BACKBONE --> NECK["Feature Pyramid Network (Ch.4)<br/>Multi-scale features<br/>P3: 80×80×256 (small objects)<br/>P4: 40×40×512 (medium)<br/>P5: 20×20×1024 (large)"]
 
-    NECK --> DETECT["Detection Head (Ch.4)<br/>YOLOv5 grid prediction<br/>25,200 anchor boxes<br/>→ NMS → ~15 detections"]
+ NECK --> DETECT["Detection Head (Ch.4)<br/>YOLOv5 grid prediction<br/>25,200 anchor boxes<br/>→ NMS → ~15 detections"]
 
-    DETECT --> SEGMENT["Segmentation Branch (Ch.6)<br/>Mask R-CNN mask head<br/>28×28 binary mask per object<br/>Upsampled to object size"]
+ DETECT --> SEGMENT["Segmentation Branch (Ch.6)<br/>Mask R-CNN mask head<br/>28×28 binary mask per object<br/>Upsampled to object size"]
 
-    SEGMENT --> POSTPROC["Post-Processing<br/>IoU thresholding (0.5)<br/>Confidence filtering (>0.3)<br/>Box rescaling to 1920×1080"]
+ SEGMENT --> POSTPROC["Post-Processing<br/>IoU thresholding (0.5)<br/>Confidence filtering (>0.3)<br/>Box rescaling to 1920×1080"]
 
-    POSTPROC --> OUTPUT["📊 Output<br/>{<br/>  detections: [<br/>    {bbox, class, conf, mask},<br/>    ...<br/>  ],<br/>  inference_ms: 35,<br/>  frame_id: 12345<br/>}"]
+ POSTPROC --> OUTPUT[" Output<br/>{<br/> detections: [<br/> {bbox, class, conf, mask},<br/> ...<br/> ],<br/> inference_ms: 35,<br/> frame_id: 12345<br/>}"]
 
-    OUTPUT --> MONITOR["Monitoring (Ch.6+9)<br/>Track mAP drift (alert if <80%)<br/>Latency histogram (p99 <50ms)<br/>SKU counting accuracy"]
+ OUTPUT --> MONITOR["Monitoring (Ch.6+9)<br/>Track mAP drift (alert if <80%)<br/>Latency histogram (p99 <50ms)<br/>SKU counting accuracy"]
 
-    MONITOR --> RETRAIN["Periodic Retraining<br/>Ch.7-8: Self-supervised on new unlabeled<br/>Ch.9: Distill latest teacher<br/>Ch.10: Prune updated student<br/>Deploy: A/B test vs current model"]
+ MONITOR --> RETRAIN["Periodic Retraining<br/>Ch.7-8: Self-supervised on new unlabeled<br/>Ch.9: Distill latest teacher<br/>Ch.10: Prune updated student<br/>Deploy: A/B test vs current model"]
 
-    style PREPROC fill:#e0f2fe,stroke:#0369a1,stroke-width:2px,color:#0c4a6e
-    style BACKBONE fill:#047857,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style NECK fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style DETECT fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style SEGMENT fill:#7c2d12,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style OUTPUT fill:#15803d,stroke:#e2e8f0,stroke-width:3px,color:#ffffff
+ style PREPROC fill:#e0f2fe,stroke:#0369a1,stroke-width:2px,color:#0c4a6e
+ style BACKBONE fill:#047857,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style NECK fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style DETECT fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style SEGMENT fill:#7c2d12,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style OUTPUT fill:#15803d,stroke:#e2e8f0,stroke-width:3px,color:#ffffff
 
-    subgraph PRETRAIN["Self-Supervised Pretraining Pipeline (Ch.7-8)"]
-        UNLABELED["50k Unlabeled<br/>Shelf Photos"] --> AUGMENT["Data Augmentation<br/>Crop, flip, jitter"]
-        AUGMENT --> CONTRAST["Contrastive/MAE Loss<br/>SimCLR: NT-Xent<br/>DINO: Self-distillation<br/>MAE: Reconstruction"]
-        CONTRAST --> ENCODER["Pretrained Encoder<br/>Rich visual features<br/>No labels needed!"]
-    end
+ subgraph PRETRAIN["Self-Supervised Pretraining Pipeline (Ch.7-8)"]
+ UNLABELED["50k Unlabeled<br/>Shelf Photos"] --> AUGMENT["Data Augmentation<br/>Crop, flip, jitter"]
+ AUGMENT --> CONTRAST["Contrastive/MAE Loss<br/>SimCLR: NT-Xent<br/>DINO: Self-distillation<br/>MAE: Reconstruction"]
+ CONTRAST --> ENCODER["Pretrained Encoder<br/>Rich visual features<br/>No labels needed!"]
+ end
 
-    subgraph DISTILL["Knowledge Distillation (Ch.9)"]
-        TEACHER["Teacher: ResNet-50<br/>97 MB, 85.4% mAP"] --> SOFT["Soft Targets<br/>τ=5 temperature<br/>KL divergence loss"]
-        SOFT --> STUDENT["Student: MobileNetV2<br/>10.7 MB → 6.8 MB (pruned)<br/>83.2% → 82.1% mAP"]
-    end
+ subgraph DISTILL["Knowledge Distillation (Ch.9)"]
+ TEACHER["Teacher: ResNet-50<br/>97 MB, 85.4% mAP"] --> SOFT["Soft Targets<br/>τ=5 temperature<br/>KL divergence loss"]
+ SOFT --> STUDENT["Student: MobileNetV2<br/>10.7 MB → 6.8 MB (pruned)<br/>83.2% → 82.1% mAP"]
+ end
 
-    ENCODER -.->|"Fine-tune backbone"| BACKBONE
-    STUDENT -.->|"Deploy compressed model"| BACKBONE
+ ENCODER -.->|"Fine-tune backbone"| BACKBONE
+ STUDENT -.->|"Deploy compressed model"| BACKBONE
 ```
 
 ---
@@ -305,32 +305,32 @@ flowchart TD
 ```python
 # ======= STAGE 1: SELF-SUPERVISED PRETRAINING (Ch.7-8) =======
 # Leverage 50k unlabeled shelf photos
-unlabeled_data = load_unlabeled_images()  # 50,000 images
+unlabeled_data = load_unlabeled_images() # 50,000 images
 
 # Option A: SimCLR (Ch.7)
 encoder = resnet50_backbone()
 for img in unlabeled_data:
-    x_i, x_j = augment(img)  # Two random crops
-    z_i, z_j = encoder(x_i), encoder(x_j)
-    loss = nt_xent_loss(z_i, z_j, temperature=0.1)  # Contrastive loss
-    loss.backward()
+ x_i, x_j = augment(img) # Two random crops
+ z_i, z_j = encoder(x_i), encoder(x_j)
+ loss = nt_xent_loss(z_i, z_j, temperature=0.1) # Contrastive loss
+ loss.backward()
 
 # Option B: DINO (Ch.8) — current production choice
 student, teacher = vit_small(), vit_small()
 for img in unlabeled_data:
-    global_crops, local_crops = multi_crop_augment(img)
-    p_s = student(global_crops + local_crops)
-    p_t = teacher(global_crops)
-    loss = cross_entropy(p_t, p_s)  # Self-distillation
-    loss.backward()
-    teacher.update_momentum(student)  # θ_t ← 0.996·θ_t + 0.004·θ_s
+ global_crops, local_crops = multi_crop_augment(img)
+ p_s = student(global_crops + local_crops)
+ p_t = teacher(global_crops)
+ loss = cross_entropy(p_t, p_s) # Self-distillation
+ loss.backward()
+ teacher.update_momentum(student) # θ_t ← 0.996·θ_t + 0.004·θ_s
 
 # Save pretrained encoder
 torch.save(encoder.state_dict(), 'pretrained_backbone.pth')
 
 # ======= STAGE 2: SUPERVISED FINE-TUNING (Ch.3-6) =======
 # Use 850 labeled images
-labeled_data = load_labeled_images()  # 850 images with bbox + masks
+labeled_data = load_labeled_images() # 850 images with bbox + masks
 
 # Load pretrained backbone (Ch.7-8)
 backbone = mobilenetv2()
@@ -344,47 +344,47 @@ model.add_mask_head(num_classes=20)
 
 # Train with multi-task loss
 for img, bbox, mask in labeled_data:
-    pred_bbox, pred_cls, pred_mask = model(img)
-    loss = loss_cls(pred_cls, bbox.cls) + \
-           loss_bbox(pred_bbox, bbox.coords) + \
-           loss_mask(pred_mask, mask)
-    loss.backward()
+ pred_bbox, pred_cls, pred_mask = model(img)
+ loss = loss_cls(pred_cls, bbox.cls) + \
+ loss_bbox(pred_bbox, bbox.coords) + \
+ loss_mask(pred_mask, mask)
+ loss.backward()
 
 # ======= STAGE 3: KNOWLEDGE DISTILLATION (Ch.9) =======
-teacher = resnet50_maskrcnn()  # 97 MB, 85.4% mAP (trained in Stage 2)
-student = mobilenetv2_maskrcnn()  # 14 MB, untrained
+teacher = resnet50_maskrcnn() # 97 MB, 85.4% mAP (trained in Stage 2)
+student = mobilenetv2_maskrcnn() # 14 MB, untrained
 
 for img, label in labeled_data:
-    # Teacher generates soft targets
-    with torch.no_grad():
-        teacher_logits = teacher(img)
-        soft_targets = F.softmax(teacher_logits / tau, dim=1)  # τ=5
+ # Teacher generates soft targets
+ with torch.no_grad():
+ teacher_logits = teacher(img)
+ soft_targets = F.softmax(teacher_logits / tau, dim=1) # τ=5
 
-    # Student learns from teacher + labels
-    student_logits = student(img)
-    soft_preds = F.softmax(student_logits / tau, dim=1)
-    hard_preds = F.softmax(student_logits, dim=1)
+ # Student learns from teacher + labels
+ student_logits = student(img)
+ soft_preds = F.softmax(student_logits / tau, dim=1)
+ hard_preds = F.softmax(student_logits, dim=1)
 
-    loss = 0.9 * kl_div(soft_targets, soft_preds) * (tau**2) + \
-           0.1 * cross_entropy(label, hard_preds)
-    loss.backward()
+ loss = 0.9 * kl_div(soft_targets, soft_preds) * (tau**2) + \
+ 0.1 * cross_entropy(label, hard_preds)
+ loss.backward()
 
 # ======= STAGE 4: PRUNING + MIXED PRECISION (Ch.10) =======
 # Prune 80% of weights
 for name, param in student.named_parameters():
-    mask = (param.abs() > threshold).float()  # threshold=0.01
-    param.data *= mask  # Zero out small weights
+ mask = (param.abs() > threshold).float() # threshold=0.01
+ param.data *= mask # Zero out small weights
 
 # Fine-tune with AMP (2× faster)
 scaler = GradScaler()
 for img, label in labeled_data:
-    with autocast():  # FP16 forward pass
-        output = student(img)
-        loss = criterion(output, label)
-    scaler.scale(loss).backward()
-    scaler.step(optimizer)
+ with autocast(): # FP16 forward pass
+ output = student(img)
+ loss = criterion(output, label)
+ scaler.scale(loss).backward()
+ scaler.step(optimizer)
 
-# Save final model: 6.8 MB, 82.1% mAP, 71.2% IoU ✅
+# Save final model: 6.8 MB, 82.1% mAP, 71.2% IoU
 torch.save(student.state_dict(), 'productioncv_v1.0.pth')
 ```
 
@@ -399,68 +399,68 @@ from flask import Flask, request, jsonify
 app = Flask(__name__)
 
 # Load pruned model (Ch.10)
-model = load_pruned_model('productioncv_v1.0.pth')  # 6.8 MB
+model = load_pruned_model('productioncv_v1.0.pth') # 6.8 MB
 model.eval()
 model.cuda()
 
 @app.route('/detect', methods=['POST'])
 def detect_products():
-    # Receive image from retail camera
-    img = request.files['image']  # 1920×1080 RGB
-    img_tensor = preprocess(img)  # Resize to 640×640, normalize
+ # Receive image from retail camera
+ img = request.files['image'] # 1920×1080 RGB
+ img_tensor = preprocess(img) # Resize to 640×640, normalize
 
-    # Inference (35ms on Jetson Nano)
-    with torch.no_grad():
-        detections = model(img_tensor.cuda())
+ # Inference (35ms on Jetson Nano)
+ with torch.no_grad():
+ detections = model(img_tensor.cuda())
 
-    # Post-process
-    boxes = detections['boxes']  # [N, 4] bounding boxes
-    classes = detections['classes']  # [N] class IDs (0-19)
-    scores = detections['scores']  # [N] confidence scores
-    masks = detections['masks']  # [N, 28, 28] binary masks
+ # Post-process
+ boxes = detections['boxes'] # [N, 4] bounding boxes
+ classes = detections['classes'] # [N] class IDs (0-19)
+ scores = detections['scores'] # [N] confidence scores
+ masks = detections['masks'] # [N, 28, 28] binary masks
 
-    # NMS + confidence filtering (Ch.4)
-    keep = nms(boxes, scores, iou_threshold=0.5)
-    keep = keep[scores[keep] > 0.3]
+ # NMS + confidence filtering (Ch.4)
+ keep = nms(boxes, scores, iou_threshold=0.5)
+ keep = keep[scores[keep] > 0.3]
 
-    # Format output
-    results = []
-    for i in keep:
-        results.append({
-            'product_id': int(classes[i]),
-            'bbox': boxes[i].tolist(),
-            'confidence': float(scores[i]),
-            'mask': masks[i].cpu().numpy().tolist()
-        })
+ # Format output
+ results = []
+ for i in keep:
+ results.append({
+ 'product_id': int(classes[i]),
+ 'bbox': boxes[i].tolist(),
+ 'confidence': float(scores[i]),
+ 'mask': masks[i].cpu().numpy().tolist()
+ })
 
-    return jsonify({
-        'detections': results,
-        'inference_ms': 35,
-        'model_version': 'v1.0',
-        'constraints_met': {
-            'mAP': '82.1% (target: 85%)',
-            'IoU': '71.2% (target: 70%) ✅',
-            'latency': '35ms (target: <50ms) ✅',
-            'model_size': '6.8 MB (target: <100 MB) ✅'
-        }
-    })
+ return jsonify({
+ 'detections': results,
+ 'inference_ms': 35,
+ 'model_version': 'v1.0',
+ 'constraints_met': {
+ 'mAP': '82.1% (target: 85%)',
+ 'IoU': '71.2% (target: 70%) ',
+ 'latency': '35ms (target: <50ms) ',
+ 'model_size': '6.8 MB (target: <100 MB) '
+ }
+ })
 
 @app.route('/health', methods=['GET'])
 def health_check():
-    # Monitor drift (Ch.6+9)
-    recent_map = calculate_recent_map()  # Last 1000 frames
-    if recent_map < 0.80:
-        alert_team("mAP drift detected: {:.1f}%".format(recent_map * 100))
+ # Monitor drift (Ch.6+9)
+ recent_map = calculate_recent_map() # Last 1000 frames
+ if recent_map < 0.80:
+ alert_team("mAP drift detected: {:.1f}%".format(recent_map * 100))
 
-    return jsonify({
-        'status': 'healthy',
-        'recent_mAP': f"{recent_map:.3f}",
-        'model_size_mb': 6.8,
-        'avg_latency_ms': 35
-    })
+ return jsonify({
+ 'status': 'healthy',
+ 'recent_mAP': f"{recent_map:.3f}",
+ 'model_size_mb': 6.8,
+ 'avg_latency_ms': 35
+ })
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+ app.run(host='0.0.0.0', port=5000)
 ```
 
 ---
@@ -470,37 +470,37 @@ if __name__ == '__main__':
 ```python
 # ======= DRIFT DETECTION =======
 # Ch.6: Alert if mAP degrades over time
-if production_map < 0.80:  # 2% below training baseline
-    alert("mAP drift: {:.1f}% → retrain triggered".format(production_map * 100))
+if production_map < 0.80: # 2% below training baseline
+ alert("mAP drift: {:.1f}% → retrain triggered".format(production_map * 100))
 
 # Ch.9: Monitor student-teacher divergence
 teacher_preds = teacher_model(recent_images)
 student_preds = student_model(recent_images)
 kl_div = compute_kl_divergence(teacher_preds, student_preds)
-if kl_div > 0.15:  # Student drifting from teacher
-    alert("Student-teacher divergence: {:.3f}".format(kl_div))
+if kl_div > 0.15: # Student drifting from teacher
+ alert("Student-teacher divergence: {:.3f}".format(kl_div))
 
 # ======= LATENCY MONITORING =======
 # Ch.2+4: Track p99 latency on Jetson Nano
-latencies = collect_recent_latencies()  # Last 10k inferences
+latencies = collect_recent_latencies() # Last 10k inferences
 p99 = np.percentile(latencies, 99)
-if p99 > 50:  # Constraint #3 violated
-    alert("p99 latency: {:.1f}ms (target: <50ms)".format(p99))
+if p99 > 50: # Constraint #3 violated
+ alert("p99 latency: {:.1f}ms (target: <50ms)".format(p99))
 
 # ======= DATA QUALITY =======
 # Ch.7-8: Detect domain shift via embedding clustering
 embeddings = encoder.encode(recent_images)
 cluster_centers = kmeans(embeddings, n_clusters=20)
 distances = compute_distances(embeddings, cluster_centers)
-if np.mean(distances) > threshold:  # Images look different
-    alert("Domain shift detected → collect new unlabeled data for retraining")
+if np.mean(distances) > threshold: # Images look different
+ alert("Domain shift detected → collect new unlabeled data for retraining")
 
 # ======= RETRAINING TRIGGER =======
 # Automatic retraining conditions
 if (weeks_since_training > 4) or \
-   (production_map < 0.80) or \
-   (domain_shift_detected):
-    trigger_retraining_pipeline()
+ (production_map < 0.80) or \
+ (domain_shift_detected):
+ trigger_retraining_pipeline()
 ```
 
 ---
@@ -551,11 +551,11 @@ if (weeks_since_training > 4) or \
 
 | # | Constraint | Target | Status | How We Achieved It |
 |---|------------|--------|--------|-------------------|
-| **#1** | **DETECTION ACCURACY** | mAP@0.5 ≥ 85% | ⚠️ **82.1%** | Ch.3 Faster R-CNN (86.3%) → Ch.4 YOLOv5 (82.1%) trade-off for speed. Close enough for production (3% below target acceptable given 5× latency improvement). |
-| **#2** | **SEGMENTATION QUALITY** | IoU ≥ 70% | ✅ **71.2%** | Ch.6 Mask R-CNN (71.2%) + Ch.10 pruning regularization (+0.3% IoU). Instance segmentation enables per-product masks. |
-| **#3** | **INFERENCE LATENCY** | <50ms per frame | ✅ **35ms** | Ch.2 MobileNetV2 (35ms on Jetson Nano) + Ch.4 YOLOv5 one-stage detection (no RoI pooling bottleneck). 30% under budget! |
-| **#4** | **MODEL SIZE** | <100 MB | ✅ **6.8 MB** | Ch.2 MobileNetV2 (14 MB) → Ch.9 distillation (10.7 MB) → Ch.10 pruning (6.8 MB). 15× smaller than target! |
-| **#5** | **DATA EFFICIENCY** | <1,000 labeled images | ✅ **850 labels** | Ch.7 SimCLR (1k labels) → Ch.8 DINO (850 labels). Self-supervised pretraining on 50k unlabeled images. 15% under budget! |
+| **#1** | **DETECTION ACCURACY** | mAP@0.5 ≥ 85% | **82.1%** | Ch.3 Faster R-CNN (86.3%) → Ch.4 YOLOv5 (82.1%) trade-off for speed. Close enough for production (3% below target acceptable given 5× latency improvement). |
+| **#2** | **SEGMENTATION QUALITY** | IoU ≥ 70% | **71.2%** | Ch.6 Mask R-CNN (71.2%) + Ch.10 pruning regularization (+0.3% IoU). Instance segmentation enables per-product masks. |
+| **#3** | **INFERENCE LATENCY** | <50ms per frame | **35ms** | Ch.2 MobileNetV2 (35ms on Jetson Nano) + Ch.4 YOLOv5 one-stage detection (no RoI pooling bottleneck). 30% under budget! |
+| **#4** | **MODEL SIZE** | <100 MB | **6.8 MB** | Ch.2 MobileNetV2 (14 MB) → Ch.9 distillation (10.7 MB) → Ch.10 pruning (6.8 MB). 15× smaller than target! |
+| **#5** | **DATA EFFICIENCY** | <1,000 labeled images | **850 labels** | Ch.7 SimCLR (1k labels) → Ch.8 DINO (850 labels). Self-supervised pretraining on 50k unlabeled images. 15% under budget! |
 
 **Overall verdict:** **4 of 5 constraints exceeded, 1 close (82% vs 85% mAP)**. Production deployment approved — 3% mAP gap acceptable given 35ms latency (30% faster than target) and 6.8 MB size (15× smaller than target).
 
@@ -638,7 +638,7 @@ Current system processes frames independently. Next: temporal modeling:
 | Ch.9 | Distilled MobileNetV2 | 83.2% | 68.9% | 39 | 10.7 | 850 | Knowledge distillation |
 | Ch.10 | Pruned MobileNetV2 | **82.1%** | **71.2%** | **35** | **6.8** | **850** | Pruning + AMP |
 
-**Final result:** 82.1% mAP, 71.2% IoU, 35ms latency, 6.8 MB model, 850 labels → **4 of 5 constraints exceeded!** 🎉
+**Final result:** 82.1% mAP, 71.2% IoU, 35ms latency, 6.8 MB model, 850 labels → **4 of 5 constraints exceeded!**
 
 ---
 
@@ -691,4 +691,4 @@ Current system processes frames independently. Next: temporal modeling:
 
 **Document version:** 1.0 (April 2026)
 **Last updated:** Ch.10 completion
-**Status:** ✅ All 5 ProductionCV constraints achieved, ready for edge deployment
+**Status:** All 5 ProductionCV constraints achieved, ready for edge deployment

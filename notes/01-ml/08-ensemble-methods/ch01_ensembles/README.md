@@ -10,7 +10,7 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 💡 **EnsembleAI**: Beat any single model by >5% in MAE/accuracy via intelligent combination.
+> **EnsembleAI**: Beat any single model by >5% in MAE/accuracy via intelligent combination.
 >
 > **5 Constraints**: 1. IMPROVEMENT >5% — 2. DIVERSITY — 3. EFFICIENCY <5× latency — 4. INTERPRETABILITY (SHAP) — 5. ROBUSTNESS (stable across seeds)
 
@@ -20,19 +20,19 @@
 - **Question**: Can we get the best of both worlds?
 
 **What this chapter unlocks:**
-- ✅ **Constraint #1 (IMPROVEMENT)**: Random Forest beats single Decision Tree by >5% RMSE
-- ✅ **Constraint #2 (DIVERSITY)**: Bootstrap sampling + feature randomization → decorrelated trees
-- ✅ **Constraint #5 (ROBUSTNESS)**: Averaging 200 trees → stable predictions across seeds
+- **Constraint #1 (IMPROVEMENT)**: Random Forest beats single Decision Tree by >5% RMSE
+- **Constraint #2 (DIVERSITY)**: Bootstrap sampling + feature randomization → decorrelated trees
+- **Constraint #5 (ROBUSTNESS)**: Averaging 200 trees → stable predictions across seeds
 
 **What's still missing:**
-- ❌ Constraint #3 (EFFICIENCY): Not yet tested latency budgets
-- ❌ Constraint #4 (INTERPRETABILITY): Feature importance is global only — need per-prediction SHAP (Ch.4)
+- Constraint #3 (EFFICIENCY): Not yet tested latency budgets
+- Constraint #4 (INTERPRETABILITY): Feature importance is global only — need per-prediction SHAP (Ch.4)
 
 ```mermaid
 flowchart LR
-    DT["Single Decision Tree\n• High variance\n• Unstable"] 
-    DT -->|"Bootstrap\n+ feature subset"| RF["Random Forest\n• Low variance\n• Stable\n• OOB validation free"]
-    RF -->|"Ch.2"| BOOST["Boosting\n(reduce bias next)"]
+ DT["Single Decision Tree\n• High variance\n• Unstable"]
+ DT -->|"Bootstrap\n+ feature subset"| RF["Random Forest\n• Low variance\n• Stable\n• OOB validation free"]
+ RF -->|"Ch.2"| BOOST["Boosting\n(reduce bias next)"]
 ```
 
 ---
@@ -53,7 +53,7 @@ Train $T$ decision trees, each on a different **bootstrap sample** (random sampl
 
 **Classification**: California Housing binarized — predict whether a district is "high-value" (above median). A single Decision Tree achieves F1 ≈ 0.80; can Random Forest improve stability and accuracy?
 
-Dataset: `sklearn.datasets.fetch_california_housing()`  
+Dataset: `sklearn.datasets.fetch_california_housing()`
 Features: MedInc, HouseAge, AveRooms, AveBedrms, Population, AveOccup, Latitude, Longitude
 
 ---
@@ -110,11 +110,11 @@ Three decision stumps trained on separate bootstrap samples, predicting class (0
 
 | Sample | Stump 1 | Stump 2 | Stump 3 | Majority Vote | True Label |
 |--------|---------|---------|---------|--------------|------------|
-| A | 1 | 1 | 0 | **1** (2/3) | 1 ✅ |
-| B | 0 | 0 | 1 | **0** (2/3) | 0 ✅ |
-| C | 1 | 0 | 0 | **0** (2/3) | 1 ❌ |
-| D | 1 | 1 | 1 | **1** (3/3) | 1 ✅ |
-| E | 0 | 1 | 0 | **0** (2/3) | 0 ✅ |
+| A | 1 | 1 | 0 | **1** (2/3) | 1 |
+| B | 0 | 0 | 1 | **0** (2/3) | 0 |
+| C | 1 | 0 | 0 | **0** (2/3) | 1 |
+| D | 1 | 1 | 1 | **1** (3/3) | 1 |
+| E | 0 | 1 | 0 | **0** (2/3) | 0 |
 
 Ensemble accuracy = 4/5 = **80%**. Each stump alone achieves at most 3/5 = 60%. Vote aggregation smooths out individual tree mistakes.
 
@@ -126,12 +126,12 @@ Ensemble accuracy = 4/5 = **80%**. Each stump alone achieves at most 3/5 = 60%. 
 RANDOM FOREST (Regression):
 1. Set T=200, max_features='sqrt', oob_score=True
 2. For t = 1 to T:
-   a. Draw bootstrap sample B_t (n samples with replacement)
-   b. Grow decision tree on B_t:
-      - At each node, pick m random features
-      - Split on the best feature/threshold (MSE reduction)
-      - Grow until max_depth or min_samples_leaf reached
-   c. Record OOB predictions for samples NOT in B_t
+ a. Draw bootstrap sample B_t (n samples with replacement)
+ b. Grow decision tree on B_t:
+ - At each node, pick m random features
+ - Split on the best feature/threshold (MSE reduction)
+ - Grow until max_depth or min_samples_leaf reached
+ c. Record OOB predictions for samples NOT in B_t
 3. Ensemble prediction: average of all T trees
 4. OOB score: R² computed from OOB predictions
 
@@ -150,36 +150,36 @@ Same as above, but:
 
 ```mermaid
 flowchart TD
-    D["Training Data\n(n samples)"]
-    D -->|"Bootstrap\nsample 1"| T1["Tree 1\n(sees ~63%)"]
-    D -->|"Bootstrap\nsample 2"| T2["Tree 2\n(sees ~63%)"]
-    D -->|"Bootstrap\nsample T"| TN["Tree T\n(sees ~63%)"]
-    T1 --> AVG["Average / Vote"]
-    T2 --> AVG
-    TN --> AVG
-    AVG --> PRED["Final Prediction"]
-    
-    D -.->|"~37% OOB\nper tree"| OOB["OOB Error\n(free validation)"]
+ D["Training Data\n(n samples)"]
+ D -->|"Bootstrap\nsample 1"| T1["Tree 1\n(sees ~63%)"]
+ D -->|"Bootstrap\nsample 2"| T2["Tree 2\n(sees ~63%)"]
+ D -->|"Bootstrap\nsample T"| TN["Tree T\n(sees ~63%)"]
+ T1 --> AVG["Average / Vote"]
+ T2 --> AVG
+ TN --> AVG
+ AVG --> PRED["Final Prediction"]
+
+ D -.->|"~37% OOB\nper tree"| OOB["OOB Error\n(free validation)"]
 ```
 
 ### Feature randomization reduces correlation
 
 ```mermaid
 flowchart LR
-    subgraph BagOnly ["Bagging Only (all features)"]
-        BA["Tree A:\nsplit on MedInc"]
-        BB["Tree B:\nsplit on MedInc"]
-        BC["Tree C:\nsplit on MedInc"]
-    end
-    
-    subgraph RF ["Random Forest (m=3 of 8)"]
-        RA["Tree A:\nsplit on MedInc"]
-        RB["Tree B:\nsplit on Latitude"]
-        RC["Tree C:\nsplit on AveRooms"]
-    end
-    
-    BagOnly -->|"ρ high"| HIGH["High ensemble\nvariance"]
-    RF -->|"ρ low"| LOW["Low ensemble\nvariance"]
+ subgraph BagOnly ["Bagging Only (all features)"]
+ BA["Tree A:\nsplit on MedInc"]
+ BB["Tree B:\nsplit on MedInc"]
+ BC["Tree C:\nsplit on MedInc"]
+ end
+
+ subgraph RF ["Random Forest (m=3 of 8)"]
+ RA["Tree A:\nsplit on MedInc"]
+ RB["Tree B:\nsplit on Latitude"]
+ RC["Tree C:\nsplit on AveRooms"]
+ end
+
+ BagOnly -->|"ρ high"| HIGH["High ensemble\nvariance"]
+ RF -->|"ρ low"| LOW["Low ensemble\nvariance"]
 ```
 
 ---
@@ -211,12 +211,12 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    Q1{"RF barely beats\nsingle tree?"}
-    Q1 -->|Yes| A1["Check max_features.\nTrees too correlated?\nReduce to 'sqrt' or 0.3"]
-    Q1 -->|No| Q2{"OOB ≈ test score?"}
-    Q2 -->|Yes| OK["Model is well-calibrated ✓"]
-    Q2 -->|"OOB >> test"| A2["Possible data leak or\ntrain/test distribution shift"]
-    Q2 -->|"OOB << test"| A3["Too few trees or\ntoo shallow (increase depth)"]
+ Q1{"RF barely beats\nsingle tree?"}
+ Q1 -->|Yes| A1["Check max_features.\nTrees too correlated?\nReduce to 'sqrt' or 0.3"]
+ Q1 -->|No| Q2{"OOB ≈ test score?"}
+ Q2 -->|Yes| OK["Model is well-calibrated ✓"]
+ Q2 -->|"OOB >> test"| A2["Possible data leak or\ntrain/test distribution shift"]
+ Q2 -->|"OOB << test"| A3["Too few trees or\ntoo shallow (increase depth)"]
 ```
 
 ---
@@ -224,33 +224,30 @@ flowchart TD
 ## 8 · Where This Reappears
 
 The bagging concept you've just learned is the foundation for multiple advanced techniques:
-
-➡️ **Ch.2 (Boosting)**: Contrasts with bagging's parallel training — boosting trains sequentially to reduce bias instead of variance.  
-➡️ **Ch.3 (XGBoost/LightGBM)**: XGBoost adds `subsample` and `colsample_bytree` — both borrowed from Random Forest's randomization strategy.  
-➡️ **Ch.4 (SHAP)**: TreeSHAP computes exact Shapley values for Random Forest by exploiting the tree structure.  
-➡️ **Ch.5 (Stacking)**: Random Forest is the most common base model in stacks — its low variance makes it a reliable ensemble member.  
-➡️ **Ch.6 (Production)**: OOB error estimation provides free validation — you'll use it to prune weak trees before deployment.
+**Ch.2 (Boosting)**: Contrasts with bagging's parallel training — boosting trains sequentially to reduce bias instead of variance.
+**Ch.3 (XGBoost/LightGBM)**: XGBoost adds `subsample` and `colsample_bytree` — both borrowed from Random Forest's randomization strategy.
+**Ch.4 (SHAP)**: TreeSHAP computes exact Shapley values for Random Forest by exploiting the tree structure.
+**Ch.5 (Stacking)**: Random Forest is the most common base model in stacks — its low variance makes it a reliable ensemble member.
+**Ch.6 (Production)**: OOB error estimation provides free validation — you'll use it to prune weak trees before deployment.
 
 ---
 
 ## 9 · Progress Check — What We Can Solve Now
 
 ![Progress visualization](img/ch01-progress-check.png) ← **Note**: This is a placeholder reference for future visual dashboard
-
-✅ **Unlocked capabilities:**
+**Unlocked capabilities:**
 - **Variance reduction**: Random Forest beats single Decision Tree by >10% RMSE consistently
 - **Free validation**: OOB score provides accurate test estimate without holdout set
 - **Feature importance**: Stable global rankings across 200 trees (vs noisy single-tree importance)
 - **Parallel training**: All trees train independently → n_jobs=-1 uses all CPU cores
-- **Constraint #1 (IMPROVEMENT) ✅**: >5% RMSE improvement over single Decision Tree achieved
-- **Constraint #2 (DIVERSITY) ✅**: Bootstrap + feature randomization ensures low correlation ρ
-- **Constraint #5 (ROBUSTNESS) ✅**: Predictions stable across random seeds
-
-❌ **Still can't solve:**
-- ❌ **High-bias problems**: Random Forest can't reduce bias — a shallow RF of stumps still underfits
-- ❌ **Constraint #3 (EFFICIENCY)**: Haven't benchmarked latency against production SLA yet (Ch.6)
-- ❌ **Constraint #4 (INTERPRETABILITY)**: Only global feature importance; no per-prediction explanations (need SHAP in Ch.4)
-- ❌ **Extrapolation**: Trees clamp predictions to training range — can't predict beyond min/max values
+- **Constraint #1 (IMPROVEMENT) **: >5% RMSE improvement over single Decision Tree achieved
+- **Constraint #2 (DIVERSITY) **: Bootstrap + feature randomization ensures low correlation ρ
+- **Constraint #5 (ROBUSTNESS) **: Predictions stable across random seeds
+**Still can't solve:**
+- **High-bias problems**: Random Forest can't reduce bias — a shallow RF of stumps still underfits
+- **Constraint #3 (EFFICIENCY)**: Haven't benchmarked latency against production SLA yet (Ch.6)
+- **Constraint #4 (INTERPRETABILITY)**: Only global feature importance; no per-prediction explanations (need SHAP in Ch.4)
+- **Extrapolation**: Trees clamp predictions to training range — can't predict beyond min/max values
 
 **Real-world status**: You can now deploy robust regression and classification models that beat single trees and provide free validation estimates. But if your data has high bias (underfitting), bagging alone won't fix it.
 
@@ -261,9 +258,8 @@ The bagging concept you've just learned is the foundation for multiple advanced 
 ## 10 · Bridge to Chapter 2
 
 Random Forest reduces **variance** by averaging decorrelated trees, but it doesn't reduce **bias** — shallow forests of stumps still underfit. Chapter 2 introduces **boosting**, where trees train *sequentially* with each one correcting the ensemble's remaining errors.
-
-➡️ **Evaluation:** Ensemble accuracy, AUC, and precision/recall trade-offs are covered in depth at [02-Classification/ch03-metrics](../../02_classification/ch03_metrics).  
-➡️ **Tuning:** Grid search and cross-validation for `n_estimators` and `max_depth` are in [02-Classification/ch05-hyperparameter-tuning](../../02_classification/ch05_hyperparameter_tuning).
+**Evaluation:** Ensemble accuracy, AUC, and precision/recall trade-offs are covered in depth at [02-Classification/ch03-metrics](../../02_classification/ch03_metrics).
+**Tuning:** Grid search and cross-validation for `n_estimators` and `max_depth` are in [02-Classification/ch05-hyperparameter-tuning](../../02_classification/ch05_hyperparameter_tuning).
 
 > **The story.** Two parallel revolutions in the 1990s. **SVMs** came from **Vladimir Vapnik and Corinna Cortes** at AT&T Bell Labs in **1995** — the maximum-margin classifier plus the kernel trick let SVMs handle non-linear boundaries without explicitly building the feature space. For about a decade SVMs *were* statistical machine learning, dominating bioinformatics and text classification. The ensemble lineage ran in parallel: **Leo Breiman's bagging** (1996) showed that averaging many high-variance trees crushes their variance; the same year **Yoav Freund & Robert Schapire's AdaBoost** built trees *sequentially* with each one focusing on the previous's mistakes; Breiman's **Random Forests** (2001) added feature subsampling to bagging. The end of the boosting line was **Tianqi Chen & Carlos Guestrin's XGBoost** (**2014**) and Microsoft's **LightGBM** (2017), which between them won effectively every tabular Kaggle competition for a decade and remain the production default for structured data.
 >
@@ -275,20 +271,20 @@ Random Forest reduces **variance** by averaging decorrelated trees, but it doesn
 
 ## 0 · The Challenge — Where We Are
 
-> 💡 **The mission**: Launch **SmartVal AI** — a production home valuation system satisfying 5 constraints:
+> **The mission**: Launch **SmartVal AI** — a production home valuation system satisfying 5 constraints:
 > 1. **ACCURACY**: <$40k MAE — 2. **GENERALIZATION**: Unseen districts — 3. **MULTI-TASK**: Value + Segment — 4. **INTERPRETABILITY**: Explainable — 5. **PRODUCTION**: Scale + Monitor
 
 **What we know so far:**
-- ✅ Ch.1-9: Neural networks achieving Constraints #1 & #2, plus evaluation toolkit
-- ✅ Ch.10: Interpretable models (decision trees, KNN) but with accuracy trade-off
-- ⚡ **Constraint #4 PARTIAL**: Can explain predictions, but $10k MAE penalty
-- 💡 **Can we have both accuracy AND interpretability?**
+- Ch.1-9: Neural networks achieving Constraints #1 & #2, plus evaluation toolkit
+- Ch.10: Interpretable models (decision trees, KNN) but with accuracy trade-off
+- **Constraint #4 PARTIAL**: Can explain predictions, but $10k MAE penalty
+- **Can we have both accuracy AND interpretability?**
 
 **What's blocking us:**
-⚠️ **The accuracy-interpretability trade-off**
+**The accuracy-interpretability trade-off**
 
 Current state:
-- **Neural Network**: $38k MAE, black box ❌
+- **Neural Network**: $38k MAE, black box
 - **Decision Tree**: $48k MAE, fully interpretable ✓ (but $10k worse!)
 - **Business need**: <$40k MAE AND explainable predictions
 
@@ -299,13 +295,12 @@ Current state:
 4. **Accuracy requirement**: Can't sacrifice $10k MAE for interpretability
 
 **What this chapter unlocks:**
-⚡ **The best of both worlds:**
+**The best of both worlds:**
 1. **XGBoost**: Ensemble of 100-500 trees → **$35k MAE** (beats neural net!)
 2. **SHAP values**: Explain ANY model's predictions (neural net, XGBoost, etc.)
 3. **Feature importance**: Which features matter most (stable, model-agnostic)
 4. **Individual explanations**: "For this district: MedInc contributed +$80k, Latitude contributed -$20k..."
-
-⚡ **Constraint #4 (INTERPRETABILITY) ACHIEVED!**
+**Constraint #4 (INTERPRETABILITY) ACHIEVED!**
 - **XGBoost + SHAP**: $35k MAE (best accuracy yet!) + full explainability
 - **Model-agnostic**: SHAP works on neural nets too (can explain Ch.4-6 models retroactively)
 - **Production-ready**: Fast inference + human-readable explanations
@@ -318,16 +313,16 @@ Example:
 ```
 District #4217 predicted value: $350k
 SHAP explanation:
-  Base value (average): $207k
-  + MedInc=8.2 (high):  +$85k
-  + Latitude=36.5 (coastal): +$48k
-  + HouseAge=25 (newer): +$12k
-  + AveRooms=6.2: +$8k
-  - Population=1200 (dense): -$10k
-  = $350k
+ Base value (average): $207k
+ + MedInc=8.2 (high): +$85k
+ + Latitude=36.5 (coastal): +$48k
+ + HouseAge=25 (newer): +$12k
+ + AveRooms=6.2: +$8k
+ - Population=1200 (dense): -$10k
+ = $350k
 ```
 
-Compliance team: ✅ **APPROVED**
+Compliance team: **APPROVED**
 
 ---
 
@@ -352,8 +347,8 @@ SVM: maximum-margin linear boundary; kernel trick for non-linear data
 
 The platform now wants the **best possible regression model** for median house value — not just a classifier. We benchmark four models on the full 8-feature California Housing regression task: Linear Regression (Ch.1 baseline), Decision Tree, Random Forest, and XGBoost.
 
-Dataset: **California Housing** (`sklearn.datasets.fetch_california_housing`) 
-Features: all 8 housing features 
+Dataset: **California Housing** (`sklearn.datasets.fetch_california_housing`)
+Features: all 8 housing features
 Target: `MedHouseVal` (median house value in $100k units)
 
 We also run a classification comparison (high-value vs not) to include SVM alongside the ensemble models.
@@ -582,52 +577,48 @@ Round 3: F_3(x) = F_2(x) + η·tree_3(residual_2) → ...
 ---
 
 ## 8 · Progress Check — What We Can Solve Now
-
-⚡ **MAJOR MILESTONE**: ✅ **Constraint #4 (INTERPRETABILITY) ACHIEVED!**
+**MAJOR MILESTONE**: **Constraint #4 (INTERPRETABILITY) ACHIEVED!**
 
 **Unlocked capabilities:**
-- ✅ **XGBoost**: **$45k MAE** (best accuracy yet! Beats neural net $48k and decision tree $58k)
-- ✅ **SHAP values**: Model-agnostic explanations → explain ANY model (XGBoost, neural net, etc.)
-- ✅ **Per-prediction explanations**: "MedInc contributed +$80k, Latitude contributed -$20k..."
-- ✅ **Feature importance**: Stable, validated importance scores
-- ✅ **Compliance approved**: Fast inference + human-readable explanations
+- **XGBoost**: **$45k MAE** (best accuracy yet! Beats neural net $48k and decision tree $58k)
+- **SHAP values**: Model-agnostic explanations → explain ANY model (XGBoost, neural net, etc.)
+- **Per-prediction explanations**: "MedInc contributed +$80k, Latitude contributed -$20k..."
+- **Feature importance**: Stable, validated importance scores
+- **Compliance approved**: Fast inference + human-readable explanations
 
 **Progress toward constraints:**
 | Constraint | Status | Current State |
 |------------|--------|---------------|
-| #1 ACCURACY | ✅ **IMPROVED** | **XGBoost: $45k MAE** (beats neural net $48k, decision tree $58k!) |
-| #2 GENERALIZATION | ✅ **ACHIEVED** | Test MAE maintains, XGBoost ensembles reduce variance |
-| #3 MULTI-TASK | ⚡ Partial | Can do regression + multi-class, but not simultaneous multi-task |
-| #4 INTERPRETABILITY | ✅ **ACHIEVED** | **XGBoost + SHAP: $45k MAE + full explainability!** |
-| #5 PRODUCTION | ⚡ Partial | Fast inference (XGBoost optimized), but no versioning/monitoring yet |
+| #1 ACCURACY | **IMPROVED** | **XGBoost: $45k MAE** (beats neural net $48k, decision tree $58k!) |
+| #2 GENERALIZATION | **ACHIEVED** | Test MAE maintains, XGBoost ensembles reduce variance |
+| #3 MULTI-TASK | Partial | Can do regression + multi-class, but not simultaneous multi-task |
+| #4 INTERPRETABILITY | **ACHIEVED** | **XGBoost + SHAP: $45k MAE + full explainability!** |
+| #5 PRODUCTION | Partial | Fast inference (XGBoost optimized), but no versioning/monitoring yet |
 
 **What we can solve:**
-
-✅ **Best accuracy + full interpretability!**
+**Best accuracy + full interpretability!**
 - **XGBoost**: $45k MAE (ensemble of 500 trees, beats all previous models)
 - **SHAP**: Explains individual predictions with contribution breakdown
-- **Compliance team**: ✅ **APPROVED FOR PRODUCTION**
+- **Compliance team**: **APPROVED FOR PRODUCTION**
 
 Example SHAP explanation:
 ```
 District #4217 predicted value: $350k
 SHAP explanation:
-  Base value (dataset average): $207k
-  + MedInc=8.2 (high income):     +$85k  ← biggest driver!
-  + Latitude=36.5 (coastal):       +$48k
-  + HouseAge=25 (newer):           +$12k
-  + AveRooms=6.2 (spacious):       +$8k
-  - Population=1200 (dense):       -$10k
-  ---------------------------------------
-  = $350k predicted value
+ Base value (dataset average): $207k
+ + MedInc=8.2 (high income): +$85k ← biggest driver!
+ + Latitude=36.5 (coastal): +$48k
+ + HouseAge=25 (newer): +$12k
+ + AveRooms=6.2 (spacious): +$8k
+ - Population=1200 (dense): -$10k
+ ---------------------------------------
+ = $350k predicted value
 ```
-
-✅ **Model-agnostic explanations!**
+**Model-agnostic explanations!**
 - **SHAP works on ANY model**: XGBoost, Random Forest, neural networks (Ch.4-6), SVMs
 - Can **retroactively explain** our best neural network from Ch.5-6!
 - **Consistency**: Same explanation method across all models → fair comparison
-
-✅ **Feature importance (stable):**
+**Feature importance (stable):**
 XGBoost SHAP importance on California Housing:
 1. **MedInc**: 0.58 (median income dominates)
 2. **Latitude**: 0.18 (coastal location premium)
@@ -644,24 +635,24 @@ XGBoost SHAP importance on California Housing:
 **Key insights unlocked:**
 
 1. **Why XGBoost beats single trees:**
-   - **Single Decision Tree**: High variance, $58k MAE
-   - **Random Forest** (bagging): Averages 500 trees → variance $\frac{1}{500}$ of single tree → $47k MAE
-   - **XGBoost** (boosting): Sequentially fits residuals → reduces bias AND variance → **$45k MAE**
+ - **Single Decision Tree**: High variance, $58k MAE
+ - **Random Forest** (bagging): Averages 500 trees → variance $\frac{1}{500}$ of single tree → $47k MAE
+ - **XGBoost** (boosting): Sequentially fits residuals → reduces bias AND variance → **$45k MAE**
 
 2. **Why ensembles work:**
-   - **Bagging** (Random Forest): Reduces variance by averaging
-   - **Boosting** (XGBoost): Reduces bias by focusing on mistakes
-   - **Result**: Bias ↓, Variance ↓ → best of both worlds!
+ - **Bagging** (Random Forest): Reduces variance by averaging
+ - **Boosting** (XGBoost): Reduces bias by focusing on mistakes
+ - **Result**: Bias ↓, Variance ↓ → best of both worlds!
 
 3. **SHAP advantages over other explanation methods:**
-   - **Tree feature importance**: Only global (which features matter overall), not per-prediction
-   - **Permutation importance**: Computationally expensive, unstable
-   - **SHAP**: Local (per-prediction) + global (average across dataset) + theoretically grounded (Shapley values from game theory)
+ - **Tree feature importance**: Only global (which features matter overall), not per-prediction
+ - **Permutation importance**: Computationally expensive, unstable
+ - **SHAP**: Local (per-prediction) + global (average across dataset) + theoretically grounded (Shapley values from game theory)
 
 4. **When to use which ensemble:**
-   - **Random Forest**: Default for tabular data, robust, hard to overfit
-   - **XGBoost**: Competition-grade accuracy, requires careful tuning
-   - **LightGBM**: Faster than XGBoost on large datasets (>100k rows)
+ - **Random Forest**: Default for tabular data, robust, hard to overfit
+ - **XGBoost**: Competition-grade accuracy, requires careful tuning
+ - **LightGBM**: Faster than XGBoost on large datasets (>100k rows)
 
 **Hyperparameter tuning learned:**
 
@@ -675,17 +666,15 @@ XGBoost critical hyperparameters:
 | **colsample_bytree** | 0.5-1.0 | Feature sampling per tree | 0.8 recommended |
 
 **What we still CAN'T solve:**
-
-❌ **Multi-task learning** (Constraint #3):
+**Multi-task learning** (Constraint #3):
 - XGBoost does regression OR multi-class classification, but not **simultaneously**
 - Can't predict house value AND classify into market segments in one model
 - **Need**: Clustering (Ch.12) to discover segments, then multi-output architecture
-
-❌ **Production deployment** (Constraint #5):
+**Production deployment** (Constraint #5):
 - Have fast inference + interpretability, but no:
-  - Model versioning (can't roll back to previous version)
-  - A/B testing (can't compare models in production)
-  - Monitoring (can't detect model drift)
+ - Model versioning (can't roll back to previous version)
+ - A/B testing (can't compare models in production)
+ - Monitoring (can't detect model drift)
 - **Need**: MLOps infrastructure (Ch.16-19)
 
 **Diagnostic toolkit:**
@@ -696,17 +685,16 @@ XGBoost critical hyperparameters:
 4. **OOB error** (Random Forest): Free validation error without separate holdout set
 
 **Production deployment checklist (now possible!):**
-
-✅ **Accuracy**: $45k MAE (meets <$50k requirement)  
-✅ **Generalization**: Test MAE = $47k (acceptable <$60k threshold)  
-✅ **Interpretability**: SHAP explanations for every prediction  
-✅ **Fast inference**: XGBoost optimized (10ms per prediction)  
-❌ **Versioning**: Need MLflow/Weights & Biases (Ch.19)  
-❌ **Monitoring**: Need production telemetry (Ch.19)  
-❌ **A/B testing**: Need deployment infrastructure (Ch.19)  
+**Accuracy**: $45k MAE (meets <$50k requirement)
+**Generalization**: Test MAE = $47k (acceptable <$60k threshold)
+**Interpretability**: SHAP explanations for every prediction
+**Fast inference**: XGBoost optimized (10ms per prediction)
+**Versioning**: Need MLflow/Weights & Biases (Ch.19)
+**Monitoring**: Need production telemetry (Ch.19)
+**A/B testing**: Need deployment infrastructure (Ch.19)
 
 **Next step:**
-We've mastered **supervised learning** (Constraints #1, #2, #4 achieved!). But all our models require **labeled data** (house values, class labels). What if we have **unlabeled data** and want to discover structure? Next up: [Ch.12 — Clustering](../../07_unsupervised_learning/ch01_clustering) introduces **unsupervised learning** → discover market segments ("Coastal Luxury", "Suburban Affordable", etc.) without manual labels → 💡 **Constraint #3 ACHIEVED!**
+We've mastered **supervised learning** (Constraints #1, #2, #4 achieved!). But all our models require **labeled data** (house values, class labels). What if we have **unlabeled data** and want to discover structure? Next up: [Ch.12 — Clustering](../../07_unsupervised_learning/ch01_clustering) introduces **unsupervised learning** → discover market segments ("Coastal Luxury", "Suburban Affordable", etc.) without manual labels → **Constraint #3 ACHIEVED!**
 
 ---
 

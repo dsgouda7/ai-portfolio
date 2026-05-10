@@ -10,16 +10,16 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 💡 **The mission**: Advance **FraudShield** — a production fraud detection system satisfying 5 constraints:
-> 1. ⚡ **RECALL**: ≥80% fraud recall at ≤0.5% false positive rate — *still 15pp short after IF*
-> 2. ⚡ **GENERALIZATION**: Detect novel fraud patterns not seen in training — *IF partially handles this; AE extends it*
-> 3. ⚡ **MULTI-SIGNAL**: Combine transaction amount, PCA features V1–V28, and temporal patterns — *AE captures joint structure across all 30 features*
-> 4. ✅ **SPEED**: <10ms inference latency per transaction — *AE forward pass is O(d·k) matrix ops, sub-millisecond*
-> 5. ✅ **NO DISTRIBUTION ASSUMPTION**: Fraud patterns are non-Gaussian and shift over time — *AE learns the data manifold without imposing a parametric form*
+> **The mission**: Advance **FraudShield** — a production fraud detection system satisfying 5 constraints:
+> 1. **RECALL**: ≥80% fraud recall at ≤0.5% false positive rate — *still 15pp short after IF*
+> 2. **GENERALIZATION**: Detect novel fraud patterns not seen in training — *IF partially handles this; AE extends it*
+> 3. **MULTI-SIGNAL**: Combine transaction amount, PCA features V1–V28, and temporal patterns — *AE captures joint structure across all 30 features*
+> 4. **SPEED**: <10ms inference latency per transaction — *AE forward pass is O(d·k) matrix ops, sub-millisecond*
+> 5. **NO DISTRIBUTION ASSUMPTION**: Fraud patterns are non-Gaussian and shift over time — *AE learns the data manifold without imposing a parametric form*
 
 **FraudShield scoreboard after Ch.2:**
-- ✅ Z-score baseline: **45% recall** @ 0.5% FPR — catches per-feature extremes
-- ✅ Isolation Forest: **~65% recall** @ 0.5% FPR — captures joint geometric isolation
+- Z-score baseline: **45% recall** @ 0.5% FPR — catches per-feature extremes
+- Isolation Forest: **~65% recall** @ 0.5% FPR — captures joint geometric isolation
 
 **What Isolation Forest cannot do:**
 Isolation Forest partitions the feature space with *random* splits — it finds points that are geometrically isolated regardless of *what* they look like. A clever adversarial fraudster can position a transaction inside a dense cluster of normal data by keeping every individual feature within normal range. Because IF uses axis-aligned random cuts, it has no model of "what a normal transaction should look like" — it only asks "how quickly can I cut this point away from its neighbours?" If the answer is "slowly" (because the point is surrounded by normals), IF gives it a low anomaly score.
@@ -29,19 +29,19 @@ Autoencoders build an explicit model of normality. Trained **only on legitimate 
 
 ```mermaid
 flowchart LR
-    CH1["Ch.1: Statistics\n45% recall\nPer-feature thresholds"]
-    CH2["Ch.2: Isolation Forest\n~65% recall\nGeometric isolation"]
-    CH3["Ch.3: Autoencoder\n~75% recall\nLearned normality"]
-    GOAL["Target: 80% recall\n@ 0.5% FPR"]
+ CH1["Ch.1: Statistics\n45% recall\nPer-feature thresholds"]
+ CH2["Ch.2: Isolation Forest\n~65% recall\nGeometric isolation"]
+ CH3["Ch.3: Autoencoder\n~75% recall\nLearned normality"]
+ GOAL["Target: 80% recall\n@ 0.5% FPR"]
 
-    CH1 -->|"+20pp\njoint structure"| CH2
-    CH2 -->|"+10pp\nrepresentation\nlearning"| CH3
-    CH3 -->|"ensemble\nin Ch.5"| GOAL
+ CH1 -->|"+20pp\njoint structure"| CH2
+ CH2 -->|"+10pp\nrepresentation\nlearning"| CH3
+ CH3 -->|"ensemble\nin Ch.5"| GOAL
 
-    style CH1 fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH2 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH3 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style GOAL fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH1 fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH2 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH3 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style GOAL fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -86,29 +86,29 @@ AUTOENCODER ANOMALY DETECTION PIPELINE
 
 Training (normal transactions only):
 ┌─────────────────────────────────────────────────────────┐
-│  X_normal = X_train[y_train == 0]    ← only legitimate  │
-│  Standardize: µ, σ computed on X_normal                 │
-│  For each mini-batch of normal transactions:             │
-│    z  = encoder(x)        ← compress to latent space    │
-│    x̂  = decoder(z)        ← reconstruct from latent     │
-│    L  = mean(‖x - x̂‖²)   ← reconstruction MSE          │
-│    Backward + Adam update                               │
-│  Early stopping on validation reconstruction error      │
+│ X_normal = X_train[y_train == 0] ← only legitimate │
+│ Standardize: µ, σ computed on X_normal │
+│ For each mini-batch of normal transactions: │
+│ z = encoder(x) ← compress to latent space │
+│ x̂ = decoder(z) ← reconstruct from latent │
+│ L = mean(‖x - x̂‖²) ← reconstruction MSE │
+│ Backward + Adam update │
+│ Early stopping on validation reconstruction error │
 └─────────────────────────────────────────────────────────┘
 
 Inference (all test transactions):
 ┌─────────────────────────────────────────────────────────┐
-│  For each transaction x in test set:                     │
-│    z  = encoder(x)        ← encode                      │
-│    x̂  = decoder(z)        ← decode                      │
-│    s  = (1/d)‖x - x̂‖²    ← anomaly score               │
-│    flag = (s > τ)         ← threshold decision          │
+│ For each transaction x in test set: │
+│ z = encoder(x) ← encode │
+│ x̂ = decoder(z) ← decode │
+│ s = (1/d)‖x - x̂‖² ← anomaly score │
+│ flag = (s > τ) ← threshold decision │
 └─────────────────────────────────────────────────────────┘
 
 Threshold selection:
 ┌─────────────────────────────────────────────────────────┐
-│  Compute s_i for all legitimate validation transactions  │
-│  τ = percentile(s_i, 99.5)  ← controls FPR ≤ 0.5%      │
+│ Compute s_i for all legitimate validation transactions │
+│ τ = percentile(s_i, 99.5) ← controls FPR ≤ 0.5% │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -200,20 +200,20 @@ The large error on feature $x_2$ ($-2.1$ reconstructed as $-0.696$) dominates. I
 ```
 Validation set reconstruction errors:
 
-  Normal transactions (n=45,000):   Fraud transactions (n=492):
+ Normal transactions (n=45,000): Fraud transactions (n=492):
 
-  count                              count
-    │████████████▄                     │
-    │█████████████████▄                │
-    │██████████████████████▄           │       ▄▄▄▄▄▄▄
-    │████████████████████████████▄     │    ▄▄████████████▄
-    │█████████████████████████████▄▄   │  ▄▄████████████████▄▄
-    ├──────────────────────── error    ├──────────────────────────── error
-    0    0.02   0.05   0.08   0.12     0    0.5    1.0    2.0    5.0
-                           ↑ τ=0.155                  ↑ fraud median ≈ 1.8
+ count count
+ │████████████▄ │
+ │█████████████████▄ │
+ │██████████████████████▄ │ ▄▄▄▄▄▄▄
+ │████████████████████████████▄ │ ▄▄████████████▄
+ │█████████████████████████████▄▄ │ ▄▄████████████████▄▄
+ ├──────────────────────── error ├──────────────────────────── error
+ 0 0.02 0.05 0.08 0.12 0 0.5 1.0 2.0 5.0
+ ↑ τ=0.155 ↑ fraud median ≈ 1.8
 
-  99.5th pct of normal ≈ 0.155       Normal ∩ Fraud overlap ≈ 25%
-  → threshold τ = 0.155              → 75% of fraud is above threshold
+ 99.5th pct of normal ≈ 0.155 Normal ∩ Fraud overlap ≈ 25%
+ → threshold τ = 0.155 → 75% of fraud is above threshold
 ```
 
 The distributions barely overlap above $\tau = 0.155$ — reconstruction error is a genuinely discriminative score for this dataset. The 25% overlap region is the hard cases: fraud that reconstructs almost as well as normal (either structurally mimicking legitimate patterns or simple low-value transactions).
@@ -228,7 +228,7 @@ $$\text{Decision}(\mathbf{x}) = \begin{cases} \text{Anomaly (Fraud)} & \text{if 
 
 | Transaction | Reconstruction Error $\mathcal{L}$ | $\mathcal{L} > \tau$? | Decision |
 |-------------|-----------------------------------|----------------------|----------|
-| Normal (legit) | **0.04** | $0.04 \leq 0.5$ → No | ✅ Legitimate |
+| Normal (legit) | **0.04** | $0.04 \leq 0.5$ → No | Legitimate |
 | Fraud | **2.87** | $2.87 > 0.5$ → Yes | 🚨 Flagged |
 
 Arithmetic for the decision boundary:
@@ -261,7 +261,7 @@ $$\tau = \max(L) + 1.645 \times \sigma_L = 0.06 + 1.645 \times 0.011 = 0.06 + 0.
 
 This threshold allows for natural variation above the observed maximum normal error. In production, with 45,000+ validation normal transactions, the percentile is computed empirically from the error distribution histogram rather than this parametric estimate.
 
-> ⚡ **FPR calibration**: Setting $\tau$ at the 99.5th percentile of normal validation errors guarantees FPR ≤ 0.5% *on the validation distribution*. If fraud patterns shift over time, re-calibrate periodically on fresh normal samples.
+> **FPR calibration**: Setting $\tau$ at the 99.5th percentile of normal validation errors guarantees FPR ≤ 0.5% *on the validation distribution*. If fraud patterns shift over time, re-calibrate periodically on fresh normal samples.
 
 ### 4.6 · Training Objective
 
@@ -271,7 +271,7 @@ $$\theta^*, \phi^* = \arg\min_{\theta, \phi} \frac{1}{|\mathcal{X}_0|} \sum_{\ma
 
 where $\theta$ are encoder parameters $(W_e, \mathbf{b}_e)$ and $\phi$ are decoder parameters $(W_d, \mathbf{b}_d)$. The optimization uses **Adam** with learning rate $\eta = 10^{-3}$, mini-batch size 256, and early stopping on validation reconstruction error with patience 10 epochs.
 
-> 💡 **Why Adam?** Adam adapts the learning rate per parameter based on first and second moment estimates of the gradient. For autoencoders, where different layers may have vastly different gradient scales, Adam's per-parameter adaptation prevents slow convergence in shallow layers and instability in deep layers. The learning rate $10^{-3}$ is the near-universal Adam default that works well across network depths and architectures.
+> **Why Adam?** Adam adapts the learning rate per parameter based on first and second moment estimates of the gradient. For autoencoders, where different layers may have vastly different gradient scales, Adam's per-parameter adaptation prevents slow convergence in shallow layers and instability in deep layers. The learning rate $10^{-3}$ is the near-universal Adam default that works well across network depths and architectures.
 
 ### 4.7 · Information Bottleneck Principle
 
@@ -279,10 +279,10 @@ The bottleneck dimension $k$ controls what the autoencoder can and cannot memori
 
 | Bottleneck $k$ | Behavior | Anomaly Detection |
 |----------------|----------|-------------------|
-| $k = d$ (no compression) | Identity mapping possible | ❌ Fraud reconstructs perfectly — no anomaly signal |
-| $k \gg k^*$ (too wide) | Encodes noise and outliers | ❌ High reconstruction on everything |
-| $k \approx k^*$ (sweet spot) | Captures normality manifold | ✅ Normal: low error; Fraud: high error |
-| $k \ll k^*$ (too narrow) | Underfits normality | ❌ High reconstruction even on normal transactions |
+| $k = d$ (no compression) | Identity mapping possible | Fraud reconstructs perfectly — no anomaly signal |
+| $k \gg k^*$ (too wide) | Encodes noise and outliers | High reconstruction on everything |
+| $k \approx k^*$ (sweet spot) | Captures normality manifold | Normal: low error; Fraud: high error |
+| $k \ll k^*$ (too narrow) | Underfits normality | High reconstruction even on normal transactions |
 
 For the Credit Card dataset with 30 PCA features (by construction orthogonal), the intrinsic dimensionality of the normal manifold is roughly $k^* \approx 8$–$14$. A bottleneck of $k=10$ is the starting point for hyperparameter search.
 ### 4.8 · Denoising Autoencoder Extension
@@ -323,7 +323,7 @@ The model optimizes: *"Given a legitimate credit card transaction, compress it t
 
 **Why this is the hardest part to get right in production**: In a live fraud detection system, the "label = 0" transactions in the training set may include undetected fraud from previous months — fraud that slipped through the existing detector and was never labeled. This silent contamination is the norm, not the exception. The autoencoder must be robust to ~0.17% contamination (the base fraud rate), which it is by design. Higher contamination from systematic detection failures requires active decontamination.
 
-> ⚡ **Contamination danger**: If even 1–2% of fraud is included in training, the autoencoder partially learns to encode fraud patterns. The reconstruction error distribution for fraud shifts down, overlap with normal increases, and recall at fixed FPR drops. This is the most common silent failure in production deployments (see §9).
+> **Contamination danger**: If even 1–2% of fraud is included in training, the autoencoder partially learns to encode fraud patterns. The reconstruction error distribution for fraud shifts down, overlap with normal increases, and recall at fixed FPR drops. This is the most common silent failure in production deployments (see §9).
 
 ### Act 2 · Bottleneck Forces Compression
 
@@ -339,12 +339,12 @@ This baseline reconstruction error is the floor of normal variation. It reflects
 **Convergence signal**: Plot training and validation reconstruction error by epoch. A healthy training curve looks like:
 
 ```
-Epoch   Train MSE   Val MSE    Notes
-  1      0.842       0.851    Random init, high error everywhere
- 10      0.182       0.185    Rapid descent, major structure learned
- 25      0.058       0.062    Diminishing returns, fine-tuning
- 40      0.041       0.048    Near convergence
- 55      0.038       0.047    Early stop triggered (val plateaued)
+Epoch Train MSE Val MSE Notes
+ 1 0.842 0.851 Random init, high error everywhere
+ 10 0.182 0.185 Rapid descent, major structure learned
+ 25 0.058 0.062 Diminishing returns, fine-tuning
+ 40 0.041 0.048 Near convergence
+ 55 0.038 0.047 Early stop triggered (val plateaued)
 ```
 
 Validation loss slightly higher than training is expected (the model was not trained on the validation set). If the gap widens dramatically (training MSE 0.010, validation MSE 0.200), the model is overfitting — reduce $k$ or add L2 regularization.
@@ -354,7 +354,7 @@ Fraud transactions whose feature patterns were absent during training produce la
 
 **The AUC-ROC improvement**: Isolation Forest achieved AUC ≈ 0.89. The autoencoder achieves AUC ≈ 0.94 — a 5-point improvement driven by the reconstruction error score's ability to separate normal and fraud distributions more completely. At the 0.5% FPR operating point, this translates to recall improving from ~65% to ~75%.
 
-> 💡 **What AUC = 0.94 means for FraudShield.** AUC is the probability that if you picked one fraud transaction and one legitimate transaction at random, the model would score the fraud higher. AUC = 0.5 is a coin flip — the model has no discriminative power. AUC = 0.94 means FraudShield correctly ranks the fraud transaction first 94 times out of 100 random pairs.
+> **What AUC = 0.94 means for FraudShield.** AUC is the probability that if you picked one fraud transaction and one legitimate transaction at random, the model would score the fraud higher. AUC = 0.5 is a coin flip — the model has no discriminative power. AUC = 0.94 means FraudShield correctly ranks the fraud transaction first 94 times out of 100 random pairs.
 >
 > **Production thresholds for fraud detection:**
 >
@@ -378,10 +378,10 @@ The production autoencoder for FraudShield uses a two-layer symmetric architectu
 
 ```
 Encoder:
-  Input (30)  →  Hidden E1 (20, ReLU)  →  Bottleneck (10, ReLU)
+ Input (30) → Hidden E1 (20, ReLU) → Bottleneck (10, ReLU)
 
 Decoder:
-  Bottleneck (10)  →  Hidden D1 (20, ReLU)  →  Output (30, Linear)
+ Bottleneck (10) → Hidden D1 (20, ReLU) → Output (30, Linear)
 ```
 
 Total parameters:
@@ -443,11 +443,11 @@ This is exactly the input from §4.1–4.3. Recall: $\mathbf{z}_{\text{fraud}} =
 | Latent $\mathbf{z}$ | $[0.910, 0.000]$ | $[1.49, 0.000]$ |
 | Reconstruction $\hat{\mathbf{x}}$ | $[0.473, -0.464, 0.755]$ | $[0.647, -0.696, 1.045]$ |
 | MSE $\mathcal{L}$ | **0.184** | **0.920** |
-| Threshold $\tau = 0.5$ | 0.184 ≤ 0.5 → ✅ Normal | 0.920 > 0.5 → 🚨 Flagged |
+| Threshold $\tau = 0.5$ | 0.184 ≤ 0.5 → Normal | 0.920 > 0.5 → 🚨 Flagged |
 
 The fraud input's $x_2 = -2.1$ (an extreme PCA value never seen during training) reconstructs as $-0.696$ — roughly the mean of the training distribution for this feature. The autoencoder doesn't know how to encode or decode extreme negative values in this dimension because it never learned to do so. The resulting error ($-2.1 - (-0.696) = -1.404$, squared $= 1.971$) dominates the reconstruction loss.
 
-> 💡 **Reconstruction error by feature**: In the full 30-feature version, examining the per-feature reconstruction errors reveals *which features* the anomaly deviates on. Features V4, V11, V14, and V17 are the most discriminative PCA components for credit card fraud. An autoencoder trained on normal data produces large reconstruction errors specifically on these features for fraud transactions — interpretable fraud evidence at the feature level.
+> **Reconstruction error by feature**: In the full 30-feature version, examining the per-feature reconstruction errors reveals *which features* the anomaly deviates on. Features V4, V11, V14, and V17 are the most discriminative PCA components for credit card fraud. An autoencoder trained on normal data produces large reconstruction errors specifically on these features for fraud transactions — interpretable fraud evidence at the feature level.
 
 ### Implementation Sketch
 
@@ -455,26 +455,26 @@ The fraud input's $x_2 = -2.1$ (an extreme PCA value never seen during training)
 import numpy as np
 
 # --- Training (normal transactions only) ---
-X_normal = X_train[y_train == 0]          # shape: (227451, 30)
+X_normal = X_train[y_train == 0] # shape: (227451, 30)
 
 # Standardize on normal data
-mu  = X_normal.mean(axis=0)               # shape: (30,)
+mu = X_normal.mean(axis=0) # shape: (30,)
 sig = X_normal.std(axis=0) + 1e-8
 X_normal_std = (X_normal - mu) / sig
 
 # Define architecture: 30 → 20 → 10 → 20 → 30
 encoder = Sequential([Dense(20, activation='relu'),
-                       Dense(10, activation='relu')])
+ Dense(10, activation='relu')])
 decoder = Sequential([Dense(20, activation='relu'),
-                       Dense(30, activation='linear')])
+ Dense(30, activation='linear')])
 autoencoder = Sequential([encoder, decoder])
 
 autoencoder.compile(optimizer=Adam(1e-3), loss='mse')
 history = autoencoder.fit(
-    X_normal_std, X_normal_std,           # target = input (reconstruction)
-    epochs=100, batch_size=256,
-    validation_split=0.1,
-    callbacks=[EarlyStopping(patience=10, restore_best_weights=True)]
+ X_normal_std, X_normal_std, # target = input (reconstruction)
+ epochs=100, batch_size=256,
+ validation_split=0.1,
+ callbacks=[EarlyStopping(patience=10, restore_best_weights=True)]
 )
 
 # --- Threshold (99.5th percentile of normal val errors) ---
@@ -482,13 +482,13 @@ X_val_normal = X_val[y_val == 0]
 X_val_std = (X_val_normal - mu) / sig
 recon_val = autoencoder.predict(X_val_std)
 errors_val = np.mean((X_val_std - recon_val)**2, axis=1)
-tau = np.percentile(errors_val, 99.5)     # FPR ≤ 0.5% on normal val
+tau = np.percentile(errors_val, 99.5) # FPR ≤ 0.5% on normal val
 
 # --- Scoring all test transactions ---
 X_test_std = (X_test - mu) / sig
 recon_test = autoencoder.predict(X_test_std)
 scores = np.mean((X_test_std - recon_test)**2, axis=1)
-y_pred = (scores > tau).astype(int)       # 1 = fraud, 0 = legitimate
+y_pred = (scores > tau).astype(int) # 1 = fraud, 0 = legitimate
 ```
 
 Note the asymmetry: the autoencoder is trained on `(X_normal_std, X_normal_std)` — input equals target, as reconstruction self-supervision. At inference, test transactions pass through the same standardization using *training* statistics (`mu`, `sig`) so that the scale is consistent.
@@ -501,79 +501,79 @@ Note the asymmetry: the autoencoder is trained on `(X_normal_std, X_normal_std)`
 
 ```mermaid
 flowchart LR
-    X["Input x\n30 features\n(Time, Amount, V1-V28)"]
-    E1["Dense Layer\n30 → 20\nReLU"]
-    BN["Bottleneck z\n10 dims\nReLU"]
-    D1["Dense Layer\n10 → 20\nReLU"]
-    OUT["Output x̂\n30 features\nLinear"]
-    ERR["Reconstruction\nError\n‖x - x̂‖² / 30"]
-    THRESH{"Error > τ?"}
-    FRAUD["🚨 FRAUD\nFlag transaction"]
-    LEGIT["✅ LEGIT\nApprove transaction"]
+ X["Input x\n30 features\n(Time, Amount, V1-V28)"]
+ E1["Dense Layer\n30 → 20\nReLU"]
+ BN["Bottleneck z\n10 dims\nReLU"]
+ D1["Dense Layer\n10 → 20\nReLU"]
+ OUT["Output x̂\n30 features\nLinear"]
+ ERR["Reconstruction\nError\n‖x - x̂‖² / 30"]
+ THRESH{"Error > τ?"}
+ FRAUD["🚨 FRAUD\nFlag transaction"]
+ LEGIT[" LEGIT\nApprove transaction"]
 
-    X --> E1
-    E1 --> BN
-    BN --> D1
-    D1 --> OUT
-    OUT --> ERR
-    X --> ERR
-    ERR --> THRESH
-    THRESH -->|"Yes"| FRAUD
-    THRESH -->|"No"| LEGIT
+ X --> E1
+ E1 --> BN
+ BN --> D1
+ D1 --> OUT
+ OUT --> ERR
+ X --> ERR
+ ERR --> THRESH
+ THRESH -->|"Yes"| FRAUD
+ THRESH -->|"No"| LEGIT
 
-    style X fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style E1 fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style BN fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style D1 fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style OUT fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style ERR fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style THRESH fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style FRAUD fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style LEGIT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style X fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style E1 fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style BN fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style D1 fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style OUT fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style ERR fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style THRESH fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style FRAUD fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style LEGIT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### Diagram 2 — Training Loop: Why Normal-Only Training Works
 
 ```mermaid
 flowchart TD
-    DATA["Training Data\n284,807 transactions"]
-    SPLIT{"Filter by label"}
-    NORMAL["Normal Set\n~227,451 transactions\n(99.83% of train)"]
-    DISCARD["Fraud (492 txns)\nExcluded from training"]
+ DATA["Training Data\n284,807 transactions"]
+ SPLIT{"Filter by label"}
+ NORMAL["Normal Set\n~227,451 transactions\n(99.83% of train)"]
+ DISCARD["Fraud (492 txns)\nExcluded from training"]
 
-    EPOCH["Mini-batch epoch loop"]
-    FWD["Forward pass\nz = encoder(x)\nx̂ = decoder(z)"]
-    LOSS["Reconstruction loss\nL = mean(‖x - x̂‖²)"]
-    BACK["Backward pass\nAdam update"]
-    STOP{"Val loss\nimproving?"}
-    TRAINED["✅ Trained AE\nNormal manifold encoded"]
+ EPOCH["Mini-batch epoch loop"]
+ FWD["Forward pass\nz = encoder(x)\nx̂ = decoder(z)"]
+ LOSS["Reconstruction loss\nL = mean(‖x - x̂‖²)"]
+ BACK["Backward pass\nAdam update"]
+ STOP{"Val loss\nimproving?"}
+ TRAINED[" Trained AE\nNormal manifold encoded"]
 
-    INFERENCE["Inference: all test transactions"]
-    SCORE["Score: s = ‖x - x̂‖²/30"]
-    THRESH["Threshold: flag if s > τ"]
+ INFERENCE["Inference: all test transactions"]
+ SCORE["Score: s = ‖x - x̂‖²/30"]
+ THRESH["Threshold: flag if s > τ"]
 
-    DATA --> SPLIT
-    SPLIT -->|"label = 0"| NORMAL
-    SPLIT -->|"label = 1"| DISCARD
-    NORMAL --> EPOCH
-    EPOCH --> FWD --> LOSS --> BACK --> STOP
-    STOP -->|"Yes, continue"| EPOCH
-    STOP -->|"No, early stop"| TRAINED
+ DATA --> SPLIT
+ SPLIT -->|"label = 0"| NORMAL
+ SPLIT -->|"label = 1"| DISCARD
+ NORMAL --> EPOCH
+ EPOCH --> FWD --> LOSS --> BACK --> STOP
+ STOP -->|"Yes, continue"| EPOCH
+ STOP -->|"No, early stop"| TRAINED
 
-    TRAINED --> INFERENCE --> SCORE --> THRESH
+ TRAINED --> INFERENCE --> SCORE --> THRESH
 
-    style DATA fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style NORMAL fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style DISCARD fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style TRAINED fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style THRESH fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style SPLIT fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style STOP fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style FWD fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style LOSS fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style BACK fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style INFERENCE fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style SCORE fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style DATA fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style NORMAL fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style DISCARD fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style TRAINED fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style THRESH fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style SPLIT fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style STOP fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style FWD fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style LOSS fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style BACK fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style INFERENCE fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style SCORE fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -611,7 +611,7 @@ The single most impactful hyperparameter.
 
 **Tuning strategy**: Start with $k = \lfloor d/3 \rfloor = 10$. Sweep $\{5, 8, 10, 12, 15, 20\}$ using reconstruction error AUC on a labeled validation set. The optimal $k$ is near the intrinsic dimensionality of the normal data manifold.
 
-> 💡 **Intrinsic dimensionality test**: Run PCA on the normal training set. The number of components that explain 95% of variance is a good proxy for the intrinsic dimensionality and a good starting point for $k$.
+> **Intrinsic dimensionality test**: Run PCA on the normal training set. The number of components that explain 95% of variance is a good proxy for the intrinsic dimensionality and a good starting point for $k$.
 
 ### Dial 2 — Training Contamination Rate
 
@@ -640,7 +640,7 @@ The threshold percentile $p_\tau$ directly controls the FPR / recall tradeoff:
 
 **The FraudShield constraint** is 0.5% FPR → use the 99.5th percentile of normal validation reconstruction errors.
 
-> ⚡ **Do not tune $\tau$ on the test set.** Set $\tau$ using only the validation set of normal transactions. Test set FPR and recall are final evaluation metrics, not tuning signals. Test contamination inflates reported performance and gives a false sense of reaching the 80% target.
+> **Do not tune $\tau$ on the test set.** Set $\tau$ using only the validation set of normal transactions. Test set FPR and recall are final evaluation metrics, not tuning signals. Test contamination inflates reported performance and gives a false sense of reaching the 80% target.
 
 ### Dial 4 — Network Depth and Width
 
@@ -648,13 +648,13 @@ The architecture (number of hidden layers and units) controls model capacity. Fo
 
 | Architecture | Parameters | Behavior | Production Suitability |
 |-------------|-----------|----------|------------------------|
-| 30→10→30 (1-hidden each) | 920 | Underfits complex normal structure | ✅ Fast inference, acceptable recall |
-| **30→20→10→20→30 (2-hidden each)** | **1,680** | **Captures non-linear normal manifold** | **✅ Sweet spot** |
-| 30→50→20→10→20→50→30 (3-hidden each) | 7,180 | Over-parameterized for 30 features | ⚡ Overfits to training normals |
+| 30→10→30 (1-hidden each) | 920 | Underfits complex normal structure | Fast inference, acceptable recall |
+| **30→20→10→20→30 (2-hidden each)** | **1,680** | **Captures non-linear normal manifold** | ** Sweet spot** |
+| 30→50→20→10→20→50→30 (3-hidden each) | 7,180 | Over-parameterized for 30 features | Overfits to training normals |
 
 **Practical rule**: For tabular anomaly detection, use 2 hidden layers per side (encoder + decoder). Going deeper than 3 layers rarely helps on standardized PCA features that are already decorrelated — the non-linearities compound without adding meaningful representational power beyond what 2 layers provide.
 
-> 💡 **Depth vs. bottleneck**: The bottleneck $k$ is the primary hyperparameter; depth is secondary. Tune $k$ first on a grid search over $\{5, 8, 10, 12, 15\}$ holding depth fixed at 2 layers. Only tune depth if the best $k$ model is still underfitting (high validation reconstruction error on normal transactions).
+> **Depth vs. bottleneck**: The bottleneck $k$ is the primary hyperparameter; depth is secondary. Tune $k$ first on a grid search over $\{5, 8, 10, 12, 15\}$ holding depth fixed at 2 layers. Only tune depth if the best $k$ model is still underfitting (high validation reconstruction error on normal transactions).
 
 ---
 
@@ -712,7 +712,7 @@ The architecture (number of hidden layers and units) controls model capacity. Fo
 | **Multimodal AI track** | Image anomaly detection uses convolutional autoencoders with the same reconstruction-error scoring mechanism: train on normal images, flag frames with high reconstruction error. The encoder is a convolutional stack (spatial compression); the decoder is a transposed convolutional stack (spatial reconstruction). |
 | **Production (Ch.6)** | Real-time autoencoder inference requires serving the encoder+decoder as a two-stage model. Latency is dominated by matrix multiplication — a 30→10→30 AE is microseconds per transaction on CPU. The threshold $\tau$ must be stored as a model artifact and reloaded at inference time. |
 
-> ➡️ **Reconstruction loss as a universal concept**: the MSE objective $\|\mathbf{x} - \hat{\mathbf{x}}\|^2$ appears in denoising autoencoders (here), variational autoencoders (Deep Learning track), and masked autoencoders for vision (Multimodal AI track). Every time a model is trained to reconstruct its input, it is implicitly learning to model the data distribution — and deviation from that model is the anomaly signal.
+> ➡ **Reconstruction loss as a universal concept**: the MSE objective $\|\mathbf{x} - \hat{\mathbf{x}}\|^2$ appears in denoising autoencoders (here), variational autoencoders (Deep Learning track), and masked autoencoders for vision (Multimodal AI track). Every time a model is trained to reconstruct its input, it is implicitly learning to model the data distribution — and deviation from that model is the anomaly signal.
 
 ---
 
@@ -722,19 +722,19 @@ The architecture (number of hidden layers and units) controls model capacity. Fo
 FraudShield Status After Ch.3 — Autoencoder
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Constraint            Before Ch.3        After Ch.3
+Constraint Before Ch.3 After Ch.3
 ─────────────────────────────────────────────────────────────────
-#1 RECALL ≥ 80%       65% (IF)           75% (AE)       ⚡ +10pp
-#2 GENERALIZATION     Partial            Improved       ⚡ manifold learned
-#3 MULTI-SIGNAL       Single method      Still single   ⚡ combine in Ch.5
-#4 SPEED < 10ms       ✅ Achieved        ✅ Achieved      ~0.2ms AE forward
-#5 NO DIST. ASSUMPT.  ✅ IF: tree-based  ✅ AE: manifold  both distribution-free
+#1 RECALL ≥ 80% 65% (IF) 75% (AE) +10pp
+#2 GENERALIZATION Partial Improved manifold learned
+#3 MULTI-SIGNAL Single method Still single combine in Ch.5
+#4 SPEED < 10ms Achieved Achieved ~0.2ms AE forward
+#5 NO DIST. ASSUMPT. IF: tree-based AE: manifold both distribution-free
 ─────────────────────────────────────────────────────────────────
-Target: 80% recall @ 0.5% FPR         5pp gap remaining
+Target: 80% recall @ 0.5% FPR 5pp gap remaining
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-> 💡 **Where we are**: The autoencoder's reconstruction error score catches fraud that geometric isolation (Isolation Forest) misses — specifically, fraud that is positioned inside normal-density regions but deviates from the normal transaction *structure*. Recall climbed from 65% (IF) to 75% (AE), a +10pp gain. We're now 5pp short of the 80% target.
+> **Where we are**: The autoencoder's reconstruction error score catches fraud that geometric isolation (Isolation Forest) misses — specifically, fraud that is positioned inside normal-density regions but deviates from the normal transaction *structure*. Recall climbed from 65% (IF) to 75% (AE), a +10pp gain. We're now 5pp short of the 80% target.
 
 **Why 75% and not 80%?**
 The remaining 25% of undetected fraud falls into two categories:
@@ -749,11 +749,11 @@ The remaining 25% of undetected fraud falls into two categories:
 
 | Feature | Normal MSE (median) | Fraud MSE (median) | Separation ratio | IF catches this? |
 |---------|--------------------|--------------------|-----------------|------------------|
-| V14 | 0.008 | 1.240 | **155×** | ✅ Often (isolated) |
-| V4  | 0.012 | 0.980 | 82× | ⚡ Sometimes |
-| V11 | 0.015 | 0.750 | 50× | ⚡ Sometimes |
-| V17 | 0.020 | 0.580 | 29× | ❌ Rarely (dense) |
-| Amount | 0.040 | 0.060 | 1.5× | ❌ No (small amounts) |
+| V14 | 0.008 | 1.240 | **155×** | Often (isolated) |
+| V4 | 0.012 | 0.980 | 82× | Sometimes |
+| V11 | 0.015 | 0.750 | 50× | Sometimes |
+| V17 | 0.020 | 0.580 | 29× | Rarely (dense) |
+| Amount | 0.040 | 0.060 | 1.5× | No (small amounts) |
 
 The reconstruction error for features V14 and V4 is 80–155× larger on fraud than on normal transactions. These are the same PCA components that are most correlated with fraud in the original dataset. The autoencoder has *discovered* them implicitly — trained only on normal data, it has learned that these dimensions are tightly constrained in legitimate transactions, and any deviation is highly anomalous.
 
@@ -763,7 +763,7 @@ The reconstruction error for features V14 and V4 is 80–155× larger on fraud t
 
 ## 12 · Bridge to Ch.4 — One-Class SVM
 
-> ➡️ **What's next**: The autoencoder reached 75% recall — a +10pp improvement over Isolation Forest — by learning *what normal transactions look like* and flagging deviations. Both methods now sit in the toolbox: IF scores by geometric isolation, AE scores by reconstruction failure. But both are trained on all-normal data, and both produce continuous scores rather than explicit boundaries.
+> ➡ **What's next**: The autoencoder reached 75% recall — a +10pp improvement over Isolation Forest — by learning *what normal transactions look like* and flagging deviations. Both methods now sit in the toolbox: IF scores by geometric isolation, AE scores by reconstruction failure. But both are trained on all-normal data, and both produce continuous scores rather than explicit boundaries.
 
 **The question Ch.4 asks**: Can we define an explicit *boundary* around normal data — in a non-linear kernel space — and classify anything outside that boundary as an anomaly? One-Class SVM does exactly this. Introduced by Schölkopf et al. (1999), it maps training data into a high-dimensional kernel space and finds the maximum-margin hyperplane separating the data from the origin. Points on the origin side are anomalies.
 
@@ -780,54 +780,54 @@ The reconstruction error for features V14 and V4 is 80–155× larger on fraud t
 | Anomaly signal | Reconstruction error (continuous) | Signed distance to boundary (continuous) |
 | Interpretability | Per-feature reconstruction errors | Signed distance to hyperplane |
 | Sensitivity to $k$ | High — bottleneck is the key hyperparameter | Low — $\nu$ and $\gamma$ are the key hyperparameters |
-| Works at large $N$? | ✅ Mini-batch training scales linearly | ⚡ Exact kernel SVM struggles at $N > 50k$ (use Nyström or SGD approximation) |
+| Works at large $N$? | Mini-batch training scales linearly | Exact kernel SVM struggles at $N > 50k$ (use Nyström or SGD approximation) |
 
 For the Credit Card dataset ($N \approx 284k$), the autoencoder is the more practical method in terms of training speed. One-Class SVM with RBF kernel on the full training set is intractable — sklearn's `OneClassSVM` will require either sub-sampling ($N \leq 10k$) or the `SGDOneClassSVM` approximation. This computational constraint, paradoxically, makes OCSVM a better ensemble *component* than standalone detector: train it on a 10k normal sub-sample and use its decision function as one score among three.
-    style LEGIT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style LEGIT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### Diagram 2 — Training Loop: Why Normal-Only Training Works
 
 ```mermaid
 flowchart TD
-    DATA["Training Data\n284,807 transactions"]
-    SPLIT{"Filter by label"}
-    NORMAL["Normal Set\n~227,451 transactions\n(99.83% of train)"]
-    DISCARD["Fraud (492 txns)\nExcluded from training"]
+ DATA["Training Data\n284,807 transactions"]
+ SPLIT{"Filter by label"}
+ NORMAL["Normal Set\n~227,451 transactions\n(99.83% of train)"]
+ DISCARD["Fraud (492 txns)\nExcluded from training"]
 
-    EPOCH["Mini-batch epoch loop"]
-    FWD["Forward pass\nz = encoder(x)\nx̂ = decoder(z)"]
-    LOSS["Reconstruction loss\nL = mean(‖x - x̂‖²)"]
-    BACK["Backward pass\nAdam update"]
-    STOP{"Val loss\nimproving?"}
-    TRAINED["✅ Trained AE\nNormal manifold encoded"]
+ EPOCH["Mini-batch epoch loop"]
+ FWD["Forward pass\nz = encoder(x)\nx̂ = decoder(z)"]
+ LOSS["Reconstruction loss\nL = mean(‖x - x̂‖²)"]
+ BACK["Backward pass\nAdam update"]
+ STOP{"Val loss\nimproving?"}
+ TRAINED[" Trained AE\nNormal manifold encoded"]
 
-    INFERENCE["Inference: all test transactions"]
-    SCORE["Score: s = ‖x - x̂‖²/30"]
-    THRESH["Threshold: flag if s > τ"]
+ INFERENCE["Inference: all test transactions"]
+ SCORE["Score: s = ‖x - x̂‖²/30"]
+ THRESH["Threshold: flag if s > τ"]
 
-    DATA --> SPLIT
-    SPLIT -->|"label = 0"| NORMAL
-    SPLIT -->|"label = 1"| DISCARD
-    NORMAL --> EPOCH
-    EPOCH --> FWD --> LOSS --> BACK --> STOP
-    STOP -->|"Yes, continue"| EPOCH
-    STOP -->|"No, early stop"| TRAINED
+ DATA --> SPLIT
+ SPLIT -->|"label = 0"| NORMAL
+ SPLIT -->|"label = 1"| DISCARD
+ NORMAL --> EPOCH
+ EPOCH --> FWD --> LOSS --> BACK --> STOP
+ STOP -->|"Yes, continue"| EPOCH
+ STOP -->|"No, early stop"| TRAINED
 
-    TRAINED --> INFERENCE --> SCORE --> THRESH
+ TRAINED --> INFERENCE --> SCORE --> THRESH
 
-    style DATA fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style NORMAL fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style DISCARD fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style TRAINED fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style THRESH fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style SPLIT fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style STOP fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style FWD fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style LOSS fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style BACK fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style INFERENCE fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style SCORE fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style DATA fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style NORMAL fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style DISCARD fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style TRAINED fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style THRESH fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style SPLIT fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style STOP fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style FWD fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style LOSS fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style BACK fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style INFERENCE fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style SCORE fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -865,7 +865,7 @@ The single most impactful hyperparameter.
 
 **Tuning strategy**: Start with $k = \lfloor d/3 \rfloor = 10$. Sweep $\{5, 8, 10, 12, 15, 20\}$ using reconstruction error AUC on a labeled validation set. The optimal $k$ is near the intrinsic dimensionality of the normal data manifold.
 
-> 💡 **Intrinsic dimensionality test**: Run PCA on the normal training set. The number of components that explain 95% of variance is a good proxy for the intrinsic dimensionality and a good starting point for $k$.
+> **Intrinsic dimensionality test**: Run PCA on the normal training set. The number of components that explain 95% of variance is a good proxy for the intrinsic dimensionality and a good starting point for $k$.
 
 ### Dial 2 — Training Contamination Rate
 
@@ -894,7 +894,7 @@ The threshold percentile $p_\tau$ directly controls the FPR / recall tradeoff:
 
 **The FraudShield constraint** is 0.5% FPR → use the 99.5th percentile of normal validation reconstruction errors.
 
-> ⚡ **Do not tune $\tau$ on the test set.** Set $\tau$ using only the validation set of normal transactions. Test set FPR and recall are final evaluation metrics, not tuning signals. Test contamination inflates reported performance and gives a false sense of reaching the 80% target.
+> **Do not tune $\tau$ on the test set.** Set $\tau$ using only the validation set of normal transactions. Test set FPR and recall are final evaluation metrics, not tuning signals. Test contamination inflates reported performance and gives a false sense of reaching the 80% target.
 
 ### Dial 4 — Network Depth and Width
 
@@ -902,13 +902,13 @@ The architecture (number of hidden layers and units) controls model capacity. Fo
 
 | Architecture | Parameters | Behavior | Production Suitability |
 |-------------|-----------|----------|------------------------|
-| 30→10→30 (1-hidden each) | 920 | Underfits complex normal structure | ✅ Fast inference, acceptable recall |
-| **30→20→10→20→30 (2-hidden each)** | **1,680** | **Captures non-linear normal manifold** | **✅ Sweet spot** |
-| 30→50→20→10→20→50→30 (3-hidden each) | 7,180 | Over-parameterized for 30 features | ⚡ Overfits to training normals |
+| 30→10→30 (1-hidden each) | 920 | Underfits complex normal structure | Fast inference, acceptable recall |
+| **30→20→10→20→30 (2-hidden each)** | **1,680** | **Captures non-linear normal manifold** | ** Sweet spot** |
+| 30→50→20→10→20→50→30 (3-hidden each) | 7,180 | Over-parameterized for 30 features | Overfits to training normals |
 
 **Practical rule**: For tabular anomaly detection, use 2 hidden layers per side (encoder + decoder). Going deeper than 3 layers rarely helps on standardized PCA features that are already decorrelated — the non-linearities compound without adding meaningful representational power beyond what 2 layers provide.
 
-> 💡 **Depth vs. bottleneck**: The bottleneck $k$ is the primary hyperparameter; depth is secondary. Tune $k$ first on a grid search over $\{5, 8, 10, 12, 15\}$ holding depth fixed at 2 layers. Only tune depth if the best $k$ model is still underfitting (high validation reconstruction error on normal transactions).
+> **Depth vs. bottleneck**: The bottleneck $k$ is the primary hyperparameter; depth is secondary. Tune $k$ first on a grid search over $\{5, 8, 10, 12, 15\}$ holding depth fixed at 2 layers. Only tune depth if the best $k$ model is still underfitting (high validation reconstruction error on normal transactions).
 
 ---
 
@@ -966,7 +966,7 @@ The architecture (number of hidden layers and units) controls model capacity. Fo
 | **Multimodal AI track** | Image anomaly detection uses convolutional autoencoders with the same reconstruction-error scoring mechanism: train on normal images, flag frames with high reconstruction error. |
 | **Production (Ch.6)** | Real-time autoencoder inference requires serving the encoder+decoder as a two-stage model. Latency is dominated by matrix multiplication — a 30→10→30 AE is microseconds per transaction on CPU. |
 
-> ➡️ **Reconstruction loss as a universal concept**: the MSE objective $\|\mathbf{x} - \hat{\mathbf{x}}\|^2$ appears in denoising autoencoders (here), variational autoencoders (Deep Learning track), and masked autoencoders for vision (Multimodal AI track). Every time a model is trained to reconstruct its input, it is implicitly learning to model the data distribution — and deviation from that model is the anomaly signal.
+> ➡ **Reconstruction loss as a universal concept**: the MSE objective $\|\mathbf{x} - \hat{\mathbf{x}}\|^2$ appears in denoising autoencoders (here), variational autoencoders (Deep Learning track), and masked autoencoders for vision (Multimodal AI track). Every time a model is trained to reconstruct its input, it is implicitly learning to model the data distribution — and deviation from that model is the anomaly signal.
 
 ---
 
@@ -976,19 +976,19 @@ The architecture (number of hidden layers and units) controls model capacity. Fo
 FraudShield Status After Ch.3 — Autoencoder
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Constraint            Before Ch.3        After Ch.3
+Constraint Before Ch.3 After Ch.3
 ─────────────────────────────────────────────────────────────────
-#1 RECALL ≥ 80%       65% (IF)           75% (AE)       ⚡ +10pp
-#2 GENERALIZATION     Partial            Improved       ⚡ manifold learned
-#3 MULTI-SIGNAL       Single method      Still single   ⚡ combine in Ch.5
-#4 SPEED < 10ms       ✅ Achieved        ✅ Achieved      ~0.2ms AE forward
-#5 NO DIST. ASSUMPT.  ✅ IF: tree-based  ✅ AE: manifold  both distribution-free
+#1 RECALL ≥ 80% 65% (IF) 75% (AE) +10pp
+#2 GENERALIZATION Partial Improved manifold learned
+#3 MULTI-SIGNAL Single method Still single combine in Ch.5
+#4 SPEED < 10ms Achieved Achieved ~0.2ms AE forward
+#5 NO DIST. ASSUMPT. IF: tree-based AE: manifold both distribution-free
 ─────────────────────────────────────────────────────────────────
-Target: 80% recall @ 0.5% FPR         5pp gap remaining
+Target: 80% recall @ 0.5% FPR 5pp gap remaining
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-> 💡 **Where we are**: The autoencoder's reconstruction error score catches fraud that geometric isolation (Isolation Forest) misses — specifically, fraud that is positioned inside normal-density regions but deviates from the normal transaction *structure*. Recall climbed from 65% (IF) to 75% (AE), a +10pp gain. We're now 5pp short of the 80% target.
+> **Where we are**: The autoencoder's reconstruction error score catches fraud that geometric isolation (Isolation Forest) misses — specifically, fraud that is positioned inside normal-density regions but deviates from the normal transaction *structure*. Recall climbed from 65% (IF) to 75% (AE), a +10pp gain. We're now 5pp short of the 80% target.
 
 **Why 75% and not 80%?**
 The remaining 25% of undetected fraud falls into two categories:
@@ -1003,11 +1003,11 @@ The remaining 25% of undetected fraud falls into two categories:
 
 | Feature | Normal MSE (median) | Fraud MSE (median) | Separation ratio | IF catches this? |
 |---------|--------------------|--------------------|-----------------|------------------|
-| V14 | 0.008 | 1.240 | **155×** | ✅ Often (isolated) |
-| V4  | 0.012 | 0.980 | 82× | ⚡ Sometimes |
-| V11 | 0.015 | 0.750 | 50× | ⚡ Sometimes |
-| V17 | 0.020 | 0.580 | 29× | ❌ Rarely (dense) |
-| Amount | 0.040 | 0.060 | 1.5× | ❌ No (small amounts) |
+| V14 | 0.008 | 1.240 | **155×** | Often (isolated) |
+| V4 | 0.012 | 0.980 | 82× | Sometimes |
+| V11 | 0.015 | 0.750 | 50× | Sometimes |
+| V17 | 0.020 | 0.580 | 29× | Rarely (dense) |
+| Amount | 0.040 | 0.060 | 1.5× | No (small amounts) |
 
 The reconstruction error for features V14 and V4 is 80–155× larger on fraud than on normal transactions. These are the same PCA components that are most correlated with fraud in the original dataset. The autoencoder has *discovered* them implicitly — trained only on normal data, it has learned that these dimensions are tightly constrained in legitimate transactions, and any deviation is highly anomalous.
 
@@ -1017,7 +1017,7 @@ The reconstruction error for features V14 and V4 is 80–155× larger on fraud t
 
 ## 12 · Bridge to Ch.4 — One-Class SVM
 
-> ➡️ **What's next**: The autoencoder reached 75% recall — a +10pp improvement over Isolation Forest — by learning *what normal transactions look like* and flagging deviations. Both methods now sit in the toolbox: IF scores by geometric isolation, AE scores by reconstruction failure. But both are trained on all-normal data, and both produce continuous scores rather than explicit boundaries.
+> ➡ **What's next**: The autoencoder reached 75% recall — a +10pp improvement over Isolation Forest — by learning *what normal transactions look like* and flagging deviations. Both methods now sit in the toolbox: IF scores by geometric isolation, AE scores by reconstruction failure. But both are trained on all-normal data, and both produce continuous scores rather than explicit boundaries.
 
 **The question Ch.4 asks**: Can we define an explicit *boundary* around normal data — in a non-linear kernel space — and classify anything outside that boundary as an anomaly? One-Class SVM does exactly this. Introduced by Schölkopf et al. (1999), it maps training data into a high-dimensional kernel space and finds the maximum-margin hyperplane separating the data from the origin. Points on the origin side are anomalies.
 
@@ -1034,7 +1034,7 @@ The reconstruction error for features V14 and V4 is 80–155× larger on fraud t
 | Anomaly signal | Reconstruction error (continuous) | Signed distance to boundary (continuous) |
 | Interpretability | Per-feature reconstruction errors | Signed distance to hyperplane |
 | Sensitivity to $k$ | High — bottleneck is the key hyperparameter | Low — $\nu$ and $\gamma$ are the key hyperparameters |
-| Works at large $N$? | ✅ Mini-batch training scales linearly | ⚡ Exact kernel SVM struggles at $N > 50k$ (use Nyström or SGD approximation) |
+| Works at large $N$? | Mini-batch training scales linearly | Exact kernel SVM struggles at $N > 50k$ (use Nyström or SGD approximation) |
 
 For the Credit Card dataset ($N \approx 284k$), the autoencoder is the more practical method in terms of training speed. One-Class SVM with RBF kernel on the full training set is intractable — sklearn's `OneClassSVM` will require either sub-sampling ($N \leq 10k$) or the `SGDOneClassSVM` approximation. This computational constraint, paradoxically, makes OCSVM a better ensemble *component* than standalone detector: train it on a 10k normal sub-sample and use its decision function as one score among three.
 

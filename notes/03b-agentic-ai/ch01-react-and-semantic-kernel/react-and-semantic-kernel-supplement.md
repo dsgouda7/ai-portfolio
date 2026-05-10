@@ -21,22 +21,22 @@ A single agent handling a complex task faces compounding problems:
 ### Orchestrator–Worker Pattern
 
 ```
-                     ┌──────────────────────────────────┐
-                     │        ORCHESTRATOR AGENT         │
-                     │  (LLM: task decomposition,        │
-                     │   routing, result synthesis)       │
-                     └──────┬──────────┬────────┬────────┘
-                            │          │        │
-              ┌─────────────▼──┐  ┌────▼────┐  ┌▼──────────────┐
-              │  Research Agent │  │  Code   │  │  Summary Agent │
-              │ (RAG + Search)  │  │  Agent  │  │  (Writing LLM) │
-              └─────────────┬──┘  └────┬────┘  └┬──────────────┘
-                            │          │         │
-                     ┌──────▼──────────▼─────────▼──────┐
-                     │            Tool Layer             │
-                     │  Web Search | SQL | Code Exec |   │
-                     │  Vector DB  | File System | APIs  │
-                     └───────────────────────────────────┘
+ ┌──────────────────────────────────┐
+ │ ORCHESTRATOR AGENT │
+ │ (LLM: task decomposition, │
+ │ routing, result synthesis) │
+ └──────┬──────────┬────────┬────────┘
+ │ │ │
+ ┌─────────────▼──┐ ┌────▼────┐ ┌▼──────────────┐
+ │ Research Agent │ │ Code │ │ Summary Agent │
+ │ (RAG + Search) │ │ Agent │ │ (Writing LLM) │
+ └─────────────┬──┘ └────┬────┘ └┬──────────────┘
+ │ │ │
+ ┌──────▼──────────▼─────────▼──────┐
+ │ Tool Layer │
+ │ Web Search | SQL | Code Exec | │
+ │ Vector DB | File System | APIs │
+ └───────────────────────────────────┘
 ```
 
 **Key design principle:** The Orchestrator never directly calls tools — it only dispatches work and synthesizes results. Worker agents each own a focused tool set and context window. This separation keeps each agent's prompt small and focused, dramatically reducing hallucination risk.
@@ -49,14 +49,14 @@ Two agents are given the same task and critique each other's outputs before a th
 
 ```
 User Query
-    │
-    ├──► Agent A (Solver) ──────────► Answer A ──┐
-    │                                             ▼
-    └──► Agent B (Critic) ──────────────── Critique of A
-                                                  │
-                                    Agent C (Synthesizer)
-                                                  │
-                                           Final Answer
+ │
+ ├──► Agent A (Solver) ──────────► Answer A ──┐
+ │ ▼
+ └──► Agent B (Critic) ──────────────── Critique of A
+ │
+ Agent C (Synthesizer)
+ │
+ Final Answer
 ```
 
 This is effective for **high-stakes reasoning tasks** (legal reasoning, medical diagnosis) where a single agent's blind spots can go undetected. The debate pattern forces explicit justification of claims.
@@ -87,11 +87,11 @@ from typing import TypedDict
 
 # Define shared state schema
 class AgentState(TypedDict):
-    user_query: str
-    distance_km: float | None
-    train_type: str | None
-    avg_speed: float | None
-    messages: list
+ user_query: str
+ distance_km: float | None
+ train_type: str | None
+ avg_speed: float | None
+ messages: list
 
 # Build the graph
 workflow = StateGraph(AgentState)
@@ -119,21 +119,21 @@ Unlike a fixed sequential pipeline, LangGraph supports **conditional edges** —
 
 ```python
 def route_after_retrieval(state: AgentState) -> str:
-    if state["distance_km"] is None:
-        return "fallback_search"   # distance lookup failed
-    elif state["distance_km"] > 500:
-        return "extended_analysis"  # long route, needs more detail
-    else:
-        return "calculate"          # normal path
+ if state["distance_km"] is None:
+ return "fallback_search" # distance lookup failed
+ elif state["distance_km"] > 500:
+ return "extended_analysis" # long route, needs more detail
+ else:
+ return "calculate" # normal path
 
 workflow.add_conditional_edges(
-    "retrieve_distance",
-    route_after_retrieval,
-    {
-        "fallback_search": "fallback_search",
-        "extended_analysis": "extended_analysis",
-        "calculate": "calculate"
-    }
+ "retrieve_distance",
+ route_after_retrieval,
+ {
+ "fallback_search": "fallback_search",
+ "extended_analysis": "extended_analysis",
+ "calculate": "calculate"
+ }
 )
 ```
 
@@ -149,12 +149,12 @@ Fully autonomous agents are inappropriate for high-stakes actions (sending email
 
 ```
 Agent plans: "Delete all records older than 2023"
-    │
-    ▼
-⏸  PAUSE — human approval required
-    │
-    ├── Human approves → Agent executes delete
-    └── Human rejects  → Agent re-plans or stops
+ │
+ ▼
+ PAUSE — human approval required
+ │
+ ├── Human approves → Agent executes delete
+ └── Human rejects → Agent re-plans or stops
 ```
 
 In Semantic Kernel, filters implement this:
@@ -162,11 +162,11 @@ In Semantic Kernel, filters implement this:
 ```python
 @kernel.filter(filter_type=FilterTypes.FUNCTION_INVOCATION)
 async def approval_filter(context, next):
-    if context.function.name in REQUIRES_APPROVAL:
-        approved = await request_human_approval(context.function.name, context.arguments)
-        if not approved:
-            raise PermissionError("User did not approve this action")
-    await next(context)
+ if context.function.name in REQUIRES_APPROVAL:
+ approved = await request_human_approval(context.function.name, context.arguments)
+ if not approved:
+ raise PermissionError("User did not approve this action")
+ await next(context)
 ```
 
 ### Progressive Autonomy Model
@@ -200,19 +200,19 @@ Every tool must have:
 # BAD: Vague description, unvalidated input, unbounded output
 @kernel_function(description="Search for stuff")
 def search(query: str) -> str:
-    return requests.get(f"https://api.search.com?q={query}").text  # dump entire response
+ return requests.get(f"https://api.search.com?q={query}").text # dump entire response
 
 # GOOD: Precise description, typed input, bounded structured output
 @kernel_function(
-    description="Search the rail route database for distance in km between two airport codes. "
-                "Returns a JSON object with 'distance_km' (float) or 'error' (str) if not found."
+ description="Search the rail route database for distance in km between two airport codes. "
+ "Returns a JSON object with 'distance_km' (float) or 'error' (str) if not found."
 )
 def get_rail_distance(origin: Annotated[str, "3-letter airport code"],
-                       destination: Annotated[str, "3-letter airport code"]) -> dict:
-    result = route_db.lookup(origin, destination)
-    if result:
-        return {"distance_km": result.distance}
-    return {"error": f"No route found between {origin} and {destination}"}
+ destination: Annotated[str, "3-letter airport code"]) -> dict:
+ result = route_db.lookup(origin, destination)
+ if result:
+ return {"distance_km": result.distance}
+ return {"error": f"No route found between {origin} and {destination}"}
 ```
 
 ### Tool Output Sizing
@@ -221,9 +221,9 @@ Returning too much data from a tool is a common production mistake:
 
 ```
 Tool returns 50,000 tokens of raw search results
-    → Fills context window
-    → Agent loses track of earlier reasoning
-    → Performance degrades; cost spikes
+ → Fills context window
+ → Agent loses track of earlier reasoning
+ → Performance degrades; cost spikes
 ```
 
 **Rule:** Tool outputs should be pre-processed to return only what the agent needs. Summarize, filter, and structure tool responses before returning them to the agent context.
@@ -242,12 +242,12 @@ The agent keeps retrying the same failing tool call or revisiting already-answer
 ```python
 seen_actions = set()
 for step in range(max_steps):
-    action = llm.plan(context)
-    action_key = f"{action.tool}:{json.dumps(action.args, sort_keys=True)}"
-    if action_key in seen_actions:
-        context += "\nObservation: This action was already taken. Do not repeat it."
-        continue
-    seen_actions.add(action_key)
+ action = llm.plan(context)
+ action_key = f"{action.tool}:{json.dumps(action.args, sort_keys=True)}"
+ if action_key in seen_actions:
+ context += "\nObservation: This action was already taken. Do not repeat it."
+ continue
+ seen_actions.add(action_key)
 ```
 
 ### 5.2 Premature Termination
@@ -312,22 +312,22 @@ from semantic_kernel.agents import AgentGroupChat, ChatCompletionAgent
 from semantic_kernel.agents.strategies import TerminationStrategy, SelectionStrategy
 
 researcher = ChatCompletionAgent(kernel=kernel, name="Researcher",
-    instructions="Retrieve factual information using provided tools.")
+ instructions="Retrieve factual information using provided tools.")
 
 analyst = ChatCompletionAgent(kernel=kernel, name="Analyst",
-    instructions="Analyze retrieved information and identify gaps.")
+ instructions="Analyze retrieved information and identify gaps.")
 
 writer = ChatCompletionAgent(kernel=kernel, name="Writer",
-    instructions="Compose the final answer from the analyst's synthesis.")
+ instructions="Compose the final answer from the analyst's synthesis.")
 
 chat = AgentGroupChat(
-    agents=[researcher, analyst, writer],
-    termination_strategy=TerminationStrategy(maximum_iterations=6),
-    selection_strategy=SelectionStrategy()  # round-robin by default
+ agents=[researcher, analyst, writer],
+ termination_strategy=TerminationStrategy(maximum_iterations=6),
+ selection_strategy=SelectionStrategy() # round-robin by default
 )
 
 async for message in chat.invoke():
-    print(f"[{message.name}]: {message.content}")
+ print(f"[{message.name}]: {message.content}")
 ```
 
 ---
@@ -335,27 +335,27 @@ async for message in chat.invoke():
 ## 7. ReAct vs. Plan-and-Execute vs. LangGraph — When to Use Which
 
 ```
-                    ┌─────────────────────────────────────────────┐
-                    │          Task Characteristics                │
-                    └─────────────────┬───────────────────────────┘
-                                      │
-              ┌───────────────────────┼────────────────────────────┐
-              │                       │                            │
-    Steps unknown upfront?    Steps predictable?         Complex branching
-    High uncertainty?         Short linear workflow?     + parallelism needed?
-              │                       │                            │
-              ▼                       ▼                            ▼
-         ┌────────┐           ┌──────────────┐           ┌──────────────┐
-         │  ReAct  │           │ Plan-and-    │           │  LangGraph   │
-         │ (dynamic│           │ Execute      │           │ (stateful    │
-         │  loop)  │           │              │           │  graph)      │
-         └────────┘           └──────────────┘           └──────────────┘
+ ┌─────────────────────────────────────────────┐
+ │ Task Characteristics │
+ └─────────────────┬───────────────────────────┘
+ │
+ ┌───────────────────────┼────────────────────────────┐
+ │ │ │
+ Steps unknown upfront? Steps predictable? Complex branching
+ High uncertainty? Short linear workflow? + parallelism needed?
+ │ │ │
+ ▼ ▼ ▼
+ ┌────────┐ ┌──────────────┐ ┌──────────────┐
+ │ ReAct │ │ Plan-and- │ │ LangGraph │
+ │ (dynamic│ │ Execute │ │ (stateful │
+ │ loop) │ │ │ │ graph) │
+ └────────┘ └──────────────┘ └──────────────┘
 
-    Best when:               Best when:                 Best when:
-    - Unknown # of steps     - Task can be fully        - Multi-agent
-    - Mid-task replanning      decomposed upfront        - Human-in-loop
-    - Tool results affect    - Lower latency needed     - Conditional routing
-      the next question      - Deterministic flows      - Persistent state
+ Best when: Best when: Best when:
+ - Unknown # of steps - Task can be fully - Multi-agent
+ - Mid-task replanning decomposed upfront - Human-in-loop
+ - Tool results affect - Lower latency needed - Conditional routing
+ the next question - Deterministic flows - Persistent state
 ```
 
 ---

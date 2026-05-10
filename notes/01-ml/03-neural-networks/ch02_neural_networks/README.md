@@ -10,7 +10,7 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Launch **UnifiedAI** — prove neural networks unify regression and classification in one architecture, satisfying:
+> **The mission**: Launch **UnifiedAI** — prove neural networks unify regression and classification in one architecture, satisfying:
 > 1. **ACCURACY**: ≤$28k MAE (housing regression) + ≥95% accuracy (face classification)
 > 2. **GENERALIZATION**: Unseen districts + new celebrity faces — no memorisation
 > 3. **MULTI-TASK**: Same hidden layers, different output heads (regression vs classification)
@@ -18,14 +18,13 @@
 > 5. **PRODUCTION**: <100ms inference, TensorBoard monitoring, handles missing data
 
 **What we know so far:**
-- ✅ [Regression track Ch.1](../../01_regression/ch01_linear_regression): Linear baseline — ~$70k MAE on California Housing
-- ✅ [Classification track Ch.1](../../02_classification/ch01_logistic_regression): Logistic regression for binary face attributes
-- ✅ [NN Ch.1 — XOR Problem](../ch01_xor_problem): Proved linear models structurally cannot represent non-linear boundaries
-- ✅ [NN Ch.1 — XOR Problem](../ch01_xor_problem): UAT guarantees one hidden layer of sufficient width approximates any continuous function
+- [Regression track Ch.1](../../01_regression/ch01_linear_regression): Linear baseline — ~$70k MAE on California Housing
+- [Classification track Ch.1](../../02_classification/ch01_logistic_regression): Logistic regression for binary face attributes
+- [NN Ch.1 — XOR Problem](../ch01_xor_problem): Proved linear models structurally cannot represent non-linear boundaries
+- [NN Ch.1 — XOR Problem](../ch01_xor_problem): UAT guarantees one hidden layer of sufficient width approximates any continuous function
 
 **What's blocking us:**
-
-⚠️ The XOR chapter diagnosed the problem on a toy 4-point dataset with 2 features. California Housing has **8 correlated features** and **20,640 districts** with genuinely non-linear interactions:
+The XOR chapter diagnosed the problem on a toy 4-point dataset with 2 features. California Housing has **8 correlated features** and **20,640 districts** with genuinely non-linear interactions:
 - *Coastal + high-income* jointly drives premium pricing — neither feature alone is sufficient
 - Income shows **diminishing returns**: doubling income in an already-expensive area lifts price less than in an affordable one
 - Latitude and Longitude encode micro-regions whose effect is **non-additive** with every other feature
@@ -65,16 +64,16 @@ A neural network is a **chain of linear transformations interleaved with non-lin
 Think of California's 20,640 districts plotted in 8-dimensional feature space. Districts with `(high income, coastal latitude)` and `(high income, inland latitude)` overlap badly in that raw space — a flat plane cannot separate them. Each hidden layer applies two operations: a weight matrix that rotates and rescales the axes, then a ReLU that folds the space by zeroing out the negative half. The result is not a scaled version of the original space — it is a *bent and folded* version.
 
 ```
-Raw input space         After layer 1           After layer 2
-(tangled clusters)  →   (first fold applied) →  (clusters separated)
-     ●  ○                   ●    ○                  ●●●    ○○○
-  ○  ●  ○  ●     →       ●   ○   ●    →          ●●●●●  ○○○○○
-     ○  ●                   ○    ●
+Raw input space After layer 1 After layer 2
+(tangled clusters) → (first fold applied) → (clusters separated)
+ ● ○ ● ○ ●●● ○○○
+ ○ ● ○ ● → ● ○ ● → ●●●●● ○○○○○
+ ○ ● ○ ●
 ```
 
 By the time the data reaches the final output layer, the network has warped feature space until the coastal-premium clusters are in different corners. The output layer then draws a flat plane — but across a space that has already been bent into the right shape.
 
-> 💡 This is why adding a third hidden layer to SmartVal's architecture can unlock the non-linear interaction between `Latitude × MedInc`: no single fold is enough, but two sequential folds can separate that cluster boundary.
+> This is why adding a third hidden layer to SmartVal's architecture can unlock the non-linear interaction between `Latitude × MedInc`: no single fold is enough, but two sequential folds can separate that cluster boundary.
 
 ---
 
@@ -119,16 +118,16 @@ with boundary conditions $\mathbf{a}^{(0)} = \mathbf{x}$ (input) and $\hat{\math
 Given: input x in R^8 (one California Housing district, standardised)
 
 # Layer 1: 8 to 64 (ReLU hidden)
-z1 = W1 . x  + b1       W1 in R^{64x8},  b1 in R^{64}
-a1 = ReLU(z1)           a1 in R^{64}      (negatives clipped to 0)
+z1 = W1 . x + b1 W1 in R^{64x8}, b1 in R^{64}
+a1 = ReLU(z1) a1 in R^{64} (negatives clipped to 0)
 
 # Layer 2: 64 to 32 (ReLU hidden)
-z2 = W2 . a1 + b2       W2 in R^{32x64}, b2 in R^{32}
-a2 = ReLU(z2)           a2 in R^{32}
+z2 = W2 . a1 + b2 W2 in R^{32x64}, b2 in R^{32}
+a2 = ReLU(z2) a2 in R^{32}
 
 # Output layer: 32 to 1 (linear — no activation)
-z3 = W3 . a2 + b3       W3 in R^{1x32},  b3 in R
-yhat = z3               yhat in R  (predicted house value in x$100k units)
+z3 = W3 . a2 + b3 W3 in R^{1x32}, b3 in R
+yhat = z3 yhat in R (predicted house value in x$100k units)
 ```
 
 The output layer has **no activation** because house value is unbounded. For binary classification the output uses sigmoid; for multi-class, softmax. Only the last layer changes — hidden layers are identical across tasks.
@@ -170,7 +169,7 @@ $$a^{(1)}_2 = \max(0,\ -0.74) = \mathbf{0.00} \qquad \text{(negative — clipped
 
 $$\mathbf{a}^{(1)} = [0.74,\ 0.00]^\top$$
 
-> 💡 **Neuron 2 is dead for this input.** Its pre-activation is negative, so ReLU sets its output to 0. It contributes nothing to the prediction for this particular input. If a neuron is negative across *all* training inputs it becomes permanently dead — see §9.
+> **Neuron 2 is dead for this input.** Its pre-activation is negative, so ReLU sets its output to 0. It contributes nothing to the prediction for this particular input. If a neuron is negative across *all* training inputs it becomes permanently dead — see §9.
 
 **Step 3 — Output layer** ($\hat{y} = W^{(2)}\mathbf{a}^{(1)} + b^{(2)}$, no activation):
 
@@ -215,7 +214,7 @@ $$\text{softmax}(z_k) = \frac{e^{z_k}}{\sum_{j=1}^{K} e^{z_j}} \qquad \sum_{k=1}
 |----:|----------:|------------:|-----------:|
 | -2 | 0.000 | 0.119 | -0.964 |
 | -1 | 0.000 | 0.269 | -0.762 |
-|  0 | 0.000 | 0.500 |  0.000 |
+| 0 | 0.000 | 0.500 | 0.000 |
 | +1 | 1.000 | 0.731 | +0.762 |
 | +2 | 2.000 | 0.881 | +0.964 |
 
@@ -293,22 +292,22 @@ $$\text{Total} = (8\times64+64) + (64\times32+32) + (32\times1+1) = 576 + 2080 +
 **Forward pass shape trace** (before any training, with random He-initialised $W^{(1)}$):
 
 ```
-District input x:  shape (8,)
-                       ↓  W^(1) @ x + b^(1)
-z^(1):             shape (64,)   — 64 pre-activations (mix of +/− values)
-                       ↓  ReLU
-a^(1):             shape (64,)   — ~32 neurons active, ~32 clamped to 0
-                       ↓  W^(2) @ a^(1) + b^(2)
-z^(2):             shape (32,)   — 32 pre-activations
-                       ↓  ReLU
-a^(2):             shape (32,)   — ~16 neurons active, ~16 clamped to 0
-                       ↓  W^(3) @ a^(2) + b^(3)
-yhat:              shape (1,)    — single scalar: predicted house value
+District input x: shape (8,)
+ ↓ W^(1) @ x + b^(1)
+z^(1): shape (64,) — 64 pre-activations (mix of +/− values)
+ ↓ ReLU
+a^(1): shape (64,) — ~32 neurons active, ~32 clamped to 0
+ ↓ W^(2) @ a^(1) + b^(2)
+z^(2): shape (32,) — 32 pre-activations
+ ↓ ReLU
+a^(2): shape (32,) — ~16 neurons active, ~16 clamped to 0
+ ↓ W^(3) @ a^(2) + b^(3)
+yhat: shape (1,) — single scalar: predicted house value
 ```
 
 Before training, all three districts receive nearly random predictions (all near 0 in standardised units). After training with backprop (Ch.3), the weight matrices learn to route high-income/coastal features to produce high $\hat{y}$ and low-income/inland features to produce low $\hat{y}$. The architecture is agnostic to the task during this chapter — it is simply a function from $\mathbb{R}^8$ to $\mathbb{R}$.
 
-> 💡 **Why ~half the neurons are active at initialisation.** He initialisation draws from $\mathcal{N}(0, \sigma)$, which is symmetric around zero. The pre-activations $z = Wx + b$ are therefore approximately symmetric too. ReLU zeros exactly the negative half, leaving ~50% active. After training, the fraction changes based on what the task requires — some neurons may specialise and fire rarely, others frequently.
+> **Why ~half the neurons are active at initialisation.** He initialisation draws from $\mathcal{N}(0, \sigma)$, which is symmetric around zero. The pre-activations $z = Wx + b$ are therefore approximately symmetric too. ReLU zeros exactly the negative half, leaving ~50% active. After training, the fraction changes based on what the task requires — some neurons may specialise and fire rarely, others frequently.
 
 
 ---
@@ -413,75 +412,75 @@ The predictions (0.494 vs −0.034) are both poor — these are random untrained
 
 ```mermaid
 graph LR
-    subgraph Input["Input Layer (8 features)"]
-        direction TB
-        X1["MedInc"]
-        X2["HouseAge"]
-        X3["AveRooms"]
-        X4["AveBedrms"]
-        X5["Population"]
-        X6["AveOccup"]
-        X7["Latitude"]
-        X8["Longitude"]
-    end
+ subgraph Input["Input Layer (8 features)"]
+ direction TB
+ X1["MedInc"]
+ X2["HouseAge"]
+ X3["AveRooms"]
+ X4["AveBedrms"]
+ X5["Population"]
+ X6["AveOccup"]
+ X7["Latitude"]
+ X8["Longitude"]
+ end
 
-    subgraph H1["Hidden Layer 1 · ReLU · 64 units"]
-        direction TB
-        H1A["●"]
-        H1B["●"]
-        H1C["●"]
-        H1D["⋮ (x61 more)"]
-    end
+ subgraph H1["Hidden Layer 1 · ReLU · 64 units"]
+ direction TB
+ H1A["●"]
+ H1B["●"]
+ H1C["●"]
+ H1D["⋮ (x61 more)"]
+ end
 
-    subgraph H2["Hidden Layer 2 · ReLU · 32 units"]
-        direction TB
-        H2A["●"]
-        H2B["●"]
-        H2C["⋮ (x30 more)"]
-    end
+ subgraph H2["Hidden Layer 2 · ReLU · 32 units"]
+ direction TB
+ H2A["●"]
+ H2B["●"]
+ H2C["⋮ (x30 more)"]
+ end
 
-    subgraph Out["Output Layer · Linear · 1 unit"]
-        Y["yhat (x$100k)"]
-    end
+ subgraph Out["Output Layer · Linear · 1 unit"]
+ Y["yhat (x$100k)"]
+ end
 
-    X1 & X2 & X3 & X4 & X5 & X6 & X7 & X8 --> H1A & H1B & H1C & H1D
-    H1A & H1B & H1C & H1D --> H2A & H2B & H2C
-    H2A & H2B & H2C --> Y
+ X1 & X2 & X3 & X4 & X5 & X6 & X7 & X8 --> H1A & H1B & H1C & H1D
+ H1A & H1B & H1C & H1D --> H2A & H2B & H2C
+ H2A & H2B & H2C --> Y
 
-    style Input fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style H1 fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style H2 fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style Out fill:#15803d,color:#fff,stroke:#15803d
+ style Input fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style H1 fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style H2 fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style Out fill:#15803d,color:#fff,stroke:#15803d
 ```
 
 ### Activation function decision tree
 
 ```mermaid
 graph TD
-    A["Where is this activation used?"] --> B["Hidden layer"]
-    A --> C["Binary output"]
-    A --> D["Multi-class output"]
-    A --> E["Regression output"]
+ A["Where is this activation used?"] --> B["Hidden layer"]
+ A --> C["Binary output"]
+ A --> D["Multi-class output"]
+ A --> E["Regression output"]
 
-    B --> B1["ReLU: max(0,z)\nGradient = 1 or 0\nNo saturation for z>0\nDefault choice"]
-    B --> B2["Tanh: zero-centred\nRange (-1,1)\nBetter than sigmoid\nUse in RNNs"]
-    B --> B3["Sigmoid hidden AVOID\nMax gradient 0.25\nVanishes at depth\nDropped since 2012"]
+ B --> B1["ReLU: max(0,z)\nGradient = 1 or 0\nNo saturation for z>0\nDefault choice"]
+ B --> B2["Tanh: zero-centred\nRange (-1,1)\nBetter than sigmoid\nUse in RNNs"]
+ B --> B3["Sigmoid hidden AVOID\nMax gradient 0.25\nVanishes at depth\nDropped since 2012"]
 
-    C --> C1["Sigmoid: 1/(1+e^-z)\nOutput in (0,1)\nProbability of class=1\nPair with BCE loss"]
-    D --> D1["Softmax: e^zk / sum e^zj\nOutputs sum to 1\nK-class probabilities\nPair with cross-entropy"]
-    E --> E1["Linear (identity)\nOutput in (-inf,+inf)\nNo price clipping\nPair with MSE/Huber"]
+ C --> C1["Sigmoid: 1/(1+e^-z)\nOutput in (0,1)\nProbability of class=1\nPair with BCE loss"]
+ D --> D1["Softmax: e^zk / sum e^zj\nOutputs sum to 1\nK-class probabilities\nPair with cross-entropy"]
+ E --> E1["Linear (identity)\nOutput in (-inf,+inf)\nNo price clipping\nPair with MSE/Huber"]
 
-    style A fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style B fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style C fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style D fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style E fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style B1 fill:#15803d,color:#fff,stroke:#15803d
-    style B2 fill:#b45309,color:#fff,stroke:#b45309
-    style B3 fill:#b91c1c,color:#fff,stroke:#b91c1c
-    style C1 fill:#15803d,color:#fff,stroke:#15803d
-    style D1 fill:#15803d,color:#fff,stroke:#15803d
-    style E1 fill:#15803d,color:#fff,stroke:#15803d
+ style A fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style B fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style C fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style D fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style E fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style B1 fill:#15803d,color:#fff,stroke:#15803d
+ style B2 fill:#b45309,color:#fff,stroke:#b45309
+ style B3 fill:#b91c1c,color:#fff,stroke:#b91c1c
+ style C1 fill:#15803d,color:#fff,stroke:#15803d
+ style D1 fill:#15803d,color:#fff,stroke:#15803d
+ style E1 fill:#15803d,color:#fff,stroke:#15803d
 ```
 
 ---
@@ -559,47 +558,47 @@ graph TD
 
 ```mermaid
 flowchart TD
-    Start["Training a neural network"] --> CheckLoss{"Loss converging?"}
+ Start["Training a neural network"] --> CheckLoss{"Loss converging?"}
 
-    CheckLoss -->|"Yes, but predictions wrong range"| OutputAct["Check output activation"]
-    OutputAct --> FixOut["Regression: no activation\nBinary: sigmoid\nMulti-class: softmax"]
+ CheckLoss -->|"Yes, but predictions wrong range"| OutputAct["Check output activation"]
+ OutputAct --> FixOut["Regression: no activation\nBinary: sigmoid\nMulti-class: softmax"]
 
-    CheckLoss -->|"No, stuck near initial value"| CheckSym{"All neurons identical after training?"}
-    CheckSym -->|"Yes"| ZeroInit["Zero initialisation"]
-    ZeroInit --> FixInit["He init for ReLU\nXavier for sigmoid/tanh"]
+ CheckLoss -->|"No, stuck near initial value"| CheckSym{"All neurons identical after training?"}
+ CheckSym -->|"Yes"| ZeroInit["Zero initialisation"]
+ ZeroInit --> FixInit["He init for ReLU\nXavier for sigmoid/tanh"]
 
-    CheckSym -->|"No"| CheckOsc{"Loss oscillating or diverging?"}
-    CheckOsc -->|"Yes"| Unscaled["Unscaled inputs"]
-    Unscaled --> FixScale["StandardScaler on train set\nTransform train+test"]
+ CheckSym -->|"No"| CheckOsc{"Loss oscillating or diverging?"}
+ CheckOsc -->|"Yes"| Unscaled["Unscaled inputs"]
+ Unscaled --> FixScale["StandardScaler on train set\nTransform train+test"]
 
-    CheckOsc -->|"No"| CheckDead{"Many neurons always output 0?"}
-    CheckDead -->|"Yes"| DeadReLU["Dead ReLU neurons"]
-    DeadReLU --> FixDead["Reduce LR, verify He init\nConsider Leaky ReLU"]
+ CheckOsc -->|"No"| CheckDead{"Many neurons always output 0?"}
+ CheckDead -->|"Yes"| DeadReLU["Dead ReLU neurons"]
+ DeadReLU --> FixDead["Reduce LR, verify He init\nConsider Leaky ReLU"]
 
-    CheckDead -->|"No"| CheckVanish{"Early layers not learning?"}
-    CheckVanish -->|"Yes"| Sigmoid["Sigmoid in hidden layers"]
-    Sigmoid --> FixSigmoid["Replace hidden sigmoid with ReLU"]
+ CheckDead -->|"No"| CheckVanish{"Early layers not learning?"}
+ CheckVanish -->|"Yes"| Sigmoid["Sigmoid in hidden layers"]
+ Sigmoid --> FixSigmoid["Replace hidden sigmoid with ReLU"]
 
-    CheckVanish -->|"No"| Good["Network training correctly"]
+ CheckVanish -->|"No"| Good["Network training correctly"]
 
-    FixOut --> Good
-    FixInit --> Good
-    FixScale --> Good
-    FixDead --> Good
-    FixSigmoid --> Good
+ FixOut --> Good
+ FixInit --> Good
+ FixScale --> Good
+ FixDead --> Good
+ FixSigmoid --> Good
 
-    style Start fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style Good fill:#15803d,color:#fff,stroke:#15803d
-    style ZeroInit fill:#b91c1c,color:#fff,stroke:#b91c1c
-    style Unscaled fill:#b91c1c,color:#fff,stroke:#b91c1c
-    style DeadReLU fill:#b91c1c,color:#fff,stroke:#b91c1c
-    style Sigmoid fill:#b91c1c,color:#fff,stroke:#b91c1c
-    style OutputAct fill:#b45309,color:#fff,stroke:#b45309
-    style FixOut fill:#b45309,color:#fff,stroke:#b45309
-    style FixInit fill:#b45309,color:#fff,stroke:#b45309
-    style FixScale fill:#b45309,color:#fff,stroke:#b45309
-    style FixDead fill:#b45309,color:#fff,stroke:#b45309
-    style FixSigmoid fill:#b45309,color:#fff,stroke:#b45309
+ style Start fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style Good fill:#15803d,color:#fff,stroke:#15803d
+ style ZeroInit fill:#b91c1c,color:#fff,stroke:#b91c1c
+ style Unscaled fill:#b91c1c,color:#fff,stroke:#b91c1c
+ style DeadReLU fill:#b91c1c,color:#fff,stroke:#b91c1c
+ style Sigmoid fill:#b91c1c,color:#fff,stroke:#b91c1c
+ style OutputAct fill:#b45309,color:#fff,stroke:#b45309
+ style FixOut fill:#b45309,color:#fff,stroke:#b45309
+ style FixInit fill:#b45309,color:#fff,stroke:#b45309
+ style FixScale fill:#b45309,color:#fff,stroke:#b45309
+ style FixDead fill:#b45309,color:#fff,stroke:#b45309
+ style FixSigmoid fill:#b45309,color:#fff,stroke:#b45309
 ```
 
 ---
@@ -610,7 +609,7 @@ flowchart TD
 
 **Immediate next chapters:**
 
-- **[Ch.3 — Backpropagation & Optimisers](../ch03_backprop_optimisers)**: Derives the chain rule for propagating gradients backward through the exact architecture you built here. Without backprop, the 2,689 parameters have no way to improve. Ch.3 introduces Adam — converges 5–10× faster than vanilla SGD on California Housing. ⚡ **This is where ~$55k MAE becomes achievable.**
+- **[Ch.3 — Backpropagation & Optimisers](../ch03_backprop_optimisers)**: Derives the chain rule for propagating gradients backward through the exact architecture you built here. Without backprop, the 2,689 parameters have no way to improve. Ch.3 introduces Adam — converges 5–10× faster than vanilla SGD on California Housing. **This is where ~$55k MAE becomes achievable.**
 
 - **[Ch.4 — Regularisation](../ch04_regularisation)**: After Ch.3 gets MAE to ~$55k on training data, validation MAE will be ~$62k — the model is memorising training neighbourhoods. Ch.4 adds L2 weight decay, dropout (randomly zeroing activations during training), and early stopping. The forward pass equations from this chapter remain unchanged; regularisation operates on top.
 
@@ -633,8 +632,8 @@ flowchart TD
 This chapter built a **regression** head (linear output + MSE). UnifiedAI requires *both* regression (California Housing MAE) *and* classification (CelebA face attributes). The solution: **shared hidden layers, separate output heads**:
 
 ```
-x  -->  [64 ReLU]  -->  [32 ReLU]  -->  yhat_regression     (linear,  MSE loss)
-                                  \-->  yhat_classification  (sigmoid, BCE loss)
+x --> [64 ReLU] --> [32 ReLU] --> yhat_regression (linear, MSE loss)
+ \--> yhat_classification (sigmoid, BCE loss)
 ```
 
 Hidden layers learn a universal representation; output heads are task-specific adapters. This multi-task architecture is introduced in Ch.5 (CNNs) and fully realised in Ch.9 (Metrics & Multi-task Learning).
@@ -644,29 +643,27 @@ Hidden layers learn a universal representation; output heads are task-specific a
 ## 11 · Progress Check — What We Can Solve Now
 
 ![Progress check](img/ch02-neural-networks-progress-check.png)
-
-✅ **Unlocked this chapter:**
-- ✅ **Full MLP architecture**: 8 → 64 (ReLU) → 32 (ReLU) → 1 (linear) — blueprint complete
-- ✅ **Activation function selection**: ReLU for hidden layers (no gradient saturation); linear output for regression
-- ✅ **Weight initialisation**: He init for ReLU layers — variance preserved; symmetry broken
-- ✅ **Forward pass**: Can compute predictions layer-by-layer from any input vector — verified by hand arithmetic for two distinct inputs
-- ✅ **Parameter count**: 2,689 parameters — well-conditioned for 20,640 training samples
-- ✅ **Non-linearity proof of concept**: Architecture capable of ~$55k MAE (25% better than linear) once trained
-
-❌ **Still can't do:**
-- ❌ **Train the network** — forward pass computes predictions but gradients are not yet computed
-- ❌ **Improve the weights** — 2,689 random parameters produce random predictions (Example 1: yhat = 0.494 vs true ~4.5 for a San Jose district)
-- ❌ **Achieve ~$55k MAE** — the architecture supports it but only backpropagation can realise it
-- ❌ **Guard against overfitting** — no train/validation split; memorisation not yet prevented
+**Unlocked this chapter:**
+- **Full MLP architecture**: 8 → 64 (ReLU) → 32 (ReLU) → 1 (linear) — blueprint complete
+- **Activation function selection**: ReLU for hidden layers (no gradient saturation); linear output for regression
+- **Weight initialisation**: He init for ReLU layers — variance preserved; symmetry broken
+- **Forward pass**: Can compute predictions layer-by-layer from any input vector — verified by hand arithmetic for two distinct inputs
+- **Parameter count**: 2,689 parameters — well-conditioned for 20,640 training samples
+- **Non-linearity proof of concept**: Architecture capable of ~$55k MAE (25% better than linear) once trained
+**Still can't do:**
+- **Train the network** — forward pass computes predictions but gradients are not yet computed
+- **Improve the weights** — 2,689 random parameters produce random predictions (Example 1: yhat = 0.494 vs true ~4.5 for a San Jose district)
+- **Achieve ~$55k MAE** — the architecture supports it but only backpropagation can realise it
+- **Guard against overfitting** — no train/validation split; memorisation not yet prevented
 
 **UnifiedAI constraint status:**
 
 | Constraint | Target | Status | Blocker |
 |---|---|---|---|
 | #1 ACCURACY | ≤$28k MAE | ⏳ Architecture ready — ~$55k possible | Backprop needed (Ch.3) |
-| #2 GENERALIZATION | Unseen districts | ❌ | Regularisation needed (Ch.4) |
+| #2 GENERALIZATION | Unseen districts | | Regularisation needed (Ch.4) |
 | #3 MULTI-TASK | Same arch, dual head | ⏳ Architecture supports it | Output head not yet swapped |
-| #4 INTERPRETABILITY | Explainable features | ❌ | Attention mechanism needed (Ch.10) |
+| #4 INTERPRETABILITY | Explainable features | | Attention mechanism needed (Ch.10) |
 | #5 PRODUCTION | <100ms inference | ⏳ 2,689 params → fast | Deployment pipeline needed |
 
 **Real-world status:** The blueprint is complete and the forward pass is verified. The network is a dormant engine — all the cylinders are in place, but there is no ignition yet. Chapter 3 provides the spark.
@@ -679,4 +676,4 @@ This chapter defined the architecture: layers, activations, initialisation, and 
 
 **Chapter 3** works backwards through everything you just built. It applies the **chain rule** to compute $\frac{\partial L}{\partial W^{(\ell)}}$ and $\frac{\partial L}{\partial \mathbf{b}^{(\ell)}}$ for every layer simultaneously — propagating the loss signal from the output (where the error is known) back through ReLU and linear layers to the input. It then introduces the **Adam optimiser**, which adapts the learning rate per parameter and converges 5–10× faster than vanilla SGD on California Housing. By the end of Ch.3, the 2,689 parameters will have been updated hundreds of times, and the model will achieve ~$55k MAE on held-out districts — the first real proof that neural networks beat the $70k linear baseline.
 
-> ⚡ **One chapter away from the $55k MAE milestone** — the architecture is ready. Ch.3 pulls the trigger.
+> **One chapter away from the $55k MAE milestone** — the architecture is ready. Ch.3 pulls the trigger.

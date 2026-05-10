@@ -25,7 +25,7 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Launch **UnifiedAI** — a production home valuation + market attribute system satisfying 5 constraints:
+> **The mission**: Launch **UnifiedAI** — a production home valuation + market attribute system satisfying 5 constraints:
 > 1. **ACCURACY**: ≤$28k MAE (regression) + ≥95% avg accuracy (classification)
 > 2. **GENERALIZATION**: Unseen districts + unseen faces from CelebA
 > 3. **MULTI-TASK**: Same architecture handles both regression and classification
@@ -33,21 +33,21 @@
 > 5. **PRODUCTION**: <100ms inference + TensorBoard monitoring
 
 **What we know so far:**
-- ✅ **Ch.1–2** (Neural Networks + XOR): Dense feedforward networks approximate any function — ~$48k MAE
-- ✅ **Ch.3** (Backprop + Adam): Training converges — ~$45k MAE
-- ✅ **Ch.4** (Regularisation): Dropout + L2 prevent overfitting — stable $43k MAE on validation
-- ✅ **Ch.5** (CNNs): Spatial features extracted from aerial images for CelebA
-- ✅ **Ch.6** (RNNs/LSTMs): Sequential modelling — but bottlenecked by hidden state serialisation
-- ✅ **Ch.9** (Sequences → Attention): Soft dictionary lookup computed; 8 × 8 attention matrix built
-- ❌ **But $43k > $28k target** — we're still 54% above the accuracy constraint
-- ❌ **Ch.9's single-head attention cannot capture all feature relationships simultaneously**
+- **Ch.1–2** (Neural Networks + XOR): Dense feedforward networks approximate any function — ~$48k MAE
+- **Ch.3** (Backprop + Adam): Training converges — ~$45k MAE
+- **Ch.4** (Regularisation): Dropout + L2 prevent overfitting — stable $43k MAE on validation
+- **Ch.5** (CNNs): Spatial features extracted from aerial images for CelebA
+- **Ch.6** (RNNs/LSTMs): Sequential modelling — but bottlenecked by hidden state serialisation
+- **Ch.9** (Sequences → Attention): Soft dictionary lookup computed; 8 × 8 attention matrix built
+- **But $43k > $28k target** — we're still 54% above the accuracy constraint
+- **Ch.9's single-head attention cannot capture all feature relationships simultaneously**
 
 **What's blocking us — the single-head limitation:**
 
 Ch.9's attention mechanism looks for one type of relationship per query token. For the high-value coastal district in our running example, the single head must choose:
 
-> *Does MedInc attend to Latitude (geographic context)?*  
-> *Or does MedInc attend to HouseAge (depreciation adjustment)?*  
+> *Does MedInc attend to Latitude (geographic context)?*
+> *Or does MedInc attend to HouseAge (depreciation adjustment)?*
 > *Or does MedInc attend to AveRooms (luxury signal)?*
 
 **It cannot do all three at once.** The single set of $W_Q, W_K, W_V$ matrices is trained to one consensus view. But California housing prices are shaped by at least four structurally different relationship types:
@@ -75,9 +75,9 @@ Additionally, the current Ch.9 architecture has no positional encoding and no re
 | **Full parallelism** | LSTM processes tokens one-by-one (180ms); Transformer processes all at once (45ms) | #5 PRODUCTION |
 
 **Target impact after this chapter:**
-- ≤$28k MAE ✅ — multi-head attention captures all four housing relationship types
-- ≥95% CelebA accuracy ✅ — attention captures long-range face-attribute dependencies
-- <100ms inference ✅ — full parallelism replaces sequential LSTM bottleneck
+- ≤$28k MAE — multi-head attention captures all four housing relationship types
+- ≥95% CelebA accuracy — attention captures long-range face-attribute dependencies
+- <100ms inference — full parallelism replaces sequential LSTM bottleneck
 - **UnifiedAI mission: COMPLETE**
 
 ---
@@ -92,7 +92,7 @@ Additionally, the current Ch.9 architecture has no positional encoding and no re
 
 A **transformer encoder** processes an entire sequence in parallel by running $h$ independent scaled dot-product attention computations — called **heads** — simultaneously on learned projections of the input, then combining their outputs through a learned mixing matrix. Each head specialises in a different relationship pattern without any coordination penalty because the computation is independent. **No recurrence, no bottleneck**: token 7 can directly attend to token 1 in a single matrix multiply, and the gradient path is equally direct in the backward pass.
 
-> ➡️ **The key counterintuition:** Vaswani et al. showed you can discard RNN recurrence entirely and lose *nothing* — as long as you inject position information explicitly and stack enough encoder blocks. The positional encoding buys back the order signal; the residuals buy back the depth. What you gain is full parallelism across the sequence length dimension.
+> ➡ **The key counterintuition:** Vaswani et al. showed you can discard RNN recurrence entirely and lose *nothing* — as long as you inject position information explicitly and stack enough encoder blocks. The positional encoding buys back the order signal; the residuals buy back the depth. What you gain is full parallelism across the sequence length dimension.
 
 ---
 
@@ -124,7 +124,7 @@ We treat the California Housing dataset's 8 census features as an **8-token sequ
 
 **Why this example works pedagogically:** The attention weight $A[i, j]$ for head $k$ tells you exactly how much token $i$ attended to token $j$ under that head's learned relationship lens. When Head 2 shows `Latitude` attending strongly to `Longitude`, the model is computing: *"these two features jointly identify the coastal Bay Area cluster — the location premium belongs to their combination, not either alone."*
 
-> 💡 **The real unlock:** Once you understand transformers on this 8-token tabular example, applying them to 50-token text descriptions is architecturally identical — just change $T=8$ to $T=50$ and swap the input projection. Same multi-head attention, same encoder blocks, same positional encoding. The architecture is task-agnostic.
+> **The real unlock:** Once you understand transformers on this 8-token tabular example, applying them to 50-token text descriptions is architecturally identical — just change $T=8$ to $T=50$ and swap the input projection. Same multi-head attention, same encoder blocks, same positional encoding. The architecture is task-agnostic.
 
 ---
 
@@ -133,40 +133,40 @@ We treat the California Housing dataset's 8 census features as an **8-token sequ
 One encoder block transforms an input $X \in \mathbb{R}^{n \times d_\text{model}}$ to an output of identical shape:
 
 ```
-Input X                                     shape: (n, d_model)
+Input X shape: (n, d_model)
  │
- ├─ Add positional encoding PE              shape: (n, d_model)   ← done once before block 1
+ ├─ Add positional encoding PE shape: (n, d_model) ← done once before block 1
  │
 ┌─────────────────────────────────────────────────────────────┐
-│  ENCODER BLOCK (repeated N times)                           │
-│                                                             │
-│  ┌─ LayerNorm(X)                          (n, d_model)      │
-│  │                                                          │
-│  │  ┌── Head 1: Attention(Q₁,K₁,V₁)    (n, d_k)          │
-│  │  ├── Head 2: Attention(Q₂,K₂,V₂)    (n, d_k)          │
-│  │  ├── ...                                                  │
-│  │  └── Head h: Attention(Qₕ,Kₕ,Vₕ)    (n, d_k)          │
-│  │                                                          │
-│  │  Concat all heads                     (n, h·d_k)        │
-│  │  Multiply by W_O                      (n, d_model)       │
-│  │                                                          │
-│  └─ Residual: X ← X + MHA_output        (n, d_model)  ←──┤
-│                                                             │
-│  ┌─ LayerNorm(X)                          (n, d_model)      │
-│  │                                                          │
-│  │  FFN: max(0, X·W₁+b₁)·W₂+b₂          (n, d_model)     │
-│  │  Expand: d_model → d_ff = 4·d_model                     │
-│  │  Contract: d_ff → d_model                               │
-│  │                                                          │
-│  └─ Residual: X ← X + FFN_output        (n, d_model)  ←──┤
-│                                                             │
+│ ENCODER BLOCK (repeated N times) │
+│ │
+│ ┌─ LayerNorm(X) (n, d_model) │
+│ │ │
+│ │ ┌── Head 1: Attention(Q₁,K₁,V₁) (n, d_k) │
+│ │ ├── Head 2: Attention(Q₂,K₂,V₂) (n, d_k) │
+│ │ ├── ... │
+│ │ └── Head h: Attention(Qₕ,Kₕ,Vₕ) (n, d_k) │
+│ │ │
+│ │ Concat all heads (n, h·d_k) │
+│ │ Multiply by W_O (n, d_model) │
+│ │ │
+│ └─ Residual: X ← X + MHA_output (n, d_model) ←──┤
+│ │
+│ ┌─ LayerNorm(X) (n, d_model) │
+│ │ │
+│ │ FFN: max(0, X·W₁+b₁)·W₂+b₂ (n, d_model) │
+│ │ Expand: d_model → d_ff = 4·d_model │
+│ │ Contract: d_ff → d_model │
+│ │ │
+│ └─ Residual: X ← X + FFN_output (n, d_model) ←──┤
+│ │
 └─────────────────────────────────────────────────────────────┘
  │
-Output X                                    shape: (n, d_model)
+Output X shape: (n, d_model)
  │
-Pool (mean across n) or use [CLS] token     shape: (d_model,)
+Pool (mean across n) or use [CLS] token shape: (d_model,)
  │
-Linear projection head                      shape: (1,) or (C,)
+Linear projection head shape: (1,) or (C,)
 ```
 
 **Shape summary for $n=8$, $d_\text{model}=512$, $h=8$, $d_k=64$, $N=6$:**
@@ -211,7 +211,7 @@ $$\text{MultiHead}(X) = \text{Concat}\!\left(\text{head}_1, \ldots, \text{head}_
 
 $$\underbrace{3 \times h \times d_\text{model} \times d_k}_{W_Q, W_K, W_V} + \underbrace{d_\text{model}^2}_{W_O} = 3 \times 8 \times 512 \times 64 + 512^2 = 786{,}432 + 262{,}144 = 1{,}048{,}576 \approx 1\text{M}$$
 
-> 💡 **Connection to Ch.9:** Ch.9 computed attention with identity projections ($W_Q = W_K = W_V = I$). This chapter adds **learned** $W_Q^{(i)}, W_K^{(i)}, W_V^{(i)}$ — the model trains to find the optimal projection subspace for each head. That single change is what allows Head 2 to specialise in geographic proximity while Head 1 specialises in income relationships.
+> **Connection to Ch.9:** Ch.9 computed attention with identity projections ($W_Q = W_K = W_V = I$). This chapter adds **learned** $W_Q^{(i)}, W_K^{(i)}, W_V^{(i)}$ — the model trains to find the optimal projection subspace for each head. That single change is what allows Head 2 to specialise in geographic proximity while Head 1 specialises in income relationships.
 
 ---
 
@@ -338,7 +338,7 @@ $$\boxed{\text{MultiHead}(X)[0] = [\mathbf{8.30},\ \mathbf{0.50},\ \mathbf{-0.86
 
 5. **Residual + LayerNorm come next** — the output above is added back to the original $X[0]$ (residual), then LayerNorm stabilizes the distribution before the FFN sublayer.
 
-> ⚡ **This is why transformers work:** Two heads captured two orthogonal relationships (income, geography) in a single forward pass. With $h=8$ heads and $N=6$ stacked blocks, the model builds a rich hierarchy of multi-perspective representations — all in parallel, all differentiable, all interpretable via attention weight inspection.
+> **This is why transformers work:** Two heads captured two orthogonal relationships (income, geography) in a single forward pass. With $h=8$ heads and $N=6$ stacked blocks, the model builds a rich hierarchy of multi-perspective representations — all in parallel, all differentiable, all interpretable via attention weight inspection.
 
 ---
 
@@ -426,13 +426,13 @@ $$\boxed{X'[1] = [\mathbf{1.541},\ \mathbf{0.740},\ \mathbf{0.910},\ \mathbf{1.1
 3. **Addition preserves semantic content** — the original embedding values (income signal, age signal) remain; PE adds orthogonal position information without overwriting learned features.
 4. **This happens once before block 1** — all subsequent encoder layers operate on $X'$, which now has both semantic content and position awareness.
 
-> ⚡ **Critical detail:** Positional encoding is added before the first encoder block and never recomputed. The same $X + \text{PE}$ flows through all $N$ layers. This is why residual connections are essential — they allow the original position-encoded input to bypass transformations and remain accessible at every depth.
+> **Critical detail:** Positional encoding is added before the first encoder block and never recomputed. The same $X + \text{PE}$ flows through all $N$ layers. This is why residual connections are essential — they allow the original position-encoded input to bypass transformations and remain accessible at every depth.
 
 **Why sinusoidal? Relative positions are constant linear offsets in PE space.**
 
 Using the angle-addition identity: $\sin(pos + k) = \sin(pos)\cos(k) + \cos(pos)\sin(k)$, so $\text{PE}(pos + k)$ is a **linear function of $\text{PE}(pos)$** for any fixed offset $k$. This means the model can learn to recognise "token at distance 3 ahead" as a learnable linear transformation applied to the current position's encoding — relative position relationships are algebraically accessible even for positions never seen during training.
 
-> 💡 **Learned vs. sinusoidal:** Modern LLMs (BERT, GPT) use learned positional embeddings or RoPE (Rotary Positional Embedding). Sinusoidal requires no extra parameters and generalises to longer sequences. Use sinusoidal to understand the mechanism; use learned or RoPE in production.
+> **Learned vs. sinusoidal:** Modern LLMs (BERT, GPT) use learned positional embeddings or RoPE (Rotary Positional Embedding). Sinusoidal requires no extra parameters and generalises to longer sequences. Use sinusoidal to understand the mechanism; use learned or RoPE in production.
 
 ---
 
@@ -461,9 +461,9 @@ $$\text{LN}(\mathbf{x}) = \gamma \cdot \frac{\mathbf{x} - \mu}{\sigma + \varepsi
 
 $\text{LN}([1.0,\ 2.0,\ 3.0,\ 4.0]) = [\mathbf{-1.342},\ \mathbf{-0.447},\ \mathbf{+0.447},\ \mathbf{+1.342}]$
 
-**Verification:** Mean of output $= 0.000$ ✅ · Variance $\approx 1.000$ ✅
+**Verification:** Mean of output $= 0.000$ · Variance $\approx 1.000$
 
-> ⚠️ **LayerNorm vs BatchNorm:** BatchNorm averages statistics across the *batch* — training and inference statistics differ, causing instability at small batch sizes or variable-length sequences. LayerNorm averages statistics across *features* for each token independently — no discrepancy between training and inference, no instability with variable lengths.
+> **Warning — LayerNorm vs BatchNorm:** BatchNorm averages statistics across the *batch* — training and inference statistics differ, causing instability at small batch sizes or variable-length sequences. LayerNorm averages statistics across *features* for each token independently — no discrepancy between training and inference, no instability with variable lengths.
 
 ---
 
@@ -476,11 +476,11 @@ $$\text{FFN}(\mathbf{x}) = \max(0,\ \mathbf{x} W_1 + \mathbf{b}_1)\ W_2 + \mathb
 **Dimensions** ($d_\text{model}=4$, $d_\text{ff}=16$, the standard $4\times$ expansion ratio):
 
 ```
-Input token:  x         shape: (d_model,)  = (4,)
-              ↓  W₁: (d_model × d_ff)      = (4 × 16)
-Hidden layer: h = ReLU(x·W₁ + b₁)  shape: (d_ff,) = (16,)
-              ↓  W₂: (d_ff × d_model)      = (16 × 4)
-Output:       FFN(x)    shape: (d_model,)  = (4,) ← same as input
+Input token: x shape: (d_model,) = (4,)
+ ↓ W₁: (d_model × d_ff) = (4 × 16)
+Hidden layer: h = ReLU(x·W₁ + b₁) shape: (d_ff,) = (16,)
+ ↓ W₂: (d_ff × d_model) = (16 × 4)
+Output: FFN(x) shape: (d_model,) = (4,) ← same as input
 ```
 
 **Complete walkthrough — MedInc token after multi-head attention:**
@@ -549,7 +549,7 @@ $$\boxed{\mathbf{x}_{\text{final}} = [\mathbf{1.75},\ \mathbf{0.01},\ \mathbf{0.
 
 5. **Same $W_1, W_2$ for all tokens** — unlike attention (which computes token-specific weights via softmax), the FFN applies the same learned transformation to every position. The transformation is position-wise but weight-shared across the sequence.
 
-> ⚡ **Why $4\times$ expansion?** The FFN is the model's position-wise memory bank. The hidden expansion gives each token a richer set of intermediate features to combine before projecting back. The $4\times$ ratio was chosen empirically in the original paper — reducing to $2\times$ noticeably hurts performance on translation benchmarks; increasing beyond $4\times$ shows diminishing returns for standard tasks while quadrupling memory and compute costs.
+> **Why $4\times$ expansion?** The FFN is the model's position-wise memory bank. The hidden expansion gives each token a richer set of intermediate features to combine before projecting back. The $4\times$ ratio was chosen empirically in the original paper — reducing to $2\times$ noticeably hurts performance on translation benchmarks; increasing beyond $4\times$ shows diminishing returns for standard tasks while quadrupling memory and compute costs.
 
 ---
 
@@ -661,85 +661,85 @@ $$\boxed{\text{MultiHead}(X) = \begin{pmatrix}\mathbf{0.802} & \mathbf{0.599} & 
 
 ```mermaid
 flowchart TD
-    INPUT["Input X\n(n × d_model)"]:::info --> PE
-    PE["Add Positional Encoding\nX ← X + PE\n(n × d_model)"]:::info --> LN1
+ INPUT["Input X\n(n × d_model)"]:::info --> PE
+ PE["Add Positional Encoding\nX ← X + PE\n(n × d_model)"]:::info --> LN1
 
-    LN1["LayerNorm"]:::primary --> MHA
+ LN1["LayerNorm"]:::primary --> MHA
 
-    subgraph MHA["Multi-Head Attention"]
-        direction TB
-        H1["Head 1\nW_Q¹ W_K¹ W_V¹\n(d_model × d_k)"]:::success
-        H2["Head 2\nW_Q² W_K² W_V²\n(d_model × d_k)"]:::success
-        Hh["Head h\nW_Qʰ W_Kʰ W_Vʰ\n(d_model × d_k)"]:::success
-        CONCAT["Concat heads → (n × d_model)"]:::primary
-        WO["× W_O  (d_model × d_model)"]:::primary
-        H1 --> CONCAT
-        H2 --> CONCAT
-        Hh --> CONCAT
-        CONCAT --> WO
-    end
+ subgraph MHA["Multi-Head Attention"]
+ direction TB
+ H1["Head 1\nW_Q¹ W_K¹ W_V¹\n(d_model × d_k)"]:::success
+ H2["Head 2\nW_Q² W_K² W_V²\n(d_model × d_k)"]:::success
+ Hh["Head h\nW_Qʰ W_Kʰ W_Vʰ\n(d_model × d_k)"]:::success
+ CONCAT["Concat heads → (n × d_model)"]:::primary
+ WO["× W_O (d_model × d_model)"]:::primary
+ H1 --> CONCAT
+ H2 --> CONCAT
+ Hh --> CONCAT
+ CONCAT --> WO
+ end
 
-    MHA --> RES1
-    INPUT --> RES1["Residual: X ← X + MHA_out\n(n × d_model)"]:::caution
-    RES1 --> LN2["LayerNorm"]:::primary
-    LN2 --> FFN
+ MHA --> RES1
+ INPUT --> RES1["Residual: X ← X + MHA_out\n(n × d_model)"]:::caution
+ RES1 --> LN2["LayerNorm"]:::primary
+ LN2 --> FFN
 
-    subgraph FFN["Feed-Forward Network"]
-        direction TB
-        L1["Linear: d_model → d_ff\n(n × d_ff)"]:::success
-        RELU["ReLU activation"]:::caution
-        L2["Linear: d_ff → d_model\n(n × d_model)"]:::success
-        L1 --> RELU --> L2
-    end
+ subgraph FFN["Feed-Forward Network"]
+ direction TB
+ L1["Linear: d_model → d_ff\n(n × d_ff)"]:::success
+ RELU["ReLU activation"]:::caution
+ L2["Linear: d_ff → d_model\n(n × d_model)"]:::success
+ L1 --> RELU --> L2
+ end
 
-    FFN --> RES2
-    RES1 --> RES2["Residual: X ← X + FFN_out\n(n × d_model)"]:::caution
-    RES2 --> OUT["Output X\n(n × d_model)\n× N encoder blocks"]:::info
+ FFN --> RES2
+ RES1 --> RES2["Residual: X ← X + FFN_out\n(n × d_model)"]:::caution
+ RES2 --> OUT["Output X\n(n × d_model)\n× N encoder blocks"]:::info
 
-    classDef primary fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    classDef success fill:#15803d,color:#fff,stroke:#15803d
-    classDef caution fill:#b45309,color:#fff,stroke:#b45309
-    classDef info fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ classDef primary fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ classDef success fill:#15803d,color:#fff,stroke:#15803d
+ classDef caution fill:#b45309,color:#fff,stroke:#b45309
+ classDef info fill:#1d4ed8,color:#fff,stroke:#1d4ed8
 ```
 
 ### Multi-head attention — 4 heads capturing different housing relationships
 
 ```mermaid
 flowchart LR
-    X["Input X\n8 tokens\n(8 × d_model)"]:::info
+ X["Input X\n8 tokens\n(8 × d_model)"]:::info
 
-    X --> H1
-    X --> H2
-    X --> H3
-    X --> H4
+ X --> H1
+ X --> H2
+ X --> H3
+ X --> H4
 
-    subgraph H1["Head 1 — Income relationships"]
-        H1A["MedInc ↔ AveRooms\nMedInc ↔ HouseAge\nW_Q¹ W_K¹ W_V¹"]:::success
-    end
+ subgraph H1["Head 1 — Income relationships"]
+ H1A["MedInc ↔ AveRooms\nMedInc ↔ HouseAge\nW_Q¹ W_K¹ W_V¹"]:::success
+ end
 
-    subgraph H2["Head 2 — Geographic proximity"]
-        H2A["Latitude ↔ Longitude\nCoastal Bay Area cluster\nW_Q² W_K² W_V²"]:::primary
-    end
+ subgraph H2["Head 2 — Geographic proximity"]
+ H2A["Latitude ↔ Longitude\nCoastal Bay Area cluster\nW_Q² W_K² W_V²"]:::primary
+ end
 
-    subgraph H3["Head 3 — Population density"]
-        H3A["Population ↔ AveOccup\nUrban density signal\nW_Q³ W_K³ W_V³"]:::caution
-    end
+ subgraph H3["Head 3 — Population density"]
+ H3A["Population ↔ AveOccup\nUrban density signal\nW_Q³ W_K³ W_V³"]:::caution
+ end
 
-    subgraph H4["Head 4 — Housing stock"]
-        H4A["AveRooms ↔ AveBedrms\nFamily vs studio mix\nW_Q⁴ W_K⁴ W_V⁴"]:::info
-    end
+ subgraph H4["Head 4 — Housing stock"]
+ H4A["AveRooms ↔ AveBedrms\nFamily vs studio mix\nW_Q⁴ W_K⁴ W_V⁴"]:::info
+ end
 
-    H1 --> CONCAT["Concat + W_O\n(8 × d_model)"]:::primary
-    H2 --> CONCAT
-    H3 --> CONCAT
-    H4 --> CONCAT
+ H1 --> CONCAT["Concat + W_O\n(8 × d_model)"]:::primary
+ H2 --> CONCAT
+ H3 --> CONCAT
+ H4 --> CONCAT
 
-    CONCAT --> OUT["Context-enriched\ntoken representations\n(8 × d_model)"]:::success
+ CONCAT --> OUT["Context-enriched\ntoken representations\n(8 × d_model)"]:::success
 
-    classDef primary fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    classDef success fill:#15803d,color:#fff,stroke:#15803d
-    classDef caution fill:#b45309,color:#fff,stroke:#b45309
-    classDef info fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ classDef primary fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ classDef success fill:#15803d,color:#fff,stroke:#15803d
+ classDef caution fill:#b45309,color:#fff,stroke:#b45309
+ classDef info fill:#1d4ed8,color:#fff,stroke:#1d4ed8
 ```
 
 ---
@@ -789,7 +789,7 @@ The transformer encoder built here is the substrate of virtually every modern AI
 | **AlphaFold 2** (protein folding) | Attention over amino acid sequence; same multi-head mechanism |
 | **Hyperparameter tuning** ([Ch.11](../ch11_hyperparameter_tuning)) | $d_\text{model}$, $h$, $N$, $d_\text{ff}$, dropout, LR schedule all require systematic search |
 
-> ➡️ **The single most important forward pointer:** Everything in the [AI track](../../../03-ai) is a transformer. The encoder you just built is the exact encoder inside BERT. Change the attention mask from all-ones to upper-triangular causal and you have GPT. Add cross-attention between encoder and decoder and you have the full sequence-to-sequence architecture behind T5 and machine translation. Master this chapter and every model in the AI track is accessible.
+> ➡ **The single most important forward pointer:** Everything in the [AI track](../../../03-ai) is a transformer. The encoder you just built is the exact encoder inside BERT. Change the attention mask from all-ones to upper-triangular causal and you have GPT. Add cross-attention between encoder and decoder and you have the full sequence-to-sequence architecture behind T5 and machine translation. Master this chapter and every model in the AI track is accessible.
 
 ### Encoder vs. Decoder — One Mask is the Only Difference
 
@@ -799,7 +799,7 @@ The transformer encoder built here is the substrate of virtually every modern AI
 | **Training objective** | Masked token prediction (fill in the blank) | Next-token prediction (what comes next) |
 | **Primary use** | Embeddings, classification, RAG retrieval | Text generation, agents, chat LLMs |
 | **Examples** | BERT, RoBERTa, all-MiniLM, sentence-transformers | GPT-4, Llama 3, Claude, Mistral |
-| **What you built in this chapter** | ✅ This chapter | +1 line of causal masking code |
+| **What you built in this chapter** | This chapter | +1 line of causal masking code |
 
 The causal mask is a single upper-triangular $-\infty$ matrix added to the raw score matrix before the softmax:
 
@@ -817,11 +817,11 @@ Positions in the future receive $e^{-\infty} = 0$ weight — the decoder literal
 
 | # | Constraint | Target | Status | How We Achieved It |
 |---|---|---|---|---|
-| **#1** | **ACCURACY** | ≤$28k MAE + ≥95% acc | ✅ **COMPLETE** | Multi-head attention ($h=8$) captures all housing relationship types simultaneously; 6-block encoder with $d_\text{model}=512$ reaches ≤$28k MAE on California Housing and ≥95% avg accuracy on CelebA |
-| **#2** | **GENERALIZATION** | Unseen districts + faces | ✅ **COMPLETE** | Positional encoding generalises to unseen position combinations; attention dropout regularises learned projections; validated on held-out California districts and unseen CelebA identities |
-| **#3** | **MULTI-TASK** | Value + segment | ✅ **COMPLETE** | Shared encoder backbone; regression head (mean-pool → Linear) and classification head (CLS token → Linear) trained jointly with combined loss |
-| **#4** | **INTERPRETABILITY** | Explainable attribution | ✅ **COMPLETE** | Per-head attention weight matrix $A[i,j]$ directly surfaces which features drove each prediction; Head 1 = MedInc → value, Head 2 = Lat/Long → location premium |
-| **#5** | **PRODUCTION** | <100ms inference | ✅ **COMPLETE** | All 8 tokens processed in parallel; measured 45ms CPU / <10ms GPU vs 180ms LSTM sequential baseline |
+| **#1** | **ACCURACY** | ≤$28k MAE + ≥95% acc | **COMPLETE** | Multi-head attention ($h=8$) captures all housing relationship types simultaneously; 6-block encoder with $d_\text{model}=512$ reaches ≤$28k MAE on California Housing and ≥95% avg accuracy on CelebA |
+| **#2** | **GENERALIZATION** | Unseen districts + faces | **COMPLETE** | Positional encoding generalises to unseen position combinations; attention dropout regularises learned projections; validated on held-out California districts and unseen CelebA identities |
+| **#3** | **MULTI-TASK** | Value + segment | **COMPLETE** | Shared encoder backbone; regression head (mean-pool → Linear) and classification head (CLS token → Linear) trained jointly with combined loss |
+| **#4** | **INTERPRETABILITY** | Explainable attribution | **COMPLETE** | Per-head attention weight matrix $A[i,j]$ directly surfaces which features drove each prediction; Head 1 = MedInc → value, Head 2 = Lat/Long → location premium |
+| **#5** | **PRODUCTION** | <100ms inference | **COMPLETE** | All 8 tokens processed in parallel; measured 45ms CPU / <10ms GPU vs 180ms LSTM sequential baseline |
 
 ### Metric Progression — California Housing MAE
 
@@ -832,7 +832,7 @@ Positions in the future receive $e^{-\infty} = 0$ weight — the decoder literal
 | Ch.4 | + Dropout + L2 | ~$43k |
 | Ch.5 | + CNN spatial features | ~$38k |
 | Ch.9 | + Single-head attention | ~$34k |
-| **Ch.10** | **+ Multi-head transformer encoder** | **≤$28k ✅** |
+| **Ch.10** | **+ Multi-head transformer encoder** | **≤$28k ** |
 
 ### Grand Narrative Closure
 

@@ -24,12 +24,12 @@
 
 | Constraint | Target | Status | Evidence |
 |------------|--------|--------|----------|
-| #1 Quality | ≥4.0/5.0 | ❌ Not applicable | Can't generate images yet |
-| #2 Speed | <30 seconds | ❌ Not applicable | No generation pipeline yet |
-| #3 Cost | <$5k hardware | ❌ Not validated | CLIP runs on laptop but no generation yet |
-| #4 Control | <5% unusable | ⚡ **Foundation laid** | Can condition generation on text (architecture ready, need diffusion model) |
-| #5 Throughput | 100+ images/day | ❌ Not applicable | No generation capability |
-| #6 Versatility | 3 modalities | ⚡ **Text-image search enabled** | Can search 10k stock photos with "blue ocean sunset" query |
+| #1 Quality | ≥4.0/5.0 | Not applicable | Can't generate images yet |
+| #2 Speed | <30 seconds | Not applicable | No generation pipeline yet |
+| #3 Cost | <$5k hardware | Not validated | CLIP runs on laptop but no generation yet |
+| #4 Control | <5% unusable | **Foundation laid** | Can condition generation on text (architecture ready, need diffusion model) |
+| #5 Throughput | 100+ images/day | Not applicable | No generation capability |
+| #6 Versatility | 3 modalities | **Text-image search enabled** | Can search 10k stock photos with "blue ocean sunset" query |
 
 ---
 
@@ -85,19 +85,19 @@ client_brief = "modern office with natural light, minimalist, professional photo
 
 # Encode text query → 512-dim embedding
 text_inputs = processor(text=[client_brief], return_tensors="pt", padding=True)
-text_embedding = model.get_text_features(**text_inputs)  # shape: (1, 512)
-text_embedding = text_embedding / text_embedding.norm(dim=-1, keepdim=True)  # L2 normalize
+text_embedding = model.get_text_features(**text_inputs) # shape: (1, 512)
+text_embedding = text_embedding / text_embedding.norm(dim=-1, keepdim=True) # L2 normalize
 
 # Encode all 10k stock images (precomputed offline)
 # image_embeddings shape: (10000, 512), all L2-normalized
 
 # Rank by cosine similarity (equivalent to dot product on unit sphere)
-similarities = (text_embedding @ image_embeddings.T).squeeze(0)  # shape: (10000,)
+similarities = (text_embedding @ image_embeddings.T).squeeze(0) # shape: (10000,)
 top_5_indices = similarities.argsort(descending=True)[:5]
 
 # Return top 5 matches to designer
 for idx in top_5_indices:
-    print(f"Image {idx}: similarity {similarities[idx]:.3f}")
+ print(f"Image {idx}: similarity {similarities[idx]:.3f}")
 # Output:
 # Image 3421: similarity 0.876 — modern office, large windows, clean desk
 # Image 7834: similarity 0.852 — minimalist workspace, natural lighting
@@ -233,10 +233,10 @@ No gradient updates to CLIP. No labelled training data for the new task. The mod
  v₄ │ 0.04 0.08 0.05 0.89 ...│ ← image 4 should match t₄
  ... │ ... │
  └────────────────────────────┘
- 
+
  Goal: push diagonal entries → 1.0
  push off-diagonal entries → 0.0
- 
+
  Cross-entropy loss treats each row as a classification problem
  (N-way classification with one correct answer per row)
 ```
@@ -269,15 +269,15 @@ model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
 processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
 
 # Precompute and index image embeddings
-image_embeddings = []  # List of 10k PIL Images
+image_embeddings = [] # List of 10k PIL Images
 for img in stock_library:
-    inputs = processor(images=img, return_tensors="pt")
-    emb = model.get_image_features(**inputs)
-    emb = emb / emb.norm(dim=-1, keepdim=True)  # L2 normalize
-    image_embeddings.append(emb.cpu().numpy())
+ inputs = processor(images=img, return_tensors="pt")
+ emb = model.get_image_features(**inputs)
+ emb = emb / emb.norm(dim=-1, keepdim=True) # L2 normalize
+ image_embeddings.append(emb.cpu().numpy())
 
-image_embeddings = np.vstack(image_embeddings)  # shape: (10000, 512)
-index = faiss.IndexFlatIP(512)  # Inner product (cosine sim on unit vectors)
+image_embeddings = np.vstack(image_embeddings) # shape: (10000, 512)
+index = faiss.IndexFlatIP(512) # Inner product (cosine sim on unit vectors)
 index.add(image_embeddings)
 
 # Real-time query: Campaign "Spring Collection Hero"
@@ -291,11 +291,11 @@ scores, indices = index.search(text_emb.cpu().numpy(), k=10)
 
 # Designer reviews top 10 in 15 seconds instead of browsing 10k images
 for rank, (idx, score) in enumerate(zip(indices[0], scores[0])):
-    print(f"{rank+1}. Image {idx}: score {score:.3f}")
+ print(f"{rank+1}. Image {idx}: score {score:.3f}")
 ```
 
 **Impact on VisualForge Constraints:**
-- **Constraint #4 (Control)**: ⚡ Text conditioning architecture validated → ready to plug into diffusion models
+- **Constraint #4 (Control)**: Text conditioning architecture validated → ready to plug into diffusion models
 - **Constraint #5 (Throughput)**: Designer time saved: 3 hours/week → 0 hours/week on manual tagging
 - **ROI**: CLIP-based search deployed → 15 hours/month saved across 5 designers → $3k/month labor savings
 
@@ -322,7 +322,7 @@ for rank, (idx, score) in enumerate(zip(indices[0], scores[0])):
 query1 = "a red circle above a blue square"
 query2 = "a blue square above a red circle"
 similarity = cosine_sim(encode_text(query1), encode_text(query2))
-print(similarity)  # Output: 0.94 (nearly identical!)
+print(similarity) # Output: 0.94 (nearly identical!)
 ```
 
 **Fix:** For spatial control, you need **ControlNet** (Ch.8) or **layout-to-image** models. CLIP is not sufficient.
@@ -340,7 +340,7 @@ print(similarity)  # Output: 0.94 (nearly identical!)
 **Example:**
 ```python
 # VisualForge: Campaign "Spring Collection" requires exact color match
-query = "coral dress"  # Client's Pantone 16-1546 (Living Coral)
+query = "coral dress" # Client's Pantone 16-1546 (Living Coral)
 results = search_clip(query, top_k=10)
 # Returns: 3 coral, 4 salmon, 2 peach, 1 orange — only 30% exact match
 ```
@@ -350,8 +350,8 @@ results = search_clip(query, top_k=10)
 **VisualForge production workaround:**
 ```python
 # Two-stage search: CLIP semantic + HSV color filter
-clip_candidates = search_clip("coral dress", top_k=100)  # Broad semantic search
-target_hsv = (15, 0.6, 0.9)  # Coral in HSV space
+clip_candidates = search_clip("coral dress", top_k=100) # Broad semantic search
+target_hsv = (15, 0.6, 0.9) # Coral in HSV space
 filtered = [img for img in clip_candidates if color_distance(img, target_hsv) < 0.1]
 # Now 80% exact color match
 ```
@@ -367,7 +367,7 @@ filtered = [img for img in clip_candidates if color_distance(img, target_hsv) < 
 **Example:**
 ```python
 # VisualForge: Campaign "Product Lineup" needs exact count
-query = "five running shoes in a row"  # Client brief: showcase 5 colorways
+query = "five running shoes in a row" # Client brief: showcase 5 colorways
 results = search_clip(query, top_k=10)
 # Returns images with 3, 4, 5, 6 shoes — no count enforcement
 ```
@@ -409,7 +409,7 @@ from transformers import CLIPModel, Trainer
 model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
 train_dataset = VisualForgeDataset(images=stock_library, captions=campaign_tags)
 trainer = Trainer(model=model, train_dataset=train_dataset, ...)
-trainer.train()  # 2 hours on single RTX 4090
+trainer.train() # 2 hours on single RTX 4090
 # Result: VisualForge-specific CLIP variant with 78% precision on domain queries
 ```
 
@@ -421,22 +421,22 @@ trainer.train()  # 2 hours on single RTX 4090
 
 | Scenario | Use CLIP | Alternative | Why |
 |----------|----------|-------------|-----|
-| Semantic image search ("modern office") | ✅ CLIP | ❌ Keyword tags | CLIP understands semantics; keywords are brittle |
-| Exact visual match (find duplicates) | ❌ CLIP | ✅ Perceptual hash (pHash) | CLIP embeddings are semantic, not pixel-exact |
-| Fine-grained attribute ("coral dress") | ⚠️ CLIP + filter | ✅ Fine-tuned CLIP or attribute classifier | CLIP coarse; fine-tune for domain |
-| Spatial layout ("logo top-left corner") | ❌ CLIP | ✅ Object detection (YOLO, GroundingDINO) | CLIP ignores spatial relationships |
-| Text in images ("find billboard with text 'Sale'") | ❌ CLIP | ✅ OCR (Tesseract) + keyword search | CLIP cannot read text |
-| Zero-shot classification ("is this a product photo?") | ✅ CLIP | ❌ Supervised classifier | CLIP zero-shot; no training data needed |
-| Cross-modal retrieval (text→image, image→text) | ✅ CLIP | ❌ Separate text/image models | CLIP shared space enables cross-modal |
-| Text-conditioned generation ("generate modern office") | ✅ CLIP (as component) | ❌ Unconditional GAN | CLIP text encoder conditions diffusion models |
+| Semantic image search ("modern office") | CLIP | Keyword tags | CLIP understands semantics; keywords are brittle |
+| Exact visual match (find duplicates) | CLIP | Perceptual hash (pHash) | CLIP embeddings are semantic, not pixel-exact |
+| Fine-grained attribute ("coral dress") | CLIP + filter | Fine-tuned CLIP or attribute classifier | CLIP coarse; fine-tune for domain |
+| Spatial layout ("logo top-left corner") | CLIP | Object detection (YOLO, GroundingDINO) | CLIP ignores spatial relationships |
+| Text in images ("find billboard with text 'Sale'") | CLIP | OCR (Tesseract) + keyword search | CLIP cannot read text |
+| Zero-shot classification ("is this a product photo?") | CLIP | Supervised classifier | CLIP zero-shot; no training data needed |
+| Cross-modal retrieval (text→image, image→text) | CLIP | Separate text/image models | CLIP shared space enables cross-modal |
+| Text-conditioned generation ("generate modern office") | CLIP (as component) | Unconditional GAN | CLIP text encoder conditions diffusion models |
 
 **VisualForge decision matrix:**
 
-- **Campaign "Spring Collection Hero"** (semantic search for reference images) → **CLIP** ✅
-- **Campaign "Product Demo"** (exact product geometry, spatial layout) → **CLIP retrieval + ControlNet generation** ✅
-- **Campaign "Brand Pattern"** (exact color matching) → **CLIP + HSV filter** ✅
-- **Quality assurance** (detect duplicates in generated outputs) → **pHash**, not CLIP ❌
-- **Text-to-image generation** (core VisualForge capability) → **CLIP text encoder + diffusion model** (Ch.4+) ✅
+- **Campaign "Spring Collection Hero"** (semantic search for reference images) → **CLIP**
+- **Campaign "Product Demo"** (exact product geometry, spatial layout) → **CLIP retrieval + ControlNet generation**
+- **Campaign "Brand Pattern"** (exact color matching) → **CLIP + HSV filter**
+- **Quality assurance** (detect duplicates in generated outputs) → **pHash**, not CLIP
+- **Text-to-image generation** (core VisualForge capability) → **CLIP text encoder + diffusion model** (Ch.4+)
 
 **Rule of thumb:** CLIP is a semantic alignment model, not a spatial/attribute/OCR model. Use it for "what objects are present" tasks, not "where/how many/what text" tasks.
 
@@ -557,13 +557,13 @@ CLIP embeddings are L2-normalised → cosine similarity = dot product on unit sp
 ## 11.5 · Progress Check — What Have We Unlocked?
 
 ### Before This Chapter
-- **Constraint #4 (Control)**: ❌ No way to condition generation on text descriptions
-- **Constraint #6 (Versatility)**: ⚡ Image embeddings only, no text-image alignment
+- **Constraint #4 (Control)**: No way to condition generation on text descriptions
+- **Constraint #6 (Versatility)**: Image embeddings only, no text-image alignment
 - **VisualForge Status**: Can't generate custom visuals from client briefs
 
 ### After This Chapter
-- **Constraint #4 (Control)**: ⚡ **Foundation laid** → Text-image alignment ready (CLIP shared space)
-- **Constraint #6 (Versatility)**: ⚡ **Text-image search enabled** → Search 10k stock photos with text queries
+- **Constraint #4 (Control)**: **Foundation laid** → Text-image alignment ready (CLIP shared space)
+- **Constraint #6 (Versatility)**: **Text-image search enabled** → Search 10k stock photos with text queries
 - **VisualForge Status**: Text conditioning architecture ready → can embed "modern office with natural light" as 512-dim vector
 
 ---
@@ -590,22 +590,22 @@ CLIP embeddings are L2-normalised → cosine similarity = dot product on unit sp
 
 | Constraint | Ch.1 Foundations | Ch.2 ViT | **Ch.3 CLIP (this chapter)** | Target | Next Unlock |
 |------------|------------------|----------|------------------------------|--------|-------------|
-| **#1 Quality** | ❌ No generation | ❌ No generation | ❌ **No generation** | ≥4.0/5.0 | Ch.4 Diffusion |
-| **#2 Speed** | ❌ N/A | ❌ N/A | ❌ **N/A** | <30 sec | Ch.5 Schedulers |
-| **#3 Cost** | ❌ N/A | ✅ ViT on laptop | ✅ **CLIP on laptop** | <$5k hardware | Ch.6 Latent Diffusion |
-| **#4 Control** | ❌ No alignment | ❌ Image only | ⚡ **Text conditioning ready** | <5% unusable | Ch.4+ (text-conditioned diffusion) |
-| **#5 Throughput** | ❌ N/A | ❌ N/A | ❌ **N/A** | 100+ imgs/day | Ch.8 Text-to-Image |
-| **#6 Versatility** | ❌ Pixel space | ⚡ Image embeddings | ⚡ **Text-image search** | 3 modalities | Ch.10 Multimodal LLM |
+| **#1 Quality** | No generation | No generation | **No generation** | ≥4.0/5.0 | Ch.4 Diffusion |
+| **#2 Speed** | N/A | N/A | **N/A** | <30 sec | Ch.5 Schedulers |
+| **#3 Cost** | N/A | ViT on laptop | **CLIP on laptop** | <$5k hardware | Ch.6 Latent Diffusion |
+| **#4 Control** | No alignment | Image only | **Text conditioning ready** | <5% unusable | Ch.4+ (text-conditioned diffusion) |
+| **#5 Throughput** | N/A | N/A | **N/A** | 100+ imgs/day | Ch.8 Text-to-Image |
+| **#6 Versatility** | Pixel space | Image embeddings | **Text-image search** | 3 modalities | Ch.10 Multimodal LLM |
 
 **Key wins after Chapter 3:**
-- ✅ **Shared embedding space**: Text and images live in same 512-dim space → cosine similarity directly comparable
-- ✅ **Text-image search deployed**: VisualForge designers search 10k stock photos with campaign briefs (17 ms latency)
-- ✅ **Text conditioning architecture validated**: CLIP text encoder ready to plug into diffusion U-Net (Ch.4+)
+- **Shared embedding space**: Text and images live in same 512-dim space → cosine similarity directly comparable
+- **Text-image search deployed**: VisualForge designers search 10k stock photos with campaign briefs (17 ms latency)
+- **Text conditioning architecture validated**: CLIP text encoder ready to plug into diffusion U-Net (Ch.4+)
 
 **What's still blocking:**
-- ❌ **Cannot generate images**: CLIP enables search but not generation → need diffusion models (Ch.4)
-- ❌ **No quality/speed metrics yet**: Can't measure generation quality/speed until we can generate (Ch.4+)
-- ❌ **Constraint #1, #2, #5 remain blocked**: All require generative capability
+- **Cannot generate images**: CLIP enables search but not generation → need diffusion models (Ch.4)
+- **No quality/speed metrics yet**: Can't measure generation quality/speed until we can generate (Ch.4+)
+- **Constraint #1, #2, #5 remain blocked**: All require generative capability
 
 **VisualForge business impact so far:**
 - **Cost savings**: $3k/month labor (designers no longer manually tag stock images)

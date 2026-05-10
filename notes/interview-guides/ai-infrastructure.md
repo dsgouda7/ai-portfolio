@@ -6,7 +6,7 @@
 
 ---
 
-> 💡 **How to use the junior/senior answer comparisons** — Each question below includes a junior-level answer and a senior-level answer. Junior answers are technically correct but surface-level. Senior answers demonstrate production experience, failure awareness, and trade-off reasoning. Hiring managers at FAANG and growth-stage AI companies distinguish these instantly. Study the DIFFERENCE between the two, not just the senior answer.
+> **How to use the junior/senior answer comparisons** — Each question below includes a junior-level answer and a senior-level answer. Junior answers are technically correct but surface-level. Senior answers demonstrate production experience, failure awareness, and trade-off reasoning. Hiring managers at FAANG and growth-stage AI companies distinguish these instantly. Study the DIFFERENCE between the two, not just the senior answer.
 
 ## 1 · Concept Map — The 10 Questions That Matter
 
@@ -34,14 +34,11 @@ Do you understand why LLM inference is fundamentally memory-bound, not compute-b
 **The Junior Answer vs Senior Answer**
 
 **Q: "Why is LLM inference slow on a high-TFLOP GPU?"**
-
-❌ **Junior**: "The model is large and there are many parameters to compute."
+**Junior**: "The model is large and there are many parameters to compute."
 *Why it signals junior:* Focuses on size without understanding the bottleneck. Doesn't distinguish compute from memory bandwidth.
-
-✅ **Senior**: "LLM decode at batch=1 has arithmetic intensity around 2–5 FLOP/byte — far left of the roofline ridge point at ~156 FLOP/byte for an A100. The GPU spends 80–90% of time waiting for weights to arrive from HBM, not computing. Adding more TFLOP/s doesn't help; bandwidth is the limit. This is why an H100 at 3.35 TB/s HBM bandwidth delivers 1.7× faster inference than an A100 at 2 TB/s — despite having 3× the compute."
+**Senior**: "LLM decode at batch=1 has arithmetic intensity around 2–5 FLOP/byte — far left of the roofline ridge point at ~156 FLOP/byte for an A100. The GPU spends 80–90% of time waiting for weights to arrive from HBM, not computing. Adding more TFLOP/s doesn't help; bandwidth is the limit. This is why an H100 at 3.35 TB/s HBM bandwidth delivers 1.7× faster inference than an A100 at 2 TB/s — despite having 3× the compute."
 *Why it signals senior:* Names arithmetic intensity, references the roofline ridge point, explains the 80–90% memory stall time, quantifies bandwidth gain vs compute gain.
-
-💡 **Key insight**: In the InferenceBase system (Llama-3-8B self-hosting), moving from an A100 to H100 gave us 1.7× throughput improvement — exactly matching the HBM bandwidth ratio, not the 3× compute ratio. Bandwidth is the real cost driver.
+**Key insight**: In the InferenceBase system (Llama-3-8B self-hosting), moving from an A100 to H100 gave us 1.7× throughput improvement — exactly matching the HBM bandwidth ratio, not the 3× compute ratio. Bandwidth is the real cost driver.
 
 **The Key Tradeoffs**
 
@@ -54,11 +51,11 @@ Do you understand why LLM inference is fundamentally memory-bound, not compute-b
 
 **Failure Mode Gotchas**
 
-⚠️ **Gotcha Q:** "We upgraded from 4×A100 to 4×H100 but only got 1.5× speedup, not 3×. Why?"
+**Warning — Gotcha Q:** "We upgraded from 4×A100 to 4×H100 but only got 1.5× speedup, not 3×. Why?"
 **Why it's hard:** Candidates assume more compute = proportional speedup without checking the actual bottleneck.
 **What to say:** "Your workload is still memory-bound. Check arithmetic intensity — if it's <50 FLOP/byte, you're paying for 3× compute you can't use. The 1.5× gain matches the bandwidth increase minus inter-GPU communication overhead. To get more speedup: increase batch size (raises arithmetic intensity) or use speculative decoding (reduces weight reads per token)."
 
-⚠️ **Gotcha Q:** "Why does a 7B model run slower than a 1B model even though we have 312 TFLOP/s available?"
+**Warning — Gotcha Q:** "Why does a 7B model run slower than a 1B model even though we have 312 TFLOP/s available?"
 **Why it's hard:** The candidate forgets that model size directly impacts memory reads per token.
 **What to say:** "7B model = 14 GB weights in BF16. Each token generation reads all 14 GB from HBM. At 2 TB/s bandwidth, that's 7ms per token just for weight reads — before any compute. The 1B model only reads 2 GB (1ms read time). You're 7× slower because you're reading 7× more data, and bandwidth is the bottleneck, not the 312 TFLOP/s compute."
 
@@ -69,8 +66,7 @@ Do you understand why LLM inference is fundamentally memory-bound, not compute-b
 - **Production**: A100 (2 TB/s) with continuous batching (batch=16–32) delivers ~400 tokens/sec aggregate throughput
 - **Why the jump matters**: Production needs <100ms P99 TTFT. RTX 4090 can't maintain this under load spikes (no ECC, driver crashes). A100 gives 2× bandwidth + ECC + NVLink for multi-GPU failover.
 - **Cost tradeoff**: $10k A100 vs $1600 RTX 4090 — but one A100 replaces 2–3 RTX 4090s once you account for batch efficiency and uptime SLA
-
-⚡ **Production trap:** "We'll save money with consumer GPUs" — until the first driver crash during peak traffic costs you $50k in lost revenue. The $8k premium for data center GPUs is insurance, not overhead.
+**Production trap:** "We'll save money with consumer GPUs" — until the first driver crash during peak traffic costs you $50k in lost revenue. The $8k premium for data center GPUs is insurance, not overhead.
 
 ---
 
@@ -81,14 +77,11 @@ Can you size VRAM requirements for inference vs training? Do you account for KV 
 **The Junior Answer vs Senior Answer**
 
 **Q: "How much VRAM do you need to serve Llama-3-8B at batch=16, max context 4096 tokens?"**
-
-❌ **Junior**: "8 billion parameters, so probably around 8–10 GB."
+**Junior**: "8 billion parameters, so probably around 8–10 GB."
 *Why it signals junior:* Only considers parameter count, ignores precision, KV cache, and activations.
-
-✅ **Senior**: "Weights: 8B × 2 bytes (BF16) = 16 GB. KV cache per request: 2 × 32 layers × 4096 hidden_dim × 2 bytes = 512 KB/token. At 4096 tokens max: 2 GB per request. Batch=16: 32 GB KV cache. Activations: ~2 GB. Total: 16 + 32 + 2 = 50 GB. You need an A100-80GB or 2×A100-40GB with tensor parallelism. At batch=8, you'd fit on a single A100-40GB with 8 GB headroom."
+**Senior**: "Weights: 8B × 2 bytes (BF16) = 16 GB. KV cache per request: 2 × 32 layers × 4096 hidden_dim × 2 bytes = 512 KB/token. At 4096 tokens max: 2 GB per request. Batch=16: 32 GB KV cache. Activations: ~2 GB. Total: 16 + 32 + 2 = 50 GB. You need an A100-80GB or 2×A100-40GB with tensor parallelism. At batch=8, you'd fit on a single A100-40GB with 8 GB headroom."
 *Why it signals senior:* Breaks down all three memory components, computes KV cache growth with batch size, gives specific deployment options with headroom analysis.
-
-💡 **Key insight**: At InferenceBase, we initially tried batch=32 on A100-40GB and hit OOM after the first user with a 3k-token context. Calculating KV cache pressure up front would have saved 4 hours of debugging.
+**Key insight**: At InferenceBase, we initially tried batch=32 on A100-40GB and hit OOM after the first user with a 3k-token context. Calculating KV cache pressure up front would have saved 4 hours of debugging.
 
 **The Key Tradeoffs**
 
@@ -103,11 +96,11 @@ Can you size VRAM requirements for inference vs training? Do you account for KV 
 
 **Failure Mode Gotchas**
 
-⚠️ **Gotcha Q:** "We sized VRAM for the model weights but we're still getting OOM. Why?"
+**Warning — Gotcha Q:** "We sized VRAM for the model weights but we're still getting OOM. Why?"
 **Why it's hard:** Forgetting KV cache is a dynamic data structure that grows with context and batch size.
 **What to say:** "KV cache is the most common OOM culprit in production. For Llama-2-7B, each token adds 512 KB — a 2048-token context at batch=16 uses 16 GB KV cache alone. You need to budget: weights + (KV_per_token × max_seq_len × batch_size) + activation memory. Enable PagedAttention (vLLM) to reduce KV cache fragmentation and fit 2× larger batches."
 
-⚠️ **Gotcha Q:** "Why does our INT4 quantized model give terrible results on reasoning tasks but fine on summarization?"
+**Warning — Gotcha Q:** "Why does our INT4 quantized model give terrible results on reasoning tasks but fine on summarization?"
 **Why it's hard:** Not all tasks have the same quantization tolerance.
 **What to say:** "Reasoning tasks (math, logic, chain-of-thought) rely on precise intermediate activations. INT4 quantization loses 5–10% accuracy on these tasks because rounding errors compound across layers. Summarization is more robust because it's pattern-matching, not computation. Test quantization per task — use INT8 for reasoning, INT4 for summarization if VRAM is tight."
 
@@ -119,8 +112,7 @@ Can you size VRAM requirements for inference vs training? Do you account for KV 
 - **Actual deployment**: INT8 quantization (8 GB weights) + batch=24 + 4k context = 8 + 48 + 2 = 58 GB → fits on 1×A100-80GB with headroom
 - **Quality check**: Human eval on 200-sample test set showed 0.8% quality drop (acceptable for our SLA)
 - **Budget impact**: Reduced from $80k/year (2×A100-40GB on-demand) to $15k/year (1×A100-80GB reserved + INT8) — 81% cost reduction
-
-⚡ **Production rule:** Always budget VRAM as: `weights + (KV_per_token × max_seq × batch) + 20%_headroom`. The 20% accounts for activation spikes and PyTorch memory allocator fragmentation.
+**Production rule:** Always budget VRAM as: `weights + (KV_per_token × max_seq × batch) + 20%_headroom`. The 20% accounts for activation spikes and PyTorch memory allocator fragmentation.
 
 ---
 
@@ -131,14 +123,11 @@ Do you know the difference between TTFT (user-visible latency) and throughput (c
 **The Junior Answer vs Senior Answer**
 
 **Q: "How would you serve Llama-3-8B at 10k requests/day with <100ms P99 TTFT?"**
-
-❌ **Junior**: "I'd use Ollama or Hugging Face Transformers with a GPU. Maybe add a load balancer."
+**Junior**: "I'd use Ollama or Hugging Face Transformers with a GPU. Maybe add a load balancer."
 *Why it signals junior:* Ollama has no concurrency primitives for production serving. Missing TTFT vs throughput distinction. No mention of batching or KV cache optimization.
-
-✅ **Senior**: "Use vLLM for continuous batching and PagedAttention — these give 2–3× throughput vs naive serving. Deploy on A100-80GB (2 TB/s HBM) to hit TTFT target. Configure max batch size based on VRAM budget: at 4k context, batch=24 fits in 58 GB with INT8 quantization. Monitor P99 TTFT and throughput separately — optimize batch size to maximize throughput while keeping P99 <100ms. If load spikes exceed single-GPU capacity, add tensor parallelism across 2×A100 with NVLink (avoids inter-node communication overhead)."
+**Senior**: "Use vLLM for continuous batching and PagedAttention — these give 2–3× throughput vs naive serving. Deploy on A100-80GB (2 TB/s HBM) to hit TTFT target. Configure max batch size based on VRAM budget: at 4k context, batch=24 fits in 58 GB with INT8 quantization. Monitor P99 TTFT and throughput separately — optimize batch size to maximize throughput while keeping P99 <100ms. If load spikes exceed single-GPU capacity, add tensor parallelism across 2×A100 with NVLink (avoids inter-node communication overhead)."
 *Why it signals senior:* Names vLLM-specific optimizations, distinguishes TTFT from throughput, gives VRAM calculation, explains batch size tuning strategy, addresses scale-out with communication-aware architecture.
-
-💡 **Key insight**: At InferenceBase, switching from Hugging Face Transformers to vLLM gave us 2.4× throughput improvement (170 tok/s → 410 tok/s) on the same A100. PagedAttention eliminated KV cache fragmentation and let us run batch=24 instead of batch=12.
+**Key insight**: At InferenceBase, switching from Hugging Face Transformers to vLLM gave us 2.4× throughput improvement (170 tok/s → 410 tok/s) on the same A100. PagedAttention eliminated KV cache fragmentation and let us run batch=24 instead of batch=12.
 
 **The Key Tradeoffs**
 
@@ -153,11 +142,11 @@ Do you know the difference between TTFT (user-visible latency) and throughput (c
 
 **Failure Mode Gotchas**
 
-⚠️ **Gotcha Q:** "We're hitting 500 tokens/sec throughput but users complain about slowness. Why?"
+**Warning — Gotcha Q:** "We're hitting 500 tokens/sec throughput but users complain about slowness. Why?"
 **Why it's hard:** Optimizing the wrong metric — throughput vs P99 latency.
 **What to say:** "High aggregate throughput doesn't guarantee low P99 latency. You might have batch=64 for max throughput, but users in a large batch wait for all 64 requests to complete before seeing their first token. Reduce batch size to 16–24 — throughput drops 20% but P99 TTFT improves 3×. Users notice latency, not your GPU utilization."
 
-⚠️ **Gotcha Q:** "Continuous batching sounds great but our P99 latency got worse. What happened?"
+**Warning — Gotcha Q:** "Continuous batching sounds great but our P99 latency got worse. What happened?"
 **Why it's hard:** Continuous batching can introduce head-of-line blocking if not configured correctly.
 **What to say:** "Check your max sequence length limit. If one request generates 2048 tokens while others need 128 tokens, the long request blocks the queue. Set per-request timeouts and max_tokens limits. Use priority queuing — short requests (≤512 tokens) in high-priority queue, long requests (>512) in low-priority. This is what we did at InferenceBase to keep P99 <100ms while still serving 4k-context research queries."
 
@@ -169,13 +158,12 @@ Do you know the difference between TTFT (user-visible latency) and throughput (c
 - **Batch size tuning**: Started at batch=32 (max throughput) but P99 = 140ms. Reduced to batch=24 → throughput dropped 15% but P99 = 85ms (acceptable tradeoff)
 - **Cost optimization**: Reserved 1×A100-80GB at $1.25/hr (3-year commit) = $10,950/year base + $4k/year for INT8 model serving license = $15k/year total
 - **Monitoring**: Track TTFT and throughput separately; alert if P99 TTFT >95ms or throughput <350 tok/s
-
-⚡ **Production rule:** TTFT is what users complain about; throughput is what accountants complain about. Optimize TTFT first (keep users happy), then maximize throughput within the TTFT constraint.
+**Production rule:** TTFT is what users complain about; throughput is what accountants complain about. Optimize TTFT first (keep users happy), then maximize throughput within the TTFT constraint.
 
 ---
 
-> 💡 **GPU sizing verdict:** TTFT is what users complain about; throughput is what accountants complain about. Optimize TTFT first.
-> ➡️ The Rapid-Fire Round at the end covers the most common follow-up questions interviewers use to probe depth.
+> **GPU sizing verdict:** TTFT is what users complain about; throughput is what accountants complain about. Optimize TTFT first.
+> ➡ The Rapid-Fire Round at the end covers the most common follow-up questions interviewers use to probe depth.
 
 ---
 
@@ -247,7 +235,7 @@ Both use 16 bits total but different mantissa/exponent splits. BF16 has the same
 
 ## 4 · Signal Words That Distinguish Answers
 
-**✅ Senior signals:**
+** Senior signals:**
 - "Arithmetic intensity of 2–5 FLOP/byte places decode left of the ridge point" (shows roofline understanding)
 - "HBM bandwidth is the bottleneck; TFLOP/s doesn't matter until you cross the ridge" (distinguishes bandwidth from compute)
 - "KV cache pressure grows as batch × seq_len — budget 512 KB/token for Llama-2-7B" (quantifies memory growth)
@@ -258,7 +246,7 @@ Both use 16 bits total but different mantissa/exponent splits. BF16 has the same
 - "Tensor parallelism shards weights across GPUs with all-reduce per layer; data parallelism replicates model and syncs gradients" (distinguishes TP from DP)
 - "At InferenceBase, we budget VRAM as: weights + (KV_per_token × max_seq × batch) + 20% headroom" (shows production awareness)
 
-**❌ Junior signals:**
+** Junior signals:**
 - "Just use a bigger GPU" → missing bandwidth vs compute analysis
 - "The model is large" → vague; doesn't quantify or identify bottleneck
 - "Quantization is free" → ignores quality loss, especially for reasoning tasks
@@ -278,7 +266,7 @@ Both use 16 bits total but different mantissa/exponent splits. BF16 has the same
 ---
 
 <details>
-<summary>⚡ 5-Minute Crammer — last-resort prep</summary>
+<summary> 5-Minute Crammer — last-resort prep</summary>
 
 ## 5 · The 5-Minute Concept Cram
 
@@ -332,7 +320,7 @@ Both use 16 bits total but different mantissa/exponent splits. BF16 has the same
 
 ## Related Topics
 
-> ➡️ **Forward links** — these build on AI Infrastructure concepts:
+> ➡ **Forward links** — these build on AI Infrastructure concepts:
 - [Agentic AI Interview Guide](agentic-ai.md) — Cost & Latency section covers the application-layer view of the same GPU/inference concepts
 - [Multimodal AI / Local Diffusion Lab](../05-multimodal_ai/ch13_local_diffusion_lab) — same serving patterns apply to diffusion models
 

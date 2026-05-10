@@ -11,15 +11,15 @@
 
 ## § 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Build **OrderFlow** — AI-native B2B purchase order automation satisfying 8 constraints:
+> **The mission**: Build **OrderFlow** — AI-native B2B purchase order automation satisfying 8 constraints:
 > 1. **THROUGHPUT**: 1,000 POs/day — 2. **LATENCY**: <4hr SLA — 3. **ACCURACY**: <2% error — 4. **SCALABILITY**: 10 agents/PO — 5. **RELIABILITY**: >99.9% uptime — 6. **AUDITABILITY**: Full traceability — 7. **OBSERVABILITY**: Real-time monitoring — 8. **DEPLOYABILITY**: Zero-downtime updates
 
 **What we know so far**:
-- ✅ **Ch.1 Message Formats**: Decomposed single agent into 8 specialized agents (Intake, Pricing, Negotiation, Legal, Finance, Drafting, Sending, Reconciliation)
-- ✅ **Context overflow eliminated**: Each agent stays under 4k token budget (50% of 8k limit)
-- ✅ **Error rate improved**: 5% → 3.8% (structured message schemas prevent parsing failures)
-- ⚡ **Current metrics**: 10 POs/day throughput, 36 hours median latency, 3.8% error rate
-- ❌ **But we still can't ground agents in real-time data!** Each agent needs access to ~20 data sources (ERP, pricing APIs, supplier APIs, email, legal templates). Without a standard protocol, that's **8 agents × 20 integrations = 160 bespoke implementations**.
+- **Ch.1 Message Formats**: Decomposed single agent into 8 specialized agents (Intake, Pricing, Negotiation, Legal, Finance, Drafting, Sending, Reconciliation)
+- **Context overflow eliminated**: Each agent stays under 4k token budget (50% of 8k limit)
+- **Error rate improved**: 5% → 3.8% (structured message schemas prevent parsing failures)
+- **Current metrics**: 10 POs/day throughput, 36 hours median latency, 3.8% error rate
+- **But we still can't ground agents in real-time data!** Each agent needs access to ~20 data sources (ERP, pricing APIs, supplier APIs, email, legal templates). Without a standard protocol, that's **8 agents × 20 integrations = 160 bespoke implementations**.
 
 **What's blocking us**:
 
@@ -31,40 +31,39 @@ You're the Lead Architect at OrderFlow. Your 8 agents are working, but they're b
 
 ```
 Problems:
-1. ❌ **Integration explosion**: N agents × M tools = N×M bespoke adapters (8 × 20 = 160 for OrderFlow) → **Blocks #4 SCALABILITY**
-2. ❌ **No schema discovery**: Agent code hardcodes API schemas; when supplier API changes, agents break silently → **Blocks #3 ACCURACY**
-3. ❌ **Zero observability**: Custom wrappers don't log tool calls consistently; cannot debug which agent called which supplier → **Blocks #7 OBSERVABILITY**
+1. **Integration explosion**: N agents × M tools = N×M bespoke adapters (8 × 20 = 160 for OrderFlow) → **Blocks #4 SCALABILITY**
+2. **No schema discovery**: Agent code hardcodes API schemas; when supplier API changes, agents break silently → **Blocks #3 ACCURACY**
+3. **Zero observability**: Custom wrappers don't log tool calls consistently; cannot debug which agent called which supplier → **Blocks #7 OBSERVABILITY**
 ```
 
 **Business impact**: You hired 2 engineers for 6 months just to write integration adapters ($180k labor cost). When TechFurnish changed their pricing API, 3 agents broke in production. OrderFlow processed zero POs for 4 hours. The CTO is demanding: **"Why can't we add a new supplier without rewriting half the codebase?"**
 
 **What this chapter unlocks**:
 
-🚀 **Model Context Protocol (MCP) — collapse N×M to N+M**:
+ **Model Context Protocol (MCP) — collapse N×M to N+M**:
 1. **Standard protocol for tool access**: JSON-RPC 2.0 transport → any agent connects to any data source without custom code
 2. **Self-describing servers**: Tools declare their JSON Schema at runtime → agents discover capabilities dynamically, no hardcoded schemas
 3. **Integration collapse**: 160 bespoke integrations → **8 MCP clients + 20 MCP servers = 28 components** (94% reduction)
-
-⚡ **Expected improvements**:
+**Expected improvements**:
 - **Throughput**: 10 → 10 POs/day (no change yet — still sequential architecture)
 - **Latency**: 36 hours → 36 hours (no change yet — still synchronous)
 - **Error rate**: 3.8% → **3.2%** (agents grounded in real-time ERP data, no hallucinated pricing)
-- **Scalability**: 160 integrations → **28 components** (94% reduction) → **#4 SCALABILITY foundation ✅**
-- **Auditability**: Basic logging → **MCP tool call logging** (partial observability) → **#6 AUDITABILITY improved ⚡**
-- **Observability**: Message structure only → **MCP request/response logged** (standardized format) → **#7 OBSERVABILITY improved ⚡**
+- **Scalability**: 160 integrations → **28 components** (94% reduction) → **#4 SCALABILITY foundation **
+- **Auditability**: Basic logging → **MCP tool call logging** (partial observability) → **#6 AUDITABILITY improved **
+- **Observability**: Message structure only → **MCP request/response logged** (standardized format) → **#7 OBSERVABILITY improved **
 
 ### Progress on the 8 Constraints
 
 | Constraint | Status | Evidence |
 |------------|--------|----------|
-| #1 THROUGHPUT | ❌ **BLOCKED** | Still 10 POs/day (integration bottleneck) |
-| #2 LATENCY | ❌ **BLOCKED** | 36 hours median (manual baseline) |
-| #3 ACCURACY | ⚡ **IMPROVED** | 3.8% → **3.2% error** (agents grounded in real ERP data, no hallucinated pricing) |
-| #4 SCALABILITY | ✅ **VALIDATED** | 8 agents share 20 MCP servers (no integration duplication) |
-| #5 RELIABILITY | ❌ **BLOCKED** | No graceful degradation |
-| #6 AUDITABILITY | ⚡ **IMPROVED** | MCP servers log all tool calls (partial observability) |
-| #7 OBSERVABILITY | ⚡ **IMPROVED** | MCP tool calls logged (but no distributed tracing) |
-| #8 DEPLOYABILITY | ❌ **BLOCKED** | No deployment automation |
+| #1 THROUGHPUT | **BLOCKED** | Still 10 POs/day (integration bottleneck) |
+| #2 LATENCY | **BLOCKED** | 36 hours median (manual baseline) |
+| #3 ACCURACY | **IMPROVED** | 3.8% → **3.2% error** (agents grounded in real ERP data, no hallucinated pricing) |
+| #4 SCALABILITY | **VALIDATED** | 8 agents share 20 MCP servers (no integration duplication) |
+| #5 RELIABILITY | **BLOCKED** | No graceful degradation |
+| #6 AUDITABILITY | **IMPROVED** | MCP servers log all tool calls (partial observability) |
+| #7 OBSERVABILITY | **IMPROVED** | MCP tool calls logged (but no distributed tracing) |
+| #8 DEPLOYABILITY | **BLOCKED** | No deployment automation |
 
 **What's still blocking**: Agents on different servers can't delegate tasks to each other (e.g., Intake agent can't call Negotiation agent across Kubernetes pods). *(Ch.3 — A2A solves this.)*
 
@@ -94,7 +93,7 @@ One common point of confusion: **what is an agent, and what is an MCP server?**
 
 ## § 1.2 · MCP vs Traditional REST APIs — Why MCP is More Powerful for Agent Integration
 
-> 🎯 **The confusion:** Many teams ask: "We already have REST APIs for our ERP and pricing systems. Why do we need MCP? Isn't this just another wrapper around HTTP?"
+> **The confusion:** Many teams ask: "We already have REST APIs for our ERP and pricing systems. Why do we need MCP? Isn't this just another wrapper around HTTP?"
 >
 > **The answer:** MCP is not a REST API replacement — it's a **task-based agentic interface** built on JSON-RPC 2.0 that transitions AI interaction from a *resource-based model* (REST) to a *capability-based execution model* optimized for LLM consumption. The difference is architectural, not cosmetic.
 
@@ -126,40 +125,40 @@ Traditional Web APIs were designed for **human developers** building web applica
 import requests
 
 def get_techfurnish_quote(item_id: str, quantity: int) -> dict:
-    """
-    PROBLEMS:
-    1. Hardcoded endpoint — changes break agent
-    2. No schema discovery — agent doesn't know valid item_id format
-    3. Error handling varies — 404 vs 422 vs 500 semantics inconsistent
-    4. No retry logic — agent must implement exponential backoff manually
-    5. Token-inefficient — raw API response includes 40 unused fields
-    """
-    response = requests.post(
-        "https://api.techfurnish.com/v2/quotes",  # ❌ Hardcoded URL
-        headers={"Authorization": f"Bearer {API_KEY}"},  # ❌ Custom auth per API
-        json={"item_sku": item_id, "qty": quantity}  # ❌ Schema unknown until runtime error
-    )
+ """
+ PROBLEMS:
+ 1. Hardcoded endpoint — changes break agent
+ 2. No schema discovery — agent doesn't know valid item_id format
+ 3. Error handling varies — 404 vs 422 vs 500 semantics inconsistent
+ 4. No retry logic — agent must implement exponential backoff manually
+ 5. Token-inefficient — raw API response includes 40 unused fields
+ """
+ response = requests.post(
+ "https://api.techfurnish.com/v2/quotes", # Hardcoded URL
+ headers={"Authorization": f"Bearer {API_KEY}"}, # Custom auth per API
+ json={"item_sku": item_id, "qty": quantity} # Schema unknown until runtime error
+ )
 
-    if response.status_code == 200:
-        data = response.json()
-        # ❌ Response includes 40 fields; agent only needs 2 (price, delivery_days)
-        return {"price": data["unit_price"], "delivery_days": data["lead_time_days"]}
-    elif response.status_code == 404:
-        raise ValueError("Item not found")  # ❌ Custom error handling per API
-    elif response.status_code == 500:
-        raise RuntimeError("Supplier API down")  # ❌ Should retry, but doesn't
-    else:
-        raise Exception(f"Unknown error: {response.status_code}")
+ if response.status_code == 200:
+ data = response.json()
+ # Response includes 40 fields; agent only needs 2 (price, delivery_days)
+ return {"price": data["unit_price"], "delivery_days": data["lead_time_days"]}
+ elif response.status_code == 404:
+ raise ValueError("Item not found") # Custom error handling per API
+ elif response.status_code == 500:
+ raise RuntimeError("Supplier API down") # Should retry, but doesn't
+ else:
+ raise Exception(f"Unknown error: {response.status_code}")
 
 # Agent code — tightly coupled to TechFurnish
 quote = get_techfurnish_quote("DESK-001", 10)
 ```
 
 **Problems:**
-- ❌ **Integration explosion**: When you add OfficeDepot, you write `get_officedepot_quote()` — different URL, different auth, different error codes
-- ❌ **Silent failures**: TechFurnish changes API schema (renames `unit_price` → `price_per_unit`) → agent crashes in production
-- ❌ **Token waste**: Raw API returns 847 tokens; agent only needs 12 tokens (price + delivery time)
-- ❌ **No auditability**: Custom HTTP client doesn't log tool calls in standardized format → Elena (CFO) cannot audit pricing decisions
+- **Integration explosion**: When you add OfficeDepot, you write `get_officedepot_quote()` — different URL, different auth, different error codes
+- **Silent failures**: TechFurnish changes API schema (renames `unit_price` → `price_per_unit`) → agent crashes in production
+- **Token waste**: Raw API returns 847 tokens; agent only needs 12 tokens (price + delivery time)
+- **No auditability**: Custom HTTP client doesn't log tool calls in standardized format → Elena (CFO) cannot audit pricing decisions
 
 #### MCP Approach (Production-Grade)
 
@@ -167,53 +166,53 @@ quote = get_techfurnish_quote("DESK-001", 10)
 # MCP server wraps TechFurnish API (written once, reused by all agents)
 @mcp_server.tool()
 def get_supplier_quote(supplier_name: str, item_id: str, quantity: int) -> dict:
-    """
-    Fetch real-time pricing from supplier API.
+ """
+ Fetch real-time pricing from supplier API.
 
-    SOLUTIONS:
-    1. ✅ Schema declared via JSON Schema — agents discover valid inputs at runtime
-    2. ✅ Server handles TechFurnish API changes — agent code unchanged
-    3. ✅ Standardized error codes — agent knows when to retry (-32603)
-    4. ✅ Token-optimized output — server returns only (price, delivery_days)
-    5. ✅ Audit trail — MCP protocol logs all tool calls with timestamps
-    """
-    if supplier_name == "TechFurnish":
-        # Internal: Call TechFurnish REST API (complexity hidden from agent)
-        response = requests.post(
-            "https://api.techfurnish.com/v2/quotes",
-            headers={"Authorization": f"Bearer {TECHFURNISH_KEY}"},
-            json={"item_sku": item_id, "qty": quantity}
-        )
-        if response.status_code == 200:
-            data = response.json()
-            # ✅ Pre-process for LLM: extract only relevant fields
-            return {
-                "price": data["unit_price"],
-                "delivery_days": data["lead_time_days"],
-                "currency": "USD"
-            }
-        elif response.status_code == 500:
-            # ✅ Translate to standard JSON-RPC error
-            raise MCPInternalError("Supplier API temporarily unavailable")
-    elif supplier_name == "OfficeDepot":
-        # ✅ Agent calls same tool name — server handles routing
-        return call_officedepot_api(item_id, quantity)
-    else:
-        raise MCPInvalidParamsError(f"Unknown supplier: {supplier_name}")
+ SOLUTIONS:
+ 1. Schema declared via JSON Schema — agents discover valid inputs at runtime
+ 2. Server handles TechFurnish API changes — agent code unchanged
+ 3. Standardized error codes — agent knows when to retry (-32603)
+ 4. Token-optimized output — server returns only (price, delivery_days)
+ 5. Audit trail — MCP protocol logs all tool calls with timestamps
+ """
+ if supplier_name == "TechFurnish":
+ # Internal: Call TechFurnish REST API (complexity hidden from agent)
+ response = requests.post(
+ "https://api.techfurnish.com/v2/quotes",
+ headers={"Authorization": f"Bearer {TECHFURNISH_KEY}"},
+ json={"item_sku": item_id, "qty": quantity}
+ )
+ if response.status_code == 200:
+ data = response.json()
+ # Pre-process for LLM: extract only relevant fields
+ return {
+ "price": data["unit_price"],
+ "delivery_days": data["lead_time_days"],
+ "currency": "USD"
+ }
+ elif response.status_code == 500:
+ # Translate to standard JSON-RPC error
+ raise MCPInternalError("Supplier API temporarily unavailable")
+ elif supplier_name == "OfficeDepot":
+ # Agent calls same tool name — server handles routing
+ return call_officedepot_api(item_id, quantity)
+ else:
+ raise MCPInvalidParamsError(f"Unknown supplier: {supplier_name}")
 
 # Agent code — decoupled, reusable, auditable
 quote = await mcp_client.call_tool(
-    "get_supplier_quote",
-    arguments={"supplier_name": "TechFurnish", "item_id": "DESK-001", "quantity": 10}
+ "get_supplier_quote",
+ arguments={"supplier_name": "TechFurnish", "item_id": "DESK-001", "quantity": 10}
 )
-# ✅ Agent code identical for TechFurnish, OfficeDepot, any future supplier
+# Agent code identical for TechFurnish, OfficeDepot, any future supplier
 ```
 
 **Advantages:**
-- ✅ **N+M collapse**: 8 agents × 20 tools = **28 components** (not 160)
-- ✅ **Schema discovery**: Agent calls `tools/list`, receives JSON Schema → knows `quantity` must be `integer, minimum: 1`
-- ✅ **Token efficiency**: MCP server pre-processes response → 847 tokens → **12 tokens** (65× reduction)
-- ✅ **Auditability**: Every `tools/call` logged with `tool_name`, `arguments`, `result`, `timestamp` → Elena can export PDF showing which agent made which pricing decision based on which evidence
+- **N+M collapse**: 8 agents × 20 tools = **28 components** (not 160)
+- **Schema discovery**: Agent calls `tools/list`, receives JSON Schema → knows `quantity` must be `integer, minimum: 1`
+- **Token efficiency**: MCP server pre-processes response → 847 tokens → **12 tokens** (65× reduction)
+- **Auditability**: Every `tools/call` logged with `tool_name`, `arguments`, `result`, `timestamp` → Elena can export PDF showing which agent made which pricing decision based on which evidence
 
 ### The Three-Layer Architecture: How MCP Orchestrates Agent-Tool-API Communication
 
@@ -221,24 +220,24 @@ MCP introduces a **sidecar architecture** that decouples agent logic from extern
 
 ```
 ┌─────────────────────┐
-│  Agent (MCP Client) │  ← Autonomous decision-making (LLM-powered)
-│  "I need a quote"   │
+│ Agent (MCP Client) │ ← Autonomous decision-making (LLM-powered)
+│ "I need a quote" │
 └──────────┬──────────┘
-           │ JSON-RPC 2.0 (MCP Protocol)
-           │ tools/call {"name": "get_supplier_quote", ...}
-           │
+ │ JSON-RPC 2.0 (MCP Protocol)
+ │ tools/call {"name": "get_supplier_quote", ...}
+ │
 ┌──────────▼──────────┐
-│   MCP Server        │  ← Lightweight gateway (deterministic code)
-│   • Schema registry │     • Translates LLM requests → REST API calls
-│   • Error handling  │     • Pre-processes responses for token efficiency
-│   • Auth management │     • Handles retries, rate limits, logging
+│ MCP Server │ ← Lightweight gateway (deterministic code)
+│ • Schema registry │ • Translates LLM requests → REST API calls
+│ • Error handling │ • Pre-processes responses for token efficiency
+│ • Auth management │ • Handles retries, rate limits, logging
 └──────────┬──────────┘
-           │ HTTP POST (Traditional REST API)
-           │ {"item_sku": "DESK-001", "qty": 10}
-           │
+ │ HTTP POST (Traditional REST API)
+ │ {"item_sku": "DESK-001", "qty": 10}
+ │
 ┌──────────▼──────────┐
-│  TechFurnish API    │  ← External data source (unchanged)
-│  (REST endpoint)    │
+│ TechFurnish API │ ← External data source (unchanged)
+│ (REST endpoint) │
 └─────────────────────┘
 ```
 
@@ -267,7 +266,7 @@ A common question: "Why did Anthropic choose JSON-RPC 2.0 (text-based) over Prot
 
 **Performance trade-off:** JSON-RPC adds ~5-10ms serialization overhead per request vs. Protobuf. But MCP's target workload is **agent-tool communication** (dozens of calls per PO), not high-frequency trading (millions of calls per second). The ~10ms cost is dominated by network latency (30-100ms) and LLM inference time (500-2000ms).
 
-> 💡 **OrderFlow Production Metrics:**
+> **OrderFlow Production Metrics:**
 > - **Avg tool call latency:** 847ms (TechFurnish API response time)
 > - **JSON-RPC serialization overhead:** 12ms (1.4% of total latency)
 > - **Conclusion:** Switching to Protobuf would save 12ms but add 2-3 weeks of engineering complexity → **not worth it**
@@ -313,13 +312,13 @@ Beyond the N+M collapse, MCP delivers four architectural advantages that REST AP
 **Compliance outcome:** Elena exports audit report showing:
 ```json
 {
-  "po_id": "2024-1847",
-  "approval_decision": "approved",
-  "tool_calls": [
-    {"tool": "get_supplier_quote", "result": {"price": 789}, "timestamp": "2026-05-09T10:15:32Z"},
-    {"tool": "check_budget", "result": {"remaining": 120000}, "timestamp": "2026-05-09T10:15:45Z"},
-    {"tool": "send_approval_email", "result": {"sent": true}, "timestamp": "2026-05-09T10:16:01Z"}
-  ]
+ "po_id": "2024-1847",
+ "approval_decision": "approved",
+ "tool_calls": [
+ {"tool": "get_supplier_quote", "result": {"price": 789}, "timestamp": "2026-05-09T10:15:32Z"},
+ {"tool": "check_budget", "result": {"remaining": 120000}, "timestamp": "2026-05-09T10:15:45Z"},
+ {"tool": "send_approval_email", "result": {"sent": true}, "timestamp": "2026-05-09T10:16:01Z"}
+ ]
 }
 ```
 
@@ -344,7 +343,7 @@ MCP is not a silver bullet. Here's the decision matrix:
 
 ## § 1.5 · The Practitioner Workflow — Your 4-Phase MCP Integration
 
-> ⚠️ **Two ways to read this chapter:**
+> **Warning — Two ways to read this chapter:**
 > - **Theory-first (recommended for learning):** Read §0→§3 sequentially to understand MCP concepts, then use this workflow as your integration reference
 > - **Workflow-first (practitioners building production systems):** Use this diagram as a jump-to guide when integrating MCP into existing agent infrastructure
 >
@@ -352,28 +351,28 @@ MCP is not a silver bullet. Here's the decision matrix:
 
 **Before diving into protocol details, understand the workflow you'll follow when integrating any agent with any MCP server:**
 
-> 📊 **What you'll build by the end:** A production-grade MCP client that discovers tools at runtime, validates parameters against server-provided schemas, handles transport failures gracefully, and logs all tool calls for auditability.
+> **What you'll build by the end:** A production-grade MCP client that discovers tools at runtime, validates parameters against server-provided schemas, handles transport failures gracefully, and logs all tool calls for auditability.
 
 ```
-Phase 1: INITIALIZE        Phase 2: DISCOVER          Phase 3: CALL             Phase 4: HANDLE
+Phase 1: INITIALIZE Phase 2: DISCOVER Phase 3: CALL Phase 4: HANDLE
 ──────────────────────────────────────────────────────────────────────────────────────────────────
-Connect to server:         List available tools:      Execute tool:             Handle failures:
+Connect to server: List available tools: Execute tool: Handle failures:
 
-• Send initialize          • Send tools/list          • Send tools/call         • Detect error codes
-• Negotiate protocol       • Receive JSON Schemas     • Validate params         • Implement retry logic
-• Confirm capabilities     • Cache tool registry      • Parse result/error      • Log all interactions
+• Send initialize • Send tools/list • Send tools/call • Detect error codes
+• Negotiate protocol • Receive JSON Schemas • Validate params • Implement retry logic
+• Confirm capabilities • Cache tool registry • Parse result/error • Log all interactions
 
-→ DECISION:                → DECISION:                → DECISION:               → DECISION:
-  Which transport?           Which tool to expose?      Validate before call?     Retry strategy?
-  • Local tool: stdio        • Agent needs: Tool        • Always validate         • -32603 (internal):
-  • Remote service:          • Read-only: Resource        against schema            exponential backoff
-    HTTP + SSE               • Template: Prompt         • Fail fast on bad        • -32601 (not found):
-  • Concurrent clients:      • List all on startup        input                     no retry, alert user
-    HTTP (stdio is 1:1)                                                           • Transport timeout:
-                                                                                    reconnect + replay
+→ DECISION: → DECISION: → DECISION: → DECISION:
+ Which transport? Which tool to expose? Validate before call? Retry strategy?
+ • Local tool: stdio • Agent needs: Tool • Always validate • -32603 (internal):
+ • Remote service: • Read-only: Resource against schema exponential backoff
+ HTTP + SSE • Template: Prompt • Fail fast on bad • -32601 (not found):
+ • Concurrent clients: • List all on startup input no retry, alert user
+ HTTP (stdio is 1:1) • Transport timeout:
+ reconnect + replay
 ```
 
-> 💡 **Usage note:** Phases 1-2 happen once per agent startup or server connection. Phase 3 executes on every tool call. Phase 4 is continuous monitoring — every phase can fail and must be handled.
+> **Usage note:** Phases 1-2 happen once per agent startup or server connection. Phase 3 executes on every tool call. Phase 4 is continuous monitoring — every phase can fail and must be handled.
 
 **Real-world integration timeline:**
 - **Day 1-2:** Implement Phase 1 (handshake) + Phase 2 (discovery) → agent can connect to server and list available tools
@@ -385,16 +384,16 @@ Connect to server:         List available tools:      Execute tool:             
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Phase1_Initialize
-    Phase1_Initialize --> Phase2_Discover: Handshake successful
-    Phase1_Initialize --> Phase4_Handle: Connection failed
-    Phase2_Discover --> Phase3_Call: Tools discovered
-    Phase2_Discover --> Phase4_Handle: Discovery failed
-    Phase3_Call --> Phase3_Call: Next tool call
-    Phase3_Call --> Phase4_Handle: Call failed
-    Phase4_Handle --> Phase1_Initialize: Reconnect
-    Phase4_Handle --> Phase3_Call: Retry succeeded
-    Phase4_Handle --> [*]: Unrecoverable error
+ [*] --> Phase1_Initialize
+ Phase1_Initialize --> Phase2_Discover: Handshake successful
+ Phase1_Initialize --> Phase4_Handle: Connection failed
+ Phase2_Discover --> Phase3_Call: Tools discovered
+ Phase2_Discover --> Phase4_Handle: Discovery failed
+ Phase3_Call --> Phase3_Call: Next tool call
+ Phase3_Call --> Phase4_Handle: Call failed
+ Phase4_Handle --> Phase1_Initialize: Reconnect
+ Phase4_Handle --> Phase3_Call: Retry succeeded
+ Phase4_Handle --> [*]: Unrecoverable error
 ```
 
 **Critical invariants:**
@@ -434,12 +433,12 @@ Without MCP, every integration between an agent and a tool is a custom adapter: 
 With `N` agents and `M` tools, that is `N × M` bespoke integrations. MCP collapses it to `N + M`: each tool becomes an MCP server (written once), and each agent becomes an MCP client (written once per framework). Any client connects to any server through a shared protocol.
 
 ```
-Without MCP:                        With MCP:
-Agent A → ERP adapter               Agent A ─────┐
-Agent A → Pricing adapter           Agent B ─────┼──▶ MCP Protocol ──▶ ERP Server
-Agent B → ERP adapter               Agent C ─────┘                ──▶ Pricing Server
-Agent B → Pricing adapter                                          ──▶ Email Server
-   = N × M adapters                    = N clients + M servers
+Without MCP: With MCP:
+Agent A → ERP adapter Agent A ─────┐
+Agent A → Pricing adapter Agent B ─────┼──▶ MCP Protocol ──▶ ERP Server
+Agent B → ERP adapter Agent C ─────┘ ──▶ Pricing Server
+Agent B → Pricing adapter ──▶ Email Server
+ = N × M adapters = N clients + M servers
 ```
 
 ### Protocol Mechanics
@@ -453,41 +452,41 @@ MCP is an open standard published by Anthropic (November 2024). It is built on *
 ```json
 // Client → Server: initialise the connection and negotiate capabilities
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "initialize",
-  "params": {
-    "protocolVersion": "2024-11-05",
-    "capabilities": {
-      "tools": {},           // Client can invoke tools
-      "sampling": {}         // Client supports LLM sampling (optional)
-    },
-    "clientInfo": {
-      "name": "OrderFlow-PricingAgent",
-      "version": "1.2.0"
-    }
-  }
+ "jsonrpc": "2.0",
+ "id": 1,
+ "method": "initialize",
+ "params": {
+ "protocolVersion": "2024-11-05",
+ "capabilities": {
+ "tools": {}, // Client can invoke tools
+ "sampling": {} // Client supports LLM sampling (optional)
+ },
+ "clientInfo": {
+ "name": "OrderFlow-PricingAgent",
+ "version": "1.2.0"
+ }
+ }
 }
 
 // Server → Client: confirm capabilities
 {
-  "jsonrpc": "2.0",
-  "id": 1,
-  "result": {
-    "protocolVersion": "2024-11-05",
-    "capabilities": {
-      "tools": {
-        "listChanged": true    // Server will notify on tool changes
-      },
-      "resources": {
-        "subscribe": true      // Server supports resource subscriptions
-      }
-    },
-    "serverInfo": {
-      "name": "pricing-mcp-server",
-      "version": "2.1.3"
-    }
-  }
+ "jsonrpc": "2.0",
+ "id": 1,
+ "result": {
+ "protocolVersion": "2024-11-05",
+ "capabilities": {
+ "tools": {
+ "listChanged": true // Server will notify on tool changes
+ },
+ "resources": {
+ "subscribe": true // Server supports resource subscriptions
+ }
+ },
+ "serverInfo": {
+ "name": "pricing-mcp-server",
+ "version": "2.1.3"
+ }
+ }
 }
 ```
 
@@ -496,15 +495,15 @@ MCP is an open standard published by Anthropic (November 2024). It is built on *
 ```python
 # validate protocol version compatibility — reject incompatible servers early
 if server_version != client_version:
-    if is_backward_compatible(server_version, client_version):
-        log.warning(f"Protocol version mismatch: {client_version} → {server_version} (compatible)")
-    else:
-        raise ProtocolVersionError(
-            f"Incompatible protocol versions: client={client_version}, server={server_version}"
-        )
+ if is_backward_compatible(server_version, client_version):
+ log.warning(f"Protocol version mismatch: {client_version} → {server_version} (compatible)")
+ else:
+ raise ProtocolVersionError(
+ f"Incompatible protocol versions: client={client_version}, server={server_version}"
+ )
 ```
 
-> ⚡ **Why this matters:** In production, your OrderFlow Pricing agent (client v1.2.0) might connect to an old ERP server (protocol 2024-09-15) and a new supplier API server (protocol 2024-11-05). The handshake is your compatibility firewall — reject incompatible servers before any tool call happens.
+> **Why this matters:** In production, your OrderFlow Pricing agent (client v1.2.0) might connect to an old ERP server (protocol 2024-09-15) and a new supplier API server (protocol 2024-11-05). The handshake is your compatibility firewall — reject incompatible servers before any tool call happens.
 
 The server is now self-described. The client does not need prior knowledge of what the server can do — it discovers it through the protocol.
 
@@ -534,8 +533,8 @@ Resources are URI-addressable content. The agent requests a resource, the server
 # Server exposes order records as resources
 @mcp_server.resource("order://{order_id}")
 def get_order(order_id: str) -> str:
-    record = db.fetch_order(order_id)
-    return json.dumps(record)
+ record = db.fetch_order(order_id)
+ return json.dumps(record)
 
 # Client reads the resource — same pattern as fetching a URL
 content = await mcp_client.read_resource(f"order://PO-4812")
@@ -551,9 +550,9 @@ Tools are functions the agent can invoke. Unlike Resources, Tools can mutate sta
 # Server exposes a tool
 @mcp_server.tool()
 def send_purchase_order(po_document: str, supplier_email: str) -> dict:
-    """Send a purchase order to a supplier via email."""
-    result = email_client.send(to=supplier_email, body=po_document)
-    return {"message_id": result.id, "status": "sent"}
+ """Send a purchase order to a supplier via email."""
+ result = email_client.send(to=supplier_email, body=po_document)
+ return {"message_id": result.id, "status": "sent"}
 ```
 
 The critical detail: the server's `tools/list` response includes the full JSON Schema for each tool's input parameters. The agent never has to guess or hardcode the schema — the server declares it.
@@ -563,44 +562,44 @@ The critical detail: the server's `tools/list` response includes the full JSON S
 ```json
 // Client → Server: Discover available tools
 {
-  "jsonrpc": "2.0",
-  "id": 2,
-  "method": "tools/list"
+ "jsonrpc": "2.0",
+ "id": 2,
+ "method": "tools/list"
 }
 
 // Server → Client: Tool registry with full schemas
 {
-  "jsonrpc": "2.0",
-  "id": 2,
-  "result": {
-    "tools": [
-      {
-        "name": "get_supplier_quote",
-        "description": "Fetch real-time pricing from supplier API",
-        "inputSchema": {
-          "type": "object",
-          "properties": {
-            "supplier_name": {"type": "string", "enum": ["TechFurnish", "OfficeDepot"]},
-            "item_id": {"type": "string", "pattern": "^[A-Z]+-[0-9]+$"},
-            "quantity": {"type": "integer", "minimum": 1, "maximum": 10000}
-          },
-          "required": ["supplier_name", "item_id", "quantity"]
-        }
-      },
-      {
-        "name": "send_purchase_order",
-        "description": "Send a purchase order to a supplier via email.",
-        "inputSchema": {
-          "type": "object",
-          "properties": {
-            "po_document": {"type": "string"},
-            "supplier_email": {"type": "string", "format": "email"}
-          },
-          "required": ["po_document", "supplier_email"]
-        }
-      }
-    ]
-  }
+ "jsonrpc": "2.0",
+ "id": 2,
+ "result": {
+ "tools": [
+ {
+ "name": "get_supplier_quote",
+ "description": "Fetch real-time pricing from supplier API",
+ "inputSchema": {
+ "type": "object",
+ "properties": {
+ "supplier_name": {"type": "string", "enum": ["TechFurnish", "OfficeDepot"]},
+ "item_id": {"type": "string", "pattern": "^[A-Z]+-[0-9]+$"},
+ "quantity": {"type": "integer", "minimum": 1, "maximum": 10000}
+ },
+ "required": ["supplier_name", "item_id", "quantity"]
+ }
+ },
+ {
+ "name": "send_purchase_order",
+ "description": "Send a purchase order to a supplier via email.",
+ "inputSchema": {
+ "type": "object",
+ "properties": {
+ "po_document": {"type": "string"},
+ "supplier_email": {"type": "string", "format": "email"}
+ },
+ "required": ["po_document", "supplier_email"]
+ }
+ }
+ ]
+ }
 }
 ```
 
@@ -609,24 +608,24 @@ The critical detail: the server's `tools/list` response includes the full JSON S
 ```python
 # cache tool schemas on discovery — avoid re-discovering on every call
 class MCPClient:
-    def __init__(self):
-        self._tool_registry: dict[str, dict] = {}  # Cache schemas here
+ def __init__(self):
+ self._tool_registry: dict[str, dict] = {} # Cache schemas here
 
-    async def discover_tools(self):
-        """Phase 2: Discover and cache all tools (call once per connection)"""
-        response = await self.call("tools/list")
-        for tool in response["result"]["tools"]:
-            self._tool_registry[tool["name"]] = tool["inputSchema"]
-        logger.info(f"Discovered {len(self._tool_registry)} tools: {list(self._tool_registry.keys())}")
+ async def discover_tools(self):
+ """Phase 2: Discover and cache all tools (call once per connection)"""
+ response = await self.call("tools/list")
+ for tool in response["result"]["tools"]:
+ self._tool_registry[tool["name"]] = tool["inputSchema"]
+ logger.info(f"Discovered {len(self._tool_registry)} tools: {list(self._tool_registry.keys())}")
 
-    def get_tool_schema(self, tool_name: str) -> dict:
-        """Retrieve cached schema (no network call)"""
-        if tool_name not in self._tool_registry:
-            raise ToolNotFoundError(f"Tool '{tool_name}' not in registry. Did you call discover_tools()?")
-        return self._tool_registry[tool_name]
+ def get_tool_schema(self, tool_name: str) -> dict:
+ """Retrieve cached schema (no network call)"""
+ if tool_name not in self._tool_registry:
+ raise ToolNotFoundError(f"Tool '{tool_name}' not in registry. Did you call discover_tools()?")
+ return self._tool_registry[tool_name]
 ```
 
-> ⚡ **Performance insight:** Discovery adds 10-50ms latency (1 round-trip). Cache the results. In the OrderFlow Pricing agent, we call `discover_tools()` once at startup, then handle 1,000 POs/day with zero re-discovery overhead.
+> **Performance insight:** Discovery adds 10-50ms latency (1 round-trip). Cache the results. In the OrderFlow Pricing agent, we call `discover_tools()` once at startup, then handle 1,000 POs/day with zero re-discovery overhead.
 
 ### Prompts — Reusable, parameterised instruction templates
 
@@ -636,14 +635,14 @@ Prompts are pre-built instruction templates stored server-side. The client can r
 # Server exposes a prompt template
 @mcp_server.prompt()
 def negotiate_price_prompt(supplier_name: str, target_price: float) -> list[dict]:
-    return [
-        {"role": "system", "content": f"You are a procurement specialist negotiating with {supplier_name}."},
-        {"role": "user", "content": f"Your target price is ${target_price:.2f} per unit. Begin negotiation."}
-    ]
+ return [
+ {"role": "system", "content": f"You are a procurement specialist negotiating with {supplier_name}."},
+ {"role": "user", "content": f"Your target price is ${target_price:.2f} per unit. Begin negotiation."}
+ ]
 
 # Client retrieves it
 messages = await mcp_client.get_prompt("negotiate_price_prompt",
-                                        arguments={"supplier_name": "Acme Corp", "target_price": 13.50})
+ arguments={"supplier_name": "Acme Corp", "target_price": 13.50})
 ```
 
 **Why Prompts belong in MCP:** The prompt to negotiate with a specific supplier changes when the business changes. Storing it server-side means the agent binary does not need to be redeployed when the instruction changes.
@@ -666,23 +665,23 @@ messages = await mcp_client.get_prompt("negotiate_price_prompt",
 ```python
 # choose transport: stdio for local single-client, http+sse for remote/multi-client
 def choose_transport(tool_properties: dict) -> str:
-    if tool_properties["requires_local_filesystem"]:
-        return "stdio"  # e.g., code execution sandbox, Git operations
+ if tool_properties["requires_local_filesystem"]:
+ return "stdio" # e.g., code execution sandbox, Git operations
 
-    if tool_properties["concurrent_agents"] > 1:
-        return "http+sse"  # e.g., shared ERP, pricing APIs
+ if tool_properties["concurrent_agents"] > 1:
+ return "http+sse" # e.g., shared ERP, pricing APIs
 
-    if tool_properties["network_latency_acceptable"]:
-        return "http+sse"  # e.g., external APIs, microservices
+ if tool_properties["network_latency_acceptable"]:
+ return "http+sse" # e.g., external APIs, microservices
 
-    return "stdio"  # default for local, single-agent tools
+ return "stdio" # default for local, single-agent tools
 ```
 
 **Real-world example (OrderFlow):**
 - **stdio transport:** Code execution tool (runs untrusted supplier scripts in sandbox), Git commit tool (local repository)
 - **HTTP+SSE transport:** ERP server (8 agents query concurrently), pricing server (shared supplier API wrapper), email gateway (stateless, scales horizontally)
 
-> ⚠️ **Common trap:** Using stdio for shared tools. If 8 agents each spawn their own stdio pricing-server subprocess, you have 8 redundant HTTP connection pools to TechFurnish API → rate limit violations. **Solution:** Deploy pricing-server as HTTP+SSE service once, all agents connect to `http://pricing-server:8080`.
+> **Warning — Common trap:** Using stdio for shared tools. If 8 agents each spawn their own stdio pricing-server subprocess, you have 8 redundant HTTP connection pools to TechFurnish API → rate limit violations. **Solution:** Deploy pricing-server as HTTP+SSE service once, all agents connect to `http://pricing-server:8080`.
 
 ---
 
@@ -691,20 +690,20 @@ def choose_transport(tool_properties: dict) -> str:
 **OrderFlow MCP interaction flow** (Pricing agent queries TechFurnish supplier):
 
 ```
-PricingAgent (MCP Client)          pricing-mcp-server          TechFurnish API
-    |                                     |                          |
-    |──1. initialize──────────────────▶  |                          |
-    |◀─────capabilities: {tools}─────────|                          |
-    |                                     |                          |
-    |──2. tools/list──────────────────▶  |                          |
-    |◀─────[get_supplier_quote]──────────|                          |
-    |                                     |                          |
-    |──3. tools/call────────────────────▶|                          |
-    |   {name: "get_supplier_quote",     |──HTTP POST──────────────▶|
-    |    arguments: {supplier: "TechF",  |                          |
-    |                item: "DESK-001",   |◀─────{price: 789}────────|
-    |                qty: 10}}            |                          |
-    |◀─────result: {price: 789}──────────|                          |
+PricingAgent (MCP Client) pricing-mcp-server TechFurnish API
+ | | |
+ |──1. initialize──────────────────▶ | |
+ |◀─────capabilities: {tools}─────────| |
+ | | |
+ |──2. tools/list──────────────────▶ | |
+ |◀─────[get_supplier_quote]──────────| |
+ | | |
+ |──3. tools/call────────────────────▶| |
+ | {name: "get_supplier_quote", |──HTTP POST──────────────▶|
+ | arguments: {supplier: "TechF", | |
+ | item: "DESK-001", |◀─────{price: 789}────────|
+ | qty: 10}} | |
+ |◀─────result: {price: 789}──────────| |
 ```
 
 **Step-by-step**:
@@ -712,61 +711,60 @@ PricingAgent (MCP Client)          pricing-mcp-server          TechFurnish API
 2. **Discovery** (Phase 2): Agent calls `tools/list`, server returns JSON Schema for each tool
 3. **Invocation** (Phase 3): Agent calls `tools/call` with tool name + arguments, server validates against schema and executes
 4. **Response** (Phase 3): Server returns result or error in standard JSON-RPC format
-
-💡 **Key insight**: The agent never hardcoded TechFurnish's API. The server wrapped it. When you add OfficeDepot tomorrow, the Pricing agent's code doesn't change — you just add OfficeDepot logic inside the MCP server.
+**Key insight**: The agent never hardcoded TechFurnish's API. The server wrapped it. When you add OfficeDepot tomorrow, the Pricing agent's code doesn't change — you just add OfficeDepot logic inside the MCP server.
 
 ### Phase 3 Implementation — Tool Invocation with Validation
 
 ```python
 # Phase 3: Tool invocation with client-side validation
 async def call_tool(client: MCPClient, tool_name: str, arguments: dict) -> dict:
-    """
-    Phase 3 implementation: Validate arguments against schema, invoke tool, handle response.
+ """
+ Phase 3 implementation: Validate arguments against schema, invoke tool, handle response.
 
-    Args:
-        client: MCP client with cached tool registry (from Phase 2)
-        tool_name: Name of the tool to call
-        arguments: Tool parameters (must match inputSchema)
+ Args:
+ client: MCP client with cached tool registry (from Phase 2)
+ tool_name: Name of the tool to call
+ arguments: Tool parameters (must match inputSchema)
 
-    Returns:
-        Tool result dict
+ Returns:
+ Tool result dict
 
-    Raises:
-        ValidationError: Arguments don't match schema
-        ToolExecutionError: Server returned error response
-    """
-    # validate arguments against cached schema before sending to server
-    schema = client.get_tool_schema(tool_name)  # Cached from Phase 2
-    try:
-        jsonschema.validate(instance=arguments, schema=schema)
-    except jsonschema.ValidationError as e:
-        raise ValidationError(
-            f"Invalid arguments for tool '{tool_name}': {e.message}\n"
-            f"Expected schema: {json.dumps(schema, indent=2)}"
-        )
+ Raises:
+ ValidationError: Arguments don't match schema
+ ToolExecutionError: Server returned error response
+ """
+ # validate arguments against cached schema before sending to server
+ schema = client.get_tool_schema(tool_name) # Cached from Phase 2
+ try:
+ jsonschema.validate(instance=arguments, schema=schema)
+ except jsonschema.ValidationError as e:
+ raise ValidationError(
+ f"Invalid arguments for tool '{tool_name}': {e.message}\n"
+ f"Expected schema: {json.dumps(schema, indent=2)}"
+ )
 
-    # Send tools/call request
-    request = {
-        "jsonrpc": "2.0",
-        "id": client.next_request_id(),
-        "method": "tools/call",
-        "params": {
-            "name": tool_name,
-            "arguments": arguments
-        }
-    }
+ # Send tools/call request
+ request = {
+ "jsonrpc": "2.0",
+ "id": client.next_request_id(),
+ "method": "tools/call",
+ "params": {
+ "name": tool_name,
+ "arguments": arguments
+ }
+ }
 
-    response = await client.send_request(request)
+ response = await client.send_request(request)
 
-    # Handle response
-    if "result" in response:
-        return response["result"]
-    elif "error" in response:
-        # Phase 4 will handle retry logic for specific error codes
-        raise ToolExecutionError(
-            code=response["error"]["code"],
-            message=response["error"]["message"]
-        )
+ # Handle response
+ if "result" in response:
+ return response["result"]
+ elif "error" in response:
+ # Phase 4 will handle retry logic for specific error codes
+ raise ToolExecutionError(
+ code=response["error"]["code"],
+ message=response["error"]["message"]
+ )
 ```
 
 **Complete Phase 3 example (PO #2024-1847):**
@@ -774,25 +772,25 @@ async def call_tool(client: MCPClient, tool_name: str, arguments: dict) -> dict:
 ```python
 # Real tool call from OrderFlow Pricing agent
 try:
-    result = await call_tool(
-        client=pricing_mcp_client,
-        tool_name="get_supplier_quote",
-        arguments={
-            "supplier_name": "TechFurnish",
-            "item_id": "DESK-001",
-            "quantity": 10
-        }
-    )
-    print(f"✅ Quote received: ${result['price']} per unit, {result['delivery_days']} days")
-    # Output: ✅ Quote received: $789 per unit, 14 days
+ result = await call_tool(
+ client=pricing_mcp_client,
+ tool_name="get_supplier_quote",
+ arguments={
+ "supplier_name": "TechFurnish",
+ "item_id": "DESK-001",
+ "quantity": 10
+ }
+ )
+ print(f" Quote received: ${result['price']} per unit, {result['delivery_days']} days")
+ # Output: Quote received: $789 per unit, 14 days
 except ValidationError as e:
-    print(f"❌ Invalid arguments: {e}")
+ print(f" Invalid arguments: {e}")
 except ToolExecutionError as e:
-    print(f"❌ Tool execution failed: {e.code} - {e.message}")
-    # Phase 4 retry logic would trigger here
+ print(f" Tool execution failed: {e.code} - {e.message}")
+ # Phase 4 retry logic would trigger here
 ```
 
-> ⚡ **Why client-side validation matters:** In OrderFlow, we caught 23% of tool call errors during local validation (wrong argument types, missing required fields) before sending the request. This saved 847ms × 0.23 = **195ms per call** (no round-trip to server).
+> **Why client-side validation matters:** In OrderFlow, we caught 23% of tool call errors during local validation (wrong argument types, missing required fields) before sending the request. This saved 847ms × 0.23 = **195ms per call** (no round-trip to server).
 
 ---
 
@@ -812,12 +810,12 @@ except ToolExecutionError as e:
 
 | Code | Meaning | Retry Strategy | Example |
 |------|---------|----------------|----------|
-| **-32700** | Parse error (malformed JSON) | ❌ **No retry** (client bug) | Sent `{"jsonrpc": "2.0", "method: "tools/call"}` (missing closing quote) |
-| **-32600** | Invalid request (missing required field) | ❌ **No retry** (client bug) | Sent `tools/call` without `params.name` |
-| **-32601** | Method not found | ❌ **No retry** (tool doesn't exist) | Called `get_supplier_price` (typo: should be `get_supplier_quote`) |
-| **-32602** | Invalid params (schema validation failed) | ❌ **No retry** (fix arguments first) | Sent `quantity: -5` (violates `minimum: 1`) |
-| **-32603** | Internal error (server-side crash) | ✅ **Retry with exponential backoff** | Supplier API timed out |
-| **-32000 to -32099** | Server-defined errors | ⚠️ **Depends on error message** | `-32050: Rate limit exceeded` (wait 60s, retry) |
+| **-32700** | Parse error (malformed JSON) | **No retry** (client bug) | Sent `{"jsonrpc": "2.0", "method: "tools/call"}` (missing closing quote) |
+| **-32600** | Invalid request (missing required field) | **No retry** (client bug) | Sent `tools/call` without `params.name` |
+| **-32601** | Method not found | **No retry** (tool doesn't exist) | Called `get_supplier_price` (typo: should be `get_supplier_quote`) |
+| **-32602** | Invalid params (schema validation failed) | **No retry** (fix arguments first) | Sent `quantity: -5` (violates `minimum: 1`) |
+| **-32603** | Internal error (server-side crash) | **Retry with exponential backoff** | Supplier API timed out |
+| **-32000 to -32099** | Server-defined errors | **Depends on error message** | `-32050: Rate limit exceeded` (wait 60s, retry) |
 
 **Phase 4 implementation — Retry logic:**
 
@@ -826,92 +824,92 @@ import asyncio
 from typing import Optional
 
 class MCPClient:
-    async def call_tool_with_retry(
-        self,
-        tool_name: str,
-        arguments: dict,
-        max_retries: int = 3,
-        base_delay: float = 1.0
-    ) -> dict:
-        """
-        Phase 4: Call tool with exponential backoff retry for transient errors.
+ async def call_tool_with_retry(
+ self,
+ tool_name: str,
+ arguments: dict,
+ max_retries: int = 3,
+ base_delay: float = 1.0
+ ) -> dict:
+ """
+ Phase 4: Call tool with exponential backoff retry for transient errors.
 
-        Retry logic:
-        - -32603 (internal error): Retry with exponential backoff
-        - -32700, -32600, -32601, -32602: No retry (client/schema errors)
-        - Transport timeout: Reconnect + retry
-        - All other errors: No retry, propagate to caller
-        """
-        last_error: Optional[Exception] = None
+ Retry logic:
+ - -32603 (internal error): Retry with exponential backoff
+ - -32700, -32600, -32601, -32602: No retry (client/schema errors)
+ - Transport timeout: Reconnect + retry
+ - All other errors: No retry, propagate to caller
+ """
+ last_error: Optional[Exception] = None
 
-        for attempt in range(max_retries):
-            try:
-                # validate then execute tool call
-                result = await self.call_tool(tool_name, arguments)
+ for attempt in range(max_retries):
+ try:
+ # validate then execute tool call
+ result = await self.call_tool(tool_name, arguments)
 
-                # Success: log and return
-                logger.info(
-                    f"Tool '{tool_name}' succeeded",
-                    extra={
-                        "attempt": attempt + 1,
-                        "tool_name": tool_name,
-                        "latency_ms": result.get("_latency_ms", 0)
-                    }
-                )
-                return result
+ # Success: log and return
+ logger.info(
+ f"Tool '{tool_name}' succeeded",
+ extra={
+ "attempt": attempt + 1,
+ "tool_name": tool_name,
+ "latency_ms": result.get("_latency_ms", 0)
+ }
+ )
+ return result
 
-            except ToolExecutionError as e:
-                # Check if error is retryable
-                if e.code == -32603:  # Internal error
-                    delay = base_delay * (2 ** attempt)  # Exponential backoff
-                    logger.warning(
-                        f"Tool '{tool_name}' failed with -32603 (internal error), "
-                        f"retrying in {delay}s (attempt {attempt + 1}/{max_retries})",
-                        extra={"error_message": e.message}
-                    )
-                    await asyncio.sleep(delay)
-                    last_error = e
-                    continue
+ except ToolExecutionError as e:
+ # Check if error is retryable
+ if e.code == -32603: # Internal error
+ delay = base_delay * (2 ** attempt) # Exponential backoff
+ logger.warning(
+ f"Tool '{tool_name}' failed with -32603 (internal error), "
+ f"retrying in {delay}s (attempt {attempt + 1}/{max_retries})",
+ extra={"error_message": e.message}
+ )
+ await asyncio.sleep(delay)
+ last_error = e
+ continue
 
-                elif e.code in {-32700, -32600, -32601, -32602}:
-                    # Client error: no retry, log and re-raise immediately
-                    logger.error(
-                        f"Tool '{tool_name}' failed with non-retryable error {e.code}",
-                        extra={
-                            "error_code": e.code,
-                            "error_message": e.message,
-                            "arguments": arguments
-                        }
-                    )
-                    raise
+ elif e.code in {-32700, -32600, -32601, -32602}:
+ # Client error: no retry, log and re-raise immediately
+ logger.error(
+ f"Tool '{tool_name}' failed with non-retryable error {e.code}",
+ extra={
+ "error_code": e.code,
+ "error_message": e.message,
+ "arguments": arguments
+ }
+ )
+ raise
 
-                else:
-                    # Unknown error: log and re-raise
-                    logger.error(
-                        f"Tool '{tool_name}' failed with unknown error {e.code}",
-                        extra={"error_message": e.message}
-                    )
-                    raise
+ else:
+ # Unknown error: log and re-raise
+ logger.error(
+ f"Tool '{tool_name}' failed with unknown error {e.code}",
+ extra={"error_message": e.message}
+ )
+ raise
 
-            except TransportTimeout as e:
-                # Transport failure: reconnect and retry
-                logger.warning(
-                    f"Transport timeout on attempt {attempt + 1}/{max_retries}, reconnecting..."
-                )
-                await self.reconnect()  # Phase 1: re-handshake
-                await self.discover_tools()  # Phase 2: re-discover
-                last_error = e
-                continue
+ except TransportTimeout as e:
+ # Transport failure: reconnect and retry
+ logger.warning(
+ f"Transport timeout on attempt {attempt + 1}/{max_retries}, reconnecting..."
+ )
+ await self.reconnect() # Phase 1: re-handshake
+ await self.discover_tools() # Phase 2: re-discover
+ last_error = e
+ continue
 
-        # All retries exhausted
-        logger.error(
-            f"Tool '{tool_name}' failed after {max_retries} attempts",
-            extra={"last_error": str(last_error)}
-        )
-        raise ToolExecutionError(
-            code=-1,
-            message=f"Tool '{tool_name}' failed after {max_retries} retries: {last_error}"
-        )
+ # All retries exhausted
+ logger.error(
+ f"Tool '{tool_name}' failed after {max_retries} attempts",
+ extra={"last_error": str(last_error)}
+ )
+ raise ToolExecutionError(
+ code=-1,
+ message=f"Tool '{tool_name}' failed after {max_retries} retries: {last_error}"
+ )
 ```
 
 **Observability — Logging every Phase:**
@@ -924,44 +922,44 @@ logger = structlog.get_logger()
 
 # Phase 1: Handshake
 logger.info(
-    "mcp.handshake",
-    phase="initialize",
-    protocol_version="2024-11-05",
-    server_name="pricing-mcp-server",
-    client_name="OrderFlow-PricingAgent"
+ "mcp.handshake",
+ phase="initialize",
+ protocol_version="2024-11-05",
+ server_name="pricing-mcp-server",
+ client_name="OrderFlow-PricingAgent"
 )
 
 # Phase 2: Discovery
 logger.info(
-    "mcp.discovery",
-    phase="tools_list",
-    tools_discovered=["get_supplier_quote", "send_purchase_order"],
-    latency_ms=42
+ "mcp.discovery",
+ phase="tools_list",
+ tools_discovered=["get_supplier_quote", "send_purchase_order"],
+ latency_ms=42
 )
 
 # Phase 3: Tool invocation
 logger.info(
-    "mcp.tool_call",
-    phase="call",
-    tool_name="get_supplier_quote",
-    arguments={"supplier_name": "TechFurnish", "item_id": "DESK-001", "quantity": 10},
-    correlation_id="PO-2024-1847",
-    latency_ms=847
+ "mcp.tool_call",
+ phase="call",
+ tool_name="get_supplier_quote",
+ arguments={"supplier_name": "TechFurnish", "item_id": "DESK-001", "quantity": 10},
+ correlation_id="PO-2024-1847",
+ latency_ms=847
 )
 
 # Phase 4: Error handling
 logger.error(
-    "mcp.tool_error",
-    phase="handle",
-    tool_name="get_supplier_quote",
-    error_code=-32603,
-    error_message="Supplier API timeout",
-    retry_attempt=1,
-    correlation_id="PO-2024-1847"
+ "mcp.tool_error",
+ phase="handle",
+ tool_name="get_supplier_quote",
+ error_code=-32603,
+ error_message="Supplier API timeout",
+ retry_attempt=1,
+ correlation_id="PO-2024-1847"
 )
 ```
 
-> ⚡ **Why structured logging matters:** In OrderFlow, when CFO asked "Which agent queried TechFurnish for PO #2024-1847?", we ran: `grep 'correlation_id="PO-2024-1847"' logs/*.jsonl | grep tool_name="get_supplier_quote"` → found the full decision chain in 30 seconds. Before structured MCP logging, this forensics took 2+ hours.
+> **Why structured logging matters:** In OrderFlow, when CFO asked "Which agent queried TechFurnish for PO #2024-1847?", we ran: `grep 'correlation_id="PO-2024-1847"' logs/*.jsonl | grep tool_name="get_supplier_quote"` → found the full decision chain in 30 seconds. Before structured MCP logging, this forensics took 2+ hours.
 
 | Concern | MCP Solution | OrderFlow Implementation |
 |---------|-------------|-------------------------|
@@ -971,8 +969,7 @@ logger.error(
 | **Rate limiting** | Server-side token bucket | pricing-server: 100 req/min per agent (prevents TechFurnish API ban) |
 | **Monitoring** | JSON-RPC requests → middleware logs | Every tool call logged to Elasticsearch with correlation_id |
 | **Deployment** | stdio: binaries; HTTP: containers | stdio servers: Docker images; HTTP servers: Kubernetes Deployment with HPA |
-
-⚠️ **Common trap**: Exposing raw database access as MCP Resources. Instead, expose semantic operations as Tools (e.g., `get_inventory_level(item_id)` not `SELECT * FROM inventory`). This prevents agents from issuing arbitrary SQL.
+**Common trap**: Exposing raw database access as MCP Resources. Instead, expose semantic operations as Tools (e.g., `get_inventory_level(item_id)` not `SELECT * FROM inventory`). This prevents agents from issuing arbitrary SQL.
 
 ---
 
@@ -1011,41 +1008,39 @@ logger.error(
 
 ```mermaid
 graph LR
-    Ch1["Ch.1\nMessage Formats"]:::done
-    Ch2["Ch.2\nMCP"]:::current
-    Ch3["Ch.3\nA2A"]:::upcoming
-    Ch4["Ch.4\nEvent-Driven"]:::upcoming
-    Ch5["Ch.5\nShared Memory"]:::upcoming
-    Ch6["Ch.6\nTrust & Sandboxing"]:::upcoming
-    Ch7["Ch.7\nAgent Frameworks"]:::upcoming
-    Ch1 --> Ch2 --> Ch3 --> Ch4 --> Ch5 --> Ch6 --> Ch7
-    classDef done fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    classDef current fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    classDef upcoming fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ Ch1["Ch.1\nMessage Formats"]:::done
+ Ch2["Ch.2\nMCP"]:::current
+ Ch3["Ch.3\nA2A"]:::upcoming
+ Ch4["Ch.4\nEvent-Driven"]:::upcoming
+ Ch5["Ch.5\nShared Memory"]:::upcoming
+ Ch6["Ch.6\nTrust & Sandboxing"]:::upcoming
+ Ch7["Ch.7\nAgent Frameworks"]:::upcoming
+ Ch1 --> Ch2 --> Ch3 --> Ch4 --> Ch5 --> Ch6 --> Ch7
+ classDef done fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ classDef current fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ classDef upcoming fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
-
-✅ **Unlocked capabilities**:
-- ✅ **Standard tool protocol**: Any agent can call any tool via JSON-RPC 2.0 without custom adapter code
-- ✅ **Runtime schema discovery**: Agents discover tool schemas dynamically at connection time (no hardcoded schemas)
-- ✅ **Integration collapse**: 160 bespoke integrations reduced to 28 components (8 MCP clients + 20 MCP servers)
-- ✅ **Real-time data grounding**: Agents now query live ERP inventory, supplier pricing APIs, legal templates (no hallucinated data)
+**Unlocked capabilities**:
+- **Standard tool protocol**: Any agent can call any tool via JSON-RPC 2.0 without custom adapter code
+- **Runtime schema discovery**: Agents discover tool schemas dynamically at connection time (no hardcoded schemas)
+- **Integration collapse**: 160 bespoke integrations reduced to 28 components (8 MCP clients + 20 MCP servers)
+- **Real-time data grounding**: Agents now query live ERP inventory, supplier pricing APIs, legal templates (no hallucinated data)
 
 ### Constraint Status After Ch.2
 
 | Constraint | Before | After Ch.2 | Change |
 |------------|--------|------------|--------|
-| #1 THROUGHPUT | 10 POs/day | Still 10 POs/day | ❌ No change |
-| #2 LATENCY | 36 hours median | 36 hours median | ❌ No change |
-| #3 ACCURACY | 3.8% error | **3.2% error** | ⚡ **16% better** (grounded in real ERP data) |
-| #4 SCALABILITY | 8 agents, but 160 integrations | **8 clients + 20 servers = 28 components** | ✅ **94% reduction** |
-| #5 RELIABILITY | No retry logic | No retry logic | ❌ No change |
-| #6 AUDITABILITY | Basic logging | MCP tool call logging | ⚡ **Improved** |
-| #7 OBSERVABILITY | Message structure only | MCP tool calls logged | ⚡ **Improved** |
-| #8 DEPLOYABILITY | No automation | No automation | ❌ No change |
+| #1 THROUGHPUT | 10 POs/day | Still 10 POs/day | No change |
+| #2 LATENCY | 36 hours median | 36 hours median | No change |
+| #3 ACCURACY | 3.8% error | **3.2% error** | **16% better** (grounded in real ERP data) |
+| #4 SCALABILITY | 8 agents, but 160 integrations | **8 clients + 20 servers = 28 components** | **94% reduction** |
+| #5 RELIABILITY | No retry logic | No retry logic | No change |
+| #6 AUDITABILITY | Basic logging | MCP tool call logging | **Improved** |
+| #7 OBSERVABILITY | Message structure only | MCP tool calls logged | **Improved** |
+| #8 DEPLOYABILITY | No automation | No automation | No change |
 
 ### What We Can Solve Now
-
-✅ **Scenario 1: Add new supplier without rewriting agents**
+**Scenario 1: Add new supplier without rewriting agents**
 ```
 Before Ch.2:
 New supplier API → write custom wrapper → update 3 agents → deploy → test → 2 weeks
@@ -1054,10 +1049,9 @@ After Ch.2:
 New supplier API → add to existing pricing-mcp-server → test server → deploy server → 2 days
 Agents unchanged, automatically discover new supplier via tools/list
 
-Result: ✅ 7× faster supplier onboarding ($14k engineering cost → $2k)
+Result: 7× faster supplier onboarding ($14k engineering cost → $2k)
 ```
-
-✅ **Scenario 2: Recover from supplier API schema change**
+**Scenario 2: Recover from supplier API schema change**
 ```
 Before Ch.2:
 TechFurnish changes API → 3 agents crash → emergency hotfix → 4-hour production outage
@@ -1065,19 +1059,18 @@ TechFurnish changes API → 3 agents crash → emergency hotfix → 4-hour produ
 After Ch.2:
 TechFurnish changes API → update pricing-mcp-server (single file) → agents reconnect → discover new schema → 15-minute fix
 
-Result: ✅ 16× faster recovery (4 hours → 15 minutes), zero agent code changes
+Result: 16× faster recovery (4 hours → 15 minutes), zero agent code changes
 ```
-
-✅ **Scenario 3: Compliance audit of tool usage**
+**Scenario 3: Compliance audit of tool usage**
 ```
 Before Ch.2:
 CFO asks "Which agent approved PO #2024-1847?" → manually grep 8 agent logs → inconsistent formats → 2-hour forensics
 
 After Ch.2:
 Every MCP tools/call logged in standard JSON-RPC format → query audit DB:
-  SELECT * FROM mcp_calls WHERE correlation_id = 'PO-2024-1847' AND tool_name = 'approve_purchase_order'
+ SELECT * FROM mcp_calls WHERE correlation_id = 'PO-2024-1847' AND tool_name = 'approve_purchase_order'
 
-Result: ✅ Full decision chain reconstructed in 30 seconds
+Result: Full decision chain reconstructed in 30 seconds
 ```
 
 ### MCP Servers Deployed
@@ -1089,12 +1082,9 @@ Result: ✅ Full decision chain reconstructed in 30 seconds
 - `audit-proxy-server`: Logging proxy that records all tool calls to compliance database
 
 ### What's Still Blocking
-
-❌ **Cross-service agent delegation**: Your Intake agent (Kubernetes Pod 1) receives PO #2024-1847. It needs to delegate pricing lookup to the Pricing agent (Pod 3) and negotiation to the Negotiation agent (Pod 5). MCP solves agent-to-tool communication, but you have no protocol for agent-to-agent task handoff. You're still hardcoding HTTP endpoints: `POST http://pricing-agent:8080/lookup`. When you add a 9th agent, you update 8 agent configs. **Constraint #4 SCALABILITY blocked: can't add agents without N² coordination.**
-
-❌ **Synchronous bottleneck**: Intake agent calls Pricing agent (847ms supplier API call), waits for response, then calls Negotiation agent (12-second LLM call), waits, then calls Approval agent. Total: 2 min + 5 min + 8 min + 15 min + 2 min + 3 min = **35 minutes best-case, 36 hours with queue time**. **Constraint #1 THROUGHPUT blocked at 10 POs/day** (need 1,000 POs/day).
-
-❌ **No shared state management**: Pricing agent and Negotiation agent both need to update the PO line items. Race condition: both agents read `quantity: 10`, Pricing agent updates to `quantity: 10, price: 789`, Negotiation agent updates to `quantity: 10, price: 749`, last write wins → Pricing agent's work silently lost. **Constraint #3 ACCURACY risk: data corruption in concurrent workflows**.
+**Cross-service agent delegation**: Your Intake agent (Kubernetes Pod 1) receives PO #2024-1847. It needs to delegate pricing lookup to the Pricing agent (Pod 3) and negotiation to the Negotiation agent (Pod 5). MCP solves agent-to-tool communication, but you have no protocol for agent-to-agent task handoff. You're still hardcoding HTTP endpoints: `POST http://pricing-agent:8080/lookup`. When you add a 9th agent, you update 8 agent configs. **Constraint #4 SCALABILITY blocked: can't add agents without N² coordination.**
+**Synchronous bottleneck**: Intake agent calls Pricing agent (847ms supplier API call), waits for response, then calls Negotiation agent (12-second LLM call), waits, then calls Approval agent. Total: 2 min + 5 min + 8 min + 15 min + 2 min + 3 min = **35 minutes best-case, 36 hours with queue time**. **Constraint #1 THROUGHPUT blocked at 10 POs/day** (need 1,000 POs/day).
+**No shared state management**: Pricing agent and Negotiation agent both need to update the PO line items. Race condition: both agents read `quantity: 10`, Pricing agent updates to `quantity: 10, price: 789`, Negotiation agent updates to `quantity: 10, price: 749`, last write wins → Pricing agent's work silently lost. **Constraint #3 ACCURACY risk: data corruption in concurrent workflows**.
 
 **Real-world status**: You can now add tools (suppliers, APIs, services) without rewriting agents. Error rate improved 3.8% → 3.2% (agents grounded in real data). But you're still at 10 POs/day throughput with 36-hour latency — agents can't delegate to each other across service boundaries.
 

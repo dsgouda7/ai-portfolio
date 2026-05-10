@@ -22,12 +22,12 @@
 
 | Constraint | Target | Status | Evidence |
 |------------|--------|--------|----------|
-| #1 Quality | ≥4.0/5.0 | ⚡ **~3.2/5.0** | DDIM 50-step matches DDPM 1000-step quality |
-| #2 Speed | <30 seconds | ⚡ **30-60s** | DDIM 50 steps = 15s, DPM 20 steps = 6s (MNIST scale) |
-| #3 Cost | <$5k hardware | ❌ Not validated | Still testing on full 512×512 images |
-| #4 Control | <5% unusable | ⚡ **~40% unusable** | Still unconditional generation, no text |
-| #5 Throughput | 100+ images/day | ⚡ **~20 images/day** | Speed improvement enables more generation |
-| #6 Versatility | 3 modalities | ⚡ **Partial** | Can generate faster, still no text conditioning |
+| #1 Quality | ≥4.0/5.0 | **~3.2/5.0** | DDIM 50-step matches DDPM 1000-step quality |
+| #2 Speed | <30 seconds | **30-60s** | DDIM 50 steps = 15s, DPM 20 steps = 6s (MNIST scale) |
+| #3 Cost | <$5k hardware | Not validated | Still testing on full 512×512 images |
+| #4 Control | <5% unusable | **~40% unusable** | Still unconditional generation, no text |
+| #5 Throughput | 100+ images/day | **~20 images/day** | Speed improvement enables more generation |
+| #6 Versatility | 3 modalities | **Partial** | Can generate faster, still no text conditioning |
 
 ---
 
@@ -62,10 +62,10 @@ Training a DDPM takes 1 000 noisy steps. But *inference doesn't have to*. A **sc
 
 ```
 Scheduler comparison on: "Mango leather bag, studio white background"
-DDPM  1000 steps → ~45 sec/image (750 min for 50 images ❌ too slow)
-DDIM    50 steps → ~8 sec/image  (~ 7 min for 50 images ✅)
-DPM++   20 steps → ~3 sec/image  (~ 3 min for 50 images ✅✅)
-SD-Turbo 4 steps → ~0.5 sec/image (~ 30 sec for 50 images ⚡)
+DDPM 1000 steps → ~45 sec/image (750 min for 50 images too slow)
+DDIM 50 steps → ~8 sec/image (~ 7 min for 50 images )
+DPM++ 20 steps → ~3 sec/image (~ 3 min for 50 images )
+SD-Turbo 4 steps → ~0.5 sec/image (~ 30 sec for 50 images )
 ```
 
 ## 3 · The Math
@@ -152,17 +152,17 @@ prompt = "Mango leather crossbody bag, center frame, white background, studio li
 negative_prompt = "blur, shadow, background texture, people, logo, text"
 
 def benchmark_scheduler(scheduler_class, scheduler_kwargs, num_steps, label):
-    pipe = StableDiffusionPipeline.from_pretrained(
-        model_id, scheduler=scheduler_class.from_pretrained(model_id, subfolder="scheduler", **scheduler_kwargs),
-        torch_dtype=torch.float16
-    ).to("cuda")
-    t0 = time.time()
-    img = pipe(prompt, negative_prompt=negative_prompt, num_inference_steps=num_steps,
-               guidance_scale=7.5, generator=torch.manual_seed(42)).images[0]
-    elapsed = time.time() - t0
-    img.save(f"vf_spring_{label}.png")
-    print(f"{label}: {elapsed:.1f}s — 50-image batch: {elapsed*50/60:.1f} min")
-    return elapsed
+ pipe = StableDiffusionPipeline.from_pretrained(
+ model_id, scheduler=scheduler_class.from_pretrained(model_id, subfolder="scheduler", **scheduler_kwargs),
+ torch_dtype=torch.float16
+ ).to("cuda")
+ t0 = time.time()
+ img = pipe(prompt, negative_prompt=negative_prompt, num_inference_steps=num_steps,
+ guidance_scale=7.5, generator=torch.manual_seed(42)).images[0]
+ elapsed = time.time() - t0
+ img.save(f"vf_spring_{label}.png")
+ print(f"{label}: {elapsed:.1f}s — 50-image batch: {elapsed*50/60:.1f} min")
+ return elapsed
 
 # DDIM 50 steps — deterministic, reproducible seeds for A/B review
 benchmark_scheduler(DDIMScheduler, {"clip_sample": False, "set_alpha_to_one": False}, 50, "ddim_50")
@@ -175,10 +175,10 @@ benchmark_scheduler(DPMSolverMultistepScheduler, {"algorithm_type": "dpmsolver++
 
 | Scheduler | Steps | Time/image | 50-image batch | Quality | Best for |
 |-----------|-------|------------|----------------|---------|----------|
-| DDPM | 1000 | ~45s | ~37 min ❌ | Baseline | Training only |
-| DDIM | 50 | ~8s | ~7 min ✅ | ≈DDPM | Reproducibility (same seed = same image) |
-| DPM-Solver++ | 20 | ~3s | ~2.5 min ✅✅ | ≈DDIM | **VisualForge default** |
-| SD-Turbo (4-step) | 4 | ~0.5s | ~25s ⚡ | Slightly lower | Real-time preview |
+| DDPM | 1000 | ~45s | ~37 min | Baseline | Training only |
+| DDIM | 50 | ~8s | ~7 min | ≈DDPM | Reproducibility (same seed = same image) |
+| DPM-Solver++ | 20 | ~3s | ~2.5 min | ≈DDIM | **VisualForge default** |
+| SD-Turbo (4-step) | 4 | ~0.5s | ~25s | Slightly lower | Real-time preview |
 
 ---
 
@@ -244,7 +244,7 @@ Timestep sub-sequences:
 
 **Cause**: CFG amplifies the model's prediction error. Fewer steps = larger per-step error. Amplifying large errors = artifacts.
 
-**Fix**: 
+**Fix**:
 - High guidance (12–15): use 30+ steps
 - Low step count (10–20): keep guidance ≤ 7.5
 - VisualForge production: guidance 7.5, DPM-Solver++ 20 steps (balanced)
@@ -312,8 +312,7 @@ Timestep sub-sequences:
 **Still using**: Same U-Net architecture, same text encoder (CLIP), same VAE decoder (if latent diffusion).
 
 **What's new**: Just the sampling algorithm—how we walk from $x_T$ (noise) to $x_0$ (image).
-
-💡 **Insight**: Schedulers are the "compiler optimization" of diffusion models. The model is the source code; the scheduler is the optimization level (O0 = DDPM 1000 steps, O3 = DPM-Solver++ 20 steps). Same output semantics, wildly different runtime.
+**Insight**: Schedulers are the "compiler optimization" of diffusion models. The model is the source code; the scheduler is the optimization level (O0 = DDPM 1000 steps, O3 = DPM-Solver++ 20 steps). Same output semantics, wildly different runtime.
 
 ## 9 · Interview Checklist
 
@@ -336,40 +335,40 @@ Timestep sub-sequences:
 
 ### Foundational Papers
 
-**DDIM (2020)**  
-[Denoising Diffusion Implicit Models](https://arxiv.org/abs/2010.02502) — Jiaming Song, Chenlin Meng, Stefano Ermon  
+**DDIM (2020)**
+[Denoising Diffusion Implicit Models](https://arxiv.org/abs/2010.02502) — Jiaming Song, Chenlin Meng, Stefano Ermon
 *The paper that unlocked fast sampling. Reformulates DDPM as a non-Markovian ODE, enabling deterministic sub-sequence sampling.*
 
-**DPM-Solver (2022)**  
-[DPM-Solver: A Fast ODE Solver for Diffusion Probabilistic Model Sampling](https://arxiv.org/abs/2206.00927) — Cheng Lu et al., NeurIPS 2022  
+**DPM-Solver (2022)**
+[DPM-Solver: A Fast ODE Solver for Diffusion Probabilistic Model Sampling](https://arxiv.org/abs/2206.00927) — Cheng Lu et al., NeurIPS 2022
 *High-order exponential integrators for the reverse ODE. Achieves 10-20 steps with quality matching DDIM 50.*
 
-**DPM-Solver++ (2022)**  
-[DPM-Solver++: Fast Solver for Guided Sampling of Diffusion Probabilistic Models](https://arxiv.org/abs/2211.01095) — Cheng Lu et al.  
+**DPM-Solver++ (2022)**
+[DPM-Solver++: Fast Solver for Guided Sampling of Diffusion Probabilistic Models](https://arxiv.org/abs/2211.01095) — Cheng Lu et al.
 *Improved version handling classifier-free guidance. VisualForge production default.*
 
-**Karras et al. EDM (2022)**  
-[Elucidating the Design Space of Diffusion-Based Generative Models](https://arxiv.org/abs/2206.00364) — Tero Karras et al., NeurIPS 2022  
+**Karras et al. EDM (2022)**
+[Elucidating the Design Space of Diffusion-Based Generative Models](https://arxiv.org/abs/2206.00364) — Tero Karras et al., NeurIPS 2022
 *Unified framework for diffusion schedulers. Clarifies the relationship between DDPM, DDIM, and modern samplers. Industry reference.*
 
-**Latent Consistency Models (2023)**  
-[LCM: Latent Consistency Models](https://arxiv.org/abs/2310.04378) — Simian Luo et al.  
+**Latent Consistency Models (2023)**
+[LCM: Latent Consistency Models](https://arxiv.org/abs/2310.04378) — Simian Luo et al.
 *1-4 step sampling via consistency distillation. Foundation for real-time generation.*
 
 ### Implementations
 
-**Diffusers Library (Hugging Face)**  
-[diffusers/schedulers](https://github.com/huggingface/diffusers/tree/main/src/diffusers/schedulers)  
+**Diffusers Library (Hugging Face)**
+[diffusers/schedulers](https://github.com/huggingface/diffusers/tree/main/src/diffusers/schedulers)
 Production-ready implementations of DDIM, DPM-Solver++, LCM, PNDM, Euler, and 15+ other schedulers. Drop-in compatible with all Stable Diffusion checkpoints.
 
-**K-Diffusion (Katherine Crowson)**  
-[crowsonkb/k-diffusion](https://github.com/crowsonkb/k-diffusion)  
+**K-Diffusion (Katherine Crowson)**
+[crowsonkb/k-diffusion](https://github.com/crowsonkb/k-diffusion)
 Research library with Karras scheduler variants, used by Stability AI and ComfyUI.
 
 ### Interactive Resources
 
-**Stable Diffusion Scheduler Comparator**  
-[huggingface.co/spaces/multimodalart/scheduler-comparator](https://huggingface.co/spaces/multimodalart/scheduler-comparator)  
+**Stable Diffusion Scheduler Comparator**
+[huggingface.co/spaces/multimodalart/scheduler-comparator](https://huggingface.co/spaces/multimodalart/scheduler-comparator)
 Side-by-side scheduler comparison tool. Generate the same image with DDIM, DPM-Solver++, Euler, etc.
 
 ---- **LCM / distillation:** Latent Consistency Models learn to map any noisy latent directly to the clean latent in 1–4 steps by enforcing self-consistency along the ODE trajectory; LCM-LoRA distils this as a lightweight adapter. SD-Turbo and SDXL-Turbo use adversarial diffusion distillation. Trap: "LCM images are the same quality as 50-step DDIM" — 1–4 step models sacrifice fine detail and diversity; 8+ steps are usually needed to match 50-step DDIM quality
@@ -377,7 +376,7 @@ Side-by-side scheduler comparison tool. Generate the same image with DDIM, DPM-S
 ### Common Misconceptions (Quick Reference)
 
 | Misconception | Reality |
-|---------------|---------|  
+|---------------|---------|
 | "DDIM needs retraining" | No — any DDPM-trained model can use DDIM at inference |
 | "More steps always = better quality" | Past ~30 steps with DPM-Solver, quality plateaus |
 | "Deterministic means boring" | Use different seeds for diversity; determinism just means reproducibility |
@@ -412,11 +411,11 @@ The notebook demonstrates:
 ## 11.5 · Progress Check — What Have We Unlocked?
 
 ### Before This Chapter
-- **Constraint #2 (Speed)**: ❌ **5 minutes per image** (1000 DDPM steps)
+- **Constraint #2 (Speed)**: **5 minutes per image** (1000 DDPM steps)
 - **VisualForge Status**: Unusable for client review calls
 
 ### After This Chapter
-- **Constraint #2 (Speed)**: ⚡ **30-60s per image** (DDIM 50 steps, DPM-Solver 20 steps)
+- **Constraint #2 (Speed)**: **30-60s per image** (DDIM 50 steps, DPM-Solver 20 steps)
 - **VisualForge Status**: Approaching <30s target, but need compression for 512×512 resolution
 
 ---
@@ -442,17 +441,17 @@ The notebook demonstrates:
 
 | Constraint | Ch.1 | Ch.2 | Ch.3 | Ch.4 | **Ch.5** | Ch.6 | Target |
 |------------|------|------|------|------|----------|------|--------|
-| #1 Quality | ❌ | ❌ | ❌ | ⚡ 3.0 | **⚡ 3.2** | ⚡ 3.5 | ≥4.0/5.0 |
-| #2 Speed | ❌ | ❌ | ❌ | ❌ 5min | **⚡ 30-60s** | ✅ 20s | <30s |
-| #3 Cost | ❌ | ❌ | ❌ | ❌ | **❌** | ✅ $2.5k | <$5k |
-| #4 Control | ❌ | ❌ | ⚡ | ⚡ 40% | **⚡ 40%** | ⚡ <15% | <5% |
-| #5 Throughput | ❌ | ❌ | ❌ | ❌ 10/day | **⚡ 20/day** | ⚡ 80/day | 100+/day |
-| #6 Versatility | ⚡ | ⚡ | ⚡ | ⚡ | **⚡** | ⚡ | 3 modalities |
+| #1 Quality | | | | 3.0 | ** 3.2** | 3.5 | ≥4.0/5.0 |
+| #2 Speed | | | | 5min | ** 30-60s** | 20s | <30s |
+| #3 Cost | | | | | **** | $2.5k | <$5k |
+| #4 Control | | | | 40% | ** 40%** | <15% | <5% |
+| #5 Throughput | | | | 10/day | ** 20/day** | 80/day | 100+/day |
+| #6 Versatility | | | | | **** | | 3 modalities |
 
 **Legend**:
-- ❌ = Not yet addressed (constraint blocked)
-- ⚡ = Foundation laid / partial progress (moving toward target)
-- ✅ = Target hit (constraint fully satisfied)
+- = Not yet addressed (constraint blocked)
+- = Foundation laid / partial progress (moving toward target)
+- = Target hit (constraint fully satisfied)
 
 **Ch.5 Achievements**:
 - **Speed**: 1000 → 50 steps (DDIM) = 5min → 30-60s (20× faster)
@@ -470,7 +469,7 @@ The notebook demonstrates:
 **Next unlock**: **Latent Diffusion** — the breakthrough that made Stable Diffusion possible:
 - **VAE compression**: 512×512×3 image → 64×64×4 latent (16× smaller)
 - **Diffuse in latent space**: Same U-Net, 16× less data per step
-- **Result**: 50 DDIM steps in latent = <20s on laptop ✅ hits Speed target
+- **Result**: 50 DDIM steps in latent = <20s on laptop hits Speed target
 - **Bonus**: CLIP text conditioning (finally control generation with text prompts)
 
 Schedulers (Ch.5) + Latent space (Ch.6) = the two-part solution to real-time generation.

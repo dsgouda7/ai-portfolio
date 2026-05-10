@@ -10,13 +10,13 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Deploy a production Flask app with full observability — monitor requests/sec, latency, error rate, and alert on failures.
+> **The mission**: Deploy a production Flask app with full observability — monitor requests/sec, latency, error rate, and alert on failures.
 
 **What we know so far:**
-- ✅ We can containerize Flask apps (Ch.1 — Docker)
-- ✅ We can orchestrate multi-container stacks (Ch.2 — Docker Compose)
-- ✅ We can auto-deploy with GitHub Actions (Ch.4 — CI/CD)
-- ❌ **But we have NO visibility into runtime behavior!**
+- We can containerize Flask apps (Ch.1 — Docker)
+- We can orchestrate multi-container stacks (Ch.2 — Docker Compose)
+- We can auto-deploy with GitHub Actions (Ch.4 — CI/CD)
+- **But we have NO visibility into runtime behavior!**
 
 **What's blocking us:**
 We're deploying code into a black box:
@@ -32,8 +32,7 @@ The **Prometheus + Grafana observability stack** — instrument Flask app, scrap
 - **Establishes the three pillars**: Metrics (counters, histograms, gauges) + Logs + Traces
 - **Provides concrete dashboards**: Request rate graph, latency histogram, error count
 - **Teaches production debugging**: How to identify slow routes, instance failures, and traffic spikes
-
-✅ **This is the foundation** — every later chapter assumes you can see what your system is doing.
+**This is the foundation** — every later chapter assumes you can see what your system is doing.
 
 ---
 
@@ -55,7 +54,7 @@ This chapter focuses on **metrics** — the foundation. Logs and traces are cove
 
 ## 1.5 · The Practitioner Workflow — Your 4-Phase Observability Stack
 
-> ⚠️ **Two ways to read this chapter:**
+> **Warning — Two ways to read this chapter:**
 > - **Theory-first (recommended for learning):** Read §0→§4 sequentially to understand the concepts, then use this workflow as your reference
 > - **Workflow-first (practitioners with existing knowledge):** Use this diagram as a jump-to guide when instrumenting real services
 >
@@ -64,24 +63,24 @@ This chapter focuses on **metrics** — the foundation. Logs and traces are cove
 **What you'll build by the end:** A full observability stack with instrumented Flask app → Prometheus scraping → Grafana dashboards → Alertmanager routing to PagerDuty. You'll be able to see request rate spikes in real-time, track latency percentiles, and get paged before customers notice failures.
 
 ```
-Phase 1: INSTRUMENT          Phase 2: COLLECT           Phase 3: VISUALIZE         Phase 4: ALERT
+Phase 1: INSTRUMENT Phase 2: COLLECT Phase 3: VISUALIZE Phase 4: ALERT
 ──────────────────────────────────────────────────────────────────────────────────────────────────
-Add metrics to app:          Configure scraping:        Build dashboards:          Define alert rules:
+Add metrics to app: Configure scraping: Build dashboards: Define alert rules:
 
-• Import prometheus_client   • prometheus.yml targets   • Grafana data source      • Alerting rules YAML
-• Counter for requests       • Scrape interval 15s      • Time-series panels       • Alertmanager routing
-• Histogram for latency      • Retention 30 days        • RED metrics dashboard    • PagerDuty integration
-• Gauge for connections      • Label dimensions         • PromQL queries           • Runbook links
+• Import prometheus_client • prometheus.yml targets • Grafana data source • Alerting rules YAML
+• Counter for requests • Scrape interval 15s • Time-series panels • Alertmanager routing
+• Histogram for latency • Retention 30 days • RED metrics dashboard • PagerDuty integration
+• Gauge for connections • Label dimensions • PromQL queries • Runbook links
 
-→ DECISION:                  → DECISION:                → DECISION:                → DECISION:
-  Which metric type?           How often to scrape?       Which metrics to graph?    When to fire alerts?
-  • Monotonic count: Counter   • High-traffic: 5-10s      • Start with RED metrics   • Error rate > 5%
-  • Distribution: Histogram    • Low-traffic: 30-60s      • Rate (req/sec)           • Latency p95 > 500ms
-  • Instant value: Gauge       • Balance load vs detail   • Errors (count)           • Saturation > 80%
-                                                          • Duration (latency)       • Fire after 2min sustained
+→ DECISION: → DECISION: → DECISION: → DECISION:
+ Which metric type? How often to scrape? Which metrics to graph? When to fire alerts?
+ • Monotonic count: Counter • High-traffic: 5-10s • Start with RED metrics • Error rate > 5%
+ • Distribution: Histogram • Low-traffic: 30-60s • Rate (req/sec) • Latency p95 > 500ms
+ • Instant value: Gauge • Balance load vs detail • Errors (count) • Saturation > 80%
+ • Duration (latency) • Fire after 2min sustained
 ```
 
-> 💡 **How to use this workflow:** Deploy Phases 1→2→3→4 in sequence on your first service. Once the stack is running, iterate backward — add new metrics (Phase 1), verify they appear in Prometheus (Phase 2), visualize them in Grafana (Phase 3), and create alerts for SLA breaches (Phase 4). The four phases are a deployment sequence first, then a continuous refinement loop.
+> **How to use this workflow:** Deploy Phases 1→2→3→4 in sequence on your first service. Once the stack is running, iterate backward — add new metrics (Phase 1), verify they appear in Prometheus (Phase 2), visualize them in Grafana (Phase 3), and create alerts for SLA breaches (Phase 4). The four phases are a deployment sequence first, then a continuous refinement loop.
 
 ### The RED Method — Your North Star for Service Metrics
 
@@ -160,9 +159,9 @@ $$\text{metric\_name}\{\text{label1}=\text{value1}, \text{label2}=\text{value2}\
 
 Example:
 ```
-http_requests_total{method="GET", route="/api/payment", status="200"}  1609459200: 150
-http_requests_total{method="GET", route="/api/payment", status="200"}  1609459215: 162
-http_requests_total{method="GET", route="/api/payment", status="200"}  1609459230: 178
+http_requests_total{method="GET", route="/api/payment", status="200"} 1609459200: 150
+http_requests_total{method="GET", route="/api/payment", status="200"} 1609459215: 162
+http_requests_total{method="GET", route="/api/payment", status="200"} 1609459230: 178
 ```
 
 Each tuple `(metric_name, labels)` defines a unique **time series**. Every scrape appends a new `(timestamp, value)` pair.
@@ -185,12 +184,12 @@ This computes the per-second rate over the last 5 minutes. If the counter went f
 A histogram tracks how many observations fall into predefined buckets. For latency:
 
 ```
-http_request_duration_seconds_bucket{route="/api/payment", le="0.1"}   150
-http_request_duration_seconds_bucket{route="/api/payment", le="0.5"}   280
-http_request_duration_seconds_bucket{route="/api/payment", le="1.0"}   295
-http_request_duration_seconds_bucket{route="/api/payment", le="+Inf"}  300
-http_request_duration_seconds_sum{route="/api/payment"}                85.2
-http_request_duration_seconds_count{route="/api/payment"}              300
+http_request_duration_seconds_bucket{route="/api/payment", le="0.1"} 150
+http_request_duration_seconds_bucket{route="/api/payment", le="0.5"} 280
+http_request_duration_seconds_bucket{route="/api/payment", le="1.0"} 295
+http_request_duration_seconds_bucket{route="/api/payment", le="+Inf"} 300
+http_request_duration_seconds_sum{route="/api/payment"} 85.2
+http_request_duration_seconds_count{route="/api/payment"} 300
 ```
 
 The `le` label means "less than or equal". This histogram says:
@@ -210,7 +209,7 @@ histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))
 
 This interpolates linearly between bucket boundaries. If 280 out of 300 samples (93%) are in the ≤0.5s bucket, and 295 (98%) are in the ≤1.0s bucket, then p95 falls between 0.5s and 1.0s.
 
-> ⚠️ **Histogram precision depends on bucket boundaries.** If you define buckets `[0.1, 1.0, 10.0]`, you can't distinguish between a 0.2s request and a 0.9s request — both land in the same bucket. Choose buckets that match your SLA thresholds (e.g., if your SLA is <500ms, include a 0.5s bucket).
+> **Histogram precision depends on bucket boundaries.** If you define buckets `[0.1, 1.0, 10.0]`, you can't distinguish between a 0.2s request and a 0.9s request — both land in the same bucket. Choose buckets that match your SLA thresholds (e.g., if your SLA is <500ms, include a 0.5s bucket).
 
 ### 4.3 · Code Snippet — Flask App Instrumentation
 
@@ -226,75 +225,75 @@ app = Flask(__name__)
 
 # Phase 1: Define metrics with labels for high-dimensional slicing
 REQUEST_COUNT = Counter(
-    'http_requests_total',
-    'Total HTTP requests',
-    ['method', 'route', 'status']
+ 'http_requests_total',
+ 'Total HTTP requests',
+ ['method', 'route', 'status']
 )
 
 REQUEST_LATENCY = Histogram(
-    'http_request_duration_seconds',
-    'HTTP request latency',
-    ['route'],
-    buckets=[0.1, 0.5, 1.0, 5.0]  # SLA buckets: <100ms (fast), <500ms (acceptable), <1s (slow), <5s (critical)
+ 'http_request_duration_seconds',
+ 'HTTP request latency',
+ ['route'],
+ buckets=[0.1, 0.5, 1.0, 5.0] # SLA buckets: <100ms (fast), <500ms (acceptable), <1s (slow), <5s (critical)
 )
 
 ACTIVE_CONNECTIONS = Gauge(
-    'active_connections',
-    'Number of active connections'
+ 'active_connections',
+ 'Number of active connections'
 )
 
 @app.before_request
 def before_request():
-    """Track request start time and increment active connections."""
-    request.start_time = time.time()
-    ACTIVE_CONNECTIONS.inc()
+ """Track request start time and increment active connections."""
+ request.start_time = time.time()
+ ACTIVE_CONNECTIONS.inc()
 
 @app.after_request
 def after_request(response):
-    """Record metrics after each request completes."""
-    # DECISION LOGIC: Only record latency for non-metrics endpoints
-    if request.path != '/metrics':
-        latency = time.time() - request.start_time
-        REQUEST_LATENCY.labels(route=request.path).observe(latency)
-        REQUEST_COUNT.labels(
-            method=request.method,
-            route=request.path,
-            status=response.status_code
-        ).inc()
+ """Record metrics after each request completes."""
+ # DECISION LOGIC: Only record latency for non-metrics endpoints
+ if request.path != '/metrics':
+ latency = time.time() - request.start_time
+ REQUEST_LATENCY.labels(route=request.path).observe(latency)
+ REQUEST_COUNT.labels(
+ method=request.method,
+ route=request.path,
+ status=response.status_code
+ ).inc()
 
-    ACTIVE_CONNECTIONS.dec()
-    return response
+ ACTIVE_CONNECTIONS.dec()
+ return response
 
 @app.route('/health')
 def health():
-    """Health check endpoint."""
-    return jsonify({"status": "healthy"}), 200
+ """Health check endpoint."""
+ return jsonify({"status": "healthy"}), 200
 
 @app.route('/api/payment', methods=['POST'])
 def payment():
-    """Simulate payment processing with variable latency."""
-    time.sleep(0.05)  # Simulate 50ms processing time
+ """Simulate payment processing with variable latency."""
+ time.sleep(0.05) # Simulate 50ms processing time
 
-    # DECISION LOGIC: Simulate 5% error rate
-    import random
-    if random.random() < 0.05:
-        return jsonify({"error": "Payment gateway timeout"}), 503
+ # DECISION LOGIC: Simulate 5% error rate
+ import random
+ if random.random() < 0.05:
+ return jsonify({"error": "Payment gateway timeout"}), 503
 
-    return jsonify({"status": "processed", "amount": 100.00}), 200
+ return jsonify({"status": "processed", "amount": 100.00}), 200
 
 @app.route('/api/refund', methods=['POST'])
 def refund():
-    """Simulate refund processing."""
-    time.sleep(0.1)  # Refunds take 100ms
-    return jsonify({"status": "refunded"}), 200
+ """Simulate refund processing."""
+ time.sleep(0.1) # Refunds take 100ms
+ return jsonify({"status": "refunded"}), 200
 
 @app.route('/metrics')
 def metrics():
-    """Prometheus metrics endpoint."""
-    return generate_latest(), 200, {'Content-Type': CONTENT_TYPE_LATEST}
+ """Prometheus metrics endpoint."""
+ return generate_latest(), 200, {'Content-Type': CONTENT_TYPE_LATEST}
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+ app.run(host='0.0.0.0', port=5000)
 ```
 
 **Key decisions in the code:**
@@ -303,7 +302,7 @@ if __name__ == '__main__':
 3. **Gauge inc/dec** — Tracks active connections in real-time; spikes indicate connection pool exhaustion
 4. **Exclude /metrics from recording** — Prevents self-measurement noise
 
-> 💡 **Industry Standard:** `prometheus_client`
+> **Industry Standard:** `prometheus_client`
 >
 > This is the canonical Python library maintained by the Prometheus project. Use it for all metric instrumentation in Python services.
 >
@@ -317,8 +316,8 @@ if __name__ == '__main__':
 >
 > **See also:** [Prometheus client library best practices](https://prometheus.io/docs/instrumenting/writing_clientlibs/)
 
-> 💡 **Instrument verdict:** Flask `/metrics` exposes Counter, Histogram, and Gauge; labels enable per-route error rate and p95 latency queries without redeployment.
-> ➡️ App emitting Prometheus format; proceed to Collect phase to scrape and store.
+> **Instrument verdict:** Flask `/metrics` exposes Counter, Histogram, and Gauge; labels enable per-route error rate and p95 latency queries without redeployment.
+> ➡ App emitting Prometheus format; proceed to Collect phase to scrape and store.
 
 ---
 
@@ -333,22 +332,22 @@ Prometheus uses a **pull model** — it actively fetches metrics from targets, r
 ```yaml
 # prometheus.yml
 global:
-  scrape_interval: 15s  # How often to scrape all targets
-  evaluation_interval: 15s  # How often to evaluate alerting rules
+ scrape_interval: 15s # How often to scrape all targets
+ evaluation_interval: 15s # How often to evaluate alerting rules
 
 scrape_configs:
-  # Job 1: Scrape the Flask app
-  - job_name: 'flask-app'
-    static_configs:
-      - targets: ['flask-app:5000']  # Docker Compose service name
-        labels:
-          environment: 'production'
-          team: 'payments'
+ # Job 1: Scrape the Flask app
+ - job_name: 'flask-app'
+ static_configs:
+ - targets: ['flask-app:5000'] # Docker Compose service name
+ labels:
+ environment: 'production'
+ team: 'payments'
 
-  # Job 2: Scrape Prometheus itself (self-monitoring)
-  - job_name: 'prometheus'
-    static_configs:
-      - targets: ['localhost:9090']
+ # Job 2: Scrape Prometheus itself (self-monitoring)
+ - job_name: 'prometheus'
+ static_configs:
+ - targets: ['localhost:9090']
 ```
 
 **Key parameters:**
@@ -363,20 +362,20 @@ Prometheus defaults to **15 days retention**. For production, increase to 30+ da
 ```yaml
 # docker-compose.yml
 services:
-  prometheus:
-    image: prom/prometheus:latest
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.retention.time=30d'  # Keep 30 days
-      - '--storage.tsdb.retention.size=50GB'  # Or until disk fills to 50GB
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus-data:/prometheus
-    ports:
-      - "9090:9090"
+ prometheus:
+ image: prom/prometheus:latest
+ command:
+ - '--config.file=/etc/prometheus/prometheus.yml'
+ - '--storage.tsdb.retention.time=30d' # Keep 30 days
+ - '--storage.tsdb.retention.size=50GB' # Or until disk fills to 50GB
+ volumes:
+ - ./prometheus.yml:/etc/prometheus/prometheus.yml
+ - prometheus-data:/prometheus
+ ports:
+ - "9090:9090"
 
 volumes:
-  prometheus-data:
+ prometheus-data:
 ```
 
 **Retention decisions:**
@@ -384,7 +383,7 @@ volumes:
 - **30 days** — Standard for production; allows month-over-month comparisons
 - **90+ days** — Requires remote storage (Thanos, Cortex, or cloud-managed Prometheus)
 
-> ⚠️ **Retention limits erase historical data.** If you deploy a change on Monday and by Friday notice latency creeping up, but Prometheus only retains 7 days, you can't compare to last month's baseline. Set retention to at least 30 days for production.
+> **Retention limits erase historical data.** If you deploy a change on Monday and by Friday notice latency creeping up, but Prometheus only retains 7 days, you can't compare to last month's baseline. Set retention to at least 30 days for production.
 
 ### 5.3 · Code Snippet — Docker Compose Stack
 
@@ -395,46 +394,46 @@ Here's the full stack: Flask app + Prometheus + Grafana in one `docker-compose.y
 version: '3.8'
 
 services:
-  flask-app:
-    build: .
-    ports:
-      - "5000:5000"
-    networks:
-      - monitoring
+ flask-app:
+ build: .
+ ports:
+ - "5000:5000"
+ networks:
+ - monitoring
 
-  prometheus:
-    image: prom/prometheus:latest
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.retention.time=30d'
-      - '--storage.tsdb.retention.size=50GB'
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus-data:/prometheus
-    ports:
-      - "9090:9090"
-    networks:
-      - monitoring
+ prometheus:
+ image: prom/prometheus:latest
+ command:
+ - '--config.file=/etc/prometheus/prometheus.yml'
+ - '--storage.tsdb.retention.time=30d'
+ - '--storage.tsdb.retention.size=50GB'
+ volumes:
+ - ./prometheus.yml:/etc/prometheus/prometheus.yml
+ - prometheus-data:/prometheus
+ ports:
+ - "9090:9090"
+ networks:
+ - monitoring
 
-  grafana:
-    image: grafana/grafana:latest
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-      - GF_USERS_ALLOW_SIGN_UP=false
-    volumes:
-      - grafana-data:/var/lib/grafana
-    ports:
-      - "3000:3000"
-    networks:
-      - monitoring
+ grafana:
+ image: grafana/grafana:latest
+ environment:
+ - GF_SECURITY_ADMIN_PASSWORD=admin
+ - GF_USERS_ALLOW_SIGN_UP=false
+ volumes:
+ - grafana-data:/var/lib/grafana
+ ports:
+ - "3000:3000"
+ networks:
+ - monitoring
 
 networks:
-  monitoring:
-    driver: bridge
+ monitoring:
+ driver: bridge
 
 volumes:
-  prometheus-data:
-  grafana-data:
+ prometheus-data:
+ grafana-data:
 ```
 
 **Start the stack:**
@@ -450,7 +449,7 @@ open http://localhost:9090/targets
 # Expected: flask-app (1/1 up), prometheus (1/1 up)
 ```
 
-> 💡 **Industry Standard:** Prometheus + Grafana OSS + Comparison with paid alternatives
+> **Industry Standard:** Prometheus + Grafana OSS + Comparison with paid alternatives
 >
 > This open-source stack is the de facto standard for Kubernetes monitoring. Over 80% of CNCF Kubernetes deployments use Prometheus.
 >
@@ -473,8 +472,8 @@ open http://localhost:9090/targets
 >
 > **When to pay for SaaS:** When you don't want to manage Prometheus scaling (federation, Thanos) or need integrated log/trace correlation. Otherwise, Prometheus is production-ready and free.
 
-> 💡 **Collect verdict:** Prometheus scraping every 15 seconds; 30-day TSDB retention; PromQL `rate(http_requests_total[5m])` returns live requests/sec.
-> ➡️ Historical data queryable; proceed to Visualize phase to build Grafana dashboards.
+> **Collect verdict:** Prometheus scraping every 15 seconds; 30-day TSDB retention; PromQL `rate(http_requests_total[5m])` returns live requests/sec.
+> ➡ Historical data queryable; proceed to Visualize phase to build Grafana dashboards.
 
 ---
 
@@ -486,10 +485,10 @@ Buckets: `[0.1, 0.5, 1.0, +Inf]`
 
 | Bucket | Count | Cumulative | Fraction |
 |--------|-------|------------|----------|
-| ≤0.1s  | 2     | 2          | 0.20     |
-| ≤0.5s  | 6     | 8          | 0.80     |
-| ≤1.0s  | 1     | 9          | 0.90     |
-| ≤+Inf  | 1     | 10         | 1.00     |
+| ≤0.1s | 2 | 2 | 0.20 |
+| ≤0.5s | 6 | 8 | 0.80 |
+| ≤1.0s | 1 | 9 | 0.90 |
+| ≤+Inf | 1 | 10 | 1.00 |
 
 **p50** (median): 50% of samples = 5 requests. Falls in the ≤0.5s bucket. Since 2 samples are in ≤0.1s and 8 are in ≤0.5s, p50 is interpolated as:
 
@@ -511,9 +510,9 @@ Raw PromQL queries are powerful but not user-friendly. Grafana turns time-series
 
 1. **Access Grafana:** http://localhost:3000 (user: `admin`, password: `admin`)
 2. **Add Prometheus data source:**
-   - Configuration → Data Sources → Add data source → Prometheus
-   - URL: `http://prometheus:9090` (Docker Compose service name)
-   - Save & Test
+ - Configuration → Data Sources → Add data source → Prometheus
+ - URL: `http://prometheus:9090` (Docker Compose service name)
+ - Save & Test
 
 ### 6.2 · Building a RED Metrics Dashboard
 
@@ -522,34 +521,34 @@ The **RED method** (Rate, Errors, Duration) is the minimum viable dashboard for 
 **Panel 1: Request Rate (Rate)**
 - Visualization: Time series (line graph)
 - PromQL query:
-  ```promql
-  sum(rate(http_requests_total[5m])) by (route)
-  ```
+ ```promql
+ sum(rate(http_requests_total[5m])) by (route)
+ ```
 - Shows requests/sec for each route over time
 - **What to look for:** Traffic spikes, diurnal patterns (higher during business hours), sudden drops (service down)
 
 **Panel 2: Error Rate (Errors)**
 - Visualization: Time series (line graph) with threshold line at 5%
 - PromQL query:
-  ```promql
-  sum(rate(http_requests_total{status=~"5.."}[5m])) by (route) / sum(rate(http_requests_total[5m])) by (route)
-  ```
+ ```promql
+ sum(rate(http_requests_total{status=~"5.."}[5m])) by (route) / sum(rate(http_requests_total[5m])) by (route)
+ ```
 - Shows error percentage (0-100%) per route
 - **What to look for:** Spikes above 5% trigger alert, sustained errors indicate broken deployment
 
 **Panel 3: Latency (Duration)**
 - Visualization: Time series (line graph) with multiple percentiles
 - PromQL queries (add 3 queries to same panel):
-  ```promql
-  # p50 (median)
-  histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket[5m])) by (route, le))
+ ```promql
+ # p50 (median)
+ histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket[5m])) by (route, le))
 
-  # p95 (95th percentile)
-  histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (route, le))
+ # p95 (95th percentile)
+ histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (route, le))
 
-  # p99 (99th percentile)
-  histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (route, le))
-  ```
+ # p99 (99th percentile)
+ histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (route, le))
+ ```
 - Shows latency distribution over time
 - **What to look for:** p95 and p99 creeping up indicate slow queries or resource exhaustion
 
@@ -559,58 +558,58 @@ Grafana dashboards can be exported as JSON and version-controlled. Here's a mini
 
 ```json
 {
-  "dashboard": {
-    "title": "Flask Payment API - RED Metrics",
-    "panels": [
-      {
-        "id": 1,
-        "title": "Request Rate (req/sec)",
-        "type": "timeseries",
-        "targets": [
-          {
-            "expr": "sum(rate(http_requests_total[5m])) by (route)",
-            "legendFormat": "{{route}}"
-          }
-        ],
-        "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8}
-      },
-      {
-        "id": 2,
-        "title": "Error Rate (%)",
-        "type": "timeseries",
-        "targets": [
-          {
-            "expr": "sum(rate(http_requests_total{status=~\"5..\"}[5m])) by (route) / sum(rate(http_requests_total[5m])) by (route) * 100",
-            "legendFormat": "{{route}}"
-          }
-        ],
-        "thresholds": [
-          {"value": 5, "color": "red"}
-        ],
-        "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8}
-      },
-      {
-        "id": 3,
-        "title": "Latency (p50, p95, p99)",
-        "type": "timeseries",
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket[5m])) by (route, le))",
-            "legendFormat": "p50 {{route}}"
-          },
-          {
-            "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (route, le))",
-            "legendFormat": "p95 {{route}}"
-          },
-          {
-            "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (route, le))",
-            "legendFormat": "p99 {{route}}"
-          }
-        ],
-        "gridPos": {"x": 0, "y": 8, "w": 24, "h": 8}
-      }
-    ]
-  }
+ "dashboard": {
+ "title": "Flask Payment API - RED Metrics",
+ "panels": [
+ {
+ "id": 1,
+ "title": "Request Rate (req/sec)",
+ "type": "timeseries",
+ "targets": [
+ {
+ "expr": "sum(rate(http_requests_total[5m])) by (route)",
+ "legendFormat": "{{route}}"
+ }
+ ],
+ "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8}
+ },
+ {
+ "id": 2,
+ "title": "Error Rate (%)",
+ "type": "timeseries",
+ "targets": [
+ {
+ "expr": "sum(rate(http_requests_total{status=~\"5..\"}[5m])) by (route) / sum(rate(http_requests_total[5m])) by (route) * 100",
+ "legendFormat": "{{route}}"
+ }
+ ],
+ "thresholds": [
+ {"value": 5, "color": "red"}
+ ],
+ "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8}
+ },
+ {
+ "id": 3,
+ "title": "Latency (p50, p95, p99)",
+ "type": "timeseries",
+ "targets": [
+ {
+ "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket[5m])) by (route, le))",
+ "legendFormat": "p50 {{route}}"
+ },
+ {
+ "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (route, le))",
+ "legendFormat": "p95 {{route}}"
+ },
+ {
+ "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (route, le))",
+ "legendFormat": "p99 {{route}}"
+ }
+ ],
+ "gridPos": {"x": 0, "y": 8, "w": 24, "h": 8}
+ }
+ ]
+ }
 }
 ```
 
@@ -620,7 +619,7 @@ Grafana dashboards can be exported as JSON and version-controlled. Here's a mini
 3. Select Prometheus data source
 4. Save
 
-> 💡 **Industry Standard:** OpenTelemetry for vendor-neutral instrumentation
+> **Industry Standard:** OpenTelemetry for vendor-neutral instrumentation
 >
 > While `prometheus_client` is the standard for Prometheus-specific monitoring, **OpenTelemetry** is the emerging cross-vendor standard for metrics, logs, and traces.
 >
@@ -642,16 +641,16 @@ Grafana dashboards can be exported as JSON and version-controlled. Here's a mini
 >
 > @app.route('/api/payment')
 > def payment():
->     request_counter.add(1, {"route": "/api/payment", "status": "200"})
->     return jsonify({"status": "processed"})
+> request_counter.add(1, {"route": "/api/payment", "status": "200"})
+> return jsonify({"status": "processed"})
 > ```
 >
 > **Trade-off:** OpenTelemetry is more verbose but future-proof. Use `prometheus_client` for simple setups; switch to OpenTelemetry when you need multi-backend support.
 >
 > **See also:** [OpenTelemetry Python docs](https://opentelemetry.io/docs/instrumentation/python/)
 
-> 💡 **Visualize verdict:** RED dashboard shows request rate, error rate, and p95 latency panels; latency trend visible 6 hours back without PromQL knowledge.
-> ➡️ Stakeholders can read service health at a glance; proceed to Alert phase.
+> **Visualize verdict:** RED dashboard shows request rate, error rate, and p95 latency panels; latency trend visible 6 hours back without PromQL knowledge.
+> ➡ Stakeholders can read service health at a glance; proceed to Alert phase.
 
 ---
 
@@ -666,50 +665,50 @@ Alerting rules are defined in YAML and loaded by Prometheus. Each rule has a Pro
 ```yaml
 # alerts.yml
 groups:
-  - name: flask-app-alerts
-    interval: 15s
-    rules:
-      # Alert 1: High error rate (> 5% for 2 minutes)
-      - alert: HighErrorRate
-        expr: |
-          sum(rate(http_requests_total{status=~"5.."}[5m])) by (route)
-          /
-          sum(rate(http_requests_total[5m])) by (route)
-          > 0.05
-        for: 2m
-        labels:
-          severity: critical
-          team: payments
-        annotations:
-          summary: "High error rate on {{ $labels.route }}"
-          description: "Error rate is {{ $value | humanizePercentage }} (threshold: 5%)"
-          runbook_url: "https://wiki.company.com/runbooks/high-error-rate"
+ - name: flask-app-alerts
+ interval: 15s
+ rules:
+ # Alert 1: High error rate (> 5% for 2 minutes)
+ - alert: HighErrorRate
+ expr: |
+ sum(rate(http_requests_total{status=~"5.."}[5m])) by (route)
+ /
+ sum(rate(http_requests_total[5m])) by (route)
+ > 0.05
+ for: 2m
+ labels:
+ severity: critical
+ team: payments
+ annotations:
+ summary: "High error rate on {{ $labels.route }}"
+ description: "Error rate is {{ $value | humanizePercentage }} (threshold: 5%)"
+ runbook_url: "https://wiki.company.com/runbooks/high-error-rate"
 
-      # Alert 2: High latency (p95 > 500ms for 5 minutes)
-      - alert: HighLatency
-        expr: |
-          histogram_quantile(0.95,
-            sum(rate(http_request_duration_seconds_bucket[5m])) by (route, le)
-          ) > 0.5
-        for: 5m
-        labels:
-          severity: warning
-          team: payments
-        annotations:
-          summary: "High latency on {{ $labels.route }}"
-          description: "p95 latency is {{ $value }}s (threshold: 0.5s)"
+ # Alert 2: High latency (p95 > 500ms for 5 minutes)
+ - alert: HighLatency
+ expr: |
+ histogram_quantile(0.95,
+ sum(rate(http_request_duration_seconds_bucket[5m])) by (route, le)
+ ) > 0.5
+ for: 5m
+ labels:
+ severity: warning
+ team: payments
+ annotations:
+ summary: "High latency on {{ $labels.route }}"
+ description: "p95 latency is {{ $value }}s (threshold: 0.5s)"
 
-      # Alert 3: Service down (no requests for 1 minute)
-      - alert: ServiceDown
-        expr: |
-          sum(rate(http_requests_total[1m])) == 0
-        for: 1m
-        labels:
-          severity: critical
-          team: payments
-        annotations:
-          summary: "Flask app is down"
-          description: "No requests received in the last minute"
+ # Alert 3: Service down (no requests for 1 minute)
+ - alert: ServiceDown
+ expr: |
+ sum(rate(http_requests_total[1m])) == 0
+ for: 1m
+ labels:
+ severity: critical
+ team: payments
+ annotations:
+ summary: "Flask app is down"
+ description: "No requests received in the last minute"
 ```
 
 **Key parameters:**
@@ -722,7 +721,7 @@ groups:
 ```yaml
 # prometheus.yml (add to existing config)
 rule_files:
-  - /etc/prometheus/alerts.yml
+ - /etc/prometheus/alerts.yml
 ```
 
 ### 7.2 · Alertmanager Routing
@@ -732,41 +731,41 @@ Alertmanager receives alerts from Prometheus and routes them to notification cha
 ```yaml
 # alertmanager.yml
 global:
-  resolve_timeout: 5m
+ resolve_timeout: 5m
 
 route:
-  # Default receiver for all alerts
-  receiver: 'slack-general'
+ # Default receiver for all alerts
+ receiver: 'slack-general'
 
-  # Route critical alerts to PagerDuty
-  routes:
-    - match:
-        severity: critical
-      receiver: 'pagerduty-oncall'
-      continue: true  # Also send to Slack
+ # Route critical alerts to PagerDuty
+ routes:
+ - match:
+ severity: critical
+ receiver: 'pagerduty-oncall'
+ continue: true # Also send to Slack
 
-    - match:
-        severity: warning
-      receiver: 'slack-warnings'
+ - match:
+ severity: warning
+ receiver: 'slack-warnings'
 
 receivers:
-  - name: 'slack-general'
-    slack_configs:
-      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
-        channel: '#alerts'
-        title: '{{ .GroupLabels.alertname }}'
-        text: '{{ range .Alerts }}{{ .Annotations.summary }}\n{{ end }}'
+ - name: 'slack-general'
+ slack_configs:
+ - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+ channel: '#alerts'
+ title: '{{ .GroupLabels.alertname }}'
+ text: '{{ range .Alerts }}{{ .Annotations.summary }}\n{{ end }}'
 
-  - name: 'pagerduty-oncall'
-    pagerduty_configs:
-      - service_key: 'YOUR_PAGERDUTY_SERVICE_KEY'
-        description: '{{ .GroupLabels.alertname }}: {{ .CommonAnnotations.summary }}'
+ - name: 'pagerduty-oncall'
+ pagerduty_configs:
+ - service_key: 'YOUR_PAGERDUTY_SERVICE_KEY'
+ description: '{{ .GroupLabels.alertname }}: {{ .CommonAnnotations.summary }}'
 
-  - name: 'slack-warnings'
-    slack_configs:
-      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
-        channel: '#alerts-warnings'
-        title: '⚠️ {{ .GroupLabels.alertname }}'
+ - name: 'slack-warnings'
+ slack_configs:
+ - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+ channel: '#alerts-warnings'
+ title: ' {{ .GroupLabels.alertname }}'
 ```
 
 **Routing logic:**
@@ -783,75 +782,75 @@ Here's a complete incident response flow showing decision logic at each step:
 # This runs in Alertmanager webhook receiver (e.g., PagerDuty integration)
 
 def handle_alert(alert):
-    """
-    Handle incoming alert from Alertmanager.
+ """
+ Handle incoming alert from Alertmanager.
 
-    DECISION LOGIC:
-    1. Parse alert labels and annotations
-    2. Check severity and route to correct team
-    3. If critical, page on-call engineer
-    4. If warning, post to Slack and create Jira ticket
-    5. Attach runbook link from annotations
-    """
-    alert_name = alert['labels']['alertname']
-    severity = alert['labels']['severity']
-    route = alert['labels'].get('route', 'unknown')
-    description = alert['annotations']['description']
-    runbook_url = alert['annotations'].get('runbook_url', '')
+ DECISION LOGIC:
+ 1. Parse alert labels and annotations
+ 2. Check severity and route to correct team
+ 3. If critical, page on-call engineer
+ 4. If warning, post to Slack and create Jira ticket
+ 5. Attach runbook link from annotations
+ """
+ alert_name = alert['labels']['alertname']
+ severity = alert['labels']['severity']
+ route = alert['labels'].get('route', 'unknown')
+ description = alert['annotations']['description']
+ runbook_url = alert['annotations'].get('runbook_url', '')
 
-    # DECISION 1: Route by severity
-    if severity == 'critical':
-        # Page on-call engineer via PagerDuty
-        create_pagerduty_incident(
-            title=f"[CRITICAL] {alert_name} on {route}",
-            description=description,
-            urgency='high',
-            runbook_url=runbook_url
-        )
+ # DECISION 1: Route by severity
+ if severity == 'critical':
+ # Page on-call engineer via PagerDuty
+ create_pagerduty_incident(
+ title=f"[CRITICAL] {alert_name} on {route}",
+ description=description,
+ urgency='high',
+ runbook_url=runbook_url
+ )
 
-        # DECISION 2: Auto-remediation for known issues
-        if alert_name == 'HighLatency' and route == '/api/payment':
-            # Known fix: Scale up payment service
-            print(f"Auto-scaling payment service from 3 to 6 replicas...")
-            scale_kubernetes_deployment('payment-service', replicas=6)
+ # DECISION 2: Auto-remediation for known issues
+ if alert_name == 'HighLatency' and route == '/api/payment':
+ # Known fix: Scale up payment service
+ print(f"Auto-scaling payment service from 3 to 6 replicas...")
+ scale_kubernetes_deployment('payment-service', replicas=6)
 
-        elif alert_name == 'HighErrorRate' and '503' in description:
-            # Known fix: Restart hung workers
-            print(f"Restarting Flask workers...")
-            restart_service('flask-app')
+ elif alert_name == 'HighErrorRate' and '503' in description:
+ # Known fix: Restart hung workers
+ print(f"Restarting Flask workers...")
+ restart_service('flask-app')
 
-    elif severity == 'warning':
-        # Post to Slack warnings channel
-        post_to_slack(
-            channel='#alerts-warnings',
-            message=f"⚠️ {alert_name}: {description}\nRunbook: {runbook_url}"
-        )
+ elif severity == 'warning':
+ # Post to Slack warnings channel
+ post_to_slack(
+ channel='#alerts-warnings',
+ message=f" {alert_name}: {description}\nRunbook: {runbook_url}"
+ )
 
-        # Create Jira ticket for investigation
-        create_jira_ticket(
-            project='OPS',
-            summary=f"Investigate {alert_name} on {route}",
-            description=description,
-            priority='Medium'
-        )
+ # Create Jira ticket for investigation
+ create_jira_ticket(
+ project='OPS',
+ summary=f"Investigate {alert_name} on {route}",
+ description=description,
+ priority='Medium'
+ )
 
-    # DECISION 3: Log all alerts to central audit trail
-    log_to_datadog(alert)
+ # DECISION 3: Log all alerts to central audit trail
+ log_to_datadog(alert)
 
 # Example alert payload from Alertmanager
 alert_payload = {
-    "labels": {
-        "alertname": "HighLatency",
-        "severity": "critical",
-        "route": "/api/payment",
-        "team": "payments"
-    },
-    "annotations": {
-        "summary": "High latency on /api/payment",
-        "description": "p95 latency is 1.2s (threshold: 0.5s)",
-        "runbook_url": "https://wiki.company.com/runbooks/high-latency"
-    },
-    "startsAt": "2024-01-15T14:30:00Z"
+ "labels": {
+ "alertname": "HighLatency",
+ "severity": "critical",
+ "route": "/api/payment",
+ "team": "payments"
+ },
+ "annotations": {
+ "summary": "High latency on /api/payment",
+ "description": "p95 latency is 1.2s (threshold: 0.5s)",
+ "runbook_url": "https://wiki.company.com/runbooks/high-latency"
+ },
+ "startsAt": "2024-01-15T14:30:00Z"
 }
 
 handle_alert(alert_payload)
@@ -887,7 +886,7 @@ handle_alert(alert_payload)
 - Implement retry with exponential backoff for payment gateway calls
 ```
 
-> 💡 **Industry Standard:** Loki for log aggregation + Jaeger for distributed tracing
+> **Industry Standard:** Loki for log aggregation + Jaeger for distributed tracing
 >
 > Metrics tell you *that* something is broken. Logs tell you *why* (error messages, stack traces). Traces tell you *where* (which service in the request path is slow).
 >
@@ -917,8 +916,8 @@ handle_alert(alert_payload)
 > - [Jaeger documentation](https://www.jaegertracing.io/docs/)
 > - [OpenTelemetry auto-instrumentation](https://opentelemetry.io/docs/instrumentation/python/automatic/) (add traces without code changes)
 
-> 💡 **Observability verdict:** Mean time to detect p95 latency spike: 4m30s → 45s; alert noise reduced 60% after symptom→cause rewrite with `for: 2m` duration.
-> ➡️ On-call paged with context and runbook link; chapter complete.
+> **Observability verdict:** Mean time to detect p95 latency spike: 4m30s → 45s; alert noise reduced 60% after symptom→cause rewrite with `for: 2m` duration.
+> ➡ On-call paged with context and runbook link; chapter complete.
 
 ---
 
@@ -974,12 +973,12 @@ This chapter focuses on **metrics** because they're the foundation for dashboard
 
 **Bad:**
 ```python
-REQUEST_COUNT.labels(user_id=user_id).inc()  # 1M users = 1M time series
+REQUEST_COUNT.labels(user_id=user_id).inc() # 1M users = 1M time series
 ```
 
 **Good:**
 ```python
-REQUEST_COUNT.labels(route=request.path, status=status_code).inc()  # ~100 routes × 10 status codes = 1K time series
+REQUEST_COUNT.labels(route=request.path, status=status_code).inc() # ~100 routes × 10 status codes = 1K time series
 ```
 
 **How to detect:** Prometheus UI → Status → TSDB Status. If you see "time series count" growing unbounded, you have a cardinality problem.
@@ -998,23 +997,23 @@ REQUEST_COUNT.labels(route=request.path, status=status_code).inc()  # ~100 route
 
 **Slow:**
 ```promql
-sum(rate(http_requests_total[30d]))  # Scans 30 days of raw data
+sum(rate(http_requests_total[30d])) # Scans 30 days of raw data
 ```
 
 **Fast:**
 ```promql
-sum(rate(http_requests_total[5m]))  # Scans 5 minutes of raw data
+sum(rate(http_requests_total[5m])) # Scans 5 minutes of raw data
 ```
 
 **Recording rule** (precompute hourly):
 ```yaml
 # prometheus.yml
 groups:
-  - name: aggregations
-    interval: 60s
-    rules:
-      - record: http_requests:rate5m
-        expr: sum(rate(http_requests_total[5m]))
+ - name: aggregations
+ interval: 60s
+ rules:
+ - record: http_requests:rate5m
+ expr: sum(rate(http_requests_total[5m]))
 ```
 
 Now query `http_requests:rate5m` instead — it's precomputed every 60 seconds.
@@ -1033,12 +1032,12 @@ Now query `http_requests:rate5m` instead — it's precomputed every 60 seconds.
 ```yaml
 # docker-compose.yml
 services:
-  prometheus:
-    image: prom/prometheus:latest
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.retention.time=30d'  # Keep 30 days
-      - '--storage.tsdb.retention.size=50GB'  # Or 50GB disk limit
+ prometheus:
+ image: prom/prometheus:latest
+ command:
+ - '--config.file=/etc/prometheus/prometheus.yml'
+ - '--storage.tsdb.retention.time=30d' # Keep 30 days
+ - '--storage.tsdb.retention.size=50GB' # Or 50GB disk limit
 ```
 
 **Remote storage:** For multi-year retention, send metrics to a remote backend:
@@ -1054,38 +1053,38 @@ Here's the full architecture showing all four phases integrated:
 
 ```mermaid
 graph TB
-    subgraph "Phase 1: INSTRUMENT"
-        A[Flask App] -->|prometheus_client| B[/metrics endpoint]
-        B --> C[Counter: http_requests_total]
-        B --> D[Histogram: http_request_duration_seconds]
-        B --> E[Gauge: active_connections]
-    end
+ subgraph "Phase 1: INSTRUMENT"
+ A[Flask App] -->|prometheus_client| B[/metrics endpoint]
+ B --> C[Counter: http_requests_total]
+ B --> D[Histogram: http_request_duration_seconds]
+ B --> E[Gauge: active_connections]
+ end
 
-    subgraph "Phase 2: COLLECT"
-        F[Prometheus] -->|scrape every 15s| B
-        F --> G[TSDB Storage]
-        G -->|30 day retention| H[Time-series data]
-    end
+ subgraph "Phase 2: COLLECT"
+ F[Prometheus] -->|scrape every 15s| B
+ F --> G[TSDB Storage]
+ G -->|30 day retention| H[Time-series data]
+ end
 
-    subgraph "Phase 3: VISUALIZE"
-        I[Grafana] -->|PromQL queries| F
-        I --> J[Dashboard: Request Rate]
-        I --> K[Dashboard: Error Rate]
-        I --> L[Dashboard: Latency p95/p99]
-    end
+ subgraph "Phase 3: VISUALIZE"
+ I[Grafana] -->|PromQL queries| F
+ I --> J[Dashboard: Request Rate]
+ I --> K[Dashboard: Error Rate]
+ I --> L[Dashboard: Latency p95/p99]
+ end
 
-    subgraph "Phase 4: ALERT"
-        M[Alertmanager] -->|evaluate rules| F
-        M --> N{Error rate > 5%?}
-        N -->|Yes| O[PagerDuty]
-        N -->|Yes| P[Slack #alerts]
-        N -->|Yes| Q[Runbook: Scale service]
-    end
+ subgraph "Phase 4: ALERT"
+ M[Alertmanager] -->|evaluate rules| F
+ M --> N{Error rate > 5%?}
+ N -->|Yes| O[PagerDuty]
+ N -->|Yes| P[Slack #alerts]
+ N -->|Yes| Q[Runbook: Scale service]
+ end
 
-    style A fill:#1e3a8a,color:#fff
-    style F fill:#15803d,color:#fff
-    style I fill:#b45309,color:#fff
-    style M fill:#b91c1c,color:#fff
+ style A fill:#1e3a8a,color:#fff
+ style F fill:#15803d,color:#fff
+ style I fill:#b45309,color:#fff
+ style M fill:#b91c1c,color:#fff
 ```
 
 **The complete flow:**
@@ -1102,11 +1101,11 @@ graph TB
 14:32:00 — Error rate climbs to 6% (database saturated)
 14:34:00 — Alertmanager fires: "HighErrorRate on /api/payment" (sustained for 2min)
 14:34:05 — PagerDuty pages on-call engineer Sarah
-14:34:10 — Slack #alerts posts: "⚠️ HighErrorRate: 6% errors (threshold 5%)" with runbook link
+14:34:10 — Slack #alerts posts: " HighErrorRate: 6% errors (threshold 5%)" with runbook link
 14:35:00 — Sarah checks runbook, scales payment service from 3 → 6 replicas
 14:36:00 — Error rate drops to 2%
 14:38:00 — Alertmanager resolves alert (error rate < 5% for 2min)
-14:38:05 — Slack posts: "✅ HighErrorRate resolved"
+14:38:05 — Slack posts: " HighErrorRate resolved"
 ```
 
 **Key takeaway:** The four phases work together as a continuous feedback loop:
@@ -1131,12 +1130,12 @@ You see this graph in Grafana:
 
 ```
 Request rate (requests/sec)
-   ▲
-100│          ╱╲
- 50│    ╱╲  ╱  ╲
-  0│___/  \/    \___
-   └────────────────▶ Time
-      10am   11am   12pm
+ ▲
+100│ ╱╲
+ 50│ ╱╲ ╱ ╲
+ 0│___/ \/ \___
+ └────────────────▶ Time
+ 10am 11am 12pm
 ```
 
 **Questions:**
@@ -1148,16 +1147,16 @@ Request rate (requests/sec)
 1. `rate(http_requests_total[5m])` or `sum(rate(http_requests_total[5m])) by (route)`
 2. Possible causes: traffic spike (marketing campaign, viral post), DDoS attack, retry storm from a failing client
 3. Alerting rule:
-   ```yaml
-   groups:
-     - name: alerts
-       rules:
-         - alert: HighRequestRate
-           expr: sum(rate(http_requests_total[5m])) > 80
-           for: 2m  # Fire only if sustained for 2 minutes
-           annotations:
-             summary: "Request rate exceeded 80 req/sec"
-   ```
+ ```yaml
+ groups:
+ - name: alerts
+ rules:
+ - alert: HighRequestRate
+ expr: sum(rate(http_requests_total[5m])) > 80
+ for: 2m # Fire only if sustained for 2 minutes
+ annotations:
+ summary: "Request rate exceeded 80 req/sec"
+ ```
 
 ---
 
@@ -1167,12 +1166,12 @@ Your `/api/payment` route usually has p95 latency of 200ms. After deploying a ne
 
 ```
 Latency p95 (seconds)
-   ▲
-1.0│          ████████
-0.5│    ████  ████████
-0.2│████████  ████████
-   └────────────────────▶ Time
-      v1.0      v1.1
+ ▲
+1.0│ ████████
+0.5│ ████ ████████
+0.2│████████ ████████
+ └────────────────────▶ Time
+ v1.0 v1.1
 ```
 
 **Questions:**
@@ -1184,10 +1183,10 @@ Latency p95 (seconds)
 1. `histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{route="/api/payment"}[5m]))`
 2. p95 latency increased from 200ms to 1.0s — a 5x regression. Likely causes: slow database query, external API timeout, missing cache hit
 3. Add more granular labels:
-   ```python
-   REQUEST_LATENCY.labels(route=request.path, handler='db_query').observe(latency)
-   ```
-   Then query `histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{handler="db_query"}[5m]))` to isolate the slow component.
+ ```python
+ REQUEST_LATENCY.labels(route=request.path, handler='db_query').observe(latency)
+ ```
+ Then query `histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{handler="db_query"}[5m]))` to isolate the slow component.
 
 ---
 
@@ -1197,12 +1196,12 @@ Your dashboard shows:
 
 ```
 Error rate (errors/sec)
-   ▲
-10 │          ██
- 5 │          ██
+ ▲
+10 │ ██
+ 5 │ ██
  0 │__________██__________
-   └────────────────────▶ Time
-            3pm
+ └────────────────────▶ Time
+ 3pm
 ```
 
 **Questions:**
@@ -1213,15 +1212,15 @@ Error rate (errors/sec)
 **Answers:**
 1. `sum(rate(http_requests_total{status=~"5.."}[5m]))` (matches status codes 500–599)
 2. Break down by route and status:
-   ```promql
-   sum(rate(http_requests_total{status=~"5.."}[5m])) by (route, status)
-   ```
-   If `/api/payment` shows 100% 503 errors, the payment service is down.
+ ```promql
+ sum(rate(http_requests_total{status=~"5.."}[5m])) by (route, status)
+ ```
+ If `/api/payment` shows 100% 503 errors, the payment service is down.
 3. **Correlate with logs:** Use a trace ID or request ID label:
-   ```python
-   REQUEST_COUNT.labels(route=request.path, status=status_code, trace_id=trace_id).inc()
-   ```
-   Then grep logs for `trace_id=abc123` to see the full error stack trace.
+ ```python
+ REQUEST_COUNT.labels(route=request.path, status=status_code, trace_id=trace_id).inc()
+ ```
+ Then grep logs for `trace_id=abc123` to see the full error stack trace.
 
 ---
 

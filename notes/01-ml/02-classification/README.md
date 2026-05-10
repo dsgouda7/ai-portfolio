@@ -24,11 +24,11 @@ In Topic 01 (Regression) you predicted **continuous values** — house prices wi
 
 | Ch | Title | What Unlocks | F1-Score | Constraints | Status |
 |----|-------|--------------|----------|-------------|--------|
-| **1** | [Logistic Regression](ch01_logistic_regression) | Binary baseline: Smiling (88% F1) | Smiling: 88% | #1 Partial, #5 ✅ | 🔧 |
-| **2** | [Classical Classifiers](ch02_classical_classifiers) | Interpretable rules: Decision trees show "if pixel[32,40] > 128 → Smiling" | Smiling: 85% | #4 Partial | 🔧 |
-| **3** | [Evaluation Metrics](ch03_metrics) | **Attribute Trinity unlocked**: measure all 3 with F1, expose Bald's 12% recall | Smiling: 88%<br>Eyeglasses: 76%<br>Bald: 12% recall! | #1 Exposed, #3 Recognized | 🔧 |
-| **4** | [Support Vector Machines](ch04_svm) | Maximum-margin separation improves Eyeglasses | Smiling: 89%<br>Eyeglasses: 82% | #1 Improved | 📋 |
-| **5** | [Hyperparameter Tuning](ch05_hyperparameter_tuning) | Per-attribute threshold tuning conquers Bald | **Smiling: 92%**<br>**Eyeglasses: 87%**<br>**Bald: 86%** | **#1 ✅ #2 ✅ #3 ✅** | 📋 |
+| **1** | [Logistic Regression](ch01_logistic_regression) | Binary baseline: Smiling (88% F1) | Smiling: 88% | #1 Partial, #5 | |
+| **2** | [Classical Classifiers](ch02_classical_classifiers) | Interpretable rules: Decision trees show "if pixel[32,40] > 128 → Smiling" | Smiling: 85% | #4 Partial | |
+| **3** | [Evaluation Metrics](ch03_metrics) | **Attribute Trinity unlocked**: measure all 3 with F1, expose Bald's 12% recall | Smiling: 88%<br>Eyeglasses: 76%<br>Bald: 12% recall! | #1 Exposed, #3 Recognized | |
+| **4** | [Support Vector Machines](ch04_svm) | Maximum-margin separation improves Eyeglasses | Smiling: 89%<br>Eyeglasses: 82% | #1 Improved | |
+| **5** | [Hyperparameter Tuning](ch05_hyperparameter_tuning) | Per-attribute threshold tuning conquers Bald | **Smiling: 92%**<br>**Eyeglasses: 87%**<br>**Bald: 86%** | **#1 #2 #3 ** | |
 
 > **Track scope**: This 5-chapter track achieves **all 5 constraints** with the Attribute Trinity (3 attributes). **Why 3, not 40?** Each of the 3 attributes represents a distinct class imbalance regime you'll encounter in production ML:
 > - **Smiling (48%)**: Balanced data — learn fundamentals without imbalance complications
@@ -37,7 +37,7 @@ In Topic 01 (Regression) you predicted **continuous values** — house prices wi
 >
 > Mastering these 3 **proves** you can handle any binary classification problem. Scaling to 40 attributes (Constraint #3 in original challenge) requires **multi-output neural networks** with shared representations, which is the natural next step in [Topic 03 — Neural Networks](../03_neural_networks/README.md).
 
-> ✔️ **Why this progression works**: Classical ML forces you to understand the *math* (sigmoid, cross-entropy, decision boundaries) before neural networks automate it. The Trinity's escalating difficulty ensures you've debugged imbalance at small scale before tackling deep learning's complexity.
+> ✔ **Why this progression works**: Classical ML forces you to understand the *math* (sigmoid, cross-entropy, decision boundaries) before neural networks automate it. The Trinity's escalating difficulty ensures you've debugged imbalance at small scale before tackling deep learning's complexity.
 
 > † F1-score is used after Ch.3; before that, naive accuracy hides class imbalance (e.g., 96% accuracy on Bald by always predicting "Not-Bald").
 
@@ -49,12 +49,12 @@ In Topic 01 (Regression) you predicted **continuous values** — house prices wi
 **Build simple classifiers, understand their limits**
 
 - **Ch.1**: Can logistic regression detect Smiling? → Yes, ~88% F1-score (decent baseline!)
-  - *"88% F1 on Smiling is promising. But what about Eyeglasses (13% of faces) and Bald (2.5%)? We need all three." — Product Lead*
+ - *"88% F1 on Smiling is promising. But what about Eyeglasses (13% of faces) and Bald (2.5%)? We need all three." — Product Lead*
 
 - **Ch.2**: Decision trees, KNN, Naive Bayes → ~85% F1 but interpretable rules
-  - *"I love that the tree shows 'if pixel[32,40] > 128 → likely Smiling'. But 85% is lower than logistic regression?" — CEO*
+ - *"I love that the tree shows 'if pixel[32,40] > 128 → likely Smiling'. But 85% is lower than logistic regression?" — CEO*
 
-**Status**: ❌ Need proper evaluation and better models.
+**Status**: Need proper evaluation and better models.
 
 ---
 
@@ -62,23 +62,23 @@ In Topic 01 (Regression) you predicted **continuous values** — house prices wi
 **Learn to measure correctly, then push the boundary**
 
 - **Ch.3**: Proper metrics → 88% F1 on Smiling was real, but **Bald recall is only 12%!**
-  - *"96% accuracy on Bald by always predicting Not-Bald? That's the accuracy paradox. We need F1-score for all 3 attributes." — Data Scientist*
-  - **Trinity exposed**: Smiling 88% F1, Eyeglasses 76% F1, Bald 12% recall (disaster!)
+ - *"96% accuracy on Bald by always predicting Not-Bald? That's the accuracy paradox. We need F1-score for all 3 attributes." — Data Scientist*
+ - **Trinity exposed**: Smiling 88% F1, Eyeglasses 76% F1, Bald 12% recall (disaster!)
 
 - **Ch.4**: SVM with RBF kernel → ~89% F1 on Smiling, 82% on Eyeglasses
-  - *"SVM finds the widest gap between Smiling and Not-Smiling in feature space. Eyeglasses improved! But Bald is still broken." — ML Lead*
+ - *"SVM finds the widest gap between Smiling and Not-Smiling in feature space. Eyeglasses improved! But Bald is still broken." — ML Lead*
 
-**Status**: ✅ Proper evaluation framework. SVM improves accuracy.
+**Status**: Proper evaluation framework. SVM improves accuracy.
 
 ---
 
 ### Act 3: Optimization (Ch.5)
 **Tune everything, unlock production quality**
 
-- **Ch.5**: Grid/Random/Bayesian search + per-attribute threshold tuning → **All 3 attributes >85% F1 ✅**
-  - *"Per-attribute threshold tuning pushed Bald F1 from 12% to 86%! Smiling hit 92%, Eyeglasses 87%. We conquered the Trinity." — ML Engineer*
+- **Ch.5**: Grid/Random/Bayesian search + per-attribute threshold tuning → **All 3 attributes >85% F1 **
+ - *"Per-attribute threshold tuning pushed Bald F1 from 12% to 86%! Smiling hit 92%, Eyeglasses 87%. We conquered the Trinity." — ML Engineer*
 
-**Status**: ✅✅✅ All 5 constraints achieved: Balanced Performance (#1), Generalization (#2), Imbalance Mastery (#3), Interpretability (#4 partial), Efficiency (#5).
+**Status**: All 5 constraints achieved: Balanced Performance (#1), Generalization (#2), Imbalance Mastery (#3), Interpretability (#4 partial), Efficiency (#5).
 
 ---
 
@@ -102,12 +102,12 @@ Every chapter uses the same dataset: [CelebA](https://mmlab.ie.cuhk.edu.hk/proje
 **Image format**: 178×218 color → resized to 64×64 grayscale for classical ML (flattened to 4,096 features or HOG descriptors)
 
 **Why CelebA is perfect for the Attribute Trinity**:
-- ✅ Natural binary labels (not manufactured thresholds)
-- ✅ Natural class imbalance progression (Smiling 48% → Eyeglasses 13% → Bald 2.5%)
-- ✅ Visual intuition (see what the model gets right/wrong on each attribute)
-- ✅ Standard research benchmark with known baselines
-- ✅ Forces proper metrics (accuracy fails spectacularly on Bald)
-- ✅ Prepares for multi-label (scaling 3 → 40 attributes in Neural Networks track)
+- Natural binary labels (not manufactured thresholds)
+- Natural class imbalance progression (Smiling 48% → Eyeglasses 13% → Bald 2.5%)
+- Visual intuition (see what the model gets right/wrong on each attribute)
+- Standard research benchmark with known baselines
+- Forces proper metrics (accuracy fails spectacularly on Bald)
+- Prepares for multi-label (scaling 3 → 40 attributes in Neural Networks track)
 
 ---
 

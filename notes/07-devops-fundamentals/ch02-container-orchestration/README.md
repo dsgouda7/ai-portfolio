@@ -10,11 +10,11 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Deploy a production-ready 3-tier web application (frontend → backend → database) that survives restarts, scales horizontally, and starts with one command.
+> **The mission**: Deploy a production-ready 3-tier web application (frontend → backend → database) that survives restarts, scales horizontally, and starts with one command.
 
 **What we know so far:**
-- ✅ Ch.1: We can containerize a single Python Flask app with Docker
-- ❌ **But we can't coordinate multiple services** — manually running `docker run` for web + Postgres + Redis = 3 terminal windows, hardcoded IPs, brittle startup scripts
+- Ch.1: We can containerize a single Python Flask app with Docker
+- **But we can't coordinate multiple services** — manually running `docker run` for web + Postgres + Redis = 3 terminal windows, hardcoded IPs, brittle startup scripts
 
 **What's blocking us:**
 
@@ -39,7 +39,7 @@ Docker Compose — declarative multi-container orchestration. Define all service
 
 ## 1 · Core Idea — Declarative Service Orchestration
 
-> ⚡ **When this breaks** — ProductionStack's Flask container starts before PostgreSQL finishes its initialization sequence; the app throws a `connection refused` error on the database and crashes, taking the payment service with it. Manually restarting containers in the right order during a 3 am outage is exactly how SLA violations happen. Docker Compose's `depends_on` + health check system eliminates startup race conditions by materializing services in the correct order, every time — no bash scripts, no sleep timers, no luck.
+> **When this breaks** — ProductionStack's Flask container starts before PostgreSQL finishes its initialization sequence; the app throws a `connection refused` error on the database and crashes, taking the payment service with it. Manually restarting containers in the right order during a 3 am outage is exactly how SLA violations happen. Docker Compose's `depends_on` + health check system eliminates startup race conditions by materializing services in the correct order, every time — no bash scripts, no sleep timers, no luck.
 
 **The insight**: Don't script container startup — declare the *desired state* of your system.
 
@@ -59,31 +59,31 @@ The Compose engine reads the YAML, creates networks and volumes, starts containe
 
 ## 1.5 · The Practitioner Workflow — Your 4-Phase Orchestration
 
-> ⚠️ **Two ways to read this chapter:**
+> **Warning — Two ways to read this chapter:**
 > - **Theory-first (recommended for learning):** Read §0→§5 sequentially to understand concepts, then use this workflow as reference
 > - **Workflow-first (practitioners with existing knowledge):** Use this diagram as a jump-to guide when deploying real stacks
 
 **What you'll build by the end:** A production-ready 3-tier architecture (web + cache + database) that starts with one command, survives restarts, scales horizontally, and maintains persistent state. This is the complete docker-compose.yml from §2 that orchestrates service lifecycle, configuration, and observability.
 
 ```
-Phase 1: DEFINE            Phase 2: CONFIGURE          Phase 3: ORCHESTRATE       Phase 4: OBSERVE
+Phase 1: DEFINE Phase 2: CONFIGURE Phase 3: ORCHESTRATE Phase 4: OBSERVE
 ──────────────────────────────────────────────────────────────────────────────────────────────────
-Declare service topology:  Inject runtime config:      Control lifecycle:         Monitor health:
+Declare service topology: Inject runtime config: Control lifecycle: Monitor health:
 
-• Service definitions      • Environment variables     • depends_on ordering      • Health checks
-• Network topology         • .env files                • Restart policies         • Log aggregation
-• Volume mounts            • Secrets management        • Resource limits          • Service discovery
+• Service definitions • Environment variables • depends_on ordering • Health checks
+• Network topology • .env files • Restart policies • Log aggregation
+• Volume mounts • Secrets management • Resource limits • Service discovery
 
-→ DECISION:                → DECISION:                 → DECISION:                → DECISION:
-  Service structure?         Config source?              Startup order?             Health criteria?
-  • 3-tier: web/cache/db     • .env: local dev          • Strict: service_healthy   • DB: pg_isready
-  • Networks: frontend/      • Vault: production        • Loose: service_started    • Web: HTTP 200
-    backend isolation        • Never hardcode secrets   • Scale replicas with       • Logs: docker compose
-  • Volumes: named for         in YAML                    --scale flag                logs -f <service>
-    persistence
+→ DECISION: → DECISION: → DECISION: → DECISION:
+ Service structure? Config source? Startup order? Health criteria?
+ • 3-tier: web/cache/db • .env: local dev • Strict: service_healthy • DB: pg_isready
+ • Networks: frontend/ • Vault: production • Loose: service_started • Web: HTTP 200
+ backend isolation • Never hardcode secrets • Scale replicas with • Logs: docker compose
+ • Volumes: named for in YAML --scale flag logs -f <service>
+ persistence
 ```
 
-> 💡 **How to use this workflow:** Phase 1→2 define your stack architecture (run once per project). Phase 3→4 are iterative — run every deployment cycle. When a service fails to start (Phase 3), Phase 4 diagnostics (logs + health checks) identify the root cause before you modify Phase 1 or 2.
+> **How to use this workflow:** Phase 1→2 define your stack architecture (run once per project). Phase 3→4 are iterative — run every deployment cycle. When a service fails to start (Phase 3), Phase 4 diagnostics (logs + health checks) identify the root cause before you modify Phase 1 or 2.
 
 ### The 4-Phase Decision Flow
 
@@ -91,23 +91,23 @@ This diagram shows the complete practitioner journey from single-container app t
 
 ```mermaid
 graph TD
-    Start([docker-compose.yml]) --> B{Phase 1: DEFINE<br/>Service topology}
-    B -->|No network isolation| C[Add custom bridge network]
-    B -->|Data lost on restart| D[Add named volumes]
-    B -->|Services declared| E{Phase 2: CONFIGURE<br/>Secrets and env vars}
-    E -->|Secrets hardcoded in YAML| F[Move secrets to .env<br/>add .env to .gitignore]
-    E -->|Config externalized| G{Phase 3: ORCHESTRATE<br/>docker compose up -d}
-    G -->|Web crashes before db ready| H[Add depends_on with<br/>service_healthy condition]
-    G -->|Container restart loop| I[docker compose logs -f web]
-    G -->|Stack running| J{Phase 4: OBSERVE<br/>Health and logs}
-    J -->|Service unhealthy| K[Fix health check command<br/>and retry interval]
-    J -->|All services healthy| L[✅ ProductionStack ready]
-    style L fill:#15803d,stroke:#15803d,color:#fff
-    style B fill:#1e3a8a,stroke:#1e3a8a,color:#fff
-    style E fill:#1e3a8a,stroke:#1e3a8a,color:#fff
-    style G fill:#1e3a8a,stroke:#1e3a8a,color:#fff
-    style H fill:#b45309,stroke:#b45309,color:#fff
-    style I fill:#b91c1c,stroke:#b91c1c,color:#fff
+ Start([docker-compose.yml]) --> B{Phase 1: DEFINE<br/>Service topology}
+ B -->|No network isolation| C[Add custom bridge network]
+ B -->|Data lost on restart| D[Add named volumes]
+ B -->|Services declared| E{Phase 2: CONFIGURE<br/>Secrets and env vars}
+ E -->|Secrets hardcoded in YAML| F[Move secrets to .env<br/>add .env to .gitignore]
+ E -->|Config externalized| G{Phase 3: ORCHESTRATE<br/>docker compose up -d}
+ G -->|Web crashes before db ready| H[Add depends_on with<br/>service_healthy condition]
+ G -->|Container restart loop| I[docker compose logs -f web]
+ G -->|Stack running| J{Phase 4: OBSERVE<br/>Health and logs}
+ J -->|Service unhealthy| K[Fix health check command<br/>and retry interval]
+ J -->|All services healthy| L[ ProductionStack ready]
+ style L fill:#15803d,stroke:#15803d,color:#fff
+ style B fill:#1e3a8a,stroke:#1e3a8a,color:#fff
+ style E fill:#1e3a8a,stroke:#1e3a8a,color:#fff
+ style G fill:#1e3a8a,stroke:#1e3a8a,color:#fff
+ style H fill:#b45309,stroke:#b45309,color:#fff
+ style I fill:#b91c1c,stroke:#b91c1c,color:#fff
 ```
 
 ---
@@ -141,48 +141,48 @@ Create a new directory `flask-stack/` with:
 version: '3.9'
 
 services:
-  web:
-    build: .
-    ports:
-      - "5000:5000"
-    environment:
-      - DATABASE_URL=postgresql://user:pass@db:5432/appdb
-      - REDIS_URL=redis://cache:6379
-    depends_on:
-      db:
-        condition: service_healthy
-      cache:
-        condition: service_started
-    networks:
-      - app-network
+ web:
+ build: .
+ ports:
+ - "5000:5000"
+ environment:
+ - DATABASE_URL=postgresql://user:pass@db:5432/appdb
+ - REDIS_URL=redis://cache:6379
+ depends_on:
+ db:
+ condition: service_healthy
+ cache:
+ condition: service_started
+ networks:
+ - app-network
 
-  db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: pass
-      POSTGRES_DB: appdb
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-    networks:
-      - app-network
+ db:
+ image: postgres:16-alpine
+ environment:
+ POSTGRES_USER: user
+ POSTGRES_PASSWORD: pass
+ POSTGRES_DB: appdb
+ volumes:
+ - postgres-data:/var/lib/postgresql/data
+ healthcheck:
+ test: ["CMD-SHELL", "pg_isready -U user"]
+ interval: 5s
+ timeout: 3s
+ retries: 5
+ networks:
+ - app-network
 
-  cache:
-    image: redis:7-alpine
-    networks:
-      - app-network
+ cache:
+ image: redis:7-alpine
+ networks:
+ - app-network
 
 networks:
-  app-network:
-    driver: bridge
+ app-network:
+ driver: bridge
 
 volumes:
-  postgres-data:
+ postgres-data:
 ```
 
 **Key details**:
@@ -196,11 +196,11 @@ The `depends_on` block controls startup order:
 
 ```yaml
 web:
-  depends_on:
-    db:
-      condition: service_healthy  # Wait for health check to pass
-    cache:
-      condition: service_started  # Just wait for container to start
+ depends_on:
+ db:
+ condition: service_healthy # Wait for health check to pass
+ cache:
+ condition: service_started # Just wait for container to start
 ```
 
 Without this, Flask would crash with "connection refused" errors on startup.
@@ -211,25 +211,25 @@ Without this, Flask would crash with "connection refused" errors on startup.
 
 **Volumes**: The `postgres-data` named volume stores `/var/lib/postgresql/data` (Postgres's data directory). When you run `docker compose down`, the database persists. To wipe it: `docker compose down --volumes`.
 
-> 💡 **Industry Standard:** Docker Compose YAML specification
+> **Industry Standard:** Docker Compose YAML specification
 > ```yaml
 > # Canonical structure for production stacks
 > services:
->   <service_name>:
->     image: <image>:<tag>  # Always pin versions (postgres:16-alpine, not postgres:latest)
->     depends_on:
->       <dependency>:
->         condition: service_healthy  # Wait for health checks, not just startup
->     networks:
->       - <network_name>
->     volumes:
->       - <named_volume>:<container_path>
+> <service_name>:
+> image: <image>:<tag> # Always pin versions (postgres:16-alpine, not postgres:latest)
+> depends_on:
+> <dependency>:
+> condition: service_healthy # Wait for health checks, not just startup
+> networks:
+> - <network_name>
+> volumes:
+> - <named_volume>:<container_path>
 > ```
 > **When to use:** Always use declarative YAML instead of imperative `docker run` commands. YAML is version-controlled, reviewable, and reproducible.
 > **Common alternatives:** Docker Swarm (deprecated), Kubernetes (multi-node orchestration), Nomad (HashiCorp)
 
-> 💡 **Define verdict:** 3-tier stack (web + cache + db) declared with health-check dependency ordering — `service_healthy` prevents Flask/Postgres race condition.
-> ➡️ Topology complete; proceed to Configure phase to externalize secrets.
+> **Define verdict:** 3-tier stack (web + cache + db) declared with health-check dependency ordering — `service_healthy` prevents Flask/Postgres race condition.
+> ➡ Topology complete; proceed to Configure phase to externalize secrets.
 
 ---
 
@@ -264,23 +264,23 @@ Update `docker-compose.yml` to reference variables:
 
 ```yaml
 services:
-  web:
-    build: .
-    environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - REDIS_URL=${REDIS_URL}
-      - SECRET_KEY=${SECRET_KEY}
-    env_file:
-      - .env  # Load all variables from .env
+ web:
+ build: .
+ environment:
+ - DATABASE_URL=${DATABASE_URL}
+ - REDIS_URL=${REDIS_URL}
+ - SECRET_KEY=${SECRET_KEY}
+ env_file:
+ - .env # Load all variables from .env
 
-  db:
-    image: postgres:16-alpine
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-    env_file:
-      - .env
+ db:
+ image: postgres:16-alpine
+ environment:
+ - POSTGRES_USER=${POSTGRES_USER}
+ - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+ - POSTGRES_DB=${POSTGRES_DB}
+ env_file:
+ - .env
 ```
 
 **Key details**:
@@ -288,22 +288,22 @@ services:
 - `.gitignore` should include `.env` — commit `.env.example` with placeholder values instead
 - Production systems use Docker secrets or external vaults (see callout below)
 
-> 💡 **Industry Standard:** Docker Secrets (Swarm/Kubernetes) or External Vaults
+> **Industry Standard:** Docker Secrets (Swarm/Kubernetes) or External Vaults
 > ```yaml
 > # Docker Swarm secrets (production)
 > services:
->   db:
->     secrets:
->       - db_password
+> db:
 > secrets:
->   db_password:
->     external: true  # Managed outside Compose (e.g., AWS Secrets Manager)
+> - db_password
+> secrets:
+> db_password:
+> external: true # Managed outside Compose (e.g., AWS Secrets Manager)
 > ```
 > **When to use:** Production deployments. Never use .env files in production — they're unencrypted files on disk.
 > **Common alternatives:** AWS Secrets Manager, HashiCorp Vault, Azure Key Vault, Kubernetes Secrets
 
-> 💡 **Configure verdict:** Secrets moved from YAML to `.env` — same `docker-compose.yml` works across dev/staging/prod with different `.env` files.
-> ➡️ Credentials out of git history; proceed to Orchestrate phase.
+> **Configure verdict:** Secrets moved from YAML to `.env` — same `docker-compose.yml` works across dev/staging/prod with different `.env` files.
+> ➡ Credentials out of git history; proceed to Orchestrate phase.
 
 ---
 
@@ -320,44 +320,44 @@ Three orchestration levers:
 
 ```yaml
 services:
-  web:
-    build: .
-    depends_on:
-      db:
-        condition: service_healthy  # CRITICAL: wait for health check
-      cache:
-        condition: service_started  # Just wait for container to start
-    restart: unless-stopped  # Auto-restart on crash (but not if manually stopped)
-    deploy:
-      resources:
-        limits:
-          cpus: '1.0'      # Max 1 CPU core
-          memory: 512M     # Max 512MB RAM
-        reservations:
-          cpus: '0.5'      # Guaranteed 0.5 cores
-          memory: 256M
+ web:
+ build: .
+ depends_on:
+ db:
+ condition: service_healthy # CRITICAL: wait for health check
+ cache:
+ condition: service_started # Just wait for container to start
+ restart: unless-stopped # Auto-restart on crash (but not if manually stopped)
+ deploy:
+ resources:
+ limits:
+ cpus: '1.0' # Max 1 CPU core
+ memory: 512M # Max 512MB RAM
+ reservations:
+ cpus: '0.5' # Guaranteed 0.5 cores
+ memory: 256M
 
-  db:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-      start_period: 10s  # Grace period before health checks start
-    deploy:
-      resources:
-        limits:
-          memory: 1G
+ db:
+ image: postgres:16-alpine
+ restart: unless-stopped
+ healthcheck:
+ test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+ interval: 5s
+ timeout: 3s
+ retries: 5
+ start_period: 10s # Grace period before health checks start
+ deploy:
+ resources:
+ limits:
+ memory: 1G
 
-  cache:
-    image: redis:7-alpine
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          memory: 256M
+ cache:
+ image: redis:7-alpine
+ restart: unless-stopped
+ deploy:
+ resources:
+ limits:
+ memory: 256M
 ```
 
 **Key details**:
@@ -382,28 +382,28 @@ docker compose ps
 1. **Port conflicts**: If `web` exposes port 5000, all 3 replicas will fight for it — solution: use reverse proxy (Traefik, Nginx)
 2. **Session state**: If Flask stores sessions in memory, users will be randomly logged out as requests hit different replicas — solution: use Redis for shared session storage (already in our stack!)
 
-> 💡 **Industry Standard:** Traefik or Nginx for Load Balancing
+> **Industry Standard:** Traefik or Nginx for Load Balancing
 > ```yaml
 > services:
->   traefik:
->     image: traefik:v2.10
->     command:
->       - "--providers.docker=true"
->       - "--entrypoints.web.address=:80"
->     ports:
->       - "80:80"
->     volumes:
->       - /var/run/docker.sock:/var/run/docker.sock
->   web:
->     labels:
->       - "traefik.enable=true"
->       - "traefik.http.routers.web.rule=Host(`api.example.com`)"
+> traefik:
+> image: traefik:v2.10
+> command:
+> - "--providers.docker=true"
+> - "--entrypoints.web.address=:80"
+> ports:
+> - "80:80"
+> volumes:
+> - /var/run/docker.sock:/var/run/docker.sock
+> web:
+> labels:
+> - "traefik.enable=true"
+> - "traefik.http.routers.web.rule=Host(`api.example.com`)"
 > ```
 > **When to use:** When scaling beyond 1 replica of a web service. Traefik auto-discovers containers via Docker socket.
 > **Common alternatives:** Nginx, HAProxy, AWS ALB, Kubernetes Ingress
 
-> 💡 **Orchestrate verdict:** Health-check ordering eliminates startup races; `unless-stopped` auto-heals crashes; resource limits cap memory at 1 GB per service.
-> ➡️ Services self-heal; horizontal scaling via `--scale` ready for load balancer; proceed to Observe phase.
+> **Orchestrate verdict:** Health-check ordering eliminates startup races; `unless-stopped` auto-heals crashes; resource limits cap memory at 1 GB per service.
+> ➡ Services self-heal; horizontal scaling via `--scale` ready for load balancer; proceed to Observe phase.
 
 ---
 
@@ -437,10 +437,10 @@ docker compose logs -f --timestamps web
 docker compose ps
 
 # Output:
-# NAME        IMAGE               STATUS                    PORTS
-# web_1       flask-app:latest    Up 2 minutes (healthy)    0.0.0.0:5000->5000/tcp
-# db_1        postgres:16-alpine  Up 2 minutes (healthy)    5432/tcp
-# cache_1     redis:7-alpine      Up 2 minutes              6379/tcp
+# NAME IMAGE STATUS PORTS
+# web_1 flask-app:latest Up 2 minutes (healthy) 0.0.0.0:5000->5000/tcp
+# db_1 postgres:16-alpine Up 2 minutes (healthy) 5432/tcp
+# cache_1 redis:7-alpine Up 2 minutes 6379/tcp
 ```
 
 **Inspect individual container**:
@@ -459,28 +459,28 @@ All stateful services need health checks. Here are production-grade examples:
 
 ```yaml
 services:
-  db:
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 10s      # Check every 10 seconds
-      timeout: 5s        # Fail if check takes >5s
-      retries: 5         # Mark unhealthy after 5 consecutive failures
-      start_period: 30s  # Grace period for slow startup (don't fail during init)
+ db:
+ healthcheck:
+ test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+ interval: 10s # Check every 10 seconds
+ timeout: 5s # Fail if check takes >5s
+ retries: 5 # Mark unhealthy after 5 consecutive failures
+ start_period: 30s # Grace period for slow startup (don't fail during init)
 
-  cache:
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 3
+ cache:
+ healthcheck:
+ test: ["CMD", "redis-cli", "ping"]
+ interval: 5s
+ timeout: 3s
+ retries: 3
 
-  web:
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 15s
+ web:
+ healthcheck:
+ test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+ interval: 10s
+ timeout: 5s
+ retries: 3
+ start_period: 15s
 ```
 
 **Critical**: The `web` service health check requires a `/health` endpoint in your Flask app:
@@ -489,33 +489,33 @@ services:
 # app.py
 @app.route('/health')
 def health_check():
-    """Health check endpoint for Docker Compose."""
-    try:
-        # Test database connection
-        db.session.execute('SELECT 1')
-        # Test Redis connection
-        cache.ping()
-        return {'status': 'healthy'}, 200
-    except Exception as e:
-        return {'status': 'unhealthy', 'error': str(e)}, 503
+ """Health check endpoint for Docker Compose."""
+ try:
+ # Test database connection
+ db.session.execute('SELECT 1')
+ # Test Redis connection
+ cache.ping()
+ return {'status': 'healthy'}, 200
+ except Exception as e:
+ return {'status': 'unhealthy', 'error': str(e)}, 503
 ```
 
-> 💡 **Industry Standard:** Structured Logging with ELK Stack or Loki
+> **Industry Standard:** Structured Logging with ELK Stack or Loki
 > ```yaml
 > services:
->   web:
->     logging:
->       driver: "json-file"
->       options:
->         max-size: "10m"
->         max-file: "3"
->         labels: "service,environment"
+> web:
+> logging:
+> driver: "json-file"
+> options:
+> max-size: "10m"
+> max-file: "3"
+> labels: "service,environment"
 >
->   # For production: send to centralized logging (Elasticsearch, Loki, CloudWatch)
->   loki:
->     image: grafana/loki:2.9.0
->     ports:
->       - "3100:3100"
+> # For production: send to centralized logging (Elasticsearch, Loki, CloudWatch)
+> loki:
+> image: grafana/loki:2.9.0
+> ports:
+> - "3100:3100"
 > ```
 > **When to use:** Production systems with >3 services. Local dev can use `docker compose logs`.
 > **Common alternatives:** ELK Stack (Elasticsearch/Logstash/Kibana), Splunk, Datadog, AWS CloudWatch Logs
@@ -527,9 +527,9 @@ Compose provides built-in DNS for service discovery:
 ```bash
 # From inside web container, test connectivity
 docker compose exec web sh
-$ ping db           # Resolves to db container IP
-$ ping cache        # Resolves to cache container IP
-$ curl http://db:5432  # Test if port is reachable
+$ ping db # Resolves to db container IP
+$ ping cache # Resolves to cache container IP
+$ curl http://db:5432 # Test if port is reachable
 ```
 
 **Common debugging commands**:
@@ -547,8 +547,8 @@ docker compose exec web env
 docker compose exec db psql -U user -d appdb -c "SELECT COUNT(*) FROM users;"
 ```
 
-> 💡 **Observe verdict:** `docker compose ps` shows unhealthy services instantly; centralized logs surface root cause without `docker exec` in most cases.
-> ➡️ Observability complete; chapter ready for Kubernetes orchestration in Ch.3.
+> **Observe verdict:** `docker compose ps` shows unhealthy services instantly; centralized logs surface root cause without `docker exec` in most cases.
+> ➡ Observability complete; chapter ready for Kubernetes orchestration in Ch.3.
 
 ---
 
@@ -576,8 +576,8 @@ curl http://localhost:5000/users
 
 **Tear down**:
 ```bash
-docker compose down        # Stops containers, removes networks (keeps volumes)
-docker compose down --volumes  # Also deletes postgres-data volume
+docker compose down # Stops containers, removes networks (keeps volumes)
+docker compose down --volumes # Also deletes postgres-data volume
 ```
 
 ---
@@ -607,17 +607,17 @@ By default, Compose creates a single network for all services. You can define mu
 
 ```yaml
 networks:
-  frontend:  # Web tier only
-  backend:   # Database tier only
+ frontend: # Web tier only
+ backend: # Database tier only
 
 services:
-  web:
-    networks:
-      - frontend
-      - backend
-  db:
-    networks:
-      - backend  # Not visible to external clients
+ web:
+ networks:
+ - frontend
+ - backend
+ db:
+ networks:
+ - backend # Not visible to external clients
 ```
 
 Services communicate via DNS: `http://web:5000`, `postgresql://db:5432`.
@@ -641,7 +641,7 @@ Three types:
 
 **The scenario**: Your Flask app connects to Postgres in `__init__`:
 ```python
-db = SQLAlchemy(app)  # Crashes if Postgres isn't ready
+db = SQLAlchemy(app) # Crashes if Postgres isn't ready
 ```
 
 **Symptom**: `web` container starts, crashes with `connection refused`, restarts, crashes again (crash loop).
@@ -657,9 +657,9 @@ docker compose logs web
 **Fix 1: Health check condition (recommended)**
 ```yaml
 web:
-  depends_on:
-    db:
-      condition: service_healthy  # Wait for health check to pass
+ depends_on:
+ db:
+ condition: service_healthy # Wait for health check to pass
 ```
 
 **Fix 2: Retry logic in app code (defense in depth)**
@@ -668,19 +668,19 @@ import time
 from sqlalchemy import create_engine
 
 def connect_with_retry(db_url, retries=5):
-    for i in range(retries):
-        try:
-            engine = create_engine(db_url)
-            engine.connect()
-            return engine
-        except Exception as e:
-            if i == retries - 1:
-                raise
-            print(f"DB not ready, retrying in 2s... ({e})")
-            time.sleep(2)
+ for i in range(retries):
+ try:
+ engine = create_engine(db_url)
+ engine.connect()
+ return engine
+ except Exception as e:
+ if i == retries - 1:
+ raise
+ print(f"DB not ready, retrying in 2s... ({e})")
+ time.sleep(2)
 ```
 
-> 💡 **Industry Practice:** Always implement both health checks AND retry logic
+> **Industry Practice:** Always implement both health checks AND retry logic
 >
 > **Why both?** Health checks prevent startup races in orchestration layer. Retry logic handles transient failures after startup (network blips, database restarts). Production systems need defense in depth.
 >
@@ -707,19 +707,19 @@ lsof -i :5432
 **Fix 1: Change the host port mapping**
 ```yaml
 db:
-  ports:
-    - "5433:5432"  # Expose on host port 5433 instead
+ ports:
+ - "5433:5432" # Expose on host port 5433 instead
 ```
 Now connect via `postgresql://user:pass@localhost:5433/appdb`.
 
 **Fix 2: Don't expose the port at all (recommended for production)**
 ```yaml
 db:
-  # Remove ports section entirely
+ # Remove ports section entirely
 ```
 Services can still communicate via the internal `app-network`. Only expose ports that need external access (e.g., the `web` service).
 
-> 💡 **Industry Practice:** Minimal Port Exposure
+> **Industry Practice:** Minimal Port Exposure
 >
 > **Security principle**: Only expose ports that require external access. Database ports should NEVER be exposed in production — only the web/API layer should be accessible from outside the Docker network.
 >
@@ -733,9 +733,9 @@ Services can still communicate via the internal `app-network`. Only expose ports
 **The scenario**: You define a custom network for `web` and `db`, but forget to expose `web`'s port:
 ```yaml
 services:
-  web:
-    networks:
-      - backend  # No external access
+ web:
+ networks:
+ - backend # No external access
 ```
 
 **Symptom**: `curl http://localhost:5000` times out — the container is running but unreachable.
@@ -744,35 +744,35 @@ services:
 
 **Validation**: Check network configuration:
 ```bash
-docker compose ps  # Container is Up, but no port mapping shown
-docker network inspect <project>_backend  # See which containers are on network
+docker compose ps # Container is Up, but no port mapping shown
+docker network inspect <project>_backend # See which containers are on network
 ```
 
 **Fix**: Explicitly publish ports:
 ```yaml
 web:
-  ports:
-    - "5000:5000"  # Bind container port 5000 to host port 5000
-  networks:
-    - backend
+ ports:
+ - "5000:5000" # Bind container port 5000 to host port 5000
+ networks:
+ - backend
 ```
 
 Alternatively, use `network_mode: host` (Linux only) to share the host's network stack — but this disables network isolation (not recommended for production).
 
-> 💡 **Industry Practice:** Multi-Network Isolation for Defense in Depth
+> **Industry Practice:** Multi-Network Isolation for Defense in Depth
 > ```yaml
 > networks:
->   frontend:  # Public-facing tier
->   backend:   # Internal services only
+> frontend: # Public-facing tier
+> backend: # Internal services only
 >
 > services:
->   web:
->     networks:
->       - frontend  # Can receive external traffic
->       - backend   # Can talk to database
->   db:
->     networks:
->       - backend  # Isolated from external access
+> web:
+> networks:
+> - frontend # Can receive external traffic
+> - backend # Can talk to database
+> db:
+> networks:
+> - backend # Isolated from external access
 > ```
 > **When to use:** Any production system with >2 tiers. Prevents lateral movement if web tier is compromised.
 
@@ -790,30 +790,30 @@ docker volume ls | grep postgres-data
 
 **Prevention**:
 1. Always use named volumes for production data:
-   ```yaml
-   volumes:
-     postgres-data:/var/lib/postgresql/data
-   ```
+ ```yaml
+ volumes:
+ postgres-data:/var/lib/postgresql/data
+ ```
 2. Back up volumes before destructive operations:
-   ```bash
-   docker run --rm -v postgres-data:/data -v $(pwd):/backup \
-     busybox tar czf /backup/postgres-backup.tar.gz /data
-   ```
+ ```bash
+ docker run --rm -v postgres-data:/data -v $(pwd):/backup \
+ busybox tar czf /backup/postgres-backup.tar.gz /data
+ ```
 3. Use external volume management (cloud block storage, NFS) for critical data
 
-> 💡 **Industry Practice:** Backup Automation for Persistent Volumes
+> **Industry Practice:** Backup Automation for Persistent Volumes
 > ```yaml
 > services:
->   backup:
->     image: postgres:16-alpine
->     volumes:
->       - postgres-data:/data:ro  # Read-only mount
->       - ./backups:/backups
->     command: >
->       sh -c "while true; do
->         pg_dump -U user appdb | gzip > /backups/backup_$(date +%Y%m%d_%H%M%S).sql.gz;
->         sleep 86400;
->       done"
+> backup:
+> image: postgres:16-alpine
+> volumes:
+> - postgres-data:/data:ro # Read-only mount
+> - ./backups:/backups
+> command: >
+> sh -c "while true; do
+> pg_dump -U user appdb | gzip > /backups/backup_$(date +%Y%m%d_%H%M%S).sql.gz;
+> sleep 86400;
+> done"
 > ```
 > **When to use:** Any stateful service. Automate daily backups, test restore procedures monthly.
 > **Common alternatives:** AWS EBS snapshots, GCP Persistent Disk snapshots, Azure Backup, Velero (Kubernetes)
@@ -830,18 +830,18 @@ docker volume ls | grep postgres-data
 version: '3.9'
 
 services:
-  api:
-    image: node:18
-    ports:
-      - "3000:3000"
-    environment:
-      DATABASE_URL: postgresql://user:pass@db:5432/appdb
-    command: npm start
+ api:
+ image: node:18
+ ports:
+ - "3000:3000"
+ environment:
+ DATABASE_URL: postgresql://user:pass@db:5432/appdb
+ command: npm start
 
-  db:
-    image: postgres:16
-    environment:
-      POSTGRES_PASSWORD: pass
+ db:
+ image: postgres:16
+ environment:
+ POSTGRES_PASSWORD: pass
 ```
 
 You run `docker compose up` and see:
@@ -859,19 +859,19 @@ api_1 exited with code 1
 
 ```yaml
 api:
-  depends_on:
-    db:
-      condition: service_healthy
+ depends_on:
+ db:
+ condition: service_healthy
 ```
 
 Add a health check to `db`:
 ```yaml
 db:
-  healthcheck:
-    test: ["CMD-SHELL", "pg_isready -U user"]
-    interval: 5s
-    timeout: 3s
-    retries: 5
+ healthcheck:
+ test: ["CMD-SHELL", "pg_isready -U user"]
+ interval: 5s
+ timeout: 3s
+ retries: 5
 ```
 
 **Phase violated**: Phase 3 (ORCHESTRATE) — startup ordering not defined.
@@ -887,11 +887,11 @@ db:
 
 ```yaml
 db:
-  volumes:
-    - db-data:/var/lib/postgresql/data
+ volumes:
+ - db-data:/var/lib/postgresql/data
 
 volumes:
-  db-data:
+ db-data:
 ```
 
 **Phase violated**: Phase 1 (DEFINE) — volume persistence not configured.
@@ -925,12 +925,12 @@ docker compose up -d --scale api=3
 
 ```yaml
 api:
-  deploy:
-    resources:
-      limits:
-        memory: 512M  # Hard limit
-      reservations:
-        memory: 256M  # Guaranteed minimum
+ deploy:
+ resources:
+ limits:
+ memory: 512M # Hard limit
+ reservations:
+ memory: 256M # Guaranteed minimum
 ```
 
 When memory hits 512M, the container is killed and restarted (if `restart: unless-stopped` is set).
@@ -953,10 +953,10 @@ When memory hits 512M, the container is killed and restarted (if `restart: unles
 
 ```yaml
 api:
-  env_file:
-    - .env  # Load variables from .env
-  environment:
-    - DATABASE_URL=${DATABASE_URL}  # Interpolate from .env
+ env_file:
+ - .env # Load variables from .env
+ environment:
+ - DATABASE_URL=${DATABASE_URL} # Interpolate from .env
 ```
 
 **Common mistake**: Creating a .env file is not enough — services must declare `env_file` or explicit `environment` interpolation.
@@ -976,63 +976,63 @@ docker compose exec api env | grep DATABASE_URL
 
 ```mermaid
 flowchart TD
-    Start([New Multi-Container Project]) --> Phase1[Phase 1: DEFINE]
+ Start([New Multi-Container Project]) --> Phase1[Phase 1: DEFINE]
 
-    Phase1 --> Define1{Services defined?}
-    Define1 -->|No| DefineServices[Declare services in YAML]
-    DefineServices --> Define2{Networks isolated?}
-    Define1 -->|Yes| Define2
-    Define2 -->|No| DefineNetworks[Create custom networks]
-    DefineNetworks --> Define3{Volumes persistent?}
-    Define2 -->|Yes| Define3
-    Define3 -->|No| DefineVolumes[Add named volumes]
-    DefineVolumes --> Phase2[Phase 2: CONFIGURE]
-    Define3 -->|Yes| Phase2
+ Phase1 --> Define1{Services defined?}
+ Define1 -->|No| DefineServices[Declare services in YAML]
+ DefineServices --> Define2{Networks isolated?}
+ Define1 -->|Yes| Define2
+ Define2 -->|No| DefineNetworks[Create custom networks]
+ DefineNetworks --> Define3{Volumes persistent?}
+ Define2 -->|Yes| Define3
+ Define3 -->|No| DefineVolumes[Add named volumes]
+ DefineVolumes --> Phase2[Phase 2: CONFIGURE]
+ Define3 -->|Yes| Phase2
 
-    Phase2 --> Config1{Secrets externalized?}
-    Config1 -->|No| ConfigEnv[Move to .env file]
-    ConfigEnv --> Config2{Variables interpolated?}
-    Config1 -->|Yes| Config2
-    Config2 -->|No| ConfigInterpolate[Use ${VAR} syntax]
-    ConfigInterpolate --> Phase3[Phase 3: ORCHESTRATE]
-    Config2 -->|Yes| Phase3
+ Phase2 --> Config1{Secrets externalized?}
+ Config1 -->|No| ConfigEnv[Move to .env file]
+ ConfigEnv --> Config2{Variables interpolated?}
+ Config1 -->|Yes| Config2
+ Config2 -->|No| ConfigInterpolate[Use ${VAR} syntax]
+ ConfigInterpolate --> Phase3[Phase 3: ORCHESTRATE]
+ Config2 -->|Yes| Phase3
 
-    Phase3 --> Orch1{Dependencies ordered?}
-    Orch1 -->|No| OrchDepends[Add depends_on + health checks]
-    OrchDepends --> Orch2{Restart policy set?}
-    Orch1 -->|Yes| Orch2
-    Orch2 -->|No| OrchRestart[Set restart: unless-stopped]
-    OrchRestart --> Orch3{Resource limits?}
-    Orch2 -->|Yes| Orch3
-    Orch3 -->|No| OrchLimits[Add CPU/memory limits]
-    OrchLimits --> StartStack[docker compose up -d]
-    Orch3 -->|Yes| StartStack
+ Phase3 --> Orch1{Dependencies ordered?}
+ Orch1 -->|No| OrchDepends[Add depends_on + health checks]
+ OrchDepends --> Orch2{Restart policy set?}
+ Orch1 -->|Yes| Orch2
+ Orch2 -->|No| OrchRestart[Set restart: unless-stopped]
+ OrchRestart --> Orch3{Resource limits?}
+ Orch2 -->|Yes| Orch3
+ Orch3 -->|No| OrchLimits[Add CPU/memory limits]
+ OrchLimits --> StartStack[docker compose up -d]
+ Orch3 -->|Yes| StartStack
 
-    StartStack --> Phase4[Phase 4: OBSERVE]
+ StartStack --> Phase4[Phase 4: OBSERVE]
 
-    Phase4 --> Obs1{Services healthy?}
-    Obs1 -->|No| ObsLogs[Check: docker compose logs]
-    ObsLogs --> ObsHealth[Check: docker compose ps]
-    ObsHealth --> ObsDebug{Root cause?}
-    ObsDebug -->|Config error| Phase2
-    ObsDebug -->|Dependency error| Phase3
-    ObsDebug -->|Architecture error| Phase1
-    Obs1 -->|Yes| Obs2{Logs aggregated?}
-    Obs2 -->|No| ObsLogging[Set up centralized logging]
-    ObsLogging --> Obs3{Scaling needed?}
-    Obs2 -->|Yes| Obs3
-    Obs3 -->|No| Production[Ready for Production]
-    Obs3 -->|Yes| ObsScale[Add load balancer + scale replicas]
-    ObsScale --> Production
+ Phase4 --> Obs1{Services healthy?}
+ Obs1 -->|No| ObsLogs[Check: docker compose logs]
+ ObsLogs --> ObsHealth[Check: docker compose ps]
+ ObsHealth --> ObsDebug{Root cause?}
+ ObsDebug -->|Config error| Phase2
+ ObsDebug -->|Dependency error| Phase3
+ ObsDebug -->|Architecture error| Phase1
+ Obs1 -->|Yes| Obs2{Logs aggregated?}
+ Obs2 -->|No| ObsLogging[Set up centralized logging]
+ ObsLogging --> Obs3{Scaling needed?}
+ Obs2 -->|Yes| Obs3
+ Obs3 -->|No| Production[Ready for Production]
+ Obs3 -->|Yes| ObsScale[Add load balancer + scale replicas]
+ ObsScale --> Production
 
-    Production --> End([Deployed Stack])
+ Production --> End([Deployed Stack])
 
-    style Phase1 fill:#1e3a8a,color:#fff
-    style Phase2 fill:#15803d,color:#fff
-    style Phase3 fill:#b45309,color:#fff
-    style Phase4 fill:#1d4ed8,color:#fff
-    style Production fill:#15803d,color:#fff
-    style End fill:#22c55e,color:#fff
+ style Phase1 fill:#1e3a8a,color:#fff
+ style Phase2 fill:#15803d,color:#fff
+ style Phase3 fill:#b45309,color:#fff
+ style Phase4 fill:#1d4ed8,color:#fff
+ style Production fill:#15803d,color:#fff
+ style End fill:#22c55e,color:#fff
 ```
 
 > **Reading the flowchart**: Each phase has decision gates that must pass before proceeding to the next phase. When a failure occurs in Phase 4 (OBSERVE), trace back to the originating phase based on error type. **Configuration errors** → Phase 2. **Dependency/ordering errors** → Phase 3. **Architecture errors** (wrong network topology, missing volumes) → Phase 1.

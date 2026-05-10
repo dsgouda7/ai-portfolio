@@ -7,18 +7,18 @@
 **Three ways to learn this track:**
 
 1. **Big picture first (recommended for time-constrained readers):**
-   - Read this `grand_solution.md` → understand narrative
-   - Run [grand_solution.ipynb (reference)](grand_solution_reference.ipynb) | [grand_solution.ipynb (exercise)](grand_solution_exercise.ipynb) → see code consolidated
-   - Dive into individual chapters for depth
+ - Read this `grand_solution.md` → understand narrative
+ - Run [grand_solution.ipynb (reference)](grand_solution_reference.ipynb) | [grand_solution.ipynb (exercise)](grand_solution_exercise.ipynb) → see code consolidated
+ - Dive into individual chapters for depth
 
 2. **Hands-on exploration:**
-   - Run [grand_solution.ipynb (reference)](grand_solution_reference.ipynb) | [grand_solution.ipynb (exercise)](grand_solution_exercise.ipynb) directly
-   - Code consolidates: setup → each chapter → integration
-   - Each cell includes markdown explaining what problem it solves
+ - Run [grand_solution.ipynb (reference)](grand_solution_reference.ipynb) | [grand_solution.ipynb (exercise)](grand_solution_exercise.ipynb) directly
+ - Code consolidates: setup → each chapter → integration
+ - Each cell includes markdown explaining what problem it solves
 
 3. **Sequential deep dive (recommended for mastery):**
-   - Start with Ch.1 → progress through Ch.6
-   - Return to this document for synthesis
+ - Start with Ch.1 → progress through Ch.6
+ - Return to this document for synthesis
 
 ---
 
@@ -69,7 +69,7 @@ Each chapter includes:
 
 ---
 
-## Mission Accomplished: 87% Hit Rate@10 ✅
+## Mission Accomplished: 87% Hit Rate@10
 
 **The Challenge:** Build FlixAI — a production movie recommendation engine achieving >85% hit rate @ top-10 while handling cold start, scaling to millions of ratings, maintaining diversity, and providing explainable recommendations.
 
@@ -78,13 +78,13 @@ Each chapter includes:
 **The Progression:**
 
 ```
-Ch.1: Popularity baseline         → 42% HR@10  (same top-10 for everyone)
-Ch.2: Collaborative filtering     → 68% HR@10  (user-based + item-based CF)
-Ch.3: Matrix factorization        → 78% HR@10  (latent factors discovered)
-Ch.4: Neural collaborative        → 83% HR@10  (non-linear interactions)
-Ch.5: Hybrid content fusion       → 87% HR@10  (metadata + embeddings)
-Ch.6: Cold start + production     → 87% HR@10  (maintained, all constraints met)
-                                    ✅ TARGET: >85% HR@10
+Ch.1: Popularity baseline → 42% HR@10 (same top-10 for everyone)
+Ch.2: Collaborative filtering → 68% HR@10 (user-based + item-based CF)
+Ch.3: Matrix factorization → 78% HR@10 (latent factors discovered)
+Ch.4: Neural collaborative → 83% HR@10 (non-linear interactions)
+Ch.5: Hybrid content fusion → 87% HR@10 (metadata + embeddings)
+Ch.6: Cold start + production → 87% HR@10 (maintained, all constraints met)
+TARGET: >85% HR@10
 ```
 
 ---
@@ -168,7 +168,7 @@ Ch.6: Cold start + production     → 87% HR@10  (maintained, all constraints me
 **What it is:** Combine collaborative embeddings with content features (genres, director, year) and user demographics (age, gender, occupation) using Deep & Cross Networks. Cross network learns explicit feature interactions (genre × age), deep network learns implicit patterns.
 
 **What it unlocked:**
-- **87% HR@10 ✅ Target achieved!** — content features closed the 4-point gap
+- **87% HR@10 Target achieved!** — content features closed the 4-point gap
 - **Diversity:** MMR re-ranking ensures top-10 spans 6+ genres (ILD@10 > 0.4)
 - **Explainability:** "Because it's sci-fi by Christopher Nolan and you loved Interstellar"
 - **Cold-item improvement:** New releases with zero ratings can be recommended via metadata
@@ -207,30 +207,30 @@ Here's how all 6 concepts integrate into deployed FlixAI:
 
 ```mermaid
 flowchart TD
-    INPUT["User Request<br/>(user_id, context)"] --> ROUTER["Cold-Start Router<br/>(interaction count)"]
-    
-    ROUTER -->|"< 10 interactions"| COLD["Cold Start Path<br/>Ch.6: ε-greedy + content"]
-    ROUTER -->|"10-50 interactions"| WARM["Warming Path<br/>Ch.5: Hybrid blend"]
-    ROUTER -->|"> 50 interactions"| HOT["Established Path<br/>Ch.4: Neural CF"]
-    
-    COLD --> CANDIDATE["Candidate Generation<br/>Ch.2: Item-CF (ANN)<br/>Top-100 from 1,682"]
-    WARM --> CANDIDATE
-    HOT --> CANDIDATE
-    
-    CANDIDATE --> RANK["Ranking Model<br/>Ch.5: DCN hybrid<br/>Score top-100"]
-    
-    RANK --> RERANK["Re-Ranking<br/>Ch.5: MMR diversity<br/>Top-10 from top-100"]
-    
-    RERANK --> MONITOR["Monitoring<br/>Ch.6: Track HR@10 drift<br/>Alert if < 80%"]
-    
-    MONITOR --> EXPLAIN["Explainability<br/>Ch.5: Content features<br/>'Sci-fi by Nolan'"]
-    
-    EXPLAIN --> OUTPUT["API Response<br/>{top_10: [...],<br/>reasons: [...],<br/>confidence: 0.87}"]
-    
-    style INPUT fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CANDIDATE fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style RANK fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style OUTPUT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ INPUT["User Request<br/>(user_id, context)"] --> ROUTER["Cold-Start Router<br/>(interaction count)"]
+
+ ROUTER -->|"< 10 interactions"| COLD["Cold Start Path<br/>Ch.6: ε-greedy + content"]
+ ROUTER -->|"10-50 interactions"| WARM["Warming Path<br/>Ch.5: Hybrid blend"]
+ ROUTER -->|"> 50 interactions"| HOT["Established Path<br/>Ch.4: Neural CF"]
+
+ COLD --> CANDIDATE["Candidate Generation<br/>Ch.2: Item-CF (ANN)<br/>Top-100 from 1,682"]
+ WARM --> CANDIDATE
+ HOT --> CANDIDATE
+
+ CANDIDATE --> RANK["Ranking Model<br/>Ch.5: DCN hybrid<br/>Score top-100"]
+
+ RANK --> RERANK["Re-Ranking<br/>Ch.5: MMR diversity<br/>Top-10 from top-100"]
+
+ RERANK --> MONITOR["Monitoring<br/>Ch.6: Track HR@10 drift<br/>Alert if < 80%"]
+
+ MONITOR --> EXPLAIN["Explainability<br/>Ch.5: Content features<br/>'Sci-fi by Nolan'"]
+
+ EXPLAIN --> OUTPUT["API Response<br/>{top_10: [...],<br/>reasons: [...],<br/>confidence: 0.87}"]
+
+ style INPUT fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CANDIDATE fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style RANK fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style OUTPUT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### Deployment Pipeline (How Ch.1-6 Connect in Production)
@@ -238,12 +238,12 @@ flowchart TD
 **1. Training Pipeline (runs weekly):**
 ```python
 # Ch.1: Load MovieLens 100k
-ratings, movies, users = load_movielens_100k()  # 100k ratings, 943 users, 1682 movies
+ratings, movies, users = load_movielens_100k() # 100k ratings, 943 users, 1682 movies
 
 # Ch.2: Compute item-item similarity matrix (offline)
 item_cf_model = ItemBasedCF()
 item_cf_model.fit(ratings)
-item_sim_matrix = item_cf_model.compute_similarity()  # Cosine on rating vectors
+item_sim_matrix = item_cf_model.compute_similarity() # Cosine on rating vectors
 
 # Ch.3: Train matrix factorization (ALS for implicit feedback)
 mf_model = ALS(factors=50, regularization=0.02, iterations=15)
@@ -252,32 +252,32 @@ user_factors, item_factors = mf_model.fit(ratings)
 # Ch.4: Train Neural CF
 ncf_model = NeuralCF(embedding_dim=16, mlp_layers=[64, 32, 16])
 ncf_model.fit(
-    train_interactions,  # Binary: user watched movie (1) or not (0)
-    epochs=50,
-    batch_size=256,
-    negative_samples=4  # 4 negatives per positive
+ train_interactions, # Binary: user watched movie (1) or not (0)
+ epochs=50,
+ batch_size=256,
+ negative_samples=4 # 4 negatives per positive
 )
 
 # Ch.5: Train Hybrid DCN
 # Combine embeddings + content features
 X_train = build_features(
-    user_embeddings=user_factors,       # Ch.3 MF embeddings
-    item_embeddings=item_factors,       # Ch.3 MF embeddings
-    genres=movies['genres'],            # 19 binary genre flags
-    directors=movies['director'],       # One-hot encoded
-    release_year=movies['year'],        # Normalized
-    user_demographics=users[['age', 'gender', 'occupation']]
+ user_embeddings=user_factors, # Ch.3 MF embeddings
+ item_embeddings=item_factors, # Ch.3 MF embeddings
+ genres=movies['genres'], # 19 binary genre flags
+ directors=movies['director'], # One-hot encoded
+ release_year=movies['year'], # Normalized
+ user_demographics=users[['age', 'gender', 'occupation']]
 )
 
 dcn_model = DeepAndCross(
-    cross_layers=3,      # Explicit feature interactions
-    deep_layers=[256, 128, 64],
-    embedding_dim=32
+ cross_layers=3, # Explicit feature interactions
+ deep_layers=[256, 128, 64],
+ embedding_dim=32
 )
 dcn_model.fit(X_train, y_train, epochs=30, validation_split=0.2)
 
 # Ch.6: Build ANN index for fast candidate retrieval
-ann_index = build_faiss_index(item_factors)  # 1,682 items → 100-dim vectors
+ann_index = build_faiss_index(item_factors) # 1,682 items → 100-dim vectors
 ann_index.add(item_factors)
 ```
 
@@ -285,144 +285,144 @@ ann_index.add(item_factors)
 ```python
 @app.route('/recommend', methods=['POST'])
 def recommend():
-    user_id = request.json['user_id']
-    context = request.json.get('context', {})  # Device, time, location
-    
-    # Ch.6: Route based on interaction count
-    interaction_count = get_interaction_count(user_id)
-    
-    if interaction_count < 10:
-        # Cold start: ε-greedy with content fallback
-        epsilon = 0.3
-        if random.random() < epsilon:
-            # Explore: random from user's onboarding genres
-            candidates = sample_by_genre(user_onboarding_genres, k=100)
-        else:
-            # Exploit: content-based (Ch.1 + Ch.5 metadata)
-            candidates = popularity_by_genre(user_onboarding_genres, k=100)
-    
-    elif interaction_count < 50:
-        # Warming: blend item-CF + neural CF
-        # Ch.2: Item-based CF candidates (fast ANN lookup)
-        user_history = get_user_history(user_id)
-        cf_candidates = []
-        for movie in user_history[-5:]:  # Last 5 watched
-            similar = ann_index.search(item_factors[movie], k=20)
-            cf_candidates.extend(similar)
-        
-        # Ch.4: Neural CF scores
-        ncf_scores = ncf_model.predict(user_id, cf_candidates)
-        
-        # Blend: 50% CF, 50% NCF
-        candidates = blend_scores(cf_candidates, ncf_scores, alpha=0.5)[:100]
-    
-    else:
-        # Established: full hybrid model
-        # Ch.6: Fast candidate generation via ANN
-        user_embedding = user_factors[user_id]
-        candidates = ann_index.search(user_embedding, k=100)
-    
-    # Ch.5: Rank candidates with DCN hybrid model
-    X_candidates = build_features(
-        user_id=user_id,
-        candidate_items=candidates,
-        context=context
-    )
-    scores = dcn_model.predict(X_candidates)
-    
-    # Ch.5: Re-rank for diversity (MMR)
-    top_10 = mmr_rerank(
-        items=candidates,
-        scores=scores,
-        lambda_diversity=0.3,  # Balance relevance vs. diversity
-        k=10
-    )
-    
-    # Ch.5: Generate explanations
-    explanations = []
-    for item in top_10:
-        reasons = explain_recommendation(
-            user_id=user_id,
-            item_id=item,
-            features=X_candidates[item],
-            model=dcn_model
-        )
-        explanations.append(reasons)
-    
-    # Ch.6: Log for monitoring
-    log_recommendation(user_id, top_10, scores, timestamp=now())
-    
-    return {
-        "recommendations": top_10,
-        "explanations": explanations,
-        "confidence": float(scores[:10].mean()),
-        "diversity": compute_ild(top_10)
-    }
+ user_id = request.json['user_id']
+ context = request.json.get('context', {}) # Device, time, location
+
+ # Ch.6: Route based on interaction count
+ interaction_count = get_interaction_count(user_id)
+
+ if interaction_count < 10:
+ # Cold start: ε-greedy with content fallback
+ epsilon = 0.3
+ if random.random() < epsilon:
+ # Explore: random from user's onboarding genres
+ candidates = sample_by_genre(user_onboarding_genres, k=100)
+ else:
+ # Exploit: content-based (Ch.1 + Ch.5 metadata)
+ candidates = popularity_by_genre(user_onboarding_genres, k=100)
+
+ elif interaction_count < 50:
+ # Warming: blend item-CF + neural CF
+ # Ch.2: Item-based CF candidates (fast ANN lookup)
+ user_history = get_user_history(user_id)
+ cf_candidates = []
+ for movie in user_history[-5:]: # Last 5 watched
+ similar = ann_index.search(item_factors[movie], k=20)
+ cf_candidates.extend(similar)
+
+ # Ch.4: Neural CF scores
+ ncf_scores = ncf_model.predict(user_id, cf_candidates)
+
+ # Blend: 50% CF, 50% NCF
+ candidates = blend_scores(cf_candidates, ncf_scores, alpha=0.5)[:100]
+
+ else:
+ # Established: full hybrid model
+ # Ch.6: Fast candidate generation via ANN
+ user_embedding = user_factors[user_id]
+ candidates = ann_index.search(user_embedding, k=100)
+
+ # Ch.5: Rank candidates with DCN hybrid model
+ X_candidates = build_features(
+ user_id=user_id,
+ candidate_items=candidates,
+ context=context
+ )
+ scores = dcn_model.predict(X_candidates)
+
+ # Ch.5: Re-rank for diversity (MMR)
+ top_10 = mmr_rerank(
+ items=candidates,
+ scores=scores,
+ lambda_diversity=0.3, # Balance relevance vs. diversity
+ k=10
+ )
+
+ # Ch.5: Generate explanations
+ explanations = []
+ for item in top_10:
+ reasons = explain_recommendation(
+ user_id=user_id,
+ item_id=item,
+ features=X_candidates[item],
+ model=dcn_model
+ )
+ explanations.append(reasons)
+
+ # Ch.6: Log for monitoring
+ log_recommendation(user_id, top_10, scores, timestamp=now())
+
+ return {
+ "recommendations": top_10,
+ "explanations": explanations,
+ "confidence": float(scores[:10].mean()),
+ "diversity": compute_ild(top_10)
+ }
 ```
 
 **3. Monitoring Dashboard (tracks production health):**
 ```python
 # Ch.6: Track online metrics
 def monitor_production():
-    # Hit rate drift detection
-    current_hr = compute_hit_rate_last_24h()
-    if current_hr < 0.80:  # 80% threshold (7 points below target)
-        alert("HR@10 dropped to {:.1%} — investigate!".format(current_hr))
-    
-    # Cold start performance
-    cold_hr = compute_hit_rate_by_cohort(interaction_count="<10")
-    warm_hr = compute_hit_rate_by_cohort(interaction_count="10-50")
-    hot_hr = compute_hit_rate_by_cohort(interaction_count=">50")
-    
-    dashboard_metrics = {
-        "overall_hr@10": current_hr,
-        "cold_start_hr@10": cold_hr,    # Expect ~50% (Ch.6 bandit)
-        "warming_hr@10": warm_hr,       # Expect ~75% (Ch.5 hybrid blend)
-        "established_hr@10": hot_hr,    # Expect ~87% (Ch.5 full hybrid)
-        "diversity_ild@10": compute_ild_aggregate(),  # Target > 0.4
-        "latency_p99": get_latency_percentile(99),    # Target < 300ms
-    }
-    
-    # Ch.3: Feature importance shifts (data drift)
-    current_importance = get_feature_importance(dcn_model)
-    if cosine_distance(current_importance, baseline_importance) > 0.15:
-        alert("Feature importance shifted — possible data drift")
-    
-    # Ch.6: Retrain trigger
-    days_since_last_train = (now() - last_train_timestamp).days
-    if days_since_last_train > 7:
-        trigger_retraining_pipeline()
-    
-    return dashboard_metrics
+ # Hit rate drift detection
+ current_hr = compute_hit_rate_last_24h()
+ if current_hr < 0.80: # 80% threshold (7 points below target)
+ alert("HR@10 dropped to {:.1%} — investigate!".format(current_hr))
+
+ # Cold start performance
+ cold_hr = compute_hit_rate_by_cohort(interaction_count="<10")
+ warm_hr = compute_hit_rate_by_cohort(interaction_count="10-50")
+ hot_hr = compute_hit_rate_by_cohort(interaction_count=">50")
+
+ dashboard_metrics = {
+ "overall_hr@10": current_hr,
+ "cold_start_hr@10": cold_hr, # Expect ~50% (Ch.6 bandit)
+ "warming_hr@10": warm_hr, # Expect ~75% (Ch.5 hybrid blend)
+ "established_hr@10": hot_hr, # Expect ~87% (Ch.5 full hybrid)
+ "diversity_ild@10": compute_ild_aggregate(), # Target > 0.4
+ "latency_p99": get_latency_percentile(99), # Target < 300ms
+ }
+
+ # Ch.3: Feature importance shifts (data drift)
+ current_importance = get_feature_importance(dcn_model)
+ if cosine_distance(current_importance, baseline_importance) > 0.15:
+ alert("Feature importance shifted — possible data drift")
+
+ # Ch.6: Retrain trigger
+ days_since_last_train = (now() - last_train_timestamp).days
+ if days_since_last_train > 7:
+ trigger_retraining_pipeline()
+
+ return dashboard_metrics
 
 # Ch.6: A/B testing framework
 def run_ab_test(control_model, treatment_model, duration_days=14):
-    """
-    Test if treatment model improves over control.
-    Need 8,864 users to detect 2% lift at 80% power.
-    """
-    users = sample_new_signups(n=10000)
-    control_group, treatment_group = random_split(users, ratio=0.5)
-    
-    # Serve recommendations
-    control_results = serve_recommendations(control_group, control_model)
-    treatment_results = serve_recommendations(treatment_group, treatment_model)
-    
-    # Measure hit rates
-    control_hr = compute_hit_rate(control_results)
-    treatment_hr = compute_hit_rate(treatment_results)
-    
-    # Statistical test
-    p_value = two_proportion_ztest(
-        control_hits, control_total,
-        treatment_hits, treatment_total
-    )
-    
-    if p_value < 0.05 and treatment_hr > control_hr:
-        print(f"✅ Treatment wins: {treatment_hr:.1%} vs {control_hr:.1%} (p={p_value:.4f})")
-        rollout_to_production(treatment_model)
-    else:
-        print(f"❌ No significant difference (p={p_value:.4f})")
+ """
+ Test if treatment model improves over control.
+ Need 8,864 users to detect 2% lift at 80% power.
+ """
+ users = sample_new_signups(n=10000)
+ control_group, treatment_group = random_split(users, ratio=0.5)
+
+ # Serve recommendations
+ control_results = serve_recommendations(control_group, control_model)
+ treatment_results = serve_recommendations(treatment_group, treatment_model)
+
+ # Measure hit rates
+ control_hr = compute_hit_rate(control_results)
+ treatment_hr = compute_hit_rate(treatment_results)
+
+ # Statistical test
+ p_value = two_proportion_ztest(
+ control_hits, control_total,
+ treatment_hits, treatment_total
+ )
+
+ if p_value < 0.05 and treatment_hr > control_hr:
+ print(f" Treatment wins: {treatment_hr:.1%} vs {control_hr:.1%} (p={p_value:.4f})")
+ rollout_to_production(treatment_model)
+ else:
+ print(f" No significant difference (p={p_value:.4f})")
 ```
 
 ---
@@ -465,23 +465,23 @@ def run_ab_test(control_model, treatment_model, duration_days=14):
 
 | # | Constraint | Target | Status | How We Achieved It |
 |---|------------|--------|--------|--------------------|
-| **#1** | **ACCURACY** | >85% HR@10 | ✅ **87%** | Ch.5 hybrid (DCN) + Ch.6 exploration |
-| **#2** | **COLD START** | New users/items | ✅ **Solved** | Ch.6 bandits (ε-greedy, UCB) + Ch.5 content fallback |
-| **#3** | **SCALABILITY** | 1M+ ratings, <200ms | ✅ **180ms p99** | Ch.2 ANN candidate generation + Ch.5 two-stage ranking |
-| **#4** | **DIVERSITY** | Not just blockbusters | ✅ **ILD@10=0.52** | Ch.5 MMR re-ranking (λ=0.3 diversity weight) |
-| **#5** | **EXPLAINABILITY** | "Because you liked X" | ✅ **Metadata** | Ch.5 content features (genre, director) + Ch.2 item-CF neighbors |
+| **#1** | **ACCURACY** | >85% HR@10 | **87%** | Ch.5 hybrid (DCN) + Ch.6 exploration |
+| **#2** | **COLD START** | New users/items | **Solved** | Ch.6 bandits (ε-greedy, UCB) + Ch.5 content fallback |
+| **#3** | **SCALABILITY** | 1M+ ratings, <200ms | **180ms p99** | Ch.2 ANN candidate generation + Ch.5 two-stage ranking |
+| **#4** | **DIVERSITY** | Not just blockbusters | **ILD@10=0.52** | Ch.5 MMR re-ranking (λ=0.3 diversity weight) |
+| **#5** | **EXPLAINABILITY** | "Because you liked X" | **Metadata** | Ch.5 content features (genre, director) + Ch.2 item-CF neighbors |
 
 ---
 
 ## What's Next: Beyond Recommender Systems
 
 **This track taught:**
-- ✅ Collaborative filtering captures taste via peer behavior (Ch.2)
-- ✅ Matrix factorization discovers latent factors from sparse data (Ch.3)
-- ✅ Neural networks learn non-linear interactions (Ch.4)
-- ✅ Hybrid systems fuse collaborative + content signals (Ch.5)
-- ✅ Bandits solve cold start via active exploration (Ch.6)
-- ✅ A/B testing validates offline metrics with online traffic (Ch.6)
+- Collaborative filtering captures taste via peer behavior (Ch.2)
+- Matrix factorization discovers latent factors from sparse data (Ch.3)
+- Neural networks learn non-linear interactions (Ch.4)
+- Hybrid systems fuse collaborative + content signals (Ch.5)
+- Bandits solve cold start via active exploration (Ch.6)
+- A/B testing validates offline metrics with online traffic (Ch.6)
 
 **What remains for recommendation at scale:**
 - **Session-based recommendations:** Recurrent models (RNN, Transformer) for sequential signals — "user watched A → B → ?" (Track 10-SequenceModels)
@@ -521,12 +521,12 @@ Recommender systems are not single models — they are **pipelines of specialize
 **3. Offline metrics are necessary but insufficient.** Ch.1-5 optimized hit rate on the MovieLens test set. But real users browse differently, have recency bias, and churn if the first 3 recommendations miss. A/B testing (Ch.6) on live traffic is the only validation that matters. Ship the popularity baseline, measure, iterate.
 
 **You now have:**
-- ✅ A production recommender system achieving 87% HR@10 with <200ms latency
-- ✅ Cold-start handling via bandits + content fallback (50% HR@10 for new users)
-- ✅ Diversity optimization via MMR re-ranking (ILD@10 = 0.52)
-- ✅ Explainability via content features + collaborative neighbors
-- ✅ A/B testing framework for safe production rollout
-- ✅ The conceptual foundation for sequence models (Track 10), multi-task learning (Track 12), and causal inference (Track 14)
+- A production recommender system achieving 87% HR@10 with <200ms latency
+- Cold-start handling via bandits + content fallback (50% HR@10 for new users)
+- Diversity optimization via MMR re-ranking (ILD@10 = 0.52)
+- Explainability via content features + collaborative neighbors
+- A/B testing framework for safe production rollout
+- The conceptual foundation for sequence models (Track 10), multi-task learning (Track 12), and causal inference (Track 14)
 
 **Next milestone:** Apply these principles to other domains — product recommendations (e-commerce), playlist generation (music), video suggestions (streaming), job postings (LinkedIn), ad targeting (Google Ads). The architecture is identical: candidate generation → ranking → re-ranking → exploration, with domain-specific features and constraints. The patterns from FlixAI transfer directly.
 

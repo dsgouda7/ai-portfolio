@@ -10,7 +10,7 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Build **ProductionCV** — an autonomous retail shelf monitoring system satisfying 5 constraints:
+> **The mission**: Build **ProductionCV** — an autonomous retail shelf monitoring system satisfying 5 constraints:
 > 1. **DETECTION ACCURACY**: mAP@0.5 ≥ 85% — Detect products on retail shelves (empty slots, misplaced items)
 > 2. **SEGMENTATION QUALITY**: IoU ≥ 70% — Pixel-level product boundaries for planogram compliance
 > 3. **INFERENCE LATENCY**: <50ms per frame — Real-time monitoring on edge devices (NVIDIA Jetson)
@@ -18,11 +18,11 @@
 > 5. **DATA EFFICIENCY**: <1,000 labeled images — Leverage self-supervised pretraining
 
 **What we know so far:**
-- ✅ Ch.1 (ResNets): Skip connections enable 100+ layer networks (78.2% mAP)
-- ✅ Ch.2 (MobileNet): Efficient architectures (76.8% mAP, 35ms, 14MB)
-- ✅ Ch.3 (Faster R-CNN): Two-stage detection (86.3% mAP, **Constraint #1 ✅ ACHIEVED!**)
-- ❌ **But inference is 180ms** — 3.6× slower than 50ms target (Constraint #3)
-- ❌ **Model is 167 MB** — 1.7× larger than 100 MB target (Constraint #4)
+- Ch.1 (ResNets): Skip connections enable 100+ layer networks (78.2% mAP)
+- Ch.2 (MobileNet): Efficient architectures (76.8% mAP, 35ms, 14MB)
+- Ch.3 (Faster R-CNN): Two-stage detection (86.3% mAP, **Constraint #1 ACHIEVED!**)
+- **But inference is 180ms** — 3.6× slower than 50ms target (Constraint #3)
+- **Model is 167 MB** — 1.7× larger than 100 MB target (Constraint #4)
 
 **What's blocking us:**
 The **two-stage pipeline bottleneck**:
@@ -52,10 +52,8 @@ This architecture prioritizes accuracy over speed. For edge deployment (in-store
 - **No RPN stage:** Eliminate region proposal bottleneck
 - **Dense prediction:** Every spatial location predicts boxes directly (fully parallelizable on GPU)
 - **Multi-scale detection:** FPN ensures small objects (64×64 pixels) and large objects (512×512) both detected
-
-✅ **This unlocks Constraint #3 (latency)** — YOLOv5 achieves 15–25ms inference (2–3× faster than target), enabling real-time edge deployment.
-
-⚡ **Partial progress on Constraint #4 (model size)** — YOLOv5s is 14 MB (already met!), RetinaNet-ResNet50 is 145 MB (12% reduction vs Faster R-CNN).
+**This unlocks Constraint #3 (latency)** — YOLOv5 achieves 15–25ms inference (2–3× faster than target), enabling real-time edge deployment.
+**Partial progress on Constraint #4 (model size)** — YOLOv5s is 14 MB (already met!), RetinaNet-ResNet50 is 145 MB (12% reduction vs Faster R-CNN).
 
 ---
 
@@ -74,28 +72,28 @@ One-stage detectors treat object detection as a **regression problem**: predict 
 **YOLO's approach:**
 1. **Grid division:** Split image into $S \times S$ grid (e.g., $7 \times 7$ = 49 cells)
 2. **Per-cell prediction:** Each cell predicts $B$ bounding boxes (typically $B=2$), each box has:
-   - **Coordinates:** $(x, y, w, h)$ — center relative to cell, size relative to image
-   - **Confidence:** $p(\text{object}) \times \text{IoU}$ — how confident + how accurate
-   - **Class probabilities:** $p(c | \text{object})$ for $C$ classes (e.g., 20 products)
+ - **Coordinates:** $(x, y, w, h)$ — center relative to cell, size relative to image
+ - **Confidence:** $p(\text{object}) \times \text{IoU}$ — how confident + how accurate
+ - **Class probabilities:** $p(c | \text{object})$ for $C$ classes (e.g., 20 products)
 3. **Single forward pass:** Output tensor shape: $S \times S \times (B \times 5 + C)$
-   - Example: $7 \times 7 \times (2 \times 5 + 20) = 7 \times 7 \times 30$
-   - 5 values per box: $(x, y, w, h, \text{confidence})$
-   - 20 class probabilities (shared across all boxes in the cell)
+ - Example: $7 \times 7 \times (2 \times 5 + 20) = 7 \times 7 \times 30$
+ - 5 values per box: $(x, y, w, h, \text{confidence})$
+ - 20 class probabilities (shared across all boxes in the cell)
 
 **RetinaNet's approach:**
 1. **Feature Pyramid Network (FPN):** Extract features at multiple scales (P3, P4, P5, P6, P7)
-   - P3: Detects small objects (8× downsampling from input, 128×128 feature map)
-   - P7: Detects large objects (128× downsampling, 8×8 feature map)
+ - P3: Detects small objects (8× downsampling from input, 128×128 feature map)
+ - P7: Detects large objects (128× downsampling, 8×8 feature map)
 
-> 💡 **Anchors tile the feature map:** Before you predict anything, you pre-define a grid of "anchor boxes" at every spatial location — like tiling the image with thousands of candidate bounding boxes at multiple scales and aspect ratios. The network doesn't invent box shapes from scratch; it **adjusts** these pre-defined anchors by predicting small offset corrections $(Δx, Δy, Δw, Δh)$. This makes training more stable: the network learns "shift this anchor left 5 pixels, make it 10% wider" instead of "guess absolute coordinates $(x, y, w, h)$ for an object you've never seen." At a 40×40 feature map with 9 anchors per location, you have 14,400 candidate boxes — most are background (99%), which is why focal loss is critical.
+> **Anchors tile the feature map:** Before you predict anything, you pre-define a grid of "anchor boxes" at every spatial location — like tiling the image with thousands of candidate bounding boxes at multiple scales and aspect ratios. The network doesn't invent box shapes from scratch; it **adjusts** these pre-defined anchors by predicting small offset corrections $(Δx, Δy, Δw, Δh)$. This makes training more stable: the network learns "shift this anchor left 5 pixels, make it 10% wider" instead of "guess absolute coordinates $(x, y, w, h)$ for an object you've never seen." At a 40×40 feature map with 9 anchors per location, you have 14,400 candidate boxes — most are background (99%), which is why focal loss is critical.
 
 2. **Dense anchors:** At each FPN level, place 9 anchors per location (3 scales × 3 ratios)
 3. **Classification + box regression:** Two sibling subnets (4 conv layers each)
-   - Classification: Predict class probabilities (20 products + background)
-   - Box regression: Predict offsets $(Δx, Δy, Δw, Δh)$ to refine anchor
+ - Classification: Predict class probabilities (20 products + background)
+ - Box regression: Predict offsets $(Δx, Δy, Δw, Δh)$ to refine anchor
 4. **Focal loss:** During training, down-weight easy negatives (see §4 for math)
 
-> 💡 **Key insight:** In Faster R-CNN, the RPN proposes 300 "interesting" regions, and the detector only processes those 300. In one-stage detectors, **every spatial location** is a candidate (thousands of predictions). This means 99% of predictions are background (class imbalance). YOLO handles this with confidence thresholding (discard low-confidence boxes). RetinaNet solves it with **focal loss** — a training innovation that prevents easy negatives from dominating the gradient.
+> **Key insight:** In Faster R-CNN, the RPN proposes 300 "interesting" regions, and the detector only processes those 300. In one-stage detectors, **every spatial location** is a candidate (thousands of predictions). This means 99% of predictions are background (class imbalance). YOLO handles this with confidence thresholding (discard low-confidence boxes). RetinaNet solves it with **focal loss** — a training innovation that prevents easy negatives from dominating the gradient.
 
 ---
 
@@ -115,9 +113,9 @@ You're building **ProductionCV** for real-time retail shelf monitoring. The cons
 
 **Step 2: Backbone (CSPDarknet53)**
 - Extract features at 3 scales:
-  - P3: 80×80×256 (8× downsampling) — small objects
-  - P4: 40×40×512 (16× downsampling) — medium objects
-  - P5: 20×20×1024 (32× downsampling) — large objects
+ - P3: 80×80×256 (8× downsampling) — small objects
+ - P4: 40×40×512 (16× downsampling) — medium objects
+ - P5: 20×20×1024 (32× downsampling) — large objects
 
 **Step 3: Neck (PANet — Path Aggregation Network)**
 - Fuse features across scales (top-down + bottom-up paths)
@@ -125,9 +123,9 @@ You're building **ProductionCV** for real-time retail shelf monitoring. The cons
 
 **Step 4: Detection Head**
 - At each of 3 scales, predict for every spatial location:
-  - **Objectness:** Is this an object? (sigmoid output)
-  - **Box:** $(x, y, w, h)$ relative to anchor
-  - **Class:** 20-way softmax (Coca-Cola, Pepsi, Sprite, ...)
+ - **Objectness:** Is this an object? (sigmoid output)
+ - **Box:** $(x, y, w, h)$ relative to anchor
+ - **Class:** 20-way softmax (Coca-Cola, Pepsi, Sprite, ...)
 - Total predictions: $(80×80 + 40×40 + 20×20) × 3 \text{ anchors} = 25,200$ boxes
 
 **Step 5: Post-processing**
@@ -137,16 +135,16 @@ You're building **ProductionCV** for real-time retail shelf monitoring. The cons
 
 **Performance:**
 - **mAP@0.5:** 82.1% (4% lower than Faster R-CNN's 86.3%, but acceptable trade-off)
-- **Inference time:** 18ms on RTX 3090, 35ms on Jetson Nano (**Constraint #3 ✅ ACHIEVED!**)
-- **Model size:** 14 MB (YOLOv5s) (**Constraint #4 ✅ ACHIEVED!**)
+- **Inference time:** 18ms on RTX 3090, 35ms on Jetson Nano (**Constraint #3 ACHIEVED!**)
+- **Model size:** 14 MB (YOLOv5s) (**Constraint #4 ACHIEVED!**)
 
 **Example detection output:**
 ```
 Frame 1 (18ms):
-  Box 1: Coca-Cola (0.94) @ [120, 200, 80, 150]
-  Box 2: Pepsi (0.91) @ [300, 180, 75, 140]
-  Box 3: Sprite (0.87) @ [500, 190, 70, 145]
-  ...
+ Box 1: Coca-Cola (0.94) @ [120, 200, 80, 150]
+ Box 2: Pepsi (0.91) @ [300, 180, 75, 140]
+ Box 3: Sprite (0.87) @ [500, 190, 70, 145]
+ ...
 ```
 
 ---
@@ -155,58 +153,58 @@ Frame 1 (18ms):
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ Input: 640×640×3 RGB Image                                  │
+│ Input: 640×640×3 RGB Image │
 └─────────────────────────────────────────────────────────────┘
-                        ↓
+ ↓
 ┌─────────────────────────────────────────────────────────────┐
-│ Backbone: CSPDarknet53 (Cross Stage Partial Network)       │
-│ - Focus layer (slice + concat → 320×320×12)                │
-│ - CSP blocks with residual connections                      │
-│ - Output 3 feature maps:                                    │
-│   * P3: 80×80×256   (8× downsampling)  ← small objects     │
-│   * P4: 40×40×512   (16× downsampling) ← medium objects    │
-│   * P5: 20×20×1024  (32× downsampling) ← large objects     │
+│ Backbone: CSPDarknet53 (Cross Stage Partial Network) │
+│ - Focus layer (slice + concat → 320×320×12) │
+│ - CSP blocks with residual connections │
+│ - Output 3 feature maps: │
+│ * P3: 80×80×256 (8× downsampling) ← small objects │
+│ * P4: 40×40×512 (16× downsampling) ← medium objects │
+│ * P5: 20×20×1024 (32× downsampling) ← large objects │
 └─────────────────────────────────────────────────────────────┘
-                        ↓
+ ↓
 ┌─────────────────────────────────────────────────────────────┐
-│ Neck: PANet (Path Aggregation Network)                      │
+│ Neck: PANet (Path Aggregation Network) │
 │ - Top-down pathway: P5 → P4 → P3 (semantic info flows down)│
-│ - Bottom-up pathway: P3 → P4 → P5 (localization flows up)  │
-│ - Fuses multi-scale features                                │
+│ - Bottom-up pathway: P3 → P4 → P5 (localization flows up) │
+│ - Fuses multi-scale features │
 └─────────────────────────────────────────────────────────────┘
-                        ↓
-          ┌─────────────┼─────────────┐
-          ↓             ↓             ↓
-    ┌─────────┐   ┌─────────┐   ┌─────────┐
-    │ Head P3 │   │ Head P4 │   │ Head P5 │
-    │ 80×80   │   │ 40×40   │   │ 20×20   │
-    └─────────┘   └─────────┘   └─────────┘
-          ↓             ↓             ↓
-    Per location (3 anchors each):
-    - Objectness: 1 value (is object?)
-    - Box: 4 values (x, y, w, h)
-    - Class: 20 values (softmax over products)
-    
-    Total: 25 values × 3 anchors = 75 channels
-                        ↓
+ ↓
+ ┌─────────────┼─────────────┐
+ ↓ ↓ ↓
+ ┌─────────┐ ┌─────────┐ ┌─────────┐
+ │ Head P3 │ │ Head P4 │ │ Head P5 │
+ │ 80×80 │ │ 40×40 │ │ 20×20 │
+ └─────────┘ └─────────┘ └─────────┘
+ ↓ ↓ ↓
+ Per location (3 anchors each):
+ - Objectness: 1 value (is object?)
+ - Box: 4 values (x, y, w, h)
+ - Class: 20 values (softmax over products)
+
+ Total: 25 values × 3 anchors = 75 channels
+ ↓
 ┌─────────────────────────────────────────────────────────────┐
-│ Total predictions:                                          │
-│ - P3: 80×80×3 = 19,200 boxes                               │
-│ - P4: 40×40×3 = 4,800 boxes                                │
-│ - P5: 20×20×3 = 1,200 boxes                                │
-│ - **Total: 25,200 candidate boxes**                        │
+│ Total predictions: │
+│ - P3: 80×80×3 = 19,200 boxes │
+│ - P4: 40×40×3 = 4,800 boxes │
+│ - P5: 20×20×3 = 1,200 boxes │
+│ - **Total: 25,200 candidate boxes** │
 └─────────────────────────────────────────────────────────────┘
-                        ↓
+ ↓
 ┌─────────────────────────────────────────────────────────────┐
-│ Post-processing                                             │
-│ 1. Filter: Keep only boxes with objectness > 0.25          │
-│    → ~500 boxes remain                                      │
-│ 2. NMS: Remove overlapping boxes (IoU > 0.45)              │
-│    → ~15 final detections                                   │
+│ Post-processing │
+│ 1. Filter: Keep only boxes with objectness > 0.25 │
+│ → ~500 boxes remain │
+│ 2. NMS: Remove overlapping boxes (IoU > 0.45) │
+│ → ~15 final detections │
 └─────────────────────────────────────────────────────────────┘
-                        ↓
-              Final Detections
-         (15 boxes with class labels)
+ ↓
+ Final Detections
+ (15 boxes with class labels)
 ```
 
 **Key architectural details:**
@@ -275,12 +273,12 @@ $$
 
 Where:
 - $p_t$ — predicted probability for the true class:
-  $$
-  p_t = \begin{cases}
-  p & \text{if } y = 1 \text{ (foreground)} \\
-  1 - p & \text{if } y = 0 \text{ (background)}
-  \end{cases}
-  $$
+ $$
+ p_t = \begin{cases}
+ p & \text{if } y = 1 \text{ (foreground)} \\
+ 1 - p & \text{if } y = 0 \text{ (background)}
+ \end{cases}
+ $$
 - $\gamma$ — **focusing parameter** (typically $\gamma=2$)
 - $\alpha_t$ — balancing factor (typically $\alpha=0.25$ for foreground, $1-\alpha=0.75$ for background)
 
@@ -333,21 +331,21 @@ Where:
 ### YOLO Grid-Based Prediction
 
 ```
-Input Image (640×640)          Grid (7×7)            Predictions per Cell
-┌─────────────────┐            ┌───┬───┬───┐         
-│                 │            │   │   │   │         Each cell predicts:
-│    [Product]    │     →      ├───┼───┼───┤         - 2 bounding boxes
-│       ↓         │            │ X │   │   │         - 20 class probabilities
-│   ┌─────┐       │            ├───┼───┼───┤         
-│   │Coca │       │            │   │   │   │         Box format:
-│   │Cola │       │            └───┴───┴───┘         (x, y, w, h, confidence)
-│   └─────┘       │               ↑
-└─────────────────┘               │
-                          Object center falls
-                          in this grid cell
-                          → This cell is
-                            responsible for
-                            detecting it
+Input Image (640×640) Grid (7×7) Predictions per Cell
+┌─────────────────┐ ┌───┬───┬───┐
+│ │ │ │ │ │ Each cell predicts:
+│ [Product] │ → ├───┼───┼───┤ - 2 bounding boxes
+│ ↓ │ │ X │ │ │ - 20 class probabilities
+│ ┌─────┐ │ ├───┼───┼───┤
+│ │Coca │ │ │ │ │ │ Box format:
+│ │Cola │ │ └───┴───┴───┘ (x, y, w, h, confidence)
+│ └─────┘ │ ↑
+└─────────────────┘ │
+ Object center falls
+ in this grid cell
+ → This cell is
+ responsible for
+ detecting it
 ```
 
 **Responsibility rule:** The grid cell containing the object's center is responsible for detecting that object. If two objects' centers fall in the same cell, the cell must use its two bounding box predictions to capture both.
@@ -355,27 +353,27 @@ Input Image (640×640)          Grid (7×7)            Predictions per Cell
 ### Feature Pyramid Network (FPN) Multi-Scale Detection
 
 ```
-                    P5 (20×20)           P4 (40×40)           P3 (80×80)
-                    ┌────────┐           ┌────────┐           ┌────────┐
-Large objects  →    │  🏢🏢  │           │        │           │        │
-(200×300 px)        │  🏢🏢  │           │        │           │        │
-                    └────────┘           └────────┘           └────────┘
-                    Detect here          
-                    
-Medium objects →                          ┌────────┐           
-(100×150 px)                              │  📦📦  │           
-                                          │  📦📦  │           
-                                          └────────┘           
-                                          Detect here          
-                    
-Small objects  →                                               ┌────────┐
-(50×50 px)                                                     │ ○○○○○○ │
-                                                               │ ○○○○○○ │
-                                                               └────────┘
-                                                               Detect here
+ P5 (20×20) P4 (40×40) P3 (80×80)
+ ┌────────┐ ┌────────┐ ┌────────┐
+Large objects → │ 🏢🏢 │ │ │ │ │
+(200×300 px) │ 🏢🏢 │ │ │ │ │
+ └────────┘ └────────┘ └────────┘
+ Detect here
 
-Receptive field:    256×256 px           128×128 px           64×64 px
-Stride:             32                   16                   8
+Medium objects → ┌────────┐
+(100×150 px) │ 📦📦 │
+ │ 📦📦 │
+ └────────┘
+ Detect here
+
+Small objects → ┌────────┐
+(50×50 px) │ ○○○○○○ │
+ │ ○○○○○○ │
+ └────────┘
+ Detect here
+
+Receptive field: 256×256 px 128×128 px 64×64 px
+Stride: 32 16 8
 ```
 
 ![Multi-scale detection using Feature Pyramid Network](img/ch04-multiscale-detection.png)
@@ -394,9 +392,9 @@ Stride:             32                   16                   8
 
 **How it works:**
 - After the detection head predicts 25,200 boxes, filter:
-  $$
-  \text{Keep box } i \text{ if } \text{confidence}_i > \tau_{\text{conf}}
-  $$
+ $$
+ \text{Keep box } i \text{ if } \text{confidence}_i > \tau_{\text{conf}}
+ $$
 - Lower threshold → more detections (including false positives)
 - Higher threshold → fewer detections (might miss objects)
 
@@ -422,7 +420,7 @@ Stride:             32                   16                   8
 - Detections: 8 boxes (all correct, but missed 5 products)
 - Result: High precision, low recall — unacceptable for inventory monitoring
 
-> ⚠️ **Warning:** Don't blindly increase confidence threshold to reduce false positives. You'll miss valid detections. Instead, use **NMS IoU threshold** (see Ch.3) to remove duplicates, or fine-tune the model on your specific dataset.
+> **Warning — Warning:** Don't blindly increase confidence threshold to reduce false positives. You'll miss valid detections. Instead, use **NMS IoU threshold** (see Ch.3) to remove duplicates, or fine-tune the model on your specific dataset.
 
 ---
 
@@ -455,25 +453,23 @@ Stride:             32                   16                   8
 ## 9 · Progress Check — What We Can Solve Now
 
 ![ProductionCV constraint progress](img/ch04-progress-check.png)
-
-✅ **Unlocked capabilities:**
+**Unlocked capabilities:**
 - **Real-time detection:** 15–25ms per frame (vs 180ms in Ch.3) → **10× faster!**
 - **Edge deployment:** YOLOv5s runs on NVIDIA Jetson Nano at 30 FPS
 - **Compact models:** 14 MB (YOLOv5s) vs 167 MB (Faster R-CNN) → **12× smaller!**
-- **Constraint #3 ✅ ACHIEVED!** — Inference latency <50ms (target: <50ms, actual: 18–35ms)
-- **Constraint #4 ✅ ACHIEVED!** — Model size <100 MB (target: <100MB, actual: 14MB)
+- **Constraint #3 ACHIEVED!** — Inference latency <50ms (target: <50ms, actual: 18–35ms)
+- **Constraint #4 ACHIEVED!** — Model size <100 MB (target: <100MB, actual: 14MB)
 
 **Metrics comparison (ProductionCV retail shelf dataset):**
 
 | Model | mAP@0.5 | Inference Time | Model Size | Constraints Met |
 |-------|---------|----------------|------------|-----------------|
-| **Faster R-CNN** (Ch.3) | 86.3% | 180ms | 167 MB | ✅ #1 only |
-| **YOLOv5s** (Ch.4) | 82.1% | 18ms | 14 MB | ✅ #1, #3, #4 |
-| **RetinaNet** (Ch.4) | 84.5% | 95ms | 145 MB | ✅ #1, partial #3 |
-
-❌ **Still can't solve:**
-- ❌ **Constraint #2 (segmentation):** Bounding boxes don't capture product boundaries (need pixel-level masks for planogram compliance)
-- ❌ **Constraint #5 (data efficiency):** Still requires 800–1,000 labeled images (haven't leveraged self-supervised pretraining)
+| **Faster R-CNN** (Ch.3) | 86.3% | 180ms | 167 MB | #1 only |
+| **YOLOv5s** (Ch.4) | 82.1% | 18ms | 14 MB | #1, #3, #4 |
+| **RetinaNet** (Ch.4) | 84.5% | 95ms | 145 MB | #1, partial #3 |
+**Still can't solve:**
+- **Constraint #2 (segmentation):** Bounding boxes don't capture product boundaries (need pixel-level masks for planogram compliance)
+- **Constraint #5 (data efficiency):** Still requires 800–1,000 labeled images (haven't leveraged self-supervised pretraining)
 
 **Real-world status:** We can now deploy real-time product detection on edge cameras (<50ms, <100MB). The system meets latency and size constraints, but accuracy dropped 4% (86.3% → 82.1% mAP). This is an acceptable trade-off for most applications — **2% mAP costs 10× slower inference**. However, we still need pixel-level segmentation (not just boxes) to verify planogram compliance (e.g., "Is the Coca-Cola logo fully visible?").
 

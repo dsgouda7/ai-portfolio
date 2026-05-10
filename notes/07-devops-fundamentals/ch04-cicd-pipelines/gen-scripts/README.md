@@ -41,10 +41,10 @@ All diagrams are saved to `../img/` directory.
 - **Static PNG**: High-resolution diagram suitable for README
 - **Animated GIF**: Shows progression/interaction (e.g., highlighting stages)
 - **Colors**: Consistent across all DevOps track chapters
-  - Red: Triggers/critical actions
-  - Teal: Testing/validation
-  - Blue: Build/containerization
-  - Green: Deployment/success
+ - Red: Triggers/critical actions
+ - Teal: Testing/validation
+ - Blue: Build/containerization
+ - Green: Deployment/success
 
 ## Modifying Diagrams
 

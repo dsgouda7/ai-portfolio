@@ -24,17 +24,17 @@
 
 | Constraint | Target | Status | Evidence |
 |------------|--------|--------|----------|
-| #1 Quality | ≥4.0/5.0 | ❌ Not applicable | Can't generate images yet |
-| #2 Speed | <30 seconds | ❌ Not applicable | No generation pipeline yet |
-| #3 Cost | <$5k hardware | ❌ Not validated | Haven't tested hardware requirements |
-| #4 Control | <5% unusable | ❌ Not applicable | Can't generate yet |
-| #5 Throughput | 100+ images/day | ❌ Not applicable | No generation capability |
-| #6 Versatility | 3 modalities | ⚡ **Foundation laid** | Can load and preprocess images, audio, video as tensors |
+| #1 Quality | ≥4.0/5.0 | Not applicable | Can't generate images yet |
+| #2 Speed | <30 seconds | Not applicable | No generation pipeline yet |
+| #3 Cost | <$5k hardware | Not validated | Haven't tested hardware requirements |
+| #4 Control | <5% unusable | Not applicable | Can't generate yet |
+| #5 Throughput | 100+ images/day | Not applicable | No generation capability |
+| #6 Versatility | 3 modalities | **Foundation laid** | Can load and preprocess images, audio, video as tensors |
 
 **Symbols**:
-- ❌ = Blocked (constraint not addressed yet)
-- ⚡ = Foundation laid (partial progress, not at target yet)
-- ✅ = Target hit (constraint fully satisfied)
+- = Blocked (constraint not addressed yet)
+- = Foundation laid (partial progress, not at target yet)
+- = Target hit (constraint fully satisfied)
 
 ---
 
@@ -59,12 +59,12 @@ A neural network can only process numbers. Every raw signal — a JPEG, an MP3, 
 **Problem**: Your client sends a reference JPEG (previous year's spring campaign). You need to load it, analyze color distribution, and prepare it as a tensor for the image encoder. The model doesn't understand JPEGs — it needs numerical arrays.
 
 ```
-Goal:       Load client reference JPEG → convert to tensor → inspect shape and
-            statistics → prepare for model input
+Goal: Load client reference JPEG → convert to tensor → inspect shape and
+ statistics → prepare for model input
 
-Input:      Spring campaign reference photo (JPEG, 2048×1536 pixels)
-Output:     (3, H, W) float32 tensor, normalized to ImageNet stats, ready for
-            VisualForge's image encoder pipeline
+Input: Spring campaign reference photo (JPEG, 2048×1536 pixels)
+Output: (3, H, W) float32 tensor, normalized to ImageNet stats, ready for
+ VisualForge's image encoder pipeline
 ```
 
 By the end of this chapter you will have built the input stage of VisualForge — the part that accepts client reference images and produces tensors ready for downstream model layers.
@@ -87,9 +87,9 @@ $$\hat{x}_c = \frac{x_c - \mu_c}{\sigma_c}$$
 
 | Channel | $\mu_c$ | $\sigma_c$ |
 |---------|---------|-----------|
-| Red     | 0.485   | 0.229     |
-| Green   | 0.456   | 0.224     |
-| Blue    | 0.406   | 0.225     |
+| Red | 0.485 | 0.229 |
+| Green | 0.456 | 0.224 |
+| Blue | 0.406 | 0.225 |
 
 ### 3.2 Audio as Tensors
 
@@ -133,28 +133,28 @@ A model trained purely on images has no mechanism to process a sequence of integ
 ### The Signal → Tensor Pipeline
 
 ```
-┌──────────────┐    ┌─────────────────┐    ┌────────────────────────────────┐
-│  Raw File     │    │   Load & Decode  │    │  Normalise + Reshape           │
-│               │    │                  │    │                                │
-│  image.jpg    │───▶│  (H, W, 3)       │───▶│  (3, H, W)   float32 [-1,1]   │
-│  audio.wav    │    │  (T,)             │    │  (F, T')     log mel-spec      │
-│  video.mp4    │    │  (T, H, W, 3)    │    │  (T, 3, H, W) float32 [0,1]   │
-└──────────────┘    └─────────────────┘    └────────────────────────────────┘
+┌──────────────┐ ┌─────────────────┐ ┌────────────────────────────────┐
+│ Raw File │ │ Load & Decode │ │ Normalise + Reshape │
+│ │ │ │ │ │
+│ image.jpg │───▶│ (H, W, 3) │───▶│ (3, H, W) float32 [-1,1] │
+│ audio.wav │ │ (T,) │ │ (F, T') log mel-spec │
+│ video.mp4 │ │ (T, H, W, 3) │ │ (T, 3, H, W) float32 [0,1] │
+└──────────────┘ └─────────────────┘ └────────────────────────────────┘
 ```
 
 ### The Modality Gap — Why Different Projections are Needed
 
 ```
-Raw Space                   Shared Embedding Space
+Raw Space Shared Embedding Space
 
-  Text tokens ─────────────▶ ┌──────────────────────┐
-  (discrete integers)    ┌──▶│                      │
-                         │   │   "a woman in        │
-  Image pixels ──────────┘   │    floral dress"     │
-  (spatial float tensor)     │                      │◀── Contrastive loss
-                         ┌──▶│   [photo matching    │    pulls matching
-  Audio mel-spec ────────┘   │    that description] │    pairs together
-  (spectral float tensor)    └──────────────────────┘
+ Text tokens ─────────────▶ ┌──────────────────────┐
+ (discrete integers) ┌──▶│ │
+ │ │ "a woman in │
+ Image pixels ──────────┘ │ floral dress" │
+ (spatial float tensor) │ │◀── Contrastive loss
+ ┌──▶│ [photo matching │ pulls matching
+ Audio mel-spec ────────┘ │ that description] │ pairs together
+ (spectral float tensor) └──────────────────────┘
 
 Each modality needs its own encoder to project into the shared space.
 CLIP (Ch.3) is the canonical example of this alignment.
@@ -171,22 +171,22 @@ JPEG file → PIL.Image.open() → mode "RGB" → numpy array shape (H, W, 3)
 ### Step 2: Reshape to channel-first
 
 ```
-(H, W, 3)  →  (3, H, W)
+(H, W, 3) → (3, H, W)
 ```
 PyTorch convention: channels first. PIL/NumPy convention: channels last. Always convert.
 
 ### Step 3: Normalise
 
 ```
-uint8 [0, 255]  →  float32 [0.0, 1.0]   by dividing by 255
-                →  float32 [-1.0, 1.0]  by (x - 0.5) / 0.5   (diffusion models)
-                →  ImageNet-normalised  by channel-wise (x - μ) / σ  (ViT, CLIP, ResNet)
+uint8 [0, 255] → float32 [0.0, 1.0] by dividing by 255
+ → float32 [-1.0, 1.0] by (x - 0.5) / 0.5 (diffusion models)
+ → ImageNet-normalised by channel-wise (x - μ) / σ (ViT, CLIP, ResNet)
 ```
 
 ### Step 4: Batch
 
 ```
-Single image (3, H, W)  →  batched (N, 3, H, W)  by unsqueeze(0) or torch.stack
+Single image (3, H, W) → batched (N, 3, H, W) by unsqueeze(0) or torch.stack
 ```
 
 ### Step 5: Send to model
@@ -213,29 +213,29 @@ import torchvision.transforms as T
 
 # VisualForge: Load client reference images
 reference_images = [
-    "spring_2025_hero_1.jpg",
-    "spring_2025_hero_2.jpg",
-    "spring_2025_hero_3.jpg",
-    "spring_2025_hero_4.jpg",
-    "spring_2025_hero_5.jpg"
+ "spring_2025_hero_1.jpg",
+ "spring_2025_hero_2.jpg",
+ "spring_2025_hero_3.jpg",
+ "spring_2025_hero_4.jpg",
+ "spring_2025_hero_5.jpg"
 ]
 
 # Standard ImageNet normalization for downstream ViT/CLIP encoders
 transform = T.Compose([
-    T.Resize((224, 224)),
-    T.ToTensor(),  # Converts PIL Image (H,W,3) → torch tensor (3,H,W) in [0,1]
-    T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+ T.Resize((224, 224)),
+ T.ToTensor(), # Converts PIL Image (H,W,3) → torch tensor (3,H,W) in [0,1]
+ T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
 # Load and tensorize all references
 tensors = []
 for img_path in reference_images:
-    img = Image.open(img_path).convert("RGB")
-    tensor = transform(img)  # (3, 224, 224)
-    tensors.append(tensor)
+ img = Image.open(img_path).convert("RGB")
+ tensor = transform(img) # (3, 224, 224)
+ tensors.append(tensor)
 
 # Stack into batch
-batch = torch.stack(tensors)  # (5, 3, 224, 224)
+batch = torch.stack(tensors) # (5, 3, 224, 224)
 print(f"VisualForge batch ready: {batch.shape}")
 print(f"Mean pixel value: {batch.mean().item():.3f}")
 print(f"Std pixel value: {batch.std().item():.3f}")
@@ -246,10 +246,10 @@ print(f"Std pixel value: {batch.std().item():.3f}")
 **Result**: 5 images processed in <1 second, now ready for semantic analysis, color clustering, or comparison against generated outputs.
 
 **What this unlocks for VisualForge**:
-- ✅ Can batch-process client reference images
-- ✅ Standardized numerical representation (no more manual color picking)
-- ✅ Ready for downstream encoders (ViT, CLIP, VAE)
-- ⚡ **Constraint #6 progress**: Foundation for handling image modality
+- Can batch-process client reference images
+- Standardized numerical representation (no more manual color picking)
+- Ready for downstream encoders (ViT, CLIP, VAE)
+- **Constraint #6 progress**: Foundation for handling image modality
 
 ---
 
@@ -264,15 +264,15 @@ print(f"Std pixel value: {batch.std().item():.3f}")
 **Fix**: Always use `ToTensor()` transform or manually transpose:
 ```python
 # Wrong: PIL Image → numpy → torch (keeps HWC order)
-img_np = np.array(Image.open("photo.jpg"))  # (H, W, 3)
-tensor = torch.from_numpy(img_np)  # Still (H, W, 3) ❌
+img_np = np.array(Image.open("photo.jpg")) # (H, W, 3)
+tensor = torch.from_numpy(img_np) # Still (H, W, 3)
 
 # Right: Use torchvision transform
-tensor = T.ToTensor()(Image.open("photo.jpg"))  # (3, H, W) ✅
+tensor = T.ToTensor()(Image.open("photo.jpg")) # (3, H, W)
 
 # Or manual transpose
-img_np = np.array(Image.open("photo.jpg"))  # (H, W, 3)
-tensor = torch.from_numpy(img_np).permute(2, 0, 1)  # (3, H, W) ✅
+img_np = np.array(Image.open("photo.jpg")) # (H, W, 3)
+tensor = torch.from_numpy(img_np).permute(2, 0, 1) # (3, H, W)
 ```
 
 ### Trap 2: Wrong Normalization for Model
@@ -285,14 +285,14 @@ tensor = torch.from_numpy(img_np).permute(2, 0, 1)  # (3, H, W) ✅
 ```python
 # For diffusion models (SDXL, Stable Diffusion)
 transform = T.Compose([
-    T.ToTensor(),  # [0, 1]
-    T.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])  # → [-1, 1]
+ T.ToTensor(), # [0, 1]
+ T.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]) # → [-1, 1]
 ])
 
 # For ImageNet-pretrained models (ViT, CLIP, ResNet)
 transform = T.Compose([
-    T.ToTensor(),  # [0, 1]
-    T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # ImageNet stats
+ T.ToTensor(), # [0, 1]
+ T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) # ImageNet stats
 ])
 ```
 
@@ -312,8 +312,8 @@ pipe = StableDiffusionPipeline.from_pretrained("stabilityai/stable-diffusion-xl-
 
 # Right: float16 → 4GB VRAM
 pipe = StableDiffusionPipeline.from_pretrained(
-    "stabilityai/stable-diffusion-xl-base-1.0",
-    torch_dtype=torch.float16  # ✅ Halves memory usage
+ "stabilityai/stable-diffusion-xl-base-1.0",
+ torch_dtype=torch.float16 # Halves memory usage
 ).to("cuda")
 ```
 
@@ -329,25 +329,25 @@ pipe = StableDiffusionPipeline.from_pretrained(
 import cv2
 
 def load_video_sampled(video_path, target_fps=4, resize=(224, 224)):
-    cap = cv2.VideoCapture(video_path)
-    original_fps = cap.get(cv2.CAP_PROP_FPS)
-    frame_skip = int(original_fps / target_fps)
+ cap = cv2.VideoCapture(video_path)
+ original_fps = cap.get(cv2.CAP_PROP_FPS)
+ frame_skip = int(original_fps / target_fps)
 
-    frames = []
-    frame_idx = 0
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
-        if frame_idx % frame_skip == 0:
-            frame = cv2.resize(frame, resize)
-            frames.append(frame)
-        frame_idx += 1
-    cap.release()
+ frames = []
+ frame_idx = 0
+ while True:
+ ret, frame = cap.read()
+ if not ret:
+ break
+ if frame_idx % frame_skip == 0:
+ frame = cv2.resize(frame, resize)
+ frames.append(frame)
+ frame_idx += 1
+ cap.release()
 
-    # Convert to tensor: (T, H, W, 3) → (T, 3, H, W)
-    video_tensor = torch.from_numpy(np.array(frames)).permute(0, 3, 1, 2).float() / 255.0
-    return video_tensor
+ # Convert to tensor: (T, H, W, 3) → (T, 3, H, W)
+ video_tensor = torch.from_numpy(np.array(frames)).permute(0, 3, 1, 2).float() / 255.0
+ return video_tensor
 
 # 1-min video at 4fps, 224×224 → (240, 3, 224, 224) ≈ 57MB
 video = load_video_sampled("campaign_video.mp4")
@@ -358,14 +358,12 @@ video = load_video_sampled("campaign_video.mp4")
 ## 7 · When to Use This vs Alternatives
 
 ### When to use standard tensor preprocessing (this chapter)
-
-✅ **Use when**:
+**Use when**:
 - Building custom pipelines that need full control over preprocessing
 - Integrating with models that expect specific tensor formats
 - Analyzing image statistics before model input
 - Batching heterogeneous image sources (client uploads, stock photos, generated outputs)
-
-❌ **Don't use when**:
+**Don't use when**:
 - The model library already provides preprocessing (e.g., `diffusers` pipelines handle it automatically)
 - Working with pre-packaged datasets (ImageNet, COCO) that come with built-in transforms
 
@@ -382,7 +380,7 @@ image_tensor = transform(pil_image)
 # Library way (automatic)
 from transformers import CLIPProcessor
 processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
-inputs = processor(images=pil_image, return_tensors="pt")  # Handles everything
+inputs = processor(images=pil_image, return_tensors="pt") # Handles everything
 ```
 
 **Recommendation**: Use library preprocessors for standard models (CLIP, Stable Diffusion). Use manual transforms when you need custom resolutions, augmentations, or multi-stage pipelines.
@@ -417,10 +415,10 @@ Every subsequent chapter assumes you can convert a JPEG/MP3/MP4 into a properly 
 
 ### Likely Asked
 - "How would you convert a 5-second 16 kHz audio clip to a tensor ready for a ViT-based model?"
-  **Answer**: Resample → STFT (Short-Time Fourier Transform) → Apply mel filterbank → Take log → Treat as 2-D image `(F, T')` where F = mel bins (e.g. 80), T' = time frames. Then apply standard image preprocessing (resize, normalize).
+ **Answer**: Resample → STFT (Short-Time Fourier Transform) → Apply mel filterbank → Take log → Treat as 2-D image `(F, T')` where F = mel bins (e.g. 80), T' = time frames. Then apply standard image preprocessing (resize, normalize).
 
 - "Why does the same pixel value mean something different in a diffusion model vs a classification model?"
-  **Answer**: Diffusion models (Stable Diffusion) are trained on `[-1, 1]` normalized pixels. Classification models (ResNet, ViT) are trained on ImageNet statistics `(x - μ) / σ`. Same raw pixel value maps to different normalized values → model sees a different input distribution.
+ **Answer**: Diffusion models (Stable Diffusion) are trained on `[-1, 1]` normalized pixels. Classification models (ResNet, ViT) are trained on ImageNet statistics `(x - μ) / σ`. Same raw pixel value maps to different normalized values → model sees a different input distribution.
 
 ### Trap to Avoid
 - Forgetting to convert channel order (HWC → CHW) when going from PIL/NumPy to PyTorch
@@ -433,24 +431,24 @@ Every subsequent chapter assumes you can convert a JPEG/MP3/MP4 into a properly 
 
 ### Foundational Papers
 - **Representation Learning** (Bengio et al., 2013) — First systematic treatment of learning joint representations across modalities
-  [arXiv:1206.5538](https://arxiv.org/abs/1206.5538)
+ [arXiv:1206.5538](https://arxiv.org/abs/1206.5538)
 
 - **Multimodal Deep Learning** (Ngiam et al., 2011) — First joint audio-video deep autoencoders
-  [ICML 2011](https://ai.stanford.edu/~ang/papers/icml11-MultimodalDeepLearning.pdf)
+ [ICML 2011](https://ai.stanford.edu/~ang/papers/icml11-MultimodalDeepLearning.pdf)
 
 ### Normalization and Preprocessing
 - **ImageNet Statistics**: Where the `[0.485, 0.456, 0.406]` means come from
-  [PyTorch Vision Docs](https://pytorch.org/vision/stable/models.html)
+ [PyTorch Vision Docs](https://pytorch.org/vision/stable/models.html)
 
 - **Mel Spectrogram**: Understanding audio-to-image conversion
-  [LibROSA Documentation](https://librosa.org/doc/main/generated/librosa.feature.melspectrogram.html)
+ [LibROSA Documentation](https://librosa.org/doc/main/generated/librosa.feature.melspectrogram.html)
 
 ### Practical Guides
 - **torchvision.transforms Tutorial**: All image preprocessing transforms
-  [PyTorch Docs](https://pytorch.org/vision/stable/transforms.html)
+ [PyTorch Docs](https://pytorch.org/vision/stable/transforms.html)
 
 - **HuggingFace Image Processing**: How `transformers` library handles preprocessing
-  [HF Docs](https://huggingface.co/docs/transformers/main/en/preprocessing)
+ [HF Docs](https://huggingface.co/docs/transformers/main/en/preprocessing)
 
 ---
 
@@ -473,11 +471,11 @@ Every subsequent chapter assumes you can convert a JPEG/MP3/MP4 into a properly 
 ## 11.5 · Progress Check — What Have We Unlocked?
 
 ### Before This Chapter
-- **Constraint #6 (Versatility)**: ❌ No way to process image/audio/video files — neural networks can't operate on raw JPEGs
+- **Constraint #6 (Versatility)**: No way to process image/audio/video files — neural networks can't operate on raw JPEGs
 - **VisualForge Status**: Cannot accept client reference images, campaign photos, or brief attachments
 
 ### After This Chapter
-- **Constraint #6 (Versatility)**: ⚡ **Foundation laid** → Can load JPEGs, WAVs, MP4s as tensors, normalized and ready for model input
+- **Constraint #6 (Versatility)**: **Foundation laid** → Can load JPEGs, WAVs, MP4s as tensors, normalized and ready for model input
 - **VisualForge Status**: Input pipeline operational → images load as `(3, H, W)` tensors, normalized to ImageNet stats or `[-1,1]` for diffusion
 
 ---
@@ -505,12 +503,12 @@ Every subsequent chapter assumes you can convert a JPEG/MP3/MP4 into a properly 
 
 | Constraint | Ch.1 (This Chapter) | Ch.2 ViT | Ch.3 CLIP | ... | Target |
 |------------|---------------------|----------|-----------|-----|--------|
-| #1 Quality | ❌ Can't generate yet | ❌ | ⚡ | ... | 4.0/5.0 |
-| #2 Speed | ❌ No generation | ❌ | ❌ | ... | <30s |
-| #3 Cost | ❌ Not validated | ❌ | ❌ | ... | <$5k |
-| #4 Control | ❌ No generation | ❌ | ⚡ | ... | <5% unusable |
-| #5 Throughput | ❌ No generation | ❌ | ❌ | ... | 100+ images/day |
-| #6 Versatility | ⚡ **Tensors ready** | ⚡ | ⚡ | ... | 3 modalities |
+| #1 Quality | Can't generate yet | | | ... | 4.0/5.0 |
+| #2 Speed | No generation | | | ... | <30s |
+| #3 Cost | Not validated | | | ... | <$5k |
+| #4 Control | No generation | | | ... | <5% unusable |
+| #5 Throughput | No generation | | | ... | 100+ images/day |
+| #6 Versatility | **Tensors ready** | | | ... | 3 modalities |
 
 **This chapter's impact**: Unlocked the ability to load and preprocess all 3 modalities (image, audio, video) as tensors. This is the foundation — every subsequent chapter builds on this preprocessing pipeline.
 

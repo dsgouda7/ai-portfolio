@@ -10,7 +10,7 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 💡 **The mission**: Deploy **FraudShield** — a production credit card fraud detection system satisfying 5 constraints:
+> **The mission**: Deploy **FraudShield** — a production credit card fraud detection system satisfying 5 constraints:
 > 1. **DETECTION**: ≥80% recall @ 0.5% FPR — catch 4 in 5 frauds without flooding ops with false alarms
 > 2. **PRECISION**: FPR ≤ 0.5% — at most 1 false alert per 200 legitimate transactions
 > 3. **REAL-TIME**: Inference ≤100ms per transaction — must not slow payment processing
@@ -18,43 +18,43 @@
 > 5. **EXPLAINABILITY**: Human-readable justification per flagged transaction — compliance requires it
 
 **What we know so far:**
-- ✅ Z-score (Ch.1): 45% recall @ 0.5% FPR — catches extreme-amount fraud only
-- ✅ Isolation Forest (Ch.2): 65% recall — catches geometrically isolated transactions
-- ✅ Autoencoder (Ch.3): 75% recall — catches transactions that reconstruct poorly
-- ✅ One-Class SVM (Ch.4): 78% recall — catches transactions outside the kernel boundary
-- ❌ **But every single detector falls short of 80% recall!**
+- Z-score (Ch.1): 45% recall @ 0.5% FPR — catches extreme-amount fraud only
+- Isolation Forest (Ch.2): 65% recall — catches geometrically isolated transactions
+- Autoencoder (Ch.3): 75% recall — catches transactions that reconstruct poorly
+- One-Class SVM (Ch.4): 78% recall — catches transactions outside the kernel boundary
+- **But every single detector falls short of 80% recall!**
 
 **What's blocking us — the single-detector ceiling:**
 The best individual result, OCSVM at 78%, appears tantalizingly close. The temptation is to tune the threshold — but that trades recall for FPR mechanically without generating new signal. A careful analysis of false negatives reveals *why* the ceiling exists:
 
 | Fraud type | Missed by IF | Missed by AE | Missed by OCSVM |
 |---|---|---|---|
-| Clustered card-present fraud rings | ✅ **YES** — not geometrically isolated | No | No |
-| Rare high-value patterns (seen once) | No | ✅ **YES** — reconstructs from partial training | No |
-| High-dimensional synthetic identities | No | No | ✅ **YES** — inside sparse kernel region |
+| Clustered card-present fraud rings | **YES** — not geometrically isolated | No | No |
+| Rare high-value patterns (seen once) | No | **YES** — reconstructs from partial training | No |
+| High-dimensional synthetic identities | No | No | **YES** — inside sparse kernel region |
 
 The three detectors fail on *different* fraud. The fraud missed by IF is caught by AE and OCSVM. The fraud missed by AE is caught by IF and OCSVM. No single detector can catch all three failure modes simultaneously — they are geometrically incompatible. The ceiling is real, and the only way through it is to combine.
 
-> ⚡ **Constraint #1 gap**: OCSVM at 78% is 2 percentage points short. With 284,807 transactions at 0.17% fraud rate (≈492 fraud cases), 2 pp = ~10 additional frauds caught per cycle. The ensemble closes this gap.
+> **Constraint #1 gap**: OCSVM at 78% is 2 percentage points short. With 284,807 transactions at 0.17% fraud rate (≈492 fraud cases), 2 pp = ~10 additional frauds caught per cycle. The ensemble closes this gap.
 
 **What this chapter unlocks:**
 Ensemble anomaly detection fuses IF + AE + OCSVM through four combination strategies. The best strategy achieves **82% recall @ 0.5% FPR** — finally clearing the 80% FraudShield target.
 
 ```mermaid
 flowchart TD
-    IF["Ch.2: Isolation Forest\n65% recall"] --> FUSE
-    AE["Ch.3: Autoencoder\n75% recall"] --> FUSE
-    SVM["Ch.4: One-Class SVM\n78% recall"] --> FUSE
-    FUSE["Score Fusion\n(normalize → combine)"]
-    FUSE --> ENS["Ensemble\n82% recall ✅"]
-    ENS --> TARGET["Constraint #1\nACHIEVED!"]
+ IF["Ch.2: Isolation Forest\n65% recall"] --> FUSE
+ AE["Ch.3: Autoencoder\n75% recall"] --> FUSE
+ SVM["Ch.4: One-Class SVM\n78% recall"] --> FUSE
+ FUSE["Score Fusion\n(normalize → combine)"]
+ FUSE --> ENS["Ensemble\n82% recall "]
+ ENS --> TARGET["Constraint #1\nACHIEVED!"]
 
-    style IF fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style AE fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style SVM fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style FUSE fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style ENS fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style TARGET fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style IF fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style AE fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style SVM fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style FUSE fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style ENS fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style TARGET fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -104,7 +104,7 @@ Four combination strategies are available, ordered from simplest to most powerfu
 - Decent labeled set (hundreds+) → stacking with logistic regression
 - Large labeled set (thousands+) → stacking with gradient-boosted meta-learner
 
-> 💡 **Score averaging is the Occam's razor of ensembles.** Before reaching for weighted or stacked combinations, check whether simple averaging already crosses the threshold. If the detectors are of similar quality and their errors are roughly independent, averaging captures most of the diversity benefit without risk of overfitting.
+> **Score averaging is the Occam's razor of ensembles.** Before reaching for weighted or stacked combinations, check whether simple averaging already crosses the threshold. If the detectors are of similar quality and their errors are roughly independent, averaging captures most of the diversity benefit without risk of overfitting.
 
 ---
 
@@ -123,7 +123,7 @@ $$\tilde{s}_i(\mathbf{x}) = \frac{s_i(\mathbf{x}) - \min_{\mathbf{x}' \in \mathc
 
 After normalisation: $\tilde{s}_i = 0$ means least anomalous in the test set under detector $i$; $\tilde{s}_i = 1$ means most anomalous.
 
-> ⚠️ **Normalisation scope matters.** Normalise over the full test set (or a held-out calibration set), not over training data alone. If a test transaction has a score outside the training range, clipping to $[0,1]$ is fine but should be logged.
+> **Normalisation scope matters.** Normalise over the full test set (or a held-out calibration set), not over training data alone. If a test transaction has a score outside the training range, clipping to $[0,1]$ is fine but should be logged.
 
 ---
 
@@ -135,9 +135,9 @@ $$\hat{s}(\mathbf{x}) = \frac{1}{3}\bigl(\tilde{s}_1(\mathbf{x}) + \tilde{s}_2(\
 
 | Transaction | $\tilde{s}_1$ (IF) | $\tilde{s}_2$ (AE) | $\tilde{s}_3$ (OCSVM) | $\hat{s}_{\text{avg}}$ | Decision |
 |---|---|---|---|---|---|
-| **T1 — clustered fraud** | 0.41 | **0.88** | **0.82** | $(0.41 + 0.88 + 0.82)/3 = \mathbf{0.703}$ | **FRAUD ✅** |
-| T2 — legitimate outlier (large amount) | **0.74** | 0.32 | 0.29 | $(0.74 + 0.32 + 0.29)/3 = \mathbf{0.450}$ | Normal ✅ |
-| T3 — normal transaction | 0.12 | 0.19 | 0.15 | $(0.12 + 0.19 + 0.15)/3 = \mathbf{0.153}$ | Normal ✅ |
+| **T1 — clustered fraud** | 0.41 | **0.88** | **0.82** | $(0.41 + 0.88 + 0.82)/3 = \mathbf{0.703}$ | **FRAUD ** |
+| T2 — legitimate outlier (large amount) | **0.74** | 0.32 | 0.29 | $(0.74 + 0.32 + 0.29)/3 = \mathbf{0.450}$ | Normal |
+| T3 — normal transaction | 0.12 | 0.19 | 0.15 | $(0.12 + 0.19 + 0.15)/3 = \mathbf{0.153}$ | Normal |
 
 **What the numbers show:**
 - T1 is a clustered fraud that IF barely flags ($\tilde{s}_1 = 0.41$, below threshold). IF alone would miss it. The AE and OCSVM both flag it strongly. The average = 0.703 > 0.60: caught by the ensemble.
@@ -189,7 +189,7 @@ $$\text{Sum} = 0.85 + 0.90 + 0.87 = 2.62$$
 
 $$w_1 = \frac{0.85}{2.62} = 0.3244 \qquad w_2 = \frac{0.90}{2.62} = 0.3435 \qquad w_3 = \frac{0.87}{2.62} = 0.3321$$
 
-Verify: $0.3244 + 0.3435 + 0.3321 = 1.0000$ ✅
+Verify: $0.3244 + 0.3435 + 0.3321 = 1.0000$
 
 **Apply to transaction T1** (normalised scores from §4.2: IF=0.41, AE=0.88, OCSVM=0.82):
 
@@ -207,7 +207,7 @@ $$= 0.2400 + 0.1099 + 0.0963 = \mathbf{0.446}$$
 
 Below threshold: correctly classified as normal. The weighted ensemble down-weights the IF's false-positive signal because AE and OCSVM — the more accurate detectors — disagree.
 
-> 💡 **Why AUC-proportional weighting is valid across detectors.** AUC is always bounded [0, 1] regardless of the fraud rate or total transaction count in the validation set. This scale-independence is what makes $w_i \propto \text{AUC}_i$ a coherent formula: you can compute IF's AUC on a 10,000-transaction validation set and AE's AUC on a different 8,000-transaction set, and the resulting weights are still comparable. Compare this to raw recall counts, which cannot be combined across datasets of different sizes.
+> **Why AUC-proportional weighting is valid across detectors.** AUC is always bounded [0, 1] regardless of the fraud rate or total transaction count in the validation set. This scale-independence is what makes $w_i \propto \text{AUC}_i$ a coherent formula: you can compute IF's AUC on a 10,000-transaction validation set and AE's AUC on a different 8,000-transaction set, and the resulting weights are still comparable. Compare this to raw recall counts, which cannot be combined across datasets of different sizes.
 
 ---
 
@@ -258,7 +258,7 @@ Repeating for all parameters and converging (via gradient ascent on log-likeliho
 
 **Why stacking outperforms averaging:** Averaging assumes the detectors contribute equally. The meta-learner learns that IF is noisier and down-weights it automatically. It also discovers interaction effects: "flag if AE score AND OCSVM score are both > 0.6, even if IF score is modest" — a logical AND that simple averaging cannot express.
 
-> ⚠️ **Overfitting risk**: With only 492 labeled fraud examples and 3 meta-features, stacking is low-risk. But if you add many detector scores or derived features, the meta-learner can overfit. Use 5-fold cross-validation: for each fold, train the base detectors on 4/5 of the data, generate out-of-fold scores, train the meta-learner on those scores, evaluate on the held-out fold.
+> **Overfitting risk**: With only 492 labeled fraud examples and 3 meta-features, stacking is low-risk. But if you add many detector scores or derived features, the meta-learner can overfit. Use 5-fold cross-validation: for each fold, train the base detectors on 4/5 of the data, generate out-of-fold scores, train the meta-learner on those scores, evaluate on the held-out fold.
 
 ---
 
@@ -304,65 +304,65 @@ ENSEMBLE ANOMALY DETECTION — COMPLETE ALGORITHM
 PHASE 1: PREPARATION (done once, off inference path)
 
 1. Train base detectors independently on normal transactions only:
-   └─ IF:    IsolationForest(n_estimators=200, contamination=0.001)
-   └─ AE:    Autoencoder(encoder=[29→16→8], decoder=[8→16→29])
-              trained on reconstruction MSE, normal data only
-   └─ OCSVM: OneClassSVM(kernel='rbf', nu=0.001, gamma='scale')
-              trained on 20k normal sample (computational limit)
+ └─ IF: IsolationForest(n_estimators=200, contamination=0.001)
+ └─ AE: Autoencoder(encoder=[29→16→8], decoder=[8→16→29])
+ trained on reconstruction MSE, normal data only
+ └─ OCSVM: OneClassSVM(kernel='rbf', nu=0.001, gamma='scale')
+ trained on 20k normal sample (computational limit)
 
 2. Compute anomaly scores on a held-out calibration set:
-   └─ scores_if   = IF.score_samples(X_cal)        # raw IF scores
-   └─ scores_ae   = AE.reconstruction_error(X_cal)  # MSE per sample
-   └─ scores_svm  = -SVM.decision_function(X_cal)   # negated (higher=worse)
+ └─ scores_if = IF.score_samples(X_cal) # raw IF scores
+ └─ scores_ae = AE.reconstruction_error(X_cal) # MSE per sample
+ └─ scores_svm = -SVM.decision_function(X_cal) # negated (higher=worse)
 
 3. Fit min-max scaler parameters on calibration set:
-   └─ min_k = min(scores_k),  max_k = max(scores_k)  for k in {IF, AE, SVM}
+ └─ min_k = min(scores_k), max_k = max(scores_k) for k in {IF, AE, SVM}
 
 ─────────────────────────────────────────────────────────────
 PHASE 2: WEIGHT ESTIMATION (for weighted ensemble / stacking)
 
 4. Compute normalised scores on validation set (has labels):
-   └─ s̃_k(x) = (scores_k(x) − min_k) / (max_k − min_k)
+ └─ s̃_k(x) = (scores_k(x) − min_k) / (max_k − min_k)
 
 5. Measure individual AUC on validation fraud labels:
-   └─ AUC_IF = roc_auc_score(y_val, s̃_IF)
-   └─ AUC_AE = roc_auc_score(y_val, s̃_AE)
-   └─ AUC_SVM = roc_auc_score(y_val, s̃_SVM)
-   └─ w_k = AUC_k / sum(AUC_1, AUC_2, AUC_3)
+ └─ AUC_IF = roc_auc_score(y_val, s̃_IF)
+ └─ AUC_AE = roc_auc_score(y_val, s̃_AE)
+ └─ AUC_SVM = roc_auc_score(y_val, s̃_SVM)
+ └─ w_k = AUC_k / sum(AUC_1, AUC_2, AUC_3)
 
 6. (Optional stacking) Train meta-learner on out-of-fold scores:
-   └─ features = [s̃_IF, s̃_AE, s̃_SVM]
-   └─ meta = LogisticRegression(C=1.0)
-   └─ meta.fit(features_val, y_val)
+ └─ features = [s̃_IF, s̃_AE, s̃_SVM]
+ └─ meta = LogisticRegression(C=1.0)
+ └─ meta.fit(features_val, y_val)
 
 ─────────────────────────────────────────────────────────────
 PHASE 3: THRESHOLD CALIBRATION
 
 7. Set operating threshold τ at 0.5% FPR on validation set:
-   └─ fpr, tpr, thresholds = roc_curve(y_val, ensemble_scores_val)
-   └─ τ = thresholds[np.searchsorted(fpr, 0.005)]
+ └─ fpr, tpr, thresholds = roc_curve(y_val, ensemble_scores_val)
+ └─ τ = thresholds[np.searchsorted(fpr, 0.005)]
 
 ─────────────────────────────────────────────────────────────
 PHASE 4: REAL-TIME INFERENCE (on the payment path)
 
 For each incoming transaction x:
-8.  s_IF  = IF.score_samples([x])[0]
-9.  s_AE  = AE.reconstruction_error([x])[0]
+8. s_IF = IF.score_samples([x])[0]
+9. s_AE = AE.reconstruction_error([x])[0]
 10. s_SVM = -SVM.decision_function([x])[0]
 
 11. Normalise:
-    └─ s̃_IF  = clip((s_IF  − min_IF)  / (max_IF  − min_IF),  0, 1)
-    └─ s̃_AE  = clip((s_AE  − min_AE)  / (max_AE  − min_AE),  0, 1)
-    └─ s̃_SVM = clip((s_SVM − min_SVM) / (max_SVM − min_SVM), 0, 1)
+ └─ s̃_IF = clip((s_IF − min_IF) / (max_IF − min_IF), 0, 1)
+ └─ s̃_AE = clip((s_AE − min_AE) / (max_AE − min_AE), 0, 1)
+ └─ s̃_SVM = clip((s_SVM − min_SVM) / (max_SVM − min_SVM), 0, 1)
 
 12. Combine (choose one strategy):
-    └─ avg:     ŝ = (s̃_IF + s̃_AE + s̃_SVM) / 3
-    └─ weighted: ŝ = w_IF·s̃_IF + w_AE·s̃_AE + w_SVM·s̃_SVM
-    └─ stacking: ŝ = meta.predict_proba([[s̃_IF, s̃_AE, s̃_SVM]])[0,1]
+ └─ avg: ŝ = (s̃_IF + s̃_AE + s̃_SVM) / 3
+ └─ weighted: ŝ = w_IF·s̃_IF + w_AE·s̃_AE + w_SVM·s̃_SVM
+ └─ stacking: ŝ = meta.predict_proba([[s̃_IF, s̃_AE, s̃_SVM]])[0,1]
 
 13. Decision:
-    └─ if ŝ > τ:  flag as FRAUD → alert ops, hold transaction
-    └─ else:      approve transaction, continue
+ └─ if ŝ > τ: flag as FRAUD → alert ops, hold transaction
+ └─ else: approve transaction, continue
 
 ─────────────────────────────────────────────────────────────
 PHASE 5: EVALUATION (off inference path, periodic)
@@ -419,7 +419,7 @@ Note: T6 is the hard case. IF gives it only 0.38 (the fraud is NOT geometrically
 | | T1 | T2 | T3 | T4 | T5 | **T6** |
 |---|---|---|---|---|---|---|
 | avg | 0.100 | 0.437 | 0.377 | 0.460 | 0.487 | **0.717** |
-| Decision | Legit ✅ | Legit ✅ | Legit ✅ | Legit ✅ | Legit ✅ | **FRAUD ✅** |
+| Decision | Legit | Legit | Legit | Legit | Legit | **FRAUD ** |
 
 Score averaging catches T6 (0.717 > 0.60). T2's high IF score (0.71) is overridden by low AE+OCSVM → correctly classified as legit.
 
@@ -435,7 +435,7 @@ Ranks under OCSVM (sorted by $\tilde{s}_3$ descending): T6=1, T5=2, T4=3, T3=4, 
 | AE rank | 6 | 5 | 3 | 4 | 2 | **1** |
 | OCSVM rank | 6 | 5 | 4 | 3 | 2 | **1** |
 | Mean rank $\bar{r}$ | 6.00 | 3.67 | 4.00 | 3.00 | 2.33 | **2.00** |
-| Ensemble rank | 6th | 4th | 5th | 3rd | 2nd | **1st (most anomalous) ✅** |
+| Ensemble rank | 6th | 4th | 5th | 3rd | 2nd | **1st (most anomalous) ** |
 
 T6 achieves rank 1 (most anomalous) in the ensemble because it is ranked 1st by both AE and OCSVM. T2 achieves rank 4th despite being ranked 1st by IF — because AE and OCSVM rank it 5th, dragging the mean rank up.
 
@@ -445,7 +445,7 @@ $$\hat{s}_{\text{T6}} = 0.324 \times 0.38 + 0.344 \times 0.91 + 0.332 \times 0.8
 
 $$\hat{s}_{\text{T2}} = 0.324 \times 0.71 + 0.344 \times 0.29 + 0.332 \times 0.31 = 0.230 + 0.100 + 0.103 = \mathbf{0.433}$$
 
-T6 flagged (0.722 > 0.60); T2 safe (0.433 < 0.60). ✅
+T6 flagged (0.722 > 0.60); T2 safe (0.433 < 0.60).
 
 **Stacking (logistic regression, converged $\boldsymbol{\beta} = [-3.8, 1.2, 4.1, 3.9]$)**:
 
@@ -457,23 +457,23 @@ $$P(\text{fraud} \mid \text{T2}) = \sigma(-3.8 + 1.2 \times 0.71 + 4.1 \times 0.
 
 $$= \sigma(-3.8 + 0.852 + 1.189 + 1.209) = \sigma(-0.550) = \frac{1}{1 + e^{0.550}} = \mathbf{0.366}$$
 
-T6: 97.7% probability of fraud → flagged ✅. T2: 36.6% → not flagged ✅.
+T6: 97.7% probability of fraud → flagged . T2: 36.6% → not flagged .
 
 **What score fusion achieves — explicit closing:**
 
-> 💡 **Fusion crosses the FraudShield threshold.** Score averaging achieves **82% recall @ 0.5% FPR** — clearing the 80% constraint for the first time. No single detector hit this: IF alone = 65% recall, AE alone = 75%, OCSVM alone = 78%. The ensemble catches 82% because the three detectors fail on *different* fraud — clustered card-present fraud (caught by AE, missed by IF), rare high-value patterns (caught by IF, missed by AE), high-dimensional synthetic identities (caught by IF, missed by OCSVM). The 2pp gap from 78% → 82% represents ~10 additional frauds caught per cycle — enough to satisfy the compliance requirement and keep the programme licence. **FraudShield Constraint #1 is satisfied.**
+> **Fusion crosses the FraudShield threshold.** Score averaging achieves **82% recall @ 0.5% FPR** — clearing the 80% constraint for the first time. No single detector hit this: IF alone = 65% recall, AE alone = 75%, OCSVM alone = 78%. The ensemble catches 82% because the three detectors fail on *different* fraud — clustered card-present fraud (caught by AE, missed by IF), rare high-value patterns (caught by IF, missed by AE), high-dimensional synthetic identities (caught by IF, missed by OCSVM). The 2pp gap from 78% → 82% represents ~10 additional frauds caught per cycle — enough to satisfy the compliance requirement and keep the programme licence. **FraudShield Constraint #1 is satisfied.**
 
 **Summary — which combination methods catch T6 (the hard fraud)?**
 
 | Method | T6 caught? | T2 false alarm? | Notes |
 |---|---|---|---|
-| IF alone | ❌ NO (0.38 < 0.60) | ⚠️ False alarm! (0.71 > 0.60) | IF alone misses T6 AND false-alarms T2 |
-| AE alone | ✅ Yes (0.91 > 0.60) | ✅ No alarm | AE catches T6 but misses other fraud types |
-| OCSVM alone | ✅ Yes (0.86 > 0.60) | ✅ No alarm | Same |
-| Score average | ✅ Yes (0.717) | ✅ No alarm (0.437) | ✅ Simple and effective |
-| Rank-based | ✅ Yes (rank 1) | ✅ No alarm (rank 4) | ✅ Robust to scale outliers |
-| Weighted AUC | ✅ Yes (0.722) | ✅ No alarm (0.433) | ✅ Slightly better signal |
-| Stacking LR | ✅ Yes (0.977) | ✅ No alarm (0.366) | ✅ Highest confidence, lowest false-alarm risk |
+| IF alone | NO (0.38 < 0.60) | False alarm! (0.71 > 0.60) | IF alone misses T6 AND false-alarms T2 |
+| AE alone | Yes (0.91 > 0.60) | No alarm | AE catches T6 but misses other fraud types |
+| OCSVM alone | Yes (0.86 > 0.60) | No alarm | Same |
+| Score average | Yes (0.717) | No alarm (0.437) | Simple and effective |
+| Rank-based | Yes (rank 1) | No alarm (rank 4) | Robust to scale outliers |
+| Weighted AUC | Yes (0.722) | No alarm (0.433) | Slightly better signal |
+| Stacking LR | Yes (0.977) | No alarm (0.366) | Highest confidence, lowest false-alarm risk |
 
 IF alone would cause a false alarm on T2 AND miss T6 — the worst of both worlds. Every ensemble method avoids both errors simultaneously.
 
@@ -485,55 +485,55 @@ IF alone would cause a false alarm on T2 AND miss T6 — the worst of both world
 
 ```mermaid
 flowchart TD
-    TX["Test Transaction x"] --> D1["Isolation Forest\ns₁ = 0.38"]
-    TX --> D2["Autoencoder\ns₂ = 0.91"]
-    TX --> D3["One-Class SVM\ns₃ = 0.86"]
+ TX["Test Transaction x"] --> D1["Isolation Forest\ns₁ = 0.38"]
+ TX --> D2["Autoencoder\ns₂ = 0.91"]
+ TX --> D3["One-Class SVM\ns₃ = 0.86"]
 
-    D1 -->|"min-max\nnormalize"| N1["s̃₁ = 0.38\n(IF = weak signal)"]
-    D2 -->|"min-max\nnormalize"| N2["s̃₂ = 0.91\n(AE = strong signal)"]
-    D3 -->|"min-max\nnormalize"| N3["s̃₃ = 0.86\n(OCSVM = strong signal)"]
+ D1 -->|"min-max\nnormalize"| N1["s̃₁ = 0.38\n(IF = weak signal)"]
+ D2 -->|"min-max\nnormalize"| N2["s̃₂ = 0.91\n(AE = strong signal)"]
+ D3 -->|"min-max\nnormalize"| N3["s̃₃ = 0.86\n(OCSVM = strong signal)"]
 
-    N1 --> AVG["Score Average\n(0.38+0.91+0.86)/3 = 0.717"]
-    N2 --> AVG
-    N3 --> AVG
+ N1 --> AVG["Score Average\n(0.38+0.91+0.86)/3 = 0.717"]
+ N2 --> AVG
+ N3 --> AVG
 
-    N1 --> WGT["Weighted AUC\n0.324×0.38 + 0.344×0.91\n+ 0.332×0.86 = 0.722"]
-    N2 --> WGT
-    N3 --> WGT
+ N1 --> WGT["Weighted AUC\n0.324×0.38 + 0.344×0.91\n+ 0.332×0.86 = 0.722"]
+ N2 --> WGT
+ N3 --> WGT
 
-    N1 --> STK["Stacking LR\nσ(−3.8 + 1.2×0.38\n+ 4.1×0.91 + 3.9×0.86)\n= 0.977"]
-    N2 --> STK
-    N3 --> STK
+ N1 --> STK["Stacking LR\nσ(−3.8 + 1.2×0.38\n+ 4.1×0.91 + 3.9×0.86)\n= 0.977"]
+ N2 --> STK
+ N3 --> STK
 
-    AVG -->|"0.717 > τ=0.60"| FRAUD["⚠️ FRAUD"]
-    WGT -->|"0.722 > τ=0.60"| FRAUD
-    STK -->|"0.977 > τ=0.50"| FRAUD
+ AVG -->|"0.717 > τ=0.60"| FRAUD[" FRAUD"]
+ WGT -->|"0.722 > τ=0.60"| FRAUD
+ STK -->|"0.977 > τ=0.50"| FRAUD
 
-    style TX fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style D1 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style D2 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style D3 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style FRAUD fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style AVG fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style WGT fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style STK fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style TX fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style D1 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style D2 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style D3 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style FRAUD fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style AVG fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style WGT fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style STK fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### 7.2 — FraudShield Recall Progression
 
 ```mermaid
 flowchart LR
-    C1["Ch.1: Z-score\n45% recall\n❌ 35pp short"] --> C2
-    C2["Ch.2: Isolation Forest\n65% recall\n❌ 15pp short"] --> C3
-    C3["Ch.3: Autoencoder\n75% recall\n❌ 5pp short"] --> C4
-    C4["Ch.4: One-Class SVM\n78% recall\n❌ 2pp short"] --> C5
-    C5["Ch.5: Ensemble\n82% recall\n✅ TARGET MET!"]
+ C1["Ch.1: Z-score\n45% recall\n 35pp short"] --> C2
+ C2["Ch.2: Isolation Forest\n65% recall\n 15pp short"] --> C3
+ C3["Ch.3: Autoencoder\n75% recall\n 5pp short"] --> C4
+ C4["Ch.4: One-Class SVM\n78% recall\n 2pp short"] --> C5
+ C5["Ch.5: Ensemble\n82% recall\n TARGET MET!"]
 
-    style C1 fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style C2 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style C3 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style C4 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style C5 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style C1 fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style C2 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style C3 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style C4 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style C5 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -574,44 +574,43 @@ For AUC-weighted ensembles, the weights are sensitive to the size of the validat
 
 ```mermaid
 flowchart TD
-    START(["New ensemble project"]) --> LABELS{"Do you have\nlabeled fraud\nexamples?"}
+ START(["New ensemble project"]) --> LABELS{"Do you have\nlabeled fraud\nexamples?"}
 
-    LABELS -->|"No labels at all"| DIVERSE{"Are the detectors\ndiverse (low\nerror overlap)?"}
-    LABELS -->|"≥50 fraud examples"| STACK["Stacking\n(logistic regression\nmeta-learner)"]
-    LABELS -->|"<50 fraud examples\nbut some"| AUC_W["Weighted by AUC\n(estimate AUC on\nsmall validation set)"]
+ LABELS -->|"No labels at all"| DIVERSE{"Are the detectors\ndiverse (low\nerror overlap)?"}
+ LABELS -->|"≥50 fraud examples"| STACK["Stacking\n(logistic regression\nmeta-learner)"]
+ LABELS -->|"<50 fraud examples\nbut some"| AUC_W["Weighted by AUC\n(estimate AUC on\nsmall validation set)"]
 
-    DIVERSE -->|"Yes (>20% disagreement)"| AVG["Score Averaging\n(simplest, robust)"]
-    DIVERSE -->|"No (correlated detectors)"| RANK["Rank-Based\n(mitigates outlier\nscore dominance)"]
+ DIVERSE -->|"Yes (>20% disagreement)"| AVG["Score Averaging\n(simplest, robust)"]
+ DIVERSE -->|"No (correlated detectors)"| RANK["Rank-Based\n(mitigates outlier\nscore dominance)"]
 
-    AVG --> CHECK{"Does averaging\ncross the recall\ntarget?"}
-    RANK --> CHECK
-    CHECK -->|"Yes"| DONE(["✅ Ship it"])
-    CHECK -->|"No"| AUC_W
+ AVG --> CHECK{"Does averaging\ncross the recall\ntarget?"}
+ RANK --> CHECK
+ CHECK -->|"Yes"| DONE([" Ship it"])
+ CHECK -->|"No"| AUC_W
 
-    AUC_W --> CHECK2{"Does weighted\nensemble cross\nrecall target?"}
-    CHECK2 -->|"Yes"| DONE
-    CHECK2 -->|"No"| ADD["Add a more diverse\nbase detector\n(e.g., HBOS, LOF)"]
-    ADD --> CHECK
+ AUC_W --> CHECK2{"Does weighted\nensemble cross\nrecall target?"}
+ CHECK2 -->|"Yes"| DONE
+ CHECK2 -->|"No"| ADD["Add a more diverse\nbase detector\n(e.g., HBOS, LOF)"]
+ ADD --> CHECK
 
-    STACK --> DONE
+ STACK --> DONE
 
-    style START fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style DONE fill:#15803d,color:#fff,stroke:#15803d
-    style LABELS fill:#b45309,color:#fff,stroke:#b45309
-    style DIVERSE fill:#b45309,color:#fff,stroke:#b45309
-    style CHECK fill:#b45309,color:#fff,stroke:#b45309
-    style CHECK2 fill:#b45309,color:#fff,stroke:#b45309
-    style AVG fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style RANK fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style AUC_W fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style STACK fill:#15803d,color:#fff,stroke:#15803d
+ style START fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style DONE fill:#15803d,color:#fff,stroke:#15803d
+ style LABELS fill:#b45309,color:#fff,stroke:#b45309
+ style DIVERSE fill:#b45309,color:#fff,stroke:#b45309
+ style CHECK fill:#b45309,color:#fff,stroke:#b45309
+ style CHECK2 fill:#b45309,color:#fff,stroke:#b45309
+ style AVG fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style RANK fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style AUC_W fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style STACK fill:#15803d,color:#fff,stroke:#15803d
 ```
 
 **Common traps:**
-
-❌ **"More detectors always help"** → Only if they are diverse. A homogeneous ensemble (three IF variants) adds little.
-❌ **"Stacking is always better than averaging"** → Not with fewer than ~50 labeled examples. A 3-weight logistic regression will overfit.
-❌ **"Average first, then threshold"** → Always calibrate the threshold on a held-out set using the same combination strategy you will use at inference.
+**"More detectors always help"** → Only if they are diverse. A homogeneous ensemble (three IF variants) adds little.
+**"Stacking is always better than averaging"** → Not with fewer than ~50 labeled examples. A 3-weight logistic regression will overfit.
+**"Average first, then threshold"** → Always calibrate the threshold on a held-out set using the same combination strategy you will use at inference.
 
 ---
 
@@ -645,21 +644,19 @@ flowchart TD
 
 | Constraint | Target | Status |
 |---|---|---|
-| #1 DETECTION | ≥80% recall @ 0.5% FPR | ✅ **82% recall @ 0.5% FPR — ACHIEVED!** |
-| #2 PRECISION | FPR ≤ 0.5% | ✅ Held at 0.5% FPR threshold |
-| #3 REAL-TIME | ≤100ms inference | ⚡ ~60ms for 3 detectors (tight but OK) |
-| #4 ADAPTABILITY | Survive fraud pattern shifts | ❌ Static ensemble — no drift detection yet |
-| #5 EXPLAINABILITY | Human-readable justification | ❌ Ensemble scores are not self-explaining |
-
-✅ **Unlocked capabilities:**
+| #1 DETECTION | ≥80% recall @ 0.5% FPR | **82% recall @ 0.5% FPR — ACHIEVED!** |
+| #2 PRECISION | FPR ≤ 0.5% | Held at 0.5% FPR threshold |
+| #3 REAL-TIME | ≤100ms inference | ~60ms for 3 detectors (tight but OK) |
+| #4 ADAPTABILITY | Survive fraud pattern shifts | Static ensemble — no drift detection yet |
+| #5 EXPLAINABILITY | Human-readable justification | Ensemble scores are not self-explaining |
+**Unlocked capabilities:**
 - Score fusion (averaging, ranking, weighting, stacking) of heterogeneous anomaly detectors
 - Detection of fraud that no single detector can catch individually
 - Calibrated probability output (stacking) for downstream threshold tuning
 - 82% recall @ 0.5% FPR — FraudShield's primary detection constraint satisfied
-
-❌ **Still can't solve:**
-- ❌ **Adaptability** (Constraint #4): The ensemble is static. Fraudsters will evolve. Without drift detection and retraining triggers, performance will degrade over months.
-- ❌ **Explainability** (Constraint #5): "Ensemble score = 0.72" is not a justification a compliance officer can use. We need feature-level attribution per flagged transaction.
+**Still can't solve:**
+- **Adaptability** (Constraint #4): The ensemble is static. Fraudsters will evolve. Without drift detection and retraining triggers, performance will degrade over months.
+- **Explainability** (Constraint #5): "Ensemble score = 0.72" is not a justification a compliance officer can use. We need feature-level attribution per flagged transaction.
 
 **Real-world status**: FraudShield can now detect 4 in 5 frauds while alarming on fewer than 1 in 200 legitimate transactions — the lab target is met. But lab performance ≠ production performance when fraud patterns shift. Ch.6 is about keeping this performance alive.
 
@@ -669,4 +666,4 @@ flowchart TD
 
 This chapter proved that combining three diverse detectors through score fusion achieves the 80%+ recall target that no single detector could reach. But proof-of-concept and production are different things. Ch.6 asks the hard question: what happens six months after deployment when fraudsters discover which patterns evade detection and start deliberately engineering transactions to score low on all three detectors? The answer requires **drift detection** (monitoring the score distributions of normal transactions to detect when "what normal looks like" has changed), **automated retraining triggers** (retrain the ensemble when drift is confirmed), and **SHAP-based explanations** (translate "ensemble score = 0.72" into "flagged because transaction amount is 8× your monthly average AND occurred in a new country AND used a card-not-present channel simultaneously"). Ch.6 converts the FraudShield prototype into a system that satisfies all five constraints — including the two that remain open after this chapter.
 
-> ➡️ **[Ch.6 — Production & Real-Time Inference →](../ch06_production)**
+> ➡ **[Ch.6 — Production & Real-Time Inference →](../ch06_production)**

@@ -1,7 +1,7 @@
 # Feature Engineering Restructure — Authoring Guide Analysis & Plan
 
-**Date:** April 29, 2026  
-**Purpose:** Document why Ch.3 needs restructuring and provide implementation roadmap  
+**Date:** April 29, 2026
+**Purpose:** Document why Ch.3 needs restructuring and provide implementation roadmap
 **Status:** Analysis Complete → Ready for Implementation
 
 ---
@@ -14,7 +14,7 @@ Ch.3 Feature Engineering needs restructuring from concept-stacked (§Pearson →
 
 ## Key Finding: The Authoring Guide Needs an Addendum for Procedural Chapters
 
-The current authoring guide is **concept-focused** (tool → failure → fix → next tool).  
+The current authoring guide is **concept-focused** (tool → failure → fix → next tool).
 The feature engineering restructure plan is **workflow-focused** (observe → diagnose → decide → implement).
 
 **Both patterns are valid.** The issue is the authoring guide doesn't explicitly support procedural chapters where the practitioner follows a decision tree.
@@ -23,32 +23,32 @@ The feature engineering restructure plan is **workflow-focused** (observe → di
 
 ## What the Authoring Guide DOES Cover (Already Strong)
 
-### ✅ Pedagogical Patterns Already Present
+### Pedagogical Patterns Already Present
 
 | Pattern | Status in Guide | Examples |
 |---------|-----------------|----------|
-| **Failure-first pedagogy** | ✅ Explicit rule | "Tool → specific failure → minimal fix → that fix's failure → next tool" |
-| **Numerical walkthroughs** | ✅ Canonical example | "3–5 row subset, step-by-step arithmetic, verification sentence" |
-| **Forward/backward linking** | ✅ Mandatory | "Every concept links to where introduced and where it reappears" |
-| **Progress check sections** | ✅ Template provided | "✅ Unlocked / ❌ Still can't solve" |
-| **Diagnostic flowcharts** | ✅ Required | "Mermaid diagnostic flowchart in What Can Go Wrong section" |
-| **Code snippets** | ✅ Covered | "Minimal but complete" + notebook mirroring |
-| **Real data requirement** | ✅ Explicit rule | "California Housing real numbers, not toy datasets" |
-| **Callout system** | ✅ Defined | 💡⚠️⚡📖➡️ with specific use cases |
+| **Failure-first pedagogy** | Explicit rule | "Tool → specific failure → minimal fix → that fix's failure → next tool" |
+| **Numerical walkthroughs** | Canonical example | "3–5 row subset, step-by-step arithmetic, verification sentence" |
+| **Forward/backward linking** | Mandatory | "Every concept links to where introduced and where it reappears" |
+| **Progress check sections** | Template provided | " Unlocked / Still can't solve" |
+| **Diagnostic flowcharts** | Required | "Mermaid diagnostic flowchart in What Can Go Wrong section" |
+| **Code snippets** | Covered | "Minimal but complete" + notebook mirroring |
+| **Real data requirement** | Explicit rule | "California Housing real numbers, not toy datasets" |
+| **Callout system** | Defined | 📖➡ with specific use cases |
 
-### ✅ Voice & Style Rules (Match the Restructure Plan)
+### Voice & Style Rules (Match the Restructure Plan)
 
-- **Second-person practitioner voice** ✅
-- **Direct, time-efficient tone** ✅
-- **No academic hedging** ✅
-- **Every formula gets verbal gloss** ✅
-- **Walkthroughs with actual numbers** ✅
+- **Second-person practitioner voice**
+- **Direct, time-efficient tone**
+- **No academic hedging**
+- **Every formula gets verbal gloss**
+- **Walkthroughs with actual numbers**
 
 ---
 
 ## What the Authoring Guide DOES NOT Cover (Needs Addition)
 
-### ❌ Workflow-Based Chapter Structure
+### Workflow-Based Chapter Structure
 
 The current template assumes chapters organized by **concepts**:
 ```
@@ -73,7 +73,7 @@ The restructure plan organizes by **workflow phases**:
 
 ---
 
-### ❌ Decision Checkpoint Pattern
+### Decision Checkpoint Pattern
 
 **What the plan adds:**
 ```markdown
@@ -98,7 +98,7 @@ The restructure plan organizes by **workflow phases**:
 
 ---
 
-### ❌ Code Snippet Placement Strategy
+### Code Snippet Placement Strategy
 
 **Current guide:** "Code blocks are minimal but complete" + "Notebook mirrors README"
 
@@ -111,7 +111,7 @@ The restructure plan organizes by **workflow phases**:
 
 ---
 
-### ❌ Workflow vs Concept Chapter Distinction
+### Workflow vs Concept Chapter Distinction
 
 **Current guide treats all chapters the same.** The template applies uniformly.
 
@@ -128,20 +128,20 @@ The restructure plan organizes by **workflow phases**:
 
 | Dimension | Current Authoring Guide | Feature Engineering Plan | Match? |
 |-----------|------------------------|--------------------------|--------|
-| **Primary organizing principle** | Concept progression | Workflow phases | ❌ Different |
-| **Section structure** | Core Idea → Math → Examples | Inspect → Audit → Transform → Validate | ❌ Different |
-| **Decision points** | End of chapter (diagnostic flowchart) | After each phase (checkpoint) | ⚠️ Partial overlap |
-| **Code placement** | In notebook, referenced from README | Code snippets inline in README | ⚠️ Different emphasis |
-| **Numerical walkthroughs** | Mandatory, 3-5 rows | Mandatory, with decisions annotated | ✅ Same principle |
-| **Real data requirement** | California Housing only | California Housing with visualizations | ✅ Same |
-| **Failure-first pedagogy** | Explicit rule | Implicit (show what breaks → decide) | ✅ Same spirit |
-| **Progress tracking** | § Progress Check at end | Phase-level progress + final check | ⚠️ More granular |
-| **Visualization strategy** | Demonstrate what prose can't | Show distributions that inform decisions | ✅ Same principle |
+| **Primary organizing principle** | Concept progression | Workflow phases | Different |
+| **Section structure** | Core Idea → Math → Examples | Inspect → Audit → Transform → Validate | Different |
+| **Decision points** | End of chapter (diagnostic flowchart) | After each phase (checkpoint) | Partial overlap |
+| **Code placement** | In notebook, referenced from README | Code snippets inline in README | Different emphasis |
+| **Numerical walkthroughs** | Mandatory, 3-5 rows | Mandatory, with decisions annotated | Same principle |
+| **Real data requirement** | California Housing only | California Housing with visualizations | Same |
+| **Failure-first pedagogy** | Explicit rule | Implicit (show what breaks → decide) | Same spirit |
+| **Progress tracking** | § Progress Check at end | Phase-level progress + final check | More granular |
+| **Visualization strategy** | Demonstrate what prose can't | Show distributions that inform decisions | Same principle |
 
 **Legend:**
-- ✅ = Plans align
-- ⚠️ = Same spirit, different execution
-- ❌ = Fundamental difference requiring guidance update
+- = Plans align
+- = Same spirit, different execution
+- = Fundamental difference requiring guidance update
 
 ---
 
@@ -154,17 +154,17 @@ Add new section after "Chapter README Template":
 ```markdown
 ## Workflow-Based Chapter Pattern (Procedural Chapters)
 
-> **When to use:** Chapters covering procedures practitioners follow (feature engineering, 
-> data validation, model diagnostics, hyperparameter tuning) should use workflow-based structure 
+> **When to use:** Chapters covering procedures practitioners follow (feature engineering,
+> data validation, model diagnostics, hyperparameter tuning) should use workflow-based structure
 > instead of concept-based structure.
 
 ### Identifying Procedural Chapters
 
 A chapter is workflow-based if:
-- ✅ It teaches a **sequence of decisions** more than a single concept
-- ✅ Practitioner asks "what should I do next?" after each section
-- ✅ Multiple tools/techniques are chosen based on data characteristics
-- ✅ The chapter reads like a troubleshooting guide, not a concept introduction
+- It teaches a **sequence of decisions** more than a single concept
+- Practitioner asks "what should I do next?" after each section
+- Multiple tools/techniques are chosen based on data characteristics
+- The chapter reads like a troubleshooting guide, not a concept introduction
 
 **Examples:**
 - **Workflow-based:** Feature Engineering (inspect → decide scaler → check VIF → transform)
@@ -226,35 +226,35 @@ A chapter is workflow-based if:
 **Rule 1: Each phase ends with executable code showing that phase's workflow**
 
 ```python
-# ✅ Good: Phase 1 code snippet (inspection loop)
+# Good: Phase 1 code snippet (inspection loop)
 for col in numeric_cols:
-    skew = df[col].skew()
-    iqr = df[col].quantile(0.75) - df[col].quantile(0.25)
-    
-    # Plot side-by-side: raw vs log-transformed
-    fig, axes = plt.subplots(1, 2, figsize=(12, 4))
-    axes[0].hist(df[col], bins=50, edgecolor='black')
-    axes[1].hist(np.log1p(df[col]), bins=50, edgecolor='black', color='green')
-    
-    # DECISION LOGIC
-    if abs(skew) > 1.0:
-        print(f"{col}: Skew={skew:.2f} → log1p + StandardScaler")
-    elif iqr / df[col].std() > 2.5:
-        print(f"{col}: Heavy outliers → RobustScaler")
-    else:
-        print(f"{col}: Symmetric → StandardScaler")
+ skew = df[col].skew()
+ iqr = df[col].quantile(0.75) - df[col].quantile(0.25)
+
+ # Plot side-by-side: raw vs log-transformed
+ fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+ axes[0].hist(df[col], bins=50, edgecolor='black')
+ axes[1].hist(np.log1p(df[col]), bins=50, edgecolor='black', color='green')
+
+ # DECISION LOGIC
+ if abs(skew) > 1.0:
+ print(f"{col}: Skew={skew:.2f} → log1p + StandardScaler")
+ elif iqr / df[col].std() > 2.5:
+ print(f"{col}: Heavy outliers → RobustScaler")
+ else:
+ print(f"{col}: Symmetric → StandardScaler")
 ```
 
 **Rule 2: Decision logic appears in code comments, not just prose**
 
 ```python
-# ✅ Good: Inline decision annotation
+# Good: Inline decision annotation
 if vif > 10:
-    print(f"{feat}: VIF={vif:.1f} ❌ SEVERE - Drop or combine")
+ print(f"{feat}: VIF={vif:.1f} SEVERE - Drop or combine")
 elif vif > 5 and target_corr < 0.3:
-    print(f"{feat}: VIF={vif:.1f}, weak signal → Drop candidate")
+ print(f"{feat}: VIF={vif:.1f}, weak signal → Drop candidate")
 else:
-    print(f"{feat}: VIF={vif:.1f} ✅ OK")
+ print(f"{feat}: VIF={vif:.1f} OK")
 ```
 
 **Rule 3: Example usage blocks after defining functions**
@@ -262,7 +262,7 @@ else:
 ```python
 # Define utility
 def inspect_feature_distribution(df, col):
-    # ... implementation ...
+ # ... implementation ...
 
 # Example usage — show it in action
 inspect_feature_distribution(housing_df, 'AveRooms')
@@ -346,12 +346,12 @@ Every checkpoint follows this 3-part structure:
 
 | Chapter | Current Structure | Should Restructure? | Reason |
 |---------|------------------|---------------------|--------|
-| Ch.3 Feature Importance | Concept-based | ✅ **YES** | Procedural workflow (inspect → VIF → transform → validate) |
-| Ch.0 Data Prep | Concept-based | ✅ **YES** | Procedural workflow (missing → outliers → scaling) |
-| Ch.1 Linear Regression | Concept-based | ❌ **NO** | Single algorithm, not procedural |
-| Ch.2 Multiple Regression | Concept-based | ❌ **NO** | Extension of Ch.1, not procedural |
-| Ch.7 Hyperparameter Tuning | Concept-based | ⚠️ **CONSIDER** | Has decision tree (LR → batch → optimizer → ...) |
-| Ch.8 Data Validation | Concept-based | ✅ **YES** | Procedural workflow (schema → distribution → drift) |
+| Ch.3 Feature Importance | Concept-based | **YES** | Procedural workflow (inspect → VIF → transform → validate) |
+| Ch.0 Data Prep | Concept-based | **YES** | Procedural workflow (missing → outliers → scaling) |
+| Ch.1 Linear Regression | Concept-based | **NO** | Single algorithm, not procedural |
+| Ch.2 Multiple Regression | Concept-based | **NO** | Extension of Ch.1, not procedural |
+| Ch.7 Hyperparameter Tuning | Concept-based | **CONSIDER** | Has decision tree (LR → batch → optimizer → ...) |
+| Ch.8 Data Validation | Concept-based | **YES** | Procedural workflow (schema → distribution → drift) |
 
 **Recommendation:** Restructure 2-3 high-impact procedural chapters as proof-of-concept before updating authoring guide.
 
@@ -390,11 +390,11 @@ Every checkpoint follows this 3-part structure:
 
 The authoring guide update succeeds if:
 
-1. ✅ **Discoverability:** Authors can identify whether their chapter should be workflow-based or concept-based
-2. ✅ **Consistency:** All procedural chapters follow same decision checkpoint pattern
-3. ✅ **Usability:** Readers can execute workflows without external references
-4. ✅ **Compatibility:** Workflow chapters still satisfy all existing style rules (failure-first, numerical walkthroughs, forward/backward links)
-5. ✅ **Maintainability:** Grand solutions can synthesize both workflow and concept chapters into coherent narrative
+1. **Discoverability:** Authors can identify whether their chapter should be workflow-based or concept-based
+2. **Consistency:** All procedural chapters follow same decision checkpoint pattern
+3. **Usability:** Readers can execute workflows without external references
+4. **Compatibility:** Workflow chapters still satisfy all existing style rules (failure-first, numerical walkthroughs, forward/backward links)
+5. **Maintainability:** Grand solutions can synthesize both workflow and concept chapters into coherent narrative
 
 ---
 
@@ -421,14 +421,14 @@ It needs a **targeted addendum** for procedural chapters that:
 After every major technique, add "Industry Standard" callout box:
 
 ```markdown
-> 💡 **Industry Standard:** `sklearn.preprocessing.StandardScaler`
-> 
+> **Industry Standard:** `sklearn.preprocessing.StandardScaler`
+>
 > ```python
 > from sklearn.preprocessing import StandardScaler
 > scaler = StandardScaler()
-> X_scaled = scaler.fit_transform(X_train)  # One line!
+> X_scaled = scaler.fit_transform(X_train) # One line!
 > ```
-> 
+>
 > **When to use:** Always in production. Manual implementation shown for learning only.
 > **Common alternatives:** `RobustScaler`, `MinMaxScaler`, `MaxAbsScaler`
 ```
@@ -471,13 +471,13 @@ Pattern per technique:
 ```python
 # Manual (learning): 10 lines showing the math
 for i in range(n_iterations):
-    gradient = compute_gradient(X, y, w, b)
-    w = w - alpha * gradient
-    # ...
+ gradient = compute_gradient(X, y, w, b)
+ w = w - alpha * gradient
+ # ...
 
 # Industry standard (production): 1 line
 from sklearn.linear_model import LinearRegression
-model = LinearRegression().fit(X_train, y_train)  # That's it!
+model = LinearRegression().fit(X_train, y_train) # That's it!
 ```
 
 **Verify:** Every major technique follows this pattern
@@ -580,20 +580,20 @@ model = LinearRegression().fit(X_train, y_train)  # That's it!
 
 ## Success Criteria (Complete)
 
-1. ✅ Authoring guide has workflow-based pattern section with decision checkpoint template
-2. ✅ Clear identification criteria (when to use workflow vs concept structure)
-3. ✅ Ch.3 Feature Engineering follows workflow structure (proof-of-concept)
-4. ✅ All procedural chapters follow same pattern (consistency)
-5. ✅ Industry standard tools shown alongside manual implementations (every technique)
-6. ✅ Notebooks executable top-to-bottom with both manual + library examples
-7. ✅ Decision checkpoints use consistent 3-part format (what/means/next)
-8. ✅ All visualizations use real California Housing data with decision annotations
+1. Authoring guide has workflow-based pattern section with decision checkpoint template
+2. Clear identification criteria (when to use workflow vs concept structure)
+3. Ch.3 Feature Engineering follows workflow structure (proof-of-concept)
+4. All procedural chapters follow same pattern (consistency)
+5. Industry standard tools shown alongside manual implementations (every technique)
+6. Notebooks executable top-to-bottom with both manual + library examples
+7. Decision checkpoints use consistent 3-part format (what/means/next)
+8. All visualizations use real California Housing data with decision annotations
 
 ---
 
 ## Next Actions
 
-1. ✅ **Review this complete analysis and plan**
+1. **Review this complete analysis and plan**
 2. → **Execute Phase 1:** Update authoring guide (single insert, 3-4 hours)
 3. → **Execute Phase 2:** Restructure Ch.3 as proof-of-concept (6 edits, 10-15 hours)
 4. → **Checkpoint:** Review Phase 2 output, refine patterns if needed

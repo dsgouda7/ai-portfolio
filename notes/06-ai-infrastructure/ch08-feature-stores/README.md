@@ -11,18 +11,18 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Self-host Llama-3-8B for <$15k/month, replacing $80k OpenAI API costs
+> **The mission**: Self-host Llama-3-8B for <$15k/month, replacing $80k OpenAI API costs
 >
 > **6 Constraints**: #1 Cost (<$15k/mo) • #2 Latency (≤2s) • #3 Throughput (≥10k req/day) • #4 Memory (fit in VRAM) • #5 Quality (≥95% accuracy) • #6 Reliability (>99% uptime)
 
 **What we know so far**:
-- ✅ Ch.1: RTX 4090 (24GB VRAM, $1.50/hr) → hardware locked in
-- ✅ Ch.2: INT4 Llama-3-8B = 8GB params + 4GB KV cache → fits in 24GB
-- ✅ Ch.3: Quantization → 60% cost reduction, <1% accuracy loss
-- ✅ Ch.4: Data parallelism → training throughput 4x
-- ✅ Ch.5: PagedAttention + batching → 12k req/day on 1 GPU, 1.2s p95
-- ✅ Ch.6: vLLM serving framework → production-ready inference stack
-- ✅ Ch.7: NVLink → multi-GPU scaling to 40k req/day
+- Ch.1: RTX 4090 (24GB VRAM, $1.50/hr) → hardware locked in
+- Ch.2: INT4 Llama-3-8B = 8GB params + 4GB KV cache → fits in 24GB
+- Ch.3: Quantization → 60% cost reduction, <1% accuracy loss
+- Ch.4: Data parallelism → training throughput 4x
+- Ch.5: PagedAttention + batching → 12k req/day on 1 GPU, 1.2s p95
+- Ch.6: vLLM serving framework → production-ready inference stack
+- Ch.7: NVLink → multi-GPU scaling to 40k req/day
 
 **What's blocking us**:
 
@@ -34,10 +34,10 @@
 **Current situation:** Features are computed on-the-fly via PostgreSQL joins:
 ```sql
 SELECT
-    u.user_id,
-    ARRAY_AGG(d.doc_type ORDER BY d.created_at DESC LIMIT 10) as last_10_doc_types,
-    AVG(d.confidence_score) as avg_confidence,
-    -- ... 15 more columns ...
+ u.user_id,
+ ARRAY_AGG(d.doc_type ORDER BY d.created_at DESC LIMIT 10) as last_10_doc_types,
+ AVG(d.confidence_score) as avg_confidence,
+ -- ... 15 more columns ...
 FROM users u
 JOIN documents d ON u.user_id = d.user_id
 WHERE d.created_at > NOW() - INTERVAL '30 days'
@@ -45,10 +45,10 @@ GROUP BY u.user_id;
 ```
 
 **Problems**:
-1. ❌ **Latency explosion** — Feature query takes **380ms** (vs 50ms target) → p95 latency now **2.8s** (40% over budget)
-2. ❌ **Training-serving skew** — Data scientists compute features in Pandas during training, engineering rewrites in SQL for production → silent bugs
-3. ❌ **No feature versioning** — Model trained on `user_avg_confidence` definition from Jan 1, deployed to production that computes it differently on Feb 1 → accuracy drops from 96% → 89%
-4. ❌ **Repeated computation** — Same `user_last_10_clicks` computed 10k times/day (once per request) instead of precomputed once and cached
+1. **Latency explosion** — Feature query takes **380ms** (vs 50ms target) → p95 latency now **2.8s** (40% over budget)
+2. **Training-serving skew** — Data scientists compute features in Pandas during training, engineering rewrites in SQL for production → silent bugs
+3. **No feature versioning** — Model trained on `user_avg_confidence` definition from Jan 1, deployed to production that computes it differently on Feb 1 → accuracy drops from 96% → 89%
+4. **Repeated computation** — Same `user_last_10_clicks` computed 10k times/day (once per request) instead of precomputed once and cached
 
 **Business impact**:
 - **Latency SLA violated**: 2.8s p95 (vs 2s target) → 40% of users see slow responses → churn risk
@@ -58,26 +58,25 @@ GROUP BY u.user_id;
 
 **What this chapter unlocks**:
 
-🚀 **Feature store infrastructure**:
+ **Feature store infrastructure**:
 1. **Offline store** — Parquet/BigQuery for training data (point-in-time correct historical features)
 2. **Online store** — Redis/DynamoDB for serving (sub-10ms feature lookups)
 3. **Feature definitions** — Single Python definition generates both training and serving features (eliminates skew)
 4. **Materialization** — Precompute features on a schedule (hourly, daily) → serve from cache
 5. **Versioning** — Track which feature definitions were used to train each model → reproduce training data exactly
-
-⚡ **Expected improvements**:
-- **Latency**: 380ms feature lookup → **8ms** (97% reduction) → p95 back to 1.4s ✅
-- **Cost**: 4 PostgreSQL replicas ($800/mo) → 1 Redis instance ($120/mo) → **85% cost reduction** ✅
+**Expected improvements**:
+- **Latency**: 380ms feature lookup → **8ms** (97% reduction) → p95 back to 1.4s
+- **Cost**: 4 PostgreSQL replicas ($800/mo) → 1 Redis instance ($120/mo) → **85% cost reduction**
 - **Feature velocity**: 3 days per feature → **30 minutes** (define once, deploy to offline + online)
-- **Accuracy stability**: Eliminate training-serving skew → maintain 96% accuracy ✅
+- **Accuracy stability**: Eliminate training-serving skew → maintain 96% accuracy
 
 **Constraint status after this chapter**:
-- #1 (Cost): ✅ **MET** — $1,095/mo GPU + $120/mo Redis = $1,215/mo (vs $15k budget)
-- #2 (Latency): ✅ **MET** — 1.4s p95 (vs 2s target, 30% margin)
-- #3 (Throughput): ✅ **MET** — 12k req/day (vs 10k target)
-- #4 (Memory): ✅ **MET** — 12GB VRAM used (vs 24GB capacity)
-- #5 (Quality): ✅ **MET** — 96% accuracy maintained (vs 95% target)
-- #6 (Reliability): ⚡ **ON TRACK** — Redis adds single point of failure risk (mitigated in Ch.9-10)
+- #1 (Cost): **MET** — $1,095/mo GPU + $120/mo Redis = $1,215/mo (vs $15k budget)
+- #2 (Latency): **MET** — 1.4s p95 (vs 2s target, 30% margin)
+- #3 (Throughput): **MET** — 12k req/day (vs 10k target)
+- #4 (Memory): **MET** — 12GB VRAM used (vs 24GB capacity)
+- #5 (Quality): **MET** — 96% accuracy maintained (vs 95% target)
+- #6 (Reliability): **ON TRACK** — Redis adds single point of failure risk (mitigated in Ch.9-10)
 
 ---
 
@@ -99,20 +98,20 @@ Feature stores solve one fundamental problem: **eliminate the training-serving g
 ```python
 # Training code (data scientist's Jupyter notebook)
 def compute_user_features(df):
-    return df.groupby('user_id').agg({
-        'purchase_amount': 'mean',
-        'last_purchase': 'max'
-    }).rename(columns={'purchase_amount': 'user_avg_purchase'})
+ return df.groupby('user_id').agg({
+ 'purchase_amount': 'mean',
+ 'last_purchase': 'max'
+ }).rename(columns={'purchase_amount': 'user_avg_purchase'})
 ```
 
 ```sql
 -- Production code (engineering's SQL query)
 SELECT
-    user_id,
-    AVG(purchase_amount) as user_avg_purchase,  -- Bug: includes refunds
-    MAX(last_purchase) as last_purchase
+ user_id,
+ AVG(purchase_amount) as user_avg_purchase, -- Bug: includes refunds
+ MAX(last_purchase) as last_purchase
 FROM transactions
-WHERE status = 'completed'  -- Different filter than training!
+WHERE status = 'completed' -- Different filter than training!
 GROUP BY user_id;
 ```
 
@@ -127,15 +126,15 @@ from feast import FeatureView, Field
 from feast.types import Float32, Int64
 
 user_features = FeatureView(
-    name="user_purchase_features",
-    entities=["user"],
-    schema=[
-        Field(name="avg_purchase_last_30d", dtype=Float32),
-        Field(name="total_purchases", dtype=Int64),
-        Field(name="days_since_last_purchase", dtype=Int64)
-    ],
-    source=user_transactions_source,  # Parquet file or database table
-    ttl=timedelta(days=30)
+ name="user_purchase_features",
+ entities=["user"],
+ schema=[
+ Field(name="avg_purchase_last_30d", dtype=Float32),
+ Field(name="total_purchases", dtype=Int64),
+ Field(name="days_since_last_purchase", dtype=Int64)
+ ],
+ source=user_transactions_source, # Parquet file or database table
+ ttl=timedelta(days=30)
 )
 ```
 
@@ -152,9 +151,9 @@ user_features = FeatureView(
 ```python
 # Training job: fetch 1 million historical feature vectors
 training_data = fs.get_historical_features(
-    entity_df=entity_df,  # user_id + timestamp for each training example
-    features=["user_purchase_features:avg_purchase_last_30d",
-              "item_features:avg_rating"]
+ entity_df=entity_df, # user_id + timestamp for each training example
+ features=["user_purchase_features:avg_purchase_last_30d",
+ "item_features:avg_rating"]
 ).to_df()
 
 # Returns point-in-time correct features (no data leakage!)
@@ -165,9 +164,9 @@ training_data = fs.get_historical_features(
 ```python
 # Inference: fetch features for one user in <10ms
 features = fs.get_online_features(
-    entity_rows=[{"user_id": 12345}],
-    features=["user_purchase_features:avg_purchase_last_30d",
-              "item_features:avg_rating"]
+ entity_rows=[{"user_id": 12345}],
+ features=["user_purchase_features:avg_purchase_last_30d",
+ "item_features:avg_rating"]
 ).to_dict()
 
 # Returns: {'avg_purchase_last_30d': 127.50, 'avg_rating': 4.3}
@@ -198,7 +197,7 @@ feast materialize-incremental $(date -u +"%Y-%m-%dT%H:%M:%S")
 
 ## 1.5 · The Practitioner Workflow — Your 5-Phase Feature Store Deployment
 
-> ⚠️ **Two ways to read this chapter:**
+> **Warning — Two ways to read this chapter:**
 > - **Theory-first (recommended for learning):** Read §0→§3 sequentially to understand the concepts, then use this workflow as your reference
 > - **Workflow-first (practitioners with existing knowledge):** Use this diagram as a jump-to guide when working with real data
 >
@@ -207,27 +206,27 @@ feast materialize-incremental $(date -u +"%Y-%m-%dT%H:%M:%S")
 **What you'll build by the end:** A production-ready feature store with dual storage (offline + online), automated materialization, and data quality monitoring — eliminating training-serving skew while achieving sub-10ms feature lookups.
 
 ```
-Phase 1: DEFINE          Phase 2: OFFLINE           Phase 3: ONLINE            Phase 4: MATERIALIZE        Phase 5: MONITOR
+Phase 1: DEFINE Phase 2: OFFLINE Phase 3: ONLINE Phase 4: MATERIALIZE Phase 5: MONITOR
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-Registry setup:          Batch storage:             Low-latency serving:       Sync pipeline:              Quality gates:
+Registry setup: Batch storage: Low-latency serving: Sync pipeline: Quality gates:
 
-• Define entities        • Choose warehouse         • Select KV store          • Schedule jobs             • Freshness alerts
-• Create FeatureViews    • Parquet on S3/Azure      • Redis cluster            • Hourly/daily cadence      • Schema drift checks
-• Declare schemas        • Point-in-time joins      • DynamoDB tables          • Incremental updates       • Distribution shifts
-• Set TTLs               • Historical backfills     • <10ms p95 latency        • Consistency validation    • Data completeness
-• Version definitions    • Partition by date        • Cache warming            • Idempotency guarantees    • Outlier detection
+• Define entities • Choose warehouse • Select KV store • Schedule jobs • Freshness alerts
+• Create FeatureViews • Parquet on S3/Azure • Redis cluster • Hourly/daily cadence • Schema drift checks
+• Declare schemas • Point-in-time joins • DynamoDB tables • Incremental updates • Distribution shifts
+• Set TTLs • Historical backfills • <10ms p95 latency • Consistency validation • Data completeness
+• Version definitions • Partition by date • Cache warming • Idempotency guarantees • Outlier detection
 
-→ DECISION:              → DECISION:                → DECISION:                → DECISION:                 → DECISION:
-  Feature granularity?     Storage backend?           Online store choice?       Materialization freq?       Alert thresholds?
-  • Per-user features      • Parquet: cost-effective  • Redis: performance       • Hourly: fresh data        • Freshness: <1hr lag
-  • Per-item features      • BigQuery: SQL queries    • DynamoDB: managed        • Daily: slow-changing      • Schema: auto-detect
-  • Cross-entity joins     • Snowflake: analytics     • Cassandra: multi-DC      • Real-time: streaming      • Drift: >2σ change
-  • Aggregation windows    • Delta Lake: ACID         • Bigtable: massive scale  • On-demand: A/B tests      • Completeness: >95%
+→ DECISION: → DECISION: → DECISION: → DECISION: → DECISION:
+ Feature granularity? Storage backend? Online store choice? Materialization freq? Alert thresholds?
+ • Per-user features • Parquet: cost-effective • Redis: performance • Hourly: fresh data • Freshness: <1hr lag
+ • Per-item features • BigQuery: SQL queries • DynamoDB: managed • Daily: slow-changing • Schema: auto-detect
+ • Cross-entity joins • Snowflake: analytics • Cassandra: multi-DC • Real-time: streaming • Drift: >2σ change
+ • Aggregation windows • Delta Lake: ACID • Bigtable: massive scale • On-demand: A/B tests • Completeness: >95%
 ```
 
-> 💡 **Execution order:** Complete phases 1→2→3 sequentially (registry before storage, storage before serving). Phase 4 (materialization) bridges 2↔3 and runs continuously. Phase 5 (monitoring) observes all phases and triggers alerts. Phases 2-5 are production concerns; Phase 1 must be done correctly first — all downstream reliability depends on well-defined feature schemas.
+> **Execution order:** Complete phases 1→2→3 sequentially (registry before storage, storage before serving). Phase 4 (materialization) bridges 2↔3 and runs continuously. Phase 5 (monitoring) observes all phases and triggers alerts. Phases 2-5 are production concerns; Phase 1 must be done correctly first — all downstream reliability depends on well-defined feature schemas.
 
-> 💡 **Feature store verdict:** Online store p99 retrieval 3ms — batch feature pipeline replaced by pre-computed embeddings, latency 340ms → 18ms ✅.
+> **Feature store verdict:** Online store p99 retrieval 3ms — batch feature pipeline replaced by pre-computed embeddings, latency 340ms → 18ms .
 
 ---
 
@@ -269,31 +268,31 @@ The model needs **3 types of features**:
 
 ```
 Raw Data Sources:
-  ├── user_uploads (PostgreSQL) → Extract user behavior features
-  ├── processed_documents (PostgreSQL) → Extract quality metrics
-  └── users (PostgreSQL) → Extract account metadata
+ ├── user_uploads (PostgreSQL) → Extract user behavior features
+ ├── processed_documents (PostgreSQL) → Extract quality metrics
+ └── users (PostgreSQL) → Extract account metadata
 
-             ↓ (ETL job runs hourly)
+ ↓ (ETL job runs hourly)
 
 Feature Definitions (Feast):
-  ├── user_features.py → user_last_10_doc_types, user_avg_confidence_score, ...
-  ├── document_features.py → doc_page_count, doc_file_size_mb, ...
-  └── derived_features.py → user_doc_type_affinity, expected_processing_time
+ ├── user_features.py → user_last_10_doc_types, user_avg_confidence_score, ...
+ ├── document_features.py → doc_page_count, doc_file_size_mb, ...
+ └── derived_features.py → user_doc_type_affinity, expected_processing_time
 
-             ↓ (Materialization runs hourly)
+ ↓ (Materialization runs hourly)
 
 Storage:
-  ├── Offline Store (Parquet) → Training data (historical features for 1M users)
-  ├── Online Store (Redis) → Serving data (latest features for active 10k users)
-  └── Feature Registry (SQLite) → Metadata (feature schemas, update timestamps)
+ ├── Offline Store (Parquet) → Training data (historical features for 1M users)
+ ├── Online Store (Redis) → Serving data (latest features for active 10k users)
+ └── Feature Registry (SQLite) → Metadata (feature schemas, update timestamps)
 
-             ↓ (Inference request)
+ ↓ (Inference request)
 
 Serving:
-  GET /api/predict?user_id=12345
-    → Fetch features from Redis (5ms)
-    → Pass to model (50ms)
-    → Return prediction (confidence=0.94, processing_time=12s)
+ GET /api/predict?user_id=12345
+ → Fetch features from Redis (5ms)
+ → Pass to model (50ms)
+ → Return prediction (confidence=0.94, processing_time=12s)
 ```
 
 ### Latency Breakdown: Before vs After Feature Store
@@ -301,23 +300,23 @@ Serving:
 **Before (direct PostgreSQL queries during inference):**
 ```
 Total latency: 2,800ms p95
-  ├── Feature queries (5 separate SELECT statements): 1,800ms
-  │   ├── user_last_10_doc_types: 420ms
-  │   ├── user_avg_confidence_score: 380ms
-  │   ├── user_total_pages_processed: 320ms
-  │   ├── user_doc_type_affinity: 450ms
-  │   └── expected_processing_time: 230ms
-  ├── Model inference (Llama-3-8B): 950ms
-  └── Response serialization: 50ms
+ ├── Feature queries (5 separate SELECT statements): 1,800ms
+ │ ├── user_last_10_doc_types: 420ms
+ │ ├── user_avg_confidence_score: 380ms
+ │ ├── user_total_pages_processed: 320ms
+ │ ├── user_doc_type_affinity: 450ms
+ │ └── expected_processing_time: 230ms
+ ├── Model inference (Llama-3-8B): 950ms
+ └── Response serialization: 50ms
 ```
 
 **After (precomputed features in Redis):**
 ```
 Total latency: 1,400ms p95 (50% reduction!)
-  ├── Feature lookup (single Redis MGET): 8ms  ← 99.6% faster
-  ├── Model inference (Llama-3-8B): 950ms
-  └── Response serialization: 50ms
-  └── Margin for p95 variability: 392ms
+ ├── Feature lookup (single Redis MGET): 8ms ← 99.6% faster
+ ├── Model inference (Llama-3-8B): 950ms
+ └── Response serialization: 50ms
+ └── Margin for p95 variability: 392ms
 ```
 
 **Cost impact:**
@@ -330,78 +329,78 @@ Total latency: 1,400ms p95 (50% reduction!)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                         FEATURE STORE ARCHITECTURE                           │
-│                                                                               │
-│  SERVING LAYER (Real-time inference)                                         │
-│  ┌────────────────────────────────────────────────────────────────────────┐ │
-│  │  ML Application (API Server)                                            │ │
-│  │  • GET /predict?user_id=12345                                           │ │
-│  │  • Fetch features from Online Store (5-10ms)                            │ │
-│  │  • Pass to model (50-1000ms depending on model size)                    │ │
-│  │  • Return prediction                                                     │ │
-│  └───────────────────────────────┬──────────────────────────────────────┘ │
-│                                  │                                          │
-│                                  ▼                                          │
-│  ┌────────────────────────────────────────────────────────────────────────┐ │
-│  │  ONLINE STORE (Low-latency serving) — <10ms lookups                    │ │
-│  │                                                                          │ │
-│  │  Redis / DynamoDB / Cassandra                                           │ │
-│  │  • Key: entity_id (user_id, item_id)                                    │ │
-│  │  • Value: feature vector (JSON/binary)                                  │ │
-│  │  • TTL: 30 days (configurable per feature view)                         │ │
-│  │  • Storage: Only latest values (~10k active entities × 20 features)     │ │
-│  └───────────────────────────────┬──────────────────────────────────────┘ │
-│                                  │                                          │
-│                                  ▲ (Materialization writes here)           │
-│                                  │                                          │
-│  ┌────────────────────────────────────────────────────────────────────────┐ │
-│  │  FEATURE REGISTRY (Metadata catalog)                                    │ │
-│  │                                                                          │ │
-│  │  SQLite / PostgreSQL / Cloud registry                                   │ │
-│  │  • Feature schemas (name, dtype, entity, source)                        │ │
-│  │  • Materialization history (last run timestamp, row count)              │ │
-│  │  • Feature lineage (which datasets produced which features)             │ │
-│  └───────────────────────────────┬──────────────────────────────────────┘ │
-│                                  │                                          │
-│                                  ▲ (Feature definitions registered here)   │
-│                                  │                                          │
-│  TRAINING LAYER (Batch historical retrieval)                                │
-│  ┌────────────────────────────────────────────────────────────────────────┐ │
-│  │  ML Training Job (Jupyter / Airflow / Azure ML)                         │ │
-│  │  • Fetch historical features for 1M training examples                   │ │
-│  │  • Point-in-time correct joins (no data leakage)                        │ │
-│  │  • Returns: Pandas DataFrame (1M rows × 50 features)                    │ │
-│  │  • Latency: 10s–10min (batch query, not latency-critical)               │ │
-│  └───────────────────────────────┬──────────────────────────────────────┘ │
-│                                  │                                          │
-│                                  ▼                                          │
-│  ┌────────────────────────────────────────────────────────────────────────┐ │
-│  │  OFFLINE STORE (High-throughput analytical storage)                     │ │
-│  │                                                                          │ │
-│  │  Parquet / BigQuery / Snowflake / Redshift                              │ │
-│  │  • Partitioned by date (event_timestamp column)                         │ │
-│  │  • Columnar format (efficient aggregation queries)                      │ │
-│  │  • Retention: 1-2 years of historical features                          │ │
-│  │  • Storage: TBs of data (full history for all entities)                 │ │
-│  └───────────────────────────────┬──────────────────────────────────────┘ │
-│                                  │                                          │
-│                                  ▲ (Materialization writes here too)       │
-│                                  │                                          │
-│  DATA SOURCES (Raw event streams)                                           │
-│  ┌────────────────────────────────────────────────────────────────────────┐ │
-│  │  • PostgreSQL (transactions, user_uploads, processed_documents)         │ │
-│  │  • Kafka (real-time event streams)                                      │ │
-│  │  • S3/Azure Blob (CSV/Parquet dumps)                                    │ │
-│  │  • REST APIs (third-party data sources)                                 │ │
-│  └────────────────────────────────────────────────────────────────────────┘ │
-│                                                                               │
-│  ORCHESTRATION (Scheduled feature computation)                               │
-│  ┌────────────────────────────────────────────────────────────────────────┐ │
-│  │  Airflow / cron / Azure Data Factory                                    │ │
-│  │  • Hourly: Materialize high-freshness features (user behavior)          │ │
-│  │  • Daily: Materialize low-freshness features (user demographics)        │ │
-│  │  • On-demand: Materialize features for new models                       │ │
-│  └────────────────────────────────────────────────────────────────────────┘ │
+│ FEATURE STORE ARCHITECTURE │
+│ │
+│ SERVING LAYER (Real-time inference) │
+│ ┌────────────────────────────────────────────────────────────────────────┐ │
+│ │ ML Application (API Server) │ │
+│ │ • GET /predict?user_id=12345 │ │
+│ │ • Fetch features from Online Store (5-10ms) │ │
+│ │ • Pass to model (50-1000ms depending on model size) │ │
+│ │ • Return prediction │ │
+│ └───────────────────────────────┬──────────────────────────────────────┘ │
+│ │ │
+│ ▼ │
+│ ┌────────────────────────────────────────────────────────────────────────┐ │
+│ │ ONLINE STORE (Low-latency serving) — <10ms lookups │ │
+│ │ │ │
+│ │ Redis / DynamoDB / Cassandra │ │
+│ │ • Key: entity_id (user_id, item_id) │ │
+│ │ • Value: feature vector (JSON/binary) │ │
+│ │ • TTL: 30 days (configurable per feature view) │ │
+│ │ • Storage: Only latest values (~10k active entities × 20 features) │ │
+│ └───────────────────────────────┬──────────────────────────────────────┘ │
+│ │ │
+│ ▲ (Materialization writes here) │
+│ │ │
+│ ┌────────────────────────────────────────────────────────────────────────┐ │
+│ │ FEATURE REGISTRY (Metadata catalog) │ │
+│ │ │ │
+│ │ SQLite / PostgreSQL / Cloud registry │ │
+│ │ • Feature schemas (name, dtype, entity, source) │ │
+│ │ • Materialization history (last run timestamp, row count) │ │
+│ │ • Feature lineage (which datasets produced which features) │ │
+│ └───────────────────────────────┬──────────────────────────────────────┘ │
+│ │ │
+│ ▲ (Feature definitions registered here) │
+│ │ │
+│ TRAINING LAYER (Batch historical retrieval) │
+│ ┌────────────────────────────────────────────────────────────────────────┐ │
+│ │ ML Training Job (Jupyter / Airflow / Azure ML) │ │
+│ │ • Fetch historical features for 1M training examples │ │
+│ │ • Point-in-time correct joins (no data leakage) │ │
+│ │ • Returns: Pandas DataFrame (1M rows × 50 features) │ │
+│ │ • Latency: 10s–10min (batch query, not latency-critical) │ │
+│ └───────────────────────────────┬──────────────────────────────────────┘ │
+│ │ │
+│ ▼ │
+│ ┌────────────────────────────────────────────────────────────────────────┐ │
+│ │ OFFLINE STORE (High-throughput analytical storage) │ │
+│ │ │ │
+│ │ Parquet / BigQuery / Snowflake / Redshift │ │
+│ │ • Partitioned by date (event_timestamp column) │ │
+│ │ • Columnar format (efficient aggregation queries) │ │
+│ │ • Retention: 1-2 years of historical features │ │
+│ │ • Storage: TBs of data (full history for all entities) │ │
+│ └───────────────────────────────┬──────────────────────────────────────┘ │
+│ │ │
+│ ▲ (Materialization writes here too) │
+│ │ │
+│ DATA SOURCES (Raw event streams) │
+│ ┌────────────────────────────────────────────────────────────────────────┐ │
+│ │ • PostgreSQL (transactions, user_uploads, processed_documents) │ │
+│ │ • Kafka (real-time event streams) │ │
+│ │ • S3/Azure Blob (CSV/Parquet dumps) │ │
+│ │ • REST APIs (third-party data sources) │ │
+│ └────────────────────────────────────────────────────────────────────────┘ │
+│ │
+│ ORCHESTRATION (Scheduled feature computation) │
+│ ┌────────────────────────────────────────────────────────────────────────┐ │
+│ │ Airflow / cron / Azure Data Factory │ │
+│ │ • Hourly: Materialize high-freshness features (user behavior) │ │
+│ │ • Daily: Materialize low-freshness features (user demographics) │ │
+│ │ • On-demand: Materialize features for new models │ │
+│ └────────────────────────────────────────────────────────────────────────┘ │
 └───────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -437,37 +436,37 @@ from datetime import timedelta
 
 # Step 1: Define entities (primary keys for feature lookups)
 user = Entity(
-    name="user",
-    join_keys=["user_id"],
-    description="User entity for personalization features"
+ name="user",
+ join_keys=["user_id"],
+ description="User entity for personalization features"
 )
 
 document = Entity(
-    name="document",
-    join_keys=["doc_id"],
-    description="Document entity for content features"
+ name="document",
+ join_keys=["doc_id"],
+ description="Document entity for content features"
 )
 
 # Step 2: Define data sources (where raw data lives)
 user_stats_source = FileSource(
-    path="data/user_stats.parquet",
-    timestamp_field="event_timestamp",
-    created_timestamp_column="created_at"
+ path="data/user_stats.parquet",
+ timestamp_field="event_timestamp",
+ created_timestamp_column="created_at"
 )
 
 # Step 3: Define FeatureView (feature schema + transformation logic)
 user_features = FeatureView(
-    name="user_document_features",
-    entities=[user],
-    ttl=timedelta(days=30),  # Features expire after 30 days
-    schema=[
-        Field(name="user_avg_confidence_score", dtype=Float32),
-        Field(name="user_total_pages_processed", dtype=Int64),
-        Field(name="user_days_since_signup", dtype=Int64),
-        Field(name="user_last_10_doc_types", dtype=Array(String))
-    ],
-    source=user_stats_source,
-    online=True  # Enable online store (Redis) for real-time serving
+ name="user_document_features",
+ entities=[user],
+ ttl=timedelta(days=30), # Features expire after 30 days
+ schema=[
+ Field(name="user_avg_confidence_score", dtype=Float32),
+ Field(name="user_total_pages_processed", dtype=Int64),
+ Field(name="user_days_since_signup", dtype=Int64),
+ Field(name="user_last_10_doc_types", dtype=Array(String))
+ ],
+ source=user_stats_source,
+ online=True # Enable online store (Redis) for real-time serving
 )
 
 # Step 4: Register features with Feast
@@ -537,33 +536,33 @@ spark = SparkSession.builder.appName("FeatureMaterialization").getOrCreate()
 
 # Step 1: Read raw data from PostgreSQL
 user_uploads = spark.read.jdbc(
-    url="jdbc:postgresql://db.example.com:5432/prod",
-    table="user_uploads",
-    properties={"user": "readonly", "password": "***"}
+ url="jdbc:postgresql://db.example.com:5432/prod",
+ table="user_uploads",
+ properties={"user": "readonly", "password": "***"}
 )
 
 processed_docs = spark.read.jdbc(
-    url="jdbc:postgresql://db.example.com:5432/prod",
-    table="processed_documents",
-    properties={"user": "readonly", "password": "***"}
+ url="jdbc:postgresql://db.example.com:5432/prod",
+ table="processed_documents",
+ properties={"user": "readonly", "password": "***"}
 )
 
 # Step 2: Compute aggregated features
 user_features = processed_docs.groupBy("user_id", "event_date").agg(
-    avg("confidence_score").alias("user_avg_confidence_score"),
-    count("doc_id").alias("user_total_pages_processed"),
-    collect_list("doc_type").alias("user_last_10_doc_types")
+ avg("confidence_score").alias("user_avg_confidence_score"),
+ count("doc_id").alias("user_total_pages_processed"),
+ collect_list("doc_type").alias("user_last_10_doc_types")
 ).withColumn(
-    "user_days_since_signup",
-    datediff(current_date(), col("signup_date"))
+ "user_days_since_signup",
+ datediff(current_date(), col("signup_date"))
 )
 
 # Step 3: Write to Parquet (partitioned by date for efficient queries)
 user_features.write.mode("append").partitionBy("event_date").parquet(
-    "s3://feature-store/offline/user_features/"
+ "s3://feature-store/offline/user_features/"
 )
 
-print(f"✅ Materialized {user_features.count()} feature rows to offline store")
+print(f" Materialized {user_features.count()} feature rows to offline store")
 ```
 
 **What this accomplishes:**
@@ -624,37 +623,37 @@ registry: s3://feature-store/registry.db
 provider: aws
 
 online_store:
-  type: redis
-  connection_string: "redis-cluster.cache.amazonaws.com:6379"
-  ssl: true
-  # Redis cluster mode: 3 master nodes, 3 replicas (high availability)
-  cluster_mode: true
-  # Key structure: feast_project:feature_view:entity_id
-  # Example: inferencebase_features:user_document_features:user:12345
-  key_ttl: 2592000  # 30 days in seconds
+ type: redis
+ connection_string: "redis-cluster.cache.amazonaws.com:6379"
+ ssl: true
+ # Redis cluster mode: 3 master nodes, 3 replicas (high availability)
+ cluster_mode: true
+ # Key structure: feast_project:feature_view:entity_id
+ # Example: inferencebase_features:user_document_features:user:12345
+ key_ttl: 2592000 # 30 days in seconds
 
 offline_store:
-  type: file  # Parquet files on S3
-  path: "s3://feature-store/offline/"
+ type: file # Parquet files on S3
+ path: "s3://feature-store/offline/"
 
 # Enable point-in-time join for training (prevents data leakage)
 flags:
-  alpha_features: true
-  enable_on_demand_feature_views: false
+ alpha_features: true
+ enable_on_demand_feature_views: false
 ```
 
 **Redis cluster setup (production):**
 ```bash
 # 1. Provision Redis cluster (AWS ElastiCache example)
 aws elasticache create-replication-group \
-  --replication-group-id feature-store-prod \
-  --replication-group-description "Feature store online cache" \
-  --engine redis \
-  --cache-node-type cache.r6g.large \  # 13.07 GB RAM, $0.201/hr = $145/mo
-  --num-cache-clusters 3 \              # 1 master + 2 replicas
-  --automatic-failover-enabled \
-  --at-rest-encryption-enabled \
-  --transit-encryption-enabled
+ --replication-group-id feature-store-prod \
+ --replication-group-description "Feature store online cache" \
+ --engine redis \
+ --cache-node-type cache.r6g.large \ # 13.07 GB RAM, $0.201/hr = $145/mo
+ --num-cache-clusters 3 \ # 1 master + 2 replicas
+ --automatic-failover-enabled \
+ --at-rest-encryption-enabled \
+ --transit-encryption-enabled
 
 # 2. Test connection
 redis-cli -h feature-store-prod.cache.amazonaws.com -p 6379 --tls
@@ -662,7 +661,7 @@ redis-cli -h feature-store-prod.cache.amazonaws.com -p 6379 --tls
 PONG
 
 # 3. Configure eviction policy (handle memory limits gracefully)
-redis-cli CONFIG SET maxmemory-policy allkeys-lru  # Evict least-recently-used keys
+redis-cli CONFIG SET maxmemory-policy allkeys-lru # Evict least-recently-used keys
 ```
 
 #### Decision Checkpoint #3
@@ -726,50 +725,50 @@ import logging
 logger = logging.getLogger(__name__)
 
 def materialize_features_incremental():
-    """
-    Materialize features from offline store to online store (Redis).
-    Runs hourly to keep online features fresh.
-    """
-    fs = FeatureStore(repo_path="feature_repo/")
+ """
+ Materialize features from offline store to online store (Redis).
+ Runs hourly to keep online features fresh.
+ """
+ fs = FeatureStore(repo_path="feature_repo/")
 
-    # Materialize features for the last 2 hours (with 1-hour overlap for safety)
-    start_time = datetime.utcnow() - timedelta(hours=2)
-    end_time = datetime.utcnow()
+ # Materialize features for the last 2 hours (with 1-hour overlap for safety)
+ start_time = datetime.utcnow() - timedelta(hours=2)
+ end_time = datetime.utcnow()
 
-    logger.info(f"Materializing features from {start_time} to {end_time}")
+ logger.info(f"Materializing features from {start_time} to {end_time}")
 
-    try:
-        # Feast reads from offline store (Parquet), writes to online store (Redis)
-        fs.materialize_incremental(end_date=end_time)
+ try:
+ # Feast reads from offline store (Parquet), writes to online store (Redis)
+ fs.materialize_incremental(end_date=end_time)
 
-        # Validate: check that online store has recent data
-        online_features = fs.get_online_features(
-            entity_rows=[{"user_id": 12345}],
-            features=["user_document_features:user_avg_confidence_score"]
-        ).to_dict()
+ # Validate: check that online store has recent data
+ online_features = fs.get_online_features(
+ entity_rows=[{"user_id": 12345}],
+ features=["user_document_features:user_avg_confidence_score"]
+ ).to_dict()
 
-        if online_features["user_avg_confidence_score"][0] is None:
-            raise ValueError("❌ Materialization failed: online store has no data for user 12345")
+ if online_features["user_avg_confidence_score"][0] is None:
+ raise ValueError(" Materialization failed: online store has no data for user 12345")
 
-        logger.info(f"✅ Materialization complete. Sample feature: {online_features}")
+ logger.info(f" Materialization complete. Sample feature: {online_features}")
 
-    except Exception as e:
-        logger.error(f"❌ Materialization failed: {e}")
-        raise  # Fail the Airflow task (triggers alerts)
+ except Exception as e:
+ logger.error(f" Materialization failed: {e}")
+ raise # Fail the Airflow task (triggers alerts)
 
 # Airflow DAG definition
 with DAG(
-    dag_id="materialize_features_hourly",
-    start_date=datetime(2024, 1, 1),
-    schedule_interval="0 * * * *",  # Run every hour at :00
-    catchup=False,
-    default_args={"retries": 3, "retry_delay": timedelta(minutes=5)}
+ dag_id="materialize_features_hourly",
+ start_date=datetime(2024, 1, 1),
+ schedule_interval="0 * * * *", # Run every hour at :00
+ catchup=False,
+ default_args={"retries": 3, "retry_delay": timedelta(minutes=5)}
 ) as dag:
 
-    materialize_task = PythonOperator(
-        task_id="materialize_features",
-        python_callable=materialize_features_incremental
-    )
+ materialize_task = PythonOperator(
+ task_id="materialize_features",
+ python_callable=materialize_features_incremental
+ )
 ```
 
 **What this accomplishes:**
@@ -837,11 +836,11 @@ fs = FeatureStore(repo_path="feature_repo/")
 # Fetch recent features from online store (sample 1000 users)
 entity_df = pd.DataFrame({"user_id": range(1, 1001)})
 features_df = fs.get_online_features(
-    entity_rows=entity_df.to_dict(orient="records"),
-    features=[
-        "user_document_features:user_avg_confidence_score",
-        "user_document_features:user_total_pages_processed"
-    ]
+ entity_rows=entity_df.to_dict(orient="records"),
+ features=[
+ "user_document_features:user_avg_confidence_score",
+ "user_document_features:user_total_pages_processed"
+ ]
 ).to_df()
 
 # Convert to Great Expectations DataFrame
@@ -849,37 +848,37 @@ ge_df = ge.from_pandas(features_df)
 
 # Define expectations (data quality rules)
 ge_df.expect_column_values_to_be_between(
-    column="user_avg_confidence_score",
-    min_value=0.0,
-    max_value=1.0,
-    mostly=0.95  # Allow 5% outliers
+ column="user_avg_confidence_score",
+ min_value=0.0,
+ max_value=1.0,
+ mostly=0.95 # Allow 5% outliers
 )
 
 ge_df.expect_column_mean_to_be_between(
-    column="user_total_pages_processed",
-    min_value=50,
-    max_value=500,
-    # Baseline: historical mean was 200 pages, expect ±2σ
+ column="user_total_pages_processed",
+ min_value=50,
+ max_value=500,
+ # Baseline: historical mean was 200 pages, expect ±2σ
 )
 
 ge_df.expect_column_values_to_not_be_null(
-    column="user_avg_confidence_score",
-    mostly=0.95  # <5% null rate is acceptable
+ column="user_avg_confidence_score",
+ mostly=0.95 # <5% null rate is acceptable
 )
 
 # Run validation
 validation_result = ge_df.validate()
 
 if not validation_result["success"]:
-    print("❌ Data quality check FAILED:")
-    for result in validation_result["results"]:
-        if not result["success"]:
-            print(f"  - {result['expectation_config']['expectation_type']}: {result['exception_info']}")
+ print(" Data quality check FAILED:")
+ for result in validation_result["results"]:
+ if not result["success"]:
+ print(f" - {result['expectation_config']['expectation_type']}: {result['exception_info']}")
 
-    # Send alert (Slack, PagerDuty, email)
-    # raise Exception("Feature data quality violation detected")
+ # Send alert (Slack, PagerDuty, email)
+ # raise Exception("Feature data quality violation detected")
 else:
-    print("✅ Data quality check PASSED")
+ print(" Data quality check PASSED")
 ```
 
 **What this catches:**
@@ -905,9 +904,9 @@ else:
 > staleness_minutes = (datetime.utcnow() - last_materialization_time).total_seconds() / 60
 >
 > if staleness_minutes > 90:
->     send_alert("⚠️ Features are 90+ minutes stale", severity="warning")
+> send_alert(" Features are 90+ minutes stale", severity="warning")
 > if staleness_minutes > 120:
->     send_alert("🚨 Features are 2+ hours stale", severity="critical", page_oncall=True)
+> send_alert("🚨 Features are 2+ hours stale", severity="critical", page_oncall=True)
 > ```
 
 #### Industry Callout #5
@@ -933,44 +932,44 @@ Week 1: DEFINE (Phase 1)
 ├── Define entities (user, document)
 ├── Create FeatureViews (user_features, document_features)
 ├── Run `feast apply` → register in SQLite
-└── ✅ Feature registry operational
+└── Feature registry operational
 
 Week 2: OFFLINE (Phase 2)
 ├── Set up Parquet storage on S3 (s3://feature-store/offline/)
 ├── Write Spark job to compute aggregations
 ├── Backfill 90 days of historical features
-└── ✅ Offline store operational (training can fetch historical data)
+└── Offline store operational (training can fetch historical data)
 
 Week 3: ONLINE (Phase 3)
 ├── Provision Redis cluster (AWS ElastiCache, 3 nodes)
 ├── Update feature_store.yaml with Redis connection
 ├── Test online feature retrieval (<10ms latency)
-└── ✅ Online store operational (inference can fetch latest features)
+└── Online store operational (inference can fetch latest features)
 
 Week 4: MATERIALIZE (Phase 4)
 ├── Write Airflow DAG for hourly materialization
 ├── Run initial materialization (offline → online)
 ├── Monitor materialization job (logs, alerts)
-└── ✅ Materialization pipeline operational (features stay fresh)
+└── Materialization pipeline operational (features stay fresh)
 
 Week 5: MONITOR (Phase 5)
 ├── Integrate Great Expectations for data quality checks
 ├── Set up freshness alerts (Datadog/CloudWatch)
 ├── Create dashboard (Grafana: feature staleness, null rates, distribution shifts)
-└── ✅ Monitoring operational (catch issues before they impact models)
+└── Monitoring operational (catch issues before they impact models)
 
 Week 6: PRODUCTION CUTOVER
 ├── Switch inference API to fetch from feature store (Redis)
 ├── Update training notebooks to use `get_historical_features()`
 ├── Decommission old PostgreSQL feature queries
-└── 🎉 Feature store fully operational — training-serving skew eliminated
+└── Feature store fully operational — training-serving skew eliminated
 ```
 
 ---
 
 ## 4 · Feature Store Comparison — Choosing Your Platform
 
-> 💡 **Quick reference:** For detailed context on each platform, see the industry callouts in §3.7-3.11 (Feast in §3.7, Tecton in §3.8, Hopsworks in §3.9, AWS SageMaker in §3.10, Databricks in §3.11).
+> **Quick reference:** For detailed context on each platform, see the industry callouts in §3.7-3.11 (Feast in §3.7, Tecton in §3.8, Hopsworks in §3.9, AWS SageMaker in §3.10, Databricks in §3.11).
 
 ### Comprehensive Comparison Matrix
 
@@ -982,7 +981,7 @@ Week 6: PRODUCTION CUTOVER
 | **Offline stores** | Parquet, BigQuery, Snowflake, Redshift | Snowflake, Databricks, S3 | Hive, BigQuery, Snowflake | S3 (Parquet), Athena (queries) | Delta Lake (native) |
 | **Real-time features** | Kafka + Python UDFs | Native streaming (Spark, Flink) | Beam pipelines, Kafka | Kinesis integration | Spark Structured Streaming |
 | **Feature monitoring** | Manual (external tools) | Built-in (drift, quality, freshness) | Built-in data validation | CloudWatch integration | Unity Catalog + built-in drift detection |
-| **Point-in-time joins** | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
+| **Point-in-time joins** | Yes | Yes | Yes | Yes | Yes |
 | **Feature versioning** | Git-based (feature_store.yaml) | Automatic (UI + API) | Automatic (UI + Git) | Manual (feature group versions) | Unity Catalog versioning |
 | **Team collaboration** | Git + shared registry | Built-in UI + RBAC | Built-in UI + RBAC | IAM-based access control | Unity Catalog + RBAC |
 | **Latency** | <10ms (self-tuned Redis) | <5ms (SLA guaranteed) | <10ms (RonDB) | ~10ms (DynamoDB, region-dependent) | ~15ms (Delta Lake + cache) |
@@ -994,22 +993,22 @@ Week 6: PRODUCTION CUTOVER
 START: What's your constraint?
 │
 ├─ Budget <$500/mo?
-│  └─ YES → **Feast** (self-hosted on K8s, Parquet + Redis)
+│ └─ YES → **Feast** (self-hosted on K8s, Parquet + Redis)
 │
 ├─ Already on AWS?
-│  └─ YES → **AWS SageMaker Feature Store** (native integration, zero ops)
+│ └─ YES → **AWS SageMaker Feature Store** (native integration, zero ops)
 │
 ├─ Already on Databricks?
-│  └─ YES → **Databricks Feature Store** (Unity Catalog, Delta Lake)
+│ └─ YES → **Databricks Feature Store** (Unity Catalog, Delta Lake)
 │
 ├─ Need <5ms p99 latency SLA?
-│  └─ YES → **Tecton** (enterprise SLA, built-in monitoring)
+│ └─ YES → **Tecton** (enterprise SLA, built-in monitoring)
 │
 ├─ EU/GDPR compliance required?
-│  └─ YES → **Hopsworks** (data residency, end-to-end platform)
+│ └─ YES → **Hopsworks** (data residency, end-to-end platform)
 │
 └─ Default → Start with **Feast** (open-source, learn fundamentals)
-           → Upgrade to Tecton/Hopsworks/Cloud when complexity scales
+ → Upgrade to Tecton/Hopsworks/Cloud when complexity scales
 ```
 
 ---
@@ -1029,17 +1028,17 @@ START: What's your constraint?
 **Training (Pandas):**
 ```python
 user_features = df.groupby('user_id').agg({
-    'purchase_amount': 'mean'  # Averages ALL purchases (including $0 items)
+ 'purchase_amount': 'mean' # Averages ALL purchases (including $0 items)
 }).rename(columns={'purchase_amount': 'avg_purchase'})
 ```
 
 **Production (SQL — rewritten by engineering):**
 ```sql
 SELECT
-    user_id,
-    AVG(purchase_amount) as avg_purchase
+ user_id,
+ AVG(purchase_amount) as avg_purchase
 FROM transactions
-WHERE purchase_amount > 0  ← BUG: Filters out $0 items!
+WHERE purchase_amount > 0 ← BUG: Filters out $0 items!
 GROUP BY user_id;
 ```
 
@@ -1049,10 +1048,10 @@ GROUP BY user_id;
 ```python
 # One definition, used by both training and serving
 user_features = FeatureView(
-    name="user_features",
-    source=transactions_source,
-    schema=[Field(name="avg_purchase", dtype=Float32)],
-    # Feature logic defined once in Python, compiled to SQL/Spark automatically
+ name="user_features",
+ source=transactions_source,
+ schema=[Field(name="avg_purchase", dtype=Float32)],
+ # Feature logic defined once in Python, compiled to SQL/Spark automatically
 )
 ```
 
@@ -1069,9 +1068,9 @@ user_features = FeatureView(
 **Fix:** Increase materialization frequency for high-velocity features:
 ```python
 user_features = FeatureView(
-    name="user_features",
-    ttl=timedelta(hours=1),  # Materialize hourly instead of daily
-    online=True
+ name="user_features",
+ ttl=timedelta(hours=1), # Materialize hourly instead of daily
+ online=True
 )
 ```
 
@@ -1093,9 +1092,9 @@ user_features = FeatureView(
 **Fix 1 — Reduce TTL:**
 ```python
 user_features = FeatureView(
-    name="user_features",
-    ttl=timedelta(days=7),  # Was 30 days → reduced to 7
-    online=True
+ name="user_features",
+ ttl=timedelta(days=7), # Was 30 days → reduced to 7
+ online=True
 )
 ```
 
@@ -1117,15 +1116,15 @@ redis-server --maxmemory 16gb --maxmemory-policy allkeys-lru
 ```python
 # WRONG: Naive join (data leakage!)
 entity_df = pd.DataFrame({
-    "user_id": [12345],
-    "label": [1],  # User purchased on 2024-01-15
-    "event_timestamp": pd.Timestamp("2024-01-15 10:00:00")
+ "user_id": [12345],
+ "label": [1], # User purchased on 2024-01-15
+ "event_timestamp": pd.Timestamp("2024-01-15 10:00:00")
 })
 
 feature_df = pd.DataFrame({
-    "user_id": [12345],
-    "avg_purchase": [68.0],  # Computed using data up to 2024-01-20 (includes future!)
-    "event_timestamp": pd.Timestamp("2024-01-20 00:00:00")
+ "user_id": [12345],
+ "avg_purchase": [68.0], # Computed using data up to 2024-01-20 (includes future!)
+ "event_timestamp": pd.Timestamp("2024-01-20 00:00:00")
 })
 
 # Naive merge allows model to see avg_purchase from 5 days in the future!
@@ -1136,8 +1135,8 @@ training_df = entity_df.merge(feature_df, on="user_id")
 ```python
 # CORRECT: Point-in-time join (no leakage)
 training_df = fs.get_historical_features(
-    entity_df=entity_df,
-    features=["user_features:avg_purchase"]
+ entity_df=entity_df,
+ features=["user_features:avg_purchase"]
 ).to_df()
 
 # Feast ensures avg_purchase is computed using only data BEFORE 2024-01-15 10:00
@@ -1162,8 +1161,8 @@ git push origin model-v1-features
 
 # 2 months later: checkout exact feature definitions from training
 git checkout model-v1-features
-feast apply  # Re-register old feature definitions
-feast materialize ...  # Recompute features using old definitions
+feast apply # Re-register old feature definitions
+feast materialize ... # Recompute features using old definitions
 ```
 
 **Production workflow:**
@@ -1175,36 +1174,36 @@ feast materialize ...  # Recompute features using old definitions
 
 ## 6 · Progress Check — What We've Accomplished
 
-🎉 **Feature store infrastructure deployed** — training and serving use identical feature definitions
+ **Feature store infrastructure deployed** — training and serving use identical feature definitions
 
 **Unlocked capabilities**:
-- ✅ **Sub-10ms feature lookups** — 380ms PostgreSQL queries → 8ms Redis lookups (97% reduction)
-- ✅ **Zero training-serving skew** — single Python definition generates both training and serving features
-- ✅ **Point-in-time correct training data** — historical features fetched without data leakage
-- ✅ **Feature versioning** — track which features were used to train each model
-- ✅ **Cost reduction** — 4 PostgreSQL replicas ($800/mo) → 1 Redis instance ($120/mo) = **85% savings**
+- **Sub-10ms feature lookups** — 380ms PostgreSQL queries → 8ms Redis lookups (97% reduction)
+- **Zero training-serving skew** — single Python definition generates both training and serving features
+- **Point-in-time correct training data** — historical features fetched without data leakage
+- **Feature versioning** — track which features were used to train each model
+- **Cost reduction** — 4 PostgreSQL replicas ($800/mo) → 1 Redis instance ($120/mo) = **85% savings**
 
 **Progress toward constraints**:
 
 | Constraint | Status | Current State |
 |------------|--------|---------------|
-| #1 COST | ✅ **MET** | $1,215/mo total ($1,095 GPU + $120 Redis) — **92% under budget** ($15k target) |
-| #2 LATENCY | ✅ **MET** | 1.4s p95 (was 2.8s) — **30% better than 2s target** |
-| #3 THROUGHPUT | ✅ **MET** | 12k req/day — **120% of 10k target** |
-| #4 MEMORY | ✅ **MET** | 12GB VRAM used — **50% of 24GB capacity** |
-| #5 QUALITY | ✅ **MET** | 96% accuracy maintained (eliminated skew) — **1% above 95% target** |
-| #6 RELIABILITY | ⚡ **ON TRACK** | 99.5% uptime (Redis adds single point of failure risk, mitigated in Ch.9-10) |
+| #1 COST | **MET** | $1,215/mo total ($1,095 GPU + $120 Redis) — **92% under budget** ($15k target) |
+| #2 LATENCY | **MET** | 1.4s p95 (was 2.8s) — **30% better than 2s target** |
+| #3 THROUGHPUT | **MET** | 12k req/day — **120% of 10k target** |
+| #4 MEMORY | **MET** | 12GB VRAM used — **50% of 24GB capacity** |
+| #5 QUALITY | **MET** | 96% accuracy maintained (eliminated skew) — **1% above 95% target** |
+| #6 RELIABILITY | **ON TRACK** | 99.5% uptime (Redis adds single point of failure risk, mitigated in Ch.9-10) |
 
 **What we can solve now**:
-- ✅ Deploy new features in **30 minutes** (was 3 days) — define once, deploy to both stores
-- ✅ Debug model accuracy issues by comparing training vs serving feature distributions
-- ✅ A/B test feature definitions (roll out new aggregation logic to 10% of traffic, measure impact)
-- ✅ Scale to 100+ features without latency degradation (Redis handles 100k ops/sec)
+- Deploy new features in **30 minutes** (was 3 days) — define once, deploy to both stores
+- Debug model accuracy issues by comparing training vs serving feature distributions
+- A/B test feature definitions (roll out new aggregation logic to 10% of traffic, measure impact)
+- Scale to 100+ features without latency degradation (Redis handles 100k ops/sec)
 
 **What's still missing (Ch.9-10):**
-- ⚠️ **Feature monitoring** — no alerts for feature drift, staleness, or distribution shifts
-- ⚠️ **Disaster recovery** — Redis single point of failure (need replication + backups)
-- ⚠️ **Production deployment** — no CI/CD for feature updates (manual `feast apply` + `materialize`)
+- **Feature monitoring** — no alerts for feature drift, staleness, or distribution shifts
+- **Disaster recovery** — Redis single point of failure (need replication + backups)
+- **Production deployment** — no CI/CD for feature updates (manual `feast apply` + `materialize`)
 
 ---
 

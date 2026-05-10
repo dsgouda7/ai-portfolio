@@ -10,13 +10,13 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 💡 **The mission**: Launch **SmartVal AI** — a production home valuation system satisfying 5 constraints:
+> **The mission**: Launch **SmartVal AI** — a production home valuation system satisfying 5 constraints:
 > 1. **ACCURACY**: <$40k MAE — 2. **GENERALIZATION**: Unseen districts — 3. **MULTI-TASK**: Value + Segment — 4. **INTERPRETABILITY**: Explainable — 5. **PRODUCTION**: Scale + Monitor
 
 **What we know so far:**
-- ✅ We have the California Housing dataset (20,640 districts, 8 features)
-- ✅ We understand the business problem (estimate median house values)
-- ❌ **But we have NO model yet!**
+- We have the California Housing dataset (20,640 districts, 8 features)
+- We understand the business problem (estimate median house values)
+- **But we have NO model yet!**
 
 **What's blocking us:**
 We need the **simplest possible baseline**. Before building complex multi-layer networks or ensemble models, we must establish:
@@ -31,8 +31,7 @@ The **linear regression baseline** — fit $\hat{y} = wx + b$ to predict median 
 - **Establishes the core training loop**: parameterized function → loss → gradient → update
 - **Provides first accuracy measurement**: ~$70k MAE (baseline to beat)
 - **Teaches fundamental concepts**: MSE loss, gradient descent, learning rate, R²
-
-✅ **This is the foundation** — every later chapter builds on these mechanics.
+**This is the foundation** — every later chapter builds on these mechanics.
 
 ---
 
@@ -92,7 +91,7 @@ Before diving into the math, here is the full training loop you'll be running. E
 
 $\alpha$ is the **learning rate** — the size of each step down the loss slope. Too large: the loss oscillates or diverges. Too small: training takes forever.
 
-> ⚡ **Gradient Descent goes deeper in the Neural Networks track.** This chapter uses gradient descent as the recipe for finding `w` and `b`. For the full treatment — momentum, SGD variants, Adam, learning rate schedules — see the Neural Networks track ([Ch.3 →](../../03_neural_networks)). For now: follow the slope downhill, one small step at a time.
+> **Gradient Descent goes deeper in the Neural Networks track.** This chapter uses gradient descent as the recipe for finding `w` and `b`. For the full treatment — momentum, SGD variants, Adam, learning rate schedules — see the Neural Networks track ([Ch.3 →](../../03_neural_networks)). For now: follow the slope downhill, one small step at a time.
 
 Sections 4–6 explain the math behind each step. Come back to this map when the detail feels overwhelming.
 
@@ -183,35 +182,35 @@ The most powerful diagnostic tool in regression is the **residual plot**: scatte
 **Three patterns you'll see:**
 
 ```
-Pattern 1: Random Cloud (✅ Good)          Pattern 2: U-Shape Curve (❌ Non-linear)
-     e                                          e
-     |  · ·  ·                                  |     ·
-     | ·  · · ·                                 |   ·   ·
-   0 +────────── ŷ                            0 +────────── ŷ
-     | · ·  ·                                   |   ·   ·
-     | ·   ·  ·                                 |     ·
+Pattern 1: Random Cloud ( Good) Pattern 2: U-Shape Curve ( Non-linear)
+ e e
+ | · · · | ·
+ | · · · · | · ·
+ 0 +────────── ŷ 0 +────────── ŷ
+ | · · · | · ·
+ | · · · | ·
 
-No pattern = linear model is correct         Curve = model is systematically wrong
-Residuals are just random noise               Add x², x³ features (Ch.4)
+No pattern = linear model is correct Curve = model is systematically wrong
+Residuals are just random noise Add x², x³ features (Ch.4)
 
 
-Pattern 3: Funnel (❌ Heteroscedasticity)    Pattern 4: Bands (❌ Discrete Target)
-     e                                          e
-     |    ·                                     | ----·----
-     |  ·  ·                                    | ----·----
-   0 +────────── ŷ                            0 +────────── ŷ
-     | ·  ·  ·                                  | ----·----
-     |·  ·   ·   ·                              | ----·----
+Pattern 3: Funnel ( Heteroscedasticity) Pattern 4: Bands ( Discrete Target)
+ e e
+ | · | ----·----
+ | · · | ----·----
+ 0 +────────── ŷ 0 +────────── ŷ
+ | · · · | ----·----
+ |· · · · | ----·----
 
-Variance grows with ŷ                         Target has jumps (price tiers, ratings)
-Log-transform y before fitting                Classification problem, not regression
+Variance grows with ŷ Target has jumps (price tiers, ratings)
+Log-transform y before fitting Classification problem, not regression
 ```
 
 **What each pattern means:**
 
 | Pattern | What it means | What to do |
 |---------|---------------|------------|
-| **Random cloud around zero** | ✅ Model is well-specified | Keep going — you're done |
+| **Random cloud around zero** | Model is well-specified | Keep going — you're done |
 | **U-shape or ∩-shape** | Relationship is non-linear | Add polynomial features ($x^2, x^3$) — see Ch.4 |
 | **Funnel (spreads out)** | Variance grows with predictions | Try `y_log = np.log(y)` as target |
 | **Stripes or bands** | Target is discrete/categorical | Wrong problem type — use classification |
@@ -222,10 +221,10 @@ Log-transform y before fitting                Classification problem, not regres
 ```
 Residuals at epoch 0 (all weights = 0, every ŷ = 0):
 
-District  y_actual  ŷ     e = y - ŷ   Interpretation
-   1      4.526    0.00   +4.526      Model way too low
-   2      3.585    0.00   +3.585      Model way too low
-   3      3.521    0.00   +3.521      Model way too low
+District y_actual ŷ e = y - ŷ Interpretation
+ 1 4.526 0.00 +4.526 Model way too low
+ 2 3.585 0.00 +3.585 Model way too low
+ 3 3.521 0.00 +3.521 Model way too low
 ```
 
 All residuals positive → systematic underprediction. The gradient $\mathbf{X}^\top \mathbf{e}$ will push all weights upward.
@@ -233,10 +232,10 @@ All residuals positive → systematic underprediction. The gradient $\mathbf{X}^
 ```
 After 10 epochs (model partially trained):
 
-District  y_actual  ŷ      e = y - ŷ   Interpretation
-   1      4.526    4.20    +0.326      Close — slight under
-   2      3.585    3.70    -0.115      Close — slight over
-   3      3.521    3.90    -0.379      Largest error — luxury district
+District y_actual ŷ e = y - ŷ Interpretation
+ 1 4.526 4.20 +0.326 Close — slight under
+ 2 3.585 3.70 -0.115 Close — slight over
+ 3 3.521 3.90 -0.379 Largest error — luxury district
 ```
 
 Residuals now mix positive and negative (good!), but district 3 still has the largest error. **This tells you:** a simple linear combination of `MedInc` and `HouseAge` may not fully capture luxury coastal districts. You might need interaction terms (`MedInc × Latitude`) or non-linear features — patterns the residual plot reveals but the MSE number hides.
@@ -248,7 +247,7 @@ import matplotlib.pyplot as plt
 
 # After training
 y_pred = model.predict(X_test)
-residuals = y_test - y_pred  # e_i = y_i - ŷ_i
+residuals = y_test - y_pred # e_i = y_i - ŷ_i
 
 # Residual plot
 plt.figure(figsize=(10, 5))
@@ -257,7 +256,7 @@ plt.subplot(1, 2, 1)
 plt.scatter(y_pred, residuals, alpha=0.5, s=10)
 plt.axhline(0, color='red', linestyle='--', linewidth=2)
 plt.xlabel('Predicted values ŷ')
-plt.ylabel('Residuals  e = y − ŷ')
+plt.ylabel('Residuals e = y − ŷ')
 plt.title('Residual Plot — Look for Patterns')
 
 plt.subplot(1, 2, 2)
@@ -269,23 +268,23 @@ plt.tight_layout()
 plt.show()
 ```
 
-**Left plot:** If you see random scatter → ✅ model is good. If you see a curve, funnel, or stripes → ❌ model assumptions violated.
-**Right plot:** If histogram is bell-shaped (normal) → ✅ OLS assumptions hold. If heavily skewed or multi-modal → ❌ consider robust losses (MAE, Huber).
+**Left plot:** If you see random scatter → model is good. If you see a curve, funnel, or stripes → model assumptions violated.
+**Right plot:** If histogram is bell-shaped (normal) → OLS assumptions hold. If heavily skewed or multi-modal → consider robust losses (MAE, Huber).
 
-> ⚡ **Why we care about residuals and not just MSE.** MSE = 0.22 tells you the model has error. The residual plot tells you *why*: maybe you're missing $x^2$, maybe outliers are pulling the line, maybe you need a log transform. One number measures performance; $n$ residuals diagnose the fix.
+> **Why we care about residuals and not just MSE.** MSE = 0.22 tells you the model has error. The residual plot tells you *why*: maybe you're missing $x^2$, maybe outliers are pulling the line, maybe you need a log transform. One number measures performance; $n$ residuals diagnose the fix.
 
-> 💡 **When to prefer the Normal Equation over gradient descent**
+> **When to prefer the Normal Equation over gradient descent**
 
 | Criterion | Normal Equation | Gradient Descent |
 |---|---|---|
-| **Dataset size** | ✅ Small–medium ($n \lesssim 10{,}000$, $d \lesssim 1{,}000$) | ✅ Large datasets — $O(nd)$ per epoch vs $O(nd^2 + d^3)$ one-shot |
-| **Exact answer** | ✅ One shot, mathematically exact | ❌ Approximate — stops when loss stops changing |
-| **Hyperparameter tuning** | ✅ Zero — no learning rate or epoch count to tune | ❌ Requires tuning $\alpha$, batch size, stopping criterion |
-| **Feature scaling** | ✅ Not required — matrix algebra is scale-invariant | ❌ Essential — unscaled features produce mismatched gradients |
-| **Singular / ill-conditioned $X^\top X$** | ❌ Breaks — $X^\top X$ is not invertible when columns are linearly dependent (multicollinearity) or $d > n$ | ✅ Gradient descent still runs — just may be slow or noisy |
-| **Non-linear models** | ❌ No closed form exists for neural networks, decision trees, etc. | ✅ Works for any differentiable loss |
-| **Online / streaming data** | ❌ Must recompute the full inverse when data arrives | ✅ One mini-batch update per new batch |
-| **Memory footprint** | ❌ Must hold $X^\top X \in \mathbb{R}^{d \times d}$ in RAM; at $d = 10{,}000$ that is 800 MB | ✅ Only the current batch lives in memory |
+| **Dataset size** | Small–medium ($n \lesssim 10{,}000$, $d \lesssim 1{,}000$) | Large datasets — $O(nd)$ per epoch vs $O(nd^2 + d^3)$ one-shot |
+| **Exact answer** | One shot, mathematically exact | Approximate — stops when loss stops changing |
+| **Hyperparameter tuning** | Zero — no learning rate or epoch count to tune | Requires tuning $\alpha$, batch size, stopping criterion |
+| **Feature scaling** | Not required — matrix algebra is scale-invariant | Essential — unscaled features produce mismatched gradients |
+| **Singular / ill-conditioned $X^\top X$** | Breaks — $X^\top X$ is not invertible when columns are linearly dependent (multicollinearity) or $d > n$ | Gradient descent still runs — just may be slow or noisy |
+| **Non-linear models** | No closed form exists for neural networks, decision trees, etc. | Works for any differentiable loss |
+| **Online / streaming data** | Must recompute the full inverse when data arrives | One mini-batch update per new batch |
+| **Memory footprint** | Must hold $X^\top X \in \mathbb{R}^{d \times d}$ in RAM; at $d = 10{,}000$ that is 800 MB | Only the current batch lives in memory |
 
 **Practical rule of thumb:**
 - $n < 10{,}000$ rows and $d < 500$ features → try the Normal Equation first; it gives the exact answer instantly.
@@ -296,7 +295,7 @@ plt.show()
 2. **$d > n$** — more features than rows means $X^\top X$ is rank-deficient and has infinitely many solutions. Gradient descent with early stopping or explicit regularization implicitly picks one; the raw Normal Equation does not.
 3. **Non-Gaussian noise** — the Normal Equation is the MLE solution *only* when residuals are i.i.d. Gaussian. If your residuals are heavy-tailed or skewed, the closed-form minimiser of MSE is no longer the statistically optimal estimator (MAE's closed form, the sample median, is better under Laplacian noise).
 
-> ⚡ **Why this chapter uses gradient descent anyway.** The Normal Equation is a dead end the moment you move to neural networks, logistic regression, or any non-linear model. The training loop from §3 — forward pass → loss → gradient → update — is the one universal recipe that works for every model in this track. Gradient descent here is intentional practice for what comes next.
+> **Why this chapter uses gradient descent anyway.** The Normal Equation is a dead end the moment you move to neural networks, logistic regression, or any non-linear model. The training loop from §3 — forward pass → loss → gradient → update — is the one universal recipe that works for every model in this track. Gradient descent here is intentional practice for what comes next.
 
 ---
 
@@ -388,10 +387,10 @@ $$\text{Huber}_{\delta}(e) = \begin{cases} \tfrac{1}{2}e^2 & \text{if } |e| \leq
 Set $\delta = \$30{,}000$ (roughly one standard deviation of house prices in your dataset):
 
 ```
-District A (error $0):     → MSE mode: ½(0)²         = $0
-District B (error $20k):   → MSE mode: ½(20,000)²    = $200 million   (quadratic urgency)
-District C (error $200k):  → MAE mode: 30k × 200k − ½(30k)²
-                                     = $6B − $450M   = $5.55 billion   (linear, won't dominate)
+District A (error $0): → MSE mode: ½(0)² = $0
+District B (error $20k): → MSE mode: ½(20,000)² = $200 million (quadratic urgency)
+District C (error $200k): → MAE mode: 30k × 200k − ½(30k)²
+ = $6B − $450M = $5.55 billion (linear, won't dominate)
 
 Pure MSE comparison: District C alone = $40 billion
 ```
@@ -400,7 +399,7 @@ District C still contributes, but it no longer outweighs everything else 100:1. 
 
 **$\delta$ is the dial:** push it low and Huber behaves like MAE everywhere; push it high and it behaves like MSE everywhere. A practical starting point is the standard deviation of your target variable.
 
-> ➡️ **One more question these losses cannot answer:** *What fraction of the total price variation in the data did the model capture?* MAE and RMSE measure error size; they don't say how much of the signal we explained versus missed. That question only becomes meaningful when you have two models to compare — the 1-feature baseline from this chapter versus the 8-feature model in the next. **R² and Adjusted R²** answer it, and they earn their introduction in [Ch.2 §1.5](../ch02_multiple_regression).
+> ➡ **One more question these losses cannot answer:** *What fraction of the total price variation in the data did the model capture?* MAE and RMSE measure error size; they don't say how much of the signal we explained versus missed. That question only becomes meaningful when you have two models to compare — the 1-feature baseline from this chapter versus the 8-feature model in the next. **R² and Adjusted R²** answer it, and they earn their introduction in [Ch.2 §1.5](../ch02_multiple_regression).
 
 ---
 
@@ -409,17 +408,17 @@ District C still contributes, but it no longer outweighs everything else 100:1. 
 Start with the simplest fair measure. Discover when it breaks. Fix the failure mode. Repeat.
 
 ```
-MAE       →  fair, interpretable, robust
-            ↳ BREAKS when big errors are disproportionately costly
+MAE → fair, interpretable, robust
+ ↳ BREAKS when big errors are disproportionately costly
 
-MSE       →  urgent, differentiable, optimizer-friendly
-            ↳ BREAKS when outliers hijack the gradient; also: units²
+MSE → urgent, differentiable, optimizer-friendly
+ ↳ BREAKS when outliers hijack the gradient; also: units²
 
-RMSE      →  MSE in human units (not a new loss, just a reporter)
-            ↳ BREAKS at the same place MSE does
+RMSE → MSE in human units (not a new loss, just a reporter)
+ ↳ BREAKS at the same place MSE does
 
-Huber     →  MSE for small errors + MAE for large errors, tunable via δ
-            ↳ Resolves the MAE/MSE tension; becomes the mature default
+Huber → MSE for small errors + MAE for large errors, tunable via δ
+ ↳ Resolves the MAE/MSE tension; becomes the mature default
 
 (R² and Adjusted R² — what fraction of price variance did we explain? — are introduced in Ch.2 §1.5,
  where comparing a 1-feature and an 8-feature model makes the comparison meaningful.)
@@ -443,31 +442,30 @@ Huber     →  MSE for small errors + MAE for large errors, tunable via δ
 
 ```mermaid
 flowchart TD
-    START(["New regression project"]) --> OUTLIERS{"Inspect your residual plot.\nAre there extreme outliers?"}
+ START(["New regression project"]) --> OUTLIERS{"Inspect your residual plot.\nAre there extreme outliers?"}
 
-    OUTLIERS -->|"No — data looks\nnormally distributed"| MSE_NODE["Use MSE\n(train with MSE,\nreport with RMSE)"]
-    OUTLIERS -->|"A few — less than\n~10 % of rows"| HUBER_NODE["Use Huber loss\nStart δ = 1 std dev\nof your target"]
-    OUTLIERS -->|"Many — heavy-tailed\nor skewed target"| MAE_NODE["Use MAE\nFully robust;\nall errors equal weight"]
+ OUTLIERS -->|"No — data looks\nnormally distributed"| MSE_NODE["Use MSE\n(train with MSE,\nreport with RMSE)"]
+ OUTLIERS -->|"A few — less than\n~10 % of rows"| HUBER_NODE["Use Huber loss\nStart δ = 1 std dev\nof your target"]
+ OUTLIERS -->|"Many — heavy-tailed\nor skewed target"| MAE_NODE["Use MAE\nFully robust;\nall errors equal weight"]
 
-    MSE_NODE --> DONE(["\ud83c\udfaf Train · evaluate · iterate"])
-    HUBER_NODE --> DONE
-    MAE_NODE --> DONE
+ MSE_NODE --> DONE(["\ud83c\udfaf Train · evaluate · iterate"])
+ HUBER_NODE --> DONE
+ MAE_NODE --> DONE
 
-    style START fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style DONE fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style OUTLIERS fill:#b45309,color:#fff,stroke:#b45309
-    style MSE_NODE fill:#15803d,color:#fff,stroke:#15803d
-    style HUBER_NODE fill:#15803d,color:#fff,stroke:#15803d
-    style MAE_NODE fill:#15803d,color:#fff,stroke:#15803d
+ style START fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style DONE fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style OUTLIERS fill:#b45309,color:#fff,stroke:#b45309
+ style MSE_NODE fill:#15803d,color:#fff,stroke:#15803d
+ style HUBER_NODE fill:#15803d,color:#fff,stroke:#15803d
+ style MAE_NODE fill:#15803d,color:#fff,stroke:#15803d
 ```
 
 **Common traps:**
+**"Always use MSE — it's the default"** → Check for outliers first; MSE will chase them relentlessly.
+**"MAE is always safer because it's robust"** → Too forgiving when large errors are genuinely catastrophic (loan defaults, safety-critical systems).
+**"Huber is complex overkill"** → It's two lines of code and often beats both MAE and MSE in practice.
 
-❌ **"Always use MSE — it's the default"** → Check for outliers first; MSE will chase them relentlessly.
-❌ **"MAE is always safer because it's robust"** → Too forgiving when large errors are genuinely catastrophic (loan defaults, safety-critical systems).
-❌ **"Huber is complex overkill"** → It's two lines of code and often beats both MAE and MSE in practice.
-
-> 💡 **Deeper connection**: each loss function *assumes* a different noise distribution. MSE assumes Gaussian noise, MAE assumes Laplacian noise, Huber assumes a mixture. When you choose a loss you are implicitly stating a belief about how errors are generated — a fact that the MLE & Loss Functions chapter (in the Neural Networks track) formalises through maximum likelihood estimation.
+> **Deeper connection**: each loss function *assumes* a different noise distribution. MSE assumes Gaussian noise, MAE assumes Laplacian noise, Huber assumes a mixture. When you choose a loss you are implicitly stating a belief about how errors are generated — a fact that the MLE & Loss Functions chapter (in the Neural Networks track) formalises through maximum likelihood estimation.
 
 ---
 
@@ -633,18 +631,18 @@ $$b_2 = 1.333 - 0.1 \times 0.533 = \mathbf{1.280}$$
 
 ```
 for each epoch:
-    ŷ = w·X + b                       # forward pass — uses current w, b
-    e = ŷ - y                          # errors
-    ∂L/∂w = (2/N) · Xᵀ · e            # gradient w.r.t. weight
-    ∂L/∂b = (2/N) · sum(e)            # gradient w.r.t. bias
-    w ← w − α · ∂L/∂w                 # update
-    b ← b − α · ∂L/∂b
-    if |ΔMSE| < ε: break              # converged
+ ŷ = w·X + b # forward pass — uses current w, b
+ e = ŷ - y # errors
+ ∂L/∂w = (2/N) · Xᵀ · e # gradient w.r.t. weight
+ ∂L/∂b = (2/N) · sum(e) # gradient w.r.t. bias
+ w ← w − α · ∂L/∂w # update
+ b ← b − α · ∂L/∂b
+ if |ΔMSE| < ε: break # converged
 ```
 
 The rows never change between epochs — only $w$ and $b$ change, which changes the errors, which changes the gradients.
 
-> ⚡ **Constraint #1 check:** The training loop is now defined. Our first RMSE baseline (~\$84k on California Housing) quantifies how far we are from the <\$40k MAE target.
+> **Constraint #1 check:** The training loop is now defined. Our first RMSE baseline (~\$84k on California Housing) quantifies how far we are from the <\$40k MAE target.
 
 ---
 
@@ -652,14 +650,14 @@ The rows never change between epochs — only $w$ and $b$ change, which changes 
 
 ```mermaid
 flowchart TD
-    INIT["Initialise W=0, b=0"] --> FWD
-    FWD["Forward pass\nŷᵢ = Wxᵢ + b  for all i"] --> LOSS
-    LOSS["Compute loss\nMSE = (1/N) Σ(ŷᵢ − yᵢ)²"] --> GRAD
-    GRAD["Compute gradients\n∂L/∂W = (2/N) Σ(ŷᵢ−yᵢ)·xᵢ\n∂L/∂b = (2/N) Σ(ŷᵢ−yᵢ)"] --> UPDATE
-    UPDATE["Update weights\nW ← W − α·∂L/∂W\nb ← b − α·∂L/∂b"] --> CHECK
-    CHECK{"Converged?\nΔloss < ε or\nmax epochs reached"}
-    CHECK -->|"No — run another epoch\n(same N rows, updated W and b)"| FWD
-    CHECK -->|"Yes"| DONE["✅ W*, b* found"]
+ INIT["Initialise W=0, b=0"] --> FWD
+ FWD["Forward pass\nŷᵢ = Wxᵢ + b for all i"] --> LOSS
+ LOSS["Compute loss\nMSE = (1/N) Σ(ŷᵢ − yᵢ)²"] --> GRAD
+ GRAD["Compute gradients\n∂L/∂W = (2/N) Σ(ŷᵢ−yᵢ)·xᵢ\n∂L/∂b = (2/N) Σ(ŷᵢ−yᵢ)"] --> UPDATE
+ UPDATE["Update weights\nW ← W − α·∂L/∂W\nb ← b − α·∂L/∂b"] --> CHECK
+ CHECK{"Converged?\nΔloss < ε or\nmax epochs reached"}
+ CHECK -->|"No — run another epoch\n(same N rows, updated W and b)"| FWD
+ CHECK -->|"Yes"| DONE[" W*, b* found"]
 ```
 
 The loop-back edge label **"same N rows, updated W and b"** is the epoch story in one phrase.
@@ -710,9 +708,9 @@ Looking back at the epoch table from §6.4:
 
 At epoch 200 the loss is improving by roughly 0.00085 per epoch. With initial MSE of 5.63, that is $0.00085 / 5.63 \approx 0.015\%$ — well within a `tol=1e-3` stopping rule. Training past epoch 200 on this single-feature problem returns almost nothing.
 
-> ⚠️ **A common trap: stopping too early vs. too late.** Set $\varepsilon$ too large and you stop before the loss has genuinely flattened — the model is still improvable but you declared victory. Set it too small (or rely only on max-epochs) and you run thousands of unnecessary epochs, burning compute on gains smaller than measurement noise. The epoch table is your diagnostic: if adjacent epochs differ in the 5th decimal place, you're done.
+> **A common trap: stopping too early vs. too late.** Set $\varepsilon$ too large and you stop before the loss has genuinely flattened — the model is still improvable but you declared victory. Set it too small (or rely only on max-epochs) and you run thousands of unnecessary epochs, burning compute on gains smaller than measurement noise. The epoch table is your diagnostic: if adjacent epochs differ in the 5th decimal place, you're done.
 
-> ⚡ **Patience and early stopping.** In neural networks (Ch.3), you'll add a third dimension: *validation loss*. You can stop not just when the training loss stops improving, but when the *held-out* loss starts rising — which is the first sign of overfitting. That concept (early stopping as regularization) is introduced there; the same $\varepsilon$ logic applies.
+> **Patience and early stopping.** In neural networks (Ch.3), you'll add a third dimension: *validation loss*. You can stop not just when the training loss stops improving, but when the *held-out* loss starts rising — which is the first sign of overfitting. That concept (early stopping as regularization) is introduced there; the same $\varepsilon$ logic applies.
 
 With the gradient descent loop in hand, it is now clear why MSE's geometry makes convergence so well-behaved. When the model is linear in its parameters and the loss is MSE, the empirical risk is *exactly* a quadratic function of the parameters. For the single-feature model (holding $b$ fixed for clarity) we can expand the empirical MSE as a quadratic in $w$:
 
@@ -893,18 +891,18 @@ These two limits disagree: $+1 \neq -1$. The ordinary derivative $\frac{d}{de}|e
 
 ```
 dL/de
-  ↑
+ ↑
 +1│ ─────────────
-  │               (right side: slope = +1)
-  │
+ │ (right side: slope = +1)
+ │
  ─┼──────────── e
-  │
-  │───────────
--1│               (left side: slope = -1)
-  │
-  └────────────→
+ │
+ │───────────
+-1│ (left side: slope = -1)
+ │
+ └────────────→
 
-  The two sides don't meet → no derivative at e = 0
+ The two sides don't meet → no derivative at e = 0
 ```
 
 ![MAE kink vs MSE smoothness — the three curves side by side](img/loss_curves_mae_vs_mse.png)
@@ -939,7 +937,7 @@ $$\frac{d}{de}\text{Huber}_{\delta}(e) = \begin{cases} e & \text{if } |e| \leq \
 
 Two things to verify:
 
-**1. Smooth at zero.** In the inner region ($|e| \leq \delta$), the derivative is $e$. At $e = 0$: derivative = $0$. Defined, unambiguous, zero. ✅
+**1. Smooth at zero.** In the inner region ($|e| \leq \delta$), the derivative is $e$. At $e = 0$: derivative = $0$. Defined, unambiguous, zero.
 
 **2. Smooth at the junction $e = \pm\delta$.** The two formulas must agree exactly at $|e| = \delta$ (otherwise there would be a jump in the gradient — called a $C^0$ but not $C^1$ function):
 
@@ -952,10 +950,10 @@ They match. The gradient function is **continuous everywhere**, including at the
 
 | Error size | MSE gradient | MAE gradient | Huber gradient (δ=$30k) |
 |-----------|-------------|-------------|------------------------|
-| $0 (perfect) | **0** ✅ | undefined ❌ | **0** ✅ |
-| $1k (tiny) | $2k (small, proportional) | ±1 (same as $200k!) | $1k (proportional) ✅ |
-| $20k (medium) | $40k (large) | ±1 | $20k (proportional) ✅ |
-| $200k (outlier) | $400k (huge, hijacked!) | ±1 | **$30k (capped!)** ✅ |
+| $0 (perfect) | **0** | undefined | **0** |
+| $1k (tiny) | $2k (small, proportional) | ±1 (same as $200k!) | $1k (proportional) |
+| $20k (medium) | $40k (large) | ±1 | $20k (proportional) |
+| $200k (outlier) | $400k (huge, hijacked!) | ±1 | **$30k (capped!)** |
 
 This table reveals the full picture: MSE is proportional but hijackable; MAE is bounded but non-differentiable; Huber is proportional for normal errors and bounded for outliers — the best of both.
 
@@ -965,11 +963,11 @@ This table reveals the full picture: MSE is proportional but hijackable; MAE is 
 
 | Loss | Differentiable at $e=0$? | Gradient at $e=0$ | Gradient for large errors | Use as training loss? |
 |------|--------------------------|-------------------|--------------------------|----------------------|
-| **MSE** | ✅ Yes ($e^2$) | 0 (correct) | Grows as $2e$ (hijackable) | ✅ Default |
-| **MAE** | ❌ No ($|e|$ has kink) | Undefined | Constant ±1 (robust) | ⚠️ Subgradient only (not autodiff) |
-| **RMSE** | ❌ No (same kink) | Undefined | Constant ±1 | ❌ Never train with this |
-| **Huber** | ✅ Yes ($C^1$ everywhere) | 0 (correct) | Capped at ±δ (robust) | ✅ Best default |
-| **R²** | — (not a loss, evaluation metric) | — | — | ❌ Not a training loss |
+| **MSE** | Yes ($e^2$) | 0 (correct) | Grows as $2e$ (hijackable) | Default |
+| **MAE** | No ($|e|$ has kink) | Undefined | Constant ±1 (robust) | Subgradient only (not autodiff) |
+| **RMSE** | No (same kink) | Undefined | Constant ±1 | Never train with this |
+| **Huber** | Yes ($C^1$ everywhere) | 0 (correct) | Capped at ±δ (robust) | Best default |
+| **R²** | — (not a loss, evaluation metric) | — | — | Not a training loss |
 
 ---
 
@@ -1019,11 +1017,11 @@ $$\frac{\partial L}{\partial w_j} = \frac{2}{N}\sum_{i=1}^{N}(\hat{y}_i - y_i)\c
 
 Now $x_{ij}^{\text{scaled}} \approx [-3, +3]$ regardless of the original unit — a single learning rate works for all weights and the loss contours become circular, letting gradient steps point directly toward the minimum.
 
-> ⚠️ **Data leakage.** Always fit the scaler on **training data only**:
+> **Data leakage.** Always fit the scaler on **training data only**:
 > ```python
 > scaler = StandardScaler()
-> X_train = scaler.fit_transform(X_train)   # fit μ, σ on training set; transform
-> X_test  = scaler.transform(X_test)         # apply same μ, σ — no re-fit!
+> X_train = scaler.fit_transform(X_train) # fit μ, σ on training set; transform
+> X_test = scaler.transform(X_test) # apply same μ, σ — no re-fit!
 > ```
 > Fitting on the full dataset (including test) leaks test-set statistics into training. Validation numbers become optimistic and the model will perform worse in production.
 
@@ -1044,7 +1042,7 @@ This is the correct definition of feature importance for a linear model — and 
 
 The ordering is the model's belief about what matters. Remove `MedInc` and predictive power collapses. Remove `HouseAge` and almost nothing changes.
 
-> ⚠️ **Never compare raw weights.** Before scaling: `w_MedInc ≈ 0.60`, `w_Latitude ≈ −0.42`. The 0.60 vs 0.42 comparison is meaningless — the features carry different units and the weights absorbed those units. Standardise first; compare second.
+> **Never compare raw weights.** Before scaling: `w_MedInc ≈ 0.60`, `w_Latitude ≈ −0.42`. The 0.60 vs 0.42 comparison is meaningless — the features carry different units and the weights absorbed those units. Standardise first; compare second.
 
 #### Two rules for any linear model trained on standardised features
 
@@ -1178,8 +1176,8 @@ rmse = np.sqrt(mean_squared_error(y_test, y_pred))
 r2 = r2_score(y_test, y_pred)
 print(f"RMSE: {rmse:.3f} R²: {r2:.3f}")
 print(f"Weight: {model.coef_[0]:.3f} Bias: {model.intercept_:.3f}")
-# Weight ≈ 0.600  → each +$10k income predicts +$60k house value
-# Bias  ≈ 0.452  → ~$45k baseline (model's prediction when MedInc = 0)
+# Weight ≈ 0.600 → each +$10k income predicts +$60k house value
+# Bias ≈ 0.452 → ~$45k baseline (model's prediction when MedInc = 0)
 ```
 
 ### Manual Gradient Descent (to see the mechanics)
@@ -1229,34 +1227,34 @@ for epoch in range(200):
 
 ```mermaid
 flowchart TD
-    PROBLEM["Debugging regression problems"] --> SYMPTOM{"What's wrong?"}
+ PROBLEM["Debugging regression problems"] --> SYMPTOM{"What's wrong?"}
 
-    SYMPTOM -->|"Loss oscillates<br/>or diverges"| SCALE{"Features<br/>scaled?"}
-    SYMPTOM -->|"Loss decreases but<br/>predictions are bad"| RESIDUAL{"Check residual<br/>plot"}
-    SYMPTOM -->|"Adding features<br/>always improves R²"| METRIC["Switch to Adjusted R²<br/>(penalizes complexity)"]
-    SYMPTOM -->|"Weights change wildly<br/>across runs"| CORR["Check feature correlation<br/>Use Ridge if VIF > 10"]
+ SYMPTOM -->|"Loss oscillates<br/>or diverges"| SCALE{"Features<br/>scaled?"}
+ SYMPTOM -->|"Loss decreases but<br/>predictions are bad"| RESIDUAL{"Check residual<br/>plot"}
+ SYMPTOM -->|"Adding features<br/>always improves R²"| METRIC["Switch to Adjusted R²<br/>(penalizes complexity)"]
+ SYMPTOM -->|"Weights change wildly<br/>across runs"| CORR["Check feature correlation<br/>Use Ridge if VIF > 10"]
 
-    SCALE -->|"No"| FIX1["✅ Standardize features:<br/>StandardScaler()"]
-    SCALE -->|"Yes"| LR["Lower learning rate ÷10<br/>or use Adam optimizer"]
+ SCALE -->|"No"| FIX1[" Standardize features:<br/>StandardScaler()"]
+ SCALE -->|"Yes"| LR["Lower learning rate ÷10<br/>or use Adam optimizer"]
 
-    RESIDUAL -->|"U-shaped or<br/>curved pattern"| FIX2["✅ Relationship is non-linear<br/>Add polynomial features<br/>or use neural network (Ch.4)"]
-    RESIDUAL -->|"Few extreme<br/>outliers"| FIX3["✅ Switch to Huber loss<br/>δ = 1 std dev"]
-    RESIDUAL -->|"Many outliers<br/>(>10%)"| FIX4["✅ Switch to MAE<br/>(fully robust)"]
+ RESIDUAL -->|"U-shaped or<br/>curved pattern"| FIX2[" Relationship is non-linear<br/>Add polynomial features<br/>or use neural network (Ch.4)"]
+ RESIDUAL -->|"Few extreme<br/>outliers"| FIX3[" Switch to Huber loss<br/>δ = 1 std dev"]
+ RESIDUAL -->|"Many outliers<br/>(>10%)"| FIX4[" Switch to MAE<br/>(fully robust)"]
 
-    style PROBLEM fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style SYMPTOM fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style FIX1 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style FIX2 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style FIX3 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style FIX4 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style METRIC fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CORR fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style SCALE fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style RESIDUAL fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style LR fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style PROBLEM fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style SYMPTOM fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style FIX1 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style FIX2 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style FIX3 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style FIX4 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style METRIC fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CORR fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style SCALE fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style RESIDUAL fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style LR fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
-> ⚡ **Constraint #5 (PRODUCTION):** The issues in §9 — unscaled features, outlier sensitivity, no missing-value handling — are what separate this research baseline from a production system. Ch.5 (Ridge/Lasso) and Ch.9 (Pipelines) address them.
+> **Constraint #5 (PRODUCTION):** The issues in §9 — unscaled features, outlier sensitivity, no missing-value handling — are what separate this research baseline from a production system. Ch.5 (Ridge/Lasso) and Ch.9 (Pipelines) address them.
 
 > 📖 **Deep dive on loss functions:** See §5 "Loss Functions" above for concrete California Housing examples showing when MSE fails ($40B contribution from one outlier) and how MAE/Huber solve it. See §6.6 "The Gradient Descent Lens" for the calculus of which losses can be used with autodiff and why the kink in |e| at zero prevents using MAE directly in backprop. The decision tree in §5 helps you choose the right loss based on your data characteristics.
 
@@ -1275,20 +1273,18 @@ The single most important dial in any gradient-based model is **learning rate**.
 ---
 
 ## 11 · Progress Check — What We Can Solve Now
-
-✅ **Unlocked capabilities:**
+**Unlocked capabilities:**
 - **First working model!** Can predict median house value from median income
 - **Baseline accuracy**: ~$70k MAE (Mean Absolute Error) on California Housing
 - **Core training loop**: Understand loss → gradient → update cycle
 - **Evaluation framework**: Know difference between MSE (loss), RMSE (metric), R² (variance explained)
 - **Optimization fundamentals**: Gradient descent, learning rate tuning, convergence monitoring
-
-❌ **Still can't solve:**
-- ❌ **Constraint #1 (ACCURACY)**: $70k MAE >> $50k target. Single-feature model is too simple!
-- ❌ **Constraint #2 (GENERALIZATION)**: Haven't tested on truly unseen data yet (validation/test split exists but no cross-validation)
-- ❌ **Constraint #3 (MULTI-TASK)**: Only regression (continuous output). Can't classify districts into market segments
-- ❌ **Constraint #4 (INTERPRETABILITY)**: Partially satisfied (linear model = interpretable weights) but limited to one feature
-- ❌ **Constraint #5 (PRODUCTION)**: No handling of missing data, outliers, or edge cases. Not scalable architecture
+**Still can't solve:**
+- **Constraint #1 (ACCURACY)**: $70k MAE >> $50k target. Single-feature model is too simple!
+- **Constraint #2 (GENERALIZATION)**: Haven't tested on truly unseen data yet (validation/test split exists but no cross-validation)
+- **Constraint #3 (MULTI-TASK)**: Only regression (continuous output). Can't classify districts into market segments
+- **Constraint #4 (INTERPRETABILITY)**: Partially satisfied (linear model = interpretable weights) but limited to one feature
+- **Constraint #5 (PRODUCTION)**: No handling of missing data, outliers, or edge cases. Not scalable architecture
 
 **Real-world status**: We can answer "*Given median income of $50k, estimate the house value*" → ~$180k. But:
 - **Too inaccurate**: Off by ±$70k on average (lenders won't accept this)
@@ -1298,11 +1294,11 @@ The single most important dial in any gradient-based model is **learning rate**.
 **Progress toward constraints:**
 | Constraint | Status | Current State |
 |------------|--------|---------------|
-| #1 ACCURACY | ❌ Partial | $70k MAE (need <$50k) |
-| #2 GENERALIZATION | ❌ Not tested | No regularization, limited validation |
-| #3 MULTI-TASK | ❌ Blocked | Regression only (no classification) |
-| #4 INTERPRETABILITY | ⚡ Partial | Linear = interpretable, but single-feature; R² ≈ 0.47 (R² defined in Ch.2 §1.5) |
-| #5 PRODUCTION | ❌ Blocked | Research code (not production-ready) |
+| #1 ACCURACY | Partial | $70k MAE (need <$50k) |
+| #2 GENERALIZATION | Not tested | No regularization, limited validation |
+| #3 MULTI-TASK | Blocked | Regression only (no classification) |
+| #4 INTERPRETABILITY | Partial | Linear = interpretable, but single-feature; R² ≈ 0.47 (R² defined in Ch.2 §1.5) |
+| #5 PRODUCTION | Blocked | Research code (not production-ready) |
 
 **Next up:** [Ch.2 — Multiple Regression](../ch02_multiple_regression) extends the model to all 8 California Housing features, cutting MAE from $70k to $55k. We’ll see how feature matrices work, how correlated inputs interact, and why adding more features isn’t always better.
 

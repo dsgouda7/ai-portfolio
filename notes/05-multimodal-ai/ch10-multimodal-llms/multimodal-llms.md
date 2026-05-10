@@ -24,12 +24,12 @@
 
 | Constraint | Target | Status | Evidence |
 |------------|--------|--------|----------|
-| #1 Quality | ≥4.0/5.0 | ⚡ **~3.9/5.0** | VLM QA catches more errors, improves avg quality |
-| #2 Speed | <30 seconds | ✅ **~18s** | VLM adds ~2s per image (acceptable) |
-| #3 Cost | <$5k hardware | ✅ **$2.5k laptop** | LLaVA-7B runs on same hardware |
-| #4 Control | <5% unusable | ✅ **~3% unusable** | Auto-QA doesn't change generation, maintains control |
-| #5 Throughput | 100+ images/day | ✅ **~120 images/day** | Auto-QA removes bottleneck, hits target! |
-| #6 Versatility | 3 modalities | ✅ **All 3 enabled** | Text→Image + Video + Understanding complete |
+| #1 Quality | ≥4.0/5.0 | **~3.9/5.0** | VLM QA catches more errors, improves avg quality |
+| #2 Speed | <30 seconds | **~18s** | VLM adds ~2s per image (acceptable) |
+| #3 Cost | <$5k hardware | **$2.5k laptop** | LLaVA-7B runs on same hardware |
+| #4 Control | <5% unusable | **~3% unusable** | Auto-QA doesn't change generation, maintains control |
+| #5 Throughput | 100+ images/day | **~120 images/day** | Auto-QA removes bottleneck, hits target! |
+| #6 Versatility | 3 modalities | **All 3 enabled** | Text→Image + Video + Understanding complete |
 
 ---
 
@@ -170,7 +170,7 @@ A multimodal LLM connects vision to language through three stages: **encode** (i
 4. **FlanT5-XL or OPT-6.7B** receives the 32 visual tokens as a soft prompt prefix
 5. **Decode response**
 
-💡 **Insight:** Why fewer tokens? The LLM's KV-cache memory scales quadratically with sequence length. 32 tokens instead of 256 saves 64× memory at the visual prefix — critical for long document understanding.
+**Insight:** Why fewer tokens? The LLM's KV-cache memory scales quadratically with sequence length. 32 tokens instead of 256 saves 64× memory at the visual prefix — critical for long document understanding.
 
 ---
 
@@ -188,28 +188,28 @@ import torch
 
 processor = LlavaNextProcessor.from_pretrained("llava-hf/llava-v1.6-mistral-7b-hf")
 model = LlavaNextForConditionalGeneration.from_pretrained(
-    "llava-hf/llava-v1.6-mistral-7b-hf",
-    torch_dtype=torch.float16, device_map="auto"
+ "llava-hf/llava-v1.6-mistral-7b-hf",
+ torch_dtype=torch.float16, device_map="auto"
 )
 
 # VisualForge QA checklist questions
 qa_questions = [
-    "Is the background white or near-white? Answer yes or no.",
-    "Is there a person visible in this image? Answer yes or no.",
-    "Is the product clearly visible and in focus? Answer yes or no.",
-    "Are there any visible logos, text, or watermarks? Answer yes or no.",
+ "Is the background white or near-white? Answer yes or no.",
+ "Is there a person visible in this image? Answer yes or no.",
+ "Is the product clearly visible and in focus? Answer yes or no.",
+ "Are there any visible logos, text, or watermarks? Answer yes or no.",
 ]
 
 def qa_image(image_path: str, questions: list) -> dict:
-    image = Image.open(image_path)
-    results = {}
-    for question in questions:
-        prompt = f"[INST] <image>\n{question} [/INST]"
-        inputs = processor(prompt, image, return_tensors="pt").to("cuda")
-        output = model.generate(**inputs, max_new_tokens=10)
-        answer = processor.decode(output[0], skip_special_tokens=True).split("[/INST]")[-1].strip().lower()
-        results[question[:40]] = answer
-    return results
+ image = Image.open(image_path)
+ results = {}
+ for question in questions:
+ prompt = f"[INST] <image>\n{question} [/INST]"
+ inputs = processor(prompt, image, return_tensors="pt").to("cuda")
+ output = model.generate(**inputs, max_new_tokens=10)
+ answer = processor.decode(output[0], skip_special_tokens=True).split("[/INST]")[-1].strip().lower()
+ results[question[:40]] = answer
+ return results
 
 # Example: check a generated product shot
 result = qa_image("vf_generated_001.png", qa_questions)
@@ -221,10 +221,10 @@ print(result)
 
 | Check | Pass Rate | Fail Action |
 |-------|-----------|-------------|
-| White background | 91% ✅ | Auto-reject; regenerate with stronger negative prompt |
-| No people | 97% ✅ | Flag for manual review |
-| Product in focus | 89% ⚡ | Auto-reject; add sharpness prompt |
-| No logos/watermarks | 99% ✅ | Flag for legal review if fail |
+| White background | 91% | Auto-reject; regenerate with stronger negative prompt |
+| No people | 97% | Flag for manual review |
+| Product in focus | 89% | Auto-reject; add sharpness prompt |
+| No logos/watermarks | 99% | Flag for legal review if fail |
 
 ## 6 · Common Failure Modes
 
@@ -356,16 +356,16 @@ print(result)
 
 ### Likely Asked
 - *"How would you add vision to LLaMA-3?"*
-  → Attach a CLIP or SigLIP ViT, project visual tokens to LLaMA's embed dimension with an MLP, fine-tune on instruction-following visual QA data (e.g., LLaVA-style)
+ → Attach a CLIP or SigLIP ViT, project visual tokens to LLaMA's embed dimension with an MLP, fine-tune on instruction-following visual QA data (e.g., LLaVA-style)
 
 - *"What is the Q-Former and when would you use it?"*
-  → A cross-attention transformer that compresses many visual tokens into few learnable query outputs; use when the LLM has short context limits or when visual compression is needed
+ → A cross-attention transformer that compresses many visual tokens into few learnable query outputs; use when the LLM has short context limits or when visual compression is needed
 
 - *"Why freeze the ViT during initial training?"*
-  → Prevents catastrophic interference; the ViT's features are already strong from CLIP pretraining; frozen ViT lets you focus the compute budget on learning the alignment
+ → Prevents catastrophic interference; the ViT's features are already strong from CLIP pretraining; frozen ViT lets you focus the compute budget on learning the alignment
 
 - *"How would you debug visual hallucination?"*
-  → Check if projection layer is undertrained; increase visual instruction tuning epochs; use higher-resolution vision encoder; add grounding annotations to training data
+ → Check if projection layer is undertrained; increase visual instruction tuning epochs; use higher-resolution vision encoder; add grounding annotations to training data
 
 ### Common Traps to Avoid
 
@@ -388,24 +388,24 @@ print(result)
 ### Foundational Papers
 
 - **LLaVA** (Liu et al., 2023): [Visual Instruction Tuning](https://arxiv.org/abs/2304.08485)
-  *The paper that proved you can match GPT-4V with academic-budget training. Single MLP projection, LLaMA backbone, trained on 150K instruction-following examples.*
+ *The paper that proved you can match GPT-4V with academic-budget training. Single MLP projection, LLaMA backbone, trained on 150K instruction-following examples.*
 
 - **LLaVA-1.5** (Liu et al., 2023): [Improved Baselines with Visual Instruction Tuning](https://arxiv.org/abs/2310.03744)
-  *Higher resolution (336px), MLP instead of linear, better data mix. State-of-the-art open VLM at 7B/13B scale.*
+ *Higher resolution (336px), MLP instead of linear, better data mix. State-of-the-art open VLM at 7B/13B scale.*
 
 - **BLIP-2** (Li et al., 2023): [Bootstrapping Language-Image Pre-training with Frozen Image Encoders and Large Language Models](https://arxiv.org/abs/2301.12597)
-  *Introduced the Q-Former. Showed you can connect frozen ViT + frozen LLM with a tiny trainable bridge.*
+ *Introduced the Q-Former. Showed you can connect frozen ViT + frozen LLM with a tiny trainable bridge.*
 
 - **InstructBLIP** (Dai et al., 2023): [InstructBLIP: Towards General-purpose Vision-Language Models with Instruction Tuning](https://arxiv.org/abs/2305.06500)
-  *Applies instruction tuning to BLIP-2. Better zero-shot generalization on VQA tasks.*
+ *Applies instruction tuning to BLIP-2. Better zero-shot generalization on VQA tasks.*
 
 ### Key Comparisons
 
 - **Qwen2-VL** (Alibaba, 2024): [Qwen2-VL Technical Report](https://arxiv.org/abs/2409.12191)
-  *Variable-resolution vision encoder (NaViT). Handles images from 224px to 1024px without resizing. Strong OCR.*
+ *Variable-resolution vision encoder (NaViT). Handles images from 224px to 1024px without resizing. Strong OCR.*
 
 - **Llama-3.2 Vision** (Meta, 2024): [The Llama 3 Herd of Models](https://arxiv.org/abs/2407.21783)
-  *Meta's official vision extension to LLaMA-3. Cross-attention adapter, trained on diverse data (charts, diagrams, scientific figures).*
+ *Meta's official vision extension to LLaMA-3. Cross-attention adapter, trained on diverse data (charts, diagrams, scientific figures).*
 
 **Model Comparison Table:**
 
@@ -425,10 +425,10 @@ print(result)
 ### Techniques
 
 - **Flamingo** (DeepMind, 2022): [Tackling Multiple Tasks with a Single Visual Language Model](https://arxiv.org/abs/2204.14198)
-  *Interleaved text-image inputs. Gated cross-attention layers. Pioneered few-shot in-context learning for vision.*
+ *Interleaved text-image inputs. Gated cross-attention layers. Pioneered few-shot in-context learning for vision.*
 
 - **CogVLM** (Tsinghua, 2023): [Visual Expert for Large Language Models](https://arxiv.org/abs/2311.03079)
-  *Adds a "visual expert" branch to each LLM layer. Allows deep visual-text interaction without modifying LLM weights.*
+ *Adds a "visual expert" branch to each LLM layer. Allows deep visual-text interaction without modifying LLM weights.*
 
 ### Benchmarks
 
@@ -446,42 +446,41 @@ print(result)
 **What's inside**:
 
 1. **Mini VLM from scratch** (educational proxy):
-   - Pretrained ViT (torchvision) → linear projection → tiny GPT decoder
-   - Train on 10-class visual QA dataset ("What digit is this?" → "Seven")
-   - CPU-runnable, results in 5 minutes
+ - Pretrained ViT (torchvision) → linear projection → tiny GPT decoder
+ - Train on 10-class visual QA dataset ("What digit is this?" → "Seven")
+ - CPU-runnable, results in 5 minutes
 
 2. **LLaVA inference** (VisualForge production):
-   - Load `llava-hf/llava-v1.6-mistral-7b-hf` from Hugging Face
-   - Product QA workflow: load 512×512 generated image → ask campaign-brief questions
-   - **Example outputs**:
-     - "Is the background white?" → "Yes"
-     - "Is the product centered?" → "Yes"
-     - "What product category is this?" → "Running shoe"
+ - Load `llava-hf/llava-v1.6-mistral-7b-hf` from Hugging Face
+ - Product QA workflow: load 512×512 generated image → ask campaign-brief questions
+ - **Example outputs**:
+ - "Is the background white?" → "Yes"
+ - "Is the product centered?" → "Yes"
+ - "What product category is this?" → "Running shoe"
 
 3. **Automated batch QA**:
-   - Process 100 generated images → VLM checks 4 questions per image
-   - Flag images with any "No" answer → manual review
-   - Measure: % auto-approved (target: 85%)
+ - Process 100 generated images → VLM checks 4 questions per image
+ - Flag images with any "No" answer → manual review
+ - Measure: % auto-approved (target: 85%)
 
 **Runtime estimates**:
 - Mini VLM training: ~5 minutes (CPU)
 - LLaVA inference: ~2 seconds per image (RTX 4090), ~8 seconds (CPU)
 - Batch QA (100 images): ~3 minutes (GPU), ~13 minutes (CPU)
-
-⚠️ **GPU note**: LLaVA-7B runs on CPU but is slow (8s/image). RTX 3060 or better recommended for production throughput.
+**GPU note**: LLaVA-7B runs on CPU but is slow (8s/image). RTX 3060 or better recommended for production throughput.
 
 ---
 
 ## 11.5 · Progress Check — What Have We Unlocked?
 
 ### Before This Chapter
-- **Constraint #5 (Throughput)**: ⚡ ~85 images/day, bottlenecked by 100% manual QA
-- **Constraint #6 (Versatility)**: ⚡ Text→Image + Video, no understanding/verification
+- **Constraint #5 (Throughput)**: ~85 images/day, bottlenecked by 100% manual QA
+- **Constraint #6 (Versatility)**: Text→Image + Video, no understanding/verification
 - **VisualForge Status**: Every output requires human review → bottleneck
 
 ### After This Chapter
-- **Constraint #5 (Throughput)**: ✅ **~120 images/day** → Auto-QA removes bottleneck, target hit!
-- **Constraint #6 (Versatility)**: ✅ **All 3 modalities enabled** → Text→Image + Video + Understanding complete
+- **Constraint #5 (Throughput)**: **~120 images/day** → Auto-QA removes bottleneck, target hit!
+- **Constraint #6 (Versatility)**: **All 3 modalities enabled** → Text→Image + Video + Understanding complete
 - **VisualForge Status**: Generate → VLM checks against brief → auto-approve 85%, flag 15% for human review
 
 ---
@@ -507,14 +506,14 @@ print(result)
 
 | Constraint | Ch.1 | Ch.3 | Ch.6 | Ch.8 | Ch.9 | **Ch.10** | Target |
 |------------|------|------|------|------|------|-----------|--------|
-| **Quality** | ❌ | ❌ | ⚡ 3.5 | ⚡ 3.8 | ⚡ 3.8 | **⚡ 3.9** | 4.0/5.0 |
-| **Speed** | ❌ | ❌ | ✅ 20s | ✅ 18s | ✅ 18s | **✅ 18s** | <30s |
-| **Cost** | ❌ | ❌ | ✅ $2.5k | ✅ $2.5k | ✅ $2.5k | **✅ $2.5k** | <$5k |
-| **Control** | ❌ | ⚡ 15% | ⚡ 10% | ✅ 3% | ✅ 3% | **✅ 3%** | <5% |
-| **Throughput** | ❌ | ❌ | ❌ | ⚡ 80/day | ⚡ 85/day | **✅ 120/day** | 100+/day |
-| **Versatility** | ⚡ | ⚡ | ⚡ T→I | ⚡ T→I | ⚡ T→I+V | **✅ All 3** | 3 modalities |
+| **Quality** | | | 3.5 | 3.8 | 3.8 | ** 3.9** | 4.0/5.0 |
+| **Speed** | | | 20s | 18s | 18s | ** 18s** | <30s |
+| **Cost** | | | $2.5k | $2.5k | $2.5k | ** $2.5k** | <$5k |
+| **Control** | | 15% | 10% | 3% | 3% | ** 3%** | <5% |
+| **Throughput** | | | | 80/day | 85/day | ** 120/day** | 100+/day |
+| **Versatility** | | | T→I | T→I | T→I+V | ** All 3** | 3 modalities |
 
-**Legend**: ❌ Not addressed | ⚡ Partial progress | ✅ Target hit
+**Legend**: Not addressed | Partial progress | Target hit
 
 ---
 

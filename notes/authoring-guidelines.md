@@ -12,7 +12,7 @@ register: technical_but_conversational
 pedagogy: failure_first
 formula_rule: verbal_gloss_required_within_three_lines
 numerical_walkthroughs: judicious_when_clarifying_never_decorative
-callout_system: {insight:"💡", warning:"⚠️", constraint:"⚡", optional_depth:"📖", forward_pointer:"➡️"}
+callout_system: {insight:"", warning:"", constraint:"", optional_depth:"📖", forward_pointer:"➡"}
 mermaid_color_palette: {primary:"#1e3a8a", success:"#15803d", caution:"#b45309", danger:"#b91c1c", info:"#1d4ed8"}
 image_background: dark_facecolor_1a1a2e_for_generated_plots
 section_order: [story_header, challenge_0, animation, core_idea, running_example, math, step_by_step, key_diagrams, failure_modes, progress_check, bridge]
@@ -90,12 +90,12 @@ The reader is placed inside the scenario at all times:
 > *"Full stop."*
 
 **4. Academic register is forbidden.** Do not write:
-- ❌ "In this section we demonstrate..."
-- ❌ "It can be shown that..."
-- ❌ "The reader may note..."
-- ❌ "We present / We propose..."
-- ❌ "Let us explore..."
-- ❌ "This section introduces..."
+- "In this section we demonstrate..."
+- "It can be shown that..."
+- "The reader may note..."
+- "We present / We propose..."
+- "Let us explore..."
+- "This section introduces..."
 
 ---
 
@@ -119,11 +119,11 @@ Every chapter opens with § 0. The format is fixed:
 ```markdown
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: [Grand Challenge name] — [one-line constraint list]
+> **The mission**: [Grand Challenge name] — [one-line constraint list]
 
 **What we know so far:**
-- ✅ [Previous chapter achievements with named metrics]
-- ❌ **But we still can't [specific named gap]**
+- [Previous chapter achievements with named metrics]
+- **But we still can't [specific named gap]**
 
 **What's blocking us:**
 [2–4 sentences — concrete, named, with numbers.
@@ -138,7 +138,7 @@ Every chapter opens with § 0. The format is fixed:
 - The gap is never "our model is not accurate enough" — it is "$55k MAE vs. $40k target — 38% overshoot"
 - The blocker is never abstract — it is the specific named failure in the track's running example
 - Numbers are always named. Fuzzy language is a red line violation.
-- Constraint achievements are marked with ⚡ and a specific evidenced number
+- Constraint achievements are marked with and a specific evidenced number
 
 ---
 
@@ -164,9 +164,9 @@ If a section covers three methods, the section must show *what breaks* with meth
 **The failure must be concrete with numbers.** Not "accuracy drops" but "$55k MAE vs. $40k target — we miss the constraint by 38%." Not "latency degrades" but "6s p95 → 40% conversation abandonment rate, measurable from session logs."
 
 **This pattern applies to every domain:**
-- AIInfrastructure: FP16 fills 20GB VRAM → batch=1 max → 3k req/day → quantize to INT4 → 8GB → batch=4 → 12k req/day ✅
-- MultiAgentAI: single agent hits 8k context limit after 3 negotiations → multi-agent decomposition → context per agent stays <2k ✅
-- MultimodalAI: unconditioned diffusion → random noise output → add CLIP text conditioning → coherent but prompt-agnostic → increase CFG scale to 7.5 → prompt-responsive ✅
+- AIInfrastructure: FP16 fills 20GB VRAM → batch=1 max → 3k req/day → quantize to INT4 → 8GB → batch=4 → 12k req/day
+- MultiAgentAI: single agent hits 8k context limit after 3 negotiations → multi-agent decomposition → context per agent stays <2k
+- MultimodalAI: unconditioned diffusion → random noise output → add CLIP text conditioning → coherent but prompt-agnostic → increase CFG scale to 7.5 → prompt-responsive
 
 ---
 
@@ -187,20 +187,18 @@ If a section covers three methods, the section must show *what breaks* with meth
 **Rule 5: ASCII matrix diagrams for matrix operations.** Aligned brackets, dimension annotations, actual numbers where possible. The dimension of every operand and result must be shown.
 
 ```
-Xᵀ · e                                 (2×3) · (3×1) → (2×1)
+Xᵀ · e (2×3) · (3×1) → (2×1)
 
-  Xᵀ                     e
-  ┌  0.5  1.5  2.0  ┐   ┌  -1.5  ┐
-  └  1.0  0.0 -1.0  ┘ × │  -2.5  │
-                         └  -4.0  ┘
+ Xᵀ e
+ ┌ 0.5 1.5 2.0 ┐ ┌ -1.5 ┐
+ └ 1.0 0.0 -1.0 ┘ × │ -2.5 │
+ └ -4.0 ┘
 ```
 
 **Rule 6: Intuition first, formalism second.** Explain the **why** before the **what**. A formula without motivation is decoration.
-
-❌ **Wrong (formalism first):**
+**Wrong (formalism first):**
 > "The gradient is computed as ∇L = Xᵀ(ŷ - y). This gives us the direction to update weights."
-
-✅ **Right (intuition first):**
+**Right (intuition first):**
 > "We need to know which direction makes loss smaller. If predictions are too high, reduce the weights. If too low, increase them. This 'which direction' question is answered by the gradient: ∇L = Xᵀ(ŷ - y)."
 
 **Rule 7: Prioritize geometric intuition over algebraic manipulation.** Use diagrams, analogies, and plain-English explanations. Save the algebra for optional depth boxes.
@@ -212,16 +210,16 @@ Xᵀ · e                                 (2×3) · (3×1) → (2×1)
 Numerical examples are powerful pedagogical tools — but only when they **build intuition** rather than demonstrate arithmetic. Use them when concrete numbers make a concept clearer; skip them when they obscure the core idea.
 
 **When to use numerical walkthroughs:**
-- ✅ **Introducing a new algorithm** — show one complete iteration with explicit numbers to demystify the mechanics
-- ✅ **Debugging a concept** — when readers commonly misunderstand (e.g., gradient accumulation, broadcasting rules, attention weight normalization)
-- ✅ **Comparing alternatives** — show same example through two methods to highlight the difference (MAE vs MSE on same residuals)
-- ✅ **Validating implementation** — provide "ground truth" numbers readers can reproduce to verify their code
+- **Introducing a new algorithm** — show one complete iteration with explicit numbers to demystify the mechanics
+- **Debugging a concept** — when readers commonly misunderstand (e.g., gradient accumulation, broadcasting rules, attention weight normalization)
+- **Comparing alternatives** — show same example through two methods to highlight the difference (MAE vs MSE on same residuals)
+- **Validating implementation** — provide "ground truth" numbers readers can reproduce to verify their code
 
 **When to skip numerical walkthroughs:**
-- ❌ **Concept is already intuitive** — don't calculate 0.7 × 3.2 = 2.24 if the pattern is obvious
-- ❌ **Arithmetic obscures the idea** — if readers will focus on calculation details instead of the principle
-- ❌ **Same pattern as previous example** — don't repeat arithmetic for every hyperparameter or every layer
-- ❌ **Better shown visually** — use a plot or diagram instead of a table of numbers
+- **Concept is already intuitive** — don't calculate 0.7 × 3.2 = 2.24 if the pattern is obvious
+- **Arithmetic obscures the idea** — if readers will focus on calculation details instead of the principle
+- **Same pattern as previous example** — don't repeat arithmetic for every hyperparameter or every layer
+- **Better shown visually** — use a plot or diagram instead of a table of numbers
 
 **The judicious walkthrough structure (when you do use one):**
 1. State the toy dataset as a markdown table with named columns (use the track's running example data, never purely synthetic)
@@ -235,7 +233,7 @@ If a reader finishes a section thinking "I can do the arithmetic" instead of "I 
 
 **Examples of intuition-building vs calculation-showing:**
 
-| Concept | ❌ Calculation-Heavy | ✅ Intuition-Building |
+| Concept | Calculation-Heavy | Intuition-Building |
 |---------|---------------------|----------------------|
 | **Gradient Descent** | Show 10 iterations of w₁, w₂, w₃... with full arithmetic | Show ONE iteration with numbers, then explain "this is why it converges — the gradient gets smaller as we approach the minimum" with a plot |
 | **Batch Normalization** | Calculate μ, σ², normalized values for all 32 samples | Show one sample before/after normalization, explain "this centers activations so they don't explode or vanish," show distribution plot |
@@ -256,7 +254,7 @@ Every new concept links to where it was first introduced and where it will matte
 **Forward link pattern:**
 *"This is the conceptual foundation of neural network backpropagation. Every time you call `loss.backward()` in PyTorch, this matrix multiply is running — one per layer."*
 
-**The `> ➡️` callout** plants seeds for concepts introduced in later chapters without derailing the current section.
+**The `> ➡` callout** plants seeds for concepts introduced in later chapters without derailing the current section.
 
 **Cross-track links** to MathUnderTheHood are standard for rigorous derivations. Always reference the specific chapter:
 `[MathUnderTheHood ch06 — Gradient & Chain Rule](../math_under_the_hood/ch06_gradient_chain_rule)`
@@ -269,11 +267,11 @@ The meaning of every callout symbol is fixed. Do not improvise with new emoji or
 
 | Symbol | Meaning | When to use |
 |--------|---------|-------------|
-| `💡` | Key insight / conceptual payoff | After a result that reframes something the reader thought they understood |
-| `⚠️` | Warning / common trap | Before or after a pattern that is often done wrong |
-| `⚡` | Grand Challenge constraint connection | When content advances or validates one of the track's core constraints |
+| `` | Key insight / conceptual payoff | After a result that reframes something the reader thought they understood |
+| `` | Warning / common trap | Before or after a pattern that is often done wrong |
+| `` | Grand Challenge constraint connection | When content advances or validates one of the track's core constraints |
 | `> 📖 **Optional:**` | Deeper derivation | Full proofs and math that break the narrative flow for practitioners |
-| `> ➡️` | Forward pointer | When a concept needs to be planted before its formal treatment |
+| `> ➡` | Forward pointer | When a concept needs to be planted before its formal treatment |
 
 **Every callout ends with an actionable conclusion.** A Fix, a Rule, a What-to-do. No callout that just says "this is interesting" without consequence.
 
@@ -314,8 +312,8 @@ All Mermaid nodes: `stroke:#e2e8f0,stroke-width:2px,color:#ffffff`
 **Minimal but complete.** Enough to run end-to-end with real output. Nothing extra.
 
 **Comments explain WHY, not WHAT.**
-- ❌ `# fit the scaler`
-- ✅ `# fit on TRAIN statistics only — applying to test avoids leakage`
+- `# fit the scaler`
+- `# fit on TRAIN statistics only — applying to test avoids leakage`
 
 **The manual path alongside the library path.** When teaching a concept (gradient descent, attention, message passing, diffusion), show the manual implementation first, then the library version. Label clearly:
 - `# Educational: [concept] from scratch`
@@ -338,12 +336,10 @@ The last substantive section of every chapter. Fixed format:
 
 ```markdown
 ## N · Progress Check — What We Can Solve Now
-
-✅ **Unlocked capabilities:**
-- [specific capability with named metric — e.g., "RAG: menu error rate 15% → 4.2% ✅"]
-- [constraint achievement — e.g., "Constraint #2 ACCURACY ✅ ACHIEVED: <5% error rate"]
-
-❌ **Still can't solve:**
+**Unlocked capabilities:**
+- [specific capability with named metric — e.g., "RAG: menu error rate 15% → 4.2% "]
+- [constraint achievement — e.g., "Constraint #2 ACCURACY ACHIEVED: <5% error rate"]
+**Still can't solve:**
 - [named, specific gap with numbers — e.g., "6s p95 latency → 40% abandonment; target <3s"]
 - [what's next and why it's blocked]
 
@@ -351,8 +347,8 @@ The last substantive section of every chapter. Fixed format:
 
 | Constraint | Status | Current State |
 |------------|--------|---------------|
-| #1 [NAME] | ✅/❌/⚡ | [current metric vs. target] |
-| ...        | ...    | ...           |
+| #1 [NAME] | // | [current metric vs. target] |
+| ... | ... | ... |
 
 **[Mermaid LR flowchart showing all chapters, current one highlighted, metrics annotated]**
 ```
@@ -369,17 +365,17 @@ Every chapter follows this section sequence. Sections may be combined or have su
 [Blockquote header: story, curriculum position, notation]
 
 ## 0 · The Challenge — Where We Are
-## Animation                        ← needle GIF immediately after § 0
-## 1 · Core Idea                    ← 2–3 sentences, plain English
-## 2 · Running Example              ← tie the concept to the track's production scenario
-## 3 · The Math                     ← formulas, annotated, scalar-first
-## 4 · How It Works — Step by Step  ← numbered walkthrough or flow diagram
-## 5 · Key Diagrams                 ← Mermaid / ASCII art minimum 1
-## 6 · The Hyperparameter Dial      ← main tunable, effect, typical value
-## 7 · What Can Go Wrong            ← 3–5 failure modes, one sentence each
-## N-1 · Where This Reappears       ← forward links
-## N · Progress Check               ← fixed format above
-## N+1 · Bridge to Next Chapter     ← one clause what this established + one clause what next adds
+## Animation ← needle GIF immediately after § 0
+## 1 · Core Idea ← 2–3 sentences, plain English
+## 2 · Running Example ← tie the concept to the track's production scenario
+## 3 · The Math ← formulas, annotated, scalar-first
+## 4 · How It Works — Step by Step ← numbered walkthrough or flow diagram
+## 5 · Key Diagrams ← Mermaid / ASCII art minimum 1
+## 6 · The Hyperparameter Dial ← main tunable, effect, typical value
+## 7 · What Can Go Wrong ← 3–5 failure modes, one sentence each
+## N-1 · Where This Reappears ← forward links
+## N · Progress Check ← fixed format above
+## N+1 · Bridge to Next Chapter ← one clause what this established + one clause what next adds
 ```
 
 Supplement documents (e.g., `notebook_supplement.ipynb_solution.ipynb` (reference) or `notebook_supplement.ipynb_exercise.ipynb` (practice)) skip § 0, § Animation, and Progress Check. They are deep technical dives for advanced readers.
@@ -396,10 +392,10 @@ Absolute prohibitions. No exception, no track-level override:
 | 2 | **No concept without grounding in the running example** | Abstract explanations disconnect learning from practice |
 | 3 | **No section without forward/backward context** | Isolated concepts don't stick; only connected ones do |
 | 4 | **No math derivation without intuition-building support** | Use numerical examples when they clarify; use diagrams, verbal glosses, or analogies when numbers obscure the concept |
-| 5 | **No callout box without actionable content** | Every 💡⚠️⚡ ends with a Fix, Rule, or What-to-do |
+| 5 | **No callout box without actionable content** | Every ends with a Fix, Rule, or What-to-do |
 | 6 | **No academic register** | "It can be shown that" and "In this section we" are banned |
 | 7 | **No fuzzy metrics** | "Higher accuracy" is forbidden; "$55k MAE vs. $40k target" is required |
-| 8 | **No forward reference without a ➡️ callout** | Plant every concept formally before using it downstream |
+| 8 | **No forward reference without a ➡ callout** | Plant every concept formally before using it downstream |
 | 9 | **No supplement with a § 0 Challenge section** | Supplements are deep dives, not narrative chapters |
 | 10 | **No chapter without a Progress Check** | Every chapter must close with the constraint status update |
 
@@ -409,19 +405,19 @@ Absolute prohibitions. No exception, no track-level override:
 
 Before marking a chapter complete:
 
-- [ ] Story header: historical context → curriculum position → notation declaration ✅
-- [ ] § 0 Challenge section with concrete failure scenario and named blocker ✅
-- [ ] Needle GIF present under `## Animation` ✅
-- [ ] Failure-first structure in every multi-option subsection ✅
-- [ ] Every formula verbally glossed within 3 lines ✅
-- [ ] At least one numerical walkthrough with explicit arithmetic ✅
-- [ ] Forward/backward links on every new concept ✅
-- [ ] Callout boxes use the standard symbols only ✅
-- [ ] Images in `./img/` with dark background and descriptive alt-text ✅
-- [ ] Code blocks labelled Educational vs Production ✅
-- [ ] Progress Check with constraint status table and Mermaid arc ✅
-- [ ] Bridge paragraph closes the chapter ✅
-- [ ] No academic register, no fuzzy metrics, no decoration ✅
+- [ ] Story header: historical context → curriculum position → notation declaration
+- [ ] § 0 Challenge section with concrete failure scenario and named blocker
+- [ ] Needle GIF present under `## Animation`
+- [ ] Failure-first structure in every multi-option subsection
+- [ ] Every formula verbally glossed within 3 lines
+- [ ] At least one numerical walkthrough with explicit arithmetic
+- [ ] Forward/backward links on every new concept
+- [ ] Callout boxes use the standard symbols only
+- [ ] Images in `./img/` with dark background and descriptive alt-text
+- [ ] Code blocks labelled Educational vs Production
+- [ ] Progress Check with constraint status table and Mermaid arc
+- [ ] Bridge paragraph closes the chapter
+- [ ] No academic register, no fuzzy metrics, no decoration
 
 ---
 
@@ -459,11 +455,11 @@ Each track's `AUTHORING_GUIDE.md` extends this document with:
 1. **Meta-navigation section** — a section whose only purpose is to map phases/acts to section numbers (e.g., "Phase 2 → §4.1, §4.2, §5 Act 2"). Delete it. The sequential narrative is self-navigating. If orientation is needed, one sentence in § 0 suffices.
 2. **Tagged prefix headers** — `### **[Phase 2: AUDIT]** Act 2`. Embed the stage in the title naturally: `### Act 2 — Audit: The IQR Sweep`. One title, one meaning.
 3. **DECISION CHECKPOINT blocks** — ~20-line structured summaries with sub-headings "What you just saw / What it means / What to do next". They repeat content just covered and pre-announce the next section. Replace with exactly two callouts:
-   ```
-   > 💡 **[Stage] verdict:** [one-sentence decision + metric impact]
-   > ➡️ [forward pointer to next step or chapter, with named consequence]
-   ```
-4. **Section-number cross-references** — "see §5 Act 2" or "covered in §4.2". Section numbers shift when content moves. Use `> ➡️` callouts at the point where a concept reappears, or use relative file paths for inter-chapter links.
+ ```
+ > **[Stage] verdict:** [one-sentence decision + metric impact]
+ > ➡ [forward pointer to next step or chapter, with named consequence]
+ ```
+4. **Section-number cross-references** — "see §5 Act 2" or "covered in §4.2". Section numbers shift when content moves. Use `> ➡` callouts at the point where a concept reappears, or use relative file paths for inter-chapter links.
 5. **Unverified link paths** — cross-references with wrong directory depth (`../../` vs `../`) or wrong separator (`_` vs `-`). Every path must be verified to exist before writing it.
 
 ### The diagnostic test
@@ -477,8 +473,8 @@ Read any section of a chapter. Count how many navigation models the reader must 
 After each act or stage concludes, use at most one of each type:
 
 ```
-> 💡 **[Stage] verdict:** [decision + metric impact in one sentence]
-> ➡️ [what this enables next, with named consequence]
+> **[Stage] verdict:** [decision + metric impact in one sentence]
+> ➡ [what this enables next, with named consequence]
 ```
 
-Never chain these together to recreate a checkpoint block. One `💡` per act. One `➡️` per act.
+Never chain these together to recreate a checkpoint block. One `` per act. One `➡` per act.

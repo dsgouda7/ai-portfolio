@@ -25,7 +25,7 @@ Ensemble methods are the most consistent winners in production ML. Every Kaggle 
 | **California Housing** | Regression | `sklearn.datasets.fetch_california_housing` | Predict median house value ($100k units) |
 | **California Housing (binarized)** | Classification | `sklearn.datasets.fetch_california_housing` | Classify districts as high-value (above median) or low-value |
 
-> ⚡ **Cross-cutting design**: Every chapter applies ensemble methods to **California Housing** (regression) and **California Housing binarized** (classification). Using one dataset for both tasks keeps the focus on the ensemble algorithms, not dataset context-switching.
+> **Cross-cutting design**: Every chapter applies ensemble methods to **California Housing** (regression) and **California Housing binarized** (classification). Using one dataset for both tasks keeps the focus on the ensemble algorithms, not dataset context-switching.
 
 ---
 
@@ -33,53 +33,53 @@ Ensemble methods are the most consistent winners in production ML. Every Kaggle 
 
 | Ch | Title | What Unlocks | Key Metric | Constraints | Status |
 |----|-------|--------------|------------|-------------|--------|
-| **1** | [Bagging & Random Forest](ch01_ensembles) | Variance reduction via bootstrap aggregation | RF RMSE < DT RMSE | #1 #2 #5 | ✅ |
-| **2** | [Boosting: AdaBoost & Gradient Boosting](ch02_boosting) | Bias reduction via sequential error correction | GB beats RF on MAE | #1 #2 | 📋 |
-| **3** | [XGBoost, LightGBM, CatBoost](ch03_xgboost_lightgbm) | Production-grade gradient boosting frameworks | XGB < $35k MAE | #1 #3 | 📋 |
-| **4** | [SHAP Interpretability](ch04_shap) | Explain any ensemble's predictions | Per-prediction explanations | #4 | 📋 |
-| **5** | [Stacking & Blending](ch05_stacking) | Meta-learner combines diverse base models | Stack beats best single | #1 #2 | 📋 |
-| **6** | [Production Ensembles](ch06_production) | Deploy, version, prune, and monitor | Latency < 5× single | #3 #5 | 📋 |
+| **1** | [Bagging & Random Forest](ch01_ensembles) | Variance reduction via bootstrap aggregation | RF RMSE < DT RMSE | #1 #2 #5 | |
+| **2** | [Boosting: AdaBoost & Gradient Boosting](ch02_boosting) | Bias reduction via sequential error correction | GB beats RF on MAE | #1 #2 | |
+| **3** | [XGBoost, LightGBM, CatBoost](ch03_xgboost_lightgbm) | Production-grade gradient boosting frameworks | XGB < $35k MAE | #1 #3 | |
+| **4** | [SHAP Interpretability](ch04_shap) | Explain any ensemble's predictions | Per-prediction explanations | #4 | |
+| **5** | [Stacking & Blending](ch05_stacking) | Meta-learner combines diverse base models | Stack beats best single | #1 #2 | |
+| **6** | [Production Ensembles](ch06_production) | Deploy, version, prune, and monitor | Latency < 5× single | #3 #5 | |
 
 ---
 
 ## Narrative Arc: From Single Trees to Production Ensembles
 
-### 🎬 Act 1: Foundations — Bagging & Boosting (Ch.1–2)
+### Act 1: Foundations — Bagging & Boosting (Ch.1–2)
 **Two strategies to combine weak learners**
 
 - **Ch.1 — Bagging**: Train 200 independent trees on bootstrap samples, average their predictions. Variance drops as $\frac{1}{N}$ (if trees are decorrelated). Random Forest adds feature randomization to decorrelate.
-  - *"One tree memorizes noise. Two hundred trees cancel each other's mistakes." — Leo Breiman*
+ - *"One tree memorizes noise. Two hundred trees cancel each other's mistakes." — Leo Breiman*
 
 - **Ch.2 — Boosting**: Train trees *sequentially*, each one correcting the previous ensemble's errors. AdaBoost reweights samples; Gradient Boosting fits residuals. Bias drops with each round.
-  - *"Boosting focuses on what the ensemble still gets wrong — it's gradient descent in function space."*
+ - *"Boosting focuses on what the ensemble still gets wrong — it's gradient descent in function space."*
 
-**Status**: ✅✅❌❌❌ (Improvement + Diversity demonstrated)
+**Status**: (Improvement + Diversity demonstrated)
 
 ---
 
-### ⚡ Act 2: Production-Grade Frameworks (Ch.3–4)
+### Act 2: Production-Grade Frameworks (Ch.3–4)
 **Industrial-strength boosting + explainability**
 
 - **Ch.3 — XGBoost/LightGBM/CatBoost**: Regularized boosting, histogram-based splits, GPU acceleration. The models that win every tabular competition.
-  - *"XGBoost is the AK-47 of machine learning — reliable, effective, everywhere."*
+ - *"XGBoost is the AK-47 of machine learning — reliable, effective, everywhere."*
 
 - **Ch.4 — SHAP**: Shapley values from game theory. Explain *any* model's prediction: "MedInc pushed this prediction +$35k." Both local (per-prediction) and global (feature importance).
-  - *"If you can't explain it to the compliance team, you can't deploy it."*
-  - > 💡 **Cross-track note**: TreeSHAP also retroactively satisfies **SmartVal Constraint #4** (Interpretability: predictions must be explainable to non-technical stakeholders) — the first point in the curriculum where you can show a compliance-ready explanation to a lending regulator.
+ - *"If you can't explain it to the compliance team, you can't deploy it."*
+ - > **Cross-track note**: TreeSHAP also retroactively satisfies **SmartVal Constraint #4** (Interpretability: predictions must be explainable to non-technical stakeholders) — the first point in the curriculum where you can show a compliance-ready explanation to a lending regulator.
 
-**Status**: ✅✅✅✅❌ (Efficiency + Interpretability achieved!)
+**Status**: (Efficiency + Interpretability achieved!)
 
 ---
 
-### 🚀 Act 3: Advanced Combinations & Deployment (Ch.5–6)
+### Act 3: Advanced Combinations & Deployment (Ch.5–6)
 **Stacking, blending, and the production reality**
 
 - **Ch.5 — Stacking & Blending**: Train a meta-learner on out-of-fold predictions from diverse base models. When stacking helps (diverse base learners) vs when it doesn't (diminishing returns).
 
 - **Ch.6 — Production Ensembles**: Latency budgets, model pruning, A/B testing, when ensembles beat neural networks (spoiler: tabular data), and when they don't.
-  - *"The best model is the one you can actually deploy."*
+ - *"The best model is the one you can actually deploy."*
 
-**Status**: ✅✅✅✅✅ (All constraints achieved!)
+**Status**: (All constraints achieved!)
 
 ---
 
@@ -87,18 +87,18 @@ Ensemble methods are the most consistent winners in production ML. Every Kaggle 
 
 ```mermaid
 flowchart TD
-    SINGLE["Single Model\n(high variance OR high bias)"]
-    SINGLE --> BAG["Bagging\n(reduce variance)"]
-    SINGLE --> BOOST["Boosting\n(reduce bias)"]
-    BAG --> RF["Random Forest\nCh.1"]
-    BOOST --> ADA["AdaBoost\nCh.2"]
-    BOOST --> GB["Gradient Boosting\nCh.2"]
-    GB --> XGB["XGBoost\nCh.3"]
-    GB --> LGB["LightGBM\nCh.3"]
-    GB --> CAT["CatBoost\nCh.3"]
-    RF & XGB --> SHAP["SHAP\nExplainability\nCh.4"]
-    RF & XGB & LGB --> STACK["Stacking\nCh.5"]
-    STACK --> PROD["Production\nDeployment\nCh.6"]
+ SINGLE["Single Model\n(high variance OR high bias)"]
+ SINGLE --> BAG["Bagging\n(reduce variance)"]
+ SINGLE --> BOOST["Boosting\n(reduce bias)"]
+ BAG --> RF["Random Forest\nCh.1"]
+ BOOST --> ADA["AdaBoost\nCh.2"]
+ BOOST --> GB["Gradient Boosting\nCh.2"]
+ GB --> XGB["XGBoost\nCh.3"]
+ GB --> LGB["LightGBM\nCh.3"]
+ GB --> CAT["CatBoost\nCh.3"]
+ RF & XGB --> SHAP["SHAP\nExplainability\nCh.4"]
+ RF & XGB & LGB --> STACK["Stacking\nCh.5"]
+ STACK --> PROD["Production\nDeployment\nCh.6"]
 ```
 
 ---

@@ -5,8 +5,8 @@ This directory contains Python scripts that generate visual diagrams for the Inf
 ## Scripts
 
 ### 1. gen_ch06_terraform_workflow.py
-**Purpose:** Generate the Terraform workflow diagram  
-**Output:** `../img/ch06-terraform-workflow.png`  
+**Purpose:** Generate the Terraform workflow diagram
+**Output:** `../img/ch06-terraform-workflow.png`
 **Content:** Shows the complete workflow: Write → Init → Plan → Apply → State
 
 **Key elements:**
@@ -24,8 +24,8 @@ python gen_ch06_terraform_workflow.py
 ---
 
 ### 2. gen_ch06_resource_graph.py
-**Purpose:** Generate the resource dependency graph diagram  
-**Output:** `../img/ch06-resource-graph.png`  
+**Purpose:** Generate the resource dependency graph diagram
+**Output:** `../img/ch06-resource-graph.png`
 **Content:** Shows how Terraform builds a directed acyclic graph (DAG) of resource dependencies
 
 **Key elements:**
@@ -44,8 +44,8 @@ python gen_ch06_resource_graph.py
 ---
 
 ### 3. gen_ch06_state_management.py
-**Purpose:** Generate the state management comparison diagram  
-**Output:** `../img/ch06-state-management.png`  
+**Purpose:** Generate the state management comparison diagram
+**Output:** `../img/ch06-state-management.png`
 **Content:** Compares local vs remote state backends
 
 **Key elements:**
@@ -134,17 +134,17 @@ pip install matplotlib
 ```
 
 ### Error: "Tkinter not found"
-**Cause:** GUI backend not available  
+**Cause:** GUI backend not available
 **Solution:** Scripts use `Agg` backend (headless) — should work without GUI
 
 ### Diagrams look pixelated
 **Solution:** Increase DPI in script (currently 150)
 ```python
-plt.savefig(output_path, dpi=200, ...)  # Higher quality
+plt.savefig(output_path, dpi=200, ...) # Higher quality
 ```
 
 ### Font warnings
-**Cause:** Custom fonts not available  
+**Cause:** Custom fonts not available
 **Solution:** Warnings are safe to ignore — falls back to default fonts
 
 ---
@@ -160,7 +160,7 @@ To modify diagram appearance:
 Example:
 ```python
 # Make title larger
-ax.text(5, 9.5, 'Title', fontsize=28, ...)  # Changed from 24
+ax.text(5, 9.5, 'Title', fontsize=28, ...) # Changed from 24
 ```
 
 ---

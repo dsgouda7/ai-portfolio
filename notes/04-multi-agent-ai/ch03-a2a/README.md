@@ -10,7 +10,7 @@
 
 ## § 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Build **OrderFlow** — AI-native B2B purchase order automation satisfying 8 constraints:
+> **The mission**: Build **OrderFlow** — AI-native B2B purchase order automation satisfying 8 constraints:
 > 1. **THROUGHPUT**: 1,000 POs/day — 2. **LATENCY**: <4hr SLA — 3. **ACCURACY**: <2% error — 4. **SCALABILITY**: 10 agents/PO — 5. **RELIABILITY**: >99.9% uptime — 6. **AUDITABILITY**: Full traceability — 7. **OBSERVABILITY**: Real-time monitoring — 8. **DEPLOYABILITY**: Zero-downtime updates
 
 **After Ch.2**: 8 specialized agents connected to 20 data sources via MCP (28 components vs. 160 integrations). Error rate 3.2%.
@@ -23,22 +23,22 @@ Intake agent (Pod 1) needs to delegate to Negotiation agent (Pod 3) across Kuber
 
 ### What We Unlock in This Chapter
 
-- ✅ Understand A2A protocol: Agent Cards (capability manifest), task lifecycle (submitted → working → completed/failed)
-- ✅ Cross-service delegation: Agents discover each other via `/.well-known/agent.json`, delegate via HTTP + SSE
-- ✅ Distributed agent topology: Agents run on separate machines/clusters without tight coupling
+- Understand A2A protocol: Agent Cards (capability manifest), task lifecycle (submitted → working → completed/failed)
+- Cross-service delegation: Agents discover each other via `/.well-known/agent.json`, delegate via HTTP + SSE
+- Distributed agent topology: Agents run on separate machines/clusters without tight coupling
 
 ### Progress on the 8 Constraints
 
 | Constraint | Status | Evidence |
 |------------|--------|----------|
-| #1 THROUGHPUT | ❌ **BLOCKED** | Still 10 POs/day (synchronous blocking) |
-| #2 LATENCY | ❌ **BLOCKED** | 36 hours median (synchronous polling) |
-| #3 ACCURACY | ⚡ **STABLE** | 3.2% error (maintained from Ch.2) |
-| #4 SCALABILITY | ✅ **DISTRIBUTED!** | Agents run on separate machines/clusters |
-| #5 RELIABILITY | ⚡ **IMPROVED** | Task IDs enable retry after crashes |
-| #6 AUDITABILITY | ⚡ **STABLE** | Task lifecycle persisted |
-| #7 OBSERVABILITY | ⚡ **STABLE** | Task status queryable |
-| #8 DEPLOYABILITY | ⚡ **FOUNDATION LAID** | Agent Cards enable versioning (but no CI/CD automation) |
+| #1 THROUGHPUT | **BLOCKED** | Still 10 POs/day (synchronous blocking) |
+| #2 LATENCY | **BLOCKED** | 36 hours median (synchronous polling) |
+| #3 ACCURACY | **STABLE** | 3.2% error (maintained from Ch.2) |
+| #4 SCALABILITY | **DISTRIBUTED!** | Agents run on separate machines/clusters |
+| #5 RELIABILITY | **IMPROVED** | Task IDs enable retry after crashes |
+| #6 AUDITABILITY | **STABLE** | Task lifecycle persisted |
+| #7 OBSERVABILITY | **STABLE** | Task status queryable |
+| #8 DEPLOYABILITY | **FOUNDATION LAID** | Agent Cards enable versioning (but no CI/CD automation) |
 
 **What's still blocking**: Synchronous A2A polling blocks Intake agent for 1-2 hours while Negotiation agent works → can only handle 3 × 8hr = **24 POs/day**. Need async pub/sub to hit 1,000 POs/day. *(Ch.4 — Event-driven solves this.)*
 
@@ -73,32 +73,32 @@ GET https://supplier-negotiation.orderflow.internal/.well-known/agent.json
 
 ```json
 {
-  "name": "SupplierNegotiationAgent",
-  "description": "Negotiates purchase order terms with registered suppliers.",
-  "version": "1.2.0",
-  "url": "https://supplier-negotiation.orderflow.internal/a2a",
-  "capabilities": {
-    "streaming": true,
-    "pushNotifications": false
-  },
-  "skills": [
-    {
-      "id": "negotiate_po",
-      "name": "Negotiate Purchase Order",
-      "description": "Given supplier options and a target price, negotiates final terms.",
-      "inputModes": ["text/plain", "application/json"],
-      "outputModes": ["application/json"]
-    }
-  ],
-  "authentication": {
-    "schemes": ["Bearer"]
-  }
+ "name": "SupplierNegotiationAgent",
+ "description": "Negotiates purchase order terms with registered suppliers.",
+ "version": "1.2.0",
+ "url": "https://supplier-negotiation.orderflow.internal/a2a",
+ "capabilities": {
+ "streaming": true,
+ "pushNotifications": false
+ },
+ "skills": [
+ {
+ "id": "negotiate_po",
+ "name": "Negotiate Purchase Order",
+ "description": "Given supplier options and a target price, negotiates final terms.",
+ "inputModes": ["text/plain", "application/json"],
+ "outputModes": ["application/json"]
+ }
+ ],
+ "authentication": {
+ "schemes": ["Bearer"]
+ }
 }
 ```
 
 The Agent Card answers: what can this agent do, what formats does it accept, what authentication does it require, and does it support streaming? A calling agent can make an informed delegation decision from this card alone — no human configuration required.
 
-> 💡 **Auth scheme verdict:** **Use Bearer tokens** (OAuth 2.0 with managed identity) for production multi-tenant systems — tokens rotate automatically, scope to specific agents, no static secrets in code. **Use API keys** for internal single-tenant systems where OAuth overhead isn't justified. **Avoid basic auth** (username/password) — credentials don't rotate, require secure storage. **OrderFlow pattern:** All cross-pod A2A calls use Azure Managed Identity → exchange for short-lived Bearer tokens (1-hour TTL) via MSAL library.
+> **Auth scheme verdict:** **Use Bearer tokens** (OAuth 2.0 with managed identity) for production multi-tenant systems — tokens rotate automatically, scope to specific agents, no static secrets in code. **Use API keys** for internal single-tenant systems where OAuth overhead isn't justified. **Avoid basic auth** (username/password) — credentials don't rotate, require secure storage. **OrderFlow pattern:** All cross-pod A2A calls use Azure Managed Identity → exchange for short-lived Bearer tokens (1-hour TTL) via MSAL library.
 
 > 🏭 **Industry Note — Agent Card Schema Standards:** Agent Cards use JSON Schema for skill input/output validation. OpenAPI 3.1 and AsyncAPI 2.6+ both support Agent Card embedding — Salesforce's Einstein Agent and SAP's Joule use OpenAPI extensions (`x-agent-card`) to declare A2A compatibility alongside REST APIs. MongoDB Atlas uses AsyncAPI for event-driven agent skills. The IETF draft RFC-9512 ("Well-Known URIs for Agent Discovery") formalizes the `/.well-known/agent.json` convention, following the same pattern as `/.well-known/openid-configuration` (OAuth 2.0) and `/.well-known/security.txt` (security contact info).
 
@@ -107,19 +107,19 @@ The Agent Card answers: what can this agent do, what formats does it accept, wha
 A2A tasks follow a strict state machine. This is the core semantic difference from a tool call, which has no lifecycle — it either returns or throws.
 
 ```
-                          ┌──────────┐
-                          │submitted │  ← Client sends the task
-                          └────┬─────┘
-                               │
-                          ┌────▼─────┐
-                          │ working  │  ← Agent is actively processing
-                          └────┬─────┘
-                               │
-              ┌────────────────┼─────────────────┐
-              │                │                 │
-        ┌─────▼──────┐  ┌──────▼──────┐  ┌──────▼──────┐
-        │ completed  │  │   failed    │  │  cancelled  │
-        └────────────┘  └─────────────┘  └─────────────┘
+ ┌──────────┐
+ │submitted │ ← Client sends the task
+ └────┬─────┘
+ │
+ ┌────▼─────┐
+ │ working │ ← Agent is actively processing
+ └────┬─────┘
+ │
+ ┌────────────────┼─────────────────┐
+ │ │ │
+ ┌─────▼──────┐ ┌──────▼──────┐ ┌──────▼──────┐
+ │ completed │ │ failed │ │ cancelled │
+ └────────────┘ └─────────────┘ └─────────────┘
 ```
 
 Each state transition is observable by the calling agent through polling or SSE streaming.
@@ -130,53 +130,53 @@ Each state transition is observable by the calling agent through polling or SSE 
 import httpx
 
 async def delegate_to_negotiation_agent(order_details: dict, auth_token: str) -> str:
-    """Returns a task_id that can be polled or streamed."""
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            "https://supplier-negotiation.orderflow.internal/a2a/tasks",
-            json={
-                "skill_id": "negotiate_po",
-                "input": {
-                    "content": order_details,
-                    "content_type": "application/json"
-                },
-                "metadata": {
-                    "correlation_id": order_details["po_id"]
-                }
-            },
-            headers={"Authorization": f"Bearer {auth_token}"}
-        )
-        return response.json()["task_id"]
+ """Returns a task_id that can be polled or streamed."""
+ async with httpx.AsyncClient() as client:
+ response = await client.post(
+ "https://supplier-negotiation.orderflow.internal/a2a/tasks",
+ json={
+ "skill_id": "negotiate_po",
+ "input": {
+ "content": order_details,
+ "content_type": "application/json"
+ },
+ "metadata": {
+ "correlation_id": order_details["po_id"]
+ }
+ },
+ headers={"Authorization": f"Bearer {auth_token}"}
+ )
+ return response.json()["task_id"]
 ```
 
-> 💡 **Agent selection verdict:** **Always fetch the Agent Card first** — validate that the `skill_id` you need exists in the `skills` array, check that your input format matches one of the skill's `inputModes`, and verify the agent's `version` is compatible with your integration. **Never hardcode agent URLs** — use service discovery (Kubernetes DNS, Consul) so agents can move between pods/clusters without breaking callers. **OrderFlow pattern:** Orchestrator maintains a registry cache of Agent Cards (refreshed every 5 minutes) — lookup by `skill_id`, validate compatibility, then delegate.
+> **Agent selection verdict:** **Always fetch the Agent Card first** — validate that the `skill_id` you need exists in the `skills` array, check that your input format matches one of the skill's `inputModes`, and verify the agent's `version` is compatible with your integration. **Never hardcode agent URLs** — use service discovery (Kubernetes DNS, Consul) so agents can move between pods/clusters without breaking callers. **OrderFlow pattern:** Orchestrator maintains a registry cache of Agent Cards (refreshed every 5 minutes) — lookup by `skill_id`, validate compatibility, then delegate.
 
-> 💡 **Polling vs streaming verdict:** **Use SSE streaming** when task duration >30s, progress updates matter (e.g., "Contacting supplier..."), or when orchestrator needs to display real-time status to users. **Use polling** for quick tasks (<10s), batch processing where individual task progress doesn't matter, or when SSE support is unavailable (firewalls blocking long-lived connections). **OrderFlow pattern:** Negotiation tasks (1-2 hours) → SSE streaming; Pricing lookups (<5s) → poll once after 3s delay.
+> **Polling vs streaming verdict:** **Use SSE streaming** when task duration >30s, progress updates matter (e.g., "Contacting supplier..."), or when orchestrator needs to display real-time status to users. **Use polling** for quick tasks (<10s), batch processing where individual task progress doesn't matter, or when SSE support is unavailable (firewalls blocking long-lived connections). **OrderFlow pattern:** Negotiation tasks (1-2 hours) → SSE streaming; Pricing lookups (<5s) → poll once after 3s delay.
 
 ### 3.4 · Real-Time Progress Updates — SSE Streaming
 
 ```python
 async def stream_task_progress(task_id: str, auth_token: str):
-    async with httpx.AsyncClient() as client:
-        async with client.stream(
-            "GET",
-            f"https://supplier-negotiation.orderflow.internal/a2a/tasks/{task_id}/stream",
-            headers={"Authorization": f"Bearer {auth_token}"}
-        ) as response:
-            async for line in response.aiter_lines():
-                if line.startswith("data:"):
-                    event = json.loads(line[5:])
-                    if event["status"] == "completed":
-                        return event["result"]
-                    elif event["status"] == "failed":
-                        raise AgentTaskFailed(event["error"])
+ async with httpx.AsyncClient() as client:
+ async with client.stream(
+ "GET",
+ f"https://supplier-negotiation.orderflow.internal/a2a/tasks/{task_id}/stream",
+ headers={"Authorization": f"Bearer {auth_token}"}
+ ) as response:
+ async for line in response.aiter_lines():
+ if line.startswith("data:"):
+ event = json.loads(line[5:])
+ if event["status"] == "completed":
+ return event["result"]
+ elif event["status"] == "failed":
+ raise AgentTaskFailed(event["error"])
 ```
 
 SSE streaming means the calling agent does not poll in a loop and does not block a thread. It connects a streaming response and receives state transitions as they happen.
 
 > 🏭 **Industry Note — SSE vs WebSocket Trade-offs:** A2A specifies **Server-Sent Events (SSE)** for streaming, not WebSockets. **Why SSE?** (1) Unidirectional — server pushes updates, client doesn't need to send messages mid-stream (simpler protocol), (2) Auto-reconnect — browsers/clients retry SSE connections automatically with `Last-Event-ID` header to resume, (3) HTTP/2 multiplexing — SSE streams multiplex over a single connection without head-of-line blocking, (4) Firewall-friendly — standard HTTP, no special ports or upgrade handshake. **When WebSocket wins:** bidirectional real-time (e.g., collaborative editing, gaming) where client needs to send frequent updates. **A2A's choice:** Task delegation is server→client updates only, so SSE is the right fit. Google's A2A spec references RFC-8895 (SSE over HTTP/2) for implementation details.
 
-> 💡 **SSE reconnect verdict:** **Always store the last received event offset** (use the `id` field in SSE messages or maintain your own sequence counter). On reconnection, send `Last-Event-ID: <offset>` header — the server resumes from that point, avoiding duplicate processing. **Implement exponential backoff:** 1s, 2s, 4s, 8s, max 60s between reconnect attempts. **OrderFlow pattern:** SSE client stores `last_event_id` in Redis (shared across orchestrator replicas) — if orchestrator pod crashes, new pod reads offset from Redis and reconnects without missing events.
+> **SSE reconnect verdict:** **Always store the last received event offset** (use the `id` field in SSE messages or maintain your own sequence counter). On reconnection, send `Last-Event-ID: <offset>` header — the server resumes from that point, avoiding duplicate processing. **Implement exponential backoff:** 1s, 2s, 4s, 8s, max 60s between reconnect attempts. **OrderFlow pattern:** SSE client stores `last_event_id` in Redis (shared across orchestrator replicas) — if orchestrator pod crashes, new pod reads offset from Redis and reconnects without missing events.
 
 ### MCP and A2A — Complementary, Not Competing
 
@@ -191,13 +191,13 @@ They are designed to be stacked:
 
 ```
 Orchestrator
-    │ delegates via A2A
-    ▼
+ │ delegates via A2A
+ ▼
 SupplierNegotiationAgent
-    │ accesses tools via MCP
-    ├──▶ MCP ERP Server (Resource: supplier records)
-    ├──▶ MCP Pricing Server (Tool: get_real_time_quote)
-    └──▶ MCP Email Server (Tool: send_offer_email)
+ │ accesses tools via MCP
+ ├──▶ MCP ERP Server (Resource: supplier records)
+ ├──▶ MCP Pricing Server (Tool: get_real_time_quote)
+ └──▶ MCP Email Server (Tool: send_offer_email)
 ```
 
 A calling agent should not care whether the sub-agent uses MCP, direct API calls, or some other internal mechanism to do its work. A2A abstracts the *task*; MCP abstracts the *tools*. The sub-agent uses MCP internally; the calling agent uses A2A to reach the sub-agent.
@@ -235,9 +235,9 @@ Here's how PO #2024-1847 flows through A2A delegation:
 **2. Task Submission**: Orchestrator POSTs to `/a2a/tasks/send` with:
 ```json
 {
-  "skill_id": "negotiate_po",
-  "input": {"po_id": "2024-1847", "supplier_id": "TechFurnish"},
-  "metadata": {"correlation_id": "po-2024-1847"}
+ "skill_id": "negotiate_po",
+ "input": {"po_id": "2024-1847", "supplier_id": "TechFurnish"},
+ "metadata": {"correlation_id": "po-2024-1847"}
 }
 ```
 Response: `{"task_id": "a7b3c9d2-...", "status": "submitted"}`
@@ -253,22 +253,22 @@ data: {"status": "completed", "result": {"price": "$749", "delivery": "14 days"}
 
 **ASCII sequence diagram:**
 ```
-Orchestrator                 A2A Server (Negotiation Agent)      Supplier API
-    |                                    |                             |
-    |──1. GET /.well-known/agent.json──→|                             |
-    |←────Agent Card (negotiate_po)──────|                             |
-    |                                    |                             |
-    |──2. POST /tasks/send──────────────→|                             |
-    |   (po_id, supplier_id)             |                             |
-    |←──task_id: a7b3c9d2-...───────────|                             |
-    |                                    |                             |
-    |──3. GET /tasks/{id}/stream────────→|                             |
-    |   (SSE connection opens)           |──quote_request────────────→|
-    |                                    |                             |
-    |←──data: {"status":"working"}───────|                             |
-    |                                    |←─────quote($749)───────────|
-    |←──data: {"status":"completed"}─────|                             |
-    |   {"result": {"price":"$749"}}     |                             |
+Orchestrator A2A Server (Negotiation Agent) Supplier API
+ | | |
+ |──1. GET /.well-known/agent.json──→| |
+ |←────Agent Card (negotiate_po)──────| |
+ | | |
+ |──2. POST /tasks/send──────────────→| |
+ | (po_id, supplier_id) | |
+ |←──task_id: a7b3c9d2-...───────────| |
+ | | |
+ |──3. GET /tasks/{id}/stream────────→| |
+ | (SSE connection opens) |──quote_request────────────→|
+ | | |
+ |←──data: {"status":"working"}───────| |
+ | |←─────quote($749)───────────|
+ |←──data: {"status":"completed"}─────| |
+ | {"result": {"price":"$749"}} | |
 ```
 
 **Critical insight**: Orchestrator thread is free during the 45-minute negotiation — it only holds the `task_id` reference. This enables concurrent processing of other POs.
@@ -281,51 +281,51 @@ Orchestrator                 A2A Server (Negotiation Agent)      Supplier API
 
 ```
 Tool Call (synchronous, milliseconds):
-  Agent ──invoke("get_price", args)──→ PricingAPI ──200ms──→ returns $749
+ Agent ──invoke("get_price", args)──→ PricingAPI ──200ms──→ returns $749
 
 Agent Call (asynchronous, minutes/hours):
-  Orchestrator ──submit("negotiate_po")──→ NegotiationAgent
-       ↓ task_id stored                         ↓ spawns sub-agents
-       ↓ orchestrator continues                  ↓ calls supplier API (45 min wait)
-       ↓                                         ↓ internal reasoning loop
-       ↓                                         ↓
-       ←─────SSE: "completed"──────────────────←
+ Orchestrator ──submit("negotiate_po")──→ NegotiationAgent
+ ↓ task_id stored ↓ spawns sub-agents
+ ↓ orchestrator continues ↓ calls supplier API (45 min wait)
+ ↓ ↓ internal reasoning loop
+ ↓ ↓
+ ←─────SSE: "completed"──────────────────←
 ```
 
 ### A2A Layers with MCP
 
 ```
 ┌─────────────────────────────────────────────┐
-│ Orchestrator Agent                          │
-│ ├─ uses A2A to delegate to sub-agents       │
+│ Orchestrator Agent │
+│ ├─ uses A2A to delegate to sub-agents │
 └─────────────┬───────────────────────────────┘
-              │ A2A protocol (task delegation)
-              ▼
+ │ A2A protocol (task delegation)
+ ▼
 ┌─────────────────────────────────────────────┐
-│ Negotiation Agent (separate service/pod)    │
-│ ├─ uses MCP to access tools                 │
-│ │  ├─ MCP ERP Server (supplier records)     │
-│ │  ├─ MCP Pricing Server (get_quote tool)   │
-│ │  └─ MCP Email Server (send_offer tool)    │
+│ Negotiation Agent (separate service/pod) │
+│ ├─ uses MCP to access tools │
+│ │ ├─ MCP ERP Server (supplier records) │
+│ │ ├─ MCP Pricing Server (get_quote tool) │
+│ │ └─ MCP Email Server (send_offer tool) │
 └─────────────────────────────────────────────┘
 ```
 
 ### State Machine Visualization
 
 ```
-                          ┌──────────┐
-                          │submitted │  ← Client sends the task
-                          └────┬─────┘
-                               │
-                          ┌────▼─────┐
-                          │ working  │  ← Agent is actively processing
-                          └────┬─────┘
-                               │
-              ┌────────────────┼─────────────────┐
-              │                │                 │
-        ┌─────▼──────┐  ┌──────▼──────┐  ┌──────▼──────┐
-        │ completed  │  │   failed    │  │  cancelled  │
-        └────────────┘  └─────────────┘  └─────────────┘
+ ┌──────────┐
+ │submitted │ ← Client sends the task
+ └────┬─────┘
+ │
+ ┌────▼─────┐
+ │ working │ ← Agent is actively processing
+ └────┬─────┘
+ │
+ ┌────────────────┼─────────────────┐
+ │ │ │
+ ┌─────▼──────┐ ┌──────▼──────┐ ┌──────▼──────┐
+ │ completed │ │ failed │ │ cancelled │
+ └────────────┘ └─────────────┘ └─────────────┘
 ```
 
 ---
@@ -348,10 +348,10 @@ Agent Call (asynchronous, minutes/hours):
 **Observability**: Log every A2A interaction with structured fields:
 ```python
 logger.info("A2A task submitted", extra={
-    "task_id": task_id,
-    "agent_url": agent_url,
-    "correlation_id": correlation_id,
-    "skill_id": skill_id
+ "task_id": task_id,
+ "agent_url": agent_url,
+ "correlation_id": correlation_id,
+ "skill_id": skill_id
 })
 ```
 This enables distributed tracing (LangSmith/Jaeger) and correlation across agent boundaries.
@@ -364,23 +364,23 @@ This enables distributed tracing (LangSmith/Jaeger) and correlation across agent
 
 ## § 7 · What Can Go Wrong
 
-**❌ Agent discovery fails (404 on Agent Card)**
+** Agent discovery fails (404 on Agent Card)**
 **Trap**: Orchestrator hardcodes agent URL, agent moves to new pod/cluster → 404
 **Fix**: Use service discovery (Kubernetes DNS, Consul) + health checks. Agent Card URL should be stable service endpoint, not pod IP.
 
-**❌ Task submitted but never completes (hung in "working" state)**
+** Task submitted but never completes (hung in "working" state)**
 **Trap**: Negotiation agent crashes mid-task, orchestrator polls forever waiting for completion
 **Fix**: Set client-side timeout (e.g., 4 hours for PO SLA). After timeout, query task status via `/tasks/{id}` — if still "working", cancel and route to human review. Implement server-side heartbeat/keepalive.
 
-**❌ SSE connection drops silently (network glitch)**
+** SSE connection drops silently (network glitch)**
 **Trap**: Orchestrator thinks it's streaming, but connection severed — never receives "completed" event
 **Fix**: SSE client library should auto-reconnect with `Last-Event-ID` header to resume from last received event. Fallback: poll `/tasks/{id}` every 30 seconds if no SSE event received.
 
-**❌ Agent returns "completed" but result is malformed JSON**
+** Agent returns "completed" but result is malformed JSON**
 **Trap**: Orchestrator parses result, crashes on KeyError → PO stuck
 **Fix**: Validate result schema against Agent Card's declared `outputModes`. If validation fails, treat as "failed" and log structured error. Use Pydantic models for type safety.
 
-**❌ Orchestrator submits 1,000 tasks to one agent simultaneously → agent overwhelmed**
+** Orchestrator submits 1,000 tasks to one agent simultaneously → agent overwhelmed**
 **Trap**: No rate limiting, agent OOMs or returns 429 Too Many Requests
 **Fix**: Implement client-side rate limiting (e.g., max 50 concurrent tasks per agent). Use exponential backoff on 429/503 responses. Monitor agent capacity via metrics (CPU, memory, task queue depth).
 
@@ -402,35 +402,34 @@ This enables distributed tracing (LangSmith/Jaeger) and correlation across agent
 
 ```mermaid
 graph LR
-    Ch1["Ch.1\nMessage Formats"]:::done
-    Ch2["Ch.2\nMCP"]:::done
-    Ch3["Ch.3\nA2A"]:::done
-    Ch4["Ch.4\nEvent-Driven"]:::done
-    Ch5["Ch.5\nShared Memory"]:::done
-    Ch6["Ch.6\nTrust & Sandboxing"]:::done
-    Ch7["Ch.7\nAgent Frameworks"]:::done
-    Ch1 --> Ch2 --> Ch3 --> Ch4 --> Ch5 --> Ch6 --> Ch7
-    classDef done fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    classDef current fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    classDef upcoming fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ Ch1["Ch.1\nMessage Formats"]:::done
+ Ch2["Ch.2\nMCP"]:::done
+ Ch3["Ch.3\nA2A"]:::done
+ Ch4["Ch.4\nEvent-Driven"]:::done
+ Ch5["Ch.5\nShared Memory"]:::done
+ Ch6["Ch.6\nTrust & Sandboxing"]:::done
+ Ch7["Ch.7\nAgent Frameworks"]:::done
+ Ch1 --> Ch2 --> Ch3 --> Ch4 --> Ch5 --> Ch6 --> Ch7
+ classDef done fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ classDef current fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ classDef upcoming fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### Constraint Status After Ch.3
 
 | Constraint | Before | After Ch.3 | Change |
 |------------|--------|------------|--------|
-| #1 THROUGHPUT | 10 POs/day | **24 POs/day** | ⚡ **2.4× faster** (but still far from 1,000 target) |
-| #2 LATENCY | 36 hours median | 36 hours median | ❌ No change |
-| #3 ACCURACY | 3.2% error | 3.2% error | ⚡ Stable |
-| #4 SCALABILITY | 8 agents, single cluster | **Distributed across 3 Kubernetes pods** | ✅ **Cluster-scale achieved** |
-| #5 RELIABILITY | No retry logic | Task IDs enable retry after crash | ⚡ **Improved** |
-| #6 AUDITABILITY | MCP tool call logging | Task lifecycle persisted | ⚡ **Improved** |
-| #7 OBSERVABILITY | MCP logs | Task status queryable via A2A API | ⚡ **Improved** |
-| #8 DEPLOYABILITY | No versioning | Agent Cards declare versions | ⚡ **Foundation laid** |
+| #1 THROUGHPUT | 10 POs/day | **24 POs/day** | **2.4× faster** (but still far from 1,000 target) |
+| #2 LATENCY | 36 hours median | 36 hours median | No change |
+| #3 ACCURACY | 3.2% error | 3.2% error | Stable |
+| #4 SCALABILITY | 8 agents, single cluster | **Distributed across 3 Kubernetes pods** | **Cluster-scale achieved** |
+| #5 RELIABILITY | No retry logic | Task IDs enable retry after crash | **Improved** |
+| #6 AUDITABILITY | MCP tool call logging | Task lifecycle persisted | **Improved** |
+| #7 OBSERVABILITY | MCP logs | Task status queryable via A2A API | **Improved** |
+| #8 DEPLOYABILITY | No versioning | Agent Cards declare versions | **Foundation laid** |
 
 ### The Win
-
-✅ **Cross-service agent delegation**: Agents can now run on separate Kubernetes pods and delegate tasks via A2A protocol. Intake agent (Pod 1) delegates to Negotiation agent (Pod 3) via HTTP + SSE streaming.
+**Cross-service agent delegation**: Agents can now run on separate Kubernetes pods and delegate tasks via A2A protocol. Intake agent (Pod 1) delegates to Negotiation agent (Pod 3) via HTTP + SSE streaming.
 
 **Measured impact**: Throughput increased 10 → 24 POs/day (3 orchestrator threads × 8hr). Task failures now retryable via task IDs.
 
@@ -438,8 +437,8 @@ graph LR
 
 ```
 Intake Agent (Pod 1) ──A2A──▶ Pricing Agent (Pod 2)
-                      ──A2A──▶ Negotiation Agent (Pod 3)
-                      ──A2A──▶ Legal Agent (Pod 4)
+ ──A2A──▶ Negotiation Agent (Pod 3)
+ ──A2A──▶ Legal Agent (Pod 4)
 ```
 
 ### What's Still Blocking

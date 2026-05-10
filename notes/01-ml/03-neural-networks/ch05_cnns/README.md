@@ -10,7 +10,7 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Launch **UnifiedAI** — prove one architecture unifies regression and classification, satisfying 5 constraints:
+> **The mission**: Launch **UnifiedAI** — prove one architecture unifies regression and classification, satisfying 5 constraints:
 > 1. **ACCURACY**: ≤$28k MAE (housing regression) + ≥95% accuracy (face attribute classification)
 > 2. **GENERALIZATION**: Work on unseen districts and unseen faces — no memorising training examples
 > 3. **MULTI-TASK**: Predict house value (regression) AND classify face attributes (multi-label)
@@ -18,11 +18,11 @@
 > 5. **PRODUCTION-READY**: <100ms inference, TensorBoard monitoring, scale to millions of images
 
 **What we know so far:**
-- ✅ [Ch.2](../ch02_neural_networks): Dense MLPs handle tabular features → house value prediction
-- ✅ [Ch.3](../ch03_backprop): Backpropagation + Adam trains any differentiable network
-- ✅ [Ch.4](../ch04_regularisation): Dropout, L2, BatchNorm close the train–val gap ($36k → $18k)
-- ✅ Can handle **tabular data** (8 numerical features → house value or binary attributes)
-- ❌ **But dense networks are catastrophically wrong for raw pixel data!**
+- [Ch.2](../ch02_neural_networks): Dense MLPs handle tabular features → house value prediction
+- [Ch.3](../ch03_backprop): Backpropagation + Adam trains any differentiable network
+- [Ch.4](../ch04_regularisation): Dropout, L2, BatchNorm close the train–val gap ($36k → $18k)
+- Can handle **tabular data** (8 numerical features → house value or binary attributes)
+- **But dense networks are catastrophically wrong for raw pixel data!**
 
 **What's blocking us:**
 
@@ -38,11 +38,11 @@ Image: 64×64 grayscale = 4,096 pixel inputs
 HOG features (traditional): 1,764-dimensional descriptor, hand-crafted
 
 Dense approach — raw pixels as inputs:
-  Layer 1: 4,096 × 512 weights + 512 biases   =  2,097,664 params
-  Layer 2:   512 × 128 weights + 128 biases   =     65,664 params
-  Layer 3:   128 ×  40 weights +  40 biases   =      5,160 params
-  ──────────────────────────────────────────────────────────────
-  Total: 2,168,488 params for just 3 layers, 50k training images → severe overfit
+ Layer 1: 4,096 × 512 weights + 512 biases = 2,097,664 params
+ Layer 2: 512 × 128 weights + 128 biases = 65,664 params
+ Layer 3: 128 × 40 weights + 40 biases = 5,160 params
+ ──────────────────────────────────────────────────────────────
+ Total: 2,168,488 params for just 3 layers, 50k training images → severe overfit
 ```
 
 **Scale to the full CelebA resolution (218×178 RGB):**
@@ -58,23 +58,22 @@ Layer 1 alone: 116,412 × 512 = 59,603,000 weights (60 million!)
 2. **No spatial structure**: Pixel $(3, 7)$ and pixel $(60, 58)$ are treated as unrelated scalars in weight matrix $W$ → the network can't learn "eyes are near the top of a face" because that is a *positional* prior
 3. **No translation invariance**: If a smiling mouth appears 5 pixels left, the dense network must relearn "smile" from scratch — it has separate weights for every pixel position, so position shifts break every learned association
 
-> 💡 **Hubel & Wiesel (1959) diagnosed the fix:** The cat's visual cortex has neurons responding to *local* oriented features *anywhere* in the visual field. The same filter — reused at every spatial position — is what dense networks lack. That is the convolution operation.
+> **Hubel & Wiesel (1959) diagnosed the fix:** The cat's visual cortex has neurons responding to *local* oriented features *anywhere* in the visual field. The same filter — reused at every spatial position — is what dense networks lack. That is the convolution operation.
 
 **HOG features: the halfway fix that still falls short.**
 
 Histogram of Oriented Gradients (HOG) descriptors hand-engineer the "local edges" intuition. On CelebA Smiling:
 
 ```
-HOG + Logistic Regression:        88.2% accuracy
-HOG + SVM (RBF kernel):           89.1% accuracy
-Raw pixels + MLP (2 layers):      81.4% accuracy  ← dense fails; too noisy
+HOG + Logistic Regression: 88.2% accuracy
+HOG + SVM (RBF kernel): 89.1% accuracy
+Raw pixels + MLP (2 layers): 81.4% accuracy ← dense fails; too noisy
 ```
 
 HOG works because it computes orientation histograms in 8×8 cells — a manual approximation of what a conv layer learns automatically. But HOG is fixed. It cannot adapt to the dataset, cannot learn "slightly-open lips with teeth" vs "closed lips upturned corners", and cannot compose into higher-level representations. A CNN learns all of this end-to-end.
 
 **What this chapter unlocks:**
-
-⚡ **Convolutional Neural Networks — the architecture that fixed computer vision:**
+**Convolutional Neural Networks — the architecture that fixed computer vision:**
 
 1. **Weight sharing**: A 3×3 filter has **9 parameters** regardless of image size — applies those 9 weights at every position
 2. **Translation equivariance**: The same filter detects "smile edge" at any position in the face
@@ -83,8 +82,8 @@ HOG works because it computes orientation histograms in 8×8 cells — a manual 
 5. **Unification**: The same conv backbone, swapped output head → regression (house value) or classification (face attributes)
 
 **UnifiedAI progress after this chapter:**
-- **Constraint #1 (ACCURACY)**: CNN accuracy on CelebA Smiling: HOG+logistic 88% → CNN 93% ✅
-- **Constraint #3 (MULTI-TASK)**: ⚡ Partial — conv backbone now supports multi-label attribute heads
+- **Constraint #1 (ACCURACY)**: CNN accuracy on CelebA Smiling: HOG+logistic 88% → CNN 93%
+- **Constraint #3 (MULTI-TASK)**: Partial — conv backbone now supports multi-label attribute heads
 - **Constraint #2 (GENERALIZATION)**: Weight sharing dramatically reduces parameters → better generalisation
 
 ---
@@ -114,17 +113,17 @@ The same architecture — conv backbone + dense head — classifies face attribu
 
 ```
 Option A — Dense layer (128 hidden units):
-  Inputs: 64 × 64 = 4,096
-  Weights: 4,096 × 128 = 524,288
-  Biases:              128
-  Total:           524,416 parameters
+ Inputs: 64 × 64 = 4,096
+ Weights: 4,096 × 128 = 524,288
+ Biases: 128
+ Total: 524,416 parameters
 
 Option B — Conv layer (32 filters, 3×3 kernel, 1 input channel):
-  Kernel weights per filter: 3 × 3 × 1 = 9
-  Bias per filter:                        1
-  Total per filter:                      10
-  Filters:                               32
-  Total:                                320 parameters
+ Kernel weights per filter: 3 × 3 × 1 = 9
+ Bias per filter: 1
+ Total per filter: 10
+ Filters: 32
+ Total: 320 parameters
 
 Reduction: 524,416 / 320 = 1,639× fewer parameters
 ```
@@ -138,34 +137,34 @@ The conv layer achieves this reduction by applying the same 9 weights at all $62
 The canonical CNN for CelebA face attributes (64×64 grayscale input, binary Smiling output):
 
 ```
-Input image: 1 × 64 × 64  (channels × height × width)
-     │
-     ▼
-Conv2D(32 filters, 3×3) ──→ ReLU ──→  32 × 62 × 62
-     │
-     ▼
-MaxPool2D(2×2, stride=2)  ──────────  32 × 31 × 31
-     │
-     ▼
-Conv2D(64 filters, 3×3) ──→ ReLU ──→  64 × 29 × 29
-     │
-     ▼
-MaxPool2D(2×2, stride=2)  ──────────  64 × 14 × 14
-     │
-     ▼
+Input image: 1 × 64 × 64 (channels × height × width)
+ │
+ ▼
+Conv2D(32 filters, 3×3) ──→ ReLU ──→ 32 × 62 × 62
+ │
+ ▼
+MaxPool2D(2×2, stride=2) ────────── 32 × 31 × 31
+ │
+ ▼
+Conv2D(64 filters, 3×3) ──→ ReLU ──→ 64 × 29 × 29
+ │
+ ▼
+MaxPool2D(2×2, stride=2) ────────── 64 × 14 × 14
+ │
+ ▼
 Conv2D(128 filters, 3×3) ─→ ReLU ──→ 128 × 12 × 12
-     │
-     ▼
-MaxPool2D(2×2, stride=2)  ──────────  128 × 6 × 6
-     │
-     ▼
-Flatten ────────────────────────────  4,608
-     │
-     ▼
-Dense(256) ──→ ReLU  ───────────────  256
-     │
-     ▼
-Dense(1) ────→ Sigmoid ─────────────  1  (Smiling probability)
+ │
+ ▼
+MaxPool2D(2×2, stride=2) ────────── 128 × 6 × 6
+ │
+ ▼
+Flatten ──────────────────────────── 4,608
+ │
+ ▼
+Dense(256) ──→ ReLU ─────────────── 256
+ │
+ ▼
+Dense(1) ────→ Sigmoid ───────────── 1 (Smiling probability)
 ```
 
 **Reading the shape annotations:** each tensor shape is `channels × height × width`. Spatial dimensions shrink at every pooling step (halved) and slightly at every conv step (no padding). Channel depth grows as the network extracts more abstract features.
@@ -182,7 +181,7 @@ $$(\mathbf{X} \star \mathbf{K})_{i,j} = \sum_{u=0}^{f-1} \sum_{v=0}^{f-1} \mathb
 
 The kernel slides across the input one stride at a time. At each position $(i, j)$ the output is the **dot product** of the kernel with the overlapping patch of the input.
 
-> ⚠️ **Cross-correlation vs convolution**: PyTorch and TensorFlow implement cross-correlation (no kernel flip) but call it "convolution" because for learned symmetric kernels the distinction is irrelevant. The formula above is cross-correlation.
+> **Cross-correlation vs convolution**: PyTorch and TensorFlow implement cross-correlation (no kernel flip) but call it "convolution" because for learned symmetric kernels the distinction is irrelevant. The formula above is cross-correlation.
 
 ---
 
@@ -232,7 +231,7 @@ The kernel slides to three more positions. Each applies the same elementwise mul
 
 $$\mathbf{X} \star \mathbf{K} = \begin{pmatrix}6 & 6 \\ 6 & 6\end{pmatrix}$$
 
-> 💡 **Why all 6s?** This input is a ramp ($1, 2, \ldots, 16$) increasing uniformly left-to-right. The vertical edge detector responds identically at every position because the left-to-right gradient is constant everywhere. On a real face image, the detector would fire strongly at eye edges and lip contours, weakly at smooth skin regions. This shows convolution detects vertical edges uniformly across the input — the same filter fires at every position where the pattern appears. Translation equivariance is built into the operation.
+> **Why all 6s?** This input is a ramp ($1, 2, \ldots, 16$) increasing uniformly left-to-right. The vertical edge detector responds identically at every position because the left-to-right gradient is constant everywhere. On a real face image, the detector would fire strongly at eye edges and lip contours, weakly at smooth skin regions. This shows convolution detects vertical edges uniformly across the input — the same filter fires at every position where the pattern appears. Translation equivariance is built into the operation.
 
 ---
 
@@ -267,7 +266,7 @@ After the first conv: **62×62**.
 Final spatial dimension before flatten: **6×6** per channel. With 128 channels: $128 \times 6 \times 6 = 4{,}608$ values fed to the dense head.
 
 **"Same" padding** adds $p = \lfloor f/2 \rfloor$ to preserve spatial dimensions:
-- $f=3, p=1$: $H_{\text{out}} = \frac{H_{\text{in}} + 2(1) - 3}{1} + 1 = H_{\text{in}}$ ✅
+- $f=3, p=1$: $H_{\text{out}} = \frac{H_{\text{in}} + 2(1) - 3}{1} + 1 = H_{\text{in}}$
 
 ---
 
@@ -322,7 +321,7 @@ $$\mathbf{F} = \begin{pmatrix}
 
 $$\text{MaxPool}(\mathbf{F}) = \begin{pmatrix}8 & 9 \\ 6 & 11\end{pmatrix}$$
 
-> 💡 **What max pooling does:** It retains the *strongest activation* in each window — "was this pattern present in this region?" — and discards its exact sub-pixel position. A smile that shifts 1 pixel left produces the same pooled output if both positions fall in the same 2×2 window. This is **local translation invariance**.
+> **What max pooling does:** It retains the *strongest activation* in each window — "was this pattern present in this region?" — and discards its exact sub-pixel position. A smile that shifts 1 pixel left produces the same pooled output if both positions fall in the same 2×2 window. This is **local translation invariance**.
 
 **Average pooling** uses mean instead of max:
 
@@ -350,7 +349,7 @@ $$\text{RF}_L = 1 + L \times (f - 1)$$
 
 **Why receptive field matters for CelebA:** A 3×3 receptive field sees one edge. A 28×28 receptive field sees an entire eye or mouth region. Deeper networks with pooling build up the receptive field needed to detect face attributes without needing enormous kernels.
 
-> 💡 **VGGNet insight:** Two stacked 3×3 conv layers achieve a 5×5 receptive field with $(9+9) \times C^2 = 18C^2$ parameters, versus one 5×5 layer with $25C^2$ parameters — 28% fewer parameters for the same coverage. Three 3×3 layers beat one 7×7 layer similarly. This is why modern architectures use exclusively small kernels.
+> **VGGNet insight:** Two stacked 3×3 conv layers achieve a 5×5 receptive field with $(9+9) \times C^2 = 18C^2$ parameters, versus one 5×5 layer with $25C^2$ parameters — 28% fewer parameters for the same coverage. Three 3×3 layers beat one 7×7 layer similarly. This is why modern architectures use exclusively small kernels.
 
 ---
 
@@ -362,9 +361,9 @@ The naive approach: flatten 64×64 grayscale → 4,096 inputs → two dense laye
 
 ```
 Dense MLP on raw pixels (64×64 CelebA):
-  Layer 1: 4,096 × 512 = 2,097,152 weights  (2M+ for one layer)
-  Parameters dominate → overfits 50k images completely
-  CelebA Smiling accuracy: ~81% (worse than HOG + logistic at 88%)
+ Layer 1: 4,096 × 512 = 2,097,152 weights (2M+ for one layer)
+ Parameters dominate → overfits 50k images completely
+ CelebA Smiling accuracy: ~81% (worse than HOG + logistic at 88%)
 ```
 
 The failure is structural: the model learns "pixel $(42,37)$ being bright predicts smiling" — a coincidence of the training set, not a facial feature. The learned weights memorise positions, not patterns.
@@ -413,10 +412,10 @@ Apply a **Sobel vertical edge detector** to a 4×4 face patch. Show every multip
 **Input patch $\mathbf{X}$ (4×4, pixel intensities):**
 
 ```
- 10  10  80  80
- 10  10  80  80
- 10  10  80  80
- 10  10  80  80
+ 10 10 80 80
+ 10 10 80 80
+ 10 10 80 80
+ 10 10 80 80
 ```
 
 This represents a sharp vertical edge: left half dark (value 10), right half bright (value 80). A vertical edge detector should fire strongly.
@@ -469,7 +468,7 @@ $$= -10 + 0 + 80 - 20 + 0 + 160 - 10 + 0 + 80 = \mathbf{280}$$
 
 $$\mathbf{Z} = \begin{pmatrix}280 & 280 \\ 280 & 280\end{pmatrix}$$
 
-> 💡 **Why 280?** The vertical Sobel kernel computes $(\text{right column} - \text{left column})$, weighted $1+2+1=4$. Left column sum per row $= 10$, right column sum per row $= 80$. Difference per row $= 70$. Total over 3 rows with weights $[-1,-2,-1]$ and $[+1,+2,+1]$: $(-1-2-1)(10) + (+1+2+1)(80) = -40 + 320 = 280$. A stronger edge (larger pixel difference) gives a larger activation.
+> **Why 280?** The vertical Sobel kernel computes $(\text{right column} - \text{left column})$, weighted $1+2+1=4$. Left column sum per row $= 10$, right column sum per row $= 80$. Difference per row $= 70$. Total over 3 rows with weights $[-1,-2,-1]$ and $[+1,+2,+1]$: $(-1-2-1)(10) + (+1+2+1)(80) = -40 + 320 = 280$. A stronger edge (larger pixel difference) gives a larger activation.
 
 ---
 
@@ -499,27 +498,27 @@ The Sobel kernel is hand-crafted. In a trained CNN, the 9 values in $\mathbf{K}$
 
 ```mermaid
 graph TD
-    A["Input\n1 × 64 × 64\n(greyscale face)"]
-    A --> B["Conv2D 32 filters 3×3\n+ ReLU\n32 × 62 × 62"]
-    B --> C["MaxPool 2×2\n32 × 31 × 31"]
-    C --> D["Conv2D 64 filters 3×3\n+ ReLU\n64 × 29 × 29"]
-    D --> E["MaxPool 2×2\n64 × 14 × 14"]
-    E --> F["Conv2D 128 filters 3×3\n+ ReLU\n128 × 12 × 12"]
-    F --> G["MaxPool 2×2\n128 × 6 × 6"]
-    G --> H["Flatten\n4,608"]
-    H --> I["Dense 256 + ReLU\n256"]
-    I --> J["Dense 1 + Sigmoid\nSmiling probability"]
+ A["Input\n1 × 64 × 64\n(greyscale face)"]
+ A --> B["Conv2D 32 filters 3×3\n+ ReLU\n32 × 62 × 62"]
+ B --> C["MaxPool 2×2\n32 × 31 × 31"]
+ C --> D["Conv2D 64 filters 3×3\n+ ReLU\n64 × 29 × 29"]
+ D --> E["MaxPool 2×2\n64 × 14 × 14"]
+ E --> F["Conv2D 128 filters 3×3\n+ ReLU\n128 × 12 × 12"]
+ F --> G["MaxPool 2×2\n128 × 6 × 6"]
+ G --> H["Flatten\n4,608"]
+ H --> I["Dense 256 + ReLU\n256"]
+ I --> J["Dense 1 + Sigmoid\nSmiling probability"]
 
-    style A fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style B fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style C fill:#15803d,color:#fff,stroke:#15803d
-    style D fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style E fill:#15803d,color:#fff,stroke:#15803d
-    style F fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style G fill:#15803d,color:#fff,stroke:#15803d
-    style H fill:#b45309,color:#fff,stroke:#b45309
-    style I fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style J fill:#15803d,color:#fff,stroke:#15803d
+ style A fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style B fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style C fill:#15803d,color:#fff,stroke:#15803d
+ style D fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style E fill:#15803d,color:#fff,stroke:#15803d
+ style F fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style G fill:#15803d,color:#fff,stroke:#15803d
+ style H fill:#b45309,color:#fff,stroke:#b45309
+ style I fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style J fill:#15803d,color:#fff,stroke:#15803d
 ```
 
 ---
@@ -528,46 +527,46 @@ graph TD
 
 ```mermaid
 flowchart TD
-    START(["New image task"])
-    START --> Q1{"Image size?"}
+ START(["New image task"])
+ START --> Q1{"Image size?"}
 
-    Q1 -->|"Small\n≤ 64×64"| SMALL["3 conv blocks\n(32→64→128 filters)\nNo 'same' padding needed"]
-    Q1 -->|"Medium\n64–224px"| MED["4–5 conv blocks\nAdd 'same' padding\nStride-2 conv OR pool"]
-    Q1 -->|"Large\n> 224px"| LARGE["Use pretrained backbone\nResNet50 / EfficientNet\nFine-tune last layers only"]
+ Q1 -->|"Small\n≤ 64×64"| SMALL["3 conv blocks\n(32→64→128 filters)\nNo 'same' padding needed"]
+ Q1 -->|"Medium\n64–224px"| MED["4–5 conv blocks\nAdd 'same' padding\nStride-2 conv OR pool"]
+ Q1 -->|"Large\n> 224px"| LARGE["Use pretrained backbone\nResNet50 / EfficientNet\nFine-tune last layers only"]
 
-    SMALL --> Q2{"Classes?"}
-    MED --> Q2
-    LARGE --> Q2
+ SMALL --> Q2{"Classes?"}
+ MED --> Q2
+ LARGE --> Q2
 
-    Q2 -->|"Binary\n(e.g. smiling/not)"| BIN["Dense(1) + Sigmoid\nBinary Cross-Entropy loss"]
-    Q2 -->|"Multi-class\n(single label)"| MULTI["Dense(C) + Softmax\nCross-Entropy loss"]
-    Q2 -->|"Multi-label\n(e.g. 40 attributes)"| MLABEL["Dense(40) + Sigmoid\nBCE per attribute"]
+ Q2 -->|"Binary\n(e.g. smiling/not)"| BIN["Dense(1) + Sigmoid\nBinary Cross-Entropy loss"]
+ Q2 -->|"Multi-class\n(single label)"| MULTI["Dense(C) + Softmax\nCross-Entropy loss"]
+ Q2 -->|"Multi-label\n(e.g. 40 attributes)"| MLABEL["Dense(40) + Sigmoid\nBCE per attribute"]
 
-    BIN --> TRAIN["Train with Adam\nlr=1e-3, batch=64"]
-    MULTI --> TRAIN
-    MLABEL --> TRAIN
+ BIN --> TRAIN["Train with Adam\nlr=1e-3, batch=64"]
+ MULTI --> TRAIN
+ MLABEL --> TRAIN
 
-    TRAIN --> Q3{"Val accuracy\nplateau?"}
-    Q3 -->|"Overfitting\ntrain >> val"| REG["Add Dropout(0.5)\nbefore Dense\nOR Data Augmentation"]
-    Q3 -->|"Underfitting\nboth low"| DEEPER["Add conv block\nOR increase filters\nOR reduce LR"]
-    Q3 -->|"Good fit\ntrain ≈ val"| DONE["✅ Deploy"]
+ TRAIN --> Q3{"Val accuracy\nplateau?"}
+ Q3 -->|"Overfitting\ntrain >> val"| REG["Add Dropout(0.5)\nbefore Dense\nOR Data Augmentation"]
+ Q3 -->|"Underfitting\nboth low"| DEEPER["Add conv block\nOR increase filters\nOR reduce LR"]
+ Q3 -->|"Good fit\ntrain ≈ val"| DONE[" Deploy"]
 
-    REG --> TRAIN
-    DEEPER --> TRAIN
+ REG --> TRAIN
+ DEEPER --> TRAIN
 
-    style START fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style DONE fill:#15803d,color:#fff,stroke:#15803d
-    style Q1 fill:#b45309,color:#fff,stroke:#b45309
-    style Q2 fill:#b45309,color:#fff,stroke:#b45309
-    style Q3 fill:#b45309,color:#fff,stroke:#b45309
-    style BIN fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style MULTI fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style MLABEL fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style REG fill:#b91c1c,color:#fff,stroke:#b91c1c
-    style DEEPER fill:#b91c1c,color:#fff,stroke:#b91c1c
-    style SMALL fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style MED fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style LARGE fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style START fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style DONE fill:#15803d,color:#fff,stroke:#15803d
+ style Q1 fill:#b45309,color:#fff,stroke:#b45309
+ style Q2 fill:#b45309,color:#fff,stroke:#b45309
+ style Q3 fill:#b45309,color:#fff,stroke:#b45309
+ style BIN fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style MULTI fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style MLABEL fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style REG fill:#b91c1c,color:#fff,stroke:#b91c1c
+ style DEEPER fill:#b91c1c,color:#fff,stroke:#b91c1c
+ style SMALL fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style MED fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style LARGE fill:#1e3a8a,color:#fff,stroke:#1e3a8a
 ```
 
 ---
@@ -628,27 +627,25 @@ flowchart TD
 | Dense MLP (raw pixels) | 4,096 raw pixels | 81.4% |
 | HOG + Logistic Regression | 1,764-dim HOG features | 88.2% |
 | HOG + SVM (RBF) | 1,764-dim HOG features | 89.1% |
-| Simple CNN (3 conv blocks) | Learned spatial features | **93.0%** ✅ |
+| Simple CNN (3 conv blocks) | Learned spatial features | **93.0%** |
 
 **UnifiedAI constraint scorecard after Ch.5:**
 
 | # | Constraint | Target | Status |
 |---|-----------|--------|--------|
-| #1 | ACCURACY | ≤$28k MAE + ≥95% face accuracy | ⚡ **93% achieved on Smiling** — 2pp gap to 95% |
-| #2 | GENERALIZATION | Unseen faces + districts | ✅ Weight sharing dramatically reduces overfit |
-| #3 | MULTI-TASK | Value + Attributes (multi-label) | ⚡ Partial — conv backbone + multi-label head possible |
-| #4 | INTERPRETABILITY | Explainable predictions | ❌ Blocked — conv filters are hard to interpret directly (Ch.11 SHAP begins to address) |
-| #5 | PRODUCTION | <100ms inference, scalable | ⚡ Partial — CNNs are fast at inference; monitoring deferred to Ch.9 TensorBoard |
-
-✅ **Unlocked capabilities:**
+| #1 | ACCURACY | ≤$28k MAE + ≥95% face accuracy | **93% achieved on Smiling** — 2pp gap to 95% |
+| #2 | GENERALIZATION | Unseen faces + districts | Weight sharing dramatically reduces overfit |
+| #3 | MULTI-TASK | Value + Attributes (multi-label) | Partial — conv backbone + multi-label head possible |
+| #4 | INTERPRETABILITY | Explainable predictions | Blocked — conv filters are hard to interpret directly (Ch.11 SHAP begins to address) |
+| #5 | PRODUCTION | <100ms inference, scalable | Partial — CNNs are fast at inference; monitoring deferred to Ch.9 TensorBoard |
+**Unlocked capabilities:**
 - Classify CelebA face attributes from raw image pixels with 93% accuracy (beating all hand-crafted feature approaches)
 - Shared conv backbone for both regression (house value) and classification (face attributes)
 - Parameter-efficient image encoding: 1.27M params versus 500M+ for equivalent dense network
-
-❌ **Still can't solve:**
-- ❌ Sequential/temporal data — month-by-month housing price trends require RNNs (Ch.6)
-- ❌ Interpretability — what parts of the face drove the "Smiling" prediction? (Ch.11 SHAP, Ch.18 attention maps)
-- ❌ 95%+ accuracy on all 40 CelebA attributes simultaneously — residual connections and data augmentation required
+**Still can't solve:**
+- Sequential/temporal data — month-by-month housing price trends require RNNs (Ch.6)
+- Interpretability — what parts of the face drove the "Smiling" prediction? (Ch.11 SHAP, Ch.18 attention maps)
+- 95%+ accuracy on all 40 CelebA attributes simultaneously — residual connections and data augmentation required
 
 **Real-world status:** We can now process image data with a parameter-efficient learned feature extractor, achieving 93% accuracy on face attributes, but temporal patterns and full interpretability remain out of reach.
 

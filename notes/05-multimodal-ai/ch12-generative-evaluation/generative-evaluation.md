@@ -30,12 +30,12 @@
 
 | Constraint | Target | Status | Evidence |
 |------------|--------|--------|----------|
-| #1 Quality | ≥4.0/5.0 | ✅ **4.1/5.0** | HPSv2 score on 500-image test set (exceeds target!) |
-| #2 Speed | <30 seconds | ✅ **~18s** | Unchanged from Ch.10 |
-| #3 Cost | <$5k hardware | ✅ **$2.5k laptop** | Unchanged from Ch.10 |
-| #4 Control | <5% unusable | ✅ **~3% unusable** | Unchanged from Ch.10 |
-| #5 Throughput | 100+ images/day | ✅ **~120 images/day** | Unchanged from Ch.10 |
-| #6 Versatility | 3 modalities | ✅ **All 3 enabled** | Unchanged from Ch.10 |
+| #1 Quality | ≥4.0/5.0 | **4.1/5.0** | HPSv2 score on 500-image test set (exceeds target!) |
+| #2 Speed | <30 seconds | **~18s** | Unchanged from Ch.10 |
+| #3 Cost | <$5k hardware | **$2.5k laptop** | Unchanged from Ch.10 |
+| #4 Control | <5% unusable | **~3% unusable** | Unchanged from Ch.10 |
+| #5 Throughput | 100+ images/day | **~120 images/day** | Unchanged from Ch.10 |
+| #6 Versatility | 3 modalities | **All 3 enabled** | Unchanged from Ch.10 |
 
 ---
 
@@ -67,7 +67,7 @@ Three orthogonal axes you must measure:
 
 ## 1.5 · The Practitioner Workflow — Your 4-Phase Quality Gate
 
-> ⚠️ **Two ways to read this chapter:**
+> **Warning — Two ways to read this chapter:**
 > - **Theory-first (recommended for learning):** Read §0→§5 sequentially to understand the concepts, then use this workflow as your reference
 > - **Workflow-first (practitioners with existing knowledge):** Use this diagram as a jump-to guide when working with real data
 >
@@ -76,27 +76,27 @@ Three orthogonal axes you must measure:
 **What you'll build by the end:** A multi-metric quality scorecard combining FID (distribution similarity), CLIP Score (text-image alignment), and HPSv2 (human preference prediction) — the three-metric gate from §5 that answers "are my generated images ready to ship?"
 
 ```
-Phase 1: IDENTIFY          Phase 2: SELECT             Phase 3: COMPUTE           Phase 4: INTERPRET
+Phase 1: IDENTIFY Phase 2: SELECT Phase 3: COMPUTE Phase 4: INTERPRET
 ────────────────────────────────────────────────────────────────────────────────────────────────────
-Define evaluation goals:   Choose metric suite:        Run evaluation pipeline:   Analyze results:
+Define evaluation goals: Choose metric suite: Run evaluation pipeline: Analyze results:
 
-• Fidelity priority?       • FID for distribution      • Generate N≥5k images     • Compare to thresholds
-• Alignment priority?      • CLIP for text match       • torch-fidelity FID       • Cross-check metrics
-• Human preference?        • HPSv2 for aesthetics      • CLIPScore from HF        • Identify failure modes
-• Sample size N            • Precision/Recall if       • batch_size=50            • Make go/no-go call
-                            needed                     • Same resolution!
+• Fidelity priority? • FID for distribution • Generate N≥5k images • Compare to thresholds
+• Alignment priority? • CLIP for text match • torch-fidelity FID • Cross-check metrics
+• Human preference? • HPSv2 for aesthetics • CLIPScore from HF • Identify failure modes
+• Sample size N • Precision/Recall if • batch_size=50 • Make go/no-go call
+ needed • Same resolution!
 
-→ DECISION:                → DECISION:                 → DECISION:                → DECISION:
-  What to measure?           Which metrics?              Ready to run?              Ship or iterate?
-  • Text-to-image task:      • Core: FID + CLIP         • N<5k? FID unstable       • FID<50 + CLIP>0.25:
-    FID + CLIP + HPSv2       • Optional: HPSv2          • Different resolutions?     likely ready
-  • Img2img task:            • If diversity matters:      Resize consistently      • HPSv2<3.8: aesthetic
-    LPIPS + CLIP               add Precision/Recall     • Reference set clean?       issues
-  • Video: FVD + CLIPSIM                                                           • Low CLIP + high FID:
-                                                                                     model ignores prompts
+→ DECISION: → DECISION: → DECISION: → DECISION:
+ What to measure? Which metrics? Ready to run? Ship or iterate?
+ • Text-to-image task: • Core: FID + CLIP • N<5k? FID unstable • FID<50 + CLIP>0.25:
+ FID + CLIP + HPSv2 • Optional: HPSv2 • Different resolutions? likely ready
+ • Img2img task: • If diversity matters: Resize consistently • HPSv2<3.8: aesthetic
+ LPIPS + CLIP add Precision/Recall • Reference set clean? issues
+ • Video: FVD + CLIPSIM • Low CLIP + high FID:
+ model ignores prompts
 ```
 
-> 💡 **How to use this workflow:** Complete Phase 1→2 to define your evaluation strategy, then run Phase 3 once you have generated images. Phase 4 is where you make the production decision — refer back to §6 Failure Modes if metrics contradict each other.
+> **How to use this workflow:** Complete Phase 1→2 to define your evaluation strategy, then run Phase 3 once you have generated images. Phase 4 is where you make the production decision — refer back to §6 Failure Modes if metrics contradict each other.
 
 ---
 
@@ -116,32 +116,32 @@ Define evaluation goals:   Choose metric suite:        Run evaluation pipeline: 
 START: What's your use case?
 │
 ├─ Text-to-image generation (e.g., VisualForge product shots)
-│  ├─ Concern: "Do images look real?"
-│  │  └─ Measure: FID vs reference corpus (§3.1)
-│  │     Threshold: <50 for production quality
-│  │
-│  ├─ Concern: "Do outputs match text prompts?"
-│  │  └─ Measure: CLIP Score (§3.3)
-│  │     Threshold: >0.25 for prompt adherence
-│  │
-│  └─ Concern: "Will clients like these?"
-│     └─ Measure: HPSv2 (§3.3, §5)
-│        Threshold: >4.0/5.0 for professional quality
+│ ├─ Concern: "Do images look real?"
+│ │ └─ Measure: FID vs reference corpus (§3.1)
+│ │ Threshold: <50 for production quality
+│ │
+│ ├─ Concern: "Do outputs match text prompts?"
+│ │ └─ Measure: CLIP Score (§3.3)
+│ │ Threshold: >0.25 for prompt adherence
+│ │
+│ └─ Concern: "Will clients like these?"
+│ └─ Measure: HPSv2 (§3.3, §5)
+│ Threshold: >4.0/5.0 for professional quality
 │
 ├─ Image-to-image refinement (e.g., inpainting, style transfer)
-│  ├─ Concern: "How close to the reference image?"
-│  │  └─ Measure: LPIPS (§3.4)
-│  │     Threshold: <0.15 for perceptually similar
-│  │
-│  └─ Concern: "Does edited region match prompt?"
-│     └─ Measure: CLIP Score on edited region only
+│ ├─ Concern: "How close to the reference image?"
+│ │ └─ Measure: LPIPS (§3.4)
+│ │ Threshold: <0.15 for perceptually similar
+│ │
+│ └─ Concern: "Does edited region match prompt?"
+│ └─ Measure: CLIP Score on edited region only
 │
 └─ Video generation
-   ├─ Concern: "Per-frame realism"
-   │  └─ Measure: FVD (§9 Interview Checklist)
-   │
-   └─ Concern: "Temporal consistency"
-      └─ Measure: VBench suite (§10 Further Reading)
+ ├─ Concern: "Per-frame realism"
+ │ └─ Measure: FVD (§9 Interview Checklist)
+ │
+ └─ Concern: "Temporal consistency"
+ └─ Measure: VBench suite (§10 Further Reading)
 ```
 
 **Code snippet — Metric selection helper:**
@@ -149,78 +149,78 @@ START: What's your use case?
 ```python
 # Define evaluation strategy based on use case
 def plan_evaluation(use_case: str,
-                    primary_concern: str,
-                    sample_count: int,
-                    has_reference_corpus: bool) -> dict:
-    """
-    Returns recommended metric suite and minimum sample requirements.
+ primary_concern: str,
+ sample_count: int,
+ has_reference_corpus: bool) -> dict:
+ """
+ Returns recommended metric suite and minimum sample requirements.
 
-    Args:
-        use_case: 'text-to-image', 'img2img', or 'video'
-        primary_concern: 'realism', 'alignment', 'aesthetics', or 'perceptual_similarity'
-        sample_count: number of generated images available for evaluation
-        has_reference_corpus: True if you have real images for comparison
+ Args:
+ use_case: 'text-to-image', 'img2img', or 'video'
+ primary_concern: 'realism', 'alignment', 'aesthetics', or 'perceptual_similarity'
+ sample_count: number of generated images available for evaluation
+ has_reference_corpus: True if you have real images for comparison
 
-    Returns:
-        dict with 'metrics' (list), 'min_samples' (int), 'warnings' (list)
-    """
-    plan = {'metrics': [], 'min_samples': 500, 'warnings': []}
+ Returns:
+ dict with 'metrics' (list), 'min_samples' (int), 'warnings' (list)
+ """
+ plan = {'metrics': [], 'min_samples': 500, 'warnings': []}
 
-    if use_case == 'text-to-image':
-        if primary_concern == 'realism':
-            if has_reference_corpus:
-                plan['metrics'].append('FID')
-                plan['min_samples'] = 5000  # FID needs large N
-                if sample_count < 5000:
-                    plan['warnings'].append(
-                        f"FID unstable with N={sample_count} (±10 FID variance). "
-                        "Increase to N≥5k or use only as relative comparison."
-                    )
-            else:
-                plan['warnings'].append("FID requires reference corpus. Use CLIP + HPSv2 instead.")
+ if use_case == 'text-to-image':
+ if primary_concern == 'realism':
+ if has_reference_corpus:
+ plan['metrics'].append('FID')
+ plan['min_samples'] = 5000 # FID needs large N
+ if sample_count < 5000:
+ plan['warnings'].append(
+ f"FID unstable with N={sample_count} (±10 FID variance). "
+ "Increase to N≥5k or use only as relative comparison."
+ )
+ else:
+ plan['warnings'].append("FID requires reference corpus. Use CLIP + HPSv2 instead.")
 
-        if primary_concern in ['alignment', 'realism']:
-            plan['metrics'].append('CLIP Score')
+ if primary_concern in ['alignment', 'realism']:
+ plan['metrics'].append('CLIP Score')
 
-        if primary_concern == 'aesthetics':
-            plan['metrics'].append('HPSv2')
+ if primary_concern == 'aesthetics':
+ plan['metrics'].append('HPSv2')
 
-        # Default: use all three for comprehensive evaluation
-        if not plan['metrics']:
-            plan['metrics'] = ['FID', 'CLIP Score', 'HPSv2']
-            plan['warnings'].append("No primary concern specified — using full suite.")
+ # Default: use all three for comprehensive evaluation
+ if not plan['metrics']:
+ plan['metrics'] = ['FID', 'CLIP Score', 'HPSv2']
+ plan['warnings'].append("No primary concern specified — using full suite.")
 
-    elif use_case == 'img2img':
-        plan['metrics'] = ['LPIPS', 'CLIP Score']
-        plan['min_samples'] = 100  # LPIPS works per-image
+ elif use_case == 'img2img':
+ plan['metrics'] = ['LPIPS', 'CLIP Score']
+ plan['min_samples'] = 100 # LPIPS works per-image
 
-    elif use_case == 'video':
-        plan['metrics'] = ['FVD', 'CLIPSIM', 'VBench']
-        plan['min_samples'] = 1000  # FVD needs large N like FID
+ elif use_case == 'video':
+ plan['metrics'] = ['FVD', 'CLIPSIM', 'VBench']
+ plan['min_samples'] = 1000 # FVD needs large N like FID
 
-    return plan
+ return plan
 
 # Example usage for VisualForge
 vf_plan = plan_evaluation(
-    use_case='text-to-image',
-    primary_concern='realism',
-    sample_count=500,
-    has_reference_corpus=True
+ use_case='text-to-image',
+ primary_concern='realism',
+ sample_count=500,
+ has_reference_corpus=True
 )
 print(f"Recommended metrics: {vf_plan['metrics']}")
 print(f"Minimum samples: {vf_plan['min_samples']}")
 for warning in vf_plan['warnings']:
-    print(f"⚠️  {warning}")
+ print(f" {warning}")
 # Output:
 # Recommended metrics: ['FID', 'CLIP Score']
 # Minimum samples: 5000
-# ⚠️ FID unstable with N=500 (±10 FID variance). Increase to N≥5k or use only as relative comparison.
+# FID unstable with N=500 (±10 FID variance). Increase to N≥5k or use only as relative comparison.
 ```
 
 > 🏭 **Industry standard:** OpenAI's DALL-E 3 evaluation uses FID (N=30k) + CLIP Score + human preference ratings (n=1000 human comparisons). Midjourney V6 uses HPSv2 + Aesthetic Predictor + manual QA on 500-image batches. Stability AI (SDXL) reports FID (N=50k) + CLIP Score + FID-CLIP harmonic mean.
 
-> 💡 **Metric selection verdict:** FID + CLIP Score + HPSv2 covers VisualForge quality, alignment, and preference goals — FID is unstable at N=500; use for relative comparisons only until N ≥ 5,000.
-> ➡️ Stable metric implementations are selected next to ensure reproducible cross-experiment comparisons.
+> **Metric selection verdict:** FID + CLIP Score + HPSv2 covers VisualForge quality, alignment, and preference goals — FID is unstable at N=500; use for relative comparisons only until N ≥ 5,000.
+> ➡ Stable metric implementations are selected next to ensure reproducible cross-experiment comparisons.
 
 ---
 
@@ -248,47 +248,47 @@ import subprocess
 import sys
 
 def setup_metrics_env(metrics: list):
-    """Install required packages for chosen metrics."""
-    package_map = {
-        'FID': ['torch-fidelity'],
-        'CLIP Score': ['torchmetrics', 'transformers'],
-        'HPSv2': ['transformers'],  # Manual clone needed
-        'LPIPS': ['lpips'],
-        'Precision/Recall': ['prdc']
-    }
+ """Install required packages for chosen metrics."""
+ package_map = {
+ 'FID': ['torch-fidelity'],
+ 'CLIP Score': ['torchmetrics', 'transformers'],
+ 'HPSv2': ['transformers'], # Manual clone needed
+ 'LPIPS': ['lpips'],
+ 'Precision/Recall': ['prdc']
+ }
 
-    packages_needed = set()
-    for metric in metrics:
-        packages_needed.update(package_map.get(metric, []))
+ packages_needed = set()
+ for metric in metrics:
+ packages_needed.update(package_map.get(metric, []))
 
-    for pkg in packages_needed:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", pkg])
+ for pkg in packages_needed:
+ subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", pkg])
 
-    print(f"✅ Installed packages: {', '.join(packages_needed)}")
+ print(f" Installed packages: {', '.join(packages_needed)}")
 
-    # Validate installations
-    try:
-        if 'FID' in metrics:
-            from torch_fidelity import calculate_metrics
-            print("✅ torch-fidelity ready")
+ # Validate installations
+ try:
+ if 'FID' in metrics:
+ from torch_fidelity import calculate_metrics
+ print(" torch-fidelity ready")
 
-        if 'CLIP Score' in metrics:
-            from transformers import CLIPModel, CLIPProcessor
-            model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
-            print("✅ CLIP model loaded (openai/clip-vit-base-patch32)")
+ if 'CLIP Score' in metrics:
+ from transformers import CLIPModel, CLIPProcessor
+ model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
+ print(" CLIP model loaded (openai/clip-vit-base-patch32)")
 
-        if 'LPIPS' in metrics:
-            import lpips
-            loss_fn = lpips.LPIPS(net='alex')
-            print("✅ LPIPS (AlexNet backbone) ready")
+ if 'LPIPS' in metrics:
+ import lpips
+ loss_fn = lpips.LPIPS(net='alex')
+ print(" LPIPS (AlexNet backbone) ready")
 
-        if 'Precision/Recall' in metrics:
-            from prdc import compute_prdc
-            print("✅ PRDC (Precision/Recall) ready")
+ if 'Precision/Recall' in metrics:
+ from prdc import compute_prdc
+ print(" PRDC (Precision/Recall) ready")
 
-    except ImportError as e:
-        print(f"❌ Import failed: {e}")
-        raise
+ except ImportError as e:
+ print(f" Import failed: {e}")
+ raise
 
 # Example: VisualForge setup
 setup_metrics_env(['FID', 'CLIP Score', 'HPSv2'])
@@ -296,8 +296,8 @@ setup_metrics_env(['FID', 'CLIP Score', 'HPSv2'])
 
 > 🏭 **Industry standard:** Weights & Biases (W&B) provides unified metric tracking with `wandb.log({'fid': fid_score, 'clip_score': clip_mean})`. Google's Imagen paper uses `clean-fid` with Inception-v3 pool3 features at 299×299 resolution. Stable Diffusion XL evaluation uses `torch-fidelity` with 50k samples.
 
-> 💡 **Implementation verdict:** torch-fidelity FID, CLIP ViT-B/32, and HPSv2 checkpoint validated — all cross-checks pass, consistent implementations locked for all experiments.
-> ➡️ Evaluation pipeline is run on the full VisualForge spring-collection batch in the next section.
+> **Implementation verdict:** torch-fidelity FID, CLIP ViT-B/32, and HPSv2 checkpoint validated — all cross-checks pass, consistent implementations locked for all experiments.
+> ➡ Evaluation pipeline is run on the full VisualForge spring-collection batch in the next section.
 
 ---
 
@@ -325,190 +325,190 @@ import json
 from tqdm import tqdm
 
 class GenerativeEvaluator:
-    """
-    Production-grade evaluation pipeline for text-to-image generation.
-    Computes FID, CLIP Score, and optionally HPSv2.
-    """
-    def __init__(self, device='cuda' if torch.cuda.is_available() else 'cpu'):
-        self.device = device
-        self.clip_model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32").to(device).eval()
-        self.clip_processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+ """
+ Production-grade evaluation pipeline for text-to-image generation.
+ Computes FID, CLIP Score, and optionally HPSv2.
+ """
+ def __init__(self, device='cuda' if torch.cuda.is_available() else 'cpu'):
+ self.device = device
+ self.clip_model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32").to(device).eval()
+ self.clip_processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
 
-    def compute_fid(self,
-                    real_dir: Path,
-                    generated_dir: Path,
-                    batch_size: int = 50) -> float:
-        """
-        Compute FID between real and generated image directories.
+ def compute_fid(self,
+ real_dir: Path,
+ generated_dir: Path,
+ batch_size: int = 50) -> float:
+ """
+ Compute FID between real and generated image directories.
 
-        Args:
-            real_dir: directory containing reference images
-            generated_dir: directory containing generated images
-            batch_size: batch size for feature extraction
+ Args:
+ real_dir: directory containing reference images
+ generated_dir: directory containing generated images
+ batch_size: batch size for feature extraction
 
-        Returns:
-            FID score (lower is better; <50 = production quality)
-        """
-        metrics = calculate_metrics(
-            input1=str(generated_dir),
-            input2=str(real_dir),
-            cuda=self.device == 'cuda',
-            isc=False,  # disable Inception Score (we don't need it)
-            fid=True,
-            kid=False,
-            verbose=False,
-            batch_size=batch_size
-        )
-        return metrics['frechet_inception_distance']
+ Returns:
+ FID score (lower is better; <50 = production quality)
+ """
+ metrics = calculate_metrics(
+ input1=str(generated_dir),
+ input2=str(real_dir),
+ cuda=self.device == 'cuda',
+ isc=False, # disable Inception Score (we don't need it)
+ fid=True,
+ kid=False,
+ verbose=False,
+ batch_size=batch_size
+ )
+ return metrics['frechet_inception_distance']
 
-    def compute_clip_scores(self,
-                           image_paths: list,
-                           prompts: list,
-                           batch_size: int = 32) -> dict:
-        """
-        Compute CLIP Score for each (image, prompt) pair.
+ def compute_clip_scores(self,
+ image_paths: list,
+ prompts: list,
+ batch_size: int = 32) -> dict:
+ """
+ Compute CLIP Score for each (image, prompt) pair.
 
-        Args:
-            image_paths: list of paths to generated images
-            prompts: list of text prompts (must match length of image_paths)
-            batch_size: batch size for CLIP encoding
+ Args:
+ image_paths: list of paths to generated images
+ prompts: list of text prompts (must match length of image_paths)
+ batch_size: batch size for CLIP encoding
 
-        Returns:
-            dict with 'scores' (per-image), 'mean', 'std', 'min', 'max'
-        """
-        assert len(image_paths) == len(prompts), "Must have one prompt per image"
+ Returns:
+ dict with 'scores' (per-image), 'mean', 'std', 'min', 'max'
+ """
+ assert len(image_paths) == len(prompts), "Must have one prompt per image"
 
-        scores = []
-        for i in tqdm(range(0, len(image_paths), batch_size), desc="CLIP Score"):
-            batch_imgs = [Image.open(p).convert('RGB') for p in image_paths[i:i+batch_size]]
-            batch_prompts = prompts[i:i+batch_size]
+ scores = []
+ for i in tqdm(range(0, len(image_paths), batch_size), desc="CLIP Score"):
+ batch_imgs = [Image.open(p).convert('RGB') for p in image_paths[i:i+batch_size]]
+ batch_prompts = prompts[i:i+batch_size]
 
-            inputs = self.clip_processor(
-                text=batch_prompts,
-                images=batch_imgs,
-                return_tensors="pt",
-                padding=True
-            ).to(self.device)
+ inputs = self.clip_processor(
+ text=batch_prompts,
+ images=batch_imgs,
+ return_tensors="pt",
+ padding=True
+ ).to(self.device)
 
-            with torch.no_grad():
-                outputs = self.clip_model(**inputs)
-                # CLIP Score = 2.5 * max(0, cosine_similarity)
-                # logits_per_image is already scaled cosine similarity
-                batch_scores = (outputs.logits_per_image.diagonal() / 100).cpu().numpy()
+ with torch.no_grad():
+ outputs = self.clip_model(**inputs)
+ # CLIP Score = 2.5 * max(0, cosine_similarity)
+ # logits_per_image is already scaled cosine similarity
+ batch_scores = (outputs.logits_per_image.diagonal() / 100).cpu().numpy()
 
-            scores.extend(batch_scores)
+ scores.extend(batch_scores)
 
-        return {
-            'scores': scores,
-            'mean': sum(scores) / len(scores),
-            'std': (sum((s - sum(scores)/len(scores))**2 for s in scores) / len(scores))**0.5,
-            'min': min(scores),
-            'max': max(scores)
-        }
+ return {
+ 'scores': scores,
+ 'mean': sum(scores) / len(scores),
+ 'std': (sum((s - sum(scores)/len(scores))**2 for s in scores) / len(scores))**0.5,
+ 'min': min(scores),
+ 'max': max(scores)
+ }
 
-    def evaluate_campaign(self,
-                         real_dir: Path,
-                         generated_dir: Path,
-                         prompts_file: Path) -> dict:
-        """
-        Full evaluation for a VisualForge campaign batch.
+ def evaluate_campaign(self,
+ real_dir: Path,
+ generated_dir: Path,
+ prompts_file: Path) -> dict:
+ """
+ Full evaluation for a VisualForge campaign batch.
 
-        Args:
-            real_dir: reference corpus (approved past campaigns)
-            generated_dir: generated images for this campaign
-            prompts_file: JSON file mapping filename -> prompt
+ Args:
+ real_dir: reference corpus (approved past campaigns)
+ generated_dir: generated images for this campaign
+ prompts_file: JSON file mapping filename -> prompt
 
-        Returns:
-            dict with all metrics and pass/fail thresholds
-        """
-        # Load prompts
-        with open(prompts_file) as f:
-            prompt_map = json.load(f)
+ Returns:
+ dict with all metrics and pass/fail thresholds
+ """
+ # Load prompts
+ with open(prompts_file) as f:
+ prompt_map = json.load(f)
 
-        gen_paths = sorted(glob.glob(str(generated_dir / "*.png")))
-        prompts = [prompt_map[Path(p).name] for p in gen_paths]
+ gen_paths = sorted(glob.glob(str(generated_dir / "*.png")))
+ prompts = [prompt_map[Path(p).name] for p in gen_paths]
 
-        print(f"Evaluating {len(gen_paths)} generated images...")
+ print(f"Evaluating {len(gen_paths)} generated images...")
 
-        # Compute FID (requires large N for stability)
-        print("Computing FID...")
-        fid_score = self.compute_fid(real_dir, generated_dir)
+ # Compute FID (requires large N for stability)
+ print("Computing FID...")
+ fid_score = self.compute_fid(real_dir, generated_dir)
 
-        # Compute CLIP Score (works with any N)
-        print("Computing CLIP Scores...")
-        clip_results = self.compute_clip_scores(gen_paths, prompts)
+ # Compute CLIP Score (works with any N)
+ print("Computing CLIP Scores...")
+ clip_results = self.compute_clip_scores(gen_paths, prompts)
 
-        # Assemble results
-        results = {
-            'fid': {
-                'score': fid_score,
-                'threshold': 50.0,
-                'pass': fid_score < 50.0,
-                'interpretation': 'Distribution similarity to reference corpus'
-            },
-            'clip_score': {
-                'mean': clip_results['mean'],
-                'std': clip_results['std'],
-                'threshold': 0.25,
-                'pass': clip_results['mean'] > 0.25,
-                'interpretation': 'Text-image alignment (prompt adherence)'
-            },
-            'overall_pass': fid_score < 50.0 and clip_results['mean'] > 0.25,
-            'sample_count': len(gen_paths),
-            'warnings': []
-        }
+ # Assemble results
+ results = {
+ 'fid': {
+ 'score': fid_score,
+ 'threshold': 50.0,
+ 'pass': fid_score < 50.0,
+ 'interpretation': 'Distribution similarity to reference corpus'
+ },
+ 'clip_score': {
+ 'mean': clip_results['mean'],
+ 'std': clip_results['std'],
+ 'threshold': 0.25,
+ 'pass': clip_results['mean'] > 0.25,
+ 'interpretation': 'Text-image alignment (prompt adherence)'
+ },
+ 'overall_pass': fid_score < 50.0 and clip_results['mean'] > 0.25,
+ 'sample_count': len(gen_paths),
+ 'warnings': []
+ }
 
-        # Add warnings for common issues
-        if len(gen_paths) < 5000:
-            results['warnings'].append(
-                f"FID computed on N={len(gen_paths)} samples (unstable, ±10 variance). "
-                "Use for relative comparison only or increase to N≥5k."
-            )
+ # Add warnings for common issues
+ if len(gen_paths) < 5000:
+ results['warnings'].append(
+ f"FID computed on N={len(gen_paths)} samples (unstable, ±10 variance). "
+ "Use for relative comparison only or increase to N≥5k."
+ )
 
-        if clip_results['std'] > 0.15:
-            results['warnings'].append(
-                f"High CLIP Score variance (σ={clip_results['std']:.3f}) — "
-                "some images may not match prompts. Inspect low-scoring outliers."
-            )
+ if clip_results['std'] > 0.15:
+ results['warnings'].append(
+ f"High CLIP Score variance (σ={clip_results['std']:.3f}) — "
+ "some images may not match prompts. Inspect low-scoring outliers."
+ )
 
-        return results
+ return results
 
 # Example usage: VisualForge spring collection evaluation
 evaluator = GenerativeEvaluator(device='cuda')
 results = evaluator.evaluate_campaign(
-    real_dir=Path("data/vf_reference_corpus"),
-    generated_dir=Path("output/spring_collection_v1"),
-    prompts_file=Path("output/spring_collection_v1/prompts.json")
+ real_dir=Path("data/vf_reference_corpus"),
+ generated_dir=Path("output/spring_collection_v1"),
+ prompts_file=Path("output/spring_collection_v1/prompts.json")
 )
 
 print(json.dumps(results, indent=2))
 # Output:
 # {
-#   "fid": {
-#     "score": 42.3,
-#     "threshold": 50.0,
-#     "pass": true,
-#     "interpretation": "Distribution similarity to reference corpus"
-#   },
-#   "clip_score": {
-#     "mean": 0.31,
-#     "std": 0.08,
-#     "threshold": 0.25,
-#     "pass": true,
-#     "interpretation": "Text-image alignment (prompt adherence)"
-#   },
-#   "overall_pass": true,
-#   "sample_count": 500,
-#   "warnings": [
-#     "FID computed on N=500 samples (unstable, ±10 variance). Use for relative comparison only or increase to N≥5k."
-#   ]
+# "fid": {
+# "score": 42.3,
+# "threshold": 50.0,
+# "pass": true,
+# "interpretation": "Distribution similarity to reference corpus"
+# },
+# "clip_score": {
+# "mean": 0.31,
+# "std": 0.08,
+# "threshold": 0.25,
+# "pass": true,
+# "interpretation": "Text-image alignment (prompt adherence)"
+# },
+# "overall_pass": true,
+# "sample_count": 500,
+# "warnings": [
+# "FID computed on N=500 samples (unstable, ±10 variance). Use for relative comparison only or increase to N≥5k."
+# ]
 # }
 ```
 
 > 🏭 **Industry standard:** Stability AI's SDXL evaluation pipeline uses `torch-fidelity` with 50k samples, CLIP ViT-L/14 (not ViT-B/32), and Aesthetic Predictor v2.1. Images resized to 512×512 for FID (original training resolution). All metrics logged to Weights & Biases with per-checkpoint comparisons.
 
-> 💡 **Compute verdict:** FID=42.3, CLIP=0.31 (σ=0.08) on 500 images — preprocessing consistent, prompt coverage complete; FID sample-size warning noted for relative comparison use only.
-> ➡️ Metric scores are interpreted against quality thresholds in the go/no-go section.
+> **Compute verdict:** FID=42.3, CLIP=0.31 (σ=0.08) on 500 images — preprocessing consistent, prompt coverage complete; FID sample-size warning noted for relative comparison use only.
+> ➡ Metric scores are interpreted against quality thresholds in the go/no-go section.
 
 ---
 
@@ -527,20 +527,20 @@ print(json.dumps(results, indent=2))
 **Decision matrix (VisualForge quality gate):**
 
 ```
-                    CLIP Score
-                 Low (<0.25)     High (≥0.25)
-              ┌─────────────────┬─────────────────┐
-    FID       │ ❌ FAIL         │ ⚠️  PARTIAL    │
-    High      │ Model broken    │ Realistic but   │
-    (≥50)     │ (ignore prompts │ prompt-agnostic │
-              │  + unrealistic) │ (tune CFG ↑)    │
-              ├─────────────────┼─────────────────┤
-    FID       │ ⚠️  PARTIAL    │ ✅ PASS         │
-    Low       │ Adheres to      │ Realistic +     │
-    (<50)     │ prompts but     │ prompt-aligned  │
-              │ lacks realism   │ → ready to ship │
-              │ (tune steps ↑)  │                 │
-              └─────────────────┴─────────────────┘
+ CLIP Score
+ Low (<0.25) High (≥0.25)
+ ┌─────────────────┬─────────────────┐
+ FID │ FAIL │ PARTIAL │
+ High │ Model broken │ Realistic but │
+ (≥50) │ (ignore prompts │ prompt-agnostic │
+ │ + unrealistic) │ (tune CFG ↑) │
+ ├─────────────────┼─────────────────┤
+ FID │ PARTIAL │ PASS │
+ Low │ Adheres to │ Realistic + │
+ (<50) │ prompts but │ prompt-aligned │
+ │ lacks realism │ → ready to ship │
+ │ (tune steps ↑) │ │
+ └─────────────────┴─────────────────┘
 ```
 
 **Code snippet — Interpret results and generate report:**
@@ -548,85 +548,85 @@ print(json.dumps(results, indent=2))
 ```python
 # Interpret evaluation results and make go/no-go decision
 def interpret_results(results: dict, use_case: str = 'visualforge') -> dict:
-    """
-    Interpret evaluation metrics and generate actionable recommendations.
+ """
+ Interpret evaluation metrics and generate actionable recommendations.
 
-    Args:
-        results: output from GenerativeEvaluator.evaluate_campaign()
-        use_case: 'visualforge' (strict thresholds) or 'internal' (relaxed)
+ Args:
+ results: output from GenerativeEvaluator.evaluate_campaign()
+ use_case: 'visualforge' (strict thresholds) or 'internal' (relaxed)
 
-    Returns:
-        dict with 'decision', 'blockers', 'warnings', 'recommendations'
-    """
-    thresholds = {
-        'visualforge': {'fid': 50.0, 'clip': 0.25, 'hps': 4.0},
-        'internal': {'fid': 100.0, 'clip': 0.20, 'hps': 3.5}
-    }[use_case]
+ Returns:
+ dict with 'decision', 'blockers', 'warnings', 'recommendations'
+ """
+ thresholds = {
+ 'visualforge': {'fid': 50.0, 'clip': 0.25, 'hps': 4.0},
+ 'internal': {'fid': 100.0, 'clip': 0.20, 'hps': 3.5}
+ }[use_case]
 
-    fid = results['fid']['score']
-    clip = results['clip_score']['mean']
+ fid = results['fid']['score']
+ clip = results['clip_score']['mean']
 
-    interpretation = {
-        'decision': 'UNDECIDED',
-        'blockers': [],
-        'warnings': results.get('warnings', []),
-        'recommendations': []
-    }
+ interpretation = {
+ 'decision': 'UNDECIDED',
+ 'blockers': [],
+ 'warnings': results.get('warnings', []),
+ 'recommendations': []
+ }
 
-    # Decision logic based on 2×2 matrix
-    fid_pass = fid < thresholds['fid']
-    clip_pass = clip > thresholds['clip']
+ # Decision logic based on 2×2 matrix
+ fid_pass = fid < thresholds['fid']
+ clip_pass = clip > thresholds['clip']
 
-    if fid_pass and clip_pass:
-        interpretation['decision'] = 'PASS — Ready to ship'
-        interpretation['recommendations'].append(
-            f"✅ FID={fid:.1f} < {thresholds['fid']} and CLIP={clip:.3f} > {thresholds['clip']} "
-            "→ Images are realistic and prompt-aligned."
-        )
+ if fid_pass and clip_pass:
+ interpretation['decision'] = 'PASS — Ready to ship'
+ interpretation['recommendations'].append(
+ f" FID={fid:.1f} < {thresholds['fid']} and CLIP={clip:.3f} > {thresholds['clip']} "
+ "→ Images are realistic and prompt-aligned."
+ )
 
-    elif not fid_pass and not clip_pass:
-        interpretation['decision'] = 'FAIL — Model fundamentally broken'
-        interpretation['blockers'].append(
-            f"❌ FID={fid:.1f} ≥ {thresholds['fid']} (unrealistic) AND "
-            f"CLIP={clip:.3f} ≤ {thresholds['clip']} (ignores prompts)"
-        )
-        interpretation['recommendations'].append(
-            "Check model checkpoint, verify conditioning is enabled, inspect sample outputs for collapse."
-        )
+ elif not fid_pass and not clip_pass:
+ interpretation['decision'] = 'FAIL — Model fundamentally broken'
+ interpretation['blockers'].append(
+ f" FID={fid:.1f} ≥ {thresholds['fid']} (unrealistic) AND "
+ f"CLIP={clip:.3f} ≤ {thresholds['clip']} (ignores prompts)"
+ )
+ interpretation['recommendations'].append(
+ "Check model checkpoint, verify conditioning is enabled, inspect sample outputs for collapse."
+ )
 
-    elif fid_pass and not clip_pass:
-        interpretation['decision'] = 'PARTIAL PASS — Realistic but prompt-agnostic'
-        interpretation['warnings'].append(
-            f"⚠️  FID={fid:.1f} < {thresholds['fid']} (realistic) BUT "
-            f"CLIP={clip:.3f} ≤ {thresholds['clip']} (weak prompt adherence)"
-        )
-        interpretation['recommendations'].append(
-            "Increase CFG guidance scale (try 7.5→12.0) to strengthen prompt conditioning. "
-            "Verify CLIP embeddings are passed to UNet correctly."
-        )
+ elif fid_pass and not clip_pass:
+ interpretation['decision'] = 'PARTIAL PASS — Realistic but prompt-agnostic'
+ interpretation['warnings'].append(
+ f" FID={fid:.1f} < {thresholds['fid']} (realistic) BUT "
+ f"CLIP={clip:.3f} ≤ {thresholds['clip']} (weak prompt adherence)"
+ )
+ interpretation['recommendations'].append(
+ "Increase CFG guidance scale (try 7.5→12.0) to strengthen prompt conditioning. "
+ "Verify CLIP embeddings are passed to UNet correctly."
+ )
 
-    elif not fid_pass and clip_pass:
-        interpretation['decision'] = 'PARTIAL PASS — Prompt-aligned but lacks realism'
-        interpretation['warnings'].append(
-            f"⚠️  FID={fid:.1f} ≥ {thresholds['fid']} (lacks realism) BUT "
-            f"CLIP={clip:.3f} > {thresholds['clip']} (prompt-aligned)"
-        )
-        interpretation['recommendations'].append(
-            "Increase inference steps (25→50) or switch to better scheduler (Euler→DPM++) to improve quality. "
-            "Check for training artifacts or dataset quality issues."
-        )
+ elif not fid_pass and clip_pass:
+ interpretation['decision'] = 'PARTIAL PASS — Prompt-aligned but lacks realism'
+ interpretation['warnings'].append(
+ f" FID={fid:.1f} ≥ {thresholds['fid']} (lacks realism) BUT "
+ f"CLIP={clip:.3f} > {thresholds['clip']} (prompt-aligned)"
+ )
+ interpretation['recommendations'].append(
+ "Increase inference steps (25→50) or switch to better scheduler (Euler→DPM++) to improve quality. "
+ "Check for training artifacts or dataset quality issues."
+ )
 
-    # Add HPSv2 interpretation if available
-    if 'hps' in results:
-        hps = results['hps']['score']
-        if hps < thresholds['hps']:
-            interpretation['warnings'].append(
-                f"⚠️  HPSv2={hps:.2f} < {thresholds['hps']} — "
-                "Technically correct but aesthetically unpleasing. "
-                "Check composition, lighting, color grading."
-            )
+ # Add HPSv2 interpretation if available
+ if 'hps' in results:
+ hps = results['hps']['score']
+ if hps < thresholds['hps']:
+ interpretation['warnings'].append(
+ f" HPSv2={hps:.2f} < {thresholds['hps']} — "
+ "Technically correct but aesthetically unpleasing. "
+ "Check composition, lighting, color grading."
+ )
 
-    return interpretation
+ return interpretation
 
 # Example: VisualForge spring collection decision
 decision = interpret_results(results, use_case='visualforge')
@@ -634,17 +634,17 @@ print(f"\n{'='*60}")
 print(f"DECISION: {decision['decision']}")
 print(f"{'='*60}")
 for blocker in decision['blockers']:
-    print(blocker)
+ print(blocker)
 for warning in decision['warnings']:
-    print(warning)
+ print(warning)
 for rec in decision['recommendations']:
-    print(f"→ {rec}")
+ print(f"→ {rec}")
 ```
 
 > 🏭 **Industry standard:** Midjourney V6 uses HPSv2>4.2 + manual QA pass rate >90% as the release gate. OpenAI DALL-E 3 uses FID<20 (against LAION-5B subset) + CLIP Score>0.32 + human preference win rate >60% vs. DALL-E 2. Stable Diffusion XL uses FID<25 + Aesthetic Score>6.0/10 as the checkpoint selection criterion.
 
-> 💡 **FID verdict:** FID 42.3 → CLIP 0.31 → HPSv2 4.1 — VisualForge spring collection passes all thresholds; ship to creative director for spot-check (expect ≥80% approval).
-> ➡️ CLIP similarity and HPSv2 confirm prompt alignment and aesthetic quality alongside distribution realism.
+> **FID verdict:** FID 42.3 → CLIP 0.31 → HPSv2 4.1 — VisualForge spring collection passes all thresholds; ship to creative director for spot-check (expect ≥80% approval).
+> ➡ CLIP similarity and HPSv2 confirm prompt alignment and aesthetic quality alongside distribution realism.
 
 ---
 
@@ -656,7 +656,7 @@ for rec in decision['recommendations']:
 - Are all VisualForge campaign types represented (product-on-white, lifestyle, brand-pattern)? → **class recall per brief type**
 - Does "Mango leather crossbody bag, white background" produce a bag on white, not a lifestyle shot? → **CLIP Score** (text-image alignment)
 
-💡 **Why this matters:** At 120 images/day throughput, you can't manually review every output. Automated metrics give you a 10-minute quality gate instead of 2 hours of manual inspection.
+**Why this matters:** At 120 images/day throughput, you can't manually review every output. Automated metrics give you a 10-minute quality gate instead of 2 hours of manual inspection.
 
 > 📖 **Educational proxy:** FID math is illustrated using MNIST digit generation (reference = real digits, generated = DDPM output) because it's compact and verifiable. The VisualForge production evaluation (§5) applies the same metrics to campaign image batches.
 
@@ -744,8 +744,7 @@ Kynkäänniemi et al. 2019 formulation using $k$-NN manifold estimation:
 $$
 \text{Precision} = \frac{1}{|X_g|}\sum_i \mathbf{1}[x_{g,i} \in \text{manifold}(X_r)]
 $$
-
-⚡ **Connection to Constraint #1 (Quality):** HPSv2 score of 4.1/5.0 = exceeds target → freelancer replacement validated.
+**Connection to Constraint #1 (Quality):** HPSv2 score of 4.1/5.0 = exceeds target → freelancer replacement validated.
 
 ---
 
@@ -755,23 +754,23 @@ $$
  GENERATIVE EVALUATION LANDSCAPE
  ─────────────────────────────────
 
- Reference-free                      Reference-based
- (no real images needed)             (compares to real distribution)
+ Reference-free Reference-based
+ (no real images needed) (compares to real distribution)
 
- ┌─────────────────────┐            ┌──────────────────────────────┐
- │ CLIP Score          │            │ FID (distribution match)     │
- │ text ↔ image align  │            │ IS (fidelity + diversity)    │
- │ HPSv2, ImageReward  │            │ Precision / Recall           │
- │ (human preference)  │            │ LPIPS (pixel-level, per img) │
- └─────────────────────┘            └──────────────────────────────┘
+ ┌─────────────────────┐ ┌──────────────────────────────┐
+ │ CLIP Score │ │ FID (distribution match) │
+ │ text ↔ image align │ │ IS (fidelity + diversity) │
+ │ HPSv2, ImageReward │ │ Precision / Recall │
+ │ (human preference) │ │ LPIPS (pixel-level, per img) │
+ └─────────────────────┘ └──────────────────────────────┘
 
- Sample-level                        Distribution-level
- (per image score)                   (needs thousands of images)
+ Sample-level Distribution-level
+ (per image score) (needs thousands of images)
 
- ┌─────────────────────┐            ┌──────────────────────────────┐
- │ LPIPS               │            │ FID, IS, Precision/Recall    │
- │ SSIM, PSNR          │            │ (stable only with N≥5k)      │
- │ CLIP Score          │            └──────────────────────────────┘
+ ┌─────────────────────┐ ┌──────────────────────────────┐
+ │ LPIPS │ │ FID, IS, Precision/Recall │
+ │ SSIM, PSNR │ │ (stable only with N≥5k) │
+ │ CLIP Score │ └──────────────────────────────┘
  └─────────────────────┘
 ```
 
@@ -780,11 +779,11 @@ FID BIAS VS SAMPLE COUNT
 ─────────────────────────
 FID
  ↑
-300│ × N=100         ← unstable, don't trust this
+300│ × N=100 ← unstable, don't trust this
 200│ × N=500
 100│ × N=1k
- 50│ × N=5k          ← starts to stabilise
- 20│ × N=50k         ← production-grade estimate
+ 50│ × N=5k ← starts to stabilise
+ 20│ × N=50k ← production-grade estimate
  └───────────────────────────→ N (log scale)
 
 True FID attained only at large N; small N inflates FID.
@@ -816,8 +815,8 @@ ref_images = [Image.open(f).resize((299, 299)) for f in glob.glob("vf_reference/
 gen_images = [Image.open(f).resize((299, 299)) for f in glob.glob("vf_generated/*.png")]
 
 def to_tensor_batch(images: list, batch_size=50):
-    import torchvision.transforms.functional as TF
-    return torch.stack([TF.to_tensor(img) for img in images])
+ import torchvision.transforms.functional as TF
+ return torch.stack([TF.to_tensor(img) for img in images])
 
 fid.update(to_tensor_batch(ref_images), real=True)
 fid.update(to_tensor_batch(gen_images), real=False)
@@ -830,13 +829,13 @@ processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
 
 brief_prompt = "product on white background, studio lighting, e-commerce photography"
 clip_scores = []
-for img_path in glob.glob("vf_generated/*.png")[:20]:  # spot-check 20
-    img = Image.open(img_path)
-    inputs = processor(text=[brief_prompt], images=[img], return_tensors="pt", padding=True)
-    with torch.no_grad():
-        outputs = model(**inputs)
-    score = outputs.logits_per_image.item() / 100  # normalised to 0–1
-    clip_scores.append(score)
+for img_path in glob.glob("vf_generated/*.png")[:20]: # spot-check 20
+ img = Image.open(img_path)
+ inputs = processor(text=[brief_prompt], images=[img], return_tensors="pt", padding=True)
+ with torch.no_grad():
+ outputs = model(**inputs)
+ score = outputs.logits_per_image.item() / 100 # normalised to 0–1
+ clip_scores.append(score)
 print(f"Mean CLIP Score: {sum(clip_scores)/len(clip_scores):.3f} (target >0.25)")
 ```
 
@@ -844,12 +843,12 @@ print(f"Mean CLIP Score: {sum(clip_scores)/len(clip_scores):.3f} (target >0.25)"
 
 | Metric | Target | Result | Interpretation |
 |--------|--------|--------|----------------|
-| FID vs. reference corpus | <50 | 42.3 ✅ | Generated images statistically similar to approved products |
-| CLIP Score (brief match) | >0.25 | 0.31 ✅ | Images correctly depict brief prompt |
-| Class recall (brief types) | ≥0.9 per type | 0.93 product-on-white, 0.87 lifestyle ✅ | All campaign types represented |
-| Manual QA pass rate | >80% | 84% ✅ | Creative director sign-off rate |
+| FID vs. reference corpus | <50 | 42.3 | Generated images statistically similar to approved products |
+| CLIP Score (brief match) | >0.25 | 0.31 | Images correctly depict brief prompt |
+| Class recall (brief types) | ≥0.9 per type | 0.93 product-on-white, 0.87 lifestyle | All campaign types represented |
+| Manual QA pass rate | >80% | 84% | Creative director sign-off rate |
 
-> ✅ **Gate decision**: FID 42.3 < 50 threshold and CLIP 0.31 > 0.25 threshold — batch approved for creative review. This automated gate saves ~2 hours of manual review per 100-image batch.
+> **Gate decision**: FID 42.3 < 50 threshold and CLIP 0.31 > 0.25 threshold — batch approved for creative review. This automated gate saves ~2 hours of manual review per 100-image batch.
 
 > 🏭 **Industry standard — Multi-metric dashboards:** Weights & Biases (W&B) is the production standard for metric tracking. Log metrics with `wandb.log({'fid': fid_score, 'clip_score': clip_mean, 'hpsv2': hps_score})` and visualize trends across checkpoints. Stability AI's internal dashboard tracks FID + CLIP + Aesthetic Score + HPSv2 for every SDXL training run (logged every 5k steps). OpenAI logs to internal tools but published DALL-E 3 metrics follow the same multi-metric pattern. **Key insight:** Single-metric optimization ("minimize FID only") leads to mode collapse — always track ≥2 orthogonal metrics (fidelity + alignment or fidelity + aesthetics).
 
@@ -927,8 +926,7 @@ print(f"Mean CLIP Score: {sum(clip_scores)/len(clip_scores):.3f} (target >0.25)"
 | Ch.10 Multimodal LLM | Image understanding for QA | Automated QA pass rate 84% → validates VLM can filter unusable outputs |
 
 **Key unlock:** Before this chapter, you had to trust that your generations "looked good." Now you have objective proof: HPSv2=4.1/5.0 exceeds freelancer baseline (4.0 target). VisualForge can replace $600k/year of human work with confidence.
-
-➡️ **Forward pointer:** Next chapter (Ch.12) optimizes speed (18s → 8s with SDXL-Turbo) while maintaining this 4.1/5.0 quality — evaluation metrics prove the optimization doesn't degrade outputs.
+**Forward pointer:** Next chapter (Ch.12) optimizes speed (18s → 8s with SDXL-Turbo) while maintaining this 4.1/5.0 quality — evaluation metrics prove the optimization doesn't degrade outputs.
 
 ---
 
@@ -997,11 +995,11 @@ print(f"Mean CLIP Score: {sum(clip_scores)/len(clip_scores):.3f} (target >0.25)"
 ## 11.5 · Progress Check — What Have We Unlocked?
 
 ### Before This Chapter
-- **Constraint #1 (Quality)**: ⚡ ~3.9/5.0 via slow/expensive client surveys
+- **Constraint #1 (Quality)**: ~3.9/5.0 via slow/expensive client surveys
 - **VisualForge Status**: Cannot track quality improvements objectively
 
 ### After This Chapter
-- **Constraint #1 (Quality)**: ✅ **4.1/5.0** → HPSv2 score on 500-image test set, exceeds 4.0 target!
+- **Constraint #1 (Quality)**: **4.1/5.0** → HPSv2 score on 500-image test set, exceeds 4.0 target!
 - **VisualForge Status**: Automated metrics prove quality exceeds freelancer baseline (4.2/5.0 during ramp-up, now 4.1/5.0)
 
 ---
@@ -1026,14 +1024,14 @@ print(f"Mean CLIP Score: {sum(clip_scores)/len(clip_scores):.3f} (target >0.25)"
 
 | Constraint | Ch.1 | Ch.3 | Ch.6 | Ch.8 | Ch.10 | Ch.11 (This) | Target |
 |------------|------|------|------|------|-------|--------------|--------|
-| Quality | ❌ | ❌ | ⚡ 3.5 | ⚡ 3.8 | ⚡ 3.9 | ✅ **4.1/5.0** | 4.0/5.0 |
-| Speed | ❌ | ❌ | ✅ 20s | ✅ 18s | ✅ 18s | ✅ 18s | <30s |
-| Cost | ❌ | ❌ | ✅ $2.5k | ✅ $2.5k | ✅ $2.5k | ✅ $2.5k | <$5k |
-| Control | ❌ | ⚡ | ⚡ <15% | ✅ 3% | ✅ 3% | ✅ 3% | <5% |
-| Throughput | ❌ | ❌ | ❌ | ⚡ 80/day | ✅ 120/day | ✅ 120/day | 100+/day |
-| Versatility | ⚡ | ⚡ | ⚡ T2I | ⚡ T2I+Video | ✅ All 3 | ✅ All 3 | 3 modes |
+| Quality | | | 3.5 | 3.8 | 3.9 | **4.1/5.0** | 4.0/5.0 |
+| Speed | | | 20s | 18s | 18s | 18s | <30s |
+| Cost | | | $2.5k | $2.5k | $2.5k | $2.5k | <$5k |
+| Control | | | <15% | 3% | 3% | 3% | <5% |
+| Throughput | | | | 80/day | 120/day | 120/day | 100+/day |
+| Versatility | | | T2I | T2I+Video | All 3 | All 3 | 3 modes |
 
-**Legend:** ❌ = Blocked | ⚡ = Foundation laid | ✅ = Target hit
+**Legend:** = Blocked | = Foundation laid | = Target hit
 
 ---
 

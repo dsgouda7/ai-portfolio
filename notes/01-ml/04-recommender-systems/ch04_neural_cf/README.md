@@ -23,7 +23,7 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Launch **FlixAI** — a production-grade movie recommendation engine achieving >85% hit rate @ top-10 recommendations across 5 constraints:
+> **The mission**: Launch **FlixAI** — a production-grade movie recommendation engine achieving >85% hit rate @ top-10 recommendations across 5 constraints:
 > 1. **ACCURACY**: >85% HR@10 on MovieLens 100k
 > 2. **COLD START**: Handle new users and items with no interaction history
 > 3. **SCALABILITY**: 1M+ ratings, <200 ms inference latency
@@ -31,10 +31,10 @@
 > 5. **EXPLAINABILITY**: "Because you liked X" justifications
 
 **What we know so far:**
-- ✅ Ch.1 popularity baseline → 42% HR@10 (too generic)
-- ✅ Ch.2 collaborative filtering → 65% HR@10 (sparse data limits)
-- ✅ Ch.3 matrix factorisation → 78% HR@10 (latent factors help but hit a ceiling)
-- ❌ **Still 7 points short of the 85% target.**
+- Ch.1 popularity baseline → 42% HR@10 (too generic)
+- Ch.2 collaborative filtering → 65% HR@10 (sparse data limits)
+- Ch.3 matrix factorisation → 78% HR@10 (latent factors help but hit a ceiling)
+- **Still 7 points short of the 85% target.**
 
 **What is blocking us:**
 
@@ -43,9 +43,9 @@ Matrix factorisation assumes user–item interaction is a **linear dot product**
 $$\hat{r}_{ui} = \mathbf{u}^\top\mathbf{v} = u_1 v_1 + u_2 v_2 + \cdots + u_d v_d$$
 
 This is a weighted sum — fundamentally **linear**. Consider User 196 on MovieLens 100k:
-- ⭐⭐⭐⭐⭐ *Die Hard* (action)
-- ⭐⭐⭐⭐⭐ *Groundhog Day* (comedy)
-- ⭐⭐ *Last Action Hero* (action-comedy) ← **hates the hybrid**
+- *Die Hard* (action)
+- *Groundhog Day* (comedy)
+- *Last Action Hero* (action-comedy) ← **hates the hybrid**
 
 A linear model cannot encode "likes A AND B separately but dislikes A + B together" because the dot product treats dimensions independently — there is no cross-term for $u_{\text{action}} \times u_{\text{comedy}} \times v_{\text{action}} \times v_{\text{comedy}}$.
 
@@ -56,24 +56,24 @@ Replace the dot product with a learnable MLP that models arbitrary interactions.
 
 | Constraint | Status after Ch.3 | Ch.4 target |
 |------------|-------------------|-------------|
-| ACCURACY >85% HR@10 | ❌ 78% | ⚠️ ~82% (closing the gap) |
-| COLD START | ❌ No embeddings for new arrivals | ❌ Still blocked |
-| SCALABILITY | ⚠️ OK for 100k | ⚠️ Neural net is heavier |
-| DIVERSITY | ⚠️ Latent space helps | ⚠️ Richer embeddings |
-| EXPLAINABILITY | ❌ Black-box | ❌ Deeper = less interpretable |
+| ACCURACY >85% HR@10 | 78% | ~82% (closing the gap) |
+| COLD START | No embeddings for new arrivals | Still blocked |
+| SCALABILITY | OK for 100k | Neural net is heavier |
+| DIVERSITY | Latent space helps | Richer embeddings |
+| EXPLAINABILITY | Black-box | Deeper = less interpretable |
 
 ```mermaid
 flowchart LR
-    MF["Ch.3: MF\nHR@10 = 78%"] --> EMB["Separate GMF\n+ MLP Embeddings"]
-    EMB --> GMF["GMF Path\n(linear ⊙)"]
-    EMB --> MLP["MLP Path\n(non-linear ReLU)"]
-    GMF --> FUSE["Fuse & Predict\nσ(w·GMF + w·MLP)"]
-    MLP --> FUSE
-    FUSE --> EVAL["Evaluate\nHR@10 ≈ 82%"]
+ MF["Ch.3: MF\nHR@10 = 78%"] --> EMB["Separate GMF\n+ MLP Embeddings"]
+ EMB --> GMF["GMF Path\n(linear ⊙)"]
+ EMB --> MLP["MLP Path\n(non-linear ReLU)"]
+ GMF --> FUSE["Fuse & Predict\nσ(w·GMF + w·MLP)"]
+ MLP --> FUSE
+ FUSE --> EVAL["Evaluate\nHR@10 ≈ 82%"]
 
-    style MF fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style FUSE fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style EVAL fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style MF fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style FUSE fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style EVAL fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -97,7 +97,7 @@ The GMF and MLP outputs are **concatenated and projected** through a final sigmo
 
 Crucially, GMF and MLP use **separate embedding tables** — the same user gets one representation optimised for linear interactions and another optimised for non-linear ones. This doubles the parameter count but prevents the two paths from interfering with each other.
 
-> 💡 **Why not just a bigger MF?** Adding more factors ($d = 8 \to 32$) in Ch.3 gave diminishing returns (+0.5% each). The architecture itself was the ceiling, not the capacity. NCF breaks through by changing the *interaction function*, not just its size.
+> **Why not just a bigger MF?** Adding more factors ($d = 8 \to 32$) in Ch.3 gave diminishing returns (+0.5% each). The architecture itself was the ceiling, not the capacity. NCF breaks through by changing the *interaction function*, not just its size.
 
 ---
 
@@ -132,32 +132,32 @@ Before the math, here is the full NeuMF pipeline. Each step maps to a sub-sectio
 ```
 NEUMF PIPELINE
 ══════════════════════════════════════════════════════════════════════
-INPUT:  user_id u,  item_id i
+INPUT: user_id u, item_id i
 
-Step 1 — Embedding Lookup  (§4a)
-  p_u^G = GMF_user_table[u]      # shape (d,)
-  q_i^G = GMF_item_table[i]      # shape (d,)
-  p_u^M = MLP_user_table[u]      # shape (d,)
-  q_i^M = MLP_item_table[i]      # shape (d,)
+Step 1 — Embedding Lookup (§4a)
+ p_u^G = GMF_user_table[u] # shape (d,)
+ q_i^G = GMF_item_table[i] # shape (d,)
+ p_u^M = MLP_user_table[u] # shape (d,)
+ q_i^M = MLP_item_table[i] # shape (d,)
 
-Step 2 — GMF Path  (§4b)
-  φ_GMF      = p_u^G ⊙ q_i^G          # element-wise product, shape (d,)
-  logit_GMF  = h_G^T · φ_GMF          # scalar
+Step 2 — GMF Path (§4b)
+ φ_GMF = p_u^G ⊙ q_i^G # element-wise product, shape (d,)
+ logit_GMF = h_G^T · φ_GMF # scalar
 
-Step 3 — MLP Path  (§4c)
-  z_0   = [p_u^M ; q_i^M]        # concatenate → shape (2d,) = 8
-  z_1   = ReLU(W_1 z_0 + b_1)    # 8 → 4
-  z_2   = ReLU(W_2 z_1 + b_2)    # 4 → 2
-  φ_MLP = W_3 z_2 + b_3          # 2 → 1  (linear projection, scalar)
+Step 3 — MLP Path (§4c)
+ z_0 = [p_u^M ; q_i^M] # concatenate → shape (2d,) = 8
+ z_1 = ReLU(W_1 z_0 + b_1) # 8 → 4
+ z_2 = ReLU(W_2 z_1 + b_2) # 4 → 2
+ φ_MLP = W_3 z_2 + b_3 # 2 → 1 (linear projection, scalar)
 
-Step 4 — Fuse  (§4d)
-  logit = w_G · logit_GMF + w_M · φ_MLP + b_fuse
+Step 4 — Fuse (§4d)
+ logit = w_G · logit_GMF + w_M · φ_MLP + b_fuse
 
 Step 5 — Predict
-  ŷ_ui  = σ(logit)                # ∈ (0, 1)
+ ŷ_ui = σ(logit) # ∈ (0, 1)
 
-Step 6 — Loss  (§4e)
-  L = −[y · log(ŷ) + (1−y) · log(1−ŷ)]   # BCE for one pair
+Step 6 — Loss (§4e)
+ L = −[y · log(ŷ) + (1−y) · log(1−ŷ)] # BCE for one pair
 ══════════════════════════════════════════════════════════════════════
 ```
 
@@ -215,7 +215,7 @@ $$\mathbf{p}_1^G = [0.60,\ 0.20,\ -0.40,\ 0.80] \qquad \mathbf{q}_3^G = [0.20,\ 
 
 $$\mathbf{p}_1^M = [0.50,\ -0.30,\ 0.70,\ 0.10] \qquad \mathbf{q}_3^M = [0.40,\ 0.60,\ -0.20,\ 0.30]$$
 
-> 💡 The embedding lookup is **O(1)** — just an index into a matrix. The expensive step is the gradient update that slowly adjusts these rows during training.
+> The embedding lookup is **O(1)** — just an index into a matrix. The expensive step is the gradient update that slowly adjusts these rows during training.
 
 ---
 
@@ -326,10 +326,10 @@ MLP with $\mathbf{q}_2^M = [-0.20,\ 0.40,\ 0.70,\ 0.20]$:
 
 - $\mathbf{z}_0^{(2)} = [0.50,\ -0.30,\ 0.70,\ 0.10,\ -0.20,\ 0.40,\ 0.70,\ 0.20]$
 - Layer 1 (same $W_1$, $\mathbf{b}_1$): $\mathbf{z}_1^{(2)} = [0.41,\ 0.00,\ 0.29,\ 0.35]$
-  - $a_1[0] = 0.20(0.50)-0.10(-0.30)+0.30(0.70)+0.10(0.10)+0.20(-0.20)-0.20(0.40)+0.10(0.70)+0.30(0.20)+0.05 = 0.41$
-  - $a_1[1] = -0.10(0.50)+0.30(-0.30)+0.10(0.70)-0.20(0.10)+0.30(-0.20)+0.10(0.40)-0.10(0.70)+0.20(0.20)+0.05 = -0.09 \to 0.00$
-  - $a_1[2] = 0.30(0.50)+0.20(-0.30)-0.10(0.70)+0.30(0.10)-0.10(-0.20)+0.20(0.40)+0.30(0.70)-0.10(0.20)-0.05 = 0.29$
-  - $a_1[3] = 0.10(0.50)-0.20(-0.30)+0.20(0.70)+0.30(0.10)+0.10(-0.20)-0.30(0.40)+0.20(0.70)+0.10(0.20)+0.05 = 0.35$
+ - $a_1[0] = 0.20(0.50)-0.10(-0.30)+0.30(0.70)+0.10(0.10)+0.20(-0.20)-0.20(0.40)+0.10(0.70)+0.30(0.20)+0.05 = 0.41$
+ - $a_1[1] = -0.10(0.50)+0.30(-0.30)+0.10(0.70)-0.20(0.10)+0.30(-0.20)+0.10(0.40)-0.10(0.70)+0.20(0.20)+0.05 = -0.09 \to 0.00$
+ - $a_1[2] = 0.30(0.50)+0.20(-0.30)-0.10(0.70)+0.30(0.10)-0.10(-0.20)+0.20(0.40)+0.30(0.70)-0.10(0.20)-0.05 = 0.29$
+ - $a_1[3] = 0.10(0.50)-0.20(-0.30)+0.20(0.70)+0.30(0.10)+0.10(-0.20)-0.30(0.40)+0.20(0.70)+0.10(0.20)+0.05 = 0.35$
 - Layer 2: $a_2[0] = 0.40(0.41)+0.50(0.29)+0.30(0.35) = 0.414$; $a_2[1] = -0.30(0.41)+0.20(0.29)-0.40(0.35) = -0.205 \to 0.00$
 - $\mathbf{z}_2^{(2)} = [0.414,\ 0.000]$; $\phi^{\text{MLP}}_2 = 0.60(0.414) = 0.248$
 
@@ -347,7 +347,7 @@ Backpropagation will:
 - Push $\hat{y}_{1,3}$ **upward** (user 1 watched item 3 — loss says increase probability)
 - Push $\hat{y}_{1,2}$ **downward** (user 1 did not watch item 2 — loss says decrease probability)
 
-> 💡 **The match is exact.** Every number above is verifiable on a calculator. The network is matrix multiplies, element-wise products, ReLUs, and a sigmoid — nothing else.
+> **The match is exact.** Every number above is verifiable on a calculator. The network is matrix multiplies, element-wise products, ReLUs, and a sigmoid — nothing else.
 
 ---
 
@@ -442,20 +442,20 @@ The update is tiny per step but **directionally correct** — $\mathbf{p}_1^G$ s
 
 ```
 for epoch in range(max_epochs):
-    for batch in dataloader:                 # batch_size = 256
-        u, i, y = batch                      # users, items, labels (0/1)
-        logit   = model(u, i)                # NeuMF forward pass
-        loss    = bce_loss(logit, y)         # scalar
-        loss.backward()                      # backprop through all paths
-        optimizer.step()                     # Adam update
-        optimizer.zero_grad()
+ for batch in dataloader: # batch_size = 256
+ u, i, y = batch # users, items, labels (0/1)
+ logit = model(u, i) # NeuMF forward pass
+ loss = bce_loss(logit, y) # scalar
+ loss.backward() # backprop through all paths
+ optimizer.step() # Adam update
+ optimizer.zero_grad()
 
-    val_hr = evaluate(model, val_data)       # HR@10 on validation set
-    if val_hr > best_hr:
-        best_hr = val_hr
-        save_checkpoint(model)
-    elif epochs_no_improve >= patience:
-        break                                # early stopping
+ val_hr = evaluate(model, val_data) # HR@10 on validation set
+ if val_hr > best_hr:
+ best_hr = val_hr
+ save_checkpoint(model)
+ elif epochs_no_improve >= patience:
+ break # early stopping
 ```
 
 ---
@@ -466,55 +466,55 @@ for epoch in range(max_epochs):
 
 ```mermaid
 flowchart TB
-    USER["User ID"] --> UG["User Embedding\n(GMF)  d-dim"]
-    USER --> UM["User Embedding\n(MLP)  d-dim"]
-    ITEM["Item ID"] --> IG["Item Embedding\n(GMF)  d-dim"]
-    ITEM --> IM["Item Embedding\n(MLP)  d-dim"]
+ USER["User ID"] --> UG["User Embedding\n(GMF) d-dim"]
+ USER --> UM["User Embedding\n(MLP) d-dim"]
+ ITEM["Item ID"] --> IG["Item Embedding\n(GMF) d-dim"]
+ ITEM --> IM["Item Embedding\n(MLP) d-dim"]
 
-    UG --> GMF["⊙  Element-wise Product\nφ_GMF  shape (d,)"]
-    IG --> GMF
-    GMF --> HGMF["h_G^T · φ_GMF\nGMF scalar"]
+ UG --> GMF["⊙ Element-wise Product\nφ_GMF shape (d,)"]
+ IG --> GMF
+ GMF --> HGMF["h_G^T · φ_GMF\nGMF scalar"]
 
-    UM --> CONCAT["⊕  Concatenate  →  2d"]
-    IM --> CONCAT
-    CONCAT --> D1["Dense  ReLU\n2d → d"]
-    D1 --> D2["Dense  ReLU\nd → d/2"]
-    D2 --> D3["Dense  Linear\nd/2 → 1\nφ_MLP scalar"]
+ UM --> CONCAT["⊕ Concatenate → 2d"]
+ IM --> CONCAT
+ CONCAT --> D1["Dense ReLU\n2d → d"]
+ D1 --> D2["Dense ReLU\nd → d/2"]
+ D2 --> D3["Dense Linear\nd/2 → 1\nφ_MLP scalar"]
 
-    HGMF --> FUSE["Fuse\nw_G · logit_GMF + w_M · φ_MLP + b"]
-    D3 --> FUSE
-    FUSE --> OUT["σ( · )  →  ŷ ∈ (0,1)"]
+ HGMF --> FUSE["Fuse\nw_G · logit_GMF + w_M · φ_MLP + b"]
+ D3 --> FUSE
+ FUSE --> OUT["σ( · ) → ŷ ∈ (0,1)"]
 
-    style USER fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style ITEM fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style GMF fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CONCAT fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style FUSE fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style OUT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style D3 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style USER fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style ITEM fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style GMF fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CONCAT fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style FUSE fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style OUT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style D3 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### Diagram 2 — Negative Sampling Training Loop
 
 ```mermaid
 flowchart LR
-    INTER["User–Item\nInteraction Log\n(implicit)"] --> POS["Positive pair\n(u, i)  y=1"]
-    POS --> SAMPLE["Sample k=4 negatives\n(u, j₁)…(u, j₄)  y=0\nj ∉ history(u)"]
-    SAMPLE --> BATCH["Mini-batch\n256 pairs\n~51 pos + ~205 neg"]
-    BATCH --> FWD["NeuMF\nforward pass"]
-    FWD --> BCE["BCE Loss\n−Σ[y log ŷ + (1−y) log(1−ŷ)]"]
-    BCE --> BACK["Backprop through\nGMF + MLP paths"]
-    BACK --> ADAM["Adam step\nupdate embeddings\n+ weight matrices"]
-    ADAM --> EVAL{"Val HR@10\nimproved?"}
-    EVAL -->|"Yes — keep going"| BATCH
-    EVAL -->|"No gain for 5 epochs"| DONE["✅ Early stop\nReturn best checkpoint"]
+ INTER["User–Item\nInteraction Log\n(implicit)"] --> POS["Positive pair\n(u, i) y=1"]
+ POS --> SAMPLE["Sample k=4 negatives\n(u, j₁)…(u, j₄) y=0\nj ∉ history(u)"]
+ SAMPLE --> BATCH["Mini-batch\n256 pairs\n~51 pos + ~205 neg"]
+ BATCH --> FWD["NeuMF\nforward pass"]
+ FWD --> BCE["BCE Loss\n−Σ[y log ŷ + (1−y) log(1−ŷ)]"]
+ BCE --> BACK["Backprop through\nGMF + MLP paths"]
+ BACK --> ADAM["Adam step\nupdate embeddings\n+ weight matrices"]
+ ADAM --> EVAL{"Val HR@10\nimproved?"}
+ EVAL -->|"Yes — keep going"| BATCH
+ EVAL -->|"No gain for 5 epochs"| DONE[" Early stop\nReturn best checkpoint"]
 
-    style INTER fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style POS fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style SAMPLE fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style BCE fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style EVAL fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style DONE fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style INTER fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style POS fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style SAMPLE fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style BCE fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style EVAL fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style DONE fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -532,7 +532,7 @@ flowchart LR
 
 **The single most impactful dial is the MLP architecture** (number of layers and halving tower pattern $2d \to d \to d/2$). Start with 3 layers and halving. Add depth only if training BCE is still decreasing while validation HR stagnates — a sign of insufficient model capacity, not overfitting.
 
-> ⚡ **Constraint #3 check (SCALABILITY):** Embedding dim $d$ is the dominant memory cost: $|\text{users}| \times d \times 4$ bytes per embedding table. At 100k users and $d=32$: $100k \times 32 \times 4 \times 4$ tables = 51 MB. At 1M users: 512 MB — still manageable. The MLP weight matrices are small by comparison (<1 MB).
+> **Constraint #3 check (SCALABILITY):** Embedding dim $d$ is the dominant memory cost: $|\text{users}| \times d \times 4$ bytes per embedding table. At 100k users and $d=32$: $100k \times 32 \times 4 \times 4$ tables = 51 MB. At 1M users: 512 MB — still manageable. The MLP weight matrices are small by comparison (<1 MB).
 
 ---
 
@@ -564,23 +564,23 @@ A positive at rank 1 → NDCG = 1.0; at rank 10 → NDCG ≈ 0.29.
 
 ```mermaid
 flowchart TD
-    PROBLEM["NCF Debugging"] --> SYMPTOM{"What is wrong?"}
+ PROBLEM["NCF Debugging"] --> SYMPTOM{"What is wrong?"}
 
-    SYMPTOM -->|"HR@10 stagnates at epoch 3"| EMB{"Embedding std\n> 0.05?"}
-    SYMPTOM -->|"Loss spike at epoch 15+"| CLIP["Add gradient clipping\nmax_norm=1.0 + halve LR"]
-    SYMPTOM -->|"Train BCE → 0, val HR flat"| OVER["Increase k to 4–8\nAdd Dropout 0.2 after ReLU"]
-    SYMPTOM -->|"New-user HR is 30 pts lower"| COLD["Cold start — expected\nFix: Ch.5 hybrid content features"]
+ SYMPTOM -->|"HR@10 stagnates at epoch 3"| EMB{"Embedding std\n> 0.05?"}
+ SYMPTOM -->|"Loss spike at epoch 15+"| CLIP["Add gradient clipping\nmax_norm=1.0 + halve LR"]
+ SYMPTOM -->|"Train BCE → 0, val HR flat"| OVER["Increase k to 4–8\nAdd Dropout 0.2 after ReLU"]
+ SYMPTOM -->|"New-user HR is 30 pts lower"| COLD["Cold start — expected\nFix: Ch.5 hybrid content features"]
 
-    EMB -->|"No — near zero"| FIX1["Increase w_G or add\nGMF-specific aux loss"]
-    EMB -->|"Yes — ok"| FIX2["Try deeper MLP\nor increase embedding dim"]
+ EMB -->|"No — near zero"| FIX1["Increase w_G or add\nGMF-specific aux loss"]
+ EMB -->|"Yes — ok"| FIX2["Try deeper MLP\nor increase embedding dim"]
 
-    style PROBLEM fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style SYMPTOM fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CLIP fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style OVER fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style FIX1 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style FIX2 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style COLD fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style PROBLEM fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style SYMPTOM fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CLIP fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style OVER fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style FIX1 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style FIX2 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style COLD fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -596,7 +596,7 @@ flowchart TD
 | **Implicit feedback framing** | BPR (Rendle et al. 2009) | Pairwise ranking loss instead of BCE; more direct for top-$N$ retrieval |
 | **Embedding lookup mechanism** | Every neural NLP / CV model | Same index-into-table mechanism, just larger tables ($d = 768+$) |
 
-> ➡️ **Forward pointer:** Ch.5 Hybrid Systems extends NeuMF by appending item content features (genre, release year, director) to the MLP input, closing the cold-start gap by ~15 HR points for users with fewer than 5 interactions.
+> ➡ **Forward pointer:** Ch.5 Hybrid Systems extends NeuMF by appending item content features (genre, release year, director) to the MLP input, closing the cold-start gap by ~15 HR points for users with fewer than 5 interactions.
 
 > 📖 **Optional depth:** Wide & Deep (Cheng et al. 2016) is the production version of NeuMF's two-path idea, deployed in the Google Play store. The "wide" component is a linear model with hand-crafted crossed features (memorisation); the "deep" component is a DNN (generalisation). NeuMF's GMF / MLP split is conceptually identical — the innovation in Wide & Deep is the engineering to serve it at billion-user scale.
 
@@ -605,27 +605,25 @@ flowchart TD
 ## 11 · Progress Check — What We Can Solve Now
 
 ![progress check](img/ch04-neural-cf-progress-check.png)
-
-✅ **Unlocked capabilities:**
+**Unlocked capabilities:**
 - **Non-linear interactions** — MLP captures "likes A but not A + B" patterns invisible to the dot product
 - **Implicit feedback training** — BCE with negative sampling; no explicit ratings required
 - **HR@10 ≈ 82%** — 4 points above the MF ceiling at 78%; 3 points short of the 85% target
 - **NDCG@10 ≈ 0.52** — positive items rank higher within the top-10 than under MF (≈ 0.46)
 - **End-to-end trainable** — all four embedding tables and all MLP weight matrices updated jointly via backprop
-
-❌ **Still cannot solve:**
-- ❌ **Cold start** — new users and items with no interaction history get random embeddings → random recommendations
-- ❌ **ACCURACY target** — 82% HR@10 < 85% target; 3 points remain for Ch.5
-- ❌ **Explainability** — deeper MLP = less interpretable; no "because you liked X" attribution
-- ❌ **Scalability at 1 M+** — per-pair MLP forward pass is ~10× slower than dot product; needs ANN for sub-200 ms
+**Still cannot solve:**
+- **Cold start** — new users and items with no interaction history get random embeddings → random recommendations
+- **ACCURACY target** — 82% HR@10 < 85% target; 3 points remain for Ch.5
+- **Explainability** — deeper MLP = less interpretable; no "because you liked X" attribution
+- **Scalability at 1 M+** — per-pair MLP forward pass is ~10× slower than dot product; needs ANN for sub-200 ms
 
 | Constraint | Status | Notes |
 |------------|--------|-------|
-| #1 ACCURACY >85% HR@10 | ⚠️ 82% | 3 pts short; Ch.5 hybrid closes this |
-| #2 COLD START | ❌ Blocked | Embedding requires at least one interaction |
-| #3 SCALABILITY <200 ms | ⚠️ OK at 100k | Needs ANN index at 1 M+ users |
-| #4 DIVERSITY | ⚠️ Improved | Richer latent space reduces popularity bias |
-| #5 EXPLAINABILITY | ❌ Hard | Black-box MLP; no direct feature attribution |
+| #1 ACCURACY >85% HR@10 | 82% | 3 pts short; Ch.5 hybrid closes this |
+| #2 COLD START | Blocked | Embedding requires at least one interaction |
+| #3 SCALABILITY <200 ms | OK at 100k | Needs ANN index at 1 M+ users |
+| #4 DIVERSITY | Improved | Richer latent space reduces popularity bias |
+| #5 EXPLAINABILITY | Hard | Black-box MLP; no direct feature attribution |
 
 **What this chapter proved:** replacing the linear dot product with a neural network interaction layer — keeping the linear GMF path alongside — gains 4 HR@10 points on the identical MovieLens 100k dataset and training protocol. The bottleneck has shifted from architecture (fixed dot product) to data sparsity (cold start) and the final 3-point accuracy gap.
 

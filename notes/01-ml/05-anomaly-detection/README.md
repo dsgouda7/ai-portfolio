@@ -22,53 +22,53 @@ This is not a Kaggle competition. Every chapter builds toward a single productio
 
 | Ch | Title | What Unlocks | Recall@0.5%FPR | Constraints | Status |
 |----|-------|--------------|----------------|-------------|--------|
-| **1** | [Statistical Anomaly Detection](ch01_statistical_methods) | Z-score, IQR baselines on transaction amounts | ~45% | #1 Partial | 🔧 |
-| **2** | [Isolation Forest](ch02_isolation_forest) | Tree-based path-length anomaly scoring | ~72% | #1 Improved | 🔧 |
-| **3** | [One-Class SVM](ch04_one_class_svm) | Kernel-based novelty detection boundary | ~75% | #1 Close | 🔧 |
-| **4** | [Autoencoders](ch03_autoencoders) | Neural reconstruction error as anomaly signal | ~78% | #1 Close! | 🔧 |
-| **5** | [Ensemble Anomaly Detection](ch05_ensemble_anomaly) | Score fusion across all detectors | **~83%** | **#1 ✅ #2 ✅** | 🔧 |
-| **6** | [Production & Real-Time](ch06_production) | Online learning, drift detection, latency optimization | 83%+ | **#1 ✅ #2 ✅ #3 ✅ #4 ✅ #5 ✅** | 🔧 |
+| **1** | [Statistical Anomaly Detection](ch01_statistical_methods) | Z-score, IQR baselines on transaction amounts | ~45% | #1 Partial | |
+| **2** | [Isolation Forest](ch02_isolation_forest) | Tree-based path-length anomaly scoring | ~72% | #1 Improved | |
+| **3** | [One-Class SVM](ch04_one_class_svm) | Kernel-based novelty detection boundary | ~75% | #1 Close | |
+| **4** | [Autoencoders](ch03_autoencoders) | Neural reconstruction error as anomaly signal | ~78% | #1 Close! | |
+| **5** | [Ensemble Anomaly Detection](ch05_ensemble_anomaly) | Score fusion across all detectors | **~83%** | **#1 #2 ** | |
+| **6** | [Production & Real-Time](ch06_production) | Online learning, drift detection, latency optimization | 83%+ | **#1 #2 #3 #4 #5 ** | |
 
 ---
 
 ## Narrative Arc: From 45% Baseline to 83%+ Production System
 
-### 🎬 Act 1: Foundations (Ch.1-2)
+### Act 1: Foundations (Ch.1-2)
 **Establish baselines, understand the imbalance problem**
 
 - **Ch.1**: Can simple statistics detect fraud? → Z-score catches 45% but misses subtle patterns
-  - *"45% recall is embarrassing. We're missing more than half of all fraud!" — Head of Risk*
+ - *"45% recall is embarrassing. We're missing more than half of all fraud!" — Head of Risk*
 
 - **Ch.2**: Isolation Forest exploits the key insight — anomalies are easier to isolate → 72% recall
-  - *"72% is promising, but we're still missing 28% of fraud. That's $2.8M in losses per quarter." — CFO*
+ - *"72% is promising, but we're still missing 28% of fraud. That's $2.8M in losses per quarter." — CFO*
 
-**Status**: ❌ Detection constraint unmet. Need more sophisticated methods.
+**Status**: Detection constraint unmet. Need more sophisticated methods.
 
 ---
 
-### ⚡ Act 2: Deep Learning & Kernel Methods (Ch.3-4)
+### Act 2: Deep Learning & Kernel Methods (Ch.3-4)
 **Learn normal transaction patterns, flag deviations**
 
 - **Ch.3**: One-Class SVM draws a tight boundary around normal data in kernel space → 75% recall
-  - *"75% recall from a kernel boundary! Simpler than deep learning and already beating the isolation forest on this data." — Data Science Lead*
+ - *"75% recall from a kernel boundary! Simpler than deep learning and already beating the isolation forest on this data." — Data Science Lead*
 
 - **Ch.4**: Autoencoders learn to reconstruct normal transactions; fraud = high reconstruction error → 78% recall
-  - *"78%! The autoencoder is learning what normal looks like — reconstruction error catches subtle fraud patterns the SVM misses. But we still need 80%+." — VP Engineering*
+ - *"78%! The autoencoder is learning what normal looks like — reconstruction error catches subtle fraud patterns the SVM misses. But we still need 80%+." — VP Engineering*
 
-**Status**: ❌ Still 2% short of the 80% target. Individual models have complementary strengths.
+**Status**: Still 2% short of the 80% target. Individual models have complementary strengths.
 
 ---
 
-### 🏆 Act 3: Ensemble & Production (Ch.5-6)
+### Act 3: Ensemble & Production (Ch.5-6)
 **Combine detectors, deploy to production**
 
-- **Ch.5**: Ensemble fuses Z-score + Isolation Forest + Autoencoder + One-Class SVM → **83% recall ✅ Target achieved!**
-  - *"83% recall at 0.5% FPR! The ensemble catches fraud that no single model finds." — Head of Risk*
+- **Ch.5**: Ensemble fuses Z-score + Isolation Forest + Autoencoder + One-Class SVM → **83% recall Target achieved!**
+ - *"83% recall at 0.5% FPR! The ensemble catches fraud that no single model finds." — Head of Risk*
 
 - **Ch.6**: Production hardening — online learning for concept drift, latency optimization, monitoring dashboards
-  - *"FraudShield is live: 83% recall, <50ms latency, drift alerts, and every flag has an explanation." — CTO*
+ - *"FraudShield is live: 83% recall, <50ms latency, drift alerts, and every flag has an explanation." — CTO*
 
-**Status**: ✅✅✅✅✅ **ALL CONSTRAINTS SATISFIED!**
+**Status**: **ALL CONSTRAINTS SATISFIED!**
 
 ---
 
@@ -89,7 +89,7 @@ Every chapter uses the same dataset: [Credit Card Fraud Detection](https://www.k
 
 ```
 Legitimate: 284,315 transactions (99.827%)
-Fraudulent:     492 transactions  (0.17%)
+Fraudulent: 492 transactions (0.17%)
 
 Ratio: 577:1
 ```
@@ -97,11 +97,11 @@ Ratio: 577:1
 A model that predicts "legitimate" for every transaction gets **99.83% accuracy** — and catches **zero fraud**. This is why accuracy is meaningless here. We must optimize for **recall at a fixed false positive rate**.
 
 **Why this dataset is perfect**:
-- ✅ **Extreme imbalance**: 0.17% fraud (teaches the hardest real-world problem)
-- ✅ **PCA anonymized**: V1-V28 protect cardholder privacy while remaining analytically useful
-- ✅ **Temporal structure**: Time-ordered transactions enable realistic train/test splits
-- ✅ **Real stakes**: Every method must prove its worth against the FPR constraint
-- ✅ **Industry standard**: The most-used anomaly detection benchmark in ML
+- **Extreme imbalance**: 0.17% fraud (teaches the hardest real-world problem)
+- **PCA anonymized**: V1-V28 protect cardholder privacy while remaining analytically useful
+- **Temporal structure**: Time-ordered transactions enable realistic train/test splits
+- **Real stakes**: Every method must prove its worth against the FPR constraint
+- **Industry standard**: The most-used anomaly detection benchmark in ML
 
 **Evaluation Protocol** (consistent across all chapters):
 
@@ -134,12 +134,12 @@ recall_at_target_fpr = tpr[idx]
 ## Success Criteria
 
 Students who complete this track can:
-1. ✅ Apply statistical anomaly detection (Z-score, IQR, Mahalanobis) and understand their limits
-2. ✅ Deploy Isolation Forests for scalable outlier detection
-3. ✅ Build autoencoders that learn normal patterns and flag reconstruction errors
-4. ✅ Use One-Class SVM for novelty detection in high-dimensional space
-5. ✅ Handle extreme class imbalance (0.17% positive class) with proper evaluation
-6. ✅ Build ensemble anomaly detectors that exceed any single model
-7. ✅ Deploy real-time fraud detection with concept drift monitoring
+1. Apply statistical anomaly detection (Z-score, IQR, Mahalanobis) and understand their limits
+2. Deploy Isolation Forests for scalable outlier detection
+3. Build autoencoders that learn normal patterns and flag reconstruction errors
+4. Use One-Class SVM for novelty detection in high-dimensional space
+5. Handle extreme class imbalance (0.17% positive class) with proper evaluation
+6. Build ensemble anomaly detectors that exceed any single model
+7. Deploy real-time fraud detection with concept drift monitoring
 
-**Grand Challenge Completion**: FraudShield achieves 83% recall @ 0.5% FPR ✅
+**Grand Challenge Completion**: FraudShield achieves 83% recall @ 0.5% FPR

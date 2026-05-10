@@ -10,7 +10,7 @@
 
 ## 0 · The Challenge — Where You Are
 
-> ⚡ **The mission**: Build **SmartVal AI** — a production home valuation system achieving <$40k MAE by satisfying 5 core constraints:
+> **The mission**: Build **SmartVal AI** — a production home valuation system achieving <$40k MAE by satisfying 5 core constraints:
 > 1. **ACCURACY**: <$40k MAE on median house values (appraisal regulations require ±20% accuracy)
 > 2. **GENERALIZATION**: Work on unseen districts (CA → nationwide expansion)
 > 3. **DATA QUALITY**: Clean data BEFORE training (no garbage in)
@@ -18,10 +18,10 @@
 > 5. **PRODUCTION**: <100ms inference, handle outliers, version control
 
 **What you know so far:**
-- ✅ Target: <$40k MAE for production deployment
-- ✅ Dataset: California Housing, 20,640 districts, 8 features
-- ❌ **Haven't audited data quality yet**
-- ❌ Don't know if outliers, missing values, or distribution issues exist
+- Target: <$40k MAE for production deployment
+- Dataset: California Housing, 20,640 districts, 8 features
+- **Haven't audited data quality yet**
+- Don't know if outliers, missing values, or distribution issues exist
 
 **What's blocking SmartVal AI:**
 Before building any models, you must ensure data quality. A previous contractor's baseline achieved 82k MAE but used zero-filled missing values and kept impossible outliers (HouseAge = 200 years!). Those data quality issues alone cost ~15-20k MAE. Your job: find and fix every data quality issue BEFORE touching model architecture.
@@ -61,19 +61,19 @@ print(df.describe().T[['mean', 'min', 'max']])
 ```
 
 ```
-              mean     min      max
-MedInc        3.87    0.50    15.00
-HouseAge     28.64    1.00    52.00
-AveRooms      5.43    0.85   141.91
-AveBedrms     1.10    0.33    34.07
-Population  1425.48    3.00  35682.00
-AveOccup      3.07    0.69  1243.33
-MedHouseVal   2.07    0.15     5.00
+ mean min max
+MedInc 3.87 0.50 15.00
+HouseAge 28.64 1.00 52.00
+AveRooms 5.43 0.85 141.91
+AveBedrms 1.10 0.33 34.07
+Population 1425.48 3.00 35682.00
+AveOccup 3.07 0.69 1243.33
+MedHouseVal 2.07 0.15 5.00
 ```
 
 Three numbers jump out: `AveRooms` max = 141.91, `AveBedrms` max = 34.07, and `AveOccup` max = 1243.33. None of these are physically plausible for an *average* district. They are aggregation artifacts from tiny-population districts where one unusual property skews the mean.
 
-> 💡 **What the previous contractor did.** They filled missing `AveBedrms` values with `0`. The model learned: *"districts with 0 average bedrooms have high house values"* — a phantom correlation that would break in production. This alone costs ~8-10k MAE.
+> **What the previous contractor did.** They filled missing `AveBedrms` values with `0`. The model learned: *"districts with 0 average bedrooms have high house values"* — a phantom correlation that would break in production. This alone costs ~8-10k MAE.
 
 The next two hours reveal the full picture. By the time you write a single line of training code, you'll have identified:
 - 1,066 rows with aggregation-artifact outliers in `AveRooms` (IQR upper fence = 8.47)
@@ -89,37 +89,37 @@ Before diving into the math, here is the complete EDA workflow as a numbered pse
 
 ```
 1. LOAD & SHAPE CHECK
-   └─ df.shape, df.dtypes, df.head(5)
-   └─ Expected rows? Correct dtypes? Encoding issues?
+ └─ df.shape, df.dtypes, df.head(5)
+ └─ Expected rows? Correct dtypes? Encoding issues?
 
 2. DISTRIBUTION SUMMARY
-   └─ df.describe() — inspect min/max/mean/std/percentiles
-   └─ Red flags: impossible max, mean ≠ median by 2+σ, zeros in non-zero columns
+ └─ df.describe() — inspect min/max/mean/std/percentiles
+ └─ Red flags: impossible max, mean ≠ median by 2+σ, zeros in non-zero columns
 
 3. MISSING VALUE AUDIT
-   └─ df.isnull().sum() — count per column
-   └─ Heatmap — is the pattern random or systematic?
-   └─ Threshold: <5% → impute; 5–30% → test strategies; >30% → consider drop
+ └─ df.isnull().sum() — count per column
+ └─ Heatmap — is the pattern random or systematic?
+ └─ Threshold: <5% → impute; 5–30% → test strategies; >30% → consider drop
 
 4. OUTLIER DETECTION
-   └─ IQR method (default) — works on any distribution
-   └─ Z-score method — only if data is ~normal
-   └─ Domain knowledge: impossible vs. rare-but-real?
+ └─ IQR method (default) — works on any distribution
+ └─ Z-score method — only if data is ~normal
+ └─ Domain knowledge: impossible vs. rare-but-real?
 
 5. IMPUTATION STRATEGY SELECTION
-   └─ Test mean / median / KNN on baseline model
-   └─ Measure MAE for each; pick winner
-   └─ Apply AFTER train/test split (prevent data leakage)
+ └─ Test mean / median / KNN on baseline model
+ └─ Measure MAE for each; pick winner
+ └─ Apply AFTER train/test split (prevent data leakage)
 
 6. DISTRIBUTION VISUALIZATION
-   └─ Histograms — skewness, bimodality, truncation
-   └─ Box plots — outlier tails
-   └─ Correlation heatmap — which features matter most?
+ └─ Histograms — skewness, bimodality, truncation
+ └─ Box plots — outlier tails
+ └─ Correlation heatmap — which features matter most?
 
 7. BASELINE MODEL — MEASURE THE GAP
-   └─ Train LinearRegression on cleaned data
-   └─ Report MAE before/after cleaning
-   └─ Document every change with a metric
+ └─ Train LinearRegression on cleaned data
+ └─ Report MAE before/after cleaning
+ └─ Document every change with a metric
 ```
 
 ---
@@ -162,12 +162,12 @@ $$s = \sqrt{\frac{(-34.265)^2 + (-33.055)^2 + (-35.405)^2 + (102.725)^2}{3}} = \
 
 | District | $x_i$ | $(x_i - \bar{x})$ | $Z_i = (x_i - \bar{x})/s$ | Flag? |
 |----------|-------|-------------------|-----------------------------|-------|
-| Typical inland | 4.92 | −34.27 | −34.27 / 68.49 = **−0.50** | ❌ No |
-| Suburban | 6.13 | −33.06 | −33.06 / 68.49 = **−0.48** | ❌ No |
-| Dense urban | 3.78 | −35.41 | −35.41 / 68.49 = **−0.52** | ❌ No |
-| Artifact | 141.91 | +102.72 | +102.72 / 68.49 = **+1.50** | ❌ No! |
+| Typical inland | 4.92 | −34.27 | −34.27 / 68.49 = **−0.50** | No |
+| Suburban | 6.13 | −33.06 | −33.06 / 68.49 = **−0.48** | No |
+| Dense urban | 3.78 | −35.41 | −35.41 / 68.49 = **−0.52** | No |
+| Artifact | 141.91 | +102.72 | +102.72 / 68.49 = **+1.50** | No! |
 
-> ⚠️ **The masking effect.** The outlier at 141.91 inflated $\bar{x}$ from ~5 to 39 and $s$ to 68, so its own Z-score is only 1.50 — well below the threshold of 3. The extreme value *contaminated* the statistics used to detect it. This is why Z-score fails when heavy outliers are present. Use IQR as your default.
+> **The masking effect.** The outlier at 141.91 inflated $\bar{x}$ from ~5 to 39 and $s$ to 68, so its own Z-score is only 1.50 — well below the threshold of 3. The extreme value *contaminated* the statistics used to detect it. This is why Z-score fails when heavy outliers are present. Use IQR as your default.
 
 ---
 
@@ -202,14 +202,14 @@ Apply to the same four districts:
 
 | District | $x_i$ | Below 2.025? | Above 8.469? | Flagged? |
 |----------|-------|-------------|-------------|---------|
-| Typical inland | 4.92 | No | No | ❌ Clean |
-| Suburban | 6.13 | No | No | ❌ Clean |
-| Dense urban | 3.78 | No | No | ❌ Clean |
-| Artifact | 141.91 | No | **Yes** | ✅ **OUTLIER** |
+| Typical inland | 4.92 | No | No | Clean |
+| Suburban | 6.13 | No | No | Clean |
+| Dense urban | 3.78 | No | No | Clean |
+| Artifact | 141.91 | No | **Yes** | **OUTLIER** |
 
 IQR correctly flags 141.91 while leaving the three normal districts alone. The fences (anchored at $Q_1 = 4.44$, $Q_3 = 6.05$) could not be shifted by the extreme value.
 
-> 💡 **IQR is your default.** Use Z-score only when `df[col].skew() < 1.0` AND no masking outliers exist. When in doubt: start with IQR.
+> **IQR is your default.** Use Z-score only when `df[col].skew() < 1.0` AND no masking outliers exist. When in doubt: start with IQR.
 
 ---
 
@@ -256,19 +256,19 @@ This toy subset (hand-selected monotone rows) gives near-perfect correlation. Th
 ```
 Correlation Matrix — California Housing (8 features + target)
 
-                 MedInc  HouseAge  AveRooms  AveBedrms  Population  AveOccup  Lat    Long   Target
-MedInc         [ 1.00    -0.12      0.33      -0.06       -0.07       0.02    -0.08  -0.02  +0.69 ]
-HouseAge       [-0.12     1.00     -0.15       0.02       -0.30       0.01    +0.01  -0.11  +0.11 ]
-AveRooms       [ 0.33    -0.15      1.00       0.85       -0.07      -0.00    +0.11  -0.03  +0.15 ]
-AveBedrms      [-0.06     0.02      0.85       1.00       -0.07       0.00    +0.07  -0.07  -0.05 ]
-Population     [-0.07    -0.30     -0.07      -0.07        1.00       0.07    -0.11   0.10  -0.03 ]
-AveOccup       [ 0.02     0.01     -0.00       0.00        0.07       1.00    +0.00   0.00  -0.02 ]
-Latitude       [-0.08     0.01      0.11       0.07       -0.11       0.00    +1.00  -0.92  -0.14 ]
-Longitude      [-0.02    -0.11     -0.03      -0.07        0.10       0.00    -0.92   1.00  -0.04 ]
-MedHouseVal    [+0.69    +0.11     +0.15      -0.05       -0.03      -0.02    -0.14  -0.04   1.00 ]
-                  ↑                   ↑--------------------------↑
-           strongest            |r|=0.85: multicollinearity risk
-           predictor            (AveRooms & AveBedrms nearly redundant)
+ MedInc HouseAge AveRooms AveBedrms Population AveOccup Lat Long Target
+MedInc [ 1.00 -0.12 0.33 -0.06 -0.07 0.02 -0.08 -0.02 +0.69 ]
+HouseAge [-0.12 1.00 -0.15 0.02 -0.30 0.01 +0.01 -0.11 +0.11 ]
+AveRooms [ 0.33 -0.15 1.00 0.85 -0.07 -0.00 +0.11 -0.03 +0.15 ]
+AveBedrms [-0.06 0.02 0.85 1.00 -0.07 0.00 +0.07 -0.07 -0.05 ]
+Population [-0.07 -0.30 -0.07 -0.07 1.00 0.07 -0.11 0.10 -0.03 ]
+AveOccup [ 0.02 0.01 -0.00 0.00 0.07 1.00 +0.00 0.00 -0.02 ]
+Latitude [-0.08 0.01 0.11 0.07 -0.11 0.00 +1.00 -0.92 -0.14 ]
+Longitude [-0.02 -0.11 -0.03 -0.07 0.10 0.00 -0.92 1.00 -0.04 ]
+MedHouseVal [+0.69 +0.11 +0.15 -0.05 -0.03 -0.02 -0.14 -0.04 1.00 ]
+ ↑ ↑--------------------------↑
+ strongest |r|=0.85: multicollinearity risk
+ predictor (AveRooms & AveBedrms nearly redundant)
 ```
 
 **What to read from this matrix:**
@@ -311,10 +311,10 @@ print(summary)
 # Step 3: DECISION LOGIC (inline annotation)
 # Flag columns where max >> mean (potential outliers or artifacts)
 for col in df.columns:
-    max_val = df[col].max()
-    mean_val = df[col].mean()
-    if max_val > mean_val * 3:  # max is 3x+ the mean
-        print(f"⚠️  {col}: max={max_val:.2f} is {max_val/mean_val:.1f}x the mean")
+ max_val = df[col].max()
+ mean_val = df[col].mean()
+ if max_val > mean_val * 3: # max is 3x+ the mean
+ print(f" {col}: max={max_val:.2f} is {max_val/mean_val:.1f}x the mean")
 ```
 
 Output from this scan:
@@ -323,19 +323,18 @@ Output from this scan:
 Dataset shape: (20640, 9)
 
 === SUMMARY STATISTICS ===
-               min     mean      max      std
-MedInc        0.50     3.87    15.00     1.90
-HouseAge      1.00    28.64    52.00    12.59
-AveRooms      0.85     5.43   141.91     2.47
-AveBedrms     0.33     1.10    34.07     0.47
-Population    3.00  1425.48 35682.00  1132.46
-AveOccup      0.69     3.07  1243.33     2.61
-MedHouseVal   0.15     2.07     5.00     1.15
-
-⚠️  AveRooms: max=141.91 is 26.1x the mean
-⚠️  AveBedrms: max=34.07 is 31.0x the mean
-⚠️  Population: max=35682.00 is 25.0x the mean
-⚠️  AveOccup: max=1243.33 is 405.0x the mean
+ min mean max std
+MedInc 0.50 3.87 15.00 1.90
+HouseAge 1.00 28.64 52.00 12.59
+AveRooms 0.85 5.43 141.91 2.47
+AveBedrms 0.33 1.10 34.07 0.47
+Population 3.00 1425.48 35682.00 1132.46
+AveOccup 0.69 3.07 1243.33 2.61
+MedHouseVal 0.15 2.07 5.00 1.15
+AveRooms: max=141.91 is 26.1x the mean
+AveBedrms: max=34.07 is 31.0x the mean
+Population: max=35682.00 is 25.0x the mean
+AveOccup: max=1243.33 is 405.0x the mean
 ```
 
 The output takes four seconds to render. She reads `AveRooms` max: **141.91**. `AveBedrms` max: **34.07**. `AveOccup` max: **1243.33**.
@@ -345,12 +344,12 @@ The output takes four seconds to render. She reads `AveRooms` max: **141.91**. `
 She runs `df.isnull().sum()`. Zero missing values. *That's the first lie*, she thinks. Not because the data is intentionally deceitful — but because zero missing values in a real-world dataset means the missing values were *filled with something*. She pulls up the contractor's preprocessing script. Line 47:
 
 ```python
-df.fillna(0, inplace=True)  # Fix missing values
+df.fillna(0, inplace=True) # Fix missing values
 ```
 
-> ⚠️ **The silent corruption.** `fillna(0)` doesn't raise an error, doesn't cause a NaN warning, and silently teaches your model that missing data means "zero bedrooms." In a house price model, "zero bedrooms" can spuriously correlate with certain districts that also happen to have high prices, creating a phantom relationship that won't generalize.
+> **The silent corruption.** `fillna(0)` doesn't raise an error, doesn't cause a NaN warning, and silently teaches your model that missing data means "zero bedrooms." In a house price model, "zero bedrooms" can spuriously correlate with certain districts that also happen to have high prices, creating a phantom relationship that won't generalize.
 
-> 💡 **Inspect verdict:** Zero-fill corruption confirmed (`fillna(0)` at line 47) — `AveBedrms` zeros are phantom values, not real signal. Target ceiling found: 965 rows capped at $500k. Next: IQR sweep to quantify how many rows are affected before touching anything.
+> **Inspect verdict:** Zero-fill corruption confirmed (`fillna(0)` at line 47) — `AveBedrms` zeros are phantom values, not real signal. Target ceiling found: 965 rows capped at $500k. Next: IQR sweep to quantify how many rows are affected before touching anything.
 
 ---
 
@@ -360,39 +359,39 @@ Sarah runs IQR detection on every column:
 
 ```python
 def iqr_fence(df, col, k=1.5):
-    Q1, Q3 = df[col].quantile(0.25), df[col].quantile(0.75)
-    iqr = Q3 - Q1
-    return Q1 - k * iqr, Q3 + k * iqr
+ Q1, Q3 = df[col].quantile(0.25), df[col].quantile(0.75)
+ iqr = Q3 - Q1
+ return Q1 - k * iqr, Q3 + k * iqr
 
 for col in df.select_dtypes(include='number').columns:
-    lo, hi = iqr_fence(df, col)
-    n = ((df[col] < lo) | (df[col] > hi)).sum()
-    if n > 0:
-        print(f"{col:15s}: {n:5d} outliers | fence [{lo:.2f}, {hi:.2f}]")
+ lo, hi = iqr_fence(df, col)
+ n = ((df[col] < lo) | (df[col] > hi)).sum()
+ if n > 0:
+ print(f"{col:15s}: {n:5d} outliers | fence [{lo:.2f}, {hi:.2f}]")
 ```
 
 ```
-AveRooms      :  1066 outliers | fence [2.03, 8.47]
-AveBedrms     :  1211 outliers | fence [0.96, 1.34]
-AveOccup      :   795 outliers | fence [-0.21, 5.68]
-Population    :  1069 outliers | fence [-820.0, 3447.0]
-MedHouseVal   :   965 outliers | fence [-0.37, 4.74]
+AveRooms : 1066 outliers | fence [2.03, 8.47]
+AveBedrms : 1211 outliers | fence [0.96, 1.34]
+AveOccup : 795 outliers | fence [-0.21, 5.68]
+Population : 1069 outliers | fence [-820.0, 3447.0]
+MedHouseVal : 965 outliers | fence [-0.37, 4.74]
 ```
 
 The `AveBedrms` fence [0.96, 1.34] catches all zero-filled rows: any district with fewer than 0.96 average bedrooms per household is flagged. The IQR fence identified the corruption without domain knowledge.
 
-> 💡 **Industry Standard: pandas-profiling / ydata-profiling**
+> **Industry Standard: pandas-profiling / ydata-profiling**
 > ```python
 > from ydata_profiling import ProfileReport
 > profile = ProfileReport(df, title="California Housing EDA", explorative=True)
-> profile.to_file("data_quality_report.html")  # Generates complete audit in one line
+> profile.to_file("data_quality_report.html") # Generates complete audit in one line
 > ```
 > **What it gives you:** Automated distribution plots, missing value heatmaps, correlation matrices, outlier detection, and data quality warnings — everything from §3 in 30 seconds. Use for rapid EDA; manual inspection (this chapter) teaches you what to look for when the automated report flags issues.
 > **When to use:** Initial data audit, quarterly data drift monitoring, handoff documentation for stakeholders.
 
-> ⚡ **Constraint #3 check — DATA QUALITY:** 1,066 outliers in `AveRooms`, 1,211 in `AveBedrms` (including all zero-fills). These must be investigated before any training begins.
+> **Constraint #3 check — DATA QUALITY:** 1,066 outliers in `AveRooms`, 1,211 in `AveBedrms` (including all zero-fills). These must be investigated before any training begins.
 
-> 💡 **Audit verdict:** IQR caught 1,066 artifact rows in `AveRooms` and 1,211 in `AveBedrms` (including every zero-fill, since the fence [0.96, 1.34] is below any `fillna(0)` value). Plan: cap at 99th percentile, restore zeros to NaN, then compare imputation strategies.
+> **Audit verdict:** IQR caught 1,066 artifact rows in `AveRooms` and 1,211 in `AveBedrms` (including every zero-fill, since the fence [0.96, 1.34] is below any `fillna(0)` value). Plan: cap at 99th percentile, restore zeros to NaN, then compare imputation strategies.
 
 ---
 
@@ -414,9 +413,9 @@ For legitimate missing `AveBedrms` values, she tests three strategies (splitting
 | Median imputation | **$54,100** | Better for skewed data |
 | **KNN (k=5)** | **$52,100** | **Best** — uses `AveRooms` correlation |
 
-> 💡 **Why KNN wins.** `AveBedrms` and `AveRooms` have r = 0.85. KNN uses this: a district with `AveRooms = 6.2` predicts `AveBedrms ≈ 1.1`. Mean/median imputation ignores this relationship.
+> **Why KNN wins.** `AveBedrms` and `AveRooms` have r = 0.85. KNN uses this: a district with `AveRooms = 6.2` predicts `AveBedrms ≈ 1.1`. Mean/median imputation ignores this relationship.
 
-> 💡 **Industry Standard: Great Expectations for Data Validation**
+> **Industry Standard: Great Expectations for Data Validation**
 > ```python
 > import great_expectations as gx
 > context = gx.get_context()
@@ -429,7 +428,7 @@ For legitimate missing `AveBedrms` values, she tests three strategies (splitting
 > **When to use:** Production inference pipelines (validate incoming data), CI/CD data quality gates, retraining workflows.
 > **Common alternative:** Pydantic for schema validation, Pandera for DataFrame contracts.
 
-> 💡 **Transform verdict:** KNN ($52.1k) beats mean ($54.8k) by exploiting `AveRooms` ↔ `AveBedrms` r = 0.85. $15k MAE recovered from cleaning alone — no model changes yet.
+> **Transform verdict:** KNN ($52.1k) beats mean ($54.8k) by exploiting `AveRooms` ↔ `AveBedrms` r = 0.85. $15k MAE recovered from cleaning alone — no model changes yet.
 
 ---
 
@@ -440,8 +439,8 @@ With outliers flagged and imputation strategy selected, Sarah turns to histogram
 ```python
 fig, axes = plt.subplots(3, 3, figsize=(15, 12), facecolor='#1a1a2e')
 for ax, col in zip(axes.flatten(), df.columns):
-    ax.hist(df[col], bins=50, color='#1d4ed8', alpha=0.7, edgecolor='none')
-    ax.set_title(col, color='white'); ax.set_facecolor('#1a1a2e')
+ ax.hist(df[col], bins=50, color='#1d4ed8', alpha=0.7, edgecolor='none')
+ ax.set_title(col, color='white'); ax.set_facecolor('#1a1a2e')
 plt.tight_layout(); plt.savefig('img/distributions.png', dpi=120, facecolor='#1a1a2e')
 ```
 
@@ -451,7 +450,7 @@ Key observations:
 - `AveOccup`: Extremely right-skewed — 99th percentile capping needed
 - `MedHouseVal`: **Capped at 5.0001** (= $500,100) for 965 rows — hard ceiling artifact
 
-> ⚠️ **The target ceiling.** `MedHouseVal` capped at $500,100 for 4.7% of rows. A model trained on this will systematically underestimate high-value properties — a limitation that must be documented in the audit log.
+> **The target ceiling.** `MedHouseVal` capped at $500,100 for 4.7% of rows. A model trained on this will systematically underestimate high-value properties — a limitation that must be documented in the audit log.
 
 ### Resolution — Sarah's Cleaning Plan (11:30am)
 
@@ -464,11 +463,11 @@ Key observations:
 
 Data is now clean and ready for modeling. Ch.01-07 will build models on this solid foundation to achieve the <$40k MAE target.
 
-> 💡 **Validate verdict:** Data quality foundation complete. Cleaned baseline $52k MAE — $15k better than the contractor's zero-filled $67k with no architecture changes.
+> **Validate verdict:** Data quality foundation complete. Cleaned baseline $52k MAE — $15k better than the contractor's zero-filled $67k with no architecture changes.
 
-> ➡️ **Ch.01 Linear Regression** starts from this $52k baseline. The cleaning pipeline (IQR caps + `KNNImputer` fitted on `X_train`) must be serialized for inference — different preprocessing at serve time is the #1 cause of train/serve skew.
+> ➡ **Ch.01 Linear Regression** starts from this $52k baseline. The cleaning pipeline (IQR caps + `KNNImputer` fitted on `X_train`) must be serialized for inference — different preprocessing at serve time is the #1 cause of train/serve skew.
 
-> 💡 **Phase 4 Validation Pattern — Train/Test Split with Data Quality Checks**
+> **Phase 4 Validation Pattern — Train/Test Split with Data Quality Checks**
 > ```python
 > # Phase 4: VALIDATE — Measure cleaning impact with proper train/test split
 > from sklearn.model_selection import train_test_split
@@ -477,27 +476,27 @@ Data is now clean and ready for modeling. Ch.01-07 will build models on this sol
 >
 > # Split BEFORE any transformations (prevents data leakage)
 > X_train, X_test, y_train, y_test = train_test_split(
->     X_cleaned, y, test_size=0.2, random_state=42, stratify=y_binned
+> X_cleaned, y, test_size=0.2, random_state=42, stratify=y_binned
 > )
 >
 > # DECISION LOGIC: Validate data quality on both splits
 > print("=== POST-SPLIT QUALITY CHECKS ===")
 > for split_name, X_split in [("Train", X_train), ("Test", X_test)]:
->     print(f"\n{split_name} split:")
->     # Check 1: No missing values post-imputation
->     missing = X_split.isnull().sum().sum()
->     print(f"  Missing values: {missing} (should be 0)")
+> print(f"\n{split_name} split:")
+> # Check 1: No missing values post-imputation
+> missing = X_split.isnull().sum().sum()
+> print(f" Missing values: {missing} (should be 0)")
 >
->     # Check 2: No extreme outliers post-capping
->     for col in ['AveRooms', 'AveOccup']:
->         p99 = X_split[col].quantile(0.99)
->         above_p99 = (X_split[col] > p99).sum()
->         print(f"  {col} > p99: {above_p99} rows (should be ~1%)")
+> # Check 2: No extreme outliers post-capping
+> for col in ['AveRooms', 'AveOccup']:
+> p99 = X_split[col].quantile(0.99)
+> above_p99 = (X_split[col] > p99).sum()
+> print(f" {col} > p99: {above_p99} rows (should be ~1%)")
 >
 > # Baseline model on cleaned data
 > model = LinearRegression().fit(X_train, y_train)
 > mae = mean_absolute_error(y_test, model.predict(X_test))
-> print(f"\n✅ Cleaned data MAE: ${mae*100_000:,.0f}")
+> print(f"\n Cleaned data MAE: ${mae*100_000:,.0f}")
 > print(f"Target for Ch.01-07: <$40,000 (additional $12k improvement needed)")
 > ```
 > **What this validates:** (1) No data leakage (train/test split precedes all transformations), (2) cleaning steps applied consistently, (3) quantified baseline for model improvement tracking.
@@ -522,23 +521,23 @@ print(df['AveRooms'].describe())
 ```
 
 ```
-count    20640.000000
-mean         5.428999
-std          2.474173
-min          0.846154
-25%          4.440959    ← Q1
-50%          5.229129
-75%          6.052381    ← Q3
-max        141.909091    ← Red flag
+count 20640.000000
+mean 5.428999
+std 2.474173
+min 0.846154
+25% 4.440959 ← Q1
+50% 5.229129
+75% 6.052381 ← Q3
+max 141.909091 ← Red flag
 ```
 
 ```python
 # Step 2: IQR — explicit arithmetic
-Q1 = df['AveRooms'].quantile(0.25)       # 4.441
-Q3 = df['AveRooms'].quantile(0.75)       # 6.052
-IQR = Q3 - Q1                            # 1.611
-lower_fence = Q1 - 1.5 * IQR             # 4.441 - 2.417 = 2.025
-upper_fence = Q3 + 1.5 * IQR             # 6.052 + 2.417 = 8.469
+Q1 = df['AveRooms'].quantile(0.25) # 4.441
+Q3 = df['AveRooms'].quantile(0.75) # 6.052
+IQR = Q3 - Q1 # 1.611
+lower_fence = Q1 - 1.5 * IQR # 4.441 - 2.417 = 2.025
+upper_fence = Q3 + 1.5 * IQR # 6.052 + 2.417 = 8.469
 
 print(f"IQR = {Q3:.3f} - {Q1:.3f} = {IQR:.3f}")
 print(f"Lower fence = {Q1:.3f} - 1.5×{IQR:.3f} = {lower_fence:.3f}")
@@ -563,28 +562,28 @@ print(high.head(3))
 
 ```
 Outliers: 1066 (5.2% of data)
-   AveRooms  Population  MedHouseVal
-     141.91         3.0         2.33
-      88.32         5.0         1.12
-      55.14         8.0         0.85
+ AveRooms Population MedHouseVal
+ 141.91 3.0 2.33
+ 88.32 5.0 1.12
+ 55.14 8.0 0.85
 ```
 
 Tiny populations (3–8 people), enormous average rooms = single buildings forming their own "district." The aggregation creates nonsense averages.
 
 ```python
 # Step 5: Apply fix — cap at 99th percentile (preserves most data)
-p99 = df['AveRooms'].quantile(0.99)      # ~10.60
+p99 = df['AveRooms'].quantile(0.99) # ~10.60
 df_clean = df.copy()
 
 # DECISION LOGIC (inline annotation)
 # If AveRooms > p99: cap at p99 (preserves 99% data, removes artifacts)
 df_clean.loc[df_clean['AveRooms'] > p99, 'AveRooms'] = p99
 
-print(f"After capping: max = {df_clean['AveRooms'].max():.2f}")  # 10.60
-print(f"Rows modified: {(df['AveRooms'] > p99).sum()}")           # 206 rows
+print(f"After capping: max = {df_clean['AveRooms'].max():.2f}") # 10.60
+print(f"Rows modified: {(df['AveRooms'] > p99).sum()}") # 206 rows
 ```
 
-> 💡 **Decision rationale:** Capping at 99th percentile (10.6 rooms) removes 206 rows with physically implausible averages (141 rooms!) while preserving all legitimate high-value estates (7-10 rooms). Alternative: remove outliers entirely (loses 5.2% of data). Capping is preferred when outliers are measurement artifacts, not signal.
+> **Decision rationale:** Capping at 99th percentile (10.6 rooms) removes 206 rows with physically implausible averages (141 rooms!) while preserving all legitimate high-value estates (7-10 rooms). Alternative: remove outliers entirely (loses 5.2% of data). Capping is preferred when outliers are measurement artifacts, not signal.
 
 ---
 
@@ -595,7 +594,7 @@ print(f"Rows modified: {(df['AveRooms'] > p99).sum()}")           # 206 rows
 df_working = df.copy()
 df_working.loc[df_working['AveBedrms'] < 0.5, 'AveBedrms'] = np.nan
 print(f"Missing: {df_working['AveBedrms'].isnull().sum()} rows "
-      f"({100*df_working['AveBedrms'].isnull().mean():.1f}%)")
+ f"({100*df_working['AveBedrms'].isnull().mean():.1f}%)")
 ```
 
 ```
@@ -612,32 +611,32 @@ from sklearn.impute import KNNImputer, SimpleImputer
 X = df_working.drop('MedHouseVal', axis=1)
 y = df_working['MedHouseVal']
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42
+ X, y, test_size=0.2, random_state=42
 )
 
 # Step 3: Test each strategy
 results = {}
 for name, imp in [
-    ('Mean',   SimpleImputer(strategy='mean')),
-    ('Median', SimpleImputer(strategy='median')),
-    ('KNN-5',  KNNImputer(n_neighbors=5)),
+ ('Mean', SimpleImputer(strategy='mean')),
+ ('Median', SimpleImputer(strategy='median')),
+ ('KNN-5', KNNImputer(n_neighbors=5)),
 ]:
-    # DECISION LOGIC (inline annotation)
-    # fit() on X_train ONLY — prevents data leakage
-    # transform() on X_test uses X_train statistics
-    X_tr = imp.fit_transform(X_train)   # Fit on train ONLY
-    X_te = imp.transform(X_test)         # Apply train statistics to test
+ # DECISION LOGIC (inline annotation)
+ # fit() on X_train ONLY — prevents data leakage
+ # transform() on X_test uses X_train statistics
+ X_tr = imp.fit_transform(X_train) # Fit on train ONLY
+ X_te = imp.transform(X_test) # Apply train statistics to test
 
-    model = LinearRegression().fit(X_tr, y_train)
-    mae = mean_absolute_error(y_test, model.predict(X_te))
-    results[name] = mae
-    print(f"{name:8s}  MAE: ${mae*100_000:,.0f}")
+ model = LinearRegression().fit(X_tr, y_train)
+ mae = mean_absolute_error(y_test, model.predict(X_te))
+ results[name] = mae
+ print(f"{name:8s} MAE: ${mae*100_000:,.0f}")
 ```
 
 ```
-Mean      MAE: $54,812
-Median    MAE: $54,073
-KNN-5     MAE: $52,144   ← winner ($2,668 better than Mean)
+Mean MAE: $54,812
+Median MAE: $54,073
+KNN-5 MAE: $52,144 ← winner ($2,668 better than Mean)
 ```
 
 ```python
@@ -650,7 +649,7 @@ print(f"KNN vs Mean improvement: ${improvement:,.0f}")
 # Alternative: IterativeImputer (MICE) for >100k rows
 ```
 
-> ➡️ **What this $2.7k improvement tells you.** The gain from better imputation alone is modest — $12k comes from fixing the zero-fill corruption entirely, much more from model architecture (Multiple Regression) and distribution alignment (Class Imbalance). But every downstream fix depends on clean inputs. Corrupted inputs cannot be compensated by any amount of architecture tuning.
+> ➡ **What this $2.7k improvement tells you.** The gain from better imputation alone is modest — $12k comes from fixing the zero-fill corruption entirely, much more from model architecture (Multiple Regression) and distribution alignment (Class Imbalance). But every downstream fix depends on clean inputs. Corrupted inputs cannot be compensated by any amount of architecture tuning.
 
 ---
 
@@ -660,86 +659,86 @@ print(f"KNN vs Mean improvement: ${improvement:,.0f}")
 
 ```mermaid
 flowchart TD
-    LOAD(["📂 Load Dataset\ndf.shape, df.head(5)"]) --> DESCRIBE
-    DESCRIBE["df.describe()\nCheck min / max / mean / std"] --> REDFLAGS{"🚨 Red flags?\nImpossible max, zeros in\nnon-zero columns, extreme skew"}
+ LOAD([" Load Dataset\ndf.shape, df.head(5)"]) --> DESCRIBE
+ DESCRIBE["df.describe()\nCheck min / max / mean / std"] --> REDFLAGS{"🚨 Red flags?\nImpossible max, zeros in\nnon-zero columns, extreme skew"}
 
-    REDFLAGS -->|"Yes"| OUTLIER_METHOD{"Which\ndetection method?"}
-    REDFLAGS -->|"Looks clean"| MISSING
+ REDFLAGS -->|"Yes"| OUTLIER_METHOD{"Which\ndetection method?"}
+ REDFLAGS -->|"Looks clean"| MISSING
 
-    OUTLIER_METHOD -->|"Data is ~normal\n(skew < 1.0)"| ZSCORE["Z-score method\n|Z| > 3 = outlier\n⚠️ Masking risk"]
-    OUTLIER_METHOD -->|"Default / skewed\ndistribution"| IQR["IQR method\nfence = Q1 ± 1.5·IQR\n✅ Masking-resistant"]
+ OUTLIER_METHOD -->|"Data is ~normal\n(skew < 1.0)"| ZSCORE["Z-score method\n|Z| > 3 = outlier\n Masking risk"]
+ OUTLIER_METHOD -->|"Default / skewed\ndistribution"| IQR["IQR method\nfence = Q1 ± 1.5·IQR\n Masking-resistant"]
 
-    ZSCORE --> DOMAIN
-    IQR --> DOMAIN{"Domain knowledge:\nphysically impossible\nor rare-but-real?"}
+ ZSCORE --> DOMAIN
+ IQR --> DOMAIN{"Domain knowledge:\nphysically impossible\nor rare-but-real?"}
 
-    DOMAIN -->|"Impossible\n(HouseAge=150, Rooms=142)"| REMOVE["Remove or cap\nat 99th percentile"]
-    DOMAIN -->|"Rare but real\n(MedInc=15, luxury estate)"| KEEP["Keep — it is signal\nNote in audit log"]
+ DOMAIN -->|"Impossible\n(HouseAge=150, Rooms=142)"| REMOVE["Remove or cap\nat 99th percentile"]
+ DOMAIN -->|"Rare but real\n(MedInc=15, luxury estate)"| KEEP["Keep — it is signal\nNote in audit log"]
 
-    REMOVE --> MISSING
-    KEEP --> MISSING
+ REMOVE --> MISSING
+ KEEP --> MISSING
 
-    MISSING{"Missing\nvalues?"}
-    MISSING -->|"0% but zeros look wrong"| ZEROFILL{"Were they\nzero-filled?\nCheck describe min"}
-    MISSING -->|"< 5%"| IMPUTE
-    MISSING -->|"5–30%"| TEST["Test mean / median / KNN\nMeasure MAE for each"]
-    MISSING -->|"> 30%"| DROP["Consider dropping\ncolumn entirely"]
+ MISSING{"Missing\nvalues?"}
+ MISSING -->|"0% but zeros look wrong"| ZEROFILL{"Were they\nzero-filled?\nCheck describe min"}
+ MISSING -->|"< 5%"| IMPUTE
+ MISSING -->|"5–30%"| TEST["Test mean / median / KNN\nMeasure MAE for each"]
+ MISSING -->|"> 30%"| DROP["Consider dropping\ncolumn entirely"]
 
-    ZEROFILL -->|"Yes — restore NaN\nthen impute"| IMPUTE
-    ZEROFILL -->|"No"| CORR
+ ZEROFILL -->|"Yes — restore NaN\nthen impute"| IMPUTE
+ ZEROFILL -->|"No"| CORR
 
-    TEST --> IMPUTE["Impute on TRAIN only\n⚠️ No data leakage"]
-    IMPUTE --> CORR
+ TEST --> IMPUTE["Impute on TRAIN only\n No data leakage"]
+ IMPUTE --> CORR
 
-    CORR["Correlation matrix\nFlag |r| > 0.8 pairs"] --> BASELINE
-    BASELINE["Baseline model\nMAE before/after\nDocument every change"] --> DONE(["✅ Clean data ready"])
+ CORR["Correlation matrix\nFlag |r| > 0.8 pairs"] --> BASELINE
+ BASELINE["Baseline model\nMAE before/after\nDocument every change"] --> DONE([" Clean data ready"])
 
-    style LOAD fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style DONE fill:#15803d,color:#fff,stroke:#15803d
-    style REDFLAGS fill:#b45309,color:#fff,stroke:#b45309
-    style OUTLIER_METHOD fill:#b45309,color:#fff,stroke:#b45309
-    style DOMAIN fill:#b45309,color:#fff,stroke:#b45309
-    style MISSING fill:#b45309,color:#fff,stroke:#b45309
-    style ZEROFILL fill:#b91c1c,color:#fff,stroke:#b91c1c
-    style DROP fill:#b91c1c,color:#fff,stroke:#b91c1c
-    style ZSCORE fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style IQR fill:#15803d,color:#fff,stroke:#15803d
+ style LOAD fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style DONE fill:#15803d,color:#fff,stroke:#15803d
+ style REDFLAGS fill:#b45309,color:#fff,stroke:#b45309
+ style OUTLIER_METHOD fill:#b45309,color:#fff,stroke:#b45309
+ style DOMAIN fill:#b45309,color:#fff,stroke:#b45309
+ style MISSING fill:#b45309,color:#fff,stroke:#b45309
+ style ZEROFILL fill:#b91c1c,color:#fff,stroke:#b91c1c
+ style DROP fill:#b91c1c,color:#fff,stroke:#b91c1c
+ style ZSCORE fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style IQR fill:#15803d,color:#fff,stroke:#15803d
 ```
 
 ### 7.2 · Which Imputation Strategy? Decision Tree
 
 ```mermaid
 flowchart TD
-    START(["Missing values detected"]) --> PCT{"% missing?"}
+ START(["Missing values detected"]) --> PCT{"% missing?"}
 
-    PCT -->|"> 30%"| DROP2["Drop column\nToo much invented data"]
-    PCT -->|"5–30%"| PATTERN{"Is missingness\npatterned?"}
-    PCT -->|"< 5%"| DIST{"Feature distribution\nskewed? skew > 1.0?"}
+ PCT -->|"> 30%"| DROP2["Drop column\nToo much invented data"]
+ PCT -->|"5–30%"| PATTERN{"Is missingness\npatterned?"}
+ PCT -->|"< 5%"| DIST{"Feature distribution\nskewed? skew > 1.0?"}
 
-    PATTERN -->|"Random scatter\n(heatmap: no stripes)"| MAR["Assume MAR\nProceed to strategy"]
-    PATTERN -->|"Systematic\n(specific rows always miss)"| MNAR["⚠️ MNAR\nInvestigate root cause\nbefore imputing"]
+ PATTERN -->|"Random scatter\n(heatmap: no stripes)"| MAR["Assume MAR\nProceed to strategy"]
+ PATTERN -->|"Systematic\n(specific rows always miss)"| MNAR[" MNAR\nInvestigate root cause\nbefore imputing"]
 
-    MAR --> CORR2{"Correlated with\nother features?\n|r| > 0.5?"}
-    CORR2 -->|"Yes (AveBedrms\nvs AveRooms r=0.85)"| KNN2["KNN Imputation\nk=5 default\n✅ Best for AveBedrms"]
-    CORR2 -->|"No"| DIST
+ MAR --> CORR2{"Correlated with\nother features?\n|r| > 0.5?"}
+ CORR2 -->|"Yes (AveBedrms\nvs AveRooms r=0.85)"| KNN2["KNN Imputation\nk=5 default\n Best for AveBedrms"]
+ CORR2 -->|"No"| DIST
 
-    DIST -->|"Right-skewed"| MEDIAN2["Median Imputation\nRobust to outliers"]
-    DIST -->|"~Normal"| MEAN2["Mean Imputation\nSimplest"]
+ DIST -->|"Right-skewed"| MEDIAN2["Median Imputation\nRobust to outliers"]
+ DIST -->|"~Normal"| MEAN2["Mean Imputation\nSimplest"]
 
-    KNN2 --> LEAKAGE["⚠️ fit(X_train) only\ntransform(X_test) with\ntrain statistics"]
-    MEDIAN2 --> LEAKAGE
-    MEAN2 --> LEAKAGE
+ KNN2 --> LEAKAGE[" fit(X_train) only\ntransform(X_test) with\ntrain statistics"]
+ MEDIAN2 --> LEAKAGE
+ MEAN2 --> LEAKAGE
 
-    LEAKAGE --> MEASURE["Measure MAE\nbefore / after\nDocument result"]
+ LEAKAGE --> MEASURE["Measure MAE\nbefore / after\nDocument result"]
 
-    style START fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style DROP2 fill:#b91c1c,color:#fff,stroke:#b91c1c
-    style MNAR fill:#b91c1c,color:#fff,stroke:#b91c1c
-    style KNN2 fill:#15803d,color:#fff,stroke:#15803d
-    style PCT fill:#b45309,color:#fff,stroke:#b45309
-    style CORR2 fill:#b45309,color:#fff,stroke:#b45309
-    style DIST fill:#b45309,color:#fff,stroke:#b45309
-    style LEAKAGE fill:#b91c1c,color:#fff,stroke:#b91c1c
-    style MEASURE fill:#15803d,color:#fff,stroke:#15803d
+ style START fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style DROP2 fill:#b91c1c,color:#fff,stroke:#b91c1c
+ style MNAR fill:#b91c1c,color:#fff,stroke:#b91c1c
+ style KNN2 fill:#15803d,color:#fff,stroke:#15803d
+ style PCT fill:#b45309,color:#fff,stroke:#b45309
+ style CORR2 fill:#b45309,color:#fff,stroke:#b45309
+ style DIST fill:#b45309,color:#fff,stroke:#b45309
+ style LEAKAGE fill:#b91c1c,color:#fff,stroke:#b91c1c
+ style MEASURE fill:#15803d,color:#fff,stroke:#15803d
 ```
 
 ---
@@ -752,7 +751,7 @@ flowchart TD
 
 ```python
 lower_fence = Q1 - k * IQR
-upper_fence = Q3 + k * IQR   # ← k is the dial
+upper_fence = Q3 + k * IQR # ← k is the dial
 ```
 
 | `k` | % of Gaussian data retained | When to use |
@@ -767,7 +766,7 @@ upper_fence = Q3 + k * IQR   # ← k is the dial
 
 ```python
 from scipy.stats import zscore
-outliers = df[zscore(df[col]).abs() > threshold]  # ← threshold is the dial
+outliers = df[zscore(df[col]).abs() > threshold] # ← threshold is the dial
 ```
 
 | Threshold | % retained (Gaussian) | When to use |
@@ -781,7 +780,7 @@ outliers = df[zscore(df[col]).abs() > threshold]  # ← threshold is the dial
 ### 8.3 · KNN Imputation `n_neighbors` (Default: 5)
 
 ```python
-imputer = KNNImputer(n_neighbors=k)  # ← k is the dial
+imputer = KNNImputer(n_neighbors=k) # ← k is the dial
 ```
 
 | `k` | Behavior | When to use |
@@ -792,20 +791,20 @@ imputer = KNNImputer(n_neighbors=k)  # ← k is the dial
 
 **Note:** KNN imputation is $O(n^2)$ distance computation. For >100k rows, consider `IterativeImputer` (MICE) as a faster alternative.
 
-> 💡 **Industry Standard: sklearn Pipeline for Production**
+> **Industry Standard: sklearn Pipeline for Production**
 > ```python
 > from sklearn.pipeline import Pipeline
 > from sklearn.preprocessing import StandardScaler
 > from sklearn.impute import KNNImputer
 >
 > cleaning_pipeline = Pipeline([
->     ('imputer', KNNImputer(n_neighbors=5)),
->     ('scaler', StandardScaler()),
+> ('imputer', KNNImputer(n_neighbors=5)),
+> ('scaler', StandardScaler()),
 > ])
 > # Fit on training data only — prevents data leakage
 > cleaning_pipeline.fit(X_train)
 > X_train_clean = cleaning_pipeline.transform(X_train)
-> X_test_clean = cleaning_pipeline.transform(X_test)  # Uses train statistics
+> X_test_clean = cleaning_pipeline.transform(X_test) # Uses train statistics
 > ```
 > **What it gives you:** Guaranteed replication of training-time transformations at inference time. Pipeline serializes imputation statistics (fitted on training data) and applies them identically to test/production data.
 > **When to use:** Every production model. Pipelines eliminate the #1 cause of train/serve skew (different preprocessing between training and inference).
@@ -817,17 +816,17 @@ imputer = KNNImputer(n_neighbors=k)  # ← k is the dial
 
 > Anti-patterns that would break SmartVal AI if not caught early.
 
-- ❌ **Zero-fill as missing value proxy.** `fillna(0)` is fast to write and catastrophic to model. Zero is a meaningful value for most numerical features. Always restore zeros to `NaN` and impute properly. Using `fillna(0)` on `AveBedrms` alone can cost ~8-12k MAE in production.
+- **Zero-fill as missing value proxy.** `fillna(0)` is fast to write and catastrophic to model. Zero is a meaningful value for most numerical features. Always restore zeros to `NaN` and impute properly. Using `fillna(0)` on `AveBedrms` alone can cost ~8-12k MAE in production.
 
-- ❌ **Imputing before train/test split.** Computing imputation statistics on the full dataset leaks test-set information into training. The model appears to perform better offline than it does in deployment. Always: split first, `imputer.fit(X_train)`, then `imputer.transform(X_test)`.
+- **Imputing before train/test split.** Computing imputation statistics on the full dataset leaks test-set information into training. The model appears to perform better offline than it does in deployment. Always: split first, `imputer.fit(X_train)`, then `imputer.transform(X_test)`.
 
-- ❌ **Treating all outliers as errors.** A `MedInc` of 15.0 is an extreme statistical outlier but represents real California luxury districts. Removing it means your model has never seen high-income patterns. Use domain knowledge to distinguish physically-impossible artifacts from rare-but-real signal.
+- **Treating all outliers as errors.** A `MedInc` of 15.0 is an extreme statistical outlier but represents real California luxury districts. Removing it means your model has never seen high-income patterns. Use domain knowledge to distinguish physically-impossible artifacts from rare-but-real signal.
 
-- ❌ **Ignoring target ceiling artifacts.** `MedHouseVal` capped at $500,100 for 4.7% of rows. A model trained on this will systematically underestimate high-value properties. Document this limitation explicitly in the audit log.
+- **Ignoring target ceiling artifacts.** `MedHouseVal` capped at $500,100 for 4.7% of rows. A model trained on this will systematically underestimate high-value properties. Document this limitation explicitly in the audit log.
 
-- ❌ **Skipping the correlation matrix.** The r = 0.85 between `AveRooms` and `AveBedrms` creates multicollinearity that inflates linear coefficients. A two-minute correlation check in EDA prevents a days-long debugging session in the regression track.
+- **Skipping the correlation matrix.** The r = 0.85 between `AveRooms` and `AveBedrms` creates multicollinearity that inflates linear coefficients. A two-minute correlation check in EDA prevents a days-long debugging session in the regression track.
 
-> 💡 **Industry Standard: Evidently AI for Data & Model Monitoring**
+> **Industry Standard: Evidently AI for Data & Model Monitoring**
 > ```python
 > from evidently import ColumnMapping
 > from evidently.report import Report
@@ -855,7 +854,7 @@ EDA findings cascade through every subsequent step:
 | [Ch.02 — Multiple Regression](../ch02_multiple_regression) | VIF analysis (detecting multicollinearity) is the formal follow-up to the r = 0.85 pair flagged here |
 | [Neural Networks track](../../03-neural-networks) | Z-score normalization of features before neural network training is the model-building application of §4.1's formula |
 
-> ➡️ **The EDA-to-production pipeline.** Data cleaning decisions made here must be replicated exactly in the inference pipeline — the same imputer (fitted on training data) must transform incoming production data identically. This is the origin of the `sklearn.pipeline.Pipeline` pattern used throughout the regression and neural network tracks.
+> ➡ **The EDA-to-production pipeline.** Data cleaning decisions made here must be replicated exactly in the inference pipeline — the same imputer (fitted on training data) must transform incoming production data identically. This is the origin of the `sklearn.pipeline.Pipeline` pattern used throughout the regression and neural network tracks.
 
 ---
 
@@ -869,21 +868,21 @@ EDA findings cascade through every subsequent step:
 |---|------------|--------|--------|---------|
 | **#1** | ACCURACY | <$40k MAE | 🔴 **Not Started** | Data cleaned, ready for modeling (Ch.01-07) |
 | **#2** | GENERALIZATION | Unseen districts | 🔴 **Not Started** | Clean foundation established for later chapters |
-| **#3** | DATA QUALITY | Clean data BEFORE training | ✅ **Unlocked** | Zero-fill reversed. IQR outliers flagged. KNN imputation selected. |
+| **#3** | DATA QUALITY | Clean data BEFORE training | **Unlocked** | Zero-fill reversed. IQR outliers flagged. KNN imputation selected. |
 | **#4** | INTERPRETABILITY | Explainable predictions | 🟡 **Partial** | Correlation analysis identifies key features (MedInc r=0.69) |
 | **#5** | PRODUCTION | <100ms inference, monitoring | 🔴 **Not Started** | Foundation laid; addressed in Ch.08 |
 
-**✅ Unlocked capabilities:**
+** Unlocked capabilities:**
 - IQR outlier detection (masking-resistant) and Z-score (for Gaussian data)
 - Missing value pattern analysis (random vs. systematic) and imputation strategy selection via MAE comparison
 - Correlation analysis to identify dominant features (MedInc r=0.69) and multicollinearity risks (AveRooms/AveBedrms r=0.85)
 - Documented audit trail: every cleaning step with clear rationale
 
-**❌ Still need to build:**
-- ❌ **ACCURACY** target — haven't built any models yet. That's Ch.01-07 (Linear Regression → XGBoost)
-- ❌ **GENERALIZATION** assurance — need cross-validation and regularization. That's Ch.05-06
-- ❌ **CLASS BALANCE** check — haven't examined training distribution. That's Ch.00b
-- ❌ **PRODUCTION MONITORING** — need validation schemas and drift detection. That's Ch.08
+** Still need to build:**
+- **ACCURACY** target — haven't built any models yet. That's Ch.01-07 (Linear Regression → XGBoost)
+- **GENERALIZATION** assurance — need cross-validation and regularization. That's Ch.05-06
+- **CLASS BALANCE** check — haven't examined training distribution. That's Ch.00b
+- **PRODUCTION MONITORING** — need validation schemas and drift detection. That's Ch.08
 
 **Current status:** Clean dataset ready for modeling. SmartVal AI has a solid data quality foundation — now we can build models with confidence that we're not training on garbage data.
 
@@ -893,4 +892,4 @@ EDA findings cascade through every subsequent step:
 
 This chapter cleaned the raw data — removed outliers, analyzed missing patterns, selected optimal imputation strategies. The next chapter, **Ch.00b — Class Imbalance**, examines the training distribution: the California Housing dataset has 75% median-value homes and only 25% high-value ones. A perfectly clean dataset with skewed class distribution still produces a biased model. Ch.00b teaches you SMOTE, class weighting, and stratified sampling to ensure all market segments are properly represented before building any models.
 
-> ➡️ **[Ch.00b — Class Imbalance →](../ch00b-class-imbalance)** — When the data is clean but the distribution is wrong.
+> ➡ **[Ch.00b — Class Imbalance →](../ch00b-class-imbalance)** — When the data is clean but the distribution is wrong.

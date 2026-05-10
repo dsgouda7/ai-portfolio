@@ -12,7 +12,7 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 💡 **The mission**: Launch **UnifiedAI** — prove neural networks unify regression and classification under one architecture, achieving:
+> **The mission**: Launch **UnifiedAI** — prove neural networks unify regression and classification under one architecture, achieving:
 > 1. **ACCURACY**: ≤$28k MAE (housing regression) + ≥95% avg accuracy (face classification)
 > 2. **GENERALIZATION**: Unseen districts + new celebrity identities
 > 3. **MULTI-TASK**: Same architecture predicts value AND classifies face attributes simultaneously
@@ -20,33 +20,33 @@
 > 5. **PRODUCTION**: <100ms inference, TensorBoard monitoring
 
 **What we know so far:**
-- ✅ **Topic 01 (Regression)**: Linear regression baseline on California Housing — ~$70k MAE
-- ✅ **Topic 02 (Classification)**: Logistic regression for binary face attribute classification — ~88% on one attribute
-- ✅ Gradient descent, MSE, BCE, train/test splits, evaluation metrics
-- ✅ Polynomial features (Ch.4 Regression) — some non-linearity helps, but no hidden layers yet
+- **Topic 01 (Regression)**: Linear regression baseline on California Housing — ~$70k MAE
+- **Topic 02 (Classification)**: Logistic regression for binary face attribute classification — ~88% on one attribute
+- Gradient descent, MSE, BCE, train/test splits, evaluation metrics
+- Polynomial features (Ch.4 Regression) — some non-linearity helps, but no hidden layers yet
 
 **What's blocking us:**
 
 The product team applied logistic regression to a "Premium Neighbourhood" classifier and found:
 - **Coastal + High-Income** districts — correctly labelled premium ✓
 - **Inland + Low-Income** districts — correctly labelled non-premium ✓
-- **Coastal + Low-Income** districts — ❌ **misclassified** (income weight dominates negatively)
-- **Inland + High-Income** districts — ❌ **misclassified** (income weight dominates positively)
+- **Coastal + Low-Income** districts — **misclassified** (income weight dominates negatively)
+- **Inland + High-Income** districts — **misclassified** (income weight dominates positively)
 
 The true decision boundary is **non-linear** — you need a curved surface — but logistic regression can only produce a straight hyperplane. No amount of additional training epochs or learning rate tuning can fix this; it is a **structural impossibility**.
 
 **Why this blocks every UnifiedAI constraint:**
-- ❌ **Constraint #1 (ACCURACY)**: Can't hit ≤$28k MAE if the model structurally can't represent non-linear price interactions
-- ❌ **Constraint #3 (MULTI-TASK)**: Classification side broken for any non-linearly-separable attribute
-- ❌ **Constraint #4 (INTERPRETABILITY)**: Linear coefficients are meaningless when the true relationship is non-linear
+- **Constraint #1 (ACCURACY)**: Can't hit ≤$28k MAE if the model structurally can't represent non-linear price interactions
+- **Constraint #3 (MULTI-TASK)**: Classification side broken for any non-linearly-separable attribute
+- **Constraint #4 (INTERPRETABILITY)**: Linear coefficients are meaningless when the true relationship is non-linear
 
-> ⚠️ **DIAGNOSTIC CHAPTER** — This chapter does not unlock any UnifiedAI constraint. Instead:
+> **DIAGNOSTIC CHAPTER** — This chapter does not unlock any UnifiedAI constraint. Instead:
 > 1. **Proves the problem** algebraically — XOR has no linear solution (no retraining can fix it)
 > 2. **Shows the failure** on real housing data (coastal × income interaction)
 > 3. **Derives the solution** — one hidden layer + non-linear activation can learn XOR exactly
 > 4. **Motivates Ch.2** — the UAT guarantees a one-hidden-layer network can approximate any function; Ch.2 builds the full architecture
 
-> ⚡ Every real-world ML problem has non-linear decision boundaries. Moving beyond linear models is not optional; it is the prerequisite for everything in this track.
+> Every real-world ML problem has non-linear decision boundaries. Moving beyond linear models is not optional; it is the prerequisite for everything in this track.
 
 ---
 
@@ -104,14 +104,14 @@ XOR is 1 when exactly one input is 1. It is 0 when both are 0 or both are 1. The
 ### 3.2 · Geometry — Why No Line Separates XOR
 
 ```
-          x2
-          1 |  o(0,1)=1    *(1,1)=0
-            |
-          0 |  *(0,0)=0    o(1,0)=1
-            +---------------------------  x1
-              0              1
+ x2
+ 1 | o(0,1)=1 *(1,1)=0
+ |
+ 0 | *(0,0)=0 o(1,0)=1
+ +--------------------------- x1
+ 0 1
 
-  * = class 0   o = class 1
+ * = class 0 o = class 1
 ```
 
 The two class-1 points `(0,1)` and `(1,0)` sit at diagonally opposite corners. The two class-0 points `(0,0)` and `(1,1)` sit at the other two corners. Any straight line that separates the class-1 point at top-left from the class-0 point at top-right must also separate the class-0 point at bottom-left from the class-1 point at bottom-right — and those two constraints are geometrically incompatible. You would need to "cut" both diagonals simultaneously, which a single line cannot do.
@@ -134,12 +134,12 @@ A key observation: inputs `(0,1)` and `(1,0)` are geometrically diagonal — but
 
 | Architecture | Parameters (2 inputs) | Boundary shape | Solves XOR? | Solves housing? |
 |---|---|---|---|---|
-| Single perceptron (threshold) | 3 | Hyperplane (straight line) | ❌ | ❌ |
-| Logistic regression | 3 | Hyperplane | ❌ | ❌ |
-| Degree-2 polynomial features | 6 | Quadratic surface | ✅ (if $x_1 x_2$ included) | Partial |
-| 1 hidden layer, 2 ReLU neurons | 9 | Piecewise-linear (2 folds) | ✅ | Partial |
-| 1 hidden layer, 64 ReLU neurons | 193 | Complex piecewise-linear | ✅ | ✅ |
-| 3 hidden layers (64→32→16, ReLU) | ~5k | Hierarchical piecewise-linear | ✅ | ✅ strong |
+| Single perceptron (threshold) | 3 | Hyperplane (straight line) | | |
+| Logistic regression | 3 | Hyperplane | | |
+| Degree-2 polynomial features | 6 | Quadratic surface | (if $x_1 x_2$ included) | Partial |
+| 1 hidden layer, 2 ReLU neurons | 9 | Piecewise-linear (2 folds) | | Partial |
+| 1 hidden layer, 64 ReLU neurons | 193 | Complex piecewise-linear | | |
+| 3 hidden layers (64→32→16, ReLU) | ~5k | Hierarchical piecewise-linear | | strong |
 
 The jump from logistic regression (3 parameters) to a 1-hidden-layer network with 2 neurons (9 parameters) adds only 6 parameters — yet unlocks a fundamentally different class of functions. The asymmetry between the cost of the solution and the magnitude of what it unlocks is why hidden layers were such a breakthrough.
 
@@ -151,11 +151,11 @@ Before diving into the full math, here is the complete computation in pseudocode
 # Forward pass: 2-layer XOR network
 # Input: x = [x1, x2]
 
-z1 = W1 · x + b1           # hidden pre-activations: shape (2,)
-h  = ReLU(z1)              # hidden activations: shape (2,)
-z2 = W2 · h + b2           # output pre-activation: scalar
-y_hat = z2                 # linear output (no final activation for regression)
-                           # for binary classification: y_hat = sigmoid(z2)
+z1 = W1 · x + b1 # hidden pre-activations: shape (2,)
+h = ReLU(z1) # hidden activations: shape (2,)
+z2 = W2 · h + b2 # output pre-activation: scalar
+y_hat = z2 # linear output (no final activation for regression)
+ # for binary classification: y_hat = sigmoid(z2)
 ```
 
 Each step has a name and a purpose:
@@ -198,7 +198,7 @@ But C1 requires $b \leq 0$. We need simultaneously $b > 0$ and $b \leq 0$.
 
 **Contradiction. No real numbers $w_1, w_2, b$ satisfy all four XOR constraints.** $\square$
 
-> 💡 **Key insight**: the contradiction arises because XOR requires *interaction* between $x_1$ and $x_2$. A linear model can only represent additive effects ($w_1 x_1 + w_2 x_2$), never a multiplicative interaction term. The California Housing equivalent: the joint effect of `Latitude × MedInc` on price cannot be expressed as a sum of their individual effects — and that is precisely the interaction linear regression misses.
+> **Key insight**: the contradiction arises because XOR requires *interaction* between $x_1$ and $x_2$. A linear model can only represent additive effects ($w_1 x_1 + w_2 x_2$), never a multiplicative interaction term. The California Housing equivalent: the joint effect of `Latitude × MedInc` on price cannot be expressed as a sum of their individual effects — and that is precisely the interaction linear regression misses.
 
 This is not a failure of optimisation. It is a failure of *expressivity*. No learning algorithm, no matter how sophisticated, can find weights that do not exist.
 
@@ -206,10 +206,10 @@ This is not a failure of optimisation. It is a failure of *expressivity*. No lea
 
 | Input | $w_1 x_1 + w_2 x_2 + b$ | Decision ($> 0$?) | True label | Correct? |
 |---|---|---|---|---|
-| (0,0) | $0 + 0 - 0.5 = -0.5$ | 0 (no) | 0 | ✅ |
-| (0,1) | $0 + 1 - 0.5 = +0.5$ | 1 (yes) | 1 | ✅ |
-| (1,0) | $1 + 0 - 0.5 = +0.5$ | 1 (yes) | 1 | ✅ |
-| (1,1) | $1 + 1 - 0.5 = +1.5$ | 1 (yes) | **0** | ❌ |
+| (0,0) | $0 + 0 - 0.5 = -0.5$ | 0 (no) | 0 | |
+| (0,1) | $0 + 1 - 0.5 = +0.5$ | 1 (yes) | 1 | |
+| (1,0) | $1 + 0 - 0.5 = +0.5$ | 1 (yes) | 1 | |
+| (1,1) | $1 + 1 - 0.5 = +1.5$ | 1 (yes) | **0** | |
 
 3 of 4 correct — but input (1,1) is wrong. No matter how you adjust $w_1$, $w_2$, or $b$, you cannot simultaneously satisfy C1–C4. The proof above shows why: the constraints are algebraically contradictory.
 
@@ -222,9 +222,9 @@ This is not a failure of optimisation. It is a failure of *expressivity*. No lea
 In plain English: **one hidden layer is enough in theory.** You may need many neurons for hard functions, but a solution is guaranteed to exist.
 
 **Three things the theorem says:**
-1. ✅ A solution *exists* — you do not need infinite depth
-2. ⚠️ It does not say how *wide* the hidden layer must be — could require a huge width
-3. ⚠️ It does not say gradient descent will *find* the solution — only that it exists
+1. A solution *exists* — you do not need infinite depth
+2. It does not say how *wide* the hidden layer must be — could require a huge width
+3. It does not say gradient descent will *find* the solution — only that it exists
 
 **Intuition for why this is true.** A single hidden neuron with a sigmoid activation draws one S-shaped "bump" in the output space. By positioning bumps at the right locations with the right heights, you can approximate any function value at any input. This is analogous to Fourier series approximation: any periodic function can be approximated by a sum of sine waves; any continuous function can be approximated by a sum of sigmoid bumps. The more bumps (hidden neurons), the better the approximation.
 
@@ -232,7 +232,7 @@ In plain English: **one hidden layer is enough in theory.** You may need many ne
 
 **Why depth wins in practice.** A deep network can represent the same function as a shallow one with exponentially fewer neurons. Depth creates a hierarchy of features: early layers detect simple patterns; later layers compose them into complex representations. For XOR we need only 2 hidden neurons and 1 layer — but for 200k-pixel face images, depth is essential.
 
-> ➡️ **Connection to Ch.2 (Neural Networks):** The UAT motivates building a full multi-layer network for California Housing. If one hidden layer is theoretically sufficient and XOR needs only 2 neurons, what does an 8-feature housing regression need? Ch.2 answers this empirically.
+> ➡ **Connection to Ch.2 (Neural Networks):** The UAT motivates building a full multi-layer network for California Housing. If one hidden layer is theoretically sufficient and XOR needs only 2 neurons, what does an 8-feature housing regression need? Ch.2 answers this empirically.
 
 ---
 
@@ -268,15 +268,15 @@ $$\mathbf{h} = \sigma\bigl(W^{(1)}\mathbf{x} + \mathbf{b}^{(1)}\bigr)$$
 
 Now $\hat{y} = W^{(2)}\mathbf{h} + b^{(2)}$ cannot be simplified to $W^*\mathbf{x} + b^*$ — the non-linearity inside $\sigma$ prevents the algebraic cancellation. The two-layer network genuinely has more representational power.
 
-> ⚡ **Constraint connection**: this proof explains why linear regression ($W\mathbf{x}+b$) is structurally limited to ~$70k MAE on California Housing. Adding more features helps, but no linear model can represent the XOR-like interaction patterns in the data. A hidden layer with activation is required.
+> **Constraint connection**: this proof explains why linear regression ($W\mathbf{x}+b$) is structurally limited to ~$70k MAE on California Housing. Adding more features helps, but no linear model can represent the XOR-like interaction patterns in the data. A hidden layer with activation is required.
 
 **Practical implication.** When you see a PyTorch or Keras model defined as:
 
 ```python
 model = nn.Sequential(
-    nn.Linear(2, 4),   # layer 1
-    nn.Linear(4, 2),   # layer 2 — NO activation between layers!
-    nn.Linear(2, 1),   # output
+ nn.Linear(2, 4), # layer 1
+ nn.Linear(4, 2), # layer 2 — NO activation between layers!
+ nn.Linear(2, 1), # output
 )
 ```
 
@@ -360,7 +360,7 @@ No matter how many epochs you train, the binary cross-entropy loss plateaus abov
 
 This does not solve XOR. Sigmoid applied to a linear combination is monotone in each input. The decision boundary $\hat{y} = 0.5$ corresponds exactly to $w_1 x_1 + w_2 x_2 + b = 0$ — a straight line. The sigmoid changes the output range from $\mathbb{R}$ to $(0,1)$; it does not change the decision boundary in input space. Act 2 fails for the same algebraic reason as Act 1.
 
-> 💡 **Key insight**: the activation function must act on the **hidden layer** to bend the representation space. Applied only to the output, it changes the output range but not the expressivity.
+> **Key insight**: the activation function must act on the **hidden layer** to bend the representation space. Applied only to the output, it changes the output range but not the expressivity.
 
 ### Act 3 · One Hidden Layer with 2 Neurons Solves XOR Exactly
 
@@ -436,10 +436,10 @@ $$\hat{\mathbf{y}} = \begin{bmatrix}1 & -2\end{bmatrix} \begin{bmatrix} 0 & 1 & 
 
 | Input $[x_1, x_2]$ | $\mathbf{z}^{(1)}$ | $\mathbf{h} = \text{ReLU}(\mathbf{z}^{(1)})$ | $\hat{y}$ | True $y$ | Correct? |
 |---|---|---|---|---|---|
-| $[0, 0]$ | $[0, -1]$ | $[0, 0]$ | **0** | 0 | ✅ |
-| $[0, 1]$ | $[1,\ 0]$ | $[1, 0]$ | **1** | 1 | ✅ |
-| $[1, 0]$ | $[1,\ 0]$ | $[1, 0]$ | **1** | 1 | ✅ |
-| $[1, 1]$ | $[2,\ 1]$ | $[2, 1]$ | **0** | 0 | ✅ |
+| $[0, 0]$ | $[0, -1]$ | $[0, 0]$ | **0** | 0 | |
+| $[0, 1]$ | $[1,\ 0]$ | $[1, 0]$ | **1** | 1 | |
+| $[1, 0]$ | $[1,\ 0]$ | $[1, 0]$ | **1** | 1 | |
+| $[1, 1]$ | $[2,\ 1]$ | $[2, 1]$ | **0** | 0 | |
 
 **100% accuracy. Zero error. Two neurons. One ReLU.**
 
@@ -455,54 +455,54 @@ Critical insight: inputs `(0,1)` and `(1,0)` — XOR-positive but geometrically 
 
 ```mermaid
 flowchart LR
-    X1["x_1"]:::input --> H1["h_1 = ReLU(x_1+x_2)\nOR-like unit"]:::hidden
-    X1 --> H2["h_2 = ReLU(x_1+x_2-1)\nAND-like unit"]:::hidden
-    X2["x_2"]:::input --> H1
-    X2 --> H2
-    H1 -->|"+1"| OUT["y_hat = h_1 - 2h_2\nXOR output"]:::output
-    H2 -->|"-2"| OUT
+ X1["x_1"]:::input --> H1["h_1 = ReLU(x_1+x_2)\nOR-like unit"]:::hidden
+ X1 --> H2["h_2 = ReLU(x_1+x_2-1)\nAND-like unit"]:::hidden
+ X2["x_2"]:::input --> H1
+ X2 --> H2
+ H1 -->|"+1"| OUT["y_hat = h_1 - 2h_2\nXOR output"]:::output
+ H2 -->|"-2"| OUT
 
-    subgraph L0["Input (2 units)"]
-        X1
-        X2
-    end
-    subgraph L1["Hidden Layer (2 ReLU)"]
-        H1
-        H2
-    end
-    subgraph L2["Output (linear)"]
-        OUT
-    end
+ subgraph L0["Input (2 units)"]
+ X1
+ X2
+ end
+ subgraph L1["Hidden Layer (2 ReLU)"]
+ H1
+ H2
+ end
+ subgraph L2["Output (linear)"]
+ OUT
+ end
 
-    classDef input fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    classDef hidden fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    classDef output fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ classDef input fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ classDef hidden fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ classDef output fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### From Linear Failure to Non-Linear Solution
 
 ```mermaid
 flowchart LR
-    A["Linear model\nAccuracy 50%\nMathematically PROVEN\nimpossible to fix\n(no line separates XOR)"]:::danger
-    A -->|"Add hidden layer\n+ ReLU activation"| B["Two-layer network\nAccuracy 100%\nZero error on XOR\nTwo neurons sufficient\nSpace is transformed"]:::success
-    B -->|"Add more neurons\nor more layers"| C["Deeper network\nArbitrary boundary\nUniversal Approximation\nTheorem applies"]:::info
+ A["Linear model\nAccuracy 50%\nMathematically PROVEN\nimpossible to fix\n(no line separates XOR)"]:::danger
+ A -->|"Add hidden layer\n+ ReLU activation"| B["Two-layer network\nAccuracy 100%\nZero error on XOR\nTwo neurons sufficient\nSpace is transformed"]:::success
+ B -->|"Add more neurons\nor more layers"| C["Deeper network\nArbitrary boundary\nUniversal Approximation\nTheorem applies"]:::info
 
-    classDef danger fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    classDef success fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    classDef info fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ classDef danger fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ classDef success fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ classDef info fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### XOR Input Space vs Hidden Layer Space
 
 ```
-  Original XOR input space          Hidden layer space (h1, h2)
-        x2                                  h2
-    1 | o(0,1)   *(1,1)              1 | *(1,1) at [2,1]
-      |                                |
-    0 | *(0,0)   o(1,0)              0 | *(0,0)=o(0,1)=o(1,0) all at h2=0
-      +---------------  x1             +---------------------------  h1
-        NOT linearly                     (0,1) and (1,0) SAME POINT [1,0]
-        separable                        Output layer draws one line: DONE
+ Original XOR input space Hidden layer space (h1, h2)
+ x2 h2
+ 1 | o(0,1) *(1,1) 1 | *(1,1) at [2,1]
+ | |
+ 0 | *(0,0) o(1,0) 0 | *(0,0)=o(0,1)=o(1,0) all at h2=0
+ +--------------- x1 +--------------------------- h1
+ NOT linearly (0,1) and (1,0) SAME POINT [1,0]
+ separable Output layer draws one line: DONE
 ```
 
 Both XOR-positive inputs `(0,1)` and `(1,0)` collapse to identical hidden representation $[1, 0]$. The hard part — distinguishing diagonally-placed same-class points — is solved by the transformation, not by a curved boundary.
@@ -522,7 +522,7 @@ Both XOR-positive inputs `(0,1)` and `(1,0)` collapse to identical hidden repres
 
 **Width vs. depth distinction.** XOR is a *width* problem: 2 neurons are sufficient regardless of depth. For real problems like California Housing, *depth* creates a feature hierarchy (interaction detection → combination → price estimate) that shallow-wide networks approximate less efficiently.
 
-> 💡 **Practical rule:** start with `hidden_units = max(4, 2 × input_features)`. For 8-feature housing, start with 16 hidden units and measure validation MAE. Tune width before adding depth.
+> **Practical rule:** start with `hidden_units = max(4, 2 × input_features)`. For 8-feature housing, start with 16 hidden units and measure validation MAE. Tune width before adding depth.
 
 **Activation function comparison table:**
 
@@ -571,24 +571,24 @@ Both XOR-positive inputs `(0,1)` and `(1,0)` collapse to identical hidden repres
 
 ```mermaid
 flowchart TD
-    START["Network predicts poorly<br/>on a learnable problem"]:::danger --> Q1{"Accuracy near 50%<br/>for binary classification?"}
-    Q1 -->|"Yes — random chance"| LINEAR["LINEAR FAILURE<br/>Data is not linearly separable<br/>No linear model can fix this"]:::caution
-    Q1 -->|"No"| Q2{"Train accuracy near 100%<br/>but test accuracy low?"}
-    LINEAR --> FIX1["Add hidden layer with ReLU<br/>Start: 2–16 neurons<br/>Verify with XOR toy test"]:::success
-    Q2 -->|"Yes"| OVERFIT["OVERFITTING<br/>Too many hidden units<br/>Memorising training set"]:::caution
-    Q2 -->|"No"| Q3{"Loss is NaN or higher<br/>than initial loss?"}
-    OVERFIT --> FIX2["Reduce hidden units<br/>Add Dropout or L2<br/>(see Ch.4 Regularisation)"]:::success
-    Q3 -->|"Yes"| EXPLODE["DIVERGENCE<br/>Learning rate too high<br/>or weights exploded"]:::caution
-    Q3 -->|"No"| Q4{"Output always predicts<br/>same class or value?"}
-    EXPLODE --> FIX3["Lower learning rate 10x<br/>Use gradient clipping<br/>Check weight initialisation"]:::success
-    Q4 -->|"Yes"| DEAD["DEAD NEURONS<br/>Zero init or dead ReLU zone"]:::caution
-    Q4 -->|"No"| SLOW["SLOW CONVERGENCE<br/>LR too small or<br/>features unscaled"]:::caution
-    DEAD --> FIX4["He or Xavier random init<br/>Check output activation<br/>(Sigmoid not ReLU for binary)"]:::success
-    SLOW --> FIX5["Scale input features<br/>Switch to Adam (lr=1e-3)<br/>Increase LR cautiously"]:::success
+ START["Network predicts poorly<br/>on a learnable problem"]:::danger --> Q1{"Accuracy near 50%<br/>for binary classification?"}
+ Q1 -->|"Yes — random chance"| LINEAR["LINEAR FAILURE<br/>Data is not linearly separable<br/>No linear model can fix this"]:::caution
+ Q1 -->|"No"| Q2{"Train accuracy near 100%<br/>but test accuracy low?"}
+ LINEAR --> FIX1["Add hidden layer with ReLU<br/>Start: 2–16 neurons<br/>Verify with XOR toy test"]:::success
+ Q2 -->|"Yes"| OVERFIT["OVERFITTING<br/>Too many hidden units<br/>Memorising training set"]:::caution
+ Q2 -->|"No"| Q3{"Loss is NaN or higher<br/>than initial loss?"}
+ OVERFIT --> FIX2["Reduce hidden units<br/>Add Dropout or L2<br/>(see Ch.4 Regularisation)"]:::success
+ Q3 -->|"Yes"| EXPLODE["DIVERGENCE<br/>Learning rate too high<br/>or weights exploded"]:::caution
+ Q3 -->|"No"| Q4{"Output always predicts<br/>same class or value?"}
+ EXPLODE --> FIX3["Lower learning rate 10x<br/>Use gradient clipping<br/>Check weight initialisation"]:::success
+ Q4 -->|"Yes"| DEAD["DEAD NEURONS<br/>Zero init or dead ReLU zone"]:::caution
+ Q4 -->|"No"| SLOW["SLOW CONVERGENCE<br/>LR too small or<br/>features unscaled"]:::caution
+ DEAD --> FIX4["He or Xavier random init<br/>Check output activation<br/>(Sigmoid not ReLU for binary)"]:::success
+ SLOW --> FIX5["Scale input features<br/>Switch to Adam (lr=1e-3)<br/>Increase LR cautiously"]:::success
 
-    classDef danger fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    classDef caution fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    classDef success fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ classDef danger fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ classDef caution fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ classDef success fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -608,7 +608,7 @@ Every chapter in the Neural Networks track depends on the insight from this chap
 | **Ch.14 — MLE & Loss Functions** | The output activation choice from §9 trap #2 is formalised: Sigmoid → Bernoulli MLE, Softmax → Categorical MLE, Linear → Gaussian MLE |
 | **Ch.17 — Transformers & Attention** | The feed-forward sublayer inside every Transformer block is exactly the two-layer non-linear network from this chapter, applied independently to each token position |
 
-> ⚡ The XOR problem is not a toy exercise. It is the minimal case that exposes every architectural decision that matters: width, depth, activation function, weight initialisation, and output design. Every time you debug a neural network stuck at chance accuracy, you are debugging XOR.
+> The XOR problem is not a toy exercise. It is the minimal case that exposes every architectural decision that matters: width, depth, activation function, weight initialisation, and output design. Every time you debug a neural network stuck at chance accuracy, you are debugging XOR.
 
 **Cross-track connections:** XOR-like interactions appear in every track:
 
@@ -632,33 +632,33 @@ Every chapter in the Neural Networks track depends on the insight from this chap
 
 | Constraint | Target | Status after Ch.1 | What blocks it |
 |---|---|---|---|
-| **#1 ACCURACY** | ≤$28k MAE + ≥95% accuracy | ❌ Not yet | No full architecture built; Ch.2 constructs it |
-| **#2 GENERALIZATION** | Unseen districts + identities | ❌ Not yet | No training loop exists yet |
-| **#3 MULTI-TASK** | Single architecture for both tasks | ❌ Not yet | No architecture built yet |
-| **#4 INTERPRETABILITY** | Attention-based attribution | ❌ Not yet | No attention mechanism yet |
-| **#5 PRODUCTION** | <100ms inference, monitoring | ❌ Not yet | No deployable model yet |
+| **#1 ACCURACY** | ≤$28k MAE + ≥95% accuracy | Not yet | No full architecture built; Ch.2 constructs it |
+| **#2 GENERALIZATION** | Unseen districts + identities | Not yet | No training loop exists yet |
+| **#3 MULTI-TASK** | Single architecture for both tasks | Not yet | No architecture built yet |
+| **#4 INTERPRETABILITY** | Attention-based attribution | Not yet | No attention mechanism yet |
+| **#5 PRODUCTION** | <100ms inference, monitoring | Not yet | No deployable model yet |
 
 **Chapter-by-chapter progress toward \$28k MAE:**
 
 | Chapter | Architecture | MAE (housing) | Constraint #1 |
 |---|---|---|---|
-| Topic 01 Ch.1 (Linear Regression) | $\hat{y} = wx + b$ | ~$70k | ❌ |
-| Topic 01 Ch.2 (Multiple Regression) | $\hat{y} = \mathbf{w}^\top\mathbf{x} + b$ | ~$62k | ❌ |
-| **This chapter (XOR diagnostic)** | **Proven: linear ceiling exists** | **Still ~$62k** | **❌** |
-| Ch.2 (Neural Networks) | 8 → 16 → 1, ReLU | ~$55k | ❌ (getting closer) |
-| Ch.3 (Backprop + Adam) | 8 → 64 → 32 → 1, ReLU | ~$40k | ❌ |
-| Ch.4 (Regularisation) | + Dropout + L2 | ~$35k | ❌ |
-| Ch.5 (Backprop + tuning) | Full architecture | ~$28k | ✅ |
+| Topic 01 Ch.1 (Linear Regression) | $\hat{y} = wx + b$ | ~$70k | |
+| Topic 01 Ch.2 (Multiple Regression) | $\hat{y} = \mathbf{w}^\top\mathbf{x} + b$ | ~$62k | |
+| **This chapter (XOR diagnostic)** | **Proven: linear ceiling exists** | **Still ~$62k** | **** |
+| Ch.2 (Neural Networks) | 8 → 16 → 1, ReLU | ~$55k | (getting closer) |
+| Ch.3 (Backprop + Adam) | 8 → 64 → 32 → 1, ReLU | ~$40k | |
+| Ch.4 (Regularisation) | + Dropout + L2 | ~$35k | |
+| Ch.5 (Backprop + tuning) | Full architecture | ~$28k | |
 
 This chapter's contribution: proving *why* all rows above a certain architecture produce a ceiling, and pointing to exactly what needs to change.
 
-**✅ What this chapter unlocked (foundational):**
+** What this chapter unlocked (foundational):**
 - Algebraic proof that linear models have a hard expressivity ceiling on XOR-like problems
 - Geometric understanding of why a hidden layer fixes it (input space transformation)
 - Manual construction of a provably correct two-layer ReLU network for XOR
 - Universal Approximation Theorem: theoretical guarantee that one hidden layer is sufficient in principle
 
-**❌ Still cannot solve:**
+** Still cannot solve:**
 - California Housing at ≤$28k MAE — need the full multi-layer architecture (Ch.2)
 - CelebA face attributes at ≥95% — need deeper networks and face-specific features (Ch.2–Ch.5)
 - Train any network — gradient flow through non-linear layers requires backpropagation (Ch.3)

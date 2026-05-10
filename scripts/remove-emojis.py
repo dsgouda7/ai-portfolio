@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """
-Remove unnecessary emojis from markdown files in notes/03a-ai/ directory.
+Remove unnecessary emojis from markdown files.
+
+Usage:
+    python remove-emojis.py [directory]
+    
+If no directory specified, processes all files under notes/
 
 Rules:
 1. Remove decorative emojis (🎯, 🚀, ✅, ⚡, 📊, 💡, ⚠️, etc.)
@@ -105,7 +110,11 @@ def process_directory(directory):
     return results
 
 def main():
-    target_dir = Path(__file__).parent.parent / 'notes' / '03a-ai'
+    import sys
+    if len(sys.argv) > 1:
+        target_dir = Path(sys.argv[1])
+    else:
+        target_dir = Path(__file__).parent.parent / 'notes'
 
     print(f"Processing markdown files in: {target_dir}")
     print("=" * 60)
@@ -116,7 +125,10 @@ def main():
     print("=" * 60)
     total_emojis = 0
     for filepath, count in sorted(results.items()):
-        rel_path = Path(filepath).relative_to(target_dir)
+        try:
+            rel_path = Path(filepath).relative_to(target_dir)
+        except ValueError:
+            rel_path = Path(filepath)
         print(f"{rel_path}: {count} emojis removed")
         total_emojis += count
 

@@ -10,7 +10,7 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 💡 **FaceAI Mission**: >90% avg accuracy across all 40 binary CelebA attributes
+> **FaceAI Mission**: >90% avg accuracy across all 40 binary CelebA attributes
 >
 > | # | Constraint | Ch.1–4 Status | This Chapter |
 > |---|-----------|---------------|-------------|
@@ -21,17 +21,17 @@
 > | 5 | PRODUCTION: <200ms inference, reproducible | sklearn pipeline, <10ms | Tuning is offline; production model is unchanged |
 
 **What we know so far:**
-- ✅ Ch.1 — Logistic Regression: **88%** on Smiling; solid linear baseline on all 40 attributes
-- ✅ Ch.2 — Random Forest: **91%** on Smiling; **87% average** across 40 attributes (best so far)
-- ✅ Ch.3 — Evaluation Framework: F1-macro, ROC-AUC, confusion matrices, per-attribute breakdowns
-- ✅ Ch.4 — SVM with RBF kernel: **90%** on Smiling; **89% average** across 40 attributes
-- ❌ **But 39 of 40 attributes are still individually below 90%.** The goal requires ALL of them.
+- Ch.1 — Logistic Regression: **88%** on Smiling; solid linear baseline on all 40 attributes
+- Ch.2 — Random Forest: **91%** on Smiling; **87% average** across 40 attributes (best so far)
+- Ch.3 — Evaluation Framework: F1-macro, ROC-AUC, confusion matrices, per-attribute breakdowns
+- Ch.4 — SVM with RBF kernel: **90%** on Smiling; **89% average** across 40 attributes
+- **But 39 of 40 attributes are still individually below 90%.** The goal requires ALL of them.
 
 **What's blocking us:**
 
 Every classifier in Ch.1–4 used hand-picked hyperparameters. Random Forest used `max_depth=10, n_estimators=100` because those are reasonable defaults. SVM used `C=10, γ=0.01` because a few manual trials looked good. These were guesses — educated guesses, but guesses. The model that reaches 91% on Smiling with those parameters might reach **93%** with `max_depth=15, n_estimators=200`. The model stuck at 79% on Attractive might reach 91% with `max_depth=12, n_estimators=150`.
 
-> ⚠️ **Production crisis:** The product analytics team reports that FaceAI's **Attractive** attribute is at 79% — the lowest of all 40. Users who identify as attractive are being systematically mis-labelled. The app is getting negative reviews.
+> **Warning — Production crisis:** The product analytics team reports that FaceAI's **Attractive** attribute is at 79% — the lowest of all 40. Users who identify as attractive are being systematically mis-labelled. The app is getting negative reviews.
 >
 > **Root cause:** The Random Forest for Attractive was never tuned. It runs with the same defaults as the Smiling classifier, even though Attractive has different class balance and different feature importance patterns.
 >
@@ -42,14 +42,14 @@ Every classifier in Ch.1–4 used hand-picked hyperparameters. Random Forest use
 - **Grid search**: exhaustive, reproducible, but exponential in cost
 - **Random search** (Bergstra & Bengio 2012): the same budget, far better coverage of dimensions that actually matter
 - **Bayesian optimisation** (Snoek et al. 2012): learn from past trials, direct the next trial to the highest-expected-improvement region
-- **Constraint #1 ✅**: Push average accuracy from 89% → **>91%** and every individual attribute above 90%
+- **Constraint #1 **: Push average accuracy from 89% → **>91%** and every individual attribute above 90%
 
 ```mermaid
 graph LR
-    A["Ch.1 LogReg\n88% Smiling\n85% avg"] --> B["Ch.2 RF\n91% Smiling\n87% avg"]
-    B --> C["Ch.4 SVM\n90% Smiling\n89% avg"]
-    C --> D["Ch.5 Tuned\n>91% avg\nAll 40 ≥ 90% ✅"]
-    style D fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ A["Ch.1 LogReg\n88% Smiling\n85% avg"] --> B["Ch.2 RF\n91% Smiling\n87% avg"]
+ B --> C["Ch.4 SVM\n90% Smiling\n89% avg"]
+ C --> D["Ch.5 Tuned\n>91% avg\nAll 40 ≥ 90% "]
+ style D fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -107,23 +107,23 @@ Remaining 90% is split k=5 ways for all CV.
 
 STAGE 2 — CHOOSE SEARCH STRATEGY
 ──────────────────────────────────
-   Option A: Grid search  → enumerate all λ ∈ H1 × H2 × … × Hd
-   Option B: Random search → sample n configs from H
-   Option C: Bayesian opt  → propose λ_next = argmax EI(λ)
+ Option A: Grid search → enumerate all λ ∈ H1 × H2 × … × Hd
+ Option B: Random search → sample n configs from H
+ Option C: Bayesian opt → propose λ_next = argmax EI(λ)
 
 STAGE 3 — CROSS-VALIDATION FOR EACH CANDIDATE λ
 ──────────────────────────────────────────────────
-   For each fold i = 1 … k:
-      Train on folds {1…k} \ {i}
-      Evaluate on fold i → record ε_i
-   CV_error = (1/k) Σ ε_i    [see §4.1 for explicit numbers]
+ For each fold i = 1 … k:
+ Train on folds {1…k} \ {i}
+ Evaluate on fold i → record ε_i
+ CV_error = (1/k) Σ ε_i [see §4.1 for explicit numbers]
 
 STAGE 4 — SELECT BEST λ* = argmin CV_error(λ)
 
 STAGE 5 — FINAL EVALUATION ON HELD-OUT TEST SET
 ──────────────────────────────────────────────────
-   Retrain on all 90% training data with λ*
-   Evaluate on the 10% test set → unbiased accuracy estimate
+ Retrain on all 90% training data with λ*
+ Evaluate on the 10% test set → unbiased accuracy estimate
 ```
 
 The key discipline: the test set is untouched until the very end. Evaluating candidate hyperparameters on the test set is one of the most common and most costly mistakes in applied ML (§9).
@@ -156,7 +156,7 @@ Every row is used exactly once for validation and four times for training — no
 
 **Minimal worked example — $k=5$, $N=100$, fold assignment:**
 
-> 💡 **This is pedagogical scaffolding** — the toy 100-row fold assignment lets you verify CV logic by hand (20 rows per fold, 80 for training, 20 for validation) before running on 182k rows. Once you understand the rotation on 100 rows, scaling to 182k is just arithmetic.
+> **This is pedagogical scaffolding** — the toy 100-row fold assignment lets you verify CV logic by hand (20 rows per fold, 80 for training, 20 for validation) before running on 182k rows. Once you understand the rotation on 100 rows, scaling to 182k is just arithmetic.
 
 For exactly 100 training samples and $k=5$ folds, each fold contains $\lfloor 100/5 \rfloor = 20$ rows:
 
@@ -196,7 +196,7 @@ $$\widehat{\text{CV}}_5 = \frac{0.212 + 0.206 + 0.199 + 0.215 + 0.213}{5} = \fra
 
 Cross-validated error = 20.9%, meaning **5-fold CV accuracy = 79.1%** — consistent with what you would see by training on all data and evaluating on a fresh test set, but computed without touching the test set at all.
 
-> ⚡ **Priority: Intuition over calculation.** The test: Can you explain why every row must be used exactly once for validation and exactly four times for training? If yes, you understand cross-validation. The arithmetic (0.212 + 0.206 + … = 1.045) is secondary.
+> **Priority: Intuition over calculation.** The test: Can you explain why every row must be used exactly once for validation and exactly four times for training? If yes, you understand cross-validation. The arithmetic (0.212 + 0.206 + … = 1.045) is secondary.
 
 **Why $k=5$ or $k=10$?** There is a bias–variance trade-off in $k$ itself. Small $k$ (e.g., $k=2$) uses less data for training each fold → the error estimate is pessimistic (high bias). Large $k$ (e.g., $k=N$, leave-one-out) uses nearly all data for training → low bias but high variance across folds because each fold's test set is a single row. $k=5$ or $k=10$ is the empirical sweet spot for most datasets; Stone (1974) proved leave-one-out is asymptotically equivalent to AIC, but for practical sample sizes 5-fold is more stable.
 
@@ -256,13 +256,13 @@ $$P = 1 - (0.95)^{60} = 1 - e^{60 \ln 0.95} = 1 - e^{-3.077} \approx 1 - 0.0461 
 | 5 | 0.7738 | **22.6%** | Weak — 4 in 5 budgets miss the good region |
 | 10 | 0.5987 | **40.1%** | Coin-flip odds; unreliable for production |
 | 20 | 0.3585 | **64.2%** | Better than even, but still fails 1 in 3 runs |
-| 60 | 0.0461 | **95.4%** | ✅ Bergstra & Bengio's 95% guarantee |
+| 60 | 0.0461 | **95.4%** | Bergstra & Bengio's 95% guarantee |
 
 Verification for $n=5$: $(0.95)^5 = 0.95^2 \cdot 0.95^2 \cdot 0.95 = 0.9025 \times 0.9025 \times 0.95 = 0.8145 \times 0.95 = 0.7738$, so $P = 1 - 0.7738 = 0.2262$. The jump from $n=20$ (64%) to $n=60$ (95%) is why practitioners use 60 as the default rather than stopping at 20.
 
-> 💡 **The critical insight.** This result holds regardless of how many hyperparameter dimensions you have. A 10-dimensional search space with $p = 5\%$ effective volume still requires only 60 trials to find a good region with 95% probability. Grid search on 10 dimensions with 5 values each requires $5^{10} = 9.7$ million trials. Random search beats grid search by a factor of $9.7 \times 10^6 / 60 \approx 160,000\times$ — with the same performance guarantee — whenever only a few dimensions matter.
+> **The critical insight.** This result holds regardless of how many hyperparameter dimensions you have. A 10-dimensional search space with $p = 5\%$ effective volume still requires only 60 trials to find a good region with 95% probability. Grid search on 10 dimensions with 5 values each requires $5^{10} = 9.7$ million trials. Random search beats grid search by a factor of $9.7 \times 10^6 / 60 \approx 160,000\times$ — with the same performance guarantee — whenever only a few dimensions matter.
 
-> ⚡ **Priority: Intuition over calculation.** Can you explain why random search works without memorizing $(1-p)^n$? The intuition: if only 2 of 10 hyperparameters actually matter, random search spreads its budget across both important axes while grid search wastes most trials on the 8 irrelevant ones. That dimension-independence is the whole game.
+> **Priority: Intuition over calculation.** Can you explain why random search works without memorizing $(1-p)^n$? The intuition: if only 2 of 10 hyperparameters actually matter, random search spreads its budget across both important axes while grid search wastes most trials on the 8 irrelevant ones. That dimension-independence is the whole game.
 
 **Why only a few dimensions matter.** For the Attractive attribute, experiments show that `max_depth` and `n_estimators` together explain ~85% of the variance in CV accuracy. `min_samples_leaf`, `max_features`, and `bootstrap` contribute almost nothing above their defaults. Grid search wastes its budget testing all combinations of the irrelevant dimensions; random search automatically covers the important ones.
 
@@ -301,14 +301,14 @@ where $\Phi$ and $\phi$ are the standard normal CDF and PDF respectively.
 **The Bayesian search loop:**
 
 ```
-1.  Run a few random initial trials (typically 10–20) to seed the surrogate.
-2.  Fit the GP (or TPE in Optuna) to all observed (λ, f(λ)) pairs.
-3.  Compute EI(λ) across a dense grid of candidate points (fast — evaluating
-    the GP is cheap; training the actual model is expensive).
-4.  Select λ_next = argmax EI(λ).
-5.  Train and evaluate the model at λ_next — get f(λ_next).
-6.  Add (λ_next, f(λ_next)) to the history.
-7.  Go to step 2 and repeat until budget exhausted.
+1. Run a few random initial trials (typically 10–20) to seed the surrogate.
+2. Fit the GP (or TPE in Optuna) to all observed (λ, f(λ)) pairs.
+3. Compute EI(λ) across a dense grid of candidate points (fast — evaluating
+ the GP is cheap; training the actual model is expensive).
+4. Select λ_next = argmax EI(λ).
+5. Train and evaluate the model at λ_next — get f(λ_next).
+6. Add (λ_next, f(λ_next)) to the history.
+7. Go to step 2 and repeat until budget exhausted.
 ```
 
 After 30–50 trials, Bayesian opt reliably finds hyperparameter configurations that grid search would need 200+ trials to match.
@@ -320,14 +320,14 @@ After 30–50 trials, Bayesian opt reliably finds hyperparameter configurations 
 A single loop of $k$-fold CV selects the best hyperparameters. But if you then report "our CV accuracy is 90.3%" as the final metric, you are reporting the score on the *same* data that selected the winner — an optimistic estimate. Nested cross-validation fixes this by separating the selection decision from the evaluation decision with two concentric loops:
 
 ```
-Outer loop (k_outer = 5 folds):   evaluates the *tuning procedure*
-└── Inner loop (k_inner = 5 folds):  selects λ* within the outer training set
+Outer loop (k_outer = 5 folds): evaluates the *tuning procedure*
+└── Inner loop (k_inner = 5 folds): selects λ* within the outer training set
 
 For each outer fold i:
-    inner_train  = outer_train \ outer_val_i          (80% of data)
-    inner_val    = outer_val_i                         (20% of data — never seen during tuning)
-    λ*_i = argmax CV_inner(λ)                          (inner loop picks best config)
-    ε_i  = error(model(λ*_i), inner_val)               (outer fold gives unbiased estimate)
+ inner_train = outer_train \ outer_val_i (80% of data)
+ inner_val = outer_val_i (20% of data — never seen during tuning)
+ λ*_i = argmax CV_inner(λ) (inner loop picks best config)
+ ε_i = error(model(λ*_i), inner_val) (outer fold gives unbiased estimate)
 
 Final estimate = (1/k_outer) Σ ε_i
 ```
@@ -347,14 +347,14 @@ inner_cv = KFold(n_splits=5, shuffle=True, random_state=42)
 outer_cv = KFold(n_splits=5, shuffle=True, random_state=42)
 
 clf = GridSearchCV(
-    estimator=RandomForestClassifier(random_state=42),
-    param_grid={"max_depth": [3, 5, 10], "n_estimators": [50, 100, 200]},
-    cv=inner_cv, scoring="accuracy", n_jobs=-1
+ estimator=RandomForestClassifier(random_state=42),
+ param_grid={"max_depth": [3, 5, 10], "n_estimators": [50, 100, 200]},
+ cv=inner_cv, scoring="accuracy", n_jobs=-1
 )
 # nested estimate — unbiased
 nested_scores = cross_val_score(clf, X_attractive, y_attractive, cv=outer_cv, scoring="accuracy")
 print(f"Nested CV accuracy: {nested_scores.mean():.3f} ± {nested_scores.std():.3f}")
-# → Nested CV accuracy: 0.895 ± 0.011   (vs inner-loop 0.903 — 0.8pp optimism penalty)
+# → Nested CV accuracy: 0.895 ± 0.011 (vs inner-loop 0.903 — 0.8pp optimism penalty)
 ```
 
 ---
@@ -378,11 +378,11 @@ The three strategies occupy different points in the cost–quality trade-off:
 ```
 How many hyperparameter axes?
 ├─ 1–2 axes, ≤ 5 values each: → GRID SEARCH
-│    (9 combinations × 5-fold = 45 fits → ~9 min for RF)
+│ (9 combinations × 5-fold = 45 fits → ~9 min for RF)
 ├─ 3–5 axes OR expensive evaluation: → RANDOM SEARCH (n=60)
-│    (60 trials × 5-fold = 300 fits → ~60 min for RF)
+│ (60 trials × 5-fold = 300 fits → ~60 min for RF)
 └─ Any axes, very expensive evaluation: → BAYESIAN OPT (n=30)
-     (30 trials × 5-fold = 150 fits + ~1s surrogate → ~30 min for RF)
+ (30 trials × 5-fold = 150 fits + ~1s surrogate → ~30 min for RF)
 ```
 
 **Practical rule for this chapter:** The Attractive attribute RF uses only 2 axes → grid search. When extending to SVM (4+ axes: $C, \gamma$, kernel, class\_weight) → switch to random search with $n = 60$.
@@ -424,7 +424,7 @@ Define a $3 \times 3$ grid, evaluate all 9 × 5-fold = 45 fits. You are guarante
 | 3 | Random search | $n \times k$ | High when few dims matter | > 3 axes, fast evaluation |
 | 4 | Bayesian opt | $n_\text{seed} \times k$ + $n_\text{guided} \times k$ | Highest | > 3 axes, expensive evaluation |
 
-> 💡 **Rule of thumb for FaceAI:** Start with Act 2 (grid, 2 axes per attribute). If any attribute is still below 90% after grid search, escalate to Act 3 (random, 60 trials). Only escalate to Act 4 if per-trial compute exceeds 5 minutes — which happens in the Neural Networks track, not here.
+> **Rule of thumb for FaceAI:** Start with Act 2 (grid, 2 axes per attribute). If any attribute is still below 90% after grid search, escalate to Act 3 (random, 60 trials). Only escalate to Act 4 if per-trial compute exceeds 5 minutes — which happens in the Neural Networks track, not here.
 
 ---
 
@@ -449,7 +449,7 @@ Search space: `max_depth ∈ {3, 5, 10}`, `n_estimators ∈ {50, 100, 200}`.
 - *Diminishing returns on trees.* The 100→200 tree gain is +2.2% at depth 10; the 50→100 gain is also +1.9%. Doubling from 200 to 400 would likely yield < 1% additional gain.
 - *Shallow trees plateau fast.* At `max_depth=3`, going from 50 to 200 trees gains only +1.1%. Averaging more weak trees doesn't compensate for each tree being too shallow to capture the signal.
 
-> ⚡ **What this demonstrates — intuition over calculation.** The test: Can you explain why depth matters more than tree count without referring to the specific 90.3% or 80.1% numbers? If yes, you understand the bias-variance trade-off for this attribute. The arithmetic is evidence, not the concept.
+> **What this demonstrates — intuition over calculation.** The test: Can you explain why depth matters more than tree count without referring to the specific 90.3% or 80.1% numbers? If yes, you understand the bias-variance trade-off for this attribute. The arithmetic is evidence, not the concept.
 
 **Deploying the winner:**
 
@@ -458,9 +458,9 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score
 
 best_rf = RandomForestClassifier(
-    max_depth=10,
-    n_estimators=200,
-    random_state=42,
+ max_depth=10,
+ n_estimators=200,
+ random_state=42,
 )
 cv_scores = cross_val_score(best_rf, X_attractive, y_attractive, cv=5, scoring='accuracy')
 print(f"CV accuracy: {cv_scores.mean():.3f} ± {cv_scores.std():.3f}")
@@ -494,71 +494,71 @@ All three strategies beat the 90% target. For a 2-axis grid, the difference is s
 
 ```mermaid
 flowchart TD
-    SPACE["Hyperparameter Space\nmax_depth × n_estimators\n(continuous, not just 3×3)"]
+ SPACE["Hyperparameter Space\nmax_depth × n_estimators\n(continuous, not just 3×3)"]
 
-    SPACE --> GRID["Grid Search\n9 fixed combinations\nExhaustive on the grid\n45 model fits"]
-    SPACE --> RAND["Random Search\n60 independent samples\nCovers more of each axis\n60 model fits"]
-    SPACE --> BAYES["Bayesian Optimisation\n10 random seed + 20 EI-guided\nLearns the landscape\n30 model fits"]
+ SPACE --> GRID["Grid Search\n9 fixed combinations\nExhaustive on the grid\n45 model fits"]
+ SPACE --> RAND["Random Search\n60 independent samples\nCovers more of each axis\n60 model fits"]
+ SPACE --> BAYES["Bayesian Optimisation\n10 random seed + 20 EI-guided\nLearns the landscape\n30 model fits"]
 
-    GRID --> WINNER["Best on grid:\nmax_depth=10, n_estimators=200\n→ 90.3% CV accuracy"]
-    RAND --> WINNER
-    BAYES --> WINNER2["Near-best after 30 trials:\nmax_depth=11, n_estimators=185\n→ 90.5% CV accuracy"]
+ GRID --> WINNER["Best on grid:\nmax_depth=10, n_estimators=200\n→ 90.3% CV accuracy"]
+ RAND --> WINNER
+ BAYES --> WINNER2["Near-best after 30 trials:\nmax_depth=11, n_estimators=185\n→ 90.5% CV accuracy"]
 
-    WINNER --> DEPLOY["Retrain on full training set\nEval on held-out test set\n→ FaceAI Attractive ≥ 90% ✅"]
-    WINNER2 --> DEPLOY
+ WINNER --> DEPLOY["Retrain on full training set\nEval on held-out test set\n→ FaceAI Attractive ≥ 90% "]
+ WINNER2 --> DEPLOY
 
-    style DEPLOY fill:#15803d,color:#ffffff,stroke:#15803d
-    style BAYES  fill:#1e3a8a,color:#ffffff,stroke:#1e3a8a
-    style WINNER fill:#b45309,color:#ffffff,stroke:#b45309
-    style WINNER2 fill:#b45309,color:#ffffff,stroke:#b45309
+ style DEPLOY fill:#15803d,color:#ffffff,stroke:#15803d
+ style BAYES fill:#1e3a8a,color:#ffffff,stroke:#1e3a8a
+ style WINNER fill:#b45309,color:#ffffff,stroke:#b45309
+ style WINNER2 fill:#b45309,color:#ffffff,stroke:#b45309
 ```
 
 ### Diagram 2 — Strategy Comparison Arc
 
 ```mermaid
 flowchart TD
-    START(["Same search space\nmax_depth × n_estimators"])
+ START(["Same search space\nmax_depth × n_estimators"])
 
-    START --> A1["Act 1 — Manual\nHand-pick defaults\n79.1% on Attractive\nO(1/expert) scaling"]
-    A1 --> A2["Act 2 — Grid Search\n9 combos × 5 folds = 45 fits\nExhaustive on 3×3 grid\n90.3% found"]
-    A2 --> A3["Act 3 — Random Search\n60 trials × 5 folds = 300 fits\n95% coverage guarantee\n90.8% found"]
-    A3 --> A4["Act 4 — Bayesian Opt\n30 trials (10 seed + 20 EI)\nLearns the landscape\n90.9% found"]
+ START --> A1["Act 1 — Manual\nHand-pick defaults\n79.1% on Attractive\nO(1/expert) scaling"]
+ A1 --> A2["Act 2 — Grid Search\n9 combos × 5 folds = 45 fits\nExhaustive on 3×3 grid\n90.3% found"]
+ A2 --> A3["Act 3 — Random Search\n60 trials × 5 folds = 300 fits\n95% coverage guarantee\n90.8% found"]
+ A3 --> A4["Act 4 — Bayesian Opt\n30 trials (10 seed + 20 EI)\nLearns the landscape\n90.9% found"]
 
-    A4 --> VERDICT["All three exceed 90%\nDifference = sample efficiency\nnot final quality\n\nFor FaceAI RF (2 axes) → grid\nFor SVM (4+ axes) → random\nFor deep nets (8+ axes) → Bayesian"]
+ A4 --> VERDICT["All three exceed 90%\nDifference = sample efficiency\nnot final quality\n\nFor FaceAI RF (2 axes) → grid\nFor SVM (4+ axes) → random\nFor deep nets (8+ axes) → Bayesian"]
 
-    style START fill:#1e3a8a,color:#ffffff,stroke:#1e3a8a
-    style A1 fill:#b91c1c,color:#ffffff,stroke:#b91c1c
-    style A2 fill:#b45309,color:#ffffff,stroke:#b45309
-    style A3 fill:#1d4ed8,color:#ffffff,stroke:#1d4ed8
-    style A4 fill:#15803d,color:#ffffff,stroke:#15803d
-    style VERDICT fill:#15803d,color:#ffffff,stroke:#15803d
+ style START fill:#1e3a8a,color:#ffffff,stroke:#1e3a8a
+ style A1 fill:#b91c1c,color:#ffffff,stroke:#b91c1c
+ style A2 fill:#b45309,color:#ffffff,stroke:#b45309
+ style A3 fill:#1d4ed8,color:#ffffff,stroke:#1d4ed8
+ style A4 fill:#15803d,color:#ffffff,stroke:#15803d
+ style VERDICT fill:#15803d,color:#ffffff,stroke:#15803d
 ```
 
 ### Diagram 3 — $k$-Fold Cross-Validation as a Rotation
 
 ```mermaid
 flowchart LR
-    DATA["Full Training Set\n90% of CelebA\nN = 182,340 rows"]
+ DATA["Full Training Set\n90% of CelebA\nN = 182,340 rows"]
 
-    DATA --> F1["Fold 1\n36,468 rows"]
-    DATA --> F2["Fold 2\n36,468 rows"]
-    DATA --> F3["Fold 3\n36,468 rows"]
-    DATA --> F4["Fold 4\n36,468 rows"]
-    DATA --> F5["Fold 5\n36,468 rows"]
+ DATA --> F1["Fold 1\n36,468 rows"]
+ DATA --> F2["Fold 2\n36,468 rows"]
+ DATA --> F3["Fold 3\n36,468 rows"]
+ DATA --> F4["Fold 4\n36,468 rows"]
+ DATA --> F5["Fold 5\n36,468 rows"]
 
-    F1 --> R1["Round 1\n🔴 Val: Fold 1\n🟢 Train: 2,3,4,5\n→ ε₁"]
-    F2 --> R2["Round 2\n🔴 Val: Fold 2\n🟢 Train: 1,3,4,5\n→ ε₂"]
-    F3 --> R3["Round 3\n🔴 Val: Fold 3\n🟢 Train: 1,2,4,5\n→ ε₃"]
-    F4 --> R4["Round 4\n🔴 Val: Fold 4\n🟢 Train: 1,2,3,5\n→ ε₄"]
-    F5 --> R5["Round 5\n🔴 Val: Fold 5\n🟢 Train: 1,2,3,4\n→ ε₅"]
+ F1 --> R1["Round 1\n🔴 Val: Fold 1\n🟢 Train: 2,3,4,5\n→ ε₁"]
+ F2 --> R2["Round 2\n🔴 Val: Fold 2\n🟢 Train: 1,3,4,5\n→ ε₂"]
+ F3 --> R3["Round 3\n🔴 Val: Fold 3\n🟢 Train: 1,2,4,5\n→ ε₃"]
+ F4 --> R4["Round 4\n🔴 Val: Fold 4\n🟢 Train: 1,2,3,5\n→ ε₄"]
+ F5 --> R5["Round 5\n🔴 Val: Fold 5\n🟢 Train: 1,2,3,4\n→ ε₅"]
 
-    R1 --> CV["CV_error = (ε₁+ε₂+ε₃+ε₄+ε₅) / 5\nUnbiased generalisation estimate"]
-    R2 --> CV
-    R3 --> CV
-    R4 --> CV
-    R5 --> CV
+ R1 --> CV["CV_error = (ε₁+ε₂+ε₃+ε₄+ε₅) / 5\nUnbiased generalisation estimate"]
+ R2 --> CV
+ R3 --> CV
+ R4 --> CV
+ R5 --> CV
 
-    style CV fill:#1d4ed8,color:#ffffff,stroke:#1d4ed8
+ style CV fill:#1d4ed8,color:#ffffff,stroke:#1d4ed8
 ```
 
 ---
@@ -632,7 +632,7 @@ Not applicable to RF or SVM. But when you carry this pipeline into the Neural Ne
 - **Dimensionality reduction (SegmentAI)**: choosing number of PCA components via reconstruction error on held-out rows
 - **Anomaly detection (FraudShield)**: threshold-selection cross-validation on imbalanced fraud labels
 
-> ⚡ **The key insight that carries forward:** Any time you are choosing something *before* training — number of clusters, number of components, regularisation coefficient, architecture width — you are doing hyperparameter tuning. The $k$-fold CV + search framework from this chapter is the universal tool.
+> **The key insight that carries forward:** Any time you are choosing something *before* training — number of clusters, number of components, regularisation coefficient, architecture width — you are doing hyperparameter tuning. The $k$-fold CV + search framework from this chapter is the universal tool.
 
 **The same three questions always apply:**
 1. *How many axes does the search space have?* (≤3 → grid; >3 → random or Bayesian)
@@ -647,7 +647,7 @@ These three questions are the decision interface for every hyperparameter proble
 
 ![Progress check](img/ch05-hyperparameter-tuning-progress-check.png)
 
-### FaceAI COMPLETE ✅
+### FaceAI COMPLETE
 
 > **Mission:** >90% average accuracy across all 40 CelebA binary attributes.
 > **Result:** **91.2% average accuracy — all 40 attributes individually ≥ 90%.**
@@ -655,31 +655,29 @@ These three questions are the decision interface for every hyperparameter proble
 **Chapter-by-chapter accuracy progression:**
 
 ```
-Ch.1 Logistic Regression   →  85% avg   (88% on Smiling)
-Ch.2 Random Forest         →  87% avg   (91% on Smiling)
-Ch.4 SVM with RBF kernel   →  89% avg   (90% on Smiling)
-Ch.5 Hyperparameter Tuning → 91.2% avg  (all 40 ≥ 90%) ✅
+Ch.1 Logistic Regression → 85% avg (88% on Smiling)
+Ch.2 Random Forest → 87% avg (91% on Smiling)
+Ch.4 SVM with RBF kernel → 89% avg (90% on Smiling)
+Ch.5 Hyperparameter Tuning → 91.2% avg (all 40 ≥ 90%)
 ```
 
 **All 5 FaceAI constraints — final status:**
 
 | # | Constraint | Target | Final status | How achieved |
 |---|-----------|--------|-------------|--------------|
-| **1** | ACCURACY | >90% avg, all 40 attrs | ✅ **91.2% avg — all 40 ≥ 90%** | Grid search per attribute; random search for SVM (4+ axes) |
-| **2** | GENERALIZATION | Unseen celebrity faces | ✅ **Nested CV confirmed** | Outer 5-fold CV on all 40 attributes; no test-set leakage at any stage |
-| **3** | MULTI-LABEL | 40 simultaneous predictions | ✅ **40 tuned models deployed** | Per-attribute hyperparameter search + per-attribute decision threshold |
-| **4** | INTERPRETABILITY | Explainable predictions | ✅ **RF feature importances retained** | Search does not change model class — RF importance ranking intact |
-| **5** | PRODUCTION | <200ms inference, reproducible | ✅ **<10ms sklearn pipeline, seed=42** | Tuning is fully offline; production inference path unchanged |
-
-✅ **What we can now do:**
+| **1** | ACCURACY | >90% avg, all 40 attrs | **91.2% avg — all 40 ≥ 90%** | Grid search per attribute; random search for SVM (4+ axes) |
+| **2** | GENERALIZATION | Unseen celebrity faces | **Nested CV confirmed** | Outer 5-fold CV on all 40 attributes; no test-set leakage at any stage |
+| **3** | MULTI-LABEL | 40 simultaneous predictions | **40 tuned models deployed** | Per-attribute hyperparameter search + per-attribute decision threshold |
+| **4** | INTERPRETABILITY | Explainable predictions | **RF feature importances retained** | Search does not change model class — RF importance ranking intact |
+| **5** | PRODUCTION | <200ms inference, reproducible | **<10ms sklearn pipeline, seed=42** | Tuning is fully offline; production inference path unchanged |
+**What we can now do:**
 
 - Systematically tune any sklearn classifier across any finite hyperparameter space using `GridSearchCV` or `RandomizedSearchCV`
 - Estimate generalisation error honestly with $k$-fold cross-validation, with a valid confidence interval (Nadeau–Bengio correction)
 - Choose between grid, random, and Bayesian search based on number of axes and per-trial compute budget
 - Reproduce all results end-to-end: `random_state=42` in the model, the search, and the CV splitter
 - Deploy with confidence: the 90% target is validated on a held-out test set that was never touched during tuning
-
-❌ **What classical ML cannot do:**
+**What classical ML cannot do:**
 
 - Learn shared representations across all 40 attributes simultaneously (each model is trained independently)
 - Scale to raw pixel inputs without hand-engineered HOG features
@@ -710,19 +708,19 @@ The **UnifiedAI mission** (Neural Networks track) answers this:
 - **Method**: shared backbone → task-specific heads → joint training with a multi-task loss function
 - **New tools unlocked**: backpropagation, SGD/Adam, regularisation (L1/L2/Dropout), CNNs, and hyperparameter tuning with early stopping
 
-> ➡️ The hyperparameter tuning toolkit you built in this chapter reappears in full force in the Neural Networks track. Learning rate, batch size, width, depth, dropout rate — all swept with the same grid/random/Bayesian framework, but now using Optuna and early stopping to manage 100× more expensive per-trial evaluations (minutes per trial instead of seconds).
+> ➡ The hyperparameter tuning toolkit you built in this chapter reappears in full force in the Neural Networks track. Learning rate, batch size, width, depth, dropout rate — all swept with the same grid/random/Bayesian framework, but now using Optuna and early stopping to manage 100× more expensive per-trial evaluations (minutes per trial instead of seconds).
 
 **The conceptual bridge:**
 
 ```
 Ch.5 (Classification) established:
-   systematic search → best λ* per attribute, per model class
-            ↓
+ systematic search → best λ* per attribute, per model class
+ ↓
 Ch.19 (Neural Networks) extends to:
-   systematic search over architecture space (width, depth, activation)
-   + early stopping to manage per-trial compute
-   + multi-task objective (housing MAE + face accuracy simultaneously)
-   + Bayesian opt via Optuna TPE instead of GP (scales to 8+ axes)
+ systematic search over architecture space (width, depth, activation)
+ + early stopping to manage per-trial compute
+ + multi-task objective (housing MAE + face accuracy simultaneously)
+ + Bayesian opt via Optuna TPE instead of GP (scales to 8+ axes)
 ```
 
 **Next up:** Ch.1 of the Neural Networks track — **The XOR Problem** — where you discover why every single classifier in this track fails at a task a child can solve instantly, and why that failure is the key that unlocks non-linear models and the entire deep learning curriculum.

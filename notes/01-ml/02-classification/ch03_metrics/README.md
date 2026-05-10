@@ -10,7 +10,7 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Launch **FaceAI** — automated 40-attribute face tagging at >90% average accuracy, replacing \$0.05/image manual labelling. Five constraints must hold:
+> **The mission**: Launch **FaceAI** — automated 40-attribute face tagging at >90% average accuracy, replacing \$0.05/image manual labelling. Five constraints must hold:
 > 1. **ACCURACY**: >90% average accuracy across all 40 binary attributes
 > 2. **GENERALIZATION**: Generalise to unseen celebrity faces, not just training set
 > 3. **MULTI-LABEL**: Predict all 40 binary attributes per face simultaneously
@@ -18,10 +18,10 @@
 > 5. **PRODUCTION**: <200ms inference per image at scale
 
 **What we know so far:**
-- ✅ Ch.1: Logistic regression delivers **88% accuracy on Smiling** (baseline)
-- ✅ Ch.2: Decision trees give **85% accuracy** with human-readable rules
-- ✅ Ch.2: KNN (80%) and Naive Bayes (76%) added to the model palette
-- ❌ **But every model reported accuracy — and accuracy is a liar for imbalanced classes.**
+- Ch.1: Logistic regression delivers **88% accuracy on Smiling** (baseline)
+- Ch.2: Decision trees give **85% accuracy** with human-readable rules
+- Ch.2: KNN (80%) and Naive Bayes (76%) added to the model palette
+- **But every model reported accuracy — and accuracy is a liar for imbalanced classes.**
 
 **What's blocking us — the Bald Paradox:**
 
@@ -35,7 +35,7 @@ Accuracy = (0 + 9800) / 10000 = 98.0%
 Bald faces correctly detected = 0 / 200 = 0%
 ```
 
-> ⚠️ **The Bald Paradox**: A model that has learned absolutely nothing — it simply memorises the majority class — achieves 98% accuracy. You could replace your entire model with a single line `return "Not Bald"` and lose nothing. Accuracy on imbalanced classes measures majority-class dominance, not model quality.
+> **The Bald Paradox**: A model that has learned absolutely nothing — it simply memorises the majority class — achieves 98% accuracy. You could replace your entire model with a single line `return "Not Bald"` and lose nothing. Accuracy on imbalanced classes measures majority-class dominance, not model quality.
 
 **The five FaceAI constraints make this worse, not better:**
 1. 40 attributes span positive rates from **48% (Smiling)** down to **2.2% (Bald)** and **1.1% (Mustache)** — accuracy varies wildly across attributes for exactly the wrong reasons
@@ -55,11 +55,11 @@ Bald faces correctly detected = 0 / 200 = 0%
 
 ```mermaid
 graph LR
-    A["Ch.1: LogReg<br/>88% Smiling"] --> B["Ch.2: Trees+KNN+NB<br/>Interpretability"]
-    B --> C["Ch.3: Metrics<br/>Validation toolkit ✅"]
-    C --> D["Ch.4: SVM<br/>Higher accuracy"]
-    D --> E["Ch.5: Tuning<br/>Production-ready"]
-    style C fill:#0f766e,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ A["Ch.1: LogReg<br/>88% Smiling"] --> B["Ch.2: Trees+KNN+NB<br/>Interpretability"]
+ B --> C["Ch.3: Metrics<br/>Validation toolkit "]
+ C --> D["Ch.4: SVM<br/>Higher accuracy"]
+ D --> E["Ch.5: Tuning<br/>Production-ready"]
+ style C fill:#0f766e,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -117,11 +117,11 @@ You pull up the confusion matrix for the 1,000-image test set:
 ```
 Confusion matrix, Model A:
 
-               Predicted Not-Bald    Predicted Bald
-               ─────────────────────────────────────
-Actual Bald  │        FN = 200      │    TP = 0     │
-Actual Not-B │        TN = 9800     │    FP = 0     │
-               ─────────────────────────────────────
+ Predicted Not-Bald Predicted Bald
+ ─────────────────────────────────────
+Actual Bald │ FN = 200 │ TP = 0 │
+Actual Not-B │ TN = 9800 │ FP = 0 │
+ ─────────────────────────────────────
 ```
 
 $$\text{Accuracy} = \frac{TP + TN}{N} = \frac{0 + 9800}{10000} = 0.980 = \mathbf{98.0\%}$$
@@ -180,12 +180,12 @@ Everything derives from four counts. Learn them as definitions, not formulas:
 **The 2×2 table — canonical layout:**
 
 ```
-                      PREDICTED
-                  Positive    Negative
-             ┌────────────┬────────────┐
-ACTUAL Pos   │  TP (hit)  │  FN (miss) │
-       Neg   │ FP (alarm) │  TN (quiet)│
-             └────────────┴────────────┘
+ PREDICTED
+ Positive Negative
+ ┌────────────┬────────────┐
+ACTUAL Pos │ TP (hit) │ FN (miss) │
+ Neg │ FP (alarm) │ TN (quiet)│
+ └────────────┴────────────┘
 ```
 
 **CelebA Bald example — Model A at $t = 0.5$:**
@@ -193,17 +193,17 @@ ACTUAL Pos   │  TP (hit)  │  FN (miss) │
 Test set: 10,000 images. 200 Bald, 9,800 Not-Bald. Model predicts every image as Not-Bald.
 
 ```
-                      PREDICTED
-                  Bald        Not-Bald
-             ┌────────────┬────────────┐
-ACTUAL Bald  │  TP = 0    │  FN = 200  │  ← All 200 Bald faces missed
-       Not-B │  FP = 0    │  TN = 9800 │  ← All 9800 Not-Bald correctly silent
-             └────────────┴────────────┘
+ PREDICTED
+ Bald Not-Bald
+ ┌────────────┬────────────┐
+ACTUAL Bald │ TP = 0 │ FN = 200 │ ← All 200 Bald faces missed
+ Not-B │ FP = 0 │ TN = 9800 │ ← All 9800 Not-Bald correctly silent
+ └────────────┴────────────┘
 ```
 
 Interpretation: The model never predicted Bald once. TN=9800 drives the high accuracy. FN=200 is the invisible catastrophe.
 
-> 💡 **Naming mnemonic**: The first word (True/False) says whether the prediction matched reality. The second word (Positive/Negative) says what the model *predicted*. TP = correctly predicted Positive. FP = wrongly predicted Positive. Memorise this once; never look it up again.
+> **Naming mnemonic**: The first word (True/False) says whether the prediction matched reality. The second word (Positive/Negative) says what the model *predicted*. TP = correctly predicted Positive. FP = wrongly predicted Positive. Memorise this once; never look it up again.
 
 ---
 
@@ -223,11 +223,11 @@ $$\text{Precision} = P = \frac{TP}{TP + FP}$$
 
 | Image | True label | $\hat{p}$ | Prediction ($t{=}0.5$) | Correct? |
 |---|---|---|---|---|
-| img_001 | Bald | 0.72 | Bald ✅ | TP |
-| img_002 | Bald | 0.31 | Not-Bald ❌ | FN |
-| img_003 | Not-Bald | 0.63 | Bald ❌ | FP |
-| img_004 | Not-Bald | 0.08 | Not-Bald ✅ | TN |
-| img_005 | Not-Bald | 0.11 | Not-Bald ✅ | TN |
+| img_001 | Bald | 0.72 | Bald | TP |
+| img_002 | Bald | 0.31 | Not-Bald | FN |
+| img_003 | Not-Bald | 0.63 | Bald | FP |
+| img_004 | Not-Bald | 0.08 | Not-Bald | TN |
+| img_005 | Not-Bald | 0.11 | Not-Bald | TN |
 
 From the table: $TP = 1, FP = 1, TN = 2, FN = 1$
 
@@ -241,7 +241,7 @@ $$TP = 100,\ FP = 200 \implies \text{Precision} = \frac{100}{100 + 200} = \frac{
 
 The model predicted 300 faces as Bald; 100 actually were. Every 3 flagged faces, 1 is real and 2 are false alarms.
 
-> ⚠️ **Precision is undefined when $TP + FP = 0$** — when a model makes zero positive predictions (like Model A that always says Not-Bald). Convention: set precision to 0 in this case.
+> **Precision is undefined when $TP + FP = 0$** — when a model makes zero positive predictions (like Model A that always says Not-Bald). Convention: set precision to 0 in this case.
 
 ---
 
@@ -270,7 +270,7 @@ $$\text{Recall} = \frac{TP}{TP + FN} = \frac{1}{1 + 1} = \frac{1}{2} = 0.50$$
 
 Model C finds 50% of all Bald faces. Not perfect, but infinitely better than 0%.
 
-> 💡 **Recall = TPR = Sensitivity.** These three names all refer to the same formula $\frac{TP}{TP+FN}$. "True Positive Rate" is used in ROC analysis; "Sensitivity" is used in medical contexts; "Recall" comes from information retrieval. Know all three names — they appear in different corners of the literature.
+> **Recall = TPR = Sensitivity.** These three names all refer to the same formula $\frac{TP}{TP+FN}$. "True Positive Rate" is used in ROC analysis; "Sensitivity" is used in medical contexts; "Recall" comes from information retrieval. Know all three names — they appear in different corners of the literature.
 
 **The precision–recall tension**: Raising the threshold $t$ increases precision (you only flag when very sure) but decreases recall (you miss more real positives). Lowering $t$ does the reverse. This is the fundamental trade-off of binary classification. There is no setting that maximises both simultaneously unless your model is perfect.
 
@@ -317,7 +317,7 @@ $$F_2 = \frac{5 \times 0.333 \times 0.500}{4 \times 0.333 + 0.500} = \frac{0.833
 
 The optimal F1 occurs at $t = 0.30$ — the threshold that balances precision and recall best for this model and dataset.
 
-> 💡 **Scale independence.** F1 is always between 0 and 1 regardless of dataset size, class distribution, or the total number of predictions. F1 = 0.40 means the same thing whether you have 1,000 images or 10,000,000. This is why it's the standard metric for comparing models across datasets with different positive rates — accuracy is not, because it scales with the majority class proportion.
+> **Scale independence.** F1 is always between 0 and 1 regardless of dataset size, class distribution, or the total number of predictions. F1 = 0.40 means the same thing whether you have 1,000 images or 10,000,000. This is why it's the standard metric for comparing models across datasets with different positive rates — accuracy is not, because it scales with the majority class proportion.
 
 ---
 
@@ -358,9 +358,9 @@ $$\text{AUC} \approx 0.000040 + 0.000700 + 0.004900 + 0.054000 + 0.832500 = \mat
 
 **Interpretation**: The logistic regression model ranks a random Bald face above a random Not-Bald face 89.2% of the time — a strong ranking signal, despite only 2.0% positive prevalence.
 
-> ⚠️ **The AUC paradox for extreme imbalance**: Notice that $A_5$ contributes 93.2% of the total AUC. The dominant area is the region where FPR is between 0.1 and 1.0 — which corresponds to thresholds so low that the model is flagging 10%–100% of all faces as Bald. In a production system, nobody would run the model at those thresholds. **This is why ROC-AUC can look deceptively good for severe imbalance** — it includes threshold regimes that are useless in practice. The PR curve fixes this.
+> **The AUC paradox for extreme imbalance**: Notice that $A_5$ contributes 93.2% of the total AUC. The dominant area is the region where FPR is between 0.1 and 1.0 — which corresponds to thresholds so low that the model is flagging 10%–100% of all faces as Bald. In a production system, nobody would run the model at those thresholds. **This is why ROC-AUC can look deceptively good for severe imbalance** — it includes threshold regimes that are useless in practice. The PR curve fixes this.
 
-> 💡 **Scale independence.** AUC-ROC is always between 0 and 1 regardless of dataset size or class distribution. 0.5 is always a random classifier; 1.0 is always perfect separation. This makes AUC-ROC directly comparable across different imbalanced datasets — unlike accuracy, which inflates with the majority class.
+> **Scale independence.** AUC-ROC is always between 0 and 1 regardless of dataset size or class distribution. 0.5 is always a random classifier; 1.0 is always perfect separation. This makes AUC-ROC directly comparable across different imbalanced datasets — unlike accuracy, which inflates with the majority class.
 
 ---
 
@@ -423,9 +423,9 @@ F1 at the optimal threshold tells you how good the model is at its best operatin
 
 Logistic regression beats the decision tree on every threshold-free metric. AUC-ROC = 0.50 for the trivial baseline confirms that a random coin flip offers no ranking power.
 
-> ➡️ **Use ROC-AUC to compare models during development; use PR-AUC to report results for severely imbalanced classes; use F1 at the business-chosen threshold for production monitoring.**
+> ➡ **Use ROC-AUC to compare models during development; use PR-AUC to report results for severely imbalanced classes; use F1 at the business-chosen threshold for production monitoring.**
 
-> ⚠️ **PR-AUC baseline is NOT 0.5.** A random classifier's ROC-AUC is always 0.5 — that's what "coin flip" means on the ROC curve. But a random classifier's PR-AUC equals the **positive rate** of the dataset. On Bald (2.0% positive), a random baseline has PR-AUC ≈ 0.020, not 0.5. This is why PR-AUC = 0.62 in the table above is a meaningful number: it's 31× the random baseline, not 24% above it. Always compare PR-AUC against the positive rate baseline, not against 0.5.
+> **PR-AUC baseline is NOT 0.5.** A random classifier's ROC-AUC is always 0.5 — that's what "coin flip" means on the ROC curve. But a random classifier's PR-AUC equals the **positive rate** of the dataset. On Bald (2.0% positive), a random baseline has PR-AUC ≈ 0.020, not 0.5. This is why PR-AUC = 0.62 in the table above is a meaningful number: it's 31× the random baseline, not 24% above it. Always compare PR-AUC against the positive rate baseline, not against 0.5.
 
 ---
 
@@ -440,11 +440,11 @@ The model only predicts Bald when it is very confident. Few positive predictions
 **Confusion matrix:**
 
 ```
-               Pred. Bald    Pred. Not-Bald
-           ┌─────────────┬─────────────────┐
-Act. Bald  │   TP = 12   │    FN = 188     │
-Act. Not-B │   FP =  8   │    TN = 9792    │
-           └─────────────┴─────────────────┘
+ Pred. Bald Pred. Not-Bald
+ ┌─────────────┬─────────────────┐
+Act. Bald │ TP = 12 │ FN = 188 │
+Act. Not-B │ FP = 8 │ TN = 9792 │
+ └─────────────┴─────────────────┘
 ```
 
 Counts: $TP + FP = 12 + 8 = 20$ positive predictions made. $TP + FN = 12 + 188 = 200$ actual Bald faces.
@@ -468,11 +468,11 @@ The sklearn default. Most practitioners start here without questioning it.
 **Confusion matrix:**
 
 ```
-               Pred. Bald    Pred. Not-Bald
-           ┌─────────────┬─────────────────┐
-Act. Bald  │   TP = 40   │    FN = 160     │
-Act. Not-B │   FP = 60   │    TN = 9740    │
-           └─────────────┴─────────────────┘
+ Pred. Bald Pred. Not-Bald
+ ┌─────────────┬─────────────────┐
+Act. Bald │ TP = 40 │ FN = 160 │
+Act. Not-B │ FP = 60 │ TN = 9740 │
+ └─────────────┴─────────────────┘
 ```
 
 Counts: $TP + FP = 40 + 60 = 100$ positive predictions made. $TP + FN = 40 + 160 = 200$ actual Bald faces.
@@ -496,11 +496,11 @@ The F1-optimal threshold, found by sweeping thresholds and picking the maximum.
 **Confusion matrix:**
 
 ```
-               Pred. Bald    Pred. Not-Bald
-           ┌─────────────┬─────────────────┐
-Act. Bald  │   TP = 100  │    FN = 100     │
-Act. Not-B │   FP = 200  │    TN = 9600    │
-           └─────────────┴─────────────────┘
+ Pred. Bald Pred. Not-Bald
+ ┌─────────────┬─────────────────┐
+Act. Bald │ TP = 100 │ FN = 100 │
+Act. Not-B │ FP = 200 │ TN = 9600 │
+ └─────────────┴─────────────────┘
 ```
 
 Counts: $TP + FP = 100 + 200 = 300$ positive predictions made. $TP + FN = 100 + 100 = 200$ actual Bald faces.
@@ -533,17 +533,17 @@ $$F_1 = \frac{2 \times 0.333 \times 0.500}{0.333 + 0.500} = \frac{2 \times 0.166
 
 ```mermaid
 flowchart TD
-    RAW["Logistic Regression\nOutputs: p̂ ∈ [0, 1]\ne.g. p̂ = 0.31 for one face"] --> THRESH{"Threshold t — your dial"}
+ RAW["Logistic Regression\nOutputs: p̂ ∈ [0, 1]\ne.g. p̂ = 0.31 for one face"] --> THRESH{"Threshold t — your dial"}
 
-    THRESH -->|"t = 0.70\n(conservative)"| HIGH["Predict Bald only when confident\n→ Precision ↑ (0.600)\n→ Recall ↓ (0.060)\n→ F1 = 0.109\nMiss 94% of Bald faces"]
-    THRESH -->|"t = 0.50\n(sklearn default)"| MID["Balanced but wrong for Bald\n→ Precision = 0.400\n→ Recall = 0.200\n→ F1 = 0.267\nMiss 80% of Bald faces"]
-    THRESH -->|"t = 0.30\n(F1-optimal)"| LOW["Aggressive tagging\n→ Precision = 0.333\n→ Recall = 0.500\n→ F1 = 0.400 ← best\nFind 50% of Bald faces"]
+ THRESH -->|"t = 0.70\n(conservative)"| HIGH["Predict Bald only when confident\n→ Precision ↑ (0.600)\n→ Recall ↓ (0.060)\n→ F1 = 0.109\nMiss 94% of Bald faces"]
+ THRESH -->|"t = 0.50\n(sklearn default)"| MID["Balanced but wrong for Bald\n→ Precision = 0.400\n→ Recall = 0.200\n→ F1 = 0.267\nMiss 80% of Bald faces"]
+ THRESH -->|"t = 0.30\n(F1-optimal)"| LOW["Aggressive tagging\n→ Precision = 0.333\n→ Recall = 0.500\n→ F1 = 0.400 ← best\nFind 50% of Bald faces"]
 
-    style HIGH fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style MID fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style LOW fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style RAW fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style THRESH fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style HIGH fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style MID fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style LOW fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style RAW fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style THRESH fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -552,30 +552,30 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    START(["New classification attribute"]) --> BALANCE{"What is the positive rate?"}
+ START(["New classification attribute"]) --> BALANCE{"What is the positive rate?"}
 
-    BALANCE -->|"30 – 70%\n(Balanced)"| BAL_PATH["Use Accuracy + F1\nROC-AUC if model comparison needed\n\nExamples: Smiling (48%), Male (42%)"]
-    BALANCE -->|"10 – 30% or 70 – 90%\n(Moderate imbalance)"| MOD_PATH["Drop accuracy. Use F1 + ROC-AUC\nTune threshold on validation set\n\nExamples: Eyeglasses (6.5%), Wearing Hat"]
-    BALANCE -->|"< 10% or > 90%\n(Severe imbalance)"| SEV_PATH["Never report accuracy. Use Recall + F1 + PR-AUC\nSet recall floor from business requirement\nTune threshold to meet floor\n\nExamples: Bald (2.2%), Mustache (1.1%)"]
+ BALANCE -->|"30 – 70%\n(Balanced)"| BAL_PATH["Use Accuracy + F1\nROC-AUC if model comparison needed\n\nExamples: Smiling (48%), Male (42%)"]
+ BALANCE -->|"10 – 30% or 70 – 90%\n(Moderate imbalance)"| MOD_PATH["Drop accuracy. Use F1 + ROC-AUC\nTune threshold on validation set\n\nExamples: Eyeglasses (6.5%), Wearing Hat"]
+ BALANCE -->|"< 10% or > 90%\n(Severe imbalance)"| SEV_PATH["Never report accuracy. Use Recall + F1 + PR-AUC\nSet recall floor from business requirement\nTune threshold to meet floor\n\nExamples: Bald (2.2%), Mustache (1.1%)"]
 
-    BAL_PATH --> REPORT["Report to stakeholders\nwith threshold stated explicitly"]
-    MOD_PATH --> REPORT
-    SEV_PATH --> REPORT
+ BAL_PATH --> REPORT["Report to stakeholders\nwith threshold stated explicitly"]
+ MOD_PATH --> REPORT
+ SEV_PATH --> REPORT
 
-    REPORT --> MULTI{"Multi-label task?\n(FaceAI: 40 attributes)"}
-    MULTI -->|"Yes"| MACRO["Report macro-F1 (equal weight per attribute)\n+ Hamming loss\n+ Subset accuracy (strict)"]
-    MULTI -->|"No"| DONE(["Evaluation complete ✅"])
-    MACRO --> DONE
+ REPORT --> MULTI{"Multi-label task?\n(FaceAI: 40 attributes)"}
+ MULTI -->|"Yes"| MACRO["Report macro-F1 (equal weight per attribute)\n+ Hamming loss\n+ Subset accuracy (strict)"]
+ MULTI -->|"No"| DONE(["Evaluation complete "])
+ MACRO --> DONE
 
-    style START fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style DONE fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style BALANCE fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style BAL_PATH fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style MOD_PATH fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style SEV_PATH fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style MACRO fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style REPORT fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style MULTI fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style START fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style DONE fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style BALANCE fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style BAL_PATH fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style MOD_PATH fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style SEV_PATH fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style MACRO fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style REPORT fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style MULTI fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -584,31 +584,31 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-    CM["2×2 Confusion Matrix\nTP | FP\nFN | TN"] --> ACC["Accuracy\n(TP+TN) / N"]
-    CM --> PREC["Precision\nTP / (TP+FP)"]
-    CM --> REC["Recall / TPR\nTP / (TP+FN)"]
-    CM --> FPR_NODE["FPR\nFP / (FP+TN)"]
+ CM["2×2 Confusion Matrix\nTP | FP\nFN | TN"] --> ACC["Accuracy\n(TP+TN) / N"]
+ CM --> PREC["Precision\nTP / (TP+FP)"]
+ CM --> REC["Recall / TPR\nTP / (TP+FN)"]
+ CM --> FPR_NODE["FPR\nFP / (FP+TN)"]
 
-    PREC --> F1_NODE["F1 Score\n2PR / (P+R)"]
-    REC --> F1_NODE
-    REC --> ROCPT["One ROC point\n(FPR, TPR)"]
-    FPR_NODE --> ROCPT
+ PREC --> F1_NODE["F1 Score\n2PR / (P+R)"]
+ REC --> F1_NODE
+ REC --> ROCPT["One ROC point\n(FPR, TPR)"]
+ FPR_NODE --> ROCPT
 
-    ROCPT -->|"Sweep t ∈ [0,1]"| ROCCURVE["ROC Curve"]
-    ROCCURVE --> AUC_ROC["AUC-ROC\n∫ TPR d(FPR)"]
+ ROCPT -->|"Sweep t ∈ [0,1]"| ROCCURVE["ROC Curve"]
+ ROCCURVE --> AUC_ROC["AUC-ROC\n∫ TPR d(FPR)"]
 
-    PREC --> PRPT["One PR point\n(Recall, Precision)"]
-    REC --> PRPT
-    PRPT -->|"Sweep t ∈ [0,1]"| PRCURVE["PR Curve"]
-    PRCURVE --> AUC_PR["PR-AUC\n∫ Precision d(Recall)"]
+ PREC --> PRPT["One PR point\n(Recall, Precision)"]
+ REC --> PRPT
+ PRPT -->|"Sweep t ∈ [0,1]"| PRCURVE["PR Curve"]
+ PRCURVE --> AUC_PR["PR-AUC\n∫ Precision d(Recall)"]
 
-    F1_NODE -->|"Average over 40 attrs"| MACRO["Macro-F1"]
+ F1_NODE -->|"Average over 40 attrs"| MACRO["Macro-F1"]
 
-    style CM fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style AUC_ROC fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style AUC_PR fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style MACRO fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style F1_NODE fill:#0f766e,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CM fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style AUC_ROC fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style AUC_PR fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style MACRO fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style F1_NODE fill:#0f766e,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -630,13 +630,13 @@ The threshold is the single most impactful parameter in classification evaluatio
 ```
 1. Train model, get predicted probabilities y_prob on validation set
 2. Sweep: for t in np.linspace(0.01, 0.99, 99):
-       compute F1(t) using y_pred = (y_prob >= t)
-3. Pick t* = argmax F1(t)  [or argmin |Recall(t) - recall_target| for recall floors]
+ compute F1(t) using y_pred = (y_prob >= t)
+3. Pick t* = argmax F1(t) [or argmin |Recall(t) - recall_target| for recall floors]
 4. Evaluate on held-out test set using t* (never re-tune on test set)
 5. Document t* explicitly in all reports: "Bald F1 = 0.40 at threshold t=0.30"
 ```
 
-> ⚡ **Constraint #2 unlock**: Per-attribute threshold tuning is how FaceAI handles 40 attributes with imbalance ratios from 48% (Smiling) to 1.1% (Mustache). One trained model, 40 independently tuned thresholds.
+> **Constraint #2 unlock**: Per-attribute threshold tuning is how FaceAI handles 40 attributes with imbalance ratios from 48% (Smiling) to 1.1% (Mustache). One trained model, 40 independently tuned thresholds.
 
 ### Dial 2 — $\beta$ in $F_\beta$ Score
 
@@ -696,7 +696,7 @@ $$F_1^{\text{macro}} = \frac{1}{L}\sum_{l=1}^{L} F_{1,l}$$
 
 Compute F1 separately for each of the 40 attributes at its own optimal threshold, then average. Each attribute contributes equally. Bald (2.2% positive) has the same weight as Smiling (48% positive). This forces the system to work on every attribute, including the hard rare ones.
 
-> 💡 **Macro-F1 is the primary FaceAI metric.** If any attribute has $F_{1,l} \approx 0$ (as Bald does with the naïve $t = 0.5$), macro-F1 will be dragged down and the problem is visible. Micro-F1 would hide it behind the majority-class attributes.
+> **Macro-F1 is the primary FaceAI metric.** If any attribute has $F_{1,l} \approx 0$ (as Bald does with the naïve $t = 0.5$), macro-F1 will be dragged down and the problem is visible. Micro-F1 would hide it behind the majority-class attributes.
 
 ---
 
@@ -718,26 +718,17 @@ Compute F1 separately for each of the 40 attributes at its own optimal threshold
 ![Progress visualization](img/ch03-metrics-progress-check.png)
 
 **Unlocked capabilities after this chapter:**
-
-✅ **Confusion matrix** — You can read a 2×2 table and extract every story it tells. TP=12, FP=8, TN=9792, FN=188 at $t=0.70$ is not just numbers; it is the sentence "the model makes very few predictions, and most of those predictions are correct, but it misses almost every Bald face."
-
-✅ **Precision and Recall** — You know these are not interchangeable and why you must report both for imbalanced classes. Precision = purity of positive predictions. Recall = coverage of actual positives.
-
-✅ **F1 score** — Van Rijsbergen's harmonic mean is now your default metric for imbalanced classification. You know why harmonic mean (F1 = 0.32) penalises a P=0.80, R=0.20 model more honestly than arithmetic mean (0.50 would say).
-
-✅ **AUC-ROC** — You can compute AUC from a 5-point ROC curve by trapezoidal integration (AUC = 0.892 for the Bald classifier), and you understand its probabilistic interpretation: the probability that a random positive ranks above a random negative.
-
-✅ **Threshold tuning** — You can sweep thresholds, plot F1 vs $t$, and identify $t^* = 0.30$ as the operating point that maximises F1 on the Bald attribute without any model retraining.
-
-✅ **Macro-F1** — You can aggregate per-attribute F1 scores across all 40 FaceAI attributes with equal weight, catching rare-class failures that micro-F1 and accuracy would both conceal.
-
-✅ **Constraint #1 VALIDATED** — The 88% Smiling accuracy from Ch.1 is real: Smiling is balanced (48%), accuracy correlates with F1 there. The 97.8% Bald accuracy is fraudulent. With per-attribute macro-F1 as the primary metric and per-attribute threshold tuning, FaceAI's constraint target becomes: **macro-F1 > 0.75 across 40 attributes**.
+**Confusion matrix** — You can read a 2×2 table and extract every story it tells. TP=12, FP=8, TN=9792, FN=188 at $t=0.70$ is not just numbers; it is the sentence "the model makes very few predictions, and most of those predictions are correct, but it misses almost every Bald face."
+**Precision and Recall** — You know these are not interchangeable and why you must report both for imbalanced classes. Precision = purity of positive predictions. Recall = coverage of actual positives.
+**F1 score** — Van Rijsbergen's harmonic mean is now your default metric for imbalanced classification. You know why harmonic mean (F1 = 0.32) penalises a P=0.80, R=0.20 model more honestly than arithmetic mean (0.50 would say).
+**AUC-ROC** — You can compute AUC from a 5-point ROC curve by trapezoidal integration (AUC = 0.892 for the Bald classifier), and you understand its probabilistic interpretation: the probability that a random positive ranks above a random negative.
+**Threshold tuning** — You can sweep thresholds, plot F1 vs $t$, and identify $t^* = 0.30$ as the operating point that maximises F1 on the Bald attribute without any model retraining.
+**Macro-F1** — You can aggregate per-attribute F1 scores across all 40 FaceAI attributes with equal weight, catching rare-class failures that micro-F1 and accuracy would both conceal.
+**Constraint #1 VALIDATED** — The 88% Smiling accuracy from Ch.1 is real: Smiling is balanced (48%), accuracy correlates with F1 there. The 97.8% Bald accuracy is fraudulent. With per-attribute macro-F1 as the primary metric and per-attribute threshold tuning, FaceAI's constraint target becomes: **macro-F1 > 0.75 across 40 attributes**.
 
 **Still can't solve:**
-
-❌ **Accuracy above 90% across all 40 attributes** — The logistic regression model from Ch.1 reaches F1 ≈ 0.70 for the balanced attributes (Smiling, Young, Male) but only 0.40 for severely imbalanced ones (Bald, Mustache). We need a model with higher separation power to push rare-class F1 above 0.60. That is Ch.4's job.
-
-❌ **Hard margin classes** — For some face attributes, logistic regression's linear boundary in HOG space cannot separate positive from negative. Non-linear classifiers are needed.
+**Accuracy above 90% across all 40 attributes** — The logistic regression model from Ch.1 reaches F1 ≈ 0.70 for the balanced attributes (Smiling, Young, Male) but only 0.40 for severely imbalanced ones (Bald, Mustache). We need a model with higher separation power to push rare-class F1 above 0.60. That is Ch.4's job.
+**Hard margin classes** — For some face attributes, logistic regression's linear boundary in HOG space cannot separate positive from negative. Non-linear classifiers are needed.
 
 **Real-world status**: You can now tell your VP exactly how the model performs on every attribute, including the rare ones. You can choose a threshold for each attribute based on business requirements. You can compare models honestly using AUC and macro-F1. The *measurement* problem is solved. The *accuracy* problem is still open.
 
@@ -759,7 +750,7 @@ This chapter established *how to measure* a classifier; Ch.4 establishes *a bett
 
 The SVM's structural advantage: it optimises the **margin** around the decision boundary, not the log-likelihood of a probability model. For balanced attributes (Smiling, Male), this typically raises F1 by 3–6 points. For severely imbalanced attributes (Bald, Mustache), the advantage depends on the kernel — a radial basis function kernel can learn non-linear boundaries in HOG space that separate Bald from Not-Bald more cleanly than any linear model. We will measure the outcome using the tools built in this chapter.
 
-> ➡️ **Before reading Ch.4**, confirm you can answer these questions from memory: What is the difference between precision and recall? Why does the harmonic mean penalise an imbalanced P/R pair more than the arithmetic mean? What does AUC = 0.892 mean in plain English? If yes: you have this chapter. If no: revisit §4.2–4.5.
+> ➡ **Before reading Ch.4**, confirm you can answer these questions from memory: What is the difference between precision and recall? Why does the harmonic mean penalise an imbalanced P/R pair more than the arithmetic mean? What does AUC = 0.892 mean in plain English? If yes: you have this chapter. If no: revisit §4.2–4.5.
 
 
 ### Multi-Label Metrics — Evaluating All 40 Attributes
@@ -784,7 +775,7 @@ $$F_1^{\text{macro}} = \frac{1}{L}\sum_{l=1}^{L} F_{1,l}$$
 
 **Verbal gloss**: Compute $F_1$ separately for each of the 40 attributes, then average them. Treats each attribute equally — Bald (2.5%) has the same weight as Smiling (48%). This prevents the majority class from hiding minority-class failures. Use this when every attribute matters equally to the business.
 
-> 💡 **Why macro-F1 is preferred for FaceAI**: If you use **micro-F1** (pool all TP/FP/FN across attributes before computing), the balanced attributes (Smiling, Male) dominate the score and hide Bald/Mustache failures. Macro-F1 forces you to excel on every attribute, including rare ones.
+> **Why macro-F1 is preferred for FaceAI**: If you use **micro-F1** (pool all TP/FP/FN across attributes before computing), the balanced attributes (Smiling, Male) dominate the score and hide Bald/Mustache failures. Macro-F1 forces you to excel on every attribute, including rare ones.
 
 ---
 
@@ -795,68 +786,68 @@ Here's the workflow you'll run for every classifier in FaceAI:
 ```
 ALGORITHM: Comprehensive Multi-Threshold Evaluation
 ──────────────────────────────────────────────────────
-Input:  y_true (ground truth labels)
-        y_prob (predicted probabilities ∈ [0,1])
-        threshold (default 0.5, tune per-attribute)
+Input: y_true (ground truth labels)
+ y_prob (predicted probabilities ∈ [0,1])
+ threshold (default 0.5, tune per-attribute)
 
 STEP 1: Convert probabilities to binary predictions
-        y_pred = (y_prob >= threshold).astype(int)
+ y_pred = (y_prob >= threshold).astype(int)
 
-        Example (threshold=0.5):
-        y_prob = [0.12, 0.68, 0.45, 0.89, 0.22]
-        y_pred = [0,    1,    0,    1,    0   ]
+ Example (threshold=0.5):
+ y_prob = [0.12, 0.68, 0.45, 0.89, 0.22]
+ y_pred = [0, 1, 0, 1, 0 ]
 
 STEP 2: Build confusion matrix (count the four outcomes)
-        TP = sum((y_pred == 1) & (y_true == 1))
-        FP = sum((y_pred == 1) & (y_true == 0))
-        TN = sum((y_pred == 0) & (y_true == 0))
-        FN = sum((y_pred == 0) & (y_true == 1))
+ TP = sum((y_pred == 1) & (y_true == 1))
+ FP = sum((y_pred == 1) & (y_true == 0))
+ TN = sum((y_pred == 0) & (y_true == 0))
+ FN = sum((y_pred == 0) & (y_true == 1))
 
-        Display as 2×2 grid:
-        ┌──────────────────┐
-        │  TN    FP      │  ← Predicted Negative | Positive
-        │  FN    TP      │
-        └──────────────────┘
-           ↑              ↑
-        Actual Neg     Actual Pos
+ Display as 2×2 grid:
+ ┌──────────────────┐
+ │ TN FP │ ← Predicted Negative | Positive
+ │ FN TP │
+ └──────────────────┘
+ ↑ ↑
+ Actual Neg Actual Pos
 
 STEP 3: Compute single-threshold metrics
-        accuracy  = (TP + TN) / (TP + FP + TN + FN)
-        precision = TP / (TP + FP)              ← "of predicted positives, % correct"
-        recall    = TP / (TP + FN)              ← "of actual positives, % found"
-        F1        = 2 * precision * recall / (precision + recall)
+ accuracy = (TP + TN) / (TP + FP + TN + FN)
+ precision = TP / (TP + FP) ← "of predicted positives, % correct"
+ recall = TP / (TP + FN) ← "of actual positives, % found"
+ F1 = 2 * precision * recall / (precision + recall)
 
 STEP 4: Sweep thresholds for ROC curve
-        For t in [0.0, 0.01, 0.02, ..., 0.99, 1.0]:
-            y_pred_t = (y_prob >= t).astype(int)
-            Compute: TPR(t) = recall at threshold t
-                     FPR(t) = FP / (FP + TN) at threshold t
-            Store: (FPR(t), TPR(t)) as one point
+ For t in [0.0, 0.01, 0.02, ..., 0.99, 1.0]:
+ y_pred_t = (y_prob >= t).astype(int)
+ Compute: TPR(t) = recall at threshold t
+ FPR(t) = FP / (FP + TN) at threshold t
+ Store: (FPR(t), TPR(t)) as one point
 
-        Plot: TPR vs FPR → ROC curve
-        AUC = area under the curve (via trapezoidal rule)
+ Plot: TPR vs FPR → ROC curve
+ AUC = area under the curve (via trapezoidal rule)
 
 STEP 5: Sweep thresholds for PR curve (better for imbalanced)
-        For t in [0.0, 0.01, 0.02, ..., 0.99, 1.0]:
-            Compute: Precision(t), Recall(t) at threshold t
-            Store: (Recall(t), Precision(t))
+ For t in [0.0, 0.01, 0.02, ..., 0.99, 1.0]:
+ Compute: Precision(t), Recall(t) at threshold t
+ Store: (Recall(t), Precision(t))
 
-        Plot: Precision vs Recall → PR curve
-        PR-AUC = area under the curve
+ Plot: Precision vs Recall → PR curve
+ PR-AUC = area under the curve
 
 STEP 6: Multi-label extension (40 attributes)
-        For each attribute l in [1..40]:
-            Compute: F1_l, Recall_l, PR-AUC_l
+ For each attribute l in [1..40]:
+ Compute: F1_l, Recall_l, PR-AUC_l
 
-        Aggregate:
-        macro_F1    = mean(F1_1, F1_2, ..., F1_40)      ← equal weight per attribute
-        Hamming     = (1 / N*40) * sum(errors across all labels)
-        subset_acc  = fraction of images with all 40 labels correct
+ Aggregate:
+ macro_F1 = mean(F1_1, F1_2, ..., F1_40) ← equal weight per attribute
+ Hamming = (1 / N*40) * sum(errors across all labels)
+ subset_acc = fraction of images with all 40 labels correct
 
 Output: Full report card ready for stakeholder presentation
 ```
 
-> 💡 **Key insight**: Steps 1–3 give you metrics at one threshold. Steps 4–5 show the **full trade-off space** across all thresholds, letting you pick the operating point that matches business needs (e.g., 70% recall minimum for legal compliance on Bald detection).
+> **Key insight**: Steps 1–3 give you metrics at one threshold. Steps 4–5 show the **full trade-off space** across all thresholds, letting you pick the operating point that matches business needs (e.g., 70% recall minimum for legal compliance on Bald detection).
 
 ---
 
@@ -868,13 +859,13 @@ Your model outputs probabilities. The threshold converts them to binary predicti
 
 ```mermaid
 graph TD
-    A["Raw Probabilities<br/>ĥ ∈ [0, 1]"] --> B{"Threshold t"}
-    B -->|"t = 0.3<br/>(low)"| C["More positives predicted<br/>→ High Recall<br/>→ Low Precision<br/>👉 Good for Bald (catch rare cases)"]
-    B -->|"t = 0.5<br/>(default)"| D["Balanced trade-off<br/>→ Moderate Recall & Precision<br/>👉 Good for Smiling (balanced)"]
-    B -->|"t = 0.7<br/>(high)"| E["Fewer positives predicted<br/>→ High Precision<br/>→ Low Recall<br/>👉 Conservative mode"]
-    style C fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style D fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style E fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ A["Raw Probabilities<br/>ĥ ∈ [0, 1]"] --> B{"Threshold t"}
+ B -->|"t = 0.3<br/>(low)"| C["More positives predicted<br/>→ High Recall<br/>→ Low Precision<br/>👉 Good for Bald (catch rare cases)"]
+ B -->|"t = 0.5<br/>(default)"| D["Balanced trade-off<br/>→ Moderate Recall & Precision<br/>👉 Good for Smiling (balanced)"]
+ B -->|"t = 0.7<br/>(high)"| E["Fewer positives predicted<br/>→ High Precision<br/>→ Low Recall<br/>👉 Conservative mode"]
+ style C fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style D fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style E fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 **Read this as**: Lowering the threshold makes the model more **aggressive** (predicts positive more often), catching more true positives (higher recall) but also triggering more false alarms (lower precision). Raising the threshold makes it **conservative** (only predicts positive when very confident).
@@ -887,13 +878,13 @@ Which metric should you report to stakeholders? Depends on class balance:
 
 ```mermaid
 graph LR
-    A["Which metric<br/>for this attribute?"] -->|"Check positive rate"| B{"Class balance?"}
-    B -->|"Balanced<br/>(30–70%)"| C["Accuracy + F1<br/>👉 Smiling, Male, Young"]
-    B -->|"Moderate imbalance<br/>(10–30%)"| D["F1 + ROC-AUC<br/>👉 Eyeglasses, Wearing_Hat"]
-    B -->|"Severe imbalance<br/>(< 10% or > 90%)"| E["Recall + PR-AUC<br/>👉 Bald, Mustache"]
-    style C fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style D fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style E fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ A["Which metric<br/>for this attribute?"] -->|"Check positive rate"| B{"Class balance?"}
+ B -->|"Balanced<br/>(30–70%)"| C["Accuracy + F1<br/>👉 Smiling, Male, Young"]
+ B -->|"Moderate imbalance<br/>(10–30%)"| D["F1 + ROC-AUC<br/>👉 Eyeglasses, Wearing_Hat"]
+ B -->|"Severe imbalance<br/>(< 10% or > 90%)"| E["Recall + PR-AUC<br/>👉 Bald, Mustache"]
+ style C fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style D fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style E fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 **Why this matters**: Your product lead asks, "How's the Bald classifier?" If you say "97.4% accuracy" (masking 0% recall), you've misled her. If you say "48% recall at 40% precision, PR-AUC=0.62," you've given her the real picture.
@@ -905,19 +896,19 @@ graph LR
 **Visual intuition**: ROC can look deceptively good for rare classes because FPR (denominator includes 97.5% majority) stays low even when recall is terrible. PR focuses on the minority class:
 
 ```
-ROC Curve (Bald)                    PR Curve (Bald)
+ROC Curve (Bald) PR Curve (Bald)
 
-TPR                                 Precision
- │   ╭────╮                         │ ╭───╮
-1.0 │ ╭─╯    ╰╮ <- Looks good!    1.0 │╯    ╰╮
-    │╯        ╰╮                      │        ╰╮ <- Shows decline!
-0.5 │          ╰╮  AUC=0.89      0.5 │          ╰╮ AUC=0.62
-    │            ╰╮                 │            ╰╮
-0.0 └────────────────       0.0 └────────────────
-    0.0          1.0 FPR           0.0          1.0 Recall
+TPR Precision
+ │ ╭────╮ │ ╭───╮
+1.0 │ ╭─╯ ╰╮ <- Looks good! 1.0 │╯ ╰╮
+ │╯ ╰╮ │ ╰╮ <- Shows decline!
+0.5 │ ╰╮ AUC=0.89 0.5 │ ╰╮ AUC=0.62
+ │ ╰╮ │ ╰╮
+0.0 └──────────────── 0.0 └────────────────
+ 0.0 1.0 FPR 0.0 1.0 Recall
 ```
 
-> ⚠️ **For Bald and Mustache, ignore ROC — use PR-AUC.** The same model can have ROC-AUC=0.89 (looks strong) and PR-AUC=0.62 (mediocre). The PR curve tells the truth.
+> **For Bald and Mustache, ignore ROC — use PR-AUC.** The same model can have ROC-AUC=0.89 (looks strong) and PR-AUC=0.62 (mediocre). The PR curve tells the truth.
 
 ---
 
@@ -944,7 +935,7 @@ The **decision threshold** is the most impactful "hyperparameter" in classificat
 
 The optimal threshold balances precision and recall. For production, you might choose $t=0.20$ (recall=65%, precision=32%) if your business requirement is "catch at least 60% of Bald faces."
 
-> ⚡ **Constraint #2 unlock**: Per-attribute threshold tuning is how FaceAI will handle the 40 attributes with wildly different class distributions (48% Smiling vs 2.5% Bald). One model, 40 thresholds.
+> **Constraint #2 unlock**: Per-attribute threshold tuning is how FaceAI will handle the 40 attributes with wildly different class distributions (48% Smiling vs 2.5% Bald). One model, 40 thresholds.
 
 ---
 
@@ -1014,17 +1005,17 @@ The optimal threshold balances precision and recall. For production, you might c
 
 ```mermaid
 graph TD
-    A["Model looks good<br/>but fails in production?"] --> B{"Imbalanced classes?"}
-    B -->|"Yes (pos rate < 20%)"| C["Accuracy paradox!<br/>Check recall and F1"]
-    B -->|"No (pos rate 30–70%)"| D{"Using threshold 0.5?"}
-    C --> E["Switch to PR-AUC<br/>Tune threshold per-attribute"]
-    D -->|"Yes"| F["Sweep threshold 0.1–0.9<br/>Optimize for F1 or recall target"]
-    D -->|"Already tuned"| G{"Using ROC-AUC?"}
-    G -->|"Yes, imbalanced data"| H["Switch to PR-AUC<br/>ROC hides minority-class failures"]
-    G -->|"No"| I["Check calibration<br/>Plot reliability diagram"]
-    style C fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style E fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style H fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ A["Model looks good<br/>but fails in production?"] --> B{"Imbalanced classes?"}
+ B -->|"Yes (pos rate < 20%)"| C["Accuracy paradox!<br/>Check recall and F1"]
+ B -->|"No (pos rate 30–70%)"| D{"Using threshold 0.5?"}
+ C --> E["Switch to PR-AUC<br/>Tune threshold per-attribute"]
+ D -->|"Yes"| F["Sweep threshold 0.1–0.9<br/>Optimize for F1 or recall target"]
+ D -->|"Already tuned"| G{"Using ROC-AUC?"}
+ G -->|"Yes, imbalanced data"| H["Switch to PR-AUC<br/>ROC hides minority-class failures"]
+ G -->|"No"| I["Check calibration<br/>Plot reliability diagram"]
+ style C fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style E fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style H fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -1041,41 +1032,34 @@ graph TD
 | **Hamming loss for multi-label** | [Topic 03 — Neural Networks](../../03_neural_networks/README.md) | Hamming loss is differentiable → can be used directly as a neural network loss function for multi-label tasks (alternative to 40 separate binary cross-entropy losses) |
 | **Calibration and reliability diagrams** | [Topic 05 — Anomaly Detection](../../05_anomaly_detection/README.md) Ch.4 (Calibration) | When stakeholders ask "what does 0.73 probability mean?", you need calibration. Platt scaling and isotonic regression recalibrate model outputs to match true frequencies |
 
-> ➡️ **This chapter gives you the evaluation vocabulary that every subsequent chapter assumes.** From now on, when a chapter says "F1 improved from 0.82 to 0.87," you know exactly what that means and whether it's significant. When a research paper reports "ROC-AUC=0.94 on MNIST," you know to ask about class balance before trusting it.
+> ➡ **This chapter gives you the evaluation vocabulary that every subsequent chapter assumes.** From now on, when a chapter says "F1 improved from 0.82 to 0.87," you know exactly what that means and whether it's significant. When a research paper reports "ROC-AUC=0.94 on MNIST," you know to ask about class balance before trusting it.
 
 ---
 
 ## 9 · Progress Check
 
 ### Unlocked Capabilities
-
-✅ **Proper evaluation framework for imbalanced classes**
+**Proper evaluation framework for imbalanced classes**
 - Confusion matrix exposes what accuracy hides (0% recall on Bald despite 97.4% accuracy)
 - Precision/Recall/F1 measure minority-class performance directly
 - PR-AUC evaluates rare attributes (Bald, Mustache) better than ROC-AUC
-
-✅ **Threshold tuning as a hyperparameter**
+**Threshold tuning as a hyperparameter**
 - Lowering threshold from 0.5 → 0.3 improves Bald recall from 8% → 48%
 - Per-attribute thresholds let you match business needs (high recall for legal compliance, high precision for user trust)
-
-✅ **Multi-label evaluation toolkit**
+**Multi-label evaluation toolkit**
 - Hamming loss (lenient: 95% of labels correct), subset accuracy (strict: all 40 must match)
 - Macro-F1 prevents majority-class dominance — every attribute matters equally
-
-✅ **Cross-validation for confidence intervals**
+**Cross-validation for confidence intervals**
 - 5-fold CV gives $88.2 \pm 1.5\%$ — you can now answer the CTO's "can you guarantee <$90k MAE?" with statistical confidence
 
 ### Still Can't Solve
-
-❌ **88% on Smiling is real, but still below 90% target**
+**88% on Smiling is real, but still below 90% target**
 - Logistic regression with hand-crafted features (HOG, pixel stats) plateaus around 88–89%
 - Linear decision boundaries may not be optimal for facial attribute patterns
-
-❌ **No interpretability for why predictions fail**
+**No interpretability for why predictions fail**
 - Metrics tell you *what* failed (12% recall on Bald), but not *why*
 - Which facial features matter most for Bald detection? Can't answer yet
-
-❌ **Multi-label architecture not yet implemented**
+**Multi-label architecture not yet implemented**
 - Currently training 40 separate binary classifiers (inefficient, doesn't share knowledge)
 - Need a single model with 40 output heads → requires neural networks (Ch.5+)
 
@@ -1087,23 +1071,23 @@ graph TD
 | **#2** | **GENERALIZATION** | Unseen faces | Train/test split | **🟢 Cross-validation** (88.2 ± 1.5% confidence) | Ch.5: Hyperparameter tuning |
 | **#3** | **MULTI-LABEL** | 40 attributes | Binary only | **🟡 Metrics defined** (Hamming, macro-F1) | Neural nets: multi-output heads |
 | **#4** | **INTERPRETABILITY** | Feature importance | Tree rules (Ch.2) | **🟢 Per-attribute diagnostics** (which attributes fail) | SHAP values (Ensemble track) |
-| **#5** | **PRODUCTION** | <200ms | ✅ | ✅ | Not affected by metrics |
+| **#5** | **PRODUCTION** | <200ms | | | Not affected by metrics |
 
-**Legend**: 🔴 Blocked | 🟡 Partial | 🟢 Achieved | ✅ Complete
+**Legend**: 🔴 Blocked | 🟡 Partial | 🟢 Achieved | Complete
 
 ### Progress Flow
 
 ```mermaid
 graph LR
-    A["Ch.1: 88%<br/>(unvalidated)"] --> B["Ch.2: 82–85%<br/>(interpretable)"]
-    B --> C["Ch.3: 88%<br/>✅ Validated!"]
-    C --> D["Ch.4: 89%<br/>(SVM)"]
-    D --> E["Ch.5: 92%<br/>(tuned)"]
-    style C fill:#0f766e,stroke:#e2e8f0,stroke-width:3px,color:#ffffff
-    style A fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style B fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style D fill:#374151,stroke:#e2e8f0,stroke-width:2px,color:#9ca3af
-    style E fill:#374151,stroke:#e2e8f0,stroke-width:2px,color:#9ca3af
+ A["Ch.1: 88%<br/>(unvalidated)"] --> B["Ch.2: 82–85%<br/>(interpretable)"]
+ B --> C["Ch.3: 88%<br/> Validated!"]
+ C --> D["Ch.4: 89%<br/>(SVM)"]
+ D --> E["Ch.5: 92%<br/>(tuned)"]
+ style C fill:#0f766e,stroke:#e2e8f0,stroke-width:3px,color:#ffffff
+ style A fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style B fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style D fill:#374151,stroke:#e2e8f0,stroke-width:2px,color:#9ca3af
+ style E fill:#374151,stroke:#e2e8f0,stroke-width:2px,color:#9ca3af
 ```
 
 **Real-world status**: You can now defend the 88% Smiling accuracy with confidence intervals and per-class breakdowns. You've proven the model works on balanced attributes (Smiling, Male, Young) but exposed failures on rare attributes (Bald recall=12%, Mustache recall=18%). Your product lead accepts the metrics report — green light to push for 90% with better models in Ch.4.
@@ -1133,7 +1117,7 @@ import pandas as pd
 
 attr_path = Path('data/celeba/metadata/list_attr_celeba.txt')
 attr = pd.read_csv(attr_path, delim_whitespace=True, skiprows=1)
-attr = (attr + 1) // 2   # {-1,+1} -> {0,1}
+attr = (attr + 1) // 2 # {-1,+1} -> {0,1}
 
 # Example target
 y_smiling = attr['Smiling'].astype(int)

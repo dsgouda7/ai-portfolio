@@ -25,19 +25,19 @@
 After the overview, read chapters in **strict order** — each builds on the previous:
 
 ```
-Ch.1: Message Formats          → Foundation (agent communication contracts)
-  ↓
-Ch.2: MCP Protocol            → Integration layer (agents access tools)
-  ↓
-Ch.3: A2A Protocol            → Delegation layer (agents call other agents)
-  ↓
-Ch.4: Event-Driven Agents     → Coordination layer (async pub/sub messaging)
-  ↓
-Ch.5: Shared Memory           → Context layer (blackboard pattern)
-  ↓
-Ch.6: Trust & Sandboxing      → Security layer (prompt injection defense)
-  ↓
-Ch.7: Agent Frameworks        → Orchestration layer (production deployment)
+Ch.1: Message Formats → Foundation (agent communication contracts)
+ ↓
+Ch.2: MCP Protocol → Integration layer (agents access tools)
+ ↓
+Ch.3: A2A Protocol → Delegation layer (agents call other agents)
+ ↓
+Ch.4: Event-Driven Agents → Coordination layer (async pub/sub messaging)
+ ↓
+Ch.5: Shared Memory → Context layer (blackboard pattern)
+ ↓
+Ch.6: Trust & Sandboxing → Security layer (prompt injection defense)
+ ↓
+Ch.7: Agent Frameworks → Orchestration layer (production deployment)
 ```
 
 **Why sequential matters:**
@@ -57,29 +57,29 @@ Ch.7: Agent Frameworks        → Orchestration layer (production deployment)
 
 ---
 
-## Mission Accomplished: OrderFlow Production System ✅
+## Mission Accomplished: OrderFlow Production System
 
 **The Challenge:** Build OrderFlow — a production B2B purchase order automation system handling 1,000 POs/day with <4hr SLA and <2% error rate.
 
 **The Result:**
-- **1,200 POs/day throughput** ✅ (120% of target, 24× improvement over manual baseline)
-- **3.2hr p95 latency** ✅ (20% below <4hr SLA target, 11× faster than manual)
-- **1.6% error rate** ✅ (20% below <2% target, 68% reduction from manual)
-- **99.95% uptime** ✅ (exceeds 99.9% target)
-- **Full audit trail** ✅ (every agent decision reconstructable)
-- **Zero unauthorized >$100k commitments** ✅ (prompt injection defense + approval thresholds)
+- **1,200 POs/day throughput** (120% of target, 24× improvement over manual baseline)
+- **3.2hr p95 latency** (20% below <4hr SLA target, 11× faster than manual)
+- **1.6% error rate** (20% below <2% target, 68% reduction from manual)
+- **99.95% uptime** (exceeds 99.9% target)
+- **Full audit trail** (every agent decision reconstructable)
+- **Zero unauthorized >$100k commitments** (prompt injection defense + approval thresholds)
 
 **The Progression:**
 
 ```
-Ch.1: Message Formats          → Context overflow eliminated (single 16k agent → 8 × 3k agents)
-Ch.2: MCP Protocol            → 160 integrations → 28 components (94% reduction)
-Ch.3: A2A Protocol            → Distributed agents across 3 Kubernetes pods
-Ch.4: Event-Driven            → 10 POs/day → 1,200 POs/day (120× improvement!)
-Ch.5: Shared Memory           → 8hr latency → 4.5hr (eliminated cross-agent blocking)
-Ch.6: Trust & Sandboxing      → 3.2% → 1.6% error (zero unauthorized commitments)
-Ch.7: Agent Frameworks        → Production orchestration (LangGraph + observability)
-                               ✅ ALL 8 CONSTRAINTS ACHIEVED
+Ch.1: Message Formats → Context overflow eliminated (single 16k agent → 8 × 3k agents)
+Ch.2: MCP Protocol → 160 integrations → 28 components (94% reduction)
+Ch.3: A2A Protocol → Distributed agents across 3 Kubernetes pods
+Ch.4: Event-Driven → 10 POs/day → 1,200 POs/day (120× improvement!)
+Ch.5: Shared Memory → 8hr latency → 4.5hr (eliminated cross-agent blocking)
+Ch.6: Trust & Sandboxing → 3.2% → 1.6% error (zero unauthorized commitments)
+Ch.7: Agent Frameworks → Production orchestration (LangGraph + observability)
+ALL 8 CONSTRAINTS ACHIEVED
 ```
 
 ---
@@ -219,97 +219,97 @@ Here's how all 7 concepts integrate into the deployed OrderFlow system:
 
 ```mermaid
 flowchart TD
-    subgraph "External Systems"
-        EMAIL["📧 Email<br/>(requester POs)"]
-        SUPPLIERS["🏢 Supplier APIs<br/>(TechFurnish, OfficeDepot)"]
-        ERP["📊 ERP System<br/>(inventory, pricing)"]
-    end
-    
-    subgraph "Message Bus (Ch.4 Event-Driven)"
-        BUS["Azure Service Bus / Kafka<br/>Topics: order.received, pricing.complete, negotiation.complete, po.approved, po.sent"]
-    end
-    
-    subgraph "Shared Memory (Ch.5 Blackboard)"
-        REDIS["Redis Blackboard<br/>order:{po_id}:intake<br/>order:{po_id}:pricing<br/>order:{po_id}:negotiation<br/>order:{po_id}:approval"]
-    end
-    
-    subgraph "Agents (Ch.1 Message Formats)"
-        INTAKE["Intake Agent<br/>(parse email → structured PO)"]
-        PRICING["Pricing Agent<br/>(query suppliers via MCP)"]
-        NEGOTIATION["Negotiation Agent<br/>(A2A delegate to suppliers)"]
-        LEGAL["Legal Agent<br/>(validate terms)"]
-        FINANCE["Finance Agent<br/>(approval thresholds)"]
-        DRAFTING["Drafting Agent<br/>(generate PO document)"]
-        SENDING["Sending Agent<br/>(email supplier)"]
-        RECONCILE["Reconciliation Agent<br/>(match confirmation)"]
-    end
-    
-    subgraph "MCP Servers (Ch.2 Tool Integration)"
-        MCP_ERP["MCP: ERP Server<br/>(inventory, pricing)"]
-        MCP_EMAIL["MCP: Email Server<br/>(send/receive)"]
-        MCP_SUPPLIERS["MCP: Supplier API Server<br/>(quotes, confirmations)"]
-    end
-    
-    subgraph "Security (Ch.6 Trust & Sandboxing)"
-        HMAC["HMAC Signer/Verifier<br/>(authenticate agent messages)"]
-        SANDBOX["Docker Sandboxes<br/>(isolate tool execution)"]
-        VALIDATOR["Pydantic Validators<br/>(structured output validation)"]
-    end
-    
-    subgraph "Orchestration (Ch.7 LangGraph)"
-        LANGGRAPH["LangGraph State Machine<br/>(workflow definition + checkpointing)"]
-        LANGSMITH["LangSmith Tracing<br/>(distributed observability)"]
-    end
-    
-    EMAIL -->|1. PO request| INTAKE
-    INTAKE -->|2. publish order.received| BUS
-    INTAKE -->|3. write intake section| REDIS
-    
-    BUS -->|4. consume order.received| PRICING
-    PRICING -->|5. read intake section| REDIS
-    PRICING -->|6. query quotes| MCP_ERP
-    PRICING -->|6. query quotes| MCP_SUPPLIERS
-    PRICING -->|7. write pricing section| REDIS
-    PRICING -->|8. publish pricing.complete| BUS
-    
-    BUS -->|9. consume pricing.complete| NEGOTIATION
-    NEGOTIATION -->|10. A2A delegate| MCP_SUPPLIERS
-    NEGOTIATION -->|11. write negotiation section| REDIS
-    NEGOTIATION -->|12. publish negotiation.complete| BUS
-    
-    BUS -->|13. consume negotiation.complete| FINANCE
-    FINANCE -->|14. read all sections| REDIS
-    FINANCE -->|15. check thresholds| VALIDATOR
-    FINANCE -->|16. write approval section| REDIS
-    FINANCE -->|17. publish po.approved| BUS
-    
-    BUS -->|18. consume po.approved| DRAFTING
-    DRAFTING -->|19. read all sections| REDIS
-    DRAFTING -->|20. generate PO doc| MCP_ERP
-    DRAFTING -->|21. publish po.drafted| BUS
-    
-    BUS -->|22. consume po.drafted| SENDING
-    SENDING -->|23. send PO via email| MCP_EMAIL
-    SENDING -->|24. publish po.sent| BUS
-    
-    SUPPLIERS -->|25. confirmation email| RECONCILE
-    RECONCILE -->|26. match to PO| REDIS
-    RECONCILE -->|27. publish po.reconciled| BUS
-    
-    LANGGRAPH -.->|orchestrate state transitions| BUS
-    LANGSMITH -.->|trace all agent calls| INTAKE
-    LANGSMITH -.->|trace all agent calls| PRICING
-    LANGSMITH -.->|trace all agent calls| NEGOTIATION
-    LANGSMITH -.->|trace all agent calls| FINANCE
-    
-    HMAC -.->|sign/verify| BUS
-    SANDBOX -.->|isolate execution| PRICING
-    SANDBOX -.->|isolate execution| NEGOTIATION
-    
-    style EMAIL fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style BUS fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style REDIS fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style LANGGRAPH fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ subgraph "External Systems"
+ EMAIL["📧 Email<br/>(requester POs)"]
+ SUPPLIERS["🏢 Supplier APIs<br/>(TechFurnish, OfficeDepot)"]
+ ERP[" ERP System<br/>(inventory, pricing)"]
+ end
+
+ subgraph "Message Bus (Ch.4 Event-Driven)"
+ BUS["Azure Service Bus / Kafka<br/>Topics: order.received, pricing.complete, negotiation.complete, po.approved, po.sent"]
+ end
+
+ subgraph "Shared Memory (Ch.5 Blackboard)"
+ REDIS["Redis Blackboard<br/>order:{po_id}:intake<br/>order:{po_id}:pricing<br/>order:{po_id}:negotiation<br/>order:{po_id}:approval"]
+ end
+
+ subgraph "Agents (Ch.1 Message Formats)"
+ INTAKE["Intake Agent<br/>(parse email → structured PO)"]
+ PRICING["Pricing Agent<br/>(query suppliers via MCP)"]
+ NEGOTIATION["Negotiation Agent<br/>(A2A delegate to suppliers)"]
+ LEGAL["Legal Agent<br/>(validate terms)"]
+ FINANCE["Finance Agent<br/>(approval thresholds)"]
+ DRAFTING["Drafting Agent<br/>(generate PO document)"]
+ SENDING["Sending Agent<br/>(email supplier)"]
+ RECONCILE["Reconciliation Agent<br/>(match confirmation)"]
+ end
+
+ subgraph "MCP Servers (Ch.2 Tool Integration)"
+ MCP_ERP["MCP: ERP Server<br/>(inventory, pricing)"]
+ MCP_EMAIL["MCP: Email Server<br/>(send/receive)"]
+ MCP_SUPPLIERS["MCP: Supplier API Server<br/>(quotes, confirmations)"]
+ end
+
+ subgraph "Security (Ch.6 Trust & Sandboxing)"
+ HMAC["HMAC Signer/Verifier<br/>(authenticate agent messages)"]
+ SANDBOX["Docker Sandboxes<br/>(isolate tool execution)"]
+ VALIDATOR["Pydantic Validators<br/>(structured output validation)"]
+ end
+
+ subgraph "Orchestration (Ch.7 LangGraph)"
+ LANGGRAPH["LangGraph State Machine<br/>(workflow definition + checkpointing)"]
+ LANGSMITH["LangSmith Tracing<br/>(distributed observability)"]
+ end
+
+ EMAIL -->|1. PO request| INTAKE
+ INTAKE -->|2. publish order.received| BUS
+ INTAKE -->|3. write intake section| REDIS
+
+ BUS -->|4. consume order.received| PRICING
+ PRICING -->|5. read intake section| REDIS
+ PRICING -->|6. query quotes| MCP_ERP
+ PRICING -->|6. query quotes| MCP_SUPPLIERS
+ PRICING -->|7. write pricing section| REDIS
+ PRICING -->|8. publish pricing.complete| BUS
+
+ BUS -->|9. consume pricing.complete| NEGOTIATION
+ NEGOTIATION -->|10. A2A delegate| MCP_SUPPLIERS
+ NEGOTIATION -->|11. write negotiation section| REDIS
+ NEGOTIATION -->|12. publish negotiation.complete| BUS
+
+ BUS -->|13. consume negotiation.complete| FINANCE
+ FINANCE -->|14. read all sections| REDIS
+ FINANCE -->|15. check thresholds| VALIDATOR
+ FINANCE -->|16. write approval section| REDIS
+ FINANCE -->|17. publish po.approved| BUS
+
+ BUS -->|18. consume po.approved| DRAFTING
+ DRAFTING -->|19. read all sections| REDIS
+ DRAFTING -->|20. generate PO doc| MCP_ERP
+ DRAFTING -->|21. publish po.drafted| BUS
+
+ BUS -->|22. consume po.drafted| SENDING
+ SENDING -->|23. send PO via email| MCP_EMAIL
+ SENDING -->|24. publish po.sent| BUS
+
+ SUPPLIERS -->|25. confirmation email| RECONCILE
+ RECONCILE -->|26. match to PO| REDIS
+ RECONCILE -->|27. publish po.reconciled| BUS
+
+ LANGGRAPH -.->|orchestrate state transitions| BUS
+ LANGSMITH -.->|trace all agent calls| INTAKE
+ LANGSMITH -.->|trace all agent calls| PRICING
+ LANGSMITH -.->|trace all agent calls| NEGOTIATION
+ LANGSMITH -.->|trace all agent calls| FINANCE
+
+ HMAC -.->|sign/verify| BUS
+ SANDBOX -.->|isolate execution| PRICING
+ SANDBOX -.->|isolate execution| NEGOTIATION
+
+ style EMAIL fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style BUS fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style REDIS fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style LANGGRAPH fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### System Flow Walkthrough (PO #2024-1847)
@@ -328,7 +328,7 @@ flowchart TD
 10. **Ch.2 + Ch.4:** Drafting Agent generates PO document via MCP ERP server → Sending Agent emails supplier via MCP Email server
 11. **Ch.7 (LangGraph):** Entire workflow orchestrated by LangGraph state machine, checkpointed at each state transition, traced by LangSmith
 
-**Total elapsed time:** 3.2 hours (from email receipt → PO sent) ✅
+**Total elapsed time:** 3.2 hours (from email receipt → PO sent)
 
 ---
 
@@ -336,14 +336,14 @@ flowchart TD
 
 | # | Constraint | Target | Status | How We Achieved It |
 |---|------------|--------|--------|-------------------|
-| **#1** | **THROUGHPUT** | 1,000 POs/day | ✅ **1,200 POs/day** | Ch.4: Event-driven async pub/sub (50 concurrent POs × 20 POs/hr) |
-| **#2** | **LATENCY** | <4hr SLA | ✅ **3.2hr p95** | Ch.4: Async eliminates queue buildup + Ch.5: Shared memory eliminates redundant work + Ch.7: Checkpointing eliminates retry overhead |
-| **#3** | **ACCURACY** | <2% error | ✅ **1.6% error** | Ch.2: MCP grounds agents in real-time ERP data + Ch.6: Prompt injection defense + approval thresholds |
-| **#4** | **SCALABILITY** | 10 agents/PO | ✅ **8 agents/PO** | Ch.1: Context decomposition (16k monolith → 8 × 3k specialists) + Ch.3: Distributed topology (3 Kubernetes pods) |
-| **#5** | **RELIABILITY** | >99.9% uptime | ✅ **99.95% uptime** | Ch.4: DLQ captures failures (0.2% failure rate, all recoverable) + Ch.7: Checkpointing + graceful degradation |
-| **#6** | **AUDITABILITY** | Full traceability | ✅ **Complete audit trail** | Ch.5: Event sourcing (every blackboard write logged) + Ch.6: HMAC signatures prove message authenticity + Ch.7: LangSmith traces reconstruct decision chain |
-| **#7** | **OBSERVABILITY** | Real-time monitoring | ✅ **Production-grade observability** | Ch.2: MCP tool calls logged + Ch.4: Message bus metrics (throughput, lag) + Ch.5: Queryable blackboard state + Ch.7: LangSmith distributed tracing + Grafana + ELK + PagerDuty |
-| **#8** | **DEPLOYABILITY** | Zero-downtime updates | ✅ **Blue-green deployment** | Ch.3: Agent Cards enable versioning + Ch.6: Sandboxed agents enable independent updates + Ch.7: Docker/K8s + Terraform IaC + <5 min rollback |
+| **#1** | **THROUGHPUT** | 1,000 POs/day | **1,200 POs/day** | Ch.4: Event-driven async pub/sub (50 concurrent POs × 20 POs/hr) |
+| **#2** | **LATENCY** | <4hr SLA | **3.2hr p95** | Ch.4: Async eliminates queue buildup + Ch.5: Shared memory eliminates redundant work + Ch.7: Checkpointing eliminates retry overhead |
+| **#3** | **ACCURACY** | <2% error | **1.6% error** | Ch.2: MCP grounds agents in real-time ERP data + Ch.6: Prompt injection defense + approval thresholds |
+| **#4** | **SCALABILITY** | 10 agents/PO | **8 agents/PO** | Ch.1: Context decomposition (16k monolith → 8 × 3k specialists) + Ch.3: Distributed topology (3 Kubernetes pods) |
+| **#5** | **RELIABILITY** | >99.9% uptime | **99.95% uptime** | Ch.4: DLQ captures failures (0.2% failure rate, all recoverable) + Ch.7: Checkpointing + graceful degradation |
+| **#6** | **AUDITABILITY** | Full traceability | **Complete audit trail** | Ch.5: Event sourcing (every blackboard write logged) + Ch.6: HMAC signatures prove message authenticity + Ch.7: LangSmith traces reconstruct decision chain |
+| **#7** | **OBSERVABILITY** | Real-time monitoring | **Production-grade observability** | Ch.2: MCP tool calls logged + Ch.4: Message bus metrics (throughput, lag) + Ch.5: Queryable blackboard state + Ch.7: LangSmith distributed tracing + Grafana + ELK + PagerDuty |
+| **#8** | **DEPLOYABILITY** | Zero-downtime updates | **Blue-green deployment** | Ch.3: Agent Cards enable versioning + Ch.6: Sandboxed agents enable independent updates + Ch.7: Docker/K8s + Terraform IaC + <5 min rollback |
 
 ---
 
@@ -391,11 +391,11 @@ flowchart TD
 ## What's Next: Beyond OrderFlow
 
 **This track taught:**
-- ✅ Multi-agent message formats (Ch.1: OpenAI envelope, handoff strategies)
-- ✅ Open protocols (Ch.2: MCP, Ch.3: A2A)
-- ✅ Coordination patterns (Ch.4: event-driven, Ch.5: shared memory)
-- ✅ Security (Ch.6: trust boundaries, prompt injection defense)
-- ✅ Production frameworks (Ch.7: AutoGen, LangGraph, Semantic Kernel)
+- Multi-agent message formats (Ch.1: OpenAI envelope, handoff strategies)
+- Open protocols (Ch.2: MCP, Ch.3: A2A)
+- Coordination patterns (Ch.4: event-driven, Ch.5: shared memory)
+- Security (Ch.6: trust boundaries, prompt injection defense)
+- Production frameworks (Ch.7: AutoGen, LangGraph, Semantic Kernel)
 
 **What remains for production AI systems:**
 - **Advanced Agent Patterns:** Multi-agent debate (critic-proposer), swarm intelligence, hierarchical planning
@@ -431,7 +431,7 @@ flowchart TD
 Master multi-agent coordination, and you've mastered distributed systems architecture — just with LLM agents instead of stateless services.
 
 **You now have:**
-- A production-ready multi-agent system (1,200 POs/day, <4hr SLA, <2% error ✅)
+- A production-ready multi-agent system (1,200 POs/day, <4hr SLA, <2% error )
 - A mental model for systematic multi-agent design (protocols → coordination → security → frameworks)
 - The vocabulary to architect any multi-agent system (MCP, A2A, blackboard, HMAC, state machine)
 

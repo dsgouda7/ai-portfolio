@@ -9,13 +9,13 @@
 **Three ways to learn the Math Under the Hood track:**
 
 1. **📖 Sequential deep dive (recommended)**: Read chapters Ch.1–7 in order, each with:
-   - Full narrative in `chNN_*/README.md` 
-   - Interactive widgets in `chNN_*/notebook.ipynb`
-   - Each chapter builds on the previous one's concepts
+ - Full narrative in `chNN_*/README.md`
+ - Interactive widgets in `chNN_*/notebook.ipynb`
+ - Each chapter builds on the previous one's concepts
 
-2. **⚡ Quick overview (this document)**: Read the synthesis below to understand the complete progression, then jump to specific chapters for details
+2. ** Quick overview (this document)**: Read the synthesis below to understand the complete progression, then jump to specific chapters for details
 
-3. **💻 Hands-on code walkthrough**: Open [`grand_solution.ipynb`](grand_solution.ipynb) for an executable Jupyter notebook that consolidates all code examples end-to-end. Run it top-to-bottom to see the complete solution in action.
+3. ** Hands-on code walkthrough**: Open [`grand_solution.ipynb`](grand_solution.ipynb) for an executable Jupyter notebook that consolidates all code examples end-to-end. Run it top-to-bottom to see the complete solution in action.
 
 **Chapter roadmap:**
 - [Ch.1: Linear Algebra](ch01_linear_algebra/README.md) — Lines, weights, and biases
@@ -28,7 +28,7 @@
 
 ---
 
-## Mission Accomplished: All Three Constraints Verified ✅
+## Mission Accomplished: All Three Constraints Verified
 
 **The Challenge:** Score a knuckleball free kick from 20m that (1) clears a 1.8m wall at 9.15m, (2) dips under a 2.44m crossbar, and (3) beats the goalkeeper's reaction time.
 
@@ -37,14 +37,14 @@
 **The Mathematical Progression:**
 
 ```
-Ch.1: Linear approximation       → Predict first 0.1s only (gravity ignored)
-Ch.2: Polynomial features         → Model full parabola (2D trajectory complete)
-Ch.3: Calculus fundamentals       → Find apex, verify wall/crossbar clearance ✅
-Ch.4: Gradient descent            → Optimize single parameter (best angle OR speed)
-Ch.5: Matrix operations           → Handle 8+ features simultaneously
-Ch.6: Chain rule + gradients      → Optimize ALL parameters at once ✅
-Ch.7: Probability & MLE           → Handle striker fatigue, wind variance ✅
-                                    ✅ READY FOR ML: All math foundations complete
+Ch.1: Linear approximation → Predict first 0.1s only (gravity ignored)
+Ch.2: Polynomial features → Model full parabola (2D trajectory complete)
+Ch.3: Calculus fundamentals → Find apex, verify wall/crossbar clearance
+Ch.4: Gradient descent → Optimize single parameter (best angle OR speed)
+Ch.5: Matrix operations → Handle 8+ features simultaneously
+Ch.6: Chain rule + gradients → Optimize ALL parameters at once
+Ch.7: Probability & MLE → Handle striker fatigue, wind variance
+READY FOR ML: All math foundations complete
 ```
 
 ---
@@ -91,7 +91,7 @@ Ch.7: Probability & MLE           → Handle striker fatigue, wind variance ✅
 
 **What it unlocked:**
 - **Find the apex:** Solve $h'(t) = 0$ → $t_{\text{peak}} = v_{0y}/g = 0.663$s
-- **Verify constraints:** Compute $h(0.6s) = 1.92m > 1.8m$ ✅ (wall cleared), $h(1.2s) = 1.60m < 2.44m$ ✅ (under crossbar)
+- **Verify constraints:** Compute $h(0.6s) = 1.92m > 1.8m$ (wall cleared), $h(1.2s) = 1.60m < 2.44m$ (under crossbar)
 - **Instantaneous rates:** Know if the ball is rising ($h' > 0$) or falling ($h' < 0$) at any moment
 
 **ML silent assumption #3:** *"Backpropagation is just the chain rule."* Every `.backward()` call in PyTorch computes $\frac{\partial L}{\partial w_i}$ using the derivative rules from this chapter. The formula $\frac{d}{dx}(x^n) = nx^{n-1}$ appears a trillion times per day across all training runs worldwide. If you don't understand why tangent slopes matter, you can't understand why gradient descent works.
@@ -176,51 +176,51 @@ Ch.7: Probability & MLE           → Handle striker fatigue, wind variance ✅
 
 ```mermaid
 flowchart TD
-    START["Problem: Score free kick<br/>3 constraints"]
-    
-    CH1["Ch.1: Linear Algebra<br/>$h = wt + b$<br/>✓ Predict first 0.1s"]
-    
-    CH2["Ch.2: Polynomial Features<br/>$h = v₀t - ½gt²$<br/>✓ Model full parabola"]
-    
-    CH3["Ch.3: Calculus<br/>$h' = 0$ → find apex<br/>✅ Verify wall/crossbar"]
-    
-    CH4["Ch.4: Gradient Descent<br/>$θ ← θ - η∇L$<br/>✓ Optimize 1 parameter"]
-    
-    CH5["Ch.5: Matrices<br/>$\hat{y} = Xw$<br/>✓ Handle 8+ features"]
-    
-    CH6["Ch.6: Chain Rule<br/>Backpropagation<br/>✅ Optimize all parameters"]
-    
-    CH7["Ch.7: Probability<br/>MLE + uncertainty<br/>✅ Handle noise"]
-    
-    ML["Ready for ML Track<br/>notes/01-ml/"]
-    
-    START --> CH1
-    CH1 --> CH2
-    CH2 --> CH3
-    CH3 --> CH4
-    CH4 --> CH5
-    CH5 --> CH6
-    CH6 --> CH7
-    CH7 --> ML
-    
-    style START fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH3 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH6 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH7 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style ML fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ START["Problem: Score free kick<br/>3 constraints"]
+
+ CH1["Ch.1: Linear Algebra<br/>$h = wt + b$<br/>✓ Predict first 0.1s"]
+
+ CH2["Ch.2: Polynomial Features<br/>$h = v₀t - ½gt²$<br/>✓ Model full parabola"]
+
+ CH3["Ch.3: Calculus<br/>$h' = 0$ → find apex<br/> Verify wall/crossbar"]
+
+ CH4["Ch.4: Gradient Descent<br/>$θ ← θ - η∇L$<br/>✓ Optimize 1 parameter"]
+
+ CH5["Ch.5: Matrices<br/>$\hat{y} = Xw$<br/>✓ Handle 8+ features"]
+
+ CH6["Ch.6: Chain Rule<br/>Backpropagation<br/> Optimize all parameters"]
+
+ CH7["Ch.7: Probability<br/>MLE + uncertainty<br/> Handle noise"]
+
+ ML["Ready for ML Track<br/>notes/01-ml/"]
+
+ START --> CH1
+ CH1 --> CH2
+ CH2 --> CH3
+ CH3 --> CH4
+ CH4 --> CH5
+ CH5 --> CH6
+ CH6 --> CH7
+ CH7 --> ML
+
+ style START fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH3 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH6 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH7 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style ML fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### Capability Milestones
 
 | After Chapter | Can Predict? | Can Verify Constraints? | Can Optimize? | Can Handle Uncertainty? |
 |---|:---:|:---:|:---:|:---:|
-| Ch.1 | First 0.1s only | ❌ | ❌ | ❌ |
-| Ch.2 | Full trajectory ✅ | ❌ | ❌ | ❌ |
-| Ch.3 | Full trajectory ✅ | **Wall + Crossbar ✅** | ❌ | ❌ |
-| Ch.4 | Full trajectory ✅ | Wall + Crossbar ✅ | 1 parameter ✅ | ❌ |
-| Ch.5 | Multi-feature ✅ | Wall + Crossbar ✅ | 1 parameter ✅ | ❌ |
-| Ch.6 | Multi-feature ✅ | Wall + Crossbar ✅ | **All parameters ✅** | ❌ |
-| Ch.7 | Multi-feature ✅ | Wall + Crossbar ✅ | All parameters ✅ | **Noise + confidence ✅** |
+| Ch.1 | First 0.1s only | | | |
+| Ch.2 | Full trajectory | | | |
+| Ch.3 | Full trajectory | **Wall + Crossbar ** | | |
+| Ch.4 | Full trajectory | Wall + Crossbar | 1 parameter | |
+| Ch.5 | Multi-feature | Wall + Crossbar | 1 parameter | |
+| Ch.6 | Multi-feature | Wall + Crossbar | **All parameters ** | |
+| Ch.7 | Multi-feature | Wall + Crossbar | All parameters | **Noise + confidence ** |
 
 ---
 
@@ -228,9 +228,9 @@ flowchart TD
 
 | # | Constraint | Target | Math Tool | Status |
 |---|------------|--------|-----------|--------|
-| **#1** | **WALL CLEARANCE** | $h(t_{\text{wall}}) > 1.8$ m | Ch.3: Solve $h'(t) = 0$, compute $h(0.6s)$ | ✅ **Verified** |
-| **#2** | **CROSSBAR CLEARANCE** | $h(t_{\text{goal}}) < 2.44$ m | Ch.3: Compute $h(1.2s)$ | ✅ **Verified** |
-| **#3** | **KEEPER-BEATING SPEED** | Flight time $< t_{\text{reaction}}$ | Ch.4: Optimize angle/speed | ✅ **Optimized** |
+| **#1** | **WALL CLEARANCE** | $h(t_{\text{wall}}) > 1.8$ m | Ch.3: Solve $h'(t) = 0$, compute $h(0.6s)$ | **Verified** |
+| **#2** | **CROSSBAR CLEARANCE** | $h(t_{\text{goal}}) < 2.44$ m | Ch.3: Compute $h(1.2s)$ | **Verified** |
+| **#3** | **KEEPER-BEATING SPEED** | Flight time $< t_{\text{reaction}}$ | Ch.4: Optimize angle/speed | **Optimized** |
 
 **Complete mathematical toolkit:**
 - **Ch.1-2:** Build the trajectory model $h(t) = v_{0y}t - \frac{1}{2}gt^2$
@@ -258,25 +258,25 @@ Every chapter's mathematics reappears immediately in the ML track:
 
 ### The Silent Assumptions ML Books Make
 
-**Assumption 1 (from Ch.1):** *"You know what a dot product is."*  
+**Assumption 1 (from Ch.1):** *"You know what a dot product is."*
 Without this, every explanation of attention (`Q·K^T`), word embeddings (cosine similarity), and dense layers is gibberish.
 
-**Assumption 2 (from Ch.2):** *"You understand feature engineering."*  
+**Assumption 2 (from Ch.2):** *"You understand feature engineering."*
 Papers that mention "we use polynomial features of degree 3" or "RBF kernels" assume you know this chapter's trick.
 
-**Assumption 3 (from Ch.3):** *"You can read derivative notation."*  
+**Assumption 3 (from Ch.3):** *"You can read derivative notation."*
 Every optimization paper uses $\nabla_\theta \mathcal{L}$, $\partial L/\partial w$, or $df/dx$. If these symbols feel foreign, you can't read the literature.
 
-**Assumption 4 (from Ch.4):** *"You know gradient descent is walking downhill."*  
+**Assumption 4 (from Ch.4):** *"You know gradient descent is walking downhill."*
 Papers that introduce new optimizers (AdamW, LAMB, Lion) are *modifications* of gradient descent. Without the baseline, you can't understand what they're fixing.
 
-**Assumption 5 (from Ch.5):** *"Matrix shapes are obvious to you."*  
+**Assumption 5 (from Ch.5):** *"Matrix shapes are obvious to you."*
 When a paper writes "we apply $W \in \mathbb{R}^{768 \times 512}$ to embeddings $X \in \mathbb{R}^{N \times 768}$," they expect you to immediately know the output shape is $(N \times 512)$.
 
-**Assumption 6 (from Ch.6):** *"Backpropagation is the chain rule."*  
+**Assumption 6 (from Ch.6):** *"Backpropagation is the chain rule."*
 If you don't see that `.backward()` is computing $\prod_i J_i^\top$ from the loss backward to the inputs, you can't debug vanishing gradients or understand why skip connections (ResNets) help.
 
-**Assumption 7 (from Ch.7):** *"Loss functions come from distributions."*  
+**Assumption 7 (from Ch.7):** *"Loss functions come from distributions."*
 When a paper uses focal loss, Dice loss, or triplet loss, they're making implicit distributional assumptions. Understanding MLE lets you *design* new losses for new noise models instead of just copying from scikit-learn.
 
 ---
@@ -285,31 +285,31 @@ When a paper uses focal loss, Dice loss, or triplet loss, they're making implici
 
 > 📜 **Historical context:** Every concept below solved a problem that had no prior solution. Understanding *which* problem makes the math stick.
 
-**820 CE: Al-Khwārizmī (Linear Algebra)**  
+**820 CE: Al-Khwārizmī (Linear Algebra)**
 → Systematic methods for solving $ax + b = c$ — the word "algebra" comes from his book's title.
 
-**1637: Descartes & Fermat (Coordinate Geometry)**  
+**1637: Descartes & Fermat (Coordinate Geometry)**
 → Glued algebra to geometry: every line is an equation, every equation a line. This merger is the foundation of Ch.1.
 
-**1665–1687: Newton & Leibniz (Calculus)**  
+**1665–1687: Newton & Leibniz (Calculus)**
 → Invented derivatives and integrals *specifically* to solve projectile motion (our free kick problem!). The trajectory equation $h(t) = v_0 t - \frac{1}{2}gt^2$ forced the invention of calculus.
 
-**1847: Cauchy (Gradient Descent)**  
+**1847: Cauchy (Gradient Descent)**
 → Published "steepest descent" for optimizing functions without closed-form solutions. This became the training algorithm for all neural networks 140 years later.
 
-**1850–1858: Sylvester & Cayley (Matrices)**  
+**1850–1858: Sylvester & Cayley (Matrices)**
 → Defined matrix algebra: addition, multiplication, identity, inverse. Every deep learning library implements their rules.
 
-**1901: Karl Pearson (Normal Equations)**  
+**1901: Karl Pearson (Normal Equations)**
 → Wrote least-squares regression as $(X^\top X)^{-1}X^\top y$ — still the analytical solution taught in every ML course.
 
-**1974: Paul Werbos (Backpropagation)**  
+**1974: Paul Werbos (Backpropagation)**
 → PhD thesis showing the chain rule can be applied recursively to compute all gradients in a neural network. Published in 1974, ignored until 1986.
 
-**1986: Rumelhart, Hinton & Williams (Nature Paper)**  
+**1986: Rumelhart, Hinton & Williams (Nature Paper)**
 → Popularized backpropagation + gradient descent as the training method for multi-layer networks. This single paper launched modern deep learning.
 
-**1990s–2000s: BLAS/LAPACK (Numerical Linear Algebra)**  
+**1990s–2000s: BLAS/LAPACK (Numerical Linear Algebra)**
 → Hardware-optimized matrix multiply libraries. PyTorch/TensorFlow are wrappers around these — the 10,000× GPU speedup comes from efficient $A\mathbf{x}$ implementations.
 
 **The narrative arc:** Linear equations (Ch.1) → curves (Ch.2) → calculus that tames curves (Ch.3) → iterative optimization (Ch.4) → matrices that pack many problems together (Ch.5) → recursive gradient computation (Ch.6) → probabilistic modeling (Ch.7). Each step addresses a *specific* blockage that had no prior satisfactory solution.
@@ -332,9 +332,9 @@ X_poly = poly.fit_transform(X_scaled)
 
 # Ch.5: Fit with normal equations (small data) or gradient descent (large data)
 if N < 10_000:
-    w = np.linalg.lstsq(X_poly.T @ X_poly, X_poly.T @ y)[0]
+ w = np.linalg.lstsq(X_poly.T @ X_poly, X_poly.T @ y)[0]
 else:
-    w = gradient_descent(X_poly, y, lr=0.01, epochs=100)
+ w = gradient_descent(X_poly, y, lr=0.01, epochs=100)
 ```
 
 **Why this order matters:**
@@ -348,8 +348,8 @@ else:
 ```
 Is the problem convex?
 ├── Yes: Can you compute the gradient in closed form?
-│   ├── Yes: Use normal equations (Ch.5) — one-shot solution
-│   └── No: Use gradient descent (Ch.4) — iterative but guaranteed to converge
+│ ├── Yes: Use normal equations (Ch.5) — one-shot solution
+│ └── No: Use gradient descent (Ch.4) — iterative but guaranteed to converge
 └── No (non-convex): Use gradient descent + random restarts + momentum
 ```
 
@@ -363,16 +363,16 @@ Is the problem convex?
 **The duality:**
 ```python
 # Forward pass: Ch.1–Ch.5 (compute predictions)
-h1 = relu(W1 @ x + b1)      # Ch.5: Matrix multiply
-h2 = relu(W2 @ h1 + b2)     # Ch.5: Matrix multiply
-y_pred = W3 @ h2 + b3       # Ch.5: Matrix multiply
-loss = mse(y_pred, y_true)  # Ch.7: Gaussian MLE
+h1 = relu(W1 @ x + b1) # Ch.5: Matrix multiply
+h2 = relu(W2 @ h1 + b2) # Ch.5: Matrix multiply
+y_pred = W3 @ h2 + b3 # Ch.5: Matrix multiply
+loss = mse(y_pred, y_true) # Ch.7: Gaussian MLE
 
 # Backward pass: Ch.6 (compute gradients via chain rule)
-dL_dW3 = dL_dy_pred @ h2.T           # Ch.6: Jacobian chain rule
-dL_dh2 = W3.T @ dL_dy_pred           # Ch.6: Reverse-mode autodiff
-dL_dW2 = (dL_dh2 * relu_grad(h2)) @ h1.T  # Ch.6: Hadamard product
-dL_dW1 = ...                         # Ch.6: Recurse backward
+dL_dW3 = dL_dy_pred @ h2.T # Ch.6: Jacobian chain rule
+dL_dh2 = W3.T @ dL_dy_pred # Ch.6: Reverse-mode autodiff
+dL_dW2 = (dL_dh2 * relu_grad(h2)) @ h1.T # Ch.6: Hadamard product
+dL_dW1 = ... # Ch.6: Recurse backward
 
 # Update: Ch.4 (gradient descent)
 W1 -= lr * dL_dW1
@@ -447,55 +447,55 @@ Once Ch.1–7 feel comfortable, you're ready for the ML track. Here's the roadma
 
 ### Ch.1: Linear Algebra
 ```
-Line:           y = wx + b
-Dot product:    a·b = Σ aᵢbᵢ = ‖a‖‖b‖cos(θ)
-Multi-feature:  ŷ = w·x + b = w₁x₁ + w₂x₂ + ... + wₐxₐ + b
+Line: y = wx + b
+Dot product: a·b = Σ aᵢbᵢ = ‖a‖‖b‖cos(θ)
+Multi-feature: ŷ = w·x + b = w₁x₁ + w₂x₂ + ... + wₐxₐ + b
 ```
 
 ### Ch.2: Polynomials
 ```
-Parabola:       y = ax² + bx + c
-Basis trick:    Set x₁=x², x₂=x → y = ax₁ + bx₂ + c (now linear in params!)
-Free kick:      h(t) = v₀t - ½gt²
+Parabola: y = ax² + bx + c
+Basis trick: Set x₁=x², x₂=x → y = ax₁ + bx₂ + c (now linear in params!)
+Free kick: h(t) = v₀t - ½gt²
 ```
 
 ### Ch.3: Calculus
 ```
-Derivative:     f'(x) = lim[Δx→0] (f(x+Δx) - f(x))/Δx
-Power rule:     d/dx(xⁿ) = nxⁿ⁻¹
-Find peak:      Solve f'(x) = 0
-Integral:       ∫ₐᵇ f(x)dx = F(b) - F(a) where F' = f
+Derivative: f'(x) = lim[Δx→0] (f(x+Δx) - f(x))/Δx
+Power rule: d/dx(xⁿ) = nxⁿ⁻¹
+Find peak: Solve f'(x) = 0
+Integral: ∫ₐᵇ f(x)dx = F(b) - F(a) where F' = f
 ```
 
 ### Ch.4: Gradient Descent
 ```
-Update rule:    θₖ₊₁ = θₖ - η·f'(θₖ)
-Stop when:      |f'(θₖ)| < ε or |θₖ₊₁ - θₖ| < ε
+Update rule: θₖ₊₁ = θₖ - η·f'(θₖ)
+Stop when: |f'(θₖ)| < ε or |θₖ₊₁ - θₖ| < ε
 ```
 
 ### Ch.5: Matrices
 ```
-Matrix-vector:  (Ax)ᵢ = Σⱼ Aᵢⱼxⱼ
-Transpose:      (AB)ᵀ = BᵀAᵀ
-Normal eqns:    w = (XᵀX)⁻¹Xᵀy
-MSE loss:       L(w) = ‖Xw - y‖² = (Xw - y)ᵀ(Xw - y)
+Matrix-vector: (Ax)ᵢ = Σⱼ Aᵢⱼxⱼ
+Transpose: (AB)ᵀ = BᵀAᵀ
+Normal eqns: w = (XᵀX)⁻¹Xᵀy
+MSE loss: L(w) = ‖Xw - y‖² = (Xw - y)ᵀ(Xw - y)
 ```
 
 ### Ch.6: Chain Rule & Gradients
 ```
-Gradient:       ∇f = [∂f/∂θ₁, ..., ∂f/∂θₐ]ᵀ
-Vector update:  θₖ₊₁ = θₖ - η·∇f(θₖ)
-Scalar chain:   dz/dx = (dz/dy)·(dy/dx)
-Matrix chain:   ∇ₓL = Jᵀ·∇ᵧL where y = f(x), J = Jacobian of f
+Gradient: ∇f = [∂f/∂θ₁, ..., ∂f/∂θₐ]ᵀ
+Vector update: θₖ₊₁ = θₖ - η·∇f(θₖ)
+Scalar chain: dz/dx = (dz/dy)·(dy/dx)
+Matrix chain: ∇ₓL = Jᵀ·∇ᵧL where y = f(x), J = Jacobian of f
 ```
 
 ### Ch.7: Probability & MLE
 ```
-Expectation:    E[X] = Σ xᵢ·P(xᵢ)  or  ∫ x·p(x)dx
-Variance:       Var(X) = E[(X - μ)²] = E[X²] - (E[X])²
-Gaussian PDF:   p(x) = (1/√(2πσ²))·exp(-(x-μ)²/(2σ²))
-MLE:            θ̂ = argmax Π p(yᵢ|θ) = argmin -Σ log p(yᵢ|θ)
-MSE = MLE:      Gaussian noise → minimize Σ(yᵢ - ŷᵢ)²
+Expectation: E[X] = Σ xᵢ·P(xᵢ) or ∫ x·p(x)dx
+Variance: Var(X) = E[(X - μ)²] = E[X²] - (E[X])²
+Gaussian PDF: p(x) = (1/√(2πσ²))·exp(-(x-μ)²/(2σ²))
+MLE: θ̂ = argmax Π p(yᵢ|θ) = argmin -Σ log p(yᵢ|θ)
+MSE = MLE: Gaussian noise → minimize Σ(yᵢ - ŷᵢ)²
 ```
 
 ---

@@ -12,7 +12,7 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 💡 **AgentAI mission**: Build an agent that achieves ≥195/200 average reward on CartPole. Five constraints block the way:
+> **AgentAI mission**: Build an agent that achieves ≥195/200 average reward on CartPole. Five constraints block the way:
 > 1. **OPTIMALITY** — find the best possible policy, not a good-enough one
 > 2. **EFFICIENCY** — converge in polynomial time, not exponential search
 > 3. **SCALABILITY** — work at $|S| > 10^6$ (CartPole's state space is continuous)
@@ -24,10 +24,10 @@
 **Needle moved:** max Bellman error $\Delta$ falls from roughly $8.20$ at initialization to $0.04$ at convergence, making the optimal policy readable from every grid cell.
 
 **What we know so far:**
-- ⚡ MDP framework: states, actions, rewards, transitions, policies (Ch.1)
-- ⚡ Bellman policy equation: $V^{\pi}(s) = \sum_{a} \pi(a|s) \sum_{s'} P(s'|s,a)\bigl[R + \gamma V^{\pi}(s')\bigr]$
-- ⚡ Bellman optimality equation: $V^*(s) = \max_a \sum_{s'} P(s'|s,a)\bigl[R + \gamma V^*(s')\bigr]$
-- ⚡ Both equations have $|S|$ unknowns
+- MDP framework: states, actions, rewards, transitions, policies (Ch.1)
+- Bellman policy equation: $V^{\pi}(s) = \sum_{a} \pi(a|s) \sum_{s'} P(s'|s,a)\bigl[R + \gamma V^{\pi}(s')\bigr]$
+- Bellman optimality equation: $V^*(s) = \max_a \sum_{s'} P(s'|s,a)\bigl[R + \gamma V^*(s')\bigr]$
+- Both equations have $|S|$ unknowns
 - **But we have NO algorithm to find $V^*$ or $\pi^*$ from these equations!**
 
 **What's blocking us:**
@@ -37,35 +37,35 @@ The Bellman optimality equation is a system of $|S|$ coupled non-linear equation
 
 | AgentAI Constraint | Status after Ch.2 |
 |-------------------|------------------|
-| #1 OPTIMALITY | ✅ **Achieved** — both algorithms provably reach $\pi^*$ with known $P$ |
-| #2 EFFICIENCY | ⚠️ Polynomial: $O(\|S\|^2 \|A\|)$ per sweep — feasible for small MDPs |
-| #3 SCALABILITY | ❌ Infeasible when $\|S\| > 10^6$ — CartPole is continuous; Ch.4 fixes this |
-| #4 STABILITY | ✅ Guaranteed — contraction mapping theorem, $\gamma < 1$ |
-| #5 GENERALIZATION | ❌ Solution is tied to the specific $P$ and $R$ — no transfer |
+| #1 OPTIMALITY | **Achieved** — both algorithms provably reach $\pi^*$ with known $P$ |
+| #2 EFFICIENCY | Polynomial: $O(\|S\|^2 \|A\|)$ per sweep — feasible for small MDPs |
+| #3 SCALABILITY | Infeasible when $\|S\| > 10^6$ — CartPole is continuous; Ch.4 fixes this |
+| #4 STABILITY | Guaranteed — contraction mapping theorem, $\gamma < 1$ |
+| #5 GENERALIZATION | Solution is tied to the specific $P$ and $R$ — no transfer |
 
-> ⚡ **CartPole is out of reach for now.** CartPole has a continuous 4-dimensional state space — an uncountably infinite $|S|$. Dynamic programming requires enumerating every state explicitly. Chapters 3–4 address this with Q-learning and function approximation.
+> **CartPole is out of reach for now.** CartPole has a continuous 4-dimensional state space — an uncountably infinite $|S|$. Dynamic programming requires enumerating every state explicitly. Chapters 3–4 address this with Q-learning and function approximation.
 
 ```mermaid
 flowchart LR
-    subgraph ch1["Ch.1 — MDP Framework"]
-        A["Bellman Equations\n(|S| coupled equations)"]
-    end
-    subgraph ch2["Ch.2 — This Chapter"]
-        B["Policy Evaluation\n(linear Bellman iterate)"]
-        C["Value Iteration\n(Bellman optimality sweep)"]
-        B --> D["Policy Iteration\n(evaluate → improve)"]
-        C --> E["Optimal V* and π*"]
-        D --> E
-    end
-    subgraph ch3["Ch.3 — Q-Learning"]
-        F["Drop P(s'|s,a)\nrequirement"]
-    end
-    A --> B
-    A --> C
-    E --> F
-    style A fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style E fill:#15803d,color:#fff,stroke:#15803d
-    style F fill:#b45309,color:#fff,stroke:#b45309
+ subgraph ch1["Ch.1 — MDP Framework"]
+ A["Bellman Equations\n(|S| coupled equations)"]
+ end
+ subgraph ch2["Ch.2 — This Chapter"]
+ B["Policy Evaluation\n(linear Bellman iterate)"]
+ C["Value Iteration\n(Bellman optimality sweep)"]
+ B --> D["Policy Iteration\n(evaluate → improve)"]
+ C --> E["Optimal V* and π*"]
+ D --> E
+ end
+ subgraph ch3["Ch.3 — Q-Learning"]
+ F["Drop P(s'|s,a)\nrequirement"]
+ end
+ A --> B
+ A --> C
+ E --> F
+ style A fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style E fill:#15803d,color:#fff,stroke:#15803d
+ style F fill:#b45309,color:#fff,stroke:#b45309
 ```
 
 ---
@@ -90,7 +90,7 @@ Three DP algorithms, one mathematical foundation:
 | **Value Iteration** | Optimality Bellman (has $\max_a$) | No — extracted at end | Geometric at rate $\gamma$ |
 | **Policy Iteration** | Both, alternating | Yes — improves each pass | Finite — at most $\|A\|^{\|S\|}$ policies |
 
-> 💡 **Why DP and not just search?** The MDP has $|A|^{|S|}$ deterministic policies. For the 4×4 GridWorld: $4^{15} \approx 10^9$ policies. Exhaustive search is hopeless. DP doesn't enumerate policies — it computes a value function that encodes all policy comparisons simultaneously in $|S|$ numbers.
+> **Why DP and not just search?** The MDP has $|A|^{|S|}$ deterministic policies. For the 4×4 GridWorld: $4^{15} \approx 10^9$ policies. Exhaustive search is hopeless. DP doesn't enumerate policies — it computes a value function that encodes all policy comparisons simultaneously in $|S|$ numbers.
 
 **When does DP apply?** Three conditions must hold:
 1. **Known model**: you can compute $P(s'|s,a)$ and $R(s,a,s')$ for any triple without sampling.
@@ -109,27 +109,27 @@ Every section grounds its math in two environments.
 
 ```
 ┌──────┬──────┬──────┬──────┐
-│ S(0) │  (1) │  (2) │  (3) │
+│ S(0) │ (1) │ (2) │ (3) │
 ├──────┼──────┼──────┼──────┤
-│  (4) │ ██(5)│  (6) │  (7) │
+│ (4) │ ██(5)│ (6) │ (7) │
 ├──────┼──────┼──────┼──────┤
-│  (8) │  (9) │ (10) │ (11) │
+│ (8) │ (9) │ (10) │ (11) │
 ├──────┼──────┼──────┼──────┤
 │ (12) │ (13) │ (14) │ G(15)│
 └──────┴──────┴──────┴──────┘
 
 Known: P(s'|s,a) = 1 for the landing state (deterministic moves)
-Known: R = +10 if s' = 15,  R = -1 otherwise
-γ = 0.9,  θ = 0.001
+Known: R = +10 if s' = 15, R = -1 otherwise
+γ = 0.9, θ = 0.001
 ```
 
 **4-state chain** — stripped-down arithmetic toy used in §4 and §6:
 
 ```
 A ──right──▶ B ──right──▶ C ──right──▶ Goal
-(s=0)        (s=1)         (s=2)        (s=3, terminal)
+(s=0) (s=1) (s=2) (s=3, terminal)
 
-R = -1 every step.  V(Goal) = 0 always (absorbed).
+R = -1 every step. V(Goal) = 0 always (absorbed).
 γ = 0.9.
 ```
 
@@ -160,11 +160,11 @@ POLICY EVALUATION (inner loop of Policy Iteration)
 ────────────────────────────────────────────────────
 1. Fix policy π
 2. REPEAT
-   a. Δ = 0
-   b. FOR each non-terminal state s:
-      v_old = V(s)
-      V(s)  = Σ_a π(a|s) · Σ_{s'} P(s'|s,a) · [R + γV(s')]   ← linear Bellman backup
-      Δ     = max(Δ, |V(s) − v_old|)
+ a. Δ = 0
+ b. FOR each non-terminal state s:
+ v_old = V(s)
+ V(s) = Σ_a π(a|s) · Σ_{s'} P(s'|s,a) · [R + γV(s')] ← linear Bellman backup
+ Δ = max(Δ, |V(s) − v_old|)
 3. UNTIL Δ < θ
 4. RETURN V^π
 
@@ -172,9 +172,9 @@ POLICY ITERATION (outer loop)
 ────────────────────────────────────────────────────
 1. Initialize π randomly
 2. REPEAT
-   a. Run Policy Evaluation  →  obtain V^π
-   b. FOR each state s:
-      π(s) ← argmax_a Σ_{s'} P(s'|s,a)[R + γV^π(s')]          ← greedy improvement
+ a. Run Policy Evaluation → obtain V^π
+ b. FOR each state s:
+ π(s) ← argmax_a Σ_{s'} P(s'|s,a)[R + γV^π(s')] ← greedy improvement
 3. UNTIL policy unchanged
 4. RETURN π*
 
@@ -182,34 +182,34 @@ VALUE ITERATION (one-step shortcut)
 ────────────────────────────────────────────────────
 1. Initialize V(s) = 0
 2. REPEAT
-   a. Δ = 0
-   b. FOR each non-terminal state s:
-      v_old = V(s)
-      V(s)  = max_a Σ_{s'} P(s'|s,a) · [R + γV(s')]            ← Bellman optimality backup
-      Δ     = max(Δ, |V(s) − v_old|)
+ a. Δ = 0
+ b. FOR each non-terminal state s:
+ v_old = V(s)
+ V(s) = max_a Σ_{s'} P(s'|s,a) · [R + γV(s')] ← Bellman optimality backup
+ Δ = max(Δ, |V(s) − v_old|)
 3. UNTIL Δ < θ
-4. π*(s) = argmax_a Σ_{s'} P(s'|s,a)[R + γV(s')]               ← extract at the end
+4. π*(s) = argmax_a Σ_{s'} P(s'|s,a)[R + γV(s')] ← extract at the end
 5. RETURN V*, π*
 ```
 
-> ➡️ **Value Iteration = Policy Iteration with 1-step evaluation.** Value iteration performs exactly one evaluation sweep before improving (the $\max_a$ is the implicit improvement). Policy iteration runs evaluation to full convergence before each improvement. Policy iteration takes fewer outer iterations but each is more expensive; value iteration takes more outer iterations but each is cheap.
+> ➡ **Value Iteration = Policy Iteration with 1-step evaluation.** Value iteration performs exactly one evaluation sweep before improving (the $\max_a$ is the implicit improvement). Policy iteration runs evaluation to full convergence before each improvement. Policy iteration takes fewer outer iterations but each is more expensive; value iteration takes more outer iterations but each is cheap.
 
 **Algorithm selection flowchart:**
 
 ```
-Do you have P(s'|s,a)?  ──No──▶ Ch.3 Q-Learning (model-free)
-         │
-        Yes
-         ▼
-Is |S| × |A| < 10⁶?   ──No──▶ Ch.4 DQN (function approximation)
-         │
-        Yes
-         ▼
-Is |A| small (≤ 10)?    ──Yes──▶ Policy Iteration (fewer outer iters)
-         │
-         No
-         ▼
-      Value Iteration   (cheaper per sweep when |A| is large)
+Do you have P(s'|s,a)? ──No──▶ Ch.3 Q-Learning (model-free)
+ │
+ Yes
+ ▼
+Is |S| × |A| < 10⁶? ──No──▶ Ch.4 DQN (function approximation)
+ │
+ Yes
+ ▼
+Is |A| small (≤ 10)? ──Yes──▶ Policy Iteration (fewer outer iters)
+ │
+ No
+ ▼
+ Value Iteration (cheaper per sweep when |A| is large)
 ```
 
 ---
@@ -284,7 +284,7 @@ $$\boxed{V_3 = [\,-2.71,\; -1.90,\; -1.00,\; 0\,]}$$
 | ⋮ | ⋮ | ⋮ | ⋮ | 0 | $0.9^k$ |
 | ∞ (exact) | −2.71 | −1.90 | −1.00 | 0 | 0 |
 
-> 💡 **The $\Delta$ column shrinks by exactly $\gamma = 0.9$ each sweep.** This is not a coincidence — it is the $\gamma$-contraction property in action. At convergence, the exact values are $V^*(C) = -1$, $V^*(B) = -1 - 0.9 = -1.90$, $V^*(A) = -1 - 0.9 - 0.81 = -2.71$ — the discounted sum of future $-1$ penalties.
+> **The $\Delta$ column shrinks by exactly $\gamma = 0.9$ each sweep.** This is not a coincidence — it is the $\gamma$-contraction property in action. At convergence, the exact values are $V^*(C) = -1$, $V^*(B) = -1 - 0.9 = -1.90$, $V^*(A) = -1 - 0.9 - 0.81 = -2.71$ — the discounted sum of future $-1$ penalties.
 
 **Closed-form verification.** For the always-right policy on a chain of length $n$ from state 0 to terminal:
 $$V^{\pi}(\text{state } k) = \sum_{t=0}^{n-k-1} \gamma^t \cdot (-1) = -(1 + \gamma + \gamma^2 + \ldots + \gamma^{n-k-1}) = -\frac{1-\gamma^{n-k}}{1-\gamma}$$
@@ -340,7 +340,7 @@ $$\pi_1(B) = \arg\max\{-1.90,\; -4.74\} = \textbf{Right} \qquad \leftarrow \text
 
 The agent was burning $-4.74$ expected return on Detour when Right was available for $-1.90$. One greedy step finds this — no matter how many evaluation iterations ran under the bad policy.
 
-> ⚠️ **The Policy Improvement Theorem guarantees $V^{\pi_1}(s) \geq V^{\pi_0}(s)$ for ALL states.** Fixing B's action from Detour to Right doesn't just improve B — it also improves A, because A's value depends on what happens next (which is now B going right instead of looping).
+> **The Policy Improvement Theorem guarantees $V^{\pi_1}(s) \geq V^{\pi_0}(s)$ for ALL states.** Fixing B's action from Detour to Right doesn't just improve B — it also improves A, because A's value depends on what happens next (which is now B going right instead of looping).
 
 **The improvement theorem — why it's not obvious.** When we change $\pi_0(B)$ from Detour to Right, A's value improves from $-5.26$ to $-2.71$ even though we didn't touch $\pi(A)$. This happens because the value of A under policy $\pi$ is $V^{\pi}(A) = -1 + 0.9 V^{\pi}(B)$ — it depends on B's value, which improved. The theorem guarantees this cascading improvement: if the greedy action is at least as good as the current action at *every* state, then the new policy is at least as good everywhere. The proof uses the contraction property applied in reverse.
 
@@ -397,7 +397,7 @@ $$V_3(C) = \max\bigl\{-1 + 0.9 \times 0\bigr\} = \mathbf{-1.00}$$
 
 Each sweep adds one more "layer" of states that know the path to Goal.
 
-> 💡 **With two actions the $\max$ makes a real difference.** If B had Detour ($R=0$) and Right ($R=-1$): at $k=0$, $V_1(B) = \max\{-1, 0\} = 0$ — VI temporarily prefers Detour! But as the loop's cost propagates back through A in later iterations, VI eventually discovers Right is better. Policy evaluation under the Detour policy would go to −4.74; VI avoids this by continually applying the max.
+> **With two actions the $\max$ makes a real difference.** If B had Detour ($R=0$) and Right ($R=-1$): at $k=0$, $V_1(B) = \max\{-1, 0\} = 0$ — VI temporarily prefers Detour! But as the loop's cost propagates back through A in later iterations, VI eventually discovers Right is better. Policy evaluation under the Detour policy would go to −4.74; VI avoids this by continually applying the max.
 
 ---
 
@@ -406,49 +406,49 @@ Each sweep adds one more "layer" of states that know the path to Goal.
 ```
 ALGORITHM: Value Iteration
 ──────────────────────────────────────────────────────────────
-Input:  MDP = (S, A, P, R, γ),  convergence threshold θ > 0
-Output: Optimal value function V*,  optimal policy π*
+Input: MDP = (S, A, P, R, γ), convergence threshold θ > 0
+Output: Optimal value function V*, optimal policy π*
 
- 1. FOR each s ∈ S:  V(s) ← 0          // arbitrary initialization
+ 1. FOR each s ∈ S: V(s) ← 0 // arbitrary initialization
  2. REPEAT
-    a. Δ ← 0
-    b. FOR each non-terminal s ∈ S:
-       i.  v_old ← V(s)
-       ii. V(s)  ← max_a Σ_{s'} P(s'|s,a) · [R(s,a,s') + γ V(s')]
-       iii.Δ ← max(Δ,  |v_old − V(s)|)
+ a. Δ ← 0
+ b. FOR each non-terminal s ∈ S:
+ i. v_old ← V(s)
+ ii. V(s) ← max_a Σ_{s'} P(s'|s,a) · [R(s,a,s') + γ V(s')]
+ iii.Δ ← max(Δ, |v_old − V(s)|)
  3. UNTIL Δ < θ
  4. FOR each s ∈ S:
-    π*(s) ← argmax_a Σ_{s'} P(s'|s,a) · [R(s,a,s') + γ V(s')]
+ π*(s) ← argmax_a Σ_{s'} P(s'|s,a) · [R(s,a,s') + γ V(s')]
  5. RETURN V*, π*
 ```
 
-> 💡 **Python implementation note.** The inner loop `for s in S: V[s] = max(...)` is easily vectorized. Use a NumPy array `V = np.zeros(n_states)` and iterate over states with `for s in range(n_states): ...`. For small MDPs ($|S| < 1000$), a pure-Python loop is fast enough; for larger MDPs use `np.einsum` or sparse matrix-vector products to compute the full Bellman backup in one operation.
+> **Python implementation note.** The inner loop `for s in S: V[s] = max(...)` is easily vectorized. Use a NumPy array `V = np.zeros(n_states)` and iterate over states with `for s in range(n_states): ...`. For small MDPs ($|S| < 1000$), a pure-Python loop is fast enough; for larger MDPs use `np.einsum` or sparse matrix-vector products to compute the full Bellman backup in one operation.
 
 **Policy Iteration pseudocode (complete):**
 
 ```
 ALGORITHM: Policy Iteration
 ──────────────────────────────────────────────────────────────
-Input:  MDP = (S, A, P, R, γ),  evaluation threshold θ > 0
+Input: MDP = (S, A, P, R, γ), evaluation threshold θ > 0
 Output: Optimal policy π*
 
- 1. FOR each s ∈ S:  π(s) ← arbitrary action in A(s)
- 2. V(s) ← 0  for all s
- 3. REPEAT   (outer loop — policy update)
-    ── Policy Evaluation (inner loop) ──────────────────────
-    a. REPEAT
-       i.  Δ ← 0
-       ii. FOR each non-terminal s ∈ S:
-           v_old ← V(s)
-           V(s)  ← Σ_{s'} P(s'|s,π(s)) · [R(s,π(s),s') + γ V(s')]
-           Δ ← max(Δ, |v_old − V(s)|)
-       iii.UNTIL Δ < θ
-    ── Policy Improvement ──────────────────────────────────
-    b. policy_stable ← True
-    c. FOR each s ∈ S:
-       a_old ← π(s)
-       π(s)  ← argmax_a Σ_{s'} P(s'|s,a) · [R(s,a,s') + γ V(s')]
-       IF a_old ≠ π(s):  policy_stable ← False
+ 1. FOR each s ∈ S: π(s) ← arbitrary action in A(s)
+ 2. V(s) ← 0 for all s
+ 3. REPEAT (outer loop — policy update)
+ ── Policy Evaluation (inner loop) ──────────────────────
+ a. REPEAT
+ i. Δ ← 0
+ ii. FOR each non-terminal s ∈ S:
+ v_old ← V(s)
+ V(s) ← Σ_{s'} P(s'|s,π(s)) · [R(s,π(s),s') + γ V(s')]
+ Δ ← max(Δ, |v_old − V(s)|)
+ iii.UNTIL Δ < θ
+ ── Policy Improvement ──────────────────────────────────
+ b. policy_stable ← True
+ c. FOR each s ∈ S:
+ a_old ← π(s)
+ π(s) ← argmax_a Σ_{s'} P(s'|s,a) · [R(s,a,s') + γ V(s')]
+ IF a_old ≠ π(s): policy_stable ← False
  4. UNTIL policy_stable
  5. RETURN π*
 ```
@@ -478,7 +478,7 @@ $$\|V_{22} - V^*\|_\infty \leq 0.9^{22}\,\epsilon_0 \approx 0.0985\,\epsilon_0 <
 | 0.95 | 45 | 90 |
 | 0.99 | 230 | 459 |
 
-> ⚠️ **$\gamma$ close to 1 is expensive.** Going from $\gamma = 0.9$ to $\gamma = 0.99$ multiplies the required iterations by about 10. Tasks requiring long-horizon planning (many steps to goal) need high $\gamma$ — but pay for it with slow convergence.
+> **$\gamma$ close to 1 is expensive.** Going from $\gamma = 0.9$ to $\gamma = 0.99$ multiplies the required iterations by about 10. Tasks requiring long-horizon planning (many steps to goal) need high $\gamma$ — but pay for it with slow convergence.
 
 **Applying the bound to the 4×4 GridWorld.** The furthest state from Goal (state 0, top-left corner) is at least 7 moves away. Starting with $V_0 = 0$ everywhere, the initial error is $\epsilon_0 \approx 10$ (roughly the maximum possible discounted return). After 22 VI sweeps with $\gamma = 0.9$:
 
@@ -486,7 +486,7 @@ $$\|V_{22} - V^*\|_\infty \leq 0.0985 \times 10 = 0.985$$
 
 In other words, the worst-case value error is under $\$1$ after 22 sweeps, even starting cold. In practice the wall-clock time on modern hardware is under 1 millisecond for a 16-state MDP.
 
-> 📚 **Optional depth — non-geometric convergence for Policy Iteration.** PI's convergence is *not* geometric in the number of outer iterations — it is finite and often super-linear in practice. Each policy improvement is strictly monotone, and because there are finitely many deterministic policies, the sequence $V^{\pi_0} \leq V^{\pi_1} \leq \ldots \leq V^*$ terminates. The number of outer iterations is bounded by $|A|^{|S|}$ (the number of deterministic policies) but in practice is much smaller — often just 2–5 for small MDPs regardless of $|S|$.
+> **Optional depth — non-geometric convergence for Policy Iteration.** PI's convergence is *not* geometric in the number of outer iterations — it is finite and often super-linear in practice. Each policy improvement is strictly monotone, and because there are finitely many deterministic policies, the sequence $V^{\pi_0} \leq V^{\pi_1} \leq \ldots \leq V^*$ terminates. The number of outer iterations is bounded by $|A|^{|S|}$ (the number of deterministic policies) but in practice is much smaller — often just 2–5 for small MDPs regardless of $|S|$.
 
 ### 4.5 Summary Comparison — All Three Algorithms on the 4-State Chain
 
@@ -499,7 +499,7 @@ For reference, here is how all three algorithms behave on the Detour/Right 4-sta
 | $V(C)$ at convergence | $-1.00$ | $-1.00$ | $-1.00$ |
 | Outer iterations to converge | 1 (fixed $\pi$) | $\sim$30 sweeps | 2 policy switches |
 | Extracted policy at B | Detour (fixed) | Right | Right |
-| Optimality of result | ✗ Suboptimal | ✅ Optimal | ✅ Optimal |
+| Optimality of result | ✗ Suboptimal | Optimal | Optimal |
 
 Policy evaluation gives $V(B) = -4.74$ under the bad policy. Value iteration and Policy Iteration both converge to $V(B) = -1.90$ under the optimal (Right) policy. Policy Iteration reaches this in 2 outer iterations; Value Iteration needs $\sim$30 sweeps to reduce $\Delta$ below $\theta = 0.001$.
 
@@ -560,11 +560,11 @@ This is value iteration. Each sweep evaluates *and* implicitly improves (the $\m
 The trade-off: value iteration needs more outer sweeps than policy iteration, but each sweep is cheaper (no inner loop). For problems with many actions, the two algorithms perform comparably; for tiny action spaces, policy iteration's faster outer convergence can win.
 
 ```
-Act 1: Direct matrix solve       O(|S|³)           exact, dies at |S| > 10⁴
-Act 2: Iterative evaluation      O(|S|²|A|)/sweep  scales, but finds V^π not V*
-Act 3: Evaluate + improve (PI)   few outer iters   expensive inner loop
-Act 4: One-step eval + max (VI)  more outer iters  no inner loop
-                                  ↳ The standard choice for model-based RL
+Act 1: Direct matrix solve O(|S|³) exact, dies at |S| > 10⁴
+Act 2: Iterative evaluation O(|S|²|A|)/sweep scales, but finds V^π not V*
+Act 3: Evaluate + improve (PI) few outer iters expensive inner loop
+Act 4: One-step eval + max (VI) more outer iters no inner loop
+ ↳ The standard choice for model-based RL
 ```
 
 **Complexity summary for the full algorithms:**
@@ -614,8 +614,8 @@ To see the iterative sweep converge, here are the first 3 of many sweeps from $V
 | ⋮ | ⋮ | ⋮ | ⋮ | $0.9^k$ |
 | ∞ | **−5.26** | **−4.74** | **−1.00** | 0 |
 
-*Sweep 1 arithmetic:* $V(B) = 0 + 0.9 \times V_0(A) = 0$; $V(A) = -1 + 0.9 \times V_0(B) = -1$.  
-*Sweep 2:* $V(B) = 0 + 0.9 \times (-1) = -0.90$; $V(A) = -1 + 0.9 \times 0 = -1$.  
+*Sweep 1 arithmetic:* $V(B) = 0 + 0.9 \times V_0(A) = 0$; $V(A) = -1 + 0.9 \times V_0(B) = -1$.
+*Sweep 2:* $V(B) = 0 + 0.9 \times (-1) = -0.90$; $V(A) = -1 + 0.9 \times 0 = -1$.
 *Sweep 3:* $V(A) = -1 + 0.9 \times (-0.90) = -1.81$; $V(B) = 0 + 0.9 \times (-1) = -0.90$.
 
 ---
@@ -632,7 +632,7 @@ $$\pi_1(B) = \arg\max\{-1.90,\; -4.74\} = \textbf{Right} \quad \leftarrow \textb
 
 States A and C have only one action — no change needed. The overall policy changed (B switched from Detour to Right). **Policy stable = False → do not stop. Run Pass 2.**
 
-> 💡 **Why did the Detour policy look good at initialization?** When all values were 0, the Detour action had $R = 0$ vs Right's $R = -1$ — so Detour appeared free. Only after evaluation revealed the true long-run cost ($-4.74$ vs $-1.90$) did the improvement step see through the illusion. This is the key danger of policy iteration: a bad initial policy can look locally attractive until values have propagated far enough.
+> **Why did the Detour policy look good at initialization?** When all values were 0, the Detour action had $R = 0$ vs Right's $R = -1$ — so Detour appeared free. Only after evaluation revealed the true long-run cost ($-4.74$ vs $-1.90$) did the improvement step see through the illusion. This is the key danger of policy iteration: a bad initial policy can look locally attractive until values have propagated far enough.
 
 ---
 
@@ -675,7 +675,7 @@ Detour is still dominated — but less dramatically. With the all-Right policy i
 
 **Why Detour's Q-value improved.** Under $\pi_0$, $V(A) = -5.26$ because A loops with B forever. Under $\pi_1$, $V(A) = -2.71$ because A now leads to the Goal in 3 steps. The Detour Q-value is $0 + 0.9 V(A)$, so it improved from $-4.74$ to $-2.44$ as A became reachable. But Right's Q-value stayed at $-1.90$ (unaffected by A's value), so Right still wins.
 
-**Policy stable = True.** $\pi^* = \pi_1$ = always Right. **Converged in 2 policy switches.** ✅
+**Policy stable = True.** $\pi^* = \pi_1$ = always Right. **Converged in 2 policy switches.**
 
 **What if the chain were longer (say 10 states)?** Policy iteration would still need only 2 outer iterations — the improvement step finds Right is always better than any backward action, regardless of chain length. The inner evaluation loop would take more sweeps to converge (more states to propagate through), but the outer loop stays at 2. This is policy iteration's key advantage over exhaustive search.
 
@@ -695,63 +695,63 @@ This matches $V^{\pi^*}(A) = -2.71$ exactly.
 
 ```mermaid
 flowchart TD
-    A["Initialize V(s) = 0 for all s"]:::primary --> B
-    B["For each non-terminal s ∈ S"]:::info --> C
-    C["V(s) ← max_a Σ P(s'|s,a)·[R + γV(s')]"]:::caution --> D
-    D{"Δ = max|ΔV(s)| < θ ?"}:::caution --> |"No — error still large"| B
-    D --> |"Yes — converged"| E
-    E["Extract π*(s) = argmax_a Σ P[R + γV(s')]"]:::success --> F
-    F["Return V*, π*"]:::success
+ A["Initialize V(s) = 0 for all s"]:::primary --> B
+ B["For each non-terminal s ∈ S"]:::info --> C
+ C["V(s) ← max_a Σ P(s'|s,a)·[R + γV(s')]"]:::caution --> D
+ D{"Δ = max|ΔV(s)| < θ ?"}:::caution --> |"No — error still large"| B
+ D --> |"Yes — converged"| E
+ E["Extract π*(s) = argmax_a Σ P[R + γV(s')]"]:::success --> F
+ F["Return V*, π*"]:::success
 
-    classDef primary fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    classDef success fill:#15803d,color:#fff,stroke:#15803d
-    classDef caution fill:#b45309,color:#fff,stroke:#b45309
-    classDef danger  fill:#b91c1c,color:#fff,stroke:#b91c1c
-    classDef info    fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ classDef primary fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ classDef success fill:#15803d,color:#fff,stroke:#15803d
+ classDef caution fill:#b45309,color:#fff,stroke:#b45309
+ classDef danger fill:#b91c1c,color:#fff,stroke:#b91c1c
+ classDef info fill:#1d4ed8,color:#fff,stroke:#1d4ed8
 ```
 
 ### 7.2 Policy Iteration Cycle
 
 ```mermaid
 flowchart LR
-    I["Initialize π₀\n(random actions)"]:::primary --> PE
-    PE["Policy Evaluation\nIterate linear Bellman\nuntil Δ < θ"]:::info --> PI
-    PI["Policy Improvement\nπ(s) ← argmax_a Q^π(s,a)\nfor every state s"]:::caution --> CHK
-    CHK{"Any π(s)\nchanged?"}:::caution --> |"Yes — keep going"| PE
-    CHK --> |"No — stable"| DONE
-    DONE["Return π* = πₖ\n(provably optimal)"]:::success
+ I["Initialize π₀\n(random actions)"]:::primary --> PE
+ PE["Policy Evaluation\nIterate linear Bellman\nuntil Δ < θ"]:::info --> PI
+ PI["Policy Improvement\nπ(s) ← argmax_a Q^π(s,a)\nfor every state s"]:::caution --> CHK
+ CHK{"Any π(s)\nchanged?"}:::caution --> |"Yes — keep going"| PE
+ CHK --> |"No — stable"| DONE
+ DONE["Return π* = πₖ\n(provably optimal)"]:::success
 
-    classDef primary fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    classDef success fill:#15803d,color:#fff,stroke:#15803d
-    classDef caution fill:#b45309,color:#fff,stroke:#b45309
-    classDef danger  fill:#b91c1c,color:#fff,stroke:#b91c1c
-    classDef info    fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ classDef primary fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ classDef success fill:#15803d,color:#fff,stroke:#15803d
+ classDef caution fill:#b45309,color:#fff,stroke:#b45309
+ classDef danger fill:#b91c1c,color:#fff,stroke:#b91c1c
+ classDef info fill:#1d4ed8,color:#fff,stroke:#1d4ed8
 ```
 
 ### 7.3 Value Propagation Wave on GridWorld (ASCII)
 
 ```
-Iteration 0 — all zeros:           Iteration 1 — reward first touches neighbors:
-┌─────┬─────┬─────┬─────┐          ┌─────┬─────┬─────┬─────┐
-│  0  │  0  │  0  │  0  │          │  0  │  0  │  0  │  0  │
-├─────┼─────┼─────┼─────┤          ├─────┼─────┼─────┼─────┤
-│  0  │ ██  │  0  │  0  │          │  0  │ ██  │  0  │  0  │
-├─────┼─────┼─────┼─────┤          ├─────┼─────┼─────┼─────┤
-│  0  │  0  │  0  │  0  │          │  0  │  0  │  0  │  8.0│
-├─────┼─────┼─────┼─────┤          ├─────┼─────┼─────┼─────┤
-│  0  │  0  │  0  │  0  │          │  0  │  0  │  10 │  0  │
-└─────┴─────┴─────┴─────┘          └─────┴─────┴─────┴─────┘
+Iteration 0 — all zeros: Iteration 1 — reward first touches neighbors:
+┌─────┬─────┬─────┬─────┐ ┌─────┬─────┬─────┬─────┐
+│ 0 │ 0 │ 0 │ 0 │ │ 0 │ 0 │ 0 │ 0 │
+├─────┼─────┼─────┼─────┤ ├─────┼─────┼─────┼─────┤
+│ 0 │ ██ │ 0 │ 0 │ │ 0 │ ██ │ 0 │ 0 │
+├─────┼─────┼─────┼─────┤ ├─────┼─────┼─────┼─────┤
+│ 0 │ 0 │ 0 │ 0 │ │ 0 │ 0 │ 0 │ 8.0│
+├─────┼─────┼─────┼─────┤ ├─────┼─────┼─────┼─────┤
+│ 0 │ 0 │ 0 │ 0 │ │ 0 │ 0 │ 10 │ 0 │
+└─────┴─────┴─────┴─────┘ └─────┴─────┴─────┴─────┘
 
-Iteration 3 — wave spreading:       Converged (~12 sweeps):
-┌─────┬─────┬─────┬─────┐          ┌─────┬─────┬─────┬─────┐
-│  0  │  0  │  0  │  4.7│          │ 4.1 │ 5.3 │ 6.6 │ 7.4 │
-├─────┼─────┼─────┼─────┤          ├─────┼─────┼─────┼─────┤
-│  0  │ ██  │  5.8│  6.4│          │ 3.0 │ ██  │ 7.4 │ 8.2 │
-├─────┼─────┼─────┼─────┤          ├─────┼─────┼─────┼─────┤
-│  0  │  4.7│  6.4│  8.0│          │ 3.9 │ 5.3 │ 8.2 │ 9.0 │
-├─────┼─────┼─────┼─────┤          ├─────┼─────┼─────┼─────┤
-│  0  │  5.8│  8.0│  10 │          │ 3.0 │ 5.9 │ 9.0 │  10 │
-└─────┴─────┴─────┴─────┘          └─────┴─────┴─────┴─────┘
+Iteration 3 — wave spreading: Converged (~12 sweeps):
+┌─────┬─────┬─────┬─────┐ ┌─────┬─────┬─────┬─────┐
+│ 0 │ 0 │ 0 │ 4.7│ │ 4.1 │ 5.3 │ 6.6 │ 7.4 │
+├─────┼─────┼─────┼─────┤ ├─────┼─────┼─────┼─────┤
+│ 0 │ ██ │ 5.8│ 6.4│ │ 3.0 │ ██ │ 7.4 │ 8.2 │
+├─────┼─────┼─────┼─────┤ ├─────┼─────┼─────┼─────┤
+│ 0 │ 4.7│ 6.4│ 8.0│ │ 3.9 │ 5.3 │ 8.2 │ 9.0 │
+├─────┼─────┼─────┼─────┤ ├─────┼─────┼─────┼─────┤
+│ 0 │ 5.8│ 8.0│ 10 │ │ 3.0 │ 5.9 │ 9.0 │ 10 │
+└─────┴─────┴─────┴─────┘ └─────┴─────┴─────┴─────┘
 Values radiate backward from Goal like ripples on water — each cell learns how far it is.
 ```
 
@@ -780,7 +780,7 @@ Values radiate backward from Goal like ripples on water — each cell learns how
 | Max sweeps (safety cap) | $< 10$: values haven't propagated across even a small grid | $100$–$500$: sufficient for grids up to $10^4$ states | Unlimited with $\theta > 0$: fine, $\theta$ will fire first | Cap at $1{,}000$; the cap should never trigger if $\theta$ is set correctly |
 | Eval depth per PI step (PI only) | $= 1$ step: equivalent to value iteration | $10$–$50$ sweeps: matches full-convergence quality in practice | Full convergence: adds significant cost with negligible benefit after the first few passes | Truncated evaluation at 10–20 sweeps is the pragmatic default for large $|S|$ |
 
-> 💡 **Why $\theta = 0.001$ and not $0$?** Floating-point arithmetic means $\Delta$ never reaches exactly 0. With $\theta = 0.001$ the algorithm stops when the largest per-state value change is less than one part in a thousand of typical values — well past the point where the extracted policy changes.
+> **Why $\theta = 0.001$ and not $0$?** Floating-point arithmetic means $\Delta$ never reaches exactly 0. With $\theta = 0.001$ the algorithm stops when the largest per-state value change is less than one part in a thousand of typical values — well past the point where the extracted policy changes.
 
 **Sensitivity of the extracted policy to $\theta$.** The policy stops changing long before values converge numerically. In the GridWorld example, the greedy policy stabilizes after $\sim$5 sweeps (before values have fully propagated to corner states), but value errors at that point are still $> 1.0$. This means:
 - For policy quality: $\theta = 0.1$ is usually sufficient.
@@ -809,19 +809,19 @@ CartPole episodes end after 200 steps at most, suggesting $\gamma \approx 0.99$.
 
 ```mermaid
 flowchart TD
-    P["Values not converging or policy wrong"]:::danger --> Q
-    Q{"Is Δ shrinking\neach sweep?"}:::caution --> |"No"| R["Check γ < 1 and\nskip terminal states"]:::danger
-    Q --> |"Yes, but slowly"| S{"θ too large?"}:::caution
-    S --> |"Yes"| T["Decrease θ × 0.1\nre-run and compare"]:::success
-    S --> |"No"| U{"State space > 10⁶?"}:::caution
-    U --> |"Yes"| V["Function approximation\n→ Ch.4 DQN"]:::info
-    U --> |"No"| W["Verify reward sign\nand γ ∈ (0, 1)"]:::info
+ P["Values not converging or policy wrong"]:::danger --> Q
+ Q{"Is Δ shrinking\neach sweep?"}:::caution --> |"No"| R["Check γ < 1 and\nskip terminal states"]:::danger
+ Q --> |"Yes, but slowly"| S{"θ too large?"}:::caution
+ S --> |"Yes"| T["Decrease θ × 0.1\nre-run and compare"]:::success
+ S --> |"No"| U{"State space > 10⁶?"}:::caution
+ U --> |"Yes"| V["Function approximation\n→ Ch.4 DQN"]:::info
+ U --> |"No"| W["Verify reward sign\nand γ ∈ (0, 1)"]:::info
 
-    classDef primary fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    classDef success fill:#15803d,color:#fff,stroke:#15803d
-    classDef caution fill:#b45309,color:#fff,stroke:#b45309
-    classDef danger  fill:#b91c1c,color:#fff,stroke:#b91c1c
-    classDef info    fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ classDef primary fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ classDef success fill:#15803d,color:#fff,stroke:#15803d
+ classDef caution fill:#b45309,color:#fff,stroke:#b45309
+ classDef danger fill:#b91c1c,color:#fff,stroke:#b91c1c
+ classDef info fill:#1d4ed8,color:#fff,stroke:#1d4ed8
 ```
 
 ---
@@ -839,7 +839,7 @@ The DP machinery — contraction mappings, value backups, policy improvement —
 | **04-MultiAgent AI** | Single-agent MDP | Nash equilibrium in cooperative games found by multi-agent value iteration — same sweep-until-stable structure |
 | **03-AI / Agentic AI** | Markovian transitions | BFS/DFS over a planning graph is DP on a deterministic MDP with $\gamma = 1$; A* adds a heuristic value function |
 
-> ➡️ **The Principle of Optimality is universal.** Every time an algorithm says "assume the future is handled optimally and solve for the current decision," it invokes Bellman's 1957 insight — from classical DP to neural critics to LLM chain-of-thought planners reasoning step by step.
+> ➡ **The Principle of Optimality is universal.** Every time an algorithm says "assume the future is handled optimally and solve for the current decision," it invokes Bellman's 1957 insight — from classical DP to neural critics to LLM chain-of-thought planners reasoning step by step.
 
 **One pattern to watch for.** Whenever you see "target network", "critic", "baseline", or "value head" in a paper, ask: what is this approximating? Almost always the answer is $V^{\pi}$ or $V^*$ — and the update rule for that approximation is a one-step Bellman backup, the same equation you worked out by hand in this chapter for the 4-state chain.
 
@@ -851,19 +851,19 @@ The DP machinery — contraction mappings, value backups, policy improvement —
 
 | Skill | What you need | AgentAI status |
 |-------|--------------|----------------|
-| Run 3 iterations of Policy Evaluation by hand | 4-state chain, $\gamma = 0.9$, show each arithmetic step | ✅ Small MDPs |
-| Apply Policy Improvement and identify which action changes | Detour vs Right example — Q-values must differ | ✅ Small MDPs |
-| Run 3 iterations of Value Iteration with explicit arithmetic | Same 4-state chain, $\max_a$ written out | ✅ Small MDPs |
-| Prove convergence using the contraction bound | $\gamma^{22} \approx 0.098 < 0.1$ for $\gamma=0.9$ | ✅ Small MDPs |
-| Trace a 2-pass Policy Iteration with arithmetic | §6 walkthrough with Detour/Right actions | ✅ Small MDPs |
-| Explain the VI vs PI trade-off in one sentence | Inner loop vs outer iterations | ✅ Small MDPs |
-| Run DP on CartPole | Continuous 4-D state space — tabular $V(s)$ impossible | ❌ CartPole |
+| Run 3 iterations of Policy Evaluation by hand | 4-state chain, $\gamma = 0.9$, show each arithmetic step | Small MDPs |
+| Apply Policy Improvement and identify which action changes | Detour vs Right example — Q-values must differ | Small MDPs |
+| Run 3 iterations of Value Iteration with explicit arithmetic | Same 4-state chain, $\max_a$ written out | Small MDPs |
+| Prove convergence using the contraction bound | $\gamma^{22} \approx 0.098 < 0.1$ for $\gamma=0.9$ | Small MDPs |
+| Trace a 2-pass Policy Iteration with arithmetic | §6 walkthrough with Detour/Right actions | Small MDPs |
+| Explain the VI vs PI trade-off in one sentence | Inner loop vs outer iterations | Small MDPs |
+| Run DP on CartPole | Continuous 4-D state space — tabular $V(s)$ impossible | CartPole |
 
 **Honest assessment after Ch.2:**
-- ✅ **GridWorld-class MDPs** with $|S| \leq 10^4$ — both algorithms converge in seconds.
-- ❌ **CartPole** — continuous state space; tabular DP is impossible. Ch.3 (Q-learning) and Ch.4 (DQN) close this gap.
+- **GridWorld-class MDPs** with $|S| \leq 10^4$ — both algorithms converge in seconds.
+- **CartPole** — continuous state space; tabular DP is impossible. Ch.3 (Q-learning) and Ch.4 (DQN) close this gap.
 
-> 💡 **The CartPole constraint is intentionally carried forward.** Knowing *why* DP fails at CartPole — and precisely what property it lacks ($|S|$ is infinite and continuous) — is the motivation for every method in Chapters 3–5. By the end of Ch.4, CartPole will be solved by a DQN scoring ≥195/200.
+> **The CartPole constraint is intentionally carried forward.** Knowing *why* DP fails at CartPole — and precisely what property it lacks ($|S|$ is infinite and continuous) — is the motivation for every method in Chapters 3–5. By the end of Ch.4, CartPole will be solved by a DQN scoring ≥195/200.
 
 **Self-quiz before moving on:**
 1. Write down $V_4(A)$ for the 4-state chain with $\gamma = 0.9$, $R = -1$. *(Answer: $-3.439 = -1 - 0.9 - 0.81 - 0.729$)*
@@ -894,11 +894,11 @@ One more issue arises: Q-learning's convergence guarantee requires infinitely ma
 3. **The $\gamma$-contraction is the guarantee.** Whenever you see a convergence proof in RL, look for the argument that shows repeated application of the Bellman operator is a contraction. It is always there, dressed in different notation.
 
 ```
-Ch.2 DP         →  Ch.3 Q-Learning    →  Ch.4 DQN
-Known P            No P needed            No P, large/continuous |S|
-Tabular V(s)       Tabular Q(s,a)         Neural Q(s,a;θ)
-Convergence        Asymptotic opt         Empirical opt (no guarantee)
-guaranteed         (with ∞ samples)       (works in practice)
+Ch.2 DP → Ch.3 Q-Learning → Ch.4 DQN
+Known P No P needed No P, large/continuous |S|
+Tabular V(s) Tabular Q(s,a) Neural Q(s,a;θ)
+Convergence Asymptotic opt Empirical opt (no guarantee)
+guaranteed (with ∞ samples) (works in practice)
 ```
 
 **A concrete preview of Ch.3.** Q-learning updates a table $Q(s,a)$ after each observed transition $(s, a, r, s')$:

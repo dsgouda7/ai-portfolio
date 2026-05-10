@@ -2,7 +2,7 @@
 
 > **The story.** The hardest question in machine learning is not "how do I build a model?" but "how do I know if it worked?" In supervised learning the answer is straightforward: compare predictions to labels. In unsupervised learning the answer took decades to develop. The first systematic step came from **William M. Rand** in **1971**, who proposed counting concordant pairs between two clusterings of the same data — the **Rand Index** — and showing how to correct it for chance agreement. Three years later, in **1974**, **Tadeusz Calinski and Jerzy Harabasz** proposed their ratio index: between-cluster dispersion divided by within-cluster dispersion — a single number capturing how dense and well-separated clusters are, requiring no labels whatsoever. The label-free revolution continued with **David Davies and Donald Bouldin** in **1979**: their index compares each cluster's internal scatter to the distance separating it from its nearest neighbour cluster, producing an average compactness–separation ratio. The field crystallised with **Peter Rousseeuw**'s silhouette coefficient in **1987** — the per-point measure that asks *"is point $i$ closer to its own cluster or to the nearest other cluster?"* — yielding a score in $[-1,1]$ any practitioner can interpret without consulting a statistician. Together these four milestones turned unsupervised learning from "pretty plots" into engineering decisions backed by quantitative evidence.
 >
-> **Where you are in the curriculum.** This is the **final chapter** of the Unsupervised Learning track. [Ch.1](../ch01_clustering) ran K-Means on UCI Wholesale customers and produced k=4 segments (silhouette=0.42 — below the 0.5 target). [Ch.2](../ch02_dimensionality_reduction) applied UMAP 3D to compress the feature space and re-ran K-Means, visually tightening the clusters. Now the CMO asks the hard engineering question: *"Are those 4 segments provably good?"* This chapter provides the answer — four formal metrics that validate cluster quality without labels — and closes the SegmentAI mission with silhouette=0.57 ✅.
+> **Where you are in the curriculum.** This is the **final chapter** of the Unsupervised Learning track. [Ch.1](../ch01_clustering) ran K-Means on UCI Wholesale customers and produced k=4 segments (silhouette=0.42 — below the 0.5 target). [Ch.2](../ch02_dimensionality_reduction) applied UMAP 3D to compress the feature space and re-ran K-Means, visually tightening the clusters. Now the CMO asks the hard engineering question: *"Are those 4 segments provably good?"* This chapter provides the answer — four formal metrics that validate cluster quality without labels — and closes the SegmentAI mission with silhouette=0.57 .
 >
 > **Notation in this chapter.** Clustering of $n$ points into $k$ clusters: $C_i$ — set of points in cluster $i$; $n_i=|C_i|$ — cluster size; $\mu_i$ — centroid of $C_i$; $\bar{\mu}$ — overall data centroid. **Silhouette:** $a(i)$ — mean distance from point $i$ to all other members of its own cluster (*cohesion*); $b(i)$ — mean distance from $i$ to all members of its nearest other cluster (*separation*); $s(i)=\frac{b(i)-a(i)}{\max(a(i),b(i))}\in[-1,1]$ — silhouette coefficient; 1=perfectly assigned, −1=misassigned. **Davies–Bouldin:** $\sigma_i$ — mean intra-cluster distance for cluster $i$; $\mathrm{DB}=\frac{1}{k}\sum_{i=1}^{k}\max_{j\neq i}\frac{\sigma_i+\sigma_j}{d(\mu_i,\mu_j)}$ — lower is better. **Calinski–Harabasz:** $B=\sum_i n_i\|\mu_i-\bar{\mu}\|^2$ — between-cluster SS; $W=\sum_i\sum_{x\in C_i}\|x-\mu_i\|^2$ — within-cluster SS; $\mathrm{CH}=\frac{B/(k-1)}{W/(n-k)}$ — higher is better. **ARI:** $\mathrm{ARI}=\frac{\sum_{ij}\binom{n_{ij}}{2}-t_3}{\frac{1}{2}(t_1+t_2)-t_3}$ where $t_1,t_2,t_3$ are functions of the contingency-table row/column sums; range $[-1,1]$; requires ground-truth labels.
 
@@ -10,13 +10,13 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 💡 **The mission**: Build **SegmentAI** — discover 4 actionable customer segments from UCI Wholesale data satisfying 5 constraints:
+> **The mission**: Build **SegmentAI** — discover 4 actionable customer segments from UCI Wholesale data satisfying 5 constraints:
 > 1. **SEGMENTATION**: 4 distinct, non-overlapping segments — 2. **INTERPRETABILITY**: Each segment maps to a business-actionable profile — 3. **STABILITY**: Reproducible across data resamples — 4. **SCALABILITY**: Pipeline runs on 10k+ customers — 5. **VALIDATION**: Silhouette score >0.5 (quantitative proof of cluster quality)
 
 **What we know so far:**
-- ✅ Ch.1: K-Means on 440 wholesale customers → k=4 segments, silhouette=0.42 (below 0.5 target)
-- ✅ Ch.2: UMAP 3D compression → re-clustered → visually tighter clusters, silhouette improves
-- ❌ **We have no formal proof that k=4 is optimal or that the clusters are not artefacts of random initialisation**
+- Ch.1: K-Means on 440 wholesale customers → k=4 segments, silhouette=0.42 (below 0.5 target)
+- Ch.2: UMAP 3D compression → re-clustered → visually tighter clusters, silhouette improves
+- **We have no formal proof that k=4 is optimal or that the clusters are not artefacts of random initialisation**
 
 **What's blocking us:**
 The CMO asks: *"Our marketing team is about to build four separate campaigns. How do we know those clusters are not noise?"*
@@ -43,11 +43,11 @@ The four canonical metrics for measuring cluster quality:
 
 ```mermaid
 flowchart LR
-    A["Ch.1: K-Means k=4\nsilhouette=0.42\n❌ below 0.5 target"] --> B["Ch.2: UMAP 3D\ntighter clusters\nsilhouette improves"]
-    B --> C["Ch.3: Metrics suite\nsilhouette=0.57 ✅\nALL 5 constraints met"]
-    style A fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#fff
-    style B fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#fff
-    style C fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#fff
+ A["Ch.1: K-Means k=4\nsilhouette=0.42\n below 0.5 target"] --> B["Ch.2: UMAP 3D\ntighter clusters\nsilhouette improves"]
+ B --> C["Ch.3: Metrics suite\nsilhouette=0.57 \nALL 5 constraints met"]
+ style A fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#fff
+ style B fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#fff
+ style C fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#fff
 ```
 
 ---
@@ -70,7 +70,7 @@ flowchart LR
 
 **Adjusted Rand Index: external validation.** When ground-truth labels exist, ARI measures how well your clusters agree with them, corrected for chance. A random partition scores ≈0; perfect agreement scores 1. Use as a sanity check when a proxy label is available.
 
-> ⚡ **The key insight:** Internal metrics (silhouette, DB, CH) need only the feature matrix. External metrics (ARI) require ground-truth labels. Requiring two or three internal metrics to *agree* on a k value makes the validation robust against any single metric's geometry assumptions.
+> **The key insight:** Internal metrics (silhouette, DB, CH) need only the feature matrix. External metrics (ARI) require ground-truth labels. Requiring two or three internal metrics to *agree* on a k value makes the validation robust against any single metric's geometry assumptions.
 
 ---
 
@@ -106,7 +106,7 @@ flowchart LR
 | 0.25 – 0.50 | Weak, meaningful overlap | Investigate preprocessing |
 | < 0.25 | No meaningful structure | Try different algorithm or features |
 
-> 💡 **Practical rule:** Run all three internal metrics. If they *agree* on the same k, that k is robust. If they disagree, inspect per-cluster silhouette samples — one poorly-formed cluster often drives the discrepancy.
+> **Practical rule:** Run all three internal metrics. If they *agree* on the same k, that k is robust. If they disagree, inspect per-cluster silhouette samples — one poorly-formed cluster often drives the discrepancy.
 
 
 ## 4 · The Math — All Arithmetic
@@ -156,7 +156,7 @@ $$b(x_2)=d(x_2,x_3)=\|[1,0]-[5,0]\|=\sqrt{(1-5)^2+(0-0)^2}=\sqrt{16}=4.0$$
 
 $$s(x_2)=\frac{b(x_2)-a(x_2)}{\max(a(x_2),\,b(x_2))}=\frac{4.0-1.0}{\max(1.0,\,4.0)}=\frac{3.0}{4.0}=\mathbf{0.75}$$
 
-> ⚠️ Note: $s(x_2)\neq s(x_1)$ because $x_2$ lies between $x_1$ and $x_3$ on the number line — it is one unit closer to $C_2$. The silhouette is *not* symmetric unless the geometry is symmetric.
+> Note: $s(x_2)\neq s(x_1)$ because $x_2$ lies between $x_1$ and $x_3$ on the number line — it is one unit closer to $C_2$. The silhouette is *not* symmetric unless the geometry is symmetric.
 
 ---
 
@@ -196,27 +196,27 @@ $$\bar{s}=\frac{s(x_1)+s(x_2)+s(x_3)}{3}=\frac{0.80+0.75+1.0}{3}=\frac{2.55}{3}=
 **Silhouette geometry — visual intuition:**
 
 ```
-Cluster C1                Cluster C2
-  x1=[0,0] ──── x2=[1,0]          x3=[5,0]
-      |               |                |
- a(x1)=1.0       a(x2)=1.0       a(x3)=0
-                                       |
-  b(x1)=d(x1,x3)=5.0            b(x3)=mean(5.0, 4.0)=4.5
-  b(x2)=d(x2,x3)=4.0
+Cluster C1 Cluster C2
+ x1=[0,0] ──── x2=[1,0] x3=[5,0]
+ | | |
+ a(x1)=1.0 a(x2)=1.0 a(x3)=0
+ |
+ b(x1)=d(x1,x3)=5.0 b(x3)=mean(5.0, 4.0)=4.5
+ b(x2)=d(x2,x3)=4.0
 
-  s(x1) = (5-1)/5  = 0.80   ← well inside own cluster
-  s(x2) = (4-1)/4  = 0.75   ← still well assigned, but closer to C2
-  s(x3) = (4.5-0)/4.5 = 1.0 ← singleton; by convention always 1.0
+ s(x1) = (5-1)/5 = 0.80 ← well inside own cluster
+ s(x2) = (4-1)/4 = 0.75 ← still well assigned, but closer to C2
+ s(x3) = (4.5-0)/4.5 = 1.0 ← singleton; by convention always 1.0
 ```
 
 **Step-by-step recipe (sklearn):**
 
 ```
 1. For every point i in the dataset:
-   a. Compute a(i) = mean distance to all other points in C_i
-   b. For each other cluster j ≠ C_i: compute mean_dist(i, C_j)
-   c. b(i) = min over j≠C_i of mean_dist(i, C_j)
-   d. s(i) = (b(i) - a(i)) / max(a(i), b(i))
+ a. Compute a(i) = mean distance to all other points in C_i
+ b. For each other cluster j ≠ C_i: compute mean_dist(i, C_j)
+ c. b(i) = min over j≠C_i of mean_dist(i, C_j)
+ d. s(i) = (b(i) - a(i)) / max(a(i), b(i))
 2. Mean silhouette = (1/n) * sum_i s(i)
 3. Per-cluster silhouette = mean of s(i) for all i in that cluster
 ```
@@ -344,7 +344,7 @@ $$\mathrm{ARI}=\frac{\displaystyle\sum_{ij}\binom{n_{ij}}{2}-t_3}{\dfrac{t_1+t_2
 
 Interpretation: ARI=0.44 is moderate agreement — the clustering recovers most of the true structure, with the one misassigned point (true class 1 → predicted cluster 0) reducing it from the perfect score of 1.0.
 
-> 💡 **Reading ARI in practice.** Random assignment scores ≈ 0 by construction (the "adjusted" part corrects for chance). Perfect agreement with ground truth scores 1.0. Negative values mean the clustering is worse than random — a sign to revisit $k$ or the algorithm entirely.
+> **Reading ARI in practice.** Random assignment scores ≈ 0 by construction (the "adjusted" part corrects for chance). Perfect agreement with ground truth scores 1.0. Negative values mean the clustering is worse than random — a sign to revisit $k$ or the algorithm entirely.
 >
 > | ARI | Interpretation | Recommended action |
 > |---|---|---|
@@ -370,7 +370,7 @@ For each of the 440 customers, compute $a(i)$ (mean distance to cluster-mates) a
 Silhouette can be gamed by special geometries (singletons score 1.0; very unequal cluster sizes distort the mean). Davies–Bouldin checks that clusters are *simultaneously* compact and well-separated: it penalises any cluster that is internally loose *or* too close to another cluster. Calinski–Harabasz checks the global picture — are centroids far from the overall mean (large $B$) while points cluster tightly around their own centroids (small $W$)?
 
 **Act 4 — All three metrics agree → k=4 is optimal → SegmentAI target achieved.**
-Sweep k=2 to k=8. Silhouette peaks at k=4 (0.57). DB reaches its minimum at k=4 (0.89). CH reaches its maximum at k=4 (210). Three independent metrics, three votes for k=4. Silhouette=0.57>0.5 ✅. The engineering decision is made with confidence.
+Sweep k=2 to k=8. Silhouette peaks at k=4 (0.57). DB reaches its minimum at k=4 (0.89). CH reaches its maximum at k=4 (210). Three independent metrics, three votes for k=4. Silhouette=0.57>0.5 . The engineering decision is made with confidence.
 
 
 ## 6 · Full Metrics Walkthrough — SegmentAI k=4
@@ -381,7 +381,7 @@ Sweep k=2 to k=8. Silhouette peaks at k=4 (0.57). DB reaches its minimum at k=4 
 |---|-------------|-----------------|---------------------|---------|
 | 2 | 0.49 | 1.21 | 165 | Too coarse — HoReCa and Retail merged |
 | 3 | 0.53 | 1.05 | 188 | Good metrics, but 3 segments insufficient for marketing |
-| **4** | **0.57** | **0.89** | **210** | **✅ All 3 metrics peak/trough here — unanimous** |
+| **4** | **0.57** | **0.89** | **210** | ** All 3 metrics peak/trough here — unanimous** |
 | 5 | 0.51 | 0.98 | 197 | All 3 metrics worse than k=4 |
 | 6 | 0.47 | 1.14 | 180 | Declining quality |
 | 7 | 0.44 | 1.22 | 168 | Declining |
@@ -393,23 +393,23 @@ k=4 wins all three metrics simultaneously. This unanimous agreement is the stron
 
 | Metric | Value | Threshold | Status |
 |--------|-------|-----------|--------|
-| Silhouette | **0.57** | >0.5 required | ✅ |
-| Davies–Bouldin | **0.89** | <1.0 acceptable | ✅ |
-| Calinski–Harabasz | **210** | Peak at k=4 (k=3: 188, k=5: 197) | ✅ |
+| Silhouette | **0.57** | >0.5 required | |
+| Davies–Bouldin | **0.89** | <1.0 acceptable | |
+| Calinski–Harabasz | **210** | Peak at k=4 (k=3: 188, k=5: 197) | |
 | ARI | **N/A** | No ground-truth customer labels available | — |
 
-> 💡 **Why no ARI?** The `Channel` column (Hotel=1, Retail=2) was excluded from clustering per the challenge specification. Using it as a 2-class proxy against a 4-cluster prediction is methodologically unsound — ARI would measure how 4 clusters map onto 2 categories, which is not the question being asked. In production, domain experts could manually label a holdout sample for proper external validation.
+> **Why no ARI?** The `Channel` column (Hotel=1, Retail=2) was excluded from clustering per the challenge specification. Using it as a 2-class proxy against a 4-cluster prediction is methodologically unsound — ARI would measure how 4 clusters map onto 2 categories, which is not the question being asked. In production, domain experts could manually label a holdout sample for proper external validation.
 
 ### Per-Cluster Silhouette Profile (k=4)
 
 ```
-Cluster 0 — HoReCa buyers       ████████████████████████  0.63
-Cluster 1 — Retail anchors       ████████████████████      0.59
-Cluster 2 — Mixed channel        ████████████████          0.48
-Cluster 3 — Deli specialists     ████████████████████████  0.61
+Cluster 0 — HoReCa buyers ████████████████████████ 0.63
+Cluster 1 — Retail anchors ████████████████████ 0.59
+Cluster 2 — Mixed channel ████████████████ 0.48
+Cluster 3 — Deli specialists ████████████████████████ 0.61
 ──────────────────────────────────────────────────────────────
-Overall mean silhouette                                      0.57 ✅
-Target threshold                                             0.50
+Overall mean silhouette 0.57
+Target threshold 0.50
 ```
 
 Cluster 2 (Mixed channel) scores 0.48 — below the mean but still *positive*. This means all 440 customers are assigned to a cluster closer to them than any alternative. No cluster has a negative mean silhouette; no mandatory merging is required. The mixed-channel segment is the natural boundary region containing customers that don't fit neatly into any specialist category — this is expected and acceptable.
@@ -422,39 +422,39 @@ Cluster 2 (Mixed channel) scores 0.48 — below the mean but still *positive*. T
 
 ```mermaid
 flowchart TD
-    A["I need to evaluate\na clustering result"] --> B{"Ground-truth labels\navailable?"}
-    B -->|"Yes"| C["ARI + internal metrics\n(use both for full picture)"]
-    B -->|"No"| D["Internal metrics only:\nsilhouette + DB + CH"]
-    D --> E["Compute silhouette\n(cohesion vs separation)"]
-    D --> F["Compute Davies–Bouldin\n(scatter-to-separation ratio)"]
-    D --> G["Compute Calinski–Harabasz\n(between/within dispersion)"]
-    E --> H{"Do all 3 agree\non best k?"}
-    F --> H
-    G --> H
-    H -->|"Yes — unanimous"| I["✅ Confident k choice\nAll evidence converges"]
-    H -->|"No — disagreement"| J["Inspect silhouette_samples()\nper cluster"]
-    J --> K{"Any cluster with\nmean s(i) < 0?"}
-    K -->|"Yes"| L["Merge that cluster\nor try DBSCAN/HDBSCAN"]
-    K -->|"No"| M{"Business constraint\non k?"}
-    M -->|"Yes + silhouette > 0.5"| N["Accept business k\nDocument trade-off"]
-    M -->|"No constraint"| O["Pick k where\nsilhouette is maximum"]
-    style I fill:#15803d,color:#fff,stroke:#e2e8f0
-    style L fill:#b91c1c,color:#fff,stroke:#e2e8f0
-    style N fill:#b45309,color:#fff,stroke:#e2e8f0
-    style C fill:#1d4ed8,color:#fff,stroke:#e2e8f0
+ A["I need to evaluate\na clustering result"] --> B{"Ground-truth labels\navailable?"}
+ B -->|"Yes"| C["ARI + internal metrics\n(use both for full picture)"]
+ B -->|"No"| D["Internal metrics only:\nsilhouette + DB + CH"]
+ D --> E["Compute silhouette\n(cohesion vs separation)"]
+ D --> F["Compute Davies–Bouldin\n(scatter-to-separation ratio)"]
+ D --> G["Compute Calinski–Harabasz\n(between/within dispersion)"]
+ E --> H{"Do all 3 agree\non best k?"}
+ F --> H
+ G --> H
+ H -->|"Yes — unanimous"| I[" Confident k choice\nAll evidence converges"]
+ H -->|"No — disagreement"| J["Inspect silhouette_samples()\nper cluster"]
+ J --> K{"Any cluster with\nmean s(i) < 0?"}
+ K -->|"Yes"| L["Merge that cluster\nor try DBSCAN/HDBSCAN"]
+ K -->|"No"| M{"Business constraint\non k?"}
+ M -->|"Yes + silhouette > 0.5"| N["Accept business k\nDocument trade-off"]
+ M -->|"No constraint"| O["Pick k where\nsilhouette is maximum"]
+ style I fill:#15803d,color:#fff,stroke:#e2e8f0
+ style L fill:#b91c1c,color:#fff,stroke:#e2e8f0
+ style N fill:#b45309,color:#fff,stroke:#e2e8f0
+ style C fill:#1d4ed8,color:#fff,stroke:#e2e8f0
 ```
 
 ### Diagram 2 — Silhouette Score by Cluster (SegmentAI k=4)
 
 ```mermaid
 xychart-beta
-    title "Per-Cluster Silhouette — SegmentAI k=4 (target line: 0.50)"
-    x-axis ["HoReCa (C0)", "Retail (C1)", "Mixed (C2)", "Deli (C3)", "Mean", "Target"]
-    y-axis "Silhouette score" 0.0 --> 0.75
-    bar [0.63, 0.59, 0.48, 0.61, 0.57, 0.50]
+ title "Per-Cluster Silhouette — SegmentAI k=4 (target line: 0.50)"
+ x-axis ["HoReCa (C0)", "Retail (C1)", "Mixed (C2)", "Deli (C3)", "Mean", "Target"]
+ y-axis "Silhouette score" 0.0 --> 0.75
+ bar [0.63, 0.59, 0.48, 0.61, 0.57, 0.50]
 ```
 
-> 💡 **How to read Diagram 2:** C2 (Mixed channel, 0.48) dips below the mean but stays positive — all customers are correctly assigned to a closer cluster than any alternative. The mean (0.57) clears the target (0.50). Always inspect this chart using `silhouette_samples(X, labels)` grouped by cluster before reporting the overall score — means can hide individual poorly-assigned clusters.
+> **How to read Diagram 2:** C2 (Mixed channel, 0.48) dips below the mean but stays positive — all customers are correctly assigned to a closer cluster than any alternative. The mean (0.57) clears the target (0.50). Always inspect this chart using `silhouette_samples(X, labels)` grouped by cluster before reporting the overall score — means can hide individual poorly-assigned clusters.
 
 ---
 
@@ -494,18 +494,18 @@ xychart-beta
 
 ```python
 from sklearn.metrics import (
-    silhouette_score,          # overall mean silhouette
-    silhouette_samples,        # one score per point — always inspect this
-    davies_bouldin_score,
-    calinski_harabasz_score,
-    adjusted_rand_score,       # requires ground-truth labels
+ silhouette_score, # overall mean silhouette
+ silhouette_samples, # one score per point — always inspect this
+ davies_bouldin_score,
+ calinski_harabasz_score,
+ adjusted_rand_score, # requires ground-truth labels
 )
 
-sil   = silhouette_score(X_umap, labels)          # 0.57
-sils  = silhouette_samples(X_umap, labels)        # shape (440,) — inspect by cluster
-db    = davies_bouldin_score(X_umap, labels)      # 0.89
-ch    = calinski_harabasz_score(X_umap, labels)   # 210
-# ari = adjusted_rand_score(true_labels, labels)  # N/A here — no true_labels
+sil = silhouette_score(X_umap, labels) # 0.57
+sils = silhouette_samples(X_umap, labels) # shape (440,) — inspect by cluster
+db = davies_bouldin_score(X_umap, labels) # 0.89
+ch = calinski_harabasz_score(X_umap, labels) # 210
+# ari = adjusted_rand_score(true_labels, labels) # N/A here — no true_labels
 ```
 
 ---
@@ -582,17 +582,17 @@ The pattern established here — *quantitative validation of discovered structur
 
 ## 11 · Progress Check — SegmentAI Complete
 
-🎉 **ALL FIVE SEGMENTAI CONSTRAINTS ACHIEVED.**
+ **ALL FIVE SEGMENTAI CONSTRAINTS ACHIEVED.**
 
 ### Constraint Scorecard
 
 | Constraint | Status | Evidence | Journey |
 |------------|--------|----------|---------|
-| #1 SEGMENTATION | ✅ **ACHIEVED** | k=4 validated by 3 independent internal metrics | Ch.1: 0.42 → Ch.2: improves → Ch.3: **0.57 ✅** |
-| #2 INTERPRETABILITY | ✅ **ACHIEVED** | 4 business-named segments from centroid profiles | HoReCa, Retail, Mixed, Deli |
-| #3 STABILITY | ✅ **ACHIEVED** | Bootstrap stability >90% (100 resamples) | Reproducible on fresh data |
-| #4 SCALABILITY | ✅ **ACHIEVED** | K-Means + UMAP: $O(nKd)$ — handles 10k+ | No algorithm changes at scale |
-| #5 VALIDATION | ✅ **ACHIEVED** | **Silhouette=0.57 > 0.5 ✅** | DB=0.89 <1.0 ✅; CH=210 peak at k=4 ✅ |
+| #1 SEGMENTATION | **ACHIEVED** | k=4 validated by 3 independent internal metrics | Ch.1: 0.42 → Ch.2: improves → Ch.3: **0.57 ** |
+| #2 INTERPRETABILITY | **ACHIEVED** | 4 business-named segments from centroid profiles | HoReCa, Retail, Mixed, Deli |
+| #3 STABILITY | **ACHIEVED** | Bootstrap stability >90% (100 resamples) | Reproducible on fresh data |
+| #4 SCALABILITY | **ACHIEVED** | K-Means + UMAP: $O(nKd)$ — handles 10k+ | No algorithm changes at scale |
+| #5 VALIDATION | **ACHIEVED** | **Silhouette=0.57 > 0.5 ** | DB=0.89 <1.0 ; CH=210 peak at k=4 |
 
 ### What You Learned in This Track
 
@@ -611,34 +611,34 @@ The pattern established here — *quantitative validation of discovered structur
 ```
 Silhouette
 0.70 ┤
-0.60 ┤                              ●─────── 0.57 ✅ (Ch.3, UMAP + metrics)
+0.60 ┤ ●─────── 0.57 (Ch.3, UMAP + metrics)
 0.50 ┤──────────────────────────────────────── target 0.50
-0.40 ┤          ●────────── 0.42 (Ch.1, K-Means raw features)
+0.40 ┤ ●────────── 0.42 (Ch.1, K-Means raw features)
 0.30 ┤
 0.20 ┤
-0.10 ┤  ● 0.10 (random baseline)
+0.10 ┤ ● 0.10 (random baseline)
 0.00 ┤
-     └────────────────────────────────────────────────────▶ chapter
-      Baseline    Ch.1: K-Means       Ch.3: UMAP + Metrics
+ └────────────────────────────────────────────────────▶ chapter
+ Baseline Ch.1: K-Means Ch.3: UMAP + Metrics
 ```
 
 ### SegmentAI Track Completion
 
 ```mermaid
 flowchart LR
-    A["Ch.1: Clustering\nK-Means · DBSCAN · HDBSCAN\nsilhouette=0.42"] --> B["Ch.2: Dim Reduction\nPCA · t-SNE · UMAP 3D\nsilhouette improves"]
-    B --> C["Ch.3: Metrics\nSilhouette · DB · CH · ARI\nsilhouette=0.57 ✅"]
-    C --> D["🎉 SegmentAI Complete\n4 segments validated\nAll 5 constraints ✅"]
-    A -.->|"#4 Scalability ✅"| E["O(nKd) pipeline"]
-    B -.->|"#2 Interpretability ✅"| F["3D visualisation"]
-    C -.->|"#1 #3 #5 ✅"| G["Quantitative proof"]
-    style A fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#fff
-    style B fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#fff
-    style C fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#fff
-    style D fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#fff
+ A["Ch.1: Clustering\nK-Means · DBSCAN · HDBSCAN\nsilhouette=0.42"] --> B["Ch.2: Dim Reduction\nPCA · t-SNE · UMAP 3D\nsilhouette improves"]
+ B --> C["Ch.3: Metrics\nSilhouette · DB · CH · ARI\nsilhouette=0.57 "]
+ C --> D[" SegmentAI Complete\n4 segments validated\nAll 5 constraints "]
+ A -.->|"#4 Scalability "| E["O(nKd) pipeline"]
+ B -.->|"#2 Interpretability "| F["3D visualisation"]
+ C -.->|"#1 #3 #5 "| G["Quantitative proof"]
+ style A fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#fff
+ style B fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#fff
+ style C fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#fff
+ style D fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#fff
 ```
 
-> 💡 **Production statement:** *"SegmentAI is production-ready. Four validated, stable, business-actionable customer segments with quantitative proof: silhouette=0.57 (above 0.5 threshold), DB=0.89 (below 1.0), CH=210 (peak at k=4). All 440 customers are positively assigned — no cluster has a negative mean silhouette. Marketing can build differentiated campaigns for HoReCa buyers, Retail anchors, Mixed-channel buyers, and Deli specialists with confidence that segments will reproduce on new customer data."*
+> **Production statement:** *"SegmentAI is production-ready. Four validated, stable, business-actionable customer segments with quantitative proof: silhouette=0.57 (above 0.5 threshold), DB=0.89 (below 1.0), CH=210 (peak at k=4). All 440 customers are positively assigned — no cluster has a negative mean silhouette. Marketing can build differentiated campaigns for HoReCa buyers, Retail anchors, Mixed-channel buyers, and Deli specialists with confidence that segments will reproduce on new customer data."*
 
 ![Progress check](img/ch03-unsupervised-metrics-progress-check.png)
 
@@ -646,7 +646,7 @@ flowchart LR
 
 ## 12 · Bridge Forward — 08 Ensemble Methods
 
-🎉 **The Unsupervised Learning track is complete.** In three chapters you went from raw 6-dimensional wholesale spending data (Ch.1, silhouette=0.42) through UMAP 3D dimensional compression (Ch.2) to formally validated, production-ready customer segments (Ch.3, silhouette=0.57 ✅, all 5 constraints).
+ **The Unsupervised Learning track is complete.** In three chapters you went from raw 6-dimensional wholesale spending data (Ch.1, silhouette=0.42) through UMAP 3D dimensional compression (Ch.2) to formally validated, production-ready customer segments (Ch.3, silhouette=0.57 , all 5 constraints).
 
 **What the unsupervised track built:**
 
@@ -654,7 +654,7 @@ flowchart LR
 |---------|---------------|------------|
 | Ch.1 — Clustering | K-Means, DBSCAN, HDBSCAN algorithms | k=4 initial segments |
 | Ch.2 — Dimensionality Reduction | PCA, t-SNE, UMAP 3D | Tighter clusters, richer visualisation |
-| Ch.3 — Metrics | Silhouette, DB, CH, ARI derivations | silhouette=0.57 ✅ formal validation |
+| Ch.3 — Metrics | Silhouette, DB, CH, ARI derivations | silhouette=0.57 formal validation |
 
 **What comes next:** The **[08-EnsembleMethods](../../08_ensemble_methods)** track takes SegmentAI's validated segments as *inputs* — not just deliverables. The central pattern: route new customers to their segment, apply the segment's specialist supervised model, aggregate predictions. Silhouette and DB from this chapter validate the routing partition before any ensemble model is trained.
 
@@ -665,5 +665,4 @@ flowchart LR
 - **[Ch.4 — SHAP Explanations](../../08_ensemble_methods/ch04_shap):** Shapley values that explain *why* the ensemble made each prediction — completing the interpretability arc started in every track
 
 **The connecting thread:** SegmentAI's 4 validated clusters → EnsembleAI's segment-specific models. The unsupervised track found the partition; the ensemble track builds specialist predictors on each partition and combines them. From clustering to ensemble: every step is traceable from raw wholesale data to production-grade, interpretable, segment-aware predictions.
-
-➡️ **Next: [08-EnsembleMethods / Ch.1 — Ensembles & Bagging](../../08_ensemble_methods/ch01_ensembles)**
+**Next: [08-EnsembleMethods / Ch.1 — Ensembles & Bagging](../../08_ensemble_methods/ch01_ensembles)**

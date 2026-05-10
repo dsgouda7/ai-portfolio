@@ -5,16 +5,16 @@ This directory contains Python scripts to generate visual diagrams for Ch.5: Mon
 ## Scripts
 
 1. **gen_ch05_prometheus_architecture.py** — Prometheus architecture diagram
-   - Shows: Scrape targets → TSDB → Query flow
-   - Output: `../img/prometheus_architecture.png`
+ - Shows: Scrape targets → TSDB → Query flow
+ - Output: `../img/prometheus_architecture.png`
 
 2. **gen_ch05_metrics_types.py** — Metrics types comparison
-   - Shows: Counter, Gauge, Histogram, Summary with examples
-   - Output: `../img/metrics_types.png`
+ - Shows: Counter, Gauge, Histogram, Summary with examples
+ - Output: `../img/metrics_types.png`
 
 3. **gen_ch05_grafana_dashboard.py** — Sample Grafana dashboard layout
-   - Shows: Time-series graphs, stat panels, heatmaps
-   - Output: `../img/grafana_dashboard.png`
+ - Shows: Time-series graphs, stat panels, heatmaps
+ - Output: `../img/grafana_dashboard.png`
 
 ## Requirements
 

@@ -10,18 +10,18 @@
 
 ## 0 · The Challenge — Where You Are
 
-> 🎯 **The mission**: Build **SmartVal AI** — a production home valuation system achieving <$40k MAE by satisfying 5 constraints:
-> 1. ⚡ **ACCURACY**: <$40k MAE on median house values — *foundational work this chapter*
-> 2. ⚡ **GENERALIZATION**: Work on unseen districts (nationwide expansion) — *partial unlock*
-> 3. ⚡ **DATA QUALITY**: Training distribution must support all market segments — **← THIS CHAPTER**
-> 4. ⚡ **INTERPRETABILITY**: Explainable predictions for underwriters
-> 5. ⚡ **PRODUCTION**: <100ms inference, handle outliers, version control
+> **The mission**: Build **SmartVal AI** — a production home valuation system achieving <$40k MAE by satisfying 5 constraints:
+> 1. **ACCURACY**: <$40k MAE on median house values — *foundational work this chapter*
+> 2. **GENERALIZATION**: Work on unseen districts (nationwide expansion) — *partial unlock*
+> 3. **DATA QUALITY**: Training distribution must support all market segments — **← THIS CHAPTER**
+> 4. **INTERPRETABILITY**: Explainable predictions for underwriters
+> 5. **PRODUCTION**: <100ms inference, handle outliers, version control
 
 **What you know so far:**
-- ✅ Ch.00: Removed outliers (`HouseAge > 52`, aggregation artifacts)
-- ✅ Ch.00: KNN imputation reduced MAE vs mean/median imputation
-- ✅ Target: <$40k MAE for production deployment
-- ❌ **But haven't checked training class distribution yet!**
+- Ch.00: Removed outliers (`HouseAge > 52`, aggregation artifacts)
+- Ch.00: KNN imputation reduced MAE vs mean/median imputation
+- Target: <$40k MAE for production deployment
+- **But haven't checked training class distribution yet!**
 
 **What's blocking SmartVal AI:**
 The California Housing dataset has 75% median-value districts (<$265k) and only 25% high-value districts (≥$265k). If you train naively, the model learns to predict "median" for everything, achieving 75% accuracy. But high-value homes are where appraisal precision matters most — undervaluing a $500k property by $100k loses the customer's trust. The **high-value segment drives revenue and requires special attention**.
@@ -32,8 +32,7 @@ The California Housing dataset has 75% median-value districts (<$265k) and only 
 - Stratified train/test splits that preserve class proportions
 - Class weights and SMOTE synthetic oversampling
 - Precision and recall as evaluation metrics for imbalanced problems
-
-✅ **After this chapter:** You have a balanced training dataset ready for modeling (Ch.01-07), ensuring the model learns patterns from all market segments, not just the most common one.
+**After this chapter:** You have a balanced training dataset ready for modeling (Ch.01-07), ensuring the model learns patterns from all market segments, not just the most common one.
 
 ---
 
@@ -51,7 +50,7 @@ The California Housing dataset has 75% median-value districts (<$265k) and only 
 
 **A model optimises what you measure, not what you care about.** When 75% of training examples are median-value homes, a classifier that predicts "median" for everything achieves 75% accuracy — without learning anything about high-value properties. **Class imbalance is a measurement problem as much as a data problem**: fixing the training distribution AND switching to precision/recall metrics are both required.
 
-> 💡 **The key insight**: You cannot diagnose an imbalance problem using accuracy. Accuracy asks "how often are you right?" — in an imbalanced dataset, "right" mostly means "correctly identified the majority class." Recall asks "of all high-value homes, how many did you catch?" and precision asks "of those you called high-value, how many actually were?" Only these per-class metrics expose what is happening.
+> **The key insight**: You cannot diagnose an imbalance problem using accuracy. Accuracy asks "how often are you right?" — in an imbalanced dataset, "right" mostly means "correctly identified the majority class." Recall asks "of all high-value homes, how many did you catch?" and precision asks "of those you called high-value, how many actually were?" Only these per-class metrics expose what is happening.
 
 ---
 
@@ -60,23 +59,23 @@ The California Housing dataset has 75% median-value districts (<$265k) and only 
 **What you'll build by the end:** A production-ready classification pipeline with balanced training data, optimized decision thresholds, and per-class performance validation. This workflow prevents the "high accuracy, zero minority recall" trap that breaks imbalanced classifiers.
 
 ```
-Phase 1: DETECT               Phase 2: REBALANCE            Phase 3: VALIDATE
+Phase 1: DETECT Phase 2: REBALANCE Phase 3: VALIDATE
 ──────────────────────────────────────────────────────────────────────────────
-Compute class distribution:   Choose rebalancing strategy:  Precision/recall by class:
+Compute class distribution: Choose rebalancing strategy: Precision/recall by class:
 
-• y_train.value_counts()      • Dataset size check:         • classification_report()
-• Calculate imbalance ratio     - <1K samples: class_weight • Precision-recall curve
-• Check minority coverage       - 1K-100K: SMOTE            • F₁ score per class
-                                - >100K: undersample        • Threshold tuning (τ)
+• y_train.value_counts() • Dataset size check: • classification_report()
+• Calculate imbalance ratio - <1K samples: class_weight • Precision-recall curve
+• Check minority coverage - 1K-100K: SMOTE • F₁ score per class
+ - >100K: undersample • Threshold tuning (τ)
 
-→ DECISION:                   → DECISION:                   → DECISION:
-  Is it imbalanced?             Technique selection:          Final threshold τ*:
-  • Ratio >3:1: YES             • <50 minority: weights only  • Sweep τ ∈ [0.1, 0.9]
-  • Ratio <3:1: NO, skip        • ≥50 minority: SMOTE        • Maximize minority F₁
-                                • Huge dataset: undersample   • Validate on test set
+→ DECISION: → DECISION: → DECISION:
+ Is it imbalanced? Technique selection: Final threshold τ*:
+ • Ratio >3:1: YES • <50 minority: weights only • Sweep τ ∈ [0.1, 0.9]
+ • Ratio <3:1: NO, skip • ≥50 minority: SMOTE • Maximize minority F₁
+ • Huge dataset: undersample • Validate on test set
 ```
 
-> 💡 **How to use this workflow:** Execute Phase 1 first — if imbalance ratio < 3:1, stop here and proceed to modeling. If ≥ 3:1, apply Phase 2 rebalancing ONLY to training data, then validate with Phase 3 metrics. Never apply SMOTE before the train/test split.
+> **How to use this workflow:** Execute Phase 1 first — if imbalance ratio < 3:1, stop here and proceed to modeling. If ≥ 3:1, apply Phase 2 rebalancing ONLY to training data, then validate with Phase 3 metrics. Never apply SMOTE before the train/test split.
 
 ---
 
@@ -84,7 +83,7 @@ Compute class distribution:   Choose rebalancing strategy:  Precision/recall by 
 
 You load the California Housing data and create a binary classification label: districts in the **top quartile** (≥ 75th percentile of `MedHouseVal`) become class 1 ("high-value"); all others are class 0 ("median").
 
-**💻 Executable Code — Phase 1: Detect Imbalance**
+** Executable Code — Phase 1: Detect Imbalance**
 
 ```python
 import pandas as pd
@@ -109,7 +108,7 @@ imbalance_ratio = class_counts[0] / class_counts[1]
 print(f"Class distribution: {dict(class_counts)}")
 print(f"Imbalance ratio: {imbalance_ratio:.1f}:1")
 print(f"Minority class %: {100 * class_counts[1] / len(y):.1f}%")
-# Output: Imbalance ratio: 3.0:1  (75% vs 25%)
+# Output: Imbalance ratio: 3.0:1 (75% vs 25%)
 ```
 
 ```python
@@ -133,10 +132,10 @@ print(df['HighValue'].value_counts(normalize=True))
 **Output:**
 ```
 75th percentile threshold: $265k
-0 (Median)    15480
-1 (High)       5160
-0    0.750
-1    0.250
+0 (Median) 15480
+1 (High) 5160
+0 0.750
+1 0.250
 ```
 
 **The distribution in ASCII:**
@@ -144,19 +143,19 @@ print(df['HighValue'].value_counts(normalize=True))
 ```
 Class distribution — California Housing (n = 20,640)
 ─────────────────────────────────────────────────────
-Median (0)  ████████████████████████████████████  15,480  (75%)
-High   (1)  ████████████                           5,160  (25%)
+Median (0) ████████████████████████████████████ 15,480 (75%)
+High (1) ████████████ 5,160 (25%)
 ─────────────────────────────────────────────────────
-            0      3k     6k     9k    12k    15k
+ 0 3k 6k 9k 12k 15k
 ```
 
 **What this means for production:**
 In training, every 3 median homes teach the model 1 high-value home (75/25 split). But if your production traffic has a different distribution — say, more high-value queries — the model hasn't learned those patterns deeply enough. This is why balanced training matters.
 
-> ⚠️ **The luxury tier gap**: Using a higher "luxury" absolute threshold (the top ~8% by California standards — roughly equivalent to homes >$450k today), the imbalance becomes even more extreme: ~18,989 median vs ~1,651 luxury in the training set. If production queries skew toward luxury homes, these become the most expensive mispredictions because luxury homes have the largest absolute price differences.
+> **The luxury tier gap**: Using a higher "luxury" absolute threshold (the top ~8% by California standards — roughly equivalent to homes >$450k today), the imbalance becomes even more extreme: ~18,989 median vs ~1,651 luxury in the training set. If production queries skew toward luxury homes, these become the most expensive mispredictions because luxury homes have the largest absolute price differences.
 
-> 💡 **Detect verdict:** 75:25 imbalance ratio (3:1) confirmed — naïve classifier achieves 75% accuracy predicting “median” while missing all high-value homes; SMOTE with k=5 is safe (5,160 minority samples available).
-> ➡️ Apply SMOTE only to the training split to avoid leakage; if ratio ≥ 10:1 combine SMOTE with `class_weight='balanced'`.
+> **Detect verdict:** 75:25 imbalance ratio (3:1) confirmed — naïve classifier achieves 75% accuracy predicting “median” while missing all high-value homes; SMOTE with k=5 is safe (5,160 minority samples available).
+> ➡ Apply SMOTE only to the training split to avoid leakage; if ratio ≥ 10:1 combine SMOTE with `class_weight='balanced'`.
 
 ---
 
@@ -181,20 +180,20 @@ Before the math, here is the full landscape of four techniques — their trade-o
 ```
 1. Identify all minority class samples (class 1: high-value)
 2. For each minority sample x_i:
-   a. Find k nearest neighbours (default k=5) among minority only
-   b. Randomly select one neighbour x_nn
-   c. Draw λ ~ Uniform(0, 1)
-   d. Synthesize: x_new = x_i + λ × (x_nn − x_i)
-   e. Assign x_new label = 1
+ a. Find k nearest neighbours (default k=5) among minority only
+ b. Randomly select one neighbour x_nn
+ c. Draw λ ~ Uniform(0, 1)
+ d. Synthesize: x_new = x_i + λ × (x_nn − x_i)
+ e. Assign x_new label = 1
 3. Repeat until desired balance ratio is reached
 ```
 
 **Class Weights — Weighted Loss:**
 ```
 1. Count: n = total samples, n_j = samples in class j, C = number of classes
-2. Compute: w_j = n / (C × n_j)   for each class j
+2. Compute: w_j = n / (C × n_j) for each class j
 3. Modify training objective:
-   Loss_weighted = Σ_i  w_{y_i} × Loss(y_i, ŷ_i)
+ Loss_weighted = Σ_i w_{y_i} × Loss(y_i, ŷ_i)
 4. Minority errors now cost proportionally more → gradient updates reflect business priority
 ```
 
@@ -235,16 +234,16 @@ $$w_1 = \frac{20{,}640}{2 \times 5{,}160} = \frac{20{,}640}{10{,}320} = \mathbf{
 
 **Interpretation:** Every error on a high-value home costs the model **3× as much** ($2.000 / 0.667 = 3.0$) as an error on a median home. The model is forced to care about high-value homes in proportion to how underrepresented they are.
 
-> 💡 **The balance property:** Verify that $w_0 \times n_0 + w_1 \times n_1 = 0.667 \times 15{,}480 + 2.000 \times 5{,}160 = 10{,}325 + 10{,}320 \approx 20{,}640$. The weighted sum of samples equals total samples — the effective class sizes are equalized, which is exactly the goal.
+> **The balance property:** Verify that $w_0 \times n_0 + w_1 \times n_1 = 0.667 \times 15{,}480 + 2.000 \times 5{,}160 = 10{,}325 + 10{,}320 \approx 20{,}640$. The weighted sum of samples equals total samples — the effective class sizes are equalized, which is exactly the goal.
 
 ```python
 from sklearn.utils.class_weight import compute_class_weight
 import numpy as np
 
 class_weights = compute_class_weight(
-    class_weight='balanced',
-    classes=np.array([0, 1]),
-    y=y_train   # your training labels
+ class_weight='balanced',
+ classes=np.array([0, 1]),
+ y=y_train # your training labels
 )
 # class_weights → [0.667, 2.000]
 weight_dict = {0: class_weights[0], 1: class_weights[1]}
@@ -262,14 +261,14 @@ weight_dict = {0: class_weights[0], 1: class_weights[1]}
 The **confusion matrix** for a binary classifier has four cells:
 
 ```
-                     Predicted
-               ┌─────────────┬─────────────┐
-               │   Median    │  High-Value │
-    ┌──────────┼─────────────┼─────────────┤
-    │  Median  │  TN = 3,013 │  FP =    83 │
-    │  High-V  │  FN =   826 │  TP =   206 │
-    └──────────┴─────────────┴─────────────┘
-    Total: 4,128 test samples (20% of 20,640)
+ Predicted
+ ┌─────────────┬─────────────┐
+ │ Median │ High-Value │
+ ┌──────────┼─────────────┼─────────────┤
+ │ Median │ TN = 3,013 │ FP = 83 │
+ │ High-V │ FN = 826 │ TP = 206 │
+ └──────────┴─────────────┴─────────────┘
+ Total: 4,128 test samples (20% of 20,640)
 ```
 
 **Accuracy** (the misleading metric):
@@ -343,7 +342,7 @@ $$= [\mathbf{8.78},\ \mathbf{12.80}]$$
 
 The new synthetic district has `MedInc = 8.78` and `HouseAge = 12.80` — a plausible high-value home sitting between A and D in feature space. It is assigned class 1 and added to the training set.
 
-> ⚡ **Constraint #3 DATA QUALITY checkpoint:** After SMOTE, the training set expands from 16,512 to 24,768 samples with a balanced 50/50 class ratio. The model now trains on a representative distribution — not 75%-median-heavy data.
+> **Constraint #3 DATA QUALITY checkpoint:** After SMOTE, the training set expands from 16,512 to 24,768 samples with a balanced 50/50 class ratio. The model now trains on a representative distribution — not 75%-median-heavy data.
 
 ---
 
@@ -373,16 +372,16 @@ She reports 77.9% accuracy to her manager. Then she pulls up the per-class break
 print(classification_report(y_test, y_pred, target_names=['Median', 'High-Value']))
 ```
 ```
-              precision    recall  f1-score   support
-Median            0.79      0.98      0.88      3096
-High-Value        0.71      0.20      0.31      1032
+ precision recall f1-score support
+Median 0.79 0.98 0.88 3096
+High-Value 0.71 0.20 0.31 1032
 
-accuracy                              0.78      4128
+accuracy 0.78 4128
 ```
 
 Recall on high-value homes: **20%**. The model misses 4 out of 5 luxury properties.
 
-> ⚠️ **The accuracy paradox**: A naïve "predict all median" baseline achieves exactly 75% accuracy with zero learning. The trained model achieves 78% — only 3 percentage points better than doing nothing. Accuracy is dominated by the majority class. This is the hallmark of a class imbalance problem.
+> **The accuracy paradox**: A naïve "predict all median" baseline achieves exactly 75% accuracy with zero learning. The trained model achieves 78% — only 3 percentage points better than doing nothing. Accuracy is dominated by the majority class. This is the hallmark of a class imbalance problem.
 
 ---
 
@@ -400,13 +399,13 @@ X_train_smote, y_train_smote = smote.fit_resample(X_train, y_train)
 print(f"Before: {pd.Series(y_train).value_counts().to_dict()}")
 # Before: {0: 11610, 1: 3870}
 
-print(f"After:  {pd.Series(y_train_smote).value_counts().to_dict()}")
-# After:  {0: 11610, 1: 11610}  ← Balanced!
+print(f"After: {pd.Series(y_train_smote).value_counts().to_dict()}")
+# After: {0: 11610, 1: 11610} ← Balanced!
 ```
 
 Retrain and re-evaluate on the **original imbalanced test set**:
 
-**💻 Executable Code — Phase 2: Apply SMOTE**
+** Executable Code — Phase 2: Apply SMOTE**
 
 ```python
 from imblearn.over_sampling import SMOTE
@@ -416,7 +415,7 @@ import pandas as pd
 
 # CRITICAL: Split FIRST, then apply SMOTE only to training set
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42, stratify=y
+ X, y, test_size=0.2, random_state=42, stratify=y
 )
 
 print(f"Before SMOTE: {pd.Series(y_train).value_counts().to_dict()}")
@@ -426,8 +425,8 @@ print(f"Before SMOTE: {pd.Series(y_train).value_counts().to_dict()}")
 smote = SMOTE(k_neighbors=5, random_state=42)
 X_train_balanced, y_train_balanced = smote.fit_resample(X_train, y_train)
 
-print(f"After SMOTE:  {pd.Series(y_train_balanced).value_counts().to_dict()}")
-# After:  {0: 12384, 1: 12384}  ← Balanced!
+print(f"After SMOTE: {pd.Series(y_train_balanced).value_counts().to_dict()}")
+# After: {0: 12384, 1: 12384} ← Balanced!
 
 # Train on balanced data
 model = LogisticRegression(random_state=42, max_iter=1000)
@@ -437,15 +436,15 @@ model.fit(X_train_balanced, y_train_balanced)
 Results on the original imbalanced test set:
 
 ```
-              precision    recall  f1-score
-Median            0.89      0.88      0.88
-High-Value        0.65      0.67      0.66   ← recall: 20% → 67%
+ precision recall f1-score
+Median 0.89 0.88 0.88
+High-Value 0.65 0.67 0.66 ← recall: 20% → 67%
 ```
 
 Minority-class recall jumps from 20% to 67%. The model now *sees* high-value homes properly during training.
 
-> 💡 **Rebalance verdict:** SMOTE expanded minority training class from 4,128 → 12,384 samples (50:50 balanced); minority-class recall jumped from 20% to 67% — gradient updates no longer dominated by majority class.
-> ➡️ Validate SMOTE was applied only to training data, then proceed to threshold tuning (τ sweep) to maximize minority-class F₁.
+> **Rebalance verdict:** SMOTE expanded minority training class from 4,128 → 12,384 samples (50:50 balanced); minority-class recall jumped from 20% to 67% — gradient updates no longer dominated by majority class.
+> ➡ Validate SMOTE was applied only to training data, then proceed to threshold tuning (τ sweep) to maximize minority-class F₁.
 
 ---
 
@@ -462,7 +461,7 @@ thresholds = np.linspace(0.1, 0.9, 81)
 f1_scores = [f1_score(y_test, (y_proba >= t).astype(int)) for t in thresholds]
 best_threshold = thresholds[np.argmax(f1_scores)]
 
-print(f"Best threshold: {best_threshold:.2f}  (default was 0.50)")
+print(f"Best threshold: {best_threshold:.2f} (default was 0.50)")
 # Best threshold: 0.38
 ```
 
@@ -474,7 +473,7 @@ Lowering the threshold from 0.50 to 0.38 recovers an additional 4% recall with o
 
 Sarah's final evaluation uses macro F₁ and minority-class recall as primary metrics — not accuracy:
 
-**💻 Executable Code — Phase 3: Validate with Precision-Recall by Class**
+** Executable Code — Phase 3: Validate with Precision-Recall by Class**
 
 ```python
 from sklearn.metrics import classification_report, f1_score
@@ -490,7 +489,7 @@ thresholds = np.linspace(0.1, 0.9, 81)
 f1_scores = [f1_score(y_test, (y_proba >= t).astype(int)) for t in thresholds]
 best_threshold = thresholds[np.argmax(f1_scores)]
 
-print(f"\nBest threshold: {best_threshold:.2f}  (default was 0.50)")
+print(f"\nBest threshold: {best_threshold:.2f} (default was 0.50)")
 print(f"Best minority F₁: {max(f1_scores):.3f}")
 
 # Apply tuned threshold
@@ -508,11 +507,11 @@ print(classification_report(y_test, y_pred_tuned, target_names=['Median', 'High-
 
 **Output:**
 ```
-              precision    recall  f1-score   support
-Median            0.90      0.88      0.89      3096
-High-Value        0.66      0.71      0.68      1032
+ precision recall f1-score support
+Median 0.90 0.88 0.89 3096
+High-Value 0.66 0.71 0.68 1032
 
-macro avg         0.78      0.80      0.79      4128
+macro avg 0.78 0.80 0.79 4128
 ```
 
 **Final result:** High-value recall = 71%, F₁ = 0.68. The model now *finds* luxury properties effectively, ensuring balanced performance across all market segments when you build regression models in Ch.01-07.
@@ -520,8 +519,8 @@ macro avg         0.78      0.80      0.79      4128
 > **Industry Standard:** Threshold tuning with `sklearn.metrics.precision_recall_curve`
 > Manual threshold search (sweeping τ ∈ [0.1, 0.9] and computing F₁ at each point) teaches the precision-recall tradeoff. In production, use `precision_recall_curve(y_true, y_score)` which returns precision, recall, and thresholds arrays in one call. Find optimal operating point with `thresholds[np.argmax(f1_scores)]`. For business-specific cost functions (e.g., false negative costs 10× false positive), replace F₁ maximization with custom cost function: `cost = FN_cost * fn_count + FP_cost * fp_count` and minimize over threshold sweep.
 
-> 💡 **Validate verdict:** SMOTE + threshold tuning (τ* = 0.38) raised minority-class recall from 20% to 71% at 66% precision (F₁ = 0.68) — balanced training across 75%/25% class split achieved.
-> ➡️ Use τ* = 0.38 in production inference; monitor class distribution drift — if high-value fraction exceeds 35%, retrain SMOTE and recalibrate threshold.
+> **Validate verdict:** SMOTE + threshold tuning (τ* = 0.38) raised minority-class recall from 20% to 71% at 66% precision (F₁ = 0.68) — balanced training across 75%/25% class split achieved.
+> ➡ Use τ* = 0.38 in production inference; monitor class distribution drift — if high-value fraction exceeds 35%, retrain SMOTE and recalibrate threshold.
 
 ---
 
@@ -568,10 +567,10 @@ Using the same 4-point minority dataset from §4.3, let's generate 2 synthetic s
 **Minority dataset** (2 features, 4 points):
 
 ```
-Point A: [MedInc=8.3, HouseAge=12.0]   k=2 nearest: D(2.33), B(4.08)
-Point B: [MedInc=9.1, HouseAge=16.0]   k=2 nearest: D(2.51), A(4.08)
-Point C: [MedInc=7.8, HouseAge=20.0]   k=2 nearest: A(8.01), B(8.60)
-Point D: [MedInc=9.5, HouseAge=14.0]   k=2 nearest: A(2.33), B(2.51)
+Point A: [MedInc=8.3, HouseAge=12.0] k=2 nearest: D(2.33), B(4.08)
+Point B: [MedInc=9.1, HouseAge=16.0] k=2 nearest: D(2.51), A(4.08)
+Point C: [MedInc=7.8, HouseAge=20.0] k=2 nearest: A(8.01), B(8.60)
+Point D: [MedInc=9.5, HouseAge=14.0] k=2 nearest: A(2.33), B(2.51)
 ```
 
 **Synthetic sample 1** — source A, neighbour D, $\lambda = 0.40$:
@@ -590,8 +589,8 @@ Point D: [MedInc=9.5, HouseAge=14.0]   k=2 nearest: A(2.33), B(2.51)
 
 **Sanity check — the interpolation guarantee:**
 
-- Sample 1: MedInc $8.3 < \mathbf{8.78} < 9.5$ ✅ and HouseAge $12.0 < \mathbf{12.80} < 14.0$ ✅
-- Sample 2: MedInc $9.1 < \mathbf{9.38} < 9.5$ ✅ and HouseAge $14.0 < \mathbf{14.60} < 16.0$ ✅
+- Sample 1: MedInc $8.3 < \mathbf{8.78} < 9.5$ and HouseAge $12.0 < \mathbf{12.80} < 14.0$
+- Sample 2: MedInc $9.1 < \mathbf{9.38} < 9.5$ and HouseAge $14.0 < \mathbf{14.60} < 16.0$
 
 Both synthetic points lie strictly *between* their parent points. SMOTE guarantees that new points always reside on the line segment connecting two existing minority samples — never outside the convex hull of the minority class.
 
@@ -608,33 +607,33 @@ Both synthetic points lie strictly *between* their parent points. SMOTE guarante
 
 ```mermaid
 flowchart TD
-    RAW["Raw Training Data\n15,480 median (75%)\n5,160 high-value (25%)"]
+ RAW["Raw Training Data\n15,480 median (75%)\n5,160 high-value (25%)"]
 
-    SPLIT["Stratified Train/Test Split\nstratify=y  preserves 75/25 ratio\nin both train and test sets"]
+ SPLIT["Stratified Train/Test Split\nstratify=y preserves 75/25 ratio\nin both train and test sets"]
 
-    RAW --> SPLIT
-    SPLIT --> TRAIN["Training Set\n12,384 median  (75%)\n4,128 high-value  (25%)"]
-    SPLIT --> TEST["Test Set — FROZEN\n3,096 median\n1,032 high-value\n⚠️ SMOTE never touches this"]
+ RAW --> SPLIT
+ SPLIT --> TRAIN["Training Set\n12,384 median (75%)\n4,128 high-value (25%)"]
+ SPLIT --> TEST["Test Set — FROZEN\n3,096 median\n1,032 high-value\n SMOTE never touches this"]
 
-    TRAIN --> SMOTE_NODE["SMOTE Oversampling\nk_neighbors=5, random_state=42\nGenerate 8,256 synthetic\nhigh-value samples"]
+ TRAIN --> SMOTE_NODE["SMOTE Oversampling\nk_neighbors=5, random_state=42\nGenerate 8,256 synthetic\nhigh-value samples"]
 
-    SMOTE_NODE --> BALANCED["Balanced Training Set\n12,384 median\n12,384 high-value\n(4,128 real + 8,256 synthetic)"]
+ SMOTE_NODE --> BALANCED["Balanced Training Set\n12,384 median\n12,384 high-value\n(4,128 real + 8,256 synthetic)"]
 
-    BALANCED --> MODEL["Train Classifier\nLogisticRegression or\nRandomForestClassifier"]
+ BALANCED --> MODEL["Train Classifier\nLogisticRegression or\nRandomForestClassifier"]
 
-    MODEL --> THRESHOLD["Threshold Tuning\nSweep τ ∈ [0.1, 0.9]\non validation fold\nMaximise minority-class F₁"]
+ MODEL --> THRESHOLD["Threshold Tuning\nSweep τ ∈ [0.1, 0.9]\non validation fold\nMaximise minority-class F₁"]
 
-    THRESHOLD --> EVAL["Evaluate on Frozen Test Set\nReport Precision / Recall / F₁\nNot Accuracy"]
+ THRESHOLD --> EVAL["Evaluate on Frozen Test Set\nReport Precision / Recall / F₁\nNot Accuracy"]
 
-    style RAW fill:#b91c1c,color:#fff,stroke:#b91c1c
-    style SPLIT fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style TEST fill:#b45309,color:#fff,stroke:#b45309
-    style SMOTE_NODE fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style BALANCED fill:#15803d,color:#fff,stroke:#15803d
-    style MODEL fill:#15803d,color:#fff,stroke:#15803d
-    style TRAIN fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style THRESHOLD fill:#15803d,color:#fff,stroke:#15803d
-    style EVAL fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style RAW fill:#b91c1c,color:#fff,stroke:#b91c1c
+ style SPLIT fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style TEST fill:#b45309,color:#fff,stroke:#b45309
+ style SMOTE_NODE fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style BALANCED fill:#15803d,color:#fff,stroke:#15803d
+ style MODEL fill:#15803d,color:#fff,stroke:#15803d
+ style TRAIN fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style THRESHOLD fill:#15803d,color:#fff,stroke:#15803d
+ style EVAL fill:#1e3a8a,color:#fff,stroke:#1e3a8a
 ```
 
 ---
@@ -643,40 +642,40 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    START(["Imbalanced classification\nproblem detected"]) --> SIZE
+ START(["Imbalanced classification\nproblem detected"]) --> SIZE
 
-    SIZE{"Dataset size?"}
-    SIZE -->|"> 1M rows"| UNDER["Random Undersampling\nDrop majority samples\nuntil ratio ≤ 10:1"]
-    SIZE -->|"< 1M rows"| MINORITY_COUNT
+ SIZE{"Dataset size?"}
+ SIZE -->|"> 1M rows"| UNDER["Random Undersampling\nDrop majority samples\nuntil ratio ≤ 10:1"]
+ SIZE -->|"< 1M rows"| MINORITY_COUNT
 
-    MINORITY_COUNT{"Minority class\nsample count?"}
-    MINORITY_COUNT -->|"< 50 samples"| WEIGHTS["Class Weights only\nSMOTE needs neighbours —\ntoo few to interpolate safely"]
-    MINORITY_COUNT -->|"≥ 50 samples"| SMOTE_BRANCH
+ MINORITY_COUNT{"Minority class\nsample count?"}
+ MINORITY_COUNT -->|"< 50 samples"| WEIGHTS["Class Weights only\nSMOTE needs neighbours —\ntoo few to interpolate safely"]
+ MINORITY_COUNT -->|"≥ 50 samples"| SMOTE_BRANCH
 
-    SMOTE_BRANCH{"Business priority?"}
-    SMOTE_BRANCH -->|"Speed / interpretability"| WEIGHTS2["class_weight='balanced'\nNo data augmentation\nZero overhead"]
-    SMOTE_BRANCH -->|"Recall is critical\n(fraud / medical / luxury)"| SMOTE_PATH["SMOTE + Stratified Split\nApply ONLY to training set\nEvaluate on real test data"]
-    SMOTE_BRANCH -->|"Need both precision\nand recall"| COMBO["SMOTE + Class Weights\nStrongest general baseline"]
+ SMOTE_BRANCH{"Business priority?"}
+ SMOTE_BRANCH -->|"Speed / interpretability"| WEIGHTS2["class_weight='balanced'\nNo data augmentation\nZero overhead"]
+ SMOTE_BRANCH -->|"Recall is critical\n(fraud / medical / luxury)"| SMOTE_PATH["SMOTE + Stratified Split\nApply ONLY to training set\nEvaluate on real test data"]
+ SMOTE_BRANCH -->|"Need both precision\nand recall"| COMBO["SMOTE + Class Weights\nStrongest general baseline"]
 
-    SMOTE_PATH --> THRESHOLD["Threshold Tuning\nSweep τ to maximise\nminority-class F₁"]
-    WEIGHTS2 --> THRESHOLD
-    COMBO --> THRESHOLD
-    WEIGHTS --> THRESHOLD
-    UNDER --> THRESHOLD
+ SMOTE_PATH --> THRESHOLD["Threshold Tuning\nSweep τ to maximise\nminority-class F₁"]
+ WEIGHTS2 --> THRESHOLD
+ COMBO --> THRESHOLD
+ WEIGHTS --> THRESHOLD
+ UNDER --> THRESHOLD
 
-    THRESHOLD --> EVAL2(["Report Precision · Recall · F₁\n(never Accuracy alone\non an imbalanced problem)"])
+ THRESHOLD --> EVAL2(["Report Precision · Recall · F₁\n(never Accuracy alone\non an imbalanced problem)"])
 
-    style START fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style SIZE fill:#b45309,color:#fff,stroke:#b45309
-    style MINORITY_COUNT fill:#b45309,color:#fff,stroke:#b45309
-    style SMOTE_BRANCH fill:#b45309,color:#fff,stroke:#b45309
-    style UNDER fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style WEIGHTS fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style WEIGHTS2 fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style SMOTE_PATH fill:#15803d,color:#fff,stroke:#15803d
-    style COMBO fill:#15803d,color:#fff,stroke:#15803d
-    style THRESHOLD fill:#15803d,color:#fff,stroke:#15803d
-    style EVAL2 fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style START fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style SIZE fill:#b45309,color:#fff,stroke:#b45309
+ style MINORITY_COUNT fill:#b45309,color:#fff,stroke:#b45309
+ style SMOTE_BRANCH fill:#b45309,color:#fff,stroke:#b45309
+ style UNDER fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style WEIGHTS fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style WEIGHTS2 fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style SMOTE_PATH fill:#15803d,color:#fff,stroke:#15803d
+ style COMBO fill:#15803d,color:#fff,stroke:#15803d
+ style THRESHOLD fill:#15803d,color:#fff,stroke:#15803d
+ style EVAL2 fill:#1e3a8a,color:#fff,stroke:#1e3a8a
 ```
 
 ---
@@ -693,19 +692,19 @@ Controls how many nearest minority neighbours each source sample considers when 
 | **3–5** | Balanced diversity (default range) | General starting point; works for most problems |
 | **7–10** | Points spread wider; risks crossing into majority territory | Minority class has a smooth, spread-out distribution |
 
-> ⚠️ **k must be less than the minority sample count.** With 50 minority samples, `k_neighbors=5` is safe. With 10 minority samples, use `k_neighbors=3` at most — otherwise SMOTE raises a `ValueError`.
+> **k must be less than the minority sample count.** With 50 minority samples, `k_neighbors=5` is safe. With 10 minority samples, use `k_neighbors=3` at most — otherwise SMOTE raises a `ValueError`.
 
 ```python
 from imblearn.over_sampling import SMOTE
 
 # Conservative: tight synthetic neighbours
-smote_tight   = SMOTE(k_neighbors=3, random_state=42)
+smote_tight = SMOTE(k_neighbors=3, random_state=42)
 
 # Default: balanced
 smote_default = SMOTE(k_neighbors=5, random_state=42)
 
 # Aggressive: broader spread
-smote_wide    = SMOTE(k_neighbors=7, random_state=42)
+smote_wide = SMOTE(k_neighbors=7, random_state=42)
 ```
 
 ---
@@ -752,22 +751,22 @@ thresholds = np.linspace(0.1, 0.9, 81)
 f1s = [f1_score(y_val, (y_proba >= t).astype(int)) for t in thresholds]
 best_t = thresholds[np.argmax(f1s)]
 
-print(f"Best threshold: {best_t:.2f}")  # typically 0.35–0.45 for imbalanced problems
+print(f"Best threshold: {best_t:.2f}") # typically 0.35–0.45 for imbalanced problems
 ```
 
 ---
 
 ## 9 · What Can Go Wrong
 
-> ⚠️ **Trap 1 — SMOTE on the full dataset before splitting.** This is one of the most common leakage bugs in imbalanced learning. Synthetic samples are interpolations of real samples. If you SMOTE first, your test set contains interpolated versions of training points — you are evaluating on data that "looks like" your training data, and all metrics are inflated. **Fix:** Always split with `stratify=y` first, then apply `smote.fit_resample` only on `X_train, y_train`.
+> **Trap 1 — SMOTE on the full dataset before splitting.** This is one of the most common leakage bugs in imbalanced learning. Synthetic samples are interpolations of real samples. If you SMOTE first, your test set contains interpolated versions of training points — you are evaluating on data that "looks like" your training data, and all metrics are inflated. **Fix:** Always split with `stratify=y` first, then apply `smote.fit_resample` only on `X_train, y_train`.
 
-> ⚠️ **Trap 2 — Reporting accuracy on an imbalanced test set.** Even after rebalancing the training set correctly, if you report `accuracy_score` on a test set that keeps the original 75/25 ratio, majority-class performance dominates. A model with 90% recall on median but 10% recall on high-value will still show a respectable overall accuracy. **Fix:** Always report macro F₁, per-class recall, and ROC-AUC. Use `classification_report(zero_division=0)`.
+> **Trap 2 — Reporting accuracy on an imbalanced test set.** Even after rebalancing the training set correctly, if you report `accuracy_score` on a test set that keeps the original 75/25 ratio, majority-class performance dominates. A model with 90% recall on median but 10% recall on high-value will still show a respectable overall accuracy. **Fix:** Always report macro F₁, per-class recall, and ROC-AUC. Use `classification_report(zero_division=0)`.
 
-> ⚠️ **Trap 3 — SMOTE with insufficient minority samples.** SMOTE requires at least `k_neighbors + 1` minority samples. With 5 minority samples and `k_neighbors=5`, sklearn raises a `ValueError`. **Fix:** Reduce `k_neighbors` to `n_minority - 1`, or fall back to `class_weight='balanced'` entirely when minority samples are fewer than 50.
+> **Trap 3 — SMOTE with insufficient minority samples.** SMOTE requires at least `k_neighbors + 1` minority samples. With 5 minority samples and `k_neighbors=5`, sklearn raises a `ValueError`. **Fix:** Reduce `k_neighbors` to `n_minority - 1`, or fall back to `class_weight='balanced'` entirely when minority samples are fewer than 50.
 
-> ⚠️ **Trap 4 — Using standard SMOTE on categorical features.** SMOTE interpolates linearly: a categorical feature with values `{1, 2, 3}` (e.g., bedroom count) would synthesize fractional values like `1.7 bedrooms`. Semantically wrong. **Fix:** Use `SMOTENC` (SMOTE for Nominal and Continuous) from `imblearn`, specifying which column indices are categorical via the `categorical_features` parameter.
+> **Trap 4 — Using standard SMOTE on categorical features.** SMOTE interpolates linearly: a categorical feature with values `{1, 2, 3}` (e.g., bedroom count) would synthesize fractional values like `1.7 bedrooms`. Semantically wrong. **Fix:** Use `SMOTENC` (SMOTE for Nominal and Continuous) from `imblearn`, specifying which column indices are categorical via the `categorical_features` parameter.
 
-> ⚠️ **Trap 5 — Assuming SMOTE always outperforms class weights.** On large, well-separated datasets (like California Housing), `class_weight='balanced'` often matches SMOTE accuracy at a fraction of the compute cost and with no leakage risk. SMOTE shines when the minority class has complex non-linear boundaries. **Fix:** Benchmark both. Use `class_weight='balanced'` as the zero-cost baseline before adding SMOTE to the pipeline.
+> **Trap 5 — Assuming SMOTE always outperforms class weights.** On large, well-separated datasets (like California Housing), `class_weight='balanced'` often matches SMOTE accuracy at a fraction of the compute cost and with no leakage risk. SMOTE shines when the minority class has complex non-linear boundaries. **Fix:** Benchmark both. Use `class_weight='balanced'` as the zero-cost baseline before adding SMOTE to the pipeline.
 
 ---
 
@@ -783,7 +782,7 @@ This chapter's techniques and metrics are the foundation for at least four later
 
 **→ Production Monitoring (06-AI_Infrastructure track):** Class distribution monitoring is a production-critical feature. When your production traffic shifts — say from 25% high-value to 40% high-value — the model experiences **label shift**. The class weights and decision thresholds calibrated on 25% high-value training data are no longer optimal. Monitoring and retraining triggers are the direct sequel to today's lesson.
 
-> ➡️ **Every model that outputs probabilities uses threshold logic.** Neural networks, gradient-boosted trees, and retrieval models all produce scores that require calibration. The precision-recall trade-off you learned here is universal — threshold tuning is not specific to logistic regression.
+> ➡ **Every model that outputs probabilities uses threshold logic.** Neural networks, gradient-boosted trees, and retrieval models all produce scores that require calibration. The precision-recall trade-off you learned here is universal — threshold tuning is not specific to logistic regression.
 
 ---
 
@@ -797,21 +796,21 @@ This chapter's techniques and metrics are the foundation for at least four later
 |---|---|---|---|---|
 | **#1** | ACCURACY | <$40k MAE | 🔴 Not Started | Foundation laid; ready for modeling (Ch.01-07) |
 | **#2** | GENERALIZATION | Unseen districts | 🟡 Partial | Balanced training improves generalization |
-| **#3** | DATA QUALITY | Clean + balanced | ✅ **Unlocked** | SMOTE balances 75/25 → 50/50; stratified splits throughout |
+| **#3** | DATA QUALITY | Clean + balanced | **Unlocked** | SMOTE balances 75/25 → 50/50; stratified splits throughout |
 | **#4** | INTERPRETABILITY | Explainable | 🟡 Partial | Precision/recall provide class-level insights |
 | **#5** | PRODUCTION | Inference + monitoring | 🔴 Not Started | Pipeline established; full monitoring in Ch.08 |
 
-**✅ Unlocked capabilities:**
+** Unlocked capabilities:**
 - Compute balanced class weights from $w_j = n/(C \times n_j)$ and verify by hand
 - Apply SMOTE synthetic oversampling *after* the train/test split — zero leakage
 - Evaluate imbalanced classifiers with precision, recall, and F₁ instead of accuracy
 - Tune decision threshold $\tau$ to maximise minority-class F₁
 - **Constraint #3 DATA QUALITY fully achieved**
 
-**❌ Still need to build:**
-- ❌ **ACCURACY** target — haven't built regression models yet. That's Ch.01-07
-- ❌ **Feature drift detection** — class balance is fixed, but feature distributions may shift in production. That's Ch.08
-- ❌ **Production monitoring** — need automated alerts when class distribution shifts in live data
+** Still need to build:**
+- **ACCURACY** target — haven't built regression models yet. That's Ch.01-07
+- **Feature drift detection** — class balance is fixed, but feature distributions may shift in production. That's Ch.08
+- **Production monitoring** — need automated alerts when class distribution shifts in live data
 
 **Current status:** Clean, balanced dataset ready for modeling. SmartVal AI now has data quality + class balance foundations. Ch.01 will build the first regression model on this solid data.
 

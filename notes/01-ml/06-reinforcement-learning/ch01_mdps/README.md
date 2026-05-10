@@ -24,7 +24,7 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 💡 **The mission**: Build **AgentAI** — autonomous agents that learn optimal behavior through trial-and-error, satisfying 5 constraints:
+> **The mission**: Build **AgentAI** — autonomous agents that learn optimal behavior through trial-and-error, satisfying 5 constraints:
 > 1. **OPTIMALITY**: Find the optimal policy $\pi^*$ (CartPole ≥195/200 steps average)
 > 2. **EFFICIENCY**: Learn in minimal episodes (no brute-force search)
 > 3. **SCALABILITY**: Handle large/continuous state spaces (GridWorld → CartPole → beyond)
@@ -32,9 +32,9 @@
 > 5. **GENERALIZATION**: Transfer learned behavior to modified or new environments
 
 **What we know so far:**
-- ⚡ We know supervised learning: labeled data → model $f(x)$ → minimize prediction error
-- ⚡ We know unsupervised learning: unlabeled data → find latent structure
-- ⚡ We know gradient descent, neural networks, backprop, and evaluation metrics
+- We know supervised learning: labeled data → model $f(x)$ → minimize prediction error
+- We know unsupervised learning: unlabeled data → find latent structure
+- We know gradient descent, neural networks, backprop, and evaluation metrics
 - **But we have NO framework for sequential decision-making under uncertainty!**
 
 **The paradigm shift — why RL is different:**
@@ -54,33 +54,33 @@ The **MDP framework** — the universal formal language of RL. Every algorithm i
 
 | Constraint | Status after this chapter |
 |---|---|
-| #1 OPTIMALITY | ⚠️ Defined mathematically (Bellman optimality), not yet computed |
-| #2 EFFICIENCY | ❌ Not addressed (no algorithm yet) |
-| #3 SCALABILITY | ❌ Not addressed (small GridWorld only) |
-| #4 STABILITY | ❌ Not addressed (no iterative algorithm yet) |
-| #5 GENERALIZATION | ❌ Not addressed (single environment) |
+| #1 OPTIMALITY | Defined mathematically (Bellman optimality), not yet computed |
+| #2 EFFICIENCY | Not addressed (no algorithm yet) |
+| #3 SCALABILITY | Not addressed (small GridWorld only) |
+| #4 STABILITY | Not addressed (no iterative algorithm yet) |
+| #5 GENERALIZATION | Not addressed (single environment) |
 
 The value of this chapter is precisely this: **you cannot solve a problem you cannot formulate**. By the end, you will be able to write down any RL problem as an MDP and state what it means to solve it.
 
 ```mermaid
 flowchart LR
-    subgraph SL["Supervised Learning"]
-        direction TB
-        SL_IN["Input x"] --> SL_MODEL["Model f(x)"]
-        SL_LABEL["Label y (given)"] --> SL_LOSS["Loss(y-hat, y)"]
-        SL_MODEL --> SL_LOSS
-    end
-    subgraph RL["Reinforcement Learning"]
-        direction TB
-        RL_S["State s_t"] --> RL_AGENT["Agent pi(a|s)"]
-        RL_AGENT --> RL_A["Action a_t"]
-        RL_A --> RL_ENV["Environment"]
-        RL_ENV --> RL_R["Reward r_{t+1}"]
-        RL_ENV --> RL_S2["Next state s_{t+1}"]
-        RL_R --> RL_AGENT
-        RL_S2 --> RL_AGENT
-    end
-    SL -. "paradigm shift: labels to reward signal" .-> RL
+ subgraph SL["Supervised Learning"]
+ direction TB
+ SL_IN["Input x"] --> SL_MODEL["Model f(x)"]
+ SL_LABEL["Label y (given)"] --> SL_LOSS["Loss(y-hat, y)"]
+ SL_MODEL --> SL_LOSS
+ end
+ subgraph RL["Reinforcement Learning"]
+ direction TB
+ RL_S["State s_t"] --> RL_AGENT["Agent pi(a|s)"]
+ RL_AGENT --> RL_A["Action a_t"]
+ RL_A --> RL_ENV["Environment"]
+ RL_ENV --> RL_R["Reward r_{t+1}"]
+ RL_ENV --> RL_S2["Next state s_{t+1}"]
+ RL_R --> RL_AGENT
+ RL_S2 --> RL_AGENT
+ end
+ SL -. "paradigm shift: labels to reward signal" .-> RL
 ```
 
 ---
@@ -103,18 +103,18 @@ You're training an agent to navigate a 4×4 grid from the **Start** cell (top-le
 
 ```
 +------+------+------+------+
-| S(0) |  (1) |  (2) |  (3) |
+| S(0) | (1) | (2) | (3) |
 +------+------+------+------+
-|  (4) | XX(5)|  (6) |  (7) |
+| (4) | XX(5)| (6) | (7) |
 +------+------+------+------+
-|  (8) |  (9) | (10) | (11) |
+| (8) | (9) | (10) | (11) |
 +------+------+------+------+
 | (12) | (13) | (14) | G(15)|
 +------+------+------+------+
 
-S  = Start  (state 0, top-left)
-G  = Goal   (state 15, bottom-right, terminal)
-XX = Wall   (state 5, impassable)
+S = Start (state 0, top-left)
+G = Goal (state 15, bottom-right, terminal)
+XX = Wall (state 5, impassable)
 Actions: {up, down, left, right}
 ```
 
@@ -134,7 +134,7 @@ Actions: {up, down, left, right}
 - Has an obstacle (wall) that makes the shortest path non-trivial
 - Terminal state gives unambiguous episode structure
 
-> ➡️ **CartPole connection.** The CartPole environment (OpenAI Gym) has a *continuous* state space (4 real-valued observations: cart position, cart velocity, pole angle, pole angular velocity) and a discrete action space {left, right}. It is also an MDP — the Markov property holds because those 4 observations capture all relevant physics. Everything we define for GridWorld applies to CartPole; only the state space size changes.
+> ➡ **CartPole connection.** The CartPole environment (OpenAI Gym) has a *continuous* state space (4 real-valued observations: cart position, cart velocity, pole angle, pole angular velocity) and a discrete action space {left, right}. It is also an MDP — the Markov property holds because those 4 observations capture all relevant physics. Everything we define for GridWorld applies to CartPole; only the state space size changes.
 
 ---
 
@@ -164,7 +164,7 @@ $$P(s_{t+1} \mid s_t, a_t, s_{t-1}, a_{t-1}, \ldots, s_0, a_0) = P(s_{t+1} \mid 
 
 The transition probability depends *only* on the current state and action. All the history is compressed into the single vector $s_t$. This is the load-bearing assumption of all RL theory.
 
-> ⚠️ **When the Markov assumption fails.** In partially observable environments — where the agent sees only a *sensor reading*, not the full state — the Markov property breaks. A robot that sees only a camera image might be in an ambiguous state (two rooms look identical). The formal extension is the **Partially Observable MDP (POMDP)**, discussed in §9.
+> **When the Markov assumption fails.** In partially observable environments — where the agent sees only a *sensor reading*, not the full state — the Markov property breaks. A robot that sees only a camera image might be in an ambiguous state (two rooms look identical). The formal extension is the **Partially Observable MDP (POMDP)**, discussed in §9.
 
 ---
 
@@ -227,7 +227,7 @@ $$H = \frac{1}{1 - \gamma}$$
 | 0.99 | 100 | Agent cares about ~100 steps ahead |
 | 0.999 | 1000 | Agent cares about ~1000 steps ahead |
 
-> ⚡ **Practical choice.** For GridWorld (short episodes, ~15 steps), $\gamma = 0.9$ is appropriate — $H=10$ steps is enough to see the goal from any cell. For CartPole (up to 200 steps), $\gamma = 0.99$ gives $H=100$ steps, appropriate for an agent that must balance throughout the episode.
+> **Practical choice.** For GridWorld (short episodes, ~15 steps), $\gamma = 0.9$ is appropriate — $H=10$ steps is enough to see the goal from any cell. For CartPole (up to 200 steps), $\gamma = 0.99$ gives $H=100$ steps, appropriate for an agent that must balance throughout the episode.
 
 ### 4.3 State Value Function and Bellman Equation for $V^\pi$
 
@@ -317,7 +317,7 @@ The MDP framework does not appear out of thin air — it solves a specific seque
 
 **Act 4 — Bellman equations give the algorithm.** Once the problem is written as an MDP, the Bellman equations expose a recursive structure that transforms "find the best infinite-horizon policy" into "solve a system of equations, one per state." Chapter 2 (Dynamic Programming) uses this to compute $V^*$ and $\pi^*$ exactly for small MDPs. Chapters 3–6 approximate these solutions for large and continuous state spaces.
 
-> ➡️ **Forward pointer.** The Bellman equations are the seed of everything: value iteration (ch02), Q-learning (ch03), policy gradient (ch04), actor-critic (ch05), and deep Q-networks (ch06) all either solve or approximate the same two equations.
+> ➡ **Forward pointer.** The Bellman equations are the seed of everything: value iteration (ch02), Q-learning (ch03), policy gradient (ch04), actor-critic (ch05), and deep Q-networks (ch06) all either solve or approximate the same two equations.
 
 ---
 
@@ -328,19 +328,19 @@ Before diving into algorithms, let's trace through *one complete episode* in Gri
 ```
 ALGORITHM: Evaluate a trajectory in an MDP
 ─────────────────────────────────────────────────
-Input:  MDP = (S, A, P, R, γ), policy π, start state s₀
+Input: MDP = (S, A, P, R, γ), policy π, start state s₀
 Output: Return G₀ (cumulative discounted reward from step 0)
 
 1. Initialize t = 0, G = 0.0, discount = 1.0
 2. Set s = s₀
 3. REPEAT until s is terminal:
-   a. Sample action a ~ π(·|s)         // follow the policy
-   b. Observe next state s' ~ P(·|s,a) // environment transitions
-   c. Observe reward r = R(s, a, s')    // environment gives reward
-   d. G ← G + discount × r             // accumulate discounted reward
-   e. discount ← discount × γ          // decay the discount
-   f. s ← s'                           // advance to next state
-   g. t ← t + 1
+ a. Sample action a ~ π(·|s) // follow the policy
+ b. Observe next state s' ~ P(·|s,a) // environment transitions
+ c. Observe reward r = R(s, a, s') // environment gives reward
+ d. G ← G + discount × r // accumulate discounted reward
+ e. discount ← discount × γ // decay the discount
+ f. s ← s' // advance to next state
+ g. t ← t + 1
 4. RETURN G
 ```
 
@@ -427,17 +427,17 @@ State $A$ converges in iteration 3 because information propagates one step per i
 
 ```mermaid
 flowchart LR
-    AGENT["Agent
+ AGENT["Agent
 pi(a|s)"]
-    ENV["Environment
+ ENV["Environment
 P(s' | s,a), R(s,a,s')"]
 
-    AGENT -->|"Action a_t"| ENV
-    ENV -->|"Reward r_{t+1}"| AGENT
-    ENV -->|"Next state s_{t+1}"| AGENT
+ AGENT -->|"Action a_t"| ENV
+ ENV -->|"Reward r_{t+1}"| AGENT
+ ENV -->|"Next state s_{t+1}"| AGENT
 
-    style AGENT fill:#1e3a8a,color:#fff,stroke:#1d4ed8,stroke-width:2px
-    style ENV fill:#15803d,color:#fff,stroke:#15803d,stroke-width:2px
+ style AGENT fill:#1e3a8a,color:#fff,stroke:#1d4ed8,stroke-width:2px
+ style ENV fill:#15803d,color:#fff,stroke:#15803d,stroke-width:2px
 ```
 
 The loop runs at every time step $t$. The agent uses its policy $\pi$ to map the current state to an action. The environment uses its dynamics $P$ and reward function $R$ to return the next state and reward. The agent updates its estimate of $V^\pi$ or $Q^\pi$ using the Bellman equations, then repeats.
@@ -446,54 +446,54 @@ The loop runs at every time step $t$. The agent uses its policy $\pi$ to map the
 
 ```mermaid
 flowchart TD
-    MDP["MDP = (S, A, P, R, gamma)"]
-    S["S: State Space
+ MDP["MDP = (S, A, P, R, gamma)"]
+ S["S: State Space
 16 cells (GridWorld)
 R^4 (CartPole)"]
-    A["A: Action Space
+ A["A: Action Space
 up down left right
 (GridWorld)
 left right (CartPole)"]
-    P["P(s'|s,a): Transitions
+ P["P(s'|s,a): Transitions
 P in [0,1]
 sum = 1
 Markov property holds"]
-    R["R(s,a,s'): Reward
+ R["R(s,a,s'): Reward
 +10 at goal
 -1 per step
 -5 wall collision"]
-    G["gamma: Discount Factor
+ G["gamma: Discount Factor
 gamma in [0,1)
 H = 1/(1-gamma)
 gamma=0.9 -> H=10"]
-    PI["pi(a|s): Policy
+ PI["pi(a|s): Policy
 Agent decision rule
 Maps states to actions"]
-    V["V*(s): Optimal Value
+ V["V*(s): Optimal Value
 Expected return
 Bellman optimality
 What ch02 will compute"]
 
-    MDP --> S
-    MDP --> A
-    MDP --> P
-    MDP --> R
-    MDP --> G
-    S --> PI
-    A --> PI
-    PI --> V
-    P --> V
-    R --> V
-    G --> V
+ MDP --> S
+ MDP --> A
+ MDP --> P
+ MDP --> R
+ MDP --> G
+ S --> PI
+ A --> PI
+ PI --> V
+ P --> V
+ R --> V
+ G --> V
 
-    style MDP fill:#1e3a8a,color:#fff,stroke:#1d4ed8,stroke-width:2px
-    style S fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style A fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style P fill:#b45309,color:#fff,stroke:#b45309
-    style R fill:#b45309,color:#fff,stroke:#b45309
-    style G fill:#b45309,color:#fff,stroke:#b45309
-    style PI fill:#15803d,color:#fff,stroke:#15803d
-    style V fill:#b91c1c,color:#fff,stroke:#b91c1c
+ style MDP fill:#1e3a8a,color:#fff,stroke:#1d4ed8,stroke-width:2px
+ style S fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style A fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style P fill:#b45309,color:#fff,stroke:#b45309
+ style R fill:#b45309,color:#fff,stroke:#b45309
+ style G fill:#b45309,color:#fff,stroke:#b45309
+ style PI fill:#15803d,color:#fff,stroke:#15803d
+ style V fill:#b91c1c,color:#fff,stroke:#b91c1c
 ```
 
 ---
@@ -516,7 +516,7 @@ The discount factor $\gamma$ is the single most important hyperparameter in any 
 
 **Practical tuning principle:** Start with $\gamma = 0.99$ for episodic tasks and reduce only if the agent is too slow to converge. If the agent behaves myopically (ignoring delayed rewards), increase $\gamma$.
 
-> ⚡ **γ interacts with learning rate.** High $\gamma$ (long horizon) means value estimates are more sensitive to errors — a small mistake in $V(s)$ propagates further back through the Bellman update chain. This increases effective variance of TD-learning updates, which may require a smaller learning rate. This interaction is explored in ch02–ch03.
+> **γ interacts with learning rate.** High $\gamma$ (long horizon) means value estimates are more sensitive to errors — a small mistake in $V(s)$ propagates further back through the Bellman update chain. This increases effective variance of TD-learning updates, which may require a smaller learning rate. This interaction is explored in ch02–ch03.
 
 ---
 
@@ -580,7 +580,7 @@ Every chapter in the RL track builds directly on MDP foundations:
 | Transition $P(s'|s,a)$ | ch02 Dynamic Programming (requires full knowledge of $P$); ch03–ch06 (model-free: do not require $P$) |
 | Stochastic vs deterministic policy | ch04 (stochastic policies needed for REINFORCE gradient); ch06 DDPG (deterministic policy) |
 
-> ➡️ **Math track connection.** The Bellman equation is a **fixed-point equation** — $V^\pi = T^\pi V^\pi$ where $T^\pi$ is the Bellman operator. The contraction mapping theorem guarantees a unique solution and convergence of value iteration. See [00-math_under_the_hood/ch04_small_steps](../../../../00-math_under_the_hood/ch04_small_steps/README.md).
+> ➡ **Math track connection.** The Bellman equation is a **fixed-point equation** — $V^\pi = T^\pi V^\pi$ where $T^\pi$ is the Bellman operator. The contraction mapping theorem guarantees a unique solution and convergence of value iteration. See [00-math_under_the_hood/ch04_small_steps](../../../../00-math_under_the_hood/ch04_small_steps/README.md).
 
 ---
 
@@ -590,25 +590,25 @@ Every chapter in the RL track builds directly on MDP foundations:
 
 | Concept | Status | Confirmed by |
 |---|---|---|
-| State, action, reward, transition | ✅ Defined | §3 MDP formalism |
-| Policy $\pi$, stochastic and deterministic | ✅ Defined | §§3–4 |
-| Return $G_t$ with discount $\gamma$ | ✅ Computed explicitly | §4.1 — 3-step arithmetic |
-| Bellman equation for $V^\pi$ | ✅ Derived and solved | §4.3 — 2-state and 3-state examples |
-| Q-function $Q^\pi(s,a)$ | ✅ Defined and computed | §4.4 — GridWorld Q values |
-| Bellman optimality $V^*$, $Q^*$ | ✅ Defined and solved | §4.5 — 2-state optimization |
-| Full iterative computation | ✅ 3 iterations shown | §6 — 4-state chain |
-| Discount factor analysis | ✅ Effective horizon formula | §§4.2, 8 |
-| Failure modes | ✅ Catalogued | §9 |
+| State, action, reward, transition | Defined | §3 MDP formalism |
+| Policy $\pi$, stochastic and deterministic | Defined | §§3–4 |
+| Return $G_t$ with discount $\gamma$ | Computed explicitly | §4.1 — 3-step arithmetic |
+| Bellman equation for $V^\pi$ | Derived and solved | §4.3 — 2-state and 3-state examples |
+| Q-function $Q^\pi(s,a)$ | Defined and computed | §4.4 — GridWorld Q values |
+| Bellman optimality $V^*$, $Q^*$ | Defined and solved | §4.5 — 2-state optimization |
+| Full iterative computation | 3 iterations shown | §6 — 4-state chain |
+| Discount factor analysis | Effective horizon formula | §§4.2, 8 |
+| Failure modes | Catalogued | §9 |
 
 **What is NOT yet possible:**
 
 | Missing piece | Needed for | Provided by |
 |---|---|---|
-| ❌ Algorithm to compute $V^*$ for large MDPs | AgentAI #1 OPTIMALITY | ch02 Dynamic Programming |
-| ❌ Learning without knowing $P(s'|s,a)$ | Real environments (model-free RL) | ch03 Q-Learning |
-| ❌ Handling continuous state spaces | CartPole, robotics | ch06 DQN |
-| ❌ Exploration strategy | AgentAI #2 EFFICIENCY | ch03 ε-greedy, UCB |
-| ❌ Function approximation | AgentAI #3 SCALABILITY | ch05–ch06 |
+| Algorithm to compute $V^*$ for large MDPs | AgentAI #1 OPTIMALITY | ch02 Dynamic Programming |
+| Learning without knowing $P(s'|s,a)$ | Real environments (model-free RL) | ch03 Q-Learning |
+| Handling continuous state spaces | CartPole, robotics | ch06 DQN |
+| Exploration strategy | AgentAI #2 EFFICIENCY | ch03 ε-greedy, UCB |
+| Function approximation | AgentAI #3 SCALABILITY | ch05–ch06 |
 
 **One-sentence summary:** We can now write any RL problem as an MDP, define what optimal means via the Bellman equations, and verify small examples by hand — but we cannot yet compute the optimal policy efficiently for large problems.
 
@@ -626,9 +626,9 @@ The Bellman equations from this chapter are *definitions* — they tell us what 
 - **Value Iteration**: Repeatedly apply the Bellman optimality operator until $V$ converges to $V^*$ — more direct than Policy Iteration
 
 **What ch02 requires from you:**
-- ✅ Know what an MDP is (this chapter)
-- ✅ Know what $V^\pi$, $Q^\pi$, $V^*$, $Q^*$ are (this chapter)
-- ✅ Understand the Bellman equations as recursive definitions (this chapter)
+- Know what an MDP is (this chapter)
+- Know what $V^\pi$, $Q^\pi$, $V^*$, $Q^*$ are (this chapter)
+- Understand the Bellman equations as recursive definitions (this chapter)
 
 **What ch02 adds:**
 - Iterative algorithms that refine value estimates until convergence
@@ -636,7 +636,7 @@ The Bellman equations from this chapter are *definitions* — they tell us what 
 - Full GridWorld solution (all 16 states, all 4 actions)
 - Key limitation revealed: Dynamic Programming requires **full knowledge of $P(s'|s,a)$** — you must know the environment's transition model. Chapters 3–6 remove this assumption (model-free RL).
 
-> ⚡ **AgentAI progress after ch02.** Constraint #1 (OPTIMALITY) will be fully addressed for small discrete MDPs like GridWorld. CartPole's state space is continuous ($\mathbb{R}^4$) — DP cannot enumerate states. Constraint #3 (SCALABILITY) remains open until ch06 DQN.
+> **AgentAI progress after ch02.** Constraint #1 (OPTIMALITY) will be fully addressed for small discrete MDPs like GridWorld. CartPole's state space is continuous ($\mathbb{R}^4$) — DP cannot enumerate states. Constraint #3 (SCALABILITY) remains open until ch06 DQN.
 
 ---
 
@@ -655,4 +655,4 @@ CartPole provides a concrete bridge from the toy GridWorld to a real RL benchmar
 
 **Target:** CartPole ≥195/200 steps average — find a policy where the pole stays upright for at least 195 consecutive steps out of 200. This requires learning precise balancing: small left/right actions at the right moments to counteract the pole's angular momentum.
 
-> ➡️ **This target is addressed in ch06 DQN**, where a neural network approximates $Q^*(s,a)$ over the continuous CartPole state space.
+> ➡ **This target is addressed in ch06 DQN**, where a neural network approximates $Q^*(s,a)$ over the continuous CartPole state space.

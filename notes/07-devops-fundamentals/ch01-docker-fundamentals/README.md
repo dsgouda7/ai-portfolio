@@ -10,13 +10,13 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 💡 **The mission**: Deploy a **production-ready Flask web app** satisfying 5 constraints:
+> **The mission**: Deploy a **production-ready Flask web app** satisfying 5 constraints:
 > 1. **PORTABILITY**: Runs identically on dev, staging, production — 2. **REPRODUCIBILITY**: Same build every time — 3. **ISOLATION**: No dependency conflicts with host — 4. **EFFICIENCY**: Fast builds, small images — 5. **OBSERVABILITY**: Logs, debugging, health checks
 
 **What we know so far:**
-- ✅ We have a Flask app with Redis cache (standard 3-tier architecture)
-- ✅ It works on the developer's laptop (Python 3.11, Redis installed locally)
-- ❌ **But it fails on the production server!** Different Python version, missing Redis, wrong environment variables
+- We have a Flask app with Redis cache (standard 3-tier architecture)
+- It works on the developer's laptop (Python 3.11, Redis installed locally)
+- **But it fails on the production server!** Different Python version, missing Redis, wrong environment variables
 
 **What's blocking us:**
 We need **containerization** — packaging the app and all its dependencies into a single, portable unit. Without containers:
@@ -30,8 +30,7 @@ The **Docker workflow** — write once, run anywhere:
 - **Dockerfile defines the build**: One file specifies Python version, dependencies, startup command
 - **Image is the blueprint**: Built once, pushed to registry, pulled by any server
 - **Container is the runtime**: Start, stop, inspect, scale without touching the host OS
-
-✅ **This is the foundation** — every later chapter assumes your app is containerized.
+**This is the foundation** — every later chapter assumes your app is containerized.
 
 ---
 
@@ -45,7 +44,7 @@ The **Docker workflow** — write once, run anywhere:
 
 ## 1 · Docker Solves "Works on My Machine" with Lightweight Containers
 
-> ⚡ **When this breaks** — ProductionStack's Flask API runs perfectly on your laptop but crashes the moment it hits staging: Python 3.9 versus 3.11, missing Redis, conflicting system packages. The payment service goes dark, your CTO gets a support escalation at 3 am, and "it works on my machine" is not an acceptable incident report. Docker eliminates environment drift by baking the entire runtime — Python version, packages, config — into the image artifact, so the same container runs identically on every machine, every time.
+> **When this breaks** — ProductionStack's Flask API runs perfectly on your laptop but crashes the moment it hits staging: Python 3.9 versus 3.11, missing Redis, conflicting system packages. The payment service goes dark, your CTO gets a support escalation at 3 am, and "it works on my machine" is not an acceptable incident report. Docker eliminates environment drift by baking the entire runtime — Python version, packages, config — into the image artifact, so the same container runs identically on every machine, every time.
 
 Docker packages your application, runtime, and dependencies into a **container** — a lightweight, isolated environment that runs identically on any machine with Docker installed. Unlike virtual machines (which virtualize hardware), containers share the host OS kernel, making them fast to start and efficient in resource usage.
 
@@ -59,30 +58,30 @@ Every container starts from an image. You build an image once (defining Python v
 
 ## 1.5 · The Practitioner Workflow — Your 4-Phase Deployment
 
-> ⚠️ **Two ways to read this chapter:**
+> **Warning — Two ways to read this chapter:**
 > - **Theory-first (recommended for learning):** Read §0→§4 sequentially to understand concepts, then use this workflow as your reference
 > - **Workflow-first (practitioners with existing knowledge):** Use this diagram as a jump-to guide when deploying real applications
 
 **What you'll build by the end:** A production-ready containerized Flask app with optimized build times, minimal image size, proper networking, and complete debugging capability. This is the workflow you'll follow for every application deployment.
 
 ```
-Phase 1: WRITE              Phase 2: BUILD              Phase 3: RUN                Phase 4: DEBUG
+Phase 1: WRITE Phase 2: BUILD Phase 3: RUN Phase 4: DEBUG
 ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
-Create Dockerfile:          Build optimized image:      Launch container:           Troubleshoot issues:
+Create Dockerfile: Build optimized image: Launch container: Troubleshoot issues:
 
-• Choose base image         • Enable BuildKit           • Port mapping              • View logs
-• Layer dependencies        • Use build cache           • Volume mounts             • Exec into container
-• Multi-stage builds        • Tag strategy              • Environment vars          • Inspect layers
-• .dockerignore             • Size optimization         • Network setup             • Analyze performance
+• Choose base image • Enable BuildKit • Port mapping • View logs
+• Layer dependencies • Use build cache • Volume mounts • Exec into container
+• Multi-stage builds • Tag strategy • Environment vars • Inspect layers
+• .dockerignore • Size optimization • Network setup • Analyze performance
 
-→ DECISION:                 → DECISION:                 → DECISION:                 → DECISION:
-  Base image choice?          Fast enough?                Persistent data?            Root cause?
-  • python:3.11-slim          • >2 min: Add cache         • Database: Volume          • Logs: Check stdout
-  • python:3.11-alpine        • >100MB: Multi-stage       • Code: Bind mount (dev)    • Network: Exec ping
-  • Full (800MB, avoid)       • Check with Dive tool      • Secrets: Env vars         • Layers: Use Dive
+→ DECISION: → DECISION: → DECISION: → DECISION:
+ Base image choice? Fast enough? Persistent data? Root cause?
+ • python:3.11-slim • >2 min: Add cache • Database: Volume • Logs: Check stdout
+ • python:3.11-alpine • >100MB: Multi-stage • Code: Bind mount (dev) • Network: Exec ping
+ • Full (800MB, avoid) • Check with Dive tool • Secrets: Env vars • Layers: Use Dive
 ```
 
-> 💡 **How to use this workflow:** Complete Phase 1→2→3→4 in order on your first deployment. For subsequent updates, you'll typically iterate between Phase 1 (modify Dockerfile), Phase 2 (rebuild), and Phase 4 (verify). The sections below teach WHY each phase works; refer back here for WHAT to do.
+> **How to use this workflow:** Complete Phase 1→2→3→4 in order on your first deployment. For subsequent updates, you'll typically iterate between Phase 1 (modify Dockerfile), Phase 2 (rebuild), and Phase 4 (verify). The sections below teach WHY each phase works; refer back here for WHAT to do.
 
 ### The 4-Phase Decision Flow
 
@@ -90,22 +89,22 @@ This diagram shows the complete practitioner journey from raw application code t
 
 ```mermaid
 graph TD
-    A[Application Code] --> B{Phase 1: WRITE<br/>Create Dockerfile}
-    B -->|Bloated image| C[Add multi-stage build<br/>and .dockerignore]
-    B -->|Cache misses on rebuild| D[Reorder COPY: requirements.txt<br/>before application code]
-    B -->|Build ready| E{Phase 2: BUILD<br/>docker build -t flask-app:v1 .}
-    E -->|Build fails| F[Check Dockerfile syntax<br/>run docker build --no-cache]
-    E -->|Image built| G{Phase 3: RUN<br/>docker run -p 5000:5000}
-    G -->|Container exits immediately| H[Phase 4: DEBUG<br/>docker logs + docker exec -it]
-    G -->|Port unreachable from host| I[Verify Flask binds 0.0.0.0<br/>not 127.0.0.1]
-    G -->|Container running healthy| J[✅ ProductionStack live]
-    H --> G
-    I --> G
-    style J fill:#15803d,stroke:#15803d,color:#fff
-    style B fill:#1e3a8a,stroke:#1e3a8a,color:#fff
-    style E fill:#1e3a8a,stroke:#1e3a8a,color:#fff
-    style G fill:#1e3a8a,stroke:#1e3a8a,color:#fff
-    style H fill:#b91c1c,stroke:#b91c1c,color:#fff
+ A[Application Code] --> B{Phase 1: WRITE<br/>Create Dockerfile}
+ B -->|Bloated image| C[Add multi-stage build<br/>and .dockerignore]
+ B -->|Cache misses on rebuild| D[Reorder COPY: requirements.txt<br/>before application code]
+ B -->|Build ready| E{Phase 2: BUILD<br/>docker build -t flask-app:v1 .}
+ E -->|Build fails| F[Check Dockerfile syntax<br/>run docker build --no-cache]
+ E -->|Image built| G{Phase 3: RUN<br/>docker run -p 5000:5000}
+ G -->|Container exits immediately| H[Phase 4: DEBUG<br/>docker logs + docker exec -it]
+ G -->|Port unreachable from host| I[Verify Flask binds 0.0.0.0<br/>not 127.0.0.1]
+ G -->|Container running healthy| J[ ProductionStack live]
+ H --> G
+ I --> G
+ style J fill:#15803d,stroke:#15803d,color:#fff
+ style B fill:#1e3a8a,stroke:#1e3a8a,color:#fff
+ style E fill:#1e3a8a,stroke:#1e3a8a,color:#fff
+ style G fill:#1e3a8a,stroke:#1e3a8a,color:#fff
+ style H fill:#b91c1c,stroke:#b91c1c,color:#fff
 ```
 
 ---
@@ -132,7 +131,7 @@ By step 5, you have a **production-ready deployment**: two containers (Flask + R
 
 ## 3 · Mental Model — Image vs. Container (Blueprint vs. Instance)
 
-> 💡 **The analogy that never fails:** An **image** is like a class definition in Python. A **container** is like an object instantiated from that class. You can create 10 containers from one image — they all start with the same code and dependencies, but they run independently with separate memory and state.
+> **The analogy that never fails:** An **image** is like a class definition in Python. A **container** is like an object instantiated from that class. You can create 10 containers from one image — they all start with the same code and dependencies, but they run independently with separate memory and state.
 
 **Image:**
 - Read-only filesystem layers
@@ -151,8 +150,8 @@ By step 5, you have a **production-ready deployment**: two containers (Flask + R
 **The lifecycle:**
 ```
 Dockerfile → build → Image → run → Container
-                        ↓
-                    push to registry → pull on production → run → Container
+ ↓
+ push to registry → pull on production → run → Container
 ```
 
 **Key insight:** When you run `docker build`, you're creating a **read-only template**. When you run `docker run`, you're creating a **writable runtime instance**. This separation is why Docker enables immutable infrastructure — you never patch a running container. You build a new image and replace the old container.
@@ -176,8 +175,8 @@ WORKDIR /app
 
 # Install build dependencies (gcc, etc.) for compiling Python packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
+ gcc \
+ && rm -rf /var/lib/apt/lists/*
 
 # Copy ONLY requirements first (maximize cache hits)
 COPY requirements.txt .
@@ -220,7 +219,7 @@ CMD ["python", "app.py"]
 | **Slim base images** | Saves 500-700 MB | Always — use `python:3.11-slim` (120 MB) instead of `python:3.11` (800 MB) |
 | **Chain RUN commands** | Reduces layer count | When installing packages — cleanup in same layer |
 
-> 💡 **Industry Standard: Alpine vs Slim Base Images**
+> **Industry Standard: Alpine vs Slim Base Images**
 >
 > ```dockerfile
 > # Option 1: Debian-based slim (120 MB, better compatibility)
@@ -258,8 +257,8 @@ Dockerfile
 docker-compose.yml
 ```
 
-> 💡 **Write verdict:** Dockerfile uses multi-stage build — image size 300 MB → 120 MB; layer caching eliminates `pip install` on code-only changes.
-> ➡️ Enables faster CI/CD pulls and reduced attack surface; proceed to Build phase.
+> **Write verdict:** Dockerfile uses multi-stage build — image size 300 MB → 120 MB; layer caching eliminates `pip install` on code-only changes.
+> ➡ Enables faster CI/CD pulls and reduced attack surface; proceed to Build phase.
 
 ---
 
@@ -276,37 +275,37 @@ export DOCKER_BUILDKIT=1
 
 # Build with inline cache (stores cache metadata in image for remote caching)
 docker build \
-  --build-arg BUILDKIT_INLINE_CACHE=1 \
-  --cache-from flask-app:latest \
-  -t flask-app:v1 \
-  -t flask-app:latest \
-  .
+ --build-arg BUILDKIT_INLINE_CACHE=1 \
+ --cache-from flask-app:latest \
+ -t flask-app:v1 \
+ -t flask-app:latest \
+ .
 
 # OUTPUT:
 # [+] Building 12.3s (15/15) FINISHED
-#  => [internal] load build definition from Dockerfile      0.1s
-#  => [internal] load .dockerignore                          0.0s
-#  => [internal] load metadata for docker.io/library/python  0.8s
-#  => [builder 1/5] FROM python:3.11-slim                    0.0s (CACHED)
-#  => [internal] load build context                          0.2s
-#  => [builder 2/5] WORKDIR /app                             0.0s (CACHED)
-#  => [builder 3/5] RUN apt-get update && apt-get install   2.1s
-#  => [builder 4/5] COPY requirements.txt .                  0.0s
-#  => [builder 5/5] RUN pip install --user                   8.2s
-#  => [stage-1 2/6] WORKDIR /app                             0.0s (CACHED)
-#  => [stage-1 3/6] COPY --from=builder /root/.local         0.3s
-#  => [stage-1 4/6] COPY . .                                 0.1s
-#  => [stage-1 5/6] RUN useradd -m appuser                   0.4s
-#  => exporting to image                                     0.2s
-#  => => writing image sha256:a3c5d9f8b2e1...                0.1s
-#  => => naming to docker.io/library/flask-app:v1            0.0s
-#  => => naming to docker.io/library/flask-app:latest        0.0s
+# => [internal] load build definition from Dockerfile 0.1s
+# => [internal] load .dockerignore 0.0s
+# => [internal] load metadata for docker.io/library/python 0.8s
+# => [builder 1/5] FROM python:3.11-slim 0.0s (CACHED)
+# => [internal] load build context 0.2s
+# => [builder 2/5] WORKDIR /app 0.0s (CACHED)
+# => [builder 3/5] RUN apt-get update && apt-get install 2.1s
+# => [builder 4/5] COPY requirements.txt . 0.0s
+# => [builder 5/5] RUN pip install --user 8.2s
+# => [stage-1 2/6] WORKDIR /app 0.0s (CACHED)
+# => [stage-1 3/6] COPY --from=builder /root/.local 0.3s
+# => [stage-1 4/6] COPY . . 0.1s
+# => [stage-1 5/6] RUN useradd -m appuser 0.4s
+# => exporting to image 0.2s
+# => => writing image sha256:a3c5d9f8b2e1... 0.1s
+# => => naming to docker.io/library/flask-app:v1 0.0s
+# => => naming to docker.io/library/flask-app:latest 0.0s
 
 # Verify image size
 docker images flask-app
-# REPOSITORY   TAG      IMAGE ID       CREATED          SIZE
-# flask-app    v1       a3c5d9f8b2e1   30 seconds ago   122MB
-# flask-app    latest   a3c5d9f8b2e1   30 seconds ago   122MB
+# REPOSITORY TAG IMAGE ID CREATED SIZE
+# flask-app v1 a3c5d9f8b2e1 30 seconds ago 122MB
+# flask-app latest a3c5d9f8b2e1 30 seconds ago 122MB
 ```
 
 **Build time optimization strategies:**
@@ -318,7 +317,7 @@ docker images flask-app
 | **Rebuilds dependencies** | `requirements.txt` unchanged but rebuilds | Move `COPY requirements.txt` before `COPY . .` |
 | **No layer caching in CI** | Every CI build is cold | Use registry as cache: `--cache-from registry.com/flask-app:latest` |
 
-> 💡 **Industry Standard: BuildKit for Fast Builds**
+> **Industry Standard: BuildKit for Fast Builds**
 >
 > ```bash
 > # Legacy builder (slow, sequential)
@@ -332,9 +331,9 @@ docker images flask-app
 >
 > # BuildKit with cache mounts (persistent dependency cache)
 > docker build \
->   --build-arg BUILDKIT_INLINE_CACHE=1 \
->   --cache-from flask-app:latest \
->   -t flask-app:v1 .
+> --build-arg BUILDKIT_INLINE_CACHE=1 \
+> --cache-from flask-app:latest \
+> -t flask-app:v1 .
 > # Build time: 22s on second build (dependencies cached)
 > ```
 >
@@ -358,8 +357,8 @@ docker build -t flask-app:$(git rev-parse --short HEAD) .
 docker build -t flask-app:staging-1.2.3 .
 ```
 
-> 💡 **Build verdict:** BuildKit cuts build time 4m12s → 1m38s; cached `requirements.txt` layer makes code-only rebuilds 22s.
-> ➡️ Registry-ready artifact with SHA tag for rollback; proceed to Run phase.
+> **Build verdict:** BuildKit cuts build time 4m12s → 1m38s; cached `requirements.txt` layer makes code-only rebuilds 22s.
+> ➡ Registry-ready artifact with SHA tag for rollback; proceed to Run phase.
 
 ---
 
@@ -380,35 +379,35 @@ docker network create flask-net
 
 # 3. Run Redis on custom network with volume
 docker run -d \
-  --name redis \
-  --network flask-net \
-  -v redis-data:/data \
-  --restart unless-stopped \
-  redis:7
+ --name redis \
+ --network flask-net \
+ -v redis-data:/data \
+ --restart unless-stopped \
+ redis:7
 
 # 4. Run Flask app with complete configuration
 docker run -d \
-  --name flask-api \
-  --network flask-net \
-  -p 5000:5000 \
-  -v flask-data:/app/data \
-  -e FLASK_ENV=production \
-  -e REDIS_HOST=redis \
-  -e REDIS_PORT=6379 \
-  -e SECRET_KEY=${SECRET_KEY} \
-  --restart unless-stopped \
-  --memory="512m" \
-  --cpus="1.0" \
-  flask-app:v1
+ --name flask-api \
+ --network flask-net \
+ -p 5000:5000 \
+ -v flask-data:/app/data \
+ -e FLASK_ENV=production \
+ -e REDIS_HOST=redis \
+ -e REDIS_PORT=6379 \
+ -e SECRET_KEY=${SECRET_KEY} \
+ --restart unless-stopped \
+ --memory="512m" \
+ --cpus="1.0" \
+ flask-app:v1
 
 # OUTPUT:
 # 89f7c3d2e1a5b4f6c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1
 
 # 5. Verify containers are running
 docker ps
-# CONTAINER ID   IMAGE          COMMAND                  STATUS         PORTS                    NAMES
-# 89f7c3d2e1a5   flask-app:v1   "python app.py"          Up 10 seconds  0.0.0.0:5000->5000/tcp   flask-api
-# 7b3e9f1d2c4a   redis:7        "docker-entrypoint.s…"   Up 15 seconds  6379/tcp                 redis
+# CONTAINER ID IMAGE COMMAND STATUS PORTS NAMES
+# 89f7c3d2e1a5 flask-app:v1 "python app.py" Up 10 seconds 0.0.0.0:5000->5000/tcp flask-api
+# 7b3e9f1d2c4a redis:7 "docker-entrypoint.s…" Up 15 seconds 6379/tcp redis
 
 # 6. Test the application
 curl http://localhost:5000/health
@@ -416,8 +415,8 @@ curl http://localhost:5000/health
 
 # 7. Check resource usage
 docker stats flask-api --no-stream
-# CONTAINER    CPU %   MEM USAGE / LIMIT   MEM %   NET I/O       BLOCK I/O
-# flask-api    1.2%    45MiB / 512MiB      8.8%    1.2kB / 648B  0B / 0B
+# CONTAINER CPU % MEM USAGE / LIMIT MEM % NET I/O BLOCK I/O
+# flask-api 1.2% 45MiB / 512MiB 8.8% 1.2kB / 648B 0B / 0B
 ```
 
 **Container runtime options:**
@@ -433,7 +432,7 @@ docker stats flask-api --no-stream
 | `--memory="512m"` | Memory limit | Always in production (prevent runaway processes) |
 | `--cpus="1.0"` | CPU limit | Always in production (prevent CPU starvation) |
 
-> 💡 **Industry Standard: Docker Compose for Multi-Container Apps**
+> **Industry Standard: Docker Compose for Multi-Container Apps**
 >
 > Managing multiple `docker run` commands is error-prone. Docker Compose defines entire stacks in YAML:
 >
@@ -442,41 +441,41 @@ docker stats flask-api --no-stream
 > version: '3.8'
 >
 > services:
->   redis:
->     image: redis:7
->     volumes:
->       - redis-data:/data
->     restart: unless-stopped
+> redis:
+> image: redis:7
+> volumes:
+> - redis-data:/data
+> restart: unless-stopped
 >
->   flask-api:
->     build: .
->     ports:
->       - "5000:5000"
->     environment:
->       FLASK_ENV: production
->       REDIS_HOST: redis
->       SECRET_KEY: ${SECRET_KEY}
->     volumes:
->       - flask-data:/app/data
->     depends_on:
->       - redis
->     restart: unless-stopped
->     deploy:
->       resources:
->         limits:
->           cpus: '1.0'
->           memory: 512M
+> flask-api:
+> build: .
+> ports:
+> - "5000:5000"
+> environment:
+> FLASK_ENV: production
+> REDIS_HOST: redis
+> SECRET_KEY: ${SECRET_KEY}
+> volumes:
+> - flask-data:/app/data
+> depends_on:
+> - redis
+> restart: unless-stopped
+> deploy:
+> resources:
+> limits:
+> cpus: '1.0'
+> memory: 512M
 >
 > volumes:
->   redis-data:
->   flask-data:
+> redis-data:
+> flask-data:
 > ```
 >
 > **One command to rule them all:**
 > ```bash
-> docker compose up -d    # Start entire stack
-> docker compose down     # Stop and remove all containers
-> docker compose logs -f  # Follow logs from all services
+> docker compose up -d # Start entire stack
+> docker compose down # Stop and remove all containers
+> docker compose logs -f # Follow logs from all services
 > ```
 >
 > **When to use:**
@@ -490,20 +489,20 @@ docker stats flask-api --no-stream
 
 ```bash
 # Standard mapping (host port = container port)
-docker run -p 5000:5000 flask-app:v1  # localhost:5000 → container:5000
+docker run -p 5000:5000 flask-app:v1 # localhost:5000 → container:5000
 
 # Custom host port (avoid conflicts)
-docker run -p 8080:5000 flask-app:v1  # localhost:8080 → container:5000
+docker run -p 8080:5000 flask-app:v1 # localhost:8080 → container:5000
 
 # Bind to specific interface (security)
-docker run -p 127.0.0.1:5000:5000 flask-app:v1  # Only localhost can access
+docker run -p 127.0.0.1:5000:5000 flask-app:v1 # Only localhost can access
 
 # Random host port (useful for parallel testing)
-docker run -p 5000 flask-app:v1  # Docker assigns random port (e.g., 32768)
+docker run -p 5000 flask-app:v1 # Docker assigns random port (e.g., 32768)
 ```
 
-> 💡 **Run verdict:** Flask + Redis running with 512 MB memory cap, named volume persistence, and bridge-network DNS — same `docker run` works on dev, staging, and production.
-> ➡️ Persistent data and automatic restarts ready; proceed to Debug phase.
+> **Run verdict:** Flask + Redis running with 512 MB memory cap, named volume persistence, and bridge-network DNS — same `docker run` works on dev, staging, and production.
+> ➡ Persistent data and automatic restarts ready; proceed to Debug phase.
 
 ---
 
@@ -518,15 +517,15 @@ Debugging containers requires different tools than debugging local processes. Th
 
 # 1. Check if container is running
 docker ps -a
-# CONTAINER ID   IMAGE          STATUS                     NAMES
-# 89f7c3d2e1a5   flask-app:v1   Exited (1) 5 seconds ago   flask-api
+# CONTAINER ID IMAGE STATUS NAMES
+# 89f7c3d2e1a5 flask-app:v1 Exited (1) 5 seconds ago flask-api
 # ^ Container crashed! Let's find out why...
 
 # 2. View container logs (stdout/stderr)
 docker logs flask-api
 # Traceback (most recent call last):
-#   File "/app/app.py", line 12, in <module>
-#     redis_host = os.environ['REDIS_HOST']  # Missing environment variable!
+# File "/app/app.py", line 12, in <module>
+# redis_host = os.environ['REDIS_HOST'] # Missing environment variable!
 # KeyError: 'REDIS_HOST'
 # ^ Root cause: Missing REDIS_HOST environment variable
 
@@ -541,8 +540,8 @@ docker run -d --name flask-api -p 5000:5000 -e REDIS_HOST=redis flask-app:v1
 
 # 5. Verify container is healthy
 docker ps
-# CONTAINER ID   IMAGE          STATUS         PORTS                    NAMES
-# 7c8d9e0f1a2b   flask-app:v1   Up 10 seconds  0.0.0.0:5000->5000/tcp   flask-api
+# CONTAINER ID IMAGE STATUS PORTS NAMES
+# 7c8d9e0f1a2b flask-app:v1 Up 10 seconds 0.0.0.0:5000->5000/tcp flask-api
 # ^ Now running!
 
 # 6. Exec into running container for deeper inspection
@@ -551,14 +550,14 @@ root@7c8d9e0f1a2b:/app# ls -la
 # total 24
 # drwxr-xr-x 1 root root 4096 Apr 29 10:15 .
 # drwxr-xr-x 1 root root 4096 Apr 29 10:15 ..
-# -rw-r--r-- 1 root root  342 Apr 29 10:10 app.py
-# -rw-r--r-- 1 root root   87 Apr 29 10:10 requirements.txt
+# -rw-r--r-- 1 root root 342 Apr 29 10:10 app.py
+# -rw-r--r-- 1 root root 87 Apr 29 10:10 requirements.txt
 
 root@7c8d9e0f1a2b:/app# pip list
-# Package    Version
+# Package Version
 # ---------- -------
-# Flask      3.0.0
-# redis      5.0.0
+# Flask 3.0.0
+# redis 5.0.0
 
 root@7c8d9e0f1a2b:/app# curl http://localhost:5000/health
 # {"status": "ok", "redis": "connected"}
@@ -572,15 +571,15 @@ root@7c8d9e0f1a2b:/app# exit
 
 # 7. Analyze image layers (check for bloat)
 docker history flask-app:v1
-# IMAGE          CREATED        CREATED BY                                      SIZE
-# a3c5d9f8b2e1   2 hours ago    CMD ["python" "app.py"]                         0B
-# <missing>      2 hours ago    USER appuser                                    0B
-# <missing>      2 hours ago    RUN useradd -m appuser && chown -R appuser…     5.2kB
-# <missing>      2 hours ago    COPY . .                                        1.2kB
-# <missing>      2 hours ago    COPY --from=builder /root/.local /root/.local   45MB   <- Python packages
-# <missing>      2 hours ago    WORKDIR /app                                    0B
-# <missing>      3 days ago     /bin/sh -c #(nop)  CMD ["python3"]              0B
-# <missing>      3 days ago     /bin/sh -c apt-get update && apt-get install…   75MB   <- Base Python
+# IMAGE CREATED CREATED BY SIZE
+# a3c5d9f8b2e1 2 hours ago CMD ["python" "app.py"] 0B
+# <missing> 2 hours ago USER appuser 0B
+# <missing> 2 hours ago RUN useradd -m appuser && chown -R appuser… 5.2kB
+# <missing> 2 hours ago COPY . . 1.2kB
+# <missing> 2 hours ago COPY --from=builder /root/.local /root/.local 45MB <- Python packages
+# <missing> 2 hours ago WORKDIR /app 0B
+# <missing> 3 days ago /bin/sh -c #(nop) CMD ["python3"] 0B
+# <missing> 3 days ago /bin/sh -c apt-get update && apt-get install… 75MB <- Base Python
 # ^ Largest layers: base image (75 MB) + Python packages (45 MB) = 120 MB total
 
 # 8. Deep layer analysis with Dive tool
@@ -599,7 +598,7 @@ dive flask-app:v1
 | Image size bloated (>500 MB) | `docker history <image>` or `dive <image>` | Find large layers, check for `.git`, `venv`, build tools |
 | Build cache not working | `docker build --no-cache` then `docker build` | Compare build times — should be 10x faster with cache |
 
-> 💡 **Industry Standard: Dive Tool for Image Layer Analysis**
+> **Industry Standard: Dive Tool for Image Layer Analysis**
 >
 > [Dive](https://github.com/wagoodman/dive) shows exactly what files changed in each layer:
 >
@@ -623,9 +622,9 @@ dive flask-app:v1
 > - **Security audit:** Check for accidentally copied secrets (`.env`, `config.json`)
 >
 > **Example findings:**
-> - ❌ Layer 5 adds `venv/` (200 MB) — not in `.dockerignore`
-> - ❌ Layer 8 adds `.git/` (50 MB) — should be excluded
-> - ✅ Layer 12 removes build tools (saved 180 MB via multi-stage)
+> - Layer 5 adds `venv/` (200 MB) — not in `.dockerignore`
+> - Layer 8 adds `.git/` (50 MB) — should be excluded
+> - Layer 12 removes build tools (saved 180 MB via multi-stage)
 >
 > **See also:** [Dive GitHub repo](https://github.com/wagoodman/dive)
 
@@ -634,22 +633,22 @@ dive flask-app:v1
 ```bash
 # Monitor real-time resource usage
 docker stats flask-api
-# CONTAINER    CPU %   MEM USAGE / LIMIT   MEM %   NET I/O       BLOCK I/O
-# flask-api    15.3%   128MiB / 512MiB     25%     1.2MB / 3.4MB 0B / 4.1MB
+# CONTAINER CPU % MEM USAGE / LIMIT MEM % NET I/O BLOCK I/O
+# flask-api 15.3% 128MiB / 512MiB 25% 1.2MB / 3.4MB 0B / 4.1MB
 
 # View running processes inside container
 docker top flask-api
-# UID    PID     PPID    C    STIME   TTY   TIME       CMD
-# root   12847   12827   0    10:15   ?     00:00:00   python app.py
-# root   12901   12847   0    10:15   ?     00:00:02   /usr/local/bin/python
+# UID PID PPID C STIME TTY TIME CMD
+# root 12847 12827 0 10:15 ? 00:00:00 python app.py
+# root 12901 12847 0 10:15 ? 00:00:02 /usr/local/bin/python
 
 # Check container health (if HEALTHCHECK defined in Dockerfile)
 docker inspect flask-api --format='{{.State.Health.Status}}'
 # healthy
 ```
 
-> 💡 **Debug verdict:** Container logs and exec access identified missing env var in 90s — no local Python environment needed.
-> ➡️ Four-command toolkit (logs/exec/inspect/dive) covers 95% of container failures; chapter complete.
+> **Debug verdict:** Container logs and exec access identified missing env var in 90s — no local Python environment needed.
+> ➡ Four-command toolkit (logs/exec/inspect/dive) covers 95% of container failures; chapter complete.
 
 ---
 
@@ -673,15 +672,15 @@ docker volume create redis-data
 
 # Run Redis with volume mounted
 docker run -d \
-  --name redis \
-  -v redis-data:/data \
-  redis:7
+ --name redis \
+ -v redis-data:/data \
+ redis:7
 
 # Verify volume persists after container removal
 docker rm -f redis
 docker volume ls
-# DRIVER    VOLUME NAME
-# local     redis-data
+# DRIVER VOLUME NAME
+# local redis-data
 
 # New container reuses same data
 docker run -d --name redis -v redis-data:/data redis:7
@@ -700,9 +699,9 @@ docker run -d --name redis -v redis-data:/data redis:7
 ```bash
 # Mount host directory into container
 docker run -d \
-  -p 5000:5000 \
-  -v $(pwd)/app:/app \
-  flask-app:v1
+ -p 5000:5000 \
+ -v $(pwd)/app:/app \
+ flask-app:v1
 ```
 
 **Bind mount syntax:** `-v HOST_PATH:CONTAINER_PATH`
@@ -740,21 +739,21 @@ By default, containers are isolated. To enable Flask → Redis communication, bo
 
 ```bash
 docker run -d \
-  --name redis \
-  --network flask-net \
-  -v redis-data:/data \
-  redis:7
+ --name redis \
+ --network flask-net \
+ -v redis-data:/data \
+ redis:7
 ```
 
 ### 6.3 · Run Flask with Redis Connection
 
 ```bash
 docker run -d \
-  --name flask-api \
-  --network flask-net \
-  -p 5000:5000 \
-  -e REDIS_HOST=redis \
-  flask-app:v1
+ --name flask-api \
+ --network flask-net \
+ -p 5000:5000 \
+ -e REDIS_HOST=redis \
+ flask-app:v1
 ```
 
 **Environment variable injection:** `-e KEY=value`
@@ -782,7 +781,7 @@ docker exec flask-api ping redis
 # 64 bytes from 172.18.0.2: icmp_seq=0 ttl=64 time=0.123 ms
 ```
 
-> 💡 **Bridge to Ch.2:** Managing two containers with manual `docker run` commands is fragile. Docker Compose (Ch.2) defines multi-container apps in a single YAML file — one command starts the entire stack with correct networks, volumes, and environment variables.
+> **Bridge to Ch.2:** Managing two containers with manual `docker run` commands is fragile. Docker Compose (Ch.2) defines multi-container apps in a single YAML file — one command starts the entire stack with correct networks, volumes, and environment variables.
 
 ---
 
@@ -825,7 +824,7 @@ docker pull yourusername/flask-app:v1
 docker run -d -p 5000:5000 yourusername/flask-app:v1
 ```
 
-> ⚡ **Image size matters for deployment speed.** A 1 GB image takes ~2 minutes to pull over a 100 Mbps connection. A 120 MB image pulls in 10 seconds. Multi-stage builds and `.dockerignore` are not optional optimizations — they're production requirements.
+> **Image size matters for deployment speed.** A 1 GB image takes ~2 minutes to pull over a 100 Mbps connection. A 120 MB image pulls in 10 seconds. Multi-stage builds and `.dockerignore` are not optional optimizations — they're production requirements.
 
 ---
 
@@ -843,8 +842,8 @@ Error starting userland proxy: listen tcp 0.0.0.0:5000: bind: address already in
 **Fix:**
 ```bash
 # Find process using port 5000
-lsof -i :5000  # macOS/Linux
-netstat -ano | findstr :5000  # Windows
+lsof -i :5000 # macOS/Linux
+netstat -ano | findstr :5000 # Windows
 
 # Kill process or use different host port
 docker run -d -p 8080:5000 flask-app:v1
@@ -860,10 +859,10 @@ docker run -d -p 8080:5000 flask-app:v1
 - Installed build tools (`gcc`, `make`) and didn't remove them
 
 **Fix checklist:**
-1. ✅ Use `-slim` or `-alpine` base images
-2. ✅ Add comprehensive `.dockerignore`
-3. ✅ Use multi-stage builds to discard build tools
-4. ✅ Chain `RUN` commands to reduce layers: `RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*`
+1. Use `-slim` or `-alpine` base images
+2. Add comprehensive `.dockerignore`
+3. Use multi-stage builds to discard build tools
+4. Chain `RUN` commands to reduce layers: `RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*`
 
 **Target sizes:**
 
@@ -883,12 +882,12 @@ docker run -d -p 8080:5000 flask-app:v1
 
 **Cache invalidation order:**
 ```dockerfile
-FROM python:3.11-slim        # Cached (base image unchanged)
-WORKDIR /app                 # Cached (instruction unchanged)
-COPY requirements.txt .      # Cached (file unchanged)
-RUN pip install -r requirements.txt  # Cached (previous layer unchanged)
-COPY . .                     # NOT CACHED (app.py changed)
-CMD ["python", "app.py"]     # NOT CACHED (previous layer changed)
+FROM python:3.11-slim # Cached (base image unchanged)
+WORKDIR /app # Cached (instruction unchanged)
+COPY requirements.txt . # Cached (file unchanged)
+RUN pip install -r requirements.txt # Cached (previous layer unchanged)
+COPY . . # NOT CACHED (app.py changed)
+CMD ["python", "app.py"] # NOT CACHED (previous layer changed)
 ```
 
 ### 8.4 · Secrets Leaked in Image
@@ -897,8 +896,8 @@ CMD ["python", "app.py"]     # NOT CACHED (previous layer changed)
 
 **Cause:**
 ```dockerfile
-COPY .env .  # .env contains SECRET_KEY=abc123
-RUN rm .env  # Too late — file exists in previous layer
+COPY .env . # .env contains SECRET_KEY=abc123
+RUN rm .env # Too late — file exists in previous layer
 ```
 
 **Fix:** **Never copy secrets into images.** Use:
@@ -1054,21 +1053,21 @@ docker run -d --name flask-api --network flask-net -p 5000:5000 -e REDIS_HOST=re
 **Docker Compose** — define multi-container apps in a single YAML file:
 ```yaml
 services:
-  redis:
-    image: redis:7
-    volumes:
-      - redis-data:/data
-  flask-api:
-    build: .
-    ports:
-      - "5000:5000"
-    environment:
-      REDIS_HOST: redis
-    depends_on:
-      - redis
+ redis:
+ image: redis:7
+ volumes:
+ - redis-data:/data
+ flask-api:
+ build: .
+ ports:
+ - "5000:5000"
+ environment:
+ REDIS_HOST: redis
+ depends_on:
+ - redis
 
 volumes:
-  redis-data:
+ redis-data:
 ```
 
 One command: `docker compose up`
@@ -1078,8 +1077,7 @@ One command: `docker compose down`
 - **Ch.1 (Docker):** Single-container workflows — build, run, debug
 - **Ch.2 (Compose):** Multi-container workflows — define services, networks, volumes declaratively
 - **Ch.3 (Kubernetes):** Multi-host orchestration — scale across servers, auto-healing, load balancing
-
-✅ You now understand containers at the primitive level. Ch.2 builds the orchestration layer on top.
+You now understand containers at the primitive level. Ch.2 builds the orchestration layer on top.
 
 ---
 

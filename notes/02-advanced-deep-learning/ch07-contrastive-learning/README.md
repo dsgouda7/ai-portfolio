@@ -10,14 +10,14 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Build **ProductionCV** — an autonomous retail shelf monitoring system satisfying 5 constraints:
+> **The mission**: Build **ProductionCV** — an autonomous retail shelf monitoring system satisfying 5 constraints:
 > 1. **DETECTION ACCURACY**: mAP@0.5 ≥ 85% — 2. **SEGMENTATION QUALITY**: IoU ≥ 70% — 3. **INFERENCE LATENCY**: <50ms per frame — 4. **MODEL SIZE**: <100 MB — 5. **DATA EFFICIENCY**: <1,000 labeled images
 
 **What we know so far:**
-- ✅ Ch.1–2: ResNet-50 backbone (mAP 80% from scratch, 25M params)
-- ✅ Ch.3–4: YOLOv5 one-stage detector (mAP 85%, 95ms inference)
-- ✅ Ch.5–6: Mask R-CNN instance segmentation (IoU 71%)
-- ❌ **But we need 10,000 labeled images to achieve these results!**
+- Ch.1–2: ResNet-50 backbone (mAP 80% from scratch, 25M params)
+- Ch.3–4: YOLOv5 one-stage detector (mAP 85%, 95ms inference)
+- Ch.5–6: Mask R-CNN instance segmentation (IoU 71%)
+- **But we need 10,000 labeled images to achieve these results!**
 
 **What's blocking us:**
 **Constraint #5 (data efficiency)** is violated. Current approach:
@@ -34,21 +34,20 @@
 **Self-supervised pretraining via contrastive learning**. The two-stage workflow:
 
 1. **Stage 1 — Unsupervised pretraining (SimCLR/MoCo)**:
-   - Train ResNet-50 on 50k *unlabeled* shelf photos
-   - Objective: Learn features by contrasting augmented views (no labels needed)
-   - Output: Pretrained encoder with rich visual representations
+ - Train ResNet-50 on 50k *unlabeled* shelf photos
+ - Objective: Learn features by contrasting augmented views (no labels needed)
+ - Output: Pretrained encoder with rich visual representations
 
 2. **Stage 2 — Supervised fine-tuning**:
-   - Freeze encoder (or fine-tune with small learning rate)
-   - Train detection head on 1,000 labeled images
-   - Output: Detection model matching 10,000-label baseline
+ - Freeze encoder (or fine-tune with small learning rate)
+ - Train detection head on 1,000 labeled images
+ - Output: Detection model matching 10,000-label baseline
 
 **Results from Chen et al. (2020) / He et al. (2020):**
 - SimCLR pretrained on ImageNet (1.2M unlabeled) → fine-tune on 1% labels (12.8k) → 76.5% top-1 accuracy
 - Baseline (train from scratch on 1% labels) → 25.4% accuracy
 - **3× accuracy gain from self-supervised pretraining!**
-
-✅ **This unlocks constraint #5** — achieve mAP 85% with <1,000 labeled images (vs 10,000 before).
+**This unlocks constraint #5** — achieve mAP 85% with <1,000 labeled images (vs 10,000 before).
 
 ---
 
@@ -93,7 +92,7 @@ Where:
 - $2N$ — batch size (N images, each has 2 augmentations = 2N total views)
 - Denominator sums over all 2N-1 views except $i$ itself (1 positive + 2N-2 negatives)
 
-> 💡 **Key insight:** The network learns visual invariances automatically. If two crops of the same shelf photo have similar embeddings, the network is learning "products in similar positions are the same," "lighting changes don't matter," "occlusions are noise" — all without a single label.
+> **Key insight:** The network learns visual invariances automatically. If two crops of the same shelf photo have similar embeddings, the network is learning "products in similar positions are the same," "lighting changes don't matter," "occlusions are noise" — all without a single label.
 
 ![Contrastive pairs visualization](img/ch07-contrastive-pairs-final.png)
 
@@ -109,16 +108,16 @@ You're the lead ML engineer at RetailVisionAI. You have:
 
 **The supervised baseline (Ch.4 YOLO)**:
 - Train YOLOv5 from scratch on 1,000 labeled images → **72% mAP** (below 85% target)
-- Train on 10,000 labeled images → 85% mAP ✅ (but costs $50k to label)
+- Train on 10,000 labeled images → 85% mAP (but costs $50k to label)
 
 **The contrastive learning workflow:**
 
 **Stage 1 — SimCLR pretraining on 50k unlabeled images** (3 days on 4× V100 GPUs):
 1. For each unlabeled image $x$, generate positive pair $(\tilde{x}_i, \tilde{x}_j)$:
-   - Random crop (0.08–1.0 scale)
-   - Color jitter (brightness ±0.8, contrast ±0.8, saturation ±0.8, hue ±0.2)
-   - Random grayscale (prob 0.2)
-   - Gaussian blur (prob 0.5)
+ - Random crop (0.08–1.0 scale)
+ - Color jitter (brightness ±0.8, contrast ±0.8, saturation ±0.8, hue ±0.2)
+ - Random grayscale (prob 0.2)
+ - Gaussian blur (prob 0.5)
 2. Encode with ResNet-50: $h_i = f(\tilde{x}_i), h_j = f(\tilde{x}_j)$
 3. Project to 128-d: $z_i = g(h_i), z_j = g(h_j)$ (MLP: 2048 → 2048 → 128)
 4. Compute contrastive loss with batch size 256 (512 views total, 1 positive + 510 negatives per anchor)
@@ -160,25 +159,25 @@ $$
 **Step-by-step breakdown:**
 
 1. **Numerator: positive pair similarity**
-   $$
-   \text{score}_{\text{pos}} = \exp\left(\frac{z_i^T z_j}{\tau \|z_i\| \|z_j\|}\right)
-   $$
-   - $\tau$ (temperature) scales the similarity — lower $\tau$ amplifies differences
-   - Typical $\tau = 0.07$ makes the loss focus on hard negatives
+ $$
+ \text{score}_{\text{pos}} = \exp\left(\frac{z_i^T z_j}{\tau \|z_i\| \|z_j\|}\right)
+ $$
+ - $\tau$ (temperature) scales the similarity — lower $\tau$ amplifies differences
+ - Typical $\tau = 0.07$ makes the loss focus on hard negatives
 
 2. **Denominator: normalize over all pairs**
-   $$
-   Z = \sum_{k=1}^{2N} \mathbb{1}_{k \neq i} \exp\left(\frac{z_i^T z_k}{\tau \|z_i\| \|z_k\|}\right)
-   $$
-   - Sum over 2N-1 views (exclude $i$ itself)
-   - Includes 1 positive ($j$) + 2N-2 negatives (all other views in batch)
+ $$
+ Z = \sum_{k=1}^{2N} \mathbb{1}_{k \neq i} \exp\left(\frac{z_i^T z_k}{\tau \|z_i\| \|z_k\|}\right)
+ $$
+ - Sum over 2N-1 views (exclude $i$ itself)
+ - Includes 1 positive ($j$) + 2N-2 negatives (all other views in batch)
 
 3. **Final loss: negative log probability**
-   $$
-   \mathcal{L}_{i,j} = -\log \frac{\text{score}_{\text{pos}}}{Z}
-   $$
-   - Minimizing this loss → maximizing $\text{score}_{\text{pos}}$ while minimizing $\text{score}_{\text{neg}}$
-   - This is equivalent to softmax cross entropy where the positive is the "correct class"
+ $$
+ \mathcal{L}_{i,j} = -\log \frac{\text{score}_{\text{pos}}}{Z}
+ $$
+ - Minimizing this loss → maximizing $\text{score}_{\text{pos}}$ while minimizing $\text{score}_{\text{neg}}$
+ - This is equivalent to softmax cross entropy where the positive is the "correct class"
 
 **Full batch loss:**
 Average over all $2N$ anchors and their positives:
@@ -213,9 +212,9 @@ Batch: 4 images → 8 views (A1, A2, B1, B2, C1, C2, D1, D2).
 
 Cosine similarities (made up for illustration):
 ```
-     A1   A2   B1   B2   C1   C2   D1   D2
-A1 [ 1.0  0.9  0.3  0.2  0.1  0.1  0.2  0.1]  ← A2 is positive
-A2 [ 0.9  1.0  0.2  0.3  0.1  0.2  0.1  0.2]
+ A1 A2 B1 B2 C1 C2 D1 D2
+A1 [ 1.0 0.9 0.3 0.2 0.1 0.1 0.2 0.1] ← A2 is positive
+A2 [ 0.9 1.0 0.2 0.3 0.1 0.2 0.1 0.2]
 ```
 
 For anchor A1, positive A2, $\tau=0.1$:
@@ -229,8 +228,8 @@ Denominator (exclude A1, include 7 others):
 $$
 \begin{align}
 Z &= \exp(0.9/0.1) + \exp(0.3/0.1) + \exp(0.2/0.1) + \exp(0.1/0.1) + \cdots \\
-  &= 8103.08 + 20.09 + 7.39 + 2.72 + 2.72 + 7.39 + 2.72 \\
-  &= 8146.11
+ &= 8103.08 + 20.09 + 7.39 + 2.72 + 2.72 + 7.39 + 2.72 \\
+ &= 8146.11
 \end{align}
 $$
 
@@ -250,13 +249,13 @@ $$
 **Architecture:**
 ```
 Unlabeled image x
-    ↓
-Aug(x) → x̃ᵢ, x̃ⱼ  (two random augmentations)
-    ↓
-Encoder f (ResNet-50)  →  hᵢ, hⱼ (2048-d)
-    ↓
-Projection head g (MLP)  →  zᵢ, zⱼ (128-d)
-    ↓
+ ↓
+Aug(x) → x̃ᵢ, x̃ⱼ (two random augmentations)
+ ↓
+Encoder f (ResNet-50) → hᵢ, hⱼ (2048-d)
+ ↓
+Projection head g (MLP) → zᵢ, zⱼ (128-d)
+ ↓
 Contrastive loss: pull (zᵢ, zⱼ) together, push away from other images in batch
 ```
 
@@ -283,11 +282,11 @@ Contrastive loss: pull (zᵢ, zⱼ) together, push away from other images in bat
 **Architecture:**
 ```
 Query encoder fq (updated by gradient)
-    ↓
+ ↓
 xquery → zquery
 
 Key encoder fk (updated by momentum: θk ← 0.999·θk + 0.001·θq)
-    ↓
+ ↓
 xkey → zkey → enqueue to queue Q (size K=65536)
 
 Loss: contrastive loss between zquery and (1 positive + K negatives from queue)
@@ -296,36 +295,36 @@ Loss: contrastive loss between zquery and (1 positive + K negatives from queue)
 **Key innovations:**
 
 1. **Momentum encoder** ($\theta_k \gets m \theta_k + (1-m) \theta_q$, $m=0.999$):
-   - Key encoder updates slowly → queue keys stay consistent
-   - Prevents queue from having keys from vastly different encoder versions
-   - Similar to exponential moving average in BatchNorm
+ - Key encoder updates slowly → queue keys stay consistent
+ - Prevents queue from having keys from vastly different encoder versions
+ - Similar to exponential moving average in BatchNorm
 
 2. **Queue of negatives** (K=65536):
-   - Decouple batch size from number of negatives
-   - Batch size 256 → still get 65536 negatives from queue!
-   - Queue is FIFO: enqueue new batch keys, dequeue oldest
+ - Decouple batch size from number of negatives
+ - Batch size 256 → still get 65536 negatives from queue!
+ - Queue is FIFO: enqueue new batch keys, dequeue oldest
 
 **Training loop:**
 ```python
 for batch in dataloader:
-    # Query branch (gradient flows)
-    q = projection_head(encoder_q(augment(batch)))
-    
-    # Key branch (momentum update, no gradient)
-    with torch.no_grad():
-        k = projection_head(encoder_k(augment(batch)))
-    
-    # Contrastive loss: q vs (k_positive + queue)
-    loss = contrastive_loss(q, k, queue)
-    loss.backward()
-    optimizer.step()
-    
-    # Update key encoder by momentum
-    for param_q, param_k in zip(encoder_q.parameters(), encoder_k.parameters()):
-        param_k.data = 0.999 * param_k.data + 0.001 * param_q.data
-    
-    # Update queue: enqueue k, dequeue oldest
-    queue = torch.cat([k, queue[:-batch_size]], dim=0)
+ # Query branch (gradient flows)
+ q = projection_head(encoder_q(augment(batch)))
+
+ # Key branch (momentum update, no gradient)
+ with torch.no_grad():
+ k = projection_head(encoder_k(augment(batch)))
+
+ # Contrastive loss: q vs (k_positive + queue)
+ loss = contrastive_loss(q, k, queue)
+ loss.backward()
+ optimizer.step()
+
+ # Update key encoder by momentum
+ for param_q, param_k in zip(encoder_q.parameters(), encoder_k.parameters()):
+ param_k.data = 0.999 * param_k.data + 0.001 * param_q.data
+
+ # Update queue: enqueue k, dequeue oldest
+ queue = torch.cat([k, queue[:-batch_size]], dim=0)
 ```
 
 **Strengths:**
@@ -347,17 +346,17 @@ for batch in dataloader:
 **Step 1: Augmentation pipeline**
 ```python
 transforms = [
-    RandomResizedCrop(224, scale=(0.08, 1.0)),
-    RandomApply([ColorJitter(0.8, 0.8, 0.8, 0.2)], p=0.8),
-    RandomGrayscale(p=0.2),
-    RandomApply([GaussianBlur(kernel_size=23)], p=0.5),
-    RandomHorizontalFlip(),
-    ToTensor(),
-    Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+ RandomResizedCrop(224, scale=(0.08, 1.0)),
+ RandomApply([ColorJitter(0.8, 0.8, 0.8, 0.2)], p=0.8),
+ RandomGrayscale(p=0.2),
+ RandomApply([GaussianBlur(kernel_size=23)], p=0.5),
+ RandomHorizontalFlip(),
+ ToTensor(),
+ Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ]
 
-x_i = apply_transforms(x)  # First augmentation
-x_j = apply_transforms(x)  # Second augmentation (different random seed)
+x_i = apply_transforms(x) # First augmentation
+x_j = apply_transforms(x) # Second augmentation (different random seed)
 ```
 
 **Why these augmentations?**
@@ -370,27 +369,27 @@ x_j = apply_transforms(x)  # Second augmentation (different random seed)
 **Step 2: Forward pass**
 ```python
 # Batch shape: [256, 3, 224, 224]
-batch_views = torch.cat([x_i, x_j], dim=0)  # [512, 3, 224, 224]
+batch_views = torch.cat([x_i, x_j], dim=0) # [512, 3, 224, 224]
 
 # Encoder: ResNet-50 (outputs [512, 2048])
-h = encoder(batch_views)  # Remove final FC layer, take avgpool output
+h = encoder(batch_views) # Remove final FC layer, take avgpool output
 
 # Projection head: MLP (2048 → 2048 → 128)
-z = projection_head(h)  # [512, 128]
+z = projection_head(h) # [512, 128]
 
 # Split back into two views
-z_i, z_j = torch.split(z, batch_size, dim=0)  # Each [256, 128]
+z_i, z_j = torch.split(z, batch_size, dim=0) # Each [256, 128]
 ```
 
 **Step 3: Compute similarities**
 ```python
 # Normalize embeddings
-z_i_norm = F.normalize(z_i, dim=1)  # L2 normalize each row
+z_i_norm = F.normalize(z_i, dim=1) # L2 normalize each row
 z_j_norm = F.normalize(z_j, dim=1)
 
 # Compute all pairwise similarities: [512, 512]
 z_all = torch.cat([z_i_norm, z_j_norm], dim=0)
-similarity_matrix = z_all @ z_all.T / tau  # Cosine similarity scaled by temperature
+similarity_matrix = z_all @ z_all.T / tau # Cosine similarity scaled by temperature
 
 # Example: similarity_matrix[0, 256] is sim(z_i[0], z_j[0]) — the positive pair for anchor 0
 ```
@@ -404,7 +403,7 @@ labels = torch.cat([torch.arange(N, 2*N), torch.arange(0, N)], dim=0).to(device)
 
 # Mask out self-similarities (diagonal)
 mask = torch.eye(2*N, dtype=torch.bool).to(device)
-similarity_matrix.masked_fill_(mask, -9e15)  # Set diagonal to -inf
+similarity_matrix.masked_fill_(mask, -9e15) # Set diagonal to -inf
 
 # Cross entropy loss: treat positive as correct class
 loss = F.cross_entropy(similarity_matrix, labels)
@@ -422,18 +421,18 @@ optimizer.step()
 **Step 6: Fine-tuning**
 ```python
 # Discard projection head, freeze encoder (or unfreeze with small LR)
-encoder.eval()  # Freeze BatchNorm stats
+encoder.eval() # Freeze BatchNorm stats
 
 # Attach detection head
 detector = YOLOv5(backbone=encoder, num_classes=20)
 
 # Train on 1,000 labeled images
 for epoch in range(50):
-    for images, targets in labeled_dataloader:
-        preds = detector(images)
-        loss = yolo_loss(preds, targets)
-        loss.backward()
-        optimizer.step()
+ for images, targets in labeled_dataloader:
+ preds = detector(images)
+ loss = yolo_loss(preds, targets)
+ loss.backward()
+ optimizer.step()
 ```
 
 **Result**: mAP 84% (vs 72% from scratch) with 10× less labeled data!
@@ -447,26 +446,26 @@ for epoch in range(50):
 ```mermaid
 %%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#1e3a8a','primaryTextColor':'#fff','primaryBorderColor':'#1e40af','lineColor':'#3b82f6','secondaryColor':'#15803d','tertiaryColor':'#b45309','background':'#1a1a2e','mainBkg':'#1a1a2e','textColor':'#e5e7eb'}}}%%
 graph TD
-    A[Unlabeled Image x] -->|Aug1| B[x̃ᵢ Crop+Jitter+Blur]
-    A -->|Aug2| C[x̃ⱼ Different Crop+Jitter+Blur]
-    B --> D[ResNet Encoder f]
-    C --> E[ResNet Encoder f]
-    D --> F[h_i 2048-d features]
-    E --> G[h_j 2048-d features]
-    F --> H[Projection Head g MLP]
-    G --> I[Projection Head g MLP]
-    H --> J[z_i 128-d embedding]
-    I --> K[z_j 128-d embedding]
-    J --> L{Contrastive Loss}
-    K --> L
-    M[Other images in batch Negatives] --> L
-    L -->|Pull together| N[Positive pair z_i, z_j]
-    L -->|Push apart| O[Negative pairs z_i, z_k]
-    
-    style A fill:#1e3a8a
-    style L fill:#b91c1c
-    style N fill:#15803d
-    style O fill:#b45309
+ A[Unlabeled Image x] -->|Aug1| B[x̃ᵢ Crop+Jitter+Blur]
+ A -->|Aug2| C[x̃ⱼ Different Crop+Jitter+Blur]
+ B --> D[ResNet Encoder f]
+ C --> E[ResNet Encoder f]
+ D --> F[h_i 2048-d features]
+ E --> G[h_j 2048-d features]
+ F --> H[Projection Head g MLP]
+ G --> I[Projection Head g MLP]
+ H --> J[z_i 128-d embedding]
+ I --> K[z_j 128-d embedding]
+ J --> L{Contrastive Loss}
+ K --> L
+ M[Other images in batch Negatives] --> L
+ L -->|Pull together| N[Positive pair z_i, z_j]
+ L -->|Push apart| O[Negative pairs z_i, z_k]
+
+ style A fill:#1e3a8a
+ style L fill:#b91c1c
+ style N fill:#15803d
+ style O fill:#b45309
 ```
 
 ### Diagram 2: SimCLR vs MoCo Architecture
@@ -474,28 +473,28 @@ graph TD
 **SimCLR:**
 ```
 Batch: 256 images → 512 augmented views
-                    ↓
-            ResNet Encoder f (shared weights)
-                    ↓
-            Projection Head g (MLP)
-                    ↓
-            512 embeddings z
-                    ↓
-    Contrastive Loss: 1 positive + 510 negatives per anchor
-    
+ ↓
+ ResNet Encoder f (shared weights)
+ ↓
+ Projection Head g (MLP)
+ ↓
+ 512 embeddings z
+ ↓
+ Contrastive Loss: 1 positive + 510 negatives per anchor
+
 Limitation: Needs 4096 batch size for best results → 32 TPUs
 ```
 
 **MoCo:**
 ```
-Query Encoder fq          Key Encoder fk
-(gradient updates)        (momentum updates: θk ← 0.999·θk + 0.001·θq)
-      ↓                         ↓
-    z_query                   z_key
-      ↓                         ↓
-      └────→ Contrastive Loss ← Queue Q (65536 cached keys)
-                    ↓
-           1 positive + 65536 negatives
+Query Encoder fq Key Encoder fk
+(gradient updates) (momentum updates: θk ← 0.999·θk + 0.001·θq)
+ ↓ ↓
+ z_query z_key
+ ↓ ↓
+ └────→ Contrastive Loss ← Queue Q (65536 cached keys)
+ ↓
+ 1 positive + 65536 negatives
 
 Advantage: Batch size 256 works → single 8-GPU machine
 ```
@@ -504,26 +503,26 @@ Advantage: Batch size 256 works → single 8-GPU machine
 
 ![Data efficiency comparison](img/ch07-data-efficiency.png)
 
-*x-axis: Number of labeled training images (log scale)*  
+*x-axis: Number of labeled training images (log scale)*
 *y-axis: mAP@0.5 on test set*
 
 ```
 mAP
 85% ┼─────────────────────────────●SimCLR pretrained (1,000 labels)
-    │                          ╱
-    │                       ╱
-    │                    ╱
+ │ ╱
+ │ ╱
+ │ ╱
 72% ┼────────────────●From scratch (1,000 labels)
-    │             ╱
-    │          ╱
-    │       ╱
+ │ ╱
+ │ ╱
+ │ ╱
 50% ┼────●From scratch (100 labels)
-    │
-    └────┴────┴────┴────┴────┴────→ Labeled images
-         100  500  1,000   5,000   10,000
-         
+ │
+ └────┴────┴────┴────┴────┴────→ Labeled images
+ 100 500 1,000 5,000 10,000
+
 Key insight: Contrastive pretraining gives +12% mAP gain at 1,000 labels
-            → reaches 10,000-label performance with 10× less annotation cost
+ → reaches 10,000-label performance with 10× less annotation cost
 ```
 
 ---
@@ -583,33 +582,27 @@ Key insight: Contrastive pretraining gives +12% mAP gain at 1,000 labels
 ---
 
 ## 8 · What Can Go Wrong
-
-⚠️ **Using weak augmentations** (only random crop, no color jitter)
+**Using weak augmentations** (only random crop, no color jitter)
 - **Symptom**: Model collapses — all embeddings become identical
 - **Why**: Without strong augmentations, the easiest solution is to ignore the input and output the same embedding for everything (minimizes loss trivially)
 - **Fix**: Use the full augmentation pipeline from SimCLR paper (crop + color + blur + grayscale)
-
-⚠️ **Batch size too small** (e.g., 32 images = 64 views)
+**Batch size too small** (e.g., 32 images = 64 views)
 - **Symptom**: Slow convergence, poor downstream performance (-5% mAP)
 - **Why**: Only 62 negatives per anchor → easy task → network doesn't learn fine-grained features
 - **Fix**: Use batch size 256+ (SimCLR) or switch to MoCo (works with batch 256 via queue)
-
-⚠️ **Not normalizing embeddings** (cosine similarity without L2 normalization)
+**Not normalizing embeddings** (cosine similarity without L2 normalization)
 - **Symptom**: Training diverges, loss becomes NaN
 - **Why**: Unnormalized dot products can be arbitrarily large → $\exp(\text{huge number}) = \infty$
 - **Fix**: Always apply `F.normalize(z, dim=1)` before computing similarities
-
-⚠️ **Using projection head for downstream tasks**
+**Using projection head for downstream tasks**
 - **Symptom**: Fine-tuning performance is worse than expected
 - **Why**: Projection head collapses information to 128-d for contrastive learning, but downstream tasks need the full 2048-d features
 - **Fix**: Discard projection head after pretraining, use encoder outputs $h$ (not projections $z$)
-
-⚠️ **Temperature too high** ($\tau = 1.0$)
+**Temperature too high** ($\tau = 1.0$)
 - **Symptom**: Loss decreases but downstream accuracy plateaus early
 - **Why**: High temperature makes all negatives equally easy → network doesn't learn to discriminate hard cases
 - **Fix**: Use $\tau \in [0.05, 0.1]$ (lower for similar-looking data like retail shelves)
-
-⚠️ **MoCo momentum too low** ($m = 0.9$ instead of 0.999)
+**MoCo momentum too low** ($m = 0.9$ instead of 0.999)
 - **Symptom**: MoCo underperforms SimCLR despite having 128× more negatives
 - **Why**: Queue contains keys from very different encoder versions → noisy contrastive signal
 - **Fix**: Use $m = 0.999$ (extremely slow momentum updates)
@@ -642,12 +635,11 @@ Key insight: Contrastive pretraining gives +12% mAP gain at 1,000 labels
 ## 10 · Progress Check — What We Can Solve Now
 
 ![Progress check dashboard](img/ch07-progress-check.png)
-
-✅ **Unlocked capabilities:**
-- ✅ **Constraint #5 ACHIEVED!** — Data efficiency: <1,000 labeled images
-  - Baseline (from scratch): 72% mAP with 1,000 labels, need 10,000 labels for 85% mAP
-  - **SimCLR pretrained**: 84% mAP with 1,000 labels (nearly hitting 85% target!)
-  - Cost savings: $50k → $5k labeling budget (10× reduction)
+**Unlocked capabilities:**
+- **Constraint #5 ACHIEVED!** — Data efficiency: <1,000 labeled images
+ - Baseline (from scratch): 72% mAP with 1,000 labels, need 10,000 labels for 85% mAP
+ - **SimCLR pretrained**: 84% mAP with 1,000 labels (nearly hitting 85% target!)
+ - Cost savings: $50k → $5k labeling budget (10× reduction)
 - Leverage 50k unlabeled shelf photos (previously wasted, now central to training)
 - Self-supervised pretraining transfers across domains (pretrain on ImageNet, fine-tune on retail shelves)
 
@@ -656,19 +648,18 @@ Key insight: Contrastive pretraining gives +12% mAP gain at 1,000 labels
 | Training Strategy | Labeled Images | mAP@0.5 | Labeling Cost |
 |-------------------|----------------|---------|---------------|
 | From scratch (Ch.4 YOLO) | 1,000 | 72% | $5k |
-| From scratch (Ch.4 YOLO) | 10,000 | 85% ✅ | $50k |
+| From scratch (Ch.4 YOLO) | 10,000 | 85% | $50k |
 | **SimCLR pretraining** | **1,000** | **84%** | **$5k** |
 | SimCLR + fine-tuning | 2,000 | 87% | $10k |
 
 **Key insight**: Contrastive pretraining gives +12% mAP gain at same label count. We're 1% away from 85% mAP target with 10× less labeled data!
+**Still can't solve:**
+- Not quite at 85% mAP target (84% current, need 1% more)
+- SimCLR pretraining took 3 days on 4× V100 GPUs ($500 compute cost) — expensive
+- Requires careful augmentation tuning (weak augmentations → model collapse)
+- MoCo queue requires 33 MB extra memory (limits batch size on small GPUs)
 
-❌ **Still can't solve:**
-- ❌ Not quite at 85% mAP target (84% current, need 1% more)
-- ❌ SimCLR pretraining took 3 days on 4× V100 GPUs ($500 compute cost) — expensive
-- ❌ Requires careful augmentation tuning (weak augmentations → model collapse)
-- ❌ MoCo queue requires 33 MB extra memory (limits batch size on small GPUs)
-
-**Real-world status**: We can now build production CV systems with <1,000 labeled images by leveraging massive unlabeled datasets. **Constraint #5 ✅ UNLOCKED!** But we're still 1% short of the 85% mAP target.
+**Real-world status**: We can now build production CV systems with <1,000 labeled images by leveraging massive unlabeled datasets. **Constraint #5 UNLOCKED!** But we're still 1% short of the 85% mAP target.
 
 **Next up:** Ch.8 gives us **DINO and MAE** — state-of-the-art self-supervised methods that push beyond contrastive learning. DINO achieves 86% mAP with 850 labels (no negative sampling needed), and MAE unlocks Vision Transformers (bridge to Multimodal AI track).
 

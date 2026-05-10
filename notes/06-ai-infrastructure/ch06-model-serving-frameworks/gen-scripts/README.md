@@ -52,10 +52,10 @@ All diagrams follow the AI Infrastructure track visual style:
 
 - **Dark background:** `#1a1a2e` (figure), `#16213e` (axes)
 - **Color palette:**
-  - Red `#b91c1c`: Baseline/slow (HuggingFace)
-  - Orange `#b45309`: Medium performance (TensorRT)
-  - Green `#15803d`: Recommended (vLLM)
-  - Blue `#1d4ed8`: Monitoring/infrastructure
+ - Red `#b91c1c`: Baseline/slow (HuggingFace)
+ - Orange `#b45309`: Medium performance (TensorRT)
+ - Green `#15803d`: Recommended (vLLM)
+ - Blue `#1d4ed8`: Monitoring/infrastructure
 - **Font:** Default matplotlib (system sans-serif)
 - **Resolution:** 150 DPI for all PNG exports
 - **Animation:** 100ms per frame, 10 FPS

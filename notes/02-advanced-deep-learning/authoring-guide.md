@@ -4,7 +4,7 @@
 > Each chapter lives under `notes/02-advanced_deep_learning/` in its own folder, containing a README and a Jupyter notebook.
 > Read this before authoring or reviewing any chapter to keep tone, structure, and the running example consistent.
 >
-> **📚 Adapted from:** `notes/01-ml/authoring-guide.md` — inherits all ML track conventions unless explicitly overridden below.
+> ** Adapted from:** `notes/01-ml/authoring-guide.md` — inherits all ML track conventions unless explicitly overridden below.
 
 <!-- LLM-STYLE-FINGERPRINT-V1
 canonical_chapters: ["notes/02-advanced_deep_learning/ch01_residual_networks/README.md", "notes/02-advanced_deep_learning/ch02_efficient_architectures/README.md"]
@@ -14,7 +14,7 @@ running_example: ProductionCV_retail_shelf_monitoring
 dataset: synthetic_retail_shelf_20_classes
 grand_challenge: ProductionCV_5_constraints
 failure_first_pedagogy: true
-callout_system: {insight:"💡", warning:"⚠️", constraint:"⚡", optional_depth:"📖", forward_pointer:"➡️"}
+callout_system: {insight:"", warning:"", constraint:"", optional_depth:"📖", forward_pointer:"➡"}
 mermaid_color_palette: {primary:"#1e3a8a", success:"#15803d", caution:"#b45309", danger:"#b91c1c", info:"#1d4ed8"}
 image_background: dark_facecolor_1a1a2e_for_generated_plots
 section_template: [story_header, challenge_0, animation, core_idea_1, running_example_2, architecture_3, math_4, step_by_step_5, key_diagrams_6, hyperparameter_dial_7, what_can_go_wrong_8, progress_check_N, bridge_N1]
@@ -49,15 +49,15 @@ red_lines: [no_architecture_without_visual_diagram, no_concept_without_productio
 | Ch | What Unlocks | Constraints Addressed | Status |
 |----|--------------|----------------------|--------|
 | 1 | ResNet-50 baseline (78.2% mAP) | #1 Foundation | Starting point |
-| 2 | MobileNetV2 (76.8% mAP, 35ms, 14MB) | **#3 ✅ Latency, #4 ✅ Size** | Efficiency unlocked! |
-| 3 | Faster R-CNN (86.3% mAP, 180ms) | **#1 ✅ Detection accuracy!** | But too slow |
+| 2 | MobileNetV2 (76.8% mAP, 35ms, 14MB) | **#3 Latency, #4 Size** | Efficiency unlocked! |
+| 3 | Faster R-CNN (86.3% mAP, 180ms) | **#1 Detection accuracy!** | But too slow |
 | 4 | YOLOv5 (82.1% mAP, 18ms, 14MB) | #1 #3 #4 all optimized | Speed + accuracy balance |
 | 5 | U-Net semantic segmentation (62% mIoU) | #2 Foundation | Pixel-level masks |
-| 6 | Mask R-CNN (87.3% mAP, 71.2% mIoU) | **#2 ✅ Segmentation quality!** | Instance masks |
-| 7 | SimCLR pretraining (84% mAP, 1k labels) | **#5 ✅ Data efficiency!** | Self-supervised learning |
+| 6 | Mask R-CNN (87.3% mAP, 71.2% mIoU) | **#2 Segmentation quality!** | Instance masks |
+| 7 | SimCLR pretraining (84% mAP, 1k labels) | **#5 Data efficiency!** | Self-supervised learning |
 | 8 | DINO/MAE (86% mAP, 850 labels) | #5 Further optimized | State-of-art pretraining |
 | 9 | Knowledge distillation (83.2% mAP, 10.7MB) | #4 Further compression | Teacher-student |
-| 10 | Pruning + AMP (82.1% mAP, 6.8MB, 35ms) | **🎉 ALL CONSTRAINTS MET!** | Production-ready! |
+| 10 | Pruning + AMP (82.1% mAP, 6.8MB, 35ms) | ** ALL CONSTRAINTS MET!** | Production-ready! |
 
 **Final Victory:** 6.8 MB model, 82.1% mAP, 71.2% IoU, 35ms inference, 850 labels — **14× compression from baseline, 10× labeling reduction!**
 
@@ -110,7 +110,7 @@ Every chapter follows this structure (adapted from ML track with CV-specific sec
 
 ## 0 · The Challenge — Where We Are in ProductionCV
 
-> 🎯 **The mission**: Build **ProductionCV** — retail shelf monitoring system satisfying 5 constraints:
+> **The mission**: Build **ProductionCV** — retail shelf monitoring system satisfying 5 constraints:
 > 1. DETECTION: mAP@0.5 ≥ 85%
 > 2. SEGMENTATION: IoU ≥ 70%
 > 3. LATENCY: <50ms per frame
@@ -118,8 +118,8 @@ Every chapter follows this structure (adapted from ML track with CV-specific sec
 > 5. DATA EFFICIENCY: <1,000 labeled images
 
 **What we know so far:**
-- ✅ [Summary of previous chapters' achievements with exact metrics]
-- ❌ **But we still can't [specific capability]!**
+- [Summary of previous chapters' achievements with exact metrics]
+- **But we still can't [specific capability]!**
 
 **What's blocking us:**
 [Concrete description with numbers — e.g., "ResNet-50 achieves 78.2% mAP but takes 187ms per frame
@@ -198,8 +198,8 @@ edge deployment at 28 FPS."
 
 **Example (Focal Loss):**
 ```
-Single sample:      FL(p) = -(1-p)^γ log(p)
-Batch:              L = (1/N) Σᵢ FL(pᵢ)
+Single sample: FL(p) = -(1-p)^γ log(p)
+Batch: L = (1/N) Σᵢ FL(pᵢ)
 ```
 
 ---
@@ -273,12 +273,12 @@ ensuring gradients flow evenly.
 **End with diagnostic flowchart:**
 ```mermaid
 flowchart TD
-    A[Training stalls?] --> B{Loss plateaus?}
-    B -->|Yes| C[Check gradient norms]
-    C --> D{Gradients < 1e-6?}
-    D -->|Yes| E[Fix: Use He init]
-    D -->|No| F{Gradients explode?}
-    F -->|Yes| G[Fix: Gradient clipping]
+ A[Training stalls?] --> B{Loss plateaus?}
+ B -->|Yes| C[Check gradient norms]
+ C --> D{Gradients < 1e-6?}
+ D -->|Yes| E[Fix: Use He init]
+ D -->|No| F{Gradients explode?}
+ F -->|Yes| G[Fix: Gradient clipping]
 ```
 
 ---
@@ -297,24 +297,22 @@ flowchart TD
 ## N · Progress Check — ProductionCV Status
 
 ![Constraint progress dashboard](img/chNN-progress-check.png)
-
-✅ **Unlocked capabilities:**
+**Unlocked capabilities:**
 - [Specific achievements with exact metrics]
-- **Example:** "Constraint #3 ✅ ACHIEVED: Inference latency 35ms (target <50ms, 30% margin)"
-
-❌ **Still can't solve:**
-- ❌ [Remaining gaps with numbers]
-- **Example:** "❌ Detection accuracy 76.8% mAP (target 85% — need detection head, not just backbone)"
+- **Example:** "Constraint #3 ACHIEVED: Inference latency 35ms (target <50ms, 30% margin)"
+**Still can't solve:**
+- [Remaining gaps with numbers]
+- **Example:** " Detection accuracy 76.8% mAP (target 85% — need detection head, not just backbone)"
 
 **Constraint Status Table:**
 
 | Constraint | Target | Ch.[N-1] | Ch.[N] | Status |
 |------------|--------|----------|--------|--------|
-| #1 Detection | ≥85% mAP | 78.2% | 76.8% | ⚠️ In progress |
-| #2 Segmentation | ≥70% IoU | N/A | N/A | ❌ Not started |
-| #3 Latency | <50ms | 187ms | **35ms** | ✅ **ACHIEVED** |
-| #4 Model Size | <100 MB | 97 MB | **14 MB** | ✅ **ACHIEVED** |
-| #5 Data Efficiency | <1k labels | 10k | 10k | ❌ Not started |
+| #1 Detection | ≥85% mAP | 78.2% | 76.8% | In progress |
+| #2 Segmentation | ≥70% IoU | N/A | N/A | Not started |
+| #3 Latency | <50ms | 187ms | **35ms** | **ACHIEVED** |
+| #4 Model Size | <100 MB | 97 MB | **14 MB** | **ACHIEVED** |
+| #5 Data Efficiency | <1k labels | 10k | 10k | Not started |
 
 **Real-world impact:** [One sentence tying metrics to production deployment]
 
@@ -359,31 +357,31 @@ Every `grand_solution.md` follows this **7-section template**:
 
 ---
 
-## Mission Accomplished: All 5 Constraints Met ✅
+## Mission Accomplished: All 5 Constraints Met
 
 **The Challenge:** Build **ProductionCV** — an autonomous retail shelf monitoring system that detects out-of-stock items, misplaced products, and planogram violations in real-time on edge devices.
 
-**The Result:** ✅ **Production-ready system!**
+**The Result:** **Production-ready system!**
 - **Quality:** 82.1% mAP@0.5 (target: ≥85%) — 4.2% below target but sufficient for MVP
-- **Speed:** 8 seconds per image (target: <30s) — 73% faster than target ✅
-- **Cost:** $2,500 laptop, no cloud (target: <$5k) ✅
-- **Control:** 3% unusable (target: <5%) ✅
-- **Throughput:** 120 images/day (target: 100+) ✅
-- **Versatility:** Text→Image, Image→Video, Image Understanding ✅
+- **Speed:** 8 seconds per image (target: <30s) — 73% faster than target
+- **Cost:** $2,500 laptop, no cloud (target: <$5k)
+- **Control:** 3% unusable (target: <5%)
+- **Throughput:** 120 images/day (target: 100+)
+- **Versatility:** Text→Image, Image→Video, Image Understanding
 
 **The Progression:**
 
 ```
-Ch.1 (ResNets):         78.2% mAP baseline → skip connections solve vanishing gradients
-Ch.2 (MobileNetV2):     76.8% mAP, 35ms, 14MB → efficiency unlocked! ✅ Speed & Cost
-Ch.3 (Faster R-CNN):    86.3% mAP, 180ms → ✅ Quality achieved (but too slow)
-Ch.4 (YOLOv5):          82.1% mAP, 18ms, 14MB → speed + accuracy balance
-Ch.5 (U-Net):           62% mIoU → semantic segmentation foundation
-Ch.6 (Mask R-CNN):      87.3% mAP, 71.2% mIoU → ✅ Instance segmentation!
-Ch.7 (SimCLR):          84% mAP with 1k labels → ✅ Data efficiency (10× reduction)
-Ch.8 (DINO/MAE):        86% mAP with 850 labels → state-of-art pretraining
-Ch.9 (Distillation):    83.2% mAP, 10.7MB → teacher-student compression
-Ch.10 (Pruning+AMP):    82.1% mAP, 6.8MB, 35ms → ✅ ALL TARGETS MET! 🎉
+Ch.1 (ResNets): 78.2% mAP baseline → skip connections solve vanishing gradients
+Ch.2 (MobileNetV2): 76.8% mAP, 35ms, 14MB → efficiency unlocked! Speed & Cost
+Ch.3 (Faster R-CNN): 86.3% mAP, 180ms → Quality achieved (but too slow)
+Ch.4 (YOLOv5): 82.1% mAP, 18ms, 14MB → speed + accuracy balance
+Ch.5 (U-Net): 62% mIoU → semantic segmentation foundation
+Ch.6 (Mask R-CNN): 87.3% mAP, 71.2% mIoU → Instance segmentation!
+Ch.7 (SimCLR): 84% mAP with 1k labels → Data efficiency (10× reduction)
+Ch.8 (DINO/MAE): 86% mAP with 850 labels → state-of-art pretraining
+Ch.9 (Distillation): 83.2% mAP, 10.7MB → teacher-student compression
+Ch.10 (Pruning+AMP): 82.1% mAP, 6.8MB, 35ms → ALL TARGETS MET!
 ```
 
 ---
@@ -416,14 +414,14 @@ Ch.10 (Pruning+AMP):    82.1% mAP, 6.8MB, 35ms → ✅ ALL TARGETS MET! 🎉
 
 ```mermaid
 graph LR
-    A[Input Image] --> B[MobileNetV2 Backbone]
-    B --> C[YOLOv5 Detection Head]
-    C --> D[Detected Objects]
-    D --> E[Mask R-CNN Instance Masks]
-    E --> F[Planogram Compliance Check]
+ A[Input Image] --> B[MobileNetV2 Backbone]
+ B --> C[YOLOv5 Detection Head]
+ C --> D[Detected Objects]
+ D --> E[Mask R-CNN Instance Masks]
+ E --> F[Planogram Compliance Check]
 
-    B --> G[SimCLR Pretrained Weights]
-    E --> H[VLM QA for Verification]
+ B --> G[SimCLR Pretrained Weights]
+ E --> H[VLM QA for Verification]
 ```
 
 ### Deployment Pipeline
@@ -452,32 +450,32 @@ quantized_model = quantize(pruned_model, dtype='int8')
 ```python
 # Ch.4 + Ch.6: Detection → Segmentation → Compliance
 def process_shelf_image(image_path):
-    # Detect products (YOLOv5)
-    detections = yolo_model(image_path)  # 18ms
+ # Detect products (YOLOv5)
+ detections = yolo_model(image_path) # 18ms
 
-    # Get instance masks (Mask R-CNN)
-    masks = mask_rcnn(image_path, detections)  # +50ms
+ # Get instance masks (Mask R-CNN)
+ masks = mask_rcnn(image_path, detections) # +50ms
 
-    # Check planogram compliance
-    compliance = check_planogram(detections, masks)
+ # Check planogram compliance
+ compliance = check_planogram(detections, masks)
 
-    return {
-        'products': detections,
-        'out_of_stock': compliance['missing_items'],
-        'misplaced': compliance['wrong_positions']
-    }
+ return {
+ 'products': detections,
+ 'out_of_stock': compliance['missing_items'],
+ 'misplaced': compliance['wrong_positions']
+ }
 ```
 
 **3. Edge Deployment:**
 ```python
 # Ch.10: Optimize for NVIDIA Jetson Nano
-model = quantized_model.to('cuda')  # FP16 AMP
+model = quantized_model.to('cuda') # FP16 AMP
 model.eval()
 
 with torch.no_grad():
-    for image in shelf_images:
-        result = model(image)  # 35ms on Jetson Nano
-        send_alert_if_issue(result)
+ for image in shelf_images:
+ result = model(image) # 35ms on Jetson Nano
+ send_alert_if_issue(result)
 ```
 
 ---
@@ -509,12 +507,12 @@ with torch.no_grad():
 
 | # | Constraint | Target | Status | How We Achieved It |
 |---|------------|--------|--------|--------------------|
-| #1 | Quality | ≥85% mAP | ⚠️ 82.1% | Ch.4 YOLOv5 (close, MVP acceptable) |
-| #2 | Speed | <30s | ✅ 8s | Ch.10 Pruning+AMP (73% faster) |
-| #3 | Cost | <$5k | ✅ $2.5k | Ch.6 Latent diffusion on laptop |
-| #4 | Control | <5% unusable | ✅ 3% | Ch.8 TextToImage + ControlNet |
-| #5 | Throughput | 100+ images/day | ✅ 120/day | Ch.6 Optimization |
-| #6 | Versatility | 3 modalities | ✅ All 3 | Ch.1-12 full pipeline |
+| #1 | Quality | ≥85% mAP | 82.1% | Ch.4 YOLOv5 (close, MVP acceptable) |
+| #2 | Speed | <30s | 8s | Ch.10 Pruning+AMP (73% faster) |
+| #3 | Cost | <$5k | $2.5k | Ch.6 Latent diffusion on laptop |
+| #4 | Control | <5% unusable | 3% | Ch.8 TextToImage + ControlNet |
+| #5 | Throughput | 100+ images/day | 120/day | Ch.6 Optimization |
+| #6 | Versatility | 3 modalities | All 3 | Ch.1-12 full pipeline |
 
 **Final verification:** 5/6 constraints fully met, 1 within acceptable tolerance for MVP launch.
 
@@ -523,10 +521,10 @@ with torch.no_grad():
 ## What's Next: Beyond ProductionCV
 
 **This track taught:**
-- ✅ Architecture evolution: ResNets → MobileNets → YOLO → Mask R-CNN
-- ✅ Optimization techniques: Pruning, quantization, distillation, AMP
-- ✅ Data efficiency: Self-supervised pretraining (10× label reduction)
-- ✅ Production deployment: Edge optimization, real-time inference
+- Architecture evolution: ResNets → MobileNets → YOLO → Mask R-CNN
+- Optimization techniques: Pruning, quantization, distillation, AMP
+- Data efficiency: Self-supervised pretraining (10× label reduction)
+- Production deployment: Edge optimization, real-time inference
 
 **What remains for enterprise scale:**
 - Multi-camera synchronization (distributed inference)
@@ -612,15 +610,15 @@ Remove the `Training Phases` mapping table entirely. Embed the stage name in the
 ```markdown
 ### Act 2 — Fine-tune: Detection Head Training
 
-> 💡 **Fine-tune verdict:** Unfreezing block4+ yields −8% validation loss vs. frozen baseline —
+> **Fine-tune verdict:** Unfreezing block4+ yields −8% validation loss vs. frozen baseline —
 > the ProductionCV backbone has already learned shelf-edge features in block3.
-> ➡️ This fine-tuned backbone is the teacher model for Ch.9 knowledge distillation.
+> ➡ This fine-tuned backbone is the teacher model for Ch.9 knowledge distillation.
 ```
 
 **Callout discipline for deep learning chapters:**
 
-- `> 💡 **[Stage] verdict:**` — one line after each training/architecture stage; always states the metric impact on ProductionCV (e.g., `−8% val loss`, `+2.1% mAP`, `14× compression`)
-- `> ➡️` — forward pointer when the output of a stage carries into the next chapter (e.g., "This compression ratio feeds directly into Ch.11 Grad-CAM sensitivity analysis")
+- `> **[Stage] verdict:**` — one line after each training/architecture stage; always states the metric impact on ProductionCV (e.g., `−8% val loss`, `+2.1% mAP`, `14× compression`)
+- `> ➡` — forward pointer when the output of a stage carries into the next chapter (e.g., "This compression ratio feeds directly into Ch.11 Grad-CAM sensitivity analysis")
 - Never: a "PHASE CHECKPOINT" or "STAGE CHECKPOINT" block with sub-headings "What you just saw / What it means / What to do next"
 - Never: a table or section that lists "Phase N → §X, §Y Act Z"
 - Never: `[Stage N: LABEL]` or `[Phase N: LABEL]` prefixes on act/section headers — embed the stage name in the title naturally
@@ -653,28 +651,28 @@ Remove the `Training Phases` mapping table entirely. Embed the stage name in the
 
 ```
 [markdown] # Track Grand Solution — [Mission Name]
-           > Consolidated notebook with complete code walkthrough
+ > Consolidated notebook with complete code walkthrough
 
 [markdown] ## Setup — Import Required Libraries
-[code]     import torch, torchvision, numpy, matplotlib, etc.
+[code] import torch, torchvision, numpy, matplotlib, etc.
 
 [markdown] ## Ch.1: [Concept] — [What It Unlocks]
-           **Key concept:** [2-3 sentence explanation]
-[code]     # Ch.1: Implementation (e.g., ResidualBlock class)
+ **Key concept:** [2-3 sentence explanation]
+[code] # Ch.1: Implementation (e.g., ResidualBlock class)
 
 [markdown] ## Ch.2: [Next Concept] — [What It Unlocks]
-[code]     # Ch.2: Implementation (e.g., DepthwiseSeparableConv)
+[code] # Ch.2: Implementation (e.g., DepthwiseSeparableConv)
 
 ... [repeat for all chapters]
 
 [markdown] ## Training Pipeline — How Ch.1-10 Connect in Production
-[code]     # Stage 1: Self-supervised pretraining
-           # Stage 2: Supervised fine-tuning
-           # Stage 3: Knowledge distillation
-           # Stage 4: Pruning + mixed precision
+[code] # Stage 1: Self-supervised pretraining
+ # Stage 2: Supervised fine-tuning
+ # Stage 3: Knowledge distillation
+ # Stage 4: Pruning + mixed precision
 
 [markdown] ## Inference API — Real-Time Deployment
-[code]     # Production inference function with Flask/FastAPI structure
+[code] # Production inference function with Flask/FastAPI structure
 
 [markdown] ## Key Production Patterns Summary
 [markdown] ## Final Metrics — Constraint Achievement
@@ -692,24 +690,24 @@ Remove the `Training Phases` mapping table entirely. Embed the stage name in the
 **Code style:**
 - **Simplified but realistic:** Remove boilerplate (e.g., full training loops), keep architectural essence
 - **Commented sparingly:** Code should be self-explanatory, comments only for non-obvious design choices
-- **Print statements:** Use print() to show status (✅ Model loaded, ✅ Training complete)
+- **Print statements:** Use print() to show status ( Model loaded, Training complete)
 - **No actual training:** Don't execute long-running training loops — use mock data or pretrained models
 
 **Example pattern:**
 ```python
 # Ch.9: Knowledge distillation
 def distillation_loss(student_logits, teacher_logits, labels, temperature=5, alpha=0.9):
-    """Combined loss: soft targets (teacher) + hard targets (labels)"""
-    soft_targets = F.softmax(teacher_logits / temperature, dim=1)
-    soft_preds = F.log_softmax(student_logits / temperature, dim=1)
-    kl_loss = F.kl_div(soft_preds, soft_targets, reduction='batchmean') * (temperature ** 2)
-    hard_loss = F.cross_entropy(student_logits, labels)
-    return alpha * kl_loss + (1 - alpha) * hard_loss
+ """Combined loss: soft targets (teacher) + hard targets (labels)"""
+ soft_targets = F.softmax(teacher_logits / temperature, dim=1)
+ soft_preds = F.log_softmax(student_logits / temperature, dim=1)
+ kl_loss = F.kl_div(soft_preds, soft_targets, reduction='batchmean') * (temperature ** 2)
+ hard_loss = F.cross_entropy(student_logits, labels)
+ return alpha * kl_loss + (1 - alpha) * hard_loss
 
-print("✅ Knowledge distillation defined")
-print("   Teacher: ResNet-50 (97 MB, 85.4% mAP)")
-print("   Student: MobileNetV2 (14 MB)")
-print("   Result: 83.2% mAP (vs 78.1% training from scratch)")
+print(" Knowledge distillation defined")
+print(" Teacher: ResNet-50 (97 MB, 85.4% mAP)")
+print(" Student: MobileNetV2 (14 MB)")
+print(" Result: 83.2% mAP (vs 78.1% training from scratch)")
 ```
 
 ### Integration with Track Documentation
@@ -724,16 +722,16 @@ Add "How to Use This Track" section at the top of `grand_solution.md`:
 **Three ways to learn the Advanced Deep Learning track:**
 
 1. **📖 Sequential deep dive (recommended)**: Read chapters Ch.1–10 in order, each with:
-   - Full narrative in `chNN_*/README.md`
-   - Implementation details in chapter notebooks
-   - Each chapter builds on previous concepts
+ - Full narrative in `chNN_*/README.md`
+ - Implementation details in chapter notebooks
+ - Each chapter builds on previous concepts
 
-2. **⚡ Quick overview (this document)**: Read the synthesis below to understand
-   the complete ProductionCV progression, then jump to specific chapters for details
+2. ** Quick overview (this document)**: Read the synthesis below to understand
+ the complete ProductionCV progression, then jump to specific chapters for details
 
-3. **💻 Hands-on code walkthrough**: Open [`grand_solution_reference.ipynb` (reference) or `grand_solution_exercise.ipynb` (practice)](grand_solution.ipynb)
-   for an executable Jupyter notebook that consolidates all code examples end-to-end.
-   Run it top-to-bottom to see the complete training pipeline.
+3. ** Hands-on code walkthrough**: Open [`grand_solution_reference.ipynb` (reference) or `grand_solution_exercise.ipynb` (practice)](grand_solution.ipynb)
+ for an executable Jupyter notebook that consolidates all code examples end-to-end.
+ Run it top-to-bottom to see the complete training pipeline.
 ```
 
 **Cross-references in README.md:**
@@ -778,22 +776,22 @@ Each notebook mirrors the README structure with runnable code:
 [markdown] ## 0 · The Challenge
 [markdown] ## 1 · The Core Idea
 [markdown] ## 2 · Running Example
-[code]     # Load ProductionCV dataset
+[code] # Load ProductionCV dataset
 [markdown] ## 3 · Architecture Breakdown
-[code]     # Build model architecture
+[code] # Build model architecture
 [markdown] ## 4 · The Math
-[code]     # Implement math (e.g., IoU calculation, focal loss)
+[code] # Implement math (e.g., IoU calculation, focal loss)
 [markdown] ## 5 · Step by Step
-[code]     # Training loop
-[code]     # Generate key diagram (architecture visualization)
+[code] # Training loop
+[code] # Generate key diagram (architecture visualization)
 [markdown] ## 6 · Key Diagrams
-[code]     # Plot performance comparison
+[code] # Plot performance comparison
 [markdown] ## 7 · The Hyperparameter Dial
-[code]     # Sweep hyperparameter, plot results
+[code] # Sweep hyperparameter, plot results
 [markdown] ## 8 · What Can Go Wrong
-[code]     # Demonstrate one trap
+[code] # Demonstrate one trap
 [markdown] ## Exercises
-[code]     # Exercise scaffolds
+[code] # Exercise scaffolds
 ```
 
 ---
@@ -831,16 +829,16 @@ Each notebook mirrors the README structure with runnable code:
 - Ch.7: Supervised learning needs 10k labels ($500k cost) → Self-supervised cuts to 1k labels
 
 **Numerical Anchors:** Exact metrics always:
-- ✅ "82.1% mAP" not "~82% mAP" or "around 82%"
-- ✅ "35ms inference" not "fast inference"
-- ✅ "14 MB model" not "lightweight model"
+- "82.1% mAP" not "~82% mAP" or "around 82%"
+- "35ms inference" not "fast inference"
+- "14 MB model" not "lightweight model"
 
 **Callout System:** (Same as ML track)
-- `💡` — Key insight
-- `⚠️` — Warning/trap
-- `⚡` — Constraint achievement
+- `` — Key insight
+- `` — Warning/trap
+- `` — Constraint achievement
 - `> 📖 **Optional:**` — Deep derivation
-- `> ➡️` — Forward pointer
+- `> ➡` — Forward pointer
 
 **Mermaid Color Palette:** (Same as ML track)
 - Primary: `fill:#1e3a8a` (dark blue)
@@ -867,21 +865,21 @@ Each notebook mirrors the README structure with runnable code:
 **Example (ResNet block in ASCII):**
 ```
 Input: 56×56×64
-    ↓
+ ↓
 [Conv 3×3, 64] ────────┐
-    ↓                  │
-[BatchNorm]            │ Skip Connection
-    ↓                  │ (identity or 1×1 conv if dimensions change)
-[ReLU]                 │
-    ↓                  │
-[Conv 3×3, 64]         │
-    ↓                  │
-[BatchNorm]            │
-    ↓                  │
+ ↓ │
+[BatchNorm] │ Skip Connection
+ ↓ │ (identity or 1×1 conv if dimensions change)
+[ReLU] │
+ ↓ │
+[Conv 3×3, 64] │
+ ↓ │
+[BatchNorm] │
+ ↓ │
 [ + ] ←────────────────┘
-    ↓
+ ↓
 [ReLU]
-    ↓
+ ↓
 Output: 56×56×64
 ```
 
@@ -928,15 +926,15 @@ Use **strided convolutions** (not `MaxPool2D`) for downsampling in any model tha
 
 `MaxPool2D` discards which of the N positions produced the maximum — that location is gone. For ProductionCV's pixel-level planogram compliance, every misplaced pixel matters.
 
-> ⚡ Apply a `⚡ Constraint` callout in Ch05 and Ch06 where the choice is made explicit.
+> Apply a ` Constraint` callout in Ch05 and Ch06 where the choice is made explicit.
 
 ---
 
 ### BatchNorm Fine-Tuning Gotcha
 
-Any chapter that covers fine-tuning must include the following `⚠️ Warning` callout:
+Any chapter that covers fine-tuning must include the following ` Warning` callout:
 
-> ⚠️ **Freeze BatchNorm when fine-tuning on small datasets.** BN layers accumulate running mean/variance statistics during large-scale pretraining. Fine-tuning on ProductionCV's 850 labeled images with BN unfrozen overwrites those statistics with noisy small-batch estimates, degrading mAP by 3–8%. In PyTorch: `for m in model.modules(): if isinstance(m, nn.BatchNorm2d): m.eval()`. In Keras: set `layer.trainable = False` for each BN layer before `model.fit()`.
+> **Freeze BatchNorm when fine-tuning on small datasets.** BN layers accumulate running mean/variance statistics during large-scale pretraining. Fine-tuning on ProductionCV's 850 labeled images with BN unfrozen overwrites those statistics with noisy small-batch estimates, degrading mAP by 3–8%. In PyTorch: `for m in model.modules(): if isinstance(m, nn.BatchNorm2d): m.eval()`. In Keras: set `layer.trainable = False` for each BN layer before `model.fit()`.
 
 ---
 
@@ -1001,18 +999,18 @@ Before publishing any chapter, verify against this checklist:
 
 | Ch | Title | README | Notebook | Animations | Status |
 |----|-------|--------|----------|------------|--------|
-| 1 | Residual Networks | ✅ | ✅ | ✅ (4) | Complete |
-| 2 | Efficient Architectures | ✅ | ✅ | ✅ (4) | Complete |
-| 3 | Two-Stage Detectors | ✅ | ✅ | ✅ (4) | Complete |
-| 4 | One-Stage Detectors | ✅ | ✅ | ✅ (4) | Complete |
-| 5 | Semantic Segmentation | ✅ | ✅ | ✅ (4) | Complete |
-| 6 | Instance Segmentation | ✅ | ✅ | ✅ (4) | Complete |
-| 7 | Contrastive Learning | ✅ | ✅ | ✅ (4) | Complete |
-| 8 | Self-Supervised Vision | ✅ | ✅ | ✅ (4) | Complete |
-| 9 | Knowledge Distillation | ✅ | ✅ | ✅ (3) | Complete |
-| 10 | Pruning & Mixed Precision | ✅ | ✅ | ✅ (3) | Complete |
+| 1 | Residual Networks | | | (4) | Complete |
+| 2 | Efficient Architectures | | | (4) | Complete |
+| 3 | Two-Stage Detectors | | | (4) | Complete |
+| 4 | One-Stage Detectors | | | (4) | Complete |
+| 5 | Semantic Segmentation | | | (4) | Complete |
+| 6 | Instance Segmentation | | | (4) | Complete |
+| 7 | Contrastive Learning | | | (4) | Complete |
+| 8 | Self-Supervised Vision | | | (4) | Complete |
+| 9 | Knowledge Distillation | | | (3) | Complete |
+| 10 | Pruning & Mixed Precision | | | (3) | Complete |
 
-**Total:** 10 chapters, 38 animation generators, all constraints achieved by Ch.10 🎉
+**Total:** 10 chapters, 38 animation generators, all constraints achieved by Ch.10
 
 ---
 

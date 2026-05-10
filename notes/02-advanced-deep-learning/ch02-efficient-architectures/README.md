@@ -10,13 +10,13 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Build **ProductionCV** — an autonomous retail shelf monitoring system satisfying 5 constraints:
+> **The mission**: Build **ProductionCV** — an autonomous retail shelf monitoring system satisfying 5 constraints:
 > 1. **DETECTION ACCURACY**: mAP@0.5 ≥ 85% — 2. **SEGMENTATION QUALITY**: IoU ≥ 70% — 3. **INFERENCE LATENCY**: <50ms per frame — 4. **MODEL SIZE**: <100 MB — 5. **DATA EFFICIENCY**: <1,000 labeled images
 
 **What we know so far:**
-- ✅ Ch.1 (ResNets) — Skip connections enable 100+ layer networks, solved vanishing gradients
-- ✅ ResNet-50 baseline — 78.2% mAP on ProductionCV dataset, 11.7M parameters
-- ❌ **But ResNet-50 is too slow and too large!** 98 MB model size (barely fits constraint #4), 85ms inference on Jetson Nano (70% over constraint #3 target)
+- Ch.1 (ResNets) — Skip connections enable 100+ layer networks, solved vanishing gradients
+- ResNet-50 baseline — 78.2% mAP on ProductionCV dataset, 11.7M parameters
+- **But ResNet-50 is too slow and too large!** 98 MB model size (barely fits constraint #4), 85ms inference on Jetson Nano (70% over constraint #3 target)
 
 **What's blocking us:**
 **Computational inefficiency of standard convolutions.** A single 3×3 conv layer with 128 input channels and 256 output channels performs:
@@ -43,10 +43,9 @@ Key innovations:
 4. **Speedup**: $\frac{k^2 \cdot C_{\text{out}}}{k^2 + C_{\text{out}}}$ = 8.5× for $k=3, C_{\text{out}}=256$
 
 **Expected results:**
-- **MobileNetV2**: 3.5M params, 300 MFLOPs → <20 MB, 35ms on Jetson Nano ✅
+- **MobileNetV2**: 3.5M params, 300 MFLOPs → <20 MB, 35ms on Jetson Nano
 - **EfficientNet-B0**: 5.3M params, 390 MFLOPs → 21 MB, 42ms, same accuracy as ResNet-50
-
-✅ **This unlocks constraints #3 and #4** — edge deployment becomes viable.
+**This unlocks constraints #3 and #4** — edge deployment becomes viable.
 
 ---
 
@@ -85,7 +84,7 @@ $$
 
 For $k=3, C_{\text{out}}=256$: $\frac{9 \times 256}{9 + 256} = \frac{2304}{265} \approx 8.7×$
 
-> 💡 **Key insight:** The speedup grows with the number of output channels. For wider networks (512, 1024 channels), the speedup approaches $k^2$ (9× for 3×3 convs). This is why MobileNets can afford to be relatively wide — the depthwise/pointwise factorization makes width cheap.
+> **Key insight:** The speedup grows with the number of output channels. For wider networks (512, 1024 channels), the speedup approaches $k^2$ (9× for 3×3 convs). This is why MobileNets can afford to be relatively wide — the depthwise/pointwise factorization makes width cheap.
 
 ---
 
@@ -107,9 +106,9 @@ You're the lead ML engineer at a retail automation company. Your ResNet-50 model
 How do you cut compute by 3× without losing accuracy?
 
 **Naive approaches that fail:**
-1. ❌ **Reduce depth** (ResNet-18 instead of ResNet-50) → 2× faster but -4% mAP (74% → below threshold)
-2. ❌ **Reduce width** (50% fewer channels per layer) → 4× faster but -6% mAP (72% → unacceptable)
-3. ❌ **Reduce input resolution** (112×112 instead of 224×224) → 4× faster but -8% mAP (70% → product logos unreadable)
+1. **Reduce depth** (ResNet-18 instead of ResNet-50) → 2× faster but -4% mAP (74% → below threshold)
+2. **Reduce width** (50% fewer channels per layer) → 4× faster but -6% mAP (72% → unacceptable)
+3. **Reduce input resolution** (112×112 instead of 224×224) → 4× faster but -8% mAP (70% → product logos unreadable)
 
 **MobileNet's solution:**
 Replace every standard 3×3 conv with depthwise separable conv → 8× fewer FLOPs, minimal accuracy loss.
@@ -128,11 +127,11 @@ MobileNetV2 (Sandler et al., 2018) improves MobileNetV1 with **inverted residual
 ```
 Standard ResNet block:
 Wide (256) → Narrow (64) → Wide (256) + skip
-           ↓ bottleneck ↓
+ ↓ bottleneck ↓
 
 Inverted residual (MobileNetV2):
 Narrow (64) → Wide (384) → Narrow (64) + skip
-            ↑ expansion ↑
+ ↑ expansion ↑
 ```
 
 **Why invert?** Depthwise convs are cheap, so expanding before depthwise is nearly free. Skip connections around narrow ends preserve information.
@@ -143,11 +142,11 @@ Narrow (64) → Wide (384) → Narrow (64) + skip
 Input: C channels
 
 1. Expansion (1×1 pointwise): C → t·C (t = expansion ratio, typically 6)
-   ↓
+ ↓
 2. Depthwise 3×3: t·C (spatial filtering, cheap because 1 filter per channel)
-   ↓
+ ↓
 3. Projection (1×1 pointwise): t·C → C (linear, no ReLU)
-   ↓
+ ↓
 4. Skip connection: Add input if stride=1
 
 Output: C channels
@@ -161,41 +160,41 @@ Output: C channels
 Input: 224×224×3
 
 ┌────────────────────────────────────────┐
-│ Conv 3×3, stride=2 → 112×112×32       │
+│ Conv 3×3, stride=2 → 112×112×32 │
 └────────────────────────────────────────┘
-         ↓
+ ↓
 ┌────────────────────────────────────────┐
-│ Inverted Residual Block (t=1, C=16)   │  stride=1, 112×112×16
+│ Inverted Residual Block (t=1, C=16) │ stride=1, 112×112×16
 └────────────────────────────────────────┘
-         ↓
+ ↓
 ┌────────────────────────────────────────┐
-│ 2× Inverted Residual (t=6, C=24)      │  stride=2 → 56×56×24
+│ 2× Inverted Residual (t=6, C=24) │ stride=2 → 56×56×24
 └────────────────────────────────────────┘
-         ↓
+ ↓
 ┌────────────────────────────────────────┐
-│ 3× Inverted Residual (t=6, C=32)      │  stride=2 → 28×28×32
+│ 3× Inverted Residual (t=6, C=32) │ stride=2 → 28×28×32
 └────────────────────────────────────────┘
-         ↓
+ ↓
 ┌────────────────────────────────────────┐
-│ 4× Inverted Residual (t=6, C=64)      │  stride=2 → 14×14×64
+│ 4× Inverted Residual (t=6, C=64) │ stride=2 → 14×14×64
 └────────────────────────────────────────┘
-         ↓
+ ↓
 ┌────────────────────────────────────────┐
-│ 3× Inverted Residual (t=6, C=96)      │  stride=1 → 14×14×96
+│ 3× Inverted Residual (t=6, C=96) │ stride=1 → 14×14×96
 └────────────────────────────────────────┘
-         ↓
+ ↓
 ┌────────────────────────────────────────┐
-│ 3× Inverted Residual (t=6, C=160)     │  stride=2 → 7×7×160
+│ 3× Inverted Residual (t=6, C=160) │ stride=2 → 7×7×160
 └────────────────────────────────────────┘
-         ↓
+ ↓
 ┌────────────────────────────────────────┐
-│ 1× Inverted Residual (t=6, C=320)     │  stride=1 → 7×7×320
+│ 1× Inverted Residual (t=6, C=320) │ stride=1 → 7×7×320
 └────────────────────────────────────────┘
-         ↓
+ ↓
 ┌────────────────────────────────────────┐
-│ Conv 1×1 → 7×7×1280                    │
-│ Global Average Pool → 1×1×1280         │
-│ FC → num_classes                       │
+│ Conv 1×1 → 7×7×1280 │
+│ Global Average Pool → 1×1×1280 │
+│ FC → num_classes │
 └────────────────────────────────────────┘
 ```
 
@@ -297,7 +296,7 @@ For $k=3, C_{\text{out}} \gg k^2$: Speedup $\approx k^2 = 9×$
 - Replace final FC layer (1000 classes → 20 retail product classes)
 - Fine-tune for 50 epochs with SGD + cosine LR schedule
 
-> ⚠️ **Freeze BatchNorm during fine-tuning.** BN layers accumulate running mean/variance statistics during ImageNet-scale pretraining. Fine-tuning on ProductionCV's 850 labeled images with BN layers unfrozen overwrites those statistics with noisy small-batch estimates, degrading mAP by 3–8%. In PyTorch: `for m in model.modules(): if isinstance(m, nn.BatchNorm2d): m.eval()`. In Keras: set `layer.trainable = False` for each BN layer before `model.fit()`.
+> **Freeze BatchNorm during fine-tuning.** BN layers accumulate running mean/variance statistics during ImageNet-scale pretraining. Fine-tuning on ProductionCV's 850 labeled images with BN layers unfrozen overwrites those statistics with noisy small-batch estimates, degrading mAP by 3–8%. In PyTorch: `for m in model.modules(): if isinstance(m, nn.BatchNorm2d): m.eval()`. In Keras: set `layer.trainable = False` for each BN layer before `model.fit()`.
 
 **Step 3: Measure baseline performance**
 - Accuracy: Should achieve 75-77% mAP (slightly below ResNet-50's 78.2%)
@@ -329,46 +328,46 @@ For $k=3, C_{\text{out}} \gg k^2$: Speedup $\approx k^2 = 9×$
 Standard 3×3 Convolution (128 → 256 channels):
 
 ┌──────────────────────────────────────────────────┐
-│  Input: 56×56×128                                │
+│ Input: 56×56×128 │
 └───────────────┬──────────────────────────────────┘
-                │
-                ↓
-     ┌──────────────────────┐
-     │  3×3 Conv (256 kernels, each 3×3×128)       │
-     │  FLOPs: 925M                                 │
-     │  Params: 295k                                │
-     └──────────┬───────────────────────────────────┘
-                │
-                ↓
+ │
+ ↓
+ ┌──────────────────────┐
+ │ 3×3 Conv (256 kernels, each 3×3×128) │
+ │ FLOPs: 925M │
+ │ Params: 295k │
+ └──────────┬───────────────────────────────────┘
+ │
+ ↓
 ┌───────────────┴──────────────────────────────────┐
-│  Output: 56×56×256                               │
+│ Output: 56×56×256 │
 └──────────────────────────────────────────────────┘
 
 Depthwise Separable (equivalent):
 
 ┌──────────────────────────────────────────────────┐
-│  Input: 56×56×128                                │
+│ Input: 56×56×128 │
 └───────────────┬──────────────────────────────────┘
-                │
-                ↓ Step 1: Depthwise 3×3
-     ┌──────────────────────┐
-     │  3×3 Depthwise (128 filters, each 3×3×1)    │
-     │  FLOPs: 3.6M (one filter per channel)       │
-     │  Params: 1.2k                                │
-     └──────────┬───────────────────────────────────┘
-                │
-                ↓ Intermediate: 56×56×128
-                │
-                ↓ Step 2: Pointwise 1×1
-     ┌──────────────────────┐
-     │  1×1 Conv (256 filters, each 1×1×128)       │
-     │  FLOPs: 103M (mixing channels)              │
-     │  Params: 33k                                 │
-     └──────────┬───────────────────────────────────┘
-                │
-                ↓
+ │
+ ↓ Step 1: Depthwise 3×3
+ ┌──────────────────────┐
+ │ 3×3 Depthwise (128 filters, each 3×3×1) │
+ │ FLOPs: 3.6M (one filter per channel) │
+ │ Params: 1.2k │
+ └──────────┬───────────────────────────────────┘
+ │
+ ↓ Intermediate: 56×56×128
+ │
+ ↓ Step 2: Pointwise 1×1
+ ┌──────────────────────┐
+ │ 1×1 Conv (256 filters, each 1×1×128) │
+ │ FLOPs: 103M (mixing channels) │
+ │ Params: 33k │
+ └──────────┬───────────────────────────────────┘
+ │
+ ↓
 ┌───────────────┴──────────────────────────────────┐
-│  Output: 56×56×256                               │
+│ Output: 56×56×256 │
 └──────────────────────────────────────────────────┘
 
 Total: 106.6M FLOPs (8.7× speedup), 34.2k params (8.6× reduction)
@@ -382,23 +381,23 @@ Total: 106.6M FLOPs (8.7× speedup), 34.2k params (8.6× reduction)
 
 ```mermaid
 flowchart TD
-    A[Input<br/>56×56×64] --> B[1×1 Conv Expand<br/>64 → 384 channels<br/>t=6 expansion]
-    B --> C[BatchNorm + ReLU6]
-    C --> D[3×3 Depthwise<br/>384 channels<br/>stride=1]
-    D --> E[BatchNorm + ReLU6]
-    E --> F[1×1 Conv Project<br/>384 → 64 channels<br/>LINEAR no ReLU]
-    F --> G[BatchNorm]
+ A[Input<br/>56×56×64] --> B[1×1 Conv Expand<br/>64 → 384 channels<br/>t=6 expansion]
+ B --> C[BatchNorm + ReLU6]
+ C --> D[3×3 Depthwise<br/>384 channels<br/>stride=1]
+ D --> E[BatchNorm + ReLU6]
+ E --> F[1×1 Conv Project<br/>384 → 64 channels<br/>LINEAR no ReLU]
+ F --> G[BatchNorm]
 
-    A -.Skip connection<br/>identity.-> H[Add]
-    G --> H
-    H --> I[Output<br/>56×56×64]
+ A -.Skip connection<br/>identity.-> H[Add]
+ G --> H
+ H --> I[Output<br/>56×56×64]
 
-    style A fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style B fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style D fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style F fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style H fill:#f59e0b,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style I fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style A fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style B fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style D fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style F fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style H fill:#f59e0b,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style I fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### 6.3 EfficientNet Compound Scaling
@@ -408,22 +407,22 @@ Baseline network (depth d, width w, resolution r):
 
 Traditional scaling (one dimension at a time):
 ┌─────────────┬──────────────┬───────────┬────────────┐
-│   Deeper    │    Wider     │  Higher   │  Accuracy  │
-│  (2× depth) │ (2× width)   │  (2× res) │            │
+│ Deeper │ Wider │ Higher │ Accuracy │
+│ (2× depth) │ (2× width) │ (2× res) │ │
 ├─────────────┼──────────────┼───────────┼────────────┤
-│     2d      │      w       │     r     │   +2.1%    │
-│     d       │     2w       │     r     │   +1.8%    │
-│     d       │      w       │    2r     │   +1.5%    │
+│ 2d │ w │ r │ +2.1% │
+│ d │ 2w │ r │ +1.8% │
+│ d │ w │ 2r │ +1.5% │
 └─────────────┴──────────────┴───────────┴────────────┘
 
 EfficientNet compound scaling (all dimensions together):
 ┌─────────────┬──────────────┬───────────┬────────────┐
-│   Depth     │    Width     │  Resolut  │  Accuracy  │
-│  α^φ · d    │  β^φ · w     │  γ^φ · r  │            │
+│ Depth │ Width │ Resolut │ Accuracy │
+│ α^φ · d │ β^φ · w │ γ^φ · r │ │
 ├─────────────┼──────────────┼───────────┼────────────┤
-│  φ=1: 1.2d  │    1.1w      │   1.15r   │   +3.8%    │
-│  φ=2: 1.4d  │    1.2w      │   1.3r    │   +5.2%    │
-│  φ=3: 1.7d  │    1.4w      │   1.5r    │   +6.1%    │
+│ φ=1: 1.2d │ 1.1w │ 1.15r │ +3.8% │
+│ φ=2: 1.4d │ 1.2w │ 1.3r │ +5.2% │
+│ φ=3: 1.7d │ 1.4w │ 1.5r │ +6.1% │
 └─────────────┴──────────────┴───────────┴────────────┘
 
 Constraint: α · β² · γ² ≈ 2 (FLOPs scale as width² and resolution²)
@@ -498,15 +497,15 @@ Constraint: α · β² · γ² ≈ 2 (FLOPs scale as width² and resolution²)
 ```python
 # WRONG — ReLU after projection destroys information
 projection = nn.Sequential(
-    nn.Conv2d(hidden_dim, out_channels, 1, bias=False),
-    nn.BatchNorm2d(out_channels),
-    nn.ReLU6()  # ❌ BAD! Removes negative values in low-dimensional space
+ nn.Conv2d(hidden_dim, out_channels, 1, bias=False),
+ nn.BatchNorm2d(out_channels),
+ nn.ReLU6() # BAD! Removes negative values in low-dimensional space
 )
 
 # CORRECT — Linear bottleneck (no ReLU)
 projection = nn.Sequential(
-    nn.Conv2d(hidden_dim, out_channels, 1, bias=False),
-    nn.BatchNorm2d(out_channels)  # ✅ No activation
+ nn.Conv2d(hidden_dim, out_channels, 1, bias=False),
+ nn.BatchNorm2d(out_channels) # No activation
 )
 ```
 
@@ -520,10 +519,10 @@ projection = nn.Sequential(
 
 ```python
 # WRONG — standard conv (expensive)
-depthwise = nn.Conv2d(128, 128, kernel_size=3, padding=1)  # ❌ 128×128 = 16k filters!
+depthwise = nn.Conv2d(128, 128, kernel_size=3, padding=1) # 128×128 = 16k filters!
 
 # CORRECT — depthwise conv (one filter per channel)
-depthwise = nn.Conv2d(128, 128, kernel_size=3, padding=1, groups=128)  # ✅ 128 filters
+depthwise = nn.Conv2d(128, 128, kernel_size=3, padding=1, groups=128) # 128 filters
 ```
 
 **Symptoms:** Model trains but is 8× slower than expected (defeats the whole purpose of depthwise separable convs).
@@ -556,7 +555,7 @@ import torch.quantization as quant
 
 # Post-training static quantization
 model_quantized = quant.quantize_dynamic(
-    model, {nn.Linear, nn.Conv2d}, dtype=torch.qint8
+ model, {nn.Linear, nn.Conv2d}, dtype=torch.qint8
 )
 
 # Quantization-aware training (better accuracy)
@@ -592,18 +591,16 @@ model_quantized = quant.convert(model_prepared)
 ## 10 · Progress Check — What We Can Solve Now
 
 ![ProductionCV progress after Ch.2](img/ch02-progress-check.png)
-
-✅ **Unlocked capabilities:**
+**Unlocked capabilities:**
 - **Edge deployment viable** — MobileNetV2 (α=1.0): 3.5M params, 300 MFLOPs, 14 MB, 35ms on Jetson Nano
-- **Constraint #3 ✅ Achieved!** — 35ms < 50ms target (30% headroom)
-- **Constraint #4 ✅ Achieved!** — 14 MB < 100 MB target (86% under budget)
+- **Constraint #3 Achieved!** — 35ms < 50ms target (30% headroom)
+- **Constraint #4 Achieved!** — 14 MB < 100 MB target (86% under budget)
 - **Accuracy maintained** — MobileNetV2 achieves 76.8% mAP on ProductionCV dataset (vs 78.2% for ResNet-50, only -1.4%)
 - **Production deployment** — Real-time shelf monitoring at 28 FPS (vs 11 FPS with ResNet-50)
-
-❌ **Still can't solve:**
-- ❌ **Constraint #1 (Detection Accuracy)** — 76.8% mAP, need 85% (+8.2 points)
-- ❌ **Constraint #2 (Segmentation Quality)** — Not started, need IoU ≥ 70%
-- ❌ **Constraint #5 (Data Efficiency)** — Still requires 5k labeled images, target <1k
+**Still can't solve:**
+- **Constraint #1 (Detection Accuracy)** — 76.8% mAP, need 85% (+8.2 points)
+- **Constraint #2 (Segmentation Quality)** — Not started, need IoU ≥ 70%
+- **Constraint #5 (Data Efficiency)** — Still requires 5k labeled images, target <1k
 
 **Progress toward constraints:**
 
@@ -611,8 +608,8 @@ model_quantized = quant.convert(model_prepared)
 |------------|--------|-------------|-------------|-------------|
 | #1 Detection Accuracy | mAP ≥ 85% | 78.2% (ResNet-50) | 76.8% (MobileNetV2) | -1.4% (acceptable tradeoff) |
 | #2 Segmentation Quality | IoU ≥ 70% | Not started | Not started | Ch.5–6 |
-| #3 Inference Latency | <50ms | 85ms | **35ms ✅** | **2.4× faster** |
-| #4 Model Size | <100 MB | 98 MB | **14 MB ✅** | **7× smaller** |
+| #3 Inference Latency | <50ms | 85ms | **35ms ** | **2.4× faster** |
+| #4 Model Size | <100 MB | 98 MB | **14 MB ** | **7× smaller** |
 | #5 Data Efficiency | <1k labels | Not started | Not started | Ch.7–8 |
 
 **Real-world status:** We can now deploy ProductionCV on edge devices! MobileNetV2 runs at 35ms per frame on an NVIDIA Jetson Nano ($99 device), achieving real-time monitoring (28 FPS) with 76.8% mAP. The accuracy is 1.4% lower than ResNet-50, but the 7× model size reduction and 2.4× speedup make edge deployment viable.
@@ -622,7 +619,7 @@ model_quantized = quant.convert(model_prepared)
 - **Deployment scale**: 1,000 stores × $1,100 savings = $1.1M hardware cost reduction
 - **Real-time monitoring**: 28 FPS enables live stockout alerts (ResNet-50 @ 11 FPS missed 63% of frames)
 
-**Next up:** Ch.3 gives us **Two-Stage Object Detection (Faster R-CNN)** — we'll use MobileNetV2 as the backbone and add a Region Proposal Network (RPN) + detection head to achieve 85%+ mAP (constraint #1 ✅).
+**Next up:** Ch.3 gives us **Two-Stage Object Detection (Faster R-CNN)** — we'll use MobileNetV2 as the backbone and add a Region Proposal Network (RPN) + detection head to achieve 85%+ mAP (constraint #1 ).
 
 ---
 
@@ -632,4 +629,4 @@ Ch.2 gave you efficient architectures — MobileNetV2 and EfficientNet achieve R
 
 But you're still doing **classification** (predict one label per image). Retail shelf monitoring needs **object detection** (predict bounding boxes + labels for all products in the frame).
 
-Ch.3 gives you **Faster R-CNN** — a two-stage detector that uses your MobileNetV2 backbone to extract features, then applies a Region Proposal Network (RPN) to generate candidate boxes, and finally classifies + refines each box. You'll achieve 85%+ mAP (constraint #1 ✅) while keeping inference under 50ms by using the efficient backbone from Ch.2.
+Ch.3 gives you **Faster R-CNN** — a two-stage detector that uses your MobileNetV2 backbone to extract features, then applies a Region Proposal Network (RPN) to generate candidate boxes, and finally classifies + refines each box. You'll achieve 85%+ mAP (constraint #1 ) while keeping inference under 50ms by using the efficient backbone from Ch.2.

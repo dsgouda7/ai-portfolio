@@ -10,26 +10,26 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 🎬 **Animation placeholder** — Deterministic animation showing GPU communication patterns: Single-GPU baseline → Multi-GPU with PCIe (bottleneck highlighted) → Multi-GPU with NVLink (bandwidth improvement shown). Visual will demonstrate 70B model split across 4 GPUs with attention layer sharded across devices, showing token-by-token inference with cross-GPU communication. Compare PCIe (16 GB/s → 8.75s to transfer 140GB) vs NVLink (900 GB/s → 0.16s). Target: 30-second loop showing communication timeline with bandwidth comparison overlay.
+> **Animation placeholder** — Deterministic animation showing GPU communication patterns: Single-GPU baseline → Multi-GPU with PCIe (bottleneck highlighted) → Multi-GPU with NVLink (bandwidth improvement shown). Visual will demonstrate 70B model split across 4 GPUs with attention layer sharded across devices, showing token-by-token inference with cross-GPU communication. Compare PCIe (16 GB/s → 8.75s to transfer 140GB) vs NVLink (900 GB/s → 0.16s). Target: 30-second loop showing communication timeline with bandwidth comparison overlay.
 
 ---
 
-> 🎯 **The mission**: Self-host Llama-3-8B for <$15k/month, replacing $80k OpenAI API costs
+> **The mission**: Self-host Llama-3-8B for <$15k/month, replacing $80k OpenAI API costs
 >
 > **6 Constraints**: #1 Cost (<$15k/mo) • #2 Latency (≤2s) • #3 Throughput (≥10k req/day) • #4 Memory (fit in VRAM) • #5 Quality (≥95% accuracy) • #6 Reliability (>99% uptime)
 
 **What we know so far**:
-- ✅ **Ch.1 (GPU Architecture)**: RTX 4090 identified as target (24GB VRAM, 1.0 TB/s bandwidth, $1.50/hr)
-- ✅ **Ch.2 (Memory Budgets)**: Llama-3-8B FP16 fits in 20GB (16GB params + 4GB KV cache)
-- ✅ **Ch.3 (Quantization)**: INT4 quantization → 8GB params, enables multi-batch inference
-- ✅ **Ch.4 (Distributed Training)**: Understand data/tensor/pipeline parallelism strategies
-- ✅ **Ch.5 (Inference Optimization)**: PagedAttention + continuous batching → 1.2s p95 latency, 12k req/day ✅
-- ✅ **Ch.6 (Serving Frameworks)**: vLLM deployed, achieving throughput and latency targets ✅
-- 📊 **Current state**:
-  - **Production**: 1× RTX 4090, Llama-3-8B INT4, vLLM serving
-  - **Cost**: $1,095/month (93% under $15k budget) ✅
-  - **Performance**: 1.2s p95 latency, 12,000 req/day (120% of target) ✅
-  - **Quality**: 96.2% accuracy (above 95% target) ✅
+- **Ch.1 (GPU Architecture)**: RTX 4090 identified as target (24GB VRAM, 1.0 TB/s bandwidth, $1.50/hr)
+- **Ch.2 (Memory Budgets)**: Llama-3-8B FP16 fits in 20GB (16GB params + 4GB KV cache)
+- **Ch.3 (Quantization)**: INT4 quantization → 8GB params, enables multi-batch inference
+- **Ch.4 (Distributed Training)**: Understand data/tensor/pipeline parallelism strategies
+- **Ch.5 (Inference Optimization)**: PagedAttention + continuous batching → 1.2s p95 latency, 12k req/day
+- **Ch.6 (Serving Frameworks)**: vLLM deployed, achieving throughput and latency targets
+- **Current state**:
+ - **Production**: 1× RTX 4090, Llama-3-8B INT4, vLLM serving
+ - **Cost**: $1,095/month (93% under $15k budget)
+ - **Performance**: 1.2s p95 latency, 12,000 req/day (120% of target)
+ - **Quality**: 96.2% accuracy (above 95% target)
 
 **What's blocking us**:
 
@@ -39,56 +39,56 @@
 
 ```
 CEO: "Great work on the cost savings. Now I need you to plan for Q1 growth.
-     Enterprise customers are asking for Llama-2-70B support — they need
-     higher reasoning quality for legal document analysis. Our current 8B
-     model isn't cutting it for complex contracts."
+ Enterprise customers are asking for Llama-2-70B support — they need
+ higher reasoning quality for legal document analysis. Our current 8B
+ model isn't cutting it for complex contracts."
 
 Engineer: "70B model is 140 GB in FP16. Even with INT4 quantization, that's
-          35 GB. Our RTX 4090 has 24 GB VRAM. It won't fit on one GPU."
+ 35 GB. Our RTX 4090 has 24 GB VRAM. It won't fit on one GPU."
 
 CEO: "So we need multiple GPUs?"
 
 Engineer: "Yes, at least 4 GPUs. But there's a problem: if I connect 4 GPUs
-          via PCIe, the cross-GPU communication is so slow that inference
-          latency explodes. PCIe is only 16 GB/s — transferring 35 GB of
-          activations between GPUs would take 2+ seconds *per layer*."
+ via PCIe, the cross-GPU communication is so slow that inference
+ latency explodes. PCIe is only 16 GB/s — transferring 35 GB of
+ activations between GPUs would take 2+ seconds *per layer*."
 
 CEO: "What's the solution?"
 
 Engineer: "NVLink. It's 900 GB/s — 56× faster than PCIe. But NVLink is only
-          available on datacenter GPUs like A100 or H100, not consumer cards.
-          We'd need to switch from RTX 4090 ($1.50/hr) to A100 ($2.50/hr).
-          And I need to understand the networking topology to architect this
-          correctly — NVSwitch vs direct NVLink, InfiniBand for multi-node,
-          RDMA for low-latency communication."
+ available on datacenter GPUs like A100 or H100, not consumer cards.
+ We'd need to switch from RTX 4090 ($1.50/hr) to A100 ($2.50/hr).
+ And I need to understand the networking topology to architect this
+ correctly — NVSwitch vs direct NVLink, InfiniBand for multi-node,
+ RDMA for low-latency communication."
 
 CEO: "Will this break our $15k/month budget?"
 
 Engineer: "4× A100 @ $2.50/hr = $10/hr = $7,300/month. Still under budget,
-          but we need to validate the architecture first. I have 2 weeks to:
-          1. Understand NVLink vs PCIe bandwidth trade-offs
-          2. Profile Llama-2-70B tensor parallelism with NCCL
-          3. Measure actual latency on multi-GPU setup
-          4. Design InfiniBand topology if we need >8 GPUs in the future"
+ but we need to validate the architecture first. I have 2 weeks to:
+ 1. Understand NVLink vs PCIe bandwidth trade-offs
+ 2. Profile Llama-2-70B tensor parallelism with NCCL
+ 3. Measure actual latency on multi-GPU setup
+ 4. Design InfiniBand topology if we need >8 GPUs in the future"
 ```
 
 **Problems**:
-1. ❌ **PCIe bottleneck**: PCIe Gen4 ×16 = 16 GB/s (one direction). Llama-2-70B INT4 = 35 GB parameters. Multi-GPU inference requires transferring activation tensors between GPUs every layer (hundreds of MB per forward pass). At 16 GB/s, cross-GPU communication dominates latency → 5-10s per inference (vs 2s target) ⚠️
-2. ❌ **No NVLink on consumer GPUs**: RTX 4090 has no NVLink — only PCIe. To get NVLink, must switch to datacenter GPUs (A100, H100) at higher cost ($2.50-$4/hr vs $1.50/hr)
-3. ❌ **Topology complexity**: 4 GPUs in a server can connect via:
-   - Direct NVLink mesh (A100: 12 NVLink lanes, can connect 8 GPUs fully)
-   - NVSwitch fabric (H100: 18 NVLinks + NVSwitch for full bisection bandwidth)
-   - PCIe + CPU relay (consumer GPUs: all traffic through PCIe → CPU bottleneck)
-   - InfiniBand for multi-node (200 Gb/s = 25 GB/s, but requires RDMA setup)
+1. **PCIe bottleneck**: PCIe Gen4 ×16 = 16 GB/s (one direction). Llama-2-70B INT4 = 35 GB parameters. Multi-GPU inference requires transferring activation tensors between GPUs every layer (hundreds of MB per forward pass). At 16 GB/s, cross-GPU communication dominates latency → 5-10s per inference (vs 2s target)
+2. **No NVLink on consumer GPUs**: RTX 4090 has no NVLink — only PCIe. To get NVLink, must switch to datacenter GPUs (A100, H100) at higher cost ($2.50-$4/hr vs $1.50/hr)
+3. **Topology complexity**: 4 GPUs in a server can connect via:
+ - Direct NVLink mesh (A100: 12 NVLink lanes, can connect 8 GPUs fully)
+ - NVSwitch fabric (H100: 18 NVLinks + NVSwitch for full bisection bandwidth)
+ - PCIe + CPU relay (consumer GPUs: all traffic through PCIe → CPU bottleneck)
+ - InfiniBand for multi-node (200 Gb/s = 25 GB/s, but requires RDMA setup)
 
-   **Team has zero expertise in HPC networking** — don't know how to choose topology or debug NCCL communication failures
-4. ❌ **Unknown latency impact**: Tensor parallelism splits each transformer layer across GPUs. Every `matmul` requires an `all-reduce` collective to synchronize results. If `all-reduce` takes 10ms (slow PCIe) vs 1ms (fast NVLink), and Llama-2-70B has 80 layers, that's **800ms vs 80ms communication overhead per inference** — determines whether we meet the 2s latency target or not
-5. ❌ **NCCL tuning required**: NCCL (NVIDIA Collective Communications Library) auto-detects topology and selects ring/tree algorithms. But default settings may choose suboptimal paths (e.g., going through PCIe when NVLink is available). Must understand NCCL topology tables and tuning parameters (`NCCL_P2P_DISABLE`, `NCCL_IB_DISABLE`, etc.) to debug performance
-6. ❌ **InfiniBand unknown**: For future scale-out (16+ GPUs across 2-4 nodes), will need InfiniBand fabric. Team doesn't know:
-   - InfiniBand vs Ethernet (ROCE)
-   - RDMA setup (GPUDirect RDMA to bypass CPU)
-   - InfiniBand switch topology (fat-tree, dragonfly)
-   - Cost implications (Mellanox switches, cables, NICs)
+ **Team has zero expertise in HPC networking** — don't know how to choose topology or debug NCCL communication failures
+4. **Unknown latency impact**: Tensor parallelism splits each transformer layer across GPUs. Every `matmul` requires an `all-reduce` collective to synchronize results. If `all-reduce` takes 10ms (slow PCIe) vs 1ms (fast NVLink), and Llama-2-70B has 80 layers, that's **800ms vs 80ms communication overhead per inference** — determines whether we meet the 2s latency target or not
+5. **NCCL tuning required**: NCCL (NVIDIA Collective Communications Library) auto-detects topology and selects ring/tree algorithms. But default settings may choose suboptimal paths (e.g., going through PCIe when NVLink is available). Must understand NCCL topology tables and tuning parameters (`NCCL_P2P_DISABLE`, `NCCL_IB_DISABLE`, etc.) to debug performance
+6. **InfiniBand unknown**: For future scale-out (16+ GPUs across 2-4 nodes), will need InfiniBand fabric. Team doesn't know:
+ - InfiniBand vs Ethernet (ROCE)
+ - RDMA setup (GPUDirect RDMA to bypass CPU)
+ - InfiniBand switch topology (fat-tree, dragonfly)
+ - Cost implications (Mellanox switches, cables, NICs)
 
 **Business impact**:
 - **$1M+ enterprise deals blocked**: Cannot serve 70B models → losing high-value customers to competitors
@@ -99,49 +99,48 @@ Engineer: "4× A100 @ $2.50/hr = $10/hr = $7,300/month. Still under budget,
 
 **What this chapter unlocks**:
 
-🚀 **GPU-to-GPU networking fundamentals for multi-GPU inference and training**:
+ **GPU-to-GPU networking fundamentals for multi-GPU inference and training**:
 1. **Understand interconnect hierarchy**: PCIe vs NVLink vs InfiniBand → bandwidth, latency, topology
 2. **Profile communication patterns**: Tensor parallelism for 70B model → measure `all-reduce` overhead with NCCL
 3. **Read topology tables**: `nvidia-smi topo -m` → identify NVLink bridges, PCIe switches, NUMA domains
 4. **Design multi-GPU architecture**: 4-GPU NVLink mesh (A100) vs 8-GPU NVSwitch (H100) vs multi-node InfiniBand (16+ GPUs)
-5. **Validate latency**: Llama-2-70B inference on 4× A100 with NVLink → measure actual p95 latency < 2s ✅
-
-⚡ **Expected outcomes**:
+5. **Validate latency**: Llama-2-70B inference on 4× A100 with NVLink → measure actual p95 latency < 2s
+**Expected outcomes**:
 - **Architecture decision**: 4× A100 (80GB) with NVLink identified as target (vs RTX 4090 PCIe-only or H100 overkill)
 - **Cost estimate**:
-  ```
-  4× A100 80GB @ $2.50/hr × 730 hr/month = $7,300/month
-  vs $15,000 budget → $7,700 headroom (51% under budget) ✅
-  vs $80,000 OpenAI baseline → $72,700 savings/month (91% reduction) ✅
-  ```
+ ```
+ 4× A100 80GB @ $2.50/hr × 730 hr/month = $7,300/month
+ vs $15,000 budget → $7,700 headroom (51% under budget)
+ vs $80,000 OpenAI baseline → $72,700 savings/month (91% reduction)
+ ```
 - **Bandwidth verification**:
-  ```
-  PCIe Gen4 ×16: 16 GB/s (one direction) → 35 GB transfer = 2.2s → FAILS latency target ❌
-  NVLink 3.0 (A100): 600 GB/s bidirectional = 300 GB/s per direction → 35 GB = 0.12s → PASSES ✅
-  InfiniBand HDR: 200 Gb/s = 25 GB/s → 35 GB = 1.4s → marginal (okay for multi-node, slower than NVLink)
-  ```
-- **Tensor parallelism validated**: Llama-2-70B INT4 (35 GB) split across 4× A100 (80 GB each) → 8.75 GB per GPU + 4 GB KV cache = ~13 GB used per GPU (16% of 80 GB VRAM) ✅
+ ```
+ PCIe Gen4 ×16: 16 GB/s (one direction) → 35 GB transfer = 2.2s → FAILS latency target
+ NVLink 3.0 (A100): 600 GB/s bidirectional = 300 GB/s per direction → 35 GB = 0.12s → PASSES
+ InfiniBand HDR: 200 Gb/s = 25 GB/s → 35 GB = 1.4s → marginal (okay for multi-node, slower than NVLink)
+ ```
+- **Tensor parallelism validated**: Llama-2-70B INT4 (35 GB) split across 4× A100 (80 GB each) → 8.75 GB per GPU + 4 GB KV cache = ~13 GB used per GPU (16% of 80 GB VRAM)
 - **Latency benchmark**:
-  ```
-  Llama-2-70B INT4 on 4× A100 with NVLink:
-    - Compute per layer: ~50ms (dominated by matmul in INT4)
-    - Communication per layer (all-reduce): ~1.5ms (NVLink + NCCL)
-    - 80 layers × 51.5ms = 4.1s total
-    - With batching + optimization → ~1.8s p95 latency (under 2s target) ✅
+ ```
+ Llama-2-70B INT4 on 4× A100 with NVLink:
+ - Compute per layer: ~50ms (dominated by matmul in INT4)
+ - Communication per layer (all-reduce): ~1.5ms (NVLink + NCCL)
+ - 80 layers × 51.5ms = 4.1s total
+ - With batching + optimization → ~1.8s p95 latency (under 2s target)
 
-  Same setup with PCIe (no NVLink):
-    - Communication per layer: ~15ms (10× slower)
-    - 80 layers × (50 + 15)ms = 5.2s → FAILS ❌
-  ```
+ Same setup with PCIe (no NVLink):
+ - Communication per layer: ~15ms (10× slower)
+ - 80 layers × (50 + 15)ms = 5.2s → FAILS
+ ```
 - **Next question unlocked**: "How do we deploy and monitor this in production?" → Need Ch.8-10 for cloud infrastructure, MLOps, production platform
 
 **Constraint status after Ch.7**:
-- #1 (Cost): ⚡ **ON TRACK** ($7,300/month for 4× A100, under $15k budget) ✅
-- #2 (Latency): ⚡ **VALIDATED** (1.8s p95 with NVLink, under 2s target) ✅
-- #3 (Throughput): ⚡ **EXCEEDS TARGET** (4× A100 can handle 40,000+ req/day with parallel serving) ✅
-- #4 (Memory): ⚡ **RESOLVED** (70B INT4 fits across 4× 80GB GPUs with headroom) ✅
-- #5 (Quality): ⚡ **ASSUMED** (Llama-2-70B benchmarks show >97% accuracy on complex tasks) ✅
-- #6 (Reliability): ⚡ **UNKNOWN** (need Ch.9-10 for fault tolerance, monitoring, auto-scaling)
+- #1 (Cost): **ON TRACK** ($7,300/month for 4× A100, under $15k budget)
+- #2 (Latency): **VALIDATED** (1.8s p95 with NVLink, under 2s target)
+- #3 (Throughput): **EXCEEDS TARGET** (4× A100 can handle 40,000+ req/day with parallel serving)
+- #4 (Memory): **RESOLVED** (70B INT4 fits across 4× 80GB GPUs with headroom)
+- #5 (Quality): **ASSUMED** (Llama-2-70B benchmarks show >97% accuracy on complex tasks)
+- #6 (Reliability): **UNKNOWN** (need Ch.9-10 for fault tolerance, monitoring, auto-scaling)
 
 **Foundation established**: Understand GPU networking → can now design cloud deployment and production monitoring (Ch.8-10)
 
@@ -174,19 +173,19 @@ InferenceBase's Llama-2-70B model has 70 billion parameters (140 GB in FP16, 35 
 ```
 PCIe Topology (Typical Consumer/Server Setup)
 
-         CPU
-          │
-    ┌─────┴─────┐
-    │  PCIe    │
-    │  Switch  │  (Gen4 ×16 lanes)
-    └─┬───┬───┬┘
-      │   │   │
-    GPU0 GPU1 GPU2
+ CPU
+ │
+ ┌─────┴─────┐
+ │ PCIe │
+ │ Switch │ (Gen4 ×16 lanes)
+ └─┬───┬───┬┘
+ │ │ │
+ GPU0 GPU1 GPU2
 
 GPU0 ↔ GPU1 communication:
-  GPU0 → PCIe → CPU → PCIe → GPU1
-  Bandwidth: 16 GB/s (one direction)
-  Latency: ~5-10 μs (includes CPU relay overhead)
+ GPU0 → PCIe → CPU → PCIe → GPU1
+ Bandwidth: 16 GB/s (one direction)
+ Latency: ~5-10 μs (includes CPU relay overhead)
 ```
 
 **The problem**: All GPU-to-GPU traffic flows through the CPU's PCIe root complex. This means:
@@ -211,14 +210,14 @@ GPU0 ↔ GPU1 communication:
 ```
 NVLink Topology (A100 8-GPU Server)
 
-    GPU0 ←NVLink→ GPU1 ←NVLink→ GPU2 ←NVLink→ GPU3
-     ↕              ↕              ↕              ↕
-    GPU4 ←NVLink→ GPU5 ←NVLink→ GPU6 ←NVLink→ GPU7
+ GPU0 ←NVLink→ GPU1 ←NVLink→ GPU2 ←NVLink→ GPU3
+ ↕ ↕ ↕ ↕
+ GPU4 ←NVLink→ GPU5 ←NVLink→ GPU6 ←NVLink→ GPU7
 
 Each GPU has 12 NVLink lanes (A100 3.0):
-  - Direct connections to 6 neighbors
-  - 600 GB/s total bidirectional bandwidth per GPU
-  - Any-to-any communication via multi-hop routing
+ - Direct connections to 6 neighbors
+ - 600 GB/s total bidirectional bandwidth per GPU
+ - Any-to-any communication via multi-hop routing
 ```
 
 **NVLink Generations**:
@@ -254,17 +253,17 @@ Each GPU has 12 NVLink lanes (A100 3.0):
 ```
 InfiniBand Topology (Multi-Node Cluster)
 
-   ┌─────────────────────────────────────────────┐
-   │         InfiniBand Switch Fabric             │
-   │              (Fat-Tree Topology)             │
-   └─┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬┘
-     │     │     │     │     │     │     │     │
-   Node0 Node1 Node2 Node3 Node4 Node5 Node6 Node7
+ ┌─────────────────────────────────────────────┐
+ │ InfiniBand Switch Fabric │
+ │ (Fat-Tree Topology) │
+ └─┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬┘
+ │ │ │ │ │ │ │ │
+ Node0 Node1 Node2 Node3 Node4 Node5 Node6 Node7
 
 Each node:
-  - 8× A100 GPUs (NVLink-connected within node)
-  - 1-4× InfiniBand NICs (200 Gb/s each)
-  - GPUDirect RDMA enabled (GPU memory → IB NIC → network, zero-copy)
+ - 8× A100 GPUs (NVLink-connected within node)
+ - 1-4× InfiniBand NICs (200 Gb/s each)
+ - GPUDirect RDMA enabled (GPU memory → IB NIC → network, zero-copy)
 ```
 
 **InfiniBand Speeds** (per lane):
@@ -313,16 +312,16 @@ Distributed training and inference rely on **collective communication primitives
 All-Reduce Example (4 GPUs, gradient synchronization)
 
 Before:
-  GPU0: [1, 2, 3]
-  GPU1: [4, 5, 6]
-  GPU2: [7, 8, 9]
-  GPU3: [10, 11, 12]
+ GPU0: [1, 2, 3]
+ GPU1: [4, 5, 6]
+ GPU2: [7, 8, 9]
+ GPU3: [10, 11, 12]
 
 After all-reduce (sum):
-  GPU0: [22, 26, 30]  (sum of all)
-  GPU1: [22, 26, 30]
-  GPU2: [22, 26, 30]
-  GPU3: [22, 26, 30]
+ GPU0: [22, 26, 30] (sum of all)
+ GPU1: [22, 26, 30]
+ GPU2: [22, 26, 30]
+ GPU3: [22, 26, 30]
 ```
 
 **Used for**:
@@ -336,16 +335,16 @@ After all-reduce (sum):
 All-Gather Example (4 GPUs, embedding lookup)
 
 Before:
-  GPU0: [1, 2]
-  GPU1: [3, 4]
-  GPU2: [5, 6]
-  GPU3: [7, 8]
+ GPU0: [1, 2]
+ GPU1: [3, 4]
+ GPU2: [5, 6]
+ GPU3: [7, 8]
 
 After all-gather:
-  GPU0: [1, 2, 3, 4, 5, 6, 7, 8]
-  GPU1: [1, 2, 3, 4, 5, 6, 7, 8]
-  GPU2: [1, 2, 3, 4, 5, 6, 7, 8]
-  GPU3: [1, 2, 3, 4, 5, 6, 7, 8]
+ GPU0: [1, 2, 3, 4, 5, 6, 7, 8]
+ GPU1: [1, 2, 3, 4, 5, 6, 7, 8]
+ GPU2: [1, 2, 3, 4, 5, 6, 7, 8]
+ GPU3: [1, 2, 3, 4, 5, 6, 7, 8]
 ```
 
 **Used for**:
@@ -359,16 +358,16 @@ After all-gather:
 Reduce-Scatter Example (4 GPUs)
 
 Before:
-  GPU0: [1, 2, 3, 4]
-  GPU1: [5, 6, 7, 8]
-  GPU2: [9, 10, 11, 12]
-  GPU3: [13, 14, 15, 16]
+ GPU0: [1, 2, 3, 4]
+ GPU1: [5, 6, 7, 8]
+ GPU2: [9, 10, 11, 12]
+ GPU3: [13, 14, 15, 16]
 
 After reduce-scatter (sum, then split):
-  GPU0: [28]  (1+5+9+13)
-  GPU1: [32]  (2+6+10+14)
-  GPU2: [36]  (3+7+11+15)
-  GPU3: [40]  (4+8+12+16)
+ GPU0: [28] (1+5+9+13)
+ GPU1: [32] (2+6+10+14)
+ GPU2: [36] (3+7+11+15)
+ GPU3: [40] (4+8+12+16)
 ```
 
 **Used for**:
@@ -381,16 +380,16 @@ After reduce-scatter (sum, then split):
 Broadcast Example
 
 Before:
-  GPU0: [1, 2, 3, 4]  (source)
-  GPU1: [0, 0, 0, 0]
-  GPU2: [0, 0, 0, 0]
-  GPU3: [0, 0, 0, 0]
+ GPU0: [1, 2, 3, 4] (source)
+ GPU1: [0, 0, 0, 0]
+ GPU2: [0, 0, 0, 0]
+ GPU3: [0, 0, 0, 0]
 
 After broadcast:
-  GPU0: [1, 2, 3, 4]
-  GPU1: [1, 2, 3, 4]
-  GPU2: [1, 2, 3, 4]
-  GPU3: [1, 2, 3, 4]
+ GPU0: [1, 2, 3, 4]
+ GPU1: [1, 2, 3, 4]
+ GPU2: [1, 2, 3, 4]
+ GPU3: [1, 2, 3, 4]
 ```
 
 **Used for**:
@@ -405,14 +404,14 @@ NCCL (NVIDIA Collective Communications Library) implements collectives using a *
 Ring All-Reduce (4 GPUs)
 
 Step 1: Reduce-Scatter Phase
-  GPU0 → GPU1 → GPU2 → GPU3 → GPU0 (ring)
-  Each GPU sends 1/N of its data to the next GPU
-  After N-1 steps, each GPU has the sum of 1/N of all data
+ GPU0 → GPU1 → GPU2 → GPU3 → GPU0 (ring)
+ Each GPU sends 1/N of its data to the next GPU
+ After N-1 steps, each GPU has the sum of 1/N of all data
 
 Step 2: All-Gather Phase
-  GPU0 → GPU1 → GPU2 → GPU3 → GPU0 (ring)
-  Each GPU forwards its summed chunk to the next GPU
-  After N-1 steps, all GPUs have the full result
+ GPU0 → GPU1 → GPU2 → GPU3 → GPU0 (ring)
+ Each GPU forwards its summed chunk to the next GPU
+ After N-1 steps, all GPUs have the full result
 
 Total steps: 2(N-1) = 6 steps for N=4 GPUs
 Data transferred per GPU: 2(N-1)/N = 1.5× the data size
@@ -471,32 +470,32 @@ Tensor parallelism (also called *intra-layer model parallelism*) splits each wei
 
 ```
 Standard (Single GPU):
-  Input: [batch, seq_len, hidden_dim] = [1, 2048, 8192]
-  Weight1: [hidden_dim, ffn_dim] = [8192, 28672] (235 MB in FP16)
-  Intermediate: matmul(Input, Weight1) = [1, 2048, 28672]
-  Activation: GELU(Intermediate)
-  Weight2: [ffn_dim, hidden_dim] = [28672, 8192] (235 MB)
-  Output: matmul(Activation, Weight2) = [1, 2048, 8192]
+ Input: [batch, seq_len, hidden_dim] = [1, 2048, 8192]
+ Weight1: [hidden_dim, ffn_dim] = [8192, 28672] (235 MB in FP16)
+ Intermediate: matmul(Input, Weight1) = [1, 2048, 28672]
+ Activation: GELU(Intermediate)
+ Weight2: [ffn_dim, hidden_dim] = [28672, 8192] (235 MB)
+ Output: matmul(Activation, Weight2) = [1, 2048, 8192]
 
 Tensor Parallelism (4 GPUs):
-  Split Weight1 column-wise: each GPU holds [8192, 7168] (59 MB)
+ Split Weight1 column-wise: each GPU holds [8192, 7168] (59 MB)
 
-  GPU0: matmul(Input, Weight1[:,0:7168]) → [1, 2048, 7168]
-  GPU1: matmul(Input, Weight1[:,7168:14336]) → [1, 2048, 7168]
-  GPU2: matmul(Input, Weight1[:,14336:21504]) → [1, 2048, 7168]
-  GPU3: matmul(Input, Weight1[:,21504:28672]) → [1, 2048, 7168]
+ GPU0: matmul(Input, Weight1[:,0:7168]) → [1, 2048, 7168]
+ GPU1: matmul(Input, Weight1[:,7168:14336]) → [1, 2048, 7168]
+ GPU2: matmul(Input, Weight1[:,14336:21504]) → [1, 2048, 7168]
+ GPU3: matmul(Input, Weight1[:,21504:28672]) → [1, 2048, 7168]
 
-  → All-Gather: Concatenate outputs → [1, 2048, 28672] on all GPUs
-  → GELU activation (independent per GPU)
+ → All-Gather: Concatenate outputs → [1, 2048, 28672] on all GPUs
+ → GELU activation (independent per GPU)
 
-  Split Weight2 row-wise: each GPU holds [7168, 8192] (59 MB)
+ Split Weight2 row-wise: each GPU holds [7168, 8192] (59 MB)
 
-  GPU0: matmul(Activation[:,0:7168], Weight2[0:7168,:]) → [1, 2048, 8192]
-  GPU1: matmul(Activation[:,7168:14336], Weight2[7168:14336,:]) → [1, 2048, 8192]
-  GPU2: matmul(Activation[:,14336:21504], Weight2[14336:21504,:]) → [1, 2048, 8192]
-  GPU3: matmul(Activation[:,21504:28672], Weight2[21504:28672,:]) → [1, 2048, 8192]
+ GPU0: matmul(Activation[:,0:7168], Weight2[0:7168,:]) → [1, 2048, 8192]
+ GPU1: matmul(Activation[:,7168:14336], Weight2[7168:14336,:]) → [1, 2048, 8192]
+ GPU2: matmul(Activation[:,14336:21504], Weight2[14336:21504,:]) → [1, 2048, 8192]
+ GPU3: matmul(Activation[:,21504:28672], Weight2[21504:28672,:]) → [1, 2048, 8192]
 
-  → All-Reduce (sum): Add outputs → [1, 2048, 8192] on all GPUs
+ → All-Reduce (sum): Add outputs → [1, 2048, 8192] on all GPUs
 ```
 
 **Communication volume per layer**:
@@ -526,18 +525,18 @@ NVIDIA's `nvidia-smi topo -m` command displays the GPU interconnect topology, sh
 ```
 $ nvidia-smi topo -m
 
-        GPU0    GPU1    GPU2    GPU3    CPU Affinity    NUMA Affinity
-GPU0     X      NV12    NV12    NV12    0-63           0
-GPU1    NV12     X      NV12    NV12    0-63           0
-GPU2    NV12    NV12     X      NV12    0-63           0
-GPU3    NV12    NV12    NV12     X      0-63           0
+ GPU0 GPU1 GPU2 GPU3 CPU Affinity NUMA Affinity
+GPU0 X NV12 NV12 NV12 0-63 0
+GPU1 NV12 X NV12 NV12 0-63 0
+GPU2 NV12 NV12 X NV12 0-63 0
+GPU3 NV12 NV12 NV12 X 0-63 0
 
 Legend:
-  X    = Self
-  NV#  = Connection traversing a bonded set of # NVLinks
-  PIX  = Connection traversing PCIe and X NVLinks
-  PHB  = Connection traversing PCIe Host Bridge
-  SYS  = Connection traversing PCIe + NUMA socket
+ X = Self
+ NV# = Connection traversing a bonded set of # NVLinks
+ PIX = Connection traversing PCIe and X NVLinks
+ PHB = Connection traversing PCIe Host Bridge
+ SYS = Connection traversing PCIe + NUMA socket
 ```
 
 **Interpretation**:
@@ -550,15 +549,15 @@ Legend:
 ```
 $ nvidia-smi topo -m
 
-        GPU0    GPU1    GPU2    GPU3    CPU Affinity    NUMA Affinity
-GPU0     X      PHB     PHB     SYS     0-31           0
-GPU1    PHB      X      PHB     SYS     0-31           0
-GPU2    PHB     PHB      X      SYS     0-31           0
-GPU3    SYS     SYS     SYS      X      32-63          1
+ GPU0 GPU1 GPU2 GPU3 CPU Affinity NUMA Affinity
+GPU0 X PHB PHB SYS 0-31 0
+GPU1 PHB X PHB SYS 0-31 0
+GPU2 PHB PHB X SYS 0-31 0
+GPU3 SYS SYS SYS X 32-63 1
 
 Legend:
-  PHB  = Connection traversing PCIe Host Bridge (same CPU socket)
-  SYS  = Connection traversing PCIe + NUMA socket (cross-socket)
+ PHB = Connection traversing PCIe Host Bridge (same CPU socket)
+ SYS = Connection traversing PCIe + NUMA socket (cross-socket)
 ```
 
 **Interpretation**:
@@ -568,10 +567,10 @@ Legend:
 - **Problem**: GPU0 ↔ GPU3 must traverse PCIe + QPI/UPI cross-socket link → 2× slower than GPU0 ↔ GPU1
 
 **What to look for**:
-- ✅ **Best**: All `NV#` entries → full NVLink mesh
-- ⚠️ **Okay**: `PHB` within same NUMA node → PCIe but no cross-socket penalty
-- ❌ **Bad**: `SYS` entries → cross-socket traffic, high latency
-- ❌ **Worst**: `PIX` entries → PCIe + partial NVLink (asymmetric topology, NCCL struggles to optimize)
+- **Best**: All `NV#` entries → full NVLink mesh
+- **Okay**: `PHB` within same NUMA node → PCIe but no cross-socket penalty
+- **Bad**: `SYS` entries → cross-socket traffic, high latency
+- **Worst**: `PIX` entries → PCIe + partial NVLink (asymmetric topology, NCCL struggles to optimize)
 
 **NCCL Tuning**:
 - NCCL reads `nvidia-smi topo` output to auto-detect topology
@@ -626,17 +625,17 @@ nvidia-smi topo -m | grep SYS
 
 **Fix**:
 - Pin GPUs to CPUs on the same socket using `numactl`:
-  ```bash
-  numactl --cpunodebind=0 --membind=0 python train.py --local_rank 0
-  numactl --cpunodebind=0 --membind=0 python train.py --local_rank 1
-  ```
+ ```bash
+ numactl --cpunodebind=0 --membind=0 python train.py --local_rank 0
+ numactl --cpunodebind=0 --membind=0 python train.py --local_rank 1
+ ```
 - Or configure PyTorch DDP to use same-socket GPUs:
-  ```python
-  import torch.distributed as dist
-  dist.init_process_group(backend='nccl')
-  # Set CUDA_VISIBLE_DEVICES to only same-socket GPUs
-  os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'  # GPUs on socket 0
-  ```
+ ```python
+ import torch.distributed as dist
+ dist.init_process_group(backend='nccl')
+ # Set CUDA_VISIBLE_DEVICES to only same-socket GPUs
+ os.environ['CUDA_VISIBLE_DEVICES'] = '0,1' # GPUs on socket 0
+ ```
 
 ### 3. InfiniBand Fabric Misconfiguration
 
@@ -651,11 +650,11 @@ ibstat
 
 # Expected output:
 CA 'mlx5_0'
-  Port 1:
-    State: Active
-    Physical state: LinkUp
-    Rate: 200 Gb/s (HDR)
-    Link layer: InfiniBand
+ Port 1:
+ State: Active
+ Physical state: LinkUp
+ Rate: 200 Gb/s (HDR)
+ Link layer: InfiniBand
 
 # Check if GPUDirect RDMA is enabled
 cat /proc/driver/nvidia/gpudirect-rdma/version
@@ -664,22 +663,22 @@ cat /proc/driver/nvidia/gpudirect-rdma/version
 
 **Fix**:
 - Install MLNX_OFED drivers (Mellanox OpenFabrics Enterprise Distribution):
-  ```bash
-  wget https://www.mellanox.com/downloads/ofed/MLNX_OFED-5.9-0.5.6.0/...
-  sudo ./mlnxofedinstall --add-kernel-support --skip-repo
-  ```
+ ```bash
+ wget https://www.mellanox.com/downloads/ofed/MLNX_OFED-5.9-0.5.6.0/...
+ sudo ./mlnxofedinstall --add-kernel-support --skip-repo
+ ```
 - Enable GPUDirect RDMA:
-  ```bash
-  sudo modprobe nvidia-peermem
-  lsmod | grep nvidia_peermem  # Verify module loaded
-  ```
+ ```bash
+ sudo modprobe nvidia-peermem
+ lsmod | grep nvidia_peermem # Verify module loaded
+ ```
 - Set NCCL environment variables:
-  ```bash
-  export NCCL_IB_DISABLE=0  # Enable InfiniBand
-  export NCCL_IB_HCA=mlx5_0  # Specify IB adapter
-  export NCCL_IB_GID_INDEX=3  # RoCE mode (if using Ethernet)
-  export NCCL_NET_GDR_LEVEL=5  # Enable GPUDirect RDMA
-  ```
+ ```bash
+ export NCCL_IB_DISABLE=0 # Enable InfiniBand
+ export NCCL_IB_HCA=mlx5_0 # Specify IB adapter
+ export NCCL_IB_GID_INDEX=3 # RoCE mode (if using Ethernet)
+ export NCCL_NET_GDR_LEVEL=5 # Enable GPUDirect RDMA
+ ```
 
 ### 4. PCIe Gen3 Instead of Gen4
 
@@ -692,8 +691,8 @@ cat /proc/driver/nvidia/gpudirect-rdma/version
 nvidia-smi -q | grep "Bus Id\|Link Speed"
 
 # Expected output (Gen4):
-    Bus Id                          : 00000000:17:00.0
-    Link Speed                      : 16 GT/s  (Gen4)
+ Bus Id : 00000000:17:00.0
+ Link Speed : 16 GT/s (Gen4)
 
 # If shows 8 GT/s, you're running Gen3 → half bandwidth!
 ```
@@ -717,7 +716,7 @@ cd nccl-tests && make
 ./build/all_reduce_perf -b 1M -e 1G -f 2 -g 4
 
 # Expected output (4× A100 with NVLink):
-#   Avg bus bandwidth: 480-550 GB/s (0.8-0.9× theoretical max)
+# Avg bus bandwidth: 480-550 GB/s (0.8-0.9× theoretical max)
 
 # If seeing <100 GB/s, NCCL is not using NVLink correctly
 ```
@@ -741,16 +740,16 @@ You should now be able to:
 3. **Read `nvidia-smi topo -m`**: Identify NVLink vs PCIe vs cross-socket connections. Recognize when topology is suboptimal (PHB, SYS, PIX entries).
 
 4. **Choose the right topology**:
-   - 1-4 GPUs, <30B model → PCIe acceptable for data parallelism
-   - 4-8 GPUs, 30-70B model → NVLink required for tensor parallelism
-   - 8+ GPUs, multi-node → InfiniBand + NVLink (within-node NVLink, cross-node InfiniBand)
+ - 1-4 GPUs, <30B model → PCIe acceptable for data parallelism
+ - 4-8 GPUs, 30-70B model → NVLink required for tensor parallelism
+ - 8+ GPUs, multi-node → InfiniBand + NVLink (within-node NVLink, cross-node InfiniBand)
 
 5. **Debug communication slowdowns**: Use NCCL bandwidth tests, check NVLink status with `nvidia-smi nvlink`, verify NUMA affinity with `numactl`, validate InfiniBand with `ibstat`.
 
 6. **Estimate cost**:
-   - 4× A100 80GB (NVLink) @ $2.50/hr = $7,300/month
-   - 8× H100 80GB (NVSwitch) @ $4.00/hr = $23,360/month
-   - Add InfiniBand cost for multi-node: ~$1,000-$2,000 per server (NIC) + ~$15,000-$30,000 (switch)
+ - 4× A100 80GB (NVLink) @ $2.50/hr = $7,300/month
+ - 8× H100 80GB (NVSwitch) @ $4.00/hr = $23,360/month
+ - Add InfiniBand cost for multi-node: ~$1,000-$2,000 per server (NIC) + ~$15,000-$30,000 (switch)
 
 ---
 

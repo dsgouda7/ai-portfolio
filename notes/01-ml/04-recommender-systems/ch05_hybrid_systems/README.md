@@ -10,7 +10,7 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Launch **FlixAI** — a production-grade movie recommendation engine that achieves >85% hit rate @ top-10 while satisfying all five constraints:
+> **The mission**: Launch **FlixAI** — a production-grade movie recommendation engine that achieves >85% hit rate @ top-10 while satisfying all five constraints:
 > 1. **ACCURACY**: HR@10 > 85% on held-out MovieLens 100k test split
 > 2. **COLD START**: New movies (< 5 ratings) must still appear in relevant top-10 lists
 > 3. **SCALE**: Serve recommendations for 943 users × 1,682 movies in < 200ms
@@ -18,11 +18,11 @@
 > 5. **EXPLAINABILITY**: Every recommendation must carry a human-readable reason
 
 **What we know so far:**
-- ✅ Ch.1: Popularity baseline = 42% HR@10 (simple, zero personalization)
-- ✅ Ch.2: Collaborative filtering (user-based + item-based) = 68% HR@10
-- ✅ Ch.3: Matrix factorization with latent factors = 78% HR@10
-- ✅ Ch.4: Neural CF with non-linear embeddings = 82% HR@10
-- ❌ **But we are still 3 points short of the 85% target — and cold start is still broken!**
+- Ch.1: Popularity baseline = 42% HR@10 (simple, zero personalization)
+- Ch.2: Collaborative filtering (user-based + item-based) = 68% HR@10
+- Ch.3: Matrix factorization with latent factors = 78% HR@10
+- Ch.4: Neural CF with non-linear embeddings = 82% HR@10
+- **But we are still 3 points short of the 85% target — and cold start is still broken!**
 
 **What is blocking us — the structural limit of NCF:**
 
@@ -31,26 +31,26 @@ NCF (Ch.4) treats every movie as an opaque integer ID. User 42 = integer 42, Mov
 Yet Dune's content tells us everything: Genres = [Sci-Fi, Adventure] + Director = [Denis Villeneuve] — who directed Arrival and Blade Runner 2049, both rated 5★ by User 42. **Constraint #2 (cold start) requires content features.** There is no way around it.
 
 **What this chapter unlocks:**
-- ✅ **Content-based features**: genre vectors, director embeddings, cast metadata
-- ✅ **Weighted hybrid**: blend CF and CBF predictions with learned or tuned $\alpha$
-- ✅ **Two-tower model** (YouTube DNN / BERT4Rec style): user tower + item tower, trained jointly end-to-end
-- ✅ **Cold-start improvement**: new items use their item tower embedding (built from content, not ratings)
-- ✅ **Explainability**: "Because it is Sci-Fi by Villeneuve, and you rated Arrival 5★"
-- 🎯 **Target: HR@10 ≥ 85%** — content + two-tower closes the 3-point gap
+- **Content-based features**: genre vectors, director embeddings, cast metadata
+- **Weighted hybrid**: blend CF and CBF predictions with learned or tuned $\alpha$
+- **Two-tower model** (YouTube DNN / BERT4Rec style): user tower + item tower, trained jointly end-to-end
+- **Cold-start improvement**: new items use their item tower embedding (built from content, not ratings)
+- **Explainability**: "Because it is Sci-Fi by Villeneuve, and you rated Arrival 5★"
+- **Target: HR@10 ≥ 85%** — content + two-tower closes the 3-point gap
 
 ```mermaid
 flowchart LR
-    NCF["Ch.4: NCF\nHR@10 = 82%\nCold start ❌"] --> CONTENT["Add Content\nFeatures\n(genres, director)"]
-    CONTENT --> WTOWER["Two-Tower\nModel\n(user + item)"]
-    CONTENT --> WHYBRID["Weighted\nHybrid\nα·CF + (1-α)·CBF"]
-    WTOWER --> EVAL["Evaluate\nHR@10 ≥ 85% ✅\nCold start ✅"]
-    WHYBRID --> EVAL
+ NCF["Ch.4: NCF\nHR@10 = 82%\nCold start "] --> CONTENT["Add Content\nFeatures\n(genres, director)"]
+ CONTENT --> WTOWER["Two-Tower\nModel\n(user + item)"]
+ CONTENT --> WHYBRID["Weighted\nHybrid\nα·CF + (1-α)·CBF"]
+ WTOWER --> EVAL["Evaluate\nHR@10 ≥ 85% \nCold start "]
+ WHYBRID --> EVAL
 
-    style NCF fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CONTENT fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style WTOWER fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style WHYBRID fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style EVAL fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style NCF fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CONTENT fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style WTOWER fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style WHYBRID fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style EVAL fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -95,7 +95,7 @@ $$\hat{y}_{\text{hybrid}} = 0.06 \times 2.1 + 0.94 \times 4.3 = 0.13 + 4.04 = \m
 
 Dune jumps from rank 847 to rank **9** in User 42's list. This is the cold-start problem being solved structurally, not patched.
 
-> 💡 **The cold-start solution is not a special-case patch.** The two-tower model handles cold start structurally: a new item's item-tower embedding is built purely from content features on day one, and gradually blends in collaborative signal as ratings accumulate. No separate "new item" code path required.
+> **The cold-start solution is not a special-case patch.** The two-tower model handles cold start structurally: a new item's item-tower embedding is built purely from content features on day one, and gradually blends in collaborative signal as ratings accumulate. No separate "new item" code path required.
 
 ---
 
@@ -105,12 +105,12 @@ There are four fundamental hybridization strategies. Each solves the CF/CBF tens
 
 | Strategy | Formula | Cold Start | Tuning | Production Use |
 |---|---|---|---|---|
-| **Switching** | Use CF if ≥ $k$ ratings, else CBF | ✅ (clean fallback) | Easy (one threshold) | Netflix early systems |
-| **Weighted** | $\hat{y} = \alpha \hat{y}_{\text{CF}} + (1{-}\alpha)\hat{y}_{\text{CBF}}$ | ✅ (adjust $\alpha$ by rating count) | Medium ($\alpha$ tuning) | Pandora, Spotify baseline |
-| **Feature Augmentation** | Append $\mathbf{f}_i$ to MF embeddings: $\hat{y} = f(\mathbf{p}_u \oplus \mathbf{q}_i \oplus \mathbf{f}_i)$ | ✅ (content in embedding) | Hard (retrain from scratch) | Taobao, Alibaba |
-| **Two-Tower** | $\hat{y} = \mathbf{e}_u^\top \mathbf{e}_i$, towers trained jointly | ✅ (item tower = content only at launch) | Hard (end-to-end) | YouTube, LinkedIn, Pinterest |
+| **Switching** | Use CF if ≥ $k$ ratings, else CBF | (clean fallback) | Easy (one threshold) | Netflix early systems |
+| **Weighted** | $\hat{y} = \alpha \hat{y}_{\text{CF}} + (1{-}\alpha)\hat{y}_{\text{CBF}}$ | (adjust $\alpha$ by rating count) | Medium ($\alpha$ tuning) | Pandora, Spotify baseline |
+| **Feature Augmentation** | Append $\mathbf{f}_i$ to MF embeddings: $\hat{y} = f(\mathbf{p}_u \oplus \mathbf{q}_i \oplus \mathbf{f}_i)$ | (content in embedding) | Hard (retrain from scratch) | Taobao, Alibaba |
+| **Two-Tower** | $\hat{y} = \mathbf{e}_u^\top \mathbf{e}_i$, towers trained jointly | (item tower = content only at launch) | Hard (end-to-end) | YouTube, LinkedIn, Pinterest |
 
-> ⚡ **Constraint #2 (Cold Start).** All four strategies handle cold start, but differently. Switching is bluntest — when a movie has < $k$ ratings it gets pure CBF. Weighted is more graceful: $\alpha$ can be a function of rating count, smoothly interpolating from pure CBF to pure CF. Two-tower is most principled: the item tower always uses content, so "cold" vs "warm" is a spectrum rather than a binary switch.
+> **Constraint #2 (Cold Start).** All four strategies handle cold start, but differently. Switching is bluntest — when a movie has < $k$ ratings it gets pure CBF. Weighted is more graceful: $\alpha$ can be a function of rating count, smoothly interpolating from pure CBF to pure CF. Two-tower is most principled: the item tower always uses content, so "cold" vs "warm" is a spectrum rather than a binary switch.
 
 **Which strategy to use?**
 - Few content features, most items warm → **Weighted**
@@ -211,32 +211,32 @@ Input slice: $\mathbf{x} = [0.35, 1.0, 0.76]$ (age=0.35, programmer=1.0, avg\_ra
 ```
 User Tower — Layer 1 (3 → 4 units, ReLU):
 
-  Neuron 0: z = 0.5×0.35 + 0.4×1.0 + 0.3×0.76 + 0.1
-              = 0.175 + 0.400 + 0.228 + 0.100 = 0.903
-            h₁[0] = ReLU(0.903) = 0.903
+ Neuron 0: z = 0.5×0.35 + 0.4×1.0 + 0.3×0.76 + 0.1
+ = 0.175 + 0.400 + 0.228 + 0.100 = 0.903
+ h₁[0] = ReLU(0.903) = 0.903
 
-  Neuron 1: z = -0.2×0.35 + 0.6×1.0 + 0.5×0.76 - 0.1
-              = -0.070 + 0.600 + 0.380 - 0.100 = 0.810
-            h₁[1] = ReLU(0.810) = 0.810
+ Neuron 1: z = -0.2×0.35 + 0.6×1.0 + 0.5×0.76 - 0.1
+ = -0.070 + 0.600 + 0.380 - 0.100 = 0.810
+ h₁[1] = ReLU(0.810) = 0.810
 
-  Neuron 2: z = 0.3×0.35 + 0.2×1.0 - 0.4×0.76 + 0.2
-              = 0.105 + 0.200 - 0.304 + 0.200 = 0.201
-            h₁[2] = ReLU(0.201) = 0.201
+ Neuron 2: z = 0.3×0.35 + 0.2×1.0 - 0.4×0.76 + 0.2
+ = 0.105 + 0.200 - 0.304 + 0.200 = 0.201
+ h₁[2] = ReLU(0.201) = 0.201
 
-  Neuron 3: z = 0.7×0.35 - 0.3×1.0 + 0.6×0.76 + 0.0
-              = 0.245 - 0.300 + 0.456 + 0.000 = 0.401
-            h₁[3] = ReLU(0.401) = 0.401
+ Neuron 3: z = 0.7×0.35 - 0.3×1.0 + 0.6×0.76 + 0.0
+ = 0.245 - 0.300 + 0.456 + 0.000 = 0.401
+ h₁[3] = ReLU(0.401) = 0.401
 
-  → h₁ = [0.903, 0.810, 0.201, 0.401]
+ → h₁ = [0.903, 0.810, 0.201, 0.401]
 
 User Tower — Layer 2 (4 → 4 units, ReLU):
-  (another affine + ReLU on h₁)
-  → h₂ = [0.744, 0.612, 0.389, 0.501]  (representative values)
+ (another affine + ReLU on h₁)
+ → h₂ = [0.744, 0.612, 0.389, 0.501] (representative values)
 
 User Tower — Layer 3 (4 → 2 units, L2-normalize):
-  z = W₃ · h₂  →  raw = [1.21, 0.88]
-  ‖z‖ = √(1.21² + 0.88²) = √(1.464 + 0.774) = √2.238 ≈ 1.496
-  e_u = z / ‖z‖ = [1.21/1.496, 0.88/1.496] = [0.809, 0.588]
+ z = W₃ · h₂ → raw = [1.21, 0.88]
+ ‖z‖ = √(1.21² + 0.88²) = √(1.464 + 0.774) = √2.238 ≈ 1.496
+ e_u = z / ‖z‖ = [1.21/1.496, 0.88/1.496] = [0.809, 0.588]
 ```
 
 The item tower runs the same forward pass on item features $\mathbf{f}_{\text{Dune}}$, producing $\mathbf{e}_{\text{Dune}} \in \mathbb{R}^{2}$ (using [0.772, 0.635] as a concrete value).
@@ -265,19 +265,19 @@ $$\tilde{\mathbf{q}}_i = [\mathbf{q}_i \oplus \mathbf{g}_i \oplus \text{year}_i]
 
 ```
 CF embedding (16-dim, from MF on ratings):
-  q_Dune = [0.12, -0.43, 0.78, 0.31, ..., -0.22]    ← 16 values (noisy if cold)
+ q_Dune = [0.12, -0.43, 0.78, 0.31, ..., -0.22] ← 16 values (noisy if cold)
 
 Genre vector (19-dim, binary multi-hot):
-  g_Dune = [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0]
-                ↑ Adventure=1                    ↑ Sci-Fi=1
+ g_Dune = [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0]
+ ↑ Adventure=1 ↑ Sci-Fi=1
 
 Year (normalized, 1-dim):
-  year_Dune = (2023 - 1919) / (2023 - 1919) = 1.0   ← newest movie = 1.0
+ year_Dune = (2023 - 1919) / (2023 - 1919) = 1.0 ← newest movie = 1.0
 
 Augmented embedding (36-dim):
-  q̃_Dune = [0.12, -0.43, ..., -0.22,   ← CF part (16)
-              0, 1, 0, ..., 0, 1, 0,     ← genre part (19)
-              1.0]                         ← year part (1)
+ q̃_Dune = [0.12, -0.43, ..., -0.22, ← CF part (16)
+ 0, 1, 0, ..., 0, 1, 0, ← genre part (19)
+ 1.0] ← year part (1)
 ```
 
 Even when $\mathbf{q}_i$ is near-random (cold start), the genre and year components carry meaningful signal. The model can match User 42 (high Sci-Fi affinity) to Dune via the genre overlap in the augmented embedding.
@@ -301,14 +301,14 @@ MovieLens 100k has ~55,000 ratings ≥ 3.5 → training set has $55{,}000 \times
 ```
 For each batch of (user, item) pairs:
 
-  1. User tower forward pass:
-     u_features → Dense(64, ReLU) → Dense(32, ReLU) → Dense(32) → L2-norm → e_u
+ 1. User tower forward pass:
+ u_features → Dense(64, ReLU) → Dense(32, ReLU) → Dense(32) → L2-norm → e_u
 
-  2. Item tower forward pass:
-     i_features → Dense(64, ReLU) → Dense(32, ReLU) → Dense(32) → L2-norm → e_i
+ 2. Item tower forward pass:
+ i_features → Dense(64, ReLU) → Dense(32, ReLU) → Dense(32) → L2-norm → e_i
 
-  3. Compute score:
-     score(u, i) = dot(e_u, e_i)        ← cosine similarity (both normalized)
+ 3. Compute score:
+ score(u, i) = dot(e_u, e_i) ← cosine similarity (both normalized)
 ```
 
 **Step 3 — Compute loss (sampled softmax):**
@@ -353,8 +353,8 @@ NCF scores items purely from rating co-occurrences. For a new movie with 3 ratin
 **Cold-start failure is structural** — no amount of hyperparameter tuning fixes it. NCF simply does not have the data to make a good prediction for cold items.
 
 **Concrete metrics:**
-- Overall HR@10 = 82% ✅ (target: 85%)
-- **Cold-start HR@10 for new items (<5 ratings) = 23% ❌** — 7 in 10 cold items never appear in any top-10
+- Overall HR@10 = 82% (target: 85%)
+- **Cold-start HR@10 for new items (<5 ratings) = 23% ** — 7 in 10 cold items never appear in any top-10
 - Dune (3 ratings) ranked 847/1,682 for User 42 — buried beyond discovery
 - CF alone structural failure: no path to 85% without content signal
 
@@ -363,7 +363,7 @@ NCF scores items purely from rating co-occurrences. For a new movie with 3 ratin
 Pure content-based filtering predicts from item similarity alone: "you liked Arrival (Sci-Fi), so you will like all Sci-Fi movies." This ignores the social proof embedded in 100,000 ratings. User 42 might not like every Sci-Fi film — only the cerebral, high-concept ones from directors like Villeneuve or Nolan. CBF has no way to learn this distinction from genre vectors alone.
 
 **Concrete metrics:**
-- Overall HR@10 = 71% ❌ (11pp below CF, 14pp below target)
+- Overall HR@10 = 71% (11pp below CF, 14pp below target)
 - Cold-start HR@10 = 68% — better than CF's 23%, but User 42 gets flooded with every sci-fi movie in the catalog
 - **Precision problem**: Top-10 contains 6 sci-fi films User 42 would rate <3★ — genre match doesn't guarantee taste match
 - CBF alone failure: social proof (collaborative signal) is irreplaceable for taste refinement
@@ -383,7 +383,7 @@ $\hat{y} = \alpha \hat{y}_{\text{CF}} + (1-\alpha) \hat{y}_{\text{CBF}}$ improve
 
 The two-tower model learns the right blending automatically, conditioned on all available features. For warm items, the item tower's rating-count feature signals reliability, and the collaborative embedding (via avg\_rating) dominates. For cold items, genre + director features dominate. The user tower learns taste profiles that generalize across items. Training with sampled negatives across all 1,682 movies teaches the model the full item space simultaneously.
 
-> Two-tower HR@10 = **85%**. Cold-start HR@10 for new items = **78%**. ✅ FlixAI target crossed.
+> Two-tower HR@10 = **85%**. Cold-start HR@10 for new items = **78%**. FlixAI target crossed.
 
 **Why does two-tower beat weighted hybrid on accuracy?**
 
@@ -392,9 +392,9 @@ The weighted hybrid blends two pre-trained scores — it cannot change how the u
 **The cold-start spectrum:**
 
 ```
-Day 0  (0 ratings):   Item embedding = pure content (genre + director + year)
-Day 1  (5 ratings):   α = 0.10 — blend tips toward content, collaborative barely contributes
-Day 7  (30 ratings):  α = 0.60 — roughly equal weight
+Day 0 (0 ratings): Item embedding = pure content (genre + director + year)
+Day 1 (5 ratings): α = 0.10 — blend tips toward content, collaborative barely contributes
+Day 7 (30 ratings): α = 0.60 — roughly equal weight
 Day 30 (100 ratings): α = 1.00 — pure collaborative (content still in item tower, but CF dominates)
 Day 90 (500 ratings): Pure CF regime — indistinguishable from Ch.4 NCF for this item
 ```
@@ -467,13 +467,13 @@ $$\cos = \frac{(1)(0.10)+(0)(0.50)+(0)(0.85)+(1)(0.05)}{1.414 \times 1.0} = \fra
 |---|---|---|---|---|---|---|---|
 | Interstellar | 4.5 | 4.77 | 1.00 | $1.00\times4.5 + 0.00\times4.77$ | **4.50** | 1 | 1 |
 | Arrival | 4.2 | 4.77 | 1.00 | $1.00\times4.2 + 0.00\times4.77$ | **4.20** | 2 | 2 |
-| Dune 2023 | 1.5 | 3.36 | 0.06 | $0.06\times1.5 + 0.94\times3.36 = 0.09 + 3.16$ | **3.25** | **5** | **3 ✅** |
+| Dune 2023 | 1.5 | 3.36 | 0.06 | $0.06\times1.5 + 0.94\times3.36 = 0.09 + 3.16$ | **3.25** | **5** | **3 ** |
 | The Notebook | 2.3 | 2.50 | 1.00 | $1.00\times2.3 + 0.00\times2.50$ | **2.30** | 3 | 4 |
 | Hot Shots | 1.9 | 0.53 | 1.00 | $1.00\times1.9 + 0.00\times0.53$ | **1.90** | 4 | 5 |
 
 **The cold-start fix in numbers:** Dune jumps from rank 5 (dead last) to rank 3 in User 42 list. Interstellar and Arrival retain top spots — they are warm, so CF dominates and their high collaborative scores are preserved. The Notebook and Hot Shots drop because User 42 genre preferences do not align — CBF is doing its job.
 
-> 💡 **Why do warm movies not benefit from CBF in this walkthrough?** When $\alpha = 1.0$, the CBF score is multiplied by $(1-\alpha) = 0$ and contributes nothing. In practice you might cap $\alpha \leq 0.9$ even for warm items, retaining a small content regularization effect — especially useful for niche genres where collaborative data is sparse.
+> **Why do warm movies not benefit from CBF in this walkthrough?** When $\alpha = 1.0$, the CBF score is multiplied by $(1-\alpha) = 0$ and contributes nothing. In practice you might cap $\alpha \leq 0.9$ even for warm items, retaining a small content regularization effect — especially useful for niche genres where collaborative data is sparse.
 
 ---
 
@@ -483,53 +483,53 @@ $$\cos = \frac{(1)(0.10)+(0)(0.50)+(0)(0.85)+(1)(0.05)}{1.414 \times 1.0} = \fra
 
 ```mermaid
 flowchart TB
-    subgraph USER_TOWER["User Tower"]
-        UF["User Features\n[age, gender, occupation,\navg_rating, genre_prefs]"] --> UL1["Dense 64, ReLU"]
-        UL1 --> UL2["Dense 32, ReLU"]
-        UL2 --> UL3["Dense 32, L2-norm"]
-        UL3 --> EU["User Embedding\ne_u ∈ ℝ³²"]
-    end
+ subgraph USER_TOWER["User Tower"]
+ UF["User Features\n[age, gender, occupation,\navg_rating, genre_prefs]"] --> UL1["Dense 64, ReLU"]
+ UL1 --> UL2["Dense 32, ReLU"]
+ UL2 --> UL3["Dense 32, L2-norm"]
+ UL3 --> EU["User Embedding\ne_u ∈ ℝ³²"]
+ end
 
-    subgraph ITEM_TOWER["Item Tower"]
-        IF["Item Features\n[genres, year, director,\navg_rating, rating_count]"] --> IL1["Dense 64, ReLU"]
-        IL1 --> IL2["Dense 32, ReLU"]
-        IL2 --> IL3["Dense 32, L2-norm"]
-        IL3 --> EI["Item Embedding\ne_i ∈ ℝ³²"]
-    end
+ subgraph ITEM_TOWER["Item Tower"]
+ IF["Item Features\n[genres, year, director,\navg_rating, rating_count]"] --> IL1["Dense 64, ReLU"]
+ IL1 --> IL2["Dense 32, ReLU"]
+ IL2 --> IL3["Dense 32, L2-norm"]
+ IL3 --> EI["Item Embedding\ne_i ∈ ℝ³²"]
+ end
 
-    EU --> DOT["Dot Product\nŷ = eᵤᵀ eᵢ"]
-    EI --> DOT
-    DOT --> SCORE["Score ∈ [-1, 1]\nRank items by score"]
+ EU --> DOT["Dot Product\nŷ = eᵤᵀ eᵢ"]
+ EI --> DOT
+ DOT --> SCORE["Score ∈ [-1, 1]\nRank items by score"]
 
-    style USER_TOWER fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style ITEM_TOWER fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style DOT fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style SCORE fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style USER_TOWER fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style ITEM_TOWER fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style DOT fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style SCORE fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### Hybrid Strategy Decision Flow
 
 ```mermaid
 flowchart TD
-    START(["New recommendation request\n(user u, candidate items)"]) --> COLD{"Is item cold?\nn_ratings < n_warm"}
+ START(["New recommendation request\n(user u, candidate items)"]) --> COLD{"Is item cold?\nn_ratings < n_warm"}
 
-    COLD -->|"Yes: n < 5\nCold start"| CBF_DOM["CBF-dominant blend\nα = n / n_warm\n(α close to 0)"]
-    COLD -->|"No: n ≥ 5\nWarm item"| WARM{"Rich content\nfeatures available?"}
+ COLD -->|"Yes: n < 5\nCold start"| CBF_DOM["CBF-dominant blend\nα = n / n_warm\n(α close to 0)"]
+ COLD -->|"No: n ≥ 5\nWarm item"| WARM{"Rich content\nfeatures available?"}
 
-    WARM -->|"Yes (genres,\ndirector known)"| HYBRID["Weighted Hybrid\nŷ = α·ŷ_CF + (1-α)·ŷ_CBF\nα = min(1, n / n_warm)"]
-    WARM -->|"No metadata"| CF_ONLY["CF Only\nŷ = ŷ_CF\n(Ch.4 NCF)"]
+ WARM -->|"Yes (genres,\ndirector known)"| HYBRID["Weighted Hybrid\nŷ = α·ŷ_CF + (1-α)·ŷ_CBF\nα = min(1, n / n_warm)"]
+ WARM -->|"No metadata"| CF_ONLY["CF Only\nŷ = ŷ_CF\n(Ch.4 NCF)"]
 
-    CBF_DOM --> RANK["Rank and return\ntop-10 by ŷ_hybrid"]
-    HYBRID --> RANK
-    CF_ONLY --> RANK
+ CBF_DOM --> RANK["Rank and return\ntop-10 by ŷ_hybrid"]
+ HYBRID --> RANK
+ CF_ONLY --> RANK
 
-    style START fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style COLD fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style WARM fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CBF_DOM fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style HYBRID fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CF_ONLY fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style RANK fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style START fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style COLD fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style WARM fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CBF_DOM fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style HYBRID fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CF_ONLY fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style RANK fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -553,12 +553,12 @@ Setting it too low (e.g., 5) means switching to CF-dominant blending after only 
 
 ```python
 for n_warm in [20, 35, 50, 75, 100]:
-    for alpha_max in [0.7, 0.8, 0.9, 1.0]:
-        evaluate HR@10 on val split
+ for alpha_max in [0.7, 0.8, 0.9, 1.0]:
+ evaluate HR@10 on val split
 # Result: n_warm=50, alpha_max=1.0 is the stable peak on MovieLens 100k
 ```
 
-> ⚠️ **Tuning $\alpha$ on the test set is data leakage.** Tune $\alpha$ on a held-out validation split, then evaluate once on the test split. Grid-searching $\alpha$ directly on test performance overfits a scalar to 943 users — the reported HR@10 will be inflated.
+> **Tuning $\alpha$ on the test set is data leakage.** Tune $\alpha$ on a held-out validation split, then evaluate once on the test split. Grid-searching $\alpha$ directly on test performance overfits a scalar to 943 users — the reported HR@10 will be inflated.
 
 ---
 
@@ -574,9 +574,9 @@ for n_warm in [20, 35, 50, 75, 100]:
 | **Two-tower negative sampling bias** | Popular items dominate negatives; model ignores long tail | Frequency-based negative sampling | Use popularity-corrected or mixed-strategy sampling |
 | **Alpha memorization** | Fixed global $\alpha$ applied to all users hurts genre-diverse users | Global $\alpha$ ignores per-user cold-start variation | Per-user $\alpha$: weight by how many items in user history are cold |
 
-> ⚠️ **The "everything is Sci-Fi" failure is real.** In early FlixAI evaluations, setting $\alpha$ too low caused CBF to dominate for all users — the genre preference vector locked every sci-fi fan into a genre echo chamber. HR@10 was high (87%) but diversity ILD@10 collapsed to 0.12 (all same genre). **Diversity (Constraint #4) and accuracy (Constraint #1) are in tension.** Ch.6 addresses this directly with MMR re-ranking.
+> **The "everything is Sci-Fi" failure is real.** In early FlixAI evaluations, setting $\alpha$ too low caused CBF to dominate for all users — the genre preference vector locked every sci-fi fan into a genre echo chamber. HR@10 was high (87%) but diversity ILD@10 collapsed to 0.12 (all same genre). **Diversity (Constraint #4) and accuracy (Constraint #1) are in tension.** Ch.6 addresses this directly with MMR re-ranking.
 
-> 💡 **The two-tower can still overfit on 100k ratings.** With tower depth ≥ 4 layers and embedding dim ≥ 64, the model has more parameters than training signal. Use dropout (0.2) in both towers and early stopping on validation HR@10. Embedding dim matters more than depth: a 2-layer tower with dim=64 beats a 4-layer tower with dim=16 on MovieLens 100k.
+> **The two-tower can still overfit on 100k ratings.** With tower depth ≥ 4 layers and embedding dim ≥ 64, the model has more parameters than training signal. Use dropout (0.2) in both towers and early stopping on validation HR@10. Embedding dim matters more than depth: a 2-layer tower with dim=64 beats a 4-layer tower with dim=16 on MovieLens 100k.
 
 **Diagnosing a broken two-tower — the three signals to watch:**
 
@@ -586,7 +586,7 @@ for n_warm in [20, 35, 50, 75, 100]:
 | Cold-start HR@10 vs. warm-item HR@10 | Both ≥ 70% | Cold-start HR@10 < 40% | Lower $n_{\text{warm}}$; check item tower feature quality |
 | Genre distribution of top-10 | ≤ 3 same genre | 7+ same genre every session | Add diversity constraint or MMR (Ch.6) |
 
-> ⚠️ **Model freshness matters for content features.** If director or genre metadata is added to the item tower, the item embeddings must be recomputed whenever metadata changes. In production, this means running the item tower as a nightly batch job — not a one-time offline step. Missing this step means new movies added after the last batch run have stale (or absent) item embeddings.
+> **Model freshness matters for content features.** If director or genre metadata is added to the item tower, the item embeddings must be recomputed whenever metadata changes. In production, this means running the item tower as a nightly batch job — not a one-time offline step. Missing this step means new movies added after the last batch run have stale (or absent) item embeddings.
 
 ---
 
@@ -601,7 +601,7 @@ for n_warm in [20, 35, 50, 75, 100]:
 | Cold-start via content features | Production ML — every catalog with frequent new-item launches (news, streaming, e-commerce) |
 | Sampled softmax training | Large-scale retrieval: YouTube DNN, FAISS approximate nearest-neighbor search |
 
-> ➡️ **The two-tower pattern is the retrieval half of every modern production recommender.** Spotify, Pinterest, and LinkedIn all use it for first-stage retrieval (find candidate 500 from 10M items in < 10ms), followed by a more expensive reranking model. The two-tower is fast because item embeddings are pre-computed for all items and ANN search finds nearest neighbors in milliseconds.
+> ➡ **The two-tower pattern is the retrieval half of every modern production recommender.** Spotify, Pinterest, and LinkedIn all use it for first-stage retrieval (find candidate 500 from 10M items in < 10ms), followed by a more expensive reranking model. The two-tower is fast because item embeddings are pre-computed for all items and ANN search finds nearest neighbors in milliseconds.
 
 **The pattern you built generalizes directly:**
 
@@ -623,11 +623,11 @@ The code you write for 1,682 MovieLens movies scales to 800M YouTube videos by c
 
 | Chapter | Method | HR@10 | Cold-Start HR@10 | Constraint Status |
 |---|---|---|---|---|
-| Ch.1 | Popularity baseline | 42% | 42% (no personalization) | ❌ #1 #2 #3 #4 #5 |
-| Ch.2 | Collaborative filtering | 68% | 38% (cold fails) | ❌ #1 #2 |
-| Ch.3 | Matrix factorization | 78% | 31% (embedding noise) | ❌ #1 #2 |
-| Ch.4 | Neural CF (NCF) | 82% | 23% (structural cold start) | ❌ #1 #2 |
-| **Ch.5** | **Hybrid + Two-Tower** | **85% ✅** | **78% ✅** | ✅ #1 ✅ #2 ❌ #4 |
+| Ch.1 | Popularity baseline | 42% | 42% (no personalization) | #1 #2 #3 #4 #5 |
+| Ch.2 | Collaborative filtering | 68% | 38% (cold fails) | #1 #2 |
+| Ch.3 | Matrix factorization | 78% | 31% (embedding noise) | #1 #2 |
+| Ch.4 | Neural CF (NCF) | 82% | 23% (structural cold start) | #1 #2 |
+| **Ch.5** | **Hybrid + Two-Tower** | **85% ** | **78% ** | #1 #2 #4 |
 
 **What just happened:** Adding content features (genres, director, year) to a two-tower model pushed HR@10 from 82% to **85%** — crossing the FlixAI accuracy threshold for the first time. Cold-start HR@10 for new items jumped from 23% to 78% by shifting blending weight toward CBF when rating counts are low.
 
@@ -644,7 +644,7 @@ These are approximate attributions from ablation experiments on MovieLens 100k. 
 
 **What is still missing:** Constraint #4 (Diversity) is still red. The genre echo chamber problem (§9) is real: top-10 lists are accurate but genre-monotone. A user who loves Sci-Fi gets 7/10 Sci-Fi recommendations. That is not what production looks like — you want diverse discovery. Ch.6 fixes this with sequence-aware reranking and MMR.
 
-> 💡 **The 85% threshold is a milestone, not a ceiling.** Every point beyond 85% is marginal gain on a metric that does not measure everything. The next chapter goal is "great recommendations" — diverse, surprising, and timely — not just "more accurate recommendations."
+> **The 85% threshold is a milestone, not a ceiling.** Every point beyond 85% is marginal gain on a metric that does not measure everything. The next chapter goal is "great recommendations" — diverse, surprising, and timely — not just "more accurate recommendations."
 
 ---
 
@@ -662,4 +662,4 @@ $$\text{MMR} = \underset{i \in \mathcal{C} \setminus \mathcal{S}}{\arg\max} \lef
 
 where $\mathcal{C}$ is the candidate set, $\mathcal{S}$ is the already-selected set, and $\lambda$ trades off relevance vs. diversity. Setting $\lambda=0.7$ means "70% accuracy, 30% diversity." The user tower embeddings built in this chapter feed directly into Ch.6's candidate retrieval stage.
 
-> ➡️ **Ch.6 preview:** With sequence-aware reranking and MMR, FlixAI reaches **87% HR@10** and **ILD@10 = 0.61** (diverse top-10). Both accuracy and diversity constraints satisfied simultaneously.
+> ➡ **Ch.6 preview:** With sequence-aware reranking and MMR, FlixAI reaches **87% HR@10** and **ILD@10 = 0.61** (diverse top-10). Both accuracy and diversity constraints satisfied simultaneously.

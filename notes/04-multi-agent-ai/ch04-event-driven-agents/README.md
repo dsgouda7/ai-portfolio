@@ -10,15 +10,15 @@
 
 ## § 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Build **OrderFlow** — AI-native B2B purchase order automation satisfying 8 constraints:
+> **The mission**: Build **OrderFlow** — AI-native B2B purchase order automation satisfying 8 constraints:
 > 1. **THROUGHPUT**: 1,000 POs/day — 2. **LATENCY**: <4hr SLA — 3. **ACCURACY**: <2% error — 4. **SCALABILITY**: 10 agents/PO — 5. **RELIABILITY**: >99.9% uptime — 6. **AUDITABILITY**: Full traceability — 7. **OBSERVABILITY**: Real-time monitoring — 8. **DEPLOYABILITY**: Zero-downtime updates
 
 **What we know so far**:
-- ✅ **Ch.1 (Message Formats)**: Structured agent message schemas prevent context overflow — single-agent 8k token limit → multi-agent decomposition foundation
-- ✅ **Ch.2 (MCP)**: Tool integration protocol collapses N×M to N+M — 10 agents × 15 systems = 150 hardcoded clients → 25 MCP connections
-- ✅ **Ch.3 (A2A)**: Agents distributed across 3 Kubernetes pods, cross-service delegation via A2A protocol
-- ⚡ **Current metrics**: Throughput 24 POs/day (2.4% of target), Latency 36hr median, Error rate 3.2%, 8 agents across 3 pods
-- ❌ **But you still can't process 1,000 POs/day!** Synchronous orchestrator threads block waiting for supplier responses.
+- **Ch.1 (Message Formats)**: Structured agent message schemas prevent context overflow — single-agent 8k token limit → multi-agent decomposition foundation
+- **Ch.2 (MCP)**: Tool integration protocol collapses N×M to N+M — 10 agents × 15 systems = 150 hardcoded clients → 25 MCP connections
+- **Ch.3 (A2A)**: Agents distributed across 3 Kubernetes pods, cross-service delegation via A2A protocol
+- **Current metrics**: Throughput 24 POs/day (2.4% of target), Latency 36hr median, Error rate 3.2%, 8 agents across 3 pods
+- **But you still can't process 1,000 POs/day!** Synchronous orchestrator threads block waiting for supplier responses.
 
 **What's blocking us**:
 
@@ -27,34 +27,33 @@
 **The incident**: PO #2024-1847 (Sarah Chen's 10 standing desks) arrived at 09:15. Your Intake agent parsed it, delegated to Pricing agent via A2A at 09:17. TechFurnish's API took 47 minutes to respond with a quote. Your orchestrator thread waited. So did PO #2024-1848, #2024-1849, and 237 others in the queue behind it. By 14:30, you had 240 POs queued, orchestrator memory at 92%, and your on-call phone ringing.
 
 **Problems**:
-1. ❌ **Synchronous blocking kills throughput**: Intake agent waits 1-2 hours for Negotiation agent → orchestrator thread blocks → max throughput = 3 threads × 8hr = **24 POs/day** (2.4% of 1,000 target). Blocks **#1 THROUGHPUT**.
-2. ❌ **Queue buildup destroys latency**: 240 POs in queue × 35 min/PO = **140 hours queuing delay**. Sarah's desk order from Tuesday morning won't start processing until Friday. Blocks **#2 LATENCY**.
-3. ❌ **Cascading failures**: One slow supplier API (TechFurnish timeout) stalls the entire pipeline — no PO can proceed while the orchestrator waits. Blocks **#5 RELIABILITY**.
+1. **Synchronous blocking kills throughput**: Intake agent waits 1-2 hours for Negotiation agent → orchestrator thread blocks → max throughput = 3 threads × 8hr = **24 POs/day** (2.4% of 1,000 target). Blocks **#1 THROUGHPUT**.
+2. **Queue buildup destroys latency**: 240 POs in queue × 35 min/PO = **140 hours queuing delay**. Sarah's desk order from Tuesday morning won't start processing until Friday. Blocks **#2 LATENCY**.
+3. **Cascading failures**: One slow supplier API (TechFurnish timeout) stalls the entire pipeline — no PO can proceed while the orchestrator waits. Blocks **#5 RELIABILITY**.
 
 **Business impact**: At 24 POs/day capacity, you're processing **600 POs/month** — but the business needs **22,000 POs/month**. The gap: **21,400 POs/month unprocessed** = $64M/month in delayed procurement = equipment downtime, missed production schedules, manual fallback at $420k/year labor cost.
 
 **What this chapter unlocks**:
 
-🚀 **Async event-driven messaging decouples producers from consumers**:
+ **Async event-driven messaging decouples producers from consumers**:
 1. **Message bus replaces synchronous orchestrator**: Agents publish events to Azure Service Bus / Kafka — no blocking waits
 2. **Independent scaling per agent type**: 3× Inventory agents, 8× Negotiation agents (the bottleneck), 2× Approval agents — each scales to load
 3. **Dead-letter queues for graceful degradation**: Failed messages route to human review (0.2% failure rate) — don't block the pipeline
-
-⚡ **Expected improvements**:
-- **Throughput**: 24 POs/day (synchronous) → **1,200 POs/day** (50 concurrent POs × 20 POs/hr) — **50× improvement, exceeds 1,000 target** ✅
+**Expected improvements**:
+- **Throughput**: 24 POs/day (synchronous) → **1,200 POs/day** (50 concurrent POs × 20 POs/hr) — **50× improvement, exceeds 1,000 target**
 - **Latency**: 36hr median (queue buildup) → **8hr median** (async eliminates queueing) — **4.5× faster** (still not at <4hr target)
 - **Reliability**: Single failure stalls pipeline → **DLQ captures 0.2% failures, all recoverable** — **production-grade resilience**
-- **Constraint #1 THROUGHPUT**: ✅ **ACHIEVED** (1,200 POs/day measured in load test)
+- **Constraint #1 THROUGHPUT**: **ACHIEVED** (1,200 POs/day measured in load test)
 
 **Constraint status after Ch.4**:
-- #1 (Throughput): ⚡ **ACHIEVED** — 1,200 POs/day (120% of 1,000 target)
-- #2 (Latency): ⚡ **IMPROVED** — 8hr median (still not at <4hr target, need Ch.5 shared memory to eliminate redundant work)
-- #3 (Accuracy): ⚡ **STABLE** — 3.2% error (maintained from Ch.3)
-- #4 (Scalability): ✅ **DISTRIBUTED** — 50 concurrent POs × 8 agents each = 400 agent instances in-flight
-- #5 (Reliability): ⚡ **IMPROVED** — DLQ captures failures, no cascade
-- #6 (Auditability): ⚡ **STABLE** — Correlation IDs link events to POs
-- #7 (Observability): ⚡ **IMPROVED** — Message bus metrics (throughput, lag), but no distributed tracing yet
-- #8 (Deployability): ❌ **BLOCKED** — No deployment automation (Ch.7)
+- #1 (Throughput): **ACHIEVED** — 1,200 POs/day (120% of 1,000 target)
+- #2 (Latency): **IMPROVED** — 8hr median (still not at <4hr target, need Ch.5 shared memory to eliminate redundant work)
+- #3 (Accuracy): **STABLE** — 3.2% error (maintained from Ch.3)
+- #4 (Scalability): **DISTRIBUTED** — 50 concurrent POs × 8 agents each = 400 agent instances in-flight
+- #5 (Reliability): **IMPROVED** — DLQ captures failures, no cascade
+- #6 (Auditability): **STABLE** — Correlation IDs link events to POs
+- #7 (Observability): **IMPROVED** — Message bus metrics (throughput, lag), but no distributed tracing yet
+- #8 (Deployability): **BLOCKED** — No deployment automation (Ch.7)
 
 ---
 
@@ -74,15 +73,15 @@
 **The OrderFlow event topology:**
 
 ```
-Business Process:        Event Topics:                    Subscribers:
-──────────────────      ─────────────────────           ────────────────
-Email arrives        →  order.received                →  Pricing, Inventory (parallel)
-Quotes gathered      →  quote.completed               →  Negotiation
-Terms negotiated     →  negotiation.completed         →  Approval
-PO approved          →  po.approved                   →  Drafting
-PO sent to supplier  →  po.sent                       →  Audit, ERP Sync
+Business Process: Event Topics: Subscribers:
+────────────────── ───────────────────── ────────────────
+Email arrives → order.received → Pricing, Inventory (parallel)
+Quotes gathered → quote.completed → Negotiation
+Terms negotiated → negotiation.completed → Approval
+PO approved → po.approved → Drafting
+PO sent to supplier → po.sent → Audit, ERP Sync
 
-Dead letter topics:     order.received.dlq, quote.completed.dlq, ... (one per main topic)
+Dead letter topics: order.received.dlq, quote.completed.dlq, ... (one per main topic)
 ```
 
 **Event vs Command distinction:**
@@ -93,23 +92,23 @@ OrderFlow uses events throughout — agents publish what they completed, downstr
 
 **Topic naming conventions:**
 ```
-<entity>.<lifecycle_stage>     # Examples: order.received, negotiation.completed
-<entity>.<action>.dlq          # Dead letters: quote.completed.dlq
-<entity>.<action>.retry        # Optional retry topics for exponential backoff
+<entity>.<lifecycle_stage> # Examples: order.received, negotiation.completed
+<entity>.<action>.dlq # Dead letters: quote.completed.dlq
+<entity>.<action>.retry # Optional retry topics for exponential backoff
 ```
 
 **Fan-out pattern:** One `order.received` event triggers 3 parallel agents (Pricing, Inventory, CreditCheck) — all subscribe to the same topic, process independently, publish separate result topics.
 
 **Fan-in pattern:** Aggregator agent subscribes to 3 result topics, accumulates responses keyed by `correlation_id` (the PO ID), publishes single `prechecks.completed` event when all 3 arrive.
 
-> 💡 **Industry Standard — CloudEvents:** For cross-organization event exchange, use [CloudEvents 1.0 spec](https://cloudevents.io) — standardizes `id`, `source`, `type`, `datacontenttype`, `data` fields. Major clouds (AWS EventBridge, Azure Event Grid, Google Eventarc) all support CloudEvents. For internal OrderFlow topology, simpler message structure in §3 suffices.
+> **Industry Standard — CloudEvents:** For cross-organization event exchange, use [CloudEvents 1.0 spec](https://cloudevents.io) — standardizes `id`, `source`, `type`, `datacontenttype`, `data` fields. Major clouds (AWS EventBridge, Azure Event Grid, Google Eventarc) all support CloudEvents. For internal OrderFlow topology, simpler message structure in §3 suffices.
 
 **Checkpoint 1 — Topology validation:**
-- [ ] Every business outcome maps to exactly one event topic ✅
-- [ ] Event names are past-tense (describe what happened, not commands) ✅
-- [ ] Each topic has a corresponding DLQ (`.dlq` suffix) ✅
-- [ ] Fan-out scenarios identified (which events trigger multiple parallel agents?) ✅
-- [ ] Fan-in scenarios identified (which downstream events wait for multiple upstreams?) ✅
+- [ ] Every business outcome maps to exactly one event topic
+- [ ] Event names are past-tense (describe what happened, not commands)
+- [ ] Each topic has a corresponding DLQ (`.dlq` suffix)
+- [ ] Fan-out scenarios identified (which events trigger multiple parallel agents?)
+- [ ] Fan-in scenarios identified (which downstream events wait for multiple upstreams?)
 
 ---
 
@@ -123,12 +122,12 @@ OrderFlow uses events throughout — agents publish what they completed, downstr
 
 | Broker | Throughput | Latency | Durability | Operational Complexity | Cost (AWS/Azure) | OrderFlow Fit |
 |--------|-----------|---------|------------|----------------------|-----------------|--------------|
-| **Redis Streams** | 1,500 msg/sec | <5ms p95 | Append-only log, configurable retention | Low (single Redis instance, no cluster needed at this scale) | $80/mo (r6g.large) | ✅ **Best fit** — exceeds 12 msg/sec requirement with 125× headroom, minimal ops overhead |
-| **RabbitMQ** | 800 msg/sec | 10-20ms p95 | Durable queues with ack | Medium (cluster for HA, manual partition management) | $180/mo (3-node cluster) | ⚠️ Sufficient but overkill — 67× headroom, adds cluster complexity |
-| **Apache Kafka** | 10,000 msg/sec | 20-50ms p95 | Partitioned log, configurable retention | High (ZooKeeper dependency, partition rebalancing, offset management) | $600/mo (MSK 3-broker cluster) | ❌ Massive overkill — 833× headroom, 7.5× cost vs Redis, operationally heavy |
-| **Azure Service Bus** | 2,000 msg/sec | 10-30ms p95 | Sessions, DLQ, scheduled messages | Low (fully managed, no infra) | $250/mo (Standard tier) | ✅ Strong fit if already on Azure — native managed identity, built-in DLQ, FIFO sessions |
+| **Redis Streams** | 1,500 msg/sec | <5ms p95 | Append-only log, configurable retention | Low (single Redis instance, no cluster needed at this scale) | $80/mo (r6g.large) | **Best fit** — exceeds 12 msg/sec requirement with 125× headroom, minimal ops overhead |
+| **RabbitMQ** | 800 msg/sec | 10-20ms p95 | Durable queues with ack | Medium (cluster for HA, manual partition management) | $180/mo (3-node cluster) | Sufficient but overkill — 67× headroom, adds cluster complexity |
+| **Apache Kafka** | 10,000 msg/sec | 20-50ms p95 | Partitioned log, configurable retention | High (ZooKeeper dependency, partition rebalancing, offset management) | $600/mo (MSK 3-broker cluster) | Massive overkill — 833× headroom, 7.5× cost vs Redis, operationally heavy |
+| **Azure Service Bus** | 2,000 msg/sec | 10-30ms p95 | Sessions, DLQ, scheduled messages | Low (fully managed, no infra) | $250/mo (Standard tier) | Strong fit if already on Azure — native managed identity, built-in DLQ, FIFO sessions |
 
-**✅ Decision for OrderFlow:** **Redis Streams** wins on cost ($80/mo vs $600/mo Kafka), simplicity (single instance vs Kafka cluster), and sufficient throughput (1,500 msg/sec >> 12 msg/sec requirement). Upgrade path exists: if load exceeds 1,000 msg/sec sustained, migrate to Kafka without changing producer/consumer code (both use similar append-log semantics).
+** Decision for OrderFlow:** **Redis Streams** wins on cost ($80/mo vs $600/mo Kafka), simplicity (single instance vs Kafka cluster), and sufficient throughput (1,500 msg/sec >> 12 msg/sec requirement). Upgrade path exists: if load exceeds 1,000 msg/sec sustained, migrate to Kafka without changing producer/consumer code (both use similar append-log semantics).
 
 **Redis Streams configuration for OrderFlow:**
 
@@ -138,24 +137,24 @@ import redis.asyncio as redis
 
 # Connect to Redis (managed Redis instance on AWS ElastiCache or Azure Cache)
 r = await redis.from_url("redis://orderflow-cache.redis.cache.windows.net:6380",
-                          ssl=True, decode_responses=True)
+ ssl=True, decode_responses=True)
 
 # Create consumer groups for each topic (one-time setup per topic)
 topics = ["order.received", "quote.completed", "negotiation.completed", "po.approved", "po.sent"]
 for topic in topics:
-    try:
-        # Create consumer group 'orderflow-workers' starting from beginning of stream
-        await r.xgroup_create(topic, "orderflow-workers", id="0", mkstream=True)
-        print(f"✅ Consumer group created for {topic}")
-    except redis.ResponseError as e:
-        if "BUSYGROUP" in str(e):
-            print(f"⚠️  Consumer group already exists for {topic}")
-        else:
-            raise
+ try:
+ # Create consumer group 'orderflow-workers' starting from beginning of stream
+ await r.xgroup_create(topic, "orderflow-workers", id="0", mkstream=True)
+ print(f" Consumer group created for {topic}")
+ except redis.ResponseError as e:
+ if "BUSYGROUP" in str(e):
+ print(f" Consumer group already exists for {topic}")
+ else:
+ raise
 
 # Configure stream retention (keep last 10,000 messages per topic, ~24 hours at peak load)
 for topic in topics:
-    await r.xtrim(topic, maxlen=10_000, approximate=True)
+ await r.xtrim(topic, maxlen=10_000, approximate=True)
 ```
 
 **Durability configuration:**
@@ -165,14 +164,14 @@ for topic in topics:
 
 **Partition strategy (not needed for Redis Streams at this scale):** Redis Streams are single-partition by default. For >10k msg/sec workloads, use Kafka with partition key = `correlation_id` (routes all PO #2024-1847 events to same partition for ordering).
 
-> 💡 **Industry Standard — Apache Kafka for high-throughput:** If your peak load exceeds 10,000 msg/sec sustained, Kafka is the standard choice. Major platforms (LinkedIn, Uber, Netflix) run Kafka clusters handling millions of msgs/sec. Kafka's partitioned log model gives horizontal scaling (add brokers → add partitions → increase throughput linearly). Trade-off: operational complexity (ZooKeeper/KRaft, partition rebalancing, offset management).
+> **Industry Standard — Apache Kafka for high-throughput:** If your peak load exceeds 10,000 msg/sec sustained, Kafka is the standard choice. Major platforms (LinkedIn, Uber, Netflix) run Kafka clusters handling millions of msgs/sec. Kafka's partitioned log model gives horizontal scaling (add brokers → add partitions → increase throughput linearly). Trade-off: operational complexity (ZooKeeper/KRaft, partition rebalancing, offset management).
 
 **Checkpoint 2 — Broker validation:**
-- [ ] Throughput requirement calculated from peak load + headroom ✅
-- [ ] Broker selected based on cost, ops complexity, throughput margin ✅
-- [ ] Consumer groups created for each topic ✅
-- [ ] Durability configured (persistence, replication) ✅
-- [ ] Retention policy set (message TTL or max count) ✅
+- [ ] Throughput requirement calculated from peak load + headroom
+- [ ] Broker selected based on cost, ops complexity, throughput margin
+- [ ] Consumer groups created for each topic
+- [ ] Durability configured (persistence, replication)
+- [ ] Retention policy set (message TTL or max count)
 
 ---
 
@@ -192,56 +191,56 @@ from redis.asyncio import Redis
 from datetime import datetime
 
 class EventPublisher:
-    def __init__(self, redis_client: Redis, max_retries: int = 3):
-        self.redis = redis_client
-        self.max_retries = max_retries
+ def __init__(self, redis_client: Redis, max_retries: int = 3):
+ self.redis = redis_client
+ self.max_retries = max_retries
 
-    async def publish(self, topic: str, event: Dict[str, Any]) -> str:
-        """Publish event with exponential backoff retry."""
-        # Add envelope fields
-        message = {
-            "message_id": event.get("message_id", f"msg-{datetime.utcnow().timestamp()}"),
-            "correlation_id": event["correlation_id"],  # PO ID
-            "causation_id": event.get("causation_id"),  # Parent message that triggered this
-            "topic": topic,
-            "timestamp": datetime.utcnow().isoformat(),
-            "payload": event["payload"],
-            "schema_version": "1.0"
-        }
+ async def publish(self, topic: str, event: Dict[str, Any]) -> str:
+ """Publish event with exponential backoff retry."""
+ # Add envelope fields
+ message = {
+ "message_id": event.get("message_id", f"msg-{datetime.utcnow().timestamp()}"),
+ "correlation_id": event["correlation_id"], # PO ID
+ "causation_id": event.get("causation_id"), # Parent message that triggered this
+ "topic": topic,
+ "timestamp": datetime.utcnow().isoformat(),
+ "payload": event["payload"],
+ "schema_version": "1.0"
+ }
 
-        # Retry loop with exponential backoff
-        for attempt in range(self.max_retries):
-            try:
-                # Publish to Redis Stream via XADD
-                message_id = await self.redis.xadd(topic, message)
-                return message_id  # Success
-            except Exception as e:
-                if attempt == self.max_retries - 1:
-                    # Final retry failed → route to DLQ
-                    await self._send_to_dlq(topic, message, error=str(e))
-                    raise
-                # Exponential backoff: 1s, 2s, 4s
-                backoff_seconds = 2 ** attempt
-                await asyncio.sleep(backoff_seconds)
+ # Retry loop with exponential backoff
+ for attempt in range(self.max_retries):
+ try:
+ # Publish to Redis Stream via XADD
+ message_id = await self.redis.xadd(topic, message)
+ return message_id # Success
+ except Exception as e:
+ if attempt == self.max_retries - 1:
+ # Final retry failed → route to DLQ
+ await self._send_to_dlq(topic, message, error=str(e))
+ raise
+ # Exponential backoff: 1s, 2s, 4s
+ backoff_seconds = 2 ** attempt
+ await asyncio.sleep(backoff_seconds)
 
-    async def _send_to_dlq(self, topic: str, message: Dict[str, Any], error: str):
-        """Send failed message to dead-letter queue."""
-        dlq_topic = f"{topic}.dlq"
-        message["error"] = error
-        message["failed_at"] = datetime.utcnow().isoformat()
-        await self.redis.xadd(dlq_topic, message)
+ async def _send_to_dlq(self, topic: str, message: Dict[str, Any], error: str):
+ """Send failed message to dead-letter queue."""
+ dlq_topic = f"{topic}.dlq"
+ message["error"] = error
+ message["failed_at"] = datetime.utcnow().isoformat()
+ await self.redis.xadd(dlq_topic, message)
 
 # Usage in Pricing agent:
 publisher = EventPublisher(redis_client)
 await publisher.publish("quote.completed", {
-    "correlation_id": "2024-1847",
-    "causation_id": "msg-intake-001",
-    "payload": {
-        "supplier_id": "SUP-88412",
-        "price_per_unit_usd": 14.20,
-        "quantity": 500,
-        "delivery_days": 7
-    }
+ "correlation_id": "2024-1847",
+ "causation_id": "msg-intake-001",
+ "payload": {
+ "supplier_id": "SUP-88412",
+ "price_per_unit_usd": 14.20,
+ "quantity": 500,
+ "delivery_days": 7
+ }
 })
 ```
 
@@ -255,14 +254,14 @@ await publisher.publish("quote.completed", {
 - **At-most-once**: Producer sends and forgets, no ack. Fast but lossy — unacceptable for financial commitments.
 - **Exactly-once**: Distributed transaction across producer, broker, consumer. Expensive and complex — rarely worth it (use idempotent consumers instead).
 
-> 💡 **Industry Standard — Transactional Outbox Pattern:** For events that must be published atomically with database writes (e.g., "save PO to DB + publish po.approved event"), use the **Outbox pattern**: Write event to an `outbox` table in the same DB transaction, then a separate process polls the outbox and publishes to the message bus. This avoids distributed transactions while guaranteeing event delivery. See [Microservices.io Transactional Outbox](https://microservices.io/patterns/data/transactional-outbox.html).
+> **Industry Standard — Transactional Outbox Pattern:** For events that must be published atomically with database writes (e.g., "save PO to DB + publish po.approved event"), use the **Outbox pattern**: Write event to an `outbox` table in the same DB transaction, then a separate process polls the outbox and publishes to the message bus. This avoids distributed transactions while guaranteeing event delivery. See [Microservices.io Transactional Outbox](https://microservices.io/patterns/data/transactional-outbox.html).
 
 **Checkpoint 3 — Producer validation:**
-- [ ] All agents converted from synchronous calls to event publishing ✅
-- [ ] Retry logic implemented (exponential backoff, max 3 attempts) ✅
-- [ ] DLQ routing for exhausted retries ✅
-- [ ] Message envelope includes `message_id`, `correlation_id`, `causation_id` ✅
-- [ ] Serialization format chosen (JSON for readability, Protobuf for high throughput) ✅
+- [ ] All agents converted from synchronous calls to event publishing
+- [ ] Retry logic implemented (exponential backoff, max 3 attempts)
+- [ ] DLQ routing for exhausted retries
+- [ ] Message envelope includes `message_id`, `correlation_id`, `causation_id`
+- [ ] Serialization format chosen (JSON for readability, Protobuf for high throughput)
 
 ---
 
@@ -281,95 +280,95 @@ from typing import Dict, Any, Callable
 from redis.asyncio import Redis
 
 class EventConsumer:
-    def __init__(self, redis_client: Redis, topic: str,
-                 consumer_group: str, consumer_name: str,
-                 handler: Callable, max_retries: int = 3):
-        self.redis = redis_client
-        self.topic = topic
-        self.consumer_group = consumer_group
-        self.consumer_name = consumer_name  # Unique ID for this worker instance
-        self.handler = handler
-        self.max_retries = max_retries
-        self.dedup_ttl_seconds = 86400  # 24 hours
+ def __init__(self, redis_client: Redis, topic: str,
+ consumer_group: str, consumer_name: str,
+ handler: Callable, max_retries: int = 3):
+ self.redis = redis_client
+ self.topic = topic
+ self.consumer_group = consumer_group
+ self.consumer_name = consumer_name # Unique ID for this worker instance
+ self.handler = handler
+ self.max_retries = max_retries
+ self.dedup_ttl_seconds = 86400 # 24 hours
 
-    async def start(self, concurrency: int = 8):
-        """Start worker pool consuming from Redis Stream."""
-        tasks = [self._worker() for _ in range(concurrency)]
-        await asyncio.gather(*tasks)
+ async def start(self, concurrency: int = 8):
+ """Start worker pool consuming from Redis Stream."""
+ tasks = [self._worker() for _ in range(concurrency)]
+ await asyncio.gather(*tasks)
 
-    async def _worker(self):
-        """Single worker loop: read → check idempotency → process → ack/retry/dlq."""
-        while True:
-            try:
-                # Read next message from consumer group (blocks until message available)
-                # '>' means "give me new messages not yet delivered to this consumer group"
-                messages = await self.redis.xreadgroup(
-                    self.consumer_group, self.consumer_name, {self.topic: '>'},
-                    count=1, block=5000  # block up to 5 seconds waiting for message
-                )
+ async def _worker(self):
+ """Single worker loop: read → check idempotency → process → ack/retry/dlq."""
+ while True:
+ try:
+ # Read next message from consumer group (blocks until message available)
+ # '>' means "give me new messages not yet delivered to this consumer group"
+ messages = await self.redis.xreadgroup(
+ self.consumer_group, self.consumer_name, {self.topic: '>'},
+ count=1, block=5000 # block up to 5 seconds waiting for message
+ )
 
-                if not messages:
-                    continue  # No messages, loop again
+ if not messages:
+ continue # No messages, loop again
 
-                # Extract message
-                stream, msg_list = messages[0]
-                msg_id, msg_data = msg_list[0]
+ # Extract message
+ stream, msg_list = messages[0]
+ msg_id, msg_data = msg_list[0]
 
-                # Check idempotency: have we already processed this message_id?
-                message_id = msg_data.get("message_id")
-                dedup_key = f"processed:{message_id}"
-                if await self.redis.exists(dedup_key):
-                    # Already processed → ack and skip
-                    await self.redis.xack(self.topic, self.consumer_group, msg_id)
-                    continue
+ # Check idempotency: have we already processed this message_id?
+ message_id = msg_data.get("message_id")
+ dedup_key = f"processed:{message_id}"
+ if await self.redis.exists(dedup_key):
+ # Already processed → ack and skip
+ await self.redis.xack(self.topic, self.consumer_group, msg_id)
+ continue
 
-                # Process message
-                try:
-                    await self.handler(msg_data)
-                    # Mark as processed (idempotency)
-                    await self.redis.setex(dedup_key, self.dedup_ttl_seconds, "1")
-                    # Ack to broker
-                    await self.redis.xack(self.topic, self.consumer_group, msg_id)
-                except Exception as e:
-                    # Retry logic: check delivery count
-                    # (Redis Streams doesn't track retries natively — implement via metadata)
-                    retry_count = int(msg_data.get("retry_count", 0))
-                    if retry_count >= self.max_retries:
-                        # Exhausted retries → DLQ
-                        await self._send_to_dlq(msg_data, error=str(e))
-                        await self.redis.xack(self.topic, self.consumer_group, msg_id)
-                    else:
-                        # Retry: increment count, don't ack (message will be redelivered)
-                        # (Better: republish to retry topic with incremented count)
-                        pass  # Message stays unacked, will be redelivered after timeout
-            except Exception as e:
-                # Worker crashed → log error, continue (don't kill worker pool)
-                print(f"Worker error: {e}")
-                await asyncio.sleep(1)
+ # Process message
+ try:
+ await self.handler(msg_data)
+ # Mark as processed (idempotency)
+ await self.redis.setex(dedup_key, self.dedup_ttl_seconds, "1")
+ # Ack to broker
+ await self.redis.xack(self.topic, self.consumer_group, msg_id)
+ except Exception as e:
+ # Retry logic: check delivery count
+ # (Redis Streams doesn't track retries natively — implement via metadata)
+ retry_count = int(msg_data.get("retry_count", 0))
+ if retry_count >= self.max_retries:
+ # Exhausted retries → DLQ
+ await self._send_to_dlq(msg_data, error=str(e))
+ await self.redis.xack(self.topic, self.consumer_group, msg_id)
+ else:
+ # Retry: increment count, don't ack (message will be redelivered)
+ # (Better: republish to retry topic with incremented count)
+ pass # Message stays unacked, will be redelivered after timeout
+ except Exception as e:
+ # Worker crashed → log error, continue (don't kill worker pool)
+ print(f"Worker error: {e}")
+ await asyncio.sleep(1)
 
-    async def _send_to_dlq(self, message: Dict[str, Any], error: str):
-        """Route failed message to DLQ."""
-        dlq_topic = f"{self.topic}.dlq"
-        message["error"] = error
-        message["failed_at"] = datetime.utcnow().isoformat()
-        await self.redis.xadd(dlq_topic, message)
+ async def _send_to_dlq(self, message: Dict[str, Any], error: str):
+ """Route failed message to DLQ."""
+ dlq_topic = f"{self.topic}.dlq"
+ message["error"] = error
+ message["failed_at"] = datetime.utcnow().isoformat()
+ await self.redis.xadd(dlq_topic, message)
 
 # Usage in Negotiation agent:
 async def handle_quote_completed(message: Dict[str, Any]):
-    """Business logic: negotiate with supplier."""
-    payload = message["payload"]
-    supplier_id = payload["supplier_id"]
-    # ... negotiation logic ...
-    # Publish result
-    await publisher.publish("negotiation.completed", {
-        "correlation_id": message["correlation_id"],
-        "causation_id": message["message_id"],
-        "payload": {"supplier_id": supplier_id, "negotiated_price": 13.80, ...}
-    })
+ """Business logic: negotiate with supplier."""
+ payload = message["payload"]
+ supplier_id = payload["supplier_id"]
+ # ... negotiation logic ...
+ # Publish result
+ await publisher.publish("negotiation.completed", {
+ "correlation_id": message["correlation_id"],
+ "causation_id": message["message_id"],
+ "payload": {"supplier_id": supplier_id, "negotiated_price": 13.80, ...}
+ })
 
 consumer = EventConsumer(redis_client, "quote.completed", "orderflow-workers",
-                         "negotiation-worker-1", handle_quote_completed)
-await consumer.start(concurrency=8)  # 8 parallel workers
+ "negotiation-worker-1", handle_quote_completed)
+await consumer.start(concurrency=8) # 8 parallel workers
 ```
 
 **Idempotency implementation:**
@@ -387,14 +386,14 @@ await consumer.start(concurrency=8)  # 8 parallel workers
 - **Manual intervention:** Procurement team investigates failed PO (e.g., supplier API returned 500 error), fixes issue (e.g., contact supplier directly), marks PO as resolved in UI
 - **Replay:** After fix, operator can replay DLQ message (re-publish to main topic) to retry processing
 
-> 💡 **Industry Standard — Competing Consumers Pattern:** Multiple consumer instances (8 Negotiation workers) subscribe to the same topic as part of the same consumer group. The message broker ensures each message is delivered to exactly one consumer in the group (load balancing). This is how Kafka consumer groups, RabbitMQ competing consumers, and Redis Streams consumer groups all work. See [Enterprise Integration Patterns — Competing Consumers](https://www.enterpriseintegrationpatterns.com/patterns/messaging/CompetingConsumers.html).
+> **Industry Standard — Competing Consumers Pattern:** Multiple consumer instances (8 Negotiation workers) subscribe to the same topic as part of the same consumer group. The message broker ensures each message is delivered to exactly one consumer in the group (load balancing). This is how Kafka consumer groups, RabbitMQ competing consumers, and Redis Streams consumer groups all work. See [Enterprise Integration Patterns — Competing Consumers](https://www.enterpriseintegrationpatterns.com/patterns/messaging/CompetingConsumers.html).
 
 **Checkpoint 4 — Consumer validation:**
-- [ ] Worker pool implemented with fixed concurrency (no unbounded parallelism) ✅
-- [ ] Idempotency check via Redis `processed:{message_id}` key before processing ✅
-- [ ] DLQ routing for messages exceeding max retry count ✅
-- [ ] At-least-once delivery guarantee via broker ack after successful processing ✅
-- [ ] Error handling doesn't kill worker pool (catch exceptions, log, continue) ✅
+- [ ] Worker pool implemented with fixed concurrency (no unbounded parallelism)
+- [ ] Idempotency check via Redis `processed:{message_id}` key before processing
+- [ ] DLQ routing for messages exceeding max retry count
+- [ ] At-least-once delivery guarantee via broker ack after successful processing
+- [ ] Error handling doesn't kill worker pool (catch exceptions, log, continue)
 
 ---
 
@@ -423,48 +422,48 @@ from prometheus_client import Counter, Histogram, Gauge, start_http_server
 
 # Metrics
 messages_published = Counter('orderflow_messages_published_total',
-                              'Total messages published', ['topic'])
+ 'Total messages published', ['topic'])
 messages_consumed = Counter('orderflow_messages_consumed_total',
-                            'Total messages consumed', ['topic', 'status'])  # status: success/retry/dlq
+ 'Total messages consumed', ['topic', 'status']) # status: success/retry/dlq
 consumer_lag_messages = Gauge('orderflow_consumer_lag_messages',
-                              'Unprocessed messages in topic', ['topic'])
+ 'Unprocessed messages in topic', ['topic'])
 consumer_lag_seconds = Gauge('orderflow_consumer_lag_seconds',
-                             'Age of oldest unprocessed message', ['topic'])
+ 'Age of oldest unprocessed message', ['topic'])
 processing_latency = Histogram('orderflow_processing_latency_seconds',
-                               'Time from publish to ack', ['topic'])
+ 'Time from publish to ack', ['topic'])
 dlq_depth = Gauge('orderflow_dlq_depth', 'Messages in DLQ', ['topic'])
 
 # Instrument producer
 async def publish(topic: str, event: Dict[str, Any]):
-    # ... existing publish logic ...
-    messages_published.labels(topic=topic).inc()
+ # ... existing publish logic ...
+ messages_published.labels(topic=topic).inc()
 
 # Instrument consumer
 async def _worker(self):
-    start_time = time.time()
-    # ... existing worker logic ...
-    # On success:
-    messages_consumed.labels(topic=self.topic, status='success').inc()
-    processing_latency.labels(topic=self.topic).observe(time.time() - start_time)
-    # On DLQ:
-    messages_consumed.labels(topic=self.topic, status='dlq').inc()
-    dlq_depth.labels(topic=self.topic).inc()
+ start_time = time.time()
+ # ... existing worker logic ...
+ # On success:
+ messages_consumed.labels(topic=self.topic, status='success').inc()
+ processing_latency.labels(topic=self.topic).observe(time.time() - start_time)
+ # On DLQ:
+ messages_consumed.labels(topic=self.topic, status='dlq').inc()
+ dlq_depth.labels(topic=self.topic).inc()
 
 # Lag monitoring (separate background task)
 async def monitor_lag():
-    while True:
-        for topic in ["order.received", "quote.completed", ...]:
-            # Get pending messages count from Redis Streams
-            info = await redis.xpending(topic, "orderflow-workers")
-            lag = info["pending"]
-            consumer_lag_messages.labels(topic=topic).set(lag)
+ while True:
+ for topic in ["order.received", "quote.completed", ...]:
+ # Get pending messages count from Redis Streams
+ info = await redis.xpending(topic, "orderflow-workers")
+ lag = info["pending"]
+ consumer_lag_messages.labels(topic=topic).set(lag)
 
-            # Get oldest message timestamp
-            if lag > 0:
-                oldest = await redis.xpending_range(topic, "orderflow-workers", "-", "+", 1)
-                oldest_timestamp = oldest[0]["time_since_delivered"]
-                consumer_lag_seconds.labels(topic=topic).set(oldest_timestamp / 1000)
-        await asyncio.sleep(10)  # Update every 10 seconds
+ # Get oldest message timestamp
+ if lag > 0:
+ oldest = await redis.xpending_range(topic, "orderflow-workers", "-", "+", 1)
+ oldest_timestamp = oldest[0]["time_since_delivered"]
+ consumer_lag_seconds.labels(topic=topic).set(oldest_timestamp / 1000)
+ await asyncio.sleep(10) # Update every 10 seconds
 
 # Start Prometheus HTTP server (scrape endpoint at :8000/metrics)
 start_http_server(8000)
@@ -482,25 +481,25 @@ start_http_server(8000)
 # alertmanager.yml
 groups:
 - name: orderflow_messaging
-  rules:
-  - alert: HighConsumerLag
-    expr: orderflow_consumer_lag_messages > 1000
-    for: 5m
-    annotations:
-      summary: "Consumer lag exceeds 1000 messages on {{ $labels.topic }}"
+ rules:
+ - alert: HighConsumerLag
+ expr: orderflow_consumer_lag_messages > 1000
+ for: 5m
+ annotations:
+ summary: "Consumer lag exceeds 1000 messages on {{ $labels.topic }}"
 
-  - alert: DLQBuildup
-    expr: orderflow_dlq_depth > 50
-    for: 10m
-    annotations:
-      summary: "DLQ depth exceeds 50 on {{ $labels.topic }} — manual review needed"
+ - alert: DLQBuildup
+ expr: orderflow_dlq_depth > 50
+ for: 10m
+ annotations:
+ summary: "DLQ depth exceeds 50 on {{ $labels.topic }} — manual review needed"
 
-  - alert: HighErrorRate
-    expr: rate(orderflow_messages_consumed_total{status="dlq"}[5m]) /
-          rate(orderflow_messages_consumed_total[5m]) > 0.02
-    for: 5m
-    annotations:
-      summary: "Error rate exceeds 2% — systemic issue"
+ - alert: HighErrorRate
+ expr: rate(orderflow_messages_consumed_total{status="dlq"}[5m]) /
+ rate(orderflow_messages_consumed_total[5m]) > 0.02
+ for: 5m
+ annotations:
+ summary: "Error rate exceeds 2% — systemic issue"
 ```
 
 **Distributed tracing (OpenTelemetry):**
@@ -508,14 +507,14 @@ groups:
 - **Trace context propagation:** `correlation_id` becomes trace ID, `causation_id` links parent-child spans
 - **Visualization:** Jaeger/Zipkin shows full PO lifecycle as a tree of spans with timing for each agent
 
-> 💡 **Industry Standard — OpenTelemetry for distributed tracing:** OpenTelemetry is the CNCF standard for traces, metrics, and logs. It instruments your code once, then exports to any backend (Jaeger, Zipkin, Datadog, New Relic, Honeycomb). For event-driven systems, propagate trace context via message headers (`traceparent` field in CloudEvents). See [OpenTelemetry Messaging Conventions](https://opentelemetry.io/docs/specs/otel/trace/semantic_conventions/messaging/).
+> **Industry Standard — OpenTelemetry for distributed tracing:** OpenTelemetry is the CNCF standard for traces, metrics, and logs. It instruments your code once, then exports to any backend (Jaeger, Zipkin, Datadog, New Relic, Honeycomb). For event-driven systems, propagate trace context via message headers (`traceparent` field in CloudEvents). See [OpenTelemetry Messaging Conventions](https://opentelemetry.io/docs/specs/otel/trace/semantic_conventions/messaging/).
 
 **Checkpoint 5 — Monitoring validation:**
-- [ ] Message rate, consumer lag, DLQ depth, processing latency, error rate metrics instrumented ✅
-- [ ] Prometheus scrape endpoint exposed (`:8000/metrics`) ✅
-- [ ] Grafana dashboard created with 5 key panels ✅
-- [ ] Alertmanager rules configured (lag > 1000, DLQ > 50, error rate > 2%) ✅
-- [ ] Distributed tracing spans created per agent action with correlation ID propagation ✅
+- [ ] Message rate, consumer lag, DLQ depth, processing latency, error rate metrics instrumented
+- [ ] Prometheus scrape endpoint exposed (`:8000/metrics`)
+- [ ] Grafana dashboard created with 5 key panels
+- [ ] Alertmanager rules configured (lag > 1000, DLQ > 50, error rate > 2%)
+- [ ] Distributed tracing spans created per agent action with correlation ID propagation
 
 ---
 
@@ -523,27 +522,27 @@ groups:
 
 When building event-driven multi-agent systems, complete these 5 phases in order:
 
-**✅ Phase 1 (Topology):**
+** Phase 1 (Topology):**
 - [ ] Business events mapped to topics (past-tense naming)
 - [ ] Fan-out and fan-in scenarios identified
 - [ ] Topic naming conventions established
 
-**✅ Phase 2 (Broker):**
+** Phase 2 (Broker):**
 - [ ] Throughput requirement calculated (peak load + 50% headroom)
 - [ ] Broker selected (Redis Streams for <10k msg/sec, Kafka for higher)
 - [ ] Consumer groups created, durability configured
 
-**✅ Phase 3 (Producers):**
+** Phase 3 (Producers):**
 - [ ] Agents converted to event publishers
 - [ ] Retry logic with exponential backoff (1s, 2s, 4s)
 - [ ] DLQ routing for exhausted retries
 
-**✅ Phase 4 (Consumers):**
+** Phase 4 (Consumers):**
 - [ ] Worker pools with fixed concurrency (8-12 per agent type)
 - [ ] Idempotency via `processed:{message_id}` Redis key
 - [ ] DLQ handling and human review workflow
 
-**✅ Phase 5 (Monitor):**
+** Phase 5 (Monitor):**
 - [ ] Metrics: message rate, lag, DLQ depth, latency, error rate
 - [ ] Grafana dashboard with 5 key panels
 - [ ] Alerts: lag > 1000, DLQ > 50, error rate > 2%
@@ -558,32 +557,32 @@ Sarah Chen's standing desk order arrives as an email at 09:15. You're the Lead A
 
 **Before (Ch.3 synchronous — failed)**:
 ```
-09:15  Sarah's email arrives → Intake agent parses → publishes to orchestrator queue
-09:17  Orchestrator thread #1 picks up PO #2024-1847
-09:17  Orchestrator → A2A call to Pricing agent: "Get quotes for 10 standing desks"
-09:18  Pricing agent → TechFurnish API: "Quote request"
-       [TechFurnish API takes 47 minutes to respond — their database is slow today]
-10:04  TechFurnish → Pricing agent: "$789/desk"
-10:04  Pricing agent → Orchestrator: "Best quote: TechFurnish $789/desk"
-10:04  Orchestrator → A2A call to Negotiation agent: "Negotiate with TechFurnish"
-       [Orchestrator thread #1 has been blocked for 47 minutes waiting]
-       [POs #2024-1848 through #2024-2087 are queued, waiting for thread #1]
+09:15 Sarah's email arrives → Intake agent parses → publishes to orchestrator queue
+09:17 Orchestrator thread #1 picks up PO #2024-1847
+09:17 Orchestrator → A2A call to Pricing agent: "Get quotes for 10 standing desks"
+09:18 Pricing agent → TechFurnish API: "Quote request"
+ [TechFurnish API takes 47 minutes to respond — their database is slow today]
+10:04 TechFurnish → Pricing agent: "$789/desk"
+10:04 Pricing agent → Orchestrator: "Best quote: TechFurnish $789/desk"
+10:04 Orchestrator → A2A call to Negotiation agent: "Negotiate with TechFurnish"
+ [Orchestrator thread #1 has been blocked for 47 minutes waiting]
+ [POs #2024-1848 through #2024-2087 are queued, waiting for thread #1]
 ```
 Orchestrator thread count: **3 threads**. PO processing time: **35 min/PO** (when suppliers are fast). Max throughput: **3 threads × 60 min/hr ÷ 35 min/PO = 5 POs/hr = 24 POs/day** (assumes 8-hour workday, ignores queue buildup). Actual throughput when TechFurnish is slow: **1 PO every 47 minutes = 10 POs/day**.
 
 **After (Ch.4 event-driven — success)**:
 ```
-09:15  Sarah's email → Intake agent → publishes event: {"topic": "order.received", "po_id": "2024-1847", "items": [...]}
-09:15  [Message bus] → Pricing agent (consumer) picks up "order.received" event
-09:16  Pricing agent → TechFurnish API: "Quote request"
-       [Pricing agent returns immediately — does not block any orchestrator]
-       [Other Pricing agent replicas (8 total) process POs #2024-1848, #2024-1849, ...]
-10:03  TechFurnish → Pricing agent: "$789/desk"
-10:03  Pricing agent → publishes event: {"topic": "quote.completed", "po_id": "2024-1847", "quote": ...}
-10:03  [Message bus] → Negotiation agent picks up "quote.completed" event
-10:03  Negotiation agent → negotiates with TechFurnish → publishes "negotiation.completed"
-10:18  Approval agent → auto-approves ($7,490 < $10k threshold) → publishes "po.approved"
-10:20  Drafting agent → sends PO to TechFurnish → publishes "po.sent"
+09:15 Sarah's email → Intake agent → publishes event: {"topic": "order.received", "po_id": "2024-1847", "items": [...]}
+09:15 [Message bus] → Pricing agent (consumer) picks up "order.received" event
+09:16 Pricing agent → TechFurnish API: "Quote request"
+ [Pricing agent returns immediately — does not block any orchestrator]
+ [Other Pricing agent replicas (8 total) process POs #2024-1848, #2024-1849, ...]
+10:03 TechFurnish → Pricing agent: "$789/desk"
+10:03 Pricing agent → publishes event: {"topic": "quote.completed", "po_id": "2024-1847", "quote": ...}
+10:03 [Message bus] → Negotiation agent picks up "quote.completed" event
+10:03 Negotiation agent → negotiates with TechFurnish → publishes "negotiation.completed"
+10:18 Approval agent → auto-approves ($7,490 < $10k threshold) → publishes "po.approved"
+10:20 Drafting agent → sends PO to TechFurnish → publishes "po.sent"
 ```
 No orchestrator thread blocked. **50 concurrent POs in-flight** at any moment (limited only by message bus throughput, not thread count). **20 POs/hr throughput = 1,000 POs/day** (assumes 50-hour work week for the system, no downtime). TechFurnish's slow response affects only PO #2024-1847's latency — does not stall the pipeline.
 
@@ -599,22 +598,22 @@ Before configuring brokers or writing code, you must map the business process to
 
 ```mermaid
 graph LR
-    A[Email Arrives] -->|order.received| B[Pricing Agent]
-    A -->|order.received| C[Inventory Agent]
-    B -->|quote.completed| D[Negotiation Agent]
-    D -->|negotiation.completed| E[Approval Agent]
-    E -->|po.approved| F[Drafting Agent]
-    F -->|po.sent| G[Audit Logger]
-    F -->|po.sent| H[ERP Sync]
+ A[Email Arrives] -->|order.received| B[Pricing Agent]
+ A -->|order.received| C[Inventory Agent]
+ B -->|quote.completed| D[Negotiation Agent]
+ D -->|negotiation.completed| E[Approval Agent]
+ E -->|po.approved| F[Drafting Agent]
+ F -->|po.sent| G[Audit Logger]
+ F -->|po.sent| H[ERP Sync]
 
-    style A fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style B fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style C fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style D fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style E fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style F fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style G fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style H fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style A fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style B fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style C fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style D fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style E fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style F fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style G fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style H fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 **Topic hierarchy:** `<entity>.<lifecycle_stage>` naming (e.g., `order.received`, `negotiation.completed`). Past-tense events describe what happened, not commands.
@@ -623,26 +622,26 @@ graph LR
 
 **Fan-in:** Aggregator agent waits for both `quote.completed` and `inventory.checked` before publishing `prechecks.completed`.
 
-> ⚡ **Decision Checkpoint 1 — Event Granularity:** OrderFlow uses 5 lifecycle events (received, quoted, negotiated, approved, sent). Finer granularity (agent.started, agent.thinking) floods the bus. Coarser granularity (po.processed) hides valuable state transitions. **Result:** 5 topics handle 1,200 POs/day = 6,000 events/day = 4.2 events/sec sustained — well within Redis Streams 1,500 msg/sec capacity.
+> **Decision Checkpoint 1 — Event Granularity:** OrderFlow uses 5 lifecycle events (received, quoted, negotiated, approved, sent). Finer granularity (agent.started, agent.thinking) floods the bus. Coarser granularity (po.processed) hides valuable state transitions. **Result:** 5 topics handle 1,200 POs/day = 6,000 events/day = 4.2 events/sec sustained — well within Redis Streams 1,500 msg/sec capacity.
 
 ### Progress on the 8 Constraints
 
 | Constraint | Status | Evidence |
 |------------|--------|----------|
-| #1 THROUGHPUT | ⚡ **ACHIEVED!** | **1,000 POs/day** measured in load test (120% of target) |
-| #2 LATENCY | ⚡ **IMPROVED** | 36hr → **8hr median** (async eliminates queueing delays, but not at <4hr target yet) |
-| #3 ACCURACY | ⚡ **STABLE** | 3.2% error (maintained from Ch.3) |
-| #4 SCALABILITY | ✅ **DISTRIBUTED** | 50 concurrent POs × 8 agents each |
-| #5 RELIABILITY | ⚡ **IMPROVED** | DLQ captures failed messages (0.2% failure rate, all recoverable) |
-| #6 AUDITABILITY | ⚡ **STABLE** | Correlation IDs link events to POs |
-| #7 OBSERVABILITY | ⚡ **IMPROVED** | Message bus metrics (throughput, lag), but no distributed tracing |
-| #8 DEPLOYABILITY | ❌ **BLOCKED** | No deployment automation |
+| #1 THROUGHPUT | **ACHIEVED!** | **1,000 POs/day** measured in load test (120% of target) |
+| #2 LATENCY | **IMPROVED** | 36hr → **8hr median** (async eliminates queueing delays, but not at <4hr target yet) |
+| #3 ACCURACY | **STABLE** | 3.2% error (maintained from Ch.3) |
+| #4 SCALABILITY | **DISTRIBUTED** | 50 concurrent POs × 8 agents each |
+| #5 RELIABILITY | **IMPROVED** | DLQ captures failed messages (0.2% failure rate, all recoverable) |
+| #6 AUDITABILITY | **STABLE** | Correlation IDs link events to POs |
+| #7 OBSERVABILITY | **IMPROVED** | Message bus metrics (throughput, lag), but no distributed tracing |
+| #8 DEPLOYABILITY | **BLOCKED** | No deployment automation |
 
 **What's still blocking**: Pricing agent doesn't see negotiation context → quotes wrong delivery terms. Approval agent doesn't know negotiation history → asks redundant questions. *(Ch.5 — SharedMemory solves this.)*
 
 ### Where Synchronous Stops Working
 
-> 💡 **Async prevents blocking:** In synchronous orchestration, when Agent A calls Agent B and waits for a response, that orchestrator thread is **stuck** — it can't process other tasks while waiting. If Agent B takes 2 hours (e.g., waiting for supplier quotes), that thread is blocked for 2 hours. With only 3 threads, max throughput = 3 tasks/2 hours = 36 tasks/day. Async pub/sub breaks this: Agent A publishes an event ("I need quotes") and **immediately returns** — no waiting. When Agent B finishes (2 hours later), it publishes a "quotes ready" event. Agent A's thread processed 100 other tasks in those 2 hours. Throughput jumps from 36/day to 1,000+/day using the same 3 threads. The magic: **decoupling producer availability from consumer speed**.
+> **Async prevents blocking:** In synchronous orchestration, when Agent A calls Agent B and waits for a response, that orchestrator thread is **stuck** — it can't process other tasks while waiting. If Agent B takes 2 hours (e.g., waiting for supplier quotes), that thread is blocked for 2 hours. With only 3 threads, max throughput = 3 tasks/2 hours = 36 tasks/day. Async pub/sub breaks this: Agent A publishes an event ("I need quotes") and **immediately returns** — no waiting. When Agent B finishes (2 hours later), it publishes a "quotes ready" event. Agent A's thread processed 100 other tasks in those 2 hours. Throughput jumps from 36/day to 1,000+/day using the same 3 threads. The magic: **decoupling producer availability from consumer speed**.
 
 A synchronous orchestrator is effectively a state machine that blocks. The orchestrator calls Agent A, waits, gets a result, calls Agent B, waits. While waiting, the orchestrator thread (or async coroutine) holds state in memory and cannot serve another task.
 
@@ -666,16 +665,16 @@ The solution is to decouple producers from consumers using a **message bus**.
 ### The Async Pub/Sub Model for Agents
 
 ```
-                    ┌────────────────────────────────────┐
-                    │           MESSAGE BUS               │
-                    │                                     │
-Producer:           │  Topic: "order.received"            │  Consumer:
-Intake Service ────▶│  Topic: "negotiation.completed"     │──▶ Negotiation Agent
-                    │  Topic: "po.approved"               │──▶ PO Drafting Agent
-                    │  Topic: "po.sent"                   │──▶ Audit Logger
-                    │                                     │
-                    │  DLQ: "negotiation.failed"          │──▶ Human Review Agent
-                    └────────────────────────────────────┘
+ ┌────────────────────────────────────┐
+ │ MESSAGE BUS │
+ │ │
+Producer: │ Topic: "order.received" │ Consumer:
+Intake Service ────▶│ Topic: "negotiation.completed" │──▶ Negotiation Agent
+ │ Topic: "po.approved" │──▶ PO Drafting Agent
+ │ Topic: "po.sent" │──▶ Audit Logger
+ │ │
+ │ DLQ: "negotiation.failed" │──▶ Human Review Agent
+ └────────────────────────────────────┘
 ```
 
 Key shift in mental model: **agents do not call each other**. Each agent publishes an event to the bus when it completes work. Any agent that cares about that event subscribes to it. The orchestrator is replaced by the topology of subscriptions.
@@ -690,18 +689,18 @@ Every message in an event-driven agent system needs at minimum:
 
 ```python
 {
-    "message_id": "msg-f28a4c91",          # unique envelope ID for deduplication
-    "correlation_id": "po-4812",           # the business entity this message relates to
-    "causation_id": "msg-e7b19a03",        # the message that caused this one (tracing)
-    "topic": "negotiation.completed",
-    "timestamp": "2025-07-14T09:23:11Z",
-    "payload": {
-        "supplier_id": "SUP-88412",
-        "agreed_price_usd": 14.20,
-        "quantity": 500,
-        "delivery_days": 7
-    },
-    "schema_version": "1.0"
+ "message_id": "msg-f28a4c91", # unique envelope ID for deduplication
+ "correlation_id": "po-4812", # the business entity this message relates to
+ "causation_id": "msg-e7b19a03", # the message that caused this one (tracing)
+ "topic": "negotiation.completed",
+ "timestamp": "2025-07-14T09:23:11Z",
+ "payload": {
+ "supplier_id": "SUP-88412",
+ "agreed_price_usd": 14.20,
+ "quantity": 500,
+ "delivery_days": 7
+ },
+ "schema_version": "1.0"
 }
 ```
 
@@ -709,7 +708,7 @@ Every message in an event-driven agent system needs at minimum:
 - **`causation_id`**: Enables distributed tracing across the agent chain — if a message triggers another message, causation_id points back. This is how you reconstruct the full execution graph in a trace viewer.
 - **`schema_version`**: Agents evolve independently. A consumer must be able to ignore fields it does not understand, and must be resilient to minor schema changes without breaking. Versioning the schema makes that explicit.
 
-> ⚡ **Decision Checkpoint 2 — Message Serialization:** OrderFlow uses JSON for message payloads (human-readable, 200 bytes/message). At 6,000 events/day, that's 1.2 MB/day = 36 MB/month message payload bandwidth — negligible. **Alternative:** Protobuf cuts payload size by 60% (80 bytes/message) but requires `.proto` schema files. **Trigger:** Switch to Protobuf when message volume exceeds 100k events/day or when latency-critical (<10ms p95).
+> **Decision Checkpoint 2 — Message Serialization:** OrderFlow uses JSON for message payloads (human-readable, 200 bytes/message). At 6,000 events/day, that's 1.2 MB/day = 36 MB/month message payload bandwidth — negligible. **Alternative:** Protobuf cuts payload size by 60% (80 bytes/message) but requires `.proto` schema files. **Trigger:** Switch to Protobuf when message volume exceeds 100k events/day or when latency-critical (<10ms p95).
 
 ## Reliable Event Handling — Consumers
 
@@ -722,9 +721,9 @@ A dead-letter queue (DLQ) is where messages land when processing fails after all
 ```python
 # Azure Service Bus example: configure a subscription with DLQ on 3 failures
 subscription_config = {
-    "max_delivery_count": 3,         # retry up to 3 times
-    "dead_lettering_on_message_expiration": True,
-    "dead_lettering_on_filter_evaluation_exceptions": True
+ "max_delivery_count": 3, # retry up to 3 times
+ "dead_lettering_on_message_expiration": True,
+ "dead_lettering_on_filter_evaluation_exceptions": True
 }
 ```
 
@@ -742,13 +741,13 @@ subscription_config = {
 
 ```python
 async def handle_send_po_email(message: Message):
-    # Check if this message was already processed
-    if await dedup_store.exists(message.message_id):
-        logger.info(f"Duplicate message {message.message_id} — skipping")
-        return
+ # Check if this message was already processed
+ if await dedup_store.exists(message.message_id):
+ logger.info(f"Duplicate message {message.message_id} — skipping")
+ return
 
-    await email_client.send(...)
-    await dedup_store.set(message.message_id, ttl_seconds=86400)
+ await email_client.send(...)
+ await dedup_store.set(message.message_id, ttl_seconds=86400)
 ```
 
 ### Fan-Out and Fan-In
@@ -757,9 +756,9 @@ async def handle_send_po_email(message: Message):
 
 ```
 "order.received" topic
-    ├──▶ InventoryCheckAgent  (parallel)
-    ├──▶ CreditCheckAgent     (parallel)
-    └──▶ SupplierLookupAgent  (parallel)
+ ├──▶ InventoryCheckAgent (parallel)
+ ├──▶ CreditCheckAgent (parallel)
+ └──▶ SupplierLookupAgent (parallel)
 ```
 
 All three agents consume the same message concurrently. The bus handles the distribution.
@@ -769,14 +768,14 @@ All three agents consume the same message concurrently. The bus handles the dist
 ```python
 # Aggregator pattern: accumulate results until all parallel tasks complete
 async def aggregate_pre_checks(correlation_id: str, result: dict):
-    await shared_store.append(f"prechecks:{correlation_id}", result)
-    all_results = await shared_store.get_all(f"prechecks:{correlation_id}")
+ await shared_store.append(f"prechecks:{correlation_id}", result)
+ all_results = await shared_store.get_all(f"prechecks:{correlation_id}")
 
-    if len(all_results) == EXPECTED_PARALLEL_AGENTS:  # all 3 arrived
-        await bus.publish("prechecks.completed", {
-            "correlation_id": correlation_id,
-            "results": all_results
-        })
+ if len(all_results) == EXPECTED_PARALLEL_AGENTS: # all 3 arrived
+ await bus.publish("prechecks.completed", {
+ "correlation_id": correlation_id,
+ "results": all_results
+ })
 ```
 
 The aggregator listens to a shared topic, accumulates partial results in a store (see Ch.5 — Shared Memory), and publishes a single downstream event when all parallel results have landed.
@@ -792,9 +791,9 @@ The aggregator listens to a shared topic, accumulates partial results in a store
 
 **For agent workloads at OrderFlow's scale (1,000 POs/day):** Azure Service Bus is the pragmatic choice. The built-in session support gives per-PO FIFO ordering; native DLQ requires no custom code; managed identity authentication fits the security model from Ch.6.
 
-> ⚡ **Decision Checkpoint 3 — Broker Selection:** OrderFlow peak load: 1,200 POs/day × 5 events/PO = 6,000 events/day peak. During business hours (10hr): 6,000 ÷ 10hr ÷ 3600s = **0.17 events/sec sustained**. Add 50× spike factor for traffic bursts → **8.5 events/sec** peak requirement. **Broker analysis:** RabbitMQ: 800 msg/sec (94× headroom, $180/mo). Redis Streams: 1,500 msg/sec (176× headroom, $80/mo). Kafka: 10,000 msg/sec (1,176× headroom, $600/mo). **Decision:** Redis Streams — sufficient throughput at lowest cost. **Upgrade trigger:** If sustained load exceeds 1,000 msg/sec, migrate to Kafka (partition by `correlation_id` for ordering).
+> **Decision Checkpoint 3 — Broker Selection:** OrderFlow peak load: 1,200 POs/day × 5 events/PO = 6,000 events/day peak. During business hours (10hr): 6,000 ÷ 10hr ÷ 3600s = **0.17 events/sec sustained**. Add 50× spike factor for traffic bursts → **8.5 events/sec** peak requirement. **Broker analysis:** RabbitMQ: 800 msg/sec (94× headroom, $180/mo). Redis Streams: 1,500 msg/sec (176× headroom, $80/mo). Kafka: 10,000 msg/sec (1,176× headroom, $600/mo). **Decision:** Redis Streams — sufficient throughput at lowest cost. **Upgrade trigger:** If sustained load exceeds 1,000 msg/sec, migrate to Kafka (partition by `correlation_id` for ordering).
 
-> 💡 **Industry Standard — Apache Kafka for Event Sourcing:** When you need to replay the entire event history (audit compliance, rebuild projections, debug production incidents), Kafka's log retention model shines. Set `retention.ms` to 7 days (or indefinite for compliance), then any consumer can replay from any offset. Redis Streams trims old messages (10k max), so it's not suitable for long-term event sourcing. See [Martin Kleppmann — "Designing Data-Intensive Applications" Ch.11](https://dataintensive.net/) for event sourcing deep dive.
+> **Industry Standard — Apache Kafka for Event Sourcing:** When you need to replay the entire event history (audit compliance, rebuild projections, debug production incidents), Kafka's log retention model shines. Set `retention.ms` to 7 days (or indefinite for compliance), then any consumer can replay from any offset. Redis Streams trims old messages (10k max), so it's not suitable for long-term event sourcing. See [Martin Kleppmann — "Designing Data-Intensive Applications" Ch.11](https://dataintensive.net/) for event sourcing deep dive.
 
 ---
 
@@ -825,15 +824,15 @@ No agent calls another agent. The message bus routes events.
 Each agent checks a Redis deduplication store before processing:
 ```python
 if await redis.exists(f"processed:{message.message_id}"):
-    logger.info(f"Duplicate message {message.message_id} — skipping")
-    await bus.acknowledge(message)
-    return
+ logger.info(f"Duplicate message {message.message_id} — skipping")
+ await bus.acknowledge(message)
+ return
 ```
 This prevents duplicate email sends, duplicate PO submissions, duplicate approval notifications.
 
-> ⚡ **Decision Checkpoint 4 — Idempotency Strategy:** OrderFlow uses Redis `SET message_id EX 86400` (24-hour TTL) for deduplication. At 6,000 events/day, that's 6,000 keys × 64 bytes = 384 KB Redis memory — negligible. **Alternative:** Database unique constraint on `message_id` column (slower but survives Redis restart). **Trigger:** Use database if message history must survive cache eviction or for audit compliance (7-year retention).
+> **Decision Checkpoint 4 — Idempotency Strategy:** OrderFlow uses Redis `SET message_id EX 86400` (24-hour TTL) for deduplication. At 6,000 events/day, that's 6,000 keys × 64 bytes = 384 KB Redis memory — negligible. **Alternative:** Database unique constraint on `message_id` column (slower but survives Redis restart). **Trigger:** Use database if message history must survive cache eviction or for audit compliance (7-year retention).
 
-> 💡 **Industry Standard — NATS JetStream for Edge Deployment:** If deploying agents to edge locations (retail stores, manufacturing plants) with intermittent connectivity, NATS JetStream provides lightweight pub/sub with local persistence. Messages queue locally when network is down, then sync to central broker when connectivity restores. At 20 MB binary footprint, NATS runs on Raspberry Pi. See [NATS.io JetStream](https://docs.nats.io/nats-concepts/jetstream) for edge messaging patterns.
+> **Industry Standard — NATS JetStream for Edge Deployment:** If deploying agents to edge locations (retail stores, manufacturing plants) with intermittent connectivity, NATS JetStream provides lightweight pub/sub with local persistence. Messages queue locally when network is down, then sync to central broker when connectivity restores. At 20 MB binary footprint, NATS runs on Raspberry Pi. See [NATS.io JetStream](https://docs.nats.io/nats-concepts/jetstream) for edge messaging patterns.
 
 **Step 4: Configure dead-letter routing**
 
@@ -843,9 +842,9 @@ If a message fails 3 times (e.g., Pricing agent can't parse item description), A
 
 You run a load test: 1,200 POs submitted over 24 hours. Negotiation agent CPU hits 80% → you scale to 12 replicas via Kubernetes Horizontal Pod Autoscaler. Throughput stabilizes at **1,200 POs/day** with **8hr median latency**.
 
-> ⚡ **Decision Checkpoint 5 — Consumer Scaling Strategy:** OrderFlow uses Kubernetes HPA (Horizontal Pod Autoscaler) with target CPU 70%. When Negotiation agent CPU exceeds 70%, HPA spawns new replicas (max 20). **Scaling math:** Each Negotiation worker handles 4 concurrent negotiations. At 1,200 POs/day = 50 POs/hr, need 50 ÷ 4 = **12.5 workers** minimum. Set HPA min=8, max=20, target CPU=70% for headroom. **Result:** Auto-scales from 8 workers (off-peak) to 16 workers (peak traffic).
+> **Decision Checkpoint 5 — Consumer Scaling Strategy:** OrderFlow uses Kubernetes HPA (Horizontal Pod Autoscaler) with target CPU 70%. When Negotiation agent CPU exceeds 70%, HPA spawns new replicas (max 20). **Scaling math:** Each Negotiation worker handles 4 concurrent negotiations. At 1,200 POs/day = 50 POs/hr, need 50 ÷ 4 = **12.5 workers** minimum. Set HPA min=8, max=20, target CPU=70% for headroom. **Result:** Auto-scales from 8 workers (off-peak) to 16 workers (peak traffic).
 
-> 💡 **Industry Standard — Redpanda for Kafka-Compatible Streaming:** Redpanda is a drop-in Kafka replacement written in C++ (vs Kafka's JVM). Same protocol, same client libraries, but 10× faster and no ZooKeeper dependency. At <1 GB memory footprint (vs Kafka's 4 GB), Redpanda fits constrained environments. Benchmarks: 3.6M msg/sec on a single broker. See [Redpanda Benchmarks](https://redpanda.com/blog/kafka-vs-redpanda-performance-benchmark) for throughput comparisons.
+> **Industry Standard — Redpanda for Kafka-Compatible Streaming:** Redpanda is a drop-in Kafka replacement written in C++ (vs Kafka's JVM). Same protocol, same client libraries, but 10× faster and no ZooKeeper dependency. At <1 GB memory footprint (vs Kafka's 4 GB), Redpanda fits constrained environments. Benchmarks: 3.6M msg/sec on a single broker. See [Redpanda Benchmarks](https://redpanda.com/blog/kafka-vs-redpanda-performance-benchmark) for throughput comparisons.
 
 ---
 
@@ -884,24 +883,19 @@ For supplier quote collection (fan-out $k=4$ suppliers): $T_{\text{fanout}} = \m
 ---
 
 ## 6 · What Can Go Wrong
-
-⚠️ **Trap 1: No idempotency → duplicate actions**
+**Trap 1: No idempotency → duplicate actions**
 - **Problem**: At-least-once delivery means messages can be processed twice. Without deduplication, you send duplicate emails, charge cards twice, submit duplicate POs.
 - **Fix**: Store `message_id` in Redis with 24-hour TTL. Check before executing non-idempotent actions.
-
-⚠️ **Trap 2: Message ordering lost across agents**
+**Trap 2: Message ordering lost across agents**
 - **Problem**: Pricing agent publishes "quote.completed" for PO #2024-1847. Negotiation agent publishes "negotiation.completed". But what if negotiation completes *before* the pricing agent's message is consumed by downstream agents? The approval agent sees negotiation results before it sees the quote.
 - **Fix**: Use **Azure Service Bus sessions** (per-PO FIFO ordering) or **Kafka partition keys** (route all messages for one PO to same partition).
-
-⚠️ **Trap 3: Dead-letter queue grows unbounded**
+**Trap 3: Dead-letter queue grows unbounded**
 - **Problem**: A model change causes 2% of POs to fail parsing. 20 POs/day × 30 days = 600 POs in DLQ. No one notices until the business complains about missing POs.
 - **Fix**: Set up **DLQ depth alerts** (PagerDuty alert when DLQ depth > 50). Deploy a Human Review Agent that processes DLQ messages daily.
-
-⚠️ **Trap 4: Message payload too large**
+**Trap 4: Message payload too large**
 - **Problem**: Pricing agent publishes full supplier catalog (5 MB JSON) in `quote.completed` event. Azure Service Bus max message size: **256 KB**. Message rejected.
 - **Fix**: Store large payloads in **blob storage** (Azure Blob, S3). Publish only a **reference** in the message: `{"quote_blob_url": "https://..."}`. Consumer fetches blob on demand.
-
-⚠️ **Trap 5: Fan-in without timeout → stuck workflows**
+**Trap 5: Fan-in without timeout → stuck workflows**
 - **Problem**: You fan out to 4 suppliers. 3 respond within 10 seconds. 1 supplier times out after 60 seconds. Your aggregator waits forever for the 4th response.
 - **Fix**: Set a **fan-in timeout** (e.g., 30 seconds). After timeout, aggregator publishes results from the 3 responders + marks the 4th as "timeout". The downstream agent proceeds with partial data.
 
@@ -920,46 +914,44 @@ For supplier quote collection (fan-out $k=4$ suppliers): $T_{\text{fanout}} = \m
 ---
 
 ## 8 · Progress Check — What We Can Solve Now
-
-✅ **Unlocked capabilities**:
-- ✅ **Async event-driven messaging**: Agents publish to Azure Service Bus — no blocking orchestrator threads
-- ✅ **Independent agent scaling**: 3× Inventory, 8× Negotiation, 2× Approval agents — each scales to load
-- ✅ **Dead-letter queues**: Failed messages (0.2% rate) route to human review — don't block pipeline
-- ✅ **Fan-out parallelism**: One `order.received` event triggers 4 parallel supplier quote requests — results merged via aggregator
-- ✅ **Idempotency**: Redis deduplication prevents duplicate email sends, duplicate PO submissions
-- ⚡ **Constraint #1 THROUGHPUT**: ✅ **ACHIEVED!** 1,200 POs/day measured in load test (120% of 1,000 target)
+**Unlocked capabilities**:
+- **Async event-driven messaging**: Agents publish to Azure Service Bus — no blocking orchestrator threads
+- **Independent agent scaling**: 3× Inventory, 8× Negotiation, 2× Approval agents — each scales to load
+- **Dead-letter queues**: Failed messages (0.2% rate) route to human review — don't block pipeline
+- **Fan-out parallelism**: One `order.received` event triggers 4 parallel supplier quote requests — results merged via aggregator
+- **Idempotency**: Redis deduplication prevents duplicate email sends, duplicate PO submissions
+- **Constraint #1 THROUGHPUT**: **ACHIEVED!** 1,200 POs/day measured in load test (120% of 1,000 target)
 
 **Progress toward constraints**:
 
 ```mermaid
 graph LR
-    Ch1["Ch.1\nMessage Formats"]:::done
-    Ch2["Ch.2\nMCP"]:::done
-    Ch3["Ch.3\nA2A"]:::done
-    Ch4["Ch.4\nEvent-Driven"]:::current
-    Ch5["Ch.5\nShared Memory"]:::upcoming
-    Ch6["Ch.6\nTrust & Sandboxing"]:::upcoming
-    Ch7["Ch.7\nAgent Frameworks"]:::upcoming
-    Ch1 --> Ch2 --> Ch3 --> Ch4 --> Ch5 --> Ch6 --> Ch7
-    classDef done fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    classDef current fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    classDef upcoming fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ Ch1["Ch.1\nMessage Formats"]:::done
+ Ch2["Ch.2\nMCP"]:::done
+ Ch3["Ch.3\nA2A"]:::done
+ Ch4["Ch.4\nEvent-Driven"]:::current
+ Ch5["Ch.5\nShared Memory"]:::upcoming
+ Ch6["Ch.6\nTrust & Sandboxing"]:::upcoming
+ Ch7["Ch.7\nAgent Frameworks"]:::upcoming
+ Ch1 --> Ch2 --> Ch3 --> Ch4 --> Ch5 --> Ch6 --> Ch7
+ classDef done fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ classDef current fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ classDef upcoming fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 | Constraint | Before | After Ch.4 | Change |
 |------------|--------|------------|--------|
-| #1 THROUGHPUT | 24 POs/day (synchronous blocking) | **1,200 POs/day** | ✅ **TARGET EXCEEDED** (50× improvement) |
-| #2 LATENCY | 36 hours median | **8 hours median** | ⚡ **4.5× faster** (still not <4hr target) |
-| #3 ACCURACY | 3.2% error | 3.2% error | ⚡ Stable |
-| #4 SCALABILITY | 8 agents, 3 pods | 8 agents, 50 concurrent POs | ✅ Validated at scale |
-| #5 RELIABILITY | Task retry via A2A | **DLQ + auto-retry + 0.2% failure rate** | ⚡ **Production-grade** |
-| #6 AUDITABILITY | Task IDs | Correlation IDs link events | ⚡ **Improved** |
-| #7 OBSERVABILITY | Task status queryable | **Message bus metrics** (throughput, lag) | ⚡ **Improved** |
-| #8 DEPLOYABILITY | No automation | No automation | ❌ No change |
+| #1 THROUGHPUT | 24 POs/day (synchronous blocking) | **1,200 POs/day** | **TARGET EXCEEDED** (50× improvement) |
+| #2 LATENCY | 36 hours median | **8 hours median** | **4.5× faster** (still not <4hr target) |
+| #3 ACCURACY | 3.2% error | 3.2% error | Stable |
+| #4 SCALABILITY | 8 agents, 3 pods | 8 agents, 50 concurrent POs | Validated at scale |
+| #5 RELIABILITY | Task retry via A2A | **DLQ + auto-retry + 0.2% failure rate** | **Production-grade** |
+| #6 AUDITABILITY | Task IDs | Correlation IDs link events | **Improved** |
+| #7 OBSERVABILITY | Task status queryable | **Message bus metrics** (throughput, lag) | **Improved** |
+| #8 DEPLOYABILITY | No automation | No automation | No change |
 
 **What you can solve now**:
-
-✅ **High-volume PO processing**:
+**High-volume PO processing**:
 ```
 Before Ch.4:
 Synchronous orchestrator: 3 threads × 8hr = 24 POs/day (2.4% of target)
@@ -967,35 +959,34 @@ Queue buildup: 240 POs waiting, 36hr median latency
 Single supplier timeout stalls entire pipeline
 
 After Ch.4:
-Async message bus: 50 concurrent POs × 20 POs/hr = 1,200 POs/day ✅
+Async message bus: 50 concurrent POs × 20 POs/hr = 1,200 POs/day
 8hr median latency (4.5× faster)
 DLQ captures 0.2% failures → all recoverable
 
-Result: ✅ Throughput constraint achieved (120% of 1,000 POs/day target)
+Result: Throughput constraint achieved (120% of 1,000 POs/day target)
 ```
-
-✅ **Graceful degradation on supplier timeouts**:
+**Graceful degradation on supplier timeouts**:
 ```
 Before: TechFurnish API timeout → entire pipeline stalls → no POs processed
 After: TechFurnish timeout → message moved to DLQ → other POs continue → human review agent notified
-Result: ✅ Reliability improved (0.2% failure rate, no cascading failures)
+Result: Reliability improved (0.2% failure rate, no cascading failures)
 ```
 
 **What you still can't solve**:
 
-- ❌ **Cross-agent context blindness**: Pricing agent doesn't see negotiation results → quotes wrong delivery terms. Approval agent doesn't know negotiation history → asks redundant questions. Each agent operates in isolation. → **Need Ch.5 (Shared Memory) for blackboard architecture — shared Redis store gives all agents visibility into full PO context**
-- ❌ **<4hr latency target**: Current 8hr median (4.5× faster than 36hr, but still double target). Agents repeat work (Pricing agent re-fetches quotes already cached by Negotiation agent). → **Need Ch.5 for shared cache to eliminate redundant API calls**
-- ❌ **Zero-downtime deployment**: Manual kubectl apply → brief downtime → rollback requires re-deploying previous image. → **Need Ch.7 (Agent Frameworks) for blue-green deployment + health checks**
+- **Cross-agent context blindness**: Pricing agent doesn't see negotiation results → quotes wrong delivery terms. Approval agent doesn't know negotiation history → asks redundant questions. Each agent operates in isolation. → **Need Ch.5 (Shared Memory) for blackboard architecture — shared Redis store gives all agents visibility into full PO context**
+- **<4hr latency target**: Current 8hr median (4.5× faster than 36hr, but still double target). Agents repeat work (Pricing agent re-fetches quotes already cached by Negotiation agent). → **Need Ch.5 for shared cache to eliminate redundant API calls**
+- **Zero-downtime deployment**: Manual kubectl apply → brief downtime → rollback requires re-deploying previous image. → **Need Ch.7 (Agent Frameworks) for blue-green deployment + health checks**
 
-**Real-world status**: You can now process 1,200 POs/day (target achieved ✅), but latency is 8hr median (need 4hr) and agents can't share context (need shared memory).
+**Real-world status**: You can now process 1,200 POs/day (target achieved ), but latency is 8hr median (need 4hr) and agents can't share context (need shared memory).
 
-**Next up**: Ch.5 (Shared Memory & Blackboard Architectures) gives you **Redis-backed shared state** — Pricing agent writes quotes, Negotiation agent reads them → eliminates redundant API calls → **target: <4hr latency** ✅
+**Next up**: Ch.5 (Shared Memory & Blackboard Architectures) gives you **Redis-backed shared state** — Pricing agent writes quotes, Negotiation agent reads them → eliminates redundant API calls → **target: <4hr latency**
 
 ---
 
 ## 9 · Bridge to Ch.5
 
-Ch.4 unlocked **1,000 POs/day throughput** (120% of target ✅) via async messaging, but agents operate in isolation — Pricing agent can't see what Negotiation agent learned, Approval agent can't see what Pricing agent quoted → redundant API calls, repeated work, 8hr median latency (2× the <4hr target). Ch.5 (**Shared Memory & Blackboard Architectures**) introduces a **Redis-backed blackboard** where all agents read/write shared PO state → Pricing agent writes `order:2024-1847:quotes`, Negotiation agent reads it → **eliminates redundant work** → **<4hr latency target** ✅.
+Ch.4 unlocked **1,000 POs/day throughput** (120% of target ) via async messaging, but agents operate in isolation — Pricing agent can't see what Negotiation agent learned, Approval agent can't see what Pricing agent quoted → redundant API calls, repeated work, 8hr median latency (2× the <4hr target). Ch.5 (**Shared Memory & Blackboard Architectures**) introduces a **Redis-backed blackboard** where all agents read/write shared PO state → Pricing agent writes `order:2024-1847:quotes`, Negotiation agent reads it → **eliminates redundant work** → **<4hr latency target** .
 
 ---
 

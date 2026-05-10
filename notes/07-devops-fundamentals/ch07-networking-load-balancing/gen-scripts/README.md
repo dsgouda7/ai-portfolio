@@ -19,18 +19,18 @@ Generates diagram showing reverse proxy architecture:
 ### `gen_ch07_load_balancing_algorithms.py`
 Generates diagram comparing three load balancing algorithms:
 - **Output:** `../img/gen_ch07_load_balancing_algorithms.png`
-- **Algorithms:** 
-  - Round-robin (even distribution)
-  - Least connections (route to least busy backend)
-  - IP hash (sticky sessions)
+- **Algorithms:**
+ - Round-robin (even distribution)
+ - Least connections (route to least busy backend)
+ - IP hash (sticky sessions)
 - **Includes:** Use cases, pros/cons for each algorithm
 
 ### `gen_ch07_health_checks.py`
 Generates diagram comparing passive vs active health checks:
 - **Output:** `../img/gen_ch07_health_checks.png`
-- **Shows:** 
-  - Passive: Nginx detects failures from real request timeouts
-  - Active: Nginx probes `/health` endpoint every 5 seconds
+- **Shows:**
+ - Passive: Nginx detects failures from real request timeouts
+ - Active: Nginx probes `/health` endpoint every 5 seconds
 - **Timeline:** Failure detection from t=0 to t=20s
 - **Includes:** Configuration examples, pros/cons, best practices
 
@@ -59,11 +59,11 @@ python gen_ch07_reverse_proxy.py
 All diagrams are saved to `../img/`:
 ```
 ../img/
-├── ch07-networking-load-balancing-needle.gif  # Chapter animation
-├── ch07-networking-load-balancing-needle.png  # Static version
-├── gen_ch07_reverse_proxy.png                  # Reverse proxy architecture
-├── gen_ch07_load_balancing_algorithms.png      # Algorithm comparison
-└── gen_ch07_health_checks.png                  # Health check strategies
+├── ch07-networking-load-balancing-needle.gif # Chapter animation
+├── ch07-networking-load-balancing-needle.png # Static version
+├── gen_ch07_reverse_proxy.png # Reverse proxy architecture
+├── gen_ch07_load_balancing_algorithms.png # Algorithm comparison
+└── gen_ch07_health_checks.png # Health check strategies
 ```
 
 ## Animation Conventions
@@ -78,11 +78,11 @@ Following the established pattern from Math Under the Hood and ML chapters:
 ## Diagram Style
 
 - **Clear hierarchy:** Title → Main content → Details
-- **Consistent colors:** 
-  - Blue (`#3b82f6`): Client/Internet
-  - Green (`#059669`): Nginx/Proxy
-  - Purple (`#4f46e5`): Backends
-  - Red (`#ef4444`): Failures
-  - Yellow (`#f59e0b`): Warnings/Configuration
+- **Consistent colors:**
+ - Blue (`#3b82f6`): Client/Internet
+ - Green (`#059669`): Nginx/Proxy
+ - Purple (`#4f46e5`): Backends
+ - Red (`#ef4444`): Failures
+ - Yellow (`#f59e0b`): Warnings/Configuration
 - **Annotations:** Use arrows, labels, and boxes to guide the eye
 - **Readability:** 150 DPI, large fonts (10-14pt), high contrast

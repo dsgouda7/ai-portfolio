@@ -23,8 +23,8 @@ Every chapter uses the *same* real-world problem: a football (soccer) striker li
 **Can we score this goal?** To succeed, the ball must satisfy **THREE constraints simultaneously**:
 
 1. **🧱 Wall Clearance**: At the wall position (9.15 m horizontal distance, ~0.6s flight time), the ball must be **above 1.8 m** (wall height)
-2. **🎯 Crossbar Clearance**: At the goal line (20 m horizontal distance, ~1.2s flight time), the ball must be **below 2.44 m** (crossbar height)
-3. **⚡ Keeper-Beating Speed**: The ball must arrive fast enough (or with short enough flight time) that the goalkeeper cannot react
+2. ** Crossbar Clearance**: At the goal line (20 m horizontal distance, ~1.2s flight time), the ball must be **below 2.44 m** (crossbar height)
+3. ** Keeper-Beating Speed**: The ball must arrive fast enough (or with short enough flight time) that the goalkeeper cannot react
 
 These are **competing constraints** — a high launch angle clears the wall easily but might sail over the crossbar. A low angle beats the keeper but hits the wall. Finding the right launch speed v₀ and angle θ is a **constrained multi-objective optimization problem** — exactly what real ML does!
 
@@ -34,13 +34,13 @@ This thread was picked deliberately — projectile motion is the problem that *f
 
 | Chapter | Math Tool | What It Unlocks | Challenge Progress |
 |---|---|---|---|
-| Ch.1 Linear Algebra | Lines, slopes, intercepts | Predict height during first 0.1s (linear approx) | ❌ Can't model full curve yet |
-| Ch.2 Non-linear Algebra | Polynomials, parabolas | Model full trajectory h(t) = v₀ᵧt - ½gt² | ❌ Can't find peak/crossings yet |
-| Ch.3 Calculus Intro | Derivatives, rate of change | Find apex (h'=0), compute wall/goal heights | ✅ **Can check constraints 1 & 2!** |
-| Ch.4 Small Steps | Gradient descent, iteration | Optimize ONE parameter (angle for max range) | ✅ Can find best single-variable solution |
-| Ch.5 Matrices | Multi-variable systems | Handle v₀ AND θ AND wind simultaneously | ❌ Can't optimize multi-dim yet |
-| Ch.6 Chain Rule | Gradients, Jacobians | Optimize MULTIPLE parameters at once | ✅ **Can solve full challenge!** |
-| Ch.7 Probability | Distributions, noise | Handle striker fatigue, ball variance | ✅ Can reason about success rate |
+| Ch.1 Linear Algebra | Lines, slopes, intercepts | Predict height during first 0.1s (linear approx) | Can't model full curve yet |
+| Ch.2 Non-linear Algebra | Polynomials, parabolas | Model full trajectory h(t) = v₀ᵧt - ½gt² | Can't find peak/crossings yet |
+| Ch.3 Calculus Intro | Derivatives, rate of change | Find apex (h'=0), compute wall/goal heights | **Can check constraints 1 & 2!** |
+| Ch.4 Small Steps | Gradient descent, iteration | Optimize ONE parameter (angle for max range) | Can find best single-variable solution |
+| Ch.5 Matrices | Multi-variable systems | Handle v₀ AND θ AND wind simultaneously | Can't optimize multi-dim yet |
+| Ch.6 Chain Rule | Gradients, Jacobians | Optimize MULTIPLE parameters at once | **Can solve full challenge!** |
+| Ch.7 Probability | Distributions, noise | Handle striker fatigue, ball variance | Can reason about success rate |
 
 **The narrative arc**: We move from "can we predict?" (Ch.1-3) → "can we optimize one thing?" (Ch.4) → "can we optimize everything?" (Ch.5-6) → "can we handle uncertainty?" (Ch.7).
 

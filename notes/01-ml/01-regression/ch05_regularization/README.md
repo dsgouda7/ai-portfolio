@@ -12,15 +12,15 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 💡 **The mission**: Launch **SmartVal AI** — a production home valuation system satisfying 5 constraints:
+> **The mission**: Launch **SmartVal AI** — a production home valuation system satisfying 5 constraints:
 > 1. **ACCURACY**: <$40k MAE — 2. **GENERALIZATION**: Unseen districts — 3. **MULTI-TASK**: Value + Segment — 4. **INTERPRETABILITY**: Explainable — 5. **PRODUCTION**: Scale + Monitor
 
 **What we know so far:**
-- ✅ Ch.1: Single feature → $70k MAE
-- ✅ Ch.2: All 8 features → $55k MAE
-- ✅ Ch.3: Feature importance & multicollinearity audit
-- ✅ Ch.4: Polynomial features → $48k MAE
-- ❌ **But we're $8k away AND at risk of overfitting!**
+- Ch.1: Single feature → $70k MAE
+- Ch.2: All 8 features → $55k MAE
+- Ch.3: Feature importance & multicollinearity audit
+- Ch.4: Polynomial features → $48k MAE
+- **But we're $8k away AND at risk of overfitting!**
 
 **What's blocking us:**
 
@@ -48,33 +48,33 @@ Not all 44 features carry real signal. Some are noise artifacts of the polynomia
 - Their polynomial products (`AveRooms²`, `AveRooms × AveBedrms`, `AveBedrms²`) make it worse
 
 **What this chapter unlocks:**
-⚡ **Regularization controls both problems simultaneously:**
+**Regularization controls both problems simultaneously:**
 - **Ridge (L2)**: Shrinks ALL weights → handles multicollinearity, stabilizes predictions
 - **Lasso (L1)**: Shrinks SOME weights to exactly zero → automatic feature selection
 
-Result: **~$38k MAE** 💡 **Target achieved!**
+Result: **~$38k MAE** **Target achieved!**
 
 ```mermaid
 flowchart LR
-    subgraph "The Problem"
-        POLY["44 polynomial<br/>features"] --> NOISE["Many are noise<br/>Overfitting risk"]
-        POLY --> COLLIN["Some are correlated<br/>Unstable weights"]
-    end
-    
-    subgraph "The Solutions"
-        RIDGE["Ridge (L2)<br/>Shrink all weights<br/>Fix collinearity"] 
-        LASSO["Lasso (L1)<br/>Zero out noise<br/>Feature selection"]
-    end
-    
-    NOISE --> LASSO
-    COLLIN --> RIDGE
-    
-    RIDGE --> RESULT["$38k MAE ✅<br/>Target achieved!"]
-    LASSO --> RESULT
-    
-    style NOISE fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style COLLIN fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style RESULT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ subgraph "The Problem"
+ POLY["44 polynomial<br/>features"] --> NOISE["Many are noise<br/>Overfitting risk"]
+ POLY --> COLLIN["Some are correlated<br/>Unstable weights"]
+ end
+
+ subgraph "The Solutions"
+ RIDGE["Ridge (L2)<br/>Shrink all weights<br/>Fix collinearity"]
+ LASSO["Lasso (L1)<br/>Zero out noise<br/>Feature selection"]
+ end
+
+ NOISE --> LASSO
+ COLLIN --> RIDGE
+
+ RIDGE --> RESULT["$38k MAE <br/>Target achieved!"]
+ LASSO --> RESULT
+
+ style NOISE fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style COLLIN fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style RESULT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -146,9 +146,9 @@ These features capture training-set correlations that don't generalize. District
 
 | District | True Value | Ridge Prediction | Error | Improvement |
 |----------|------------|------------------|-------|-------------|
-| #1 (SF) | $452k | $467k | +$15k | $33k → $15k ✅ |
-| #2 (Inland) | $125k | $112k | −$13k | $27k → $13k ✅ |
-| #3 (Coastal) | $310k | $325k | +$15k | $42k → $15k ✅ |
+| #1 (SF) | $452k | $467k | +$15k | $33k → $15k |
+| #2 (Inland) | $125k | $112k | −$13k | $27k → $13k |
+| #3 (Coastal) | $310k | $325k | +$15k | $42k → $15k |
 
 **Test MAE:** $48k → **$38k** (Ridge shrinks noise → better generalization)
 
@@ -158,11 +158,11 @@ These features capture training-set correlations that don't generalize. District
 
 | Feature | OLS Weight | Lasso Weight | Status |
 |---------|------------|--------------|--------|
-| `MedInc` | +0.68 | +0.65 | ✅ Kept |
-| `Latitude` | −0.42 | −0.38 | ✅ Kept |
-| `AveRooms × AveBedrms` | +0.29 | +0.06 | ⚠️ Shrunk |
-| `Population × AveBedrms` | +0.21 | **0.00** | ❌ Zeroed |
-| `AveOccup²` | −0.18 | **0.00** | ❌ Zeroed |
+| `MedInc` | +0.68 | +0.65 | Kept |
+| `Latitude` | −0.42 | −0.38 | Kept |
+| `AveRooms × AveBedrms` | +0.29 | +0.06 | Shrunk |
+| `Population × AveBedrms` | +0.21 | **0.00** | Zeroed |
+| `AveOccup²` | −0.18 | **0.00** | Zeroed |
 
 **Result:** Only 32 features remain active. The model is now **sparse** — easier to interpret, slightly worse accuracy.
 
@@ -170,13 +170,13 @@ These features capture training-set correlations that don't generalize. District
 
 ### 2.4 · Three Key Patterns
 
-**1. Signal strength determines survival:**  
+**1. Signal strength determines survival:**
 Strong features (`MedInc`, `Latitude`) resist shrinkage in both Ridge and Lasso. Weak features (`Population × AveBedrms`) shrink dramatically or hit zero.
 
-**2. Multicollinearity gets resolved differently:**  
+**2. Multicollinearity gets resolved differently:**
 When `AveRooms` and `AveBedrms` are correlated (ρ = 0.85), Ridge **distributes** weight across both, while Lasso **picks one arbitrarily** and zeros the other.
 
-**3. Noise features collapse:**  
+**3. Noise features collapse:**
 Cross-terms like `Population × AveBedrms` lack domain justification. Ridge shrinks them to near-zero; Lasso eliminates them completely.
 
 **The trade-off:** Ridge achieved the $38k target while keeping all 44 features (safer for production). Lasso achieved $39k with only 32 features (better for interpretability).
@@ -244,24 +244,24 @@ Consider `Population × AveOccup` (a noise feature with weak MSE gradient ≈ 0.
 
 **Ridge path with λ=1.0:**
 ```
-Iteration  |  w_j    |  MSE grad  |  Ridge grad (2λw)  |  Net force  |  Next w_j
+Iteration | w_j | MSE grad | Ridge grad (2λw) | Net force | Next w_j
 ----------------------------------------------------------------------------------
-0          |  0.100  |  +0.0005   |  +0.200            |  −0.1995    |  0.080
-50         |  0.010  |  +0.0005   |  +0.020            |  −0.0195    |  0.008
-100        |  0.001  |  +0.0005   |  +0.002            |  −0.0015    |  0.0008
-∞          |  ~0.00025 | +0.0005  |  +0.0005           |  ≈0         |  **STUCK near zero**
+0 | 0.100 | +0.0005 | +0.200 | −0.1995 | 0.080
+50 | 0.010 | +0.0005 | +0.020 | −0.0195 | 0.008
+100 | 0.001 | +0.0005 | +0.002 | −0.0015 | 0.0008
+∞ | ~0.00025 | +0.0005 | +0.0005 | ≈0 | **STUCK near zero**
 ```
 
 Ridge gradient weakens as $w_j \to 0$, eventually balancing the tiny MSE gradient. The weight **never reaches exact zero**.
 
 **Lasso path with λ=0.001:**
 ```
-Iteration  |  w_j    |  MSE grad  |  Lasso grad  |  Net force  |  Next w_j
+Iteration | w_j | MSE grad | Lasso grad | Net force | Next w_j
 ----------------------------------------------------------------------------------
-0          |  0.100  |  +0.0005   |  +0.001      |  −0.0005    |  0.099
-10         |  0.010  |  +0.0005   |  +0.001      |  −0.0005    |  0.009
-20         |  0.001  |  +0.0005   |  +0.001      |  −0.0005    |  0.000
-21         |  **0.000** | N/A    |  N/A         |  N/A        |  **ZEROED**
+0 | 0.100 | +0.0005 | +0.001 | −0.0005 | 0.099
+10 | 0.010 | +0.0005 | +0.001 | −0.0005 | 0.009
+20 | 0.001 | +0.0005 | +0.001 | −0.0005 | 0.000
+21 | **0.000** | N/A | N/A | N/A | **ZEROED**
 ```
 
 Lasso gradient stays constant at +0.001 regardless of $w_j$. Once $w_j$ gets small enough that the MSE gradient (+0.0005) can't overcome the penalty gradient (+0.001), the weight hits **exact zero** and stays there.
@@ -280,8 +280,8 @@ This is why Lasso is called a **feature selection** method — it makes binary d
 ![MSE convergence comparison with same regularization parameter](img/ch05-mse-convergence-comparison.png)
 
 **What this shows:** All three loss functions trained with the **same λ=0.001** to compare optimization paths fairly:
-- **MSE (no regularization)** — Converges quickly but risks overfitting  
-- **MSE + L2 (Ridge)** — Smooth convergence with continuous weight shrinkage  
+- **MSE (no regularization)** — Converges quickly but risks overfitting
+- **MSE + L2 (Ridge)** — Smooth convergence with continuous weight shrinkage
 - **MSE + L1 (Lasso)** — Similar trajectory but with discrete feature zeroing
 
 **Key insight:** Regularization adds a "drag force" during optimization. The penalty opposes the MSE gradient at each iteration, slowing convergence but improving generalization.
@@ -290,12 +290,12 @@ This is why Lasso is called a **feature selection** method — it makes binary d
 
 ![Lambda sensitivity: convergence rates for different λ values](img/ch05-lambda-convergence-sensitivity.png)
 
-**Left panel (L1/Lasso):** Larger λ slows convergence but stabilizes final MSE  
+**Left panel (L1/Lasso):** Larger λ slows convergence but stabilizes final MSE
 **Right panel (L2/Ridge):** Same pattern — the regularization-convergence trade-off is fundamental
 
 **Reading the curves:**
-- **λ = 10⁻⁵** (yellow): Fast convergence, minimal regularization  
-- **λ = 10⁻³** (blue): Balanced — reasonable convergence speed, good generalization  
+- **λ = 10⁻⁵** (yellow): Fast convergence, minimal regularization
+- **λ = 10⁻³** (blue): Balanced — reasonable convergence speed, good generalization
 - **λ = 10⁻¹** (purple): Slow convergence, heavy regularization (risks underfitting)
 
 ### Comparison Table
@@ -303,25 +303,25 @@ This is why Lasso is called a **feature selection** method — it makes binary d
 | | Ridge (L2) | Lasso (L1) |
 |---|---|---|
 | **Penalty** | $\lambda\sum w_j^2$ | $\lambda\sum\|w_j\|$ |
-| **Zeros out features?** | ❌ Never | ✅ Yes |
-| **Handles collinearity?** | ✅ Yes (distributes credit) | ⚠️ Picks one arbitrarily |
+| **Zeros out features?** | Never | Yes |
+| **Handles collinearity?** | Yes (distributes credit) | Picks one arbitrarily |
 | **Optimization** | Smooth gradient everywhere | Non-differentiable at zero |
 | **Best when** | Correlated features, stability | Feature selection, interpretability |
 
 ```mermaid
 flowchart TD
-    START["Choose Regularization"] --> Q1{"Need feature<br/>selection?"}
-    
-    Q1 -->|"Yes"| LASSO["✅ Lasso (L1)<br/>Automatic selection<br/>Sparse model"]
-    Q1 -->|"No"| Q2{"Features<br/>correlated?"}
-    
-    Q2 -->|"Yes (VIF > 5)"| RIDGE["✅ Ridge (L2)<br/>Shrinks all weights<br/>Stable coefficients"]
-    Q2 -->|"No, both work"| RIDGE2["✅ Ridge or Lasso<br/>Try both"]
-    
-    style START fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style RIDGE fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style RIDGE2 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style LASSO fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ START["Choose Regularization"] --> Q1{"Need feature<br/>selection?"}
+
+ Q1 -->|"Yes"| LASSO[" Lasso (L1)<br/>Automatic selection<br/>Sparse model"]
+ Q1 -->|"No"| Q2{"Features<br/>correlated?"}
+
+ Q2 -->|"Yes (VIF > 5)"| RIDGE[" Ridge (L2)<br/>Shrinks all weights<br/>Stable coefficients"]
+ Q2 -->|"No, both work"| RIDGE2[" Ridge or Lasso<br/>Try both"]
+
+ style START fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style RIDGE fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style RIDGE2 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style LASSO fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -362,23 +362,22 @@ This is why Lasso is called a "feature selection" method — it doesn't just shr
 ---
 
 ## 5 · The λ Dial: From $48k to $38k MAE
-
-⚡ **Victory:** SmartVal AI hit the <$40k target by tuning λ (regularization strength).
+**Victory:** SmartVal AI hit the <$40k target by tuning λ (regularization strength).
 
 ### 5.1 · The Accuracy Needle
 
 ![Regularization needle: MAE drops as λ increases](img/ch05-regularization-needle.gif)
 
-- **λ = 0**: No penalty → $48k MAE (overfitting)  
-- **λ = 1.0**: Optimal → **$38k MAE** ✅  
+- **λ = 0**: No penalty → $48k MAE (overfitting)
+- **λ = 1.0**: Optimal → **$38k MAE**
 - **λ = 1000**: Over-penalized → $65k MAE (underfitting)
 
 ### 5.2 · The U-Shaped Validation Curve
 
 ![Lambda sweep showing U-shaped curve with optimal point](img/ch05-lambda-sweep.png)
 
-**Left side** (low λ): Overfitting — training MAE low, test MAE high  
-**Bottom** (λ ≈ 1.0): Goldilocks zone — both low  
+**Left side** (low λ): Overfitting — training MAE low, test MAE high
+**Bottom** (λ ≈ 1.0): Goldilocks zone — both low
 **Right side** (high λ): Underfitting — both high
 
 **Production workflow:**
@@ -391,18 +390,18 @@ This is why Lasso is called a "feature selection" method — it doesn't just shr
 
 ![Weight shrinkage across lambda values](img/ch05-lambda-powers-sweep.gif)
 
-**Left panel:** All 44 features (gray) + tracked features (color) shrink as λ increases  
+**Left panel:** All 44 features (gray) + tracked features (color) shrink as λ increases
 **Right panel:** Current weight magnitudes — noise features collapse faster than signal features
 
 **Key observations:**
-- **λ = 0.001**: Minimal regularization → noise features still large  
-- **λ = 1.0**: Sweet spot → signal features strong, noise suppressed  
+- **λ = 0.001**: Minimal regularization → noise features still large
+- **λ = 1.0**: Sweet spot → signal features strong, noise suppressed
 - **λ = 1000**: Over-regularized → even strong signals nearly zero
 
 **Why this matters:** λ is the first hyperparameter you've seen that **explicitly controls the bias-variance trade-off**. This same principle appears in:
-- Neural network weight decay  
-- Dropout  
-- Batch normalization  
+- Neural network weight decay
+- Dropout
+- Batch normalization
 - Early stopping
 
 ---
@@ -419,75 +418,71 @@ This is why Lasso is called a "feature selection" method — it doesn't just shr
 
 ```mermaid
 flowchart TD
-    DIAG["Regularization Diagnostics"] --> Q{"What symptom?"}
-    
-    Q -->|"MAE didn't improve<br/>over Ch.4"| Q1{"λ value?"}
-    Q -->|"Lasso unstable<br/>on correlated features"| FIX2["✅ Use Ridge instead<br/>(handles correlation)"]
-    Q -->|"All weights → 0"| FIX3["✅ λ too large<br/>Reduce λ by 10×"]
-    
-    Q1 -->|"λ ≈ 0"| FIX4["✅ Increase λ<br/>(no penalty = no help)"]
-    Q1 -->|"λ > 0"| FIX5["✅ Check feature scaling<br/>Must standardize first"]
-    
-    style DIAG fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style FIX2 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style FIX3 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style FIX4 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style FIX5 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ DIAG["Regularization Diagnostics"] --> Q{"What symptom?"}
+
+ Q -->|"MAE didn't improve<br/>over Ch.4"| Q1{"λ value?"}
+ Q -->|"Lasso unstable<br/>on correlated features"| FIX2[" Use Ridge instead<br/>(handles correlation)"]
+ Q -->|"All weights → 0"| FIX3[" λ too large<br/>Reduce λ by 10×"]
+
+ Q1 -->|"λ ≈ 0"| FIX4[" Increase λ<br/>(no penalty = no help)"]
+ Q1 -->|"λ > 0"| FIX5[" Check feature scaling<br/>Must standardize first"]
+
+ style DIAG fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style FIX2 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style FIX3 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style FIX4 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style FIX5 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
 
 ## 7 · Progress Check — What We Can Solve Now
-
-⚡ **MILESTONE: $40k MAE TARGET ACHIEVED!**
-
-✅ **Unlocked capabilities:**
-- **MAE < $40k**: Ridge achieves ~$38k MAE → **Constraint #1 (ACCURACY) ✅**
-- **Generalization**: Regularization prevents overfitting → **Constraint #2 (GENERALIZATION) ✅**
+**MILESTONE: $40k MAE TARGET ACHIEVED!**
+**Unlocked capabilities:**
+- **MAE < $40k**: Ridge achieves ~$38k MAE → **Constraint #1 (ACCURACY) **
+- **Generalization**: Regularization prevents overfitting → **Constraint #2 (GENERALIZATION) **
 - **Automatic feature selection**: Lasso zeros noise features → cleaner model
 - **Collinearity handled**: Ridge stabilizes correlated feature weights
 - **Full pipeline**: Raw data → Polynomial → Scale → Regularize → Predict
-
-❌ **Still can't solve:**
-- ❌ **Constraint #3 (MULTI-TASK)**: Still regression only (no classification)
-- ⚠️ **Constraint #4 (INTERPRETABILITY)**: Ch.3 gave feature-level interpretability (VIF + permutation importance); model-level per-prediction explanations (SHAP) come in Ch.7
-- ❌ **Constraint #5 (PRODUCTION)**: No systematic evaluation framework yet
+**Still can't solve:**
+- **Constraint #3 (MULTI-TASK)**: Still regression only (no classification)
+- **Constraint #4 (INTERPRETABILITY)**: Ch.3 gave feature-level interpretability (VIF + permutation importance); model-level per-prediction explanations (SHAP) come in Ch.7
+- **Constraint #5 (PRODUCTION)**: No systematic evaluation framework yet
 
 **Progress toward constraints:**
 | Constraint | Status | Current State |
 |------------|--------|---------------|
-| #1 ACCURACY | ✅ **ACHIEVED** | ~$38k MAE (target was <$40k) |
-| #2 GENERALIZATION | ✅ **ACHIEVED** | Regularization prevents overfitting |
-| #3 MULTI-TASK | ❌ Blocked | Still regression only |
-| #4 INTERPRETABILITY | ⚠️ Partial | Lasso helps (fewer features) but polynomials are opaque |
-| #5 PRODUCTION | ❌ Blocked | No evaluation framework |
+| #1 ACCURACY | **ACHIEVED** | ~$38k MAE (target was <$40k) |
+| #2 GENERALIZATION | **ACHIEVED** | Regularization prevents overfitting |
+| #3 MULTI-TASK | Blocked | Still regression only |
+| #4 INTERPRETABILITY | Partial | Lasso helps (fewer features) but polynomials are opaque |
+| #5 PRODUCTION | Blocked | No evaluation framework |
 
 ```mermaid
 flowchart LR
-    CH1["Ch.1<br/>$70k MAE<br/>1 feature"] -->|"+7 features"| CH2["Ch.2<br/>$55k MAE<br/>8 features"]
-    CH2 -->|"+feature diag"| CH3["Ch.3<br/>$55k interpretable"]
-    CH3 -->|"+polynomials"| CH4["Ch.4<br/>$48k MAE<br/>44 features"]
-    CH4 -->|"+regularization"| CH5["Ch.5<br/>$38k MAE ✅<br/>32 features"]
-    CH5 -->|"evaluate"| CH6["Ch.6<br/>Robust metrics"]
-    
-    style CH1 fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH2 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH3 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH4 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH5 fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH6 fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ CH1["Ch.1<br/>$70k MAE<br/>1 feature"] -->|"+7 features"| CH2["Ch.2<br/>$55k MAE<br/>8 features"]
+ CH2 -->|"+feature diag"| CH3["Ch.3<br/>$55k interpretable"]
+ CH3 -->|"+polynomials"| CH4["Ch.4<br/>$48k MAE<br/>44 features"]
+ CH4 -->|"+regularization"| CH5["Ch.5<br/>$38k MAE <br/>32 features"]
+ CH5 -->|"evaluate"| CH6["Ch.6<br/>Robust metrics"]
+
+ style CH1 fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH2 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH3 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH4 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH5 fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH6 fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
 
 ## 8 · Bridge to Chapter 6
-
-⚡ **SmartVal AI status update:** Two of five constraints are now **ACHIEVED**:
-- ✅ **Constraint #1 (ACCURACY <$40k)**: Ridge achieves $38k MAE
-- ✅ **Constraint #2 (GENERALIZATION)**: Regularization prevents overfitting (train-test gap <$1k)
+**SmartVal AI status update:** Two of five constraints are now **ACHIEVED**:
+- **Constraint #1 (ACCURACY <$40k)**: Ridge achieves $38k MAE
+- **Constraint #2 (GENERALIZATION)**: Regularization prevents overfitting (train-test gap <$1k)
 
 **But how robust is this $38k number?** Ch.5 proved we can hit the target, but production ML requires more:
-- Is $38k stable across different data splits?  
+- Is $38k stable across different data splits?
 - Does the model systematically fail on certain districts (expensive homes? rural areas?)
 - Can we quantify prediction uncertainty? ("This house is $480k ± $50k")
 - How do we monitor model degradation over time?

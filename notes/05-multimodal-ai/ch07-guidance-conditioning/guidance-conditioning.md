@@ -24,12 +24,12 @@
 
 | Constraint | Target | Status | Evidence |
 |------------|--------|--------|----------|
-| #1 Quality | ≥4.0/5.0 | ⚡ **~3.8/5.0** | Better prompt adherence improves client ratings |
-| #2 Speed | <30 seconds | ✅ **20s** | Unchanged from Ch.6 |
-| #3 Cost | <$5k hardware | ✅ **$2.5k laptop** | Unchanged from Ch.6 |
-| #4 Control | <5% unusable | ⚡ **<15% unusable** | CFG scale 12.0 + negative prompts improve success rate |
-| #5 Throughput | 100+ images/day | ⚡ **~50 images/day** | Lower unusable rate = less regeneration time |
-| #6 Versatility | 3 modalities | ⚡ **Text→Image enabled** | Still only text→image, no video/understanding |
+| #1 Quality | ≥4.0/5.0 | **~3.8/5.0** | Better prompt adherence improves client ratings |
+| #2 Speed | <30 seconds | **20s** | Unchanged from Ch.6 |
+| #3 Cost | <$5k hardware | **$2.5k laptop** | Unchanged from Ch.6 |
+| #4 Control | <5% unusable | **<15% unusable** | CFG scale 12.0 + negative prompts improve success rate |
+| #5 Throughput | 100+ images/day | **~50 images/day** | Lower unusable rate = less regeneration time |
+| #6 Versatility | 3 modalities | **Text→Image enabled** | Still only text→image, no video/understanding |
 
 ---
 
@@ -59,19 +59,19 @@ Prompt: "Mango leather crossbody bag, center frame, white background, studio lig
 Negative: "cluttered background, shadow, people, logo, blur"
 
 CFG scale sweep on this brief:
-  scale=1.0  → unconditioned (barely follows the prompt — varied, creative but unfocused)
-  scale=7.5  → production default (follows brief closely, high quality)
-  scale=12.0 → over-conditioned (artifacts, oversaturated colors)
+ scale=1.0 → unconditioned (barely follows the prompt — varied, creative but unfocused)
+ scale=7.5 → production default (follows brief closely, high quality)
+ scale=12.0 → over-conditioned (artifacts, oversaturated colors)
 ```
 
 > 📖 **Educational proxy:** The math is illustrated with digit-class labels (0–9) because it shows the conditional direction clearly with only 10 classes. The production mechanism is identical — replace "digit 3" with "white background product shot."
 
 ```
 Educational math proxy:
-  Digit class label 3 → guides denoising toward "threes"
-  Class label dropped 10% during training → model learns both conditional and unconditional
-  CFG: ε̃ = ε_uncond + γ(ε_cond - ε_uncond)
-  γ=7.5 in production (same γ for digits or product shots)
+ Digit class label 3 → guides denoising toward "threes"
+ Class label dropped 10% during training → model learns both conditional and unconditional
+ CFG: ε̃ = ε_uncond + γ(ε_cond - ε_uncond)
+ γ=7.5 in production (same γ for digits or product shots)
 ```
 
 ---
@@ -207,10 +207,10 @@ from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler
 import torch
 
 pipe = StableDiffusionPipeline.from_pretrained(
-    "stabilityai/stable-diffusion-2-1",
-    scheduler=DPMSolverMultistepScheduler.from_pretrained(
-        "stabilityai/stable-diffusion-2-1", subfolder="scheduler"),
-    torch_dtype=torch.float16
+ "stabilityai/stable-diffusion-2-1",
+ scheduler=DPMSolverMultistepScheduler.from_pretrained(
+ "stabilityai/stable-diffusion-2-1", subfolder="scheduler"),
+ torch_dtype=torch.float16
 ).to("cuda")
 
 brief_prompt = "Mango leather crossbody bag, center frame, white background, studio lighting, sharp product photography"
@@ -218,27 +218,27 @@ brand_negative = "people, faces, logo, text, watermark, shadow, cluttered backgr
 
 # CFG scale sweep — pick scale that hits brief compliance without artifacts
 for scale in [1.0, 7.5, 12.0]:
-    img = pipe(
-        brief_prompt,
-        negative_prompt=brand_negative,
-        guidance_scale=scale,
-        num_inference_steps=20,
-        generator=torch.manual_seed(42),
-    ).images[0]
-    img.save(f"vf_cfg_scale_{scale}.png")
+ img = pipe(
+ brief_prompt,
+ negative_prompt=brand_negative,
+ guidance_scale=scale,
+ num_inference_steps=20,
+ generator=torch.manual_seed(42),
+ ).images[0]
+ img.save(f"vf_cfg_scale_{scale}.png")
 ```
 
 **CFG scale effect on VisualForge product brief:**
 
 | CFG scale | Brief compliance | Background | Artifact risk | Verdict |
 |-----------|-----------------|------------|----------------|---------|
-| 1.0 | Low (ignores prompt) | Variable | None | ❌ Not usable |
-| 5.0 | Medium | Usually white | Low | ⚡ Experimental |
-| 7.5 | High | White ✅ | Low | ✅ **Production default** |
-| 10.0 | Very high | White ✅ | Medium (color saturation) | ⚡ Sometimes useful |
-| 12.0 | Rigid | White ✅ | High (burnt highlights) | ❌ Avoid |
+| 1.0 | Low (ignores prompt) | Variable | None | Not usable |
+| 5.0 | Medium | Usually white | Low | Experimental |
+| 7.5 | High | White | Low | **Production default** |
+| 10.0 | Very high | White | Medium (color saturation) | Sometimes useful |
+| 12.0 | Rigid | White | High (burnt highlights) | Avoid |
 
-> 💡 VisualForge uses `guidance_scale=7.5` as the default. For unusual brief types (e.g., "abstract brand pattern"), experiment up to 9.0. Above 10.0, artifacts appear in >30% of outputs on product shots.
+> VisualForge uses `guidance_scale=7.5` as the default. For unusual brief types (e.g., "abstract brand pattern"), experiment up to 9.0. Above 10.0, artifacts appear in >30% of outputs on product shots.
 
 ---
 
@@ -276,8 +276,8 @@ Some implementations use empty string `""`, others use learnable null token, oth
 
 | Method | Pros | Cons | When to Use |
 |--------|------|------|-------------|
-| **Classifier-Free Guidance** | No separate classifier; single model; works for open-domain text | 2× inference cost | ✅ **Default for text→image** (SD, DALL-E, Imagen) |
-| **Classifier Guidance** | Historically first method; can use pre-trained classifiers | Requires noisy-image classifier at every noise level; impractical for text | ❌ Obsolete for production |
+| **Classifier-Free Guidance** | No separate classifier; single model; works for open-domain text | 2× inference cost | **Default for text→image** (SD, DALL-E, Imagen) |
+| **Classifier Guidance** | Historically first method; can use pre-trained classifiers | Requires noisy-image classifier at every noise level; impractical for text | Obsolete for production |
 
 ### CFG Guidance Scale Selection
 
@@ -287,7 +287,7 @@ Some implementations use empty string `""`, others use learnable null token, oth
 | **5.0-7.0** | Balanced creativity + adherence | Artistic, painterly, abstract briefs |
 | **7.5** | **VisualForge default** | Professional product shots, hero images |
 | **8.0-10.0** | High adherence | Strict brand guidelines, precise composition |
-| **12.0+** | Oversaturated, artifacts | ❌ Avoid in production |
+| **12.0+** | Oversaturated, artifacts | Avoid in production |
 
 ### Text Conditioning vs Structural Conditioning
 
@@ -403,14 +403,14 @@ Some implementations use empty string `""`, others use learnable null token, oth
 ## 11.5 · Progress Check — What Have We Unlocked?
 
 ### Before This Chapter
-- **Constraint #1 (Quality)**: ⚡ ~3.5/5.0, text prompts work but your outputs are unpredictable
-- **Constraint #4 (Control)**: ⚡ ~25% unusable (wrong composition, cluttered backgrounds)
+- **Constraint #1 (Quality)**: ~3.5/5.0, text prompts work but your outputs are unpredictable
+- **Constraint #4 (Control)**: ~25% unusable (wrong composition, cluttered backgrounds)
 - **VisualForge Status**: Your team spends hours regenerating to get usable outputs
 
 ### After This Chapter
-- **Constraint #1 (Quality)**: ⚡ **3.8/5.0** → CFG improves your prompt adherence
-- **Constraint #4 (Control)**: ⚡ **<15% unusable** → CFG scale 12.0 + negative prompts improve your success rate
-- **Constraint #5 (Throughput)**: ⚡ **~50 images/day** → Lower unusable rate = less wasted regeneration time
+- **Constraint #1 (Quality)**: **3.8/5.0** → CFG improves your prompt adherence
+- **Constraint #4 (Control)**: **<15% unusable** → CFG scale 12.0 + negative prompts improve your success rate
+- **Constraint #5 (Throughput)**: **~50 images/day** → Lower unusable rate = less wasted regeneration time
 - **VisualForge Status**: Your prompt "modern office with natural light" + negative "cluttered, dark" → 85% success rate
 
 ---
@@ -435,12 +435,12 @@ Some implementations use empty string `""`, others use learnable null token, oth
 
 | Constraint | Ch.4 | Ch.5 | Ch.6 | **Ch.7 (this)** | Target |
 |------------|------|------|------|-----------------|--------|
-| #1 Quality | ⚡ 3.0/5.0 | ⚡ 3.2/5.0 | ⚡ 3.5/5.0 | **⚡ 3.8/5.0** | ≥4.0/5.0 |
-| #2 Speed | ❌ 5min | ⚡ 30-60s | ✅ 20s | **✅ 20s** | <30s |
-| #3 Cost | ❌ | ❌ | ✅ $2.5k | **✅ $2.5k** | <$5k |
-| #4 Control | ⚡ ~40% unusable | ⚡ ~40% | ⚡ ~25% | **⚡ <15%** | <5% |
-| #5 Throughput | ❌ ~10/day | ❌ ~15/day | ⚡ ~40/day | **⚡ ~50/day** | 100+/day |
-| #6 Versatility | ⚡ Can generate | ⚡ | ⚡ Text→Image | **⚡ Text→Image** | 3 modalities |
+| #1 Quality | 3.0/5.0 | 3.2/5.0 | 3.5/5.0 | ** 3.8/5.0** | ≥4.0/5.0 |
+| #2 Speed | 5min | 30-60s | 20s | ** 20s** | <30s |
+| #3 Cost | | | $2.5k | ** $2.5k** | <$5k |
+| #4 Control | ~40% unusable | ~40% | ~25% | ** <15%** | <5% |
+| #5 Throughput | ~10/day | ~15/day | ~40/day | ** ~50/day** | 100+/day |
+| #6 Versatility | Can generate | | Text→Image | ** Text→Image** | 3 modalities |
 
 **Progress this chapter:** CFG improved prompt adherence (#1 Quality ↑), reduced unusable rate (#4 Control ↑), increased throughput (#5 ↑ from less rework).
 
@@ -456,7 +456,7 @@ Some implementations use empty string `""`, others use learnable null token, oth
 
 **What you need next:** **ControlNet** — you'll condition on edge maps, depth maps, pose skeletons. Your designer sketches a rough layout in 30 seconds → ControlNet enforces that structure → 95% first-try success rate. CFG controls "what" (semantic), ControlNet controls "where" (spatial).
 
-**The unlock:** You'll combine CFG + ControlNet → full control over generation. Text describes the concept ("modern office"), ControlNet enforces composition (edge map from designer sketch), negative prompt removes unwanted elements ("cluttered, dark"). Result: **<5% unusable rate** (✅ Constraint #4 target hit).
+**The unlock:** You'll combine CFG + ControlNet → full control over generation. Text describes the concept ("modern office"), ControlNet enforces composition (edge map from designer sketch), negative prompt removes unwanted elements ("cluttered, dark"). Result: **<5% unusable rate** ( Constraint #4 target hit).
 
 → **Next chapter:** [Text-to-Image (ControlNet)](../ch08_text_to_image/README.md)
 

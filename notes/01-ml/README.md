@@ -8,7 +8,7 @@ You start by predicting house prices with linear regression (Track 1), add facia
 
 ## 8 Learning Tracks
 
-### 🎯 Core Fundamentals (Start Here)
+### Core Fundamentals (Start Here)
 
 #### 1. [Regression](01_regression/README.md) — SmartVal AI
 > **Dataset**: California Housing (20,640 districts, 8 features)
@@ -37,7 +37,7 @@ Learn clustering and dimensionality reduction. Master K-means, DBSCAN, HDBSCAN, 
 
 ---
 
-### 🧠 Intermediate / Deep Learning
+### Intermediate / Deep Learning
 
 #### 3. [Neural Networks](03_neural_networks/README.md) — UnifiedAI
 > **Datasets**: California Housing (regression) + CelebA (classification)
@@ -48,7 +48,7 @@ Discover how neural networks unify regression and classification. Same feedforwa
 
 ---
 
-### 🔬 Specialized Paradigms
+### Specialized Paradigms
 
 #### 4. [Recommender Systems](04_recommender_systems/README.md) — FlixAI
 > **Dataset**: MovieLens 100k (943 users, 1,682 movies, 100k ratings)
@@ -77,7 +77,7 @@ Master MDPs, Q-learning, Deep Q-Networks, policy gradients, and modern RL (PPO, 
 
 ---
 
-### 🎓 Capstone
+### Capstone
 
 #### 8. [Ensemble Methods](08_ensemble_methods/README.md) — EnsembleAI
 > **Datasets**: California Housing (regression) + CelebA (classification)
@@ -92,31 +92,31 @@ Cross-cutting capstone. Ensemble methods are the most consistent winners in prod
 
 ```mermaid
 graph TD
-    Start[Start Here] --> Beginner{Choose Path}
-    Beginner -->|Beginner| Reg[01-Regression]
-    Reg --> Class[02-Classification]
-    Class --> Unsup[07-Unsupervised Learning]
+ Start[Start Here] --> Beginner{Choose Path}
+ Beginner -->|Beginner| Reg[01-Regression]
+ Reg --> Class[02-Classification]
+ Class --> Unsup[07-Unsupervised Learning]
 
-    Unsup --> Int{Intermediate?}
-    Int -->|Yes| NN[03-Neural Networks]
-    NN --> Ens[08-Ensemble Methods]
+ Unsup --> Int{Intermediate?}
+ Int -->|Yes| NN[03-Neural Networks]
+ NN --> Ens[08-Ensemble Methods]
 
-    Ens --> Spec{Specialization?}
-    Spec -->|Personalization| Rec[04-Recommender Systems]
-    Spec -->|Security| Anom[05-Anomaly Detection]
-    Spec -->|Agents| RL[06-Reinforcement Learning]
+ Ens --> Spec{Specialization?}
+ Spec -->|Personalization| Rec[04-Recommender Systems]
+ Spec -->|Security| Anom[05-Anomaly Detection]
+ Spec -->|Agents| RL[06-Reinforcement Learning]
 
-    Int -->|No| Done1[Complete!]
-    Spec --> Done2[Complete!]
+ Int -->|No| Done1[Complete!]
+ Spec --> Done2[Complete!]
 
-    style Reg fill:#047857,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style Class fill:#047857,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style NN fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style Ens fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style Rec fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style Anom fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style RL fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style Unsup fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style Reg fill:#047857,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style Class fill:#047857,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style NN fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style Ens fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style Rec fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style Anom fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style RL fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style Unsup fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### Beginner Path (12 weeks)
@@ -156,39 +156,39 @@ Choose based on career goals:
 
 ```mermaid
 graph TB
-    subgraph Core["Core ML Systems"]
-        Reg[🏠 Regression API<br/>California Housing<br/>&lt;$40k MAE]
-        Class[👤 Classification API<br/>CelebA Faces<br/>&gt;90% avg accuracy]
-        NN[🧠 Unified NN System<br/>Both datasets<br/>$28k + 95%]
-    end
+ subgraph Core["Core ML Systems"]
+ Reg[🏠 Regression API<br/>California Housing<br/>&lt;$40k MAE]
+ Class[👤 Classification API<br/>CelebA Faces<br/>&gt;90% avg accuracy]
+ NN[ Unified NN System<br/>Both datasets<br/>$28k + 95%]
+ end
 
-    subgraph Specialized["Specialized Systems"]
-        Rec[🎬 Recommender Engine<br/>MovieLens<br/>&gt;85% hit rate]
-        Anom[💳 Fraud Detector<br/>Credit Card<br/>80% recall]
-        RL[🎮 RL Agent<br/>GridWorld + CartPole<br/>Optimal policies]
-        Unsup[👥 Segmentation Tool<br/>Customers<br/>silhouette &gt;0.5]
-    end
+ subgraph Specialized["Specialized Systems"]
+ Rec[ Recommender Engine<br/>MovieLens<br/>&gt;85% hit rate]
+ Anom[💳 Fraud Detector<br/>Credit Card<br/>80% recall]
+ RL[ RL Agent<br/>GridWorld + CartPole<br/>Optimal policies]
+ Unsup[👥 Segmentation Tool<br/>Customers<br/>silhouette &gt;0.5]
+ end
 
-    subgraph Advanced["Production Infrastructure"]
-        Ens[📦 Ensemble Pipeline<br/>XGBoost + SHAP<br/>+5% improvement]
-    end
+ subgraph Advanced["Production Infrastructure"]
+ Ens[📦 Ensemble Pipeline<br/>XGBoost + SHAP<br/>+5% improvement]
+ end
 
-    Reg --> NN
-    Class --> NN
-    NN --> Ens
-    Ens -.-> Rec
-    Ens -.-> Anom
-    Ens -.-> RL
+ Reg --> NN
+ Class --> NN
+ NN --> Ens
+ Ens -.-> Rec
+ Ens -.-> Anom
+ Ens -.-> RL
 ```
 
-1. ✅ **Regression API** — Real estate valuation (<$40k MAE, interpretable with SHAP)
-2. ✅ **Classification API** — Facial attribute recognition (>90% accuracy, 40 multi-label attributes)
-3. ✅ **Unified NN System** — Same architecture for regression + classification tasks
-4. ✅ **Recommender Engine** — Collaborative filtering (>85% hit rate @ top-10)
-5. ✅ **Fraud Detector** — Real-time anomaly detection (80% recall @ 0.5% FPR, extreme imbalance)
-6. ✅ **RL Agent** — Trial-and-error learning (conceptual mastery of MDPs, Q-learning, policy gradients)
-7. ✅ **Segmentation Tool** — Unsupervised customer clustering (silhouette >0.5, actionable segments)
-8. ✅ **Ensemble Pipeline** — Production boosting/stacking (+5% over single models)
+1. **Regression API** — Real estate valuation (<$40k MAE, interpretable with SHAP)
+2. **Classification API** — Facial attribute recognition (>90% accuracy, 40 multi-label attributes)
+3. **Unified NN System** — Same architecture for regression + classification tasks
+4. **Recommender Engine** — Collaborative filtering (>85% hit rate @ top-10)
+5. **Fraud Detector** — Real-time anomaly detection (80% recall @ 0.5% FPR, extreme imbalance)
+6. **RL Agent** — Trial-and-error learning (conceptual mastery of MDPs, Q-learning, policy gradients)
+7. **Segmentation Tool** — Unsupervised customer clustering (silhouette >0.5, actionable segments)
+8. **Ensemble Pipeline** — Production boosting/stacking (+5% over single models)
 
 ---
 
@@ -284,11 +284,9 @@ If you want the most practical learning order, start with `01-Regression`, then 
 ---
 
 ## Start Here
-
-🎯 **Your mission**: go from fitting your first model to understanding the main ML paradigms used in production.
+**Your mission**: go from fitting your first model to understanding the main ML paradigms used in production.
 
 **Best starting point**: [01-Regression — SmartVal AI](01_regression/README.md)
 
 **Recommended core path**: `01-Regression → 02-Classification → 03-NeuralNetworks → 07-UnsupervisedLearning → 08-EnsembleMethods`
-
-📚 **Interview prep?** Use [Interview_guide.md](../interview_guides/interview-guide.md) for the condensed review version of the track.
+**Interview prep?** Use [Interview_guide.md](../interview_guides/interview-guide.md) for the condensed review version of the track.

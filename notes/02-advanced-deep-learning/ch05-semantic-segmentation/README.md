@@ -10,14 +10,14 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Build **ProductionCV** — an autonomous retail shelf monitoring system satisfying 5 constraints:
+> **The mission**: Build **ProductionCV** — an autonomous retail shelf monitoring system satisfying 5 constraints:
 > 1. **DETECTION ACCURACY**: mAP@0.5 ≥ 85% — 2. **SEGMENTATION QUALITY**: IoU ≥ 70% — 3. **INFERENCE LATENCY**: <50ms per frame — 4. **MODEL SIZE**: <100 MB — 5. **DATA EFFICIENCY**: <1,000 labeled images
 
 **What we know so far:**
-- ✅ ResNet backbones enable 100+ layer networks (Ch.1 skip connections)
-- ✅ Faster R-CNN detects products with bounding boxes (Ch.3 region proposals)
-- ✅ YOLO achieves 85.3% mAP@0.5 in real-time (Ch.4 one-stage detection)
-- ❌ **But we can't determine product boundaries at the pixel level!**
+- ResNet backbones enable 100+ layer networks (Ch.1 skip connections)
+- Faster R-CNN detects products with bounding boxes (Ch.3 region proposals)
+- YOLO achieves 85.3% mAP@0.5 in real-time (Ch.4 one-stage detection)
+- **But we can't determine product boundaries at the pixel level!**
 
 **What's blocking us:**
 Bounding boxes are rectangular and coarse — they can't capture:
@@ -45,8 +45,7 @@ Pixel (250, 180): class="milk_carton"
 - **U-Net skip connections**: Recover fine spatial details lost during downsampling
 - **DeepLab atrous convolutions**: Expand receptive field without reducing resolution
 - **Metrics**: IoU (Intersection over Union), mIoU (mean IoU), Dice coefficient
-
-⚡ **Progress on constraint #2**: Currently 0% (no segmentation). This chapter achieves **IoU ≈ 62%** on retail shelf images (empty space vs products). Next chapter (Ch.6 Mask R-CNN) pushes to **IoU ≥ 70%** by adding instance differentiation.
+**Progress on constraint #2**: Currently 0% (no segmentation). This chapter achieves **IoU ≈ 62%** on retail shelf images (empty space vs products). Next chapter (Ch.6 Mask R-CNN) pushes to **IoU ≥ 70%** by adding instance differentiation.
 
 ---
 
@@ -73,21 +72,21 @@ $$
 **Three milestone architectures:**
 
 1. **FCN (Fully Convolutional Network, Long et al. 2015)**:
-   - Replace FC layers with 1×1 convolutions (preserve spatial structure)
-   - Upsample feature maps back to input resolution (transposed convolution)
-   - Skip connections from earlier layers for finer detail
+ - Replace FC layers with 1×1 convolutions (preserve spatial structure)
+ - Upsample feature maps back to input resolution (transposed convolution)
+ - Skip connections from earlier layers for finer detail
 
 2. **U-Net (Ronneberger et al. 2015)**:
-   - Symmetric encoder-decoder architecture (U-shaped)
-   - Skip connections at *every resolution level* (not just final layer like FCN)
-   - Concatenate encoder features with decoder features (richer context)
+ - Symmetric encoder-decoder architecture (U-shaped)
+ - Skip connections at *every resolution level* (not just final layer like FCN)
+ - Concatenate encoder features with decoder features (richer context)
 
 3. **DeepLabV3+ (Chen et al. 2018)**:
-   - **Atrous (dilated) convolutions**: Expand receptive field without pooling
-   - **ASPP (Atrous Spatial Pyramid Pooling)**: Parallel atrous convs at rates {6, 12, 18}
-   - **Encoder-decoder with low-level features**: Combine high-level semantics with fine details
+ - **Atrous (dilated) convolutions**: Expand receptive field without pooling
+ - **ASPP (Atrous Spatial Pyramid Pooling)**: Parallel atrous convs at rates {6, 12, 18}
+ - **Encoder-decoder with low-level features**: Combine high-level semantics with fine details
 
-> 💡 **Key insight:** Standard CNNs downsample aggressively (5× pooling → 32× spatial reduction). This loses fine boundaries. Segmentation architectures must balance:
+> **Key insight:** Standard CNNs downsample aggressively (5× pooling → 32× spatial reduction). This loses fine boundaries. Segmentation architectures must balance:
 > - **Downsampling** (build semantic understanding via large receptive fields)
 > - **Upsampling** (recover spatial resolution for pixel-level predictions)
 > - **Skip connections** (preserve fine details from early layers)
@@ -117,36 +116,36 @@ You're the lead ML engineer at **ProductionCV**. Your autonomous shelf monitorin
 ```python
 # Replace dense layers with 1×1 conv
 # Input: [B, 512, 512, 3]
-x = resnet50_backbone(x)        # [B, 16, 16, 2048]
-x = conv_1x1(x, num_classes=5)  # [B, 16, 16, 5]
-x = upsample_32x(x)             # [B, 512, 512, 5]
-output = softmax(x, axis=-1)    # Per-pixel class probabilities
+x = resnet50_backbone(x) # [B, 16, 16, 2048]
+x = conv_1x1(x, num_classes=5) # [B, 16, 16, 5]
+x = upsample_32x(x) # [B, 512, 512, 5]
+output = softmax(x, axis=-1) # Per-pixel class probabilities
 ```
 
 **U-Net improvement:**
 Add skip connections at every resolution level:
 ```python
 # Encoder (downsampling path)
-e1 = conv_block(input)       # [B, 512, 512, 64]
-e2 = conv_block(pool(e1))    # [B, 256, 256, 128]
-e3 = conv_block(pool(e2))    # [B, 128, 128, 256]
-e4 = conv_block(pool(e3))    # [B, 64, 64, 512]
+e1 = conv_block(input) # [B, 512, 512, 64]
+e2 = conv_block(pool(e1)) # [B, 256, 256, 128]
+e3 = conv_block(pool(e2)) # [B, 128, 128, 256]
+e4 = conv_block(pool(e3)) # [B, 64, 64, 512]
 
 # Bottleneck
-b = conv_block(pool(e4))     # [B, 32, 32, 1024]
+b = conv_block(pool(e4)) # [B, 32, 32, 1024]
 
 # Decoder (upsampling path with skip connections)
-d4 = concat([upsample(b), e4])     # [B, 64, 64, 512+512]
-d3 = concat([upsample(d4), e3])    # [B, 128, 128, 256+256]
-d2 = concat([upsample(d3), e2])    # [B, 256, 256, 128+128]
-d1 = concat([upsample(d2), e1])    # [B, 512, 512, 64+64]
+d4 = concat([upsample(b), e4]) # [B, 64, 64, 512+512]
+d3 = concat([upsample(d4), e3]) # [B, 128, 128, 256+256]
+d2 = concat([upsample(d3), e2]) # [B, 256, 256, 128+128]
+d1 = concat([upsample(d2), e1]) # [B, 512, 512, 64+64]
 
-output = conv_1x1(d1, num_classes=5)  # [B, 512, 512, 5]
+output = conv_1x1(d1, num_classes=5) # [B, 512, 512, 5]
 ```
 
-> ⚡ **Design Constraint: Use strides, not pooling.** `MaxPool2D` discards which of the N positions produced the maximum — that location is gone and cannot be recovered in the decoder. For ProductionCV's pixel-level planogram compliance check, every misplaced pixel matters. Use strided `Conv2D(strides=2)` for all downsampling in encoder stages.
+> **Design Constraint: Use strides, not pooling.** `MaxPool2D` discards which of the N positions produced the maximum — that location is gone and cannot be recovered in the decoder. For ProductionCV's pixel-level planogram compliance check, every misplaced pixel matters. Use strided `Conv2D(strides=2)` for all downsampling in encoder stages.
 
-> ➡️ **This rule carries forward:** Ch.06 (instance segmentation with Mask R-CNN) applies the same principle. It applies outside CV too — any generative model that must reconstruct spatial structure must use strides, not pooling.
+> ➡ **This rule carries forward:** Ch.06 (instance segmentation with Mask R-CNN) applies the same principle. It applies outside CV too — any generative model that must reconstruct spatial structure must use strides, not pooling.
 
 **Results:**
 - FCN: mIoU = 58.2% (coarse boundaries, misses small gaps)
@@ -163,14 +162,14 @@ output = conv_1x1(d1, num_classes=5)  # [B, 512, 512, 5]
 
 ```
 Input: 512×512×3
-  ↓
+ ↓
 Backbone (ResNet/VGG):
-  Conv layers → 16×16×2048 feature map (32× downsampling)
-  ↓
+ Conv layers → 16×16×2048 feature map (32× downsampling)
+ ↓
 1×1 Conv: 16×16×2048 → 16×16×C (C = num classes)
-  ↓
+ ↓
 Transposed Conv (32× upsampling): 16×16×C → 512×512×C
-  ↓
+ ↓
 Softmax: Per-pixel class probabilities
 ```
 
@@ -194,15 +193,15 @@ Softmax: Per-pixel class probabilities
 **Key innovation:** Skip connections at *every resolution level*, not just final layer.
 
 ```
-Encoder (Contracting Path):          Decoder (Expanding Path):
+Encoder (Contracting Path): Decoder (Expanding Path):
 512×512×64 ──────────────────────→ Concat → 512×512×128
-  ↓ MaxPool                                    ↑ UpConv
+ ↓ MaxPool ↑ UpConv
 256×256×128 ─────────────────────→ Concat → 256×256×256
-  ↓ MaxPool                                    ↑ UpConv
+ ↓ MaxPool ↑ UpConv
 128×128×256 ─────────────────────→ Concat → 128×128×512
-  ↓ MaxPool                                    ↑ UpConv
+ ↓ MaxPool ↑ UpConv
 64×64×512 ───────────────────────→ Concat → 64×64×1024
-  ↓ MaxPool                                    ↑ UpConv
+ ↓ MaxPool ↑ UpConv
 32×32×1024 (Bottleneck)
 ```
 
@@ -230,24 +229,24 @@ Encoder (Contracting Path):          Decoder (Expanding Path):
 
 ```
 Input: 512×512×3
-  ↓
+ ↓
 Backbone (ResNet with atrous convs):
-  Output stride = 16 (not 32) → 32×32×2048
-  ↓
+ Output stride = 16 (not 32) → 32×32×2048
+ ↓
 ASPP (Atrous Spatial Pyramid Pooling):
-  Parallel branches:
-    - 1×1 conv (rate=1)
-    - 3×3 atrous conv (rate=6)  → 13×13 receptive field
-    - 3×3 atrous conv (rate=12) → 25×25 receptive field
-    - 3×3 atrous conv (rate=18) → 37×37 receptive field
-    - Global Average Pooling + 1×1 conv
-  Concat all → 32×32×256
-  ↓
+ Parallel branches:
+ - 1×1 conv (rate=1)
+ - 3×3 atrous conv (rate=6) → 13×13 receptive field
+ - 3×3 atrous conv (rate=12) → 25×25 receptive field
+ - 3×3 atrous conv (rate=18) → 37×37 receptive field
+ - Global Average Pooling + 1×1 conv
+ Concat all → 32×32×256
+ ↓
 Decoder:
-  Upsample 4× → 128×128×256
-  Concat with low-level features (from encoder layer 2)
-  Conv refinement → 128×128×C
-  Upsample 4× → 512×512×C
+ Upsample 4× → 128×128×256
+ Concat with low-level features (from encoder layer 2)
+ Conv refinement → 128×128×C
+ Upsample 4× → 512×512×C
 ```
 
 **Atrous convolution math:** Standard 3×3 conv with rate $r$ becomes:
@@ -286,15 +285,15 @@ Where:
 In retail shelf images, 80% of pixels are "background" — this dominates the loss. Solutions:
 
 1. **Weighted loss**: Weight classes by inverse frequency
-   $$
-   w_c = \frac{1}{\text{frequency}(c)} \quad \Rightarrow \quad \mathcal{L} = -\sum_{i,j,c} w_c \cdot y_{i,j,c} \log(\hat{y}_{i,j,c})
-   $$
+ $$
+ w_c = \frac{1}{\text{frequency}(c)} \quad \Rightarrow \quad \mathcal{L} = -\sum_{i,j,c} w_c \cdot y_{i,j,c} \log(\hat{y}_{i,j,c})
+ $$
 
 2. **Focal loss** (Lin et al., 2017): Downweight easy examples
-   $$
-   \mathcal{L}_{\text{focal}} = -\sum_{i,j,c} (1 - \hat{y}_{i,j,c})^\gamma \cdot y_{i,j,c} \log(\hat{y}_{i,j,c})
-   $$
-   Where $\gamma = 2$ typically. When $\hat{y}_{i,j,c} \approx 1$ (confident correct), $(1 - \hat{y})^\gamma \approx 0$ (low loss).
+ $$
+ \mathcal{L}_{\text{focal}} = -\sum_{i,j,c} (1 - \hat{y}_{i,j,c})^\gamma \cdot y_{i,j,c} \log(\hat{y}_{i,j,c})
+ $$
+ Where $\gamma = 2$ typically. When $\hat{y}_{i,j,c} \approx 1$ (confident correct), $(1 - \hat{y})^\gamma \approx 0$ (low loss).
 
 ### Evaluation Metrics
 
@@ -340,20 +339,20 @@ Standard 3×3 convolution has receptive field = 3. **Atrous convolution** with r
 
 **Standard 3×3 conv (rate=1):**
 ```
-Kernel positions:  [-1, 0, +1]
-Receptive field:   3 pixels
+Kernel positions: [-1, 0, +1]
+Receptive field: 3 pixels
 ```
 
 **Atrous 3×3 conv (rate=2):**
 ```
-Kernel positions:  [-2, 0, +2]  (insert 1 zero between)
-Receptive field:   5 pixels
+Kernel positions: [-2, 0, +2] (insert 1 zero between)
+Receptive field: 5 pixels
 ```
 
 **Atrous 3×3 conv (rate=6):**
 ```
-Kernel positions:  [-6, 0, +6]  (insert 5 zeros between)
-Receptive field:   13 pixels
+Kernel positions: [-6, 0, +6] (insert 5 zeros between)
+Receptive field: 13 pixels
 ```
 
 **Formula:**
@@ -366,10 +365,10 @@ Where $r$ is the dilation rate.
 **ASPP (Atrous Spatial Pyramid Pooling):**
 Apply parallel atrous convolutions at multiple rates, then concatenate:
 ```python
-aspp_6 = atrous_conv(x, rate=6)   # 13×13 receptive field
-aspp_12 = atrous_conv(x, rate=12)  # 25×25 receptive field
-aspp_18 = atrous_conv(x, rate=18)  # 37×37 receptive field
-global_pool = global_avg_pool(x)   # Entire image context
+aspp_6 = atrous_conv(x, rate=6) # 13×13 receptive field
+aspp_12 = atrous_conv(x, rate=12) # 25×25 receptive field
+aspp_18 = atrous_conv(x, rate=18) # 37×37 receptive field
+global_pool = global_avg_pool(x) # Entire image context
 
 output = concat([aspp_6, aspp_12, aspp_18, global_pool])
 ```
@@ -405,13 +404,13 @@ output = concat([aspp_6, aspp_12, aspp_18, global_pool])
 **Encoder (contracting path):**
 ```
 Input 512×512×3
-→ [Conv3×3, ReLU, Conv3×3, ReLU] → 512×512×64   (copy to decoder)
+→ [Conv3×3, ReLU, Conv3×3, ReLU] → 512×512×64 (copy to decoder)
 → MaxPool2×2 → 256×256×64
-→ [Conv3×3, ReLU, Conv3×3, ReLU] → 256×256×128  (copy to decoder)
+→ [Conv3×3, ReLU, Conv3×3, ReLU] → 256×256×128 (copy to decoder)
 → MaxPool2×2 → 128×128×128
-→ [Conv3×3, ReLU, Conv3×3, ReLU] → 128×128×256  (copy to decoder)
+→ [Conv3×3, ReLU, Conv3×3, ReLU] → 128×128×256 (copy to decoder)
 → MaxPool2×2 → 64×64×256
-→ [Conv3×3, ReLU, Conv3×3, ReLU] → 64×64×512    (copy to decoder)
+→ [Conv3×3, ReLU, Conv3×3, ReLU] → 64×64×512 (copy to decoder)
 → MaxPool2×2 → 32×32×512
 ```
 
@@ -440,11 +439,11 @@ Input 512×512×3
 **Step 2: ASPP module**
 ```python
 # Parallel branches at multiple rates
-branch_1x1 = conv_1x1(x)              # 1×1 conv (point-wise)
-branch_r6 = atrous_conv(x, rate=6)    # 3×3 atrous (rate 6)
-branch_r12 = atrous_conv(x, rate=12)  # 3×3 atrous (rate 12)
-branch_r18 = atrous_conv(x, rate=18)  # 3×3 atrous (rate 18)
-branch_pool = global_avg_pool(x)      # Global context
+branch_1x1 = conv_1x1(x) # 1×1 conv (point-wise)
+branch_r6 = atrous_conv(x, rate=6) # 3×3 atrous (rate 6)
+branch_r12 = atrous_conv(x, rate=12) # 3×3 atrous (rate 12)
+branch_r18 = atrous_conv(x, rate=18) # 3×3 atrous (rate 18)
+branch_pool = global_avg_pool(x) # Global context
 
 aspp_out = concat([branch_1x1, branch_r6, branch_r12, branch_r18, branch_pool])
 # → 32×32×256 (after 1×1 conv projection)
@@ -465,31 +464,31 @@ aspp_out = concat([branch_1x1, branch_r6, branch_r12, branch_r18, branch_pool])
 ### U-Net Architecture (Symmetric Encoder-Decoder)
 
 ```
-                        Bottleneck
-                        1024 channels
-                             │
-              ┌──────────────┴──────────────┐
-              │                             │
-         Encoder (Down)              Decoder (Up)
-              │                             │
-    512×512×64├──────────────────────────┐  │
-              │                          └─→Concat → 512×512×64
-    MaxPool   │                             UpConv
-              │                             │
-    256×256×128├─────────────────────┐      │
-              │                      └──────→Concat → 256×256×128
-    MaxPool   │                         UpConv
-              │                             │
-    128×128×256├────────────┐               │
-              │             └───────────────→Concat → 128×128×256
-    MaxPool   │                         UpConv
-              │                             │
-    64×64×512 └─────────────────────────────→Concat → 64×64×512
-              │                         UpConv
-    MaxPool   │                             │
-              ▼                             ▼
-         32×32×512                     Final Conv 1×1
-                                       512×512×C classes
+ Bottleneck
+ 1024 channels
+ │
+ ┌──────────────┴──────────────┐
+ │ │
+ Encoder (Down) Decoder (Up)
+ │ │
+ 512×512×64├──────────────────────────┐ │
+ │ └─→Concat → 512×512×64
+ MaxPool │ UpConv
+ │ │
+ 256×256×128├─────────────────────┐ │
+ │ └──────→Concat → 256×256×128
+ MaxPool │ UpConv
+ │ │
+ 128×128×256├────────────┐ │
+ │ └───────────────→Concat → 128×128×256
+ MaxPool │ UpConv
+ │ │
+ 64×64×512 └─────────────────────────────→Concat → 64×64×512
+ │ UpConv
+ MaxPool │ │
+ ▼ ▼
+ 32×32×512 Final Conv 1×1
+ 512×512×C classes
 ```
 
 **Key:** Skip connections at every resolution level (not just final output).
@@ -497,15 +496,15 @@ aspp_out = concat([branch_1x1, branch_r6, branch_r12, branch_r18, branch_pool])
 ### Atrous Convolution Visualization
 
 ```
-Standard 3×3 Conv (rate=1):          Atrous 3×3 Conv (rate=2):
-┌─┬─┬─┐                              ┌─┬ ┬─┬ ┬─┐
-│1│2│3│   Receptive field: 3         │1│ │2│ │3│   Receptive field: 5
-└─┴─┴─┘                              └─┴ ┴─┴ ┴─┘
-                                        └──Gaps (zeros)
+Standard 3×3 Conv (rate=1): Atrous 3×3 Conv (rate=2):
+┌─┬─┬─┐ ┌─┬ ┬─┬ ┬─┐
+│1│2│3│ Receptive field: 3 │1│ │2│ │3│ Receptive field: 5
+└─┴─┴─┘ └─┴ ┴─┴ ┴─┘
+ └──Gaps (zeros)
 
 Atrous 3×3 Conv (rate=4):
 ┌─┬ ┬ ┬ ┬─┬ ┬ ┬ ┬─┐
-│1│ │ │ │2│ │ │ │3│   Receptive field: 9
+│1│ │ │ │2│ │ │ │3│ Receptive field: 9
 └─┴ ┴ ┴ ┴─┴ ┴ ┴ ┴─┘
 ```
 
@@ -514,14 +513,14 @@ Same number of parameters (9 weights), larger receptive field.
 ### Segmentation Evaluation (IoU Calculation)
 
 ```
-Ground Truth Mask:        Predicted Mask:           Intersection & Union:
-┌─────────────┐          ┌─────────────┐          ┌─────────────┐
-│             │          │             │          │             │
-│   ████████  │          │  ████████   │          │   █████     │ ← Intersection (TP)
-│   ████████  │          │  ████████   │          │   █████     │
-│   ████████  │          │  ████████   │          │             │
-│             │          │             │          │  ░░░░░░░░   │ ← Union (TP+FP+FN)
-└─────────────┘          └─────────────┘          └─────────────┘
+Ground Truth Mask: Predicted Mask: Intersection & Union:
+┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+│ │ │ │ │ │
+│ ████████ │ │ ████████ │ │ █████ │ ← Intersection (TP)
+│ ████████ │ │ ████████ │ │ █████ │
+│ ████████ │ │ ████████ │ │ │
+│ │ │ │ │ ░░░░░░░░ │ ← Union (TP+FP+FN)
+└─────────────┘ └─────────────┘ └─────────────┘
 
 IoU = |Intersection| / |Union| = TP / (TP + FP + FN)
 ```
@@ -566,15 +565,15 @@ IoU = |Intersection| / |Union| = TP / (TP + FP + FN)
 
 ## 8 · What Can Go Wrong
 
-⚠️ **Coarse boundaries (FCN-32s):** If you only upsample from the deepest layer, boundaries are blocky. *Solution: Add skip connections (FCN-8s or U-Net).*
+**Warning — Coarse boundaries (FCN-32s):** If you only upsample from the deepest layer, boundaries are blocky. *Solution: Add skip connections (FCN-8s or U-Net).*
 
-⚠️ **Class imbalance dominates loss:** 90% background pixels → model predicts "background" for everything and still gets 90% pixel accuracy! *Solution: Weighted loss or focal loss, evaluate with IoU (not pixel accuracy).*
+**Warning — Class imbalance dominates loss:** 90% background pixels → model predicts "background" for everything and still gets 90% pixel accuracy! *Solution: Weighted loss or focal loss, evaluate with IoU (not pixel accuracy).*
 
-⚠️ **Vanishing small objects:** Aggressive downsampling (32×) loses small products (e.g., travel-size items on retail shelves). *Solution: Use output stride 16 or 8 (DeepLab), or multi-scale training.*
+**Warning — Vanishing small objects:** Aggressive downsampling (32×) loses small products (e.g., travel-size items on retail shelves). *Solution: Use output stride 16 or 8 (DeepLab), or multi-scale training.*
 
-⚠️ **Checkerboard artifacts from transposed convolution:** Transposed conv with odd strides causes overlapping "stripes" in upsampled output. *Solution: Use bilinear upsampling + 3×3 conv instead of transposed conv, or ensure kernel_size divisible by stride.*
+**Warning — Checkerboard artifacts from transposed convolution:** Transposed conv with odd strides causes overlapping "stripes" in upsampled output. *Solution: Use bilinear upsampling + 3×3 conv instead of transposed conv, or ensure kernel_size divisible by stride.*
 
-⚠️ **Memory explosion with high-resolution inputs:** Full U-Net on 1024×1024 images requires 16+ GB GPU memory. *Solution: Crop inputs to 512×512 patches, or use lighter encoder (MobileNet instead of ResNet-101).*
+**Warning — Memory explosion with high-resolution inputs:** Full U-Net on 1024×1024 images requires 16+ GB GPU memory. *Solution: Crop inputs to 512×512 patches, or use lighter encoder (MobileNet instead of ResNet-101).*
 
 ---
 
@@ -590,20 +589,17 @@ IoU = |Intersection| / |Union| = TP / (TP + FP + FN)
 ## 10 · Progress Check — What We Can Solve Now
 
 ![Segmentation progress dashboard](img/ch05-progress-check.png)
-
-✅ **Unlocked capabilities:**
+**Unlocked capabilities:**
 - Classify every pixel in retail shelf images (background, products, empty space, shelf edges)
 - U-Net achieves **mIoU = 62.4%** on validation set (5 classes)
 - Detect empty shelf gaps with 88% pixel-level recall (planogram compliance)
 - Per-product boundaries (but no instance differentiation yet — all cereal boxes labeled "product")
-
-⚡ **Constraint #2 progress:** Currently **IoU ≈ 62%** (target ≥ 70%)
+**Constraint #2 progress:** Currently **IoU ≈ 62%** (target ≥ 70%)
 - **Blocking issue:** Semantic segmentation assigns same label to all instances of a class (can't distinguish cereal_box_1 vs cereal_box_2)
 - **Next unlock:** Instance segmentation (Ch.6 Mask R-CNN) adds object detection → each product gets unique mask
-
-❌ **Still can't solve:**
-- ❌ **Distinguish individual product instances** — if three cereal boxes overlap, semantic segmentation labels all pixels "product" (can't count them or track inventory per SKU)
-- ❌ **Real-time inference** — U-Net with ResNet-101 encoder runs at 80ms per frame (target <50ms)
+**Still can't solve:**
+- **Distinguish individual product instances** — if three cereal boxes overlap, semantic segmentation labels all pixels "product" (can't count them or track inventory per SKU)
+- **Real-time inference** — U-Net with ResNet-101 encoder runs at 80ms per frame (target <50ms)
 
 **Real-world status**: We can now identify product boundaries at the pixel level (62% IoU), but we can't distinguish between two products of the same type (all cereal boxes get same mask). For inventory counting and SKU-level tracking, we need instance segmentation.
 
@@ -615,4 +611,4 @@ IoU = |Intersection| / |Union| = TP / (TP + FP + FN)
 
 Semantic segmentation classifies pixels but loses object identity (can't count overlapping products). Ch.6 adds **Mask R-CNN** — detect individual objects with Faster R-CNN, then predict a 28×28 binary mask for each RoI. This combines detection (bounding boxes) + segmentation (pixel masks) → true instance-level understanding.
 
-> ➡️ **Where the field is now (2023+).** Fully supervised encoder-decoder segmentation — everything in this chapter — is no longer the default for new deployments. Meta's Segment Anything Model (SAM) was trained on 1 billion masks and can segment any object in any image from a single click or bounding-box prompt, zero-shot. For ProductionCV, this means new product categories could be added without pixel-level annotation. The encoder-decoder skills in this chapter remain essential: understanding SAM, fine-tuning it for domain-specific use, and reasoning about its failure modes all require the architectural foundations you've just built.
+> ➡ **Where the field is now (2023+).** Fully supervised encoder-decoder segmentation — everything in this chapter — is no longer the default for new deployments. Meta's Segment Anything Model (SAM) was trained on 1 billion masks and can segment any object in any image from a single click or bounding-box prompt, zero-shot. For ProductionCV, this means new product categories could be added without pixel-level annotation. The encoder-decoder skills in this chapter remain essential: understanding SAM, fine-tuning it for domain-specific use, and reasoning about its failure modes all require the architectural foundations you've just built.

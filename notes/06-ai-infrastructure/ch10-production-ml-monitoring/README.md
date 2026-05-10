@@ -11,7 +11,7 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 💡 **The mission**: You're the Platform Engineer at **InferenceBase** (the AI startup from Ch.1-9). You've just deployed the best BERT sentiment classifier from Ch.9 (94% test accuracy) to production. It processes **10,000 customer reviews per day** for an e-commerce platform. The CEO is happy — until **week 3**, when the customer support team reports:
+> **The mission**: You're the Platform Engineer at **InferenceBase** (the AI startup from Ch.1-9). You've just deployed the best BERT sentiment classifier from Ch.9 (94% test accuracy) to production. It processes **10,000 customer reviews per day** for an e-commerce platform. The CEO is happy — until **week 3**, when the customer support team reports:
 > - "Users are complaining the product recommendations are wrong (driven by sentiment predictions)"
 > - "Manual spot-checks show the model is getting ~70% accuracy now (down from 94%)"
 > - **You have no idea when the degradation started or why**
@@ -29,8 +29,7 @@ The **production ML monitoring & A/B testing** discipline:
 3. **A/B test new models** — Deploy v2 to 10% of traffic, compare metrics to v1, promote only if better
 4. **Rollback in <5 minutes** — Automated cutover to previous version when metrics degrade
 5. **Root cause analysis** — Drill into drift reports to understand *why* performance dropped (data shift, adversarial inputs, concept drift)
-
-✅ **After this chapter**: When model accuracy drops from 94% to 70%, you'll know within 24 hours, have a drift report explaining why (e.g., "production text is 30% shorter than training data"), and roll back to v1 in 2 minutes.
+**After this chapter**: When model accuracy drops from 94% to 70%, you'll know within 24 hours, have a drift report explaining why (e.g., "production text is 30% shorter than training data"), and roll back to v1 in 2 minutes.
 
 ---
 
@@ -63,38 +62,38 @@ Production monitoring solves one problem: **detect when your deployed model stop
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
-│                    PRODUCTION MONITORING STACK                      │
-│                                                                      │
-│  ALERT LAYER                                                         │
-│  ┌──────────────────────────────────────────────────────────────┐  │
-│  │  Automated Alerts (Email, Slack, PagerDuty)                   │  │
-│  │  • Data drift detected → Retrain with new data                │  │
-│  │  • Accuracy < 90% → Rollback to v1                            │  │
-│  │  • Latency > 200ms → Scale up inference servers               │  │
-│  └───────────────────────────┬──────────────────────────────────┘  │
-│                              │                                       │
-│  DETECTION LAYER                                                     │
-│  ┌────────────────────────────▼──────────────────────────────────┐ │
-│  │  Evidently AI Drift Reports                                    │ │
-│  │  • Compare P(X_prod) vs. P(X_train) (KL divergence)           │ │
-│  │  • Compare P(ŷ_prod) vs. P(ŷ_train) (class distribution)     │ │
-│  │  • Visualize feature histograms (training vs. production)     │ │
-│  └───────────────────────────┬────────────────────────────────────┘ │
-│                              │                                       │
-│  COLLECTION LAYER                                                    │
-│  ┌────────────────────────────▼──────────────────────────────────┐ │
-│  │  Prediction Logging (SQLite / Postgres / BigQuery)            │ │
-│  │  • Log every prediction: (input, output, timestamp, model_v)  │ │
-│  │  • Log ground truth when available (user feedback, labels)    │ │
-│  │  • Log metadata: latency, error codes, model_id               │ │
-│  └───────────────────────────┬────────────────────────────────────┘ │
-│                              │                                       │
-│  SERVING LAYER                                                       │
-│  ┌────────────────────────────▼──────────────────────────────────┐ │
-│  │  Model Serving (MLflow / FastAPI / TorchServe)                │ │
-│  │  • v1 (90% traffic) ────┐                                      │ │
-│  │  • v2 (10% traffic) ────┴─→ Predictions                       │ │
-│  └────────────────────────────────────────────────────────────────┘ │
+│ PRODUCTION MONITORING STACK │
+│ │
+│ ALERT LAYER │
+│ ┌──────────────────────────────────────────────────────────────┐ │
+│ │ Automated Alerts (Email, Slack, PagerDuty) │ │
+│ │ • Data drift detected → Retrain with new data │ │
+│ │ • Accuracy < 90% → Rollback to v1 │ │
+│ │ • Latency > 200ms → Scale up inference servers │ │
+│ └───────────────────────────┬──────────────────────────────────┘ │
+│ │ │
+│ DETECTION LAYER │
+│ ┌────────────────────────────▼──────────────────────────────────┐ │
+│ │ Evidently AI Drift Reports │ │
+│ │ • Compare P(X_prod) vs. P(X_train) (KL divergence) │ │
+│ │ • Compare P(ŷ_prod) vs. P(ŷ_train) (class distribution) │ │
+│ │ • Visualize feature histograms (training vs. production) │ │
+│ └───────────────────────────┬────────────────────────────────────┘ │
+│ │ │
+│ COLLECTION LAYER │
+│ ┌────────────────────────────▼──────────────────────────────────┐ │
+│ │ Prediction Logging (SQLite / Postgres / BigQuery) │ │
+│ │ • Log every prediction: (input, output, timestamp, model_v) │ │
+│ │ • Log ground truth when available (user feedback, labels) │ │
+│ │ • Log metadata: latency, error codes, model_id │ │
+│ └───────────────────────────┬────────────────────────────────────┘ │
+│ │ │
+│ SERVING LAYER │
+│ ┌────────────────────────────▼──────────────────────────────────┐ │
+│ │ Model Serving (MLflow / FastAPI / TorchServe) │ │
+│ │ • v1 (90% traffic) ────┐ │ │
+│ │ • v2 (10% traffic) ────┴─→ Predictions │ │
+│ └────────────────────────────────────────────────────────────────┘ │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -104,7 +103,7 @@ Production monitoring solves one problem: **detect when your deployed model stop
 
 ## 1.5 · The Practitioner Workflow — Your 5-Phase Production ML Monitoring System
 
-> ⚠️ **Two ways to read this chapter:**
+> **Warning — Two ways to read this chapter:**
 > - **Theory-first (recommended for learning):** Read §0→§3 sequentially to understand the concepts, then use this workflow as your reference
 > - **Workflow-first (practitioners with existing knowledge):** Use this diagram as a jump-to guide when working with production models
 >
@@ -113,84 +112,84 @@ Production monitoring solves one problem: **detect when your deployed model stop
 **What you'll build by the end:** A complete production monitoring pipeline with automated drift detection, performance tracking, A/B testing framework, and rollback procedures. This is the system that catches model degradation within 24 hours instead of 3 weeks.
 
 ```
-Phase 1: DEPLOY              Phase 2: DETECT              Phase 3: TRIAGE
+Phase 1: DEPLOY Phase 2: DETECT Phase 3: TRIAGE
 ────────────────────────────────────────────────────────────────────────────
-Capture baselines:           Monitor distributions:       Diagnose root cause:
+Capture baselines: Monitor distributions: Diagnose root cause:
 
-• Log 1st week predictions   • PSI for feature drift      • Data drift analysis
-• Save reference stats       • KS test per feature        • Segment comparison
-• Define SLA thresholds      • Class distribution shift   • Cohort performance
-• Set alert thresholds       • Performance metrics        • Feature importance shift
+• Log 1st week predictions • PSI for feature drift • Data drift analysis
+• Save reference stats • KS test per feature • Segment comparison
+• Define SLA thresholds • Class distribution shift • Cohort performance
+• Set alert thresholds • Performance metrics • Feature importance shift
 
-→ DECISION:                  → DECISION:                  → DECISION:
-  Baseline complete?           Drift detected?              Root cause identified?
-  ✓ 1000+ samples logged       • PSI > 0.2: RETRAIN        • Data drift: New pipeline
-  ✓ Reference distribution     • Accuracy drop: ROLLBACK   • Concept drift: New labels
-    saved                      • Both: TRIAGE → Phase 3    • Infrastructure: Scale up
-  ✓ Alert rules configured                                 • Adversarial: Filter inputs
+→ DECISION: → DECISION: → DECISION:
+ Baseline complete? Drift detected? Root cause identified?
+ ✓ 1000+ samples logged • PSI > 0.2: RETRAIN • Data drift: New pipeline
+ ✓ Reference distribution • Accuracy drop: ROLLBACK • Concept drift: New labels
+ saved • Both: TRIAGE → Phase 3 • Infrastructure: Scale up
+ ✓ Alert rules configured • Adversarial: Filter inputs
 
 
-Phase 4: REMEDIATE           Phase 5: VALIDATE
+Phase 4: REMEDIATE Phase 5: VALIDATE
 ────────────────────────────────────────────────────────────────────────────
-Execute intervention:        Confirm recovery:
+Execute intervention: Confirm recovery:
 
-• Retrain with new data      • A/B test new version
-• Champion/Challenger A/B    • Monitor for 48 hours
-• Gradual rollout (10→100%)  • Compare business metrics
-• Rollback if metrics drop   • Update runbook
+• Retrain with new data • A/B test new version
+• Champion/Challenger A/B • Monitor for 48 hours
+• Gradual rollout (10→100%) • Compare business metrics
+• Rollback if metrics drop • Update runbook
 
-→ DECISION:                  → DECISION:
-  Which intervention?          Deployment successful?
-  • High data drift:           ✓ Metrics recovered
-    RETRAIN + A/B test         ✓ No new drift detected
-  • Performance drop only:     ✓ False positive rate OK
-    ROLLBACK immediately       ✓ Runbook updated
-  • Infrastructure issue:
-    SCALE/FIX servers
+→ DECISION: → DECISION:
+ Which intervention? Deployment successful?
+ • High data drift: ✓ Metrics recovered
+ RETRAIN + A/B test ✓ No new drift detected
+ • Performance drop only: ✓ False positive rate OK
+ ROLLBACK immediately ✓ Runbook updated
+ • Infrastructure issue:
+ SCALE/FIX servers
 ```
 
-> 💡 **Usage note:** Phases 1-2 run continuously in production. Phase 3 is triggered by alerts from Phase 2. Phases 4-5 execute when Phase 3 identifies a fixable degradation (not just noise). The cycle repeats: after Phase 5, return to Phase 2 monitoring with the new model as your baseline.
+> **Usage note:** Phases 1-2 run continuously in production. Phase 3 is triggered by alerts from Phase 2. Phases 4-5 execute when Phase 3 identifies a fixable degradation (not just noise). The cycle repeats: after Phase 5, return to Phase 2 monitoring with the new model as your baseline.
 
-> 💡 **Monitoring verdict:** Drift detected at day 14, v2 rolled out via A/B test — accuracy recovered from 91% → 96.2%, zero customer-facing downtime ✅.
-> ➡️ Ch.11 wraps monitoring into the end-to-end deployment pipeline — drift triggers automatic retraining.
+> **Monitoring verdict:** Drift detected at day 14, v2 rolled out via A/B test — accuracy recovered from 91% → 96.2%, zero customer-facing downtime .
+> ➡ Ch.11 wraps monitoring into the end-to-end deployment pipeline — drift triggers automatic retraining.
 
 ### Workflow Decision Tree
 
 ```mermaid
 graph TD
-    A[Phase 1: DEPLOY<br/>Capture baseline] --> B[Phase 2: DETECT<br/>Monitor metrics]
-    B --> C{Drift detected?}
-    C -->|No drift<br/>Performance OK| B
-    C -->|Data drift<br/>PSI > 0.2| D[Phase 3: TRIAGE<br/>Analyze root cause]
-    C -->|Performance drop<br/>Accuracy < 90%| E[Phase 4: REMEDIATE<br/>ROLLBACK immediately]
-    D --> F{Root cause?}
-    F -->|Data drift<br/>Distribution shift| G[Phase 4: REMEDIATE<br/>Retrain with new data]
-    F -->|Concept drift<br/>Label definition changed| H[Phase 4: REMEDIATE<br/>Collect new labels + retrain]
-    F -->|Infrastructure<br/>Server degradation| I[Phase 4: REMEDIATE<br/>Scale/fix infrastructure]
-    F -->|Adversarial<br/>Gaming inputs| J[Phase 4: REMEDIATE<br/>Add input filters]
-    G --> K[Phase 5: VALIDATE<br/>A/B test new model]
-    H --> K
-    I --> L[Phase 5: VALIDATE<br/>Monitor recovery]
-    J --> L
-    K --> M{v2 better than v1?}
-    M -->|Yes<br/>Metrics improved| N[Gradual rollout<br/>10% → 50% → 100%]
-    M -->|No<br/>Metrics same/worse| E
-    E --> O[Update runbook<br/>Return to Phase 2]
-    L --> O
-    N --> O
-    O --> B
+ A[Phase 1: DEPLOY<br/>Capture baseline] --> B[Phase 2: DETECT<br/>Monitor metrics]
+ B --> C{Drift detected?}
+ C -->|No drift<br/>Performance OK| B
+ C -->|Data drift<br/>PSI > 0.2| D[Phase 3: TRIAGE<br/>Analyze root cause]
+ C -->|Performance drop<br/>Accuracy < 90%| E[Phase 4: REMEDIATE<br/>ROLLBACK immediately]
+ D --> F{Root cause?}
+ F -->|Data drift<br/>Distribution shift| G[Phase 4: REMEDIATE<br/>Retrain with new data]
+ F -->|Concept drift<br/>Label definition changed| H[Phase 4: REMEDIATE<br/>Collect new labels + retrain]
+ F -->|Infrastructure<br/>Server degradation| I[Phase 4: REMEDIATE<br/>Scale/fix infrastructure]
+ F -->|Adversarial<br/>Gaming inputs| J[Phase 4: REMEDIATE<br/>Add input filters]
+ G --> K[Phase 5: VALIDATE<br/>A/B test new model]
+ H --> K
+ I --> L[Phase 5: VALIDATE<br/>Monitor recovery]
+ J --> L
+ K --> M{v2 better than v1?}
+ M -->|Yes<br/>Metrics improved| N[Gradual rollout<br/>10% → 50% → 100%]
+ M -->|No<br/>Metrics same/worse| E
+ E --> O[Update runbook<br/>Return to Phase 2]
+ L --> O
+ N --> O
+ O --> B
 
-    style A fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style B fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style D fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style E fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style G fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style H fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style I fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style J fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style K fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style L fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style N fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style A fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style B fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style D fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style E fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style G fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style H fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style I fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style J fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style K fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style L fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style N fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### The 5-Phase Cycle in Production
@@ -208,7 +207,7 @@ In a mature production system, this workflow runs continuously:
 | **Week 7** | Phase 5 (VALIDATE) | v1.1 at 100% traffic; PSI = 0.05, accuracy = 93% → stable |
 | **Week 8+** | Phase 2 (DETECT) | Return to continuous monitoring with v1.1 as new baseline |
 
-> 💡 **Industry callout: Evidently AI for drift detection**
+> **Industry callout: Evidently AI for drift detection**
 > **Tool:** [Evidently AI](https://evidentlyai.com) — open-source drift detection framework
 > **When to use:** Phase 2 (DETECT) — automated drift reports comparing training vs production distributions
 > **Key metrics:** PSI (Population Stability Index), KS test, feature-level drift scores
@@ -241,9 +240,9 @@ Deploy the registered model from Ch.9 using MLflow Model Serving:
 ```bash
 # Start MLflow model serving on port 5001
 mlflow models serve \
-    --model-uri "models:/bert-sentiment-classifier/Production" \
-    --port 5001 \
-    --no-conda
+ --model-uri "models:/bert-sentiment-classifier/Production" \
+ --port 5001 \
+ --no-conda
 ```
 
 **Inference API:**
@@ -251,11 +250,11 @@ mlflow models serve \
 import requests
 
 response = requests.post(
-    "http://localhost:5001/invocations",
-    json={"inputs": ["This product is amazing!", "Terrible quality."]}
+ "http://localhost:5001/invocations",
+ json={"inputs": ["This product is amazing!", "Terrible quality."]}
 )
 
-predictions = response.json()["predictions"]  # [1, 0] (positive, negative)
+predictions = response.json()["predictions"] # [1, 0] (positive, negative)
 ```
 
 **What we log per prediction:**
@@ -265,38 +264,38 @@ import sqlite3
 from datetime import datetime
 
 def log_prediction(prediction_data):
-    """Log prediction to SQLite for baseline capture and drift detection."""
-    conn = sqlite3.connect("production_logs.db")
-    cursor = conn.cursor()
+ """Log prediction to SQLite for baseline capture and drift detection."""
+ conn = sqlite3.connect("production_logs.db")
+ cursor = conn.cursor()
 
-    cursor.execute("""
-        INSERT INTO predictions (timestamp, model_version, input_text,
-                                prediction, latency_ms, confidence)
-        VALUES (?, ?, ?, ?, ?, ?)
-    """, (
-        prediction_data["timestamp"],
-        prediction_data["model_version"],
-        prediction_data["input_text"],
-        prediction_data["prediction"],
-        prediction_data["latency_ms"],
-        prediction_data["confidence"]
-    ))
+ cursor.execute("""
+ INSERT INTO predictions (timestamp, model_version, input_text,
+ prediction, latency_ms, confidence)
+ VALUES (?, ?, ?, ?, ?, ?)
+ """, (
+ prediction_data["timestamp"],
+ prediction_data["model_version"],
+ prediction_data["input_text"],
+ prediction_data["prediction"],
+ prediction_data["latency_ms"],
+ prediction_data["confidence"]
+ ))
 
-    conn.commit()
-    conn.close()
+ conn.commit()
+ conn.close()
 
 # Example: Log one prediction
 log_prediction({
-    "timestamp": datetime.now(),
-    "model_version": "v1",
-    "input_text": "This product is amazing!",
-    "prediction": 1,  # positive
-    "latency_ms": 45,
-    "confidence": 0.95
+ "timestamp": datetime.now(),
+ "model_version": "v1",
+ "input_text": "This product is amazing!",
+ "prediction": 1, # positive
+ "latency_ms": 45,
+ "confidence": 0.95
 })
 ```
 
-> 💡 **Industry callout: Arize AI for ML observability**
+> **Industry callout: Arize AI for ML observability**
 > **Tool:** [Arize AI](https://arize.com) — ML observability platform with automated root cause analysis
 > **When to use:** Phase 1 (DEPLOY) + Phase 2 (DETECT) — captures baseline metrics and monitors production performance
 > **Key features:** Automated drift detection, embedding visualization, model performance tracking, integrated A/B test analysis
@@ -307,10 +306,10 @@ log_prediction({
 ### DECISION CHECKPOINT 1 — Phase 1 Complete
 
 **What you just captured:**
-- ✅ **1,247 predictions logged** over 7 days (baseline period)
-- ✅ **Reference distribution saved**: avg text length 195 words, 48% positive class, vocabulary size 8,342 unique tokens
-- ✅ **Performance baseline**: 94% accuracy on test set, 180ms p95 latency, 0.89 avg confidence
-- ✅ **SLA thresholds defined**: accuracy > 90%, latency < 200ms, positive class 40-60% (balanced)
+- **1,247 predictions logged** over 7 days (baseline period)
+- **Reference distribution saved**: avg text length 195 words, 48% positive class, vocabulary size 8,342 unique tokens
+- **Performance baseline**: 94% accuracy on test set, 180ms p95 latency, 0.89 avg confidence
+- **SLA thresholds defined**: accuracy > 90%, latency < 200ms, positive class 40-60% (balanced)
 
 **What it means:**
 - You now have a **reference snapshot** of what "normal" production traffic looks like for this model
@@ -329,7 +328,7 @@ log_prediction({
 
 ### Step 2: Monitor Data Drift (Input Distribution Changes)
 
-> 💡 **Intuition first:** **Data drift measures how much the production input distribution has shifted away from training data**. If your model was trained on movie reviews (200 words, balanced sentiment) but production serves product reviews (50 words, 75% positive), the input distributions P(X<sub>train</sub>) and P(X<sub>prod</sub>) have diverged. Drift metrics like **KL divergence** and **PSI** (Population Stability Index) quantify this shift — high values mean "your model is seeing data it wasn't trained on, so performance may degrade." Think of drift detection as an **early warning system**: it alerts you *before* accuracy drops, giving you time to retrain.
+> **Intuition first:** **Data drift measures how much the production input distribution has shifted away from training data**. If your model was trained on movie reviews (200 words, balanced sentiment) but production serves product reviews (50 words, 75% positive), the input distributions P(X<sub>train</sub>) and P(X<sub>prod</sub>) have diverged. Drift metrics like **KL divergence** and **PSI** (Population Stability Index) quantify this shift — high values mean "your model is seeing data it wasn't trained on, so performance may degrade." Think of drift detection as an **early warning system**: it alerts you *before* accuracy drops, giving you time to retrain.
 
 **After 1 week of production traffic**, compare production inputs vs. training data:
 
@@ -353,9 +352,9 @@ report.save_html("drift_report.html")
 
 | Feature | Training (IMDB) | Production (E-commerce) | Drift Detected? | KL Divergence |
 |---|---|---|---|---|
-| Text length | 200 ± 50 words | 50 ± 20 words | ✅ YES | 0.35 |
-| Vocabulary overlap | — | 60% overlap | ✅ YES | — |
-| Positive class % | 50% | 75% | ✅ YES | 0.12 |
+| Text length | 200 ± 50 words | 50 ± 20 words | YES | 0.35 |
+| Vocabulary overlap | — | 60% overlap | YES | — |
+| Positive class % | 50% | 75% | YES | 0.12 |
 
 **Interpretation:**
 - **Text length drift** — Production reviews are **4× shorter** (50 vs. 200 words)
@@ -374,8 +373,8 @@ from evidently.metric_preset import ClassificationPreset
 # Compare prediction distributions
 report = Report(metrics=[ClassificationPreset()])
 report.run(
-    reference_data=training_predictions,  # Predictions on test set
-    current_data=production_predictions   # Predictions in production
+ reference_data=training_predictions, # Predictions on test set
+ current_data=production_predictions # Predictions in production
 )
 report.save_html("prediction_drift_report.html")
 ```
@@ -384,9 +383,9 @@ report.save_html("prediction_drift_report.html")
 
 | Metric | Training Test Set | Production (Week 1) | Production (Week 3) | Drift? |
 |---|---|---|---|---|
-| Positive class % | 50% | 75% | 85% | ✅ YES |
-| Prediction entropy | 0.68 | 0.72 | 0.45 | ✅ YES (more confident but wrong) |
-| Avg confidence | 0.82 | 0.85 | 0.92 | ⚠️ Warning (overconfident) |
+| Positive class % | 50% | 75% | 85% | YES |
+| Prediction entropy | 0.68 | 0.72 | 0.45 | YES (more confident but wrong) |
+| Avg confidence | 0.82 | 0.85 | 0.92 | Warning (overconfident) |
 
 **Interpretation:**
 - **Positive class % increased** — Model predicts "positive" 85% of the time (vs. 50% in training)
@@ -395,7 +394,7 @@ report.save_html("prediction_drift_report.html")
 
 **Root cause hypothesis:** Model trained on movie reviews (balanced 50/50 positive/negative) now sees product reviews (naturally more positive), but the **definition of "positive"** differs (movie: "great acting" vs. product: "fast shipping").
 
-> 💡 **Industry callout: WhyLabs for data quality monitoring**
+> **Industry callout: WhyLabs for data quality monitoring**
 > **Tool:** [WhyLabs](https://whylabs.ai) — lightweight data quality + drift monitoring platform
 > **When to use:** Phase 2 (DETECT) — continuous monitoring of data quality, drift, and model performance
 > **Key features:** Privacy-preserving profiling (no raw data leaves your infrastructure), statistical drift detection, anomaly detection, schema validation
@@ -408,9 +407,9 @@ report.save_html("prediction_drift_report.html")
 **What you just detected:**
 - 🚨 **HIGH data drift**: Text length 200 → 50 words (KL divergence 0.35 > threshold 0.1)
 - 🚨 **HIGH prediction drift**: Positive class 50% → 85% (model over-predicts positive)
-- ⚠️ **Prediction entropy dropped**: 0.68 → 0.45 (model is more confident but wrong)
-- ⚠️ **Vocabulary overlap**: Only 60% of production words appeared in training
-- ✅ **Performance still acceptable**: 91% accuracy (above 90% SLA threshold)
+- **Prediction entropy dropped**: 0.68 → 0.45 (model is more confident but wrong)
+- **Vocabulary overlap**: Only 60% of production words appeared in training
+- **Performance still acceptable**: 91% accuracy (above 90% SLA threshold)
 
 **What it means:**
 - **Training distribution ≠ production distribution** — the model sees data it wasn't trained on
@@ -445,34 +444,34 @@ import numpy as np
 
 # Load production predictions (week 3)
 prod_df = pd.read_sql("""
-    SELECT input_text, prediction, confidence, timestamp
-    FROM predictions
-    WHERE timestamp > NOW() - INTERVAL '7 days'
+ SELECT input_text, prediction, confidence, timestamp
+ FROM predictions
+ WHERE timestamp > NOW() - INTERVAL '7 days'
 """, conn)
 
 # Create segments by text length
 prod_df['text_length'] = prod_df['input_text'].str.split().str.len()
 prod_df['length_segment'] = pd.cut(prod_df['text_length'],
-                                     bins=[0, 30, 100, 300],
-                                     labels=['short', 'medium', 'long'])
+ bins=[0, 30, 100, 300],
+ labels=['short', 'medium', 'long'])
 
 # Analyze prediction distribution per segment
 segment_stats = prod_df.groupby('length_segment').agg({
-    'prediction': ['mean', 'count'],  # % positive, sample count
-    'confidence': 'mean',
-    'text_length': 'mean'
+ 'prediction': ['mean', 'count'], # % positive, sample count
+ 'confidence': 'mean',
+ 'text_length': 'mean'
 }).round(3)
 
 print("Segment Analysis:")
 print(segment_stats)
 
 # Output:
-#                 prediction              confidence  text_length
-#                      mean   count         mean         mean
+# prediction confidence text_length
+# mean count mean mean
 # length_segment
-# short                0.88   8234         0.94         22.3
-# medium               0.75   1543         0.87        64.1
-# long                 0.52    223         0.79       142.7
+# short 0.88 8234 0.94 22.3
+# medium 0.75 1543 0.87 64.1
+# long 0.52 223 0.79 142.7
 ```
 
 **Findings:**
@@ -485,10 +484,10 @@ print(segment_stats)
 ### DECISION CHECKPOINT 3 — Phase 3 Complete
 
 **Root cause diagnosed:**
-- ✅ **Data drift confirmed**: Production text length 50 words vs training 200 words (75% shorter)
-- ✅ **Segment identified**: Short reviews (< 30 words) have 88% positive prediction rate (vs 50% baseline)
-- ✅ **Concept drift ruled out**: Long production reviews (100+ words) perform at 52% positive (similar to training) → the true label distribution hasn't changed, only input length
-- ✅ **Infrastructure issues ruled out**: Latency stable at 180ms, no server errors, batch size unchanged
+- **Data drift confirmed**: Production text length 50 words vs training 200 words (75% shorter)
+- **Segment identified**: Short reviews (< 30 words) have 88% positive prediction rate (vs 50% baseline)
+- **Concept drift ruled out**: Long production reviews (100+ words) perform at 52% positive (similar to training) → the true label distribution hasn't changed, only input length
+- **Infrastructure issues ruled out**: Latency stable at 180ms, no server errors, batch size unchanged
 
 **What it means:**
 - **This is fixable via retraining** — not a fundamental model architecture problem
@@ -513,30 +512,30 @@ You've retrained a new model (v2) on **1,000 labeled production reviews**. Befor
 ```python
 # A/B test controller (traffic splitter)
 def route_traffic(user_id):
-    """Route 10% of users to v2, 90% to v1."""
-    if hash(user_id) % 10 == 0:
-        return "v2"  # 10% traffic
-    else:
-        return "v1"  # 90% traffic
+ """Route 10% of users to v2, 90% to v1."""
+ if hash(user_id) % 10 == 0:
+ return "v2" # 10% traffic
+ else:
+ return "v1" # 90% traffic
 
 # Inference with A/B routing
 def predict(text, user_id):
-    model_version = route_traffic(user_id)
+ model_version = route_traffic(user_id)
 
-    if model_version == "v1":
-        prediction = model_v1.predict(text)
-    else:
-        prediction = model_v2.predict(text)
+ if model_version == "v1":
+ prediction = model_v1.predict(text)
+ else:
+ prediction = model_v2.predict(text)
 
-    # Log with model version tag
-    log_prediction({
-        "model_version": model_version,
-        "input": text,
-        "prediction": prediction,
-        "user_id": user_id
-    })
+ # Log with model version tag
+ log_prediction({
+ "model_version": model_version,
+ "input": text,
+ "prediction": prediction,
+ "user_id": user_id
+ })
 
-    return prediction
+ return prediction
 ```
 
 **A/B test runs for 48 hours**, collecting metrics for both versions.
@@ -547,32 +546,32 @@ def predict(text, user_id):
 
 | Metric | v1 (Baseline) | v2 (Retrained) | Winner? |
 |---|---|---|---|
-| **Accuracy** (on labeled subset) | 72% | 91% | ✅ v2 |
-| **F1 Score** | 0.68 | 0.89 | ✅ v2 |
-| **Latency (p95)** | 180ms | 220ms | ⚠️ v1 (but acceptable) |
-| **User thumbs-up rate** | 65% | 88% | ✅ v2 |
-| **False positive rate** | 35% | 12% | ✅ v2 |
+| **Accuracy** (on labeled subset) | 72% | 91% | v2 |
+| **F1 Score** | 0.68 | 0.89 | v2 |
+| **Latency (p95)** | 180ms | 220ms | v1 (but acceptable) |
+| **User thumbs-up rate** | 65% | 88% | v2 |
+| **False positive rate** | 35% | 12% | v2 |
 
 **Statistical significance test:**
 ```python
 from scipy import stats
 
 # Accuracy samples (bootstrap from logged predictions)
-v1_accuracy = [0.71, 0.73, 0.72, 0.70, 0.74]  # 5 daily samples
+v1_accuracy = [0.71, 0.73, 0.72, 0.70, 0.74] # 5 daily samples
 v2_accuracy = [0.90, 0.91, 0.92, 0.89, 0.91]
 
 # T-test: Is v2 significantly better?
 t_stat, p_value = stats.ttest_ind(v1_accuracy, v2_accuracy)
 
 if p_value < 0.05:
-    print(f"v2 is significantly better (p={p_value:.4f})")
+ print(f"v2 is significantly better (p={p_value:.4f})")
 else:
-    print(f"No significant difference (p={p_value:.4f})")
+ print(f"No significant difference (p={p_value:.4f})")
 ```
 
 **Decision:** v2 is significantly better (p < 0.001) → **Proceed with gradual rollout**
 
-> 💡 **Industry callout: DataRobot MLOps for champion/challenger testing**
+> **Industry callout: DataRobot MLOps for champion/challenger testing**
 > **Tool:** [DataRobot MLOps](https://datarobot.com/platform/mlops/) — enterprise MLOps platform with automated A/B testing
 > **When to use:** Phase 4 (REMEDIATE) + Phase 5 (VALIDATE) — automated champion/challenger deployment with statistical significance testing
 > **Key features:** Automated traffic splitting, statistical test integration (t-test, Bayesian A/B), automated rollout schedules, rollback on metric degradation
@@ -583,11 +582,11 @@ else:
 ### DECISION CHECKPOINT 4 — Phase 4 Complete
 
 **A/B test results (48 hours, 10,000 predictions per model):**
-- ✅ **v2 accuracy 91%** vs v1 accuracy 72% → **+19 percentage points** (statistically significant, p < 0.001)
-- ✅ **v2 F1 score 0.89** vs v1 F1 0.68 → **+31% improvement**
-- ✅ **User thumbs-up rate 88%** vs 65% → **+23 percentage points** (business metric improved)
-- ⚠️ **v2 latency 220ms** vs v1 180ms → **+22% slower** (but still within 200ms SLA for p95)
-- ✅ **False positive rate 12%** vs 35% → **65% reduction** in incorrect "positive" predictions
+- **v2 accuracy 91%** vs v1 accuracy 72% → **+19 percentage points** (statistically significant, p < 0.001)
+- **v2 F1 score 0.89** vs v1 F1 0.68 → **+31% improvement**
+- **User thumbs-up rate 88%** vs 65% → **+23 percentage points** (business metric improved)
+- **v2 latency 220ms** vs v1 180ms → **+22% slower** (but still within 200ms SLA for p95)
+- **False positive rate 12%** vs 35% → **65% reduction** in incorrect "positive" predictions
 
 **What it means:**
 - **v2 is significantly better on all core metrics** — accuracy, F1, user satisfaction all improved
@@ -617,26 +616,26 @@ Day 5: If metrics hold, increase to 100%
 **Automated rollout script:**
 ```python
 def gradual_rollout(target_percentage, current_percentage, step=10):
-    """Gradually increase v2 traffic from current to target."""
-    for pct in range(current_percentage, target_percentage + 1, step):
-        # Update traffic split
-        update_traffic_split(v1_pct=100-pct, v2_pct=pct)
+ """Gradually increase v2 traffic from current to target."""
+ for pct in range(current_percentage, target_percentage + 1, step):
+ # Update traffic split
+ update_traffic_split(v1_pct=100-pct, v2_pct=pct)
 
-        # Wait 24 hours and monitor metrics
-        time.sleep(24 * 3600)
+ # Wait 24 hours and monitor metrics
+ time.sleep(24 * 3600)
 
-        # Check metrics
-        v2_accuracy = get_accuracy(model="v2", last_hours=24)
+ # Check metrics
+ v2_accuracy = get_accuracy(model="v2", last_hours=24)
 
-        if v2_accuracy < 0.90:  # Threshold
-            print(f"⚠️ v2 accuracy dropped to {v2_accuracy:.2%} — ROLLING BACK")
-            rollback_to_v1()
-            return False
-        else:
-            print(f"✅ v2 traffic at {pct}%, accuracy {v2_accuracy:.2%}")
+ if v2_accuracy < 0.90: # Threshold
+ print(f" v2 accuracy dropped to {v2_accuracy:.2%} — ROLLING BACK")
+ rollback_to_v1()
+ return False
+ else:
+ print(f" v2 traffic at {pct}%, accuracy {v2_accuracy:.2%}")
 
-    print("🎉 v2 fully deployed to 100% of traffic")
-    return True
+ print(" v2 fully deployed to 100% of traffic")
+ return True
 
 # Execute rollout
 gradual_rollout(current_percentage=10, target_percentage=100, step=10)
@@ -645,25 +644,25 @@ gradual_rollout(current_percentage=10, target_percentage=100, step=10)
 **Rollback procedure (if metrics degrade):**
 ```python
 def rollback_to_v1():
-    """Instant cutover: v2 → v1."""
-    update_traffic_split(v1_pct=100, v2_pct=0)
+ """Instant cutover: v2 → v1."""
+ update_traffic_split(v1_pct=100, v2_pct=0)
 
-    # Log rollback event
-    log_event({
-        "timestamp": datetime.now(),
-        "event": "rollback",
-        "from_version": "v2",
-        "to_version": "v1",
-        "reason": "accuracy < 90%"
-    })
+ # Log rollback event
+ log_event({
+ "timestamp": datetime.now(),
+ "event": "rollback",
+ "from_version": "v2",
+ "to_version": "v1",
+ "reason": "accuracy < 90%"
+ })
 
-    # Send alert
-    send_alert("🚨 Model v2 rolled back due to performance degradation")
+ # Send alert
+ send_alert("🚨 Model v2 rolled back due to performance degradation")
 ```
 
 **Result:** v2 reaches 100% traffic by Day 5 with 91% accuracy maintained. v1 is archived but kept in registry for emergency rollback.
 
-> 💡 **Industry callout: Fiddler AI for explainability + monitoring**
+> **Industry callout: Fiddler AI for explainability + monitoring**
 > **Tool:** [Fiddler AI](https://fiddler.ai) — ML observability with built-in explainability (SHAP, LIME integration)
 > **When to use:** Phase 5 (VALIDATE) — post-deployment validation with explainability to confirm model behavior is correct
 > **Key features:** Drift detection + explainability in one platform; slice-based analysis (segment performance); fairness metrics; custom metric tracking
@@ -677,18 +676,18 @@ def rollback_to_v1():
 
 | Day | Traffic Split | v2 Accuracy | v2 Latency | User Approval | Status |
 |-----|---------------|-------------|------------|---------------|--------|
-| **Day 1-2** | 10% v2, 90% v1 | 91% | 220ms | 88% | ✅ PASS |
-| **Day 3** | 50% v2, 50% v1 | 90% | 218ms | 87% | ✅ PASS |
-| **Day 4** | 75% v2, 25% v1 | 91% | 222ms | 88% | ✅ PASS |
-| **Day 5** | 100% v2 | 91% | 220ms | 88% | ✅ PASS |
-| **Day 7** | 100% v2 | 91% | 219ms | 89% | ✅ STABLE |
+| **Day 1-2** | 10% v2, 90% v1 | 91% | 220ms | 88% | PASS |
+| **Day 3** | 50% v2, 50% v1 | 90% | 218ms | 87% | PASS |
+| **Day 4** | 75% v2, 25% v1 | 91% | 222ms | 88% | PASS |
+| **Day 5** | 100% v2 | 91% | 220ms | 88% | PASS |
+| **Day 7** | 100% v2 | 91% | 219ms | 89% | STABLE |
 
 **Final validation checks:**
-- ✅ **Metrics recovered and stable**: Accuracy 91% for 7+ days (vs 72% pre-retrain)
-- ✅ **No new drift detected**: PSI = 0.06 (LOW drift), text length distribution stable at 50 words avg
-- ✅ **False positive rate normalized**: 12% (down from 35%), positive prediction rate 52% (down from 85%)
-- ✅ **Latency within SLA**: p95 = 198ms (under 200ms threshold), avg = 220ms
-- ✅ **User feedback positive**: 89% thumbs-up rate sustained (vs 65% baseline)
+- **Metrics recovered and stable**: Accuracy 91% for 7+ days (vs 72% pre-retrain)
+- **No new drift detected**: PSI = 0.06 (LOW drift), text length distribution stable at 50 words avg
+- **False positive rate normalized**: 12% (down from 35%), positive prediction rate 52% (down from 85%)
+- **Latency within SLA**: p95 = 198ms (under 200ms threshold), avg = 220ms
+- **User feedback positive**: 89% thumbs-up rate sustained (vs 65% baseline)
 
 **What it means:**
 - **Deployment successful** — v2 is now the production champion model
@@ -697,10 +696,10 @@ def rollback_to_v1():
 - **A/B testing de-risked rollout** — gradual rollout caught no unexpected issues; 100% confidence in v2 stability
 
 **Post-deployment actions completed:**
-→ ✅ **Runbook updated:** Documented text length drift, retraining procedure, and rollout timeline for future reference
-→ ✅ **Alert thresholds recalibrated:** PSI threshold increased to 0.15 (was 0.10) based on observed false positive rate during rollout
-→ ✅ **Baseline refreshed:** v2 performance (91% accuracy, 50-word avg text) now serves as new reference distribution
-→ ✅ **v1 archived in model registry:** Tagged as "rollback-candidate" for emergency use if v2 degrades
+→ **Runbook updated:** Documented text length drift, retraining procedure, and rollout timeline for future reference
+→ **Alert thresholds recalibrated:** PSI threshold increased to 0.15 (was 0.10) based on observed false positive rate during rollout
+→ **Baseline refreshed:** v2 performance (91% accuracy, 50-word avg text) now serves as new reference distribution
+→ **v1 archived in model registry:** Tagged as "rollback-candidate" for emergency use if v2 degrades
 
 **Return to Phase 2 (DETECT):** Resume continuous monitoring with v2 as the new baseline.
 
@@ -709,18 +708,18 @@ def rollback_to_v1():
 ## 3 · Mental Model — Train-Time Metrics ≠ Production Metrics
 
 ```
-TRAINING ENVIRONMENT                  PRODUCTION ENVIRONMENT
-┌─────────────────────────┐          ┌──────────────────────────────┐
-│ Fixed test set           │          │ Evolving data distribution   │
-│ (IMDB reviews from 2020) │          │ (E-commerce reviews from     │
-│                          │          │  2024, changing daily)       │
-│ Accuracy: 94% ✅         │    ≠     │ Accuracy: 72% ❌             │
-│                          │          │                              │
-│ • Balanced classes       │          │ • Class imbalance (75% pos)  │
-│ • Clean, labeled data    │          │ • Noisy, unlabeled data      │
-│ • Controlled environment │          │ • Adversarial inputs         │
-│ • No time pressure       │          │ • Real-time SLA (<200ms)     │
-└─────────────────────────┘          └──────────────────────────────┘
+TRAINING ENVIRONMENT PRODUCTION ENVIRONMENT
+┌─────────────────────────┐ ┌──────────────────────────────┐
+│ Fixed test set │ │ Evolving data distribution │
+│ (IMDB reviews from 2020) │ │ (E-commerce reviews from │
+│ │ │ 2024, changing daily) │
+│ Accuracy: 94% │ ≠ │ Accuracy: 72% │
+│ │ │ │
+│ • Balanced classes │ │ • Class imbalance (75% pos) │
+│ • Clean, labeled data │ │ • Noisy, unlabeled data │
+│ • Controlled environment │ │ • Adversarial inputs │
+│ • No time pressure │ │ • Real-time SLA (<200ms) │
+└─────────────────────────┘ └──────────────────────────────┘
 ```
 
 ### Why Models Degrade in Production
@@ -771,36 +770,36 @@ TRAINING ENVIRONMENT                  PRODUCTION ENVIRONMENT
 
 | Metric | Training Data | Production (Week 1) | Drift? | Severity |
 |---|---|---|---|---|
-| Text length (avg words) | 200 | 50 | ✅ YES | High (KL=0.35) |
-| Positive class % | 50% | 75% | ✅ YES | Medium (KL=0.12) |
-| Vocabulary overlap | — | 60% | ✅ YES | High |
-| Accuracy (labeled subset) | 94% | 91% | ❌ NO | Low (within SLA) |
-| Latency (p95) | 150ms | 170ms | ❌ NO | Low (within SLA) |
+| Text length (avg words) | 200 | 50 | YES | High (KL=0.35) |
+| Positive class % | 50% | 75% | YES | Medium (KL=0.12) |
+| Vocabulary overlap | — | 60% | YES | High |
+| Accuracy (labeled subset) | 94% | 91% | NO | Low (within SLA) |
+| Latency (p95) | 150ms | 170ms | NO | Low (within SLA) |
 
 **Questions:**
 
 1. **Should you roll back to the previous model version?**
-   - **Answer:** No — accuracy is 91% (within SLA of 90%), and latency is acceptable
-   - **Reasoning:** Data drift is high BUT performance is still good → drift is benign (for now)
+ - **Answer:** No — accuracy is 91% (within SLA of 90%), and latency is acceptable
+ - **Reasoning:** Data drift is high BUT performance is still good → drift is benign (for now)
 
 2. **Should you retrain the model with production data?**
-   - **Answer:** Yes (proactive measure) — high data drift (text length, vocabulary) means training distribution no longer matches production
-   - **Reasoning:** Accuracy is 91% *now*, but drift suggests it will degrade further → retrain with 1,000 labeled production samples to align with new distribution
+ - **Answer:** Yes (proactive measure) — high data drift (text length, vocabulary) means training distribution no longer matches production
+ - **Reasoning:** Accuracy is 91% *now*, but drift suggests it will degrade further → retrain with 1,000 labeled production samples to align with new distribution
 
 3. **Should you do nothing and keep monitoring?**
-   - **Answer:** Not recommended — high data drift + vocabulary shift = red flag
-   - **Reasoning:** Even if accuracy is OK today, the model is fragile (trained on wrong distribution) → small changes could cause sudden drop
+ - **Answer:** Not recommended — high data drift + vocabulary shift = red flag
+ - **Reasoning:** Even if accuracy is OK today, the model is fragile (trained on wrong distribution) → small changes could cause sudden drop
 
 4. **How would you collect labels for retraining?**
-   - **Option 1:** User feedback (thumbs up/down on predictions) — cheap, noisy, biased (users only label bad predictions)
-   - **Option 2:** Manual labeling (hire annotators to label 1,000 production reviews) — expensive but accurate
-   - **Option 3:** Active learning (label only high-uncertainty predictions) — efficient, requires 200–300 labels
-   - **Recommended:** Start with Option 1 (user feedback), supplement with Option 3 (active learning on uncertain cases)
+ - **Option 1:** User feedback (thumbs up/down on predictions) — cheap, noisy, biased (users only label bad predictions)
+ - **Option 2:** Manual labeling (hire annotators to label 1,000 production reviews) — expensive but accurate
+ - **Option 3:** Active learning (label only high-uncertainty predictions) — efficient, requires 200–300 labels
+ - **Recommended:** Start with Option 1 (user feedback), supplement with Option 3 (active learning on uncertain cases)
 
 5. **What's the rollback trigger?**
-   - **Accuracy < 90%** (SLA violation) → immediate rollback
-   - **OR data drift + accuracy drop > 3%** (91% → 88%) in 24 hours → rollback + investigate
-   - **OR user complaints spike > 2× baseline** → rollback + manual review
+ - **Accuracy < 90%** (SLA violation) → immediate rollback
+ - **OR data drift + accuracy drop > 3%** (91% → 88%) in 24 hours → rollback + investigate
+ - **OR user complaints spike > 2× baseline** → rollback + manual review
 
 **Takeaway:** **Data drift alone is not a rollback trigger** — it's a signal to prepare for retraining. **Performance drift (accuracy drop) is the rollback trigger**.
 
@@ -836,21 +835,21 @@ You've just built a robust monitoring + A/B testing pipeline for a single model.
 ### The Operational Maturity Ladder
 
 ```
-Ch.10 (Current)                   Future (Advanced Topics)
-┌─────────────────────────┐      ┌────────────────────────────────┐
-│ Single model            │      │ Multi-model systems            │
-│ Manual drift review     │  →   │ Automated drift detection      │
-│ Manual A/B test         │      │ Automated A/B tests per deploy │
-│ Rollback on failure     │      │ Canary + gradual rollout       │
-│ Weekly retraining       │      │ Online learning (daily)        │
-└─────────────────────────┘      └────────────────────────────────┘
+Ch.10 (Current) Future (Advanced Topics)
+┌─────────────────────────┐ ┌────────────────────────────────┐
+│ Single model │ │ Multi-model systems │
+│ Manual drift review │ → │ Automated drift detection │
+│ Manual A/B test │ │ Automated A/B tests per deploy │
+│ Rollback on failure │ │ Canary + gradual rollout │
+│ Weekly retraining │ │ Online learning (daily) │
+└─────────────────────────┘ └────────────────────────────────┘
 ```
 
 **What you bring from Ch.10:**
-- ✅ Drift detection (Evidently AI)
-- ✅ A/B testing framework (traffic splitting, metrics comparison)
-- ✅ Rollback procedures (automated cutover in <5 min)
-- ✅ Production logging (predictions + ground truth)
+- Drift detection (Evidently AI)
+- A/B testing framework (traffic splitting, metrics comparison)
+- Rollback procedures (automated cutover in <5 min)
+- Production logging (predictions + ground truth)
 
 **What you'll need for multi-model systems:**
 - Feature stores (shared features across models) → revisit Ch.8
@@ -880,4 +879,4 @@ Ch.10 (Current)                   Future (Advanced Topics)
 ---
 
 **Last updated:** April 26, 2026
-**Status:** ✅ README complete — notebook + assets in progress
+**Status:** README complete — notebook + assets in progress

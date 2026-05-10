@@ -38,60 +38,60 @@ This curriculum takes you from software engineer to hireable AI engineer. Work a
 
 ```mermaid
 flowchart TB
-    subgraph Stage1[Stage 1: Foundations]
-        Math[00-math_under_the_hood<br/>Linear algebra, calculus, gradients]
-    end
+ subgraph Stage1[Stage 1: Foundations]
+ Math[00-math_under_the_hood<br/>Linear algebra, calculus, gradients]
+ end
 
-    subgraph Stage2[Stage 2: Data Engineering]
-        Data[01-ml/00_data_fundamentals<br/>Pandas, EDA, drift detection]
-    end
+ subgraph Stage2[Stage 2: Data Engineering]
+ Data[01-ml/00_data_fundamentals<br/>Pandas, EDA, drift detection]
+ end
 
-    subgraph Stage3[Stage 3: Classical ML]
-        Regression[01-ml/01_regression]
-        Classification[01-ml/02_classification]
-        Regression --> Classification
-    end
+ subgraph Stage3[Stage 3: Classical ML]
+ Regression[01-ml/01_regression]
+ Classification[01-ml/02_classification]
+ Regression --> Classification
+ end
 
-    subgraph Stage4[Stage 4: Deep Learning]
-        NeuralNets[01-ml/03_neural_networks<br/>CNNs, RNNs, Transformers]
-    end
+ subgraph Stage4[Stage 4: Deep Learning]
+ NeuralNets[01-ml/03_neural_networks<br/>CNNs, RNNs, Transformers]
+ end
 
-    subgraph Stage5[Stage 5: Specialization - Choose ONE]
-        LLM[03a-ai<br/>LLM Fundamentals]
-        Agentic[03b-agentic-ai<br/>PizzaBot Agent]
-        Multimodal[05-multimodal_ai<br/>Diffusion, CLIP, Stable Diffusion]
-        Infra[06-ai_infrastructure<br/>GPU, quantization, serving]
-    end
+ subgraph Stage5[Stage 5: Specialization - Choose ONE]
+ LLM[03a-ai<br/>LLM Fundamentals]
+ Agentic[03b-agentic-ai<br/>PizzaBot Agent]
+ Multimodal[05-multimodal_ai<br/>Diffusion, CLIP, Stable Diffusion]
+ Infra[06-ai_infrastructure<br/>GPU, quantization, serving]
+ end
 
-    subgraph Stage6[Stage 6: Production]
-        Advanced[02-advanced_deep_learning<br/>Detection, segmentation, compression]
-        DevOps[07-devops_fundamentals<br/>Docker, K8s, monitoring]
-        Advanced -.parallel.-> DevOps
-    end
+ subgraph Stage6[Stage 6: Production]
+ Advanced[02-advanced_deep_learning<br/>Detection, segmentation, compression]
+ DevOps[07-devops_fundamentals<br/>Docker, K8s, monitoring]
+ Advanced -.parallel.-> DevOps
+ end
 
-    Math --> Data
-    Data --> Regression
-    Classification --> NeuralNets
-    NeuralNets --> LLM
-    NeuralNets --> Agentic
-    NeuralNets --> Multimodal
-    NeuralNets --> Infra
-    LLM --> Agentic
-    Agentic --> Advanced
-    Multimodal --> Advanced
-    Infra --> Advanced
+ Math --> Data
+ Data --> Regression
+ Classification --> NeuralNets
+ NeuralNets --> LLM
+ NeuralNets --> Agentic
+ NeuralNets --> Multimodal
+ NeuralNets --> Infra
+ LLM --> Agentic
+ Agentic --> Advanced
+ Multimodal --> Advanced
+ Infra --> Advanced
 
-    style Math fill:#e1f5ff
-    style Data fill:#e1f5ff
-    style Regression fill:#fff4e1
-    style Classification fill:#fff4e1
-    style NeuralNets fill:#fff4e1
-    style LLM fill:#e8f5e9
-    style Agentic fill:#e8f5e9
-    style Multimodal fill:#e8f5e9
-    style Infra fill:#e8f5e9
-    style Advanced fill:#ffe1e1
-    style DevOps fill:#ffe1e1
+ style Math fill:#e1f5ff
+ style Data fill:#e1f5ff
+ style Regression fill:#fff4e1
+ style Classification fill:#fff4e1
+ style NeuralNets fill:#fff4e1
+ style LLM fill:#e8f5e9
+ style Agentic fill:#e8f5e9
+ style Multimodal fill:#e8f5e9
+ style Infra fill:#e8f5e9
+ style Advanced fill:#ffe1e1
+ style DevOps fill:#ffe1e1
 ```
 
 ### Prerequisites by Track
@@ -124,21 +124,21 @@ flowchart TB
 **Data prep before modeling** (Stage 2): 80% of production ML failures are data quality issues. Learn to detect outliers, handle drift, and validate distributions BEFORE you waste time tuning a model on garbage data.
 
 **Transformers before specializations** (Stage 4):
-   Transformers are the foundation for:
-   - **AI track**: GPT-4 is a Transformer + RLHF
-   - **Multimodal track**: CLIP and Stable Diffusion use Transformer encoders
-   - **Advanced Deep Learning**: Vision Transformers replace CNNs in modern architectures
+ Transformers are the foundation for:
+ - **AI track**: GPT-4 is a Transformer + RLHF
+ - **Multimodal track**: CLIP and Stable Diffusion use Transformer encoders
+ - **Advanced Deep Learning**: Vision Transformers replace CNNs in modern architectures
 
-   Nail self-attention in ML Ch.18, then specialize.
+ Nail self-attention in ML Ch.18, then specialize.
 
 **Advanced Deep Learning LAST**
-   ResNets, YOLOv5, and Mask R-CNN assume you already understand:
-   - Loss functions and gradient descent (ML Ch.1-2)
-   - Backpropagation (ML Ch.5)
-   - CNNs and regularization (ML Ch.7, Ch.6)
-   - Hyperparameter tuning (ML Ch.6)
+ ResNets, YOLOv5, and Mask R-CNN assume you already understand:
+ - Loss functions and gradient descent (ML Ch.1-2)
+ - Backpropagation (ML Ch.5)
+ - CNNs and regularization (ML Ch.7, Ch.6)
+ - Hyperparameter tuning (ML Ch.6)
 
-   If you skip ML Ch.1-10 and jump straight to object detection, you'll be lost. The Advanced Deep Learning track is NOT a beginner-friendly entry point — it's a capstone.
+ If you skip ML Ch.1-10 and jump straight to object detection, you'll be lost. The Advanced Deep Learning track is NOT a beginner-friendly entry point — it's a capstone.
 
 ### Track Overview
 
@@ -187,16 +187,16 @@ Utility folders that appear alongside chapters:
 ```
 notes/
 ├── 00-math_under_the_hood/ ← Math foundations: linear & non-linear algebra, calculus, 1-D optimisation, matrices, gradients & chain rule, probability
-├── 01-ml/               ← Machine Learning: topics grouped by domain (Regression, Classification, …)
-├── 03a-ai/              ← LLM Fundamentals: GPT-4 vs Claude investigation, prompting, CoT, RAG (5 chapters)
-├── 03b-agentic-ai/      ← Agentic AI: PizzaBot Grand Challenge — tool use, safety, eval, cost, fine-tuning (6 chapters)
-├── 04-multi_agent_ai/   ← Multi-agent protocols and coordination patterns (+ notebooks)
-├── 05-multimodal_ai/    ← Diffusion, CLIP, vision transformers, text-to-video (+ notebooks)
+├── 01-ml/ ← Machine Learning: topics grouped by domain (Regression, Classification, …)
+├── 03a-ai/ ← LLM Fundamentals: GPT-4 vs Claude investigation, prompting, CoT, RAG (5 chapters)
+├── 03b-agentic-ai/ ← Agentic AI: PizzaBot Grand Challenge — tool use, safety, eval, cost, fine-tuning (6 chapters)
+├── 04-multi_agent_ai/ ← Multi-agent protocols and coordination patterns (+ notebooks)
+├── 05-multimodal_ai/ ← Diffusion, CLIP, vision transformers, text-to-video (+ notebooks)
 ├── 06-ai_infrastructure/ ← GPU hardware to production serving platforms (+ notebooks)
 ├── 07-devops_fundamentals/ ← Docker, Kubernetes, CI/CD, monitoring
 ├── 02-advanced_deep_learning/ ← Production computer vision: ResNets, detection, segmentation, compression (+ notebooks)
-├── archived/            ← Historical HTML/PDF chronicles and archived storyboard assets
-└── interview_guides/    ← Consolidated interview prep — rapid-fire Q&A + checklist index
+├── archived/ ← Historical HTML/PDF chronicles and archived storyboard assets
+└── interview_guides/ ← Consolidated interview prep — rapid-fire Q&A + checklist index
 ```
 
 ---
@@ -399,41 +399,41 @@ Working Python experiments that accompany the theory.
 ### Path A — Interview Prep (2–4 hours)
 
 ```
-1. InterviewGuides/                     ← single consolidated interview prep entry point
-2. AI/AIPrimer.md                      ← understand the agentic systems architecture (Part 2)
-3. ML/AUTHORING_GUIDE.md               ← skim Chapter Summaries for ML concepts
-4. MultiAgentAI/README.md              ← multi-agent protocol interview checklist
+1. InterviewGuides/ ← single consolidated interview prep entry point
+2. AI/AIPrimer.md ← understand the agentic systems architecture (Part 2)
+3. ML/AUTHORING_GUIDE.md ← skim Chapter Summaries for ML concepts
+4. MultiAgentAI/README.md ← multi-agent protocol interview checklist
 ```
 
 ### Path B — AI Engineering Deep Dive (~10–14 hours)
 
 ```
 Step 1 — Reasoning layer
-  → AI/ch03_CoTReasoning/
-  → AI/ch03_CoTReasoning/CoTReasoning_Supplement.md
+ → AI/ch03_CoTReasoning/
+ → AI/ch03_CoTReasoning/CoTReasoning_Supplement.md
 
 Step 2 — Knowledge layer
-  → AI/ch04_RAGAndEmbeddings/
-  → AI/ch04_RAGAndEmbeddings/RAGAndEmbeddings_Supplement.md
-  → AI/ch05_VectorDBs/
+ → AI/ch04_RAGAndEmbeddings/
+ → AI/ch04_RAGAndEmbeddings/RAGAndEmbeddings_Supplement.md
+ → AI/ch05_VectorDBs/
 
 Step 3 — Orchestration layer
-  → AI/ch06_ReActAndSemanticKernel/
-  → AI/ch06_ReActAndSemanticKernel/ReActAndSemanticKernel_Supplement.md
+ → AI/ch06_ReActAndSemanticKernel/
+ → AI/ch06_ReActAndSemanticKernel/ReActAndSemanticKernel_Supplement.md
 
 Step 4 — Multi-agent
-  → MultiAgentAI/ch01_MessageFormats/ → ch02_MCP/ → ch03_A2A/ → ch07_AgentFrameworks/
+ → MultiAgentAI/ch01_MessageFormats/ → ch02_MCP/ → ch03_A2A/ → ch07_AgentFrameworks/
 
 Step 5 — Synthesis
-  → InterviewGuides/              (now reads as a self-test)
+ → InterviewGuides/ (now reads as a self-test)
 ```
 
 ### Path C — ML from Scratch (~40–50 hours)
 
 ```
 0. Math on-ramp (skip if `ŷ = wx + b`, gradients, and matrix multiply already feel like tools):
-   MathUnderTheHood/ ch01 → ch07 — knuckleball free-kick thread, README + notebook each
-1. Run: .\scripts\setup.ps1  (Windows)  or  bash scripts/setup.sh  (macOS/Linux)
+ MathUnderTheHood/ ch01 → ch07 — knuckleball free-kick thread, README + notebook each
+1. Run: .\scripts\setup.ps1 (Windows) or bash scripts/setup.sh (macOS/Linux)
 2. Work through ML topics in order: 01-Regression → 02-Classification → 03-NeuralNetworks → 07-UnsupervisedLearning → 08-EnsembleMethods (then 04/05/06 as specialization tracks)
 3. After Regression + Classification fundamentals, you have enough ML to start Path B in parallel
 ```

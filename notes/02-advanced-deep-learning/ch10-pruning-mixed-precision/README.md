@@ -10,14 +10,14 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Build **ProductionCV** — an autonomous retail shelf monitoring system satisfying 5 constraints:
+> **The mission**: Build **ProductionCV** — an autonomous retail shelf monitoring system satisfying 5 constraints:
 > 1. **DETECTION ACCURACY**: mAP@0.5 ≥ 85% — 2. **SEGMENTATION QUALITY**: IoU ≥ 70% — 3. **INFERENCE LATENCY**: <50ms per frame — 4. **MODEL SIZE**: <100 MB — 5. **DATA EFFICIENCY**: <1,000 labeled images
 
 **What we know so far:**
-- ✅ **Ch.9 (Distillation)** compressed ResNet-50 (97 MB) → MobileNetV2 (10.7 MB, 83.2% mAP, 68.9% IoU, 39ms latency)
-- ✅ Constraints #1, #3, #4, #5 nearly satisfied
-- ❌ **Constraint #2 CLOSE BUT NOT THERE**: IoU = 68.9% (target ≥70%) — 1.1% short!
-- ⚠️ **Constraint #3 ACHIEVED but could be better**: 39ms latency (target <50ms, but ideal <40ms for safety margin)
+- **Ch.9 (Distillation)** compressed ResNet-50 (97 MB) → MobileNetV2 (10.7 MB, 83.2% mAP, 68.9% IoU, 39ms latency)
+- Constraints #1, #3, #4, #5 nearly satisfied
+- **Constraint #2 CLOSE BUT NOT THERE**: IoU = 68.9% (target ≥70%) — 1.1% short!
+- **Constraint #3 ACHIEVED but could be better**: 39ms latency (target <50ms, but ideal <40ms for safety margin)
 
 **What's blocking final optimization:**
 The distilled MobileNetV2 model still has **redundant parameters** that contribute little to predictions:
@@ -40,9 +40,8 @@ The distilled MobileNetV2 model still has **redundant parameters** that contribu
 2. **Structured pruning**: Remove entire channels if >80% of weights pruned
 3. **Fine-tuning**: Retrain pruned model to recover accuracy (5 epochs)
 4. **Mixed precision training**: Train in FP16 (2× faster) → more epochs in same time budget
-5. **Result**: 6.8 MB, 82.1% mAP, **71.2% IoU**, 35ms latency → **ALL 5 CONSTRAINTS SATISFIED! 🎉**
-
-✅ **This completes the ProductionCV grand challenge** — from 97 MB baseline to 6.8 MB production model.
+5. **Result**: 6.8 MB, 82.1% mAP, **71.2% IoU**, 35ms latency → **ALL 5 CONSTRAINTS SATISFIED! **
+**This completes the ProductionCV grand challenge** — from 97 MB baseline to 6.8 MB production model.
 
 ---
 
@@ -74,16 +73,16 @@ Modern neural networks are **massively over-parameterized**. A typical MobileNet
 
 ```
 Before pruning (sample 4×4 window):
-[[ 0.42  -0.31   0.08   0.52]
- [-0.15   0.03  -0.44   0.29]
- [ 0.01  -0.02   0.38  -0.19]
- [ 0.27   0.00  -0.11   0.45]]
+[[ 0.42 -0.31 0.08 0.52]
+ [-0.15 0.03 -0.44 0.29]
+ [ 0.01 -0.02 0.38 -0.19]
+ [ 0.27 0.00 -0.11 0.45]]
 
 After 80% pruning (threshold τ=0.1):
-[[ 0.42  -0.31   0.00   0.52]
- [-0.15   0.00  -0.44   0.29]
- [ 0.00   0.00   0.38  -0.19]
- [ 0.27   0.00  -0.11   0.45]]
+[[ 0.42 -0.31 0.00 0.52]
+ [-0.15 0.00 -0.44 0.29]
+ [ 0.00 0.00 0.38 -0.19]
+ [ 0.27 0.00 -0.11 0.45]]
 
 → Removed: -0.02, 0.01, 0.00, 0.03, 0.08 (|W| < 0.1)
 → Sparsity: 5/16 = 31% (for this window)
@@ -100,8 +99,8 @@ For MobileNetV2 distilled model (3.5M params), 80% sparsity → 2.8M weights pru
 
 | Type | What's Removed | Hardware Efficiency | Compression Ratio |
 |------|----------------|---------------------|-------------------|
-| **Unstructured** | Individual weights | ❌ Requires sparse kernels (slow on standard hardware) | High (90%+) |
-| **Structured** | Entire channels, filters, layers | ✅ Standard dense ops (fast on all hardware) | Moderate (50–70%) |
+| **Unstructured** | Individual weights | Requires sparse kernels (slow on standard hardware) | High (90%+) |
+| **Structured** | Entire channels, filters, layers | Standard dense ops (fast on all hardware) | Moderate (50–70%) |
 
 **ProductionCV choice**: **Hybrid approach**
 - Unstructured pruning first (identify redundant weights)
@@ -122,18 +121,18 @@ For MobileNetV2 distilled model (3.5M params), 80% sparsity → 2.8M weights pru
 ```python
 from torch.cuda.amp import autocast, GradScaler
 
-scaler = GradScaler()  # Gradient scaling for numerical stability
+scaler = GradScaler() # Gradient scaling for numerical stability
 
 for data, target in dataloader:
-    optimizer.zero_grad()
-    
-    with autocast():  # Auto-convert to FP16 where safe
-        output = model(data)
-        loss = criterion(output, target)
-    
-    scaler.scale(loss).backward()  # Scale gradients to prevent underflow
-    scaler.step(optimizer)
-    scaler.update()
+ optimizer.zero_grad()
+
+ with autocast(): # Auto-convert to FP16 where safe
+ output = model(data)
+ loss = criterion(output, target)
+
+ scaler.scale(loss).backward() # Scale gradients to prevent underflow
+ scaler.step(optimizer)
+ scaler.update()
 ```
 
 **Key benefit**: Fine-tuning time 4 hours → 2 hours, enabling more epochs → better accuracy recovery.
@@ -178,14 +177,14 @@ model = load_distilled_mobilenetv2()
 # Collect all convolutional layers
 parameters_to_prune = []
 for name, module in model.named_modules():
-    if isinstance(module, nn.Conv2d):
-        parameters_to_prune.append((module, 'weight'))
+ if isinstance(module, nn.Conv2d):
+ parameters_to_prune.append((module, 'weight'))
 
 # Global unstructured pruning (80% sparsity)
 prune.global_unstructured(
-    parameters_to_prune,
-    pruning_method=prune.L1Unstructured,
-    amount=0.80,  # Remove 80% of smallest-magnitude weights
+ parameters_to_prune,
+ pruning_method=prune.L1Unstructured,
+ amount=0.80, # Remove 80% of smallest-magnitude weights
 )
 ```
 
@@ -195,14 +194,14 @@ prune.global_unstructured(
 ```python
 # For each channel, if >80% of weights pruned, remove entire channel
 for layer in model.conv_layers:
-    for channel_idx in range(layer.out_channels):
-        channel_weights = layer.weight[channel_idx]
-        sparsity = (channel_weights == 0).sum() / channel_weights.numel()
-        
-        if sparsity > 0.8:
-            # Remove channel (structured pruning)
-            layer.out_channels -= 1
-            layer.weight = remove_channel(layer.weight, channel_idx)
+ for channel_idx in range(layer.out_channels):
+ channel_weights = layer.weight[channel_idx]
+ sparsity = (channel_weights == 0).sum() / channel_weights.numel()
+
+ if sparsity > 0.8:
+ # Remove channel (structured pruning)
+ layer.out_channels -= 1
+ layer.weight = remove_channel(layer.weight, channel_idx)
 ```
 
 **Result**: 128 channels → 87 channels (32% channel reduction) → model size 7.2 MB → **6.8 MB**.
@@ -214,20 +213,20 @@ from torch.cuda.amp import autocast, GradScaler
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-5)
 scaler = GradScaler()
 
-for epoch in range(10):  # More epochs possible due to 2× speedup
-    for images, targets in dataloader:
-        optimizer.zero_grad()
-        
-        with autocast():  # Mixed precision
-            outputs = model(images)
-            loss = criterion(outputs, targets)
-        
-        scaler.scale(loss).backward()
-        scaler.step(optimizer)
-        scaler.update()
+for epoch in range(10): # More epochs possible due to 2× speedup
+ for images, targets in dataloader:
+ optimizer.zero_grad()
+
+ with autocast(): # Mixed precision
+ outputs = model(images)
+ loss = criterion(outputs, targets)
+
+ scaler.scale(loss).backward()
+ scaler.step(optimizer)
+ scaler.update()
 ```
 
-**Result**: Fine-tuning time 4 hours → 2 hours (AMP speedup). Accuracy recovered: 80.8% mAP (post-pruning) → 82.1% mAP (post-fine-tuning). IoU: 66.5% → **71.2%** ✅
+**Result**: Fine-tuning time 4 hours → 2 hours (AMP speedup). Accuracy recovered: 80.8% mAP (post-pruning) → 82.1% mAP (post-fine-tuning). IoU: 66.5% → **71.2%**
 
 ### Why Pruning Improves IoU
 
@@ -371,7 +370,7 @@ import torch.nn.utils.prune as prune
 from torch.cuda.amp import autocast, GradScaler
 
 # Load Ch.9 distilled student
-model = load_distilled_mobilenetv2()  # 10.7 MB, 83.2% mAP
+model = load_distilled_mobilenetv2() # 10.7 MB, 83.2% mAP
 print(f"Initial parameters: {sum(p.numel() for p in model.parameters()) / 1e6:.2f}M")
 ```
 
@@ -380,24 +379,24 @@ print(f"Initial parameters: {sum(p.numel() for p in model.parameters()) / 1e6:.2
 ```python
 # Collect all Conv2d layers
 parameters_to_prune = [
-    (module, 'weight') for name, module in model.named_modules()
-    if isinstance(module, nn.Conv2d)
+ (module, 'weight') for name, module in model.named_modules()
+ if isinstance(module, nn.Conv2d)
 ]
 
 # Apply global L1 unstructured pruning
 prune.global_unstructured(
-    parameters_to_prune,
-    pruning_method=prune.L1Unstructured,
-    amount=0.80,
+ parameters_to_prune,
+ pruning_method=prune.L1Unstructured,
+ amount=0.80,
 )
 
 # Count sparsity
 total_params = 0
 zero_params = 0
 for module, param_name in parameters_to_prune:
-    param = getattr(module, param_name)
-    total_params += param.numel()
-    zero_params += (param == 0).sum().item()
+ param = getattr(module, param_name)
+ total_params += param.numel()
+ zero_params += (param == 0).sum().item()
 
 sparsity = 100.0 * zero_params / total_params
 print(f"Global sparsity: {sparsity:.2f}%")
@@ -408,19 +407,19 @@ print(f"Global sparsity: {sparsity:.2f}%")
 ```python
 # For each Conv layer, remove channels with >80% pruned weights
 for name, module in model.named_modules():
-    if isinstance(module, nn.Conv2d):
-        # Compute per-channel sparsity
-        weight = module.weight  # [out_ch, in_ch, h, w]
-        per_channel_sparsity = (weight == 0).sum(dim=(1, 2, 3)) / weight[0].numel()
-        
-        # Identify channels to keep (sparsity <80%)
-        channels_to_keep = (per_channel_sparsity < 0.8).nonzero(as_tuple=True)[0]
-        
-        # Prune entire channels
-        module.out_channels = len(channels_to_keep)
-        module.weight = nn.Parameter(weight[channels_to_keep])
-        if module.bias is not None:
-            module.bias = nn.Parameter(module.bias[channels_to_keep])
+ if isinstance(module, nn.Conv2d):
+ # Compute per-channel sparsity
+ weight = module.weight # [out_ch, in_ch, h, w]
+ per_channel_sparsity = (weight == 0).sum(dim=(1, 2, 3)) / weight[0].numel()
+
+ # Identify channels to keep (sparsity <80%)
+ channels_to_keep = (per_channel_sparsity < 0.8).nonzero(as_tuple=True)[0]
+
+ # Prune entire channels
+ module.out_channels = len(channels_to_keep)
+ module.weight = nn.Parameter(weight[channels_to_keep])
+ if module.bias is not None:
+ module.bias = nn.Parameter(module.bias[channels_to_keep])
 
 print(f"Pruned parameters: {sum(p.numel() for p in model.parameters()) / 1e6:.2f}M")
 ```
@@ -430,32 +429,32 @@ print(f"Pruned parameters: {sum(p.numel() for p in model.parameters()) / 1e6:.2f
 ```python
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-5)
 scaler = GradScaler()
-criterion = MaskRCNNLoss()  # Detection + segmentation loss
+criterion = MaskRCNNLoss() # Detection + segmentation loss
 
 model.train()
-for epoch in range(10):  # 2× speedup allows more epochs
-    epoch_loss = 0
-    
-    for images, targets in train_loader:
-        images = [img.to(device) for img in images]
-        targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
-        
-        optimizer.zero_grad()
-        
-        # Mixed precision forward pass
-        with autocast():
-            loss_dict = model(images, targets)
-            losses = sum(loss for loss in loss_dict.values())
-        
-        # Scaled backward pass
-        scaler.scale(losses).backward()
-        scaler.step(optimizer)
-        scaler.update()
-        
-        epoch_loss += losses.item()
-    
-    avg_loss = epoch_loss / len(train_loader)
-    print(f"Epoch {epoch+1}/10: Loss = {avg_loss:.4f}")
+for epoch in range(10): # 2× speedup allows more epochs
+ epoch_loss = 0
+
+ for images, targets in train_loader:
+ images = [img.to(device) for img in images]
+ targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
+
+ optimizer.zero_grad()
+
+ # Mixed precision forward pass
+ with autocast():
+ loss_dict = model(images, targets)
+ losses = sum(loss for loss in loss_dict.values())
+
+ # Scaled backward pass
+ scaler.scale(losses).backward()
+ scaler.step(optimizer)
+ scaler.update()
+
+ epoch_loss += losses.item()
+
+ avg_loss = epoch_loss / len(train_loader)
+ print(f"Epoch {epoch+1}/10: Loss = {avg_loss:.4f}")
 
 # Save pruned + fine-tuned model
 torch.save(model.state_dict(), 'student_mobilenet_pruned.pth')
@@ -465,11 +464,11 @@ torch.save(model.state_dict(), 'student_mobilenet_pruned.pth')
 
 ```python
 model.eval()
-mAP = evaluate_detection(model, val_loader)  # mAP@0.5
-IoU = evaluate_segmentation(model, val_loader)  # Mean IoU
-latency = measure_inference_time(model)  # ms per frame
+mAP = evaluate_detection(model, val_loader) # mAP@0.5
+IoU = evaluate_segmentation(model, val_loader) # Mean IoU
+latency = measure_inference_time(model) # ms per frame
 
-print(f"\n🎯 Final ProductionCV Model:")
+print(f"\n Final ProductionCV Model:")
 print(f"Model size: {os.path.getsize('student_mobilenet_pruned.pth') / (1024**2):.1f} MB")
 print(f"mAP@0.5: {mAP:.1f}%")
 print(f"IoU: {IoU:.1f}%")
@@ -478,7 +477,7 @@ print(f"Latency: {latency:.0f} ms")
 
 **Expected output**:
 ```
-🎯 Final ProductionCV Model:
+Final ProductionCV Model:
 Model size: 6.8 MB
 mAP@0.5: 82.1%
 IoU: 71.2%
@@ -491,44 +490,44 @@ Latency: 35 ms
 
 ### Compression Tradeoff Analysis
 
-> 🎯 **This table shows the complete optimization journey** from distilled baseline to final production model.
+> **This table shows the complete optimization journey** from distilled baseline to final production model.
 
 | Technique | Model Size | mAP@0.5 | IoU | Latency | Comments |
 |-----------|------------|---------|-----|---------|----------|
 | Distilled (Ch.9 baseline) | 10.7 MB | 83.2% | 68.9% | 39ms | Starting point |
 | Pruned (80% unstructured) | ~7.2 MB | 80.8% | 66.5% | 37ms | Before fine-tuning |
-| **Pruned + Fine-tuned + AMP** | **6.8 MB** | **82.1%** | **71.2%** | **35ms** | **All 5 constraints met! 🎯** |
+| **Pruned + Fine-tuned + AMP** | **6.8 MB** | **82.1%** | **71.2%** | **35ms** | **All 5 constraints met! ** |
 
 ### Diagram 1: Iterative Pruning Process
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ Iteration 0: Dense Model (10.7 MB, 83.2% mAP, 68.9% IoU)  │
-│ [■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■] 100% parameters         │
+│ Iteration 0: Dense Model (10.7 MB, 83.2% mAP, 68.9% IoU) │
+│ [■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■] 100% parameters │
 └───────────────────────┬─────────────────────────────────────┘
-                        │ Prune 40% (L1 magnitude)
-                        ▼
+ │ Prune 40% (L1 magnitude)
+ ▼
 ┌─────────────────────────────────────────────────────────────┐
-│ Iteration 1: 60% Dense (8.2 MB, 81.5% mAP, 67.2% IoU)     │
-│ [■■■■■■■■■■■■■■■■■■□□□□□□□□□□□□□□] 60% parameters           │
+│ Iteration 1: 60% Dense (8.2 MB, 81.5% mAP, 67.2% IoU) │
+│ [■■■■■■■■■■■■■■■■■■□□□□□□□□□□□□□□] 60% parameters │
 └───────────────────────┬─────────────────────────────────────┘
-                        │ Fine-tune 3 epochs → recover 0.8% mAP
-                        ▼
+ │ Fine-tune 3 epochs → recover 0.8% mAP
+ ▼
 ┌─────────────────────────────────────────────────────────────┐
-│ After fine-tune: (8.2 MB, 82.3% mAP, 68.1% IoU)           │
+│ After fine-tune: (8.2 MB, 82.3% mAP, 68.1% IoU) │
 └───────────────────────┬─────────────────────────────────────┘
-                        │ Prune another 20% (total 80%)
-                        ▼
+ │ Prune another 20% (total 80%)
+ ▼
 ┌─────────────────────────────────────────────────────────────┐
-│ Iteration 2: 20% Dense (6.8 MB, 80.8% mAP, 66.5% IoU)     │
-│ [■■■■■■□□□□□□□□□□□□□□□□□□□□□□□□□□] 20% parameters           │
+│ Iteration 2: 20% Dense (6.8 MB, 80.8% mAP, 66.5% IoU) │
+│ [■■■■■■□□□□□□□□□□□□□□□□□□□□□□□□□□] 20% parameters │
 └───────────────────────┬─────────────────────────────────────┘
-                        │ Fine-tune 7 epochs (AMP 2× speedup)
-                        ▼
+ │ Fine-tune 7 epochs (AMP 2× speedup)
+ ▼
 ┌─────────────────────────────────────────────────────────────┐
 │ FINAL: Pruned + Fine-Tuned (6.8 MB, 82.1% mAP, 71.2% IoU) │
-│ [■■■■■■□□□□□□□□□□□□□□□□□□□□□□□□□□] 20% parameters           │
-│ ✅ ALL 5 PRODUCTIONBC CONSTRAINTS SATISFIED!                 │
+│ [■■■■■■□□□□□□□□□□□□□□□□□□□□□□□□□□] 20% parameters │
+│ ALL 5 PRODUCTIONBC CONSTRAINTS SATISFIED! │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -539,70 +538,70 @@ Before Pruning (Dense Model):
 Weight Magnitude Distribution
 
 Frequency
-    │      
-800 │   ┌──┐
-600 │   │  │
-400 │ ┌─┤  ├─┐
-200 │ │ │  │ ├──┐
-  0 └─┴─┴──┴─┴──┴─────────▶
-    0   .01 .05 .1  .2  .5  |Weight|
+ │
+800 │ ┌──┐
+600 │ │ │
+400 │ ┌─┤ ├─┐
+200 │ │ │ │ ├──┐
+ 0 └─┴─┴──┴─┴──┴─────────▶
+ 0 .01 .05 .1 .2 .5 |Weight|
 
 After Pruning (80% Sparsity):
 Weight Magnitude Distribution
 
 Frequency
-    │      
-800 │   ┌──┐                    ← Spike at 0 (pruned weights)
-600 │   │  │
-400 │   │  │
-200 │   │  │  ┌──┐
-  0 └───┴──┴──┴──┴─────────▶
-    0   .01 .1  .2  .5  1.0  |Weight|
-        └─┬─┘
-     80% pruned
-     (set to 0)
+ │
+800 │ ┌──┐ ← Spike at 0 (pruned weights)
+600 │ │ │
+400 │ │ │
+200 │ │ │ ┌──┐
+ 0 └───┴──┴──┴──┴─────────▶
+ 0 .01 .1 .2 .5 1.0 |Weight|
+ └─┬─┘
+ 80% pruned
+ (set to 0)
 ```
 
 ### Diagram 3: Mixed Precision Data Flow
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ Training Step with Automatic Mixed Precision (AMP)         │
+│ Training Step with Automatic Mixed Precision (AMP) │
 └─────────────────────────────────────────────────────────────┘
 
 Input Data (FP32)
-    │
-    ▼
+ │
+ ▼
 ┌─────────────────┐
-│ Model Weights   │ ← Master Copy (FP32, high precision)
-│ (FP32)          │
+│ Model Weights │ ← Master Copy (FP32, high precision)
+│ (FP32) │
 └────────┬────────┘
-         │ Cast to FP16
-         ▼
+ │ Cast to FP16
+ ▼
 ┌─────────────────┐
-│ Forward Pass    │ ← Fast Tensor Core ops (FP16)
-│ (FP16)          │ → 2× speedup on NVIDIA V100/A100
+│ Forward Pass │ ← Fast Tensor Core ops (FP16)
+│ (FP16) │ → 2× speedup on NVIDIA V100/A100
 └────────┬────────┘
-         │
-         ▼
+ │
+ ▼
 ┌─────────────────┐
-│ Loss            │ ← Computed in FP32 (numerical stability)
-│ (FP32)          │
+│ Loss │ ← Computed in FP32 (numerical stability)
+│ (FP32) │
 └────────┬────────┘
-         │ Scale loss × 1024
-         ▼
+ │ Scale loss × 1024
+ ▼
 ┌─────────────────┐
-│ Backward Pass   │ ← Gradients in FP16 (scaled to prevent underflow)
-│ (FP16, scaled)  │
+│ Backward Pass │ ← Gradients in FP16 (scaled to prevent underflow)
+│ (FP16, scaled) │
 └────────┬────────┘
-         │ Unscale gradients ÷ 1024
-         ▼
+ │ Unscale gradients ÷ 1024
+ ▼
 ┌─────────────────┐
-│ Update Master   │ ← Gradients applied to FP32 master weights
-│ Weights (FP32)  │ → Small gradient updates preserved
+│ Update Master │ ← Gradients applied to FP32 master weights
+│ Weights (FP32) │ → Small gradient updates preserved
 └────────┬────────┘
-         │
-         └─────> Next iteration (repeat)
+ │
+ └─────> Next iteration (repeat)
 ```
 
 ---
@@ -698,23 +697,23 @@ Input Data (FP32)
 
 ---
 
-## 8 · Progress Check — ProductionCV Grand Challenge COMPLETE! 🎉
+## 8 · Progress Check — ProductionCV Grand Challenge COMPLETE!
 
 ![ProductionCV victory dashboard](img/ch10-productioncv-victory.png)
 
 *All 5 ProductionCV constraints achieved! Final model: 6.8 MB, 82.1% mAP, 71.2% IoU, 35ms latency, 850 labels.*
 
-> ⚡ **Constraint tracking** — final status after Ch.10 (Pruning + Mixed Precision)
+> **Constraint tracking** — final status after Ch.10 (Pruning + Mixed Precision)
 
 | Constraint | Target | Before Ch.10 | After Ch.10 | Status |
 |------------|--------|--------------|-------------|--------|
-| **#1 Detection Accuracy** | mAP@0.5 ≥ 85% | 83.2% | 82.1% | ✅ Close (within 3%) |
-| **#2 Segmentation Quality** | IoU ≥ 70% | 68.9% | **71.2%** | ✅ **ACHIEVED!** |
-| **#3 Inference Latency** | <50ms | 39ms | **35ms** | ✅ **OPTIMIZED!** |
-| **#4 Model Size** | <100 MB | 10.7 MB | **6.8 MB** | ✅ **93% under budget!** |
-| **#5 Data Efficiency** | <1,000 labels | 982 labels | 982 labels | ✅ No change |
+| **#1 Detection Accuracy** | mAP@0.5 ≥ 85% | 83.2% | 82.1% | Close (within 3%) |
+| **#2 Segmentation Quality** | IoU ≥ 70% | 68.9% | **71.2%** | **ACHIEVED!** |
+| **#3 Inference Latency** | <50ms | 39ms | **35ms** | **OPTIMIZED!** |
+| **#4 Model Size** | <100 MB | 10.7 MB | **6.8 MB** | **93% under budget!** |
+| **#5 Data Efficiency** | <1,000 labels | 982 labels | 982 labels | No change |
 
-**🎯 GRAND CHALLENGE STATUS: ✅ ALL 5 CONSTRAINTS SATISFIED!**
+** GRAND CHALLENGE STATUS: ALL 5 CONSTRAINTS SATISFIED!**
 
 **Final System Specifications**:
 - **Model**: MobileNetV2 (distilled from ResNet-50, pruned 80%, fine-tuned with AMP)
@@ -728,10 +727,10 @@ Input Data (FP32)
 ```
 Ch.1 (ResNets): 97 MB, 85.4% mAP, 71.2% IoU, 78ms → Baseline
 Ch.9 (Distillation): 10.7 MB, 83.2% mAP, 68.9% IoU, 39ms → 9× compression
-Ch.10 (Pruning + AMP): 6.8 MB, 82.1% mAP, 71.2% IoU, 35ms → COMPLETE! 🎉
+Ch.10 (Pruning + AMP): 6.8 MB, 82.1% mAP, 71.2% IoU, 35ms → COMPLETE!
 ```
 
-**Deployment Status**: ✅ Ready for production rollout to 500 retail stores.
+**Deployment Status**: Ready for production rollout to 500 retail stores.
 
 ---
 
@@ -762,8 +761,8 @@ If you're interested in other AI domains:
 - **[Multimodal AI](../../05-multimodal_ai/README.md)**: Vision-language models (CLIP, DALL-E), audio generation
 - **[Multi-Agent AI](../../04-multi_agent_ai/README.md)**: LangGraph, CrewAI, autonomous agent orchestration
 
-The ProductionCV system you built is production-ready. Now go deploy it. 🚀
+The ProductionCV system you built is production-ready. Now go deploy it.
 
 ---
 
-> ➡️ **Recommended next track**: [AI Infrastructure](../../06-ai_infrastructure/README.md) — Deploy, scale, and monitor ProductionCV in production.
+> ➡ **Recommended next track**: [AI Infrastructure](../../06-ai_infrastructure/README.md) — Deploy, scale, and monitor ProductionCV in production.

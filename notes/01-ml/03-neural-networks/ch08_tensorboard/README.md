@@ -10,7 +10,7 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Launch **UnifiedAI** — a unified neural architecture proving the same model handles regression AND classification, satisfying 5 constraints:
+> **The mission**: Launch **UnifiedAI** — a unified neural architecture proving the same model handles regression AND classification, satisfying 5 constraints:
 > 1. **ACCURACY**: ≤$28k MAE (regression) + ≥95% avg accuracy (classification)
 > 2. **GENERALIZATION**: Unseen districts + new face identities
 > 3. **MULTI-TASK**: Same shared architecture for both tasks
@@ -18,18 +18,18 @@
 > 5. **PRODUCTION**: <100ms inference, TensorBoard monitoring, model versioning
 
 **What we know so far:**
-- ✅ Ch.1–7: Achieved $48k MAE (progress toward #1) and generalization via regularisation (#2 ✅)
-- ✅ Ch.2: Same dense architecture handles regression and classification (partial #3)
-- ✅ Ch.3: Backprop + optimisers — full training loop with SGD and Adam
-- ✅ Ch.4: Regularisation — L1/L2/Dropout prevent memorisation of training districts
-- ✅ Ch.5: CNNs extract spatial features for both housing aerial data and face images
-- ✅ Ch.6: RNNs/LSTMs handle sequential housing price time-series
-- ✅ Ch.7: MLE & Loss Functions — understand why MSE for regression, BCE for classification
-- ❌ **Constraint #5 (PRODUCTION): Still blind!** Our model trains to convergence — but we cannot diagnose *why* it converged there. We cannot see whether the loss is still decreasing, whether weights are saturating, whether certain neurons are dead, or whether the embeddings are meaningful.
+- Ch.1–7: Achieved $48k MAE (progress toward #1) and generalization via regularisation (#2 )
+- Ch.2: Same dense architecture handles regression and classification (partial #3)
+- Ch.3: Backprop + optimisers — full training loop with SGD and Adam
+- Ch.4: Regularisation — L1/L2/Dropout prevent memorisation of training districts
+- Ch.5: CNNs extract spatial features for both housing aerial data and face images
+- Ch.6: RNNs/LSTMs handle sequential housing price time-series
+- Ch.7: MLE & Loss Functions — understand why MSE for regression, BCE for classification
+- **Constraint #5 (PRODUCTION): Still blind!** Our model trains to convergence — but we cannot diagnose *why* it converged there. We cannot see whether the loss is still decreasing, whether weights are saturating, whether certain neurons are dead, or whether the embeddings are meaningful.
 
 **What is blocking us:**
 
-> ⚠️ **The production monitoring gap.** Engineer reports: "Model trained for 50 epochs, validation MAE stopped decreasing at epoch 22, but I kept training — wasted 28 epochs and compute budget, and the final weights were *worse* than the best checkpoint."
+> **The production monitoring gap.** Engineer reports: "Model trained for 50 epochs, validation MAE stopped decreasing at epoch 22, but I kept training — wasted 28 epochs and compute budget, and the final weights were *worse* than the best checkpoint."
 
 **Common training failures with zero visibility:**
 
@@ -45,16 +45,14 @@
 - TensorBoard is the minimum viable observability layer. W&B, MLflow, and Prometheus extend it — but all start here.
 
 **What this chapter unlocks:**
-
-⚡ **TensorBoard — production training instrumentation:**
+**TensorBoard — production training instrumentation:**
 
 1. **Loss curves (Scalars)**: Plot train/val MAE per epoch → see overfitting start at epoch 22, not epoch 50
 2. **Weight histograms**: Track per-layer weight distributions → detect dead neurons, weight saturation
 3. **Gradient histograms**: Monitor per-layer gradient magnitudes → catch vanishing/exploding before NaN
 4. **Embedding projector**: Visualize the learned 16-dim intermediate space → validate that similar-valued districts cluster
 5. **hparam logging**: Log hyperparameter sweeps → compare 12 training runs in one dashboard
-
-⚡ **Constraint #5 PARTIAL ✅**: Monitoring infrastructure in place. Still need: model versioning, A/B testing, serving latency monitoring (final pieces in the Production track).
+**Constraint #5 PARTIAL **: Monitoring infrastructure in place. Still need: model versioning, A/B testing, serving latency monitoring (final pieces in the Production track).
 
 ---
 
@@ -77,24 +75,24 @@ TensorBoard is a web UI for training metrics that reads structured event files w
 **What you'll build by the end:** A fully instrumented training loop with scalar loss tracking (Phase 1), automatic overfitting detection (Phase 2), gradient health monitoring (Phase 3), and embedding space validation (Phase 4) — the complete observability stack that transforms blind training into debuggable, production-grade ML development.
 
 ```
-Phase 1: INSTRUMENT         Phase 2: DIAGNOSE           Phase 3: TUNE               Phase 4: VALIDATE
+Phase 1: INSTRUMENT Phase 2: DIAGNOSE Phase 3: TUNE Phase 4: VALIDATE
 ────────────────────────────────────────────────────────────────────────────────────────────────────
-Add scalar logging:         Watch loss curves:          Add histogram tracking:     Validate embeddings:
+Add scalar logging: Watch loss curves: Add histogram tracking: Validate embeddings:
 
-• SummaryWriter setup       • Plot train vs val loss    • Log weight distributions  • Extract layer3 output
-• add_scalar for loss       • Detect gap widening       • Log gradient magnitudes   • Project with t-SNE/PCA
-• Log train + val MAE       • Early stopping trigger    • Detect vanishing/exploding• Check cluster structure
-• Log learning rate         • Save best checkpoint      • Monitor layer health      • Validate feature learning
+• SummaryWriter setup • Plot train vs val loss • Log weight distributions • Extract layer3 output
+• add_scalar for loss • Detect gap widening • Log gradient magnitudes • Project with t-SNE/PCA
+• Log train + val MAE • Early stopping trigger • Detect vanishing/exploding• Check cluster structure
+• Log learning rate • Save best checkpoint • Monitor layer health • Validate feature learning
 
-→ DECISION:                 → DECISION:                 → DECISION:                 → DECISION:
-  Logging frequency?          When to stop training?      Which layers to fix?        Is training successful?
-  • Scalars: every epoch      • Val loss plateaus: stop   • Layer1 grads ≈ 0:         • Clusters match labels:
-  • Histograms: every 5       • Gap widens: add dropout     add BatchNorm               training worked
-  • Embeddings: end only      • No improvement 5 epochs:  • Exploding (>100):         • Random cloud:
-                                restore best checkpoint     gradient clipping           increase capacity/epochs
+→ DECISION: → DECISION: → DECISION: → DECISION:
+ Logging frequency? When to stop training? Which layers to fix? Is training successful?
+ • Scalars: every epoch • Val loss plateaus: stop • Layer1 grads ≈ 0: • Clusters match labels:
+ • Histograms: every 5 • Gap widens: add dropout add BatchNorm training worked
+ • Embeddings: end only • No improvement 5 epochs: • Exploding (>100): • Random cloud:
+ restore best checkpoint gradient clipping increase capacity/epochs
 ```
 
-> 💡 **How to use this workflow:** Always start with Phase 1 (scalars are cheap and immediately actionable). Add Phase 2 early stopping logic after 10+ epochs of baseline training. Only add Phase 3 histograms if training dynamics look unusual (loss plateau, NaN values). Use Phase 4 as final validation that the model learned meaningful representations, not as a per-epoch diagnostic.
+> **How to use this workflow:** Always start with Phase 1 (scalars are cheap and immediately actionable). Add Phase 2 early stopping logic after 10+ epochs of baseline training. Only add Phase 3 histograms if training dynamics look unusual (loss plateau, NaN values). Use Phase 4 as final validation that the model learned meaningful representations, not as a per-epoch diagnostic.
 
 ---
 
@@ -149,35 +147,35 @@ np.random.seed(SEED)
 
 # ── Data: California Housing ──────────────────────────────────────────────────
 data = fetch_california_housing()
-X, y = data.data, data.target        # (20640, 8) features; (20640,) target in $100k units
+X, y = data.data, data.target # (20640, 8) features; (20640,) target in $100k units
 X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=SEED)
 
 scaler_X = StandardScaler()
-X_train  = scaler_X.fit_transform(X_train)  # fit on training data only — no leakage
-X_val    = scaler_X.transform(X_val)
+X_train = scaler_X.fit_transform(X_train) # fit on training data only — no leakage
+X_val = scaler_X.transform(X_val)
 
 X_train_t = torch.tensor(X_train, dtype=torch.float32)
 y_train_t = torch.tensor(y_train, dtype=torch.float32).unsqueeze(1)
-X_val_t   = torch.tensor(X_val,   dtype=torch.float32)
-y_val_t   = torch.tensor(y_val,   dtype=torch.float32).unsqueeze(1)
+X_val_t = torch.tensor(X_val, dtype=torch.float32)
+y_val_t = torch.tensor(y_val, dtype=torch.float32).unsqueeze(1)
 
 # ── Model: UnifiedAI housing network from Ch.3 ────────────────────────────────
 class HousingNet(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.layer1 = nn.Linear(8, 64)   # 8 features → 64 hidden units
-        self.layer2 = nn.Linear(64, 32)  # 64 → 32
-        self.layer3 = nn.Linear(32, 16)  # 32 → 16  ← embedding layer
-        self.out    = nn.Linear(16, 1)   # 16 → scalar house-value prediction
-        self.relu   = nn.ReLU()
+ def __init__(self):
+ super().__init__()
+ self.layer1 = nn.Linear(8, 64) # 8 features → 64 hidden units
+ self.layer2 = nn.Linear(64, 32) # 64 → 32
+ self.layer3 = nn.Linear(32, 16) # 32 → 16 ← embedding layer
+ self.out = nn.Linear(16, 1) # 16 → scalar house-value prediction
+ self.relu = nn.ReLU()
 
-    def forward(self, x):
-        h1 = self.relu(self.layer1(x))
-        h2 = self.relu(self.layer2(h1))
-        h3 = self.relu(self.layer3(h2))
-        return self.out(h3), h3          # return prediction AND embedding
+ def forward(self, x):
+ h1 = self.relu(self.layer1(x))
+ h2 = self.relu(self.layer2(h1))
+ h3 = self.relu(self.layer3(h2))
+ return self.out(h3), h3 # return prediction AND embedding
 
-model     = HousingNet()
+model = HousingNet()
 optimiser = torch.optim.Adam(model.parameters(), lr=1e-3)
 criterion = nn.MSELoss()
 
@@ -187,33 +185,33 @@ writer = SummaryWriter(log_dir='runs/adam_lr1e-3_seed42')
 
 # ── Training loop: 50 epochs with scalar instrumentation ──────────────────────
 for epoch in range(1, 51):
-    # Forward pass
-    model.train()
-    preds, _ = model(X_train_t)
-    loss      = criterion(preds, y_train_t)
+ # Forward pass
+ model.train()
+ preds, _ = model(X_train_t)
+ loss = criterion(preds, y_train_t)
 
-    # Backward pass
-    optimiser.zero_grad()
-    loss.backward()
-    optimiser.step()
+ # Backward pass
+ optimiser.zero_grad()
+ loss.backward()
+ optimiser.step()
 
-    # Validation (no gradient tracking)
-    model.eval()
-    with torch.no_grad():
-        val_preds, _ = model(X_val_t)
-        val_loss      = criterion(val_preds, y_val_t)
-        # Convert MSE ($100k² units) to MAE ($k) for human-readable reporting
-        val_mae_k = torch.mean(torch.abs(val_preds - y_val_t)).item() * 100
+ # Validation (no gradient tracking)
+ model.eval()
+ with torch.no_grad():
+ val_preds, _ = model(X_val_t)
+ val_loss = criterion(val_preds, y_val_t)
+ # Convert MSE ($100k² units) to MAE ($k) for human-readable reporting
+ val_mae_k = torch.mean(torch.abs(val_preds - y_val_t)).item() * 100
 
-    # ── LOG SCALARS ──────────────────────────────────────────────────────────
-    # Tag format 'Group/series' groups train and val under the same Scalars chart.
-    writer.add_scalar('Loss/train', loss.item(),     epoch)  # training MSE
-    writer.add_scalar('Loss/val',   val_loss.item(), epoch)  # validation MSE
-    writer.add_scalar('MAE_k/val',  val_mae_k,       epoch)  # validation MAE in $k
-    writer.add_scalar('LR',         optimiser.param_groups[0]['lr'], epoch)
+ # ── LOG SCALARS ──────────────────────────────────────────────────────────
+ # Tag format 'Group/series' groups train and val under the same Scalars chart.
+ writer.add_scalar('Loss/train', loss.item(), epoch) # training MSE
+ writer.add_scalar('Loss/val', val_loss.item(), epoch) # validation MSE
+ writer.add_scalar('MAE_k/val', val_mae_k, epoch) # validation MAE in $k
+ writer.add_scalar('LR', optimiser.param_groups[0]['lr'], epoch)
 
 writer.close()
-# Launch: tensorboard --logdir runs/  →  open http://localhost:6006
+# Launch: tensorboard --logdir runs/ → open http://localhost:6006
 ```
 
 **Line-by-line notes:**
@@ -223,7 +221,7 @@ writer.close()
 - `writer.add_scalar('LR', ...)` — always log the learning rate. When you add a scheduler later, you will see the decay curve here without changing any other code.
 - `writer.close()` — flushes the event file buffer. Always call this or use `writer` as a context manager (`with SummaryWriter(...) as writer:`).
 
-> 💡 **Industry Standard:** `torch.utils.tensorboard.SummaryWriter`
+> **Industry Standard:** `torch.utils.tensorboard.SummaryWriter`
 >
 > ```python
 > from torch.utils.tensorboard import SummaryWriter
@@ -235,17 +233,17 @@ writer.close()
 >
 > # Context manager pattern (auto-flush on exit)
 > with SummaryWriter(f'runs/{run_name}') as writer:
->     for epoch in range(epochs):
->         # ... training loop ...
->         writer.add_scalar('Loss/train', train_loss, epoch)
+> for epoch in range(epochs):
+> # ... training loop ...
+> writer.add_scalar('Loss/train', train_loss, epoch)
 > ```
 >
 > **When to use:** Always for local training. For cloud/team workflows, migrate to Weights & Biases (`wandb.log()`) or MLflow (`mlflow.log_metric()`) — same scalar logging API, hosted backend with experiment comparison UI.
 > **Common alternatives:** Weights & Biases (hosted, collaborative), MLflow (self-hosted, model registry), TensorBoardX (older PyTorch versions)
 > **See also:** [PyTorch TensorBoard tutorial](https://pytorch.org/tutorials/recipes/recipes/tensorboard_with_pytorch.html)
 
-> 💡 **Instrument verdict:** Scalar logging (<1ms/call) added for Loss/train, Loss/val, MAE, and LR; TensorBoard Scalars tab live at localhost:6006 — minimum viable observability established.
-> ➡️ Run 10–20 epochs to establish baseline curve; if val loss is flat while train loss drops, add early stopping before proceeding.
+> **Instrument verdict:** Scalar logging (<1ms/call) added for Loss/train, Loss/val, MAE, and LR; TensorBoard Scalars tab live at localhost:6006 — minimum viable observability established.
+> ➡ Run 10–20 epochs to establish baseline curve; if val loss is flat while train loss drops, add early stopping before proceeding.
 
 ---
 
@@ -256,40 +254,40 @@ Histograms show the empirical distribution of a tensor values at each logged ste
 ```python
 # Extended training loop — add histogram logging every 5 epochs
 for epoch in range(1, 51):
-    model.train()
-    preds, _ = model(X_train_t)
-    loss      = criterion(preds, y_train_t)
-    optimiser.zero_grad()
-    loss.backward()
-    # Read gradients HERE — after backward(), before zero_grad()
-    # (zero_grad() clears them; reading after would give None or zeros)
-    grads_l1 = model.layer1.weight.grad.clone() if model.layer1.weight.grad is not None else None
-    grads_l2 = model.layer2.weight.grad.clone() if model.layer2.weight.grad is not None else None
-    grads_l3 = model.layer3.weight.grad.clone() if model.layer3.weight.grad is not None else None
-    optimiser.step()
+ model.train()
+ preds, _ = model(X_train_t)
+ loss = criterion(preds, y_train_t)
+ optimiser.zero_grad()
+ loss.backward()
+ # Read gradients HERE — after backward(), before zero_grad()
+ # (zero_grad() clears them; reading after would give None or zeros)
+ grads_l1 = model.layer1.weight.grad.clone() if model.layer1.weight.grad is not None else None
+ grads_l2 = model.layer2.weight.grad.clone() if model.layer2.weight.grad is not None else None
+ grads_l3 = model.layer3.weight.grad.clone() if model.layer3.weight.grad is not None else None
+ optimiser.step()
 
-    model.eval()
-    with torch.no_grad():
-        val_preds, _ = model(X_val_t)
-        val_loss      = criterion(val_preds, y_val_t)
-        val_mae_k     = torch.mean(torch.abs(val_preds - y_val_t)).item() * 100
+ model.eval()
+ with torch.no_grad():
+ val_preds, _ = model(X_val_t)
+ val_loss = criterion(val_preds, y_val_t)
+ val_mae_k = torch.mean(torch.abs(val_preds - y_val_t)).item() * 100
 
-    # Scalars every epoch (cheap)
-    writer.add_scalar('Loss/train', loss.item(),     epoch)
-    writer.add_scalar('Loss/val',   val_loss.item(), epoch)
-    writer.add_scalar('MAE_k/val',  val_mae_k,       epoch)
+ # Scalars every epoch (cheap)
+ writer.add_scalar('Loss/train', loss.item(), epoch)
+ writer.add_scalar('Loss/val', val_loss.item(), epoch)
+ writer.add_scalar('MAE_k/val', val_mae_k, epoch)
 
-    # Histograms every 5 epochs (moderate cost — do not log every epoch on large models)
-    if epoch % 5 == 0:
-        # Weight distributions: healthy = broad, shifting; unhealthy = spike at 0
-        writer.add_histogram('weights/layer1', model.layer1.weight.data, epoch)
-        writer.add_histogram('weights/layer2', model.layer2.weight.data, epoch)
-        writer.add_histogram('weights/layer3', model.layer3.weight.data, epoch)
-        # Gradient distributions: healthy = narrow, centred near 0; vanishing = spike at 0
-        if grads_l1 is not None:
-            writer.add_histogram('grads/layer1', grads_l1, epoch)
-            writer.add_histogram('grads/layer2', grads_l2, epoch)
-            writer.add_histogram('grads/layer3', grads_l3, epoch)
+ # Histograms every 5 epochs (moderate cost — do not log every epoch on large models)
+ if epoch % 5 == 0:
+ # Weight distributions: healthy = broad, shifting; unhealthy = spike at 0
+ writer.add_histogram('weights/layer1', model.layer1.weight.data, epoch)
+ writer.add_histogram('weights/layer2', model.layer2.weight.data, epoch)
+ writer.add_histogram('weights/layer3', model.layer3.weight.data, epoch)
+ # Gradient distributions: healthy = narrow, centred near 0; vanishing = spike at 0
+ if grads_l1 is not None:
+ writer.add_histogram('grads/layer1', grads_l1, epoch)
+ writer.add_histogram('grads/layer2', grads_l2, epoch)
+ writer.add_histogram('grads/layer3', grads_l3, epoch)
 ```
 
 **Why histograms?**
@@ -309,32 +307,32 @@ for epoch in range(1, 51):
 | `max(|grad|)` per layer | < 10 | > 100 | Exploding — gradient clipping or LR reduction |
 | Weight-norm / grad-norm ratio | $10^2$ – $10^4$ | > $10^6$ | Dying layer — check activation and initialisation |
 
-> 💡 **Industry Standard:** `torch.nn.utils.clip_grad_norm_` + TensorBoard histograms
+> **Industry Standard:** `torch.nn.utils.clip_grad_norm_` + TensorBoard histograms
 >
 > ```python
 > # Production gradient monitoring pattern
 > for epoch in range(epochs):
->     loss.backward()
+> loss.backward()
 >
->     # Log pre-clip gradients for diagnostics
->     if epoch % 5 == 0:
->         for name, param in model.named_parameters():
->             if param.grad is not None:
->                 writer.add_histogram(f'grads/{name}', param.grad, epoch)
->                 grad_norm = param.grad.norm().item()
->                 writer.add_scalar(f'grad_norm/{name}', grad_norm, epoch)
+> # Log pre-clip gradients for diagnostics
+> if epoch % 5 == 0:
+> for name, param in model.named_parameters():
+> if param.grad is not None:
+> writer.add_histogram(f'grads/{name}', param.grad, epoch)
+> grad_norm = param.grad.norm().item()
+> writer.add_scalar(f'grad_norm/{name}', grad_norm, epoch)
 >
->     # Clip gradients before optimizer step
->     torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
->     optimizer.step()
+> # Clip gradients before optimizer step
+> torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+> optimizer.step()
 > ```
 >
 > **When to use:** Always clip gradients for RNNs/LSTMs (exploding gradients common). For feedforward networks, add clipping only if you see NaN losses or histogram spikes >100.
 > **Common alternatives:** Per-parameter clipping (`clip_grad_value_`), adaptive clipping (scales with average grad norm)
 > **Gradient anomaly detection:** PyTorch 1.9+ has `torch.autograd.detect_anomaly()` context manager — catches NaN/Inf gradients with full backward stack trace
 
-> 💡 **Tune verdict:** Weight histogram spike at 0 = dead neurons; gradient spike at 0 = vanishing; gradient spread >100 = exploding — histograms expose internal failures that loss curves cannot.
-> ➡️ If layer 1 gradients are near-zero, add BatchNorm before layer 1; if gradients exceed 100, apply `clip_grad_norm_(model.parameters(), 1.0)` before `optimizer.step()`.
+> **Tune verdict:** Weight histogram spike at 0 = dead neurons; gradient spike at 0 = vanishing; gradient spread >100 = exploding — histograms expose internal failures that loss curves cannot.
+> ➡ If layer 1 gradients are near-zero, add BatchNorm before layer 1; if gradients exceed 100, apply `clip_grad_norm_(model.parameters(), 1.0)` before `optimizer.step()`.
 
 ---
 
@@ -348,10 +346,10 @@ from torchvision.utils import make_grid
 # Assume face_batch is a (B, C, H, W) tensor from the CelebA data loader.
 # Log a 4x4 grid of the first 16 faces every 10 epochs.
 if epoch % 10 == 0:
-    # normalize=True maps pixel values to [0, 1] for TensorBoard display
-    img_grid = make_grid(face_batch[:16], nrow=4, normalize=True)
-    writer.add_image('predictions/face_batch', img_grid, epoch)
-    # add_image expects (C, H, W) — make_grid always returns that shape
+ # normalize=True maps pixel values to [0, 1] for TensorBoard display
+ img_grid = make_grid(face_batch[:16], nrow=4, normalize=True)
+ writer.add_image('predictions/face_batch', img_grid, epoch)
+ # add_image expects (C, H, W) — make_grid always returns that shape
 ```
 
 **What to look for:** At epoch 1, attribute assignments look random (loss curve matches). By epoch 30, the model correctly highlights face regions associated with glasses or smiles. If the grid still looks random at epoch 30, the model is not converging on visual features — a signal that a loss curve showing slow but steady improvement would miss entirely.
@@ -366,23 +364,23 @@ The embedding projector takes the 16-dimensional layer3 output for your validati
 # After training is complete, extract embeddings for the full validation set
 model.eval()
 with torch.no_grad():
-    _, val_embeddings = model(X_val_t)   # shape: (N_val, 16)
+ _, val_embeddings = model(X_val_t) # shape: (N_val, 16)
 
 # Build human-readable tier labels for the projector colour legend
 val_prices = y_val_t.squeeze().numpy()
 tiers = [
-    'High (>$350k)'      if p > 3.5 else
-    'Mid ($150k-$350k)'  if p > 1.5 else
-    'Low (<$150k)'
-    for p in val_prices
+ 'High (>$350k)' if p > 3.5 else
+ 'Mid ($150k-$350k)' if p > 1.5 else
+ 'Low (<$150k)'
+ for p in val_prices
 ]
 
 # Log the embedding tensor + metadata
 writer.add_embedding(
-    val_embeddings,         # (N_val, 16) — the high-dimensional representation
-    metadata=tiers,         # N_val label strings — TensorBoard colours dots by these
-    global_step=50,         # step at which this was logged
-    tag='layer3_housing',   # distinguishes multiple embeddings if logged
+ val_embeddings, # (N_val, 16) — the high-dimensional representation
+ metadata=tiers, # N_val label strings — TensorBoard colours dots by these
+ global_step=50, # step at which this was logged
+ tag='layer3_housing', # distinguishes multiple embeddings if logged
 )
 # In TensorBoard Projector tab: select t-SNE, run 1000 iterations.
 # Expected result: three loose clusters (Low / Mid / High value tiers).
@@ -394,7 +392,7 @@ writer.add_embedding(
 - Districts that are geographic neighbours (same county, similar income) appear adjacent even though the network never saw latitude or longitude as inputs.
 - Single undifferentiated cloud → model capacity or training duration insufficient; or label noise is too high.
 
-> 💡 **Industry Standard:** TensorBoard Projector + UMAP for large datasets
+> **Industry Standard:** TensorBoard Projector + UMAP for large datasets
 >
 > ```python
 > # Production embedding validation pattern
@@ -406,20 +404,20 @@ writer.add_embedding(
 >
 > # Log to TensorBoard
 > writer.add_embedding(
->     embeddings,
->     metadata=labels,
->     label_img=images,  # Optional: thumbnail images per point
->     tag='layer3_embeddings',
->     global_step=epoch
+> embeddings,
+> metadata=labels,
+> label_img=images, # Optional: thumbnail images per point
+> tag='layer3_embeddings',
+> global_step=epoch
 > )
 >
 > # Alternative: Weights & Biases 3D interactive scatter
 > import wandb
 > wandb.log({
->     "embeddings": wandb.plots.scatter(
->         wandb.Table(data=[[x, y, z, label] for (x,y,z), label in zip(embedding_3d, labels)]),
->         x="x", y="y", z="z", title="Layer 3 Embeddings (UMAP)"
->     )
+> "embeddings": wandb.plots.scatter(
+> wandb.Table(data=[[x, y, z, label] for (x,y,z), label in zip(embedding_3d, labels)]),
+> x="x", y="y", z="z", title="Layer 3 Embeddings (UMAP)"
+> )
 > })
 > ```
 >
@@ -427,8 +425,8 @@ writer.add_embedding(
 > **Common alternatives:** UMAP (faster than t-SNE, preserves global structure), PCA (linear, fast baseline), Isomap (manifold learning)
 > **Embedding libraries:** `umap-learn`, `scikit-learn.manifold`, `tensorboard.plugins.projector`
 
-> 💡 **Validate verdict:** t-SNE of 16-dim layer-3 embeddings shows three separable tiers (low/mid/high-value districts) — model learned geography-correlated features without explicit lat/lon coordinates.
-> ➡️ If embeddings show a single undifferentiated cloud, the model is undertrained or undercapacity — increase epochs or layer width before deployment.
+> **Validate verdict:** t-SNE of 16-dim layer-3 embeddings shows three separable tiers (low/mid/high-value districts) — model learned geography-correlated features without explicit lat/lon coordinates.
+> ➡ If embeddings show a single undifferentiated cloud, the model is undertrained or undercapacity — increase epochs or layer width before deployment.
 
 ---
 
@@ -438,56 +436,56 @@ After training multiple configurations, log each run hyperparameters alongside i
 
 ```python
 def run_experiment(lr, batch_size, optimiser_name='adam', epochs=50):
-    # Each config writes to its own subdirectory
-    writer = SummaryWriter(log_dir=f'runs/{optimiser_name}_lr{lr}_bs{batch_size}')
-    # ... full training loop from §4.1 ...
-    final_mae_k = val_mae_k  # scalar from last epoch
+ # Each config writes to its own subdirectory
+ writer = SummaryWriter(log_dir=f'runs/{optimiser_name}_lr{lr}_bs{batch_size}')
+ # ... full training loop from §4.1 ...
+ final_mae_k = val_mae_k # scalar from last epoch
 
-    # Log hparams + metric ONCE at the end of each run
-    writer.add_hparams(
-        hparam_dict={
-            'lr':          lr,
-            'batch_size':  batch_size,
-            'optimiser':   optimiser_name,
-        },
-        metric_dict={
-            'hparam/final_val_mae_k': final_mae_k,
-        },
-    )
-    writer.close()
+ # Log hparams + metric ONCE at the end of each run
+ writer.add_hparams(
+ hparam_dict={
+ 'lr': lr,
+ 'batch_size': batch_size,
+ 'optimiser': optimiser_name,
+ },
+ metric_dict={
+ 'hparam/final_val_mae_k': final_mae_k,
+ },
+ )
+ writer.close()
 
 # Sweep: 6 configurations
 for lr in [1e-2, 1e-3, 1e-4]:
-    for opt in ['sgd', 'adam']:
-        run_experiment(lr=lr, batch_size=256, optimiser_name=opt)
+ for opt in ['sgd', 'adam']:
+ run_experiment(lr=lr, batch_size=256, optimiser_name=opt)
 ```
 
 **In the HParams tab:** sortable table showing `lr × optimiser → final_val_mae_k`. At a glance you see that Adam at 1e-3 dominates on California Housing. The parallel coordinates view reveals that low learning rates hurt both optimisers but hurt SGD more — a second-order insight that individual loss curves would not surface unless you plotted all six manually.
 
-> 💡 **Industry Standard:** Optuna + TensorBoard HParams for automated hyperparameter optimization
+> **Industry Standard:** Optuna + TensorBoard HParams for automated hyperparameter optimization
 >
 > ```python
 > import optuna
 > from torch.utils.tensorboard import SummaryWriter
 >
 > def objective(trial):
->     # Optuna suggests hyperparameters
->     lr = trial.suggest_float('lr', 1e-5, 1e-1, log=True)
->     batch_size = trial.suggest_categorical('batch_size', [32, 64, 128, 256])
->     optimizer_name = trial.suggest_categorical('optimizer', ['sgd', 'adam', 'adamw'])
+> # Optuna suggests hyperparameters
+> lr = trial.suggest_float('lr', 1e-5, 1e-1, log=True)
+> batch_size = trial.suggest_categorical('batch_size', [32, 64, 128, 256])
+> optimizer_name = trial.suggest_categorical('optimizer', ['sgd', 'adam', 'adamw'])
 >
->     # Train model with suggested hyperparameters
->     writer = SummaryWriter(f'runs/trial_{trial.number}')
->     final_mae = train_model(lr, batch_size, optimizer_name, writer)
+> # Train model with suggested hyperparameters
+> writer = SummaryWriter(f'runs/trial_{trial.number}')
+> final_mae = train_model(lr, batch_size, optimizer_name, writer)
 >
->     # Log to TensorBoard HParams
->     writer.add_hparams(
->         {'lr': lr, 'batch_size': batch_size, 'optimizer': optimizer_name},
->         {'hparam/final_mae': final_mae}
->     )
->     writer.close()
+> # Log to TensorBoard HParams
+> writer.add_hparams(
+> {'lr': lr, 'batch_size': batch_size, 'optimizer': optimizer_name},
+> {'hparam/final_mae': final_mae}
+> )
+> writer.close()
 >
->     return final_mae  # Optuna minimizes this
+> return final_mae # Optuna minimizes this
 >
 > # Run Bayesian optimization (Optuna finds best params automatically)
 > study = optuna.create_study(direction='minimize')
@@ -526,8 +524,8 @@ You add `writer.add_scalar('Loss/train', ...)` and `writer.add_scalar('Loss/val'
 
 **Action:** Add early stopping (save checkpoint at min val loss). New final MAE: **$48k** — a $6k gain at zero architecture cost.
 
-> 💡 **Diagnose verdict:** Train/val loss gap opened at epoch 22 (0.02 → 0.17); early stopping at epoch 22 recovers the $48k MAE checkpoint vs. $54k at epoch 50 — 28 wasted epochs and a better model for free.
-> ➡️ Implement early stopping with patience=5: save checkpoint when val_loss improves, restore best after training — zero architecture cost, $6k MAE gain.
+> **Diagnose verdict:** Train/val loss gap opened at epoch 22 (0.02 → 0.17); early stopping at epoch 22 recovers the $48k MAE checkpoint vs. $54k at epoch 50 — 28 wasted epochs and a better model for free.
+> ➡ Implement early stopping with patience=5: save checkpoint when val_loss improves, restore best after training — zero architecture cost, $6k MAE gain.
 
 ---
 
@@ -569,12 +567,12 @@ torch.manual_seed(SEED)
 np.random.seed(SEED)
 
 # ── Data pipeline ──────────────────────────────────────────────────────────────
-housing      = fetch_california_housing()
-X, y         = housing.data, housing.target
+housing = fetch_california_housing()
+X, y = housing.data, housing.target
 X_tr, X_va, y_tr, y_va = train_test_split(X, y, test_size=0.2, random_state=SEED)
-scaler       = StandardScaler()
-X_tr         = scaler.fit_transform(X_tr)
-X_va         = scaler.transform(X_va)
+scaler = StandardScaler()
+X_tr = scaler.fit_transform(X_tr)
+X_va = scaler.transform(X_va)
 X_tr_t = torch.tensor(X_tr, dtype=torch.float32)
 y_tr_t = torch.tensor(y_tr, dtype=torch.float32).unsqueeze(1)
 X_va_t = torch.tensor(X_va, dtype=torch.float32)
@@ -582,95 +580,95 @@ y_va_t = torch.tensor(y_va, dtype=torch.float32).unsqueeze(1)
 
 # ── Model (8→64→32→16→1, returns embedding from layer3) ──────────────────────
 class HousingNet(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.bn0    = nn.BatchNorm1d(8)   # added after Act 3 revealed layer1 stall
-        self.layer1 = nn.Linear(8, 64)
-        self.layer2 = nn.Linear(64, 32)
-        self.layer3 = nn.Linear(32, 16)
-        self.out    = nn.Linear(16, 1)
-        self.relu   = nn.ReLU()
-    def forward(self, x):
-        x  = self.bn0(x)
-        h1 = self.relu(self.layer1(x))
-        h2 = self.relu(self.layer2(h1))
-        h3 = self.relu(self.layer3(h2))
-        return self.out(h3), h3
+ def __init__(self):
+ super().__init__()
+ self.bn0 = nn.BatchNorm1d(8) # added after Act 3 revealed layer1 stall
+ self.layer1 = nn.Linear(8, 64)
+ self.layer2 = nn.Linear(64, 32)
+ self.layer3 = nn.Linear(32, 16)
+ self.out = nn.Linear(16, 1)
+ self.relu = nn.ReLU()
+ def forward(self, x):
+ x = self.bn0(x)
+ h1 = self.relu(self.layer1(x))
+ h2 = self.relu(self.layer2(h1))
+ h3 = self.relu(self.layer3(h2))
+ return self.out(h3), h3
 
-model     = HousingNet()
+model = HousingNet()
 optimiser = torch.optim.Adam(model.parameters(), lr=1e-3)
 # ReduceLROnPlateau: halve LR after 5 epochs with no val_loss improvement
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimiser, patience=5, factor=0.5)
 criterion = nn.MSELoss()
-writer    = SummaryWriter('runs/full_instrumented_seed42')
+writer = SummaryWriter('runs/full_instrumented_seed42')
 
 # Log the model graph once so the Graphs tab shows the architecture
 writer.add_graph(model, torch.zeros(1, 8))
 
 best_val_loss = float('inf')
-best_epoch    = 0
+best_epoch = 0
 
 for epoch in range(1, 51):
 
-    # ── Train ──────────────────────────────────────────────────────────────────
-    model.train()
-    preds, _ = model(X_tr_t)
-    loss      = criterion(preds, y_tr_t)
-    optimiser.zero_grad()
-    loss.backward()
-    # Clip gradients to prevent exploding — log raw grads before this step
-    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-    optimiser.step()
+ # ── Train ──────────────────────────────────────────────────────────────────
+ model.train()
+ preds, _ = model(X_tr_t)
+ loss = criterion(preds, y_tr_t)
+ optimiser.zero_grad()
+ loss.backward()
+ # Clip gradients to prevent exploding — log raw grads before this step
+ torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+ optimiser.step()
 
-    # ── Validate ───────────────────────────────────────────────────────────────
-    model.eval()
-    with torch.no_grad():
-        val_preds, val_emb = model(X_va_t)
-        val_loss  = criterion(val_preds, y_va_t)
-        val_mae_k = torch.mean(torch.abs(val_preds - y_va_t)).item() * 100
+ # ── Validate ───────────────────────────────────────────────────────────────
+ model.eval()
+ with torch.no_grad():
+ val_preds, val_emb = model(X_va_t)
+ val_loss = criterion(val_preds, y_va_t)
+ val_mae_k = torch.mean(torch.abs(val_preds - y_va_t)).item() * 100
 
-    scheduler.step(val_loss)   # scheduler updates LR — visible in 'LR' scalar
+ scheduler.step(val_loss) # scheduler updates LR — visible in 'LR' scalar
 
-    # ── Scalars: every epoch (cheap) ──────────────────────────────────────────
-    writer.add_scalar('Loss/train', loss.item(),     epoch)
-    writer.add_scalar('Loss/val',   val_loss.item(), epoch)
-    writer.add_scalar('MAE_k/val',  val_mae_k,       epoch)
-    writer.add_scalar('LR',         optimiser.param_groups[0]['lr'], epoch)
+ # ── Scalars: every epoch (cheap) ──────────────────────────────────────────
+ writer.add_scalar('Loss/train', loss.item(), epoch)
+ writer.add_scalar('Loss/val', val_loss.item(), epoch)
+ writer.add_scalar('MAE_k/val', val_mae_k, epoch)
+ writer.add_scalar('LR', optimiser.param_groups[0]['lr'], epoch)
 
-    # ── Histograms: every 5 epochs (moderate cost) ────────────────────────────
-    if epoch % 5 == 0:
-        writer.add_histogram('weights/layer1', model.layer1.weight.data,   epoch)
-        writer.add_histogram('weights/layer2', model.layer2.weight.data,   epoch)
-        writer.add_histogram('weights/layer3', model.layer3.weight.data,   epoch)
-        # Gradients are populated after loss.backward() — but we clipped above.
-        # For raw pre-clip gradients, read them between backward() and clip_grad_norm_().
-        if model.layer1.weight.grad is not None:
-            writer.add_histogram('grads/layer1', model.layer1.weight.grad, epoch)
-            writer.add_histogram('grads/layer2', model.layer2.weight.grad, epoch)
-            writer.add_histogram('grads/layer3', model.layer3.weight.grad, epoch)
+ # ── Histograms: every 5 epochs (moderate cost) ────────────────────────────
+ if epoch % 5 == 0:
+ writer.add_histogram('weights/layer1', model.layer1.weight.data, epoch)
+ writer.add_histogram('weights/layer2', model.layer2.weight.data, epoch)
+ writer.add_histogram('weights/layer3', model.layer3.weight.data, epoch)
+ # Gradients are populated after loss.backward() — but we clipped above.
+ # For raw pre-clip gradients, read them between backward() and clip_grad_norm_().
+ if model.layer1.weight.grad is not None:
+ writer.add_histogram('grads/layer1', model.layer1.weight.grad, epoch)
+ writer.add_histogram('grads/layer2', model.layer2.weight.grad, epoch)
+ writer.add_histogram('grads/layer3', model.layer3.weight.grad, epoch)
 
-    # ── Checkpoint: save whenever validation improves ─────────────────────────
-    if val_loss.item() < best_val_loss:
-        best_val_loss = val_loss.item()
-        best_epoch    = epoch
-        torch.save(model.state_dict(), 'runs/best_model.pt')
+ # ── Checkpoint: save whenever validation improves ─────────────────────────
+ if val_loss.item() < best_val_loss:
+ best_val_loss = val_loss.item()
+ best_epoch = epoch
+ torch.save(model.state_dict(), 'runs/best_model.pt')
 
 # ── Embedding projector: once after training ──────────────────────────────────
 model.eval()
 with torch.no_grad():
-    _, final_emb = model(X_va_t)
+ _, final_emb = model(X_va_t)
 
 tiers = [
-    'High' if p > 3.5 else 'Mid' if p > 1.5 else 'Low'
-    for p in y_va_t.squeeze().numpy()
+ 'High' if p > 3.5 else 'Mid' if p > 1.5 else 'Low'
+ for p in y_va_t.squeeze().numpy()
 ]
 writer.add_embedding(final_emb, metadata=tiers, global_step=50, tag='layer3_housing')
 
 # ── HParam summary ────────────────────────────────────────────────────────────
 writer.add_hparams(
-    {'lr': 1e-3, 'optimiser': 'adam', 'batch_norm': True, 'grad_clip': 1.0},
-    {'hparam/best_val_mae_k': float(np.sqrt(best_val_loss) * 100),
-     'hparam/best_epoch':     float(best_epoch)},
+ {'lr': 1e-3, 'optimiser': 'adam', 'batch_norm': True, 'grad_clip': 1.0},
+ {'hparam/best_val_mae_k': float(np.sqrt(best_val_loss) * 100),
+ 'hparam/best_epoch': float(best_epoch)},
 )
 
 writer.close()
@@ -694,93 +692,93 @@ print(f"Best validation MAE: {np.sqrt(best_val_loss)*100:.1f}k at epoch {best_ep
 
 ```mermaid
 flowchart TD
-    A["Training loop\nmodel.train() + loss.backward()"]
-    B["SummaryWriter\nwrites event files\nto runs/exp_name/"]
-    C1["Scalars\nadd_scalar\nLoss/train · Loss/val · MAE_k · LR"]
-    C2["Histograms\nadd_histogram\nweights/layerN · grads/layerN"]
-    C3["Embeddings\nadd_embedding\nlayer3 → 16-dim → t-SNE"]
-    C4["HParams\nadd_hparams\nlr × optimiser → final_mae"]
-    D["tensorboard --logdir runs/\nlocalhost:6006"]
-    E1["Scalars tab\noverfitting detector"]
-    E2["Histograms tab\ngradient health"]
-    E3["Projector tab\nfeature space quality"]
-    E4["HParams tab\nsweep comparison"]
+ A["Training loop\nmodel.train() + loss.backward()"]
+ B["SummaryWriter\nwrites event files\nto runs/exp_name/"]
+ C1["Scalars\nadd_scalar\nLoss/train · Loss/val · MAE_k · LR"]
+ C2["Histograms\nadd_histogram\nweights/layerN · grads/layerN"]
+ C3["Embeddings\nadd_embedding\nlayer3 → 16-dim → t-SNE"]
+ C4["HParams\nadd_hparams\nlr × optimiser → final_mae"]
+ D["tensorboard --logdir runs/\nlocalhost:6006"]
+ E1["Scalars tab\noverfitting detector"]
+ E2["Histograms tab\ngradient health"]
+ E3["Projector tab\nfeature space quality"]
+ E4["HParams tab\nsweep comparison"]
 
-    A --> B
-    B --> C1
-    B --> C2
-    B --> C3
-    B --> C4
-    C1 --> D
-    C2 --> D
-    C3 --> D
-    C4 --> D
-    D --> E1
-    D --> E2
-    D --> E3
-    D --> E4
+ A --> B
+ B --> C1
+ B --> C2
+ B --> C3
+ B --> C4
+ C1 --> D
+ C2 --> D
+ C3 --> D
+ C4 --> D
+ D --> E1
+ D --> E2
+ D --> E3
+ D --> E4
 
-    style A fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style B fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style D fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style C1 fill:#15803d,color:#fff,stroke:#15803d
-    style C2 fill:#15803d,color:#fff,stroke:#15803d
-    style C3 fill:#15803d,color:#fff,stroke:#15803d
-    style C4 fill:#15803d,color:#fff,stroke:#15803d
-    style E1 fill:#15803d,color:#fff,stroke:#15803d
-    style E2 fill:#15803d,color:#fff,stroke:#15803d
-    style E3 fill:#15803d,color:#fff,stroke:#15803d
-    style E4 fill:#15803d,color:#fff,stroke:#15803d
+ style A fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style B fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style D fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style C1 fill:#15803d,color:#fff,stroke:#15803d
+ style C2 fill:#15803d,color:#fff,stroke:#15803d
+ style C3 fill:#15803d,color:#fff,stroke:#15803d
+ style C4 fill:#15803d,color:#fff,stroke:#15803d
+ style E1 fill:#15803d,color:#fff,stroke:#15803d
+ style E2 fill:#15803d,color:#fff,stroke:#15803d
+ style E3 fill:#15803d,color:#fff,stroke:#15803d
+ style E4 fill:#15803d,color:#fff,stroke:#15803d
 ```
 
 ### 7.2 What Each Chart Tells You — Decision Flowchart
 
 ```mermaid
 flowchart TD
-    START(["Open TensorBoard dashboard"])
-    Q1{"Scalars tab:\nIs val_loss decreasing?"}
-    Q2{"Is train_loss\nalso decreasing?"}
-    Q3{"How large is the\ntrain / val gap?"}
-    Q4{"Histograms tab:\nAre early-layer grads moving\nacross epochs?"}
-    Q5{"Projector tab:\nDo clusters match\nexpected categories?"}
+ START(["Open TensorBoard dashboard"])
+ Q1{"Scalars tab:\nIs val_loss decreasing?"}
+ Q2{"Is train_loss\nalso decreasing?"}
+ Q3{"How large is the\ntrain / val gap?"}
+ Q4{"Histograms tab:\nAre early-layer grads moving\nacross epochs?"}
+ Q5{"Projector tab:\nDo clusters match\nexpected categories?"}
 
-    ACT_A["❌ Underfitting\n→ Increase model capacity\n→ Train more epochs\n→ Check data pipeline"]
-    ACT_B["❌ Training diverged\n→ Reduce LR\n→ Add gradient clipping\n→ Check for data anomalies"]
-    ACT_C["✅ On track\nMonitor but no action yet"]
-    ACT_D["⚠️ Overfitting\n→ Early stopping\n→ Add dropout or L2\n→ More data"]
-    ACT_E["❌ Vanishing gradients\n→ Add BatchNorm\n→ Use ReLU not sigmoid\n→ Add skip connections"]
-    ACT_F["✅ Gradient health OK\n→ Move to Projector tab"]
-    ACT_G["❌ Model learned noise\n→ Train longer\n→ Increase capacity\n→ Check label quality"]
-    ACT_H["✅ Useful representations\nlearned — training successful"]
+ ACT_A[" Underfitting\n→ Increase model capacity\n→ Train more epochs\n→ Check data pipeline"]
+ ACT_B[" Training diverged\n→ Reduce LR\n→ Add gradient clipping\n→ Check for data anomalies"]
+ ACT_C[" On track\nMonitor but no action yet"]
+ ACT_D[" Overfitting\n→ Early stopping\n→ Add dropout or L2\n→ More data"]
+ ACT_E[" Vanishing gradients\n→ Add BatchNorm\n→ Use ReLU not sigmoid\n→ Add skip connections"]
+ ACT_F[" Gradient health OK\n→ Move to Projector tab"]
+ ACT_G[" Model learned noise\n→ Train longer\n→ Increase capacity\n→ Check label quality"]
+ ACT_H[" Useful representations\nlearned — training successful"]
 
-    START --> Q1
-    Q1 -->|"Yes"| Q3
-    Q1 -->|"No — flat"| Q2
-    Q2 -->|"No — both flat"| ACT_A
-    Q2 -->|"Yes — train ↓, val ↑"| ACT_B
-    Q3 -->|"Small gap"| ACT_C
-    Q3 -->|"Large and widening"| ACT_D
-    ACT_C --> Q4
-    Q4 -->|"No — frozen in early layers"| ACT_E
-    Q4 -->|"Yes — all layers active"| ACT_F
-    ACT_F --> Q5
-    Q5 -->|"No clusters visible"| ACT_G
-    Q5 -->|"Clear cluster structure"| ACT_H
+ START --> Q1
+ Q1 -->|"Yes"| Q3
+ Q1 -->|"No — flat"| Q2
+ Q2 -->|"No — both flat"| ACT_A
+ Q2 -->|"Yes — train ↓, val ↑"| ACT_B
+ Q3 -->|"Small gap"| ACT_C
+ Q3 -->|"Large and widening"| ACT_D
+ ACT_C --> Q4
+ Q4 -->|"No — frozen in early layers"| ACT_E
+ Q4 -->|"Yes — all layers active"| ACT_F
+ ACT_F --> Q5
+ Q5 -->|"No clusters visible"| ACT_G
+ Q5 -->|"Clear cluster structure"| ACT_H
 
-    style START fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style ACT_A fill:#b91c1c,color:#fff,stroke:#b91c1c
-    style ACT_B fill:#b91c1c,color:#fff,stroke:#b91c1c
-    style ACT_D fill:#b45309,color:#fff,stroke:#b45309
-    style ACT_E fill:#b45309,color:#fff,stroke:#b45309
-    style ACT_G fill:#b91c1c,color:#fff,stroke:#b91c1c
-    style ACT_C fill:#15803d,color:#fff,stroke:#15803d
-    style ACT_F fill:#15803d,color:#fff,stroke:#15803d
-    style ACT_H fill:#15803d,color:#fff,stroke:#15803d
-    style Q1 fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style Q2 fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style Q3 fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style Q4 fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style Q5 fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style START fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style ACT_A fill:#b91c1c,color:#fff,stroke:#b91c1c
+ style ACT_B fill:#b91c1c,color:#fff,stroke:#b91c1c
+ style ACT_D fill:#b45309,color:#fff,stroke:#b45309
+ style ACT_E fill:#b45309,color:#fff,stroke:#b45309
+ style ACT_G fill:#b91c1c,color:#fff,stroke:#b91c1c
+ style ACT_C fill:#15803d,color:#fff,stroke:#15803d
+ style ACT_F fill:#15803d,color:#fff,stroke:#15803d
+ style ACT_H fill:#15803d,color:#fff,stroke:#15803d
+ style Q1 fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style Q2 fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style Q3 fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style Q4 fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style Q5 fill:#1d4ed8,color:#fff,stroke:#1d4ed8
 ```
 
 ---
@@ -799,11 +797,11 @@ flowchart TD
 
 **Practical logging budget:**
 ```
-Scalars      → every epoch   (cheap — always on)
-Histograms   → every 5 epochs  (moderate — on for production runs)
-Images       → every 10 epochs, max 16 samples  (expensive — on when debugging predictions)
-Embeddings   → once at the end  (expensive — validate representation quality)
-Profiler     → batch 2 only  (expensive — only when diagnosing GPU utilisation)
+Scalars → every epoch (cheap — always on)
+Histograms → every 5 epochs (moderate — on for production runs)
+Images → every 10 epochs, max 16 samples (expensive — on when debugging predictions)
+Embeddings → once at the end (expensive — validate representation quality)
+Profiler → batch 2 only (expensive — only when diagnosing GPU utilisation)
 ```
 
 ---
@@ -835,19 +833,19 @@ Profiler     → batch 2 only  (expensive — only when diagnosing GPU utilisati
 
 ## Progress Check
 
-> ⚡ **Constraint #5 — PRODUCTION: Partial ✅**
+> **Constraint #5 — PRODUCTION: Partial **
 
 | Production requirement | Status | How it was satisfied |
 |---|---|---|
-| Training loss monitoring (scalars) | ✅ Done | `add_scalar` for Loss/train, Loss/val, MAE_k, LR every epoch |
-| Weight and gradient diagnostics | ✅ Done | `add_histogram` every 5 epochs for all layers |
-| Representation quality validation | ✅ Done | `add_embedding` projector at epoch 50 |
-| Hyperparameter sweep logging | ✅ Done | `add_hparams` per run with final MAE metric |
-| Model checkpointing | ✅ Done | `torch.save(model.state_dict(), ...)` at minimum val loss |
-| Serving latency monitoring | ❌ Not yet | Requires live traffic — covered in Production track |
-| Model versioning and registry | ❌ Not yet | MLflow Model Registry or W&B Artifacts |
-| A/B testing infrastructure | ❌ Not yet | Requires serving layer and traffic splitting |
-| Prediction distribution drift | ❌ Not yet | Requires production traffic data |
+| Training loss monitoring (scalars) | Done | `add_scalar` for Loss/train, Loss/val, MAE_k, LR every epoch |
+| Weight and gradient diagnostics | Done | `add_histogram` every 5 epochs for all layers |
+| Representation quality validation | Done | `add_embedding` projector at epoch 50 |
+| Hyperparameter sweep logging | Done | `add_hparams` per run with final MAE metric |
+| Model checkpointing | Done | `torch.save(model.state_dict(), ...)` at minimum val loss |
+| Serving latency monitoring | Not yet | Requires live traffic — covered in Production track |
+| Model versioning and registry | Not yet | MLflow Model Registry or W&B Artifacts |
+| A/B testing infrastructure | Not yet | Requires serving layer and traffic splitting |
+| Prediction distribution drift | Not yet | Requires production traffic data |
 
 **Summary.** The training loop is fully instrumented. We can now detect overfitting the moment it starts, diagnose dead neurons before they waste epochs of compute, and confirm that the model intermediate representations are meaningful and not random. This is the observability floor for any production ML system. The four remaining Constraint #5 items — serving latency, model registry, A/B testing, drift detection — require infrastructure that training-time TensorBoard cannot provide; they belong to the serving and MLOps chapters.
 
@@ -863,4 +861,4 @@ That is exactly the problem **attention** solves.
 
 In [Ch.9](../ch09_sequences_to_attention), we treat the 8 housing features as a *sequence of tokens* and implement attention as a soft dictionary lookup: each feature queries all other features, and the output is a weighted sum where the weights encode *relevance given context*. The embedding projector you built here will make the attention mechanism effect immediately visible — you will see the clusters sharpen when attention-weighted feature interactions replace the fixed MLP projection.
 
-> ➡️ **Up next**: [Ch.9 — From Sequences to Attention](../ch09_sequences_to_attention) — the bridge between the MLP world and the Transformer world, implemented with nothing beyond a `numpy` dot product and softmax.
+> ➡ **Up next**: [Ch.9 — From Sequences to Attention](../ch09_sequences_to_attention) — the bridge between the MLP world and the Transformer world, implemented with nothing beyond a `numpy` dot product and softmax.

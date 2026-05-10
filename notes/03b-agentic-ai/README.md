@@ -53,12 +53,12 @@ Fine-tuning bakes Mamma Rosa's brand voice into the model — reduces output var
 ## Progression Metrics
 
 ```
-Ch.1: ReAct orchestration       → 27% conv, +$2.80 AOV, 4s p95    (broke through baseline)
-Ch.2: Safety hardening          → 27% conv, 0 attacks [#5 SAFETY]
-Ch.3: Evaluation framework      → 30% conv (quality assurance, faster iteration)
+Ch.1: ReAct orchestration → 27% conv, +$2.80 AOV, 4s p95 (broke through baseline)
+Ch.2: Safety hardening → 27% conv, 0 attacks [#5 SAFETY]
+Ch.3: Evaluation framework → 30% conv (quality assurance, faster iteration)
 Ch.4: Cost/latency optimization → 32% conv, 1.8s p95, $0.06/conv [#3 #4]
-Ch.5: Fine-tuning               → 32% conv, $41.00 AOV [#6 RELIABILITY]
-Ch.6: Advanced patterns         → Production-grade multi-agent system
+Ch.5: Fine-tuning → 32% conv, $41.00 AOV [#6 RELIABILITY]
+Ch.6: Advanced patterns → Production-grade multi-agent system
 ```
 
 **Final metrics:** 32% conversion (>25% target), $41.80 AOV (+$3.30), 1.8s p95 (<3s), $0.06/conv (<$0.08), 0 attacks, >99% uptime

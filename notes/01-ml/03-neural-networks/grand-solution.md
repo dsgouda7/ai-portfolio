@@ -9,26 +9,26 @@
 **Three ways to learn this track:**
 
 1. **Big picture first (recommended for time-constrained readers):**
-   - Read this `grand_solution.md` document → understand the complete narrative arc
-   - Run [grand_solution.ipynb (reference)](grand_solution_reference.ipynb) | [grand_solution.ipynb (exercise)](grand_solution_exercise.ipynb) → see all code consolidated end-to-end
-   - Dive into individual chapters for depth on specific concepts
+ - Read this `grand_solution.md` document → understand the complete narrative arc
+ - Run [grand_solution.ipynb (reference)](grand_solution_reference.ipynb) | [grand_solution.ipynb (exercise)](grand_solution_exercise.ipynb) → see all code consolidated end-to-end
+ - Dive into individual chapters for depth on specific concepts
 
 2. **Hands-on exploration:**
-   - Run [grand_solution.ipynb (reference)](grand_solution_reference.ipynb) | [grand_solution.ipynb (exercise)](grand_solution_exercise.ipynb) directly → executable demonstration of all 10 chapters
-   - Code consolidates: setup → imports → each chapter's solution → final integration
-   - Each cell includes concise markdown explaining what problem it solves
+ - Run [grand_solution.ipynb (reference)](grand_solution_reference.ipynb) | [grand_solution.ipynb (exercise)](grand_solution_exercise.ipynb) directly → executable demonstration of all 10 chapters
+ - Code consolidates: setup → imports → each chapter's solution → final integration
+ - Each cell includes concise markdown explaining what problem it solves
 
 3. **Sequential deep dive (recommended for complete mastery):**
-   - Start with [Ch.1 XOR Problem](ch01_xor_problem) → understand why neural networks are needed
-   - Progress through Ch.2–10 in order → each chapter builds on previous concepts
-   - Return to this document for synthesis and production patterns
+ - Start with [Ch.1 XOR Problem](ch01_xor_problem) → understand why neural networks are needed
+ - Progress through Ch.2–10 in order → each chapter builds on previous concepts
+ - Return to this document for synthesis and production patterns
 
 **What's in the companion notebook:**
-- ✅ All code examples from this document in executable form
-- ✅ Multi-modal architecture (tabular + image + text)
-- ✅ Complete training pipeline with regularization
-- ✅ Production inference patterns
-- ✅ Can be run top-to-bottom to demonstrate the full solution
+- All code examples from this document in executable form
+- Multi-modal architecture (tabular + image + text)
+- Complete training pipeline with regularization
+- Production inference patterns
+- Can be run top-to-bottom to demonstrate the full solution
 
 **Chapter reading order:**
 
@@ -47,7 +47,7 @@
 
 ---
 
-## Mission Accomplished: $28k MAE + 95% Accuracy ✅
+## Mission Accomplished: $28k MAE + 95% Accuracy
 
 **The Challenge:** Build UnifiedAI — prove neural networks are universal function approximators that unify regression and classification under one architecture, achieving ≤$28k MAE (California Housing) + ≥95% avg attribute accuracy (CelebA).
 
@@ -56,18 +56,18 @@
 **The Progression:**
 
 ```
-Baseline (Linear Regression):     $70k MAE    (Topic 01, pre-NN)
-Ch.1: XOR Problem                  Diagnostic  (proved linear models fail)
-Ch.2: Neural Networks              $55k MAE    (3-layer dense, ReLU)
-Ch.3: Backprop + Adam              $48k MAE    (efficient training)
-Ch.4: Regularization               $43k MAE    (dropout + L2 + early stopping)
-Ch.5: CNNs                         $38k MAE    (spatial feature extraction)
-Ch.6: RNNs/LSTMs                   $35k MAE    (temporal patterns)
-Ch.7: MLE & Loss Functions         $35k MAE    (principled loss selection)
-Ch.8: TensorBoard                  $33k MAE    (instrumented training)
-Ch.9: Sequences → Attention        $30k MAE    (parallel sequence processing)
-Ch.10: Transformers                $28k MAE    (hierarchical text features)
-                                   ✅ TARGET: ≤$28k MAE + ≥95% accuracy
+Baseline (Linear Regression): $70k MAE (Topic 01, pre-NN)
+Ch.1: XOR Problem Diagnostic (proved linear models fail)
+Ch.2: Neural Networks $55k MAE (3-layer dense, ReLU)
+Ch.3: Backprop + Adam $48k MAE (efficient training)
+Ch.4: Regularization $43k MAE (dropout + L2 + early stopping)
+Ch.5: CNNs $38k MAE (spatial feature extraction)
+Ch.6: RNNs/LSTMs $35k MAE (temporal patterns)
+Ch.7: MLE & Loss Functions $35k MAE (principled loss selection)
+Ch.8: TensorBoard $33k MAE (instrumented training)
+Ch.9: Sequences → Attention $30k MAE (parallel sequence processing)
+Ch.10: Transformers $28k MAE (hierarchical text features)
+TARGET: ≤$28k MAE + ≥95% accuracy
 ```
 
 **Unification Proof:** Same 3-layer dense network (8 → 64 → 32), same Adam optimizer, same regularization — only the output layer changes:
@@ -245,8 +245,8 @@ Ch.10: Transformers                $28k MAE    (hierarchical text features)
 **What it is:** Transformer replaces recurrence entirely with stacked self-attention. Key components: learned projections ($W_Q, W_K, W_V$), scaled dot-product attention, multi-head attention (H=8 parallel attention patterns), positional encoding (inject word order), residual connections + LayerNorm (enable depth), position-wise feed-forward layers. Encoder-only (BERT) for classification, decoder-only (GPT) for generation, encoder-decoder (original) for translation.
 
 **What it unlocked:**
-- **$28k MAE ✅:** Transformer encoder on property descriptions captured hierarchical concepts (tokens → phrases → document-level features)
-- **95.2% classification accuracy ✅:** Vision Transformer (ViT) on CelebA face attributes — attention learns spatial relationships without convolution
+- **$28k MAE :** Transformer encoder on property descriptions captured hierarchical concepts (tokens → phrases → document-level features)
+- **95.2% classification accuracy :** Vision Transformer (ViT) on CelebA face attributes — attention learns spatial relationships without convolution
 - **Full parallelism:** All 50 tokens processed simultaneously → **45ms inference** (vs LSTM's 180ms sequential)
 - **Unification complete:** Same transformer architecture → linear output head (regression) or sigmoid output head (classification)
 
@@ -265,64 +265,64 @@ Here's how all 10 concepts integrate into a deployed UnifiedAI system:
 
 ```mermaid
 flowchart TD
-    INPUT["Raw Input Data"]
-    
-    subgraph "Feature Engineering"
-        TABULAR["Tabular Features<br/>(8 census variables)"]
-        IMAGE["Satellite Image<br/>(district aerial view)"]
-        TEXT["Property Description<br/>(50-word text)"]
-    end
-    
-    subgraph "Feature Extraction"
-        DENSE["Dense Layers<br/>Ch.2: 8 → 64 → 32<br/>Ch.3: Adam optimizer<br/>Ch.4: Dropout 0.5"]
-        CNN["CNN Encoder<br/>Ch.5: Conv2d × 3<br/>MaxPool → 512-dim"]
-        TRANSFORMER["Transformer Encoder<br/>Ch.9-10: 6 layers<br/>8 attention heads"]
-    end
-    
-    subgraph "Fusion Layer"
-        CONCAT["Concatenate<br/>[32 + 512 + 768] = 1312-dim"]
-        FUSED["Dense 256 → 128<br/>Ch.4: BatchNorm + Dropout"]
-    end
-    
-    subgraph "Output Heads"
-        REG_HEAD["Regression Head<br/>Linear(128 → 1)<br/>Ch.7: MSE loss"]
-        CLASS_HEAD["Classification Head<br/>Linear(128 → 40) → Sigmoid<br/>Ch.7: BCE loss"]
-    end
-    
-    subgraph "Monitoring"
-        TB["TensorBoard<br/>Ch.8: Loss curves<br/>Weight histograms<br/>Embedding projector"]
-    end
-    
-    INPUT --> TABULAR
-    INPUT --> IMAGE
-    INPUT --> TEXT
-    
-    TABULAR --> DENSE
-    IMAGE --> CNN
-    TEXT --> TRANSFORMER
-    
-    DENSE --> CONCAT
-    CNN --> CONCAT
-    TRANSFORMER --> CONCAT
-    
-    CONCAT --> FUSED
-    
-    FUSED --> REG_HEAD
-    FUSED --> CLASS_HEAD
-    
-    REG_HEAD --> TB
-    CLASS_HEAD --> TB
-    
-    REG_HEAD --> OUTPUT["Prediction<br/>Value: $385k ± $28k<br/>Attributes: [Smiling: 98%, Male: 12%, ...]"]
-    CLASS_HEAD --> OUTPUT
-    
-    style INPUT fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style DENSE fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CNN fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style TRANSFORMER fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style REG_HEAD fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CLASS_HEAD fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style OUTPUT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ INPUT["Raw Input Data"]
+
+ subgraph "Feature Engineering"
+ TABULAR["Tabular Features<br/>(8 census variables)"]
+ IMAGE["Satellite Image<br/>(district aerial view)"]
+ TEXT["Property Description<br/>(50-word text)"]
+ end
+
+ subgraph "Feature Extraction"
+ DENSE["Dense Layers<br/>Ch.2: 8 → 64 → 32<br/>Ch.3: Adam optimizer<br/>Ch.4: Dropout 0.5"]
+ CNN["CNN Encoder<br/>Ch.5: Conv2d × 3<br/>MaxPool → 512-dim"]
+ TRANSFORMER["Transformer Encoder<br/>Ch.9-10: 6 layers<br/>8 attention heads"]
+ end
+
+ subgraph "Fusion Layer"
+ CONCAT["Concatenate<br/>[32 + 512 + 768] = 1312-dim"]
+ FUSED["Dense 256 → 128<br/>Ch.4: BatchNorm + Dropout"]
+ end
+
+ subgraph "Output Heads"
+ REG_HEAD["Regression Head<br/>Linear(128 → 1)<br/>Ch.7: MSE loss"]
+ CLASS_HEAD["Classification Head<br/>Linear(128 → 40) → Sigmoid<br/>Ch.7: BCE loss"]
+ end
+
+ subgraph "Monitoring"
+ TB["TensorBoard<br/>Ch.8: Loss curves<br/>Weight histograms<br/>Embedding projector"]
+ end
+
+ INPUT --> TABULAR
+ INPUT --> IMAGE
+ INPUT --> TEXT
+
+ TABULAR --> DENSE
+ IMAGE --> CNN
+ TEXT --> TRANSFORMER
+
+ DENSE --> CONCAT
+ CNN --> CONCAT
+ TRANSFORMER --> CONCAT
+
+ CONCAT --> FUSED
+
+ FUSED --> REG_HEAD
+ FUSED --> CLASS_HEAD
+
+ REG_HEAD --> TB
+ CLASS_HEAD --> TB
+
+ REG_HEAD --> OUTPUT["Prediction<br/>Value: $385k ± $28k<br/>Attributes: [Smiling: 98%, Male: 12%, ...]"]
+ CLASS_HEAD --> OUTPUT
+
+ style INPUT fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style DENSE fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CNN fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style TRANSFORMER fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style REG_HEAD fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CLASS_HEAD fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style OUTPUT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### Deployment Pipeline (How Ch.1-10 Connect in Production)
@@ -330,9 +330,9 @@ flowchart TD
 **1. Training Pipeline (runs weekly):**
 ```python
 # Ch.2: Load multi-modal data
-tabular_features = load_california_housing()  # 8 features
-satellite_images = load_district_images()     # 224×224 RGB
-property_text = load_descriptions()           # 50-word sequences
+tabular_features = load_california_housing() # 8 features
+satellite_images = load_district_images() # 224×224 RGB
+property_text = load_descriptions() # 50-word sequences
 
 # Ch.3: Feature scaling
 scaler = StandardScaler().fit(tabular_features)
@@ -340,12 +340,12 @@ tabular_scaled = scaler.transform(tabular_features)
 
 # Ch.5: CNN feature extraction (shared backbone)
 cnn_encoder = Sequential([
-    Conv2D(32, 3, activation='relu'),
-    MaxPooling2D(2),
-    Conv2D(64, 3, activation='relu'),
-    MaxPooling2D(2),
-    Conv2D(128, 3, activation='relu'),
-    Flatten(),  # → 512-dim
+ Conv2D(32, 3, activation='relu'),
+ MaxPooling2D(2),
+ Conv2D(64, 3, activation='relu'),
+ MaxPooling2D(2),
+ Conv2D(128, 3, activation='relu'),
+ Flatten(), # → 512-dim
 ])
 spatial_features = cnn_encoder(satellite_images)
 
@@ -353,30 +353,30 @@ spatial_features = cnn_encoder(satellite_images)
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 transformer = TFBertModel.from_pretrained('bert-base-uncased')
 text_tokens = tokenizer(property_text, return_tensors='tf', padding=True)
-text_features = transformer(text_tokens).last_hidden_state[:, 0, :]  # CLS token, 768-dim
+text_features = transformer(text_tokens).last_hidden_state[:, 0, :] # CLS token, 768-dim
 
 # Ch.2: Dense feature extraction from tabular
 dense_encoder = Sequential([
-    Dense(64, activation='relu', kernel_initializer='he_normal'),
-    Dropout(0.5),  # Ch.4
-    Dense(32, activation='relu'),
-    Dropout(0.5),
+ Dense(64, activation='relu', kernel_initializer='he_normal'),
+ Dropout(0.5), # Ch.4
+ Dense(32, activation='relu'),
+ Dropout(0.5),
 ])
 tabular_features_deep = dense_encoder(tabular_scaled)
 
 # Fusion layer (multi-modal)
-fused = Concatenate()([tabular_features_deep, spatial_features, text_features])  # 1312-dim
+fused = Concatenate()([tabular_features_deep, spatial_features, text_features]) # 1312-dim
 fused = Dense(256, activation='relu')(fused)
-fused = BatchNorm()(fused)  # Ch.4
+fused = BatchNorm()(fused) # Ch.4
 fused = Dropout(0.3)(fused)
 fused = Dense(128, activation='relu')(fused)
 
 # Ch.7: Task-specific heads
-regression_output = Dense(1, activation='linear', name='value')(fused)  # MSE loss
-classification_output = Dense(40, activation='sigmoid', name='attributes')(fused)  # BCE loss
+regression_output = Dense(1, activation='linear', name='value')(fused) # MSE loss
+classification_output = Dense(40, activation='sigmoid', name='attributes')(fused) # BCE loss
 
 model = Model(inputs=[tabular_input, image_input, text_input],
-              outputs=[regression_output, classification_output])
+ outputs=[regression_output, classification_output])
 
 # Ch.3: Adam optimizer with learning rate schedule
 lr_schedule = CosineDecayRestarts(initial_lr=0.001, first_decay_steps=1000)
@@ -384,13 +384,13 @@ optimizer = Adam(learning_rate=lr_schedule, beta_1=0.9, beta_2=0.999)
 
 # Ch.7: Multi-task loss
 model.compile(
-    optimizer=optimizer,
-    loss={
-        'value': 'mse',           # Regression (Ch.7: Gaussian MLE)
-        'attributes': 'binary_crossentropy'  # Classification (Ch.7: Bernoulli MLE)
-    },
-    loss_weights={'value': 1.0, 'attributes': 0.5},  # Weight regression higher
-    metrics={'value': 'mae', 'attributes': 'accuracy'}
+ optimizer=optimizer,
+ loss={
+ 'value': 'mse', # Regression (Ch.7: Gaussian MLE)
+ 'attributes': 'binary_crossentropy' # Classification (Ch.7: Bernoulli MLE)
+ },
+ loss_weights={'value': 1.0, 'attributes': 0.5}, # Weight regression higher
+ metrics={'value': 'mae', 'attributes': 'accuracy'}
 )
 
 # Ch.4 + Ch.8: Training with regularization and monitoring
@@ -398,12 +398,12 @@ early_stop = EarlyStopping(monitor='val_value_mae', patience=10, restore_best_we
 tensorboard = TensorBoard(log_dir='logs/unified_ai', histogram_freq=1, write_graph=True)
 
 history = model.fit(
-    [X_tabular, X_images, X_text],
-    [y_value, y_attributes],
-    validation_split=0.2,
-    epochs=100,
-    batch_size=64,
-    callbacks=[early_stop, tensorboard],  # Ch.4 + Ch.8
+ [X_tabular, X_images, X_text],
+ [y_value, y_attributes],
+ validation_split=0.2,
+ epochs=100,
+ batch_size=64,
+ callbacks=[early_stop, tensorboard], # Ch.4 + Ch.8
 )
 ```
 
@@ -419,98 +419,98 @@ app = FastAPI()
 model = tf.keras.models.load_model('models/unified_ai_v1.h5')
 
 class PropertyInput(BaseModel):
-    # Tabular features
-    med_inc: float
-    house_age: float
-    ave_rooms: float
-    ave_bedrms: float
-    population: float
-    ave_occup: float
-    latitude: float
-    longitude: float
-    # Image (base64 encoded)
-    satellite_image: str
-    # Text
-    description: str
+ # Tabular features
+ med_inc: float
+ house_age: float
+ ave_rooms: float
+ ave_bedrms: float
+ population: float
+ ave_occup: float
+ latitude: float
+ longitude: float
+ # Image (base64 encoded)
+ satellite_image: str
+ # Text
+ description: str
 
 @app.post("/predict")
 async def predict_property(input_data: PropertyInput):
-    # Preprocess tabular
-    tabular = np.array([[
-        input_data.med_inc, input_data.house_age, input_data.ave_rooms,
-        input_data.ave_bedrms, input_data.population, input_data.ave_occup,
-        input_data.latitude, input_data.longitude
-    ]])
-    tabular_scaled = scaler.transform(tabular)
-    
-    # Preprocess image (Ch.5)
-    image = decode_base64_image(input_data.satellite_image)
-    image_resized = cv2.resize(image, (224, 224)) / 255.0
-    
-    # Preprocess text (Ch.10)
-    text_tokens = tokenizer(input_data.description, return_tensors='tf', 
-                           padding=True, truncation=True, max_length=50)
-    
-    # Inference (Ch.2-10)
-    value_pred, attributes_pred = model.predict([
-        tabular_scaled, 
-        np.expand_dims(image_resized, 0),
-        text_tokens
-    ])
-    
-    # Ch.6: Apply attention weights for explainability
-    attention_weights = model.get_layer('transformer').output  # Extract attention
-    top_words = get_top_attended_words(text_tokens, attention_weights, k=5)
-    
-    return {
-        "predicted_value": float(value_pred[0][0] * 100000),  # Convert back to dollars
-        "confidence_interval": "±$28k",  # From validation MAE
-        "attributes": {
-            attr_names[i]: float(attributes_pred[0][i]) 
-            for i in range(40)
-        },
-        "explanation": {
-            "top_text_features": top_words,  # Ch.9-10: Attention weights
-            "spatial_importance": "coastal+urban density",  # Ch.5: CNN activation maps
-        },
-        "inference_time_ms": 45  # Ch.9-10: Transformer parallelism
-    }
+ # Preprocess tabular
+ tabular = np.array([[
+ input_data.med_inc, input_data.house_age, input_data.ave_rooms,
+ input_data.ave_bedrms, input_data.population, input_data.ave_occup,
+ input_data.latitude, input_data.longitude
+ ]])
+ tabular_scaled = scaler.transform(tabular)
+
+ # Preprocess image (Ch.5)
+ image = decode_base64_image(input_data.satellite_image)
+ image_resized = cv2.resize(image, (224, 224)) / 255.0
+
+ # Preprocess text (Ch.10)
+ text_tokens = tokenizer(input_data.description, return_tensors='tf',
+ padding=True, truncation=True, max_length=50)
+
+ # Inference (Ch.2-10)
+ value_pred, attributes_pred = model.predict([
+ tabular_scaled,
+ np.expand_dims(image_resized, 0),
+ text_tokens
+ ])
+
+ # Ch.6: Apply attention weights for explainability
+ attention_weights = model.get_layer('transformer').output # Extract attention
+ top_words = get_top_attended_words(text_tokens, attention_weights, k=5)
+
+ return {
+ "predicted_value": float(value_pred[0][0] * 100000), # Convert back to dollars
+ "confidence_interval": "±$28k", # From validation MAE
+ "attributes": {
+ attr_names[i]: float(attributes_pred[0][i])
+ for i in range(40)
+ },
+ "explanation": {
+ "top_text_features": top_words, # Ch.9-10: Attention weights
+ "spatial_importance": "coastal+urban density", # Ch.5: CNN activation maps
+ },
+ "inference_time_ms": 45 # Ch.9-10: Transformer parallelism
+ }
 ```
 
 **3. Monitoring Dashboard (TensorBoard + custom metrics):**
 ```python
 # Ch.8: TensorBoard callback during training
 tensorboard_callback = TensorBoard(
-    log_dir='logs/unified_ai',
-    histogram_freq=1,           # Weight/gradient histograms every epoch
-    write_graph=True,           # Computation graph
-    write_images=True,          # Sample predictions
-    update_freq='epoch',
-    embeddings_freq=1,          # t-SNE projector every epoch
-    embeddings_metadata='metadata.tsv'
+ log_dir='logs/unified_ai',
+ histogram_freq=1, # Weight/gradient histograms every epoch
+ write_graph=True, # Computation graph
+ write_images=True, # Sample predictions
+ update_freq='epoch',
+ embeddings_freq=1, # t-SNE projector every epoch
+ embeddings_metadata='metadata.tsv'
 )
 
 # Custom monitoring: track MAE by price tier
 class MAEByTierCallback(Callback):
-    def on_epoch_end(self, epoch, logs=None):
-        # Predictions on validation set
-        y_pred = self.model.predict(X_val)
-        y_true = y_val
-        
-        # Segment by price tier
-        low_tier = y_true < 200000
-        mid_tier = (y_true >= 200000) & (y_true < 400000)
-        high_tier = y_true >= 400000
-        
-        mae_low = np.mean(np.abs(y_pred[low_tier] - y_true[low_tier]))
-        mae_mid = np.mean(np.abs(y_pred[mid_tier] - y_true[mid_tier]))
-        mae_high = np.mean(np.abs(y_pred[high_tier] - y_true[high_tier]))
-        
-        # Log to TensorBoard
-        with self.writer.as_default():
-            tf.summary.scalar('mae_low_tier', mae_low, step=epoch)
-            tf.summary.scalar('mae_mid_tier', mae_mid, step=epoch)
-            tf.summary.scalar('mae_high_tier', mae_high, step=epoch)
+ def on_epoch_end(self, epoch, logs=None):
+ # Predictions on validation set
+ y_pred = self.model.predict(X_val)
+ y_true = y_val
+
+ # Segment by price tier
+ low_tier = y_true < 200000
+ mid_tier = (y_true >= 200000) & (y_true < 400000)
+ high_tier = y_true >= 400000
+
+ mae_low = np.mean(np.abs(y_pred[low_tier] - y_true[low_tier]))
+ mae_mid = np.mean(np.abs(y_pred[mid_tier] - y_true[mid_tier]))
+ mae_high = np.mean(np.abs(y_pred[high_tier] - y_true[high_tier]))
+
+ # Log to TensorBoard
+ with self.writer.as_default():
+ tf.summary.scalar('mae_low_tier', mae_low, step=epoch)
+ tf.summary.scalar('mae_mid_tier', mae_mid, step=epoch)
+ tf.summary.scalar('mae_high_tier', mae_high, step=epoch)
 ```
 
 ---
@@ -563,28 +563,28 @@ class MAEByTierCallback(Callback):
 
 | # | Constraint | Target | Status | How We Achieved It |
 |---|------------|--------|--------|--------------------|
-| #1 | **ACCURACY** | ≤$28k MAE (regression)<br/>≥95% accuracy (classification) | ✅ **$28k MAE**<br/>✅ **95.2% accuracy** | Ch.2-3: Neural network baseline<br/>Ch.4: Regularization (dropout + L2)<br/>Ch.5: CNN spatial features<br/>Ch.10: Transformer text encoding |
-| #2 | **GENERALIZATION** | Work on unseen districts + new faces | ✅ **Test R² = 0.87** | Ch.4: Dropout + early stopping + BatchNorm<br/>Ch.6: Cross-validation (5-fold)<br/>Ch.8: Validation monitoring |
-| #3 | **MULTI-TASK** | Same architecture for both tasks | ✅ **Shared backbone<br/>+ task heads** | Ch.2: Proved hidden layers are task-agnostic<br/>Ch.7: MSE (regression) + BCE (classification) both from MLE<br/>Fusion: Multi-modal → shared 128-dim → separate heads |
-| #4 | **INTERPRETABILITY** | Explainable feature attribution | ✅ **Attention weights<br/>+ gradient-based** | Ch.9-10: Attention weights show which text/image regions matter<br/>GradCAM (Ch.5): Highlight important image regions<br/>SHAP: Feature importance for tabular |
-| #5 | **PRODUCTION** | <100ms inference<br/>TensorBoard monitoring | ✅ **45ms inference**<br/>✅ **Full instrumentation** | Ch.8: TensorBoard scalars + histograms + projector<br/>Ch.9-10: Transformer parallelism (4× faster than LSTM)<br/>Batch inference: 64 samples in 180ms (2.8ms/sample) |
+| #1 | **ACCURACY** | ≤$28k MAE (regression)<br/>≥95% accuracy (classification) | **$28k MAE**<br/> **95.2% accuracy** | Ch.2-3: Neural network baseline<br/>Ch.4: Regularization (dropout + L2)<br/>Ch.5: CNN spatial features<br/>Ch.10: Transformer text encoding |
+| #2 | **GENERALIZATION** | Work on unseen districts + new faces | **Test R² = 0.87** | Ch.4: Dropout + early stopping + BatchNorm<br/>Ch.6: Cross-validation (5-fold)<br/>Ch.8: Validation monitoring |
+| #3 | **MULTI-TASK** | Same architecture for both tasks | **Shared backbone<br/>+ task heads** | Ch.2: Proved hidden layers are task-agnostic<br/>Ch.7: MSE (regression) + BCE (classification) both from MLE<br/>Fusion: Multi-modal → shared 128-dim → separate heads |
+| #4 | **INTERPRETABILITY** | Explainable feature attribution | **Attention weights<br/>+ gradient-based** | Ch.9-10: Attention weights show which text/image regions matter<br/>GradCAM (Ch.5): Highlight important image regions<br/>SHAP: Feature importance for tabular |
+| #5 | **PRODUCTION** | <100ms inference<br/>TensorBoard monitoring | **45ms inference**<br/> **Full instrumentation** | Ch.8: TensorBoard scalars + histograms + projector<br/>Ch.9-10: Transformer parallelism (4× faster than LSTM)<br/>Batch inference: 64 samples in 180ms (2.8ms/sample) |
 
 ---
 
 ## What's Next: Beyond Neural Networks
 
 **This track taught:**
-- ✅ Neural networks are universal function approximators — one architecture, different output heads
-- ✅ Backpropagation + Adam + regularization form the universal training recipe
-- ✅ CNNs for spatial data, RNNs for sequences, Transformers for both (+ text)
-- ✅ Attention enables parallelism + interpretability + long-range dependencies
-- ✅ Production deployment requires monitoring (TensorBoard), multi-modal fusion, multi-task learning
+- Neural networks are universal function approximators — one architecture, different output heads
+- Backpropagation + Adam + regularization form the universal training recipe
+- CNNs for spatial data, RNNs for sequences, Transformers for both (+ text)
+- Attention enables parallelism + interpretability + long-range dependencies
+- Production deployment requires monitoring (TensorBoard), multi-modal fusion, multi-task learning
 
 **What remains for UnifiedAI:**
-- ❌ **Advanced architectures:** ResNets (skip connections at scale), U-Nets (segmentation), GANs (generation)
-- ❌ **Transfer learning:** Fine-tune pretrained models (BERT, ResNet-50) instead of training from scratch
-- ❌ **Efficiency:** Model compression (quantization, pruning, distillation) for edge deployment
-- ❌ **Robustness:** Adversarial training, out-of-distribution detection, uncertainty quantification
+- **Advanced architectures:** ResNets (skip connections at scale), U-Nets (segmentation), GANs (generation)
+- **Transfer learning:** Fine-tune pretrained models (BERT, ResNet-50) instead of training from scratch
+- **Efficiency:** Model compression (quantization, pruning, distillation) for edge deployment
+- **Robustness:** Adversarial training, out-of-distribution detection, uncertainty quantification
 
 **Continue to:**
 - **[02-advanced_deep_learning](../../02-advanced_deep_learning)** — ResNets, U-Nets, GANs, Autoencoders, VAEs
@@ -629,13 +629,13 @@ Neural networks are not magic — they are **stacked linear transformations sepa
 **Each chapter unlocked a capability, and each capability compounded.** This is how production ML systems are built — not with one genius idea, but with disciplined application of 10 well-understood techniques, each improving the baseline incrementally.
 
 **You now have:**
-- ✅ **Feedforward networks from scratch** — forward pass, backprop, gradient descent
-- ✅ **CNN pipelines** for images — Conv2d → BatchNorm → ReLU → MaxPool → Dense
-- ✅ **RNN/LSTM models** for sequences — hidden state recurrence, gated memory
-- ✅ **Transformer architectures** — scaled dot-product attention, multi-head, positional encoding
-- ✅ **Multi-modal fusion** — tabular + image + text → shared representation → task heads
-- ✅ **Production deployment patterns** — regularization, monitoring, multi-task learning, attention interpretability
-- ✅ **Deep understanding** of why the same architecture solves regression AND classification
+- **Feedforward networks from scratch** — forward pass, backprop, gradient descent
+- **CNN pipelines** for images — Conv2d → BatchNorm → ReLU → MaxPool → Dense
+- **RNN/LSTM models** for sequences — hidden state recurrence, gated memory
+- **Transformer architectures** — scaled dot-product attention, multi-head, positional encoding
+- **Multi-modal fusion** — tabular + image + text → shared representation → task heads
+- **Production deployment patterns** — regularization, monitoring, multi-task learning, attention interpretability
+- **Deep understanding** of why the same architecture solves regression AND classification
 
 **Next milestone:** **[03-ai](../../03-ai)** — Apply transformers to LLMs, RAG, embeddings, agents. Everything in modern AI builds on Ch.10's transformer architecture — you're now ready to understand GPT-4, BERT, Claude, and the entire generative AI stack.
 

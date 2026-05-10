@@ -8,24 +8,24 @@
 
 **Two learning paths available:**
 
-1. **📄 Conceptual (this document):** Read this grand_solution.md for the complete narrative — concepts, architecture patterns, and production considerations without running code.
+1. ** Conceptual (this document):** Read this grand_solution.md for the complete narrative — concepts, architecture patterns, and production considerations without running code.
 
-2. **💻 Hands-on ([grand_solution.ipynb (reference)](grand_solution_reference.ipynb) | [grand_solution.ipynb (exercise)](grand_solution_exercise.ipynb)):** Run the Jupyter notebook to execute the complete FraudShield pipeline from scratch — trains all 6 detectors, builds the ensemble, and demonstrates production inference. **Run top-to-bottom to reproduce 83% recall.**
+2. ** Hands-on ([grand_solution.ipynb (reference)](grand_solution_reference.ipynb) | [grand_solution.ipynb (exercise)](grand_solution_exercise.ipynb)):** Run the Jupyter notebook to execute the complete FraudShield pipeline from scratch — trains all 6 detectors, builds the ensemble, and demonstrates production inference. **Run top-to-bottom to reproduce 83% recall.**
 
 **Sequential chapter reading:**
 ```
 Ch.1: Statistical Anomaly Detection (Z-score baseline)
-  ↓ Learn: Scoring paradigm, imbalance problem, interpretability
+ ↓ Learn: Scoring paradigm, imbalance problem, interpretability
 Ch.2: Isolation Forest (geometric isolation)
-  ↓ Learn: Path-length scoring, sub-sampling, no distribution assumptions
+ ↓ Learn: Path-length scoring, sub-sampling, no distribution assumptions
 Ch.3: Autoencoders (reconstruction error)
-  ↓ Learn: Representation learning, bottleneck principle, novelty detection
+ ↓ Learn: Representation learning, bottleneck principle, novelty detection
 Ch.4: One-Class SVM (kernel boundaries)
-  ↓ Learn: Kernel trick, ν parameter, boundary-based detection
+ ↓ Learn: Kernel trick, ν parameter, boundary-based detection
 Ch.5: Ensemble Anomaly Detection (fusion)
-  ↓ Learn: Complementary detectors, score normalization, variance reduction
+ ↓ Learn: Complementary detectors, score normalization, variance reduction
 Ch.6: Production & Real-Time Inference (deployment)
-  ↓ Learn: Drift detection, ONNX export, SHAP explainability
+ ↓ Learn: Drift detection, ONNX export, SHAP explainability
 ```
 
 **Recommended workflow:**
@@ -36,7 +36,7 @@ Ch.6: Production & Real-Time Inference (deployment)
 
 ---
 
-## Mission Accomplished: 83% Recall @ 0.5% FPR ✅
+## Mission Accomplished: 83% Recall @ 0.5% FPR
 
 **The Challenge:** Build FraudShield — a production fraud detection system achieving 80%+ recall at 0.5% false positive rate with <100ms inference on a dataset where only 0.17% of transactions are fraudulent (577:1 imbalance).
 
@@ -45,13 +45,13 @@ Ch.6: Production & Real-Time Inference (deployment)
 **The Progression:**
 
 ```
-Ch.1: Z-score baseline              → 45% recall   (statistical thresholds catch obvious extremes)
-Ch.2: Isolation Forest              → 72% recall   (path-length scoring captures geometric isolation)
-Ch.3: Autoencoders                  → 78% recall   (reconstruction error learns normal patterns)
-Ch.4: One-Class SVM                 → 75% recall   (kernel boundary separates normality from origin)
-Ch.5: Ensemble fusion               → 83% recall   (complementary errors cancel when fused)
-Ch.6: Production hardening          → 83%+ stable  (drift detection + explainability)
-                                      ✅ TARGET: >80% recall @ <0.5% FPR
+Ch.1: Z-score baseline → 45% recall (statistical thresholds catch obvious extremes)
+Ch.2: Isolation Forest → 72% recall (path-length scoring captures geometric isolation)
+Ch.3: Autoencoders → 78% recall (reconstruction error learns normal patterns)
+Ch.4: One-Class SVM → 75% recall (kernel boundary separates normality from origin)
+Ch.5: Ensemble fusion → 83% recall (complementary errors cancel when fused)
+Ch.6: Production hardening → 83%+ stable (drift detection + explainability)
+TARGET: >80% recall @ <0.5% FPR
 ```
 
 ---
@@ -172,44 +172,44 @@ Here's how all 6 concepts integrate into a deployed FraudShield system:
 
 ```mermaid
 flowchart TD
-    INPUT["Transaction\n(30 features)"] --> VALIDATE["Input Validation\n& Scaling"]
-    
-    VALIDATE --> PARALLEL{"Parallel\nScoring"}
-    
-    PARALLEL --> Z["Z-Score\n~0.1ms"]
-    PARALLEL --> IF["Isolation Forest\n~5ms"]
-    PARALLEL --> AE["Autoencoder\n~10ms (ONNX)"]
-    PARALLEL --> SVM["One-Class SVM\n~20ms"]
-    
-    Z --> NORM["Score Normalization\n[0,1] range"]
-    IF --> NORM
-    AE --> NORM
-    SVM --> NORM
-    
-    NORM --> FUSE["Ensemble Fusion\nWeighted average"]
-    
-    FUSE --> THRESH{"Score > τ?"}
-    
-    THRESH -->|"Yes"| EXPLAIN["Generate SHAP\nExplanation"]
-    THRESH -->|"No"| PASS["Approve\nTransaction"]
-    
-    EXPLAIN --> FLAG["Block + Alert\n{score: 0.83,\nreason: V14+Amount}"]
-    
-    FLAG --> LOG["Log for\nMonitoring"]
-    PASS --> LOG
-    
-    LOG --> DRIFT["Drift Detection\nADWIN on scores"]
-    
-    DRIFT -->|"Drift detected"| RETRAIN["Trigger\nRetraining"]
-    DRIFT -->|"Stable"| MONITOR["Dashboard\nRecall/FPR/Latency"]
-    
-    RETRAIN --> UPDATE["Update Models\nRolling window"]
-    
-    style INPUT fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style PARALLEL fill:#7c3aed,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style FUSE fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style FLAG fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style DRIFT fill:#ea580c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ INPUT["Transaction\n(30 features)"] --> VALIDATE["Input Validation\n& Scaling"]
+
+ VALIDATE --> PARALLEL{"Parallel\nScoring"}
+
+ PARALLEL --> Z["Z-Score\n~0.1ms"]
+ PARALLEL --> IF["Isolation Forest\n~5ms"]
+ PARALLEL --> AE["Autoencoder\n~10ms (ONNX)"]
+ PARALLEL --> SVM["One-Class SVM\n~20ms"]
+
+ Z --> NORM["Score Normalization\n[0,1] range"]
+ IF --> NORM
+ AE --> NORM
+ SVM --> NORM
+
+ NORM --> FUSE["Ensemble Fusion\nWeighted average"]
+
+ FUSE --> THRESH{"Score > τ?"}
+
+ THRESH -->|"Yes"| EXPLAIN["Generate SHAP\nExplanation"]
+ THRESH -->|"No"| PASS["Approve\nTransaction"]
+
+ EXPLAIN --> FLAG["Block + Alert\n{score: 0.83,\nreason: V14+Amount}"]
+
+ FLAG --> LOG["Log for\nMonitoring"]
+ PASS --> LOG
+
+ LOG --> DRIFT["Drift Detection\nADWIN on scores"]
+
+ DRIFT -->|"Drift detected"| RETRAIN["Trigger\nRetraining"]
+ DRIFT -->|"Stable"| MONITOR["Dashboard\nRecall/FPR/Latency"]
+
+ RETRAIN --> UPDATE["Update Models\nRolling window"]
+
+ style INPUT fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style PARALLEL fill:#7c3aed,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style FUSE fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style FLAG fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style DRIFT fill:#ea580c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### Deployment Pipeline (How Ch.1-6 Connect in Production)
@@ -236,7 +236,7 @@ oc_svm = OneClassSVM(kernel='rbf', gamma='scale', nu=0.01)
 oc_svm.fit(X_sub)
 
 # Ch.5: Calibrate ensemble weights on validation set
-weights = optimize_ensemble_weights(val_scores, y_val)  # [0.2, 0.3, 0.35, 0.15]
+weights = optimize_ensemble_weights(val_scores, y_val) # [0.2, 0.3, 0.35, 0.15]
 
 # Ch.6: Initialize drift detectors
 drift_detector = ADWIN(delta=0.002)
@@ -247,51 +247,51 @@ shap_explainer = shap.KernelExplainer(ensemble_predict, X_background)
 ```python
 @app.route('/predict', methods=['POST'])
 def predict():
-    X = validate_and_scale(request.json, mu, sigma)
-    
-    # Ch.1-4: Parallel scoring (Z-score, Isolation Forest, Autoencoder, SVM)
-    with ThreadPoolExecutor(max_workers=4) as executor:
-        scores = [executor.submit(detector, X) for detector in detectors]
-    
-    # Ch.5: Normalize and fuse scores
-    scores_norm = [minmax_normalize(s.result()) for s in scores]
-    ensemble_score = np.average(scores_norm, weights=weights)
-    is_fraud = ensemble_score > threshold
-    
-    # Ch.6: Generate SHAP explanation if fraud detected
-    explanation = None
-    if is_fraud:
-        shap_values = shap_explainer.shap_values(X)
-        explanation = f"Flagged: {get_top_contributors(shap_values)}"
-    
-    # Ch.6: Log and monitor for drift
-    log_transaction(X, ensemble_score, is_fraud)
-    if drift_detector.add_and_check(ensemble_score):
-        alert("Drift detected — triggering retraining")
-    
-    return {"decision": "FRAUD" if is_fraud else "LEGITIMATE",
-            "score": float(ensemble_score), "explanation": explanation}
+ X = validate_and_scale(request.json, mu, sigma)
+
+ # Ch.1-4: Parallel scoring (Z-score, Isolation Forest, Autoencoder, SVM)
+ with ThreadPoolExecutor(max_workers=4) as executor:
+ scores = [executor.submit(detector, X) for detector in detectors]
+
+ # Ch.5: Normalize and fuse scores
+ scores_norm = [minmax_normalize(s.result()) for s in scores]
+ ensemble_score = np.average(scores_norm, weights=weights)
+ is_fraud = ensemble_score > threshold
+
+ # Ch.6: Generate SHAP explanation if fraud detected
+ explanation = None
+ if is_fraud:
+ shap_values = shap_explainer.shap_values(X)
+ explanation = f"Flagged: {get_top_contributors(shap_values)}"
+
+ # Ch.6: Log and monitor for drift
+ log_transaction(X, ensemble_score, is_fraud)
+ if drift_detector.add_and_check(ensemble_score):
+ alert("Drift detected — triggering retraining")
+
+ return {"decision": "FRAUD" if is_fraud else "LEGITIMATE",
+ "score": float(ensemble_score), "explanation": explanation}
 ```
 
 **3. Monitoring Dashboard (tracks production health):**
 ```python
 # Ch.6: Alert if recall drops (requires labeled feedback)
 if weekly_recall < 0.75:
-    alert("Recall dropped below 75% — model degradation detected")
+ alert("Recall dropped below 75% — model degradation detected")
 
 # Ch.6: Track FPR from customer complaints
-if customer_dispute_rate > 0.006:  # >0.6% FPR
-    alert("False positive rate exceeds 0.6% — threshold too aggressive")
+if customer_dispute_rate > 0.006: # >0.6% FPR
+ alert("False positive rate exceeds 0.6% — threshold too aggressive")
 
 # Ch.6: Latency SLA
-if p99_latency > 100:  # 99th percentile
-    alert("Latency SLA violated — p99 > 100ms")
+if p99_latency > 100: # 99th percentile
+ alert("Latency SLA violated — p99 > 100ms")
 
 # Ch.6: Feature distribution drift (KS test)
 for feature in ['V14', 'Amount', 'V17']:
-    ks_stat, p_value = ks_2samp(historical[feature], current_week[feature])
-    if p_value < 0.01:
-        alert(f"Feature {feature} distribution shifted — KS p-value {p_value}")
+ ks_stat, p_value = ks_2samp(historical[feature], current_week[feature])
+ if p_value < 0.01:
+ alert(f"Feature {feature} distribution shifted — KS p-value {p_value}")
 ```
 
 ---
@@ -339,23 +339,23 @@ for feature in ['V14', 'Amount', 'V17']:
 
 | # | Constraint | Target | Status | How We Achieved It |
 |---|------------|--------|--------|--------------------|
-| **#1** | **DETECTION** | >80% recall | ✅ **83%** | Ch.5: Ensemble fusion of 4 complementary detectors |
-| **#2** | **FALSE POSITIVE RATE** | <0.5% FPR | ✅ **0.5%** | Ch.5: ROC-curve threshold calibration on validation set |
-| **#3** | **REAL-TIME** | <100ms inference | ✅ **~50ms** | Ch.6: ONNX export + parallel scoring + cached preprocessing |
-| **#4** | **ADAPTABILITY** | Handle concept drift | ✅ **Adaptive** | Ch.6: ADWIN drift detection + automatic retraining triggers |
-| **#5** | **EXPLAINABILITY** | Justify flagged transactions | ✅ **Compliant** | Ch.6: SHAP feature attribution + top-contributor summaries |
+| **#1** | **DETECTION** | >80% recall | **83%** | Ch.5: Ensemble fusion of 4 complementary detectors |
+| **#2** | **FALSE POSITIVE RATE** | <0.5% FPR | **0.5%** | Ch.5: ROC-curve threshold calibration on validation set |
+| **#3** | **REAL-TIME** | <100ms inference | **~50ms** | Ch.6: ONNX export + parallel scoring + cached preprocessing |
+| **#4** | **ADAPTABILITY** | Handle concept drift | **Adaptive** | Ch.6: ADWIN drift detection + automatic retraining triggers |
+| **#5** | **EXPLAINABILITY** | Justify flagged transactions | **Compliant** | Ch.6: SHAP feature attribution + top-contributor summaries |
 
 ---
 
 ## What's Next: Beyond Anomaly Detection
 
 **This track taught:**
-- ✅ Statistical baselines establish scoring paradigm (Z-score, IQR, Mahalanobis)
-- ✅ Isolation Forest captures geometric isolation without distribution assumptions
-- ✅ Autoencoders learn compressed normal patterns via reconstruction error
-- ✅ One-Class SVM draws kernel-space boundaries separating normal from origin
-- ✅ Ensemble fusion combines complementary detectors to exceed any individual method
-- ✅ Production requires drift detection, latency optimization, and explainability
+- Statistical baselines establish scoring paradigm (Z-score, IQR, Mahalanobis)
+- Isolation Forest captures geometric isolation without distribution assumptions
+- Autoencoders learn compressed normal patterns via reconstruction error
+- One-Class SVM draws kernel-space boundaries separating normal from origin
+- Ensemble fusion combines complementary detectors to exceed any individual method
+- Production requires drift detection, latency optimization, and explainability
 
 **What remains for FraudShield:**
 - **Deep anomaly detection:** Variational Autoencoders (VAE), GANs for novelty detection
@@ -403,11 +403,11 @@ Anomaly detection on extreme class imbalance (0.17% fraud) requires a fundamenta
 5. **FPR is the constraint, recall is the objective** — optimize recall *at fixed FPR*, never maximize both jointly
 
 **You now have:**
-- ✅ A production fraud detection system achieving 83% recall @ 0.5% FPR
-- ✅ Adaptive retraining triggered by concept drift detection (ADWIN, Page-Hinkley)
-- ✅ <50ms latency via ONNX export and parallel detector execution
-- ✅ Compliance-ready explanations via SHAP feature attribution
-- ✅ Framework for ensemble anomaly detection applicable to any domain (intrusion, manufacturing, health)
+- A production fraud detection system achieving 83% recall @ 0.5% FPR
+- Adaptive retraining triggered by concept drift detection (ADWIN, Page-Hinkley)
+- <50ms latency via ONNX export and parallel detector execution
+- Compliance-ready explanations via SHAP feature attribution
+- Framework for ensemble anomaly detection applicable to any domain (intrusion, manufacturing, health)
 
 **Next milestone:** Extend to **graph-based fraud detection** where transactions form networks, catching collusion rings that single-transaction detectors miss. Continue to Multi-Agent AI where fraudsters and detectors co-evolve in adversarial dynamics.
 
@@ -430,4 +430,4 @@ Anomaly detection on extreme class imbalance (0.17% fraud) requires a fundamenta
 
 ---
 
-**FraudShield Status: PRODUCTION READY** 🚀
+**FraudShield Status: PRODUCTION READY**

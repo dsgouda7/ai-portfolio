@@ -2,7 +2,7 @@
 
 > **The story.** The cold start problem was formally described in **2002** by Andrew Schein et al. in "Methods and Metrics for Cold-Start Recommendations," but the production solutions emerged from hard lessons at scale. **Netflix's 2012** engineering blog ("It's All A/B") changed how the industry thought about evaluation: every algorithm change — no matter how promising offline — must run through live A/B tests before deployment, because real users behave nothing like held-out test sets. In **2015**, Spotify's *Discover Weekly* solved cold start for new songs by combining collaborative filtering with raw audio content analysis: if a song *sounds like* what you like, recommend it even with zero plays — audio embeddings replace the missing rating signal. **Lin et al. (2019)** formalised the warm-up transition in "Warm Up Cold-Start Advertisements," showing that blending content features with early collaborative signals dramatically outperforms either alone — and that the blend weight should shift automatically as evidence accumulates. The production gap that opens here is between research and reality: an offline 87% HR@10 in a notebook is not the same as 87% HR@10 in production, where new users arrive every second with zero history, new items launch with zero ratings, and the SLA is **100ms** hard ceiling. Closing that gap requires bandit exploration, two-stage retrieval, and continuous A/B monitoring.
 >
-> **Where you are in the curriculum.** This is **Chapter 6 — the final chapter** of the Recommender Systems track. You have built FlixAI from a 42% popularity baseline (Ch.1) through collaborative filtering (Ch.2, 68% HR@10), matrix factorization (Ch.3, 78%), neural embeddings (Ch.4, 83%), to a hybrid DCN system (Ch.5, **87% HR@10 ✅ accuracy target achieved**). The accuracy constraint is satisfied — but 15% of monthly traffic is **new signups with zero watch history**, and every new movie launches with zero ratings on day one. The hybrid model is helpless for both. This chapter solves cold start via content-based initialisation and bandit exploration, builds the production two-stage retrieval pipeline, designs A/B testing for online validation, and delivers the monitoring infrastructure. By the end, **all 5 FlixAI constraints are satisfied** and the system is live in production.
+> **Where you are in the curriculum.** This is **Chapter 6 — the final chapter** of the Recommender Systems track. You have built FlixAI from a 42% popularity baseline (Ch.1) through collaborative filtering (Ch.2, 68% HR@10), matrix factorization (Ch.3, 78%), neural embeddings (Ch.4, 83%), to a hybrid DCN system (Ch.5, **87% HR@10 accuracy target achieved**). The accuracy constraint is satisfied — but 15% of monthly traffic is **new signups with zero watch history**, and every new movie launches with zero ratings on day one. The hybrid model is helpless for both. This chapter solves cold start via content-based initialisation and bandit exploration, builds the production two-stage retrieval pipeline, designs A/B testing for online validation, and delivers the monitoring infrastructure. By the end, **all 5 FlixAI constraints are satisfied** and the system is live in production.
 >
 > **Notation in this chapter.** $\mu_i$ — estimated click-through rate (mean reward) for arm (item) $i$; $n_i$ — number of times arm $i$ has been pulled (shown); $N$ — total number of pulls across all arms; $\text{UCB1}(i) = \mu_i + \sqrt{2 \ln N / n_i}$ — upper confidence bound score for arm $i$; $\mathbf{g} \in \mathbb{R}^{18}$ — user genre preference vector (one entry per MovieLens genre, values 1–5); $K$ — number of ANN candidates retrieved; $HR@10$ — hit rate at 10 (fraction of users for whom at least one relevant item appears in the top-10); $\sigma$ — standard deviation of HR@10 across users (used in A/B sample size formula); $\delta$ — minimum detectable effect (MDE) in an A/B test; $\epsilon$ — exploration rate; $\gamma$ — epsilon decay rate (0.99); $\epsilon_{\min}$ — minimum exploration rate (0.05); $t$ — total interactions so far for this user.
 
@@ -10,14 +10,14 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Launch **FlixAI** — >85% hit rate@10 across all 5 constraints. This is the final blocker.
+> **The mission**: Launch **FlixAI** — >85% hit rate@10 across all 5 constraints. This is the final blocker.
 
 **What we unlocked in Ch.5:**
-- ✅ Hybrid DCN = **87% HR@10** (accuracy target exceeded!)
-- ✅ Diversity via MMR re-ranking — top-10 spans 6+ genres
-- ✅ Explainability — "Because it's sci-fi and you loved *Inception*"
-- ❌ **Cold start: new users and new items have no embeddings**
-- ❌ **Serving: no production pipeline, no latency budget enforced**
+- Hybrid DCN = **87% HR@10** (accuracy target exceeded!)
+- Diversity via MMR re-ranking — top-10 spans 6+ genres
+- Explainability — "Because it's sci-fi and you loved *Inception*"
+- **Cold start: new users and new items have no embeddings**
+- **Serving: no production pipeline, no latency budget enforced**
 
 **The five blockers to production launch:**
 
@@ -33,24 +33,24 @@
 
 | Constraint | Ch.5 Status | Ch.6 Goal | Mechanism |
 |-----------|-------------|-----------|-----------|
-| **#1 ACCURACY** >85% HR@10 | ✅ 87% | ✅ **Maintain ≥87%** | Hybrid model preserved; bandit exploration adds signal |
-| **#2 COLD START** | ❌ Helpless for new users | ✅ **Solved** | Content embedding + UCB1 bandit + onboarding survey |
-| **#3 SCALABILITY** <100ms | ❌ ~350ms | ✅ **Solved** | Two-stage: ANN retrieval (10ms) + ranker (70ms) |
-| **#4 DIVERSITY** | ✅ MMR re-ranking | ✅ **Maintained** | MMR re-ranking from Ch.5 preserved |
-| **#5 EXPLAINABILITY** | ✅ Content features | ✅ **Maintained** | Explanations from Ch.5 preserved |
+| **#1 ACCURACY** >85% HR@10 | 87% | **Maintain ≥87%** | Hybrid model preserved; bandit exploration adds signal |
+| **#2 COLD START** | Helpless for new users | **Solved** | Content embedding + UCB1 bandit + onboarding survey |
+| **#3 SCALABILITY** <100ms | ~350ms | **Solved** | Two-stage: ANN retrieval (10ms) + ranker (70ms) |
+| **#4 DIVERSITY** | MMR re-ranking | **Maintained** | MMR re-ranking from Ch.5 preserved |
+| **#5 EXPLAINABILITY** | Content features | **Maintained** | Explanations from Ch.5 preserved |
 
 ```mermaid
 flowchart LR
-    HYBRID["Ch.5: Hybrid DCN<br/>HR@10 = 87% ✅<br/>⚠️ Cold users fail<br/>⚠️ ~350ms latency"] --> COLD["Cold Start Solved<br/>Content embedding<br/>+ UCB1 bandit"]
-    COLD --> PIPE["Two-Stage Pipeline<br/>ANN + ranker<br/>< 100ms SLA"]
-    PIPE --> AB["A/B Testing<br/>+ Monitoring<br/>Online validation"]
-    AB --> DONE["🎉 All 5 Constraints<br/>Satisfied<br/>FlixAI is LIVE"]
+ HYBRID["Ch.5: Hybrid DCN<br/>HR@10 = 87% <br/> Cold users fail<br/> ~350ms latency"] --> COLD["Cold Start Solved<br/>Content embedding<br/>+ UCB1 bandit"]
+ COLD --> PIPE["Two-Stage Pipeline<br/>ANN + ranker<br/>< 100ms SLA"]
+ PIPE --> AB["A/B Testing<br/>+ Monitoring<br/>Online validation"]
+ AB --> DONE[" All 5 Constraints<br/>Satisfied<br/>FlixAI is LIVE"]
 
-    style HYBRID fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style COLD fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style PIPE fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style AB fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style DONE fill:#15803d,stroke:#e2e8f0,stroke-width:3px,color:#ffffff
+ style HYBRID fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style COLD fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style PIPE fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style AB fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style DONE fill:#15803d,stroke:#e2e8f0,stroke-width:3px,color:#ffffff
 ```
 
 ---
@@ -79,29 +79,29 @@ These three strategies together close both remaining constraints: cold start (#2
 
 **Before diving into theory, understand the 5-phase workflow you'll follow with every recommender system:**
 
-> 📊 **What you'll build by the end:** A production cold start pipeline that routes new users through content-based recommendations with bandit exploration, transitions to hybrid collaborative filtering as signals accumulate, and monitors the cold→warm graduation rate via dashboards. This is the complete FlixAI production architecture serving 15% cold users at 100ms p99 latency.
+> **What you'll build by the end:** A production cold start pipeline that routes new users through content-based recommendations with bandit exploration, transitions to hybrid collaborative filtering as signals accumulate, and monitors the cold→warm graduation rate via dashboards. This is the complete FlixAI production architecture serving 15% cold users at 100ms p99 latency.
 
 ```
-Phase 1: DETECT               Phase 2: FALLBACK             Phase 3: BOOTSTRAP            Phase 4: TRANSITION           Phase 5: MONITOR
+Phase 1: DETECT Phase 2: FALLBACK Phase 3: BOOTSTRAP Phase 4: TRANSITION Phase 5: MONITOR
 ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-Identify cold users/items:    Serve non-personalized:       Accelerate learning:          Switch to personalized:       Track cold start metrics:
+Identify cold users/items: Serve non-personalized: Accelerate learning: Switch to personalized: Track cold start metrics:
 
-• Check interaction count     • Content embedding from      • UCB1 bandit exploration     • Interaction count ≥10:      • HR@10 by user cohort
-• Time since signup          •   survey (users)            • Epsilon-greedy decay        •   blend content + CF         • Time-to-personalization
-• Item rating count          • Metadata embedding          • Exploration budget = 30%    • Interaction count ≥50:      • CTR gap (cold vs warm)
-• Embedding existence        •   (genre, cast, director)   • Active learning: surface    •   full CF model             • Item graduation rate
-                             • Popularity fallback         •   high-uncertainty items    • Confidence thresholds       • Latency p99 SLA
-→ DECISION:                  → DECISION:                   → DECISION:                   → DECISION:                   → DECISION:
-  Cold or warm?                Content vs popularity?        Exploration rate?             When to transition?           Alert or retrain?
-  • 0 interactions: COLD       • Survey exists: weighted     • 0-9 interactions: ε=0.30    • <10: content only           • HR@10 drops >1.5pp: alert
-  • 1-9: WARMING               •   genre embedding           • 10-49: ε=0.10 (decay)       • 10-49: 70/30 blend          • Cold fraction >30%: scale
-  • ≥10: WARM                  • No survey: top-100 popular  • ≥50: ε=0.05 (maintain)      • ≥50: full hybrid DCN        • p99 >110ms: optimize ANN
-  • ≥50: ESTABLISHED           • Items: genre/cast/director  • UCB1 self-regulates         • A/B test before 100% ship   • Graduation <50 int: lower
+• Check interaction count • Content embedding from • UCB1 bandit exploration • Interaction count ≥10: • HR@10 by user cohort
+• Time since signup • survey (users) • Epsilon-greedy decay • blend content + CF • Time-to-personalization
+• Item rating count • Metadata embedding • Exploration budget = 30% • Interaction count ≥50: • CTR gap (cold vs warm)
+• Embedding existence • (genre, cast, director) • Active learning: surface • full CF model • Item graduation rate
+ • Popularity fallback • high-uncertainty items • Confidence thresholds • Latency p99 SLA
+→ DECISION: → DECISION: → DECISION: → DECISION: → DECISION:
+ Cold or warm? Content vs popularity? Exploration rate? When to transition? Alert or retrain?
+ • 0 interactions: COLD • Survey exists: weighted • 0-9 interactions: ε=0.30 • <10: content only • HR@10 drops >1.5pp: alert
+ • 1-9: WARMING • genre embedding • 10-49: ε=0.10 (decay) • 10-49: 70/30 blend • Cold fraction >30%: scale
+ • ≥10: WARM • No survey: top-100 popular • ≥50: ε=0.05 (maintain) • ≥50: full hybrid DCN • p99 >110ms: optimize ANN
+ • ≥50: ESTABLISHED • Items: genre/cast/director • UCB1 self-regulates • A/B test before 100% ship • Graduation <50 int: lower
 ```
 
-> 💡 **Usage note:** Phases 1-2-3 execute on every request (synchronous, <100ms SLA). Phase 4 is automatic via interaction count thresholds. Phase 5 runs continuously (async monitoring + nightly retraining). The system self-tunes — you set initial thresholds, then monitor convergence.
+> **Usage note:** Phases 1-2-3 execute on every request (synchronous, <100ms SLA). Phase 4 is automatic via interaction count thresholds. Phase 5 runs continuously (async monitoring + nightly retraining). The system self-tunes — you set initial thresholds, then monitor convergence.
 
-> 💡 **How to use this workflow:** Start with Phase 1 detection logic on all requests. Route to Phase 2 if cold, otherwise skip to ranking. Phase 3 runs in parallel (exploration slots injected into final top-10). Phase 4 triggers automatically when interaction counts cross thresholds. Phase 5 is your ops dashboard — check daily, alert on regressions.
+> **How to use this workflow:** Start with Phase 1 detection logic on all requests. Route to Phase 2 if cold, otherwise skip to ranking. Phase 3 runs in parallel (exploration slots injected into final top-10). Phase 4 triggers automatically when interaction counts cross thresholds. Phase 5 is your ops dashboard — check daily, alert on regressions.
 
 ---
 
@@ -130,7 +130,7 @@ The system has zero watch history — no collaborative signal exists. Step 1: co
 **After 50 interactions (warm user, ε = 0.10):**
 Sarah's preferences have converged: she clusters with users who love *psychological thrillers* and *international cinema*. The exploration rate has decayed from 0.30 to 0.10, and collaborative filtering contributes 70% of the ranking score.
 
-> 💡 **Cold start is a transition, not a permanent state.** The bandit accelerates learning by deliberately trying uncertain items early, then backs off as confidence grows. Sarah moves from generic-content recommendations to personalised ones in ~50 interactions — about 2–3 days of normal use.
+> **Cold start is a transition, not a permanent state.** The bandit accelerates learning by deliberately trying uncertain items early, then backs off as confidence grows. Sarah moves from generic-content recommendations to personalised ones in ~50 interactions — about 2–3 days of normal use.
 
 ### Scenario B: New movie launches — *Dune: Part 3*
 
@@ -152,53 +152,53 @@ The production pipeline replaces "score all 1,682 movies" with a four-stage funn
 User request arrives (t = 0ms)
 │
 ├─ [Stage 1 — ANN Retrieval: 10ms]
-│   Input: user embedding (survey or collaborative)
-│   Method: FAISS / Annoy index over 1,682 item embeddings
-│   Output: 100 coarse candidates
-│   Why fast: precomputed item embeddings + approximate index tree
+│ Input: user embedding (survey or collaborative)
+│ Method: FAISS / Annoy index over 1,682 item embeddings
+│ Output: 100 coarse candidates
+│ Why fast: precomputed item embeddings + approximate index tree
 │
 ├─ [Stage 2 — Precise Ranking: 70ms]
-│   Input: 100 ANN candidates
-│   Method: Full hybrid DCN model (Ch.5)
-│   Output: 100 items with precise relevance scores
-│   Why only 100: ANN over-retrieves; ranker is expensive
+│ Input: 100 ANN candidates
+│ Method: Full hybrid DCN model (Ch.5)
+│ Output: 100 items with precise relevance scores
+│ Why only 100: ANN over-retrieves; ranker is expensive
 │
 ├─ [Stage 3 — Re-ranking for Diversity: 10ms]
-│   Input: top-50 ranked items
-│   Method: MMR (Maximal Marginal Relevance, from Ch.5)
-│   Output: top-10 with genre diversity enforced
+│ Input: top-50 ranked items
+│ Method: MMR (Maximal Marginal Relevance, from Ch.5)
+│ Output: top-10 with genre diversity enforced
 │
 └─ [Stage 4 — Serving: 10ms]
-    Input: top-10 items + scores + explanations
-    Method: JSON serialisation + Redis metadata cache
-    Output: response to frontend
-    Total: 10 + 70 + 10 + 10 = 100ms ✅
+ Input: top-10 items + scores + explanations
+ Method: JSON serialisation + Redis metadata cache
+ Output: response to frontend
+ Total: 10 + 70 + 10 + 10 = 100ms
 ```
 
 **Cold user routing** (prepended before Stage 1):
 
 ```
 IF n_interactions < 10:
-    user_embedding = content_embedding_from_survey(survey_responses)
-    exploration_rate = 0.30        # high: learn fast
+ user_embedding = content_embedding_from_survey(survey_responses)
+ exploration_rate = 0.30 # high: learn fast
 ELIF n_interactions < 50:
-    user_embedding = blend(content_emb, collab_emb, alpha=0.30)
-    exploration_rate = 0.10
+ user_embedding = blend(content_emb, collab_emb, alpha=0.30)
+ exploration_rate = 0.10
 ELSE:
-    user_embedding = collaborative_embedding
-    exploration_rate = 0.05
+ user_embedding = collaborative_embedding
+ exploration_rate = 0.05
 ```
 
 **New item routing** (injected into Stage 1 candidate pool):
 
 ```
 IF item.n_ratings < 10:
-    item_embedding = content_embedding_from_metadata(genre, director, cast)
-    ucb1_bonus = min(sqrt(2*ln(N)/max(n_i,1)), MAX_BONUS)
+ item_embedding = content_embedding_from_metadata(genre, director, cast)
+ ucb1_bonus = min(sqrt(2*ln(N)/max(n_i,1)), MAX_BONUS)
 ELIF item.n_ratings < 100:
-    item_embedding = blend(content_emb, collab_emb, alpha=0.30)
+ item_embedding = blend(content_emb, collab_emb, alpha=0.30)
 ELSE:
-    item_embedding = collaborative_embedding    # graduated
+ item_embedding = collaborative_embedding # graduated
 ```
 
 **Feedback loop (nightly retraining):**
@@ -208,7 +208,7 @@ ELSE:
 - Items with ≥100 ratings graduate to collaborative embedding
 - Deploy updated model at 2am (after A/B gate check)
 
-> ⚡ **Constraint #3 (Scalability) is solved by the funnel shape.** 1,682 items → 100 ANN → 10 served. The expensive model only touches 100 items. This pattern is universal: every large-scale recommender (YouTube, Spotify, Amazon) uses the same two-tower retrieval-then-ranking architecture.
+> **Constraint #3 (Scalability) is solved by the funnel shape.** 1,682 items → 100 ANN → 10 served. The expensive model only touches 100 items. This pattern is universal: every large-scale recommender (YouTube, Spotify, Amazon) uses the same two-tower retrieval-then-ranking architecture.
 
 
 ## 4 · Math
@@ -222,71 +222,71 @@ ELSE:
 import datetime
 
 def detect_cold_start_status(user_id, item_id=None):
-    """
-    Classify user/item as COLD, WARMING, WARM, or ESTABLISHED.
-    Returns tuple: (user_status, item_status, metadata)
-    """
-    # Fetch user interaction history
-    user_interactions = db.query(
-        "SELECT COUNT(*) as n, MIN(timestamp) as first_interaction "
-        "FROM interactions WHERE user_id = ?", user_id
-    )
+ """
+ Classify user/item as COLD, WARMING, WARM, or ESTABLISHED.
+ Returns tuple: (user_status, item_status, metadata)
+ """
+ # Fetch user interaction history
+ user_interactions = db.query(
+ "SELECT COUNT(*) as n, MIN(timestamp) as first_interaction "
+ "FROM interactions WHERE user_id = ?", user_id
+ )
 
-    n_interactions = user_interactions['n']
-    days_since_signup = (datetime.now() - user_interactions['first_interaction']).days
+ n_interactions = user_interactions['n']
+ days_since_signup = (datetime.now() - user_interactions['first_interaction']).days
 
-    # USER DECISION LOGIC
-    if n_interactions == 0:
-        user_status = "COLD"          # 0 interactions → content embedding
-        exploration_rate = 0.30       # High exploration
-    elif n_interactions < 10:
-        user_status = "WARMING"       # 1-9 interactions → content-heavy blend
-        exploration_rate = 0.30 * (0.99 ** n_interactions)
-    elif n_interactions < 50:
-        user_status = "WARM"          # 10-49 interactions → CF emerging
-        exploration_rate = 0.10
-    else:
-        user_status = "ESTABLISHED"  # ≥50 interactions → full hybrid
-        exploration_rate = 0.05
+ # USER DECISION LOGIC
+ if n_interactions == 0:
+ user_status = "COLD" # 0 interactions → content embedding
+ exploration_rate = 0.30 # High exploration
+ elif n_interactions < 10:
+ user_status = "WARMING" # 1-9 interactions → content-heavy blend
+ exploration_rate = 0.30 * (0.99 ** n_interactions)
+ elif n_interactions < 50:
+ user_status = "WARM" # 10-49 interactions → CF emerging
+ exploration_rate = 0.10
+ else:
+ user_status = "ESTABLISHED" # ≥50 interactions → full hybrid
+ exploration_rate = 0.05
 
-    # ITEM DECISION LOGIC (if item_id provided)
-    if item_id:
-        item_ratings = db.query(
-            "SELECT COUNT(*) as n FROM ratings WHERE item_id = ?", item_id
-        )
-        n_ratings = item_ratings['n']
+ # ITEM DECISION LOGIC (if item_id provided)
+ if item_id:
+ item_ratings = db.query(
+ "SELECT COUNT(*) as n FROM ratings WHERE item_id = ?", item_id
+ )
+ n_ratings = item_ratings['n']
 
-        if n_ratings < 10:
-            item_status = "COLD"
-        elif n_ratings < 100:
-            item_status = "WARMING"
-        else:
-            item_status = "ESTABLISHED"
-    else:
-        item_status = None
+ if n_ratings < 10:
+ item_status = "COLD"
+ elif n_ratings < 100:
+ item_status = "WARMING"
+ else:
+ item_status = "ESTABLISHED"
+ else:
+ item_status = None
 
-    return {
-        'user_status': user_status,
-        'item_status': item_status,
-        'n_interactions': n_interactions,
-        'exploration_rate': exploration_rate,
-        'days_active': days_since_signup
-    }
+ return {
+ 'user_status': user_status,
+ 'item_status': item_status,
+ 'n_interactions': n_interactions,
+ 'exploration_rate': exploration_rate,
+ 'days_active': days_since_signup
+ }
 
 # Example output:
 # detect_cold_start_status(user_id=12345)
 # → {'user_status': 'WARMING', 'n_interactions': 5, 'exploration_rate': 0.285, ...}
 ```
 
-> 💡 **Industry Standard:** `RecSys.ColdStartDetector`
+> **Industry Standard:** `RecSys.ColdStartDetector`
 >
 > Most production systems (Spotify, YouTube, LinkedIn) implement detection as a microservice that caches user/item status in Redis with 1-hour TTL. The cache key is `cold_start:{user_id}` → `{status, n_interactions, last_updated}`. This avoids database lookups on every request.
 >
 > **When to use:** Always in production. The manual implementation above is for learning only.
 > **Common alternatives:** Time-based windows ("user is cold if no activity in last 7 days"), session-based ("cold per session, not globally"), hybrid (interaction count + recency weighted).
 
-> 💡 **Detect verdict:** Cold user status resolves in <1ms from Redis; COLD/WARMING users (15% of traffic) route to content-based fallback, WARM/ESTABLISHED users skip directly to hybrid DCN ranking.
-> ➡️ Route COLD/WARMING users to content embedding fallback; inject UCB1 exploration slots for COLD items.
+> **Detect verdict:** Cold user status resolves in <1ms from Redis; COLD/WARMING users (15% of traffic) route to content-based fallback, WARM/ESTABLISHED users skip directly to hybrid DCN ranking.
+> ➡ Route COLD/WARMING users to content embedding fallback; inject UCB1 exploration slots for COLD items.
 
 ---
 
@@ -310,56 +310,56 @@ $$\mathbf{u}_0 = 0.556 \cdot \mathbf{e}_{\text{Action}} + 0.111 \cdot \mathbf{e}
 
 The result is a 32-dimensional vector that lives in the same space as item embeddings. ANN retrieval immediately finds the 100 nearest items in under 10ms. This embedding is updated after every interaction as new ratings arrive.
 
-> 💡 **Same embedding space.** Because genre prototypes are learned from the same item embedding matrix as collaborative vectors, the cold-start user embedding is directly comparable to warm-user embeddings and to item embeddings. No separate cold-start model is needed — just a different input to the same lookup.
+> **Same embedding space.** Because genre prototypes are learned from the same item embedding matrix as collaborative vectors, the cold-start user embedding is directly comparable to warm-user embeddings and to item embeddings. No separate cold-start model is needed — just a different input to the same lookup.
 
 ```python
 # Phase 2: Content-based fallback embedding
 import numpy as np
 
 def content_embedding_from_survey(survey_responses, genre_prototypes):
-    """
-    Convert survey responses to initial user embedding.
+ """
+ Convert survey responses to initial user embedding.
 
-    Args:
-        survey_responses: dict {genre_name: rating (1-5)}
-        genre_prototypes: dict {genre_name: np.array(32,)} learned from Ch.4
+ Args:
+ survey_responses: dict {genre_name: rating (1-5)}
+ genre_prototypes: dict {genre_name: np.array(32,)} learned from Ch.4
 
-    Returns:
-        user_embedding: np.array(32,) unit-normalized
-    """
-    # Extract ratings and normalize to weights
-    genres = list(survey_responses.keys())
-    ratings = np.array([survey_responses[g] for g in genres])
-    weights = ratings / ratings.sum()  # Sum to 1
+ Returns:
+ user_embedding: np.array(32,) unit-normalized
+ """
+ # Extract ratings and normalize to weights
+ genres = list(survey_responses.keys())
+ ratings = np.array([survey_responses[g] for g in genres])
+ weights = ratings / ratings.sum() # Sum to 1
 
-    # Weighted sum of genre prototypes
-    user_embedding = np.zeros(32)
-    for genre, weight in zip(genres, weights):
-        user_embedding += weight * genre_prototypes[genre]
+ # Weighted sum of genre prototypes
+ user_embedding = np.zeros(32)
+ for genre, weight in zip(genres, weights):
+ user_embedding += weight * genre_prototypes[genre]
 
-    # Unit-normalize (cosine similarity requires ||u|| = 1)
-    user_embedding = user_embedding / np.linalg.norm(user_embedding)
+ # Unit-normalize (cosine similarity requires ||u|| = 1)
+ user_embedding = user_embedding / np.linalg.norm(user_embedding)
 
-    return user_embedding
+ return user_embedding
 
 # Example: Sarah's survey [Action=5, Romance=1, Comedy=3]
 survey = {'Action': 5, 'Romance': 1, 'Comedy': 3}
 genre_prototypes = {
-    'Action':  np.array([0.8, -0.3, 0.5, ...]),  # 32-dim, from Ch.4 training
-    'Romance': np.array([-0.4, 0.9, -0.2, ...]),
-    'Comedy':  np.array([0.1, 0.2, 0.7, ...])
+ 'Action': np.array([0.8, -0.3, 0.5, ...]), # 32-dim, from Ch.4 training
+ 'Romance': np.array([-0.4, 0.9, -0.2, ...]),
+ 'Comedy': np.array([0.1, 0.2, 0.7, ...])
 }
 
 u_0 = content_embedding_from_survey(survey, genre_prototypes)
-print(u_0.shape)  # (32,)
-print(np.linalg.norm(u_0))  # 1.0 (unit-normalized)
+print(u_0.shape) # (32,)
+print(np.linalg.norm(u_0)) # 1.0 (unit-normalized)
 
 # DECISION LOGIC: Use this embedding for ANN retrieval
 candidates = faiss_index.search(u_0.reshape(1, -1), k=100)
 print(f"Retrieved {len(candidates)} content-similar items in 10ms")
 ```
 
-> 💡 **Industry Standard:** Amazon item-item collaborative filtering
+> **Industry Standard:** Amazon item-item collaborative filtering
 >
 > **Amazon's approach (2003):** For new users with zero history, Amazon falls back to **item-item collaborative filtering** seeded from browsing context. If a user views a camera, show "customers who viewed this camera also bought these accessories." This avoids surveys entirely — the current item serves as the initial signal.
 >
@@ -367,8 +367,8 @@ print(f"Retrieved {len(candidates)} content-similar items in 10ms")
 >
 > **When to use:** Amazon's approach requires existing catalog interaction (browsing session); Spotify's requires domain-specific features (audio, video, text). Survey-based embedding works when no session context exists (fresh signup, email campaign click-through).
 
-> 💡 **Fallback verdict:** Survey [Action=5, Romance=1, Comedy=3] → 32-dim genre embedding → 61% HR@10 on day one (vs. 42% popularity baseline); no survey falls back to top-100 popularity.
-> ➡️ Reserve 3 of 10 slots for bandit exploration; log impressions to seed Phase 3 reward updates on first click.
+> **Fallback verdict:** Survey [Action=5, Romance=1, Comedy=3] → 32-dim genre embedding → 61% HR@10 on day one (vs. 42% popularity baseline); no survey falls back to top-100 popularity.
+> ➡ Reserve 3 of 10 slots for bandit exploration; log impressions to seed Phase 3 reward updates on first click.
 
 ---
 
@@ -398,7 +398,7 @@ $$\ln 10 = 2.303$$
 
 After serving Item C five more times and measuring $\mu_C = 0.72$, its $n_i = 6$ and UCB1 drops to $0.72 + \sqrt{4.606/6} = 0.72 + 0.876 = 1.596$ — now below Item A. The bandit self-corrects.
 
-> 💡 **UCB1 is "optimism in the face of uncertainty."** This principle reappears in Bayesian optimisation (hyperparameter tuning, Ch.19) and Monte Carlo Tree Search (RL track). The UCB formula is the same; only the domain changes.
+> **UCB1 is "optimism in the face of uncertainty."** This principle reappears in Bayesian optimisation (hyperparameter tuning, Ch.19) and Monte Carlo Tree Search (RL track). The UCB formula is the same; only the domain changes.
 
 ### 4.4 · **[Phase 4: TRANSITION]** Confidence-Based Switching from Content to Collaborative
 
@@ -424,74 +424,74 @@ where $\alpha$ decays from 1.0 (pure content) to 0.05 (mostly CF) as interaction
 import numpy as np
 
 def get_user_embedding(user_id, content_emb, collab_emb, n_interactions):
-    """
-    Blend content and collaborative embeddings based on interaction count.
+ """
+ Blend content and collaborative embeddings based on interaction count.
 
-    Args:
-        user_id: int
-        content_emb: np.array(32,) from survey or metadata
-        collab_emb: np.array(32,) from Ch.4 neural CF (may be None if n < 10)
-        n_interactions: int
+ Args:
+ user_id: int
+ content_emb: np.array(32,) from survey or metadata
+ collab_emb: np.array(32,) from Ch.4 neural CF (may be None if n < 10)
+ n_interactions: int
 
-    Returns:
-        final_embedding: np.array(32,) blended and unit-normalized
-        metadata: dict with alpha, source, exploration_rate
-    """
-    # TRANSITION DECISION LOGIC
-    if n_interactions < 10:
-        alpha = 0.70  # Content-heavy
-        source = "content_heavy"
-        exploration_rate = 0.30 * (0.99 ** n_interactions)  # Decay from 0.30
-    elif n_interactions < 50:
-        alpha = 0.30  # CF emerging
-        source = "collaborative_emerging"
-        exploration_rate = 0.10
-    else:
-        alpha = 0.05  # Pure CF (content as smoothing prior)
-        source = "collaborative"
-        exploration_rate = 0.05
+ Returns:
+ final_embedding: np.array(32,) blended and unit-normalized
+ metadata: dict with alpha, source, exploration_rate
+ """
+ # TRANSITION DECISION LOGIC
+ if n_interactions < 10:
+ alpha = 0.70 # Content-heavy
+ source = "content_heavy"
+ exploration_rate = 0.30 * (0.99 ** n_interactions) # Decay from 0.30
+ elif n_interactions < 50:
+ alpha = 0.30 # CF emerging
+ source = "collaborative_emerging"
+ exploration_rate = 0.10
+ else:
+ alpha = 0.05 # Pure CF (content as smoothing prior)
+ source = "collaborative"
+ exploration_rate = 0.05
 
-    # Blend embeddings
-    if collab_emb is None or n_interactions < 10:
-        # Not enough CF signal yet → fallback to pure content
-        final_embedding = content_emb
-    else:
-        final_embedding = alpha * content_emb + (1 - alpha) * collab_emb
+ # Blend embeddings
+ if collab_emb is None or n_interactions < 10:
+ # Not enough CF signal yet → fallback to pure content
+ final_embedding = content_emb
+ else:
+ final_embedding = alpha * content_emb + (1 - alpha) * collab_emb
 
-    # Unit-normalize
-    final_embedding = final_embedding / np.linalg.norm(final_embedding)
+ # Unit-normalize
+ final_embedding = final_embedding / np.linalg.norm(final_embedding)
 
-    return final_embedding, {
-        'alpha': alpha,
-        'source': source,
-        'exploration_rate': exploration_rate,
-        'n_interactions': n_interactions
-    }
+ return final_embedding, {
+ 'alpha': alpha,
+ 'source': source,
+ 'exploration_rate': exploration_rate,
+ 'n_interactions': n_interactions
+ }
 
 # Example: Sarah at interaction 5, 15, and 55
 for n in [5, 15, 55]:
-    emb, meta = get_user_embedding(
-        user_id=12345,
-        content_emb=np.random.randn(32),  # From survey
-        collab_emb=np.random.randn(32),   # From Ch.4 CF
-        n_interactions=n
-    )
-    print(f"n={n}: {meta['source']}, α={meta['alpha']:.2f}, ε={meta['exploration_rate']:.3f}")
+ emb, meta = get_user_embedding(
+ user_id=12345,
+ content_emb=np.random.randn(32), # From survey
+ collab_emb=np.random.randn(32), # From Ch.4 CF
+ n_interactions=n
+ )
+ print(f"n={n}: {meta['source']}, α={meta['alpha']:.2f}, ε={meta['exploration_rate']:.3f}")
 
 # Output:
-# n=5:  content_heavy, α=0.70, ε=0.285
+# n=5: content_heavy, α=0.70, ε=0.285
 # n=15: collaborative_emerging, α=0.30, ε=0.100
 # n=55: collaborative, α=0.05, ε=0.050
 ```
 
-> 💡 **Industry Standard:** LinkedIn's hybrid approach (content + network)
+> **Industry Standard:** LinkedIn's hybrid approach (content + network)
 >
 > **LinkedIn's approach (2019):** For cold users, LinkedIn blends (1) **content features** (job title, skills, industry), (2) **network features** (connections’ activity, group memberships), and (3) **collaborative filtering** (users with similar engagement patterns). The blend weight is learned via a gating network (not a fixed schedule) — the model itself decides how much to trust each signal source based on confidence.
 >
 > **When to use:** Fixed schedules (α at 10/50 interactions) work when user behavior is consistent. Learned gating works when some users engage heavily (fast transition) while others lurk (slow transition). FlixAI uses fixed thresholds for simplicity; production systems often learn them.
 
-> 💡 **Transition verdict:** Cold→warm graduation is automatic via interaction thresholds: 70% content at 5 interactions → 5% content at 55 interactions; HR@10 rises 61% → 74% → 87% over ~50 interactions (~3–5 days).
-> ➡️ Update CF embedding via exponential moving average after every click; monitor days-to-50-interactions as a product health metric (target < 7 days).
+> **Transition verdict:** Cold→warm graduation is automatic via interaction thresholds: 70% content at 5 interactions → 5% content at 55 interactions; HR@10 rises 61% → 74% → 87% over ~50 interactions (~3–5 days).
+> ➡ Update CF embedding via exponential moving average after every click; monitor days-to-50-interactions as a product health metric (target < 7 days).
 
 ---
 
@@ -516,114 +516,114 @@ import pandas as pd
 import datetime
 
 def compute_cold_start_metrics(date_range_days=7):
-    """
-    Compute cold start metrics for monitoring dashboard.
-    Runs daily as part of production health checks.
-    """
-    start_date = datetime.datetime.now() - datetime.timedelta(days=date_range_days)
+ """
+ Compute cold start metrics for monitoring dashboard.
+ Runs daily as part of production health checks.
+ """
+ start_date = datetime.datetime.now() - datetime.timedelta(days=date_range_days)
 
-    # Metric 1: HR@10 by cohort
-    hr10_by_cohort = db.query("""
-        SELECT
-            CASE
-                WHEN n_interactions = 0 THEN 'COLD'
-                WHEN n_interactions < 10 THEN 'WARMING'
-                WHEN n_interactions < 50 THEN 'WARM'
-                ELSE 'ESTABLISHED'
-            END AS cohort,
-            AVG(hr10) as hr10,
-            COUNT(*) as n_users
-        FROM user_metrics
-        WHERE date >= ?
-        GROUP BY cohort
-    """, start_date)
+ # Metric 1: HR@10 by cohort
+ hr10_by_cohort = db.query("""
+ SELECT
+ CASE
+ WHEN n_interactions = 0 THEN 'COLD'
+ WHEN n_interactions < 10 THEN 'WARMING'
+ WHEN n_interactions < 50 THEN 'WARM'
+ ELSE 'ESTABLISHED'
+ END AS cohort,
+ AVG(hr10) as hr10,
+ COUNT(*) as n_users
+ FROM user_metrics
+ WHERE date >= ?
+ GROUP BY cohort
+ """, start_date)
 
-    # Metric 2: Time-to-personalization (median days to 50 interactions)
-    time_to_warm = db.query("""
-        SELECT
-            PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY days_to_50_interactions)
-                AS median_days
-        FROM (
-            SELECT user_id,
-                   DATEDIFF(day, signup_date, interaction_50_date) AS days_to_50_interactions
-            FROM user_lifecycle
-            WHERE interaction_50_date >= ?
-        )
-    """, start_date)
+ # Metric 2: Time-to-personalization (median days to 50 interactions)
+ time_to_warm = db.query("""
+ SELECT
+ PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY days_to_50_interactions)
+ AS median_days
+ FROM (
+ SELECT user_id,
+ DATEDIFF(day, signup_date, interaction_50_date) AS days_to_50_interactions
+ FROM user_lifecycle
+ WHERE interaction_50_date >= ?
+ )
+ """, start_date)
 
-    # Metric 3: CTR gap (cold vs warm)
-    ctr_gap = db.query("""
-        SELECT
-            AVG(CASE WHEN cohort='COLD' THEN ctr END) AS ctr_cold,
-            AVG(CASE WHEN cohort IN ('WARM','ESTABLISHED') THEN ctr END) AS ctr_warm
-        FROM impression_logs
-        WHERE date >= ?
-    """, start_date)
-    ctr_gap_pct = 100 * (ctr_gap['ctr_warm'] - ctr_gap['ctr_cold']) / ctr_gap['ctr_warm']
+ # Metric 3: CTR gap (cold vs warm)
+ ctr_gap = db.query("""
+ SELECT
+ AVG(CASE WHEN cohort='COLD' THEN ctr END) AS ctr_cold,
+ AVG(CASE WHEN cohort IN ('WARM','ESTABLISHED') THEN ctr END) AS ctr_warm
+ FROM impression_logs
+ WHERE date >= ?
+ """, start_date)
+ ctr_gap_pct = 100 * (ctr_gap['ctr_warm'] - ctr_gap['ctr_cold']) / ctr_gap['ctr_warm']
 
-    # Metric 4: Item graduation rate (% of new items reaching 100 ratings in 14 days)
-    item_graduation = db.query("""
-        SELECT
-            COUNT(CASE WHEN days_to_100_ratings <= 14 THEN 1 END) * 100.0 / COUNT(*)
-                AS graduation_rate_pct
-        FROM (
-            SELECT item_id,
-                   DATEDIFF(day, launch_date, rating_100_date) AS days_to_100_ratings
-            FROM item_lifecycle
-            WHERE launch_date >= ?
-        )
-    """, start_date)
+ # Metric 4: Item graduation rate (% of new items reaching 100 ratings in 14 days)
+ item_graduation = db.query("""
+ SELECT
+ COUNT(CASE WHEN days_to_100_ratings <= 14 THEN 1 END) * 100.0 / COUNT(*)
+ AS graduation_rate_pct
+ FROM (
+ SELECT item_id,
+ DATEDIFF(day, launch_date, rating_100_date) AS days_to_100_ratings
+ FROM item_lifecycle
+ WHERE launch_date >= ?
+ )
+ """, start_date)
 
-    # Metric 5: Cold user fraction
-    cold_fraction = db.query("""
-        SELECT
-            COUNT(CASE WHEN n_interactions < 10 THEN 1 END) * 100.0 / COUNT(*)
-                AS cold_fraction_pct
-        FROM daily_active_users
-        WHERE date = CURRENT_DATE
-    """)
+ # Metric 5: Cold user fraction
+ cold_fraction = db.query("""
+ SELECT
+ COUNT(CASE WHEN n_interactions < 10 THEN 1 END) * 100.0 / COUNT(*)
+ AS cold_fraction_pct
+ FROM daily_active_users
+ WHERE date = CURRENT_DATE
+ """)
 
-    # Metric 6: Latency p99
-    latency_p99 = db.query("""
-        SELECT PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY latency_ms) AS p99_latency
-        FROM request_logs
-        WHERE date >= ?
-    """, start_date)
+ # Metric 6: Latency p99
+ latency_p99 = db.query("""
+ SELECT PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY latency_ms) AS p99_latency
+ FROM request_logs
+ WHERE date >= ?
+ """, start_date)
 
-    # ALERT LOGIC
-    alerts = []
-    if hr10_by_cohort.loc[hr10_by_cohort['cohort']=='COLD', 'hr10'].values[0] < 0.59:
-        alerts.append("🚨 Cold user HR@10 dropped below 59% (target: 61%)")
-    if time_to_warm['median_days'] > 10:
-        alerts.append("⚠️ Time-to-warm exceeds 10 days (target: <7 days)")
-    if ctr_gap_pct > 40:
-        alerts.append(f"⚠️ CTR gap {ctr_gap_pct:.1f}% exceeds 40% threshold")
-    if item_graduation['graduation_rate_pct'] < 60:
-        alerts.append(f"⚠️ Item graduation rate {item_graduation['graduation_rate_pct']:.1f}% below 60%")
-    if cold_fraction['cold_fraction_pct'] > 30:
-        alerts.append(f"⚠️ Cold user fraction {cold_fraction['cold_fraction_pct']:.1f}% exceeds 30%")
-    if latency_p99['p99_latency'] > 110:
-        alerts.append(f"🚨 p99 latency {latency_p99['p99_latency']:.0f}ms exceeds 110ms SLA")
+ # ALERT LOGIC
+ alerts = []
+ if hr10_by_cohort.loc[hr10_by_cohort['cohort']=='COLD', 'hr10'].values[0] < 0.59:
+ alerts.append("🚨 Cold user HR@10 dropped below 59% (target: 61%)")
+ if time_to_warm['median_days'] > 10:
+ alerts.append(" Time-to-warm exceeds 10 days (target: <7 days)")
+ if ctr_gap_pct > 40:
+ alerts.append(f" CTR gap {ctr_gap_pct:.1f}% exceeds 40% threshold")
+ if item_graduation['graduation_rate_pct'] < 60:
+ alerts.append(f" Item graduation rate {item_graduation['graduation_rate_pct']:.1f}% below 60%")
+ if cold_fraction['cold_fraction_pct'] > 30:
+ alerts.append(f" Cold user fraction {cold_fraction['cold_fraction_pct']:.1f}% exceeds 30%")
+ if latency_p99['p99_latency'] > 110:
+ alerts.append(f"🚨 p99 latency {latency_p99['p99_latency']:.0f}ms exceeds 110ms SLA")
 
-    return {
-        'hr10_by_cohort': hr10_by_cohort,
-        'time_to_warm_days': time_to_warm['median_days'],
-        'ctr_gap_pct': ctr_gap_pct,
-        'item_graduation_rate': item_graduation['graduation_rate_pct'],
-        'cold_fraction_pct': cold_fraction['cold_fraction_pct'],
-        'p99_latency_ms': latency_p99['p99_latency'],
-        'alerts': alerts
-    }
+ return {
+ 'hr10_by_cohort': hr10_by_cohort,
+ 'time_to_warm_days': time_to_warm['median_days'],
+ 'ctr_gap_pct': ctr_gap_pct,
+ 'item_graduation_rate': item_graduation['graduation_rate_pct'],
+ 'cold_fraction_pct': cold_fraction['cold_fraction_pct'],
+ 'p99_latency_ms': latency_p99['p99_latency'],
+ 'alerts': alerts
+ }
 
 # Run daily monitoring
 metrics = compute_cold_start_metrics(date_range_days=7)
 if metrics['alerts']:
-    for alert in metrics['alerts']:
-        print(alert)
-        # send_to_slack(alert)  # Production: alert on-call engineer
+ for alert in metrics['alerts']:
+ print(alert)
+ # send_to_slack(alert) # Production: alert on-call engineer
 ```
 
-> 💡 **Industry Standard:** Spotify's Discover Weekly monitoring\n>\n> **Spotify's approach (2016):** Discover Weekly (their cold-start playlist for new songs) is monitored via a **multi-armed bandit dashboard** showing: (1) per-genre exploration rates, (2) "time to 1000 streams" for new releases, (3) CTR by user tenure cohort, (4) "regret" (how many skips in first 30 seconds). Alerts fire when regret exceeds 15% for cold users or when new-release time-to-1000 exceeds 48 hours.\n>\n> **When to use:** Spotify's dashboard is specific to music streaming (skip rate, stream completion). FlixAI uses click rate and HR@10. The pattern is universal: cohort-level metrics + graduation speed + alert thresholds.\n\n#### A/B Test Sample Size Calculation
+> **Industry Standard:** Spotify's Discover Weekly monitoring\n>\n> **Spotify's approach (2016):** Discover Weekly (their cold-start playlist for new songs) is monitored via a **multi-armed bandit dashboard** showing: (1) per-genre exploration rates, (2) "time to 1000 streams" for new releases, (3) CTR by user tenure cohort, (4) "regret" (how many skips in first 30 seconds). Alerts fire when regret exceeds 15% for cold users or when new-release time-to-1000 exceeds 48 hours.\n>\n> **When to use:** Spotify's dashboard is specific to music streaming (skip rate, stream completion). FlixAI uses click rate and HR@10. The pattern is universal: cohort-level metrics + graduation speed + alert thresholds.\n\n#### A/B Test Sample Size Calculation
 
 **Test hypothesis:** Is the cold-start bandit better than popularity fallback for new users?
 
@@ -643,7 +643,7 @@ Total experiment size: 400 (control) + 400 (treatment) = **800 new signups**. At
 
 **Where the constant 16 comes from:** The exact factor is $(z_{\alpha/2} + z_\beta)^2 \times 2 = (1.96 + 0.842)^2 \times 2 = (2.802)^2 \times 2 = 7.85 \times 2 = 15.70 \approx 16$. Rounded to 16 for mental arithmetic.
 
-> ⚠️ **Never A/B test on the MovieLens test set.** The held-out split is for offline evaluation only. Real A/B tests run on live traffic — users never seen in training. Offline HR@10 measures model quality; online A/B tests measure business impact. These are different questions.
+> **Never A/B test on the MovieLens test set.** The held-out split is for offline evaluation only. Real A/B tests run on live traffic — users never seen in training. Offline HR@10 measures model quality; online A/B tests measure business impact. These are different questions.
 
 **Offline vs online metrics — the full comparison:**
 
@@ -654,10 +654,10 @@ Total experiment size: 400 (control) + 400 (treatment) = **800 new signups**. At
 | 7-day retention | Live A/B test | Whether recommendations keep users coming back | Confounded by external factors (seasonality) |
 | p99 latency | Production logs | Whether system meets SLA | Infrastructure-dependent; varies with load |
 
-> 📌 **Practitioner rule:** Always validate with offline HR@10 first (cheap, fast). If offline HR@10 holds steady, deploy to a 1% traffic slice and check p99 latency. Only then run a full-power A/B test. This sequence minimises the risk of shipping a latency regression to 100% of users.
+> **Practitioner rule:** Always validate with offline HR@10 first (cheap, fast). If offline HR@10 holds steady, deploy to a 1% traffic slice and check p99 latency. Only then run a full-power A/B test. This sequence minimises the risk of shipping a latency regression to 100% of users.
 
-> 💡 **Monitor verdict:** A/B test showed +45% relative lift in cold-user HR@10 (42% → 61%) with p99 held at 98ms; requires 400 users/variant for δ=0.02 detection — 4 days at 200 signups/day.
-> ➡️ Track cohort-level HR@10 separately from warm users; alert if cold HR@10 drops below 59% or cold user fraction exceeds 30%.
+> **Monitor verdict:** A/B test showed +45% relative lift in cold-user HR@10 (42% → 61%) with p99 held at 98ms; requires 400 users/variant for δ=0.02 detection — 4 days at 200 signups/day.
+> ➡ Track cohort-level HR@10 separately from warm users; alert if cold HR@10 drops below 59% or cold user fraction exceeds 30%.
 
 ---
 
@@ -734,7 +734,7 @@ Top-5 by ANN cosine similarity: *Heat* (0.91), *The Dark Knight* (0.89), *Die Ha
 
 **Metric outcome after Step 2:**
 - Recall@100 = 0.94 — ANN captured 94% of relevant items in candidate pool
-- Latency: 8ms ✅ (budget: 10ms)
+- Latency: 8ms (budget: 10ms)
 - Content-only embedding already surfaces action/sci-fi cluster — even with zero watch history, survey preferences yield actionable candidates
 
 ---
@@ -768,13 +768,13 @@ Item C selected as top bandit pick. *Oldboy* also qualifies as a second explorat
 | 9 | **Item A** (new movie) | UCB1 bandit | 2.218 UCB |
 | 10 | *Oldboy* | UCB1 bandit | 2.050 UCB |
 
-MMR confirms genre diversity: action, thriller, sci-fi, Korean thriller all present. **Total latency: ~98ms ✅**
+MMR confirms genre diversity: action, thriller, sci-fi, Korean thriller all present. **Total latency: ~98ms **
 
 **Metric outcome after Step 4:**
 - Cold user (session 1) HR@10 = 61% — content embedding + bandit exploration delivers 6 in 10 new users a relevant recommendation on first session
 - Diversity: 5 genres represented (action, thriller, sci-fi, noir, Korean cinema) — no genre dominates
 - Exploration rate ε=0.30 means 3 of 10 slots reserved for uncertainty reduction — system learns Sarah's true preferences in 5-10 interactions
-- Latency SLA satisfied: 98ms < 100ms hard ceiling ✅
+- Latency SLA satisfied: 98ms < 100ms hard ceiling
 
 ---
 
@@ -830,61 +830,61 @@ By session 10 (roughly 10 total clicks), her recommendation set has stabilised a
 
 ```mermaid
 flowchart LR
-    NEW["New User<br/>0 to 9 interactions<br/>Content embedding<br/>epsilon = 0.30<br/>HR@10 approx 61%"]
-    WARM["Warming Up<br/>10 to 49 interactions<br/>Blend 30/70<br/>epsilon = 0.10<br/>HR@10 approx 74%"]
-    HOT["Established<br/>50 plus interactions<br/>Full hybrid DCN<br/>epsilon = 0.05<br/>HR@10 approx 87%"]
+ NEW["New User<br/>0 to 9 interactions<br/>Content embedding<br/>epsilon = 0.30<br/>HR@10 approx 61%"]
+ WARM["Warming Up<br/>10 to 49 interactions<br/>Blend 30/70<br/>epsilon = 0.10<br/>HR@10 approx 74%"]
+ HOT["Established<br/>50 plus interactions<br/>Full hybrid DCN<br/>epsilon = 0.05<br/>HR@10 approx 87%"]
 
-    NEW -->|"10 interactions<br/>content yields to CF"| WARM
-    WARM -->|"50 interactions<br/>CF dominates"| HOT
-    HOT -->|"Ongoing:<br/>nightly retrain + A/B gate"| HOT
+ NEW -->|"10 interactions<br/>content yields to CF"| WARM
+ WARM -->|"50 interactions<br/>CF dominates"| HOT
+ HOT -->|"Ongoing:<br/>nightly retrain + A/B gate"| HOT
 
-    style NEW fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style WARM fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style HOT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style NEW fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style WARM fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style HOT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### Diagram 2: Production Serving Pipeline with SLA Budget
 
 ```mermaid
 flowchart TB
-    REQ["User Request<br/>t = 0ms"] --> ROUTE{"Cold / Warm / Hot?<br/>(interaction count lookup)"}
+ REQ["User Request<br/>t = 0ms"] --> ROUTE{"Cold / Warm / Hot?<br/>(interaction count lookup)"}
 
-    COLD_EMB["Survey to weighted<br/>genre embedding<br/>0.2ms"]
-    COLLAB_EMB["Collaborative<br/>embedding lookup<br/>0.1ms"]
+ COLD_EMB["Survey to weighted<br/>genre embedding<br/>0.2ms"]
+ COLLAB_EMB["Collaborative<br/>embedding lookup<br/>0.1ms"]
 
-    ANN["ANN Retrieval (FAISS)<br/>1682 items to 100 candidates<br/>10ms"]
+ ANN["ANN Retrieval (FAISS)<br/>1682 items to 100 candidates<br/>10ms"]
 
-    RANK["Hybrid DCN Ranker<br/>100 candidates to top-50<br/>70ms"]
+ RANK["Hybrid DCN Ranker<br/>100 candidates to top-50<br/>70ms"]
 
-    MMR["MMR Re-ranking<br/>top-50 to top-10<br/>10ms"]
+ MMR["MMR Re-ranking<br/>top-50 to top-10<br/>10ms"]
 
-    SERVE["JSON Serving<br/>plus Redis metadata cache<br/>10ms"]
+ SERVE["JSON Serving<br/>plus Redis metadata cache<br/>10ms"]
 
-    LOG["Impression Logger<br/>(async, no latency cost)"]
+ LOG["Impression Logger<br/>(async, no latency cost)"]
 
-    RESP["Response returned<br/>Total approx 100ms"]
+ RESP["Response returned<br/>Total approx 100ms"]
 
-    REQ --> ROUTE
-    ROUTE -->|"cold"| COLD_EMB
-    ROUTE -->|"warm or hot"| COLLAB_EMB
-    COLD_EMB --> ANN
-    COLLAB_EMB --> ANN
-    ANN --> RANK
-    RANK --> MMR
-    MMR --> SERVE
-    SERVE --> LOG
-    SERVE --> RESP
+ REQ --> ROUTE
+ ROUTE -->|"cold"| COLD_EMB
+ ROUTE -->|"warm or hot"| COLLAB_EMB
+ COLD_EMB --> ANN
+ COLLAB_EMB --> ANN
+ ANN --> RANK
+ RANK --> MMR
+ MMR --> SERVE
+ SERVE --> LOG
+ SERVE --> RESP
 
-    style REQ fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style ROUTE fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style COLD_EMB fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style COLLAB_EMB fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style ANN fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style RANK fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style MMR fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style SERVE fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style RESP fill:#15803d,stroke:#e2e8f0,stroke-width:3px,color:#ffffff
-    style LOG fill:#15803d,stroke:#e2e8f0,stroke-width:1px,color:#ffffff
+ style REQ fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style ROUTE fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style COLD_EMB fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style COLLAB_EMB fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style ANN fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style RANK fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style MMR fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style SERVE fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style RESP fill:#15803d,stroke:#e2e8f0,stroke-width:3px,color:#ffffff
+ style LOG fill:#15803d,stroke:#e2e8f0,stroke-width:1px,color:#ffffff
 ```
 
 ---
@@ -933,9 +933,9 @@ flowchart TB
 
 | Analysis strategy | Actual Type I error | What you promised |
 |---|---|---|
-| Pre-register end date, analyze once | **~5%** | ✅ Matches α = 0.05 |
-| Check daily, stop when p < 0.05 | **~20%** | ❌ 4× your declared false-positive rate |
-| Check twice (midpoint + end) | **~8%** | ⚠️ Mildly inflated |
+| Pre-register end date, analyze once | **~5%** | Matches α = 0.05 |
+| Check daily, stop when p < 0.05 | **~20%** | 4× your declared false-positive rate |
+| Check twice (midpoint + end) | **~8%** | Mildly inflated |
 
 Every additional look is another independent chance to cross p < 0.05 by luck. **Fix:** Pre-register the sample size and analysis date. Use sequential testing (mSPRT, alpha-spending) if continuous monitoring is required. (Full framework: [ch06-metrics §8b](../../01-regression/ch06_metrics/README.md#8b--statistical-significance-of-regression-coefficients-p-values).)
 
@@ -967,7 +967,7 @@ Every additional look is another independent chance to cross p < 0.05 by luck. *
 
 ---
 
-## 11 · Progress Check — FlixAI COMPLETE ✅
+## 11 · Progress Check — FlixAI COMPLETE
 
 ![Progress visualization](img/ch06-cold-start-production-progress-check.png)
 
@@ -975,21 +975,21 @@ Every additional look is another independent chance to cross p < 0.05 by luck. *
 
 | Constraint | Target | Ch.1 | Ch.2 | Ch.3 | Ch.4 | Ch.5 | **Ch.6 FINAL** |
 |-----------|--------|------|------|------|------|------|----------------|
-| **#1 ACCURACY** | >85% HR@10 | 42% | 68% | 78% | 83% | 87% ✅ | **87%+ ✅ maintained** |
-| **#2 COLD START** | New users/items served | ❌ | ❌ | ❌ | ❌ | ⚠️ items only | **✅ both users + items** |
-| **#3 SCALABILITY** | <100ms serving | ❌ | ❌ | ❌ | ⚠️ | ⚠️ 350ms | **✅ ~100ms two-stage** |
-| **#4 DIVERSITY** | ILD@10 >0.4 | ❌ | ❌ | ❌ | ⚠️ | ✅ MMR | **✅ maintained** |
-| **#5 EXPLAINABILITY** | Stakeholder-readable | ❌ | ⚠️ | ⚠️ | ❌ | ✅ | **✅ maintained** |
+| **#1 ACCURACY** | >85% HR@10 | 42% | 68% | 78% | 83% | 87% | **87%+ maintained** |
+| **#2 COLD START** | New users/items served | | | | | items only | ** both users + items** |
+| **#3 SCALABILITY** | <100ms serving | | | | | 350ms | ** ~100ms two-stage** |
+| **#4 DIVERSITY** | ILD@10 >0.4 | | | | | MMR | ** maintained** |
+| **#5 EXPLAINABILITY** | Stakeholder-readable | | | | | | ** maintained** |
 
-### ✅ What Ch.6 unlocked:
+### What Ch.6 unlocked:
 
 - **Cold user onboarding:** Survey → weighted embedding → ANN retrieval → UCB1 exploration. HR@10 for new users: **42% (popularity baseline) → 61% on day-1** → converges to 87% by interaction 50.
 - **Cold item launch:** Content embedding → immediate ANN inclusion → UCB1 exploration bonus → graduates to collaborative after 100 ratings.
-- **Two-stage pipeline:** 1,682 items → 100 ANN → 10 final → **~100ms ✅** (from 350ms).
+- **Two-stage pipeline:** 1,682 items → 100 ANN → 10 final → **~100ms ** (from 350ms).
 - **A/B testing framework:** $n = 400$/variant for $\delta = 0.02$ lift. 7-day retention lift of +42% confirmed bandit ships.
 - **Production monitoring:** HR@10 regression alerts, latency p99 dashboard, cold-user fraction, item graduation rate.
 
-### ❌ Intentionally out of scope:
+### Intentionally out of scope:
 
 - **Real-time feature streaming:** Ratings are batched nightly; real-time updates require Kafka + Redis streams (AI Infrastructure track).
 - **Multi-objective optimisation:** Optimises HR@10 alone; production systems balance accuracy, diversity, revenue, and fairness.
@@ -999,18 +999,18 @@ Every additional look is another independent chance to cross p < 0.05 by luck. *
 
 ```mermaid
 flowchart LR
-    CH1["Ch.1: Popularity<br/>HR@10 = 42%<br/>Baseline"] --> CH2["Ch.2: Collab Filter<br/>HR@10 = 68%<br/>User similarity"]
-    CH2 --> CH3["Ch.3: Matrix Factor<br/>HR@10 = 78%<br/>Latent factors"]
-    CH3 --> CH4["Ch.4: Neural CF<br/>HR@10 = 83%<br/>Deep embeddings"]
-    CH4 --> CH5["Ch.5: Hybrid DCN<br/>HR@10 = 87% ✅<br/>#1 #4 #5 solved"]
-    CH5 --> CH6["Ch.6: Cold Start<br/>+ Production<br/>ALL 5 SOLVED ✅"]
+ CH1["Ch.1: Popularity<br/>HR@10 = 42%<br/>Baseline"] --> CH2["Ch.2: Collab Filter<br/>HR@10 = 68%<br/>User similarity"]
+ CH2 --> CH3["Ch.3: Matrix Factor<br/>HR@10 = 78%<br/>Latent factors"]
+ CH3 --> CH4["Ch.4: Neural CF<br/>HR@10 = 83%<br/>Deep embeddings"]
+ CH4 --> CH5["Ch.5: Hybrid DCN<br/>HR@10 = 87% <br/>#1 #4 #5 solved"]
+ CH5 --> CH6["Ch.6: Cold Start<br/>+ Production<br/>ALL 5 SOLVED "]
 
-    style CH1 fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH2 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH3 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH4 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH5 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH6 fill:#15803d,stroke:#e2e8f0,stroke-width:3px,color:#ffffff
+ style CH1 fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH2 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH3 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH4 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH5 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH6 fill:#15803d,stroke:#e2e8f0,stroke-width:3px,color:#ffffff
 ```
 
 ---
@@ -1029,6 +1029,6 @@ The **Anomaly Detection track** addresses this directly:
 
 The skills from this chapter transfer directly into that track: A/B testing methodology → hypothesis tests for anomaly significance; bandit reward signals → the metrics anomaly detection monitors; the two-stage architecture → the layers where anomalies can originate (retrieval vs. ranking vs. serving).
 
-> ➡️ **What you take into the next track:** A live production recommender system generating real interaction data, an A/B testing infrastructure for validating detection algorithms, and a concrete monitoring mission — keep FlixAI's HR@10 above 85% under concept drift, data pipeline failures, and adversarial inputs. The Anomaly Detection track gives you the tools to maintain it.
+> ➡ **What you take into the next track:** A live production recommender system generating real interaction data, an A/B testing infrastructure for validating detection algorithms, and a concrete monitoring mission — keep FlixAI's HR@10 above 85% under concept drift, data pipeline failures, and adversarial inputs. The Anomaly Detection track gives you the tools to maintain it.
 
-> 🔑 **Chapter summary in one sentence:** Cold start is a solved problem when you combine content-based embeddings for initial queries, UCB1 bandits for exploration, two-stage ANN retrieval for latency, and systematic A/B testing for deployment confidence — the same architecture FlixAI now runs in production, serving ≥85% HR@10 with a <100ms p99 latency guarantee.
+> **Chapter summary in one sentence:** Cold start is a solved problem when you combine content-based embeddings for initial queries, UCB1 bandits for exploration, two-stage ANN retrieval for latency, and systematic A/B testing for deployment confidence — the same architecture FlixAI now runs in production, serving ≥85% HR@10 with a <100ms p99 latency guarantee.

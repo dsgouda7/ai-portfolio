@@ -16,11 +16,11 @@ You've now built it. This document is the checkered flag.
 
 | # | Constraint | Target | Status |
 |---|------------|--------|--------|
-| **#1** | **ACCURACY** | <$40k MAE on held-out districts | ✅ **Achieved** — Ch.7 XGBoost reaches $32k |
-| **#2** | **GENERALIZATION** | No overfitting; holds on unseen districts | ✅ **Achieved** — Ridge regularization + 5-fold CV |
-| **#3** | **MULTI-TASK** | Predict value AND market segment | ➡️ Out of scope — continues in [02-Classification →](../02_classification) |
-| **#4** | **INTERPRETABILITY** | Explainable predictions for underwriters | ✅ **Partially achieved** — VIF audit (Ch.3), SHAP feature importance (Ch.7) |
-| **#5** | **PRODUCTION** | <100ms inference, scale, monitoring | ⚠️ **Pipeline established** — systematic tuning in Ch.7; deeper MLOps in [08-EnsembleMethods →](../08_ensemble_methods) |
+| **#1** | **ACCURACY** | <$40k MAE on held-out districts | **Achieved** — Ch.7 XGBoost reaches $32k |
+| **#2** | **GENERALIZATION** | No overfitting; holds on unseen districts | **Achieved** — Ridge regularization + 5-fold CV |
+| **#3** | **MULTI-TASK** | Predict value AND market segment | ➡ Out of scope — continues in [02-Classification →](../02_classification) |
+| **#4** | **INTERPRETABILITY** | Explainable predictions for underwriters | **Partially achieved** — VIF audit (Ch.3), SHAP feature importance (Ch.7) |
+| **#5** | **PRODUCTION** | <100ms inference, scale, monitoring | **Pipeline established** — systematic tuning in Ch.7; deeper MLOps in [08-EnsembleMethods →](../08_ensemble_methods) |
 
 ---
 
@@ -31,11 +31,11 @@ You've now built it. This document is the checkered flag.
 | Floor | Predict `median(y_train)` for every district | ~$72k MAE | Must beat this before claiming ML value |
 | 1 | Linear Regression | Single-feature baseline (MedInc → MedHouseVal) | ~$70k | #1 Partial |
 | 2 | Multiple Regression | All 8 features, vectorized gradient descent | ~$55k | #1 Improved |
-| 3 | Feature Scaling, Importance & Multicollinearity | VIF audit, permutation importance, StandardScaler | ~$55k | **#4 ✅ Feature-level** |
+| 3 | Feature Scaling, Importance & Multicollinearity | VIF audit, permutation importance, StandardScaler | ~$55k | **#4 Feature-level** |
 | 4 | Polynomial Features | Degree-2 expansion (8 → 44 features) | ~$48k | #1 Close |
-| 5 | Regularization | Ridge/Lasso/Elastic Net | **$38k** | **#1 ✅ #2 ✅** |
+| 5 | Regularization | Ridge/Lasso/Elastic Net | **$38k** | **#1 #2 ** |
 | 6 | Evaluation Metrics | Cross-validation, residual diagnostics, learning curves | $38k ± $2k | Validated |
-| 7 | Hyperparameter Tuning | Optuna + XGBoost + SHAP | **$32k** | **#1 ✅ #2 ✅ #4 ✅** |
+| 7 | Hyperparameter Tuning | Optuna + XGBoost + SHAP | **$32k** | **#1 #2 #4 ** |
 
 ---
 
@@ -58,7 +58,7 @@ from sklearn.pipeline import Pipeline
 
 data = fetch_california_housing()
 X_train, X_test, y_train, y_test = train_test_split(
-    data.data, data.target, test_size=0.2, random_state=42
+ data.data, data.target, test_size=0.2, random_state=42
 )
 
 # Build the pipeline: poly → scale → ridge
@@ -101,8 +101,8 @@ Train an XGBoost regressor using RandomizedSearchCV (50 trials, 5-fold CV). Fill
 
 | Model | CV MAE | Test MAE | Fit time | Interpretable? |
 |-------|--------|----------|----------|----------------|
-| Best Ridge (Exercise 3) | | | | ✅ coefficient weights |
-| XGBoost (tuned) | | | | ✅ SHAP values |
+| Best Ridge (Exercise 3) | | | | coefficient weights |
+| XGBoost (tuned) | | | | SHAP values |
 
 Generate SHAP feature importances for the winning XGBoost model. Do the top-3 SHAP features match the permutation importance ranking from Exercise 2?
 
@@ -115,9 +115,9 @@ Your CFO asks: "Where does the model fail — and by how much?"
 1. Plot predicted vs actual. Mark any district where actual > $400k in red.
 2. Plot residuals vs predicted. Does variance fan out at higher predictions?
 3. Compute MAE separately for three price bands:
-   - Budget: actual < $150k
-   - Mid-range: $150k–$350k
-   - Premium: actual > $350k
+ - Budget: actual < $150k
+ - Mid-range: $150k–$350k
+ - Premium: actual > $350k
 
 **Discussion:** The premium band almost certainly shows the highest MAE. Explain *structurally* why this is unavoidable given the California Housing dataset — and what you would do about it if you had access to uncapped sale prices.
 

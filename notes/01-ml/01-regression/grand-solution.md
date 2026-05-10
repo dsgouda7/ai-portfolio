@@ -7,24 +7,24 @@
 **Three ways to learn from this content:**
 
 1. **📓 Executable Code First** → Run [grand_solution.ipynb (reference)](grand_solution_reference.ipynb) | [grand_solution.ipynb (exercise)](grand_solution_exercise.ipynb)
-   - Complete end-to-end implementation in a single notebook
-   - Execute cells top-to-bottom to see the full progression
-   - Perfect for hands-on learners who want to experiment immediately
+ - Complete end-to-end implementation in a single notebook
+ - Execute cells top-to-bottom to see the full progression
+ - Perfect for hands-on learners who want to experiment immediately
 
 2. **📖 Narrative Arc** → Read this document (grand_solution.md)
-   - Understand *why* each concept matters and *when* to use it
-   - See how all 7 chapters connect into a production system
-   - Best for understanding the big picture and design patterns
+ - Understand *why* each concept matters and *when* to use it
+ - See how all 7 chapters connect into a production system
+ - Best for understanding the big picture and design patterns
 
-3. **🎯 Deep Dive** → Study individual chapter READMEs + notebooks
-   - [Ch.1: Linear Regression](ch01_linear_regression/README.md) — Baseline model
-   - [Ch.2: Multiple Regression](ch02_multiple_regression/README.md) — All features
-   - [Ch.3: Feature Importance](ch03_feature_importance/README.md) — VIF & importance
-   - [Ch.4: Polynomial Features](ch04_polynomial_features/README.md) — Non-linear patterns
-   - [Ch.5: Regularization](ch05_regularization/README.md) — Ridge/Lasso
-   - [Ch.6: Metrics & Validation](ch06_metrics/README.md) — Cross-validation
-   - [Ch.7: Hyperparameter Tuning](ch07_hyperparameter_tuning/README.md) — XGBoost + Optuna
-   - Each chapter has detailed math, diagrams, and implementation notes
+3. ** Deep Dive** → Study individual chapter READMEs + notebooks
+ - [Ch.1: Linear Regression](ch01_linear_regression/README.md) — Baseline model
+ - [Ch.2: Multiple Regression](ch02_multiple_regression/README.md) — All features
+ - [Ch.3: Feature Importance](ch03_feature_importance/README.md) — VIF & importance
+ - [Ch.4: Polynomial Features](ch04_polynomial_features/README.md) — Non-linear patterns
+ - [Ch.5: Regularization](ch05_regularization/README.md) — Ridge/Lasso
+ - [Ch.6: Metrics & Validation](ch06_metrics/README.md) — Cross-validation
+ - [Ch.7: Hyperparameter Tuning](ch07_hyperparameter_tuning/README.md) — XGBoost + Optuna
+ - Each chapter has detailed math, diagrams, and implementation notes
 
 **Recommended Path:**
 - **Beginners:** Start with [grand_solution.ipynb (reference)](grand_solution_reference.ipynb) | [grand_solution.ipynb (exercise)](grand_solution_exercise.ipynb), then read individual chapters for concepts you want to understand deeply
@@ -33,7 +33,7 @@
 
 ---
 
-## Mission Accomplished: $32k MAE ✅
+## Mission Accomplished: $32k MAE
 
 **The Challenge:** Build SmartVal AI — a production home valuation system achieving <$40k MAE on California Housing median house values.
 
@@ -42,14 +42,14 @@
 **The Progression:**
 
 ```
-Ch.1: Single-feature baseline    → $70k MAE  (naive but establishes framework)
-Ch.2: Multiple features          → $55k MAE  (all 8 features, vectorized)
-Ch.3: Feature engineering        → $55k MAE  (VIF audit, importance, scaling)
-Ch.4: Polynomial features        → $48k MAE  (non-linear patterns, 8→44 features)
-Ch.5: Regularization             → $38k MAE  (Ridge prevents overfitting)
-Ch.6: Validation & diagnostics   → $38k ± $2k (cross-validation confirms)
-Ch.7: Systematic tuning          → $32k MAE  (XGBoost + Optuna optimization)
-                                   ✅ TARGET: <$40k MAE
+Ch.1: Single-feature baseline → $70k MAE (naive but establishes framework)
+Ch.2: Multiple features → $55k MAE (all 8 features, vectorized)
+Ch.3: Feature engineering → $55k MAE (VIF audit, importance, scaling)
+Ch.4: Polynomial features → $48k MAE (non-linear patterns, 8→44 features)
+Ch.5: Regularization → $38k MAE (Ridge prevents overfitting)
+Ch.6: Validation & diagnostics → $38k ± $2k (cross-validation confirms)
+Ch.7: Systematic tuning → $32k MAE (XGBoost + Optuna optimization)
+TARGET: <$40k MAE
 ```
 
 ---
@@ -188,25 +188,25 @@ Here's how all 7 concepts integrate into a deployed SmartVal AI system:
 
 ```mermaid
 flowchart TD
-    INPUT["Raw district data<br/>(8 features)"] --> VALIDATE["Data Validation<br/>Ch.3: Check VIF < 5<br/>Missing value imputation"]
-    
-    VALIDATE --> SCALE["Feature Scaling<br/>Ch.3: StandardScaler<br/>μ=0, σ=1"]
-    
-    SCALE --> POLY["Polynomial Features<br/>Ch.4: degree=2<br/>8 → 44 features"]
-    
-    POLY --> MODEL["Prediction Model<br/>Ch.5: Ridge α=1.0<br/>or Ch.7: XGBoost"]
-    
-    MODEL --> PRED["Prediction<br/>$ŷ$ = median house value"]
-    
-    PRED --> MONITOR["Monitoring<br/>Ch.6: Track MAE drift<br/>Alert if > $40k"]
-    
-    MONITOR --> EXPLAIN["Explainability<br/>Ch.3: Feature importance<br/>Ch.7: SHAP values"]
-    
-    EXPLAIN --> OUTPUT["API Response<br/>{value: $385k,<br/>confidence: ±$38k,<br/>top_features: [MedInc, Lat]}"]
-    
-    style INPUT fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style MODEL fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style OUTPUT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ INPUT["Raw district data<br/>(8 features)"] --> VALIDATE["Data Validation<br/>Ch.3: Check VIF < 5<br/>Missing value imputation"]
+
+ VALIDATE --> SCALE["Feature Scaling<br/>Ch.3: StandardScaler<br/>μ=0, σ=1"]
+
+ SCALE --> POLY["Polynomial Features<br/>Ch.4: degree=2<br/>8 → 44 features"]
+
+ POLY --> MODEL["Prediction Model<br/>Ch.5: Ridge α=1.0<br/>or Ch.7: XGBoost"]
+
+ MODEL --> PRED["Prediction<br/>$ŷ$ = median house value"]
+
+ PRED --> MONITOR["Monitoring<br/>Ch.6: Track MAE drift<br/>Alert if > $40k"]
+
+ MONITOR --> EXPLAIN["Explainability<br/>Ch.3: Feature importance<br/>Ch.7: SHAP values"]
+
+ EXPLAIN --> OUTPUT["API Response<br/>{value: $385k,<br/>confidence: ±$38k,<br/>top_features: [MedInc, Lat]}"]
+
+ style INPUT fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style MODEL fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style OUTPUT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### Deployment Pipeline (How Ch.1-7 Connect in Production)
@@ -217,7 +217,7 @@ flowchart TD
 X_train, X_test, y_train, y_test = load_california_housing()
 
 # Ch.3: Feature validation & scaling
-vif_audit(X_train)  # Flag if VIF > 5
+vif_audit(X_train) # Flag if VIF > 5
 scaler = StandardScaler().fit(X_train)
 X_train_scaled = scaler.transform(X_train)
 
@@ -226,7 +226,7 @@ poly = PolynomialFeatures(degree=2)
 X_train_poly = poly.fit_transform(X_train_scaled)
 
 # Ch.5 + Ch.7: Model training with tuned hyperparameters
-model = Ridge(alpha=1.0)  # or XGBRegressor(n_estimators=500, ...)
+model = Ridge(alpha=1.0) # or XGBRegressor(n_estimators=500, ...)
 model.fit(X_train_poly, y_train)
 
 # Ch.6: Validation
@@ -241,44 +241,44 @@ importance = permutation_importance(model, X_test_poly, y_test)
 ```python
 @app.route('/predict', methods=['POST'])
 def predict():
-    # Raw input: {MedInc: 3.5, HouseAge: 28, ...}
-    raw_features = request.json
-    
-    # Ch.3: Validate input
-    if not validate_input(raw_features):
-        return {"error": "Invalid VIF or missing features"}, 400
-    
-    # Ch.3: Scale → Ch.4: Poly → Ch.5: Predict
-    X = scaler.transform([raw_features])
-    X_poly = poly.transform(X)
-    prediction = model.predict(X_poly)[0]
-    
-    # Ch.7: SHAP explainability
-    shap_values = explainer.shap_values(X_poly)
-    
-    # Ch.6: Confidence interval from CV std
-    confidence = 2.0  # ± $2k from Ch.6 CV
-    
-    return {
-        "predicted_value": f"${prediction*100:.0f}k",
-        "confidence_interval": f"±${confidence}k",
-        "top_features": get_top_shap_features(shap_values)
-    }
+ # Raw input: {MedInc: 3.5, HouseAge: 28, ...}
+ raw_features = request.json
+
+ # Ch.3: Validate input
+ if not validate_input(raw_features):
+ return {"error": "Invalid VIF or missing features"}, 400
+
+ # Ch.3: Scale → Ch.4: Poly → Ch.5: Predict
+ X = scaler.transform([raw_features])
+ X_poly = poly.transform(X)
+ prediction = model.predict(X_poly)[0]
+
+ # Ch.7: SHAP explainability
+ shap_values = explainer.shap_values(X_poly)
+
+ # Ch.6: Confidence interval from CV std
+ confidence = 2.0 # ± $2k from Ch.6 CV
+
+ return {
+ "predicted_value": f"${prediction*100:.0f}k",
+ "confidence_interval": f"±${confidence}k",
+ "top_features": get_top_shap_features(shap_values)
+ }
 ```
 
 **3. Monitoring Dashboard (tracks production health):**
 ```python
 # Ch.6: Alert if MAE drifts
 if production_mae > 40.0:
-    alert("MAE exceeded $40k threshold")
+ alert("MAE exceeded $40k threshold")
 
 # Ch.3: Track feature importance shifts
 if abs(current_importance - baseline_importance) > 0.1:
-    alert("Feature importance shifted — possible data drift")
+ alert("Feature importance shifted — possible data drift")
 
 # Ch.7: Retrain trigger
 if weeks_since_training > 4:
-    trigger_retraining_pipeline()
+ trigger_retraining_pipeline()
 ```
 
 ---
@@ -318,21 +318,21 @@ if weeks_since_training > 4:
 
 | # | Constraint | Target | Status | How We Achieved It |
 |---|------------|--------|--------|-------------------|
-| **#1** | **ACCURACY** | <$40k MAE | ✅ **$32k** | Ch.7: XGBoost + Optuna tuning |
-| **#2** | **GENERALIZATION** | Work on unseen districts | ✅ **Stable** | Ch.5: Ridge regularization + Ch.6: 5-fold CV |
-| **#3** | **MULTI-TASK** | Value + Segment | ➡️ **Next track** | Regression complete → continues in 02-Classification |
-| **#4** | **INTERPRETABILITY** | Explainable predictions | ✅ **Compliant** | Ch.3: VIF + importance, Ch.7: SHAP values |
-| **#5** | **PRODUCTION** | <100ms, scale, monitoring | ⚡ **Framework ready** | Ch.6: Monitoring thresholds, Ch.7: Systematic tuning |
+| **#1** | **ACCURACY** | <$40k MAE | **$32k** | Ch.7: XGBoost + Optuna tuning |
+| **#2** | **GENERALIZATION** | Work on unseen districts | **Stable** | Ch.5: Ridge regularization + Ch.6: 5-fold CV |
+| **#3** | **MULTI-TASK** | Value + Segment | ➡ **Next track** | Regression complete → continues in 02-Classification |
+| **#4** | **INTERPRETABILITY** | Explainable predictions | **Compliant** | Ch.3: VIF + importance, Ch.7: SHAP values |
+| **#5** | **PRODUCTION** | <100ms, scale, monitoring | **Framework ready** | Ch.6: Monitoring thresholds, Ch.7: Systematic tuning |
 
 ---
 
 ## What's Next: Beyond Regression
 
 **This track taught:**
-- ✅ Training loop fundamentals (Ch.1: gradient descent)
-- ✅ Feature engineering (Ch.3-4: VIF, polynomial)
-- ✅ Regularization (Ch.5: Ridge/Lasso)
-- ✅ Systematic optimization (Ch.7: Optuna, XGBoost)
+- Training loop fundamentals (Ch.1: gradient descent)
+- Feature engineering (Ch.3-4: VIF, polynomial)
+- Regularization (Ch.5: Ridge/Lasso)
+- Systematic optimization (Ch.7: Optuna, XGBoost)
 
 **What remains for SmartVal AI:**
 - **Classification** (Track 02): Predict market segment (luxury/mid/affordable)
@@ -367,7 +367,7 @@ if weeks_since_training > 4:
 Master regression, and you've mastered 80% of ML. The rest is architecture.
 
 **You now have:**
-- A production-ready regression system ($32k MAE ✅)
+- A production-ready regression system ($32k MAE )
 - A mental model for systematic ML development (baseline → feature engineering → regularization → tuning)
 - The vocabulary to read any ML paper (loss, gradient, hyperparameter, cross-validation)
 

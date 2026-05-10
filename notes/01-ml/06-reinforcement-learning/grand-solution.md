@@ -16,7 +16,7 @@
 
 ---
 
-## Mission Accomplished: CartPole Solved in <200 Episodes ✅
+## Mission Accomplished: CartPole Solved in <200 Episodes
 
 **The Challenge:** Build AgentAI — autonomous agents that learn optimal policies from trial-and-error interaction, achieving average reward ≥195 over 100 consecutive episodes in CartPole-v1 within 200 training episodes.
 
@@ -25,13 +25,13 @@
 **The Progression:**
 
 ```
-Ch.1: MDP formalism              → Framework only (GridWorld 4×4, theoretical)
-Ch.2: Dynamic programming        → Optimal policy in 12 iterations (requires known P(s'|s,a))
-Ch.3: Q-learning                 → 10k episodes to converge (tabular, model-free)
-Ch.4: DQN                        → CartPole solved in 178 episodes ✅ (continuous states)
-Ch.5: Policy gradients           → Pendulum-v1 stabilized (continuous actions)
-Ch.6: PPO                        → 95% success rate, stable across seeds
-                                   ✅ TARGET: <200 episodes, avg ≥195 reward
+Ch.1: MDP formalism → Framework only (GridWorld 4×4, theoretical)
+Ch.2: Dynamic programming → Optimal policy in 12 iterations (requires known P(s'|s,a))
+Ch.3: Q-learning → 10k episodes to converge (tabular, model-free)
+Ch.4: DQN → CartPole solved in 178 episodes (continuous states)
+Ch.5: Policy gradients → Pendulum-v1 stabilized (continuous actions)
+Ch.6: PPO → 95% success rate, stable across seeds
+TARGET: <200 episodes, avg ≥195 reward
 ```
 
 ---
@@ -143,31 +143,31 @@ Here's how all 6 concepts integrate into a deployed AgentAI system:
 
 ```mermaid
 flowchart TD
-    INPUT["Environment State<br/>observations"] --> PREPROCESS["State Preprocessing<br/>Ch.1: Normalize, stack frames<br/>Check Markov property"]
-    
-    PREPROCESS --> POLICY["Policy Network π_θ<br/>Ch.5: Actor (softmax/Gaussian)<br/>Ch.6: PPO-clipped updates"]
-    
-    POLICY --> ACTION["Action Selection<br/>Ch.3: ε-greedy exploration<br/>Ch.5: Stochastic sampling"]
-    
-    ACTION --> ENV["Environment Interaction<br/>Ch.1: Observe (s,a,r,s')"]
-    
-    ENV --> BUFFER["Experience Replay<br/>Ch.4: Store in buffer D<br/>Random minibatch sampling"]
-    
-    BUFFER --> CRITIC["Critic Network V_w<br/>Ch.5: Value baseline<br/>Ch.4: Target network θ⁻"]
-    
-    CRITIC --> ADVANTAGE["Advantage Estimation<br/>Ch.5: A = Q - V<br/>Ch.6: GAE(λ)"]
-    
-    ADVANTAGE --> UPDATE["Gradient Update<br/>Ch.3: Q-learning TD error<br/>Ch.6: PPO-clip objective"]
-    
-    UPDATE --> POLICY
-    
-    MONITOR["Monitoring Dashboard"] --> METRICS["Track Metrics:<br/>- Avg episode reward<br/>- Policy entropy<br/>- Value loss<br/>- KL divergence"]
-    
-    UPDATE --> MONITOR
-    
-    style INPUT fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style POLICY fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style MONITOR fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ INPUT["Environment State<br/>observations"] --> PREPROCESS["State Preprocessing<br/>Ch.1: Normalize, stack frames<br/>Check Markov property"]
+
+ PREPROCESS --> POLICY["Policy Network π_θ<br/>Ch.5: Actor (softmax/Gaussian)<br/>Ch.6: PPO-clipped updates"]
+
+ POLICY --> ACTION["Action Selection<br/>Ch.3: ε-greedy exploration<br/>Ch.5: Stochastic sampling"]
+
+ ACTION --> ENV["Environment Interaction<br/>Ch.1: Observe (s,a,r,s')"]
+
+ ENV --> BUFFER["Experience Replay<br/>Ch.4: Store in buffer D<br/>Random minibatch sampling"]
+
+ BUFFER --> CRITIC["Critic Network V_w<br/>Ch.5: Value baseline<br/>Ch.4: Target network θ⁻"]
+
+ CRITIC --> ADVANTAGE["Advantage Estimation<br/>Ch.5: A = Q - V<br/>Ch.6: GAE(λ)"]
+
+ ADVANTAGE --> UPDATE["Gradient Update<br/>Ch.3: Q-learning TD error<br/>Ch.6: PPO-clip objective"]
+
+ UPDATE --> POLICY
+
+ MONITOR["Monitoring Dashboard"] --> METRICS["Track Metrics:<br/>- Avg episode reward<br/>- Policy entropy<br/>- Value loss<br/>- KL divergence"]
+
+ UPDATE --> MONITOR
+
+ style INPUT fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style POLICY fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style MONITOR fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### Deployment Pipeline (How Ch.1-6 Connect in Production)
@@ -176,125 +176,125 @@ flowchart TD
 ```python
 # Ch.1: Define MDP
 env = gym.make('CartPole-v1')
-state_dim = 4  # (x, ẋ, θ, θ̇)
-action_dim = 2  # {Left, Right}
-gamma = 0.99   # discount factor
+state_dim = 4 # (x, ẋ, θ, θ̇)
+action_dim = 2 # {Left, Right}
+gamma = 0.99 # discount factor
 
 # Ch.5 + Ch.6: Initialize PPO networks
-actor = PolicyNetwork(state_dim, action_dim)  # π_θ(a|s)
-critic = ValueNetwork(state_dim)              # V_w(s)
+actor = PolicyNetwork(state_dim, action_dim) # π_θ(a|s)
+critic = ValueNetwork(state_dim) # V_w(s)
 
 # Ch.4: Experience buffer (optional for PPO, required for SAC/DQN)
 replay_buffer = ReplayBuffer(capacity=1_000_000)
 
 # Training loop
 for episode in range(num_episodes):
-    states, actions, rewards, log_probs = [], [], [], []
-    state = env.reset()
-    done = False
-    
-    # Ch.3: Collect trajectory with exploration
-    while not done:
-        # Ch.5: Sample action from policy
-        action, log_prob = actor.sample(state)
-        next_state, reward, done, _ = env.step(action)
-        
-        # Ch.1: Store transition
-        states.append(state)
-        actions.append(action)
-        rewards.append(reward)
-        log_probs.append(log_prob)
-        
-        state = next_state
-    
-    # Ch.5: Compute advantages with critic
-    values = critic(states)
-    advantages = compute_gae(rewards, values, gamma, lam=0.95)
-    returns = advantages + values
-    
-    # Ch.6: PPO update with clipping
-    for epoch in range(4):  # reuse data 4 times
-        for batch in minibatch(states, actions, log_probs, advantages):
-            # Compute probability ratio
-            new_log_probs = actor.log_prob(batch.actions, batch.states)
-            ratio = torch.exp(new_log_probs - batch.old_log_probs)
-            
-            # PPO-clip objective
-            surr1 = ratio * batch.advantages
-            surr2 = torch.clamp(ratio, 1-0.2, 1+0.2) * batch.advantages
-            actor_loss = -torch.min(surr1, surr2).mean()
-            
-            # Critic loss
-            critic_loss = (critic(batch.states) - batch.returns).pow(2).mean()
-            
-            # Ch.2: Gradient descent (like value iteration, but stochastic)
-            optimize(actor_loss, critic_loss)
-    
-    # Monitor convergence
-    if avg_reward_last_100_episodes >= 195:
-        print(f"Solved in {episode} episodes!")
-        break
+ states, actions, rewards, log_probs = [], [], [], []
+ state = env.reset()
+ done = False
+
+ # Ch.3: Collect trajectory with exploration
+ while not done:
+ # Ch.5: Sample action from policy
+ action, log_prob = actor.sample(state)
+ next_state, reward, done, _ = env.step(action)
+
+ # Ch.1: Store transition
+ states.append(state)
+ actions.append(action)
+ rewards.append(reward)
+ log_probs.append(log_prob)
+
+ state = next_state
+
+ # Ch.5: Compute advantages with critic
+ values = critic(states)
+ advantages = compute_gae(rewards, values, gamma, lam=0.95)
+ returns = advantages + values
+
+ # Ch.6: PPO update with clipping
+ for epoch in range(4): # reuse data 4 times
+ for batch in minibatch(states, actions, log_probs, advantages):
+ # Compute probability ratio
+ new_log_probs = actor.log_prob(batch.actions, batch.states)
+ ratio = torch.exp(new_log_probs - batch.old_log_probs)
+
+ # PPO-clip objective
+ surr1 = ratio * batch.advantages
+ surr2 = torch.clamp(ratio, 1-0.2, 1+0.2) * batch.advantages
+ actor_loss = -torch.min(surr1, surr2).mean()
+
+ # Critic loss
+ critic_loss = (critic(batch.states) - batch.returns).pow(2).mean()
+
+ # Ch.2: Gradient descent (like value iteration, but stochastic)
+ optimize(actor_loss, critic_loss)
+
+ # Monitor convergence
+ if avg_reward_last_100_episodes >= 195:
+ print(f"Solved in {episode} episodes!")
+ break
 ```
 
 **2. Inference API (production agent):**
 ```python
 @app.route('/predict_action', methods=['POST'])
 def predict_action():
-    # Raw state from robot/environment
-    state = request.json['state']  # e.g., [x, ẋ, θ, θ̇]
-    
-    # Ch.1: Validate state is within MDP bounds
-    if not validate_state(state):
-        return {"error": "State out of bounds"}, 400
-    
-    # Ch.5: Sample action from trained policy
-    with torch.no_grad():
-        action_probs = actor(torch.tensor(state))
-        action = torch.argmax(action_probs).item()  # greedy (no exploration)
-    
-    # Ch.6: Confidence estimation
-    entropy = -torch.sum(action_probs * torch.log(action_probs + 1e-8))
-    confidence = 1 - entropy / math.log(action_dim)  # normalized
-    
-    return {
-        "action": int(action),
-        "confidence": float(confidence),
-        "action_probabilities": action_probs.tolist()
-    }
+ # Raw state from robot/environment
+ state = request.json['state'] # e.g., [x, ẋ, θ, θ̇]
+
+ # Ch.1: Validate state is within MDP bounds
+ if not validate_state(state):
+ return {"error": "State out of bounds"}, 400
+
+ # Ch.5: Sample action from trained policy
+ with torch.no_grad():
+ action_probs = actor(torch.tensor(state))
+ action = torch.argmax(action_probs).item() # greedy (no exploration)
+
+ # Ch.6: Confidence estimation
+ entropy = -torch.sum(action_probs * torch.log(action_probs + 1e-8))
+ confidence = 1 - entropy / math.log(action_dim) # normalized
+
+ return {
+ "action": int(action),
+ "confidence": float(confidence),
+ "action_probabilities": action_probs.tolist()
+ }
 ```
 
 **3. Monitoring Dashboard (tracks production health):**
 ```python
 # Ch.6: Alert if performance degrades
 def monitor_agent():
-    recent_rewards = deque(maxlen=100)
-    
-    while True:
-        episode_reward = run_episode(env, actor)
-        recent_rewards.append(episode_reward)
-        
-        avg_reward = np.mean(recent_rewards)
-        
-        # Performance degradation check
-        if len(recent_rewards) == 100 and avg_reward < 180:
-            alert("Agent performance dropped below threshold!")
-            trigger_retraining()
-        
-        # Ch.5: Policy entropy (exploration health)
-        avg_entropy = compute_policy_entropy(actor, validation_states)
-        if avg_entropy < 0.1:
-            alert("Policy collapsed to deterministic — may be overfitting")
-        
-        # Ch.4: Value network accuracy (critic quality)
-        value_loss = evaluate_value_network(critic, validation_data)
-        if value_loss > value_loss_baseline * 1.5:
-            alert("Critic network degraded — check for distribution shift")
-        
-        # Ch.3: Exploration coverage
-        state_visitation_counts = get_state_coverage()
-        unexplored_fraction = (state_visitation_counts == 0).mean()
-        if unexplored_fraction > 0.3:
-            alert("30% of state space unexplored — increase ε or entropy bonus")
+ recent_rewards = deque(maxlen=100)
+
+ while True:
+ episode_reward = run_episode(env, actor)
+ recent_rewards.append(episode_reward)
+
+ avg_reward = np.mean(recent_rewards)
+
+ # Performance degradation check
+ if len(recent_rewards) == 100 and avg_reward < 180:
+ alert("Agent performance dropped below threshold!")
+ trigger_retraining()
+
+ # Ch.5: Policy entropy (exploration health)
+ avg_entropy = compute_policy_entropy(actor, validation_states)
+ if avg_entropy < 0.1:
+ alert("Policy collapsed to deterministic — may be overfitting")
+
+ # Ch.4: Value network accuracy (critic quality)
+ value_loss = evaluate_value_network(critic, validation_data)
+ if value_loss > value_loss_baseline * 1.5:
+ alert("Critic network degraded — check for distribution shift")
+
+ # Ch.3: Exploration coverage
+ state_visitation_counts = get_state_coverage()
+ unexplored_fraction = (state_visitation_counts == 0).mean()
+ if unexplored_fraction > 0.3:
+ alert("30% of state space unexplored — increase ε or entropy bonus")
 ```
 
 ---
@@ -321,17 +321,17 @@ epsilon = max(epsilon_min, epsilon_init * decay_rate ** num_steps)
 ```python
 # Hard update (DQN, every 10k steps)
 if step % 10000 == 0:
-    target_net.load_state_dict(online_net.state_dict())
+ target_net.load_state_dict(online_net.state_dict())
 
 # Soft update (SAC, every step)
 for target_param, param in zip(target_net.parameters(), online_net.parameters()):
-    target_param.data.copy_(tau * param.data + (1 - tau) * target_param.data)
+ target_param.data.copy_(tau * param.data + (1 - tau) * target_param.data)
 ```
 
 ### 3. The Replay Buffer Pattern (Ch.4 + Ch.6)
 **When to use / not use**
-- ✅ **Use for**: DQN, SAC, DDPG (off-policy algorithms)
-- ❌ **Don't use for**: PPO, A3C (on-policy — recent data only)
+- **Use for**: DQN, SAC, DDPG (off-policy algorithms)
+- **Don't use for**: PPO, A3C (on-policy — recent data only)
 - **Capacity sizing**: 1M transitions = 10 GB RAM (store states as uint8, actions as int16)
 - **Prioritized replay**: Weight important transitions (large TD error) more heavily — 30% improvement on Atari
 
@@ -358,7 +358,7 @@ reward = 10 if reached_goal else 0
 reward = 10 if reached_goal else -0.01 * distance_to_goal
 
 # Potential-based shaping (guaranteed not to change optimal policy)
-reward = r_env + gamma * Φ(s') - Φ(s)  # Φ = potential function
+reward = r_env + gamma * Φ(s') - Φ(s) # Φ = potential function
 ```
 
 ---
@@ -367,23 +367,23 @@ reward = r_env + gamma * Φ(s') - Φ(s)  # Φ = potential function
 
 | # | Constraint | Target | Status | How We Achieved It |
 |---|------------|--------|--------|-------------------|
-| **#1** | **OPTIMALITY** | Find $\pi^*$ that maximizes $\mathbb{E}[\sum \gamma^t r_t]$ | ✅ **Achieved** | Ch.2: DP proves optimality with model; Ch.3-6: converge to $Q^*$ or locally optimal $\pi^*$ |
-| **#2** | **EFFICIENCY** | Solve CartPole in <200 episodes | ✅ **178 episodes** | Ch.4: DQN experience replay; Ch.6: SAC off-policy reuse (5× sample efficiency) |
-| **#3** | **SCALABILITY** | Handle continuous states (CartPole) and pixels (Atari) | ✅ **Solved** | Ch.4: Neural network function approximation generalizes across $10^9$ states |
-| **#4** | **STABILITY** | Converge reliably across 3 random seeds | ✅ **95% success** | Ch.4: Target networks; Ch.6: PPO clipping prevents catastrophic updates |
-| **#5** | **GENERALIZATION** | Transfer to new environment layouts | ⚠️ **Active research** | Sim-to-real gap, domain randomization, meta-RL (beyond this track) |
+| **#1** | **OPTIMALITY** | Find $\pi^*$ that maximizes $\mathbb{E}[\sum \gamma^t r_t]$ | **Achieved** | Ch.2: DP proves optimality with model; Ch.3-6: converge to $Q^*$ or locally optimal $\pi^*$ |
+| **#2** | **EFFICIENCY** | Solve CartPole in <200 episodes | **178 episodes** | Ch.4: DQN experience replay; Ch.6: SAC off-policy reuse (5× sample efficiency) |
+| **#3** | **SCALABILITY** | Handle continuous states (CartPole) and pixels (Atari) | **Solved** | Ch.4: Neural network function approximation generalizes across $10^9$ states |
+| **#4** | **STABILITY** | Converge reliably across 3 random seeds | **95% success** | Ch.4: Target networks; Ch.6: PPO clipping prevents catastrophic updates |
+| **#5** | **GENERALIZATION** | Transfer to new environment layouts | **Active research** | Sim-to-real gap, domain randomization, meta-RL (beyond this track) |
 
 ---
 
 ## What's Next: Beyond Reinforcement Learning
 
 **This track taught:**
-- ✅ MDP formalism — the universal language of sequential decision-making
-- ✅ Model-free learning — Q-learning, DQN, policy gradients work without knowing $P(s'|s,a)$
-- ✅ Function approximation — neural networks scale to continuous and high-dimensional spaces
-- ✅ Exploration-exploitation trade-off — $\epsilon$-greedy, entropy bonuses, intrinsic motivation
-- ✅ Stability techniques — experience replay, target networks, PPO clipping
-- ✅ Production patterns — actor-critic, replay buffers, monitoring, reward shaping
+- MDP formalism — the universal language of sequential decision-making
+- Model-free learning — Q-learning, DQN, policy gradients work without knowing $P(s'|s,a)$
+- Function approximation — neural networks scale to continuous and high-dimensional spaces
+- Exploration-exploitation trade-off — $\epsilon$-greedy, entropy bonuses, intrinsic motivation
+- Stability techniques — experience replay, target networks, PPO clipping
+- Production patterns — actor-critic, replay buffers, monitoring, reward shaping
 
 **What remains for AgentAI:**
 - **Multi-agent coordination** — when multiple agents interact (competition, cooperation)
@@ -423,10 +423,10 @@ The journey from random policy to optimal behavior follows a clear progression. 
 The algorithms you've learned — DQN, PPO, SAC — are not academic curiosities. They power AlphaGo's superhuman Go play, OpenAI Five's Dota 2 victories, DeepMind's protein folding breakthrough (AlphaFold), and the RLHF training that makes ChatGPT helpful and harmless. When you see a robot learn to walk, a trading algorithm adapt to market conditions, or a recommendation system personalize content, you're seeing these algorithms in action.
 
 **You now have:**
-- ✅ A complete RL toolkit — from tabular methods to deep RL
-- ✅ Production deployment patterns — replay buffers, target networks, PPO clipping
-- ✅ The ability to choose the right algorithm for your problem — discrete vs continuous, on-policy vs off-policy, sample-limited vs compute-limited
-- ✅ Debugging intuition — when to check state coverage, policy entropy, value function accuracy, reward shaping
+- A complete RL toolkit — from tabular methods to deep RL
+- Production deployment patterns — replay buffers, target networks, PPO clipping
+- The ability to choose the right algorithm for your problem — discrete vs continuous, on-policy vs off-policy, sample-limited vs compute-limited
+- Debugging intuition — when to check state coverage, policy entropy, value function accuracy, reward shaping
 
 **Next milestone:** Multi-Agent AI — where multiple agents learn together, competing or cooperating, leading to emergent communication, strategic reasoning, and the foundation for human-AI collaboration systems.
 

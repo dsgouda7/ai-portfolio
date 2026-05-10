@@ -11,12 +11,12 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 💡 **The mission**: You're the founding Platform Engineer at **InferenceBase** (the AI startup from Ch.1-5). The product is a document intelligence API: users upload PDFs, your API returns structured JSON from Llama-2-7B. You're currently using **HuggingFace Transformers** for inference — simple to code, but slow. Current metrics:
-> - ✅ Works correctly (API functional)
-> - ✅ Runs locally (one A100 GPU)
-> - ❌ **300ms latency** per request (users want <200ms)
-> - ❌ **10 requests/second max throughput** (need to scale to 100 req/s for launch)
-> - ❌ **OOM errors at batch size >4** (KV cache fills 40GB VRAM)
+> **The mission**: You're the founding Platform Engineer at **InferenceBase** (the AI startup from Ch.1-5). The product is a document intelligence API: users upload PDFs, your API returns structured JSON from Llama-2-7B. You're currently using **HuggingFace Transformers** for inference — simple to code, but slow. Current metrics:
+> - Works correctly (API functional)
+> - Runs locally (one A100 GPU)
+> - **300ms latency** per request (users want <200ms)
+> - **10 requests/second max throughput** (need to scale to 100 req/s for launch)
+> - **OOM errors at batch size >4** (KV cache fills 40GB VRAM)
 
 **What's blocking us:**
 The CEO forwards a spreadsheet comparing self-hosting vs OpenAI API:
@@ -34,8 +34,7 @@ The **model serving framework** decision matrix:
 1. **vLLM** — Best for LLMs (continuous batching, PagedAttention, 10-20× throughput vs HF)
 2. **ONNX Runtime** — Best for cross-platform deployment (CPU, mobile, edge devices)
 3. **TensorRT** — Best for absolute maximum throughput (NVIDIA GPUs only, complex setup)
-
-✅ **After this chapter**: You'll deploy Llama-2-7B with vLLM, achieve **150 req/s throughput** on one A100 (15× improvement), measure **180ms latency** (40% faster), and stay under **20GB memory usage** (KV cache paging). The math now works: 5 GPUs handle 750 req/s for $5,400/month.
+**After this chapter**: You'll deploy Llama-2-7B with vLLM, achieve **150 req/s throughput** on one A100 (15× improvement), measure **180ms latency** (40% faster), and stay under **20GB memory usage** (KV cache paging). The math now works: 5 GPUs handle 750 req/s for $5,400/month.
 
 ---
 
@@ -67,28 +66,28 @@ Training frameworks (PyTorch, TensorFlow) optimize for **fast iteration** — yo
 
 **Before diving into benchmarks, understand the decision workflow you'll follow for every model deployment:**
 
-> 📊 **What you'll build by the end:** A performance comparison matrix (throughput, latency, memory) across 3 frameworks + a deployment architecture with monitoring — answering "which framework wins for my workload?"
+> **What you'll build by the end:** A performance comparison matrix (throughput, latency, memory) across 3 frameworks + a deployment architecture with monitoring — answering "which framework wins for my workload?"
 
 ```
-Phase 1: REQUIREMENTS        Phase 2: BENCHMARK           Phase 3: COMPARE             Phase 4: DEPLOY
+Phase 1: REQUIREMENTS Phase 2: BENCHMARK Phase 3: COMPARE Phase 4: DEPLOY
 ────────────────────────────────────────────────────────────────────────────────────────────────────────
-Define success criteria:     Test frameworks:             Analyze metrics:             Production rollout:
+Define success criteria: Test frameworks: Analyze metrics: Production rollout:
 
-• Target latency (ms)        • vLLM (LLM-optimized)      • Throughput (req/s)         • FastAPI wrapper
-• Target throughput (req/s)  • ONNX Runtime (portable)   • Latency (P50/P95/P99)      • Load balancer + replicas
-• Hardware constraints       • TensorRT (NVIDIA-max)     • Memory usage (VRAM)        • Prometheus monitoring
-• Deployment platform        • Baseline (HF)             • Ease of integration        • Health checks + metrics
+• Target latency (ms) • vLLM (LLM-optimized) • Throughput (req/s) • FastAPI wrapper
+• Target throughput (req/s) • ONNX Runtime (portable) • Latency (P50/P95/P99) • Load balancer + replicas
+• Hardware constraints • TensorRT (NVIDIA-max) • Memory usage (VRAM) • Prometheus monitoring
+• Deployment platform • Baseline (HF) • Ease of integration • Health checks + metrics
 
-→ DECISION:                  → DECISION:                 → DECISION:                  → DECISION:
-  What are we optimizing?      Run all 3 on sample load    Which framework wins?        Ready for production?
-  • Latency? Throughput?       • Same model (Llama-2-7B)   • vLLM: Best for LLMs       • Monitoring in place?
-  • GPU/CPU? Cloud/edge?       • Same workload (100 req)   • ONNX: Best cross-platform • Autoscaling configured?
-  • Budget? Scale?             • Measure all 3 metrics     • TensorRT: Max throughput  • Rollback plan ready?
+→ DECISION: → DECISION: → DECISION: → DECISION:
+ What are we optimizing? Run all 3 on sample load Which framework wins? Ready for production?
+ • Latency? Throughput? • Same model (Llama-2-7B) • vLLM: Best for LLMs • Monitoring in place?
+ • GPU/CPU? Cloud/edge? • Same workload (100 req) • ONNX: Best cross-platform • Autoscaling configured?
+ • Budget? Scale? • Measure all 3 metrics • TensorRT: Max throughput • Rollback plan ready?
 ```
 
-> 💡 **Usage note:** Complete Phase 1 requirements gathering before benchmarking (avoids wasted work testing irrelevant frameworks). Run Phase 2 benchmarks in parallel (all frameworks tested with identical workload for fair comparison). Phase 3 decision is typically clear from metrics, but edge cases exist (see Decision Checkpoint 3).
+> **Usage note:** Complete Phase 1 requirements gathering before benchmarking (avoids wasted work testing irrelevant frameworks). Run Phase 2 benchmarks in parallel (all frameworks tested with identical workload for fair comparison). Phase 3 decision is typically clear from metrics, but edge cases exist (see Decision Checkpoint 3).
 
-> 💡 **Framework verdict:** vLLM outperformed TGI and TorchServe on InferenceBase workload — 12,000 req/day on 1× RTX 4090, p95 1.2s ✅.
+> **Framework verdict:** vLLM outperformed TGI and TorchServe on InferenceBase workload — 12,000 req/day on 1× RTX 4090, p95 1.2s .
 
 ---
 
@@ -104,68 +103,68 @@ Copy this table and fill in your values BEFORE benchmarking:
 # File: requirements.yaml (document before benchmarking)
 
 model:
-  name: "meta-llama/Llama-2-7b-chat-hf"
-  size_gb: 14.2  # FP16 model weights
-  architecture: "decoder-only"  # LLM vs encoder vs vision
+ name: "meta-llama/Llama-2-7b-chat-hf"
+ size_gb: 14.2 # FP16 model weights
+ architecture: "decoder-only" # LLM vs encoder vs vision
 
 workload:
-  avg_prompt_length: 200  # tokens
-  avg_output_length: 50   # tokens
-  requests_per_second: 100  # peak load
-  concurrent_users: 1000    # max simultaneous
+ avg_prompt_length: 200 # tokens
+ avg_output_length: 50 # tokens
+ requests_per_second: 100 # peak load
+ concurrent_users: 1000 # max simultaneous
 
 constraints:
-  latency_p95_target_ms: 200   # 95th percentile latency requirement
-  throughput_target_rps: 100   # requests per second target
-  budget_gpu_count: 5          # max GPUs available (or budget in $/month)
-  budget_gpu_type: "A100-40GB" # available hardware
+ latency_p95_target_ms: 200 # 95th percentile latency requirement
+ throughput_target_rps: 100 # requests per second target
+ budget_gpu_count: 5 # max GPUs available (or budget in $/month)
+ budget_gpu_type: "A100-40GB" # available hardware
 
 deployment:
-  platform: "self-hosted"  # vs "cloud API" vs "edge device"
-  os: "linux"              # vs "windows" vs "mobile"
-  gpu_vendor: "nvidia"     # vs "amd" vs "cpu-only"
+ platform: "self-hosted" # vs "cloud API" vs "edge device"
+ os: "linux" # vs "windows" vs "mobile"
+ gpu_vendor: "nvidia" # vs "amd" vs "cpu-only"
 
-priorities:  # Rank 1-5 (1 = most important)
-  latency: 1       # Time to first token
-  throughput: 2    # Requests per second per GPU
-  memory: 3        # VRAM efficiency (enables larger batch sizes)
-  ease_of_setup: 4 # Developer time to deploy
-  portability: 5   # Cross-platform compatibility
+priorities: # Rank 1-5 (1 = most important)
+ latency: 1 # Time to first token
+ throughput: 2 # Requests per second per GPU
+ memory: 3 # VRAM efficiency (enables larger batch sizes)
+ ease_of_setup: 4 # Developer time to deploy
+ portability: 5 # Cross-platform compatibility
 ```
 
 **Example: The InferenceBase scenario (from §0)**
 ```yaml
 model:
-  name: "meta-llama/Llama-2-7b-chat-hf"
-  size_gb: 14.2
-  architecture: "decoder-only"
+ name: "meta-llama/Llama-2-7b-chat-hf"
+ size_gb: 14.2
+ architecture: "decoder-only"
 
 workload:
-  avg_prompt_length: 180
-  avg_output_length: 50
-  requests_per_second: 100
-  concurrent_users: 1000
+ avg_prompt_length: 180
+ avg_output_length: 50
+ requests_per_second: 100
+ concurrent_users: 1000
 
 constraints:
-  latency_p95_target_ms: 200
-  throughput_target_rps: 100
-  budget_gpu_count: 5
-  budget_gpu_type: "A100-40GB"
+ latency_p95_target_ms: 200
+ throughput_target_rps: 100
+ budget_gpu_count: 5
+ budget_gpu_type: "A100-40GB"
 
 deployment:
-  platform: "self-hosted"
-  os: "linux"
-  gpu_vendor: "nvidia"
+ platform: "self-hosted"
+ os: "linux"
+ gpu_vendor: "nvidia"
 
 priorities:
-  latency: 1       # CEO requirement: <200ms
-  throughput: 2    # Need 100 req/s for launch
-  memory: 3        # Want to maximize batch size
-  ease_of_setup: 4 # Team has ML experience
-  portability: 5   # NVIDIA-only is fine
+ latency: 1 # CEO requirement: <200ms
+ throughput: 2 # Need 100 req/s for launch
+ memory: 3 # Want to maximize batch size
+ ease_of_setup: 4 # Team has ML experience
+ portability: 5 # NVIDIA-only is fine
 ```
 
-> 💡 **Industry Standard:** `requirements.yaml` or similar specifications
+> **Industry Standard:** `requirements.yaml` or similar specifications
 >
 > Real production teams document these constraints before any engineering work. This YAML becomes the **acceptance criteria** for framework selection — if a framework hits all targets, it wins regardless of hype.
 >
@@ -207,10 +206,10 @@ tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-2-7b-hf")
 
 # Process ONE request at a time
 for request in incoming_requests:
-    inputs = tokenizer(request.text, return_tensors="pt")
-    outputs = model.generate(**inputs, max_new_tokens=100)
-    response = tokenizer.decode(outputs[0])
-    send_response(response)
+ inputs = tokenizer(request.text, return_tensors="pt")
+ outputs = model.generate(**inputs, max_new_tokens=100)
+ response = tokenizer.decode(outputs[0])
+ send_response(response)
 ```
 
 **Problems with this code:**
@@ -223,7 +222,7 @@ for request in incoming_requests:
 
 ---
 
-> 💡 **Industry Standard:** **vLLM** — The LLM Serving Standard (UC Berkeley, 2023)
+> **Industry Standard:** **vLLM** — The LLM Serving Standard (UC Berkeley, 2023)
 >
 > **Adoption:** Used by Anyscale, Together AI, Fireworks AI, Modal, Replicate, and dozens of self-hosted deployments serving billions of tokens daily. vLLM has become the **de facto standard** for production LLM serving.
 >
@@ -275,7 +274,7 @@ outputs = llm.generate([req.text for req in incoming_requests], sampling_params)
 
 You'll deploy the same model (**Llama-2-7B-chat-hf**) with three frameworks and measure the differences. The test workload: 100 concurrent requests, each generating 50 tokens.
 
-> 💡 **Benchmarking principle:** Use **identical** workload across all frameworks (same model, same prompts, same output length) for fair comparison. Any workload variation invalidates the comparison.
+> **Benchmarking principle:** Use **identical** workload across all frameworks (same model, same prompts, same output length) for fair comparison. Any workload variation invalidates the comparison.
 
 ### Step 1: Baseline (HuggingFace Transformers)
 
@@ -286,9 +285,9 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 
 model = AutoModelForCausalLM.from_pretrained(
-    "meta-llama/Llama-2-7b-chat-hf",
-    torch_dtype=torch.float16,
-    device_map="auto"
+ "meta-llama/Llama-2-7b-chat-hf",
+ torch_dtype=torch.float16,
+ device_map="auto"
 )
 tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-2-7b-chat-hf")
 
@@ -300,13 +299,13 @@ _ = model.generate(**inputs, max_new_tokens=10)
 # Measure single request latency
 start = time.time()
 outputs = model.generate(**inputs, max_new_tokens=50)
-latency = (time.time() - start) * 1000  # Convert to ms
+latency = (time.time() - start) * 1000 # Convert to ms
 print(f"Latency: {latency:.1f} ms")
 
 # Measure throughput (sequential requests)
 start = time.time()
 for i in range(100):
-    _ = model.generate(**inputs, max_new_tokens=50)
+ _ = model.generate(**inputs, max_new_tokens=50)
 duration = time.time() - start
 throughput = 100 / duration
 print(f"Throughput: {throughput:.1f} req/s")
@@ -336,16 +335,16 @@ import time
 
 # Initialize vLLM engine
 llm = LLM(
-    model="meta-llama/Llama-2-7b-chat-hf",
-    tensor_parallel_size=1,  # Single GPU
-    dtype="float16",
-    gpu_memory_utilization=0.9  # Use 90% of VRAM for KV cache pages
+ model="meta-llama/Llama-2-7b-chat-hf",
+ tensor_parallel_size=1, # Single GPU
+ dtype="float16",
+ gpu_memory_utilization=0.9 # Use 90% of VRAM for KV cache pages
 )
 
 sampling_params = SamplingParams(
-    temperature=0.8,
-    top_p=0.95,
-    max_tokens=50
+ temperature=0.8,
+ top_p=0.95,
+ max_tokens=50
 )
 
 # Warm up
@@ -379,18 +378,18 @@ print(f"Throughput: {throughput:.1f} req/s")
 **Memory breakdown (vLLM-specific):**
 ```
 vLLM memory allocation:
-- Model weights (FP16):     14.2 GB  (7B params × 2 bytes)
-- KV cache (paged):         18.3 GB  (pool of 512 pages × 36 MB/page)
-- Activation buffers:        2.8 GB  (temporary tensors during forward pass)
-- CUDA context overhead:     1.2 GB
-Total:                      36.5 GB / 40 GB (91% utilization)
+- Model weights (FP16): 14.2 GB (7B params × 2 bytes)
+- KV cache (paged): 18.3 GB (pool of 512 pages × 36 MB/page)
+- Activation buffers: 2.8 GB (temporary tensors during forward pass)
+- CUDA context overhead: 1.2 GB
+Total: 36.5 GB / 40 GB (91% utilization)
 ```
 
 **KV cache page allocation example:**
 ```
-Request 1: [Page 0, Page 1, Page 2]        ← 3 pages (152 tokens generated)
-Request 2: [Page 3, Page 4]                ← 2 pages (98 tokens generated)
-Request 3: [Page 5, Page 6, Page 7]        ← 3 pages (145 tokens)
+Request 1: [Page 0, Page 1, Page 2] ← 3 pages (152 tokens generated)
+Request 2: [Page 3, Page 4] ← 2 pages (98 tokens generated)
+Request 3: [Page 5, Page 6, Page 7] ← 3 pages (145 tokens)
 ...
 
 When Request 1 finishes:
@@ -409,10 +408,10 @@ pip install optimum[exporters]
 
 # Export to ONNX format with INT8 quantization
 optimum-cli export onnx \
-    --model meta-llama/Llama-2-7b-chat-hf \
-    --task text-generation-with-past \
-    --quantize int8 \
-    llama2-7b-onnx/
+ --model meta-llama/Llama-2-7b-chat-hf \
+ --task text-generation-with-past \
+ --quantize int8 \
+ llama2-7b-onnx/
 ```
 
 **Code:**
@@ -422,8 +421,8 @@ from transformers import AutoTokenizer
 import time
 
 model = ORTModelForCausalLM.from_pretrained(
-    "llama2-7b-onnx",
-    provider="CUDAExecutionProvider"  # Use GPU
+ "llama2-7b-onnx",
+ provider="CUDAExecutionProvider" # Use GPU
 )
 tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-2-7b-chat-hf")
 
@@ -440,7 +439,7 @@ print(f"Latency: {latency:.1f} ms")
 # Measure throughput (sequential, ONNX doesn't batch automatically)
 start = time.time()
 for _ in range(100):
-    _ = model.generate(**inputs, max_new_tokens=50)
+ _ = model.generate(**inputs, max_new_tokens=50)
 throughput = 100 / (time.time() - start)
 print(f"Throughput: {throughput:.1f} req/s")
 ```
@@ -467,7 +466,7 @@ print(f"Throughput: {throughput:.1f} req/s")
 
 ---
 
-> 💡 **Industry Standard:** **ONNX Runtime** — Cross-Platform Inference (Microsoft, 2018)
+> **Industry Standard:** **ONNX Runtime** — Cross-Platform Inference (Microsoft, 2018)
 >
 > **Adoption:** Powers Microsoft's production ML (Bing, Office 365, Azure Cognitive Services), used by Meta's PyTorch Mobile, runs in TensorFlow Lite alternative workflows. ONNX Runtime is the **only truly cross-platform** inference engine with production-grade performance.
 >
@@ -506,12 +505,12 @@ pip install nvidia-tensorrt
 
 # Build TensorRT engine (one-time compilation)
 trtllm-build \
-    --checkpoint_dir llama2-7b-fp16 \
-    --output_dir llama2-7b-trt \
-    --max_batch_size 128 \
-    --max_input_len 512 \
-    --max_output_len 200 \
-    --gemm_plugin float16
+ --checkpoint_dir llama2-7b-fp16 \
+ --output_dir llama2-7b-trt \
+ --max_batch_size 128 \
+ --max_input_len 512 \
+ --max_output_len 200 \
+ --gemm_plugin float16
 ```
 
 **Code:**
@@ -563,7 +562,7 @@ print(f"Throughput: {throughput:.1f} req/s")
 
 ---
 
-> 💡 **Industry Standard:** **TensorRT** — NVIDIA's Maximum Performance Compiler (2016)
+> **Industry Standard:** **TensorRT** — NVIDIA's Maximum Performance Compiler (2016)
 >
 > **Adoption:** Powers NVIDIA Triton Inference Server (used by AWS SageMaker, Azure ML, Google Vertex AI), runs in all major cloud GPU offerings. TensorRT is the **fastest** inference engine for NVIDIA hardware — period.
 >
@@ -617,7 +616,7 @@ print(f"Throughput: {throughput:.1f} req/s")
 → **If deploying to edge devices or AMD GPUs:** Choose **ONNX Runtime** (cross-platform portability)
 → **Next:** Proceed to Phase 3 (framework comparison matrix) to validate the decision against other criteria
 
-> ⚠️ **Edge case — Multi-framework deployment:** Some teams deploy vLLM for cloud (NVIDIA A100s) and ONNX for edge (Raspberry Pi 5 with CPU) — same model, two frameworks. This adds operational complexity but may be justified if edge deployment is a hard requirement.
+> **Warning — Edge case — Multi-framework deployment:** Some teams deploy vLLM for cloud (NVIDIA A100s) and ONNX for edge (Raspberry Pi 5 with CPU) — same model, two frameworks. This adds operational complexity but may be justified if edge deployment is a hard requirement.
 
 ---
 
@@ -700,7 +699,7 @@ But vLLM reserves overhead (activation buffers, CUDA context), so practical limi
 
 Let's deploy vLLM as a production service with logging and metrics.
 
-> 💡 **Production deployment checklist:** (1) API wrapper (FastAPI), (2) Health checks (`/health` endpoint), (3) Metrics export (Prometheus `/metrics`), (4) Load testing (verify throughput target), (5) Monitoring dashboard (Grafana or similar). This section walks through all 5.
+> **Production deployment checklist:** (1) API wrapper (FastAPI), (2) Health checks (`/health` endpoint), (3) Metrics export (Prometheus `/metrics`), (4) Load testing (verify throughput target), (5) Monitoring dashboard (Grafana or similar). This section walks through all 5.
 
 ### Step 1: Install vLLM and Dependencies
 
@@ -729,9 +728,9 @@ app = FastAPI()
 
 # Initialize vLLM
 llm = LLM(
-    model="meta-llama/Llama-2-7b-chat-hf",
-    tensor_parallel_size=1,
-    gpu_memory_utilization=0.9
+ model="meta-llama/Llama-2-7b-chat-hf",
+ tensor_parallel_size=1,
+ gpu_memory_utilization=0.9
 )
 
 # Prometheus metrics
@@ -740,40 +739,40 @@ latency_histogram = Histogram('vllm_latency_seconds', 'Request latency')
 throughput_counter = Counter('vllm_tokens_generated', 'Tokens generated')
 
 class GenerateRequest(BaseModel):
-    prompt: str
-    max_tokens: int = 100
-    temperature: float = 0.8
+ prompt: str
+ max_tokens: int = 100
+ temperature: float = 0.8
 
 @app.post("/generate")
 async def generate(request: GenerateRequest):
-    request_counter.inc()
-    start_time = time.time()
+ request_counter.inc()
+ start_time = time.time()
 
-    sampling_params = SamplingParams(
-        temperature=request.temperature,
-        max_tokens=request.max_tokens
-    )
+ sampling_params = SamplingParams(
+ temperature=request.temperature,
+ max_tokens=request.max_tokens
+ )
 
-    outputs = llm.generate([request.prompt], sampling_params)
-    generated_text = outputs[0].outputs[0].text
+ outputs = llm.generate([request.prompt], sampling_params)
+ generated_text = outputs[0].outputs[0].text
 
-    latency = time.time() - start_time
-    latency_histogram.observe(latency)
-    throughput_counter.inc(len(outputs[0].outputs[0].token_ids))
+ latency = time.time() - start_time
+ latency_histogram.observe(latency)
+ throughput_counter.inc(len(outputs[0].outputs[0].token_ids))
 
-    return {
-        "generated_text": generated_text,
-        "latency_ms": latency * 1000,
-        "tokens_generated": len(outputs[0].outputs[0].token_ids)
-    }
+ return {
+ "generated_text": generated_text,
+ "latency_ms": latency * 1000,
+ "tokens_generated": len(outputs[0].outputs[0].token_ids)
+ }
 
 @app.get("/metrics")
 async def metrics():
-    return generate_latest().decode("utf-8")
+ return generate_latest().decode("utf-8")
 
 @app.get("/health")
 async def health():
-    return {"status": "healthy"}
+ return {"status": "healthy"}
 ```
 
 ### Step 3: Run Server
@@ -790,14 +789,14 @@ uvicorn serve:app --host 0.0.0.0 --port 8000 --workers 1
 ```bash
 # Single request
 curl -X POST http://localhost:8000/generate \
-  -H "Content-Type: application/json" \
-  -d '{"prompt": "Explain quantum computing", "max_tokens": 50}'
+ -H "Content-Type: application/json" \
+ -d '{"prompt": "Explain quantum computing", "max_tokens": 50}'
 
 # Response:
 # {
-#   "generated_text": "in simple terms.\n\nQuantum computing is...",
-#   "latency_ms": 184.2,
-#   "tokens_generated": 50
+# "generated_text": "in simple terms.\n\nQuantum computing is...",
+# "latency_ms": 184.2,
+# "tokens_generated": 50
 # }
 ```
 
@@ -811,14 +810,14 @@ pip install locust
 from locust import HttpUser, task, between
 
 class VLLMUser(HttpUser):
-    wait_time = between(0.1, 0.5)
+ wait_time = between(0.1, 0.5)
 
-    @task
-    def generate(self):
-        self.client.post("/generate", json={
-            "prompt": "Explain machine learning in one sentence.",
-            "max_tokens": 50
-        })
+ @task
+ def generate(self):
+ self.client.post("/generate", json={
+ "prompt": "Explain machine learning in one sentence.",
+ "max_tokens": 50
+ })
 
 # Run load test (100 concurrent users)
 locust -f locustfile.py --host http://localhost:8000 --users 100 --spawn-rate 10
@@ -836,18 +835,18 @@ locust -f locustfile.py --host http://localhost:8000 --users 100 --spawn-rate 10
 **File: `prometheus.yml`**
 ```yaml
 scrape_configs:
-  - job_name: 'vllm'
-    static_configs:
-      - targets: ['localhost:8000']
-    metrics_path: '/metrics'
+ - job_name: 'vllm'
+ static_configs:
+ - targets: ['localhost:8000']
+ metrics_path: '/metrics'
 ```
 
 **Start Prometheus:**
 ```bash
 # Run Prometheus in Docker
 docker run -p 9090:9090 \
-  -v $(pwd)/prometheus.yml:/etc/prometheus/prometheus.yml \
-  prom/prometheus
+ -v $(pwd)/prometheus.yml:/etc/prometheus/prometheus.yml \
+ prom/prometheus
 ```
 
 **Query metrics:**
@@ -878,7 +877,7 @@ docker run -p 9090:9090 \
 → **Disaster recovery:** Set up health checks with automatic replica replacement if a GPU OOMs or crashes
 → **A/B testing:** Deploy two vLLM versions (e.g., Llama-2-7B vs Llama-2-13B) and route 10% of traffic to the larger model for quality comparison
 
-> 💡 **Industry Standard:** Production LLM serving stacks (Anyscale Endpoints, Together AI, Fireworks AI)
+> **Industry Standard:** Production LLM serving stacks (Anyscale Endpoints, Together AI, Fireworks AI)
 >
 > All three major LLM API providers use this exact stack: vLLM inference engine + FastAPI wrapper + Prometheus metrics + Kubernetes orchestration. The architecture you just built is **production-grade** — the same patterns used to serve billions of tokens per day at scale.
 >
@@ -893,29 +892,29 @@ docker run -p 9090:9090 \
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│                    Load Balancer (NGINX)                     │
-│                                                               │
-│  ┌─────────────────────────────────────────────────────────┐ │
-│  │ Health checks: GET /health every 10s                    │ │
-│  │ Routing: Round-robin across healthy replicas           │ │
-│  └─────────────────────────────────────────────────────────┘ │
+│ Load Balancer (NGINX) │
+│ │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ Health checks: GET /health every 10s │ │
+│ │ Routing: Round-robin across healthy replicas │ │
+│ └─────────────────────────────────────────────────────────┘ │
 └────┬──────────────────────┬──────────────────────┬──────────┘
-     │                      │                      │
-     ▼                      ▼                      ▼
-┌──────────┐          ┌──────────┐          ┌──────────┐
-│ vLLM #1  │          │ vLLM #2  │          │ vLLM #3  │
-│ A100 GPU │          │ A100 GPU │          │ A100 GPU │
-│          │          │          │          │          │
-│ 150 r/s  │          │ 150 r/s  │          │ 150 r/s  │
-└──────────┘          └──────────┘          └──────────┘
-     │                      │                      │
-     └──────────────────────┴──────────────────────┘
-                            │
-                            ▼
-                   ┌─────────────────┐
-                   │   Prometheus    │
-                   │   Monitoring    │
-                   └─────────────────┘
+ │ │ │
+ ▼ ▼ ▼
+┌──────────┐ ┌──────────┐ ┌──────────┐
+│ vLLM #1 │ │ vLLM #2 │ │ vLLM #3 │
+│ A100 GPU │ │ A100 GPU │ │ A100 GPU │
+│ │ │ │ │ │
+│ 150 r/s │ │ 150 r/s │ │ 150 r/s │
+└──────────┘ └──────────┘ └──────────┘
+ │ │ │
+ └──────────────────────┴──────────────────────┘
+ │
+ ▼
+ ┌─────────────────┐
+ │ Prometheus │
+ │ Monitoring │
+ └─────────────────┘
 ```
 
 **Key points:**
@@ -942,33 +941,33 @@ Line chart showing:
 - X-axis: Time (seconds)
 - Y-axis: VRAM usage (GB)
 - Three lines:
-  - HuggingFace (static allocation, peaks at 22 GB, stays flat)
-  - vLLM without paging (peaks at 35 GB, OOM at 40 GB)
-  - vLLM with PagedAttention (peaks at 32 GB, pages freed as requests finish)
+ - HuggingFace (static allocation, peaks at 22 GB, stays flat)
+ - vLLM without paging (peaks at 35 GB, OOM at 40 GB)
+ - vLLM with PagedAttention (peaks at 32 GB, pages freed as requests finish)
 
 ### Diagram 4: Framework Decision Tree
 
 *See `gen_scripts/gen_ch06_decision_tree.py` for code*
 
 ```
-                  ┌─────────────────────────┐
-                  │ Choose Serving Framework│
-                  └───────────┬─────────────┘
-                              │
-              ┌───────────────┴───────────────┐
-              │                               │
-         Is it an LLM?                    Not an LLM
-         (decoder-only)                  (encoder, vision, etc.)
-              │                               │
-        ┌─────┴─────┐                   ┌────┴────┐
-        │           │                   │         │
-      Yes          No                 ONNX    TensorRT
-        │                             (cross-  (NVIDIA
-   ┌────┴────┐                      platform)   only)
-   │         │
- vLLM    TensorRT
-(best     (max
-choice)  perf)
+ ┌─────────────────────────┐
+ │ Choose Serving Framework│
+ └───────────┬─────────────┘
+ │
+ ┌───────────────┴───────────────┐
+ │ │
+ Is it an LLM? Not an LLM
+ (decoder-only) (encoder, vision, etc.)
+ │ │
+ ┌─────┴─────┐ ┌────┴────┐
+ │ │ │ │
+ Yes No ONNX TensorRT
+ │ (cross- (NVIDIA
+ ┌────┴────┐ platform) only)
+ │ │
+ vLLM TensorRT
+(best (max
+choice) perf)
 ```
 
 ---
@@ -979,24 +978,24 @@ choice)  perf)
 
 | Requirement | vLLM | ONNX Runtime | TensorRT | HuggingFace |
 |---|---|---|---|---|
-| **LLM inference (GPT, Llama, Mistral)** | ✅ Excellent | ⚠️ Works but slow | ✅ Fastest | ❌ Too slow |
-| **Cross-platform (CPU, ARM, AMD)** | ❌ NVIDIA only | ✅ Excellent | ❌ NVIDIA only | ✅ Works everywhere |
-| **Throughput (req/s per GPU)** | ✅ 10-20× baseline | ⚠️ 2-3× baseline | ✅ 20-30× baseline | ❌ Baseline |
-| **Latency (ms per request)** | ✅ 40% faster | ⚠️ 30% faster | ✅ 55% faster | ❌ Baseline |
-| **Memory efficiency** | ✅ Paged KV cache | ✅ INT8 quantization | ⚠️ Same as vLLM | ❌ Static allocation |
-| **Ease of setup** | ✅ Pip install | ✅ Pip install | ⚠️ Complex build | ✅ Pip install |
-| **Dynamic batching** | ✅ Continuous | ❌ Manual | ✅ Static batch size | ❌ Manual |
-| **Production readiness** | ✅ Used by Anyscale, Together | ✅ Microsoft production | ✅ NVIDIA Triton | ⚠️ Research only |
+| **LLM inference (GPT, Llama, Mistral)** | Excellent | Works but slow | Fastest | Too slow |
+| **Cross-platform (CPU, ARM, AMD)** | NVIDIA only | Excellent | NVIDIA only | Works everywhere |
+| **Throughput (req/s per GPU)** | 10-20× baseline | 2-3× baseline | 20-30× baseline | Baseline |
+| **Latency (ms per request)** | 40% faster | 30% faster | 55% faster | Baseline |
+| **Memory efficiency** | Paged KV cache | INT8 quantization | Same as vLLM | Static allocation |
+| **Ease of setup** | Pip install | Pip install | Complex build | Pip install |
+| **Dynamic batching** | Continuous | Manual | Static batch size | Manual |
+| **Production readiness** | Used by Anyscale, Together | Microsoft production | NVIDIA Triton | Research only |
 
 ---
 
 ### 6.1 DECISION CHECKPOINT — Phase 3 Complete (Framework Comparison)
 
 **What you just saw:**
-- **Matrix row "LLM inference":** vLLM and TensorRT both score ✅ Excellent, ONNX scores ⚠️ Works but slow, HuggingFace scores ❌ Too slow
-- **Matrix row "Cross-platform":** ONNX scores ✅ Excellent (CPU/ARM/AMD), vLLM and TensorRT score ❌ NVIDIA only
+- **Matrix row "LLM inference":** vLLM and TensorRT both score Excellent, ONNX scores Works but slow, HuggingFace scores Too slow
+- **Matrix row "Cross-platform":** ONNX scores Excellent (CPU/ARM/AMD), vLLM and TensorRT score NVIDIA only
 - **Matrix row "Throughput":** TensorRT 20-30× (highest), vLLM 10-20× (second), ONNX 2-3× (third), HuggingFace 1× (baseline)
-- **Matrix row "Ease of setup":** vLLM and ONNX both ✅ Pip install, TensorRT ⚠️ Complex build (10-15 min compile)
+- **Matrix row "Ease of setup":** vLLM and ONNX both Pip install, TensorRT Complex build (10-15 min compile)
 
 **What it means:**
 - **No single framework dominates all criteria** — each excels in different scenarios (vLLM for LLMs, ONNX for portability, TensorRT for max speed)
@@ -1005,19 +1004,19 @@ choice)  perf)
 
 **What to do next:**
 → **Match your Phase 1 priorities to matrix rows:**
-  - Latency Priority #1 + NVIDIA hardware → **TensorRT** (142 ms P50, fastest)
-  - Throughput Priority #1 + LLM workload → **vLLM** or **TensorRT** (147-189 req/s)
-  - Cross-platform Priority #1 → **ONNX Runtime** (only option for AMD/CPU/mobile)
-  - Memory efficiency Priority #1 → **ONNX INT8** (12 GB vs 32 GB for vLLM FP16)
+ - Latency Priority #1 + NVIDIA hardware → **TensorRT** (142 ms P50, fastest)
+ - Throughput Priority #1 + LLM workload → **vLLM** or **TensorRT** (147-189 req/s)
+ - Cross-platform Priority #1 → **ONNX Runtime** (only option for AMD/CPU/mobile)
+ - Memory efficiency Priority #1 → **ONNX INT8** (12 GB vs 32 GB for vLLM FP16)
 
 → **For InferenceBase (our scenario):**
-  - Priorities: Latency #1 (200ms), Throughput #2 (100 req/s), Memory #3
-  - vLLM satisfies: Latency ✅ (184 ms < 200 ms target), Throughput ✅ (147 req/s >> 20 req/s per GPU needed)
-  - **Decision: vLLM wins** — meets all requirements, easiest setup (pip install), production-proven
+ - Priorities: Latency #1 (200ms), Throughput #2 (100 req/s), Memory #3
+ - vLLM satisfies: Latency (184 ms < 200 ms target), Throughput (147 req/s >> 20 req/s per GPU needed)
+ - **Decision: vLLM wins** — meets all requirements, easiest setup (pip install), production-proven
 
 → **Next:** Proceed to Phase 4 (production deployment with FastAPI + monitoring)
 
-> 💡 **Industry Standard:** Framework selection matrices like this appear in every major AI lab's internal docs (OpenAI, Anthropic, Hugging Face all maintain similar tables). The key is **matching your row priorities to your Phase 1 requirements** — don't default to "most popular" without measuring.
+> **Industry Standard:** Framework selection matrices like this appear in every major AI lab's internal docs (OpenAI, Anthropic, Hugging Face all maintain similar tables). The key is **matching your row priorities to your Phase 1 requirements** — don't default to "most popular" without measuring.
 
 ---
 
@@ -1035,18 +1034,18 @@ choice)  perf)
 **Example config for production (Llama-2-7B on A100):**
 ```python
 llm = LLM(
-    model="meta-llama/Llama-2-7b-chat-hf",
-    tensor_parallel_size=1,
-    dtype="bfloat16",
-    gpu_memory_utilization=0.85,  # Leave 15% buffer for spikes
-    max_num_seqs=128,              # Balance throughput vs latency
-    max_model_len=2048             # Cap at 2048 tokens (system + user + response)
+ model="meta-llama/Llama-2-7b-chat-hf",
+ tensor_parallel_size=1,
+ dtype="bfloat16",
+ gpu_memory_utilization=0.85, # Leave 15% buffer for spikes
+ max_num_seqs=128, # Balance throughput vs latency
+ max_model_len=2048 # Cap at 2048 tokens (system + user + response)
 )
 ```
 
 ---
 
-> 💡 **Industry Standard:** **BentoML** for Model Deployment Orchestration
+> **Industry Standard:** **BentoML** for Model Deployment Orchestration
 >
 > ```python
 > # File: service.py (BentoML wrapper for vLLM)
@@ -1054,17 +1053,17 @@ llm = LLM(
 > from vllm import LLM, SamplingParams
 >
 > @bentoml.service(
->     resources={"gpu": 1, "gpu_type": "nvidia-a100"},
->     traffic={"timeout": 60}
+> resources={"gpu": 1, "gpu_type": "nvidia-a100"},
+> traffic={"timeout": 60}
 > )
 > class LlamaService:
->     def __init__(self):
->         self.llm = LLM(model="meta-llama/Llama-2-7b-chat-hf")
+> def __init__(self):
+> self.llm = LLM(model="meta-llama/Llama-2-7b-chat-hf")
 >
->     @bentoml.api
->     def generate(self, prompt: str, max_tokens: int = 100) -> str:
->         outputs = self.llm.generate([prompt], SamplingParams(max_tokens=max_tokens))
->         return outputs[0].outputs[0].text
+> @bentoml.api
+> def generate(self, prompt: str, max_tokens: int = 100) -> str:
+> outputs = self.llm.generate([prompt], SamplingParams(max_tokens=max_tokens))
+> return outputs[0].outputs[0].text
 >
 > # Deploy with: bentoml serve service:LlamaService
 > # Containerize with: bentoml containerize llamaservice:latest
@@ -1101,24 +1100,24 @@ RuntimeError: CUDA out of memory. Tried to allocate 3.2 GB (GPU 0; 39.4 GB total
 
 **Solutions:**
 1. **Lower `max_num_seqs`** (reduce concurrent requests):
-   ```python
-   llm = LLM(model=..., max_num_seqs=32)  # Default is 256
-   ```
+ ```python
+ llm = LLM(model=..., max_num_seqs=32) # Default is 256
+ ```
 
 2. **Lower `max_model_len`** (cap sequence length):
-   ```python
-   llm = LLM(model=..., max_model_len=1024)  # Default is 4096
-   ```
+ ```python
+ llm = LLM(model=..., max_model_len=1024) # Default is 4096
+ ```
 
 3. **Reduce `gpu_memory_utilization`** (leave more VRAM buffer):
-   ```python
-   llm = LLM(model=..., gpu_memory_utilization=0.7)  # Default is 0.9
-   ```
+ ```python
+ llm = LLM(model=..., gpu_memory_utilization=0.7) # Default is 0.9
+ ```
 
 4. **Use quantization** (INT8 or INT4 reduces memory 2-4×):
-   ```python
-   llm = LLM(model=..., quantization="awq")  # Requires AWQ-quantized checkpoint
-   ```
+ ```python
+ llm = LLM(model=..., quantization="awq") # Requires AWQ-quantized checkpoint
+ ```
 
 ### Problem 2: KV Cache Eviction (PagedAttention Thrashing)
 
@@ -1142,17 +1141,17 @@ If hit rate <80%, you're evicting too often.
 
 **Solutions:**
 1. **Lower `max_tokens`** (shorter responses = faster request completion):
-   ```python
-   sampling_params = SamplingParams(max_tokens=50)  # Instead of 200
-   ```
+ ```python
+ sampling_params = SamplingParams(max_tokens=50) # Instead of 200
+ ```
 
 2. **Increase GPU memory** (upgrade from A100 40GB to A100 80GB or H100 80GB)
 
 3. **Enable prefix caching** (share KV cache for common prompt prefixes):
-   ```python
-   llm = LLM(model=..., enable_prefix_caching=True)
-   ```
-   This helps if many requests share the same system prompt.
+ ```python
+ llm = LLM(model=..., enable_prefix_caching=True)
+ ```
+ This helps if many requests share the same system prompt.
 
 ### Problem 3: GPU Underutilization (Low Throughput Despite Available VRAM)
 
@@ -1169,18 +1168,18 @@ If hit rate <80%, you're evicting too often.
 **Diagnosis:**
 Check request arrival rate:
 ```python
-arrival_rate = total_requests / total_time  # Should be >100 req/s for good batching
+arrival_rate = total_requests / total_time # Should be >100 req/s for good batching
 ```
 
 **Solutions:**
 1. **Increase load** (add more clients sending requests)
 
 2. **Lower latency target** (accept smaller batches):
-   ```python
-   # This is internal vLLM config (not exposed via API)
-   # But you can reduce max_num_seqs to force smaller batches to start sooner
-   llm = LLM(model=..., max_num_seqs=16)
-   ```
+ ```python
+ # This is internal vLLM config (not exposed via API)
+ # But you can reduce max_num_seqs to force smaller batches to start sooner
+ llm = LLM(model=..., max_num_seqs=16)
+ ```
 
 3. **Use burst traffic patterns** (requests come in waves, not uniformly)
 
@@ -1196,16 +1195,16 @@ arrival_rate = total_requests / total_time  # Should be >100 req/s for good batc
 
 **Solutions:**
 1. **Warm up the model** at server startup:
-   ```python
-   # After loading LLM
-   _ = llm.generate(["Warmup prompt"], SamplingParams(max_tokens=1))
-   logger.info("Model warmed up")
-   ```
+ ```python
+ # After loading LLM
+ _ = llm.generate(["Warmup prompt"], SamplingParams(max_tokens=1))
+ logger.info("Model warmed up")
+ ```
 
 2. **Use CUDA graphs** (eliminates kernel launch overhead after warmup):
-   ```python
-   llm = LLM(model=..., enforce_eager=False)  # Enable CUDA graphs (default)
-   ```
+ ```python
+ llm = LLM(model=..., enforce_eager=False) # Enable CUDA graphs (default)
+ ```
 
 ---
 
@@ -1214,45 +1213,45 @@ arrival_rate = total_requests / total_time  # Should be >100 req/s for good batc
 Before moving to the next chapter, verify you can answer:
 
 1. **Why is vLLM 15× faster than HuggingFace Transformers for serving Llama-2-7B?**
-   <details><summary>Answer</summary>
+ <details><summary>Answer</summary>
 
-   vLLM implements three key optimizations: (1) **Continuous batching** — starts inference on new requests immediately instead of waiting for a full batch, keeping GPU busy; (2) **PagedAttention** — manages KV cache in pages like OS virtual memory, eliminating fragmentation and freeing memory as requests finish; (3) **Operator fusion** — merges multiple CUDA kernels into single fused kernels, reducing launch overhead. Together these achieve ~85% GPU utilization vs ~40% with naive PyTorch.
-   </details>
+ vLLM implements three key optimizations: (1) **Continuous batching** — starts inference on new requests immediately instead of waiting for a full batch, keeping GPU busy; (2) **PagedAttention** — manages KV cache in pages like OS virtual memory, eliminating fragmentation and freeing memory as requests finish; (3) **Operator fusion** — merges multiple CUDA kernels into single fused kernels, reducing launch overhead. Together these achieve ~85% GPU utilization vs ~40% with naive PyTorch.
+ </details>
 
 2. **What is PagedAttention and why does it help with memory?**
-   <details><summary>Answer</summary>
+ <details><summary>Answer</summary>
 
-   PagedAttention is vLLM's memory manager that allocates KV cache in fixed-size pages (e.g., 4 MB blocks) instead of contiguous buffers. Benefits: (1) **No fragmentation** — pages can be allocated anywhere in VRAM; (2) **Dynamic allocation** — pages freed immediately when requests finish (no waiting for batch end); (3) **Sharing** — pages can be shared across requests with common prompt prefixes (prefix caching). This allows 2-4× more concurrent requests vs static allocation.
-   </details>
+ PagedAttention is vLLM's memory manager that allocates KV cache in fixed-size pages (e.g., 4 MB blocks) instead of contiguous buffers. Benefits: (1) **No fragmentation** — pages can be allocated anywhere in VRAM; (2) **Dynamic allocation** — pages freed immediately when requests finish (no waiting for batch end); (3) **Sharing** — pages can be shared across requests with common prompt prefixes (prefix caching). This allows 2-4× more concurrent requests vs static allocation.
+ </details>
 
 3. **When should you use ONNX Runtime instead of vLLM?**
-   <details><summary>Answer</summary>
+ <details><summary>Answer</summary>
 
-   Use ONNX Runtime when: (1) **Cross-platform deployment** — need to run on CPU, ARM, AMD GPUs, or mobile devices (vLLM is NVIDIA-only); (2) **Memory constraints** — ONNX INT8 quantization uses 2× less VRAM than vLLM FP16; (3) **Non-LLM models** — ONNX supports vision, encoder, and custom architectures (vLLM is LLM-specific). Trade-off: ONNX is 2-6× slower than vLLM for LLMs because it lacks continuous batching.
-   </details>
+ Use ONNX Runtime when: (1) **Cross-platform deployment** — need to run on CPU, ARM, AMD GPUs, or mobile devices (vLLM is NVIDIA-only); (2) **Memory constraints** — ONNX INT8 quantization uses 2× less VRAM than vLLM FP16; (3) **Non-LLM models** — ONNX supports vision, encoder, and custom architectures (vLLM is LLM-specific). Trade-off: ONNX is 2-6× slower than vLLM for LLMs because it lacks continuous batching.
+ </details>
 
 4. **How do you calculate the max concurrent requests for a given GPU?**
-   <details><summary>Answer</summary>
+ <details><summary>Answer</summary>
 
-   Formula: $N_{\text{max}} = \frac{V_{\text{available}}}{M_{\text{KV per request}}}$
+ Formula: $N_{\text{max}} = \frac{V_{\text{available}}}{M_{\text{KV per request}}}$
 
-   Where $V_{\text{available}} = V_{\text{total}} - M_{\text{model}}$ (VRAM after loading model)
+ Where $V_{\text{available}} = V_{\text{total}} - M_{\text{model}}$ (VRAM after loading model)
 
-   And $M_{\text{KV}} = 2 \times n_{\text{layers}} \times d_{\text{model}} \times \text{seq\_len} \times \text{bytes}$
+ And $M_{\text{KV}} = 2 \times n_{\text{layers}} \times d_{\text{model}} \times \text{seq\_len} \times \text{bytes}$
 
-   Example (Llama-2-7B, A100 40GB, 200 tokens/request):
-   - Available VRAM: 40 - 14.2 = 25.8 GB
-   - KV per request: 2 × 32 × 4096 × 200 × 2 bytes = 105 MB
-   - Max concurrent: 25.8 GB / 105 MB = 246 requests
+ Example (Llama-2-7B, A100 40GB, 200 tokens/request):
+ - Available VRAM: 40 - 14.2 = 25.8 GB
+ - KV per request: 2 × 32 × 4096 × 200 × 2 bytes = 105 MB
+ - Max concurrent: 25.8 GB / 105 MB = 246 requests
 
-   In practice, vLLM achieves ~60% of theoretical due to activation buffers and overhead.
-   </details>
+ In practice, vLLM achieves ~60% of theoretical due to activation buffers and overhead.
+ </details>
 
 5. **What is continuous batching and why does it improve throughput?**
-   <details><summary>Answer</summary>
+ <details><summary>Answer</summary>
 
-   Continuous batching (aka iteration-level batching) starts inference on new requests as soon as they arrive, without waiting for a full batch. Traditional batching waits until N requests accumulate before starting the forward pass. Benefits: (1) **Lower latency** — first request doesn't wait for others; (2) **Higher GPU utilization** — GPU stays busy even if requests arrive slowly; (3) **Better throughput** — can process variable-length requests efficiently (finished requests are replaced immediately). Implemented by vLLM and TensorRT-LLM.
-   </details>
+ Continuous batching (aka iteration-level batching) starts inference on new requests as soon as they arrive, without waiting for a full batch. Traditional batching waits until N requests accumulate before starting the forward pass. Benefits: (1) **Lower latency** — first request doesn't wait for others; (2) **Higher GPU utilization** — GPU stays busy even if requests arrive slowly; (3) **Better throughput** — can process variable-length requests efficiently (finished requests are replaced immediately). Implemented by vLLM and TensorRT-LLM.
+ </details>
 
 ---
 
@@ -1263,12 +1262,9 @@ Before moving to the next chapter, verify you can answer:
 ---
 
 ## Bridge to Next Chapter
-
-✅ **What you learned:** How to deploy LLMs with production-grade serving frameworks (vLLM, ONNX, TensorRT), measure throughput/latency/memory, and choose the right tool for your workload.
-
-🎯 **Your new capability:** You can serve Llama-2-7B at 150 req/s on one GPU (vs 10 req/s with baseline), handle 1000+ concurrent users with 3-5 GPUs, and deploy with health checks, metrics, and load balancing.
-
-➡️ **Next chapter (Ch.7 — AI-Specific Networking):** Now that you can max out one GPU, the next bottleneck is **GPU-to-GPU communication**. When you split Llama-70B across 4 GPUs with tensor parallelism, how does GPU #1 send activations to GPU #2? Why does PCIe (~32 GB/s) become the bottleneck? How do NVLink (~600 GB/s) and InfiniBand (~400 Gbps) solve this? Ch.7 teaches the networking layer that makes multi-GPU inference practical — and explains why NVIDIA's DGX systems are 10× faster than cobbled-together GPU clusters.
+**What you learned:** How to deploy LLMs with production-grade serving frameworks (vLLM, ONNX, TensorRT), measure throughput/latency/memory, and choose the right tool for your workload.
+**Your new capability:** You can serve Llama-2-7B at 150 req/s on one GPU (vs 10 req/s with baseline), handle 1000+ concurrent users with 3-5 GPUs, and deploy with health checks, metrics, and load balancing.
+**Next chapter (Ch.7 — AI-Specific Networking):** Now that you can max out one GPU, the next bottleneck is **GPU-to-GPU communication**. When you split Llama-70B across 4 GPUs with tensor parallelism, how does GPU #1 send activations to GPU #2? Why does PCIe (~32 GB/s) become the bottleneck? How do NVLink (~600 GB/s) and InfiniBand (~400 Gbps) solve this? Ch.7 teaches the networking layer that makes multi-GPU inference practical — and explains why NVIDIA's DGX systems are 10× faster than cobbled-together GPU clusters.
 
 **Cross-chapter connections:**
 - [Ch.1: GPU Architecture](../ch01_gpu_architecture) — Tensor Cores, memory bandwidth (hardware limits vLLM throughput)

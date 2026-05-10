@@ -1,8 +1,8 @@
 # AI Portfolio — Professional Learning Roadmap (1 Hour/Day)
 
-> **Target Audience:** Working professionals with 1 hour/day to dedicate to learning AI/ML  
-> **Total Duration:** ~180 days (6 months) to reach senior ML/AI engineering proficiency  
-> **Prerequisites:** Can write Python, comfortable with command line, know what a matrix is  
+> **Target Audience:** Working professionals with 1 hour/day to dedicate to learning AI/ML
+> **Total Duration:** ~180 days (6 months) to reach senior ML/AI engineering proficiency
+> **Prerequisites:** Can write Python, comfortable with command line, know what a matrix is
 > **End Goal:** Job-ready for ML Engineer, AI Engineer, or Computer Vision Engineer roles at FAANG+ companies
 
 ---
@@ -15,17 +15,17 @@ Every session follows this pattern:
 
 ```
 ┌─────────────────────────────────────────┐
-│ 🕐 0:00-0:05 (5 min)  │ Review yesterday's checklist + setup environment │
-│ 📚 0:05-0:40 (35 min) │ Read chapter README + work through examples      │
-│ 💻 0:40-0:55 (15 min) │ Run notebook cells + experiment                  │
-│ ✅ 0:55-1:00 (5 min)  │ Complete daily checklist + commit notes          │
+│ 🕐 0:00-0:05 (5 min) │ Review yesterday's checklist + setup environment │
+│ 0:05-0:40 (35 min) │ Read chapter README + work through examples │
+│ 0:40-0:55 (15 min) │ Run notebook cells + experiment │
+│ 0:55-1:00 (5 min) │ Complete daily checklist + commit notes │
 └─────────────────────────────────────────┘
 ```
 
 ### Progress Tracking
 
-- ✅ **Complete**: Finished chapter, ran all code, understand concepts
-- ⏸️ **In Progress**: Started but need more time
+- **Complete**: Finished chapter, ran all code, understand concepts
+- **In Progress**: Started but need more time
 - 🔄 **Review**: Need to revisit after completing dependent chapters
 
 ### When You Get Stuck
@@ -40,8 +40,8 @@ Every session follows this pattern:
 
 ## Phase 1: Foundations (Days 1-30, ~30 hours)
 
-**Goal:** Build mathematical foundations and understand data engineering  
-**Why First:** You'll see gradients, matrices, and data quality issues in every ML chapter  
+**Goal:** Build mathematical foundations and understand data engineering
+**Why First:** You'll see gradients, matrices, and data quality issues in every ML chapter
 **Success Metric:** Can derive gradient descent by hand, detect data drift
 
 ### Week 1: Mathematical Foundations (Days 1-7)
@@ -141,7 +141,7 @@ Every session follows this pattern:
 - [ ] Understand matrices as "batch processing" for multiple samples
 - [ ] Know chain rule enables training deep networks
 - [ ] Completed all 7 math chapters (7/7)
-- [ ] **Milestone:** Ready to start ML track ✅
+- [ ] **Milestone:** Ready to start ML track
 
 ---
 
@@ -194,9 +194,9 @@ Every session follows this pattern:
 - **Time:** 4 hours total (1 hour/day)
 - **Deliverable:** Notebook that loads, cleans, validates, and monitors housing data
 
-**Day 11:** Implement outlier detection (IQR + Z-score)  
-**Day 12:** Handle class imbalance (compute weights, apply SMOTE)  
-**Day 13:** Set up drift monitoring (PSI, KL divergence)  
+**Day 11:** Implement outlier detection (IQR + Z-score)
+**Day 12:** Handle class imbalance (compute weights, apply SMOTE)
+**Day 13:** Set up drift monitoring (PSI, KL divergence)
 **Day 14:** Create validation dashboard with Great Expectations
 
 **Week 2-3 Checklist:**
@@ -204,7 +204,7 @@ Every session follows this pattern:
 - [ ] Understand class imbalance techniques (weights, SMOTE, cost-sensitive learning)
 - [ ] Can compute PSI and detect distribution drift
 - [ ] Built production-ready data validation pipeline
-- [ ] **Milestone:** Ready for ML algorithms ✅
+- [ ] **Milestone:** Ready for ML algorithms
 
 ---
 
@@ -275,7 +275,7 @@ Every session follows this pattern:
 **Daily Checklist:**
 - [ ] Applied Ridge (L2 penalty) — shrinks all weights proportionally
 - [ ] Applied Lasso (L1 penalty) — sets some weights to exactly zero
-- [ ] MAE improved: $48k → $38k ✅ (Target: <$40k achieved!)
+- [ ] MAE improved: $48k → $38k (Target: <$40k achieved!)
 - [ ] Used 5-fold cross-validation to select best $\alpha$
 
 ---
@@ -305,14 +305,14 @@ Every session follows this pattern:
 - [ ] Understand Ridge/Lasso/Elastic Net trade-offs
 - [ ] Can use SHAP for feature importance visualization
 - [ ] Completed all 7 regression chapters (7/7)
-- [ ] **Milestone:** SmartVal AI constraint achieved (<$40k MAE) ✅
+- [ ] **Milestone:** SmartVal AI constraint achieved (<$40k MAE)
 
 ---
 
 ## Phase 2: Core ML Algorithms (Days 22-60, ~39 hours)
 
-**Goal:** Master classification, neural networks, and gradient-based optimization  
-**Why Next:** Build on regression foundations, unlock deep learning  
+**Goal:** Master classification, neural networks, and gradient-based optimization
+**Why Next:** Build on regression foundations, unlock deep learning
 **Success Metric:** Can implement neural networks and transformers from scratch
 
 ### Week 5-6: Classification (Days 22-35)
@@ -323,8 +323,8 @@ Every session follows this pattern:
 - **Key Concept:** Sigmoid function squashes output to [0, 1]
 - **Hands-On:** Train logistic regression on CelebA dataset
 
-**Day 22:** Understand sigmoid activation, cross-entropy loss  
-**Day 23:** Implement gradient descent for logistic regression  
+**Day 22:** Understand sigmoid activation, cross-entropy loss
+**Day 23:** Implement gradient descent for logistic regression
 **Day 24:** Evaluate with precision, recall, F1 score
 
 **3-Day Checklist:**
@@ -386,7 +386,7 @@ Every session follows this pattern:
 **2-Day Checklist:**
 - [ ] Used GridSearchCV for SVM (C, gamma)
 - [ ] Used RandomizedSearchCV for Random Forest (n_estimators, max_depth)
-- [ ] FaceAI achieved >90% avg accuracy across 5 attributes ✅
+- [ ] FaceAI achieved >90% avg accuracy across 5 attributes
 - [ ] **Milestone:** Classification track complete (5/5 chapters)
 
 ---
@@ -458,7 +458,7 @@ Every session follows this pattern:
 **4-Day Checklist:**
 - [ ] Understand convolution: sliding window with learnable filters
 - [ ] Built CNN: Conv(32) → Pool → Conv(64) → Pool → Dense(128) → Output
-- [ ] Achieved 95% accuracy on CelebA (exceeds FaceAI target!) ✅
+- [ ] Achieved 95% accuracy on CelebA (exceeds FaceAI target!)
 - [ ] Visualized learned filters (edge detectors, texture detectors)
 
 ---
@@ -515,14 +515,14 @@ Every session follows this pattern:
 - [ ] Understand encoder-decoder architecture
 - [ ] Computed attention weights: which input tokens matter most
 - [ ] Visualized attention heatmap for translation task
-- [ ] **Milestone:** Ready for Transformers ✅
+- [ ] **Milestone:** Ready for Transformers
 
 ---
 
 ## Phase 3: Advanced ML & Specializations (Days 61-120, ~60 hours)
 
-**Goal:** Master Transformers, then specialize in AI/Multimodal/Infrastructure  
-**Why Next:** Transformers are foundation for modern AI  
+**Goal:** Master Transformers, then specialize in AI/Multimodal/Infrastructure
+**Why Next:** Transformers are foundation for modern AI
 **Success Metric:** Can implement Transformer, choose specialization path
 
 ### Week 11-12: Transformers (Days 61-75)
@@ -533,12 +533,12 @@ Every session follows this pattern:
 - **Key Concept:** Attention is all you need
 - **Hands-On:** Implement Transformer from scratch
 
-**Day 61:** Understand self-attention mechanism  
-**Day 62:** Implement scaled dot-product attention  
-**Day 63:** Build multi-head attention (8 heads)  
-**Day 64:** Add positional encodings  
-**Day 65:** Stack encoder/decoder layers  
-**Day 66:** Train on simple task (e.g., reverse sequence)  
+**Day 61:** Understand self-attention mechanism
+**Day 62:** Implement scaled dot-product attention
+**Day 63:** Build multi-head attention (8 heads)
+**Day 64:** Add positional encodings
+**Day 65:** Stack encoder/decoder layers
+**Day 66:** Train on simple task (e.g., reverse sequence)
 **Day 67:** Validate Transformer achieves UnifiedAI targets
 
 **Week 11-12 Checklist:**
@@ -546,21 +546,21 @@ Every session follows this pattern:
 - [ ] Built 8-head attention (parallel attention computations)
 - [ ] Added positional encoding: $PE_{pos,2i} = \sin(pos/10000^{2i/d})$
 - [ ] Trained Transformer: achieved convergence
-- [ ] **Milestone:** Transformer implementation complete ✅
+- [ ] **Milestone:** Transformer implementation complete
 - [ ] **DECISION POINT:** Choose specialization track
 
 ---
 
 ### Specialization Tracks (Days 68-120)
 
-> **You MUST choose ONE specialization track.** Each is ~53 days (7-8 weeks).  
+> **You MUST choose ONE specialization track.** Each is ~53 days (7-8 weeks).
 > Pick based on career goals:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ 🤖 AI Track           │ RAG, agents, LangChain              │ → AI Engineer
-│ 🎨 Multimodal AI      │ Stable Diffusion, CLIP, generation │ → Generative AI Engineer
-│ ⚙️  AI Infrastructure │ GPU optimization, serving, MLOps   │ → ML Infrastructure Engineer
+│ AI Track │ RAG, agents, LangChain │ → AI Engineer
+│ Multimodal AI │ Stable Diffusion, CLIP, generation │ → Generative AI Engineer
+│ AI Infrastructure │ GPU optimization, serving, MLOps │ → ML Infrastructure Engineer
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -568,8 +568,8 @@ Every session follows this pattern:
 
 ## Specialization Option A: AI Engineering (Days 68-120)
 
-**Track:** [03-ai](03-ai)  
-**Grand Challenge:** PizzaBot — Conversational AI for Mamma Rosa's Pizza  
+**Track:** [03-ai](03-ai)
+**Grand Challenge:** PizzaBot — Conversational AI for Mamma Rosa's Pizza
 **Final Constraint:** >32% conversion, <$0.07/conv, <3s latency, 0 successful attacks
 
 ### Week 13-14: LLM Foundations (Days 68-82)
@@ -618,16 +618,16 @@ Every session follows this pattern:
 - **Focus:** Semantic search, retrieval-augmented generation
 - **Hands-On:** Build RAG pipeline for PizzaBot menu corpus
 
-**Day 77:** Understand embeddings (768-dim vectors)  
-**Day 78:** Compute embeddings for menu items  
-**Day 79:** Implement semantic search (cosine similarity)  
-**Day 80:** Build RAG pipeline: query → retrieve → augment → generate  
-**Day 81:** Evaluate retrieval accuracy (precision@k)  
-**Day 82:** Achieve <5% error rate ✅ (Constraint #2 met!)
+**Day 77:** Understand embeddings (768-dim vectors)
+**Day 78:** Compute embeddings for menu items
+**Day 79:** Implement semantic search (cosine similarity)
+**Day 80:** Build RAG pipeline: query → retrieve → augment → generate
+**Day 81:** Evaluate retrieval accuracy (precision@k)
+**Day 82:** Achieve <5% error rate (Constraint #2 met!)
 
 **Week 13-14 Checklist:**
 - [ ] Built RAG pipeline: 98% retrieval accuracy
-- [ ] Error rate: 7% → <5% ✅
+- [ ] Error rate: 7% → <5%
 - [ ] Reduced hallucinations (grounded in menu corpus)
 - [ ] PizzaBot can now answer 95% of customer queries correctly
 
@@ -667,10 +667,10 @@ Every session follows this pattern:
 - **Chapter:** [03-ai/ch09_cost_and_latency](03-ai/ch09_cost_and_latency)
 
 **5-Day Checklist:**
-- [ ] Implemented prompt injection defense (0 successful attacks) ✅
+- [ ] Implemented prompt injection defense (0 successful attacks)
 - [ ] Measured RAGAS metrics (faithfulness, relevancy, context precision)
 - [ ] Optimized latency: 6s → 2.5s (KV caching, streaming)
-- [ ] Cost: $0.015/conv → <$0.08/conv ✅
+- [ ] Cost: $0.015/conv → <$0.08/conv
 
 ---
 
@@ -684,7 +684,7 @@ Every session follows this pattern:
 - [ ] Trained LoRA adapter for Mamma Rosa's brand voice
 - [ ] Implemented reflection pattern (self-critique)
 - [ ] Built hierarchical agent (manager delegates to workers)
-- [ ] Conversion rate: 28% → 32% ✅ (All constraints met!)
+- [ ] Conversion rate: 28% → 32% (All constraints met!)
 
 ---
 
@@ -696,22 +696,22 @@ Every session follows this pattern:
 - Days 106-112: Write unit tests, integration tests, property-based tests
 - Days 113-115: Set up monitoring (Prometheus, Grafana, OpenTelemetry)
 - Days 116-118: Deploy to staging, run A/B test
-- Days 119-120: Deploy to production, celebrate! 🎉
+- Days 119-120: Deploy to production, celebrate!
 
 **AI Track Completion Checklist:**
-- [ ] PizzaBot achieves >32% conversion ✅
-- [ ] Cost <$0.07/conv ✅
-- [ ] Latency <3s p95 ✅
-- [ ] Safety: 0 successful attacks ✅
-- [ ] Reliability >99% uptime ✅
-- [ ] **Certification:** AI Engineer (Production-Ready) ✅
+- [ ] PizzaBot achieves >32% conversion
+- [ ] Cost <$0.07/conv
+- [ ] Latency <3s p95
+- [ ] Safety: 0 successful attacks
+- [ ] Reliability >99% uptime
+- [ ] **Certification:** AI Engineer (Production-Ready)
 
 ---
 
 ## Specialization Option B: Multimodal AI (Days 68-120)
 
-**Track:** [05-multimodal_ai](05-multimodal_ai)  
-**Grand Challenge:** VisualForge Studio — Local image generation pipeline  
+**Track:** [05-multimodal_ai](05-multimodal_ai)
+**Grand Challenge:** VisualForge Studio — Local image generation pipeline
 **Final Constraint:** ≥4.0/5.0 quality, <30s/image, <$5k hardware
 
 ### Week 13-15: Diffusion Foundations (Days 68-90)
@@ -764,7 +764,7 @@ Every session follows this pattern:
 - [ ] Ran Stable Diffusion 1.5 — 512×512 images, 25s/image
 - [ ] Quality: 3.8/5.0 (close to target)
 - [ ] Generated 4-second video clips (temporal consistency)
-- [ ] Cost: $2,500 laptop (under $5k budget) ✅
+- [ ] Cost: $2,500 laptop (under $5k budget)
 
 ---
 
@@ -780,19 +780,19 @@ Every session follows this pattern:
 - Days 119-120: Deploy production studio, showcase portfolio
 
 **Multimodal AI Track Completion Checklist:**
-- [ ] Quality ≥4.0/5.0 (HPSv2 metric) ✅
-- [ ] Speed <30s/image (SDXL-Turbo: 8s) ✅
-- [ ] Cost <$5k hardware ($2,500 laptop) ✅
-- [ ] Control <5% unusable (3% with ControlNet) ✅
-- [ ] Throughput 100+/day (120 images) ✅
-- [ ] **Certification:** Multimodal AI Engineer (Production-Ready) ✅
+- [ ] Quality ≥4.0/5.0 (HPSv2 metric)
+- [ ] Speed <30s/image (SDXL-Turbo: 8s)
+- [ ] Cost <$5k hardware ($2,500 laptop)
+- [ ] Control <5% unusable (3% with ControlNet)
+- [ ] Throughput 100+/day (120 images)
+- [ ] **Certification:** Multimodal AI Engineer (Production-Ready)
 
 ---
 
 ## Specialization Option C: AI Infrastructure (Days 68-120)
 
-**Track:** [06-ai_infrastructure](06-ai_infrastructure)  
-**Grand Challenge:** InferenceBase — Self-host Llama-3-8B  
+**Track:** [06-ai_infrastructure](06-ai_infrastructure)
+**Grand Challenge:** InferenceBase — Self-host Llama-3-8B
 **Final Constraint:** <$15k/mo, ≤2s p95, ≥10k req/day
 
 ### Week 13-16: GPU Optimization (Days 68-97)
@@ -818,7 +818,7 @@ Every session follows this pattern:
 - [ ] Applied INT4 quantization: 16GB → 4GB (4× compression)
 - [ ] Quality: 96.2% accuracy (minimal degradation)
 - [ ] Implemented KV caching: 2× speedup
-- [ ] Deployed vLLM: 22k req/day throughput ✅
+- [ ] Deployed vLLM: 22k req/day throughput
 
 ---
 
@@ -832,7 +832,7 @@ Every session follows this pattern:
 - [ ] Set up MLflow for experiment tracking
 - [ ] Configured Prometheus + Grafana dashboards
 - [ ] Monitored GPU utilization, throughput, latency
-- [ ] Achieved 99.5% uptime ✅
+- [ ] Achieved 99.5% uptime
 
 ---
 
@@ -843,22 +843,22 @@ Every session follows this pattern:
 **Final Project — InferenceBase Production:**
 - Days 111-115: Deploy Llama-3-8B on 2× A100 GPUs
 - Days 116-118: Load test (10k req/day, 1.2s p95 latency)
-- Days 119-120: Cost analysis: $7.3k/mo (51% under budget!) ✅
+- Days 119-120: Cost analysis: $7.3k/mo (51% under budget!)
 
 **AI Infrastructure Track Completion Checklist:**
-- [ ] Cost <$15k/mo ($7.3k actual) ✅
-- [ ] Latency ≤2s p95 (1.2s actual) ✅
-- [ ] Throughput ≥10k req/day (22k actual) ✅
-- [ ] Memory fit in VRAM (12GB/24GB) ✅
-- [ ] Quality ≥95% accuracy (96.2%) ✅
-- [ ] **Certification:** ML Infrastructure Engineer (Production-Ready) ✅
+- [ ] Cost <$15k/mo ($7.3k actual)
+- [ ] Latency ≤2s p95 (1.2s actual)
+- [ ] Throughput ≥10k req/day (22k actual)
+- [ ] Memory fit in VRAM (12GB/24GB)
+- [ ] Quality ≥95% accuracy (96.2%)
+- [ ] **Certification:** ML Infrastructure Engineer (Production-Ready)
 
 ---
 
 ## Phase 4: Job Readiness (Days 121-180, ~60 hours)
 
-**Goal:** Polish portfolio, interview prep, land job  
-**Why Last:** Need strong projects before job search  
+**Goal:** Polish portfolio, interview prep, land job
+**Why Last:** Need strong projects before job search
 **Success Metric:** 5 interviews scheduled, 2+ offers
 
 ### Week 20-22: Portfolio Projects (Days 121-150)
@@ -930,7 +930,7 @@ Every session follows this pattern:
 - [ ] LinkedIn optimized (500+ connections, recommendations)
 - [ ] 50 applications submitted
 - [ ] 5+ phone screens scheduled
-- [ ] **GOAL:** 2+ job offers within 60 days ✅
+- [ ] **GOAL:** 2+ job offers within 60 days
 
 ---
 
@@ -967,42 +967,42 @@ Every session follows this pattern:
 
 ## Monthly Milestones
 
-### Month 1 (Days 1-30): Foundations ✅
+### Month 1 (Days 1-30): Foundations
 - [ ] Completed Math track (7 chapters)
 - [ ] Completed Data Fundamentals (3 chapters)
 - [ ] Can derive gradient descent by hand
 - [ ] Can detect data drift with PSI
 
-### Month 2 (Days 31-60): Core ML ✅
+### Month 2 (Days 31-60): Core ML
 - [ ] Completed Regression (7 chapters)
 - [ ] Completed Classification (5 chapters)
 - [ ] SmartVal AI: <$40k MAE achieved
 - [ ] FaceAI: >90% accuracy achieved
 
-### Month 3 (Days 61-90): Deep Learning ✅
+### Month 3 (Days 61-90): Deep Learning
 - [ ] Completed Neural Networks (10 chapters)
 - [ ] Implemented Transformer from scratch
 - [ ] UnifiedAI: $28k MAE + 95% accuracy achieved
 - [ ] **Decision made:** Chosen specialization track
 
-### Month 4 (Days 91-120): Specialization ✅
+### Month 4 (Days 91-120): Specialization
 - [ ] Completed 6-8 chapters of chosen track
 - [ ] Grand challenge achieved (PizzaBot/VisualForge/InferenceBase)
 - [ ] Built 1-2 portfolio-quality projects
 - [ ] Can explain specialization to interviewer in 5 minutes
 
-### Month 5 (Days 121-150): Portfolio ✅
+### Month 5 (Days 121-150): Portfolio
 - [ ] Built 3 portfolio projects
 - [ ] GitHub profile polished (READMEs, documentation)
 - [ ] Public demos deployed (Heroku, Hugging Face Spaces)
 - [ ] LinkedIn updated with projects
 
-### Month 6 (Days 151-180): Job Search ✅
+### Month 6 (Days 151-180): Job Search
 - [ ] Interview prep complete (technical + behavioral)
 - [ ] 50 applications submitted
 - [ ] 5+ phone screens completed
 - [ ] 2+ onsite interviews scheduled
-- [ ] **TARGET:** Job offer received 🎉
+- [ ] **TARGET:** Job offer received
 
 ---
 
@@ -1037,14 +1037,13 @@ Every session follows this pattern:
 ## When You Complete The Curriculum
 
 ### You will be able to:
-
-✅ **Explain ML algorithms** from first principles (derive gradient descent, backprop, attention)  
-✅ **Build end-to-end pipelines** (data validation → training → serving → monitoring)  
-✅ **Implement complex models** (Transformers, GANs, diffusion models from scratch)  
-✅ **Optimize for production** (quantization, caching, cost optimization)  
-✅ **Interview confidently** for ML Engineer, AI Engineer, CV Engineer roles  
-✅ **Contribute to open source** ML projects (understand codebases like PyTorch, LangChain)  
-✅ **Self-teach new techniques** (read papers, implement from scratch)  
+**Explain ML algorithms** from first principles (derive gradient descent, backprop, attention)
+**Build end-to-end pipelines** (data validation → training → serving → monitoring)
+**Implement complex models** (Transformers, GANs, diffusion models from scratch)
+**Optimize for production** (quantization, caching, cost optimization)
+**Interview confidently** for ML Engineer, AI Engineer, CV Engineer roles
+**Contribute to open source** ML projects (understand codebases like PyTorch, LangChain)
+**Self-teach new techniques** (read papers, implement from scratch)
 
 ### Job titles you qualify for:
 
@@ -1107,9 +1106,9 @@ Copy this to a personal doc, update weekly:
 ```markdown
 # My AI Portfolio Progress
 
-**Start Date:** YYYY-MM-DD  
-**Target Completion:** YYYY-MM-DD (6 months)  
-**Hours Logged:** X / 180 hours  
+**Start Date:** YYYY-MM-DD
+**Target Completion:** YYYY-MM-DD (6 months)
+**Hours Logged:** X / 180 hours
 
 ## Phase 1: Foundations (30 days)
 - [ ] Week 1: Math (Days 1-7) — X/7 complete
@@ -1139,11 +1138,11 @@ Copy this to a personal doc, update weekly:
 
 ---
 
-**Good luck. You've got this.** 🚀
+**Good luck. You've got this.**
 
 ---
 
-**Last Updated:** April 28, 2026  
-**Repository Grade:** A (90.4/100) — World-class curriculum  
-**Total Chapters:** ~120 across 8 tracks  
+**Last Updated:** April 28, 2026
+**Repository Grade:** A (90.4/100) — World-class curriculum
+**Total Chapters:** ~120 across 8 tracks
 **Estimated Time to Job-Ready:** 180 days (1 hour/day)

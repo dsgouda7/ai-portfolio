@@ -6,7 +6,7 @@
 
 ---
 
-> 💡 **How to use the junior/senior answer comparisons** — Each question below includes a junior-level answer and a senior-level answer. Junior answers are technically correct but surface-level. Senior answers demonstrate production experience, failure awareness, and trade-off reasoning. Hiring managers at FAANG and growth-stage AI companies distinguish these instantly. Study the DIFFERENCE between the two, not just the senior answer.
+> **How to use the junior/senior answer comparisons** — Each question below includes a junior-level answer and a senior-level answer. Junior answers are technically correct but surface-level. Senior answers demonstrate production experience, failure awareness, and trade-off reasoning. Hiring managers at FAANG and growth-stage AI companies distinguish these instantly. Study the DIFFERENCE between the two, not just the senior answer.
 
 ## 1 · Concept Map — The 10 Questions That Matter
 
@@ -39,18 +39,16 @@ Do you understand the fundamental representation gap between modalities and why 
 
 ### Likely Asked
 - "How would you convert a 5-second 16 kHz audio clip to a tensor ready for a ViT-based model?"
-  → resample → STFT → mel filterbank → log scale → treat as 2-D image
+ → resample → STFT → mel filterbank → log scale → treat as 2-D image
 - "Why does the same pixel value mean something different in a diffusion model vs a classification model?"
-  → different normalisation conventions (`[-1,1]` vs `[0,1]` vs ImageNet stats)
+ → different normalisation conventions (`[-1,1]` vs `[0,1]` vs ImageNet stats)
 
 #### The Junior Answer vs Senior Answer
 
 **Q: "How do you handle different input modalities in a unified model?"**
-
-❌ **Junior**: "You normalize them and concatenate."
+**Junior**: "You normalize them and concatenate."
 *Why this signals junior:* Ignores the modality gap — different modalities have different statistical properties and semantic densities.
-
-✅ **Senior**: "Each modality needs its own encoder (ViT for images, BERT for text) that projects to a shared embedding space. The key is contrastive alignment — CLIP uses InfoNCE loss to make matching (text, image) pairs close in cosine similarity while pushing unrelated pairs apart. For VisualForge Studio, we use a frozen CLIP text encoder to condition image generation."
+**Senior**: "Each modality needs its own encoder (ViT for images, BERT for text) that projects to a shared embedding space. The key is contrastive alignment — CLIP uses InfoNCE loss to make matching (text, image) pairs close in cosine similarity while pushing unrelated pairs apart. For VisualForge Studio, we use a frozen CLIP text encoder to condition image generation."
 *Why this signals senior:* Names the architecture pattern (separate encoders + shared space), cites a specific loss function, grounds in a production system.
 
 #### The Key Tradeoffs
@@ -63,11 +61,11 @@ Do you understand the fundamental representation gap between modalities and why 
 
 #### Failure Mode Gotchas
 
-💡 **Trap:** Forgetting to convert channel order (HWC → CHW) when going from PIL/NumPy to PyTorch causes silent shape mismatches.
+**Trap:** Forgetting to convert channel order (HWC → CHW) when going from PIL/NumPy to PyTorch causes silent shape mismatches.
 **How to detect:** Model forward pass fails with "expected 3 channels, got 224" or similar dimension error.
 **Fix:** Always `torchvision.transforms.ToTensor()` which handles HWC→CHW + uint8→float32 + [0,255]→[0,1].
 
-⚠️ **Trap:** Using ImageNet normalization for medical images or satellite imagery — domain mismatch will hurt transfer learning.
+**Warning — Trap:** Using ImageNet normalization for medical images or satellite imagery — domain mismatch will hurt transfer learning.
 **How to detect:** Validation accuracy plateau well below expected.
 **Fix:** Compute dataset-specific mean/std or use domain-pretrained models (e.g., MedCLIP for medical).
 
@@ -101,11 +99,9 @@ Do you understand why ViT needs massive data to beat CNNs, and can you explain t
 #### The Junior Answer vs Senior Answer
 
 **Q: "Why does ViT struggle on small datasets compared to CNNs?"**
-
-❌ **Junior**: "It doesn't have convolutional layers."
+**Junior**: "It doesn't have convolutional layers."
 *Why this signals junior:* Surface-level observation without understanding the root cause.
-
-✅ **Senior**: "ViT has minimal spatial inductive bias — no local connectivity, no translation equivariance beyond tied patch embeddings. CNNs bake in 2D locality through convolution kernels. On ImageNet-1k, ViT-B underperforms ResNet-50 when both are trained from scratch. ViT needs either massive scale (JFT-300M) or compensating techniques (DeiT's distillation, MAE's masked pretraining) to compete in data-constrained regimes. In VisualForge, we use pretrained ViT-L/14 from CLIP — 400M image-text pairs provide the necessary scale."
+**Senior**: "ViT has minimal spatial inductive bias — no local connectivity, no translation equivariance beyond tied patch embeddings. CNNs bake in 2D locality through convolution kernels. On ImageNet-1k, ViT-B underperforms ResNet-50 when both are trained from scratch. ViT needs either massive scale (JFT-300M) or compensating techniques (DeiT's distillation, MAE's masked pretraining) to compete in data-constrained regimes. In VisualForge, we use pretrained ViT-L/14 from CLIP — 400M image-text pairs provide the necessary scale."
 *Why this signals senior:* Names the specific bias (locality), quantifies the data requirement, cites compensating techniques, grounds in production context.
 
 #### The Key Tradeoffs
@@ -118,11 +114,11 @@ Do you understand why ViT needs massive data to beat CNNs, and can you explain t
 
 #### Failure Mode Gotchas
 
-⚠️ **Trap:** Forgetting that attention in ViT is over patches, not pixels — patch count $N = (H/P)^2$, not $H \times W$.
+**Warning — Trap:** Forgetting that attention in ViT is over patches, not pixels — patch count $N = (H/P)^2$, not $H \times W$.
 **Impact:** Memory scales as $O(N^2)$, not $O(HW)$; doubling resolution = 4× memory.
 **Fix:** For high-res images, use hierarchical architectures (Swin) or local attention windows.
 
-💡 **Gotcha:** "ViT always beats ResNet" — only with sufficient scale and data; DeiT and MAE address the constrained-data regime.
+**Gotcha:** "ViT always beats ResNet" — only with sufficient scale and data; DeiT and MAE address the constrained-data regime.
 **Interview distinction:** A senior candidate knows ViT-B on ImageNet-1k alone underperforms ResNet-50; the win comes from pretraining scale.
 
 #### The Production Angle
@@ -156,19 +152,15 @@ Can you derive the InfoNCE loss, explain why batch size matters, and describe CL
 #### The Junior Answer vs Senior Answer
 
 **Q: "Why does CLIP use such large batch sizes during training?"**
-
-❌ **Junior**: "To train faster with more parallelism."
+**Junior**: "To train faster with more parallelism."
 *Why this signals junior:* Confuses batch size with GPU utilization — misses the contrastive learning mechanics.
-
-✅ **Senior**: "Large batch = more negatives per sample. InfoNCE loss treats the N-1 other images in a batch of N as hard negatives for each text. Batch size 32,768 means 32,767 negatives per positive pair — this forces the model to learn fine-grained distinctions. Small batch = easy negatives = poor representations. CLIP's batch size is a hyperparameter for negative mining difficulty, not just hardware efficiency."
+**Senior**: "Large batch = more negatives per sample. InfoNCE loss treats the N-1 other images in a batch of N as hard negatives for each text. Batch size 32,768 means 32,767 negatives per positive pair — this forces the model to learn fine-grained distinctions. Small batch = easy negatives = poor representations. CLIP's batch size is a hyperparameter for negative mining difficulty, not just hardware efficiency."
 *Why this signals senior:* Explains the contrastive loss mechanics, quantifies the effect, distinguishes batch size roles.
 
 **Q: "How is CLIP used in Stable Diffusion?"**
-
-❌ **Junior**: "It encodes the text prompt."
+**Junior**: "It encodes the text prompt."
 *Why this signals junior:* Technically correct but incomplete — doesn't explain the conditioning mechanism.
-
-✅ **Senior**: "CLIP's frozen text encoder converts the prompt to 77 token embeddings (each 768-dim for SD 1.5). These embeddings become keys and values in cross-attention layers throughout the U-Net denoiser — at every resolution stage. Query comes from the noisy latent features. This is how text steers the denoising trajectory. In VisualForge Studio, we also use CLIP for prompt embeddings and for computing CLIP Score during evaluation."
+**Senior**: "CLIP's frozen text encoder converts the prompt to 77 token embeddings (each 768-dim for SD 1.5). These embeddings become keys and values in cross-attention layers throughout the U-Net denoiser — at every resolution stage. Query comes from the noisy latent features. This is how text steers the denoising trajectory. In VisualForge Studio, we also use CLIP for prompt embeddings and for computing CLIP Score during evaluation."
 *Why this signals senior:* Describes the full data flow (text → embeddings → cross-attention K/V), names the architecture component, grounds in production.
 
 #### The Key Tradeoffs
@@ -181,11 +173,11 @@ Can you derive the InfoNCE loss, explain why batch size matters, and describe CL
 
 #### Failure Mode Gotchas
 
-⚠️ **Trap:** Confusing CLIP (contrastive training, no generation) with DALL-E (generative, uses CLIP as a component).
+**Warning — Trap:** Confusing CLIP (contrastive training, no generation) with DALL-E (generative, uses CLIP as a component).
 **Interview impact:** Shows you don't understand the architecture landscape.
 **Clarification:** CLIP = embedding model; DALL-E = generative model conditioned on CLIP embeddings.
 
-💡 **Gotcha:** "CLIP embeddings can be compared with raw dot product" — CLIP embeddings are L2-normalized; use cosine similarity.
+**Gotcha:** "CLIP embeddings can be compared with raw dot product" — CLIP embeddings are L2-normalized; use cosine similarity.
 **Why it matters:** Unnormalized dot product gives wrong rankings if vectors aren't on the unit sphere.
 **Fix:** `cosine_sim = torch.nn.functional.cosine_similarity(emb1, emb2)` or `dot_product(normalize(emb1), normalize(emb2))`.
 
@@ -221,11 +213,9 @@ Can you derive the forward process, explain the U-Net training objective, and di
 #### The Junior Answer vs Senior Answer
 
 **Q: "Walk me through the diffusion training objective."**
-
-❌ **Junior**: "The model learns to denoise images."
+**Junior**: "The model learns to denoise images."
 *Why this signals junior:* Vague — doesn't specify what the model predicts or the loss function.
-
-✅ **Senior**: "Training: Sample a timestep $t \sim \text{Uniform}(1, T)$, add Gaussian noise $\epsilon \sim \mathcal{N}(0, I)$ to the clean image $x_0$ according to $x_t = \sqrt{\bar{\alpha}_t} x_0 + \sqrt{1 - \bar{\alpha}_t} \epsilon$. The U-Net $\epsilon_\theta(x_t, t)$ predicts the noise $\epsilon$. Loss is simple MSE: $\|\epsilon - \epsilon_\theta(x_t, t)\|^2$. This is denoising score matching. Inference reverses this: start from pure noise, iteratively subtract predicted noise over T steps to recover $x_0$."
+**Senior**: "Training: Sample a timestep $t \sim \text{Uniform}(1, T)$, add Gaussian noise $\epsilon \sim \mathcal{N}(0, I)$ to the clean image $x_0$ according to $x_t = \sqrt{\bar{\alpha}_t} x_0 + \sqrt{1 - \bar{\alpha}_t} \epsilon$. The U-Net $\epsilon_\theta(x_t, t)$ predicts the noise $\epsilon$. Loss is simple MSE: $\|\epsilon - \epsilon_\theta(x_t, t)\|^2$. This is denoising score matching. Inference reverses this: start from pure noise, iteratively subtract predicted noise over T steps to recover $x_0$."
 *Why this signals senior:* Writes the forward process equation, names the loss, distinguishes training (single step) from inference (T steps).
 
 #### The Key Tradeoffs
@@ -239,11 +229,11 @@ Can you derive the forward process, explain the U-Net training objective, and di
 
 #### Failure Mode Gotchas
 
-⚠️ **Trap:** Confusing $\beta_t$ (noise variance) with $\alpha_t = 1 - \beta_t$ (signal retention fraction).
+**Warning — Trap:** Confusing $\beta_t$ (noise variance) with $\alpha_t = 1 - \beta_t$ (signal retention fraction).
 **Impact:** Wrong schedule = wrong signal-to-noise ratio = poor generation.
 **Mnemonic:** $\alpha_t$ = fraction of original signal remaining; $\bar{\alpha}_t = \prod_{i=1}^t \alpha_i$ = cumulative signal.
 
-💡 **Gotcha:** "Diffusion generates in a single forward pass" — NO. Inference requires T repeated U-Net calls (typically 20–50).
+**Gotcha:** "Diffusion generates in a single forward pass" — NO. Inference requires T repeated U-Net calls (typically 20–50).
 **Why it matters:** Latency = T × forward_time; this is why fast schedulers (DPM-Solver, LCM) are critical for production.
 
 #### The Production Angle
@@ -274,11 +264,9 @@ Do you understand why DDPM needs 1000 steps, how DDIM achieves deterministic sam
 #### The Junior Answer vs Senior Answer
 
 **Q: "How does DDIM achieve faster sampling than DDPM?"**
-
-❌ **Junior**: "It uses fewer steps."
+**Junior**: "It uses fewer steps."
 *Why this signals junior:* Describes the outcome, not the mechanism.
-
-✅ **Senior**: "DDIM reinterprets the reverse process as an ODE instead of an SDE — it picks a non-Markovian trajectory that allows skipping timesteps without quality loss. Where DDPM samples every step from $t=1000$ to $t=0$, DDIM can sample a subsequence like [1000, 950, 900, ..., 50, 0] (50 steps) by solving the ODE deterministically. At $\sigma=0$ it's fully deterministic; at $\sigma=\text{DDPM}$ it reduces to stochastic DDPM. In VisualForge, we default to 25-step DDIM for 1.0s latency."
+**Senior**: "DDIM reinterprets the reverse process as an ODE instead of an SDE — it picks a non-Markovian trajectory that allows skipping timesteps without quality loss. Where DDPM samples every step from $t=1000$ to $t=0$, DDIM can sample a subsequence like [1000, 950, 900, ..., 50, 0] (50 steps) by solving the ODE deterministically. At $\sigma=0$ it's fully deterministic; at $\sigma=\text{DDPM}$ it reduces to stochastic DDPM. In VisualForge, we default to 25-step DDIM for 1.0s latency."
 *Why this signals senior:* Explains the ODE vs SDE distinction, describes the subsequence sampling, quantifies production latency.
 
 #### The Key Tradeoffs
@@ -296,11 +284,11 @@ Do you understand why DDPM needs 1000 steps, how DDIM achieves deterministic sam
 
 #### Failure Mode Gotchas
 
-⚠️ **Trap:** Confusing the **training** noise schedule (always 1000 steps) with the **inference** step count (scheduler-specific).
+**Warning — Trap:** Confusing the **training** noise schedule (always 1000 steps) with the **inference** step count (scheduler-specific).
 **Clarification:** Training defines $q(x_t|x_0)$ over 1000 steps. Inference schedulers can use any subsequence — 50, 25, or even 1 step with distillation.
 **Why it matters:** Candidates who say "diffusion always needs 1000 steps" fail this question.
 
-💡 **Gotcha:** "LCM 1-step images match 50-step DDIM quality" — NO.
+**Gotcha:** "LCM 1-step images match 50-step DDIM quality" — NO.
 **Reality:** 1–4 step models sacrifice fine detail and diversity; they're for real-time preview, not final output.
 **In VisualForge:** LCM is for interactive preview; final generation uses 25-step DDIM.
 
@@ -333,11 +321,9 @@ Why does Stable Diffusion run in latent space, not pixel space? Can you explain 
 #### The Junior Answer vs Senior Answer
 
 **Q: "Why does Stable Diffusion run diffusion in latent space instead of pixel space?"**
-
-❌ **Junior**: "It's faster."
+**Junior**: "It's faster."
 *Why this signals junior:* Correct but unquantified — doesn't explain the compression ratio or computational savings.
-
-✅ **Senior**: "A 512×512 RGB image is 786k pixels. The VAE encoder compresses it to 64×64×4 latent (16k values) — 8× spatial downsampling per dimension, 49× fewer values. Diffusion cost scales as $O(H^2 W^2)$ for attention, so latent diffusion is ~64× cheaper per step than pixel-space DDPM. Quality is preserved because the VAE is trained to reconstruct faithfully. In VisualForge, this makes 25-step generation feasible at 1.0s; pixel-space would be ~60s."
+**Senior**: "A 512×512 RGB image is 786k pixels. The VAE encoder compresses it to 64×64×4 latent (16k values) — 8× spatial downsampling per dimension, 49× fewer values. Diffusion cost scales as $O(H^2 W^2)$ for attention, so latent diffusion is ~64× cheaper per step than pixel-space DDPM. Quality is preserved because the VAE is trained to reconstruct faithfully. In VisualForge, this makes 25-step generation feasible at 1.0s; pixel-space would be ~60s."
 *Why this signals senior:* Quantifies compression (8× spatial, 64× compute), explains the quadratic attention cost, grounds in production.
 
 #### The Key Tradeoffs
@@ -350,11 +336,11 @@ Why does Stable Diffusion run in latent space, not pixel space? Can you explain 
 
 #### Failure Mode Gotchas
 
-⚠️ **Trap:** "The VAE is trained as part of SD" — NO.
+**Warning — Trap:** "The VAE is trained as part of SD" — NO.
 **Reality:** VAE is pretrained separately and frozen during SD training. Only the U-Net denoiser is trained.
 **Why it matters:** Shows you understand the training pipeline separation.
 
-💡 **Gotcha:** Forgetting the VAE scaling factor (0.18215).
+**Gotcha:** Forgetting the VAE scaling factor (0.18215).
 **Impact:** Without scaling, latent variance doesn't match the $\mathcal{N}(0, I)$ prior DDPM expects → poor generation.
 **In VisualForge:** Scaling is baked into the model config; forgetting it during custom fine-tuning is a common bug.
 
@@ -391,11 +377,9 @@ Can you derive the CFG equation, explain the two model calls, and describe what 
 #### The Junior Answer vs Senior Answer
 
 **Q: "What is classifier-free guidance and why do we need it?"**
-
-❌ **Junior**: "It makes the model follow the prompt better."
+**Junior**: "It makes the model follow the prompt better."
 *Why this signals junior:* Outcome without mechanism — doesn't explain the two predictions or the blending equation.
-
-✅ **Senior**: "CFG trains the U-Net both conditionally (with prompt) and unconditionally (prompt dropped). At inference, we make two predictions per step: $\epsilon_\text{cond}$ with the prompt, $\epsilon_\text{uncond}$ without. The guided prediction is $\epsilon_\text{guided} = \epsilon_\text{uncond} + w (\epsilon_\text{cond} - \epsilon_\text{uncond})$. When $w > 1$, we amplify the direction toward the conditional score. This increases prompt adherence at the cost of diversity. In VisualForge, we default to $w=7.5$ for quality; $w=12$ for strict prompt adherence."
+**Senior**: "CFG trains the U-Net both conditionally (with prompt) and unconditionally (prompt dropped). At inference, we make two predictions per step: $\epsilon_\text{cond}$ with the prompt, $\epsilon_\text{uncond}$ without. The guided prediction is $\epsilon_\text{guided} = \epsilon_\text{uncond} + w (\epsilon_\text{cond} - \epsilon_\text{uncond})$. When $w > 1$, we amplify the direction toward the conditional score. This increases prompt adherence at the cost of diversity. In VisualForge, we default to $w=7.5$ for quality; $w=12$ for strict prompt adherence."
 *Why this signals senior:* Writes the equation, explains the training procedure (condition dropout), names the tradeoff, grounds in production.
 
 #### The Key Tradeoffs
@@ -412,11 +396,11 @@ Can you derive the CFG equation, explain the two model calls, and describe what 
 
 #### Failure Mode Gotchas
 
-⚠️ **Trap:** Confusing guidance scale with classifier temperature — they are different mechanisms.
+**Warning — Trap:** Confusing guidance scale with classifier temperature — they are different mechanisms.
 **Clarification:** Classifier guidance uses a pretrained classifier to steer (requires external model); CFG uses the same U-Net with/without conditioning (no extra model).
 **Interview distinction:** Classifier guidance is mostly deprecated; CFG is the standard.
 
-💡 **Gotcha:** "Negative prompts block content" — NO, they steer.
+**Gotcha:** "Negative prompts block content" — NO, they steer.
 **Mechanism:** Negative prompt replaces $\epsilon_\text{uncond}$ with $\epsilon_\text{negative}$ in the CFG equation, steering *away* from the negative concept.
 **In VisualForge:** Common negatives: "blurry, low quality, watermark, text" — steers toward high-quality, text-free outputs.
 
@@ -449,11 +433,9 @@ Do you understand img2img, ControlNet architecture, and LoRA fine-tuning mechani
 #### The Junior Answer vs Senior Answer
 
 **Q: "How would you fine-tune Stable Diffusion on a specific art style with only 15 images?"**
-
-❌ **Junior**: "Fine-tune the whole model on those images."
+**Junior**: "Fine-tune the whole model on those images."
 *Why this signals junior:* Ignores overfitting risk and computational cost — full fine-tuning on 15 samples will overfit catastrophically.
-
-✅ **Senior**: "Use LoRA — low-rank adaptation of the U-Net's attention weight matrices. Freeze the base model, train only low-rank residuals (rank=8 typical) on the 15 images for ~1000 steps. This adds only ~3 MB of parameters vs 2 GB for the full model. LoRA prevents overfitting through the rank bottleneck while capturing style effectively. In VisualForge, we fine-tune custom LoRAs per client in ~15 minutes on a single A100."
+**Senior**: "Use LoRA — low-rank adaptation of the U-Net's attention weight matrices. Freeze the base model, train only low-rank residuals (rank=8 typical) on the 15 images for ~1000 steps. This adds only ~3 MB of parameters vs 2 GB for the full model. LoRA prevents overfitting through the rank bottleneck while capturing style effectively. In VisualForge, we fine-tune custom LoRAs per client in ~15 minutes on a single A100."
 *Why this signals senior:* Names the technique, explains the rank bottleneck mechanism, quantifies parameters and training time, grounds in production.
 
 #### The Key Tradeoffs
@@ -467,10 +449,10 @@ Do you understand img2img, ControlNet architecture, and LoRA fine-tuning mechani
 
 #### Failure Mode Gotchas
 
-⚠️ **Trap:** Confusing **classifier guidance** (Ch.5, needs pretrained classifier) with **classifier-free guidance** (Ch.5) and with the **negative prompt extension** of CFG.
+**Warning — Trap:** Confusing **classifier guidance** (Ch.5, needs pretrained classifier) with **classifier-free guidance** (Ch.5) and with the **negative prompt extension** of CFG.
 **Clarification:** All use the word "guidance" but are different mechanisms. Classifier guidance is deprecated; CFG is standard; negative prompts extend CFG.
 
-💡 **Gotcha:** "ControlNet is just img2img with extra conditioning."
+**Gotcha:** "ControlNet is just img2img with extra conditioning."
 **Difference:** img2img starts from a partially noised image (strength parameter); ControlNet starts from pure noise but injects spatial guidance at every U-Net layer via cross-attention and skip connections. ControlNet gives structural control without pixel-level initialization.
 
 #### The Production Angle
@@ -502,11 +484,9 @@ Do you understand temporal consistency challenges, temporal attention mechanics,
 #### The Junior Answer vs Senior Answer
 
 **Q: "Why can't you just generate video frame-by-frame with a T2I model?"**
-
-❌ **Junior**: "It would be slow."
+**Junior**: "It would be slow."
 *Why this signals junior:* Misses the main problem — temporal consistency and flicker.
-
-✅ **Senior**: "The core issue is temporal inconsistency. Each frame is generated independently — the DDPM noise process is i.i.d. per frame. This causes flicker, object drift, and style shifts across frames. The solution is temporal attention: each pixel/patch attends not just spatially within its frame but also to the same spatial position in neighboring frames. AnimateDiff adds temporal attention modules to a frozen spatial SD U-Net, training only the temporal layers on video data. This enforces frame-to-frame coherence while preserving spatial generation quality."
+**Senior**: "The core issue is temporal inconsistency. Each frame is generated independently — the DDPM noise process is i.i.d. per frame. This causes flicker, object drift, and style shifts across frames. The solution is temporal attention: each pixel/patch attends not just spatially within its frame but also to the same spatial position in neighboring frames. AnimateDiff adds temporal attention modules to a frozen spatial SD U-Net, training only the temporal layers on video data. This enforces frame-to-frame coherence while preserving spatial generation quality."
 *Why this signals senior:* Identifies the root cause (i.i.d. noise), names the solution (temporal attention), describes a specific architecture (AnimateDiff), explains the freeze-spatial-train-temporal strategy.
 
 #### The Key Tradeoffs
@@ -520,11 +500,11 @@ Do you understand temporal consistency challenges, temporal attention mechanics,
 
 #### Failure Mode Gotchas
 
-⚠️ **Trap:** "Temporal consistency is free from DDPM" — NO.
+**Warning — Trap:** "Temporal consistency is free from DDPM" — NO.
 **Reality:** The Markovian noise process is independent per frame; correlation must be learned via temporal attention.
 **Interview distinction:** A senior candidate knows that naive frame-by-frame generation produces flicker.
 
-💡 **Gotcha:** Confusing AnimateDiff (spatial frozen, temporal trained) with full T2V training (both trained).
+**Gotcha:** Confusing AnimateDiff (spatial frozen, temporal trained) with full T2V training (both trained).
 **Why AnimateDiff wins:** Leverages pretrained SD spatial quality, only learns temporal coherence — much cheaper and faster to train.
 
 #### The Production Angle
@@ -556,11 +536,9 @@ Do you understand the vision-encoder → alignment-layer → LLM architecture, a
 #### The Junior Answer vs Senior Answer
 
 **Q: "How would you add vision capabilities to an existing LLM like LLaMA?"**
-
-❌ **Junior**: "Attach a vision encoder and fine-tune."
+**Junior**: "Attach a vision encoder and fine-tune."
 *Why this signals junior:* Vague — doesn't specify the alignment mechanism or training strategy.
-
-✅ **Senior**: "Three components: (1) Vision encoder (e.g., CLIP ViT-L/14) to convert 224×224 image → 256 patch tokens. (2) Alignment layer (e.g., linear projection or Q-Former) to map ViT's 768-dim embeddings to LLaMA's 4096-dim space. (3) Freeze ViT, train projection + LLaMA on instruction-following visual QA data (e.g., LLaVA-150k). Freezing prevents catastrophic interference. For token compression, LLaVA uses 576 tokens (24×24 patches), BLIP-2 uses a Q-Former to compress to 32 learnable queries — choose based on context window budget."
+**Senior**: "Three components: (1) Vision encoder (e.g., CLIP ViT-L/14) to convert 224×224 image → 256 patch tokens. (2) Alignment layer (e.g., linear projection or Q-Former) to map ViT's 768-dim embeddings to LLaMA's 4096-dim space. (3) Freeze ViT, train projection + LLaMA on instruction-following visual QA data (e.g., LLaVA-150k). Freezing prevents catastrophic interference. For token compression, LLaVA uses 576 tokens (24×24 patches), BLIP-2 uses a Q-Former to compress to 32 learnable queries — choose based on context window budget."
 *Why this signals senior:* Names all three components, specifies dimensions, describes freeze strategy, compares token compression approaches, cites datasets.
 
 #### The Key Tradeoffs
@@ -573,11 +551,11 @@ Do you understand the vision-encoder → alignment-layer → LLM architecture, a
 
 #### Failure Mode Gotchas
 
-⚠️ **Trap:** "MLLMs 'see' images like humans" — NO.
+**Warning — Trap:** "MLLMs 'see' images like humans" — NO.
 **Reality:** They process a sequence of numerical patch embeddings; spatial understanding is learned, not built-in.
 **Interview impact:** Shows you understand the representation gap.
 
-💡 **Gotcha:** "More visual tokens = better performance."
+**Gotcha:** "More visual tokens = better performance."
 **Reality:** 576 tokens (LLaVA) vs 32 tokens (BLIP-2 Q-Former) — performance difference is task-dependent. Fine-grained spatial tasks (OCR, counting) favor more tokens; semantic QA works fine with 32.
 **In VisualForge:** Use Q-Former for caption generation (semantic), full tokens for layout analysis (spatial).
 
@@ -615,11 +593,9 @@ Can you explain FID mechanics, distinguish FID from CLIP Score, and describe wha
 #### The Junior Answer vs Senior Answer
 
 **Q: "How do you evaluate a text-to-image model's quality?"**
-
-❌ **Junior**: "Compute FID score."
+**Junior**: "Compute FID score."
 *Why this signals junior:* Single metric, no understanding of what FID misses (prompt alignment).
-
-✅ **Senior**: "You need complementary metrics: (1) FID for distributional realism — fit Gaussians to Inception features of real vs generated images, compute Fréchet distance. Need 5k+ samples to reduce bias. (2) CLIP Score for text-image alignment — cosine similarity between CLIP embeddings of prompt and generated image. (3) Human eval on 100–200 samples for compositional accuracy (attribute binding, spatial relations) — FID and CLIP Score both miss fine-grained composition failures. In VisualForge, we track FID daily (5k samples) and CLIP Score per generation, with monthly human eval sweeps."
+**Senior**: "You need complementary metrics: (1) FID for distributional realism — fit Gaussians to Inception features of real vs generated images, compute Fréchet distance. Need 5k+ samples to reduce bias. (2) CLIP Score for text-image alignment — cosine similarity between CLIP embeddings of prompt and generated image. (3) Human eval on 100–200 samples for compositional accuracy (attribute binding, spatial relations) — FID and CLIP Score both miss fine-grained composition failures. In VisualForge, we track FID daily (5k samples) and CLIP Score per generation, with monthly human eval sweeps."
 *Why this signals senior:* Names multiple metrics, explains what each measures, notes sample size requirements, identifies blind spots, grounds in production monitoring.
 
 #### The Key Tradeoffs
@@ -636,15 +612,15 @@ Can you explain FID mechanics, distinguish FID from CLIP Score, and describe wha
 
 #### Failure Mode Gotchas
 
-⚠️ **Trap:** Reporting FID on <5k samples without flagging the bias.
+**Warning — Trap:** Reporting FID on <5k samples without flagging the bias.
 **Impact:** Small-sample FID is noisy — Gaussian fit variance dominates.
 **Fix:** Always report sample size with FID; use bootstrapping to estimate confidence intervals.
 
-💡 **Gotcha:** "CLIP Score captures compositional accuracy" — NO.
+**Gotcha:** "CLIP Score captures compositional accuracy" — NO.
 **Reality:** CLIP Score is global semantic similarity; it can't verify attribute binding. "a red cube and blue sphere" with swapped colors scores nearly identically to the correct image.
 **Solution:** Use GenEval or T2I-CompBench for compositional eval.
 
-⚠️ **Video trap:** "High per-frame FID means good video" — NO.
+**Warning — Video trap:** "High per-frame FID means good video" — NO.
 **Missing:** Temporal coherence. A strobing video can have excellent per-frame FID but unwatchable flicker.
 **Use instead:** FVD (Fréchet Video Distance) with I3D features, or VBench for comprehensive temporal eval.
 
@@ -680,11 +656,9 @@ Can you walk through the full T2I pipeline from prompt to pixel, and explain key
 #### The Junior Answer vs Senior Answer
 
 **Q: "Walk me through generating an image from a text prompt with Stable Diffusion."**
-
-❌ **Junior**: "The model takes the prompt and generates pixels."
+**Junior**: "The model takes the prompt and generates pixels."
 *Why this signals junior:* Hand-waves the entire pipeline — no mention of CLIP, latent space, or denoising.
-
-✅ **Senior**: "Five stages: (1) CLIP text encoder converts prompt to 77 token embeddings (768-dim each for SD 1.5). (2) Start from Gaussian noise in 64×64×4 latent space. (3) DDIM denoiser runs 25 steps — at each step, the U-Net predicts noise $\epsilon_\theta(z_t, t, c)$ conditioned on text via cross-attention, subtract noise to get $z_{t-1}$. (4) CFG blends conditional and unconditional predictions with scale $w=7.5$. (5) VAE decoder upsamples 64×64×4 latent to 512×512×3 RGB image. Latency: 1.0s on A100. In VisualForge, we cache CLIP embeddings per prompt and batch CFG predictions for efficiency."
+**Senior**: "Five stages: (1) CLIP text encoder converts prompt to 77 token embeddings (768-dim each for SD 1.5). (2) Start from Gaussian noise in 64×64×4 latent space. (3) DDIM denoiser runs 25 steps — at each step, the U-Net predicts noise $\epsilon_\theta(z_t, t, c)$ conditioned on text via cross-attention, subtract noise to get $z_{t-1}$. (4) CFG blends conditional and unconditional predictions with scale $w=7.5$. (5) VAE decoder upsamples 64×64×4 latent to 512×512×3 RGB image. Latency: 1.0s on A100. In VisualForge, we cache CLIP embeddings per prompt and batch CFG predictions for efficiency."
 *Why this signals senior:* Names all components, specifies dimensions and step count, explains CFG, quantifies latency, mentions production optimizations.
 
 #### The Key Tradeoffs
@@ -702,10 +676,10 @@ Can you walk through the full T2I pipeline from prompt to pixel, and explain key
 
 #### Failure Mode Gotchas
 
-⚠️ **Trap:** "Stable Diffusion runs the denoiser in pixel space" — NO, it runs in **latent** space (64×64×4).
+**Warning — Trap:** "Stable Diffusion runs the denoiser in pixel space" — NO, it runs in **latent** space (64×64×4).
 **Why it matters:** Shows you understand the core SD innovation.
 
-💡 **Gotcha:** Conflating LoRA (parameter-efficient fine-tuning, updates U-Net attention weights) with textual inversion (token-based, updates only embedding).
+**Gotcha:** Conflating LoRA (parameter-efficient fine-tuning, updates U-Net attention weights) with textual inversion (token-based, updates only embedding).
 **When to use which:** LoRA for style/composition changes, textual inversion for single-concept appearance.
 
 #### The Production Angle
@@ -724,7 +698,7 @@ Can you walk through the full T2I pipeline from prompt to pixel, and explain key
 ---
 
 <details>
-<summary>⚡ 5-Minute Crammer — last-resort prep</summary>
+<summary> 5-Minute Crammer — last-resort prep</summary>
 
 ## 5 · The 5-Minute Concept Cram
 
@@ -827,7 +801,7 @@ Can you walk through the full T2I pipeline from prompt to pixel, and explain key
 
 ## Related Topics
 
-> ➡️ **Forward pointers:** Where to go next after mastering this guide.
+> ➡ **Forward pointers:** Where to go next after mastering this guide.
 
 - [Agentic AI Interview Guide](agentic-ai.md) — CoT, ReAct, RAG, embeddings fundamentals
 - [Multi-Agent AI Interview Guide](multi-agent-ai.md) — agent protocols, MCP, A2A, event-driven systems
@@ -909,7 +883,7 @@ When image quality and prompt adherence matter more than speed. SDXL requires ~6
 
 ## 4 · Signal Words That Distinguish Answers
 
-### ✅ Senior Signals — Say This
+### Senior Signals — Say This
 
 **Architecture & Components:**
 - "Vision encoder → alignment layer → LLM" (MLLM architecture pattern)
@@ -936,7 +910,7 @@ When image quality and prompt adherence matter more than speed. SDXL requires ~6
 - "In VisualForge, we default to 25-step DDIM for 1.0s latency" (grounds in production SLAs)
 - "I'd instrument this with daily FID tracking and per-generation CLIP Score thresholds" (monitoring mindset)
 
-### ❌ Junior Signals — Don't Say This
+### Junior Signals — Don't Say This
 
 **Vague Mechanism:**
 - "It generates from noise randomly" → (DDIM is deterministic; even DDPM is structured)

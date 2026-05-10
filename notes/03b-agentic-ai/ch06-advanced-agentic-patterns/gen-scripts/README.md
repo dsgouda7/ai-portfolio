@@ -26,7 +26,7 @@ Illustrates the **Generate → Critique → Revise** pattern with color-coded st
 
 Shows **multi-agent debate** with 2 agents proposing solutions and 1 judge arbitrating:
 - Agent 1 (Strict): Conservative interpretation
-- Agent 2 (Generous): Liberal interpretation  
+- Agent 2 (Generous): Liberal interpretation
 - Judge: Makes final decision using RAG database lookup
 
 **Example:** Pricing dispute resolution with conflicting discount policies
@@ -44,7 +44,7 @@ Shows **multi-agent debate** with 2 agents proposing solutions and 1 judge arbit
 
 Demonstrates **Planner → Workers → Verifier** pattern:
 - Planner decomposes complex task into subtasks
-- Workers execute in parallel (shows ⚡ parallel execution)
+- Workers execute in parallel (shows parallel execution)
 - Verifier validates all constraints
 
 **Example:** Catering order (15 pizzas, 3 delivery times, $200 budget)
@@ -90,7 +90,7 @@ Shows **Generate → Verify → Correct** iteration:
 
 **Verification States:**
 - ○ Pending (gray)
-- 🔍 Verifying (orange)
+- Verifying (orange)
 - ✓ Verified (green)
 - ✗ Failed (red)
 
@@ -158,18 +158,18 @@ Consistent across all animations:
 ```
 notes/03-ai/ch11_advanced_agentic_patterns/
 ├── gen_scripts/
-│   ├── gen_ch11_reflection_loop.py
-│   ├── gen_ch11_debate_flow.py
-│   ├── gen_ch11_hierarchical_flow.py
-│   ├── gen_ch11_tree_of_thoughts.py
-│   ├── gen_ch11_chain_of_verification.py
-│   └── README.md (this file)
+│ ├── gen_ch11_reflection_loop.py
+│ ├── gen_ch11_debate_flow.py
+│ ├── gen_ch11_hierarchical_flow.py
+│ ├── gen_ch11_tree_of_thoughts.py
+│ ├── gen_ch11_chain_of_verification.py
+│ └── README.md (this file)
 └── img/
-    ├── ch11_reflection_loop.gif
-    ├── ch11_debate_flow.gif
-    ├── ch11_hierarchical_flow.gif
-    ├── ch11_tree_of_thoughts.gif
-    └── ch11_chain_of_verification.gif
+ ├── ch11_reflection_loop.gif
+ ├── ch11_debate_flow.gif
+ ├── ch11_hierarchical_flow.gif
+ ├── ch11_tree_of_thoughts.gif
+ └── ch11_chain_of_verification.gif
 ```
 
 ---

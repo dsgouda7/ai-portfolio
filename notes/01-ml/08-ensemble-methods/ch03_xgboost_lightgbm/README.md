@@ -10,7 +10,7 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 💡 **EnsembleAI**: Build a production model that beats any single model by >5% MAE on California Housing median house value prediction.
+> **EnsembleAI**: Build a production model that beats any single model by >5% MAE on California Housing median house value prediction.
 >
 > **5 Constraints:**
 > 1. **IMPROVEMENT** — beat baseline by >5% MAE *(target: <\$35k → now targeting <\$22k)*
@@ -23,34 +23,34 @@
 
 | Chapter | Model | MAE | Status |
 |---------|-------|-----|--------|
-| Ch.1 | Random Forest | ~\$32k | ✅ Constraint #1 partial |
-| Ch.2 | Gradient Boosting (sklearn) | **\$25k** | ✅ Constraint #1 met — but slow, no L1/L2 |
+| Ch.1 | Random Forest | ~\$32k | Constraint #1 partial |
+| Ch.2 | Gradient Boosting (sklearn) | **\$25k** | Constraint #1 met — but slow, no L1/L2 |
 
 **What's still blocking us:**
 
-- ⚠️ sklearn `GradientBoostingRegressor` is **single-threaded** — no parallelism within a round
-- ⚠️ No regularization on leaf *weights* — only tree depth and early stopping
-- ⚠️ Split finding is exact: $O(n \log n)$ per feature per round — painful at 20k rows
-- ❌ Constraint #4 (Interpretability) unmet — need SHAP in Ch.4
+- sklearn `GradientBoostingRegressor` is **single-threaded** — no parallelism within a round
+- No regularization on leaf *weights* — only tree depth and early stopping
+- Split finding is exact: $O(n \log n)$ per feature per round — painful at 20k rows
+- Constraint #4 (Interpretability) unmet — need SHAP in Ch.4
 
 **What this chapter unlocks:**
 
-- ✅ **Constraint #1**: XGBoost MAE = \$22k — **\$3k better than vanilla GB, 12% improvement**
-- ✅ **Constraint #2**: LightGBM uses fundamentally different histogram-based split finding
-- ✅ **Constraint #3**: LightGBM trains ~3× faster than sklearn GB on California Housing
-- ⚡ Regularization toolkit: `reg_lambda` ($\lambda$), `reg_alpha` ($\alpha$), `min_child_weight`, `gamma`
+- **Constraint #1**: XGBoost MAE = \$22k — **\$3k better than vanilla GB, 12% improvement**
+- **Constraint #2**: LightGBM uses fundamentally different histogram-based split finding
+- **Constraint #3**: LightGBM trains ~3× faster than sklearn GB on California Housing
+- Regularization toolkit: `reg_lambda` ($\lambda$), `reg_alpha` ($\alpha$), `min_child_weight`, `gamma`
 
 ```mermaid
 flowchart LR
-    style GB fill:#b91c1c,color:#fff,stroke:#b91c1c
-    style XGB fill:#15803d,color:#fff,stroke:#15803d
-    style LGB fill:#15803d,color:#fff,stroke:#15803d
-    style SHAP fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style GB fill:#b91c1c,color:#fff,stroke:#b91c1c
+ style XGB fill:#15803d,color:#fff,stroke:#15803d
+ style LGB fill:#15803d,color:#fff,stroke:#15803d
+ style SHAP fill:#1e3a8a,color:#fff,stroke:#1e3a8a
 
-    GB["sklearn GB\nCh.2: MAE=25k\nsingle-threaded\nno L1/L2"]
-    GB --> XGB["XGBoost\n2nd-order Taylor\nL1/L2 on leaves\nMAE=22k"]
-    GB --> LGB["LightGBM\nHistogram bins\nGOSS sampling\nMAE=22k, 3× faster"]
-    XGB & LGB --> SHAP["SHAP — Ch.4\nPer-prediction\nexplanations"]
+ GB["sklearn GB\nCh.2: MAE=25k\nsingle-threaded\nno L1/L2"]
+ GB --> XGB["XGBoost\n2nd-order Taylor\nL1/L2 on leaves\nMAE=22k"]
+ GB --> LGB["LightGBM\nHistogram bins\nGOSS sampling\nMAE=22k, 3× faster"]
+ XGB & LGB --> SHAP["SHAP — Ch.4\nPer-prediction\nexplanations"]
 ```
 
 ---
@@ -89,7 +89,7 @@ XGBoost's 12% MAE improvement over vanilla GB (\$25k → \$22k) comes primarily 
 
 LightGBM matches XGBoost's accuracy because histogram binning loses very little information (California Housing's continuous features map cleanly to 256 bins) while enabling much faster training.
 
-> ⚡ **Why \$22k matters:** \$3k improvement on a median home value of ~\$200k is 1.5% of the asset value. At scale — valuing 100,000 homes — that's \$300M in aggregate prediction error eliminated.
+> **Why \$22k matters:** \$3k improvement on a median home value of ~\$200k is 1.5% of the asset value. At scale — valuing 100,000 homes — that's \$300M in aggregate prediction error eliminated.
 
 ---
 
@@ -109,28 +109,28 @@ LightGBM matches XGBoost's accuracy because histogram binning loses very little 
 | **Best default for** | General tabular, Kaggle | Large datasets (>100k rows) | Datasets with many categoricals |
 | **Python package** | `pip install xgboost` | `pip install lightgbm` | `pip install catboost` |
 
-> 💡 **Quick-choose rule:** Start with XGBoost. Switch to LightGBM if training takes >5 min or rows > 500k. Switch to CatBoost if you have >5 categorical columns and don't want to one-hot encode.
+> **Quick-choose rule:** Start with XGBoost. Switch to LightGBM if training takes >5 min or rows > 500k. Switch to CatBoost if you have >5 categorical columns and don't want to one-hot encode.
 
 ### Decision flow
 
 ```mermaid
 flowchart TD
-    style START fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style Q1 fill:#b45309,color:#fff,stroke:#b45309
-    style Q2 fill:#b45309,color:#fff,stroke:#b45309
-    style Q3 fill:#b45309,color:#fff,stroke:#b45309
-    style CAT fill:#15803d,color:#fff,stroke:#15803d
-    style LGB fill:#15803d,color:#fff,stroke:#15803d
-    style XGB fill:#15803d,color:#fff,stroke:#15803d
+ style START fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style Q1 fill:#b45309,color:#fff,stroke:#b45309
+ style Q2 fill:#b45309,color:#fff,stroke:#b45309
+ style Q3 fill:#b45309,color:#fff,stroke:#b45309
+ style CAT fill:#15803d,color:#fff,stroke:#15803d
+ style LGB fill:#15803d,color:#fff,stroke:#15803d
+ style XGB fill:#15803d,color:#fff,stroke:#15803d
 
-    START(["New tabular ML task"])
-    START --> Q1{"Many categorical features?\n(>5 high-cardinality cols)"}
-    Q1 -->|"Yes"| CAT["CatBoost\n— native target encoding\n— no one-hot needed"]
-    Q1 -->|"No"| Q2{"Large dataset?\n(>500k rows or\ntraining >5 min)"}
-    Q2 -->|"Yes"| LGB["LightGBM\n— histogram 80× speedup\n— leaf-wise growth"]
-    Q2 -->|"No"| Q3{"Need explainability\nor Kaggle benchmark?"}
-    Q3 -->|"Either"| XGB["XGBoost\n— best documented\n— TreeSHAP native\n— competition default"]
-    Q3 -->|"Neither"| LGB
+ START(["New tabular ML task"])
+ START --> Q1{"Many categorical features?\n(>5 high-cardinality cols)"}
+ Q1 -->|"Yes"| CAT["CatBoost\n— native target encoding\n— no one-hot needed"]
+ Q1 -->|"No"| Q2{"Large dataset?\n(>500k rows or\ntraining >5 min)"}
+ Q2 -->|"Yes"| LGB["LightGBM\n— histogram 80× speedup\n— leaf-wise growth"]
+ Q2 -->|"No"| Q3{"Need explainability\nor Kaggle benchmark?"}
+ Q3 -->|"Either"| XGB["XGBoost\n— best documented\n— TreeSHAP native\n— competition default"]
+ Q3 -->|"Neither"| LGB
 ```
 
 ---
@@ -165,22 +165,22 @@ Linear Regression is a "needy" model: the data must be mathematically "polite" (
 
 ```mermaid
 flowchart TD
-    style A fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style B fill:#b45309,color:#fff,stroke:#b45309
-    style D fill:#7c3aed,color:#fff,stroke:#7c3aed
-    style E fill:#7c3aed,color:#fff,stroke:#7c3aed
-    style F fill:#7c3aed,color:#fff,stroke:#7c3aed
-    style G fill:#7c3aed,color:#fff,stroke:#7c3aed
-    style H fill:#15803d,color:#fff,stroke:#15803d
+ style A fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style B fill:#b45309,color:#fff,stroke:#b45309
+ style D fill:#7c3aed,color:#fff,stroke:#7c3aed
+ style E fill:#7c3aed,color:#fff,stroke:#7c3aed
+ style F fill:#7c3aed,color:#fff,stroke:#7c3aed
+ style G fill:#7c3aed,color:#fff,stroke:#7c3aed
+ style H fill:#15803d,color:#fff,stroke:#15803d
 
-    A[Raw Data] --> B[Data Cleaning\nnulls · extreme outliers]
-    B --> C{Text data?}
-    C -- Yes --> D["TF-IDF / Word Embeddings\n→ creates the x vector\n(each word = one feature)"]
-    C -- No --> E
-    D --> E["Categorical Encoding\nOne-Hot: Red→[1,0,0]\nBlue→[0,1,0]"]
-    E --> F["Manual Feature Extraction\nx₁² for parabolic curves\nPrice×Location for interactions"]
-    F --> G["Feature Scaling · Required\nStandardScaler: μ=0 σ=1\nwithout this, salary dwarfs age"]
-    G --> H[Linear Regression Training\nfit β to minimise Σ(y−ŷ)²]
+ A[Raw Data] --> B[Data Cleaning\nnulls · extreme outliers]
+ B --> C{Text data?}
+ C -- Yes --> D["TF-IDF / Word Embeddings\n→ creates the x vector\n(each word = one feature)"]
+ C -- No --> E
+ D --> E["Categorical Encoding\nOne-Hot: Red→[1,0,0]\nBlue→[0,1,0]"]
+ E --> F["Manual Feature Extraction\nx₁² for parabolic curves\nPrice×Location for interactions"]
+ F --> G["Feature Scaling · Required\nStandardScaler: μ=0 σ=1\nwithout this, salary dwarfs age"]
+ G --> H[Linear Regression Training\nfit β to minimise Σ(y−ŷ)²]
 ```
 
 **XGBoost — the low-friction route**
@@ -189,18 +189,18 @@ Trees use "greater than / less than" split logic. They don't care about absolute
 
 ```mermaid
 flowchart TD
-    style A fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style B fill:#b45309,color:#fff,stroke:#b45309
-    style D fill:#7c3aed,color:#fff,stroke:#7c3aed
-    style E fill:#7c3aed,color:#fff,stroke:#7c3aed
-    style F fill:#15803d,color:#fff,stroke:#15803d
+ style A fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style B fill:#b45309,color:#fff,stroke:#b45309
+ style D fill:#7c3aed,color:#fff,stroke:#7c3aed
+ style E fill:#7c3aed,color:#fff,stroke:#7c3aed
+ style F fill:#15803d,color:#fff,stroke:#15803d
 
-    A[Raw Data] --> B["Data Cleaning\nnulls optional — XGBoost\nlearns a default split direction"]
-    B --> C{Text data?}
-    C -- Yes --> D["TF-IDF / Embeddings\nstill required — trees need numbers"]
-    C -- No --> E
-    D --> E["Label / Ordinal Encoding\n'Red'→1 'Blue'→2\nOne-Hot actively discouraged:\ncreates sparse, redundant splits"]
-    E --> F["XGBoost Training\n✓ Handles non-linearity internally\n✓ Captures interactions via branches\n✓ Scale-invariant — no StandardScaler\n✓ Robust to outliers — own leaf"]
+ A[Raw Data] --> B["Data Cleaning\nnulls optional — XGBoost\nlearns a default split direction"]
+ B --> C{Text data?}
+ C -- Yes --> D["TF-IDF / Embeddings\nstill required — trees need numbers"]
+ C -- No --> E
+ D --> E["Label / Ordinal Encoding\n'Red'→1 'Blue'→2\nOne-Hot actively discouraged:\ncreates sparse, redundant splits"]
+ E --> F["XGBoost Training\n✓ Handles non-linearity internally\n✓ Captures interactions via branches\n✓ Scale-invariant — no StandardScaler\n✓ Robust to outliers — own leaf"]
 ```
 
 ---
@@ -250,7 +250,7 @@ P-values answer one question: **could this result have appeared by sampling nois
 | Linear regression feature selection | Yes — "could this coefficient be noise?" | Full framework: [ch06-metrics §8b](../../01-regression/ch06_metrics/README.md#8b--statistical-significance-of-regression-coefficients-p-values) |
 | XGBoost / tree feature importance | No — no coefficient distribution to test | **SHAP values** (Ch.4) — per-prediction attribution |
 
-> 💡 **Quick read:** $p = 0.45$ means if this feature truly had no effect, you'd still see a coefficient this large 45% of the time by random sampling alone — essentially noise. $p < 0.05$ means that probability drops below 5% — real signal.
+> **Quick read:** $p = 0.45$ means if this feature truly had no effect, you'd still see a coefficient this large 45% of the time by random sampling alone — essentially noise. $p < 0.05$ means that probability drops below 5% — real signal.
 
 ---
 
@@ -385,7 +385,7 @@ Gain = 0.417 > 0 → split accepted. If $\gamma = 0.5$: Gain = $0.417 - 0.5 = -0
 
 Per-round speedup from histograms alone: $n / B = 20{,}640 / 256 = \mathbf{80.6\times}$.
 
-> 💡 **Why accuracy is preserved.** House values \$15k–\$500k fit into 256 quantile bins with ~\$1.5k bin width. The split "MedInc < 3.4175" is empirically indistinguishable from a bin boundary at 3.41 for CA Housing. LightGBM's default quantile-based binning places more boundaries where the data is dense, which is where splits matter most.
+> **Why accuracy is preserved.** House values \$15k–\$500k fit into 256 quantile bins with ~\$1.5k bin width. The split "MedInc < 3.4175" is empirically indistinguishable from a bin boundary at 3.41 for CA Housing. LightGBM's default quantile-based binning places more boundaries where the data is dense, which is where splits matter most.
 
 ---
 
@@ -462,7 +462,7 @@ $$= \frac{1}{2}\left[\frac{2.8224}{4} + \frac{2.8224}{3} - 0\right] = \frac{1}{2
 | Candidate | Gain | Decision |
 |-----------|------|----------|
 | `AveRooms < 3` | 0.471 | — |
-| **`AveRooms < 5`** | **0.823** | ✅ Winner |
+| **`AveRooms < 5`** | **0.823** | Winner |
 
 `AveRooms < 5` wins. This split separates the two expensive houses (4,5 — priced above mean) from the three cheaper ones (1,2,3 — priced at or below mean), creating two groups where the gradient signals are coherent within each.
 
@@ -486,11 +486,11 @@ With $\eta = 0.1$, the actual update: $\hat{y}_i \leftarrow \hat{y}_i + \eta \cd
 
 | House | $y_i$ | Before | $\eta \cdot w$ | After | Error before → after |
 |-------|--------|--------|----------------|-------|---------------------|
-| 1 | \$150k | \$266k | $0.1 \times (-0.42) \times \$100k = -\$4.2k$ | \$261.8k | \$116k → \$111.8k ✅ |
-| 2 | \$200k | \$266k | $-\$4.2k$ | \$261.8k | \$66k → \$61.8k ✅ |
-| 3 | \$280k | \$266k | $-\$4.2k$ | \$261.8k | \$14k → \$18.2k ⬆️ |
-| 4 | \$320k | \$266k | $0.1 \times (+0.56) \times \$100k = +\$5.6k$ | \$271.6k | \$54k → \$48.4k ✅ |
-| 5 | \$380k | \$266k | $+\$5.6k$ | \$271.6k | \$114k → \$108.4k ✅ |
+| 1 | \$150k | \$266k | $0.1 \times (-0.42) \times \$100k = -\$4.2k$ | \$261.8k | \$116k → \$111.8k |
+| 2 | \$200k | \$266k | $-\$4.2k$ | \$261.8k | \$66k → \$61.8k |
+| 3 | \$280k | \$266k | $-\$4.2k$ | \$261.8k | \$14k → \$18.2k ⬆ |
+| 4 | \$320k | \$266k | $0.1 \times (+0.56) \times \$100k = +\$5.6k$ | \$271.6k | \$54k → \$48.4k |
+| 5 | \$380k | \$266k | $+\$5.6k$ | \$271.6k | \$114k → \$108.4k |
 
 House 3's error *increased* slightly — it was correctly valued (close to mean) but got lumped in the "cheaper" leaf. This is the cost of leaf-based approximation: the leaf weight is optimal *on average* for the group, not optimal for each individual sample. Over 500 rounds, subsequent trees will continue to correct the residuals, eventually achieving MAE ≈ \$22k.
 
@@ -504,42 +504,42 @@ The small $\eta = 0.1$ step is deliberate: 500 rounds of small corrections gener
 
 ```mermaid
 flowchart TD
-    style ROOT fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style GRAD fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style SPLIT fill:#b45309,color:#fff,stroke:#b45309
-    style GAIN fill:#b45309,color:#fff,stroke:#b45309
-    style PRUNE fill:#b91c1c,color:#fff,stroke:#b91c1c
-    style LEAFL fill:#15803d,color:#fff,stroke:#15803d
-    style LEAFR fill:#15803d,color:#fff,stroke:#15803d
-    style UPDATE fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style ROOT fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style GRAD fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style SPLIT fill:#b45309,color:#fff,stroke:#b45309
+ style GAIN fill:#b45309,color:#fff,stroke:#b45309
+ style PRUNE fill:#b91c1c,color:#fff,stroke:#b91c1c
+ style LEAFL fill:#15803d,color:#fff,stroke:#15803d
+ style LEAFR fill:#15803d,color:#fff,stroke:#15803d
+ style UPDATE fill:#1e3a8a,color:#fff,stroke:#1e3a8a
 
-    ROOT["Start of round m\nCurrent predictions ŷᵢ for all n samples"]
-    ROOT --> GRAD["Compute gᵢ = ∂l/∂ŷᵢ and hᵢ = ∂²l/∂ŷᵢ²\n(MSE: gᵢ = ŷᵢ − yᵢ, hᵢ = 1)"]
-    GRAD --> SPLIT["For each feature f, threshold t:\npartition → I_L and I_R\nCompute G_L, H_L, G_R, H_R"]
-    SPLIT --> GAIN["Gain = ½[G_L²/(H_L+λ) + G_R²/(H_R+λ)\n− (G_L+G_R)²/(H_L+H_R+λ)] − γ"]
-    GAIN -->|"Gain < 0 (below γ)"| PRUNE["Reject split\n(structural pruning by γ)"]
-    GAIN -->|"Gain ≥ 0"| LEAFL["Leaf L: w_L* = −G_L/(H_L+λ)"]
-    GAIN -->|"Gain ≥ 0"| LEAFR["Leaf R: w_R* = −G_R/(H_R+λ)"]
-    LEAFL & LEAFR --> UPDATE["Update: ŷᵢ ← ŷᵢ + η·w_leaf(i)\nRepeat for round m+1"]
+ ROOT["Start of round m\nCurrent predictions ŷᵢ for all n samples"]
+ ROOT --> GRAD["Compute gᵢ = ∂l/∂ŷᵢ and hᵢ = ∂²l/∂ŷᵢ²\n(MSE: gᵢ = ŷᵢ − yᵢ, hᵢ = 1)"]
+ GRAD --> SPLIT["For each feature f, threshold t:\npartition → I_L and I_R\nCompute G_L, H_L, G_R, H_R"]
+ SPLIT --> GAIN["Gain = ½[G_L²/(H_L+λ) + G_R²/(H_R+λ)\n− (G_L+G_R)²/(H_L+H_R+λ)] − γ"]
+ GAIN -->|"Gain < 0 (below γ)"| PRUNE["Reject split\n(structural pruning by γ)"]
+ GAIN -->|"Gain ≥ 0"| LEAFL["Leaf L: w_L* = −G_L/(H_L+λ)"]
+ GAIN -->|"Gain ≥ 0"| LEAFR["Leaf R: w_R* = −G_R/(H_R+λ)"]
+ LEAFL & LEAFR --> UPDATE["Update: ŷᵢ ← ŷᵢ + η·w_leaf(i)\nRepeat for round m+1"]
 ```
 
 ### Diagram 2 — LightGBM Histogram Binning
 
 ```mermaid
 flowchart LR
-    style RAW fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style BIN fill:#b45309,color:#fff,stroke:#b45309
-    style HIST fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style SCAN fill:#15803d,color:#fff,stroke:#15803d
-    style GAIN2 fill:#15803d,color:#fff,stroke:#15803d
-    style SPEED fill:#b91c1c,color:#fff,stroke:#b91c1c
+ style RAW fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style BIN fill:#b45309,color:#fff,stroke:#b45309
+ style HIST fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style SCAN fill:#15803d,color:#fff,stroke:#15803d
+ style GAIN2 fill:#15803d,color:#fff,stroke:#15803d
+ style SPEED fill:#b91c1c,color:#fff,stroke:#b91c1c
 
-    RAW["Raw feature values\nn=20,640 unique floats\ne.g. MedInc: 0.499…15.000"]
-    RAW -->|"One-time O(n·d)"| BIN["Bin into B≤256 buckets\nQuantile-based boundaries\nBin 0: [0.499, 0.556)\nBin 1: [0.556, 0.612)…"]
-    BIN --> HIST["Gradient histogram per leaf:\nG_bin, H_bin for each bucket\n256 entries × 8 features"]
-    HIST -->|"Per-split O(B·d)"| SCAN["Scan 255 bin boundaries\n(not 20,640 values)\nSame Gain formula applies"]
-    SCAN --> GAIN2["Best split: bin boundary\nApprox. same accuracy\nas exact threshold"]
-    GAIN2 --> SPEED["Speedup: n/B per round\n= 20,640/256 ≈ 80×\n500 rounds: ~69× total"]
+ RAW["Raw feature values\nn=20,640 unique floats\ne.g. MedInc: 0.499…15.000"]
+ RAW -->|"One-time O(n·d)"| BIN["Bin into B≤256 buckets\nQuantile-based boundaries\nBin 0: [0.499, 0.556)\nBin 1: [0.556, 0.612)…"]
+ BIN --> HIST["Gradient histogram per leaf:\nG_bin, H_bin for each bucket\n256 entries × 8 features"]
+ HIST -->|"Per-split O(B·d)"| SCAN["Scan 255 bin boundaries\n(not 20,640 values)\nSame Gain formula applies"]
+ SCAN --> GAIN2["Best split: bin boundary\nApprox. same accuracy\nas exact threshold"]
+ GAIN2 --> SPEED["Speedup: n/B per round\n= 20,640/256 ≈ 80×\n500 rounds: ~69× total"]
 ```
 
 ---
@@ -578,39 +578,39 @@ Tune in this order: early stopping → tree complexity → regularization → sa
 # XGBoost
 import xgboost as xgb
 model = xgb.XGBRegressor(
-    n_estimators=1000,
-    learning_rate=0.05,
-    max_depth=4,
-    subsample=0.8,
-    colsample_bytree=0.8,
-    reg_lambda=1.0,
-    reg_alpha=0.0,
-    early_stopping_rounds=30,
-    eval_metric="mae",
-    random_state=42,
+ n_estimators=1000,
+ learning_rate=0.05,
+ max_depth=4,
+ subsample=0.8,
+ colsample_bytree=0.8,
+ reg_lambda=1.0,
+ reg_alpha=0.0,
+ early_stopping_rounds=30,
+ eval_metric="mae",
+ random_state=42,
 )
 model.fit(X_train, y_train, eval_set=[(X_val, y_val)], verbose=100)
 
 # LightGBM
 import lightgbm as lgb
 model = lgb.LGBMRegressor(
-    n_estimators=1000,
-    learning_rate=0.05,
-    num_leaves=31,
-    subsample=0.8,
-    feature_fraction=0.8,
-    lambda_l2=1.0,
-    min_child_samples=20,
-    random_state=42,
+ n_estimators=1000,
+ learning_rate=0.05,
+ num_leaves=31,
+ subsample=0.8,
+ feature_fraction=0.8,
+ lambda_l2=1.0,
+ min_child_samples=20,
+ random_state=42,
 )
 model.fit(
-    X_train, y_train,
-    eval_set=[(X_val, y_val)],
-    callbacks=[lgb.early_stopping(30), lgb.log_evaluation(100)],
+ X_train, y_train,
+ eval_set=[(X_val, y_val)],
+ callbacks=[lgb.early_stopping(30), lgb.log_evaluation(100)],
 )
 ```
 
-> ⚠️ **`learning_rate` and `n_estimators` are coupled.** Halving the learning rate requires roughly doubling the number of trees. Always use early stopping to find optimal `n_estimators` automatically rather than guessing.
+> **`learning_rate` and `n_estimators` are coupled.** Halving the learning rate requires roughly doubling the number of trees. Always use early stopping to find optimal `n_estimators` automatically rather than guessing.
 
 ### Step-by-Step: XGBoost on California Housing
 
@@ -623,7 +623,7 @@ import numpy as np
 
 # 1 — Load data
 data = fetch_california_housing()
-X, y = data.data, data.target  # y in $100k units
+X, y = data.data, data.target # y in $100k units
 
 # 2 — Train/val/test split (60/20/20)
 X_train, X_tmp, y_train, y_tmp = train_test_split(X, y, test_size=0.4, random_state=42)
@@ -631,35 +631,35 @@ X_val, X_test, y_val, y_test = train_test_split(X_tmp, y_tmp, test_size=0.5, ran
 
 # 3 — Instantiate with starter config
 model = xgb.XGBRegressor(
-    n_estimators=1000,       # upper bound; early stopping finds the real number
-    learning_rate=0.05,      # small steps → better generalization
-    max_depth=4,             # shallow trees for boosting
-    subsample=0.8,           # row sampling per round
-    colsample_bytree=0.8,    # feature sampling per round
-    reg_lambda=1.0,          # L2 regularization on leaf weights
-    reg_alpha=0.0,           # L1 regularization (off by default)
-    gamma=0.0,               # min gain threshold (0 = accept all splits)
-    eval_metric="mae",
-    early_stopping_rounds=30,
-    random_state=42,
+ n_estimators=1000, # upper bound; early stopping finds the real number
+ learning_rate=0.05, # small steps → better generalization
+ max_depth=4, # shallow trees for boosting
+ subsample=0.8, # row sampling per round
+ colsample_bytree=0.8, # feature sampling per round
+ reg_lambda=1.0, # L2 regularization on leaf weights
+ reg_alpha=0.0, # L1 regularization (off by default)
+ gamma=0.0, # min gain threshold (0 = accept all splits)
+ eval_metric="mae",
+ early_stopping_rounds=30,
+ random_state=42,
 )
 
 # 4 — Fit with validation monitoring
 model.fit(X_train, y_train, eval_set=[(X_val, y_val)], verbose=100)
-print(f"Best round: {model.best_iteration}")  # e.g. 487
+print(f"Best round: {model.best_iteration}") # e.g. 487
 
 # 5 — Evaluate on held-out test set
 y_pred = model.predict(X_test)
-mae = mean_absolute_error(y_test, y_pred) * 100  # convert to $k
-print(f"XGBoost test MAE: ${mae:.1f}k")  # → ~$22k
+mae = mean_absolute_error(y_test, y_pred) * 100 # convert to $k
+print(f"XGBoost test MAE: ${mae:.1f}k") # → ~$22k
 
 # 6 — Compare: vanilla sklearn GB from Ch.2
 from sklearn.ensemble import GradientBoostingRegressor
 gb = GradientBoostingRegressor(n_estimators=500, learning_rate=0.05, max_depth=4, random_state=42)
 gb.fit(X_train, y_train)
 gb_mae = mean_absolute_error(y_test, gb.predict(X_test)) * 100
-print(f"sklearn GB test MAE: ${gb_mae:.1f}k")   # → ~$25k
-print(f"XGBoost improvement: {(gb_mae - mae) / gb_mae * 100:.1f}%")  # → ~12%
+print(f"sklearn GB test MAE: ${gb_mae:.1f}k") # → ~$25k
+print(f"XGBoost improvement: {(gb_mae - mae) / gb_mae * 100:.1f}%") # → ~12%
 ```
 
 ### Step-by-Step: LightGBM — same accuracy, 3× faster
@@ -670,30 +670,30 @@ import time
 
 # 7 — LightGBM with equivalent config
 lgb_model = lgb.LGBMRegressor(
-    n_estimators=1000,
-    learning_rate=0.05,
-    num_leaves=31,           # controls tree complexity (vs max_depth)
-    subsample=0.8,
-    feature_fraction=0.8,
-    lambda_l2=1.0,
-    min_child_samples=20,
-    random_state=42,
+ n_estimators=1000,
+ learning_rate=0.05,
+ num_leaves=31, # controls tree complexity (vs max_depth)
+ subsample=0.8,
+ feature_fraction=0.8,
+ lambda_l2=1.0,
+ min_child_samples=20,
+ random_state=42,
 )
 
 t0 = time.time()
 lgb_model.fit(
-    X_train, y_train,
-    eval_set=[(X_val, y_val)],
-    callbacks=[lgb.early_stopping(30), lgb.log_evaluation(100)],
+ X_train, y_train,
+ eval_set=[(X_val, y_val)],
+ callbacks=[lgb.early_stopping(30), lgb.log_evaluation(100)],
 )
 lgb_time = time.time() - t0
 
 lgb_mae = mean_absolute_error(y_test, lgb_model.predict(X_test)) * 100
-print(f"LightGBM test MAE:  ${lgb_mae:.1f}k  (trained in {lgb_time:.1f}s)")
+print(f"LightGBM test MAE: ${lgb_mae:.1f}k (trained in {lgb_time:.1f}s)")
 # → ~$22k, ~6s vs ~18s for sklearn GB
 ```
 
-> 💡 **Key observation**: `best_iteration` from early stopping prevents over-training. Without it, both models would continue past their optimal round and start memorizing noise — val MAE would rise while train MAE continued falling.
+> **Key observation**: `best_iteration` from early stopping prevents over-training. Without it, both models would continue past their optimal round and start memorizing noise — val MAE would rise while train MAE continued falling.
 
 ---
 
@@ -714,18 +714,12 @@ print(f"LightGBM test MAE:  ${lgb_mae:.1f}k  (trained in {lgb_time:.1f}s)")
 ---
 
 ## 10 · Where This Reappears
-
-➡️ **Ch.4 (SHAP)** — TreeSHAP computes exact Shapley values for XGBoost/LightGBM in milliseconds. Pipe a trained `xgb.XGBRegressor` into `shap.TreeExplainer` to explain individual California Housing valuations. This satisfies EnsembleAI Constraint #4 (Interpretability).
-
-➡️ **Ch.5 (Stacking)** — XGBoost is the most common meta-learner and base learner in stacked ensembles. LightGBM's speed makes it ideal when training across many cross-validation folds.
-
-➡️ **Ch.6 (Production)** — Latency benchmarks, model serialization (`booster.save_model()`), ONNX export, GPU deployment. XGBoost/LightGBM `.predict()` runs in <1 ms — production-safe.
-
-➡️ **05-AnomalyDetection** — XGBoost appears as the supervised comparison baseline against Isolation Forest and One-Class SVM. LightGBM handles 284k transaction rows where its speed matters most.
-
-➡️ **04-RecommenderSystems** — LightGBM powers Learning-to-Rank pipelines (LambdaRank objective) re-ranking candidate recommendation items by relevance.
-
-➡️ **06-AI-Infrastructure** — Model serving, A/B testing, and drift detection are demonstrated with XGBoost models as the deployed artifact.
+**Ch.4 (SHAP)** — TreeSHAP computes exact Shapley values for XGBoost/LightGBM in milliseconds. Pipe a trained `xgb.XGBRegressor` into `shap.TreeExplainer` to explain individual California Housing valuations. This satisfies EnsembleAI Constraint #4 (Interpretability).
+**Ch.5 (Stacking)** — XGBoost is the most common meta-learner and base learner in stacked ensembles. LightGBM's speed makes it ideal when training across many cross-validation folds.
+**Ch.6 (Production)** — Latency benchmarks, model serialization (`booster.save_model()`), ONNX export, GPU deployment. XGBoost/LightGBM `.predict()` runs in <1 ms — production-safe.
+**05-AnomalyDetection** — XGBoost appears as the supervised comparison baseline against Isolation Forest and One-Class SVM. LightGBM handles 284k transaction rows where its speed matters most.
+**04-RecommenderSystems** — LightGBM powers Learning-to-Rank pipelines (LambdaRank objective) re-ranking candidate recommendation items by relevance.
+**06-AI-Infrastructure** — Model serving, A/B testing, and drift detection are demonstrated with XGBoost models as the deployed artifact.
 
 ---
 
@@ -737,25 +731,23 @@ print(f"LightGBM test MAE:  ${lgb_mae:.1f}k  (trained in {lgb_time:.1f}s)")
 
 | Constraint | Target | Status | Evidence |
 |------------|--------|--------|----------|
-| **#1 IMPROVEMENT** | >5% MAE vs baseline | ✅ **12% improvement** | XGBoost \$22k vs vanilla GB \$25k |
-| **#2 DIVERSITY** | Different algorithmic strategies | ✅ **Met** | 2nd-order (XGBoost) + histogram (LightGBM) — different engines |
-| **#3 EFFICIENCY** | Training <5×; inference <1ms | ✅ **Met** | LightGBM **3× faster**; inference <1ms |
-| **#4 INTERPRETABILITY** | Per-prediction explanations | ❌ **Open** | Global feature importance only — need SHAP (Ch.4) |
-| **#5 ROBUSTNESS** | Stable across seeds | ✅ **Met** | L1/L2 + early stopping stabilize results |
+| **#1 IMPROVEMENT** | >5% MAE vs baseline | **12% improvement** | XGBoost \$22k vs vanilla GB \$25k |
+| **#2 DIVERSITY** | Different algorithmic strategies | **Met** | 2nd-order (XGBoost) + histogram (LightGBM) — different engines |
+| **#3 EFFICIENCY** | Training <5×; inference <1ms | **Met** | LightGBM **3× faster**; inference <1ms |
+| **#4 INTERPRETABILITY** | Per-prediction explanations | **Open** | Global feature importance only — need SHAP (Ch.4) |
+| **#5 ROBUSTNESS** | Stable across seeds | **Met** | L1/L2 + early stopping stabilize results |
 
 ### Capability summary
-
-✅ **XGBoost MAE = \$22k on California Housing** — beats vanilla GB by \$3k (12%)
-✅ **LightGBM MAE = \$22k at 3× training speed** — 80× fewer scan ops per split via histogram
-✅ **Second-order leaf weights**: $w_j^* = -G_j/(H_j+\lambda)$ — closed-form, optimal, regularized
-✅ **Structural pruning via $\gamma$**: every split must exceed a minimum gain threshold
-✅ **Full regularization toolkit**: `reg_lambda` ($\lambda$), `reg_alpha` ($\alpha$), `gamma`, `min_child_weight`
-✅ **GPU support**: `tree_method='gpu_hist'` (XGBoost) / `device='gpu'` (LightGBM)
-
-❌ **Still can't solve:**
-- ❌ **Constraint #4 (Interpretability)**: No per-prediction explanations — global feature importance only
-- ❌ **Extrapolation**: Trees clamp predictions to the training value range
-- ❌ **Online learning**: Batch learners only — cannot update incrementally on streaming data
+**XGBoost MAE = \$22k on California Housing** — beats vanilla GB by \$3k (12%)
+**LightGBM MAE = \$22k at 3× training speed** — 80× fewer scan ops per split via histogram
+**Second-order leaf weights**: $w_j^* = -G_j/(H_j+\lambda)$ — closed-form, optimal, regularized
+**Structural pruning via $\gamma$**: every split must exceed a minimum gain threshold
+**Full regularization toolkit**: `reg_lambda` ($\lambda$), `reg_alpha` ($\alpha$), `gamma`, `min_child_weight`
+**GPU support**: `tree_method='gpu_hist'` (XGBoost) / `device='gpu'` (LightGBM)
+**Still can't solve:**
+- **Constraint #4 (Interpretability)**: No per-prediction explanations — global feature importance only
+- **Extrapolation**: Trees clamp predictions to the training value range
+- **Online learning**: Batch learners only — cannot update incrementally on streaming data
 
 **Real-world status**: XGBoost and LightGBM win Kaggle tabular competitions and power production systems at Uber (trip pricing), Airbnb (demand forecasting), Spotify (content ranking), and across financial services (credit scoring). You now have competition-grade boosting. But when a compliance officer asks "why did your model predict \$400k for *this* district?" you still have no per-prediction answer. That changes in Ch.4.
 
@@ -767,4 +759,4 @@ XGBoost and LightGBM deliver accuracy and speed, but in regulated industries eve
 
 **Chapter 4** introduces **SHAP** (SHapley Additive exPlanations) — a game-theoretic framework that decomposes any model's prediction into exact, consistent per-feature contributions. TreeSHAP computes exact Shapley values in $O(T L D^2)$ (trees × leaves × depth²) instead of the exponential brute-force cost, making per-prediction explanations fast enough for production APIs.
 
-> ➡️ **What SHAP unlocks:** EnsembleAI Constraint #4 — the last open constraint. With SHAP, every California Housing prediction becomes auditable: "Why \$330k? Here's the breakdown by feature." That's the difference between a model that scores well and a model that ships.
+> ➡ **What SHAP unlocks:** EnsembleAI Constraint #4 — the last open constraint. With SHAP, every California Housing prediction becomes auditable: "Why \$330k? Here's the breakdown by feature." That's the difference between a model that scores well and a model that ships.

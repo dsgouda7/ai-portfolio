@@ -24,7 +24,7 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The goal**: Launch **PizzaBot v2.0** — an intelligent pizza ordering agent satisfying 6 production constraints:
+> **The goal**: Launch **PizzaBot v2.0** — an intelligent pizza ordering agent satisfying 6 production constraints:
 > 1. **ACCURACY**: Handle 99%+ of customer orders without human escalation
 > 2. **EDGE CASE ROBUSTNESS**: Handle contradictory inputs (gluten-free + extra cheese), pricing conflicts, menu ambiguities with <1% error rate
 > 3. **COST EFFICIENCY**: ≤\$0.25 per conversation (3× single-pass budget allowed for complex orders)
@@ -33,8 +33,7 @@
 > 6. **GRACEFUL DEGRADATION**: When uncertain, ask clarifying questions instead of hallucinating
 
 **What we know so far:**
-
-✅ **Ch.1–10 gave us single-pass agent capabilities:**
+**Ch.1–10 gave us single-pass agent capabilities:**
 - Ch.1: GPT-4 can understand natural language orders
 - Ch.2: Prompt engineering steers tone and format
 - Ch.3: Chain-of-thought breaks down multi-item orders
@@ -49,36 +48,33 @@
 
 ```
 Customer: "I want a large pepperoni pizza for delivery."
-PizzaBot v1.0: ✅ "Large pepperoni ($14.99) + delivery ($3.00) = $17.99.
-                    Estimated delivery: 35 minutes. Confirm order?"
+PizzaBot v1.0: "Large pepperoni ($14.99) + delivery ($3.00) = $17.99.
+ Estimated delivery: 35 minutes. Confirm order?"
 ```
 
 **But edge cases still break:**
-
-❌ **Edge case #1: Contradictory constraints**
+**Edge case #1: Contradictory constraints**
 ```
 Customer: "I want a large pepperoni pizza, but make it gluten-free,
-           dairy-free, and add extra cheese."
-PizzaBot v1.0: ❌ "Error: dairy-free and extra cheese are incompatible."
-                    [Customer abandons order]
+ dairy-free, and add extra cheese."
+PizzaBot v1.0: "Error: dairy-free and extra cheese are incompatible."
+ [Customer abandons order]
 ```
-
-❌ **Edge case #2: Pricing conflicts (overlapping discounts)**
+**Edge case #2: Pricing conflicts (overlapping discounts)**
 ```
 Customer: "I have a 20% off coupon, a \$5 loyalty reward, and the
-           current 'Buy One Get One 50% Off' promo. Which applies?"
-PizzaBot v1.0: ❌ "Only one discount can be applied per order."
-                    [Wrong! Policy says: coupons + loyalty stack, but promo replaces both]
-                    [Customer disputes charge]
+ current 'Buy One Get One 50% Off' promo. Which applies?"
+PizzaBot v1.0: "Only one discount can be applied per order."
+ [Wrong! Policy says: coupons + loyalty stack, but promo replaces both]
+ [Customer disputes charge]
 ```
-
-❌ **Edge case #3: Complex catering orders**
+**Edge case #3: Complex catering orders**
 ```
 Customer: "I need 15 pizzas for a company event: 5 at 12pm, 5 at 1pm,
-           5 at 2pm. Budget is \$200 total. What can you do?"
-PizzaBot v1.0: ❌ "15 large pizzas = \$224.85, over budget."
-                    [Doesn't explore: medium pizzas, split toppings, promo codes]
-                    [Misses \$180 solution that exists]
+ 5 at 2pm. Budget is \$200 total. What can you do?"
+PizzaBot v1.0: "15 large pizzas = \$224.85, over budget."
+ [Doesn't explore: medium pizzas, split toppings, promo codes]
+ [Misses \$180 solution that exists]
 ```
 
 **What's blocking us:**
@@ -93,11 +89,11 @@ Single-pass reasoning forces the model to get everything right in one attempt. N
 
 | Metric | Ch.10 (single-pass) | Target | Gap |
 |--------|---------------------|--------|-----|
-| **Simple orders** (1-2 items, no edge cases) | 98% ✅ | 95% | +3% |
-| **Edge cases** (contradictions, conflicts) | 92% ❌ | 99% | -7% |
-| **Complex orders** (catering, multi-constraint) | 85% ❌ | 95% | -10% |
-| **Overall accuracy** | 95% ❌ | 99% | -4% |
-| **Customer escalation rate** | 8% ❌ | <1% | -7% |
+| **Simple orders** (1-2 items, no edge cases) | 98% | 95% | +3% |
+| **Edge cases** (contradictions, conflicts) | 92% | 99% | -7% |
+| **Complex orders** (catering, multi-constraint) | 85% | 95% | -10% |
+| **Overall accuracy** | 95% | 99% | -4% |
+| **Customer escalation rate** | 8% | <1% | -7% |
 | **Avg tokens/conversation** | 850 | 2,550 (3× budget) | OK |
 | **Avg latency** | 4.2s | <15s | OK |
 
@@ -106,41 +102,41 @@ Single-pass reasoning forces the model to get everything right in one attempt. N
 Four patterns that trade tokens for reliability:
 
 1. **Reflection** (self-critique): Generate → Critique → Revise loop fixes contradictions
-   - Example: Detects "dairy-free + extra cheese" conflict → suggests vegan cheese
-   - Cost: 3× tokens (draft + critique + revision)
-   - Impact: Edge case accuracy 92% → 98%
+ - Example: Detects "dairy-free + extra cheese" conflict → suggests vegan cheese
+ - Cost: 3× tokens (draft + critique + revision)
+ - Impact: Edge case accuracy 92% → 98%
 
 2. **Debate & Consensus** (multi-agent): Multiple agents propose solutions, arbiter picks best
-   - Example: Pricing conflict → Agent1 (generous) vs Agent2 (strict) vs Judge (policy)
-   - Cost: N agents × tokens per round (typically 3 agents, 2 rounds = 6× baseline)
-   - Impact: Pricing dispute accuracy 85% → 97%
+ - Example: Pricing conflict → Agent1 (generous) vs Agent2 (strict) vs Judge (policy)
+ - Cost: N agents × tokens per round (typically 3 agents, 2 rounds = 6× baseline)
+ - Impact: Pricing dispute accuracy 85% → 97%
 
 3. **Hierarchical Orchestration** (planner → workers → verifier): Complex tasks decomposed
-   - Example: Catering order → Planner splits into 3 batches → Workers execute → Verifier checks budget
-   - Cost: 1 planner + N workers + 1 verifier (typically 1 + 3 + 1 = 5× baseline)
-   - Impact: Complex order accuracy 85% → 96%
+ - Example: Catering order → Planner splits into 3 batches → Workers execute → Verifier checks budget
+ - Cost: 1 planner + N workers + 1 verifier (typically 1 + 3 + 1 = 5× baseline)
+ - Impact: Complex order accuracy 85% → 96%
 
 4. **Tool Selection** (smart retry chains): Try fast tool → if fails, escalate to expensive tool
-   - Example: Inventory check: cached → DB → API → human escalation
-   - Cost: Variable (1.1× for cache hit, 2.5× for full escalation)
-   - Impact: Tool failure recovery 60% → 95%
+ - Example: Inventory check: cached → DB → API → human escalation
+ - Cost: Variable (1.1× for cache hit, 2.5× for full escalation)
+ - Impact: Tool failure recovery 60% → 95%
 
 **Expected outcomes after Ch.11:**
 
 | Metric | Before | After | Improvement |
 |--------|--------|-------|-------------|
-| Overall accuracy | 95% | 99.2% | +4.2% ✅ |
-| Edge case handling | 92% | 98.5% | +6.5% ✅ |
-| Complex order handling | 85% | 96% | +11% ✅ |
-| Escalation rate | 8% | 0.8% | -7.2% ✅ |
-| Avg cost/conversation | \$0.08 | \$0.18 | +\$0.10 (still under \$0.25 budget) ✅ |
-| Avg latency | 4.2s | 11.3s | +7.1s (still under 15s limit) ✅ |
+| Overall accuracy | 95% | 99.2% | +4.2% |
+| Edge case handling | 92% | 98.5% | +6.5% |
+| Complex order handling | 85% | 96% | +11% |
+| Escalation rate | 8% | 0.8% | -7.2% |
+| Avg cost/conversation | \$0.08 | \$0.18 | +\$0.10 (still under \$0.25 budget) |
+| Avg latency | 4.2s | 11.3s | +7.1s (still under 15s limit) |
 
 ---
 
-## 📽️ Animation Reference
+## 📽 Animation Reference
 
-> ⚠️ **Placeholder for animation assets** (to be generated by animation subagents):
+> **Placeholder for animation assets** (to be generated by animation subagents):
 >
 > **Decision flow animations** (see `notes/03-ai/ch11_advanced_agentic_patterns/gen_scripts/`):
 > - `gen_reflection_flow.py` → `img/reflection-flow.gif`: Draft → Critique → Revise loop with contradiction detection
@@ -177,7 +173,7 @@ The three §0 failures — contradictory constraints (8% customer abandonment), 
 | **Hierarchical** | Multi-step, decomposable tasks | 5× | 15× (on catering-like tasks) | Catering orders, research tasks |
 | **Tool Selection** | Multiple tools, failure-prone | 1.1×–2.5× | 2× recovery rate | Inventory lookup, API calls |
 
-> 💡 Pattern selection is a business decision, not an engineering one. Reflection spends an extra \$0.16 per ambiguous order; on PizzaBot that recovers orders worth \$25 — over 15,000% ROI. Debate spends \$0.45 to prevent a \$25 refund dispute. Hierarchical spends \$0.50 to capture a \$157 catering order that single-pass would have lost entirely. The question is never whether you can afford the tokens — it's whether you can afford the failures you're routing around.
+> Pattern selection is a business decision, not an engineering one. Reflection spends an extra \$0.16 per ambiguous order; on PizzaBot that recovers orders worth \$25 — over 15,000% ROI. Debate spends \$0.45 to prevent a \$25 refund dispute. Hierarchical spends \$0.50 to capture a \$157 catering order that single-pass would have lost entirely. The question is never whether you can afford the tokens — it's whether you can afford the failures you're routing around.
 
 ---
 
@@ -193,13 +189,13 @@ The three §0 failures are traced through their full conversation below — each
 
 ```
 Customer: "I want a large pepperoni pizza, but make it gluten-free,
-           dairy-free, and add extra cheese."
+ dairy-free, and add extra cheese."
 ```
 
 **PizzaBot v1.0 (single-pass):**
 ```
-❌ Response: "Error: You requested dairy-free, but extra cheese contains dairy.
-              Please clarify your order."
+Response: "Error: You requested dairy-free, but extra cheese contains dairy.
+ Please clarify your order."
 ```
 **Problem:** Technically correct, but unhelpful. Customer meant "vegan cheese." 8% of customers abandon at this point.
 
@@ -208,30 +204,30 @@ Customer: "I want a large pepperoni pizza, but make it gluten-free,
 **Step 1 — Draft (generate initial response):**
 ```python
 draft = LLM("Customer ordered: gluten-free + dairy-free + extra cheese.
-             Generate order confirmation.")
+ Generate order confirmation.")
 # Output: "Error: dairy-free and extra cheese are incompatible."
 ```
 
 **Step 2 — Critique (self-assessment):**
 ```python
 critique = LLM(f"Assess this draft: '{draft}'
-                Customer context: They ordered dairy-free + extra cheese.
-                Is there a better interpretation?")
+ Customer context: They ordered dairy-free + extra cheese.
+ Is there a better interpretation?")
 # Output: "The draft is technically correct but unhelpful. Customer likely
-#          wants vegan cheese. Check if gluten-free + vegan mozzarella is available."
+# wants vegan cheese. Check if gluten-free + vegan mozzarella is available."
 ```
 
 **Step 3 — Revise (incorporate critique):**
 ```python
 revised = LLM(f"Revise: '{draft}'
-               Critique: '{critique}'
-               Use menu API to check vegan cheese availability.")
+ Critique: '{critique}'
+ Use menu API to check vegan cheese availability.")
 # Calls menu API: vegan_mozzarella = available, +$2.50
 # Output: "For dairy-free, we use vegan mozzarella. Would you like extra
-#          vegan mozzarella (+$2.50) on your gluten-free pepperoni pizza?"
+# vegan mozzarella (+$2.50) on your gluten-free pepperoni pizza?"
 ```
 
-**Customer response:** ✅ "Yes, perfect!" (Conversion rate: 92% → 98%)
+**Customer response:** "Yes, perfect!" (Conversion rate: 92% → 98%)
 
 **Cost:** 850 tokens (draft) + 650 tokens (critique) + 950 tokens (revision) = **2,450 tokens** (\$0.23) vs. \$0.08 single-pass. **Worth it:** \$0.15 extra cost prevents \$25 abandoned order (1,667% ROI).
 
@@ -241,7 +237,7 @@ revised = LLM(f"Revise: '{draft}'
 
 ```
 Customer: "I have a 20% off coupon (SAVE20), a \$5 loyalty reward, and I see
-           a 'Buy One Get One 50% Off' promo banner. What's my total?"
+ a 'Buy One Get One 50% Off' promo banner. What's my total?"
 ```
 
 **Policy (stored in vector DB):**
@@ -252,8 +248,8 @@ Customer: "I have a 20% off coupon (SAVE20), a \$5 loyalty reward, and I see
 **PizzaBot v1.0 (single-pass RAG):**
 ```
 # RAG retrieves policy: "Only one promotional discount per order."
-❌ Response: "Your total is \$22.49 with the BOGO promo. The coupon and
-              loyalty reward don't apply when using a promo."
+Response: "Your total is \$22.49 with the BOGO promo. The coupon and
+ loyalty reward don't apply when using a promo."
 # WRONG! Should have calculated both paths and picked cheaper one.
 ```
 
@@ -265,44 +261,44 @@ Customer: "I have a 20% off coupon (SAVE20), a \$5 loyalty reward, and I see
 ```python
 # Agent 1 (Generous): Apply all discounts that don't conflict
 proposal_1 = LLM("Customer has SAVE20 coupon, $5 loyalty, BOGO promo.
-                  Policy: coupons + loyalty stack, promo replaces both.
-                  Calculate: Coupon + loyalty total.")
+ Policy: coupons + loyalty stack, promo replaces both.
+ Calculate: Coupon + loyalty total.")
 # Output: "2 large pizzas (\$29.98) → 20% off (\$23.98) → \$5 loyalty (\$18.98)"
 
 # Agent 2 (Strict): Apply promotional discount
 proposal_2 = LLM("Customer has SAVE20 coupon, $5 loyalty, BOGO promo.
-                  Policy: promo replaces coupons + loyalty.
-                  Calculate: BOGO total.")
+ Policy: promo replaces coupons + loyalty.
+ Calculate: BOGO total.")
 # Output: "2 large pizzas (\$29.98) → 50% off 2nd pizza (\$22.49)"
 ```
 
 **Step 2 — Challenge (agents critique each other):**
 ```python
 challenge_1_to_2 = LLM(f"Agent 2 says: {proposal_2}.
-                        But policy says 'pick best discount'. Did you check
-                        if coupon + loyalty is cheaper?")
+ But policy says 'pick best discount'. Did you check
+ if coupon + loyalty is cheaper?")
 # Agent 2: "No, I assumed BOGO is always better for 2 pizzas."
 
 challenge_2_to_1 = LLM(f"Agent 1 says: {proposal_1}.
-                        But promotional discount exists. Policy says it replaces
-                        coupons + loyalty. Did you justify why coupon + loyalty
-                        should apply instead?")
+ But promotional discount exists. Policy says it replaces
+ coupons + loyalty. Did you justify why coupon + loyalty
+ should apply instead?")
 # Agent 1: "Yes. \$18.98 (coupon + loyalty) < \$22.49 (BOGO). Customer saves \$3.51 more."
 ```
 
 **Step 3 — Vote (arbiter picks best):**
 ```python
 judge = LLM(f"Proposal 1: {proposal_1} = \$18.98.
-             Proposal 2: {proposal_2} = \$22.49.
-             Customer should pay whichever is cheaper.
-             Which proposal is correct?")
+ Proposal 2: {proposal_2} = \$22.49.
+ Customer should pay whichever is cheaper.
+ Which proposal is correct?")
 # Output: "Proposal 1 (\$18.98) is correct. Policy says 'pick best discount',
-#          and coupon + loyalty is \$3.51 cheaper than BOGO."
+# and coupon + loyalty is \$3.51 cheaper than BOGO."
 ```
 
-**Final response:** ✅ "Your total is **\$18.98** (20% coupon + \$5 loyalty reward). That's \$3.51 cheaper than the BOGO promo, so we applied the coupon + loyalty instead."
+**Final response:** "Your total is **\$18.98** (20% coupon + \$5 loyalty reward). That's \$3.51 cheaper than the BOGO promo, so we applied the coupon + loyalty instead."
 
-**Customer response:** ✅ "Wow, thanks for checking that!" (Dispute rate: 15% → 3%)
+**Customer response:** "Wow, thanks for checking that!" (Dispute rate: 15% → 3%)
 
 **Cost:** 3 agents × 2 rounds = 6 LLM calls × 800 tokens = **4,800 tokens** (\$0.45). **Worth it:** Prevents \$25 refund dispute (5,555% ROI).
 
@@ -312,16 +308,16 @@ judge = LLM(f"Proposal 1: {proposal_1} = \$18.98.
 
 ```
 Customer: "I need 15 pizzas for a company event. 5 delivered at 12pm, 5 at 1pm,
-           5 at 2pm. Budget is $200 total. Mix of vegetarian and meat options.
-           What can you do?"
+ 5 at 2pm. Budget is $200 total. Mix of vegetarian and meat options.
+ What can you do?"
 ```
 
 **PizzaBot v1.0 (single-pass):**
 ```
 # Chain-of-thought reasoning:
 "15 large pizzas × $14.99 = $224.85. Over budget by $24.85."
-❌ Response: "Your order total is $224.85, which exceeds your $200 budget.
-              Would you like to reduce the quantity?"
+Response: "Your order total is $224.85, which exceeds your $200 budget.
+ Would you like to reduce the quantity?"
 ```
 
 **Problem:** Didn't explore solution space. Misses: medium pizzas ($11.99), half-topping splits, bulk discount (10+ pizzas = 15% off), promo code CATERING20.
@@ -331,7 +327,7 @@ Customer: "I need 15 pizzas for a company event. 5 delivered at 12pm, 5 at 1pm,
 **Step 1 — Plan (decompose task):**
 ```python
 planner = LLM("Customer needs 15 pizzas, 3 delivery times, $200 budget.
-               Break this into subtasks with constraints.")
+ Break this into subtasks with constraints.")
 # Output plan:
 # Task 1: Optimize pizza sizes (large vs medium) to fit budget
 # Task 2: Split toppings (5 vegetarian, 10 meat mix)
@@ -345,48 +341,48 @@ planner = LLM("Customer needs 15 pizzas, 3 delivery times, $200 budget.
 ```python
 # Worker 1: Optimize sizes
 worker_1 = LLM("15 pizzas, \$200 budget. Try: 15 large (\$224.85), 15 medium (\$179.85).
-                Which fits?")
+ Which fits?")
 # Output: "15 medium pizzas = \$179.85 (under budget by \$20.15)"
 
 # Worker 2: Split toppings
 worker_2 = LLM("15 medium pizzas: 5 vegetarian (margherita), 10 meat (pepperoni,
-                sausage, supreme mix). Pricing?")
+ sausage, supreme mix). Pricing?")
 # Output: "5 margherita (\$11.99 each) + 10 meat (\$12.49 avg) = \$184.90"
 
 # Worker 3: Apply discounts
 worker_3 = LLM("10+ pizzas = 15% bulk discount. Also check CATERING20 promo (20% off).
-                Which saves more?")
+ Which saves more?")
 # Output: "Bulk discount: \$184.90 × 0.85 = \$157.17.
-#          Promo CATERING20: \$184.90 × 0.80 = \$147.92.
-#          Promo wins (saves \$9.25 more)."
+# Promo CATERING20: \$184.90 × 0.80 = \$147.92.
+# Promo wins (saves \$9.25 more)."
 
 # Worker 4: Schedule deliveries
 worker_4 = LLM("15 pizzas, 3 delivery windows (12pm, 1pm, 2pm). Split 5-5-5.
-                Delivery fee?")
+ Delivery fee?")
 # Output: "5 pizzas/delivery × \$3 fee × 3 deliveries = \$9 total delivery."
 ```
 
 **Step 3 — Verify (check constraints):**
 ```python
 verifier = LLM(f"Plan: {plan}
-                Results: {worker_1} + {worker_2} + {worker_3} + {worker_4}
-                Total cost: \$147.92 (pizzas) + \$9 (delivery) = \$156.92
-                Budget: \$200
-                Constraint satisfied? Any conflicts?")
-# Output: "✅ Total \$156.92 < \$200 budget (under by \$43.08).
-#          ✅ All 15 pizzas accounted for (5 veggie, 10 meat).
-#          ✅ 3 delivery windows scheduled.
-#          ✅ CATERING20 promo applied (saves \$37).
-#          No conflicts detected."
+ Results: {worker_1} + {worker_2} + {worker_3} + {worker_4}
+ Total cost: \$147.92 (pizzas) + \$9 (delivery) = \$156.92
+ Budget: \$200
+ Constraint satisfied? Any conflicts?")
+# Output: " Total \$156.92 < \$200 budget (under by \$43.08).
+# All 15 pizzas accounted for (5 veggie, 10 meat).
+# 3 delivery windows scheduled.
+# CATERING20 promo applied (saves \$37).
+# No conflicts detected."
 ```
 
-**Final response:** ✅ "I can do 15 medium pizzas (5 vegetarian, 10 meat) with the CATERING20 promo for **\$156.92 total** (including delivery). That's \$43 under budget! Deliveries at 12pm, 1pm, 2pm. Confirm?"
+**Final response:** "I can do 15 medium pizzas (5 vegetarian, 10 meat) with the CATERING20 promo for **\$156.92 total** (including delivery). That's \$43 under budget! Deliveries at 12pm, 1pm, 2pm. Confirm?"
 
-**Customer response:** ✅ "Perfect, let's do it!" (Complex order success: 85% → 96%)
+**Customer response:** "Perfect, let's do it!" (Complex order success: 85% → 96%)
 
 **Cost:** 1 planner (1,200 tokens) + 4 workers (800 tokens each) + 1 verifier (950 tokens) = **5,350 tokens** (\$0.50). **Worth it:** Captures \$157 order that v1.0 would have lost (31,400% ROI).
 
-> 💡 **Three edge cases, three recoveries:** Edge case #1 (contradictions): customer abandonment 8% → 1.5%. Edge case #2 (pricing disputes): dispute rate 15% → 3%. Edge case #3 (catering): complex order capture 85% → 96%. Together they close the 7-point escalation gap from §0 at \$0.24–\$0.50 per complex conversation — the overall average stays at \$0.18 because the 92% of simple orders running single-pass at \$0.08 anchor the mean below the \$0.25 cap.
+> **Three edge cases, three recoveries:** Edge case #1 (contradictions): customer abandonment 8% → 1.5%. Edge case #2 (pricing disputes): dispute rate 15% → 3%. Edge case #3 (catering): complex order capture 85% → 96%. Together they close the 7-point escalation gap from §0 at \$0.24–\$0.50 per complex conversation — the overall average stays at \$0.18 because the 92% of simple orders running single-pass at \$0.08 anchor the mean below the \$0.25 cap.
 
 ---
 
@@ -403,26 +399,26 @@ Edge case #1 in §0 — eight percent of customers abandoning after "dairy-free 
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  REFLECTION LOOP                                            │
-│                                                             │
-│  User Input                                                 │
-│      ↓                                                      │
-│  ┌─────────────────┐                                       │
-│  │  1. GENERATE    │  draft = LLM(prompt)                  │
-│  │     (Draft)     │  "dairy-free + extra cheese = error"  │
-│  └────────┬────────┘                                       │
-│           ↓                                                 │
-│  ┌─────────────────┐                                       │
-│  │  2. CRITIQUE    │  critique = LLM(draft)                │
-│  │  (Self-Assess)  │  "Unhelpful. Check vegan cheese."     │
-│  └────────┬────────┘                                       │
-│           ↓                                                 │
-│  ┌─────────────────┐                                       │
-│  │  3. REVISE      │  revised = LLM(draft + critique)      │
-│  │  (Improve)      │  "Vegan mozzarella available +$2.50"  │
-│  └────────┬────────┘                                       │
-│           ↓                                                 │
-│  Final Response                                             │
+│ REFLECTION LOOP │
+│ │
+│ User Input │
+│ ↓ │
+│ ┌─────────────────┐ │
+│ │ 1. GENERATE │ draft = LLM(prompt) │
+│ │ (Draft) │ "dairy-free + extra cheese = error" │
+│ └────────┬────────┘ │
+│ ↓ │
+│ ┌─────────────────┐ │
+│ │ 2. CRITIQUE │ critique = LLM(draft) │
+│ │ (Self-Assess) │ "Unhelpful. Check vegan cheese." │
+│ └────────┬────────┘ │
+│ ↓ │
+│ ┌─────────────────┐ │
+│ │ 3. REVISE │ revised = LLM(draft + critique) │
+│ │ (Improve) │ "Vegan mozzarella available +$2.50" │
+│ └────────┬────────┘ │
+│ ↓ │
+│ Final Response │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -433,14 +429,12 @@ Edge case #1 in §0 — eight percent of customers abandoning after "dairy-free 
 ---
 
 ### When to Use Reflection
-
-✅ **Use reflection when:**
+**Use reflection when:**
 - Input is ambiguous ("dairy-free + extra cheese")
 - Output must be self-consistent (legal contracts, medical reports)
 - High cost of error (financial transactions, safety-critical systems)
 - You have 3× token budget and 3× latency budget
-
-❌ **Don't use reflection when:**
+**Don't use reflection when:**
 - Input is unambiguous ("large pepperoni pizza")
 - Speed matters more than accuracy (chatbot small talk)
 - Single-pass accuracy is already >99% (simple classification tasks)
@@ -455,24 +449,24 @@ Edge case #1 in §0 — eight percent of customers abandoning after "dairy-free 
 
 ```python
 def generate_draft(user_input):
-    """Generate initial response without reflection."""
-    prompt = f"""
-    Customer order: {user_input}
+ """Generate initial response without reflection."""
+ prompt = f"""
+ Customer order: {user_input}
 
-    Menu context (from RAG):
-    - Gluten-free crust: available (+$2.00)
-    - Dairy-free option: use vegan mozzarella
-    - Extra cheese: +\$2.50 (dairy mozzarella)
+ Menu context (from RAG):
+ - Gluten-free crust: available (+$2.00)
+ - Dairy-free option: use vegan mozzarella
+ - Extra cheese: +\$2.50 (dairy mozzarella)
 
-    Generate order confirmation or error message.
-    """
-    draft = LLM(prompt)
-    return draft
+ Generate order confirmation or error message.
+ """
+ draft = LLM(prompt)
+ return draft
 
 # Input: "gluten-free + dairy-free + extra cheese"
 draft = generate_draft(user_input)
 # Output: "Error: dairy-free and extra cheese (dairy) are incompatible.
-#          Please remove one option."
+# Please remove one option."
 ```
 
 **Problem:** Draft is technically correct but misses the user's intent (vegan cheese).
@@ -483,30 +477,30 @@ draft = generate_draft(user_input)
 
 ```python
 def critique_draft(draft, user_input):
-    """Self-assess draft quality and suggest improvements."""
-    critique_prompt = f"""
-    You are a quality assurance agent. Assess this draft response:
+ """Self-assess draft quality and suggest improvements."""
+ critique_prompt = f"""
+ You are a quality assurance agent. Assess this draft response:
 
-    Draft: "{draft}"
+ Draft: "{draft}"
 
-    Original user input: "{user_input}"
+ Original user input: "{user_input}"
 
-    Evaluate:
-    1. Is the response technically correct?
-    2. Is it helpful to the customer?
-    3. Are there alternative interpretations we missed?
-    4. What would improve this response?
+ Evaluate:
+ 1. Is the response technically correct?
+ 2. Is it helpful to the customer?
+ 3. Are there alternative interpretations we missed?
+ 4. What would improve this response?
 
-    Provide critique.
-    """
-    critique = LLM(critique_prompt)
-    return critique
+ Provide critique.
+ """
+ critique = LLM(critique_prompt)
+ return critique
 
 critique = critique_draft(draft, user_input)
 # Output: "The draft is technically correct (dairy cheese conflicts with dairy-free).
-#          However, it's unhelpful. The customer likely wants vegan cheese.
-#          Improvement: Check if vegan mozzarella is available and offer it as
-#          'extra vegan cheese' (+$2.50)."
+# However, it's unhelpful. The customer likely wants vegan cheese.
+# Improvement: Check if vegan mozzarella is available and offer it as
+# 'extra vegan cheese' (+$2.50)."
 ```
 
 ---
@@ -515,31 +509,31 @@ critique = critique_draft(draft, user_input)
 
 ```python
 def revise_draft(draft, critique, user_input):
-    """Incorporate critique to improve draft."""
-    revision_prompt = f"""
-    Original draft: "{draft}"
-    Critique: "{critique}"
-    User input: "{user_input}"
+ """Incorporate critique to improve draft."""
+ revision_prompt = f"""
+ Original draft: "{draft}"
+ Critique: "{critique}"
+ User input: "{user_input}"
 
-    Tools available:
-    - menu_api.check_vegan_cheese() → returns availability and price
+ Tools available:
+ - menu_api.check_vegan_cheese() → returns availability and price
 
-    Generate improved response incorporating the critique.
-    Use tools if needed.
-    """
-    # Tool call: menu_api.check_vegan_cheese()
-    # Returns: {"available": true, "price": 2.50}
+ Generate improved response incorporating the critique.
+ Use tools if needed.
+ """
+ # Tool call: menu_api.check_vegan_cheese()
+ # Returns: {"available": true, "price": 2.50}
 
-    revised = LLM(revision_prompt)
-    return revised
+ revised = LLM(revision_prompt)
+ return revised
 
 revised = revise_draft(draft, critique, user_input)
 # Output: "For dairy-free, we use vegan mozzarella (no dairy).
-#          Would you like extra vegan mozzarella (+\$2.50) on your
-#          gluten-free pepperoni pizza? Total: \$19.49."
+# Would you like extra vegan mozzarella (+\$2.50) on your
+# gluten-free pepperoni pizza? Total: \$19.49."
 ```
 
-**Customer response:** ✅ "Yes, perfect!"
+**Customer response:** "Yes, perfect!"
 
 ---
 
@@ -570,32 +564,32 @@ revised = revise_draft(draft, critique, user_input)
 ```python
 # Bad critique example
 draft = "Your gluten-free pizza includes sourdough crust (naturally gluten-free)."
-# ❌ WRONG! Sourdough contains gluten.
+# WRONG! Sourdough contains gluten.
 
 critique = critique_draft(draft, user_input)
 # Output: "The response is correct. Sourdough is naturally gluten-free due to
-#          fermentation breaking down gluten proteins."
-# ❌ WRONG AGAIN! Model doubled down on hallucination.
+# fermentation breaking down gluten proteins."
+# WRONG AGAIN! Model doubled down on hallucination.
 ```
 
 **Fix:** Ground critique in external facts (RAG lookup, API call).
 
 ```python
 def critique_with_grounding(draft, user_input):
-    """Critique draft with external fact-checking."""
-    # Step 1: Extract factual claims from draft
-    claims = extract_claims(draft)
-    # ["sourdough crust is gluten-free"]
+ """Critique draft with external fact-checking."""
+ # Step 1: Extract factual claims from draft
+ claims = extract_claims(draft)
+ # ["sourdough crust is gluten-free"]
 
-    # Step 2: Verify each claim with RAG or API
-    for claim in claims:
-        fact_check = menu_api.verify_claim(claim)
-        # Returns: {"claim": "sourdough is gluten-free", "verdict": "FALSE"}
+ # Step 2: Verify each claim with RAG or API
+ for claim in claims:
+ fact_check = menu_api.verify_claim(claim)
+ # Returns: {"claim": "sourdough is gluten-free", "verdict": "FALSE"}
 
-        if fact_check["verdict"] == "FALSE":
-            return f"Draft contains false claim: '{claim}'. Correct it."
+ if fact_check["verdict"] == "FALSE":
+ return f"Draft contains false claim: '{claim}'. Correct it."
 
-    return "No factual errors detected."
+ return "No factual errors detected."
 ```
 
 ---
@@ -622,21 +616,21 @@ critique_3 = "Consider mentioning order tracking link."
 
 ```python
 def should_stop_iterating(draft, critique, iteration):
-    """Decide if reflection loop should terminate."""
-    # Stop after N iterations
-    if iteration >= 3:
-        return True
+ """Decide if reflection loop should terminate."""
+ # Stop after N iterations
+ if iteration >= 3:
+ return True
 
-    # Stop if critique says "good enough"
-    if any(phrase in critique.lower() for phrase in
-           ["no improvements", "acceptable", "sufficient"]):
-        return True
+ # Stop if critique says "good enough"
+ if any(phrase in critique.lower() for phrase in
+ ["no improvements", "acceptable", "sufficient"]):
+ return True
 
-    # Stop if draft hasn't changed (convergence)
-    if iteration > 0 and draft == previous_draft:
-        return True
+ # Stop if draft hasn't changed (convergence)
+ if iteration > 0 and draft == previous_draft:
+ return True
 
-    return False
+ return False
 ```
 
 ---
@@ -652,40 +646,40 @@ response = LLM(user_input)
 # "Large pepperoni ($14.99) + delivery ($3.00) = $17.99. Confirm?"
 
 # Reflection adds no value:
-draft = generate_draft(user_input)     # Same response
-critique = critique_draft(draft)       # "No improvements needed"
-revised = revise_draft(draft, critique)  # Same response
-# ❌ Wasted 2× extra LLM calls for identical output
+draft = generate_draft(user_input) # Same response
+critique = critique_draft(draft) # "No improvements needed"
+revised = revise_draft(draft, critique) # Same response
+# Wasted 2× extra LLM calls for identical output
 ```
 
 **Fix:** Route simple inputs to single-pass, complex to reflection.
 
 ```python
 def classify_input_complexity(user_input):
-    """Decide if input needs reflection."""
-    complexity_signals = [
-        "contradictory keywords" if any(pair in user_input.lower() for pair in
-            [("dairy-free", "cheese"), ("gluten-free", "extra cheese")]) else None,
-        "multiple discounts" if user_input.lower().count("discount") +
-            user_input.lower().count("coupon") + user_input.lower().count("promo") >= 2 else None,
-        "complex constraints" if len(user_input.split()) > 30 else None,
-    ]
+ """Decide if input needs reflection."""
+ complexity_signals = [
+ "contradictory keywords" if any(pair in user_input.lower() for pair in
+ [("dairy-free", "cheese"), ("gluten-free", "extra cheese")]) else None,
+ "multiple discounts" if user_input.lower().count("discount") +
+ user_input.lower().count("coupon") + user_input.lower().count("promo") >= 2 else None,
+ "complex constraints" if len(user_input.split()) > 30 else None,
+ ]
 
-    if any(complexity_signals):
-        return "REFLECTION"  # Use 3-step loop
-    else:
-        return "SINGLE_PASS"  # Skip reflection
+ if any(complexity_signals):
+ return "REFLECTION" # Use 3-step loop
+ else:
+ return "SINGLE_PASS" # Skip reflection
 
 # Route inputs
 if classify_input_complexity(user_input) == "REFLECTION":
-    response = reflection_agent(user_input)
+ response = reflection_agent(user_input)
 else:
-    response = single_pass_agent(user_input)
+ response = single_pass_agent(user_input)
 ```
 
 ---
 
-### 💡 Insight: When Reflection Fails, Escalate to Debate
+### Insight: When Reflection Fails, Escalate to Debate
 
 Reflection assumes the model can self-correct. But what if the model consistently critiques incorrectly (as in Trap #1)?
 
@@ -693,30 +687,30 @@ Reflection assumes the model can self-correct. But what if the model consistentl
 
 ```python
 def smart_routing(user_input):
-    """Route to single-pass, reflection, or debate based on complexity."""
-    complexity = classify_input_complexity(user_input)
+ """Route to single-pass, reflection, or debate based on complexity."""
+ complexity = classify_input_complexity(user_input)
 
-    if complexity == "SIMPLE":
-        return single_pass_agent(user_input)
+ if complexity == "SIMPLE":
+ return single_pass_agent(user_input)
 
-    elif complexity == "AMBIGUOUS":
-        # Try reflection first
-        response, history = reflection_agent(user_input)
+ elif complexity == "AMBIGUOUS":
+ # Try reflection first
+ response, history = reflection_agent(user_input)
 
-        # If reflection converged quickly, use it
-        if len(history) <= 2:
-            return response
+ # If reflection converged quickly, use it
+ if len(history) <= 2:
+ return response
 
-        # If reflection didn't converge, escalate to debate
-        else:
-            return debate_agent(user_input)
+ # If reflection didn't converge, escalate to debate
+ else:
+ return debate_agent(user_input)
 
-    elif complexity == "HIGH_STAKES":
-        # Skip reflection, go straight to debate (pricing disputes, medical)
-        return debate_agent(user_input)
+ elif complexity == "HIGH_STAKES":
+ # Skip reflection, go straight to debate (pricing disputes, medical)
+ return debate_agent(user_input)
 ```
 
-> 💡 **Reflection's business case in §0 terms:** The 6.5-point edge-case accuracy gain (92% → 98.5%) converts abandoned-order errors into clarifying prompts. At PizzaBot's volume that is \$161 net daily gain on \$1.04 of extra token spend — a 15,621% ROI — but only because the routing function above reserves reflection for genuinely ambiguous inputs. Applied to all 1,000 daily orders, reflection would cost \$160/day in wasted tokens while improving already-correct answers by zero.
+> **Reflection's business case in §0 terms:** The 6.5-point edge-case accuracy gain (92% → 98.5%) converts abandoned-order errors into clarifying prompts. At PizzaBot's volume that is \$161 net daily gain on \$1.04 of extra token spend — a 15,621% ROI — but only because the routing function above reserves reflection for genuinely ambiguous inputs. Applied to all 1,000 daily orders, reflection would cost \$160/day in wasted tokens while improving already-correct answers by zero.
 
 ---
 
@@ -734,38 +728,38 @@ Edge case #2 in §0 — the pricing conflict where PizzaBot v1.0 charged $22.49 
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
-│  DEBATE & CONSENSUS LOOP                                           │
-│                                                                    │
-│  User Input                                                        │
-│      ↓                                                             │
-│  ┌──────────────────────────────────────────────────────────┐    │
-│  │  1. PROPOSE (parallel)                                   │    │
-│  │                                                           │    │
-│  │  Agent 1 (Generous)    Agent 2 (Strict)    Agent 3 (...)│    │
-│  │  "Apply all discounts"  "Apply promo only"  ...          │    │
-│  └──────────────────┬───────────────────────────────────────┘    │
-│                     ↓                                              │
-│  ┌──────────────────────────────────────────────────────────┐    │
-│  │  2. CHALLENGE (adversarial)                              │    │
-│  │                                                           │    │
-│  │  Agent 1 → Agent 2: "Did you check if coupon is cheaper?"│    │
-│  │  Agent 2 → Agent 1: "Policy says promo replaces coupon"  │    │
-│  └──────────────────┬───────────────────────────────────────┘    │
-│                     ↓                                              │
-│  ┌──────────────────────────────────────────────────────────┐    │
-│  │  3. DEFEND (justify)                                     │    │
-│  │                                                           │    │
-│  │  Agent 1: "Coupon saves $3.51 more (policy: pick best)"  │    │
-│  │  Agent 2: "I didn't compare. Agent 1 is correct."        │    │
-│  └──────────────────┬───────────────────────────────────────┘    │
-│                     ↓                                              │
-│  ┌──────────────────────────────────────────────────────────┐    │
-│  │  4. VOTE (arbiter selects best)                          │    │
-│  │                                                           │    │
-│  │  Judge: "Agent 1's proposal ($18.98) is correct."        │    │
-│  └──────────────────┬───────────────────────────────────────┘    │
-│                     ↓                                              │
-│  Final Response                                                    │
+│ DEBATE & CONSENSUS LOOP │
+│ │
+│ User Input │
+│ ↓ │
+│ ┌──────────────────────────────────────────────────────────┐ │
+│ │ 1. PROPOSE (parallel) │ │
+│ │ │ │
+│ │ Agent 1 (Generous) Agent 2 (Strict) Agent 3 (...)│ │
+│ │ "Apply all discounts" "Apply promo only" ... │ │
+│ └──────────────────┬───────────────────────────────────────┘ │
+│ ↓ │
+│ ┌──────────────────────────────────────────────────────────┐ │
+│ │ 2. CHALLENGE (adversarial) │ │
+│ │ │ │
+│ │ Agent 1 → Agent 2: "Did you check if coupon is cheaper?"│ │
+│ │ Agent 2 → Agent 1: "Policy says promo replaces coupon" │ │
+│ └──────────────────┬───────────────────────────────────────┘ │
+│ ↓ │
+│ ┌──────────────────────────────────────────────────────────┐ │
+│ │ 3. DEFEND (justify) │ │
+│ │ │ │
+│ │ Agent 1: "Coupon saves $3.51 more (policy: pick best)" │ │
+│ │ Agent 2: "I didn't compare. Agent 1 is correct." │ │
+│ └──────────────────┬───────────────────────────────────────┘ │
+│ ↓ │
+│ ┌──────────────────────────────────────────────────────────┐ │
+│ │ 4. VOTE (arbiter selects best) │ │
+│ │ │ │
+│ │ Judge: "Agent 1's proposal ($18.98) is correct." │ │
+│ └──────────────────┬───────────────────────────────────────┘ │
+│ ↓ │
+│ Final Response │
 └────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -776,14 +770,12 @@ Edge case #2 in §0 — the pricing conflict where PizzaBot v1.0 charged $22.49 
 ---
 
 ### When to Use Debate
-
-✅ **Use debate when:**
+**Use debate when:**
 - Decision is high-stakes (medical diagnosis, legal reasoning, fraud detection)
 - Multiple valid interpretations exist (policy ambiguity, subjective decisions)
 - Single-agent reflection didn't converge (agent keeps changing answer)
 - You need adversarial validation (avoid groupthink)
-
-❌ **Don't use debate when:**
+**Don't use debate when:**
 - Decision is objective with one correct answer ("2 + 2 = ?")
 - Speed matters more than accuracy
 - Token budget is tight (6× cost vs. single-pass)
@@ -798,39 +790,39 @@ Edge case #2 in §0 — the pricing conflict where PizzaBot v1.0 charged $22.49 
 
 ```python
 def debate_propose(user_input, num_agents=3):
-    """Multiple agents independently generate proposals."""
-    proposals = []
+ """Multiple agents independently generate proposals."""
+ proposals = []
 
-    # Agent 1: Generous interpretation
-    agent_1_prompt = f"""
-    You are a customer-friendly pricing agent. Given this order:
-    {user_input}
+ # Agent 1: Generous interpretation
+ agent_1_prompt = f"""
+ You are a customer-friendly pricing agent. Given this order:
+ {user_input}
 
-    Customer has: 20% coupon, \$5 loyalty, BOGO promo.
-    Policy: Coupons + loyalty stack. Promos replace coupons + loyalty if better.
+ Customer has: 20% coupon, \$5 loyalty, BOGO promo.
+ Policy: Coupons + loyalty stack. Promos replace coupons + loyalty if better.
 
-    Calculate the LOWEST possible price (most customer-friendly interpretation).
-    """
-    proposal_1 = LLM(agent_1_prompt)
-    proposals.append(("Agent 1 (Generous)", proposal_1))
+ Calculate the LOWEST possible price (most customer-friendly interpretation).
+ """
+ proposal_1 = LLM(agent_1_prompt)
+ proposals.append(("Agent 1 (Generous)", proposal_1))
 
-    # Agent 2: Strict interpretation
-    agent_2_prompt = f"""
-    You are a policy-strict pricing agent. Given this order:
-    {user_input}
+ # Agent 2: Strict interpretation
+ agent_2_prompt = f"""
+ You are a policy-strict pricing agent. Given this order:
+ {user_input}
 
-    Customer has: 20% coupon, \$5 loyalty, BOGO promo.
-    Policy: Only one promotional discount applies.
+ Customer has: 20% coupon, \$5 loyalty, BOGO promo.
+ Policy: Only one promotional discount applies.
 
-    Calculate the price (strict policy interpretation).
-    """
-    proposal_2 = LLM(agent_2_prompt)
-    proposals.append(("Agent 2 (Strict)", proposal_2))
+ Calculate the price (strict policy interpretation).
+ """
+ proposal_2 = LLM(agent_2_prompt)
+ proposals.append(("Agent 2 (Strict)", proposal_2))
 
-    # Agent 3: Neutral (optional - can add more agents)
-    # proposals.append(("Agent 3 (Neutral)", ...))
+ # Agent 3: Neutral (optional - can add more agents)
+ # proposals.append(("Agent 3 (Neutral)", ...))
 
-    return proposals
+ return proposals
 
 proposals = debate_propose(user_input)
 # Agent 1: "\$18.98 (coupon + loyalty stacked, no promo)"
@@ -843,31 +835,31 @@ proposals = debate_propose(user_input)
 
 ```python
 def debate_challenge(proposals):
-    """Each agent challenges the others' proposals."""
-    challenges = []
+ """Each agent challenges the others' proposals."""
+ challenges = []
 
-    for i, (agent_i, proposal_i) in enumerate(proposals):
-        for j, (agent_j, proposal_j) in enumerate(proposals):
-            if i == j:
-                continue  # Don't challenge self
+ for i, (agent_i, proposal_i) in enumerate(proposals):
+ for j, (agent_j, proposal_j) in enumerate(proposals):
+ if i == j:
+ continue # Don't challenge self
 
-            challenge_prompt = f"""
-            You are {agent_i}. Your proposal: {proposal_i}.
-            {agent_j} proposed: {proposal_j}.
+ challenge_prompt = f"""
+ You are {agent_i}. Your proposal: {proposal_i}.
+ {agent_j} proposed: {proposal_j}.
 
-            Critique their proposal: Did they miss anything? Misinterpret policy?
-            """
-            challenge = LLM(challenge_prompt)
-            challenges.append((agent_i, agent_j, challenge))
+ Critique their proposal: Did they miss anything? Misinterpret policy?
+ """
+ challenge = LLM(challenge_prompt)
+ challenges.append((agent_i, agent_j, challenge))
 
-    return challenges
+ return challenges
 
 challenges = debate_challenge(proposals)
 # Agent 1 → Agent 2: "You applied BOGO (\$22.49) but didn't check if
-#                     coupon + loyalty (\$18.98) is cheaper. Policy says
-#                     'pick best discount'."
+# coupon + loyalty (\$18.98) is cheaper. Policy says
+# 'pick best discount'."
 # Agent 2 → Agent 1: "You stacked coupon + loyalty, but policy says
-#                     promotional discounts replace coupons. BOGO should apply."
+# promotional discounts replace coupons. BOGO should apply."
 ```
 
 ---
@@ -876,31 +868,31 @@ challenges = debate_challenge(proposals)
 
 ```python
 def debate_defend(proposals, challenges):
-    """Agents defend their proposals against challenges."""
-    defenses = []
+ """Agents defend their proposals against challenges."""
+ defenses = []
 
-    for agent_name, proposal in proposals:
-        # Gather all challenges directed at this agent
-        agent_challenges = [c for c in challenges if c[1] == agent_name]
+ for agent_name, proposal in proposals:
+ # Gather all challenges directed at this agent
+ agent_challenges = [c for c in challenges if c[1] == agent_name]
 
-        defense_prompt = f"""
-        You are {agent_name}. Your proposal: {proposal}.
+ defense_prompt = f"""
+ You are {agent_name}. Your proposal: {proposal}.
 
-        Challenges against your proposal:
-        {'\n'.join([f"{c[0]}: {c[2]}" for c in agent_challenges])}
+ Challenges against your proposal:
+ {'\n'.join([f"{c[0]}: {c[2]}" for c in agent_challenges])}
 
-        Defend your proposal or concede if the challenge is valid.
-        """
-        defense = LLM(defense_prompt)
-        defenses.append((agent_name, defense))
+ Defend your proposal or concede if the challenge is valid.
+ """
+ defense = LLM(defense_prompt)
+ defenses.append((agent_name, defense))
 
-    return defenses
+ return defenses
 
 defenses = debate_defend(proposals, challenges)
 # Agent 1: "My proposal is correct. Policy says 'pick best discount'.
-#           Coupon + loyalty (\$18.98) < BOGO (\$22.49), so coupon + loyalty applies."
+# Coupon + loyalty (\$18.98) < BOGO (\$22.49), so coupon + loyalty applies."
 # Agent 2: "I concede. I didn't compare both paths. Agent 1 is correct.
-#           Customer should pay \$18.98."
+# Customer should pay \$18.98."
 ```
 
 ---
@@ -909,33 +901,33 @@ defenses = debate_defend(proposals, challenges)
 
 ```python
 def debate_vote(proposals, challenges, defenses):
-    """Judge evaluates proposals and selects best."""
-    judge_prompt = f"""
-    You are a neutral judge. Review these pricing proposals:
+ """Judge evaluates proposals and selects best."""
+ judge_prompt = f"""
+ You are a neutral judge. Review these pricing proposals:
 
-    {proposals}
+ {proposals}
 
-    Challenges:
-    {challenges}
+ Challenges:
+ {challenges}
 
-    Defenses:
-    {defenses}
+ Defenses:
+ {defenses}
 
-    Which proposal is correct according to policy?
-    Policy: Coupons + loyalty stack. Promotional discounts replace both
-            unless coupon + loyalty is cheaper.
+ Which proposal is correct according to policy?
+ Policy: Coupons + loyalty stack. Promotional discounts replace both
+ unless coupon + loyalty is cheaper.
 
-    Select the best proposal and explain why.
-    """
-    verdict = LLM(judge_prompt)
-    return verdict
+ Select the best proposal and explain why.
+ """
+ verdict = LLM(judge_prompt)
+ return verdict
 
 verdict = debate_vote(proposals, challenges, defenses)
 # Output: "Agent 1's proposal ($18.98) is correct.
-#          Coupon + loyalty stacked = $18.98.
-#          BOGO promo = $22.49.
-#          Policy: 'Pick best discount' → $18.98 wins.
-#          Customer should pay $18.98."
+# Coupon + loyalty stacked = $18.98.
+# BOGO promo = $22.49.
+# Policy: 'Pick best discount' → $18.98 wins.
+# Customer should pay $18.98."
 ```
 
 ---
@@ -947,8 +939,8 @@ verdict = debate_vote(proposals, challenges, defenses)
 ```python
 # Bad debate example
 proposals = [
-    ("Agent 1", "\$22.49 (BOGO promo applied)"),
-    ("Agent 2", "\$22.49 (BOGO promo applied)"),
+ ("Agent 1", "\$22.49 (BOGO promo applied)"),
+ ("Agent 2", "\$22.49 (BOGO promo applied)"),
 ]
 # Both agents picked BOGO without comparing to coupon + loyalty.
 
@@ -957,7 +949,7 @@ challenges = []
 
 verdict = debate_vote(proposals, challenges, [])
 # Output: "\$22.49 (BOGO promo applied)."
-# ❌ WRONG! Should be \$18.98 (coupon + loyalty is cheaper).
+# WRONG! Should be \$18.98 (coupon + loyalty is cheaper).
 ```
 
 **Why this happens:** Agents have similar biases (all trained on same data), no adversarial diversity.
@@ -966,17 +958,17 @@ verdict = debate_vote(proposals, challenges, [])
 
 ```python
 def debate_propose_adversarial(user_input):
-    """Agents assigned adversarial perspectives."""
-    # Agent 1: Maximize customer savings
-    agent_1_prompt = "Calculate LOWEST price (customer-friendly)."
+ """Agents assigned adversarial perspectives."""
+ # Agent 1: Maximize customer savings
+ agent_1_prompt = "Calculate LOWEST price (customer-friendly)."
 
-    # Agent 2: Maximize revenue (business-friendly)
-    agent_2_prompt = "Calculate HIGHEST valid price (business-friendly)."
+ # Agent 2: Maximize revenue (business-friendly)
+ agent_2_prompt = "Calculate HIGHEST valid price (business-friendly)."
 
-    # Agent 3: Neutral (policy-strict)
-    agent_3_prompt = "Calculate price (strict policy interpretation)."
+ # Agent 3: Neutral (policy-strict)
+ agent_3_prompt = "Calculate price (strict policy interpretation)."
 
-    # Now agents are forced to disagree
+ # Now agents are forced to disagree
 ```
 
 ---
@@ -1003,22 +995,22 @@ Agent 2: "Still \$22.49"
 
 ```python
 def should_stop_debate(defenses, round_num, max_rounds=2):
-    """Decide if debate should terminate."""
-    # Stop after max rounds
-    if round_num >= max_rounds:
-        return True
+ """Decide if debate should terminate."""
+ # Stop after max rounds
+ if round_num >= max_rounds:
+ return True
 
-    # Stop if all agents converged (all defenses identical)
-    if len(set(d[1] for d in defenses)) == 1:
-        return True
+ # Stop if all agents converged (all defenses identical)
+ if len(set(d[1] for d in defenses)) == 1:
+ return True
 
-    return False
+ return False
 
 def break_tie(proposals):
-    """If agents don't converge, use tie-breaking rule."""
-    # Rule: Pick most customer-friendly (lowest price)
-    prices = extract_prices(proposals)
-    return min(prices)
+ """If agents don't converge, use tie-breaking rule."""
+ # Rule: Pick most customer-friendly (lowest price)
+ prices = extract_prices(proposals)
+ return min(prices)
 ```
 
 ---
@@ -1031,37 +1023,37 @@ user_input = "What's the price of a large pepperoni pizza?"
 
 # Debate is overkill:
 proposals = [
-    ("Agent 1", "$14.99"),
-    ("Agent 2", "$14.99"),
+ ("Agent 1", "$14.99"),
+ ("Agent 2", "$14.99"),
 ]
-challenges = []  # No disagreement
+challenges = [] # No disagreement
 verdict = "$14.99"
 
-# ❌ Wasted 6× tokens for identical output
+# Wasted 6× tokens for identical output
 ```
 
 **Fix:** Route simple queries to single-pass, high-stakes to debate.
 
 ```python
 def classify_query_stakes(user_input):
-    """Decide if query needs debate."""
-    high_stakes_signals = [
-        "multiple discounts",
-        "policy ambiguity",
-        "medical diagnosis",
-        "legal question",
-        "fraud detection",
-    ]
+ """Decide if query needs debate."""
+ high_stakes_signals = [
+ "multiple discounts",
+ "policy ambiguity",
+ "medical diagnosis",
+ "legal question",
+ "fraud detection",
+ ]
 
-    if any(signal in user_input.lower() for signal in high_stakes_signals):
-        return "DEBATE"
-    else:
-        return "SINGLE_PASS"
+ if any(signal in user_input.lower() for signal in high_stakes_signals):
+ return "DEBATE"
+ else:
+ return "SINGLE_PASS"
 ```
 
 ---
 
-### 💡 Insight: Debate vs. Reflection
+### Insight: Debate vs. Reflection
 
 | Pattern | When to use | Agents | Cost | Best for |
 |---------|-------------|--------|------|----------|
@@ -1073,7 +1065,7 @@ def classify_query_stakes(user_input):
 - If single-pass fails, try reflection (3× cost)
 - If reflection doesn't converge, escalate to debate (6× cost)
 
-> 💡 **Debate's business case in §0 terms:** Pricing disputes cost $25 per refund plus chargeback fees; debate prevents each for $0.45 — 5,556% ROI per dispute avoided. That ROI holds only because the escalation path above reserves debate for the 2–3% of orders with genuine policy ambiguity. Routing all 1,000 daily orders through debate would spend $450/day to prevent 15 disputes worth $375 — a net loss.
+> **Debate's business case in §0 terms:** Pricing disputes cost $25 per refund plus chargeback fees; debate prevents each for $0.45 — 5,556% ROI per dispute avoided. That ROI holds only because the escalation path above reserves debate for the 2–3% of orders with genuine policy ambiguity. Routing all 1,000 daily orders through debate would spend $450/day to prevent 15 disputes worth $375 — a net loss.
 
 ---
 
@@ -1090,32 +1082,32 @@ Edge case #3 in §0 — the $200 catering order refused with "over budget by $24
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│  HIERARCHICAL ORCHESTRATION                                      │
-│                                                                  │
-│  Complex Task                                                    │
-│      ↓                                                           │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │  1. PLANNER (decompose)                                 │   │
-│  │                                                          │   │
-│  │  Plan: [Task1, Task2, Task3, Task4]                     │   │
-│  │  Constraints: [Budget ≤ $200, 3 delivery times, ...]    │   │
-│  └──────────────────┬──────────────────────────────────────┘   │
-│                     ↓                                            │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │  2. WORKERS (execute in parallel)                       │   │
-│  │                                                          │   │
-│  │  Worker1: Optimize sizes    Worker2: Split toppings     │   │
-│  │  Worker3: Apply discounts   Worker4: Schedule delivery  │   │
-│  └──────────────────┬──────────────────────────────────────┘   │
-│                     ↓                                            │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │  3. VERIFIER (validate)                                 │   │
-│  │                                                          │   │
-│  │  Check: Budget OK? All pizzas accounted? Conflicts?     │   │
-│  │  ✅ All constraints satisfied.                           │   │
-│  └──────────────────┬──────────────────────────────────────┘   │
-│                     ↓                                            │
-│  Final Response                                                  │
+│ HIERARCHICAL ORCHESTRATION │
+│ │
+│ Complex Task │
+│ ↓ │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ 1. PLANNER (decompose) │ │
+│ │ │ │
+│ │ Plan: [Task1, Task2, Task3, Task4] │ │
+│ │ Constraints: [Budget ≤ $200, 3 delivery times, ...] │ │
+│ └──────────────────┬──────────────────────────────────────┘ │
+│ ↓ │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ 2. WORKERS (execute in parallel) │ │
+│ │ │ │
+│ │ Worker1: Optimize sizes Worker2: Split toppings │ │
+│ │ Worker3: Apply discounts Worker4: Schedule delivery │ │
+│ └──────────────────┬──────────────────────────────────────┘ │
+│ ↓ │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ 3. VERIFIER (validate) │ │
+│ │ │ │
+│ │ Check: Budget OK? All pizzas accounted? Conflicts? │ │
+│ │ All constraints satisfied. │ │
+│ └──────────────────┬──────────────────────────────────────┘ │
+│ ↓ │
+│ Final Response │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -1126,14 +1118,12 @@ Edge case #3 in §0 — the $200 catering order refused with "over budget by $24
 ---
 
 ### When to Use Hierarchical Orchestration
-
-✅ **Use hierarchical when:**
+**Use hierarchical when:**
 - Task is decomposable (catering orders, research tasks, data pipelines)
 - Subtasks can run in parallel (faster than sequential)
 - Need to enforce global constraints (budget, deadlines, dependencies)
 - Workers might drift from plan (need verification)
-
-❌ **Don't use hierarchical when:**
+**Don't use hierarchical when:**
 - Task is atomic (single-step, no decomposition)
 - Sequential execution is required (each step depends on previous)
 - Overhead of planner + verifier > benefit of parallelization
@@ -1148,19 +1138,19 @@ Edge case #3 in §0 — the $200 catering order refused with "over budget by $24
 
 ```python
 def hierarchical_plan(user_input):
-    """Decompose complex task into subtasks with constraints."""
-    planner_prompt = f"""
-    Customer request: {user_input}
+ """Decompose complex task into subtasks with constraints."""
+ planner_prompt = f"""
+ Customer request: {user_input}
 
-    Task: Break this into subtasks. For each subtask:
-    1. What needs to be done?
-    2. What are the constraints?
-    3. What information does the worker need?
+ Task: Break this into subtasks. For each subtask:
+ 1. What needs to be done?
+ 2. What are the constraints?
+ 3. What information does the worker need?
 
-    Provide a structured plan.
-    """
-    plan = LLM(planner_prompt)
-    return plan
+ Provide a structured plan.
+ """
+ plan = LLM(planner_prompt)
+ return plan
 
 user_input = """
 I need 15 pizzas for a company event. 5 delivered at 12pm, 5 at 1pm, 5 at 2pm.
@@ -1170,20 +1160,20 @@ Budget is $200 total. Mix of vegetarian and meat options.
 plan = hierarchical_plan(user_input)
 # Output:
 # Task 1: Optimize pizza sizes (large vs medium) to fit $200 budget
-#    - Constraint: Total cost ≤ $200 (including delivery)
-#    - Input: 15 pizzas, menu pricing
+# - Constraint: Total cost ≤ $200 (including delivery)
+# - Input: 15 pizzas, menu pricing
 #
 # Task 2: Split toppings (vegetarian vs meat)
-#    - Constraint: "Mix" means at least 20% vegetarian (3+ pizzas)
-#    - Input: Customer preference ("mix of vegetarian and meat")
+# - Constraint: "Mix" means at least 20% vegetarian (3+ pizzas)
+# - Input: Customer preference ("mix of vegetarian and meat")
 #
 # Task 3: Apply bulk discounts or promo codes
-#    - Constraint: Pick discount that saves most
-#    - Input: 10+ pizzas = 15% bulk discount, CATERING20 = 20% off
+# - Constraint: Pick discount that saves most
+# - Input: 10+ pizzas = 15% bulk discount, CATERING20 = 20% off
 #
 # Task 4: Schedule deliveries
-#    - Constraint: 3 delivery windows (12pm, 1pm, 2pm), 5 pizzas each
-#    - Input: Delivery fee ($3/delivery), kitchen capacity
+# - Constraint: 3 delivery windows (12pm, 1pm, 2pm), 5 pizzas each
+# - Input: Delivery fee ($3/delivery), kitchen capacity
 #
 # Global constraint: Total cost ≤ $200
 ```
@@ -1194,56 +1184,56 @@ plan = hierarchical_plan(user_input)
 
 ```python
 def hierarchical_execute(plan):
-    """Workers execute subtasks in parallel."""
-    workers = []
+ """Workers execute subtasks in parallel."""
+ workers = []
 
-    # Worker 1: Optimize sizes
-    worker_1_prompt = f"""
-    Subtask: {plan['Task 1']}
+ # Worker 1: Optimize sizes
+ worker_1_prompt = f"""
+ Subtask: {plan['Task 1']}
 
-    Menu:
-    - Large pizza: $14.99
-    - Medium pizza: $11.99
+ Menu:
+ - Large pizza: $14.99
+ - Medium pizza: $11.99
 
-    Calculate: 15 large vs 15 medium. Which fits $200 budget?
-    """
-    result_1 = LLM(worker_1_prompt)
-    workers.append(("Worker 1", result_1))
+ Calculate: 15 large vs 15 medium. Which fits $200 budget?
+ """
+ result_1 = LLM(worker_1_prompt)
+ workers.append(("Worker 1", result_1))
 
-    # Worker 2: Split toppings
-    worker_2_prompt = f"""
-    Subtask: {plan['Task 2']}
+ # Worker 2: Split toppings
+ worker_2_prompt = f"""
+ Subtask: {plan['Task 2']}
 
-    Customer said "mix of vegetarian and meat". Split 15 pizzas.
-    Constraint: At least 3 vegetarian (20%).
-    """
-    result_2 = LLM(worker_2_prompt)
-    workers.append(("Worker 2", result_2))
+ Customer said "mix of vegetarian and meat". Split 15 pizzas.
+ Constraint: At least 3 vegetarian (20%).
+ """
+ result_2 = LLM(worker_2_prompt)
+ workers.append(("Worker 2", result_2))
 
-    # Worker 3: Apply discounts
-    worker_3_prompt = f"""
-    Subtask: {plan['Task 3']}
+ # Worker 3: Apply discounts
+ worker_3_prompt = f"""
+ Subtask: {plan['Task 3']}
 
-    Options:
-    - Bulk discount (10+ pizzas): 15% off
-    - CATERING20 promo: 20% off
+ Options:
+ - Bulk discount (10+ pizzas): 15% off
+ - CATERING20 promo: 20% off
 
-    Which saves more?
-    """
-    result_3 = LLM(worker_3_prompt)
-    workers.append(("Worker 3", result_3))
+ Which saves more?
+ """
+ result_3 = LLM(worker_3_prompt)
+ workers.append(("Worker 3", result_3))
 
-    # Worker 4: Schedule deliveries
-    worker_4_prompt = f"""
-    Subtask: {plan['Task 4']}
+ # Worker 4: Schedule deliveries
+ worker_4_prompt = f"""
+ Subtask: {plan['Task 4']}
 
-    15 pizzas, 3 delivery windows (12pm, 1pm, 2pm).
-    Split 5-5-5. Delivery fee: $3/delivery.
-    """
-    result_4 = LLM(worker_4_prompt)
-    workers.append(("Worker 4", result_4))
+ 15 pizzas, 3 delivery windows (12pm, 1pm, 2pm).
+ Split 5-5-5. Delivery fee: $3/delivery.
+ """
+ result_4 = LLM(worker_4_prompt)
+ workers.append(("Worker 4", result_4))
 
-    return workers
+ return workers
 
 # Execute in parallel
 workers = hierarchical_execute(plan)
@@ -1259,32 +1249,32 @@ workers = hierarchical_execute(plan)
 
 ```python
 def hierarchical_verify(plan, workers):
-    """Validate worker results against plan and constraints."""
-    verifier_prompt = f"""
-    Original plan: {plan}
+ """Validate worker results against plan and constraints."""
+ verifier_prompt = f"""
+ Original plan: {plan}
 
-    Worker results:
-    {workers}
+ Worker results:
+ {workers}
 
-    Verify:
-    1. Are all subtasks completed?
-    2. Do results satisfy constraints?
-    3. Are there any conflicts or missing pieces?
+ Verify:
+ 1. Are all subtasks completed?
+ 2. Do results satisfy constraints?
+ 3. Are there any conflicts or missing pieces?
 
-    Calculate final cost and check against $200 budget.
-    """
-    verification = LLM(verifier_prompt)
-    return verification
+ Calculate final cost and check against $200 budget.
+ """
+ verification = LLM(verifier_prompt)
+ return verification
 
 verification = hierarchical_verify(plan, workers)
 # Output:
-# ✅ Task 1: 15 medium pizzas = $179.85
-# ✅ Task 2: 5 vegetarian + 10 meat (20% vegetarian minimum satisfied)
-# ✅ Task 3: CATERING20 applied → $179.85 × 0.80 = $143.88
-# ✅ Task 4: 3 deliveries × $3 = $9
-# ✅ Total: $143.88 + $9 = $152.88
-# ✅ Budget: $152.88 < $200 ✅
-# ✅ All constraints satisfied. No conflicts.
+# Task 1: 15 medium pizzas = $179.85
+# Task 2: 5 vegetarian + 10 meat (20% vegetarian minimum satisfied)
+# Task 3: CATERING20 applied → $179.85 × 0.80 = $143.88
+# Task 4: 3 deliveries × $3 = $9
+# Total: $143.88 + $9 = $152.88
+# Budget: $152.88 < $200
+# All constraints satisfied. No conflicts.
 ```
 
 ---
@@ -1299,7 +1289,7 @@ plan = "Optimize sizes to fit $200 budget. Choose large OR medium, not both."
 
 # Worker 1 drifts:
 worker_1_result = "I chose 10 large pizzas ($149.90) and 5 medium ($59.95) = $209.85."
-# ❌ WRONG! Exceeded budget. Worker ignored "choose large OR medium" constraint.
+# WRONG! Exceeded budget. Worker ignored "choose large OR medium" constraint.
 ```
 
 **Why this happens:** Workers don't see full context (only their subtask).
@@ -1308,21 +1298,21 @@ worker_1_result = "I chose 10 large pizzas ($149.90) and 5 medium ($59.95) = $20
 
 ```python
 def worker_execute_with_context(subtask, plan):
-    """Execute subtask with full context."""
-    worker_prompt = f"""
-    Full plan: {plan}
+ """Execute subtask with full context."""
+ worker_prompt = f"""
+ Full plan: {plan}
 
-    Your subtask: {subtask}
+ Your subtask: {subtask}
 
-    Global constraints:
-    - Budget ≤ $200
-    - 15 pizzas total (no more, no less)
-    - 3 delivery windows (12pm, 1pm, 2pm)
+ Global constraints:
+ - Budget ≤ $200
+ - 15 pizzas total (no more, no less)
+ - 3 delivery windows (12pm, 1pm, 2pm)
 
-    Execute your subtask WITHOUT violating global constraints.
-    """
-    result = LLM(worker_prompt)
-    return result
+ Execute your subtask WITHOUT violating global constraints.
+ """
+ result = LLM(worker_prompt)
+ return result
 ```
 
 ---
@@ -1337,34 +1327,34 @@ def worker_execute_with_context(subtask, plan):
 
 # Verifier fails to catch:
 verification = LLM("Check if all constraints satisfied")
-# Output: "✅ All constraints satisfied."
-# ❌ WRONG! Delivery fee is $15, not $9. Total = $158.88, not $152.88.
+# Output: " All constraints satisfied."
+# WRONG! Delivery fee is $15, not $9. Total = $158.88, not $152.88.
 ```
 
 **Fix:** Verifier must re-compute critical values.
 
 ```python
 def hierarchical_verify_with_recompute(plan, workers):
-    """Verifier re-computes to catch errors."""
-    # Extract claims from worker results
-    claims = {
-        "pizza_cost": extract_value(workers, "Worker 1", "cost"),
-        "delivery_fee": extract_value(workers, "Worker 4", "delivery fee"),
-        "discount_rate": extract_value(workers, "Worker 3", "discount"),
-    }
+ """Verifier re-computes to catch errors."""
+ # Extract claims from worker results
+ claims = {
+ "pizza_cost": extract_value(workers, "Worker 1", "cost"),
+ "delivery_fee": extract_value(workers, "Worker 4", "delivery fee"),
+ "discount_rate": extract_value(workers, "Worker 3", "discount"),
+ }
 
-    # Re-compute total
-    pizza_cost = 15 * 11.99  # 15 medium pizzas
-    discount = 0.20 if "CATERING20" in workers else 0.15
-    discounted_cost = pizza_cost * (1 - discount)
-    delivery_fee = 3 * 3  # 3 deliveries × $3
-    total = discounted_cost + delivery_fee
+ # Re-compute total
+ pizza_cost = 15 * 11.99 # 15 medium pizzas
+ discount = 0.20 if "CATERING20" in workers else 0.15
+ discounted_cost = pizza_cost * (1 - discount)
+ delivery_fee = 3 * 3 # 3 deliveries × $3
+ total = discounted_cost + delivery_fee
 
-    # Compare to worker claims
-    if abs(total - claims["pizza_cost"] - claims["delivery_fee"]) > 0.01:
-        return f"❌ Verification failed. Re-computed total: ${total:.2f}"
+ # Compare to worker claims
+ if abs(total - claims["pizza_cost"] - claims["delivery_fee"]) > 0.01:
+ return f" Verification failed. Re-computed total: ${total:.2f}"
 
-    return f"✅ Verification passed. Total: ${total:.2f}"
+ return f" Verification passed. Total: ${total:.2f}"
 ```
 
 ---
@@ -1374,16 +1364,16 @@ def hierarchical_verify_with_recompute(plan, workers):
 ```python
 # Overly granular decomposition
 plan = {
-    "Task 1": "Check if large pizzas fit budget",
-    "Task 2": "Check if medium pizzas fit budget",
-    "Task 3": "Compare large vs medium",
-    "Task 4": "Pick cheaper option",
-    "Task 5": "Count vegetarian pizzas",
-    "Task 6": "Count meat pizzas",
-    "Task 7": "Check if vegetarian count ≥ 20%",
-    # ... 15 subtasks total
+ "Task 1": "Check if large pizzas fit budget",
+ "Task 2": "Check if medium pizzas fit budget",
+ "Task 3": "Compare large vs medium",
+ "Task 4": "Pick cheaper option",
+ "Task 5": "Count vegetarian pizzas",
+ "Task 6": "Count meat pizzas",
+ "Task 7": "Check if vegetarian count ≥ 20%",
+ # ... 15 subtasks total
 }
-# ❌ Overhead: 1 planner + 15 workers + 1 verifier = 17 LLM calls
+# Overhead: 1 planner + 15 workers + 1 verifier = 17 LLM calls
 # Could have been done in 1 planner + 4 workers + 1 verifier = 6 calls
 ```
 
@@ -1391,21 +1381,21 @@ plan = {
 
 ```python
 def hierarchical_plan_smart(user_input):
-    """Planner batches related subtasks."""
-    planner_prompt = f"""
-    Customer request: {user_input}
+ """Planner batches related subtasks."""
+ planner_prompt = f"""
+ Customer request: {user_input}
 
-    Break into 3-5 high-level subtasks (not 15 micro-tasks).
-    Each subtask should be independently executable.
-    Batch related operations (e.g., "Optimize sizes" includes large vs medium comparison).
-    """
-    plan = LLM(planner_prompt)
-    return plan
+ Break into 3-5 high-level subtasks (not 15 micro-tasks).
+ Each subtask should be independently executable.
+ Batch related operations (e.g., "Optimize sizes" includes large vs medium comparison).
+ """
+ plan = LLM(planner_prompt)
+ return plan
 ```
 
 ---
 
-### 💡 Insight: Hierarchical vs. Sequential Chain
+### Insight: Hierarchical vs. Sequential Chain
 
 | Pattern | Structure | When to use | Parallelization |
 |---------|-----------|-------------|-----------------|
@@ -1416,7 +1406,7 @@ def hierarchical_plan_smart(user_input):
 - **Sequential**: "Book flight → Book hotel → Book rental car" (each depends on previous)
 - **Hierarchical**: "Plan trip → [Book flight ‖ Book hotel ‖ Book car] → Verify itinerary" (subtasks parallel)
 
-> 💡 **Hierarchical's business case in §0 terms:** The $157 catering order lost in §0 to a single-pass refusal represents an 11-point complex-order capture improvement (85% → 96%) for $0.50 of orchestration overhead — 31,400% ROI. The operative metric is not token cost but complex-order capture rate: hierarchical finds solutions that single-pass structurally cannot explore within its token budget.
+> **Hierarchical's business case in §0 terms:** The $157 catering order lost in §0 to a single-pass refusal represents an 11-point complex-order capture improvement (85% → 96%) for $0.50 of orchestration overhead — 31,400% ROI. The operative metric is not token cost but complex-order capture rate: hierarchical finds solutions that single-pass structurally cannot explore within its token budget.
 
 ---
 
@@ -1435,34 +1425,34 @@ def hierarchical_plan_smart(user_input):
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│  TOOL SELECTION WITH FALLBACK CHAIN                          │
-│                                                              │
-│  Task: Check inventory for pepperoni                         │
-│      ↓                                                       │
-│  ┌────────────────────────────────────────────────────┐    │
-│  │  Try Tool 1: CACHE (fast, 95% accuracy, $0.001)   │    │
-│  │  ↓                                                  │    │
-│  │  Success? → Return result                          │    │
-│  │  Failure? ↓                                         │    │
-│  └────────────────────────────────────────────────────┘    │
-│      ↓                                                       │
-│  ┌────────────────────────────────────────────────────┐    │
-│  │  Try Tool 2: DATABASE (medium, 99% accuracy, $0.01)│    │
-│  │  ↓                                                  │    │
-│  │  Success? → Return result                          │    │
-│  │  Failure? ↓                                         │    │
-│  └────────────────────────────────────────────────────┘    │
-│      ↓                                                       │
-│  ┌────────────────────────────────────────────────────┐    │
-│  │  Try Tool 3: API (slow, 100% accuracy, $0.05)     │    │
-│  │  ↓                                                  │    │
-│  │  Success? → Return result                          │    │
-│  │  Failure? ↓                                         │    │
-│  └────────────────────────────────────────────────────┘    │
-│      ↓                                                       │
-│  ┌────────────────────────────────────────────────────┐    │
-│  │  Escalate to HUMAN (fallback of last resort)      │    │
-│  └────────────────────────────────────────────────────┘    │
+│ TOOL SELECTION WITH FALLBACK CHAIN │
+│ │
+│ Task: Check inventory for pepperoni │
+│ ↓ │
+│ ┌────────────────────────────────────────────────────┐ │
+│ │ Try Tool 1: CACHE (fast, 95% accuracy, $0.001) │ │
+│ │ ↓ │ │
+│ │ Success? → Return result │ │
+│ │ Failure? ↓ │ │
+│ └────────────────────────────────────────────────────┘ │
+│ ↓ │
+│ ┌────────────────────────────────────────────────────┐ │
+│ │ Try Tool 2: DATABASE (medium, 99% accuracy, $0.01)│ │
+│ │ ↓ │ │
+│ │ Success? → Return result │ │
+│ │ Failure? ↓ │ │
+│ └────────────────────────────────────────────────────┘ │
+│ ↓ │
+│ ┌────────────────────────────────────────────────────┐ │
+│ │ Try Tool 3: API (slow, 100% accuracy, $0.05) │ │
+│ │ ↓ │ │
+│ │ Success? → Return result │ │
+│ │ Failure? ↓ │ │
+│ └────────────────────────────────────────────────────┘ │
+│ ↓ │
+│ ┌────────────────────────────────────────────────────┐ │
+│ │ Escalate to HUMAN (fallback of last resort) │ │
+│ └────────────────────────────────────────────────────┘ │
 └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -1472,14 +1462,12 @@ def hierarchical_plan_smart(user_input):
 ---
 
 ### When to Use Tool Selection
-
-✅ **Use tool selection when:**
+**Use tool selection when:**
 - Multiple tools can solve the task (cache, DB, API)
 - Tools have different cost/latency/accuracy trade-offs
 - Tools can fail (network errors, timeouts, rate limits)
 - Need graceful degradation (fallback to cheaper/slower tool)
-
-❌ **Don't use tool selection when:**
+**Don't use tool selection when:**
 - Only one tool available
 - All tools have identical cost/latency/accuracy
 - Tool failures are catastrophic (no fallback possible)
@@ -1492,22 +1480,22 @@ def hierarchical_plan_smart(user_input):
 
 ```python
 def rule_based_tool_selection(task_type, context):
-    """Select tool using if-then rules."""
-    if task_type == "inventory_check":
-        # Rule: Try fast cache first, fallback to DB
-        return ["cache", "database", "api"]
+ """Select tool using if-then rules."""
+ if task_type == "inventory_check":
+ # Rule: Try fast cache first, fallback to DB
+ return ["cache", "database", "api"]
 
-    elif task_type == "pricing_calculation":
-        # Rule: Pricing must be accurate → skip cache, go to DB
-        return ["database", "api"]
+ elif task_type == "pricing_calculation":
+ # Rule: Pricing must be accurate → skip cache, go to DB
+ return ["database", "api"]
 
-    elif task_type == "menu_lookup":
-        # Rule: Menu rarely changes → cache is sufficient
-        return ["cache"]
+ elif task_type == "menu_lookup":
+ # Rule: Menu rarely changes → cache is sufficient
+ return ["cache"]
 
-    else:
-        # Default: Try all tools in order (cheap → expensive)
-        return ["cache", "database", "api", "human"]
+ else:
+ # Default: Try all tools in order (cheap → expensive)
+ return ["cache", "database", "api", "human"]
 ```
 
 **Pros:** Fast, deterministic, no LLM call needed
@@ -1521,25 +1509,25 @@ def rule_based_tool_selection(task_type, context):
 
 ```python
 def cost_based_fallback(tools, task):
-    """Execute tools in order (cheapest → most expensive) until success."""
-    for tool in tools:
-        try:
-            result = tool.execute(task)
-            if result.success:
-                return result
-        except ToolFailure as e:
-            # Log failure and try next tool
-            logging.warning(f"{tool.name} failed: {e}. Trying next tool...")
-            continue
+ """Execute tools in order (cheapest → most expensive) until success."""
+ for tool in tools:
+ try:
+ result = tool.execute(task)
+ if result.success:
+ return result
+ except ToolFailure as e:
+ # Log failure and try next tool
+ logging.warning(f"{tool.name} failed: {e}. Trying next tool...")
+ continue
 
-    # All tools failed → escalate to human
-    return escalate_to_human(task)
+ # All tools failed → escalate to human
+ return escalate_to_human(task)
 
 # Tool definitions
 tools = [
-    Tool(name="cache", cost=0.001, latency=0.1, accuracy=0.95),
-    Tool(name="database", cost=0.01, latency=0.5, accuracy=0.99),
-    Tool(name="api", cost=0.05, latency=2.0, accuracy=1.00),
+ Tool(name="cache", cost=0.001, latency=0.1, accuracy=0.95),
+ Tool(name="database", cost=0.01, latency=0.5, accuracy=0.99),
+ Tool(name="api", cost=0.05, latency=2.0, accuracy=1.00),
 ]
 
 # Example: Inventory check
@@ -1547,8 +1535,8 @@ task = "Check inventory for pepperoni"
 result = cost_based_fallback(tools, task)
 
 # Execution trace:
-# 1. Try cache: ❌ Cache miss (pepperoni not in cache)
-# 2. Try database: ✅ Success (pepperoni in stock: 50 units)
+# 1. Try cache: Cache miss (pepperoni not in cache)
+# 2. Try database: Success (pepperoni in stock: 50 units)
 # Cost: $0.001 (cache attempt) + $0.01 (DB success) = $0.011
 ```
 
@@ -1563,30 +1551,30 @@ result = cost_based_fallback(tools, task)
 
 ```python
 def llm_based_tool_selection(task, context, available_tools):
-    """LLM meta-agent selects best tool for task."""
-    tool_descriptions = "\n".join([
-        f"- {t.name}: Cost ${t.cost}, Latency {t.latency}s, Accuracy {t.accuracy*100}%"
-        for t in available_tools
-    ])
+ """LLM meta-agent selects best tool for task."""
+ tool_descriptions = "\n".join([
+ f"- {t.name}: Cost ${t.cost}, Latency {t.latency}s, Accuracy {t.accuracy*100}%"
+ for t in available_tools
+ ])
 
-    meta_agent_prompt = f"""
-    Task: {task}
-    Context: {context}
+ meta_agent_prompt = f"""
+ Task: {task}
+ Context: {context}
 
-    Available tools:
-    {tool_descriptions}
+ Available tools:
+ {tool_descriptions}
 
-    Which tool should we use? Consider:
-    1. Task requirements (accuracy vs speed)
-    2. Context (e.g., is cached data stale?)
-    3. Cost-benefit trade-off
+ Which tool should we use? Consider:
+ 1. Task requirements (accuracy vs speed)
+ 2. Context (e.g., is cached data stale?)
+ 3. Cost-benefit trade-off
 
-    Output: Tool name only.
-    """
-    selected_tool_name = LLM(meta_agent_prompt)
-    selected_tool = [t for t in available_tools if t.name == selected_tool_name][0]
+ Output: Tool name only.
+ """
+ selected_tool_name = LLM(meta_agent_prompt)
+ selected_tool = [t for t in available_tools if t.name == selected_tool_name][0]
 
-    return selected_tool
+ return selected_tool
 
 # Example: Inventory check with context
 task = "Check inventory for pepperoni"
@@ -1595,7 +1583,7 @@ context = "Customer just ordered 20 pizzas. Cache was updated 5 minutes ago."
 selected_tool = llm_based_tool_selection(task, context, tools)
 # LLM output: "cache"
 # Reasoning: "Cache is recent (5 min old) and customer needs fast response.
-#             Use cache (95% accuracy is acceptable for inventory check)."
+# Use cache (95% accuracy is acceptable for inventory check)."
 
 result = selected_tool.execute(task)
 ```
@@ -1612,41 +1600,41 @@ result = selected_tool.execute(task)
 ```python
 # Fallback chain with no stopping condition
 while True:
-    result = try_cache()
-    if result.success:
-        return result
+ result = try_cache()
+ if result.success:
+ return result
 
-    result = try_database()
-    if result.success:
-        return result
+ result = try_database()
+ if result.success:
+ return result
 
-    result = try_api()
-    if result.success:
-        return result
+ result = try_api()
+ if result.success:
+ return result
 
-    # Loop forever if all tools fail
+ # Loop forever if all tools fail
 ```
 
 **Fix:** Add max retry limit and human escalation.
 
 ```python
 def tool_selection_with_retry_limit(tools, task, max_retries=3):
-    """Fallback chain with retry limit."""
-    attempts = 0
+ """Fallback chain with retry limit."""
+ attempts = 0
 
-    while attempts < max_retries:
-        for tool in tools:
-            try:
-                result = tool.execute(task)
-                return result
-            except ToolFailure:
-                continue
+ while attempts < max_retries:
+ for tool in tools:
+ try:
+ result = tool.execute(task)
+ return result
+ except ToolFailure:
+ continue
 
-        attempts += 1
-        logging.warning(f"All tools failed. Retry {attempts}/{max_retries}")
+ attempts += 1
+ logging.warning(f"All tools failed. Retry {attempts}/{max_retries}")
 
-    # Max retries exceeded → escalate
-    return escalate_to_human(task)
+ # Max retries exceeded → escalate
+ return escalate_to_human(task)
 ```
 
 ---
@@ -1659,27 +1647,27 @@ selected_tool = llm_based_tool_selection(task, context, tools)
 # Output: "api" (100% accuracy, $0.05 cost)
 
 # But cache would have worked (95% accuracy, $0.001 cost)
-# ❌ Wasted $0.049 (49× more expensive)
+# Wasted $0.049 (49× more expensive)
 ```
 
 **Fix:** Add cost-awareness to LLM prompt.
 
 ```python
 def llm_based_tool_selection_cost_aware(task, context, tools, budget=0.02):
-    """LLM meta-agent with cost constraint."""
-    meta_agent_prompt = f"""
-    Task: {task}
-    Context: {context}
-    Budget: ${budget}
+ """LLM meta-agent with cost constraint."""
+ meta_agent_prompt = f"""
+ Task: {task}
+ Context: {context}
+ Budget: ${budget}
 
-    Available tools:
-    {tool_descriptions}
+ Available tools:
+ {tool_descriptions}
 
-    Pick the CHEAPEST tool that satisfies task requirements.
-    Only use expensive tools if cheap tools can't meet requirements.
-    """
-    selected_tool_name = LLM(meta_agent_prompt)
-    return selected_tool_name
+ Pick the CHEAPEST tool that satisfies task requirements.
+ Only use expensive tools if cheap tools can't meet requirements.
+ """
+ selected_tool_name = LLM(meta_agent_prompt)
+ return selected_tool_name
 ```
 
 ---
@@ -1689,32 +1677,32 @@ def llm_based_tool_selection_cost_aware(task, context, tools, budget=0.02):
 ```python
 # Payment processing has no fallback
 def process_payment(card_info):
-    result = payment_api.charge(card_info)
-    if result.failure:
-        return "Payment failed. Order cancelled."
-    # ❌ No retry with backup payment processor
+ result = payment_api.charge(card_info)
+ if result.failure:
+ return "Payment failed. Order cancelled."
+ # No retry with backup payment processor
 ```
 
 **Fix:** Always have fallback for critical operations.
 
 ```python
 def process_payment_with_fallback(card_info):
-    """Payment with fallback to backup processor."""
-    primary_processors = [stripe_api, square_api, paypal_api]
+ """Payment with fallback to backup processor."""
+ primary_processors = [stripe_api, square_api, paypal_api]
 
-    for processor in primary_processors:
-        try:
-            result = processor.charge(card_info)
-            if result.success:
-                return result
-        except PaymentError:
-            continue
+ for processor in primary_processors:
+ try:
+ result = processor.charge(card_info)
+ if result.success:
+ return result
+ except PaymentError:
+ continue
 
-    # All processors failed → escalate to manual processing
-    return escalate_to_manual_payment(card_info)
+ # All processors failed → escalate to manual processing
+ return escalate_to_manual_payment(card_info)
 ```
 
-> 💡 **Tool selection's business case in §0 terms:** The 35-point recovery improvement (60% → 95%) eliminates roughly 4.2% of all escalations. Unlike the other three patterns, the ROI here is a cost-reduction metric, not a revenue-capture metric: each avoided escalation removes a fraction of the $157,680 annual labor cost from §0 rather than recovering an abandoned order. That makes tool selection the lowest-drama, highest-consistency investment in the pattern stack.
+> **Tool selection's business case in §0 terms:** The 35-point recovery improvement (60% → 95%) eliminates roughly 4.2% of all escalations. Unlike the other three patterns, the ROI here is a cost-reduction metric, not a revenue-capture metric: each avoided escalation removes a fraction of the $157,680 annual labor cost from §0 rather than recovering an abandoned order. That makes tool selection the lowest-drama, highest-consistency investment in the pattern stack.
 
 ---
 
@@ -1728,42 +1716,42 @@ Every agentic pattern is a trade-off: **tokens ↔ reliability**.
 
 ```
 Reliability (%)
-   100% ┤                                          ● Hierarchical + Debate
-        │                                    ● Debate
-    99% ┤                              ● Hierarchical
-        │                        ● Reflection
-    95% ┤                  ● Single-pass (Ch.1-10)
-        │            ●
-    90% ┤      ●
-        │ ●
-    85% ┤
-        └────────────────────────────────────────────────────────────────
-         1×      3×      5×      7×      9×      11×     13×     15×
-                           Token Cost (relative to single-pass)
+ 100% ┤ ● Hierarchical + Debate
+ │ ● Debate
+ 99% ┤ ● Hierarchical
+ │ ● Reflection
+ 95% ┤ ● Single-pass (Ch.1-10)
+ │ ●
+ 90% ┤ ●
+ │ ●
+ 85% ┤
+ └────────────────────────────────────────────────────────────────
+ 1× 3× 5× 7× 9× 11× 13× 15×
+ Token Cost (relative to single-pass)
 ```
 
 ### Decision Tree: Which Pattern for Which Problem?
 
 ```
 ┌─ Is task simple & unambiguous?
-│   ├─ YES → SINGLE-PASS (1×)
-│   └─ NO → Continue ↓
+│ ├─ YES → SINGLE-PASS (1×)
+│ └─ NO → Continue ↓
 │
 ├─ Does input have contradictions or ambiguity?
-│   ├─ YES → REFLECTION (3×)
-│   └─ NO → Continue ↓
+│ ├─ YES → REFLECTION (3×)
+│ └─ NO → Continue ↓
 │
 ├─ Is decision high-stakes (medical, legal, fraud)?
-│   ├─ YES → DEBATE (6×)
-│   └─ NO → Continue ↓
+│ ├─ YES → DEBATE (6×)
+│ └─ NO → Continue ↓
 │
 ├─ Is task decomposable into subtasks?
-│   ├─ YES → HIERARCHICAL (5–7×)
-│   └─ NO → Continue ↓
+│ ├─ YES → HIERARCHICAL (5–7×)
+│ └─ NO → Continue ↓
 │
 ├─ Do you have multiple tools with different cost/accuracy?
-│   ├─ YES → TOOL SELECTION (1.1–2.5×)
-│   └─ NO → SINGLE-PASS (1×)
+│ ├─ YES → TOOL SELECTION (1.1–2.5×)
+│ └─ NO → SINGLE-PASS (1×)
 ```
 
 ### Pattern Comparison Table
@@ -1789,7 +1777,7 @@ Reliability (%)
 
 **Key insight:** Even expensive patterns (6× tokens) pay for themselves if they prevent order abandonment or disputes.
 
-> 💡 **The routing rule in §0 terms:** The §0 cost constraint is $0.25/conversation *average*, not per-call. The decision tree keeps that average intact by routing 92% of simple orders to $0.08 single-pass while spending $0.18–$0.50 on the 8% that need pattern support — landing at $0.18 average, well under cap. Routing all orders through the most expensive pattern would cost $0.50 average, doubling the constraint, while improving already-correct simple orders by zero.
+> **The routing rule in §0 terms:** The §0 cost constraint is $0.25/conversation *average*, not per-call. The decision tree keeps that average intact by routing 92% of simple orders to $0.08 single-pass while spending $0.18–$0.50 on the 8% that need pattern support — landing at $0.18 average, well under cap. Routing all orders through the most expensive pattern would cost $0.50 average, doubling the constraint, while improving already-correct simple orders by zero.
 
 ---
 
@@ -1803,19 +1791,19 @@ Each pattern in §3–§6 introduced at least one failure mode, and the failures
 
 ```python
 # Reflection loop
-for i in range(100):  # ❌ No stopping condition
-    critique = critique(response)
-    response = revise(critique)
+for i in range(100): # No stopping condition
+ critique = critique(response)
+ response = revise(critique)
 ```
 
 **Fix:** Add max iterations and convergence check.
 
 ```python
-for i in range(3):  # Max 3 iterations
-    critique = critique(response)
-    if "no improvements" in critique:
-        break  # Converged
-    response = revise(critique)
+for i in range(3): # Max 3 iterations
+ critique = critique(response)
+ if "no improvements" in critique:
+ break # Converged
+ response = revise(critique)
 ```
 
 ---
@@ -1825,19 +1813,19 @@ for i in range(3):  # Max 3 iterations
 **Symptom:** Model critiques its own hallucination as correct.
 
 ```python
-draft = "Sourdough crust is gluten-free."  # ❌ WRONG
-critique = "Sourdough is naturally gluten-free."  # ❌ WRONG AGAIN
+draft = "Sourdough crust is gluten-free." # WRONG
+critique = "Sourdough is naturally gluten-free." # WRONG AGAIN
 ```
 
 **Fix:** Ground critique in external facts (RAG, API).
 
 ```python
 def critique_with_grounding(draft):
-    claims = extract_claims(draft)
-    for claim in claims:
-        fact = rag.verify(claim)  # Check against knowledge base
-        if not fact.verified:
-            return f"False claim: {claim}"
+ claims = extract_claims(draft)
+ for claim in claims:
+ fact = rag.verify(claim) # Check against knowledge base
+ if not fact.verified:
+ return f"False claim: {claim}"
 ```
 
 ---
@@ -1848,7 +1836,7 @@ def critique_with_grounding(draft):
 
 ```python
 agent_1 = "$22.49 (BOGO promo)"
-agent_2 = "$22.49 (BOGO promo)"  # No disagreement
+agent_2 = "$22.49 (BOGO promo)" # No disagreement
 ```
 
 **Fix:** Assign adversarial roles (generous vs. strict).
@@ -1866,7 +1854,7 @@ agent_2_prompt = "Calculate price (policy-strict)"
 
 ```python
 plan = "Budget ≤ $200"
-worker = "$209.85"  # ❌ Exceeded budget
+worker = "$209.85" # Exceeded budget
 ```
 
 **Fix:** Include constraints in every worker prompt.
@@ -1885,20 +1873,20 @@ Global constraints: Budget ≤ $200
 **Symptom:** Retry loop with no convergence.
 
 ```python
-while True:  # ❌ Infinite retry
-    result = try_cache()
-    result = try_db()
-    result = try_api()
+while True: # Infinite retry
+ result = try_cache()
+ result = try_db()
+ result = try_api()
 ```
 
 **Fix:** Add max retries and human escalation.
 
 ```python
 for attempt in range(3):
-    for tool in tools:
-        result = tool.execute()
-        if result.success:
-            return result
+ for tool in tools:
+ result = tool.execute()
+ if result.success:
+ return result
 
 escalate_to_human()
 ```
@@ -1911,19 +1899,19 @@ escalate_to_human()
 
 ```python
 user_input = "Large pepperoni pizza"
-response = debate_agent(user_input)  # ❌ Wasted 6× tokens
+response = debate_agent(user_input) # Wasted 6× tokens
 ```
 
 **Fix:** Route simple queries to single-pass.
 
 ```python
 if is_simple(user_input):
-    return single_pass(user_input)  # 1× cost
+ return single_pass(user_input) # 1× cost
 else:
-    return debate_agent(user_input)  # 6× cost
+ return debate_agent(user_input) # 6× cost
 ```
 
-> 💡 **Traps compound in production:** An uncapped reflection loop (Trap #1) combined with expensive-pattern overuse (Trap #6) can turn a $0.24 edge-case call into a $2.40 runaway — ten times the §0 budget cap with no improvement in answer quality. The fixes here are not optional hardening; they are the boundary conditions that keep the cost model in §7 valid and the $0.25/conversation cap enforceable.
+> **Traps compound in production:** An uncapped reflection loop (Trap #1) combined with expensive-pattern overuse (Trap #6) can turn a $0.24 edge-case call into a $2.40 runaway — ten times the §0 budget cap with no improvement in answer quality. The fixes here are not optional hardening; they are the boundary conditions that keep the cost model in §7 valid and the $0.25/conversation cap enforceable.
 
 ---
 
@@ -2004,12 +1992,12 @@ Show that all 6 constraints are now satisfied.
 
 | Constraint | Ch.10 (single-pass) | Ch.11 (with patterns) | Status |
 |------------|---------------------|----------------------|--------|
-| **#1 ACCURACY** (99%+ orders handled) | 95% | 99.2% | ✅ |
-| **#2 EDGE CASES** (<1% error rate) | 8% | 0.8% | ✅ |
-| **#3 COST** (≤$0.25/conversation) | $0.08 | $0.18 avg | ✅ |
-| **#4 LATENCY** (<15s for complex orders) | 4.2s | 11.3s avg | ✅ |
-| **#5 TRANSPARENCY** (show reasoning) | ❌ No | ✅ Yes (multi-step explanations) | ✅ |
-| **#6 GRACEFUL DEGRADATION** (ask clarifying questions) | ❌ No | ✅ Yes (reflection + debate) | ✅ |
+| **#1 ACCURACY** (99%+ orders handled) | 95% | 99.2% | |
+| **#2 EDGE CASES** (<1% error rate) | 8% | 0.8% | |
+| **#3 COST** (≤$0.25/conversation) | $0.08 | $0.18 avg | |
+| **#4 LATENCY** (<15s for complex orders) | 4.2s | 11.3s avg | |
+| **#5 TRANSPARENCY** (show reasoning) | No | Yes (multi-step explanations) | |
+| **#6 GRACEFUL DEGRADATION** (ask clarifying questions) | No | Yes (reflection + debate) | |
 
 ---
 
@@ -2018,40 +2006,40 @@ Show that all 6 constraints are now satisfied.
 Which capabilities does each pattern unlock?
 
 **Single-pass (Ch.1-10):**
-- ✅ Simple orders (1-2 items)
-- ✅ Menu lookups (RAG grounding)
-- ✅ Tool orchestration (ReAct)
-- ❌ Contradictory inputs (no self-correction)
-- ❌ Pricing disputes (no multi-agent reasoning)
-- ❌ Complex catering (no decomposition)
+- Simple orders (1-2 items)
+- Menu lookups (RAG grounding)
+- Tool orchestration (ReAct)
+- Contradictory inputs (no self-correction)
+- Pricing disputes (no multi-agent reasoning)
+- Complex catering (no decomposition)
 
 **Reflection (Ch.11):**
-- ✅ Simple orders
-- ✅ Menu lookups
-- ✅ Tool orchestration
-- ✅ Contradictory inputs (self-critique)
-- ❌ Pricing disputes (single-agent can't arbitrate)
-- ❌ Complex catering (no decomposition)
+- Simple orders
+- Menu lookups
+- Tool orchestration
+- Contradictory inputs (self-critique)
+- Pricing disputes (single-agent can't arbitrate)
+- Complex catering (no decomposition)
 
 **Debate (Ch.11):**
-- ✅ Simple orders
-- ✅ Menu lookups
-- ✅ Tool orchestration
-- ✅ Contradictory inputs
-- ✅ Pricing disputes (multi-agent arbitration)
-- ❌ Complex catering (no decomposition)
+- Simple orders
+- Menu lookups
+- Tool orchestration
+- Contradictory inputs
+- Pricing disputes (multi-agent arbitration)
+- Complex catering (no decomposition)
 
 **Hierarchical (Ch.11):**
-- ✅ Simple orders
-- ✅ Menu lookups
-- ✅ Tool orchestration
-- ✅ Contradictory inputs (verifier catches)
-- ✅ Pricing disputes (workers handle)
-- ✅ Complex catering (planner decomposes)
+- Simple orders
+- Menu lookups
+- Tool orchestration
+- Contradictory inputs (verifier catches)
+- Pricing disputes (workers handle)
+- Complex catering (planner decomposes)
 
 **All patterns combined:**
-- ✅ All 6 constraints satisfied
-- ✅ Production-ready PizzaBot v2.0
+- All 6 constraints satisfied
+- Production-ready PizzaBot v2.0
 
 ---
 
@@ -2085,14 +2073,14 @@ Which capabilities does each pattern unlock?
 **Ch.11 Reflection (single-agent):**
 ```python
 draft = Agent1("Generate response")
-critique = Agent1("Critique your own draft")  # Same agent
+critique = Agent1("Critique your own draft") # Same agent
 revised = Agent1("Revise based on critique")
 ```
 
 **Multi-Agent Ch.3 (cross-agent critique):**
 ```python
 draft = AgentA("Generate response")
-critique = AgentB("Critique AgentA's draft")  # Different agent (adversarial)
+critique = AgentB("Critique AgentA's draft") # Different agent (adversarial)
 revised = AgentA("Revise based on AgentB's critique")
 # AgentB persists, learns from past critiques, specializes in finding flaws
 ```
@@ -2102,7 +2090,7 @@ revised = AgentA("Revise based on AgentB's critique")
 **Ch.11 Hierarchical (ephemeral):**
 ```python
 plan = Planner("Decompose task")
-workers = [Worker1("Task 1"), Worker2("Task 2"), ...]  # Created per-task
+workers = [Worker1("Task 1"), Worker2("Task 2"), ...] # Created per-task
 verify = Verifier("Check results")
 # Workers disappear after task completes
 ```
@@ -2110,21 +2098,19 @@ verify = Verifier("Check results")
 **Multi-Agent Ch.5 (persistent orchestration):**
 ```python
 plan = ManagerAgent.decompose(task)
-workers = [WorkerAgent1, WorkerAgent2, ...]  # Persistent, have memory of past tasks
+workers = [WorkerAgent1, WorkerAgent2, ...] # Persistent, have memory of past tasks
 results = await asyncio.gather(*[w.execute(subtask) for w in workers])
 verify = ManagerAgent.verify(results)
 # Workers persist, learn patterns (e.g., "Task 1 usually takes 5s"), optimize over time
 ```
 
 ### When to Escalate from Ch.11 to Multi-Agent Track
-
-✅ **Escalate to multi-agent when:**
+**Escalate to multi-agent when:**
 - Tasks span multiple conversations (agents need long-term memory)
 - Agents specialize (each agent becomes expert in one domain)
 - Coordination is dynamic (agents negotiate, not hard-coded plan)
 - Scaling beyond 4 agents (distributed systems)
-
-❌ **Stay with Ch.11 patterns when:**
+**Stay with Ch.11 patterns when:**
 - Tasks are scoped to single conversation
 - Agents are disposable (no benefit to persistence)
 - Coordination is simple (hard-coded plan works fine)
@@ -2140,7 +2126,7 @@ verify = ManagerAgent.verify(results)
 6. **Multi-Agent Ch.5** — Tool Specialization & Negotiation (agents own tools, negotiate usage)
 7. **Multi-Agent Ch.6** — Production Multi-Agent Systems (AutoGPT, MetaGPT, CrewAI)
 
-> ➡️ **What Ch.11 patterns cannot do alone:** All four patterns operate within a single conversation — agent state resets each turn, agents are ephemeral, and coordination is hard-coded into the prompt. The multi-agent track adds persistence (agents retain memory across conversations), specialization (agents develop task expertise over time), and asynchronous coordination (agents message each other without a human turn in the loop). Start with [Multi-Agent Ch.1](../../04-multi-agent-ai/ch01-intro-to-multi-agent-systems/README.md) for agent types and communication protocols.
+> ➡ **What Ch.11 patterns cannot do alone:** All four patterns operate within a single conversation — agent state resets each turn, agents are ephemeral, and coordination is hard-coded into the prompt. The multi-agent track adds persistence (agents retain memory across conversations), specialization (agents develop task expertise over time), and asynchronous coordination (agents message each other without a human turn in the loop). Start with [Multi-Agent Ch.1](../../04-multi-agent-ai/ch01-intro-to-multi-agent-systems/README.md) for agent types and communication protocols.
 
 ---
 
@@ -2165,10 +2151,10 @@ You've learned four agentic patterns that trade tokens for reliability:
 - Complex order success: 85% → 96% (11% improvement)
 - Escalation rate: 8% → 0.8% (7.2% reduction)
 - Cost: $0.08 → $0.18 avg (still under $0.25 budget)
-- All 6 constraints satisfied ✅
+- All 6 constraints satisfied
 
 **Next stop:** Multi-Agent AI track (`notes/04-multi_agent_ai/`) extends these patterns to persistent, coordinated, multi-agent systems.
 
 ---
 
-**You now have the complete agentic AI toolkit (Ch.1–11).** You can build production agents that handle 99%+ of real-world inputs with graceful degradation, transparent reasoning, and cost-efficient orchestration. 🎉
+**You now have the complete agentic AI toolkit (Ch.1–11).** You can build production agents that handle 99%+ of real-world inputs with graceful degradation, transparent reasoning, and cost-efficient orchestration.

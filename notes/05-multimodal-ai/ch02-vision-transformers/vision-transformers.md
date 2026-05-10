@@ -24,12 +24,12 @@
 
 | Constraint | Target | Status | Evidence |
 |------------|--------|--------|----------|
-| #1 Quality | ≥4.0/5.0 | ❌ Not applicable | Can't generate images yet |
-| #2 Speed | <30 seconds | ❌ Not applicable | No generation pipeline yet |
-| #3 Cost | <$5k hardware | ❌ Not validated | ViT runs on laptop but haven't tested full pipeline |
-| #4 Control | <5% unusable | ❌ Not applicable | Can't generate yet |
-| #5 Throughput | 100+ images/day | ❌ Not applicable | No generation capability |
-| #6 Versatility | 3 modalities | ⚡ **Image embeddings** | Can extract semantic image features (768-dim embeddings) |
+| #1 Quality | ≥4.0/5.0 | Not applicable | Can't generate images yet |
+| #2 Speed | <30 seconds | Not applicable | No generation pipeline yet |
+| #3 Cost | <$5k hardware | Not validated | ViT runs on laptop but haven't tested full pipeline |
+| #4 Control | <5% unusable | Not applicable | Can't generate yet |
+| #5 Throughput | 100+ images/day | Not applicable | No generation capability |
+| #6 Versatility | 3 modalities | **Image embeddings** | Can extract semantic image features (768-dim embeddings) |
 
 ---
 
@@ -55,7 +55,7 @@ This design has two major consequences:
 
 **Your challenge**: VisualForge's creative director hands you 10,000 stock photos (real estate interiors, fashion shoots, automotive, hospitality) and says "I need to search this library by typing 'modern office with natural light' and get the top 5 matches. Go."
 
-**First attempt — pixel-level comparison**: You flatten each image to a 150,528-dim vector (224×224×3) and compute cosine similarity. **Result**: Returns images with similar color histograms — blue ocean sunsets match "modern office" because both are "mostly blue pixels." ❌ Useless.
+**First attempt — pixel-level comparison**: You flatten each image to a 150,528-dim vector (224×224×3) and compute cosine similarity. **Result**: Returns images with similar color histograms — blue ocean sunsets match "modern office" because both are "mostly blue pixels." Useless.
 
 **What you need**: A **semantic embedding** that understands "office", "modern", "natural light" — not just pixel values.
 
@@ -74,7 +74,7 @@ inputs = processor(images=image, return_tensors="pt")
 outputs = model(**inputs)
 
 # Extract CLS token embedding — 768-dim semantic representation
-embedding = outputs.last_hidden_state[:, 0, :]  # Shape: (1, 768)
+embedding = outputs.last_hidden_state[:, 0, :] # Shape: (1, 768)
 # This embedding captures "modern office", "natural light", "minimalist" — not pixel colors
 ```
 
@@ -88,7 +88,7 @@ Output: 197 tokens (196 patches + 1 [CLS]) × 768 dims
  → CLS token after 12 transformer layers = semantic embedding
 ```
 
-**Result**: Now "modern office with natural light" query (embedded via CLIP text encoder in Ch.3) returns actual office interiors — not random blue images. ✅
+**Result**: Now "modern office with natural light" query (embedded via CLIP text encoder in Ch.3) returns actual office interiors — not random blue images.
 
 ---
 
@@ -262,13 +262,13 @@ CNN (ResNet): ViT self-attention:
 
 ```python
 # Step 1: Embed the 10k stock library using ViT
-stock_embeddings = []  # Will hold 10,000 × 768 embeddings
+stock_embeddings = [] # Will hold 10,000 × 768 embeddings
 for image_path in visualforge_stock_library:
-    image = load_image(image_path)
-    inputs = processor(images=image, return_tensors="pt")
-    outputs = vit_model(**inputs)
-    cls_embedding = outputs.last_hidden_state[:, 0, :]
-    stock_embeddings.append(cls_embedding)
+ image = load_image(image_path)
+ inputs = processor(images=image, return_tensors="pt")
+ outputs = vit_model(**inputs)
+ cls_embedding = outputs.last_hidden_state[:, 0, :]
+ stock_embeddings.append(cls_embedding)
 
 # Step 2: When generating (Ch.6+), use nearest-neighbor search
 # to find reference images that match "luxury hotel lobby"
@@ -278,9 +278,9 @@ query_text = "luxury hotel lobby, modern minimalist"
 ```
 
 **What this unlocks**:
-- **Constraint #6 (Versatility)**: ⚡ Can now extract semantic features from images
+- **Constraint #6 (Versatility)**: Can now extract semantic features from images
 - **Throughput foundation**: Embedding 10k images takes ~5 minutes one-time cost (ViT-B on laptop GPU)
-- **Cost**: ✅ Runs on $2.5k laptop, no cloud API costs
+- **Cost**: Runs on $2.5k laptop, no cloud API costs
 
 **What we still can't do**:
 - Generate images (need diffusion model, Ch.4+)
@@ -300,15 +300,15 @@ query_text = "luxury hotel lobby, modern minimalist"
 **Fix**: Bicubic interpolation of the learned positional embeddings:
 ```python
 # Interpolate 14×14 positional embeddings → 32×32
-original_pos_embed = model.embeddings.position_embeddings.data  # (1, 197, 768)
-cls_pos = original_pos_embed[:, 0:1, :]  # CLS token position
-patch_pos = original_pos_embed[:, 1:, :]  # 196 patch positions
+original_pos_embed = model.embeddings.position_embeddings.data # (1, 197, 768)
+cls_pos = original_pos_embed[:, 0:1, :] # CLS token position
+patch_pos = original_pos_embed[:, 1:, :] # 196 patch positions
 
-patch_pos = patch_pos.reshape(1, 14, 14, 768).permute(0, 3, 1, 2)  # (1, 768, 14, 14)
-patch_pos = F.interpolate(patch_pos, size=(32, 32), mode='bicubic')  # → (1, 768, 32, 32)
-patch_pos = patch_pos.permute(0, 2, 3, 1).reshape(1, 1024, 768)  # (1, 1024, 768)
+patch_pos = patch_pos.reshape(1, 14, 14, 768).permute(0, 3, 1, 2) # (1, 768, 14, 14)
+patch_pos = F.interpolate(patch_pos, size=(32, 32), mode='bicubic') # → (1, 768, 32, 32)
+patch_pos = patch_pos.permute(0, 2, 3, 1).reshape(1, 1024, 768) # (1, 1024, 768)
 
-new_pos_embed = torch.cat([cls_pos, patch_pos], dim=1)  # (1, 1025, 768)
+new_pos_embed = torch.cat([cls_pos, patch_pos], dim=1) # (1, 1025, 768)
 model.embeddings.position_embeddings.data = new_pos_embed
 ```
 
@@ -354,12 +354,12 @@ model.embeddings.position_embeddings.data = new_pos_embed
 
 | Use Case | When to Use ViT | When to Use CNN | When to Use Hybrid |
 |----------|----------------|----------------|--------------------|
-| **Image embedding for retrieval** | ✅ Always (CLIP uses ViT) | ❌ CNN embeddings less semantic | ⚠️ CLIP ViT already hybrid |
-| **Diffusion model backbone** | ✅ High-res latent space (SD) | ❌ U-Net uses CNN-like structure | ✅ **Most common** (U-Net with attention layers) |
-| **Classification on small dataset (<1M images)** | ❌ Needs pretraining | ✅ ResNet, ConvNeXt outperform | ⚠️ Fine-tune pretrained ViT |
-| **Dense prediction (segmentation, detection)** | ⚠️ Needs hierarchical variant (Swin) | ✅ CNN feature pyramids work well | ✅ ViT backbone + CNN decoder |
-| **Real-time inference (<100ms)** | ❌ Full attention too slow | ✅ MobileNet, EfficientNet | ⚠️ ViT-Tiny with distillation |
-| **VisualForge image embedding** | ✅ **This chapter** — CLIP ViT-L/14 | ❌ Can't align with text | N/A |
+| **Image embedding for retrieval** | Always (CLIP uses ViT) | CNN embeddings less semantic | CLIP ViT already hybrid |
+| **Diffusion model backbone** | High-res latent space (SD) | U-Net uses CNN-like structure | **Most common** (U-Net with attention layers) |
+| **Classification on small dataset (<1M images)** | Needs pretraining | ResNet, ConvNeXt outperform | Fine-tune pretrained ViT |
+| **Dense prediction (segmentation, detection)** | Needs hierarchical variant (Swin) | CNN feature pyramids work well | ViT backbone + CNN decoder |
+| **Real-time inference (<100ms)** | Full attention too slow | MobileNet, EfficientNet | ViT-Tiny with distillation |
+| **VisualForge image embedding** | **This chapter** — CLIP ViT-L/14 | Can't align with text | N/A |
 
 **Decision tree for VisualForge**:
 ```
@@ -396,9 +396,9 @@ Need <30s generation time?
 
 **Constraint progression**:
 ```
-Ch.1: Can load images ⚡
-Ch.2: Can extract semantic embeddings ⚡ → Constraint #6 (Versatility) foundation
-Ch.3: Can align text ↔ image embeddings ⚡ → Constraint #4 (Control) foundation
+Ch.1: Can load images
+Ch.2: Can extract semantic embeddings → Constraint #6 (Versatility) foundation
+Ch.3: Can align text ↔ image embeddings → Constraint #4 (Control) foundation
 ```
 
 ---
@@ -431,22 +431,22 @@ Ch.3: Can align text ↔ image embeddings ⚡ → Constraint #4 (Control) founda
 
 ### Foundational Papers
 1. **"An Image Is Worth 16x16 Words: Transformers for Image Recognition at Scale"** (Dosovitskiy et al., ICLR 2021) — The original ViT paper
-   - [arXiv:2010.11929](https://arxiv.org/abs/2010.11929)
-   - Shows ViT matches/beats CNNs at scale (JFT-300M dataset)
+ - [arXiv:2010.11929](https://arxiv.org/abs/2010.11929)
+ - Shows ViT matches/beats CNNs at scale (JFT-300M dataset)
 
 2. **"Training data-efficient image transformers & distillation through attention"** (Touvron et al., ICML 2021) — DeiT
-   - [arXiv:2012.12877](https://arxiv.org/abs/2012.12877)
-   - How to train ViT on ImageNet-1k (1.3M images) without massive pretraining
+ - [arXiv:2012.12877](https://arxiv.org/abs/2012.12877)
+ - How to train ViT on ImageNet-1k (1.3M images) without massive pretraining
 
 3. **"Swin Transformer: Hierarchical Vision Transformer using Shifted Windows"** (Liu et al., ICCV 2021)
-   - [arXiv:2103.14030](https://arxiv.org/abs/2103.14030)
-   - Efficient hierarchical ViT for dense prediction tasks
+ - [arXiv:2103.14030](https://arxiv.org/abs/2103.14030)
+ - Efficient hierarchical ViT for dense prediction tasks
 
 ### Implementations
 - **Hugging Face Transformers**: `transformers.ViTModel`, `transformers.ViTImageProcessor`
-  - Pretrained weights: `google/vit-base-patch16-224`, `google/vit-large-patch14-224`
+ - Pretrained weights: `google/vit-base-patch16-224`, `google/vit-large-patch14-224`
 - **timm (PyTorch Image Models)**: `timm.create_model('vit_base_patch16_224')`
-  - 500+ pretrained vision models including ViT, DeiT, Swin
+ - 500+ pretrained vision models including ViT, DeiT, Swin
 
 ### Key Repos
 - **Google Research ViT**: [github.com/google-research/vision_transformer](https://github.com/google-research/vision_transformer)
@@ -475,19 +475,18 @@ Ch.3: Can align text ↔ image embeddings ⚡ → Constraint #4 (Control) founda
 **Key outputs**:
 - Embedding similarity matrix for 10 stock images
 - Attention map overlay showing "what ViT looks at" when classifying "modern office"
-
-⚠️ **Note**: This chapter only extracts embeddings. We don't train ViT from scratch (requires 100M+ images). We use pretrained weights from CLIP (Ch.3).
+**Note**: This chapter only extracts embeddings. We don't train ViT from scratch (requires 100M+ images). We use pretrained weights from CLIP (Ch.3).
 
 ---
 
 ## 11.5 · Progress Check — What Have We Unlocked?
 
 ### Before This Chapter
-- **Constraint #6 (Versatility)**: ⚡ Can load images as tensors (Ch.1), no semantic understanding
+- **Constraint #6 (Versatility)**: Can load images as tensors (Ch.1), no semantic understanding
 - **VisualForge Status**: Cannot search stock library by semantic query ("modern office with natural light")
 
 ### After This Chapter
-- **Constraint #6 (Versatility)**: ⚡ **Image embeddings** → Can extract 768-dim semantic embeddings from images
+- **Constraint #6 (Versatility)**: **Image embeddings** → Can extract 768-dim semantic embeddings from images
 - **VisualForge Status**: Image encoder ready (ViT-B/16) → can embed 10k stock photos for similarity search
 
 ---
@@ -512,12 +511,12 @@ Ch.3: Can align text ↔ image embeddings ⚡ → Constraint #4 (Control) founda
 
 | Constraint | Ch.1 | Ch.2 (ViT) | Ch.3 | Target |
 |------------|------|------------|------|--------|
-| #1 Quality | ❌ | ❌ | ❌ | ≥4.0/5.0 |
-| #2 Speed | ❌ | ❌ | ❌ | <30s |
-| #3 Cost | ❌ | ❌ | ❌ | <$5k |
-| #4 Control | ❌ | ❌ | ⚡ Text conditioning | <5% unusable |
-| #5 Throughput | ❌ | ❌ | ❌ | 100+ images/day |
-| #6 Versatility | ⚡ Load images | ⚡ **Image embeddings** | ⚡ Text-image search | 3 modalities |
+| #1 Quality | | | | ≥4.0/5.0 |
+| #2 Speed | | | | <30s |
+| #3 Cost | | | | <$5k |
+| #4 Control | | | Text conditioning | <5% unusable |
+| #5 Throughput | | | | 100+ images/day |
+| #6 Versatility | Load images | **Image embeddings** | Text-image search | 3 modalities |
 
 **Current state**: We can now extract semantic meaning from images, but still can't generate or condition on text.
 

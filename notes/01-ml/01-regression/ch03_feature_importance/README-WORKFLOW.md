@@ -10,13 +10,13 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 💡 **The mission**: Launch **SmartVal AI** — a production home valuation system satisfying 5 constraints:
+> **The mission**: Launch **SmartVal AI** — a production home valuation system satisfying 5 constraints:
 > 1. **ACCURACY**: <\$40k MAE — 2. **GENERALIZATION**: Unseen districts — 3. **MULTI-TASK**: Value + Segment — 4. **INTERPRETABILITY**: Explainable — 5. **PRODUCTION**: Scale + Monitor
 
 **What we know so far:**
-- ✅ Ch.1: Single feature (MedInc) → \$70k MAE
-- ✅ Ch.2: All 8 features → \$55k MAE — 21% better
-- ❌ **But we don't know WHY it's better, or which features are doing the work**
+- Ch.1: Single feature (MedInc) → \$70k MAE
+- Ch.2: All 8 features → \$55k MAE — 21% better
+- **But we don't know WHY it's better, or which features are doing the work**
 
 **What's blocking us:**
 
@@ -31,7 +31,7 @@ You can't answer any of those questions from Ch.2's output. You have weights, bu
 - Which feature *pairs* are **stronger together** than the sum of their parts (joint permutation, interaction uplift)
 - A **bar chart** and **heatmap** you can hand to any stakeholder
 
-> ⚡ **Constraint #4 — Interpretability unlocked:** You can now explain to the compliance officer *which* features drive SmartVal predictions, *why* certain weight pairs are unstable (AveRooms/AveBedrms collinearity), and *which* feature is safe to drop (Population). This is the foundation for explainable valuation decisions required by lending regulations.
+> **Constraint #4 — Interpretability unlocked:** You can now explain to the compliance officer *which* features drive SmartVal predictions, *why* certain weight pairs are unstable (AveRooms/AveBedrms collinearity), and *which* feature is safe to drop (Population). This is the foundation for explainable valuation decisions required by lending regulations.
 
 This does not change the MAE. It changes your understanding of *why* you're at \$55k and what levers exist to push lower.
 
@@ -48,18 +48,18 @@ This does not change the MAE. It changes your understanding of *why* you're at \
 Before diving into the mathematical methods, understand the **practitioner workflow** you'll follow with every new dataset:
 
 ```
-Phase 1: INSPECT           Phase 2: AUDIT              Phase 3: TRANSFORM        Phase 4: VALIDATE
+Phase 1: INSPECT Phase 2: AUDIT Phase 3: TRANSFORM Phase 4: VALIDATE
 ────────────────────────────────────────────────────────────────────────────────────────────────
-Look at each feature       Check for redundancy        Build transformation      Rank features by
-distribution:             between feature pairs:       pipeline:                 importance:
+Look at each feature Check for redundancy Build transformation Rank features by
+distribution: between feature pairs: pipeline: importance:
 
-• Compute skew, IQR        • Correlation heatmap       • Log transform skewed    • Univariate R²
-• Plot histograms          • Calculate VIF             • StandardScaler all      • Standardized weights
-• Identify outliers        • Flag VIF > 5              • ColumnTransformer      • Permutation importance
-                                                         for mixed types
+• Compute skew, IQR • Correlation heatmap • Log transform skewed • Univariate R²
+• Plot histograms • Calculate VIF • StandardScaler all • Standardized weights
+• Identify outliers • Flag VIF > 5 • ColumnTransformer • Permutation importance
+ for mixed types
 
-DECISION: Which scaler?    DECISION: Drop/merge?       DECISION: Pipeline order  DECISION: Keep/drop?
-→ Skew > 1: log1p         → VIF > 10: Drop one        → Always fit on train     → Perm. importance
-→ Heavy outliers:         → VIF 5-10: Monitor           only!                     near zero: drop
-  RobustScaler            → VIF < 5: Keep both        → Transform train/test    → VIF > 5 + low perm:  
-→ Symmetric: Standard                                   consistently               drop redundant one
+DECISION: Which scaler? DECISION: Drop/merge? DECISION: Pipeline order DECISION: Keep/drop?
+→ Skew > 1: log1p → VIF > 10: Drop one → Always fit on train → Perm. importance
+→ Heavy outliers: → VIF 5-10: Monitor only! near zero: drop
+ RobustScaler → VIF < 5: Keep both → Transform train/test → VIF > 5 + low perm:
+→ Symmetric: Standard consistently drop redundant one

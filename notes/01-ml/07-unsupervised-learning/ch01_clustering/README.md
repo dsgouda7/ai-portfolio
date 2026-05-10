@@ -10,7 +10,7 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 💡 **The mission**: Build **SegmentAI** — discover actionable customer segments from 440 wholesale customers, silhouette >0.5, satisfying 5 constraints.
+> **The mission**: Build **SegmentAI** — discover actionable customer segments from 440 wholesale customers, silhouette >0.5, satisfying 5 constraints.
 
 | # | Constraint | Target | Why It Matters |
 |---|-----------|--------|----------------|
@@ -21,10 +21,10 @@
 | **#5** | **SCALABILITY** | Handles 1M+ customers at inference | K-Means is $O(nKd)$ per iteration — scales to millions with mini-batch variants |
 
 **What we know so far:**
-- ✅ Dataset: 440 wholesale customers, 6 spending features (Fresh, Milk, Grocery, Frozen, Detergents_Paper, Delicatessen)
-- ✅ RL track complete — AgentAI achieved ≥195/200 CartPole steps
-- ❌ **No labels — supervised learning is impossible here**
-- ❌ **No baseline clusters yet — SegmentAI has not segmented a single customer**
+- Dataset: 440 wholesale customers, 6 spending features (Fresh, Milk, Grocery, Frozen, Detergents_Paper, Delicatessen)
+- RL track complete — AgentAI achieved ≥195/200 CartPole steps
+- **No labels — supervised learning is impossible here**
+- **No baseline clusters yet — SegmentAI has not segmented a single customer**
 
 **What is blocking us:**
 
@@ -40,13 +40,13 @@ Three clustering algorithms to discover structure without labels:
 
 | Constraint | Status | This Chapter |
 |------------|--------|-------------|
-| #1 SEGMENTATION | ⚡ Partial → ✅ | k=4 found; silhouette=0.52 — above threshold |
-| #2 INTERPRETABILITY | ⚡ Partial | Centroids named: HoReCa, Retail, Mixed, Outlier |
-| #3 OUTLIER HANDLING | ✅ Done | DBSCAN labels extreme spenders as noise |
-| #4 NO LABELS | ✅ Done | Fully unsupervised throughout |
-| #5 SCALABILITY | ✅ Done | K-Means O(nKd) scales to millions |
+| #1 SEGMENTATION | Partial → | k=4 found; silhouette=0.52 — above threshold |
+| #2 INTERPRETABILITY | Partial | Centroids named: HoReCa, Retail, Mixed, Outlier |
+| #3 OUTLIER HANDLING | Done | DBSCAN labels extreme spenders as noise |
+| #4 NO LABELS | Done | Fully unsupervised throughout |
+| #5 SCALABILITY | Done | K-Means O(nKd) scales to millions |
 
-> ⚠️ **Silhouette=0.52 satisfies the SegmentAI target — but visualising these 6D clusters requires dimensionality reduction.** Ch.2 provides PCA/t-SNE projections that let stakeholders see the segments as a 2D scatter plot.
+> **Silhouette=0.52 satisfies the SegmentAI target — but visualising these 6D clusters requires dimensionality reduction.** Ch.2 provides PCA/t-SNE projections that let stakeholders see the segments as a 2D scatter plot.
 
 ---
 
@@ -67,15 +67,15 @@ Three clustering algorithms to discover structure without labels:
 **Agglomerative hierarchical clustering** starts with each point as its own cluster and merges the two closest clusters at every step. The *linkage criterion* defines "closest": Ward linkage minimises the variance increase on merge (best for compact clusters), complete linkage uses the maximum pairwise distance (avoids elongated chains). Produces a dendrogram — cut it at any height to get any $K$. Very interpretable merge tree.
 
 ```
-Algorithm    | K required? | Outlier concept | Cluster shape | Scales to 1M?
+Algorithm | K required? | Outlier concept | Cluster shape | Scales to 1M?
 -------------|-------------|-----------------|---------------|---------------
-K-Means      | Yes         | None (forced)   | Spherical     | Yes (mini-batch)
-DBSCAN       | No          | Noise label -1  | Arbitrary     | With index
-Agglomerative| No (cut)    | None            | Any (linkage) | Slow O(n^2 logn)
-GMM          | Yes         | Soft membership | Elliptical    | Yes
+K-Means | Yes | None (forced) | Spherical | Yes (mini-batch)
+DBSCAN | No | Noise label -1 | Arbitrary | With index
+Agglomerative| No (cut) | None | Any (linkage) | Slow O(n^2 logn)
+GMM | Yes | Soft membership | Elliptical | Yes
 ```
 
-> 💡 **Why Lloyd's 1957 algorithm still dominates in 2025:** $O(nKd)$ per iteration, trivially parallelisable, and mini-batch K-Means (Sculley 2010) brings it to streaming scale. The Bell Labs PCM quantiser is still the production default sixty-eight years later.
+> **Why Lloyd's 1957 algorithm still dominates in 2025:** $O(nKd)$ per iteration, trivially parallelisable, and mini-batch K-Means (Sculley 2010) brings it to streaming scale. The Bell Labs PCM quantiser is still the production default sixty-eight years later.
 
 ---
 
@@ -120,12 +120,12 @@ DBSCAN (ε=0.8, minPts=5) identifies 23 customers as noise (label $-1$): extreme
 | **Cluster shape** | Spherical | Arbitrary | Depends on linkage | Elliptical |
 | **Outlier handling** | Forces every point into a cluster | Labels sparse points noise ($-1$) | Forces every point | Soft membership; low-probability outliers |
 | **Time complexity** | $O(nKd \cdot \text{iter})$ | $O(n \log n)$ with index | $O(n^2 \log n)$ | $O(nK^2 d \cdot \text{iter})$ |
-| **Scales to 1M rows** | ✅ Mini-batch K-Means | ✅ With kd-tree | ❌ Memory-bound | ⚡ Diagonal covariance |
-| **Needs $K$ upfront** | ✅ Yes | ❌ No | ❌ No (post-hoc cut) | ✅ Yes |
-| **Deterministic** | ❌ Init-sensitive | ✅ Given fixed ε | ✅ | ❌ Init-sensitive |
-| **SegmentAI fit** | ✅ Primary algorithm | ✅ Outlier detector | ⚡ Dendrogram insight | ❌ Too slow for 1M |
+| **Scales to 1M rows** | Mini-batch K-Means | With kd-tree | Memory-bound | Diagonal covariance |
+| **Needs $K$ upfront** | Yes | No | No (post-hoc cut) | Yes |
+| **Deterministic** | Init-sensitive | Given fixed ε | | Init-sensitive |
+| **SegmentAI fit** | Primary algorithm | Outlier detector | Dendrogram insight | Too slow for 1M |
 
-> ➡️ **Decision rule for this track:** use K-Means as the primary segmentation algorithm (fast, interpretable centroids), DBSCAN as the outlier detector (flag noise customers), and the agglomerative dendrogram to cross-check the natural cluster count without specifying $K$ in advance.
+> ➡ **Decision rule for this track:** use K-Means as the primary segmentation algorithm (fast, interpretable centroids), DBSCAN as the outlier detector (flag noise customers), and the agglomerative dendrogram to cross-check the natural cluster count without specifying $K$ in advance.
 
 ---
 
@@ -208,7 +208,7 @@ $$d(\mathbf{x}_4, \boldsymbol{\mu}_2) = \sqrt{(9-8.5)^2+(8-8.5)^2} = \sqrt{0.25+
 $$J = \|\mathbf{x}_1-\boldsymbol{\mu}_1\|^2 + \|\mathbf{x}_2-\boldsymbol{\mu}_1\|^2 + \|\mathbf{x}_3-\boldsymbol{\mu}_2\|^2 + \|\mathbf{x}_4-\boldsymbol{\mu}_2\|^2$$
 $$= 0.50 + 0.50 + 0.50 + 0.50 = \mathbf{2.0}$$
 
-> 💡 **Inertia = 2.0 means each point lies $\sqrt{0.5} \approx 0.71$ from its centroid.** Perfectly symmetric — the two clusters are geometric mirror images. On the real 6D UCI data, inertia at k=4 (after standardisation) is approximately 1,100 — much larger, but the relative drop from k=3 to k=4 tells the same elbow story.
+> **Inertia = 2.0 means each point lies $\sqrt{0.5} \approx 0.71$ from its centroid.** Perfectly symmetric — the two clusters are geometric mirror images. On the real 6D UCI data, inertia at k=4 (after standardisation) is approximately 1,100 — much larger, but the relative drop from k=3 to k=4 tells the same elbow story.
 
 ### 4.5 DBSCAN — Core, Border, Noise Classification
 
@@ -278,7 +278,7 @@ $$J(k{=}2)=2\times\frac{12}{9}\approx\mathbf{2.67}\quad\text{(each cluster contr
 | 3 | 1.33 | 1.34 — small |
 | 4 | 0.67 | 0.66 — small |
 
-> ⚡ **The elbow is at k=2 for this toy dataset.** The drop from k=1→2 is 146.9; the drop from k=2→3 is only 1.34 — 100× smaller. Adding a third cluster barely reduces inertia because the two natural groups are already captured. For the **real UCI dataset** (440 customers, 6D), the elbow appears around k=4, matching SegmentAI's target of four segments.
+> **The elbow is at k=2 for this toy dataset.** The drop from k=1→2 is 146.9; the drop from k=2→3 is only 1.34 — 100× smaller. Adding a third cluster barely reduces inertia because the two natural groups are already captured. For the **real UCI dataset** (440 customers, 6D), the elbow appears around k=4, matching SegmentAI's target of four segments.
 
 ---
 
@@ -373,9 +373,9 @@ New centroids: $\boldsymbol{\mu}_1=[1.33,\;2.00]$, $\boldsymbol{\mu}_2=[8.00,\;8
 |-----------|----------------------|----------------------|-------------|
 | 0 (init) | [1.00, 2.00] | [8.00, 7.00] | 10.00 |
 | 1 | [1.33, 2.00] | [8.00, 8.00] | 6.67 |
-| 2 | [1.33, 2.00] | [8.00, 8.00] | 6.67 — **converged** ✅ |
+| 2 | [1.33, 2.00] | [8.00, 8.00] | 6.67 — **converged** |
 
-> 💡 **Why convergence took only 1 update:** the two groups are well-separated (gap ~7 units) and the initial seeds were already embedded in each group. With random init on a noisy dataset, 20–50 iterations are typical before convergence. K-Means++ reduces this to 5–15 iterations for most real datasets.
+> **Why convergence took only 1 update:** the two groups are well-separated (gap ~7 units) and the initial seeds were already embedded in each group. With random init on a noisy dataset, 20–50 iterations are typical before convergence. K-Means++ reduces this to 5–15 iterations for most real datasets.
 
 ---
 
@@ -385,54 +385,54 @@ New centroids: $\boldsymbol{\mu}_1=[1.33,\;2.00]$, $\boldsymbol{\mu}_2=[8.00,\;8
 
 ```mermaid
 flowchart TD
-    INIT["Initialise K centroids\nμ₁, μ₂, ..., μ_K\nK-Means++ sampling"]
-    ASSIGN["Assignment step\nfor each xᵢ:\nassign to argmin_k ‖xᵢ − μ_k‖"]
-    UPDATE["Update step\nfor each k:\nμ_k ← mean of all xᵢ in C_k"]
-    CHECK{"Assignments\nchanged?"}
-    DONE["Return final clusters\nC₁, C₂, ..., C_K\nand centroids μ_k"]
+ INIT["Initialise K centroids\nμ₁, μ₂, ..., μ_K\nK-Means++ sampling"]
+ ASSIGN["Assignment step\nfor each xᵢ:\nassign to argmin_k ‖xᵢ − μ_k‖"]
+ UPDATE["Update step\nfor each k:\nμ_k ← mean of all xᵢ in C_k"]
+ CHECK{"Assignments\nchanged?"}
+ DONE["Return final clusters\nC₁, C₂, ..., C_K\nand centroids μ_k"]
 
-    INIT   --> ASSIGN
-    ASSIGN --> UPDATE
-    UPDATE --> CHECK
-    CHECK  -->|"yes — keep iterating"| ASSIGN
-    CHECK  -->|"no — converged"| DONE
+ INIT --> ASSIGN
+ ASSIGN --> UPDATE
+ UPDATE --> CHECK
+ CHECK -->|"yes — keep iterating"| ASSIGN
+ CHECK -->|"no — converged"| DONE
 
-    style INIT   fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style ASSIGN fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style UPDATE fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style CHECK  fill:#b45309,color:#fff,stroke:#b45309
-    style DONE   fill:#15803d,color:#fff,stroke:#15803d
+ style INIT fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style ASSIGN fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style UPDATE fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style CHECK fill:#b45309,color:#fff,stroke:#b45309
+ style DONE fill:#15803d,color:#fff,stroke:#15803d
 ```
 
 ### 7.2 SegmentAI Cluster Membership
 
 ```mermaid
 flowchart LR
-    RAW["440 customers\n6 spending features\nraw, heavily right-skewed"]
-    PREP["log1p transform\n+ StandardScaler\nmandatory pre-step"]
-    KMEANS["K-Means\nk = 4\nLloyd's algorithm\n~20 iterations"]
-    C0["Cluster 0 — HoReCa\nHigh Fresh + Frozen\nHotels / Restaurants / Cafés\n~130 customers"]
-    C1["Cluster 1 — Retail\nHigh Grocery +\nDetergents_Paper\n~120 customers"]
-    C2["Cluster 2 — Mixed / SME\nModerate all features\nSmall-to-medium enterprises\n~150 customers"]
-    C3["Cluster 3 — Outlier bulk\nExtreme values in ≥1 feature\nFlagged by DBSCAN too\n~40 customers"]
+ RAW["440 customers\n6 spending features\nraw, heavily right-skewed"]
+ PREP["log1p transform\n+ StandardScaler\nmandatory pre-step"]
+ KMEANS["K-Means\nk = 4\nLloyd's algorithm\n~20 iterations"]
+ C0["Cluster 0 — HoReCa\nHigh Fresh + Frozen\nHotels / Restaurants / Cafés\n~130 customers"]
+ C1["Cluster 1 — Retail\nHigh Grocery +\nDetergents_Paper\n~120 customers"]
+ C2["Cluster 2 — Mixed / SME\nModerate all features\nSmall-to-medium enterprises\n~150 customers"]
+ C3["Cluster 3 — Outlier bulk\nExtreme values in ≥1 feature\nFlagged by DBSCAN too\n~40 customers"]
 
-    RAW    --> PREP
-    PREP   --> KMEANS
-    KMEANS --> C0
-    KMEANS --> C1
-    KMEANS --> C2
-    KMEANS --> C3
+ RAW --> PREP
+ PREP --> KMEANS
+ KMEANS --> C0
+ KMEANS --> C1
+ KMEANS --> C2
+ KMEANS --> C3
 
-    style RAW    fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style PREP   fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style KMEANS fill:#b45309,color:#fff,stroke:#b45309
-    style C0     fill:#15803d,color:#fff,stroke:#15803d
-    style C1     fill:#15803d,color:#fff,stroke:#15803d
-    style C2     fill:#15803d,color:#fff,stroke:#15803d
-    style C3     fill:#b91c1c,color:#fff,stroke:#b91c1c
+ style RAW fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style PREP fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style KMEANS fill:#b45309,color:#fff,stroke:#b45309
+ style C0 fill:#15803d,color:#fff,stroke:#15803d
+ style C1 fill:#15803d,color:#fff,stroke:#15803d
+ style C2 fill:#15803d,color:#fff,stroke:#15803d
+ style C3 fill:#b91c1c,color:#fff,stroke:#b91c1c
 ```
 
-> ➡️ **Cluster 3 (red) overlaps strongly with the 23 customers DBSCAN labels $-1$.** K-Means forced them into a cluster; DBSCAN refuses to. Both algorithms agree these are anomalous buyers — the disagreement is only in how to handle them.
+> ➡ **Cluster 3 (red) overlaps strongly with the 23 customers DBSCAN labels $-1$.** K-Means forced them into a cluster; DBSCAN refuses to. Both algorithms agree these are anomalous buyers — the disagreement is only in how to handle them.
 
 ---
 
@@ -443,7 +443,7 @@ flowchart LR
 | $K$ | Too low | Sweet spot | Too high |
 |-----|---------|------------|----------|
 | Signal | Coarse — HoReCa and Retail merged into "large buyer" | Elbow of inertia + silhouette peak | Every customer in its own cluster; inertia→0, silhouette→meaningless |
-| SegmentAI | k=2: silhouette=0.35, too coarse for targeting | **k=4: silhouette=0.52** ✅ | k=8: silhouette=0.38, micro-segments overlap |
+| SegmentAI | k=2: silhouette=0.35, too coarse for targeting | **k=4: silhouette=0.52** | k=8: silhouette=0.38, micro-segments overlap |
 | Rule of thumb | Combine elbow plot + silhouette sweep + business constraint (CMO may insist on exactly N segments) | | |
 
 **Sweep strategy:** run K-Means for k=2 to 10 (`n_init=10` each). Plot inertia (elbow) and mean silhouette on the same figure. K at the inertia elbow *and* silhouette peak is the answer. When they disagree, business requirements break the tie.
@@ -466,7 +466,7 @@ flowchart LR
 | **Single** | Minimum pairwise distance | Susceptible to chaining | Avoid for customer data |
 | **Average** | Mean pairwise distance | Intermediate robustness | Moderate |
 
-> ⚡ **Ward linkage + agglomerative = best dendrogram for SegmentAI.** Cutting at 4 branches matches K-Means and confirms the natural cluster count without specifying $K$ in advance.
+> **Ward linkage + agglomerative = best dendrogram for SegmentAI.** Cutting at 4 branches matches K-Means and confirms the natural cluster count without specifying $K$ in advance.
 
 ---
 
@@ -504,11 +504,11 @@ Customer X spends 112,151 on Fresh — 20× the median. Without log-transform, t
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 
-X_log = np.log1p(X)               # compress skew: 3–112k → 1.1–11.6
-X_sc  = StandardScaler().fit_transform(X_log)   # equalise variance
+X_log = np.log1p(X) # compress skew: 3–112k → 1.1–11.6
+X_sc = StandardScaler().fit_transform(X_log) # equalise variance
 ```
 
-> ⚠️ **Pre-processing checklist for clustering:**
+> **Warning — Pre-processing checklist for clustering:**
 > 1. `log1p` transform on all skewed spending columns
 > 2. `StandardScaler` — no exceptions for distance-based algorithms
 > 3. Silhouette sweep over k=2 to 10
@@ -548,7 +548,7 @@ $s(\mathbf{x}_1)\approx0.86$ — very well-clustered. By symmetry, $s(\mathbf{x}
 
 Mean silhouette = **0.86** for this toy dataset. For SegmentAI at k=4: mean silhouette = **0.52**, above the 0.5 target.
 
-> ⚡ **Silhouette is the primary model-selection criterion for SegmentAI.** Inertia alone always favours larger $k$ (reaches 0 at $k=n$). Silhouette penalises both under-clustering (large $a(i)$) and over-clustering (small $b(i)$), giving a balanced, label-free quality score. Ch.3 extends this with Davies-Bouldin and Calinski-Harabasz indices.
+> **Silhouette is the primary model-selection criterion for SegmentAI.** Inertia alone always favours larger $k$ (reaches 0 at $k=n$). Silhouette penalises both under-clustering (large $a(i)$) and over-clustering (small $b(i)$), giving a balanced, label-free quality score. Ch.3 extends this with Davies-Bouldin and Calinski-Harabasz indices.
 
 ---
 
@@ -567,17 +567,17 @@ X = data.data[["Fresh","Milk","Grocery","Frozen","Detergents_Paper","Delicatesse
 
 # ── 2. Pre-process: log1p → StandardScaler ───────────────────────────────────
 X_log = np.log1p(X.values)
-X_sc  = StandardScaler().fit_transform(X_log)
+X_sc = StandardScaler().fit_transform(X_log)
 
 # ── 3. K-Means: sweep k=2..10, record inertia + silhouette ──────────────────
 results = {}
 for k in range(2, 11):
-    km = KMeans(n_clusters=k, init='k-means++', n_init=10, random_state=42)
-    labels = km.fit_predict(X_sc)
-    results[k] = {
-        "inertia":   km.inertia_,
-        "silhouette": silhouette_score(X_sc, labels),
-    }
+ km = KMeans(n_clusters=k, init='k-means++', n_init=10, random_state=42)
+ labels = km.fit_predict(X_sc)
+ results[k] = {
+ "inertia": km.inertia_,
+ "silhouette": silhouette_score(X_sc, labels),
+ }
 
 best_k = max(results, key=lambda k: results[k]["silhouette"])
 print(f"Best k={best_k}, silhouette={results[best_k]['silhouette']:.3f}")
@@ -590,22 +590,22 @@ labels_km = km4.fit_predict(X_sc)
 # ── 5. DBSCAN for outlier detection ─────────────────────────────────────────
 db = DBSCAN(eps=0.8, min_samples=5)
 labels_db = db.fit_predict(X_sc)
-n_noise    = (labels_db == -1).sum()
-print(f"DBSCAN noise customers: {n_noise}")  # Expected: ~23
+n_noise = (labels_db == -1).sum()
+print(f"DBSCAN noise customers: {n_noise}") # Expected: ~23
 
 # ── 6. Interpret centroids (back to original scale) ─────────────────────────
 from sklearn.preprocessing import StandardScaler
 scaler = StandardScaler().fit(X_log)
 centroids_log = scaler.inverse_transform(km4.cluster_centers_)
-centroids_raw = np.expm1(centroids_log)   # undo log1p
+centroids_raw = np.expm1(centroids_log) # undo log1p
 import pandas as pd
 centroid_df = pd.DataFrame(centroids_raw,
-                            columns=X.columns,
-                            index=[f"Cluster {i}" for i in range(4)])
+ columns=X.columns,
+ index=[f"Cluster {i}" for i in range(4)])
 print(centroid_df.round(0))
 ```
 
-> 💡 **The most common mistake:** calling `KMeans` or `DBSCAN` on raw spending values without `log1p` + `StandardScaler`. The Fresh feature alone spans 3 orders of magnitude — raw Euclidean distances are dominated entirely by Fresh, and all other features are effectively invisible to the algorithm.
+> **The most common mistake:** calling `KMeans` or `DBSCAN` on raw spending values without `log1p` + `StandardScaler`. The Fresh feature alone spans 3 orders of magnitude — raw Euclidean distances are dominated entirely by Fresh, and all other features are effectively invisible to the algorithm.
 
 ---
 
@@ -618,7 +618,7 @@ print(centroid_df.round(0))
 | [NN track Ch.4](../../../03-neural_networks/ch04_neural_networks) | Autoencoder latent representations fed into K-Means for deep clustering |
 | [ML Ch.11 — XGBoost](../../02_classification/ch11_xgboost) | Cluster labels as a categorical feature for churn or upsell prediction models |
 
-> ➡️ **The centroid profiles** ($\boldsymbol{\mu}_k$ in original spend units, recovered via `expm1(scaler.inverse_transform(mu))`) from this chapter are the direct input to the SegmentAI marketing strategy: HoReCa buyers get bulk-produce discounts, Retail buyers get detergent promotions. Clustering is the discovery step; centroid interpretation is the business step.
+> ➡ **The centroid profiles** ($\boldsymbol{\mu}_k$ in original spend units, recovered via `expm1(scaler.inverse_transform(mu))`) from this chapter are the direct input to the SegmentAI marketing strategy: HoReCa buyers get bulk-produce discounts, Retail buyers get detergent promotions. Clustering is the discovery step; centroid interpretation is the business step.
 
 ---
 
@@ -626,22 +626,22 @@ print(centroid_df.round(0))
 
 | Metric | Value | Target | Status |
 |--------|-------|--------|--------|
-| Silhouette score (k=4) | 0.52 | > 0.50 | ✅ |
-| DBSCAN noise fraction | 5.2% (23/440) | < 10% | ✅ |
-| Interpretable segment names | 4 named | 4 named | ✅ |
-| Cluster stability (n_init=10) | Identical across all 10 runs | Stable | ✅ |
-| Constraint #3 — outlier handling | 23 flagged as noise | Flagged | ✅ |
-| Constraint #4 — no labels used | Fully unsupervised | Unsupervised | ✅ |
-| Constraint #5 — scalability | O(nKd) per iter | 1M+ capable | ✅ |
+| Silhouette score (k=4) | 0.52 | > 0.50 | |
+| DBSCAN noise fraction | 5.2% (23/440) | < 10% | |
+| Interpretable segment names | 4 named | 4 named | |
+| Cluster stability (n_init=10) | Identical across all 10 runs | Stable | |
+| Constraint #3 — outlier handling | 23 flagged as noise | Flagged | |
+| Constraint #4 — no labels used | Fully unsupervised | Unsupervised | |
+| Constraint #5 — scalability | O(nKd) per iter | 1M+ capable | |
 
 ![Progress check](img/ch01-clustering-progress-check.png)
 
 **What this chapter achieved:**
-- ✅ k=4 K-Means on UCI Wholesale Customers → silhouette=0.52, above 0.5 SegmentAI target
-- ✅ DBSCAN flags 23 outlier customers — not forced into any segment
-- ✅ Four segments named from centroid profiles: HoReCa, Retail, Mixed, Outlier-bulk
-- ✅ Constraints #3, #4, #5 fully satisfied
-- ❌ **Not yet:** cannot visually validate clusters — 6D requires dimensionality reduction first
+- k=4 K-Means on UCI Wholesale Customers → silhouette=0.52, above 0.5 SegmentAI target
+- DBSCAN flags 23 outlier customers — not forced into any segment
+- Four segments named from centroid profiles: HoReCa, Retail, Mixed, Outlier-bulk
+- Constraints #3, #4, #5 fully satisfied
+- **Not yet:** cannot visually validate clusters — 6D requires dimensionality reduction first
 
 **The gap:** the CMO asks *"Show me a scatter plot of the segments."* You cannot yet — a 6D scatter plot is uninterpretable. You need to project to 2D while preserving cluster structure. That is exactly Ch.2.
 
@@ -656,13 +656,13 @@ print(centroid_df.round(0))
 **The direct connection:**
 
 ```
-Ch.1 (this chapter)              Ch.2 (next)
-K-Means → 4 cluster labels  →  PCA projection → 2D scatter plot
-silhouette=0.52              →  visual validation of cluster separation
-6D centroids                 →  2D centroid coordinates for annotation
-23 DBSCAN noise customers    →  appear as isolated dots outside cluster regions
+Ch.1 (this chapter) Ch.2 (next)
+K-Means → 4 cluster labels → PCA projection → 2D scatter plot
+silhouette=0.52 → visual validation of cluster separation
+6D centroids → 2D centroid coordinates for annotation
+23 DBSCAN noise customers → appear as isolated dots outside cluster regions
 ```
 
-> ➡️ **Start Ch.2 with the cluster labels from this chapter as colour coding.** Every customer already has a label {0, 1, 2, 3}. PCA/t-SNE will show whether those labels correspond to visually separated groups — the ultimate sanity check on SegmentAI's segments.
+> ➡ **Start Ch.2 with the cluster labels from this chapter as colour coding.** Every customer already has a label {0, 1, 2, 3}. PCA/t-SNE will show whether those labels correspond to visually separated groups — the ultimate sanity check on SegmentAI's segments.
 
 [→ Ch.2: Dimensionality Reduction](../ch02_dimensionality_reduction)

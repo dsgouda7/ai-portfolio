@@ -4,7 +4,7 @@
 > These are not chapter notes — they are **structured interview primers** designed to get a senior AI/ML engineer from zero to confident in a specific domain within 2–4 hours.
 > Read this before editing any guide to keep tone, structure, and coverage consistent.
 >
-> **📚 Updated:** Now includes comprehensive pedagogical patterns, mathematical style conventions, and visual standards aligned with the ML track authoring guide.
+> ** Updated:** Now includes comprehensive pedagogical patterns, mathematical style conventions, and visual standards aligned with the ML track authoring guide.
 
 <!-- LLM-STYLE-FINGERPRINT-V1
 scope: interview_guides
@@ -14,7 +14,7 @@ register: high_density_technical_interview_ready
 pedagogy: anticipate_the_interviewer + failure_first_discovery
 format: concept_map + Q&A + failure_modes + signal_words + tradeoff_matrices
 failure_first_pedagogy: true
-callout_system: {insight:"💡", warning:"⚠️", production:"⚡", optional_depth:"📖", forward_pointer:"➡️"}
+callout_system: {insight:"", warning:"", production:"", optional_depth:"📖", forward_pointer:"➡"}
 mermaid_color_palette: {primary:"#1e3a8a", success:"#15803d", caution:"#b45309", danger:"#b91c1c", info:"#1d4ed8"}
 answer_density: {definition:"2-3_sentences", tradeoff:"3-4_sentences", system_design:"1_paragraph", failure_mode:"2_sentences", rapid_fire:"≤3_sentences"}
 math_style: formula_first_then_verbal_gloss_judicious_numerical_examples
@@ -102,10 +102,10 @@ Every interview guide follows this structure. Section order is fixed.
 ## 4 · Signal Words That Distinguish Answers
 
 [Vocabulary and framing that signals senior thinking:
- - ✅ "I'd instrument this with..." (shows production mindset)
- - ✅ "The tradeoff I'd consider is..." (shows depth)
- - ❌ "It depends..." (without following up with what it depends on)
- - ❌ "You could use X or Y depending on..." (without comparing the two)]
+ - "I'd instrument this with..." (shows production mindset)
+ - "The tradeoff I'd consider is..." (shows depth)
+ - "It depends..." (without following up with what it depends on)
+ - "You could use X or Y depending on..." (without comparing the two)]
 
 ---
 
@@ -125,8 +125,8 @@ The reader is treated as a capable engineer who doesn't need flattery, gets impa
 
 **No hedging.** Interviews reward confident, specific answers. The guide must model that register.
 
-> ❌ "RAG can be useful in situations where you need grounded information retrieval from a corpus of documents."
-> ✅ "Use RAG when the LLM needs private/recent data it wasn't trained on. Use fine-tuning when you need to change style, format, or domain-specific inference patterns — not facts."
+> "RAG can be useful in situations where you need grounded information retrieval from a corpus of documents."
+> "Use RAG when the LLM needs private/recent data it wasn't trained on. Use fine-tuning when you need to change style, format, or domain-specific inference patterns — not facts."
 
 **Second person inside interview scenarios:**
 > *"The interviewer asks: 'How would you reduce hallucination in production?' What do you say?"*
@@ -159,10 +159,10 @@ Weak answer → why it signals junior → what's missing → strong answer → w
 
 > Q: "How do you prevent an agent from getting stuck in a loop?"
 >
-> ❌ **Weak**: "You can add a maximum step limit."
+> **Weak**: "You can add a maximum step limit."
 > *Why it signals junior:* Correct but minimal — shows you know the band-aid, not the root cause.
 >
-> ✅ **Strong**: "Max steps is the floor, not the ceiling. More importantly, you should detect semantic loops — repeated intents with different surface forms — using embedding similarity on recent actions. If `cos_sim(action_t, action_{t-k}) > 0.92`, the agent is cycling. From there: exponential backoff + alternative tool selection, then escalate to human if still stuck after 3 cycles."
+> **Strong**: "Max steps is the floor, not the ceiling. More importantly, you should detect semantic loops — repeated intents with different surface forms — using embedding similarity on recent actions. If `cos_sim(action_t, action_{t-k}) > 0.92`, the agent is cycling. From there: exponential backoff + alternative tool selection, then escalate to human if still stuck after 3 cycles."
 > *Why it signals senior:* Names the mechanism (semantic loop detection), gives a specific threshold, describes the recovery strategy, includes human-in-the-loop escalation.
 
 This pattern must appear for every major concept in every guide.
@@ -175,11 +175,11 @@ Used consistently across all interview guides. Must be used exactly this way —
 
 | Symbol | Meaning | When to use |
 |---|---|---|
-| `💡` | Key insight / interview power-up | After a distinction that separates senior from junior answers |
-| `⚠️` | Common interview trap | Questions that trip up candidates who have surface knowledge |
-| `⚡` | Production angle / scale consideration | How the concept changes at production scale (10k req/day, 100M users) |
+| `` | Key insight / interview power-up | After a distinction that separates senior from junior answers |
+| `` | Common interview trap | Questions that trip up candidates who have surface knowledge |
+| `` | Production angle / scale consideration | How the concept changes at production scale (10k req/day, 100M users) |
 | `> 📖 **Optional:**` | Deeper technical detail | Formal proofs, advanced theory that can be skipped in interview prep |
-| `> ➡️` | Related concept pointer | When a concept connects to another domain or advanced topic |
+| `> ➡` | Related concept pointer | When a concept connects to another domain or advanced topic |
 
 The callout box content is always **actionable**: it ends with a Fix, a Rule, a What-to-do, or a specific decision criterion. No callout box that just says "this is interesting" without consequence.
 
@@ -214,11 +214,11 @@ Math in interview guides appears only as:
 **Colour palette** — used consistently for all flowcharts and diagrams:
 
 ```css
-Primary/data:     fill:#1e3a8a (dark blue)
+Primary/data: fill:#1e3a8a (dark blue)
 Success/achieved: fill:#15803d (dark green)
-Caution/partial:  fill:#b45309 (amber)
-Danger/blocked:   fill:#b91c1c (dark red)
-Info/neutral:     fill:#1d4ed8 (medium blue)
+Caution/partial: fill:#b45309 (amber)
+Danger/blocked: fill:#b91c1c (dark red)
+Info/neutral: fill:#1d4ed8 (medium blue)
 ```
 
 All Mermaid nodes use `stroke:#e2e8f0,stroke-width:2px,color:#ffffff` for text legibility on dark backgrounds.
@@ -263,7 +263,7 @@ All Mermaid nodes use `stroke:#e2e8f0,stroke-width:2px,color:#ffffff` for text l
 **Forward link pattern:** *"If the interviewer follows up with 'how does this scale?', see the [Production Scaling] section below."*
 
 **Cross-guide links:** When a concept in one interview guide relates to another domain:
-> *"➡️ For the infrastructure angle on serving these models, see [AIInfrastructure.md](ai-infrastructure.md#model-serving)"*
+> *"➡ For the infrastructure angle on serving these models, see [AIInfrastructure.md](ai-infrastructure.md#model-serving)"*
 
 **External reference links:** Link to official docs, papers, or blog posts for deep dives:
 > *"📖 For the full attention mechanism derivation, see [Vaswani et al. 2017 — 'Attention Is All You Need'](https://arxiv.org/abs/1706.03762)"*
@@ -325,7 +325,7 @@ Each guide must include a **Signal Words** section listing the vocabulary that m
 
 **Universal signal words (apply to all guides):**
 
-| ✅ Senior signals | ❌ Junior signals |
+| Senior signals | Junior signals |
 |------------------|-----------------|
 | "I'd instrument this with X metric" | "I would test it" |
 | "The tradeoff is X at the cost of Y" | "It depends" (without completion) |
@@ -385,11 +385,9 @@ Each guide is anchored to the real-world system from its parent track:
 **Formatting conventions for interview Q&A:**
 ```markdown
 **Q: [Interview question verbatim or close paraphrase]**
-
-❌ **Junior**: "[what a weak candidate says]"
+**Junior**: "[what a weak candidate says]"
 *Why this signals junior:* [one sentence on what's missing]
-
-✅ **Senior**: "[what a strong candidate says — specific, concrete, tradeoff-aware]"
+**Senior**: "[what a strong candidate says — specific, concrete, tradeoff-aware]"
 *Why this signals senior:* [one sentence on what it demonstrates]
 ```
 
@@ -420,10 +418,10 @@ Weak answer → why it signals junior → what's missing → strong answer → w
 
 > Q: "How do you prevent an agent from getting stuck in a loop?"
 >
-> ❌ **Weak**: "You can add a maximum step limit."
+> **Weak**: "You can add a maximum step limit."
 > *Why it signals junior:* Correct but minimal — shows you know the band-aid, not the root cause.
 >
-> ✅ **Strong**: "Max steps is the floor, not the ceiling. More importantly, you should detect semantic loops — repeated intents with different surface forms — using embedding similarity on recent actions. If `cos_sim(action_t, action_{t-k}) > 0.92`, the agent is cycling. From there: exponential backoff + alternative tool selection, then escalate to human if still stuck after 3 cycles."
+> **Strong**: "Max steps is the floor, not the ceiling. More importantly, you should detect semantic loops — repeated intents with different surface forms — using embedding similarity on recent actions. If `cos_sim(action_t, action_{t-k}) > 0.92`, the agent is cycling. From there: exponential backoff + alternative tool selection, then escalate to human if still stuck after 3 cycles."
 > *Why it signals senior:* Names the mechanism (semantic loop detection), gives a specific threshold, describes the recovery strategy, includes human-in-the-loop escalation.
 
 This pattern must appear for every major concept in every guide.
@@ -491,7 +489,7 @@ This pattern must appear for every major concept in every guide.
 
 **Universal signal words (apply to all interview guides):**
 
-| ✅ Senior signals | ❌ Junior signals |
+| Senior signals | Junior signals |
 |------------------|-----------------|
 | "I'd instrument this with X metric" | "I would test it" |
 | "The tradeoff is X at the cost of Y" | "It depends" (without completion) |
@@ -551,9 +549,9 @@ This pattern must appear for every major concept in every guide.
 **Rule:** Claims must be specific enough to be falsifiable.
 
 **Examples:**
-- ❌ "RAG improves results" → ✅ "RAG reduces hallucination from 23%→8%"
-- ❌ "Batch processing is faster" → ✅ "Batch 32 = 180 tok/s vs Batch 1 = 10 tok/s"
-- ❌ "Attention is expensive" → ✅ "O(n²) = 64M ops for 8k context"
+- "RAG improves results" → "RAG reduces hallucination from 23%→8%"
+- "Batch processing is faster" → "Batch 32 = 180 tok/s vs Batch 1 = 10 tok/s"
+- "Attention is expensive" → "O(n²) = 64M ops for 8k context"
 
 **Why:** Specific claims can be verified, remembered, and cited in interviews.
 
@@ -562,66 +560,47 @@ This pattern must appear for every major concept in every guide.
 ## Anti-Patterns — What NOT to Do
 
 ### Content Anti-Patterns
-
-❌ **Vague "it depends" without completion**
+**Vague "it depends" without completion**
 Example: "RAG vs fine-tuning depends on your use case" (STOP — what specifically does it depend on?)
-
-❌ **Textbook definitions without interview angle**
+**Textbook definitions without interview angle**
 Example: "RAG is a technique that retrieves..." (MISSING — when does an interviewer ask about RAG? What are they really testing?)
-
-❌ **Listing methods without failure modes**
+**Listing methods without failure modes**
 Example: "Here are five agent architectures: ReAct, Reflexion, Chain-of-Thought, Tree-of-Thoughts, Graph-of-Thoughts" (MISSING — when does each one fail? What's the decision tree?)
-
-❌ **Academic register**
+**Academic register**
 Example: "We can demonstrate that...", "It has been shown that...", "Research indicates..."
-
-❌ **Missing production angle**
+**Missing production angle**
 Example: Explaining a concept only at demo scale without addressing: "What breaks at 10k req/day?"
-
-❌ **No tradeoff analysis**
+**No tradeoff analysis**
 Example: Presenting approach X as simply better than Y without showing when Y wins
-
-❌ **Rapid-fire answers longer than 3 sentences**
+**Rapid-fire answers longer than 3 sentences**
 Example: A 2-paragraph essay for a question that should take 20 seconds to answer
-
-❌ **No concrete numbers**
+**No concrete numbers**
 Example: "Significantly faster" instead of "18× throughput improvement"
-
-❌ **Improvised emoji**
-Example: Using 🔍🎯✨🚀 as callouts (only 💡⚠️⚡📖➡️ allowed)
+**Improvised emoji**
+Example: Using ✨ as callouts (only 📖➡ allowed)
 
 ### Structural Anti-Patterns
-
-❌ **Missing Junior vs Senior comparison**
+**Missing Junior vs Senior comparison**
 Every major concept needs this structure — it's the core teaching device
-
-❌ **No "what they're really testing" analysis**
+**No "what they're really testing" analysis**
 Every Q&A section needs to explain the underlying competency probe
-
-❌ **Incomplete tradeoff matrices**
+**Incomplete tradeoff matrices**
 If you list options, you must include: when each wins, when each loses, decision criteria
-
-❌ **No diagnostic strategy for failure modes**
+**No diagnostic strategy for failure modes**
 Listing what breaks without explaining how to detect/fix it
-
-❌ **Missing signal words section**
+**Missing signal words section**
 Every guide needs vocabulary that distinguishes senior answers
-
-❌ **No anchor example**
+**No anchor example**
 Abstract concepts without a concrete recurring scenario
 
 ### Voice Anti-Patterns
-
-❌ **Hedging language**
+**Hedging language**
 Example: "You might want to consider possibly using..."
-
-❌ **Tutorial-style hand-holding**
+**Tutorial-style hand-holding**
 Example: "First we'll learn about X, then we'll explore Y..." (this is interview prep, not a course)
-
-❌ **Excessive humor or personality**
+**Excessive humor or personality**
 Example: Jokes, memes, or casual asides that dilute density
-
-❌ **Missing second-person framing**
+**Missing second-person framing**
 Example: "One could..." instead of "You should..."
 
 ---
@@ -657,7 +636,7 @@ Before publishing any interview guide, verify each item:
 - [ ] Anchor example: concrete scenario referenced throughout
 
 ### Visual & Formatting
-- [ ] Callout boxes: only `💡 ⚠️ ⚡ 📖 ➡️` — no improvised emoji
+- [ ] Callout boxes: only ` 📖 ➡` — no improvised emoji
 - [ ] Mermaid diagrams: colour palette respected (dark blue / dark green / amber / dark red)
 - [ ] Images: high-contrast, purposeful (not decorative), descriptive alt-text
 - [ ] No animations (static reference images only for interview guides)
@@ -680,7 +659,7 @@ Before publishing any interview guide, verify each item:
 ### Cross-References
 - [ ] Links to related interview guides for cross-domain concepts
 - [ ] Links to official docs / papers for deep dives (📖 Optional)
-- [ ] Forward pointers (➡️) for advanced topics
+- [ ] Forward pointers (➡) for advanced topics
 - [ ] Backward links for prerequisite concepts
 
 ### Completeness Test
@@ -738,20 +717,20 @@ Interview guides prioritize **density over length**:
 
 **Comments explain *why*, not *what***:
 ```python
-# ❌ Encode the query
+# Encode the query
 query_embedding = model.encode(query)
 
-# ✅ Use the SAME model for query and corpus (asymmetric models need separate encoders)
+# Use the SAME model for query and corpus (asymmetric models need separate encoders)
 query_embedding = model.encode(query)
 ```
 
 **Show common mistakes:**
 ```python
-# ❌ WRONG — retrieves too much, blows context window
+# WRONG — retrieves too much, blows context window
 docs = retrieve_all(query)
 context = "\n".join([d.text for d in docs])
 
-# ✅ RIGHT — retrieve K, rerank, take top N, validate length
+# RIGHT — retrieve K, rerank, take top N, validate length
 docs = retrieve_top_k(query, k=20)
 docs_reranked = rerank(query, docs, model="cross-encoder")
 context = assemble_context(docs_reranked[:5], max_tokens=2000)
@@ -819,14 +798,14 @@ Three navigation models running simultaneously: week labels, `SECTION N` numbers
 
 Fold the study sequence into one "How to use this guide" paragraph at the top — delete it everywhere else. Replace `## SECTION N — Title` with plain descriptive headers: `## ReAct & Agent Architecture — What They're Testing`. Replace "Quick Reference — Section N Summary" tables with a single verdict callout at the close of the section:
 
-> 💡 **Gradient descent verdict:** If asked "explain backprop to a product manager", the answer is: "We measure how wrong the model is, then nudge every weight slightly in the direction that makes it less wrong. Do that 10,000 times."
+> **Gradient descent verdict:** If asked "explain backprop to a product manager", the answer is: "We measure how wrong the model is, then nudge every weight slightly in the direction that makes it less wrong. Do that 10,000 times."
 
-> ➡️ For the production angle on learning rate schedules, see [Cost & Latency Optimization](#cost--latency-optimization).
+> ➡ For the production angle on learning rate schedules, see [Cost & Latency Optimization](#cost--latency-optimization).
 
 **Callout discipline for interview guides:**
 
-- `> 💡 **[concept] verdict:**` — the one-sentence answer a hiring manager would want to hear
-- `> ➡️` — forward pointer to related concepts or deeper chapters
+- `> **[concept] verdict:**` — the one-sentence answer a hiring manager would want to hear
+- `> ➡` — forward pointer to related concepts or deeper chapters
 - Never: a "STUDY CHECKPOINT" or "Quick Reference — Section N Summary" block with multiple sub-headings
 - Never: "Week N → §X, §Y, §Z" cross-reference tables
 - Never: `## SECTION N` or `## Ch.N` prefixes — ordinal tracking crowds out concept recall

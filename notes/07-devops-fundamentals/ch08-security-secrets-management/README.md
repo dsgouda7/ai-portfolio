@@ -10,7 +10,7 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 💡 **The mission**: Deploy a **production Flask app with database access** satisfying 5 constraints:
+> **The mission**: Deploy a **production Flask app with database access** satisfying 5 constraints:
 > 1. **NO SECRETS IN GIT**: Database password never appears in version control
 > 2. **NO SECRETS IN IMAGES**: Docker image can be public — no credentials leaked
 > 3. **RUNTIME INJECTION**: Secrets loaded at container startup from secure store
@@ -18,10 +18,10 @@
 > 5. **AUDIT TRAIL**: Know who accessed secrets and when
 
 **What we know so far:**
-- ✅ We've containerized a Flask app (Ch.1)
-- ✅ We've deployed it with Docker Compose (Ch.2)
-- ✅ We've pushed images to registries (Ch.4)
-- ❌ **But the database password is hardcoded in the Dockerfile!** Anyone with image access has credentials
+- We've containerized a Flask app (Ch.1)
+- We've deployed it with Docker Compose (Ch.2)
+- We've pushed images to registries (Ch.4)
+- **But the database password is hardcoded in the Dockerfile!** Anyone with image access has credentials
 
 **What's blocking us:**
 We need **secrets management** — a secure way to provide credentials to running containers without embedding them in code or images. Without proper secrets handling:
@@ -37,8 +37,7 @@ The **secrets management workflow** — secure credentials from creation to revo
 - **Runtime**: Secrets injected via environment variables, mounted files, or secret stores
 - **Rotation**: Update credentials in the secret store, restart containers — no rebuild
 - **Audit**: Track secret access, enforce least privilege with RBAC
-
-✅ **This is the security foundation** — every production deployment requires proper secrets handling.
+**This is the security foundation** — every production deployment requires proper secrets handling.
 
 ---
 
@@ -70,7 +69,7 @@ The image itself contains **zero secrets**. Change the database password? Just u
 
 ## 1.5 · The Practitioner Workflow — Your 4-Phase Security Audit
 
-> ⚠️ **Two ways to read this chapter:**
+> **Warning — Two ways to read this chapter:**
 > - **Theory-first (recommended for learning):** Read §0→§6 sequentially to understand the concepts, then use this workflow as your reference
 > - **Workflow-first (practitioners with existing knowledge):** Use this diagram as a jump-to guide when securing real deployments
 >
@@ -79,23 +78,23 @@ The image itself contains **zero secrets**. Change the database password? Just u
 **What you'll build by the end:** A SOC 2-compliant deployment where secrets never touch git, images, or build-time configuration — only runtime injection from secure stores, with automated scanning preventing accidental leaks and 90-day rotation schedules.
 
 ```
-Phase 1: AUDIT              Phase 2: LOCAL DEV         Phase 3: PRODUCTION        Phase 4: ROTATION
+Phase 1: AUDIT Phase 2: LOCAL DEV Phase 3: PRODUCTION Phase 4: ROTATION
 ────────────────────────────────────────────────────────────────────────────────────────────────────
-Scan for hardcoded secrets: Use .env files locally:    Runtime secret injection:  Rotate + prevent leaks:
+Scan for hardcoded secrets: Use .env files locally: Runtime secret injection: Rotate + prevent leaks:
 
-• Run gitleaks on repo      • .env file (gitignored)   • Docker Secrets (Swarm)   • Update Key Vault secret
-• Check Dockerfiles for ENV • python-dotenv in code    • K8s Secrets (volumes)    • Restart containers
-• Search code for patterns  • Never commit .env        • Azure Key Vault / AWS    • Pre-commit hook blocks
-• Review docker-compose.yml • Local only — never prod  • Secrets Manager (SDK)      accidental commits
+• Run gitleaks on repo • .env file (gitignored) • Docker Secrets (Swarm) • Update Key Vault secret
+• Check Dockerfiles for ENV • python-dotenv in code • K8s Secrets (volumes) • Restart containers
+• Search code for patterns • Never commit .env • Azure Key Vault / AWS • Pre-commit hook blocks
+• Review docker-compose.yml • Local only — never prod • Secrets Manager (SDK) accidental commits
 
-→ DECISION:                 → DECISION:                → DECISION:                → DECISION:
-  Found secrets in code?      Local dev setup?           Production platform?       Rotation schedule?
-  • Yes: Remove + rotate      • Single dev: .env         • Docker Swarm: Secrets    • SOC 2: 90 days
-  • Dockerfiles: Strip ENV    • Team: docker-compose     • Kubernetes: K8s Secrets  • PCI-DSS: 90 days
-  • History: git-filter-repo    dev secrets              • Cloud: Key Vault/AWS     • Internal: 180 days
+→ DECISION: → DECISION: → DECISION: → DECISION:
+ Found secrets in code? Local dev setup? Production platform? Rotation schedule?
+ • Yes: Remove + rotate • Single dev: .env • Docker Swarm: Secrets • SOC 2: 90 days
+ • Dockerfiles: Strip ENV • Team: docker-compose • Kubernetes: K8s Secrets • PCI-DSS: 90 days
+ • History: git-filter-repo dev secrets • Cloud: Key Vault/AWS • Internal: 180 days
 ```
 
-> 💡 **How to use this workflow:** Run Phase 1 (audit) immediately on any codebase you inherit or before first production deployment. Complete Phase 2 (local dev) once per project. Implement Phase 3 (production) before first deploy. Schedule Phase 4 (rotation) as a recurring calendar task (every 90 days for compliance).
+> **How to use this workflow:** Run Phase 1 (audit) immediately on any codebase you inherit or before first production deployment. Complete Phase 2 (local dev) once per project. Implement Phase 3 (production) before first deploy. Schedule Phase 4 (rotation) as a recurring calendar task (every 90 days for compliance).
 
 ---
 
@@ -133,32 +132,32 @@ Before you can secure secrets, you need to **find them**. Legacy codebases often
 # Use gitleaks to scan entire repository history
 # This finds secrets in current files AND past commits (even if deleted)
 docker run --rm -v $(pwd):/repo zricethezav/gitleaks:latest detect \
-  --source /repo \
-  --report-path /repo/gitleaks-report.json \
-  --verbose
+ --source /repo \
+ --report-path /repo/gitleaks-report.json \
+ --verbose
 
 # Output format:
-# Finding:     AWS Access Key
-# Secret:      AKIA****************EXAMPLE
-# File:        docker-compose.yml
-# Line:        14
-# Commit:      a3f8d92 (2023-04-15)
-# Author:      dev@example.com
+# Finding: AWS Access Key
+# Secret: AKIA****************EXAMPLE
+# File: docker-compose.yml
+# Line: 14
+# Commit: a3f8d92 (2023-04-15)
+# Author: dev@example.com
 
 # DECISION LOGIC
 if [ -s gitleaks-report.json ]; then
-  echo "❌ SECRETS FOUND — Review gitleaks-report.json"
-  echo "Action required:"
-  echo "  1. Remove secrets from current files"
-  echo "  2. Rotate all compromised credentials immediately"
-  echo "  3. Use git-filter-repo to purge from history (if repo is private)"
-  exit 1
+ echo " SECRETS FOUND — Review gitleaks-report.json"
+ echo "Action required:"
+ echo " 1. Remove secrets from current files"
+ echo " 2. Rotate all compromised credentials immediately"
+ echo " 3. Use git-filter-repo to purge from history (if repo is private)"
+ exit 1
 else
-  echo "✅ No secrets detected — Safe to proceed"
+ echo " No secrets detected — Safe to proceed"
 fi
 ```
 
-> 💡 **Industry Standard:** `gitleaks` (open-source, actively maintained)
+> **Industry Standard:** `gitleaks` (open-source, actively maintained)
 > ```bash
 > # Install locally (macOS)
 > brew install gitleaks
@@ -173,14 +172,14 @@ fi
 
 | Pattern | Regex | Risk Level |
 |---------|-------|------------|
-| AWS Access Key | `AKIA[0-9A-Z]{16}` | ❌ CRITICAL — full AWS account access |
-| Private SSH key | `-----BEGIN (RSA|OPENSSH) PRIVATE KEY-----` | ❌ CRITICAL — server access |
-| Generic password | `password\s*=\s*["'][^"']+["']` | ⚠️ HIGH — depends on context |
-| API key | `api[_-]?key\s*=\s*["'][^"']+["']` | ⚠️ HIGH — service access |
-| Database URL | `postgres://.*:.*@` | ⚠️ HIGH — DB credentials in connection string |
+| AWS Access Key | `AKIA[0-9A-Z]{16}` | CRITICAL — full AWS account access |
+| Private SSH key | `-----BEGIN (RSA|OPENSSH) PRIVATE KEY-----` | CRITICAL — server access |
+| Generic password | `password\s*=\s*["'][^"']+["']` | HIGH — depends on context |
+| API key | `api[_-]?key\s*=\s*["'][^"']+["']` | HIGH — service access |
+| Database URL | `postgres://.*:.*@` | HIGH — DB credentials in connection string |
 
-> 💡 **Security verdict:** Secrets in git: 12 hardcoded → 0; git history flagged — rotate all detected credentials immediately.
-> ➡️ Repo scanned clean; proceed to Local Dev phase to adopt `.env` pattern.
+> **Security verdict:** Secrets in git: 12 hardcoded → 0; git history flagged — rotate all detected credentials immediately.
+> ➡ Repo scanned clean; proceed to Local Dev phase to adopt `.env` pattern.
 
 ---
 
@@ -213,7 +212,7 @@ from dotenv import load_dotenv
 import os
 
 # Load environment variables from .env file
-load_dotenv()  # Looks for .env in current directory
+load_dotenv() # Looks for .env in current directory
 
 app = Flask(__name__)
 
@@ -224,22 +223,22 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
 # DECISION LOGIC (fail fast if critical secrets missing)
 if not DATABASE_URL:
-    raise RuntimeError("❌ DATABASE_URL not set — check .env file exists")
+ raise RuntimeError(" DATABASE_URL not set — check .env file exists")
 if not API_KEY:
-    raise RuntimeError("❌ API_KEY not set — check .env file exists")
+ raise RuntimeError(" API_KEY not set — check .env file exists")
 
-print(f"✅ Connected to database: {DATABASE_URL.split('@')[1]}")  # Log host only, not password
-print(f"✅ API key loaded: {API_KEY[:7]}...{API_KEY[-4:]}")      # Log first 7 + last 4 chars only
+print(f" Connected to database: {DATABASE_URL.split('@')[1]}") # Log host only, not password
+print(f" API key loaded: {API_KEY[:7]}...{API_KEY[-4:]}") # Log first 7 + last 4 chars only
 
 @app.route('/')
 def index():
-    return "Flask app running with secrets from .env"
+ return "Flask app running with secrets from .env"
 
 if __name__ == '__main__':
-    app.run(debug=True)
+ app.run(debug=True)
 ```
 
-> 💡 **Industry Standard:** `python-dotenv` (Python), `dotenv` (Node.js), `godotenv` (Go)
+> **Industry Standard:** `python-dotenv` (Python), `dotenv` (Node.js), `godotenv` (Go)
 > ```bash
 > # Install
 > pip install python-dotenv
@@ -251,22 +250,22 @@ if __name__ == '__main__':
 
 ```
 project/
-├── .env                 ← NOT in git (contains real secrets)
-├── .env.example         ← Committed (template with placeholders)
-├── .gitignore           ← Contains: .env
-├── app.py               ← Loads from .env via load_dotenv()
-├── docker-compose.yml   ← References ${ENV_VARS} (Phase 3)
-└── requirements.txt     ← Contains: python-dotenv
+├── .env ← NOT in git (contains real secrets)
+├── .env.example ← Committed (template with placeholders)
+├── .gitignore ← Contains: .env
+├── app.py ← Loads from .env via load_dotenv()
+├── docker-compose.yml ← References ${ENV_VARS} (Phase 3)
+└── requirements.txt ← Contains: python-dotenv
 ```
 
-> 💡 **Local Dev verdict:** `os.getenv()` replaces hardcoded strings; `.env` gitignored with `.env.example` template — new developer onboarding in one `cp` command.
-> ➡️ Local secrets secured; proceed to Production phase for runtime injection in containers.
+> **Local Dev verdict:** `os.getenv()` replaces hardcoded strings; `.env` gitignored with `.env.example` template — new developer onboarding in one `cp` command.
+> ➡ Local secrets secured; proceed to Production phase for runtime injection in containers.
 
 ---
 
 ## 3 · Mental Model — Build-Time vs. Runtime vs. Secret Stores
 
-> 💡 **The analogy that never fails:** **Build time** is like constructing a house — you don't install the safe combination in the walls. **Runtime** is like moving in — the combination is handed to you separately. **Secret stores** are like a bank vault — the combination is kept offsite, only accessible to authorized residents.
+> **The analogy that never fails:** **Build time** is like constructing a house — you don't install the safe combination in the walls. **Runtime** is like moving in — the combination is handed to you separately. **Secret stores** are like a bank vault — the combination is kept offsite, only accessible to authorized residents.
 
 **Build time (Dockerfile):**
 - Packages application code, dependencies, runtime (Python, Flask)
@@ -289,25 +288,25 @@ project/
 **The lifecycle:**
 ```
 Developer writes code (no secrets)
-    ↓
+ ↓
 Dockerfile builds image (no secrets)
-    ↓
+ ↓
 Image pushed to registry (public or private, no secrets leaked)
-    ↓
+ ↓
 Container started with secret injection:
-    • Local dev: .env file
-    • Docker Compose: Docker Secrets
-    • Kubernetes: K8s Secrets
-    • Cloud: Azure Key Vault / AWS Secrets Manager
-    ↓
+ • Local dev: .env file
+ • Docker Compose: Docker Secrets
+ • Kubernetes: K8s Secrets
+ • Cloud: Azure Key Vault / AWS Secrets Manager
+ ↓
 Application reads secret at runtime
-    ↓
+ ↓
 Secret rotated in store (container restarts or refreshes)
-      ✅ WHAT THIS PREVENTS:
-      • Compromised credentials remain valid indefinitely (rotation limits exposure window to 90 days max)
-      • Single leaked password grants permanent access (old password stops working after rotation)
-      • Insider threats (ex-employee's cached credentials expire on rotation schedule)
-      • Compliance violations (SOC 2, PCI-DSS require 90-day password rotation)
+WHAT THIS PREVENTS:
+ • Compromised credentials remain valid indefinitely (rotation limits exposure window to 90 days max)
+ • Single leaked password grants permanent access (old password stops working after rotation)
+ • Insider threats (ex-employee's cached credentials expire on rotation schedule)
+ • Compliance violations (SOC 2, PCI-DSS require 90-day password rotation)
 ```
 
 ---
@@ -327,24 +326,24 @@ Docker Swarm's native secret management encrypts secrets at rest and in transit,
 version: '3.8'
 
 services:
-  flask-app:
-    image: myapp:latest
-    secrets:
-      - db_password
-      - api_key
-    environment:
-      # Pass secret file paths to application
-      DATABASE_PASSWORD_FILE: /run/secrets/db_password
-      API_KEY_FILE: /run/secrets/api_key
-    deploy:
-      replicas: 3
+ flask-app:
+ image: myapp:latest
+ secrets:
+ - db_password
+ - api_key
+ environment:
+ # Pass secret file paths to application
+ DATABASE_PASSWORD_FILE: /run/secrets/db_password
+ API_KEY_FILE: /run/secrets/api_key
+ deploy:
+ replicas: 3
 
 secrets:
-  db_password:
-    file: ./secrets/db_password.txt  # Local file for dev
-    # external: true                 # Or reference external secret in production
-  api_key:
-    file: ./secrets/api_key.txt
+ db_password:
+ file: ./secrets/db_password.txt # Local file for dev
+ # external: true # Or reference external secret in production
+ api_key:
+ file: ./secrets/api_key.txt
 ```
 
 ```python
@@ -352,32 +351,32 @@ secrets:
 import os
 
 def read_secret(secret_name):
-    """Read secret from Docker Secrets mount point."""
-    secret_path = f'/run/secrets/{secret_name}'
-    try:
-        with open(secret_path, 'r') as f:
-            return f.read().strip()
-    except FileNotFoundError:
-        # Fallback to environment variable (for local dev)
-        return os.getenv(secret_name.upper())
+ """Read secret from Docker Secrets mount point."""
+ secret_path = f'/run/secrets/{secret_name}'
+ try:
+ with open(secret_path, 'r') as f:
+ return f.read().strip()
+ except FileNotFoundError:
+ # Fallback to environment variable (for local dev)
+ return os.getenv(secret_name.upper())
 
 # DECISION LOGIC (runtime environment detection)
 if os.path.exists('/run/secrets/db_password'):
-    # Running in Docker Swarm with secrets
-    DB_PASSWORD = read_secret('db_password')
-    API_KEY = read_secret('api_key')
-    print("✅ Loaded secrets from Docker Secrets")
+ # Running in Docker Swarm with secrets
+ DB_PASSWORD = read_secret('db_password')
+ API_KEY = read_secret('api_key')
+ print(" Loaded secrets from Docker Secrets")
 else:
-    # Running locally or in environment without Docker Secrets
-    DB_PASSWORD = os.getenv('DB_PASSWORD')
-    API_KEY = os.getenv('API_KEY')
-    print("⚠️  Loaded secrets from environment variables (local dev only)")
+ # Running locally or in environment without Docker Secrets
+ DB_PASSWORD = os.getenv('DB_PASSWORD')
+ API_KEY = os.getenv('API_KEY')
+ print(" Loaded secrets from environment variables (local dev only)")
 
 if not DB_PASSWORD:
-    raise RuntimeError("❌ DB_PASSWORD not available")
+ raise RuntimeError(" DB_PASSWORD not available")
 ```
 
-> 💡 **Industry Standard:** Docker Secrets (Swarm mode)
+> **Industry Standard:** Docker Secrets (Swarm mode)
 > ```bash
 > # Create secret from file
 > echo "my_secure_password" | docker secret create db_password -
@@ -403,18 +402,18 @@ Kubernetes Secrets are base64-encoded (not encrypted by default!) but can be mou
 ```yaml
 # Create Kubernetes secret (imperative)
 kubectl create secret generic db-credentials \
-  --from-literal=password=my_secure_password \
-  --from-literal=username=admin
+ --from-literal=password=my_secure_password \
+ --from-literal=username=admin
 
 # Or from file (declarative)
 apiVersion: v1
 kind: Secret
 metadata:
-  name: db-credentials
+ name: db-credentials
 type: Opaque
 data:
-  password: bXlfc2VjdXJlX3Bhc3N3b3Jk  # base64 encoded
-  username: YWRtaW4=
+ password: bXlfc2VjdXJlX3Bhc3N3b3Jk # base64 encoded
+ username: YWRtaW4=
 ```
 
 ```yaml
@@ -422,31 +421,31 @@ data:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: flask-app
+ name: flask-app
 spec:
-  replicas: 3
-  template:
-    spec:
-      containers:
-      - name: flask
-        image: myapp:latest
-        volumeMounts:
-        - name: db-secrets
-          mountPath: /run/secrets
-          readOnly: true
-        env:
-        - name: DATABASE_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: db-credentials
-              key: password
-      volumes:
-      - name: db-secrets
-        secret:
-          secretName: db-credentials
+ replicas: 3
+ template:
+ spec:
+ containers:
+ - name: flask
+ image: myapp:latest
+ volumeMounts:
+ - name: db-secrets
+ mountPath: /run/secrets
+ readOnly: true
+ env:
+ - name: DATABASE_PASSWORD
+ valueFrom:
+ secretKeyRef:
+ name: db-credentials
+ key: password
+ volumes:
+ - name: db-secrets
+ secret:
+ secretName: db-credentials
 ```
 
-> 💡 **Industry Standard:** Kubernetes Secrets + External Secrets Operator
+> **Industry Standard:** Kubernetes Secrets + External Secrets Operator
 > ```bash
 > # Install External Secrets Operator (syncs from cloud secret stores)
 > helm install external-secrets external-secrets/external-secrets -n external-secrets-system
@@ -456,15 +455,15 @@ spec:
 > apiVersion: external-secrets.io/v1beta1
 > kind: SecretStore
 > metadata:
->   name: azure-keyvault
+> name: azure-keyvault
 > spec:
->   provider:
->     azurekv:
->       vaultUrl: "https://my-vault.vault.azure.net"
->       authSecretRef:
->         clientId:
->           name: azure-creds
->           key: client-id
+> provider:
+> azurekv:
+> vaultUrl: "https://my-vault.vault.azure.net"
+> authSecretRef:
+> clientId:
+> name: azure-creds
+> key: client-id
 > EOF
 > ```
 > **When to use:** Kubernetes production clusters. Enables GitOps (secret definitions in git, values in cloud).
@@ -482,50 +481,50 @@ import os
 
 # DECISION LOGIC (environment-based secret source)
 if os.getenv('AZURE_KEY_VAULT_URL'):
-    # Production: fetch from Azure Key Vault
-    vault_url = os.getenv('AZURE_KEY_VAULT_URL')
-    credential = DefaultAzureCredential()  # Uses managed identity in Azure
-    client = SecretClient(vault_url=vault_url, credential=credential)
+ # Production: fetch from Azure Key Vault
+ vault_url = os.getenv('AZURE_KEY_VAULT_URL')
+ credential = DefaultAzureCredential() # Uses managed identity in Azure
+ client = SecretClient(vault_url=vault_url, credential=credential)
 
-    DB_PASSWORD = client.get_secret('db-password').value
-    API_KEY = client.get_secret('api-key').value
-    print(f"✅ Loaded secrets from Azure Key Vault: {vault_url}")
+ DB_PASSWORD = client.get_secret('db-password').value
+ API_KEY = client.get_secret('api-key').value
+ print(f" Loaded secrets from Azure Key Vault: {vault_url}")
 elif os.path.exists('/run/secrets/db_password'):
-    # Docker Swarm: read from mounted files
-    DB_PASSWORD = open('/run/secrets/db_password').read().strip()
-    API_KEY = open('/run/secrets/api_key').read().strip()
-    print("✅ Loaded secrets from Docker Secrets")
+ # Docker Swarm: read from mounted files
+ DB_PASSWORD = open('/run/secrets/db_password').read().strip()
+ API_KEY = open('/run/secrets/api_key').read().strip()
+ print(" Loaded secrets from Docker Secrets")
 else:
-    # Local dev: fallback to .env
-    from dotenv import load_dotenv
-    load_dotenv()
-    DB_PASSWORD = os.getenv('DB_PASSWORD')
-    API_KEY = os.getenv('API_KEY')
-    print("⚠️  Loaded secrets from .env (local dev only)")
+ # Local dev: fallback to .env
+ from dotenv import load_dotenv
+ load_dotenv()
+ DB_PASSWORD = os.getenv('DB_PASSWORD')
+ API_KEY = os.getenv('API_KEY')
+ print(" Loaded secrets from .env (local dev only)")
 
 if not DB_PASSWORD:
-    raise RuntimeError("❌ No secret source available — check configuration")
+ raise RuntimeError(" No secret source available — check configuration")
 ```
 
-> 💡 **Industry Standard:** Azure Key Vault (Azure), AWS Secrets Manager (AWS), HashiCorp Vault (self-hosted)
+> **Industry Standard:** Azure Key Vault (Azure), AWS Secrets Manager (AWS), HashiCorp Vault (self-hosted)
 > ```bash
 > # Azure Key Vault: Create secret
 > az keyvault secret set \
->   --vault-name my-vault \
->   --name db-password \
->   --value "my_secure_password"
+> --vault-name my-vault \
+> --name db-password \
+> --value "my_secure_password"
 >
 > # Grant access to managed identity (for app running in Azure)
 > az keyvault set-policy \
->   --name my-vault \
->   --object-id <app-managed-identity-id> \
->   --secret-permissions get list
+> --name my-vault \
+> --object-id <app-managed-identity-id> \
+> --secret-permissions get list
 > ```
 > **When to use:** Always in cloud production (Azure, AWS, GCP). Full audit logs, automatic rotation, RBAC.
 > **Common alternatives:** AWS Secrets Manager (AWS), GCP Secret Manager (Google Cloud), HashiCorp Vault (multi-cloud)
 
-> 💡 **Production verdict:** Secrets injected at runtime via Docker Secrets or Key Vault SDK — `docker history` shows zero credentials; rotation requires only a container restart.
-> ➡️ Audit trail and RBAC active; proceed to Rotation phase to automate 30-day cycles.
+> **Production verdict:** Secrets injected at runtime via Docker Secrets or Key Vault SDK — `docker history` shows zero credentials; rotation requires only a container restart.
+> ➡ Audit trail and RBAC active; proceed to Rotation phase to automate 30-day cycles.
 
 ---
 
@@ -577,29 +576,29 @@ echo "🔄 Rotating secret: $SECRET_NAME"
 
 # Step 2: Update secret in Azure Key Vault
 az keyvault secret set \
-  --vault-name "$VAULT_NAME" \
-  --name "$SECRET_NAME" \
-  --value "$NEW_PASSWORD" \
-  --expires "$(date -u -d '+90 days' +%Y-%m-%dT%H:%M:%SZ)"  # Auto-expire in 90 days
+ --vault-name "$VAULT_NAME" \
+ --name "$SECRET_NAME" \
+ --value "$NEW_PASSWORD" \
+ --expires "$(date -u -d '+90 days' +%Y-%m-%dT%H:%M:%SZ)" # Auto-expire in 90 days
 
-echo "✅ Secret updated in Key Vault"
+echo " Secret updated in Key Vault"
 
 # Step 3: Update database password (example for PostgreSQL)
 export PGPASSWORD="$NEW_PASSWORD"
 psql -h db.example.com -U admin -d postgres -c \
-  "ALTER USER admin WITH PASSWORD '$NEW_PASSWORD';"
+ "ALTER USER admin WITH PASSWORD '$NEW_PASSWORD';"
 
-echo "✅ Database password updated"
+echo " Database password updated"
 
 # Step 4: Restart containers to pick up new secret
 kubectl rollout restart deployment/flask-app
 kubectl rollout status deployment/flask-app --timeout=5m
 
-echo "✅ Containers restarted — using new secret"
+echo " Containers restarted — using new secret"
 
 # Step 5: Wait 7 days before revoking old secret (grace period)
-echo "⚠️  Old secret still valid for 7 days (grace period)"
-echo "   Run 'revoke-old-secrets.sh' after verifying all services healthy"
+echo " Old secret still valid for 7 days (grace period)"
+echo " Run 'revoke-old-secrets.sh' after verifying all services healthy"
 ```
 
 **Preventing accidental secret commits (pre-commit hook):**
@@ -607,12 +606,12 @@ echo "   Run 'revoke-old-secrets.sh' after verifying all services healthy"
 ```yaml
 # .pre-commit-config.yaml — place this file in repo root
 repos:
-  - repo: https://github.com/Yelp/detect-secrets
-    rev: v1.4.0
-    hooks:
-      - id: detect-secrets
-        args: ['--baseline', '.secrets.baseline']
-        exclude: package-lock.json
+ - repo: https://github.com/Yelp/detect-secrets
+ rev: v1.4.0
+ hooks:
+ - id: detect-secrets
+ args: ['--baseline', '.secrets.baseline']
+ exclude: package-lock.json
 
 # Install pre-commit hooks (run once per repo)
 # pip install pre-commit
@@ -632,13 +631,13 @@ detect-secrets...........................................................Failed
 - exit code: 1
 
 Potential secrets detected in config.py:
-  Line 14: Potential AWS Access Key (AKIA1234567890EXAMPLE)
-  Line 18: Potential Password in URL (postgres://user:secret@db:5432)
+ Line 14: Potential AWS Access Key (AKIA1234567890EXAMPLE)
+ Line 18: Potential Password in URL (postgres://user:secret@db:5432)
 
 Commit blocked. Remove secrets before committing.
 ```
 
-> 💡 **Industry Standard:** `detect-secrets` (Yelp) + `pre-commit` framework
+> **Industry Standard:** `detect-secrets` (Yelp) + `pre-commit` framework
 > ```bash
 > # Install
 > pip install detect-secrets pre-commit
@@ -655,8 +654,8 @@ Commit blocked. Remove secrets before committing.
 > **When to use:** Install in every repository before first commit. Blocks secrets at commit time (cheapest place to catch them).
 > **Common alternatives:** `gitleaks` (pre-commit hook mode), `git-secrets` (AWS-specific), GitHub Secret Scanning (automatic for public repos)
 
-> 💡 **Rotation verdict:** Secrets in git: 12 hardcoded → 0; rotation lag: manual/never → automated 30-day cycle; pre-commit hook blocks accidental leaks.
-> ➡️ SOC 2 compliance cycle enforced; chapter complete.
+> **Rotation verdict:** Secrets in git: 12 hardcoded → 0; rotation lag: manual/never → automated 30-day cycle; pre-commit hook blocks accidental leaks.
+> ➡ SOC 2 compliance cycle enforced; chapter complete.
 
 ---
 
@@ -682,13 +681,13 @@ CMD ["node", "server.js"]
 
 **Issues:**
 1. **Hardcoded database password in `ENV DATABASE_URL`**
-   → **Fix:** Remove `ENV` line, pass `DATABASE_URL` at runtime via `-e` or Docker Secrets
+ → **Fix:** Remove `ENV` line, pass `DATABASE_URL` at runtime via `-e` or Docker Secrets
 
 2. **Hardcoded API key in `ENV API_KEY`**
-   → **Fix:** Store in secret manager (Key Vault, Secrets Manager), fetch at container startup
+ → **Fix:** Store in secret manager (Key Vault, Secrets Manager), fetch at container startup
 
 3. **Secrets are visible in image history**
-   → **Fix:** Run `docker history <image>` and you'll see both secrets in plaintext
+ → **Fix:** Run `docker history <image>` and you'll see both secrets in plaintext
 
 **Secure version:**
 ```dockerfile

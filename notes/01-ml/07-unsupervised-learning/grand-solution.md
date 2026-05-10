@@ -9,22 +9,22 @@
 **Three ways to learn this track:**
 
 1. **Big picture first (recommended for time-constrained readers):**
-   - Read this `grand_solution.md` → understand narrative
-   - Run [grand_solution.ipynb (reference)](grand_solution_reference.ipynb) | [grand_solution.ipynb (exercise)](grand_solution_exercise.ipynb) → see code consolidated
-   - Dive into individual chapters for depth
+ - Read this `grand_solution.md` → understand narrative
+ - Run [grand_solution.ipynb (reference)](grand_solution_reference.ipynb) | [grand_solution.ipynb (exercise)](grand_solution_exercise.ipynb) → see code consolidated
+ - Dive into individual chapters for depth
 
 2. **Hands-on exploration:**
-   - Run [grand_solution.ipynb (reference)](grand_solution_reference.ipynb) | [grand_solution.ipynb (exercise)](grand_solution_exercise.ipynb) directly
-   - Code consolidates: setup → each chapter → integration
-   - Each cell includes markdown explaining what problem it solves
+ - Run [grand_solution.ipynb (reference)](grand_solution_reference.ipynb) | [grand_solution.ipynb (exercise)](grand_solution_exercise.ipynb) directly
+ - Code consolidates: setup → each chapter → integration
+ - Each cell includes markdown explaining what problem it solves
 
 3. **Sequential deep dive (recommended for mastery):**
-   - Start with Ch.1 → progress through Ch.3
-   - Return to this document for synthesis
+ - Start with Ch.1 → progress through Ch.3
+ - Return to this document for synthesis
 
 ---
 
-## Mission Accomplished: 0.52 Silhouette ✅
+## Mission Accomplished: 0.52 Silhouette
 
 **The Challenge:** Build SegmentAI — a production customer segmentation system discovering 5 actionable segments with silhouette score >0.5, **without any manual labeling**.
 
@@ -33,10 +33,10 @@
 **The Progression:**
 
 ```
-Ch.1: K-Means clustering         → 0.42 silhouette  (5 segments discovered, but overlapping)
-Ch.2: PCA dimensionality         → 0.48 silhouette  (sharper boundaries in 2D space)
-Ch.3: Validation suite           → 0.52 silhouette  (bootstrap stability + business naming)
-                                    ✅ TARGET: >0.5 silhouette
+Ch.1: K-Means clustering → 0.42 silhouette (5 segments discovered, but overlapping)
+Ch.2: PCA dimensionality → 0.48 silhouette (sharper boundaries in 2D space)
+Ch.3: Validation suite → 0.52 silhouette (bootstrap stability + business naming)
+TARGET: >0.5 silhouette
 ```
 
 **The paradigm shift:** No labels. No ground truth. No "correct answer" to check against. Pure discovery from purchase patterns alone.
@@ -91,7 +91,7 @@ Ch.3: Validation suite           → 0.52 silhouette  (bootstrap stability + bus
 **What it is:** Measure cluster quality without ground truth using silhouette, Davies-Bouldin, Calinski-Harabasz, plus bootstrap stability testing and business naming.
 
 **What it unlocked:**
-- **Silhouette = 0.52 ✅:** K-Means K=5 on PCA-preprocessed data crosses the 0.5 threshold
+- **Silhouette = 0.52 :** K-Means K=5 on PCA-preprocessed data crosses the 0.5 threshold
 - **Metric disagreement resolution:** Silhouette prefers K=3 (0.58), but business needs K=5 (0.52) — acceptable trade-off
 - **Bootstrap stability:** 95% of customers assigned to same segment across 100 resamples — production-ready
 - **Business validation:** Centroid analysis → "Loyalists" (28%), "Price-Sensitive" (22%), "Big Spenders" (15%), "Occasional Buyers" (25%), "Deli Specialists" (10%)
@@ -113,27 +113,27 @@ Here's how all 3 concepts integrate into a deployed SegmentAI system:
 
 ```mermaid
 flowchart TD
-    INPUT["Raw customer data<br/>(6 spending features)"] --> VALIDATE["Data Validation<br/>Ch.1: Check skewness<br/>Log-transform if needed"]
-    
-    VALIDATE --> SCALE["Feature Scaling<br/>Ch.1: StandardScaler<br/>μ=0, σ=1"]
-    
-    SCALE --> PCA["Dimensionality Reduction<br/>Ch.2: PCA 6D → 4D<br/>92% variance retained"]
-    
-    PCA --> CLUSTER["Clustering Model<br/>Ch.1: K-Means K=5<br/>or HDBSCAN auto-K"]
-    
-    CLUSTER --> ASSIGN["Segment Assignment<br/>Customer → nearest centroid"]
-    
-    ASSIGN --> NAME["Business Naming<br/>Ch.3: Centroid profiling<br/>Cluster 0 → 'Loyalists'"]
-    
-    NAME --> MONITOR["Monitoring<br/>Ch.3: Track silhouette drift<br/>Alert if < 0.45"]
-    
-    MONITOR --> STABILITY["Stability Check<br/>Ch.3: Bootstrap resampling<br/>Flag if < 90%"]
-    
-    STABILITY --> OUTPUT["API Response<br/>{segment: 'Loyalists',<br/>confidence: 0.87,<br/>profile: {...}}"]
-    
-    style INPUT fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CLUSTER fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style OUTPUT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ INPUT["Raw customer data<br/>(6 spending features)"] --> VALIDATE["Data Validation<br/>Ch.1: Check skewness<br/>Log-transform if needed"]
+
+ VALIDATE --> SCALE["Feature Scaling<br/>Ch.1: StandardScaler<br/>μ=0, σ=1"]
+
+ SCALE --> PCA["Dimensionality Reduction<br/>Ch.2: PCA 6D → 4D<br/>92% variance retained"]
+
+ PCA --> CLUSTER["Clustering Model<br/>Ch.1: K-Means K=5<br/>or HDBSCAN auto-K"]
+
+ CLUSTER --> ASSIGN["Segment Assignment<br/>Customer → nearest centroid"]
+
+ ASSIGN --> NAME["Business Naming<br/>Ch.3: Centroid profiling<br/>Cluster 0 → 'Loyalists'"]
+
+ NAME --> MONITOR["Monitoring<br/>Ch.3: Track silhouette drift<br/>Alert if < 0.45"]
+
+ MONITOR --> STABILITY["Stability Check<br/>Ch.3: Bootstrap resampling<br/>Flag if < 90%"]
+
+ STABILITY --> OUTPUT["API Response<br/>{segment: 'Loyalists',<br/>confidence: 0.87,<br/>profile: {...}}"]
+
+ style INPUT fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CLUSTER fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style OUTPUT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### Deployment Pipeline (How Ch.1-3 Connect in Production)
@@ -141,7 +141,7 @@ flowchart TD
 **1. Training Pipeline (runs monthly with new customer data):**
 ```python
 # Ch.1: Load data
-X = load_customer_spending()  # 440 customers × 6 features
+X = load_customer_spending() # 440 customers × 6 features
 
 # Ch.1: Log-transform skewed spending + standardize
 X_log = np.log1p(X)
@@ -149,7 +149,7 @@ scaler = StandardScaler().fit(X_log)
 X_scaled = scaler.transform(X_log)
 
 # Ch.2: PCA preprocessing (improves silhouette from 0.42 → 0.48)
-pca = PCA(n_components=4)  # retain 92% variance
+pca = PCA(n_components=4) # retain 92% variance
 X_pca = pca.fit_transform(X_scaled)
 
 # Ch.1 + Ch.3: Clustering with validated K
@@ -157,17 +157,17 @@ kmeans = KMeans(n_clusters=5, init='k-means++', n_init=10, random_state=42)
 kmeans.fit(X_pca)
 
 # Ch.3: Validation metrics
-silhouette = silhouette_score(X_pca, kmeans.labels_)  # Must be > 0.5
-davies_bouldin = davies_bouldin_score(X_pca, kmeans.labels_)  # Lower better
+silhouette = silhouette_score(X_pca, kmeans.labels_) # Must be > 0.5
+davies_bouldin = davies_bouldin_score(X_pca, kmeans.labels_) # Lower better
 print(f"Silhouette: {silhouette:.3f}, DBI: {davies_bouldin:.3f}")
 
 # Ch.3: Bootstrap stability test
 stability = bootstrap_stability(X_pca, kmeans, n_bootstrap=100)
-print(f"Mean stability: {stability.mean():.1%}")  # Target: >90%
+print(f"Mean stability: {stability.mean():.1%}") # Target: >90%
 
 # Ch.3: Business naming via centroid analysis
 centroids_original = scaler.inverse_transform(pca.inverse_transform(kmeans.cluster_centers_))
-centroids_original = np.expm1(centroids_original)  # undo log1p
+centroids_original = np.expm1(centroids_original) # undo log1p
 segment_names = assign_business_names(centroids_original, feature_names)
 ```
 
@@ -175,60 +175,60 @@ segment_names = assign_business_names(centroids_original, feature_names)
 ```python
 @app.route('/segment', methods=['POST'])
 def segment_customer():
-    # Raw input: {Fresh: 12000, Milk: 5700, Grocery: 7561, ...}
-    raw_features = request.json
-    
-    # Ch.1: Preprocess new customer (same pipeline as training)
-    X_new = np.array([[raw_features[f] for f in feature_names]])
-    X_new_log = np.log1p(X_new)
-    X_new_scaled = scaler.transform(X_new_log)
-    
-    # Ch.2: PCA transform
-    X_new_pca = pca.transform(X_new_scaled)
-    
-    # Ch.1: Assign to nearest cluster
-    cluster_id = kmeans.predict(X_new_pca)[0]
-    distance_to_centroid = np.linalg.norm(X_new_pca - kmeans.cluster_centers_[cluster_id])
-    
-    # Ch.3: Confidence score (inverse of normalized distance)
-    max_dist = np.max([np.linalg.norm(kmeans.cluster_centers_[i] - kmeans.cluster_centers_[j]) 
-                       for i in range(5) for j in range(i+1, 5)])
-    confidence = 1 - (distance_to_centroid / max_dist)
-    
-    # Ch.3: Business name lookup
-    segment_name = segment_names[cluster_id]
-    
-    return {
-        "segment_id": int(cluster_id),
-        "segment_name": segment_name,
-        "confidence": f"{confidence:.2f}",
-        "profile": get_segment_profile(cluster_id),
-        "recommended_campaigns": get_campaigns(segment_name)
-    }
+ # Raw input: {Fresh: 12000, Milk: 5700, Grocery: 7561, ...}
+ raw_features = request.json
+
+ # Ch.1: Preprocess new customer (same pipeline as training)
+ X_new = np.array([[raw_features[f] for f in feature_names]])
+ X_new_log = np.log1p(X_new)
+ X_new_scaled = scaler.transform(X_new_log)
+
+ # Ch.2: PCA transform
+ X_new_pca = pca.transform(X_new_scaled)
+
+ # Ch.1: Assign to nearest cluster
+ cluster_id = kmeans.predict(X_new_pca)[0]
+ distance_to_centroid = np.linalg.norm(X_new_pca - kmeans.cluster_centers_[cluster_id])
+
+ # Ch.3: Confidence score (inverse of normalized distance)
+ max_dist = np.max([np.linalg.norm(kmeans.cluster_centers_[i] - kmeans.cluster_centers_[j])
+ for i in range(5) for j in range(i+1, 5)])
+ confidence = 1 - (distance_to_centroid / max_dist)
+
+ # Ch.3: Business name lookup
+ segment_name = segment_names[cluster_id]
+
+ return {
+ "segment_id": int(cluster_id),
+ "segment_name": segment_name,
+ "confidence": f"{confidence:.2f}",
+ "profile": get_segment_profile(cluster_id),
+ "recommended_campaigns": get_campaigns(segment_name)
+ }
 ```
 
 **3. Monitoring Dashboard (tracks production health):**
 ```python
 # Ch.3: Alert if silhouette drifts below threshold
 if production_silhouette < 0.45:
-    alert("Silhouette dropped below 0.45 — clusters degrading")
+ alert("Silhouette dropped below 0.45 — clusters degrading")
 
 # Ch.3: Track segment distribution shifts
 current_dist = np.bincount(current_labels) / len(current_labels)
-baseline_dist = np.array([0.28, 0.22, 0.15, 0.25, 0.10])  # from training
+baseline_dist = np.array([0.28, 0.22, 0.15, 0.25, 0.10]) # from training
 if np.abs(current_dist - baseline_dist).max() > 0.05:
-    alert("Segment distribution shifted >5% — possible data drift")
+ alert("Segment distribution shifted >5% — possible data drift")
 
 # Ch.3: Bootstrap stability on recent data
 if weeks_since_training > 4:
-    recent_stability = bootstrap_stability(recent_X_pca, kmeans, n_bootstrap=50)
-    if recent_stability.mean() < 0.85:
-        alert("Stability dropped to {recent_stability.mean():.1%} — retrain recommended")
-        trigger_retraining_pipeline()
+ recent_stability = bootstrap_stability(recent_X_pca, kmeans, n_bootstrap=50)
+ if recent_stability.mean() < 0.85:
+ alert("Stability dropped to {recent_stability.mean():.1%} — retrain recommended")
+ trigger_retraining_pipeline()
 
 # Ch.2: PCA explained variance check
 if pca.explained_variance_ratio_[:4].sum() < 0.85:
-    alert("PCA variance dropped — feature distributions may have changed")
+ alert("PCA variance dropped — feature distributions may have changed")
 ```
 
 ---
@@ -252,8 +252,8 @@ if pca.explained_variance_ratio_[:4].sum() < 0.85:
 ### 3. The Metric-Business Alignment Pattern (Ch.3)
 **When metrics disagree with business requirements:**
 - Silhouette says K=3 (0.58), but marketing needs K=5 (0.52)
-- Check: Is K=5 silhouette above minimum threshold (0.5)? → Yes ✅
-- Check: Are K=5 segments actionable? → Yes ✅
+- Check: Is K=5 silhouette above minimum threshold (0.5)? → Yes
+- Check: Are K=5 segments actionable? → Yes
 - Document trade-off: "Metrics prefer K=3, but K=5 chosen for business alignment. Silhouette 0.52 confirms clusters are valid."
 - Never blindly optimize metrics — they guide, not decide
 
@@ -261,11 +261,11 @@ if pca.explained_variance_ratio_[:4].sum() < 0.85:
 **Sequential preprocessing for production clustering:**
 ```python
 # Stage 1 (Ch.1): Data prep
-X_log = np.log1p(X)  # handle skewness
-X_scaled = StandardScaler().fit_transform(X_log)  # equal scales
+X_log = np.log1p(X) # handle skewness
+X_scaled = StandardScaler().fit_transform(X_log) # equal scales
 
 # Stage 2 (Ch.2): Dimensionality reduction
-pca = PCA(n_components=4)  # 92% variance
+pca = PCA(n_components=4) # 92% variance
 X_reduced = pca.fit_transform(X_scaled)
 
 # Stage 3 (Ch.1): Clustering
@@ -276,7 +276,7 @@ labels = kmeans.fit_predict(X_reduced)
 silhouette = silhouette_score(X_reduced, labels)
 stability = bootstrap_stability(X_reduced, kmeans)
 if silhouette > 0.5 and stability > 0.9:
-    deploy_to_production()
+ deploy_to_production()
 ```
 
 ### 5. The Stability-First Pattern (Ch.3)
@@ -293,21 +293,21 @@ if silhouette > 0.5 and stability > 0.9:
 
 | # | Constraint | Target | Status | How We Achieved It |
 |---|------------|--------|--------|-------------------|
-| **#1** | **SEGMENTATION** | 5 distinct segments | ✅ **5 segments** | Ch.1: K-Means K=5 + Ch.2: PCA sharpened boundaries |
-| **#2** | **INTERPRETABILITY** | Business-actionable names | ✅ **Named** | Ch.3: Centroid profiling → "Loyalists", "Price-Sensitive", etc. |
-| **#3** | **STABILITY** | Reproducible across resamples | ✅ **95%** | Ch.3: Bootstrap stability testing |
-| **#4** | **SCALABILITY** | 10k+ customers | ✅ **Scales** | Ch.1: K-Means O(nKd) + Ch.2: PCA O(nd²) |
-| **#5** | **VALIDATION** | Silhouette >0.5 | ✅ **0.52** | Ch.3: Metric suite + PCA preprocessing |
+| **#1** | **SEGMENTATION** | 5 distinct segments | **5 segments** | Ch.1: K-Means K=5 + Ch.2: PCA sharpened boundaries |
+| **#2** | **INTERPRETABILITY** | Business-actionable names | **Named** | Ch.3: Centroid profiling → "Loyalists", "Price-Sensitive", etc. |
+| **#3** | **STABILITY** | Reproducible across resamples | **95%** | Ch.3: Bootstrap stability testing |
+| **#4** | **SCALABILITY** | 10k+ customers | **Scales** | Ch.1: K-Means O(nKd) + Ch.2: PCA O(nd²) |
+| **#5** | **VALIDATION** | Silhouette >0.5 | **0.52** | Ch.3: Metric suite + PCA preprocessing |
 
 ---
 
 ## What's Next: Beyond Unsupervised Learning
 
 **This track taught:**
-- ✅ Clustering fundamentals (K-Means, DBSCAN, HDBSCAN)
-- ✅ Dimensionality reduction (PCA, t-SNE, UMAP)
-- ✅ Unsupervised validation (silhouette, DBI, CHI, bootstrap)
-- ✅ The no-labels paradigm shift (discovery vs prediction)
+- Clustering fundamentals (K-Means, DBSCAN, HDBSCAN)
+- Dimensionality reduction (PCA, t-SNE, UMAP)
+- Unsupervised validation (silhouette, DBI, CHI, bootstrap)
+- The no-labels paradigm shift (discovery vs prediction)
 
 **What remains for SegmentAI:**
 - **Temporal segmentation:** Track how customers move between segments over time → churn prediction
@@ -347,7 +347,7 @@ if silhouette > 0.5 and stability > 0.9:
 **The universal pattern: Scale → Reduce → Cluster → Validate → Name → Deploy.** This six-stage pipeline applies to customer segmentation, document clustering, genomic data, image clustering, and any other unsupervised scenario. Master this pattern here, and you can cluster anything.
 
 **You now have:**
-- A production-ready customer segmentation system (5 segments, 0.52 silhouette ✅)
+- A production-ready customer segmentation system (5 segments, 0.52 silhouette )
 - Three clustering algorithms (K-Means, DBSCAN, HDBSCAN) with clear decision rules for when to use each
 - Three dimensionality reduction techniques (PCA, t-SNE, UMAP) for preprocessing and visualization
 - A complete unsupervised validation toolkit (silhouette, DBI, CHI, ARI, bootstrap)

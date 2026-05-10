@@ -8,18 +8,18 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 🎬 **Animation placeholder** — Deterministic animation showing GPU architecture stack: CUDA cores → Tensor Cores → Memory hierarchy → Roofline model. Visual will demonstrate why LLM inference is memory-bound (1-5 FLOP/byte) vs ridge point (164 FLOP/byte for RTX 4090), with bandwidth bottleneck highlighted. Target: 30-second loop showing single decode step walking through SM → HBM pipeline with arithmetic intensity calculation overlay.
+> **Animation placeholder** — Deterministic animation showing GPU architecture stack: CUDA cores → Tensor Cores → Memory hierarchy → Roofline model. Visual will demonstrate why LLM inference is memory-bound (1-5 FLOP/byte) vs ridge point (164 FLOP/byte for RTX 4090), with bandwidth bottleneck highlighted. Target: 30-second loop showing single decode step walking through SM → HBM pipeline with arithmetic intensity calculation overlay.
 
 ---
 
-> 🎯 **The mission**: Self-host Llama-3-8B for <$15k/month, replacing $80k OpenAI API costs
+> **The mission**: Self-host Llama-3-8B for <$15k/month, replacing $80k OpenAI API costs
 >
 > **6 Constraints**: #1 Cost (<$15k/mo) • #2 Latency (≤2s) • #3 Throughput (≥10k req/day) • #4 Memory (fit in VRAM) • #5 Quality (≥95% accuracy) • #6 Reliability (>99% uptime)
 
 **What we know so far**:
-- ❌ **Starting from zero** — no infrastructure, no hardware selected
-- 📊 **Current state**: Spending $80,000/month on OpenAI API (GPT-3.5-turbo)
-- 🎯 **CEO's question**: "Can we cut this bill by 80% with self-hosting?"
+- **Starting from zero** — no infrastructure, no hardware selected
+- **Current state**: Spending $80,000/month on OpenAI API (GPT-3.5-turbo)
+- **CEO's question**: "Can we cut this bill by 80% with self-hosting?"
 
 **What's blocking us**:
 
@@ -29,8 +29,8 @@
 
 ```
 CEO: "I just got the OpenAI bill. $80,000 for one month. That's $960k/year.
-     We're burning investor cash on API calls. Can we self-host Llama-3-8B
-     and cut this to $15k/month?"
+ We're burning investor cash on API calls. Can we self-host Llama-3-8B
+ and cut this to $15k/month?"
 
 Engineer: "Maybe. Llama-3-8B is 8 billion parameters, needs BF16 precision..."
 
@@ -39,19 +39,19 @@ CEO: "What does that mean in English?"
 Engineer: "I... need to calculate the GPU requirements first."
 
 CEO: "Fine. You have two weeks to tell me:
-     1. Which GPU do we need?
-     2. How much will it cost per month?
-     3. Will it match OpenAI's speed?
-     If the answer is yes, we build it. If no, we keep paying OpenAI."
+ 1. Which GPU do we need?
+ 2. How much will it cost per month?
+ 3. Will it match OpenAI's speed?
+ If the answer is yes, we build it. If no, we keep paying OpenAI."
 ```
 
 **Problems**:
-1. ❌ **No GPU expertise**: Team has only used OpenAI API — zero experience with GPU hardware, CUDA, or VRAM sizing
-2. ❌ **Spec sheet confusion**: A100 datasheet says "312 TFLOP/s", RTX 4090 says "165 TFLOP/s" — does that mean A100 is 2× faster? What about the $3/hr vs $1.50/hr price difference?
-3. ❌ **Unknown VRAM needs**: Llama-3-8B has 8 billion parameters... is that 8GB VRAM? 16GB? 32GB? Does "8B" = "8GB"? Team is guessing.
-4. ❌ **Bandwidth vs compute**: Datasheets prominently quote TFLOP/s (compute), but is that the real bottleneck for LLM inference, or is it memory bandwidth (TB/s)?
-5. ❌ **Cost modeling impossible**: Cannot estimate monthly cloud GPU costs without knowing which GPU model to rent (A100? H100? RTX 4090? A10G?)
-6. ❌ **Wrong purchase = catastrophic failure**: Ordering 10× A10G (24GB VRAM, 0.6 TB/s) when you need 1× A100 (80GB, 2.0 TB/s) means burning $15k budget on hardware that OOMs on first inference
+1. **No GPU expertise**: Team has only used OpenAI API — zero experience with GPU hardware, CUDA, or VRAM sizing
+2. **Spec sheet confusion**: A100 datasheet says "312 TFLOP/s", RTX 4090 says "165 TFLOP/s" — does that mean A100 is 2× faster? What about the $3/hr vs $1.50/hr price difference?
+3. **Unknown VRAM needs**: Llama-3-8B has 8 billion parameters... is that 8GB VRAM? 16GB? 32GB? Does "8B" = "8GB"? Team is guessing.
+4. **Bandwidth vs compute**: Datasheets prominently quote TFLOP/s (compute), but is that the real bottleneck for LLM inference, or is it memory bandwidth (TB/s)?
+5. **Cost modeling impossible**: Cannot estimate monthly cloud GPU costs without knowing which GPU model to rent (A100? H100? RTX 4090? A10G?)
+6. **Wrong purchase = catastrophic failure**: Ordering 10× A10G (24GB VRAM, 0.6 TB/s) when you need 1× A100 (80GB, 2.0 TB/s) means burning $15k budget on hardware that OOMs on first inference
 
 **Business impact**:
 - **$80k/month burn rate**: Every month of delay = $80,000 wasted on OpenAI
@@ -62,36 +62,35 @@ CEO: "Fine. You have two weeks to tell me:
 
 **What this chapter unlocks**:
 
-🚀 **GPU hardware fundamentals to make informed decisions**:
+ **GPU hardware fundamentals to make informed decisions**:
 1. **Understand GPU architecture**: CUDA cores vs Tensor Cores → what accelerates LLMs
 2. **Read GPU datasheets correctly**: VRAM, bandwidth, TFLOP/s → which specs matter
 3. **Roofline analysis**: Memory-bound vs compute-bound → why LLM inference is bandwidth-limited
 4. **Compare GPU options**: A100 vs H100 vs RTX 4090 → cost/performance for Llama-3-8B
 5. **Identify target GPU**: RTX 4090 (24GB, 1.0 TB/s, $1.50/hr) → best price/performance for 8B model
-
-⚡ **Expected outcomes**:
+**Expected outcomes**:
 - **GPU selection**: RTX 4090 identified as target (24GB VRAM, 1.0 TB/s bandwidth, $1.50/hr cloud rental)
 - **Cost estimate**:
-  ```
-  RTX 4090 @ $1.50/hr × 730 hr/month = $1,095/month
-  vs $15,000 budget → $13,905 headroom (93% under budget!) ✅
-  vs $80,000 OpenAI baseline → $78,905 savings/month (98.6% reduction) ✅
-  ```
+ ```
+ RTX 4090 @ $1.50/hr × 730 hr/month = $1,095/month
+ vs $15,000 budget → $13,905 headroom (93% under budget!)
+ vs $80,000 OpenAI baseline → $78,905 savings/month (98.6% reduction)
+ ```
 - **Bottleneck identified**: LLM inference is **memory-bound**, not compute-bound
-  ```
-  Llama-3-8B decode: ~1-5 FLOP/byte (load 16GB weights, do 16 GFLOP)
-  RTX 4090 ridge point: 165 TFLOP/s / 1.0 TB/s = 164 FLOP/byte
-  1-5 << 164 → deep in memory-bound region → bandwidth is king, not TFLOP/s
-  ```
+ ```
+ Llama-3-8B decode: ~1-5 FLOP/byte (load 16GB weights, do 16 GFLOP)
+ RTX 4090 ridge point: 165 TFLOP/s / 1.0 TB/s = 164 FLOP/byte
+ 1-5 << 164 → deep in memory-bound region → bandwidth is king, not TFLOP/s
+ ```
 - **Next question unlocked**: "Will 24GB VRAM fit Llama-3-8B?" → Need Ch.2 memory calculator
 
 **Constraint status after Ch.1**:
-- #1 (Cost): ⚡ **ON TRACK** ($1,095/month estimated, well under $15k budget)
-- #2 (Latency): ⚡ **UNKNOWN** (need Ch.5-6 for latency benchmarks)
-- #3 (Throughput): ⚡ **UNKNOWN** (need Ch.5-6 for throughput tests)
-- #4 (Memory): ⚡ **IDENTIFIED** (24GB VRAM target, but need Ch.2 to confirm model fits)
-- #5 (Quality): ⚡ **ASSUMED** (Llama-3-8B benchmarks suggest >95%, need validation)
-- #6 (Reliability): ⚡ **UNKNOWN** (need Ch.9-10 for production readiness)
+- #1 (Cost): **ON TRACK** ($1,095/month estimated, well under $15k budget)
+- #2 (Latency): **UNKNOWN** (need Ch.5-6 for latency benchmarks)
+- #3 (Throughput): **UNKNOWN** (need Ch.5-6 for throughput tests)
+- #4 (Memory): **IDENTIFIED** (24GB VRAM target, but need Ch.2 to confirm model fits)
+- #5 (Quality): **ASSUMED** (Llama-3-8B benchmarks suggest >95%, need validation)
+- #6 (Reliability): **UNKNOWN** (need Ch.9-10 for production readiness)
 
 **Foundation established**: Understand GPU hardware specs → can now calculate exact VRAM needs (Ch.2)
 
@@ -125,11 +124,11 @@ The SM is the fundamental building block of a GPU. Each SM contains:
 
 ```
 One Streaming Multiprocessor (SM)
-├── CUDA Cores     — scalar floating-point arithmetic units (FP32, FP64)
-├── Tensor Cores   — 4×4 matrix multiply-accumulate units (FP16, BF16, INT8, FP8)
-├── L1 Cache       — ~128 KB, private to the SM
-├── Shared Memory  — programmer-controlled scratchpad, part of the L1 budget
-├── Registers      — 64K 32-bit registers; private to each thread
+├── CUDA Cores — scalar floating-point arithmetic units (FP32, FP64)
+├── Tensor Cores — 4×4 matrix multiply-accumulate units (FP16, BF16, INT8, FP8)
+├── L1 Cache — ~128 KB, private to the SM
+├── Shared Memory — programmer-controlled scratchpad, part of the L1 budget
+├── Registers — 64K 32-bit registers; private to each thread
 └── Warp Schedulers — schedule 32-thread warps onto execution units
 
 A "warp" = 32 threads that execute the same instruction in lock-step (SIMT).
@@ -170,17 +169,17 @@ This is the most important section in this chapter. Almost all inference perform
 Hierarchy (fastest → slowest, smallest → largest)
 
 ┌────────────────────────────────────────────────────────────────────────┐
-│  Registers     │  ~256 KB per SM  │  ~TB/s   │  Compiler-managed       │
+│ Registers │ ~256 KB per SM │ ~TB/s │ Compiler-managed │
 ├────────────────────────────────────────────────────────────────────────┤
-│  L1 / Shared   │  ~128 KB per SM  │  ~30 TB/s │  Programmer-managed    │
+│ L1 / Shared │ ~128 KB per SM │ ~30 TB/s │ Programmer-managed │
 ├────────────────────────────────────────────────────────────────────────┤
-│  L2 Cache      │  40–50 MB        │  ~12 TB/s │  Hardware-managed      │
+│ L2 Cache │ 40–50 MB │ ~12 TB/s │ Hardware-managed │
 ├────────────────────────────────────────────────────────────────────────┤
-│  HBM (VRAM)    │  24–80 GB        │  1–4 TB/s │  Device memory (slow!) │
+│ HBM (VRAM) │ 24–80 GB │ 1–4 TB/s │ Device memory (slow!) │
 ├────────────────────────────────────────────────────────────────────────┤
-│  System RAM    │  64–2,048 GB     │  ~50 GB/s │  PCIe transfer (slow!) │
+│ System RAM │ 64–2,048 GB │ ~50 GB/s │ PCIe transfer (slow!) │
 ├────────────────────────────────────────────────────────────────────────┤
-│  NVMe SSD      │  TBs             │  ~7 GB/s  │  Disk offloading        │
+│ NVMe SSD │ TBs │ ~7 GB/s │ Disk offloading │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -193,16 +192,16 @@ HBM is a 3D-stacked DRAM technology mounted directly adjacent to the GPU die, co
 **Why bandwidth matters for InferenceBase**:
 ```
 Llama-3-8B FP16 decode (batch=1):
-  - Load 16GB model weights from VRAM
-  - Perform ~16 GFLOP of computation
-  - Arithmetic intensity = 16 GFLOP / 16 GB = 1 FLOP/byte
+ - Load 16GB model weights from VRAM
+ - Perform ~16 GFLOP of computation
+ - Arithmetic intensity = 16 GFLOP / 16 GB = 1 FLOP/byte
 
-  On RTX 4090 (1.0 TB/s bandwidth):
-    Time to load weights = 16 GB / 1.0 TB/s = 16 ms
-    Time to compute = 16 GFLOP / 165 TFLOP/s = 0.1 ms
-    → GPU spends 99.4% of time waiting for memory! ⚠️
+ On RTX 4090 (1.0 TB/s bandwidth):
+ Time to load weights = 16 GB / 1.0 TB/s = 16 ms
+ Time to compute = 16 GFLOP / 165 TFLOP/s = 0.1 ms
+ → GPU spends 99.4% of time waiting for memory!
 
-  Conclusion: Bandwidth (TB/s) determines throughput, not TFLOP/s.
+ Conclusion: Bandwidth (TB/s) determines throughput, not TFLOP/s.
 ```
 
 | GPU | VRAM | VRAM type | Bandwidth |
@@ -249,16 +248,16 @@ The Roofline Model is a visual tool that maps every operation onto a 2D space of
 ```
 Achievable
 TFLOP/s
-  │
-  │                  ┌──────────────────── Peak Compute
-  │                 /  (compute-bound)
-  │                /
-  │               /  ← slope = bandwidth
-  │              /
-  │             /
-  │____________/ ← ridge point
-  │(memory-bound)
-  └───────────────────────── Arithmetic Intensity (FLOP/byte)
+ │
+ │ ┌──────────────────── Peak Compute
+ │ / (compute-bound)
+ │ /
+ │ / ← slope = bandwidth
+ │ /
+ │ /
+ │____________/ ← ridge point
+ │(memory-bound)
+ └───────────────────────── Arithmetic Intensity (FLOP/byte)
 ```
 
 **Where common AI operations land:**
@@ -287,10 +286,10 @@ GPU execution of GEMM (General Matrix Multiply):
 1. Decompose C into tiles (e.g., 128×128 output tiles)
 2. Each tile is assigned to one thread block → one SM
 3. Within an SM:
-   a. Load a tile of A and a tile of B into shared memory
-   b. Tensor Cores compute the tile product (4×4 × 4×4 accumulations)
-   c. Repeat until the full K dimension is consumed
-   d. Write the output tile back to HBM
+ a. Load a tile of A and a tile of B into shared memory
+ b. Tensor Cores compute the tile product (4×4 × 4×4 accumulations)
+ c. Repeat until the full K dimension is consumed
+ d. Write the output tile back to HBM
 4. All SMs execute in parallel — the full C matrix is computed simultaneously
 
 The key: shared memory acts as a fast staging area that hides HBM latency.
@@ -328,31 +327,31 @@ When comparing GPUs for an AI workload, five numbers matter:
 ```
 Generation timeline (datacenter focus):
 
-2017  V100 (Volta)
-      ├─ First with Tensor Cores (FP16 only)
-      ├─ HBM2: 900 GB/s (32 GB) / 900 GB/s (16 GB)
-      └─ Still common in older cloud instances (p3 on AWS)
+2017 V100 (Volta)
+ ├─ First with Tensor Cores (FP16 only)
+ ├─ HBM2: 900 GB/s (32 GB) / 900 GB/s (16 GB)
+ └─ Still common in older cloud instances (p3 on AWS)
 
-2020  A100 (Ampere)
-      ├─ BF16 Tensor Cores — the sweet spot for LLM training
-      ├─ HBM2e: 2.0 TB/s (80 GB), 1.6 TB/s (40 GB)
-      ├─ MIG (Multi-Instance GPU): partition one A100 into 7 isolated instances
-      └─ The workhorse of LLM training and inference (2021–2024)
+2020 A100 (Ampere)
+ ├─ BF16 Tensor Cores — the sweet spot for LLM training
+ ├─ HBM2e: 2.0 TB/s (80 GB), 1.6 TB/s (40 GB)
+ ├─ MIG (Multi-Instance GPU): partition one A100 into 7 isolated instances
+ └─ The workhorse of LLM training and inference (2021–2024)
 
-2022  H100 (Hopper)
-      ├─ FP8 Tensor Cores — first hardware support for FP8 inference
-      ├─ HBM3: 3.35 TB/s (SXM flavor) — 1.7× over A100
-      ├─ NVLink 4.0: 900 GB/s bidirectional per GPU
-      └─ The current standard for large-scale training
+2022 H100 (Hopper)
+ ├─ FP8 Tensor Cores — first hardware support for FP8 inference
+ ├─ HBM3: 3.35 TB/s (SXM flavor) — 1.7× over A100
+ ├─ NVLink 4.0: 900 GB/s bidirectional per GPU
+ └─ The current standard for large-scale training
 
-2024  B200 (Blackwell)
-      ├─ FP4 support, 20 PFLOP/s peak (FP4 sparsity)
-      ├─ HBM3e: 8.0 TB/s
-      └─ Targeted at trillion-parameter training
+2024 B200 (Blackwell)
+ ├─ FP4 support, 20 PFLOP/s peak (FP4 sparsity)
+ ├─ HBM3e: 8.0 TB/s
+ └─ Targeted at trillion-parameter training
 
 Consumer (relevant for self-hosting):
-      RTX 4090  — 24 GB GDDR6X, 1.0 TB/s, 165 TFLOP/s (BF16), ~$1,600
-      RTX 3090  — 24 GB GDDR6X, 0.9 TB/s,  71 TFLOP/s (BF16), ~$700 used
+ RTX 4090 — 24 GB GDDR6X, 1.0 TB/s, 165 TFLOP/s (BF16), ~$1,600
+ RTX 3090 — 24 GB GDDR6X, 0.9 TB/s, 71 TFLOP/s (BF16), ~$700 used
 ```
 
 ---
@@ -364,63 +363,62 @@ Consumer (relevant for self-hosting):
 VRAM Utilization (24 GB total)
 ═══════════════════════════════════════════════════════════════
 
-  ┌──────────────────────────────────────────────┐
-  │ Model Parameters (FP16)                      │  16.0 GB
-  │ 8B params × 2 bytes/param                    │
-  ├──────────────────────────────────────────────┤
-  │ KV Cache (batch=1, seq=2048)                 │   4.0 GB
-  │ 2048 tokens × 32 layers × 2 × 128 × 32 heads │
-  ├──────────────────────────────────────────────┤
-  │ Activations (forward pass tensors)           │   2.0 GB
-  │ Temporary buffers for matmul, softmax        │
-  ├──────────────────────────────────────────────┤
-  │ VRAM Used                                    │  22.0 GB
-  ├──────────────────────────────────────────────┤
-  │ Available Headroom                           │   2.0 GB
-  └──────────────────────────────────────────────┘
-
-  ✅ Fits in 24GB RTX 4090 with 8% headroom (tight!)
-  ⚠️  Batch=2 would require +4GB → 26GB total → OOM crash
+ ┌──────────────────────────────────────────────┐
+ │ Model Parameters (FP16) │ 16.0 GB
+ │ 8B params × 2 bytes/param │
+ ├──────────────────────────────────────────────┤
+ │ KV Cache (batch=1, seq=2048) │ 4.0 GB
+ │ 2048 tokens × 32 layers × 2 × 128 × 32 heads │
+ ├──────────────────────────────────────────────┤
+ │ Activations (forward pass tensors) │ 2.0 GB
+ │ Temporary buffers for matmul, softmax │
+ ├──────────────────────────────────────────────┤
+ │ VRAM Used │ 22.0 GB
+ ├──────────────────────────────────────────────┤
+ │ Available Headroom │ 2.0 GB
+ └──────────────────────────────────────────────┘
+Fits in 24GB RTX 4090 with 8% headroom (tight!)
+Batch=2 would require +4GB → 26GB total → OOM crash
 
 ═══════════════════════════════════════════════════════════════
 ```
 
-> 💡 **Key insight**: 22GB / 24GB = 92% utilization → zero room for batching. This is why Ch.3 (Quantization) is critical — INT4 cuts params from 16GB → 4GB, freeing 12GB for KV cache → enables batch=4.
+> **Key insight**: 22GB / 24GB = 92% utilization → zero room for batching. This is why Ch.3 (Quantization) is critical — INT4 cuts params from 16GB → 4GB, freeing 12GB for KV cache → enables batch=4.
 
 Tracing one decode step of an LLM inference forward pass at the hardware level:
 
 ```
 Step 1: LOAD input embedding
-        GPU fetches the embedding vector for the last generated token
-        from HBM. ~4 KB for a 4096-dim vector in BF16.
-        → Memory-bound, nothing to compute yet.
+ GPU fetches the embedding vector for the last generated token
+ from HBM. ~4 KB for a 4096-dim vector in BF16.
+ → Memory-bound, nothing to compute yet.
 
 Step 2: ATTENTION — Q/K/V projections
-        Three matrix multiplies: [1 × 4096] × [4096 × 4096]
-        FLOPs = 2 × 1 × 4096 × 4096 ≈ 33M FLOPs
-        Bytes loaded = 3 × 4096 × 4096 × 2 bytes ≈ 96 MB
-        Arithmetic intensity ≈ 0.34 FLOP/byte → deep memory-bound
+ Three matrix multiplies: [1 × 4096] × [4096 × 4096]
+ FLOPs = 2 × 1 × 4096 × 4096 ≈ 33M FLOPs
+ Bytes loaded = 3 × 4096 × 4096 × 2 bytes ≈ 96 MB
+ Arithmetic intensity ≈ 0.34 FLOP/byte → deep memory-bound
 
 Step 3: ATTENTION — score computation
-        Q × Kᵀ for each head: shape [1 × 128] × [128 × seq_len]
-        At seq_len = 512: 33M FLOPs, 0.5 MB bytes read
-        Intensity ≈ 66 FLOP/byte → still memory-bound (ridge=156)
+ Q × Kᵀ for each head: shape [1 × 128] × [128 × seq_len]
+ At seq_len = 512: 33M FLOPs, 0.5 MB bytes read
+ Intensity ≈ 66 FLOP/byte → still memory-bound (ridge=156)
 
 Step 4: FFN — two linear layers
-        [1 × 4096] × [4096 × 16384] then [1 × 16384] × [16384 × 4096]
-        ≈ 268M FLOPs, 512 MB loaded
-        Intensity ≈ 0.5 FLOP/byte → memory-bound
+ [1 × 4096] × [4096 × 16384] then [1 × 16384] × [16384 × 4096]
+ ≈ 268M FLOPs, 512 MB loaded
+ Intensity ≈ 0.5 FLOP/byte → memory-bound
 
 Step 5: OUTPUT head — project to vocab
-        [1 × 4096] × [4096 × 32000]
-        FLOPs ≈ 262M, Bytes ≈ 256 MB
-        Intensity ≈ 1.0 FLOP/byte → memory-bound
+ [1 × 4096] × [4096 × 32000]
+ FLOPs ≈ 262M, Bytes ≈ 256 MB
+ Intensity ≈ 1.0 FLOP/byte → memory-bound
 
 TOTAL per decode step (Llama-3-8B, seq_len=512):
-  ≈ 16 GFLOP, ≈ 1.2 GB from HBM
-  On A100 (2 TB/s): 0.6 ms minimum (bandwidth-limited)
-  Actual: ~1–2 ms with overhead → ~500–1000 tokens/sec maximum
-  With batch size 1 (single user): GPU is utilised <0.1% of peak compute
+ ≈ 16 GFLOP, ≈ 1.2 GB from HBM
+ On A100 (2 TB/s): 0.6 ms minimum (bandwidth-limited)
+ Actual: ~1–2 ms with overhead → ~500–1000 tokens/sec maximum
+ With batch size 1 (single user): GPU is utilised <0.1% of peak compute
 ```
 
 This walkthrough explains why **batching transforms LLM inference economics** more than any other single technique.
@@ -434,22 +432,22 @@ This walkthrough explains why **batching transforms LLM inference economics** mo
 ```
 Achievable
 TFLOP/s
- 312 │                           ┌─────────────────── Peak Compute (312 TFLOP/s)
-     │           Compute-bound  /
-     │                         /
-  50 │                Large ★ /
-     │              matmul    /  Prefill (large batch) ★
-     │                       /
-  10 │                      /        Attention (long) ★
-     │                     /
-   1 │      Memory-bound  /  Prefill (small batch) ★
-     │                   /
- 0.1 │  Decode ★        /  Embedding ★
-     │   (batch=1)     /
-     └─────────────────┬────────────────────────────── Arithmetic Intensity
-                       │                               (FLOP/byte)
-                    156 ← ridge point
-      0.5    5     50  156       500       5000
+ 312 │ ┌─────────────────── Peak Compute (312 TFLOP/s)
+ │ Compute-bound /
+ │ /
+ 50 │ Large ★ /
+ │ matmul / Prefill (large batch) ★
+ │ /
+ 10 │ / Attention (long) ★
+ │ /
+ 1 │ Memory-bound / Prefill (small batch) ★
+ │ /
+ 0.1 │ Decode ★ / Embedding ★
+ │ (batch=1) /
+ └─────────────────┬────────────────────────────── Arithmetic Intensity
+ │ (FLOP/byte)
+ 156 ← ridge point
+ 0.5 5 50 156 500 5000
 ```
 
 ---
@@ -478,7 +476,7 @@ Every GPU decision has three independent dials. Understanding how they interact 
 | FP8 | 1 byte | ~2× throughput (H100+) | ~1–2% on sensitive tasks | H100 inference at scale |
 | INT4 | 0.5 bytes | 2–3× throughput (GPTQ/AWQ) | 2–4% on reasoning benchmarks | Edge / cost-optimised inference |
 
-> 💡 The RTX 4090's sweet spot is BF16 or INT8 — both fit within 24 GB for Llama-3-8B. FP8 and INT4 are covered in Ch.3 (Quantization).
+> The RTX 4090's sweet spot is BF16 or INT8 — both fit within 24 GB for Llama-3-8B. FP8 and INT4 are covered in Ch.3 (Quantization).
 
 ### Dial 2 — Batch Size
 
@@ -491,7 +489,7 @@ Batch size is the throughput multiplier. For inference, it trades latency for th
 | 8 | +~4 GB KV cache | ~220 tok/s | ~900 ms | Throughput-optimised serving |
 | 16 | +~8 GB KV cache | ~350 tok/s | ~1.8 s | Batch processing / offline |
 
-> ⚠️ At batch=16, you'll hit the KV cache VRAM ceiling (8 GB) before hitting the compute ceiling — covered in Ch.2.
+> At batch=16, you'll hit the KV cache VRAM ceiling (8 GB) before hitting the compute ceiling — covered in Ch.2.
 
 ### Dial 3 — Tile Size (SM Occupancy)
 
@@ -511,30 +509,30 @@ In practice: use the defaults from cuBLAS or Triton-Flash (they autotune). The d
 import math
 
 def roofline_check(peak_bandwidth_tbs, peak_compute_tflops, flops_per_byte):
-    """
-    Determine if a workload is compute-bound or memory-bound.
+ """
+ Determine if a workload is compute-bound or memory-bound.
 
-    Args:
-        peak_bandwidth_tbs: GPU memory bandwidth in TB/s (e.g. 1.0 for RTX 4090)
-        peak_compute_tflops: Peak BF16 TFLOP/s (e.g. 165 for RTX 4090)
-        flops_per_byte: Arithmetic intensity of the workload
+ Args:
+ peak_bandwidth_tbs: GPU memory bandwidth in TB/s (e.g. 1.0 for RTX 4090)
+ peak_compute_tflops: Peak BF16 TFLOP/s (e.g. 165 for RTX 4090)
+ flops_per_byte: Arithmetic intensity of the workload
 
-    Returns:
-        dict with ridge_point, performance_ceiling, bound
-    """
-    ridge_point = (peak_compute_tflops * 1e12) / (peak_bandwidth_tbs * 1e12)
-    if flops_per_byte < ridge_point:
-        # Memory-bound: throughput = bandwidth * intensity
-        ceiling_tflops = peak_bandwidth_tbs * flops_per_byte
-        bound = "memory-bound"
-    else:
-        # Compute-bound: throughput = peak compute
-        ceiling_tflops = peak_compute_tflops
-        bound = "compute-bound"
-    return {"ridge_point": round(ridge_point, 1), "ceiling_tflops": round(ceiling_tflops, 1), "bound": bound}
+ Returns:
+ dict with ridge_point, performance_ceiling, bound
+ """
+ ridge_point = (peak_compute_tflops * 1e12) / (peak_bandwidth_tbs * 1e12)
+ if flops_per_byte < ridge_point:
+ # Memory-bound: throughput = bandwidth * intensity
+ ceiling_tflops = peak_bandwidth_tbs * flops_per_byte
+ bound = "memory-bound"
+ else:
+ # Compute-bound: throughput = peak compute
+ ceiling_tflops = peak_compute_tflops
+ bound = "compute-bound"
+ return {"ridge_point": round(ridge_point, 1), "ceiling_tflops": round(ceiling_tflops, 1), "bound": bound}
 
 # LLM decode phase: ~2 FLOPs per parameter per token, 1 byte per param (INT8)
-llm_intensity = 2  # FLOPs/byte for INT8 decode
+llm_intensity = 2 # FLOPs/byte for INT8 decode
 rtx4090 = roofline_check(peak_bandwidth_tbs=1.0, peak_compute_tflops=165, flops_per_byte=llm_intensity)
 print(rtx4090)
 # → {'ridge_point': 165.0, 'ceiling_tflops': 2.0, 'bound': 'memory-bound'}
@@ -546,21 +544,21 @@ print(rtx4090)
 from vllm import LLM, SamplingParams
 
 def check_model_fits(model_name: str, quantization: str = "none") -> dict:
-    """
-    Attempt to load model with given quantization and report VRAM usage.
-    Production pattern: run this before cluster provisioning.
-    """
-    try:
-        llm = LLM(model=model_name, quantization=quantization if quantization != "none" else None,
-                  max_model_len=4096, enforce_eager=True)
-        import torch
-        vram_used_gb = torch.cuda.memory_allocated() / 1e9
-        vram_total_gb = torch.cuda.get_device_properties(0).total_memory / 1e9
-        return {"fits": True, "vram_used_gb": round(vram_used_gb, 1),
-                "vram_total_gb": round(vram_total_gb, 1),
-                "headroom_pct": round((1 - vram_used_gb / vram_total_gb) * 100, 1)}
-    except RuntimeError as e:
-        return {"fits": False, "error": str(e)}
+ """
+ Attempt to load model with given quantization and report VRAM usage.
+ Production pattern: run this before cluster provisioning.
+ """
+ try:
+ llm = LLM(model=model_name, quantization=quantization if quantization != "none" else None,
+ max_model_len=4096, enforce_eager=True)
+ import torch
+ vram_used_gb = torch.cuda.memory_allocated() / 1e9
+ vram_total_gb = torch.cuda.get_device_properties(0).total_memory / 1e9
+ return {"fits": True, "vram_used_gb": round(vram_used_gb, 1),
+ "vram_total_gb": round(vram_total_gb, 1),
+ "headroom_pct": round((1 - vram_used_gb / vram_total_gb) * 100, 1)}
+ except RuntimeError as e:
+ return {"fits": False, "error": str(e)}
 ```
 
 ---
@@ -579,49 +577,47 @@ def check_model_fits(model_name: str, quantization: str = "none") -> dict:
 
 ## 12 · Progress Check — What We've Accomplished
 
-🎉 **GPU HARDWARE SELECTION COMPLETE! Target identified: RTX 4090**
+ **GPU HARDWARE SELECTION COMPLETE! Target identified: RTX 4090**
 
 **Critical breakthrough**: Understand GPU specs → read datasheets correctly → identify best hardware for LLM inference → calculate monthly costs → present business case to CEO
 
 **Unlocked capabilities**:
-- ✅ **Read GPU datasheets**: Understand VRAM, bandwidth, TFLOP/s → know which specs drive LLM performance
-- ✅ **Roofline analysis**: LLM inference is memory-bound (1-5 FLOP/byte vs 164 ridge point) → bandwidth is king
-- ✅ **Cost-performance comparison**: RTX 4090 ($1.50/hr) beats A100 ($3/hr) for single-user inference
-- ✅ **Hardware recommendation**: RTX 4090 (24GB VRAM, 1.0 TB/s, 165 TFLOP/s BF16) selected
+- **Read GPU datasheets**: Understand VRAM, bandwidth, TFLOP/s → know which specs drive LLM performance
+- **Roofline analysis**: LLM inference is memory-bound (1-5 FLOP/byte vs 164 ridge point) → bandwidth is king
+- **Cost-performance comparison**: RTX 4090 ($1.50/hr) beats A100 ($3/hr) for single-user inference
+- **Hardware recommendation**: RTX 4090 (24GB VRAM, 1.0 TB/s, 165 TFLOP/s BF16) selected
 
 **Progress toward constraints**:
 
 | Constraint | Status | Current State |
 |------------|--------|---------------|
-| #1 COST | ✅ **EXCELLENT!** | $1,095/month estimated (RTX 4090 @ $1.50/hr × 730 hr/mo) — **93% under budget!** |
-| #2 LATENCY | ⚡ **IDENTIFIED BOTTLENECK** | Memory bandwidth (1.0 TB/s) is bottleneck, not compute (165 TFLOP/s) — need Ch.5-6 for latency tests |
-| #3 THROUGHPUT | ⚡ **PENDING** | Batch=1 gives ~500 tokens/sec max (bandwidth-limited) — need batching (Ch.5) to hit 10k req/day |
-| #4 MEMORY | ⚡ **CANDIDATE IDENTIFIED** | 24GB VRAM available — but does Llama-3-8B fit? Need Ch.2 memory calculator! |
-| #5 QUALITY | ⚡ **ASSUMED** | Llama-3-8B benchmark scores suggest >95% accuracy — need validation |
-| #6 RELIABILITY | ⚡ **UNKNOWN** | Need Ch.9-10 for production deployment patterns |
+| #1 COST | **EXCELLENT!** | $1,095/month estimated (RTX 4090 @ $1.50/hr × 730 hr/mo) — **93% under budget!** |
+| #2 LATENCY | **IDENTIFIED BOTTLENECK** | Memory bandwidth (1.0 TB/s) is bottleneck, not compute (165 TFLOP/s) — need Ch.5-6 for latency tests |
+| #3 THROUGHPUT | **PENDING** | Batch=1 gives ~500 tokens/sec max (bandwidth-limited) — need batching (Ch.5) to hit 10k req/day |
+| #4 MEMORY | **CANDIDATE IDENTIFIED** | 24GB VRAM available — but does Llama-3-8B fit? Need Ch.2 memory calculator! |
+| #5 QUALITY | **ASSUMED** | Llama-3-8B benchmark scores suggest >95% accuracy — need validation |
+| #6 RELIABILITY | **UNKNOWN** | Need Ch.9-10 for production deployment patterns |
 
 **What we can solve now**:
-
-✅ **Read a GPU datasheet and identify the right specs**:
+**Read a GPU datasheet and identify the right specs**:
 ```
 Before Ch.1:
 Engineer looks at A100 datasheet: "312 TFLOP/s sounds fast! But wait,
-  RTX 4090 is only 165 TFLOP/s... does that mean A100 is 2× better?"
+ RTX 4090 is only 165 TFLOP/s... does that mean A100 is 2× better?"
 
 After Ch.1:
 Engineer: "LLM decode lands at 1-5 FLOP/byte (memory-bound region).
-  A100: 2.0 TB/s bandwidth → ridge point = 156 FLOP/byte
-  RTX 4090: 1.0 TB/s bandwidth → ridge point = 164 FLOP/byte
+ A100: 2.0 TB/s bandwidth → ridge point = 156 FLOP/byte
+ RTX 4090: 1.0 TB/s bandwidth → ridge point = 164 FLOP/byte
 
-  For memory-bound workloads, performance ∝ bandwidth, not TFLOP/s.
-  A100 has 2× bandwidth but costs 10× more ($80k vs $8k retail).
-  For single-user inference (batch=1), RTX 4090 delivers 50% of A100
-  throughput at 10% of the cost. Winner: RTX 4090!"
+ For memory-bound workloads, performance ∝ bandwidth, not TFLOP/s.
+ A100 has 2× bandwidth but costs 10× more ($80k vs $8k retail).
+ For single-user inference (batch=1), RTX 4090 delivers 50% of A100
+ throughput at 10% of the cost. Winner: RTX 4090!"
 
-Result: ✅ Can make informed hardware decisions!
+Result: Can make informed hardware decisions!
 ```
-
-✅ **Understand why LLM inference is slow (and what to optimize)**:
+**Understand why LLM inference is slow (and what to optimize)**:
 ```
 Before Ch.1:
 "Llama-3-8B has 8 billion parameters. An H100 has 1,979 TFLOP/s.
@@ -639,10 +635,9 @@ After Ch.1:
  To improve: increase arithmetic intensity by batching multiple requests
  (load weights once, process N tokens) → Ch.5 PagedAttention"
 
-Result: ✅ Know the bottleneck before building!
+Result: Know the bottleneck before building!
 ```
-
-✅ **Estimate monthly GPU costs**:
+**Estimate monthly GPU costs**:
 ```
 RTX 4090 cloud rental pricing:
 - RunPod on-demand: $1.50/hr
@@ -658,7 +653,7 @@ Savings: $78,905/month (98.6% reduction!)
 vs Budget constraint: $15,000/month
 Headroom: $13,905/month (can scale to 13× more GPUs if needed)
 
-Result: ✅ Business case is solid!
+Result: Business case is solid!
 ```
 
 **ASCII Cost Breakdown**:
@@ -666,22 +661,21 @@ Result: ✅ Business case is solid!
 Monthly GPU Cost Structure (RTX 4090)
 ═════════════════════════════════════════════════════════════
 
-  Cloud rental:  $1.50/hr × 730 hr/month = $1,095
-  ┌────────────────────────────────────────────────┐
-  │ Baseline (OpenAI)          $80,000/month       │ ← 73×
-  ├────────────────────────────────────────────────┤
-  │ Budget constraint          $15,000/month       │ ← 14×
-  ├────────────────────────────────────────────────┤
-  │ RTX 4090 actual cost        $1,095/month       │ ✅
-  └────────────────────────────────────────────────┘
+ Cloud rental: $1.50/hr × 730 hr/month = $1,095
+ ┌────────────────────────────────────────────────┐
+ │ Baseline (OpenAI) $80,000/month │ ← 73×
+ ├────────────────────────────────────────────────┤
+ │ Budget constraint $15,000/month │ ← 14×
+ ├────────────────────────────────────────────────┤
+ │ RTX 4090 actual cost $1,095/month │
+ └────────────────────────────────────────────────┘
 
-  Savings: $78,905/month (98.6% reduction)
-  Headroom: $13,905/month available for scaling
-  Payback: immediate (100% ROI from month 1)
+ Savings: $78,905/month (98.6% reduction)
+ Headroom: $13,905/month available for scaling
+ Payback: immediate (100% ROI from month 1)
 ═════════════════════════════════════════════════════════════
 ```
-
-✅ **Present to CEO with confidence**:
+**Present to CEO with confidence**:
 ```
 CEO: "So, which GPU do we need?"
 
@@ -693,37 +687,37 @@ Engineer: "RTX 4090. Here's why:
 5. Budget headroom: $13,905 → room to scale to 13 GPUs if traffic grows.
 
 Next steps: Ch.2 calculates exact VRAM (does 24GB fit Llama-3-8B?),
-            then Ch.5-6 benchmark latency/throughput to confirm <2s SLA."
+ then Ch.5-6 benchmark latency/throughput to confirm <2s SLA."
 
 CEO: "Perfect. Green light to continue. What's the timeline?"
 
 Engineer: "2 more weeks to validate memory fits + benchmark performance.
-           If tests pass, we deploy in Week 3."
+ If tests pass, we deploy in Week 3."
 
-Result: ✅ CEO has confidence in the plan!
+Result: CEO has confidence in the plan!
 ```
 
 **What's still blocking**:
 
-- ❌ **Memory fit unknown**: 8B parameters = 16GB FP16... but what about KV cache, activations, optimizer states? Does it fit in 24GB VRAM? → **Need Ch.2 memory calculator**
-- ❌ **Latency/throughput untested**: Roofline model predicts memory-bound performance, but what is actual p95 latency with batch=1? Can we hit 10k req/day? → **Need Ch.5-6 benchmarks**
-- ❌ **Quantization unexplored**: Can INT4 quantization cut VRAM 4× (16GB → 4GB params) without dropping below 95% accuracy target? → **Need Ch.3**
-- ❌ **Batching strategy missing**: How to batch requests to hit 10k req/day throughput without violating 2s p95 latency SLA? → **Need Ch.5 PagedAttention**
-- ❌ **Serving framework unknown**: vLLM? TensorRT-LLM? Text Generation Inference? Which framework delivers best latency for InferenceBase? → **Need Ch.6 benchmarks**
-- ❌ **Production readiness unclear**: Monitoring, checkpointing, fault tolerance, zero-downtime deployments? → **Need Ch.9-10**
+- **Memory fit unknown**: 8B parameters = 16GB FP16... but what about KV cache, activations, optimizer states? Does it fit in 24GB VRAM? → **Need Ch.2 memory calculator**
+- **Latency/throughput untested**: Roofline model predicts memory-bound performance, but what is actual p95 latency with batch=1? Can we hit 10k req/day? → **Need Ch.5-6 benchmarks**
+- **Quantization unexplored**: Can INT4 quantization cut VRAM 4× (16GB → 4GB params) without dropping below 95% accuracy target? → **Need Ch.3**
+- **Batching strategy missing**: How to batch requests to hit 10k req/day throughput without violating 2s p95 latency SLA? → **Need Ch.5 PagedAttention**
+- **Serving framework unknown**: vLLM? TensorRT-LLM? Text Generation Inference? Which framework delivers best latency for InferenceBase? → **Need Ch.6 benchmarks**
+- **Production readiness unclear**: Monitoring, checkpointing, fault tolerance, zero-downtime deployments? → **Need Ch.9-10**
 
 **Next chapter**: [Memory & Compute Budgets](../ch02_memory_and_compute_budgets/README.md) calculates exact VRAM breakdown:
 ```
 Llama-3-8B VRAM budget (FP16, batch=1, seq_len=2048):
-  Parameters:   8B params × 2 bytes/param (FP16)      = ? GB
-  KV cache:     batch × seq × layers × hidden_dim     = ? GB
-  Activations:  forward pass temporary tensors         = ? GB
-  ───────────────────────────────────────────────────────────
-  Total:        ? GB
+ Parameters: 8B params × 2 bytes/param (FP16) = ? GB
+ KV cache: batch × seq × layers × hidden_dim = ? GB
+ Activations: forward pass temporary tensors = ? GB
+ ───────────────────────────────────────────────────────────
+ Total: ? GB
 
-  Available:    24 GB (RTX 4090)
+ Available: 24 GB (RTX 4090)
 
-  Result: ✅ Fits with headroom?  or  ❌ OOM crash?
+ Result: Fits with headroom? or OOM crash?
 ```
 
 Ch.2 provides the rigorous arithmetic to answer this question definitively.

@@ -10,13 +10,13 @@
 
 ## § 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Build **OrderFlow** — AI-native B2B purchase order automation satisfying 8 constraints:
+> **The mission**: Build **OrderFlow** — AI-native B2B purchase order automation satisfying 8 constraints:
 > 1. **THROUGHPUT**: 1,000 POs/day — 2. **LATENCY**: <4hr SLA — 3. **ACCURACY**: <2% error — 4. **SCALABILITY**: 10 agents/PO — 5. **RELIABILITY**: >99.9% uptime — 6. **AUDITABILITY**: Full traceability — 7. **OBSERVABILITY**: Real-time monitoring — 8. **DEPLOYABILITY**: Zero-downtime updates
 
 **What we know so far**:
-  ✅ This is Chapter 1 — the starting point. We're beginning from manual baseline.
-  ✅ **Manual baseline**: 3 procurement specialists processing 50 POs/day @ $420k/year labor cost. 36-hour median latency, 5% error rate.
-  ❌ But we can't automate this yet — no agent architecture exists.
+This is Chapter 1 — the starting point. We're beginning from manual baseline.
+**Manual baseline**: 3 procurement specialists processing 50 POs/day @ $420k/year labor cost. 36-hour median latency, 5% error rate.
+But we can't automate this yet — no agent architecture exists.
 
 **What's blocking us**:
 
@@ -28,22 +28,22 @@ A single-agent system hits the 8k token context window after 3 supplier negotiat
 
 ### What We Unlock in This Chapter
 
-- ✅ Understand the OpenAI message envelope (`role`, `content`, `tool_calls`) as the lingua franca of multi-agent systems
-- ✅ Three handoff strategies: full history passthrough (audit-focused), structured payloads (production), blackboard (async)
-- ✅ Context budget management: Split 24k token budget across 8 specialized agents (3k each) without overflow
+- Understand the OpenAI message envelope (`role`, `content`, `tool_calls`) as the lingua franca of multi-agent systems
+- Three handoff strategies: full history passthrough (audit-focused), structured payloads (production), blackboard (async)
+- Context budget management: Split 24k token budget across 8 specialized agents (3k each) without overflow
 
 ### Progress on the 8 Constraints
 
 | Constraint | Status | Evidence |
 |------------|--------|----------|
-| #1 THROUGHPUT | ❌ **BLOCKED** | Single-agent monolith handles 10 POs/day before context overflow |
-| #2 LATENCY | ❌ **BLOCKED** | 36 hours median (manual baseline) |
-| #3 ACCURACY | ❌ **BLOCKED** | 5% error rate (agent hallucinates suppliers after context fills) |
-| #4 SCALABILITY | ⚡ **FOUNDATION LAID** | Can decompose single 16k-token agent → 8 agents (3k each) without context overflow |
-| #5 RELIABILITY | ❌ **BLOCKED** | No retry logic, no graceful degradation |
-| #6 AUDITABILITY | ⚡ **PARTIAL** | Full history passthrough enables audit, but no tracing infrastructure |
-| #7 OBSERVABILITY | ⚡ **FOUNDATION LAID** | Message structure enables future tracing (but no tooling yet) |
-| #8 DEPLOYABILITY | ❌ **BLOCKED** | Monolithic agent, no versioning or rollback |
+| #1 THROUGHPUT | **BLOCKED** | Single-agent monolith handles 10 POs/day before context overflow |
+| #2 LATENCY | **BLOCKED** | 36 hours median (manual baseline) |
+| #3 ACCURACY | **BLOCKED** | 5% error rate (agent hallucinates suppliers after context fills) |
+| #4 SCALABILITY | **FOUNDATION LAID** | Can decompose single 16k-token agent → 8 agents (3k each) without context overflow |
+| #5 RELIABILITY | **BLOCKED** | No retry logic, no graceful degradation |
+| #6 AUDITABILITY | **PARTIAL** | Full history passthrough enables audit, but no tracing infrastructure |
+| #7 OBSERVABILITY | **FOUNDATION LAID** | Message structure enables future tracing (but no tooling yet) |
+| #8 DEPLOYABILITY | **BLOCKED** | Monolithic agent, no versioning or rollback |
 
 **What's still blocking**: Decomposed agents into 8 specialists, but they can't access ERP, pricing APIs, or email. Need 8 × 20 = 160 custom integrations. *(Ch.2 — MCP solves this.)*
 
@@ -57,10 +57,10 @@ Every major agentic framework — LangChain, Semantic Kernel, AutoGen, LangGraph
 ```python
 # A message object — the atomic unit of agent communication
 {
-    "role": "user" | "assistant" | "tool" | "system",
-    "content": "...",          # string or list of content parts
-    "tool_calls": [...],       # present when role is "assistant" and agent invoked a tool
-    "tool_call_id": "..."      # present when role is "tool" (the response to a tool_call)
+ "role": "user" | "assistant" | "tool" | "system",
+ "content": "...", # string or list of content parts
+ "tool_calls": [...], # present when role is "assistant" and agent invoked a tool
+ "tool_call_id": "..." # present when role is "tool" (the response to a tool_call)
 }
 ```
 
@@ -88,14 +88,14 @@ Agent B returns its entire message list to Agent A. Agent A appends it to its ow
 ```python
 # Agent B returns everything
 handoff = {
-    "status": "completed",
-    "messages": [
-        {"role": "system", "content": "You are the pricing specialist..."},
-        {"role": "user", "content": "Negotiate supplier price for order #4812..."},
-        {"role": "assistant", "tool_calls": [{"id": "tc_01", "function": {"name": "get_quote"}}]},
-        {"role": "tool", "tool_call_id": "tc_01", "content": "{\"unit_price\": 14.20}"},
-        {"role": "assistant", "content": "Agreed price: $14.20 per unit, 500 units."}
-    ]
+ "status": "completed",
+ "messages": [
+ {"role": "system", "content": "You are the pricing specialist..."},
+ {"role": "user", "content": "Negotiate supplier price for order #4812..."},
+ {"role": "assistant", "tool_calls": [{"id": "tc_01", "function": {"name": "get_quote"}}]},
+ {"role": "tool", "tool_call_id": "tc_01", "content": "{\"unit_price\": 14.20}"},
+ {"role": "assistant", "content": "Agreed price: $14.20 per unit, 500 units."}
+ ]
 }
 ```
 
@@ -109,13 +109,13 @@ Agent B returns only a structured summary of its result.
 ```python
 # Agent B returns just what the next agent needs
 handoff = {
-    "status": "completed",
-    "result": {
-        "agreed_price_usd": 14.20,
-        "quantity": 500,
-        "delivery_days": 7,
-        "supplier_id": "SUP-88412"
-    }
+ "status": "completed",
+ "result": {
+ "agreed_price_usd": 14.20,
+ "quantity": 500,
+ "delivery_days": 7,
+ "supplier_id": "SUP-88412"
+ }
 }
 ```
 
@@ -129,10 +129,10 @@ Neither Agent A nor Agent B passes data directly. Both read from and write to a 
 ```python
 # Agent B writes its result to the shared store
 store.set(f"order:{task_id}:pricing", {
-    "agreed_price_usd": 14.20,
-    "quantity": 500,
-    "delivery_days": 7,
-    "supplier_id": "SUP-88412"
+ "agreed_price_usd": 14.20,
+ "quantity": 500,
+ "delivery_days": 7,
+ "supplier_id": "SUP-88412"
 })
 
 # Agent A reads directly from the store without waiting for B to "return" anything
@@ -159,13 +159,13 @@ A context window is a finite resource. In a multi-agent chain, it is depleted by
 
 ```python
 def trim_to_budget(messages, max_tokens, reserve_for_output=0.2):
-    budget = int(max_tokens * (1 - reserve_for_output))
-    # Always keep system message (messages[0]) and trim from oldest user/assistant pairs
-    system = [m for m in messages if m["role"] == "system"]
-    rest = [m for m in messages if m["role"] != "system"]
-    while count_tokens(system + rest) > budget and len(rest) > 1:
-        rest.pop(0)  # drop oldest non-system message
-    return system + rest
+ budget = int(max_tokens * (1 - reserve_for_output))
+ # Always keep system message (messages[0]) and trim from oldest user/assistant pairs
+ system = [m for m in messages if m["role"] == "system"]
+ rest = [m for m in messages if m["role"] != "system"]
+ while count_tokens(system + rest) > budget and len(rest) > 1:
+ rest.pop(0) # drop oldest non-system message
+ return system + rest
 ```
 
 ---
@@ -178,15 +178,15 @@ The fix: decompose into a pipeline of 8 specialized agents, each with a bounded 
 
 ```
 Orchestrator
-  │
-  ├─▶ Intake Agent       → validates request, extracts requirements
-  ├─▶ Pricing Agent      → researches supplier options, gets quotes
-  ├─▶ Negotiation Agent  → negotiates terms with selected supplier
-  ├─▶ Legal Agent        → validates contract terms against policies
-  ├─▶ Finance Agent      → confirms budget availability, approver
-  ├─▶ Drafting Agent     → generates final PO document
-  ├─▶ Sending Agent      → delivers PO to supplier via email
-  └─▶ Reconciliation Agent → tracks delivery, closes order
+ │
+ ├─▶ Intake Agent → validates request, extracts requirements
+ ├─▶ Pricing Agent → researches supplier options, gets quotes
+ ├─▶ Negotiation Agent → negotiates terms with selected supplier
+ ├─▶ Legal Agent → validates contract terms against policies
+ ├─▶ Finance Agent → confirms budget availability, approver
+ ├─▶ Drafting Agent → generates final PO document
+ ├─▶ Sending Agent → delivers PO to supplier via email
+ └─▶ Reconciliation Agent → tracks delivery, closes order
 ```
 
 Each agent sees only what it needs (structured payload from previous agent). No agent exceeds 40% of its context window (3k tokens used of 8k available) on the largest real orders.
@@ -203,31 +203,31 @@ Step 1: Orchestrator → IntakeAgent
 Message: {"role": "user", "content": "Parse PO request: 10 standing desks, budget $8,000..."}
 IntakeAgent processes → returns structured payload:
 {
-  "po_id": "2024-1847",
-  "items": [{"name": "standing desk", "quantity": 10}],
-  "budget_usd": 8000,
-  "preferred_suppliers": ["TechFurnish", "OfficeDepot"]
+ "po_id": "2024-1847",
+ "items": [{"name": "standing desk", "quantity": 10}],
+ "budget_usd": 8000,
+ "preferred_suppliers": ["TechFurnish", "OfficeDepot"]
 }
 
 Step 2: Orchestrator → PricingAgent
 Message: {"role": "user", "content": <IntakeAgent result>}
 PricingAgent queries suppliers → returns:
 {
-  "quotes": [
-    {"supplier": "TechFurnish", "unit_price_usd": 789, "total": 7890},
-    {"supplier": "OfficeDepot", "unit_price_usd": 842, "total": 8420}
-  ],
-  "recommendation": "TechFurnish"
+ "quotes": [
+ {"supplier": "TechFurnish", "unit_price_usd": 789, "total": 7890},
+ {"supplier": "OfficeDepot", "unit_price_usd": 842, "total": 8420}
+ ],
+ "recommendation": "TechFurnish"
 }
 
 Step 3: Orchestrator → NegotiationAgent
 Message: {"role": "user", "content": <PricingAgent result>}
 NegotiationAgent negotiates → returns:
 {
-  "agreed_price_usd": 749,
-  "discount_pct": 5,
-  "delivery_days": 21,
-  "supplier_id": "TechFurnish"
+ "agreed_price_usd": 749,
+ "discount_pct": 5,
+ "delivery_days": 21,
+ "supplier_id": "TechFurnish"
 }
 
 Step 4–8: Continue pipeline (Legal, Finance, Drafting, Sending, Reconciliation)
@@ -243,11 +243,11 @@ Step 4–8: Continue pipeline (Legal, Finance, Drafting, Sending, Reconciliation
 ```
 OpenAI Chat Completions Message Format:
 ┌─────────────────────────────────────────────────────┐
-│ role: "system" | "user" | "assistant" | "tool"     │
-│ content: string or null                             │
-│ tool_calls: [{id, type, function: {name, args}}]    │  (assistant only)
-│ tool_call_id: string                                │  (tool only)
-│ name: string (optional agent identifier)            │
+│ role: "system" | "user" | "assistant" | "tool" │
+│ content: string or null │
+│ tool_calls: [{id, type, function: {name, args}}] │ (assistant only)
+│ tool_call_id: string │ (tool only)
+│ name: string (optional agent identifier) │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -257,20 +257,20 @@ OpenAI Chat Completions Message Format:
 Agent Chain: A → B → C (each agent accumulates 2k tokens internally)
 
 Strategy 1 — Full History Passthrough:
-  Agent A: 2k tokens
-  Agent B: 2k (own) + 2k (A's history) = 4k tokens
-  Agent C: 2k (own) + 2k (A) + 2k (B) = 6k tokens
-  Total: 12k tokens (grows O(n²))
+ Agent A: 2k tokens
+ Agent B: 2k (own) + 2k (A's history) = 4k tokens
+ Agent C: 2k (own) + 2k (A) + 2k (B) = 6k tokens
+ Total: 12k tokens (grows O(n²))
 
 Strategy 2 — Structured Handoff:
-  Agent A: 2k tokens → returns 200-token payload
-  Agent B: 2k tokens → returns 200-token payload
-  Agent C: 2k tokens → returns 200-token payload
-  Total: 6k tokens (grows O(n))
+ Agent A: 2k tokens → returns 200-token payload
+ Agent B: 2k tokens → returns 200-token payload
+ Agent C: 2k tokens → returns 200-token payload
+ Total: 6k tokens (grows O(n))
 
 Strategy 3 — Shared Store:
-  Each agent: 2k tokens (reads/writes to external store)
-  Total: 6k tokens + store I/O latency
+ Each agent: 2k tokens (reads/writes to external store)
+ Total: 6k tokens + store I/O latency
 ```
 
 ### Context Window Management
@@ -278,16 +278,16 @@ Strategy 3 — Shared Store:
 ```
 8k Token Context Window Allocation:
 ┌────────────────────────────────────────┐ ← 8,192 tokens (hard limit)
-│  System prompt: 800 tokens             │
-│  Task payload: 500 tokens              │
-│  Agent reasoning: 2,200 tokens         │
-│  Tool calls + responses: 1,500 tokens  │
-│  ────────────────────────────────────  │
-│  Used: 5,000 tokens (61%)              │ ✅ Safe (< 80%)
-│  ────────────────────────────────────  │
-│  Reserved for output: 1,600 tokens     │ (20% buffer)
-│  ────────────────────────────────────  │
-│  Headroom: 1,592 tokens                │
+│ System prompt: 800 tokens │
+│ Task payload: 500 tokens │
+│ Agent reasoning: 2,200 tokens │
+│ Tool calls + responses: 1,500 tokens │
+│ ──────────────────────────────────── │
+│ Used: 5,000 tokens (61%) │ Safe (< 80%)
+│ ──────────────────────────────────── │
+│ Reserved for output: 1,600 tokens │ (20% buffer)
+│ ──────────────────────────────────── │
+│ Headroom: 1,592 tokens │
 └────────────────────────────────────────┘
 
 If usage exceeds 80% → trim oldest messages, keep system + recent context
@@ -313,64 +313,61 @@ If usage exceeds 80% → trim oldest messages, keep system + recent context
 ## 6 · What Can Go Wrong
 
 **1. Context overflow mid-task** — Agent exceeds 8k token limit before completing negotiation. Symptoms: incomplete responses, hallucinated data, abrupt termination.
-   - **Fix**: Implement proactive trimming at 80% usage threshold. Log trimmed content to external store for audit reconstruction.
+ - **Fix**: Implement proactive trimming at 80% usage threshold. Log trimmed content to external store for audit reconstruction.
 
 **2. Lost context after trimming** — Agent forgets critical approval threshold after oldest messages are dropped. Next agent makes wrong decision.
-   - **Fix**: Never trim the system prompt or current task payload. Preserve "pinned" messages (approval rules, PO ID, budget) using message metadata flags.
+ - **Fix**: Never trim the system prompt or current task payload. Preserve "pinned" messages (approval rules, PO ID, budget) using message metadata flags.
 
 **3. Schema mismatch between agents** — PricingAgent returns `unit_cost` but NegotiationAgent expects `unit_price_usd`. Pipeline breaks with KeyError.
-   - **Fix**: Define shared schema types (Pydantic models) at orchestrator level. Validate payloads at every handoff boundary. Fail fast with clear error messages.
+ - **Fix**: Define shared schema types (Pydantic models) at orchestrator level. Validate payloads at every handoff boundary. Fail fast with clear error messages.
 
 **4. Token cost explosion with full history** — 5-agent pipeline passes full history → 40k tokens → $0.08/PO → unsustainable at scale.
-   - **Fix**: Switch to structured handoff (Strategy 2) for production. Reserve full history for audit-only traces stored externally, not passed in context.
+ - **Fix**: Switch to structured handoff (Strategy 2) for production. Reserve full history for audit-only traces stored externally, not passed in context.
 
 **5. Audit trail gaps with structured handoff** — Compliance audit asks "Why did NegotiationAgent accept this price?" Structured payload has result but not reasoning.
-   - **Fix**: Log every agent's full message history to database with PO correlation ID. Query logs for audit reconstruction. Context passes only results; logs preserve reasoning.
+ - **Fix**: Log every agent's full message history to database with PO correlation ID. Query logs for audit reconstruction. Context passes only results; logs preserve reasoning.
 
 ## 8 · Progress Check — What We Can Solve Now
 
 ```mermaid
 graph LR
-    Ch1["Ch.1\nMessage Formats"]:::current
-    Ch2["Ch.2\nMCP"]:::upcoming
-    Ch3["Ch.3\nA2A"]:::upcoming
-    Ch4["Ch.4\nEvent-Driven"]:::upcoming
-    Ch5["Ch.5\nShared Memory"]:::upcoming
-    Ch6["Ch.6\nTrust & Sandboxing"]:::upcoming
-    Ch7["Ch.7\nAgent Frameworks"]:::upcoming
-    Ch1 --> Ch2 --> Ch3 --> Ch4 --> Ch5 --> Ch6 --> Ch7
-    classDef done fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    classDef current fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    classDef upcoming fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ Ch1["Ch.1\nMessage Formats"]:::current
+ Ch2["Ch.2\nMCP"]:::upcoming
+ Ch3["Ch.3\nA2A"]:::upcoming
+ Ch4["Ch.4\nEvent-Driven"]:::upcoming
+ Ch5["Ch.5\nShared Memory"]:::upcoming
+ Ch6["Ch.6\nTrust & Sandboxing"]:::upcoming
+ Ch7["Ch.7\nAgent Frameworks"]:::upcoming
+ Ch1 --> Ch2 --> Ch3 --> Ch4 --> Ch5 --> Ch6 --> Ch7
+ classDef done fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ classDef current fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ classDef upcoming fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
-
-✅ **Unlocked capabilities**:
-- ✅ **Multi-agent decomposition**: Split single monolithic agent into 8 specialized agents (Intake, Pricing, Negotiation, Legal, Finance, Drafting, Sending, Reconciliation)
-- ✅ **Context budget management**: Each agent operates within 3k–4k token budget (50% of 8k limit), no overflow on largest POs
-- ✅ **Structured message passing**: Defined OpenAI-compatible message envelope (`role`, `content`, `tool_calls`) as lingua franca for agent communication
-- ✅ **Three handoff strategies**: Full history (audit), structured payload (production), shared store (async) — choose based on requirements
-
-❌ **Still can't solve**:
-- ❌ **Tool integration**: 8 agents × 20 data sources = 160 custom integrations required (ERP, pricing APIs, supplier email, legal templates) → **Need Ch.2 (MCP) for protocol-based tool access**
-- ❌ **Agent coordination**: Orchestrator still calls agents sequentially → 35-minute critical path + queue delays = 36-hour SLA → **Need Ch.4 (Event-Driven) for async parallelism**
-- ❌ **Throughput bottleneck**: Sequential processing limits to 10 POs/day (vs. 1,000 target) → **Need Ch.4 for concurrency**
+**Unlocked capabilities**:
+- **Multi-agent decomposition**: Split single monolithic agent into 8 specialized agents (Intake, Pricing, Negotiation, Legal, Finance, Drafting, Sending, Reconciliation)
+- **Context budget management**: Each agent operates within 3k–4k token budget (50% of 8k limit), no overflow on largest POs
+- **Structured message passing**: Defined OpenAI-compatible message envelope (`role`, `content`, `tool_calls`) as lingua franca for agent communication
+- **Three handoff strategies**: Full history (audit), structured payload (production), shared store (async) — choose based on requirements
+**Still can't solve**:
+- **Tool integration**: 8 agents × 20 data sources = 160 custom integrations required (ERP, pricing APIs, supplier email, legal templates) → **Need Ch.2 (MCP) for protocol-based tool access**
+- **Agent coordination**: Orchestrator still calls agents sequentially → 35-minute critical path + queue delays = 36-hour SLA → **Need Ch.4 (Event-Driven) for async parallelism**
+- **Throughput bottleneck**: Sequential processing limits to 10 POs/day (vs. 1,000 target) → **Need Ch.4 for concurrency**
 
 **Progress toward constraints**:
 
 | Constraint | Status | Current State |
 |------------|--------|---------------|
-| #1 THROUGHPUT | ❌ **BLOCKED** | 10 POs/day (context overflow eliminated, but still sequential) — Target: 1,000 POs/day |
-| #2 LATENCY | ❌ **BLOCKED** | 36 hours median (manual baseline unchanged) — Target: <4 hours |
-| #3 ACCURACY | ⚡ **IMPROVED** | 5% → **3.8% error rate** (hallucination eliminated via context management) — Target: <2% |
-| #4 SCALABILITY | ✅ **FOUNDATION COMPLETE** | 8 agents, 3k tokens each, no context overflow — Target: 10 agents/PO ✅ |
-| #5 RELIABILITY | ❌ **BLOCKED** | No retry logic, no graceful degradation — Target: >99.9% uptime |
-| #6 AUDITABILITY | ⚡ **FOUNDATION LAID** | Structured payloads logged (but no correlation IDs or distributed tracing) — Target: Full traceability |
-| #7 OBSERVABILITY | ⚡ **FOUNDATION LAID** | Message schema enables future tracing infrastructure — Target: Real-time monitoring |
-| #8 DEPLOYABILITY | ❌ **BLOCKED** | Monolithic orchestrator, no containerization — Target: Zero-downtime updates |
+| #1 THROUGHPUT | **BLOCKED** | 10 POs/day (context overflow eliminated, but still sequential) — Target: 1,000 POs/day |
+| #2 LATENCY | **BLOCKED** | 36 hours median (manual baseline unchanged) — Target: <4 hours |
+| #3 ACCURACY | **IMPROVED** | 5% → **3.8% error rate** (hallucination eliminated via context management) — Target: <2% |
+| #4 SCALABILITY | **FOUNDATION COMPLETE** | 8 agents, 3k tokens each, no context overflow — Target: 10 agents/PO |
+| #5 RELIABILITY | **BLOCKED** | No retry logic, no graceful degradation — Target: >99.9% uptime |
+| #6 AUDITABILITY | **FOUNDATION LAID** | Structured payloads logged (but no correlation IDs or distributed tracing) — Target: Full traceability |
+| #7 OBSERVABILITY | **FOUNDATION LAID** | Message schema enables future tracing infrastructure — Target: Real-time monitoring |
+| #8 DEPLOYABILITY | **BLOCKED** | Monolithic orchestrator, no containerization — Target: Zero-downtime updates |
 
 **What we can solve now**:
-
-✅ **Complex PO processing without context overflow**:
+**Complex PO processing without context overflow**:
 ```
 Before Ch.1:
 Single agent hits 8k token limit after 3 supplier negotiations
@@ -380,7 +377,7 @@ After Ch.1:
 8 specialized agents, each <4k tokens
 → PO #2024-1847 completes full lifecycle without overflow
 
-Result: ✅ Context overflow eliminated (Constraint #4 foundation complete)
+Result: Context overflow eliminated (Constraint #4 foundation complete)
 ```
 
 **Real-world status**: We can now decompose agent workflows to avoid context limits, but we can't yet connect agents to real data sources (ERP, pricing APIs) or process POs concurrently.

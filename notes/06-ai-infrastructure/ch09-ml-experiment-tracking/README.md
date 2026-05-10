@@ -11,11 +11,11 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 💡 **The mission**: You're a research engineer at **InferenceBase** (the AI startup from Ch.1-5). The product team wants to improve document classification accuracy from 89% to 94%. You have:
-> - ✅ A clean feature pipeline from Ch.8
-> - ✅ 5 GPUs for parallel training
-> - ✅ 3 team members running experiments
-> - ❌ **NO experiment tracking system** — just Jupyter notebooks, scattered CSV logs, and model weights in `/tmp/`
+> **The mission**: You're a research engineer at **InferenceBase** (the AI startup from Ch.1-5). The product team wants to improve document classification accuracy from 89% to 94%. You have:
+> - A clean feature pipeline from Ch.8
+> - 5 GPUs for parallel training
+> - 3 team members running experiments
+> - **NO experiment tracking system** — just Jupyter notebooks, scattered CSV logs, and model weights in `/tmp/`
 
 **What's blocking us:**
 After **2 weeks of hyperparameter tuning** (100+ training runs), your teammate Slack's you:
@@ -34,8 +34,7 @@ The **ML experiment tracking & model registry** discipline:
 3. **Compare runs visually** — MLflow UI shows 100 experiments in one table
 4. **Promote best models** — Model registry lifecycle (Staging → Production)
 5. **Reproduce any experiment** — Given `run_id`, reconstruct exact environment
-
-✅ **After this chapter**: You can answer "which hyperparameters gave 94%?" in 10 seconds, reproduce any experiment from 3 months ago, and deploy models with one CLI command.
+**After this chapter**: You can answer "which hyperparameters gave 94%?" in 10 seconds, reproduce any experiment from 3 months ago, and deploy models with one CLI command.
 
 ---
 
@@ -89,7 +88,7 @@ Both are **local-first tools** — no cloud account required until you want team
 
 ## 1.5 · The Practitioner Workflow — Your 4-Phase Tracking Discipline
 
-> ⚠️ **Two ways to read this chapter:**
+> **Warning — Two ways to read this chapter:**
 > - **Theory-first (recommended for learning):** Read §0→§3 sequentially to understand the concepts, then use this workflow as your reference
 > - **Workflow-first (practitioners with existing knowledge):** Use this diagram as a jump-to guide when working with real data
 >
@@ -98,29 +97,29 @@ Both are **local-first tools** — no cloud account required until you want team
 **What you'll build by the end:** A reproducible ML experiment pipeline with MLflow tracking (params, metrics, artifacts), DVC data versioning, and a model registry workflow (Staging → Production). This is the system that answers "which hyperparameters gave 94%?" in 10 seconds and "can I reproduce run #47 from 3 months ago?" with confidence.
 
 ```
-Phase 1: SETUP             Phase 2: TRACK              Phase 3: COMPARE          Phase 4: PROMOTE
+Phase 1: SETUP Phase 2: TRACK Phase 3: COMPARE Phase 4: PROMOTE
 ─────────────────────────────────────────────────────────────────────────────────────────────────
-Initialize tracking:       Log during training:        Analyze experiments:      Deploy best model:
+Initialize tracking: Log during training: Analyze experiments: Deploy best model:
 
-• Start MLflow server      • mlflow.log_params()       • mlflow ui --port 5000   • mlflow.register_model()
-• Configure backend        • mlflow.log_metrics()      • Sort by test_accuracy   • Transition to Staging
-• Set experiment name      • mlflow.log_artifact()     • Compare training curves • A/B test in staging
-• Init DVC for data        • Track Git commit          • Filter by metric > X    • Promote to Production
-                           • Version data with DVC     • Download best artifacts • Version with DVC
+• Start MLflow server • mlflow.log_params() • mlflow ui --port 5000 • mlflow.register_model()
+• Configure backend • mlflow.log_metrics() • Sort by test_accuracy • Transition to Staging
+• Set experiment name • mlflow.log_artifact() • Compare training curves • A/B test in staging
+• Init DVC for data • Track Git commit • Filter by metric > X • Promote to Production
+ • Version data with DVC • Download best artifacts • Version with DVC
 
-→ DECISION:                → DECISION:                 → DECISION:               → DECISION:
-  Local vs cloud storage?    What to log?                Which run to deploy?      When to promote v2?
-  • Local: ./mlruns/         • ALWAYS: lr, batch,        • Best test_accuracy      • v2 beats v1 by >2%
-  • Team: S3 backend           epochs, random_seed       • Best F1 if imbalanced     in staging A/B test
-  • DVC remote: S3/Azure     • ALWAYS: final metrics     • Speed/accuracy tradeoff • Monitor for 24h
-                             • NEVER: intermediate                                 • Rollback plan ready
-                               checkpoints (use TB)
+→ DECISION: → DECISION: → DECISION: → DECISION:
+ Local vs cloud storage? What to log? Which run to deploy? When to promote v2?
+ • Local: ./mlruns/ • ALWAYS: lr, batch, • Best test_accuracy • v2 beats v1 by >2%
+ • Team: S3 backend epochs, random_seed • Best F1 if imbalanced in staging A/B test
+ • DVC remote: S3/Azure • ALWAYS: final metrics • Speed/accuracy tradeoff • Monitor for 24h
+ • NEVER: intermediate • Rollback plan ready
+ checkpoints (use TB)
 ```
 
-> 💡 **How to use this workflow:** Phase 1 is one-time setup per project. Phase 2→3→4 is your daily loop: train experiments (Phase 2), compare results (Phase 3), deploy winners (Phase 4). The sections below teach WHY each phase works; refer back here for WHAT to do.
+> **How to use this workflow:** Phase 1 is one-time setup per project. Phase 2→3→4 is your daily loop: train experiments (Phase 2), compare results (Phase 3), deploy winners (Phase 4). The sections below teach WHY each phase works; refer back here for WHAT to do.
 
-> 💡 **Tracking verdict:** MLflow registry promoted INT4-AWQ checkpoint — experiment audit trail confirmed 96.2% accuracy before production registration ✅.
-> ➡️ Ch.10 monitors this registered model in production and detects when accuracy drifts below threshold.
+> **Tracking verdict:** MLflow registry promoted INT4-AWQ checkpoint — experiment audit trail confirmed 96.2% accuracy before production registration .
+> ➡ Ch.10 monitors this registered model in production and detects when accuracy drifts below threshold.
 
 ---
 
@@ -132,19 +131,19 @@ Initialize tracking:       Log during training:        Analyze experiments:     
 
 ```bash
 # 1. Install dependencies
-pip install mlflow dvc[s3]  # Add [azure] or [gs] for other cloud providers
+pip install mlflow dvc[s3] # Add [azure] or [gs] for other cloud providers
 
 # 2. Initialize MLflow tracking
 mlflow server \
-    --backend-store-uri sqlite:///mlflow.db \
-    --default-artifact-root ./mlruns \
-    --host 0.0.0.0 \
-    --port 5000
+ --backend-store-uri sqlite:///mlflow.db \
+ --default-artifact-root ./mlruns \
+ --host 0.0.0.0 \
+ --port 5000
 # For production: replace sqlite with PostgreSQL, ./mlruns with S3
 
 # 3. Initialize DVC for data versioning
 dvc init
-dvc remote add -d myremote s3://my-bucket/dvc-cache  # Optional: cloud storage
+dvc remote add -d myremote s3://my-bucket/dvc-cache # Optional: cloud storage
 git add .dvc .dvcignore
 git commit -m "Initialize DVC"
 
@@ -182,56 +181,56 @@ mlflow.set_experiment("bert-sentiment-classification")
 
 # Phase 2: Log this run
 with mlflow.start_run(run_name="bert-lr2e-5-bs16-warmup100"):
-    # Log hyperparameters FIRST (before training starts)
-    mlflow.log_params({
-        "learning_rate": 2e-5,
-        "batch_size": 16,
-        "warmup_steps": 100,
-        "epochs": 3,
-        "model": "bert-base-uncased",
-        "dataset": "imdb",
-        "random_seed": 42,
-        "optimizer": "AdamW",
-        "weight_decay": 0.01
-    })
+ # Log hyperparameters FIRST (before training starts)
+ mlflow.log_params({
+ "learning_rate": 2e-5,
+ "batch_size": 16,
+ "warmup_steps": 100,
+ "epochs": 3,
+ "model": "bert-base-uncased",
+ "dataset": "imdb",
+ "random_seed": 42,
+ "optimizer": "AdamW",
+ "weight_decay": 0.01
+ })
 
-    # Set random seeds (CRITICAL for reproducibility)
-    torch.manual_seed(42)
-    torch.cuda.manual_seed_all(42)
+ # Set random seeds (CRITICAL for reproducibility)
+ torch.manual_seed(42)
+ torch.cuda.manual_seed_all(42)
 
-    # Train model (standard Hugging Face Trainer)
-    model = BertForSequenceClassification.from_pretrained("bert-base-uncased")
-    training_args = TrainingArguments(
-        output_dir="./results",
-        learning_rate=2e-5,
-        per_device_train_batch_size=16,
-        num_train_epochs=3,
-        warmup_steps=100,
-        logging_steps=50,
-        evaluation_strategy="epoch",
-        save_strategy="epoch"
-    )
-    trainer = Trainer(model=model, args=training_args, train_dataset=train_ds, eval_dataset=val_ds)
-    trainer.train()
+ # Train model (standard Hugging Face Trainer)
+ model = BertForSequenceClassification.from_pretrained("bert-base-uncased")
+ training_args = TrainingArguments(
+ output_dir="./results",
+ learning_rate=2e-5,
+ per_device_train_batch_size=16,
+ num_train_epochs=3,
+ warmup_steps=100,
+ logging_steps=50,
+ evaluation_strategy="epoch",
+ save_strategy="epoch"
+ )
+ trainer = Trainer(model=model, args=training_args, train_dataset=train_ds, eval_dataset=val_ds)
+ trainer.train()
 
-    # Log final metrics (after training completes)
-    eval_results = trainer.evaluate(test_ds)
-    mlflow.log_metrics({
-        "test_accuracy": eval_results["eval_accuracy"],
-        "test_f1": eval_results["eval_f1"],
-        "test_loss": eval_results["eval_loss"]
-    })
+ # Log final metrics (after training completes)
+ eval_results = trainer.evaluate(test_ds)
+ mlflow.log_metrics({
+ "test_accuracy": eval_results["eval_accuracy"],
+ "test_f1": eval_results["eval_f1"],
+ "test_loss": eval_results["eval_loss"]
+ })
 
-    # Log artifacts (model weights, plots, confusion matrix)
-    trainer.save_model("./final_model")
-    mlflow.log_artifact("./final_model/pytorch_model.bin", artifact_path="model")
-    mlflow.log_artifact("./confusion_matrix.png")
+ # Log artifacts (model weights, plots, confusion matrix)
+ trainer.save_model("./final_model")
+ mlflow.log_artifact("./final_model/pytorch_model.bin", artifact_path="model")
+ mlflow.log_artifact("./confusion_matrix.png")
 
-    # Log data version (DVC hash from .dvc file)
-    import yaml
-    with open("data/imdb_train.csv.dvc") as f:
-        dvc_meta = yaml.safe_load(f)
-        mlflow.set_tag("dvc_data_hash", dvc_meta["outs"][0]["md5"])
+ # Log data version (DVC hash from .dvc file)
+ import yaml
+ with open("data/imdb_train.csv.dvc") as f:
+ dvc_meta = yaml.safe_load(f)
+ mlflow.set_tag("dvc_data_hash", dvc_meta["outs"][0]["md5"])
 
 # MLflow auto-logs: start time, end time, duration, Git commit (if in repo)
 ```
@@ -252,7 +251,7 @@ with mlflow.start_run(run_name="bert-lr2e-5-bs16-warmup100"):
 | **Artifacts** | Final model weights, confusion matrix | Intermediate checkpoints (use model_checkpoint callback) | Training curves plot, attention weights viz |
 | **Metadata** | Git commit, DVC data hash | Code diffs (use Git) | GPU utilization, peak VRAM |
 
-> ⚠️ **Common mistake:** Logging 1000 metrics per epoch (train_loss at every step) → MLflow UI becomes unusably slow. **Fix:** Log summary metrics only (final test_accuracy, best val_loss). Use TensorBoard for detailed training curves.
+> **Warning — Common mistake:** Logging 1000 metrics per epoch (train_loss at every step) → MLflow UI becomes unusably slow. **Fix:** Log summary metrics only (final test_accuracy, best val_loss). Use TensorBoard for detailed training curves.
 
 ---
 
@@ -270,22 +269,22 @@ mlflow ui --port 5000
 **MLflow UI walkthrough:**
 
 1. **Table view** — All runs in one table with sortable columns
-   - Click `test_accuracy` header → sort by best accuracy
-   - Click column header + `Filter` → show only runs where `test_accuracy > 0.93`
+ - Click `test_accuracy` header → sort by best accuracy
+ - Click column header + `Filter` → show only runs where `test_accuracy > 0.93`
 
 2. **Compare runs** — Select 2+ runs → Click `Compare` button
-   - Side-by-side hyperparameters (which changed?)
-   - Overlaid training curves (which converged faster?)
-   - Metric deltas (how much did accuracy improve?)
+ - Side-by-side hyperparameters (which changed?)
+ - Overlaid training curves (which converged faster?)
+ - Metric deltas (how much did accuracy improve?)
 
 3. **Parallel coordinates plot** — See all hyperparameters + metrics as colored lines
-   - X-axis: learning_rate, batch_size, warmup_steps, test_accuracy
-   - Y-axis: Normalized values [0, 1]
-   - Pattern: "All green lines (high accuracy) cluster at lr=2e-5"
+ - X-axis: learning_rate, batch_size, warmup_steps, test_accuracy
+ - Y-axis: Normalized values [0, 1]
+ - Pattern: "All green lines (high accuracy) cluster at lr=2e-5"
 
 4. **Scatter plot** — X = one hyperparameter, Y = one metric, color = another hyperparameter
-   - X = learning_rate, Y = test_accuracy, color = batch_size
-   - Pattern: "lr=2e-5 beats 5e-5 regardless of batch size"
+ - X = learning_rate, Y = test_accuracy, color = batch_size
+ - Pattern: "lr=2e-5 beats 5e-5 regardless of batch size"
 
 **Programmatic search (for automation):**
 
@@ -294,17 +293,17 @@ import mlflow
 
 # Find best run by test accuracy
 best_runs = mlflow.search_runs(
-    experiment_names=["bert-sentiment-classification"],
-    filter_string="metrics.test_accuracy > 0.93",
-    order_by=["metrics.test_accuracy DESC"],
-    max_results=5
+ experiment_names=["bert-sentiment-classification"],
+ filter_string="metrics.test_accuracy > 0.93",
+ order_by=["metrics.test_accuracy DESC"],
+ max_results=5
 )
 
 print("Top 5 runs:")
 for idx, row in best_runs.iterrows():
-    print(f"{row['run_id'][:8]}  lr={row['params.learning_rate']}  "
-          f"acc={row['metrics.test_accuracy']:.3f}  "
-          f"duration={row['end_time'] - row['start_time']}")
+ print(f"{row['run_id'][:8]} lr={row['params.learning_rate']} "
+ f"acc={row['metrics.test_accuracy']:.3f} "
+ f"duration={row['end_time'] - row['start_time']}")
 
 # Download artifacts from best run
 best_run_id = best_runs.iloc[0]['run_id']
@@ -342,7 +341,7 @@ from mlflow.tracking import MlflowClient
 client = MlflowClient()
 
 # Step 1: Register model from best run
-best_run_id = "8b4c3d1a..."  # From Phase 3 selection
+best_run_id = "8b4c3d1a..." # From Phase 3 selection
 model_uri = f"runs:/{best_run_id}/model"
 model_name = "bert-sentiment-classifier"
 
@@ -351,10 +350,10 @@ print(f"Registered model version {model_version.version}")
 
 # Step 2: Transition to Staging
 client.transition_model_version_stage(
-    name=model_name,
-    version=model_version.version,
-    stage="Staging",
-    archive_existing_versions=False  # Keep old staging versions for rollback
+ name=model_name,
+ version=model_version.version,
+ stage="Staging",
+ archive_existing_versions=False # Keep old staging versions for rollback
 )
 
 # Step 3: A/B test in staging (manual step — deploy to staging server, monitor metrics)
@@ -364,10 +363,10 @@ client.transition_model_version_stage(
 
 # Step 4: Promote to Production (after staging validation)
 client.transition_model_version_stage(
-    name=model_name,
-    version=model_version.version,
-    stage="Production",
-    archive_existing_versions=True  # Archive old production model (enables rollback)
+ name=model_name,
+ version=model_version.version,
+ stage="Production",
+ archive_existing_versions=True # Archive old production model (enables rollback)
 )
 
 # Step 5: Version dataset with DVC
@@ -375,7 +374,7 @@ client.transition_model_version_stage(
 # dvc add data/imdb_train.csv
 # git add data/imdb_train.csv.dvc
 # git commit -m "Version dataset for model v{model_version.version}"
-# git tag model-v{model_version.version}  # Tag Git commit for easy checkout
+# git tag model-v{model_version.version} # Tag Git commit for easy checkout
 ```
 
 **Production deployment script (loads model by stage, not run_id):**
@@ -402,17 +401,17 @@ predictions = model.predict(test_inputs)
 ```
 Staging A/B test results:
 ├─ Accuracy improved by >2% AND latency <200ms
-│  └─ PROMOTE to Production
+│ └─ PROMOTE to Production
 ├─ Accuracy improved by <2% OR latency >200ms
-│  ├─ Revenue impact = +$10k/year
-│  │  └─ PROMOTE (business case justified)
-│  └─ Revenue impact = +$1k/year
-│     └─ REJECT (not worth operational risk)
+│ ├─ Revenue impact = +$10k/year
+│ │ └─ PROMOTE (business case justified)
+│ └─ Revenue impact = +$1k/year
+│ └─ REJECT (not worth operational risk)
 └─ Accuracy degraded OR error rate spiked
-   └─ REJECT → investigate (data drift? bug in preprocessing?)
+ └─ REJECT → investigate (data drift? bug in preprocessing?)
 ```
 
-> ⚠️ **Rollback plan:** Always keep previous Production model in Registry with `stage="Archived"`. If new model fails in production, transition archived model back to Production in <5 min.
+> **Warning — Rollback plan:** Always keep previous Production model in Registry with `stage="Archived"`. If new model fails in production, transition archived model back to Production in <5 min.
 
 **Reproducibility verification (6 months later):**
 
@@ -421,10 +420,10 @@ Staging A/B test results:
 git checkout model-v2
 
 # 2. Restore dataset version from that commit
-dvc pull  # Downloads data/imdb_train.csv as it existed at model-v2 tag
+dvc pull # Downloads data/imdb_train.csv as it existed at model-v2 tag
 
 # 3. Get hyperparameters from MLflow
-mlflow runs describe <run_id>  # Shows all logged params
+mlflow runs describe <run_id> # Shows all logged params
 
 # 4. Retrain with exact same config
 python train.py --config configs/bert-lr2e-5-bs16.yaml
@@ -459,7 +458,7 @@ python train.py --config configs/bert-lr2e-5-bs16.yaml
 - Reproduce experiment: 5 min (git checkout + dvc pull + python train.py)
 - Deploy model: 1 min (mlflow.pyfunc.load_model by stage)
 
-> 💡 **The 100× speedup:** Tracking doesn't make training faster — it makes **everything around training** 10–100× faster. Finding the best hyperparameters (2 hours → 10s), reproducing experiments (impossible → 5 min), deploying models (30 min → 1 min). The ROI is immediate for teams running >10 experiments/week.
+> **The 100× speedup:** Tracking doesn't make training faster — it makes **everything around training** 10–100× faster. Finding the best hyperparameters (2 hours → 10s), reproducing experiments (impossible → 5 min), deploying models (30 min → 1 min). The ROI is immediate for teams running >10 experiments/week.
 
 ---
 
@@ -485,22 +484,22 @@ import mlflow
 
 mlflow.start_run(run_name="bert-baseline")
 mlflow.log_params({
-    "learning_rate": 5e-5,
-    "batch_size": 32,
-    "epochs": 3,
-    "warmup_steps": 500,
-    "model": "bert-base-uncased",
-    "dataset": "imdb",
-    "random_seed": 42
+ "learning_rate": 5e-5,
+ "batch_size": 32,
+ "epochs": 3,
+ "warmup_steps": 500,
+ "model": "bert-base-uncased",
+ "dataset": "imdb",
+ "random_seed": 42
 })
 ```
 
 **During training (called each epoch):**
 ```python
 mlflow.log_metrics({
-    "train_loss": 0.45,
-    "train_accuracy": 0.87,
-    "val_accuracy": 0.89
+ "train_loss": 0.45,
+ "train_accuracy": 0.87,
+ "val_accuracy": 0.89
 }, step=epoch)
 ```
 
@@ -521,29 +520,29 @@ mlflow.end_run()
 
 ```python
 for lr in [2e-5, 3e-5, 5e-5]:
-    for batch_size in [16, 32]:
-        for warmup in [100, 500]:
-            mlflow.start_run(run_name=f"bert-lr{lr}-bs{batch_size}-warmup{warmup}")
-            mlflow.log_params({
-                "learning_rate": lr,
-                "batch_size": batch_size,
-                "warmup_steps": warmup,
-                "epochs": 3,
-                "random_seed": 42
-            })
+ for batch_size in [16, 32]:
+ for warmup in [100, 500]:
+ mlflow.start_run(run_name=f"bert-lr{lr}-bs{batch_size}-warmup{warmup}")
+ mlflow.log_params({
+ "learning_rate": lr,
+ "batch_size": batch_size,
+ "warmup_steps": warmup,
+ "epochs": 3,
+ "random_seed": 42
+ })
 
-            # Train model (pseudocode)
-            model = train_bert(lr=lr, batch_size=batch_size, warmup=warmup)
+ # Train model (pseudocode)
+ model = train_bert(lr=lr, batch_size=batch_size, warmup=warmup)
 
-            # Log final metrics
-            mlflow.log_metrics({
-                "test_accuracy": model.evaluate(test_data),
-                "test_f1": model.f1_score(test_data)
-            })
+ # Log final metrics
+ mlflow.log_metrics({
+ "test_accuracy": model.evaluate(test_data),
+ "test_f1": model.f1_score(test_data)
+ })
 
-            # Save artifacts
-            mlflow.log_artifact("model.pt")
-            mlflow.end_run()
+ # Save artifacts
+ mlflow.log_artifact("model.pt")
+ mlflow.end_run()
 ```
 
 **What you get:** 12 runs logged in ~4 hours. Now you can compare them visually.
@@ -572,14 +571,14 @@ Open `http://localhost:5000` in your browser. You see:
 **Find best run programmatically:**
 ```python
 best_run = mlflow.search_runs(
-    filter_string="metrics.test_accuracy > 0.93",
-    order_by=["metrics.test_accuracy DESC"],
-    max_results=1
+ filter_string="metrics.test_accuracy > 0.93",
+ order_by=["metrics.test_accuracy DESC"],
+ max_results=1
 )
 print(f"Best run: {best_run['run_id'][0]} with {best_run['metrics.test_accuracy'][0]:.2%} accuracy")
 ```
 
-> 💡 **What this MLflow UI enables:** Instead of manually comparing 12 runs in spreadsheets or Jupyter notebooks, you now:
+> **What this MLflow UI enables:** Instead of manually comparing 12 runs in spreadsheets or Jupyter notebooks, you now:
 > - **Answer "which hyperparameters gave 94%?" in 10 seconds** (not 30 minutes of scrolling)
 > - **Visualize 50 experiments at once** in parallel coordinates plot (spot patterns like "batch_size=16 always beats 32")
 > - **Compare training curves side-by-side** (see if learning rate 2e-5 converges faster than 5e-5)
@@ -593,16 +592,16 @@ Once you've identified the best run, promote it to the **model registry**:
 ```python
 # Register model from best run
 mlflow.register_model(
-    model_uri=f"runs:/{best_run_id}/model",
-    name="bert-sentiment-classifier"
+ model_uri=f"runs:/{best_run_id}/model",
+ name="bert-sentiment-classifier"
 )
 
 # Transition to Staging
 client = mlflow.tracking.MlflowClient()
 client.transition_model_version_stage(
-    name="bert-sentiment-classifier",
-    version=1,
-    stage="Staging"
+ name="bert-sentiment-classifier",
+ version=1,
+ stage="Staging"
 )
 ```
 
@@ -689,49 +688,49 @@ Change any one component → you get a different result. Keep all components the
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                        EXPERIMENT TRACKING STACK                     │
-│                                                                       │
-│  USER INTERFACE LAYER                                                │
-│  ┌────────────────────────────────────────────────────────────────┐ │
-│  │  MLflow UI (localhost:5000)           W&B Dashboard (cloud)     │ │
-│  │  • Compare runs (table, plots)        • Team collaboration      │ │
-│  │  • Search by metrics/params           • Real-time sync          │ │
-│  │  • Download artifacts                 • Hosted storage          │ │
-│  └───────────────────────────┬────────────────────────────────────┘ │
-│                              │                                        │
-│  TRACKING LAYER                                                       │
-│  ┌────────────────────────────▼──────────────────────────────────┐  │
-│  │  MLflow Tracking API                                            │  │
-│  │  • mlflow.log_params({"lr": 2e-5, "batch_size": 16})          │  │
-│  │  • mlflow.log_metrics({"accuracy": 0.94}, step=epoch)         │  │
-│  │  • mlflow.log_artifact("model.pt")                            │  │
-│  │  • mlflow.start_run() / mlflow.end_run()                      │  │
-│  └───────────────────────────┬────────────────────────────────────┘ │
-│                              │                                        │
-│  STORAGE LAYER                                                        │
-│  ┌────────────────────────────▼──────────────────────────────────┐  │
-│  │  Local Filesystem (./mlruns/)        Cloud Storage (optional)  │  │
-│  │  • mlruns/0/7a3f9b2e.../             • S3 / Azure Blob         │  │
-│  │    ├── params/                        • Centralized team store │  │
-│  │    ├── metrics/                                                 │  │
-│  │    └── artifacts/model.pt                                       │  │
-│  └────────────────────────────────────────────────────────────────┘ │
-│                                                                       │
-│  DATA VERSIONING LAYER                                               │
-│  ┌────────────────────────────────────────────────────────────────┐ │
-│  │  DVC (Data Version Control)                                     │ │
-│  │  • dvc add data/train.csv  →  .dvc/cache/a8d3c1f7...           │ │
-│  │  • dvc push  →  Upload to remote (S3, GCS, Azure, SSH)         │ │
-│  │  • dvc pull  →  Download specific version by Git commit        │ │
-│  └────────────────────────────────────────────────────────────────┘ │
-│                                                                       │
-│  MODEL REGISTRY LAYER                                                │
-│  ┌────────────────────────────────────────────────────────────────┐ │
-│  │  MLflow Model Registry                                          │ │
-│  │  • Register model from best run                                 │ │
-│  │  • Lifecycle: None → Staging → Production → Archived           │ │
-│  │  • Load by stage: models:/bert-classifier/Production           │ │
-│  └────────────────────────────────────────────────────────────────┘ │
+│ EXPERIMENT TRACKING STACK │
+│ │
+│ USER INTERFACE LAYER │
+│ ┌────────────────────────────────────────────────────────────────┐ │
+│ │ MLflow UI (localhost:5000) W&B Dashboard (cloud) │ │
+│ │ • Compare runs (table, plots) • Team collaboration │ │
+│ │ • Search by metrics/params • Real-time sync │ │
+│ │ • Download artifacts • Hosted storage │ │
+│ └───────────────────────────┬────────────────────────────────────┘ │
+│ │ │
+│ TRACKING LAYER │
+│ ┌────────────────────────────▼──────────────────────────────────┐ │
+│ │ MLflow Tracking API │ │
+│ │ • mlflow.log_params({"lr": 2e-5, "batch_size": 16}) │ │
+│ │ • mlflow.log_metrics({"accuracy": 0.94}, step=epoch) │ │
+│ │ • mlflow.log_artifact("model.pt") │ │
+│ │ • mlflow.start_run() / mlflow.end_run() │ │
+│ └───────────────────────────┬────────────────────────────────────┘ │
+│ │ │
+│ STORAGE LAYER │
+│ ┌────────────────────────────▼──────────────────────────────────┐ │
+│ │ Local Filesystem (./mlruns/) Cloud Storage (optional) │ │
+│ │ • mlruns/0/7a3f9b2e.../ • S3 / Azure Blob │ │
+│ │ ├── params/ • Centralized team store │ │
+│ │ ├── metrics/ │ │
+│ │ └── artifacts/model.pt │ │
+│ └────────────────────────────────────────────────────────────────┘ │
+│ │
+│ DATA VERSIONING LAYER │
+│ ┌────────────────────────────────────────────────────────────────┐ │
+│ │ DVC (Data Version Control) │ │
+│ │ • dvc add data/train.csv → .dvc/cache/a8d3c1f7... │ │
+│ │ • dvc push → Upload to remote (S3, GCS, Azure, SSH) │ │
+│ │ • dvc pull → Download specific version by Git commit │ │
+│ └────────────────────────────────────────────────────────────────┘ │
+│ │
+│ MODEL REGISTRY LAYER │
+│ ┌────────────────────────────────────────────────────────────────┐ │
+│ │ MLflow Model Registry │ │
+│ │ • Register model from best run │ │
+│ │ • Lifecycle: None → Staging → Production → Archived │ │
+│ │ • Load by stage: models:/bert-classifier/Production │ │
+│ └────────────────────────────────────────────────────────────────┘ │
 └───────────────────────────────────────────────────────────────────┘
 ```
 
@@ -792,37 +791,37 @@ Change any one component → you get a different result. Keep all components the
 **Questions:**
 
 1. **Which run should you deploy to production?**
-   - *Answer:* `b2c3d4e5...` (highest test_accuracy **and** test_f1)
-   - *Why not `d4e5f6g7...`?* Same accuracy but lower F1 — likely worse precision/recall balance
-   - *Why not just pick max accuracy?* F1 score accounts for class imbalance (important for sentiment where "negative" class might be rare)
+ - *Answer:* `b2c3d4e5...` (highest test_accuracy **and** test_f1)
+ - *Why not `d4e5f6g7...`?* Same accuracy but lower F1 — likely worse precision/recall balance
+ - *Why not just pick max accuracy?* F1 score accounts for class imbalance (important for sentiment where "negative" class might be rare)
 
 2. **Which hyperparameter had the biggest impact on accuracy?**
-   - *Answer:* Learning rate (2e-5 consistently better than 5e-5)
-   - *How to verify:* Sort by `learning_rate`, compare mean accuracy per group
+ - *Answer:* Learning rate (2e-5 consistently better than 5e-5)
+ - *How to verify:* Sort by `learning_rate`, compare mean accuracy per group
 
 3. **If training time is critical, which run is the best speed/accuracy tradeoff?**
-   - *Answer:* `a1b2c3d4...` (18 min, 89% accuracy) — if 89% is acceptable
-   - *But if 94% is required:* `d4e5f6g7...` (20 min, 94% accuracy) — 2 min faster than the best run
+ - *Answer:* `a1b2c3d4...` (18 min, 89% accuracy) — if 89% is acceptable
+ - *But if 94% is required:* `d4e5f6g7...` (20 min, 94% accuracy) — 2 min faster than the best run
 
 4. **How would you reproduce run `b2c3d4e5...` in 6 months?**
-   ```python
-   # 1. Get run metadata
-   run = mlflow.get_run("b2c3d4e5...")
-   git_commit = run.data.tags["mlflow.source.git.commit"]
+ ```python
+ # 1. Get run metadata
+ run = mlflow.get_run("b2c3d4e5...")
+ git_commit = run.data.tags["mlflow.source.git.commit"]
 
-   # 2. Checkout code version
-   git checkout <git_commit>
+ # 2. Checkout code version
+ git checkout <git_commit>
 
-   # 3. Pull data version
-   dvc pull  # Restores data/imdb_train.csv to the version from that commit
+ # 3. Pull data version
+ dvc pull # Restores data/imdb_train.csv to the version from that commit
 
-   # 4. Retrain with logged hyperparameters
-   python train.py \
-       --learning-rate 2e-5 \
-       --batch-size 16 \
-       --warmup-steps 100 \
-       --random-seed 42  # Must be logged in the original run!
-   ```
+ # 4. Retrain with logged hyperparameters
+ python train.py \
+ --learning-rate 2e-5 \
+ --batch-size 16 \
+ --warmup-steps 100 \
+ --random-seed 42 # Must be logged in the original run!
+ ```
 
 ---
 
@@ -853,22 +852,22 @@ You've just logged 100 experiments, registered the best model, and versioned you
 **The operational workflow:**
 
 ```
-Ch.9 (Experiment Tracking)         Ch.10 (Production Monitoring)
-┌─────────────────────────┐       ┌──────────────────────────┐
-│ 1. Train 100 models     │       │ 5. Monitor predictions   │
-│ 2. Log all experiments  │   →   │ 6. Detect drift          │
-│ 3. Pick best model      │       │ 7. A/B test v1 vs v2     │
-│ 4. Register in registry │       │ 8. Roll back if worse    │
-└─────────────────────────┘       └──────────────────────────┘
-         ↑                                     │
-         └─────────────────────────────────────┘
-           Retrain with new data (Ch.9 loop)
+Ch.9 (Experiment Tracking) Ch.10 (Production Monitoring)
+┌─────────────────────────┐ ┌──────────────────────────┐
+│ 1. Train 100 models │ │ 5. Monitor predictions │
+│ 2. Log all experiments │ → │ 6. Detect drift │
+│ 3. Pick best model │ │ 7. A/B test v1 vs v2 │
+│ 4. Register in registry │ │ 8. Roll back if worse │
+└─────────────────────────┘ └──────────────────────────┘
+ ↑ │
+ └─────────────────────────────────────┘
+ Retrain with new data (Ch.9 loop)
 ```
 
 **What you bring from Ch.9:**
-- ✅ Model registry (load Production model by stage, not hardcoded path)
-- ✅ Experiment provenance (when Production model fails, find the run_id and retrain with different hyperparameters)
-- ✅ Data versioning (compare training data distribution vs production data distribution to diagnose drift)
+- Model registry (load Production model by stage, not hardcoded path)
+- Experiment provenance (when Production model fails, find the run_id and retrain with different hyperparameters)
+- Data versioning (compare training data distribution vs production data distribution to diagnose drift)
 
 **What you'll gain in Ch.10:**
 - Real-time monitoring dashboards (latency, throughput, error rate)
@@ -898,4 +897,4 @@ Ch.9 (Experiment Tracking)         Ch.10 (Production Monitoring)
 ---
 
 **Last updated:** April 26, 2026
-**Status:** ✅ README complete — notebook + assets in progress
+**Status:** README complete — notebook + assets in progress

@@ -1,7 +1,7 @@
 # Ch.11 — Production Deployment Walkthrough
 
 **Track**: AI Infrastructure (06-ai_infrastructure) | **Chapter**: 11 | **Grand Challenge**: InferenceBase
-**Previous**: [ch10_production_ml_monitoring](../ch10_production_ml_monitoring) | **Status**: Grand Challenge Complete ✅
+**Previous**: [ch10_production_ml_monitoring](../ch10_production_ml_monitoring) | **Status**: Grand Challenge Complete
 
 > **The story.** In **2014**, Docker shipped version 1.0 and changed the question "does it work on your machine?" to a solved problem. In **2015**, Google open-sourced **Kubernetes**, and suddenly the question became "does it scale on *any* machine?" — automatically. For ML teams, the combination took years to click. Early LLM deployments (2022–2023) were notoriously fragile: a single vLLM process running in a `tmux` session on a rented A100, restarted by hand after crashes, with latency that spiked whenever traffic surged past the single-pod limit. Then teams started applying the Docker + Kubernetes playbook that backend engineers had perfected for stateless web services. The insight: **a vLLM server is just a stateless HTTP service with a GPU dependency** — it containerises exactly like any other service, and Kubernetes manages scheduling, health checks, and autoscaling the same way. The only special ingredient is the NVIDIA device plugin, which teaches Kubernetes how to claim GPU slots as resources. Once that's installed, `kubectl apply -f k8s/` is the entire deployment.
 >
@@ -14,19 +14,19 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Self-host Llama-3-8B for <$15k/month with ≤2s p95 latency, replacing $80k/month OpenAI API costs.
+> **The mission**: Self-host Llama-3-8B for <$15k/month with ≤2s p95 latency, replacing $80k/month OpenAI API costs.
 >
 > **6 Constraints**: #1 Cost (<$15k/mo) • #2 Latency (≤2s p95) • #3 Throughput (≥10k req/day) • #4 Memory (fit in 24GB VRAM) • #5 Quality (≥95% accuracy) • #6 Reliability (>99% uptime)
 
 **What we know so far:**
 
-- ✅ **Cost**: $1,095/month on RunPod RTX 4090 — 93% under budget (Ch.8)
-- ✅ **Latency**: 1.2s p95 in staging benchmark (Ch.5 + Ch.6)
-- ✅ **Throughput**: 12,000 req/day on one GPU (Ch.6)
-- ✅ **Memory**: 8GB INT4 weights + 4GB KV cache = 12GB used of 24GB VRAM (Ch.3)
-- ✅ **Quality**: 96.2% accuracy on document extraction vs. 95% target (Ch.9)
-- ✅ **Reliability**: 99.5% uptime with monitoring alerts, automated rollback (Ch.10)
-- ⚡ **Current state**: all constraints met in staging — no production deployment yet
+- **Cost**: $1,095/month on RunPod RTX 4090 — 93% under budget (Ch.8)
+- **Latency**: 1.2s p95 in staging benchmark (Ch.5 + Ch.6)
+- **Throughput**: 12,000 req/day on one GPU (Ch.6)
+- **Memory**: 8GB INT4 weights + 4GB KV cache = 12GB used of 24GB VRAM (Ch.3)
+- **Quality**: 96.2% accuracy on document extraction vs. 95% target (Ch.9)
+- **Reliability**: 99.5% uptime with monitoring alerts, automated rollback (Ch.10)
+- **Current state**: all constraints met in staging — no production deployment yet
 
 **What's blocking us:**
 
@@ -35,20 +35,19 @@
 **Current situation:** The staging instance runs as a manual `vllm serve` command over SSH on a rented GPU. If the node reboots, someone has to log in and restart it. There is no health checking, no autoscaling, no secret management.
 
 **Problems:**
-1. ❌ Manual restart — 15 minutes of downtime per GPU node reboot → violates 99% uptime SLA
-2. ❌ HuggingFace token stored as a bash export in `~/.bashrc` → any team member can accidentally `git commit` it
-3. ❌ No resource limits → a runaway batch request can OOM the process, taking down all concurrent users
-4. ❌ Kubernetes routes traffic to the pod immediately on start — but vLLM takes 90s to load Llama-3-8B → 502 errors on every cold start
+1. Manual restart — 15 minutes of downtime per GPU node reboot → violates 99% uptime SLA
+2. HuggingFace token stored as a bash export in `~/.bashrc` → any team member can accidentally `git commit` it
+3. No resource limits → a runaway batch request can OOM the process, taking down all concurrent users
+4. Kubernetes routes traffic to the pod immediately on start — but vLLM takes 90s to load Llama-3-8B → 502 errors on every cold start
 
 **What this chapter unlocks:**
 
-🚀 **One-command production deployment:**
+ **One-command production deployment:**
 1. One Dockerfile — reproducible container build, non-root user, no baked-in secrets
 2. Three K8s manifests — Deployment + Service + HPA; `kubectl apply -f k8s/` is the entire deploy
 3. Prometheus + Grafana — latency and throughput visible within 2 minutes of deployment
 4. Smoke test — one `curl` that confirms the model is answering before you declare success
-
-⚡ **Expected outcomes after this chapter:**
+**Expected outcomes after this chapter:**
 - **Deployment time**: manual SSH restart → `kubectl apply` in <30 minutes on a fresh cluster
 - **Availability**: 99.5% → >99.9% (Kubernetes automatic restart, readiness gates)
 - **Security posture**: bare token in bash history → K8s Secret injection (OWASP A02 compliant)
@@ -57,12 +56,12 @@
 
 | Constraint | Status | Evidence |
 |---|---|---|
-| #1 COST | ✅ | $1,095/month (unchanged from Ch.8) |
-| #2 LATENCY | ✅ | 1.2s p95 staging → 1.3s p95 production (K8s overhead <100ms) |
-| #3 THROUGHPUT | ✅ | 12,000 req/day; HPA scales to 48,000 req/day if needed |
-| #4 MEMORY | ✅ | 12GB used / 24GB VRAM; enforced by K8s resource limits |
-| #5 QUALITY | ✅ | Model unchanged — 96.2% accuracy |
-| #6 RELIABILITY | ✅ | Liveness + readiness probes + HPA → >99.9% uptime |
+| #1 COST | | $1,095/month (unchanged from Ch.8) |
+| #2 LATENCY | | 1.2s p95 staging → 1.3s p95 production (K8s overhead <100ms) |
+| #3 THROUGHPUT | | 12,000 req/day; HPA scales to 48,000 req/day if needed |
+| #4 MEMORY | | 12GB used / 24GB VRAM; enforced by K8s resource limits |
+| #5 QUALITY | | Model unchanged — 96.2% accuracy |
+| #6 RELIABILITY | | Liveness + readiness probes + HPA → >99.9% uptime |
 
 ---
 
@@ -80,41 +79,41 @@ Before writing a line of YAML, map the system. Every component either carries tr
 
 ```mermaid
 flowchart TD
-    A["🌐 Client Request\n(HTTPS)"]
-    B["Ingress Controller\nTLS termination\nrate limiting"]
-    C["K8s Service\nClusterIP :8000\nvllm-llama3.inferencebase"]
-    D["vLLM Pod\nLlama-3-8B INT4\nnon-root uid 1001"]
-    E["RTX 4090 GPU\n24GB VRAM\n12GB used"]
-    F["Prometheus\n/metrics scrape\nevery 15s"]
-    G["Grafana\nDashboard\ntoken/s · latency"]
-    H["HPA Controller\nscale 1→4 replicas\non CPU or queue depth"]
-    I["K8s Secret\nhf-credentials\nHF token"]
+ A["🌐 Client Request\n(HTTPS)"]
+ B["Ingress Controller\nTLS termination\nrate limiting"]
+ C["K8s Service\nClusterIP :8000\nvllm-llama3.inferencebase"]
+ D["vLLM Pod\nLlama-3-8B INT4\nnon-root uid 1001"]
+ E["RTX 4090 GPU\n24GB VRAM\n12GB used"]
+ F["Prometheus\n/metrics scrape\nevery 15s"]
+ G["Grafana\nDashboard\ntoken/s · latency"]
+ H["HPA Controller\nscale 1→4 replicas\non CPU or queue depth"]
+ I["K8s Secret\nhf-credentials\nHF token"]
 
-    A --> B
-    B --> C
-    C --> D
-    D --> E
-    D -- "exposes /metrics" --> F
-    F --> G
-    H -- "watches metrics\nadjusts replicas" --> D
-    I -- "secretKeyRef\ninjected at pod start" --> D
+ A --> B
+ B --> C
+ C --> D
+ D --> E
+ D -- "exposes /metrics" --> F
+ F --> G
+ H -- "watches metrics\nadjusts replicas" --> D
+ I -- "secretKeyRef\ninjected at pod start" --> D
 
-    style A fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style B fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style C fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style D fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style E fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style F fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style G fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style H fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style I fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style A fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style B fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style C fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style D fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style E fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style F fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style G fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style H fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style I fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 **The traffic path**: Client → Ingress (TLS + rate limiting) → Service (stable DNS) → Pod (vLLM process on GPU).
 **The control path**: HPA watches Prometheus metrics → adjusts replica count → Service load-balances across replicas.
 **The secrets path**: K8s Secret → pod env var at container start → vLLM passes it to HuggingFace Hub for model download.
 
-> ➡️ The Ingress controller configuration (TLS certificates, rate-limit annotations) is covered in [DevOps Ch.4 — CI/CD & Ingress](../../07-devops_fundamentals/ch04_cicd). This chapter focuses on the workload layer: Deployment, Service, HPA.
+> ➡ The Ingress controller configuration (TLS certificates, rate-limit annotations) is covered in [DevOps Ch.4 — CI/CD & Ingress](../../07-devops_fundamentals/ch04_cicd). This chapter focuses on the workload layer: Deployment, Service, HPA.
 
 ---
 
@@ -122,44 +121,44 @@ flowchart TD
 
 **Before diving into manifests and metrics, understand the production deployment workflow you'll follow for every ML service:**
 
-> 📊 **What you'll build by the end:** A production-grade LLM deployment on Kubernetes with automated health checks, metrics dashboards, and autoscaling — going from manual SSH restarts to `kubectl apply` in under 30 minutes.
+> **What you'll build by the end:** A production-grade LLM deployment on Kubernetes with automated health checks, metrics dashboards, and autoscaling — going from manual SSH restarts to `kubectl apply` in under 30 minutes.
 
 ```
-Phase 1: CONTAINERIZE          Phase 2: KUBERNETES            Phase 3: DEPLOY
+Phase 1: CONTAINERIZE Phase 2: KUBERNETES Phase 3: DEPLOY
 ────────────────────────────────────────────────────────────────────────────
-Build Docker image:            Write K8s manifests:           Apply and validate:
+Build Docker image: Write K8s manifests: Apply and validate:
 
-• Multi-stage Dockerfile       • Deployment (replicas,        • kubectl apply -f k8s/
-• Non-root user (uid 1001)       probes, resources)           • Smoke test (curl /health)
-• Model artifacts cached       • Service (ClusterIP)          • Check readiness gates
-• HF token via Secret          • HPA (scale triggers)         • Blue-green traffic shift
+• Multi-stage Dockerfile • Deployment (replicas, • kubectl apply -f k8s/
+• Non-root user (uid 1001) probes, resources) • Smoke test (curl /health)
+• Model artifacts cached • Service (ClusterIP) • Check readiness gates
+• HF token via Secret • HPA (scale triggers) • Blue-green traffic shift
 
-→ DECISION:                    → DECISION:                    → DECISION:
-  Image security OK?             Resource limits correct?       Deploy complete?
-  • docker run ... id              • GPU = 1 (exact match)        • /health returns 200
-  • No secrets in layers           • Memory: 20Gi req, 32Gi lim   • p95 latency < 2s
-  • Non-root user verified         • Startup probe: 360s window   • Error rate < 0.5%
+→ DECISION: → DECISION: → DECISION:
+ Image security OK? Resource limits correct? Deploy complete?
+ • docker run ... id • GPU = 1 (exact match) • /health returns 200
+ • No secrets in layers • Memory: 20Gi req, 32Gi lim • p95 latency < 2s
+ • Non-root user verified • Startup probe: 360s window • Error rate < 0.5%
 
-Phase 4: MONITOR               Phase 5: VALIDATE              Phase 6: SCALE
+Phase 4: MONITOR Phase 5: VALIDATE Phase 6: SCALE
 ────────────────────────────────────────────────────────────────────────────
-Set up observability:          Load test production:          Configure autoscaling:
+Set up observability: Load test production: Configure autoscaling:
 
-• Prometheus scrape /metrics   • Locust 20 users, 5min        • HPA on CPU + queue depth
-• Grafana dashboard (4 panels) • Compare staging vs prod      • Scale 1→4 replicas
-• Alert on p95 > 2s            • Canary: 10% → 50% → 100%    • Cost per 1M tokens
-• Queue depth threshold        • Rollback if errors spike     • Capacity planning
+• Prometheus scrape /metrics • Locust 20 users, 5min • HPA on CPU + queue depth
+• Grafana dashboard (4 panels) • Compare staging vs prod • Scale 1→4 replicas
+• Alert on p95 > 2s • Canary: 10% → 50% → 100% • Cost per 1M tokens
+• Queue depth threshold • Rollback if errors spike • Capacity planning
 
-→ DECISION:                    → DECISION:                    → DECISION:
-  Metrics visible?               Performance acceptable?        Scale trigger correct?
-  • vllm:* metrics present       • p95: 1.3s (target: ≤2s) ✅    • Queue > 10 → scale up
-  • Grafana panels populated     • Throughput: 12k req/day ✅    • Cost at 4x: $4,380/mo
-  • Alerts firing correctly      • Error rate: 0.1% ✅           • Under $15k budget ✅
+→ DECISION: → DECISION: → DECISION:
+ Metrics visible? Performance acceptable? Scale trigger correct?
+ • vllm:* metrics present • p95: 1.3s (target: ≤2s) • Queue > 10 → scale up
+ • Grafana panels populated • Throughput: 12k req/day • Cost at 4x: $4,380/mo
+ • Alerts firing correctly • Error rate: 0.1% • Under $15k budget
 ```
 
-> 💡 **Usage note:** Phases 1–3 are sequential (must containerize before deploying). Phases 4–6 can overlap — set up monitoring during deployment, run validation after first smoke test, configure HPA once baseline metrics are visible. The checkpoint after each phase tells you when to proceed.
+> **Usage note:** Phases 1–3 are sequential (must containerize before deploying). Phases 4–6 can overlap — set up monitoring during deployment, run validation after first smoke test, configure HPA once baseline metrics are visible. The checkpoint after each phase tells you when to proceed.
 
-> 💡 **Deployment verdict:** Blue-green rollout completed in 8 min with zero dropped requests — all 6 constraints met in production ✅.
-> ➡️ This is the final chapter — all InferenceBase constraints satisfied. See grand-challenge.md for the constraint scorecard.
+> **Deployment verdict:** Blue-green rollout completed in 8 min with zero dropped requests — all 6 constraints met in production .
+> ➡ This is the final chapter — all InferenceBase constraints satisfied. See grand-challenge.md for the constraint scorecard.
 
 ---
 
@@ -169,7 +168,7 @@ Set up observability:          Load test production:          Configure autoscal
 
 Deploy a container as root and you've handed an attacker the keys. If they break out of the container (any RCE vulnerability in vLLM or its dependencies), they own the host node. The OWASP Top 10 explicitly flags this as A05 — Security Misconfiguration.
 
-⚠️ **What breaks:** A security scanner (Trivy, Snyk) will flag the image in CI. Most enterprise Kubernetes clusters have an `OPA Gatekeeper` policy that rejects pods with `runAsRoot: true` — your deployment silently fails admission.
+**Warning — What breaks:** A security scanner (Trivy, Snyk) will flag the image in CI. Most enterprise Kubernetes clusters have an `OPA Gatekeeper` policy that rejects pods with `runAsRoot: true` — your deployment silently fails admission.
 
 **The fix** — create a dedicated system user during the build:
 
@@ -178,10 +177,10 @@ FROM vllm/vllm-openai:v0.4.3
 
 # Create non-root user uid 1001 and own the cache directory
 RUN groupadd --system --gid 1001 vllm \
-    && useradd --system --uid 1001 --gid 1001 \
-               --shell /bin/bash --create-home vllm \
-    && mkdir -p /home/vllm/.cache/huggingface \
-    && chown -R vllm:vllm /home/vllm
+ && useradd --system --uid 1001 --gid 1001 \
+ --shell /bin/bash --create-home vllm \
+ && mkdir -p /home/vllm/.cache/huggingface \
+ && chown -R vllm:vllm /home/vllm
 
 USER vllm
 WORKDIR /home/vllm
@@ -192,7 +191,7 @@ The `deployment.yaml` then enforces this at the pod level with `securityContext.
 ### Failure 2: baking credentials into the image
 
 ```dockerfile
-# ❌ Never do this — token ends up in image layers, git history, and registry
+# Never do this — token ends up in image layers, git history, and registry
 ENV HUGGING_FACE_HUB_TOKEN="hf_AbCdEfGhIjKlMnOpQrStUvWxYz123456"
 ```
 
@@ -209,10 +208,10 @@ ENV HF_HOME="/home/vllm/.cache/huggingface"
 ```yaml
 # deployment.yaml: token comes from Secret, not the manifest
 - name: HUGGING_FACE_HUB_TOKEN
-  valueFrom:
-    secretKeyRef:
-      name: hf-credentials
-      key: token
+ valueFrom:
+ secretKeyRef:
+ name: hf-credentials
+ key: token
 ```
 
 The K8s Secret is encrypted at rest (etcd encryption enabled by your cluster admin). It never appears in container images, Dockerfiles, or version control.
@@ -224,9 +223,9 @@ The CMD in the Dockerfile uses shell form so that `${MODEL_ID}` expands from the
 ```dockerfile
 # Shell form — ${VAR} expanded by /bin/sh at container start
 CMD python -m vllm.entrypoints.openai.api_server \
-        --model ${MODEL_ID} \
-        --quantization ${QUANTIZATION} \
-        ...
+ --model ${MODEL_ID} \
+ --quantization ${QUANTIZATION} \
+ ...
 ```
 
 This lets you swap models (`meta-llama/Meta-Llama-3-70B-Instruct`) by updating the K8s ConfigMap without rebuilding the image — an important property for the [A/B testing rollout](../ch10_production_ml_monitoring) you built in Ch.10.
@@ -242,18 +241,18 @@ docker run --rm inferencebase/llama3-vllm:latest id
 # Expected: uid=1001(vllm) gid=1001(vllm) groups=1001(vllm)
 ```
 
-> 💡 **Insight**: The `docker run ... id` check costs five seconds and catches the most common image-security mistake. Add it as the first step in your CI pipeline before the image is pushed to any registry.
+> **Insight**: The `docker run ... id` check costs five seconds and catches the most common image-security mistake. Add it as the first step in your CI pipeline before the image is pushed to any registry.
 
-> 💡 **Industry Standard:** `Docker BuildKit` for fast, cached builds
+> **Industry Standard:** `Docker BuildKit` for fast, cached builds
 >
 > ```bash
 > # Enable BuildKit for 5–10× faster rebuilds
 > export DOCKER_BUILDKIT=1
 > docker build \
->   --build-arg BUILDKIT_INLINE_CACHE=1 \
->   --cache-from inferencebase/llama3-vllm:latest \
->   -t inferencebase/llama3-vllm:v1.2.3 \
->   .
+> --build-arg BUILDKIT_INLINE_CACHE=1 \
+> --cache-from inferencebase/llama3-vllm:latest \
+> -t inferencebase/llama3-vllm:v1.2.3 \
+> .
 > # BuildKit caches each layer hash — unchanged layers skip rebuild entirely
 > ```
 >
@@ -288,8 +287,8 @@ The three manifests in `k8s/` form a complete serving stack. Apply them in one c
 ```bash
 kubectl create namespace inferencebase
 kubectl create secret generic hf-credentials \
-  --namespace inferencebase \
-  --from-literal=token="$(cat ~/.hf_token)"   # read from file, not shell history
+ --namespace inferencebase \
+ --from-literal=token="$(cat ~/.hf_token)" # read from file, not shell history
 
 kubectl apply -f k8s/
 # deployment.apps/vllm-llama3 created
@@ -302,7 +301,7 @@ Watch the rollout:
 ```bash
 kubectl rollout status deployment/vllm-llama3 -n inferencebase
 # Waiting for deployment "vllm-llama3" rollout to finish: 0 of 1 updated replicas are available...
-# deployment "vllm-llama3" successfully rolled out   ← ~90s for model load
+# deployment "vllm-llama3" successfully rolled out ← ~90s for model load
 ```
 
 ### 3.1 · `k8s/deployment.yaml` — Failure First
@@ -312,7 +311,7 @@ kubectl rollout status deployment/vllm-llama3 -n inferencebase
 ```bash
 # Deploy without limits — then send a long batch request
 curl -X POST http://vllm:8000/v1/completions \
-  -d '{"model":"inferencebase","prompt":"Summarize this 500-page document...","max_tokens":4096}'
+ -d '{"model":"inferencebase","prompt":"Summarize this 500-page document...","max_tokens":4096}'
 ```
 
 Without `resources.limits.memory`, the kernel OOM-killer terminates the vLLM process when the KV cache overflows. Every in-flight request dies. The pod restarts, spends 90s loading the model, and then the same request comes in again — infinite loop.
@@ -327,28 +326,28 @@ The `startupProbe` with `failureThreshold: 20` × `periodSeconds: 15` gives up t
 
 ```
 Timeline on pod start:
-  0s    container starts
-  60s   startupProbe begins polling /health every 15s
-  ~90s  vLLM finishes loading model, /health returns 200
-  90s   startupProbe satisfied → pod is now "started"
-  90s   readinessProbe activates → pod added to Service endpoints
-  180s  livenessProbe activates (first check)
+ 0s container starts
+ 60s startupProbe begins polling /health every 15s
+ ~90s vLLM finishes loading model, /health returns 200
+ 90s startupProbe satisfied → pod is now "started"
+ 90s readinessProbe activates → pod added to Service endpoints
+ 180s livenessProbe activates (first check)
 ```
 
-> ⚠️ **Warning:** Without `readinessProbe`, Kubernetes adds the pod to the Service endpoints the moment the container starts — before vLLM has loaded the model. The first ~90 seconds of traffic gets `Connection refused`, manifesting as 502 errors in your Ingress logs and p99 latency spikes on your Grafana dashboard. Always set `readinessProbe.initialDelaySeconds ≥ 90` for LLM containers.
+> **Warning — Warning:** Without `readinessProbe`, Kubernetes adds the pod to the Service endpoints the moment the container starts — before vLLM has loaded the model. The first ~90 seconds of traffic gets `Connection refused`, manifesting as 502 errors in your Ingress logs and p99 latency spikes on your Grafana dashboard. Always set `readinessProbe.initialDelaySeconds ≥ 90` for LLM containers.
 
 #### Resource requests and GPU limits
 
 ```yaml
 resources:
-  requests:
-    memory: "20Gi"
-    cpu: "4"
-    nvidia.com/gpu: "1"
-  limits:
-    memory: "32Gi"
-    cpu: "8"
-    nvidia.com/gpu: "1"
+ requests:
+ memory: "20Gi"
+ cpu: "4"
+ nvidia.com/gpu: "1"
+ limits:
+ memory: "32Gi"
+ cpu: "8"
+ nvidia.com/gpu: "1"
 ```
 
 The GPU limit must equal the GPU request — Kubernetes cannot share fractional GPUs across pods unless you install MIG (Multi-Instance GPU) support. Setting `nvidia.com/gpu: "1"` in both requests and limits means this pod gets exactly one GPU, and no other pod on the node can claim it.
@@ -374,58 +373,58 @@ The HPA watches two metrics:
 | `cpu` | Resource (built-in) | >70% utilization | Available everywhere; guards against compute saturation |
 | `vllm_num_requests_running` | Custom (Prometheus Adapter) | >10 per pod | Guards against queue buildup before CPU saturates |
 
-> ⚠️ **Warning:** The custom metric requires **Prometheus Adapter** installed in your cluster. Without it, the HPA ignores the `Pods` metric and scales on CPU only — which is fine as a fallback, but you'll miss queue-depth signals. Check that the adapter is running before relying on this HPA in production:
+> **Warning — Warning:** The custom metric requires **Prometheus Adapter** installed in your cluster. Without it, the HPA ignores the `Pods` metric and scales on CPU only — which is fine as a fallback, but you'll miss queue-depth signals. Check that the adapter is running before relying on this HPA in production:
 > ```bash
 > kubectl get pods -n monitoring | grep prometheus-adapter
-> # prometheus-adapter-xxxxx   1/1   Running   0   5m
+> # prometheus-adapter-xxxxx 1/1 Running 0 5m
 > ```
 
 **Scale-up behavior**: waits 60s stabilization, then adds 1 pod every 120s. GPU nodes on RunPod take 2–3 minutes to attach a new GPU — there's no point adding pods faster than the cluster can provision hardware.
 
 **Scale-down behavior**: waits 300s before removing a pod. This prevents thrashing during typical burst patterns (evening traffic spike decays over 5 minutes) and avoids the 90s model-reload cost on every scale event.
 
-> 💡 **Industry Standard:** `Kubernetes HorizontalPodAutoscaler` (HPA) for reactive autoscaling
+> **Industry Standard:** `Kubernetes HorizontalPodAutoscaler` (HPA) for reactive autoscaling
 >
 > ```yaml
 > # HPA with custom metrics (requires Prometheus Adapter)
 > apiVersion: autoscaling/v2
 > kind: HorizontalPodAutoscaler
 > metadata:
->   name: vllm-llama3
+> name: vllm-llama3
 > spec:
->   scaleTargetRef:
->     apiVersion: apps/v1
->     kind: Deployment
->     name: vllm-llama3
->   minReplicas: 1
->   maxReplicas: 4
->   metrics:
->   - type: Resource
->     resource:
->       name: cpu
->       target:
->         type: Utilization
->         averageUtilization: 70
->   - type: Pods
->     pods:
->       metric:
->         name: vllm_num_requests_waiting
->       target:
->         type: AverageValue
->         averageValue: "10"  # Scale when queue depth > 10 per pod
->   behavior:
->     scaleUp:
->       stabilizationWindowSeconds: 60
->       policies:
->       - type: Pods
->         value: 1
->         periodSeconds: 120  # Add 1 pod every 2 minutes max
->     scaleDown:
->       stabilizationWindowSeconds: 300
->       policies:
->       - type: Pods
->         value: 1
->         periodSeconds: 180  # Remove 1 pod every 3 minutes max
+> scaleTargetRef:
+> apiVersion: apps/v1
+> kind: Deployment
+> name: vllm-llama3
+> minReplicas: 1
+> maxReplicas: 4
+> metrics:
+> - type: Resource
+> resource:
+> name: cpu
+> target:
+> type: Utilization
+> averageUtilization: 70
+> - type: Pods
+> pods:
+> metric:
+> name: vllm_num_requests_waiting
+> target:
+> type: AverageValue
+> averageValue: "10" # Scale when queue depth > 10 per pod
+> behavior:
+> scaleUp:
+> stabilizationWindowSeconds: 60
+> policies:
+> - type: Pods
+> value: 1
+> periodSeconds: 120 # Add 1 pod every 2 minutes max
+> scaleDown:
+> stabilizationWindowSeconds: 300
+> policies:
+> - type: Pods
+> value: 1
+> periodSeconds: 180 # Remove 1 pod every 3 minutes max
 > ```
 >
 > **When to use:** Always for production workloads with variable traffic. HPA prevents overload (autoscale up) and reduces cost during off-peak (autoscale down).
@@ -463,10 +462,10 @@ InferenceBase uses a **blue-green deployment** pattern for zero-downtime model u
 
 ```
 Blue (v1.0) at 100% traffic → Deploy Green (v1.1) at 0% traffic
-                            → Shift 10% traffic to Green
-                            → Monitor metrics for 5 minutes
-                            → Shift 50% → Monitor → Shift 100%
-                            → Retire Blue
+ → Shift 10% traffic to Green
+ → Monitor metrics for 5 minutes
+ → Shift 50% → Monitor → Shift 100%
+ → Retire Blue
 ```
 
 **Why this matters:** LLM model updates can introduce subtle regressions (quantization errors, prompt format changes). Blue-green gives you a rollback path *before* committing all traffic to the new version.
@@ -478,49 +477,49 @@ Blue (v1.0) at 100% traffic → Deploy Green (v1.1) at 0% traffic
 ```yaml
 # deployment-blue.yaml (current v1.0)
 metadata:
-  name: vllm-llama3-blue
-  labels:
-    app: vllm-llama3
-    version: v1.0
+ name: vllm-llama3-blue
+ labels:
+ app: vllm-llama3
+ version: v1.0
 spec:
-  replicas: 2
-  template:
-    metadata:
-      labels:
-        app: vllm-llama3
-        version: v1.0
-    spec:
-      containers:
-      - name: vllm
-        image: inferencebase/llama3-vllm:v1.0
-        env:
-        - name: MODEL_ID
-          value: "meta-llama/Meta-Llama-3-8B-Instruct"
+ replicas: 2
+ template:
+ metadata:
+ labels:
+ app: vllm-llama3
+ version: v1.0
+ spec:
+ containers:
+ - name: vllm
+ image: inferencebase/llama3-vllm:v1.0
+ env:
+ - name: MODEL_ID
+ value: "meta-llama/Meta-Llama-3-8B-Instruct"
 ```
 
 ```yaml
 # deployment-green.yaml (new v1.1 — quantized INT4)
 metadata:
-  name: vllm-llama3-green
-  labels:
-    app: vllm-llama3
-    version: v1.1
+ name: vllm-llama3-green
+ labels:
+ app: vllm-llama3
+ version: v1.1
 spec:
-  replicas: 2
-  template:
-    metadata:
-      labels:
-        app: vllm-llama3
-        version: v1.1
-    spec:
-      containers:
-      - name: vllm
-        image: inferencebase/llama3-vllm:v1.1
-        env:
-        - name: MODEL_ID
-          value: "meta-llama/Meta-Llama-3-8B-Instruct"
-        - name: QUANTIZATION
-          value: "awq"  # ← New: INT4 quantization
+ replicas: 2
+ template:
+ metadata:
+ labels:
+ app: vllm-llama3
+ version: v1.1
+ spec:
+ containers:
+ - name: vllm
+ image: inferencebase/llama3-vllm:v1.1
+ env:
+ - name: MODEL_ID
+ value: "meta-llama/Meta-Llama-3-8B-Instruct"
+ - name: QUANTIZATION
+ value: "awq" # ← New: INT4 quantization
 ```
 
 **Step 2: Traffic splitting with Istio VirtualService**
@@ -530,29 +529,29 @@ spec:
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
-  name: vllm-llama3
+ name: vllm-llama3
 spec:
-  hosts:
-  - vllm-llama3.inferencebase.svc.cluster.local
-  http:
-  - match:
-    - headers:
-        version:
-          exact: "canary"  # Test traffic uses header "version: canary"
-    route:
-    - destination:
-        host: vllm-llama3
-        subset: green
-      weight: 100
-  - route:
-    - destination:
-        host: vllm-llama3
-        subset: blue
-      weight: 90  # Blue gets 90% of production traffic
-    - destination:
-        host: vllm-llama3
-        subset: green
-      weight: 10  # Green gets 10% of production traffic
+ hosts:
+ - vllm-llama3.inferencebase.svc.cluster.local
+ http:
+ - match:
+ - headers:
+ version:
+ exact: "canary" # Test traffic uses header "version: canary"
+ route:
+ - destination:
+ host: vllm-llama3
+ subset: green
+ weight: 100
+ - route:
+ - destination:
+ host: vllm-llama3
+ subset: blue
+ weight: 90 # Blue gets 90% of production traffic
+ - destination:
+ host: vllm-llama3
+ subset: green
+ weight: 10 # Green gets 10% of production traffic
 ```
 
 **Step 3: Gradual traffic shift**
@@ -581,35 +580,35 @@ kubectl delete deployment vllm-llama3-blue
 
 | Metric | Blue (v1.0) | Green (v1.1) | Decision |
 |---|---|---|---|
-| **p95 latency** | 1.2s | 1.4s | ⚠️ CAUTION — Green is 17% slower, but under 2s target. Proceed to 50%. |
-| **p95 latency** | 1.2s | 2.3s | ❌ ROLLBACK — Green breaches SLA. Shift back to 100% Blue. |
-| **Error rate** | 0.1% | 0.5% | ✅ ACCEPTABLE — Both under 0.5% threshold. Proceed. |
-| **Error rate** | 0.1% | 1.2% | ❌ ROLLBACK — Green error rate 12× higher. Immediate rollback. |
-| **Throughput** | 490 tok/s | 520 tok/s | ✅ GOOD — Green is faster (INT4 quantization benefit). |
+| **p95 latency** | 1.2s | 1.4s | CAUTION — Green is 17% slower, but under 2s target. Proceed to 50%. |
+| **p95 latency** | 1.2s | 2.3s | ROLLBACK — Green breaches SLA. Shift back to 100% Blue. |
+| **Error rate** | 0.1% | 0.5% | ACCEPTABLE — Both under 0.5% threshold. Proceed. |
+| **Error rate** | 0.1% | 1.2% | ROLLBACK — Green error rate 12× higher. Immediate rollback. |
+| **Throughput** | 490 tok/s | 520 tok/s | GOOD — Green is faster (INT4 quantization benefit). |
 
-> 💡 **Industry Standard:** `Argo Rollouts` for automated progressive delivery
+> **Industry Standard:** `Argo Rollouts` for automated progressive delivery
 >
 > ```yaml
 > # Argo Rollout with automated canary analysis
 > apiVersion: argoproj.io/v1alpha1
 > kind: Rollout
 > metadata:
->   name: vllm-llama3
+> name: vllm-llama3
 > spec:
->   replicas: 4
->   strategy:
->     canary:
->       steps:
->       - setWeight: 10
->       - pause: {duration: 5m}   # Monitor for 5 min at 10%
->       - setWeight: 50
->       - pause: {duration: 5m}
->       - setWeight: 100
->       analysis:
->         templates:
->         - templateName: success-rate
->         - templateName: latency-check
->       # Automated rollback if analysis fails
+> replicas: 4
+> strategy:
+> canary:
+> steps:
+> - setWeight: 10
+> - pause: {duration: 5m} # Monitor for 5 min at 10%
+> - setWeight: 50
+> - pause: {duration: 5m}
+> - setWeight: 100
+> analysis:
+> templates:
+> - templateName: success-rate
+> - templateName: latency-check
+> # Automated rollback if analysis fails
 > ```
 >
 > **When to use:** For mission-critical services where manual rollout is too slow or error-prone. Argo Rollouts automates the entire blue-green/canary workflow.
@@ -626,42 +625,42 @@ kubectl port-forward svc/vllm-llama3 8000:8000 -n inferencebase &
 
 # Smoke test: one real document-extraction request
 curl -s -X POST http://localhost:8000/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "inferencebase",
-    "messages": [
-      {
-        "role": "system",
-        "content": "You are a document extraction assistant. Extract structured data as JSON."
-      },
-      {
-        "role": "user",
-        "content": "Invoice #INV-2024-0042\nDate: March 15, 2024\nTotal: $1,250.00\nVendor: Acme Corp\n\nExtract: invoice_number, date, total_amount, vendor."
-      }
-    ],
-    "max_tokens": 150
-  }' | python -m json.tool
+ -H "Content-Type: application/json" \
+ -d '{
+ "model": "inferencebase",
+ "messages": [
+ {
+ "role": "system",
+ "content": "You are a document extraction assistant. Extract structured data as JSON."
+ },
+ {
+ "role": "user",
+ "content": "Invoice #INV-2024-0042\nDate: March 15, 2024\nTotal: $1,250.00\nVendor: Acme Corp\n\nExtract: invoice_number, date, total_amount, vendor."
+ }
+ ],
+ "max_tokens": 150
+ }' | python -m json.tool
 ```
 
 **Expected response** (arrive within 2s):
 
 ```json
 {
-  "id": "chat-abc123",
-  "object": "chat.completion",
-  "model": "inferencebase",
-  "choices": [{
-    "message": {
-      "role": "assistant",
-      "content": "{\"invoice_number\": \"INV-2024-0042\", \"date\": \"2024-03-15\", \"total_amount\": \"$1,250.00\", \"vendor\": \"Acme Corp\"}"
-    },
-    "finish_reason": "stop"
-  }],
-  "usage": {
-    "prompt_tokens": 87,
-    "completion_tokens": 43,
-    "total_tokens": 130
-  }
+ "id": "chat-abc123",
+ "object": "chat.completion",
+ "model": "inferencebase",
+ "choices": [{
+ "message": {
+ "role": "assistant",
+ "content": "{\"invoice_number\": \"INV-2024-0042\", \"date\": \"2024-03-15\", \"total_amount\": \"$1,250.00\", \"vendor\": \"Acme Corp\"}"
+ },
+ "finish_reason": "stop"
+ }],
+ "usage": {
+ "prompt_tokens": 87,
+ "completion_tokens": 43,
+ "total_tokens": 130
+ }
 }
 ```
 
@@ -704,7 +703,7 @@ vLLM exposes a `/metrics` endpoint natively. You enabled it with `--enable-metri
 ```
 # Check metrics are live after deployment
 kubectl exec -n inferencebase deploy/vllm-llama3 -- \
-  curl -s http://localhost:8000/metrics | grep -E "vllm:" | head -20
+ curl -s http://localhost:8000/metrics | grep -E "vllm:" | head -20
 ```
 
 | Metric | Type | What it tells you |
@@ -722,83 +721,83 @@ Import this dashboard config into Grafana (Dashboards → Import → paste JSON)
 
 ```json
 {
-  "title": "InferenceBase — Llama-3-8B Production",
-  "uid": "inferencebase-prod",
-  "panels": [
-    {
-      "title": "Token Throughput (tokens/s)",
-      "type": "timeseries",
-      "targets": [{
-        "expr": "rate(vllm:generation_tokens_total{namespace='inferencebase'}[1m])",
-        "legendFormat": "tokens/s"
-      }],
-      "thresholds": [{"value": 400, "color": "green"}, {"value": 100, "color": "red"}]
-    },
-    {
-      "title": "Request Latency P50 / P95 / P99",
-      "type": "timeseries",
-      "targets": [
-        {"expr": "histogram_quantile(0.50, rate(vllm:e2e_request_latency_seconds_bucket{namespace='inferencebase'}[5m]))", "legendFormat": "p50"},
-        {"expr": "histogram_quantile(0.95, rate(vllm:e2e_request_latency_seconds_bucket{namespace='inferencebase'}[5m]))", "legendFormat": "p95"},
-        {"expr": "histogram_quantile(0.99, rate(vllm:e2e_request_latency_seconds_bucket{namespace='inferencebase'}[5m]))", "legendFormat": "p99"}
-      ],
-      "thresholds": [{"value": 2.0, "color": "red"}]
-    },
-    {
-      "title": "Request Queue Depth",
-      "type": "stat",
-      "targets": [{"expr": "vllm:num_requests_waiting{namespace='inferencebase'}", "legendFormat": "waiting"}],
-      "thresholds": [{"value": 0, "color": "green"}, {"value": 5, "color": "yellow"}, {"value": 20, "color": "red"}]
-    },
-    {
-      "title": "GPU KV Cache Utilization",
-      "type": "gauge",
-      "targets": [{"expr": "vllm:gpu_cache_usage_perc{namespace='inferencebase'}", "legendFormat": "cache %"}],
-      "thresholds": [{"value": 0, "color": "green"}, {"value": 0.75, "color": "yellow"}, {"value": 0.90, "color": "red"}]
-    }
-  ]
+ "title": "InferenceBase — Llama-3-8B Production",
+ "uid": "inferencebase-prod",
+ "panels": [
+ {
+ "title": "Token Throughput (tokens/s)",
+ "type": "timeseries",
+ "targets": [{
+ "expr": "rate(vllm:generation_tokens_total{namespace='inferencebase'}[1m])",
+ "legendFormat": "tokens/s"
+ }],
+ "thresholds": [{"value": 400, "color": "green"}, {"value": 100, "color": "red"}]
+ },
+ {
+ "title": "Request Latency P50 / P95 / P99",
+ "type": "timeseries",
+ "targets": [
+ {"expr": "histogram_quantile(0.50, rate(vllm:e2e_request_latency_seconds_bucket{namespace='inferencebase'}[5m]))", "legendFormat": "p50"},
+ {"expr": "histogram_quantile(0.95, rate(vllm:e2e_request_latency_seconds_bucket{namespace='inferencebase'}[5m]))", "legendFormat": "p95"},
+ {"expr": "histogram_quantile(0.99, rate(vllm:e2e_request_latency_seconds_bucket{namespace='inferencebase'}[5m]))", "legendFormat": "p99"}
+ ],
+ "thresholds": [{"value": 2.0, "color": "red"}]
+ },
+ {
+ "title": "Request Queue Depth",
+ "type": "stat",
+ "targets": [{"expr": "vllm:num_requests_waiting{namespace='inferencebase'}", "legendFormat": "waiting"}],
+ "thresholds": [{"value": 0, "color": "green"}, {"value": 5, "color": "yellow"}, {"value": 20, "color": "red"}]
+ },
+ {
+ "title": "GPU KV Cache Utilization",
+ "type": "gauge",
+ "targets": [{"expr": "vllm:gpu_cache_usage_perc{namespace='inferencebase'}", "legendFormat": "cache %"}],
+ "thresholds": [{"value": 0, "color": "green"}, {"value": 0.75, "color": "yellow"}, {"value": 0.90, "color": "red"}]
+ }
+ ]
 }
 ```
 
-> 💡 **Insight:** The two panels that matter most for InferenceBase's SLA are **Request Latency P95** (alert if >2s — that's the constraint) and **Request Queue Depth** (alert if >20 — that's the HPA trigger). Everything else is useful for root-cause analysis but not worth waking someone up at 3am.
+> **Insight:** The two panels that matter most for InferenceBase's SLA are **Request Latency P95** (alert if >2s — that's the constraint) and **Request Queue Depth** (alert if >20 — that's the HPA trigger). Everything else is useful for root-cause analysis but not worth waking someone up at 3am.
 
 Set up an alert rule in Grafana for the P95 latency panel:
 
 ```yaml
 # Grafana alert (paste into panel Alerts tab)
 conditions:
-  - query:
-      expr: histogram_quantile(0.95, rate(vllm:e2e_request_latency_seconds_bucket{namespace='inferencebase'}[5m]))
-      refId: A
-    reducer: last
-    evaluator:
-      type: gt
-      params: [2.0]     # fire if p95 > 2s (the InferenceBase constraint)
-for: 5m                 # sustained for 5 minutes before alerting
+ - query:
+ expr: histogram_quantile(0.95, rate(vllm:e2e_request_latency_seconds_bucket{namespace='inferencebase'}[5m]))
+ refId: A
+ reducer: last
+ evaluator:
+ type: gt
+ params: [2.0] # fire if p95 > 2s (the InferenceBase constraint)
+for: 5m # sustained for 5 minutes before alerting
 annotations:
-  summary: "InferenceBase p95 latency breached 2s SLA"
-  description: "Current p95 = {{ $value }}s. Check queue depth and GPU cache utilization."
+ summary: "InferenceBase p95 latency breached 2s SLA"
+ description: "Current p95 = {{ $value }}s. Check queue depth and GPU cache utilization."
 ```
 
-> ➡️ The Evidently AI drift detection from [Ch.10 — Production Monitoring](../ch10_production_ml_monitoring) sits alongside this Prometheus stack. Latency and throughput live in Prometheus; input-distribution drift lives in Evidently. Both dashboards should be open in production.
+> ➡ The Evidently AI drift detection from [Ch.10 — Production Monitoring](../ch10_production_ml_monitoring) sits alongside this Prometheus stack. Latency and throughput live in Prometheus; input-distribution drift lives in Evidently. Both dashboards should be open in production.
 
-> 💡 **Industry Standard:** `Prometheus + Grafana` stack for metrics observability
+> **Industry Standard:** `Prometheus + Grafana` stack for metrics observability
 >
 > ```yaml
 > # ServiceMonitor — tells Prometheus to scrape vLLM metrics
 > apiVersion: monitoring.coreos.com/v1
 > kind: ServiceMonitor
 > metadata:
->   name: vllm-llama3
->   namespace: inferencebase
+> name: vllm-llama3
+> namespace: inferencebase
 > spec:
->   selector:
->     matchLabels:
->       app: vllm-llama3
->   endpoints:
->   - port: metrics
->     interval: 15s
->     path: /metrics
+> selector:
+> matchLabels:
+> app: vllm-llama3
+> endpoints:
+> - port: metrics
+> interval: 15s
+> path: /metrics
 > ```
 >
 > **When to use:** Always in production. Prometheus is the de facto standard for Kubernetes metrics; Grafana provides visualization and alerting.
@@ -835,53 +834,53 @@ Run this benchmark after the smoke test passes. It simulates 20 concurrent users
 from locust import HttpUser, task, between
 
 class InferenceBaseUser(HttpUser):
-    wait_time = between(1, 3)
+ wait_time = between(1, 3)
 
-    @task
-    def complete(self):
-        self.client.post("/v1/chat/completions", json={
-            "model": "inferencebase",
-            "messages": [{"role": "user", "content": "Extract the invoice number and total amount from: INV-2024-0042, $1,250.00 due 2024-03-15"}],
-            "max_tokens": 100
-        })
+ @task
+ def complete(self):
+ self.client.post("/v1/chat/completions", json={
+ "model": "inferencebase",
+ "messages": [{"role": "user", "content": "Extract the invoice number and total amount from: INV-2024-0042, $1,250.00 due 2024-03-15"}],
+ "max_tokens": 100
+ })
 ```
 
 ```bash
 locust -f locustfile.py \
-  --headless \
-  --users 20 \
-  --spawn-rate 2 \
-  --run-time 5m \
-  --host http://vllm-llama3.inferencebase.svc.cluster.local:8000
+ --headless \
+ --users 20 \
+ --spawn-rate 2 \
+ --run-time 5m \
+ --host http://vllm-llama3.inferencebase.svc.cluster.local:8000
 ```
 
 **Expected results vs. targets (InferenceBase production, 1× RTX 4090):**
 
 | Metric | Staging Result | Production Result | Target | Status |
 |---|---|---|---|---|
-| **p50 latency** | 0.7s | 0.8s | — | ✅ |
-| **p95 latency** | 1.2s | 1.3s | ≤2.0s | ✅ |
-| **p99 latency** | 1.7s | 1.9s | — | ✅ |
-| **Throughput** | 0.46 req/s | 0.44 req/s | ≥0.12 req/s (10k/day) | ✅ |
-| **Token generation rate** | 510 tokens/s | 490 tokens/s | — | ✅ |
-| **GPU KV cache peak** | 0.68 | 0.71 | <0.90 | ✅ |
-| **Error rate** | 0.0% | 0.1% | <0.5% | ✅ |
+| **p50 latency** | 0.7s | 0.8s | — | |
+| **p95 latency** | 1.2s | 1.3s | ≤2.0s | |
+| **p99 latency** | 1.7s | 1.9s | — | |
+| **Throughput** | 0.46 req/s | 0.44 req/s | ≥0.12 req/s (10k/day) | |
+| **Token generation rate** | 510 tokens/s | 490 tokens/s | — | |
+| **GPU KV cache peak** | 0.68 | 0.71 | <0.90 | |
+| **Error rate** | 0.0% | 0.1% | <0.5% | |
 
-> 💡 **Insight:** The production p95 latency (1.3s) is 8% higher than staging (1.2s). The difference is network overhead through the Kubernetes Service and Ingress layers — both expected and acceptable. The 2s target has a 54% margin.
+> **Insight:** The production p95 latency (1.3s) is 8% higher than staging (1.2s). The difference is network overhead through the Kubernetes Service and Ingress layers — both expected and acceptable. The 2s target has a 54% margin.
 
 **What causes p99 to be 46% higher than p95?**
 
 ```
-p50 = 0.8s   ← typical request: short prompt, 100 output tokens
-p95 = 1.3s   ← slightly longer prompt or small queue
-p99 = 1.9s   ← rare: request arrives just as GPU cache hit 85%,
-                vLLM evicted some KV pages (PagedAttention swap),
-                adding ~600ms for page reload
+p50 = 0.8s ← typical request: short prompt, 100 output tokens
+p95 = 1.3s ← slightly longer prompt or small queue
+p99 = 1.9s ← rare: request arrives just as GPU cache hit 85%,
+ vLLM evicted some KV pages (PagedAttention swap),
+ adding ~600ms for page reload
 ```
 
 The p99 spikes correlate with `vllm:gpu_cache_usage_perc` exceeding 0.80. Fix: lower `GPU_MEMORY_UTILIZATION` to 0.80 in `deployment.yaml`, which reserves 10% more VRAM for headroom.
 
-> ➡️ The PagedAttention KV-cache eviction mechanism is explained in detail in [Ch.5 — Inference Optimization](../ch05_inference_optimization). The `GPU_MEMORY_UTILIZATION` knob is the most direct lever for p99 tail latency.
+> ➡ The PagedAttention KV-cache eviction mechanism is explained in detail in [Ch.5 — Inference Optimization](../ch05_inference_optimization). The `GPU_MEMORY_UTILIZATION` knob is the most direct lever for p99 tail latency.
 
 ### Automated Canary Analysis Script
 
@@ -895,109 +894,109 @@ from datetime import datetime, timedelta
 PROMETHEUS_URL = "http://prometheus.monitoring.svc.cluster.local:9090"
 
 def query_prometheus(query, time_window_min=5):
-    """Query Prometheus for metric over time window"""
-    end = datetime.now()
-    start = end - timedelta(minutes=time_window_min)
+ """Query Prometheus for metric over time window"""
+ end = datetime.now()
+ start = end - timedelta(minutes=time_window_min)
 
-    params = {
-        "query": query,
-        "start": start.isoformat() + "Z",
-        "end": end.isoformat() + "Z",
-        "step": "15s"
-    }
+ params = {
+ "query": query,
+ "start": start.isoformat() + "Z",
+ "end": end.isoformat() + "Z",
+ "step": "15s"
+ }
 
-    response = requests.get(f"{PROMETHEUS_URL}/api/v1/query_range", params=params)
-    return response.json()["data"]["result"]
+ response = requests.get(f"{PROMETHEUS_URL}/api/v1/query_range", params=params)
+ return response.json()["data"]["result"]
 
 def compare_versions(blue_label, green_label, time_window=5):
-    """Compare Blue vs Green across key metrics"""
+ """Compare Blue vs Green across key metrics"""
 
-    metrics = {
-        "p95_latency": f'histogram_quantile(0.95, rate(vllm:e2e_request_latency_seconds_bucket{{version="{{}}"}}[5m]))',
-        "error_rate": f'rate(vllm:request_error_total{{version="{{}}"}}[5m])',
-        "throughput": f'rate(vllm:request_success_total{{version="{{}}"}}[5m])'
-    }
+ metrics = {
+ "p95_latency": f'histogram_quantile(0.95, rate(vllm:e2e_request_latency_seconds_bucket{{version="{{}}"}}[5m]))',
+ "error_rate": f'rate(vllm:request_error_total{{version="{{}}"}}[5m])',
+ "throughput": f'rate(vllm:request_success_total{{version="{{}}"}}[5m])'
+ }
 
-    results = {}
-    for metric_name, query_template in metrics.items():
-        blue_query = query_template.format(blue_label)
-        green_query = query_template.format(green_label)
+ results = {}
+ for metric_name, query_template in metrics.items():
+ blue_query = query_template.format(blue_label)
+ green_query = query_template.format(green_label)
 
-        blue_result = query_prometheus(blue_query, time_window)
-        green_result = query_prometheus(green_query, time_window)
+ blue_result = query_prometheus(blue_query, time_window)
+ green_result = query_prometheus(green_query, time_window)
 
-        blue_avg = sum(float(v[1]) for v in blue_result[0]["values"]) / len(blue_result[0]["values"])
-        green_avg = sum(float(v[1]) for v in green_result[0]["values"]) / len(green_result[0]["values"])
+ blue_avg = sum(float(v[1]) for v in blue_result[0]["values"]) / len(blue_result[0]["values"])
+ green_avg = sum(float(v[1]) for v in green_result[0]["values"]) / len(green_result[0]["values"])
 
-        results[metric_name] = {
-            "blue": blue_avg,
-            "green": green_avg,
-            "delta_pct": ((green_avg - blue_avg) / blue_avg) * 100
-        }
+ results[metric_name] = {
+ "blue": blue_avg,
+ "green": green_avg,
+ "delta_pct": ((green_avg - blue_avg) / blue_avg) * 100
+ }
 
-    return results
+ return results
 
 def decide_rollout(results):
-    """Automated decision: proceed, rollback, or wait"""
+ """Automated decision: proceed, rollback, or wait"""
 
-    # Decision thresholds
-    MAX_LATENCY_INCREASE_PCT = 15    # Allow 15% latency increase
-    MAX_ERROR_RATE_INCREASE_PCT = 50  # Allow 50% error rate increase
-    MIN_THROUGHPUT_DECREASE_PCT = -10 # Allow 10% throughput decrease
+ # Decision thresholds
+ MAX_LATENCY_INCREASE_PCT = 15 # Allow 15% latency increase
+ MAX_ERROR_RATE_INCREASE_PCT = 50 # Allow 50% error rate increase
+ MIN_THROUGHPUT_DECREASE_PCT = -10 # Allow 10% throughput decrease
 
-    decisions = []
+ decisions = []
 
-    # Check p95 latency
-    if results["p95_latency"]["green"] > 2.0:
-        decisions.append("❌ ROLLBACK: Green p95 latency {:.2f}s exceeds 2s SLA".format(results["p95_latency"]["green"]))
-    elif results["p95_latency"]["delta_pct"] > MAX_LATENCY_INCREASE_PCT:
-        decisions.append("⚠️ CAUTION: Green latency +{:.1f}% higher than Blue (threshold: +{}%)".format(
-            results["p95_latency"]["delta_pct"], MAX_LATENCY_INCREASE_PCT))
-    else:
-        decisions.append("✅ GOOD: Green latency within acceptable range")
+ # Check p95 latency
+ if results["p95_latency"]["green"] > 2.0:
+ decisions.append(" ROLLBACK: Green p95 latency {:.2f}s exceeds 2s SLA".format(results["p95_latency"]["green"]))
+ elif results["p95_latency"]["delta_pct"] > MAX_LATENCY_INCREASE_PCT:
+ decisions.append(" CAUTION: Green latency +{:.1f}% higher than Blue (threshold: +{}%)".format(
+ results["p95_latency"]["delta_pct"], MAX_LATENCY_INCREASE_PCT))
+ else:
+ decisions.append(" GOOD: Green latency within acceptable range")
 
-    # Check error rate
-    if results["error_rate"]["delta_pct"] > MAX_ERROR_RATE_INCREASE_PCT:
-        decisions.append("❌ ROLLBACK: Green error rate +{:.1f}% higher (threshold: +{}%)".format(
-            results["error_rate"]["delta_pct"], MAX_ERROR_RATE_INCREASE_PCT))
-    else:
-        decisions.append("✅ GOOD: Green error rate acceptable")
+ # Check error rate
+ if results["error_rate"]["delta_pct"] > MAX_ERROR_RATE_INCREASE_PCT:
+ decisions.append(" ROLLBACK: Green error rate +{:.1f}% higher (threshold: +{}%)".format(
+ results["error_rate"]["delta_pct"], MAX_ERROR_RATE_INCREASE_PCT))
+ else:
+ decisions.append(" GOOD: Green error rate acceptable")
 
-    # Check throughput
-    if results["throughput"]["delta_pct"] < MIN_THROUGHPUT_DECREASE_PCT:
-        decisions.append("⚠️ CAUTION: Green throughput {:.1f}% lower than Blue".format(
-            results["throughput"]["delta_pct"]))
-    else:
-        decisions.append("✅ GOOD: Green throughput within range")
+ # Check throughput
+ if results["throughput"]["delta_pct"] < MIN_THROUGHPUT_DECREASE_PCT:
+ decisions.append(" CAUTION: Green throughput {:.1f}% lower than Blue".format(
+ results["throughput"]["delta_pct"]))
+ else:
+ decisions.append(" GOOD: Green throughput within range")
 
-    # Final decision
-    if any("ROLLBACK" in d for d in decisions):
-        return "ROLLBACK", decisions
-    elif any("CAUTION" in d for d in decisions):
-        return "WAIT", decisions
-    else:
-        return "PROCEED", decisions
+ # Final decision
+ if any("ROLLBACK" in d for d in decisions):
+ return "ROLLBACK", decisions
+ elif any("CAUTION" in d for d in decisions):
+ return "WAIT", decisions
+ else:
+ return "PROCEED", decisions
 
 if __name__ == "__main__":
-    print("Running canary analysis: Blue (v1.0) vs Green (v1.1)")
-    print("Time window: 5 minutes")
-    print("-" * 60)
+ print("Running canary analysis: Blue (v1.0) vs Green (v1.1)")
+ print("Time window: 5 minutes")
+ print("-" * 60)
 
-    results = compare_versions("v1.0", "v1.1", time_window=5)
+ results = compare_versions("v1.0", "v1.1", time_window=5)
 
-    for metric, data in results.items():
-        print(f"\n{metric.upper()}:")
-        print(f"  Blue:  {data['blue']:.3f}")
-        print(f"  Green: {data['green']:.3f}")
-        print(f"  Delta: {data['delta_pct']:+.1f}%")
+ for metric, data in results.items():
+ print(f"\n{metric.upper()}:")
+ print(f" Blue: {data['blue']:.3f}")
+ print(f" Green: {data['green']:.3f}")
+ print(f" Delta: {data['delta_pct']:+.1f}%")
 
-    decision, reasons = decide_rollout(results)
+ decision, reasons = decide_rollout(results)
 
-    print("\n" + "=" * 60)
-    print(f"DECISION: {decision}")
-    print("=" * 60)
-    for reason in reasons:
-        print(f"  {reason}")
+ print("\n" + "=" * 60)
+ print(f"DECISION: {decision}")
+ print("=" * 60)
+ for reason in reasons:
+ print(f" {reason}")
 ```
 
 **Running the analysis:**
@@ -1012,65 +1011,65 @@ python canary_analysis.py
 # ------------------------------------------------------------
 #
 # P95_LATENCY:
-#   Blue:  1.250s
-#   Green: 1.310s
-#   Delta: +4.8%
+# Blue: 1.250s
+# Green: 1.310s
+# Delta: +4.8%
 #
 # ERROR_RATE:
-#   Blue:  0.001 (0.1%)
-#   Green: 0.001 (0.1%)
-#   Delta: +0.0%
+# Blue: 0.001 (0.1%)
+# Green: 0.001 (0.1%)
+# Delta: +0.0%
 #
 # THROUGHPUT:
-#   Blue:  0.440 req/s
-#   Green: 0.445 req/s
-#   Delta: +1.1%
+# Blue: 0.440 req/s
+# Green: 0.445 req/s
+# Delta: +1.1%
 #
 # ============================================================
 # DECISION: PROCEED
 # ============================================================
-#   ✅ GOOD: Green latency within acceptable range
-#   ✅ GOOD: Green error rate acceptable
-#   ✅ GOOD: Green throughput within range
+# GOOD: Green latency within acceptable range
+# GOOD: Green error rate acceptable
+# GOOD: Green throughput within range
 ```
 
-> 💡 **Industry Standard:** `Flagger` for automated canary analysis
+> **Industry Standard:** `Flagger` for automated canary analysis
 >
 > ```yaml
 > # Flagger Canary — automated progressive delivery with analysis
 > apiVersion: flagger.app/v1beta1
 > kind: Canary
 > metadata:
->   name: vllm-llama3
+> name: vllm-llama3
 > spec:
->   targetRef:
->     apiVersion: apps/v1
->     kind: Deployment
->     name: vllm-llama3
->   progressDeadlineSeconds: 600
->   service:
->     port: 8000
->   analysis:
->     interval: 1m
->     threshold: 5
->     maxWeight: 50
->     stepWeight: 10
->     metrics:
->     - name: request-success-rate
->       thresholdRange:
->         min: 99  # Require 99% success rate
->       interval: 1m
->     - name: request-duration
->       thresholdRange:
->         max: 2000  # Max 2s p95 latency (milliseconds)
->       interval: 1m
->     webhooks:
->     - name: load-test
->       url: http://flagger-loadtester.test/
->       timeout: 5s
->       metadata:
->         type: cmd
->         cmd: "hey -z 1m -q 10 -c 2 http://vllm-llama3-canary:8000/health"
+> targetRef:
+> apiVersion: apps/v1
+> kind: Deployment
+> name: vllm-llama3
+> progressDeadlineSeconds: 600
+> service:
+> port: 8000
+> analysis:
+> interval: 1m
+> threshold: 5
+> maxWeight: 50
+> stepWeight: 10
+> metrics:
+> - name: request-success-rate
+> thresholdRange:
+> min: 99 # Require 99% success rate
+> interval: 1m
+> - name: request-duration
+> thresholdRange:
+> max: 2000 # Max 2s p95 latency (milliseconds)
+> interval: 1m
+> webhooks:
+> - name: load-test
+> url: http://flagger-loadtester.test/
+> timeout: 5s
+> metadata:
+> type: cmd
+> cmd: "hey -z 1m -q 10 -c 2 http://vllm-llama3-canary:8000/health"
 > ```
 >
 > **When to use:** For production services where manual canary analysis is too slow. Flagger automates traffic shifting, metric analysis, and rollback.
@@ -1080,7 +1079,7 @@ python canary_analysis.py
 ### 6.1 DECISION CHECKPOINT — Phase 5 Complete
 
 **What you just validated:**
-- Load test: 20 concurrent users, 5 minutes, 6,000 requests → p95 latency 1.3s (under 2s target ✅)
+- Load test: 20 concurrent users, 5 minutes, 6,000 requests → p95 latency 1.3s (under 2s target )
 - Canary analysis: Compared Blue (v1.0) vs Green (v1.1) across p95 latency, error rate, throughput
 - Automated decision: Script output "PROCEED" — all metrics within acceptable thresholds
 
@@ -1120,14 +1119,14 @@ $$\text{tokens per hour} = \text{sustained tokens/s} \times 3{,}600$$
 
 ```
 Monthly cost = GPU hourly rate × hours per month
-             = $1.50/hr × 730 hr/month
-             = $1,095/month
+ = $1.50/hr × 730 hr/month
+ = $1,095/month
 
 Tokens processed/month (12,000 req/day × 30 days × 800 tokens/req):
-  = 288,000,000 tokens = 288M tokens/month
+ = 288,000,000 tokens = 288M tokens/month
 
 Effective cost per 1M tokens (including idle time):
-  = $1,095 / 288 = $3.80/1M tokens
+ = $1,095 / 288 = $3.80/1M tokens
 ```
 
 **Note:** The $0.85/1M figure is the *peak throughput* cost (GPU fully loaded). The $3.80/1M figure is the *realistic* cost including off-peak hours when the GPU is idle but still billed. The difference matters for capacity planning: if InferenceBase traffic grows 10× but is concentrated in 8 hours/day, one GPU handles it during those hours but costs the same monthly flat rate.
@@ -1142,9 +1141,9 @@ Effective cost per 1M tokens (including idle time):
 | Together AI (Llama-3-8B) | ~$0.20 | ~1.5s | Managed self-hosting |
 | RunPod Serverless (Llama-3-8B) | ~$0.50 | ~2–4s | Serverless, cold start risk |
 
-> ⚡ **Constraint #1 met**: $1,095/month is 93% under the $15k/month budget. Even at 4× traffic growth (HPA scales to 4 replicas → $4,380/month), the system stays under budget.
+> **Constraint #1 met**: $1,095/month is 93% under the $15k/month budget. Even at 4× traffic growth (HPA scales to 4 replicas → $4,380/month), the system stays under budget.
 
-> 💡 **Insight:** The cost advantage of self-hosting narrows as managed providers compete (Together AI at $0.20/1M). The durable advantage is **control** — you own the model weights, the data never leaves your cluster, and you can fine-tune on proprietary documents. For InferenceBase's document-intelligence product, data privacy is the deciding factor, not cost per token.
+> **Insight:** The cost advantage of self-hosting narrows as managed providers compete (Together AI at $0.20/1M). The durable advantage is **control** — you own the model weights, the data never leaves your cluster, and you can fine-tune on proprietary documents. For InferenceBase's document-intelligence product, data privacy is the deciding factor, not cost per token.
 
 ### 7.1 DECISION CHECKPOINT — Phase 6 Complete
 
@@ -1162,7 +1161,7 @@ Effective cost per 1M tokens (including idle time):
 → **Monitor HPA behavior**: Watch `kubectl get hpa -n inferencebase --watch` during next traffic spike to verify autoscale triggers
 → **Cost optimization**: If traffic remains steady at 2× (not spikey), consider switching from HPA to 2 fixed replicas (simpler, same cost)
 → **Capacity alert**: Set up alert when HPA reaches `maxReplicas: 4` → time to plan for 8-replica cluster or multi-node scaling
-→ **Deployment complete** ✅ — All 6 phases done, all 6 constraints met in production
+→ **Deployment complete** — All 6 phases done, all 6 constraints met in production
 
 ---
 
@@ -1172,31 +1171,31 @@ Effective cost per 1M tokens (including idle time):
 
 ---
 
-## 8 · Progress Check — Grand Challenge Complete ✅
+## 8 · Progress Check — Grand Challenge Complete
 
-🎉 **InferenceBase is in production.**
+ **InferenceBase is in production.**
 
 You started with a $80,000/month OpenAI API bill and a question: "Can we self-host Llama-3-8B for under $15k/month and match the latency?" Eleven chapters later, the answer is confirmed in production:
 
 | Constraint | Target | Final State | How you got there |
 |---|---|---|---|
-| **#1 COST** | <$15k/month | ✅ **$1,095/month** | INT4 quantization (Ch.3) + RunPod RTX 4090 (Ch.8) |
-| **#2 LATENCY** | ≤2s p95 | ✅ **1.3s p95** | PagedAttention (Ch.5) + vLLM continuous batching (Ch.6) |
-| **#3 THROUGHPUT** | ≥10k req/day | ✅ **12k req/day** (38k at 4 replicas) | vLLM batching + HPA autoscaling (this chapter) |
-| **#4 MEMORY** | Fit in 24GB VRAM | ✅ **12GB used** | INT4 (8GB weights) + KV cache (4GB) (Ch.2–3) |
-| **#5 QUALITY** | ≥95% accuracy | ✅ **96.2% accuracy** | Llama-3-8B vs GPT-3.5-turbo benchmark (Ch.9) |
-| **#6 RELIABILITY** | >99% uptime | ✅ **>99.9% uptime** | K8s probes + HPA + drift alerts (Ch.10 + this chapter) |
+| **#1 COST** | <$15k/month | **$1,095/month** | INT4 quantization (Ch.3) + RunPod RTX 4090 (Ch.8) |
+| **#2 LATENCY** | ≤2s p95 | **1.3s p95** | PagedAttention (Ch.5) + vLLM continuous batching (Ch.6) |
+| **#3 THROUGHPUT** | ≥10k req/day | **12k req/day** (38k at 4 replicas) | vLLM batching + HPA autoscaling (this chapter) |
+| **#4 MEMORY** | Fit in 24GB VRAM | **12GB used** | INT4 (8GB weights) + KV cache (4GB) (Ch.2–3) |
+| **#5 QUALITY** | ≥95% accuracy | **96.2% accuracy** | Llama-3-8B vs GPT-3.5-turbo benchmark (Ch.9) |
+| **#6 RELIABILITY** | >99% uptime | **>99.9% uptime** | K8s probes + HPA + drift alerts (Ch.10 + this chapter) |
 
 ### ROI Summary
 
 ```
-Annual OpenAI cost:       $80,000/month × 12 = $960,000/year
-Annual self-hosted cost:   $1,095/month × 12 =  $13,140/year
+Annual OpenAI cost: $80,000/month × 12 = $960,000/year
+Annual self-hosted cost: $1,095/month × 12 = $13,140/year
 ───────────────────────────────────────────────────────────────
-Annual savings:                                $946,860/year
-Implementation time:       8 weeks (2 evaluation + 6 build)
-Payback period:            < 1 week of operation
-ROI (year 1):              7,107%
+Annual savings: $946,860/year
+Implementation time: 8 weeks (2 evaluation + 6 build)
+Payback period: < 1 week of operation
+ROI (year 1): 7,107%
 ```
 
 The board meeting question was "does this make economic sense?" The answer: yes, by almost any measure.
@@ -1205,28 +1204,28 @@ The board meeting question was "does this make economic sense?" The answer: yes,
 
 ```
 Notes Ch.1 GPU Architecture
-  ↓  identified RTX 4090 as cost-optimal GPU
+ ↓ identified RTX 4090 as cost-optimal GPU
 Notes Ch.2 Memory Budgets
-  ↓  proved 24GB VRAM fits Llama-3-8B with headroom
+ ↓ proved 24GB VRAM fits Llama-3-8B with headroom
 Notes Ch.3 Quantization
-  ↓  INT4/AWQ: 16GB → 8GB weights, no quality degradation
+ ↓ INT4/AWQ: 16GB → 8GB weights, no quality degradation
 Notes Ch.4 Distributed Training
-  ↓  (training track — skipped for inference-only product)
+ ↓ (training track — skipped for inference-only product)
 Notes Ch.5 Inference Optimization
-  ↓  PagedAttention + continuous batching: 1.2s p95
+ ↓ PagedAttention + continuous batching: 1.2s p95
 Notes Ch.6 Serving Frameworks
-  ↓  vLLM benchmark: 12k req/day on 1 GPU
+ ↓ vLLM benchmark: 12k req/day on 1 GPU
 Notes Ch.7 Networking
-  ↓  NVLink planning for 40k req/day growth
+ ↓ NVLink planning for 40k req/day growth
 Notes Ch.8 Cloud Infrastructure
-  ↓  RunPod $1,095/month — cost constraint met
+ ↓ RunPod $1,095/month — cost constraint met
 Notes Ch.9 MLOps / Experiment Tracking
-  ↓  model registry: Llama-3-8B at 96.2% accuracy
+ ↓ model registry: Llama-3-8B at 96.2% accuracy
 Notes Ch.10 Production Monitoring
-  ↓  Evidently drift + Grafana: degradation in <24hr
-Notes Ch.11 End-to-End Deployment  ← you are here
-       Dockerfile + K8s manifests + smoke test
-       ALL CONSTRAINTS MET IN PRODUCTION ✅
+ ↓ Evidently drift + Grafana: degradation in <24hr
+Notes Ch.11 End-to-End Deployment ← you are here
+ Dockerfile + K8s manifests + smoke test
+ ALL CONSTRAINTS MET IN PRODUCTION
 ```
 
 ---
@@ -1292,7 +1291,7 @@ But production systems don't stay still. Three realistic next problems:
 
 **3. Data privacy requirements tighten** — the current setup sends document data to a cloud GPU provider. The next evolution is an on-premise GPU cluster (on-prem Kubernetes with NVIDIA DGX) or a private cloud VPC with no data egress. The same Dockerfile and manifests work in any Kubernetes cluster — that's the portability guarantee of the container abstraction.
 
-> ➡️ For CI/CD automation of the deployment pipeline (automated image builds, canary deployments, GitOps with ArgoCD), see [DevOps Ch.4 — CI/CD & Continuous Deployment](../../07-devops_fundamentals/ch04_cicd).
+> ➡ For CI/CD automation of the deployment pipeline (automated image builds, canary deployments, GitOps with ArgoCD), see [DevOps Ch.4 — CI/CD & Continuous Deployment](../../07-devops_fundamentals/ch04_cicd).
 
 ---
 

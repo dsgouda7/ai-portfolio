@@ -10,7 +10,7 @@
 
 ## 0 · The Challenge — Edge Cases Where Single-Pass Fails
 
-> 🎯 **The mission**: Launch **PizzaBot v2.0** — handle edge cases with <1% error rate, maintaining Ch.1-10 constraints:
+> **The mission**: Launch **PizzaBot v2.0** — handle edge cases with <1% error rate, maintaining Ch.1-10 constraints:
 > 1. **BUSINESS VALUE**: >25% conversion + +$2.50 AOV + 70% labor savings
 > 2. **ACCURACY**: **<1% error** (was 8% in Ch.10) — **PRIMARY IMPROVEMENT**
 > 3. **LATENCY**: <3s p95 (now <5s with reflection — pattern-dependent)
@@ -19,10 +19,10 @@
 > 6. **RELIABILITY**: >99% uptime
 
 **What we know so far:**
-- ✅ Ch.1-10: Built PizzaBot v1.0 with RAG, ReAct, safety, cost optimization
-- ✅ **92% of orders succeed** — standard requests work reliably
-- ❌ **8% edge case failure rate** — contradictions, conflicts, multi-constraint problems
-- 📊 **Current edge case metrics**: 8% error, 12% escalation to human, \$0.08/conv
+- Ch.1-10: Built PizzaBot v1.0 with RAG, ReAct, safety, cost optimization
+- **92% of orders succeed** — standard requests work reliably
+- **8% edge case failure rate** — contradictions, conflicts, multi-constraint problems
+- **Current edge case metrics**: 8% error, 12% escalation to human, \$0.08/conv
 
 **What's blocking us:**
 
@@ -32,45 +32,44 @@
 
 ```
 User: "I want a large pepperoni pizza, but make it gluten-free,
-       dairy-free, and add extra cheese."
+ dairy-free, and add extra cheese."
 ```
 
 **PizzaBot v1.0 (Ch.10 — single-pass with ReAct):**
 ```json
 {
-  "error": "Constraint conflict detected",
-  "message": "Cannot add dairy cheese to a dairy-free pizza",
-  "action": "ORDER_FAILED"
+ "error": "Constraint conflict detected",
+ "message": "Cannot add dairy cheese to a dairy-free pizza",
+ "action": "ORDER_FAILED"
 }
 ```
 
 **Problems:**
-1. ❌ **No recovery path** — detects contradiction but gives up
-2. ❌ **Doesn't explore alternatives** — vegan cheese exists but wasn't considered
-3. ❌ **Poor UX** — customer abandons order (8% of these cases)
+1. **No recovery path** — detects contradiction but gives up
+2. **Doesn't explore alternatives** — vegan cheese exists but wasn't considered
+3. **Poor UX** — customer abandons order (8% of these cases)
 
 **PizzaBot v2.0 (with Reflection pattern):**
 ```
-🧠 Round 1 (Generate):
+ Round 1 (Generate):
 "Cannot fulfill: gluten-free + dairy-free + extra cheese conflict"
 
-🔍 Round 2 (Critique):
+ Round 2 (Critique):
 "Wait — user said 'dairy-free' and 'extra cheese'. Check if non-dairy
 cheese alternatives exist in menu."
-
-✅ Round 3 (Revise):
+Round 3 (Revise):
 "For dairy-free pizzas, we use vegan mozzarella. Would you like
 extra vegan cheese (+$2.50)?"
 
 Customer: "Yes, perfect!"
-✅ Order completed
+Order completed
 ```
 
 **Impact:**
-- ✅ Edge case resolved without human intervention
-- ✅ Customer conversion (would have been lost)
-- ⚠️ Cost: 3× tokens ($0.006 vs. $0.002)
-- ⚠️ Latency: 2.4s (vs. 0.8s single-pass)
+- Edge case resolved without human intervention
+- Customer conversion (would have been lost)
+- Cost: 3× tokens ($0.006 vs. $0.002)
+- Latency: 2.4s (vs. 0.8s single-pass)
 
 ---
 
@@ -78,24 +77,24 @@ Customer: "Yes, perfect!"
 
 ```
 User: "I have a 20% off coupon, plus I'm a loyalty member (10% off),
-       and you're running a $5 discount promo. Apply all three."
+ and you're running a $5 discount promo. Apply all three."
 ```
 
 **PizzaBot v1.0 (Ch.10):**
 ```json
 {
-  "subtotal": 24.99,
-  "coupon_discount": -5.00,
-  "loyalty_discount": -2.50,
-  "promo_discount": -5.00,
-  "total": 12.49
+ "subtotal": 24.99,
+ "coupon_discount": -5.00,
+ "loyalty_discount": -2.50,
+ "promo_discount": -5.00,
+ "total": 12.49
 }
 ```
 
 **Problems:**
-1. ❌ **Violates company policy** — "only one discount per order"
-2. ❌ **Single agent has no confidence check** — applies all discounts without verification
-3. ❌ **Finance audit fails** — 50% discount is loss-making
+1. **Violates company policy** — "only one discount per order"
+2. **Single agent has no confidence check** — applies all discounts without verification
+3. **Finance audit fails** — 50% discount is loss-making
 
 **PizzaBot v2.0 (with Debate pattern):**
 ```
@@ -105,18 +104,17 @@ User: "I have a 20% off coupon, plus I'm a loyalty member (10% off),
 🎙 Agent 2 (Strict Pricer):
 "Policy says one discount only. Apply best discount: 20% coupon = $19.99"
 
-⚖️ Judge (RAG check + policy lookup):
+⚖ Judge (RAG check + policy lookup):
 "Policy retrieved: 'One promotional discount per order. Loyalty always applies.'
 Decision: Loyalty (10%) + best promo (20% coupon) = $17.49"
-
-✅ Customer accepts
+Customer accepts
 ```
 
 **Impact:**
-- ✅ Policy-compliant pricing (passes audit)
-- ✅ Customer gets fair deal (loyalty + best promo)
-- ⚠️ Cost: 5× tokens (3 agents × prompt)
-- ⚠️ Latency: 3.2s
+- Policy-compliant pricing (passes audit)
+- Customer gets fair deal (loyalty + best promo)
+- Cost: 5× tokens (3 agents × prompt)
+- Latency: 3.2s
 
 ---
 
@@ -124,7 +122,7 @@ Decision: Loyalty (10%) + best promo (20% coupon) = $17.49"
 
 ```
 User: "Need 15 pizzas for office lunch: 5 at 11am, 5 at 12pm, 5 at 1pm.
-       Budget is $200. Half vegetarian, at least 3 gluten-free."
+ Budget is $200. Half vegetarian, at least 3 gluten-free."
 ```
 
 **PizzaBot v1.0 (Ch.10):**
@@ -133,13 +131,13 @@ Error: "Complex multi-constraint order. Please call (555) PIZZA."
 ```
 
 **Problems:**
-1. ❌ **Cannot decompose** — single agent overwhelmed by constraints
-2. ❌ **No verification** — can't check budget/dietary constraints
-3. ❌ **Escalates 100% of catering orders** — defeats automation goal
+1. **Cannot decompose** — single agent overwhelmed by constraints
+2. **No verification** — can't check budget/dietary constraints
+3. **Escalates 100% of catering orders** — defeats automation goal
 
 **PizzaBot v2.0 (with Hierarchical Orchestration):**
 ```
-📋 Planner Agent:
+ Planner Agent:
 - Batch 1 (11am): 2 Margherita GF, 3 Veggie regular
 - Batch 2 (12pm): 1 Napoli GF, 2 Pepperoni, 2 Margherita
 - Batch 3 (1pm): 5 Pepperoni regular
@@ -148,21 +146,19 @@ Error: "Complex multi-constraint order. Please call (555) PIZZA."
 - Worker A processes Batch 1 → subtotal $62.45
 - Worker B processes Batch 2 → subtotal $67.50
 - Worker C processes Batch 3 → subtotal $69.95
-
-✅ Verifier Agent:
+Verifier Agent:
 - Total: $199.90 < $200 budget ✓
 - Vegetarian count: 8 pizzas ✓
 - Gluten-free count: 3 pizzas ✓
 - All constraints satisfied
-
-✅ Order confirmed
+Order confirmed
 ```
 
 **Impact:**
-- ✅ Catering orders automated (was 0%, now 95%)
-- ✅ Complex constraints verified
-- ⚠️ Cost: 8× tokens (1 planner + 3 workers + 1 verifier + coordination)
-- ⚠️ Latency: 4.8s (parallel execution)
+- Catering orders automated (was 0%, now 95%)
+- Complex constraints verified
+- Cost: 8× tokens (1 planner + 3 workers + 1 verifier + coordination)
+- Latency: 4.8s (parallel execution)
 
 ---
 
@@ -170,28 +166,27 @@ Error: "Complex multi-constraint order. Please call (555) PIZZA."
 
 | Metric | PizzaBot v1.0 (Ch.10) | PizzaBot v2.0 (Ch.11) | Improvement |
 |--------|----------------------|----------------------|-------------|
-| **Edge case error rate** | 8% | **0.7%** | ✅ **11× better** |
-| **Customer escalations** | 12% | **2%** | ✅ **6× reduction** |
-| **Catering order completion** | 0% (escalate) | **95%** | ✅ New revenue stream |
-| **Customer satisfaction** | 4.2/5 | **4.8/5** | ✅ +0.6 stars |
-| **Avg. cost per order** | $0.08 | **$0.15** | ⚠️ +87% (optimize in production) |
-| **P95 latency** | 2.1s | **3.8s** | ⚠️ +80% (still <5s target) |
+| **Edge case error rate** | 8% | **0.7%** | **11× better** |
+| **Customer escalations** | 12% | **2%** | **6× reduction** |
+| **Catering order completion** | 0% (escalate) | **95%** | New revenue stream |
+| **Customer satisfaction** | 4.2/5 | **4.8/5** | +0.6 stars |
+| **Avg. cost per order** | $0.08 | **$0.15** | +87% (optimize in production) |
+| **P95 latency** | 2.1s | **3.8s** | +80% (still <5s target) |
 
 **What this chapter unlocks:**
 
-🚀 **10 agentic patterns that trade tokens for reliability:**
-1. ✅ **Reflection** — self-critique loops (3× cost, 8→1% error)
-2. ✅ **Debate & Consensus** — multi-agent voting (5× cost, catches blind spots)
-3. ✅ **Hierarchical Orchestration** — planner → workers → verifier (8× cost, handles complexity)
-4. ✅ **Tool Selection Strategies** — choose optimal tool (fallback chains)
-5. ✅ **Tree-of-Thoughts** — explore multiple paths, backtrack (20× cost, creative problems)
-6. ✅ **Chain-of-Verification** — verify each claim (4× cost, hallucination defense)
-7. ✅ **Constitutional AI** — self-correct with principles (2× cost, safety++)
-8. ✅ **Ensemble/Voting** — multiple models aggregate (N× cost, outlier rejection)
-9. ✅ **Plan-and-Execute** — decompose → replan loop (variable cost, adaptive)
-10. ✅ **Memory-Augmented** — episodic memory for context (storage cost, personalization)
-
-⚡ **Constraint #2 (ACCURACY) — TARGET MET**: Error rate drops from 8% → **0.7%** (target was <1%). Trade-off: Cost increases from $0.08 → $0.15/conv (need to optimize high-volume patterns). Latency increases to 3.8s (still under 5s extended target).
+ **10 agentic patterns that trade tokens for reliability:**
+1. **Reflection** — self-critique loops (3× cost, 8→1% error)
+2. **Debate & Consensus** — multi-agent voting (5× cost, catches blind spots)
+3. **Hierarchical Orchestration** — planner → workers → verifier (8× cost, handles complexity)
+4. **Tool Selection Strategies** — choose optimal tool (fallback chains)
+5. **Tree-of-Thoughts** — explore multiple paths, backtrack (20× cost, creative problems)
+6. **Chain-of-Verification** — verify each claim (4× cost, hallucination defense)
+7. **Constitutional AI** — self-correct with principles (2× cost, safety++)
+8. **Ensemble/Voting** — multiple models aggregate (N× cost, outlier rejection)
+9. **Plan-and-Execute** — decompose → replan loop (variable cost, adaptive)
+10. **Memory-Augmented** — episodic memory for context (storage cost, personalization)
+**Constraint #2 (ACCURACY) — TARGET MET**: Error rate drops from 8% → **0.7%** (target was <1%). Trade-off: Cost increases from $0.08 → $0.15/conv (need to optimize high-volume patterns). Latency increases to 3.8s (still under 5s extended target).
 
 **Constraint status after Ch.11**: #2 (Accuracy) now satisfied. #3 (Latency) and #4 (Cost) need optimization for high-volume patterns — selective application of expensive patterns to edge cases only.
 
@@ -204,14 +199,14 @@ The central insight: **LLMs are better at critique than generation**. A model th
 This asymmetry creates opportunities:
 
 ```
-Single-pass accuracy:    P(correct | task) = p
+Single-pass accuracy: P(correct | task) = p
 
-Reflection accuracy:     P(correct | task, critique) = p + (1-p) · r
-                         where r = probability critique identifies error
+Reflection accuracy: P(correct | task, critique) = p + (1-p) · r
+ where r = probability critique identifies error
 
 Example: p=0.85, r=0.60
-    Single-pass: 85% correct
-    Reflection:  85% + (15% × 60%) = 94% correct
+ Single-pass: 85% correct
+ Reflection: 85% + (15% × 60%) = 94% correct
 ```
 
 **Why this works:**
@@ -239,11 +234,11 @@ Example: p=0.85, r=0.60
 **Description:** Generate → Critique → Revise cycle. The model produces an initial response, then critiques it for errors/contradictions, then generates a revised response.
 
 **When to use:**
-- ✅ Contradictory inputs (dairy-free + extra cheese)
-- ✅ Complex reasoning requiring verification (multi-step math)
-- ✅ High-stakes outputs (medical advice, legal reasoning)
-- ❌ Simple factual queries (no need for critique)
-- ❌ Time-sensitive applications (3× latency)
+- Contradictory inputs (dairy-free + extra cheese)
+- Complex reasoning requiring verification (multi-step math)
+- High-stakes outputs (medical advice, legal reasoning)
+- Simple factual queries (no need for critique)
+- Time-sensitive applications (3× latency)
 
 **Cost model:**
 - Base cost: $C_{\text{single}}$
@@ -254,41 +249,41 @@ Example: p=0.85, r=0.60
 
 ```python
 def reflection_loop(query: str, max_rounds: int = 3) -> str:
-    response = llm.generate(query)
+ response = llm.generate(query)
 
-    for round in range(max_rounds):
-        # Critique step
-        critique_prompt = f"""
-        Review this response for errors, contradictions, or missing context:
+ for round in range(max_rounds):
+ # Critique step
+ critique_prompt = f"""
+ Review this response for errors, contradictions, or missing context:
 
-        Query: {query}
-        Response: {response}
+ Query: {query}
+ Response: {response}
 
-        Identify any issues. If none, respond with "APPROVED".
-        """
-        critique = llm.generate(critique_prompt)
+ Identify any issues. If none, respond with "APPROVED".
+ """
+ critique = llm.generate(critique_prompt)
 
-        if "APPROVED" in critique:
-            break
+ if "APPROVED" in critique:
+ break
 
-        # Revise step
-        revise_prompt = f"""
-        Original query: {query}
-        Previous response: {response}
-        Critique: {critique}
+ # Revise step
+ revise_prompt = f"""
+ Original query: {query}
+ Previous response: {response}
+ Critique: {critique}
 
-        Generate an improved response addressing the critique.
-        """
-        response = llm.generate(revise_prompt)
+ Generate an improved response addressing the critique.
+ """
+ response = llm.generate(revise_prompt)
 
-    return response
+ return response
 ```
 
 **Pitfalls:**
-1. ❌ **Hallucinated critique** — model invents problems that don't exist → worse answer
-2. ❌ **Infinite loops** — critique never approves → set max_rounds
-3. ❌ **Over-polishing** — wastes tokens on insignificant improvements
-4. ❌ **No grounding** — reflection alone can't fix hallucinated facts (need RAG)
+1. **Hallucinated critique** — model invents problems that don't exist → worse answer
+2. **Infinite loops** — critique never approves → set max_rounds
+3. **Over-polishing** — wastes tokens on insignificant improvements
+4. **No grounding** — reflection alone can't fix hallucinated facts (need RAG)
 
 **Animation placeholder:** `img/reflection_loop.png`
 - Frame 1: Initial response with contradiction (red highlight)
@@ -303,52 +298,52 @@ def reflection_loop(query: str, max_rounds: int = 3) -> str:
 **Description:** N agents propose solutions, critique each other, and either vote or defer to a judge agent. Forces explicit justification and catches individual blind spots.
 
 **When to use:**
-- ✅ High-stakes decisions (fraud detection, medical diagnosis)
-- ✅ Policy interpretation (legal, financial compliance)
-- ✅ No clear ground truth (creative problems, subjective judgments)
-- ❌ Factual queries with known answers (debate is overkill)
-- ❌ Low-stakes/high-volume (cost prohibitive)
+- High-stakes decisions (fraud detection, medical diagnosis)
+- Policy interpretation (legal, financial compliance)
+- No clear ground truth (creative problems, subjective judgments)
+- Factual queries with known answers (debate is overkill)
+- Low-stakes/high-volume (cost prohibitive)
 
 **Cost model:**
 - Base cost: $C_{\text{single}}$
 - Debate cost: $N \times R \times C_{\text{single}}$
-  - $N$ = number of agents (typical: 2-5)
-  - $R$ = number of debate rounds (typical: 1-3)
+ - $N$ = number of agents (typical: 2-5)
+ - $R$ = number of debate rounds (typical: 1-3)
 
 **Implementation sketch:**
 
 ```python
 def debate_pattern(query: str, n_agents: int = 3, rounds: int = 2) -> str:
-    # Round 1: Each agent proposes independently
-    proposals = []
-    for i in range(n_agents):
-        prompt = f"Agent {i}: {query}\nProvide your solution and reasoning."
-        proposals.append(llm.generate(prompt))
+ # Round 1: Each agent proposes independently
+ proposals = []
+ for i in range(n_agents):
+ prompt = f"Agent {i}: {query}\nProvide your solution and reasoning."
+ proposals.append(llm.generate(prompt))
 
-    # Round 2-R: Agents critique each other
-    for round in range(rounds):
-        critiques = []
-        for i in range(n_agents):
-            others = [p for j, p in enumerate(proposals) if j != i]
-            prompt = f"""
-            Your proposal: {proposals[i]}
+ # Round 2-R: Agents critique each other
+ for round in range(rounds):
+ critiques = []
+ for i in range(n_agents):
+ others = [p for j, p in enumerate(proposals) if j != i]
+ prompt = f"""
+ Your proposal: {proposals[i]}
 
-            Other agents' proposals:
-            {chr(10).join(f"Agent {j}: {p}" for j, p in enumerate(others))}
+ Other agents' proposals:
+ {chr(10).join(f"Agent {j}: {p}" for j, p in enumerate(others))}
 
-            Critique others and defend/revise your proposal.
-            """
-            critiques.append(llm.generate(prompt))
-        proposals = critiques
+ Critique others and defend/revise your proposal.
+ """
+ critiques.append(llm.generate(prompt))
+ proposals = critiques
 
-    # Judge synthesizes
-    judge_prompt = f"""
-    Debate proposals:
-    {chr(10).join(f"Agent {i}: {p}" for i, p in enumerate(proposals))}
+ # Judge synthesizes
+ judge_prompt = f"""
+ Debate proposals:
+ {chr(10).join(f"Agent {i}: {p}" for i, p in enumerate(proposals))}
 
-    Synthesize the best solution considering all perspectives.
-    """
-    return llm.generate(judge_prompt)
+ Synthesize the best solution considering all perspectives.
+ """
+ return llm.generate(judge_prompt)
 ```
 
 **Variants:**
@@ -357,10 +352,10 @@ def debate_pattern(query: str, n_agents: int = 3, rounds: int = 2) -> str:
 3. **Ranked choice** — agents rank all proposals, aggregate scores
 
 **Pitfalls:**
-1. ❌ **Groupthink** — all agents converge on wrong answer (mitigate: diverse prompts)
-2. ❌ **Deadlock** — agents never agree (set max rounds, use judge)
-3. ❌ **Judge bias** — judge consistently picks Agent 1 (randomize order)
-4. ❌ **Cost explosion** — 3 agents × 3 rounds = 9× base cost
+1. **Groupthink** — all agents converge on wrong answer (mitigate: diverse prompts)
+2. **Deadlock** — agents never agree (set max rounds, use judge)
+3. **Judge bias** — judge consistently picks Agent 1 (randomize order)
+4. **Cost explosion** — 3 agents × 3 rounds = 9× base cost
 
 **Animation placeholder:** `img/debate_flow.png`
 - Frame 1: Scenario (pricing conflict: coupon + loyalty + promo)
@@ -376,55 +371,55 @@ def debate_pattern(query: str, n_agents: int = 3, rounds: int = 2) -> str:
 **Description:** Decompose task into subtasks (Planner), execute in parallel (Workers), verify constraints (Verifier). Keeps each agent's context small and focused.
 
 **When to use:**
-- ✅ Complex multi-step tasks (research, catering orders, data pipelines)
-- ✅ Parallel execution opportunities (independent subtasks)
-- ✅ Verifiable constraints (budget, count, completeness)
-- ❌ Simple single-step tasks (orchestration overhead not worth it)
-- ❌ Highly sequential tasks (no parallelization benefit)
+- Complex multi-step tasks (research, catering orders, data pipelines)
+- Parallel execution opportunities (independent subtasks)
+- Verifiable constraints (budget, count, completeness)
+- Simple single-step tasks (orchestration overhead not worth it)
+- Highly sequential tasks (no parallelization benefit)
 
 **Cost model:**
 - Base cost: $C_{\text{single}}$
 - Hierarchical cost: $(1 + N + 1) \times C_{\text{single}}$
-  - 1 planner call
-  - $N$ worker calls (can run in parallel)
-  - 1 verifier call
+ - 1 planner call
+ - $N$ worker calls (can run in parallel)
+ - 1 verifier call
 
 **Implementation sketch:**
 
 ```python
 def hierarchical_pattern(task: str) -> str:
-    # Step 1: Planner decomposes
-    plan_prompt = f"""
-    Task: {task}
+ # Step 1: Planner decomposes
+ plan_prompt = f"""
+ Task: {task}
 
-    Decompose into independent subtasks.
-    Return JSON: {{"subtasks": [...]}}
-    """
-    plan = json.loads(llm.generate(plan_prompt))
+ Decompose into independent subtasks.
+ Return JSON: {{"subtasks": [...]}}
+ """
+ plan = json.loads(llm.generate(plan_prompt))
 
-    # Step 2: Workers execute in parallel
-    results = []
-    with ThreadPoolExecutor() as executor:
-        futures = [
-            executor.submit(llm.generate, f"Execute: {subtask}")
-            for subtask in plan["subtasks"]
-        ]
-        results = [f.result() for f in futures]
+ # Step 2: Workers execute in parallel
+ results = []
+ with ThreadPoolExecutor() as executor:
+ futures = [
+ executor.submit(llm.generate, f"Execute: {subtask}")
+ for subtask in plan["subtasks"]
+ ]
+ results = [f.result() for f in futures]
 
-    # Step 3: Verifier checks constraints
-    verify_prompt = f"""
-    Original task: {task}
-    Plan: {plan}
-    Results: {results}
+ # Step 3: Verifier checks constraints
+ verify_prompt = f"""
+ Original task: {task}
+ Plan: {plan}
+ Results: {results}
 
-    Verify all constraints satisfied. If any fail, explain why.
-    """
-    verification = llm.generate(verify_prompt)
+ Verify all constraints satisfied. If any fail, explain why.
+ """
+ verification = llm.generate(verify_prompt)
 
-    if "VERIFIED" in verification:
-        return synthesize_results(results)
-    else:
-        return f"Verification failed: {verification}"
+ if "VERIFIED" in verification:
+ return synthesize_results(results)
+ else:
+ return f"Verification failed: {verification}"
 ```
 
 **Coordination protocols:**
@@ -433,10 +428,10 @@ def hierarchical_pattern(task: str) -> str:
 3. **Checkpoints** — workers save intermediate state for failure recovery
 
 **Pitfalls:**
-1. ❌ **Worker drift** — workers ignore planner (mitigate: explicit constraints)
-2. ❌ **Verifier false positives** — approves incorrect results (use tool-based verification)
-3. ❌ **Sequential bottleneck** — planner and verifier can't parallelize
-4. ❌ **Over-decomposition** — 10 workers for 5-minute task is overkill
+1. **Worker drift** — workers ignore planner (mitigate: explicit constraints)
+2. **Verifier false positives** — approves incorrect results (use tool-based verification)
+3. **Sequential bottleneck** — planner and verifier can't parallelize
+4. **Over-decomposition** — 10 workers for 5-minute task is overkill
 
 **Animation placeholder:** `img/hierarchical_flow.png`
 - Frame 1: Catering order (15 pizzas, 3 time slots, constraints)
@@ -452,11 +447,11 @@ def hierarchical_pattern(task: str) -> str:
 **Description:** Multiple tools available to solve a problem — agent must choose which tool, when, and with what fallback chain.
 
 **When to use:**
-- ✅ Multiple data sources (cache, DB, API)
-- ✅ Speed/accuracy tradeoff (fast estimate vs. slow exact)
-- ✅ Cost optimization (free tools first, paid tools fallback)
-- ❌ Single tool available (no selection needed)
-- ❌ Tool failures are rare (fallback overhead not justified)
+- Multiple data sources (cache, DB, API)
+- Speed/accuracy tradeoff (fast estimate vs. slow exact)
+- Cost optimization (free tools first, paid tools fallback)
+- Single tool available (no selection needed)
+- Tool failures are rare (fallback overhead not justified)
 
 **Strategies:**
 
@@ -464,12 +459,12 @@ def hierarchical_pattern(task: str) -> str:
 
 ```python
 def rule_based_tool_selection(query_type: str):
-    if query_type == "inventory":
-        return use_database()  # always fresh, 50ms
-    elif query_type == "weather":
-        return use_cache_or_api()  # cache first, API fallback
-    elif query_type == "sentiment":
-        return use_llm()  # no external tool needed
+ if query_type == "inventory":
+ return use_database() # always fresh, 50ms
+ elif query_type == "weather":
+ return use_cache_or_api() # cache first, API fallback
+ elif query_type == "sentiment":
+ return use_llm() # no external tool needed
 ```
 
 **Pros:** Fast, deterministic, no LLM call needed
@@ -479,18 +474,18 @@ def rule_based_tool_selection(query_type: str):
 
 ```python
 def cost_based_tool_selection(tools: list[Tool]) -> Tool:
-    # Sort by cost, try cheapest first
-    sorted_tools = sorted(tools, key=lambda t: t.cost)
+ # Sort by cost, try cheapest first
+ sorted_tools = sorted(tools, key=lambda t: t.cost)
 
-    for tool in sorted_tools:
-        try:
-            result = tool.execute()
-            if result.confidence > 0.8:
-                return result
-        except ToolError:
-            continue  # try next tool
+ for tool in sorted_tools:
+ try:
+ result = tool.execute()
+ if result.confidence > 0.8:
+ return result
+ except ToolError:
+ continue # try next tool
 
-    raise AllToolsFailedError()
+ raise AllToolsFailedError()
 ```
 
 **Pros:** Optimizes cost automatically
@@ -500,19 +495,19 @@ def cost_based_tool_selection(tools: list[Tool]) -> Tool:
 
 ```python
 def meta_agent_tool_selection(query: str, tools: list[Tool]) -> Tool:
-    tool_descriptions = "\n".join(f"{t.name}: {t.description}" for t in tools)
+ tool_descriptions = "\n".join(f"{t.name}: {t.description}" for t in tools)
 
-    prompt = f"""
-    Available tools:
-    {tool_descriptions}
+ prompt = f"""
+ Available tools:
+ {tool_descriptions}
 
-    Query: {query}
+ Query: {query}
 
-    Which tool should be used? Respond with tool name only.
-    """
+ Which tool should be used? Respond with tool name only.
+ """
 
-    tool_name = llm.generate(prompt).strip()
-    return next(t for t in tools if t.name == tool_name)
+ tool_name = llm.generate(prompt).strip()
+ return next(t for t in tools if t.name == tool_name)
 ```
 
 **Pros:** Flexible, handles novel cases
@@ -522,20 +517,20 @@ def meta_agent_tool_selection(query: str, tools: list[Tool]) -> Tool:
 
 ```python
 def fallback_chain(tools: list[Tool], query: str) -> str:
-    for i, tool in enumerate(tools):
-        try:
-            result = tool.execute(query)
-            return result
-        except ToolError as e:
-            if i == len(tools) - 1:  # last tool failed
-                return escalate_to_human(query)
-            log(f"Tool {tool.name} failed: {e}, trying next...")
+ for i, tool in enumerate(tools):
+ try:
+ result = tool.execute(query)
+ return result
+ except ToolError as e:
+ if i == len(tools) - 1: # last tool failed
+ return escalate_to_human(query)
+ log(f"Tool {tool.name} failed: {e}, trying next...")
 ```
 
 **Pitfalls:**
-1. ❌ **Tool thrashing** — retries same tool repeatedly (track attempts)
-2. ❌ **No convergence** — all tools fail (need human escalation)
-3. ❌ **Latency cascade** — trying 5 slow tools sequentially (set timeouts)
+1. **Tool thrashing** — retries same tool repeatedly (track attempts)
+2. **No convergence** — all tools fail (need human escalation)
+3. **Latency cascade** — trying 5 slow tools sequentially (set timeouts)
 
 **Animation placeholder:** `img/tool_selection_decision_tree.png`
 - Decision tree: cache (10ms) → DB (50ms) → API (200ms) → human escalation
@@ -547,18 +542,18 @@ def fallback_chain(tools: list[Tool], query: str) -> str:
 **Description:** Explore multiple reasoning branches in parallel, evaluate each, backtrack if needed. Search algorithm over thought space.
 
 **When to use:**
-- ✅ Creative problems (writing, game playing, puzzle solving)
-- ✅ No clear heuristic (explore solution space)
-- ✅ Backtracking beneficial (dead-end paths exist)
-- ❌ Single correct answer with direct path (BFS overhead wasted)
-- ❌ Strict latency requirements (search is slow)
+- Creative problems (writing, game playing, puzzle solving)
+- No clear heuristic (explore solution space)
+- Backtracking beneficial (dead-end paths exist)
+- Single correct answer with direct path (BFS overhead wasted)
+- Strict latency requirements (search is slow)
 
 **Cost model:**
 - Base cost: $C_{\text{single}}$
 - ToT cost: $B^T \times C_{\text{single}}$
-  - $B$ = branching factor (thoughts per node, typical: 3-5)
-  - $T$ = tree depth (typical: 2-4)
-  - Example: $B=3, T=3 \rightarrow 3^3 = 27 \times$ cost
+ - $B$ = branching factor (thoughts per node, typical: 3-5)
+ - $T$ = tree depth (typical: 2-4)
+ - Example: $B=3, T=3 \rightarrow 3^3 = 27 \times$ cost
 
 **Search strategies:**
 1. **Breadth-First Search (BFS)** — explore all branches at each level
@@ -569,38 +564,38 @@ def fallback_chain(tools: list[Tool], query: str) -> str:
 
 ```python
 def tree_of_thoughts(problem: str, depth: int = 3, branching: int = 3) -> str:
-    # Level 0: Initial thoughts
-    current_level = []
-    for i in range(branching):
-        thought = llm.generate(f"Thought {i} for: {problem}")
-        score = evaluate_thought(thought, problem)
-        current_level.append((thought, score))
+ # Level 0: Initial thoughts
+ current_level = []
+ for i in range(branching):
+ thought = llm.generate(f"Thought {i} for: {problem}")
+ score = evaluate_thought(thought, problem)
+ current_level.append((thought, score))
 
-    # Levels 1-T: Expand and evaluate
-    for level in range(1, depth):
-        next_level = []
-        for thought, score in current_level:
-            # Generate child thoughts
-            for i in range(branching):
-                child_prompt = f"Continuing from: {thought}\nNext step {i}:"
-                child = llm.generate(child_prompt)
-                child_score = evaluate_thought(child, problem)
-                next_level.append((child, child_score))
+ # Levels 1-T: Expand and evaluate
+ for level in range(1, depth):
+ next_level = []
+ for thought, score in current_level:
+ # Generate child thoughts
+ for i in range(branching):
+ child_prompt = f"Continuing from: {thought}\nNext step {i}:"
+ child = llm.generate(child_prompt)
+ child_score = evaluate_thought(child, problem)
+ next_level.append((child, child_score))
 
-        # Keep only top-k thoughts (beam search)
-        current_level = sorted(next_level, key=lambda x: x[1], reverse=True)[:branching]
+ # Keep only top-k thoughts (beam search)
+ current_level = sorted(next_level, key=lambda x: x[1], reverse=True)[:branching]
 
-    # Return best final thought
-    return max(current_level, key=lambda x: x[1])[0]
+ # Return best final thought
+ return max(current_level, key=lambda x: x[1])[0]
 
 def evaluate_thought(thought: str, problem: str) -> float:
-    prompt = f"""
-    Problem: {problem}
-    Thought: {thought}
+ prompt = f"""
+ Problem: {problem}
+ Thought: {thought}
 
-    Rate this thought's promise for solving the problem (0-1 scale).
-    """
-    return float(llm.generate(prompt))
+ Rate this thought's promise for solving the problem (0-1 scale).
+ """
+ return float(llm.generate(prompt))
 ```
 
 **Example: 24 Game**
@@ -609,16 +604,16 @@ def evaluate_thought(thought: str, problem: str) -> float:
 Problem: Use 4, 6, 8, 8 with +, -, ×, ÷ to make 24
 
 Tree:
-Level 0:  4 + 6 = 10  |  4 × 6 = 24  |  8 - 4 = 4
-           /   |   \        [GOAL!]
+Level 0: 4 + 6 = 10 | 4 × 6 = 24 | 8 - 4 = 4
+ / | \ [GOAL!]
 Level 1: ...
 ```
 
 **Pitfalls:**
-1. ❌ **Exponential explosion** — $5^4 = 625$ LLM calls for depth 4
-2. ❌ **Poor evaluation** — heuristic scores thoughts incorrectly → bad paths
-3. ❌ **No early stopping** — continues searching after finding solution
-4. ❌ **Latency** — sequential evaluation of 27-625 thoughts takes minutes
+1. **Exponential explosion** — $5^4 = 625$ LLM calls for depth 4
+2. **Poor evaluation** — heuristic scores thoughts incorrectly → bad paths
+3. **No early stopping** — continues searching after finding solution
+4. **Latency** — sequential evaluation of 27-625 thoughts takes minutes
 
 **Animation placeholder:** `img/tree_of_thoughts_search.png`
 - Animated tree growing: root → 3 branches → 9 branches → backtrack from dead end
@@ -630,92 +625,92 @@ Level 1: ...
 **Description:** Generate response → extract claims → independently verify each claim → revise response with corrections. Systematic hallucination defense.
 
 **When to use:**
-- ✅ Factual claims requiring verification (historical dates, scientific facts)
-- ✅ Multi-hop reasoning (claim A depends on B)
-- ✅ Hallucination-prone domains (low-resource languages, obscure topics)
-- ❌ Subjective content (opinions, creative writing)
-- ❌ Claims with no verifiable source (speculation)
+- Factual claims requiring verification (historical dates, scientific facts)
+- Multi-hop reasoning (claim A depends on B)
+- Hallucination-prone domains (low-resource languages, obscure topics)
+- Subjective content (opinions, creative writing)
+- Claims with no verifiable source (speculation)
 
 **Cost model:**
 - Base cost: $C_{\text{single}}$
 - CoVe cost: $(1 + K + 1) \times C_{\text{single}}$
-  - 1 generation call
-  - $K$ verification calls (one per claim)
-  - 1 revision call
+ - 1 generation call
+ - $K$ verification calls (one per claim)
+ - 1 revision call
 
 **Implementation sketch:**
 
 ```python
 def chain_of_verification(query: str) -> str:
-    # Step 1: Generate initial response
-    response = llm.generate(query)
+ # Step 1: Generate initial response
+ response = llm.generate(query)
 
-    # Step 2: Extract verifiable claims
-    extract_prompt = f"""
-    Extract all factual claims from this response:
-    {response}
+ # Step 2: Extract verifiable claims
+ extract_prompt = f"""
+ Extract all factual claims from this response:
+ {response}
 
-    Return as JSON: {{"claims": ["claim1", "claim2", ...]}}
-    """
-    claims = json.loads(llm.generate(extract_prompt))["claims"]
+ Return as JSON: {{"claims": ["claim1", "claim2", ...]}}
+ """
+ claims = json.loads(llm.generate(extract_prompt))["claims"]
 
-    # Step 3: Verify each claim independently
-    verified_claims = []
-    for claim in claims:
-        verify_prompt = f"""
-        Claim: {claim}
+ # Step 3: Verify each claim independently
+ verified_claims = []
+ for claim in claims:
+ verify_prompt = f"""
+ Claim: {claim}
 
-        Is this claim accurate? Check against known facts.
-        If unsure, respond "UNCERTAIN".
-        """
-        verification = llm.generate(verify_prompt)
-        verified_claims.append({
-            "claim": claim,
-            "verification": verification
-        })
+ Is this claim accurate? Check against known facts.
+ If unsure, respond "UNCERTAIN".
+ """
+ verification = llm.generate(verify_prompt)
+ verified_claims.append({
+ "claim": claim,
+ "verification": verification
+ })
 
-    # Step 4: Revise response based on verifications
-    revise_prompt = f"""
-    Original response: {response}
+ # Step 4: Revise response based on verifications
+ revise_prompt = f"""
+ Original response: {response}
 
-    Claim verifications:
-    {json.dumps(verified_claims, indent=2)}
+ Claim verifications:
+ {json.dumps(verified_claims, indent=2)}
 
-    Revise the response to correct any inaccurate claims.
-    """
-    return llm.generate(revise_prompt)
+ Revise the response to correct any inaccurate claims.
+ """
+ return llm.generate(revise_prompt)
 ```
 
 **Enhanced variant: CoVe + RAG**
 
 ```python
 def cove_with_rag(query: str, retrieval_fn) -> str:
-    response = llm.generate(query)
-    claims = extract_claims(response)
+ response = llm.generate(query)
+ claims = extract_claims(response)
 
-    verified_claims = []
-    for claim in claims:
-        # Retrieve evidence from knowledge base
-        evidence = retrieval_fn(claim)
+ verified_claims = []
+ for claim in claims:
+ # Retrieve evidence from knowledge base
+ evidence = retrieval_fn(claim)
 
-        verify_prompt = f"""
-        Claim: {claim}
-        Evidence from knowledge base:
-        {evidence}
+ verify_prompt = f"""
+ Claim: {claim}
+ Evidence from knowledge base:
+ {evidence}
 
-        Is the claim supported by the evidence?
-        """
-        verification = llm.generate(verify_prompt)
-        verified_claims.append((claim, verification, evidence))
+ Is the claim supported by the evidence?
+ """
+ verification = llm.generate(verify_prompt)
+ verified_claims.append((claim, verification, evidence))
 
-    return revise_with_evidence(response, verified_claims)
+ return revise_with_evidence(response, verified_claims)
 ```
 
 **Pitfalls:**
-1. ❌ **Circular verification** — verifier hallucinates the same fact
-2. ❌ **Over-correction** — flags correct claims as wrong
-3. ❌ **Claim extraction fails** — misses implicit claims
-4. ❌ **Cost** — 10 claims = 12× base cost
+1. **Circular verification** — verifier hallucinates the same fact
+2. **Over-correction** — flags correct claims as wrong
+3. **Claim extraction fails** — misses implicit claims
+4. **Cost** — 10 claims = 12× base cost
 
 **Animation placeholder:** `img/chain_of_verification_flow.png`
 - Frame 1: Generate response with 3 claims
@@ -730,60 +725,60 @@ def cove_with_rag(query: str, retrieval_fn) -> str:
 **Description:** Model generates response → critique against explicit principles/rules → revise to align with principles. Anthropic's method for reducing harmful outputs.
 
 **When to use:**
-- ✅ Safety-critical applications (medical, legal, financial advice)
-- ✅ Bias reduction (fairness, representation)
-- ✅ Brand voice consistency (corporate guidelines)
-- ❌ Speed-critical applications (adds 2× latency)
-- ❌ No clear principles to enforce
+- Safety-critical applications (medical, legal, financial advice)
+- Bias reduction (fairness, representation)
+- Brand voice consistency (corporate guidelines)
+- Speed-critical applications (adds 2× latency)
+- No clear principles to enforce
 
 **Cost model:**
 - Base cost: $C_{\text{single}}$
 - Constitutional cost: $(1 + P + 1) \times C_{\text{single}}$
-  - 1 generation call
-  - $P$ principle checks (typically 3-10)
-  - 1 revision call
+ - 1 generation call
+ - $P$ principle checks (typically 3-10)
+ - 1 revision call
 
 **Principles example:**
 
 ```python
 PRINCIPLES = [
-    "Never provide medical advice without disclaimers",
-    "Decline requests to generate harmful content",
-    "Avoid stereotypes based on race, gender, or religion",
-    "Cite sources when making factual claims",
-    "Admit uncertainty rather than confabulating"
+ "Never provide medical advice without disclaimers",
+ "Decline requests to generate harmful content",
+ "Avoid stereotypes based on race, gender, or religion",
+ "Cite sources when making factual claims",
+ "Admit uncertainty rather than confabulating"
 ]
 
 def constitutional_ai(query: str, principles: list[str]) -> str:
-    # Step 1: Generate initial response
-    response = llm.generate(query)
+ # Step 1: Generate initial response
+ response = llm.generate(query)
 
-    # Step 2: Check each principle
-    violations = []
-    for principle in principles:
-        check_prompt = f"""
-        Principle: {principle}
-        Response: {response}
+ # Step 2: Check each principle
+ violations = []
+ for principle in principles:
+ check_prompt = f"""
+ Principle: {principle}
+ Response: {response}
 
-        Does this response violate the principle? If yes, explain how.
-        """
-        check = llm.generate(check_prompt)
-        if "violates" in check.lower() or "yes" in check.lower():
-            violations.append((principle, check))
+ Does this response violate the principle? If yes, explain how.
+ """
+ check = llm.generate(check_prompt)
+ if "violates" in check.lower() or "yes" in check.lower():
+ violations.append((principle, check))
 
-    if not violations:
-        return response  # all principles satisfied
+ if not violations:
+ return response # all principles satisfied
 
-    # Step 3: Revise to fix violations
-    revise_prompt = f"""
-    Original response: {response}
+ # Step 3: Revise to fix violations
+ revise_prompt = f"""
+ Original response: {response}
 
-    Principle violations:
-    {chr(10).join(f"- {p}: {v}" for p, v in violations)}
+ Principle violations:
+ {chr(10).join(f"- {p}: {v}" for p, v in violations)}
 
-    Revise the response to satisfy all principles.
-    """
-    return llm.generate(revise_prompt)
+ Revise the response to satisfy all principles.
+ """
+ return llm.generate(revise_prompt)
 ```
 
 **Example: Medical query**
@@ -795,7 +790,7 @@ Initial response:
 "Take 500mg ibuprofen every 6 hours and drink plenty of water."
 
 Principle check:
-❌ Violates: "Never provide medical advice without disclaimers"
+Violates: "Never provide medical advice without disclaimers"
 
 Revised response:
 "Common approaches include rest, hydration, and over-the-counter pain relievers.
@@ -804,10 +799,10 @@ personalized advice, especially if symptoms persist."
 ```
 
 **Pitfalls:**
-1. ❌ **Principle conflicts** — two principles contradict (need prioritization)
-2. ❌ **Over-cautiousness** — declines benign requests
-3. ❌ **Vague principles** — "be helpful" is too ambiguous to enforce
-4. ❌ **Principle gaming** — model learns to superficially satisfy without true alignment
+1. **Principle conflicts** — two principles contradict (need prioritization)
+2. **Over-cautiousness** — declines benign requests
+3. **Vague principles** — "be helpful" is too ambiguous to enforce
+4. **Principle gaming** — model learns to superficially satisfy without true alignment
 
 **Animation placeholder:** `img/constitutional_ai_flow.png`
 - Frame 1: Generate response (medical advice)
@@ -822,17 +817,17 @@ personalized advice, especially if symptoms persist."
 **Description:** Run same query through N different models (or same model with different prompts/temperatures), aggregate results via voting or averaging. Reduces outlier errors.
 
 **When to use:**
-- ✅ Critical decisions (fraud detection, content moderation)
-- ✅ Outlier rejection (one model hallucinating doesn't corrupt result)
-- ✅ Uncertainty estimation (agreement = confidence)
-- ❌ Strict cost constraints (N models = N× cost)
-- ❌ Real-time applications (N models = N× latency unless parallel)
+- Critical decisions (fraud detection, content moderation)
+- Outlier rejection (one model hallucinating doesn't corrupt result)
+- Uncertainty estimation (agreement = confidence)
+- Strict cost constraints (N models = N× cost)
+- Real-time applications (N models = N× latency unless parallel)
 
 **Cost model:**
 - Base cost: $C_{\text{single}}$
 - Ensemble cost: $N \times C_{\text{single}}$
-  - $N$ = number of models/configurations (typical: 3-5)
-  - Can parallelize to reduce latency
+ - $N$ = number of models/configurations (typical: 3-5)
+ - Can parallelize to reduce latency
 
 **Aggregation strategies:**
 
@@ -840,17 +835,17 @@ personalized advice, especially if symptoms persist."
 
 ```python
 def ensemble_vote(query: str, models: list[Model]) -> str:
-    votes = [model.classify(query) for model in models]
+ votes = [model.classify(query) for model in models]
 
-    # Count votes
-    from collections import Counter
-    vote_counts = Counter(votes)
+ # Count votes
+ from collections import Counter
+ vote_counts = Counter(votes)
 
-    # Return majority class
-    majority_class, count = vote_counts.most_common(1)[0]
-    confidence = count / len(models)
+ # Return majority class
+ majority_class, count = vote_counts.most_common(1)[0]
+ confidence = count / len(models)
 
-    return majority_class, confidence
+ return majority_class, confidence
 ```
 
 **Example: Spam detection**
@@ -869,36 +864,36 @@ Result: SPAM (3/4 = 75% confidence)
 
 ```python
 def ensemble_weighted(query: str, models: list[Model]) -> str:
-    results = [(model.generate(query), model.confidence()) for model in models]
+ results = [(model.generate(query), model.confidence()) for model in models]
 
-    # Weight by confidence
-    total_weight = sum(conf for _, conf in results)
-    weighted_result = combine_weighted([
-        (res, conf / total_weight) for res, conf in results
-    ])
+ # Weight by confidence
+ total_weight = sum(conf for _, conf in results)
+ weighted_result = combine_weighted([
+ (res, conf / total_weight) for res, conf in results
+ ])
 
-    return weighted_result
+ return weighted_result
 ```
 
 #### 8c. Mixture-of-Experts (MoE)
 
 ```python
 def mixture_of_experts(query: str, experts: dict[str, Model]) -> str:
-    # Classify query type
-    query_type = classify_query(query)  # "math", "creative", "factual"
+ # Classify query type
+ query_type = classify_query(query) # "math", "creative", "factual"
 
-    # Route to specialist model
-    if query_type in experts:
-        return experts[query_type].generate(query)
-    else:
-        return experts["general"].generate(query)
+ # Route to specialist model
+ if query_type in experts:
+ return experts[query_type].generate(query)
+ else:
+ return experts["general"].generate(query)
 ```
 
 **Pitfalls:**
-1. ❌ **Correlated errors** — all models make same mistake (need diverse models)
-2. ❌ **Voting paradox** — 3-way tie (need odd number of models)
-3. ❌ **Cost explosion** — 5 GPT-4 calls = $0.25 vs $0.05 single call
-4. ❌ **Latency** — sequential execution = 5× slower (parallelize if possible)
+1. **Correlated errors** — all models make same mistake (need diverse models)
+2. **Voting paradox** — 3-way tie (need odd number of models)
+3. **Cost explosion** — 5 GPT-4 calls = $0.25 vs $0.05 single call
+4. **Latency** — sequential execution = 5× slower (parallelize if possible)
 
 **Animation placeholder:** `img/ensemble_voting.png`
 - 5 models vote → 3 agree, 2 dissent → majority wins (green checkmark)
@@ -910,59 +905,59 @@ def mixture_of_experts(query: str, experts: dict[str, Model]) -> str:
 **Description:** Generate plan → execute step 1 → observe → replan if needed → execute step 2 → repeat. Adaptive planning that adjusts to execution results.
 
 **When to use:**
-- ✅ Long-horizon tasks (research, travel booking, multi-day projects)
-- ✅ Uncertain environments (execution may fail or reveal new info)
-- ✅ Partial observability (can't plan fully upfront)
-- ❌ Short deterministic tasks (planning overhead not worth it)
-- ❌ Execution is expensive (minimize replanning)
+- Long-horizon tasks (research, travel booking, multi-day projects)
+- Uncertain environments (execution may fail or reveal new info)
+- Partial observability (can't plan fully upfront)
+- Short deterministic tasks (planning overhead not worth it)
+- Execution is expensive (minimize replanning)
 
 **Cost model:**
 - Base cost: $C_{\text{single}}$
 - Plan-Execute cost: $(P + E) \times S$
-  - $P$ = plan generation cost
-  - $E$ = execution cost per step
-  - $S$ = number of steps (varies with replanning)
+ - $P$ = plan generation cost
+ - $E$ = execution cost per step
+ - $S$ = number of steps (varies with replanning)
 
 **Implementation sketch:**
 
 ```python
 def plan_and_execute(goal: str, max_steps: int = 10) -> str:
-    plan = generate_initial_plan(goal)
-    results = []
+ plan = generate_initial_plan(goal)
+ results = []
 
-    for step_num in range(max_steps):
-        if not plan:  # goal achieved
-            break
+ for step_num in range(max_steps):
+ if not plan: # goal achieved
+ break
 
-        # Execute next step
-        current_step = plan[0]
-        result = execute_step(current_step)
-        results.append(result)
+ # Execute next step
+ current_step = plan[0]
+ result = execute_step(current_step)
+ results.append(result)
 
-        # Check if goal achieved
-        if is_goal_achieved(goal, results):
-            return synthesize_results(results)
+ # Check if goal achieved
+ if is_goal_achieved(goal, results):
+ return synthesize_results(results)
 
-        # Replan based on execution results
-        replan_prompt = f"""
-        Goal: {goal}
-        Original plan: {plan}
-        Completed: {current_step}
-        Result: {result}
+ # Replan based on execution results
+ replan_prompt = f"""
+ Goal: {goal}
+ Original plan: {plan}
+ Completed: {current_step}
+ Result: {result}
 
-        Update the plan based on this result. What should we do next?
-        """
-        plan = generate_plan(replan_prompt)
+ Update the plan based on this result. What should we do next?
+ """
+ plan = generate_plan(replan_prompt)
 
-    return synthesize_results(results)
+ return synthesize_results(results)
 
 def generate_initial_plan(goal: str) -> list[str]:
-    prompt = f"""
-    Goal: {goal}
+ prompt = f"""
+ Goal: {goal}
 
-    Generate a step-by-step plan. Return JSON: {{"steps": [...]}}
-    """
-    return json.loads(llm.generate(prompt))["steps"]
+ Generate a step-by-step plan. Return JSON: {{"steps": [...]}}
+ """
+ return json.loads(llm.generate(prompt))["steps"]
 ```
 
 **Example: Travel booking**
@@ -992,10 +987,10 @@ Replan:
 3. **Environment change** — external state changed (price increase, availability)
 
 **Pitfalls:**
-1. ❌ **Thrashing** — replan every step, never makes progress
-2. ❌ **Sunk cost fallacy** — continues bad plan because already invested
-3. ❌ **No convergence** — infinite replanning loop (set max steps)
-4. ❌ **Poor execution feedback** — can't tell if step succeeded
+1. **Thrashing** — replan every step, never makes progress
+2. **Sunk cost fallacy** — continues bad plan because already invested
+3. **No convergence** — infinite replanning loop (set max steps)
+4. **Poor execution feedback** — can't tell if step succeeded
 
 **Animation placeholder:** `img/plan_execute_replan.png`
 - Frame 1: Initial plan (4 steps)
@@ -1010,11 +1005,11 @@ Replan:
 **Description:** Agent maintains short-term working memory (current task context) and long-term episodic memory (past interactions). Enables personalization and learning from experience.
 
 **When to use:**
-- ✅ Personalized assistants (remember user preferences)
-- ✅ Long conversations (avoid re-asking questions)
-- ✅ Learning from mistakes (retrieve similar past failures)
-- ❌ Stateless APIs (no user identity to anchor memory)
-- ❌ Privacy-sensitive (storing interactions may violate policy)
+- Personalized assistants (remember user preferences)
+- Long conversations (avoid re-asking questions)
+- Learning from mistakes (retrieve similar past failures)
+- Stateless APIs (no user identity to anchor memory)
+- Privacy-sensitive (storing interactions may violate policy)
 
 **Memory types:**
 
@@ -1027,53 +1022,53 @@ Replan:
 **Cost model:**
 - Base cost: $C_{\text{single}}$
 - Memory cost: $C_{\text{single}} + S_{\text{memory}} + W_{\text{storage}}$
-  - $S_{\text{memory}}$ = token cost to load memory into context
-  - $W_{\text{storage}}$ = storage cost (e.g., vector DB)
+ - $S_{\text{memory}}$ = token cost to load memory into context
+ - $W_{\text{storage}}$ = storage cost (e.g., vector DB)
 
 **Implementation sketch:**
 
 ```python
 class MemoryAugmentedAgent:
-    def __init__(self, user_id: str):
-        self.user_id = user_id
-        self.working_memory = []  # current task context
-        self.episodic_db = VectorDB()  # past interactions
+ def __init__(self, user_id: str):
+ self.user_id = user_id
+ self.working_memory = [] # current task context
+ self.episodic_db = VectorDB() # past interactions
 
-    def process(self, query: str) -> str:
-        # Step 1: Retrieve relevant episodic memory
-        past_interactions = self.episodic_db.search(
-            query=query,
-            user_id=self.user_id,
-            top_k=3
-        )
+ def process(self, query: str) -> str:
+ # Step 1: Retrieve relevant episodic memory
+ past_interactions = self.episodic_db.search(
+ query=query,
+ user_id=self.user_id,
+ top_k=3
+ )
 
-        # Step 2: Build context with memory
-        context = f"""
-        User history:
-        {chr(10).join(past_interactions)}
+ # Step 2: Build context with memory
+ context = f"""
+ User history:
+ {chr(10).join(past_interactions)}
 
-        Current conversation:
-        {chr(10).join(self.working_memory[-5:])}  # last 5 turns
+ Current conversation:
+ {chr(10).join(self.working_memory[-5:])} # last 5 turns
 
-        Current query: {query}
-        """
+ Current query: {query}
+ """
 
-        # Step 3: Generate response
-        response = llm.generate(context)
+ # Step 3: Generate response
+ response = llm.generate(context)
 
-        # Step 4: Update working memory
-        self.working_memory.append(f"User: {query}")
-        self.working_memory.append(f"Agent: {response}")
+ # Step 4: Update working memory
+ self.working_memory.append(f"User: {query}")
+ self.working_memory.append(f"Agent: {response}")
 
-        # Step 5: Store in episodic memory
-        self.episodic_db.insert({
-            "user_id": self.user_id,
-            "query": query,
-            "response": response,
-            "timestamp": datetime.now()
-        })
+ # Step 5: Store in episodic memory
+ self.episodic_db.insert({
+ "user_id": self.user_id,
+ "query": query,
+ "response": response,
+ "timestamp": datetime.now()
+ })
 
-        return response
+ return response
 ```
 
 **Example: Personalized PizzaBot**
@@ -1097,10 +1092,10 @@ User: "Yes!"
 3. **Importance** — retrieve high-stakes or explicitly saved interactions
 
 **Pitfalls:**
-1. ❌ **Stale memory** — user preferences changed but old memory persists
-2. ❌ **Privacy leaks** — remembering sensitive info across contexts
-3. ❌ **Context pollution** — irrelevant memories confuse agent
-4. ❌ **Storage cost** — episodic memory grows indefinitely (need pruning)
+1. **Stale memory** — user preferences changed but old memory persists
+2. **Privacy leaks** — remembering sensitive info across contexts
+3. **Context pollution** — irrelevant memories confuse agent
+4. **Storage cost** — episodic memory grows indefinitely (need pruning)
 
 **Animation placeholder:** `img/memory_augmented_flow.png`
 - Frame 1: Query → retrieve episodic memory (vector DB)
@@ -1132,38 +1127,38 @@ Think of each pattern as a **strategy for spending tokens**:
 
 ```
 Simple query ("what toppings?"):
-    Single-pass ✓ — 1× cost, 99% accuracy
+ Single-pass ✓ — 1× cost, 99% accuracy
 
 Contradiction ("dairy-free + extra cheese"):
-    Reflection ✓ — 3× cost, 99% accuracy
+ Reflection ✓ — 3× cost, 99% accuracy
 
 High-stakes pricing:
-    Debate ✓ — 5× cost, 99.5% accuracy + audit trail
+ Debate ✓ — 5× cost, 99.5% accuracy + audit trail
 
 Creative writing:
-    Tree-of-Thoughts — 20× cost, explore solution space
+ Tree-of-Thoughts — 20× cost, explore solution space
 
 Catering (complex constraints):
-    Hierarchical ✓ — 8× cost, 95% automation rate
+ Hierarchical ✓ — 8× cost, 95% automation rate
 ```
 
 **Production strategy: Hybrid routing**
 
 ```python
 def route_to_pattern(query: str, context: dict) -> str:
-    # Classify query complexity
-    complexity = classify_complexity(query)
+ # Classify query complexity
+ complexity = classify_complexity(query)
 
-    if complexity == "simple":
-        return single_pass(query)  # 1× cost
-    elif complexity == "contradiction":
-        return reflection_loop(query)  # 3× cost
-    elif complexity == "high_stakes":
-        return debate_pattern(query)  # 5× cost
-    elif complexity == "multi_constraint":
-        return hierarchical(query)  # 8× cost
-    else:
-        return single_pass(query)  # default fallback
+ if complexity == "simple":
+ return single_pass(query) # 1× cost
+ elif complexity == "contradiction":
+ return reflection_loop(query) # 3× cost
+ elif complexity == "high_stakes":
+ return debate_pattern(query) # 5× cost
+ elif complexity == "multi_constraint":
+ return hierarchical(query) # 8× cost
+ else:
+ return single_pass(query) # default fallback
 ```
 
 **Cost optimization:**
@@ -1185,36 +1180,36 @@ def route_to_pattern(query: str, context: dict) -> str:
 
 ```mermaid
 graph TD
-    Start[Query arrives] --> Simple{Simple factual query?}
-    Simple -->|Yes| SinglePass[Single-pass]
-    Simple -->|No| Contradiction{Contains contradiction?}
+ Start[Query arrives] --> Simple{Simple factual query?}
+ Simple -->|Yes| SinglePass[Single-pass]
+ Simple -->|No| Contradiction{Contains contradiction?}
 
-    Contradiction -->|Yes| Reflection[Reflection Loop]
-    Contradiction -->|No| HighStakes{High-stakes decision?}
+ Contradiction -->|Yes| Reflection[Reflection Loop]
+ Contradiction -->|No| HighStakes{High-stakes decision?}
 
-    HighStakes -->|Yes| Debate[Debate & Consensus]
-    HighStakes -->|No| MultiStep{Complex multi-step task?}
+ HighStakes -->|Yes| Debate[Debate & Consensus]
+ HighStakes -->|No| MultiStep{Complex multi-step task?}
 
-    MultiStep -->|Yes| Hierarchical[Hierarchical Orchestration]
-    MultiStep -->|No| Creative{Creative/exploratory?}
+ MultiStep -->|Yes| Hierarchical[Hierarchical Orchestration]
+ MultiStep -->|No| Creative{Creative/exploratory?}
 
-    Creative -->|Yes| ToT[Tree-of-Thoughts]
-    Creative -->|No| FactCheck{Need fact verification?}
+ Creative -->|Yes| ToT[Tree-of-Thoughts]
+ Creative -->|No| FactCheck{Need fact verification?}
 
-    FactCheck -->|Yes| CoVe[Chain-of-Verification]
-    FactCheck -->|No| Safety{Safety-critical?}
+ FactCheck -->|Yes| CoVe[Chain-of-Verification]
+ FactCheck -->|No| Safety{Safety-critical?}
 
-    Safety -->|Yes| Constitutional[Constitutional AI]
-    Safety -->|No| Uncertainty{Need uncertainty estimate?}
+ Safety -->|Yes| Constitutional[Constitutional AI]
+ Safety -->|No| Uncertainty{Need uncertainty estimate?}
 
-    Uncertainty -->|Yes| Ensemble[Ensemble/Voting]
-    Uncertainty -->|No| Adaptive{Environment uncertain?}
+ Uncertainty -->|Yes| Ensemble[Ensemble/Voting]
+ Uncertainty -->|No| Adaptive{Environment uncertain?}
 
-    Adaptive -->|Yes| PlanExecute[Plan-and-Execute]
-    Adaptive -->|No| Personalized{User-specific?}
+ Adaptive -->|Yes| PlanExecute[Plan-and-Execute]
+ Adaptive -->|No| Personalized{User-specific?}
 
-    Personalized -->|Yes| Memory[Memory-Augmented]
-    Personalized -->|No| SinglePass
+ Personalized -->|Yes| Memory[Memory-Augmented]
+ Personalized -->|No| SinglePass
 ```
 
 **Quick reference table:**
@@ -1243,29 +1238,29 @@ from langgraph.graph import StateGraph, END
 from typing import TypedDict, Literal
 
 class AgentState(TypedDict):
-    query: str
-    initial_response: str
-    critique: str
-    revised_response: str
-    complexity: Literal["simple", "contradiction", "high_stakes"]
+ query: str
+ initial_response: str
+ critique: str
+ revised_response: str
+ complexity: Literal["simple", "contradiction", "high_stakes"]
 
 # Build the graph
 workflow = StateGraph(AgentState)
 
 # Define nodes
 def classify_node(state: AgentState) -> AgentState:
-    complexity = classify_complexity(state["query"])
-    return {**state, "complexity": complexity}
+ complexity = classify_complexity(state["query"])
+ return {**state, "complexity": complexity}
 
 def single_pass_node(state: AgentState) -> AgentState:
-    response = llm.generate(state["query"])
-    return {**state, "revised_response": response}
+ response = llm.generate(state["query"])
+ return {**state, "revised_response": response}
 
 def reflection_node(state: AgentState) -> AgentState:
-    initial = llm.generate(state["query"])
-    critique = llm.generate(f"Critique: {initial}")
-    revised = llm.generate(f"Revise based on: {critique}")
-    return {**state, "revised_response": revised}
+ initial = llm.generate(state["query"])
+ critique = llm.generate(f"Critique: {initial}")
+ revised = llm.generate(f"Revise based on: {critique}")
+ return {**state, "revised_response": revised}
 
 # Add nodes
 workflow.add_node("classify", classify_node)
@@ -1274,12 +1269,12 @@ workflow.add_node("reflection", reflection_node)
 
 # Conditional routing
 def route_by_complexity(state: AgentState) -> str:
-    if state["complexity"] == "simple":
-        return "single_pass"
-    elif state["complexity"] == "contradiction":
-        return "reflection"
-    else:
-        return "single_pass"  # fallback
+ if state["complexity"] == "simple":
+ return "single_pass"
+ elif state["complexity"] == "contradiction":
+ return "reflection"
+ else:
+ return "single_pass" # fallback
 
 workflow.set_entry_point("classify")
 workflow.add_conditional_edges("classify", route_by_complexity)
@@ -1298,28 +1293,28 @@ import asyncio
 from typing import List
 
 async def debate_async(query: str, n_agents: int = 3) -> str:
-    # Round 1: Generate proposals in parallel
-    async def generate_proposal(agent_id: int) -> str:
-        prompt = f"Agent {agent_id}: {query}"
-        return await llm.agenerate(prompt)
+ # Round 1: Generate proposals in parallel
+ async def generate_proposal(agent_id: int) -> str:
+ prompt = f"Agent {agent_id}: {query}"
+ return await llm.agenerate(prompt)
 
-    proposals = await asyncio.gather(*[
-        generate_proposal(i) for i in range(n_agents)
-    ])
+ proposals = await asyncio.gather(*[
+ generate_proposal(i) for i in range(n_agents)
+ ])
 
-    # Round 2: Critique in parallel
-    async def critique(agent_id: int, proposals: List[str]) -> str:
-        others = [p for i, p in enumerate(proposals) if i != agent_id]
-        prompt = f"Critique: {others}"
-        return await llm.agenerate(prompt)
+ # Round 2: Critique in parallel
+ async def critique(agent_id: int, proposals: List[str]) -> str:
+ others = [p for i, p in enumerate(proposals) if i != agent_id]
+ prompt = f"Critique: {others}"
+ return await llm.agenerate(prompt)
 
-    critiques = await asyncio.gather(*[
-        critique(i, proposals) for i in range(n_agents)
-    ])
+ critiques = await asyncio.gather(*[
+ critique(i, proposals) for i in range(n_agents)
+ ])
 
-    # Judge synthesizes
-    judge_prompt = f"Proposals: {proposals}\nCritiques: {critiques}"
-    return await llm.agenerate(judge_prompt)
+ # Judge synthesizes
+ judge_prompt = f"Proposals: {proposals}\nCritiques: {critiques}"
+ return await llm.agenerate(judge_prompt)
 
 # Usage
 result = asyncio.run(debate_async("Apply 3 discounts?"))
@@ -1332,37 +1327,37 @@ from typing import Callable, List
 import time
 
 class Tool:
-    def __init__(self, name: str, fn: Callable, cost: float, timeout: float):
-        self.name = name
-        self.fn = fn
-        self.cost = cost
-        self.timeout = timeout
+ def __init__(self, name: str, fn: Callable, cost: float, timeout: float):
+ self.name = name
+ self.fn = fn
+ self.cost = cost
+ self.timeout = timeout
 
-    def execute(self, query: str) -> str:
-        start = time.time()
-        result = self.fn(query)
-        elapsed = time.time() - start
-        if elapsed > self.timeout:
-            raise TimeoutError(f"{self.name} exceeded {self.timeout}s")
-        return result
+ def execute(self, query: str) -> str:
+ start = time.time()
+ result = self.fn(query)
+ elapsed = time.time() - start
+ if elapsed > self.timeout:
+ raise TimeoutError(f"{self.name} exceeded {self.timeout}s")
+ return result
 
 def fallback_chain(query: str, tools: List[Tool]) -> str:
-    for i, tool in enumerate(tools):
-        try:
-            print(f"Trying {tool.name} (cost: ${tool.cost})...")
-            result = tool.execute(query)
-            print(f"✓ {tool.name} succeeded")
-            return result
-        except (TimeoutError, Exception) as e:
-            print(f"✗ {tool.name} failed: {e}")
-            if i == len(tools) - 1:
-                return escalate_to_human(query)
+ for i, tool in enumerate(tools):
+ try:
+ print(f"Trying {tool.name} (cost: ${tool.cost})...")
+ result = tool.execute(query)
+ print(f"✓ {tool.name} succeeded")
+ return result
+ except (TimeoutError, Exception) as e:
+ print(f"✗ {tool.name} failed: {e}")
+ if i == len(tools) - 1:
+ return escalate_to_human(query)
 
 # Define tools (fast → slow)
 tools = [
-    Tool("cache", lambda q: check_cache(q), cost=0, timeout=0.1),
-    Tool("database", lambda q: query_db(q), cost=0.0001, timeout=0.5),
-    Tool("api", lambda q: call_api(q), cost=0.001, timeout=2.0),
+ Tool("cache", lambda q: check_cache(q), cost=0, timeout=0.1),
+ Tool("database", lambda q: query_db(q), cost=0.0001, timeout=0.5),
+ Tool("api", lambda q: call_api(q), cost=0.001, timeout=2.0),
 ]
 
 result = fallback_chain("inventory for Margherita?", tools)
@@ -1378,9 +1373,9 @@ result = fallback_chain("inventory for Margherita?", tools)
 
 ```python
 # BAD: No convergence check
-for round in range(100):  # will always run 100 times
-    critique = critique(response)
-    response = revise(critique)
+for round in range(100): # will always run 100 times
+ critique = critique(response)
+ response = revise(critique)
 ```
 
 **Fix:** Add convergence detection
@@ -1388,11 +1383,11 @@ for round in range(100):  # will always run 100 times
 ```python
 # GOOD: Stop when critique approves
 for round in range(max_rounds):
-    critique = critique(response)
-    if "APPROVED" in critique or similarity(response, prev_response) > 0.95:
-        break
-    prev_response = response
-    response = revise(critique)
+ critique = critique(response)
+ if "APPROVED" in critique or similarity(response, prev_response) > 0.95:
+ break
+ prev_response = response
+ response = revise(critique)
 ```
 
 ---
@@ -1404,7 +1399,7 @@ for round in range(max_rounds):
 ```python
 # BAD: No tie-breaking
 while not consensus(agents):
-    agents = [critique(a, others) for a in agents]  # infinite loop
+ agents = [critique(a, others) for a in agents] # infinite loop
 ```
 
 **Fix:** Add max rounds + judge
@@ -1412,9 +1407,9 @@ while not consensus(agents):
 ```python
 # GOOD: Judge arbitrates after max rounds
 for round in range(max_debate_rounds):
-    if consensus(agents):
-        return aggregate(agents)
-    agents = [critique(a, others) for a in agents]
+ if consensus(agents):
+ return aggregate(agents)
+ agents = [critique(a, others) for a in agents]
 
 # No consensus after max rounds → judge decides
 return judge(agents)
@@ -1429,7 +1424,7 @@ return judge(agents)
 ```python
 # BAD: Workers don't see the plan
 def worker(subtask: str):
-    return llm.generate(subtask)  # no context
+ return llm.generate(subtask) # no context
 ```
 
 **Fix:** Pass plan + constraints to workers
@@ -1437,14 +1432,14 @@ def worker(subtask: str):
 ```python
 # GOOD: Workers see full context
 def worker(subtask: str, plan: dict, constraints: dict):
-    prompt = f"""
-    Overall plan: {plan}
-    Constraints: {constraints}
-    Your subtask: {subtask}
+ prompt = f"""
+ Overall plan: {plan}
+ Constraints: {constraints}
+ Your subtask: {subtask}
 
-    Execute this subtask while respecting the plan and constraints.
-    """
-    return llm.generate(prompt)
+ Execute this subtask while respecting the plan and constraints.
+ """
+ return llm.generate(prompt)
 ```
 
 ---
@@ -1456,7 +1451,7 @@ def worker(subtask: str, plan: dict, constraints: dict):
 ```python
 # BAD: Infinite retry on same tool
 while not success:
-    result = tool.execute()  # keeps failing
+ result = tool.execute() # keeps failing
 ```
 
 **Fix:** Exponential backoff + fallback
@@ -1464,14 +1459,14 @@ while not success:
 ```python
 # GOOD: Backoff + switch tools
 def execute_with_backoff(tool: Tool, max_retries: int = 3):
-    for attempt in range(max_retries):
-        try:
-            return tool.execute()
-        except ToolError:
-            time.sleep(2 ** attempt)  # exponential backoff
+ for attempt in range(max_retries):
+ try:
+ return tool.execute()
+ except ToolError:
+ time.sleep(2 ** attempt) # exponential backoff
 
-    # Failed after max retries → fallback to next tool
-    raise ToolExhaustedError()
+ # Failed after max retries → fallback to next tool
+ raise ToolExhaustedError()
 ```
 
 ---
@@ -1482,25 +1477,25 @@ def execute_with_backoff(tool: Tool, max_retries: int = 3):
 
 ```python
 Original: "Margherita pizza has tomato, mozzarella, basil"
-Critique: "Error: Margherita should have pepperoni"  ← WRONG
-Revised: "Margherita pizza has tomato, mozzarella, basil, pepperoni"  ← WORSE
+Critique: "Error: Margherita should have pepperoni" ← WRONG
+Revised: "Margherita pizza has tomato, mozzarella, basil, pepperoni" ← WORSE
 ```
 
 **Fix:** Ground critique in external source (RAG)
 
 ```python
 def grounded_critique(response: str, query: str) -> str:
-    # Retrieve ground truth from knowledge base
-    evidence = retrieval_fn(query)
+ # Retrieve ground truth from knowledge base
+ evidence = retrieval_fn(query)
 
-    critique_prompt = f"""
-    Response: {response}
-    Ground truth from knowledge base: {evidence}
+ critique_prompt = f"""
+ Response: {response}
+ Ground truth from knowledge base: {evidence}
 
-    Identify errors in the response by comparing to ground truth.
-    If response matches ground truth, respond "APPROVED".
-    """
-    return llm.generate(critique_prompt)
+ Identify errors in the response by comparing to ground truth.
+ If response matches ground truth, respond "APPROVED".
+ """
+ return llm.generate(critique_prompt)
 ```
 
 ---
@@ -1566,7 +1561,7 @@ Company policy: "Maximum one promotional discount per order"
 ### Scenario 4
 ```
 Query: "Catering order: 20 pizzas across 4 delivery times,
-       budget $250, half vegetarian, 5 gluten-free"
+ budget $250, half vegetarian, 5 gluten-free"
 ```
 
 **Answer:** Hierarchical Orchestration ✓
@@ -1588,7 +1583,7 @@ Available tools: cache (10ms), database (50ms), manual count (5min)
 ### Scenario 6
 ```
 Query: "Write a creative pizza name for a dessert pizza with
-       Nutella, strawberries, and marshmallows"
+ Nutella, strawberries, and marshmallows"
 ```
 
 **Answer:** Tree-of-Thoughts ✓
@@ -1658,28 +1653,26 @@ The patterns in this chapter are **building blocks for multi-agent systems**. Wh
 **Next steps:**
 
 1. **[Multi-Agent AI Track](../../multi_agent_ai/README.md)** — Full multi-agent architectures
-   - AutoGen, CrewAI, LangGraph multi-agent
-   - Communication protocols (message passing, blackboard)
-   - Coordination patterns (auction, contract net)
+ - AutoGen, CrewAI, LangGraph multi-agent
+ - Communication protocols (message passing, blackboard)
+ - Coordination patterns (auction, contract net)
 
 2. **Production considerations:**
-   - Monitoring reflection loops (are they converging?)
-   - Cost allocation (which pattern consumed most tokens?)
-   - A/B testing (single-pass vs reflection on edge cases)
-   - Graceful degradation (fallback to single-pass if patterns timeout)
+ - Monitoring reflection loops (are they converging?)
+ - Cost allocation (which pattern consumed most tokens?)
+ - A/B testing (single-pass vs reflection on edge cases)
+ - Graceful degradation (fallback to single-pass if patterns timeout)
 
 3. **Research directions:**
-   - Learned pattern selection (RL agent picks pattern)
-   - Hybrid patterns (reflection + debate)
-   - Early stopping (stop reflection when confidence high enough)
+ - Learned pattern selection (RL agent picks pattern)
+ - Hybrid patterns (reflection + debate)
+ - Early stopping (stop reflection when confidence high enough)
 
 ---
 
 ## 10 · Summary — What You've Learned
-
-✅ **Core insight:** Single-pass LLMs fail on edge cases; iterative refinement patterns trade tokens for reliability
-
-✅ **10 agentic patterns:**
+**Core insight:** Single-pass LLMs fail on edge cases; iterative refinement patterns trade tokens for reliability
+**10 agentic patterns:**
 1. **Reflection** — self-critique loops (3× cost, 11× error reduction)
 2. **Debate** — multi-agent consensus (5× cost, catches blind spots)
 3. **Hierarchical** — planner → workers → verifier (8× cost, handles complexity)
@@ -1690,18 +1683,12 @@ The patterns in this chapter are **building blocks for multi-agent systems**. Wh
 8. **Ensemble** — multiple models vote (5× cost, outlier rejection)
 9. **Plan-Execute** — decompose → replan loop (adaptive)
 10. **Memory** — episodic + working memory (personalization)
-
-✅ **Mental model:** Patterns = token budget allocation strategies
-
-✅ **Decision framework:** Route queries to patterns based on complexity (80% single-pass, 15% reflection, 4% debate, 1% hierarchical)
-
-✅ **Production patterns:** LangGraph state machines, async multi-agent, fallback chains with timeouts
-
-✅ **Anti-patterns:** Over-iteration, debate deadlock, hierarchical drift, tool thrashing, hallucinated critique
-
-✅ **Business impact:** PizzaBot v2.0 achieves <1% error rate (was 8%), reduces escalations from 12% → 2%, automates catering orders (was 0% → 95%)
-
-✅ **Bridge to multi-agent:** These patterns scale to full multi-agent systems (see Multi-Agent AI track)
+**Mental model:** Patterns = token budget allocation strategies
+**Decision framework:** Route queries to patterns based on complexity (80% single-pass, 15% reflection, 4% debate, 1% hierarchical)
+**Production patterns:** LangGraph state machines, async multi-agent, fallback chains with timeouts
+**Anti-patterns:** Over-iteration, debate deadlock, hierarchical drift, tool thrashing, hallucinated critique
+**Business impact:** PizzaBot v2.0 achieves <1% error rate (was 8%), reduces escalations from 12% → 2%, automates catering orders (was 0% → 95%)
+**Bridge to multi-agent:** These patterns scale to full multi-agent systems (see Multi-Agent AI track)
 
 ---
 
@@ -1744,6 +1731,6 @@ The patterns in this chapter are **building blocks for multi-agent systems**. Wh
 ---
 
 **End of Ch.11: Advanced Agentic Patterns**
-✅ Constraint #2 (ACCURACY) achieved: <1% error rate
-⚠️ Optimize cost/latency for high-volume use cases
-➡️ Next: Scale to [Multi-Agent AI](../../multi_agent_ai/README.md)
+Constraint #2 (ACCURACY) achieved: <1% error rate
+Optimize cost/latency for high-volume use cases
+Next: Scale to [Multi-Agent AI](../../multi_agent_ai/README.md)

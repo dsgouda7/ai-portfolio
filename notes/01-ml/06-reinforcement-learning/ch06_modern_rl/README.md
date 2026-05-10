@@ -41,38 +41,38 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 💡 **The mission**: Complete **AgentAI** — CartPole balance task satisfying 5 constraints:
+> **The mission**: Complete **AgentAI** — CartPole balance task satisfying 5 constraints:
 > 1. **OPTIMALITY**: find $\pi^*$ (CartPole ≥195/200) — 2. **EFFICIENCY**: learn from limited
 > experience — 3. **SCALABILITY**: handle continuous/high-dimensional actions — 4. **STABILITY**: no
 > catastrophic forgetting — 5. **GENERALIZATION**: transfer across environment variations
 
 **What we know so far:**
-- ✅ MDPs and Bellman equations give us the theoretical foundation (Ch.1)
-- ✅ Dynamic programming finds optimal policies with a known environment model (Ch.2)
-- ✅ Q-learning learns policies purely from experience without a model (Ch.3)
-- ✅ DQN scales Q-learning to continuous state spaces with neural networks — ~150/200 (Ch.4)
-- ✅ Policy gradients directly optimize $\pi_\theta$ for stochastic policies (Ch.5)
-- ✅ PPO achieves ~190/200 on CartPole — stable and reliable
-- ❌ **But 190/200 is not ≥195/200 — the AgentAI mission is not yet complete!**
+- MDPs and Bellman equations give us the theoretical foundation (Ch.1)
+- Dynamic programming finds optimal policies with a known environment model (Ch.2)
+- Q-learning learns policies purely from experience without a model (Ch.3)
+- DQN scales Q-learning to continuous state spaces with neural networks — ~150/200 (Ch.4)
+- Policy gradients directly optimize $\pi_\theta$ for stochastic policies (Ch.5)
+- PPO achieves ~190/200 on CartPole — stable and reliable
+- **But 190/200 is not ≥195/200 — the AgentAI mission is not yet complete!**
 
 **What is blocking us from the final 5 steps:**
 
 PPO reaches ~190/200 but hits a ceiling driven by three interacting problems:
 
 1. **Determinism near the balance point.** At CartPole's balance point (pole angle ≈ 0°, angular
-   velocity ≈ 0), PPO's clipping slightly discourages probability-mass changes. The policy becomes
-   *too deterministic* — it assigns probability 0.93 to one action when both actions are nearly
-   equally good. A stochastic policy would sample both and discover that the other direction is
-   occasionally better, preventing micro-oscillations that accumulate into failure at step ~193.
+ velocity ≈ 0), PPO's clipping slightly discourages probability-mass changes. The policy becomes
+ *too deterministic* — it assigns probability 0.93 to one action when both actions are nearly
+ equally good. A stochastic policy would sample both and discover that the other direction is
+ occasionally better, preventing micro-oscillations that accumulate into failure at step ~193.
 
 2. **On-policy data waste.** PPO discards its rollout buffer after each update. Near ≥195
-   performance, the agent spends most of its time in a tiny region of state space (pole nearly
-   balanced, cart near center). On-policy collection keeps re-sampling the same near-optimal states.
-   Off-policy methods could reuse *all* previous experience in this critical region.
+ performance, the agent spends most of its time in a tiny region of state space (pole nearly
+ balanced, cart near center). On-policy collection keeps re-sampling the same near-optimal states.
+ Off-policy methods could reuse *all* previous experience in this critical region.
 
 3. **No mechanism for near-miss learning.** When PPO fails at step 191 (not quite ≥195), the episode
-   reward is indistinguishable from failing at step 150. There is no credit assignment signal for "I
-   was *close* — which actions at step 188–191 led to failure?"
+ reward is indistinguishable from failing at step 150. There is no credit assignment signal for "I
+ was *close* — which actions at step 188–191 led to failure?"
 
 **What this chapter unlocks:**
 
@@ -84,11 +84,11 @@ PPO reaches ~190/200 but hits a ceiling driven by three interacting problems:
 
 | Constraint | Status after this chapter |
 |-----------|-------------------------|
-| #1 OPTIMALITY | ✅ **COMPLETE** — SAC + Rainbow: CartPole ~198/200 |
-| #2 EFFICIENCY | ✅ **COMPLETE** — SAC off-policy + Rainbow prioritized replay |
-| #3 SCALABILITY | ✅ Already solved in Ch.5; SAC extends natively to continuous control |
-| #4 STABILITY | ✅ **COMPLETE** — Entropy regularization + target networks prevent collapse |
-| #5 GENERALIZATION | ✅ **COMPLETE** — Entropy-regularized stochastic policies transfer better |
+| #1 OPTIMALITY | **COMPLETE** — SAC + Rainbow: CartPole ~198/200 |
+| #2 EFFICIENCY | **COMPLETE** — SAC off-policy + Rainbow prioritized replay |
+| #3 SCALABILITY | Already solved in Ch.5; SAC extends natively to continuous control |
+| #4 STABILITY | **COMPLETE** — Entropy regularization + target networks prevent collapse |
+| #5 GENERALIZATION | **COMPLETE** — Entropy-regularized stochastic policies transfer better |
 
 ---
 
@@ -97,7 +97,7 @@ PPO reaches ~190/200 but hits a ceiling driven by three interacting problems:
 ![animation](img/ch06-modern-rl-needle.gif)
 
 **Needle moved:** CartPole average episode return rises from PPO ~190/200 → SAC ~195/200 → Rainbow
-~198/200. AgentAI target ≥195/200 **achieved** ✅.
+~198/200. AgentAI target ≥195/200 **achieved** .
 
 ---
 
@@ -140,11 +140,11 @@ which correction is best.
 
 The same SAC formulation that solves the final 5 steps of CartPole powers:
 - **Robotics**: SAC trained the Dexterous Manipulation hand (OpenAI DACTYL) to manipulate a Rubik's
-  cube with human-like fingers.
+ cube with human-like fingers.
 - **Autonomous driving**: entropy regularization keeps the policy from committing prematurely to
-  maneuvers — mimicking defensive driving.
+ maneuvers — mimicking defensive driving.
 - **Game AI**: maximum entropy prevents opponents from reading and exploiting deterministic patterns,
-  producing more robust game-playing agents.
+ producing more robust game-playing agents.
 
 ---
 
@@ -167,16 +167,16 @@ Before the math, the complete landscape of modern RL. Each algorithm addresses a
 
 ```
 On-policy (PPO) vs. Off-policy (SAC, Rainbow, DQN):
-  • On-policy: simpler, works well with many parallel environments
-  • Off-policy: reuses all data — preferred when environment steps are expensive
+ • On-policy: simpler, works well with many parallel environments
+ • Off-policy: reuses all data — preferred when environment steps are expensive
 
 Stochastic policy (PPO, SAC) vs. Deterministic (DQN argmax, DDPG):
-  • Stochastic: built-in exploration, handles partial observability
-  • Deterministic: lower variance, faster convergence if exploration is easy
+ • Stochastic: built-in exploration, handles partial observability
+ • Deterministic: lower variance, faster convergence if exploration is easy
 
 Discrete actions (DQN, Rainbow, PPO) vs. Continuous (SAC, DDPG, TD3):
-  • Discrete: argmax over Q-table is tractable
-  • Continuous: need Gaussian/deterministic policy — DQN's argmax is intractable
+ • Discrete: argmax over Q-table is tractable
+ • Continuous: need Gaussian/deterministic policy — DQN's argmax is intractable
 ```
 
 **The Rainbow combination — six components, one agent:**
@@ -394,18 +394,18 @@ space even where the original goal was never reached.
 **HER replay buffer construction:**
 
 ```
-Episode ends: s₀ → s₁ → s₂ → ··· → sT  (goal g NOT reached)
+Episode ends: s₀ → s₁ → s₂ → ··· → sT (goal g NOT reached)
 
 Add to buffer (original — failed):
-    (s₀, a₀, -1, s₁, goal=g)
-    (s₁, a₁, -1, s₂, goal=g)
-    ...
-    (s_{T-1}, a_{T-1}, -1, sT, goal=g)
+ (s₀, a₀, -1, s₁, goal=g)
+ (s₁, a₁, -1, s₂, goal=g)
+ ...
+ (s_{T-1}, a_{T-1}, -1, sT, goal=g)
 
 Add to buffer (HER relabeled, k=4 future goals per transition):
-    For transition i, sample future state indices j > i:
-        (sᵢ, aᵢ, r_relabeled, s_{i+1}, goal=sⱼ)
-        where r_relabeled = +1 if ||s_{i+1} - sⱼ|| < ε else -1
+ For transition i, sample future state indices j > i:
+ (sᵢ, aᵢ, r_relabeled, s_{i+1}, goal=sⱼ)
+ where r_relabeled = +1 if ||s_{i+1} - sⱼ|| < ε else -1
 ```
 
 With $k=4$ relabeling, every failed episode of length $T$ generates $4T$ additional successful
@@ -463,13 +463,13 @@ performance to ~198/200.
 With SAC's entropy regularization and Rainbow's prioritized replay:
 
 - Average episode length: **~198/200** — well above the ≥195 target
-- All 5 AgentAI constraints: ✅ ✅ ✅ ✅ ✅
+- All 5 AgentAI constraints:
 
 CartPole is solved. The techniques that closed the last 5 steps scale identically to:
 - Robot manipulation: SAC + HER (OpenAI DACTYL — Rubik's cube with a robot hand)
 - Autonomous vehicles: entropy regularization + prioritized replay on rare safety-critical events
 - Large language models: RLHF uses entropy regularization (KL penalty against reference policy) to
-  prevent the fine-tuned model from collapsing to repetitive outputs
+ prevent the fine-tuned model from collapsing to repetitive outputs
 
 ---
 
@@ -564,69 +564,69 @@ augmentation contributed +0.135 to the target — 51% of the TD error arose from
 
 ```mermaid
 flowchart TD
-    A["Q-learning\n(Watkins 1989)"]
-    B["DQN\n(Mnih 2015)\nReplay + target network"]
-    C["Double DQN\n(van Hasselt 2016)\nDecouple select / evaluate"]
-    D["Dueling DQN\n(Wang 2016)\nV(s) + A(s,a) heads"]
-    E["Prioritized Replay\n(Schaul 2016)\nTD-error priorities"]
-    F["Rainbow DQN\n(Hessel 2017)\n6 improvements combined"]
-    G["Policy Gradient\n(Williams 1992)\nREINFORCE"]
-    H["Actor-Critic\n(Konda & Tsitsiklis 2000)\nBaseline variance reduction"]
-    I["PPO\n(Schulman 2017)\nClipped objective ~190"]
-    J["SAC\n(Haarnoja 2018)\nMax entropy ~195 ✅"]
-    K["HER\n(Andrychowicz 2017)\nHindsight relabeling"]
-    L["🎯 AgentAI\nCartPole ≥195/200 ✅"]
+ A["Q-learning\n(Watkins 1989)"]
+ B["DQN\n(Mnih 2015)\nReplay + target network"]
+ C["Double DQN\n(van Hasselt 2016)\nDecouple select / evaluate"]
+ D["Dueling DQN\n(Wang 2016)\nV(s) + A(s,a) heads"]
+ E["Prioritized Replay\n(Schaul 2016)\nTD-error priorities"]
+ F["Rainbow DQN\n(Hessel 2017)\n6 improvements combined"]
+ G["Policy Gradient\n(Williams 1992)\nREINFORCE"]
+ H["Actor-Critic\n(Konda & Tsitsiklis 2000)\nBaseline variance reduction"]
+ I["PPO\n(Schulman 2017)\nClipped objective ~190"]
+ J["SAC\n(Haarnoja 2018)\nMax entropy ~195 "]
+ K["HER\n(Andrychowicz 2017)\nHindsight relabeling"]
+ L[" AgentAI\nCartPole ≥195/200 "]
 
-    A --> B --> C --> F
-    B --> D --> F
-    B --> E --> F
-    G --> H --> I
-    H --> J
-    F --> L
-    I --> L
-    J --> L
-    K --> L
+ A --> B --> C --> F
+ B --> D --> F
+ B --> E --> F
+ G --> H --> I
+ H --> J
+ F --> L
+ I --> L
+ J --> L
+ K --> L
 
-    style A fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style B fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style C fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style D fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style E fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style F fill:#15803d,color:#fff,stroke:#15803d
-    style G fill:#b45309,color:#fff,stroke:#b45309
-    style H fill:#b45309,color:#fff,stroke:#b45309
-    style I fill:#b45309,color:#fff,stroke:#b45309
-    style J fill:#15803d,color:#fff,stroke:#15803d
-    style K fill:#b91c1c,color:#fff,stroke:#b91c1c
-    style L fill:#15803d,color:#fff,stroke:#15803d
+ style A fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style B fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style C fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style D fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style E fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style F fill:#15803d,color:#fff,stroke:#15803d
+ style G fill:#b45309,color:#fff,stroke:#b45309
+ style H fill:#b45309,color:#fff,stroke:#b45309
+ style I fill:#b45309,color:#fff,stroke:#b45309
+ style J fill:#15803d,color:#fff,stroke:#15803d
+ style K fill:#b91c1c,color:#fff,stroke:#b91c1c
+ style L fill:#15803d,color:#fff,stroke:#15803d
 ```
 
 ### 7.2 AgentAI Final Progress — CartPole Score Trajectory
 
 ```mermaid
 flowchart LR
-    subgraph "Value-Based Track (Ch.3–4)"
-        A["Q-Learning\nCh.3 · ~60/200"]
-        B["DQN\nCh.4 · ~150/200"]
-    end
-    subgraph "Policy-Based Track (Ch.5)"
-        C["REINFORCE\nCh.5 · ~170/200"]
-        D["PPO\nCh.5 · ~190/200"]
-    end
-    subgraph "Modern RL — This Chapter"
-        E["SAC\nEntropy bonus\n~195/200 ✅"]
-        F["Rainbow\nPrioritized replay\n~198/200 🎯"]
-    end
+ subgraph "Value-Based Track (Ch.3–4)"
+ A["Q-Learning\nCh.3 · ~60/200"]
+ B["DQN\nCh.4 · ~150/200"]
+ end
+ subgraph "Policy-Based Track (Ch.5)"
+ C["REINFORCE\nCh.5 · ~170/200"]
+ D["PPO\nCh.5 · ~190/200"]
+ end
+ subgraph "Modern RL — This Chapter"
+ E["SAC\nEntropy bonus\n~195/200 "]
+ F["Rainbow\nPrioritized replay\n~198/200 "]
+ end
 
-    A --> B --> D
-    C --> D --> E --> F
+ A --> B --> D
+ C --> D --> E --> F
 
-    style A fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style B fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style C fill:#b45309,color:#fff,stroke:#b45309
-    style D fill:#b45309,color:#fff,stroke:#b45309
-    style E fill:#15803d,color:#fff,stroke:#15803d
-    style F fill:#15803d,color:#fff,stroke:#15803d
+ style A fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style B fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style C fill:#b45309,color:#fff,stroke:#b45309
+ style D fill:#b45309,color:#fff,stroke:#b45309
+ style E fill:#15803d,color:#fff,stroke:#15803d
+ style F fill:#15803d,color:#fff,stroke:#15803d
 ```
 
 ---
@@ -644,7 +644,7 @@ Controls the trade-off between reward maximization and policy entropy.
 |---------|--------------------------|--------|----------------|
 | 0.00 | 0 | Pure reward maximization | ~190/200 (PPO behavior) |
 | 0.05 | +0.034 | Weak entropy — slight regularization | ~192/200 |
-| **0.20** | **+0.134** | **Recommended default** | **~195/200 ✅** |
+| **0.20** | **+0.134** | **Recommended default** | **~195/200 ** |
 | 0.50 | +0.337 | Strong entropy — policy stays near-uniform | ~185/200 (too random) |
 | 2.00 | +1.347 | Entropy dominates — near-random policy | ~60/200 |
 
@@ -763,17 +763,17 @@ unchanged — only the gradient estimator changes.
 
 ## 11 · Progress Check
 
-> ⚡ **AgentAI — Mission Complete** ✅
+> **AgentAI — Mission Complete**
 
 ### Constraint Status — Final Chapter
 
 | # | Constraint | Target | Status |
 |---|-----------|--------|--------|
-| **#1** | **OPTIMALITY** | CartPole ≥195/200 | ✅ **SAC ~195, Rainbow ~198/200** |
-| **#2** | **EFFICIENCY** | Learn from limited experience | ✅ **Off-policy SAC + prioritized replay** |
-| **#3** | **SCALABILITY** | Handle continuous / high-dimensional actions | ✅ **SAC designed natively for continuous control** |
-| **#4** | **STABILITY** | No catastrophic forgetting | ✅ **Target networks + entropy regularization** |
-| **#5** | **GENERALIZATION** | Transfer across environment variations | ✅ **Stochastic entropy-regularized policies transfer better** |
+| **#1** | **OPTIMALITY** | CartPole ≥195/200 | **SAC ~195, Rainbow ~198/200** |
+| **#2** | **EFFICIENCY** | Learn from limited experience | **Off-policy SAC + prioritized replay** |
+| **#3** | **SCALABILITY** | Handle continuous / high-dimensional actions | **SAC designed natively for continuous control** |
+| **#4** | **STABILITY** | No catastrophic forgetting | **Target networks + entropy regularization** |
+| **#5** | **GENERALIZATION** | Transfer across environment variations | **Stochastic entropy-regularized policies transfer better** |
 
 ### CartPole Score Progression — Complete RL Track
 
@@ -783,8 +783,8 @@ unchanged — only the gradient estimator changes.
 | Ch.4 — DQN | Deep Q-network + experience replay | ~150 |
 | Ch.5 — REINFORCE | Vanilla policy gradient (Monte Carlo) | ~170 |
 | Ch.5 — PPO | Proximal Policy Optimization | ~190 |
-| **Ch.6 — SAC** | **Soft Actor-Critic — entropy bonus** | **~195 ✅** |
-| **Ch.6 — Rainbow** | **Rainbow DQN — 6 improvements** | **~198 🎯** |
+| **Ch.6 — SAC** | **Soft Actor-Critic — entropy bonus** | **~195 ** |
+| **Ch.6 — Rainbow** | **Rainbow DQN — 6 improvements** | **~198 ** |
 
 **AgentAI target ≥195/200 — ACHIEVED.**
 
@@ -792,51 +792,51 @@ unchanged — only the gradient estimator changes.
 
 ```
 MDPs + Bellman (Ch.1)
-  └─ Dynamic Programming (Ch.2): exact solutions with known model
-       └─ Q-learning (Ch.3): model-free, tabular
-            └─ DQN (Ch.4): Q-learning + neural networks
-                 └─ Policy Gradients / PPO (Ch.5): direct policy optimization
-                       └─ Modern RL (Ch.6): entropy + combination + hindsight
-                              └─ AgentAI COMPLETE ✅  (CartPole ~198/200)
+ └─ Dynamic Programming (Ch.2): exact solutions with known model
+ └─ Q-learning (Ch.3): model-free, tabular
+ └─ DQN (Ch.4): Q-learning + neural networks
+ └─ Policy Gradients / PPO (Ch.5): direct policy optimization
+ └─ Modern RL (Ch.6): entropy + combination + hindsight
+ └─ AgentAI COMPLETE (CartPole ~198/200)
 ```
 
 ### Self-Check Questions
 
 1. Why does SAC's entropy bonus help specifically near CartPole's balance point but not in early
-   training?
+ training?
 
 2. Rainbow DQN combines 6 improvements. Which component addresses Q-value *overestimation*? Which
-   component improves *exploration*? Which addresses *credit assignment speed*?
+ component improves *exploration*? Which addresses *credit assignment speed*?
 
 3. HER relabels failed trajectories. What property must the environment have for HER to be
-   applicable?
+ applicable?
 
 4. For a 2-action policy $\pi = [0.7,\ 0.3]$: compute $\mathcal{H}(\pi)$ and the augmented reward
-   for $r = 1.0$, $\alpha = 0.2$.
+ for $r = 1.0$, $\alpha = 0.2$.
 
 5. In the soft Q-update (§4.3), the soft value $V_\text{soft}(s')$ is always boosted above standard
-   $\mathbb{E}[Q(s',a')]$ by the entropy terms. Why is the subtracted $\alpha\log\pi(a')$ term
-   always non-negative in its net contribution?
+ $\mathbb{E}[Q(s',a')]$ by the entropy terms. Why is the subtracted $\alpha\log\pi(a')$ term
+ always non-negative in its net contribution?
 
 **Answers:**
 
 1. Near the balance point, Q-value differences between actions are tiny (near-tie). The entropy bonus
-   pushes the policy toward uniform when both actions are nearly equally good — which is exactly the
-   critical region where PPO overcommits. In early training, Q-values are random noise; both actions
-   have similar Q-values anyway, so entropy makes little marginal difference.
+ pushes the policy toward uniform when both actions are nearly equally good — which is exactly the
+ critical region where PPO overcommits. In early training, Q-values are random noise; both actions
+ have similar Q-values anyway, so entropy makes little marginal difference.
 
 2. Double DQN → overestimation. NoisyNets → exploration. Multi-step returns → credit assignment
-   speed (propagates reward signal $n$ steps per update instead of 1).
+ speed (propagates reward signal $n$ steps per update instead of 1).
 
 3. The environment must be goal-conditioned: reward $r = f(s, a, g)$ depends explicitly on a goal $g$
-   that can be substituted with a different goal post-hoc.
+ that can be substituted with a different goal post-hoc.
 
 4. $\mathcal{H} = -(0.7\log 0.7 + 0.3\log 0.3) = -(0.7\times(-0.357) + 0.3\times(-1.204)) =
-   0.250 + 0.361 = 0.611$; $r_\text{aug} = 1.0 + 0.2\times 0.611 = 1.0 + 0.122 = 1.122$.
+ 0.250 + 0.361 = 0.611$; $r_\text{aug} = 1.0 + 0.2\times 0.611 = 1.0 + 0.122 = 1.122$.
 
 5. Since $\pi(a') \leq 1$, we have $\log\pi(a') \leq 0$. Therefore $-\alpha\log\pi(a') \geq 0$
-   always. The entropy correction adds a non-negative quantity to each Q-value before weighting —
-   $V_\text{soft}$ is always ≥ $\mathbb{E}_{a'}[Q(s',a')]$, the standard expected value.
+ always. The entropy correction adds a non-negative quantity to each Q-value before weighting —
+ $V_\text{soft}$ is always ≥ $\mathbb{E}_{a'}[Q(s',a')]$, the standard expected value.
 
 ---
 
@@ -847,7 +847,7 @@ The RL track is complete. You have built every major component of the modern RL 
 - **Tabular foundations** (Ch.1–Ch.3): MDPs, Bellman equations, Q-learning
 - **Neural scaling** (Ch.4): DQN, experience replay, target networks
 - **Policy optimization** (Ch.5): REINFORCE, actor-critic, PPO (~190/200)
-- **Modern techniques** (Ch.6): SAC entropy, Rainbow, HER — AgentAI ≥195 ✅
+- **Modern techniques** (Ch.6): SAC entropy, Rainbow, HER — AgentAI ≥195
 
 **What comes next:** The **07_unsupervised_learning** track introduces a fundamentally different
 paradigm. In RL you have rewards — explicit signals defining what is good. In unsupervised learning
@@ -864,6 +864,6 @@ Customers dataset (440 records, 6 spending feature columns). The goal: discover 
 segments with silhouette score > 0.5. No rewards. No labels. Just the data — and structure waiting
 to be found.
 
-> ➡️ [07_unsupervised_learning →](../../07_unsupervised_learning)
+> ➡ [07_unsupervised_learning →](../../07_unsupervised_learning)
 
 

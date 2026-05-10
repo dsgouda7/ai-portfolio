@@ -16,7 +16,7 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Launch **FaceAI** — >90% average accuracy across all 40 facial binary attributes on CelebA (202k faces), replacing manual tagging at $0.05/image × 200k = $10k one-time cost.
+> **The mission**: Launch **FaceAI** — >90% average accuracy across all 40 facial binary attributes on CelebA (202k faces), replacing manual tagging at $0.05/image × 200k = $10k one-time cost.
 >
 > **5 Constraints:**
 > 1. **ACCURACY**: >90% avg accuracy across 40 attributes; ≥90% recall on rare attrs like Eyeglasses
@@ -26,10 +26,10 @@
 > 5. **PRODUCTION**: <200ms inference; sklearn-compatible pipeline
 
 **What we know so far:**
-- ✅ **Ch.1**: Logistic regression baseline — **88% accuracy on Smiling** (decent start, but only 1 of 40 attributes)
-- ✅ **Ch.2**: Random Forest — **91% average accuracy** across 40 attributes (multi-label unlocked)
-- ✅ **Ch.3**: Proper evaluation — precision-recall curves revealed RF's Eyeglasses recall = **85%** (unacceptable; a 5% positive rate means "always predict No" scores 95% accuracy — naive accuracy hides the recall gap)
-- ❌ **But 85% recall on Eyeglasses is not enough.** The product team needs ≥90%.
+- **Ch.1**: Logistic regression baseline — **88% accuracy on Smiling** (decent start, but only 1 of 40 attributes)
+- **Ch.2**: Random Forest — **91% average accuracy** across 40 attributes (multi-label unlocked)
+- **Ch.3**: Proper evaluation — precision-recall curves revealed RF's Eyeglasses recall = **85%** (unacceptable; a 5% positive rate means "always predict No" scores 95% accuracy — naive accuracy hides the recall gap)
+- **But 85% recall on Eyeglasses is not enough.** The product team needs ≥90%.
 
 **What's blocking us:**
 
@@ -52,12 +52,12 @@ Both classify the training set perfectly. But the wider the margin, the more a n
 
 ```mermaid
 graph LR
-    A["Ch.1: LogReg 88%\nSmiling"] --> B["Ch.2: RF 91% avg\nEyeglasses: 85% recall"]
-    B --> C["Ch.3: metrics\nexposed recall gap"]
-    C --> D["Ch.4: SVM\n90% recall ✅"]
-    D --> E["Ch.5: Tuning"]
-    style D fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style C fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ A["Ch.1: LogReg 88%\nSmiling"] --> B["Ch.2: RF 91% avg\nEyeglasses: 85% recall"]
+ B --> C["Ch.3: metrics\nexposed recall gap"]
+ C --> D["Ch.4: SVM\n90% recall "]
+ D --> E["Ch.5: Tuning"]
+ style D fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style C fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -91,10 +91,10 @@ You are the FaceAI engineer. Random Forest sits at 91% average accuracy but your
 
 **Your dataset slice:**
 ```
-Training:  5,000 CelebA face images (80/20 split, stratified by Eyeglasses label)
-Features:  1,764-dim HOG vector per image (9×9 orientation bins × 8×8 spatial cells)
-Balance:   250 Eyeglasses (+1), 4,750 No-Eyeglasses (−1) in the training set
-RF result: accuracy = 94.2%,  recall = 85%
+Training: 5,000 CelebA face images (80/20 split, stratified by Eyeglasses label)
+Features: 1,764-dim HOG vector per image (9×9 orientation bins × 8×8 spatial cells)
+Balance: 250 Eyeglasses (+1), 4,750 No-Eyeglasses (−1) in the training set
+RF result: accuracy = 94.2%, recall = 85%
 ```
 
 You test three configurations side-by-side:
@@ -103,7 +103,7 @@ You test three configurations side-by-side:
 |-------|--------|-----------------|
 | **RF baseline** | `RandomForestClassifier(class_weight='balanced')` | 85% recall (reference) |
 | **Linear SVM** | `SVC(kernel='linear', C=1.0, class_weight='balanced')` | ~87% recall |
-| **RBF SVM** | `SVC(kernel='rbf', C=10, gamma=0.01, class_weight='balanced')` | ~90% recall ✅ |
+| **RBF SVM** | `SVC(kernel='rbf', C=10, gamma=0.01, class_weight='balanced')` | ~90% recall |
 
 Hard vs soft margin matters here because CelebA has real annotation noise — a hard-margin SVM would fail immediately on this data. The soft margin's $C$ parameter controls how much you penalise that noise.
 
@@ -130,8 +130,8 @@ print(f"RF recall: {recall_score(y_test, rf.predict(X_test)):.2%}")
 
 # Linear SVM
 linear_svm = make_pipeline(
-    StandardScaler(),
-    SVC(kernel='linear', C=1.0, class_weight='balanced', random_state=42)
+ StandardScaler(),
+ SVC(kernel='linear', C=1.0, class_weight='balanced', random_state=42)
 )
 linear_svm.fit(X_train, y_train)
 print(f"Linear SVM recall: {recall_score(y_test, linear_svm.predict(X_test)):.2%}")
@@ -139,15 +139,15 @@ print(f"Linear SVM recall: {recall_score(y_test, linear_svm.predict(X_test)):.2%
 
 # RBF SVM
 rbf_svm = make_pipeline(
-    StandardScaler(),
-    SVC(kernel='rbf', C=10, gamma=0.01, class_weight='balanced', random_state=42)
+ StandardScaler(),
+ SVC(kernel='rbf', C=10, gamma=0.01, class_weight='balanced', random_state=42)
 )
 rbf_svm.fit(X_train, y_train)
 print(f"RBF SVM recall: {recall_score(y_test, rbf_svm.predict(X_test)):.2%}")
 # → RBF SVM recall: 90.00%
 
 print(classification_report(y_test, rbf_svm.predict(X_test),
-                            target_names=['No-Eyeglasses','Eyeglasses']))
+ target_names=['No-Eyeglasses','Eyeglasses']))
 ```
 
 ---
@@ -158,29 +158,29 @@ Before the math, here is the complete SVM pipeline. Numbered steps correspond to
 
 ```
 STEP 1. Prepare features
-         X_scaled = StandardScaler.fit_transform(X_train)
-         ← Critical: RBF kernel uses distances; unscaled features distort them
+ X_scaled = StandardScaler.fit_transform(X_train)
+ ← Critical: RBF kernel uses distances; unscaled features distort them
 
 STEP 2. Choose kernel K(·,·) and hyperparameters C, γ
 
 STEP 3. Conceptual primal (what we want to minimise):
-         min   ½‖w‖² + C · Σᵢ ξᵢ
-         w,b,ξ
-         s.t.  yᵢ(w·xᵢ + b) ≥ 1 − ξᵢ,   ξᵢ ≥ 0   ∀i
+ min ½‖w‖² + C · Σᵢ ξᵢ
+ w,b,ξ
+ s.t. yᵢ(w·xᵢ + b) ≥ 1 − ξᵢ, ξᵢ ≥ 0 ∀i
 
 STEP 4. Dual form (what sklearn actually solves — works with kernels):
-         max   Σᵢ αᵢ − ½ ΣᵢΣⱼ αᵢαⱼ yᵢyⱼ K(xᵢ, xⱼ)
-          α
-         s.t.  0 ≤ αᵢ ≤ C,   Σᵢ αᵢyᵢ = 0
+ max Σᵢ αᵢ − ½ ΣᵢΣⱼ αᵢαⱼ yᵢyⱼ K(xᵢ, xⱼ)
+ α
+ s.t. 0 ≤ αᵢ ≤ C, Σᵢ αᵢyᵢ = 0
 
 STEP 5. Apply KKT conditions → identify support vectors (αᵢ > 0)
-         Recover b from any support vector: b = yₛ − Σᵢ αᵢyᵢ K(xᵢ, xₛ)
+ Recover b from any support vector: b = yₛ − Σᵢ αᵢyᵢ K(xᵢ, xₛ)
 
 STEP 6. Store: support vectors, their αᵢ values, and b
 
 PREDICTION for new face x_new:
-         f(x_new) = Σᵢ∈SV αᵢ yᵢ K(xᵢ, x_new) + b
-         ŷ = sign(f(x_new)) → {+1: Eyeglasses, −1: No-Eyeglasses}
+ f(x_new) = Σᵢ∈SV αᵢ yᵢ K(xᵢ, x_new) + b
+ ŷ = sign(f(x_new)) → {+1: Eyeglasses, −1: No-Eyeglasses}
 ```
 
 **Why the dual?** The primal has $d = 1764$ variables (one per HOG feature). The dual has $n = 5000$ variables (one per training sample). For high-dimensional data where $d \gg n$, the dual is cheaper. More critically, the dual only ever needs dot products $K(\mathbf{x}_i, \mathbf{x}_j)$ — the $\phi(\mathbf{x})$ vectors themselves are never computed.
@@ -200,11 +200,11 @@ scaler = StandardScaler().fit(X_train)
 X_scaled = scaler.transform(X_train)
 print(f"Feature means (first 5): {X_scaled.mean(axis=0)[:5].round(6)}")
 # → [0.000000, 0.000000, 0.000000, 0.000000, 0.000000]
-print(f"Feature stds  (first 5): {X_scaled.std(axis=0)[:5].round(6)}")
+print(f"Feature stds (first 5): {X_scaled.std(axis=0)[:5].round(6)}")
 # → [1.000000, 1.000000, 1.000000, 1.000000, 1.000000]
 ```
 
-> ⚡ **Constraint #5 note:** The dual prediction sums over support vectors only (~1,000 of 5,000 faces). Predicting one new face requires 1,000 kernel evaluations, each $O(1764)$. Total: ~1.8M multiplications per prediction — well under the 200ms budget.
+> **Constraint #5 note:** The dual prediction sums over support vectors only (~1,000 of 5,000 faces). Predicting one new face requires 1,000 kernel evaluations, each $O(1764)$. Total: ~1.8M multiplications per prediction — well under the 200ms budget.
 
 ---
 
@@ -278,12 +278,12 @@ $$\|\mathbf{w}\| = 1.0 \qquad \text{margin} = \frac{2}{1} = \mathbf{2.0 \text{ u
 
 ```
 x₂
- 2 |  A●(1,2)  B●(2,2)        ← positive margin plane  (w·x+b = +1)
-   |  ─ ─ ─ ─ ─ ─ ─ ─         margin = 2.0
- 1 |   ·   ·   ·   ·           ← decision boundary      (w·x+b =  0)
-   |  ─ ─ ─ ─ ─ ─ ─ ─
- 0 |  C●(1,0)  D●(2,0)        ← negative margin plane  (w·x+b = −1)
-   +--------------------> x₁
+ 2 | A●(1,2) B●(2,2) ← positive margin plane (w·x+b = +1)
+ | ─ ─ ─ ─ ─ ─ ─ ─ margin = 2.0
+ 1 | · · · · ← decision boundary (w·x+b = 0)
+ | ─ ─ ─ ─ ─ ─ ─ ─
+ 0 | C●(1,0) D●(2,0) ← negative margin plane (w·x+b = −1)
+ +--------------------> x₁
 ```
 
 ---
@@ -336,7 +336,7 @@ $$K(\mathbf{x}_i, \mathbf{x}_j) = \phi(\mathbf{x}_i) \cdot \phi(\mathbf{x}_j)$$
 |--------|---------|----------------------|-------------------|--------------|
 | Linear | $\mathbf{x}_i \cdot \mathbf{x}_j$ | $\mathbb{R}^{1764}$ (original) | 87% | Baseline; fast; good when $n \ll d$ |
 | Polynomial (deg 2) | $(\mathbf{x}_i \cdot \mathbf{x}_j + 1)^2$ | $\mathbb{R}^{\sim 1.55M}$ (all pairs) | 88% | When pairwise interactions matter |
-| RBF | $\exp(-\gamma\|\mathbf{x}_i-\mathbf{x}_j\|^2)$ | $\mathbb{R}^{\infty}$ | **90% ✅** | Default for image features; most flexible |
+| RBF | $\exp(-\gamma\|\mathbf{x}_i-\mathbf{x}_j\|^2)$ | $\mathbb{R}^{\infty}$ | **90% ** | Default for image features; most flexible |
 
 ---
 
@@ -361,10 +361,10 @@ $$\mathbf{K} = \begin{pmatrix} 1.000 & 0.368 & 0.007 \\ 0.368 & 1.000 & 0.018 \\
 - $K_{13} = 0.007$: P1 (Eyeglasses) and P3 (No-Eyeglasses) far apart — near-zero
 
 ```
-      P1(+)  P2(+)  P3(−)
-P1(+) 1.000  0.368  0.007   ← P1 similar to P2, unrelated to P3
-P2(+) 0.368  1.000  0.018
-P3(−) 0.007  0.018  1.000   ← P3 isolated from the +1 cluster
+ P1(+) P2(+) P3(−)
+P1(+) 1.000 0.368 0.007 ← P1 similar to P2, unrelated to P3
+P2(+) 0.368 1.000 0.018
+P3(−) 0.007 0.018 1.000 ← P3 isolated from the +1 cluster
 ```
 
 **$\gamma$ dial:** small $\gamma$ → smooth near-linear boundary; large $\gamma$ → spiky per-point islands → overfit.
@@ -391,11 +391,11 @@ $f > 0$ → **Eyeglasses** ✓. SV3 (No-Eyeglasses, far away) contributes near-z
 
 ### Act 1: Linear Kernel Fails on Non-Linear Data
 
-`SVC(kernel='linear', C=1, class_weight='balanced')` → test accuracy **94.3%**, recall **87%** ❌ (vs 90% target).
+`SVC(kernel='linear', C=1, class_weight='balanced')` → test accuracy **94.3%**, recall **87%** (vs 90% target).
 
 Better than RF (85% recall), but still 3 points short. The Eyeglasses cluster in PCA projection wraps non-linearly around the No-Eyeglasses cluster. No hyperplane cleanly contains it.
 
-**Concrete failure:** A test image with thick black frames and side glare (HOG signature similar to "No Eyeglasses + strong vertical edges") sits on the wrong side of the linear boundary. The model predicts No-Eyeglasses ❌; ground truth is Eyeglasses ✓. Linear boundaries cannot curve around this case.
+**Concrete failure:** A test image with thick black frames and side glare (HOG signature similar to "No Eyeglasses + strong vertical edges") sits on the wrong side of the linear boundary. The model predicts No-Eyeglasses ; ground truth is Eyeglasses ✓. Linear boundaries cannot curve around this case.
 
 **Lesson:** Linear SVM = logistic regression with max-margin flavour. Non-linearity requires a different weapon.
 
@@ -403,7 +403,7 @@ Better than RF (85% recall), but still 3 points short. The Eyeglasses cluster in
 
 $K(\mathbf{x}_i, \mathbf{x}_j) = (\mathbf{x}_i \cdot \mathbf{x}_j + r)^p$. With $p=2, r=1$: appends all pairwise products ($\approx 1.55M$ implicit features).
 
-`SVC(kernel='poly', degree=2, C=10, class_weight='balanced')` → test accuracy **94.6%**, recall **88%** ⚠️ (still 2 points short).
+`SVC(kernel='poly', degree=2, C=10, class_weight='balanced')` → test accuracy **94.6%**, recall **88%** (still 2 points short).
 
 Better, but the global quadratic boundary doesn't adapt well to a 5%-rate attribute's local cluster geometry. The thick-frame case from Act 1 is now classified correctly, but thin wire-frame cases near the cluster edge still fall through.
 
@@ -411,7 +411,7 @@ Better, but the global quadratic boundary doesn't adapt well to a 5%-rate attrib
 
 Taylor expansion of $\exp$: $\exp(-\gamma\|\mathbf{x}-\mathbf{x}'\|^2) = \sum_{k=0}^{\infty} \frac{(-\gamma)^k}{k!}\|\mathbf{x}-\mathbf{x}'\|^{2k}$ — a mixture of *all polynomial degrees*. Models any continuous boundary.
 
-`SVC(kernel='rbf', C=10, gamma=0.01, class_weight='balanced')` → test accuracy **94.8%**, recall **90%** ✅ (target achieved).
+`SVC(kernel='rbf', C=10, gamma=0.01, class_weight='balanced')` → test accuracy **94.8%**, recall **90%** (target achieved).
 
 The RBF boundary curves smoothly around both thick-frame and wire-frame cases. The 5-point recall gap from RF (85%) is closed.
 
@@ -434,12 +434,12 @@ Sweet spot: $C=10$, $\gamma=0.01$ for normalised HOG on Eyeglasses.
 **Visualising the C vs γ surface.** If you run the grid search from §8 and plot the 5-fold CV recall for each $(C, \gamma)$ cell, you see a characteristic ridge-shaped surface:
 
 ```
-gamma →   0.001   0.01    0.1     1.0
-         ─────────────────────────────
-C=0.1  │  80%     82%    78%    65%
-C=1    │  83%     86%    84%    70%
-C=10   │  87%    [90%]   88%    72%   ← peak cell
-C=100  │  87%     89%    88%    75%
+gamma → 0.001 0.01 0.1 1.0
+ ─────────────────────────────
+C=0.1 │ 80% 82% 78% 65%
+C=1 │ 83% 86% 84% 70%
+C=10 │ 87% [90%] 88% 72% ← peak cell
+C=100 │ 87% 89% 88% 75%
 
 [90%] = best cell; the ridge runs diagonally (large C + large γ = overfit collapse)
 ```
@@ -498,18 +498,18 @@ $$\text{margin} = \frac{2}{\|\mathbf{w}\|} = \frac{2}{0.943} \approx \mathbf{2.1
 
 ```
 x₂
- 1 |  SV1●(1,1) y=+1                 ← positive margin plane  x₁+x₂=1.5
-   |       ╲
-   |        ╲ boundary x₁+x₂=0.5
- 0 |  SV2●(0,-1)y=-1     SV3●(2,0)y=+1
-   |
-   +─────────────────────────────────> x₁
-       0         1         2
+ 1 | SV1●(1,1) y=+1 ← positive margin plane x₁+x₂=1.5
+ | ╲
+ | ╲ boundary x₁+x₂=0.5
+ 0 | SV2●(0,-1)y=-1 SV3●(2,0)y=+1
+ |
+ +─────────────────────────────────> x₁
+ 0 1 2
 
-Decision boundary: ⅔x₁ + ⅔x₂ − ⅓ = 0  →  x₁+x₂ = 0.5
-Positive margin:   x₁+x₂ = 1.5  (passes through SV1 and SV3)
-Negative margin:   x₁+x₂ = −0.5 (passes through SV2)
-Margin width:      2/‖w‖ = 2/(⅔√2) ≈ 2.121 ✓
+Decision boundary: ⅔x₁ + ⅔x₂ − ⅓ = 0 → x₁+x₂ = 0.5
+Positive margin: x₁+x₂ = 1.5 (passes through SV1 and SV3)
+Negative margin: x₁+x₂ = −0.5 (passes through SV2)
+Margin width: 2/‖w‖ = 2/(⅔√2) ≈ 2.121 ✓
 ```
 
 ---
@@ -520,23 +520,23 @@ Margin width:      2/‖w‖ = 2/(⅔√2) ≈ 2.121 ✓
 
 ```mermaid
 flowchart TD
-    SCALE["① Scale features\nStandardScaler\n(mean=0, std=1)"]
-    KERNEL["② Choose kernel K(·,·)\nlinear / poly / RBF"]
-    PRIMAL["③ Primal\nmin ½‖w‖² + C·Σξᵢ\ns.t. yᵢ(w·xᵢ+b) ≥ 1−ξᵢ"]
-    DUAL["④ Dual\nmax Σαᵢ − ½ΣᵢΣⱼ αᵢαⱼyᵢyⱼK(xᵢ,xⱼ)\ns.t. 0 ≤ αᵢ ≤ C, Σαᵢyᵢ=0"]
-    KKT["⑤ KKT conditions\nidentify support vectors αᵢ > 0\nrecover b from any SV"]
-    STORE["⑥ Store\nSV set, {αᵢ}, b"]
-    PRED["⑦ Predict\nf(x) = Σ αᵢyᵢK(xᵢ,x) + b\nŷ = sign(f)"]
+ SCALE["① Scale features\nStandardScaler\n(mean=0, std=1)"]
+ KERNEL["② Choose kernel K(·,·)\nlinear / poly / RBF"]
+ PRIMAL["③ Primal\nmin ½‖w‖² + C·Σξᵢ\ns.t. yᵢ(w·xᵢ+b) ≥ 1−ξᵢ"]
+ DUAL["④ Dual\nmax Σαᵢ − ½ΣᵢΣⱼ αᵢαⱼyᵢyⱼK(xᵢ,xⱼ)\ns.t. 0 ≤ αᵢ ≤ C, Σαᵢyᵢ=0"]
+ KKT["⑤ KKT conditions\nidentify support vectors αᵢ > 0\nrecover b from any SV"]
+ STORE["⑥ Store\nSV set, {αᵢ}, b"]
+ PRED["⑦ Predict\nf(x) = Σ αᵢyᵢK(xᵢ,x) + b\nŷ = sign(f)"]
 
-    SCALE --> KERNEL --> PRIMAL --> DUAL --> KKT --> STORE --> PRED
+ SCALE --> KERNEL --> PRIMAL --> DUAL --> KKT --> STORE --> PRED
 
-    style SCALE  fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style KERNEL fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style PRIMAL fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style DUAL   fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style KKT    fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style STORE  fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style PRED   fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style SCALE fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style KERNEL fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style PRIMAL fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style DUAL fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style KKT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style STORE fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style PRED fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -545,17 +545,17 @@ flowchart TD
 
 ```mermaid
 quadrantChart
-    title C vs γ — Overfit / Underfit Quadrants (RBF SVM)
-    x-axis Low γ (smooth kernel) --> High γ (spiky kernel)
-    y-axis Low C (wide margin) --> High C (narrow margin)
-    quadrant-1 Overfit — spiky + rigid
-    quadrant-2 Narrow + smooth (often good)
-    quadrant-3 Underfit — wide + flat
-    quadrant-4 Flat + narrow (unstable)
-    Sweet spot C=10 γ=0.01: [0.28, 0.62]
-    RF baseline: [0.25, 0.25]
-    Too rigid C=1000 γ=1: [0.82, 0.90]
-    Too flat C=0.01 γ=0.001: [0.10, 0.12]
+ title C vs γ — Overfit / Underfit Quadrants (RBF SVM)
+ x-axis Low γ (smooth kernel) --> High γ (spiky kernel)
+ y-axis Low C (wide margin) --> High C (narrow margin)
+ quadrant-1 Overfit — spiky + rigid
+ quadrant-2 Narrow + smooth (often good)
+ quadrant-3 Underfit — wide + flat
+ quadrant-4 Flat + narrow (unstable)
+ Sweet spot C=10 γ=0.01: [0.28, 0.62]
+ RF baseline: [0.25, 0.25]
+ Too rigid C=1000 γ=1: [0.82, 0.90]
+ Too flat C=0.01 γ=0.001: [0.10, 0.12]
 ```
 
 > **Reading the quadrant chart.** The top-right quadrant ($C$ high AND $\gamma$ high) is the danger zone: the model memorises individual training points with tight, spiky boundaries. The bottom-left is the opposite failure: boundaries so smooth and wide that both classes blur together. The sweet spot for Eyeglasses ($C=10$, $\gamma=0.01$) sits in the upper-left quadrant — narrow enough to find the positive cluster but smooth enough to generalise across new glasses styles and lighting conditions.
@@ -571,7 +571,7 @@ quadrantChart
 | $C$ value | Margin width | Training errors | Validation behaviour | FaceAI analogy |
 |-----------|-------------|-----------------|---------------------|----------------|
 | Very large (1000) | Very narrow | Near zero | Overfit — boundary hugs noise | Memorises every known glasses style; fails on new frames |
-| Large (10) | Narrow | Few | Good generalisation for this task | **Sweet spot** for Eyeglasses ✅ |
+| Large (10) | Narrow | Few | Good generalisation for this task | **Sweet spot** for Eyeglasses |
 | Medium (1) | Moderate | Some | Reasonable; often underfits rare classes | Misses the tight +1 cluster |
 | Small (0.01) | Very wide | Many | Underfit — boundary is near-linear | Reverts to near-logistic behaviour |
 
@@ -581,7 +581,7 @@ quadrantChart
 |---------------|--------------|---------------|---------------------|----------------|
 | Very large (1.0) | Tiny (local) | Spiky islands per point | Extreme overfit | One SV = one specific face photo |
 | Large (0.1) | Small | Complex, wiggly | Tends to overfit | Fits training annotation noise |
-| Medium (0.01) | Moderate | Smooth curves | **Sweet spot** for Eyeglasses ✅ | Captures frame-region gradient patterns broadly |
+| Medium (0.01) | Moderate | Smooth curves | **Sweet spot** for Eyeglasses | Captures frame-region gradient patterns broadly |
 | Small (0.001) | Global | Near-linear | Underfit | All HOG vectors look the same |
 
 ### Failure Modes Table
@@ -594,7 +594,7 @@ quadrantChart
 | Recall 95% but precision 20% | `class_weight='balanced'` over-compensates | Check precision-recall curve | Reduce positive class weight manually; or adjust threshold on `decision_function` |
 | Predictions all one class | Feature scaling omitted | Check `X_train.std(axis=0)` — if range >> 1 unscaled | Add `StandardScaler` in pipeline before `SVC` |
 
-> ⚠️ **Always tune $C$ and $\gamma$ jointly** — they interact. A grid search that sweeps them independently (one-at-a-time) misses the diagonal sweet-spot ridge. See Ch.5 for `GridSearchCV` with a 2D `param_grid`.
+> **Always tune $C$ and $\gamma$ jointly** — they interact. A grid search that sweeps them independently (one-at-a-time) misses the diagonal sweet-spot ridge. See Ch.5 for `GridSearchCV` with a 2D `param_grid`.
 
 ### ASCII Hyperparameter Dials
 
@@ -602,26 +602,26 @@ quadrantChart
 C dial (soft-margin penalty)
 ──────────────────────────────────────────────────────────────
  UNDERFIT ◄──────────────────────────────────► OVERFIT
-  0.001      0.01      0.1    [1]    10   100   1000
-  |          |          |      |      |    |     |
- Wide        Wide      Mod    Std   Narrow N    Very narrow
- margin,    margin,   margin  →     margin      margin
- many err   some err         SVM    few err     ~0 err
-                             soft              (overfits noise)
-                           START HERE
-                           for Eyeglasses
-                           try C=10 → 90% recall ✅
+ 0.001 0.01 0.1 [1] 10 100 1000
+ | | | | | | |
+ Wide Wide Mod Std Narrow N Very narrow
+ margin, margin, margin → margin margin
+ many err some err SVM few err ~0 err
+ soft (overfits noise)
+ START HERE
+ for Eyeglasses
+ try C=10 → 90% recall
 
 γ dial (RBF kernel width)
 ──────────────────────────────────────────────────────────────
  UNDERFIT ◄──────────────────────────────────► OVERFIT
-  0.0001   0.001   [0.01]   0.1    1.0    10
-  |         |        |        |      |      |
- Global    Global  Moderate  Local  Tiny   Per-point
- smooth    smooth  curves    wiggly islands islands
- (linear-  (linear  START     fits   overfit memorise
-  like)     ish)   HERE      train          each face
-                   try γ=0.01 → 90% recall ✅
+ 0.0001 0.001 [0.01] 0.1 1.0 10
+ | | | | | |
+ Global Global Moderate Local Tiny Per-point
+ smooth smooth curves wiggly islands islands
+ (linear- (linear START fits overfit memorise
+ like) ish) HERE train each face
+ try γ=0.01 → 90% recall
 ```
 
 ### Minimal grid search — verifiable in the notebook
@@ -633,14 +633,14 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 
 param_grid = {
-    "svc__C":     [0.1, 1, 10, 100],
-    "svc__gamma": [0.001, 0.01, 0.1, 1.0],
+ "svc__C": [0.1, 1, 10, 100],
+ "svc__gamma": [0.001, 0.01, 0.1, 1.0],
 }
 pipe = make_pipeline(StandardScaler(), SVC(kernel="rbf", class_weight="balanced"))
-cv   = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 
 search = GridSearchCV(pipe, param_grid, scoring="recall",
-                      cv=cv, n_jobs=-1, verbose=1)
+ cv=cv, n_jobs=-1, verbose=1)
 search.fit(X_train, y_train)
 
 print(f"Best params : {search.best_params_}")
@@ -691,31 +691,31 @@ The ideas from this chapter recur throughout the curriculum:
 
 | # | Constraint | Before Ch.4 | After Ch.4 | Status |
 |---|-----------|------------|-----------|--------|
-| 1 | **ACCURACY** — >90% avg accuracy; ≥90% Eyeglasses recall | RF: 91% avg, **85% recall** | RBF SVM: 91% avg, **90% recall** | ✅ Recall target met |
-| 2 | **GENERALIZATION** — held-out celebrities | RF generalised; SVM inherits margin guarantee | Max-margin boundary: wider margin → better unseen-face generalisation | ✅ Improved |
-| 3 | **MULTI-LABEL** — all 40 attributes in <200ms | RF: 40 binary classifiers ✓ | SVM pipeline per-attribute; 40 models, prediction sums over ~1k SVs | ✅ Within budget |
-| 4 | **INTERPRETABILITY** — explain which HOG regions drove the prediction | RF: feature importance histogram | SVM: $\mathbf{w} = \sum \alpha_i y_i \mathbf{x}_i$ — support vector weights in HOG space; overlay on face grid | ✅ Explainable |
-| 5 | **PRODUCTION** — <200ms inference; sklearn-compatible | RF in pipeline ✓ | SVM: `make_pipeline(StandardScaler(), SVC(...))` — same interface | ✅ Production-ready |
+| 1 | **ACCURACY** — >90% avg accuracy; ≥90% Eyeglasses recall | RF: 91% avg, **85% recall** | RBF SVM: 91% avg, **90% recall** | Recall target met |
+| 2 | **GENERALIZATION** — held-out celebrities | RF generalised; SVM inherits margin guarantee | Max-margin boundary: wider margin → better unseen-face generalisation | Improved |
+| 3 | **MULTI-LABEL** — all 40 attributes in <200ms | RF: 40 binary classifiers ✓ | SVM pipeline per-attribute; 40 models, prediction sums over ~1k SVs | Within budget |
+| 4 | **INTERPRETABILITY** — explain which HOG regions drove the prediction | RF: feature importance histogram | SVM: $\mathbf{w} = \sum \alpha_i y_i \mathbf{x}_i$ — support vector weights in HOG space; overlay on face grid | Explainable |
+| 5 | **PRODUCTION** — <200ms inference; sklearn-compatible | RF in pipeline ✓ | SVM: `make_pipeline(StandardScaler(), SVC(...))` — same interface | Production-ready |
 
 **Key numbers:**
-- Eyeglasses recall: **85% (RF) → 87% (linear SVM) → 90% (RBF SVM)** ✅
+- Eyeglasses recall: **85% (RF) → 87% (linear SVM) → 90% (RBF SVM)**
 - Average accuracy across 40 attributes: **91% → 91%** (maintained while fixing recall)
 - Number of support vectors for Eyeglasses attribute: ~950 of 5,000 training faces
-- Inference latency per face (40 attributes): ~140ms on a single CPU core ✅
+- Inference latency per face (40 attributes): ~140ms on a single CPU core
 
-> ⚡ **Constraint #1 is now fully satisfied.** The FaceAI system has ≥90% recall on the hardest rare-class attribute (Eyeglasses, 5% positive rate). The maximum-margin principle and the RBF kernel together closed the 5-point recall gap that Random Forest could not.
+> **Constraint #1 is now fully satisfied.** The FaceAI system has ≥90% recall on the hardest rare-class attribute (Eyeglasses, 5% positive rate). The maximum-margin principle and the RBF kernel together closed the 5-point recall gap that Random Forest could not.
 
 ```mermaid
 graph LR
-    A["Ch.1: LogReg 88%\nSmiling baseline"] --> B["Ch.2: RF 91% avg\nEyeglasses: 85% recall"]
-    B --> C["Ch.3: P-R curves\nexposed recall gap"]
-    C --> D["Ch.4: RBF SVM\n90% recall ✅"]
-    D --> E["Ch.5: GridSearchCV\ntune C, γ jointly"]
-    style A fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style B fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style C fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style D fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style E fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ A["Ch.1: LogReg 88%\nSmiling baseline"] --> B["Ch.2: RF 91% avg\nEyeglasses: 85% recall"]
+ B --> C["Ch.3: P-R curves\nexposed recall gap"]
+ C --> D["Ch.4: RBF SVM\n90% recall "]
+ D --> E["Ch.5: GridSearchCV\ntune C, γ jointly"]
+ style A fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style B fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style C fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style D fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style E fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -742,7 +742,7 @@ You just set $C=10$ and $\gamma=0.01$ by hand based on a hint from the chapter. 
 
 Two extra recall points from systematic tuning. The manual $C=10$, $\gamma=0.01$ was close — but not optimal. Ch.5 finds the true peak of the recall ridge.
 
-> ➡️ **Next chapter**: [Ch.5 — Hyperparameter Tuning](../ch05_hyperparameter_tuning/README.md)
+> ➡ **Next chapter**: [Ch.5 — Hyperparameter Tuning](../ch05_hyperparameter_tuning/README.md)
 
 $$\|\mathbf{w}\| = \sqrt{2 \cdot \left(\tfrac{2}{3}\right)^2} = \frac{2\sqrt{2}}{3} \qquad \text{margin} = \frac{2}{2\sqrt{2}/3} = \frac{3\sqrt{2}}{2} \approx \mathbf{2.121}$$
 
@@ -768,8 +768,8 @@ The 3-support-vector example above is a 2D toy. But the same KKT machinery runs 
 **What `svm.support_vectors_` contains.** sklearn stores these automatically:
 ```python
 fitted_svm = pipe.named_steps['svc']
-print(f"Support vectors: {len(fitted_svm.support_vectors_)}")   # ~900
-print(f"Dual coeff shape: {fitted_svm.dual_coef_.shape}")         # (1, ~900)
+print(f"Support vectors: {len(fitted_svm.support_vectors_)}") # ~900
+print(f"Dual coeff shape: {fitted_svm.dual_coef_.shape}") # (1, ~900)
 ```
 
 **Why maximising margin raises recall for rare classes.** With 5% positive rate, the No-Eyeglasses cluster is 19× larger. A logistic regression or RF decision boundary gets pulled toward the dominant class by sheer sample weight. The SVM primal is blind to class counts — it only cares about the distances to the *nearest* support vectors on each side. This gives the tiny Eyeglasses cluster a fair shot at defining the boundary, which is exactly why max-margin classification helps recall on rare attributes.
@@ -790,23 +790,23 @@ This asymmetric margin is precisely what pushes recall from 85% to 90%: the solv
 
 ```mermaid
 graph TD
-    A["CelebA Face Image\n(raw pixels)"] --> B["HOG Feature Extraction\n1,764 dimensions\n9×9 bins × 8×8 cells"]
-    B --> C["StandardScaler\nμ=0, σ=1 per feature\nCritical: RBF uses distances!"]
-    C --> D{"Kernel Choice"}
-    D -->|"kernel='linear'"| E["Max-margin hyperplane\nin HOG space\nw·x + b = 0"]
-    D -->|"kernel='rbf'"| F["Kernel evaluation\nK(xᵢ,xⱼ) = exp(−γ‖xᵢ−xⱼ‖²)\nImplicit ∞-dim feature map"]
-    E --> G["Dual QP solver\nmax Σαᵢ − ½ΣᵢΣⱼαᵢαⱼyᵢyⱼK(·,·)\ns.t. 0≤αᵢ≤C, Σαᵢyᵢ=0"]
-    F --> G
-    G --> H["Support Vectors\nαᵢ > 0 → ~10–30%\nof training faces"]
-    H --> I["Decision function\nf(x) = Σᵢ∈SV αᵢyᵢK(xᵢ,x) + b"]
-    I --> J{"sign f(x)"}
-    J -->|"f > 0"| K["✅ Eyeglasses\n(recall = 90%)"]
-    J -->|"f < 0"| L["No Eyeglasses"]
+ A["CelebA Face Image\n(raw pixels)"] --> B["HOG Feature Extraction\n1,764 dimensions\n9×9 bins × 8×8 cells"]
+ B --> C["StandardScaler\nμ=0, σ=1 per feature\nCritical: RBF uses distances!"]
+ C --> D{"Kernel Choice"}
+ D -->|"kernel='linear'"| E["Max-margin hyperplane\nin HOG space\nw·x + b = 0"]
+ D -->|"kernel='rbf'"| F["Kernel evaluation\nK(xᵢ,xⱼ) = exp(−γ‖xᵢ−xⱼ‖²)\nImplicit ∞-dim feature map"]
+ E --> G["Dual QP solver\nmax Σαᵢ − ½ΣᵢΣⱼαᵢαⱼyᵢyⱼK(·,·)\ns.t. 0≤αᵢ≤C, Σαᵢyᵢ=0"]
+ F --> G
+ G --> H["Support Vectors\nαᵢ > 0 → ~10–30%\nof training faces"]
+ H --> I["Decision function\nf(x) = Σᵢ∈SV αᵢyᵢK(xᵢ,x) + b"]
+ I --> J{"sign f(x)"}
+ J -->|"f > 0"| K[" Eyeglasses\n(recall = 90%)"]
+ J -->|"f < 0"| L["No Eyeglasses"]
 
-    style K fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style H fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style G fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style L fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style K fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style H fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style G fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style L fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -815,13 +815,13 @@ graph TD
 
 ```mermaid
 graph LR
-    A["Linear Kernel\nkernel='linear'\nHyperplane in ℝ¹⁷⁶⁴\nRecall: 87%"] -->|"Add degree-2\ninteractions"| B
-    B["Polynomial Kernel\nkernel='poly', degree=2\n~1.55M implicit features\nRecall: 88%"] -->|"Infinite degrees\nvia Taylor expansion"| C
-    C["RBF Kernel\nkernel='rbf'\nInfinite-dim feature space\nRecall: 90% ✅"]
+ A["Linear Kernel\nkernel='linear'\nHyperplane in ℝ¹⁷⁶⁴\nRecall: 87%"] -->|"Add degree-2\ninteractions"| B
+ B["Polynomial Kernel\nkernel='poly', degree=2\n~1.55M implicit features\nRecall: 88%"] -->|"Infinite degrees\nvia Taylor expansion"| C
+ C["RBF Kernel\nkernel='rbf'\nInfinite-dim feature space\nRecall: 90% "]
 
-    style A fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style B fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style C fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style A fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style B fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style C fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -844,7 +844,7 @@ SVM has two interacting primary dials ($C$ and $\gamma$) plus kernel choice. Alw
 | 0.1 | 0.001 | Very smooth, near-linear | ~80% | Underfit: margin too wide |
 | 0.1 | 1.0 | Smooth with local bumps | ~84% | $C$ too lenient |
 | 10 | 0.001 | Smooth non-linear | ~87% | Slightly under-penalised |
-| **10** | **0.01** | **Flexible non-linear** | **90% ✅** | **Sweet spot** |
+| **10** | **0.01** | **Flexible non-linear** | **90% ** | **Sweet spot** |
 | 100 | 0.1 | Complex, irregular | ~89% | Slight overfit |
 | 100 | 1.0 | Extreme overfit | ~75% | Train=100%, test collapses |
 
@@ -857,12 +857,12 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 pipe = make_pipeline(
-    StandardScaler(),
-    SVC(kernel='rbf', class_weight='balanced', random_state=42)
+ StandardScaler(),
+ SVC(kernel='rbf', class_weight='balanced', random_state=42)
 )
 param_grid = {
-    'svc__C':     [0.1, 1, 10, 100],
-    'svc__gamma': [0.001, 0.01, 0.1, 1.0],
+ 'svc__C': [0.1, 1, 10, 100],
+ 'svc__gamma': [0.001, 0.01, 0.1, 1.0],
 }
 grid = GridSearchCV(pipe, param_grid, cv=5, scoring='recall', n_jobs=-1)
 grid.fit(X_train, y_eyeglasses_train)
@@ -870,11 +870,11 @@ print(grid.best_params_)
 # → {'svc__C': 10, 'svc__gamma': 0.01}
 ```
 
-> ⚠️ **Scoring matters.** Use `scoring='recall'` for Eyeglasses. The default `scoring='accuracy'` will favour the naive "always predict No" strategy (94% accuracy vs 90% recall).
+> **Scoring matters.** Use `scoring='recall'` for Eyeglasses. The default `scoring='accuracy'` will favour the naive "always predict No" strategy (94% accuracy vs 90% recall).
 
-> 💡 **Start coarse, then refine.** Sweep $C \in \{0.01, 0.1, 1, 10, 100\}$ and $\gamma \in \{0.0001, 0.001, 0.01, 0.1\}$ first, then run a finer 3×3 grid centred on the winner.
+> **Start coarse, then refine.** Sweep $C \in \{0.01, 0.1, 1, 10, 100\}$ and $\gamma \in \{0.0001, 0.001, 0.01, 0.1\}$ first, then run a finer 3×3 grid centred on the winner.
 
-> ⚡ **Ch.5 automates this.** The manual grid above takes 80 CV fits. Bayesian optimisation (Ch.5) reaches the same answer in ~20 fits using past evaluations to guide the next query.
+> **Ch.5 automates this.** The manual grid above takes 80 CV fits. Bayesian optimisation (Ch.5) reaches the same answer in ~20 fits using past evaluations to guide the next query.
 
 ---
 
@@ -906,15 +906,15 @@ Setting `SVC(probability=True)` enables `predict_proba()` via Platt scaling, whi
 ## 10 · Where This Reappears
 
 **Within this track:**
-- ➡️ **Ch.5 — Hyperparameter Tuning**: Grid search and cross-validation replace the manual $C, \gamma$ sweeps from §8. The SVM two-parameter interaction is the canonical example for why 2D joint search beats independent 1D sweeps.
-- ➡️ **Ch.9 — Metrics Deep-Dive** (Neural Networks track): Precision-recall trade-off for SVM — adjusting the decision threshold beyond `sign(f(x))`.
+- ➡ **Ch.5 — Hyperparameter Tuning**: Grid search and cross-validation replace the manual $C, \gamma$ sweeps from §8. The SVM two-parameter interaction is the canonical example for why 2D joint search beats independent 1D sweeps.
+- ➡ **Ch.9 — Metrics Deep-Dive** (Neural Networks track): Precision-recall trade-off for SVM — adjusting the decision threshold beyond `sign(f(x))`.
 
 **In later tracks:**
-- ➡️ **Neural Networks track, Ch.3 — Regularisation**: The L2 weight penalty $\frac{1}{2}\|\mathbf{w}\|^2$ in the SVM primal is exactly ridge regularisation. Neural network weight decay is the same idea layer-by-layer.
-- ➡️ **Neural Networks track, Ch.11 — SVM Loss**: Hinge loss $\max(0, 1 - y\,f(x))$ appears as an alternative final-layer loss in face verification architectures.
-- ➡️ **Math under the Hood, Ch.6 — Gradient Chain Rule**: KKT conditions are a specialised form of Lagrangian stationarity derived using chain-rule reasoning.
-- ➡️ **Multimodal AI, Ch.2 — Vision encoders**: Kernel methods and SVMs remain competitive feature-matching baselines even alongside deep learning; kernel SVM on CLIP embeddings is a strong baseline for few-shot image classification.
-- ➡️ **AI Infrastructure track, Ch.4 — Model serving**: The prediction step for a trained SVM — $f(\mathbf{x}) = \sum_i \alpha_i y_i K(\mathbf{x}_i, \mathbf{x}) + b$ — is a sparse dot-product over only the support vectors, making SVM models lightweight to serve compared to full neural networks.
+- ➡ **Neural Networks track, Ch.3 — Regularisation**: The L2 weight penalty $\frac{1}{2}\|\mathbf{w}\|^2$ in the SVM primal is exactly ridge regularisation. Neural network weight decay is the same idea layer-by-layer.
+- ➡ **Neural Networks track, Ch.11 — SVM Loss**: Hinge loss $\max(0, 1 - y\,f(x))$ appears as an alternative final-layer loss in face verification architectures.
+- ➡ **Math under the Hood, Ch.6 — Gradient Chain Rule**: KKT conditions are a specialised form of Lagrangian stationarity derived using chain-rule reasoning.
+- ➡ **Multimodal AI, Ch.2 — Vision encoders**: Kernel methods and SVMs remain competitive feature-matching baselines even alongside deep learning; kernel SVM on CLIP embeddings is a strong baseline for few-shot image classification.
+- ➡ **AI Infrastructure track, Ch.4 — Model serving**: The prediction step for a trained SVM — $f(\mathbf{x}) = \sum_i \alpha_i y_i K(\mathbf{x}_i, \mathbf{x}) + b$ — is a sparse dot-product over only the support vectors, making SVM models lightweight to serve compared to full neural networks.
 
 ---
 
@@ -923,18 +923,12 @@ Setting `SVC(probability=True)` enables `predict_proba()` via Platt scaling, whi
 ![Progress check](img/ch04-svm-progress-check.png)
 
 **What this chapter delivered:**
-
-✅ **SVM Eyeglasses recall = 90%** — max-margin geometry plus RBF kernel crossed the threshold that Random Forest (axis-aligned tree splits) could not reach on a non-linear, low-frequency boundary.
-
-✅ **Constraint #1 (Accuracy) — significant progress**: RBF SVM reaches **~91.5% average accuracy** across 40 attributes while also fixing the tail-attribute recall problem RF left open.
-
-✅ **Max-margin principle internalised**: the wider the gap to the nearest training points, the more robust the boundary is to new faces with unusual lighting, angles, or occlusion.
-
-❌ **Constraint #3 (Multi-Label) still blocked**: one SVM per attribute takes ~8s per image — 40× over the 200ms budget. A joint multi-output architecture is needed.
-
-❌ **Constraint #4 (Interpretability) still blocked**: SVM's dual form gives no feature-level explanations. Which HOG cells drove the Eyeglasses prediction? SHAP or attention mechanisms (later tracks) are needed.
-
-❌ **Constraint #5 (Production) partial**: single SVM predicts in <5ms, but 40 SVMs × 202k images = slow batch retraining at $O(n^2)$ cost.
+**SVM Eyeglasses recall = 90%** — max-margin geometry plus RBF kernel crossed the threshold that Random Forest (axis-aligned tree splits) could not reach on a non-linear, low-frequency boundary.
+**Constraint #1 (Accuracy) — significant progress**: RBF SVM reaches **~91.5% average accuracy** across 40 attributes while also fixing the tail-attribute recall problem RF left open.
+**Max-margin principle internalised**: the wider the gap to the nearest training points, the more robust the boundary is to new faces with unusual lighting, angles, or occlusion.
+**Constraint #3 (Multi-Label) still blocked**: one SVM per attribute takes ~8s per image — 40× over the 200ms budget. A joint multi-output architecture is needed.
+**Constraint #4 (Interpretability) still blocked**: SVM's dual form gives no feature-level explanations. Which HOG cells drove the Eyeglasses prediction? SHAP or attention mechanisms (later tracks) are needed.
+**Constraint #5 (Production) partial**: single SVM predicts in <5ms, but 40 SVMs × 202k images = slow batch retraining at $O(n^2)$ cost.
 
 **FaceAI progress arc:**
 
@@ -943,7 +937,7 @@ Setting `SVC(probability=True)` enables `predict_proba()` via Platt scaling, whi
 | Ch.1 | Logistic Regression | 88% (Smiling only) | — | First baseline established |
 | Ch.2 | Random Forest | 91% avg | 85% | Multi-label across 40 attrs |
 | Ch.3 | Metrics audit | 91% avg | 85% (exposed!) | Recall gap quantified |
-| **Ch.4** | **SVM + RBF kernel** | **~91.5% avg** | **90% ✅** | **Rare attr recall solved** |
+| **Ch.4** | **SVM + RBF kernel** | **~91.5% avg** | **90% ** | **Rare attr recall solved** |
 | Ch.5 | Hyperparameter tuning | TBD | TBD | Systematic optimisation |
 
 **Business impact.** Before Ch.4, FaceAI was missing 15% of Eyeglasses faces (37 of 250 test examples). After Ch.4, that drops to 10% (25 missed). At CelebA scale (202k images, ~10k with Eyeglasses), this means ~1,000 fewer missed detections per full dataset pass — directly reducing the manual review queue the annotation team needs to fill.

@@ -10,7 +10,7 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 💡 **The mission**: Launch **FraudShield** — a production fraud detection system satisfying 5 constraints:
+> **The mission**: Launch **FraudShield** — a production fraud detection system satisfying 5 constraints:
 > 1. **RECALL**: ≥80% fraud recall at ≤0.5% false positive rate
 > 2. **GENERALIZATION**: Detect novel fraud patterns not seen in training
 > 3. **MULTI-SIGNAL**: Combine transaction amount, PCA features V1–V28, and temporal patterns
@@ -18,10 +18,10 @@
 > 5. **NO DISTRIBUTION ASSUMPTION**: Fraud patterns are non-Gaussian and shift over time
 
 **What we know so far:**
-- ✅ Dataset: 284,807 credit card transactions, 492 fraud (0.17% fraud rate)
-- ✅ Features: Time, Amount, and 28 PCA-transformed features V1–V28
-- ✅ Ch.1 baseline: Z-score + IQR + Mahalanobis distance thresholds → **45% recall @ 0.5% FPR**
-- ❌ **But 55% of fraud is still undetected!**
+- Dataset: 284,807 credit card transactions, 492 fraud (0.17% fraud rate)
+- Features: Time, Amount, and 28 PCA-transformed features V1–V28
+- Ch.1 baseline: Z-score + IQR + Mahalanobis distance thresholds → **45% recall @ 0.5% FPR**
+- **But 55% of fraud is still undetected!**
 
 **What's blocking us:**
 Statistical methods assume fraud equals extreme feature values. They test each feature independently, flagging a transaction only when V14 is below −10 *or* Amount is above $10,000. But sophisticated fraud transactions look completely normal on any single feature — their anomalousness lives in the *joint structure*. A fraudster who keeps Amount low and V14 moderate but combines features in an unusual way slips through every per-feature threshold. We need a method that:
@@ -36,16 +36,16 @@ Isolation Forest scores anomalies by **how few random splits** it takes to separ
 
 ```mermaid
 flowchart LR
-    CH1["Ch.1: Statistics\n45% recall @ 0.5% FPR\n\nZ-score + Mahalanobis\nper-feature only"]
-    CH2["Ch.2: Isolation Forest\n~65% recall @ 0.5% FPR\n\nJoint structure\nno distributional assumption"]
-    GOAL["Target: 80% recall\n@ 0.5% FPR"]
+ CH1["Ch.1: Statistics\n45% recall @ 0.5% FPR\n\nZ-score + Mahalanobis\nper-feature only"]
+ CH2["Ch.2: Isolation Forest\n~65% recall @ 0.5% FPR\n\nJoint structure\nno distributional assumption"]
+ GOAL["Target: 80% recall\n@ 0.5% FPR"]
 
-    CH1 -->|"+20% recall\nno distribution needed"| CH2
-    CH2 -->|"ensemble in Ch.5"| GOAL
+ CH1 -->|"+20% recall\nno distribution needed"| CH2
+ CH2 -->|"ensemble in Ch.5"| GOAL
 
-    style CH1 fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CH2 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style GOAL fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH1 fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CH2 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style GOAL fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -72,7 +72,7 @@ Three properties make this work in practice:
 2. **Sub-sampling is a feature, not a compromise.** Using only $\psi = 256$ points per tree (instead of all 284k transactions) actually *improves* anomaly detection by reducing the "masking effect" — the tendency of very large, dense normal clusters to hide nearby anomalies. With a small sub-sample, the probability that an anomaly shares its neighbourhood with many normal points is low.
 3. **Ensemble averaging reduces variance.** A single tree can mis-score a point due to unlucky splits. Averaging path lengths across $T = 100$ trees gives a stable, reproducible score.
 
-> 💡 **Key contrast with Ch.1:** Statistical methods define "anomalous" as "far from the distribution centre." Isolation Forest defines "anomalous" as "easy to isolate" — these are different things. A transaction with moderately unusual V14 *and* moderately unusual Amount *and* moderately unusual V4 is not extreme on any single feature (Ch.1 misses it) but its joint position is sparse, and IF isolates it quickly.
+> **Key contrast with Ch.1:** Statistical methods define "anomalous" as "far from the distribution centre." Isolation Forest defines "anomalous" as "easy to isolate" — these are different things. A transaction with moderately unusual V14 *and* moderately unusual Amount *and* moderately unusual V4 is not extreme on any single feature (Ch.1 misses it) but its joint position is sparse, and IF isolates it quickly.
 
 ---
 
@@ -106,24 +106,24 @@ Before diving into the math, here is the complete algorithm. Each step correspon
 ISOLATION FOREST — TRAINING
 
 1. For each tree t = 1, ..., T:
-   a. Draw a sub-sample of ψ points from the training data (no replacement)
-   b. Build an iTree (isolation tree) on the sub-sample:
-      - If |sample| = 1 or all points identical: return leaf (point is isolated)
-      - Randomly choose a feature q from {1, ..., d}
-      - Randomly choose a split value p ∈ [min(x_q), max(x_q)] in the sub-sample
-      - Partition: left = {x : x_q < p}, right = {x : x_q ≥ p}
-      - Recurse on left and right sub-samples
-   c. Store the tree (each leaf records the sub-sample size that reached it)
+ a. Draw a sub-sample of ψ points from the training data (no replacement)
+ b. Build an iTree (isolation tree) on the sub-sample:
+ - If |sample| = 1 or all points identical: return leaf (point is isolated)
+ - Randomly choose a feature q from {1, ..., d}
+ - Randomly choose a split value p ∈ [min(x_q), max(x_q)] in the sub-sample
+ - Partition: left = {x : x_q < p}, right = {x : x_q ≥ p}
+ - Recurse on left and right sub-samples
+ c. Store the tree (each leaf records the sub-sample size that reached it)
 
 ISOLATION FOREST — SCORING
 
 2. For a new point x (or a training point):
-   a. Pass x down each of the T trees
-   b. Record path length h_t(x) in each tree
-      (path length = number of edges from root to the leaf where x lands)
-   c. Compute average: E[h(x)] = (1/T) × Σ_t h_t(x)
-   d. Normalise: s(x, ψ) = 2^(−E[h(x)] / c(ψ))
-      where c(ψ) is the expected path length in a BST of size ψ
+ a. Pass x down each of the T trees
+ b. Record path length h_t(x) in each tree
+ (path length = number of edges from root to the leaf where x lands)
+ c. Compute average: E[h(x)] = (1/T) × Σ_t h_t(x)
+ d. Normalise: s(x, ψ) = 2^(−E[h(x)] / c(ψ))
+ where c(ψ) is the expected path length in a BST of size ψ
 
 3. Set anomaly threshold τ from the ROC curve on a labelled validation set
 4. Flag x as anomaly if s(x, ψ) > τ
@@ -172,17 +172,17 @@ To see how an isolation tree is built by hand, take **five points** on a single 
 The complete 3-level isolation tree:
 
 ```
-                 [P1,P2,P3,P4,P5]
-                  split: x < 6
-                /                  \
-         [P1,P2,P3]              [P4,P5]
-          split: x < 2          split: x < 8.5
-         /          \            /             \
-       [P1]       [P2,P3]     [P4]           [P5]
-     path=2      split: x<4  path=2         path=2
-                 /        \
-              [P2]        [P3]
-             path=3      path=3
+ [P1,P2,P3,P4,P5]
+ split: x < 6
+ / \
+ [P1,P2,P3] [P4,P5]
+ split: x < 2 split: x < 8.5
+ / \ / \
+ [P1] [P2,P3] [P4] [P5]
+ path=2 split: x<4 path=2 path=2
+ / \
+ [P2] [P3]
+ path=3 path=3
 ```
 
 **Path lengths summary:**
@@ -195,7 +195,7 @@ The complete 3-level isolation tree:
 | P2 | 3 | 3 | Needed one more split inside the dense cluster |
 | P3 | 5 | 3 | Needed one more split inside the dense cluster |
 
-> ⚡ **One tree is not enough.** P4 and P5 get path=2, same as P1. In different random splits, P1 might end up requiring more cuts than P4. The ensemble over $T = 100$ trees averages out the randomness: if P4 and P5 are genuinely anomalous (in sparse regions), they will *consistently* get short paths across many different trees. P1, while at the left extreme of this single feature, may have normal values on other features and will receive longer paths in trees that split on those features first.
+> **One tree is not enough.** P4 and P5 get path=2, same as P1. In different random splits, P1 might end up requiring more cuts than P4. The ensemble over $T = 100$ trees averages out the randomness: if P4 and P5 are genuinely anomalous (in sparse regions), they will *consistently* get short paths across many different trees. P1, while at the left extreme of this single feature, may have normal values on other features and will receive longer paths in trees that split on those features first.
 
 ### 4.2 · Path Length as an Anomaly Signal
 
@@ -254,13 +254,13 @@ $$s(\mathbf{x}, \psi) = 2^{-\,E[h(\mathbf{x})]\,/\,c(\psi)}$$
 
 $$s = 2^{-2.1/3.748} = 2^{-0.560} = e^{-0.560 \times 0.693} = e^{-0.388} = \mathbf{0.676}$$
 
-Score $0.676 > \tau = 0.6$ → **flagged as fraud** ✅
+Score $0.676 > \tau = 0.6$ → **flagged as fraud**
 
 **Example 2 — Legitimate transaction, $E[h(\mathbf{x})] = 4.2$, $c(10) = 3.748$:**
 
 $$s = 2^{-4.2/3.748} = 2^{-1.120} = e^{-1.120 \times 0.693} = e^{-0.776} = \mathbf{0.462}$$
 
-Score $0.462 < \tau = 0.6$ → **not flagged** ✅
+Score $0.462 < \tau = 0.6$ → **not flagged**
 
 The fraud transaction required only 2.1 splits on average — less than the 3.748 expected for a random point. The legitimate transaction required 4.2 splits — above average, buried deeper in the dense normal cluster.
 
@@ -280,19 +280,19 @@ Four transactions with computed scores using $c(10) = 3.748$:
 
 | ID | True Label | $E[h(\mathbf{x})]$ | Score $s$ | $s > 0.6$? | Decision |
 |----|-----------|--------------------|-----------|------------|----------|
-| T1 | Fraud | 2.1 | **0.676** | ✅ Yes | TP |
-| T2 | Fraud | 3.2 | **0.553** | ❌ No | **FN** |
-| T3 | Legitimate | 4.2 | **0.462** | ❌ No | TN |
-| T4 | Legitimate | 5.1 | **0.392** | ❌ No | TN |
+| T1 | Fraud | 2.1 | **0.676** | Yes | TP |
+| T2 | Fraud | 3.2 | **0.553** | No | **FN** |
+| T3 | Legitimate | 4.2 | **0.462** | No | TN |
+| T4 | Legitimate | 5.1 | **0.392** | No | TN |
 
 > Note: $s(\text{T2}) = 2^{-3.2/3.748} = 2^{-0.854} = e^{-0.592} = 0.553$. $s(\text{T4}) = 2^{-5.1/3.748} = 2^{-1.361} = e^{-0.943} = 0.390$.
 
 **Confusion matrix at $\tau = 0.6$:**
 
 ```
-                  Predicted Fraud    Predicted Normal
-Actual Fraud           1 (TP)             1 (FN)
-Actual Normal          0 (FP)             2 (TN)
+ Predicted Fraud Predicted Normal
+Actual Fraud 1 (TP) 1 (FN)
+Actual Normal 0 (FP) 2 (TN)
 ```
 
 - **Recall** $= 1/(1+1) = 50\%$ — T2 was missed (path too long, not isolated quickly enough)
@@ -300,7 +300,7 @@ Actual Normal          0 (FP)             2 (TN)
 
 Lowering $\tau$ to 0.55 would catch T2 (recall → 100%) but would also start flagging transactions with scores in $[0.55, 0.60]$, increasing FPR. The ROC curve traces this trade-off across all possible $\tau$ values.
 
-> 💡 This toy shows why we *must* use the full ROC curve. On the real Credit Card Fraud dataset with $T = 100$ trees and $\psi = 256$, the optimal threshold from the ROC curve at 0.5% FPR gives approximately **65% recall** — a significant improvement over the 45% from statistical methods, but still short of the 80% target. That's why Ch.3–Ch.5 exist.
+> This toy shows why we *must* use the full ROC curve. On the real Credit Card Fraud dataset with $T = 100$ trees and $\psi = 256$, the optimal threshold from the ROC curve at 0.5% FPR gives approximately **65% recall** — a significant improvement over the 45% from statistical methods, but still short of the 80% target. That's why Ch.3–Ch.5 exist.
 
 ---
 
@@ -320,7 +320,7 @@ Lowering $\tau$ to 0.55 would catch T2 (recall → 100%) but would also start fl
 | `0.17%` (exact rate) | 492 | Matches reality but recall depends on score quality |
 | `0.05%` (too low) | 142 | Threshold too high → 350+ fraud cases missed |
 
-> ⚡ **Always tune the threshold via the ROC curve, not `contamination`.** The contamination parameter assumes you know the exact anomaly rate — which you rarely do in practice. The ROC curve lets you choose the exact recall/FPR operating point you need for your business constraint.
+> **Always tune the threshold via the ROC curve, not `contamination`.** The contamination parameter assumes you know the exact anomaly rate — which you rarely do in practice. The ROC curve lets you choose the exact recall/FPR operating point you need for your business constraint.
 
 ---
 
@@ -347,37 +347,37 @@ Normal points occupy $x_1 \in [2,5]$, $x_2 \in [2,4]$. The fraud point sits isol
 
 ### 6.2 · Tree 1
 
-**Depth 0 — Root (all 8 points).**  
+**Depth 0 — Root (all 8 points).**
 Feature $x_1$, split $= 5.5$:
 - Left ($x_1 < 5.5$): N1, N2, N3, N4, N5, N6, N7
-- Right ($x_1 \geq 5.5$): **A** → **$h_1(A) = 1$** ✅
+- Right ($x_1 \geq 5.5$): **A** → **$h_1(A) = 1$**
 
-**Depth 1 (7 normal points).**  
+**Depth 1 (7 normal points).**
 Feature $x_2$, split $= 3.5$:
 - Left ($x_2 < 3.5$): N1, N2, N4, N6 — 4 points
 - Right ($x_2 \geq 3.5$): N3, N5, N7 — 3 points
 
-**Depth 2a (4 points: N1, N2, N4, N6).**  
+**Depth 2a (4 points: N1, N2, N4, N6).**
 Feature $x_1$, split $= 2.5$:
 - Left: N1$(x_1=2)$ → **$h_1(N1) = 3$**
 - Right: N2, N4, N6 — 3 points
 
-**Depth 2b (3 points: N3, N5, N7).**  
+**Depth 2b (3 points: N3, N5, N7).**
 Feature $x_1$, split $= 3.5$:
 - Left: N3$(3)$, N7$(2)$ — 2 points
 - Right: N5$(4)$ → **$h_1(N5) = 3$**
 
-**Depth 3a (3 points: N2, N4, N6).**  
+**Depth 3a (3 points: N2, N4, N6).**
 Feature $x_1$, split $= 3.5$:
 - Left: N2$(3)$ → **$h_1(N2) = 4$**
 - Right: N4$(4)$, N6$(5)$ — 2 points
 
-**Depth 3b (2 points: N3, N7).**  
+**Depth 3b (2 points: N3, N7).**
 Feature $x_1$, split $= 2.5$:
 - Left: N7$(2)$ → **$h_1(N7) = 4$**
 - Right: N3$(3)$ → **$h_1(N3) = 4$**
 
-**Depth 4 (2 points: N4, N6).**  
+**Depth 4 (2 points: N4, N6).**
 Feature $x_1$, split $= 4.5$:
 - Left: N4$(4)$ → **$h_1(N4) = 5$**
 - Right: N6$(5)$ → **$h_1(N6) = 5$**
@@ -394,37 +394,37 @@ Feature $x_1$, split $= 4.5$:
 
 ### 6.3 · Tree 2
 
-**Depth 0 — Root (all 8 points).**  
+**Depth 0 — Root (all 8 points).**
 Feature $x_2$, split $= 7.0$:
 - Left ($x_2 < 7.0$): N1–N7 (all have $x_2 \leq 4$)
-- Right ($x_2 \geq 7.0$): **A** ($x_2=8$) → **$h_2(A) = 1$** ✅
+- Right ($x_2 \geq 7.0$): **A** ($x_2=8$) → **$h_2(A) = 1$**
 
-**Depth 1 (7 normal points).**  
+**Depth 1 (7 normal points).**
 Feature $x_1$, split $= 4.5$:
 - Left: N1$(2)$, N2$(3)$, N3$(3)$, N4$(4)$, N5$(4)$, N7$(2)$ — 6 points
 - Right: N6$(5)$ → **$h_2(N6) = 2$**
 
-**Depth 2 (6 points: N1, N2, N3, N4, N5, N7).**  
+**Depth 2 (6 points: N1, N2, N3, N4, N5, N7).**
 Feature $x_2$, split $= 2.5$:
 - Left: N2$(x_2=2)$ → **$h_2(N2) = 3$**
 - Right: N1, N3, N4, N5, N7 — 5 points
 
-**Depth 3 (5 points: N1, N3, N4, N5, N7).**  
+**Depth 3 (5 points: N1, N3, N4, N5, N7).**
 Feature $x_1$, split $= 2.5$:
 - Left: N1$(2)$, N7$(2)$ — 2 points
 - Right: N3$(3)$, N4$(4)$, N5$(4)$ — 3 points
 
-**Depth 4a (2 points: N1, N7).**  
+**Depth 4a (2 points: N1, N7).**
 Feature $x_2$, split $= 3.5$:
 - Left: N1$(x_2=3)$ → **$h_2(N1) = 5$**
 - Right: N7$(x_2=4)$ → **$h_2(N7) = 5$**
 
-**Depth 4b (3 points: N3, N4, N5).**  
+**Depth 4b (3 points: N3, N4, N5).**
 Feature $x_1$, split $= 3.5$:
 - Left: N3$(3)$ → **$h_2(N3) = 5$**
 - Right: N4$(4)$, N5$(4)$ — 2 points
 
-**Depth 5 (2 points: N4, N5).**  
+**Depth 5 (2 points: N4, N5).**
 Feature $x_2$, split $= 3.5$:
 - Left: N4$(x_2=3)$ → **$h_2(N4) = 6$**
 - Right: N5$(x_2=4)$ → **$h_2(N5) = 6$**
@@ -452,7 +452,7 @@ $$c(8) = 2(\ln 7 + 0.5772) - \frac{14}{8} = 2(1.946 + 0.577) - 1.750 = 5.046 - 1
 | N7 | 4 | 5 | 4.5 | 1.365 | 0.390 | 5th |
 | N4 | 5 | 6 | 5.5 | 1.669 | 0.314 | 8th → MOST NORMAL |
 
-> ✅ **The anomaly rises to the top.** Point A scores 0.810 with a large gap to all normal points (max 0.479). With threshold $\tau = 0.6$, exactly one point is flagged: the fraud transaction. In production with $T = 100$ trees and $\psi = 256$, the gap is even cleaner.
+> **The anomaly rises to the top.** Point A scores 0.810 with a large gap to all normal points (max 0.479). With threshold $\tau = 0.6$, exactly one point is flagged: the fraud transaction. In production with $T = 100$ trees and $\psi = 256$, the gap is even cleaner.
 
 **What changes with $T = 100$ trees?** In this toy we used only $T = 2$ trees. The score for A (0.810) is already clearly separated from all normal points (max 0.479), but in practice some normal points might land in sparse regions of one particular sub-sample and score higher by chance. With $T = 100$ trees, each drawing a fresh random $\psi = 256$ sub-sample, the expected path length estimate $E[h(\mathbf{x})]$ averages out these random fluctuations. The standard deviation of the ensemble score drops to approximately $\sigma_s \approx \sqrt{\text{Var}[h(\mathbf{x})]/(T \cdot c(\psi)^2)}$ — at $T = 100$, this is typically $< 0.01$, far smaller than the 0.33 gap between fraud (0.810) and the highest-scoring normal point (0.479). The ranking becomes stable and reproducible across random seeds.
 
@@ -464,78 +464,78 @@ $$c(8) = 2(\ln 7 + 0.5772) - \frac{14}{8} = 2(1.946 + 0.577) - 1.750 = 5.046 - 1
 
 ```mermaid
 flowchart TD
-    DATA["284k transactions\n(Credit Card Fraud dataset)"]
-    SAMPLE["Sub-sample ψ=256 points\n(per tree, no replacement)"]
-    BUILD["Build iTree\n(random feature + random split,\nrecurse until isolated)"]
-    TREES["T=100 isolation trees\nstored in ensemble"]
-    TX["New transaction x"]
-    PATH["Traverse all 100 trees\nh_t(x) = path length in tree t"]
-    AVG["Average: E[h(x)] = (1/T) Σ h_t(x)"]
-    SCORE["Anomaly score:\ns = 2^(−E[h(x)] / c(256))"]
-    THRESH{"s > τ ?"}
-    FRAUD["🚨 Flag as fraud"]
-    NORMAL["✅ Allow transaction"]
+ DATA["284k transactions\n(Credit Card Fraud dataset)"]
+ SAMPLE["Sub-sample ψ=256 points\n(per tree, no replacement)"]
+ BUILD["Build iTree\n(random feature + random split,\nrecurse until isolated)"]
+ TREES["T=100 isolation trees\nstored in ensemble"]
+ TX["New transaction x"]
+ PATH["Traverse all 100 trees\nh_t(x) = path length in tree t"]
+ AVG["Average: E[h(x)] = (1/T) Σ h_t(x)"]
+ SCORE["Anomaly score:\ns = 2^(−E[h(x)] / c(256))"]
+ THRESH{"s > τ ?"}
+ FRAUD["🚨 Flag as fraud"]
+ NORMAL[" Allow transaction"]
 
-    DATA --> SAMPLE
-    SAMPLE --> BUILD
-    BUILD --> TREES
-    TX --> PATH
-    TREES --> PATH
-    PATH --> AVG
-    AVG --> SCORE
-    SCORE --> THRESH
-    THRESH -->|"Yes"| FRAUD
-    THRESH -->|"No"| NORMAL
+ DATA --> SAMPLE
+ SAMPLE --> BUILD
+ BUILD --> TREES
+ TX --> PATH
+ TREES --> PATH
+ PATH --> AVG
+ AVG --> SCORE
+ SCORE --> THRESH
+ THRESH -->|"Yes"| FRAUD
+ THRESH -->|"No"| NORMAL
 
-    style DATA fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style TREES fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style FRAUD fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style NORMAL fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style SCORE fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style THRESH fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style DATA fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style TREES fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style FRAUD fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style NORMAL fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style SCORE fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style THRESH fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### Diagram 2 · Why Short Paths Mean Anomaly
 
 ```mermaid
 flowchart TD
-    ROOT["Root: all ψ=256 transactions\nRandom split: V14 < -3.5"]
-    L1["Left: 4 transactions\n(unusual V14 — sparse region)"]
-    R1["Right: 252 transactions\n(normal V14 — dense cluster)"]
+ ROOT["Root: all ψ=256 transactions\nRandom split: V14 < -3.5"]
+ L1["Left: 4 transactions\n(unusual V14 — sparse region)"]
+ R1["Right: 252 transactions\n(normal V14 — dense cluster)"]
 
-    ROOT -->|"V14 < -3.5 (4 pts, rare)"| L1
-    ROOT -->|"V14 ≥ -3.5 (252 pts, common)"| R1
+ ROOT -->|"V14 < -3.5 (4 pts, rare)"| L1
+ ROOT -->|"V14 ≥ -3.5 (252 pts, common)"| R1
 
-    L1 -->|"Amount < 180\n1 point"| FRAUD["🚨 FRAUD\nPath length = 2\nIsolated in 2 splits"]
-    L1 -->|"Amount ≥ 180\n3 points"| CONT["Keep splitting...\npath = 3+"]
+ L1 -->|"Amount < 180\n1 point"| FRAUD["🚨 FRAUD\nPath length = 2\nIsolated in 2 splits"]
+ L1 -->|"Amount ≥ 180\n3 points"| CONT["Keep splitting...\npath = 3+"]
 
-    R1 -->|"Many more splits\nneeded to separate"| DEEP["Normal transaction\nPath length = 8+\nBuried in dense cluster"]
+ R1 -->|"Many more splits\nneeded to separate"| DEEP["Normal transaction\nPath length = 8+\nBuried in dense cluster"]
 
-    style FRAUD fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style DEEP fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style ROOT fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CONT fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style FRAUD fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style DEEP fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style ROOT fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CONT fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 **Score distribution — conceptual view:**
 
 ```
-   Legitimate transactions               Fraud transactions
-   (long paths → low scores)            (short paths → high scores)
+ Legitimate transactions Fraud transactions
+ (long paths → low scores) (short paths → high scores)
 
-count                                count
-  │   ▄▄▄▄▄▄                            │
-  │  ▄████████▄                          │         ▄▄▄▄▄
-  │ ▄██████████▄                         │       ▄███████▄
-  │▄████████████▄                        │     ▄███████████▄
-  ├──────────────────── s               ├──────────────────── s
- 0.30  0.40  0.50  0.60               0.50  0.60  0.70  0.80  0.90
-              ↑                                    ↑
-          s = 0.5                          threshold τ = 0.6
-       (average path)
+count count
+ │ ▄▄▄▄▄▄ │
+ │ ▄████████▄ │ ▄▄▄▄▄
+ │ ▄██████████▄ │ ▄███████▄
+ │▄████████████▄ │ ▄███████████▄
+ ├──────────────────── s ├──────────────────── s
+ 0.30 0.40 0.50 0.60 0.50 0.60 0.70 0.80 0.90
+ ↑ ↑
+ s = 0.5 threshold τ = 0.6
+ (average path)
 
-Normal clusters around 0.40–0.50       Fraud pushes toward 0.65–0.85
-(path ≈ c(ψ) → exponent ≈ -1)         (path ≪ c(ψ) → exponent → 0⁻)
+Normal clusters around 0.40–0.50 Fraud pushes toward 0.65–0.85
+(path ≈ c(ψ) → exponent ≈ -1) (path ≪ c(ψ) → exponent → 0⁻)
 ```
 
 ---
@@ -553,16 +553,16 @@ Isolation Forest has three main dials. Unlike most ML algorithms, the defaults w
 **Tuning guidance for FraudShield:**
 
 ```
-n_estimators:  Start at 100. Increase to 200 only if scores are noisy across runs.
-               At T ≥ 100 the variance is typically < 0.01 — stable enough.
+n_estimators: Start at 100. Increase to 200 only if scores are noisy across runs.
+ At T ≥ 100 the variance is typically < 0.01 — stable enough.
 
-max_samples:   256 is the research-validated sweet spot for most datasets.
-               If your fraud cases are in very dense regions, try 128.
-               If you have many near-duplicate normal transactions, try 512.
+max_samples: 256 is the research-validated sweet spot for most datasets.
+ If your fraud cases are in very dense regions, try 128.
+ If you have many near-duplicate normal transactions, try 512.
 
 contamination: Do not rely on contamination to set your threshold.
-               Always use the ROC curve on a labelled validation set.
-               Use contamination only as a rough starting point for score-rank thresholding.
+ Always use the ROC curve on a labelled validation set.
+ Use contamination only as a rough starting point for score-rank thresholding.
 ```
 
 **Concrete impact on FraudShield (0.17% fraud rate, 492 fraud in 284,807 transactions):**
@@ -573,7 +573,7 @@ contamination: Do not rely on contamination to set your threshold.
 | `0.0017` (exact) | 492 | Threshold calibrated but recall still depends on score quality |
 | `0.001` (too low) | 285 | Threshold too high → ~200 fraud cases missed |
 
-> ⚡ **Production practice:** Train with `contamination='auto'`, then sweep $\tau$ on the validation ROC curve to hit 80% recall @ 0.5% FPR. This decouples the model from the business constraint — the model scores, the threshold enforces the business rule.
+> **Production practice:** Train with `contamination='auto'`, then sweep $\tau$ on the validation ROC curve to hit 80% recall @ 0.5% FPR. This decouples the model from the business constraint — the model scores, the threshold enforces the business rule.
 
 ---
 
@@ -612,27 +612,25 @@ If you have no labelled ground truth to build a ROC curve, the `contamination` p
 ## 11 · Progress Check — What We Can Solve Now
 
 ![Progress check](img/ch02-isolation-forest-progress-check.png)
-
-✅ **Unlocked capabilities:**
+**Unlocked capabilities:**
 - **First distribution-free anomaly detector.** Detects anomalies without any assumption about the data distribution — Gaussian, log-normal, or multi-modal, IF doesn't care.
 - **Multivariate structure captured.** Catches fraud that statistical methods miss: the transaction that looks normal on every single feature but unusual in aggregate.
 - **Scalable scoring.** $O(T \log \psi)$ inference per transaction — fast enough for real-time fraud scoring at production volume.
 - **IF recall: ~65% @ 0.5% FPR** — a significant improvement over Ch.1's 45%.
-
-❌ **Still can't solve:**
-- ❌ **Constraint #1 (RECALL ≥ 80%):** 65% recall falls 15 percentage points short. Isolation Forest captures spatial sparsity but misses fraud that is unusual in its local reconstruction pattern. That requires a different signal entirely.
-- ❌ **Constraint #2 (GENERALIZATION to novel fraud):** IF scores are calibrated on training sub-samples. A brand-new fraud pattern not present during training may not be isolated more quickly than normal transactions. Autoencoders, which learn to reconstruct normal patterns, handle novel fraud better by flagging anything that reconstructs poorly.
-- ❌ **Constraint #3 (MULTI-SIGNAL):** FraudShield's final system needs at least three independent anomaly signals. Isolation Forest provides one.
+**Still can't solve:**
+- **Constraint #1 (RECALL ≥ 80%):** 65% recall falls 15 percentage points short. Isolation Forest captures spatial sparsity but misses fraud that is unusual in its local reconstruction pattern. That requires a different signal entirely.
+- **Constraint #2 (GENERALIZATION to novel fraud):** IF scores are calibrated on training sub-samples. A brand-new fraud pattern not present during training may not be isolated more quickly than normal transactions. Autoencoders, which learn to reconstruct normal patterns, handle novel fraud better by flagging anything that reconstructs poorly.
+- **Constraint #3 (MULTI-SIGNAL):** FraudShield's final system needs at least three independent anomaly signals. Isolation Forest provides one.
 
 **FraudShield constraint progress:**
 
 | Constraint | Status | Current State |
 |------------|--------|---------------|
-| #1 RECALL ≥ 80% | ⚡ Partial | **65% recall** @ 0.5% FPR (was 45% in Ch.1) |
-| #2 GENERALIZATION | ⚡ Partial | Better than statistical; still fails on totally novel fraud |
-| #3 MULTI-SIGNAL | ❌ Blocked | One signal (IF score) — need AE + density in Ch.3–Ch.5 |
-| #4 SPEED < 10ms | ✅ Achieved | $O(T \log \psi) \approx 800$ operations per transaction |
-| #5 NO DIST. ASSUMPTION | ✅ Achieved | IF makes no distributional assumption |
+| #1 RECALL ≥ 80% | Partial | **65% recall** @ 0.5% FPR (was 45% in Ch.1) |
+| #2 GENERALIZATION | Partial | Better than statistical; still fails on totally novel fraud |
+| #3 MULTI-SIGNAL | Blocked | One signal (IF score) — need AE + density in Ch.3–Ch.5 |
+| #4 SPEED < 10ms | Achieved | $O(T \log \psi) \approx 800$ operations per transaction |
+| #5 NO DIST. ASSUMPTION | Achieved | IF makes no distributional assumption |
 
 **Real-world status:** We can score 284k transactions in seconds and detect ~65% of fraud without any distribution assumption. But 35% of fraud still escapes — transactions that are unusual in high-level joint structure but not in coarse isolation distance. Ch.3 adds the reconstruction signal to close that gap.
 
@@ -646,5 +644,5 @@ Isolation Forest established one key idea: **how easy is this point to isolate?*
 
 The two chapters also differ in what they need to learn: Isolation Forest uses no labelled data at all — it learns only from the structure of the unlabelled training set. An autoencoder also trains unsupervised, but it learns a specific *model* of normality (the encoder-decoder weights) rather than an ensemble of random trees. The parametric vs non-parametric contrast between these two approaches, and how each fails in different regimes, is one of the key lessons of Ch.3.
 
-> ➡️ **The representation learning shift**: Ch.1 and Ch.2 score anomalies by *position* (distance or isolation). Ch.3 scores anomalies by *reconstructability* — a fundamentally different inductive bias that catches fraud the geometric methods miss. See [Ch.3 — Autoencoders →](../ch03_autoencoders)
+> ➡ **The representation learning shift**: Ch.1 and Ch.2 score anomalies by *position* (distance or isolation). Ch.3 scores anomalies by *reconstructability* — a fundamentally different inductive bias that catches fraud the geometric methods miss. See [Ch.3 — Autoencoders →](../ch03_autoencoders)
 

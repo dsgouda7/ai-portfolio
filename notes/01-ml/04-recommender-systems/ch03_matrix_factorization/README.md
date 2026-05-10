@@ -14,7 +14,7 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Launch **FlixAI** — >85% hit rate@10 across 5 constraints:
+> **The mission**: Launch **FlixAI** — >85% hit rate@10 across 5 constraints:
 > 1. **ACCURACY**: >85% hit rate @ top-10 (every point = $2M ARR)
 > 2. **COLD START**: Handle new users/items gracefully
 > 3. **SCALABILITY**: 1M+ ratings, <200ms latency
@@ -22,9 +22,9 @@
 > 5. **EXPLAINABILITY**: "Because you liked X" — trustable recommendations
 
 **What we know so far:**
-- ✅ **Ch.1**: Popularity baseline → 42% HR@10 (not personalised)
-- ✅ **Ch.2**: Item-based Collaborative Filtering → ~65% HR@10 (personalised but sparse)
-- ❌ **But we still can't reach 85%!** Sparsity is crippling us.
+- **Ch.1**: Popularity baseline → 42% HR@10 (not personalised)
+- **Ch.2**: Item-based Collaborative Filtering → ~65% HR@10 (personalised but sparse)
+- **But we still can't reach 85%!** Sparsity is crippling us.
 
 **What's blocking us — and why MF solves it:**
 
@@ -43,22 +43,22 @@ The key insight: MF discovers **latent "genre-taste" dimensions** automatically.
 
 | Constraint | Status after this chapter | Notes |
 |-----------|--------------------------|-------|
-| ACCURACY >85% HR@10 | ⚠️ 65% → 75–78% | Latent factors close the gap; not fully there yet |
-| COLD START | ❌ Still fails | New user = no trained vector |
-| SCALABILITY | ✅ Much better | $O(k)$ prediction, $O(k)$ per SGD step |
-| DIVERSITY | ⚠️ Moderate | Latent space surfaces niche items more than item-CF |
-| EXPLAINABILITY | ⚠️ Harder | Factors are discovered, not labelled |
+| ACCURACY >85% HR@10 | 65% → 75–78% | Latent factors close the gap; not fully there yet |
+| COLD START | Still fails | New user = no trained vector |
+| SCALABILITY | Much better | $O(k)$ prediction, $O(k)$ per SGD step |
+| DIVERSITY | Moderate | Latent space surfaces niche items more than item-CF |
+| EXPLAINABILITY | Harder | Factors are discovered, not labelled |
 
 ```mermaid
 flowchart LR
-    CF["Ch.2: Item-CF\nHR@10 ≈ 65%\nO(n²) similarity"] --> DECOMP["Learn P ∈ ℝ^(m×k)\n     Q ∈ ℝ^(n×k)\nvia SGD"]
-    DECOMP --> PRED["Predict:\nr̂ = pᵤᵀqᵢ"]
-    PRED --> BIAS["+ Bias terms:\nμ + bᵤ + bᵢ"]
-    BIAS --> EVAL["MF + bias\nHR@10 ≈ 78%"]
+ CF["Ch.2: Item-CF\nHR@10 ≈ 65%\nO(n²) similarity"] --> DECOMP["Learn P ∈ ℝ^(m×k)\n Q ∈ ℝ^(n×k)\nvia SGD"]
+ DECOMP --> PRED["Predict:\nr̂ = pᵤᵀqᵢ"]
+ PRED --> BIAS["+ Bias terms:\nμ + bᵤ + bᵢ"]
+ BIAS --> EVAL["MF + bias\nHR@10 ≈ 78%"]
 
-    style CF fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style DECOMP fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style EVAL fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CF fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style DECOMP fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style EVAL fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -69,7 +69,7 @@ flowchart LR
 
 *Visual takeaway: item-CF's sparse neighbourhood lookups give way to a dense latent space where every user-item pair has a meaningful alignment score. HR@10 climbs from ~65% to ~78% as biases and regularisation are added.*
 
-> ⚡ **Constraint progress**: This chapter advances **Constraint #1 (ACCURACY)** from ~65% → ~78% by replacing sparse similarity lookups with dense latent factor dot products. We're now 7 points from the 85% target — Ch.4 neural CF will close it.
+> **Constraint progress**: This chapter advances **Constraint #1 (ACCURACY)** from ~65% → ~78% by replacing sparse similarity lookups with dense latent factor dot products. We're now 7 points from the 85% target — Ch.4 neural CF will close it.
 
 ---
 
@@ -131,26 +131,26 @@ Before diving into the math, here is the full training loop. Each step below has
 
 ```
 1. Initialise P ∈ ℝ^(m×k) and Q ∈ ℝ^(n×k)
-   └─ Draw each element ~ Normal(0, 0.01)
-   └─ Small random init prevents symmetry (identical rows learn nothing new)
+ └─ Draw each element ~ Normal(0, 0.01)
+ └─ Small random init prevents symmetry (identical rows learn nothing new)
 
 2. For each training epoch:
 
-   a. Shuffle the list of observed (u, i, r_ui) triples
+ a. Shuffle the list of observed (u, i, r_ui) triples
 
-   b. For each observed rating (u, i, r_ui):
-      i.   Predict:  r̂_ui = p_u · q_i  (dot product, k multiplications)
-      ii.  Error:    e_ui  = r_ui - r̂_ui
-      iii. Update:   p_u ← p_u + α · (e_ui · q_i  − λ · p_u)
-                     q_i ← q_i + α · (e_ui · p_u  − λ · q_i)
+ b. For each observed rating (u, i, r_ui):
+ i. Predict: r̂_ui = p_u · q_i (dot product, k multiplications)
+ ii. Error: e_ui = r_ui - r̂_ui
+ iii. Update: p_u ← p_u + α · (e_ui · q_i − λ · p_u)
+ q_i ← q_i + α · (e_ui · p_u − λ · q_i)
 
-   c. Compute RMSE on held-out validation set
+ c. Compute RMSE on held-out validation set
 
 3. Stop when validation RMSE stops improving (patience = 5 epochs)
 
 4. Generate recommendations:
-   └─ For user u, score all unrated items: score_i = p_u · q_i
-   └─ Sort by score descending, return top-10
+ └─ For user u, score all unrated items: score_i = p_u · q_i
+ └─ Sort by score descending, return top-10
 ```
 
 **Notation reminder:**
@@ -190,7 +190,7 @@ The regularisation term (0.04) is negligible at epoch 0 — reconstruction error
 | $\lambda \|\mathbf{p}_u\|^2$ | Shrink user vectors — prevent memorisation |
 | $\lambda \|\mathbf{q}_i\|^2$ | Shrink item vectors — encourage generalisation |
 
-> ⚠️ **Why sum only over observed pairs.** We cannot supervise on missing entries — "not rated" does not mean "rated 0." Summing over all $m \times n$ pairs would treat every absence as a zero, biasing predictions downward. The objective only penalises errors on entries we actually observed.
+> **Why sum only over observed pairs.** We cannot supervise on missing entries — "not rated" does not mean "rated 0." Summing over all $m \times n$ pairs would treat every absence as a zero, biasing predictions downward. The objective only penalises errors on entries we actually observed.
 
 ---
 
@@ -258,7 +258,7 @@ $$= [0.30, 0.80] + [0.180, 0.108] = \mathbf{[0.48,\ 0.91]}$$
 
 ### 4.4 · Bias Variant: $\hat{r}_{ui} = \mu + b_u + b_i + \mathbf{p}_u^\top \mathbf{q}_i$
 
-> ➡️ **Connection to linear regression.** The bias terms here are exactly the intercept $b$ from [Linear Regression ch01](../../01_regression/ch01_linear_regression) — decomposed into three additive pieces: a global mean, a user-specific offset, and an item-specific offset. Same idea, finer granularity.
+> ➡ **Connection to linear regression.** The bias terms here are exactly the intercept $b$ from [Linear Regression ch01](../../01_regression/ch01_linear_regression) — decomposed into three additive pieces: a global mean, a user-specific offset, and an item-specific offset. Same idea, finer granularity.
 
 Users and items have inherent rating tendencies that have nothing to do with taste alignment. User 7 gives 4.5 stars to everything; "Titanic" gets 4.2 stars on average regardless of who watches it. Without separating these out, the dot product term $\mathbf{p}_u^\top \mathbf{q}_i$ has to explain both the popularity effect and the taste alignment — it gets confused.
 
@@ -345,7 +345,7 @@ $$= [0.90, 0.10] + 0.1 \times [1.449, 1.409] = [0.90, 0.10] + [0.14, 0.14] = \ma
 
 Check: $\hat{r}_{13}^{\text{new}} = 0.82 \times 1.04 + 0.61 \times 0.24 = 0.853 + 0.146 = 1.00$. Error: $3 - 1.00 = 2.00$ ✓ reduced from 2.39.
 
-> 💡 **Key insight**: After two steps, $\mathbf{p}_1$ moved from $[0.50, 0.30]$ to $[0.82, 0.61]$ — both latent dimensions grew because User 1 gave ratings of 4 and 3. Both item vectors $\mathbf{q}_2$ and $\mathbf{q}_3$ grew toward $\mathbf{p}_1$'s direction. The latent space is discovering that User 1 aligns with movies 2 and 3.
+> **Key insight**: After two steps, $\mathbf{p}_1$ moved from $[0.50, 0.30]$ to $[0.82, 0.61]$ — both latent dimensions grew because User 1 gave ratings of 4 and 3. Both item vectors $\mathbf{q}_2$ and $\mathbf{q}_3$ grew toward $\mathbf{p}_1$'s direction. The latent space is discovering that User 1 aligns with movies 2 and 3.
 
 ---
 
@@ -402,10 +402,10 @@ $(U_1, M_2, 4)$, $(U_1, M_3, 3)$, $(U_2, M_1, 4)$, $(U_2, M_2, 2)$, $(U_3, M_1, 
 | Pair | r | $\hat{r}$ | e | $e^2$ |
 |------|---|-----------|---|-------|
 | (1,2) | 4 | 0.50×0.30 + 0.30×0.80 = 0.39 | 3.61 | 13.03 |
-| (1,3) | 3 | 0.50×0.90 + 0.30×0.10 = 0.48 | 2.52 | 6.35  |
+| (1,3) | 3 | 0.50×0.90 + 0.30×0.10 = 0.48 | 2.52 | 6.35 |
 | (2,1) | 4 | 0.40×0.60 + 0.60×0.40 = 0.48 | 3.52 | 12.39 |
-| (2,2) | 2 | 0.40×0.30 + 0.60×0.80 = 0.60 | 1.40 | 1.96  |
-| (3,1) | 1 | 0.70×0.60 + 0.20×0.40 = 0.50 | 0.50 | 0.25  |
+| (2,2) | 2 | 0.40×0.30 + 0.60×0.80 = 0.60 | 1.40 | 1.96 |
+| (3,1) | 1 | 0.70×0.60 + 0.20×0.40 = 0.50 | 0.50 | 0.25 |
 | (3,3) | 5 | 0.70×0.90 + 0.20×0.10 = 0.65 | 4.35 | 18.92 |
 
 $$\text{RMSE}_{\text{before}} = \sqrt{52.90 / 6} = \sqrt{8.82} = \mathbf{2.97}$$
@@ -462,7 +462,7 @@ $$\text{RMSE}_{\text{after}} = \sqrt{31.90 / 6} = \sqrt{5.32} = \mathbf{2.31}$$
 
 **RMSE dropped from 2.97 → 2.31 (22% reduction) in a single epoch.** On the real 100k dataset with $k=50$, running 50–200 epochs converges to validation RMSE ≈ 0.91.
 
-> 💡 **Key insight**: The $(3,1,1)$ rating with error 0.36 barely moved anything; the $(3,3,5)$ rating with error 4.18 moved $\mathbf{q}_3$ by 0.46 units in dim 1. SGD's per-rating updates automatically prioritise the most egregious errors — the same self-braking property as MSE gradient descent in linear regression.
+> **Key insight**: The $(3,1,1)$ rating with error 0.36 barely moved anything; the $(3,3,5)$ rating with error 4.18 moved $\mathbf{q}_3$ by 0.46 units in dim 1. SGD's per-rating updates automatically prioritise the most egregious errors — the same self-braking property as MSE gradient descent in linear regression.
 
 ---
 
@@ -472,66 +472,66 @@ $$\text{RMSE}_{\text{after}} = \sqrt{31.90 / 6} = \sqrt{5.32} = \mathbf{2.31}$$
 
 ```mermaid
 flowchart LR
-    R["R\n943 × 1682\n(sparse, 6.3% filled)"] -->|"decompose"| P["P\n943 × k\n(dense user factors)"]
-    R -->|"decompose"| Q["Q\n1682 × k\n(dense item factors)"]
-    P --> DOT["p_u · q_i\n(dot product)"]
-    Q --> DOT
-    DOT --> BIAS["+ μ + b_u + b_i\n(bias correction)"]
-    BIAS --> PRED["r̂_ui\n(predicted rating)"]
-    PRED --> TOP10["Top-10 per user\n(rank all unrated)"]
+ R["R\n943 × 1682\n(sparse, 6.3% filled)"] -->|"decompose"| P["P\n943 × k\n(dense user factors)"]
+ R -->|"decompose"| Q["Q\n1682 × k\n(dense item factors)"]
+ P --> DOT["p_u · q_i\n(dot product)"]
+ Q --> DOT
+ DOT --> BIAS["+ μ + b_u + b_i\n(bias correction)"]
+ BIAS --> PRED["r̂_ui\n(predicted rating)"]
+ PRED --> TOP10["Top-10 per user\n(rank all unrated)"]
 
-    style R fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style P fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style Q fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style PRED fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style TOP10 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style R fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style P fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style Q fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style PRED fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style TOP10 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### SGD Training Loop
 
 ```mermaid
 flowchart TD
-    INIT["Init P, Q\n~ Normal(0, 0.01)\nInit b_u, b_i = 0"] --> EPOCH
-    EPOCH["Start epoch"] --> SHUFFLE
-    SHUFFLE["Shuffle observed\n(u, i, r_ui) triples"] --> PICK
-    PICK["Pick next\nrating (u, i, r)"] --> FWD
-    FWD["Forward pass\nr̂ = μ + b_u + b_i + p_u·q_i"] --> ERR
-    ERR["Error\ne = r − r̂"] --> UPDT
-    UPDT["SGD update\np_u += α(e·q_i − λ·p_u)\nq_i += α(e·p_u − λ·q_i)\nb_u += α(e − λ·b_u)\nb_i += α(e − λ·b_i)"] --> MORE
-    MORE{"More ratings\nin epoch?"} -->|"Yes"| PICK
-    MORE -->|"No"| VAL["Compute val RMSE\nCheck convergence"]
-    VAL --> CONV{"Val RMSE\nimproving?"}
-    CONV -->|"Yes — next epoch"| EPOCH
-    CONV -->|"No — patience exceeded"| DONE["Return P, Q, biases\nGenerate recs"]
+ INIT["Init P, Q\n~ Normal(0, 0.01)\nInit b_u, b_i = 0"] --> EPOCH
+ EPOCH["Start epoch"] --> SHUFFLE
+ SHUFFLE["Shuffle observed\n(u, i, r_ui) triples"] --> PICK
+ PICK["Pick next\nrating (u, i, r)"] --> FWD
+ FWD["Forward pass\nr̂ = μ + b_u + b_i + p_u·q_i"] --> ERR
+ ERR["Error\ne = r − r̂"] --> UPDT
+ UPDT["SGD update\np_u += α(e·q_i − λ·p_u)\nq_i += α(e·p_u − λ·q_i)\nb_u += α(e − λ·b_u)\nb_i += α(e − λ·b_i)"] --> MORE
+ MORE{"More ratings\nin epoch?"} -->|"Yes"| PICK
+ MORE -->|"No"| VAL["Compute val RMSE\nCheck convergence"]
+ VAL --> CONV{"Val RMSE\nimproving?"}
+ CONV -->|"Yes — next epoch"| EPOCH
+ CONV -->|"No — patience exceeded"| DONE["Return P, Q, biases\nGenerate recs"]
 
-    style INIT fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style UPDT fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style DONE fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style INIT fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style UPDT fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style DONE fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### Latent Factor Space — Why Cold Items Get Discovered
 
 ```mermaid
 flowchart LR
-    subgraph USERS["User latent vectors (P)"]
-        U1["User A — cerebral fan\n[0.82, 0.61]"]
-        U2["User B — action fan\n[1.17, 0.32]"]
-    end
-    subgraph ITEMS["Item latent vectors (Q)"]
-        I1["Thoughtful drama\n[0.54, 0.99]"]
-        I2["Action blockbuster\n[1.36, 0.33]"]
-        I3["Cerebral + action\n[1.04, 0.24]"]
-    end
-    U1 -->|"high: 0.44+0.60=1.04"| I1
-    U1 -->|"moderate: 0.85+0.15"| I3
-    U2 -->|"highest: 1.59+0.11=1.70"| I2
-    U2 -->|"moderate: 1.22+0.08"| I3
+ subgraph USERS["User latent vectors (P)"]
+ U1["User A — cerebral fan\n[0.82, 0.61]"]
+ U2["User B — action fan\n[1.17, 0.32]"]
+ end
+ subgraph ITEMS["Item latent vectors (Q)"]
+ I1["Thoughtful drama\n[0.54, 0.99]"]
+ I2["Action blockbuster\n[1.36, 0.33]"]
+ I3["Cerebral + action\n[1.04, 0.24]"]
+ end
+ U1 -->|"high: 0.44+0.60=1.04"| I1
+ U1 -->|"moderate: 0.85+0.15"| I3
+ U2 -->|"highest: 1.59+0.11=1.70"| I2
+ U2 -->|"moderate: 1.22+0.08"| I3
 
-    style U1 fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style U2 fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style I1 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style I2 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style I3 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style U1 fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style U2 fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style I1 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style I2 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style I3 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -546,7 +546,7 @@ The most impactful dial. Too few factors: can't capture taste complexity. Too ma
 |-----|------------|----------|-----------------------|-------|
 | 2 | 1.21 | 1.19 | < 1 MB | Toy — misses nuance |
 | 10 | 0.98 | 0.96 | 2 MB | Decent; misses long-tail patterns |
-| **20** | **0.89** | **0.91** | **5 MB** | **✅ Sweet spot for MovieLens 100k** |
+| **20** | **0.89** | **0.91** | **5 MB** | ** Sweet spot for MovieLens 100k** |
 | 50 | 0.74 | 0.94 | 13 MB | Overfitting creeps in |
 | 100 | 0.51 | 1.09 | 25 MB | Clear overfit |
 | 200 | 0.33 | 1.31 | 50 MB | Severe overfit |
@@ -559,11 +559,11 @@ The most impactful dial. Too few factors: can't capture taste complexity. Too ma
 |-----------|--------|----------------------|
 | 0.0001 | Almost no shrinkage | Train RMSE → 0.05, val RMSE → 1.4 |
 | 0.01 | Light shrinkage | Good for larger $k$ |
-| **0.05–0.1** | **Standard range** | **✅ Best val RMSE** |
+| **0.05–0.1** | **Standard range** | ** Best val RMSE** |
 | 1.0 | Heavy shrinkage | Vectors collapse; predictions → $\mu$ |
 | 10.0 | Extreme | All predictions ≈ 3.53 — pure underfitting |
 
-> ⚠️ **Separate $\lambda$ for users and items.** Many implementations use one $\lambda$ for both. In production, tuning separately helps: niche items (few ratings) benefit from heavier regularisation. Per-item $\lambda_i \propto |R_i|^{-0.5}$ is a practical heuristic.
+> **Separate $\lambda$ for users and items.** Many implementations use one $\lambda$ for both. In production, tuning separately helps: niche items (few ratings) benefit from heavier regularisation. Per-item $\lambda_i \propto |R_i|^{-0.5}$ is a practical heuristic.
 
 ### Dial 3: $\alpha$ — Learning Rate
 
@@ -621,31 +621,31 @@ Implicit feedback is the norm in production — most users never rate movies, bu
 
 | Method | HR@10 | RMSE | Cold Start | Notes |
 |--------|-------|------|-----------|-------|
-| Popularity baseline (Ch.1) | 42% | — | ❌ | Not personalised |
-| Item-CF (Ch.2) | ~65% | ~1.05 | ❌ | Sparse, O(n²) memory |
-| **Plain MF** (this chapter) | **~75%** | **~0.92** | ❌ | Latent factors bridge sparsity |
-| **MF + bias terms** (this chapter) | **~78%** | **~0.89** | ❌ | Biases absorb popularity effect |
-| Target | **>85%** | — | ✅ | Not yet reached |
+| Popularity baseline (Ch.1) | 42% | — | | Not personalised |
+| Item-CF (Ch.2) | ~65% | ~1.05 | | Sparse, O(n²) memory |
+| **Plain MF** (this chapter) | **~75%** | **~0.92** | | Latent factors bridge sparsity |
+| **MF + bias terms** (this chapter) | **~78%** | **~0.89** | | Biases absorb popularity effect |
+| Target | **>85%** | — | | Not yet reached |
 
 **Constraint dashboard after Ch.3:**
 
 | # | Constraint | Status | Evidence |
 |---|-----------|--------|---------|
-| 1 | ACCURACY >85% HR@10 | ⚠️ 78% | +13 points over item-CF; 7 more needed |
-| 2 | COLD START | ❌ Fails | New user has no trained $\mathbf{p}$ vector |
-| 3 | SCALABILITY | ✅ | $O(k)$ prediction; 21× less memory than item-CF |
-| 4 | DIVERSITY | ⚠️ Moderate | Niche items surface more, but popularity bias persists |
-| 5 | EXPLAINABILITY | ⚠️ | Latent dimensions are discovered, not labelled |
+| 1 | ACCURACY >85% HR@10 | 78% | +13 points over item-CF; 7 more needed |
+| 2 | COLD START | Fails | New user has no trained $\mathbf{p}$ vector |
+| 3 | SCALABILITY | | $O(k)$ prediction; 21× less memory than item-CF |
+| 4 | DIVERSITY | Moderate | Niche items surface more, but popularity bias persists |
+| 5 | EXPLAINABILITY | | Latent dimensions are discovered, not labelled |
 
 **What MF solved over item-CF:**
-- ✅ Sparsity — users who never rated the same movie can still have close latent vectors
-- ✅ Memory — $(943+1682)\times20 \approx 52\text{k}$ floats vs $1682^2 \approx 2.8\text{M}$ for item-item similarity
-- ✅ Generalisation — regularised factors don't overfit training noise
+- Sparsity — users who never rated the same movie can still have close latent vectors
+- Memory — $(943+1682)\times20 \approx 52\text{k}$ floats vs $1682^2 \approx 2.8\text{M}$ for item-item similarity
+- Generalisation — regularised factors don't overfit training noise
 
 **What MF didn't solve:**
-- ❌ Cold start — new users and new items remain unrepresented until rated
-- ❌ Explainability — "dimension 7 is high" doesn't satisfy "because you liked X"
-- ❌ The last 7 points to 85% — requires non-linear interaction modelling
+- Cold start — new users and new items remain unrepresented until rated
+- Explainability — "dimension 7 is high" doesn't satisfy "because you liked X"
+- The last 7 points to 85% — requires non-linear interaction modelling
 
 ---
 
@@ -659,4 +659,4 @@ $$\hat{r}_{ui} = \text{MLP}([\mathbf{p}_u \oplus \mathbf{q}_i])$$
 
 where $\oplus$ denotes concatenation of the two embedding vectors. The MLP can learn arbitrary non-linear interactions between user and item dimensions — including complex combinatorial preferences. He et al. (2017) showed NeuralCF consistently outperforms plain MF on implicit feedback datasets. Ch.4 extends the embeddings you learned here into the neural setting, adding non-linearity, dropout, and batch normalisation — the full toolkit from the Neural Networks track, now applied to recommendations.
 
-> ⚡ **Preview:** NeuralCF + proper implicit feedback handling pushes FlixAI to ~82% HR@10. The final 3 points to 85% require the hybrid content-aware systems in Ch.5 and the cold-start solutions in Ch.6.
+> **Preview:** NeuralCF + proper implicit feedback handling pushes FlixAI to ~82% HR@10. The final 3 points to 85% require the hybrid content-aware systems in Ch.5 and the cold-start solutions in Ch.6.

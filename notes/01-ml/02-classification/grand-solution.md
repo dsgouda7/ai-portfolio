@@ -8,7 +8,7 @@
 
 1. **📖 Read this document** — Conceptual walkthrough with production architecture, key insights, and integration patterns. Perfect for understanding *why* each concept matters and *how* they connect in production systems.
 
-2. **💻 Run the notebook** — [grand_solution.ipynb (reference)](grand_solution_reference.ipynb) | [grand_solution.ipynb (exercise)](grand_solution_exercise.ipynb) consolidates all code examples into a single executable demonstration. Shows the complete progression from Ch.1 baseline → Ch.5 tuned system with runnable code cells and concise explanations.
+2. ** Run the notebook** — [grand_solution.ipynb (reference)](grand_solution_reference.ipynb) | [grand_solution.ipynb (exercise)](grand_solution_exercise.ipynb) consolidates all code examples into a single executable demonstration. Shows the complete progression from Ch.1 baseline → Ch.5 tuned system with runnable code cells and concise explanations.
 
 **Recommended path:**
 - **Short on time?** Read this document only (15 min)
@@ -25,7 +25,7 @@
 
 ---
 
-## Mission Accomplished: 92% Accuracy ✅
+## Mission Accomplished: 92% Accuracy
 
 **The Challenge:** Build FaceAI — a production facial attribute classification system achieving >90% average accuracy on 40 binary attributes, replacing manual tagging ($0.05/image × 200k images = $10k cost).
 
@@ -34,12 +34,12 @@
 **The Progression:**
 
 ```
-Ch.1: Logistic regression baseline  → 88% accuracy  (sigmoid + cross-entropy unlocked)
-Ch.2: Classical classifiers         → 85% accuracy  (interpretability vs accuracy trade-off)
-Ch.3: Proper evaluation metrics     → 88% validated (confusion matrices, F1, ROC/PR curves)
-Ch.4: Support Vector Machines       → 89% accuracy  (maximum-margin separation + RBF kernel)
-Ch.5: Hyperparameter tuning         → 92% accuracy  (systematic optimization + threshold tuning)
-                                      ✅ TARGET: >90% accuracy
+Ch.1: Logistic regression baseline → 88% accuracy (sigmoid + cross-entropy unlocked)
+Ch.2: Classical classifiers → 85% accuracy (interpretability vs accuracy trade-off)
+Ch.3: Proper evaluation metrics → 88% validated (confusion matrices, F1, ROC/PR curves)
+Ch.4: Support Vector Machines → 89% accuracy (maximum-margin separation + RBF kernel)
+Ch.5: Hyperparameter tuning → 92% accuracy (systematic optimization + threshold tuning)
+TARGET: >90% accuracy
 ```
 
 ---
@@ -152,31 +152,31 @@ Here's how all 5 concepts integrate into a deployed FaceAI system:
 
 ```mermaid
 flowchart TD
-    INPUT["Raw face image<br/>(178×218 RGB)"] --> PREPROCESS["Image Preprocessing<br/>Resize to 64×64<br/>Grayscale conversion"]
-    
-    PREPROCESS --> FEATURES["Feature Extraction<br/>Ch.1: HOG descriptors<br/>1,764 features"]
-    
-    FEATURES --> VALIDATE["Data Validation<br/>Check feature range<br/>Missing value handling"]
-    
-    VALIDATE --> SCALE["Feature Scaling<br/>Ch.1: StandardScaler<br/>μ=0, σ=1"]
-    
-    SCALE --> MODEL["Classifier Ensemble<br/>Ch.5: Tuned SVM (C=100, γ=0.01)<br/>or Ch.1: LogReg baseline"]
-    
-    MODEL --> PROB["Probability Output<br/>40 attributes × [0,1]"]
-    
-    PROB --> THRESHOLD["Per-Attribute Thresholding<br/>Ch.5: Smiling t=0.48<br/>Bald t=0.25<br/>Eyeglasses t=0.35"]
-    
-    THRESHOLD --> BINARY["Binary Predictions<br/>{Smiling: 1,<br/>Bald: 0,<br/>...}"]
-    
-    BINARY --> MONITOR["Monitoring<br/>Ch.3: Track F1-macro drift<br/>Alert if < 0.85"]
-    
-    MONITOR --> EXPLAIN["Explainability<br/>Ch.2: Tree rules fallback<br/>Ch.4: Support vector inspection"]
-    
-    EXPLAIN --> OUTPUT["API Response<br/>{attributes: {...},<br/>confidence: {...},<br/>top_features: [...]}"]
-    
-    style INPUT fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style MODEL fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style OUTPUT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ INPUT["Raw face image<br/>(178×218 RGB)"] --> PREPROCESS["Image Preprocessing<br/>Resize to 64×64<br/>Grayscale conversion"]
+
+ PREPROCESS --> FEATURES["Feature Extraction<br/>Ch.1: HOG descriptors<br/>1,764 features"]
+
+ FEATURES --> VALIDATE["Data Validation<br/>Check feature range<br/>Missing value handling"]
+
+ VALIDATE --> SCALE["Feature Scaling<br/>Ch.1: StandardScaler<br/>μ=0, σ=1"]
+
+ SCALE --> MODEL["Classifier Ensemble<br/>Ch.5: Tuned SVM (C=100, γ=0.01)<br/>or Ch.1: LogReg baseline"]
+
+ MODEL --> PROB["Probability Output<br/>40 attributes × [0,1]"]
+
+ PROB --> THRESHOLD["Per-Attribute Thresholding<br/>Ch.5: Smiling t=0.48<br/>Bald t=0.25<br/>Eyeglasses t=0.35"]
+
+ THRESHOLD --> BINARY["Binary Predictions<br/>{Smiling: 1,<br/>Bald: 0,<br/>...}"]
+
+ BINARY --> MONITOR["Monitoring<br/>Ch.3: Track F1-macro drift<br/>Alert if < 0.85"]
+
+ MONITOR --> EXPLAIN["Explainability<br/>Ch.2: Tree rules fallback<br/>Ch.4: Support vector inspection"]
+
+ EXPLAIN --> OUTPUT["API Response<br/>{attributes: {...},<br/>confidence: {...},<br/>top_features: [...]}"]
+
+ style INPUT fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style MODEL fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style OUTPUT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### Deployment Pipeline (How Ch.1-5 Connect in Production)
@@ -185,75 +185,75 @@ flowchart TD
 ```python
 # Ch.1: Load CelebA (5000 samples × 40 attributes) + extract HOG + scale
 X_train, X_test, y_train, y_test = load_celeba_subset()
-X_train_hog = extract_hog_features(X_train)  # 5000 × 1764 features
+X_train_hog = extract_hog_features(X_train) # 5000 × 1764 features
 scaler = StandardScaler().fit(X_train_hog)
 X_train_scaled = scaler.transform(X_train_hog)
 
 # Ch.5: Hyperparameter tuning with nested CV (per attribute)
 for attr_idx, attr_name in enumerate(ATTRIBUTES):
-    y_attr = y_train[:, attr_idx]
-    # Grid search: C ∈ {1, 10, 100}, γ ∈ {0.001, 0.01, 0.1}
-    search = GridSearchCV(
-        SVC(probability=True),
-        param_grid={'C': [1, 10, 100], 'gamma': [0.001, 0.01, 0.1]},
-        cv=5, scoring='f1'
-    )
-    search.fit(X_train_scaled, y_attr)
-    # Ch.5: Find optimal threshold for this attribute
-    y_probs = search.predict_proba(X_val_scaled)[:, 1]
-    optimal_threshold = find_optimal_threshold(y_val, y_probs)
-    models[attr_name] = search.best_estimator_
-    thresholds[attr_name] = optimal_threshold
+ y_attr = y_train[:, attr_idx]
+ # Grid search: C ∈ {1, 10, 100}, γ ∈ {0.001, 0.01, 0.1}
+ search = GridSearchCV(
+ SVC(probability=True),
+ param_grid={'C': [1, 10, 100], 'gamma': [0.001, 0.01, 0.1]},
+ cv=5, scoring='f1'
+ )
+ search.fit(X_train_scaled, y_attr)
+ # Ch.5: Find optimal threshold for this attribute
+ y_probs = search.predict_proba(X_val_scaled)[:, 1]
+ optimal_threshold = find_optimal_threshold(y_val, y_probs)
+ models[attr_name] = search.best_estimator_
+ thresholds[attr_name] = optimal_threshold
 
 # Ch.3: Validate with F1 scores
 for attr_name in ATTRIBUTES:
-    y_pred = (models[attr_name].predict_proba(X_test_scaled)[:, 1] > thresholds[attr_name])
-    print(f"{attr_name}: F1={f1_score(y_test[attr_name], y_pred):.3f}")
+ y_pred = (models[attr_name].predict_proba(X_test_scaled)[:, 1] > thresholds[attr_name])
+ print(f"{attr_name}: F1={f1_score(y_test[attr_name], y_pred):.3f}")
 ```
 
 **2. Inference API (handles user requests):**
 ```python
 @app.route('/classify', methods=['POST'])
 def classify_face():
-    # Ch.1: Load image → resize to 64×64 → grayscale → extract HOG → scale
-    image = load_image(request.files['image'])
-    image_gray = rgb2gray(resize(image, (64, 64)))
-    hog_features = extract_hog_features(image_gray)
-    X = scaler.transform([hog_features])
-    
-    # Ch.5: Predict all 40 attributes with tuned thresholds
-    predictions, confidences = {}, {}
-    for attr_name in ATTRIBUTES:
-        prob_positive = models[attr_name].predict_proba(X)[0][1]
-        predictions[attr_name] = int(prob_positive > thresholds[attr_name])
-        confidences[attr_name] = float(prob_positive)
-    
-    # Ch.2: Optional explainability via decision tree rules
-    if request.args.get('explain'):
-        tree_rules = explain_via_tree(hog_features, 'Smiling')
-        return {"predictions": predictions, "rules": tree_rules}
-    
-    return {"attributes": predictions, "confidence": confidences, "model_version": "v2.1_tuned_svm"}
+ # Ch.1: Load image → resize to 64×64 → grayscale → extract HOG → scale
+ image = load_image(request.files['image'])
+ image_gray = rgb2gray(resize(image, (64, 64)))
+ hog_features = extract_hog_features(image_gray)
+ X = scaler.transform([hog_features])
+
+ # Ch.5: Predict all 40 attributes with tuned thresholds
+ predictions, confidences = {}, {}
+ for attr_name in ATTRIBUTES:
+ prob_positive = models[attr_name].predict_proba(X)[0][1]
+ predictions[attr_name] = int(prob_positive > thresholds[attr_name])
+ confidences[attr_name] = float(prob_positive)
+
+ # Ch.2: Optional explainability via decision tree rules
+ if request.args.get('explain'):
+ tree_rules = explain_via_tree(hog_features, 'Smiling')
+ return {"predictions": predictions, "rules": tree_rules}
+
+ return {"attributes": predictions, "confidence": confidences, "model_version": "v2.1_tuned_svm"}
 ```
 
 **3. Monitoring Dashboard (tracks production health):**
 ```python
 # Ch.3: Alert if F1-macro drops below threshold
 if production_f1_macro < 0.85:
-    alert("F1-macro dropped below 0.85 — possible data drift")
+ alert("F1-macro dropped below 0.85 — possible data drift")
 
 # Ch.3: Track per-attribute metrics separately
 for attr_name in ATTRIBUTES:
-    if production_f1[attr_name] < baseline_f1[attr_name] - 0.05:
-        alert(f"{attr_name} F1 dropped by >5% — investigate")
+ if production_f1[attr_name] < baseline_f1[attr_name] - 0.05:
+ alert(f"{attr_name} F1 dropped by >5% — investigate")
 
 # Ch.5: Retrain trigger (weekly schedule)
 if days_since_training > 7:
-    trigger_retraining_pipeline()
+ trigger_retraining_pipeline()
 
 # Ch.3: Precision/recall monitoring (SLA enforcement)
-if production_precision['Bald'] < 0.40:  # Contractual minimum
-    alert("Bald precision SLA violated — too many false positives")
+if production_precision['Bald'] < 0.40: # Contractual minimum
+ alert("Bald precision SLA violated — too many false positives")
 ```
 
 ---
@@ -302,21 +302,21 @@ if production_precision['Bald'] < 0.40:  # Contractual minimum
 
 | # | Constraint | Target | Status | How We Achieved It |
 |---|------------|--------|--------|-------------------|
-| **#1** | **ACCURACY** | >90% avg accuracy | ✅ **92%** | Ch.5: Tuned SVM + threshold optimization |
-| **#2** | **GENERALIZATION** | Unseen celebrity faces | ✅ **Validated** | Ch.3: 5-fold CV + Ch.5: nested CV |
-| **#3** | **MULTI-LABEL** | 40 simultaneous attributes | ⚡ **Framework ready** | Ch.5: 40 independent classifiers + thresholds |
-| **#4** | **INTERPRETABILITY** | Explain predictions | ✅ **Partial** | Ch.2: Tree rules + Ch.4: Support vectors |
-| **#5** | **PRODUCTION** | <200ms inference | ⚡ **Achievable** | Ch.1: LogReg 5ms, Ch.4: SVM 50ms, batching available |
+| **#1** | **ACCURACY** | >90% avg accuracy | **92%** | Ch.5: Tuned SVM + threshold optimization |
+| **#2** | **GENERALIZATION** | Unseen celebrity faces | **Validated** | Ch.3: 5-fold CV + Ch.5: nested CV |
+| **#3** | **MULTI-LABEL** | 40 simultaneous attributes | **Framework ready** | Ch.5: 40 independent classifiers + thresholds |
+| **#4** | **INTERPRETABILITY** | Explain predictions | **Partial** | Ch.2: Tree rules + Ch.4: Support vectors |
+| **#5** | **PRODUCTION** | <200ms inference | **Achievable** | Ch.1: LogReg 5ms, Ch.4: SVM 50ms, batching available |
 
 ---
 
 ## What's Next: Beyond Classification
 
 **This track taught:**
-- ✅ Binary classification fundamentals (Ch.1: sigmoid + cross-entropy)
-- ✅ Evaluation for imbalanced data (Ch.3: F1, PR curves, threshold tuning)
-- ✅ Maximum-margin principle (Ch.4: SVM kernel trick)
-- ✅ Systematic hyperparameter search (Ch.5: Grid/Random/Bayesian optimization)
+- Binary classification fundamentals (Ch.1: sigmoid + cross-entropy)
+- Evaluation for imbalanced data (Ch.3: F1, PR curves, threshold tuning)
+- Maximum-margin principle (Ch.4: SVM kernel trick)
+- Systematic hyperparameter search (Ch.5: Grid/Random/Bayesian optimization)
 
 **What remains for FaceAI:**
 - **Deep learning** (Track 03 — Neural Networks): CNN architectures for end-to-end learning from raw pixels (no manual HOG features)
@@ -350,7 +350,7 @@ if production_precision['Bald'] < 0.40:  # Contractual minimum
 The critical insight: **accuracy is a liar for imbalanced data**. The journey from 97.4% "accuracy" on Bald (predicting everyone as Not-Bald) to 52% F1 (actually catching 68% of bald faces) is the story of proper evaluation.
 
 **You now have:**
-- A production-ready classifier system (92% F1 on Smiling ✅, 52% F1 on Bald ✅)
+- A production-ready classifier system (92% F1 on Smiling , 52% F1 on Bald )
 - A mental model for imbalanced classification (per-class F1, PR curves, threshold tuning)
 - The vocabulary to debug production classifiers ("precision dropped = too aggressive", "recall dropped = too cautious")
 - A hyperparameter tuning pipeline (Grid/Random/Bayesian search with nested CV)

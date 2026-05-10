@@ -4,7 +4,7 @@
 
 > This document is your **entry point and reading map**. It explains the conceptual arc across all chapters, defines the running scenario that threads through every note, shows how each chapter connects to the others, and prescribes reading paths based on your goal.
 
-> **Track Status:** ✅ **COMPLETE** — All 10 chapters finished (GPU architecture through production monitoring)
+> **Track Status:** **COMPLETE** — All 10 chapters finished (GPU architecture through production monitoring)
 
 ---
 
@@ -22,33 +22,33 @@ Every note in this track is anchored to a single growing problem: **InferenceBas
 
 ```
 InferenceBase after Ch.1:
-  Question: What GPU hardware do we even need for Llama-3-8B?
-  Answer:   Understand CUDA cores, tensor cores, VRAM, and bandwidth — pick a card.
+ Question: What GPU hardware do we even need for Llama-3-8B?
+ Answer: Understand CUDA cores, tensor cores, VRAM, and bandwidth — pick a card.
 
 InferenceBase after Ch.2:
-  Question: Will the model actually fit? What about training updates?
-  Answer:   Estimate VRAM precisely — parameters, KV cache, optimizer states.
+ Question: Will the model actually fit? What about training updates?
+ Answer: Estimate VRAM precisely — parameters, KV cache, optimizer states.
 
 InferenceBase after Ch.3:
-  Question: Can we go smaller without killing quality?
-  Answer:   Quantize to INT4, benchmark perplexity, decide if the tradeoff holds.
+ Question: Can we go smaller without killing quality?
+ Answer: Quantize to INT4, benchmark perplexity, decide if the tradeoff holds.
 
 InferenceBase after Ch.4:
-  Question: How do we scale out when one GPU isn't enough?
-  Answer:   Data parallelism, tensor parallelism, ZeRO — pick the right strategy.
+ Question: How do we scale out when one GPU isn't enough?
+ Answer: Data parallelism, tensor parallelism, ZeRO — pick the right strategy.
 
 InferenceBase after Ch.5:
-  Question: How do we serve 10,000 requests/day efficiently?
-  Answer:   KV cache, continuous batching, PagedAttention — throughput without waste.
+ Question: How do we serve 10,000 requests/day efficiently?
+ Answer: KV cache, continuous batching, PagedAttention — throughput without waste.
 
 InferenceBase after Ch.10:
-  Question: How do we know if production models are degrading?
-  Answer:   Monitor drift, deploy A/B tests, automate rollback on performance drops.
+ Question: How do we know if production models are degrading?
+ Answer: Monitor drift, deploy A/B tests, automate rollback on performance drops.
 
 InferenceBase final outcome:
-  Original cost: $80,000/month in API bills
-  Final cost:    $7,300/month for multi-GPU self-hosted infrastructure
-  Savings:       91% cost reduction while maintaining production SLAs
+ Original cost: $80,000/month in API bills
+ Final cost: $7,300/month for multi-GPU self-hosted infrastructure
+ Savings: 91% cost reduction while maintaining production SLAs
 ```
 
 The key constraint: **InferenceBase has a $15,000/month cloud compute budget to replace $80,000/month in API costs, and the founding Platform Engineer has two weeks**. Every chapter confronts the tradeoffs that constraint forces.
@@ -69,40 +69,40 @@ AI infrastructure is one of the few disciplines where you can point at a specifi
 Currently Implemented (Ch.1–7):
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                        AI INFRASTRUCTURE STACK                               │
-│                                                                               │
-│  ┌────────────────────────────────────────────────────────────────────────┐ │
-│  │              INFERENCE LAYER (Ch.5) — IMPLEMENTED                      │ │
-│  │                                                                          │ │
-│  │      KV Cache · Continuous Batching · PagedAttention                    │ │
-│  │      Ch.6: vLLM, ONNX Runtime, TensorRT (Serving Frameworks)           │ │
-│  └───────────────────────────────┬──────────────────────────────────────┘ │
-│                                  │                                          │
-│  ┌────────────────────────────────▼──────────────────────────────────────┐ │
-│  │      PARALLELISM LAYER (Ch.4) — IMPLEMENTED                            │ │
-│  │                                                                          │ │
-│  │      Data / Tensor / Pipeline Parallelism · ZeRO                       │ │
-│  │      Ch.7: NVLink, InfiniBand, RDMA (Networking) — IMPLEMENTED         │ │
-│  └───────────────────────────────┬──────────────────────────────────────┘ │
-│                                  │                                          │
-│  ┌────────────────────────────────▼──────────────────────────────────────┐ │
-│  │       OPTIMIZATION LAYER (Ch.3) — IMPLEMENTED                          │ │
-│  │                                                                          │ │
-│  │  BF16 / INT8 / INT4 · GPTQ · AWQ · GGUF · Loss Scaling                 │ │
-│  └───────────────────────────────┬──────────────────────────────────────┘ │
-│                                  │                                          │
-│  ┌────────────────────────────────▼──────────────────────────────────────┐ │
-│  │        MEMORY LAYER (Ch.2) — IMPLEMENTED                               │ │
-│  │                                                                          │ │
-│  │  Parameters · Activations · Optimizer States · KV Cache                │ │
-│  │  VRAM Budget · Offloading · Flash Attention                             │ │
-│  └───────────────────────────────┬──────────────────────────────────────┘ │
-│                                  │                                          │
-│  ┌────────────────────────────────▼──────────────────────────────────────┐ │
-│  │        HARDWARE LAYER (Ch.1) — COMPLETE                               │ │
-│  │                                                                          │ │
-│  │  CUDA Cores · Tensor Cores · HBM · Memory Bandwidth · Roofline Model  │ │
-│  └────────────────────────────────────────────────────────────────────────┘ │
+│ AI INFRASTRUCTURE STACK │
+│ │
+│ ┌────────────────────────────────────────────────────────────────────────┐ │
+│ │ INFERENCE LAYER (Ch.5) — IMPLEMENTED │ │
+│ │ │ │
+│ │ KV Cache · Continuous Batching · PagedAttention │ │
+│ │ Ch.6: vLLM, ONNX Runtime, TensorRT (Serving Frameworks) │ │
+│ └───────────────────────────────┬──────────────────────────────────────┘ │
+│ │ │
+│ ┌────────────────────────────────▼──────────────────────────────────────┐ │
+│ │ PARALLELISM LAYER (Ch.4) — IMPLEMENTED │ │
+│ │ │ │
+│ │ Data / Tensor / Pipeline Parallelism · ZeRO │ │
+│ │ Ch.7: NVLink, InfiniBand, RDMA (Networking) — IMPLEMENTED │ │
+│ └───────────────────────────────┬──────────────────────────────────────┘ │
+│ │ │
+│ ┌────────────────────────────────▼──────────────────────────────────────┐ │
+│ │ OPTIMIZATION LAYER (Ch.3) — IMPLEMENTED │ │
+│ │ │ │
+│ │ BF16 / INT8 / INT4 · GPTQ · AWQ · GGUF · Loss Scaling │ │
+│ └───────────────────────────────┬──────────────────────────────────────┘ │
+│ │ │
+│ ┌────────────────────────────────▼──────────────────────────────────────┐ │
+│ │ MEMORY LAYER (Ch.2) — IMPLEMENTED │ │
+│ │ │ │
+│ │ Parameters · Activations · Optimizer States · KV Cache │ │
+│ │ VRAM Budget · Offloading · Flash Attention │ │
+│ └───────────────────────────────┬──────────────────────────────────────┘ │
+│ │ │
+│ ┌────────────────────────────────▼──────────────────────────────────────┐ │
+│ │ HARDWARE LAYER (Ch.1) — COMPLETE │ │
+│ │ │ │
+│ │ CUDA Cores · Tensor Cores · HBM · Memory Bandwidth · Roofline Model │ │
+│ └────────────────────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -175,71 +175,71 @@ Currently Implemented (Ch.1–7):
 
 ```
 START HERE
-    │
-    ▼
+ │
+ ▼
 Step 0: UNDERSTAND THE HARDWARE
-        Ch.1 — GPU Architecture
+ Ch.1 — GPU Architecture
 
-        Key insight: A GPU is not a fast CPU. It is a massively parallel
-        matrix-multiply machine with a narrow memory bandwidth bottleneck.
-        Every subsequent decision — quantization, parallelism, serving
-        strategy — is an attempt to either feed that machine faster
-        or do more work per memory access.
-    │
-    ▼
+ Key insight: A GPU is not a fast CPU. It is a massively parallel
+ matrix-multiply machine with a narrow memory bandwidth bottleneck.
+ Every subsequent decision — quantization, parallelism, serving
+ strategy — is an attempt to either feed that machine faster
+ or do more work per memory access.
+ │
+ ▼
 Step 1: COUNT YOUR MEMORY BEFORE YOU START
-        Ch.2 — Memory & Compute Budgets
+ Ch.2 — Memory & Compute Budgets
 
-        Key insight: Most deployment failures are not code failures —
-        they are VRAM failures. A 7B parameter model in FP16 needs
-        ~14 GB just for weights. Add optimizer states, activations,
-        and the KV cache and you are at 40–80 GB before writing
-        a single line of training code.
-    │
-    ▼
+ Key insight: Most deployment failures are not code failures —
+ they are VRAM failures. A 7B parameter model in FP16 needs
+ ~14 GB just for weights. Add optimizer states, activations,
+ and the KV cache and you are at 40–80 GB before writing
+ a single line of training code.
+ │
+ ▼
 Step 2: SQUEEZE THE MODEL
-        Ch.3 — Quantization & Precision
+ Ch.3 — Quantization & Precision
 
-        Key insight: INT4 quantization cuts memory by 8× vs FP32, with
-        1–3% perplexity degradation on most models. BF16 training is
-        almost always better than FP16. FP8 is the emerging standard
-        for H100-class hardware.
-    │
-    ▼
+ Key insight: INT4 quantization cuts memory by 8× vs FP32, with
+ 1–3% perplexity degradation on most models. BF16 training is
+ almost always better than FP16. FP8 is the emerging standard
+ for H100-class hardware.
+ │
+ ▼
 Step 3: SCALE OUT THE TRAINING
-        Ch.4 — Parallelism & Distributed Training
+ Ch.4 — Parallelism & Distributed Training
 
-        Key insight: Data parallelism is trivial to implement but hits
-        a wall at the per-GPU memory limit. Once the model no longer
-        fits on one GPU, you need tensor or pipeline parallelism —
-        and the communication cost becomes the dominant constraint.
-    │
-    ▼
+ Key insight: Data parallelism is trivial to implement but hits
+ a wall at the per-GPU memory limit. Once the model no longer
+ fits on one GPU, you need tensor or pipeline parallelism —
+ and the communication cost becomes the dominant constraint.
+ │
+ ▼
 Step 4: OPTIMISE THE INFERENCE PATH
-        Ch.5 — Inference Optimization
+ Ch.5 — Inference Optimization
 
-        Key insight: Training throughput and inference throughput have
-        opposite optima. Training wants large batches; inference wants
-        low latency. The KV cache, continuous batching, and PagedAttention
-        are the mechanisms that reconcile these pressures.
-    │
-    ▼
+ Key insight: Training throughput and inference throughput have
+ opposite optima. Training wants large batches; inference wants
+ low latency. The KV cache, continuous batching, and PagedAttention
+ are the mechanisms that reconcile these pressures.
+ │
+ ▼
 Step 5: TRACK YOUR EXPERIMENTS
-        Ch.9 — ML Experiment Tracking & Model Registry
+ Ch.9 — ML Experiment Tracking & Model Registry
 
-        Key insight: At 100+ experiments, you can't rely on file names
-        and notebook cells. MLflow tracks hyperparameters and metrics
-        across runs. DVC versions datasets. Model registries manage
-        deployment lineage — what's in production, what's staged, what failed.
-    │
-    ▼
+ Key insight: At 100+ experiments, you can't rely on file names
+ and notebook cells. MLflow tracks hyperparameters and metrics
+ across runs. DVC versions datasets. Model registries manage
+ deployment lineage — what's in production, what's staged, what failed.
+ │
+ ▼
 Step 6: MONITOR PRODUCTION
-        Ch.10 — Production ML Monitoring & A/B Testing
+ Ch.10 — Production ML Monitoring & A/B Testing
 
-        Key insight: Models degrade silently. Drift detection catches
-        distribution shifts. A/B testing validates model improvements
-        with real users. Automated rollback prevents bad deployments
-        from lasting more than one alert cycle.
+ Key insight: Models degrade silently. Drift detection catches
+ distribution shifts. A/B testing validates model improvements
+ with real users. Automated rollback prevents bad deployments
+ from lasting more than one alert cycle.
 ```
 
 ---
@@ -402,13 +402,13 @@ Step 6: MONITOR PRODUCTION
 Every chapter in this track follows the same structure (mirroring the ML and AI tracks):
 
 ```
-notes/AIInfrastructure/  (10 chapters complete)
+notes/AIInfrastructure/ (10 chapters complete)
 ├── GPUArchitecture/
-│   ├── GPUArchitecture.md     ← Technical deep-dive: concepts, diagrams, interview checklist
-│   └── notebook.ipynb         ← Calculator / simulator that makes the concepts concrete
+│ ├── GPUArchitecture.md ← Technical deep-dive: concepts, diagrams, interview checklist
+│ └── notebook.ipynb ← Calculator / simulator that makes the concepts concrete
 ├── MemoryAndComputeBudgets/
-│   ├── MemoryAndComputeBudgets.md
-│   └── notebook.ipynb
+│ ├── MemoryAndComputeBudgets.md
+│ └── notebook.ipynb
 ├── QuantizationAndPrecision/
 ├── ParallelismAndDistributedTraining/
 ├── InferenceOptimization/
@@ -416,11 +416,11 @@ notes/AIInfrastructure/  (10 chapters complete)
 ├── AISpecificNetworking/
 ├── FeatureStores/
 ├── MLExperimentTracking/
-│   ├── MLExperimentTracking.md
-│   └── notebook.ipynb
+│ ├── MLExperimentTracking.md
+│ └── notebook.ipynb
 └── ProductionMLMonitoring/
-    ├── ProductionMLMonitoring.md
-    └── notebook.ipynb
+ ├── ProductionMLMonitoring.md
+ └── notebook.ipynb
 ```
 
 ### Chapter README structure
@@ -460,14 +460,14 @@ notes/AIInfrastructure/  (10 chapters complete)
 [markdown] Chapter title + one-liner
 [markdown] ## Core Idea
 [markdown] ## The InferenceBase Setup
-[code]     Define model/hardware parameters (user fills these in)
+[code] Define model/hardware parameters (user fills these in)
 [markdown] ## The Math / Simulation
-[code]     Implement the calculator, model, or simulator
-[code]     Visualise the result
+[code] Implement the calculator, model, or simulator
+[code] Visualise the result
 [markdown] ## Sensitivity Analysis
-[code]     Sweep a key variable — what changes?
+[code] Sweep a key variable — what changes?
 [markdown] ## Exercises
-[code]     2–3 prompts for the reader to explore independently
+[code] 2–3 prompts for the reader to explore independently
 ```
 
 ---

@@ -32,23 +32,23 @@ The Agentic AI track covers 6 core chapters: everything from tool-calling orches
 ```
 notes/03b-agentic-ai/
 ├── ch01-react-and-semantic-kernel/
-│   ├── react-and-semantic-kernel.md
-│   └── notebook.ipynb
+│ ├── react-and-semantic-kernel.md
+│ └── notebook.ipynb
 ├── ch02-safety-and-hallucination/
-│   ├── safety-and-hallucination.md
-│   └── notebook.ipynb
+│ ├── safety-and-hallucination.md
+│ └── notebook.ipynb
 ├── ch03-evaluating-ai-systems/
-│   ├── evaluating-ai-systems.md
-│   └── notebook.ipynb
+│ ├── evaluating-ai-systems.md
+│ └── notebook.ipynb
 ├── ch04-cost-and-latency/
-│   ├── cost-and-latency.md
-│   └── notebook.ipynb
+│ ├── cost-and-latency.md
+│ └── notebook.ipynb
 ├── ch05-fine-tuning/
-│   ├── fine-tuning.md
-│   └── notebook.ipynb
+│ ├── fine-tuning.md
+│ └── notebook.ipynb
 ├── ch06-advanced-agentic-patterns/
-│   ├── advanced-agentic-patterns.md
-│   └── notebook.ipynb
+│ ├── advanced-agentic-patterns.md
+│ └── notebook.ipynb
 ```
 
 ---

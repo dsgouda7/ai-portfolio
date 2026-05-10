@@ -21,7 +21,7 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Launch **UnifiedAI** — a production home valuation system satisfying 5 constraints:
+> **The mission**: Launch **UnifiedAI** — a production home valuation system satisfying 5 constraints:
 > 1. **ACCURACY**: ≤$28k MAE (regression) + ≥95% accuracy (classification)
 > 2. **GENERALIZATION**: Unseen districts + new face identities
 > 3. **MULTI-TASK**: Same architecture predicts value **and** classifies attributes
@@ -29,14 +29,14 @@
 > 5. **PRODUCTION**: <100ms inference, TensorBoard monitoring
 
 **What we know so far:**
-- ✅ Ch.1–2: Dense feedforward networks unify regression and classification
-- ✅ Ch.3: Backpropagation and Adam optimizer work across both tasks
-- ✅ Ch.4: Dropout, L2, and BatchNorm prevent overfitting
-- ✅ Ch.5: CNNs extract spatial features for image regression
-- ✅ Ch.6: RNNs/LSTMs handle sequential data but impose serialisation
-- ✅ Ch.7: MSE and BCE both derive from Maximum Likelihood Estimation
-- ✅ Ch.8: TensorBoard monitors training across tasks (Constraint #5 partial)
-- ❌ **But Ch.6's LSTM treats all 8 housing features as a fixed left-to-right sequence — they have no natural order**
+- Ch.1–2: Dense feedforward networks unify regression and classification
+- Ch.3: Backpropagation and Adam optimizer work across both tasks
+- Ch.4: Dropout, L2, and BatchNorm prevent overfitting
+- Ch.5: CNNs extract spatial features for image regression
+- Ch.6: RNNs/LSTMs handle sequential data but impose serialisation
+- Ch.7: MSE and BCE both derive from Maximum Likelihood Estimation
+- Ch.8: TensorBoard monitors training across tasks (Constraint #5 partial)
+- **But Ch.6's LSTM treats all 8 housing features as a fixed left-to-right sequence — they have no natural order**
 
 **What's blocking us:**
 
@@ -49,13 +49,12 @@ The California Housing dataset has 8 features per district: `MedInc`, `HouseAge`
 3. **No interpretability (Constraint #4 INTERPRETABILITY):** The LSTM's hidden state is a dense, opaque vector. You cannot look at it and say "the model valued income and latitude over population." Regulators and product teams need this.
 
 **What this chapter unlocks:**
-
-⚡ **Attention mechanism — soft dictionary lookup over feature tokens:**
+**Attention mechanism — soft dictionary lookup over feature tokens:**
 - **Order-independent:** Each feature attends to every other feature regardless of position — no serialisation bias
 - **Transparent:** The $8 \times 8$ attention weight matrix shows exactly which features "looked at" which others
 - **Constraint #4 INTERPRETABILITY (partial):** Attention weights on `MedInc` and `Latitude` can be surfaced directly to explain a valuation — "the model focused primarily on income ($\alpha = 0.49$) and location ($\alpha = 0.37$)"
 
-> ➡️ **Forward to Ch.10:** This chapter builds the soft-lookup intuition with nothing beyond `numpy` dot products and `softmax`. Ch.10 adds learned projections ($W_Q, W_K, W_V$), multi-head attention, positional encoding, and feed-forward sublayers to complete the Transformer architecture behind GPT, BERT, and every modern LLM.
+> ➡ **Forward to Ch.10:** This chapter builds the soft-lookup intuition with nothing beyond `numpy` dot products and `softmax`. Ch.10 adds learned projections ($W_Q, W_K, W_V$), multi-head attention, positional encoding, and feed-forward sublayers to complete the Transformer architecture behind GPT, BERT, and every modern LLM.
 
 ---
 
@@ -82,11 +81,11 @@ The UnifiedAI mission predicts California house values. In Ch.6 we treated the 8
 ```
 Token sequence for one California district:
 
- Position:  1        2          3          4
- Feature:  MedInc  HouseAge  AveRooms  AveBedrms
+ Position: 1 2 3 4
+ Feature: MedInc HouseAge AveRooms AveBedrms
 
- Position:  5           6          7          8
- Feature:  Population  AveOccup  Latitude  Longitude
+ Position: 5 6 7 8
+ Feature: Population AveOccup Latitude Longitude
 ```
 
 The district used throughout this chapter is a **high-value coastal district** with approximate values:
@@ -174,7 +173,7 @@ $$\text{sum} = 3.490 + 3.490 + 1.000 = 7.980$$
 
 $$\alpha_1 = \frac{3.490}{7.980} = 0.437, \quad \alpha_2 = \frac{3.490}{7.980} = 0.437, \quad \alpha_3 = \frac{1.000}{7.980} = 0.125$$
 
-Verification: $0.437 + 0.437 + 0.125 = 0.999 \approx 1.000$ ✅ (rounding artefact)
+Verification: $0.437 + 0.437 + 0.125 = 0.999 \approx 1.000$ (rounding artefact)
 
 **Step 3: Compute context vector — weighted sum of values.**
 
@@ -229,11 +228,11 @@ Comparison:
 | $\alpha_1$ | **0.998** | 0.595 |
 | $\alpha_2$ | 0.002 | 0.267 |
 | $\alpha_3$ | 0.000 | 0.138 |
-| Gradient flow | ❌ Nearly zero everywhere | ✅ Distributed across all tokens |
+| Gradient flow | Nearly zero everywhere | Distributed across all tokens |
 
 The $\sqrt{d_k}$ scaling restores meaningful gradient signal. Without it, larger $d_k$ values make training progressively harder.
 
-> ⚡ **Rule of thumb:** Always scale by $\sqrt{d_k}$ when implementing attention. This is the only numerical difference between Bahdanau's original additive scoring and the Transformer's scaled dot-product scoring.
+> **Rule of thumb:** Always scale by $\sqrt{d_k}$ when implementing attention. This is the only numerical difference between Bahdanau's original additive scoring and the Transformer's scaled dot-product scoring.
 
 ---
 
@@ -275,11 +274,11 @@ Winner-take-all — all weight concentrates on token 3.
 
 | Temperature $\tau$ | $\boldsymbol{\alpha}$ | Attention style | Gradient flow |
 |---|---|---|---|
-| $\tau = 0.1$ | $[0.000,\ 0.000,\ 1.000]$ | Sharp / one-hot | ❌ Collapses |
-| $\tau = 1.0$ | $[0.090,\ 0.245,\ 0.665]$ | Standard soft | ✅ Distributed |
-| $\tau = 10$ | $[0.301,\ 0.332,\ 0.367]$ | Diffuse / uniform | ✅ Very distributed |
+| $\tau = 0.1$ | $[0.000,\ 0.000,\ 1.000]$ | Sharp / one-hot | Collapses |
+| $\tau = 1.0$ | $[0.090,\ 0.245,\ 0.665]$ | Standard soft | Distributed |
+| $\tau = 10$ | $[0.301,\ 0.332,\ 0.367]$ | Diffuse / uniform | Very distributed |
 
-> 💡 **Interpretability implication.** For feature attribution in UnifiedAI, $\tau \approx 1$ gives the right balance — sharp enough that the weights tell a story (MedInc and Latitude dominate) but soft enough that gradient flows to all features during training. The $\sqrt{d_k}$ scaling is equivalent to a temperature adjustment, keeping scores in the [−2, 2] range where softmax is well-behaved.
+> **Interpretability implication.** For feature attribution in UnifiedAI, $\tau \approx 1$ gives the right balance — sharp enough that the weights tell a story (MedInc and Latitude dominate) but soft enough that gradient flows to all features during training. The $\sqrt{d_k}$ scaling is equivalent to a temperature adjustment, keeping scores in the [−2, 2] range where softmax is well-behaved.
 
 ---
 
@@ -335,7 +334,7 @@ $$\boldsymbol{\alpha}_3 = [0.568/3.596,\ 1.000/3.596,\ 2.028/3.596] = [\mathbf{0
 
 $$A = \begin{pmatrix}0.492 & 0.370 & 0.138\\0.335 & 0.445 & 0.220\\0.158 & 0.278 & 0.564\end{pmatrix}$$
 
-Row sums: $0.492+0.370+0.138=1.000$ ✅, $0.335+0.445+0.220=1.000$ ✅, $0.158+0.278+0.564=1.000$ ✅
+Row sums: $0.492+0.370+0.138=1.000$ , $0.335+0.445+0.220=1.000$ , $0.158+0.278+0.564=1.000$
 
 **Step 4: Output = $A \cdot V$.**
 
@@ -397,10 +396,10 @@ We have 3 feature-tokens: MedInc, Latitude, Longitude. Each is embedded as a 2D 
 **The input matrix** (each row is one token's embedding):
 
 ```
-     dim0   dim1
-X = [ 1.00,  0.00 ]    ← MedInc:    pure income axis
-    [ 0.60,  0.80 ]    ← Latitude:  geographic angle
-    [-0.80,  0.60 ]    ← Longitude: coastal direction
+ dim0 dim1
+X = [ 1.00, 0.00 ] ← MedInc: pure income axis
+ [ 0.60, 0.80 ] ← Latitude: geographic angle
+ [-0.80, 0.60 ] ← Longitude: coastal direction
 ```
 
 **Projection** (identity this chapter; Ch.10 makes these learned):
@@ -412,10 +411,10 @@ Q = K = V = X
 **Scores** $S = QK^\top$ — every pair's cosine similarity:
 
 ```
-           MedInc  Lat    Lon
-S =  MedInc [  1.00   0.60  -0.80 ]
-     Lat    [  0.60   1.00   0.00 ]
-     Lon    [ -0.80   0.00   1.00 ]
+ MedInc Lat Lon
+S = MedInc [ 1.00 0.60 -0.80 ]
+ Lat [ 0.60 1.00 0.00 ]
+ Lon [ -0.80 0.00 1.00 ]
 ```
 
 The positive MedInc–Latitude score (0.60) reflects that high-income districts tend toward Bay Area latitudes. The negative MedInc–Longitude score (−0.80) reflects that coastal (large-negative longitude) districts tend toward high income — vectors pointing in opposite directions in embedding space.
@@ -423,32 +422,32 @@ The positive MedInc–Latitude score (0.60) reflects that high-income districts 
 **Scale** (÷ $\sqrt{2} = 1.414$):
 
 ```
-           MedInc  Lat    Lon
-Ŝ =  MedInc [  0.707  0.424  -0.566 ]
-     Lat    [  0.424  0.707   0.000 ]
-     Lon    [ -0.566  0.000   0.707 ]
+ MedInc Lat Lon
+Ŝ = MedInc [ 0.707 0.424 -0.566 ]
+ Lat [ 0.424 0.707 0.000 ]
+ Lon [ -0.566 0.000 0.707 ]
 ```
 
 **Softmax** row-wise (full arithmetic in §4.4):
 
 ```
-           MedInc  Lat    Lon
-A =  MedInc [  0.492  0.370  0.138 ]   ← MedInc: self 49%, Lat 37%, Lon 14%
-     Lat    [  0.335  0.445  0.220 ]   ← Lat: self 45%, MedInc 34%, Lon 22%
-     Lon    [  0.158  0.278  0.564 ]   ← Lon: self 56%, Lat 28%, MedInc 16%
+ MedInc Lat Lon
+A = MedInc [ 0.492 0.370 0.138 ] ← MedInc: self 49%, Lat 37%, Lon 14%
+ Lat [ 0.335 0.445 0.220 ] ← Lat: self 45%, MedInc 34%, Lon 22%
+ Lon [ 0.158 0.278 0.564 ] ← Lon: self 56%, Lat 28%, MedInc 16%
 ```
 
 **Output** $= A \cdot V$:
 
 ```
 Output[0] = 0.492·[1.00,0.00] + 0.370·[0.60,0.80] + 0.138·[-0.80,0.60]
-          = [0.604, 0.379]    MedInc now "knows about" Bay Area geography
+ = [0.604, 0.379] MedInc now "knows about" Bay Area geography
 
 Output[1] = 0.335·[1.00,0.00] + 0.445·[0.60,0.80] + 0.220·[-0.80,0.60]
-          = [0.426, 0.488]    Latitude now "knows about" income level
+ = [0.426, 0.488] Latitude now "knows about" income level
 
 Output[2] = 0.158·[1.00,0.00] + 0.278·[0.60,0.80] + 0.564·[-0.80,0.60]
-          = [-0.126, 0.560]   Longitude contextualised by Lat+MedInc
+ = [-0.126, 0.560] Longitude contextualised by Lat+MedInc
 ```
 
 **What changed from input to output?**
@@ -469,101 +468,101 @@ Each output representation is **context-aware**: not a lone feature value, but a
 
 ```mermaid
 flowchart TD
-    INPUT["Input X\n(n tokens × d dims)\nHousing: 8 features × d"]
+ INPUT["Input X\n(n tokens × d dims)\nHousing: 8 features × d"]
 
-    subgraph PROJ["Projection  —  identity here; learned W in Ch.10"]
-        Q["Q = X · W_Q\nQueries: what am I looking for?"]
-        K["K = X · W_K\nKeys: what do I advertise?"]
-        V["V = X · W_V\nValues: what do I carry?"]
-    end
+ subgraph PROJ["Projection — identity here; learned W in Ch.10"]
+ Q["Q = X · W_Q\nQueries: what am I looking for?"]
+ K["K = X · W_K\nKeys: what do I advertise?"]
+ V["V = X · W_V\nValues: what do I carry?"]
+ end
 
-    SCORES["Score matrix  S = Q · Kᵀ\nn × n  —  every query dot every key"]
-    SCALE["Scale:  Ŝ = S / √dk\nFixes variance growth at large dk"]
-    SOFTMAX["A = softmax(Ŝ)  row-wise\nn × n  —  each row sums to 1"]
-    OUTPUT["Output = A · V\nn × dv  —  context-enriched representations"]
-    INTERP["Matrix A is interpretable:\nA[i,j] = how much token i attended to j\n→ Constraint #4 INTERPRETABILITY"]
+ SCORES["Score matrix S = Q · Kᵀ\nn × n — every query dot every key"]
+ SCALE["Scale: Ŝ = S / √dk\nFixes variance growth at large dk"]
+ SOFTMAX["A = softmax(Ŝ) row-wise\nn × n — each row sums to 1"]
+ OUTPUT["Output = A · V\nn × dv — context-enriched representations"]
+ INTERP["Matrix A is interpretable:\nA[i,j] = how much token i attended to j\n→ Constraint #4 INTERPRETABILITY"]
 
-    INPUT --> Q
-    INPUT --> K
-    INPUT --> V
-    Q --> SCORES
-    K --> SCORES
-    SCORES --> SCALE
-    SCALE --> SOFTMAX
-    SOFTMAX --> OUTPUT
-    V --> OUTPUT
-    SOFTMAX --> INTERP
+ INPUT --> Q
+ INPUT --> K
+ INPUT --> V
+ Q --> SCORES
+ K --> SCORES
+ SCORES --> SCALE
+ SCALE --> SOFTMAX
+ SOFTMAX --> OUTPUT
+ V --> OUTPUT
+ SOFTMAX --> INTERP
 
-    style INPUT fill:#1e3a8a,stroke:#e2e8f0,color:#ffffff
-    style Q fill:#b45309,stroke:#e2e8f0,color:#ffffff
-    style K fill:#b45309,stroke:#e2e8f0,color:#ffffff
-    style V fill:#15803d,stroke:#e2e8f0,color:#ffffff
-    style SCORES fill:#1d4ed8,stroke:#e2e8f0,color:#ffffff
-    style SCALE fill:#1d4ed8,stroke:#e2e8f0,color:#ffffff
-    style SOFTMAX fill:#1d4ed8,stroke:#e2e8f0,color:#ffffff
-    style OUTPUT fill:#15803d,stroke:#e2e8f0,color:#ffffff
-    style INTERP fill:#b91c1c,stroke:#e2e8f0,color:#ffffff
+ style INPUT fill:#1e3a8a,stroke:#e2e8f0,color:#ffffff
+ style Q fill:#b45309,stroke:#e2e8f0,color:#ffffff
+ style K fill:#b45309,stroke:#e2e8f0,color:#ffffff
+ style V fill:#15803d,stroke:#e2e8f0,color:#ffffff
+ style SCORES fill:#1d4ed8,stroke:#e2e8f0,color:#ffffff
+ style SCALE fill:#1d4ed8,stroke:#e2e8f0,color:#ffffff
+ style SOFTMAX fill:#1d4ed8,stroke:#e2e8f0,color:#ffffff
+ style OUTPUT fill:#15803d,stroke:#e2e8f0,color:#ffffff
+ style INTERP fill:#b91c1c,stroke:#e2e8f0,color:#ffffff
 ```
 
 ### 7.2 · Attention as Feature Attribution Flowchart
 
 ```mermaid
 flowchart TD
-    PRED["Model prediction:\nValuation = $485k for this district"]
-    ATTN["Extract attention weights A\nfrom the attention layer"]
-    ROW["Aggregate: per-token rows\nor mean-pool across all rows"]
-    TOP["Rank features by α_i:\nMedInc 0.492 → Latitude 0.370 → Longitude 0.138"]
-    CHECK{"α_i > 0.20?"}
-    HIGH["HIGH ATTRIBUTION\nIncome + Bay Area location\n→ 'Income ($83k) drove 49%\n   Bay Area location drove 37%'"]
-    LOW["LOW ATTRIBUTION\nPopulation, AveOccup:\npresent but not decisive\nfor this district type"]
-    REPORT["Regulatory explanation:\n'Valuation reflects high income\nand coastal Bay Area location'\n→ Constraint #4 satisfied"]
+ PRED["Model prediction:\nValuation = $485k for this district"]
+ ATTN["Extract attention weights A\nfrom the attention layer"]
+ ROW["Aggregate: per-token rows\nor mean-pool across all rows"]
+ TOP["Rank features by α_i:\nMedInc 0.492 → Latitude 0.370 → Longitude 0.138"]
+ CHECK{"α_i > 0.20?"}
+ HIGH["HIGH ATTRIBUTION\nIncome + Bay Area location\n→ 'Income ($83k) drove 49%\n Bay Area location drove 37%'"]
+ LOW["LOW ATTRIBUTION\nPopulation, AveOccup:\npresent but not decisive\nfor this district type"]
+ REPORT["Regulatory explanation:\n'Valuation reflects high income\nand coastal Bay Area location'\n→ Constraint #4 satisfied"]
 
-    PRED --> ATTN --> ROW --> TOP --> CHECK
-    CHECK -->|Yes| HIGH
-    CHECK -->|No| LOW
-    HIGH --> REPORT
-    LOW --> REPORT
+ PRED --> ATTN --> ROW --> TOP --> CHECK
+ CHECK -->|Yes| HIGH
+ CHECK -->|No| LOW
+ HIGH --> REPORT
+ LOW --> REPORT
 
-    style PRED fill:#1e3a8a,stroke:#e2e8f0,color:#ffffff
-    style ATTN fill:#1d4ed8,stroke:#e2e8f0,color:#ffffff
-    style ROW fill:#1d4ed8,stroke:#e2e8f0,color:#ffffff
-    style TOP fill:#b45309,stroke:#e2e8f0,color:#ffffff
-    style CHECK fill:#b45309,stroke:#e2e8f0,color:#ffffff
-    style HIGH fill:#15803d,stroke:#e2e8f0,color:#ffffff
-    style LOW fill:#b91c1c,stroke:#e2e8f0,color:#ffffff
-    style REPORT fill:#15803d,stroke:#e2e8f0,color:#ffffff
+ style PRED fill:#1e3a8a,stroke:#e2e8f0,color:#ffffff
+ style ATTN fill:#1d4ed8,stroke:#e2e8f0,color:#ffffff
+ style ROW fill:#1d4ed8,stroke:#e2e8f0,color:#ffffff
+ style TOP fill:#b45309,stroke:#e2e8f0,color:#ffffff
+ style CHECK fill:#b45309,stroke:#e2e8f0,color:#ffffff
+ style HIGH fill:#15803d,stroke:#e2e8f0,color:#ffffff
+ style LOW fill:#b91c1c,stroke:#e2e8f0,color:#ffffff
+ style REPORT fill:#15803d,stroke:#e2e8f0,color:#ffffff
 ```
 
 ### 7.3 · LSTM Sequential vs Attention Parallel
 
 ```mermaid
 flowchart LR
-    subgraph RNN["Ch.6 LSTM — 8 sequential steps; early features get overwritten"]
-        direction LR
-        F1["MedInc"] --> H1["h₁"] --> H2["h₂"] --> H3["h₃"] --> H4["h₄"] --> H5["h₅"] --> H6["h₆"] --> H7["h₇"] --> H8["h₈ (final)"]
-        F2["HouseAge"] --> H2
-        F7["Latitude"] --> H7
-        F8["Longitude"] --> H8
-    end
-    style F1 fill:#1e3a8a,color:#ffffff,stroke:#e2e8f0
-    style H8 fill:#b91c1c,color:#ffffff,stroke:#e2e8f0
+ subgraph RNN["Ch.6 LSTM — 8 sequential steps; early features get overwritten"]
+ direction LR
+ F1["MedInc"] --> H1["h₁"] --> H2["h₂"] --> H3["h₃"] --> H4["h₄"] --> H5["h₅"] --> H6["h₆"] --> H7["h₇"] --> H8["h₈ (final)"]
+ F2["HouseAge"] --> H2
+ F7["Latitude"] --> H7
+ F8["Longitude"] --> H8
+ end
+ style F1 fill:#1e3a8a,color:#ffffff,stroke:#e2e8f0
+ style H8 fill:#b91c1c,color:#ffffff,stroke:#e2e8f0
 ```
 
 ```mermaid
 flowchart LR
-    subgraph ATT["Attention — 1 parallel step: all features attend to all features simultaneously"]
-        direction LR
-        T1["MedInc"] --> ALL((8×8\nattention\nmatrix))
-        T2["HouseAge"] --> ALL
-        T7["Latitude"] --> ALL
-        T8["Longitude"] --> ALL
-        ALL --> O1["c₁ MedInc\nenriched"]
-        ALL --> O7["c₇ Latitude\nenriched"]
-    end
-    style T1 fill:#1e3a8a,color:#ffffff,stroke:#e2e8f0
-    style ALL fill:#15803d,color:#ffffff,stroke:#e2e8f0
-    style O1 fill:#1d4ed8,color:#ffffff,stroke:#e2e8f0
-    style O7 fill:#1d4ed8,color:#ffffff,stroke:#e2e8f0
+ subgraph ATT["Attention — 1 parallel step: all features attend to all features simultaneously"]
+ direction LR
+ T1["MedInc"] --> ALL((8×8\nattention\nmatrix))
+ T2["HouseAge"] --> ALL
+ T7["Latitude"] --> ALL
+ T8["Longitude"] --> ALL
+ ALL --> O1["c₁ MedInc\nenriched"]
+ ALL --> O7["c₇ Latitude\nenriched"]
+ end
+ style T1 fill:#1e3a8a,color:#ffffff,stroke:#e2e8f0
+ style ALL fill:#15803d,color:#ffffff,stroke:#e2e8f0
+ style O1 fill:#1d4ed8,color:#ffffff,stroke:#e2e8f0
+ style O7 fill:#1d4ed8,color:#ffffff,stroke:#e2e8f0
 ```
 
 The LSTM needs 8 sequential steps; attention needs 1 parallel matrix multiply. On a GPU, this difference determines whether inference takes 200ms (LSTM) or 20ms (attention).
@@ -580,7 +579,7 @@ The LSTM needs 8 sequential steps; attention needs 1 parallel matrix multiply. O
 | **Temperature $\tau$** | 0.5–2.0 | $<1$: sharpen (hard retrieval); $>1$: flatten (noisy early training). Default $\tau=1$ with $\sqrt{d_k}$ scaling handles most cases. |
 | **Sequence length $n$** | 8–2048 | Memory is $O(n^2)$ for the score matrix. For 8 housing features, trivial. For text at $n=2048$, it requires careful engineering. |
 
-> 💡 **Starting configuration for UnifiedAI housing attention:** $d_k = 16$, single head, dropout = 0.1, $\tau = 1$. Verify on validation MAE before adding heads or increasing $d_k$.
+> **Starting configuration for UnifiedAI housing attention:** $d_k = 16$, single head, dropout = 0.1, $\tau = 1$. Verify on validation MAE before adding heads or increasing $d_k$.
 
 ---
 
@@ -621,7 +620,7 @@ Two limiting regimes:
 
 This is structurally analogous to vanishing gradients in RNNs (Ch.6): the mechanism that creates sharp attention also kills gradients. The $\sqrt{d_k}$ scaling and attention dropout are the direct fixes.
 
-> ⚠️ **Debug checklist when attention training stalls:**
+> **Warning — Debug checklist when attention training stalls:**
 > 1. Are you scaling by $\sqrt{d_k}$? (most common omission)
 > 2. Is attention dropout enabled? (prevents over-concentration)
 > 3. Are you logging attention entropy per head? (catches collapse before loss plateaus)
@@ -651,10 +650,10 @@ This is structurally analogous to vanishing gradients in RNNs (Ch.6): the mechan
 | **#1 ACCURACY** | 🔄 In progress | Mechanism defined; full training with learned $W_Q, W_K, W_V$ in Ch.10 |
 | **#2 GENERALIZATION** | 🔄 In progress | Order-invariant processing reduces positional bias vs LSTM |
 | **#3 MULTI-TASK** | 🔄 In progress | Same attention layer can serve both regression and classification heads |
-| **#4 INTERPRETABILITY** | ✅ **Partial — unlocked** | §4.4 attention matrix shows `MedInc` (49%) and `Latitude` (37%) as top features for a high-value coastal district — explainable to regulators without post-hoc methods |
+| **#4 INTERPRETABILITY** | **Partial — unlocked** | §4.4 attention matrix shows `MedInc` (49%) and `Latitude` (37%) as top features for a high-value coastal district — explainable to regulators without post-hoc methods |
 | **#5 PRODUCTION** | 🔄 In progress | Parallel computation confirmed; $O(n^2)$ bottleneck quantified; full latency benchmarking in Ch.10 |
 
-> ⚡ **Constraint #4 INTERPRETABILITY (partial):** The $3 \times 3$ attention weight matrix computed in §4.4 directly surfaces `MedInc` and `Latitude` as the dominant drivers for this high-value coastal district. No SHAP, no LIME, no post-hoc approximation — the attention weights *are* the explanation. Full 8-feature attention with trained projections is in the Ch.10 notebook.
+> **Constraint #4 INTERPRETABILITY (partial):** The $3 \times 3$ attention weight matrix computed in §4.4 directly surfaces `MedInc` and `Latitude` as the dominant drivers for this high-value coastal district. No SHAP, no LIME, no post-hoc approximation — the attention weights *are* the explanation. Full 8-feature attention with trained projections is in the Ch.10 notebook.
 
 ---
 
@@ -680,4 +679,4 @@ $$\text{Attention}(Q, K, V) = \text{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\r
 
 is called "scaled dot-product attention" in Vaswani et al. (2017) and is the unmodified inner core of every attention head in GPT, BERT, T5, and every modern LLM. Everything you computed by hand in §4 and §6 is happening millions of times per forward pass in those models.
 
-> ➡️ **[Ch.10 — Transformers & Attention →](../ch10_transformers)**
+> ➡ **[Ch.10 — Transformers & Attention →](../ch10_transformers)**

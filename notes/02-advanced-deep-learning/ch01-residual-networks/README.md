@@ -10,14 +10,14 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Build **ProductionCV** — an autonomous retail shelf monitoring system satisfying 5 constraints:
+> **The mission**: Build **ProductionCV** — an autonomous retail shelf monitoring system satisfying 5 constraints:
 > 1. **DETECTION ACCURACY**: mAP@0.5 ≥ 85% — 2. **SEGMENTATION QUALITY**: IoU ≥ 70% — 3. **INFERENCE LATENCY**: <50ms per frame — 4. **MODEL SIZE**: <100 MB — 5. **DATA EFFICIENCY**: <1,000 labeled images
 
 **What we know so far:**
-- ✅ We understand CNNs (convolution extracts local features, pooling reduces spatial size)
-- ✅ We've trained VGG-style networks (stack Conv → ReLU → Pool → repeat)
-- ✅ We know deeper networks should be more powerful (Universal Approximation Theorem)
-- ❌ **But deeper networks perform WORSE!** A 56-layer plain CNN has *higher training error* than an 18-layer one.
+- We understand CNNs (convolution extracts local features, pooling reduces spatial size)
+- We've trained VGG-style networks (stack Conv → ReLU → Pool → repeat)
+- We know deeper networks should be more powerful (Universal Approximation Theorem)
+- **But deeper networks perform WORSE!** A 56-layer plain CNN has *higher training error* than an 18-layer one.
 
 **What's blocking us:**
 The **vanishing gradient problem**. When you stack 50+ convolutional layers, gradients shrink exponentially during backpropagation. By the time the error signal reaches the first layers, it's effectively zero — those layers never learn. This isn't overfitting (which shows up as train/test gap). This is **optimization failure** — even the training accuracy degrades.
@@ -35,8 +35,7 @@ The **residual connection** — an architectural pattern that lets gradients flo
 - **Gradient highway**: During backpropagation, the skip connection provides a direct path for gradients (no vanishing)
 - **Enables 100+ layers**: ResNet-152 trains successfully where plain-152 diverges
 - **Production backbone**: Foundation for Faster R-CNN, Mask R-CNN, all modern detection pipelines
-
-✅ **This unlocks constraint #1 progress** — ResNet backbones achieve 90%+ mAP on object detection benchmarks.
+**This unlocks constraint #1 progress** — ResNet backbones achieve 90%+ mAP on object detection benchmarks.
 
 ---
 
@@ -68,7 +67,7 @@ Why this works:
 2. **Gradient highway**: The skip connection $+x$ ensures gradients flow backward with magnitude 1 (no vanishing)
 3. **Identity as default**: If a layer isn't needed, the network can push $F(x) \to 0$ and pass $x$ unchanged
 
-> 💡 **Key insight:** Stacking more layers can never hurt. In a plain network, adding layers risks degradation (gradients vanish). In a ResNet, the worst case is the added layers learn $F(x) = 0$ and act as identity — the network just passes the input through unchanged. You never go backward.
+> **Key insight:** Stacking more layers can never hurt. In a plain network, adding layers risks degradation (gradients vanish). In a ResNet, the worst case is the added layers learn $F(x) = 0$ and act as identity — the network just passes the input through unchanged. You never go backward.
 
 ### 1a · Why Deep CV Systems All Look the Same
 
@@ -76,7 +75,7 @@ Residual blocks are not just a gradient trick — they instantiate a universal d
 
 Skip connections enforce the Modular property: the worst a residual block can do is learn the identity — it cannot corrupt what the previous block produced. Each block is safe to add, safe to remove, and safe to swap.
 
-> 💡 This **MDR structure** (Modular-Decomposable-Repetitive) is why Faster R-CNN (Ch.3), U-Net (Ch.5), and Mask R-CNN (Ch.6) all independently arrived at the same architectural shape. ProductionCV stacks 16 residual blocks — 4 stages of 4 blocks each — and the same block design repeats across ResNet-18/34/50/101.
+> This **MDR structure** (Modular-Decomposable-Repetitive) is why Faster R-CNN (Ch.3), U-Net (Ch.5), and Mask R-CNN (Ch.6) all independently arrived at the same architectural shape. ProductionCV stacks 16 residual blocks — 4 stages of 4 blocks each — and the same block design repeats across ResNet-18/34/50/101.
 
 ---
 
@@ -118,41 +117,41 @@ ResNet-18 has **four stages** of residual blocks, each progressively downsamplin
 Input: 224×224×3 RGB image
 
 ┌─────────────────────────────────────────────────────────────┐
-│ Stage 0: Initial Convolution                                │
-│ Conv1: 7×7, stride=2, 64 filters → 112×112×64              │
-│ MaxPool: 3×3, stride=2          → 56×56×64                 │
+│ Stage 0: Initial Convolution │
+│ Conv1: 7×7, stride=2, 64 filters → 112×112×64 │
+│ MaxPool: 3×3, stride=2 → 56×56×64 │
 └─────────────────────────────────────────────────────────────┘
-                        ↓
+ ↓
 ┌─────────────────────────────────────────────────────────────┐
-│ Stage 1: 2 Residual Blocks (64 channels, no downsampling)  │
-│ Block 1: [Conv 3×3 (64) → BN → ReLU → Conv 3×3 (64) → BN]  │
-│          + skip → ReLU          → 56×56×64                  │
-│ Block 2: (same structure)       → 56×56×64                  │
+│ Stage 1: 2 Residual Blocks (64 channels, no downsampling) │
+│ Block 1: [Conv 3×3 (64) → BN → ReLU → Conv 3×3 (64) → BN] │
+│ + skip → ReLU → 56×56×64 │
+│ Block 2: (same structure) → 56×56×64 │
 └─────────────────────────────────────────────────────────────┘
-                        ↓
+ ↓
 ┌─────────────────────────────────────────────────────────────┐
 │ Stage 2: 2 Residual Blocks (128 channels, downsample first)│
 │ Block 1: [Conv 3×3, stride=2 (128) → BN → ReLU → Conv (128)]│
-│          + skip (Conv 1×1, stride=2) → ReLU → 28×28×128     │
-│ Block 2: (no downsampling)               → 28×28×128        │
+│ + skip (Conv 1×1, stride=2) → ReLU → 28×28×128 │
+│ Block 2: (no downsampling) → 28×28×128 │
 └─────────────────────────────────────────────────────────────┘
-                        ↓
+ ↓
 ┌─────────────────────────────────────────────────────────────┐
 │ Stage 3: 2 Residual Blocks (256 channels, downsample first)│
-│ Block 1: stride=2 → 14×14×256                               │
-│ Block 2:         → 14×14×256                                │
+│ Block 1: stride=2 → 14×14×256 │
+│ Block 2: → 14×14×256 │
 └─────────────────────────────────────────────────────────────┘
-                        ↓
+ ↓
 ┌─────────────────────────────────────────────────────────────┐
 │ Stage 4: 2 Residual Blocks (512 channels, downsample first)│
-│ Block 1: stride=2 → 7×7×512                                 │
-│ Block 2:         → 7×7×512                                  │
+│ Block 1: stride=2 → 7×7×512 │
+│ Block 2: → 7×7×512 │
 └─────────────────────────────────────────────────────────────┘
-                        ↓
+ ↓
 ┌─────────────────────────────────────────────────────────────┐
-│ Global Average Pool → 1×1×512                               │
-│ Fully Connected (512 → num_classes)                         │
-│ Softmax → Class probabilities                               │
+│ Global Average Pool → 1×1×512 │
+│ Fully Connected (512 → num_classes) │
+│ Softmax → Class probabilities │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -160,29 +159,29 @@ Input: 224×224×3 RGB image
 
 ```
 ┌──────────────────────────────┐
-│  Input x (56×56×64)          │
+│ Input x (56×56×64) │
 └──────────┬───────────────────┘
-           │
-           ├─────────────────┐  Skip connection (identity)
-           │                 │
-           ↓                 │
-      Conv 3×3, 64           │
-           ↓                 │
-        BN + ReLU            │
-           ↓                 │
-      Conv 3×3, 64           │
-           ↓                 │
-          BN                 │
-           ↓                 │
-       F(x) ←─────────────── ┘
-           │
-           ↓ Addition: F(x) + x
-           │
-        ReLU(F(x) + x)
-           │
-           ↓
+ │
+ ├─────────────────┐ Skip connection (identity)
+ │ │
+ ↓ │
+ Conv 3×3, 64 │
+ ↓ │
+ BN + ReLU │
+ ↓ │
+ Conv 3×3, 64 │
+ ↓ │
+ BN │
+ ↓ │
+ F(x) ←─────────────── ┘
+ │
+ ↓ Addition: F(x) + x
+ │
+ ReLU(F(x) + x)
+ │
+ ↓
 ┌──────────┴───────────────────┐
-│  Output (56×56×64)           │
+│ Output (56×56×64) │
 └──────────────────────────────┘
 ```
 
@@ -205,19 +204,19 @@ Input: 224×224×3 RGB image
 A residual block has two components:
 
 1. **Main branch (residual function $F(x)$)**:
-   - Conv1: $3 \times 3$, stride 1, padding 1 → $z_1 = \text{Conv}(x)$
-   - BatchNorm + ReLU → $a_1 = \text{ReLU}(\text{BN}(z_1))$
-   - Conv2: $3 \times 3$, stride 1, padding 1 → $z_2 = \text{Conv}(a_1)$
-   - BatchNorm (no ReLU yet) → $F(x) = \text{BN}(z_2)$
+ - Conv1: $3 \times 3$, stride 1, padding 1 → $z_1 = \text{Conv}(x)$
+ - BatchNorm + ReLU → $a_1 = \text{ReLU}(\text{BN}(z_1))$
+ - Conv2: $3 \times 3$, stride 1, padding 1 → $z_2 = \text{Conv}(a_1)$
+ - BatchNorm (no ReLU yet) → $F(x) = \text{BN}(z_2)$
 
 2. **Skip connection (identity)**:
-   - $\text{skip} = x$ (if dimensions match)
-   - Or $\text{skip} = \text{Conv}_{1 \times 1}(x)$ if downsampling (stride=2) or channel expansion
+ - $\text{skip} = x$ (if dimensions match)
+ - Or $\text{skip} = \text{Conv}_{1 \times 1}(x)$ if downsampling (stride=2) or channel expansion
 
 3. **Addition + final activation**:
-   $$
-   \mathcal{H}(x) = \text{ReLU}(F(x) + x)
-   $$
+ $$
+ \mathcal{H}(x) = \text{ReLU}(F(x) + x)
+ $$
 
 **Dimension matching rule:**
 - If input and output have same spatial size (H, W) and channels (C), use identity skip: $\text{skip} = x$
@@ -247,7 +246,7 @@ $$
 - Even if $\frac{\partial F(x)}{\partial x} \to 0$ (residual branch saturates), the gradient $\frac{\partial L}{\partial x}$ still equals $\frac{\partial L}{\partial \mathcal{H}} \cdot 1$ — no vanishing!
 - This "+1" propagates unchanged through all skip connections, so gradients reach the first layer with magnitude intact
 
-> 💡 **Conceptual reframing:** A plain 100-layer network forces the 1st layer to learn through 99 non-linear transformations. A ResNet-100 gives the 1st layer a *direct line* to the loss via 50 skip connections. Gradients don't have to survive 99 function compositions — they take the highway.
+> **Conceptual reframing:** A plain 100-layer network forces the 1st layer to learn through 99 non-linear transformations. A ResNet-100 gives the 1st layer a *direct line* to the loss via 50 skip connections. Gradients don't have to survive 99 function compositions — they take the highway.
 
 ### Numerical Example: Gradient Flow Comparison
 
@@ -310,10 +309,10 @@ Now that you understand the architecture and math, let's walk through training R
 Plain 40-Layer CNN:
 
 Input ──► [Conv→ReLU]──►[Conv→ReLU]──►...──►[Conv→ReLU]──► Loss
-  ↑                                                          │
-  │                                                          │
-  └──────────────────────────────────────────────────────────┘
-       Gradient: 0.9^40 ≈ 0.015 (98.5% vanished)
+ ↑ │
+ │ │
+ └──────────────────────────────────────────────────────────┘
+ Gradient: 0.9^40 ≈ 0.015 (98.5% vanished)
 
 Early layers receive almost zero gradient → never learn
 Training error INCREASES with depth!
@@ -325,11 +324,11 @@ Training error INCREASES with depth!
 ResNet with Skip Connections:
 
 Input ──► [Residual Block] ──► [Residual Block] ──► ... ──► Loss
-  ↑         │      ↑              │      ↑                    │
-  │         └──────┘              └──────┘                    │
-  │        Skip (+x)            Skip (+x)                     │
-  └────────────────────────────────────────────────────────────┘
-   Gradient preserved: Each skip provides +1 term in chain rule
+ ↑ │ ↑ │ ↑ │
+ │ └──────┘ └──────┘ │
+ │ Skip (+x) Skip (+x) │
+ └────────────────────────────────────────────────────────────┘
+ Gradient preserved: Each skip provides +1 term in chain rule
 
 Early layers receive strong gradients → training succeeds
 Deeper networks achieve LOWER training error!
@@ -343,16 +342,16 @@ Deeper networks achieve LOWER training error!
 
 ```mermaid
 flowchart LR
-    A[ResNet-18<br/>8 blocks<br/>11.7M params] -->|+depth| B[ResNet-34<br/>16 blocks<br/>21.8M params]
-    B -->|+bottleneck| C[ResNet-50<br/>16 bottleneck blocks<br/>25.6M params]
-    C -->|+depth| D[ResNet-101<br/>33 bottleneck blocks<br/>44.5M params]
-    D -->|+depth| E[ResNet-152<br/>50 bottleneck blocks<br/>60.2M params]
+ A[ResNet-18<br/>8 blocks<br/>11.7M params] -->|+depth| B[ResNet-34<br/>16 blocks<br/>21.8M params]
+ B -->|+bottleneck| C[ResNet-50<br/>16 bottleneck blocks<br/>25.6M params]
+ C -->|+depth| D[ResNet-101<br/>33 bottleneck blocks<br/>44.5M params]
+ D -->|+depth| E[ResNet-152<br/>50 bottleneck blocks<br/>60.2M params]
 
-    style A fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style B fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style C fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style D fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style E fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style A fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style B fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style C fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style D fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style E fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -396,16 +395,16 @@ flowchart LR
 **Options when dimensions don't match (downsampling or channel expansion):**
 
 1. **Option A (He et al., 2015 default):** Use 1×1 conv projection only when necessary
-   - Identity skip when dimensions match
-   - 1×1 conv (stride=2) when downsampling
-   - Fewer parameters, slightly lower accuracy
+ - Identity skip when dimensions match
+ - 1×1 conv (stride=2) when downsampling
+ - Fewer parameters, slightly lower accuracy
 
 2. **Option B:** Always use 1×1 conv projection
-   - More parameters, slightly better accuracy
-   - Standard in modern implementations (PyTorch `torchvision.models.resnet50`)
+ - More parameters, slightly better accuracy
+ - Standard in modern implementations (PyTorch `torchvision.models.resnet50`)
 
 3. **Option C (original paper):** Zero-pad extra channels
-   - Never used in practice (worse accuracy)
+ - Never used in practice (worse accuracy)
 
 **Recommendation:** Use Option B (always project) for production systems.
 
@@ -420,12 +419,12 @@ flowchart LR
 ```python
 # WRONG — ReLU applied before adding skip
 out = self.relu(self.bn2(self.conv2(x)))
-out = out + identity  # Adding ReLU(F(x)) + x
+out = out + identity # Adding ReLU(F(x)) + x
 
 # CORRECT — ReLU applied after adding skip
 out = self.bn2(self.conv2(x))
-out = out + identity  # F(x) + x
-out = self.relu(out)  # ReLU(F(x) + x)
+out = out + identity # F(x) + x
+out = self.relu(out) # ReLU(F(x) + x)
 ```
 
 **Why it matters:** The gradient highway relies on the addition being the last non-linearity-free operation. Applying ReLU before addition breaks the "+1" gradient term.
@@ -436,11 +435,11 @@ out = self.relu(out)  # ReLU(F(x) + x)
 
 ```python
 # WRONG — direct skip when dimensions don't match
-out = F(x) + x  # Crashes if x is 56×56×64 and F(x) is 28×28×128
+out = F(x) + x # Crashes if x is 56×56×64 and F(x) is 28×28×128
 
 # CORRECT — project skip when necessary
 if self.downsample is not None:
-    identity = self.downsample(x)  # 1×1 conv to match dimensions
+ identity = self.downsample(x) # 1×1 conv to match dimensions
 out = F(x) + identity
 ```
 
@@ -459,7 +458,7 @@ out = F(x) + identity
 
 **Rule:** Every convolution in the residual branch must have BatchNorm (no exceptions).
 
-> ⚠️ **Freeze BatchNorm during fine-tuning.** BN layers accumulate running mean/variance statistics during ImageNet-scale pretraining. Fine-tuning on ProductionCV's 850 labeled images with BN layers unfrozen overwrites those statistics with noisy small-batch estimates, degrading mAP by 3–8%. In PyTorch: `for m in model.modules(): if isinstance(m, nn.BatchNorm2d): m.eval()`. In Keras: set `layer.trainable = False` for each BN layer before `model.fit()`.
+> **Freeze BatchNorm during fine-tuning.** BN layers accumulate running mean/variance statistics during ImageNet-scale pretraining. Fine-tuning on ProductionCV's 850 labeled images with BN layers unfrozen overwrites those statistics with noisy small-batch estimates, degrading mAP by 3–8%. In PyTorch: `for m in model.modules(): if isinstance(m, nn.BatchNorm2d): m.eval()`. In Keras: set `layer.trainable = False` for each BN layer before `model.fit()`.
 
 ### 9.4 Training Without LR Warmup
 
@@ -507,18 +506,16 @@ scheduler = SequentialLR(optimizer, schedulers=[warmup, cosine], milestones=[5])
 ## 10 · Progress Check — What We Can Solve Now
 
 ![ProductionCV progress dashboard](img/ch01-progress-check.png)
-
-✅ **Unlocked capabilities:**
+**Unlocked capabilities:**
 - **100+ layer networks train successfully** — ResNet-152 achieves 3.57% top-5 error on ImageNet (He et al., 2015)
 - **Gradient flow verified** — Early layers receive gradients with 80–90% of final layer magnitude (vs 2% in plain networks)
 - **Baseline for ProductionCV** — ResNet-50 achieves 78.2% mAP@0.5 on synthetic retail shelf dataset (SmallVal AI)
 - **Constraint #1 progress** — 78.2% mAP (target: 85%) — need 6.8 percentage points more
 - **Production backbone established** — All modern detection pipelines (Faster R-CNN, Mask R-CNN, RetinaNet) use ResNet backbones
-
-❌ **Still can't solve:**
-- ❌ **Constraint #4 (Model Size)** — ResNet-50 is 98 MB (target: <100 MB, but barely fits) — ResNet-101 is 171 MB (too large for edge devices)
-- ❌ **Constraint #3 (Latency)** — ResNet-50 inference is 85ms per frame on Jetson Nano (target: <50ms)
-- ❌ **Efficiency** — 25.6M parameters, 4.1 GFLOPs — overkill for 20-class retail product classification (needs 100+ classes on ImageNet)
+**Still can't solve:**
+- **Constraint #4 (Model Size)** — ResNet-50 is 98 MB (target: <100 MB, but barely fits) — ResNet-101 is 171 MB (too large for edge devices)
+- **Constraint #3 (Latency)** — ResNet-50 inference is 85ms per frame on Jetson Nano (target: <50ms)
+- **Efficiency** — 25.6M parameters, 4.1 GFLOPs — overkill for 20-class retail product classification (needs 100+ classes on ImageNet)
 
 **Progress toward constraints:**
 
@@ -540,4 +537,4 @@ scheduler = SequentialLR(optimizer, schedulers=[warmup, cosine], milestones=[5])
 
 Ch.1 gave you skip connections and 100-layer networks. But ResNet-50 (98 MB, 85ms inference) is too heavy for edge devices.
 
-Ch.2 gives you **depthwise separable convolutions** (MobileNet) and **compound scaling** (EfficientNet) — achieving ResNet-50 accuracy with 5× fewer parameters and 3× faster inference. The architecture shift: instead of expensive 3×3 convolutions, decompose them into 3×3 depthwise (per-channel) + 1×1 pointwise (across channels). You'll implement MobileNetV2 from scratch, deploy it on a Jetson Nano, and achieve <50ms inference (constraint #3 ✅).
+Ch.2 gives you **depthwise separable convolutions** (MobileNet) and **compound scaling** (EfficientNet) — achieving ResNet-50 accuracy with 5× fewer parameters and 3× faster inference. The architecture shift: instead of expensive 3×3 convolutions, decompose them into 3×3 depthwise (per-channel) + 1×1 pointwise (across channels). You'll implement MobileNetV2 from scratch, deploy it on a Jetson Nano, and achieve <50ms inference (constraint #3 ).

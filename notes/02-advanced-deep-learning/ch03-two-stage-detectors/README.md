@@ -10,7 +10,7 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Build **ProductionCV** — an autonomous retail shelf monitoring system satisfying 5 constraints:
+> **The mission**: Build **ProductionCV** — an autonomous retail shelf monitoring system satisfying 5 constraints:
 > 1. **DETECTION ACCURACY**: mAP@0.5 ≥ 85% — Detect products on retail shelves (empty slots, misplaced items)
 > 2. **SEGMENTATION QUALITY**: IoU ≥ 70% — Pixel-level product boundaries for planogram compliance
 > 3. **INFERENCE LATENCY**: <50ms per frame — Real-time monitoring on edge devices (NVIDIA Jetson)
@@ -18,11 +18,11 @@
 > 5. **DATA EFFICIENCY**: <1,000 labeled images — Leverage self-supervised pretraining
 
 **What we know so far:**
-- ✅ Ch.1 (ResNets): We can build 100+ layer CNNs with skip connections (78.2% mAP with ResNet-50 backbone)
-- ✅ Ch.2 (Efficient Architectures): We can compress models (MobileNetV2: 76.8% mAP, 35ms, 14MB)
-- ✅ **But we're stuck at image classification!** We can only answer "What is this?" (single label per image)
-- ❌ **We can't detect multiple objects:** Where is each product? What if 10 items overlap?
-- ❌ **No localization:** Classification gives labels, not bounding boxes
+- Ch.1 (ResNets): We can build 100+ layer CNNs with skip connections (78.2% mAP with ResNet-50 backbone)
+- Ch.2 (Efficient Architectures): We can compress models (MobileNetV2: 76.8% mAP, 35ms, 14MB)
+- **But we're stuck at image classification!** We can only answer "What is this?" (single label per image)
+- **We can't detect multiple objects:** Where is each product? What if 10 items overlap?
+- **No localization:** Classification gives labels, not bounding boxes
 
 **What's blocking us:**
 Image classification networks output a single vector: `[batch_size, num_classes]`. For object detection, you need:
@@ -51,8 +51,7 @@ Naive sliding-window approach fails:
 - **Feature sharing:** Compute CNN features once for entire image, reuse for all regions
 - **End-to-end training:** RPN + detector trained jointly (no hand-crafted region proposals)
 - **Multi-task loss:** $L = L_{\text{cls}} + \lambda L_{\text{box}}$ — optimize classification and localization together
-
-✅ **This unlocks constraint #1 (detection accuracy)** — Faster R-CNN achieves 85%+ mAP on PASCAL VOC, 90%+ on COCO with ResNet-101 backbone. First step toward real object detection on retail shelves.
+**This unlocks constraint #1 (detection accuracy)** — Faster R-CNN achieves 85%+ mAP on PASCAL VOC, 90%+ on COCO with ResNet-101 backbone. First step toward real object detection on retail shelves.
 
 ---
 
@@ -83,7 +82,7 @@ Two-stage detectors split object detection into two specialized networks:
 2. **Efficiency:** Generate fewer, high-quality proposals (~300) instead of exhaustive sliding window (10,000+)
 3. **Feature reuse:** Both stages share the same backbone CNN features (compute once, use twice)
 
-> 💡 **Key insight:** You don't need to classify every possible box. **First, find likely candidates (RPN).** Then, spend compute budget on those 300 regions, not 10,000 random boxes. This is the core efficiency gain over sliding-window detectors.
+> **Key insight:** You don't need to classify every possible box. **First, find likely candidates (RPN).** Then, spend compute budget on those 300 regions, not 10,000 random boxes. This is the core efficiency gain over sliding-window detectors.
 
 ---
 
@@ -111,8 +110,8 @@ A ResNet-50 classifier can tell you "This image contains Coca-Cola" but can't an
 - Slide a 3×3 conv over the feature map → at each of 64×48=3,072 locations, propose $k$ anchor boxes (typically $k=9$: 3 scales × 3 aspect ratios)
 - Total anchors: 3,072 × 9 = 27,648 candidate boxes
 - For each anchor, predict:
-  - **Objectness score:** $p_{\text{obj}} \in [0,1]$ (is this background or an object?)
-  - **Box refinement:** $(Δx, Δy, Δw, Δh)$ to adjust anchor → tight box
+ - **Objectness score:** $p_{\text{obj}} \in [0,1]$ (is this background or an object?)
+ - **Box refinement:** $(Δx, Δy, Δw, Δh)$ to adjust anchor → tight box
 - Keep top 300 proposals (highest objectness scores), discard background
 
 **Step 3: RoI Pooling**
@@ -143,11 +142,11 @@ Box 3: [500, 190, 70, 145] → Class: Sprite (confidence: 0.88)
 
 ```mermaid
 graph LR
-    A[Input Image<br/>1024×768×3] --> B[Backbone<br/>ResNet-50+FPN]
-    B --> C[RPN<br/>Region Proposals]
-    C --> D[RoI Pooling<br/>~300 proposals]
-    D --> E[Detection Head]
-    E --> F[Class + BBox<br/>86.3% mAP]
+ A[Input Image<br/>1024×768×3] --> B[Backbone<br/>ResNet-50+FPN]
+ B --> C[RPN<br/>Region Proposals]
+ C --> D[RoI Pooling<br/>~300 proposals]
+ D --> E[Detection Head]
+ E --> F[Class + BBox<br/>86.3% mAP]
 ```
 
 *Primary architecture diagram: Two-stage detection pipeline with ResNet-50 backbone, Region Proposal Network (RPN), RoI pooling, and dual-head detector (classification + box regression).*
@@ -156,51 +155,51 @@ graph LR
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ Input: Retail Shelf Image (1024×768×3)                     │
+│ Input: Retail Shelf Image (1024×768×3) │
 └─────────────────────────────────────────────────────────────┘
-                        ↓
+ ↓
 ┌─────────────────────────────────────────────────────────────┐
-│ Backbone CNN (ResNet-50)                                    │
-│ - Conv layers + residual blocks                             │
-│ - Output: Feature map [64×48×1024] (16× downsampling)      │
+│ Backbone CNN (ResNet-50) │
+│ - Conv layers + residual blocks │
+│ - Output: Feature map [64×48×1024] (16× downsampling) │
 └─────────────────────────────────────────────────────────────┘
-                        ↓
-          ┌─────────────┴─────────────┐
-          ↓                           ↓
-┌─────────────────────┐     ┌─────────────────────┐
-│ Region Proposal     │     │ (Features reused by │
-│ Network (RPN)       │     │  detection head)    │
-│ - 3×3 conv          │     └─────────────────────┘
-│ - Per-anchor:       │               ↓
-│   * Objectness      │     ┌─────────────────────┐
-│   * Box offsets     │     │ RoI Pooling         │
-│ - Generate 27,648   │     │ - Extract 7×7×1024  │
-│   anchors           │     │   for each proposal │
-│ - Keep top 300      │     └─────────────────────┘
-└─────────────────────┘               ↓
-          ↓                 ┌─────────────────────┐
-┌─────────────────────┐     │ Detection Head      │
-│ Proposals:          │────→│ - FC layer (4096)   │
-│ [x, y, w, h] × 300  │     │ - Classification FC │
-└─────────────────────┘     │   (21 classes)      │
-                            │ - Box regression FC │
-                            │   (4 offsets × 21)  │
-                            └─────────────────────┘
-                                      ↓
-                            ┌─────────────────────┐
-                            │ Post-Processing     │
-                            │ - Apply NMS         │
-                            │ - Threshold (0.5)   │
-                            │ - Output: Final     │
-                            │   detections        │
-                            └─────────────────────┘
-                                      ↓
-                            ┌─────────────────────┐
-                            │ Output: Detections  │
-                            │ Box1: Coca-Cola 95% │
-                            │ Box2: Pepsi 92%     │
-                            │ ...                 │
-                            └─────────────────────┘
+ ↓
+ ┌─────────────┴─────────────┐
+ ↓ ↓
+┌─────────────────────┐ ┌─────────────────────┐
+│ Region Proposal │ │ (Features reused by │
+│ Network (RPN) │ │ detection head) │
+│ - 3×3 conv │ └─────────────────────┘
+│ - Per-anchor: │ ↓
+│ * Objectness │ ┌─────────────────────┐
+│ * Box offsets │ │ RoI Pooling │
+│ - Generate 27,648 │ │ - Extract 7×7×1024 │
+│ anchors │ │ for each proposal │
+│ - Keep top 300 │ └─────────────────────┘
+└─────────────────────┘ ↓
+ ↓ ┌─────────────────────┐
+┌─────────────────────┐ │ Detection Head │
+│ Proposals: │────→│ - FC layer (4096) │
+│ [x, y, w, h] × 300 │ │ - Classification FC │
+└─────────────────────┘ │ (21 classes) │
+ │ - Box regression FC │
+ │ (4 offsets × 21) │
+ └─────────────────────┘
+ ↓
+ ┌─────────────────────┐
+ │ Post-Processing │
+ │ - Apply NMS │
+ │ - Threshold (0.5) │
+ │ - Output: Final │
+ │ detections │
+ └─────────────────────┘
+ ↓
+ ┌─────────────────────┐
+ │ Output: Detections │
+ │ Box1: Coca-Cola 95% │
+ │ Box2: Pepsi 92% │
+ │ ... │
+ └─────────────────────┘
 ```
 
 **Detailed walkthrough:**
@@ -212,17 +211,17 @@ graph LR
 
 **2. Region Proposal Network** (RPN)
 - Slide 3×3 conv over feature map → at each location, predict for 9 anchors:
-  - Objectness: 2 scores (object vs background) via 1×1 conv → [64×48×9×2]
-  - Box offsets: 4 values (Δx, Δy, Δw, Δh) via 1×1 conv → [64×48×9×4]
+ - Objectness: 2 scores (object vs background) via 1×1 conv → [64×48×9×2]
+ - Box offsets: 4 values (Δx, Δy, Δw, Δh) via 1×1 conv → [64×48×9×4]
 - Total anchors: 64×48×9 = 27,648
 - Apply softmax to objectness scores
 - Keep top 300 proposals (highest objectness, apply NMS to remove duplicates)
 
 **3. RoI Pooling**
 - For each of 300 proposals:
-  - Map proposal box coordinates to feature map coordinates (divide by stride=16)
-  - Extract variable-size region from feature map
-  - Apply max pooling to produce fixed 7×7×1024 output (align all regions to same size)
+ - Map proposal box coordinates to feature map coordinates (divide by stride=16)
+ - Extract variable-size region from feature map
+ - Apply max pooling to produce fixed 7×7×1024 output (align all regions to same size)
 
 **4. Detection Head** (Classifier + Box Regressor)
 - Flatten 7×7×1024 → 50,176-dim vector
@@ -232,10 +231,10 @@ graph LR
 
 **5. Non-Maximum Suppression** (NMS)
 - For each class (excluding background):
-  - Sort detections by confidence score (descending)
-  - Keep highest-confidence box
-  - Remove all boxes with IoU > 0.5 with the kept box
-  - Repeat until all boxes processed
+ - Sort detections by confidence score (descending)
+ - Keep highest-confidence box
+ - Remove all boxes with IoU > 0.5 with the kept box
+ - Repeat until all boxes processed
 - Apply confidence threshold (e.g., 0.5) — discard low-confidence detections
 
 **6. Final Output**
@@ -357,23 +356,23 @@ $$
 
 ```
 Feature Map [H/16, W/16, 1024]
-            ↓
-    ┌───────────────┐
-    │ 3×3 Conv (512)│  ← Intermediate feature extraction
-    └───────────────┘
-            ↓
-    ┌───────┴───────┐
-    ↓               ↓
-┌─────────┐   ┌─────────┐
-│ 1×1 Conv│   │ 1×1 Conv│
-│ (9×2)   │   │ (9×4)   │
-│ Object- │   │ Box     │
-│ ness    │   │ Offsets │
-└─────────┘   └─────────┘
-     ↓             ↓
-  [H/16,       [H/16,
-   W/16,        W/16,
-   9×2]         9×4]
+ ↓
+ ┌───────────────┐
+ │ 3×3 Conv (512)│ ← Intermediate feature extraction
+ └───────────────┘
+ ↓
+ ┌───────┴───────┐
+ ↓ ↓
+┌─────────┐ ┌─────────┐
+│ 1×1 Conv│ │ 1×1 Conv│
+│ (9×2) │ │ (9×4) │
+│ Object- │ │ Box │
+│ ness │ │ Offsets │
+└─────────┘ └─────────┘
+ ↓ ↓
+ [H/16, [H/16,
+ W/16, W/16,
+ 9×2] 9×4]
 ```
 
 **At each spatial location:**
@@ -384,14 +383,14 @@ Feature Map [H/16, W/16, 1024]
 ### RoI Pooling Visualization
 
 ```
-Feature Map [64×48×1024]         RoI Pooled [7×7×1024]
-┌─────────────────────┐          ┌─────────┐
-│                     │          │ □ □ □ □ │
-│    ┌──────────┐     │   →      │ □ □ □ □ │
-│    │ Proposal │     │   Pool   │ □ □ □ □ │
-│    │ 10×15    │     │   →      │ □ □ □ □ │
-│    └──────────┘     │   7×7    └─────────┘
-│                     │
+Feature Map [64×48×1024] RoI Pooled [7×7×1024]
+┌─────────────────────┐ ┌─────────┐
+│ │ │ □ □ □ □ │
+│ ┌──────────┐ │ → │ □ □ □ □ │
+│ │ Proposal │ │ Pool │ □ □ □ □ │
+│ │ 10×15 │ │ → │ □ □ □ □ │
+│ └──────────┘ │ 7×7 └─────────┘
+│ │
 └─────────────────────┘
 
 Proposal: Variable size (10×15 in feature map coords)
@@ -405,18 +404,18 @@ Output: Fixed size (7×7) — enables FC layers
 ### Anchor Boxes at Multiple Scales
 
 ```
-                    Anchor Boxes (9 per location)
+ Anchor Boxes (9 per location)
 
-Scale 128²:    ┌─┐  ┌──┐  ┌┐     (Small objects)
-               └─┘  └──┘  └┘
+Scale 128²: ┌─┐ ┌──┐ ┌┐ (Small objects)
+ └─┘ └──┘ └┘
 
-Scale 256²:   ┌───┐ ┌────┐ ┌──┐  (Medium objects)
-              └───┘ └────┘ └──┘
+Scale 256²: ┌───┐ ┌────┐ ┌──┐ (Medium objects)
+ └───┘ └────┘ └──┘
 
-Scale 512²:  ┌─────┐┌──────┐┌────┐ (Large objects)
-             └─────┘└──────┘└────┘
+Scale 512²: ┌─────┐┌──────┐┌────┐ (Large objects)
+ └─────┘└──────┘└────┘
 
-Aspect ratios:  1:1    1:2    2:1
+Aspect ratios: 1:1 1:2 2:1
 ```
 
 ---
@@ -456,7 +455,7 @@ Aspect ratios:  1:1    1:2    2:1
 - **Too strict** (0.3): Might suppress correct detections in crowded scenes (misses products when they overlap)
 - **Too lenient** (0.8): Leaves duplicate boxes → inflates detection count, confuses downstream logic
 
-> ⚠️ **Warning:** If you see duplicate bounding boxes in your output (5 boxes around the same object), lower the NMS threshold. If you're missing objects in crowded scenes, raise it.
+> **Warning — Warning:** If you see duplicate bounding boxes in your output (5 boxes around the same object), lower the NMS threshold. If you're missing objects in crowded scenes, raise it.
 
 ![Non-Maximum Suppression process animation](img/ch03-nms-process.gif)
 
@@ -493,22 +492,20 @@ Aspect ratios:  1:1    1:2    2:1
 ## 9 · Progress Check — What We Can Solve Now
 
 ![ProductionCV constraint progress](img/ch03-progress-check.png)
-
-✅ **Unlocked capabilities:**
+**Unlocked capabilities:**
 - **Multi-object detection:** Detect 1–15 products per image (variable number of outputs)
 - **Spatial localization:** Predict bounding boxes `[x, y, w, h]` for each detection
 - **High accuracy:** 85%+ mAP@0.5 on retail shelf dataset (Faster R-CNN with ResNet-50)
-- **Constraint #1 ✅ ACHIEVED!** — mAP@0.5 ≥ 85% (detection accuracy target met)
+- **Constraint #1 ACHIEVED!** — mAP@0.5 ≥ 85% (detection accuracy target met)
 
 **Baseline metrics (Faster R-CNN on ProductionCV dataset):**
-- **mAP@0.5:** 86.3% (above 85% threshold ✅)
+- **mAP@0.5:** 86.3% (above 85% threshold )
 - **Inference time:** 180ms per frame (on NVIDIA RTX 3090)
 - **Model size:** 167 MB (ResNet-50 backbone + detection head)
-
-❌ **Still can't solve:**
-- ❌ **Constraint #3 (latency):** 180ms >> 50ms target (3.6× too slow for edge devices)
-- ❌ **Constraint #4 (model size):** 167 MB >> 100 MB target (1.7× too large)
-- ❌ **Real-time inference:** Two-stage pipeline (RPN → RoI pooling → detection head) has high latency
+**Still can't solve:**
+- **Constraint #3 (latency):** 180ms >> 50ms target (3.6× too slow for edge devices)
+- **Constraint #4 (model size):** 167 MB >> 100 MB target (1.7× too large)
+- **Real-time inference:** Two-stage pipeline (RPN → RoI pooling → detection head) has high latency
 
 **Why we're stuck:**
 Two-stage detectors prioritize accuracy over speed:

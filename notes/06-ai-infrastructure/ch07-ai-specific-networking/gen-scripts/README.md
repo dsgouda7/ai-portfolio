@@ -46,10 +46,10 @@ All generated PNG files are saved to `../img/` directory with:
 - Dark background (`#1a1a2e`) matching the notebook theme
 - High resolution (150 DPI)
 - Consistent color scheme:
-  - 🔴 Red (#b91c1c): PCIe (slow)
-  - 🟢 Green (#15803d): NVLink (fast)
-  - 🔵 Blue (#1d4ed8): InfiniBand (multi-node)
-  - 🟡 Yellow: Highlights and annotations
+ - 🔴 Red (#b91c1c): PCIe (slow)
+ - 🟢 Green (#15803d): NVLink (fast)
+ - 🔵 Blue (#1d4ed8): InfiniBand (multi-node)
+ - 🟡 Yellow: Highlights and annotations
 
 ## Customization
 

@@ -24,12 +24,12 @@
 
 | Constraint | Target | Status | Evidence |
 |------------|--------|--------|----------|
-| #1 Quality | ≥4.0/5.0 | ⚡ **~3.0/5.0** | DDPM generates coherent MNIST digits (proof-of-concept) |
-| #2 Speed | <30 seconds | ❌ **~5 minutes** | 1000 denoising steps on laptop CPU |
-| #3 Cost | <$5k hardware | ❌ Not validated | Haven't tested on target hardware yet |
-| #4 Control | <5% unusable | ⚡ **~40% unusable** | Random sampling, no text conditioning |
-| #5 Throughput | 100+ images/day | ❌ **~10 images/day** | Limited by 5-minute generation time |
-| #6 Versatility | 3 modalities | ⚡ **Text→Image partial** | Can generate images, but not from text descriptions |
+| #1 Quality | ≥4.0/5.0 | **~3.0/5.0** | DDPM generates coherent MNIST digits (proof-of-concept) |
+| #2 Speed | <30 seconds | **~5 minutes** | 1000 denoising steps on laptop CPU |
+| #3 Cost | <$5k hardware | Not validated | Haven't tested on target hardware yet |
+| #4 Control | <5% unusable | **~40% unusable** | Random sampling, no text conditioning |
+| #5 Throughput | 100+ images/day | **~10 images/day** | Limited by 5-minute generation time |
+| #6 Versatility | 3 modalities | **Text→Image partial** | Can generate images, but not from text descriptions |
 
 ---
 
@@ -55,16 +55,16 @@ The crucial distinction from earlier generative models: **diffusion models predi
 
 ```
 Educational proxy:
-  Goal: Generate new handwritten digit images from pure noise
-  Architecture: A U-Net trained on MNIST-style data (60K 28×28 images)
-  Training: ~5 minutes on CPU (MNIST is small enough to see results quickly)
-  Inference: Sample x_T ~ N(0, I) → denoise 1000 steps → x_0 ∈ [0, 1]²⁸ˣ²⁸
+ Goal: Generate new handwritten digit images from pure noise
+ Architecture: A U-Net trained on MNIST-style data (60K 28×28 images)
+ Training: ~5 minutes on CPU (MNIST is small enough to see results quickly)
+ Inference: Sample x_T ~ N(0, I) → denoise 1000 steps → x_0 ∈ [0, 1]²⁸ˣ²⁸
 
 VisualForge mapping:
-  Brief type: "product-on-white" (512×512 RGBA, white studio background)
-  Prompt: "Mango leather crossbody bag, center frame, white background, studio lighting"
-  Architecture: DDPM → used in Stable Diffusion's training objective
-  See §5 for the full production pattern
+ Brief type: "product-on-white" (512×512 RGBA, white studio background)
+ Prompt: "Mango leather crossbody bag, center frame, white background, studio lighting"
+ Architecture: DDPM → used in Stable Diffusion's training objective
+ See §5 for the full production pattern
 ```
 
 ---
@@ -217,41 +217,41 @@ from diffusers import StableDiffusionPipeline, DDPMScheduler
 import torch
 
 pipe = StableDiffusionPipeline.from_pretrained(
-    "stabilityai/stable-diffusion-2-1",
-    scheduler=DDPMScheduler.from_pretrained("stabilityai/stable-diffusion-2-1", subfolder="scheduler"),
-    torch_dtype=torch.float16
+ "stabilityai/stable-diffusion-2-1",
+ scheduler=DDPMScheduler.from_pretrained("stabilityai/stable-diffusion-2-1", subfolder="scheduler"),
+ torch_dtype=torch.float16
 ).to("cuda")
 
 # VisualForge spring-collection brief: product-on-white
 brief_prompts = [
-    "Mango leather crossbody bag, center frame, white background, studio lighting, product photography",
-    "Navy canvas tote, flat lay, white background, minimal shadow, e-commerce style",
-    "Olive green backpack, three-quarter view, white background, high detail product shot",
+ "Mango leather crossbody bag, center frame, white background, studio lighting, product photography",
+ "Navy canvas tote, flat lay, white background, minimal shadow, e-commerce style",
+ "Olive green backpack, three-quarter view, white background, high detail product shot",
 ]
 negative_prompt = "people, model, background texture, shadow, logo, text, watermark, blur"
 
 results = pipe(
-    brief_prompts,
-    negative_prompt=[negative_prompt] * len(brief_prompts),
-    num_inference_steps=50,   # DDPM schedule — 50 steps gives good quality
-    guidance_scale=7.5,
-    height=512, width=512,
+ brief_prompts,
+ negative_prompt=[negative_prompt] * len(brief_prompts),
+ num_inference_steps=50, # DDPM schedule — 50 steps gives good quality
+ guidance_scale=7.5,
+ height=512, width=512,
 )
 
 for i, img in enumerate(results.images):
-    img.save(f"visualforge_product_{i:02d}.png")
+ img.save(f"visualforge_product_{i:02d}.png")
 ```
 
 **Constraint scorecard (3 products):**
 
 | Metric | Target | Result |
 |--------|--------|--------|
-| Generation time | <30 min / 50 products | ~18 sec / product → ~15 min / 50 ✅ |
-| Background compliance | White, no texture | ✅ (with negative prompt) |
-| Quality score (human eval) | ≥4.0/5.0 | 4.1/5.0 ✅ |
-| Consistency across batch | Same lighting direction | ⚡ Moderate — covered in Ch.3 (Guidance) |
+| Generation time | <30 min / 50 products | ~18 sec / product → ~15 min / 50 |
+| Background compliance | White, no texture | (with negative prompt) |
+| Quality score (human eval) | ≥4.0/5.0 | 4.1/5.0 |
+| Consistency across batch | Same lighting direction | Moderate — covered in Ch.3 (Guidance) |
 
-> 💡 DDPM (1000 steps) is too slow for production — Ch.2 (Schedulers) replaces it with DDIM (50 steps) and DPM-Solver (20 steps). The math here is foundational; the production solver is what ships.
+> DDPM (1000 steps) is too slow for production — Ch.2 (Schedulers) replaces it with DDIM (50 steps) and DPM-Solver (20 steps). The math here is foundational; the production solver is what ships.
 
 ---
 
@@ -322,19 +322,19 @@ for i, img in enumerate(results.images):
 ### Use DDPM When:
 
 1. **You need stable, deterministic training**
-   - GANs require adversarial game balancing (generator vs discriminator) → mode collapse, training instability
-   - DDPM is just MSE loss on noise prediction → train like any supervised model
-   - **VisualForge decision**: Tried StyleGAN2 first → 3 weeks of hyperparameter tuning, still unstable. Switched to DDPM → stable training in 2 days.
+ - GANs require adversarial game balancing (generator vs discriminator) → mode collapse, training instability
+ - DDPM is just MSE loss on noise prediction → train like any supervised model
+ - **VisualForge decision**: Tried StyleGAN2 first → 3 weeks of hyperparameter tuning, still unstable. Switched to DDPM → stable training in 2 days.
 
 2. **You need diverse outputs**
-   - VAE posteriors are typically Gaussian with fixed variance → limited diversity
-   - DDPM samples from learned distribution → high diversity without mode collapse
-   - **VisualForge result**: 100 "spring collection hero" generations → 97 unique compositions (vs 40 unique with VAE)
+ - VAE posteriors are typically Gaussian with fixed variance → limited diversity
+ - DDPM samples from learned distribution → high diversity without mode collapse
+ - **VisualForge result**: 100 "spring collection hero" generations → 97 unique compositions (vs 40 unique with VAE)
 
 3. **You have compute budget for multi-step generation**
-   - DDPM requires 20-1000 forward passes (depending on scheduler)
-   - GANs generate in 1 forward pass
-   - **VisualForge tradeoff**: 8 seconds/image (DDPM + DDIM scheduler) acceptable for client reviews; 0.5 seconds (GAN) would be nice but quality gap too large
+ - DDPM requires 20-1000 forward passes (depending on scheduler)
+ - GANs generate in 1 forward pass
+ - **VisualForge tradeoff**: 8 seconds/image (DDPM + DDIM scheduler) acceptable for client reviews; 0.5 seconds (GAN) would be nice but quality gap too large
 
 ---
 
@@ -452,35 +452,35 @@ GANs are faster at inference but harder to train (mode collapse, training instab
 ### Foundational Papers
 
 1. **Sohl-Dickstein et al. (2015)** — *"Deep Unsupervised Learning using Nonequilibrium Thermodynamics"*
-   - Original diffusion models paper (ICML 2015)
-   - Introduced forward/reverse process, but didn't achieve strong image quality
-   - https://arxiv.org/abs/1503.03585
+ - Original diffusion models paper (ICML 2015)
+ - Introduced forward/reverse process, but didn't achieve strong image quality
+ - https://arxiv.org/abs/1503.03585
 
 2. **Ho, Jain, Abbeel (2020)** — *"Denoising Diffusion Probabilistic Models (DDPM)"*
-   - The breakthrough paper that made diffusion practical
-   - Simplified training objective: predict noise, not image
-   - https://arxiv.org/abs/2006.11239
+ - The breakthrough paper that made diffusion practical
+ - Simplified training objective: predict noise, not image
+ - https://arxiv.org/abs/2006.11239
 
 3. **Song, Ermon (2020)** — *"Score-Based Generative Modeling through Stochastic Differential Equations"*
-   - Continuous-time interpretation of diffusion (score matching)
-   - Unified DDPM and score-based models
-   - https://arxiv.org/abs/2011.13456
+ - Continuous-time interpretation of diffusion (score matching)
+ - Unified DDPM and score-based models
+ - https://arxiv.org/abs/2011.13456
 
 ---
 
 ### Implementation Guides
 
 - **Hugging Face Diffusers**: Official library for diffusion models
-  - https://github.com/huggingface/diffusers
-  - `diffusers` Python package (used in § 5 Production Example)
+ - https://github.com/huggingface/diffusers
+ - `diffusers` Python package (used in § 5 Production Example)
 
 - **Annotated DDPM**: Line-by-line PyTorch walkthrough
-  - https://nn.labml.ai/diffusion/ddpm/
-  - Educational implementation showing every step
+ - https://nn.labml.ai/diffusion/ddpm/
+ - Educational implementation showing every step
 
 - **Stable Diffusion Code**: Production implementation
-  - https://github.com/CompVis/stable-diffusion
-  - See how DDPM scales to text→image generation
+ - https://github.com/CompVis/stable-diffusion
+ - See how DDPM scales to text→image generation
 
 ---
 
@@ -513,24 +513,24 @@ GANs are faster at inference but harder to train (mode collapse, training instab
 
 **Expected output**: After 5 epochs, you should see coherent handwritten digits generated from random noise.
 
-> ⚠️ **This is an educational notebook** — MNIST digits, not VisualForge product images. The production pipeline (§ 5) uses pretrained Stable Diffusion models. This notebook shows the mechanism; production uses the scaling.
+> **This is an educational notebook** — MNIST digits, not VisualForge product images. The production pipeline (§ 5) uses pretrained Stable Diffusion models. This notebook shows the mechanism; production uses the scaling.
 
 ---
 
 ## 11.5 · Progress Check — What Have We Unlocked?
 
 ### Before This Chapter
-- **Constraint #1 (Quality)**: ❌ Cannot generate images
-- **Constraint #2 (Speed)**: ❌ No generation pipeline
-- **Constraint #4 (Control)**: ❌ No way to specify what to generate
-- **Constraint #6 (Versatility)**: ⚡ Can search/embed images (Ch.3 CLIP), but not create new ones
+- **Constraint #1 (Quality)**: Cannot generate images
+- **Constraint #2 (Speed)**: No generation pipeline
+- **Constraint #4 (Control)**: No way to specify what to generate
+- **Constraint #6 (Versatility)**: Can search/embed images (Ch.3 CLIP), but not create new ones
 - **VisualForge Status**: Can only search existing images, not create new ones
 
 ### After This Chapter
-- **Constraint #1 (Quality)**: ⚡ **~3.0/5.0** → DDPM generates coherent images (MNIST proof-of-concept validates mechanism)
-- **Constraint #2 (Speed)**: ❌ **~5 minutes per image** → 1000 denoising steps on laptop CPU (unusable for client reviews)
-- **Constraint #4 (Control)**: ⚡ **~40% unusable** → Random sampling, no text conditioning yet
-- **Constraint #6 (Versatility)**: ⚡ **Text→Image partial** → Can generate images, but not from text descriptions
+- **Constraint #1 (Quality)**: **~3.0/5.0** → DDPM generates coherent images (MNIST proof-of-concept validates mechanism)
+- **Constraint #2 (Speed)**: **~5 minutes per image** → 1000 denoising steps on laptop CPU (unusable for client reviews)
+- **Constraint #4 (Control)**: **~40% unusable** → Random sampling, no text conditioning yet
+- **Constraint #6 (Versatility)**: **Text→Image partial** → Can generate images, but not from text descriptions
 - **VisualForge Status**: Generation works but unusable (5 min vs <30s target)
 
 ---
@@ -556,14 +556,14 @@ GANs are faster at inference but harder to train (mode collapse, training instab
 
 | Constraint | Ch.1 | Ch.2 | Ch.3 | Ch.4 (This) | Target |
 |------------|------|------|------|-------------|--------|
-| Quality | ❌ | ❌ | ❌ | ⚡ 3.0/5.0 | 4.0/5.0 |
-| Speed | ❌ | ❌ | ❌ | ❌ 5 min | <30s |
-| Cost | ❌ | ❌ | ❌ | ❌ | <$5k |
-| Control | ❌ | ❌ | ⚡ Text search | ⚡ 40% unusable | <5% |
-| Throughput | ❌ | ❌ | ❌ | ❌ ~10/day | 100+/day |
-| Versatility | ❌ | ⚡ Embeddings | ⚡ Search | ⚡ Generate | 3 modalities |
+| Quality | | | | 3.0/5.0 | 4.0/5.0 |
+| Speed | | | | 5 min | <30s |
+| Cost | | | | | <$5k |
+| Control | | | Text search | 40% unusable | <5% |
+| Throughput | | | | ~10/day | 100+/day |
+| Versatility | | Embeddings | Search | Generate | 3 modalities |
 
-**Legend**: ❌ Not addressed | ⚡ Foundation laid | ✅ Target hit
+**Legend**: Not addressed | Foundation laid | Target hit
 
 ---
 

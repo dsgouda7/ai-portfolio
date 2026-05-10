@@ -31,7 +31,7 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 💡 **EnsembleAI mission**: Beat any single model by >5% in MAE/accuracy via intelligent combination of diverse learners.
+> **EnsembleAI mission**: Beat any single model by >5% in MAE/accuracy via intelligent combination of diverse learners.
 >
 > **5 Constraints**: 1. IMPROVEMENT >5% over single models — 2. DIVERSITY (multiple algorithm families) — 3. EFFICIENCY (<5× latency of single model) — 4. INTERPRETABILITY (per-prediction SHAP explanations) — 5. ROBUSTNESS (stable MAE/accuracy across 5 random seeds)
 
@@ -39,10 +39,10 @@
 
 | Chapter | Method | CA Housing MAE | Constraints Met |
 |---------|--------|---------------|-----------------|
-| Ch.1 — Random Forests | Bagging 100 trees | ~$34k | #1 ✅ #2 ✅ #5 ✅ |
-| Ch.2 — Gradient Boosting | Additive trees + shrinkage | ~$28k | #1 ✅ #2 ✅ #3 ✅ #5 ✅ |
-| Ch.3 — XGBoost/LightGBM | Regularised GB + column subsampling | ~$22k | #1 ✅ #2 ✅ #3 ✅ #5 ✅ |
-| **This chapter — SHAP** | Post-hoc explanation layer | MAE unchanged | **#4 ✅ ← unlocked here** |
+| Ch.1 — Random Forests | Bagging 100 trees | ~$34k | #1 #2 #5 |
+| Ch.2 — Gradient Boosting | Additive trees + shrinkage | ~$28k | #1 #2 #3 #5 |
+| Ch.3 — XGBoost/LightGBM | Regularised GB + column subsampling | ~$22k | #1 #2 #3 #5 |
+| **This chapter — SHAP** | Post-hoc explanation layer | MAE unchanged | **#4 ← unlocked here** |
 
 **The missing piece — the black-box problem:**
 
@@ -52,22 +52,21 @@ XGBoost predicted **$420k** for a specific California district. A loan officer a
 
 ```
 Before SHAP (Ch.3 output):
-  Prediction: $420,000
-  Reason: [XGBoost ensemble of 500 trees]   ← useless to regulator
+ Prediction: $420,000
+ Reason: [XGBoost ensemble of 500 trees] ← useless to regulator
 
 After SHAP (Ch.4 output):
-  Prediction: $420,000
-  Base value: $290,000  (average prediction across all districts)
-  Breakdown:
-    MedInc = 8.2        → +$95,000  (highest-income area)
-    Location (lat/lon)  → +$40,000  (coastal premium)
-    AveRooms = 7.1      → +$15,000  (large rooms)
-    HouseAge = 12       → -$20,000  (newer build is lower value here)
-    Other features      → close to zero
-  Check: 290 + 95 + 40 + 15 − 20 ≈ 420 ✓    ← every dollar accounted for
+ Prediction: $420,000
+ Base value: $290,000 (average prediction across all districts)
+ Breakdown:
+ MedInc = 8.2 → +$95,000 (highest-income area)
+ Location (lat/lon) → +$40,000 (coastal premium)
+ AveRooms = 7.1 → +$15,000 (large rooms)
+ HouseAge = 12 → -$20,000 (newer build is lower value here)
+ Other features → close to zero
+ Check: 290 + 95 + 40 + 15 − 20 ≈ 420 ✓ ← every dollar accounted for
 ```
-
-✅ **This is the foundation** — SHAP makes the EnsembleAI system legally deployable and trusted by every stakeholder.
+**This is the foundation** — SHAP makes the EnsembleAI system legally deployable and trusted by every stakeholder.
 
 ---
 
@@ -89,10 +88,10 @@ SHAP assigns each feature a value $\phi_i$ representing its contribution to the 
 
 | Method | Local faithful? | Consistent? | Additive? | Unique? |
 |--------|----------------|-------------|-----------|---------|
-| Feature importance (MDI) | ❌ Global only | ❌ | ✅ | ❌ |
-| LIME | ✅ approximate | ❌ | ✅ | ❌ |
-| Partial dependence | ❌ Global only | ❌ | ❌ | ❌ |
-| **SHAP** | **✅ exact** | **✅** | **✅** | **✅** |
+| Feature importance (MDI) | Global only | | | |
+| LIME | approximate | | | |
+| Partial dependence | Global only | | | |
+| **SHAP** | ** exact** | **** | **** | **** |
 
 Lundberg & Lee (2017) proved that SHAP is the *only* additive explanation method satisfying all three properties. The uniqueness comes directly from the Shapley axioms.
 
@@ -143,18 +142,18 @@ Different model types require different SHAP algorithms:
 
 | Method | Works on | Complexity | Exact? | Notes |
 |--------|----------|-----------|--------|-------|
-| **TreeSHAP** | Decision trees, RF, XGBoost, LightGBM, CatBoost | $O(TLD^2)$ | ✅ Exact | Lundberg (2018); default for tree ensembles |
-| **KernelSHAP** | Any model (black-box) | $O(n_\text{samples} \cdot n_\text{features}^2)$ | ❌ Approximate | Slow for large datasets; use background ≤100 rows |
-| **DeepSHAP** | Neural networks (TF / PyTorch) | $O(n_\text{features})$ | ❌ Approximate | Uses DeepLIFT backprop; fast but approximate |
-| **LinearSHAP** | Linear models (Lasso, Ridge, Logistic) | $O(n_\text{features})$ | ✅ Exact | Closed-form; features must be independent |
-| **PermutationSHAP** | Any model | $O(2K \cdot n_\text{features})$ | ❌ Approximate | Slower but useful for validation |
+| **TreeSHAP** | Decision trees, RF, XGBoost, LightGBM, CatBoost | $O(TLD^2)$ | Exact | Lundberg (2018); default for tree ensembles |
+| **KernelSHAP** | Any model (black-box) | $O(n_\text{samples} \cdot n_\text{features}^2)$ | Approximate | Slow for large datasets; use background ≤100 rows |
+| **DeepSHAP** | Neural networks (TF / PyTorch) | $O(n_\text{features})$ | Approximate | Uses DeepLIFT backprop; fast but approximate |
+| **LinearSHAP** | Linear models (Lasso, Ridge, Logistic) | $O(n_\text{features})$ | Exact | Closed-form; features must be independent |
+| **PermutationSHAP** | Any model | $O(2K \cdot n_\text{features})$ | Approximate | Slower but useful for validation |
 
 **For EnsembleAI (XGBoost/LightGBM/RF):** always use `shap.TreeExplainer`. It is the only SHAP method that is both **exact** and **fast** (milliseconds per batch).
 
 ```python
 import shap
 explainer = shap.TreeExplainer(xgb_model)
-shap_values = explainer(X_test)          # shape: (n_test, n_features)
+shap_values = explainer(X_test) # shape: (n_test, n_features)
 ```
 
 ---
@@ -288,13 +287,13 @@ Exact Shapley computation requires evaluating $\text{val}(S)$ for all $2^{|F|}$ 
 **Simple 3-node tree example** (one split on MedInc):
 
 ```
-         Root (all data, 100%)
-          MedInc ≤ 4.0?
-         /              \
-    Left leaf           Right leaf
-    MedInc ≤ 4.0        MedInc > 4.0
-    40% of data         60% of data
-    pred = $220k        pred = $380k
+ Root (all data, 100%)
+ MedInc ≤ 4.0?
+ / \
+ Left leaf Right leaf
+ MedInc ≤ 4.0 MedInc > 4.0
+ 40% of data 60% of data
+ pred = $220k pred = $380k
 ```
 
 Base value: $E[f] = 0.40 \times 220 + 0.60 \times 380 = 88 + 228 = \$316k$
@@ -376,9 +375,9 @@ The base value is the average prediction across all training samples. For Ensemb
 ```python
 import shap
 
-explainer  = shap.TreeExplainer(xgb_model)
-shap_vals  = explainer(X_test)           # shape (n_test, 8)
-base_val   = explainer.expected_value    # ≈ 2.90 (in $100k units)
+explainer = shap.TreeExplainer(xgb_model)
+shap_vals = explainer(X_test) # shape (n_test, 8)
+base_val = explainer.expected_value # ≈ 2.90 (in $100k units)
 ```
 
 **Step 3 — Waterfall table for district #42.**
@@ -415,49 +414,49 @@ This is a regulatorily compliant explanation under GDPR Article 22 and US ECOA r
 
 ```mermaid
 flowchart LR
-    BASE["Base Value\n$290,000\n(avg prediction)"]
-    BASE -->|"+$95k\nMedInc=8.2"| N1["$385,000"]
-    N1 -->|"+$40k\nLocation coastal"| N2["$425,000"]
-    N2 -->|"+$15k\nAveRooms=7.1"| N3["$440,000"]
-    N3 -->|"-$20k\nHouseAge=12"| N4["$420,000"]
-    N4 -->|"≈ 0\nOther features"| PRED["Prediction\n$420,000"]
+ BASE["Base Value\n$290,000\n(avg prediction)"]
+ BASE -->|"+$95k\nMedInc=8.2"| N1["$385,000"]
+ N1 -->|"+$40k\nLocation coastal"| N2["$425,000"]
+ N2 -->|"+$15k\nAveRooms=7.1"| N3["$440,000"]
+ N3 -->|"-$20k\nHouseAge=12"| N4["$420,000"]
+ N4 -->|"≈ 0\nOther features"| PRED["Prediction\n$420,000"]
 
-    style BASE fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style N1 fill:#15803d,color:#fff,stroke:#15803d
-    style N2 fill:#15803d,color:#fff,stroke:#15803d
-    style N3 fill:#15803d,color:#fff,stroke:#15803d
-    style N4 fill:#b91c1c,color:#fff,stroke:#b91c1c
-    style PRED fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style BASE fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style N1 fill:#15803d,color:#fff,stroke:#15803d
+ style N2 fill:#15803d,color:#fff,stroke:#15803d
+ style N3 fill:#15803d,color:#fff,stroke:#15803d
+ style N4 fill:#b91c1c,color:#fff,stroke:#b91c1c
+ style PRED fill:#1d4ed8,color:#fff,stroke:#1d4ed8
 ```
 
 ### 7.2 — Coalition Game Interpretation
 
 ```mermaid
 flowchart TD
-    GAME["Cooperative Game\nPlayers = Features\nPayout = Prediction"]
-    GAME --> COAL["All coalitions S\n(2^n subsets of features)"]
-    COAL --> MARG["Marginal contribution\nval(S∪{i}) − val(S)\nfor each coalition S"]
-    MARG --> WEIGHT["Weighted average\n|S|!(|F|−|S|−1)! / |F|!"]
-    WEIGHT --> SHAP_VAL["SHAP value φ_i\nper feature per prediction"]
-    SHAP_VAL --> LOCAL["Local explanation\none prediction"]
-    SHAP_VAL --> GLOBAL["Global ranking\nmean |φ_i| across all samples"]
+ GAME["Cooperative Game\nPlayers = Features\nPayout = Prediction"]
+ GAME --> COAL["All coalitions S\n(2^n subsets of features)"]
+ COAL --> MARG["Marginal contribution\nval(S∪{i}) − val(S)\nfor each coalition S"]
+ MARG --> WEIGHT["Weighted average\n|S|!(|F|−|S|−1)! / |F|!"]
+ WEIGHT --> SHAP_VAL["SHAP value φ_i\nper feature per prediction"]
+ SHAP_VAL --> LOCAL["Local explanation\none prediction"]
+ SHAP_VAL --> GLOBAL["Global ranking\nmean |φ_i| across all samples"]
 
-    LOCAL --> WATER["Waterfall plot"]
-    LOCAL --> FORCE["Force plot"]
-    GLOBAL --> SWARM["Beeswarm plot"]
-    GLOBAL --> BAR["Bar chart"]
+ LOCAL --> WATER["Waterfall plot"]
+ LOCAL --> FORCE["Force plot"]
+ GLOBAL --> SWARM["Beeswarm plot"]
+ GLOBAL --> BAR["Bar chart"]
 
-    style GAME fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style COAL fill:#b45309,color:#fff,stroke:#b45309
-    style MARG fill:#b45309,color:#fff,stroke:#b45309
-    style WEIGHT fill:#b45309,color:#fff,stroke:#b45309
-    style SHAP_VAL fill:#15803d,color:#fff,stroke:#15803d
-    style LOCAL fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style GLOBAL fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style WATER fill:#15803d,color:#fff,stroke:#15803d
-    style FORCE fill:#15803d,color:#fff,stroke:#15803d
-    style SWARM fill:#15803d,color:#fff,stroke:#15803d
-    style BAR fill:#15803d,color:#fff,stroke:#15803d
+ style GAME fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style COAL fill:#b45309,color:#fff,stroke:#b45309
+ style MARG fill:#b45309,color:#fff,stroke:#b45309
+ style WEIGHT fill:#b45309,color:#fff,stroke:#b45309
+ style SHAP_VAL fill:#15803d,color:#fff,stroke:#15803d
+ style LOCAL fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style GLOBAL fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style WATER fill:#15803d,color:#fff,stroke:#15803d
+ style FORCE fill:#15803d,color:#fff,stroke:#15803d
+ style SWARM fill:#15803d,color:#fff,stroke:#15803d
+ style BAR fill:#15803d,color:#fff,stroke:#15803d
 ```
 
 ---
@@ -470,7 +469,7 @@ SHAP is a *post-hoc analysis* method — it explains a model but has no trainabl
 
 ```python
 explainer = shap.TreeExplainer(model)
-shap_values = explainer(X_test, check_additivity=True)  # default: True
+shap_values = explainer(X_test, check_additivity=True) # default: True
 ```
 
 | Setting | Effect | When to change |
@@ -478,15 +477,15 @@ shap_values = explainer(X_test, check_additivity=True)  # default: True
 | `check_additivity=True` | Verifies $E[f] + \sum \phi_i = f(\mathbf{x})$ for every row | **Always use in development** — catches numerical drift, model bugs |
 | `check_additivity=False` | Skips verification for a slight speedup | Only in production if additivity is confirmed and latency is critical |
 
-> ⚠️ **Never disable `check_additivity` without testing first.** Some multi-output models and custom objectives silently violate it. Disabling masks prediction errors.
+> **Never disable `check_additivity` without testing first.** Some multi-output models and custom objectives silently violate it. Disabling masks prediction errors.
 
 ### 8.2 — Background Dataset Size (KernelSHAP)
 
 KernelSHAP requires a *background dataset* to marginalise missing features:
 
 ```python
-background = shap.sample(X_train, 100)           # summarise to 100 rows
-explainer  = shap.KernelExplainer(model.predict, background)
+background = shap.sample(X_train, 100) # summarise to 100 rows
+explainer = shap.KernelExplainer(model.predict, background)
 ```
 
 | Background size | Speed | Explanation quality | Recommendation |
@@ -495,12 +494,12 @@ explainer  = shap.KernelExplainer(model.predict, background)
 | 50–100 rows | Fast | Good | **Default: `shap.sample(X_train, 100)`** |
 | 500+ rows | Slow | Very good | Research / validation only |
 
-> ⚡ **For tree models, skip KernelSHAP entirely.** TreeSHAP is faster, exact, and needs no background dataset.
+> **For tree models, skip KernelSHAP entirely.** TreeSHAP is faster, exact, and needs no background dataset.
 
 ### 8.3 — `nsamples` / `max_evals` (KernelSHAP)
 
 ```python
-shap_values = explainer.shap_values(X_test, nsamples=500)  # default: "auto"
+shap_values = explainer.shap_values(X_test, nsamples=500) # default: "auto"
 ```
 
 | `nsamples` | Evaluations | Accuracy | Use case |
@@ -537,26 +536,19 @@ shap_values = explainer.shap_values(X_test, nsamples=500)  # default: "auto"
 ## 10 · Where This Reappears
 
 SHAP is the universal interpretability layer — it appears in every downstream chapter and cross-track:
-
-➡️ **Ch.5 (Stacking)**: Apply SHAP to the meta-learner to understand *which base model's predictions* it trusts in which region of feature space. The stacking chapter uses SHAP to validate that the meta-learner has learned genuine diversity.
-
-➡️ **Ch.6 (Production)**: Every production deployment checklist includes a SHAP global summary (beeswarm) and a local waterfall for a representative TP/FP/FN case. Regulatory compliance gate: deployment blocked if SHAP explanations reveal unexpected feature dependence (e.g., demographic proxies).
-
-➡️ **03-NeuralNetworks track**: DeepSHAP explains neural network predictions using a backpropagation-based approximation. The same game-theoretic foundation, different algorithm.
-
-➡️ **02-Classification (FaceAI)**: KernelSHAP explains why the attribute classifier predicted "Smiling=1" for a face — which features contributed most. Satisfies GDPR requirements for automated facial analysis.
-
-➡️ **04-RecommenderSystems (FlixAI)**: SHAP on collaborative filtering explains why a movie was recommended — "This user's preference for Action genre and 2000s films drove 70% of this recommendation."
-
-➡️ **Backward pointer**: SHAP retroactively explains the SmartVal AI neural network predictions from the Regression track. The neural net from Ch.4 of 01-Regression can now be explained via DeepSHAP — closing the interpretability loop opened in Constraint #4.
+**Ch.5 (Stacking)**: Apply SHAP to the meta-learner to understand *which base model's predictions* it trusts in which region of feature space. The stacking chapter uses SHAP to validate that the meta-learner has learned genuine diversity.
+**Ch.6 (Production)**: Every production deployment checklist includes a SHAP global summary (beeswarm) and a local waterfall for a representative TP/FP/FN case. Regulatory compliance gate: deployment blocked if SHAP explanations reveal unexpected feature dependence (e.g., demographic proxies).
+**03-NeuralNetworks track**: DeepSHAP explains neural network predictions using a backpropagation-based approximation. The same game-theoretic foundation, different algorithm.
+**02-Classification (FaceAI)**: KernelSHAP explains why the attribute classifier predicted "Smiling=1" for a face — which features contributed most. Satisfies GDPR requirements for automated facial analysis.
+**04-RecommenderSystems (FlixAI)**: SHAP on collaborative filtering explains why a movie was recommended — "This user's preference for Action genre and 2000s films drove 70% of this recommendation."
+**Backward pointer**: SHAP retroactively explains the SmartVal AI neural network predictions from the Regression track. The neural net from Ch.4 of 01-Regression can now be explained via DeepSHAP — closing the interpretability loop opened in Constraint #4.
 
 ---
 
 ## 11 · Progress Check — What EnsembleAI Can Solve Now
 
 ![progress check](img/ch04-shap-progress-check.png)
-
-✅ **Unlocked capabilities — Ch.4 additions:**
+**Unlocked capabilities — Ch.4 additions:**
 
 - **Per-prediction explanations**: "MedInc=8.2 pushed this prediction +$95k above the $290k average" — every dollar attributed to a specific feature
 - **Verified attribution**: Efficiency axiom guarantees $E[f] + \sum \phi_i = f(\mathbf{x})$ — no hidden contributions
@@ -565,23 +557,22 @@ SHAP is the universal interpretability layer — it appears in every downstream 
 - **Global feature ranking**: Mean $|\phi_i|$ across test set → MedInc dominates, consistent with all prior chapters
 - **Visual toolkit**: Waterfall (one prediction), beeswarm (global importance), dependence plots (feature interactions), force plots (push/pull)
 - **Regulatory compliance**: Explanations meet GDPR Article 22, ECOA adverse action requirements — EnsembleAI is legally deployable
-- **Constraint #4 (INTERPRETABILITY) ✅ ACHIEVED** — all 5 EnsembleAI constraints are now met
+- **Constraint #4 (INTERPRETABILITY) ACHIEVED** — all 5 EnsembleAI constraints are now met
+**Known limitations — still open:**
 
-❌ **Known limitations — still open:**
-
-- ❌ **Causation**: SHAP shows association, not causation. Raising median income in a dataset does not *cause* higher house values — SHAP reflects the model's learned correlations.
-- ❌ **Counterfactuals**: SHAP does not answer "What would I need to change to get a different prediction?" — counterfactual methods (Ch.6) address this.
-- ❌ **Ensemble ceiling**: Can we squeeze more accuracy by *combining* model families? XGBoost alone achieves $22k MAE. What happens if we stack RF + XGBoost + Ridge? (Next: Ch.5)
+- **Causation**: SHAP shows association, not causation. Raising median income in a dataset does not *cause* higher house values — SHAP reflects the model's learned correlations.
+- **Counterfactuals**: SHAP does not answer "What would I need to change to get a different prediction?" — counterfactual methods (Ch.6) address this.
+- **Ensemble ceiling**: Can we squeeze more accuracy by *combining* model families? XGBoost alone achieves $22k MAE. What happens if we stack RF + XGBoost + Ridge? (Next: Ch.5)
 
 **Full EnsembleAI status after Ch.4:**
 
 | Constraint | Status | Method |
 |-----------|--------|--------|
-| #1 IMPROVEMENT >5% | ✅ | XGBoost MAE ≈ $22k vs. baseline $70k |
-| #2 DIVERSITY | ✅ | RF + GB + XGBoost trained |
-| #3 EFFICIENCY <5× latency | ✅ | XGBoost inference ms-scale; SHAP adds <10ms |
-| **#4 INTERPRETABILITY** | **✅** | **SHAP per-prediction explanations** |
-| #5 ROBUSTNESS | ✅ | Stable across 5 seeds |
+| #1 IMPROVEMENT >5% | | XGBoost MAE ≈ $22k vs. baseline $70k |
+| #2 DIVERSITY | | RF + GB + XGBoost trained |
+| #3 EFFICIENCY <5× latency | | XGBoost inference ms-scale; SHAP adds <10ms |
+| **#4 INTERPRETABILITY** | **** | **SHAP per-prediction explanations** |
+| #5 ROBUSTNESS | | Stable across 5 seeds |
 
 ---
 
@@ -630,9 +621,9 @@ $$\text{log-odds}(\mathbf{x}) = E[\text{log-odds}] + \sum_{i=1}^{n} \phi_i$$
 Converting log-odds contributions to probability space:
 
 ```python
-explainer    = shap.TreeExplainer(clf_model, link="logit")
-shap_proba   = explainer(X_test)
-shap.plots.waterfall(shap_proba[idx])   # probability-space waterfall
+explainer = shap.TreeExplainer(clf_model, link="logit")
+shap_proba = explainer(X_test)
+shap.plots.waterfall(shap_proba[idx]) # probability-space waterfall
 ```
 
 This produces a waterfall in probability units (0–1): "MedInc increased the probability of high-value from 50% to 82%" — immediately interpretable to non-technical stakeholders.
@@ -645,22 +636,22 @@ This produces a waterfall in probability units (0–1): "MedInc increased the pr
 import shap
 
 # ── Tree models (XGBoost, LightGBM, RF, CatBoost) ───────────────────────────
-explainer   = shap.TreeExplainer(model)
-shap_vals   = explainer(X_test)              # Explanation object, shape (n, p)
-base_val    = explainer.expected_value       # E[f]
+explainer = shap.TreeExplainer(model)
+shap_vals = explainer(X_test) # Explanation object, shape (n, p)
+base_val = explainer.expected_value # E[f]
 
 # ── Single prediction waterfall ──────────────────────────────────────────────
-shap.plots.waterfall(shap_vals[0])           # first test sample
+shap.plots.waterfall(shap_vals[0]) # first test sample
 shap.plots.waterfall(shap_vals[0], max_display=8)
 
 # ── Global importance (beeswarm) ─────────────────────────────────────────────
-shap.plots.beeswarm(shap_vals)               # ranked by mean |SHAP|
+shap.plots.beeswarm(shap_vals) # ranked by mean |SHAP|
 
 # ── Feature dependence plot ──────────────────────────────────────────────────
-shap.plots.scatter(shap_vals[:, "MedInc"])   # SHAP vs feature value
+shap.plots.scatter(shap_vals[:, "MedInc"]) # SHAP vs feature value
 
 # ── KernelSHAP (any model) ───────────────────────────────────────────────────
-bg          = shap.sample(X_train, 100)
+bg = shap.sample(X_train, 100)
 k_explainer = shap.KernelExplainer(model.predict, bg)
-k_vals      = k_explainer.shap_values(X_test[:50], nsamples=500)
+k_vals = k_explainer.shap_values(X_test[:50], nsamples=500)
 ```

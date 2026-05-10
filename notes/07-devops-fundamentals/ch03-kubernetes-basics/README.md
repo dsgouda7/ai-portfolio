@@ -10,7 +10,7 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 💡 **The mission**: Deploy **ProductionStack** — a production Flask service satisfying 5 constraints:
+> **The mission**: Deploy **ProductionStack** — a production Flask service satisfying 5 constraints:
 > 1. **HIGH AVAILABILITY**: Auto-restart on crashes
 > 2. **HORIZONTAL SCALING**: 3+ replicas for load distribution
 > 3. **ZERO-DOWNTIME UPDATES**: Rolling deployments
@@ -18,9 +18,9 @@
 > 5. **LOCAL DEVELOPMENT**: Run full K8s cluster on laptop (no cloud spend)
 
 **What we know so far:**
-- ✅ We can containerize apps with Docker (Ch.1)
-- ✅ We can orchestrate multi-container apps with Docker Compose (Ch.2)
-- ❌ **But Docker Compose is single-host — no multi-machine scaling or self-healing!**
+- We can containerize apps with Docker (Ch.1)
+- We can orchestrate multi-container apps with Docker Compose (Ch.2)
+- **But Docker Compose is single-host — no multi-machine scaling or self-healing!**
 
 **What's blocking us:**
 Production environments need:
@@ -37,14 +37,13 @@ Docker Compose can't do this — it's designed for single-host development, not 
 - Automatically restarts failed pods
 - Distributes traffic across healthy replicas
 - Performs rolling updates with rollback capability
-
-✅ **This is production-ready orchestration** — the foundation for microservices, ML platforms, and cloud-native apps.
+**This is production-ready orchestration** — the foundation for microservices, ML platforms, and cloud-native apps.
 
 ---
 
 ## 1 · Kubernetes Is Declarative Orchestration with Self-Healing
 
-> ⚡ **When this breaks** — A bad deployment leaves one of ProductionStack's three Flask replicas in a crash loop; the load balancer keeps routing traffic to it, and users see intermittent 502 errors that are impossible to reproduce locally. Your 99% uptime SLA is already breached by the time the on-call engineer notices. Kubernetes' ReplicaSet + rolling update strategy automatically replaces crashed pods within seconds and only routes traffic to healthy replicas — the difference between a 2-minute self-heal and a 45-minute manual incident response.
+> **When this breaks** — A bad deployment leaves one of ProductionStack's three Flask replicas in a crash loop; the load balancer keeps routing traffic to it, and users see intermittent 502 errors that are impossible to reproduce locally. Your 99% uptime SLA is already breached by the time the on-call engineer notices. Kubernetes' ReplicaSet + rolling update strategy automatically replaces crashed pods within seconds and only routes traffic to healthy replicas — the difference between a 2-minute self-heal and a 45-minute manual incident response.
 
 Kubernetes (often abbreviated **K8s**) is a container orchestration platform that manages applications across clusters of machines. Instead of imperatively running containers (`docker run ...`), you declare the *desired state* in YAML files (e.g., "I want 3 replicas of this Flask app") and Kubernetes continuously reconciles reality to match. If a pod crashes, K8s immediately starts a replacement. If a node fails, K8s reschedules its pods elsewhere. This **declarative self-healing** approach is what makes K8s production-ready.
 
@@ -68,7 +67,7 @@ Key differences from Docker Compose:
 
 ## 1.5 · The Practitioner Workflow — Your 5-Phase Deployment
 
-> ⚠️ **Two ways to read this chapter:**
+> **Warning — Two ways to read this chapter:**
 > - **Theory-first (recommended for learning):** Read §0→§3 sequentially to understand Kubernetes concepts, then use this workflow as your reference
 > - **Workflow-first (practitioners with existing knowledge):** Use this diagram as a jump-to guide when deploying real workloads
 >
@@ -77,24 +76,24 @@ Key differences from Docker Compose:
 **What you'll build by the end:** A production-ready Flask API deployment with 3 replicas, ConfigMap-injected environment variables, LoadBalancer service, Horizontal Pod Autoscaler watching CPU/memory, and a complete debugging workflow using `kubectl` commands. This is the full cycle from "I have a Docker image" to "my app is running, scaled, and monitored in Kubernetes."
 
 ```
-Phase 1: DEPLOY              Phase 2: EXPOSE            Phase 3: CONFIG           Phase 4: SCALE            Phase 5: TROUBLESHOOT
+Phase 1: DEPLOY Phase 2: EXPOSE Phase 3: CONFIG Phase 4: SCALE Phase 5: TROUBLESHOOT
 ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-Create Deployment:           Create Service:            Inject config:            Autoscale:                Debug failures:
+Create Deployment: Create Service: Inject config: Autoscale: Debug failures:
 
-• Write deployment.yaml      • Write service.yaml       • ConfigMap for env vars  • HPA yaml with targets   • kubectl get pods
-• Specify image, replicas    • ClusterIP or LoadBalancer• Secret for credentials  • CPU/memory thresholds   • kubectl describe pod
-• Readiness/liveness probes  • Selector matches labels  • Volume mounts           • Min/max replicas        • kubectl logs <pod>
-• Apply to cluster           • Expose port 80→5000      • Restart deployment      • Watch scaling events    • kubectl port-forward
+• Write deployment.yaml • Write service.yaml • ConfigMap for env vars • HPA yaml with targets • kubectl get pods
+• Specify image, replicas • ClusterIP or LoadBalancer• Secret for credentials • CPU/memory thresholds • kubectl describe pod
+• Readiness/liveness probes • Selector matches labels • Volume mounts • Min/max replicas • kubectl logs <pod>
+• Apply to cluster • Expose port 80→5000 • Restart deployment • Watch scaling events • kubectl port-forward
 
-→ DECISION:                  → DECISION:                → DECISION:               → DECISION:               → DECISION:
-  Pods status?                 Service accessible?        Config applied?           Scaling triggered?        Root cause found?
-  • Pending: resource wait     • No endpoints: selector   • Secrets base64-encoded  • CPU > 70% sustained:    • CrashLoopBackOff:
-  • CrashLoopBackOff: debug      mismatch                 • Env vars visible in pod   scale up                  check logs
-  • Running: proceed           • Can't reach: firewall    • Volume mounts correct   • < 30%: scale down       • ImagePullBackOff:
-                                 or LoadBalancer pending                                                        fix image name
+→ DECISION: → DECISION: → DECISION: → DECISION: → DECISION:
+ Pods status? Service accessible? Config applied? Scaling triggered? Root cause found?
+ • Pending: resource wait • No endpoints: selector • Secrets base64-encoded • CPU > 70% sustained: • CrashLoopBackOff:
+ • CrashLoopBackOff: debug mismatch • Env vars visible in pod scale up check logs
+ • Running: proceed • Can't reach: firewall • Volume mounts correct • < 30%: scale down • ImagePullBackOff:
+ or LoadBalancer pending fix image name
 ```
 
-> 💡 **How to use this workflow:** Start with Phase 1 (deploy a basic pod), verify it runs, then layer on Phase 2 (expose via Service), Phase 3 (inject configuration), Phase 4 (enable autoscaling), and Phase 5 (troubleshoot any issues that arise). Each phase builds on the previous — don't skip ahead until the current phase succeeds.
+> **How to use this workflow:** Start with Phase 1 (deploy a basic pod), verify it runs, then layer on Phase 2 (expose via Service), Phase 3 (inject configuration), Phase 4 (enable autoscaling), and Phase 5 (troubleshoot any issues that arise). Each phase builds on the previous — don't skip ahead until the current phase succeeds.
 
 ---
 
@@ -104,31 +103,31 @@ This diagram shows the complete practitioner journey from containerized app to p
 
 ```mermaid
 graph TD
-    A[Docker Image] --> B{Phase 1: DEPLOY<br/>Create Deployment}
-    B -->|Pods Pending| C[Check resource quotas]
-    B -->|Pods CrashLoopBackOff| D[Phase 5: DEBUG logs]
-    B -->|Pods Running| E{Phase 2: EXPOSE<br/>Create Service}
+ A[Docker Image] --> B{Phase 1: DEPLOY<br/>Create Deployment}
+ B -->|Pods Pending| C[Check resource quotas]
+ B -->|Pods CrashLoopBackOff| D[Phase 5: DEBUG logs]
+ B -->|Pods Running| E{Phase 2: EXPOSE<br/>Create Service}
 
-    E -->|No endpoints| F[Fix label selector]
-    E -->|Service accessible| G{Phase 3: CONFIG<br/>ConfigMap + Secret}
+ E -->|No endpoints| F[Fix label selector]
+ E -->|Service accessible| G{Phase 3: CONFIG<br/>ConfigMap + Secret}
 
-    G -->|Env vars missing| H[Check mount paths]
-    G -->|Config applied| I{Phase 4: SCALE<br/>Enable HPA}
+ G -->|Env vars missing| H[Check mount paths]
+ G -->|Config applied| I{Phase 4: SCALE<br/>Enable HPA}
 
-    I -->|Not scaling| J[Check metrics-server]
-    I -->|Scaling works| K[Production Ready ✅]
+ I -->|Not scaling| J[Check metrics-server]
+ I -->|Scaling works| K[Production Ready ]
 
-    D --> E
-    F --> G
-    H --> I
-    J --> K
+ D --> E
+ F --> G
+ H --> I
+ J --> K
 
-    style K fill:#15803d,stroke:#15803d,color:#fff
-    style B fill:#1e3a8a,stroke:#1e3a8a,color:#fff
-    style E fill:#1e3a8a,stroke:#1e3a8a,color:#fff
-    style G fill:#1e3a8a,stroke:#1e3a8a,color:#fff
-    style I fill:#1e3a8a,stroke:#1e3a8a,color:#fff
-    style D fill:#b91c1c,stroke:#b91c1c,color:#fff
+ style K fill:#15803d,stroke:#15803d,color:#fff
+ style B fill:#1e3a8a,stroke:#1e3a8a,color:#fff
+ style E fill:#1e3a8a,stroke:#1e3a8a,color:#fff
+ style G fill:#1e3a8a,stroke:#1e3a8a,color:#fff
+ style I fill:#1e3a8a,stroke:#1e3a8a,color:#fff
+ style D fill:#b91c1c,stroke:#b91c1c,color:#fff
 ```
 
 **Reading the flow:**
@@ -140,7 +139,7 @@ graph TD
 6. **Enable autoscaling** → HPA watches CPU/memory and adjusts replica count
 7. **Monitor metrics** → if HPA doesn't trigger, check metrics-server installation
 
-> ⚠️ **Common mistake:** Skipping straight to Phase 4 (autoscaling) before verifying Phase 1-2 basics. If pods aren't running stably, HPA can't help — it will just create more broken replicas.
+> **Warning — Common mistake:** Skipping straight to Phase 4 (autoscaling) before verifying Phase 1-2 basics. If pods aren't running stably, HPA can't help — it will just create more broken replicas.
 
 ---
 
@@ -150,15 +149,15 @@ Not all phases are sequential — some can be parallelized once prerequisites ar
 
 ```
 MUST complete in order:
-  Phase 1 (DEPLOY) → Phase 2 (EXPOSE) → Phase 5 (TROUBLESHOOT as needed)
-    ↓                    ↓                     ↓
-  Pods must run    Service must route    Debug any failures
+ Phase 1 (DEPLOY) → Phase 2 (EXPOSE) → Phase 5 (TROUBLESHOOT as needed)
+ ↓ ↓ ↓
+ Pods must run Service must route Debug any failures
 
 CAN add in parallel after Phase 2:
-  Phase 3 (CONFIG) ←→ Phase 4 (SCALE)
-    ↓                     ↓
-  Both modify         Both are optional
-  Deployment spec     enhancements
+ Phase 3 (CONFIG) ←→ Phase 4 (SCALE)
+ ↓ ↓
+ Both modify Both are optional
+ Deployment spec enhancements
 ```
 
 **Practical workflow for a new deployment:**
@@ -169,12 +168,12 @@ CAN add in parallel after Phase 2:
 5. Once working, add ConfigMap/Secret (Phase 3) and enable HPA (Phase 4) in parallel
 6. Keep Phase 5 debugging commands ready for any failures
 
-> 💡 **Production readiness checklist:**
-> - ✅ Phase 1: Deployment has resource requests/limits, readiness/liveness probes
-> - ✅ Phase 2: Service type matches access pattern (ClusterIP for internal, LoadBalancer for external)
-> - ✅ Phase 3: Secrets mounted as volumes (not env vars for sensitive data)
-> - ✅ Phase 4: HPA configured with realistic thresholds (CPU 70%, not 50%)
-> - ✅ Phase 5: Monitoring/alerting on pod restarts, OOMKilled events
+> **Production readiness checklist:**
+> - Phase 1: Deployment has resource requests/limits, readiness/liveness probes
+> - Phase 2: Service type matches access pattern (ClusterIP for internal, LoadBalancer for external)
+> - Phase 3: Secrets mounted as volumes (not env vars for sensitive data)
+> - Phase 4: HPA configured with realistic thresholds (CPU 70%, not 50%)
+> - Phase 5: Monitoring/alerting on pod restarts, OOMKilled events
 
 ---
 
@@ -193,7 +192,7 @@ Typical timelines for a 3-replica Flask deployment on a local Kind cluster (16GB
 **Total first deployment:** ~2 hours of active work + debugging time
 **Steady-state updates:** 5-15 minutes (change image tag, `kubectl apply`, verify rollout)
 
-> ⚠️ **Time sink alert:** Phase 5 debugging can dominate if you skip Phase 1 best practices. Spending 30 extra minutes on proper readiness probes and resource limits saves hours of cryptic CrashLoopBackOff troubleshooting later.
+> **Warning — Time sink alert:** Phase 5 debugging can dominate if you skip Phase 1 best practices. Spending 30 extra minutes on proper readiness probes and resource limits saves hours of cryptic CrashLoopBackOff troubleshooting later.
 
 ---
 
@@ -209,7 +208,7 @@ You're deploying **ProductionStack** — a Flask app that predicts house values.
 
 By the end, you'll have a self-healing, load-balanced API running on your laptop — the same patterns used in production clusters with 1,000+ nodes.
 
-> 💡 **Why 3 replicas?** Three is the production minimum: one replica absorbs normal traffic; if a rolling update is in progress, two remain healthy; if one crashes *during* the update, one is still serving. Fewer than three means a rolling update can momentarily leave you with zero available pods — a silent outage that the Deployment happily allows unless you set `maxUnavailable: 0`.
+> **Why 3 replicas?** Three is the production minimum: one replica absorbs normal traffic; if a rolling update is in progress, two remain healthy; if one crashes *during* the update, one is still serving. Fewer than three means a rolling update can momentarily leave you with zero available pods — a silent outage that the Deployment happily allows unless you set `maxUnavailable: 0`.
 
 ---
 
@@ -249,15 +248,15 @@ Example: A Service named `productionstack-api` that routes `http://productionsta
 **The flow:**
 ```
 Client → Service (productionstack-api:5000)
-           ↓
-   [Load balances across 3 pods]
-           ↓
-   Pod 1 (Flask)   Pod 2 (Flask)   Pod 3 (Flask)
+ ↓
+ [Load balances across 3 pods]
+ ↓
+ Pod 1 (Flask) Pod 2 (Flask) Pod 3 (Flask)
 ```
 
 If Pod 2 crashes, the Deployment's ReplicaSet immediately spawns a new Pod 2, and the Service automatically routes traffic to the replacement.
 
-> 💡 **The analogy that never fails:** A **Deployment** is like a job posting — it specifies how many workers (pods) you need and what they must do. A **ReplicaSet** is HR — it continuously checks headcount and immediately replaces anyone who leaves. A **Service** is the front desk — clients always dial the same number (`productionstack-api:5000`) and calls are routed to whichever pod is available and healthy.
+> **The analogy that never fails:** A **Deployment** is like a job posting — it specifies how many workers (pods) you need and what they must do. A **ReplicaSet** is HR — it continuously checks headcount and immediately replaces anyone who leaves. A **Service** is the front desk — clients always dial the same number (`productionstack-api:5000`) and calls are routed to whichever pod is available and healthy.
 
 ---
 
@@ -275,43 +274,43 @@ Every Deployment has 4 key sections:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: productionstack-api    # Deployment name (used in kubectl commands)
-  labels:
-    app: productionstack
+ name: productionstack-api # Deployment name (used in kubectl commands)
+ labels:
+ app: productionstack
 spec:
-  replicas: 3                   # Desired pod count
-  selector:
-    matchLabels:
-      app: productionstack      # MUST match pod template labels
-  template:                     # Pod template — defines what each replica looks like
-    metadata:
-      labels:
-        app: productionstack    # Pod labels (for Service selector)
-    spec:
-      containers:
-      - name: flask-api
-        image: myregistry/productionstack:v1.2   # Container image
-        ports:
-        - containerPort: 5000
-        resources:              # Resource requests & limits (critical for scheduling)
-          requests:
-            cpu: 200m           # "I need at least 0.2 CPU cores"
-            memory: 256Mi
-          limits:
-            cpu: 500m           # "Don't let me use more than 0.5 cores"
-            memory: 512Mi
-        readinessProbe:         # Is container ready to receive traffic?
-          httpGet:
-            path: /health
-            port: 5000
-          initialDelaySeconds: 5
-          periodSeconds: 10
-        livenessProbe:          # Is container still alive?
-          httpGet:
-            path: /health
-            port: 5000
-          initialDelaySeconds: 15
-          periodSeconds: 20
+ replicas: 3 # Desired pod count
+ selector:
+ matchLabels:
+ app: productionstack # MUST match pod template labels
+ template: # Pod template — defines what each replica looks like
+ metadata:
+ labels:
+ app: productionstack # Pod labels (for Service selector)
+ spec:
+ containers:
+ - name: flask-api
+ image: myregistry/productionstack:v1.2 # Container image
+ ports:
+ - containerPort: 5000
+ resources: # Resource requests & limits (critical for scheduling)
+ requests:
+ cpu: 200m # "I need at least 0.2 CPU cores"
+ memory: 256Mi
+ limits:
+ cpu: 500m # "Don't let me use more than 0.5 cores"
+ memory: 512Mi
+ readinessProbe: # Is container ready to receive traffic?
+ httpGet:
+ path: /health
+ port: 5000
+ initialDelaySeconds: 5
+ periodSeconds: 10
+ livenessProbe: # Is container still alive?
+ httpGet:
+ path: /health
+ port: 5000
+ initialDelaySeconds: 15
+ periodSeconds: 20
 ```
 
 ### Resource Requests vs Limits — The Scheduling Contract
@@ -323,7 +322,7 @@ spec:
 | **limits.cpu** | "Throttle me if I try to use more than this" | No limit → one pod can starve others |
 | **limits.memory** | "Kill me if I exceed this" | No limit → pod can consume all node memory → node crash |
 
-> ⚠️ **Production rule:** ALWAYS set resource requests. Limits are optional for CPU (throttling is safe) but critical for memory (exceeding memory = instant termination).
+> **Warning — Production rule:** ALWAYS set resource requests. Limits are optional for CPU (throttling is safe) but critical for memory (exceeding memory = instant termination).
 
 ### Readiness vs Liveness Probes — When to Route Traffic vs When to Restart
 
@@ -336,8 +335,8 @@ spec:
 - **Readiness:** Check dependencies (DB, Redis, external API) — return 503 if any are down
 - **Liveness:** Check only internal process health (is Flask responding at all?) — return 500 only if the app is truly hung
 
-> 💡 **Deploy verdict:** 3 replicas Running with `READY 1/1`; readiness/liveness probes prevent traffic to unhealthy pods.
-> ➡️ Pods self-heal on crash; proceed to Expose phase to route external traffic.
+> **Deploy verdict:** 3 replicas Running with `READY 1/1`; readiness/liveness probes prevent traffic to unhealthy pods.
+> ➡ Pods self-heal on crash; proceed to Expose phase to route external traffic.
 
 ---
 
@@ -348,58 +347,58 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: productionstack-api
-  labels:
-    app: productionstack
-    version: v1.2
+ name: productionstack-api
+ labels:
+ app: productionstack
+ version: v1.2
 spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: productionstack
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1           # Allow 1 extra pod during rollout (4 total momentarily)
-      maxUnavailable: 0     # Never have fewer than 3 running (zero-downtime)
-  template:
-    metadata:
-      labels:
-        app: productionstack
-        version: v1.2
-    spec:
-      containers:
-      - name: flask-api
-        image: myregistry/productionstack:v1.2
-        ports:
-        - containerPort: 5000
-          protocol: TCP
-        env:
-        - name: FLASK_ENV
-          value: "production"
-        resources:
-          requests:
-            cpu: 200m
-            memory: 256Mi
-          limits:
-            cpu: 500m
-            memory: 512Mi
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 5000
-            scheme: HTTP
-          initialDelaySeconds: 5
-          periodSeconds: 10
-          timeoutSeconds: 2
-          failureThreshold: 3
-        livenessProbe:
-          httpGet:
-            path: /liveness
-            port: 5000
-          initialDelaySeconds: 15
-          periodSeconds: 20
-          failureThreshold: 3
+ replicas: 3
+ selector:
+ matchLabels:
+ app: productionstack
+ strategy:
+ type: RollingUpdate
+ rollingUpdate:
+ maxSurge: 1 # Allow 1 extra pod during rollout (4 total momentarily)
+ maxUnavailable: 0 # Never have fewer than 3 running (zero-downtime)
+ template:
+ metadata:
+ labels:
+ app: productionstack
+ version: v1.2
+ spec:
+ containers:
+ - name: flask-api
+ image: myregistry/productionstack:v1.2
+ ports:
+ - containerPort: 5000
+ protocol: TCP
+ env:
+ - name: FLASK_ENV
+ value: "production"
+ resources:
+ requests:
+ cpu: 200m
+ memory: 256Mi
+ limits:
+ cpu: 500m
+ memory: 512Mi
+ readinessProbe:
+ httpGet:
+ path: /health
+ port: 5000
+ scheme: HTTP
+ initialDelaySeconds: 5
+ periodSeconds: 10
+ timeoutSeconds: 2
+ failureThreshold: 3
+ livenessProbe:
+ httpGet:
+ path: /liveness
+ port: 5000
+ initialDelaySeconds: 15
+ periodSeconds: 20
+ failureThreshold: 3
 ```
 
 **Apply it:**
@@ -408,8 +407,8 @@ kubectl apply -f deployment.yaml
 # deployment.apps/productionstack-api created
 
 kubectl get deployments
-# NAME                  READY   UP-TO-DATE   AVAILABLE   AGE
-# productionstack-api   3/3     3            3           45s
+# NAME READY UP-TO-DATE AVAILABLE AGE
+# productionstack-api 3/3 3 3 45s
 
 kubectl get pods -l app=productionstack
 # Shows only pods with label app=productionstack (filters out other workloads)
@@ -465,7 +464,7 @@ Pods are ephemeral — they get new IP addresses every time they restart. A **Se
 | **NodePort** | Exposes service on a fixed port on every node's IP | Development/testing, small deployments | Access via `http://<node-ip>:30001` |
 | **LoadBalancer** | Cloud provider provisions external load balancer | Production external access | AWS ELB routes public traffic to pods |
 
-> ⚠️ **Cloud vs local:** LoadBalancer only works on cloud providers (AWS/GCP/Azure) or with MetalLB installed locally. On Kind without MetalLB, LoadBalancer services stay in "Pending" state forever.
+> **Warning — Cloud vs local:** LoadBalancer only works on cloud providers (AWS/GCP/Azure) or with MetalLB installed locally. On Kind without MetalLB, LoadBalancer services stay in "Pending" state forever.
 
 ### The Service YAML Anatomy
 
@@ -473,34 +472,34 @@ Pods are ephemeral — they get new IP addresses every time they restart. A **Se
 apiVersion: v1
 kind: Service
 metadata:
-  name: productionstack-api     # Service DNS name (other pods call http://productionstack-api)
+ name: productionstack-api # Service DNS name (other pods call http://productionstack-api)
 spec:
-  type: LoadBalancer            # or ClusterIP, NodePort
-  selector:
-    app: productionstack        # MUST match Deployment pod labels
-  ports:
-  - protocol: TCP
-    port: 80                    # Port the Service listens on
-    targetPort: 5000            # Port the container listens on (from Deployment)
+ type: LoadBalancer # or ClusterIP, NodePort
+ selector:
+ app: productionstack # MUST match Deployment pod labels
+ ports:
+ - protocol: TCP
+ port: 80 # Port the Service listens on
+ targetPort: 5000 # Port the container listens on (from Deployment)
 ```
 
 **How the selector works:**
 ```
 Service selector: app=productionstack
-           ↓
-  Finds all pods with label app=productionstack
-           ↓
-  Watches their Ready status (from readinessProbe)
-           ↓
-  Adds their IPs to Endpoints list
-           ↓
-  Load-balances incoming traffic across those IPs
+ ↓
+ Finds all pods with label app=productionstack
+ ↓
+ Watches their Ready status (from readinessProbe)
+ ↓
+ Adds their IPs to Endpoints list
+ ↓
+ Load-balances incoming traffic across those IPs
 ```
 
 If no pods match the selector, the Service has **zero endpoints** — traffic goes nowhere.
 
-> 💡 **Expose verdict:** Service endpoints show 3 pod IPs; stable ClusterIP DNS name survives pod restarts and rolling updates.
-> ➡️ External traffic routing confirmed; proceed to Config phase to inject environment variables.
+> **Expose verdict:** Service endpoints show 3 pod IPs; stable ClusterIP DNS name survives pod restarts and rolling updates.
+> ➡ External traffic routing confirmed; proceed to Config phase to inject environment variables.
 
 ---
 
@@ -511,36 +510,36 @@ If no pods match the selector, the Service has **zero endpoints** — traffic go
 apiVersion: v1
 kind: Service
 metadata:
-  name: productionstack-api
-  labels:
-    app: productionstack
+ name: productionstack-api
+ labels:
+ app: productionstack
 spec:
-  type: LoadBalancer
-  selector:
-    app: productionstack    # Must match Deployment pod labels
-  ports:
-  - name: http
-    protocol: TCP
-    port: 80                # External clients call port 80
-    targetPort: 5000        # Routes to container port 5000
-  - name: metrics
-    protocol: TCP
-    port: 9090              # Prometheus scrapes port 9090
-    targetPort: 9090        # Routes to container metrics port 9090
-  sessionAffinity: None     # or ClientIP for sticky sessions
+ type: LoadBalancer
+ selector:
+ app: productionstack # Must match Deployment pod labels
+ ports:
+ - name: http
+ protocol: TCP
+ port: 80 # External clients call port 80
+ targetPort: 5000 # Routes to container port 5000
+ - name: metrics
+ protocol: TCP
+ port: 9090 # Prometheus scrapes port 9090
+ targetPort: 9090 # Routes to container metrics port 9090
+ sessionAffinity: None # or ClientIP for sticky sessions
 ```
 
 **Access patterns:**
 ```bash
 # Internal (from another pod in cluster):
-curl http://productionstack-api/health         # Uses ClusterIP, port 80
+curl http://productionstack-api/health # Uses ClusterIP, port 80
 
 # External (LoadBalancer with public IP):
-curl http://<EXTERNAL-IP>/health               # Cloud LB routes to Service port 80
+curl http://<EXTERNAL-IP>/health # Cloud LB routes to Service port 80
 
 # Port-forward (local development):
 kubectl port-forward service/productionstack-api 8080:80
-curl localhost:8080/health                      # Your laptop → Kind cluster
+curl localhost:8080/health # Your laptop → Kind cluster
 ```
 
 ---
@@ -553,8 +552,8 @@ Creating a LoadBalancer Service for every microservice is expensive — cloud pr
 
 **LoadBalancer Service:**
 ```
-www.api.com     → AWS ELB ($25/mo) → productionstack-api Service → Pods
-www.admin.com   → AWS ELB ($25/mo) → admin-api Service → Pods
+www.api.com → AWS ELB ($25/mo) → productionstack-api Service → Pods
+www.admin.com → AWS ELB ($25/mo) → admin-api Service → Pods
 www.metrics.com → AWS ELB ($25/mo) → metrics Service → Pods
 
 Cost: $75/month for 3 services
@@ -562,11 +561,11 @@ Cost: $75/month for 3 services
 
 **Ingress (with NGINX Ingress Controller):**
 ```
-www.api.com     ──┐
-www.admin.com   ──┼─→ AWS ELB ($25/mo) → NGINX Ingress Controller → Routes by hostname:
-www.metrics.com ──┘                         ├─ /api    → productionstack-api Service
-                                            ├─ /admin  → admin-api Service
-                                            └─ /metrics → metrics Service
+www.api.com ──┐
+www.admin.com ──┼─→ AWS ELB ($25/mo) → NGINX Ingress Controller → Routes by hostname:
+www.metrics.com ──┘ ├─ /api → productionstack-api Service
+ ├─ /admin → admin-api Service
+ └─ /metrics → metrics Service
 
 Cost: $25/month total (one load balancer, N services)
 ```
@@ -576,19 +575,19 @@ Cost: $25/month total (one load balancer, N services)
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: productionstack-ingress
+ name: productionstack-ingress
 spec:
-  rules:
-  - host: www.api.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: productionstack-api
-            port:
-              number: 80
+ rules:
+ - host: www.api.com
+ http:
+ paths:
+ - path: /
+ pathType: Prefix
+ backend:
+ service:
+ name: productionstack-api
+ port:
+ number: 80
 ```
 
 **When to use what:**
@@ -625,95 +624,95 @@ Hardcoding configuration in Docker images is an anti-pattern — you'd need sepa
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: productionstack-config
+ name: productionstack-config
 data:
-  DATABASE_HOST: "postgres.default.svc.cluster.local"
-  LOG_LEVEL: "INFO"
-  FLASK_ENV: "production"
-  config.json: |
-    {
-      "maxConnections": 100,
-      "timeout": 30
-    }
+ DATABASE_HOST: "postgres.default.svc.cluster.local"
+ LOG_LEVEL: "INFO"
+ FLASK_ENV: "production"
+ config.json: |
+ {
+ "maxConnections": 100,
+ "timeout": 30
+ }
 ```
 
 **Inject as environment variables:**
 ```yaml
 # deployment.yaml (containers section)
 spec:
-  containers:
-  - name: flask-api
-    image: myregistry/productionstack:v1.2
-    envFrom:
-    - configMapRef:
-        name: productionstack-config  # Injects all keys as env vars
+ containers:
+ - name: flask-api
+ image: myregistry/productionstack:v1.2
+ envFrom:
+ - configMapRef:
+ name: productionstack-config # Injects all keys as env vars
 ```
 
 **Inject as volume mount (for config files):**
 ```yaml
 spec:
-  containers:
-  - name: flask-api
-    volumeMounts:
-    - name: config-volume
-      mountPath: /app/config          # File appears at /app/config/config.json
-  volumes:
-  - name: config-volume
-    configMap:
-      name: productionstack-config
+ containers:
+ - name: flask-api
+ volumeMounts:
+ - name: config-volume
+ mountPath: /app/config # File appears at /app/config/config.json
+ volumes:
+ - name: config-volume
+ configMap:
+ name: productionstack-config
 ```
 
 ### Secret — Sensitive Configuration
 
 **Use for:** Database passwords, API keys, TLS certificates
 
-> ⚠️ **Security note:** Secrets are base64-encoded, NOT encrypted. In production, use a secrets manager (AWS Secrets Manager, HashiCorp Vault, Sealed Secrets) or encrypt etcd at rest.
+> **Warning — Security note:** Secrets are base64-encoded, NOT encrypted. In production, use a secrets manager (AWS Secrets Manager, HashiCorp Vault, Sealed Secrets) or encrypt etcd at rest.
 
 ```yaml
 # secret.yaml
 apiVersion: v1
 kind: Secret
 metadata:
-  name: productionstack-secret
+ name: productionstack-secret
 type: Opaque
 data:
-  DATABASE_PASSWORD: cGFzc3dvcmQxMjM=    # base64 of "password123"
-  API_KEY: YWJjZGVmZ2hpams=              # base64 of "abcdefghijk"
+ DATABASE_PASSWORD: cGFzc3dvcmQxMjM= # base64 of "password123"
+ API_KEY: YWJjZGVmZ2hpams= # base64 of "abcdefghijk"
 ```
 
 **Create from command line (easier):**
 ```bash
 kubectl create secret generic productionstack-secret \
-  --from-literal=DATABASE_PASSWORD=password123 \
-  --from-literal=API_KEY=abcdefghijk
+ --from-literal=DATABASE_PASSWORD=password123 \
+ --from-literal=API_KEY=abcdefghijk
 ```
 
 **Inject as environment variables:**
 ```yaml
 spec:
-  containers:
-  - name: flask-api
-    env:
-    - name: DATABASE_PASSWORD
-      valueFrom:
-        secretKeyRef:
-          name: productionstack-secret
-          key: DATABASE_PASSWORD
+ containers:
+ - name: flask-api
+ env:
+ - name: DATABASE_PASSWORD
+ valueFrom:
+ secretKeyRef:
+ name: productionstack-secret
+ key: DATABASE_PASSWORD
 ```
 
 **Best practice — Mount secrets as files, not env vars:**
 ```yaml
 spec:
-  containers:
-  - name: flask-api
-    volumeMounts:
-    - name: secret-volume
-      mountPath: /var/secrets
-      readOnly: true
-  volumes:
-  - name: secret-volume
-    secret:
-      secretName: productionstack-secret
+ containers:
+ - name: flask-api
+ volumeMounts:
+ - name: secret-volume
+ mountPath: /var/secrets
+ readOnly: true
+ volumes:
+ - name: secret-volume
+ secret:
+ secretName: productionstack-secret
 ```
 
 Why? Environment variables are:
@@ -723,8 +722,8 @@ Why? Environment variables are:
 
 File mounts are more secure — the app reads `/var/secrets/DATABASE_PASSWORD` at startup.
 
-> 💡 **Config verdict:** ConfigMap env vars and Secret volume mounts visible inside pods; `rollout restart` applies changes without manual pod deletion.
-> ➡️ Runtime config decoupled from image; proceed to Scale phase to enable autoscaling.
+> **Config verdict:** ConfigMap env vars and Secret volume mounts visible inside pods; `rollout restart` applies changes without manual pod deletion.
+> ➡ Runtime config decoupled from image; proceed to Scale phase to enable autoscaling.
 
 ---
 
@@ -735,62 +734,62 @@ File mounts are more secure — the app reads `/var/secrets/DATABASE_PASSWORD` a
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: productionstack-config
+ name: productionstack-config
 data:
-  DATABASE_HOST: "postgres.default.svc.cluster.local"
-  DATABASE_PORT: "5432"
-  LOG_LEVEL: "INFO"
-  FLASK_ENV: "production"
+ DATABASE_HOST: "postgres.default.svc.cluster.local"
+ DATABASE_PORT: "5432"
+ LOG_LEVEL: "INFO"
+ FLASK_ENV: "production"
 
 ---
 # secret.yaml
 apiVersion: v1
 kind: Secret
 metadata:
-  name: productionstack-secret
+ name: productionstack-secret
 type: Opaque
-stringData:   # Use stringData instead of data — K8s auto-base64-encodes
-  DATABASE_PASSWORD: "password123"
-  API_KEY: "abcdefghijk"
+stringData: # Use stringData instead of data — K8s auto-base64-encodes
+ DATABASE_PASSWORD: "password123"
+ API_KEY: "abcdefghijk"
 
 ---
 # deployment.yaml (updated with config injection)
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: productionstack-api
+ name: productionstack-api
 spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: productionstack
-  template:
-    metadata:
-      labels:
-        app: productionstack
-    spec:
-      containers:
-      - name: flask-api
-        image: myregistry/productionstack:v1.2
-        ports:
-        - containerPort: 5000
-        envFrom:
-        - configMapRef:
-            name: productionstack-config   # All ConfigMap keys → env vars
-        env:
-        - name: DATABASE_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: productionstack-secret
-              key: DATABASE_PASSWORD
-        volumeMounts:
-        - name: secret-volume
-          mountPath: /var/secrets
-          readOnly: true
-      volumes:
-      - name: secret-volume
-        secret:
-          secretName: productionstack-secret
+ replicas: 3
+ selector:
+ matchLabels:
+ app: productionstack
+ template:
+ metadata:
+ labels:
+ app: productionstack
+ spec:
+ containers:
+ - name: flask-api
+ image: myregistry/productionstack:v1.2
+ ports:
+ - containerPort: 5000
+ envFrom:
+ - configMapRef:
+ name: productionstack-config # All ConfigMap keys → env vars
+ env:
+ - name: DATABASE_PASSWORD
+ valueFrom:
+ secretKeyRef:
+ name: productionstack-secret
+ key: DATABASE_PASSWORD
+ volumeMounts:
+ - name: secret-volume
+ mountPath: /var/secrets
+ readOnly: true
+ volumes:
+ - name: secret-volume
+ secret:
+ secretName: productionstack-secret
 ```
 
 **Apply all at once:**
@@ -815,11 +814,11 @@ Kubernetes native Secrets are base64-encoded (not encrypted) and stored in etcd.
 **External Secrets Operator workflow:**
 ```
 AWS Secrets Manager (source of truth)
-        ↓
+ ↓
 External Secrets Operator (runs in cluster)
-        ↓
+ ↓
 Creates/updates K8s Secret automatically
-        ↓
+ ↓
 Pod mounts Secret as usual
 ```
 
@@ -828,18 +827,18 @@ Pod mounts Secret as usual
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
-  name: productionstack-secret
+ name: productionstack-secret
 spec:
-  refreshInterval: 1h           # Re-sync every hour
-  secretStoreRef:
-    name: aws-secrets-manager
-    kind: SecretStore
-  target:
-    name: productionstack-secret  # K8s Secret to create
-  data:
-  - secretKey: DATABASE_PASSWORD
-    remoteRef:
-      key: prod/productionstack/db-password   # Path in AWS Secrets Manager
+ refreshInterval: 1h # Re-sync every hour
+ secretStoreRef:
+ name: aws-secrets-manager
+ kind: SecretStore
+ target:
+ name: productionstack-secret # K8s Secret to create
+ data:
+ - secretKey: DATABASE_PASSWORD
+ remoteRef:
+ key: prod/productionstack/db-password # Path in AWS Secrets Manager
 ```
 
 **Benefits:**
@@ -871,11 +870,11 @@ Manual scaling (`kubectl scale deployment myapp --replicas=10`) doesn't adapt to
 
 ```
 Every 15 seconds (default):
-  1. HPA queries metrics-server for current CPU/memory usage
-  2. Compares to target threshold (e.g., "keep CPU at 70%")
-  3. If current > target: scale up (add replicas)
-  4. If current < target: scale down (remove replicas)
-  5. Respects min/max replica bounds
+ 1. HPA queries metrics-server for current CPU/memory usage
+ 2. Compares to target threshold (e.g., "keep CPU at 70%")
+ 3. If current > target: scale up (add replicas)
+ 4. If current < target: scale down (remove replicas)
+ 5. Respects min/max replica bounds
 ```
 
 **HPA YAML:**
@@ -883,34 +882,34 @@ Every 15 seconds (default):
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: productionstack-api-hpa
+ name: productionstack-api-hpa
 spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: productionstack-api
-  minReplicas: 3
-  maxReplicas: 10
-  metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70    # Scale up if avg CPU > 70%
-  - type: Resource
-    resource:
-      name: memory
-      target:
-        type: Utilization
-        averageUtilization: 80    # Scale up if avg memory > 80%
-  behavior:                       # Optional: fine-tune scaling behavior
-    scaleDown:
-      stabilizationWindowSeconds: 300   # Wait 5min before scaling down
-      policies:
-      - type: Percent
-        value: 50                 # Scale down max 50% of replicas at once
-        periodSeconds: 60
+ scaleTargetRef:
+ apiVersion: apps/v1
+ kind: Deployment
+ name: productionstack-api
+ minReplicas: 3
+ maxReplicas: 10
+ metrics:
+ - type: Resource
+ resource:
+ name: cpu
+ target:
+ type: Utilization
+ averageUtilization: 70 # Scale up if avg CPU > 70%
+ - type: Resource
+ resource:
+ name: memory
+ target:
+ type: Utilization
+ averageUtilization: 80 # Scale up if avg memory > 80%
+ behavior: # Optional: fine-tune scaling behavior
+ scaleDown:
+ stabilizationWindowSeconds: 300 # Wait 5min before scaling down
+ policies:
+ - type: Percent
+ value: 50 # Scale down max 50% of replicas at once
+ periodSeconds: 60
 ```
 
 **Scaling formula (simplified):**
@@ -918,11 +917,11 @@ spec:
 desired replicas = current replicas × (current metric / target metric)
 
 Example: 3 replicas, current CPU 85%, target 70%
-  → desired = 3 × (85/70) = 3.64 → rounds to 4 replicas
+ → desired = 3 × (85/70) = 3.64 → rounds to 4 replicas
 ```
 
-> 💡 **Reliability verdict:** Pod restart on crash: 0 manual interventions; MTTR 45 min → 90s with liveness probes; HPA scales 3→10 replicas at 70% CPU.
-> ➡️ Autoscaling confirmed; use Phase 5 troubleshooting commands for any remaining failures.
+> **Reliability verdict:** Pod restart on crash: 0 manual interventions; MTTR 45 min → 90s with liveness probes; HPA scales 3→10 replicas at 70% CPU.
+> ➡ Autoscaling confirmed; use Phase 5 troubleshooting commands for any remaining failures.
 
 ---
 
@@ -935,41 +934,41 @@ Beyond CPU/memory, you can scale based on custom metrics (requests per second, q
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: productionstack-api-hpa
+ name: productionstack-api-hpa
 spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: productionstack-api
-  minReplicas: 3
-  maxReplicas: 20
-  metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
-  - type: Pods
-    pods:
-      metric:
-        name: http_requests_per_second   # Custom metric from Prometheus
-      target:
-        type: AverageValue
-        averageValue: "1000"              # Scale up if > 1000 req/s per pod
-  behavior:
-    scaleUp:
-      stabilizationWindowSeconds: 60     # React quickly to traffic spikes
-      policies:
-      - type: Percent
-        value: 100                        # Can double replicas in one step
-        periodSeconds: 60
-    scaleDown:
-      stabilizationWindowSeconds: 600    # Wait 10min before scaling down
-      policies:
-      - type: Pods
-        value: 1                          # Remove max 1 pod at a time
-        periodSeconds: 120
+ scaleTargetRef:
+ apiVersion: apps/v1
+ kind: Deployment
+ name: productionstack-api
+ minReplicas: 3
+ maxReplicas: 20
+ metrics:
+ - type: Resource
+ resource:
+ name: cpu
+ target:
+ type: Utilization
+ averageUtilization: 70
+ - type: Pods
+ pods:
+ metric:
+ name: http_requests_per_second # Custom metric from Prometheus
+ target:
+ type: AverageValue
+ averageValue: "1000" # Scale up if > 1000 req/s per pod
+ behavior:
+ scaleUp:
+ stabilizationWindowSeconds: 60 # React quickly to traffic spikes
+ policies:
+ - type: Percent
+ value: 100 # Can double replicas in one step
+ periodSeconds: 60
+ scaleDown:
+ stabilizationWindowSeconds: 600 # Wait 10min before scaling down
+ policies:
+ - type: Pods
+ value: 1 # Remove max 1 pod at a time
+ periodSeconds: 120
 ```
 
 **Prerequisites for custom metrics:**
@@ -988,20 +987,20 @@ Native HPA only scales based on CPU/memory or custom Prometheus metrics. **KEDA*
 **Native HPA:**
 ```
 Can scale based on:
-  • CPU/memory (built-in)
-  • Prometheus metrics (requires Prometheus Adapter)
+ • CPU/memory (built-in)
+ • Prometheus metrics (requires Prometheus Adapter)
 ```
 
 **KEDA:**
 ```
 Can scale based on:
-  • All HPA sources, PLUS:
-  • AWS SQS queue depth
-  • Kafka consumer lag
-  • RabbitMQ queue length
-  • Azure Service Bus
-  • Cron schedules (scale to 0 at night, scale up at 8am)
-  • HTTP requests (KEDA HTTP Add-on)
+ • All HPA sources, PLUS:
+ • AWS SQS queue depth
+ • Kafka consumer lag
+ • RabbitMQ queue length
+ • Azure Service Bus
+ • Cron schedules (scale to 0 at night, scale up at 8am)
+ • HTTP requests (KEDA HTTP Add-on)
 ```
 
 **KEDA ScaledObject example (scale based on SQS queue):**
@@ -1009,18 +1008,18 @@ Can scale based on:
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
-  name: productionstack-scaledobject
+ name: productionstack-scaledobject
 spec:
-  scaleTargetRef:
-    name: productionstack-api
-  minReplicaCount: 1
-  maxReplicaCount: 50
-  triggers:
-  - type: aws-sqs-queue
-    metadata:
-      queueURL: https://sqs.us-east-1.amazonaws.com/123456789/myqueue
-      queueLength: "5"       # Scale up if queue has > 5 messages
-      awsRegion: "us-east-1"
+ scaleTargetRef:
+ name: productionstack-api
+ minReplicaCount: 1
+ maxReplicaCount: 50
+ triggers:
+ - type: aws-sqs-queue
+ metadata:
+ queueURL: https://sqs.us-east-1.amazonaws.com/123456789/myqueue
+ queueLength: "5" # Scale up if queue has > 5 messages
+ awsRegion: "us-east-1"
 ```
 
 **Scale-to-zero:**
@@ -1054,31 +1053,31 @@ Every K8s failure resolves with this sequence:
 
 ```
 Step 1: Check pod status
-   ↓
+ ↓
 kubectl get pods
-   ↓
+ ↓
 Are all pods "Running" with READY 1/1?
-   ├─ YES → Check service endpoints (Phase 2 issue)
-   └─ NO  → Proceed to Step 2
+ ├─ YES → Check service endpoints (Phase 2 issue)
+ └─ NO → Proceed to Step 2
 
 Step 2: Inspect pod details
-   ↓
+ ↓
 kubectl describe pod <pod-name>
-   ↓
+ ↓
 Look at Events section (bottom of output)
-   ├─ "Insufficient CPU/memory" → Resource quota issue
-   ├─ "ImagePullBackOff" → Image name or pull secret issue
-   ├─ "CrashLoopBackOff" → Application crash (proceed to Step 3)
-   └─ "Error: ErrImagePull" → Registry authentication issue
+ ├─ "Insufficient CPU/memory" → Resource quota issue
+ ├─ "ImagePullBackOff" → Image name or pull secret issue
+ ├─ "CrashLoopBackOff" → Application crash (proceed to Step 3)
+ └─ "Error: ErrImagePull" → Registry authentication issue
 
 Step 3: Read application logs
-   ↓
+ ↓
 kubectl logs <pod-name>
-   ↓
+ ↓
 Look for stack traces, import errors, connection failures
-   ├─ "ImportError: No module named 'flask'" → Missing dependency in image
-   ├─ "FileNotFoundError: model.pkl" → Missing file in container
-   └─ "Connection refused: localhost:5432" → Database not accessible
+ ├─ "ImportError: No module named 'flask'" → Missing dependency in image
+ ├─ "FileNotFoundError: model.pkl" → Missing file in container
+ └─ "Connection refused: localhost:5432" → Database not accessible
 ```
 
 ### 1. ImagePullBackOff — Can't Pull Docker Image
@@ -1089,7 +1088,7 @@ Look for stack traces, import errors, connection failures
 
 **Fix:**
 ```bash
-kubectl describe pod <pod-name>  # Check "Events" section for error message
+kubectl describe pod <pod-name> # Check "Events" section for error message
 # Common issues:
 # - Image name typo (e.g., `productionstack-api:v1` instead of `your-username/productionstack-api:v1`)
 # - Image not pushed to Docker Hub
@@ -1099,14 +1098,14 @@ kubectl describe pod <pod-name>  # Check "Events" section for error message
 **Example Events output:**
 ```
 Events:
-  Type     Reason     Age                From               Message
-  ----     ------     ----               ----               -------
-  Normal   Scheduled  2m                 default-scheduler  Successfully assigned default/productionstack-api-abc123 to node1
-  Normal   Pulling    1m (x4 over 2m)   kubelet            Pulling image "myregistry/productionstack:v1.2"
-  Warning  Failed     1m (x4 over 2m)   kubelet            Failed to pull image "myregistry/productionstack:v1.2": rpc error: code = Unknown desc = Error response from daemon: pull access denied for myregistry/productionstack, repository does not exist or may require 'docker login'
-  Warning  Failed     1m (x4 over 2m)   kubelet            Error: ErrImagePull
-  Normal   BackOff    30s (x5 over 2m)  kubelet            Back-off pulling image "myregistry/productionstack:v1.2"
-  Warning  Failed     30s (x5 over 2m)  kubelet            Error: ImagePullBackOff
+ Type Reason Age From Message
+ ---- ------ ---- ---- -------
+ Normal Scheduled 2m default-scheduler Successfully assigned default/productionstack-api-abc123 to node1
+ Normal Pulling 1m (x4 over 2m) kubelet Pulling image "myregistry/productionstack:v1.2"
+ Warning Failed 1m (x4 over 2m) kubelet Failed to pull image "myregistry/productionstack:v1.2": rpc error: code = Unknown desc = Error response from daemon: pull access denied for myregistry/productionstack, repository does not exist or may require 'docker login'
+ Warning Failed 1m (x4 over 2m) kubelet Error: ErrImagePull
+ Normal BackOff 30s (x5 over 2m) kubelet Back-off pulling image "myregistry/productionstack:v1.2"
+ Warning Failed 30s (x5 over 2m) kubelet Error: ImagePullBackOff
 ```
 
 **Solution paths:**
@@ -1114,23 +1113,23 @@ Events:
 # Path 1: Fix image name
 kubectl edit deployment productionstack-api
 # Change: image: myregistry/productionstack:v1.2
-# To:     image: username/productionstack:v1.2
+# To: image: username/productionstack:v1.2
 
 # Path 2: Add imagePullSecret for private registry
 kubectl create secret docker-registry regcred \
-  --docker-server=myregistry.io \
-  --docker-username=myuser \
-  --docker-password=mypassword
+ --docker-server=myregistry.io \
+ --docker-username=myuser \
+ --docker-password=mypassword
 
 # Then add to deployment:
 spec:
-  template:
-    spec:
-      imagePullSecrets:
-      - name: regcred
-      containers:
-      - name: flask-api
-        image: myregistry/productionstack:v1.2
+ template:
+ spec:
+ imagePullSecrets:
+ - name: regcred
+ containers:
+ - name: flask-api
+ image: myregistry/productionstack:v1.2
 ```
 
 ### 2. CrashLoopBackOff — Container Keeps Restarting
@@ -1141,8 +1140,8 @@ spec:
 
 **Fix:**
 ```bash
-kubectl logs <pod-name>  # Check application logs for crash reason
-kubectl describe pod <pod-name>  # Check restart count and exit code
+kubectl logs <pod-name> # Check application logs for crash reason
+kubectl describe pod <pod-name> # Check restart count and exit code
 
 # Common issues:
 # - Missing dependencies in Docker image
@@ -1155,8 +1154,8 @@ kubectl describe pod <pod-name>  # Check restart count and exit code
 kubectl logs productionstack-api-abc123
 # Output:
 # Traceback (most recent call last):
-#   File "app.py", line 1, in <module>
-#     import flask
+# File "app.py", line 1, in <module>
+# import flask
 # ModuleNotFoundError: No module named 'flask'
 ```
 
@@ -1175,7 +1174,7 @@ kubectl set image deployment/productionstack-api flask-api=myregistry/production
 
 **Answer:**
 ```bash
-kubectl logs <pod-name> --previous  # Read logs from the last crashed container
+kubectl logs <pod-name> --previous # Read logs from the last crashed container
 ```
 
 ### 3. Service Not Accessible — Can't Reach Pods
@@ -1186,9 +1185,9 @@ kubectl logs <pod-name> --previous  # Read logs from the last crashed container
 
 **Fix:**
 ```bash
-kubectl describe service <service-name>  # Check "Endpoints" (should list pod IPs)
-kubectl get pods --show-labels           # Verify pods are in "Running" state
-kubectl describe pod <pod-name>          # Check pod labels match Service selector
+kubectl describe service <service-name> # Check "Endpoints" (should list pod IPs)
+kubectl get pods --show-labels # Verify pods are in "Running" state
+kubectl describe pod <pod-name> # Check pod labels match Service selector
 
 # If Endpoints is empty:
 # - Service selector doesn't match pod labels
@@ -1199,13 +1198,13 @@ kubectl describe pod <pod-name>          # Check pod labels match Service select
 ```bash
 kubectl describe service productionstack-api
 # Output:
-# Selector:          app=productionstack
-# Endpoints:         <none>   ← Problem: no pods match selector
+# Selector: app=productionstack
+# Endpoints: <none> ← Problem: no pods match selector
 
 kubectl get pods --show-labels
 # Output:
-# NAME                                   READY   STATUS    LABELS
-# productionstack-api-7d8f9b5c4-abc12   1/1     Running   app=production-stack   ← Typo in label!
+# NAME READY STATUS LABELS
+# productionstack-api-7d8f9b5c4-abc12 1/1 Running app=production-stack ← Typo in label!
 ```
 
 **Solution:**
@@ -1213,16 +1212,16 @@ kubectl get pods --show-labels
 # Fix 1: Update Service selector to match actual pod labels
 kubectl edit service productionstack-api
 # Change: selector.app: productionstack
-# To:     selector.app: production-stack
+# To: selector.app: production-stack
 
 # OR Fix 2: Update Deployment pod labels to match Service selector
 kubectl edit deployment productionstack-api
 # Change: template.metadata.labels.app: production-stack
-# To:     template.metadata.labels.app: productionstack
+# To: template.metadata.labels.app: productionstack
 ```
 
-> 💡 **Troubleshoot verdict:** 3-step debug workflow (get pods → describe → logs) resolves 90% of K8s failures; `rollout undo` restores previous version in <60s.
-> ➡️ Deployment stable and observable; chapter complete.
+> **Troubleshoot verdict:** 3-step debug workflow (get pods → describe → logs) resolves 90% of K8s failures; `rollout undo` restores previous version in <60s.
+> ➡ Deployment stable and observable; chapter complete.
 
 ---
 
@@ -1233,36 +1232,36 @@ kubectl edit deployment productionstack-api
 # STEP 1: Check pod status
 # ============================================
 kubectl get pods
-kubectl get pods -l app=productionstack   # Filter by label
-kubectl get pods -A                       # All namespaces
-kubectl get pods -o wide                  # Show node, IP address
+kubectl get pods -l app=productionstack # Filter by label
+kubectl get pods -A # All namespaces
+kubectl get pods -o wide # Show node, IP address
 
 # ============================================
 # STEP 2: Inspect pod details
 # ============================================
 kubectl describe pod <pod-name>
-kubectl get events --sort-by='.lastTimestamp'   # Recent events across all resources
+kubectl get events --sort-by='.lastTimestamp' # Recent events across all resources
 
 # ============================================
 # STEP 3: Read logs
 # ============================================
 kubectl logs <pod-name>
-kubectl logs <pod-name> --previous              # Logs from crashed container
-kubectl logs <pod-name> -c <container-name>     # Multi-container pod
-kubectl logs -f <pod-name>                      # Follow logs (like `tail -f`)
-kubectl logs --since=1h <pod-name>              # Last hour only
+kubectl logs <pod-name> --previous # Logs from crashed container
+kubectl logs <pod-name> -c <container-name> # Multi-container pod
+kubectl logs -f <pod-name> # Follow logs (like `tail -f`)
+kubectl logs --since=1h <pod-name> # Last hour only
 
 # ============================================
 # Advanced debugging
 # ============================================
-kubectl exec -it <pod-name> -- /bin/sh          # SSH into running pod
-kubectl exec -it <pod-name> -- env              # Check environment variables
-kubectl exec -it <pod-name> -- ls /var/secrets  # Verify secret mounts
+kubectl exec -it <pod-name> -- /bin/sh # SSH into running pod
+kubectl exec -it <pod-name> -- env # Check environment variables
+kubectl exec -it <pod-name> -- ls /var/secrets # Verify secret mounts
 
-kubectl port-forward <pod-name> 8080:5000       # Forward localhost:8080 → pod:5000
-kubectl port-forward service/myapp 8080:80      # Forward to service
+kubectl port-forward <pod-name> 8080:5000 # Forward localhost:8080 → pod:5000
+kubectl port-forward service/myapp 8080:80 # Forward to service
 
-kubectl top pods                                 # Resource usage (requires metrics-server)
+kubectl top pods # Resource usage (requires metrics-server)
 kubectl top nodes
 
 # ============================================
@@ -1270,13 +1269,13 @@ kubectl top nodes
 # ============================================
 kubectl rollout status deployment/productionstack-api
 kubectl rollout history deployment/productionstack-api
-kubectl rollout undo deployment/productionstack-api         # Revert to previous
+kubectl rollout undo deployment/productionstack-api # Revert to previous
 kubectl rollout undo deployment/productionstack-api --to-revision=3
 
 # ============================================
 # Quick fixes
 # ============================================
-kubectl delete pod <pod-name>                   # Force pod restart
+kubectl delete pod <pod-name> # Force pod restart
 kubectl scale deployment productionstack-api --replicas=5
 kubectl set image deployment/productionstack-api flask-api=myregistry/productionstack:v1.3
 ```
@@ -1292,10 +1291,10 @@ Running `kubectl` commands repeatedly is tedious. Most practitioners use a **TUI
 **kubectl (CLI):**
 ```bash
 # Traditional workflow:
-kubectl get pods                  # List pods
-kubectl describe pod myapp-abc    # Inspect one
-kubectl logs myapp-abc            # Read logs
-kubectl delete pod myapp-abc      # Restart
+kubectl get pods # List pods
+kubectl describe pod myapp-abc # Inspect one
+kubectl logs myapp-abc # Read logs
+kubectl delete pod myapp-abc # Restart
 ```
 **Pros:** Universal, scriptable, works over SSH
 **Cons:** Slow for exploratory debugging, lots of typing
@@ -1304,7 +1303,7 @@ kubectl delete pod myapp-abc      # Restart
 
 **k9s (Terminal UI):**
 ```bash
-k9s  # Launch TUI
+k9s # Launch TUI
 ```
 
 **Pros:**
@@ -1369,7 +1368,7 @@ kubectl proxy
 **Step 1:** Check pod status
 ```bash
 kubectl get pods
-# Output shows: productionstack-api-abc123  0/1  CrashLoopBackOff  5  2m
+# Output shows: productionstack-api-abc123 0/1 CrashLoopBackOff 5 2m
 ```
 
 **Step 2:** Inspect pod details
@@ -1391,7 +1390,7 @@ kubectl logs productionstack-api-abc123
 
 Answer:
 ```bash
-kubectl logs productionstack-api-abc123 --previous  # Read logs from the last crashed container
+kubectl logs productionstack-api-abc123 --previous # Read logs from the last crashed container
 ```
 
 ---
@@ -1412,14 +1411,13 @@ You've manually deployed a Flask app to Kubernetes using `kubectl apply`. But in
 ---
 
 ## What You've Learned
-
-✅ **Kubernetes orchestrates containers across clusters** — not just single-host like Docker Compose
-✅ **Declarative configuration** — you specify desired state, K8s makes it happen
-✅ **Self-healing** — crashed pods restart automatically
-✅ **Deployments manage ReplicaSets** — rolling updates with zero downtime
-✅ **Services provide stable endpoints** — load-balance across pod replicas
-✅ **Kind runs K8s locally** — learn without cloud costs
-✅ **Debugging workflow** — `kubectl get/describe/logs` for troubleshooting
+**Kubernetes orchestrates containers across clusters** — not just single-host like Docker Compose
+**Declarative configuration** — you specify desired state, K8s makes it happen
+**Self-healing** — crashed pods restart automatically
+**Deployments manage ReplicaSets** — rolling updates with zero downtime
+**Services provide stable endpoints** — load-balance across pod replicas
+**Kind runs K8s locally** — learn without cloud costs
+**Debugging workflow** — `kubectl get/describe/logs` for troubleshooting
 
 ---
 

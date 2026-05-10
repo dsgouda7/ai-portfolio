@@ -24,12 +24,12 @@
 
 | Constraint | Target | Status | Evidence |
 |------------|--------|--------|----------|
-| #1 Quality | ≥4.0/5.0 | ⚡ **~3.5/5.0** | SD 1.5 generates photorealistic images, some artifacts |
-| #2 Speed | <30 seconds | ✅ **~20s** | SDXL-Turbo 4 steps = 8s, SD 1.5 DDIM 50 steps = 20s on laptop |
-| #3 Cost | <$5k hardware | ✅ **$2,500 laptop** | MacBook Pro M2 / RTX 3060 laptop sufficient |
-| #4 Control | <5% unusable | ⚡ **~25% unusable** | Text conditioning works, but "product on white background" often fails |
-| #5 Throughput | 100+ images/day | ⚡ **~30 images/day** | Speed unlocked, but high unusable rate slows iteration |
-| #6 Versatility | 3 modalities | ⚡ **Text→Image enabled** | Can generate from text prompts, no video/understanding yet |
+| #1 Quality | ≥4.0/5.0 | **~3.5/5.0** | SD 1.5 generates photorealistic images, some artifacts |
+| #2 Speed | <30 seconds | **~20s** | SDXL-Turbo 4 steps = 8s, SD 1.5 DDIM 50 steps = 20s on laptop |
+| #3 Cost | <$5k hardware | **$2,500 laptop** | MacBook Pro M2 / RTX 3060 laptop sufficient |
+| #4 Control | <5% unusable | **~25% unusable** | Text conditioning works, but "product on white background" often fails |
+| #5 Throughput | 100+ images/day | **~30 images/day** | Speed unlocked, but high unusable rate slows iteration |
+| #6 Versatility | 3 modalities | **Text→Image enabled** | Can generate from text prompts, no video/understanding yet |
 
 ---
 
@@ -64,7 +64,7 @@ Brief: "Premium coffee machine on wooden desk, cozy home office, morning light, 
 Architecture: VAE encodes 512×512 RGB → 64×64×4 latent → SDXL-Turbo denoises (4 steps) → VAE decodes back to 512×512
 Latent compression: 64×64×4 = 16,384 dimensions vs 512×512×3 = 786,432 dimensions → 48× smaller
 Result: SDXL-Turbo generates 512×512 scene in ~8 seconds on your laptop
-           20 variations = 160 seconds = 2.7 minutes total
+ 20 variations = 160 seconds = 2.7 minutes total
 ```
 
 The client watches 20 variations appear in under 3 minutes. They pick 5 finalists. You regenerate those with 20 DDIM steps (higher quality) in another minute. Total call time: 4 minutes for 25 images. Freelancers would need 2 days for the same deliverable.
@@ -158,39 +158,39 @@ from diffusers import AutoPipelineForText2Image
 import torch, time
 
 pipe = AutoPipelineForText2Image.from_pretrained(
-    "stabilityai/sdxl-turbo",
-    torch_dtype=torch.float16, variant="fp16"
+ "stabilityai/sdxl-turbo",
+ torch_dtype=torch.float16, variant="fp16"
 ).to("cuda")
 
 # VisualForge lifestyle campaign brief
 lifestyle_prompts = [
-    "Spring linen blazer, woman at outdoor café, bright morning light, editorial fashion photography, 512x512",
-    "Floral midi dress, woman in botanical garden, golden hour, high fashion editorial",
-    "Navy striped shirt, man on cobblestone street, European city, casual editorial style",
+ "Spring linen blazer, woman at outdoor café, bright morning light, editorial fashion photography, 512x512",
+ "Floral midi dress, woman in botanical garden, golden hour, high fashion editorial",
+ "Navy striped shirt, man on cobblestone street, European city, casual editorial style",
 ]
 negative_prompt = "deformed, blurry, watermark, text, low quality, cartoonish, oversaturated"
 
 t0 = time.time()
 for i, prompt in enumerate(lifestyle_prompts):
-    img = pipe(prompt=prompt, negative_prompt=negative_prompt,
-               num_inference_steps=4,   # SDXL-Turbo: 4 steps is sufficient
-               guidance_scale=0.0,      # Turbo models work best with guidance=0
-               generator=torch.manual_seed(i)).images[0]
-    img.save(f"vf_lifestyle_{i:02d}.png")
-    print(f"Image {i+1}: {time.time()-t0:.1f}s total")
+ img = pipe(prompt=prompt, negative_prompt=negative_prompt,
+ num_inference_steps=4, # SDXL-Turbo: 4 steps is sufficient
+ guidance_scale=0.0, # Turbo models work best with guidance=0
+ generator=torch.manual_seed(i)).images[0]
+ img.save(f"vf_lifestyle_{i:02d}.png")
+ print(f"Image {i+1}: {time.time()-t0:.1f}s total")
 ```
 
 **VisualForge latent-diffusion constraint scorecard:**
 
 | Metric | Target | Result |
 |--------|--------|--------|
-| Time per lifestyle image | <3s | ~0.5s (SDXL-Turbo) ✅ |
-| 50-image batch time | <30 min | ~25 sec ✅ |
-| Resolution | 512×512 | ✅ |
-| Quality score | ≥4.0/5.0 | 4.2/5.0 ✅ |
-| VAE color accuracy | No color shift | ⚡ Minor warm shift — see below |
+| Time per lifestyle image | <3s | ~0.5s (SDXL-Turbo) |
+| 50-image batch time | <30 min | ~25 sec |
+| Resolution | 512×512 | |
+| Quality score | ≥4.0/5.0 | 4.2/5.0 |
+| VAE color accuracy | No color shift | Minor warm shift — see below |
 
-> ⚠️ **Common VAE pitfall:** Forgetting to multiply latents by `vae.config.scaling_factor` (0.18215 for SD 2.1) when encoding/decoding manually causes a severe color shift. The `diffusers` pipeline handles this automatically — only relevant if writing custom sampling loops.
+> **Warning — Common VAE pitfall:** Forgetting to multiply latents by `vae.config.scaling_factor` (0.18215 for SD 2.1) when encoding/decoding manually causes a severe color shift. The `diffusers` pipeline handles this automatically — only relevant if writing custom sampling loops.
 
 ---
 
@@ -200,7 +200,7 @@ for i, prompt in enumerate(lifestyle_prompts):
 SD Architecture — Dimensions at Each Stage:
 
 ┌──────────────────────────────────────────────────────────────────┐
-│ Image space (pixel U-Net, e.g. DDPM on small-scale data)     │
+│ Image space (pixel U-Net, e.g. DDPM on small-scale data) │
 │ 28×28×1 ──────────────────────────────── 28×28×1 │
 │ (784 dim) │
 └──────────────────────────────────────────────────────────────────┘
@@ -257,12 +257,12 @@ VAE compression ratio: 786 432 / 16 384 = 48×
 
 | Scenario | Use Latent Diffusion | Use Alternative |
 |----------|---------------------|---------------|
-| **Production text→image** | ✅ SD/SDXL (8-20s, laptop-friendly) | ❌ Pixel-space DDPM (5 min+, impractical) |
-| **High-res imagery (1024×1024+)** | ✅ SDXL (native 1024×1024) | ❌ SD 1.5 (artifacts beyond 512×512) |
-| **Fast prototyping (<5s/image)** | ✅ SDXL-Turbo, LCM (4-8 steps) | ⚠️ Standard SD (20+ steps) |
-| **Fine-grained pixel control** | ⚠️ Latent space limits precision | ✅ Pixel-space models (if speed not critical) |
-| **Video generation** | ✅ Latent diffusion (AnimateDiff, SVD) | ❌ Pixel-space video (prohibitively slow) |
-| **VisualForge production pipeline** | ✅ SDXL-Turbo for drafts, SD 1.5 for finals | N/A |
+| **Production text→image** | SD/SDXL (8-20s, laptop-friendly) | Pixel-space DDPM (5 min+, impractical) |
+| **High-res imagery (1024×1024+)** | SDXL (native 1024×1024) | SD 1.5 (artifacts beyond 512×512) |
+| **Fast prototyping (<5s/image)** | SDXL-Turbo, LCM (4-8 steps) | Standard SD (20+ steps) |
+| **Fine-grained pixel control** | Latent space limits precision | Pixel-space models (if speed not critical) |
+| **Video generation** | Latent diffusion (AnimateDiff, SVD) | Pixel-space video (prohibitively slow) |
+| **VisualForge production pipeline** | SDXL-Turbo for drafts, SD 1.5 for finals | N/A |
 
 **Decision rule for VisualForge:**
 - **Drafts/iterations on client calls**: SDXL-Turbo (4 steps, 8s, good enough for feedback)
@@ -351,21 +351,21 @@ Trend: Larger latent channels (4→16), larger U-Net or Diffusion Transformer (D
 **GPU-intensive notebook** (requires CUDA GPU for full generation):
 [`notebook_supplement.ipynb_solution.ipynb` (reference) or `notebook_supplement.ipynb_exercise.ipynb` (practice) (solution)](notebook_supplement.ipynb_solution.ipynb) | [`notebook_supplement.ipynb_solution.ipynb` (reference) or `notebook_supplement.ipynb_exercise.ipynb` (practice) (exercise)](notebook_supplement.ipynb_exercise.ipynb) — Generate VisualForge lifestyle scenes using SDXL-Turbo, measure generation time, compare CFG scales
 
-> ⚠️ The supplement notebook requires a CUDA GPU (8GB+ VRAM). It includes a GPU presence guard at cell 1 and will exit gracefully if no GPU is detected.
+> The supplement notebook requires a CUDA GPU (8GB+ VRAM). It includes a GPU presence guard at cell 1 and will exit gracefully if no GPU is detected.
 
 ---
 
 ## 11.5 · Progress Check — What Have We Unlocked?
 
 ### Before This Chapter
-- **Constraint #2 (Speed)**: ⚡ DDIM at pixel-scale (28×28 educational proxy) was 30-60s; 512×512 in pixel space is too slow
-- **Constraint #3 (Cost)**: ❌ Not validated on target hardware
+- **Constraint #2 (Speed)**: DDIM at pixel-scale (28×28 educational proxy) was 30-60s; 512×512 in pixel space is too slow
+- **Constraint #3 (Cost)**: Not validated on target hardware
 - **VisualForge Status**: Cannot generate client-ready 512×512 images fast enough
 
 ### After This Chapter
-- **Constraint #2 (Speed)**: ✅ **20s per image** → SDXL-Turbo 4 steps = 8s, SD 1.5 DDIM 50 steps = 20s
-- **Constraint #3 (Cost)**: ✅ **$2,500 laptop** → MacBook Pro M2 / RTX 3060 laptop sufficient
-- **Constraint #6 (Versatility)**: ⚡ **Text→Image enabled** → Can generate from "modern office with natural light" prompts
+- **Constraint #2 (Speed)**: **20s per image** → SDXL-Turbo 4 steps = 8s, SD 1.5 DDIM 50 steps = 20s
+- **Constraint #3 (Cost)**: **$2,500 laptop** → MacBook Pro M2 / RTX 3060 laptop sufficient
+- **Constraint #6 (Versatility)**: **Text→Image enabled** → Can generate from "modern office with natural light" prompts
 - **VisualForge Status**: Core generation pipeline complete, runs locally, hits speed target
 
 ---
@@ -391,14 +391,14 @@ Trend: Larger latent channels (4→16), larger U-Net or Diffusion Transformer (D
 
 | Constraint | Ch.3 CLIP | Ch.4 Diffusion | Ch.5 Schedulers | **Ch.6 Latent Diff** | Target |
 |------------|----------|---------------|----------------|---------------------|--------|
-| #1 Quality | ❌ | ⚡ 3.0/5.0 | ⚡ 3.2/5.0 | ⚡ **3.5/5.0** | 4.0/5.0 |
-| #2 Speed | ❌ | ❌ 5min | ⚡ 30-60s | ✅ **20s** (8s Turbo) | <30s |
-| #3 Cost | ❌ | ❌ | ❌ | ✅ **$2.5k laptop** | <$5k |
-| #4 Control | ⚡ Text search | ⚡ | ⚡ | ⚡ **25% unusable** | <5% |
-| #5 Throughput | ❌ | ❌ 10/day | ❌ | ⚡ **30/day** | 100+/day |
-| #6 Versatility | ⚡ Search | ⚡ Generate | ⚡ | ⚡ **Text→Image** | 3 modalities |
+| #1 Quality | | 3.0/5.0 | 3.2/5.0 | **3.5/5.0** | 4.0/5.0 |
+| #2 Speed | | 5min | 30-60s | **20s** (8s Turbo) | <30s |
+| #3 Cost | | | | **$2.5k laptop** | <$5k |
+| #4 Control | Text search | | | **25% unusable** | <5% |
+| #5 Throughput | | 10/day | | **30/day** | 100+/day |
+| #6 Versatility | Search | Generate | | **Text→Image** | 3 modalities |
 
-**Legend**: ❌ = Blocked | ⚡ = Foundation laid | ✅ = Target hit
+**Legend**: = Blocked | = Foundation laid | = Target hit
 
 ---
 

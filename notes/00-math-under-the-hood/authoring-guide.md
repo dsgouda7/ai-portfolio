@@ -4,7 +4,7 @@
 > Each chapter lives under `notes/00-math_under_the_hood/` in its own folder, containing a README and a Jupyter notebook with interactive widgets.
 > Read this before starting any chapter to keep tone, structure, and the knuckleball free-kick running example consistent.
 >
-> **📚 Updated:** Now includes comprehensive pedagogical patterns, voice guidelines, and conformance standards aligned with ML track (see §"Style Ground Truth" and §"Pedagogical Patterns" below).
+> ** Updated:** Now includes comprehensive pedagogical patterns, voice guidelines, and conformance standards aligned with ML track (see §"Style Ground Truth" and §"Pedagogical Patterns" below).
 
 <!-- LLM-STYLE-FINGERPRINT-V1
 canonical_chapters: ["notes/00-math_under_the_hood/ch01_linear_algebra/README.md", "notes/00-math_under_the_hood/ch03_calculus_intro/README.md"]
@@ -14,7 +14,7 @@ formula_motivation: required_before_each_formula
 numerical_walkthroughs: judicious_knuckleball_examples_when_clarifying
 dataset: knuckleball_free_kick_physics_2d_parabola
 failure_first_pedagogy: true
-callout_system: {insight:"💡", warning:"⚠️", constraint:"⚡", optional_depth:"📖", forward_pointer:"➡️"}
+callout_system: {insight:"", warning:"", constraint:"", optional_depth:"📖", forward_pointer:"➡"}
 mermaid_color_palette: {primary:"#1e3a8a", success:"#15803d", caution:"#b45309", danger:"#b91c1c", info:"#1d4ed8"}
 image_background: dark_facecolor_1a1a2e_for_generated_plots
 section_template: [story_header, challenge_0, core_idea_1, running_example_2, math_3, step_by_step_4, key_diagrams_5, what_can_go_wrong_6, progress_check_N, bridge_N1]
@@ -40,10 +40,10 @@ Each chapter folder contains:
 
 ```
 chNN-<slug>/
-  README.md        # narrative, math derivations, diagrams, exercises
-  notebook.ipynb   # hands-on Python with interactive widgets
-  img/             # static PNGs and GIFs referenced from README
-  gen_scripts/     # (optional) Python scripts that generate animations
+ README.md # narrative, math derivations, diagrams, exercises
+ notebook.ipynb # hands-on Python with interactive widgets
+ img/ # static PNGs and GIFs referenced from README
+ gen_scripts/ # (optional) Python scripts that generate animations
 ```
 
 **Track-level consolidation:**
@@ -53,13 +53,13 @@ At the root of `notes/00-math_under_the_hood/`, two special files consolidate th
 - **`grand_solution.md`**: Narrative synthesis document that shows the complete mathematical progression from Ch.1–7 as a single story arc. Includes production patterns, historical context, and forward links to ML track.
 
 - **`grand_solution.ipynb`**: Executable Jupyter notebook that consolidates all code examples from the track end-to-end. Structure:
-  - Setup cell (imports, plotting config)
-  - One section per chapter (markdown explanation + code cells)
-  - Production patterns demonstrated (Scale→Engineer→Fit, Forward/Backward passes, etc.)
-  - Complete trajectory visualization
-  - Summary cell linking to ML track
+ - Setup cell (imports, plotting config)
+ - One section per chapter (markdown explanation + code cells)
+ - Production patterns demonstrated (Scale→Engineer→Fit, Forward/Backward passes, etc.)
+ - Complete trajectory visualization
+ - Summary cell linking to ML track
 
-  **Usage:** Readers can run this notebook top-to-bottom to see the complete solution in action without navigating individual chapter notebooks. Each code cell is brief (10-30 lines), focused on demonstrating the core concept, and includes inline comments referencing the chapter it came from.
+ **Usage:** Readers can run this notebook top-to-bottom to see the complete solution in action without navigating individual chapter notebooks. Each code cell is brief (10-30 lines), focused on demonstrating the core concept, and includes inline comments referencing the chapter it came from.
 
 **Naming conventions:**
 - Images: `chNN-[topic]-[type].png/.gif` (chapter-specific) or `[concept]_generated.gif/.png` (algorithmically generated)
@@ -77,8 +77,8 @@ Every chapter uses the same real-world problem: a football (soccer) striker line
 **Can we score this goal?** To succeed, the ball must satisfy **THREE constraints simultaneously**:
 
 1. **🧱 Wall Clearance**: At the wall position (9.15 m horizontal distance, ~0.6s flight time), the ball must be **above 1.8 m** (wall height)
-2. **🎯 Crossbar Clearance**: At the goal line (20 m horizontal distance, ~1.2s flight time), the ball must be **below 2.44 m** (crossbar height)
-3. **⚡ Keeper-Beating Speed**: The ball must arrive fast enough (or with short enough flight time) that the goalkeeper cannot react
+2. ** Crossbar Clearance**: At the goal line (20 m horizontal distance, ~1.2s flight time), the ball must be **below 2.44 m** (crossbar height)
+3. ** Keeper-Beating Speed**: The ball must arrive fast enough (or with short enough flight time) that the goalkeeper cannot react
 
 These are **competing constraints** — a high launch angle clears the wall easily but might sail over the crossbar. A low angle beats the keeper but hits the wall. Finding parameters (launch speed v₀, angle θ) that satisfy all three is a **constrained multi-objective optimization problem** — exactly what real ML does.
 
@@ -88,13 +88,13 @@ Each chapter gives us ONE new mathematical tool to solve ONE piece of the challe
 
 | Chapter | Math Tool | What It Unlocks | Challenge Progress |
 |---|---|---|---|
-| Ch.1 Linear Algebra | Lines, slopes, intercepts | Predict height during first 0.1s (linear approx) | ❌ Can't model full curve yet |
-| Ch.2 Non-linear Algebra | Polynomials, parabolas | Model full trajectory h(t) = v₀ᵧt - ½gt² | ❌ Can't find peak/crossings yet |
-| Ch.3 Calculus Intro | Derivatives, rate of change | Find apex (h'=0), compute wall/goal heights | ✅ **Can check constraints 1 & 2!** |
-| Ch.4 Small Steps | Gradient descent, iteration | Optimize ONE parameter (angle for max range) | ✅ Can find best single-variable solution |
-| Ch.5 Matrices | Multi-variable systems | Handle v₀ AND θ AND wind simultaneously | ❌ Can't optimize multi-dim yet |
-| Ch.6 Chain Rule | Gradients, Jacobians | Optimize MULTIPLE parameters at once | ✅ **Can solve full challenge!** |
-| Ch.7 Probability | Distributions, noise | Handle striker fatigue, ball variance | ✅ Can reason about success rate |
+| Ch.1 Linear Algebra | Lines, slopes, intercepts | Predict height during first 0.1s (linear approx) | Can't model full curve yet |
+| Ch.2 Non-linear Algebra | Polynomials, parabolas | Model full trajectory h(t) = v₀ᵧt - ½gt² | Can't find peak/crossings yet |
+| Ch.3 Calculus Intro | Derivatives, rate of change | Find apex (h'=0), compute wall/goal heights | **Can check constraints 1 & 2!** |
+| Ch.4 Small Steps | Gradient descent, iteration | Optimize ONE parameter (angle for max range) | Can find best single-variable solution |
+| Ch.5 Matrices | Multi-variable systems | Handle v₀ AND θ AND wind simultaneously | Can't optimize multi-dim yet |
+| Ch.6 Chain Rule | Gradients, Jacobians | Optimize MULTIPLE parameters at once | **Can solve full challenge!** |
+| Ch.7 Probability | Distributions, noise | Handle striker fatigue, ball variance | Can reason about success rate |
 
 **Key narrative arc**: We move from "can we predict?" (Ch.1-3) → "can we optimize one thing?" (Ch.4) → "can we optimize everything?" (Ch.5-6) → "can we handle uncertainty?" (Ch.7).
 
@@ -122,16 +122,16 @@ Every chapter README follows this **extended structure**:
 
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The goal**: Score a free kick that clears a 1.8m wall and dips under a 2.44m crossbar while beating the keeper's reaction time.
+> **The goal**: Score a free kick that clears a 1.8m wall and dips under a 2.44m crossbar while beating the keeper's reaction time.
 >
 > **THREE constraints:**
 > 1. 🧱 WALL CLEARANCE: Ball height > 1.8m at 9.15m distance
-> 2. 🎯 CROSSBAR CLEARANCE: Ball height < 2.44m at 20m distance
-> 3. ⚡ KEEPER-BEATING SPEED: Flight time or arrival velocity sufficient
+> 2. CROSSBAR CLEARANCE: Ball height < 2.44m at 20m distance
+> 3. KEEPER-BEATING SPEED: Flight time or arrival velocity sufficient
 
 **What we know so far:**
-- ✅ [Summary of previous chapters' achievements with specific numbers]
-- ❌ **But we still can't [X]!** [Specific capability blocked]
+- [Summary of previous chapters' achievements with specific numbers]
+- **But we still can't [X]!** [Specific capability blocked]
 
 **What's blocking us:**
 [Concrete description of the mathematical gap this chapter addresses — never abstract "we need to learn X" but specific "we can't find the apex of the trajectory" or "we can't optimize two variables simultaneously"]
@@ -184,14 +184,12 @@ Every chapter README follows this **extended structure**:
 ## N · Progress Check — What We Can Solve Now
 
 ![Progress visualization](img/chNN-[slug]-progress-check.png) ← **Required**: Visual showing green zones (solvable) vs red zones (blocked)
-
-✅ **Unlocked capabilities:**
+**Unlocked capabilities:**
 - [Specific things you can now do with exact constraint numbers]
-- [e.g., "Can now verify wall clearance: h(0.6s) = 1.92m > 1.8m ✅"]
-
-❌ **Still can't solve:**
+- [e.g., "Can now verify wall clearance: h(0.6s) = 1.92m > 1.8m "]
+**Still can't solve:**
 - [What's blocked — explicitly preview next chapter's unlock]
-- [e.g., "❌ Can't find optimal launch angle yet — no way to maximize range"]
+- [e.g., " Can't find optimal launch angle yet — no way to maximize range"]
 
 **Trajectory status**: [One-sentence summary showing trajectory plot with verified vs unverified regions]
 
@@ -231,11 +229,11 @@ Every chapter README must open (after the title/story/notation blockquote) with 
 ```markdown
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The goal**: Score a free kick that clears a 1.8m wall and dips under a 2.44m crossbar while beating the keeper's reaction time.
+> **The goal**: Score a free kick that clears a 1.8m wall and dips under a 2.44m crossbar while beating the keeper's reaction time.
 
 **What we know so far:**
-- ✅ [Capabilities from previous chapters]
-- ❌ [What we still can't do]
+- [Capabilities from previous chapters]
+- [What we still can't do]
 
 **What's blocking us:**
 [Specific problem this chapter solves]
@@ -250,11 +248,9 @@ Every chapter must end (before References) with:
 
 ```markdown
 ## N · Progress Check — What We Can Solve Now
-
-✅ **Unlocked capabilities:**
+**Unlocked capabilities:**
 - [List what reader can now do]
-
-❌ **Still can't solve:**
+**Still can't solve:**
 - [What's blocked until future chapters]
 
 **Next up:** [Preview of Ch.N+1's unlock]
@@ -304,11 +300,11 @@ The register: wry, businesslike, never cute.
 Every chapter opens with three specific items, in order, in a blockquote:
 
 1. **The story** — historical context. Who invented this concept, in what year, on what problem. Always a real person and a real date. Examples:
-   - Descartes (1637) — *La Géométrie* — algebra meets geometry
-   - Newton (1687) — *Principia* — calculus to solve planetary motion
-   - Gauss (1809) — least squares on Ceres asteroid orbit
+ - Descartes (1637) — *La Géométrie* — algebra meets geometry
+ - Newton (1687) — *Principia* — calculus to solve planetary motion
+ - Gauss (1809) — least squares on Ceres asteroid orbit
 
-   The history is brief (one paragraph), specific (named people, named papers, named years), and closes with a sentence connecting the historical moment to the practitioner's daily work.
+ The history is brief (one paragraph), specific (named people, named papers, named years), and closes with a sentence connecting the historical moment to the practitioner's daily work.
 
 2. **Where you are in the curriculum** — one paragraph precisely describing what the previous chapter(s) gave you and what gap this chapter fills. Must name specific capabilities or constraint statuses from preceding chapters.
 
@@ -351,14 +347,14 @@ If a formula has no verbal gloss within three lines, it is incomplete.
 **Rule 5: ASCII matrix diagrams for matrix operations.** When showing a matrix multiply or a matrix structure, draw it in ASCII with aligned brackets, showing the dimensions of each operand and the result. Example:
 
 ```
-A · x                                              (2×2) · (2×1) → (2×1)
+A · x (2×2) · (2×1) → (2×1)
 
-  A                            x
-  ┌  2   3  ┐                 ┌  1  ┐
-  └  4   1  ┘  ×              └  2  ┘
+ A x
+ ┌ 2 3 ┐ ┌ 1 ┐
+ └ 4 1 ┘ × └ 2 ┘
 
-= ┌  2×1 + 3×2  ┐  =  ┌  8  ┐
-  └  4×1 + 1×2  ┘     └  6  ┘
+= ┌ 2×1 + 3×2 ┐ = ┌ 8 ┐
+ └ 4×1 + 1×2 ┘ └ 6 ┘
 ```
 
 ---
@@ -372,7 +368,7 @@ A · x                                              (2×2) · (2×1) → (2×1)
 2. State the formula to be applied
 3. Show step-by-step arithmetic with intermediate values
 4. Show the numerical result bolded
-5. Verify: "At 0.6s, height is **1.92m** — clears the 1.8m wall ✅"
+5. Verify: "At 0.6s, height is **1.92m** — clears the 1.8m wall "
 
 **Example:**
 ```markdown
@@ -384,7 +380,7 @@ A · x                                              (2×2) · (2×1) → (2×1)
 2. ½g·t² = 0.5 × 9.8 × 0.36 = 1.76 m (gravity drop)
 3. h(0.6) = 10 × 0.6 - 1.76 = 6.0 - 1.76 = **4.24m**
 
-**Verification:** At wall position (0.6s), height is 4.24m >> 1.8m → wall cleared ✅
+**Verification:** At wall position (0.6s), height is 4.24m >> 1.8m → wall cleared
 ```
 
 **Every walkthrough ends with a verification sentence** confirming the arithmetic and tying it back to the constraint.
@@ -399,7 +395,7 @@ A · x                                              (2×2) · (2×1) → (2×1)
 
 **Forward link pattern:** *"This derivative machinery is the entire foundation of gradient descent in ML. Every time you see `loss.backward()` in PyTorch, this chain rule is running — one step per layer."*
 
-**The forward pointer callout box** (`> ➡️`) is used for concepts that will be formally introduced later but need to be planted early. Example: plant gradients in Ch.3 with `> ➡️ Ch.6 extends this to multi-variable optimization (gradients + chain rule)`.
+**The forward pointer callout box** (`> ➡`) is used for concepts that will be formally introduced later but need to be planted early. Example: plant gradients in Ch.3 with `> ➡ Ch.6 extends this to multi-variable optimization (gradients + chain rule)`.
 
 **Cross-track links** to ML chapters are standard. Always reference the specific chapter: `[ML 01-Regression/ch01-linear-regression](../../ml/01_regression/ch01_linear_regression)`.
 
@@ -411,11 +407,11 @@ Used consistently across all chapters. Must be used exactly this way — no impr
 
 | Symbol | Meaning | When to use |
 |---|---|---|
-| `💡` | Key insight / conceptual payoff | After a result that surprises or reframes understanding |
-| `⚠️` | Warning / common trap | Before or immediately after a pattern often done wrong |
-| `⚡` | Constraint connection | When content advances or validates one of the 3 free-kick constraints |
+| `` | Key insight / conceptual payoff | After a result that surprises or reframes understanding |
+| `` | Warning / common trap | Before or immediately after a pattern often done wrong |
+| `` | Constraint connection | When content advances or validates one of the 3 free-kick constraints |
 | `> 📖 **Optional:**` | Deeper derivation | Full proofs that break narrative flow |
-| `> ➡️` | Forward pointer | When a concept needs to be planted before its full treatment |
+| `> ➡` | Forward pointer | When a concept needs to be planted before its full treatment |
 
 The callout box content is always **actionable**: it ends with a Fix, a Rule, a What-to-do. No callout box that just says "this is interesting" without consequence.
 
@@ -519,23 +515,23 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Constants
-g = 9.8  # m/s² — gravity
-v0 = 20  # m/s — initial velocity
-theta_deg = 35  # degrees — launch angle
+g = 9.8 # m/s² — gravity
+v0 = 20 # m/s — initial velocity
+theta_deg = 35 # degrees — launch angle
 theta = np.radians(theta_deg)
 
 # Components
-v0_x = v0 * np.cos(theta)  # horizontal velocity (constant)
-v0_y = v0 * np.sin(theta)  # initial vertical velocity
+v0_x = v0 * np.cos(theta) # horizontal velocity (constant)
+v0_y = v0 * np.sin(theta) # initial vertical velocity
 
 # Trajectory function
 def h(t):
-    return v0_y * t - 0.5 * g * t**2
+ return v0_y * t - 0.5 * g * t**2
 
 # Check constraints
-t_wall = 9.15 / v0_x  # time to reach wall
+t_wall = 9.15 / v0_x # time to reach wall
 h_wall = h(t_wall)
-print(f"Wall clearance: {h_wall:.2f}m {'✅' if h_wall > 1.8 else '❌'}")
+print(f"Wall clearance: {h_wall:.2f}m {'' if h_wall > 1.8 else ''}")
 ```
 
 ---
@@ -548,15 +544,13 @@ The Progress Check is the penultimate section (before Bridge). It has a fixed fo
 ## N · Progress Check — What We Can Solve Now
 
 ![Progress visualization](img/chNN-[slug]-progress-check.png)
-
-✅ **Unlocked capabilities:**
+**Unlocked capabilities:**
 - [Specific capability with exact numbers]
 - [e.g., "Can now find trajectory apex: h_max = 5.10m at t = 1.02s"]
-- [Constraint advancement: "Constraint #1 ✅ Wall clearance verified!"]
-
-❌ **Still can't solve:**
+- [Constraint advancement: "Constraint #1 Wall clearance verified!"]
+**Still can't solve:**
 - [Named gaps with specifics]
-- [e.g., "❌ Can't find optimal angle yet — no way to maximize range"]
+- [e.g., " Can't find optimal angle yet — no way to maximize range"]
 
 **Trajectory status**: [One-sentence summary: "We can now verify any single trajectory satisfies constraints, but can't find the best trajectory"]
 
@@ -675,7 +669,7 @@ Act 4: Decision framework (when to use which)
 2. Specific scenario (v₀=20 m/s, θ=30°, t=0.6s)
 3. Hand calculation step-by-step
 4. Numerical result: **4.24m**
-5. Confirmation: "At 0.6s, height is **4.24m** — clears 1.8m wall ✅"
+5. Confirmation: "At 0.6s, height is **4.24m** — clears 1.8m wall "
 ```
 
 **Why effective:** Builds trust before moving to abstraction. Readers verify the math themselves.
@@ -732,29 +726,21 @@ Map tone to pedagogical purpose:
 ---
 
 ### Anti-Patterns (What NOT to Do)
-
-❌ **Listing formulas without demonstrating need**
+**Listing formulas without demonstrating need**
 Example: "Here are five trajectory formulas: parabolic, ballistic, drag-adjusted..." (without showing when/why)
-
-❌ **Formulas without verbal glossing**
+**Formulas without verbal glossing**
 Example: Dropping LaTeX `h(t) = v₀t - ½gt²` with no "In English:" paragraph
-
-❌ **Vague capability claims**
-Example: "The model got better" instead of "Can now verify wall clearance: 1.92m > 1.8m ✅"
-
-❌ **Academic register**
+**Vague capability claims**
+Example: "The model got better" instead of "Can now verify wall clearance: 1.92m > 1.8m "
+**Academic register**
 Example: "We demonstrate that...", "It can be shown that...", "In this section we will present..."
-
-❌ **Synthetic toy scenarios**
+**Synthetic toy scenarios**
 Example: Using `h(t) = 5t - 2t²` without physical grounding instead of actual knuckleball kinematics
-
-❌ **Improvised emoji**
-Example: Using 🔍🎯✨🚀 as inline callouts (only 💡⚠️⚡📖➡️ allowed)
-
-❌ **Topic-label section headings**
+**Improvised emoji**
+Example: Using ✨ as inline callouts (only 📖➡ allowed)
+**Topic-label section headings**
 Example: "## 3 · Math" instead of "## 3 · Math — How Parabolas Encode Initial Conditions"
-
-❌ **Skipping numerical verification**
+**Skipping numerical verification**
 Example: Showing formula, then immediately generalizing without computing a specific example
 
 ---
@@ -783,22 +769,22 @@ Every `grand_solution.md` follows this **7-section template**:
 
 ---
 
-## Mission Accomplished: Can We Score This Goal? ✅
+## Mission Accomplished: Can We Score This Goal?
 
 **The Challenge:** Score a knuckleball free kick that clears a 1.8m wall at 9.15m distance and dips under a 2.44m crossbar at 20m distance, while beating the goalkeeper's reaction time.
 
-**The Result:** ✅ **YES!** Optimal parameters: v₀ = 22.4 m/s, θ = 32°, flight time = 1.15s
+**The Result:** **YES!** Optimal parameters: v₀ = 22.4 m/s, θ = 32°, flight time = 1.15s
 
 **The Progression:**
 
 ```
-Ch.1 (Linear Algebra):   Can predict first 0.1s only (linear approx)
-Ch.2 (Parabolas):        Can model full trajectory → h(t) = v₀ᵧt - ½gt²
-Ch.3 (Calculus):         Can find apex (h' = 0) and verify wall/crossbar clearance ✅
-Ch.4 (Small Steps):      Can optimize one parameter (angle for max range)
-Ch.5 (Matrices):         Can handle v₀ AND θ AND wind simultaneously
-Ch.6 (Chain Rule):       Can optimize MULTIPLE parameters at once → SOLVED! ✅
-Ch.7 (Probability):      Can reason about success rate with striker fatigue
+Ch.1 (Linear Algebra): Can predict first 0.1s only (linear approx)
+Ch.2 (Parabolas): Can model full trajectory → h(t) = v₀ᵧt - ½gt²
+Ch.3 (Calculus): Can find apex (h' = 0) and verify wall/crossbar clearance
+Ch.4 (Small Steps): Can optimize one parameter (angle for max range)
+Ch.5 (Matrices): Can handle v₀ AND θ AND wind simultaneously
+Ch.6 (Chain Rule): Can optimize MULTIPLE parameters at once → SOLVED!
+Ch.7 (Probability): Can reason about success rate with striker fatigue
 ```
 
 ---
@@ -846,7 +832,7 @@ Ch.7 (Probability):      Can reason about success rate with striker fatigue
 **What it is:** Derivatives measure rate of change; h'(t) = 0 finds the apex.
 
 **What it unlocked:**
-- ✅ **Constraint #1 & #2 verification!** Can compute exact wall/crossbar heights
+- **Constraint #1 & #2 verification!** Can compute exact wall/crossbar heights
 - Find apex: h'(t) = v₀ᵧ - gt = 0 → t_apex = v₀ᵧ/g
 - Verify: h(0.6s) > 1.8m (wall) and h(1.2s) < 2.44m (crossbar)
 
@@ -900,7 +886,7 @@ Ch.7 (Probability):      Can reason about success rate with striker fatigue
 **What it is:** Gradients extend derivatives to multiple variables; chain rule composes them.
 
 **What it unlocked:**
-- ✅ **THE FULL SOLUTION!** Optimize v₀ AND θ simultaneously
+- **THE FULL SOLUTION!** Optimize v₀ AND θ simultaneously
 - ∇f = [∂f/∂v₀, ∂f/∂θ] points toward steepest ascent
 - Constrained optimization: find (v₀, θ) that clears wall AND crossbar
 
@@ -935,16 +921,16 @@ Ch.7 (Probability):      Can reason about success rate with striker fatigue
 
 ```mermaid
 graph TD
-    A[Knuckleball Problem] --> B[Ch.1-2: Model Trajectory]
-    B --> C[Ch.3: Verify Constraints]
-    C --> D[Ch.4-6: Optimize Parameters]
-    D --> E[Ch.7: Handle Uncertainty]
-    E --> F[✅ Complete Solution]
+ A[Knuckleball Problem] --> B[Ch.1-2: Model Trajectory]
+ B --> C[Ch.3: Verify Constraints]
+ C --> D[Ch.4-6: Optimize Parameters]
+ D --> E[Ch.7: Handle Uncertainty]
+ E --> F[ Complete Solution]
 
-    B --> G[h_t = v₀ᵧt - ½gt²]
-    C --> H[h' = 0 for apex]
-    D --> I[∇f for multi-variable]
-    E --> J[P_score with noise]
+ B --> G[h_t = v₀ᵧt - ½gt²]
+ C --> H[h' = 0 for apex]
+ D --> I[∇f for multi-variable]
+ E --> J[P_score with noise]
 ```
 
 ### Integration Pipeline
@@ -956,27 +942,27 @@ from scipy.optimize import minimize
 
 # Ch.2: Trajectory model
 def height(t, v0, theta):
-    v0_y = v0 * np.sin(np.radians(theta))
-    return v0_y * t - 0.5 * 9.8 * t**2
+ v0_y = v0 * np.sin(np.radians(theta))
+ return v0_y * t - 0.5 * 9.8 * t**2
 
 # Ch.3: Constraint checks
 def check_constraints(v0, theta):
-    v0_x = v0 * np.cos(np.radians(theta))
-    t_wall = 9.15 / v0_x
-    t_goal = 20.0 / v0_x
-    h_wall = height(t_wall, v0, theta)
-    h_goal = height(t_goal, v0, theta)
-    return h_wall > 1.8 and h_goal < 2.44 and h_goal > 0
+ v0_x = v0 * np.cos(np.radians(theta))
+ t_wall = 9.15 / v0_x
+ t_goal = 20.0 / v0_x
+ h_wall = height(t_wall, v0, theta)
+ h_goal = height(t_goal, v0, theta)
+ return h_wall > 1.8 and h_goal < 2.44 and h_goal > 0
 
 # Ch.6: Gradient-based optimization
 def objective(params):
-    v0, theta = params
-    if not check_constraints(v0, theta):
-        return 1e6  # penalty for constraint violation
-    # Minimize flight time (faster ball)
-    v0_x = v0 * np.cos(np.radians(theta))
-    t_goal = 20.0 / v0_x
-    return t_goal
+ v0, theta = params
+ if not check_constraints(v0, theta):
+ return 1e6 # penalty for constraint violation
+ # Minimize flight time (faster ball)
+ v0_x = v0 * np.cos(np.radians(theta))
+ t_goal = 20.0 / v0_x
+ return t_goal
 
 result = minimize(objective, x0=[22, 32], bounds=[(15, 30), (20, 50)])
 v0_opt, theta_opt = result.x
@@ -984,13 +970,13 @@ print(f"Optimal: v₀={v0_opt:.1f} m/s, θ={theta_opt:.1f}°")
 
 # Ch.7: Success rate with noise
 def monte_carlo_success_rate(v0_mean, theta_mean, n_trials=10000):
-    successes = 0
-    for _ in range(n_trials):
-        v0_trial = np.random.normal(v0_mean, 2)    # ±2 m/s fatigue
-        theta_trial = np.random.normal(theta_mean, 3)  # ±3° variance
-        if check_constraints(v0_trial, theta_trial):
-            successes += 1
-    return successes / n_trials
+ successes = 0
+ for _ in range(n_trials):
+ v0_trial = np.random.normal(v0_mean, 2) # ±2 m/s fatigue
+ theta_trial = np.random.normal(theta_mean, 3) # ±3° variance
+ if check_constraints(v0_trial, theta_trial):
+ successes += 1
+ return successes / n_trials
 
 success_rate = monte_carlo_success_rate(v0_opt, theta_opt)
 print(f"Success rate with noise: {success_rate:.1%}")
@@ -1038,9 +1024,9 @@ print(f"Success rate with noise: {success_rate:.1%}")
 
 | # | Constraint | Target | Status | How We Achieved It |
 |---|------------|--------|--------|--------------------||
-| #1 | WALL CLEARANCE | Ball height > 1.8m at 9.15m | ✅ 2.04m | Ch.3: h(0.54s) = 2.04m using v₀=22.4, θ=32° |
-| #2 | CROSSBAR CLEARANCE | Ball height < 2.44m at 20m | ✅ 2.21m | Ch.3: h(1.15s) = 2.21m (23cm margin) |
-| #3 | KEEPER-BEATING SPEED | Flight time minimized | ✅ 1.15s | Ch.6: Optimized (v₀, θ) → fastest valid trajectory |
+| #1 | WALL CLEARANCE | Ball height > 1.8m at 9.15m | 2.04m | Ch.3: h(0.54s) = 2.04m using v₀=22.4, θ=32° |
+| #2 | CROSSBAR CLEARANCE | Ball height < 2.44m at 20m | 2.21m | Ch.3: h(1.15s) = 2.21m (23cm margin) |
+| #3 | KEEPER-BEATING SPEED | Flight time minimized | 1.15s | Ch.6: Optimized (v₀, θ) → fastest valid trajectory |
 
 **Final verification:** All constraints met simultaneously with 15–20% safety margins.
 
@@ -1049,10 +1035,10 @@ print(f"Success rate with noise: {success_rate:.1%}")
 ## What's Next: Beyond Free Kicks
 
 **This track taught:**
-- ✅ Linear approximations → Parabolic models → Calculus optimization
-- ✅ Single-variable → Multi-variable → Gradient-based solutions
-- ✅ Deterministic → Probabilistic (handling real-world noise)
-- ✅ Numerical verification → Analytical solutions → Monte Carlo simulation
+- Linear approximations → Parabolic models → Calculus optimization
+- Single-variable → Multi-variable → Gradient-based solutions
+- Deterministic → Probabilistic (handling real-world noise)
+- Numerical verification → Analytical solutions → Monte Carlo simulation
 
 **What remains for advanced physics:**
 - Air resistance (quadratic drag: more calculus + differential equations)
@@ -1116,19 +1102,19 @@ Cell structure per notebook:
 [markdown] ## 0 · The Challenge
 [markdown] ## 1 · The Core Idea
 [markdown] ## 2 · Running Example
-[code]     Define knuckleball parameters (v0, theta, g, etc.)
+[code] Define knuckleball parameters (v0, theta, g, etc.)
 [markdown] ## 3 · The Math
-[code]     Implement the math (numpy + symbolic where needed)
+[code] Implement the math (numpy + symbolic where needed)
 [markdown] ## 4 · Step by Step
-[code]     The step-by-step walkthrough as runnable code
-[code]     Plotting the key diagram
-[code]     Interactive widget (slider + text input synced)
+[code] The step-by-step walkthrough as runnable code
+[code] Plotting the key diagram
+[code] Interactive widget (slider + text input synced)
 [markdown] ## 5 · The Key Diagrams
-[code]     Generate hero visualization
+[code] Generate hero visualization
 [markdown] ## 6 · What Can Go Wrong
-[code]     Demonstrate one trap (degrees/radians, etc.)
+[code] Demonstrate one trap (degrees/radians, etc.)
 [markdown] ## 7 · Exercises
-[code]     Exercise scaffolds (partially filled)
+[code] Exercise scaffolds (partially filled)
 ```
 
 ---
@@ -1172,7 +1158,7 @@ Before publishing any chapter, verify each item:
 
 ### Links & References
 - [ ] Forward/backward links: every concept links to where it was introduced and where it reappears (ML chapters + future Math chapters)
-- [ ] Callout boxes: only `💡 ⚠️ ⚡ 📖 ➡️` — no improvised emoji
+- [ ] Callout boxes: only ` 📖 ➡` — no improvised emoji
 - [ ] ML cross-references: specific chapter paths (e.g., `[ML 01-Regression/ch01](../../ml/01_regression/ch01_linear_regression)`)
 
 ### Visual Elements
@@ -1189,7 +1175,7 @@ Before publishing any chapter, verify each item:
 - [ ] Runnable: all code blocks copy-paste executable (or explicitly marked as pseudocode/conceptual)
 
 ### Progress & Traps
-- [ ] Progress Check: ✅/❌ bullets with exact constraint numbers (e.g., "h(0.6s)=1.92m > 1.8m ✅")
+- [ ] Progress Check: / bullets with exact constraint numbers (e.g., "h(0.6s)=1.92m > 1.8m ")
 - [ ] Progress Check: visual showing green (solvable) vs red (blocked) trajectory regions
 - [ ] Progress Check: trajectory status one-liner + "Next up:" preview
 - [ ] What Can Go Wrong: 3–5 traps with pattern **Bold trap** — explanation (2-3 sentences) → **Fix:** actionable sentence
@@ -1206,13 +1192,13 @@ Before publishing any chapter, verify each item:
 - [ ] Dataset: knuckleball parameters only (v₀=20m/s, θ typical 20-45°, wall at 9.15m/1.8m, goal at 20m/2.44m)
 - [ ] No synthetic toy problems: always physically grounded (no `h(t)=5t-2t²` without physics context)
 - [ ] Numerical verification: "The match is exact" pattern after every worked example
-- [ ] Specific numbers: always exact ("1.92m > 1.8m ✅") never vague ("approximately cleared")
+- [ ] Specific numbers: always exact ("1.92m > 1.8m ") never vague ("approximately cleared")
 
 ### Pedagogical Patterns
 - [ ] Failure-first arc: tool → specific failure → minimal fix → that fix's failure → next tool (not taxonomy listing)
 - [ ] Problem→Cost→Solution: every technique shown AFTER demonstrating need (specific failure + constraint violation)
 - [ ] Historical hook → physics stakes: person + year → lasting impact → connection to free kick (3-sentence pattern)
-- [ ] Forward pointers: `> ➡️` callouts plant concepts before full treatment (Ch.3 plants gradients for Ch.6)
+- [ ] Forward pointers: `> ➡` callouts plant concepts before full treatment (Ch.3 plants gradients for Ch.6)
 
 ### Notebook Alignment
 - [ ] Widget system: every slider paired with bidirectional numeric text input (type or drag)
@@ -1284,15 +1270,15 @@ Derivation steps should be numbered sub-sections within a single proof section �
 
 Each step is its own paragraph under the same section. No meta-table. No phase label. The flow is the section.
 
-For forward links to other chapters and tracks, use `> ➡️` callouts in-place — never a compiled list:
+For forward links to other chapters and tracks, use `> ➡` callouts in-place — never a compiled list:
 
-> ➡️ This result appears in ML Ch.01-Regression as the closed-form solver for linear regression weights. You will see it again in Ch.05-Matrices (§3.7) when the feature matrix grows beyond 3×3.
+> ➡ This result appears in ML Ch.01-Regression as the closed-form solver for linear regression weights. You will see it again in Ch.05-Matrices (§3.7) when the feature matrix grows beyond 3×3.
 
 **Callout discipline for math chapters:**
 
-- `> 💡 **[concept] verdict:**` — one line after a proof or derivation, states the engineering implication; e.g.:
-  > 💡 **Gradient verdict:** The partial derivative isolates each weight's contribution — this is why backprop scales to 175B parameters without computing all cross-derivatives simultaneously.
-- `> ➡️` — forward pointer to the ML/AI chapter or later math section where this formula appears in code
-- `> ⚡` — constraint connection when a derivation result advances one of the three free-kick constraints
+- `> **[concept] verdict:**` — one line after a proof or derivation, states the engineering implication; e.g.:
+ > **Gradient verdict:** The partial derivative isolates each weight's contribution — this is why backprop scales to 175B parameters without computing all cross-derivatives simultaneously.
+- `> ➡` — forward pointer to the ML/AI chapter or later math section where this formula appears in code
+- `> ` — constraint connection when a derivation result advances one of the three free-kick constraints
 - **Never:** a "PROOF STAGE" or "DERIVATION PHASE" block with "What you just derived / What it means / Where it appears"
-- **Never:** a bullet list mapping "Step N → §X in Ch.Y" — embed the section reference as prose or a `> ➡️` callout
+- **Never:** a bullet list mapping "Step N → §X in Ch.Y" — embed the section reference as prose or a `> ➡` callout

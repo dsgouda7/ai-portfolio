@@ -41,70 +41,70 @@ This is not a toy image generator. Every chapter threads through a single produc
 | **2** | [Vision Transformers](ch02_vision_transformers/vision-transformers.md) | Patch embeddings, ViT architecture, how images become tokens | Image representation | No generation yet |
 | **3** | [CLIP](ch03_clip/clip.md) | **Text-image alignment, semantic search, zero-shot classification** | Foundation for #6 | Retrieval only |
 | **4** | [Diffusion Models](ch04_diffusion_models/diffusion-models.md) | **DDPM generation, forward/reverse process, denoising** | **#1 Partial (quality), #4 Partial (control)** | MNIST: 28×28, slow |
-| **5** | [Schedulers](ch05_schedulers/schedulers.md) | **DDIM, DPM-Solver — 4-step generation instead of 1,000** | **#2 ✅ <30s target viable!** | 10× faster sampling |
-| **6** | [Latent Diffusion](ch06_latent_diffusion/latent-diffusion.md) | **VAE compression, Stable Diffusion architecture, 512×512 generation** | **#1 ✅ 4.2 HPSv2! #3 ✅ $5k HW!** | SD runs locally! |
-| **7** | [Guidance & Conditioning](ch07_guidance_conditioning/guidance-conditioning.md) | **CFG, negative prompts, semantic steering** | **#4 ✅ <3% unusable!** | Composition control |
+| **5** | [Schedulers](ch05_schedulers/schedulers.md) | **DDIM, DPM-Solver — 4-step generation instead of 1,000** | **#2 <30s target viable!** | 10× faster sampling |
+| **6** | [Latent Diffusion](ch06_latent_diffusion/latent-diffusion.md) | **VAE compression, Stable Diffusion architecture, 512×512 generation** | **#1 4.2 HPSv2! #3 $5k HW!** | SD runs locally! |
+| **7** | [Guidance & Conditioning](ch07_guidance_conditioning/guidance-conditioning.md) | **CFG, negative prompts, semantic steering** | **#4 <3% unusable!** | Composition control |
 | **8** | [Text-to-Image](ch08_text_to_image/text-to-image.md) | **ControlNet, img2img, inpainting, prompt engineering** | **#4 refined, #5 Partial** | Production pipeline |
 | **9** | [Text-to-Video](ch09_text_to_video/text-to-video.md) | **Temporal consistency, AnimateDiff, video diffusion** | **#6 Partial (modality 2/4)** | 3s clips locally |
 | **10** | [Multimodal LLMs](ch10_multimodal_llms/multimodal-llms.md) | **LLaVA, image captioning, VQA, projection layer** | **#6 Partial (modality 3/4)** | Alt text generation |
-| **11** | [Audio Generation](ch11_audio_generation/README.md) | **MMS TTS, text-to-speech, waveform synthesis** | **#6 ✅ All 4 modalities!** | Voiceover complete |
-| **12** | [Generative Evaluation](ch12_generative_evaluation/generative-evaluation.md) | **HPSv2, FID, CLIP score, human preference alignment** | **#1 measurement ✅** | Quality validation |
-| **13** | [Local Diffusion Lab](ch13_local_diffusion_lab/local-diffusion-lab.md) | **End-to-end capstone: DDPM from scratch + local SD pipeline** | **#5 ✅ 120 assets/day!** | 🎉 **ALL CONSTRAINTS MET!** |
+| **11** | [Audio Generation](ch11_audio_generation/README.md) | **MMS TTS, text-to-speech, waveform synthesis** | **#6 All 4 modalities!** | Voiceover complete |
+| **12** | [Generative Evaluation](ch12_generative_evaluation/generative-evaluation.md) | **HPSv2, FID, CLIP score, human preference alignment** | **#1 measurement ** | Quality validation |
+| **13** | [Local Diffusion Lab](ch13_local_diffusion_lab/local-diffusion-lab.md) | **End-to-end capstone: DDPM from scratch + local SD pipeline** | **#5 120 assets/day!** | **ALL CONSTRAINTS MET!** |
 
 ---
 
 ### Narrative Arc: From Theory to Production Pipeline
 
-#### 🎬 Act 1: Foundation (Ch.1-3)
+#### Act 1: Foundation (Ch.1-3)
 **Understand the representation problem**
 
 - **Ch.1**: Why raw pixels fail → Modality gap, tensor representation
 - **Ch.2**: Vision Transformers → Patch embeddings, attention over images
 - **Ch.3**: CLIP → Text-image alignment, semantic space
 
-**Status**: ❌❌❌❌❌❌ No generation capability yet. Only retrieval and classification.
+**Status**: No generation capability yet. Only retrieval and classification.
 
 ---
 
-#### ⚡ Act 2: Generation Breakthrough (Ch.4-6)
+#### Act 2: Generation Breakthrough (Ch.4-6)
 **Build the core text-to-image pipeline**
 
 - **Ch.4**: Diffusion Models → **#1 Partial, #4 Partial** (DDPM works but slow, 28×28 only)
-- **Ch.5**: Schedulers → **#2 ✅** 4-step DDIM makes <30s viable! 🎉
-- **Ch.6**: Latent Diffusion → **#1 ✅ #3 ✅** HPSv2 4.2, SD runs on $5k hardware! 🎉
+- **Ch.5**: Schedulers → **#2 ** 4-step DDIM makes <30s viable!
+- **Ch.6**: Latent Diffusion → **#1 #3 ** HPSv2 4.2, SD runs on $5k hardware!
 
-**Status**: ✅✅✅❌❌❌ Quality + Speed + Cost achieved! 512×512 images in 25s.
+**Status**: Quality + Speed + Cost achieved! 512×512 images in 25s.
 
 ---
 
-#### 🚀 Act 3: Control & Composition (Ch.7-8)
+#### Act 3: Control & Composition (Ch.7-8)
 **Eliminate unusable generations, build production workflow**
 
-- **Ch.7**: Guidance & Conditioning → **#4 ✅** CFG + negative prompts = <3% unusable! 🎉
+- **Ch.7**: Guidance & Conditioning → **#4 ** CFG + negative prompts = <3% unusable!
 - **Ch.8**: Text-to-Image → ControlNet, img2img, inpainting, prompt engineering
 
-**Status**: ✅✅✅✅❌❌ Core image pipeline production-ready!
+**Status**: Core image pipeline production-ready!
 
 ---
 
-#### 📊 Act 4: Multimodal Expansion (Ch.9-11)
+#### Act 4: Multimodal Expansion (Ch.9-11)
 **Add video, captioning, audio for full campaign creation**
 
 - **Ch.9**: Text-to-Video → AnimateDiff, temporal consistency (modality 2/4)
 - **Ch.10**: Multimodal LLMs → LLaVA captioning (modality 3/4)
-- **Ch.11**: Audio Generation → **#6 ✅** MMS TTS voiceovers (modality 4/4)! 🎉
+- **Ch.11**: Audio Generation → **#6 ** MMS TTS voiceovers (modality 4/4)!
 
-**Status**: ✅✅✅✅❌✅ All modalities working! Throughput optimization remains.
+**Status**: All modalities working! Throughput optimization remains.
 
 ---
 
-#### 🧠 Act 5: Validation & Scale (Ch.12-13)
+#### Act 5: Validation & Scale (Ch.12-13)
 **Measure quality rigorously, prove throughput at scale**
 
 - **Ch.12**: Generative Evaluation → HPSv2, FID, CLIP score, blind review
-- **Ch.13**: Local Diffusion Lab → **#5 ✅** Batch pipeline achieves 120 assets/day! 🎉
+- **Ch.13**: Local Diffusion Lab → **#5 ** Batch pipeline achieves 120 assets/day!
 
-**Status**: ✅✅✅✅✅✅ **ALL 6 CONSTRAINTS SATISFIED — PRODUCTION READY!**
+**Status**: **ALL 6 CONSTRAINTS SATISFIED — PRODUCTION READY!**
 
 ---
 
@@ -127,15 +127,15 @@ This is not a toy image generator. Every chapter threads through a single produc
 **Your progression:**
 
 ```
-After Ch.1-3:  "Okay, I understand the theory. But can we actually generate images?"
-After Ch.4:    "DDPM works... but 28×28 is unusable. And 1,000 steps takes 4 minutes."
-After Ch.5:    "4-step DDIM is 10× faster! But MNIST isn't stock photos."
-After Ch.6:    "Wait... Stable Diffusion runs locally? In 25 seconds? And it looks professional?!"
-After Ch.7:    "CFG tuning dropped unusable gens from 22% to 3%. This is getting real."
-After Ch.8:    "ControlNet means I can give designers compositional control. They're believers now."
+After Ch.1-3: "Okay, I understand the theory. But can we actually generate images?"
+After Ch.4: "DDPM works... but 28×28 is unusable. And 1,000 steps takes 4 minutes."
+After Ch.5: "4-step DDIM is 10× faster! But MNIST isn't stock photos."
+After Ch.6: "Wait... Stable Diffusion runs locally? In 25 seconds? And it looks professional?!"
+After Ch.7: "CFG tuning dropped unusable gens from 22% to 3%. This is getting real."
+After Ch.8: "ControlNet means I can give designers compositional control. They're believers now."
 After Ch.9-11: "We have video, captions, and voiceovers. Full campaign creation in one pipeline."
-After Ch.12:   "HPSv2 4.2 = matches paid stock libraries. Blind test: clients can't tell the difference."
-After Ch.13:   🎉 "Batch pipeline churns out 120 assets/day. Payback in 2.5 months. This saved the agency."
+After Ch.12: "HPSv2 4.2 = matches paid stock libraries. Blind test: clients can't tell the difference."
+After Ch.13: "Batch pipeline churns out 120 assets/day. Payback in 2.5 months. This saved the agency."
 ```
 
 **Financial impact:**
@@ -151,14 +151,14 @@ After Ch.13:   🎉 "Batch pipeline churns out 120 assets/day. Payback in 2.5 mo
 
 By the end of this track, you'll have:
 
-1. ✅ **Vision understanding** of patch embeddings, ViT architecture, modality gap (Foundation)
-2. ✅ **CLIP alignment** enabling semantic search and text-image retrieval (Constraint #6 foundation)
-3. ✅ **Diffusion mastery** from DDPM forward/reverse process to latent diffusion (Constraints #1, #2, #3)
-4. ✅ **Control systems** via CFG, negative prompts, ControlNet for composition (Constraint #4)
-5. ✅ **Multi-modal pipeline** integrating text→image, image→video, image→caption, text→speech (Constraint #6)
-6. ✅ **Evaluation rigor** using HPSv2, FID, CLIP score, human preference (Constraint #1 validation)
-7. ✅ **Production deployment** with batch processing, quality gates, throughput optimization (Constraint #5)
-8. 🎓 **Deep understanding** of when to use pixel-space vs latent-space diffusion, DDPM vs DDIM vs DPM-Solver, and how to ship generative AI on constrained hardware
+1. **Vision understanding** of patch embeddings, ViT architecture, modality gap (Foundation)
+2. **CLIP alignment** enabling semantic search and text-image retrieval (Constraint #6 foundation)
+3. **Diffusion mastery** from DDPM forward/reverse process to latent diffusion (Constraints #1, #2, #3)
+4. **Control systems** via CFG, negative prompts, ControlNet for composition (Constraint #4)
+5. **Multi-modal pipeline** integrating text→image, image→video, image→caption, text→speech (Constraint #6)
+6. **Evaluation rigor** using HPSv2, FID, CLIP score, human preference (Constraint #1 validation)
+7. **Production deployment** with batch processing, quality gates, throughput optimization (Constraint #5)
+8. **Deep understanding** of when to use pixel-space vs latent-space diffusion, DDPM vs DDIM vs DPM-Solver, and how to ship generative AI on constrained hardware
 
 ---
 
@@ -237,29 +237,29 @@ Think of PixelSmith as the technical implementation behind VisualForge Studio's 
 
 ```
 PixelSmith v1 (after Foundations):
-  Input: raw image file → Output: pixel tensor, patch embeddings
-  VisualForge capability: None yet (understanding representation)
+ Input: raw image file → Output: pixel tensor, patch embeddings
+ VisualForge capability: None yet (understanding representation)
 
 PixelSmith v2 (after CLIP):
-  Input: text query → Output: ranked images by semantic similarity
-  VisualForge capability: Asset library semantic search
+ Input: text query → Output: ranked images by semantic similarity
+ VisualForge capability: Asset library semantic search
 
 PixelSmith v3 (after Diffusion Models):
-  Input: noise → Output: generated image (DDPM from scratch)
-  VisualForge capability: Generation proof-of-concept (MNIST only)
+ Input: noise → Output: generated image (DDPM from scratch)
+ VisualForge capability: Generation proof-of-concept (MNIST only)
 
 PixelSmith v4 (after Latent Diffusion):
-  Input: text prompt → Output: generated image (Stable Diffusion, locally)
-  VisualForge capability: 🎉 CORE PIPELINE — professional 512×512 images in 25s
+ Input: text prompt → Output: generated image (Stable Diffusion, locally)
+ VisualForge capability: CORE PIPELINE — professional 512×512 images in 25s
 
 PixelSmith v5 (after ControlNet / img2img):
-  Input: text prompt + sketch → Output: controlled generated image
-  VisualForge capability: Compositional control for designer workflows
+ Input: text prompt + sketch → Output: controlled generated image
+ VisualForge capability: Compositional control for designer workflows
 
 PixelSmith v6 (after Multimodal LLMs + Audio):
-  Input: photograph + question → Output: natural language answer
-  Input: text script → Output: voiceover waveform
-  VisualForge capability: Image captioning + TTS for complete campaigns
+ Input: photograph + question → Output: natural language answer
+ Input: text script → Output: voiceover waveform
+ VisualForge capability: Image captioning + TTS for complete campaigns
 ```
 
 The key constraint: **PixelSmith must run on a stock developer laptop** — no A100, no cloud GPU budget. This forces every chapter to confront the same question production engineers face: *how do you get serious generative AI to run where you actually are?*
@@ -315,8 +315,8 @@ Each MultimodalAI chapter now includes a dedicated GPU-only notebook named `note
 
 - Hardware: NVIDIA GPU with drivers installed.
 - Runtime: Python kernel with either:
-  - `torch` with CUDA support, or
-  - `nvidia-smi` available on `PATH` for fallback detection.
+ - `torch` with CUDA support, or
+ - `nvidia-smi` available on `PATH` for fallback detection.
 
 If neither check confirms a GPU, the notebook stops immediately by design.
 
@@ -326,34 +326,34 @@ If neither check confirms a GPU, the notebook stops immediately by design.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                         MULTIMODAL AI SYSTEM                                 │
-│                                                                               │
-│  ┌────────────────────────────────────────────────────────────────────────┐ │
-│  │                     GENERATION LAYER                                    │ │
-│  │                                                                          │ │
-│  │   Diffusion Models · Latent Diffusion · Schedulers                      │ │
-│  │   Text-to-Image · Text-to-Video · ControlNet                            │ │
-│  │   [DiffusionModels.md] [LatentDiffusion.md] [TextToImage.md]            │ │
-│  └─────────────────────────────┬──────────────────────────────────────────┘ │
-│                                 │                                             │
-│          ┌──────────────────────┴───────────────────┐                       │
-│          │                                           │                       │
-│  ┌───────▼───────────────────┐     ┌────────────────▼───────────────────┐  │
-│  │  ALIGNMENT LAYER           │     │  UNDERSTANDING LAYER                │  │
-│  │                             │     │                                     │  │
-│  │  How language and vision    │     │  How models answer questions        │  │
-│  │  share the same space       │     │  about images and video             │  │
-│  │                             │     │                                     │  │
-│  │  [CLIP.md]                  │     │  [MultimodalLLMs.md]                │  │
-│  │  [GuidanceConditioning.md]  │     │  [TextToVideo.md]                   │  │
-│  └───────────────────────────┘     └────────────────────────────────────┘  │
-│                                                                               │
-│  ┌────────────────────────────────────────────────────────────────────────┐ │
-│  │                     REPRESENTATION LAYER                                │ │
-│  │                                                                          │ │
-│  │   How raw signals become tokens the model can process                   │ │
-│  │   [MultimodalFoundations.md] [VisionTransformers.md]                   │ │
-│  └────────────────────────────────────────────────────────────────────────┘ │
+│ MULTIMODAL AI SYSTEM │
+│ │
+│ ┌────────────────────────────────────────────────────────────────────────┐ │
+│ │ GENERATION LAYER │ │
+│ │ │ │
+│ │ Diffusion Models · Latent Diffusion · Schedulers │ │
+│ │ Text-to-Image · Text-to-Video · ControlNet │ │
+│ │ [DiffusionModels.md] [LatentDiffusion.md] [TextToImage.md] │ │
+│ └─────────────────────────────┬──────────────────────────────────────────┘ │
+│ │ │
+│ ┌──────────────────────┴───────────────────┐ │
+│ │ │ │
+│ ┌───────▼───────────────────┐ ┌────────────────▼───────────────────┐ │
+│ │ ALIGNMENT LAYER │ │ UNDERSTANDING LAYER │ │
+│ │ │ │ │ │
+│ │ How language and vision │ │ How models answer questions │ │
+│ │ share the same space │ │ about images and video │ │
+│ │ │ │ │ │
+│ │ [CLIP.md] │ │ [MultimodalLLMs.md] │ │
+│ │ [GuidanceConditioning.md] │ │ [TextToVideo.md] │ │
+│ └───────────────────────────┘ └────────────────────────────────────┘ │
+│ │
+│ ┌────────────────────────────────────────────────────────────────────────┐ │
+│ │ REPRESENTATION LAYER │ │
+│ │ │ │
+│ │ How raw signals become tokens the model can process │ │
+│ │ [MultimodalFoundations.md] [VisionTransformers.md] │ │
+│ └────────────────────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -442,17 +442,17 @@ AudioGeneration (standalone quick win)
 
 ```
 MultimodalFoundations
-  └─▶ VisionTransformers
-        └─▶ CLIP
-              └─▶ DiffusionModels
-                    └─▶ GuidanceConditioning
-                          └─▶ Schedulers
-                                └─▶ LatentDiffusion
-                                      └─▶ TextToImage
-                                            └─▶ TextToVideo
-                                                  └─▶ MultimodalLLMs
-                                                        └─▶ GenerativeEvaluation
-                                                              └─▶ LocalDiffusionLab (capstone)
+ └─▶ VisionTransformers
+ └─▶ CLIP
+ └─▶ DiffusionModels
+ └─▶ GuidanceConditioning
+ └─▶ Schedulers
+ └─▶ LatentDiffusion
+ └─▶ TextToImage
+ └─▶ TextToVideo
+ └─▶ MultimodalLLMs
+ └─▶ GenerativeEvaluation
+ └─▶ LocalDiffusionLab (capstone)
 ```
 
 ### By VisualForge Constraint
@@ -508,15 +508,15 @@ Every note follows this template (same order as the ML and AI tracks):
 
 > Blockquote: what you'll understand after reading this
 
-## 1 · Core Idea                   ← 2–4 sentences, plain English
-## 2 · Running Example             ← how PixelSmith uses this concept
-## 3 · The Math                    ← key equations, every symbol annotated
+## 1 · Core Idea ← 2–4 sentences, plain English
+## 2 · Running Example ← how PixelSmith uses this concept
+## 3 · The Math ← key equations, every symbol annotated
 ## 4 · How It Works — Step by Step ← numbered steps or flow diagram
-## 5 · The Key Diagrams            ← Mermaid / ASCII diagrams
-## 6 · What Changes at Scale       ← how this works in production systems
-## 7 · Common Misconceptions       ← what people get wrong
-## 8 · Interview Checklist         ← Must Know / Likely Asked / Trap to Avoid
-## 9 · What's Next                 ← forward pointer to the next note
+## 5 · The Key Diagrams ← Mermaid / ASCII diagrams
+## 6 · What Changes at Scale ← how this works in production systems
+## 7 · Common Misconceptions ← what people get wrong
+## 8 · Interview Checklist ← Must Know / Likely Asked / Trap to Avoid
+## 9 · What's Next ← forward pointer to the next note
 ```
 
 ### Chapter Status

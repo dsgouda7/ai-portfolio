@@ -5,19 +5,19 @@ This directory contains Python scripts to generate static diagrams for Ch.1 Dock
 ## Scripts
 
 1. **gen_ch01_docker_architecture.py** — Image layers diagram
-   - Shows how Dockerfile instructions create cached layers
-   - Demonstrates layer caching optimization
-   - Output: `../img/ch01-docker-architecture.png`
+ - Shows how Dockerfile instructions create cached layers
+ - Demonstrates layer caching optimization
+ - Output: `../img/ch01-docker-architecture.png`
 
 2. **gen_ch01_container_lifecycle.py** — Container lifecycle flow
-   - Build → Run → Stop → Remove state transitions
-   - Shows relationship between images and containers
-   - Output: `../img/ch01-container-lifecycle.png`
+ - Build → Run → Stop → Remove state transitions
+ - Shows relationship between images and containers
+ - Output: `../img/ch01-container-lifecycle.png`
 
 3. **gen_ch01_volume_mounts.py** — Volume persistence diagram
-   - Host filesystem vs container filesystem
-   - Named volumes vs bind mounts comparison
-   - Output: `../img/ch01-volume-mounts.png`
+ - Host filesystem vs container filesystem
+ - Named volumes vs bind mounts comparison
+ - Output: `../img/ch01-volume-mounts.png`
 
 ## Requirements
 
@@ -51,8 +51,8 @@ The chapter README references `ch01-container-lifecycle.gif` as an animation. To
 
 1. Duplicate the PNG 10 times with slight variations (or use same frame)
 2. Use ImageMagick or similar tool to create GIF:
-   ```bash
-   convert -delay 100 -loop 0 frame*.png ch01-container-lifecycle.gif
-   ```
+ ```bash
+ convert -delay 100 -loop 0 frame*.png ch01-container-lifecycle.gif
+ ```
 
 For this chapter, the static PNG serves as the animation reference.

@@ -25,7 +25,7 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 💡 **The mission**: Launch **FlixAI** — a production movie recommendation engine satisfying 5 constraints:
+> **The mission**: Launch **FlixAI** — a production movie recommendation engine satisfying 5 constraints:
 > 1. **HIT_RATE**: >85% HR@10 — users must find ≥1 relevant movie in every top-10 list
 > 2. **COLD_START**: Handle new users and new movies with zero rating history
 > 3. **DIVERSITY**: Avoid filter bubbles — don't trap users in one genre forever
@@ -33,10 +33,10 @@
 > 5. **EXPLAINABILITY**: "Recommended because you watched X" — not a black box
 
 **What we know so far:**
-- ✅ MovieLens 100k dataset: 943 users, 1,682 movies, 100,000 explicit ratings, scale 1–5
-- ✅ Business context: 60% of user sessions end without clicking a single recommendation → churn
-- ✅ CEO mandate: "Netflix recommendations drive 80% of viewing hours; ours drive 12% — fix it"
-- ❌ **No model. No metrics. No baseline.**
+- MovieLens 100k dataset: 943 users, 1,682 movies, 100,000 explicit ratings, scale 1–5
+- Business context: 60% of user sessions end without clicking a single recommendation → churn
+- CEO mandate: "Netflix recommendations drive 80% of viewing hours; ours drive 12% — fix it"
+- **No model. No metrics. No baseline.**
 
 **What's blocking us:**
 The VP of Product won't accept "it feels better." You need falsifiable numbers: "Our system achieves X% HR@10, which beats the naive baseline by Y points." Right now you have none of those numbers. Before building matrix factorization or deep learning, you must answer three foundational questions:
@@ -53,16 +53,16 @@ The VP of Product won't accept "it feels better." You need falsifiable numbers: 
 
 ```mermaid
 flowchart LR
-    DATA["MovieLens 100k<br/>943 users × 1,682 movies<br/>100k ratings"] --> EDA["Explore<br/>Density: 6.3%<br/>Sparsity: 93.7%"]
-    EDA --> BASE["Popularity<br/>Baseline"]
-    BASE --> EVAL["Evaluate<br/>HR@10 ≈ 35%"]
-    EVAL --> GAP["Gap to target:<br/>~50 percentage points"]
-    GAP --> NEXT["Ch.2–6<br/>Close the gap"]
+ DATA["MovieLens 100k<br/>943 users × 1,682 movies<br/>100k ratings"] --> EDA["Explore<br/>Density: 6.3%<br/>Sparsity: 93.7%"]
+ EDA --> BASE["Popularity<br/>Baseline"]
+ BASE --> EVAL["Evaluate<br/>HR@10 ≈ 35%"]
+ EVAL --> GAP["Gap to target:<br/>~50 percentage points"]
+ GAP --> NEXT["Ch.2–6<br/>Close the gap"]
 
-    style DATA fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style EVAL fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style GAP fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style NEXT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style DATA fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style EVAL fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style GAP fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style NEXT fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -88,15 +88,15 @@ You are a data scientist at **FlixAI**. The CEO calls you in: "Netflix recommend
 ```
 The rating matrix R (943 × 1,682) — a toy 5×5 slice:
 
-           Toy Story  GoodFellas  Fargo  Star Wars  The Matrix
-User 1         5           —        4        —           —
-User 2         —           —        —        5           3
-User 3         —           3        —        —           —
-User 4         4           —        —        4           —
-User 5         —           —        2        —           5
+ Toy Story GoodFellas Fargo Star Wars The Matrix
+User 1 5 — 4 — —
+User 2 — — — 5 3
+User 3 — 3 — — —
+User 4 4 — — 4 —
+User 5 — — 2 — 5
 
 Legend: — = NOT RATED (missing, not zero)
-        A missing entry ≠ dislike; it means "has not seen it"
+ A missing entry ≠ dislike; it means "has not seen it"
 ```
 
 **Three facts that define the recommendation challenge:**
@@ -111,9 +111,9 @@ Legend: — = NOT RATED (missing, not zero)
 | **Popularity (this chapter)** | **~35%** | **~50 pp** |
 | User-based CF (Ch.2) | ~55% | ~30 pp |
 | Matrix Factorization (Ch.3) | ~68% | ~17 pp |
-| Neural CF (Ch.5) | >85% | ✅ Target met |
+| Neural CF (Ch.5) | >85% | Target met |
 
-> 💡 **Why 0.6% for random?** With K=10 and n=1,682 items, the probability of randomly recommending a specific held-out item is 10/1682 ≈ 0.59%. The popularity baseline achieves 58× better than random — not because it is clever, but because popular movies genuinely appear in more people's preferences.
+> **Why 0.6% for random?** With K=10 and n=1,682 items, the probability of randomly recommending a specific held-out item is 10/1682 ≈ 0.59%. The popularity baseline achieves 58× better than random — not because it is clever, but because popular movies genuinely appear in more people's preferences.
 
 ---
 
@@ -122,48 +122,48 @@ Legend: — = NOT RATED (missing, not zero)
 Every production recommender — from a popularity list to a billion-parameter neural network — passes items through the same five-stage pipeline. The stages differ in *how* they work, not *that* they exist. This is your architecture map for the entire track.
 
 ```
-USER HISTORY  ─────────────────────────────────────────────
-                        │
-                        ▼
-        ┌───────────────────────────────────┐
-        │  1. CANDIDATE GENERATION          │
-        │  Retrieve N candidates from the   │
-        │  full item catalogue.             │
-        │  Ch.1: All 1,682 movies           │
-        │  Ch.3: ANN lookup in latent space │
-        └───────────────┬───────────────────┘
-                        │
-                        ▼
-        ┌───────────────────────────────────┐
-        │  2. SCORING / RANKING             │
-        │  Score each candidate.            │
-        │  Ch.1: Bayesian popularity score  │
-        │  Ch.2: User-similarity score      │
-        │  Ch.3: Dot product of latent vecs │
-        └───────────────┬───────────────────┘
-                        │
-                        ▼
-        ┌───────────────────────────────────┐
-        │  3. FILTERING                     │
-        │  Remove already-watched movies    │
-        │  Apply business rules             │
-        │  (age ratings, regional rights)   │
-        └───────────────┬───────────────────┘
-                        │
-                        ▼
-        ┌───────────────────────────────────┐
-        │  4. RE-RANKING                    │
-        │  Inject diversity (Constraint #3) │
-        │  Boost recently-added content     │
-        │  Exploration / exploitation       │
-        └───────────────┬───────────────────┘
-                        │
-                        ▼
-        ┌───────────────────────────────────┐
-        │  5. SERVE TOP-K                   │
-        │  Return K=10 items to the UI      │
-        │  Log impressions for retraining   │
-        └───────────────────────────────────┘
+USER HISTORY ─────────────────────────────────────────────
+ │
+ ▼
+ ┌───────────────────────────────────┐
+ │ 1. CANDIDATE GENERATION │
+ │ Retrieve N candidates from the │
+ │ full item catalogue. │
+ │ Ch.1: All 1,682 movies │
+ │ Ch.3: ANN lookup in latent space │
+ └───────────────┬───────────────────┘
+ │
+ ▼
+ ┌───────────────────────────────────┐
+ │ 2. SCORING / RANKING │
+ │ Score each candidate. │
+ │ Ch.1: Bayesian popularity score │
+ │ Ch.2: User-similarity score │
+ │ Ch.3: Dot product of latent vecs │
+ └───────────────┬───────────────────┘
+ │
+ ▼
+ ┌───────────────────────────────────┐
+ │ 3. FILTERING │
+ │ Remove already-watched movies │
+ │ Apply business rules │
+ │ (age ratings, regional rights) │
+ └───────────────┬───────────────────┘
+ │
+ ▼
+ ┌───────────────────────────────────┐
+ │ 4. RE-RANKING │
+ │ Inject diversity (Constraint #3) │
+ │ Boost recently-added content │
+ │ Exploration / exploitation │
+ └───────────────┬───────────────────┘
+ │
+ ▼
+ ┌───────────────────────────────────┐
+ │ 5. SERVE TOP-K │
+ │ Return K=10 items to the UI │
+ │ Log impressions for retraining │
+ └───────────────────────────────────┘
 ```
 
 In this chapter, Stage 2 (scoring) is trivial: **sort by Bayesian-averaged rating count**. Starting in Ch.2, scoring becomes a user-similarity computation. In Ch.3 it becomes a dot product of latent vectors in a compressed embedding space. The pipeline architecture stays the same — only the scoring function evolves.
@@ -233,17 +233,17 @@ Across all users:
 
 | User | Held-out movie | Appears in top-10? | Hit? |
 |------|---------------|-------------------|------|
-| Alice | Toy Story | ✅ Yes | 1 |
-| Bob | GoodFellas | ❌ No | 0 |
-| Carol | Star Wars | ✅ Yes | 1 |
-| Dave | Fargo | ✅ Yes | 1 |
-| Eve | The Matrix | ❌ No | 0 |
+| Alice | Toy Story | Yes | 1 |
+| Bob | GoodFellas | No | 0 |
+| Carol | Star Wars | Yes | 1 |
+| Dave | Fargo | Yes | 1 |
+| Eve | The Matrix | No | 0 |
 
 $$\text{HR}@10 = \frac{1 + 0 + 1 + 1 + 0}{5} = \frac{3}{5} = \mathbf{0.60 = 60\%}$$
 
 **What HR@10 is and is not.** HR@10 asks a binary question per user: "did they find *anything* relevant?" It does not measure how relevant the item was (a 5-star hit and a 3-star hit count equally) or where in the list it appeared (position 1 and position 10 count the same). NDCG (§4.3) fills both gaps. Despite these limitations, HR@10 is the metric most strongly correlated with user churn — users who find zero relevant items in their top-10 leave.
 
-> ⚡ **Constraint #1 (HIT_RATE) target**: >85% HR@10. Popularity baseline: ~35%. Gap: ~50 percentage points.
+> **Constraint #1 (HIT_RATE) target**: >85% HR@10. Popularity baseline: ~35%. Gap: ~50 percentage points.
 
 ---
 
@@ -265,11 +265,11 @@ $$\text{NDCG}@K = \frac{\text{DCG}@K}{\text{IDCG}@K}$$
 
 | Position $j$ | Relevant? | $\text{rel}_j$ | $2^{\text{rel}_j} - 1$ | $\log_2(j{+}1)$ | Contribution |
 |:---:|:---:|:---:|:---:|:---:|:---:|
-| 1 | ✅ Yes | 1 | 1 | $\log_2 2 = 1.000$ | **1.000** |
-| 2 | ❌ No | 0 | 0 | $\log_2 3 = 1.585$ | **0.000** |
-| 3 | ✅ Yes | 1 | 1 | $\log_2 4 = 2.000$ | **0.500** |
-| 4 | ❌ No | 0 | 0 | $\log_2 5 = 2.322$ | **0.000** |
-| 5 | ✅ Yes | 1 | 1 | $\log_2 6 = 2.585$ | **0.387** |
+| 1 | Yes | 1 | 1 | $\log_2 2 = 1.000$ | **1.000** |
+| 2 | No | 0 | 0 | $\log_2 3 = 1.585$ | **0.000** |
+| 3 | Yes | 1 | 1 | $\log_2 4 = 2.000$ | **0.500** |
+| 4 | No | 0 | 0 | $\log_2 5 = 2.322$ | **0.000** |
+| 5 | Yes | 1 | 1 | $\log_2 6 = 2.585$ | **0.387** |
 
 $$\text{DCG}@5 = 1.000 + 0.000 + 0.500 + 0.000 + 0.387 = \mathbf{1.887}$$
 
@@ -289,7 +289,7 @@ $$\text{NDCG}@5 = \frac{\text{DCG}@5}{\text{IDCG}@5} = \frac{1.887}{2.131} = \ma
 
 **Interpretation.** This ranking captures 88.5% of the maximum possible quality. If the 3rd relevant item had appeared at position 3 instead of position 5, we would have achieved NDCG = 1.0. Placing it at position 5 (discounted by $\log_2 6 = 2.585$) instead of position 3 ($\log_2 4 = 2.000$) cost 0.115 NDCG points. The further down a relevant item falls, the smaller its logarithmic contribution.
 
-> 💡 **Key insight**: NDCG is strictly richer than HR. When HR@K = 0, NDCG@K = 0. When HR@K > 0, NDCG tells you *how well the relevant items were ranked*. For FlixAI production: HR@10 is the churn metric (binary — did they find anything?); NDCG@10 is the engagement metric (how good was the first thing they found?).
+> **Key insight**: NDCG is strictly richer than HR. When HR@K = 0, NDCG@K = 0. When HR@K > 0, NDCG tells you *how well the relevant items were ranked*. For FlixAI production: HR@10 is the churn metric (binary — did they find anything?); NDCG@10 is the engagement metric (how good was the first thing they found?).
 
 ---
 
@@ -329,7 +329,7 @@ $$\text{Coverage} = \frac{12}{1{,}682} \times 100 = \mathbf{0.71\%}$$
 
 This system has never recommended 1,670 of the 1,682 available movies. The popularity baseline has exactly this problem: it recommends the same top-10 movies to everyone, so its coverage is at most $10/1682 = 0.59\%$.
 
-> ⚠️ **The popularity trap.** The popularity baseline has reasonable HR@10 (~35%) but catastrophically low coverage (<1%). It successfully recommends movies people generally like — but it never discovers the niche titles that passionate users love. Netflix's actual production system achieves 20–30% catalogue coverage because 80% of content consumed is *outside* the top-10 most popular titles. Popularity alone cannot serve the long tail.
+> **The popularity trap.** The popularity baseline has reasonable HR@10 (~35%) but catastrophically low coverage (<1%). It successfully recommends movies people generally like — but it never discovers the niche titles that passionate users love. Netflix's actual production system achieves 20–30% catalogue coverage because 80% of content consumed is *outside* the top-10 most popular titles. Popularity alone cannot serve the long tail.
 
 ---
 
@@ -358,7 +358,7 @@ The simplest possible system: rank all movies by average rating (with Bayesian d
 ```
 score(movie) = Bayesian average of ratings
 top_10 = sort all movies by score, descending
-recommend top_10 to ALL users  ← same list for everyone
+recommend top_10 to ALL users ← same list for everyone
 ```
 
 Result: HR@10 ≈ 35%. Used as the floor every later system must beat.
@@ -369,11 +369,11 @@ Result: HR@10 ≈ 35%. Used as the floor every later system must beat.
 
 Match items to users based on *item features*: genre, director, cast, runtime, release year. If a user has rated three Christopher Nolan films highly, recommend more Nolan films.
 
-- ✅ Solves cold start for *new users* (ask 3 genre preferences at onboarding)
-- ✅ Highly explainable: "Because you liked The Dark Knight (action, Nolan, 2008)"
-- ✅ Does not require any other user's data — fully private
-- ❌ **Filter bubble**: recommend only action → user only sees action → world narrows
-- ❌ Requires rich item metadata — not always available for new releases
+- Solves cold start for *new users* (ask 3 genre preferences at onboarding)
+- Highly explainable: "Because you liked The Dark Knight (action, Nolan, 2008)"
+- Does not require any other user's data — fully private
+- **Filter bubble**: recommend only action → user only sees action → world narrows
+- Requires rich item metadata — not always available for new releases
 
 ---
 
@@ -381,11 +381,11 @@ Match items to users based on *item features*: genre, director, cast, runtime, r
 
 Ignore item features entirely. Find users with similar rating histories and recommend what they liked. "The 12 users who rated the same 15 films you did also loved *Amélie* — you have never heard of it, but you will."
 
-- ✅ Discovers *serendipitous* recommendations beyond declared preferences
-- ✅ No item metadata required — works from behaviour alone
-- ❌ **User cold start**: zero rating history = no similar users to compare
-- ❌ **Sparsity**: two users with no overlapping rated movies have undefined similarity
-- ❌ Computationally expensive at scale: comparing every user to every other is $O(m^2)$
+- Discovers *serendipitous* recommendations beyond declared preferences
+- No item metadata required — works from behaviour alone
+- **User cold start**: zero rating history = no similar users to compare
+- **Sparsity**: two users with no overlapping rated movies have undefined similarity
+- Computationally expensive at scale: comparing every user to every other is $O(m^2)$
 
 ---
 
@@ -393,28 +393,28 @@ Ignore item features entirely. Find users with similar rating histories and reco
 
 Combine content-based signals (available immediately for new users) with collaborative signals (personalised once enough behaviour is observed). Use content features to bootstrap; graduate to collaborative signals as history grows.
 
-- ✅ Most production systems (Netflix, Spotify, YouTube) are hybrids
-- ✅ Handles cold start, sparsity, and filter bubbles simultaneously
-- ❌ More complex to build, tune, and explain
+- Most production systems (Netflix, Spotify, YouTube) are hybrids
+- Handles cold start, sparsity, and filter bubbles simultaneously
+- More complex to build, tune, and explain
 
 ```mermaid
 flowchart TD
-    Q(["New recommendation<br/>request"]) --> HIST{"User has<br/>rating history?"}
-    HIST -->|"No (cold start)"| COLD{"Item metadata<br/>available?"}
-    COLD -->|"Yes: genre, cast, plot"| CB["Content-Based Filtering<br/>Match item features to<br/>stated user preferences"]
-    COLD -->|"No metadata"| POP["Popularity Baseline<br/>← THIS CHAPTER<br/>Universal cold-start fallback"]
-    HIST -->|"Yes, has history"| META{"Rich item<br/>metadata too?"}
-    META -->|"Yes"| HYB["Hybrid CF + Content<br/>Ch.4–5: Neural CF<br/>Content + behaviour fusion"]
-    META -->|"Behaviour only"| SCALE{"System scale?"}
-    SCALE -->|"< 1M users"| UCF["User-Based CF<br/>Ch.2: cosine k-NN<br/>over rating vectors"]
-    SCALE -->|"> 1M users"| MF["Matrix Factorization<br/>Ch.3: ALS / SGD<br/>+ ANN retrieval at scale"]
+ Q(["New recommendation<br/>request"]) --> HIST{"User has<br/>rating history?"}
+ HIST -->|"No (cold start)"| COLD{"Item metadata<br/>available?"}
+ COLD -->|"Yes: genre, cast, plot"| CB["Content-Based Filtering<br/>Match item features to<br/>stated user preferences"]
+ COLD -->|"No metadata"| POP["Popularity Baseline<br/>← THIS CHAPTER<br/>Universal cold-start fallback"]
+ HIST -->|"Yes, has history"| META{"Rich item<br/>metadata too?"}
+ META -->|"Yes"| HYB["Hybrid CF + Content<br/>Ch.4–5: Neural CF<br/>Content + behaviour fusion"]
+ META -->|"Behaviour only"| SCALE{"System scale?"}
+ SCALE -->|"< 1M users"| UCF["User-Based CF<br/>Ch.2: cosine k-NN<br/>over rating vectors"]
+ SCALE -->|"> 1M users"| MF["Matrix Factorization<br/>Ch.3: ALS / SGD<br/>+ ANN retrieval at scale"]
 
-    style Q fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style POP fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CB fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style HYB fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style UCF fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style MF fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style Q fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style POP fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CB fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style HYB fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style UCF fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style MF fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -471,11 +471,11 @@ Notice: this is entirely 1990s Hollywood blockbusters. Every user — regardless
 
 ```
 For each user in the test set:
-  1. Hold out one of their highest-rated movies (the "relevant" item i*_u)
-  2. Remove the held-out movie from the training set
-  3. Build the popularity top-10 list (excluding movies this user already rated)
-  4. Check: is i*_u in the top-10?
-     → Yes: HIT (1)   → No: MISS (0)
+ 1. Hold out one of their highest-rated movies (the "relevant" item i*_u)
+ 2. Remove the held-out movie from the training set
+ 3. Build the popularity top-10 list (excluding movies this user already rated)
+ 4. Check: is i*_u in the top-10?
+ → Yes: HIT (1) → No: MISS (0)
 
 HR@10 = total HITs / total test users
 ```
@@ -484,16 +484,16 @@ HR@10 = total HITs / total test users
 
 | User | Held-out movie | In Top-10? | Hit |
 |------|---------------|:---:|:---:|
-| User 1 | Star Wars ✅ | Yes | 1 |
+| User 1 | Star Wars | Yes | 1 |
 | User 2 | GoodFellas | No | 0 |
-| User 3 | Toy Story ✅ | Yes | 1 |
-| User 4 | Contact ✅ | Yes | 1 |
+| User 3 | Toy Story | Yes | 1 |
+| User 4 | Contact | Yes | 1 |
 | User 5 | Schindler's List | No | 0 |
-| User 6 | Fargo ✅ | Yes | 1 |
+| User 6 | Fargo | Yes | 1 |
 | User 7 | Pulp Fiction | No | 0 |
-| User 8 | Return of the Jedi ✅ | Yes | 1 |
+| User 8 | Return of the Jedi | Yes | 1 |
 | User 9 | The Usual Suspects | No | 0 |
-| User 10 | Liar Liar ✅ | Yes | 1 |
+| User 10 | Liar Liar | Yes | 1 |
 
 $$\text{HR}@10_{\text{10 users}} = \frac{1+0+1+1+0+1+0+1+0+1}{10} = \frac{6}{10} = \mathbf{0.60 = 60\%}$$
 
@@ -511,61 +511,61 @@ $$\boxed{\text{HR}@10_{\text{popularity baseline}} \approx 35\% \qquad \text{Gap
 
 ```mermaid
 flowchart TD
-    subgraph INPUT["Input"]
-        UH["User rating history<br/>943 users × 1,682 movies<br/>6.3% observed"]
-    end
+ subgraph INPUT["Input"]
+ UH["User rating history<br/>943 users × 1,682 movies<br/>6.3% observed"]
+ end
 
-    subgraph PIPE["Pipeline Stages"]
-        CG["1. Candidate Generation<br/>All movies not yet rated by user"]
-        SC["2. Scoring<br/>Ch.1: Bayesian popularity score<br/>Ch.2: User k-NN similarity<br/>Ch.3: Latent vector dot product"]
-        FL["3. Filtering<br/>Remove already-rated movies<br/>Age ratings, regional rights"]
-        RR["4. Re-ranking<br/>Diversity injection (Constraint #3)<br/>Freshness boost for new releases"]
-        SV["5. Serve Top-10<br/>Return to UI in &lt; 100ms (Constraint #4)<br/>Log impressions for retraining"]
-    end
+ subgraph PIPE["Pipeline Stages"]
+ CG["1. Candidate Generation<br/>All movies not yet rated by user"]
+ SC["2. Scoring<br/>Ch.1: Bayesian popularity score<br/>Ch.2: User k-NN similarity<br/>Ch.3: Latent vector dot product"]
+ FL["3. Filtering<br/>Remove already-rated movies<br/>Age ratings, regional rights"]
+ RR["4. Re-ranking<br/>Diversity injection (Constraint #3)<br/>Freshness boost for new releases"]
+ SV["5. Serve Top-10<br/>Return to UI in &lt; 100ms (Constraint #4)<br/>Log impressions for retraining"]
+ end
 
-    subgraph EVAL["Evaluation"]
-        HR["HR@10<br/>Churn signal"]
-        NDCG["NDCG@10<br/>Engagement signal"]
-        COV["Coverage<br/>Diversity signal"]
-    end
+ subgraph EVAL["Evaluation"]
+ HR["HR@10<br/>Churn signal"]
+ NDCG["NDCG@10<br/>Engagement signal"]
+ COV["Coverage<br/>Diversity signal"]
+ end
 
-    UH --> CG
-    CG --> SC
-    SC --> FL
-    FL --> RR
-    RR --> SV
-    SV --> HR
-    SV --> NDCG
-    SV --> COV
+ UH --> CG
+ CG --> SC
+ SC --> FL
+ FL --> RR
+ RR --> SV
+ SV --> HR
+ SV --> NDCG
+ SV --> COV
 
-    style INPUT fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style PIPE fill:#1d4ed8,stroke:#e2e8f0,stroke-width:1px,color:#ffffff
-    style EVAL fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style SV fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style INPUT fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style PIPE fill:#1d4ed8,stroke:#e2e8f0,stroke-width:1px,color:#ffffff
+ style EVAL fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style SV fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### Taxonomy Decision Tree — Which Algorithm to Choose
 
 ```mermaid
 flowchart TD
-    START(["Incoming<br/>recommendation request"]) --> HIST{"User has<br/>rating history?"}
+ START(["Incoming<br/>recommendation request"]) --> HIST{"User has<br/>rating history?"}
 
-    HIST -->|"No — cold start"| META{"Item metadata<br/>available?"}
-    META -->|"Yes: genre, cast, plot"| CB["Content-Based Filtering<br/>Match item features to<br/>stated user preferences"]
-    META -->|"No metadata"| POP_COLD["Popularity Baseline<br/>← THIS CHAPTER<br/>Universal cold-start fallback"]
+ HIST -->|"No — cold start"| META{"Item metadata<br/>available?"}
+ META -->|"Yes: genre, cast, plot"| CB["Content-Based Filtering<br/>Match item features to<br/>stated user preferences"]
+ META -->|"No metadata"| POP_COLD["Popularity Baseline<br/>← THIS CHAPTER<br/>Universal cold-start fallback"]
 
-    HIST -->|"Yes — has ratings"| RICH{"Rich item<br/>metadata too?"}
-    RICH -->|"Yes: genre + behaviour"| HYB["Hybrid System<br/>Ch.4–5: Neural CF<br/>Content + behaviour fusion"]
-    RICH -->|"No — behaviour only"| SCALEQ{"System scale?"}
-    SCALEQ -->|"< 1M users"| UCF["User-Based CF<br/>Ch.2: cosine k-NN<br/>over rating vectors"]
-    SCALEQ -->|"> 1M users"| MF["Matrix Factorization<br/>Ch.3: ALS / SGD<br/>+ ANN retrieval at scale"]
+ HIST -->|"Yes — has ratings"| RICH{"Rich item<br/>metadata too?"}
+ RICH -->|"Yes: genre + behaviour"| HYB["Hybrid System<br/>Ch.4–5: Neural CF<br/>Content + behaviour fusion"]
+ RICH -->|"No — behaviour only"| SCALEQ{"System scale?"}
+ SCALEQ -->|"< 1M users"| UCF["User-Based CF<br/>Ch.2: cosine k-NN<br/>over rating vectors"]
+ SCALEQ -->|"> 1M users"| MF["Matrix Factorization<br/>Ch.3: ALS / SGD<br/>+ ANN retrieval at scale"]
 
-    style START fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style POP_COLD fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style CB fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style HYB fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style UCF fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style MF fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style START fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style POP_COLD fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style CB fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style HYB fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style UCF fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style MF fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -588,7 +588,7 @@ $K$ determines how many movies to show each user. Larger $K$ always increases HR
 
 **Effect rule of thumb.** HR@K follows a roughly logarithmic curve: doubling K near K=10 increases HR by ~10 pp. But Precision@K falls roughly as $1/K$ because the number of relevant items per user does not grow with K.
 
-> ⚠️ **The K tradeoff in production.** More items = higher HR but lower perceived quality. A list of 100 movies with 1 relevant item has HR=1.0 but Precision@100 = 0.01. Users who scroll through 90 irrelevant items to find the one they want still churn. Production systems optimise for the K that maximises *engagement* (click-through rate, watch rate), not raw HR.
+> **The K tradeoff in production.** More items = higher HR but lower perceived quality. A list of 100 movies with 1 relevant item has HR=1.0 but Precision@100 = 0.01. Users who scroll through 90 irrelevant items to find the one they want still churn. Production systems optimise for the K that maximises *engagement* (click-through rate, watch rate), not raw HR.
 
 ### Dial 2 — Bayesian Damping Constant $C$
 
@@ -665,7 +665,7 @@ Every concept from this chapter propagates forward through the track:
 | Pipeline stages | Ch.6: each stage becomes a microservice in the production architecture |
 | Popularity baseline as fallback | Appears throughout production when personalised models lack sufficient data |
 
-> ➡️ **Cross-track pointer**: The leave-one-out evaluation protocol here mirrors the hold-out evaluation in the Classification track. The key difference is that recommendation evaluation is *ranking*-based — we care about the order of items, not merely whether each is classified correctly. HR@K and NDCG@K are the ranking counterparts of accuracy and AUC.
+> ➡ **Cross-track pointer**: The leave-one-out evaluation protocol here mirrors the hold-out evaluation in the Classification track. The key difference is that recommendation evaluation is *ranking*-based — we care about the order of items, not merely whether each is classified correctly. HR@K and NDCG@K are the ranking counterparts of accuracy and AUC.
 
 ---
 
@@ -674,8 +674,7 @@ Every concept from this chapter propagates forward through the track:
 ![Progress visualization](img/ch01-fundamentals-progress-check.png)
 
 **Current best: popularity recommender — HR@10 ≈ 35%** (vs 0.6% random — 58× improvement)
-
-✅ **Unlocked this chapter:**
+**Unlocked this chapter:**
 - Evaluation framework: HR@K, NDCG@K, MRR, Coverage — shared with Ch.2–6
 - Popularity baseline: ~35% HR@10 (the floor every future system must beat)
 - Sparsity quantification: 6.31% density, 93.7% missing — motivates latent factor approaches
@@ -687,17 +686,16 @@ Every concept from this chapter propagates forward through the track:
 
 | # | Constraint | Target | Status | Current best |
 |---|------------|:---:|:---:|:---|
-| #1 | HIT_RATE | >85% HR@10 | ❌ ~35% — 50 pp gap | Popularity baseline |
-| #2 | COLD_START | New users/items | ⚠️ Partial | Same list for everyone (no personalization) |
-| #3 | DIVERSITY | Avoid filter bubbles | ❌ Coverage < 1% | 10 blockbusters for everyone |
-| #4 | LATENCY | <100ms at scale | ✅ Trivial | Pre-computed static list |
-| #5 | EXPLAINABILITY | "Because you watched X" | ❌ No personalization | "These are popular" |
-
-❌ **Still can't solve:**
-- ❌ Personalization — every user gets the same list regardless of taste or history
-- ❌ Filter bubble — 99%+ of the catalogue is never recommended to anyone
-- ❌ Meaningful explainability — "this is popular" does not satisfy Constraint #5
-- ❌ Cold start for items (new movies have zero ratings — cannot appear in popularity list)
+| #1 | HIT_RATE | >85% HR@10 | ~35% — 50 pp gap | Popularity baseline |
+| #2 | COLD_START | New users/items | Partial | Same list for everyone (no personalization) |
+| #3 | DIVERSITY | Avoid filter bubbles | Coverage < 1% | 10 blockbusters for everyone |
+| #4 | LATENCY | <100ms at scale | Trivial | Pre-computed static list |
+| #5 | EXPLAINABILITY | "Because you watched X" | No personalization | "These are popular" |
+**Still can't solve:**
+- Personalization — every user gets the same list regardless of taste or history
+- Filter bubble — 99%+ of the catalogue is never recommended to anyone
+- Meaningful explainability — "this is popular" does not satisfy Constraint #5
+- Cold start for items (new movies have zero ratings — cannot appear in popularity list)
 
 **Real-world status**: We have a working floor. The ~35% HR@10 popularity baseline is meaningful — random was 0.6% — but FlixAI's 85% target requires personalisation. The evaluation framework is locked in and will be the shared language for the next 5 chapters.
 
@@ -711,10 +709,10 @@ This chapter established the evaluation language (HR@K, NDCG@K, MRR, Coverage), 
 
 Chapter 2 introduces **user-based collaborative filtering**: instead of recommending globally popular movies, find the $k$ most similar users to the target user (by cosine similarity of their rating vectors) and recommend what *those users* liked that the target user has not seen yet. This requires no item metadata — only the behaviour patterns in $R$. It addresses:
 
-- ✅ **Personalization** — different users with different similarity neighbourhoods get different recommendations
-- ✅ **Long tail** — niche users find niche content through similar-taste neighbours
-- ✅ **No metadata required** — pure behaviour signal
-- ❌ Still struggles with cold start: a user with zero ratings has no similar neighbours
-- ❌ Scales poorly: comparing every user to every other user is $O(m^2)$ — infeasible at 100M users
+- **Personalization** — different users with different similarity neighbourhoods get different recommendations
+- **Long tail** — niche users find niche content through similar-taste neighbours
+- **No metadata required** — pure behaviour signal
+- Still struggles with cold start: a user with zero ratings has no similar neighbours
+- Scales poorly: comparing every user to every other user is $O(m^2)$ — infeasible at 100M users
 
 The ~50-point gap from ~35% → >85% HR@10 is the arc of the entire Recommender Systems track. Each chapter closes part of the gap by fixing the failure mode of the previous approach.

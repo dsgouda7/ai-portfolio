@@ -10,13 +10,13 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 💡 **AgentAI constraints**: 1. OPTIMALITY — achieve ≥195/200 avg steps on CartPole-v1 — 2. EFFICIENCY — learn without exhaustive search — 3. SCALABILITY — handle continuous state spaces — 4. STABILITY — maintain stable neural network training — 5. GENERALIZATION — transfer learned behavior across similar states
+> **AgentAI constraints**: 1. OPTIMALITY — achieve ≥195/200 avg steps on CartPole-v1 — 2. EFFICIENCY — learn without exhaustive search — 3. SCALABILITY — handle continuous state spaces — 4. STABILITY — maintain stable neural network training — 5. GENERALIZATION — transfer learned behavior across similar states
 
 **What we know so far:**
-- ✅ MDPs and Bellman equations (Ch.1): $Q^*(s,a) = r + \gamma \max_{a'} Q^*(s',a')$
-- ✅ Dynamic Programming (Ch.2): exact solution when model is known
-- ✅ Q-learning (Ch.3): learns $Q^*(s,a)$ purely from experience — solves GridWorld (16 states)
-- ❌ **Q-table completely fails for CartPole** — continuous state space → infinitely many rows
+- MDPs and Bellman equations (Ch.1): $Q^*(s,a) = r + \gamma \max_{a'} Q^*(s',a')$
+- Dynamic Programming (Ch.2): exact solution when model is known
+- Q-learning (Ch.3): learns $Q^*(s,a)$ purely from experience — solves GridWorld (16 states)
+- **Q-table completely fails for CartPole** — continuous state space → infinitely many rows
 
 **What is blocking us:**
 CartPole has **4 continuous state variables**: cart position $x \in [-4.8, 4.8]$, cart velocity $\dot{x} \in (-\infty, \infty)$, pole angle $\theta \in [-0.42, 0.42]$ rad, pole angular velocity $\dot{\theta} \in (-\infty, \infty)$.
@@ -35,25 +35,25 @@ Two critical stability innovations are required to make neural network + Q-learn
 
 | Constraint | Status after this chapter |
 |---|---|
-| #1 OPTIMALITY | ✅ Converges to near-optimal policy with sufficient network capacity |
-| #2 EFFICIENCY | ⚠️ Experience replay reuses each transition multiple times (off-policy) |
-| #3 SCALABILITY | ✅ **Solved!** Neural network handles continuous and high-dimensional state spaces |
-| #4 STABILITY | ✅ Experience replay + target networks stabilize deep Q-learning |
-| #5 GENERALIZATION | ⚠️ Generalizes across similar states within the same environment |
+| #1 OPTIMALITY | Converges to near-optimal policy with sufficient network capacity |
+| #2 EFFICIENCY | Experience replay reuses each transition multiple times (off-policy) |
+| #3 SCALABILITY | **Solved!** Neural network handles continuous and high-dimensional state spaces |
+| #4 STABILITY | Experience replay + target networks stabilize deep Q-learning |
+| #5 GENERALIZATION | Generalizes across similar states within the same environment |
 
 ```mermaid
 flowchart LR
-    subgraph "Ch.3 — Tabular Q-Learning"
-        A["Q-table\n|S| × |A| entries\n16 states → works"] --> B["Continuous states?\n10⁸ entries → fails"]
-    end
-    subgraph "Ch.4 — DQN"
-        C["Neural Network\nQ(s,a;θ)\nparams ~thousands"] --> D["Any state space\ncontinuous, pixels, etc."]
-    end
-    B -->|"Replace table\nwith network"| C
-    style A fill:#1e3a8a,color:#fff
-    style B fill:#b91c1c,color:#fff
-    style C fill:#15803d,color:#fff
-    style D fill:#15803d,color:#fff
+ subgraph "Ch.3 — Tabular Q-Learning"
+ A["Q-table\n|S| × |A| entries\n16 states → works"] --> B["Continuous states?\n10⁸ entries → fails"]
+ end
+ subgraph "Ch.4 — DQN"
+ C["Neural Network\nQ(s,a;θ)\nparams ~thousands"] --> D["Any state space\ncontinuous, pixels, etc."]
+ end
+ B -->|"Replace table\nwith network"| C
+ style A fill:#1e3a8a,color:#fff
+ style B fill:#b91c1c,color:#fff
+ style C fill:#15803d,color:#fff
+ style D fill:#15803d,color:#fff
 ```
 
 ---
@@ -70,7 +70,7 @@ flowchart LR
 
 A **Deep Q-Network** replaces the Q-table with a neural network $Q(s, a; \theta)$ that takes a continuous state vector as input and outputs Q-values for every discrete action simultaneously. The network is trained by minimizing the squared Bellman error between its current Q-value predictions and **TD targets** computed using a frozen copy of the network ($\theta^-$). Two structural innovations prevent the instability that naively plugging a neural network into Q-learning produces: **experience replay** stores all past transitions in a buffer and trains on uniformly sampled random minibatches (breaking temporal correlation and reusing data), while **target networks** freeze the TD targets for $C$ gradient steps at a time (preventing the optimization from chasing its own tail).
 
-> ⚡ **Three components, one algorithm.** The DQN agent is: (1) a neural network $Q(s,a;\theta)$ that replaces the Q-table, (2) a replay buffer $\mathcal{D}$ that stores and re-samples transitions, and (3) a target network $\theta^-$ that stabilizes the regression objective. Remove any one and performance collapses. All three are needed simultaneously.
+> **Three components, one algorithm.** The DQN agent is: (1) a neural network $Q(s,a;\theta)$ that replaces the Q-table, (2) a replay buffer $\mathcal{D}$ that stores and re-samples transitions, and (3) a target network $\theta^-$ that stabilizes the regression objective. Remove any one and performance collapses. All three are needed simultaneously.
 
 ---
 
@@ -81,20 +81,20 @@ The CartPole-v1 task: a cart moves along a track; a pole is hinged to the top of
 ```
 State space (continuous, 4-dimensional)
 ─────────────────────────────────────────────────────────────────
-  Variable         Symbol   Range            Meaning
-  ─────────────────────────────────────────────────────────────
-  Cart position    x        [-4.8, 4.8]      Distance from centre
-  Cart velocity    x_dot    (-inf, +inf)     Speed of cart
-  Pole angle       theta    [-0.42, 0.42]    Angle in radians (~24°)
-  Pole ang. vel.   theta_d  (-inf, +inf)     Angular speed of pole
+ Variable Symbol Range Meaning
+ ─────────────────────────────────────────────────────────────
+ Cart position x [-4.8, 4.8] Distance from centre
+ Cart velocity x_dot (-inf, +inf) Speed of cart
+ Pole angle theta [-0.42, 0.42] Angle in radians (~24°)
+ Pole ang. vel. theta_d (-inf, +inf) Angular speed of pole
 ─────────────────────────────────────────────────────────────────
 
 Action space (discrete, 2 actions)
-  0 = Push Left (force = -10 N)
-  1 = Push Right (force = +10 N)
+ 0 = Push Left (force = -10 N)
+ 1 = Push Right (force = +10 N)
 
 Reward: +1 for each timestep where pole is upright
-Goal:   Average 195 steps over 100 consecutive episodes
+Goal: Average 195 steps over 100 consecutive episodes
 ```
 
 **Why Q-table fails here (explicit arithmetic):**
@@ -115,13 +115,13 @@ Similar states produce similar Q-values automatically through the network's lear
 **Network architecture:**
 
 ```
-Input (state)        Hidden Layer 1      Hidden Layer 2     Output (Q-values)
-────────────         ──────────────      ──────────────     ─────────────────
-  x (pos.)  ─┐
-  x_dot     ─┤──→  [64 ReLU units] ──→  [64 ReLU units] ──→  Q(s, Left)
-  theta     ─┤                                            ──→  Q(s, Right)
-  theta_d   ─┘
-  (4 inputs)           (64 units)          (64 units)          (2 outputs)
+Input (state) Hidden Layer 1 Hidden Layer 2 Output (Q-values)
+──────────── ────────────── ────────────── ─────────────────
+ x (pos.) ─┐
+ x_dot ─┤──→ [64 ReLU units] ──→ [64 ReLU units] ──→ Q(s, Left)
+ theta ─┤ ──→ Q(s, Right)
+ theta_d ─┘
+ (4 inputs) (64 units) (64 units) (2 outputs)
 ```
 
 A single forward pass gives **both** Q-values simultaneously — much more efficient than calling the network twice.
@@ -144,60 +144,60 @@ A single forward pass gives **both** Q-values simultaneously — much more effic
 ## 3 · DQN Algorithm at a Glance
 
 ```
-ALGORITHM: Deep Q-Network (DQN)   [Mnih et al. 2015]
+ALGORITHM: Deep Q-Network (DQN) [Mnih et al. 2015]
 ═══════════════════════════════════════════════════════════════════
-Input:   Environment env
-         Learning rate α, discount γ, initial exploration ε₀
-         Replay buffer capacity N, minibatch size B
-         Target network update frequency C
-Output:  Trained Q-network with weights θ
+Input: Environment env
+ Learning rate α, discount γ, initial exploration ε₀
+ Replay buffer capacity N, minibatch size B
+ Target network update frequency C
+Output: Trained Q-network with weights θ
 
 Initialization:
-  1. θ  ← random weights          // online (training) network
-  2. θ⁻ ← θ                       // target network: frozen copy
-  3. D  ← empty replay buffer (capacity N)
-  4. total_steps ← 0
-  5. ε ← ε₀
+ 1. θ ← random weights // online (training) network
+ 2. θ⁻ ← θ // target network: frozen copy
+ 3. D ← empty replay buffer (capacity N)
+ 4. total_steps ← 0
+ 5. ε ← ε₀
 
 Main loop:
-  FOR episode = 1, 2, 3, ... :
-    s ← env.reset()
+ FOR episode = 1, 2, 3, ... :
+ s ← env.reset()
 
-    WHILE episode not done:
-      ── ε-greedy action selection ──────────────────────────────
-      With probability ε:
-        a ← random action                   // EXPLORE
-      Otherwise:
-        a ← argmax_{a'} Q(s, a'; θ)         // EXPLOIT online net
+ WHILE episode not done:
+ ── ε-greedy action selection ──────────────────────────────
+ With probability ε:
+ a ← random action // EXPLORE
+ Otherwise:
+ a ← argmax_{a'} Q(s, a'; θ) // EXPLOIT online net
 
-      ── Environment step ────────────────────────────────────────
-      r, s', done ← env.step(a)
+ ── Environment step ────────────────────────────────────────
+ r, s', done ← env.step(a)
 
-      ── Store transition ────────────────────────────────────────
-      Push (s, a, r, s', done) into D        // overwrite oldest if full
+ ── Store transition ────────────────────────────────────────
+ Push (s, a, r, s', done) into D // overwrite oldest if full
 
-      ── Training step (skip until |D| >= B) ─────────────────────
-      IF |D| >= B:
-        B_samples ← uniform_sample(D, size=B)
+ ── Training step (skip until |D| >= B) ─────────────────────
+ IF |D| >= B:
+ B_samples ← uniform_sample(D, size=B)
 
-        FOR each (sⱼ, aⱼ, rⱼ, s'ⱼ, doneⱼ) in B_samples:
-          IF doneⱼ:
-            ŷⱼ ← rⱼ                                  // terminal
-          ELSE:
-            ŷⱼ ← rⱼ + γ · max_{a'} Q(s'ⱼ, a'; θ⁻)  // Bellman target
+ FOR each (sⱼ, aⱼ, rⱼ, s'ⱼ, doneⱼ) in B_samples:
+ IF doneⱼ:
+ ŷⱼ ← rⱼ // terminal
+ ELSE:
+ ŷⱼ ← rⱼ + γ · max_{a'} Q(s'ⱼ, a'; θ⁻) // Bellman target
 
-        L(θ) ← (1/B) Σⱼ [ ŷⱼ - Q(sⱼ, aⱼ; θ) ]²
-        θ ← θ - α · ∇_θ L(θ)               // gradient step
+ L(θ) ← (1/B) Σⱼ [ ŷⱼ - Q(sⱼ, aⱼ; θ) ]²
+ θ ← θ - α · ∇_θ L(θ) // gradient step
 
-      ── Target network update ────────────────────────────────────
-      total_steps += 1
-      IF total_steps mod C == 0:
-        θ⁻ ← θ                              // hard copy every C steps
+ ── Target network update ────────────────────────────────────
+ total_steps += 1
+ IF total_steps mod C == 0:
+ θ⁻ ← θ // hard copy every C steps
 
-      s ← s'
+ s ← s'
 
-    ── Decay exploration ─────────────────────────────────────────
-    ε ← max(ε_min, ε · ε_decay)
+ ── Decay exploration ─────────────────────────────────────────
+ ε ← max(ε_min, ε · ε_decay)
 ═══════════════════════════════════════════════════════════════════
 ```
 
@@ -257,7 +257,7 @@ The key subtlety: the gradient flows only through the **online** network $Q(s,a;
 
 ### 4.4 Why Experience Replay Helps (Correlation Argument)
 
-> 💡 **Intuition first — why replay matters.** When you train on consecutive transitions from the same episode, the network sees a sequence of nearly identical states (the pole moved only a few degrees per step). Gradient descent overfits to the recent trajectory and forgets everything before. The replay buffer **breaks temporal correlation** by storing thousands of past transitions and sampling uniformly at random — the network trains on diverse experiences from across many episodes, not just the last few seconds of play. This is the key stability innovation: decorrelate the training data stream.
+> **Intuition first — why replay matters.** When you train on consecutive transitions from the same episode, the network sees a sequence of nearly identical states (the pole moved only a few degrees per step). Gradient descent overfits to the recent trajectory and forgets everything before. The replay buffer **breaks temporal correlation** by storing thousands of past transitions and sampling uniformly at random — the network trains on diverse experiences from across many episodes, not just the last few seconds of play. This is the key stability innovation: decorrelate the training data stream.
 
 **Without replay:** consecutive transitions in a CartPole episode are highly correlated:
 
@@ -301,11 +301,11 @@ The network is trained against a target that **shifts with every gradient step**
 
 ```
 Without target network:
-  Loss: 2.1 → 3.4 → 1.8 → 4.2 → 2.9 → 5.1 → 3.3 → ...  (oscillates, no trend)
+ Loss: 2.1 → 3.4 → 1.8 → 4.2 → 2.9 → 5.1 → 3.3 → ... (oscillates, no trend)
 
 With target network (C=100):
-  Loss: 2.1 → 1.9 → 1.7 → 1.5 → 1.3 → 1.1 → 0.9 → ...  (decreasing, converging)
-       ────────── 100 stable steps ─────────│θ⁻ updated│─── 100 more stable steps ──
+ Loss: 2.1 → 1.9 → 1.7 → 1.5 → 1.3 → 1.1 → 0.9 → ... (decreasing, converging)
+ ────────── 100 stable steps ─────────│θ⁻ updated│─── 100 more stable steps ──
 ```
 
 The frozen target network converts an unstable dynamic programming update into a well-posed supervised regression problem (for $C$ steps at a time).
@@ -336,17 +336,17 @@ Early in training, Q-values are random noise. Exploiting random Q-values leads t
 
 ```
 Naive Q-network
-      │  diverges immediately (correlated gradients + moving target)
-      ▼
+ │ diverges immediately (correlated gradients + moving target)
+ ▼
 + Experience Replay
-      │  correlation drops, data reuse improves
-      ▼
+ │ correlation drops, data reuse improves
+ ▼
 + Target Network
-      │  targets stabilize, loss converges
-      ▼
+ │ targets stabilize, loss converges
+ ▼
 + ε-Decay Schedule
-      │  balanced exploration/exploitation
-      ▼
+ │ balanced exploration/exploitation
+ ▼
 DQN: ~150/200 on CartPole
 ```
 
@@ -383,27 +383,27 @@ Below: the exact quantities the DQN algorithm computes on each of its first 10 s
 
 ```
 Sampled transition #1: (s=[0.00,0.00,0.01,-0.01], a=L, r=1, s'=[-0.01,-0.15,0.01,0.20], done=F)
-  Target network Q(s',·;θ⁻) outputs: [Left=0.50, Right=0.52]
-  max Q(s',·;θ⁻) = 0.52
-  ŷ₁ = 1 + 0.99 × 0.52 = 1.515
+ Target network Q(s',·;θ⁻) outputs: [Left=0.50, Right=0.52]
+ max Q(s',·;θ⁻) = 0.52
+ ŷ₁ = 1 + 0.99 × 0.52 = 1.515
 
 Sampled transition #2: (s=[-0.01,-0.15,0.01,0.20], a=R, r=1, s'=[0.00,0.04,0.01,-0.08], done=F)
-  Target network Q(s',·;θ⁻) outputs: [Left=0.47, Right=0.48]
-  max Q(s',·;θ⁻) = 0.48
-  ŷ₂ = 1 + 0.99 × 0.48 = 1.475
+ Target network Q(s',·;θ⁻) outputs: [Left=0.47, Right=0.48]
+ max Q(s',·;θ⁻) = 0.48
+ ŷ₂ = 1 + 0.99 × 0.48 = 1.475
 
 Sampled transition #3: (s=[0.00,0.04,0.01,-0.08], a=L, r=1, s'=[-0.01,-0.11,0.01,0.15], done=F)
-  Target network Q(s',·;θ⁻) outputs: [Left=0.49, Right=0.51]
-  max Q(s',·;θ⁻) = 0.51
-  ŷ₃ = 1 + 0.99 × 0.51 = 1.505
+ Target network Q(s',·;θ⁻) outputs: [Left=0.49, Right=0.51]
+ max Q(s',·;θ⁻) = 0.51
+ ŷ₃ = 1 + 0.99 × 0.51 = 1.505
 
 Online network Q(s,a;θ) for the selected actions:
-  transition 1: Q(s, Left;  θ) = 0.41   → loss₁ = (1.515 - 0.41)² = (1.105)² = 1.221
-  transition 2: Q(s, Right; θ) = 0.38   → loss₂ = (1.475 - 0.38)² = (1.095)² = 1.199
-  transition 3: Q(s, Left;  θ) = 0.44   → loss₃ = (1.505 - 0.44)² = (1.065)² = 1.134
+ transition 1: Q(s, Left; θ) = 0.41 → loss₁ = (1.515 - 0.41)² = (1.105)² = 1.221
+ transition 2: Q(s, Right; θ) = 0.38 → loss₂ = (1.475 - 0.38)² = (1.095)² = 1.199
+ transition 3: Q(s, Left; θ) = 0.44 → loss₃ = (1.505 - 0.44)² = (1.065)² = 1.134
 
 Batch loss L(θ) = (1.221 + 1.199 + 1.134) / 3 = 1.185
-Gradient step: θ ← θ - α · ∇_θ L(θ)   [each Q-value is pulled upward toward its ŷ]
+Gradient step: θ ← θ - α · ∇_θ L(θ) [each Q-value is pulled upward toward its ŷ]
 ```
 
 **At step 5:** $\theta^- \leftarrow \theta$ (hard copy). The target network now has the same weights as the online network. Steps 6–10 compute targets using this slightly improved $\theta^-$. At step 10, another hard copy. And so on.
@@ -418,63 +418,63 @@ Over thousands of episodes, the Q-values gradually converge toward the true opti
 
 ```mermaid
 flowchart LR
-    subgraph ENV["Environment"]
-        E1["State s\n[x, x_dot, θ, θ_dot]"]
-        E2["Reward r, Next state s'"]
-    end
+ subgraph ENV["Environment"]
+ E1["State s\n[x, x_dot, θ, θ_dot]"]
+ E2["Reward r, Next state s'"]
+ end
 
-    subgraph ONLINE["Online Network  θ  (updated every step)"]
-        IN1["Input\n4 units"]
-        H1["Hidden 1\n64 ReLU"]
-        H2["Hidden 2\n64 ReLU"]
-        OUT1["Output\n2 units (linear)"]
-        IN1 --> H1 --> H2 --> OUT1
-    end
+ subgraph ONLINE["Online Network θ (updated every step)"]
+ IN1["Input\n4 units"]
+ H1["Hidden 1\n64 ReLU"]
+ H2["Hidden 2\n64 ReLU"]
+ OUT1["Output\n2 units (linear)"]
+ IN1 --> H1 --> H2 --> OUT1
+ end
 
-    subgraph TARGET["Target Network  θ⁻  (frozen, copied every C steps)"]
-        IN2["Input\n4 units"]
-        H3["Hidden 1\n64 ReLU"]
-        H4["Hidden 2\n64 ReLU"]
-        OUT2["Output\n2 units (linear)"]
-        IN2 --> H3 --> H4 --> OUT2
-    end
+ subgraph TARGET["Target Network θ⁻ (frozen, copied every C steps)"]
+ IN2["Input\n4 units"]
+ H3["Hidden 1\n64 ReLU"]
+ H4["Hidden 2\n64 ReLU"]
+ OUT2["Output\n2 units (linear)"]
+ IN2 --> H3 --> H4 --> OUT2
+ end
 
-    E1 -->|"forward pass"| IN1
-    OUT1 -->|"argmax → action"| ENV
-    E2 -->|"r, s' for target"| IN2
-    OUT2 -->|"max Q(s',·;θ⁻)"| LOSS["Loss\nL = (ŷ - Q(s,a;θ))²"]
-    OUT1 -->|"Q(s,a;θ)"| LOSS
-    LOSS -->|"∇_θ L"| ONLINE
+ E1 -->|"forward pass"| IN1
+ OUT1 -->|"argmax → action"| ENV
+ E2 -->|"r, s' for target"| IN2
+ OUT2 -->|"max Q(s',·;θ⁻)"| LOSS["Loss\nL = (ŷ - Q(s,a;θ))²"]
+ OUT1 -->|"Q(s,a;θ)"| LOSS
+ LOSS -->|"∇_θ L"| ONLINE
 
-    style ONLINE fill:#1e3a8a,color:#fff
-    style TARGET fill:#b45309,color:#fff
-    style ENV fill:#15803d,color:#fff
-    style LOSS fill:#b91c1c,color:#fff
+ style ONLINE fill:#1e3a8a,color:#fff
+ style TARGET fill:#b45309,color:#fff
+ style ENV fill:#15803d,color:#fff
+ style LOSS fill:#b91c1c,color:#fff
 ```
 
 ### 7.2 Experience Replay + Training Loop
 
 ```mermaid
 flowchart TD
-    A["Agent observes state s"] -->|"ε-greedy"| B["Select action a"]
-    B --> C["Environment: r, s', done"]
-    C --> D["Store (s,a,r,s',done)\nin replay buffer D"]
+ A["Agent observes state s"] -->|"ε-greedy"| B["Select action a"]
+ B --> C["Environment: r, s', done"]
+ C --> D["Store (s,a,r,s',done)\nin replay buffer D"]
 
-    subgraph BUF["Replay Buffer  D  (capacity N=10,000)"]
-        D --> BUFcontent["(s₁,a₁,r₁,s'₁)\n(s₂,a₂,r₂,s'₂)\n   ⋮\n(sₙ,aₙ,rₙ,s'ₙ)"]
-    end
+ subgraph BUF["Replay Buffer D (capacity N=10,000)"]
+ D --> BUFcontent["(s₁,a₁,r₁,s'₁)\n(s₂,a₂,r₂,s'₂)\n ⋮\n(sₙ,aₙ,rₙ,s'ₙ)"]
+ end
 
-    BUFcontent -->|"uniform sample\nB=32 transitions"| E["Compute targets ŷⱼ\nusing frozen θ⁻"]
-    E --> F["Compute loss\nL = (1/B)Σ(ŷⱼ - Q(sⱼ,aⱼ;θ))²"]
-    F --> G["Gradient update θ\nθ ← θ - α∇L"]
-    G -->|"every C steps\nθ⁻ ← θ"| H["Update target network"]
-    H --> A
-    C --> A
+ BUFcontent -->|"uniform sample\nB=32 transitions"| E["Compute targets ŷⱼ\nusing frozen θ⁻"]
+ E --> F["Compute loss\nL = (1/B)Σ(ŷⱼ - Q(sⱼ,aⱼ;θ))²"]
+ F --> G["Gradient update θ\nθ ← θ - α∇L"]
+ G -->|"every C steps\nθ⁻ ← θ"| H["Update target network"]
+ H --> A
+ C --> A
 
-    style BUF fill:#1e3a8a,color:#fff
-    style E fill:#b45309,color:#fff
-    style F fill:#b91c1c,color:#fff
-    style G fill:#15803d,color:#fff
+ style BUF fill:#1e3a8a,color:#fff
+ style E fill:#b45309,color:#fff
+ style F fill:#b91c1c,color:#fff
+ style G fill:#15803d,color:#fff
 ```
 
 ---
@@ -504,14 +504,14 @@ DQN is sensitive to several hyperparameters. Here are the key dials, what they c
 **ε decay schedule (linear decay example):**
 
 ```
-ε(t) = max( ε_min,  ε₀ - (ε₀ - ε_min) × t / decay_steps )
+ε(t) = max( ε_min, ε₀ - (ε₀ - ε_min) × t / decay_steps )
 
 With ε₀=1.0, ε_min=0.01, decay_steps=10,000:
-  t=0:      ε = 1.000  (100% random — pure exploration)
-  t=2,500:  ε = 0.758  (76% random)
-  t=5,000:  ε = 0.505  (51% random)
-  t=7,500:  ε = 0.253  (25% random)
-  t=10,000: ε = 0.010  (1% random — exploitation phase)
+ t=0: ε = 1.000 (100% random — pure exploration)
+ t=2,500: ε = 0.758 (76% random)
+ t=5,000: ε = 0.505 (51% random)
+ t=7,500: ε = 0.253 (25% random)
+ t=10,000: ε = 0.010 (1% random — exploitation phase)
 ```
 
 ---
@@ -552,24 +552,24 @@ Pulling together §4.1–4.5 on a single transition $(s, a=\text{Right}, r=1.0, 
 
 ```
 Step 1 — Forward pass (online network, θ):
-    Q(s, Left;  θ) = 0.73
-    Q(s, Right; θ) = 0.85   ← the action taken
+ Q(s, Left; θ) = 0.73
+ Q(s, Right; θ) = 0.85 ← the action taken
 
 Step 2 — Compute TD target (target network, θ⁻, FROZEN):
-    Q(s', Left;  θ⁻) = 0.32
-    Q(s', Right; θ⁻) = 0.41   ← maximum
-    ŷ = 1.0 + 0.99 × 0.41 = 1.406
+ Q(s', Left; θ⁻) = 0.32
+ Q(s', Right; θ⁻) = 0.41 ← maximum
+ ŷ = 1.0 + 0.99 × 0.41 = 1.406
 
 Step 3 — Compute loss:
-    L = (ŷ - Q(s, Right; θ))² = (1.406 - 0.85)² = (0.556)² = 0.309
+ L = (ŷ - Q(s, Right; θ))² = (1.406 - 0.85)² = (0.556)² = 0.309
 
 Step 4 — Gradient:
-    ∇_θ L ∝ 2 × (0.85 - 1.406) × ∇_θ Q(s, Right; θ)
-           = -1.112 × ∇_θ Q(s, Right; θ)   [negative → increase Q]
+ ∇_θ L ∝ 2 × (0.85 - 1.406) × ∇_θ Q(s, Right; θ)
+ = -1.112 × ∇_θ Q(s, Right; θ) [negative → increase Q]
 
 Step 5 — Weight update (α = 0.001):
-    θ ← θ + 0.001 × 1.112 × ∇_θ Q(s, Right; θ)
-    Next forward pass: Q(s, Right; θ) increases toward 1.406
+ θ ← θ + 0.001 × 1.112 × ∇_θ Q(s, Right; θ)
+ Next forward pass: Q(s, Right; θ) increases toward 1.406
 
 Step 6 — Target network: θ⁻ is NOT updated this step (only every C=100 steps)
 ```
@@ -588,7 +588,7 @@ The target $\hat{y} = 1.406$ was computed with the **frozen** $\theta^-$ in Step
 | **03-AI track** | RL-from-Human-Feedback (RLHF) in LLMs uses policy gradient methods, but replay buffers appear in offline RL variants |
 | **06-AI Infrastructure track** | Experience replay buffer design (sharding, prioritization) is a systems-level engineering challenge at production scale |
 
-> ⚡ **The experience replay idea generalizes far beyond DQN.** Replay buffers appear in actor-critic algorithms (SAC, TD3), offline RL, and model-based RL. The core insight — decouple data collection from gradient updates — is one of the most reused ideas in all of deep RL.
+> **The experience replay idea generalizes far beyond DQN.** Replay buffers appear in actor-critic algorithms (SAC, TD3), offline RL, and model-based RL. The core insight — decouple data collection from gradient updates — is one of the most reused ideas in all of deep RL.
 
 ---
 
@@ -600,9 +600,9 @@ The target $\hat{y} = 1.406$ was computed with the **frozen** $\theta^-$ in Step
 
 | Metric | Status |
 |---|---|
-| GridWorld (16 states) | ✅ Q-learning solves it perfectly (Ch.3) |
-| CartPole — Q-table | ❌ Fails: continuous state space |
-| CartPole — DQN | ✅ **~150/200 average steps** — stable, improving |
+| GridWorld (16 states) | Q-learning solves it perfectly (Ch.3) |
+| CartPole — Q-table | Fails: continuous state space |
+| CartPole — DQN | **~150/200 average steps** — stable, improving |
 | CartPole target (≥195/200) | ⏳ Not yet — approaches but has not reached 195 |
 
 **What DQN achieves:**
@@ -616,7 +616,7 @@ After ~5,000 training steps with default hyperparameters ($N = 10{,}000$, $B = 6
 - The 4 → 64 → 64 → 2 network may need more capacity or longer training for the final margin
 - Policy gradient methods (Ch.5) use a stochastic parameterized policy directly, which tends to converge faster on the final precision required for CartPole-v1 solved status
 
-> 💡 **The 195 ceiling is not accidental.** CartPole-v1 is considered "solved" at ≥195/200. DQN typically reaches 150–175 with a standard implementation. Reaching 195 reliably requires either (a) longer training with careful ε decay, (b) Double DQN to reduce overestimation, or (c) the policy gradient methods in Ch.5. This chapter's result is a real milestone — the agent is genuinely controlling the pole — but the final push comes next.
+> **The 195 ceiling is not accidental.** CartPole-v1 is considered "solved" at ≥195/200. DQN typically reaches 150–175 with a standard implementation. Reaching 195 reliably requires either (a) longer training with careful ε decay, (b) Double DQN to reduce overestimation, or (c) the policy gradient methods in Ch.5. This chapter's result is a real milestone — the agent is genuinely controlling the pole — but the final push comes next.
 
 ---
 
@@ -638,7 +638,7 @@ $$\nabla_\theta J(\theta) = \mathbb{E}_{\pi_\theta}\left[\nabla_\theta \log \pi_
 
 This is the **policy gradient theorem** (Williams, 1992) — the foundation of REINFORCE, Actor-Critic, PPO, and SAC.
 
-> ➡️ **In Ch.5** you will build an Actor-Critic agent that consistently reaches **≥180/200** on CartPole and then apply it to the `Pendulum-v1` continuous control task — something DQN cannot do at all.
+> ➡ **In Ch.5** you will build an Actor-Critic agent that consistently reaches **≥180/200** on CartPole and then apply it to the `Pendulum-v1` continuous control task — something DQN cannot do at all.
 
 ---
 

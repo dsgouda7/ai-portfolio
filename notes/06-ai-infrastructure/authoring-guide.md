@@ -4,7 +4,7 @@
 > Each chapter lives under `notes/06-ai_infrastructure/` in its own folder, containing a README and supporting materials.
 > Read this before starting any chapter to keep tone, structure, and the running example consistent.
 >
-> **📚 Updated:** Now includes comprehensive pedagogical patterns, voice/register rules, and conformance standards aligned with ML track best practices.
+> ** Updated:** Now includes comprehensive pedagogical patterns, voice/register rules, and conformance standards aligned with ML track best practices.
 
 <!-- LLM-STYLE-FINGERPRINT-V2
 canonical_chapters: ["notes/06-ai_infrastructure/ch01_gpu_architecture/README.md", "notes/06-ai_infrastructure/ch02_memory_and_compute_budgets/README.md"]
@@ -14,7 +14,7 @@ hardware_arithmetic: required_before_claims
 numerical_benchmarks: judicious_inferencebase_measurements_when_clarifying
 running_example: inferencebase_llama3_8b_only
 failure_first_pedagogy: true
-callout_system: {insight:"💡", warning:"⚠️", constraint:"⚡", optional_depth:"📖", forward_pointer:"➡️"}
+callout_system: {insight:"", warning:"", constraint:"", optional_depth:"📖", forward_pointer:"➡"}
 mermaid_color_palette: {primary:"#1e3a8a", success:"#15803d", caution:"#b45309", danger:"#b91c1c", info:"#1d4ed8"}
 image_background: dark_facecolor_1a1a2e_for_generated_plots
 section_template: [story_header, challenge_0, animation, core_idea_1, inferencebase_example_2, hardware_specs_3, step_by_step_4, key_diagrams_5, optimization_dial_6, benchmark_skeleton_7, what_can_go_wrong_8, progress_check_N, bridge_N1]
@@ -34,11 +34,11 @@ The AI Infrastructure track is 10 chapters covering GPU architecture fundamental
 ```
 notes/06-ai_infrastructure/
 ├── ch01_gpu_architecture/
-│   ├── README.md          ← Technical deep-dive + diagrams
-│   └── (supporting materials)
+│ ├── README.md ← Technical deep-dive + diagrams
+│ └── (supporting materials)
 ├── ch02_memory_and_compute_budgets/
-│   ├── README.md
-│   └── (calculations, benchmarks)
+│ ├── README.md
+│ └── (calculations, benchmarks)
 ├── quantization/
 ├── distributed_training/
 ├── ch05_inference_optimization/
@@ -47,7 +47,7 @@ notes/06-ai_infrastructure/
 ├── cloud_infrastructure/
 ├── mlops/
 └── production_platform/
-    └── README.md          ← Final system integration
+ └── README.md ← Final system integration
 ```
 
 Each module is self-contained. Read the README to understand the infrastructure concept, see how it solves a specific InferenceBase bottleneck. The README contains technical deep-dives, hardware specs, and diagrams — no notebook needed for infrastructure chapters.
@@ -102,22 +102,22 @@ Each chapter solves a specific bottleneck on the path to production:
 | **2** | Memory Budgets | #4 (Memory) | Calculate exact VRAM: 16GB params + 4GB KV cache = 20GB → fits in 24GB |
 | **3** | Quantization | #1 (Cost), #4 (Memory) | INT4 quantization → 8GB params, enables multi-batch → cuts cost 60% |
 | **4** | Distributed Training | (Training focus) | Data parallelism for fine-tuning → not blocking inference launch |
-| **5** | Inference Optimization | #2 (Latency), #3 (Throughput) | PagedAttention + batching → 2x throughput, 1.2s p95 latency ✅ |
-| **6** | Serving Frameworks | #2 (Latency), #3 (Throughput) | vLLM benchmark: 12k req/day on 1x RTX 4090 → need 1 GPU ✅ |
+| **5** | Inference Optimization | #2 (Latency), #3 (Throughput) | PagedAttention + batching → 2x throughput, 1.2s p95 latency |
+| **6** | Serving Frameworks | #2 (Latency), #3 (Throughput) | vLLM benchmark: 12k req/day on 1x RTX 4090 → need 1 GPU |
 | **7** | Networking | #3 (Throughput), #6 (Reliability) | NVLink multi-GPU → 40k req/day capacity for growth |
-| **8** | Cloud Infrastructure | #1 (Cost) | RunPod RTX 4090: $1.50/hr × 730 hr = $1,095/month ✅ (vs $15k budget) |
-| **9** | MLOps | #6 (Reliability) | Checkpointing + monitoring → 99.5% uptime ✅ |
-| **10** | Production Platform | All constraints | Full stack: LB → vLLM → GPU → monitoring → ALL TARGETS MET ✅ |
+| **8** | Cloud Infrastructure | #1 (Cost) | RunPod RTX 4090: $1.50/hr × 730 hr = $1,095/month (vs $15k budget) |
+| **9** | MLOps | #6 (Reliability) | Checkpointing + monitoring → 99.5% uptime |
+| **10** | Production Platform | All constraints | Full stack: LB → vLLM → GPU → monitoring → ALL TARGETS MET |
 
 ### Final System Status
 
 **Ch.10 delivers**:
-- ✅ **Cost**: $1,095/month (93% under budget, 98.6% savings vs $80k baseline)
-- ✅ **Latency**: 1.2s p95 (40% better than 2s target)
-- ✅ **Throughput**: 12,000 req/day (120% of target, with headroom for growth)
-- ✅ **Memory**: 8GB INT4 model + 4GB KV cache = 12GB used (50% of 24GB VRAM)
-- ✅ **Quality**: 96.2% accuracy (vs 95% target, 1.2% below GPT-3.5-turbo)
-- ✅ **Reliability**: 99.5% uptime (above 99% target)
+- **Cost**: $1,095/month (93% under budget, 98.6% savings vs $80k baseline)
+- **Latency**: 1.2s p95 (40% better than 2s target)
+- **Throughput**: 12,000 req/day (120% of target, with headroom for growth)
+- **Memory**: 8GB INT4 model + 4GB KV cache = 12GB used (50% of 24GB VRAM)
+- **Quality**: 96.2% accuracy (vs 95% target, 1.2% below GPT-3.5-turbo)
+- **Reliability**: 99.5% uptime (above 99% target)
 
 **ROI**: $948,540/year savings ($80k → $1.1k/month), 2-week implementation → immediate payback
 
@@ -132,13 +132,13 @@ Every chapter follows this structure to maintain consistency:
 ```markdown
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Self-host Llama-3-8B for <$15k/month, replacing $80k OpenAI API costs
+> **The mission**: Self-host Llama-3-8B for <$15k/month, replacing $80k OpenAI API costs
 >
 > **6 Constraints**: #1 Cost (<$15k/mo) • #2 Latency (≤2s) • #3 Throughput (≥10k req/day) • #4 Memory (fit in VRAM) • #5 Quality (≥95% accuracy) • #6 Reliability (>99% uptime)
 
 **What we know so far**:
-- ✅ [List progress from previous chapters]
-- ⚡ **Current state**: [Key metrics]
+- [List progress from previous chapters]
+- **Current state**: [Key metrics]
 
 **What's blocking us**:
 
@@ -147,8 +147,8 @@ Every chapter follows this structure to maintain consistency:
 **Current situation**: [Concrete failure scenario]
 
 **Problems**:
-1. ❌ [Problem 1 with impact]
-2. ❌ [Problem 2 with impact]
+1. [Problem 1 with impact]
+2. [Problem 2 with impact]
 ...
 
 **Business impact**:
@@ -158,12 +158,11 @@ Every chapter follows this structure to maintain consistency:
 
 **What this chapter unlocks**:
 
-🚀 **[Core capability]**:
+ **[Core capability]**:
 1. [Specific technique/solution 1]
 2. [Specific technique/solution 2]
 ...
-
-⚡ **Expected improvements**:
+**Expected improvements**:
 - **[Metric 1]**: X → Y (improvement %)
 - **[Metric 2]**: X → Y (improvement %)
 ...
@@ -179,34 +178,33 @@ Every chapter follows this structure to maintain consistency:
 ```markdown
 ## N · Progress Check — What We've Accomplished
 
-🎉 **[Major milestone achieved]**
+ **[Major milestone achieved]**
 
 **Unlocked capabilities**:
-- ✅ [Capability 1 with concrete metric]
-- ✅ [Capability 2 with concrete metric]
+- [Capability 1 with concrete metric]
+- [Capability 2 with concrete metric]
 ...
 
 **Progress toward constraints**:
 
 | Constraint | Status | Current State |
 |------------|--------|---------------|
-| #1 COST | ⚡/✅/❌ | [Specific number vs target] |
-| #2 LATENCY | ⚡/✅/❌ | [Specific number vs target] |
-| #3 THROUGHPUT | ⚡/✅/❌ | [Specific number vs target] |
-| #4 MEMORY | ⚡/✅/❌ | [Specific number vs target] |
-| #5 QUALITY | ⚡/✅/❌ | [Specific number vs target] |
-| #6 RELIABILITY | ⚡/✅/❌ | [Specific number vs target] |
+| #1 COST | // | [Specific number vs target] |
+| #2 LATENCY | // | [Specific number vs target] |
+| #3 THROUGHPUT | // | [Specific number vs target] |
+| #4 MEMORY | // | [Specific number vs target] |
+| #5 QUALITY | // | [Specific number vs target] |
+| #6 RELIABILITY | // | [Specific number vs target] |
 
 **What we can solve now**:
-
-✅ **[Specific problem]**:
+**[Specific problem]**:
 ```
 [Concrete example showing before/after with real numbers]
 ```
 
 **What's still blocking**:
-- ❌ [Remaining issue 1] → needs [next chapter]
-- ❌ [Remaining issue 2] → needs [chapter X]
+- [Remaining issue 1] → needs [next chapter]
+- [Remaining issue 2] → needs [chapter X]
 
 **Next chapter**: [ChapterName] unlocks [capability] → [specific metric improvement]
 
@@ -226,16 +224,14 @@ Every chapter follows this structure to maintain consistency:
 ### 1. InferenceBase-First Framing
 
 Every concept must land in InferenceBase context:
-
-❌ **Generic**: "Tensor Cores accelerate matrix multiplication"
-✅ **InferenceBase**: "Llama-3-8B's attention layers require 16 TFLOP/inference. Tensor Cores deliver 165 TFLOP/s, so compute isn't the bottleneck — memory bandwidth is"
+**Generic**: "Tensor Cores accelerate matrix multiplication"
+**InferenceBase**: "Llama-3-8B's attention layers require 16 TFLOP/inference. Tensor Cores deliver 165 TFLOP/s, so compute isn't the bottleneck — memory bandwidth is"
 
 ### 2. Numbers Are Non-Negotiable
 
 Every claim needs a number tied to InferenceBase:
-
-❌ **Vague**: "Quantization reduces memory"
-✅ **Specific**: "INT4 quantization: 16GB FP16 → 8GB INT4 = 50% VRAM reduction → enables batch size 4 → 4× throughput"
+**Vague**: "Quantization reduces memory"
+**Specific**: "INT4 quantization: 16GB FP16 → 8GB INT4 = 50% VRAM reduction → enables batch size 4 → 4× throughput"
 
 ### 3. Show the Constraint Trade-offs
 
@@ -243,7 +239,7 @@ Make tensions explicit:
 
 ```markdown
 **Constraint conflict**:
-- Batching increases throughput (✅ #3) but increases latency (❌ #2)
+- Batching increases throughput ( #3) but increases latency ( #2)
 - Solution: PagedAttention allows batch=4 without latency spike (1.2s p95 maintained)
 ```
 
@@ -280,16 +276,16 @@ When claiming a constraint is met, provide:
 ### #1 Cost (<$15k/month)
 
 ```
-GPU cost: RunPod RTX 4090 @ $1.50/hr × 730 hr/mo = $1,095/mo ✅
+GPU cost: RunPod RTX 4090 @ $1.50/hr × 730 hr/mo = $1,095/mo
 Inference cost: $1,095 / 12,000 req/day / 30 days = $0.003/req
-Savings: $80,000 - $1,095 = $78,905/mo (98.6% reduction) ✅
+Savings: $80,000 - $1,095 = $78,905/mo (98.6% reduction)
 ```
 
 ### #2 Latency (≤2s p95)
 
 ```
 Measured p95 latency: 1.2s (vLLM benchmark on RTX 4090, batch=4)
-Target: ≤2s ✅ (40% headroom)
+Target: ≤2s (40% headroom)
 Breakdown: 200ms prompt processing + 1,000ms generation (50 tokens @ 50 tok/s)
 ```
 
@@ -297,7 +293,7 @@ Breakdown: 200ms prompt processing + 1,000ms generation (50 tokens @ 50 tok/s)
 
 ```
 Measured: 12,000 req/day on 1× RTX 4090 (vLLM continuous batching)
-Target: ≥10,000 req/day ✅ (120% of target, 20% growth headroom)
+Target: ≥10,000 req/day (120% of target, 20% growth headroom)
 Bottleneck: Memory bandwidth (989 GB/s effective vs 1,008 GB/s peak)
 ```
 
@@ -307,7 +303,7 @@ Bottleneck: Memory bandwidth (989 GB/s effective vs 1,008 GB/s peak)
 Model: 8GB (INT4 quantized Llama-3-8B)
 KV cache: 4GB (batch=4, seq_len=2048)
 Activations: 2GB (forward pass)
-Total: 14GB used / 24GB available ✅ (58% utilization, room for batch growth)
+Total: 14GB used / 24GB available (58% utilization, room for batch growth)
 ```
 
 ### #5 Quality (≥95% accuracy)
@@ -316,7 +312,7 @@ Total: 14GB used / 24GB available ✅ (58% utilization, room for batch growth)
 Llama-3-8B INT4: 96.2% extraction accuracy on InferenceBase eval set
 GPT-3.5-turbo baseline: 97.4%
 Delta: -1.2 percentage points (acceptable for 98.6% cost savings)
-Target: ≥95% ✅
+Target: ≥95%
 ```
 
 ### #6 Reliability (>99% uptime)
@@ -324,7 +320,7 @@ Target: ≥95% ✅
 ```
 Measured uptime: 99.5% over 30-day test period
 Downtime: 3.6 hours (checkpoint restore after preemption)
-Target: >99% ✅
+Target: >99%
 Mitigation: Checkpoint every 10 min → <10 min recovery time
 ```
 
@@ -335,14 +331,14 @@ Mitigation: Checkpoint every 10 min → <10 min recovery time
 ```markdown
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Self-host Llama-3-8B for <$15k/month, replacing $80k OpenAI API costs
+> **The mission**: Self-host Llama-3-8B for <$15k/month, replacing $80k OpenAI API costs
 >
 > **6 Constraints**: #1 Cost (<$15k/mo) • #2 Latency (≤2s) • #3 Throughput (≥10k req/day) • #4 Memory (fit in VRAM) • #5 Quality (≥95% accuracy) • #6 Reliability (>99% uptime)
 
 **What we know so far**:
-- ✅ Ch.1: Identified RTX 4090 as target GPU (24GB VRAM, $1.50/hr)
-- ✅ Ch.2: Calculated exact memory: 16GB params + 4GB KV cache = 20GB → fits!
-- ⚡ **Current metrics**: 20GB VRAM used (83% of 24GB), batch size = 1, throughput = 3,000 req/day
+- Ch.1: Identified RTX 4090 as target GPU (24GB VRAM, $1.50/hr)
+- Ch.2: Calculated exact memory: 16GB params + 4GB KV cache = 20GB → fits!
+- **Current metrics**: 20GB VRAM used (83% of 24GB), batch size = 1, throughput = 3,000 req/day
 
 **What's blocking us**:
 
@@ -359,16 +355,16 @@ VRAM breakdown (24GB total):
 
 Current performance:
 - Batch size: 1 (cannot increase — would OOM)
-- Throughput: 3,000 req/day (30% of 10k target) ❌
-- Latency: 2.8s p95 (above 2s target) ❌
-- Cost: $1,095/month (within budget) ✅
+- Throughput: 3,000 req/day (30% of 10k target)
+- Latency: 2.8s p95 (above 2s target)
+- Cost: $1,095/month (within budget)
 ```
 
 **Problems**:
-1. ❌ **Cannot batch requests**: 20GB model leaves only 4GB for KV cache (batch=1 max)
-2. ❌ **Low throughput**: Single-request processing → 3,000 req/day (need 10,000)
-3. ❌ **Latency target missed**: Sequential processing → 2.8s p95 (need ≤2s)
-4. ❌ **No growth headroom**: 83% VRAM utilization → cannot scale traffic
+1. **Cannot batch requests**: 20GB model leaves only 4GB for KV cache (batch=1 max)
+2. **Low throughput**: Single-request processing → 3,000 req/day (need 10,000)
+3. **Latency target missed**: Sequential processing → 2.8s p95 (need ≤2s)
+4. **No growth headroom**: 83% VRAM utilization → cannot scale traffic
 
 **Business impact**:
 - Throughput shortfall: Can only handle 30% of current traffic → **cannot launch**
@@ -378,26 +374,25 @@ Current performance:
 
 **What this chapter unlocks**:
 
-🚀 **Quantization techniques to shrink model footprint**:
+ **Quantization techniques to shrink model footprint**:
 1. **INT8 quantization**: 16GB → 8GB params (50% reduction)
 2. **INT4 quantization**: 16GB → 4GB params (75% reduction)
 3. **GPTQ/AWQ**: Post-training quantization (no retraining needed)
 4. **Perplexity benchmarking**: Validate quality doesn't collapse
-
-⚡ **Expected improvements**:
+**Expected improvements**:
 - **VRAM**: 20GB → 12GB total (16GB params → 8GB INT4, KV cache unchanged)
 - **Batch size**: 1 → 4 (12GB freed headroom enables 4× KV cache)
-- **Throughput**: 3,000 → 12,000 req/day (4× from batching) ✅ Exceeds 10k target!
-- **Latency**: 2.8s → 1.2s p95 (batching amortizes overhead) ✅
-- **Quality**: 97.4% → 96.2% accuracy (1.2 point drop, but still >95% target) ✅
+- **Throughput**: 3,000 → 12,000 req/day (4× from batching) Exceeds 10k target!
+- **Latency**: 2.8s → 1.2s p95 (batching amortizes overhead)
+- **Quality**: 97.4% → 96.2% accuracy (1.2 point drop, but still >95% target)
 
 **Constraint status after Ch.3**:
-- #1 (Cost): ✅ **MAINTAINED** ($1,095/month, well under $15k)
-- #2 (Latency): ✅ **TARGET HIT!** (2.8s → 1.2s p95, beats 2s target by 40%)
-- #3 (Throughput): ✅ **TARGET HIT!** (3,000 → 12,000 req/day, 120% of 10k target)
-- #4 (Memory): ✅ **OPTIMIZED** (20GB → 12GB, 50% VRAM utilization, room to grow)
-- #5 (Quality): ✅ **TARGET HIT!** (96.2% accuracy, above 95% threshold)
-- #6 (Reliability): ⚡ **ON TRACK** (pending Ch.9 MLOps)
+- #1 (Cost): **MAINTAINED** ($1,095/month, well under $15k)
+- #2 (Latency): **TARGET HIT!** (2.8s → 1.2s p95, beats 2s target by 40%)
+- #3 (Throughput): **TARGET HIT!** (3,000 → 12,000 req/day, 120% of 10k target)
+- #4 (Memory): **OPTIMIZED** (20GB → 12GB, 50% VRAM utilization, room to grow)
+- #5 (Quality): **TARGET HIT!** (96.2% accuracy, above 95% threshold)
+- #6 (Reliability): **ON TRACK** (pending Ch.9 MLOps)
 
 Quantization unlocks batching → meets 3 of 6 core constraints in one chapter!
 ```
@@ -466,14 +461,14 @@ Every infrastructure concept is introduced through a **specific InferenceBase bo
 |---------|---------------|---------|-----------------|
 | Ch.1 GPU Architecture | Don't know which GPU can run Llama-3-8B | GPU spec sheet: 24GB VRAM → RTX 4090 fits | VRAM headroom analysis needed |
 | Ch.2 Memory Budgets | "Will it fit?" needs rigorous arithmetic | 16GB params + 4GB KV + 2GB activations = 22GB → yes | But batch=1 only; 3k req/day shortfall |
-| Ch.3 Quantization | FP16 fills 16GB → batch=1 max → 3k req/day (30% of target) | INT4: 16GB → 4GB → batch=4 → 12k req/day ✅ | Need efficient serving framework |
+| Ch.3 Quantization | FP16 fills 16GB → batch=1 max → 3k req/day (30% of target) | INT4: 16GB → 4GB → batch=4 → 12k req/day | Need efficient serving framework |
 | Ch.4 Distributed Training | Fine-tuning OOMs on single GPU | Data parallelism for LoRA → doesn't block inference | Serving still single-GPU |
-| Ch.5 Inference Optimization | Batch=4 but KV cache re-allocates per request → 2.8s p95 | PagedAttention → KV blocks pre-allocated → 1.2s p95 ✅ | Need production serving framework |
-| Ch.6 Serving Frameworks | Custom inference loop hits framework scaling limits | vLLM continuous batching → 12k req/day on 1× GPU ✅ | Multi-tenant isolation needed for growth |
+| Ch.5 Inference Optimization | Batch=4 but KV cache re-allocates per request → 2.8s p95 | PagedAttention → KV blocks pre-allocated → 1.2s p95 | Need production serving framework |
+| Ch.6 Serving Frameworks | Custom inference loop hits framework scaling limits | vLLM continuous batching → 12k req/day on 1× GPU | Multi-tenant isolation needed for growth |
 | Ch.7 Networking | 1 GPU saturated at 12k req/day; traffic growing | NVLink multi-GPU → 40k req/day capacity | Real cost unknown until Ch.8 |
-| Ch.8 Cloud Infrastructure | "How much does this actually cost?" | RunPod RTX 4090: $1,095/month ✅ (vs $15k budget) | MLOps still manual |
-| Ch.9 MLOps | Manual restarts after preemption → downtime | Checkpointing + health checks → 99.5% uptime ✅ | Full stack integration pending |
-| Ch.10 Production Platform | Components work in isolation; full stack untested | Load balancer + vLLM + monitoring → all 6 constraints ✅ | 🎉 Ship it |
+| Ch.8 Cloud Infrastructure | "How much does this actually cost?" | RunPod RTX 4090: $1,095/month (vs $15k budget) | MLOps still manual |
+| Ch.9 MLOps | Manual restarts after preemption → downtime | Checkpointing + health checks → 99.5% uptime | Full stack integration pending |
+| Ch.10 Production Platform | Components work in isolation; full stack untested | Load balancer + vLLM + monitoring → all 6 constraints | Ship it |
 
 ---
 
@@ -509,14 +504,14 @@ This track is **number-heavy**. The "math" is primarily:
 Llama-3-8B VRAM Breakdown
 
 Parameters: 8B params × 2 bytes/param (FP16) = 16 GB
-KV cache:   batch=4 × seq_len=2048 × layers=32 × heads=32 × dim=128 × 2 bytes = 4 GB
+KV cache: batch=4 × seq_len=2048 × layers=32 × heads=32 × dim=128 × 2 bytes = 4 GB
 Activations: ≈ 2 GB (forward pass peak, empirically measured)
-                                                              ─────────────
-Total:                                                        22 GB
+ ─────────────
+Total: 22 GB
 
-Available:  RTX 4090 = 24 GB
-Headroom:   24 - 22 = 2 GB  (8% free — insufficient for batch growth)
-Decision:   Quantize to INT4 to free headroom → see Ch.3
+Available: RTX 4090 = 24 GB
+Headroom: 24 - 22 = 2 GB (8% free — insufficient for batch growth)
+Decision: Quantize to INT4 to free headroom → see Ch.3
 ```
 
 Every VRAM walkthrough:
@@ -528,9 +523,9 @@ Every VRAM walkthrough:
 **Throughput formula always presented in this order:**
 ```
 Measured: X req/day on Y GPUs with batch=Z
-Target:   ≥10,000 req/day
-Gap:      10,000 - X = Y (need to close by...)
-Fix:      [technique] → expected: Z req/day
+Target: ≥10,000 req/day
+Gap: 10,000 - X = Y (need to close by...)
+Fix: [technique] → expected: Z req/day
 Evidence: Benchmark result, not projection
 ```
 
@@ -540,11 +535,11 @@ Evidence: Benchmark result, not projection
 
 | Symbol | Typical use in AIInfrastructure track |
 |--------|--------------------------------------|
-| `💡` | "The Roofline Model tells you whether you're memory-bandwidth bound or compute bound — before you touch the code" |
-| `⚠️` | "Never measure latency with batch=1 only — production systems batch requests; single-item latency understates real throughput" |
-| `⚡` | Constraint achievement: "1.2s p95 → Constraint #2 LATENCY ✅ ACHIEVED (40% under 2s target)" |
+| `` | "The Roofline Model tells you whether you're memory-bandwidth bound or compute bound — before you touch the code" |
+| `` | "Never measure latency with batch=1 only — production systems batch requests; single-item latency understates real throughput" |
+| `` | Constraint achievement: "1.2s p95 → Constraint #2 LATENCY ACHIEVED (40% under 2s target)" |
 | `📖` | Full derivation of FlashAttention tiling, GPTQ weight rounding algorithm, tensor parallelism sharding math |
-| `➡️` | "We're treating serving as a black box here. Ch.6 opens the box — vLLM's continuous batching is what actually drives the throughput numbers we projected" |
+| `➡` | "We're treating serving as a black box here. Ch.6 opens the box — vLLM's continuous batching is what actually drives the throughput numbers we projected" |
 
 ---
 
@@ -557,18 +552,18 @@ from vllm import LLM, SamplingParams
 
 # Educational: manual latency measurement
 def measure_latency(prompt: str, model, n_runs: int = 100) -> dict:
-    """Returns p50/p95/p99 latency in seconds."""
-    latencies = []
-    for _ in range(n_runs):
-        start = time.perf_counter()
-        _ = model.generate([prompt], SamplingParams(max_tokens=256))
-        latencies.append(time.perf_counter() - start)
-    latencies.sort()
-    return {
-        "p50": latencies[n_runs // 2],
-        "p95": latencies[int(n_runs * 0.95)],
-        "p99": latencies[int(n_runs * 0.99)],
-    }
+ """Returns p50/p95/p99 latency in seconds."""
+ latencies = []
+ for _ in range(n_runs):
+ start = time.perf_counter()
+ _ = model.generate([prompt], SamplingParams(max_tokens=256))
+ latencies.append(time.perf_counter() - start)
+ latencies.sort()
+ return {
+ "p50": latencies[n_runs // 2],
+ "p95": latencies[int(n_runs * 0.95)],
+ "p99": latencies[int(n_runs * 0.99)],
+ }
 ```
 
 **Variable naming conventions:**
@@ -587,11 +582,11 @@ def measure_latency(prompt: str, model, n_runs: int = 100) -> dict:
 **Show the arithmetic in code, not just the result:**
 ```python
 # VRAM budget calculation — show every term
-params_gb = 8e9 * 2 / 1e9          # 8B params × 2 bytes (FP16) = 16 GB
-kv_cache_gb = (                      # KV cache for batch=4
-    4 * 2048 * 32 * 2 * 128 * 2 / 1e9  # batch × seq × layers × kv_heads × dim × bytes
+params_gb = 8e9 * 2 / 1e9 # 8B params × 2 bytes (FP16) = 16 GB
+kv_cache_gb = ( # KV cache for batch=4
+ 4 * 2048 * 32 * 2 * 128 * 2 / 1e9 # batch × seq × layers × kv_heads × dim × bytes
 )
-activations_gb = 2.0                  # empirically measured peak
+activations_gb = 2.0 # empirically measured peak
 total_gb = params_gb + kv_cache_gb + activations_gb
 print(f"Total VRAM: {total_gb:.1f} GB / 24 GB available")
 # → Total VRAM: 22.1 GB / 24 GB available
@@ -673,17 +668,17 @@ Every chapter opens with three specific items, in order, in a blockquote:
 **Required pattern — followed exactly in infrastructure chapters:**
 
 ```
-> 🎯 The mission: [one line, InferenceBase challenge + 6 constraint list]
+> The mission: [one line, InferenceBase challenge + 6 constraint list]
 
 What we know so far:
-  ✅ [summary of what previous chapters have established]
-  ❌ But we still can't [specific capability that is still missing]
+[summary of what previous chapters have established]
+But we still can't [specific capability that is still missing]
 
 What's blocking us:
-  [2–4 sentences: the concrete, named gap with exact metrics]
+ [2–4 sentences: the concrete, named gap with exact metrics]
 
 What this chapter unlocks:
-  [Specific capability bullet points with numbers — throughput, latency, cost, VRAM]
+ [Specific capability bullet points with numbers — throughput, latency, cost, VRAM]
 ```
 
 **Numbers are always named.** The gap is never "our system is too slow" — it is "2.8s p95 latency vs. 2s target". The blocker is never "memory constraints" — it is "20GB VRAM used (83% of 24GB) → cannot increase batch size → throughput capped at 3,000 req/day (30% of target)."
@@ -699,7 +694,7 @@ Infrastructure chapters go further and show a VRAM or cost breakdown in §0 with
 The quantization chapter is the canonical example:
 - Act 1: Run FP16 Llama-3-8B → show exactly where it breaks (83% VRAM, batch=1 max, 3k req/day)
 - Act 2: Try INT8 → show what improves (50% params reduction) and what remains (KV cache unchanged)
-- Act 3: Push to INT4 → show the full unlock (75% params reduction → batch=4 possible → 12k req/day ✅)
+- Act 3: Push to INT4 → show the full unlock (75% params reduction → batch=4 possible → 12k req/day )
 - Act 4: Measure quality degradation → show it's acceptable (96.2% vs 97.4%, within tolerance)
 
 Each step in the arc: **configuration → specific failure → minimal fix → that fix's capability → measure the trade-off**. The reader is never asked to memorise a taxonomy of quantization methods. They experience the need for each precision reduction before seeing it.
@@ -721,14 +716,14 @@ This track is **number-heavy**. The "math" is primarily:
 Llama-3-8B VRAM Breakdown
 
 Parameters: 8B params × 2 bytes/param (FP16) = 16 GB
-KV cache:   batch=4 × seq_len=2048 × layers=32 × heads=32 × dim=128 × 2 bytes = 4 GB
+KV cache: batch=4 × seq_len=2048 × layers=32 × heads=32 × dim=128 × 2 bytes = 4 GB
 Activations: ≈ 2 GB (forward pass peak, empirically measured)
-                                                              ─────────────
-Total:                                                        22 GB
+ ─────────────
+Total: 22 GB
 
-Available:  RTX 4090 = 24 GB
-Headroom:   24 - 22 = 2 GB  (8% free — insufficient for batch growth)
-Decision:   Quantize to INT4 to free headroom → see Ch.3 Quantization
+Available: RTX 4090 = 24 GB
+Headroom: 24 - 22 = 2 GB (8% free — insufficient for batch growth)
+Decision: Quantize to INT4 to free headroom → see Ch.3 Quantization
 ```
 
 Every VRAM walkthrough:
@@ -740,9 +735,9 @@ Every VRAM walkthrough:
 **Throughput formula always presented in this order:**
 ```
 Measured: X req/day on Y GPUs with batch=Z
-Target:   ≥10,000 req/day
-Gap:      10,000 - X = Y (need to close by...)
-Fix:      [technique] → expected: Z req/day
+Target: ≥10,000 req/day
+Gap: 10,000 - X = Y (need to close by...)
+Fix: [technique] → expected: Z req/day
 Evidence: Benchmark result, not projection
 ```
 
@@ -761,17 +756,17 @@ Per-request: $[Y] / [requests/day] / 30 days = $[Z]/req
 ```
 VRAM Budget — FP16 vs INT4
 
-FP16:                           INT4:
-  Parameters:  16 GB              Parameters:   4 GB  (75% reduction)
-  KV cache:     4 GB              KV cache:     4 GB  (unchanged)
-  Activations:  2 GB              Activations:  2 GB  (unchanged)
-               ─────                            ─────
-  Total:       22 GB              Total:       10 GB
-  Available:   24 GB              Available:   24 GB
-  Headroom:     2 GB (8%)         Headroom:    14 GB (58%)
-                ↓                               ↓
-  Batch max:    1                 Batch max:    4
-  Throughput: 3k req/day          Throughput: 12k req/day ✅
+FP16: INT4:
+ Parameters: 16 GB Parameters: 4 GB (75% reduction)
+ KV cache: 4 GB KV cache: 4 GB (unchanged)
+ Activations: 2 GB Activations: 2 GB (unchanged)
+ ───── ─────
+ Total: 22 GB Total: 10 GB
+ Available: 24 GB Available: 24 GB
+ Headroom: 2 GB (8%) Headroom: 14 GB (58%)
+ ↓ ↓
+ Batch max: 1 Batch max: 4
+ Throughput: 3k req/day Throughput: 12k req/day
 ```
 
 **Rule 3: every formula is verbally glossed immediately after it appears:**
@@ -810,7 +805,7 @@ If a formula has no verbal gloss within three lines, it is incomplete.
 
 **Forward link pattern:** *"This PagedAttention technique solves the memory fragmentation problem. Ch.6 Serving Frameworks shows how vLLM implements it in production — delivering the 12k req/day throughput we projected."*
 
-**The forward pointer callout box** (`> ➡️`) is used for concepts that will be formally introduced later but need to be planted early. GPU Architecture plants the seed for quantization with a `> ➡️` callout that says INT4 will be introduced in Ch.3 where memory constraints force the optimization.
+**The forward pointer callout box** (`> ➡`) is used for concepts that will be formally introduced later but need to be planted early. GPU Architecture plants the seed for quantization with a `> ➡` callout that says INT4 will be introduced in Ch.3 where memory constraints force the optimization.
 
 **Cross-track links** to AI track for LLM fundamentals are standard. Always reference the specific chapter: `[AI track — Transformer Architecture](.03-ai/ch01_llm_fundamentals/transformers)` for model architecture details.
 
@@ -822,11 +817,11 @@ Used consistently across infrastructure chapters. Must be used exactly this way 
 
 | Symbol | Meaning | When to use |
 |---|---|---|
-| `💡` | Key insight / conceptual payoff | After a hardware revelation that reframes the bottleneck (e.g., "Memory bandwidth, not compute, limits throughput") |
-| `⚠️` | Warning / common trap | Before or immediately after a configuration that is often done wrong (e.g., "Never measure latency with batch=1 only") |
-| `⚡` | InferenceBase constraint connection | When content advances or validates one of the 6 InferenceBase constraints |
+| `` | Key insight / conceptual payoff | After a hardware revelation that reframes the bottleneck (e.g., "Memory bandwidth, not compute, limits throughput") |
+| `` | Warning / common trap | Before or immediately after a configuration that is often done wrong (e.g., "Never measure latency with batch=1 only") |
+| `` | InferenceBase constraint connection | When content advances or validates one of the 6 InferenceBase constraints |
 | `> 📖 **Optional:**` | Deeper hardware detail | Full GPU microarchitecture, CUDA kernel optimization, networking protocol specs that break the narrative flow |
-| `> ➡️` | Forward pointer | When a hardware capability needs to be planted before its full treatment (e.g., mention NVLink in Ch.1, detail in Ch.7) |
+| `> ➡` | Forward pointer | When a hardware capability needs to be planted before its full treatment (e.g., mention NVLink in Ch.1, detail in Ch.7) |
 
 The callout box content is always **actionable**: it ends with a Fix, a Rule, a What-to-do, or a Measurement. No callout box that just says "this is interesting" without consequence.
 
@@ -878,18 +873,18 @@ from vllm import LLM, SamplingParams
 
 # Educational: manual latency measurement
 def measure_latency(prompt: str, model, n_runs: int = 100) -> dict:
-    """Returns p50/p95/p99 latency in seconds."""
-    latencies = []
-    for _ in range(n_runs):
-        start = time.perf_counter()
-        _ = model.generate([prompt], SamplingParams(max_tokens=256))
-        latencies.append(time.perf_counter() - start)
-    latencies.sort()
-    return {
-        "p50": latencies[n_runs // 2],
-        "p95": latencies[int(n_runs * 0.95)],
-        "p99": latencies[int(n_runs * 0.99)],
-    }
+ """Returns p50/p95/p99 latency in seconds."""
+ latencies = []
+ for _ in range(n_runs):
+ start = time.perf_counter()
+ _ = model.generate([prompt], SamplingParams(max_tokens=256))
+ latencies.append(time.perf_counter() - start)
+ latencies.sort()
+ return {
+ "p50": latencies[n_runs // 2],
+ "p95": latencies[int(n_runs * 0.95)],
+ "p99": latencies[int(n_runs * 0.99)],
+ }
 ```
 
 **Variable naming is consistent across all chapters:**
@@ -909,11 +904,11 @@ def measure_latency(prompt: str, model, n_runs: int = 100) -> dict:
 **Show the arithmetic in code, not just the result:**
 ```python
 # VRAM budget calculation — show every term
-params_gb = 8e9 * 2 / 1e9          # 8B params × 2 bytes (FP16) = 16 GB
-kv_cache_gb = (                      # KV cache for batch=4
-    4 * 2048 * 32 * 2 * 128 * 2 / 1e9  # batch × seq × layers × kv_heads × dim × bytes
+params_gb = 8e9 * 2 / 1e9 # 8B params × 2 bytes (FP16) = 16 GB
+kv_cache_gb = ( # KV cache for batch=4
+ 4 * 2048 * 32 * 2 * 128 * 2 / 1e9 # batch × seq × layers × kv_heads × dim × bytes
 )
-activations_gb = 2.0                  # empirically measured peak
+activations_gb = 2.0 # empirically measured peak
 total_gb = params_gb + kv_cache_gb + activations_gb
 print(f"Total VRAM: {total_gb:.1f} GB / 24 GB available")
 # → Total VRAM: 22.1 GB / 24 GB available
@@ -930,16 +925,15 @@ print(f"Total VRAM: {total_gb:.1f} GB / 24 GB available")
 The Progress Check is the last substantive section before the Bridge. It has a fixed format:
 
 ```
-✅ Unlocked capabilities:
-  [bulleted list — specific capabilities with named metrics]
-  [e.g., "Throughput improved: 3k → 12k req/day (4× from INT4 quantization + batching)"]
-
-❌ Still can't solve:
-  [bulleted list — named, specific gaps]
-  [e.g., "❌ Single-GPU ceiling: 12k req/day meets target but no headroom for growth"]
+Unlocked capabilities:
+ [bulleted list — specific capabilities with named metrics]
+ [e.g., "Throughput improved: 3k → 12k req/day (4× from INT4 quantization + batching)"]
+Still can't solve:
+ [bulleted list — named, specific gaps]
+ [e.g., " Single-GPU ceiling: 12k req/day meets target but no headroom for growth"]
 
 Progress toward constraints:
-  [table: Constraint | Status | Current State]
+ [table: Constraint | Status | Current State]
 
 [Mermaid LR flowchart showing all chapters from Ch.1 to Ch.10,
  with current chapter highlighted and key metrics annotated]
@@ -951,17 +945,17 @@ The progress flowchart always shows the full forward arc, not just the current c
 
 | Constraint | Status | Current State |
 |------------|--------|---------------|
-| #1 COST | ⚡/✅/❌ | $1,095/mo (within $15k budget ✅) |
-| #2 LATENCY | ⚡/✅/❌ | 1.2s p95 (target: ≤2s) ✅ |
-| #3 THROUGHPUT | ⚡/✅/❌ | 12k req/day (target: ≥10k) ✅ |
-| #4 MEMORY | ⚡/✅/❌ | 10GB / 24GB (58% headroom) ✅ |
-| #5 QUALITY | ⚡/✅/❌ | 96.2% accuracy (target: ≥95%) ✅ |
-| #6 RELIABILITY | ⚡/✅/❌ | 99.5% uptime (target: >99%) ✅ |
+| #1 COST | // | $1,095/mo (within $15k budget ) |
+| #2 LATENCY | // | 1.2s p95 (target: ≤2s) |
+| #3 THROUGHPUT | // | 12k req/day (target: ≥10k) |
+| #4 MEMORY | // | 10GB / 24GB (58% headroom) |
+| #5 QUALITY | // | 96.2% accuracy (target: ≥95%) |
+| #6 RELIABILITY | // | 99.5% uptime (target: >99%) |
 
 **Status legend:**
-- ✅ **ACHIEVED** — target met, constraint solved
-- ⚡ **ON TRACK** — measurable progress, not yet at target
-- ❌ **BLOCKED** — no progress yet, or regression
+- **ACHIEVED** — target met, constraint solved
+- **ON TRACK** — measurable progress, not yet at target
+- **BLOCKED** — no progress yet, or regression
 
 ---
 
@@ -1032,7 +1026,7 @@ Every `grand_solution.md` follows this **7-section template**:
 
 ---
 
-## Mission Accomplished: [Final Metric] ✅
+## Mission Accomplished: [Final Metric]
 
 **The Challenge:** [One-sentence restatement of grand challenge]
 **The Result:** [Final metric achieved]
@@ -1103,7 +1097,7 @@ Every `grand_solution.md` follows this **7-section template**:
 
 | # | Constraint | Target | Status | How We Achieved It |
 |---|------------|--------|--------|--------------------|
-| #1 | ACCURACY | [target] | ✅ [metric] | [Chapter + technique] |
+| #1 | ACCURACY | [target] | [metric] | [Chapter + technique] |
 | ... | ... | ... | ... | ... |
 
 ---
@@ -1144,10 +1138,10 @@ Every `grand_solution.md` follows this **7-section template**:
 **Tone:** Executive summary meets technical reference. You're briefing a senior engineer who's smart but time-constrained.
 
 **Voice patterns:**
-- ✅ **Direct:** "Ch.3 unlocked VIF auditing. This prevents multicollinearity."
-- ❌ **Verbose:** "In Chapter 3, we learned about an important technique called VIF auditing, which is a method that helps us identify and prevent issues related to multicollinearity in our features."
-- ✅ **Metric-focused:** "$70k → $32k MAE (54% improvement)"
-- ❌ **Vague:** "Much better accuracy than before"
+- **Direct:** "Ch.3 unlocked VIF auditing. This prevents multicollinearity."
+- **Verbose:** "In Chapter 3, we learned about an important technique called VIF auditing, which is a method that helps us identify and prevent issues related to multicollinearity in our features."
+- **Metric-focused:** "$70k → $32k MAE (54% improvement)"
+- **Vague:** "Much better accuracy than before"
 
 ---
 
@@ -1202,7 +1196,7 @@ Every `grand_solution.md` follows this **7-section template**:
 
 ## Markdown cell: Key insight
 """
-**💡 Key insight:** [The "aha" moment from chapter]
+** Key insight:** [The "aha" moment from chapter]
 ---
 """
 
@@ -1211,11 +1205,11 @@ Every `grand_solution.md` follows this **7-section template**:
 ```
 
 **Requirements:**
-- ✅ **Executable:** All code must run top-to-bottom (use mock data if needed for expensive operations)
-- ✅ **Concise markdown:** Brief context only (detailed explanations live in chapter READMEs)
-- ✅ **Production patterns:** Show real implementation code, not toy examples
-- ✅ **Clear sections:** One major section per chapter/concept group
-- ✅ **Hardware aware:** Document GPU/CPU requirements, provide fallbacks where possible
+- **Executable:** All code must run top-to-bottom (use mock data if needed for expensive operations)
+- **Concise markdown:** Brief context only (detailed explanations live in chapter READMEs)
+- **Production patterns:** Show real implementation code, not toy examples
+- **Clear sections:** One major section per chapter/concept group
+- **Hardware aware:** Document GPU/CPU requirements, provide fallbacks where possible
 
 **Cross-references:**
 - Update `grand_solution.md` to reference the notebook in "How to Use This Guide" section
@@ -1228,8 +1222,8 @@ Every `grand_solution.md` follows this **7-section template**:
 - MultimodalAI (when created) — Multi-modal model integration
 
 ---
-- ✅ **Production-grounded:** "VIF audit runs before every training job. Alert if VIF > 5."
-- ❌ **Academic:** "VIF is a useful diagnostic statistic for assessing multicollinearity."
+- **Production-grounded:** "VIF audit runs before every training job. Alert if VIF > 5."
+- **Academic:** "VIF is a useful diagnostic statistic for assessing multicollinearity."
 
 **Content density:**
 - Each chapter summary: 150-200 words max
@@ -1238,21 +1232,21 @@ Every `grand_solution.md` follows this **7-section template**:
 - Mermaid diagrams: 1-2 per document (architecture + maybe progression)
 
 **What to include:**
-- ✅ Exact metrics at each stage ($70k, $55k, $48k, ...)
-- ✅ Specific hyperparameters that matter (α=1.0, degree=2, ...)
-- ✅ Production patterns (when/why to use each technique)
-- ✅ Chapter interdependencies ("Ch.4 requires Ch.3's scaling")
-- ✅ Mermaid flowchart showing full pipeline integration
+- Exact metrics at each stage ($70k, $55k, $48k, ...)
+- Specific hyperparameters that matter (α=1.0, degree=2, ...)
+- Production patterns (when/why to use each technique)
+- Chapter interdependencies ("Ch.4 requires Ch.3's scaling")
+- Mermaid flowchart showing full pipeline integration
 
 **What to exclude:**
-- ❌ Mathematical derivations (that's in individual chapters)
-- ❌ Historical context (who invented what, when)
-- ❌ Step-by-step tutorials (that's in chapter READMEs)
-- ❌ Exercise problems (that's in notebooks)
-- ❌ Duplicate content across sections (say it once, reference it later)
+- Mathematical derivations (that's in individual chapters)
+- Historical context (who invented what, when)
+- Step-by-step tutorials (that's in chapter READMEs)
+- Exercise problems (that's in notebooks)
+- Duplicate content across sections (say it once, reference it later)
 
 **Formatting conventions:**
-- Use checkmark bullets for capabilities unlocked: ✅ ❌ ⚡ ➡️
+- Use checkmark bullets for capabilities unlocked: ➡
 - Show progression as ASCII tables or code block diagrams
 - Use `inline code` for hyperparameters, `$metric$` for dollars
 - Chapter references: "Ch.3" or "Ch.5-7" (never "Chapter Five")
@@ -1310,7 +1304,7 @@ Act 4: Measurement and business impact (cost, latency, throughput)
 **Example from Quantization chapter:**
 - FP16 deployed → 20GB VRAM (83%), batch=1 max, 3k req/day → Throughput shortfall (30% of target)
 - Try INT8 → 50% params reduction → But KV cache unchanged, still limited headroom
-- Push to INT4 → 75% params reduction → batch=4 possible → 12k req/day ✅ Target hit!
+- Push to INT4 → 75% params reduction → batch=4 possible → 12k req/day Target hit!
 - Measure quality → 96.2% accuracy (1.2% drop) → Acceptable trade-off for 98.6% cost savings
 
 **Anti-pattern:** Listing quantization methods (FP32, FP16, INT8, INT4) in a table without demonstrating deployment need.
@@ -1369,7 +1363,7 @@ Act 4: Measurement and business impact (cost, latency, throughput)
 **Example from Inference Optimization:**
 1. **Bottleneck:** Batch=4 but KV cache re-allocates per request → memory fragmentation → 2.8s p95 latency
 2. **Impact:** "CTO asks: Can you guarantee <2s?" You can't with current implementation.
-3. **Solution:** PagedAttention pre-allocates KV blocks → eliminates fragmentation → 1.2s p95 ✅
+3. **Solution:** PagedAttention pre-allocates KV blocks → eliminates fragmentation → 1.2s p95
 
 **Anti-pattern:** "Here's PagedAttention, a memory optimization technique..." (solution before bottleneck).
 
@@ -1383,7 +1377,7 @@ Act 4: Measurement and business impact (cost, latency, throughput)
 2. Optimization applied (specific configuration change)
 3. Re-measurement (same hardware + workload)
 4. Comparison table (before/after with % improvement)
-5. Confirmation: "1.2s p95 latency achieved — 40% under 2s target ✅"
+5. Confirmation: "1.2s p95 latency achieved — 40% under 2s target "
 ```
 
 **Example from Quantization:**
@@ -1392,7 +1386,7 @@ Baseline: FP16, batch=1, RTX 4090 → 3,000 req/day
 Optimization: INT4 quantization, batch=4 enabled
 Re-measurement: INT4, batch=4, RTX 4090 → 12,000 req/day
 Improvement: 4× throughput (300% increase), cost per request: $0.003
-"Target exceeded: 12k > 10k req/day ✅"
+"Target exceeded: 12k > 10k req/day "
 ```
 
 **Why effective:** Builds trust before moving to next optimization. Readers verify the claim with explicit measurements.
@@ -1406,7 +1400,7 @@ Improvement: 4× throughput (300% increase), cost per request: $0.003
 | Framework | Throughput (req/day) | Latency (p95) | VRAM (GB) | Status |
 |-----------|---------------------|---------------|-----------|--------|
 | TensorRT-LLM | 8,500 | 1.8s | 18 | Setup complexity |
-| vLLM | 12,000 | 1.2s | 14 | ✅ Winner |
+| vLLM | 12,000 | 1.2s | 14 | Winner |
 | Text Generation Inference | 9,200 | 1.5s | 16 | Good, not optimal |
 
 **Then** explain why vLLM wins (PagedAttention, continuous batching, optimized CUDA kernels).
@@ -1419,12 +1413,12 @@ Improvement: 4× throughput (300% increase), cost per request: $0.003
 
 **Template:**
 ```markdown
-> ➡️ **[Hardware feature] goes deeper in [Chapter].** This chapter covers [what's needed now].
+> ➡ **[Hardware feature] goes deeper in [Chapter].** This chapter covers [what's needed now].
 > For [advanced optimization] — [specific capability] — see [link]. For now: [continue with current concept].
 ```
 
 **Example from GPU Architecture:**
-> "⚡ NVLink multi-GPU communication goes deeper in Ch.7 Networking. This chapter establishes single-GPU specs. For multi-GPU scaling, tensor parallelism, pipeline parallelism — see there. For now: understand the 24GB VRAM ceiling on RTX 4090."
+> " NVLink multi-GPU communication goes deeper in Ch.7 Networking. This chapter establishes single-GPU specs. For multi-GPU scaling, tensor parallelism, pipeline parallelism — see there. For now: understand the 24GB VRAM ceiling on RTX 4090."
 
 **Why effective:** Prevents derailment while acknowledging production-scale multi-GPU setups exist. Readers know where to go later.
 
@@ -1470,14 +1464,14 @@ Improvement: 4× throughput (300% increase), cost per request: $0.003
 
 **Template:**
 ```markdown
-Single-GPU:  throughput = [baseline]
-Multi-GPU:   throughput = [baseline] × N GPUs × efficiency_factor  ← SAME STRUCTURE, scaling factor
+Single-GPU: throughput = [baseline]
+Multi-GPU: throughput = [baseline] × N GPUs × efficiency_factor ← SAME STRUCTURE, scaling factor
 ```
 
 **Example from Networking:**
 ```
-Single RTX 4090:  12k req/day
-4× RTX 4090 + NVLink:  12k × 4 × 0.85 = 40.8k req/day
+Single RTX 4090: 12k req/day
+4× RTX 4090 + NVLink: 12k × 4 × 0.85 = 40.8k req/day
 (efficiency_factor = 0.85 accounts for communication overhead)
 ```
 
@@ -1507,10 +1501,10 @@ Single RTX 4090:  12k req/day
 **Example from GPU Architecture:**
 - **Spec:** RTX 4090 — 24GB VRAM
 - **Mapping:**
-  - 24GB VRAM → fits Llama-3-8B FP16 (16GB params + 4GB KV + 2GB activations = 22GB)
-  - Headroom: 2GB (8% free) → batch=1 max, cannot scale
-  - Bandwidth: 1,008 GB/s → memory-bandwidth-bound, not compute-bound
-  - Cost: $1.50/hr RunPod spot → $1,095/month (within $15k budget ✅)
+ - 24GB VRAM → fits Llama-3-8B FP16 (16GB params + 4GB KV + 2GB activations = 22GB)
+ - Headroom: 2GB (8% free) → batch=1 max, cannot scale
+ - Bandwidth: 1,008 GB/s → memory-bandwidth-bound, not compute-bound
+ - Cost: $1.50/hr RunPod spot → $1,095/month (within $15k budget )
 
 **Anti-pattern:** "RTX 4090 has 24GB VRAM" with no further elaboration on deployment implications.
 
@@ -1542,7 +1536,7 @@ Single RTX 4090:  12k req/day
 
 **Example from Cloud Infrastructure:**
 - **First:** "$80k/month OpenAI bill → $0.027/req. CEO wants 90% cost reduction."
-- **Then:** "RTX 4090 @ $1.50/hr × 730 hr = $1,095/month. If we hit 12k req/day: $0.003/req → 89% reduction ✅"
+- **Then:** "RTX 4090 @ $1.50/hr × 730 hr = $1,095/month. If we hit 12k req/day: $0.003/req → 89% reduction "
 - **Finally:** Show the optimization path (quantization, batching) that enables 12k req/day on 1 GPU.
 
 **Why effective:** Cost constraint becomes THE FORCING FUNCTION for all technical decisions. Every optimization is justified by ROI.
@@ -1591,13 +1585,13 @@ Map tone to pedagogical purpose:
 **Purpose:** Let readers triage infrastructure sections visually before reading text.
 
 **System:**
-- 💡 = Key insight (hardware bottleneck revelation — power users skim these first)
-- ⚠️ = Common trap (engineers jump here when debugging production issues)
-- ⚡ = InferenceBase constraint advancement (tracks mission progress)
+- = Key insight (hardware bottleneck revelation — power users skim these first)
+- = Common trap (engineers jump here when debugging production issues)
+- = InferenceBase constraint advancement (tracks mission progress)
 - 📖 = Optional depth (GPU microarchitecture deep dives — safe to skip)
-- ➡️ = Forward pointer (where this hardware capability reappears)
+- ➡ = Forward pointer (where this hardware capability reappears)
 
-**Rule:** No other emoji as inline callouts. (✅❌🎯🚨 are structural markers for Challenge/Progress sections only.)
+**Rule:** No other emoji as inline callouts. (🚨 are structural markers for Challenge/Progress sections only.)
 
 ---
 
@@ -1647,12 +1641,12 @@ Map tone to pedagogical purpose:
 
 | Constraint | Status | Evidence |
 |------------|--------|----------|
-| #1 COST | ✅ **ACHIEVED** | $1,095/mo < $15k target (93% under budget) |
-| #2 LATENCY | ✅ **ACHIEVED** | 1.2s p95 < 2s target (40% headroom) |
-| #3 THROUGHPUT | ✅ **ACHIEVED** | 12k req/day > 10k target (120% of requirement) |
-| #4 MEMORY | ✅ **OPTIMIZED** | 10GB / 24GB VRAM (58% headroom) |
-| #5 QUALITY | ✅ **ACHIEVED** | 96.2% > 95% target (1.2% below GPT-3.5) |
-| #6 RELIABILITY | ⚡ **ON TRACK** | 99.5% uptime > 99% target |
+| #1 COST | **ACHIEVED** | $1,095/mo < $15k target (93% under budget) |
+| #2 LATENCY | **ACHIEVED** | 1.2s p95 < 2s target (40% headroom) |
+| #3 THROUGHPUT | **ACHIEVED** | 12k req/day > 10k target (120% of requirement) |
+| #4 MEMORY | **OPTIMIZED** | 10GB / 24GB VRAM (58% headroom) |
+| #5 QUALITY | **ACHIEVED** | 96.2% > 95% target (1.2% below GPT-3.5) |
+| #6 RELIABILITY | **ON TRACK** | 99.5% uptime > 99% target |
 
 **Why effective:** Red/amber/green shifts signal tangible progress. Creates long-term momentum across infrastructure chapters.
 
@@ -1698,8 +1692,8 @@ Roofline plot or cost chart + caption (10 lines)
 
 **System:**
 - `---` horizontal rules between optimization acts
-- `> 💡` insight callouts mark hardware revelations (e.g., memory-bandwidth-bound diagnosis)
-- `> ⚠️` warning callouts flag common deployment traps
+- `> ` insight callouts mark hardware revelations (e.g., memory-bandwidth-bound diagnosis)
+- `> ` warning callouts flag common deployment traps
 - `####` subsection headers for digestible hardware spec units within major sections
 
 **Frequency:** ~1 visual break per 50-80 lines.
@@ -1717,7 +1711,7 @@ Roofline plot or cost chart + caption (10 lines)
 **Hypothesis:** INT4 quantization → 4× throughput (from batch=1 → batch=4)
 **Measurement:** RTX 4090, vLLM, Llama-3-8B INT4, batch=4 → 12,000 req/day
 **Baseline:** FP16, batch=1 → 3,000 req/day
-**Confirmation:** "4× throughput confirmed (12k / 3k = 4.0×) ✅"
+**Confirmation:** "4× throughput confirmed (12k / 3k = 4.0×) "
 ```
 
 **Why effective:** Closes trust loop. Readers don't just accept hardware claims — they witness measured improvements.
@@ -1738,11 +1732,11 @@ Roofline plot or cost chart + caption (10 lines)
 **Rule:** Every chapter updates the 6-constraint progress table.
 
 **Example progression:**
-- Ch.1: All ❌ (no deployment plan yet)
-- Ch.2: #4 ⚡ (VRAM calculated, tight fit)
-- Ch.3: #3 ✅, #4 ✅ (quantization unlocks batching → throughput target hit)
-- Ch.5: #2 ✅ (PagedAttention → latency target hit)
-- Ch.10: All ✅ (production-ready system, all constraints met)
+- Ch.1: All (no deployment plan yet)
+- Ch.2: #4 (VRAM calculated, tight fit)
+- Ch.3: #3 , #4 (quantization unlocks batching → throughput target hit)
+- Ch.5: #2 (PagedAttention → latency target hit)
+- Ch.10: All (production-ready system, all constraints met)
 
 **Why effective:** Gamification. Red→amber→green shifts feel like mission milestones.
 
@@ -1752,7 +1746,7 @@ Roofline plot or cost chart + caption (10 lines)
 
 **Pattern:**
 ```python
-# ✅ COMPLETE — runs as-is (requires vllm, torch)
+# COMPLETE — runs as-is (requires vllm, torch)
 from vllm import LLM, SamplingParams
 model = LLM("meta-llama/Llama-3-8B", quantization="awq", dtype="int4")
 outputs = model.generate(prompts, SamplingParams(max_tokens=256))
@@ -1763,9 +1757,9 @@ vs
 ```python
 # Conceptual structure (not runnable)
 for request in request_queue:
-    output = model.generate(request)
-    measure_latency(output)
-    update_throughput_stats()
+ output = model.generate(request)
+ measure_latency(output)
+ update_throughput_stats()
 ```
 
 **Why effective:** Readers can verify hardware claims themselves. Trust through reproducibility.
@@ -1773,32 +1767,23 @@ for request in request_queue:
 ---
 
 ### Anti-Patterns (What NOT to Do)
-
-❌ **Listing hardware specs without deployment impact**
+**Listing hardware specs without deployment impact**
 Example: "RTX 4090 has 24GB VRAM, 16,384 CUDA cores, 1,008 GB/s bandwidth" (table without InferenceBase implications)
-
-❌ **Optimizations without before/after measurements**
+**Optimizations without before/after measurements**
 Example: "Quantization improves throughput" instead of "3k → 12k req/day (4× measured improvement)"
-
-❌ **Vague cost claims**
+**Vague cost claims**
 Example: "Self-hosting is cheaper" instead of "$1,095/month vs. $80k OpenAI (98.6% reduction)"
-
-❌ **Academic register**
+**Academic register**
 Example: "We demonstrate that...", "It can be shown that...", "In this section we will discuss..."
-
-❌ **Synthetic workloads for benchmarks**
+**Synthetic workloads for benchmarks**
 Example: Using random tensors instead of ACME Corp Q3 earnings report (InferenceBase canonical test document)
-
-❌ **Improvised emoji**
-Example: Using 🔍🎯✨🚀 as inline callouts (only 💡⚠️⚡📖➡️ allowed)
-
-❌ **Topic-label section headings**
+**Improvised emoji**
+Example: Using ✨ as inline callouts (only 📖➡ allowed)
+**Topic-label section headings**
 Example: "## 3 · Hardware" instead of "## 3 · RTX 4090 Specs — Why 24GB VRAM Is the Deployment Ceiling"
-
-❌ **Skipping VRAM breakdown**
+**Skipping VRAM breakdown**
 Example: Claiming "model fits in 24GB" without showing params + KV cache + activations arithmetic
-
-❌ **Batch=1-only benchmarks**
+**Batch=1-only benchmarks**
 Example: Reporting 0.8s latency from single-request test when production uses batch=4 (1.2s actual)
 
 ---
@@ -1849,12 +1834,12 @@ Before publishing any infrastructure chapter, verify each item:
 - [ ] Failure-first pedagogy: new optimizations introduced because baseline configuration broke, not listed a priori
 - [ ] Optional depth: GPU microarchitecture details behind `> 📖 Optional` callout boxes with vendor doc links
 - [ ] Forward/backward links: every hardware concept links to where it was introduced and where it reappears
-- [ ] Callout boxes: only `💡 ⚠️ ⚡ 📖 ➡️` — no improvised emoji
+- [ ] Callout boxes: only ` 📖 ➡` — no improvised emoji
 - [ ] Mermaid diagrams: colour palette respected (dark blue / dark green / amber / dark red)
 - [ ] Images: dark background, descriptive alt-text, purposeful (Roofline plots, VRAM breakdowns, cost curves, latency decompositions)
 - [ ] Needle GIF: chapter-level constraint progress animation present under `## Animation`
 - [ ] Code: Hardware spec stated before benchmark, `measure_latency`/`vram_gb` naming, executable benchmarks with pip-installable deps
-- [ ] Progress Check: ✅/⚡/❌ bullets with specific metrics + 6-constraint table + Mermaid LR arc showing full Ch.1-10 journey
+- [ ] Progress Check: // bullets with specific metrics + 6-constraint table + Mermaid LR arc showing full Ch.1-10 journey
 - [ ] What Can Go Wrong: 3–5 infrastructure traps with Fix + diagnostic Mermaid flowchart
 - [ ] Bridge section: one clause what this chapter established + one clause what next chapter adds
 - [ ] Voice: second person, no academic register, dry humour once per major section maximum
@@ -1905,13 +1890,13 @@ The heading already tells the reader they are in the profiling stage. There is n
 
 **Callout discipline for infrastructure chapters:**
 
-- `> 💡 **[Stage] verdict:**` — one line after each optimization stage, states the VRAM/latency/cost delta.
+- `> **[Stage] verdict:**` — one line after each optimization stage, states the VRAM/latency/cost delta.
 
-  Example: `> 💡 **Quantization verdict:** INT4 reduces VRAM from 16GB → 5.5GB, enabling batch=8 vs batch=1 — throughput 340 → 2,100 req/hr, p95 latency 4.1s → 1.7s ✅.`
+ Example: `> **Quantization verdict:** INT4 reduces VRAM from 16GB → 5.5GB, enabling batch=8 vs batch=1 — throughput 340 → 2,100 req/hr, p95 latency 4.1s → 1.7s .`
 
-- `> ➡️` — forward pointer when a configuration feeds the next chapter.
+- `> ➡` — forward pointer when a configuration feeds the next chapter.
 
-  Example: `> ➡️ vLLM uses this INT4 checkpoint directly — no re-quantization needed (Ch.6).`
+ Example: `> ➡ vLLM uses this INT4 checkpoint directly — no re-quantization needed (Ch.6).`
 
 - **Never:** a `DEPLOYMENT CHECKPOINT` or `OPTIMIZATION CHECKPOINT` block.
 - **Never:** a section listing `Phase N → §X, §Y` or `Stage N → §X, Walkthrough B`.

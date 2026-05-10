@@ -12,16 +12,16 @@
 
 ## Animation
 
-> 🎬 *Animation placeholder — needle-builder agent will generate this.*
+> *Animation placeholder — needle-builder agent will generate this.*
 
 
-> 🎯 **The mission**: Self-host Llama-3-8B for <$15k/month, replacing $80k OpenAI API costs
+> **The mission**: Self-host Llama-3-8B for <$15k/month, replacing $80k OpenAI API costs
 >
 > **6 Constraints**: #1 Cost (<$15k/mo) • #2 Latency (≤2s) • #3 Throughput (≥10k req/day) • #4 Memory (fit in VRAM) • #5 Quality (≥95% accuracy) • #6 Reliability (>99% uptime)
 
 **What we know so far**:
-- ✅ Ch.1: RTX 4090 identified as target GPU (24GB VRAM, 1.0 TB/s bandwidth, $1,095/month)
-- ⚡ **Current state**: Have GPU selection, but unknown if Llama-3-8B fits in 24GB
+- Ch.1: RTX 4090 identified as target GPU (24GB VRAM, 1.0 TB/s bandwidth, $1,095/month)
+- **Current state**: Have GPU selection, but unknown if Llama-3-8B fits in 24GB
 
 **What's blocking us**:
 
@@ -45,11 +45,11 @@ You: "Wait, what? I calculated 16GB for the model... where did the other 8GB go?
 ```
 
 **Problems**:
-1. ❌ **Forgot KV cache**: Stores attention keys/values for all tokens → grows with sequence length × batch size
-2. ❌ **Forgot activations**: Temporary tensors during forward pass → several GB
-3. ❌ **Unknown batch limit**: How many requests can we process simultaneously before OOM?
-4. ❌ **Training memory unknown**: If we want to fine-tune, what GPU do we need? (Adam optimizer states = 3× params!)
-5. ❌ **No safety margin**: Running at 100% VRAM utilization = fragmentation issues, OOM on long sequences
+1. **Forgot KV cache**: Stores attention keys/values for all tokens → grows with sequence length × batch size
+2. **Forgot activations**: Temporary tensors during forward pass → several GB
+3. **Unknown batch limit**: How many requests can we process simultaneously before OOM?
+4. **Training memory unknown**: If we want to fine-tune, what GPU do we need? (Adam optimizer states = 3× params!)
+5. **No safety margin**: Running at 100% VRAM utilization = fragmentation issues, OOM on long sequences
 
 **Business impact**:
 - **Wrong GPU purchase = $50k mistake**: If you buy RTX 4090 (24GB) but actually need A100 (80GB), you burn $8k + weeks of delay
@@ -59,27 +59,26 @@ You: "Wait, what? I calculated 16GB for the model... where did the other 8GB go?
 
 **What this chapter unlocks**:
 
-🚀 **Precise VRAM calculator for inference & training**:
+ **Precise VRAM calculator for inference & training**:
 1. **Parameter memory**: 8B params × 2 bytes (FP16) = 16 GB
 2. **KV cache memory**: batch_size × seq_len × layers × hidden_dim × 2 (K+V) × 2 bytes
 3. **Activation memory**: Temporary tensors during forward/backward pass
 4. **Optimizer states** (training): Adam = params + momentum + variance = 3× param memory
 5. **Gradient memory** (training): Same shape as parameters = 1× param memory
-
-⚡ **Expected outcomes**:
+**Expected outcomes**:
 - **Inference VRAM**: 16GB params + 4GB KV cache (batch=1, seq=2048) + 2GB activations = **22GB total**
-- **Fits in RTX 4090**: 22GB / 24GB = 92% utilization ✅ (2GB headroom)
-- **Max batch size**: (24GB - 16GB - 2GB) / 4GB per batch = **batch=1.5** → can only do batch=1 ❌
+- **Fits in RTX 4090**: 22GB / 24GB = 92% utilization (2GB headroom)
+- **Max batch size**: (24GB - 16GB - 2GB) / 4GB per batch = **batch=1.5** → can only do batch=1
 - **Training VRAM**: 16GB params + 48GB optimizer states + 16GB gradients = **80GB** → need A100 80GB for fine-tuning
 - **Quantization motivation**: INT4 → 4GB params (vs 16GB) → frees 12GB for KV cache → enables batch=4
 
 **Constraint status after Ch.2**:
-- #1 (Cost): ✅ **MAINTAINED** ($1,095/month RTX 4090 confirmed)
-- #2 (Latency): ⚡ **BLOCKED** (batch=1 → sequential processing → high latency under load)
-- #3 (Throughput): ❌ **SHORTFALL** (batch=1 → max 3,000 req/day vs 10k target)
-- #4 (Memory): ✅ **TARGET HIT!** (22GB / 24GB = fits, but zero batch headroom)
-- #5 (Quality): ⚡ **ON TRACK** (Llama-3-8B baseline)
-- #6 (Reliability): ⚡ **UNKNOWN**
+- #1 (Cost): **MAINTAINED** ($1,095/month RTX 4090 confirmed)
+- #2 (Latency): **BLOCKED** (batch=1 → sequential processing → high latency under load)
+- #3 (Throughput): **SHORTFALL** (batch=1 → max 3,000 req/day vs 10k target)
+- #4 (Memory): **TARGET HIT!** (22GB / 24GB = fits, but zero batch headroom)
+- #5 (Quality): **ON TRACK** (Llama-3-8B baseline)
+- #6 (Reliability): **UNKNOWN**
 
 **Critical realization**: Model fits, but **batch=1 limit kills throughput**. Need Ch.3 quantization to free VRAM for batching.
 
@@ -103,27 +102,27 @@ For **inference**, you only pay for #1, #2, #3. For **training**, you pay for al
 
 **Before diving into formulas, understand the workflow you'll follow with every model deployment:**
 
-> 📊 **What you'll build by the end:** A VRAM budget spreadsheet that tells you (1) exact memory breakdown, (2) whether model fits in your GPU, and (3) optimization levers to pull if it doesn't fit.
+> **What you'll build by the end:** A VRAM budget spreadsheet that tells you (1) exact memory breakdown, (2) whether model fits in your GPU, and (3) optimization levers to pull if it doesn't fit.
 
 ```
-Phase 1: CALCULATE              Phase 2: CHECK                  Phase 3: OPTIMIZE
+Phase 1: CALCULATE Phase 2: CHECK Phase 3: OPTIMIZE
 ────────────────────────────────────────────────────────────────────────────
-Calculate exact memory          Does total fit in GPU VRAM?     If no → adjust batch size,
-for each component:                                            quantization, or gradient
-                                                               checkpointing
-• Parameters (model weights)    Compare:
-• KV cache (attention state)    Total Memory ≤ GPU VRAM?       Decision tree:
-• Activations (forward pass)                                   • Reduce batch → cut KV cache
-• Optimizer states (training)   If YES → proceed to deploy     • INT8/INT4 → cut params 2-4×
-• Gradients (backprop)          If NO → go to Phase 3          • Gradient checkpoint → cut
-                                                                 activations 90%
+Calculate exact memory Does total fit in GPU VRAM? If no → adjust batch size,
+for each component: quantization, or gradient
+ checkpointing
+• Parameters (model weights) Compare:
+• KV cache (attention state) Total Memory ≤ GPU VRAM? Decision tree:
+• Activations (forward pass) • Reduce batch → cut KV cache
+• Optimizer states (training) If YES → proceed to deploy • INT8/INT4 → cut params 2-4×
+• Gradients (backprop) If NO → go to Phase 3 • Gradient checkpoint → cut
+ activations 90%
 
-→ DECISION:                     → DECISION:                     → DECISION:
-  For inference: skip optimizer   Leave 2-4GB headroom for       Each optimization has quality
-  and gradients                   fragmentation + safety         tradeoff — validate after!
+→ DECISION: → DECISION: → DECISION:
+ For inference: skip optimizer Leave 2-4GB headroom for Each optimization has quality
+ and gradients fragmentation + safety tradeoff — validate after!
 ```
 
-> ⚠️ **Two ways to read this chapter:**
+> **Warning — Two ways to read this chapter:**
 >
 > **Option A (Workflow-first)**: Read §1.5 → follow phase markers → run code snippets → hit decision checkpoints as they appear. Best for practitioners deploying models NOW.
 >
@@ -131,9 +130,9 @@ for each component:                                            quantization, or 
 >
 > **Both paths teach the same content** — workflow just reorganizes it by practitioner decision sequence.
 
-> 💡 **Usage note:** Phases 1–2 are always sequential (can't check fit without calculating first). Phase 3 is iterative — you may cycle through multiple optimizations (quantize → check → reduce batch → check) until model fits.
+> **Usage note:** Phases 1–2 are always sequential (can't check fit without calculating first). Phase 3 is iterative — you may cycle through multiple optimizations (quantize → check → reduce batch → check) until model fits.
 
-> 💡 **Memory verdict:** 16GB params + 4GB KV cache + 2GB activations = 22GB — fits RTX 4090 24GB with 2GB headroom (batch=1 only; quantization needed for batch growth) ✅.
+> **Memory verdict:** 16GB params + 4GB KV cache + 2GB activations = 22GB — fits RTX 4090 24GB with 2GB headroom (batch=1 only; quantization needed for batch growth) .
 
 ---
 
@@ -170,8 +169,8 @@ Llama-3-8B at FP16: **8,030,000,000 params × 2 bytes = 16,060 MB ≈ 16 GB**
 
 ```python
 # Phase 1: Calculate parameter memory for Llama-3-8B
-num_params = 8_000_000_000  # 8 billion parameters
-bytes_per_param = 2  # FP16 precision
+num_params = 8_000_000_000 # 8 billion parameters
+bytes_per_param = 2 # FP16 precision
 
 param_memory_bytes = num_params * bytes_per_param
 param_memory_gb = param_memory_bytes / (1024**3)
@@ -181,11 +180,11 @@ print(f"Precision: FP16 ({bytes_per_param} bytes/param)")
 
 # Compare precisions:
 for precision, bytes_val in [("FP32", 4), ("FP16", 2), ("INT8", 1), ("INT4", 0.5)]:
-    memory_gb = (num_params * bytes_val) / (1024**3)
-    print(f"{precision}: {memory_gb:.1f} GB")
+ memory_gb = (num_params * bytes_val) / (1024**3)
+ print(f"{precision}: {memory_gb:.1f} GB")
 
 # Output:
-# Parameter memory: 14.90 GB  (Note: actual = 16GB accounting for embedding layers)
+# Parameter memory: 14.90 GB (Note: actual = 16GB accounting for embedding layers)
 # Precision: FP16 (2 bytes/param)
 # FP32: 29.8 GB
 # FP16: 14.9 GB
@@ -193,7 +192,7 @@ for precision, bytes_val in [("FP32", 4), ("FP16", 2), ("INT8", 1), ("INT4", 0.5
 # INT4: 3.7 GB
 ```
 
-> 💡 **Industry Standard:** `transformers` library automatically handles precision
+> **Industry Standard:** `transformers` library automatically handles precision
 >
 > ```python
 > from transformers import AutoModelForCausalLM
@@ -201,9 +200,9 @@ for precision, bytes_val in [("FP32", 4), ("FP16", 2), ("INT8", 1), ("INT4", 0.5
 >
 > # Load model directly in FP16
 > model = AutoModelForCausalLM.from_pretrained(
->     "meta-llama/Llama-2-7b-hf",
->     torch_dtype=torch.float16,  # FP16 precision
->     device_map="auto"  # Automatically map to GPU
+> "meta-llama/Llama-2-7b-hf",
+> torch_dtype=torch.float16, # FP16 precision
+> device_map="auto" # Automatically map to GPU
 > )
 >
 > # Check actual memory usage
@@ -242,7 +241,7 @@ Where:
 
 **The bottleneck**: KV cache scales linearly with batch size. At batch=4, it consumes 16 GB alone — as much as the entire model!
 
-> 💡 **Industry Standard:** Flash Attention for memory-efficient attention
+> **Industry Standard:** Flash Attention for memory-efficient attention
 >
 > ```python
 > # Standard attention: O(N²) memory for attention matrix
@@ -252,10 +251,10 @@ Where:
 > import torch
 >
 > model = AutoModelForCausalLM.from_pretrained(
->     "meta-llama/Llama-2-7b-hf",
->     torch_dtype=torch.float16,
->     attn_implementation="flash_attention_2",  # Enable Flash Attention
->     device_map="auto",
+> "meta-llama/Llama-2-7b-hf",
+> torch_dtype=torch.float16,
+> attn_implementation="flash_attention_2", # Enable Flash Attention
+> device_map="auto",
 > )
 >
 > # Memory savings:
@@ -272,40 +271,40 @@ Where:
 
 ```python
 # Phase 1: Calculate KV cache memory for different batch sizes
-num_layers = 32  # Llama-3-8B
+num_layers = 32 # Llama-3-8B
 hidden_size = 4096
 seq_len = 2048
-bytes_per_param = 2  # FP16
+bytes_per_param = 2 # FP16
 
 def calculate_kv_cache(batch_size):
-    """Calculate KV cache memory in GB."""
-    # 2× for keys + values
-    kv_cache_bytes = 2 * batch_size * seq_len * num_layers * hidden_size * bytes_per_param
-    return kv_cache_bytes / (1024**3)
+ """Calculate KV cache memory in GB."""
+ # 2× for keys + values
+ kv_cache_bytes = 2 * batch_size * seq_len * num_layers * hidden_size * bytes_per_param
+ return kv_cache_bytes / (1024**3)
 
 print("Batch Size | KV Cache Memory | Use Case")
 print("-" * 50)
 for batch in [1, 2, 4, 8, 16]:
-    kv_gb = calculate_kv_cache(batch)
+ kv_gb = calculate_kv_cache(batch)
 
-    # DECISION LOGIC: Can we fit this batch size?
-    if kv_gb < 4:
-        status = "✅ FITS - Low memory"
-    elif kv_gb < 10:
-        status = "⚠️ MODERATE - Monitor closely"
-    else:
-        status = "❌ HIGH - Likely OOM on 24GB GPU"
+ # DECISION LOGIC: Can we fit this batch size?
+ if kv_gb < 4:
+ status = " FITS - Low memory"
+ elif kv_gb < 10:
+ status = " MODERATE - Monitor closely"
+ else:
+ status = " HIGH - Likely OOM on 24GB GPU"
 
-    print(f"batch={batch:2d}  | {kv_gb:5.2f} GB      | {status}")
+ print(f"batch={batch:2d} | {kv_gb:5.2f} GB | {status}")
 
 # Output:
 # Batch Size | KV Cache Memory | Use Case
 # --------------------------------------------------
-# batch= 1  |  1.00 GB      | ✅ FITS - Low memory
-# batch= 2  |  2.00 GB      | ✅ FITS - Low memory
-# batch= 4  |  4.00 GB      | ⚠️ MODERATE - Monitor closely
-# batch= 8  |  8.00 GB      | ⚠️ MODERATE - Monitor closely
-# batch=16  | 16.00 GB      | ❌ HIGH - Likely OOM on 24GB GPU
+# batch= 1 | 1.00 GB | FITS - Low memory
+# batch= 2 | 2.00 GB | FITS - Low memory
+# batch= 4 | 4.00 GB | MODERATE - Monitor closely
+# batch= 8 | 8.00 GB | MODERATE - Monitor closely
+# batch=16 | 16.00 GB | HIGH - Likely OOM on 24GB GPU
 ```
 
 ### 4.1 ✓ DECISION CHECKPOINT — Phase 1 Parameter & KV Cache Complete
@@ -336,28 +335,28 @@ Activations are the intermediate tensors computed during the forward pass (atten
 
 **Gradient checkpointing** (training optimization): recompute activations during backward pass instead of storing them → cuts activation memory by 90%, at the cost of 30% slower training.
 
-> 💡 **Industry Standard:** PyTorch `torch.utils.checkpoint`
+> **Industry Standard:** PyTorch `torch.utils.checkpoint`
 >
 > ```python
 > import torch
 > from torch.utils.checkpoint import checkpoint
 >
 > class TransformerBlock(torch.nn.Module):
->     def __init__(self, ...):
->         super().__init__()
->         self.attention = MultiHeadAttention(...)
->         self.ffn = FeedForward(...)
+> def __init__(self, ...):
+> super().__init__()
+> self.attention = MultiHeadAttention(...)
+> self.ffn = FeedForward(...)
 >
->     def forward(self, x):
->         # Standard forward: stores all activations (~8GB for Llama-3-8B)
->         # x = self.attention(x)
->         # x = self.ffn(x)
+> def forward(self, x):
+> # Standard forward: stores all activations (~8GB for Llama-3-8B)
+> # x = self.attention(x)
+> # x = self.ffn(x)
 >
->         # Gradient checkpointing: recompute activations during backward
->         # Memory: ~800MB (90% reduction), Speed: 30% slower
->         x = checkpoint(self.attention, x, use_reentrant=False)
->         x = checkpoint(self.ffn, x, use_reentrant=False)
->         return x
+> # Gradient checkpointing: recompute activations during backward
+> # Memory: ~800MB (90% reduction), Speed: 30% slower
+> x = checkpoint(self.attention, x, use_reentrant=False)
+> x = checkpoint(self.ffn, x, use_reentrant=False)
+> return x
 > ```
 >
 > **When to use:** When training OOMs but you can tolerate 30% longer training time.
@@ -384,7 +383,7 @@ For Llama-3-8B at FP32 optimizer states (standard):
 
 → Requires A100 80GB × 2 GPUs or ZeRO-2 sharding (Ch.4)
 
-> 💡 **Industry Standard:** DeepSpeed ZeRO for distributed training
+> **Industry Standard:** DeepSpeed ZeRO for distributed training
 >
 > ```python
 > # ZeRO Stage 2: Shard optimizer states + gradients across GPUs
@@ -393,26 +392,26 @@ For Llama-3-8B at FP32 optimizer states (standard):
 > from transformers import TrainingArguments, Trainer
 >
 > training_args = TrainingArguments(
->     output_dir="./results",
->     per_device_train_batch_size=1,
->     gradient_accumulation_steps=4,
->     fp16=True,  # FP16 training
->     deepspeed="ds_config.json",  # Enable DeepSpeed
+> output_dir="./results",
+> per_device_train_batch_size=1,
+> gradient_accumulation_steps=4,
+> fp16=True, # FP16 training
+> deepspeed="ds_config.json", # Enable DeepSpeed
 > )
 >
 > # ds_config.json:
 > # {
-> #   "zero_optimization": {
-> #     "stage": 2,  # Shard optimizer + gradients
-> #     "offload_optimizer": {"device": "cpu"}  # Optional: offload to CPU RAM
-> #   },
-> #   "fp16": {"enabled": true}
+> # "zero_optimization": {
+> # "stage": 2, # Shard optimizer + gradients
+> # "offload_optimizer": {"device": "cpu"} # Optional: offload to CPU RAM
+> # },
+> # "fp16": {"enabled": true}
 > # }
 >
 > trainer = Trainer(
->     model=model,
->     args=training_args,
->     train_dataset=train_dataset,
+> model=model,
+> args=training_args,
+> train_dataset=train_dataset,
 > )
 > trainer.train()
 > ```
@@ -446,69 +445,69 @@ $$\text{VRAM}_{\text{inference}} = \text{Params} + \text{KV Cache} + \text{Activ
 ```python
 # Phase 2: Calculate total memory and check against GPU VRAM
 def check_vram_fit(precision="FP16", batch_size=1, seq_len=2048, gpu_vram_gb=24):
-    """Check if Llama-3-8B fits in GPU memory."""
+ """Check if Llama-3-8B fits in GPU memory."""
 
-    # Phase 1 calculations (from above)
-    num_params = 8_000_000_000
-    precision_map = {"FP32": 4, "FP16": 2, "INT8": 1, "INT4": 0.5}
-    bytes_per_param = precision_map[precision]
+ # Phase 1 calculations (from above)
+ num_params = 8_000_000_000
+ precision_map = {"FP32": 4, "FP16": 2, "INT8": 1, "INT4": 0.5}
+ bytes_per_param = precision_map[precision]
 
-    # Component breakdown
-    param_memory_gb = (num_params * bytes_per_param) / (1024**3)
+ # Component breakdown
+ param_memory_gb = (num_params * bytes_per_param) / (1024**3)
 
-    # KV cache: 2 × layers × hidden × seq × batch × bytes
-    kv_cache_gb = (2 * 32 * 4096 * seq_len * batch_size * bytes_per_param) / (1024**3)
+ # KV cache: 2 × layers × hidden × seq × batch × bytes
+ kv_cache_gb = (2 * 32 * 4096 * seq_len * batch_size * bytes_per_param) / (1024**3)
 
-    # Activations: rough estimate
-    activations_gb = 2.0 if batch_size <= 2 else 4.0
+ # Activations: rough estimate
+ activations_gb = 2.0 if batch_size <= 2 else 4.0
 
-    total_memory_gb = param_memory_gb + kv_cache_gb + activations_gb
+ total_memory_gb = param_memory_gb + kv_cache_gb + activations_gb
 
-    # DECISION LOGIC: Does it fit with safety margin?
-    safety_margin_gb = 2.0  # Leave 2GB headroom for fragmentation
-    fits = total_memory_gb <= (gpu_vram_gb - safety_margin_gb)
-    utilization_pct = (total_memory_gb / gpu_vram_gb) * 100
+ # DECISION LOGIC: Does it fit with safety margin?
+ safety_margin_gb = 2.0 # Leave 2GB headroom for fragmentation
+ fits = total_memory_gb <= (gpu_vram_gb - safety_margin_gb)
+ utilization_pct = (total_memory_gb / gpu_vram_gb) * 100
 
-    print(f"\n=== VRAM CHECK: {precision} | batch={batch_size} | seq={seq_len} ===")
-    print(f"Parameter memory:  {param_memory_gb:6.2f} GB")
-    print(f"KV cache:          {kv_cache_gb:6.2f} GB")
-    print(f"Activations:       {activations_gb:6.2f} GB")
-    print(f"{'='*50}")
-    print(f"Total required:    {total_memory_gb:6.2f} GB")
-    print(f"GPU VRAM:          {gpu_vram_gb:6.2f} GB")
-    print(f"Utilization:       {utilization_pct:5.1f}%")
-    print(f"\nVerdict: {'\u2705 FITS' if fits else '\u274c OOM - DOES NOT FIT'}")
+ print(f"\n=== VRAM CHECK: {precision} | batch={batch_size} | seq={seq_len} ===")
+ print(f"Parameter memory: {param_memory_gb:6.2f} GB")
+ print(f"KV cache: {kv_cache_gb:6.2f} GB")
+ print(f"Activations: {activations_gb:6.2f} GB")
+ print(f"{'='*50}")
+ print(f"Total required: {total_memory_gb:6.2f} GB")
+ print(f"GPU VRAM: {gpu_vram_gb:6.2f} GB")
+ print(f"Utilization: {utilization_pct:5.1f}%")
+ print(f"\nVerdict: {'\u2705 FITS' if fits else '\u274c OOM - DOES NOT FIT'}")
 
-    if not fits:
-        print(f"\n⚠️ Need {total_memory_gb - (gpu_vram_gb - safety_margin_gb):.1f} GB more VRAM")
-        print("  → Options: reduce batch, use quantization, or upgrade GPU")
+ if not fits:
+ print(f"\n Need {total_memory_gb - (gpu_vram_gb - safety_margin_gb):.1f} GB more VRAM")
+ print(" → Options: reduce batch, use quantization, or upgrade GPU")
 
-    return fits, total_memory_gb
+ return fits, total_memory_gb
 
 # Test scenarios
 check_vram_fit(precision="FP16", batch_size=1, seq_len=2048, gpu_vram_gb=24)
-check_vram_fit(precision="FP16", batch_size=4, seq_len=2048, gpu_vram_gb=24)  # Will OOM
-check_vram_fit(precision="INT4", batch_size=4, seq_len=2048, gpu_vram_gb=24)  # Will fit!
+check_vram_fit(precision="FP16", batch_size=4, seq_len=2048, gpu_vram_gb=24) # Will OOM
+check_vram_fit(precision="INT4", batch_size=4, seq_len=2048, gpu_vram_gb=24) # Will fit!
 
 # Output:
 # === VRAM CHECK: FP16 | batch=1 | seq=2048 ===
-# Parameter memory:   14.90 GB
-# KV cache:            1.00 GB
-# Activations:         2.00 GB
+# Parameter memory: 14.90 GB
+# KV cache: 1.00 GB
+# Activations: 2.00 GB
 # ==================================================
-# Total required:     17.90 GB
-# GPU VRAM:           24.00 GB
-# Utilization:        74.6%
+# Total required: 17.90 GB
+# GPU VRAM: 24.00 GB
+# Utilization: 74.6%
 #
-# Verdict: ✅ FITS
+# Verdict: FITS
 ```
 
 ### 7.1 ✓ DECISION CHECKPOINT — Phase 2 Complete
 
 **What you just saw:**
-- **FP16, batch=1:** Total = 18GB, fits in 24GB RTX 4090 with 6GB headroom ✅
-- **FP16, batch=4:** Total = 34GB, **exceeds 24GB** → OOM error ❌
-- **INT4, batch=4:** Total = 10GB, fits with 14GB headroom ✅ (4× throughput unlocked!)
+- **FP16, batch=1:** Total = 18GB, fits in 24GB RTX 4090 with 6GB headroom
+- **FP16, batch=4:** Total = 34GB, **exceeds 24GB** → OOM error
+- **INT4, batch=4:** Total = 10GB, fits with 14GB headroom (4× throughput unlocked!)
 
 **What it means:**
 - **Model fits at batch=1** but no room for higher throughput
@@ -516,8 +515,8 @@ check_vram_fit(precision="INT4", batch_size=4, seq_len=2048, gpu_vram_gb=24)  # 
 - **Quantization is mandatory for batching:** INT4 shrinks params 16GB→4GB, freeing 12GB for KV cache
 
 **What to do next:**
-→ **If model fits (✅):** Proceed to deployment — skip Phase 3
-→ **If model OOMs (❌):** Go to Phase 3 OPTIMIZE — apply quantization, reduce batch, or enable gradient checkpointing
+→ **If model fits ():** Proceed to deployment — skip Phase 3
+→ **If model OOMs ():** Go to Phase 3 OPTIMIZE — apply quantization, reduce batch, or enable gradient checkpointing
 → **For our scenario:** Model fits at batch=1 but **throughput target requires batch=4**. We MUST apply INT4 quantization (Ch.3) to free VRAM.
 
 ---
@@ -548,7 +547,7 @@ $$\text{VRAM}_{\text{training}} = \text{Params} + \text{Optimizer States} + \tex
 
 **What you just saw:**
 - **Training memory:** 104GB total (16GB params + 64GB optimizer + 16GB gradients + 8GB activations)
-- **RTX 4090 has 24GB** → training **does not fit** ❌
+- **RTX 4090 has 24GB** → training **does not fit**
 - **A100 80GB × 2 required** for full fine-tuning ($6,000/month vs $1,095/month for RTX 4090)
 
 **What it means:**
@@ -557,9 +556,9 @@ $$\text{VRAM}_{\text{training}} = \text{Params} + \text{Optimizer States} + \tex
 - **Gradient checkpointing helps** but still needs 30GB (A100 40GB at $3,000/month)
 
 **What to do next:**
-→ **Option 1 (Full fine-tune):** Upgrade to A100 80GB × 2 with ZeRO-2 sharding — **$6,000/month** ⚠️
+→ **Option 1 (Full fine-tune):** Upgrade to A100 80GB × 2 with ZeRO-2 sharding — **$6,000/month**
 → **Option 2 (Gradient checkpoint):** A100 40GB — **$3,000/month**, 30% slower training
-→ **Option 3 (LoRA fine-tune):** Train only adapters (2GB), keep base frozen — **fits on RTX 4090 ($1,095/month)** ✅
+→ **Option 3 (LoRA fine-tune):** Train only adapters (2GB), keep base frozen — **fits on RTX 4090 ($1,095/month)**
 → **For our scenario:** Budget is tight. **Choose LoRA (Ch.4)** to fine-tune on RTX 4090 without exceeding $15k/month total budget.
 
 ---
@@ -570,21 +569,21 @@ $$\text{VRAM}_{\text{training}} = \text{Params} + \text{Optimizer States} + \tex
 
 ```
 Step 1: Parameter memory
-  70B params × 0.5 bytes (INT4) = 35 GB
+ 70B params × 0.5 bytes (INT4) = 35 GB
 
 Step 2: KV cache
-  L = 80 layers, H = 8192 hidden dim, S = 4096 seq, B = 2
-  KV = 2 × 80 × 8192 × 4096 × 2 × 2 bytes
-     = 2 × 80 × 8192 × 4096 × 2 × 2
-     = 21,474,836,480 bytes ≈ 21.5 GB
+ L = 80 layers, H = 8192 hidden dim, S = 4096 seq, B = 2
+ KV = 2 × 80 × 8192 × 4096 × 2 × 2 bytes
+ = 2 × 80 × 8192 × 4096 × 2 × 2
+ = 21,474,836,480 bytes ≈ 21.5 GB
 
 Step 3: Activations (estimate)
-  ~8 GB (scales with batch × seq)
+ ~8 GB (scales with batch × seq)
 
 Total: 35 + 21.5 + 8 = 64.5 GB
 
 Conclusion: Fits on A100 80GB (80 - 64.5 = 15.5 GB margin)
-            Does NOT fit on A100 40GB
+ Does NOT fit on A100 40GB
 ```
 
 ---
@@ -594,19 +593,19 @@ Conclusion: Fits on A100 80GB (80 - 64.5 = 15.5 GB margin)
 ### VRAM Breakdown: Llama-3-8B Inference vs Training
 
 ```
-INFERENCE (FP16)                      INFERENCE (INT4)                      TRAINING (FP16/FP32)
-─────────────────                     ─────────────────                     ────────────────────
-RTX 4090 24GB │                       RTX 4090 24GB │                       A100 80GB × 2 │
-              │                                     │                                       │
-Params:     16GB ████████████████      Params:     4GB ████                Params:     16GB (FP16)
-KV Cache:    4GB ████ (batch=1)       KV Cache:  16GB ████████████████    Optimizer:  64GB (FP32)
-Activations: 2GB ██                    Activations: 2GB ██                  Gradients:  16GB (FP16)
-             ─────                                 ─────                   Activations:  8GB
-Total:      22GB (92% utilization)    Total:     22GB (92% utilization)                ─────
-Free:        2GB ✅                    Free:       2GB ✅                   Total:     104GB ❌
-             ↓                                      ↓                                    ↓
-Batch max:    1 (limited!)            Batch max:   4 (4× throughput!)     Requires: 2× A100 80GB
-Throughput: 3k req/day ❌             Throughput: 12k req/day ✅          or gradient checkpointing
+INFERENCE (FP16) INFERENCE (INT4) TRAINING (FP16/FP32)
+───────────────── ───────────────── ────────────────────
+RTX 4090 24GB │ RTX 4090 24GB │ A100 80GB × 2 │
+ │ │ │
+Params: 16GB ████████████████ Params: 4GB ████ Params: 16GB (FP16)
+KV Cache: 4GB ████ (batch=1) KV Cache: 16GB ████████████████ Optimizer: 64GB (FP32)
+Activations: 2GB ██ Activations: 2GB ██ Gradients: 16GB (FP16)
+ ───── ───── Activations: 8GB
+Total: 22GB (92% utilization) Total: 22GB (92% utilization) ─────
+Free: 2GB Free: 2GB Total: 104GB
+ ↓ ↓ ↓
+Batch max: 1 (limited!) Batch max: 4 (4× throughput!) Requires: 2× A100 80GB
+Throughput: 3k req/day Throughput: 12k req/day or gradient checkpointing
 ```
 
 ---
@@ -625,7 +624,7 @@ Throughput: 3k req/day ❌             Throughput: 12k req/day ✅          or g
 
 ## 11.5 · [Phase 3: OPTIMIZE] The Hyperparameter Dial
 
-> 🎯 **You are here because:** Your model OOMed in Phase 2 CHECK, OR you need higher throughput (larger batch) but don't have VRAM headroom.
+> **You are here because:** Your model OOMed in Phase 2 CHECK, OR you need higher throughput (larger batch) but don't have VRAM headroom.
 
 Three knobs control VRAM. Each can be turned independently, but they interact through the total budget constraint.
 
@@ -639,9 +638,9 @@ $$\text{VRAM}_\text{KV} = 2 \times L \times H \times S \times B \times P$$
 | 2 | ~1.8 GB | ~18 GB | ~75 tok/s |
 | 4 | ~3.5 GB | ~19.5 GB | ~130 tok/s |
 | 8 | ~7.0 GB | ~23 GB | ~200 tok/s |
-| 16 | ~14 GB | ~30 GB ❌ OOM on 24 GB | — |
+| 16 | ~14 GB | ~30 GB OOM on 24 GB | — |
 
-> ⚠️ Never push batch=16 on a 24 GB GPU with Llama-3-8B at BF16. Use INT8/INT4 quantization (Ch.3) to free ~8 GB first.
+> Never push batch=16 on a 24 GB GPU with Llama-3-8B at BF16. Use INT8/INT4 quantization (Ch.3) to free ~8 GB first.
 
 ### Dial 2 — Sequence Length
 
@@ -652,7 +651,7 @@ Sequence length $S$ scales KV cache linearly. Halving sequence length halves KV 
 | 512 tokens | ~0.9 GB | Customer support queries |
 | 2,048 tokens | ~3.5 GB | Standard context window |
 | 8,192 tokens | ~14 GB | Near-OOM at batch=4; need INT8 |
-| 32,768 tokens | ~56 GB ❌ | Multi-GPU only |
+| 32,768 tokens | ~56 GB | Multi-GPU only |
 
 ### Dial 3 — Precision
 
@@ -660,12 +659,12 @@ Precision affects parameter memory and KV cache simultaneously:
 
 | Precision | Bytes per param $P$ | Llama-3-8B params | KV cache per unit | Total VRAM (batch=4, $S=2048$) |
 |-----------|--------------------|--------------------|-------------------|-------------------------------|
-| FP32 | 4 | 32 GB | 4 bytes | ~50 GB ❌ |
-| BF16 | 2 | 16 GB | 2 bytes | ~19.5 GB ✅ |
-| INT8 | 1 | 8 GB | 1 byte | ~9.8 GB ✅✅ |
+| FP32 | 4 | 32 GB | 4 bytes | ~50 GB |
+| BF16 | 2 | 16 GB | 2 bytes | ~19.5 GB |
+| INT8 | 1 | 8 GB | 1 byte | ~9.8 GB |
 | INT4 | 0.5 | 4 GB | 0.5 byte | ~5 GB — headroom for batch=16 |
 
-> 💡 KV cache grows with batch × seq_len. Parameters are **fixed** at load time. Quantization shrinks both; smaller batch reduces only the KV cache.
+> KV cache grows with batch × seq_len. Parameters are **fixed** at load time. Quantization shrinks both; smaller batch reduces only the KV cache.
 
 **Code snippet — Phase 3 OPTIMIZE: Apply INT8 quantization**
 
@@ -678,19 +677,19 @@ import torch
 # Target: Reduce to 8GB (INT8) to free 8GB for KV cache (batch=1 → batch=4)
 
 quantization_config = BitsAndBytesConfig(
-    load_in_8bit=True,  # INT8 quantization
-    llm_int8_threshold=6.0,  # Keep outlier features in FP16
+ load_in_8bit=True, # INT8 quantization
+ llm_int8_threshold=6.0, # Keep outlier features in FP16
 )
 
 model = AutoModelForCausalLM.from_pretrained(
-    "meta-llama/Llama-2-7b-hf",
-    quantization_config=quantization_config,
-    device_map="auto",  # Automatically place on GPU
+ "meta-llama/Llama-2-7b-hf",
+ quantization_config=quantization_config,
+ device_map="auto", # Automatically place on GPU
 )
 
 # Verify memory reduction
 param_memory_bytes = sum(
-    p.numel() * p.element_size() for p in model.parameters()
+ p.numel() * p.element_size() for p in model.parameters()
 )
 param_memory_gb = param_memory_bytes / (1024**3)
 
@@ -699,28 +698,28 @@ print(f"Memory saved: {16 - param_memory_gb:.2f} GB")
 print(f"Now have headroom for batch=4 KV cache (4GB)")
 
 # Output:
-# Quantized model memory: 7.85 GB  (50% reduction from 16GB)
+# Quantized model memory: 7.85 GB (50% reduction from 16GB)
 # Memory saved: 8.15 GB
 # Now have headroom for batch=4 KV cache (4GB)
 ```
 
-> 💡 **Industry Standard:** `bitsandbytes` library for production quantization
+> **Industry Standard:** `bitsandbytes` library for production quantization
 >
 > ```python
 > # INT4 quantization with QLoRA (best memory efficiency)
 > from transformers import AutoModelForCausalLM, BitsAndBytesConfig
 >
 > bnb_config = BitsAndBytesConfig(
->     load_in_4bit=True,  # INT4 quantization
->     bnb_4bit_compute_dtype=torch.bfloat16,  # Compute in BF16 for stability
->     bnb_4bit_use_double_quant=True,  # Double quantization for extra compression
->     bnb_4bit_quant_type="nf4",  # NormalFloat4 (better for LLMs)
+> load_in_4bit=True, # INT4 quantization
+> bnb_4bit_compute_dtype=torch.bfloat16, # Compute in BF16 for stability
+> bnb_4bit_use_double_quant=True, # Double quantization for extra compression
+> bnb_4bit_quant_type="nf4", # NormalFloat4 (better for LLMs)
 > )
 >
 > model = AutoModelForCausalLM.from_pretrained(
->     "meta-llama/Llama-2-7b-hf",
->     quantization_config=bnb_config,
->     device_map="auto",
+> "meta-llama/Llama-2-7b-hf",
+> quantization_config=bnb_config,
+> device_map="auto",
 > )
 > # Memory: ~4GB (75% reduction from 16GB FP16)
 > # Enables batch=8 on RTX 4090 (24GB)
@@ -740,15 +739,15 @@ print(f"Now have headroom for batch=4 KV cache (4GB)")
 **What it means:**
 - **Quantization unlocks batch scaling:** FP16 @ batch=1 (18GB) → INT4 @ batch=4 (10GB) = 4× throughput in same GPU
 - **Each lever has tradeoffs:**
-  - Reduce batch → lower throughput (bad for production load)
-  - Reduce seq_len → can't handle long documents (limits use cases)
-  - Quantize → potential quality loss (must validate perplexity/accuracy in Ch.3)
+ - Reduce batch → lower throughput (bad for production load)
+ - Reduce seq_len → can't handle long documents (limits use cases)
+ - Quantize → potential quality loss (must validate perplexity/accuracy in Ch.3)
 - **Gradient checkpointing (training only):** 90% activation memory reduction, 30% speed penalty
 
 **What to do next:**
 → **After optimization:** Re-run Phase 2 CHECK with new parameters to confirm model now fits
 → **Validate quality:** Especially after quantization — measure perplexity, run test prompts (Ch.3 benchmarks)
-→ **For our scenario:** Applying INT4 quantization freed 12GB. Re-check: 4GB params + 4GB KV (batch=4) + 2GB activations = **10GB total ✅ fits!** Proceed to Ch.3 to validate quality.
+→ **For our scenario:** Applying INT4 quantization freed 12GB. Re-check: 4GB params + 4GB KV (batch=4) + 2GB activations = **10GB total fits!** Proceed to Ch.3 to validate quality.
 
 ---
 
@@ -759,29 +758,29 @@ print(f"Now have headroom for batch=4 KV cache (4GB)")
 ```python
 # Educational: VRAM budget calculator from scratch (Phase 1 + Phase 2)
 def vram_budget_inference(
-    n_params: int,           # total model parameters (e.g., 8_000_000_000)
-    bytes_per_param: float,  # precision: FP32=4, BF16=2, INT8=1, INT4=0.5
-    n_layers: int,           # transformer layers (e.g., 32 for Llama-3-8B)
-    n_heads: int,            # attention heads (e.g., 32)
-    seq_len: int,            # max sequence length (e.g., 2048)
-    batch_size: int,         # concurrent requests
-    activation_overhead_gb: float = 2.0,  # typical activation memory
+ n_params: int, # total model parameters (e.g., 8_000_000_000)
+ bytes_per_param: float, # precision: FP32=4, BF16=2, INT8=1, INT4=0.5
+ n_layers: int, # transformer layers (e.g., 32 for Llama-3-8B)
+ n_heads: int, # attention heads (e.g., 32)
+ seq_len: int, # max sequence length (e.g., 2048)
+ batch_size: int, # concurrent requests
+ activation_overhead_gb: float = 2.0, # typical activation memory
 ) -> dict:
-    """Calculate inference VRAM breakdown in GB.
+ """Calculate inference VRAM breakdown in GB.
 
-    Implements Phase 1 (CALCULATE) + Phase 2 (CHECK) of the workflow.
-    """
-    params_gb = (n_params * bytes_per_param) / 1e9
-    head_dim = 128  # typical; hidden_dim / n_heads
-    kv_cache_gb = (2 * n_layers * n_heads * head_dim * seq_len * batch_size * bytes_per_param) / 1e9
-    total_gb = params_gb + kv_cache_gb + activation_overhead_gb
-    return {
-        "params_gb": round(params_gb, 2),
-        "kv_cache_gb": round(kv_cache_gb, 2),
-        "activations_gb": activation_overhead_gb,
-        "total_gb": round(total_gb, 2),
-        "fits_rtx4090": total_gb <= 22.0,  # leave 2 GB headroom
-    }
+ Implements Phase 1 (CALCULATE) + Phase 2 (CHECK) of the workflow.
+ """
+ params_gb = (n_params * bytes_per_param) / 1e9
+ head_dim = 128 # typical; hidden_dim / n_heads
+ kv_cache_gb = (2 * n_layers * n_heads * head_dim * seq_len * batch_size * bytes_per_param) / 1e9
+ total_gb = params_gb + kv_cache_gb + activation_overhead_gb
+ return {
+ "params_gb": round(params_gb, 2),
+ "kv_cache_gb": round(kv_cache_gb, 2),
+ "activations_gb": activation_overhead_gb,
+ "total_gb": round(total_gb, 2),
+ "fits_rtx4090": total_gb <= 22.0, # leave 2 GB headroom
+ }
 
 # Llama-3-8B, BF16, batch=4
 print(vram_budget_inference(8_000_000_000, 2.0, 32, 32, 2048, 4))
@@ -793,22 +792,22 @@ print(vram_budget_inference(8_000_000_000, 2.0, 32, 32, 2048, 4))
 import subprocess, json
 
 def check_gpu_vram_available() -> float:
-    """Return available VRAM in GB using nvidia-smi."""
-    result = subprocess.run(
-        ["nvidia-smi", "--query-gpu=memory.free", "--format=csv,noheader,nounits"],
-        capture_output=True, text=True
-    )
-    return int(result.stdout.strip()) / 1024  # MiB → GB
+ """Return available VRAM in GB using nvidia-smi."""
+ result = subprocess.run(
+ ["nvidia-smi", "--query-gpu=memory.free", "--format=csv,noheader,nounits"],
+ capture_output=True, text=True
+ )
+ return int(result.stdout.strip()) / 1024 # MiB → GB
 
 def preflight_vram_check(required_gb: float, safety_margin_gb: float = 2.0) -> bool:
-    """Abort if not enough VRAM. Call before loading model."""
-    available = check_gpu_vram_available()
-    if available < required_gb + safety_margin_gb:
-        raise RuntimeError(
-            f"Insufficient VRAM: {available:.1f} GB available, "
-            f"{required_gb + safety_margin_gb:.1f} GB needed (incl. {safety_margin_gb} GB margin)"
-        )
-    return True
+ """Abort if not enough VRAM. Call before loading model."""
+ available = check_gpu_vram_available()
+ if available < required_gb + safety_margin_gb:
+ raise RuntimeError(
+ f"Insufficient VRAM: {available:.1f} GB available, "
+ f"{required_gb + safety_margin_gb:.1f} GB needed (incl. {safety_margin_gb} GB margin)"
+ )
+ return True
 ```
 
 ---
@@ -829,30 +828,29 @@ def preflight_vram_check(required_gb: float, safety_margin_gb: float = 2.0) -> b
 
 ## 12 · Progress Check — What We've Accomplished
 
-🎉 **VRAM BUDGET CONFIRMED! Llama-3-8B fits in RTX 4090 at FP16**
+ **VRAM BUDGET CONFIRMED! Llama-3-8B fits in RTX 4090 at FP16**
 
 **Unlocked capabilities**:
-- ✅ **3-phase workflow mastered**: CALCULATE (§3-6) → CHECK (§7-8) → OPTIMIZE (§11.5) — reusable for any model deployment
-- ✅ **Precise VRAM calculator**: Know exact memory breakdown for any model/batch/seq_len
-- ✅ **Inference budget**: 16GB params + 4GB KV + 2GB activations = 22GB (fits in 24GB) ✅
-- ✅ **Training budget**: 104GB total → need A100 80GB × 2 or gradient checkpointing
-- ✅ **Batch size limits**: batch=1 max at FP16 → need quantization (Ch.3) for batch=4
-- ✅ **Decision checkpoints**: 3 critical go/no-go points for deployment confidence
+- **3-phase workflow mastered**: CALCULATE (§3-6) → CHECK (§7-8) → OPTIMIZE (§11.5) — reusable for any model deployment
+- **Precise VRAM calculator**: Know exact memory breakdown for any model/batch/seq_len
+- **Inference budget**: 16GB params + 4GB KV + 2GB activations = 22GB (fits in 24GB)
+- **Training budget**: 104GB total → need A100 80GB × 2 or gradient checkpointing
+- **Batch size limits**: batch=1 max at FP16 → need quantization (Ch.3) for batch=4
+- **Decision checkpoints**: 3 critical go/no-go points for deployment confidence
 
 **Progress toward constraints**:
 
 | Constraint | Status | Current State |
 |------------|--------|---------------|
-| #1 COST | ✅ **MAINTAINED** | $1,095/month RTX 4090 confirmed |
-| #2 LATENCY | ❌ **BLOCKED** | batch=1 → sequential processing → high latency under load |
-| #3 THROUGHPUT | ❌ **SHORTFALL** | batch=1 → 3,000 req/day (30% of 10k target) |
-| #4 MEMORY | ✅ **TARGET HIT!** | 22GB / 24GB = fits! (but zero batch headroom) |
-| #5 QUALITY | ⚡ **ON TRACK** | Llama-3-8B baseline (assumed >95%) |
-| #6 RELIABILITY | ⚡ **UNKNOWN** | Need Ch.9-10 for production deployment |
+| #1 COST | **MAINTAINED** | $1,095/month RTX 4090 confirmed |
+| #2 LATENCY | **BLOCKED** | batch=1 → sequential processing → high latency under load |
+| #3 THROUGHPUT | **SHORTFALL** | batch=1 → 3,000 req/day (30% of 10k target) |
+| #4 MEMORY | **TARGET HIT!** | 22GB / 24GB = fits! (but zero batch headroom) |
+| #5 QUALITY | **ON TRACK** | Llama-3-8B baseline (assumed >95%) |
+| #6 RELIABILITY | **UNKNOWN** | Need Ch.9-10 for production deployment |
 
 **What we can solve now**:
-
-✅ **Confirm hardware purchase with exact VRAM breakdown**:
+**Confirm hardware purchase with exact VRAM breakdown**:
 ```
 Before Ch.2:
 You: "8B params × 2 bytes = 16GB. RTX 4090 has 24GB. Should fit!"
@@ -863,19 +861,18 @@ You calculate:
 "Parameters: 16GB
  KV cache (batch=1, seq=2048): 4GB
  Activations: 2GB
- Total: 22GB / 24GB = 92% utilization ✅
+ Total: 22GB / 24GB = 92% utilization
  Headroom: 2GB (not enough for batch=2)
 
  Conclusion: Fits for batch=1 only. Need quantization (Ch.3) to enable batching."
 
 CEO: "So we CAN use RTX 4090, but throughput will be limited?"
 You: "Correct. We'll hit 3,000 req/day at batch=1. To reach 10k target,
-      we need INT4 quantization (Ch.3) to free VRAM for batch=4."
+ we need INT4 quantization (Ch.3) to free VRAM for batch=4."
 
-Result: ✅ Confident hardware purchase + clear roadmap to hit throughput target!
+Result: Confident hardware purchase + clear roadmap to hit throughput target!
 ```
-
-✅ **Understand training infrastructure needs**:
+**Understand training infrastructure needs**:
 ```
 Before Ch.2:
 "Can we fine-tune Llama-3-8B on RTX 4090?"
@@ -887,21 +884,20 @@ After Ch.2:
  Options:
  1. A100 80GB × 2 with ZeRO-2 sharding ($6,000/month)
  2. Gradient checkpointing → 30GB (fits on A100 40GB, $3,000/month)
- 3. LoRA fine-tuning → only 18GB (fits on RTX 4090, $1,095/month!) ✅
+ 3. LoRA fine-tuning → only 18GB (fits on RTX 4090, $1,095/month!)
 
  Decision: Use LoRA (Ch.4) to fine-tune on RTX 4090 without budget increase."
 
-Result: ✅ Can fine-tune without exceeding $15k/month budget!
+Result: Can fine-tune without exceeding $15k/month budget!
 ```
-
-✅ **Set realistic batch size expectations**:
+**Set realistic batch size expectations**:
 ```
 CEO: "Can we batch 10 requests at once for efficiency?"
 
 You: "Let me calculate:
  batch=10, seq=2048:
  KV cache = 2 × 32 layers × 4096 dim × 2048 seq × 10 batch × 2 bytes
-          = 40 GB for KV cache alone!
+ = 40 GB for KV cache alone!
 
  RTX 4090 only has 24GB total → cannot fit batch=10.
 
@@ -910,7 +906,7 @@ You: "Let me calculate:
 
  To reach batch=10, need A100 80GB or multi-GPU setup (Ch.7)."
 
-Result: ✅ Realistic throughput expectations set!
+Result: Realistic throughput expectations set!
 ```
 
 **🔄 How the workflow helped:**
@@ -921,20 +917,20 @@ Result: ✅ Realistic throughput expectations set!
 
 **After workflow approach:**
 - "Phase 2 CHECK shows 34GB required but 24GB available → OOM expected"
-- "Phase 3 OPTIMIZE: apply INT4 quantization → re-CHECK: 10GB required ✅ fits!"
+- "Phase 3 OPTIMIZE: apply INT4 quantization → re-CHECK: 10GB required fits!"
 - Confident deployment without trial-and-error
 
 **What's still blocking**:
 
-- ❌ **Throughput target unreachable**: batch=1 → 3,000 req/day (need 10k) → **Need Ch.3 quantization to enable batch=4**
-- ❌ **Latency under load**: Sequential processing → queuing delays when traffic spikes
-- ❌ **No fine-tuning path on current budget**: 104GB training needs expensive GPUs → **Need Ch.4 LoRA for RTX 4090 fine-tuning**
-- ❌ **No serving framework selected**: Raw inference loop is slow → **Need Ch.5-6 for optimized serving**
+- **Throughput target unreachable**: batch=1 → 3,000 req/day (need 10k) → **Need Ch.3 quantization to enable batch=4**
+- **Latency under load**: Sequential processing → queuing delays when traffic spikes
+- **No fine-tuning path on current budget**: 104GB training needs expensive GPUs → **Need Ch.4 LoRA for RTX 4090 fine-tuning**
+- **No serving framework selected**: Raw inference loop is slow → **Need Ch.5-6 for optimized serving**
 
 **Next chapter**: [Quantization & Precision](../ch03_quantization_and_precision) shrinks model from 16GB → 4GB:
 - INT4 quantization (GPTQ/AWQ)
 - Quality validation (perplexity benchmarks)
-- **Unlocks batch=4 → 12,000 req/day throughput ✅ (hits target!)**
+- **Unlocks batch=4 → 12,000 req/day throughput (hits target!)**
 
 **Key interview concepts from this chapter**:
 
@@ -954,7 +950,7 @@ Ch.2 confirmed the model fits — but revealed a critical bottleneck: **batch=1 
 
 **The workflow diagnosis:**
 - **Phase 1 CALCULATE**: 16GB params + 4GB KV (batch=1) + 2GB activations = 22GB
-- **Phase 2 CHECK**: Fits in 24GB ✅, but only 2GB headroom (insufficient for batch=2)
+- **Phase 2 CHECK**: Fits in 24GB , but only 2GB headroom (insufficient for batch=2)
 - **Phase 3 OPTIMIZE**: Need to free 12GB to enable batch=4 → **quantization is the only viable lever**
 
 Ch.3 (Quantization & Precision) attacks this problem directly: by shrinking the model from 16 GB to 4 GB via INT4 quantization, we free 12 GB for KV cache, enabling batch=4 and 4× throughput.

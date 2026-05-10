@@ -18,23 +18,23 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Launch **FaceAI** — automated face attribute classification with >90% average accuracy across 40 binary attributes, replacing \$0.05/image manual tagging. Five constraints must hold:
+> **The mission**: Launch **FaceAI** — automated face attribute classification with >90% average accuracy across 40 binary attributes, replacing \$0.05/image manual tagging. Five constraints must hold:
 >
 > | # | Constraint | Target | Status after Ch.1 |
 > |---|-----------|--------|-------------------|
-> | 1 | **ACCURACY** | >90% avg across 40 attributes | ⚠️ 88% on Smiling — 2% short |
-> | 2 | **GENERALIZATION** | Unseen celebrity faces | ❌ Not yet validated |
-> | 3 | **MULTI-LABEL** | 40 simultaneous binary attributes | ❌ 1 of 40 done |
-> | 4 | **INTERPRETABILITY** | Explain why each prediction was made | ❌ 1,764 weights ≠ explanation |
-> | 5 | **PRODUCTION** | <200ms inference per image | ✅ <10ms sklearn |
+> | 1 | **ACCURACY** | >90% avg across 40 attributes | 88% on Smiling — 2% short |
+> | 2 | **GENERALIZATION** | Unseen celebrity faces | Not yet validated |
+> | 3 | **MULTI-LABEL** | 40 simultaneous binary attributes | 1 of 40 done |
+> | 4 | **INTERPRETABILITY** | Explain why each prediction was made | 1,764 weights ≠ explanation |
+> | 5 | **PRODUCTION** | <200ms inference per image | <10ms sklearn |
 
 **What we know so far:**
-- ✅ Ch.1: Logistic regression delivers **88% accuracy on Smiling** — solid baseline
-- ✅ HOG features (1,764 dims) capture edge-gradient structure reliably
-- ✅ Binary cross-entropy loss and gradient descent are stable
-- ❌ **But 88% < 90% target** — and Smiling (48% positive) was the balanced easy case
-- ❌ **New challenge: Young attribute** (77% positive) — class imbalance hurts logistic regression
-- ❌ **VP of Product still waiting**: "Which feature made this prediction?"
+- Ch.1: Logistic regression delivers **88% accuracy on Smiling** — solid baseline
+- HOG features (1,764 dims) capture edge-gradient structure reliably
+- Binary cross-entropy loss and gradient descent are stable
+- **But 88% < 90% target** — and Smiling (48% positive) was the balanced easy case
+- **New challenge: Young attribute** (77% positive) — class imbalance hurts logistic regression
+- **VP of Product still waiting**: "Which feature made this prediction?"
 
 **What is blocking us:**
 The Young attribute has 77% positives. A model that always predicts "Young" scores 77% for free. Logistic regression must beat that by more than 13 points to justify its complexity. Worse: facial youth is not a single gradient direction in HOG space — it is a combination of smooth skin *and* absence of wrinkles *and* hair texture. Features that interact non-linearly. Logistic regression's hyperplane cannot capture interactions without manual feature engineering.
@@ -49,15 +49,15 @@ The Young attribute has 77% positives. A model that always predicts "Young" scor
 
 ```mermaid
 graph LR
-    A["Ch.1: LogReg<br/>88% Smiling"] --> B["Ch.2: Classical<br/>RF 91% Young ✅"]
-    B --> C["Ch.3: Metrics<br/>Precision · Recall · AUC"]
-    C --> D["Ch.4: SVM<br/>Max-margin boundary"]
-    D --> E["Ch.5: Tuning<br/>Systematic search"]
-    style A fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style B fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style C fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style D fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style E fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ A["Ch.1: LogReg<br/>88% Smiling"] --> B["Ch.2: Classical<br/>RF 91% Young "]
+ B --> C["Ch.3: Metrics<br/>Precision · Recall · AUC"]
+ C --> D["Ch.4: SVM<br/>Max-margin boundary"]
+ D --> E["Ch.5: Tuning<br/>Systematic search"]
+ style A fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style B fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style C fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style D fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style E fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -108,30 +108,30 @@ ID3 builds a tree top-down: at each node pick the attribute with the highest inf
 ```
 ALGORITHM: ID3 Decision Tree
 ──────────────────────────────────────────────────
-Input:  S = {(x_i, y_i)} training examples
-        A = {A_1, ..., A_d} available attributes
+Input: S = {(x_i, y_i)} training examples
+ A = {A_1, ..., A_d} available attributes
 
 function ID3(S, A):
-  if all examples in S have same label:
-    return Leaf(label)
-  if A is empty:
-    return Leaf(majority_class(S))
+ if all examples in S have same label:
+ return Leaf(label)
+ if A is empty:
+ return Leaf(majority_class(S))
 
-  # Pick best attribute by information gain
-  A* = argmax_{A_j in A}  IG(S, A_j)
-    where IG(S, A) = H(S) - sum_{v in values(A)} |S_v|/|S| * H(S_v)
-    and   H(S)     = -sum_k  p_k * log2(p_k)
+ # Pick best attribute by information gain
+ A* = argmax_{A_j in A} IG(S, A_j)
+ where IG(S, A) = H(S) - sum_{v in values(A)} |S_v|/|S| * H(S_v)
+ and H(S) = -sum_k p_k * log2(p_k)
 
-  # Create internal node
-  node = DecisionNode(attribute=A*)
-  for each value v of A*:
-    S_v = {x in S : x[A*] = v}
-    node.add_child(v, ID3(S_v, A minus {A*}))
-  return node
+ # Create internal node
+ node = DecisionNode(attribute=A*)
+ for each value v of A*:
+ S_v = {x in S : x[A*] = v}
+ node.add_child(v, ID3(S_v, A minus {A*}))
+ return node
 
 Predict(x, node):
-  if node is Leaf: return node.label
-  return Predict(x, node.children[x[node.attribute]])
+ if node is Leaf: return node.label
+ return Predict(x, node.children[x[node.attribute]])
 ```
 
 ### 3.2 · Random Forest — Breiman 2001
@@ -141,31 +141,31 @@ Random Forest fixes the fragility of a single tree: bootstrap the data, randomis
 ```
 ALGORITHM: Random Forest
 ──────────────────────────────────────────────────
-Input:  X_train (N x d),  y_train,  T trees,  m features/split
+Input: X_train (N x d), y_train, T trees, m features/split
 
 function BuildForest(X, y, T, m):
-  forest = []
-  for t = 1 to T:
-    # Bootstrap: sample N rows WITH replacement
-    B_t = bootstrap_sample(X, y)     # ~63.2% unique rows per tree
+ forest = []
+ for t = 1 to T:
+ # Bootstrap: sample N rows WITH replacement
+ B_t = bootstrap_sample(X, y) # ~63.2% unique rows per tree
 
-    # Grow one tree, but at each node only consider m < d features
-    tree_t = GrowTree(B_t, m)
-    forest.append(tree_t)
-  return forest
+ # Grow one tree, but at each node only consider m < d features
+ tree_t = GrowTree(B_t, m)
+ forest.append(tree_t)
+ return forest
 
 function GrowTree(data, m):
-  at each split node:
-    features_subset = sample(all_features, size=m, replace=False)
-    A* = argmax_{A_j in features_subset} IG(S, A_j)
-    split on A*
+ at each split node:
+ features_subset = sample(all_features, size=m, replace=False)
+ A* = argmax_{A_j in features_subset} IG(S, A_j)
+ split on A*
 
 function Predict(x, forest):
-  votes = [tree.predict(x) for tree in forest]
-  return majority_vote(votes)
+ votes = [tree.predict(x) for tree in forest]
+ return majority_vote(votes)
 ```
 
-> 💡 **Why the two randomisations work together.** Bootstrap sampling decorrelates trees at the data level — each sees different noisy examples. Feature subsampling decorrelates trees at the split level — no dominant feature takes over every tree's root. Trees make *different* mistakes; the vote averages them away.
+> **Why the two randomisations work together.** Bootstrap sampling decorrelates trees at the data level — each sees different noisy examples. Feature subsampling decorrelates trees at the split level — no dominant feature takes over every tree's root. Trees make *different* mistakes; the vote averages them away.
 
 ### 3.3 · k-Nearest Neighbours — Fix and Hodges 1951
 
@@ -175,13 +175,13 @@ KNN is the ultimate lazy learner. Training is just storing data. All work happen
 ALGORITHM: k-Nearest Neighbours
 ──────────────────────────────────────────────────
 Training:
-  Store all (x_i, y_i) pairs — nothing else.
+ Store all (x_i, y_i) pairs — nothing else.
 
 Predict(x_query, X_train, y_train, k):
-  distances = [euclidean(x_query, x_i) for x_i in X_train]
-  indices   = argsort(distances)[:k]          # k smallest
-  labels    = [y_train[i] for i in indices]
-  return mode(labels)                          # majority vote
+ distances = [euclidean(x_query, x_i) for x_i in X_train]
+ indices = argsort(distances)[:k] # k smallest
+ labels = [y_train[i] for i in indices]
+ return mode(labels) # majority vote
 
 where euclidean(x, x') = sqrt( sum_i (x_i - x'_i)^2 )
 ```
@@ -194,18 +194,18 @@ Naive Bayes applies Bayes' theorem with the independence assumption, estimating 
 ALGORITHM: Gaussian Naive Bayes
 ──────────────────────────────────────────────────
 Training:
-  For each class c in {0, 1}:
-    pi_c    = P(Y = c) = count(y == c) / N           # prior
-    For each feature j:
-      mu_jc  = mean(x_j | y == c)                    # mean per class
-      var_jc = var(x_j | y == c)                     # variance per class
+ For each class c in {0, 1}:
+ pi_c = P(Y = c) = count(y == c) / N # prior
+ For each feature j:
+ mu_jc = mean(x_j | y == c) # mean per class
+ var_jc = var(x_j | y == c) # variance per class
 
 Predict(x):
-  For each class c:
-    log_score_c = log(pi_c)
-    + sum_j  log_gaussian(x_j ; mu_jc, var_jc)
-      # where log_gaussian avoids underflow on 1,764-feature products
-  return argmax_c log_score_c
+ For each class c:
+ log_score_c = log(pi_c)
+ + sum_j log_gaussian(x_j ; mu_jc, var_jc)
+ # where log_gaussian avoids underflow on 1,764-feature products
+ return argmax_c log_score_c
 ```
 
 ---
@@ -230,14 +230,14 @@ $$IG(S, A) = H(S) - \sum_{v \in \text{values}(A)} \frac{|S_v|}{|S|} \cdot H(S_v)
 
 | Face | $x_1$ (smooth) | $x_2$ (no wrinkles) | Young |
 |------|---------------|---------------------|-------|
-| F1   | 1             | 1                   | 1     |
-| F2   | 1             | 1                   | 1     |
-| F3   | 1             | 0                   | 0     |
-| F4   | 1             | 0                   | 1     |
-| F5   | 0             | 0                   | 0     |
-| F6   | 0             | 0                   | 0     |
-| F7   | 0             | 1                   | 1     |
-| F8   | 0             | 0                   | 0     |
+| F1 | 1 | 1 | 1 |
+| F2 | 1 | 1 | 1 |
+| F3 | 1 | 0 | 0 |
+| F4 | 1 | 0 | 1 |
+| F5 | 0 | 0 | 0 |
+| F6 | 0 | 0 | 0 |
+| F7 | 0 | 1 | 1 |
+| F8 | 0 | 0 | 0 |
 
 **Step 1 — Root entropy.** 4 Young {F1, F2, F4, F7}, 4 Not-Young {F3, F5, F6, F8}:
 
@@ -271,7 +271,7 @@ $$IG(S,\, x_2) = 1.000 - \frac{3}{8}(0.000) - \frac{5}{8}(0.722) = 1.000 - 0 - 0
 
 **What this walkthrough demonstrates:** Entropy quantifies uncertainty as bits needed to encode a class label. Information Gain measures how many of those bits a split removes. $x_2$ (no-wrinkles) removed 0.549 bits vs $x_1$'s 0.189 — it cut uncertainty by 55% in one split. This single formula — maximizing $IG(S, A)$ — is how ID3 chooses which question to ask at every node. No domain knowledge required; the algorithm discovers that wrinkle-absence is the strongest Young discriminator from the data alone.
 
-> 💡 **Key insight**: Information gain is greedy — ID3 picks the best split *right now* without look-ahead. This makes it fast but means early splits can block better later ones. Random Forest sidesteps this by growing many trees with randomised choices.
+> **Key insight**: Information gain is greedy — ID3 picks the best split *right now* without look-ahead. This makes it fast but means early splits can block better later ones. Random Forest sidesteps this by growing many trees with randomised choices.
 
 ---
 
@@ -281,11 +281,11 @@ $$IG(S,\, x_2) = 1.000 - \frac{3}{8}(0.000) - \frac{5}{8}(0.722) = 1.000 - 0 - 0
 
 | Face | $f_1$ (smooth) | $f_2$ (eye-corner) | Young |
 |------|---------------|--------------------|-------|
-| A    | 0.90          | 0.25               | 1     |
-| B    | 0.20          | 0.80               | 0     |
-| C    | 0.70          | 0.35               | 1     |
-| D    | 0.40          | 0.60               | 0     |
-| E    | 0.85          | 0.20               | 1     |
+| A | 0.90 | 0.25 | 1 |
+| B | 0.20 | 0.80 | 0 |
+| C | 0.70 | 0.35 | 1 |
+| D | 0.40 | 0.60 | 0 |
+| E | 0.85 | 0.20 | 1 |
 
 **Euclidean distance**:
 
@@ -298,8 +298,8 @@ $$d(\mathbf{q},\, \mathbf{x}) = \sqrt{(q_1 - x_1)^2 + (q_2 - x_2)^2}$$
 | **C** | $(0.75-0.70)^2 = 0.0025$ | $(0.30-0.35)^2 = 0.0025$ | 0.0050 | **0.071** | 1 |
 | **E** | $(0.75-0.85)^2 = 0.0100$ | $(0.30-0.20)^2 = 0.0100$ | 0.0200 | **0.141** | 1 |
 | **A** | $(0.75-0.90)^2 = 0.0225$ | $(0.30-0.25)^2 = 0.0025$ | 0.0250 | **0.158** | 1 |
-| D    | $(0.75-0.40)^2 = 0.1225$ | $(0.30-0.60)^2 = 0.0900$ | 0.2125 | 0.461 | 0 |
-| B    | $(0.75-0.20)^2 = 0.3025$ | $(0.30-0.80)^2 = 0.2500$ | 0.5525 | 0.743 | 0 |
+| D | $(0.75-0.40)^2 = 0.1225$ | $(0.30-0.60)^2 = 0.0900$ | 0.2125 | 0.461 | 0 |
+| B | $(0.75-0.20)^2 = 0.3025$ | $(0.30-0.80)^2 = 0.2500$ | 0.5525 | 0.743 | 0 |
 
 **Ranked**: C (0.071) < E (0.141) < A (0.158) < D (0.461) < B (0.743).
 
@@ -307,7 +307,7 @@ $$d(\mathbf{q},\, \mathbf{x}) = \sqrt{(q_1 - x_1)^2 + (q_2 - x_2)^2}$$
 
 **What this walkthrough demonstrates:** k-NN makes no assumptions about decision boundaries — it just finds the k closest training examples and votes. Query $\mathbf{q}$ landed in a Young-dominated local neighborhood (3 of 3 nearest are Young). The distances are explicit — you can verify every $\sqrt{}$ on a calculator. This is k-NN's strength: it adapts to arbitrary data distributions without training. The cost: it must compute $N$ distances at inference time ($O(N \cdot d)$ with $N=4000, d=1764$ for FaceAI).
 
-> ⚠️ **Curse of dimensionality**: In this 2D toy the distances span 0.071 to 0.743 — well spread. In the real 1,764-dim HOG space all pairwise distances cluster around $\sqrt{1764} \approx 42$ with tiny variance. Every face becomes nearly equidistant from every other. k-NN's discriminative power collapses. Apply PCA (Ch.13) before running KNN on full HOG features.
+> **Curse of dimensionality**: In this 2D toy the distances span 0.071 to 0.743 — well spread. In the real 1,764-dim HOG space all pairwise distances cluster around $\sqrt{1764} \approx 42$ with tiny variance. Every face becomes nearly equidistant from every other. k-NN's discriminative power collapses. Apply PCA (Ch.13) before running KNN on full HOG features.
 
 ---
 
@@ -357,7 +357,7 @@ $$P(Y=1 \mid \mathbf{x}) = \frac{0.377}{0.377 + 0.008} = \frac{0.377}{0.385} \ap
 
 Posterior ratio $= 0.377 / 0.008 \approx \mathbf{47:1}$ in favour of Young. Predict: **Young**.
 
-> 💡 **Why the prior matters so much here**: The likelihood ratio alone (0.490 / 0.036 = 13.6:1) already strongly favours Young. The prior multiplies that by $0.77/0.23 = 3.3:1$ — total 45:1. On a balanced dataset (50/50) the prior contributes nothing. On Young with 77% positives, the prior *is* a strong predictor. Naive Bayes handles class imbalance naturally without any special weighting.
+> **Why the prior matters so much here**: The likelihood ratio alone (0.490 / 0.036 = 13.6:1) already strongly favours Young. The prior multiplies that by $0.77/0.23 = 3.3:1$ — total 45:1. On a balanced dataset (50/50) the prior contributes nothing. On Young with 77% positives, the prior *is* a strong predictor. Naive Bayes handles class imbalance naturally without any special weighting.
 
 ---
 
@@ -377,12 +377,12 @@ You switch to an ID3 tree (`criterion='entropy'`, `max_depth=10`). Accuracy jump
 
 ```
 if no_wrinkle_indicator > 0.41:
-  if smooth_skin_index > 0.55:
-    → Predict: Young  (312 faces, 89% pure)
-  else:
-    → Predict: Not Young  (89 faces, 72% pure)
+ if smooth_skin_index > 0.55:
+ → Predict: Young (312 faces, 89% pure)
+ else:
+ → Predict: Not Young (89 faces, 72% pure)
 else:
-  → Predict: Not Young  (depth continues...)
+ → Predict: Not Young (depth continues...)
 ```
 
 You send this to the VP of Product. "This," she says, "is what I needed. Put it in the app." Constraint #4 (Interpretability) is partially satisfied.
@@ -409,9 +409,9 @@ The bias-variance decomposition explains the jump:
 
 The tree ensemble does not "know more" than any single tree. It simply *disagrees less*. This insight — ensemble averaging ≈ variance reduction — recurs in XGBoost (Ch.11), Dropout regularisation (Neural Networks Ch.6), and multi-head attention (Neural Networks Ch.18).
 
-> 💡 **The pedagogical moment here**: This three-act failure-first arc demonstrates why ensembles dominate production ML. Each act added one technique: Act 1 (logistic regression) → single hyperplane, can't capture interactions → 82%. Act 2 (single tree) → captures interactions, but memorises noise → 86%. Act 3 (random forest) → averages away the noise, keeps the interactions → 91% ✅. The progression is not "three random algorithms" — it's a deliberate scaffolding showing what each fix unlocks.
+> **The pedagogical moment here**: This three-act failure-first arc demonstrates why ensembles dominate production ML. Each act added one technique: Act 1 (logistic regression) → single hyperplane, can't capture interactions → 82%. Act 2 (single tree) → captures interactions, but memorises noise → 86%. Act 3 (random forest) → averages away the noise, keeps the interactions → 91% . The progression is not "three random algorithms" — it's a deliberate scaffolding showing what each fix unlocks.
 
-> ⚡ **Constraint #1 ACCURACY: ✅ ACHIEVED** — Random Forest delivers 91% on Young, exceeding the 90% target. Constraint #4 INTERPRETABILITY: Partially satisfied — individual tree rules are readable (though 100 trees voting is less interpretable than a single tree).
+> **Constraint #1 ACCURACY: ACHIEVED** — Random Forest delivers 91% on Young, exceeding the 90% target. Constraint #4 INTERPRETABILITY: Partially satisfied — individual tree rules are readable (though 100 trees voting is less interpretable than a single tree).
 
 ---
 
@@ -459,9 +459,9 @@ $$H(\text{right child}) = -\frac{1}{5}\log_2\frac{1}{5} - \frac{4}{5}\log_2\frac
 **Split on $x_1$ (smooth skin) within this child:**
 
 - $x_1=1$: {F3 (Not-Young), F4 (Young)} → 1Y, 1N
-  $$H = -\frac{1}{2}\log_2\frac{1}{2} - \frac{1}{2}\log_2\frac{1}{2} = 1.000 \text{ bit}$$
+ $$H = -\frac{1}{2}\log_2\frac{1}{2} - \frac{1}{2}\log_2\frac{1}{2} = 1.000 \text{ bit}$$
 - $x_1=0$: {F5, F6, F8} → 0Y, 3N
-  $$H = 0.000 \text{ bits (pure: all Not-Young)}$$
+ $$H = 0.000 \text{ bits (pure: all Not-Young)}$$
 
 $$IG(x_1 \mid \text{right child}) = 0.722 - \frac{2}{5}(1.000) - \frac{3}{5}(0.000) = 0.722 - 0.400 - 0 = \mathbf{0.322 \text{ bits}}$$
 
@@ -487,46 +487,46 @@ Total entropy removed by two splits: $1.000 \to$ weighted average $\approx 0.400
 
 ```mermaid
 graph TD
-    ROOT["Root: 8 faces<br/>4 Young · 4 Not-Young<br/>H = 1.000 bit<br/>Best split: x₂ (no wrinkles)"]
-    L1["Left: 3 faces<br/>3 Young · 0 Not-Young<br/>H = 0.000 bits<br/>✅ LEAF → Young"]
-    R1["Right: 5 faces<br/>1 Young · 4 Not-Young<br/>H = 0.722 bits<br/>Next split: x₁ (smooth skin)"]
-    RL["Right-Left: 2 faces<br/>1 Young · 1 Not-Young<br/>H = 1.000 bit<br/>→ Recurse (majority: Not-Young)"]
-    RR["Right-Right: 3 faces<br/>0 Young · 3 Not-Young<br/>H = 0.000 bits<br/>✅ LEAF → Not-Young"]
+ ROOT["Root: 8 faces<br/>4 Young · 4 Not-Young<br/>H = 1.000 bit<br/>Best split: x₂ (no wrinkles)"]
+ L1["Left: 3 faces<br/>3 Young · 0 Not-Young<br/>H = 0.000 bits<br/> LEAF → Young"]
+ R1["Right: 5 faces<br/>1 Young · 4 Not-Young<br/>H = 0.722 bits<br/>Next split: x₁ (smooth skin)"]
+ RL["Right-Left: 2 faces<br/>1 Young · 1 Not-Young<br/>H = 1.000 bit<br/>→ Recurse (majority: Not-Young)"]
+ RR["Right-Right: 3 faces<br/>0 Young · 3 Not-Young<br/>H = 0.000 bits<br/> LEAF → Not-Young"]
 
-    ROOT -->|"x₂ = 1  (no wrinkles)"| L1
-    ROOT -->|"x₂ = 0  (has wrinkles)"| R1
-    R1   -->|"x₁ = 1  (smooth skin)"| RL
-    R1   -->|"x₁ = 0  (rough skin)"| RR
+ ROOT -->|"x₂ = 1 (no wrinkles)"| L1
+ ROOT -->|"x₂ = 0 (has wrinkles)"| R1
+ R1 -->|"x₁ = 1 (smooth skin)"| RL
+ R1 -->|"x₁ = 0 (rough skin)"| RR
 
-    style ROOT fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style L1   fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style R1   fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style RL   fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style RR   fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style ROOT fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style L1 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style R1 fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style RL fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style RR fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ### Diagram 2 — Algorithm Selection Arc
 
 ```mermaid
 flowchart LR
-    LR["Logistic Regression<br/>82% Young<br/>+5pp over baseline<br/>❌ barely beats 77% floor<br/>❌ linear boundary only"]
-    DT["Decision Tree ID3<br/>86% Young<br/>+9pp over baseline<br/>✅ readable rules<br/>⚠️ high variance"]
-    KNN["k-NN k=7<br/>80% Young<br/>❌ 50ms inference<br/>⚠️ curse of dimensionality"]
-    NB["Naive Bayes<br/>78% Young<br/>⚡ microsecond inference<br/>❌ independence violated"]
-    RF["Random Forest<br/>T=100 trees<br/>91% Young 🏆<br/>✅ beats 90% target<br/>variance ÷ T via averaging"]
+ LR["Logistic Regression<br/>82% Young<br/>+5pp over baseline<br/> barely beats 77% floor<br/> linear boundary only"]
+ DT["Decision Tree ID3<br/>86% Young<br/>+9pp over baseline<br/> readable rules<br/> high variance"]
+ KNN["k-NN k=7<br/>80% Young<br/> 50ms inference<br/> curse of dimensionality"]
+ NB["Naive Bayes<br/>78% Young<br/> microsecond inference<br/> independence violated"]
+ RF["Random Forest<br/>T=100 trees<br/>91% Young <br/> beats 90% target<br/>variance ÷ T via averaging"]
 
-    LR -->|"VP demands<br/>explanation → switch"| DT
-    DT -->|"accuracy gap<br/>→ ensemble"| RF
-    LR -.->|"slower than<br/>logistic"| KNN
-    LR -.->|"independence<br/>assumption fails"| NB
-    KNN -.->|"dimension<br/>problem"| RF
-    NB  -.->|"poor Young<br/>accuracy"| RF
+ LR -->|"VP demands<br/>explanation → switch"| DT
+ DT -->|"accuracy gap<br/>→ ensemble"| RF
+ LR -.->|"slower than<br/>logistic"| KNN
+ LR -.->|"independence<br/>assumption fails"| NB
+ KNN -.->|"dimension<br/>problem"| RF
+ NB -.->|"poor Young<br/>accuracy"| RF
 
-    style LR  fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style DT  fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style KNN fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style NB  fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
-    style RF  fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style LR fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style DT fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style KNN fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style NB fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style RF fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
 ---
@@ -548,7 +548,7 @@ flowchart LR
 3. Set `min_samples_leaf=10` only if you observe training accuracy >> test accuracy
 4. Do not tune `max_depth` for Random Forest — deep individual trees are correct; averaging controls variance
 
-> ⚡ **Constraint #5 (Production) check:** Decision Tree: <1ms (single root-to-leaf traversal). Random Forest 100 trees: ~5ms. k-NN (4k training faces): ~50ms. Naive Bayes: <0.1ms. All under 200ms budget for the current 4k training set — but KNN will blow past 200ms at full 160k CelebA scale.
+> **Constraint #5 (Production) check:** Decision Tree: <1ms (single root-to-leaf traversal). Random Forest 100 trees: ~5ms. k-NN (4k training faces): ~50ms. Naive Bayes: <0.1ms. All under 200ms budget for the current 4k training set — but KNN will blow past 200ms at full 160k CelebA scale.
 
 ---
 
@@ -597,34 +597,34 @@ The model predicts Young correctly 91% of the time *overall*. But the 77% class 
 ```
 After Ch.2 — FaceAI 5-Constraint Status
 ──────────────────────────────────────────────────────────────
-Constraint      Target               Ch.1              Ch.2
+Constraint Target Ch.1 Ch.2
 ──────────────────────────────────────────────────────────────
-#1 ACCURACY     >90% avg, 40 attrs  88% Smiling       ✅ 91% Young (RF)
-                                    (1 of 40 done)    (2 of 40 done)
+#1 ACCURACY >90% avg, 40 attrs 88% Smiling 91% Young (RF)
+ (1 of 40 done) (2 of 40 done)
 ──────────────────────────────────────────────────────────────
-#2 GENERALIZE.  Unseen faces        ❌ Not validated  ❌ Not validated
+#2 GENERALIZE. Unseen faces Not validated Not validated
 ──────────────────────────────────────────────────────────────
-#3 MULTI-LABEL  40 attributes       ❌ 1 attribute    ❌ 2 attributes
+#3 MULTI-LABEL 40 attributes 1 attribute 2 attributes
 ──────────────────────────────────────────────────────────────
-#4 INTERPRET.   Explain predictions ❌ Black box      ⚠️ Partial
-                                    (1764 weights)    (1-tree rules)
+#4 INTERPRET. Explain predictions Black box Partial
+ (1764 weights) (1-tree rules)
 ──────────────────────────────────────────────────────────────
-#5 PRODUCTION   <200ms inference    ✅ <10ms          ✅ <5ms (RF)
+#5 PRODUCTION <200ms inference <10ms <5ms (RF)
 ──────────────────────────────────────────────────────────────
 ```
 
 **Test yourself:**
 
 1. Compute $H(S)$ for a node with 6 Young and 2 Not-Young faces.
-   *(Answer: $-(6/8)\log_2(6/8) - (2/8)\log_2(2/8) = 0.311 + 0.500 = 0.811$ bits)*
+ *(Answer: $-(6/8)\log_2(6/8) - (2/8)\log_2(2/8) = 0.311 + 0.500 = 0.811$ bits)*
 2. In the 8-face toy, $IG(x_2) = 0.549$ beats $IG(x_1) = 0.189$. What does this tell you about facial aging markers?
-   *(Wrinkle presence is a stronger discriminator for Young than skin smoothness alone — it creates purer child nodes.)*
+ *(Wrinkle presence is a stronger discriminator for Young than skin smoothness alone — it creates purer child nodes.)*
 3. You run KNN on 1,764-dim HOG and all pairwise distances cluster near 42. What is happening?
-   *(Curse of dimensionality — distances concentrate in high-dimensional spaces. Apply PCA first.)*
+ *(Curse of dimensionality — distances concentrate in high-dimensional spaces. Apply PCA first.)*
 4. Naive Bayes returns $P(Y=1 \mid \mathbf{x}) = 0.0$ for a test face. What went wrong?
-   *(Floating-point underflow from multiplying 1,764 small probabilities. Use log-probabilities.)*
+ *(Floating-point underflow from multiplying 1,764 small probabilities. Use log-probabilities.)*
 5. The product team wants 90%+ accuracy *and* readable rules. Which single model satisfies both?
-   *(Neither alone. Use RF for production predictions; train a shallow tree (depth ≤ 5) in parallel for the explanation.)*
+ *(Neither alone. Use RF for production predictions; train a shallow tree (depth ≤ 5) in parallel for the explanation.)*
 
 ---
 
@@ -640,5 +640,4 @@ This is the question **Ch.3 — Metrics Deep Dive** answers. It introduces:
 - **Precision-recall curve**: the right tool for imbalanced classes — more diagnostic than ROC when the negative class is rare
 
 The 91% you earned here will look different once decomposed by class. That decomposition will determine whether the FaceAI system is ready to scale to the 38 remaining attributes.
-
-➡️ **Next**: [Ch.3 — Metrics Deep Dive](../ch03_metrics/README.md)
+**Next**: [Ch.3 — Metrics Deep Dive](../ch03_metrics/README.md)

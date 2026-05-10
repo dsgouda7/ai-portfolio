@@ -14,16 +14,16 @@
 
 ## 0 · The Challenge — Where We Are
 
-> 💡 **The mission**: Solve **AgentAI** — CartPole balance task satisfying 5 constraints:
+> **The mission**: Solve **AgentAI** — CartPole balance task satisfying 5 constraints:
 > 1. **OPTIMALITY**: find $\pi^*$ — 2. **EFFICIENCY**: learn from limited experience — 3. **SCALABILITY**: handle continuous/high-dimensional actions — 4. **STABILITY**: no catastrophic forgetting — 5. **GENERALIZATION**: transfer across environment variations
 
 **What we know so far:**
-- ✅ MDPs and Bellman equations give us the theoretical foundation (Ch.1)
-- ✅ Dynamic programming finds optimal policies with a known model (Ch.2)
-- ✅ Q-learning learns policies purely from experience without a model (Ch.3)
-- ✅ DQN scales Q-learning to continuous state spaces with neural networks (Ch.4)
-- ✅ DQN scores ~150/200 on CartPole — solid but not yet at target ≥195
-- ❌ **DQN is hitting fundamental limits that this chapter must overcome!**
+- MDPs and Bellman equations give us the theoretical foundation (Ch.1)
+- Dynamic programming finds optimal policies with a known model (Ch.2)
+- Q-learning learns policies purely from experience without a model (Ch.3)
+- DQN scales Q-learning to continuous state spaces with neural networks (Ch.4)
+- DQN scores ~150/200 on CartPole — solid but not yet at target ≥195
+- **DQN is hitting fundamental limits that this chapter must overcome!**
 
 **What is blocking us:**
 
@@ -47,29 +47,29 @@ DQN computes $Q(s, a; \theta)$ for every action and takes $\arg\max_a Q$. This h
 
 | Constraint | Status after this chapter |
 |-----------|-------------------------|
-| #1 OPTIMALITY | ✅ Policy gradient converges to locally optimal stochastic policy |
-| #2 EFFICIENCY | ⚠️ REINFORCE is sample-intensive; actor-critic and PPO improve significantly |
-| #3 SCALABILITY | ✅ **Solved!** Works for continuous actions — just change output layer |
-| #4 STABILITY | ⚠️ REINFORCE is fragile; PPO's clipping dramatically stabilizes training |
-| #5 GENERALIZATION | ⚠️ Stochastic policies generalize better than deterministic argmax |
+| #1 OPTIMALITY | Policy gradient converges to locally optimal stochastic policy |
+| #2 EFFICIENCY | REINFORCE is sample-intensive; actor-critic and PPO improve significantly |
+| #3 SCALABILITY | **Solved!** Works for continuous actions — just change output layer |
+| #4 STABILITY | REINFORCE is fragile; PPO's clipping dramatically stabilizes training |
+| #5 GENERALIZATION | Stochastic policies generalize better than deterministic argmax |
 
 ```mermaid
 flowchart LR
-    subgraph "Value-Based (Ch.3-4)"
-        A["Learn Q(s,a;θ)"] --> B["π = argmax_a Q"]
-        B --> C["Discrete actions only\nDeterministic policy"]
-    end
-    subgraph "Policy-Based (This Chapter)"
-        D["Parameterize π_θ(a|s)"] --> E["Maximize J(θ) directly"]
-        E --> F["Continuous + discrete\nStochastic policy"]
-    end
-    C -->|"Fundamental\nlimitation"| D
-    style A fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style B fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style C fill:#b91c1c,color:#fff,stroke:#b91c1c
-    style D fill:#15803d,color:#fff,stroke:#15803d
-    style E fill:#15803d,color:#fff,stroke:#15803d
-    style F fill:#15803d,color:#fff,stroke:#15803d
+ subgraph "Value-Based (Ch.3-4)"
+ A["Learn Q(s,a;θ)"] --> B["π = argmax_a Q"]
+ B --> C["Discrete actions only\nDeterministic policy"]
+ end
+ subgraph "Policy-Based (This Chapter)"
+ D["Parameterize π_θ(a|s)"] --> E["Maximize J(θ) directly"]
+ E --> F["Continuous + discrete\nStochastic policy"]
+ end
+ C -->|"Fundamental\nlimitation"| D
+ style A fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style B fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style C fill:#b91c1c,color:#fff,stroke:#b91c1c
+ style D fill:#15803d,color:#fff,stroke:#15803d
+ style E fill:#15803d,color:#fff,stroke:#15803d
+ style F fill:#15803d,color:#fff,stroke:#15803d
 ```
 
 ---
@@ -93,16 +93,16 @@ Policy gradient methods **directly parameterize the policy** $\pi_\theta(a|s)$ a
 CartPole's state is a 4-vector $s = [x,\, \dot{x},\, \theta,\, \dot{\theta}]$: cart position, cart velocity, pole angle, pole angular velocity. Instead of outputting Q-values, we output **action probabilities** directly:
 
 ```
-Policy Network  (4 → 32 → 32 → 2 → Softmax)
+Policy Network (4 → 32 → 32 → 2 → Softmax)
 ─────────────────────────────────────────────
-  Input:   s = [0.04, 0.12, -0.02, -0.31]   (4 state dimensions)
-  Layer 1: Dense(32, ReLU)
-  Layer 2: Dense(32, ReLU)
-  Layer 3: Dense(2)                          (logits for Left and Right)
-  Output:  Softmax → [π(Left|s), π(Right|s)]
+ Input: s = [0.04, 0.12, -0.02, -0.31] (4 state dimensions)
+ Layer 1: Dense(32, ReLU)
+ Layer 2: Dense(32, ReLU)
+ Layer 3: Dense(2) (logits for Left and Right)
+ Output: Softmax → [π(Left|s), π(Right|s)]
 
-  Example output:  [0.40, 0.60]
-  Sampled action:  Right  (with probability 0.60)
+ Example output: [0.40, 0.60]
+ Sampled action: Right (with probability 0.60)
 ```
 
 For each step:
@@ -117,8 +117,8 @@ The crucial difference from DQN: **there is no argmax**. We sample stochasticall
 
 For continuous actions (e.g., robot joint torque in $[-2, 2]$):
 ```
-  Output:  μ = 0.8, log σ = -1.2   (Gaussian parameters)
-  Sample:  a ~ Normal(0.8, exp(-1.2)) = Normal(0.8, 0.30) → 0.75
+ Output: μ = 0.8, log σ = -1.2 (Gaussian parameters)
+ Sample: a ~ Normal(0.8, exp(-1.2)) = Normal(0.8, 0.30) → 0.75
 ```
 The same network architecture handles both discrete and continuous actions — just change the output layer and sampling procedure.
 
@@ -130,35 +130,35 @@ The field evolved through four generations, each solving the previous generation
 
 ```
 REINFORCE (Williams 1992)
-│  ✅ First working policy gradient
-│  ✅ Correct on-policy gradient estimate
-│  ❌ Extreme variance — needs hundreds of episodes per update
+│ First working policy gradient
+│ Correct on-policy gradient estimate
+│ Extreme variance — needs hundreds of episodes per update
 │
 ▼
 Actor-Critic (Konda & Tsitsiklis 2000)
-│  ✅ Critic V(s) provides baseline → lower variance
-│  ✅ TD updates → can learn online (no need to finish episode)
-│  ❌ Critic bias can mislead actor; unstable with large step sizes
+│ Critic V(s) provides baseline → lower variance
+│ TD updates → can learn online (no need to finish episode)
+│ Critic bias can mislead actor; unstable with large step sizes
 │
 ▼
 A2C / A3C (Mnih et al. 2016)
-│  ✅ Multiple parallel workers decorrelate experience
-│  ✅ Synchronous (A2C) or asynchronous (A3C) gradient aggregation
-│  ❌ Still vulnerable to catastrophically large policy updates
+│ Multiple parallel workers decorrelate experience
+│ Synchronous (A2C) or asynchronous (A3C) gradient aggregation
+│ Still vulnerable to catastrophically large policy updates
 │
 ▼
-PPO (Schulman et al. 2017)  ← most widely deployed today
-   ✅ Clipped surrogate loss prevents large destructive updates
-   ✅ First-order (no Hessians) — fast and simple to implement
-   ✅ Works for discrete and continuous, on-policy and with replay
+PPO (Schulman et al. 2017) ← most widely deployed today
+Clipped surrogate loss prevents large destructive updates
+First-order (no Hessians) — fast and simple to implement
+Works for discrete and continuous, on-policy and with replay
 ```
 
 | Algorithm | Variance | Bias | Sample Efficiency | Stability | Continuous Actions |
 |-----------|----------|------|-------------------|-----------|-------------------|
-| REINFORCE | High | None | Low | Low | ✅ |
-| Actor-Critic | Medium | Low | Medium | Medium | ✅ |
-| A2C | Medium | Low | Medium | Medium | ✅ |
-| **PPO** | **Low** | **Low** | **High** | **High** | **✅** |
+| REINFORCE | High | None | Low | Low | |
+| Actor-Critic | Medium | Low | Medium | Medium | |
+| A2C | Medium | Low | Medium | Medium | |
+| **PPO** | **Low** | **Low** | **High** | **High** | **** |
 
 ---
 
@@ -213,38 +213,38 @@ $$\theta \leftarrow \theta + \alpha \cdot \sum_t \nabla_\theta \log \pi_\theta(a
 The episode produces rewards $r = [1, 1, 1]$. With $\gamma = 0.9$, the discounted returns (rounded for clarity) are:
 
 ```
-  G = [2.9, 1.9, 1.0]   (returns at steps 0, 1, 2)
+ G = [2.9, 1.9, 1.0] (returns at steps 0, 1, 2)
 ```
 
 The policy outputs $\pi_\theta(\text{Right}|s_t) = 0.60$ for all three states, so:
 
 ```
-  log π(Right | s_t) = log(0.60) ≈ -0.51   (same for all three steps)
+ log π(Right | s_t) = log(0.60) ≈ -0.51 (same for all three steps)
 ```
 
 **Gradient contribution at each step ($\nabla_\theta \log\pi \cdot G_t$, scalar form):**
 
 ```
-  t=0:  -0.51 × 2.9 = -1.479
-  t=1:  -0.51 × 1.9 = -0.969
-  t=2:  -0.51 × 1.0 = -0.510
+ t=0: -0.51 × 2.9 = -1.479
+ t=1: -0.51 × 1.9 = -0.969
+ t=2: -0.51 × 1.0 = -0.510
 
-  Sum:  -1.479 + (-0.969) + (-0.510) = -2.958
+ Sum: -1.479 + (-0.969) + (-0.510) = -2.958
 ```
 
 **Total REINFORCE loss** (negated scalar for gradient descent):
 
 ```
-  loss = -(-2.958) = +2.958
+ loss = -(-2.958) = +2.958
 ```
 
-> 💡 **Why negative then negate?** In PyTorch we define `loss = -sum(log_probs * returns)` so that minimizing loss is equivalent to maximizing $J(\theta)$. The sum $-2.958$ is negative because $\log\pi < 0$; negating gives a positive loss to minimize.
+> **Why negative then negate?** In PyTorch we define `loss = -sum(log_probs * returns)` so that minimizing loss is equivalent to maximizing $J(\theta)$. The sum $-2.958$ is negative because $\log\pi < 0$; negating gives a positive loss to minimize.
 
 **Step — Apply update:**
 ```
-  theta_new = theta - alpha * grad(loss)
-            = theta + alpha * grad(J(theta))   [gradient ascent on J]
-  With alpha = 0.01: theta gets nudged so that pi(Right|s) increases for all three states.
+ theta_new = theta - alpha * grad(loss)
+ = theta + alpha * grad(J(theta)) [gradient ascent on J]
+ With alpha = 0.01: theta gets nudged so that pi(Right|s) increases for all three states.
 ```
 
 ### 4.4 · Baseline and Variance Reduction
@@ -278,15 +278,15 @@ $$A^\pi(s_t, a_t) = Q^\pi(s_t, a_t) - V^\pi(s_t)$$
 Suppose the critic estimates $V(s_0) = 2.5$, $V(s_1) = 1.8$, $V(s_2) = 0.9$ for the states in §4.3.
 
 ```
-  A_0 = G_0 - V(s_0) = 2.9 - 2.5 = +0.40   (action was better than expected)
-  A_1 = G_1 - V(s_1) = 1.9 - 1.8 = +0.10   (slightly better than expected)
-  A_2 = G_2 - V(s_2) = 1.0 - 0.9 = +0.10   (slightly better than expected)
+ A_0 = G_0 - V(s_0) = 2.9 - 2.5 = +0.40 (action was better than expected)
+ A_1 = G_1 - V(s_1) = 1.9 - 1.8 = +0.10 (slightly better than expected)
+ A_2 = G_2 - V(s_2) = 1.0 - 0.9 = +0.10 (slightly better than expected)
 
-  t=0: -0.51 × 0.40 = -0.204
-  t=1: -0.51 × 0.10 = -0.051
-  t=2: -0.51 × 0.10 = -0.051
+ t=0: -0.51 × 0.40 = -0.204
+ t=1: -0.51 × 0.10 = -0.051
+ t=2: -0.51 × 0.10 = -0.051
 
-  Total scalar: -0.306   (vs -2.958 without baseline — ~10× smaller in magnitude)
+ Total scalar: -0.306 (vs -2.958 without baseline — ~10× smaller in magnitude)
 ```
 
 The gradient magnitude is ~10× smaller — far less noisy, far more stable training. The update direction is identical (all positive advantages → increase Right probability), but the learning signal is now about *relative* action quality, not episode length.
@@ -299,7 +299,7 @@ In practice, estimate $A$ using the **TD error**:
 
 $$\hat{A}(s_t, a_t) = r_t + \gamma\, V_w(s_{t+1}) - V_w(s_t) \quad (\text{one-step TD})$$
 
-> ⚡ **What the baseline achieves.** By centering the gradient signal around the expected return from each state, the baseline transforms raw episodic returns (which can vary wildly based on episode length and luck) into advantages that measure *relative action quality*. The gradient magnitude drops by ~10× (as shown in the numeric example above), training stabilizes dramatically, and the policy learns from far fewer episodes. This is why REINFORCE without a baseline is rarely used in practice — the variance is prohibitively high. Actor-critic with a learned baseline (the critic network) is the standard approach.
+> **What the baseline achieves.** By centering the gradient signal around the expected return from each state, the baseline transforms raw episodic returns (which can vary wildly based on episode length and luck) into advantages that measure *relative action quality*. The gradient magnitude drops by ~10× (as shown in the numeric example above), training stabilizes dramatically, and the policy learns from far fewer episodes. This is why REINFORCE without a baseline is rarely used in practice — the variance is prohibitively high. Actor-critic with a learned baseline (the critic network) is the standard approach.
 
 This replaces the noisy Monte Carlo return with a bootstrapped one-step estimate — lower variance at the cost of a small bias from the critic approximation. The $\lambda$-return (GAE) blends TD and MC: $\hat{A}^{\text{GAE}} = \sum_{l=0}^\infty (\gamma\lambda)^l \delta_{t+l}$ where $\delta_t = r_t + \gamma V(s_{t+1}) - V(s_t)$.
 
@@ -316,14 +316,14 @@ $$L^{\text{CLIP}}(\theta) = \mathbb{E}\!\left[\min\!\bigl(r_t(\theta)\, A_t,\;\t
 **Explicit arithmetic — PPO clip with $r_t = 1.3$, $A_t = 0.5$, $\varepsilon = 0.2$:**
 
 ```
-  Clip bounds: [1 - 0.2, 1 + 0.2] = [0.8, 1.2]
+ Clip bounds: [1 - 0.2, 1 + 0.2] = [0.8, 1.2]
 
-  Clipped ratio: clip(1.3, 0.8, 1.2) = 1.2   (1.3 exceeds upper bound → capped at 1.2)
+ Clipped ratio: clip(1.3, 0.8, 1.2) = 1.2 (1.3 exceeds upper bound → capped at 1.2)
 
-  Unclipped term: r_t * A_t        = 1.3 * 0.5 = 0.650
-  Clipped term:   clip(r_t) * A_t  = 1.2 * 0.5 = 0.600
+ Unclipped term: r_t * A_t = 1.3 * 0.5 = 0.650
+ Clipped term: clip(r_t) * A_t = 1.2 * 0.5 = 0.600
 
-  L_CLIP = min(0.650, 0.600) = 0.600
+ L_CLIP = min(0.650, 0.600) = 0.600
 ```
 
 The clipped term (0.600) is the *more pessimistic* bound — the min takes it. If we naively updated by the unclipped gradient (0.650), the policy would increase the action probability by 30% in one step. PPO caps this at 20% (the epsilon bound) and returns the minimum, preventing overshooting.
@@ -331,14 +331,14 @@ The clipped term (0.600) is the *more pessimistic* bound — the min takes it. I
 **When $A_t < 0$ (bad action), clipping works symmetrically:**
 
 ```
-  r_t = 0.6, A_t = -0.4, epsilon = 0.2
+ r_t = 0.6, A_t = -0.4, epsilon = 0.2
 
-  Clipped ratio: clip(0.6, 0.8, 1.2) = 0.8
+ Clipped ratio: clip(0.6, 0.8, 1.2) = 0.8
 
-  Unclipped: 0.6 * (-0.4) = -0.240   (wants to strongly decrease action probability)
-  Clipped:   0.8 * (-0.4) = -0.320   (capped at 20% decrease — more conservative)
+ Unclipped: 0.6 * (-0.4) = -0.240 (wants to strongly decrease action probability)
+ Clipped: 0.8 * (-0.4) = -0.320 (capped at 20% decrease — more conservative)
 
-  L_CLIP = min(-0.240, -0.320) = -0.320
+ L_CLIP = min(-0.240, -0.320) = -0.320
 ```
 
 Again the min picks the more pessimistic (smaller magnitude in the direction of the objective) — preventing the policy from being destroyed by one bad trajectory.
@@ -373,46 +373,46 @@ A 4-step CartPole trajectory. All numbers explicit. $\gamma = 0.99$.
 |----------|-------------|--------------|----------------------|--------------|
 | 0 | [0.04, 0.05, -0.02, -0.10] | Right | 0.65 | 1 |
 | 1 | [0.05, 0.24, -0.04, -0.38] | Right | 0.62 | 1 |
-| 2 | [0.10, 0.43, -0.11, -0.66] | Left  | 0.42 | 1 |
-| 3 | [0.19, 0.24, -0.24, -0.38] | Left  | 0.45 | 1 |
+| 2 | [0.10, 0.43, -0.11, -0.66] | Left | 0.42 | 1 |
+| 3 | [0.19, 0.24, -0.24, -0.38] | Left | 0.45 | 1 |
 
 Episode ends after step 3 (4 steps total). Terminal step has no future.
 
 **Step A — Compute returns backward ($G_T = 0$ for terminal):**
 ```
-  G_3 = r_3 = 1.0
-  G_2 = r_2 + gamma * G_3 = 1 + 0.99 * 1.0   = 1.990
-  G_1 = r_1 + gamma * G_2 = 1 + 0.99 * 1.990 = 1 + 1.9701 = 2.9701
-  G_0 = r_0 + gamma * G_1 = 1 + 0.99 * 2.9701 = 1 + 2.9404 = 3.9404
+ G_3 = r_3 = 1.0
+ G_2 = r_2 + gamma * G_3 = 1 + 0.99 * 1.0 = 1.990
+ G_1 = r_1 + gamma * G_2 = 1 + 0.99 * 1.990 = 1 + 1.9701 = 2.9701
+ G_0 = r_0 + gamma * G_1 = 1 + 0.99 * 2.9701 = 1 + 2.9404 = 3.9404
 ```
 
 **Step B — Compute log probabilities:**
 ```
-  log pi(Right | s_0) = log(0.65) = -0.4308
-  log pi(Right | s_1) = log(0.62) = -0.4780
-  log pi(Left  | s_2) = log(0.42) = -0.8675
-  log pi(Left  | s_3) = log(0.45) = -0.7985
+ log pi(Right | s_0) = log(0.65) = -0.4308
+ log pi(Right | s_1) = log(0.62) = -0.4780
+ log pi(Left | s_2) = log(0.42) = -0.8675
+ log pi(Left | s_3) = log(0.45) = -0.7985
 ```
 
 **Step C — Compute log_prob * return at each step:**
 ```
-  t=0: -0.4308 * 3.9404 = -1.697
-  t=1: -0.4780 * 2.9701 = -1.420
-  t=2: -0.8675 * 1.990  = -1.726
-  t=3: -0.7985 * 1.000  = -0.799
+ t=0: -0.4308 * 3.9404 = -1.697
+ t=1: -0.4780 * 2.9701 = -1.420
+ t=2: -0.8675 * 1.990 = -1.726
+ t=3: -0.7985 * 1.000 = -0.799
 ```
 
 **Step D — Sum to get total loss (negated for gradient descent):**
 ```
-  REINFORCE loss = -((-1.697) + (-1.420) + (-1.726) + (-0.799))
-                 = -(-5.642)
-                 = +5.642
+ REINFORCE loss = -((-1.697) + (-1.420) + (-1.726) + (-0.799))
+ = -(-5.642)
+ = +5.642
 ```
 
 **Step E — Gradient descent step:**
 ```
-  d(loss)/d(theta) points in direction that DECREASES loss (which INCREASES J(theta))
-  theta <- theta - alpha * d(loss)/d(theta)    (with alpha = 0.01)
+ d(loss)/d(theta) points in direction that DECREASES loss (which INCREASES J(theta))
+ theta <- theta - alpha * d(loss)/d(theta) (with alpha = 0.01)
 ```
 
 **Net effect on policy:**
@@ -425,21 +425,21 @@ Episode ends after step 3 (4 steps total). Terminal step has no future.
 Suppose the critic estimates $V(s_0)=3.5, V(s_1)=2.6, V(s_2)=1.7, V(s_3)=0.8$.
 
 ```
-  A_0 = G_0 - V(s_0) = 3.9404 - 3.5 = +0.4404
-  A_1 = G_1 - V(s_1) = 2.9701 - 2.6 = +0.3701
-  A_2 = G_2 - V(s_2) = 1.9900 - 1.7 = +0.2900
-  A_3 = G_3 - V(s_3) = 1.0000 - 0.8 = +0.2000
+ A_0 = G_0 - V(s_0) = 3.9404 - 3.5 = +0.4404
+ A_1 = G_1 - V(s_1) = 2.9701 - 2.6 = +0.3701
+ A_2 = G_2 - V(s_2) = 1.9900 - 1.7 = +0.2900
+ A_3 = G_3 - V(s_3) = 1.0000 - 0.8 = +0.2000
 ```
 
 All are positive (good episode), but much smaller than raw $G_t$. Actor loss terms:
 
 ```
-  t=0: -0.4308 × 0.4404 = -0.1897
-  t=1: -0.4780 × 0.3701 = -0.1769
-  t=2: -0.8675 × 0.2900 = -0.2516
-  t=3: -0.7985 × 0.2000 = -0.1597
+ t=0: -0.4308 × 0.4404 = -0.1897
+ t=1: -0.4780 × 0.3701 = -0.1769
+ t=2: -0.8675 × 0.2900 = -0.2516
+ t=3: -0.7985 × 0.2000 = -0.1597
 
-  Actor loss = -((-0.1897) + (-0.1769) + (-0.2516) + (-0.1597)) = +0.7779
+ Actor loss = -((-0.1897) + (-0.1769) + (-0.2516) + (-0.1597)) = +0.7779
 ```
 
 The loss magnitude dropped from 5.642 (REINFORCE) to 0.778 (actor-critic) — variance reduced by ~7× for this single episode.
@@ -452,81 +452,81 @@ The loss magnitude dropped from 5.642 (REINFORCE) to 0.778 (actor-critic) — va
 
 ```mermaid
 flowchart TD
-    ENV["Environment\n(CartPole)"]
-    POL["Policy Network\nπ_θ(a|s)\n4 → 32 → 32 → 2 → Softmax"]
-    BUF["Trajectory Buffer τ\n(s_t, a_t, r_t) for t=0..T"]
-    RET["Compute Returns\nG_t = Σ γᵏ r_{t+k}"]
-    LOSS["Compute Loss\n-Σ_t log π_θ(a_t|s_t) · G_t"]
-    OPT["Gradient Descent\nθ ← θ - α ∇loss"]
+ ENV["Environment\n(CartPole)"]
+ POL["Policy Network\nπ_θ(a|s)\n4 → 32 → 32 → 2 → Softmax"]
+ BUF["Trajectory Buffer τ\n(s_t, a_t, r_t) for t=0..T"]
+ RET["Compute Returns\nG_t = Σ γᵏ r_{t+k}"]
+ LOSS["Compute Loss\n-Σ_t log π_θ(a_t|s_t) · G_t"]
+ OPT["Gradient Descent\nθ ← θ - α ∇loss"]
 
-    ENV -->|"state s_t"| POL
-    POL -->|"sample a_t ~ π_θ"| ENV
-    ENV -->|"r_t, s_{t+1}, done"| BUF
-    POL -->|"log π_θ(a_t|s_t)"| BUF
-    BUF -->|"episode complete"| RET
-    RET --> LOSS
-    LOSS --> OPT
-    OPT -->|"updated θ"| POL
+ ENV -->|"state s_t"| POL
+ POL -->|"sample a_t ~ π_θ"| ENV
+ ENV -->|"r_t, s_{t+1}, done"| BUF
+ POL -->|"log π_θ(a_t|s_t)"| BUF
+ BUF -->|"episode complete"| RET
+ RET --> LOSS
+ LOSS --> OPT
+ OPT -->|"updated θ"| POL
 
-    style ENV fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style POL fill:#15803d,color:#fff,stroke:#15803d
-    style BUF fill:#b45309,color:#fff,stroke:#b45309
-    style RET fill:#b45309,color:#fff,stroke:#b45309
-    style LOSS fill:#b91c1c,color:#fff,stroke:#b91c1c
-    style OPT fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style ENV fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style POL fill:#15803d,color:#fff,stroke:#15803d
+ style BUF fill:#b45309,color:#fff,stroke:#b45309
+ style RET fill:#b45309,color:#fff,stroke:#b45309
+ style LOSS fill:#b91c1c,color:#fff,stroke:#b91c1c
+ style OPT fill:#1d4ed8,color:#fff,stroke:#1d4ed8
 ```
 
 ### 7.2 · Actor-Critic Architecture
 
 ```mermaid
 flowchart LR
-    STATE["State s_t\n[x, ẋ, θ, θ̇]"]
+ STATE["State s_t\n[x, ẋ, θ, θ̇]"]
 
-    subgraph ACTOR["Actor  π_θ(a|s)"]
-        direction TB
-        A1["Dense(32, ReLU)"]
-        A2["Dense(32, ReLU)"]
-        A3["Dense(2) → Softmax"]
-        A1 --> A2 --> A3
-    end
+ subgraph ACTOR["Actor π_θ(a|s)"]
+ direction TB
+ A1["Dense(32, ReLU)"]
+ A2["Dense(32, ReLU)"]
+ A3["Dense(2) → Softmax"]
+ A1 --> A2 --> A3
+ end
 
-    subgraph CRITIC["Critic  V_w(s)"]
-        direction TB
-        C1["Dense(32, ReLU)"]
-        C2["Dense(32, ReLU)"]
-        C3["Dense(1)"]
-        C1 --> C2 --> C3
-    end
+ subgraph CRITIC["Critic V_w(s)"]
+ direction TB
+ C1["Dense(32, ReLU)"]
+ C2["Dense(32, ReLU)"]
+ C3["Dense(1)"]
+ C1 --> C2 --> C3
+ end
 
-    STATE --> ACTOR
-    STATE --> CRITIC
+ STATE --> ACTOR
+ STATE --> CRITIC
 
-    ACT["Sample action\na_t ~ π_θ(·|s_t)"]
-    VAL["State value\nV_w(s_t)"]
-    NEXT["Next state s_{t+1}\nreward r_t"]
-    ADV["Advantage\nA_hat = r_t + γV_w(s') - V_w(s_t)"]
+ ACT["Sample action\na_t ~ π_θ(·|s_t)"]
+ VAL["State value\nV_w(s_t)"]
+ NEXT["Next state s_{t+1}\nreward r_t"]
+ ADV["Advantage\nA_hat = r_t + γV_w(s') - V_w(s_t)"]
 
-    ACTOR --> ACT
-    CRITIC --> VAL
-    ACT --> NEXT
-    NEXT --> ADV
-    VAL --> ADV
+ ACTOR --> ACT
+ CRITIC --> VAL
+ ACT --> NEXT
+ NEXT --> ADV
+ VAL --> ADV
 
-    ALOSS["Actor loss\n-log π_θ(a_t|s_t) · A_hat"]
-    CLOSS["Critic loss\n(r_t + γV_w(s') - V_w(s_t))²"]
+ ALOSS["Actor loss\n-log π_θ(a_t|s_t) · A_hat"]
+ CLOSS["Critic loss\n(r_t + γV_w(s') - V_w(s_t))²"]
 
-    ADV --> ALOSS
-    ADV --> CLOSS
+ ADV --> ALOSS
+ ADV --> CLOSS
 
-    style STATE fill:#1e3a8a,color:#fff,stroke:#1e3a8a
-    style ACTOR fill:#15803d,color:#fff,stroke:#15803d
-    style CRITIC fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style ACT fill:#15803d,color:#fff,stroke:#15803d
-    style VAL fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style ADV fill:#b45309,color:#fff,stroke:#b45309
-    style ALOSS fill:#b91c1c,color:#fff,stroke:#b91c1c
-    style CLOSS fill:#b91c1c,color:#fff,stroke:#b91c1c
-    style NEXT fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style STATE fill:#1e3a8a,color:#fff,stroke:#1e3a8a
+ style ACTOR fill:#15803d,color:#fff,stroke:#15803d
+ style CRITIC fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style ACT fill:#15803d,color:#fff,stroke:#15803d
+ style VAL fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+ style ADV fill:#b45309,color:#fff,stroke:#b45309
+ style ALOSS fill:#b91c1c,color:#fff,stroke:#b91c1c
+ style CLOSS fill:#b91c1c,color:#fff,stroke:#b91c1c
+ style NEXT fill:#1e3a8a,color:#fff,stroke:#1e3a8a
 ```
 
 ---
@@ -543,9 +543,9 @@ flowchart LR
 | **Epochs per rollout** | How many gradient steps on each batch of experience | Under-uses data; expensive to collect | Overfits to current batch; distribution drift between actor and critic | `4`–`10` epochs (PPO paper: 3–10) |
 | **GAE lambda** $\lambda$ | Bias-variance tradeoff in advantage estimation | TD(0)-like: low variance, higher bias | Monte Carlo-like: zero bias, high variance | `0.95` (Schulman et al. 2015b default) |
 
-> 💡 **The most impactful dial for stability is PPO's** $\varepsilon$. When PPO training diverges, the first thing to try is reducing $\varepsilon$ from 0.2 to 0.1. The second thing is reducing the learning rate.
+> **The most impactful dial for stability is PPO's** $\varepsilon$. When PPO training diverges, the first thing to try is reducing $\varepsilon$ from 0.2 to 0.1. The second thing is reducing the learning rate.
 
-> ⚠️ **Entropy bonus caveat.** Entropy bonus is crucial when the environment has a long exploration horizon (e.g., sparse rewards). For CartPole — which gives +1 every step — the agent finds the reward quickly and entropy bonuses can actually hurt by preventing the policy from committing to the correct actions.
+> **Entropy bonus caveat.** Entropy bonus is crucial when the environment has a long exploration horizon (e.g., sparse rewards). For CartPole — which gives +1 every step — the agent finds the reward quickly and entropy bonuses can actually hurt by preventing the policy from committing to the correct actions.
 
 ---
 
@@ -613,12 +613,12 @@ After this chapter, **AgentAI** reaches ~190/200 on CartPole with PPO — a subs
 
 **Worked answer — PPO clip check:**
 ```
-  r_t = 1.4, A_t = 0.8, epsilon = 0.2
-  Clip bounds: [0.8, 1.2]
-  clip(1.4, 0.8, 1.2) = 1.2
-  Unclipped: 1.4 * 0.8 = 1.12
-  Clipped:   1.2 * 0.8 = 0.96
-  L_CLIP = min(1.12, 0.96) = 0.96  <- conservative bound taken
+ r_t = 1.4, A_t = 0.8, epsilon = 0.2
+ Clip bounds: [0.8, 1.2]
+ clip(1.4, 0.8, 1.2) = 1.2
+ Unclipped: 1.4 * 0.8 = 1.12
+ Clipped: 1.2 * 0.8 = 0.96
+ L_CLIP = min(1.12, 0.96) = 0.96 <- conservative bound taken
 ```
 
 **Where we stand on AgentAI:**
@@ -645,14 +645,14 @@ PPO reaches ~190/200 on CartPole. Close — but to reliably cross ≥195, we nee
 **What you have built in this chapter:**
 
 ```
-REINFORCE     →  Direct policy optimization, stochastic exploration
-                 ↳ High variance, slow
+REINFORCE → Direct policy optimization, stochastic exploration
+ ↳ High variance, slow
 
-Actor-Critic  →  Advantage function cuts variance dramatically
-                 ↳ TD bootstrapping enables online learning
+Actor-Critic → Advantage function cuts variance dramatically
+ ↳ TD bootstrapping enables online learning
 
-PPO           →  Clipped ratio prevents catastrophic updates
-                 ↳ Most widely deployed RL algorithm in industry
+PPO → Clipped ratio prevents catastrophic updates
+ ↳ Most widely deployed RL algorithm in industry
 ```
 
 **Chapter 6** closes the loop: SAC + the final AgentAI result. The ≥195/200 target falls.

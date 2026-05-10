@@ -5,16 +5,16 @@ This directory contains generated diagrams for Ch.1 Docker Fundamentals.
 ## Diagrams
 
 1. **ch01-docker-architecture.png** — Docker image layers
-   - Illustrates how Dockerfile instructions create cached layers
-   - Shows layer sizes and cache optimization strategy
+ - Illustrates how Dockerfile instructions create cached layers
+ - Shows layer sizes and cache optimization strategy
 
 2. **ch01-container-lifecycle.png** (also used as .gif)
-   - Complete container lifecycle: Build → Run → Stop → Remove
-   - Demonstrates image vs container relationship
+ - Complete container lifecycle: Build → Run → Stop → Remove
+ - Demonstrates image vs container relationship
 
 3. **ch01-volume-mounts.png** — Volume persistence
-   - Host filesystem vs container filesystem
-   - Named volumes vs bind mounts comparison
+ - Host filesystem vs container filesystem
+ - Named volumes vs bind mounts comparison
 
 ## Generating Diagrams
 

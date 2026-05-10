@@ -4,9 +4,9 @@
 
 You are the Lead Data Scientist at a retail company. The CMO says: "We blast the same marketing emails to 440 customers. Our open rate is 12%. I want segments — 'Loyalists', 'Price-sensitive', 'Big spenders' — so each group gets the right message. But nobody has time to label 440 customer records by hand." No labels. No ground truth. Pure unsupervised learning.
 
-> 💡 **Dataset choice:** This track uses the UCI Wholesale Customers dataset (440 customers, 6 spending categories) instead of California Housing. Unsupervised methods (clustering, PCA) are best illustrated with multi-dimensional non-target data where "labels" don't exist.
+> **Dataset choice:** This track uses the UCI Wholesale Customers dataset (440 customers, 6 spending categories) instead of California Housing. Unsupervised methods (clustering, PCA) are best illustrated with multi-dimensional non-target data where "labels" don't exist.
 
-> ⚠️ **Track scope (3 chapters):** This track covers the three unsupervised primitives — cluster discovery, feature compression, and cluster validation — needed to deliver actionable segments in a lean curriculum. Traditional agglomerative hierarchical clustering is intentionally omitted: HDBSCAN's hierarchical density approach covers the same pedagogical ground with better practical defaults. Extensions (Gaussian Mixture Models, autoencoder-based representation learning) appear in the Neural Networks and Ensemble Methods tracks.
+> **Warning — Track scope (3 chapters):** This track covers the three unsupervised primitives — cluster discovery, feature compression, and cluster validation — needed to deliver actionable segments in a lean curriculum. Traditional agglomerative hierarchical clustering is intentionally omitted: HDBSCAN's hierarchical density approach covers the same pedagogical ground with better practical defaults. Extensions (Gaussian Mixture Models, autoencoder-based representation learning) appear in the Neural Networks and Ensemble Methods tracks.
 
 ---
 
@@ -26,15 +26,15 @@ You are the Lead Data Scientist at a retail company. The CMO says: "We blast the
 
 | Ch | Title | Silhouette | Key Unlock | Constraints |
 |----|-------|-----------|------------|-------------|
-| **1** | [Clustering](ch01_clustering) | 0.42 | K-Means discovers 5 initial segments; DBSCAN finds noise customers; HDBSCAN auto-discovers K | #1 Partial, #4 ✅ |
-| **2** | [Dimensionality Reduction](ch02_dimensionality_reduction) | 0.48 | PCA + t-SNE + UMAP compress 6D → 2D; clustering in reduced space improves separation | #1 ✅, #2 Partial |
-| **3** | [Unsupervised Metrics](ch03_unsupervised_metrics) | **>0.5 ✅** | Silhouette + Davies-Bouldin + Calinski-Harabasz suite; ARI/NMI for external validation; bootstrap stability; business names assigned | **All ✅** |
+| **1** | [Clustering](ch01_clustering) | 0.42 | K-Means discovers 5 initial segments; DBSCAN finds noise customers; HDBSCAN auto-discovers K | #1 Partial, #4 |
+| **2** | [Dimensionality Reduction](ch02_dimensionality_reduction) | 0.48 | PCA + t-SNE + UMAP compress 6D → 2D; clustering in reduced space improves separation | #1 , #2 Partial |
+| **3** | [Unsupervised Metrics](ch03_unsupervised_metrics) | **>0.5 ** | Silhouette + Davies-Bouldin + Calinski-Harabasz suite; ARI/NMI for external validation; bootstrap stability; business names assigned | **All ** |
 
 ---
 
 ## Narrative Arc: From Raw Data to Actionable Segments
 
-### 🎬 Act 1: Discovery (Ch.1)
+### Act 1: Discovery (Ch.1)
 **Cluster customers, see what emerges**
 
 - **K-Means** on 6 purchase features (Fresh, Milk, Grocery, Frozen, Detergents_Paper, Delicatessen)
@@ -44,11 +44,11 @@ You are the Lead Data Scientist at a retail company. The CMO says: "We blast the
 
 *"I can see the segments forming, but 0.42 silhouette means they're overlapping. The features are on wildly different scales — Fresh ranges 3–112k while Delicatessen ranges 3–48k. Can we compress this?" — Data Scientist*
 
-**Status**: ❌ Segments overlap. Need better feature space.
+**Status**: Segments overlap. Need better feature space.
 
 ---
 
-### ⚡ Act 2: Better Feature Space (Ch.2)
+### Act 2: Better Feature Space (Ch.2)
 **Reduce dimensions, sharpen boundaries**
 
 - **PCA**: 6D → 2D. First 2 PCs explain 72% of variance. PC1 = "total spend", PC2 = "fresh vs grocery"
@@ -58,21 +58,21 @@ You are the Lead Data Scientist at a retail company. The CMO says: "We blast the
 
 *"Now I can SEE the five segments! But is 0.48 good enough? And which K is actually optimal — the elbow says 3, my eyes say 5, the CMO wants 5. How do I decide?" — Data Scientist*
 
-**Status**: ✅ Segments visible. ❌ Not yet validated quantitatively.
+**Status**: Segments visible. Not yet validated quantitatively.
 
 ---
 
-### 📊 Act 3: Validation (Ch.3)
+### Act 3: Validation (Ch.3)
 **Measure, name, and stabilise segments**
 
-- **Silhouette analysis**: K=5 after PCA preprocessing → silhouette = 0.52 ✅ (above 0.5 threshold!)
+- **Silhouette analysis**: K=5 after PCA preprocessing → silhouette = 0.52 (above 0.5 threshold!)
 - **Metric disagreement**: Silhouette prefers K=3 (0.58), but business needs K=5 (0.52) — acceptable trade-off
 - **Business naming**: Centroid analysis → "Loyalists", "Price-Sensitive", "Big Spenders", "Occasional Buyers", "Deli Specialists"
 - **Bootstrap stability**: 95% of customers assigned to the same segment across 100 bootstrap samples
 
 *"Five segments, silhouette 0.52, stable across resamples, and the sales team immediately recognized 'Big Spenders' vs 'Price-Sensitive'. Ship it!" — CMO*
 
-**Status**: ✅✅✅✅✅ **ALL CONSTRAINTS SATISFIED!**
+**Status**: **ALL CONSTRAINTS SATISFIED!**
 
 ---
 
@@ -94,11 +94,11 @@ Every chapter uses the same dataset: [Wholesale Customers](https://archive.ics.u
 Plus 2 categorical features (Channel: Hotel/Restaurant/Café vs Retail; Region: 1/2/3) used only for external validation.
 
 **Why this dataset is perfect for unsupervised learning:**
-- ✅ No ground truth labels — genuine unsupervised scenario
-- ✅ Business-interpretable features (everyone understands spending)
-- ✅ Small enough to visualise (440 points), representative enough to learn
-- ✅ Natural cluster structure (hotel buyers vs retail buyers vs specialty shops)
-- ✅ Skewed distributions — forces you to handle log-transforms and scaling
+- No ground truth labels — genuine unsupervised scenario
+- Business-interpretable features (everyone understands spending)
+- Small enough to visualise (440 points), representative enough to learn
+- Natural cluster structure (hotel buyers vs retail buyers vs specialty shops)
+- Skewed distributions — forces you to handle log-transforms and scaling
 
 ```python
 import pandas as pd
@@ -107,7 +107,7 @@ df = pd.read_csv(url)
 X = df[['Fresh', 'Milk', 'Grocery', 'Frozen', 'Detergents_Paper', 'Delicatessen']].values
 ```
 
-> ⚡ **Compute**: All examples run on CPU. No GPU required — 440 rows × 6 features is fast enough for all algorithms covered here.
+> **Compute**: All examples run on CPU. No GPU required — 440 rows × 6 features is fast enough for all algorithms covered here.
 
 ---
 

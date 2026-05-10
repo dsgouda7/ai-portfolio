@@ -20,12 +20,12 @@
 
 | Constraint | Target | Status | Evidence |
 |------------|--------|--------|----------|
-| #1 Quality | ≥4.0/5.0 | ✅ **4.1/5.0** | HPSv2 score (visual quality maintained) |
-| #2 Speed | <30 seconds | ✅ **8s image + 2s audio** | SDXL-Turbo + MMS TTS (10s total per narrated frame) |
-| #3 Cost | <$5k hardware | ✅ **$2,500 laptop** | CPU-only TTS, no additional hardware needed |
-| #4 Control | <5% unusable | ✅ **3% unusable** | ControlNet + VLM QA (audio doesn't affect visual quality) |
-| #5 Throughput | 100+ images/day | ⚡ **120 images/day → 85 narrated videos/day** | Audio generation adds 2s/video (manageable) |
-| #6 Versatility | 3 modalities | ✅ **Text→Image + Video + Audio + Understanding** | Now covers all client deliverable types |
+| #1 Quality | ≥4.0/5.0 | **4.1/5.0** | HPSv2 score (visual quality maintained) |
+| #2 Speed | <30 seconds | **8s image + 2s audio** | SDXL-Turbo + MMS TTS (10s total per narrated frame) |
+| #3 Cost | <$5k hardware | **$2,500 laptop** | CPU-only TTS, no additional hardware needed |
+| #4 Control | <5% unusable | **3% unusable** | ControlNet + VLM QA (audio doesn't affect visual quality) |
+| #5 Throughput | 100+ images/day | **120 images/day → 85 narrated videos/day** | Audio generation adds 2s/video (manageable) |
+| #6 Versatility | 3 modalities | **Text→Image + Video + Audio + Understanding** | Now covers all client deliverable types |
 
 ---
 
@@ -140,25 +140,25 @@ Where:
 
 ```
 Text Input: "Introducing the Marseille Collection"
-    │
-    ├─→ Phoneme Encoder
-    │      (converts text → /ɪntrəˈdjuːsɪŋ ðə mɑːrˈseɪ kəˈlɛkʃən/)
-    │
-    ├─→ Acoustic Model (Transformer)
-    │      Predicts mel-spectrogram frames:
-    │      Time ──→
-    │   Freq ↓  [█░░░░] /m/ (low frequency hum)
-    │           [░░█░░] /ɑː/ (mid frequency vowel)
-    │           [░░░█░] /r/ (high frequency trill)
-    │           [░█░░░] /s/ (sibilant)
-    │           [░░█░░] /eɪ/ (vowel glide)
-    │
-    ├─→ Vocoder (HiFi-GAN)
-    │      Converts mel-spectrogram → waveform
-    │      Sample ──→
-    │   Amplitude ↓  ╱╲╱╲╱╲ (22,050 samples/second)
-    │
-    └─→ Audio Output (.wav file, 15 seconds)
+ │
+ ├─→ Phoneme Encoder
+ │ (converts text → /ɪntrəˈdjuːsɪŋ ðə mɑːrˈseɪ kəˈlɛkʃən/)
+ │
+ ├─→ Acoustic Model (Transformer)
+ │ Predicts mel-spectrogram frames:
+ │ Time ──→
+ │ Freq ↓ [█░░░░] /m/ (low frequency hum)
+ │ [░░█░░] /ɑː/ (mid frequency vowel)
+ │ [░░░█░] /r/ (high frequency trill)
+ │ [░█░░░] /s/ (sibilant)
+ │ [░░█░░] /eɪ/ (vowel glide)
+ │
+ ├─→ Vocoder (HiFi-GAN)
+ │ Converts mel-spectrogram → waveform
+ │ Sample ──→
+ │ Amplitude ↓ ╱╲╱╲╱╲ (22,050 samples/second)
+ │
+ └─→ Audio Output (.wav file, 15 seconds)
 ```
 
 ### Before/After: Voice Actor vs TTS
@@ -166,17 +166,17 @@ Text Input: "Introducing the Marseille Collection"
 ```
 Before (Voice Actor):
 ────────────────────────────────────────────
-Cost:       $150 per video × 85 videos/day = $12,750/day
+Cost: $150 per video × 85 videos/day = $12,750/day
 Turnaround: 24–48 hours (schedule actor, record, edit, deliver)
 Iterations: $150 per script change
-Constraint: #3 COST ❌ (unsustainable at scale)
+Constraint: #3 COST (unsustainable at scale)
 
 After (MMS TTS):
 ────────────────────────────────────────────
-Cost:       $0 (runs on existing laptop CPU)
+Cost: $0 (runs on existing laptop CPU)
 Turnaround: 2 seconds per 15-second narration (instant)
 Iterations: Free (re-generate on demand)
-Constraint: #3 COST ✅ (meets <$5k hardware target)
+Constraint: #3 COST (meets <$5k hardware target)
 ```
 
 ---
@@ -205,30 +205,30 @@ model = VitsModel.from_pretrained("facebook/mms-tts-eng")
 tokenizer = AutoTokenizer.from_pretrained("facebook/mms-tts-eng")
 
 def generate_narration(script: str, output_path: str):
-    """Generate speech from text and save as .wav file."""
-    inputs = tokenizer(script, return_tensors="pt")
+ """Generate speech from text and save as .wav file."""
+ inputs = tokenizer(script, return_tensors="pt")
 
-    with torch.no_grad():
-        output = model(**inputs).waveform
+ with torch.no_grad():
+ output = model(**inputs).waveform
 
-    # Convert to numpy and save
-    audio = output.squeeze().cpu().numpy()
-    sf.write(output_path, audio, samplerate=16000)
+ # Convert to numpy and save
+ audio = output.squeeze().cpu().numpy()
+ sf.write(output_path, audio, samplerate=16000)
 
-    return output_path
+ return output_path
 
 # VisualForge: Generate narration for spring collection products
 scripts = [
-    "Introducing the Marseille Collection—handcrafted linen in coral and sage, designed for effortless elegance.",
-    "Meet the Côte d'Azur Dress—lightweight cotton in sky blue and ivory, perfect for coastal getaways.",
-    "Discover the Provence Jacket—tailored wool in charcoal and cream, essential for transitional seasons.",
-    # ... 17 more products
+ "Introducing the Marseille Collection—handcrafted linen in coral and sage, designed for effortless elegance.",
+ "Meet the Côte d'Azur Dress—lightweight cotton in sky blue and ivory, perfect for coastal getaways.",
+ "Discover the Provence Jacket—tailored wool in charcoal and cream, essential for transitional seasons.",
+ # ... 17 more products
 ]
 
 for i, script in enumerate(scripts):
-    audio_path = f"visualforge_narration_product_{i:02d}.wav"
-    generate_narration(script, audio_path)
-    print(f"✅ Generated {audio_path} (2.1s)")
+ audio_path = f"visualforge_narration_product_{i:02d}.wav"
+ generate_narration(script, audio_path)
+ print(f" Generated {audio_path} (2.1s)")
 
 # Result: 20 narrations × 2s = 40 seconds total
 # vs 24–48 hours with voice actor booking
@@ -239,9 +239,9 @@ for i, script in enumerate(scripts):
 - **Cost**: $0 (vs $150/video × 20 = $3,000 for voice actor)
 - **Turnaround**: 40 seconds (vs 24–48 hours)
 - **Constraint impact**:
-  - ✅ **#3 COST** maintained ($0 cloud costs)
-  - ⚡ **#5 THROUGHPUT** improved (120 images/day → 85 narrated videos/day with only +2s overhead per video)
-  - ✅ **#6 VERSATILITY** unlocked (now handle text→image + video + audio + understanding)
+ - **#3 COST** maintained ($0 cloud costs)
+ - **#5 THROUGHPUT** improved (120 images/day → 85 narrated videos/day with only +2s overhead per video)
+ - **#6 VERSATILITY** unlocked (now handle text→image + video + audio + understanding)
 
 ---
 
@@ -252,8 +252,8 @@ for i, script in enumerate(scripts):
 **Symptom**: Speech sounds monotone, lacks natural pauses and emphasis.
 
 ```
-❌ "Introducing the Marseille Collection handcrafted linen in coral and sage designed for effortless elegance"
-   (flat, no pauses, robotic)
+"Introducing the Marseille Collection handcrafted linen in coral and sage designed for effortless elegance"
+ (flat, no pauses, robotic)
 ```
 
 **Why**: MMS TTS is optimized for **intelligibility** (clear pronunciation) over **expressiveness** (emotion, rhythm). It doesn't model prosody features like pitch contours, stress patterns, or natural pauses.
@@ -279,16 +279,16 @@ for i, script in enumerate(scripts):
 ```python
 # Production: VisualForge brand pronunciation dictionary
 BRAND_PRONUNCIATIONS = {
-    "Marseille": "Mar-SAY",
-    "Côte d'Azur": "Coat duh-ZOOR",
-    "Provence": "Pro-VONCE",
+ "Marseille": "Mar-SAY",
+ "Côte d'Azur": "Coat duh-ZOOR",
+ "Provence": "Pro-VONCE",
 }
 
 def preprocess_script(script: str) -> str:
-    """Replace brand names with phonetic spellings."""
-    for brand, phonetic in BRAND_PRONUNCIATIONS.items():
-        script = script.replace(brand, phonetic)
-    return script
+ """Replace brand names with phonetic spellings."""
+ for brand, phonetic in BRAND_PRONUNCIATIONS.items():
+ script = script.replace(brand, phonetic)
+ return script
 
 # Apply before generation
 script = preprocess_script("Introducing the Marseille Collection")
@@ -307,22 +307,22 @@ generate_narration(script, "output.wav")
 import numpy as np
 
 def generate_long_narration(script: str) -> np.ndarray:
-    """Handle scripts longer than 20 seconds."""
-    sentences = script.split(". ")
-    audio_segments = []
+ """Handle scripts longer than 20 seconds."""
+ sentences = script.split(". ")
+ audio_segments = []
 
-    for sentence in sentences:
-        audio = generate_narration(sentence + ".", f"temp_{len(audio_segments)}.wav")
-        audio_segments.append(audio)
+ for sentence in sentences:
+ audio = generate_narration(sentence + ".", f"temp_{len(audio_segments)}.wav")
+ audio_segments.append(audio)
 
-    # Concatenate with 0.3s silence between sentences
-    silence = np.zeros(int(0.3 * 16000))  # 16kHz sample rate
-    combined = np.concatenate([
-        seg if i == 0 else np.concatenate([silence, seg])
-        for i, seg in enumerate(audio_segments)
-    ])
+ # Concatenate with 0.3s silence between sentences
+ silence = np.zeros(int(0.3 * 16000)) # 16kHz sample rate
+ combined = np.concatenate([
+ seg if i == 0 else np.concatenate([silence, seg])
+ for i, seg in enumerate(audio_segments)
+ ])
 
-    return combined
+ return combined
 ```
 
 ---
@@ -331,18 +331,18 @@ def generate_long_narration(script: str) -> np.ndarray:
 
 | Approach | Use when... | VisualForge fit |
 |----------|-------------|-----------------|
-| **MMS TTS** (this chapter) | Need fast, local, CPU-friendly TTS; intelligibility > expressiveness | ✅ **Best for MVP**: $0 cost, 2s generation, runs on existing laptop |
-| **ElevenLabs API** | Need premium voice quality with natural prosody | ❌ Violates #3 COST (cloud dependency) + #2 SPEED (API latency) |
-| **Coqui XTTS v2** | Need voice cloning (match client's brand voice) | ⚡ **Future upgrade**: GPU required (conflicts with CPU-only constraint) |
-| **GPT-4o-mini-TTS** | Need conversational prosody with low latency | ❌ Requires API ($0.30/min = $200/day for 85 videos) |
+| **MMS TTS** (this chapter) | Need fast, local, CPU-friendly TTS; intelligibility > expressiveness | **Best for MVP**: $0 cost, 2s generation, runs on existing laptop |
+| **ElevenLabs API** | Need premium voice quality with natural prosody | Violates #3 COST (cloud dependency) + #2 SPEED (API latency) |
+| **Coqui XTTS v2** | Need voice cloning (match client's brand voice) | **Future upgrade**: GPU required (conflicts with CPU-only constraint) |
+| **GPT-4o-mini-TTS** | Need conversational prosody with low latency | Requires API ($0.30/min = $200/day for 85 videos) |
 | **Whisper** (ASR) | Need audio → text transcription (opposite direction) | Not applicable (we're doing text → audio) |
-| **Voice Actor** | Need Hollywood-quality emotional delivery | ❌ $150/video × 85 = $12,750/day (unsustainable) |
+| **Voice Actor** | Need Hollywood-quality emotional delivery | $150/video × 85 = $12,750/day (unsustainable) |
 
 **VisualForge decision tree**:
 ```
 Does client brief require emotional narration (e.g., luxury car ad)?
-  ├─ Yes → Use voice actor for hero assets (5% of videos)
-  └─ No → Use MMS TTS for bulk generation (95% of videos)
+ ├─ Yes → Use voice actor for hero assets (5% of videos)
+ └─ No → Use MMS TTS for bulk generation (95% of videos)
 ```
 
 ### Popular Audio Models (Apr 2026 Snapshot)
@@ -353,7 +353,7 @@ For reference, here are leading audio models across different use cases:
 
 | Model | Strength | Typical Runtime Profile |
 |------|----------|-------------------------|
-| `facebook/mms-tts-*` | Lightweight multilingual TTS, 1,100+ languages | ✅ CPU-friendly (VisualForge choice) |
+| `facebook/mms-tts-*` | Lightweight multilingual TTS, 1,100+ languages | CPU-friendly (VisualForge choice) |
 | `hexgrad/Kokoro-82M` | Very small open TTS model, fast local experimentation | CPU-friendly |
 | `Coqui XTTS v2` | Good multilingual open-source baseline with voice cloning support | GPU preferred |
 | `ElevenLabs` multilingual voices | Top-tier naturalness and expressiveness | API-first (cloud) |
@@ -432,13 +432,13 @@ For reference, here are leading audio models across different use cases:
 
 ### Papers
 - **WaveNet** (van den Oord et al., 2016): First high-quality neural TTS using dilated convolutions
-  - [arXiv:1609.03499](https://arxiv.org/abs/1609.03499)
+ - [arXiv:1609.03499](https://arxiv.org/abs/1609.03499)
 - **Tacotron 2** (Shen et al., 2018): End-to-end TTS with attention-based sequence-to-sequence model
-  - [arXiv:1712.05884](https://arxiv.org/abs/1712.05884)
+ - [arXiv:1712.05884](https://arxiv.org/abs/1712.05884)
 - **FastSpeech** (Ren et al., 2019): Non-autoregressive TTS for fast parallel generation
-  - [arXiv:1905.09263](https://arxiv.org/abs/1905.09263)
+ - [arXiv:1905.09263](https://arxiv.org/abs/1905.09263)
 - **MMS** (Pratap et al., 2023): Massively Multilingual Speech models covering 1,100+ languages
-  - [arXiv:2305.13516](https://arxiv.org/abs/2305.13516)
+ - [arXiv:2305.13516](https://arxiv.org/abs/2305.13516)
 
 ### Repositories
 - **MMS TTS**: [github.com/facebookresearch/fairseq/tree/main/examples/mms](https://github.com/facebookresearch/fairseq/tree/main/examples/mms)
@@ -461,38 +461,38 @@ For reference, here are leading audio models across different use cases:
 ### Quick-Win Flow
 
 1. **Install dependencies** (one cell):
-   ```python
-   !pip install transformers soundfile torch
-   ```
+ ```python
+ !pip install transformers soundfile torch
+ ```
 
 2. **Load MMS TTS model** (CPU-friendly, 150MB):
-   ```python
-   from transformers import VitsModel, AutoTokenizer
+ ```python
+ from transformers import VitsModel, AutoTokenizer
 
-   model = VitsModel.from_pretrained("facebook/mms-tts-eng")
-   tokenizer = AutoTokenizer.from_pretrained("facebook/mms-tts-eng")
-   ```
+ model = VitsModel.from_pretrained("facebook/mms-tts-eng")
+ tokenizer = AutoTokenizer.from_pretrained("facebook/mms-tts-eng")
+ ```
 
 3. **Generate speech from text**:
-   ```python
-   import torch
-   import soundfile as sf
+ ```python
+ import torch
+ import soundfile as sf
 
-   text = "Introducing the Marseille Collection—handcrafted linen in coral and sage."
-   inputs = tokenizer(text, return_tensors="pt")
+ text = "Introducing the Marseille Collection—handcrafted linen in coral and sage."
+ inputs = tokenizer(text, return_tensors="pt")
 
-   with torch.no_grad():
-       output = model(**inputs).waveform
+ with torch.no_grad():
+ output = model(**inputs).waveform
 
-   audio = output.squeeze().cpu().numpy()
-   sf.write("narration.wav", audio, samplerate=16000)
-   ```
+ audio = output.squeeze().cpu().numpy()
+ sf.write("narration.wav", audio, samplerate=16000)
+ ```
 
 4. **Play audio inline** (Jupyter):
-   ```python
-   from IPython.display import Audio
-   Audio("narration.wav")
-   ```
+ ```python
+ from IPython.display import Audio
+ Audio("narration.wav")
+ ```
 
 **Expected output**: A 5-second `.wav` file with synthesized speech narrating the Marseille Collection brief.
 
@@ -511,8 +511,8 @@ For reference, here are leading audio models across different use cases:
 - **Blocker**: Clients want narrated video ads, but voice actors cost $12,750/day ($150/video × 85 videos)
 
 ### After This Chapter
-- **Constraint #5 Throughput**: ⚡ **85 narrated videos/day** (audio adds only 2s overhead per video)
-- **Constraint #6 Versatility**: ✅ **Text→Image + Video + Audio + Understanding** (all client deliverable types covered)
+- **Constraint #5 Throughput**: **85 narrated videos/day** (audio adds only 2s overhead per video)
+- **Constraint #6 Versatility**: **Text→Image + Video + Audio + Understanding** (all client deliverable types covered)
 - **Cost savings**: $12,750/day → $0 (CPU-only TTS, no cloud APIs)
 
 ---
@@ -538,14 +538,14 @@ For reference, here are leading audio models across different use cases:
 
 | Constraint | Ch.6 | Ch.7 | Ch.8 | Ch.9 | Ch.10 | **Audio Gen** | Target |
 |------------|------|------|------|------|-------|---------------|--------|
-| #1 Quality | ⚡ 3.5 | ⚡ 3.8 | ⚡ 3.8 | ⚡ 3.8 | ⚡ 3.9 | ⚡ 3.9/5.0 | ≥4.0/5.0 |
-| #2 Speed | ✅ 20s | ✅ 20s | ✅ 18s | ✅ 18s | ✅ 18s | ✅ 8s img + 2s audio | <30s |
-| #3 Cost | ✅ $2.5k | ✅ $2.5k | ✅ $2.5k | ✅ $2.5k | ✅ $2.5k | ✅ $2.5k (no new hw) | <$5k |
-| #4 Control | ⚡ 15% | ✅ 3% | ✅ 3% | ✅ 3% | ✅ 3% | ✅ 3% unusable | <5% |
-| #5 Throughput | ⚡ 80 | ⚡ 80 | ⚡ 80 | ⚡ 85 vid | ✅ 120 img | ⚡ 85 narrated vid | 100+/day |
-| #6 Versatility | ⚡ T→I | ⚡ T→I | ⚡ T→I | ⚡ +Video | ⚡ +Understand | ✅ **+Audio** | 3 modalities |
+| #1 Quality | 3.5 | 3.8 | 3.8 | 3.8 | 3.9 | 3.9/5.0 | ≥4.0/5.0 |
+| #2 Speed | 20s | 20s | 18s | 18s | 18s | 8s img + 2s audio | <30s |
+| #3 Cost | $2.5k | $2.5k | $2.5k | $2.5k | $2.5k | $2.5k (no new hw) | <$5k |
+| #4 Control | 15% | 3% | 3% | 3% | 3% | 3% unusable | <5% |
+| #5 Throughput | 80 | 80 | 80 | 85 vid | 120 img | 85 narrated vid | 100+/day |
+| #6 Versatility | T→I | T→I | T→I | +Video | +Understand | **+Audio** | 3 modalities |
 
-**Legend**: ❌ Not addressed | ⚡ Foundation laid | ✅ Target hit
+**Legend**: Not addressed | Foundation laid | Target hit
 
 **Key observation**: Audio generation is a **force multiplier**, not a bottleneck. It adds 2 seconds per video (negligible) while unlocking an entirely new deliverable type (narrated ads) that previously cost $12,750/day in voice actor fees.
 

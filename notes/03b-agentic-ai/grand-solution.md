@@ -17,13 +17,13 @@
 ## The Progression
 
 ```
-Starting state (from 03a-ai):  RAG grounded, CoT reasoning, 18% conv, 5% errors
-Ch.1: ReAct orchestration       → 27% conv, +$2.80 AOV (proactive upselling | #1 BUSINESS VALUE)
-Ch.2: Safety hardening          → 27% conv (0 attacks | #5 SAFETY)
-Ch.3: Evaluation framework      → 30% conv (quality assurance, faster iteration | #2 ACCURACY)
-Ch.4: Cost/latency optimization → 32% conv, 1.8s p95   (streaming, caching | #3 LATENCY, #4 COST)
-Ch.5: Fine-tuning               → 32% conv, $41.00 AOV (brand voice, cost reduction | #6 RELIABILITY)
-Ch.6: Advanced patterns         → Production-grade multi-agent franchise system
+Starting state (from 03a-ai): RAG grounded, CoT reasoning, 18% conv, 5% errors
+Ch.1: ReAct orchestration → 27% conv, +$2.80 AOV (proactive upselling | #1 BUSINESS VALUE)
+Ch.2: Safety hardening → 27% conv (0 attacks | #5 SAFETY)
+Ch.3: Evaluation framework → 30% conv (quality assurance, faster iteration | #2 ACCURACY)
+Ch.4: Cost/latency optimization → 32% conv, 1.8s p95 (streaming, caching | #3 LATENCY, #4 COST)
+Ch.5: Fine-tuning → 32% conv, $41.00 AOV (brand voice, cost reduction | #6 RELIABILITY)
+Ch.6: Advanced patterns → Production-grade multi-agent franchise system
 ```
 
 ---
@@ -100,12 +100,12 @@ Ch.6: Advanced patterns         → Production-grade multi-agent franchise syste
 
 | Metric | Phone Baseline | After Ch.5 (Production) | Change |
 |---|---|---|---|
-| Conversion rate | 22% | 32% | +10pp ✅ |
-| Average order value | $38.50 | $41.80 | +$3.30 ✅ |
-| p95 latency | N/A (human) | 1.8s | — ✅ |
-| Cost per conversation | N/A | $0.06 | — ✅ |
-| Successful attacks | N/A | 0 | — ✅ |
-| Error rate | ~5% (human error) | 3.8% | Better ✅ |
+| Conversion rate | 22% | 32% | +10pp |
+| Average order value | $38.50 | $41.80 | +$3.30 |
+| p95 latency | N/A (human) | 1.8s | — |
+| Cost per conversation | N/A | $0.06 | — |
+| Successful attacks | N/A | 0 | — |
+| Error rate | ~5% (human error) | 3.8% | Better |
 
 ---
 

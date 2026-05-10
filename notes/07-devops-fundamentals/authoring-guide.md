@@ -4,7 +4,7 @@
 > Each chapter lives under `notes/07-devops_fundamentals/` in its own folder, containing a README and a Jupyter notebook.
 > Read this before starting any chapter to keep tone, structure, and the running example consistent.
 >
-> **📚 Updated:** Adapted from ML authoring guide with infrastructure-focused conventions.
+> ** Updated:** Adapted from ML authoring guide with infrastructure-focused conventions.
 
 <!-- LLM-STYLE-FINGERPRINT-V1
 canonical_chapters: ["notes/07-devops_fundamentals/ch01_docker_fundamentals/README.md", "notes/07-devops_fundamentals/ch02_container_orchestration/README.md"]
@@ -14,7 +14,7 @@ concept_motivation: required_before_each_tool
 hands_on_walkthroughs: judicious_production_stack_commands_when_clarifying
 running_example: production_stack_only_no_synthetic_except_minimal_demos
 failure_first_pedagogy: true
-callout_system: {insight:"💡", warning:"⚠️", constraint:"⚡", optional_depth:"📖", forward_pointer:"➡️"}
+callout_system: {insight:"", warning:"", constraint:"", optional_depth:"📖", forward_pointer:"➡"}
 mermaid_color_palette: {primary:"#1e3a8a", success:"#15803d", caution:"#b45309", danger:"#b91c1c", info:"#1d4ed8"}
 image_background: dark_facecolor_1a1a2e_for_generated_diagrams
 section_template: [story_header, challenge_0, animation, core_idea_1, running_example_2, mental_model_3, step_by_step_4, key_diagrams_5, configuration_dial_6, what_can_go_wrong_7, progress_check_N, bridge_N1]
@@ -35,13 +35,13 @@ The DevOps Fundamentals track is 8 chapters covering production deployment pract
 ```
 notes/07-devops_fundamentals/
 ├── ch01_docker_fundamentals/
-│   ├── README.md          ← Technical deep-dive + diagrams
-│   ├── notebook.ipynb     ← Runnable local deployment
-│   └── gen_scripts/       ← Scripts to generate animations
+│ ├── README.md ← Technical deep-dive + diagrams
+│ ├── notebook.ipynb ← Runnable local deployment
+│ └── gen_scripts/ ← Scripts to generate animations
 ├── ch02_container_orchestration/
-│   ├── README.md
-│   ├── notebook.ipynb
-│   └── gen_scripts/
+│ ├── README.md
+│ ├── notebook.ipynb
+│ └── gen_scripts/
 ... (8 chapters total)
 ```
 
@@ -98,14 +98,14 @@ Every chapter explicitly tracks which constraints it helps solve:
 
 | Ch | What Unlocks | Constraints Addressed | Status |
 |----|--------------|----------------------|--------|
-| 1 | Containerization ($Docker) | **#1 ✅ Portability** | Foundation |
+| 1 | Containerization ($Docker) | **#1 Portability** | Foundation |
 | 2 | Multi-container orchestration | #1 Extended | Composition unlocked |
-| 3 | Kubernetes self-healing | **#3 ✅ Reliability (basic)** | Auto-restart |
-| 4 | CI/CD pipelines | **#2 ✅ Automation** | Zero-touch deploy |
-| 5 | Metrics & alerting | **#4 ✅ Observability** | <5min detection |
+| 3 | Kubernetes self-healing | **#3 Reliability (basic)** | Auto-restart |
+| 4 | CI/CD pipelines | **#2 Automation** | Zero-touch deploy |
+| 5 | Metrics & alerting | **#4 Observability** | <5min detection |
 | 6 | Infrastructure as Code | #2 Extended | Reproducible infra |
 | 7 | Load balancing | #3 Extended | High availability |
-| 8 | Secrets management | **#5 ✅ Security** | 🎉 **COMPLETE!** |
+| 8 | Secrets management | **#5 Security** | **COMPLETE!** |
 
 ---
 
@@ -126,7 +126,7 @@ Every chapter README follows this **extended structure**:
 
 ## 0 · The Challenge — Where We Are
 
-> 🎯 **The mission**: Deploy **ProductionStack** — [one-sentence mission] satisfying 5 constraints:
+> **The mission**: Deploy **ProductionStack** — [one-sentence mission] satisfying 5 constraints:
 > 1. PORTABILITY: [target and threshold]
 > 2. AUTOMATION: [zero-touch target]
 > 3. RELIABILITY: [uptime target]
@@ -134,8 +134,8 @@ Every chapter README follows this **extended structure**:
 > 5. SECURITY: [security requirement]
 
 **What we know so far:**
-- ✅ [Summary of previous chapters' achievements]
-- ❌ **But we still can't [X]!**
+- [Summary of previous chapters' achievements]
+- **But we still can't [X]!**
 
 **What's blocking us:**
 [Concrete description of the gap this chapter addresses]
@@ -171,14 +171,12 @@ Every chapter README follows this **extended structure**:
 ## N · Progress Check — What We Can Deploy Now
 
 ![Progress visualization](img/chNN-progress-check.png) ← **Optional**: Visual dashboard showing constraint progress
-
-✅ **Unlocked capabilities:**
+**Unlocked capabilities:**
 - [Specific things you can now deploy]
-- [Constraint achievements: "Constraint #1 ✅ Achieved! Same Dockerfile dev→prod"]
-
-❌ **Still can't solve:**
-- ❌ [What's blocked — explicitly preview next chapter's unlock]
-- ❌ [Other remaining challenges]
+- [Constraint achievements: "Constraint #1 Achieved! Same Dockerfile dev→prod"]
+**Still can't solve:**
+- [What's blocked — explicitly preview next chapter's unlock]
+- [Other remaining challenges]
 
 **Real-world status**: [One-sentence summary: "We can now X, but we can't yet Y"]
 
@@ -205,18 +203,18 @@ Cell structure per notebook:
 [markdown] Chapter title + one-liner
 [markdown] ## The Core Idea
 [markdown] ## Running Example
-[code]     Setup: Pull Docker images, create project structure
+[code] Setup: Pull Docker images, create project structure
 [markdown] ## Mental Model
-[code]     Demonstrate core concept (e.g., docker run, docker-compose up)
+[code] Demonstrate core concept (e.g., docker run, docker-compose up)
 [markdown] ## Step by Step
-[code]     The step-by-step walkthrough as runnable commands
-[code]     Check service health, inspect logs
+[code] The step-by-step walkthrough as runnable commands
+[code] Check service health, inspect logs
 [markdown] ## The Configuration Dial
-[code]     Change a dial (e.g., replicas, resource limits), observe effect
+[code] Change a dial (e.g., replicas, resource limits), observe effect
 [markdown] ## What Can Go Wrong
-[code]     Demonstrate one of the traps + fix
+[code] Demonstrate one of the traps + fix
 [markdown] ## Exercises
-[code]     Exercise scaffolds (partially filled)
+[code] Exercise scaffolds (partially filled)
 ```
 
 ---
@@ -225,14 +223,14 @@ Cell structure per notebook:
 
 | # | Chapter | Folder | Focus | Status |
 |---|---------|--------|-------|--------|
-| 1 | Docker Fundamentals | `ch01_docker_fundamentals/` | Containerization basics | ✅ Complete |
-| 2 | Container Orchestration | `ch02_container_orchestration/` | Docker Compose multi-service | ✅ Complete |
-| 3 | Kubernetes Basics | `ch03_kubernetes_basics/` | K8s local deployment | ✅ Complete |
-| 4 | CI/CD Pipelines | `ch04_cicd_pipelines/` | GitHub Actions automation | ✅ Complete |
-| 5 | Monitoring & Observability | `ch05_monitoring_observability/` | Prometheus + Grafana | ✅ Complete |
-| 6 | Infrastructure as Code | `ch06_infrastructure_as_code/` | Terraform basics | ✅ Complete |
-| 7 | Networking & Load Balancing | `ch07_networking_load_balancing/` | Nginx reverse proxy | ✅ Complete |
-| 8 | Security & Secrets Management | `ch08_security_secrets_management/` | Secrets handling | ✅ Complete |
+| 1 | Docker Fundamentals | `ch01_docker_fundamentals/` | Containerization basics | Complete |
+| 2 | Container Orchestration | `ch02_container_orchestration/` | Docker Compose multi-service | Complete |
+| 3 | Kubernetes Basics | `ch03_kubernetes_basics/` | K8s local deployment | Complete |
+| 4 | CI/CD Pipelines | `ch04_cicd_pipelines/` | GitHub Actions automation | Complete |
+| 5 | Monitoring & Observability | `ch05_monitoring_observability/` | Prometheus + Grafana | Complete |
+| 6 | Infrastructure as Code | `ch06_infrastructure_as_code/` | Terraform basics | Complete |
+| 7 | Networking & Load Balancing | `ch07_networking_load_balancing/` | Nginx reverse proxy | Complete |
+| 8 | Security & Secrets Management | `ch08_security_secrets_management/` | Secrets handling | Complete |
 
 ---
 
@@ -349,7 +347,7 @@ Every chapter opens with three specific items, in order, in a blockquote:
 **Required pattern:**
 
 ```
-> 🎯 The mission: Deploy **ProductionStack** — [one-sentence description] satisfying 5 constraints:
+> The mission: Deploy **ProductionStack** — [one-sentence description] satisfying 5 constraints:
 > 1. PORTABILITY: [target]
 > 2. AUTOMATION: [target]
 > 3. RELIABILITY: [target]
@@ -357,14 +355,14 @@ Every chapter opens with three specific items, in order, in a blockquote:
 > 5. SECURITY: [target]
 
 What we know so far:
-  ✅ [Summary of previous chapters' achievements]
-  ❌ **But we still can't [X]!**
+[Summary of previous chapters' achievements]
+**But we still can't [X]!**
 
 What's blocking us:
-  [2–4 sentences: the concrete, named gap]
+ [2–4 sentences: the concrete, named gap]
 
 What this chapter unlocks:
-  [Specific capability bullet points]
+ [Specific capability bullet points]
 ```
 
 **Numbers are always named.** The gap is never "our deployment is not portable enough" — it is "Flask works on dev laptop (Python 3.11) but fails on production (Python 3.9, missing Redis)."
@@ -418,11 +416,11 @@ Used consistently. Must be used exactly this way:
 
 | Symbol | Meaning | When to use |
 |---|---|---|
-| `💡` | Key insight / conceptual payoff | After a result that reframes understanding |
-| `⚠️` | Warning / common trap | Before or after a pattern often done wrong |
-| `⚡` | ProductionStack constraint connection | When content advances one of the 5 constraints |
+| `` | Key insight / conceptual payoff | After a result that reframes understanding |
+| `` | Warning / common trap | Before or after a pattern often done wrong |
+| `` | ProductionStack constraint connection | When content advances one of the 5 constraints |
 | `> 📖 **Optional:**` | Deeper technical detail | Advanced configs that break narrative flow |
-| `> ➡️` | Forward pointer | When a tool needs to be planted before full treatment |
+| `> ➡` | Forward pointer | When a tool needs to be planted before full treatment |
 
 ---
 
@@ -478,16 +476,15 @@ Used consistently. Must be used exactly this way:
 The Progress Check is the last substantive section before the Bridge. Fixed format:
 
 ```
-✅ Unlocked capabilities:
-  [bulleted list — specific deployment capabilities]
-  [e.g., "Portability: Same Docker image runs on dev and prod"]
-
-❌ Still can't solve:
-  [bulleted list — named gaps]
-  [e.g., "❌ Manual deployment — no automation yet"]
+Unlocked capabilities:
+ [bulleted list — specific deployment capabilities]
+ [e.g., "Portability: Same Docker image runs on dev and prod"]
+Still can't solve:
+ [bulleted list — named gaps]
+ [e.g., " Manual deployment — no automation yet"]
 
 Progress toward constraints:
-  [table: Constraint | Status | Current State]
+ [table: Constraint | Status | Current State]
 ```
 
 ---
@@ -563,13 +560,13 @@ Every abstract concept needs a permanent deployment reference:
 Before showing configuration files, draw the architecture:
 
 ```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│   Flask     │────▶│ PostgreSQL  │     │   Redis     │
-│  :5000      │     │   :5432     │◀────│   :6379     │
-└─────────────┘     └─────────────┘     └─────────────┘
-      │                                        │
-      └────────────────┬───────────────────────┘
-                  Docker Network
+┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+│ Flask │────▶│ PostgreSQL │ │ Redis │
+│ :5000 │ │ :5432 │◀────│ :6379 │
+└─────────────┘ └─────────────┘ └─────────────┘
+ │ │
+ └────────────────┬───────────────────────┘
+ Docker Network
 ```
 
 ---
@@ -608,11 +605,11 @@ The 5 ProductionStack constraints act as a quest dashboard.
 
 | Constraint | Status | Evidence |
 |------------|--------|----------|
-| #1 PORTABILITY | ✅ **ACHIEVED** | Same Dockerfile dev→prod |
-| #2 AUTOMATION | ❌ **BLOCKED** | Manual docker run commands |
-| #3 RELIABILITY | ⚠️ **PARTIAL** | Containers restart, but no orchestration |
-| #4 OBSERVABILITY | ❌ **BLOCKED** | No metrics yet |
-| #5 SECURITY | ❌ **BLOCKED** | Secrets in environment variables |
+| #1 PORTABILITY | **ACHIEVED** | Same Dockerfile dev→prod |
+| #2 AUTOMATION | **BLOCKED** | Manual docker run commands |
+| #3 RELIABILITY | **PARTIAL** | Containers restart, but no orchestration |
+| #4 OBSERVABILITY | **BLOCKED** | No metrics yet |
+| #5 SECURITY | **BLOCKED** | Secrets in environment variables |
 
 ---
 
@@ -683,14 +680,14 @@ Two parallel navigation systems — the phase map redundantly describes what the
 Drop the phase→§ mapping block entirely. Drop the `[Phase N: LABEL]` suffix from section headers — the section title already names the stage. Replace each `DECISION CHECKPOINT` block (~20 lines of "What you just saw / What it means / What to do next") with a two-line callout:
 
 ```markdown
-> 💡 **Containerization verdict:** Image build time 4m12s → 58s with layer caching; 0 "works on my machine" incidents across last 30 deploys.
-> ➡️ This layer cache strategy carries into the CI/CD build job in ch04.
+> **Containerization verdict:** Image build time 4m12s → 58s with layer caching; 0 "works on my machine" incidents across last 30 deploys.
+> ➡ This layer cache strategy carries into the CI/CD build job in ch04.
 ```
 
 **Callout discipline for DevOps chapters:**
 
-- `> 💡 **[Stage] verdict:**` — one line after each pipeline stage; states the measurable outcome (build time, deployment frequency, MTTR, incident count)
-- `> ➡️` — forward pointer when a pattern feeds the next chapter
+- `> **[Stage] verdict:**` — one line after each pipeline stage; states the measurable outcome (build time, deployment frequency, MTTR, incident count)
+- `> ➡` — forward pointer when a pattern feeds the next chapter
 - Never: a "PIPELINE CHECKPOINT" or "DECISION CHECKPOINT" block
 - Never: a section listing "Phase N → §X, §Y Walkthrough B"
 - The section title is the stage name. `## Dockerfile Best Practices` does not need `[Phase 1: WRITE]` appended.
@@ -722,7 +719,7 @@ Every `grand_solution.md` follows this **7-section template**:
 
 ---
 
-## Mission Accomplished: [Final Metric] ✅
+## Mission Accomplished: [Final Metric]
 
 **The Challenge:** [One-sentence restatement of grand challenge]
 **The Result:** [Final metric achieved]
@@ -793,7 +790,7 @@ Every `grand_solution.md` follows this **7-section template**:
 
 | # | Constraint | Target | Status | How We Achieved It |
 |---|------------|--------|--------|--------------------|
-| #1 | ACCURACY | [target] | ✅ [metric] | [Chapter + technique] |
+| #1 | ACCURACY | [target] | [metric] | [Chapter + technique] |
 | ... | ... | ... | ... | ... |
 
 ---
@@ -845,40 +842,40 @@ Every `grand_solution.md` follows this **7-section template**:
 
 ```
 Cell 1 (Markdown): Introduction
-  - Mission statement
-  - 5 constraints or grand challenge
-  - Chapter progression summary
-  - Note about prerequisites/setup
+ - Mission statement
+ - 5 constraints or grand challenge
+ - Chapter progression summary
+ - Note about prerequisites/setup
 
 Cell 2 (Markdown): Setup
-  - Required libraries
-  - Import statements
+ - Required libraries
+ - Import statements
 
 Cell 3 (Python): Imports and setup code
-  - Import all necessary libraries
-  - Helper functions
-  - Configuration
+ - Import all necessary libraries
+ - Helper functions
+ - Configuration
 
 [For each chapter:]
 Cell N (Markdown): Ch.X: [Concept] — [Tagline]
-  - What it unlocks (2-3 bullets)
-  - Key concept (1 sentence)
-  - Production value (1-2 bullets)
+ - What it unlocks (2-3 bullets)
+ - Key concept (1 sentence)
+ - Production value (1-2 bullets)
 
 Cell N+1 (Python or Markdown): Code example
-  - Extract actual code from chapter
-  - Or show configuration snippets for infrastructure concepts
-  - Keep examples concise but complete
+ - Extract actual code from chapter
+ - Or show configuration snippets for infrastructure concepts
+ - Keep examples concise but complete
 
 [End:]
 Cell M (Markdown): Final Integration
-  - Mermaid diagram showing system architecture
-  - How all concepts connect
+ - Mermaid diagram showing system architecture
+ - How all concepts connect
 
 Cell M+1 (Markdown): Summary
-  - Mission accomplished status table
-  - Key insights from journey
-  - Next steps
+ - Mission accomplished status table
+ - Key insights from journey
+ - Next steps
 ```
 
 **Guidelines for DevOps/Infrastructure Tracks:**
@@ -891,10 +888,10 @@ Cell M+1 (Markdown): Summary
 **Example helper function for shell commands:**
 ```python
 def show_command(cmd, description=""):
-    """Display a shell command with optional description"""
-    if description:
-        print(f"📋 {description}")
-    print(f"$ {cmd}\n")
+ """Display a shell command with optional description"""
+ if description:
+ print(f" {description}")
+ print(f"$ {cmd}\n")
 ```
 
 **Cross-references:**
@@ -908,12 +905,12 @@ def show_command(cmd, description=""):
 **Tone:** Executive summary meets technical reference. You're briefing a senior engineer who's smart but time-constrained.
 
 **Voice patterns:**
-- ✅ **Direct:** "Ch.3 unlocked VIF auditing. This prevents multicollinearity."
-- ❌ **Verbose:** "In Chapter 3, we learned about an important technique called VIF auditing, which is a method that helps us identify and prevent issues related to multicollinearity in our features."
-- ✅ **Metric-focused:** "$70k → $32k MAE (54% improvement)"
-- ❌ **Vague:** "Much better accuracy than before"
-- ✅ **Production-grounded:** "VIF audit runs before every training job. Alert if VIF > 5."
-- ❌ **Academic:** "VIF is a useful diagnostic statistic for assessing multicollinearity."
+- **Direct:** "Ch.3 unlocked VIF auditing. This prevents multicollinearity."
+- **Verbose:** "In Chapter 3, we learned about an important technique called VIF auditing, which is a method that helps us identify and prevent issues related to multicollinearity in our features."
+- **Metric-focused:** "$70k → $32k MAE (54% improvement)"
+- **Vague:** "Much better accuracy than before"
+- **Production-grounded:** "VIF audit runs before every training job. Alert if VIF > 5."
+- **Academic:** "VIF is a useful diagnostic statistic for assessing multicollinearity."
 
 **Content density:**
 - Each chapter summary: 150-200 words max
@@ -922,21 +919,21 @@ def show_command(cmd, description=""):
 - Mermaid diagrams: 1-2 per document (architecture + maybe progression)
 
 **What to include:**
-- ✅ Exact metrics at each stage ($70k, $55k, $48k, ...)
-- ✅ Specific hyperparameters that matter (α=1.0, degree=2, ...)
-- ✅ Production patterns (when/why to use each technique)
-- ✅ Chapter interdependencies ("Ch.4 requires Ch.3's scaling")
-- ✅ Mermaid flowchart showing full pipeline integration
+- Exact metrics at each stage ($70k, $55k, $48k, ...)
+- Specific hyperparameters that matter (α=1.0, degree=2, ...)
+- Production patterns (when/why to use each technique)
+- Chapter interdependencies ("Ch.4 requires Ch.3's scaling")
+- Mermaid flowchart showing full pipeline integration
 
 **What to exclude:**
-- ❌ Mathematical derivations (that's in individual chapters)
-- ❌ Historical context (who invented what, when)
-- ❌ Step-by-step tutorials (that's in chapter READMEs)
-- ❌ Exercise problems (that's in notebooks)
-- ❌ Duplicate content across sections (say it once, reference it later)
+- Mathematical derivations (that's in individual chapters)
+- Historical context (who invented what, when)
+- Step-by-step tutorials (that's in chapter READMEs)
+- Exercise problems (that's in notebooks)
+- Duplicate content across sections (say it once, reference it later)
 
 **Formatting conventions:**
-- Use checkmark bullets for capabilities unlocked: ✅ ❌ ⚡ ➡️
+- Use checkmark bullets for capabilities unlocked: ➡
 - Show progression as ASCII tables or code block diagrams
 - Use `inline code` for hyperparameters, `$metric$` for dollars
 - Chapter references: "Ch.3" or "Ch.5-7" (never "Chapter Five")
