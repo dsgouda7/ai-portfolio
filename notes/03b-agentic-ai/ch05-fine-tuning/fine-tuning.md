@@ -4,7 +4,7 @@
 >
 > **Where you are in the curriculum.** The decision of *when* to fine-tune is more important than *how*. Most applications that reach for fine-tuning too early could have solved their problem with better [prompting](../../03a-ai/ch02-prompt-engineering) or [RAG](../../03a-ai/ch04-rag-and-embeddings) at a fraction of the cost. This document covers the decision framework first, then the efficient methods (LoRA, QLoRA, adapters) that make fine-tuning a Llama-class model on a laptop a realistic engineering option.
 >
-> **Notation.** $W \in \mathbb{R}^{d_\text{out} \times d_\text{in}}$ — frozen pre-trained weight matrix; $B \in \mathbb{R}^{d_\text{out} \times r}$, $A \in \mathbb{R}^{r \times d_\text{in}}$ — LoRA down- and up-projection matrices; $r$ — LoRA rank; $\alpha$ — LoRA scaling factor; $\Delta W = BA$ — trainable weight update.
+> **Notation.** $W \in \mathbb{R}^{d_{\text{out}} \times d_{\text{in}}}$ — frozen pre-trained weight matrix; $B \in \mathbb{R}^{d_{\text{out}} \times r}$, $A \in \mathbb{R}^{r \times d_{\text{in}}}$ — LoRA down- and up-projection matrices; $r$ — LoRA rank; $\alpha$ — LoRA scaling factor; $\Delta W = BA$ — trainable weight update.
 
 ***
 
@@ -1448,11 +1448,11 @@ DPO (preference):        "Oh, you've gotta try the Margherita!"      → preferr
 
 For each training triple $(x, y_w, y_l)$ — a prompt, a preferred response, and a rejected response — DPO minimises:
 
-$$\mathcal{L}_{DPO}(\pi_\theta; \pi_{ref}) = -\mathbb{E}_{(x,y_w,y_l)\sim\mathcal{D}}\!\left[\log\sigma\!\left(\beta\log\frac{\pi_\theta(y_w|x)}{\pi_{ref}(y_w|x)} - \beta\log\frac{\pi_\theta(y_l|x)}{\pi_{ref}(y_l|x)}\right)\right]$$
+$$\mathcal{L}_{DPO}(\pi_{\theta}; \pi_{ref}) = -\mathbb{E}_{(x,y_w,y_l)\sim\mathcal{D}}\!\left[\log\sigma\!\left(\beta\log\frac{\pi_{\theta}(y_w|x)}{\pi_{ref}(y_w|x)} - \beta\log\frac{\pi_{\theta}(y_l|x)}{\pi_{ref}(y_l|x)}\right)\right]$$
 
 | Symbol | Meaning |
 |---|---|
-| $\pi_\theta$ | The model being trained (policy) |
+| $\pi_{\theta}$ | The model being trained (policy) |
 | $\pi_{ref}$ | Frozen SFT/LoRA reference model — the policy before DPO |
 | $y_w$ | Preferred ("won") response — warm Mamma Rosa voice |
 | $y_l$ | Rejected ("lost") response — flat, generic response |

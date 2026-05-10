@@ -297,7 +297,7 @@ The allergen failure in §0 (Test 3) is a case of sycophantic hallucination: the
 This distinction drives your mitigation choice:
 
 - **Closed-domain** → NLI verification against retrieved context (§3.1) catches it directly, because the contradiction is detectable by comparing two texts.
-- **Open-domain** → Retrieval-Augmented Generation ([RAG](../ch04_rag_and_embeddings)) *converts* open-domain queries into closed-domain ones — retrieve the ground truth first, then generate against it. If retrieval fails, fail-safe to "I don't have that information."
+- **Open-domain** → Retrieval-Augmented Generation ([RAG](../ch04-rag-and-embeddings)) *converts* open-domain queries into closed-domain ones — retrieve the ground truth first, then generate against it. If retrieval fails, fail-safe to "I don't have that information."
 
 > ⚠️ **PizzaBot fail-safe pattern:** A customer asking "What toppings are on the Margherita?" has a closed-domain answer in the menu corpus — retrieve and verify. A customer asking "What's in Mamma Rosa's secret sauce?" has no corpus chunk — the model is in open-domain territory and will confabulate. Detect this case by checking whether retrieval returned any relevant chunk (e.g., similarity score below threshold). If not, return "I don't have that information" rather than generate. A refusal is always cheaper than a wrong answer that reaches production.
 

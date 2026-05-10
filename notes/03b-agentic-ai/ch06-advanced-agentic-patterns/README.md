@@ -2,7 +2,7 @@
 
 → Interview prep: [Interview Guide](../../interview-guides/agentic-ai.md)
 
-> **The story.** In October 2022, Shunyu Yao's team at Princeton was debugging an LLM agent that kept making the same mistake: it would reason out loud, reach a confident answer, and have no mechanism to catch its own errors. The model committed fully on the first pass — no second chance. Their fix was to give the agent a loop: reason, act, observe, reason again. They called it *ReAct*, and the accuracy gains on multi-step tasks were hard to dismiss. Two months later, Noah Shinn at Northeastern read that paper and pushed one step further: instead of observing an external environment, what if the agent observed *its own outputs* and critiqued them? *Reflexion* showed that a generate-then-critique-then-revise loop consistently recovered from errors that a single pass would have cemented. Around the same time, Yujia Li's team at DeepMind was testing a different angle — give the task to multiple agents, let them argue, then vote. Their multi-agent debate setup outperformed single-agent reasoning on complex tasks by 40%. None of this stayed in the lab for long. By early 2023, production agents at Stripe, Intercom, and Shopify were hallucinating, contradicting themselves, and failing on ambiguous inputs at a rate that threatened real revenue. The papers Yao, Shinn, and the DeepMind team had published weren't theoretical curiosities — they were the operational playbook. In this chapter, you'll implement all four of these patterns on PizzaBot v2.0 and measure exactly what each one buys you.
+> **The story.** In March 2023, AutoGPT hit GitHub and gained 30,000 stars in two weeks — the fastest-growing open-source project that month. Developers were watching in real time as a single prompt spawned an agent that broke down tasks, called tools, critiqued its own outputs, and ran in loops until it succeeded or hit a token limit. It was messy, expensive, and often hallucinated, but it proved that agents could *orchestrate themselves* if you gave them the right scaffolding. Around the same time, Stanford's Park and O'Brien published *Generative Agents: Interactive Simulacra of Human Behavior* (April 2023) — they put 25 LLM-powered agents in a virtual town and watched them plan daily routines, form relationships, and throw a Valentine's Day party without human intervention. The agents used reflection ("What did I do today?"), planning ("What should I do tomorrow?"), and multi-agent debate ("Should we invite the new neighbor?"). The paper wasn't about building better chatbots — it was about emergent social behavior from agentic patterns. By mid-2023, every major AI lab was racing to productionize these ideas: OpenAI's GPT-4 with function calling, Anthropic's Constitutional AI (self-critique loops), Google's PaLM 2 with chain-of-thought verification. The lesson was clear: single-pass reasoning fails on ambiguous inputs, contradictions, and multi-step tasks. Iterative refinement — reflection, debate, hierarchical orchestration — became the standard playbook. In this chapter, you'll implement these patterns on PizzaBot v2.0 and measure exactly what each one costs and recovers.
 >
 > **Where you are in the curriculum.** You've built PizzaBot through the LLM Fundamentals track and Ch.1-5 of this Agentic AI track. [03a-ai](../../03a-ai) gave you the model, prompting, CoT reasoning, and RAG grounding. Ch.1 (ReAct + Semantic Kernel) taught tool-calling orchestration. Ch.2 (Safety) taught guardrails. Ch.3 (Evaluation) taught measurement. Ch.4 (Cost/Latency) taught production constraints. Ch.5 (Fine-Tuning) taught task specialization. **But every pattern in Ch.1–5 assumes the agent gets one shot**. One prompt, one response, done. In this chapter, you'll learn four patterns that unlock iterative refinement: **Reflection** (self-critique), **Debate** (multi-agent reasoning), **Hierarchical Orchestration** (planner → workers → verifier), and **Tool Selection** (pick the right tool, retry when it fails). These patterns now power every major agent system: ChatGPT Code Interpreter (reflection + hierarchical), Claude artifacts (debate + verification), GitHub Copilot (hierarchical orchestration with fallback chains). This is where single-agent reasoning stops and agentic *systems* begin.
 >
@@ -27,7 +27,7 @@
 > 🎯 **The goal**: Launch **PizzaBot v2.0** — an intelligent pizza ordering agent satisfying 6 production constraints:
 > 1. **ACCURACY**: Handle 99%+ of customer orders without human escalation
 > 2. **EDGE CASE ROBUSTNESS**: Handle contradictory inputs (gluten-free + extra cheese), pricing conflicts, menu ambiguities with <1% error rate
-> 3. **COST EFFICIENCY**: ≤$0.25 per conversation (3× single-pass budget allowed for complex orders)
+> 3. **COST EFFICIENCY**: ≤\$0.25 per conversation (3× single-pass budget allowed for complex orders)
 > 4. **LATENCY**: <15s for complex orders requiring refinement (vs. <5s for simple orders)
 > 5. **TRANSPARENCY**: Show reasoning steps to customers ("Let me verify that pricing...")
 > 6. **GRACEFUL DEGRADATION**: When uncertain, ask clarifying questions instead of hallucinating
@@ -42,7 +42,7 @@
 - Ch.6: ReAct orchestration calls tools (inventory check, pricing calculator)
 - Ch.7: Safety guardrails prevent prompt injection
 - Ch.8: Evaluation framework measures accuracy
-- Ch.9: Cost/latency optimization hits $0.08/conversation, <5s latency
+- Ch.9: Cost/latency optimization hits \$0.08/conversation, <5s latency
 - Ch.10: Fine-tuning specializes model on pizza domain vocabulary
 
 **This stack handles 92% of orders perfectly.** Simple cases work:
@@ -65,7 +65,7 @@ PizzaBot v1.0: ❌ "Error: dairy-free and extra cheese are incompatible."
 
 ❌ **Edge case #2: Pricing conflicts (overlapping discounts)**
 ```
-Customer: "I have a 20% off coupon, a $5 loyalty reward, and the
+Customer: "I have a 20% off coupon, a \$5 loyalty reward, and the
            current 'Buy One Get One 50% Off' promo. Which applies?"
 PizzaBot v1.0: ❌ "Only one discount can be applied per order."
                     [Wrong! Policy says: coupons + loyalty stack, but promo replaces both]
@@ -75,10 +75,10 @@ PizzaBot v1.0: ❌ "Only one discount can be applied per order."
 ❌ **Edge case #3: Complex catering orders**
 ```
 Customer: "I need 15 pizzas for a company event: 5 at 12pm, 5 at 1pm,
-           5 at 2pm. Budget is $200 total. What can you do?"
-PizzaBot v1.0: ❌ "15 large pizzas = $224.85, over budget."
+           5 at 2pm. Budget is \$200 total. What can you do?"
+PizzaBot v1.0: ❌ "15 large pizzas = \$224.85, over budget."
                     [Doesn't explore: medium pizzas, split toppings, promo codes]
-                    [Misses $180 solution that exists]
+                    [Misses \$180 solution that exists]
 ```
 
 **What's blocking us:**
@@ -133,7 +133,7 @@ Four patterns that trade tokens for reliability:
 | Edge case handling | 92% | 98.5% | +6.5% ✅ |
 | Complex order handling | 85% | 96% | +11% ✅ |
 | Escalation rate | 8% | 0.8% | -7.2% ✅ |
-| Avg cost/conversation | $0.08 | $0.18 | +$0.10 (still under $0.25 budget) ✅ |
+| Avg cost/conversation | \$0.08 | \$0.18 | +\$0.10 (still under \$0.25 budget) ✅ |
 | Avg latency | 4.2s | 11.3s | +7.1s (still under 15s limit) ✅ |
 
 ---
@@ -165,7 +165,7 @@ The three §0 failures — contradictory constraints (8% customer abandonment), 
 
 **Why it works:** LLMs are good at local reasoning (one-step inference) but struggle with self-consistency checks. Reflection adds an external critique step. Debate adds adversarial checks. Hierarchical adds decomposition. Tool selection adds runtime adaptability.
 
-**The trade-off:** Every pattern costs more tokens. Single-pass: 850 tokens ($0.08). Reflection: 2,550 tokens ($0.24). Debate: 5,100 tokens ($0.48). The question isn't "which is best?" but "which pattern for which problem?"
+**The trade-off:** Every pattern costs more tokens. Single-pass: 850 tokens (\$0.08). Reflection: 2,550 tokens (\$0.24). Debate: 5,100 tokens (\$0.48). The question isn't "which is best?" but "which pattern for which problem?"
 
 **When to use each:**
 
@@ -177,7 +177,7 @@ The three §0 failures — contradictory constraints (8% customer abandonment), 
 | **Hierarchical** | Multi-step, decomposable tasks | 5× | 15× (on catering-like tasks) | Catering orders, research tasks |
 | **Tool Selection** | Multiple tools, failure-prone | 1.1×–2.5× | 2× recovery rate | Inventory lookup, API calls |
 
-> 💡 Pattern selection is a business decision, not an engineering one. Reflection spends an extra $0.16 per ambiguous order; on PizzaBot that recovers orders worth $25 — over 15,000% ROI. Debate spends $0.45 to prevent a $25 refund dispute. Hierarchical spends $0.50 to capture a $157 catering order that single-pass would have lost entirely. The question is never whether you can afford the tokens — it's whether you can afford the failures you're routing around.
+> 💡 Pattern selection is a business decision, not an engineering one. Reflection spends an extra \$0.16 per ambiguous order; on PizzaBot that recovers orders worth \$25 — over 15,000% ROI. Debate spends \$0.45 to prevent a \$25 refund dispute. Hierarchical spends \$0.50 to capture a \$157 catering order that single-pass would have lost entirely. The question is never whether you can afford the tokens — it's whether you can afford the failures you're routing around.
 
 ---
 
@@ -233,14 +233,14 @@ revised = LLM(f"Revise: '{draft}'
 
 **Customer response:** ✅ "Yes, perfect!" (Conversion rate: 92% → 98%)
 
-**Cost:** 850 tokens (draft) + 650 tokens (critique) + 950 tokens (revision) = **2,450 tokens** ($0.23) vs. $0.08 single-pass. **Worth it:** $0.15 extra cost prevents $25 abandoned order (1,667% ROI).
+**Cost:** 850 tokens (draft) + 650 tokens (critique) + 950 tokens (revision) = **2,450 tokens** (\$0.23) vs. \$0.08 single-pass. **Worth it:** \$0.15 extra cost prevents \$25 abandoned order (1,667% ROI).
 
 ---
 
 ### Edge Case #2: Pricing Conflicts (Debate)
 
 ```
-Customer: "I have a 20% off coupon (SAVE20), a $5 loyalty reward, and I see
+Customer: "I have a 20% off coupon (SAVE20), a \$5 loyalty reward, and I see
            a 'Buy One Get One 50% Off' promo banner. What's my total?"
 ```
 
@@ -252,7 +252,7 @@ Customer: "I have a 20% off coupon (SAVE20), a $5 loyalty reward, and I see
 **PizzaBot v1.0 (single-pass RAG):**
 ```
 # RAG retrieves policy: "Only one promotional discount per order."
-❌ Response: "Your total is $22.49 with the BOGO promo. The coupon and
+❌ Response: "Your total is \$22.49 with the BOGO promo. The coupon and
               loyalty reward don't apply when using a promo."
 # WRONG! Should have calculated both paths and picked cheaper one.
 ```
@@ -267,13 +267,13 @@ Customer: "I have a 20% off coupon (SAVE20), a $5 loyalty reward, and I see
 proposal_1 = LLM("Customer has SAVE20 coupon, $5 loyalty, BOGO promo.
                   Policy: coupons + loyalty stack, promo replaces both.
                   Calculate: Coupon + loyalty total.")
-# Output: "2 large pizzas ($29.98) → 20% off ($23.98) → $5 loyalty ($18.98)"
+# Output: "2 large pizzas (\$29.98) → 20% off (\$23.98) → \$5 loyalty (\$18.98)"
 
 # Agent 2 (Strict): Apply promotional discount
 proposal_2 = LLM("Customer has SAVE20 coupon, $5 loyalty, BOGO promo.
                   Policy: promo replaces coupons + loyalty.
                   Calculate: BOGO total.")
-# Output: "2 large pizzas ($29.98) → 50% off 2nd pizza ($22.49)"
+# Output: "2 large pizzas (\$29.98) → 50% off 2nd pizza (\$22.49)"
 ```
 
 **Step 2 — Challenge (agents critique each other):**
@@ -287,24 +287,24 @@ challenge_2_to_1 = LLM(f"Agent 1 says: {proposal_1}.
                         But promotional discount exists. Policy says it replaces
                         coupons + loyalty. Did you justify why coupon + loyalty
                         should apply instead?")
-# Agent 1: "Yes. $18.98 (coupon + loyalty) < $22.49 (BOGO). Customer saves $3.51 more."
+# Agent 1: "Yes. \$18.98 (coupon + loyalty) < \$22.49 (BOGO). Customer saves \$3.51 more."
 ```
 
 **Step 3 — Vote (arbiter picks best):**
 ```python
-judge = LLM(f"Proposal 1: {proposal_1} = $18.98.
-             Proposal 2: {proposal_2} = $22.49.
+judge = LLM(f"Proposal 1: {proposal_1} = \$18.98.
+             Proposal 2: {proposal_2} = \$22.49.
              Customer should pay whichever is cheaper.
              Which proposal is correct?")
-# Output: "Proposal 1 ($18.98) is correct. Policy says 'pick best discount',
-#          and coupon + loyalty is $3.51 cheaper than BOGO."
+# Output: "Proposal 1 (\$18.98) is correct. Policy says 'pick best discount',
+#          and coupon + loyalty is \$3.51 cheaper than BOGO."
 ```
 
-**Final response:** ✅ "Your total is **$18.98** (20% coupon + $5 loyalty reward). That's $3.51 cheaper than the BOGO promo, so we applied the coupon + loyalty instead."
+**Final response:** ✅ "Your total is **\$18.98** (20% coupon + \$5 loyalty reward). That's \$3.51 cheaper than the BOGO promo, so we applied the coupon + loyalty instead."
 
 **Customer response:** ✅ "Wow, thanks for checking that!" (Dispute rate: 15% → 3%)
 
-**Cost:** 3 agents × 2 rounds = 6 LLM calls × 800 tokens = **4,800 tokens** ($0.45). **Worth it:** Prevents $25 refund dispute (5,555% ROI).
+**Cost:** 3 agents × 2 rounds = 6 LLM calls × 800 tokens = **4,800 tokens** (\$0.45). **Worth it:** Prevents \$25 refund dispute (5,555% ROI).
 
 ---
 
@@ -344,49 +344,49 @@ planner = LLM("Customer needs 15 pizzas, 3 delivery times, $200 budget.
 **Step 2 — Execute (workers process subtasks):**
 ```python
 # Worker 1: Optimize sizes
-worker_1 = LLM("15 pizzas, $200 budget. Try: 15 large ($224.85), 15 medium ($179.85).
+worker_1 = LLM("15 pizzas, \$200 budget. Try: 15 large (\$224.85), 15 medium (\$179.85).
                 Which fits?")
-# Output: "15 medium pizzas = $179.85 (under budget by $20.15)"
+# Output: "15 medium pizzas = \$179.85 (under budget by \$20.15)"
 
 # Worker 2: Split toppings
 worker_2 = LLM("15 medium pizzas: 5 vegetarian (margherita), 10 meat (pepperoni,
                 sausage, supreme mix). Pricing?")
-# Output: "5 margherita ($11.99 each) + 10 meat ($12.49 avg) = $184.90"
+# Output: "5 margherita (\$11.99 each) + 10 meat (\$12.49 avg) = \$184.90"
 
 # Worker 3: Apply discounts
 worker_3 = LLM("10+ pizzas = 15% bulk discount. Also check CATERING20 promo (20% off).
                 Which saves more?")
-# Output: "Bulk discount: $184.90 × 0.85 = $157.17.
-#          Promo CATERING20: $184.90 × 0.80 = $147.92.
-#          Promo wins (saves $9.25 more)."
+# Output: "Bulk discount: \$184.90 × 0.85 = \$157.17.
+#          Promo CATERING20: \$184.90 × 0.80 = \$147.92.
+#          Promo wins (saves \$9.25 more)."
 
 # Worker 4: Schedule deliveries
 worker_4 = LLM("15 pizzas, 3 delivery windows (12pm, 1pm, 2pm). Split 5-5-5.
                 Delivery fee?")
-# Output: "5 pizzas/delivery × $3 fee × 3 deliveries = $9 total delivery."
+# Output: "5 pizzas/delivery × \$3 fee × 3 deliveries = \$9 total delivery."
 ```
 
 **Step 3 — Verify (check constraints):**
 ```python
 verifier = LLM(f"Plan: {plan}
                 Results: {worker_1} + {worker_2} + {worker_3} + {worker_4}
-                Total cost: $147.92 (pizzas) + $9 (delivery) = $156.92
-                Budget: $200
+                Total cost: \$147.92 (pizzas) + \$9 (delivery) = \$156.92
+                Budget: \$200
                 Constraint satisfied? Any conflicts?")
-# Output: "✅ Total $156.92 < $200 budget (under by $43.08).
+# Output: "✅ Total \$156.92 < \$200 budget (under by \$43.08).
 #          ✅ All 15 pizzas accounted for (5 veggie, 10 meat).
 #          ✅ 3 delivery windows scheduled.
-#          ✅ CATERING20 promo applied (saves $37).
+#          ✅ CATERING20 promo applied (saves \$37).
 #          No conflicts detected."
 ```
 
-**Final response:** ✅ "I can do 15 medium pizzas (5 vegetarian, 10 meat) with the CATERING20 promo for **$156.92 total** (including delivery). That's $43 under budget! Deliveries at 12pm, 1pm, 2pm. Confirm?"
+**Final response:** ✅ "I can do 15 medium pizzas (5 vegetarian, 10 meat) with the CATERING20 promo for **\$156.92 total** (including delivery). That's \$43 under budget! Deliveries at 12pm, 1pm, 2pm. Confirm?"
 
 **Customer response:** ✅ "Perfect, let's do it!" (Complex order success: 85% → 96%)
 
-**Cost:** 1 planner (1,200 tokens) + 4 workers (800 tokens each) + 1 verifier (950 tokens) = **5,350 tokens** ($0.50). **Worth it:** Captures $157 order that v1.0 would have lost (31,400% ROI).
+**Cost:** 1 planner (1,200 tokens) + 4 workers (800 tokens each) + 1 verifier (950 tokens) = **5,350 tokens** (\$0.50). **Worth it:** Captures \$157 order that v1.0 would have lost (31,400% ROI).
 
-> 💡 **Three edge cases, three recoveries:** Edge case #1 (contradictions): customer abandonment 8% → 1.5%. Edge case #2 (pricing disputes): dispute rate 15% → 3%. Edge case #3 (catering): complex order capture 85% → 96%. Together they close the 7-point escalation gap from §0 at $0.24–$0.50 per complex conversation — the overall average stays at $0.18 because the 92% of simple orders running single-pass at $0.08 anchor the mean below the $0.25 cap.
+> 💡 **Three edge cases, three recoveries:** Edge case #1 (contradictions): customer abandonment 8% → 1.5%. Edge case #2 (pricing disputes): dispute rate 15% → 3%. Edge case #3 (catering): complex order capture 85% → 96%. Together they close the 7-point escalation gap from §0 at \$0.24–\$0.50 per complex conversation — the overall average stays at \$0.18 because the 92% of simple orders running single-pass at \$0.08 anchor the mean below the \$0.25 cap.
 
 ---
 
@@ -462,7 +462,7 @@ def generate_draft(user_input):
     Menu context (from RAG):
     - Gluten-free crust: available (+$2.00)
     - Dairy-free option: use vegan mozzarella
-    - Extra cheese: +$2.50 (dairy mozzarella)
+    - Extra cheese: +\$2.50 (dairy mozzarella)
 
     Generate order confirmation or error message.
     """
@@ -535,8 +535,8 @@ def revise_draft(draft, critique, user_input):
 
 revised = revise_draft(draft, critique, user_input)
 # Output: "For dairy-free, we use vegan mozzarella (no dairy).
-#          Would you like extra vegan mozzarella (+$2.50) on your
-#          gluten-free pepperoni pizza? Total: $19.49."
+#          Would you like extra vegan mozzarella (+\$2.50) on your
+#          gluten-free pepperoni pizza? Total: \$19.49."
 ```
 
 **Customer response:** ✅ "Yes, perfect!"
@@ -550,16 +550,16 @@ revised = revise_draft(draft, critique, user_input)
 | **Contradictory orders** | 92% accuracy | 98.5% accuracy | +6.5% |
 | **Tokens** | 850 | 2,550 | 3× cost |
 | **Latency** | 4s | 12s | 3× slower |
-| **Cost** | $0.08 | $0.24 | 3× cost |
+| **Cost** | \$0.08 | \$0.24 | 3× cost |
 | **Customer abandonment** | 8% | 1.5% | -6.5% |
 
 **ROI calculation:**
-- Extra cost: $0.16 per reflection
+- Extra cost: \$0.16 per reflection
 - Orders saved: 6.5% of 100 orders/day = 6.5 orders
-- Revenue per order: $25 average
-- Revenue saved: 6.5 × $25 = $162.50/day
-- Extra cost: 6.5 × $0.16 = $1.04/day
-- **Net gain: $161.46/day** (15,621% ROI)
+- Revenue per order: \$25 average
+- Revenue saved: 6.5 × \$25 = \$162.50/day
+- Extra cost: 6.5 × \$0.16 = \$1.04/day
+- **Net gain: \$161.46/day** (15,621% ROI)
 
 ---
 
@@ -716,7 +716,7 @@ def smart_routing(user_input):
         return debate_agent(user_input)
 ```
 
-> 💡 **Reflection's business case in §0 terms:** The 6.5-point edge-case accuracy gain (92% → 98.5%) converts abandoned-order errors into clarifying prompts. At PizzaBot's volume that is $161 net daily gain on $1.04 of extra token spend — a 15,621% ROI — but only because the routing function above reserves reflection for genuinely ambiguous inputs. Applied to all 1,000 daily orders, reflection would cost $160/day in wasted tokens while improving already-correct answers by zero.
+> 💡 **Reflection's business case in §0 terms:** The 6.5-point edge-case accuracy gain (92% → 98.5%) converts abandoned-order errors into clarifying prompts. At PizzaBot's volume that is \$161 net daily gain on \$1.04 of extra token spend — a 15,621% ROI — but only because the routing function above reserves reflection for genuinely ambiguous inputs. Applied to all 1,000 daily orders, reflection would cost \$160/day in wasted tokens while improving already-correct answers by zero.
 
 ---
 
@@ -806,7 +806,7 @@ def debate_propose(user_input, num_agents=3):
     You are a customer-friendly pricing agent. Given this order:
     {user_input}
 
-    Customer has: 20% coupon, $5 loyalty, BOGO promo.
+    Customer has: 20% coupon, \$5 loyalty, BOGO promo.
     Policy: Coupons + loyalty stack. Promos replace coupons + loyalty if better.
 
     Calculate the LOWEST possible price (most customer-friendly interpretation).
@@ -819,7 +819,7 @@ def debate_propose(user_input, num_agents=3):
     You are a policy-strict pricing agent. Given this order:
     {user_input}
 
-    Customer has: 20% coupon, $5 loyalty, BOGO promo.
+    Customer has: 20% coupon, \$5 loyalty, BOGO promo.
     Policy: Only one promotional discount applies.
 
     Calculate the price (strict policy interpretation).
@@ -833,8 +833,8 @@ def debate_propose(user_input, num_agents=3):
     return proposals
 
 proposals = debate_propose(user_input)
-# Agent 1: "$18.98 (coupon + loyalty stacked, no promo)"
-# Agent 2: "$22.49 (BOGO promo applied, coupon + loyalty ignored)"
+# Agent 1: "\$18.98 (coupon + loyalty stacked, no promo)"
+# Agent 2: "\$22.49 (BOGO promo applied, coupon + loyalty ignored)"
 ```
 
 ---
@@ -863,8 +863,8 @@ def debate_challenge(proposals):
     return challenges
 
 challenges = debate_challenge(proposals)
-# Agent 1 → Agent 2: "You applied BOGO ($22.49) but didn't check if
-#                     coupon + loyalty ($18.98) is cheaper. Policy says
+# Agent 1 → Agent 2: "You applied BOGO (\$22.49) but didn't check if
+#                     coupon + loyalty (\$18.98) is cheaper. Policy says
 #                     'pick best discount'."
 # Agent 2 → Agent 1: "You stacked coupon + loyalty, but policy says
 #                     promotional discounts replace coupons. BOGO should apply."
@@ -898,9 +898,9 @@ def debate_defend(proposals, challenges):
 
 defenses = debate_defend(proposals, challenges)
 # Agent 1: "My proposal is correct. Policy says 'pick best discount'.
-#           Coupon + loyalty ($18.98) < BOGO ($22.49), so coupon + loyalty applies."
+#           Coupon + loyalty (\$18.98) < BOGO (\$22.49), so coupon + loyalty applies."
 # Agent 2: "I concede. I didn't compare both paths. Agent 1 is correct.
-#           Customer should pay $18.98."
+#           Customer should pay \$18.98."
 ```
 
 ---
@@ -947,8 +947,8 @@ verdict = debate_vote(proposals, challenges, defenses)
 ```python
 # Bad debate example
 proposals = [
-    ("Agent 1", "$22.49 (BOGO promo applied)"),
-    ("Agent 2", "$22.49 (BOGO promo applied)"),
+    ("Agent 1", "\$22.49 (BOGO promo applied)"),
+    ("Agent 2", "\$22.49 (BOGO promo applied)"),
 ]
 # Both agents picked BOGO without comparing to coupon + loyalty.
 
@@ -956,8 +956,8 @@ challenges = []
 # No challenges (both agree).
 
 verdict = debate_vote(proposals, challenges, [])
-# Output: "$22.49 (BOGO promo applied)."
-# ❌ WRONG! Should be $18.98 (coupon + loyalty is cheaper).
+# Output: "\$22.49 (BOGO promo applied)."
+# ❌ WRONG! Should be \$18.98 (coupon + loyalty is cheaper).
 ```
 
 **Why this happens:** Agents have similar biases (all trained on same data), no adversarial diversity.
@@ -985,16 +985,16 @@ def debate_propose_adversarial(user_input):
 
 ```python
 # Round 1
-Agent 1: "$18.98"
-Agent 2: "$22.49"
+Agent 1: "\$18.98"
+Agent 2: "\$22.49"
 
 # Round 2
-Agent 1: "Still $18.98 (policy says pick best)"
-Agent 2: "Still $22.49 (promo replaces coupon)"
+Agent 1: "Still \$18.98 (policy says pick best)"
+Agent 2: "Still \$22.49 (promo replaces coupon)"
 
 # Round 3
-Agent 1: "Still $18.98"
-Agent 2: "Still $22.49"
+Agent 1: "Still \$18.98"
+Agent 2: "Still \$22.49"
 
 # ... infinite loop
 ```

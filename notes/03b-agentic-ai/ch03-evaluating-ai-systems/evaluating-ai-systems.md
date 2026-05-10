@@ -373,9 +373,13 @@ The retrieval quality is bounded by the embedding model's ability to separate re
 
 **NDCG@k** (Normalised Discounted Cumulative Gain) goes further: it rewards finding relevant chunks *earlier*. Each position is discounted by its rank — position 1 gets full credit; position $i$ contributes $1/\log_2(i+1)$.
 
-$$\text{DCG@k} = \sum_{i=1}^{k} \frac{\text{rel}_i}{\log_2(i+1)}$$
+$$
+\text{DCG@k} = \sum_{i=1}^{k} \frac{\text{rel}_i}{\log_2(i+1)}
+$$
 
-$$\text{NDCG@k} = \frac{\text{DCG@k}}{\text{IDCG@k}}$$
+$$
+\text{NDCG@k} = \frac{\text{DCG@k}}{\text{IDCG@k}}
+$$
 
 where $\text{IDCG@k}$ is the ideal DCG — the score you would get if every relevant chunk appeared at the top. Normalising by IDCG brings the metric into $[0, 1]$ regardless of how many relevant chunks exist.
 
@@ -466,7 +470,9 @@ print(f"Semantic: {scores['semantic_similarity']:.3f}")  # → 0.91 (semanticall
 
 Perplexity measures how surprised the model is by a test corpus — lower means the model is a better fit for the language it's evaluating.
 
-$$\text{PP}(W) = \exp\!\left(-\frac{1}{N}\sum_{i=1}^{N} \log P(w_i \mid w_{<i})\right)$$
+$$
+\text{PP}(W) = \exp\!\left(-\frac{1}{N}\sum_{i=1}^{N} \log P(w_i \mid w_{<i})\right)
+$$
 
 **Plain-English reading:** Perplexity of 10 means the model is, on average, as uncertain as if it were choosing uniformly among 10 equally likely next tokens at each position. Lower perplexity = the model finds the text more predictable = better language model fit.
 
