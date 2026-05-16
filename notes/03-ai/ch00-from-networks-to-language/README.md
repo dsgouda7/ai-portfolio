@@ -64,9 +64,14 @@ Higher dot product → more similar meaning.
 ### Where Embeddings Come From
 
 In modern neural architectures:
-1. **Token ID:** "cat" → token 4517 (from vocabulary)
-2. **Lookup:** Row 4517 of embedding matrix $E$ (shape: [vocab_size, d_model])
-3. **Vector:** Returns $d_{model}$-dimensional vector (e.g., 256-d, 512-d, or 768-d)
+1. **Vocabulary:** Fixed set of all possible tokens the model knows (e.g., 32,000-100,000 tokens)
+2. **Token ID:** "cat" → token 4517 (index in vocabulary)
+3. **Lookup:** Row 4517 of embedding matrix $E$ (shape: [vocab_size, d_model])
+4. **Vector:** Returns $d_{model}$-dimensional vector (e.g., 256-d, 512-d, or 768-d)
+
+**Vocabulary size tradeoffs:**
+- Larger vocabulary (100k tokens): Fewer tokens per sentence, but bigger embedding table (100k × 768 = 77M parameters just for embeddings)
+- Smaller vocabulary (32k tokens): More tokens per sentence (more computation), but smaller embedding table
 
 **These embeddings are learned during training**—the model adjusts them so semantically similar words end up nearby in vector space.
 
@@ -76,7 +81,49 @@ In modern neural architectures:
 - **"Sequence of vectors" means embeddings:** A sentence with n tokens becomes n embedding vectors
 - **Dimensionality tradeoff:** Higher dimensions (512-768) capture richer semantics but use more memory and computation
 
-> **Checkpoint:** Can you explain why we can't just use one-hot encoding (binary vectors with single 1)? 
+### Matrix Operations on Embeddings
+
+**Why matrices:** Neural networks transform embeddings using **matrix multiplication**.
+
+**Matrix multiplication basics:**
+```
+If X is (n × d_in) and W is (d_in × d_out), then X @ W is (n × d_out)
+
+Example: 3 tokens, 2-D embeddings → 3-D space
+X = [[1.0, 0.2],     W = [[0.5, 0.3, 0.1],
+     [0.8, 0.9],          [0.2, 0.4, 0.6]]
+     [0.5, 1.1]]
+
+X @ W = [[1.0×0.5 + 0.2×0.2, 1.0×0.3 + 0.2×0.4, 1.0×0.1 + 0.2×0.6],
+         [0.8×0.5 + 0.9×0.2, 0.8×0.3 + 0.9×0.4, 0.8×0.1 + 0.9×0.6],
+         [0.5×0.5 + 1.1×0.2, 0.5×0.3 + 1.1×0.4, 0.5×0.1 + 1.1×0.6]]
+
+      = [[0.54, 0.38, 0.22],
+         [0.58, 0.60, 0.62],
+         [0.47, 0.59, 0.71]]
+```
+
+**Matrix transpose (T):** Swaps rows and columns.
+```
+K = [[1.0, 0.2],     K^T = [[1.0, 0.8, 0.5],
+     [0.8, 0.9],           [0.2, 0.9, 1.1]]
+     [0.5, 1.1]]
+```
+
+Used in attention: Q @ K^T computes all pairwise similarities at once.
+
+### Special Tokens
+
+Models use special markers for different purposes:
+- **[BOS]** (beginning of sequence): Marks start of text
+- **[EOS]** (end of sequence): Marks where generation should stop
+- **[PAD]** (padding): Fills shorter sequences to match batch length
+- **[MASK]** (masking): Replaces words during training (BERT-style models)
+- **[CLS]** (classification): Special token whose embedding summarizes the whole sequence
+
+You'll see these in Ch.1 when discussing different training objectives.
+
+> **Checkpoint:** Can you explain why we can't just use one-hot encoding (binary vectors with single 1)?
 >
 > *Answer: One-hot vectors have no semantic structure. "cat" = [0,0,1,0,0] and "dog" = [0,1,0,0,0] have dot product 0 (orthogonal) despite being semantically similar. Embeddings learn similarity relationships.*
 
@@ -95,6 +142,7 @@ $$
 - $h_t$: Hidden state at step $t$ (e.g., 128-d vector)
 - $x_t$: Current input embedding
 - $h_{t-1}$: Previous hidden state (memory from earlier tokens)
+- $\tanh$: **Activation function** that squashes values to (-1, 1) range, adding nonlinearity
 
 **Concrete example (2-D hidden state for simplicity):**
 
@@ -224,6 +272,13 @@ bank [0.72   1.39   1.46]
 ```
 
 **Step 3: Apply softmax (row-wise)**
+
+**Softmax converts scores to a probability distribution:**
+- All values between 0 and 1
+- All values sum to 1.0 (100%)
+- Larger scores get larger probabilities
+
+**Formula:** $\text{softmax}(x_i) = \frac{e^{x_i}}{\sum_j e^{x_j}}$
 
 ```
 Row 1 (The):
@@ -410,9 +465,57 @@ In a dense layer: $y = Wx + b$
 
 **Large models:** Modern language models have billions of parameters distributed across dozens of layers (embeddings, attention, feed-forward networks).
 
+### 6.1A · What are Layers?
+
+A **layer** is a transformation that takes inputs and produces outputs:
+
+```
+Layer L: input (n, d_in) → transformation → output (n, d_out)
+```
+
+**Dense (fully-connected) layer:**
+```python
+# Input: x with shape (n, d_in)
+# Layer computes: y = x @ W + b
+# Output: y with shape (n, d_out)
+```
+
+**Forward pass:** Processing data through all layers sequentially:
+```
+Input → Layer 1 → Layer 2 → ... → Layer N → Output
+```
+
+Each layer transforms representations, building increasingly abstract features (edges → shapes → objects).
+
+### 6.1B · Activation Functions
+
+Activation functions add **nonlinearity** between layers. Without them, stacking layers is useless (linear × linear = still linear).
+
+**Common activation functions:**
+
+**ReLU (Rectified Linear Unit):** $\text{ReLU}(x) = \max(0, x)$
+```
+Input:  [-2, -1, 0, 1, 2]
+Output: [ 0,  0, 0, 1, 2]  (negative → zero, positive → unchanged)
+```
+Used in most modern networks (fast, simple, avoids vanishing gradients).
+
+**Tanh (Hyperbolic Tangent):** $\tanh(x) = \frac{e^x - e^{-x}}{e^x + e^{-x}}$
+```
+Input:  [-2, -1, 0, 1, 2]
+Output: [-0.96, -0.76, 0, 0.76, 0.96]  (squashes to [-1, 1])
+```
+Used in RNNs/LSTMs for bounded outputs.
+
+**Softmax:** (§3) Converts scores to probabilities — used in attention and output layers.
+
+**Why nonlinearity matters:** Without activation functions, a 100-layer network would collapse to a single linear transformation. Nonlinearity enables learning complex patterns.
+
 ### 6.2 · Loss Functions
 
 **Loss measures how wrong predictions are.**
+
+A **loss function** (or cost function) quantifies the gap between model predictions and true answers. Lower loss = better model.
 
 **For language modeling (predicting next token):**
 
@@ -422,6 +525,10 @@ $$
 \mathcal{L} = -\frac{1}{N} \sum_{i=1}^{N} \log P(\text{correct token}_i | \text{context}_i)
 $$
 
+**What this means:** For each prediction, the model outputs probabilities for all possible next tokens. Cross-entropy measures how much probability mass was assigned to the correct token:
+- If model gives correct token P=0.9 → loss = -log(0.9) = 0.11 (good)
+- If model gives correct token P=0.1 → loss = -log(0.1) = 2.30 (bad)
+
 **Example:** Predicting "cat" after "The"
 - Model outputs probabilities: P(cat)=0.3, P(dog)=0.4, P(car)=0.1, ...
 - True next word is "cat"
@@ -430,14 +537,35 @@ $$
 **If model improves:** P(cat)=0.8
 - Loss = $-\log(0.8) = 0.22$ (lower = better)
 
+**Why logarithm:** Small probability differences at high confidence matter more. Going from P=0.9→0.95 improves loss more than P=0.1→0.15.
+
 ### 6.3 · Backpropagation (Conceptual)
 
 **How parameters update:**
 
-1. Forward pass: Compute predictions
-2. Calculate loss: How wrong were we?
-3. Backward pass: Compute gradients $\frac{\partial \mathcal{L}}{\partial W}$ for every parameter
-4. Update: $W_{\text{new}} = W_{\text{old}} - \eta \frac{\partial \mathcal{L}}{\partial W}$ (where $\eta$ is learning rate)
+1. **Forward pass:** Compute predictions by passing inputs through all layers
+   ```
+   x → Layer 1 → Layer 2 → ... → Layer N → prediction
+   ```
+
+2. **Calculate loss:** How wrong were we?
+   ```
+   loss = measure_error(prediction, true_answer)
+   ```
+
+3. **Backward pass:** Compute gradients $\frac{\partial \mathcal{L}}{\partial W}$ for every parameter
+   - **Gradient** = "which direction and how much to adjust W to reduce loss"
+   - Calculated using calculus chain rule, working backward through layers
+   ```
+   Layer N → Layer N-1 → ... → Layer 1
+   ```
+
+4. **Update:** $W_{\text{new}} = W_{\text{old}} - \eta \frac{\partial \mathcal{L}}{\partial W}$
+   - $\eta$ (learning rate) = how big a step to take (e.g., 0.001)
+   - Too large: overshoots minimum, training unstable
+   - Too small: very slow progress
+
+**What "the model learns" means:** Repeating forward pass → loss → backward pass → update thousands/millions of times, gradually adjusting all parameters to reduce loss.
 
 **Chain rule propagates errors backward:**
 - Layer 96 gradient → Layer 95 → ... → Layer 1
@@ -462,12 +590,12 @@ $$
 
 You now understand the foundational building blocks:
 
-**✓ Embeddings:** Why text → vectors, what dimensions mean  
-**✓ RNNs:** Sequential processing, hidden states, vanishing gradients  
-**✓ Attention:** Q/K/V, dot-product similarity, softmax, weighted sums  
-**✓ Skip connections:** "+1" gradient term, residual learning  
-**✓ Encoder-decoder:** Bidirectional vs causal, cross-attention  
-**✓ Training:** Parameters, loss, backprop, optimizers  
+**✓ Embeddings:** Why text → vectors, what dimensions mean
+**✓ RNNs:** Sequential processing, hidden states, vanishing gradients
+**✓ Attention:** Q/K/V, dot-product similarity, softmax, weighted sums
+**✓ Skip connections:** "+1" gradient term, residual learning
+**✓ Encoder-decoder:** Bidirectional vs causal, cross-attention
+**✓ Training:** Parameters, loss, backprop, optimizers
 
 **Ch.1 introduces Transformers—the architecture that combines all these pieces:**
 
