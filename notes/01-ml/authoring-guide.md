@@ -273,10 +273,10 @@ A chapter is workflow-based if:
 
 ---
 
-## 0 · The Challenge — Where We Are
+## 3 · The Challenge — Where We Are
 [Same as concept-based template]
 
-## 1 · Core Idea
+## 4 · Core Idea
 [Brief overview of the workflow purpose]
 
 ## 1.5 · The Practitioner Workflow — Your N-Phase Diagnostic
@@ -303,10 +303,10 @@ Phase 1: [ACTION] Phase 2: [ACTION] Phase 3: [ACTION]
 
 ---
 
-## 2 · Running Example
+## 5 · Running Example
 [Same as concept-based template]
 
-## 3 · Math
+## 6 · Math
 [Theory sections organized by phase]
 
 ### 3.X · [Phase Name] **[Phase N: ACTION]**
@@ -2175,7 +2175,7 @@ Before publishing any chapter, verify each item:
 A data-prep chapter (e.g., SmartVal AI's `ch00a`) running Acts 1–4 (Inspect → Audit → Transform → Validate) also adds:
 
 ```markdown
-### 1.5 · The 4-Phase Practitioner Workflow
+### 6.1 · The 4-Phase Practitioner Workflow
 
 **The workflow maps to this chapter:**
 - **Phase 1 (INSPECT)** → §3 Act 1, §3A.1 Understanding Skew

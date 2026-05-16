@@ -154,7 +154,7 @@ user_key = BlackboardSchema.user_key("sarah.chen", "preferences")
 
 ## 4 · Implementation in Redis — OrderFlow Blackboard **[Phase 2: WRITE]**
 
-### Writing Agent-Scoped Sections
+### 4.1 Writing Agent-Scoped Sections
 
 The critical rule for your OrderFlow agents: each agent writes **only its own section** of the blackboard record. No agent overwrites another agent's keys. Your NegotiationAgent writes `order:PO-4812:negotiation`, never touches `order:PO-4812:pricing`. Use namespaced keys or a hash field per agent:
 
@@ -255,7 +255,7 @@ async def safe_write_section(po_id: str, section: str, data: dict):
 
 ---
 
-### 4.4 Event Sourcing — Append-Only Audit Trail **[Phase 4: AUDIT]**
+### 4.3 Event Sourcing — Append-Only Audit Trail **[Phase 4: AUDIT]**
 
 Your CFO asks: *"Show me every decision made on PO #2024-1847 from intake to final approval."* You can show the final blackboard state (`order:PO-4812:negotiation` = `{agreed_price: 749, supplier: "TechFurnish"}`), but you cannot answer: *"Who negotiated this price? What other quotes were considered? What was the original ask?"* The blackboard only stores **current** state, not the history of how you got there.
 

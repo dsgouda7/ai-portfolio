@@ -380,9 +380,9 @@ flowchart TD
 
 ***
 
-## 3 · Core Algorithms
+## 4 · Core Algorithms
 
-### 3.1 · HNSW — Hierarchical Navigable Small World
+### 4.1 · HNSW — Hierarchical Navigable Small World
 
 ### 🗺 **Navigation Analogy: The Highway System**
 
@@ -753,11 +753,11 @@ DiskANN is supported in **Azure Database for PostgreSQL** (as one of three vecto
 
 ---
 
-## 4 · Production Architecture Patterns
+## 5 · Production Architecture Patterns
 
 Beyond choosing an index algorithm, production deployments face hybrid retrieval (combining vector + keyword search), metadata filtering tradeoffs (pre-filter vs post-filter vs iterative), and storage engine constraints (B-tree vs LSM-tree impact on write amplification). This section covers the patterns that connect index theory to operational reality.
 
-### 4.1 · HNSW + PQ (Compressed Graph Nodes)
+### 5.1 · HNSW + PQ (Compressed Graph Nodes)
 
 **What it solves:** HNSW's main weakness is its **high memory footprint**. Compressing the vectors stored at graph nodes with PQ reduces memory while preserving HNSW's graph-traversal speed.
 
@@ -765,7 +765,7 @@ Beyond choosing an index algorithm, production deployments face hybrid retrieval
 
 **Tradeoff:** Lower memory than pure HNSW, but PQ introduces some recall degradation. The oversampling technique (retrieve more candidates from compressed search, then refine with full vectors) mitigates this.
 
-### 4.2 · Flat + ANN Re-ranking (Two-Stage Retrieval)
+### 5.2 · Flat + ANN Re-ranking (Two-Stage Retrieval)
 
 **What it solves:** ANN methods are fast but approximate. For applications requiring very high precision, a two-stage pipeline uses an ANN index as a **first pass** to retrieve a larger candidate set, followed by **exact brute-force re-ranking** of just those candidates.
 
@@ -777,7 +777,7 @@ Beyond choosing an index algorithm, production deployments face hybrid retrieval
 
 This is the principle behind DiskANN's **oversampling**: if oversampling=1.5 and k=10, the system retrieves 15 vectors from the compressed index, then refines using full 32-bit vectors.
 
-### 4.3 · Pre-Filtering + Vector Search (Scalar Filtering + ANN)
+### 5.3 · Pre-Filtering + Vector Search (Scalar Filtering + ANN)
 
 **What it solves:** Many real-world queries combine metadata constraints (e.g., "category = 'electronics' AND price < 100") with vector similarity. Without integration, you either pre-filter (potentially eliminating good vector matches) or post-filter (wasting compute on irrelevant vectors).
 
@@ -858,7 +858,7 @@ flowchart TD
 - **Fallback:** If stuck with pre/post-filter, measure selectivity and oversample accordingly
 - **Never assume:** Always measure recall@k on filtered queries before production
 
-### 4.4 · Keyword/BM25 + Vector Hybrid Retrieval
+### 5.4 · Keyword/BM25 + Vector Hybrid Retrieval
 
 **What it solves:** Pure vector search finds semantically similar content but can miss exact keyword matches. Pure keyword search (BM25) finds exact matches but misses paraphrases. Combining them captures both signals.
 
@@ -898,7 +898,7 @@ flowchart TD
 
 ---
 
-## 5 · Why Vector Databases Have Different Architectures
+## 6 · Why Vector Databases Have Different Architectures
 
 §0's scaling experiment adds a choice the prototype never faced: which database engine? The answer depends on storage architecture, and the wrong choice compounds latency problems with write amplification — turning a fast HNSW index into a slow one because the underlying engine fights the graph's random-write pattern.
 
@@ -917,7 +917,7 @@ Online (OLTP-style) database systems primarily choose their data layout based on
 
 **A notable hybrid:** M365 **MIMIR** (the vector index service in Substrate), which runs on top of Jet DB, makes a deliberate architectural choice to use **append-only writes with immutable segments** layered on top of Jet DB's B+-trees to reduce write amplification. This demonstrates that even within a single organization, vector index services choose different storage strategies based on workload characteristics.
 
-### 5.1 · Why This Matters for Vector Indexing
+### 6.2 · Why This Matters for Vector Indexing
 
 Each indexing algorithm interacts differently with the storage layer:
 
@@ -931,11 +931,11 @@ The choice of storage engine therefore constrains which indexing algorithms are 
 
 ---
 
-## 6 · Vector Database Architecture Categories
+## 7 · Vector Database Architecture Categories
 
 The §0 prototype runs FAISS in-process — fast, zero-ops, single machine. The production rollout demands persistence, multi-tenancy, and managed failover — none of which FAISS provides. §6 maps the scale ladder from prototype library to production distributed system.
 
-### 6.1 · Library-First Engines (FAISS-Style)
+### 7.1 · Library-First Engines (FAISS-Style)
 
 **What they are:** In-process libraries (FAISS by Meta, HNSWlib, Annoy by Spotify) that run inside your application. No separate server process.
 
@@ -953,7 +953,7 @@ The §0 prototype runs FAISS in-process — fast, zero-ops, single machine. The 
 
 **Best for:** Rapid prototyping, offline batch processing, embedding into larger systems.
 
-### 6.2 · Vector-Native Distributed Databases
+### 7.2 · Vector-Native Distributed Databases
 
 These are purpose-built database systems designed from the ground up for vector workloads.
 
@@ -963,7 +963,7 @@ These are purpose-built database systems designed from the ground up for vector 
 
 **Weaviate** is an open-source vector database with an AI-native design, offering a modular architecture that can run self-hosted or managed. Key strengths: built-in vectorization modules, hybrid search (vector + keyword), schema-aware with module extensibility. Limitations: operational overhead when self-hosted, learning curve for schema design, slightly higher latency than Pinecone in some setups.
 
-### 6.3 · Database Extensions (Sidecar/Integrated Vector)
+### 7.3 · Database Extensions (Sidecar/Integrated Vector)
 
 Rather than using a separate vector database, these approaches add vector capabilities to an existing database engine.
 
@@ -973,7 +973,7 @@ Rather than using a separate vector database, these approaches add vector capabi
 
 **SQL Server 2025:** Provides native vector data type and ANN search using the **DiskANN algorithm**, with supported metrics of cosine, dot product, and Euclidean.
 
-### 6.4 · Search-Engine-Based (Lucene-Derived)
+### 7.4 · Search-Engine-Based (Lucene-Derived)
 
 **Azure AI Search** (and similar Lucene-based engines like Elasticsearch, OpenSearch) adds vector search alongside traditional full-text capabilities. Preferred when: indexing structured/unstructured data from a variety of sources, when state-of-the-art search quality is needed (hybrid full-text/vector search, fuzzy matching, autocomplete, semantic re-ranking, multi-language support), or when multi-modal search and embeddings (OCR, image analysis, translation) are required.
 
@@ -981,7 +981,7 @@ Rather than using a separate vector database, these approaches add vector capabi
 
 ---
 
-## 7 · Architecture Selection: When to Use Which
+## 8 · Architecture Selection: When to Use Which
 
 §0 established two hard constraints: handle 50K chunks at <100ms retrieval, and support daily menu updates without full rebuilds. Those two constraints eliminate half the options in this table before you even read the rationale column.
 
@@ -1241,7 +1241,7 @@ When selecting an indexing technique, consider these conditional guidelines:
 
 ***
 
-## 11 · Key Tradeoffs to Remember
+## 9 · Key Tradeoffs to Remember
 
 Each of §0's scaling failure modes — latency, memory, rebuild cost — maps to a different axis of this table. The right index minimizes the tradeoff that matters most for your specific constraint set.
 
@@ -1260,7 +1260,7 @@ The fundamental insight: **there is no universally "best" vector database or ind
 
 ***
 
-## 12 · Key Distinctions (Interview Reference)
+## 10 · Key Distinctions (Interview Reference)
 
 | Must know | Likely asked | Trap to avoid |
 |---|---|---|
@@ -1275,7 +1275,7 @@ The fundamental insight: **there is no universally "best" vector database or ind
 
 ***
 
-## 13 · Bridge to Next Chapter
+## 11 · Bridge to Next Chapter
 
 HNSW proves that RAG pipelines can scale to 50K+ documents with <10ms retrieval. The infrastructure question is answered. But a faster index doesn't change **what the system does** with the retrieved context.
 [1] https://learn.microsoft.com/en-us/azure/postgresql/extensions/how-to-optimize-performance-pgvector

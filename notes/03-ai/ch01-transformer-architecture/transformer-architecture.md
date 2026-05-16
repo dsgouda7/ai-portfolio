@@ -1033,7 +1033,7 @@ flowchart TD
 
 ---
 
-## 7 · Key Distinctions Every Engineer Gets Asked
+## 3 · Key Distinctions Every Engineer Gets Asked
 
 These are the concepts interviewers expect you to know cold. Each row represents a common interview question.
 
@@ -1054,7 +1054,7 @@ These are the concepts interviewers expect you to know cold. Each row represents
 
 ---
 
-## 8 · Bridge to Next Chapter
+## 4 · Bridge to Next Chapter
 
 You now understand:
 - The historical path from RNNs to transformers (§0)

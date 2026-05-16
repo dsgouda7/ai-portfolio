@@ -846,7 +846,7 @@ flowchart TD
 
 ---
 
-## 8 · Hyperparameter Dial
+## 13 · Hyperparameter Dial
 
 Three hyperparameters dominate autoencoder anomaly detection performance. Each has a meaningful failure mode at both extremes.
 
@@ -912,7 +912,7 @@ The architecture (number of hidden layers and units) controls model capacity. Fo
 
 ---
 
-## 9 · What Can Go Wrong
+## 14 · What Can Go Wrong
 
 ### Pitfall 1 — Training on Contaminated Data
 
@@ -956,7 +956,7 @@ The architecture (number of hidden layers and units) controls model capacity. Fo
 
 ---
 
-## 10 · Where This Reappears
+## 15 · Where This Reappears
 
 | Context | How autoencoders reappear |
 |---------|--------------------------|
@@ -970,7 +970,7 @@ The architecture (number of hidden layers and units) controls model capacity. Fo
 
 ---
 
-## 11 · Progress Check
+## 16 · Progress Check
 
 ```
 FraudShield Status After Ch.3 — Autoencoder
@@ -1015,7 +1015,7 @@ The reconstruction error for features V14 and V4 is 80–155× larger on fraud t
 
 ---
 
-## 12 · Bridge to Ch.4 — One-Class SVM
+## 17 · Bridge to Ch.4 — One-Class SVM
 
 > ➡ **What's next**: The autoencoder reached 75% recall — a +10pp improvement over Isolation Forest — by learning *what normal transactions look like* and flagging deviations. Both methods now sit in the toolbox: IF scores by geometric isolation, AE scores by reconstruction failure. But both are trained on all-normal data, and both produce continuous scores rather than explicit boundaries.
 

@@ -917,7 +917,7 @@ Break-even vs. API: ~same, but with full data privacy and no per-token billing
 
 ---
 
-## 10 · Interview Checklist
+## 9 · Interview Checklist
 
 | Must know | Likely asked | Trap to avoid |
 |---|---|---|
@@ -928,7 +928,7 @@ Break-even vs. API: ~same, but with full data privacy and no per-token billing
 
 ---
 
-## 11 · Progress Check — What We Can Solve Now
+## 10 · Progress Check — What We Can Solve Now
 
  **FINAL MILESTONE**: All 6 constraints exceeded! Ready for production!
 
@@ -1144,7 +1144,7 @@ ROI achievable:
 
 ---
 
-## 12 · Bridge to AI Infrastructure Track
+## 11 · Bridge to AI Infrastructure Track
 
 Ch.9 completed the **application-layer** optimization stack. You now understand:
 - Model tier selection (frontier vs mid-tier vs open-source)

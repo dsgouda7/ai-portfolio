@@ -775,7 +775,7 @@ Open-source NLI models: `cross-encoder/nli-deberta-v3-base`, `vectara/hallucinat
 ---
 
 
-## 7 · The Evaluation Benchmark Trap
+## 6 · The Evaluation Benchmark Trap
 
 Failure #2 in §0 — "no quality baseline" — tempts teams toward a shortcut: use public MMLU or HumanEval scores to select models. This section explains why a model that aces benchmarks still hallucinates allergen claims in Mamma Rosa's private-data pipeline, and why that shortcut destroys customer trust.
 
@@ -793,7 +793,7 @@ Failure #2 in §0 — "no quality baseline" — tempts teams toward a shortcut: 
 
 ---
 
-## 8 · What a Minimal Evaluation Setup Looks Like
+## 7 · What a Minimal Evaluation Setup Looks Like
 
 All five blockers from §0 can be substantially reduced with a single artefact: a 50–100 question golden dataset run on every commit. This is the minimum viable version that eliminates the "test 3 queries and hope" anti-pattern without requiring a dedicated evaluation engineering team.
 
@@ -1263,7 +1263,7 @@ jobs:
 
 ---
 
-## 9 · Progress Check — What We Can Solve Now
+## 8 · Progress Check — What We Can Solve Now
 
  **TESTING INFRASTRUCTURE DEPLOYED**: Regression prevention achieved!
 
@@ -1429,7 +1429,7 @@ Ch.7 is the **quality assurance gate** — no business metric improvements, but 
 
 ---
 
-## 10 · Bridge to Chapter 8
+## 9 · Bridge to Chapter 8
 
 Ch.7 unlocked automated testing and regression prevention. But the evaluation suite revealed three systematic gaps:
 

@@ -479,7 +479,7 @@ Left: as $\Delta t$ shrinks from 0.60 to 0.08, the secant slope slides from +0.8
 
 ---
 
-## 10 · Where This Reappears
+## 9 · Where This Reappears
 
 - **Pre-Req Ch.4.** A derivative tells you which direction is *down*. Gradient descent is walking downhill, one tiny step at a time.
 - **Pre-Req Ch.6.** Chain rule → automatic differentiation → PyTorch's `backward()`.
@@ -489,7 +489,7 @@ Left: as $\Delta t$ shrinks from 0.60 to 0.08, the secant slope slides from +0.8
 
 ---
 
-## 11 · Progress Check — What We Can Solve Now
+## 10 · Progress Check — What We Can Solve Now
 
 ```mermaid
 graph LR
@@ -531,7 +531,7 @@ graph LR
 
 ---
 
-## 12 · References
+## 11 · References
 
 - **Jon Krohn — *Calculus 1 for Machine Learning*.** Video companion to this chapter; the "limits" and "derivative definition" episodes map one-to-one to Sections 4 and 5.
 - **3Blue1Brown — *Essence of Calculus*, eps. 1–4.** The visual intuition for secant→tangent and Archimedes is unmatched.

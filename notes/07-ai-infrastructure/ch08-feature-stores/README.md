@@ -406,11 +406,11 @@ Total latency: 1,400ms p95 (50% reduction!)
 
 ### Key Components Overview
 
-The feature store has 4 core components (Registry, Offline, Online, Materialization) that must be deployed in order. The following subsections (§3.7-3.11) walk through each phase of the deployment workflow.
+The feature store has 4 core components (Registry, Offline, Online, Materialization) that must be deployed in order. The following subsections (§3.1-3.5) walk through each phase of the deployment workflow.
 
 ---
 
-### 3.7 · Feature Schema & Metadata
+### 3.1 · Feature Schema & Metadata
 
 **Purpose:** Establish the feature registry — the single source of truth for all feature definitions, schemas, and metadata.
 
@@ -508,7 +508,7 @@ user_features = FeatureView(
 
 ---
 
-### 3.8 · [Phase 2: OFFLINE] Historical Feature Storage
+### 3.2 · [Phase 2: OFFLINE] Historical Feature Storage
 
 **Purpose:** Build the offline store — a data warehouse optimized for batch retrieval of historical features for training.
 
@@ -598,7 +598,7 @@ print(f" Materialized {user_features.count()} feature rows to offline store")
 
 ---
 
-### 3.9 · [Phase 3: ONLINE] Low-Latency Retrieval
+### 3.3 · [Phase 3: ONLINE] Low-Latency Retrieval
 
 **Purpose:** Build the online store — a key-value database optimized for sub-10ms feature lookups during real-time inference.
 
@@ -694,7 +694,7 @@ redis-cli CONFIG SET maxmemory-policy allkeys-lru # Evict least-recently-used ke
 
 ---
 
-### 3.10 · [Phase 4: MATERIALIZE] Offline-to-Online Pipeline
+### 3.4 · [Phase 4: MATERIALIZE] Offline-to-Online Pipeline
 
 **Purpose:** Build the materialization pipeline — the scheduled jobs that compute features from raw data and sync them to both offline and online stores.
 
@@ -807,7 +807,7 @@ with DAG(
 
 ---
 
-### 3.11 · [Phase 5: MONITOR] Data Quality Gates
+### 3.5 · [Phase 5: MONITOR] Data Quality Gates
 
 **Purpose:** Build monitoring and alerting for feature data quality — detect freshness issues, schema drift, and distribution shifts before they impact model accuracy.
 
@@ -923,7 +923,7 @@ else:
 
 ---
 
-## 3.12 · End-to-End Workflow Summary
+## 4 · End-to-End Workflow Summary
 
 Combining all 5 phases into a production deployment timeline:
 
@@ -967,7 +967,7 @@ Week 6: PRODUCTION CUTOVER
 
 ---
 
-## 4 · Feature Store Comparison — Choosing Your Platform
+## 5 · Feature Store Comparison — Choosing Your Platform
 
 > **Quick reference:** For detailed context on each platform, see the industry callouts in §3.7-3.11 (Feast in §3.7, Tecton in §3.8, Hopsworks in §3.9, AWS SageMaker in §3.10, Databricks in §3.11).
 
@@ -1019,7 +1019,7 @@ START: What's your constraint?
 
 ---
 
-## 5 · What Can Go Wrong — Feature Store Footguns
+## 6 · What Can Go Wrong — Feature Store Footguns
 
 ### Footgun #1: Training-Serving Skew (Silent Accuracy Degradation)
 
@@ -1172,7 +1172,7 @@ feast materialize ... # Recompute features using old definitions
 
 ---
 
-## 6 · Progress Check — What We've Accomplished
+## 7 · Progress Check — What We've Accomplished
 
  **Feature store infrastructure deployed** — training and serving use identical feature definitions
 

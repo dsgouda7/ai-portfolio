@@ -221,7 +221,7 @@ VAE compression ratio: 786 432 / 16 384 = 48×
 
 ---
 
-## 6 · Common Failure Modes
+## 7 · Common Failure Modes
 
 ### Failure 1: Forgetting the VAE Scaling Factor
 
@@ -253,7 +253,7 @@ VAE compression ratio: 786 432 / 16 384 = 48×
 
 ---
 
-## 7 · When to Use Latent Diffusion vs Alternatives
+## 8 · When to Use Latent Diffusion vs Alternatives
 
 | Scenario | Use Latent Diffusion | Use Alternative |
 |----------|---------------------|---------------|
@@ -284,7 +284,7 @@ Trend: Larger latent channels (4→16), larger U-Net or Diffusion Transformer (D
 
 ---
 
-## 8 · Connection to Prior Chapters
+## 9 · Connection to Prior Chapters
 
 **Ch.3 CLIP** provided the text encoder that conditions latent diffusion:
 - CLIP text embeddings → cross-attention in U-Net → text-guided denoising
@@ -308,7 +308,7 @@ Trend: Larger latent channels (4→16), larger U-Net or Diffusion Transformer (D
 
 ---
 
-## 9 · Interview Checklist
+## 10 · Interview Checklist
 
 ### Must Know
 - The three components of Stable Diffusion: **VAE** (compress/decompress), **U-Net** (diffuse in latent), **CLIP** (condition on text)
@@ -325,7 +325,7 @@ Trend: Larger latent channels (4→16), larger U-Net or Diffusion Transformer (D
 
 ---
 
-## 10 · Further Reading
+## 11 · Further Reading
 
 **Papers:**
 - [High-Resolution Image Synthesis with Latent Diffusion Models (Rombach et al., 2022)](https://arxiv.org/abs/2112.10752) — The original Stable Diffusion paper
@@ -343,7 +343,7 @@ Trend: Larger latent channels (4→16), larger U-Net or Diffusion Transformer (D
 
 ---
 
-## 11 · Notebook
+## 12 · Notebook
 
 **Educational notebook** (runs on CPU, demonstrates VAE compression):
 [`notebook.ipynb_solution.ipynb` (reference) or `notebook.ipynb_exercise.ipynb` (practice) (solution)](notebook.ipynb_solution.ipynb) | [`notebook.ipynb_solution.ipynb` (reference) or `notebook.ipynb_exercise.ipynb` (practice) (exercise)](notebook.ipynb_exercise.ipynb) — Load SD 1.5, encode an image to latent space, visualize compression, decode back to pixels

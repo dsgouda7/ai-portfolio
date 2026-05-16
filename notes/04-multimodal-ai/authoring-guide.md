@@ -147,7 +147,7 @@ Every chapter follows this template:
 Place this **after "The story"** block and **before "1 · Core Idea"**.
 
 ```markdown
-## 0 · The VisualForge Studio Challenge
+## 12 · The VisualForge Studio Challenge
 
 **Mission**: VisualForge Studio needs to replace $600k/year freelancer costs with an in-house AI system running on local hardware (<$5k), delivering professional-grade marketing visuals (<30s per image, ≥4.0/5.0 quality), with <5% unusable generations and 100+ images/day throughput. The system must handle text→image, image→video, and image understanding for automated QA.
 
@@ -313,7 +313,7 @@ Every chapter should include:
 ## Example — Ch.4 Diffusion Models § 0 Section
 
 ```markdown
-## 0 · The VisualForge Studio Challenge
+## 13 · The VisualForge Studio Challenge
 
 **Mission**: VisualForge Studio needs to replace $600k/year freelancer costs with an in-house AI system running on local hardware (<$5k), delivering professional-grade marketing visuals (<30s per image, ≥4.0/5.0 quality), with <5% unusable generations and 100+ images/day throughput.
 

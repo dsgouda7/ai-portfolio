@@ -1054,7 +1054,7 @@ We've achieved **Constraint #1 (ACCURACY)**, but we're **overfitting badly** on 
 
 ---
 
-## 10 · Bridge to Chapter 4
+## 9 · Bridge to Chapter 4
 
 You can now train the network and watch the loss decrease. But if you let it run long enough, the training loss keeps falling while the validation loss rises — the model memorises the training districts instead of learning general patterns. Chapter 4 — **Regularisation** — introduces L1, L2, Dropout, and early stopping to close that gap.
 
@@ -1063,7 +1063,7 @@ You can now train the network and watch the loss decrease. But if you let it run
 
 ![Gradient descent optimisers — SGD, momentum, and Adam loss-surface trajectories](img/ch5-optimizers.png)
 
-## 11 · Where This Reappears
+## 10 · Where This Reappears
 
 Backpropagation and optimizer concepts thread through every neural network chapter:
 

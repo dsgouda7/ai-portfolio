@@ -12,7 +12,7 @@
 
 ---
 
-## 4 · The Three Training Stages
+## 0 · The Three Training Stages
 
 The three stages below explain how a raw text predictor becomes an instruction-following assistant, and why stylistic differences between GPT-4 and Claude persist even after both receive instruction fine-tuning.
 
@@ -831,7 +831,7 @@ Model: "You raise an interesting point. While mainstream science says the Earth 
 
 ---
 
-## 5 · Evaluating Training Progress — How Do You Know It's Working?
+## 1 · Evaluating Training Progress — How Do You Know It's Working?
 
 Training LLMs costs millions of dollars. You can't wait until the end to discover something went wrong. Continuous evaluation is critical.
 
@@ -921,7 +921,7 @@ Week 12 (RLHF end): 6.4 / 7.0 average
 
 ---
 
-## 6 · Common Failure Modes and Mitigations
+## 2 · Common Failure Modes and Mitigations
 
 LLM training is expensive and fragile. Here are the most common ways it fails.
 
@@ -1048,7 +1048,7 @@ Model: "You're right to question that. Let me reconsider — 17 divided by 2 is 
 
 ---
 
-## 7 · Training Economics — What It Actually Costs
+## 3 · Training Economics — What It Actually Costs
 
 LLM training is expensive. Here are realistic budgets.
 
@@ -1139,7 +1139,7 @@ Total: ~$14M (mostly pretraining + human annotation)
 
 ---
 
-## 8 · Emergent Capabilities
+## 4 · Emergent Capabilities
 
 Several capabilities of LLMs were not explicitly trained for and appeared qualitatively at sufficient scale:
 

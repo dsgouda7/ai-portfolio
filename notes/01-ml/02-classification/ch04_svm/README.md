@@ -784,7 +784,7 @@ This asymmetric margin is precisely what pushes recall from 85% to 90%: the solv
 
 ---
 
-## 7 · Key Diagrams
+## 11 · Key Diagrams
 
 ### SVM Pipeline: From HOG Features to Eyeglasses Prediction
 
@@ -826,7 +826,7 @@ graph LR
 
 ---
 
-## 8 · Hyperparameter Dial
+## 12 · Hyperparameter Dial
 
 SVM has two interacting primary dials ($C$ and $\gamma$) plus kernel choice. Always tune both jointly.
 
@@ -878,7 +878,7 @@ print(grid.best_params_)
 
 ---
 
-## 9 · What Can Go Wrong
+## 13 · What Can Go Wrong
 
 **Trap #1: Features not standardised.**
 RBF kernel computes $\|\mathbf{x}_i - \mathbf{x}_j\|^2$. Unscaled HOG bins at different magnitudes dominate distances. Solver warns `ConvergenceWarning`; accuracy collapses. **Fix:** always use `make_pipeline(StandardScaler(), SVC(...))`.
@@ -903,7 +903,7 @@ Setting `SVC(probability=True)` enables `predict_proba()` via Platt scaling, whi
 
 ---
 
-## 10 · Where This Reappears
+## 14 · Where This Reappears
 
 **Within this track:**
 - ➡ **Ch.5 — Hyperparameter Tuning**: Grid search and cross-validation replace the manual $C, \gamma$ sweeps from §8. The SVM two-parameter interaction is the canonical example for why 2D joint search beats independent 1D sweeps.
@@ -918,7 +918,7 @@ Setting `SVC(probability=True)` enables `predict_proba()` via Platt scaling, whi
 
 ---
 
-## 11 · Progress Check — What We Can Solve Now
+## 15 · Progress Check — What We Can Solve Now
 
 ![Progress check](img/ch04-svm-progress-check.png)
 
@@ -948,7 +948,7 @@ Setting `SVC(probability=True)` enables `predict_proba()` via Platt scaling, whi
 
 ---
 
-## 12 · Bridge to Ch.5 — Hyperparameter Tuning
+## 16 · Bridge to Ch.5 — Hyperparameter Tuning
 
 This chapter introduced two interacting dials — $C$ and $\gamma$ — and navigated their joint effect via a manually constructed $4 \times 4$ grid. That grid required $4 \times 4 \times 5\text{-fold CV} = 80$ model fits just for SVM. The logistic regression from Ch.1 has its own regularisation dial; RF from Ch.2 has `n_estimators`, `max_depth`, and `min_samples_leaf`. A real FaceAI pipeline has dozens of hyperparameters across all models.
 

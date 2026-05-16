@@ -259,7 +259,7 @@ Improvement: 46% faster!
 
 ---
 
-### 3.12 · Profiling Baseline Performance **[Phase 1: PROFILE]**
+### 3.1 · Profiling Baseline Performance **[Phase 1: PROFILE]**
 
 Before optimizing, measure where time is actually spent. Inference has 4 components:
 
@@ -382,7 +382,7 @@ print(f"TPOT (time per output token): {gen_time / (len(output_ids[0]) - len(inpu
 
 ---
 
-### 3.13 · Bottleneck Identification **[Phase 2: IDENTIFY]**
+### 3.2 · Bottleneck Identification **[Phase 2: IDENTIFY]**
 
 Profile breakdown from Phase 1 reveals where to optimize. Three bottleneck categories:
 
@@ -595,7 +595,7 @@ diagnosis = profiler.diagnose_bottleneck()
 
 ---
 
-### 3.13.1 DECISION CHECKPOINT — Phase 2 Complete **[Phase 2: IDENTIFY]**
+### 3.2.1 DECISION CHECKPOINT — Phase 2 Complete **[Phase 2: IDENTIFY]**
 
 **What you just saw:**
 - Baseline profile: 826ms total latency, 70% decode (580ms), 22% prefill (180ms), 8% tokenization+detok

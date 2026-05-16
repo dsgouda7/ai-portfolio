@@ -490,7 +490,7 @@ Constraint: α · β² · γ² ≈ 2 (FLOPs scale as width² and resolution²)
 
 ## 8 · What Can Go Wrong
 
-### 9.1 Forgetting Linear Bottleneck (ReLU After Final Projection)
+### 8.1 Forgetting Linear Bottleneck (ReLU After Final Projection)
 
 **Trap:** Adding ReLU after the final 1×1 projection in the inverted residual block.
 
@@ -513,7 +513,7 @@ projection = nn.Sequential(
 
 **Impact:** -2 to -3% accuracy loss on ImageNet.
 
-### 9.2 Using Wrong Group Count in Depthwise Conv
+### 8.2 Using Wrong Group Count in Depthwise Conv
 
 **Trap:** Forgetting to set `groups=in_channels` for depthwise convolution.
 
@@ -527,7 +527,7 @@ depthwise = nn.Conv2d(128, 128, kernel_size=3, padding=1, groups=128) # 128 filt
 
 **Symptoms:** Model trains but is 8× slower than expected (defeats the whole purpose of depthwise separable convs).
 
-### 9.3 Scaling Only One Dimension (Naive Scaling)
+### 8.3 Scaling Only One Dimension (Naive Scaling)
 
 **Trap:** Doubling network depth without adjusting width or resolution.
 
@@ -540,7 +540,7 @@ depthwise = nn.Conv2d(128, 128, kernel_size=3, padding=1, groups=128) # 128 filt
 
 Result: +3–4% accuracy for 2× FLOPs (vs +1% for depth-only scaling).
 
-### 9.4 Deploying Without Quantization
+### 8.4 Deploying Without Quantization
 
 **Trap:** Deploying FP32 MobileNet on edge device without quantization.
 
@@ -567,7 +567,7 @@ model_quantized = quant.convert(model_prepared)
 
 **Impact:** 4× model size reduction, 3× inference speedup, minimal accuracy loss (<1%).
 
-### 9.5 Not Using ReLU6 Instead of ReLU
+### 8.5 Not Using ReLU6 Instead of ReLU
 
 **Trap:** Using standard ReLU in MobileNet blocks.
 

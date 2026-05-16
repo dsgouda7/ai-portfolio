@@ -244,7 +244,7 @@ Use text-only formatting:
 Every chapter README must open (after the title/story/notation blockquote) with this structure:
 
 ```markdown
-## 0 · The Challenge — Where We Are
+## 9 · The Challenge — Where We Are
 
 > **The goal**: Score a free kick that clears a 1.8m wall and dips under a 2.44m crossbar while beating the keeper's reaction time.
 
@@ -1276,7 +1276,7 @@ This is a navigation index, not a narrative. It tells the reader *where* to look
 Derivation steps should be numbered sub-sections within a single proof section — not cross-referenced from a meta-table:
 
 ```markdown
-## 4 · Deriving the Normal Equations
+## 10 · Deriving the Normal Equations
 
 **Step 1 — Set up the loss.** Define $\mathcal{L}(w) = \|Xw - y\|^2$. Every term is a scalar squared — gravity-analogy: the higher the loss, the farther the ball lands from target.
 

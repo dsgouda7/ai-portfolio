@@ -27,6 +27,7 @@ This is not a tutorial. Every chapter follows an investigative arc: you are a St
 
 | Ch | Title | Investigation Beat | Key Experiment | Status |
 |----|-------|--------------------|----------------|--------|
+| **0** | [From Networks to Language](ch00-from-networks-to-language/README.md) | **"The Shortcut Ramp"** — condensed intuition from RNNs to transformers to LLMs | No experiments; pure conceptual bridge from notes/01 and notes/02 | ✅ Complete |
 | **1** | [Transformer Architecture](ch01-transformer-architecture/transformer-architecture.md) | **"The Engine"** — how attention mechanisms enable text generation | Build minimal transformer; trace attention patterns on sample text | 🚧 In Progress |
 | **2** | [LLM Inference Mechanics](ch02-llm-inference-mechanics/inference-mechanics.md) | **"The Controls"** — tokenization, sampling, and generation parameters | Run identical prompts with different temperatures; measure output diversity | 🚧 In Progress |
 | **3** | [LLM Training Pipeline](ch03-llm-training-pipeline/training-pipeline.md) | **"The Learning Process"** — pre-training, fine-tuning, and alignment | Compare base vs instruction-tuned model outputs on task prompts | 🚧 In Progress |
@@ -99,13 +100,22 @@ By the end of this track, you'll have:
 
 ## How to Use This Track
 
-### Sequential (Recommended)
+### Sequential (Recommended for First-Time Learners)
 Work through Ch.1 → Ch.8 in order. The first 4 chapters build foundational knowledge; the next 4 chapters apply it. Each chapter explicitly states what the experiment adds to your AI Literacy Kit.
+
+### Fast Track (For Readers from notes/01 + notes/02)
+If you've completed notes/01 (ML) and notes/02 (Advanced Deep Learning):
+1. **Start with Ch.0** ([From Networks to Language](ch00-from-networks-to-language/README.md)) — 20-min read connecting RNNs/attention/transformers to LLMs
+2. **Skim Ch.1 §0-2** (historical thread + tokenization) — you already know attention mechanics from notes/01 Ch.9-10
+3. **Focus on Ch.2-8** — inference mechanics, training, prompting, CoT, RAG are all new territory
 
 ### By Goal
 
 **"I need to understand how transformers work from scratch"**
 → [Ch.1](ch01-transformer-architecture/transformer-architecture.md), [Ch.2](ch02-llm-inference-mechanics/inference-mechanics.md)
+
+**"I'm coming from notes/01 and notes/02, need the bridge to LLMs"**
+→ [Ch.0](ch00-from-networks-to-language/README.md) (shortcut ramp with zero math, heavy diagrams)
 
 **"I need to understand why GPT-4 and Claude behave differently"**
 → [Ch.4](ch04-llm-model-internals/model-internals.md), [Ch.5](ch05-prompt-engineering/prompt-engineering.md)
@@ -145,6 +155,9 @@ Work through Ch.1 → Ch.8 in order. The first 4 chapters build foundational kno
 - Math background — transformer architecture is explained conceptually, not mathematically
 
 **This track is self-contained.** Start here if you want to understand LLMs from a practitioner's perspective.
+
+**If you've completed notes/01 (ML) and notes/02 (Advanced Deep Learning):**
+→ Start with [**Ch.0 — From Networks to Language**](ch00-from-networks-to-language/README.md) — a condensed, intuition-building bridge showing the evolutionary arc from RNNs → Attention → Transformers → LLMs. Heavy on mermaid diagrams, zero math, connects the gradient flow principles you learned (skip connections in ResNets, attention in transformers) to the production AI stack you'll build in this track.
 
 **Optional enrichment** (for readers who want deeper mathematical/architectural understanding):
 - [ML Track](../01-ml/README.md) — especially Ch.18 (Transformers) for mathematical treatment

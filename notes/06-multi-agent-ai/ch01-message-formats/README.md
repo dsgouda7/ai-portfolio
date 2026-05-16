@@ -327,7 +327,7 @@ If usage exceeds 80% → trim oldest messages, keep system + recent context
 **5. Audit trail gaps with structured handoff** — Compliance audit asks "Why did NegotiationAgent accept this price?" Structured payload has result but not reasoning.
  - **Fix**: Log every agent's full message history to database with PO correlation ID. Query logs for audit reconstruction. Context passes only results; logs preserve reasoning.
 
-## 8 · Progress Check — What We Can Solve Now
+## 7 · Progress Check — What We Can Solve Now
 
 ```mermaid
 graph LR
@@ -386,7 +386,7 @@ Result: Context overflow eliminated (Constraint #4 foundation complete)
 
 ---
 
-## 7 · The Math
+## 8 · The Math
 
 ### Context Budget Allocation
 

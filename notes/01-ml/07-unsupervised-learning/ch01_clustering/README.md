@@ -517,7 +517,7 @@ X_sc = StandardScaler().fit_transform(X_log) # equalise variance
 
 ---
 
-### 4.7 Silhouette Score — Measuring Cluster Quality Without Labels
+### 9.5 Silhouette Score — Measuring Cluster Quality Without Labels
 
 The **silhouette coefficient** $s(i)$ measures how well point $i$ fits its assigned cluster relative to the next-best cluster — without needing ground-truth labels:
 

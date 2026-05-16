@@ -961,9 +961,9 @@ This chapter focuses on **metrics** because they're the foundation for dashboard
 
 ---
 
-## 6 · What Can Go Wrong — Three Production Observability Failures
+## 10 · What Can Go Wrong — Three Production Observability Failures
 
-### 6.1 · Cardinality Explosion Kills Prometheus Performance
+### 10.1 · Cardinality Explosion Kills Prometheus Performance
 
 **What breaks:** You instrument a metric with a high-cardinality label — e.g., `user_id` or `request_id` — and Prometheus runs out of memory.
 
@@ -987,7 +987,7 @@ REQUEST_COUNT.labels(route=request.path, status=status_code).inc() # ~100 routes
 
 ---
 
-### 9.2 · PromQL Queries Time Out When Aggregating Large Time Ranges
+### 10.2 · PromQL Queries Time Out When Aggregating Large Time Ranges
 
 **What breaks:** You run a query like `sum(rate(http_requests_total[30d]))` and Grafana hangs for 30 seconds before timing out.
 
@@ -1020,7 +1020,7 @@ Now query `http_requests:rate5m` instead — it's precomputed every 60 seconds.
 
 ---
 
-### 9.3 · Retention Limits Erase Historical Data Before You Notice Trends
+### 10.3 · Retention Limits Erase Historical Data Before You Notice Trends
 
 **What breaks:** You deploy a change on Monday, and by Friday you notice latency slowly creeping up. But Prometheus only retains 7 days of data — you can't compare to last month's baseline.
 
@@ -1047,7 +1047,7 @@ services:
 
 ---
 
-## 10 · Putting It Together — The Complete Observability Stack
+## 11 · Putting It Together — The Complete Observability Stack
 
 Here's the full architecture showing all four phases integrated:
 
@@ -1122,7 +1122,7 @@ Without all four phases, you're missing observability:
 
 ---
 
-## 11 · Progress Check — Three Scenarios to Test Your Understanding
+## 12 · Progress Check — Three Scenarios to Test Your Understanding
 
 ### Scenario 1 — Request Rate Spike
 
@@ -1224,7 +1224,7 @@ Error rate (errors/sec)
 
 ---
 
-## 12 · Bridge to Ch.6 — Infrastructure as Code Automates This Entire Stack
+## 13 · Bridge to Ch.6 — Infrastructure as Code Automates This Entire Stack
 
 You just deployed Prometheus + Grafana manually with `docker-compose.yml`. **But production systems need reproducibility** — if you tear down the stack and rebuild it, the Grafana dashboards, Prometheus scrape configs, and alerting rules must come back exactly the same.
 

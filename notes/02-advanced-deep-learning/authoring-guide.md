@@ -274,12 +274,12 @@ Use text-only formatting:
 
 ---
 
-### 9.2 · [Next trap...]
+### 8.2 · [Next trap...]
 ```
 
 **Example (Ch.1 ResNets):**
 ```
-### 9.1 · Vanishing Gradients Return with Bad Initialization
+### 8.3 · Vanishing Gradients Return with Bad Initialization
 
 Even with skip connections, ResNet-152 fails to converge if weights are initialized with
 standard normal (mean=0, std=1). Early layers receive gradients 1000× smaller than late layers,

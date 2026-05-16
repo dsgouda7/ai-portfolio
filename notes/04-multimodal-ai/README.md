@@ -508,15 +508,15 @@ Every note follows this template (same order as the ML and AI tracks):
 
 > Blockquote: what you'll understand after reading this
 
-## 1 · Core Idea ← 2–4 sentences, plain English
-## 2 · Running Example ← how PixelSmith uses this concept
-## 3 · The Math ← key equations, every symbol annotated
-## 4 · How It Works — Step by Step ← numbered steps or flow diagram
-## 5 · The Key Diagrams ← Mermaid / ASCII diagrams
-## 6 · What Changes at Scale ← how this works in production systems
-## 7 · Common Misconceptions ← what people get wrong
-## 8 · Interview Checklist ← Must Know / Likely Asked / Trap to Avoid
-## 9 · What's Next ← forward pointer to the next note
+## 0 · Core Idea ← 2–4 sentences, plain English
+## 1 · Running Example ← how PixelSmith uses this concept
+## 2 · The Math ← key equations, every symbol annotated
+## 3 · How It Works — Step by Step ← numbered steps or flow diagram
+## 4 · The Key Diagrams ← Mermaid / ASCII diagrams
+## 5 · What Changes at Scale ← how this works in production systems
+## 6 · Common Misconceptions ← what people get wrong
+## 7 · Interview Checklist ← Must Know / Likely Asked / Trap to Avoid
+## 8 · What's Next ← forward pointer to the next note
 ```
 
 ### Chapter Status

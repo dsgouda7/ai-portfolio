@@ -546,7 +546,7 @@ $$\hat{y}_{\text{DDQN}} = r + \gamma \, Q\!\left(s',\; \underset{a'}{\arg\max}\;
 
 This decoupling eliminates the upward bias and is a near-zero-cost improvement to standard DQN.
 
-### 4.6 Numeric Summary: All Innovations on One Transition
+### 9.7 Numeric Summary: All Innovations on One Transition
 
 Pulling together §4.1–4.5 on a single transition $(s, a=\text{Right}, r=1.0, s', \text{non-terminal})$:
 

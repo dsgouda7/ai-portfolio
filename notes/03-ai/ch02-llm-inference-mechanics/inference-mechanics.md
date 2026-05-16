@@ -12,7 +12,7 @@
 
 ---
 
-## 3 · Sampling — Temperature, Top-p, Top-k
+## 0 · Sampling — Temperature, Top-p, Top-k
 
 The model doesn't output one answer; it outputs a probability distribution over all ~50,000 vocabulary tokens. **Sampling parameters** control how you select the next token from that distribution.
 

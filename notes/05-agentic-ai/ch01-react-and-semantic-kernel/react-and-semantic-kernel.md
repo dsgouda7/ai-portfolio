@@ -275,7 +275,7 @@ The term **"interleaved"** is central to ReAct. It means reasoning and acting ar
 
 > **Interleaved loop → cart abandonment:** Reducing visible turns from 7 to 3–4 — by moving information-gathering steps inside the loop — cuts the §0 cart abandonment rate from 15% to 5% (−10pp). At 50 daily visitors, that 10pp recovery adds approximately 5 completed orders per day, contributing the majority of the 18%→28% conversion improvement that closes Constraint #1.
 
-### 3.1 DECISION CHECKPOINT — Phase 2 (REASON) Entry
+### 1.1 DECISION CHECKPOINT — Phase 2 (REASON) Entry
 
 **What you just learned:**
 - ReAct loop has three components per step: **Thought** (LLM reasons), **Action** (tool selected), **Observation** (tool result)
@@ -435,7 +435,7 @@ Context **grows monotonically**. Once the agent has confirmed the store and item
 
 > **6-step trace → abandonment reduction:** The §0 bot surfaced 7 questions to complete this order because each information gap (store open? item available? delivery fee?) became a separate user prompt. This trace resolves all four gaps internally, surfacing one structured confirmation. Moving from 7 visible turns to 1 is the primary mechanism behind the 15%→5% cart abandonment improvement — each eliminated user prompt removes one opportunity for the customer to leave.
 
-### 4.1 DECISION CHECKPOINT — Phase 3 (ACT) Complete
+### 1.2 DECISION CHECKPOINT — Phase 3 (ACT) Complete
 
 **What you just saw:**
 - Six Thought/Action/Observation cycles to complete one user request
@@ -820,7 +820,7 @@ print(response)
 
 LangChain's `ZERO_SHOT_REACT_DESCRIPTION` agent uses a built-in ReAct prompt template. The developer only defines the tools — the framework handles the Thought→Action→Observation loop, parsing, and tool execution.
 
-### 8.1 DECISION CHECKPOINT — Phase 1 (TOOLS) Complete
+### 1.3 DECISION CHECKPOINT — Phase 1 (TOOLS) Complete
 
 **What you just saw:**
 - Two tools defined: `get_distance` (geographic API) and `calculate` (math)
@@ -875,7 +875,7 @@ Based on an internal Microsoft competitive analysis, LangChain's key strengths i
 
 **Tradeoff:** LangChain's rapid evolution means APIs can change between versions, creating maintenance overhead for long-lived production systems. An internal Microsoft assessment noted that LangChain "has too many security issues" and recommended migration to Semantic Kernel for certain production workloads.
 
-### 8.2 LangGraph: When Linear Chains Are Not Enough
+### 1.4 LangGraph: When Linear Chains Are Not Enough
 
 **LangChain `AgentExecutor`** runs the ReAct loop as a linear chain: Thought → Action → Observation → Thought → ... It executes steps sequentially until the model emits "Final Answer:" or `max_iterations` is reached. This is sufficient for most single-turn, well-defined tasks.
 
@@ -997,7 +997,7 @@ print(result)
 
 **What happens inside `invoke_prompt`:** SK automatically performs the ReAct-style loop. The developer only had to define the plugins and call `invoke_prompt` — SK handles schema generation, response parsing, function execution, result feeding, and iteration.
 
-### 9.1 DECISION CHECKPOINT — Phase 1 (TOOLS) Semantic Kernel Variant
+### 1.5 DECISION CHECKPOINT — Phase 1 (TOOLS) Semantic Kernel Variant
 
 **What you just saw:**
 - Two plugins defined: `TravelPlugin` and `CalculatorPlugin`
@@ -1127,7 +1127,7 @@ Ready to confirm? Just say "confirm order" and I'll process your payment.
 **Structure**: Clear sections (Order Summary, Total, ETA, Next Steps)
 **Actionability**: Tells user exactly what to do next ("say 'confirm order'")
 
-### 10.1 DECISION CHECKPOINT — Phase 4 (ANSWER) Complete
+### 1.6 DECISION CHECKPOINT — Phase 4 (ANSWER) Complete
 
 **What you just saw:**
 - Final synthesis after 6 Phase 2-3 iterations
@@ -1624,7 +1624,7 @@ An internal Microsoft wiki on orchestrators captures the positioning succinctly:
 
 ---
 
-## 18 · Progress Check — What We Can Solve Now
+## 2 · Progress Check — What We Can Solve Now
 
  **MAJOR MILESTONE**: **Constraint #1 (BUSINESS VALUE) ACHIEVED!**
 

@@ -269,7 +269,7 @@ Random Forest reduces **variance** by averaging decorrelated trees, but it doesn
 
 ---
 
-## 0 · The Challenge — Where We Are
+## 11 · The Challenge — Where We Are
 
 > **The mission**: Launch **SmartVal AI** — a production home valuation system satisfying 5 constraints:
 > 1. **ACCURACY**: <$40k MAE — 2. **GENERALIZATION**: Unseen districts — 3. **MULTI-TASK**: Value + Segment — 4. **INTERPRETABILITY**: Explainable — 5. **PRODUCTION**: Scale + Monitor
@@ -326,7 +326,7 @@ Compliance team: **APPROVED**
 
 ---
 
-## 1 · Core Idea
+## 12 · Core Idea
 
 **Support Vector Machine (SVM):** among all hyperplanes that correctly separate two classes, find the one that maximises the margin — the gap to the nearest training points. More margin = more tolerance to new data. The kernel trick extends this to non-linear boundaries.
 
@@ -343,7 +343,7 @@ SVM: maximum-margin linear boundary; kernel trick for non-linear data
 
 ---
 
-## 2 · Running Example
+## 13 · Running Example
 
 The platform now wants the **best possible regression model** for median house value — not just a classifier. We benchmark four models on the full 8-feature California Housing regression task: Linear Regression (Ch.1 baseline), Decision Tree, Random Forest, and XGBoost.
 
@@ -355,9 +355,9 @@ We also run a classification comparison (high-value vs not) to include SVM along
 
 ---
 
-## 3 · Math
+## 14 · Math
 
-### 3.1 SVM — Maximum Margin Hyperplane
+### 14.1 SVM — Maximum Margin Hyperplane
 
 The decision hyperplane is $\mathbf{w}^\top \mathbf{x} + b = 0$. The margin is $\frac{2}{\|\mathbf{w}\|}$. Maximising the margin is equivalent to minimising $\|\mathbf{w}\|^2$:
 
@@ -374,7 +374,7 @@ $$\min_{\mathbf{w}, b, \xi} \frac{1}{2}\|\mathbf{w}\|^2 + C\sum_i \xi_i \quad \t
 | Large | Margin shrinks, few violations allowed — low bias, high variance |
 | Small | Wide margin, many violations allowed — high bias, low variance (smoother boundary) |
 
-### 3.2 Kernel Trick
+### 14.2 Kernel Trick
 
 A kernel $K(\mathbf{x}_i, \mathbf{x}_j) = \phi(\mathbf{x}_i)^\top \phi(\mathbf{x}_j)$ computes an inner product in a high-dimensional feature space $\phi$ without explicitly constructing $\phi$. The SVM dual optimisation only needs dot products, so the kernel substitutes directly.
 
@@ -395,7 +395,7 @@ $$K(\mathbf{x}_i, \mathbf{x}_j) = \exp \left(-\gamma \|\mathbf{x}_i - \mathbf{x}
 | Polynomial | $(\mathbf{x}_i^\top \mathbf{x}_j + r)^d$ | All degree-$d$ monomials |
 | RBF | $\exp(-\gamma\|\mathbf{x}_i-\mathbf{x}_j\|^2)$ | Infinite-dimensional (Gaussian) |
 
-### 3.3 Bagging and Random Forest
+### 14.3 Bagging and Random Forest
 
 **Bootstrap:** sample $n$ training points **with replacement** to get a new dataset. On average, about $1 - 1/e \approx 63\%$ of original points are selected; the rest are the **out-of-bag (OOB)** set — a free validation set.
 
@@ -415,7 +415,7 @@ As $N \to \infty$, the variance floor is $\rho\sigma^2$ — decorrelation betwee
 | `max_features` | Features per split — default `'sqrt'` (classification); for regression, sklearn ≥1.3 defaults to all features (`1.0`) |
 | `max_depth` | Shallow trees = high bias but more decorrelated |
 
-### 3.4 Gradient Boosting
+### 14.4 Gradient Boosting
 
 Boosting builds an additive model $F_M(\mathbf{x}) = \sum_{m=1}^M \eta \cdot h_m(\mathbf{x})$ where each $h_m$ is a shallow tree. The key insight: fitting $h_m$ to the **negative gradient of the loss** with respect to $F_{m-1}(\mathbf{x})$ is equivalent to gradient descent in function space.
 
@@ -444,7 +444,7 @@ The residual **is** the negative gradient — so each tree directly fits predict
 
 ---
 
-## 4 · Step by Step
+## 15 · Step by Step
 
 ```
 SVM:
@@ -470,7 +470,7 @@ XGBoost (Boosting):
 
 ---
 
-## 5 · Key Diagrams
+## 16 · Key Diagrams
 
 ### SVM: margin maximisation
 
@@ -536,7 +536,7 @@ Round 3: F_3(x) = F_2(x) + η·tree_3(residual_2) → ...
 
 ---
 
-## 6 · Hyperparameter Dial
+## 17 · Hyperparameter Dial
 
 ### SVM
 
@@ -562,7 +562,7 @@ Round 3: F_3(x) = F_2(x) + η·tree_3(residual_2) → ...
 
 ---
 
-## 7 · What Can Go Wrong
+## 18 · What Can Go Wrong
 
 - **Boosting on noisy labels overfits fast.** Each tree corrects the previous tree's errors — including mislabelled training points. After enough rounds, the model memorises noise. Use `early_stopping_rounds` with a held-out validation set; never fit to convergence on training data alone.
 
@@ -576,7 +576,7 @@ Round 3: F_3(x) = F_2(x) + η·tree_3(residual_2) → ...
 
 ---
 
-## 8 · Progress Check — What We Can Solve Now
+## 19 · Progress Check — What We Can Solve Now
 **MAJOR MILESTONE**: **Constraint #4 (INTERPRETABILITY) ACHIEVED!**
 
 **Unlocked capabilities:**
@@ -698,7 +698,7 @@ We've mastered **supervised learning** (Constraints #1, #2, #4 achieved!). But a
 
 ---
 
-## 9 · Bridge to Chapter 12
+## 20 · Bridge to Chapter 12
 
 Ch.11 completed the supervised learning toolkit — we can now classify and regress with neural networks, trees, ensembles, and SVMs. Ch.12 — **Clustering** — shifts to unsupervised learning: no labels, no target variable. The goal is to discover natural structure in the data. The real estate platform's districts will cluster into neighbourhood types nobody defined in advance.
 

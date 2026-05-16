@@ -1298,7 +1298,7 @@ def test_concurrent_writes():
 
 ---
 
-### 5.1 · Secrets Not Set
+### 7.4 · Secrets Not Set
 
 **Symptom:** `Error: Username and password required`
 
@@ -1310,7 +1310,7 @@ def test_concurrent_writes():
 3. Add `DOCKER_USERNAME` (your Docker Hub username)
 4. Add `DOCKER_TOKEN` (create token at hub.docker.com → Account Settings → Security)
 
-### 5.2 · Workflow Syntax Errors
+### 7.5 · Workflow Syntax Errors
 
 **Symptom:** Workflow doesn't trigger or fails immediately with YAML parse error
 
@@ -1333,7 +1333,7 @@ jobs:
  runs-on: ubuntu-latest
 ```
 
-### 5.3 · Runner Timeout (6 Hours Max)
+### 7.6 · Runner Timeout (6 Hours Max)
 
 **Symptom:** Job cancelled after running for hours
 

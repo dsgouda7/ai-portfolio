@@ -1718,7 +1718,7 @@ Post-launch monitoring:
 
 ---
 
-## 8 · Interview Checklist
+## 7 · Interview Checklist
 
 | Must know | Likely asked | Trap to avoid |
 |---|---|---|
@@ -1729,7 +1729,7 @@ Post-launch monitoring:
 
 ---
 
-## 9 · Bridge
+## 8 · Bridge
 
 Safety & Hallucination Mitigation completed the reliability layer. `CostAndLatency.md` covers the operational costs of running all the mitigation techniques — NLI classifiers, self-consistency sampling, and strong judge models all have real token and compute costs that constrain what you can afford in production.
 
@@ -1737,7 +1737,7 @@ Safety & Hallucination Mitigation completed the reliability layer. `CostAndLaten
 
 ---
 
-## 10 · Progress Check — What We Can Solve Now
+## 9 · Progress Check — What We Can Solve Now
 
  **SECURITY AUDIT PASSED**: Ready for public launch!
 

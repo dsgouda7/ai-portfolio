@@ -197,7 +197,19 @@ Input: 224×224×3 RGB image
 
 ---
 
+> **§4 is optional.** The visual gradient comparison in §6.2 explains why ResNets work without calculus. Read this section only if you want the mathematical derivation — most engineers debug ResNets using the intuition from §6, not the chain rule.
+
 ## 4 · The Math — Residual Block Forward and Backward Pass
+
+**Plain-English summary before the equations:**
+
+When gradients flow backward through a ResNet, they take two paths at each block:
+1. **Through F(x)** — the residual branch (2 convs, 2 BNs, ReLU) — this path CAN vanish
+2. **Through the skip connection** — just addition, no multiplication — this path CANNOT vanish
+
+Mathematically, addition creates a "+1" term in the gradient. Even if path #1 goes to zero, path #2 delivers the gradient unchanged. That's the highway.
+
+Now the formal math:
 
 ### Forward Pass
 
@@ -334,6 +346,33 @@ Early layers receive strong gradients → training succeeds
 Deeper networks achieve LOWER training error!
 ```
 
+**Gradient magnitude at each layer (40-layer network):**
+
+```
+Plain CNN (no skip connections):
+Layer 40 (output): ████████████████████ 1.00
+Layer 30:          ████████░░░░░░░░░░░░ 0.35 (65% lost)
+Layer 20:          ███░░░░░░░░░░░░░░░░░ 0.12 (88% lost)
+Layer 10:          █░░░░░░░░░░░░░░░░░░░ 0.04 (96% lost)
+Layer 1:           ░░░░░░░░░░░░░░░░░░░░ 0.02 (98% lost) ← VANISHED!
+
+ResNet-40 (skip connections every 2 layers):
+Layer 40 (output): ████████████████████ 1.00
+Layer 30:          ██████████████████░░ 0.89 (11% lost)
+Layer 20:          █████████████████░░░ 0.82 (18% lost)
+Layer 10:          ████████████████░░░░ 0.78 (22% lost)
+Layer 1:           ███████████████░░░░░ 0.75 (25% lost) ← STRONG!
+
+Key insight: Skip connections preserve 75-90% gradient strength
+             Plain networks lose 98%+ by the time gradients reach layer 1
+```
+
+**Why the difference?**
+- **Plain network**: Gradient multiplied by ~0.9 at each layer → 0.9³⁹ ≈ 0.02 after 39 layers
+- **ResNet**: Each skip connection adds +1 term → gradient takes the highway, bypasses vanishing
+
+> **Aha:** This is why 18-layer plain CNNs achieve 28% training error while ResNet-152 achieves 3.5% — it's not about capacity (both have enough parameters), it's about **whether gradients can actually reach the early layers during training**.
+
 ![Gradient flow comparison: Plain CNN vs ResNet](img/ch01-gradient-flow-comparison.png)
 
 *Gradient magnitude comparison across 50 layers: Plain CNN gradients vanish exponentially (0.9^50 ≈ 0.005), while ResNet maintains 80%+ gradient strength at early layers via skip connections.*
@@ -412,7 +451,7 @@ flowchart LR
 
 ## 8 · What Can Go Wrong
 
-### 9.1 Forgetting the Final ReLU After Addition
+### 8.1 Forgetting the Final ReLU After Addition
 
 **Trap:** Place ReLU before addition instead of after.
 
@@ -429,7 +468,7 @@ out = self.relu(out) # ReLU(F(x) + x)
 
 **Why it matters:** The gradient highway relies on the addition being the last non-linearity-free operation. Applying ReLU before addition breaks the "+1" gradient term.
 
-### 9.2 Dimension Mismatch on Skip Connection
+### 8.2 Dimension Mismatch on Skip Connection
 
 **Trap:** Forgetting to project the skip connection when downsampling or changing channels.
 
@@ -447,7 +486,7 @@ out = F(x) + identity
 
 **Fix:** Always use a projection layer (1×1 conv with stride) when spatial size or channel count changes.
 
-### 9.3 Not Using BatchNorm After Every Convolution
+### 8.3 Not Using BatchNorm After Every Convolution
 
 **Trap:** Omitting BatchNorm layers to reduce parameters.
 
@@ -460,7 +499,7 @@ out = F(x) + identity
 
 > **Freeze BatchNorm during fine-tuning.** BN layers accumulate running mean/variance statistics during ImageNet-scale pretraining. Fine-tuning on ProductionCV's 850 labeled images with BN layers unfrozen overwrites those statistics with noisy small-batch estimates, degrading mAP by 3–8%. In PyTorch: `for m in model.modules(): if isinstance(m, nn.BatchNorm2d): m.eval()`. In Keras: set `layer.trainable = False` for each BN layer before `model.fit()`.
 
-### 9.4 Training Without LR Warmup
+### 8.4 Training Without LR Warmup
 
 **Trap:** Using high learning rate (0.1) from epoch 0.
 
@@ -482,7 +521,7 @@ cosine = CosineAnnealingLR(optimizer, T_max=95)
 scheduler = SequentialLR(optimizer, schedulers=[warmup, cosine], milestones=[5])
 ```
 
-### 9.5 Using He Initialization on Pre-Activation ResNets
+### 8.5 Using He Initialization on Pre-Activation ResNets
 
 **Trap:** Using standard He initialization on ResNets with Pre-Activation (BatchNorm → ReLU → Conv order).
 

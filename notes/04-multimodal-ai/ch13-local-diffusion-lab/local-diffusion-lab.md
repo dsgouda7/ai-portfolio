@@ -692,11 +692,11 @@ PIXELSMITH v6 — FULL ARCHITECTURE
 
 ---
 
-## 10 · Further Reading
+## 9 · Further Reading
 
 <!-- TODO: add 3-5 further reading links -->
 
-## 11 · Notebook
+## 10 · Notebook
 
 See the companion notebook: `notebook_supplement.ipynb`
 
@@ -768,7 +768,7 @@ See the companion notebook: `notebook_supplement.ipynb`
 
 ---
 
-## 10 · What's Next
+## 11 · What's Next
 
 You've completed the **VisualForge Studio Grand Challenge** — all 6 constraints achieved, $600k/year savings realized, 2.5-month payback period achieved. The 12-chapter Multimodal AI track is complete.
 

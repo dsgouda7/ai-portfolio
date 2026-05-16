@@ -12,7 +12,7 @@
 
 ---
 
-## 6 · Model Size & Mixture of Experts (MoE)
+## 0 · Model Size & Mixture of Experts (MoE)
 **Quick Estimate:**
 > **Model size → VRAM needed (fp16):**
 > - 7B model: ~14 GB VRAM minimum
@@ -1441,7 +1441,7 @@ for seq_len in seq_lens:
 
 ---
 
-## 7 · Key Distinctions Every Engineer Gets Asked
+## 1 · Key Distinctions Every Engineer Gets Asked
 
 | Pair | Distinction |
 |---|---|

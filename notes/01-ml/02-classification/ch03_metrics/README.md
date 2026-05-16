@@ -779,7 +779,7 @@ $$F_1^{\text{macro}} = \frac{1}{L}\sum_{l=1}^{L} F_{1,l}$$
 
 ---
 
-## 4 · Step by Step: Complete Evaluation Pipeline
+## 14 · Step by Step: Complete Evaluation Pipeline
 
 Here's the workflow you'll run for every classifier in FaceAI:
 
@@ -851,7 +851,7 @@ Output: Full report card ready for stakeholder presentation
 
 ---
 
-## 5 · Key Diagrams
+## 15 · Key Diagrams
 
 ### Diagram 1: Threshold as a Decision Dial
 
@@ -912,7 +912,7 @@ TPR Precision
 
 ---
 
-## 6 · The Hyperparameter Dial: Threshold Tuning
+## 16 · The Hyperparameter Dial: Threshold Tuning
 
 The **decision threshold** is the most impactful "hyperparameter" in classification evaluation — and it's often ignored because sklearn defaults to 0.5.
 
@@ -949,7 +949,7 @@ The optimal threshold balances precision and recall. For production, you might c
 
 ---
 
-## 7 · What Can Go Wrong
+## 17 · What Can Go Wrong
 
 ### Trap 1: Reporting Accuracy on Imbalanced Data
 
@@ -1020,7 +1020,7 @@ graph TD
 
 ---
 
-## 8 · Where This Reappears
+## 18 · Where This Reappears
 
 | Concept | Reappears in | How It's Used |
 |---------|-------------|---------------|
@@ -1036,7 +1036,7 @@ graph TD
 
 ---
 
-## 9 · Progress Check
+## 19 · Progress Check
 
 ### Unlocked Capabilities
 **Proper evaluation framework for imbalanced classes**
@@ -1096,7 +1096,7 @@ graph LR
 
 ---
 
-## 10 · Bridge to Next Chapter
+## 20 · Bridge to Next Chapter
 
 You've built the evaluation framework: confusion matrices, precision/recall, F1, ROC-AUC, PR-AUC, and multi-label metrics. The logistic regression baseline holds at **88% accuracy on Smiling**, and you've proven it's a real result (not the accuracy paradox) with proper cross-validation and per-class analysis.
 
