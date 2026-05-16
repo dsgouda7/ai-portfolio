@@ -38,7 +38,7 @@ If those statements make complete sense, **skip this chapter**. If any are fuzzy
 
 ### The Problem
 
-Transformers operate on **vector representations** of tokens, not raw text. Ch.1 jumps straight into formulas like $Q = X W_Q$ where $X$ is an embedding matrix. Why vectors?
+Modern neural networks process text using **vector representations** of tokens, not raw strings. Ch.1 jumps straight into formulas like $Q = X W_Q$ where $X$ is an embedding matrix. Why vectors?
 
 **Answer:** Math operations (dot products, matrix multiplication, gradient descent) require numbers. "cat" is a string—we need a numeric representation that preserves meaning.
 
@@ -63,18 +63,18 @@ Higher dot product → more similar meaning.
 
 ### Where Embeddings Come From
 
-In transformers:
+In modern neural architectures:
 1. **Token ID:** "cat" → token 4517 (from vocabulary)
 2. **Lookup:** Row 4517 of embedding matrix $E$ (shape: [vocab_size, d_model])
-3. **Vector:** Returns $d_{model}$-dimensional vector (e.g., 768-d for BERT)
+3. **Vector:** Returns $d_{model}$-dimensional vector (e.g., 256-d, 512-d, or 768-d)
 
 **These embeddings are learned during training**—the model adjusts them so semantically similar words end up nearby in vector space.
 
-### Why This Matters for Ch.1
+### Why This Matters
 
-- **Attention operates on embeddings:** Q/K/V matrices project these vectors
-- **"Sequence of vectors" = embeddings:** When Ch.1 says "(n, d_model)", it means n token embeddings
-- **Dimensionality reasoning:** Why d_model=768? Enough dimensions to represent rich semantics without wasting memory
+- **All modern sequence models operate on embeddings:** Whether RNNs, attention mechanisms, or other architectures
+- **"Sequence of vectors" means embeddings:** A sentence with n tokens becomes n embedding vectors
+- **Dimensionality tradeoff:** Higher dimensions (512-768) capture richer semantics but use more memory and computation
 
 > **Checkpoint:** Can you explain why we can't just use one-hot encoding (binary vectors with single 1)? 
 >
@@ -145,15 +145,15 @@ Suppose each time step multiplies the gradient by 0.8 (typical for tanh activati
 - Reduces vanishing but still serial (token $t$ waits for $t-1$)
 - Training 1.5B-parameter LSTM on 40GB text: **months** even on 256 GPUs
 
-### 2.3 · Why This Motivated Transformers
+### 2.3 · Why This Motivated New Architectures
 
 Two fatal flaws:
 1. **No parallelization:** GPU must process tokens sequentially
 2. **Gradient vanishing:** Information from token 1 doesn't reach token 100
 
-**Transformer solution preview:**
-- All tokens process simultaneously (parallelization)
-- Direct attention paths (no gradient decay over distance)
+**The attention mechanism (§3) solves both problems:**
+- All tokens can be processed simultaneously (parallelization)
+- Direct connections between any two tokens (no gradient decay over distance)
 
 > **Checkpoint:** Calculate gradient magnitude after 100 time steps if each step multiplies by 0.9.
 >
@@ -294,7 +294,7 @@ $$
 y = F(x) + x
 $$
 
-Where $F(x)$ is a non-linear transformation (e.g., two Conv layers in ResNets, attention block in transformers).
+Where $F(x)$ is a non-linear transformation (e.g., two Conv layers in ResNets, or any multi-layer computation).
 
 ### 4.2 · Why This Works: The "+1" Gradient Term
 
@@ -321,16 +321,16 @@ $$
 - Through 50 residual blocks: gradient = $\frac{\partial \mathcal{L}}{\partial y_{50}} \times (1 + \epsilon)^{50}$ where $\epsilon$ is small
 - Compare to plain network: $\frac{\partial \mathcal{L}}{\partial y_{50}} \times 0.9^{50} \approx 0$
 
-### 4.3 · Transformers Use Skip Connections Everywhere
+### 4.3 · Skip Connections in Deep Sequence Models
 
-**Every transformer block has TWO residual connections:**
+**Modern attention-based architectures use skip connections extensively:**
 
 ```
-x_1 = x + MultiHeadAttention(x)  # Skip around attention
-x_2 = x_1 + FeedForward(x_1)     # Skip around FFN
+x_1 = x + AttentionBlock(x)     # Skip around attention computation
+x_2 = x_1 + FeedForward(x_1)    # Skip around dense layers
 ```
 
-This is why **96-layer GPT-3** can train—gradients flow directly through all layers via the addition operations.
+This enables training **very deep networks** (50-100+ layers)—gradients flow directly through all layers via the addition operations.
 
 **Numerical comparison (from notes/02 Ch.1):**
 
@@ -338,7 +338,7 @@ This is why **96-layer GPT-3** can train—gradients flow directly through all l
 |--------------|--------|---------------------|
 | Plain network| 40     | 2% of final layer   |
 | ResNet-40    | 40     | 75% of final layer  |
-| Transformer-96| 96    | 60-70% of final layer|
+| Deep attention model| 96 | 60-70% of final layer|
 
 > **Checkpoint:** Why can't we just make learning rates smaller to compensate for vanishing gradients?
 >
@@ -355,18 +355,18 @@ This is why **96-layer GPT-3** can train—gradients flow directly through all l
 **Encoder:** Processes input sequence bidirectionally
 - Reads full sentence
 - Builds contextualized representations
-- Examples: BERT, vision ResNets
+- Use cases: Classification, retrieval, understanding tasks
 
 **Decoder:** Generates output sequence autoregressively
 - Produces one token at a time
 - Can only see previous outputs (causal masking)
-- Examples: GPT, language model heads
+- Use cases: Text generation, language modeling
 
 **Encoder-Decoder:** Combines both
 - Encoder processes source (e.g., English sentence)
 - Decoder generates target (e.g., French translation)
 - Cross-attention: decoder attends to encoder outputs
-- Examples: T5, original Transformer (2017)
+- Use cases: Translation, summarization, question answering
 
 ### 5.2 · Information Flow
 
@@ -408,7 +408,7 @@ In a dense layer: $y = Wx + b$
 - $W$: weight matrix (e.g., 768×3072 = 2.4M parameters)
 - $b$: bias vector (e.g., 3072 parameters)
 
-**Total for GPT-3:** 175 billion parameters across all layers.
+**Large models:** Modern language models have billions of parameters distributed across dozens of layers (embeddings, attention, feed-forward networks).
 
 ### 6.2 · Loss Functions
 
@@ -445,10 +445,10 @@ $$
 
 ### 6.4 · Optimizers
 
-**Adam (standard for transformers):**
+**Adam (standard for modern neural networks):**
 - Adaptive learning rates per parameter
 - Fast convergence
-- Used in BERT, GPT, T5, nearly all modern LLMs
+- Used in nearly all large-scale language and vision models
 
 **You don't need the formula—just know:** Adam adjusts each parameter's learning rate based on gradient history (recent large gradients → smaller steps; recent small gradients → larger steps).
 
@@ -458,9 +458,9 @@ $$
 
 ---
 
-## 7 · Bridge to Ch.1
+## 7 · Bridge to Ch.1: How Transformers Combine These Concepts
 
-You now understand the foundations Ch.1 assumes:
+You now understand the foundational building blocks:
 
 **✓ Embeddings:** Why text → vectors, what dimensions mean  
 **✓ RNNs:** Sequential processing, hidden states, vanishing gradients  
@@ -469,21 +469,30 @@ You now understand the foundations Ch.1 assumes:
 **✓ Encoder-decoder:** Bidirectional vs causal, cross-attention  
 **✓ Training:** Parameters, loss, backprop, optimizers  
 
-**Ch.1 builds on this:**
-- **§0:** Historical context (RNN → Transformer evolution)
-- **§2:** Tokenization (BPE algorithm)
-- **§2A:** Multi-head attention (parallel Q/K/V projections)
-- **§2A:** Positional encoding (injecting sequence order)
-- **§2B:** Three architectures (encoder-only, decoder-only, encoder-decoder)
+**Ch.1 introduces Transformers—the architecture that combines all these pieces:**
+
+Transformers are the dominant architecture for modern LLMs (GPT, BERT, T5). They use:
+- **Attention mechanism (§3)** as the core computation (replaces RNNs)
+- **Skip connections (§4)** around every attention and feed-forward layer
+- **Encoder-decoder patterns (§5)** for different tasks (BERT=encoder-only, GPT=decoder-only, T5=both)
+- **Embeddings (§1)** to represent tokens
+- **Cross-entropy loss (§6)** for training
+
+**What Ch.1 adds:**
+- **§0:** Historical context (why transformers replaced RNNs)
+- **§2:** Tokenization (BPE algorithm—how "unhappiness" → ["un", "happiness"])
+- **§2A:** Multi-head attention (running 8-16 attention mechanisms in parallel)
+- **§2A:** Positional encoding (injecting sequence order, since attention has no notion of position)
+- **§2B:** Three transformer architectures (encoder-only, decoder-only, encoder-decoder)
 - **§3:** Interview questions and production knowledge
 
-**What changes:** Ch.1 has production details, code examples, and architectural comparisons. This chapter gave you the mechanical intuition—Ch.1 shows you how it scales to billion-parameter models.
+**What changes:** Ch.1 has production details, code examples, and architectural comparisons. This chapter gave you the mechanical intuition—Ch.1 shows you how transformers assemble these pieces into billion-parameter models that power ChatGPT, Claude, and other LLMs.
 
 ---
 
 ## Summary
 
-This chapter condensed **6 key concepts** from notes/01-02 that enable understanding transformers:
+This chapter condensed **6 key concepts** from notes/01-02 that are prerequisites for understanding modern attention-based architectures:
 
 1. **Embeddings** (§1): Text as vectors, similarity via dot products
 2. **RNNs & vanishing gradients** (§2): Why sequential models fail (0.8^T decay)
@@ -492,4 +501,4 @@ This chapter condensed **6 key concepts** from notes/01-02 that enable understan
 5. **Encoder-decoder pattern** (§5): Bidirectional vs causal attention
 6. **Training basics** (§6): Parameters, cross-entropy loss, Adam optimizer
 
-**Time to Ch.1:** You're ready. Every concept Ch.1 uses is now in your mental model.
+**Time to Ch.1:** You're ready. Ch.1 will show you how **transformers** combine these building blocks into the architecture that powers GPT, BERT, and modern LLMs. Every concept you just learned appears directly in transformer designs.
