@@ -1,16 +1,14 @@
 # Ch.0 — Prerequisites: From Neural Networks to Transformers
 
-> **Reading order:** Read this chapter BEFORE Ch.1 if you need a refresher on RNNs, attention, embeddings, or skip connections. If you've recently completed notes/01 (ML Track) Ch.6, Ch.9, Ch.10 and notes/02 (Advanced Deep Learning) Ch.1, you can skip directly to Ch.1.
+> **The story:** In 2017, Google Brain's Vaswani et al. published "Attention Is All You Need"—the paper that obsoleted decades of RNN research overnight. But that breakthrough stood on foundations laid years earlier: Hochreiter & Schmidhuber's 1997 LSTM (solving vanishing gradients), Bahdanau's 2014 attention mechanism (soft dictionary lookup), and He et al.'s 2015 ResNets (skip connections). This chapter extracts those prerequisites so you can understand how transformers synthesized them into the architecture powering GPT, Claude, and every modern LLM. You're about to learn why RNNs failed at scale, how attention parallelized sequence processing, and why the "+1" gradient term changed everything.
 >
-> **What this chapter does:** Condenses the specific concepts from notes/01-02 that Ch.1 assumes you know. Every section includes worked examples with actual numbers—no hand-waving.
-
-> **Where you are:** You've learned machine learning fundamentals (notes/01) and advanced architectures (notes/02). This chapter bridges those tracks to the LLM content in notes/03. It extracts only the concepts Ch.1 references without explaining, teaching them with minimal examples.
-
-> **Notation:** $h_t$ = hidden state at time $t$; $x_t$ = input at time $t$; $W$ = weight matrix; $Q, K, V$ = query, key, value matrices; $\alpha$ = attention weights; $d_k$ = key/query dimension.
+> **Where you are:** You've completed notes/01 (ML fundamentals: gradient descent, loss functions, overfitting) and notes/02 (Advanced DL: ResNets, U-Net, transfer learning). Those tracks taught you *how to train models*. This chapter teaches the specific architectural concepts Ch.1 assumes you know—concepts that made transformers possible. If you've recently finished notes/01 Ch.6 (RNNs/LSTMs), Ch.9 (attention), and notes/02 Ch.1 (ResNets), you can skip directly to Ch.1. If those are fuzzy, this 45-minute chapter rebuilds the intuition.
+>
+> **Notation:** $x_t$ — input at time $t$; $h_t$ — hidden state at time $t$; $W$ — weight matrix; $Q, K, V$ — query, key, value matrices (attention); $\alpha$ — attention weights; $d_k$ — key/query dimension; $\eta$ — learning rate; $\mathcal{L}$ — loss.
 
 ---
 
-## 0 · Why This Chapter Exists
+## 0 · The Challenge — Can You Understand Transformers?
 
 **The gap:** Ch.1 (Transformer Architecture) opens with statements like:
 
@@ -41,6 +39,8 @@ If those statements make complete sense, **skip this chapter**. If any are fuzzy
 Modern neural networks process text using **vector representations** of tokens, not raw strings. Ch.1 jumps straight into formulas like $Q = X W_Q$ where $X$ is an embedding matrix. Why vectors?
 
 **Answer:** Math operations (dot products, matrix multiplication, gradient descent) require numbers. "cat" is a string—we need a numeric representation that preserves meaning.
+
+> **Back-reference:** This builds on notes/01 Ch.2's feature engineering principle: models need numeric inputs. For tabular data, you used one-hot encoding. For text, embeddings are the dense alternative that captures semantic relationships.
 
 ### What is an Embedding?
 
@@ -80,6 +80,8 @@ In modern neural architectures:
 - **All modern sequence models operate on embeddings:** Whether RNNs, attention mechanisms, or other architectures
 - **"Sequence of vectors" means embeddings:** A sentence with n tokens becomes n embedding vectors
 - **Dimensionality tradeoff:** Higher dimensions (512-768) capture richer semantics but use more memory and computation
+
+> ➡ **Forward pointer:** Ch.1's transformer processes embeddings through 12-96 layers of attention and feed-forward networks. Every matrix operation ($Q = XW_Q$, $K = XW_K$) transforms these embedding vectors. Without understanding embeddings, transformer diagrams are incomprehensible.
 
 ### Matrix Operations on Embeddings
 
@@ -170,6 +172,23 @@ h₃ = tanh(W_hh @ h₂ + W_xh @ x₃)
 
 **Key insight:** Each step depends on the previous one—**cannot parallelize**.
 
+```mermaid
+graph LR
+    x1["x₁: The"] -->|h₀=0| h1["h₁"]
+    x2["x₂: cat"] -->|h₁| h2["h₂"]
+    x3["x₃: sat"] -->|h₂| h3["h₃: final"]
+    h1 --> h2
+    h2 --> h3
+    style x1 fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+    style x2 fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+    style x3 fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+    style h3 fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+```
+
+*RNN sequential dependency: Token 3 must wait for Token 2's hidden state. GPUs sit idle because this can't parallelize—one of two fatal flaws that killed RNNs for large-scale language modeling.*
+
+> **Back-reference:** This is why notes/01 Ch.6 introduced LSTMs—gates control information flow to reduce (but not eliminate) vanishing gradients. Transformers solve this completely by removing sequential dependencies.
+
 ### 2.2 · The Vanishing Gradient Problem
 
 **Why deep RNNs fail:** Gradients decay exponentially when backpropagating through time.
@@ -207,6 +226,8 @@ Two fatal flaws:
 >
 > *Answer: 0.9^100 ≈ 0.000027 (0.0027% of original) — effectively vanished.*
 
+> ➡ **Forward pointer:** Ch.1's transformer uses **self-attention** where every token directly attends to every other token—no sequential dependency, no exponential gradient decay. This is why GPT-4 trains on 8,192-token contexts while RNNs struggle beyond 200 tokens.
+
 ---
 
 ## 3 · Attention: The Core Mechanism
@@ -223,6 +244,23 @@ Two fatal flaws:
 1. Compute similarity: Q · K (dot product)
 2. Normalize: softmax → probability distribution
 3. Retrieve: weighted sum of V
+
+```mermaid
+graph TD
+    q1["Query: bank"] -."scores<br/>(dot products)".-> k1["Key: The"]
+    q1 -.-> k2["Key: river"]
+    q1 -.-> k3["Key: bank"]
+    k1 -->|"softmax<br/>(normalize)"| v1["Value: The"]
+    k2 -->|softmax| v2["Value: river"]
+    k3 -->|softmax| v3["Value: bank"]
+    v1 --> out["Weighted sum<br/>context vector"]
+    v2 --> out
+    v3 --> out
+    style q1 fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+    style out fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+```
+
+*Attention processes all tokens in parallel: "bank" computes similarity scores with all keys simultaneously ("The"=0.198, "river"=0.387, "bank"=0.416), then retrieves weighted combination of values. No sequential dependency like RNNs.*
 
 ### 3.2 · Worked Example: 3-Token Attention
 
@@ -331,6 +369,8 @@ Without scaling, dot products grow with dimension. For $d_k=64$ (typical):
 >
 > *Answer: Dot products would be ~8× larger (sum of 64 products vs 2). Without √d_k scaling, softmax would collapse to near-one-hot (gradient issues).*
 
+> ➡ **Forward pointer:** Ch.1's transformer uses **multi-head attention**—running 8-16 of these attention mechanisms in parallel with different Q/K/V projections. Each head specializes in different patterns (syntactic vs semantic relationships). The complete formula you'll see is: `Attention(Q,K,V) = softmax(QK^T/√d_k)V`.
+
 ---
 
 ## 4 · Skip Connections: The Gradient Highway
@@ -350,6 +390,21 @@ y = F(x) + x
 $$
 
 Where $F(x)$ is a non-linear transformation (e.g., two Conv layers in ResNets, or any multi-layer computation).
+
+```mermaid
+graph LR
+    x["x"] --> F["F(x)<br/>Transform<br/>(attention or FFN)"]
+    x -."skip connection<br/>'+1' gradient<br/>highway".-> add["⊕"]
+    F --> add
+    add --> y["y = F(x) + x"]
+    style x fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+    style y fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+    style add fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+```
+
+*Skip connection bypasses the transformation: even if F(x) saturates (gradients → 0), the "+1" term ensures gradients flow through addition. This is why transformers can stack 96 layers while plain networks struggle beyond 10.*
+
+> **Back-reference:** Notes/02 Ch.1 showed ResNet-50 reaching 75% ImageNet accuracy while plain-50 network failed at 2%. Same principle: skip connections preserve gradient flow through depth.
 
 ### 4.2 · Why This Works: The "+1" Gradient Term
 
@@ -399,6 +454,8 @@ This enables training **very deep networks** (50-100+ layers)—gradients flow d
 >
 > *Answer: Vanishing happens in forward/backward pass, not learning rate. If gradient is 0.02 at layer 1, multiplying by any learning rate still gives tiny updates. Skip connections fix the gradient flow itself.*
 
+> ➡ **Forward pointer:** Every transformer block uses two skip connections: `x = x + Attention(x)` and `x = x + FeedForward(x)`. Ch.1 will show you the exact stacking pattern that enables GPT-3's 96 layers and GPT-4's rumored 120+ layers.
+
 ---
 
 ## 5 · Encoder-Decoder Architecture
@@ -425,23 +482,23 @@ This enables training **very deep networks** (50-100+ layers)—gradients flow d
 
 ### 5.2 · Information Flow
 
+```mermaid
+graph TB
+    subgraph Encoder ["Encoder (bidirectional)"]
+        e1["Token 1"] <--> e2["Token 2"]
+        e2 <--> e3["Token 3"]
+        e1 <--> e3
+    end
+    subgraph Decoder ["Decoder (causal)"]
+        d1["Token 1"] --> d2["Token 2"]
+        d2 --> d3["Token 3"]
+    end
+    Encoder -->|"cross-attention<br/>(decoder queries<br/>encoder keys)"| Decoder
+    style Encoder fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+    style Decoder fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
-┌─────────────────────────────────────┐
-│ Encoder (bidirectional attention)  │
-│ Token 1 ↔ Token 2 ↔ Token 3       │
-│   ↕         ↕         ↕             │
-│ All tokens see all tokens          │
-└───────────────┬─────────────────────┘
-                │ encoder outputs
-                ↓
-┌─────────────────────────────────────┐
-│ Decoder (causal attention)          │
-│ Token 1 → Token 2 → Token 3        │
-│   (can only see previous tokens)   │
-│                                     │
-│ Cross-attention: attends to ↑      │
-└─────────────────────────────────────┘
-```
+
+*Encoder processes input bidirectionally (all tokens attend to all tokens). Decoder generates output causally (token N only sees tokens 1..N-1). Cross-attention lets decoder attend to encoder outputs—used in translation (English encoder → French decoder) and summarization.*
 
 **Why different attention masks?**
 - **Encoder:** Understanding tasks benefit from full context (classification, retrieval)
@@ -450,6 +507,8 @@ This enables training **very deep networks** (50-100+ layers)—gradients flow d
 > **Checkpoint:** Why can't decoders use bidirectional attention?
 >
 > *Answer: During generation, future tokens don't exist yet. At step 5, we're predicting token 6—we can't "attend to" tokens 7-10 because they haven't been generated. Bidirectional attention would be peeking at the answer.*
+
+> ➡ **Forward pointer:** Ch.1 introduces three transformer variants: **BERT** (encoder-only, bidirectional), **GPT** (decoder-only, causal), and **T5** (encoder-decoder). ChatGPT uses decoder-only architecture—pure causal generation with no encoder.
 
 ---
 
@@ -571,6 +630,20 @@ $$
 - Layer 96 gradient → Layer 95 → ... → Layer 1
 - Skip connections ensure gradients don't vanish (§4)
 
+```mermaid
+graph LR
+    data["Input Data<br/>(tokens)"] --> forward["Forward Pass<br/>(Layer 1→96)<br/>predict next token"]
+    forward --> loss["Calculate Loss<br/>(cross-entropy)<br/>-log P(correct)"]
+    loss --> backward["Backward Pass<br/>(Layer 96→1)<br/>compute ∂L/∂W"]
+    backward --> update["Update Weights<br/>W -= η∇L"]
+    update -."repeat 1M+ times".-> forward
+    style data fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+    style loss fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+    style update fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+```
+
+*Training loop: Forward pass generates predictions, loss measures error, backward pass computes gradients for all 7B+ parameters, update step adjusts weights. This repeats millions of times on trillions of tokens.*
+
 ### 6.4 · Optimizers
 
 **Adam (standard for modern neural networks):**
@@ -583,6 +656,8 @@ $$
 > **Checkpoint:** If a model has 7B parameters and trains on 1T tokens, roughly how many gradient updates happen?
 >
 > *Answer: Depends on batch size. With batch_size=1M tokens, that's 1T/1M = 1M updates. Each update adjusts all 7B parameters using their computed gradients.*
+
+> ➡ **Forward pointer:** Ch.1 covers transformer training at scale: learning rate schedules (warmup + decay), gradient clipping (prevent explosion), and mixed-precision training (FP16/BF16 for memory efficiency). The training loop structure stays identical—just optimized for billion-parameter models.
 
 ---
 
@@ -599,7 +674,24 @@ You now understand the foundational building blocks:
 
 **Ch.1 introduces Transformers—the architecture that combines all these pieces:**
 
-Transformers are the dominant architecture for modern LLMs (GPT, BERT, T5). They use:
+```mermaid
+graph LR
+    emb["Embeddings<br/>(§1)"] --> rnn["RNN Mechanics<br/>(§2)"]
+    rnn --> attn["Attention<br/>(§3)"]
+    attn --> skip["Skip Connections<br/>(§4)"]
+    skip --> enc["Encoder-Decoder<br/>(§5)"]
+    enc --> train["Training Loop<br/>(§6)"]
+    train --> transformer["TRANSFORMER<br/>ARCHITECTURE<br/>(Ch.1)"]
+    style emb fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+    style attn fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+    style skip fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+    style enc fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+    style transformer fill:#15803d,stroke:#e2e8f0,stroke-width:3px,color:#ffffff
+```
+
+*Each Ch.0 section (§1-6) teaches one building block. Ch.1 shows how transformers combine them: embeddings flow through attention layers (with skip connections), trained end-to-end with cross-entropy loss.*
+
+Transformers are the dominant architecture for modern LLMs (GPT, BERT, T5, Claude). They use:
 - **Attention mechanism (§3)** as the core computation (replaces RNNs)
 - **Skip connections (§4)** around every attention and feed-forward layer
 - **Encoder-decoder patterns (§5)** for different tasks (BERT=encoder-only, GPT=decoder-only, T5=both)
@@ -607,26 +699,33 @@ Transformers are the dominant architecture for modern LLMs (GPT, BERT, T5). They
 - **Cross-entropy loss (§6)** for training
 
 **What Ch.1 adds:**
-- **§0:** Historical context (why transformers replaced RNNs)
-- **§2:** Tokenization (BPE algorithm—how "unhappiness" → ["un", "happiness"])
-- **§2A:** Multi-head attention (running 8-16 attention mechanisms in parallel)
-- **§2A:** Positional encoding (injecting sequence order, since attention has no notion of position)
-- **§2B:** Three transformer architectures (encoder-only, decoder-only, encoder-decoder)
-- **§3:** Interview questions and production knowledge
+- **Tokenization:** BPE algorithm (how "unhappiness" → ["un", "happiness"])
+- **Multi-head attention:** Running 8-16 attention mechanisms in parallel with different learned projections
+- **Positional encoding:** Injecting sequence order (attention has no inherent notion of position)
+- **Three architectures:** BERT (encoder-only), GPT (decoder-only), T5 (encoder-decoder)
+- **Production patterns:** Training at scale, inference optimization, prompt engineering
 
-**What changes:** Ch.1 has production details, code examples, and architectural comparisons. This chapter gave you the mechanical intuition—Ch.1 shows you how transformers assemble these pieces into billion-parameter models that power ChatGPT, Claude, and other LLMs.
+**The payoff:** Ch.1's transformer diagrams and formulas will make intuitive sense. You'll understand why "self-attention with skip connections" powers every modern LLM, why GPT-4 uses decoder-only architecture, and how 96-layer models avoid vanishing gradients. These foundations transfer directly.
 
 ---
 
-## Summary
+## Summary — You're Ready for Ch.1
 
-This chapter condensed **6 key concepts** from notes/01-02 that are prerequisites for understanding modern attention-based architectures:
+This chapter condensed **6 key concepts** from notes/01-02 that are prerequisites for understanding modern transformer architectures:
 
-1. **Embeddings** (§1): Text as vectors, similarity via dot products
-2. **RNNs & vanishing gradients** (§2): Why sequential models fail (0.8^T decay)
-3. **Attention mechanism** (§3): Q/K/V with 3-token worked example
-4. **Skip connections** (§4): "+1" gradient highway from ResNets
-5. **Encoder-decoder pattern** (§5): Bidirectional vs causal attention
-6. **Training basics** (§6): Parameters, cross-entropy loss, Adam optimizer
+1. **Embeddings (§1):** Text as vectors, dot product similarity, matrix operations (multiply, transpose)
+2. **RNNs & vanishing gradients (§2):** Sequential processing, $0.8^{50} \approx 0$ decay, why parallelization failed
+3. **Attention mechanism (§3):** Q/K/V soft dictionary lookup with complete 3-token walkthrough
+4. **Skip connections (§4):** "+1" gradient highway enabling 40-96 layer networks (2% → 75% gradient preservation)
+5. **Encoder-decoder pattern (§5):** Bidirectional vs causal attention with cross-attention bridge
+6. **Training foundations (§6):** Parameters, layers, activation functions, cross-entropy loss, backpropagation, Adam optimizer
 
-**Time to Ch.1:** You're ready. Ch.1 will show you how **transformers** combine these building blocks into the architecture that powers GPT, BERT, and modern LLMs. Every concept you just learned appears directly in transformer designs.
+**The hook delivered:** You started with fuzzy concepts ("what's a hidden state?"). You now understand:
+- Why RNNs failed (exponential gradient decay + no parallelization)
+- How attention solved it (parallel computation + direct token connections)
+- Why modern architectures stack 96+ layers (skip connections preserve gradients)
+- What "training" means mechanically (forward → loss → backward → update, repeated 1M+ times)
+
+**Time to Ch.1:** You're ready. Ch.1 will show you how **transformers** combine these building blocks into the architecture that powers GPT, BERT, Claude, and modern LLMs. Every concept you just learned appears directly in transformer designs—now you'll see how they assemble into production systems processing trillions of tokens.
+
+> **Next chapter preview:** Ch.1 opens with Vaswani et al.'s 2017 "Attention Is All You Need" paper and walks through the complete transformer block: multi-head self-attention, position-wise feed-forward networks, layer normalization, and positional encodings. You'll understand why this architecture obsoleted RNNs and became the foundation of every major LLM since 2018.
