@@ -1,6 +1,6 @@
 # Multimodal AI — Interview Primer
 
-← Back to learning chapter: [Multimodal AI](../05-multimodal-ai/README.md)
+← Back to learning chapter: [Multimodal AI](../04-multimodal-ai/README.md)
 
 > **Purpose**: Get a senior AI/ML engineer from zero to confident on multimodal AI interview questions in 2–4 hours. Covers vision transformers, contrastive learning, diffusion models, and production text-to-image/video systems. Every answer is grounded in **VisualForge Studio**, a production text-to-image pipeline serving 10k generations/day.
 

@@ -1,15 +1,15 @@
-# Exercises Track Split Plan: 03-ai → 03a-ai + 03b-agentic-ai
+# Exercises Track Split Plan: 03-ai → 03-ai + 05-agentic-ai
 
-> **Status:** exercises/03a-ai renamed from exercises/03-ai ✅ | exercises/03b-agentic-ai NOT YET CREATED ❌
+> **Status:** exercises/03-ai renamed from exercises/03-ai ✅ | exercises/05-agentic-ai NOT YET CREATED ❌
 
 ---
 
 ## Current State
 
-`exercises/03a-ai/` was renamed from `exercises/03-ai`. Its current content is **PizzaBot-focused** (LLM fine-tuning + RAG pipeline for Mamma Rosa's menu). The notes split means:
+`exercises/03-ai/` was renamed from `exercises/03-ai`. Its current content is **PizzaBot-focused** (LLM fine-tuning + RAG pipeline for Mamma Rosa's menu). The notes split means:
 
-- **notes/03a-ai** → LLM Fundamentals, **Intelligence Audit / Investigation arc** (wiki RAG, prompt engineering, CoT)
-- **notes/03b-agentic-ai** → Agentic AI, **PizzaBot Grand Challenge arc** (tool orchestration, multi-agent, safety)
+- **notes/03-ai** → LLM Fundamentals, **Intelligence Audit / Investigation arc** (wiki RAG, prompt engineering, CoT)
+- **notes/05-agentic-ai** → Agentic AI, **PizzaBot Grand Challenge arc** (tool orchestration, multi-agent, safety)
 
 The exercises must follow the same split.
 
@@ -17,9 +17,9 @@ The exercises must follow the same split.
 
 ## Target State
 
-### exercises/03a-ai — LLM Fundamentals (Investigation Arc)
+### exercises/03-ai — LLM Fundamentals (Investigation Arc)
 
-Aligns with notes/03a-ai chapters (ch01–ch05):
+Aligns with notes/03-ai chapters (ch01–ch05):
 - **Theme:** Staff Engineer AI Literacy Kit investigation — comparing GPT-4 and Claude on wiki RAG
 - **Grand Challenge:** Build a wiki Q&A system; measure hallucination rate before/after RAG; benchmark ANN indexes
 
@@ -58,17 +58,17 @@ Aligns with notes/03a-ai chapters (ch01–ch05):
 
 ---
 
-### exercises/03b-agentic-ai — Agentic AI (PizzaBot Grand Challenge)
+### exercises/05-agentic-ai — Agentic AI (PizzaBot Grand Challenge)
 
 **Does NOT exist yet — must be created.**
 
-Aligns with notes/03b-agentic-ai chapters (ch01–ch06):
+Aligns with notes/05-agentic-ai chapters (ch01–ch06):
 - **Theme:** PizzaBot Grand Challenge — build a production-grade agentic ordering system
 - **Grand Challenge:** Achieve >25% conversion, <5% error, <3s p95 latency, <$0.08/conv
 
 **Directory structure to create:**
 ```
-exercises/03b-agentic-ai/
+exercises/05-agentic-ai/
 ├── README.md                    ← PizzaBot Grand Challenge description
 ├── SOLUTION.md                  ← Full solution overview
 ├── config.yaml                  ← PizzaBot config (model, tools, constraints)
@@ -78,18 +78,18 @@ exercises/03b-agentic-ai/
 ├── setup.sh                     ← Unix setup
 ├── .gitignore                   ← Python gitignore
 ├── knowledge-base/
-│   ├── menu.json                ← MOVED from 03a-ai (Mamma Rosa's full menu)
-│   ├── faqs.txt                 ← MOVED from 03a-ai (pizza FAQs)
-│   └── policies.txt             ← MOVED from 03a-ai (delivery policies)
+│   ├── menu.json                ← MOVED from 03-ai (Mamma Rosa's full menu)
+│   ├── faqs.txt                 ← MOVED from 03-ai (pizza FAQs)
+│   └── policies.txt             ← MOVED from 03-ai (delivery policies)
 ├── src/
 │   ├── __init__.py
 │   ├── agent.py                 ← ReAct agent loop (Thought→Action→Observation)
 │   ├── tools.py                 ← Tool definitions (retrieve_from_rag, check_availability, etc.)
-│   ├── rag.py                   ← COPIED from 03a-ai (RAG pipeline for menu knowledge)
+│   ├── rag.py                   ← COPIED from 03-ai (RAG pipeline for menu knowledge)
 │   ├── safety.py                ← Guardrails (injection defense, output validation)
 │   ├── evaluate.py              ← Agentic eval (task completion, constraint satisfaction)
 │   ├── monitoring.py            ← Cost/latency tracking per conversation
-│   └── utils.py                 ← COPIED from 03a-ai (utility functions)
+│   └── utils.py                 ← COPIED from 03-ai (utility functions)
 ├── tests/
 │   ├── test_agent.py            ← Agent loop tests
 │   ├── test_tools.py            ← Tool execution tests
@@ -111,47 +111,47 @@ exercises/03b-agentic-ai/
 
 ## Implementation Plan
 
-### Phase 1 — exercises/03b-agentic-ai Creation (Parallel Agents)
+### Phase 1 — exercises/05-agentic-ai Creation (Parallel Agents)
 
 Run these 4 agents in parallel:
 
 **Agent A — Directory scaffold:**
-- Create `exercises/03b-agentic-ai/` directory structure (all folders)
-- Copy `knowledge-base/menu.json`, `knowledge-base/faqs.txt`, `knowledge-base/policies.txt` from `exercises/03a-ai/knowledge-base/` to `exercises/03b-agentic-ai/knowledge-base/`
-- Copy `exercises/03a-ai/src/rag.py` → `exercises/03b-agentic-ai/src/rag.py`
-- Copy `exercises/03a-ai/src/utils.py` → `exercises/03b-agentic-ai/src/utils.py`
-- Copy `exercises/03a-ai/requirements.txt` → `exercises/03b-agentic-ai/requirements.txt` (add langgraph, langchain-community)
-- Copy `exercises/03a-ai/.gitignore` → `exercises/03b-agentic-ai/.gitignore`
+- Create `exercises/05-agentic-ai/` directory structure (all folders)
+- Copy `knowledge-base/menu.json`, `knowledge-base/faqs.txt`, `knowledge-base/policies.txt` from `exercises/03-ai/knowledge-base/` to `exercises/05-agentic-ai/knowledge-base/`
+- Copy `exercises/03-ai/src/rag.py` → `exercises/05-agentic-ai/src/rag.py`
+- Copy `exercises/03-ai/src/utils.py` → `exercises/05-agentic-ai/src/utils.py`
+- Copy `exercises/03-ai/requirements.txt` → `exercises/05-agentic-ai/requirements.txt` (add langgraph, langchain-community)
+- Copy `exercises/03-ai/.gitignore` → `exercises/05-agentic-ai/.gitignore`
 - Create empty `src/__init__.py`, `tests/` directory
 
 **Agent B — Core files (README, SOLUTION, config):**
-- Create `exercises/03b-agentic-ai/README.md` with PizzaBot Grand Challenge description
-  - Mirror format of `exercises/03a-ai/README.md` but with PizzaBot arc content
+- Create `exercises/05-agentic-ai/README.md` with PizzaBot Grand Challenge description
+  - Mirror format of `exercises/03-ai/README.md` but with PizzaBot arc content
   - Include 6-constraint table, phone baseline, scaffolding level
-- Create `exercises/03b-agentic-ai/SOLUTION.md` with chapter-by-chapter solution overview
-- Create `exercises/03b-agentic-ai/config.yaml` with model names, tool schemas, constraint targets
+- Create `exercises/05-agentic-ai/SOLUTION.md` with chapter-by-chapter solution overview
+- Create `exercises/05-agentic-ai/config.yaml` with model names, tool schemas, constraint targets
 
 **Agent C — Agent and Tools implementation scaffold:**
-- Create `exercises/03b-agentic-ai/src/agent.py` with ReAct loop skeleton (TODOs for student to fill)
-- Create `exercises/03b-agentic-ai/src/tools.py` with tool definitions (retrieve_from_rag, check_availability, calculate_order_total)
-- Create `exercises/03b-agentic-ai/src/safety.py` with guardrails skeleton
-- Create `exercises/03b-agentic-ai/main.py` entry point
+- Create `exercises/05-agentic-ai/src/agent.py` with ReAct loop skeleton (TODOs for student to fill)
+- Create `exercises/05-agentic-ai/src/tools.py` with tool definitions (retrieve_from_rag, check_availability, calculate_order_total)
+- Create `exercises/05-agentic-ai/src/safety.py` with guardrails skeleton
+- Create `exercises/05-agentic-ai/main.py` entry point
 
 **Agent D — Reference implementations:**
-- Create `exercises/03b-agentic-ai/_REFERENCE/agent-complete.py` (full ReAct agent)
-- Create `exercises/03b-agentic-ai/_REFERENCE/safety-complete.py` (full guardrails)
-- Create `exercises/03b-agentic-ai/src/evaluate.py` (task completion metrics)
-- Create `exercises/03b-agentic-ai/src/monitoring.py` (cost/latency per conversation)
+- Create `exercises/05-agentic-ai/_REFERENCE/agent-complete.py` (full ReAct agent)
+- Create `exercises/05-agentic-ai/_REFERENCE/safety-complete.py` (full guardrails)
+- Create `exercises/05-agentic-ai/src/evaluate.py` (task completion metrics)
+- Create `exercises/05-agentic-ai/src/monitoring.py` (cost/latency per conversation)
 
-### Phase 2 — exercises/03a-ai Update (Sequential, lower priority)
+### Phase 2 — exercises/03-ai Update (Sequential, lower priority)
 
-After Phase 1 is complete, update exercises/03a-ai to align with Investigation arc:
+After Phase 1 is complete, update exercises/03-ai to align with Investigation arc:
 1. Update `README.md` to replace PizzaBot framing with Investigation arc
 2. Update `knowledge-base/` to include wiki-style documents instead of pizza menu
 3. Update `main.py` entry point to use wiki knowledge base
 4. Update `config.yaml` dataset references
 
-> **Note:** The src/ Python files in 03a-ai are mostly generic LLM/RAG patterns — they don't need major changes. The key updates are in README, knowledge-base content, and config.
+> **Note:** The src/ Python files in 03-ai are mostly generic LLM/RAG patterns — they don't need major changes. The key updates are in README, knowledge-base content, and config.
 
 ---
 
@@ -159,21 +159,21 @@ After Phase 1 is complete, update exercises/03a-ai to align with Investigation a
 
 | Source | Destination | Action |
 |--------|-------------|--------|
-| `exercises/03a-ai/knowledge-base/menu.json` | `exercises/03b-agentic-ai/knowledge-base/menu.json` | COPY |
-| `exercises/03a-ai/knowledge-base/faqs.txt` | `exercises/03b-agentic-ai/knowledge-base/faqs.txt` | COPY |
-| `exercises/03a-ai/knowledge-base/policies.txt` | `exercises/03b-agentic-ai/knowledge-base/policies.txt` | COPY |
-| `exercises/03a-ai/src/rag.py` | `exercises/03b-agentic-ai/src/rag.py` | COPY |
-| `exercises/03a-ai/src/utils.py` | `exercises/03b-agentic-ai/src/utils.py` | COPY |
-| `exercises/03a-ai/requirements.txt` | `exercises/03b-agentic-ai/requirements.txt` | COPY + add langgraph |
+| `exercises/03-ai/knowledge-base/menu.json` | `exercises/05-agentic-ai/knowledge-base/menu.json` | COPY |
+| `exercises/03-ai/knowledge-base/faqs.txt` | `exercises/05-agentic-ai/knowledge-base/faqs.txt` | COPY |
+| `exercises/03-ai/knowledge-base/policies.txt` | `exercises/05-agentic-ai/knowledge-base/policies.txt` | COPY |
+| `exercises/03-ai/src/rag.py` | `exercises/05-agentic-ai/src/rag.py` | COPY |
+| `exercises/03-ai/src/utils.py` | `exercises/05-agentic-ai/src/utils.py` | COPY |
+| `exercises/03-ai/requirements.txt` | `exercises/05-agentic-ai/requirements.txt` | COPY + add langgraph |
 
-> **Do NOT move files** — copy so 03a-ai retains its existing exercise infrastructure.
+> **Do NOT move files** — copy so 03-ai retains its existing exercise infrastructure.
 
 ---
 
 ## Constraints for Implementation Agents
 
-- Follow notes/03b-agentic-ai/authoring-guide.md for PizzaBot arc conventions
-- Follow notes/03a-ai/authoring-guide.md for Investigation arc conventions
+- Follow notes/05-agentic-ai/authoring-guide.md for PizzaBot arc conventions
+- Follow notes/03-ai/authoring-guide.md for Investigation arc conventions
 - Scaffold level: 🔴 Minimal (student fills TODOs, reference shows complete solution)
 - Security: No hardcoded API keys — use environment variables only
 - All Python code must pass basic linting (no obvious syntax errors)

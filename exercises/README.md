@@ -1,8 +1,8 @@
 # Exercises — AI Portfolio Learning Path
 
-> **Updated:** April 28, 2026  
-> **Total Exercises:** 14 (8 ML paradigms + 6 grand challenges)  
-> **Infrastructure:** Shared, plug-and-play (see `_infrastructure/`)  
+> **Updated:** April 28, 2026
+> **Total Exercises:** 14 (8 ML paradigms + 6 grand challenges)
+> **Infrastructure:** Shared, plug-and-play (see `_infrastructure/`)
 > **Pedagogy:** Interactive, experiment-driven, immediate feedback
 
 ---
@@ -94,10 +94,10 @@ exercises/
 │
 ├── 02-advanced_deep_learning/
 ├── 03-ai/
-├── 04-multi_agent_ai/
-├── 05-multimodal_ai/
-├── 06-ai_infrastructure/
-└── 07-devops_fundamentals/
+├── 04-multimodal_ai/
+├── 06-multi_agent_ai/
+├── 07-ai_infrastructure/
+└── 08-devops_fundamentals/
 ```
 
 ---
@@ -126,7 +126,7 @@ exercises/
 |----------|--------|------|
 | [02-adv-dl](02-advanced_deep_learning) | ResNet, Transformers | 10-12h |
 | [03-ai](03-ai) | LLM fine-tuning, RAG | 10-12h |
-| [05-multimodal](05-multimodal_ai) | CLIP, image-text | 10-12h |
+| [04-multimodal](04-multimodal_ai) | CLIP, image-text | 10-12h |
 
 **Total:** ~100-120 hours (2-3 weeks full-time)
 
@@ -153,7 +153,7 @@ runner.print_leaderboard()
 
 ### **3. Shared Infrastructure**
 
-**Before:** 300+ lines per exercise  
+**Before:** 300+ lines per exercise
 **After:** 8-line Makefile + 24-line docker-compose
 
 ```makefile
@@ -224,16 +224,16 @@ After each exercise:
 
 ## 🐛 **Troubleshooting**
 
-**"NotImplementedError"**  
+**"NotImplementedError"**
 → Replace TODO stub with implementation (see exercise README)
 
-**"Module 'rich' not found"**  
+**"Module 'rich' not found"**
 → Run `pip install -r requirements.txt`
 
-**"Port already in use"**  
+**"Port already in use"**
 → Check docker-compose.yml for unique port
 
-**"Network not found"**  
+**"Network not found"**
 → Run `docker network create ml-network`
 
 ---

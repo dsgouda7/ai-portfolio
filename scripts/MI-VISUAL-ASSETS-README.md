@@ -8,7 +8,7 @@ This document describes the visual assets for the Mutual Information section in 
 
 1. **ch03-mi-accumulation.gif**
    - **Purpose**: Show how MI accumulates as a weighted sum over the scatter plot
-   - **Panels**: 
+   - **Panels**:
      - Left: Joint scatter plot p(x,y)
      - Middle: Log-ratio heatmap building up cell by cell
      - Right: Cumulative MI curve approaching final value
@@ -148,7 +148,7 @@ seaborn
 ## Cross-References
 
 The MI section now has bidirectional links with:
-- [Math Ch.7 § 4b](../../../math_under_the_hood/ch07_probability_statistics/README.md#4b--covariance-and-pearson-correlation--do-two-things-move-together) - Pearson/covariance foundation
+- [Math Ch.7 § 4b](../../../00-math-under-the-hood/ch07_probability_statistics/README.md#4b--covariance-and-pearson-correlation--do-two-things-move-together) - Pearson/covariance foundation
 - Filter Methods section (same chapter) - How MI feeds feature selection
 - Method 1 (Univariate R²) - Direct comparison ρ² vs MI
 - Decision Rule table - Pearson vs MI when-to-use

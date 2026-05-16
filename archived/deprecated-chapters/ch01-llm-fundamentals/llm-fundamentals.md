@@ -1,6 +1,6 @@
 # LLM Fundamentals — What a Language Model Actually Is
 
-> **Where you are in the curriculum.** **Read this before anything else in the AI track.** Every later doc — [CoT Reasoning](../ch03-cot-reasoning), [RAG](../ch04-rag-and-embeddings), [ReAct](../../03b-agentic-ai/ch01-react-and-semantic-kernel) — assumes you know what an LLM is under the hood. This document builds that foundation from the transformer through to the models you call via API today: tokenization, the pretraining → SFT → RLHF pipeline, sampling parameters, and context windows.
+> **Where you are in the curriculum.** **Read this before anything else in the AI track.** Every later doc — [CoT Reasoning](../ch03-cot-reasoning), [RAG](../ch04-rag-and-embeddings), [ReAct](../../05-agentic-ai/ch01-react-and-semantic-kernel) — assumes you know what an LLM is under the hood. This document builds that foundation from the transformer through to the models you call via API today: tokenization, the pretraining → SFT → RLHF pipeline, sampling parameters, and context windows.
 >
 > **Notation used later in this doc.** $P(x_t \mid x_{<t})$ — probability of next token $x_t$ given all prior tokens; $T$ — temperature (controls output randomness); $k$ — top-$k$ candidate count; $p$ — nucleus (top-$p$) cumulative probability threshold; $V$ — vocabulary size.
 
@@ -952,7 +952,7 @@ The goal: move the model's outputs toward what humans actually prefer — more h
 
 **DPO (Direct Preference Optimization):** skips the reward model entirely. Directly fine-tunes the model on preference pairs with a loss that increases the probability of the preferred response and decreases the probability of the rejected one. Simpler, more stable, now preferred over RLHF in most open-source work.
 
-> 📖 **DPO intuition (full formula in [03b-agentic-ai ch05](../../03b-agentic-ai/ch05-fine-tuning/fine-tuning.md)):** For each preference pair (prompt, preferred response, rejected response), DPO adjusts the model to increase the log-probability of the preferred response relative to a frozen baseline model, while decreasing the log-probability of the rejected response. A KL penalty (β weight) prevents the model from drifting too far from the baseline. Unlike RLHF, no separate reward model is trained — the preference signal is compiled directly into the model weights. The result: simpler training, more stable convergence, and comparable alignment quality.
+> 📖 **DPO intuition (full formula in [05-agentic-ai ch05](../../05-agentic-ai/ch05-fine-tuning/fine-tuning.md)):** For each preference pair (prompt, preferred response, rejected response), DPO adjusts the model to increase the log-probability of the preferred response relative to a frozen baseline model, while decreasing the log-probability of the rejected response. A KL penalty (β weight) prevents the model from drifting too far from the baseline. Unlike RLHF, no separate reward model is trained — the preference signal is compiled directly into the model weights. The result: simpler training, more stable convergence, and comparable alignment quality.
 
 **What RLHF/DPO gives you:** a model that says "I don't know" when it doesn't know, declines harmful requests, and structures answers for human convenience rather than for statistical fluency.
 
@@ -966,7 +966,7 @@ The goal: move the model's outputs toward what humans actually prefer — more h
 
 ### Stage 4 (Optional Preview) — Parameter-Efficient Fine-Tuning (PEFT)
 
-> ⏭️ **Optional preview — skip if impatient.** PEFT is covered deeply in [03b-agentic-ai Ch.5](../../03b-agentic-ai/ch05-fine-tuning/fine-tuning.md). This section exists because the interview table asks about LoRA vs prefix tuning. Read now for vocabulary; return later for implementation.
+> ⏭️ **Optional preview — skip if impatient.** PEFT is covered deeply in [05-agentic-ai Ch.5](../../05-agentic-ai/ch05-fine-tuning/fine-tuning.md). This section exists because the interview table asks about LoRA vs prefix tuning. Read now for vocabulary; return later for implementation.
 
 **PEFT** freezes pretrained weights and trains only a small set of adapter parameters (0.01–1% of model size). The model behaves as if fully fine-tuned but at 5–10× lower compute cost. Three methods dominate:
 
@@ -1208,7 +1208,7 @@ $$x_{\text{fp16}} \approx x_{\text{int8}} \times \text{scale} + \text{zero\_poin
 
 ### Gradient Flow & Training Memory (Optional Preview)
 
-> ⏭️ **Optional — skip if focused on inference only.** Covered fully in [03b-agentic-ai Ch.5](../../03b-agentic-ai/ch05-fine-tuning/fine-tuning.md).
+> ⏭️ **Optional — skip if focused on inference only.** Covered fully in [05-agentic-ai Ch.5](../../05-agentic-ai/ch05-fine-tuning/fine-tuning.md).
 
 Training requires **backward passes** to compute gradients. Memory cost explodes:
 

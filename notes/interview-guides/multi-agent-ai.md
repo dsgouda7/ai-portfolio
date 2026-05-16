@@ -1,11 +1,11 @@
 # Multi-Agent AI Systems — Interview Primer
 
-← Back to learning chapter: [Multi-Agent AI](../04-multi-agent-ai/README.md)
+← Back to learning chapter: [Multi-Agent AI](../06-multi-agent-ai/README.md)
 
 > Senior multi-agent answers demonstrate systems thinking — not just protocol names, but coordination costs, failure modes at scale, and when to choose orchestration vs. choreography. The distinction is knowing that "just add more agents" is the answer that fails.
 
 <!-- LLM-STYLE-FINGERPRINT-V1
-scope: interview_guides/multi_agent_ai
+scope: interview_guides/multi-agent-ai
 canonical_examples: ["notes/interview_guides/agentic-ai.md", "notes/interview_guides/ai-infrastructure.md"]
 voice: second_person_practitioner
 register: high_density_technical_interview_ready

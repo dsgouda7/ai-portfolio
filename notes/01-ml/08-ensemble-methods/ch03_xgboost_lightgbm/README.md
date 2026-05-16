@@ -719,7 +719,7 @@ print(f"LightGBM test MAE: ${lgb_mae:.1f}k (trained in {lgb_time:.1f}s)")
 **Ch.6 (Production)** — Latency benchmarks, model serialization (`booster.save_model()`), ONNX export, GPU deployment. XGBoost/LightGBM `.predict()` runs in <1 ms — production-safe.
 **05-AnomalyDetection** — XGBoost appears as the supervised comparison baseline against Isolation Forest and One-Class SVM. LightGBM handles 284k transaction rows where its speed matters most.
 **04-RecommenderSystems** — LightGBM powers Learning-to-Rank pipelines (LambdaRank objective) re-ranking candidate recommendation items by relevance.
-**06-AI-Infrastructure** — Model serving, A/B testing, and drift detection are demonstrated with XGBoost models as the deployed artifact.
+**07-AI-Infrastructure** — Model serving, A/B testing, and drift detection are demonstrated with XGBoost models as the deployed artifact.
 
 ---
 

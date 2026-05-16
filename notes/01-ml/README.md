@@ -77,6 +77,15 @@ Master MDPs, Q-learning, Deep Q-Networks, policy gradients, and modern RL (PPO, 
 
 ---
 
+#### 9. [Generative Models](09-generative-models/README.md) — SynthGen Studio
+> **Dataset**: MNIST (60k digits) + CelebA (202k faces)
+> **Grand Challenge**: >90% classifier fooling rate, synthetic samples indistinguishable from real
+> **Chapters**: 3 chapters (Autoencoders → VAEs → GANs)
+
+Master generative modeling from compression to photorealistic synthesis. Learn autoencoders (deterministic compression), VAEs with the **sculptor analogy** (probabilistic latent space), and GANs with the **forger analogy** (adversarial training for >90% quality).
+
+---
+
 ### Capstone
 
 #### 8. [Ensemble Methods](08_ensemble_methods/README.md) — EnsembleAI
@@ -105,6 +114,7 @@ graph TD
  Spec -->|Personalization| Rec[04-Recommender Systems]
  Spec -->|Security| Anom[05-Anomaly Detection]
  Spec -->|Agents| RL[06-Reinforcement Learning]
+ Spec -->|Generation| Gen[09-Generative Models]
 
  Int -->|No| Done1[Complete!]
  Spec --> Done2[Complete!]
@@ -116,6 +126,7 @@ graph TD
  style Rec fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
  style Anom fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
  style RL fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
+ style Gen fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
  style Unsup fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
@@ -147,6 +158,7 @@ Choose based on career goals:
 - **Personalization**: Recommender Systems (collaborative filtering, matrix factorization)
 - **Security/Finance**: Anomaly Detection (fraud detection, outlier detection)
 - **Robotics/Games**: Reinforcement Learning (MDPs, Q-learning, policy gradients)
+- **Synthetic Data / Generative AI**: Generative Models (autoencoders, VAEs, GANs)
 
 **Outcome**: Production systems in specialized domains
 
@@ -166,6 +178,7 @@ graph TB
  Rec[ Recommender Engine<br/>MovieLens<br/>&gt;85% hit rate]
  Anom[💳 Fraud Detector<br/>Credit Card<br/>80% recall]
  RL[ RL Agent<br/>GridWorld + CartPole<br/>Optimal policies]
+ Gen[🎨 Generative Studio<br/>MNIST + CelebA<br/>&gt;90% fooling rate]
  Unsup[👥 Segmentation Tool<br/>Customers<br/>silhouette &gt;0.5]
  end
 
@@ -179,6 +192,7 @@ graph TB
  Ens -.-> Rec
  Ens -.-> Anom
  Ens -.-> RL
+ Ens -.-> Gen
 ```
 
 1. **Regression API** — Real estate valuation (<$40k MAE, interpretable with SHAP)
@@ -189,6 +203,7 @@ graph TB
 6. **RL Agent** — Trial-and-error learning (conceptual mastery of MDPs, Q-learning, policy gradients)
 7. **Segmentation Tool** — Unsupervised customer clustering (silhouette >0.5, actionable segments)
 8. **Ensemble Pipeline** — Production boosting/stacking (+5% over single models)
+9. **Generative Studio** — Synthetic data generation (autoencoders → VAEs → GANs, >90% fooling rate)
 
 ---
 
@@ -197,7 +212,7 @@ graph TB
 **Before starting:**
 - Python programming (NumPy, Pandas, Matplotlib)
 - Basic statistics (mean, variance, probability distributions)
-- Linear algebra (vectors, matrices, dot products) — see [Math Under The Hood](../00-math_under_the_hood)
+- Linear algebra (vectors, matrices, dot products) — see [Math Under The Hood](../00-math-under-the-hood)
 
 **Recommended** (but not required):
 - Calculus (derivatives, gradients) — covered in Math track Ch.3-6
@@ -215,13 +230,13 @@ graph TB
 
 ### For LLMs and Agentic AI:
 - **[AI Track](../03-ai/README.md)** — LLMs, RAG, agents, prompt engineering
-- **[Multi-Agent AI](../04-multi_agent_ai/README.md)** — Agent-to-agent coordination, MCP, shared memory
+- **[Multi-Agent AI](../06-multi-agent-ai/README.md)** — Agent-to-agent coordination, MCP, shared memory
 
 ### For Production ML Infrastructure:
-- **[AI Infrastructure](../06-ai_infrastructure/README.md)** — GPUs, distributed training, model serving, MLOps
+- **[AI Infrastructure](../07-ai-infrastructure/README.md)** — GPUs, distributed training, model serving, MLOps
 
 ### For Deep Math Understanding:
-- **[Math Under The Hood](../00-math_under_the_hood)** — Linear algebra, calculus, probability (ML prerequisites)
+- **[Math Under The Hood](../00-math-under-the-hood)** — Linear algebra, calculus, probability (ML prerequisites)
 
 ---
 
@@ -253,6 +268,9 @@ Work through topics 01 → 08 in order. Each topic is self-contained but builds 
 **"I need to segment customers or cluster unlabeled data"**
 → [07-UnsupervisedLearning](07_unsupervised_learning/README.md) — 3 chapters: clustering, dimensionality reduction, and unsupervised metrics
 
+**"I need to generate synthetic data or understand generative AI"**
+→ [09-GenerativeModels](09-generative-models/README.md) — 3 chapters: autoencoders (compression), VAEs (probabilistic generation), GANs (photorealistic synthesis)
+
 **"I need production ensemble models and explainability"**
 → [08-EnsembleMethods](08_ensemble_methods/README.md) — 6 chapters covering ensembles, boosting, XGBoost/LightGBM, SHAP, stacking, and production
 
@@ -278,6 +296,7 @@ This ML collection is organized by numbered topic folders, not a single monolith
 - `06-ReinforcementLearning/` — `ch01` through `ch06` (theory-first track)
 - `07-UnsupervisedLearning/` — `ch01` through `ch03`
 - `08-EnsembleMethods/` — `ch01` through `ch06`
+- `09-GenerativeModels/` — `ch01` through `ch03` (Autoencoders → VAEs → GANs)
 
 If you want the most practical learning order, start with `01-Regression`, then `02-Classification`, then `03-NeuralNetworks`, and branch into `07-UnsupervisedLearning`, `08-EnsembleMethods`, or one of the specialization tracks.
 

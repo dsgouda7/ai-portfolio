@@ -120,7 +120,7 @@ Get-ChildItem -Path "exercises" -Filter "config.yaml" -Recurse | Remove-Item
 
 **Keep them if:**
 - You plan to deploy APIs with Flask/FastAPI
-- You're working on exercises 06-ai_infrastructure or 07-devops_fundamentals
+- You're working on exercises 07-ai-infrastructure or 08-devops-fundamentals
 
 **Delete them if:**
 - You're only running \python main.py\ locally

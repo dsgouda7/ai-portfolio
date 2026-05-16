@@ -1,13 +1,13 @@
 # Math Under the Hood — Authoring Guide
 
 > **This document tracks the chapter-by-chapter build of the Math Under the Hood track.**
-> Each chapter lives under `notes/00-math_under_the_hood/` in its own folder, containing a README and a Jupyter notebook with interactive widgets.
+> Each chapter lives under `notes/00-math-under-the-hood/` in its own folder, containing a README and a Jupyter notebook with interactive widgets.
 > Read this before starting any chapter to keep tone, structure, and the knuckleball free-kick running example consistent.
 >
 > ** Updated:** Now includes comprehensive pedagogical patterns, voice guidelines, and conformance standards aligned with ML track (see §"Style Ground Truth" and §"Pedagogical Patterns" below).
 
 <!-- LLM-STYLE-FINGERPRINT-V1
-canonical_chapters: ["notes/00-math_under_the_hood/ch01_linear_algebra/README.md", "notes/00-math_under_the_hood/ch03_calculus_intro/README.md"]
+canonical_chapters: ["notes/00-math-under-the-hood/ch01_linear_algebra/README.md", "notes/00-math-under-the-hood/ch03_calculus_intro/README.md"]
 voice: second_person_practitioner
 register: technical_but_conversational
 formula_motivation: required_before_each_formula
@@ -28,7 +28,7 @@ interactive_widgets: bidirectional_sliders_with_numeric_inputs
 
 ---
 
-## Conventions for authoring chapters under `notes/00-math_under_the_hood/`
+## Conventions for authoring chapters under `notes/00-math-under-the-hood/`
 
 Read this before starting or editing any chapter so tone, structure, and interactive style stay consistent with Ch.1–7.
 

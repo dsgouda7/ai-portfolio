@@ -1,6 +1,6 @@
 # AI Infrastructure — Interview Primer
 
-← Back to learning chapter: [AI Infrastructure](../06-ai-infrastructure/README.md)
+← Back to learning chapter: [AI Infrastructure](../07-ai-infrastructure/README.md)
 
 > This guide prepares you to answer senior-level infrastructure questions at AI companies (Google, Meta, OpenAI, Anthropic). The distinction: junior candidates quote GPU specs; senior candidates explain why an H100 with 3× the compute of an A100 is only 1.7× faster for LLM inference. You'll learn the roofline model, VRAM budgeting (weights + KV cache + activations), quantization tradeoffs (INT8 vs INT4 quality loss), vLLM's PagedAttention innovation, and how to architect serving for <100ms P99 TTFT at <$20k/year. Every answer grounds in the InferenceBase system: Llama-3-8B self-hosting that went from $80k/year (naive deployment) to $15k/year (production-optimized).
 

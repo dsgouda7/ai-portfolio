@@ -80,16 +80,16 @@ This repo is **not accredited** — it's self-authored study material. It is, ho
 
 | Rank | Certification | Tracks that support it | Gap this repo closes |
 |---|---|---|---|
-| 1 | **DeepLearning.AI — *Deep Learning Specialization* (Coursera, Andrew Ng)** | [00-MathUnderTheHood](notes/00-math_under_the_hood), [01-ML](notes/01-ml) Ch.1–8 · Ch.15 · Ch.17–18 | Derives the math Coursera states as given; adds production depth Coursera skips. |
+| 1 | **DeepLearning.AI — *Deep Learning Specialization* (Coursera, Andrew Ng)** | [00-MathUnderTheHood](notes/00-math-under-the-hood), [01-ML](notes/01-ml) Ch.1–8 · Ch.15 · Ch.17–18 | Derives the math Coursera states as given; adds production depth Coursera skips. |
 | 2 | **DeepLearning.AI — *Machine Learning Specialization* (Coursera)** | [01-ML](notes/01-ml) Ch.1–6 · Ch.9–14 · Ch.19 | California Housing continuity forces real code understanding vs scaffolded notebooks. |
-| 3 | **HuggingFace — *NLP Course* + *LLM Course*** | [AI](notes/03-ai) (all), [01-ML](notes/01-ml) Ch.17–18, [MultiAgentAI](notes/04-multi_agent_ai) | Supplies the "why" behind every HF snippet — tokenisation, RAG, fine-tuning, evaluation. |
-| 4 | **NVIDIA Deep Learning Institute — *LLMs* / *Inference Optimization* / *Fundamentals of Deep Learning*** | [AIInfrastructure](notes/06-ai_infrastructure) (all), [01-ML](notes/01-ml) Ch.4–8 | Vendor-neutral grounding for GPU architecture, quantisation, vLLM, serving. |
-| 5 | **Azure AI Engineer Associate (AI-102)** / **AWS Certified Machine Learning – Specialty (MLS-C01)** | [AI](notes/03-ai), [AIInfrastructure](notes/06-ai_infrastructure), [MultiAgentAI](notes/04-multi_agent_ai) | Cloud exams test services; this repo teaches what the services actually do underneath. |
-| 6 | **Stanford Online — *XCS229 / CS229 Machine Learning* (paid professional track)** | [00-MathUnderTheHood](notes/00-math_under_the_hood) Ch.5–7, [01-ML](notes/01-ml) Ch.5 · Ch.6 · Ch.9 · Ch.11 · Ch.15 | Practical production framing alongside CS229's academic rigor. |
-| 7 | **DeepLearning.AI — *Generative AI with LLMs* (Coursera)** | [AI](notes/03-ai), [01-ML](notes/01-ml) Ch.18, [MultimodalAI](notes/05-multimodal_ai) | Adds agent orchestration, multi-agent protocols, and local-inference economics. |
-| 8 | **MIT / edX — *MicroMasters in Statistics and Data Science*** | [00-MathUnderTheHood](notes/00-math_under_the_hood) Ch.7, [01-ML](notes/01-ml) Ch.9 · Ch.14 · Ch.15 | Use as warm-up, not substitute — MicroMasters is heavier on pure statistics. |
+| 3 | **HuggingFace — *NLP Course* + *LLM Course*** | [AI](notes/03-ai) (all), [01-ML](notes/01-ml) Ch.17–18, [MultiAgentAI](notes/06-multi-agent-ai) | Supplies the "why" behind every HF snippet — tokenisation, RAG, fine-tuning, evaluation. |
+| 4 | **NVIDIA Deep Learning Institute — *LLMs* / *Inference Optimization* / *Fundamentals of Deep Learning*** | [AIInfrastructure](notes/07-ai-infrastructure) (all), [01-ML](notes/01-ml) Ch.4–8 | Vendor-neutral grounding for GPU architecture, quantisation, vLLM, serving. |
+| 5 | **Azure AI Engineer Associate (AI-102)** / **AWS Certified Machine Learning – Specialty (MLS-C01)** | [AI](notes/03-ai), [AIInfrastructure](notes/07-ai-infrastructure), [MultiAgentAI](notes/06-multi-agent-ai) | Cloud exams test services; this repo teaches what the services actually do underneath. |
+| 6 | **Stanford Online — *XCS229 / CS229 Machine Learning* (paid professional track)** | [00-MathUnderTheHood](notes/00-math-under-the-hood) Ch.5–7, [01-ML](notes/01-ml) Ch.5 · Ch.6 · Ch.9 · Ch.11 · Ch.15 | Practical production framing alongside CS229's academic rigor. |
+| 7 | **DeepLearning.AI — *Generative AI with LLMs* (Coursera)** | [AI](notes/03-ai), [01-ML](notes/01-ml) Ch.18, [MultimodalAI](notes/04-multimodal-ai) | Adds agent orchestration, multi-agent protocols, and local-inference economics. |
+| 8 | **MIT / edX — *MicroMasters in Statistics and Data Science*** | [00-MathUnderTheHood](notes/00-math-under-the-hood) Ch.7, [01-ML](notes/01-ml) Ch.9 · Ch.14 · Ch.15 | Use as warm-up, not substitute — MicroMasters is heavier on pure statistics. |
 
-**Recommended primary pairing:** *DeepLearning.AI Deep Learning Specialization + HuggingFace LLM Course*, using [notes/00-MathUnderTheHood/](notes/00-math_under_the_hood) to build mathematical intuition and [notes/03-ai/](notes/03-ai) + [notes/06-ai_infrastructure/](notes/06-ai_infrastructure) as the production layer those courses intentionally skip.
+**Recommended primary pairing:** *DeepLearning.AI Deep Learning Specialization + HuggingFace LLM Course*, using [notes/00-MathUnderTheHood/](notes/00-math-under-the-hood) to build mathematical intuition and [notes/03-ai/](notes/03-ai) + [notes/07-ai-infrastructure/](notes/07-ai-infrastructure) as the production layer those courses intentionally skip.
 
 ---
 
@@ -99,12 +99,12 @@ Every track in this repo is the response to a specific historical bottleneck. Re
 
 | Era | The bottleneck that defined it | Where it shows up in this repo |
 |---|---|---|
-| **Pre-1900s** — *math foundations* | Curves, gradients, and probability had to be invented before "fitting a model" was a coherent idea (Newton/Leibniz → Gauss → Pearson). | [notes/00-MathUnderTheHood/](notes/00-math_under_the_hood#historical-and-chronological-evolution) — Euclid through Rumelhart, mapped to chapters |
+| **Pre-1900s** — *math foundations* | Curves, gradients, and probability had to be invented before "fitting a model" was a coherent idea (Newton/Leibniz → Gauss → Pearson). | [notes/00-MathUnderTheHood/](notes/00-math-under-the-hood#historical-and-chronological-evolution) — Euclid through Rumelhart, mapped to chapters |
 | **1805 → 2017** — *classical & deep ML* | Least squares → MLE → perceptrons → AI winter → backprop → CNNs → LSTMs → attention → Transformer. Every chapter exists because an earlier model failed at a specific problem. | [notes/README.md (ML history)](notes/README.md#how-we-got-here--a-short-history-of-machine-learning) — full 30-row timeline aligned to ML Ch.1–19 |
 | **2017 → today** — *agentic AI* | Once Transformers existed, the next bottleneck moved up the stack: prompting → CoT reasoning → retrieval → tool use → ReAct → multi-agent orchestration. | [notes/03-ai/AIPrimer.md](notes/03-ai/ai-primer.md#how-we-got-here--a-short-history-of-agentic-ai) |
-| **2020 → today** — *multi-agent protocols* | Single agents hit context-window and trust ceilings. The fix was protocol-level: MCP, A2A, event buses, sandboxing. | [notes/04-MultiAgentAI/README.md](notes/04-multi_agent_ai/README.md#how-we-got-here--a-short-history-of-multi-agent-ai) |
-| **2014 → today** — *multimodal & generative* | GANs → VAEs → CLIP → DDPM → Latent Diffusion → ControlNet → multimodal LLMs. Each step solved a stability or controllability gap in the previous one. | [notes/05-MultimodalAI/README.md](notes/05-multimodal_ai/README.md#how-we-got-here--a-short-history-of-multimodal--generative-ai) |
-| **1999 → today** — *AI infrastructure* | GPU as graphics card → CUDA → tensor cores → HBM → ZeRO → Flash Attention → PagedAttention → 4-bit quantisation. Every chapter exists because the previous bottleneck moved (compute → memory → throughput → cost). | [notes/06-ai_infrastructure/README.md](notes/06-ai_infrastructure/README.md#how-we-got-here--a-short-history-of-ai-infrastructure) |
+| **2020 → today** — *multi-agent protocols* | Single agents hit context-window and trust ceilings. The fix was protocol-level: MCP, A2A, event buses, sandboxing. | [notes/06-MultiAgentAI/README.md](notes/06-multi-agent-ai/README.md#how-we-got-here--a-short-history-of-multi-agent-ai) |
+| **2014 → today** — *multimodal & generative* | GANs → VAEs → CLIP → DDPM → Latent Diffusion → ControlNet → multimodal LLMs. Each step solved a stability or controllability gap in the previous one. | [notes/04-MultimodalAI/README.md](notes/04-multimodal-ai/README.md#how-we-got-here--a-short-history-of-multimodal--generative-ai) |
+| **1999 → today** — *AI infrastructure* | GPU as graphics card → CUDA → tensor cores → HBM → ZeRO → Flash Attention → PagedAttention → 4-bit quantisation. Every chapter exists because the previous bottleneck moved (compute → memory → throughput → cost). | [notes/07-ai-infrastructure/README.md](notes/07-ai-infrastructure/README.md#how-we-got-here--a-short-history-of-ai-infrastructure) |
 
 **The through-line:** math made fitting models possible → classical ML made fitting useful → deep learning made fitting scalable → infrastructure made deep learning affordable → agents made deep learning *act* → multi-agent protocols made agents compose → multimodal made everything see and generate. Read the per-track histories above whenever a chapter feels like it appeared from nowhere.
 
@@ -152,7 +152,7 @@ flowchart TD
 **Goal**: Build mathematical intuition for gradient descent, backpropagation, and loss functions.
 
 **Path**:
-- [notes/00-math_under_the_hood/](notes/00-math_under_the_hood) — all 7 chapters
+- [notes/00-math-under-the-hood/](notes/00-math-under-the-hood) — all 7 chapters
 - Focus: Linear algebra (Ch.1), derivatives (Ch.3-4), gradients (Ch.6), chain rule (Ch.6)
 - **Outcome**: Can derive `∂L/∂w` by hand, understand why gradient descent works
 
@@ -192,11 +192,11 @@ flowchart TD
 - **Outcome**: Can build RAG pipelines, orchestrate tool-using agents, evaluate hallucination rates
 
 **Option B — Multimodal AI** (for generative AI engineers):
-- [notes/05-multimodal_ai/](notes/05-multimodal_ai) — Vision Transformers → CLIP → Diffusion → Latent Diffusion → Text-to-Image → Local Deployment
+- [notes/04-multimodal-ai/](notes/04-multimodal-ai) — Vision Transformers → CLIP → Diffusion → Latent Diffusion → Text-to-Image → Local Deployment
 - **Outcome**: Can run Stable Diffusion locally, understand CLIP embeddings, implement ControlNet conditioning
 
 **Option C — AI Infrastructure** (for ML platform engineers):
-- [notes/06-ai_infrastructure/](notes/06-ai_infrastructure) — GPU Architecture → Memory Budgets → Quantization → Distributed Training → Inference Optimization
+- [notes/07-ai-infrastructure/](notes/07-ai-infrastructure) — GPU Architecture → Memory Budgets → Quantization → Distributed Training → Inference Optimization
 - **Outcome**: Can estimate VRAM requirements, implement 4-bit quantization, optimize inference with Flash Attention
 
 #### Stage 6: Advanced Deep Learning + Production
@@ -204,8 +204,8 @@ flowchart TD
 
 **Path**:
 - [notes/02-advanced_deep_learning/](notes/02-advanced_deep_learning) — ResNets → Efficient Architectures → Object Detection → Segmentation → Pruning → Mixed Precision
-- [notes/06-ai_infrastructure/](notes/06-ai_infrastructure) — (if not already completed) Serving, Production Deployment
-- [notes/07-devops_fundamentals/](notes/07-devops_fundamentals) — Docker → Kubernetes → CI/CD → Monitoring
+- [notes/07-ai-infrastructure/](notes/07-ai-infrastructure) — (if not already completed) Serving, Production Deployment
+- [notes/08-devops-fundamentals/](notes/08-devops-fundamentals) — Docker → Kubernetes → CI/CD → Monitoring
 - **Outcome**: Can deploy a compressed YOLOv5 model to Kubernetes, monitor latency with Prometheus, achieve 99% uptime
 
 ### Why This Sequence?
@@ -224,14 +224,14 @@ flowchart TD
 
 | Track | What it covers |
 |-------|---------------|
-| **00-math_under_the_hood** | Linear algebra, calculus, gradients, chain rule |
+| **00-math-under-the-hood** | Linear algebra, calculus, gradients, chain rule |
 | **01-ml/00_data_fundamentals** | Pandas, EDA, class imbalance, drift detection |
 | **01-ml (Topics 1-8)** | Regression, classification, neural nets, clustering, ensembles |
 | **03-ai** | LLMs, RAG, embeddings, tool use, evaluation |
-| **04-multi_agent_ai** | MCP, A2A, event-driven patterns, sandboxing |
-| **05-multimodal_ai** | Vision Transformers, CLIP, diffusion, Stable Diffusion |
-| **06-ai_infrastructure** | GPU architecture, quantization, distributed training, serving |
-| **07-devops_fundamentals** | Docker, Kubernetes, CI/CD, monitoring |
+| **06-multi-agent-ai** | MCP, A2A, event-driven patterns, sandboxing |
+| **04-multimodal-ai** | Vision Transformers, CLIP, diffusion, Stable Diffusion |
+| **07-ai-infrastructure** | GPU architecture, quantization, distributed training, serving |
+| **08-devops-fundamentals** | Docker, Kubernetes, CI/CD, monitoring |
 | **02-advanced_deep_learning** | ResNets, detection, segmentation, pruning |
 
 ### Interview Readiness Checkpoints

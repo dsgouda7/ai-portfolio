@@ -18,17 +18,41 @@ Both scripts are designed to be re-runnable and will skip components that are al
 
 ## Script inventory
 
-| Script | Needed | When to use it | Notes |
-|---|---|---|---|
-| `scripts/setup.ps1` | Yes (Windows) | First-time full local setup on Windows; also safe for repair/re-run | Creates/uses `.venv`, installs Python deps, registers kernels, starts Jupyter; add `--enable-slm-assistant` for VS Code + Kilo Code, Ollama, and workspace wiring, `--enable-mkdocs-server` for the local docs server, and `--enable-gpu-notebook-stack` for CUDA PyTorch + fine-tuning deps |
-| `scripts/setup.sh` | Yes (macOS/Linux) | First-time full local setup on macOS/Linux; also safe for repair/re-run | Linux/macOS counterpart of `setup.ps1`; add `--enable-slm-assistant` for the optional SLM assistant bundle, `--enable-mkdocs-server` for the local docs server, and `--enable-gpu-notebook-stack` for CUDA PyTorch + fine-tuning deps |
-| `scripts/install-hooks.ps1` | Optional | Install repository git hooks on Windows | Copies files from `scripts/hooks/` into `.git/hooks/` |
-| `scripts/install-hooks.sh` | Optional | Install repository git hooks on macOS/Linux | Same behavior as PowerShell variant |
-| `scripts/check_notebooks.py` | Optional | Validate all notebooks under `notes/` for JSON/syntax issues | Best-effort static checker; useful before large commits |
-| `scripts/set_default_kernel.py` | Yes (indirect) | Usually run by setup scripts; run manually after adding/moving notebooks | Sets `metadata.kernelspec` by top-level track folder |
-| `scripts/render_html_to_png.py` | Optional | Convert HTML/SVG diagram files to PNG snapshots on Windows | Uses headless Edge/Chrome; primarily for docs asset generation |
-| `scripts/mathjax.js` | Optional | MkDocs/MathJax rendering support in docs site | Referenced by MkDocs config/assets, not executed directly |
-| `scripts/hooks/pre-commit` | Optional but recommended | Secret scanning for staged changes before commit | Installed via `install-hooks.*`; blocks likely credential leaks |
+### Setup & Environment
+
+| Script | Purpose |
+|--------|---------|
+| `setup.ps1` / `setup.sh` | Full environment setup: creates `.venv`, installs deps, registers kernels. Add `--enable-slm-assistant` for Ollama/Kilo, `--enable-mkdocs-server` for docs, `--enable-gpu-notebook-stack` for CUDA |
+| `teardown.ps1` / `teardown.sh` | Clean environment teardown |
+| `install-hooks.ps1` / `install-hooks.sh` | Install git hooks from `hooks/` directory |
+
+### Validation & Maintenance
+
+| Script | Purpose |
+|--------|---------|
+| `check-md-links.py` / `check-md-links.ps1` | Scan all markdown files for broken links |
+| `check-notebooks.py` | Validate notebook JSON/syntax |
+| `set-default-kernel.py` | Set correct kernel metadata for notebooks by track |
+| `scan-hardcoded-paths.py` | Find hardcoded absolute paths |
+| `audit-ml-images.py` | Find and clean unreferenced images in ML track |
+| `audit-workflow-pattern.py` | Validate chapter README against workflow patterns |
+| `update-notebook-links.py` | Update notebook cross-references |
+| `update-shared-imports.py` | Update shared code imports |
+
+### Generation & Rendering
+
+| Script | Purpose |
+|--------|---------|
+| `render-html-to-png.py` | Convert HTML/SVG to PNG using headless browser |
+| `generate-exercise-notebooks.py` | Generate exercise/solution notebook pairs |
+| `mathjax.js` | MathJax config for MkDocs |
+
+### Watchers & Hooks
+
+| Script | Purpose |
+|--------|---------|
+| `cce-watcher.ps1` / `cce-watcher.sh` | File watcher for CCE indexing |
+| `hooks/pre-commit` | Git pre-commit hook for secret scanning |
 
 ## Generated files
 
@@ -78,3 +102,4 @@ python scripts/render_html_to_png.py input.html output.png 1400 920
 - Setup configures the Kilo Code + Ollama assistant bundle only when `--enable-slm-assistant` is supplied; default setup keeps the footprint smaller. MkDocs is also opt-in via `--enable-mkdocs-server`, and the CUDA notebook stack is opt-in via `--enable-gpu-notebook-stack`.
 - On Windows, standard venv activation script name is `Activate.ps1`.
 - If activation scripts are unavailable, setup now falls back to direct venv interpreter/path wiring.
+- **Ad-hoc scripts removed:** One-time setup/stub-generation scripts (e.g., `create-*-img-dirs.py`, `add-*-stubs.py`, `remove-emojis.py`) have been deleted after completing their tasks. Only reusable maintenance scripts remain.

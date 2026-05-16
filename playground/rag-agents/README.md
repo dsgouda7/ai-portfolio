@@ -212,7 +212,7 @@ Each notebook references relevant chapters in the `notes/` directory:
 - **AI Fundamentals:** [notes/03-ai/](../../notes/03-ai/README.md)
 - **Prompt Engineering:** [notes/03-ai/ch02_prompt_engineering/](../../notes/03-ai/ch02_prompt_engineering)
 - **Vector Databases:** [notes/03-ai/ch05_vector_dbs/](../../notes/03-ai/ch05_vector_dbs)
-- **Multi-Agent AI:** [notes/04-multi_agent_ai/](../../notes/04-multi_agent_ai/README.md)
+- **Multi-Agent AI:** [notes/06-multi-agent-ai/](../../notes/06-multi-agent-ai/README.md)
 
 ## Troubleshooting
 

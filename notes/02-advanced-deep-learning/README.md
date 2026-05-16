@@ -254,7 +254,7 @@ This table shows how each chapter contributes to satisfying the 5 ProductionCV c
 ## Bridges to Other Tracks
 
 ### → AI Infrastructure (Ch.3 Quantization)
-- **Link:** [05_ai_infrastructure/ch03_quantization_acceleration](../../06-ai_infrastructure/ch03_quantization_acceleration/README.md)
+- **Link:** [07-ai-infrastructure/ch03_quantization_acceleration](../../07-ai-infrastructure/ch03_quantization_acceleration/README.md)
 - **What you'll learn:** INT8 quantization (4× speedup), model optimization for production deployment
 - **When to take:** After Ch.10 (pruning) to push latency from 35ms → 18ms via INT8
 

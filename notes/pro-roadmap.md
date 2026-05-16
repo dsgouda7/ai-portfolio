@@ -47,7 +47,7 @@ Every session follows this pattern:
 ### Week 1: Mathematical Foundations (Days 1-7)
 
 #### Day 1: Linear Algebra Basics
-- **Chapter:** [00-math_under_the_hood/ch01_linear_algebra](00-math_under_the_hood/ch01_linear_algebra)
+- **Chapter:** [00-math-under-the-hood/ch01_linear_algebra](00-math-under-the-hood/ch01_linear_algebra)
 - **Focus:** Lines, slopes, dot products
 - **Key Concept:** $y = wx + b$ is how ML models make predictions
 - **Hands-On:** Calculate knuckleball trajectory at t=0.1s by hand
@@ -61,7 +61,7 @@ Every session follows this pattern:
 ---
 
 #### Day 2: Polynomials and Feature Engineering
-- **Chapter:** [00-math_under_the_hood/ch02_nonlinear_algebra](00-math_under_the_hood/ch02_nonlinear_algebra)
+- **Chapter:** [00-math-under-the-hood/ch02_nonlinear_algebra](00-math-under-the-hood/ch02_nonlinear_algebra)
 - **Focus:** Parabolas, polynomial features, feature expansion
 - **Key Concept:** Turn $y = ax^2 + bx + c$ into linear form via feature engineering
 - **Hands-On:** Fit parabola to 4 trajectory points, measure error
@@ -75,7 +75,7 @@ Every session follows this pattern:
 ---
 
 #### Day 3: Derivatives and Optimization
-- **Chapter:** [00-math_under_the_hood/ch03_calculus_intro](00-math_under_the_hood/ch03_calculus_intro)
+- **Chapter:** [00-math-under-the-hood/ch03_calculus_intro](00-math-under-the-hood/ch03_calculus_intro)
 - **Focus:** Derivatives as slopes, finding peaks/valleys
 - **Key Concept:** $f'(x) = 0$ finds the apex (maximum height)
 - **Hands-On:** Calculate derivative at 3 different points on knuckleball trajectory
@@ -89,7 +89,7 @@ Every session follows this pattern:
 ---
 
 #### Day 4: Gradient Descent
-- **Chapter:** [00-math_under_the_hood/ch04_small_steps](00-math_under_the_hood/ch04_small_steps)
+- **Chapter:** [00-math-under-the-hood/ch04_small_steps](00-math-under-the-hood/ch04_small_steps)
 - **Focus:** Taking small steps downhill to find minimum
 - **Key Concept:** $w_{new} = w_{old} - \eta \cdot \frac{\partial L}{\partial w}$
 - **Hands-On:** Manually take 5 gradient descent steps
@@ -103,7 +103,7 @@ Every session follows this pattern:
 ---
 
 #### Day 5: Matrices and Multi-Dimensional Data
-- **Chapter:** [00-math_under_the_hood/ch05_matrices](00-math_under_the_hood/ch05_matrices)
+- **Chapter:** [00-math-under-the-hood/ch05_matrices](00-math-under-the-hood/ch05_matrices)
 - **Focus:** Matrix multiplication, handling 8 features at once
 - **Key Concept:** $\mathbf{y} = X \mathbf{w}$ (matrix form of linear regression)
 - **Hands-On:** Multiply 3×8 matrix by 8×1 vector by hand
@@ -117,7 +117,7 @@ Every session follows this pattern:
 ---
 
 #### Day 6: Chain Rule and Backpropagation
-- **Chapter:** [00-math_under_the_hood/ch06_gradient_chain_rule](00-math_under_the_hood/ch06_gradient_chain_rule)
+- **Chapter:** [00-math-under-the-hood/ch06_gradient_chain_rule](00-math-under-the-hood/ch06_gradient_chain_rule)
 - **Focus:** Derivatives of nested functions, multi-parameter optimization
 - **Key Concept:** $\frac{\partial L}{\partial w} = \frac{\partial L}{\partial \hat{y}} \cdot \frac{\partial \hat{y}}{\partial w}$
 - **Hands-On:** Compute gradient for 3-variable function
@@ -131,7 +131,7 @@ Every session follows this pattern:
 ---
 
 #### Day 7: Probability and Uncertainty
-- **Chapter:** [00-math_under_the_hood/ch07_probability_statistics](00-math_under_the_hood/ch07_probability_statistics)
+- **Chapter:** [00-math-under-the-hood/ch07_probability_statistics](00-math-under-the-hood/ch07_probability_statistics)
 - **Focus:** Handling noise, uncertainty, distributions
 - **Key Concept:** Maximum Likelihood Estimation (MLE)
 - **Hands-On:** Calculate probability of clearing wall with 10% velocity variance
@@ -710,14 +710,14 @@ Every session follows this pattern:
 
 ## Specialization Option B: Multimodal AI (Days 68-120)
 
-**Track:** [05-multimodal_ai](05-multimodal_ai)
+**Track:** [04-multimodal-ai](04-multimodal-ai)
 **Grand Challenge:** VisualForge Studio — Local image generation pipeline
 **Final Constraint:** ≥4.0/5.0 quality, <30s/image, <$5k hardware
 
 ### Week 13-15: Diffusion Foundations (Days 68-90)
 
 #### Days 68-72: CLIP (5 days)
-- **Chapter:** [05-multimodal_ai/ch03_clip](05-multimodal_ai/ch03_clip)
+- **Chapter:** [04-multimodal-ai/ch03_clip](04-multimodal-ai/ch03_clip)
 - **Focus:** Text-image embeddings, contrastive learning
 - **Hands-On:** Compute CLIP similarity for image-text pairs
 
@@ -730,8 +730,8 @@ Every session follows this pattern:
 ---
 
 #### Days 73-82: Diffusion Models (10 days)
-- **Chapter:** [05-multimodal_ai/ch04_diffusion_models](05-multimodal_ai/ch04_diffusion_models)
-- **Chapter:** [05-multimodal_ai/ch05_schedulers](05-multimodal_ai/ch05_schedulers)
+- **Chapter:** [04-multimodal-ai/ch04_diffusion_models](04-multimodal-ai/ch04_diffusion_models)
+- **Chapter:** [04-multimodal-ai/ch05_schedulers](04-multimodal-ai/ch05_schedulers)
 
 **10-Day Checklist:**
 - [ ] Understand forward diffusion: gradually add noise
@@ -743,8 +743,8 @@ Every session follows this pattern:
 ---
 
 #### Days 83-90: Latent Diffusion (8 days)
-- **Chapter:** [05-multimodal_ai/ch06_latent_diffusion](05-multimodal_ai/ch06_latent_diffusion)
-- **Chapter:** [05-multimodal_ai/ch07_guidance_conditioning](05-multimodal_ai/ch07_guidance_conditioning)
+- **Chapter:** [04-multimodal-ai/ch06_latent_diffusion](04-multimodal-ai/ch06_latent_diffusion)
+- **Chapter:** [04-multimodal-ai/ch07_guidance_conditioning](04-multimodal-ai/ch07_guidance_conditioning)
 
 **8-Day Checklist:**
 - [ ] Understand VAE: encode image to latent (512×512 → 64×64)
@@ -757,8 +757,8 @@ Every session follows this pattern:
 ### Week 16-18: Production Deployment (Days 91-120)
 
 #### Days 91-105: Text-to-Image and Video (15 days)
-- **Chapter:** [05-multimodal_ai/ch08_text_to_image](05-multimodal_ai/ch08_text_to_image)
-- **Chapter:** [05-multimodal_ai/ch09_text_to_video](05-multimodal_ai/ch09_text_to_video)
+- **Chapter:** [04-multimodal-ai/ch08_text_to_image](04-multimodal-ai/ch08_text_to_image)
+- **Chapter:** [04-multimodal-ai/ch09_text_to_video](04-multimodal-ai/ch09_text_to_video)
 
 **15-Day Checklist:**
 - [ ] Ran Stable Diffusion 1.5 — 512×512 images, 25s/image
@@ -769,9 +769,9 @@ Every session follows this pattern:
 ---
 
 #### Days 106-120: Local Diffusion Lab (15 days)
-- **Chapter:** [05-multimodal_ai/ch12_generative_evaluation](05-multimodal_ai/ch12_generative_evaluation)
-- **Chapter:** [05-multimodal_ai/ch13_local_diffusion_lab](05-multimodal_ai/ch13_local_diffusion_lab)
-- **Grand Solution:** [05-multimodal_ai/grand_solution.ipynb](05-multimodal_ai/grand_solution.ipynb)
+- **Chapter:** [04-multimodal-ai/ch12_generative_evaluation](04-multimodal-ai/ch12_generative_evaluation)
+- **Chapter:** [04-multimodal-ai/ch13_local_diffusion_lab](04-multimodal-ai/ch13_local_diffusion_lab)
+- **Grand Solution:** [04-multimodal-ai/grand_solution.ipynb](04-multimodal-ai/grand_solution.ipynb)
 
 **Final Project — VisualForge Studio Deployment:**
 - Days 106-110: Set up SDXL-Turbo (8s/image, 4.1/5.0 quality)
@@ -791,15 +791,15 @@ Every session follows this pattern:
 
 ## Specialization Option C: AI Infrastructure (Days 68-120)
 
-**Track:** [06-ai_infrastructure](06-ai_infrastructure)
+**Track:** [07-ai-infrastructure](07-ai-infrastructure)
 **Grand Challenge:** InferenceBase — Self-host Llama-3-8B
 **Final Constraint:** <$15k/mo, ≤2s p95, ≥10k req/day
 
 ### Week 13-16: GPU Optimization (Days 68-97)
 
 #### Days 68-75: GPU Architecture and Memory (8 days)
-- **Chapter:** [06-ai_infrastructure/ch01_gpu_architecture](06-ai_infrastructure/ch01_gpu_architecture)
-- **Chapter:** [06-ai_infrastructure/ch02_memory_and_compute_budgets](06-ai_infrastructure/ch02_memory_and_compute_budgets)
+- **Chapter:** [07-ai-infrastructure/ch01_gpu_architecture](07-ai-infrastructure/ch01_gpu_architecture)
+- **Chapter:** [07-ai-infrastructure/ch02_memory_and_compute_budgets](07-ai-infrastructure/ch02_memory_and_compute_budgets)
 
 **8-Day Checklist:**
 - [ ] Understand CUDA cores, Tensor Cores, memory hierarchy
@@ -810,9 +810,9 @@ Every session follows this pattern:
 ---
 
 #### Days 76-90: Quantization and Serving (15 days)
-- **Chapter:** [06-ai_infrastructure/ch03_quantization_and_precision](06-ai_infrastructure/ch03_quantization_and_precision)
-- **Chapter:** [06-ai_infrastructure/ch05_inference_optimization](06-ai_infrastructure/ch05_inference_optimization)
-- **Chapter:** [06-ai_infrastructure/ch06_model_serving_frameworks](06-ai_infrastructure/ch06_model_serving_frameworks)
+- **Chapter:** [07-ai-infrastructure/ch03_quantization_and_precision](07-ai-infrastructure/ch03_quantization_and_precision)
+- **Chapter:** [07-ai-infrastructure/ch05_inference_optimization](07-ai-infrastructure/ch05_inference_optimization)
+- **Chapter:** [07-ai-infrastructure/ch06_model_serving_frameworks](07-ai-infrastructure/ch06_model_serving_frameworks)
 
 **15-Day Checklist:**
 - [ ] Applied INT4 quantization: 16GB → 4GB (4× compression)
@@ -825,8 +825,8 @@ Every session follows this pattern:
 ### Week 17-19: Production Deployment (Days 91-120)
 
 #### Days 91-110: Monitoring and MLOps (20 days)
-- **Chapter:** [06-ai_infrastructure/ch09_ml_experiment_tracking](06-ai_infrastructure/ch09_ml_experiment_tracking)
-- **Chapter:** [06-ai_infrastructure/ch10_production_ml_monitoring](06-ai_infrastructure/ch10_production_ml_monitoring)
+- **Chapter:** [07-ai-infrastructure/ch09_ml_experiment_tracking](07-ai-infrastructure/ch09_ml_experiment_tracking)
+- **Chapter:** [07-ai-infrastructure/ch10_production_ml_monitoring](07-ai-infrastructure/ch10_production_ml_monitoring)
 
 **20-Day Checklist:**
 - [ ] Set up MLflow for experiment tracking
@@ -837,8 +837,8 @@ Every session follows this pattern:
 ---
 
 #### Days 111-120: End-to-End Deployment (10 days)
-- **Chapter:** [06-ai_infrastructure/ch11_end_to_end_deployment](06-ai_infrastructure/ch11_end_to_end_deployment)
-- **Grand Solution:** [06-ai_infrastructure/grand_solution.ipynb](06-ai_infrastructure/grand_solution.ipynb)
+- **Chapter:** [07-ai-infrastructure/ch11_end_to_end_deployment](07-ai-infrastructure/ch11_end_to_end_deployment)
+- **Grand Solution:** [07-ai-infrastructure/grand_solution.ipynb](07-ai-infrastructure/grand_solution.ipynb)
 
 **Final Project — InferenceBase Production:**
 - Days 111-115: Deploy Llama-3-8B on 2× A100 GPUs

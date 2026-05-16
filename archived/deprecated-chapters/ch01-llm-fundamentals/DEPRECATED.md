@@ -22,7 +22,7 @@ The content has been split into:
 - Encoder vs Decoder architectures (BERT vs GPT vs T5)
 - Positional encoding (sinusoidal, learned, RoPE)
 
-**Path:** `notes/03a-ai/ch01-transformer-architecture/transformer-architecture.md`
+**Path:** `notes/03-ai/ch01-transformer-architecture/transformer-architecture.md`
 
 ---
 
@@ -35,7 +35,7 @@ The content has been split into:
 - PagedAttention and continuous batching
 - Production serving considerations
 
-**Path:** `notes/03a-ai/ch02-llm-inference-mechanics/inference-mechanics.md`
+**Path:** `notes/03-ai/ch02-llm-inference-mechanics/inference-mechanics.md`
 
 ---
 
@@ -47,7 +47,7 @@ The content has been split into:
 - PEFT methods (LoRA, prefix tuning, prompt tuning)
 - Emergent capabilities (in-context learning, CoT, scaling thresholds)
 
-**Path:** `notes/03a-ai/ch03-llm-training-pipeline/training-pipeline.md`
+**Path:** `notes/03-ai/ch03-llm-training-pipeline/training-pipeline.md`
 
 ---
 
@@ -60,7 +60,7 @@ The content has been split into:
 - Flash Attention
 - Key technical distinctions (18 pairs)
 
-**Path:** `notes/03a-ai/ch04-llm-model-internals/model-internals.md`
+**Path:** `notes/03-ai/ch04-llm-model-internals/model-internals.md`
 
 ---
 
