@@ -42,6 +42,8 @@ All learning content lives here: a **19-chapter ML curriculum**, a math foundati
 
 → See [notes/README.md](notes/README.md) for the full index.
 
+**Quick on-ramp to transformers:** If you've completed basic ML training (gradient descent, neural networks, backprop) elsewhere and want to understand modern LLMs, start with [Ch.0 — Prerequisites: From Neural Networks to Transformers](notes/03-ai/ch00-from-networks-to-language/README.md). This 45-minute bridge chapter condenses RNNs, attention, skip connections, and encoder-decoder patterns—the 6 concepts Ch.1 (Transformers) assumes you know. Test yourself: Can you sketch 3-token attention? If yes, skip to Ch.1. If no, Ch.0 rebuilds the intuition with worked examples.
+
 ---
 
 ## `exercises/` — Hands-On Practice

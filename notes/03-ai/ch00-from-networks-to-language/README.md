@@ -30,9 +30,16 @@ If those statements make complete sense, **skip this chapter**. If any are fuzzy
 
 **Time investment:** 20-30 minutes if skimming worked examples, 45-60 minutes if working through calculations.
 
+> **Quick glossary for first-timers:**
+> - **Token** = word or sub-word piece (e.g., "unhappiness" → ["un", "happiness"])
+> - **Model** = trained neural network (billions of weights learned from data)
+> - **Inference** = using a trained model to make predictions (what happens when you hit "send" in ChatGPT)
+
 ---
 
 ## 1 · Embeddings: Why Text Becomes Vectors
+
+> **Why you care:** Every API call to OpenAI, Anthropic, or any LLM provider sends text → embeddings → transformer layers → output. Understanding embeddings = understanding what your $0.03/1k tokens actually buys. When you fine-tune a model, you're adjusting these embedding vectors. When you build RAG, you're searching embedding space.
 
 ### The Problem
 
@@ -135,6 +142,10 @@ You'll see these in Ch.1 when discussing different training objectives.
 
 ### 2.1 · How RNNs Work
 
+> **TL;DR if skimming:** RNNs process sequences one token at a time ("The" → "cat" → "sat"), maintaining a hidden state that carries information forward. Problem: Token 3 must wait for Token 2 to finish, so GPUs sit idle (can't parallelize). This is why transformers replaced RNNs—they process all tokens simultaneously.
+>
+> **Want the mechanics?** Read the walkthrough below.
+
 A **Recurrent Neural Network** processes sequences one token at a time, maintaining a **hidden state** that threads information forward:
 
 $$
@@ -232,6 +243,8 @@ Two fatal flaws:
 
 ## 3 · Attention: The Core Mechanism
 
+> **Why you care:** Attention is THE breakthrough that made modern AI possible. When ChatGPT "understands" your prompt, it's attention deciding which words matter. When it hallucinates, it's attention weights going to the wrong context. When you debug why a prompt fails, attention patterns show you what the model "sees." This section teaches you how the magic actually works.
+
 ### 3.1 · The Big Idea
 
 **From notes/01 Ch.9:** Attention is a **soft dictionary lookup**.
@@ -263,6 +276,10 @@ graph TD
 *Attention processes all tokens in parallel: "bank" computes similarity scores with all keys simultaneously ("The"=0.198, "river"=0.387, "bank"=0.416), then retrieves weighted combination of values. No sequential dependency like RNNs.*
 
 ### 3.2 · Worked Example: 3-Token Attention
+
+> **TL;DR if skimming:** Attention computes how much each word "attends to" every other word. For "The river bank", the word "bank" attends most to "river" (38.7%) and itself (41.6%), not "The" (19.8%). This disambiguates "bank" as riverbank, not financial institution. The mechanism: dot products → softmax → weighted sum.
+>
+> **Want every calculation?** The complete walkthrough below shows all 9 dot products step-by-step.
 
 **Sentence:** "The river bank"
 
@@ -374,6 +391,8 @@ Without scaling, dot products grow with dimension. For $d_k=64$ (typical):
 ---
 
 ## 4 · Skip Connections: The Gradient Highway
+
+> **Why you care:** GPT-4 has 120+ layers. Without skip connections, gradients would vanish after 10 layers (training would fail). When you fine-tune a model and decide which layers to freeze, you're leveraging skip connections' gradient preservation. When you see "x + Attention(x)" in transformer code, that "+" is a skip connection—the reason deep models work.
 
 ### 4.1 · The ResNet Insight
 
