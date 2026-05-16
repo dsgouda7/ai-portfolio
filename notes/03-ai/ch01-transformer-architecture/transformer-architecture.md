@@ -1,8 +1,14 @@
 # Transformer Architecture — From Tokens to Attention
 
+> **Reading order:** This chapter provides the technical foundation for the entire AI track. Two valid approaches:
+> - **Start here (recommended):** Get the mechanics first (this chapter), then read Ch.0 for historical "why"
+> - **Historical first:** Read Ch.0 for evolutionary context, then come here for depth
+>
+> Sections marked "*If you've read Ch.0*" can be skimmed if you took the historical-first path.
+
 > **The story.** In June **2017**, eight Google engineers submitted a twelve-page paper with a title that was either arrogant or prophetic: *"Attention Is All You Need."* The entire field of natural language processing ran on **recurrent neural networks** — architectures that processed words sequentially, one token at a time, unable to parallelize training (process tokens in parallel) and plagued by vanishing gradients (weakening learning signals in deep networks; see Appendix A) beyond 100-200 tokens. The authors proposed throwing out recurrence entirely and replacing it with a single mechanism called **attention**. Reviewers were skeptical; the NeurIPS acceptance email arrived in September with mild praise. Within two years, every major language model — **BERT**, **GPT-2**, **T5** — was a variant of their architecture, and by 2025 the transformer had become so dominant that "neural network" and "transformer" were nearly synonymous in production systems.
 >
-> **Where you are in the curriculum.** **Read this before anything else in the AI track.** This chapter builds the foundation you need for every later document — [LLM Inference Mechanics](../ch02-llm-inference-mechanics), [CoT Reasoning](../ch06-cot-reasoning), [RAG](../ch07-rag-and-embeddings), [ReAct](../../05-agentic-ai/ch01-react-and-semantic-kernel). You'll learn the historical path from RNNs to transformers, what an LLM actually is, how tokenization works, the mechanics of attention (Q/K/V, multi-head attention, positional encoding), and the three architectural families (encoder-only, decoder-only, encoder-decoder).
+> **Where you are in the curriculum.** This chapter builds the foundation you need for every later document — [LLM Inference Mechanics](../ch02-llm-inference-mechanics), [CoT Reasoning](../ch06-cot-reasoning), [RAG](../ch07-rag-and-embeddings), [ReAct](../../05-agentic-ai/ch01-react-and-semantic-kernel). You'll learn the historical path from RNNs to transformers, what an LLM actually is, how tokenization works, the mechanics of attention (Q/K/V, multi-head attention, positional encoding), and the three architectural families (encoder-only, decoder-only, encoder-decoder). **If you want evolutionary context first, see Ch.0 before reading this.**
 >
 > **Notation.** This chapter uses minimal math. When formulas appear, we provide intuition first and formulas second. **New to ML?** See Appendix A at the end for definitions of essential terms (training, gradients, embeddings, etc.).
 
@@ -17,9 +23,14 @@
 
 ## 0 · The Historical Thread
 
+> **If you've read Ch.0:** You've seen this evolutionary narrative. The unique contributions here are §0.2's decoder/encoder fork details and §0's checkpoint questions. Skim the italicized sections if familiar.
+
+<details>
+<summary><strong>Historical context: 2014-2017 (expand for full story)</strong></summary>
+
 ### 0.1 · Pre-Transformer Era (2014–2017)
 
-In the summer of 2017, eight Google engineers published a twelve-page paper with a deliberately provocative title: *"Attention Is All You Need."* They weren't describing a self-help book — they were discarding the recurrent loops that every language model had relied on for a decade and replacing them with a single mechanism called **attention**. The transformer, as the architecture came to be known, was faster to train, easier to parallelize, and — it turned out — almost infinitely scalable. Almost nobody outside research noticed.
+*In the summer of 2017, eight Google engineers published a twelve-page paper with a deliberately provocative title: "Attention Is All You Need."* They weren't describing a self-help book — they were discarding the recurrent loops that every language model had relied on for a decade and replacing them with a single mechanism called **attention**. The transformer, as the architecture came to be known, was faster to train, easier to parallelize, and — it turned out — almost infinitely scalable. Almost nobody outside research noticed.
 
 **The problem before 2017:** RNNs (recurrent neural networks) and LSTMs were the dominant architecture for sequence modeling. Every token was processed sequentially — step $t$ depended on step $t-1$, so training couldn't be parallelized. Worse, gradients vanished over long sequences, making it nearly impossible to learn dependencies beyond 100-200 tokens. The field had hit a wall.
 
@@ -35,7 +46,12 @@ The original transformer had two stacks: an **encoder** (reads the source senten
 
 > **Checkpoint:** RNNs couldn't parallelize training (sequential dependency bottleneck) and couldn't learn long-range patterns (vanishing gradients beyond 100-200 tokens). Bahdanau attention (2014) introduced the attend-to-all-tokens mechanism, but recurrence remained. The 2017 Transformer dropped recurrence entirely, enabling parallelization and solving both problems simultaneously. This unlocked the scaling path that led directly to GPT and BERT.
 
+</details>
+
 ---
+
+<details>
+<summary><strong>The decoder/encoder split: 2018-2025 (expand for timeline)</strong></summary>
 
 ### 0.2 · Decoder Revolution (2018–2025)
 
@@ -97,6 +113,8 @@ InstructGPT (1.3B parameters) outperformed raw GPT-3 (175B parameters) on most u
 
 Every model you call via API today — GPT-4, Claude, Gemini, LLaMA, Mistral — is a transformer decoder, scaled to billions of parameters, aligned with RLHF or DPO, and trained on trillions of tokens. The recipe is known. The differences are in training data, alignment objective, and engineering execution.
 
+</details>
+
 ---
 
 ## 1 · Core Idea
@@ -126,7 +144,9 @@ Each stage is covered in detail in [Ch.2 §4](../ch02-llm-inference-mechanics/in
 
 ## 2 · Tokenization
 
-Before you can estimate API costs, understand why the same English sentence tokenizes to different counts on GPT-4 vs Claude, or reason about how much document context fits in a single call — you need to understand what the model actually receives. It never sees raw text. Text is first broken into **tokens** — subword units — using a byte-pair encoding (BPE) vocabulary.
+> **If you've read Ch.0 §3.5:** You've seen the high-level intuition and ASCII examples. This section adds BPE algorithm details and deeper practical implications. Skim the italicized intro if familiar.
+
+*Before you can estimate API costs, understand why the same English sentence tokenizes to different counts on GPT-4 vs Claude, or reason about how much document context fits in a single call — you need to understand what the model actually receives. It never sees raw text. Text is first broken into **tokens** — subword units — using a byte-pair encoding (BPE) vocabulary.*
 
 ### How BPE Works
 
@@ -213,6 +233,8 @@ Larger context windows do not mean unlimited memory. Empirically, models show **
 Now that you understand *what* the model receives (tokens), let's see *how* it processes them. The transformer block is the engine that transforms raw token embeddings (vector representations; see Appendix A) into contextualized representations (vectors enriched with information from surrounding tokens). We'll build it step-by-step, starting with the core attention mechanism.
 
 ## 2A · Transformer Architecture — The Machinery Under the Hood
+
+> **If you've read Ch.0 §3.6:** You've seen the Google Search and "bank" disambiguation analogies. This section adds full formulas, worked examples with numbers, and multi-head specialization patterns. The italicized "intuition" paragraphs recap Ch.0—skim them if familiar.
 
 > **TL;DR for engineers:** Attention is a lookup mechanism. Each word searches all other words for relevant context, retrieves a weighted blend, and updates its representation. Multi-head attention runs 32 parallel lookups, each specializing in different patterns (grammar, meaning, distance). The formulas below formalize this intuition.
 

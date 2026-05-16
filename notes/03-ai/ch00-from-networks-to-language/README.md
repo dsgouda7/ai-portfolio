@@ -1,8 +1,14 @@
 # Ch.0 — From Networks to Language: The Transformer Revolution
 
+> **Reading order:** Two paths work:
+> - **Path A (Historical first):** Read this chapter for evolutionary context, then Ch.1 for technical depth
+> - **Path B (Technical first):** Read Ch.1 for transformer mechanics, then return here for the "why" behind the architecture
+>
+> Either way, both chapters are valuable. This chapter focuses on *why transformers won*; Ch.1 focuses on *how they work*.
+
 > **A brief history.** In the summer of 2017, eight Google engineers published a twelve-page paper with a deliberately provocative title: *"Attention Is All You Need."* They weren't describing a self-help book — they were discarding the recurrent loops that every language model had relied on since the 1980s. Within three years, their architecture (the transformer) became the foundation for GPT-3, BERT, and every major AI system deployed today. This chapter traces that evolutionary arc from sequential RNNs to parallel transformers.
 >
-> **Where you are in the curriculum.** You've built dense networks (notes/01 Ch.1-2), trained RNNs with vanishing gradients (notes/01 Ch.6), understood attention as soft dictionary lookup (notes/01 Ch.9), and seen transformers stack multi-head attention blocks (notes/01 Ch.10). You've also built ResNets with skip connections (notes/02 Ch.1). But you haven't yet connected why these specific architectural choices enabled the scale leap from 100M-parameter models (2018) to 175B-parameter GPT-3 (2020) to trillion-parameter systems today. This chapter provides that missing evolutionary context before Ch.1's technical deep-dive.
+> **Where you are in the curriculum.** You've built dense networks (notes/01 Ch.1-2), trained RNNs with vanishing gradients (notes/01 Ch.6), understood attention as soft dictionary lookup (notes/01 Ch.9), and seen transformers stack multi-head attention blocks (notes/01 Ch.10). You've also built ResNets with skip connections (notes/02 Ch.1). This chapter provides the missing evolutionary context—connecting *why* these specific architectural choices enabled the scale leap from 100M-parameter models (2018) to 175B-parameter GPT-3 (2020) to trillion-parameter systems today. **For deeper technical mechanics, proceed to Ch.1 after this chapter.**
 >
 > **Notation.** $h_t$ = hidden state at time $t$; $Q$, $K$, $V$ = query, key, value matrices in attention; $\text{softmax}(\cdot)$ = probability distribution over scores; $L$ = number of layers; $T$ = sequence length; $d$ = embedding dimension.
 
@@ -28,6 +34,8 @@ LSTMs mitigate gradient vanishing but don't eliminate the sequential dependency.
 ---
 
 ## 1 · The Evolution Arc — Every Architecture Solved One Problem
+
+> **Note:** If you're reading this after Ch.1, you've seen parts of this timeline. The diagram below is the unique contribution—expand the details only if you want the full story.
 
 Modern AI didn't appear overnight. Each architecture in the chain below solved a specific blocker that prevented the previous one from scaling:
 
@@ -291,7 +299,12 @@ Both architectures solve gradient flow, but for different dimensions:
 
 ## 3.5 · Tokenization — What Models Actually See
 
-Ch.1 assumes you understand tokens. Here's the 2-minute version.
+> **Skip if you've read Ch.1 §2.** This section provides quick intuition; Ch.1 covers BPE mechanics in depth.
+
+<details>
+<summary><strong>Quick tokenization intuition (click to expand)</strong></summary>
+
+*Ch.1 assumes you understand tokens. Here's the 2-minute version.*
 
 **Key insight:** Models don't see words — they see **tokens** (subword pieces).
 
@@ -330,11 +343,18 @@ Total: 6 tokens (costs money, counts toward 8k limit)
 
 **Ch.1 deep-dive:** How Byte Pair Encoding builds vocabularies from scratch. This primer gives you the "why it matters" first.
 
+</details>
+
 ---
 
 ## 3.6 · Q/K/V — Attention in Plain English
 
-Ch.1 dives into matrices immediately. Here's the intuition **before** the formulas.
+> **Skip if you've read Ch.1 §2A.** This section uses analogies; Ch.1 provides worked examples with formulas.
+
+<details>
+<summary><strong>Q/K/V intuition without math (click to expand)</strong></summary>
+
+*Ch.1 dives into matrices immediately. Here's the intuition **before** the formulas.*
 
 ### The Google Search Analogy
 
@@ -409,6 +429,8 @@ Token: "admitted" (which noun is the subject?)
 **Ch.1 shows:** The matrix math (Q@K.T, softmax, @V). This intuition helps you understand **why** we compute similarity between all token pairs.
 
 **Aha moment:** Every token asks "who are my relevant neighbors?" and attention computes the answer automatically — no hand-coded rules about "subjects come before verbs" or "river appears near geographic terms." The model learns these patterns from data.
+
+</details>
 
 ---
 
@@ -958,18 +980,19 @@ If you can answer these, **you're ready for Ch.1**.
 
 ## 12 · Bridge to Ch.1 — Transformer Architecture Deep Dive
 
-This chapter gave you the **evolutionary arc** and **high-level intuition**. Ch.1 zooms into the transformer itself:
+This chapter gave you the **evolutionary arc** and **high-level intuition**. Ch.1 provides the technical depth:
 
-- **§0-1:** Historical thread from Bahdanau attention (2014) to GPT-4 (2024)
-- **§2:** Tokenization — BPE vocabulary, why token counts vary across models
-- **§3:** Self-attention mechanics — Q/K/V projections, scaled dot-product
-- **§4:** Positional encoding — sinusoidal vs learned embeddings
-- **§5:** Encoder vs decoder architectures — BERT, GPT, T5
-- **§6:** Training objectives — masked LM (BERT) vs causal LM (GPT)
+- **§0:** Full historical timeline with decoder/encoder fork details (collapsible if you've already read it here)
+- **§2:** Complete BPE tokenization algorithm and vocabulary construction (builds on §3.5's intuition)
+- **§2A:** Attention mechanics with formulas — Q·K^T, softmax, weighted sum with worked examples (formalizes §3.6's analogies)
+- **§2B:** Encoder vs decoder architectures with attention masking patterns and code examples
+- **§3:** Interview questions table — practical knowledge for technical discussions
 
-**What changes:** Ch.1 has code examples, specific formulas, and token-level traces. This chapter was pure intuition.
+**What changes:** Ch.1 has executable code, specific formulas with dimensions, token-level traces through attention layers, and production architecture comparisons. This chapter was pure intuition and evolutionary context.
 
 **What stays the same:** The core insight — attention is soft lookup, skip connections are gradient highways, transformers are universal sequence models.
+
+**Suggested approach:** If you've been reading collapsible sections here, those same topics in Ch.1 can be skimmed. The unique content in Ch.1 is the formula derivations, worked examples, and interview prep table.
 
 ---
 
