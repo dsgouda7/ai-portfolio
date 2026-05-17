@@ -638,16 +638,16 @@ $$
 
 Before moving on, make sure you can answer:
 
-✅ **What does a loss function do?**  
+✅ **What does a loss function do?**
 _Converts all prediction errors into one number we minimize._
 
-✅ **Why do we square errors in MSE?**  
+✅ **Why do we square errors in MSE?**
 _Removes sign (under/over predictions both bad) and punishes big mistakes more._
 
-✅ **What does cross-entropy loss = 0.223 mean for a classification?**  
+✅ **What does cross-entropy loss = 0.223 mean for a classification?**
 _Model is reasonably confident in correct class (P ≈ 0.80), but not perfect._
 
-✅ **Why use $-\log(P)$ instead of $(1-P)$ for classification loss?**  
+✅ **Why use $-\log(P)$ instead of $(1-P)$ for classification loss?**
 _Logarithm gives larger gradients when very wrong, helping model learn faster._
 
 ---
@@ -715,16 +715,16 @@ This is a parabola with minimum at $w = 5$, where Loss = 0.
 
 Before moving on, make sure you can answer:
 
-✅ **What does the gradient tell us?**  
+✅ **What does the gradient tell us?**
 _Direction of steepest increase in loss. We go opposite (downhill) to decrease loss._
 
-✅ **Why does $w_{\text{new}} = w - \alpha \times \text{gradient}$ move us toward lower loss?**  
+✅ **Why does $w_{\text{new}} = w - \alpha \times \text{gradient}$ move us toward lower loss?**
 _The minus sign flips the gradient's "uphill" direction to "downhill"._
 
-✅ **What happens if learning rate $\alpha$ is too large?**  
+✅ **What happens if learning rate $\alpha$ is too large?**
 _We overshoot the minimum, causing oscillations or divergence (loss increases)._
 
-✅ **What happens if $\alpha$ is too small?**  
+✅ **What happens if $\alpha$ is too small?**
 _Training is slow — takes many iterations to converge._
 
 ---
@@ -749,7 +749,7 @@ Putting it all together, here's the complete training process:
 - **Loss functions** convert errors into one trainable number
   - MSE for regression: penalizes squared errors
   - Cross-entropy for classification: rewards confident correct predictions
-  
+
 - **Gradient descent** minimizes loss by following the slope
   - Gradient = direction of steepest increase → go opposite
   - Learning rate = step size (tune carefully!)
@@ -1176,7 +1176,7 @@ Flattening an image throws away critical information. The network has no idea th
 A fully-connected layer ignores all of this.
 
 > **Checkpoint:** Why can't we use regular dense layers for images?
-> 
+>
 > **Answer:** Two reasons: (1) Parameter explosion — a 224×224×3 image has 150k inputs, creating 150M parameters for just one layer. (2) Spatial structure loss — flattening destroys the spatial relationships between pixels.
 
 ---
@@ -1352,7 +1352,7 @@ Output
 ---
 
 > **Checkpoint:** Explain convolution in one sentence.
-> 
+>
 > **Answer:** A small filter (e.g., 3×3) slides across the image, computing a weighted sum at each position to detect local patterns like edges, with the same filter reused everywhere (parameter sharing).
 
 ---
@@ -1598,7 +1598,7 @@ graph TB
     attn["§7: Attention<br/>Q/K/V, soft lookup"]
     skip["§8: Skip Connections<br/>Gradient highway"]
     enc["§9: Encoder-Decoder<br/>Bidirectional vs causal"]
-    
+
     ml --> nn
     nn --> train
     train --> emb
@@ -1608,7 +1608,7 @@ graph TB
     attn --> skip
     skip --> enc
     enc --> transformer["🎯 TRANSFORMER<br/>Architecture<br/>(Ch.1)"]
-    
+
     style transformer fill:#15803d,stroke:#e2e8f0,stroke-width:3px,color:#ffffff
 ```
 
@@ -1686,11 +1686,11 @@ Let's make this concrete with GPT-3 (175B parameters):
 
 You now understand:
 
-✅ **Why transformers exist**: RNNs couldn't parallelize (§6) → attention solved it (§7)  
-✅ **How they work**: Embeddings (§4) → attention layers (§7) → skip connections (§8) → trained with backprop (§3)  
-✅ **Why they scale**: Skip connections (§8) enable 96+ layers without vanishing gradients  
-✅ **What training means**: Forward pass → cross-entropy loss → backprop → gradient descent (§0-3)  
-✅ **The three variants**: Encoder-only (BERT), decoder-only (GPT), encoder-decoder (T5) from §9  
+✅ **Why transformers exist**: RNNs couldn't parallelize (§6) → attention solved it (§7)
+✅ **How they work**: Embeddings (§4) → attention layers (§7) → skip connections (§8) → trained with backprop (§3)
+✅ **Why they scale**: Skip connections (§8) enable 96+ layers without vanishing gradients
+✅ **What training means**: Forward pass → cross-entropy loss → backprop → gradient descent (§0-3)
+✅ **The three variants**: Encoder-only (BERT), decoder-only (GPT), encoder-decoder (T5) from §9
 
 **Ch.1 will show you:**
 
@@ -1817,7 +1817,7 @@ GPT-3 has **175 billion parameters**, all trained using gradient descent (§2) a
 
 ---
 
-**You're ready for Ch.1.** 
+**You're ready for Ch.1.**
 
 When you open Chapter 1 and see "multi-head self-attention with skip connections trained on cross-entropy loss," every word will make sense. You'll understand why transformers obsoleted RNNs (§6 vs §7), why they stack 96 layers without breaking (§8), and how GPT differs from BERT (§9).
 
