@@ -1,0 +1,25 @@
+# Azure Configuration Template
+# Copy this file to config.txt and fill in your actual values
+# Keep config.txt secure and do not commit to version control
+
+# Azure OpenAI Configuration
+AZURE_OPENAI_ENDPOINT=https://your-resource-name.openai.azure.com/
+AZURE_OPENAI_DEPLOYMENT=your-deployment-name
+AZURE_OPENAI_API_KEY=your-api-key-here
+AZURE_OPENAI_API_VERSION=2025-01-01-preview
+
+# Azure OpenAI Embeddings Configuration
+AZURE_EMBEDDINGS_ENDPOINT=https://your-resource-name.cognitiveservices.azure.com/
+AZURE_EMBEDDINGS_DEPLOYMENT=text-embedding-3-small
+AZURE_EMBEDDINGS_API_VERSION=2024-12-01-preview
+
+# Azure AI Search Configuration
+AZURE_SEARCH_SERVICE_NAME=your-search-service-name
+AZURE_SEARCH_ADMIN_KEY=your-search-admin-key
+AZURE_SEARCH_INDEX_NAME=your-index-name
+
+# Azure AI Foundry Configuration
+AZURE_TENANT_ID=your-tenant-id
+AZURE_AI_FOUNDRY_ENDPOINT=https://your-project.services.ai.azure.com/api/projects/your-project-id
+AZURE_AI_AGENT_NAME=your-agent-name
+AZURE_AI_AGENT_VERSION=1
