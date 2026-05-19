@@ -20,6 +20,85 @@
 
 ***
 
+## Common Misconceptions — Before You Start
+
+### Misconception #1: "Chain-of-thought makes the model smarter"
+
+**Why it's seductive:** CoT prompting dramatically improves accuracy on math and logic tasks (17% → 60% on GSM8K). It looks like the model suddenly gained reasoning ability.
+
+**The truth:** The model *already had* reasoning capacity from training on billions of text examples that included worked solutions. CoT prompting doesn't make the model smarter — it **forces it to show its work**. Without CoT, the model compresses all intermediate steps into one forward pass, creating no opportunity to self-correct. With CoT, each generated step becomes visible context for the next prediction, making errors catchable.
+
+*"CoT doesn't teach reasoning. It forces reasoning into the observable stream."*
+
+### Misconception #2: "Reasoning tokens are free — longer is always better"
+
+**Why it's seductive:** More reasoning steps → better accuracy. Trained reasoning models (o1, DeepSeek-R1) allocate thousands of internal tokens per query. Surely more thinking = better answers?
+
+**The truth:** Reasoning tokens **cost money and add latency**. If a single-pass answer costs 100 tokens and CoT costs 500 tokens, you're paying **5× more**. Self-consistency at K=5 chains? **25× more**. For simple factual queries ("What is the capital of France?"), CoT adds 500 tokens of unnecessary reasoning before outputting "Paris" — zero accuracy gain, 500× cost increase.
+
+*"Reasoning tokens scale cost linearly. Allocate them like you're paying per mile."*
+
+### Misconception #3: "Self-consistency always helps"
+
+**Why it's seductive:** Sampling multiple reasoning chains and voting reduces individual-chain errors. More samples = more accuracy, right?
+
+**The truth:** Self-consistency only helps when:
+1. **The problem has multiple valid reasoning paths** (e.g., "5 - 3 + 7" can be solved left-to-right or by grouping)
+2. **Individual chains have diverse errors** (if all chains make the same mistake, voting doesn't help)
+3. **The answer is categorical** (multiple choice, yes/no, short answer)
+
+For open-ended generation ("Write a product description"), there's no majority vote — every chain produces different creative output. Self-consistency costs 5–10× with **zero benefit**.
+
+*"Voting works when paths diverge. If all roads lead to the same wrong turn, democracy fails."*
+
+### Misconception #4: "CoT reasoning is faithful — if the model shows work, the work is correct"
+
+**Why it's seductive:** The model generates step-by-step reasoning that looks logical. Surely it followed those steps to reach the answer?
+
+**The truth:** CoT chains can be **unfaithful** — the model generates reasoning that *looks* correct but doesn't reflect the actual token predictions. Example:
+
+```
+Query: "A is cheaper than B. B = C. A = $12. What does C cost?"
+Model: "Step 1: A < B, B = C, A = $12.
+        Step 2: Since B = C, let's assume B = $15 (reasonable guess).
+        Step 3: Therefore C = $15."
+```
+
+The model inserted an **unjustified assumption** at Step 2 ("let's assume B = $15"). The correct answer is "Cannot be determined from given constraints." But if unjustified assumptions lead to correct answers on average during training, RL reinforces that behavior.
+
+*"Chain-of-thought shows a story. Verify that the story is true."*
+
+### Misconception #5: "o1's hidden reasoning is fundamentally different from CoT"
+
+**Why it's seductive:** o1 generates "hidden reasoning tokens" that users never see. It must be using a separate reasoning system, not just next-token prediction.
+
+**The truth:** o1 is **still doing autoregressive next-token prediction**. The hidden reasoning tokens are just CoT chains that aren't shown to the user. The breakthrough is RL training that learned to allocate more compute on harder problems (**test-time compute scaling**) — not a new reasoning architecture. o1 = CoT + RL + hidden tokens.
+
+*"Hidden reasoning is not magic. It's chain-of-thought behind a curtain."*
+
+### Misconception #6: "Trained reasoning models (o1, R1) don't hallucinate"
+
+**Why it's seductive:** o1 achieves 97% accuracy on MATH-500 (competition math). It must be grounding answers in verified facts.
+
+**The truth:** Trained reasoning models **still hallucinate** on factual queries outside their training data. If you ask "What is our company's authentication SLA p99 latency requirement?", o1 will generate a plausible-sounding answer from training patterns ("SLAs are usually 50-200ms...") — not retrieve the actual documented requirement. Reasoning over parametric memory (training data) ≠ reasoning over retrieved facts (RAG).
+
+*"Reasoning doesn't fix hallucination. It makes hallucinations more convincing."*
+
+### Misconception #7: "Process Reward Models (PRM) always beat Outcome Reward Models (ORM)"
+
+**Why it's seductive:** Lightman et al. (2023) showed PRM training improved GPT-4 accuracy by 6.7 percentage points over ORM. Clearly step-level supervision is always better.
+
+**The truth:** PRM requires **10× more annotation cost** (label every step, not just final answers). For simple, repetitive tasks where the procedure is always the same ("5 + 3 = ?"), ORM is sufficient. PRM is justified when:
+- Step-level auditability matters (medical, legal, financial domains)
+- Long reasoning chains (10+ steps) where early errors compound
+- Generalization to new problem types (training on algebra, deploying on geometry)
+
+For budget-constrained projects with 10,000 problems to label, ORM may be the only feasible option.
+
+*"PRM buys generalization. Pay the 10× cost when transfer matters."*
+
+***
+
 ## § 0 · The Problem — Why Single-Pass Fails on Multi-Step Reasoning
 
 Before January 2022, the dominant approach to LLM prompting was direct question-answering: feed the model a question, get an answer in one forward pass. This worked well for factual recall and simple pattern completion, but failed catastrophically on multi-step reasoning tasks.
@@ -55,14 +134,19 @@ graph TD
     style Q fill:#66ff66
 ```
 
-**The structural failure:** Consider the query *"A is cheaper than B. B costs the same as C. A costs $12. What does C cost?"* A single forward pass from question to answer compresses all intermediate reasoning into one decoding step. The model must:
+**Your mission:** You're building a customer support chatbot that answers policy questions. A user asks: *"I bought insurance on Jan 15. I submitted a claim on Feb 10. My policy has a 30-day waiting period. Am I covered?"*
 
-1. Parse three constraints (A < B, B = C, A = $12)
-2. Check if B's price is derivable from the constraints
-3. Check if C's price is derivable given what's known about B
-4. Generate a final answer
+**Enemy #1: Single-pass generation jumps to conclusion**
 
-In a single-pass architecture, there is no mechanism for the model to *catch its own errors* at step 2 or 3. If the model makes a wrong inference at step 2 ("B must equal $12 because B = C and we need a number"), that error propagates to the final answer with no opportunity for correction.
+A standard LLM generates: "Yes, you're covered" (wrong — 26 days elapsed, policy requires 30).
+
+**Why it failed:** The model compressed four reasoning steps into one forward pass:
+1. Parse three constraints (purchase date, claim date, waiting period)
+2. Calculate days elapsed: Feb 10 - Jan 15 = 26 days
+3. Compare 26 days vs 30-day requirement
+4. Generate answer
+
+In a single-pass architecture, there is no mechanism for the model to *catch its own errors* at step 2 or 3. If the model makes a wrong inference at step 2 ("Jan 15 to Feb 10 is about a month, close enough"), that error propagates to the final answer with no opportunity for correction.
 
 **Empirical evidence from Wei et al. (2022):**
 - GPT-3 (175B parameters) on GSM8K (grade-school math): **17.7% accuracy** with standard prompting
@@ -71,11 +155,15 @@ In a single-pass architecture, there is no mechanism for the model to *catch its
 
 The failure was not a lack of knowledge — GPT-3 had seen arithmetic during training. The failure was *architectural*: no intermediate reasoning steps meant no opportunity to decompose the problem into manageable sub-tasks.
 
-> **Key insight:** Single-pass generation treats every problem as a pattern-completion task. Multi-step reasoning requires *visible intermediate context* that the model can condition on for subsequent steps — something the standard prompt-answer format did not provide.
+*"Single-pass answers trust one coin flip. Chain-of-thought shows the coins being flipped."*
+
+> **About this framing:** This chapter presents CoT as a solution to single-pass failures. Historically, CoT emerged from empirical experimentation ("what if we add worked examples?"), not from a theoretical analysis of single-pass limitations. We frame it as enemy → solution for pedagogical clarity.
 
 ***
 
-## § 1 · Chain-of-Thought Prompting (Wei et al., 2022)
+## § 1 · Chain-of-Thought Prompting (Wei et al., 2022) — The Tool Is Forged
+
+**Enemy #1 is defeated:** CoT prompting gives the model visible intermediate steps to condition on.
 
 **January 2022** — Wei, Tay, Bommasani, et al. published *"Chain-of-Thought Prompting Elicits Reasoning in Large Language Models"*. The core idea was almost trivially simple: show the model *how* to break down a problem by providing worked examples that include intermediate reasoning steps.
 
@@ -170,11 +258,76 @@ graph TD
 
 **Tradeoff:** Zero-shot CoT adds ~5 tokens to the prompt. Few-shot CoT adds 200–400 tokens (depending on example complexity). For cost-sensitive applications at scale, zero-shot CoT is nearly free; few-shot CoT provides better format control but at measurable cost.
 
+*"Compressed reasoning is single-threaded. Chain-of-thought parallelizes error detection across the visible stream."*
+
+### 1.3 Deep Dive: Why Does "Let's Think Step by Step" Actually Work?
+
+**The question:** Zero-shot CoT ("Let's think step by step") feels like magic. Why does appending 5 tokens change the model's behavior so dramatically?
+
+**The answer:** During instruction tuning, the model saw thousands of examples where the phrase "think step by step" preceded a worked solution:
+
+```
+Training example 1:
+"Question: 5 + 3 × 2 = ?
+Let's think step by step:
+- Order of operations: multiplication first
+- 3 × 2 = 6
+- Then 5 + 6 = 11
+Answer: 11"
+
+Training example 2:
+"Question: If John has 5 apples and gives 2 away, how many does he have?
+Let's think step by step:
+- John starts with 5
+- Gives away 2: 5 - 2 = 3
+Answer: 3"
+
+[...thousands more examples...]
+```
+
+**What the model learned:** The token sequence "Let's think step by step" is a **prompt anchor** — a learned trigger that shifts the probability distribution over next tokens. After seeing this phrase:
+
+- P("Step 1:") increases
+- P("The answer is") decreases (too early to conclude)
+- P(intermediate reasoning tokens) increases
+
+**Concrete example:**
+
+```
+Prompt: "What is 15% of 80?"
+P(next token | standard prompt):
+  "12" → 0.42 (direct answer)
+  "Let" → 0.08
+  "Step" → 0.03
+
+Prompt: "What is 15% of 80? Let's think step by step."
+P(next token | with anchor):
+  "15%" → 0.31 (start reasoning)
+  "Step" → 0.28
+  "First" → 0.19
+  "12" → 0.04 (direct answer suppressed)
+```
+
+**Why it unlocks reasoning paths:** During pretraining, the model saw billions of text examples that included worked solutions (textbooks, Stack Overflow answers, Wikipedia proofs). Those reasoning patterns are **latent in the weights** but not activated by standard prompts. The anchor phrase "think step by step" shifts the token distribution to favor those latent reasoning paths.
+
+**Famous examples from training data:**
+- *"To find the area of a circle, we use the formula πr². Let's break this down..."*
+- *"The proof of the Pythagorean theorem: Step 1: Draw a square..."*
+- *"Debugging this code: First, check if the variable is initialized..."*
+
+The model learned: **"After 'step by step', emit worked solutions."**
+
+*"The reasoning was always there. The anchor just opens the door."*
+
 > **Key insight:** CoT works because it transforms an implicit reasoning problem into an explicit sequential generation task. The model generates each step *as text*, and that text becomes part of the context window for the next step — turning compressed multi-step inference into tractable one-step-at-a-time prediction.
 
 ***
 
-## § 2 · Self-Consistency (Wang et al., 2022)
+## § 2 · Self-Consistency (Wang et al., 2022) — Overcoming Enemy #2
+
+**Victory achieved:** CoT gives us visible reasoning steps.
+
+**Enemy #2 emerges:** A single CoT chain can take a wrong fork early ("Let's assume B = $15...") and propagate that error to the final answer. How do we catch errors within the reasoning chain itself?
 
 **March 2022** — Wang, Wei, Schuurmans, et al. noticed a problem: even with CoT, a single reasoning chain could take a wrong fork early and propagate that error all the way to the final answer. Their solution: **sample many chains, take the majority vote**.
 
@@ -274,7 +427,49 @@ graph TD
 - **Categorical answers:** Tasks where the final answer is one of a discrete set (multiple choice, yes/no, classification)
 - **Not for open-ended generation:** Majority voting does not apply to creative writing or long-form answers with no canonical correct output
 
+*"One expert can be wrong. Five experts, rarely all wrong the same way."*
+
 > **Key insight:** Self-consistency exploits the fact that errors are *independent* across sampled chains. If the correct reasoning path has probability $p = 0.6$ and the wrong path has $p = 0.4$, the probability that the majority of $K = 5$ chains reach the correct answer is $\approx 0.68$ — higher than any single chain.
+
+***
+
+## § 2.4 · Cost Analysis: Standard vs CoT vs Self-Consistency
+
+Let's make the token economics concrete. Consider a customer support query: *"I bought insurance on Jan 15. I submitted a claim on Feb 10. My policy has a 30-day waiting period. Am I covered?"*
+
+| Approach | Reasoning tokens | Total tokens | Cost multiplier |
+|---|---|---|---|
+| **Standard (single-pass)** | 0 (direct answer) | 100 (prompt + answer) | 1× (baseline) |
+| **Zero-shot CoT** | ~200 (step-by-step reasoning) | 300 | 3× |
+| **Few-shot CoT** | ~400 (3 examples + reasoning) | 500 | 5× |
+| **Self-consistency (K=5)** | 200 per chain × 5 | 1,100 | 11× |
+| **Self-consistency (K=10)** | 200 per chain × 10 | 2,100 | 21× |
+| **Trained reasoning (o1-style)** | ~5,000 (hidden reasoning) | 5,100 | 51× |
+
+**Real-world cost example (GPT-4o pricing at $5/1M input tokens, $15/1M output tokens):**
+
+- **Standard prompt:** $0.0005 per query (100 tokens)
+- **Zero-shot CoT:** $0.0015 per query (3× cost)
+- **Self-consistency K=5:** $0.0055 per query (11× cost)
+- **Trained reasoning:** $0.0255 per query (51× cost)
+
+**At 1 million queries/month:**
+- Standard: **$500/month**
+- CoT: **$1,500/month** (+$1,000)
+- Self-consistency K=5: **$5,500/month** (+$5,000)
+- Trained reasoning: **$25,500/month** (+$25,000)
+
+**When the cost is justified:**
+- **High-stakes decisions:** Insurance claim approval, medical diagnosis, legal analysis — cost of one error > $5,000
+- **Categorical answers:** Multiple choice exams, yes/no decisions where voting reduces variance
+- **Complex multi-constraint problems:** Tax code interpretation, regulatory compliance checks
+
+**When the cost is not justified:**
+- **Simple factual queries:** "What is the capital of France?" — single-pass is 99.9% accurate
+- **Open-ended generation:** Creative writing, product descriptions — no majority vote possible
+- **High-volume, low-stakes queries:** Chatbot small talk, FAQ lookups
+
+*"Reasoning tokens are not free. Spend them where errors cost more than compute."*
 
 ***
 
@@ -389,11 +584,17 @@ They mentally explore a **tree of possibilities**, evaluate which branches look 
 | **Graph of Thoughts** | DAG with merge/split | Complex multi-stage workflows | $O(n \cdot m)$ (50–200×) |
 | **Reflexion** | Retry with self-reflection | Tasks with verifiable correctness | 2–5× (depends on retry count) |
 
+*"Linear chains for known paths. Tree search for mazes."*
+
 > **Key insight:** Linear CoT handles 80–85% of reasoning tasks. Advanced structures (ToT, GoT, Reflexion) add significant cost and complexity — only justified when the problem explicitly requires exploration, backtracking, or iterative refinement.
 
 ***
 
 ## § 4 · Reward Models — Process vs Outcome Supervision
+
+**Victory achieved:** CoT + self-consistency gives us multiple reasoning paths with error correction.
+
+**Enemy #3 emerges:** The model generates plausible-looking reasoning steps that still lead to wrong answers. Training to improve reasoning requires better reward signals. Should we grade the final answer only (cheap but reward-hackable) or grade every step (expensive but faithful)?
 
 CoT prompting unlocked multi-step reasoning, but researchers quickly realized a problem: the model could generate plausible-looking reasoning steps that still led to wrong answers. Training models to improve reasoning quality required better reward signals — which led to the distinction between **Process Reward Models (PRM)** and **Outcome Reward Models (ORM)**.
 
@@ -576,11 +777,17 @@ Both get the right answer. But when the problem changes:
 | **Reward hacking risk** | High — correct answer via wrong reasoning | Low — every step must be correct |
 | **Use case** | Stable, well-defined domains | High-stakes, multi-step reasoning |
 
+*"ORM grades the essay by the conclusion. PRM grades every paragraph."*
+
 > **Key insight:** PRM forces the model to learn *how to reason*, not just *what answers look correct*. The cost is 10× higher annotation effort — justified when step-level auditability matters (medical, legal, financial domains).
 
 ***
 
 ## § 5 · Trained Reasoning — o1, DeepSeek-R1, and Test-Time Compute
+
+**Victory achieved:** PRM training gives us models that learn correct reasoning procedures, not just correct answers.
+
+**Enemy #4 emerges:** CoT prompting adds 5-400 tokens per query. Can we train the model to reason *without* prompt overhead? And can we make it allocate more compute on harder problems (adaptive test-time compute scaling)?
 
 By mid-2024, a new paradigm emerged: instead of *prompting* models to generate reasoning chains, **train** them to generate long internal reasoning traces via reinforcement learning. This is the approach behind OpenAI's **o1** (September 2024) and **DeepSeek-R1** (January 2025).
 
@@ -669,11 +876,79 @@ By mid-2024, a new paradigm emerged: instead of *prompting* models to generate r
 | **DeepSeek-R1** | Jan 2025 | Hidden (internal tokens) | Pure RL (no SFT) | Open-weights reasoning model |
 | **o3** | Dec 2024 | Hidden (internal tokens) | RLVR + high-compute mode | State-of-the-art on AIME, Codeforces |
 
+*"Prompted reasoning shows its work. Trained reasoning hides its work and scales compute adaptively."*
+
 > **Key insight:** Trained reasoning (o1/R1) is not a replacement for CoT prompting — it's a complementary approach. CoT prompting gives users *visible, auditable reasoning*. Trained reasoning gives *adaptive test-time compute* and eliminates prompt overhead. Both have valid use cases.
 
 ***
 
-## § 6 · Failure Modes of Chain-of-Thought Reasoning
+## § 6 · Production Deployment Guide — When to Use CoT (and When to Skip)
+
+### 6.1 Decision Tree: Which Reasoning Approach?
+
+```
+Is the query simple factual recall? ("What is X?", "Who invented Y?")
+├─ YES → Standard prompting (no CoT)
+│         Cost: 1× | Latency: 200ms | Accuracy: 95%+
+│
+└─ NO → Does the query require multi-step reasoning?
+   ├─ YES → Is the answer categorical (multiple choice, yes/no, short answer)?
+   │  ├─ YES → Is this high-stakes? (cost of error > $100)
+   │  │  ├─ YES → Self-consistency (K=5-10)
+   │  │  │        Cost: 5-10× | Latency: 1-2s | Accuracy: +10-15%
+   │  │  │
+   │  │  └─ NO → Zero-shot CoT ("Let's think step by step")
+   │  │           Cost: 3× | Latency: 400ms | Accuracy: +5-10%
+   │  │
+   │  └─ NO (open-ended) → Few-shot CoT (provide format examples)
+   │                        Cost: 5× | Latency: 600ms | Quality: +20%
+   │
+   └─ NO (single-step reasoning) → Standard prompting
+                                    Cost: 1× | Latency: 200ms
+```
+
+### 6.2 Production Use Cases
+
+**When CoT is essential:**
+
+| Domain | Query type | Approach | Why |
+|---|---|---|---|
+| **Insurance claims** | "I bought policy on Jan 15, claimed Feb 10. 30-day waiting period. Covered?" | Zero-shot CoT | Multi-constraint logic; errors cost $1,000+ per claim |
+| **Tax compliance** | "Do stock option grants count as ordinary income or capital gains?" | Few-shot CoT + examples | Complex regulatory rules; errors trigger audits |
+| **Medical diagnosis** | "Patient has symptoms X, Y, Z. History of condition A. Differential diagnosis?" | Self-consistency K=5 | Life-critical; need confidence intervals |
+| **Code debugging** | "This function returns wrong result on edge case. Where's the bug?" | Zero-shot CoT | Multi-step tracing; visible reasoning helps engineers verify |
+| **Legal analysis** | "Does this contract clause violate non-compete law in California?" | Few-shot CoT | Precedent-based reasoning; step-by-step citations required |
+
+**When CoT hurts more than it helps:**
+
+| Query type | Why CoT fails | Correct approach |
+|---|---|---|
+| **Simple factual recall** ("Capital of France?") | Adds 500 tokens of reasoning before outputting "Paris" — zero accuracy gain, 5× cost | Standard prompting |
+| **Already-deterministic queries** ("5 + 3 = ?") | Model is 99.9% accurate without CoT; reasoning steps can introduce arithmetic errors | Standard prompting |
+| **High-volume FAQ** ("How do I reset my password?") | 1M queries/month × 3× cost = +$2,000/month for no accuracy improvement | Standard prompting + caching |
+| **Creative writing** ("Write a product tagline") | No "correct" answer to vote on; CoT format conflicts with creative flow | Standard prompting or few-shot without reasoning |
+| **Real-time latency requirements** (<100ms) | CoT adds 200-400ms; self-consistency adds 1-2s | Standard prompting + streaming |
+
+### 6.3 Cost-Accuracy Trade-Off by Model
+
+| Model | Standard accuracy | CoT accuracy | Cost multiplier | When to use CoT |
+|---|---|---|---|---|
+| **GPT-3.5** | 52% (MATH) | 67% | 3× | Always — accuracy gain justifies cost |
+| **GPT-4** | 74% (MATH) | 82% | 3× | High-stakes tasks only |
+| **GPT-4o** | 76% (MATH) | 84% | 3× | Marginal — diminishing returns |
+| **o1-preview** | N/A (has hidden CoT) | 85% (MATH) | 4× vs GPT-4o | When accuracy > 80% is required |
+| **Claude 3.5 Sonnet** | 71% (MATH) | 79% | 3× | Cost-conscious alternative to GPT-4 |
+
+**Strategic retreat:** You cannot make every query use CoT without bankrupting the inference budget. **Pick your battlefield:**
+- **High-stakes, low-volume:** Insurance claims, legal analysis → Self-consistency
+- **Medium-stakes, medium-volume:** Customer support, code review → Zero-shot CoT
+- **Low-stakes, high-volume:** FAQ, password resets → Standard prompting
+
+*"Not every question deserves a PhD thesis. Some just need the answer."*
+
+***
+
+## § 7 · Failure Modes of Chain-of-Thought Reasoning
 
 CoT and trained reasoning significantly improve accuracy on multi-step tasks, but they introduce new failure modes that do not exist in single-pass generation. Understanding these failures is critical for production deployment.
 
@@ -773,11 +1048,13 @@ Answer: "Authentication service violates SLA"
 | **Overthinking** | Excessive reasoning tokens on simple queries | RL training does not distinguish simple from hard | Adaptive compute control, prompt framing |
 | **Hallucinated tool results** | Model generates plausible tool output that was never returned | Tool results are text; model cannot verify authenticity | Structured output, verification layer |
 
+*"Reasoning chains don't guarantee truth. They guarantee traceability."*
+
 > **Key insight:** CoT and trained reasoning are not silver bullets. They introduce new failure modes (unfaithful reasoning, sycophancy, overthinking, hallucination) that require explicit mitigation strategies. For production deployment, assume *all* reasoning traces are potentially unfaithful until verified.
 
 ***
 
-## § 7 · Key Distinctions for Technical Interviews
+## § 8 · Key Distinctions for Technical Interviews
 
 This section consolidates the critical conceptual distinctions that interviewers probe when evaluating understanding of chain-of-thought reasoning.
 
@@ -798,7 +1075,7 @@ This section consolidates the critical conceptual distinctions that interviewers
 
 ***
 
-## § 8 · Bridge to Next Chapter
+## § 9 · Bridge to Next Chapter
 
 Chain-of-thought reasoning gives LLMs the ability to decompose multi-step problems into sequential reasoning traces — a dramatic improvement over single-pass generation. Self-consistency, tree search, and trained reasoning (o1/R1) further improve accuracy by exploring multiple paths or allocating adaptive compute.
 

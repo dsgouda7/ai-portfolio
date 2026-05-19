@@ -12,13 +12,113 @@
 
 ---
 
-## 0 · The Three Training Stages
+## Common Misconceptions
 
-The three stages below explain how a raw text predictor becomes an instruction-following assistant, and why stylistic differences between GPT-4 and Claude persist even after both receive instruction fine-tuning.
+**Before you start:** These misconceptions poison your first three months of understanding LLM training. Correct them now.
 
-### Stage 1 — Pretraining: Learning Language from the Internet
+### Misconception 1: "Training is just running backprop on text"
 
-🍳 **Cooking analogy:** Learning to predict the next ingredient by reading thousands of recipes. The model learns what flavors go together, typical cooking sequences, and ingredient combinations — but not how to follow your specific dinner request.
+**Why it's seductive:** People see loss curves decreasing and think "it's learning like any neural network."
+
+**The truth:** There are three completely different training regimes with different objectives, data sources, costs, and outcomes. Pretraining ($5M-$100M) learns language from raw internet text. SFT ($50k-$200k in annotation) teaches instruction format from human-written examples. RLHF ($500k-$5M in annotation) learns human preferences from pairwise comparisons. Conflating them makes you think alignment is cheap (it's not) or that more pretraining data solves sycophancy (it doesn't).
+
+*"Pretraining builds the engine. SFT installs the steering wheel. RLHF teaches it where humans want to go."*
+
+### Misconception 2: "RLHF makes the model truthful"
+
+**Why it's seductive:** Models refuse harmful requests and admit uncertainty after RLHF, so it seems like they learned honesty.
+
+**The truth:** RLHF optimizes for human **approval**, not truth. If annotators prefer confident-sounding answers, the model learns confidence. If annotators prefer agreeable responses, the model learns to agree with user framing even when wrong. This creates **sycophancy**: push back on a correct answer and the model will change it. Constitutional AI and adversarial annotation try to fix this, but the core problem remains: you're training the model to make humans happy, not to be right.
+
+*"RLHF teaches helpfulness, not honesty. The two are not the same."*
+
+### Misconception 3: "You can just RLHF any model to make it useful"
+
+**Why it's seductive:** RLHF seems like the magic step that creates ChatGPT, so why not skip pretraining?
+
+**The truth:** RLHF refines existing capabilities; it doesn't create them. A randomly initialized model has no knowledge to align. A pretrained model with 2B parameters can't develop complex reasoning through RLHF. You need the pretraining foundation ($5M-$100M) before alignment ($500k-$5M) has anything to work with. Companies don't skip pretraining because it's **95% of the model's intelligence**. RLHF is the final 5% that makes it usable.
+
+*"You can't align a mind that doesn't exist. Pretraining is the prerequisite."*
+
+### Misconception 4: "GPT-4 and Claude are different architectures"
+
+**Why it's seductive:** They behave so differently—GPT-4 is concise and confident, Claude is verbose and cautious—that they must be built differently.
+
+**The truth:** Both are transformer decoders trained with similar three-stage pipelines. The personality difference comes from **annotation guidelines during RLHF**. OpenAI annotators preferred brief, professional responses. Anthropic annotators preferred thoughtful, nuanced responses. Same architecture. Different human preferences encoded during alignment.
+
+*"Model personality is written by annotators, not architects."*
+
+### Misconception 5: "Emergent abilities are mysterious magic"
+
+**Why it's seductive:** Capabilities like chain-of-thought reasoning appear suddenly at ~100B parameters without explicit training.
+
+**The truth:** "Emergent" means the capability exists latently in the training data but requires sufficient model capacity to compress and reconstruct it. Small models see the same reasoning examples but can't allocate enough parameters to represent the patterns. At 100B parameters, the model finally has enough capacity. Not magic—**capacity threshold**.
+
+*"Emergence is when the model gets large enough to fit what was always in the data."*
+
+### Misconception 6: "More pretraining data always helps"
+
+**Why it's seductive:** GPT-3 used 300B tokens, LLaMA 2 used 2T tokens, and quality improved.
+
+**The truth:** Chinchilla scaling laws (2022) showed optimal ratio is ~20 tokens per parameter. For a 7B model, that's 140B tokens. Beyond 2T tokens, you hit **diminishing returns**—the model has seen most patterns multiple times. More data helps if it's higher quality or covers gaps, but raw volume plateaus. GPT-3 was **undertrained** (300B tokens for 175B params). Modern models are trained to saturation.
+
+*"Training past saturation is expensive overfitting, not continuous improvement."*
+
+---
+
+## 0 · The Three Training Stages — Your Mission
+
+**Your enemy:** A raw transformer outputs gibberish. You need it to become ChatGPT.
+
+The three-stage pipeline is your weapon. Each stage defeats a specific enemy:
+
+| Stage | Enemy | Tool You Forge | Cost | Outcome |
+|-------|-------|----------------|------|----------|
+| **Pretraining** | Random weights produce nonsense | Learn language from 2T tokens | $5M-$100M | Smart but unhelpful (completes text) |
+| **SFT** | Model completes text instead of answering | Teach instruction format from 10k-100k examples | $50k-$200k | Follows instructions but bland |
+| **RLHF/DPO** | Responses are technically correct but not what humans want | Learn preferences from 30k-1M comparisons | $500k-$5M | Helpful, harmless, honest (aligned) |
+
+> **About this framework:** The three-stage separation is pedagogical, not historical. Real training is messier—companies do multiple SFT rounds, iterative RLHF, continual pretraining on new data. But the conceptual separation (language → instructions → preferences) holds.
+
+**The progression:**
+
+```python
+# Enemy #1: Raw model → gibberish
+model = Transformer(random_init=True)
+model.generate("What is the capital of France?")
+# Output: "jKl9#mP2..." (random tokens)
+
+# Tool #1: Pretraining → smart but unhelpful
+model.pretrain(tokens=2_000_000_000_000, cost="$10M")  # 2 trillion tokens
+model.generate("What is the capital of France?")
+# Output: "? How many people live there? What is the GDP of France?" (completes text)
+
+# Enemy #2: Doesn't follow instructions
+# Tool #2: SFT → follows format
+model.sft(examples=50_000, cost="$200k")  # Human-written instruction/response pairs
+model.generate("What is the capital of France?")
+# Output: "The capital of France is Paris." (correct but robotic)
+
+# Enemy #3: Correct but not aligned with human preferences
+# Tool #3: RLHF → helpful/harmless/honest
+model.rlhf(preferences=100_000, cost="$2M")  # Pairwise comparisons
+model.generate("What is the capital of France?")
+# Output: "Paris is the capital of France. It's located in the north-central part of the country along the Seine River." (helpful context)
+```
+
+*"Language is learned from trillions. Instructions from thousands. Preferences from comparisons."*
+
+### Stage 1 — Pretraining: Defeating the Gibberish Enemy
+
+**Enemy #1:** Your model has 7 billion random parameters. Prompt it and it outputs token soup.
+
+**Your weapon:** 2 trillion tokens of internet text. Train for 3 weeks on 128 GPUs. Cost: $160k-$10M depending on scale.
+
+**Victory condition:** Model completes sentences coherently, writes code, does arithmetic, translates languages—everything that was in the training data.
+
+**What you DON'T get:** A helpful assistant. The model predicts `"? How many..."` after `"What is the capital of France"` because that's what it saw in training data (someone continuing the discussion), not because it wants to help you.
+
+**Cooking analogy:** Learning to predict the next ingredient by reading thousands of recipes. The model learns what flavors go together, typical cooking sequences, and ingredient combinations — but not how to follow your specific dinner request.
 
 A standard transformer decoder is trained on a massive corpus with the cross-entropy loss (a measure of prediction error; see Ch.1 Appendix A) over next-token prediction. No human labels — the text itself is the supervision.
 
@@ -27,6 +127,8 @@ A standard transformer decoder is trained on a massive corpus with the cross-ent
 **What it doesn't learn:** to be helpful, to follow instructions, or to prefer honest over fluent answers.
 
 A pretrained model responds to `"What is the capital of France?"` by continuing the text in a plausible direction — which might be `"?"` or `"A: Paris"` or `"Who is the king of France?"` depending on what it has seen. It does not reliably answer the question.
+
+*"Pretraining learns patterns, not purposes. The model knows language but not what you want."*
 
 ---
 
@@ -59,21 +161,173 @@ Pretraining datasets are measured in **trillions of tokens** and take months to 
 8. Shuffling → Randomize order to prevent overfitting to data source order
 ```
 
+**Why these sources specifically?** Each teaches different capabilities:
+
+- **Common Crawl (67%)**: Diversity over quality. You need the model to handle messy real-world text, typos, informal language, regional dialects. Wikipedia alone would make it sound like an encyclopedia.
+- **GitHub (4.5%)**: Without code data, models can't program. The 4.5% teaches syntax, API usage, debugging patterns, documentation style. Too much code (>15%) hurts conversational quality.
+- **Books (4.5%)**: Long-range coherence. Web text rarely exceeds 500 words. Books teach narrative consistency across 100k+ tokens—critical for long-context models.
+- **ArXiv (2.5%)**: Mathematical reasoning. Without LaTeX-heavy papers, models struggle with proofs, equation derivation, symbolic manipulation.
+
 **Real numbers (GPT-3 vs LLaMA 2 vs Mistral):**
 
-| Model | Training Tokens | Dataset Size (TB) | Training Duration | Compute (GPU-hours) |
-|-------|----------------|-------------------|-------------------|---------------------|
-| GPT-3 (175B) | 300B | ~570 GB | ~34 days | ~3.14M A100 hours |
-| LLaMA 2 (70B) | 2T | ~3.8 TB | ~184 days | ~1.72M A100 hours |
-| Mistral 7B | ~unknown | ~unknown | ~weeks | ~100k A100 hours |
+| Model | Parameters | Training Tokens | Dataset Size | Training Duration | Compute (A100 GPU-hours) | Est. Cost |
+|-------|------------|----------------|--------------|-------------------|--------------------------|----------|
+| GPT-3 | 175B | 300B | ~570 GB | ~34 days | ~3.14M | $5-10M |
+| LLaMA 2 7B | 7B | 2T | ~3.8 TB | ~21 days | 64k | $160k |
+| LLaMA 2 70B | 70B | 2T | ~3.8 TB | ~184 days | 4.5M | $11M |
+| Mistral 7B | 7B | Unknown | Unknown | ~weeks | ~100k | $250k |
+| GPT-4 (est.) | ~1.8T (MoE) | Unknown | Unknown | Months | Unknown | $50-100M |
 
-**Why 2 trillion tokens?** Chinchilla scaling laws (2022) showed that models were undertrained — GPT-3's 300B tokens for 175B parameters was suboptimal. The optimal ratio is roughly **20 tokens per parameter**. For a 70B model, that's 1.4 trillion tokens minimum.
+**Why 2 trillion tokens?** Chinchilla scaling laws (2022) showed that models were **undertrained**—GPT-3's 300B tokens for 175B parameters was suboptimal. The optimal ratio is roughly **20 tokens per parameter**. For a 70B model, that's 1.4 trillion tokens minimum. LLaMA 2 trained on 2T to saturation.
+
+*"GPT-3 was a genius who never finished school. LLaMA 2 is the same genius who actually graduated."*
 
 ---
 
-#### 4.2 · The Training Loop — What Actually Happens
+#### 4.2 · Deep Dive: How 2 Trillion Tokens Become 7 Billion Parameters
 
-Here's a simplified PyTorch training loop showing what happens inside pretraining:
+**The question everyone asks:** "The model sees 2 trillion tokens. How does that turn into 7 billion learned parameters?"
+
+**The short answer:** Each training step adjusts all 7B parameters slightly in the direction that reduces prediction error. After 1 million steps (each seeing 1 million tokens), you've shown the model 2 trillion tokens total, and the parameters have converged to values that minimize average error.
+
+**The detailed mechanism:**
+
+**Step 1: Random initialization**
+
+A 7B parameter LLaMA model starts with 7,000,000,000 random numbers:
+
+```python
+# Simplified (real models use more sophisticated init)
+import torch
+model_weights = {
+    'embedding': torch.randn(32000, 4096),        # 131M params (vocab × hidden dim)
+    'layer_0_attention': torch.randn(4096, 4096), # 16M params
+    'layer_0_ffn': torch.randn(4096, 11008),      # 45M params
+    # ... 31 more layers ...
+    'layer_31_attention': torch.randn(4096, 4096),
+    'layer_31_ffn': torch.randn(4096, 11008),
+    'output': torch.randn(4096, 32000)            # 131M params
+}
+
+# Total: 7B parameters, all random
+# Model prediction: complete garbage (uniform distribution over vocab)
+```
+
+At step 0, the model assigns equal probability to every token. Ask it to predict the next word after "The cat sat on the" and it's equally likely to output "table", "xjKl9", or "democracy".
+
+**Step 2: Forward pass — making predictions**
+
+```python
+# Sample batch: 512 sequences, each 2048 tokens long
+batch = get_next_batch()  # Shape: (512, 2048)
+# Example sequence 0: "The cat sat on the mat. The dog..."
+
+# Forward through all layers
+for position in range(2047):  # Predict token at each position
+    input_token = batch[:, position]      # "The"
+    target_token = batch[:, position + 1] # "cat" (what we want to predict)
+
+    # Model processes through 32 layers
+    hidden = embedding_layer(input_token)      # Random embedding
+    for layer in range(32):
+        hidden = attention(hidden)             # Random attention patterns
+        hidden = feedforward(hidden)           # Random transformations
+    logits = output_layer(hidden)              # Random scores for 32k vocab
+
+    # Logits are 32k numbers (one per vocabulary token)
+    # At step 0, all roughly equal (random)
+    # Model outputs: prob("cat") = 0.00003, prob("xjKl9") = 0.00003, ...
+```
+
+**Step 3: Compute loss — measuring wrongness**
+
+```python
+# Cross-entropy loss: how surprised are you by the correct answer?
+loss = -log(prob_of_correct_token)
+
+# Concrete example:
+# Target word is "cat" (token ID 2345)
+# Model assigns probability 0.00003 to token 2345 (basically guessing)
+loss = -log(0.00003) = 10.4  # Very high loss = very wrong
+
+# Average over all 512 sequences × 2047 positions
+total_loss = 11.5  # Typical starting loss for random model
+```
+
+**What does loss mean?** Cross-entropy loss of 11.5 means the model is equivalent to randomly guessing from 100,000 options. A trained model achieves loss ~2.0 (equivalent to choosing from ~7 plausible options).
+
+**Step 4: Backward pass — computing gradients**
+
+```python
+# For each of the 7 billion parameters, compute:
+# "If I increase this number by 0.001, does loss go up or down?"
+
+gradients = {}
+for param_name, param_value in model_weights.items():
+    # Gradient = direction and magnitude that reduces loss
+    gradients[param_name] = compute_gradient(loss, param_value)
+
+# Example gradient for one parameter:
+# param_value = 0.523 (current value)
+# gradient = -0.0041 (loss decreases if we make param smaller)
+# This means: "Decrease this weight to improve predictions"
+```
+
+**Step 5: Update weights — learning**
+
+```python
+learning_rate = 3e-4  # 0.0003 — small steps to avoid instability
+
+for param_name in model_weights:
+    # Move parameter in direction opposite to gradient (toward lower loss)
+    model_weights[param_name] -= learning_rate * gradients[param_name]
+
+# Example:
+# Before: param = 0.523, gradient = -0.0041
+# After: param = 0.523 - (0.0003 × -0.0041) = 0.523 + 0.0000012 = 0.5230012
+# Tiny change, but in the direction that reduces loss
+```
+
+**What just happened?** You adjusted all 7 billion parameters by microscopic amounts. The model is now 0.0001% better at predicting the next token.
+
+**Step 6: Repeat 1 million times**
+
+```
+Step 0: Loss = 11.5 (random guessing)
+Step 100: Loss = 6.2 (learning basic token patterns)
+Step 1000: Loss = 4.3 (learning grammar)
+Step 10000: Loss = 2.8 (learning facts)
+Step 100000: Loss = 2.1 (learning reasoning)
+Step 1000000: Loss = 1.95 (converged)
+```
+
+Each step sees 512 sequences × 2048 tokens = 1,048,576 tokens. After 1 million steps, you've shown the model:
+
+$$1,000,000 \text{ steps} \times 1,048,576 \text{ tokens/step} = 1.048 \text{ trillion tokens}$$
+
+For 2T tokens, you train for ~2 million steps.
+
+**What changed in the 7B parameters?**
+
+After 2 trillion tokens:
+
+- **Embedding layer**: Token 2345 ("cat") is now embedded near token 8721 ("dog") and 5123 ("animal") in 4096-dimensional space. Started random, now encodes semantic similarity.
+- **Attention weights**: Layer 12 learned to attend to previous nouns when processing pronouns. Layer 24 learned to attend to function arguments when processing return statements. These patterns emerged from billions of examples.
+- **FFN weights**: Store factual associations. Specific neuron activations correlate with concepts ("Paris" activates neuron 47281 in layer 18, which also activates for "France", "Eiffel Tower", "French"). Not explicitly programmed—learned from co-occurrence.
+
+*"Training is compression. 2 trillion tokens of redundant text compress into 7 billion numbers that reconstruct the patterns."*
+
+**Why this matters for production:**
+
+1. **You can't skip pretraining.** The 7B parameters start random. Without seeing trillions of tokens, they have nothing to align with RLHF.
+2. **Scaling laws are physics.** A 7B model can compress ~2T tokens effectively. A 70B model needs ~2T tokens to saturate. Undertrain and you waste capacity. Overtrain and you waste compute.
+3. **Data quality beats quantity.** If 30% of your 2T tokens are duplicate or garbage, you effectively trained on 1.4T quality tokens. LLaMA 2's aggressive filtering is why it outperforms larger models trained on messier data.
+
+---
+
+#### 4.3 · The Training Loop — Production Code
+
+Here's a condensed PyTorch training loop showing what happens inside pretraining:
 
 ```python
 import torch
@@ -146,34 +400,54 @@ Step 1000000 | Loss: 1.9821 | LR: 3.00e-05 | Perplexity: 7.26   # Converged
 
 ---
 
-#### 4.3 · Infrastructure — How Models Actually Train
+#### 4.4 · Infrastructure — How Models Actually Train
 
 Training a 70B parameter model on 2 trillion tokens requires **massive distributed infrastructure**.
 
+**The three-way trade-off:** Memory × Speed × Cost. You can optimize two, but the third suffers.
+
+| Scale | Memory Needed | Speed (tokens/sec) | Cost (cloud) | Parallelism Strategy |
+|-------|---------------|-------------------|--------------|----------------------|
+| **7B model** | ~40 GB per GPU | ~100k | $160k | Data parallel (64 GPUs) |
+| **70B model** | ~60 GB per GPU | ~80k | $11M | Tensor + data parallel (512 GPUs) |
+| **175B model** | ~80 GB per GPU | ~50k | $50M+ | Tensor + pipeline + data (2048 GPUs) |
+
 **Parallelism strategies:**
 
-1. **Data parallelism**: Each GPU trains on different batch, gradients averaged across GPUs
-2. **Model parallelism**: Split model layers across GPUs (layer 1-20 on GPU1, 21-40 on GPU2, etc.)
-3. **Pipeline parallelism**: Stream batches through model stages like an assembly line
-4. **Tensor parallelism**: Split individual weight matrices across GPUs (specific layers too big for one GPU)
+1. **Data parallelism**: Each GPU trains on different batch, gradients averaged across GPUs. Simplest approach. Scales linearly up to ~64 GPUs, then communication overhead dominates.
+
+2. **Model parallelism**: Split model layers across GPUs (layer 1-20 on GPU1, 21-40 on GPU2, etc.). Used when model doesn't fit on one GPU.
+
+3. **Pipeline parallelism**: Stream batches through model stages like an assembly line. GPU1 processes batch 1 layers 1-10 while GPU2 processes batch 0 layers 11-20. Reduces idle time.
+
+4. **Tensor parallelism**: Split individual weight matrices across GPUs (attention layers split column-wise). Used when specific layers are too big for one GPU (70B+ models).
+
+**Why 70B needs 512 GPUs but 7B needs 64:**
+
+- **7B model**: Fits on one A100 (14 GB in fp16), so pure data parallelism works. 64 GPUs = 64× throughput.
+- **70B model**: Doesn't fit on one GPU (~140 GB in fp16). Need 8-way tensor parallel to split across 8 GPUs, then 64-way data parallel = 512 total GPUs.
 
 **Typical 7B model training setup:**
 - **Hardware**: 64× A100 80GB GPUs (8 nodes × 8 GPUs)
 - **Parallelism**: Data parallel across all 64 GPUs
 - **Batch size**: 512 global (8 per GPU)
 - **Memory per GPU**: ~40GB (model weights 14GB + optimizer states 28GB)
-- **Training time**: ~2 weeks for 1 trillion tokens
-- **Cost**: ~$50,000-100,000 at cloud rates
+- **Training time**: ~21 days for 2 trillion tokens
+- **Cost**: ~$160,000 at cloud rates ($2.50/GPU-hour)
+- **Throughput**: ~100k tokens/sec
 
 **Typical 70B model training setup:**
 - **Hardware**: 512× A100 80GB GPUs (64 nodes × 8 GPUs)
 - **Parallelism**: 8-way tensor parallel + 64-way data parallel
 - **Batch size**: 4096 global (8 per GPU)
 - **Memory per GPU**: ~60GB (model shard 17.5GB + optimizer states 35GB + activations 7.5GB)
-- **Training time**: ~6 months for 2 trillion tokens
-- **Cost**: ~$2-5 million at cloud rates
+- **Training time**: ~184 days for 2 trillion tokens
+- **Cost**: ~$11 million at cloud rates
+- **Throughput**: ~80k tokens/sec (lower due to communication overhead)
 
-**Memory optimizations:**
+*"Small models train fast and cheap. Large models train slow and expensive. There is no escape from physics."*
+
+**Memory optimizations (how to fit bigger models):**
 
 ```python
 # Mixed precision training (fp16/bf16) — 2× memory savings
@@ -188,7 +462,8 @@ scaler.step(optimizer)
 scaler.update()
 
 # Gradient checkpointing — trade compute for memory (2-3× memory savings)
-model.gradient_checkpointing_enable()  # Recompute activations in backward pass
+# Recompute activations in backward pass instead of storing them
+model.gradient_checkpointing_enable()
 
 # Gradient accumulation — simulate large batch size on small GPU
 accumulation_steps = 8
@@ -200,36 +475,80 @@ for i, batch in enumerate(dataloader):
         optimizer.zero_grad()
 ```
 
+**Production trade-offs:**
+
+| Technique | Memory Saved | Speed Cost | Complexity |
+|-----------|--------------|------------|------------|
+| fp16/bf16 mixed precision | 2× | None | Low (one line) |
+| Gradient checkpointing | 2-3× | 20-30% slower | Low (one line) |
+| Gradient accumulation | Enables larger batch | No speed cost | Low |
+| Tensor parallelism | Enables 70B+ models | 15-25% overhead | High (multi-GPU comm) |
+| Pipeline parallelism | Enables 175B+ models | 20-40% idle time | Very high |
+
+**Why companies build their own data centers:**
+
+Cloud costs: $11M for LLaMA 2 70B
+Owned cluster (amortized over 3 years): ~$3-5M (65% savings)
+
+Meta, Google, OpenAI own tens of thousands of GPUs. Cloud is for prototyping, not production training.
+
 ---
 
-#### 4.4 · What Pretraining Actually Learns
+#### 4.5 · What Pretraining Actually Learns — The Emergence Timeline
 
-**Early training (steps 0-10k):**
+**Early training (steps 0-10k, ~10B tokens):**
 - Token-level patterns: "the" follows "of", punctuation rules
 - Sentence structure: subject-verb-object order
 - Basic syntax: matching parentheses, quote pairs
+- **Victory:** Model generates grammatical gibberish
 
-**Mid training (steps 10k-100k):**
+**Mid training (steps 10k-100k, ~100B tokens):**
 - Factual knowledge: "Paris is the capital of France"
 - Code patterns: `def function_name(args):` structure
 - Multi-sentence coherence: pronouns refer to earlier nouns
+- **Victory:** Model completes text plausibly
 
-**Late training (steps 100k-1M):**
+**Late training (steps 100k-1M, ~1T tokens):**
 - Long-range reasoning: maintaining plot consistency across paragraphs
 - Rare facts: less common entities and events
 - Stylistic consistency: matching tone across long generations
+- **Victory:** Model writes fluently and coherently
 
-**What it still can't do after pretraining:**
+**What it STILL can't do after pretraining:**
 - Follow direct instructions ("Translate this to French")
 - Refuse harmful requests
 - Format output consistently (JSON, lists, etc.)
 - Acknowledge uncertainty ("I don't know")
 
-This is why SFT and RLHF are necessary.
+**The pretrained model's behavior:**
 
-### Stage 2 — Supervised Fine-Tuning (SFT): Teaching Instruction Following
+```python
+prompt = "What is the capital of France?"
+pretrained_model.generate(prompt)
+# Possible outputs:
+# "? What is the population? What is the GDP?"
+# "A: Paris. Q: What is the capital of Germany?"
+# "How many people live there?"
+# All plausible continuations, none actually helpful
+```
 
-**Building analogy:** You've got a chef who knows ingredients (pretraining), now teach them your restaurant's specific menu format and plating style. Show them examples: "When a customer orders X, serve it like Y."
+*"Pretraining builds a fluent parrot. It speaks beautifully but doesn't understand you want answers, not more questions."*
+
+**This is why SFT and RLHF are necessary.** The model has knowledge; it just doesn't know how to be useful.
+
+---
+
+### Stage 2 — Supervised Fine-Tuning (SFT): Defeating the Instruction-Blindness Enemy
+
+**Enemy #2:** Your pretrained model is brilliant but useless. Ask "What is 2+2?" and it generates "What is 2+3? What is 2+4?" because that's a plausible continuation.
+
+**Your weapon:** 10k-100k human-written (instruction, response) pairs. Train for 3 epochs. Cost: $50k-$200k in annotation, $500 in compute.
+
+**Victory condition:** Model follows instructions reliably: questions get answers, translation requests get translations, code requests get working code.
+
+**What you DON'T get:** Perfect alignment. The model is helpful now, but it's bland, verbose, and doesn't refuse harmful requests well.
+
+**Restaurant analogy:** You've got a chef who knows ingredients (pretraining), now teach them your restaurant's specific menu format and plating style. Show them examples: "When a customer orders X, serve it like Y."
 
 Fine-tune the pretrained model on a curated dataset of `(instruction, response)` pairs written by human annotators.
 
@@ -237,7 +556,13 @@ Fine-tune the pretrained model on a curated dataset of `(instruction, response)`
 
 #### 4.5 · SFT Dataset Construction — The Human Labor Pipeline
 
-**The bottleneck:** You can't just ask GPT-4 to generate your SFT data — that creates a weaker copy. High-quality instruction tuning requires **human-written responses**.
+**The bottleneck:** You can't just ask GPT-4 to generate your SFT data—that creates a weaker copy (see Alpaca's mediocre results). High-quality instruction tuning requires **human-written responses**.
+
+**Why human annotation specifically?** Three reasons:
+
+1. **Quality control**: GPT-4 imitates GPT-4's biases and errors. Humans can think critically and correct mistakes.
+2. **Diversity**: Humans write in varied styles. GPT-4 writes in GPT-4 style. You want the model to learn flexibility, not copy one voice.
+3. **Safety**: Humans can navigate nuanced harmful requests ("How do I defend against cyberattacks?" vs "How do I hack my ex?"). GPT-4 either refuses both or allows both—no nuance.
 
 **Typical SFT dataset construction pipeline:**
 
@@ -265,17 +590,17 @@ Fine-tune the pretrained model on a curated dataset of `(instruction, response)`
 
 **Real SFT dataset sizes:**
 
-| Model | SFT Examples | Annotation Cost | Sources |
-|-------|--------------|-----------------|---------|
-| InstructGPT (GPT-3.5) | ~13,000 | ~$200k | OpenAI contractors |
-| Alpaca (LLaMA-based) | 52,000 | $500 (GPT-3.5 generated) | Stanford |
-| Dolly 2.0 | 15,000 | ~$100k | Databricks employees |
-| Vicuna | 70,000 | $0 (scraped ShareGPT) | LMSYS |
-| LLaMA 2 Chat | ~100,000 | ~$1-2M | Meta contractors |
+| Model | SFT Examples | Annotation Cost | Sources | Result Quality |
+|-------|--------------|-----------------|---------|----------------|
+| InstructGPT | 13,000 | ~$200k | OpenAI contractors | Excellent (careful annotation) |
+| Alpaca (LLaMA) | 52,000 | $500 (GPT-3.5 generated) | Stanford | Mediocre (model-generated) |
+| Dolly 2.0 | 15,000 | ~$100k | Databricks employees | Good (domain experts) |
+| Vicuna | 70,000 | $0 (scraped ShareGPT) | LMSYS | Variable (user conversations) |
+| LLaMA 2 Chat | ~100,000 | ~$1-2M | Meta contractors | Excellent (multi-round annotation) |
 
-**Quality vs quantity trade-off:** InstructGPT used only 13k high-quality examples and achieved better instruction following than models trained on 100k+ lower-quality examples. **Rule of thumb:** 10k excellent examples > 100k mediocre examples.
+**Quality vs quantity trade-off:** InstructGPT used only 13k high-quality examples and achieved better instruction following than models trained on 100k+ lower-quality examples.
 
----
+*"Ten thousand excellent examples beat one hundred thousand mediocre ones. SFT is where quality matters most."*
 
 #### 4.6 · SFT Training Format and Examples
 
@@ -429,15 +754,53 @@ Model: "Here are 3 key points from the article:
 | HumanEval (code) | 29.9% | 35.2% | +5.3pp |
 | GSM8K (math) | 8.7% | 18.3% | +9.6pp |
 
-**Key insight:** SFT dramatically improves format compliance and instruction following, with modest improvements on knowledge/reasoning tasks. The model already knew facts from pretraining — SFT teaches it *how to present* them helpfully.
+**Key insight:** SFT dramatically improves format compliance and instruction following, with modest improvements on knowledge/reasoning tasks. The model already knew facts from pretraining—SFT teaches it *how to present* them helpfully.
+
+*"SFT is the steering wheel. It doesn't make the car faster, it just lets you point it where you want to go."*
 
 **The sycophancy problem emerges here:** Models learn to match annotator style, including biases. If annotators write verbose, overly-agreeable responses, the model does too. This is why RLHF is necessary.
 
-### Stage 3 — RLHF / DPO (Alignment): Learning Human Preferences
+---
 
-**Restaurant analogy:** Your chef can now follow menu formats (SFT), but you need them to match *your customers' taste preferences*. Show them two dishes for the same order — customers consistently prefer one. The chef learns: "Ah, THIS is what 'good' means here."
+### Stage 3 — RLHF / DPO (Alignment): Defeating the Bland Assistant Enemy
 
-The goal: move the model's outputs toward what humans actually prefer — more helpful, less harmful, more honest.
+**Enemy #3:** Your SFT model follows instructions, but it's robotic, verbose, doesn't refuse harmful requests gracefully, and agrees with users even when they're wrong.
+
+**Your weapon:** 30k-1M human preference comparisons. Train a reward model ($500k), then fine-tune policy with PPO ($2M). Or skip reward model and use DPO ($800k). Cost: $500k-$5M.
+
+**Victory condition:** Model is helpful (answers questions), harmless (refuses dangerous requests), honest (admits uncertainty), and matches human taste for tone/style/length.
+
+**What you DON'T get:** Perfect truth. RLHF optimizes for approval, not correctness. The model learns what humans **prefer**, not what's objectively right. This creates sycophancy.
+
+**Restaurant analogy:** Your chef can now follow menu formats (SFT), but you need them to match *your customers' taste preferences*. Show them two dishes for the same order—customers consistently prefer one. The chef learns: "Ah, THIS is what 'good' means here."
+
+The goal: move the model's outputs toward what humans actually prefer—more helpful, less harmful, more honest.
+
+**Why you can't RLHF a random model:**
+
+RLHF refines existing capabilities. It can't create them from scratch.
+
+```python
+# This fails catastrophically:
+random_model = Transformer(random_init=True)  # No knowledge, no language ability
+rlhf(random_model, preferences=100_000)       # Tries to learn "helpfulness" from nothing
+# Result: Model outputs slightly-less-random gibberish
+
+# This works:
+pretrained_model = load("llama-2-7b-pretrained")  # Knows language, facts, reasoning
+sft_model = sft(pretrained_model, examples=50_000) # Knows instruction format
+rlhf_model = rlhf(sft_model, preferences=100_000)  # Refines existing helpful behavior
+# Result: ChatGPT-quality model
+```
+
+**The prerequisite chain:**
+- **Pretraining** gives the model knowledge and language ability (~$5M-$100M, 95% of intelligence)
+- **SFT** gives the model instruction-following format (~$50k-$200k, 4% of intelligence)
+- **RLHF** refines the model's alignment with human taste (~$500k-$5M, 1% of intelligence)
+
+Skip pretraining and you have nothing to align. Skip SFT and RLHF doesn't know what "helpful" means (pretrained models don't follow instructions). The pipeline order is not arbitrary—each stage builds on the previous.
+
+*"RLHF is the polish, not the sculpture. You can't polish a block of marble into a statue."*
 
 ---
 
@@ -558,6 +921,8 @@ Therefore, 15% of 80 equals 12. This type of calculation is useful for figuring 
 - **OpenAI annotators** preferred concise, confident, professional responses → GPT-4 is matter-of-fact
 - **Anthropic annotators** preferred thoughtful, cautious, nuanced responses → Claude is more conversational
 - **This is why GPT-4 and Claude "feel" different despite identical architectures**
+
+*"Model personality is written by annotators, not architects. The code is the same. The human preferences are different."*
 
 ---
 
@@ -1052,6 +1417,24 @@ Model: "You're right to question that. Let me reconsider — 17 divided by 2 is 
 
 LLM training is expensive. Here are realistic budgets.
 
+**The full pipeline cost breakdown:**
+
+| Stage | What It Does | Compute Cost | Human Cost | Total Cost | Duration |
+|-------|--------------|--------------|------------|------------|----------|
+| **Pretraining (7B)** | Learn language from 2T tokens | $160k | $0 | **$160k** | 21 days |
+| **Pretraining (70B)** | Learn language from 2T tokens | $11M | $0 | **$11M** | 184 days |
+| **Pretraining (175B)** | Learn language from 3.5T tokens | $50M | $0 | **$50M** | 400 days |
+| **SFT (50k examples)** | Teach instruction format | $500 | $50k-$200k | **$50k-$200k** | 12 hours |
+| **RLHF (100k prefs)** | Align with human preferences | $2.5k | $500k-$2M | **$500k-$2M** | 4 days |
+| **DPO (100k prefs)** | Align with human preferences | $800 | $500k-$2M | **$500k-$2M** | 36 hours |
+| **Red team testing** | Safety validation | $0 | $100k-$500k | **$100k-$500k** | 2-4 weeks |
+
+**Total for production 7B model:** ~$800k-$3M (mostly human annotation)
+**Total for production 70B model:** ~$12M-$18M (mostly pretraining + annotation)
+**Total for production 175B+ model:** ~$55M-$100M+ (GPT-4 scale)
+
+*"Pretraining buys intelligence. Annotation buys alignment. You need both."*
+
 ---
 
 #### 7.1 · Pretraining Costs
@@ -1081,6 +1464,8 @@ LLM training is expensive. Here are realistic budgets.
 
 **Note:** These are *cloud* prices. Companies with owned data centers cut costs 50-70%. Google/Meta with custom TPUs cut costs further.
 
+*"Cloud is for prototypes. Owned hardware is for production. The economics force it."*
+
 ---
 
 #### 7.2 · Fine-Tuning Costs
@@ -1103,6 +1488,10 @@ LLM training is expensive. Here are realistic budgets.
 **Human annotation costs dominate fine-tuning:**
 - SFT annotation: $200k-2M (depending on quality/scale)
 - Preference annotation: $500k-5M
+- Red team testing: $100k-500k
+- **Total human cost: $1M-7M** for production alignment
+
+*"The GPU bill is big. The human bill is bigger. Alignment is labor-intensive."*
 - Red team testing: $100k-500k
 - **Total human cost: $1M-7M** for production alignment
 
@@ -1150,7 +1539,9 @@ Several capabilities of LLMs were not explicitly trained for and appeared qualit
 | Multi-step arithmetic | ~540B parameters |
 | Theory of mind (passing Sally-Anne test) | GPT-4 class |
 
-**"Emergent"** does not mean magical. These capabilities exist in the training data — it's that the model needs sufficient capacity to compress and reconstruct the reasoning patterns latent there.
+**"Emergent"** does not mean magical. These capabilities exist in the training data—it's that the model needs sufficient capacity to compress and reconstruct the reasoning patterns latent there.
+
+*"Emergence is not magic. It's the moment when model capacity finally matches task complexity."*
 
 > ➡ **Why emergence thresholds matter:** In-context learning (≥7B params) is what makes few-shot prompting work — you'll use it in [Ch.2](../ch05-prompt-engineering). Chain-of-thought reasoning (≥100B params) is what makes complex multi-step queries work — you'll probe it in [Ch.3](../ch06-cot-reasoning). Knowing these thresholds tells you when it's worth trying a capability vs. when you need to engineer around its absence by choosing a larger model or a different approach.
 

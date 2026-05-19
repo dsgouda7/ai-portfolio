@@ -12,7 +12,50 @@
 
 ---
 
-## 0 · Model Size & Mixture of Experts (MoE)
+## Common Misconceptions
+
+**Before you dive in**, let's clear up three beliefs that quietly poison your first 3 months of LLM deployment:
+
+### 1. "Bigger models are always better"
+
+**Why it's seductive:** GPT-4 crushes GPT-3.5 on benchmarks. 70B beats 7B on MMLU. More parameters = smarter model, right?
+
+**The truth:** **Diminishing returns hit hard above 70B.** From 70B to 175B, you pay 2.5× the compute for maybe 5-8% better performance. From 175B to 540B (rumored GPT-4 dense equivalent), you're paying 3× for another 3-5%. Meanwhile:
+- 7B models with good training data match GPT-3.5 on domain tasks
+- Mistral 7B beats LLaMA 13B on many benchmarks (better architecture, better data)
+- LoRA-tuned 7B on your data > vanilla 70B on generic prompts
+
+*"Scale buys you generality. Specialization buys you performance."*
+
+### 2. "Parameters = intelligence"
+
+**Why it's seductive:** Marketing headlines scream "1.8 trillion parameters!" Science journalism equates model size with capability. Surely more parameters = more knowledge?
+
+**The truth:** **Above 70B, data quality matters 10× more than parameter count.** Consider:
+- LLaMA 65B (trained on 1.4T tokens, carefully filtered) beats OPT 175B (trained on 180B tokens, less curation)
+- Mistral 7B (trained on high-quality data) rivals LLaMA 2 13B
+- GPT-4 likely uses MoE (only ~10-20% of parameters active per token)
+- Parameter count measures capacity, not content—like judging book quality by page count
+
+*"Parameters are the library. Data is what you stock it with. Most libraries are full of junk."*
+
+### 3. "Just throw more VRAM at it"
+
+**Why it's seductive:** Can't fit a 70B model in 24GB? Buy an A100 (80GB). Still crashing? Add a second GPU. Money solves hardware problems, right?
+
+**The truth:** **VRAM scales linearly, but your problems scale quadratically.** Here's what actually happens:
+- Latency: 70B is 10× slower than 7B per token (not 10×, but ~20-30× in practice due to memory bandwidth)
+- KV cache: Serving 100 concurrent users? That's +100GB just for conversation history
+- Cost: A100 is 4× the price of 4090, but gives you 3.3× the memory—you're paying more per GB
+- Throughput: One 70B serves ~5 users/sec. Eight 7B models serve ~80 users/sec on the same hardware
+
+*"Buy memory for the model size you need, not the model size you want."*
+
+**About the framework below:** This chapter frames optimization as **solving enemies**: compute constraints (MoE), memory constraints (quantization), latency constraints (distillation). These aren't the only valid approaches—just the most battle-tested production patterns. Other valid weapons: pruning (remove weights), sparsity (zero out weights), early exit (stop computing when confident).
+
+---
+
+## 0 · Model Size & Enemy #1 (Compute Constraints)
 **Quick Estimate:**
 > **Model size → VRAM needed (fp16):**
 > - 7B model: ~14 GB VRAM minimum
@@ -22,9 +65,19 @@
 >
 > **Rule of thumb:** Parameter count (in billions) × 2 bytes = VRAM in GB (for fp16)
 
-### Mixture of Experts (MoE)
+### Enemy #1: Compute Constraints
+
+**The problem:** You're building a production API. Dense 70B models take 4 seconds to generate 100 tokens. Your users expect <500ms. You're dead.
+
+**The weapon:** Mixture of Experts (MoE)
+
+### Mixture of Experts (MoE) — How the Weapon Was Forged
 
 **The intuition:** Standard models activate ALL parameters for every token (everyone does all the work). MoE models have **specialists** — only the relevant experts activate for each token (delegation).
+
+**How it emerged:** In 2017, Google Brain researchers had a problem: scaling Transformers to 137B parameters required 3 months of TPU time and $20M. They noticed something curious—different neurons activated for different inputs. What if we split the model into specialists and only compute the relevant ones?
+
+The breakthrough: Replace dense FFN layers with N separate "expert" networks. Add a tiny router (just 0.01% of parameters) that learns to pick which experts to activate. During training on next-token prediction, the router naturally learns to specialize experts—some light up for code, others for prose, others for math. **Nobody programmed this specialization. It emerged from gradient descent trying to minimize loss.**
 
 **How it works:**
 1. Replace dense FFN layers with N "expert" sub-networks (e.g., 8 experts)
@@ -116,6 +169,8 @@ Result: Blend 53% of Expert 2's output + 24% of Expert 3's output
 
 **Key insight:** Nobody programmed Expert 0 to handle code or Expert 2 to handle philosophy. **The model learned this routing pattern** during training by trying to predict the next token accurately. Specialization emerges naturally.
 
+*"Dense models: everyone goes to every meeting. MoE: only invite who you need."*
+
 **Why MoE matters:**
 - **Scale without pain:** GPT-4's 1.8T parameters → only ~200-400B active per token (~10-20% of total). You get a 1.8T model's capacity at roughly a 200B model's compute cost per inference
 - **Specialization for free:** Different experts naturally specialize during training — some light up for code, others for natural language, others for structured data
@@ -124,17 +179,43 @@ Result: Blend 53% of Expert 2's output + 24% of Expert 3's output
 > **MoE memory trap:** Mixtral-8×7B has 8 experts × 7B each = **~93 GB VRAM needed** (fp16) to load all experts, but only **~12.9B parameters active** per token (so inference feels like a 13B model).
 >
 > **Translation:** You pay full memory cost, but only partial compute cost. Still need the huge GPU, but inference is much faster than a dense 93B model.
-**Quick Estimate:**
-> **MoE memory trap:** Mixtral-8×7B has 8 experts × 7B each = **~93 GB VRAM needed** (fp16) to load all experts, but only **~12.9B parameters active** per token (so inference feels like a 13B model).
->
-> **Translation:** You pay full memory cost, but only partial compute cost. Still need the huge GPU, but inference is much faster than a dense 93B model.
 
-**Inference cost factors:** Cost scales with (parameter count) × (context length) × (batch size). A 70B model at 128k context costs **~50× more** to run than a 7B model at 4k context. This is why production systems use smaller models wherever possible.
+**Production trade-offs — Dense vs MoE:**
+
+| Architecture | Total Params | Active/Token | Memory (fp16) | Inference Cost/Token | Quality |
+|--------------|--------------|--------------|---------------|----------------------|---------|
+| **LLaMA 2 70B** (dense) | 70B | 70B (100%) | 140 GB | 1.0× (baseline) | Excellent |
+| **Mixtral 8×7B** (MoE) | 47B | 12.9B (27%) | 94 GB | **0.18×** (5.4× cheaper) | Excellent |
+| **GPT-4** (rumored 8×220B MoE) | 1.8T | ~400B (22%) | Unknown (proprietary) | Unknown | Best-in-class |
+| **LLaMA 2 7B** (dense) | 7B | 7B (100%) | 14 GB | **0.10×** (10× cheaper) | Good |
+
+**Key insight from table:** Mixtral gives you near-70B quality at ~18% of the compute cost per token. You still pay full memory cost (94GB to load all experts), but inference feels like a 13B model.
+
+**Architecture comparison — GPT-4 (MoE) vs LLaMA 2 (Dense):**
+
+**GPT-4 (rumored architecture):**
+- **Design:** 8 experts × 220B parameters each = 1.8T total
+- **Active per token:** Top-2 experts (~400-440B parameters active)
+- **Trade-off:** Massive capacity, only pay for ~22% per token
+- **Why MoE:** Lets OpenAI serve GPT-4 at reasonable cost despite 1.8T scale
+- **Weakness:** Still need to load all 1.8T into memory (likely 16× A100 80GB)
+
+**LLaMA 2 70B (dense):**
+- **Design:** Single monolithic 70B parameter network
+- **Active per token:** All 70B parameters (100%)
+- **Trade-off:** Smaller capacity, but simpler architecture
+- **Why dense:** Easier to train, deploy, and reason about; fits on 2× A100 80GB
+- **Weakness:** Can't scale beyond memory constraints without multi-GPU inference
+
+*"MoE: Pay memory cost once, compute cost fractionally. Dense: Pay both every time."*
+
+**Inference cost factors:** Cost scales with (active parameters) × (context length) × (batch size). A 70B model at 128k context costs **~50× more** to run than a 7B model at 4k context. This is why production systems use smaller models wherever possible.
 
 > **Model selection strategy:**
 > **Cheap experiments:** GPT-4o-mini for factual retrieval, structured output, testing (fast, low cost)
 > **Complex reasoning:** GPT-4o when accuracy matters more than cost
 > **Self-hosted:** LoRA-adapted 7B can match GPT-4o-mini quality at ~$0.0003/1k tokens (6× cheaper)
+> **Victory condition:** Enemy #1 defeated. You can now serve trillion-parameter models at billion-parameter compute costs.
 
 ---
 
@@ -286,7 +367,13 @@ print(f"King-Man similarity: {similarity_king_man.item():.4f}")
 
 ---
 
-## 6B · VRAM & Memory
+## 6B · VRAM & Memory — Enemy #2 (Memory Constraints)
+
+### Enemy #2: Memory Constraints
+
+**The problem:** You have an RTX 4090 (24GB). LLaMA 70B needs 140GB. Even quantized to int8, it needs 70GB. You can't afford an A100. You're stuck.
+
+**The weapon:** Quantization (section 6C)
 
 ### VRAM Usage — Three Buckets
 
@@ -509,19 +596,63 @@ Total apartment: 45.4 GB → needs 2× A40 (48 GB) or 1× A100 (80 GB)
 
 > **Checkpoint:** Your VRAM apartment has three categories: furniture (model weights, ~14 GB for 7B), workspace (activations, ~1 GB, temporary), and storage boxes (KV cache, ~1 GB per conversation). Furniture is fixed. Workspace cleans itself. **Storage boxes multiply with every conversation** — that's why serving 100 users needs 100 GB just for cache, making KV cache the bottleneck, not model size.
 
+*"Memory is the arena. Choose your model by the size of your arena, not the size of your ambition."*
+
 ---
 
-## 6C · Optimization Techniques
+## 6C · Optimization Techniques — Forging the Weapons
 
-### Quantization — Trading Precision for Memory
+### Quantization — How the Weapon Works (Deep Dive)
 
-**Visual metaphor:** Think of quantization as **rounding prices to the nearest nickel**.
+**Recap:** Enemy #2 is memory constraints. Your weapon is quantization.
 
-- **fp16/fp32:** Every price is exact to the penny ($1.47, $2.83, $0.56)
-- **int8:** Round to the nearest nickel ($1.45, $2.85, $0.55)
-- **int4:** Round to the nearest quarter ($1.50, $2.75, $0.50)
+**The metaphor:** Think of quantization as **rounding prices to the nearest nickel**. But let's look under the hood.
 
-You lose some precision, but for most purchases (model operations), **the difference doesn't matter**.
+#### How Quantization Works (Intuition)
+
+**The core idea:** Map your model's weight range (e.g., -0.8 to 1.2) into discrete buckets. INT8 gives you 256 buckets (values -128 to 127). INT4 gives you 16 buckets (values -8 to 7).
+
+**Think of it like rounding money:**
+- FP32: Track every penny down to $0.00001 precision (4 bytes per weight)
+- INT8: Round to nearest nickel, 256 possible values (1 byte per weight, ~0.4% error)
+- INT4: Round to nearest quarter, 16 possible values (0.5 bytes per weight, ~2-5% error)
+
+**What actually happens:** Find the min/max weight in each layer. Divide that range into buckets. Each weight snaps to its nearest bucket. When you need to compute, convert back to the original range.
+
+**Example:** Weight 0.567 in range [-0.8, 1.2]
+- FP32: stores exactly 0.567000...
+- INT8: snaps to bucket 174/255 → reconstructs as 0.5647 (error: 0.0023)
+- INT4: snaps to coarser bucket → reconstructs as ~0.55 (error: 0.017)
+
+**What you gain vs lose:**
+
+| Aspect | FP32 | INT8 | INT4 |
+|--------|------|------|------|
+| **Storage** | 4 bytes | 1 byte (75% saved) | 0.5 bytes (87.5% saved) |
+| **Compute Speed** | 1× baseline | 4× faster | 4× faster |
+| **Precision** | Exact | 256 levels (~0.4% error) | 16 levels (~2-5% error) |
+| **Range** | Huge (10⁻³⁸ to 10³⁸) | Must fit in -128 to 127 | Must fit in -8 to 7 |
+
+**The outlier problem:** If 99% of weights are in [-0.8, 0.8] but one outlier is 50.0, your quantization range must cover [-50, 50], wasting resolution:
+- Without outlier: 2.0 / 255 = 0.0078 per step (fine)
+- With outlier: 100 / 255 = 0.39 per step (coarse — 50× worse)
+
+**Solution:** Mixed-precision quantization. Keep outliers (top 0.1%) in fp16, quantize the rest to int8. This is what `llm_int8_threshold=6.0` does in BitsAndBytes.
+
+**Why INT8 works so well:**
+
+1. **Weight distributions are narrow:** Most layers have weights in [-2, 2], which maps cleanly to 256 buckets
+2. **Errors average out:** Small rounding errors (±0.4%) on billions of operations tend to cancel, not accumulate
+3. **Gradient descent already deals with noise:** The model was trained with dropout, noise, and approximations—it's robust to small perturbations
+
+**Why INT4 is riskier:**
+
+- INT4 = 16 discrete values (not 256)
+- Scale factor: 2.0 / 15 ≈ 0.133 (17× coarser than int8)
+- Rounding error: ~2-5% instead of 0.4%
+- Breaking point: Complex reasoning tasks (math, multi-step logic) where errors compound
+
+*"Quantization doesn't break the model. It rounds the edges. Most edges don't matter. Some do."*
 
 **Visual: Quantization Tradeoff**
 
@@ -547,19 +678,38 @@ graph LR
     style E fill:#ffcccc
 ```
 
-**How it works (intuition, not math):**
 
-1. **Find the range** of all your weights (e.g., smallest = -1.2, largest = 0.8)
-2. **Divide that range into buckets** (255 buckets for int8, 15 buckets for int4)
-3. **Each weight gets assigned to its nearest bucket**
-4. **When computing, convert back** to the original range
 
-**Example: Rounding 0.567**
+**Production trade-offs: LLaMA 70B FP16 vs INT4**
 
-Imagine your weights range from -1.2 to 0.8:
-- **fp16:** 0.567 (exact)
-- **int8:** 0.564 (rounded to nearest bucket — error = 0.003)
-- **int4:** 0.55 (rounded to coarser bucket — error = 0.017)
+| Metric | FP16 (Baseline) | INT4 (Quantized) | Trade-off |
+|--------|-----------------|------------------|-----------|
+| **Memory** | 140 GB | **35 GB** | **4× reduction** |
+| **Inference Speed** | 1.0× (baseline) | **2.8-4.0×** | **~3.5× faster** on average |
+| **Hardware** | 2× A100 80GB ($20k) | 1× RTX 4090 24GB + CPU offload ($1.6k) | **10× cheaper** |
+| **Quality (MMLU)** | 68.9% | **65.2%** | **-3.7 points** (-5.4% relative) |
+| **Quality (HumanEval code)** | 29.9% | **26.1%** | **-3.8 points** (-12.7% relative) |
+| **Quality (GSM8K math)** | 56.8% | **48.2%** | **-8.6 points** (-15.1% relative) |
+| **Quality (chatbot)** | Excellent | Very Good | Noticeable but acceptable |
+
+**Key insights:**
+- **Factual Q&A:** INT4 is nearly indistinguishable from FP16 (<2% degradation)
+- **Math/reasoning:** INT4 loses 10-15% (errors compound over multi-step reasoning)
+- **Code generation:** INT4 loses 8-12% (off-by-one errors in logic break code)
+- **Chatbots:** Most users can't tell the difference in casual conversation
+
+**When to use INT4:**
+- Memory-constrained deployment (gaming GPU, edge devices)
+- High-throughput serving (4× more requests per GPU)
+- Non-critical tasks (summarization, classification, RAG retrieval)
+- Experimentation (iterate fast with 35GB instead of 140GB)
+
+**When to avoid INT4:**
+- Mission-critical accuracy (medical, legal, financial)
+- Multi-step reasoning chains (math, code generation, planning)
+- Situations where 10% accuracy loss = business failure
+
+*"INT4: Trade 10% of your quality for 75% of your memory. Know which 10% you're losing."*
 **Quick Estimate:**
 > **Accuracy impact by precision:**
 > - **int8:** Loses **<1%** accuracy on most tasks (you won't notice)
@@ -579,6 +729,89 @@ Imagine your weights range from -1.2 to 0.8:
 - **Weight-only (GPTQ, AWQ):** Compress the furniture, but work in full precision — saves space, modest speed gain
 - **Full quantization (int8):** Compress weights AND workspace — saves space AND speeds up math (int8 ops are 4× faster)
 - **Mixed-precision (QLoRA):** Base model in int4 (tiny), adapters in fp16 (precise) — lets you fine-tune 70B on a gaming PC
+
+> **Victory condition:** Enemy #2 defeated. You can now fit 70B models in 24GB GPUs and serve them at 3-4× the speed.
+
+---
+
+### Distillation — Enemy #3 (Latency Constraints)
+
+**The problem:** You've optimized everything. INT8 quantization, Flash Attention, KV cache pruning. Your 70B model still takes 2 seconds per response. Your users want <300ms. Physics says no.
+
+**The weapon:** Distillation
+
+**The strategy:** If you can't make the big model fast, **teach a small model to imitate it**.
+
+#### How Distillation Works
+
+1. **Teacher model** (70B): Slow, accurate, expensive
+2. **Student model** (7B): Fast, initially dumb, cheap
+3. **Training goal:** Student learns to predict what Teacher would say
+
+**Key insight:** Instead of training the student on "predict the next token" (hard), train it on "predict the Teacher's probability distribution" (easier—Teacher shows you which tokens are plausible).
+
+**Example:**
+
+Prompt: "The capital of France is"
+
+**Teacher (70B) outputs:**
+```
+Paris: 92%
+PARIS: 3%
+the city of Paris: 2%
+Paris, France: 1.5%
+(other): 1.5%
+```
+
+**Student (7B) initially outputs:**
+```
+Paris: 45%
+London: 20%  ← Wrong! But Teacher's distribution teaches it to downweight this
+France: 15%
+(other): 20%
+```
+
+**After distillation, Student outputs:**
+```
+Paris: 88%  ← Close to Teacher's 92%
+PARIS: 4%
+the city of Paris: 3%
+(other): 5%
+```
+
+**Why this works:** The Teacher's "soft labels" (probability distributions) contain more information than hard labels ("Paris"). The Student learns subtle patterns: "PARIS is plausible (3%)" and "London is implausible (<0.01%)".
+
+**Production impact:**
+
+| Metric | Teacher (70B fp16) | Student (7B fp16) | Speedup |
+|--------|-------------------|-------------------|----------|
+| **Latency** | 2.1s per response | **0.3s** | **7× faster** |
+| **Throughput** | 5 req/sec | **35 req/sec** | **7× more** |
+| **Quality** | 68.9% (MMLU) | **64.2%** | -4.7 points (-6.8%) |
+| **Cost per 1M tokens** | $2.80 | **$0.40** | **7× cheaper** |
+
+**When distillation wins:**
+- Latency-critical applications (chatbots, autocomplete, real-time agents)
+- High-throughput serving (millions of requests/day)
+- Domain-specific tasks (distill on your data → student matches Teacher on your distribution)
+
+**When distillation fails:**
+- Novel/rare inputs (Student only learned Teacher's common patterns)
+- Multi-domain generalization (Student overfits to Teacher's strengths/weaknesses)
+- Rapidly changing requirements (distillation takes weeks; can't iterate fast)
+
+**Famous distillation examples:**
+- **DistilBERT** (66M params) vs BERT (110M): 97% of quality, 60% faster
+- **TinyBERT** (14.5M params) vs BERT: 96% of quality on GLUE, 9.4× faster
+- **GPT-3.5-turbo** (rumored distillation from GPT-4): 10-20× faster, ~90% of quality
+
+*"Can't make the genius fast? Teach the apprentice what the genius knows."*
+
+> **Victory condition:** Enemy #3 defeated. You can now serve 70B-quality responses at 7B-latency speeds.
+
+---
+
+### Flash Attention — The Memory Optimization
 **Quick Estimate:**
 > **Choosing your precision level:**
 > - **Need maximum quality?** fp16 (standard production)
@@ -622,6 +855,8 @@ Training requires **backward passes** to compute gradients. **Memory cost explod
 - **Flash Attention:** Work at your desk in small batches, file immediately (fast, minimal space)
 
 **Why it matters:** Flash Attention 2 is now the default everywhere (PyTorch, Hugging Face, vLLM, TensorRT). If you see "128k context window," Flash Attention made it possible.
+
+*"Standard attention writes everything to slow memory. Flash Attention never writes what you can recompute."*
 
 **Code Example: Using Flash Attention 2**
 
@@ -735,12 +970,16 @@ graph TB
 
 ### Visualization: Parameter Distribution
 
-![Breakdown of 7B parameters by component (embeddings, attention, FFN, output head) and VRAM usage split (weights, activations, KV cache)](img/model-internals-breakdown.png)
+```mermaid
+pie title "LLaMA 7B Parameter Distribution (6.74B total)"
+    "FFN Layers (32 blocks × 90M)" : 2880
+    "Attention Layers (32 blocks × 67M)" : 2144  
+    "Embeddings (Input)" : 131
+    "Output Head" : 131
+    "LayerNorms" : 0.5
+```
 
-**Reading the diagram:**
-- **Left (pie chart):** Parameter count by component — FFN dominates (57%), attention is ~20%
-- **Right (bar chart):** VRAM usage during inference — model weights, activations, KV cache
-- **Bottom:** Precision comparison (fp16 vs int8 vs int4) for VRAM footprint
+**Key insight:** FFN layers consume 43% of total parameters, attention layers 32%, embeddings 4% combined. The remaining 21% is distributed across other components and rounding.
 
 ---
 
@@ -750,80 +989,33 @@ Understanding VRAM usage is critical for deployment. Here's how to profile and o
 
 ### Measuring Actual VRAM Usage
 
-**Code Example: Memory Profiling**
+**Quick profiling script:**
 
 ```python
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
-import gc
+from transformers import AutoModelForCausalLM
 
 def print_gpu_memory():
-    """Print current GPU memory usage"""
-    if torch.cuda.is_available():
-        allocated = torch.cuda.memory_allocated() / 1e9
-        reserved = torch.cuda.memory_reserved() / 1e9
-        print(f"GPU Memory - Allocated: {allocated:.2f} GB | Reserved: {reserved:.2f} GB")
+    allocated = torch.cuda.memory_allocated() / 1e9
+    print(f"GPU Memory: {allocated:.2f} GB")
 
-# Clear GPU memory
-gc.collect()
-torch.cuda.empty_cache()
-print_gpu_memory()
-# Output: Allocated: 0.00 GB | Reserved: 0.00 GB
-
-# Load model and measure
-model_name = "meta-llama/Llama-2-7b-hf"
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-
-print("\n1. Loading model (fp16)...")
+# Load and measure
 model = AutoModelForCausalLM.from_pretrained(
-    model_name,
+    "meta-llama/Llama-2-7b-hf",
     torch_dtype=torch.float16,
     device_map="auto"
 )
-print_gpu_memory()
-# Output: Allocated: 13.40 GB | Reserved: 13.45 GB (model weights)
+print_gpu_memory()  # Output: ~13.4 GB (model weights)
 
-print("\n2. Running inference (short prompt)...")
-prompt = "The capital of France is"
-inputs = tokenizer(prompt, return_tensors="pt").to("cuda")
-with torch.no_grad():
-    outputs = model.generate(**inputs, max_new_tokens=50)
-print_gpu_memory()
-# Output: Allocated: 14.20 GB | Reserved: 14.50 GB
-# (weights + activations + small KV cache)
-
-print("\n3. Running inference (long context)...")
-long_prompt = "Write an essay: " + "context " * 1000  # ~2k tokens
-long_inputs = tokenizer(long_prompt, return_tensors="pt").to("cuda")
-with torch.no_grad():
-    outputs = model.generate(**long_inputs, max_new_tokens=100)
-print_gpu_memory()
-# Output: Allocated: 15.80 GB | Reserved: 16.20 GB
-# (weights + activations + large KV cache from 2k context)
-
-print("\n4. Batch inference (8 prompts)...")
-batch_prompts = ["Question: What is AI?" for _ in range(8)]
-batch_inputs = tokenizer(batch_prompts, return_tensors="pt", padding=True).to("cuda")
-with torch.no_grad():
-    outputs = model.generate(**batch_inputs, max_new_tokens=50)
-print_gpu_memory()
-# Output: Allocated: 18.50 GB | Reserved: 19.00 GB
-# (weights + activations + 8× KV cache)
-
-# Cleanup
-del model
-gc.collect()
-torch.cuda.empty_cache()
-print("\n5. After cleanup...")
-print_gpu_memory()
-# Output: Allocated: 0.00 GB | Reserved: 0.50 GB (some reserved pool remains)
+# After inference with 2k context
+outputs = model.generate(long_inputs, max_new_tokens=100)
+print_gpu_memory()  # Output: ~15.8 GB (weights + activations + KV cache)
 ```
 
 **Key observations:**
-- **Model weights are constant:** Always ~13.4 GB for 7B fp16
-- **KV cache scales with context:** 50 tokens → +0.8 GB, 2000 tokens → +2.4 GB
-- **Batch size multiplies cache:** 8 conversations → 8× KV cache size
-- **Reserved > Allocated:** PyTorch pre-allocates memory for efficiency
+- Model weights constant (~13.4 GB for 7B fp16)
+- KV cache scales with context: 2k tokens → +2.4 GB
+- Batch size multiplies cache: 8 users → 8× KV cache
 
 ### Common Memory Issues and Solutions
 
@@ -981,304 +1173,78 @@ model = AutoModelForCausalLM.from_pretrained(
 - **Latency:** ~3-5s for 100-token response
 - **Cost:** ~$2/hr for 2× A100 on AWS (p4d.24xlarge)
 
-### Scenario 3: Research Lab (4× RTX 4090)
-
-**Requirements:**
-- 96 GB total VRAM (4 × 24 GB)
-- Run 70B model for experiments
-- Okay with slower inference
-- Cost: $6,400 total
-
-**Solution:**
-
-```python
-# Load 70B model in int4 (35 GB total)
-model = AutoModelForCausalLM.from_pretrained(
-    "meta-llama/Llama-2-70b-hf",
-    load_in_4bit=True,  # 35 GB across 4 GPUs (~8.75 GB each)
-    device_map="auto"
-)
-
-# Memory budget:
-# - Weights: 35 GB (split across 4 GPUs)
-# - Activations: ~5 GB total
-# - KV cache: Single user, 8k context → ~2.5 GB
-# - Total: ~42.5 GB (fits comfortably in 96 GB)
-```
-
-**Performance:**
-- **Throughput:** ~15 tokens/sec (int4 slower than int8)
-- **Latency:** ~5-7s for 100-token response
-- **Quality:** 95-97% of fp16 (acceptable for research)
-
-### Scenario 4: Mobile/Edge Deployment (Apple M2 Max)
-
-**Requirements:**
-- 96 GB unified memory (shared CPU/GPU)
-- Run locally on laptop
-- Acceptable latency for personal use
-- Cost: $3,200 (MacBook Pro)
-
-**Solution:**
-
-```python
-# Use llama.cpp with quantization (runs on CPU + GPU)
-# Download GGUF model (optimized format for llama.cpp)
-# 7B model in Q4_K_M quantization (~4 GB)
-
-from llama_cpp import Llama
-
-model = Llama(
-    model_path="llama-2-7b-chat.Q4_K_M.gguf",
-    n_ctx=4096,  # Context window
-    n_threads=8,  # CPU threads
-    n_gpu_layers=32  # Offload all layers to GPU
-)
-
-# Memory usage:
-# - Model: ~4 GB
-# - KV cache: ~2 GB (4k context)
-# - Total: ~6 GB (leaves plenty for OS + apps)
-```
-
-**Performance:**
-- **Throughput:** ~30 tokens/sec (M2 Max GPU)
-- **Latency:** ~2-3s for 75-token response
-- **Quality:** ~95% of fp16 (Q4_K_M is well-tuned)
-
 ### Cost Comparison Table
 
-| Scenario | Hardware | Model Size | Precision | Monthly Cost | Per-Token Cost |
-|----------|----------|------------|-----------|--------------|----------------|
+| Scenario | Hardware | Model | Precision | Monthly Cost | Per-Token Cost |
+|----------|----------|-------|-----------|--------------|----------------|
 | Budget Chatbot | 1× RTX 4090 | 7B | int8 | $35 (amortized) | $0.0003/1k |
 | Enterprise RAG | 2× A100 80GB | 70B | fp16 | $2,880 (AWS) | $0.02/1k |
-| Research Lab | 4× RTX 4090 | 70B | int4 | $140 (amortized) | $0.001/1k |
-| Mobile/Edge | M2 Max | 7B | Q4_K_M | $0 (one-time) | $0/1k |
-| OpenAI GPT-4 | — | 1.8T (MoE) | — | Pay-as-you-go | $30/1M tokens |
-| OpenAI GPT-4o-mini | — | ~8B (est) | — | Pay-as-you-go | $0.15/1M tokens |
+| OpenAI GPT-4 | API | 1.8T (MoE) | — | Pay-as-you-go | $30/1M tokens |
+| OpenAI GPT-4o-mini | API | ~8B (est) | — | Pay-as-you-go | $0.15/1M tokens |
 
 **Key insights:**
-- **Self-hosting is 10-100× cheaper** than GPT-4 at scale (if you have volume)
-- **RTX 4090 offers best $/performance** for small-scale self-hosting
-- **A100s are necessary** for enterprise-scale serving (batch size matters)
-- **M2 Max is excellent** for personal/development use (zero runtime cost)
-- **GPT-4o-mini is competitive** with self-hosted 7B for low-volume use (<100k tokens/month)
+- Self-hosting is 10-100× cheaper than GPT-4 at scale (if you have volume)
+- RTX 4090 offers best $/performance for small-scale self-hosting  
+- A100s necessary for enterprise-scale serving (batch size matters)
+- GPT-4o-mini competitive with self-hosted 7B for low-volume use (<100k tokens/month)
 
 ---
 
 ## 6F · Transformer Block Internals — Where Computation Happens
 
-Each transformer block has two main components: **attention** (20% of params) and **FFN** (80% of params). Let's break down what actually happens inside.
+Each transformer block has two main components: **attention** (20% of params) and **FFN** (80% of params).
 
-### Attention Layer Math (Simplified)
+### Attention Layer — The Search and Retrieve
 
-**The formula everyone shows:**
+**The formula:**
 
 $$
 \text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V
 $$
 
-**What this actually means in code:**
+**What this means:** For each token, compute similarity scores with all other tokens (QKᵀ), normalize to probabilities (softmax), then retrieve weighted values (multiply by V).
 
-```python
-import torch
-import torch.nn.functional as F
+**Multi-head attention structure (LLaMA 7B):**
+- 4 projection matrices: Wq, Wk, Wv, Wo
+- Each: 4096 × 4096 = 16M parameters
+- Total: 4 × 16M = **64M parameters per attention layer**
 
-def single_head_attention(Q, K, V):
-    """
-    Q, K, V: (batch_size, seq_len, d_model)
-    Returns: (batch_size, seq_len, d_model)
-    """
-    d_k = Q.size(-1)
-
-    # Step 1: Compute attention scores (how much each token attends to others)
-    scores = torch.matmul(Q, K.transpose(-2, -1)) / torch.sqrt(torch.tensor(d_k))
-    # Shape: (batch, seq_len, seq_len)
-
-    # Step 2: Softmax to get attention weights (probabilities)
-    attention_weights = F.softmax(scores, dim=-1)
-    # Each row sums to 1.0
-
-    # Step 3: Weight the values by attention
-    output = torch.matmul(attention_weights, V)
-    # Shape: (batch, seq_len, d_model)
-
-    return output, attention_weights
-
-# Example with real numbers
-batch_size, seq_len, d_model = 1, 4, 8
-Q = torch.randn(batch_size, seq_len, d_model)
-K = torch.randn(batch_size, seq_len, d_model)
-V = torch.randn(batch_size, seq_len, d_model)
-
-output, weights = single_head_attention(Q, K, V)
-
-print(f"Attention weights shape: {weights.shape}")  # (1, 4, 4)
-print(f"Attention weights for token 0:")
-print(weights[0, 0, :])  # [0.22, 0.31, 0.15, 0.32] — sums to 1.0
-# Token 0 pays most attention to tokens 1 and 3
-```
-
-**Multi-head attention: Run this in parallel**
-
-```python
-class MultiHeadAttention(torch.nn.Module):
-    def __init__(self, d_model=4096, num_heads=32):
-        super().__init__()
-        self.num_heads = num_heads
-        self.d_k = d_model // num_heads  # 128 per head
-
-        # Linear projections for Q, K, V
-        self.W_q = torch.nn.Linear(d_model, d_model)  # 4096 × 4096 = 16M params
-        self.W_k = torch.nn.Linear(d_model, d_model)  # 16M params
-        self.W_v = torch.nn.Linear(d_model, d_model)  # 16M params
-        self.W_o = torch.nn.Linear(d_model, d_model)  # 16M params
-        # Total: 64M parameters per attention layer
-
-    def forward(self, x):
-        batch_size, seq_len, d_model = x.shape
-
-        # 1. Linear projections
-        Q = self.W_q(x)  # (batch, seq_len, 4096)
-        K = self.W_k(x)
-        V = self.W_v(x)
-
-        # 2. Split into multiple heads
-        Q = Q.view(batch_size, seq_len, self.num_heads, self.d_k).transpose(1, 2)
-        K = K.view(batch_size, seq_len, self.num_heads, self.d_k).transpose(1, 2)
-        V = V.view(batch_size, seq_len, self.num_heads, self.d_k).transpose(1, 2)
-        # Shape: (batch, num_heads, seq_len, d_k)
-
-        # 3. Scaled dot-product attention (in parallel for all heads)
-        scores = torch.matmul(Q, K.transpose(-2, -1)) / torch.sqrt(torch.tensor(self.d_k))
-        attention_weights = F.softmax(scores, dim=-1)
-        attended_values = torch.matmul(attention_weights, V)
-
-        # 4. Concatenate heads
-        attended_values = attended_values.transpose(1, 2).contiguous()
-        attended_values = attended_values.view(batch_size, seq_len, d_model)
-
-        # 5. Final linear projection
-        output = self.W_o(attended_values)
-
-        return output
-
-# Usage
-mha = MultiHeadAttention(d_model=4096, num_heads=32)
-x = torch.randn(1, 128, 4096)  # batch=1, seq_len=128, d_model=4096
-output = mha(x)
-print(f"Output shape: {output.shape}")  # (1, 128, 4096)
-print(f"Parameters: {sum(p.numel() for p in mha.parameters()) / 1e6:.1f}M")
-# Output: 67.1M parameters
-```
-
-**Why multiple heads?** Each head learns different patterns:
-- **Head 0:** Syntax (subject-verb agreement)
-- **Head 5:** Position (nearby tokens)
-- **Head 12:** Semantics (topic coherence)
-- **Head 23:** Long-range dependencies (pronouns to nouns)
+**Why multiple heads (32 in LLaMA 7B)?** Each head learns different patterns:
+- Some heads: syntax (subject-verb agreement)
+- Some heads: position (nearby tokens)
+- Some heads: semantics (topic coherence)  
+- Some heads: long-range dependencies (pronouns → nouns)
 
 Nobody programs these specializations — they emerge from training.
 
-### Feed-Forward Network (FFN) — The Heavy Lifter
+### FFN Layer — The Transformation Workspace
 
-**The FFN is where most computation happens.** It's a simple two-layer MLP:
+**Structure:** Two-layer MLP with expansion factor ~2.7×
 
-```python
-class FeedForwardNetwork(torch.nn.Module):
-    def __init__(self, d_model=4096, d_ff=11008):  # LLaMA 7B dimensions
-        super().__init__()
-        self.W1 = torch.nn.Linear(d_model, d_ff)    # 4096 → 11008 (45M params)
-        self.W2 = torch.nn.Linear(d_ff, d_model)    # 11008 → 4096 (45M params)
-        # Total: 90M parameters per FFN layer (this is where the 75% budget goes!)
+**LLaMA 7B FFN:**
+- W1: 4096 → 11008 (45M parameters)
+- Activation: GeLU or SiLU  
+- W2: 11008 → 4096 (45M parameters)
+- Total: **90M parameters per FFN layer**
 
-    def forward(self, x):
-        # x shape: (batch, seq_len, 4096)
-
-        # 1. Expand to larger dimension
-        hidden = self.W1(x)  # (batch, seq_len, 11008)
-
-        # 2. Apply activation (GeLU or SiLU)
-        hidden = F.gelu(hidden)
-
-        # 3. Project back to original dimension
-        output = self.W2(hidden)  # (batch, seq_len, 4096)
-
-        return output
-
-# Usage
-ffn = FeedForwardNetwork(d_model=4096, d_ff=11008)
-x = torch.randn(1, 128, 4096)
-output = ffn(x)
-print(f"Parameters: {sum(p.numel() for p in ffn.parameters()) / 1e6:.1f}M")
-# Output: 90.2M parameters
-```
-
-**Why so big?** The FFN expansion factor (d_ff / d_model) is typically 2.7×-4×. LLaMA uses 2.7× (11008/4096). This creates a huge "workspace" for complex transformations.
+**Why so big?** The FFN creates a huge "workspace" (11008 dimensions) for complex transformations before projecting back to model dimension (4096).
 
 **The intuition:**
-- Attention is like **search and retrieve** — finding relevant context
-- FFN is like **transformation and reasoning** — actually doing something with that context
+- Attention: **search and retrieve** — finding relevant context
+- FFN: **transformation and reasoning** — doing something with that context
 
-### Complete Transformer Block
+### Complete Block Structure
 
-```python
-class TransformerBlock(torch.nn.Module):
-    def __init__(self, d_model=4096, num_heads=32, d_ff=11008):
-        super().__init__()
-        self.attention = MultiHeadAttention(d_model, num_heads)  # 67M params
-        self.ffn = FeedForwardNetwork(d_model, d_ff)             # 90M params
-        self.norm1 = torch.nn.LayerNorm(d_model)                 # 8K params
-        self.norm2 = torch.nn.LayerNorm(d_model)                 # 8K params
-        # Total: 157M parameters per block
+```
+TransformerBlock:
+  1. LayerNorm → Attention → Residual (+)  
+  2. LayerNorm → FFN → Residual (+)
 
-    def forward(self, x):
-        # 1. Pre-LayerNorm + Attention + Residual
-        normed = self.norm1(x)
-        attended = self.attention(normed)
-        x = x + attended  # Residual connection
-
-        # 2. Pre-LayerNorm + FFN + Residual
-        normed = self.norm2(x)
-        transformed = self.ffn(normed)
-        x = x + transformed  # Residual connection
-
-        return x
-
-# Full model structure (LLaMA 7B)
-class LLaMA7B(torch.nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.embedding = torch.nn.Embedding(32000, 4096)  # 131M params
-        self.blocks = torch.nn.ModuleList([
-            TransformerBlock(d_model=4096, num_heads=32, d_ff=11008)
-            for _ in range(32)  # 32 blocks × 157M = 5.0B params
-        ])
-        self.final_norm = torch.nn.LayerNorm(4096)  # 8K params
-        self.lm_head = torch.nn.Linear(4096, 32000, bias=False)  # 131M params
-        # Total: 6.7B parameters
-
-    def forward(self, input_ids):
-        # 1. Embedding
-        x = self.embedding(input_ids)  # (batch, seq_len, 4096)
-
-        # 2. Pass through 32 transformer blocks
-        for block in self.blocks:
-            x = block(x)
-
-        # 3. Final normalization
-        x = self.final_norm(x)
-
-        # 4. Project to vocabulary
-        logits = self.lm_head(x)  # (batch, seq_len, 32000)
-
-        return logits
-
-# Verify parameter count
-model = LLaMA7B()
-total_params = sum(p.numel() for p in model.parameters())
-print(f"Total parameters: {total_params / 1e9:.2f}B")
-# Output: 6.74B parameters (matches advertised 7B with rounding)
+Parameters per block:
+  - Attention: 67M
+  - FFN: 90M  
+  - LayerNorms: 16K (negligible)
+  - Total: 157M parameters
 ```
 
 **Parameter breakdown verified:**
