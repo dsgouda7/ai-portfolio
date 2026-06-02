@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Voice Assistant</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .status {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+        }
+        .loaded {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .not-loaded {
+            color: #dc3545;
+        }
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        button {
+            flex: 1;
+            padding: 15px;
+            font-size: 16px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .btn-text {
+            background: #667eea;
+            color: white;
+        }
+        .btn-text:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+        .btn-speech {
+            background: #764ba2;
+            color: white;
+        }
+        .btn-speech:hover {
+            background: #653d8a;
+            transform: translateY(-2px);
+        }
+        .btn-speech:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .response {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            min-height: 100px;
+            border-left: 4px solid #667eea;
+        }
+        .response h3 {
+            margin-top: 0;
+            color: #667eea;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
+        audio {
+            width: 100%;
+            margin-top: 10px;
+        }
+        .recording {
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎙️ Voice Assistant</h1>
+        <p class="subtitle">Powered by HuggingFace Transformers</p>
+
+        <div class="status" id="status">
+            <strong>Model Status:</strong>
+            <div id="model-status">Loading...</div>
+        </div>
+
+        <textarea id="input" rows="4" placeholder="Type your message here..."></textarea>
+
+        <div class="button-group">
+            <button class="btn-text" onclick="sendText()">💬 Send Text</button>
+            <button class="btn-speech" id="recordBtn" onclick="toggleRecording()">🎤 Record Speech</button>
+        </div>
+
+        <div class="response" id="response" style="display:none;">
+            <h3>Response:</h3>
+            <div id="responseText"></div>
+            <audio id="audioPlayer" controls style="display:none;"></audio>
+        </div>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+
+        async function loadStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                let html = '';
+                for (const [type, info] of Object.entries(data.models)) {
+                    const status = info.loaded ?
+                        '<span class="loaded">✓ Loaded</span>' :
+                        '<span class="not-loaded">✗ Not Loaded</span>';
+                    html += `<div class="status-item">
+                        <span>${type.toUpperCase()}: ${info.name}</span>
+                        ${status}
+                    </div>`;
+                }
+                document.getElementById('model-status').innerHTML = html;
+            } catch (e) {
+                document.getElementById('model-status').innerHTML = 'Error loading status';
+            }
+        }
+
+        async function sendText() {
+            const input = document.getElementById('input').value;
+            if (!input.trim()) {
+                alert('Please enter a message');
+                return;
+            }
+
+            const response = document.getElementById('response');
+            const responseText = document.getElementById('responseText');
+
+            response.style.display = 'block';
+            responseText.innerHTML = '<div class="loading">🤔 Thinking...</div>';
+
+            try {
+                const result = await fetch('/api/text', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({text: input})
+                });
+
+                const data = await result.json();
+                responseText.textContent = data.response;
+                loadStatus();
+            } catch (e) {
+                responseText.textContent = 'Error: ' + e.message;
+            }
+        }
+
+        async function toggleRecording() {
+            if (!isRecording) {
+                startRecording();
+            } else {
+                stopRecording();
+            }
+        }
+
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    await sendAudio(audioBlob);
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+
+                const btn = document.getElementById('recordBtn');
+                btn.textContent = '⏹️ Stop Recording';
+                btn.classList.add('recording');
+            } catch (e) {
+                alert('Could not access microphone: ' + e.message);
+            }
+        }
+
+        function stopRecording() {
+            mediaRecorder.stop();
+            isRecording = false;
+
+            const btn = document.getElementById('recordBtn');
+            btn.textContent = '🎤 Record Speech';
+            btn.classList.remove('recording');
+        }
+
+        async function sendAudio(audioBlob) {
+            const response = document.getElementById('response');
+            const responseText = document.getElementById('responseText');
+            const audioPlayer = document.getElementById('audioPlayer');
+
+            response.style.display = 'block';
+            responseText.innerHTML = '<div class="loading">🎧 Processing speech...</div>';
+            audioPlayer.style.display = 'none';
+
+            try {
+                const formData = new FormData();
+                formData.append('audio', audioBlob);
+
+                const result = await fetch('/api/speech', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await result.json();
+                responseText.innerHTML = `
+                    <p><strong>You said:</strong> ${data.transcription}</p>
+                    <p><strong>Response:</strong> ${data.response}</p>
+                `;
+
+                if (data.audio_base64) {
+                    audioPlayer.src = 'data:audio/wav;base64,' + data.audio_base64;
+                    audioPlayer.style.display = 'block';
+                }
+
+                loadStatus();
+            } catch (e) {
+                responseText.textContent = 'Error: ' + e.message;
+            }
+        }
+
+        loadStatus();
+        setInterval(loadStatus, 30000);
+    </script>
+</body>
+</html>
