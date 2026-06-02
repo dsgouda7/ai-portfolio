@@ -1,0 +1,25 @@
+# Flask Web Framework
+flask==3.0.0
+flask-cors==4.0.0
+
+# Machine Learning & AI
+transformers==4.36.0
+torch==2.1.0
+torchaudio==2.1.0
+soundfile==0.12.1
+datasets==2.16.0
+accelerate==0.25.0
+
+# Speech Processing
+librosa==0.10.1
+scipy==1.11.4
+numpy==1.26.2
+
+# Audio I/O
+pyaudio==0.2.14
+
+# Utilities
+requests==2.31.0
+python-dotenv==1.0.0
+mysqlclient==2.2.4
+sentencepiece==0.2.0
