@@ -145,5 +145,5 @@ if __name__ == '__main__':
 
     threading.Thread(target=preload, daemon=True).start()
 
-    print("Server started: http://localhost:5000")
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    print("Server started: http://localhost:5001")
+    app.run(host='0.0.0.0', port=5001, debug=False)

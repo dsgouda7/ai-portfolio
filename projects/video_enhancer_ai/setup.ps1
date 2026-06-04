@@ -37,16 +37,16 @@ if ($DockerInstalled) {
     Write-Host "Checking Docker daemon status..."
     if (-not (docker info 2>$null)) {
         Write-Host "Docker daemon is not running. Attempting to start Docker Desktop..."
-        
+
         $dockerPath = "C:\Program Files\Docker\Docker\Docker Desktop.exe"
         if (Test-Path $dockerPath) {
             Start-Process $dockerPath
             Write-Host "Waiting for Docker to start..."
-            
+
             $maxAttempts = 30
             $attempt = 0
             $started = $false
-            
+
             while ($attempt -lt $maxAttempts) {
                 Start-Sleep -Seconds 2
                 if (docker info 2>$null) {
@@ -56,7 +56,7 @@ if ($DockerInstalled) {
                 $attempt++
                 Write-Host "."
             }
-            
+
             if ($started) {
                 Write-Host "Docker daemon started successfully."
             } else {

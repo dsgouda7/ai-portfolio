@@ -66,7 +66,7 @@ The service will:
 1. Build the Docker image (first run only - ~5 minutes)
 2. Download AI models (~2-3GB, first run only)
 3. Start the Flask server
-4. Open your browser to `http://localhost:5000`
+4. Open your browser to `http://localhost:5001`
 
 **First run takes 10-15 minutes** due to model downloads. Subsequent runs start in ~60 seconds.
 
@@ -77,7 +77,7 @@ The service will:
 #### Check Status
 
 ```bash
-curl http://localhost:5000/api/status
+curl http://localhost:5001/api/status
 ```
 
 Response:
@@ -97,7 +97,7 @@ Response:
 #### Enhance Video
 
 ```bash
-curl -X POST http://localhost:5000/api/enhance \
+curl -X POST http://localhost:5001/api/enhance \
   -F "video=@input_video.mp4"
 ```
 
@@ -113,7 +113,7 @@ Response:
 #### Download Enhanced Video
 
 ```bash
-curl http://localhost:5000/api/download/enhanced_input_video.mp4 \
+curl http://localhost:5001/api/download/enhanced_input_video.mp4 \
   --output enhanced_video.mp4
 ```
 
@@ -125,7 +125,7 @@ import requests
 # Upload and enhance video
 with open('input_video.mp4', 'rb') as f:
     response = requests.post(
-        'http://localhost:5000/api/enhance',
+        'http://localhost:5001/api/enhance',
         files={'video': f}
     )
 
@@ -134,7 +134,7 @@ output_filename = result['output_file']
 
 # Download enhanced video
 response = requests.get(
-    f'http://localhost:5000/api/download/{output_filename}'
+    f'http://localhost:5001/api/download/{output_filename}'
 )
 
 with open('enhanced_output.mp4', 'wb') as f:

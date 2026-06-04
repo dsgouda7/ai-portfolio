@@ -1,7 +1,7 @@
 param(
     [switch]$NoBuild,
     [switch]$NoBrowser,
-    [string]$Port = "5000"
+    [string]$Port = "5001"
 )
 
 $ErrorActionPreference = "Stop"
@@ -32,7 +32,7 @@ if (-not $NoBuild) {
 Write-Host "Starting container..."
 docker run -d `
     --name $ContainerName `
-    -p "${Port}:5000" `
+    -p "${Port}:5001" `
     -v "${ScriptDir}/models:/app/models" `
     -v "${ScriptDir}/cache:/app/cache" `
     -v "${ScriptDir}/uploads:/app/uploads" `

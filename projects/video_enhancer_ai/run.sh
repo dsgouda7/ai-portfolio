@@ -4,7 +4,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 IMAGE_NAME="video-enhancer-ai"
 CONTAINER_NAME="video-enhancer-app"
-PORT="5000"
+PORT="5001"
 NO_BUILD=false
 NO_BROWSER=false
 
@@ -36,7 +36,7 @@ fi
 echo "Starting container..."
 docker run -d \
     --name "$CONTAINER_NAME" \
-    -p "${PORT}:5000" \
+    -p "${PORT}:5001" \
     -v "${SCRIPT_DIR}/models:/app/models" \
     -v "${SCRIPT_DIR}/cache:/app/cache" \
     -v "${SCRIPT_DIR}/uploads:/app/uploads" \
