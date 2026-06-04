@@ -98,12 +98,27 @@
             padding: 20px;
             border-radius: 10px;
             margin-top: 20px;
-            min-height: 100px;
+            max-height: 400px;
+            overflow-y: auto;
             border-left: 4px solid #667eea;
         }
         .response h3 {
             margin-top: 0;
             color: #667eea;
+            position: sticky;
+            top: 0;
+            background: #f8f9fa;
+            padding-bottom: 10px;
+        }
+        .message {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+        }
+        .message strong {
+            display: block;
+            margin-bottom: 5px;
         }
         .loading {
             text-align: center;
@@ -143,7 +158,6 @@
         <div class="response" id="response" style="display:none;">
             <h3>Response:</h3>
             <div id="responseText"></div>
-            <audio id="audioPlayer" controls style="display:none;"></audio>
         </div>
     </div>
 
@@ -184,7 +198,11 @@
             const responseText = document.getElementById('responseText');
 
             response.style.display = 'block';
-            responseText.innerHTML = '<div class="loading">🤔 Thinking...</div>';
+            
+            const loadingMsg = document.createElement('div');
+            loadingMsg.className = 'loading';
+            loadingMsg.textContent = '🤔 Thinking...';
+            responseText.appendChild(loadingMsg);
 
             try {
                 const result = await fetch('/api/text', {
@@ -194,14 +212,26 @@
                 });
 
                 const data = await result.json();
-                responseText.innerHTML = `
-                    <p><strong>You:</strong> ${input}</p>
-                    <p><strong>Assistant:</strong> ${data.response}</p>
+                
+                responseText.removeChild(loadingMsg);
+                
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message';
+                messageDiv.innerHTML = `
+                    <strong>You:</strong> ${input}<br>
+                    <strong>Assistant:</strong> ${data.response}
                 `;
+                responseText.appendChild(messageDiv);
+                
                 inputElement.value = '';
+                responseText.scrollTop = responseText.scrollHeight;
                 loadStatus();
             } catch (e) {
-                responseText.textContent = 'Error: ' + e.message;
+                responseText.removeChild(loadingMsg);
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'message';
+                errorDiv.textContent = 'Error: ' + e.message;
+                responseText.appendChild(errorDiv);
             }
         }
 
@@ -252,11 +282,13 @@
         async function sendAudio(audioBlob) {
             const response = document.getElementById('response');
             const responseText = document.getElementById('responseText');
-            const audioPlayer = document.getElementById('audioPlayer');
 
             response.style.display = 'block';
-            responseText.innerHTML = '<div class="loading">🎧 Processing speech...</div>';
-            audioPlayer.style.display = 'none';
+            
+            const loadingMsg = document.createElement('div');
+            loadingMsg.className = 'loading';
+            loadingMsg.textContent = '🎧 Processing speech...';
+            responseText.appendChild(loadingMsg);
 
             try {
                 const formData = new FormData();
@@ -268,19 +300,34 @@
                 });
 
                 const data = await result.json();
-                responseText.innerHTML = `
-                    <p><strong>You said:</strong> ${data.transcription}</p>
-                    <p><strong>Response:</strong> ${data.response}</p>
+                
+                responseText.removeChild(loadingMsg);
+                
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message';
+                messageDiv.innerHTML = `
+                    <strong>You said:</strong> ${data.transcription}<br>
+                    <strong>Assistant:</strong> ${data.response}
                 `;
-
+                
                 if (data.audio_base64) {
-                    audioPlayer.src = 'data:audio/wav;base64,' + data.audio_base64;
-                    audioPlayer.style.display = 'block';
+                    const audioEl = document.createElement('audio');
+                    audioEl.controls = true;
+                    audioEl.style.width = '100%';
+                    audioEl.style.marginTop = '10px';
+                    audioEl.src = 'data:audio/wav;base64,' + data.audio_base64;
+                    messageDiv.appendChild(audioEl);
                 }
-
+                
+                responseText.appendChild(messageDiv);
+                responseText.scrollTop = responseText.scrollHeight;
                 loadStatus();
             } catch (e) {
-                responseText.textContent = 'Error: ' + e.message;
+                responseText.removeChild(loadingMsg);
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'message';
+                errorDiv.textContent = 'Error: ' + e.message;
+                responseText.appendChild(errorDiv);
             }
         }
 
