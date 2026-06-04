@@ -198,7 +198,7 @@
             const responseText = document.getElementById('responseText');
 
             response.style.display = 'block';
-            
+
             const loadingMsg = document.createElement('div');
             loadingMsg.className = 'loading';
             loadingMsg.textContent = '🤔 Thinking...';
@@ -212,9 +212,9 @@
                 });
 
                 const data = await result.json();
-                
+
                 responseText.removeChild(loadingMsg);
-                
+
                 const messageDiv = document.createElement('div');
                 messageDiv.className = 'message';
                 messageDiv.innerHTML = `
@@ -222,7 +222,7 @@
                     <strong>Assistant:</strong> ${data.response}
                 `;
                 responseText.appendChild(messageDiv);
-                
+
                 inputElement.value = '';
                 responseText.scrollTop = responseText.scrollHeight;
                 loadStatus();
@@ -284,7 +284,7 @@
             const responseText = document.getElementById('responseText');
 
             response.style.display = 'block';
-            
+
             const loadingMsg = document.createElement('div');
             loadingMsg.className = 'loading';
             loadingMsg.textContent = '🎧 Processing speech...';
@@ -300,16 +300,16 @@
                 });
 
                 const data = await result.json();
-                
+
                 responseText.removeChild(loadingMsg);
-                
+
                 const messageDiv = document.createElement('div');
                 messageDiv.className = 'message';
                 messageDiv.innerHTML = `
                     <strong>You said:</strong> ${data.transcription}<br>
                     <strong>Assistant:</strong> ${data.response}
                 `;
-                
+
                 if (data.audio_base64) {
                     const audioEl = document.createElement('audio');
                     audioEl.controls = true;
@@ -318,7 +318,7 @@
                     audioEl.src = 'data:audio/wav;base64,' + data.audio_base64;
                     messageDiv.appendChild(audioEl);
                 }
-                
+
                 responseText.appendChild(messageDiv);
                 responseText.scrollTop = responseText.scrollHeight;
                 loadStatus();
