@@ -22,15 +22,7 @@ OUTPUT_FOLDER.mkdir(exist_ok=True)
 
 @app.route('/')
 def index():
-    return jsonify({
-        'service': 'Video Enhancer AI',
-        'version': '1.0.0',
-        'endpoints': {
-            '/health': 'Health check',
-            '/api/status': 'Get processor status',
-            '/api/enhance': 'POST video file for enhancement'
-        }
-    })
+    return render_template('index.html')
 
 
 @app.route('/health')
@@ -40,20 +32,28 @@ def health():
 
 @app.route('/api/status')
 def get_status():
-    return jsonify({
+    video_loaded = video_processor.model_config['gpu']['loaded'] or video_processor.model_config['cpu']['loaded']
+    audio_loaded = audio_processor.model_config['gpu']['loaded'] or audio_processor.model_config['cpu']['loaded']
+
+    response = {
         'video': {
             'device': video_processor.device,
-            'model_loaded': video_processor.model_config['gpu']['loaded'] or
-                          video_processor.model_config['cpu']['loaded']
+            'model_loaded': video_loaded
         },
         'audio': {
             'device': audio_processor.device,
-            'model_loaded': audio_processor.model_config['gpu']['loaded'] or
-                          audio_processor.model_config['cpu']['loaded']
+            'model_loaded': audio_loaded
         }
-    })
+    }
 
+    # Add model info
+    if video_loaded or audio_loaded:
+        response['models'] = {
+            'video': video_processor.get_model_info(),
+            'audio': audio_processor.get_model_info()
+        }
 
+    return jsonify(response)
 @app.route('/api/enhance', methods=['POST'])
 def enhance_video():
     if 'video' not in request.files:

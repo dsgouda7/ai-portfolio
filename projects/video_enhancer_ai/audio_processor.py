@@ -3,22 +3,33 @@ import torchaudio
 from pathlib import Path
 from speechbrain.pretrained import SpectralMaskEnhancement
 import warnings
+import yaml
 warnings.filterwarnings('ignore')
 
 
 class AudioProcessor:
-    def __init__(self):
+    def __init__(self, config_path='config.yaml'):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         print(f"Audio processor device: {self.device}")
 
+        # Load config
+        with open(config_path, 'r') as f:
+            config = yaml.safe_load(f)
+
+        audio_models = config['audio_models']
+
         self.model_config = {
             'gpu': {
-                'name': 'speechbrain/metricgan-plus-voicebank',
+                'name': audio_models['gpu']['name'],
+                'description': audio_models['gpu']['description'],
+                'url': audio_models['gpu']['huggingface_url'],
                 'loaded': False,
                 'model': None
             },
             'cpu': {
-                'name': 'speechbrain/metricgan-plus-voicebank',
+                'name': audio_models['cpu']['name'],
+                'description': audio_models['cpu']['description'],
+                'url': audio_models['cpu']['huggingface_url'],
                 'loaded': False,
                 'model': None
             }
@@ -67,6 +78,16 @@ class AudioProcessor:
             shutil.copy(input_path, output_path)
             print(f"Copied original audio to: {output_path}")
             return output_path
+
+
+    def get_model_info(self):
+        mode = 'gpu' if self.device == 'cuda' else 'cpu'
+        config = self.model_config[mode]
+        return {
+            'name': config['name'],
+            'description': config['description'],
+            'url': config['url']
+        }
 
 
 _audio_processor = None

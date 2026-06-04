@@ -1,0 +1,62 @@
+# Video Enhancer AI Configuration
+
+# Video Upscaling Models
+video_models:
+  gpu:
+    name: "caidas/swin2SR-realworld-sr-x4-64-bsrgan-psnr"
+    description: "High-quality 4x super-resolution optimized for real-world images"
+    huggingface_url: "https://huggingface.co/caidas/swin2SR-realworld-sr-x4-64-bsrgan-psnr"
+  cpu:
+    name: "caidas/swin2SR-classical-sr-x4-64"
+    description: "Lightweight 4x upscaler suitable for CPU inference"
+    huggingface_url: "https://huggingface.co/caidas/swin2SR-classical-sr-x4-64"
+
+# Audio Enhancement Models
+audio_models:
+  gpu:
+    name: "speechbrain/metricgan-plus-voicebank"
+    description: "Spectral mask enhancement for noise reduction"
+    huggingface_url: "https://huggingface.co/speechbrain/metricgan-plus-voicebank"
+  cpu:
+    name: "speechbrain/metricgan-plus-voicebank"
+    description: "Spectral mask enhancement for noise reduction (CPU-compatible)"
+    huggingface_url: "https://huggingface.co/speechbrain/metricgan-plus-voicebank"
+
+# Processing Configuration
+processing:
+  # Number of parallel workers for video frame processing
+  parallel_workers: 4
+
+  # Batch size for frame processing
+  batch_size: 8
+
+  # Target resolution (width, height)
+  target_resolution: [3840, 2160]  # 4K
+
+  # Chunk size for parallel processing (frames per chunk)
+  chunk_size: 30  # 1 second at 30fps
+
+# Alternative Models (uncomment to use)
+# Explore more models at: https://huggingface.co/models?pipeline_tag=image-super-resolution
+
+alternative_video_models:
+  - name: "caidas/swin2SR-lightweight-x4-64"
+    description: "Faster, lightweight 4x upscaler"
+    url: "https://huggingface.co/caidas/swin2SR-lightweight-x4-64"
+
+  - name: "eugenesiow/rcan-bam-x4"
+    description: "RCAN with Balanced Attention Module"
+    url: "https://huggingface.co/eugenesiow/rcan-bam-x4"
+
+  - name: "stabilityai/stable-video-diffusion-img2vid-xt"
+    description: "Highest quality but very slow (requires GPU, 7GB VRAM)"
+    url: "https://huggingface.co/stabilityai/stable-video-diffusion-img2vid-xt"
+
+alternative_audio_models:
+  - name: "resemble-ai/resemble-enhance"
+    description: "GPU-only super-resolution (16kHz → 44.1kHz)"
+    url: "https://huggingface.co/resemble-ai/resemble-enhance"
+
+  - name: "facebook/demucs"
+    description: "Music separation and enhancement"
+    url: "https://huggingface.co/facebook/demucs"

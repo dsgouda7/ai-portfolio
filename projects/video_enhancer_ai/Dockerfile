@@ -23,7 +23,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY video_processor.py audio_processor.py app.py .
+COPY video_processor.py audio_processor.py app.py config.yaml .
+COPY templates/ ./templates/
 
 # Create directories
 RUN mkdir -p /app/models /app/cache /app/uploads /app/outputs /app/pretrained_models

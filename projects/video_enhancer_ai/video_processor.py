@@ -5,23 +5,36 @@ from pathlib import Path
 from transformers import Swin2SRForImageSuperResolution, AutoImageProcessor
 from PIL import Image
 import warnings
+import yaml
+from concurrent.futures import ThreadPoolExecutor, as_completed
 warnings.filterwarnings('ignore')
 
 
 class VideoProcessor:
-    def __init__(self):
+    def __init__(self, config_path='config.yaml'):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         print(f"Video processor device: {self.device}")
 
+        # Load config
+        with open(config_path, 'r') as f:
+            config = yaml.safe_load(f)
+
+        self.processing_config = config['processing']
+        video_models = config['video_models']
+
         self.model_config = {
             'gpu': {
-                'name': 'caidas/swin2SR-realworld-sr-x4-64-bsrgan-psnr',
+                'name': video_models['gpu']['name'],
+                'description': video_models['gpu']['description'],
+                'url': video_models['gpu']['huggingface_url'],
                 'loaded': False,
                 'model': None,
                 'processor': None
             },
             'cpu': {
-                'name': 'caidas/swin2SR-classical-sr-x4-64',
+                'name': video_models['cpu']['name'],
+                'description': video_models['cpu']['description'],
+                'url': video_models['cpu']['huggingface_url'],
                 'loaded': False,
                 'model': None,
                 'processor': None
@@ -72,7 +85,22 @@ class VideoProcessor:
             print(f"Frame upscaling error: {e}")
             return frame
 
-    def process_video(self, input_path: str, output_path: str, target_resolution=(3840, 2160)):
+    def process_chunk(self, frames, chunk_id, total_chunks, target_resolution):
+        """Process a chunk of frames in parallel"""
+        processed_frames = []
+        for i, frame in enumerate(frames):
+            upscaled = self.upscale_frame(frame)
+            if upscaled.shape[:2][::-1] != target_resolution:
+                upscaled = cv2.resize(upscaled, target_resolution, interpolation=cv2.INTER_LANCZOS4)
+            processed_frames.append(upscaled)
+            if i % 10 == 0:
+                print(f"Chunk {chunk_id+1}/{total_chunks}: {i}/{len(frames)} frames")
+        return processed_frames
+
+    def process_video(self, input_path: str, output_path: str, target_resolution=None):
+        if target_resolution is None:
+            target_resolution = tuple(self.processing_config['target_resolution'])
+
         print(f"Processing video: {input_path}")
 
         cap = cv2.VideoCapture(input_path)
@@ -87,31 +115,62 @@ class VideoProcessor:
         print(f"Input: {width}x{height}, {fps} FPS, {total_frames} frames")
         print(f"Target: {target_resolution[0]}x{target_resolution[1]}")
 
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        out = cv2.VideoWriter(output_path, fourcc, fps, target_resolution)
-
-        processed = 0
+        # Read all frames into memory (for parallel processing)
+        frames = []
         while True:
             ret, frame = cap.read()
             if not ret:
                 break
-
-            upscaled = self.upscale_frame(frame)
-
-            if upscaled.shape[:2][::-1] != target_resolution:
-                upscaled = cv2.resize(upscaled, target_resolution, interpolation=cv2.INTER_LANCZOS4)
-
-            out.write(upscaled)
-            processed += 1
-
-            if processed % 30 == 0:
-                progress = (processed / total_frames) * 100
-                print(f"Progress: {processed}/{total_frames} ({progress:.1f}%)", end='\r')
-
+            frames.append(frame)
         cap.release()
+
+        print(f"Read {len(frames)} frames, starting parallel processing...")
+
+        # Split into chunks for parallel processing
+        chunk_size = self.processing_config.get('chunk_size', 30)
+        chunks = [frames[i:i + chunk_size] for i in range(0, len(frames), chunk_size)]
+
+        # Process chunks in parallel
+        processed_frames = []
+        max_workers = self.processing_config.get('parallel_workers', 4)
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {}
+            for i, chunk in enumerate(chunks):
+                future = executor.submit(self.process_chunk, chunk, i, len(chunks), target_resolution)
+                futures[future] = i
+
+            # Collect results in order
+            chunk_results = {}
+            for future in as_completed(futures):
+                chunk_id = futures[future]
+                chunk_results[chunk_id] = future.result()
+                print(f"Completed chunk {chunk_id+1}/{len(chunks)}")
+
+            # Reconstruct frames in order
+            for i in range(len(chunks)):
+                processed_frames.extend(chunk_results[i])
+
+        # Write output video
+        print("Writing output video...")
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        out = cv2.VideoWriter(output_path, fourcc, fps, target_resolution)
+
+        for frame in processed_frames:
+            out.write(frame)
+
         out.release()
-        print(f"\nCompleted: {output_path}")
+        print(f"Completed: {output_path}")
         return output_path
+
+    def get_model_info(self):
+        mode = 'gpu' if self.device == 'cuda' else 'cpu'
+        config = self.model_config[mode]
+        return {
+            'name': config['name'],
+            'description': config['description'],
+            'url': config['url']
+        }
 
 
 _video_processor = None

@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Enhancer AI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .status-bar {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #28a745;
+        }
+
+        .status-dot.loading {
+            background: #ffc107;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 60px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            background: #f8f9fa;
+            border-color: #764ba2;
+        }
+
+        .upload-area.dragover {
+            background: #e9ecef;
+            border-color: #28a745;
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 1.2em;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .upload-hint {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: inline-block;
+            margin: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress-container {
+            display: none;
+            margin: 20px 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e9ecef;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .result-container {
+            display: none;
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .result-video {
+            max-width: 100%;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .download-btn {
+            background: #28a745;
+        }
+
+        .download-btn:hover {
+            box-shadow: 0 10px 20px rgba(40, 167, 69, 0.3);
+        }
+
+        .info-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+
+        .info-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .model-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .model-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .model-card h4 {
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+
+        .model-card p {
+            color: #666;
+            font-size: 0.85em;
+            margin-bottom: 5px;
+        }
+
+        .model-link {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.8em;
+        }
+
+        .model-link:hover {
+            text-decoration: underline;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 Video Enhancer AI</h1>
+        <p class="subtitle">Transform your videos to 4K with AI-powered upscaling and audio enhancement</p>
+
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-dot" id="videoStatus"></div>
+                <span id="videoStatusText">Video Model: Loading...</span>
+            </div>
+            <div class="status-item">
+                <div class="status-dot" id="audioStatus"></div>
+                <span id="audioStatusText">Audio Model: Loading...</span>
+            </div>
+            <div class="status-item">
+                <span id="deviceInfo">Device: Detecting...</span>
+            </div>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📹</div>
+            <div class="upload-text">Drag and drop your video here</div>
+            <div class="upload-hint">or click to browse (MP4, AVI, MKV, MOV, WebM)</div>
+            <input type="file" id="fileInput" accept="video/*">
+        </div>
+
+        <div style="text-align: center;">
+            <button class="btn" id="uploadBtn" disabled>Select Video</button>
+            <button class="btn" id="enhanceBtn" disabled style="display: none;">Enhance Video</button>
+        </div>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill">0%</div>
+            </div>
+            <p style="text-align: center; margin-top: 10px; color: #666;" id="progressText">Processing...</p>
+        </div>
+
+        <div class="result-container" id="resultContainer">
+            <h3>✨ Enhancement Complete!</h3>
+            <p style="color: #666; margin: 10px 0;">Your video has been upscaled to 4K with improved audio quality</p>
+            <button class="btn download-btn" id="downloadBtn">Download Enhanced Video</button>
+            <button class="btn" id="resetBtn">Enhance Another Video</button>
+        </div>
+
+        <div class="info-section" id="modelInfo" style="display: none;">
+            <h3>Active AI Models</h3>
+            <div class="model-info" id="modelCards"></div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+        let enhancedFilename = null;
+
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const enhanceBtn = document.getElementById('enhanceBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const resultContainer = document.getElementById('resultContainer');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const errorMessage = document.getElementById('errorMessage');
+
+        // Load status on page load
+        loadStatus();
+
+        // Upload area click
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        // File selection
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                selectedFile = e.target.files[0];
+                showFileSelected(selectedFile.name);
+            }
+        });
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+
+            if (e.dataTransfer.files.length > 0) {
+                selectedFile = e.dataTransfer.files[0];
+                fileInput.files = e.dataTransfer.files;
+                showFileSelected(selectedFile.name);
+            }
+        });
+
+        uploadBtn.addEventListener('click', () => fileInput.click());
+
+        enhanceBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            hideError();
+            progressContainer.style.display = 'block';
+            enhanceBtn.disabled = true;
+            uploadBtn.disabled = true;
+
+            const formData = new FormData();
+            formData.append('video', selectedFile);
+
+            try {
+                updateProgress(10, 'Uploading video...');
+
+                const response = await fetch('/api/enhance', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Enhancement failed');
+                }
+
+                updateProgress(50, 'Processing video frames...');
+
+                // Simulate progress (actual processing happens server-side)
+                await simulateProgress();
+
+                const result = await response.json();
+                enhancedFilename = result.output_file;
+
+                updateProgress(100, 'Complete!');
+                showResult();
+            } catch (error) {
+                showError(error.message);
+                resetUpload();
+            }
+        });
+
+        downloadBtn.addEventListener('click', () => {
+            if (enhancedFilename) {
+                window.location.href = `/api/download/${enhancedFilename}`;
+            }
+        });
+
+        resetBtn.addEventListener('click', () => {
+            resetUpload();
+            selectedFile = null;
+            enhancedFilename = null;
+            fileInput.value = '';
+        });
+
+        function showFileSelected(filename) {
+            uploadArea.innerHTML = `
+                <div class="upload-icon">✅</div>
+                <div class="upload-text">${filename}</div>
+                <div class="upload-hint">Ready to enhance</div>
+            `;
+            enhanceBtn.style.display = 'inline-block';
+            enhanceBtn.disabled = false;
+            uploadBtn.textContent = 'Change Video';
+        }
+
+        function updateProgress(percent, text) {
+            progressFill.style.width = percent + '%';
+            progressFill.textContent = percent + '%';
+            progressText.textContent = text;
+        }
+
+        async function simulateProgress() {
+            const steps = [
+                { percent: 60, text: 'Upscaling video frames...' },
+                { percent: 75, text: 'Enhancing audio quality...' },
+                { percent: 90, text: 'Merging video and audio...' }
+            ];
+
+            for (const step of steps) {
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                updateProgress(step.percent, step.text);
+            }
+        }
+
+        function showResult() {
+            progressContainer.style.display = 'none';
+            resultContainer.style.display = 'block';
+            uploadArea.style.display = 'none';
+            enhanceBtn.style.display = 'none';
+            uploadBtn.style.display = 'none';
+        }
+
+        function resetUpload() {
+            progressContainer.style.display = 'none';
+            resultContainer.style.display = 'none';
+            uploadArea.style.display = 'block';
+            uploadBtn.style.display = 'inline-block';
+            enhanceBtn.style.display = 'none';
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = 'Select Video';
+            uploadArea.innerHTML = `
+                <div class="upload-icon">📹</div>
+                <div class="upload-text">Drag and drop your video here</div>
+                <div class="upload-hint">or click to browse (MP4, AVI, MKV, MOV, WebM)</div>
+            `;
+        }
+
+        function showError(message) {
+            errorMessage.textContent = '❌ Error: ' + message;
+            errorMessage.style.display = 'block';
+            setTimeout(() => errorMessage.style.display = 'none', 5000);
+        }
+
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
+
+        async function loadStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const status = await response.json();
+
+                // Update video status
+                const videoStatus = document.getElementById('videoStatus');
+                const videoStatusText = document.getElementById('videoStatusText');
+                if (status.video.model_loaded) {
+                    videoStatus.classList.remove('loading');
+                    videoStatusText.textContent = `Video: ${status.video.device.toUpperCase()} Ready`;
+                } else {
+                    videoStatus.classList.add('loading');
+                    videoStatusText.textContent = 'Video: Loading...';
+                }
+
+                // Update audio status
+                const audioStatus = document.getElementById('audioStatus');
+                const audioStatusText = document.getElementById('audioStatusText');
+                if (status.audio.model_loaded) {
+                    audioStatus.classList.remove('loading');
+                    audioStatusText.textContent = `Audio: ${status.audio.device.toUpperCase()} Ready`;
+                } else {
+                    audioStatus.classList.add('loading');
+                    audioStatusText.textContent = 'Audio: Loading...';
+                }
+
+                // Update device info
+                document.getElementById('deviceInfo').textContent =
+                    `Device: ${status.video.device === 'cuda' ? 'GPU' : 'CPU'}`;
+
+                // Load model info
+                if (status.models) {
+                    showModelInfo(status.models);
+                }
+
+                // Enable upload button when models are loaded
+                if (status.video.model_loaded && status.audio.model_loaded) {
+                    uploadBtn.disabled = false;
+                } else {
+                    setTimeout(loadStatus, 2000);
+                }
+            } catch (error) {
+                console.error('Failed to load status:', error);
+                setTimeout(loadStatus, 5000);
+            }
+        }
+
+        function showModelInfo(models) {
+            const modelInfo = document.getElementById('modelInfo');
+            const modelCards = document.getElementById('modelCards');
+
+            modelCards.innerHTML = `
+                <div class="model-card">
+                    <h4>Video Upscaling</h4>
+                    <p>${models.video.name}</p>
+                    <a href="${models.video.url}" target="_blank" class="model-link">View on HuggingFace →</a>
+                </div>
+                <div class="model-card">
+                    <h4>Audio Enhancement</h4>
+                    <p>${models.audio.name}</p>
+                    <a href="${models.audio.url}" target="_blank" class="model-link">View on HuggingFace →</a>
+                </div>
+            `;
+
+            modelInfo.style.display = 'block';
+        }
+
+        // Check status every 30 seconds
+        setInterval(loadStatus, 30000);
+    </script>
+</body>
+</html>
