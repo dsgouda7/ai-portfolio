@@ -1,7 +1,4 @@
 #!/usr/bin/env bash
-# Voice Assistant - Run Script (Bash)
-# Builds Docker image, runs container, and opens browser
-
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -11,172 +8,84 @@ PORT="5000"
 NO_BUILD=false
 NO_BROWSER=false
 
-# Parse arguments
+# 1. Parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --no-build)
-            NO_BUILD=true
-            shift
-            ;;
-        --no-browser)
-            NO_BROWSER=true
-            shift
-            ;;
-        --port)
-            PORT="$2"
-            shift 2
-            ;;
-        *)
-            echo "Unknown option: $1"
-            echo "Usage: $0 [--no-build] [--no-browser] [--port PORT]"
-            exit 1
-            ;;
+        --no-build)   NO_BUILD=true; shift ;;
+        --no-browser) NO_BROWSER=true; shift ;;
+        --port)       PORT="$2"; shift 2 ;;
+        *) echo "Unknown option: $1"; exit 1 ;;
     esac
 done
 
-# Color output functions
-step() { echo; echo "▶ $*"; }
-ok()   { echo "  ✓ $*"; }
-warn() { echo "  ⚠ $*"; }
-fail() { echo "  ✗ $*"; exit 1; }
-
-echo
-echo "╔════════════════════════════════════════╗"
-echo "║   Voice Assistant - Starting App      ║"
-echo "╚════════════════════════════════════════╝"
-echo
-
-# Check if Docker is running
-step "Checking Docker..."
+# 2. Verify Docker is alive
 if ! docker info &>/dev/null; then
-    fail "Docker daemon is not running. Please start Docker."
-fi
-ok "Docker is running"
-
-# Stop and remove existing container
-step "Cleaning up existing containers..."
-if docker ps -a -q -f name="$CONTAINER_NAME" &>/dev/null; then
-    existing=$(docker ps -a -q -f name="$CONTAINER_NAME")
-    if [ -n "$existing" ]; then
-        echo "  Stopping existing container..."
-        docker stop "$CONTAINER_NAME" &>/dev/null || true
-        echo "  Removing existing container..."
-        docker rm "$CONTAINER_NAME" &>/dev/null || true
-        ok "Cleaned up existing container"
-    else
-        ok "No existing container found"
-    fi
-else
-    ok "No existing container found"
+    echo "Error: Docker daemon is not running. Please start Docker." >&2
+    exit 1
 fi
 
-# Build Docker image
+# 3. Tear down old container if it exists
+if [ -n "$(docker ps -aq -f name="^/${CONTAINER_NAME}$")" ]; then
+    echo "Cleaning up old container..."
+    docker rm -f "$CONTAINER_NAME" >/dev/null
+fi
+
+# 4. Build the image
 if [ "$NO_BUILD" = false ]; then
-    step "Building Docker image..."
+    echo "Building Docker image..."
     cd "$SCRIPT_DIR"
-    echo "  This may take a few minutes on first build..."
-    if docker build -t "$IMAGE_NAME" . 2>&1 | grep -E "^Step |^Successfully" | sed 's/^/  /'; then
-        ok "Docker image built successfully"
-    else
-        fail "Docker build failed"
-    fi
-else
-    warn "Skipping build (--no-build specified)"
+    docker build -t "$IMAGE_NAME" .
 fi
 
-# Run container
-step "Starting container..."
-container_id=$(docker run -d \
+# 5. Run the container
+echo "Starting container..."
+docker run -d \
     --name "$CONTAINER_NAME" \
     -p "${PORT}:5000" \
     -v "${SCRIPT_DIR}/models:/app/models" \
     -v "${SCRIPT_DIR}/cache:/app/cache" \
-    "$IMAGE_NAME") || fail "Failed to start container"
+    "$IMAGE_NAME"
 
-ok "Container started: ${container_id:0:12}"
-
-# Wait for container to be healthy
-step "Waiting for application to start..."
-max_attempts=60
-attempt=0
+# 6. Poll health endpoint
+echo "Waiting for app to initialize (this may take a bit on first run)..."
 healthy=false
 
-echo "  Downloading models on first run (this may take 5-10 minutes)..."
-
-while [ $attempt -lt $max_attempts ]; do
-    sleep 2
-    ((attempt++))
-
-    if curl -sf --max-time 2 "http://localhost:${PORT}/health" &>/dev/null; then
+for ((i=1; i<=30; i++)); do
+    if curl -sf --max-time 2 "http://localhost:${PORT}/health" >/dev/null; then
         healthy=true
         break
     fi
 
-    # Show progress
-    if [ $((attempt % 5)) -eq 0 ]; then
-        echo "  Still waiting... ($attempt/$max_attempts)"
-
-        # Show last few lines of logs
-        docker logs --tail 3 "$CONTAINER_NAME" 2>&1 | \
-            grep -iE "Downloading|Loading|model" | \
-            sed 's/^/    /' || true
+    # Check if the container quietly died in the background while we wait
+    if [ -z "$(docker ps -q -f name="^/${CONTAINER_NAME}$")" ]; then
+        echo "Error: Container stopped unexpectedly." >&2
+        docker logs --tail 20 "$CONTAINER_NAME"
+        exit 1
     fi
+
+    sleep 5
 done
 
 if [ "$healthy" = false ]; then
-    fail "Application failed to start within timeout"
-    echo
-    echo "Container logs:"
+    echo "Error: Application failed to become healthy within the timeout period." >&2
     docker logs --tail 50 "$CONTAINER_NAME"
-    echo
-    echo "Stopping container..."
-    docker stop "$CONTAINER_NAME" &>/dev/null || true
     exit 1
 fi
 
-ok "Application is running and healthy"
-
-# Open browser
+# 7. Launch browser if requested
 if [ "$NO_BROWSER" = false ]; then
-    step "Opening browser..."
-    sleep 1
-
-    # Detect OS and open browser accordingly
     if [[ "$OSTYPE" == "darwin"* ]]; then
         open "http://localhost:${PORT}"
-    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        if command -v xdg-open &>/dev/null; then
-            xdg-open "http://localhost:${PORT}" &>/dev/null &
-        elif command -v gnome-open &>/dev/null; then
-            gnome-open "http://localhost:${PORT}" &>/dev/null &
-        fi
+    elif [[ "$OSTYPE" == "linux-gnu"* ]] && command -v xdg-open &>/dev/null; then
+        xdg-open "http://localhost:${PORT}" &>/dev/null &
     fi
-
-    ok "Browser opened"
 fi
 
-# Display success message
-echo
-echo "╔════════════════════════════════════════╗"
-echo "║   Voice Assistant is Running! 🎙️      ║"
-echo "╚════════════════════════════════════════╝"
-echo
-echo "  🌐 Web Interface:  http://localhost:${PORT}"
-echo "  📦 Container Name: $CONTAINER_NAME"
-echo
-echo "Useful commands:"
-echo "  View logs:    docker logs -f $CONTAINER_NAME"
-echo "  Stop app:     docker stop $CONTAINER_NAME"
-echo "  Restart app:  docker restart $CONTAINER_NAME"
-echo "  Remove app:   docker rm -f $CONTAINER_NAME"
-echo
-echo "Press Ctrl+C to view logs (container will keep running)"
-echo
+echo -e "\nVoice Assistant is up at http://localhost:${PORT}"
+echo -e "Showing logs. Press Ctrl+C to stop viewing logs (container stays running).\n"
 
-# Handle Ctrl+C gracefully
-trap 'echo; ok "Container is still running in background"; echo "  Access it at: http://localhost:${PORT}"; exit 0' INT
+# Leave the container running even if they hit Ctrl+C to stop following logs
+trap 'echo -e "\nExiting log stream. Container is still running background."; exit 0' INT
 
-# Stream logs
-echo "Streaming logs (Press Ctrl+C to exit)..."
-echo "─────────────────────────────────────────"
+# Stream the container logs directly
 docker logs -f "$CONTAINER_NAME"

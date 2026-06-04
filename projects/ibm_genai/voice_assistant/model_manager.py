@@ -7,15 +7,17 @@ warnings.filterwarnings('ignore')
 class ModelManager:
     def __init__(self):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        print(f"🖥️  {self.device}")
+        print(f"{self.device}")
 
         self.models_config = {
+            # speech to text model
             'stt': {
                 'name': 'openai/whisper-tiny.en',
                 'type': 'automatic-speech-recognition',
                 'loaded': False,
                 'pipeline': None
             },
+            # llm to process raw text
             'llm': {
                 'name': 'microsoft/DialoGPT-small',
                 'type': 'conversational',
@@ -23,6 +25,7 @@ class ModelManager:
                 'tokenizer': None,
                 'model': None
             },
+            # text to speech model
             'tts': {
                 'name': 'microsoft/speecht5_tts',
                 'type': 'text-to-speech',
@@ -38,7 +41,7 @@ class ModelManager:
             raise ValueError(f"Unknown model: {model_type}")
 
         config = self.models_config[model_type]
-        print(f"📥 {model_type.upper()}: {config['name']}")
+        print(f"{model_type.upper()}: {config['name']}")
 
         try:
             if model_type == 'stt':
@@ -48,7 +51,7 @@ class ModelManager:
                     device=0 if self.device == "cuda" else -1
                 )
                 config['loaded'] = True
-                print(f"✓ {model_type.upper()}")
+                print(f"{model_type.upper()}")
 
             elif model_type == 'llm':
                 config['tokenizer'] = AutoTokenizer.from_pretrained(config['name'])
@@ -58,7 +61,7 @@ class ModelManager:
                 ).to(self.device)
                 config['tokenizer'].pad_token = config['tokenizer'].eos_token
                 config['loaded'] = True
-                print(f"✓ {model_type.upper()}")
+                print(f"{model_type.upper()}")
 
             elif model_type == 'tts':
                 config['processor'] = AutoProcessor.from_pretrained(config['name'])
@@ -68,17 +71,17 @@ class ModelManager:
                     device=0 if self.device == "cuda" else -1
                 )
                 config['loaded'] = True
-                print(f"✓ {model_type.upper()}")
+                print(f"{model_type.upper()}")
 
         except Exception as e:
-            print(f"❌ {model_type}: {e}")
+            print(f"{model_type}: {e}")
             raise
 
     def download_all_models(self):
-        print("📦 Loading models...")
+        print("Loading models...")
         for model_type in self.models_config.keys():
             self.download_model(model_type)
-        print("✅ Ready!")
+        print("Downloaded models successfully")
 
     def speech_to_text(self, audio_data):
         if not self.models_config['stt']['loaded']:
@@ -88,7 +91,7 @@ class ModelManager:
             result = self.models_config['stt']['pipeline'](audio_data)
             return result['text']
         except Exception as e:
-            print(f"❌ STT: {e}")
+            print(f"STT: {e}")
             return None
 
     def generate_text_response(self, input_text, max_length=100):
@@ -119,11 +122,11 @@ class ModelManager:
                 skip_special_tokens=True
             )
 
-            return response.strip() if response else "I'm not sure how to respond to that."
+            return response.strip() if response else "Unable to process your query at this time."
 
         except Exception as e:
-            print(f"❌ LLM: {e}")
-            return "Sorry, error generating response."
+            print(f"LLM: {e}")
+            return "Encountered error while generating response."
 
     def text_to_speech(self, text):
         if not self.models_config['tts']['loaded']:
@@ -133,7 +136,7 @@ class ModelManager:
             speech = self.models_config['tts']['pipeline'](text)
             return speech['audio'], speech['sampling_rate']
         except Exception as e:
-            print(f"❌ TTS: {e}")
+            print(f"TTS: {e}")
             return None, None
 
     def get_model_status(self):

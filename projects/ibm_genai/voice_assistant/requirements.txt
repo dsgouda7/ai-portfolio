@@ -17,8 +17,9 @@ numpy==1.26.2
 
 # Audio I/O
 pyaudio==0.2.14
-wave
 
 # Utilities
 requests==2.31.0
 python-dotenv==1.0.0
+mysqlclient==2.2.4
+sentencepiece==0.2.0

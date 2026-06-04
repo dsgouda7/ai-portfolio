@@ -1,10 +1,24 @@
 FROM python:3.11-slim
 
-# Install system dependencies
+# Install system dependencies (including MySQL build tools)
 RUN apt-get update && apt-get install -y \
     portaudio19-dev \
     libsndfile1 \
     ffmpeg \
+    gcc \
+    pkg-config \
+    default-libmysqlclient-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && apt-get install -y \
+    portaudio19-dev \
+    libsndfile1 \
+    ffmpeg \
+    gcc \
+    g++ \
+    cmake \
+    pkg-config \
+    default-libmysqlclient-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -16,9 +30,10 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# Copy application code and folders
 COPY model_manager.py .
 COPY controllers.py .
+COPY templates/ ./templates/
 
 # Create directories for models and cache
 RUN mkdir -p /app/models /app/cache

@@ -35,10 +35,10 @@ def process_text():
         return jsonify({'error': 'No text provided'}), 400
 
     input_text = data['text']
-    print(f"📝 {input_text}")
+    print(f"{input_text}")
 
     response_text = model_manager.generate_text_response(input_text)
-    print(f"💬 {response_text}")
+    print(f"{response_text}")
 
     return jsonify({'input': input_text, 'response': response_text})
 
@@ -52,17 +52,17 @@ def process_speech():
 
     try:
         audio_bytes = audio_file.read()
-        print(f"🎤 Received {len(audio_bytes)} bytes")
+        print(f"Received {len(audio_bytes)} bytes")
 
         audio_data = io.BytesIO(audio_bytes)
         transcription = model_manager.speech_to_text(audio_data)
-        print(f"📝 {transcription}")
+        print(f"{transcription}")
 
         if not transcription:
-            return jsonify({'error': 'Could not transcribe audio'}), 400
+            return jsonify({'error': 'Could not process audio'}), 400
 
         response_text = model_manager.generate_text_response(transcription)
-        print(f"💬 {response_text}")
+        print(f"{response_text}")
 
         audio_array, sample_rate = model_manager.text_to_speech(response_text)
 
@@ -80,7 +80,7 @@ def process_speech():
         })
 
     except Exception as e:
-        print(f"❌ {e}")
+        print(f"{e}")
         return jsonify({'error': str(e)}), 500
 
 
@@ -94,9 +94,9 @@ def init_models():
 
 
 if __name__ == '__main__':
-    print("🚀 Starting server...")
-    print("📦 Models download on first use")
-    print("🌐 http://localhost:5000")
+    print("Initializing server...")
+    print("Initializing models")
+    print("Started listening at http://localhost:5000")
 
     threading.Thread(target=model_manager.download_all_models, daemon=True).start()
     app.run(host='0.0.0.0', port=5000, debug=False)
