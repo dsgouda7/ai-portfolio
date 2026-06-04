@@ -81,17 +81,30 @@ class ModelManager:
         print("Loading models...")
         for model_type in self.models_config.keys():
             self.download_model(model_type)
-        print("Downloaded models successfully")
+        print("Models loaded")
 
-    def speech_to_text(self, audio_data):
+    def speech_to_text(self, audio_bytes):
         if not self.models_config['stt']['loaded']:
             self.download_model('stt')
 
         try:
-            result = self.models_config['stt']['pipeline'](audio_data)
-            return result['text']
+            import tempfile
+            import os
+
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.webm') as tmp_file:
+                tmp_file.write(audio_bytes)
+                tmp_file_path = tmp_file.name
+
+            try:
+                result = self.models_config['stt']['pipeline'](tmp_file_path)
+                return result['text']
+            finally:
+                if os.path.exists(tmp_file_path):
+                    os.remove(tmp_file_path)
         except Exception as e:
-            print(f"STT: {e}")
+            print(f"STT error: {e}")
+            import traceback
+            traceback.print_exc()
             return None
 
     def generate_text_response(self, input_text, max_length=100):
@@ -122,11 +135,11 @@ class ModelManager:
                 skip_special_tokens=True
             )
 
-            return response.strip() if response else "Unable to process your query at this time."
+            return response.strip() if response else "No response generated."
 
         except Exception as e:
             print(f"LLM: {e}")
-            return "Encountered error while generating response."
+            return "Error generating response."
 
     def text_to_speech(self, text):
         if not self.models_config['tts']['loaded']:

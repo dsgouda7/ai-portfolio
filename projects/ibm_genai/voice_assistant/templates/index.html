@@ -173,7 +173,8 @@
         }
 
         async function sendText() {
-            const input = document.getElementById('input').value;
+            const inputElement = document.getElementById('input');
+            const input = inputElement.value;
             if (!input.trim()) {
                 alert('Please enter a message');
                 return;
@@ -193,7 +194,11 @@
                 });
 
                 const data = await result.json();
-                responseText.textContent = data.response;
+                responseText.innerHTML = `
+                    <p><strong>You:</strong> ${input}</p>
+                    <p><strong>Assistant:</strong> ${data.response}</p>
+                `;
+                inputElement.value = '';
                 loadStatus();
             } catch (e) {
                 responseText.textContent = 'Error: ' + e.message;
