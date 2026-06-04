@@ -66,7 +66,6 @@ def enhance_video():
     try:
         input_path = UPLOAD_FOLDER / video_file.filename
         video_file.save(str(input_path))
-        print(f"Saved input: {input_path}")
 
         output_filename = f"enhanced_{input_path.stem}.mp4"
         video_output = OUTPUT_FOLDER / f"video_{output_filename}"
@@ -76,7 +75,6 @@ def enhance_video():
         with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_audio:
             temp_audio_path = temp_audio.name
 
-        print("Extracting audio...")
         subprocess.run([
             'ffmpeg', '-i', str(input_path),
             '-vn', '-acodec', 'pcm_s16le',
@@ -84,7 +82,6 @@ def enhance_video():
             temp_audio_path, '-y'
         ], check=True, capture_output=True)
 
-        print("Processing video and audio in parallel...")
         video_thread = threading.Thread(
             target=video_processor.process_video,
             args=(str(input_path), str(video_output))
@@ -99,7 +96,6 @@ def enhance_video():
         video_thread.join()
         audio_thread.join()
 
-        print("Merging video and audio...")
         subprocess.run([
             'ffmpeg', '-i', str(video_output),
             '-i', str(audio_output),
@@ -121,9 +117,6 @@ def enhance_video():
         })
 
     except Exception as e:
-        print(f"Error: {e}")
-        import traceback
-        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 
@@ -136,14 +129,9 @@ def download_file(filename):
 
 
 if __name__ == '__main__':
-    print("Starting Video Enhancer AI server...")
-    print("Preloading models...")
-
     def preload():
         video_processor.load_model()
         audio_processor.load_model()
 
     threading.Thread(target=preload, daemon=True).start()
-
-    print("Server started: http://localhost:5001")
     app.run(host='0.0.0.0', port=5001, debug=False)

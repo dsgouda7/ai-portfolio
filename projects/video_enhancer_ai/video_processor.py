@@ -48,8 +48,6 @@ class VideoProcessor:
         if config['loaded']:
             return
 
-        print(f"Loading {mode.upper()} model: {config['name']}")
-
         try:
             config['model'] = Swin2SRForImageSuperResolution.from_pretrained(
                 config['name']
@@ -58,7 +56,6 @@ class VideoProcessor:
                 config['name']
             )
             config['loaded'] = True
-            print(f"{mode.upper()} model loaded")
         except Exception as e:
             print(f"Error loading model: {e}")
             raise
@@ -82,7 +79,6 @@ class VideoProcessor:
 
             return cv2.cvtColor(output, cv2.COLOR_RGB2BGR)
         except Exception as e:
-            print(f"Frame upscaling error: {e}")
             return frame
 
     def process_chunk(self, frames, chunk_id, total_chunks, target_resolution):
@@ -93,15 +89,11 @@ class VideoProcessor:
             if upscaled.shape[:2][::-1] != target_resolution:
                 upscaled = cv2.resize(upscaled, target_resolution, interpolation=cv2.INTER_LANCZOS4)
             processed_frames.append(upscaled)
-            if i % 10 == 0:
-                print(f"Chunk {chunk_id+1}/{total_chunks}: {i}/{len(frames)} frames")
         return processed_frames
 
     def process_video(self, input_path: str, output_path: str, target_resolution=None):
         if target_resolution is None:
             target_resolution = tuple(self.processing_config['target_resolution'])
-
-        print(f"Processing video: {input_path}")
 
         cap = cv2.VideoCapture(input_path)
         if not cap.isOpened():
@@ -112,9 +104,6 @@ class VideoProcessor:
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-        print(f"Input: {width}x{height}, {fps} FPS, {total_frames} frames")
-        print(f"Target: {target_resolution[0]}x{target_resolution[1]}")
-
         # Read all frames into memory (for parallel processing)
         frames = []
         while True:
@@ -123,8 +112,6 @@ class VideoProcessor:
                 break
             frames.append(frame)
         cap.release()
-
-        print(f"Read {len(frames)} frames, starting parallel processing...")
 
         # Split into chunks for parallel processing
         chunk_size = self.processing_config.get('chunk_size', 30)
@@ -145,14 +132,12 @@ class VideoProcessor:
             for future in as_completed(futures):
                 chunk_id = futures[future]
                 chunk_results[chunk_id] = future.result()
-                print(f"Completed chunk {chunk_id+1}/{len(chunks)}")
 
             # Reconstruct frames in order
             for i in range(len(chunks)):
                 processed_frames.extend(chunk_results[i])
 
         # Write output video
-        print("Writing output video...")
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         out = cv2.VideoWriter(output_path, fourcc, fps, target_resolution)
 
@@ -160,7 +145,6 @@ class VideoProcessor:
             out.write(frame)
 
         out.release()
-        print(f"Completed: {output_path}")
         return output_path
 
     def get_model_info(self):

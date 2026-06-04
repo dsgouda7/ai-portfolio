@@ -42,8 +42,6 @@ class AudioProcessor:
         if config['loaded']:
             return
 
-        print(f"Loading {mode.upper()} audio model: {config['name']}")
-
         try:
             config['model'] = SpectralMaskEnhancement.from_hparams(
                 source=config['name'],
@@ -51,9 +49,7 @@ class AudioProcessor:
                 run_opts={"device": self.device}
             )
             config['loaded'] = True
-            print(f"{mode.upper()} audio model loaded")
         except Exception as e:
-            print(f"Error loading audio model: {e}")
             raise
 
     def enhance_audio(self, input_path: str, output_path: str):
@@ -64,19 +60,12 @@ class AudioProcessor:
         config = self.model_config[mode]
 
         try:
-            print(f"Enhancing audio: {input_path}")
-
             enhanced = config['model'].enhance_file(input_path)
-
             torchaudio.save(output_path, enhanced.unsqueeze(0).cpu(), 16000)
-
-            print(f"Audio enhanced: {output_path}")
             return output_path
         except Exception as e:
-            print(f"Audio enhancement error: {e}")
             import shutil
             shutil.copy(input_path, output_path)
-            print(f"Copied original audio to: {output_path}")
             return output_path
 
 

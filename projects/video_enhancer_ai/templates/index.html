@@ -248,7 +248,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>🎬 Video Enhancer AI</h1>
+        <h1>Video Enhancer AI</h1>
         <p class="subtitle">Transform your videos to 4K with AI-powered upscaling and audio enhancement</p>
 
         <div class="status-bar">
@@ -268,7 +268,7 @@
         <div class="error-message" id="errorMessage"></div>
 
         <div class="upload-area" id="uploadArea">
-            <div class="upload-icon">📹</div>
+            <div class="upload-icon">[VIDEO]</div>
             <div class="upload-text">Drag and drop your video here</div>
             <div class="upload-hint">or click to browse (MP4, AVI, MKV, MOV, WebM)</div>
             <input type="file" id="fileInput" accept="video/*">
@@ -287,7 +287,7 @@
         </div>
 
         <div class="result-container" id="resultContainer">
-            <h3>✨ Enhancement Complete!</h3>
+            <h3>Enhancement Complete</h3>
             <p style="color: #666; margin: 10px 0;">Your video has been upscaled to 4K with improved audio quality</p>
             <button class="btn download-btn" id="downloadBtn">Download Enhanced Video</button>
             <button class="btn" id="resetBtn">Enhance Another Video</button>
@@ -407,7 +407,7 @@
 
         function showFileSelected(filename) {
             uploadArea.innerHTML = `
-                <div class="upload-icon">✅</div>
+                <div class="upload-icon">[OK]</div>
                 <div class="upload-text">${filename}</div>
                 <div class="upload-hint">Ready to enhance</div>
             `;
@@ -452,14 +452,14 @@
             uploadBtn.disabled = false;
             uploadBtn.textContent = 'Select Video';
             uploadArea.innerHTML = `
-                <div class="upload-icon">📹</div>
+                <div class="upload-icon">[VIDEO]</div>
                 <div class="upload-text">Drag and drop your video here</div>
                 <div class="upload-hint">or click to browse (MP4, AVI, MKV, MOV, WebM)</div>
             `;
         }
 
         function showError(message) {
-            errorMessage.textContent = '❌ Error: ' + message;
+            errorMessage.textContent = 'Error: ' + message;
             errorMessage.style.display = 'block';
             setTimeout(() => errorMessage.style.display = 'none', 5000);
         }
