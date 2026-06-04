@@ -36,10 +36,40 @@ if (-not $DockerInstalled -and -not $SkipDocker) {
 if ($DockerInstalled) {
     Write-Host "Checking Docker daemon status..."
     if (-not (docker info 2>$null)) {
-        Write-Host "Error: Docker daemon is not running. Please start Docker Desktop." -ForegroundColor Red
-        exit 1
+        Write-Host "Docker daemon is not running. Attempting to start Docker Desktop..."
+        
+        $dockerPath = "C:\Program Files\Docker\Docker\Docker Desktop.exe"
+        if (Test-Path $dockerPath) {
+            Start-Process $dockerPath
+            Write-Host "Waiting for Docker to start..."
+            
+            $maxAttempts = 30
+            $attempt = 0
+            $started = $false
+            
+            while ($attempt -lt $maxAttempts) {
+                Start-Sleep -Seconds 2
+                if (docker info 2>$null) {
+                    $started = $true
+                    break
+                }
+                $attempt++
+                Write-Host "."
+            }
+            
+            if ($started) {
+                Write-Host "Docker daemon started successfully."
+            } else {
+                Write-Host "Error: Docker daemon failed to start within 60 seconds. Please start Docker Desktop manually." -ForegroundColor Red
+                exit 1
+            }
+        } else {
+            Write-Host "Error: Docker Desktop executable not found at expected location. Please start Docker Desktop manually." -ForegroundColor Red
+            exit 1
+        }
+    } else {
+        Write-Host "Docker daemon is active."
     }
-    Write-Host "Docker daemon is active."
 }
 
 Write-Host "Verifying required project files..."

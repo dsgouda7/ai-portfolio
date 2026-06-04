@@ -79,8 +79,62 @@ if [ "$DOCKER_INSTALLED" = true ]; then
     if docker info &>/dev/null; then
         echo "Docker daemon is active."
     else
-        echo "Error: Docker daemon is not running. Please start Docker."
-        exit 1
+        echo "Docker daemon is not running. Attempting to start Docker..."
+        
+        case "$OS" in
+            macos)
+                if [ -d "/Applications/Docker.app" ]; then
+                    echo "Starting Docker Desktop..."
+                    open -a Docker
+                    
+                    echo "Waiting for Docker to start..."
+                    max_attempts=30
+                    attempt=0
+                    
+                    while [ $attempt -lt $max_attempts ]; do
+                        sleep 2
+                        if docker info &>/dev/null; then
+                            echo "Docker daemon started successfully."
+                            break
+                        fi
+                        attempt=$((attempt + 1))
+                        echo -n "."
+                    done
+                    
+                    if [ $attempt -eq $max_attempts ]; then
+                        echo ""
+                        echo "Error: Docker daemon failed to start within 60 seconds. Please start Docker manually."
+                        exit 1
+                    fi
+                else
+                    echo "Error: Docker Desktop not found. Please start Docker manually."
+                    exit 1
+                fi
+                ;;
+            
+            debian|fedora|arch|linux)
+                echo "Attempting to start Docker service..."
+                if command -v systemctl &>/dev/null; then
+                    sudo systemctl start docker
+                    sleep 3
+                    
+                    if docker info &>/dev/null; then
+                        echo "Docker daemon started successfully."
+                    else
+                        echo "Error: Failed to start Docker daemon. Please start it manually: sudo systemctl start docker"
+                        exit 1
+                    fi
+                else
+                    echo "Error: Docker daemon is not running. Please start it manually."
+                    exit 1
+                fi
+                ;;
+            
+            *)
+                echo "Error: Docker daemon is not running. Please start Docker manually."
+                exit 1
+                ;;
+        esac
     fi
 fi
 
