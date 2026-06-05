@@ -23,7 +23,7 @@ def extract_key_points(text):
     """Extract key points from transcribed text using local model"""
     # FLAN-T5 works well with instruction-based prompts
     prompt = f"List the key points from this conversation: {text}"
-    
+
     # Summarize in chunks if text is too long
     max_length = 512
     if len(text.split()) > max_length:
@@ -51,10 +51,10 @@ def transcribe_audio(audio_file):
     """Transcribe audio and extract key points using local models"""
     # Transcribe the audio
     transcribed_txt = speech_to_text(audio_file, batch_size=8)["text"]
-    
+
     # Extract key points from transcription
     result = extract_key_points(transcribed_txt)
-    
+
     # Return both transcription and key points
     return f"Transcription:\n{transcribed_txt}\n\nKey Points:\n{result}"
 
