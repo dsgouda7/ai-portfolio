@@ -2,71 +2,61 @@ import gradio as gr
 from transformers import pipeline
 import torch
 
+# Local models - no credentials required
+# Uses CPU-optimized models from HuggingFace
 
-import torch
-import os
-import gradio as gr
-#from langchain.llms import OpenAI
-from langchain.llms import HuggingFaceHub
-from transformers import pipeline
-from langchain.prompts import PromptTemplate
-from langchain.chains import LLMChain
-from ibm_watson_machine_learning.foundation_models.extensions.langchain import WatsonxLLM
-from ibm_watson_machine_learning.foundation_models.utils.enums import DecodingMethods
-from ibm_watson_machine_learning.metanames import GenTextParamsMetaNames as GenParams
-from ibm_watson_machine_learning.foundation_models import Model
+# Initialize summarization pipeline with FLAN-T5 (good for CPU, ~250MB)
+summarizer = pipeline(
+    "summarization",
+    model="google/flan-t5-small",
+    device=-1  # CPU
+)
 
-my_credentials = {
-    "url"    : "https://us-south.ml.cloud.ibm.com"
-}
+# Alternative: For better quality, use FLAN-T5-base (~900MB)
+# summarizer = pipeline(
+#     "summarization",
+#     model="google/flan-t5-base",
+#     device=-1
+# )
 
-params = {
-        GenParams.MAX_NEW_TOKENS: 700, # The maximum number of tokens that the model can generate in a single run.
-        GenParams.TEMPERATURE: 0.1,   # A parameter that controls the randomness of the token generation. A lower value makes the generation more deterministic, while a higher value introduces more randomness.
-    }
+def extract_key_points(text):
+    """Extract key points from transcribed text using local model"""
+    # FLAN-T5 works well with instruction-based prompts
+    prompt = f"List the key points from this conversation: {text}"
+    
+    # Summarize in chunks if text is too long
+    max_length = 512
+    if len(text.split()) > max_length:
+        # Split into chunks
+        words = text.split()
+        chunks = [' '.join(words[i:i+max_length]) for i in range(0, len(words), max_length)]
+        summaries = []
+        for chunk in chunks:
+            result = summarizer(f"summarize: {chunk}", max_length=150, min_length=30, do_sample=False)
+            summaries.append(result[0]['summary_text'])
+        return ' '.join(summaries)
+    else:
+        result = summarizer(prompt, max_length=200, min_length=50, do_sample=False)
+        return result[0]['summary_text']
 
-LLAMA2_model = Model(
-        model_id= 'meta-llama/llama-3-2-11b-vision-instruct', 
-        credentials=my_credentials,
-        params=params,
-        project_id="skills-network",  
-        )
-
-llm = WatsonxLLM(LLAMA2_model)  
-
-#######------------- Prompt Template-------------####
-
-# This template is structured based on LLAMA2. If you are using other LLMs, feel free to remove the tags
-temp = """
-<s><<SYS>>
-List the key points with details from the context: 
-[INST] The context : {context} [/INST] 
-<</SYS>>
-"""
-# here is the simplified version of the prompt template
-# temp = """
-# List the key points with details from the context: 
-# The context : {context} 
-# """
-
-pt = PromptTemplate(
-    input_variables=["context"],
-    template= temp)
-
-prompt_to_LLAMA2 = LLMChain(llm=llm, prompt=pt)
-
-#######------------- Speech2text-------------####
-
+# Speech-to-text pipeline (runs locally on CPU)
+speech_to_text = pipeline(
+    "automatic-speech-recognition",
+    model="openai/whisper-tiny.en",
+    chunk_length_s=30,
+    device=-1  # CPU
+)
 
 def transcribe_audio(audio_file):
-    # init the pipeline
-    pipe = pipeline("automatic-speech-recognition",
-    model="openai/whisper-tiny.en", chunk_length_s=30)
-
-    # transcribe the audio
-    transcribed_txt = pipe(audio_file, batch_size=8)["text"]
-    result = prompt_to_LLAMA2.run(transcribed_txt)
-    return result
+    """Transcribe audio and extract key points using local models"""
+    # Transcribe the audio
+    transcribed_txt = speech_to_text(audio_file, batch_size=8)["text"]
+    
+    # Extract key points from transcription
+    result = extract_key_points(transcribed_txt)
+    
+    # Return both transcription and key points
+    return f"Transcription:\n{transcribed_txt}\n\nKey Points:\n{result}"
 
 # init the gradio interface
 audio_input=gr.Audio(sources="upload", type="filepath")
