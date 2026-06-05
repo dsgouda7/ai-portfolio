@@ -1,8 +1,18 @@
 langchain==0.1.11
 gradio==5.23.2
-transformers
+transformers>=4.30.0
 bs4==0.0.2
 requests==2.31.0
 torch==2.6.0
 flask
 flask_cors
+
+# Audio processing dependencies (for Whisper)
+datasets>=2.14.0
+soundfile>=0.12.1
+librosa>=0.10.0
+
+# Model dependencies (for FLAN-T5)
+sentencepiece>=0.1.99
+protobuf>=3.20.0
+accelerate>=0.20.0
