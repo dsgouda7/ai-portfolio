@@ -1,18 +1,25 @@
-langchain==0.1.11
-gradio==5.23.2
+# Core ML/AI dependencies
 transformers>=4.30.0
-bs4==0.0.2
-requests==2.31.0
-torch==2.6.0
-flask
-flask_cors
+torch>=2.0.0
+accelerate>=0.20.0
+sentencepiece>=0.1.99
+protobuf>=3.20.0
 
-# Audio processing dependencies (for Whisper)
+# Web framework dependencies
+flask>=2.0.0
+flask_cors>=4.0.0
+gradio>=5.23.2
+
+# Audio processing dependencies
 datasets>=2.14.0
 soundfile>=0.12.1
 librosa>=0.10.0
 
-# Model dependencies (for FLAN-T5)
-sentencepiece>=0.1.99
-protobuf>=3.20.0
-accelerate>=0.20.0
+# Utility dependencies
+requests>=2.31.0
+numpy>=1.24.0
+pillow>=9.0.0
+bs4==0.0.2
+
+# Optional: For langchain integration
+langchain>=0.1.11
