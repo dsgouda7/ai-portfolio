@@ -1,0 +1,40 @@
+# Pipeline execution mode
+mode: local  # Options: local | remote
+
+# Local execution (Delta Lake + ChromaDB, no Databricks account required)
+local:
+  dataset: wikipedia  # Options: wikipedia | pubmed | arxiv
+  sample_size: 10   # Number of documents to ingest (reduced for testing)
+  delta_path: ./data/delta_lake
+  vector_store_path: ./data/chroma_db
+  embedding_model: sentence-transformers/all-MiniLM-L6-v2
+  chunk_size: 1024
+  chunk_overlap: 128
+
+# Remote execution (Databricks workspace integration)
+remote:
+  workspace_url: ""  # e.g., https://your-workspace.cloud.databricks.com
+  token_env_var: DATABRICKS_TOKEN
+  vector_search_endpoint: ""
+  catalog: main
+  schema: rag_demo
+  volume: rag_data
+  embedding_model: databricks-gte-large-en
+
+# LLM Configuration
+llm:
+  provider: watsonx  # Options: watsonx | openai | anthropic
+  model_id: meta-llama/llama-4-maverick-17b-128e-instruct-fp8
+  max_tokens: 512
+  temperature: 0.1
+
+# Retrieval parameters
+retrieval:
+  search_type: mmr  # Options: similarity | mmr
+  top_k: 6
+  lambda_mult: 0.25  # For MMR: diversity vs relevance (0=diverse, 1=relevant)
+
+# Logging
+logging:
+  level: INFO  # Options: DEBUG | INFO | WARNING | ERROR
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

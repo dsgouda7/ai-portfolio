@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  ingest:
+    build:
+      context: .
+      dockerfile: phase1-ingest/Dockerfile
+    container_name: rag-ingest
+    volumes:
+      - ./data:/app/data
+      - ./config.yaml:/app/config.yaml:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+    networks:
+      - rag-network
+
+  vectorize:
+    build:
+      context: .
+      dockerfile: phase2-vectorize/Dockerfile
+    container_name: rag-vectorize
+    volumes:
+      - ./data:/app/data
+      - ./config.yaml:/app/config.yaml:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      ingest:
+        condition: service_completed_successfully
+    networks:
+      - rag-network
+
+  serve:
+    build:
+      context: .
+      dockerfile: phase3-serve/Dockerfile
+    container_name: rag-serve
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./config.yaml:/app/config.yaml:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+      - WATSONX_URL=${WATSONX_URL}
+      - WATSONX_PROJECT_ID=${WATSONX_PROJECT_ID}
+      - WATSONX_MODEL_ID=${WATSONX_MODEL_ID}
+    depends_on:
+      vectorize:
+        condition: service_completed_successfully
+    networks:
+      - rag-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  rag-network:
+    driver: bridge

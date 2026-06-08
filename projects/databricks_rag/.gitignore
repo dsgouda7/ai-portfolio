@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+venv/
+.venv/
+*.egg
+
+# Data (never commit generated data)
+data/raw/*.csv
+data/raw/*.json
+data/raw/*.parquet
+data/delta_lake/
+data/chroma_db/
+
+# Environment variables
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Docker
+.dockerignore
+
+# MLflow
+mlruns/
+
+# Spark
+metastore_db/
+spark-warehouse/
+derby.log

@@ -1,0 +1,9 @@
+# Vectorization dependencies
+sentence-transformers>=2.2.0
+chromadb>=0.4.0
+langchain>=0.1.0
+langchain-community>=0.0.10
+deltalake>=0.15.0
+torch>=2.0.0
+pandas>=2.0.0
+pyyaml>=6.0
