@@ -11,28 +11,25 @@ ai-portfolio/
 ├── notes/       ← Study material
 ├── exercises/   ← Hands-on practice
 ├── playground/  ← Exploration & learning implementations
-├── projects/    ← Engineering projects (solo work)
+├── projects/    ← Production-grade engineering projects
+├── learning/    ← Course implementations & guided projects
 └── scripts/     ← Setup automation
 ```
 
 ---
 
-## Authorship
+## What's Here
 
-This repository contains three types of content:
+### Production Projects
+- [Databricks RAG Pipeline](projects/data-engineering/databricks_rag/) - Microservices RAG with Delta Lake, ChromaDB, FastAPI
+- [AI Video Enhancer](projects/computer-vision/video_enhancer_ai/) - 4K upscaling API with GPU acceleration
 
-### Co-Authored with AI
-- **notes/** - Theory and learning content (GitHub Copilot, Claude)
-- **exercises/** - Hands-on coding exercises (mirrors notes/ structure)
+See [projects/](projects/) for more details.
 
-### Solo Work
-- **projects/** - Capstone engineering projects (fully designed and implemented by me)
-
-### Playground
-- **playground/** - Exploratory implementations for hands-on learning and experimentation
-  - Self-contained implementations
-  - Security-hardened (no credentials, proper .gitignore)
-  - Fully documented
+### Learning & Exploration
+- [playground/](playground/) - Exploratory notebooks (AI agents, feature engineering, Azure)
+- [learning/](learning/) - Course projects (IBM Data Science, IBM GenAI)
+- [exercises/](exercises/) - Practice problems matching notes/ structure
 
 ---
 
@@ -58,21 +55,45 @@ Complementary exercises that mirror the notes/ structure. Implement algorithms a
 
 Exploratory implementations for hands-on learning and experimentation.
 
-- **[playground/rag-agents/](playground/rag-agents/README.md)** — LangChain, RAG, and Agentic AI patterns
-- **[playground/feature-engineering/](playground/feature-engineering/README.md)** — Classical ML feature engineering techniques
+- **[ai-agents/](playground/ai-agents/README.md)** — Progressive 7-notebook path: LLM basics → RAG → LangGraph
+- **[ml-features/](playground/ml-features/)** — Classical ML feature engineering techniques (6 notebooks)
+- **[azure-exploration/](playground/azure-exploration/README.md)** — Azure OpenAI, AI Search, and AI Foundry integration
+- **[chatbots/](playground/chatbots/)** — Customer service chatbot implementations
+
+→ See [playground/README.md](playground/README.md) for the full index.
 
 ---
 
-## `projects/` — Engineering Projects
+## `projects/` — Production Engineering Projects
 
-Standalone, runnable projects built with the concepts covered in the notes.
+Standalone, production-grade applications demonstrating end-to-end engineering skills.
 
-| Path | What it is |
-|---|---|
-| `projects/ml/linear-regression/` | End-to-end linear regression project on real data |
-| `projects/ai/rag-pipeline/` | RAG pipeline implementation |
+### Data Engineering
+- **[databricks_rag/](projects/data-engineering/databricks_rag/)** — Production RAG pipeline with Delta Lake, ChromaDB, FastAPI
+  - Microservices architecture (3 independent phases)
+  - Docker containerization
+  - ACID-compliant storage with Delta Lake
+  - Vector search with ChromaDB
 
-More projects added as the curriculum progresses.
+### Computer Vision
+- **[video_enhancer_ai/](projects/computer-vision/video_enhancer_ai/)** — 4K video upscaling and audio enhancement API
+  - HuggingFace Transformers (Swin2SR, MetricGAN+)
+  - GPU/CPU automatic optimization
+  - REST API with Docker deployment
+  - 100% local processing (no API keys)
+
+→ See [projects/README.md](projects/README.md) for detailed descriptions and setup instructions.
+
+---
+
+## `learning/` — Course Implementations
+
+Projects completed as part of professional courses and certifications.
+
+- **[ibm-data-science/spacex-analysis/](learning/ibm-data-science/spacex-analysis/)** — SpaceX launch data collection, scraping, and analysis (IBM Data Science Professional Certificate)
+- **[ibm-genai/](learning/ibm-genai/)** — Generative AI mini-projects and voice assistant (IBM Generative AI Engineering)
+
+→ See [learning/README.md](learning/README.md) for course details and skills demonstrated.
 
 ---
 
