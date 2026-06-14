@@ -136,12 +136,15 @@ def pick_starting_xi(squad):
 
 
 
+_ROW_MARGINS = {1: 50, 2: 28, 3: 18, 4: 12, 5: 10}
+
 def _row_xs(n):
-    """Even x% positions for n players in a row, inset from edges."""
+    """Even x% positions, spacing tightens for smaller rows so 2 FWDs aren't at the edges."""
     if n == 1:
         return [50.0]
-    step = 76.0 / (n - 1)
-    return [12.0 + i * step for i in range(n)]
+    margin = _ROW_MARGINS.get(n, 10)
+    step = (100.0 - 2 * margin) / (n - 1)
+    return [round(margin + i * step, 1) for i in range(n)]
 
 
 # y% from top of pitch div: GK at bottom, FWD at top
