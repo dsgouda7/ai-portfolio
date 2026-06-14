@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FPL Team Generator</title>
+  <style>
+    :root {
+      --pitch-green:  #1e7a32;
+      --pitch-stripe: #206e2c;
+      --line:         rgba(255,255,255,0.6);
+      --bg:           #0a0f1a;
+      --surface:      rgba(255,255,255,0.04);
+      --border:       rgba(255,255,255,0.09);
+      --text:         #e8eaf0;
+      --muted:        #7a8299;
+      --accent:       #38bdf8;
+      --gk:           #e8fa45;
+      --def:          #4fd6e8;
+      --mid:          #70e85a;
+      --fwd:          #ff5757;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ─────────────────────────────────────────────────── */
+    header {
+      background: linear-gradient(135deg, #0d1424 0%, #1a2540 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 0.85rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }
+    .header-left { display: flex; align-items: center; gap: 0.6rem; }
+    .logo { font-size: 1.5rem; }
+    header h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: 0.04em; }
+    header h1 em { color: var(--accent); font-style: normal; }
+    .pills { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .pill {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 999px;
+      padding: 0.18rem 0.65rem;
+      font-size: 0.72rem;
+    }
+    .pill strong { color: var(--accent); }
+
+    /* ── LAYOUT ─────────────────────────────────────────────────── */
+    main {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 1.2rem 1rem;
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 1.2rem;
+    }
+    @media (max-width: 820px) {
+      main { grid-template-columns: 1fr; }
+    }
+
+    /* ── PITCH ──────────────────────────────────────────────────── */
+    .pitch-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 65 / 102;
+      background: repeating-linear-gradient(
+        to bottom,
+        var(--pitch-green)  0px,
+        var(--pitch-green)  36px,
+        var(--pitch-stripe) 36px,
+        var(--pitch-stripe) 72px
+      );
+      border-radius: 6px;
+      box-shadow: 0 0 40px rgba(0,0,0,0.6);
+      overflow: visible;
+    }
+    .pitch-wrap svg.lines {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    .players-layer {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* ── PLAYER TOKEN ───────────────────────────────────────────── */
+    .player {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      z-index: 10;
+      user-select: none;
+    }
+    .player-shirt {
+      position: relative;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 800;
+      color: #000;
+      border: 2.5px solid rgba(255,255,255,0.45);
+      box-shadow: 0 3px 10px rgba(0,0,0,0.55), 0 0 0 0 transparent;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      letter-spacing: 0.02em;
+    }
+    .player:hover .player-shirt {
+      transform: scale(1.2);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.7), 0 0 0 3px rgba(255,255,255,0.3);
+    }
+    .player-name {
+      margin-top: 3px;
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: #fff;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.7);
+      white-space: nowrap;
+      max-width: 72px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: center;
+    }
+    .player-pred {
+      font-size: 0.52rem;
+      color: rgba(255,255,255,0.75);
+      text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+    }
+
+    /* ── BENCH ──────────────────────────────────────────────────── */
+    .bench-section { margin-top: 0.8rem; }
+    .section-label {
+      font-size: 0.66rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin-bottom: 0.45rem;
+    }
+    .bench-strip {
+      display: flex;
+      gap: 0.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.55rem 0.65rem;
+      flex-wrap: wrap;
+    }
+    .bench-player {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex: 1;
+      min-width: 130px;
+      cursor: pointer;
+      border-radius: 6px;
+      padding: 0.25rem 0.35rem;
+      transition: background 0.12s;
+    }
+    .bench-player:hover { background: rgba(255,255,255,0.06); }
+    .bench-shirt {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.55rem;
+      font-weight: 800;
+      color: #000;
+      border: 1.5px solid rgba(255,255,255,0.3);
+    }
+    .bench-info { flex: 1; min-width: 0; }
+    .bench-name {
+      font-size: 0.72rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .bench-sub { font-size: 0.6rem; color: var(--muted); }
+
+    /* ── SIDE PANEL ─────────────────────────────────────────────── */
+    .side-panel { display: flex; flex-direction: column; gap: 1rem; }
+    .panel-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.9rem 1rem;
+    }
+    .panel-card h3 {
+      font-size: 0.66rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin-bottom: 0.75rem;
+    }
+    .quality-row {
+      display: grid;
+      grid-template-columns: 38px 1fr 50px;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.55rem;
+      font-size: 0.75rem;
+    }
+    .q-pos { font-weight: 700; }
+    .q-bar-wrap {
+      height: 5px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .q-bar { height: 100%; border-radius: 99px; }
+    .q-val { font-size: 0.67rem; color: var(--muted); text-align: right; }
+    .quality-note {
+      font-size: 0.62rem;
+      color: rgba(255,255,255,0.28);
+      line-height: 1.5;
+      margin-top: 0.5rem;
+      border-top: 1px solid var(--border);
+      padding-top: 0.5rem;
+    }
+    .fi-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.73rem;
+      padding: 0.2rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .fi-row:last-child { border-bottom: none; }
+    .fi-pos { font-size: 0.62rem; color: var(--muted); }
+
+    /* ── TOOLTIP ────────────────────────────────────────────────── */
+    #tooltip {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      background: rgba(8, 16, 36, 0.96);
+      border: 1px solid rgba(255,255,255,0.13);
+      border-radius: 10px;
+      padding: 0.85rem 1rem;
+      width: 250px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.8);
+      pointer-events: none;
+    }
+    #tooltip.show { display: block; }
+    .tt-name { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .tt-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.6rem;
+      font-size: 0.7rem;
+    }
+    .tt-badge {
+      padding: 0.1rem 0.42rem;
+      border-radius: 4px;
+      font-weight: 800;
+      font-size: 0.65rem;
+      color: #000;
+    }
+    .tt-price { color: var(--muted); }
+    .tt-margin {
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.65rem;
+      font-weight: 600;
+    }
+    .m-high   { background: rgba(0,200,80,0.18);  color: #00e067; border: 1px solid rgba(0,200,80,0.4); }
+    .m-mid    { background: rgba(255,200,0,0.18);  color: #ffd700; border: 1px solid rgba(255,200,0,0.4); }
+    .m-low    { background: rgba(255,60,60,0.18);  color: #ff5555; border: 1px solid rgba(255,60,60,0.4); }
+    .tt-pred {
+      font-size: 0.78rem;
+      margin-bottom: 0.65rem;
+    }
+    .tt-pred .val { font-size: 1.05rem; font-weight: 700; color: var(--accent); }
+    .tt-pred .lbl { color: var(--muted); font-size: 0.65rem; }
+    .tt-divider {
+      border: none;
+      border-top: 1px solid rgba(255,255,255,0.09);
+      margin-bottom: 0.55rem;
+    }
+    .tt-stat {
+      display: grid;
+      grid-template-columns: 76px 36px 1fr 30px;
+      align-items: center;
+      gap: 0.3rem;
+      margin-bottom: 0.22rem;
+      font-size: 0.68rem;
+    }
+    .ts-label { color: var(--muted); }
+    .ts-val   { text-align: right; font-variant-numeric: tabular-nums; color: var(--text); }
+    .ts-bar-wrap {
+      height: 4px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .ts-bar { height: 100%; border-radius: 99px; transition: width 0.3s; }
+    .b-red    { background: #ff4444; }
+    .b-amber  { background: #ffa500; }
+    .b-yellow { background: #ffd700; }
+    .b-green  { background: #00c851; }
+    .ts-pct   { font-size: 0.6rem; color: var(--muted); text-align: right; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <span class="logo">⚽</span>
+    <h1><em>FPL</em> Team Generator</h1>
+  </div>
+  <div class="pills" id="pills"></div>
+</header>
+
+<main>
+  <div>
+    <!-- pitch -->
+    <div class="pitch-wrap" id="pitch">
+      <!-- Standard football pitch markings (proportional, 65×102 viewBox) -->
+      <svg class="lines" viewBox="0 0 65 102" preserveAspectRatio="none">
+        <!-- outer boundary -->
+        <rect x="2.5" y="2.5" width="60" height="97" fill="none"
+              stroke="rgba(255,255,255,0.55)" stroke-width="0.45"/>
+
+        <!-- halfway line -->
+        <line x1="2.5" y1="51" x2="62.5" y2="51"
+              stroke="rgba(255,255,255,0.55)" stroke-width="0.45"/>
+
+        <!-- centre circle & spot -->
+        <circle cx="32.5" cy="51" r="8.5" fill="none"
+                stroke="rgba(255,255,255,0.55)" stroke-width="0.45"/>
+        <circle cx="32.5" cy="51" r="0.5" fill="rgba(255,255,255,0.7)"/>
+
+        <!-- ── OPPONENT end (top, y=2.5) ───────────────────────── -->
+        <!-- penalty area -->
+        <rect x="14.5" y="2.5" width="36" height="15" fill="none"
+              stroke="rgba(255,255,255,0.55)" stroke-width="0.45"/>
+        <!-- 6-yard box -->
+        <rect x="24" y="2.5" width="17" height="5.2" fill="none"
+              stroke="rgba(255,255,255,0.55)" stroke-width="0.45"/>
+        <!-- goal -->
+        <rect x="28.5" y="1" width="8.5" height="1.7" fill="none"
+              stroke="rgba(255,255,255,0.55)" stroke-width="0.45"/>
+        <!-- penalty spot -->
+        <circle cx="32.5" cy="12.8" r="0.45" fill="rgba(255,255,255,0.7)"/>
+        <!-- penalty arc (outside box) -->
+        <path d="M 22.2 17.5 A 8.5 8.5 0 0 0 42.8 17.5"
+              fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="0.45"/>
+
+        <!-- ── OUR end (bottom, y=99.5) ────────────────────────── -->
+        <!-- penalty area -->
+        <rect x="14.5" y="84.5" width="36" height="15" fill="none"
+              stroke="rgba(255,255,255,0.55)" stroke-width="0.45"/>
+        <!-- 6-yard box -->
+        <rect x="24" y="94.3" width="17" height="5.2" fill="none"
+              stroke="rgba(255,255,255,0.55)" stroke-width="0.45"/>
+        <!-- goal -->
+        <rect x="28.5" y="99.3" width="8.5" height="1.7" fill="none"
+              stroke="rgba(255,255,255,0.55)" stroke-width="0.45"/>
+        <!-- penalty spot -->
+        <circle cx="32.5" cy="89.2" r="0.45" fill="rgba(255,255,255,0.7)"/>
+        <!-- penalty arc (outside box, curving upward) -->
+        <path d="M 22.2 84.5 A 8.5 8.5 0 0 1 42.8 84.5"
+              fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="0.45"/>
+
+        <!-- corner arcs -->
+        <path d="M 2.5 5.5 A 3 3 0 0 0 5.5 2.5"
+              fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="0.45"/>
+        <path d="M 59.5 2.5 A 3 3 0 0 0 62.5 5.5"
+              fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="0.45"/>
+        <path d="M 2.5 96.5 A 3 3 0 0 1 5.5 99.5"
+              fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="0.45"/>
+        <path d="M 59.5 99.5 A 3 3 0 0 1 62.5 96.5"
+              fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="0.45"/>
+      </svg>
+
+      <div class="players-layer" id="players-layer"></div>
+    </div>
+
+    <!-- bench -->
+    <div class="bench-section">
+      <div class="section-label">Bench</div>
+      <div class="bench-strip" id="bench-strip"></div>
+    </div>
+  </div>
+
+  <!-- right side panel -->
+  <div class="side-panel">
+    <div class="panel-card">
+      <h3>Model Quality <span style="font-size:0.6rem;opacity:.5">(in-sample)</span></h3>
+      <div id="quality-rows"></div>
+      <p class="quality-note">
+        R² is computed on training data so it's optimistic.
+        Values near 0 mean the model found little signal for that
+        position — treat those picks with extra scepticism.
+      </p>
+    </div>
+
+    <div class="panel-card">
+      <h3>Top Predictive Feature</h3>
+      <div id="fi-rows"></div>
+    </div>
+  </div>
+</main>
+
+<!-- floating tooltip -->
+<div id="tooltip"></div>
+
+<script>
+const D = {{ data|safe }};
+
+// ── helpers ────────────────────────────────────────────────────────────────
+
+const POS_COLOR = { GK: '#e8fa45', DEF: '#4fd6e8', MID: '#70e85a', FWD: '#ff5757' };
+
+function initials(p) {
+  return ((p.first_name||'')[0]||'') + ((p.second_name||'')[0]||'');
+}
+function shortName(p) {
+  return (p.second_name || p.first_name || '').substring(0, 10);
+}
+function barClass(pct) {
+  if (pct >= 75) return 'b-green';
+  if (pct >= 50) return 'b-yellow';
+  if (pct >= 25) return 'b-amber';
+  return 'b-red';
+}
+function marginClass(m) {
+  return m >= 1.5 ? 'm-high' : m >= 0.4 ? 'm-mid' : 'm-low';
+}
+function marginLabel(m) {
+  return m >= 1.5 ? '↑ Confident' : m >= 0.4 ? '~ Moderate' : '↓ Coin-flip';
+}
+
+// ── header pills ───────────────────────────────────────────────────────────
+
+const pillsEl = document.getElementById('pills');
+[
+  ['GW', D.game_week],
+  ['Formation', D.formation],
+  ['Predicted', D.total_predicted + ' pts'],
+  ['Spend', '£' + D.total_spend + 'M / £100M'],
+].forEach(([lbl, val]) => {
+  const d = document.createElement('div');
+  d.className = 'pill';
+  d.innerHTML = lbl + ': <strong>' + val + '</strong>';
+  pillsEl.appendChild(d);
+});
+
+// ── tooltip ────────────────────────────────────────────────────────────────
+
+const tip = document.getElementById('tooltip');
+
+function buildTip(p) {
+  const mc = marginClass(p.selection_margin || 0);
+  const ml = marginLabel(p.selection_margin || 0);
+  const margin = (p.selection_margin || 0);
+  const statsHtml = (p.stats || []).map(s =>
+    `<div class="tt-stat">
+      <span class="ts-label">${s.label}</span>
+      <span class="ts-val">${s.value.toFixed ? s.value.toFixed(1) : s.value}</span>
+      <div class="ts-bar-wrap">
+        <div class="ts-bar ${barClass(s.pct)}" style="width:${s.pct}%"></div>
+      </div>
+      <span class="ts-pct">${s.pct}<small>th</small></span>
+    </div>`
+  ).join('');
+
+  return `
+    <div class="tt-name">${p.first_name} ${p.second_name}</div>
+    <div class="tt-meta">
+      <span class="tt-badge" style="background:${p.color}">${p.element_type}</span>
+      <span class="tt-price">£${((p.value||0)/10).toFixed(1)}M</span>
+      <span class="tt-margin ${mc}">${ml} (${margin>=0?'+':''}${margin.toFixed(2)})</span>
+    </div>
+    <div class="tt-pred">
+      <span class="val">${(p.predicted_points||0).toFixed(2)}</span>
+      <span class="lbl"> predicted pts</span>
+    </div>
+    <hr class="tt-divider">
+    ${statsHtml}
+  `;
+}
+
+function moveTip(e) {
+  const W = window.innerWidth, H = window.innerHeight;
+  const tw = 256, th = 340;
+  let x = e.clientX + 16, y = e.clientY - 100;
+  if (x + tw > W - 8) x = e.clientX - tw - 16;
+  if (y < 8) y = e.clientY + 16;
+  if (y + th > H - 8) y = H - th - 8;
+  tip.style.left = x + 'px';
+  tip.style.top  = y + 'px';
+}
+
+document.addEventListener('mousemove', e => {
+  if (tip.classList.contains('show')) moveTip(e);
+});
+
+function attachTip(el, p) {
+  el.addEventListener('mouseenter', e => {
+    tip.innerHTML = buildTip(p);
+    tip.classList.add('show');
+    moveTip(e);
+  });
+  el.addEventListener('mouseleave', () => tip.classList.remove('show'));
+}
+
+// ── pitch players ──────────────────────────────────────────────────────────
+
+const layer = document.getElementById('players-layer');
+
+D.players.forEach(p => {
+  const el = document.createElement('div');
+  el.className = 'player';
+  el.style.left = p.pitch_x + '%';
+  el.style.top  = p.pitch_y + '%';
+  el.innerHTML = `
+    <div class="player-shirt" style="background:${p.color}">${initials(p)}</div>
+    <div class="player-name">${shortName(p)}</div>
+    <div class="player-pred">${(p.predicted_points||0).toFixed(1)}</div>
+  `;
+  attachTip(el, p);
+  layer.appendChild(el);
+});
+
+// ── bench ──────────────────────────────────────────────────────────────────
+
+const benchEl = document.getElementById('bench-strip');
+
+D.bench.forEach(p => {
+  const el = document.createElement('div');
+  el.className = 'bench-player';
+  el.innerHTML = `
+    <div class="bench-shirt" style="background:${p.color}">${initials(p)}</div>
+    <div class="bench-info">
+      <div class="bench-name">${p.first_name} ${p.second_name}</div>
+      <div class="bench-sub">${p.element_type} · ${(p.predicted_points||0).toFixed(1)} pts</div>
+    </div>
+  `;
+  attachTip(el, p);
+  benchEl.appendChild(el);
+});
+
+// ── model quality panel ────────────────────────────────────────────────────
+
+const qEl  = document.getElementById('quality-rows');
+const fiEl = document.getElementById('fi-rows');
+
+D.model_quality.forEach(m => {
+  const pct = Math.min(100, Math.round(Math.max(0, m.r2) * 100));
+  const col = POS_COLOR[m.pos] || '#fff';
+  qEl.innerHTML += `
+    <div class="quality-row">
+      <span class="q-pos" style="color:${col}">${m.pos}</span>
+      <div class="q-bar-wrap">
+        <div class="q-bar" style="width:${pct}%;background:linear-gradient(90deg,${col}88,${col})"></div>
+      </div>
+      <span class="q-val">R²&nbsp;${m.r2}</span>
+    </div>`;
+
+  fiEl.innerHTML += `
+    <div class="fi-row">
+      <span>${(m.top_feature||'').replace('roll5_','')}</span>
+      <span class="fi-pos" style="color:${col}">${m.pos}</span>
+    </div>`;
+});
+</script>
+</body>
+</html>

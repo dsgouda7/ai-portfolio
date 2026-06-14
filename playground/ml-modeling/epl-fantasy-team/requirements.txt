@@ -1,0 +1,7 @@
+pandas
+tabulate
+xgboost
+joblib
+scikit-learn
+requests
+flask
