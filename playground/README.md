@@ -55,7 +55,7 @@ Topics:
 - RAG workflows
 - Azure AI Foundry agents
 
-See also: [notes/07-ai-infrastructure/](../notes/07-ai-infrastructure/), [notes/03-ai/ch04_rag_and_embeddings/](../notes/03-ai/ch04_rag_and_embeddings/)
+See also: [notes/07-ai-infrastructure/](../notes/07-ai-infrastructure/), [notes/03-ai/ch07-rag-and-embeddings/](../notes/03-ai/ch07-rag-and-embeddings/)
 
 ---
 

@@ -17,7 +17,7 @@ Self-contained notebook with:
 
 ### 01. Azure AI Integration ([01-azure-ai-integration.ipynb](01-azure-ai-integration.ipynb))
 **Topics:** Azure OpenAI, LangChain, embeddings, vector search, Azure AI Foundry agents
-**Related Theory:** [AI Fundamentals](../../notes/03-ai/README.md), [RAG](../../notes/03-ai/ch04_rag_and_embeddings), [Vector Databases](../../notes/03-ai/ch05_vector_dbs)
+**Related Theory:** [AI Fundamentals](../../notes/03-ai/README.md), [RAG](../../notes/03-ai/ch07-rag-and-embeddings), [Vector Databases](../../notes/03-ai/ch08-vector-dbs)
 
 Learn to:
 - Authenticate with Azure OpenAI using LangChain
@@ -132,8 +132,8 @@ azure-ai-exploration/
 
 This notebook builds on concepts from:
 - [AI Fundamentals](../../notes/03-ai/README.md) - LLMs, prompt engineering
-- [RAG and Embeddings](../../notes/03-ai/ch04_rag_and_embeddings) - Retrieval-augmented generation
-- [Vector Databases](../../notes/03-ai/ch05_vector_dbs) - Semantic search patterns
+- [RAG and Embeddings](../../notes/03-ai/ch07-rag-and-embeddings) - Retrieval-augmented generation
+- [Vector Databases](../../notes/03-ai/ch08-vector-dbs) - Semantic search patterns
 
 ## Security Best Practices
 

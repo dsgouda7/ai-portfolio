@@ -973,7 +973,7 @@ graph TB
 ```mermaid
 pie title "LLaMA 7B Parameter Distribution (6.74B total)"
     "FFN Layers (32 blocks × 90M)" : 2880
-    "Attention Layers (32 blocks × 67M)" : 2144  
+    "Attention Layers (32 blocks × 67M)" : 2144
     "Embeddings (Input)" : 131
     "Output Head" : 131
     "LayerNorms" : 0.5
@@ -1184,7 +1184,7 @@ model = AutoModelForCausalLM.from_pretrained(
 
 **Key insights:**
 - Self-hosting is 10-100× cheaper than GPT-4 at scale (if you have volume)
-- RTX 4090 offers best $/performance for small-scale self-hosting  
+- RTX 4090 offers best $/performance for small-scale self-hosting
 - A100s necessary for enterprise-scale serving (batch size matters)
 - GPT-4o-mini competitive with self-hosted 7B for low-volume use (<100k tokens/month)
 
@@ -1212,7 +1212,7 @@ $$
 **Why multiple heads (32 in LLaMA 7B)?** Each head learns different patterns:
 - Some heads: syntax (subject-verb agreement)
 - Some heads: position (nearby tokens)
-- Some heads: semantics (topic coherence)  
+- Some heads: semantics (topic coherence)
 - Some heads: long-range dependencies (pronouns → nouns)
 
 Nobody programs these specializations — they emerge from training.
@@ -1223,7 +1223,7 @@ Nobody programs these specializations — they emerge from training.
 
 **LLaMA 7B FFN:**
 - W1: 4096 → 11008 (45M parameters)
-- Activation: GeLU or SiLU  
+- Activation: GeLU or SiLU
 - W2: 11008 → 4096 (45M parameters)
 - Total: **90M parameters per FFN layer**
 
@@ -1237,12 +1237,12 @@ Nobody programs these specializations — they emerge from training.
 
 ```
 TransformerBlock:
-  1. LayerNorm → Attention → Residual (+)  
+  1. LayerNorm → Attention → Residual (+)
   2. LayerNorm → FFN → Residual (+)
 
 Parameters per block:
   - Attention: 67M
-  - FFN: 90M  
+  - FFN: 90M
   - LayerNorms: 16K (negligible)
   - Total: 157M parameters
 ```
@@ -1404,6 +1404,82 @@ for seq_len in seq_lens:
 ```
 
 **The takeaway:** GQA is a pure win — less memory, faster, minimal quality loss. It's why LLaMA 2 70B can serve 100 users simultaneously on reasonable hardware.
+
+---
+
+## 7 · Why Models Behave Differently: Architecture → Behavior
+
+You can run the same prompt through GPT-4 and Claude and get responses that feel fundamentally different — one assertive, one hedging; one terse, one verbose; one citing sources, one confidently confabulating. The parameter count tells you nothing about why. The answer lives in three places: **architecture**, **alignment training**, and **instruction tuning data**.
+
+---
+
+### Dense vs MoE: The Specialist Effect
+
+MoE models (Mixtral, likely GPT-4) activate only ~20% of parameters per token — routing each token to a small set of specialized experts. Dense models (LLaMA, Mistral) activate 100% of parameters for everything.
+
+**What this produces in practice:**
+- **MoE models** tend toward sharper, more domain-specific completions within a token's "territory." When you ask about Python syntax, the code experts dominate. When you cross domains mid-sentence ("write a Python script that reads Shakespeare"), the routing is contested — multiple expert sets compete — producing less smooth interpolation between topics.
+- **Dense models** blend all knowledge uniformly for every token. The result is smoother cross-domain transitions but less sharp specialization. A well-trained 7B dense model can feel more "consistent" across a conversation even when a larger MoE would win on pure accuracy.
+
+This is not a quality judgment — it is a behavioral fingerprint of the architecture. Dense models interpolate; MoE models specialize.
+
+*"MoE routing creates behavioral texture. Dense models are smooth; MoE models have edges."*
+
+---
+
+### RLHF Alignment Variants: Where the "Personality" Comes From
+
+All major model families apply alignment training after pre-training, but they use different methods — and the differences are measurable in production:
+
+| Method | Used By | Mechanism | Behavioral Signature |
+|---|---|---|---|
+| **RLHF (reward model)** | OpenAI GPT-4, GPT-3.5 | Human raters score responses; reward model trained; PPO optimizes against it | More assertive tone, confident delivery, fewer unprompted caveats |
+| **Constitutional AI (CAI)** | Anthropic Claude | Model critiques its own outputs against a written constitution; self-revision loops applied at scale | More cautious hedging, more nuanced qualification, higher disclaimer frequency |
+| **DPO (Direct Preference Optimization)** | Mistral, LLaMA 2 chat, most OSS models | Skip reward model; optimize directly against human preference pairs | Efficient but less nuanced than full RLHF; tends toward safe, bland completions |
+
+**Why it's seductive:** "RLHF is just fine-tuning on human feedback — all three should produce similar results."
+
+**The truth:** The *mechanism* of alignment training shapes the model's default behavioral register as much as the data does. OpenAI's RLHF reward model was trained to rate confident, direct answers highly — users prefer confident responses, so the reward model learned to reward confidence. Anthropic's CAI self-critique loops were designed to surface and correct hedged or harmful outputs iteratively — the result is a model that has practiced self-qualification at scale. DPO collapses this to a classification problem — faster to train, but it loses the iterative refinement that produces nuanced hedging. **You are not seeing the model's "true personality" — you are seeing the behavioral mode that scored highest during alignment training.**
+
+---
+
+### Instruction Tuning Data: Verbosity, Formatting, and Disclaimers
+
+After alignment, models are instruction-tuned on conversational datasets. The source dataset leaves a visible behavioral fingerprint:
+
+- **Alpaca-style data** (~52K GPT-3.5-generated instruction-response pairs): short, direct answers, limited markdown, minimal disclaimers. Models trained here tend to be terse and skip unsolicited caveats.
+- **ShareGPT-style data** (real ChatGPT conversations scraped from sharers): verbose, formatted with markdown headers and bullet points, conversational register, frequent "certainly!" openers. Models trained here mirror ChatGPT's style — including its verbal tics.
+- **Proprietary RLHF datasets** (OpenAI/Anthropic internal): carefully curated for tone, disclaimer placement, and response length calibration. Produces the most polished but also most "branded" behavioral signature.
+
+**Measurable outcome:** In 2023 evaluations, models fine-tuned on ShareGPT data produced responses ~40% longer on average than Alpaca-tuned models on identical prompts — not because they had more to say, but because the training distribution was more verbose.
+
+*"The model's personality is a product of its training diet, not its parameter count."*
+
+---
+
+### Context Window: How Long Memory Changes Response Structure
+
+Long-context models (Claude 100K+, GPT-4 Turbo 128K) produce structurally different responses than 4K-context models — not just because they can process more, but because they **know they can defer**.
+
+In a 4K context, the model must be aggressive about synthesis: every response is under pressure to summarize, because there may not be room to revisit the topic. In a 100K context, the model can afford to surface nuance, qualify claims by referencing earlier context, and structure responses as documents rather than answers.
+
+**Practical fingerprint:**
+- 4K-context models: denser, more compressed responses; more assertive conclusions
+- 100K-context models: more likely to qualify claims by referencing earlier material; more likely to produce long-form structured output
+- The difference is not capability — it is the behavioral shape trained into the model based on what "good responses" looked like at its trained context length
+
+---
+
+### The Fingerprint in Practice
+
+When you run the same prompt through GPT-4 and Claude and observe different behavior, you are seeing the sum of:
+
+1. **Architecture** (MoE vs dense → specialist vs smooth)
+2. **Alignment method** (reward model RLHF → assertive; CAI → cautious; DPO → safe-bland)
+3. **Instruction data** (ShareGPT → verbose + formatted; Alpaca → terse + direct)
+4. **Context window training** (long context → deferring, document-structured responses)
+
+None of this is random. **Model behavior is deterministic and traceable** — once you know the training lineage.
 
 ---
 

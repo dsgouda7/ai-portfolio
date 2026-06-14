@@ -33,6 +33,20 @@ Features:
 - 100% local (no external APIs)
 - Dockerized
 
+---
+
+### Machine Learning
+
+#### [King County House Price Modeling](ml/king-county-house-pricing/)
+Portfolio notebook focused on practical price prediction workflow and model iteration.
+
+Tech: Python, Pandas, Seaborn, scikit-learn
+Features:
+- End-to-end regression flow from raw data to refined model
+- Data quality checks and baseline imputation
+- Linear and regularized model comparison
+- Narrative written as engineering progression
+
 ## Setup
 
 Each project has its own README with setup instructions. Most include:
