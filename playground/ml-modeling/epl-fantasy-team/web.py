@@ -14,6 +14,7 @@ import pandas as pd
 from flask import Flask, render_template
 
 from utils import DB_FILE, MODELS_FILE, GAME_WEEK, FEATURES, build_features
+from eligibility import get_eligibility, _DEFAULT as ELIG_DEFAULT
 
 app = Flask(__name__)
 
@@ -233,6 +234,19 @@ def index():
 
     all_data = build_features(DB_FILE)
     pool     = build_pool(all_data, models_map, GAME_WEEK)
+
+    print('Fetching current eligibility from FPL API...')
+    try:
+        eligibility = get_eligibility(use_llm=True)
+    except Exception as exc:
+        print(f'  Warning: eligibility check failed ({exc}), proceeding without filter')
+        eligibility = {}
+
+    if eligibility:
+        def _elig(pid):
+            return eligibility.get(int(pid), ELIG_DEFAULT).eligible
+        pool = pool[pool['id'].map(_elig)].copy()
+
     squad    = select_squad(pool, {'GK': 2, 'DEF': 5, 'MID': 5, 'FWD': 3},
                             max_per_team=4, max_spend=1000)
     starters, bench, formation = pick_starting_xi(squad)
@@ -241,12 +255,20 @@ def index():
     for p in positioned:
         p['stats'] = player_stats(p, pool)
         p['color'] = POS_COLORS[p['element_type']]
+        elig = eligibility.get(int(p.get('id', 0)), ELIG_DEFAULT)
+        p['news']    = elig.news
+        p['ep_next'] = elig.ep_next
+        p['elig_status'] = elig.status
 
     bench_list = []
     for _, p in bench.iterrows():
         b = p.to_dict()
         b['stats'] = player_stats(b, pool)
         b['color'] = POS_COLORS[b['element_type']]
+        elig = eligibility.get(int(b.get('id', 0)), ELIG_DEFAULT)
+        b['news']    = elig.news
+        b['ep_next'] = elig.ep_next
+        b['elig_status'] = elig.status
         bench_list.append(b)
 
     payload = {

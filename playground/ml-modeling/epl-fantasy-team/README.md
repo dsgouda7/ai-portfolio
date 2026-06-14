@@ -30,6 +30,67 @@ a goalkeeper and mostly noise for a forward. Target: next-GW total_points.
 minus the next available player at the same position. Margin < 0.5 means the
 model was essentially guessing between two players.
 
+## Player eligibility and live data
+
+The training data is static (2023-24 season CSV archive), but team selection
+runs against the **live FPL API** at prediction time. This matters because the
+pool of selectable players shifts constantly: loans, sales, long-term injuries.
+
+**What the FPL API gives you for free:**
+
+Every player in `bootstrap-static/elements` has:
+- `status` — `a` (available), `d` (doubtful), `i` (injured), `s` (suspended),
+  `u` (unavailable / loaned / sold), `n` (not in squad)
+- `chance_of_playing_next_round` — 0–100 or null
+- `news` — FPL's own injury/availability note (e.g. "Knee injury — Expected back
+  24 May", "Has joined Porto on loan for the rest of the season.")
+- `ep_next` — FPL's own expected points for the next round (surfaced in the UI
+  alongside the model's prediction as a sanity check)
+
+That covers roughly 95% of eligibility decisions without any external data source.
+
+**Rule-based first, LLM for the remainder:**
+
+```
+status in {u, n}                       → definitely out (loaned/sold)
+status = i or s                        → definitely out
+chance_of_playing_next_round >= 50     → in
+chance_of_playing_next_round < 25      → out
+everything else (status=d, chance 25–49, or no chance given)
+    → pass news string to LLM
+```
+
+The LLM (local `qwen2.5-coder:7b` via Ollama) reads the `news` field and returns
+AVAILABLE or UNAVAILABLE with a one-sentence rationale. It only fires on the
+~20–30 genuinely ambiguous players per GW — not on the full 841-player pool.
+If Ollama isn't running the filter degrades gracefully to rule-based with
+doubtful players treated as available.
+
+Why a code model for a football question? The `news` field is already structured
+text with a consistent grammar ("Injury type — Expected back DD Mon"). A 7B
+reasoning model handles this accurately without needing football-specific
+fine-tuning. We're not asking it to predict whether a player will score; we're
+asking it to parse a sentence.
+
+**What we're not doing:** external news APIs (Sky Sports, BBC Sport). The FPL
+`news` field aggregates the same information with a lag of at most a few hours,
+and it's already clean, structured, and free. The marginal coverage gain from
+scraping sports news doesn't justify the complexity or rate-limit overhead for
+this use case.
+
+**New/transferred players and data sparsity:**
+
+Players who joined mid-season appear in the live API but have sparse GW history
+(few or zero rows in `player_gw`). The rolling features for those players default
+to zero or near-zero. The model then predicts low points for them — which is the
+correct conservative behaviour: don't confidently pick a player you have no form
+data on. The 5-GW window naturally provides a data-density signal without any
+explicit handling needed.
+
+The `training_registry` table tracks which players were in each training run,
+so `new_players_since_last_run()` returns the IDs that need GW history backfilled
+before the next re-train. `ingest_from_fpl_api(new_ids)` does that backfill.
+
 ## Walk-forward backtest
 
 For each GW from 15 onwards, train on all prior GWs and evaluate on that GW's

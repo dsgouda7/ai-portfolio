@@ -340,7 +340,22 @@
     .b-amber  { background: #ffa500; }
     .b-yellow { background: #ffd700; }
     .b-green  { background: #00c851; }
-    .ts-pct   { font-size: 0.6rem; color: var(--muted); text-align: right; }
+    .tt-news {
+      font-size: 0.65rem;
+      color: #ffd700;
+      background: rgba(255,215,0,0.08);
+      border: 1px solid rgba(255,215,0,0.2);
+      border-radius: 4px;
+      padding: 0.2rem 0.4rem;
+      margin-bottom: 0.5rem;
+      line-height: 1.4;
+    }
+    .tt-ep {
+      font-size: 0.68rem;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+    .tt-ep span { color: var(--text); font-variant-numeric: tabular-nums; }
   </style>
 </head>
 <body>
@@ -514,10 +529,12 @@ function buildTip(p) {
       <span class="tt-price">£${((p.value||0)/10).toFixed(1)}M</span>
       <span class="tt-margin ${mc}">${ml} (${margin>=0?'+':''}${margin.toFixed(2)})</span>
     </div>
+    ${p.news ? `<div class="tt-news">${p.news}</div>` : ''}
     <div class="tt-pred">
       <span class="val">${(p.predicted_points||0).toFixed(2)}</span>
-      <span class="lbl"> predicted pts</span>
+      <span class="lbl"> model pts</span>
     </div>
+    ${p.ep_next ? `<div class="tt-ep">FPL prediction: <span>${(+p.ep_next).toFixed(1)} pts</span></div>` : ''}
     <hr class="tt-divider">
     ${statsHtml}
   `;

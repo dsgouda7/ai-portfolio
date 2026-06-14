@@ -1,0 +1,12 @@
+# generated artefacts -- do not commit
+fantasy_football.db
+models.joblib
+backtest_results.csv
+
+# dataset clone -- too large, cloned by setup.ps1
+Fantasy-Premier-League/
+
+# python
+__pycache__/
+*.pyc
+.venv/

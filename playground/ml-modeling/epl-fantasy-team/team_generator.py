@@ -7,6 +7,7 @@ import pandas as pd
 from tabulate import tabulate
 
 from utils import DB_FILE, MODELS_FILE, GAME_WEEK, FEATURES, ROLL_COLS, build_features
+from eligibility import get_eligibility, _DEFAULT as ELIG_DEFAULT
 
 MAX_PLAYERS_PER_TEAM = 4
 MAX_SPEND        = 1000
@@ -147,6 +148,15 @@ all_data = build_features(DB_FILE)
 
 print(f"Scoring players for GW {GAME_WEEK}...")
 pool = build_pool(all_data, models, GAME_WEEK)
+
+print("Fetching current eligibility from FPL API...")
+try:
+    eligibility = get_eligibility(use_llm=True)
+    def _elig(pid):
+        return eligibility.get(int(pid), ELIG_DEFAULT).eligible
+    pool = pool[pool['id'].map(_elig)].copy()
+except Exception as exc:
+    print(f'  Warning: eligibility check failed ({exc}), proceeding without filter')
 
 structure = {'GK': 2, 'DEF': 5, 'MID': 5, 'FWD': 3}
 best_team = select_team(pool, structure, MAX_PLAYERS_PER_TEAM, MAX_SPEND)
