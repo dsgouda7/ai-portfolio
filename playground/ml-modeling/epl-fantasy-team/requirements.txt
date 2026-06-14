@@ -3,5 +3,6 @@ tabulate
 xgboost
 joblib
 scikit-learn
+scipy
 requests
 flask
