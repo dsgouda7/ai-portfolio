@@ -242,7 +242,26 @@ def index():
         print(f'  Warning: eligibility check failed ({exc}), proceeding without filter')
         eligibility = {}
 
+    # build the excluded list *before* filtering the pool so we can show
+    # which high-ranking players were dropped and why
+    excluded = []
     if eligibility:
+        full_pool_sorted = pool.sort_values('predicted_points', ascending=False)
+        for _, p in full_pool_sorted.iterrows():
+            elig = eligibility.get(int(p.get('id', 0)), ELIG_DEFAULT)
+            if not elig.eligible:
+                excluded.append({
+                    'first_name': p.get('first_name', ''),
+                    'second_name': p.get('second_name', ''),
+                    'element_type': p.get('element_type', ''),
+                    'predicted_points': round(float(p['predicted_points']), 2),
+                    'news': elig.news,
+                    'method': elig.method,
+                    'color': POS_COLORS.get(str(p.get('element_type', '')), '#aaa'),
+                })
+            if len(excluded) >= 10:   # show the top-10 most impactful exclusions
+                break
+
         def _elig(pid):
             return eligibility.get(int(pid), ELIG_DEFAULT).eligible
         pool = pool[pool['id'].map(_elig)].copy()
@@ -278,6 +297,7 @@ def index():
         'total_spend':     round(float(squad['value'].sum()) / 10, 1),
         'players':         positioned,
         'bench':           bench_list,
+        'excluded':        excluded,
         'model_quality':   [{'pos': pos, **m} for pos, m in metrics.items()],
     }
 
