@@ -6,15 +6,19 @@ import numpy as np
 import pandas as pd
 from tabulate import tabulate
 
-from utils import DB_FILE, MODELS_FILE, GAME_WEEK, FEATURES, ROLL_COLS, build_features
-from eligibility import get_eligibility, _DEFAULT as ELIG_DEFAULT
+from utils import DB_FILE, MODELS_FILE, GAME_WEEK, POS_FEATURES, build_features, normalize_pool_scores
+from eligibility import get_eligibility, _DEFAULT as ELIG_DEFAULT, _ABSENT as ELIG_ABSENT, player_name_key
 
 MAX_PLAYERS_PER_TEAM = 4
 MAX_SPEND        = 1000
 
 
 def build_pool(df, models, game_week):
-    """Score every player using their position's model. Returns pool with 'predicted_points'."""
+    """
+    Score every player using their position-specific model and feature set.
+    Adds ``predicted_points_norm``: z-score within each position group,
+    enabling cross-position (uber-model) comparison for flex formation slots.
+    """
     snapshot = df[df['Game_Week'] == game_week - 1].copy()
     parts = []
 
@@ -22,11 +26,12 @@ def build_pool(df, models, game_week):
         pos_players = snapshot[snapshot['element_type'] == pos].copy()
         if pos_players.empty:
             continue
-        X = pos_players[FEATURES].fillna(0)
+        X = pos_players[POS_FEATURES[pos]].fillna(0)
         pos_players['predicted_points'] = model.predict(X)
         parts.append(pos_players)
 
-    return pd.concat(parts, ignore_index=True)
+    pool = pd.concat(parts, ignore_index=True)
+    return normalize_pool_scores(pool)
 
 
 def select_team(pool, structure, max_per_team, max_spend):
@@ -84,12 +89,20 @@ def print_player_profiles(team, pool):
     cross-position comparisons (GKs and FWDs have structurally different stat
     distributions).
     """
-    # which roll5 features are most informative per position
+    # curated display stats per position (mirrors POS_STATS in web.py)
     pos_features = {
-        'GK':  ['roll5_minutes', 'roll5_saves', 'roll5_clean_sheets', 'roll5_bonus', 'roll5_total_points'],
-        'DEF': ['roll5_minutes', 'roll5_clean_sheets', 'roll5_goals_scored', 'roll5_assists', 'roll5_bonus', 'roll5_total_points'],
-        'MID': ['roll5_minutes', 'roll5_ict_index', 'roll5_creativity', 'roll5_goals_scored', 'roll5_assists', 'roll5_bonus', 'roll5_total_points'],
-        'FWD': ['roll5_minutes', 'roll5_goals_scored', 'roll5_assists', 'roll5_threat', 'roll5_bonus', 'roll5_total_points'],
+        'GK':  ['roll5_minutes', 'roll5_starts', 'roll5_saves', 'roll5_clean_sheets',
+                'roll5_expected_goals_conceded', 'roll5_bonus', 'roll5_total_points'],
+        'DEF': ['roll5_minutes', 'roll5_starts', 'roll5_clean_sheets',
+                'roll5_goals_scored', 'roll5_assists',
+                'roll5_expected_goals', 'roll5_expected_assists',
+                'roll5_bonus', 'roll5_total_points'],
+        'MID': ['roll5_minutes', 'roll5_starts', 'roll5_goals_scored', 'roll5_assists',
+                'roll5_expected_goals', 'roll5_expected_assists',
+                'roll5_creativity', 'roll5_bonus', 'roll5_total_points'],
+        'FWD': ['roll5_minutes', 'roll5_starts', 'roll5_goals_scored', 'roll5_assists',
+                'roll5_expected_goals', 'roll5_expected_assists',
+                'roll5_threat', 'roll5_bonus', 'roll5_total_points'],
     }
 
     print("\n" + "=" * 70)
@@ -138,10 +151,10 @@ metrics = checkpoint['metrics']
 # that position and the team selections from it should be treated with scepticism
 print("\nModel quality (in-sample, optimistic):")
 quality_rows = [
-    [pos, m['n'], f"{m['r2']:.4f}", f"{m['rmse']:.4f}", m['top_feature']]
+    [m.get('model_name', pos), m['n'], m.get('n_features', '?'), f"{m['r2']:.4f}", f"{m['rmse']:.4f}", m['top_feature']]
     for pos, m in metrics.items()
 ]
-print(tabulate(quality_rows, headers=['pos', 'train_rows', 'R2', 'RMSE', 'top_feature'], tablefmt='simple'))
+print(tabulate(quality_rows, headers=['model', 'train_rows', 'features', 'R2', 'RMSE', 'top_feature'], tablefmt='simple'))
 
 print("\nBuilding features from DB...")
 all_data = build_features(DB_FILE)
@@ -149,19 +162,33 @@ all_data = build_features(DB_FILE)
 print(f"Scoring players for GW {GAME_WEEK}...")
 pool = build_pool(all_data, models, GAME_WEEK)
 
+# --- tier 1: training-time EPL membership (removes players who left the league;
+#             injured/suspended players are kept here and handled by tier 2) ---
+epl_members = checkpoint.get('epl_members')
+if epl_members is not None:
+    before = len(pool)
+    pool = pool[
+        pool.apply(lambda r: player_name_key(r.get('first_name', ''), r.get('second_name', '')) in epl_members, axis=1)
+    ].copy()
+    print(f"  EPL filter: {before - len(pool)} non-EPL players removed, {len(pool)} remain")
+
+# --- tier 2: live FPL API refresh (injury/suspension status) ---
 print("Fetching current eligibility from FPL API...")
 try:
     eligibility = get_eligibility(use_llm=True)
-    def _elig(pid):
-        return eligibility.get(int(pid), ELIG_DEFAULT).eligible
-    pool = pool[pool['id'].map(_elig)].copy()
+    def _elig(row):
+        key = (str(row.get('first_name', '') or '').lower(),
+               str(row.get('second_name', '') or '').lower())
+        return eligibility.get(key, ELIG_ABSENT).eligible
+    pool = pool[pool.apply(_elig, axis=1)].copy()
 except Exception as exc:
     print(f'  Warning: eligibility check failed ({exc}), proceeding without filter')
 
 structure = {'GK': 2, 'DEF': 5, 'MID': 5, 'FWD': 3}
 best_team = select_team(pool, structure, MAX_PLAYERS_PER_TEAM, MAX_SPEND)
 
-display_cols = ['first_name', 'second_name', 'element_type', 'team', 'value', 'predicted_points', 'selection_margin']
+display_cols = ['first_name', 'second_name', 'element_type', 'team', 'value',
+                'predicted_points', 'predicted_points_norm', 'selection_margin']
 print("\nSelected Team:")
 print(tabulate(best_team[display_cols], headers='keys', tablefmt='fancy_grid', floatfmt='.2f'))
 

@@ -19,7 +19,7 @@ from sklearn.metrics import r2_score
 from tabulate import tabulate
 from xgboost import XGBRegressor
 
-from utils import DB_FILE, FEATURES, GAME_WEEK, build_features
+from utils import DB_FILE, POS_FEATURES, GAME_WEEK, build_features
 
 MIN_TEST_GW = 15  # need enough GW history for rolling features to stabilise
 N_ESTIMATORS = 200
@@ -58,9 +58,9 @@ def run_backtest(df):
                 random_state=42,
                 verbosity=0,
             )
-            model.fit(pos_train[FEATURES].fillna(0), pos_train["target"])
+            model.fit(pos_train[POS_FEATURES[pos]].fillna(0), pos_train["target"])
 
-            y_pred = model.predict(pos_test[FEATURES].fillna(0))
+            y_pred = model.predict(pos_test[POS_FEATURES[pos]].fillna(0))
             y_true = pos_test["target"].values
             y_base = _baseline(pos_train, pos_test)
 

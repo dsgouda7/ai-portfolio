@@ -59,6 +59,37 @@ _DEFAULT = EligibilityResult(
     ep_next=0.0, method='default', reason='not in current FPL API response'
 )
 
+# used when we have a valid API response but the player is simply absent --
+# they have left the Premier League entirely (sold abroad, retired, relegated club)
+_ABSENT = EligibilityResult(
+    eligible=False, status='u', chance=0, news='',
+    ep_next=0.0, method='rule', reason='not in current FPL season'
+)
+
+
+def player_name_key(first_name: str, second_name: str) -> tuple[str, str]:
+    """Canonical (first_name_lower, second_name_lower) key used by the eligibility dict."""
+    return (str(first_name or '').lower(), str(second_name or '').lower())
+
+
+def get_epl_members() -> frozenset[tuple[str, str]]:
+    """
+    Return a frozenset of player_name_key tuples for every player currently
+    registered at an EPL club, regardless of fitness or availability.
+
+    Players with status 'u' (sold abroad, loaned out of the PL, retired) are
+    excluded.  Players who are injured, suspended, or doubtful are included --
+    they are still EPL assets and their historical data is valid for training.
+    """
+    resp = requests.get(f'{FPL_API_BASE}/bootstrap-static/', timeout=20)
+    resp.raise_for_status()
+    members = frozenset(
+        player_name_key(p['first_name'], p['second_name'])
+        for p in resp.json()['elements']
+        if p.get('status', 'u') != 'u'
+    )
+    return members
+
 
 def _rule_based(status: str, chance: Optional[int]) -> Optional[bool]:
     """
@@ -102,7 +133,7 @@ def _llm_call(name: str, pos: str, status: str, chance: Optional[int], news: str
     r = requests.post(
         f'{OLLAMA_URL}/api/generate',
         json={'model': OLLAMA_MODEL, 'prompt': prompt, 'stream': False},
-        timeout=20,
+        timeout=8,
     )
     r.raise_for_status()
     text = r.json()['response'].strip()
@@ -112,24 +143,28 @@ def _llm_call(name: str, pos: str, status: str, chance: Optional[int], news: str
     return eligible, reason[:200]
 
 
-def get_eligibility(use_llm: bool = True) -> dict[int, EligibilityResult]:
+# Name key: (first_name.lower(), second_name.lower()) -- survives season ID reassignment
+EligibilityKey = tuple[str, str]
+
+def get_eligibility(use_llm: bool = True) -> dict[EligibilityKey, EligibilityResult]:
     """
     Pull the current player list from the FPL API and return an eligibility
-    map keyed by player_id.
+    map keyed by (first_name.lower(), second_name.lower()).
 
-    Players absent from the API are not included; callers should treat missing
-    IDs as eligible (they are likely from a prior season's dataset and the
-    current-season availability is unknown).
+    Keying by name rather than player ID avoids mismatches caused by FPL
+    reassigning player IDs between seasons.  Players whose name is absent
+    from the current API have left the Premier League; callers should use
+    _ABSENT for those.
     """
     resp = requests.get(f'{FPL_API_BASE}/bootstrap-static/', timeout=20)
     resp.raise_for_status()
     players = resp.json()['elements']
 
-    results: dict[int, EligibilityResult] = {}
+    results: dict[EligibilityKey, EligibilityResult] = {}
     llm_available = use_llm
 
     for p in players:
-        pid    = int(p['id'])
+        key    = (p['first_name'].lower(), p['second_name'].lower())
         status = p.get('status', 'a')
         chance = p.get('chance_of_playing_next_round')
         news   = p.get('news') or ''
@@ -141,12 +176,12 @@ def get_eligibility(use_llm: bool = True) -> dict[int, EligibilityResult]:
         rule_result = _rule_based(status, chance)
 
         if rule_result is True:
-            results[pid] = EligibilityResult(
+            results[key] = EligibilityResult(
                 eligible=True, status=status, chance=chance, news=news,
                 ep_next=ep, method='rule', reason='available per FPL status'
             )
         elif rule_result is False:
-            results[pid] = EligibilityResult(
+            results[key] = EligibilityResult(
                 eligible=False, status=status, chance=chance, news=news,
                 ep_next=ep, method='rule',
                 reason=news[:120] if news else f'status={status}'
@@ -156,7 +191,7 @@ def get_eligibility(use_llm: bool = True) -> dict[int, EligibilityResult]:
             if llm_available:
                 try:
                     eligible, reason = _llm_call(name, pos, status, chance, news)
-                    results[pid] = EligibilityResult(
+                    results[key] = EligibilityResult(
                         eligible=eligible, status=status, chance=chance, news=news,
                         ep_next=ep, method='llm', reason=reason
                     )
@@ -164,13 +199,13 @@ def get_eligibility(use_llm: bool = True) -> dict[int, EligibilityResult]:
                     llm_available = False  # don't retry if Ollama is down
                     print(f'  Ollama unavailable ({exc}), falling back to rule-based for ambiguous players')
                     # conservative: treat doubtful with no clear signal as available
-                    results[pid] = EligibilityResult(
+                    results[key] = EligibilityResult(
                         eligible=True, status=status, chance=chance, news=news,
                         ep_next=ep, method='rule',
                         reason=f'LLM unavailable; treated as available (doubtful, chance={chance})'
                     )
             else:
-                results[pid] = EligibilityResult(
+                results[key] = EligibilityResult(
                     eligible=True, status=status, chance=chance, news=news,
                     ep_next=ep, method='rule',
                     reason=f'doubtful; treated as available (chance={chance})'

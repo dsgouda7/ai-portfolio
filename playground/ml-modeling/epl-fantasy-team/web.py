@@ -13,8 +13,16 @@ import numpy as np
 import pandas as pd
 from flask import Flask, render_template
 
-from utils import DB_FILE, MODELS_FILE, GAME_WEEK, FEATURES, build_features
-from eligibility import get_eligibility, _DEFAULT as ELIG_DEFAULT
+from utils import DB_FILE, MODELS_FILE, GAME_WEEK, POS_FEATURES, build_features, normalize_pool_scores
+from eligibility import get_eligibility, _DEFAULT as ELIG_DEFAULT, _ABSENT as ELIG_ABSENT, player_name_key
+
+
+def _elig_key(player_row) -> tuple[str, str]:
+    """Return the name key used by the eligibility dict."""
+    return player_name_key(
+        player_row.get('first_name', ''),
+        player_row.get('second_name', ''),
+    )
 
 app = Flask(__name__)
 
@@ -26,30 +34,43 @@ POS_COLORS = {
     'FWD': '#ff5757',
 }
 
-# most informative rolling stats to surface per position in the hover card
+# Stats surfaced per-player in the hover card — curated per position.
+# Removed ict_index (redundant with its components); added xG/xA/xGC and starts.
 POS_STATS = {
-    'GK':  ['roll5_minutes', 'roll5_saves', 'roll5_clean_sheets',
-            'roll5_goals_conceded', 'roll5_bonus', 'roll5_total_points'],
-    'DEF': ['roll5_minutes', 'roll5_clean_sheets', 'roll5_goals_conceded',
-            'roll5_goals_scored', 'roll5_assists', 'roll5_bonus', 'roll5_total_points'],
-    'MID': ['roll5_minutes', 'roll5_ict_index', 'roll5_creativity',
-            'roll5_goals_scored', 'roll5_assists', 'roll5_bonus', 'roll5_total_points'],
-    'FWD': ['roll5_minutes', 'roll5_goals_scored', 'roll5_assists',
-            'roll5_threat', 'roll5_ict_index', 'roll5_bonus', 'roll5_total_points'],
+    'GK':  ['roll5_minutes', 'roll5_starts', 'roll5_saves', 'roll5_clean_sheets',
+            'roll5_goals_conceded', 'roll5_expected_goals_conceded',
+            'roll5_bonus', 'roll5_total_points'],
+    'DEF': ['roll5_minutes', 'roll5_starts', 'roll5_clean_sheets',
+            'roll5_goals_conceded', 'roll5_expected_goals_conceded',
+            'roll5_goals_scored', 'roll5_assists',
+            'roll5_expected_goals', 'roll5_expected_assists',
+            'roll5_bonus', 'roll5_total_points'],
+    'MID': ['roll5_minutes', 'roll5_starts', 'roll5_goals_scored', 'roll5_assists',
+            'roll5_expected_goals', 'roll5_expected_assists',
+            'roll5_creativity', 'roll5_bonus', 'roll5_total_points'],
+    'FWD': ['roll5_minutes', 'roll5_starts', 'roll5_goals_scored', 'roll5_assists',
+            'roll5_expected_goals', 'roll5_expected_assists',
+            'roll5_threat', 'roll5_bonus', 'roll5_total_points'],
 }
 
 
 def build_pool(df, models, game_week):
+    """
+    Score every player using their position-specific model and feature set.
+    Adds ``predicted_points_norm``: z-score within each position group,
+    enabling cross-position (uber-model) comparison for flex formation slots.
+    """
     snapshot = df[df['Game_Week'] == game_week - 1].copy()
     parts = []
     for pos, model in models.items():
         pos_players = snapshot[snapshot['element_type'] == pos].copy()
         if pos_players.empty:
             continue
-        X = pos_players[FEATURES].fillna(0)
+        X = pos_players[POS_FEATURES[pos]].fillna(0)
         pos_players['predicted_points'] = model.predict(X)
         parts.append(pos_players)
-    return pd.concat(parts, ignore_index=True)
+    pool = pd.concat(parts, ignore_index=True)
+    return normalize_pool_scores(pool)
 
 
 def select_squad(pool, structure, max_per_team, max_spend):
@@ -117,9 +138,12 @@ def pick_starting_xi(squad):
                 counts[pos] += 1
                 used_ids.add(p['id'])
 
-    # pass 2 -- fill remaining 10 - len(starters_out) spots with best available
+    # pass 2 -- fill remaining 10 - len(starters_out) spots using normalised
+    # scores (uber-model): positions compared on even footing so an outstanding
+    # DEF beats an average FWD for a flex slot.
+    sort_col = 'predicted_points_norm' if 'predicted_points_norm' in outfield.columns else 'predicted_points'
     for _, p in outfield[~outfield['id'].isin(used_ids)].sort_values(
-        'predicted_points', ascending=False
+        sort_col, ascending=False
     ).iterrows():
         if len(starters_out) == 10:
             break
@@ -231,10 +255,19 @@ def index():
     checkpoint  = joblib.load(MODELS_FILE)
     models_map  = checkpoint['models']
     metrics     = checkpoint['metrics']
+    # epl_members is a frozenset of (first_name_lower, second_name_lower) tuples
+    # saved at train time; None if the checkpoint predates this feature.
+    epl_members: frozenset | None = checkpoint.get('epl_members')
 
     all_data = build_features(DB_FILE)
     pool     = build_pool(all_data, models_map, GAME_WEEK)
 
+    # --- tier 1: training-time EPL membership (removes players who left the league;
+    #             injured/suspended players are kept here and handled by tier 2) ---
+    if epl_members is not None:
+        pool = pool[pool.apply(lambda r: _elig_key(r) in epl_members, axis=1)].copy()
+
+    # --- tier 2: live FPL API refresh (injury/suspension status) ---
     print('Fetching current eligibility from FPL API...')
     try:
         eligibility = get_eligibility(use_llm=True)
@@ -246,9 +279,11 @@ def index():
     # which high-ranking players were dropped and why
     excluded = []
     if eligibility:
+        # players absent from the current API response have left the Premier League
+        absent = ELIG_ABSENT
         full_pool_sorted = pool.sort_values('predicted_points', ascending=False)
         for _, p in full_pool_sorted.iterrows():
-            elig = eligibility.get(int(p.get('id', 0)), ELIG_DEFAULT)
+            elig = eligibility.get(_elig_key(p), absent)
             if not elig.eligible:
                 excluded.append({
                     'first_name': p.get('first_name', ''),
@@ -262,9 +297,9 @@ def index():
             if len(excluded) >= 10:   # show the top-10 most impactful exclusions
                 break
 
-        def _elig(pid):
-            return eligibility.get(int(pid), ELIG_DEFAULT).eligible
-        pool = pool[pool['id'].map(_elig)].copy()
+        def _elig(row_like):
+            return eligibility.get(_elig_key(row_like) if hasattr(row_like, 'get') else row_like, ELIG_ABSENT).eligible
+        pool = pool[pool.apply(_elig, axis=1)].copy()
 
     squad    = select_squad(pool, {'GK': 2, 'DEF': 5, 'MID': 5, 'FWD': 3},
                             max_per_team=4, max_spend=1000)
@@ -274,7 +309,7 @@ def index():
     for p in positioned:
         p['stats'] = player_stats(p, pool)
         p['color'] = POS_COLORS[p['element_type']]
-        elig = eligibility.get(int(p.get('id', 0)), ELIG_DEFAULT)
+        elig = eligibility.get(_elig_key(p), ELIG_ABSENT)
         p['news']    = elig.news
         p['ep_next'] = elig.ep_next
         p['elig_status'] = elig.status
@@ -284,7 +319,7 @@ def index():
         b = p.to_dict()
         b['stats'] = player_stats(b, pool)
         b['color'] = POS_COLORS[b['element_type']]
-        elig = eligibility.get(int(b.get('id', 0)), ELIG_DEFAULT)
+        elig = eligibility.get(_elig_key(b), ELIG_ABSENT)
         b['news']    = elig.news
         b['ep_next'] = elig.ep_next
         b['elig_status'] = elig.status
