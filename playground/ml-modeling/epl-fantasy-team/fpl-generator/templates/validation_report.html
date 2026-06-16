@@ -441,6 +441,23 @@
     points on average across a season.
   </div>
 
+  <!-- Simulation assumptions callout -->
+  <div class="model-note" style="margin-top:0.6rem;border-color:rgba(251,191,36,0.25);">
+    <strong>Simulation assumptions:</strong>
+    <ul style="margin:0.5rem 0 0;padding-left:1.2rem;font-size:0.8rem;color:#9ba3b8;line-height:1.7;">
+      <li><strong>Static model</strong> — trained once on GWs 1–14, held fixed for all 23 test GWs.
+        A true rolling walk-forward would retrain at each GW using only data prior to it;
+        the results here are a <em>slightly optimistic</em> estimate of live-deployment performance.</li>
+      <li><strong>No transfers or chips</strong> — each GW selects a fresh squad of 15 independently.
+        No carry-forward team, no transfer cost penalty, no wildcard / bench-boost modelling.</li>
+      <li><strong>Lag-1 features only</strong> — all rolling stats (form, bps, xG, …) are built from
+        GW-1 data so there is no lookahead leakage into predictions.</li>
+      <li><strong>Oracle uses the same FPL constraints</strong> (£100 M budget, 3-per-club cap,
+        formation rules) — so the gap between model and oracle reflects prediction error alone,
+        not rule differences.</li>
+    </ul>
+  </div>
+
   <!-- Overall summary metrics -->
   <div class="section-title">Summary metrics (all simulated GWs)</div>
   <div class="metrics-grid" id="metrics-grid"></div>

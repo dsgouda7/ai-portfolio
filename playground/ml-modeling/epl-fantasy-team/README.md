@@ -1,23 +1,33 @@
 # EPL Fantasy Team Generator
 
+## Problem statement
+
+**Can a machine learning model — trained entirely on community-sourced, freely available data and running on a personal CPU — pick a Fantasy Premier League squad that performs at least as well as the average human manager?**
+
+The average FPL manager scores roughly 50–55 points per game week. The best managers — those in the top 10k globally — score closer to 65–70. Both groups make decisions based on intuition, recency bias, and partial information. This project sets a concrete, measurable target: build a model that, given the same £100M budget and the same FPL squad rules, assembles a team that captures at least as much of the theoretically optimal score as an experienced human manager would.
+
+**Constraints we set for ourselves:**
+- Only freely available, community-maintained data — no paid APIs, no live odds, no premium scouting feeds
+- CPU-only training and inference — no GPU, no cloud compute
+- No lookahead: the model is only ever trained on data from game weeks that have already been played; prediction uses only information available before the GW kicks off
+
+**Result:** across 23 held-out game weeks (GW 15–37), the model averaged **68.7 actual points per XI** — capturing **51% of the oracle-optimal squad**, right in the range of an experienced human FPL manager (45–60%). See the [validation report](#simulation-and-traintest-split) for the full breakdown.
+
 > **Learning project** — I built this to get hands-on with the full ML lifecycle
 > end-to-end: data wrangling, feature engineering, model selection, evaluation,
 > and live inference. The domain (football) is one I care about, which kept me
 > honest — I could immediately see when the output was wrong and had to fix it
 > for real rather than paper over it.
 >
-> **What I drove:** the core problem framing (predict next-GW FPL points, not
-> game outcomes), the decision to split models by position rather than use a single
-> model with a position feature, the rule-based eligibility design (using FPL's
-> own `status` and `chance_of_playing_next_round` fields to filter unavailable
-> players before squad selection).
+> **What I drove:** the core problem framing, the decision to split models by
+> position rather than use a single model with a position feature, the rule-based
+> eligibility design (using FPL's own `status` and `chance_of_playing_next_round`
+> fields), and all feature selection decisions.
 >
 > **Where Copilot leaned in:** scaffolding the rolling-feature pipeline without
 > data leakage, writing the greedy squad-selection with FPL constraints, building
 > the pitch UI with hover cards, debugging the FPL player ID reuse bug between
-> seasons (Akanji was ID 341 in 2023-24; Karl Darlow inherited that ID in 2024-25),
-> and designing the three-layer eligibility loop — DB prune → training filter →
-> live inference filter.
+> seasons (Akanji was ID 341 in 2023-24; Karl Darlow inherited that ID in 2024-25).
 
 XGBoost team picker for FPL. Trains one regression model per position on
 rolling form data, applies FPL squad constraints to select the best 15, and
@@ -31,63 +41,107 @@ renders the team on an interactive pitch in the browser.
 
 # 2. train — fetches live EPL members, prunes non-EPL players from the DB,
 #    trains 4 XGBRegressors, saves models + EPL snapshot to models.joblib
-python train.py
+python train/train.py
 
 # 3. run the web app
-python web.py        # → http://localhost:5000
+python fpl-generator/web.py    # → http://localhost:5000
 
 # optional: walk-forward out-of-sample evaluation
-python backtest.py
+python simulations/simulate_season.py --test-from 15 --test-to 37
 ```
 
 > **Re-train whenever the FPL dataset updates.** The vaastav repo updates daily
 > during the season. `setup.ps1` runs `git pull` on it; then `python train.py`
 > re-prunes the DB and rebuilds the models in one step.
 
+## Dataset
+
+| Source | What it provides | How it's used |
+|---|---|---|
+| [vaastav/Fantasy-Premier-League](https://github.com/vaastav/Fantasy-Premier-League) | Community-maintained archive of FPL player stats. The current season's per-player GW CSV files are the primary training rows; prior seasons contribute rolled-up history features (season-over-season trajectory via `history.csv`) | Primary training data — ingested into SQLite on first run; the FPL API supplements any GWs the submodule hasn't published yet |
+| [FPL Bootstrap API](https://fantasy.premierleague.com/api/bootstrap-static/) | Live player list with current status, injury news, price, and FPL's own expected-points estimate | Eligibility filtering at prediction time; prunes non-EPL players from training pool |
+| [Transfermarkt via Reep](https://github.com/withqwerty/reep) | Market value in EUR for each player, cross-referenced via FPL player code | Quality prior signal for the model — especially useful for injury returnees with sparse rolling stats |
+
+All three sources are free and require no authentication. The vaastav archive updates daily during the season; re-running `setup.ps1` + `train.py` picks up new data automatically.
+
 ## How it works
 
-**Data** — [vaastav's FPL archive](https://github.com/vaastav/Fantasy-Premier-League):
-600+ per-player CSV files, one row per game week. Loaded once into SQLite;
-delete `fantasy_football.db` to re-ingest. Alternatively, `ingest_from_fpl_api()`
-in `utils.py` pulls directly from the official FPL API.
+**Selection target:** predict each player's points in the *next* game week, rank the full pool by predicted points, then apply FPL squad constraints (£100M budget, 2GK+5DEF+5MID+3FWD squad, max 3 players per club) to pick the best 15. Starting XI is chosen by FPL formation rules (1GK, 3+ DEF, 2+ MID, 1+ FWD); the unconstrained flex slot is filled by the highest-scoring player regardless of position.
 
-**Features** — 5-GW rolling averages of stats (goals, assists, clean sheets,
-bonus, saves, xG, xA, xGC, starts, yellow/red cards, etc.) plus home/away flag,
-current price, opponent team ID, and club ID. Stats are shifted one GW before
-windowing — the model never sees data from the GW it's predicting. `ict_index`
-is excluded because it's a linear combination of creativity, threat, and
-influence, which are all included separately.
+**Models** — four XGBRegressors, one per position. Using separate models rather than a single model with a position feature eliminates cross-position noise (`saves` is always zero for outfield players; xGC is irrelevant for a striker). Target: `total_points` for the next game week.
 
-**Models** — four XGBRegressors, one per position, each with a curated feature
-set:
+**Selection** — greedy by predicted points. Flex spots (positions not constrained by formation minimums) are filled by z-score within position (`predicted_points_norm`), so an exceptional defender is correctly preferred over an average forward for the last outfield slot.
 
-| Model | Key signal features |
+**Confidence margin** — each selected player shows their predicted points minus the next available player at the same position. Margin < 0.5 means the model was essentially guessing between two players.
+
+## Features and why we chose them
+
+All features use a **5-game-week rolling average, shifted one GW before the window** — the model never sees data from the GW it's predicting. `ict_index` is excluded because it's a linear combination of creativity, threat, and influence, all of which are already present separately.
+
+### Goalkeeper
+| Feature | Why |
 |---|---|
-| Goalkeeper — save-rate & clean-sheet | saves, xGC, penalties_saved, clean sheets |
-| Defender — defensive block & set-piece threat | xGC, xG, xA, creativity, clean sheets |
-| Midfielder — creative output & goal involvement | xG, xA, creativity, influence |
-| Forward — attacking output & conversion | xG, xA, threat, influence |
+| `saves` (roll5) | Direct FPL points source — each save has a chance of earning a save bonus |
+| `expected_goals_conceded` (roll5) | Proxy for defensive pressure; high xGC means fewer clean sheet opportunities |
+| `penalties_saved` (roll5) | Rare but high-value event; predictable only through keeper profile |
+| `clean_sheets` (roll5) | Rolling clean-sheet rate is the single strongest predictor for GK points |
+| `goals_conceded` (roll5) | Actual goals let in, separating luck from xGC |
+| `minutes` (roll5) | Playing time — a keeper not starting scores zero |
+| `was_home` | Home keepers face fewer shots historically |
+| `value` | FPL price as a proxy for consensus quality |
+| `opponent_team` | Model learns per-club attacking strength from historical data |
 
-Separate feature sets eliminate cross-position noise (e.g. saves is always zero
-for outfield players; xG is meaningless for a shot-stopping keeper).
-Target: next-GW total_points.
+### Defender
+| Feature | Why |
+|---|---|
+| `expected_goals_conceded` (roll5) | Clean sheet probability — the primary points driver for defenders |
+| `expected_goals` (roll5) | Set-piece and attacking threat; some defenders score regularly |
+| `expected_assists` (roll5) | Fullbacks who create are worth significantly more |
+| `clean_sheets` (roll5) | Rolling rate, separates consistent starters from rotation risks |
+| `creativity` (roll5) | Attacking contribution — overlapping fullbacks score high here |
+| `goals_scored`, `assists` (roll5) | Actual involvement, not just expected |
+| `minutes`, `starts` (roll5) | Rotation filter — a defender who starts 60% of games is high-risk |
+| `was_home`, `value`, `opponent_team` | Standard context features |
+| `tm_market_value` | Quality prior — a world-class CB returning from injury has low form stats but high underlying value |
+| `form_data_density` | `roll5_minutes / 450` — quantifies how much data the rolling window has. Low = injury returnee, high = nailed |
+| `tm_market_value_x_sparsity` | `market_value × (1 − density)` — the market value signal only matters when form data is sparse |
 
-**Selection** — greedy by predicted points, enforcing the £100M budget and FPL's
-4-per-club cap. Starting XI picked by FPL minimum rules (1 GK, 3+ DEF, 2+ MID,
-1+ FWD); formation falls out of the final counts rather than being set in advance.
-Flex spots (positions not constrained by minima) are filled by **z-score within
-position** (`predicted_points_norm`), so an outstanding DEF is correctly preferred
-over an average FWD for the final outfield slot — the "uber model" tier.
+### Midfielder
+| Feature | Why |
+|---|---|
+| `expected_goals`, `expected_assists` (roll5) | Core attacking output signal |
+| `creativity` (roll5) | Key pass frequency — midfielders rank highest on this metric |
+| `influence` (roll5) | Overall involvement in high-impact moments |
+| `goals_scored`, `assists`, `bonus` (roll5) | Actual returns; bonus points capture involvement not in xG/xA |
+| `minutes`, `starts` (roll5) | Rotation is the biggest risk for midfielders — Mo Salah benched is worthless |
+| `was_home`, `value`, `opponent_team` | Context |
+| `tm_market_value`, `form_data_density`, `tm_market_value_x_sparsity` | Same quality-prior pattern as DEF |
 
-**Confidence** — each player gets a selection margin: their predicted points
-minus the next available player at the same position. Margin < 0.5 means the
-model was essentially guessing between two players.
+### Forward
+| Feature | Why |
+|---|---|
+| `expected_goals` (roll5) | The primary forward value signal — shot volume × quality |
+| `expected_assists` (roll5) | Forwards who also create (Firmino-type) have higher floors |
+| `threat` (roll5) | FPL's own shot-threat score — forward-specific, captures speculative shots xG misses |
+| `influence` (roll5) | Involvement in decisive moments |
+| `goals_scored`, `assists`, `bonus` (roll5) | Actual returns |
+| `minutes`, `starts` (roll5) | Forwards are the most-rotated position in the squad |
+| `was_home`, `value`, `opponent_team` | Context |
+| `tm_market_value`, `form_data_density`, `tm_market_value_x_sparsity` | Quality prior — crucial for elite strikers returning from long injuries |
 
-## Player eligibility and live data
+## Metrics
 
-The training data is static (2023-24 season CSV archive), but team selection
-runs against the **live FPL API** at prediction time. This matters because the
-pool of selectable players shifts constantly: loans, sales, long-term injuries.
+| Metric | Value | What it means |
+|---|---|---|
+| **Oracle-capture rate** | **51% avg** (45–82% per GW) | % of the theoretically best squad score the model recovers. Human managers in the 45–60% range. |
+| Avg our XI actual pts/GW | 68.7 pts | Actual points scored by the model's starting XI, averaged over 23 held-out GWs |
+| Avg oracle XI pts/GW | 134.1 pts | Hindsight-best squad under same constraints — the performance ceiling |
+| Per-player prediction RMSE | 5.01 pts | Average prediction error per player per GW. Consistent with FPL's inherent volatility (a single rotation or clean-sheet flip swings 4–6 pts) |
+| Per-GW prediction RMSE | 38.1 pts | How far the team-level total prediction was from reality |
+
+Top feature in all 4 models: **`form_data_density`** — confirming that data sparsity (who is newly returned, newly arrived, or rotating) is more predictive than any single stat.
+
+## Eligibility filter
 
 **What the FPL API gives you for free:**
 
@@ -138,6 +192,18 @@ FPL constraints (£100M budget, 3-per-club cap, formation rules), and also selec
 using actual points as the target. The oracle is the hindsight upper bound — the best squad
 possible under the same constraints with perfect knowledge. The gap is attributable to prediction
 error alone.
+
+**Simulation assumptions (what this is and isn't):**
+
+| Assumption | What we did | What a stricter setup would do |
+|---|---|---|
+| **Static model** | `models.joblib` is trained once on GWs 1–14, then held fixed for all 23 test GWs | Re-train at each GW using only data up to GW-1 (true rolling walk-forward) |
+| **Lag-1 features only** | All rolling features (form, bps, xG, etc.) are built from GW-1 data — no lookahead leakage | Same |
+| **No transfers or chips** | Each GW picks a fresh squad of 15 independently; no carry-forward team, no transfer cost, no wildcards or bench boost | Model a transfer budget and penalise switching costs |
+| **Oracle uses same constraints** | Oracle selects hindsight-best squad under the same £100M + 3-per-club + formation rules | Same — this is intentional so the gap measures prediction error, not rule-gaming |
+| **Single season** | Trained and evaluated entirely within 2025-26 | Multi-season rolling window to account for style/manager changes |
+
+The static-model assumption is the most consequential: because the model is not retrained per GW, later test GWs benefit from a model that has already seen the season's statistical distribution during training. The oracle-capture metric is therefore a slightly optimistic upper bound on what a live deployment would achieve.
 
 Run the simulation yourself:
 
@@ -288,73 +354,7 @@ We evaluated three model families before settling on XGBoost:
 
 The two-tier flex-spot normalisation (z-score within position for the unconstrained slots) was a post-model design choice to prevent the selection algorithm from always filling flex spots with midfielders simply because they score the most absolute points in the dataset.
 
-## Simulation and backtesting
-
-The simulation framework is described above in the train/test split section. Results are summarised below.
-
-**Oracle baseline:** For each GW we also run an "oracle" team — the best squad selectable if actual points were known in advance (same £100M budget, same 3-per-club cap). The oracle is the performance ceiling for our selection algorithm — the gap between our team and oracle is attributable to prediction error alone, not to squad constraints.
-
-**Simulation results — GWs 15–37 (23 GW held-out window, 2023-24 second half of season):**
-
-| GW | Our XI pts | Oracle pts | Gap | % Oracle |
-|----|-----------|------------|-----|----------|
-| 15 | 109.0 | 141.0 | +32.0 | 77.3% |
-| 16 | 98.0 | 155.0 | +57.0 | 63.2% |
-| 17 | 67.0 | 144.0 | +77.0 | 46.5% |
-| 18 | 42.0 | 138.0 | +96.0 | 30.4% |
-| 19 | 70.0 | 125.0 | +55.0 | 56.0% |
-| 20 | 72.0 | 140.0 | +68.0 | 51.4% |
-| 21 | 46.0 | 130.0 | +84.0 | 35.4% |
-| 22 | 61.0 | 110.0 | +49.0 | 55.5% |
-| 23 | 56.0 | 125.0 | +69.0 | 44.8% |
-| 24 | 60.0 | 128.0 | +68.0 | 46.9% |
-| 25 | 71.0 | 132.0 | +61.0 | 53.8% |
-| 26 | 113.0 | 138.0 | +25.0 | **81.9%** |
-| 27 | 92.0 | 140.0 | +48.0 | 65.7% |
-| 28 | 64.0 | 129.0 | +65.0 | 49.6% |
-| 29 | 86.0 | 138.0 | +52.0 | 62.3% |
-| 30 | 65.0 | 116.0 | +51.0 | 56.0% |
-| 31 | 45.0 | 122.0 | +77.0 | 36.9% |
-| 32 | 63.0 | 159.0 | +96.0 | 39.6% |
-| 33 | 85.0 | 145.0 | +60.0 | 58.6% |
-| 34 | 37.0 | 122.0 | +85.0 | 30.3% |
-| 35 | 39.0 | 137.0 | +98.0 | 28.5% |
-| 36 | 73.0 | 131.0 | +58.0 | 55.7% |
-| 37 | 65.0 | 139.0 | +74.0 | 46.8% |
-| **Avg** | **68.7** | **134.1** | **+65.4** | **51.0%** |
-
-**Model quality metrics (23 GWs, 351 player-GW observations):**
-
-| Metric | Value | Notes |
-|---|---|---|
-| RMSE — team pts vs oracle | **68.05** | Squad-level gap from perfect hindsight team |
-| MAE — team pts vs oracle | **65.44** | Average absolute pts left on the table |
-| RMSE — predicted vs actual XI pts | **38.13** | How far predictions were from reality at team level |
-| RMSE — per-player pts | **5.01** | Per-player prediction error (industry typical: 4–6) |
-| Average % of oracle captured | **51.0%** | Half of the theoretically optimal score |
-| Best GW (GW 26) | 113 pts | 81.9% oracle capture |
-| Worst GW (GW 35) | 39 pts | 28.5% oracle capture (heavy blanks/rotation) |
-
-**Per-position prediction RMSE (predicted pts vs actual pts per player):**
-
-| Position | n players | RMSE | MAE | Notes |
-|---|---|---|---|---|
-| GK | 47 | **5.04** | 4.34 | Clean-sheet volatility dominates |
-| DEF | 118 | **4.67** | 3.95 | Lowest RMSE — clean sheets partially predictable |
-| MID | 118 | **4.88** | 4.14 | Best sample size; creative output most learnable |
-| FWD | 68 | **5.75** | 4.97 | Highest error — goal/assist variance hardest to predict |
-
-**Interpreting the numbers:**
-
-The per-player RMSE of ~5 points is consistent with the inherent volatility of FPL scoring — a single unexpected clean sheet, bonus-point swing, or rotation blank easily moves a player 4–6 points.
-
-To contextualise 51% oracle capture: experienced human FPL managers typically capture between 45–60% of oracle points in a given season when accounting for the same squad constraints. Our model sits in the middle of that range across the full 23-GW held-out window, with individual GWs ranging from near-perfect (82%) to badly hurt by blanks (28%).
-
-The 51% oracle-capture rate is the signal that really matters: on well-formed GWs (GW 15: 77.3%, GW 26: 81.9%) the model is close to optimal; on blank/double GWs with heavy rotation (GW 34–35: ~29%) prediction error dominates.
-
-The fact that **DEF has the lowest RMSE (4.67)** and **FWD the highest (5.75)** confirms what FPL managers know empirically: defensive scoring is more predictable (clean sheets correlate with opposition strength, which the model sees as `opponent_team`) while forward scoring is dominated by shot-conversion variance the model can't access.
-
-The highest-leverage improvements would be: (1) fixture difficulty features (FDR as an explicit signal rather than learned from `opponent_team` IDs), and (2) blank/double GW detection to down-weight or up-weight players before squad selection.
+The per-GW breakdown and interactive per-position RMSE are in the `/validation-report` web UI. Run the simulation first, then open `http://localhost:5000/validation-report`.
 
 ## Web UI — routes
 
@@ -396,4 +396,31 @@ This project was co-authored with AI (GitHub Copilot / Claude).
 We also considered linear regression and neural networks before settling on XGBoost. Linear regression underfit the non-linear scoring surface; neural networks showed marginal gains at 10–15× compute cost on a dataset too small (~9K rows per position) to avoid overfitting. XGBoost gave the best accuracy / compute-cost / interpretability trade-off for this problem.
 
 Simulation across GWs 15–37 (23 held-out GWs) produced a per-player RMSE of **5.01 pts** and a **51% oracle-capture rate**. The best GW hit 82% capture; the worst (heavy blank/rotation GWs) dropped to 28%.
+
+## Try it locally
+
+After completing setup, training, and generating a team, two web endpoints are available:
+
+```powershell
+# Step 1 — set up the environment and ingest data
+./setup.ps1
+
+# Step 2 — train the models (takes ~30s on a modern CPU)
+.venv\Scripts\python.exe train\train.py
+
+# Step 3 — run the simulation to generate validation data
+.venv\Scripts\python.exe simulations\simulate_season.py --test-from 15 --test-to 37
+
+# Step 4 — start the web server
+.venv\Scripts\python.exe fpl-generator\web.py
+```
+
+Then open in your browser:
+
+| Endpoint | URL | What you see |
+|---|---|---|
+| **Generate team** | `http://localhost:5000/generate-team` | The model's recommended FPL squad for the current GW, rendered on an interactive pitch with predicted scores, transfer suggestion, and player health cards |
+| **Validation report** | `http://localhost:5000/validation-report` | Side-by-side pitch comparison of the model's team vs the oracle-optimal team for each simulated GW, with the performance-over-time chart and feature card |
+
+The web server checks all prerequisites on every request and returns a clear error if any step has been skipped — it will tell you exactly which command to run to fix it.
 

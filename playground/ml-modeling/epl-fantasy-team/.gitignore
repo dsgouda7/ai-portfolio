@@ -10,4 +10,7 @@ Fantasy-Premier-League/
 __pycache__/
 *.pyc
 .venv/
+
+# ephemeral local output
 inference_out.txt
+*.log

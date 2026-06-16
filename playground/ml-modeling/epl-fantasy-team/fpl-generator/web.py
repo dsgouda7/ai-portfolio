@@ -200,17 +200,59 @@ def _safe(obj):
     return obj
 
 
+def _setup_error(title: str, message: str, fix_cmd: str, status: int = 500) -> tuple:
+    """Return a styled setup-error page with the exact command needed to fix the issue."""
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Setup required \u2014 FPL Generator</title>
+  <style>
+    body {{ font-family: 'Segoe UI', system-ui, sans-serif; background:#0a0f1a; color:#e8eaf0;
+           display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0; }}
+    .card {{ background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.09);
+             border-radius:10px; padding:2.5rem 3rem; max-width:560px; width:90%; }}
+    h1 {{ font-size:1.1rem; color:#f87171; margin:0 0 0.5rem; }}
+    p  {{ font-size:0.85rem; color:#9ba3b8; margin:0.4rem 0 1.2rem; line-height:1.55; }}
+    .cmd {{ background:#111827; border:1px solid rgba(255,255,255,0.1); border-radius:6px;
+            padding:0.7rem 1rem; font-family:monospace; font-size:0.8rem; color:#38bdf8;
+            white-space:pre-wrap; word-break:break-all; }}
+    .label {{ font-size:0.68rem; color:#7a8299; text-transform:uppercase;
+              letter-spacing:0.05em; margin-bottom:0.3rem; }}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>\u26a0 {{title}}</h1>
+    <p>{{message}}</p>
+    <div class="label">Run this to fix it:</div>
+    <div class="cmd">{{fix_cmd}}</div>
+  </div>
+</body>
+</html>"""
+    return html.format(title=title, message=message, fix_cmd=fix_cmd), status
+
+
 # ---------------------------------------------------------------------------
-# route
+# routes
 # ---------------------------------------------------------------------------
 
 @app.route('/generate-team')
 def index():
+    if not os.path.exists(DB_FILE):
+        return _setup_error(
+            'Database not found',
+            'The player database has not been created yet. '
+            'Run setup.ps1 to clone the FPL dataset and prepare the environment, '
+            'then run train.py which ingests the data automatically.',
+            '.\\setup.ps1\n.venv\\Scripts\\python.exe train\\train.py',
+        )
     if not os.path.exists(MODELS_FILE):
-        return (
-            f'<h2 style="font-family:sans-serif;padding:2rem">'
-            f'{MODELS_FILE} not found — run train/train.py first.</h2>',
-            500,
+        return _setup_error(
+            'Models not trained',
+            'No trained models found. models.joblib is created by the training script. '
+            'Training takes ~30 seconds on a modern CPU.',
+            '.venv\\Scripts\\python.exe train\\train.py',
         )
 
     checkpoint  = joblib.load(MODELS_FILE)
@@ -399,10 +441,13 @@ def validation_report():
     player_csv = Path(__file__).parent.parent / 'simulations' / 'results' / 'player_rows.csv'
 
     if not sim_csv.exists():
-        return (
-            '<h2 style="font-family:sans-serif;padding:2rem">'
-            'No simulation results found.<br>'
-            'Run: <code>python simulations/simulate_season.py</code> first.</h2>',
+        return _setup_error(
+            'Simulation results not found',
+            'The validation report requires simulation data that has not been generated yet. '
+            'This runs the model against held-out game weeks and compares it to the '
+            'oracle-optimal squad. It takes 1–2 minutes to complete.',
+            '.venv\\Scripts\\python.exe simulations\\simulate_season.py '
+            '--test-from 15 --test-to 37',
             404,
         )
 
