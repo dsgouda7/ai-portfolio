@@ -64,9 +64,31 @@ def _autodetect_season(
     )
 
 
-SEASON, PLAYERS_DIR, RAW_DATA_PATH, GAME_WEEK = _autodetect_season()
-DB_FILE          = str(_ROOT / 'fantasy_football.db')
-MODELS_FILE      = str(_ROOT / 'models.joblib')
+SEASON, PLAYERS_DIR, RAW_DATA_PATH, GAME_WEEK = _autodetect_season(
+    # FPL_VAASTAV_DIR lets the ingest container mount vaastav as a volume.
+    # Falls back to the submodule path used by local setup.ps1 runs.
+    base=os.environ.get('FPL_VAASTAV_DIR'),
+)
+
+# ---------------------------------------------------------------------------
+# Pipeline I/O paths
+# ---------------------------------------------------------------------------
+# Each path is controlled by an env var so the same source tree runs both
+# locally (defaults below) and inside a containerised pipeline step, where
+# the runner mounts directories and injects the env vars.
+#
+#   Local default         Container / AML mount
+#   ─────────────────     ──────────────────────────────────────────────────
+#   fantasy_football.db   $FPL_DATA_DIR/fantasy_football.db
+#   models.joblib         $FPL_MODELS_DIR/models.joblib
+#
+# To run a step in a container:
+#   docker run --env FPL_DATA_DIR=/mnt/data --env FPL_MODELS_DIR=/mnt/models …
+DB_FILE     = os.environ.get('FPL_DB_FILE',
+              str(_ROOT / 'fantasy_football.db'))
+MODELS_FILE = os.environ.get('FPL_MODELS_FILE',
+              str(_ROOT / 'models.joblib'))
+
 MAX_PLAYERS_PER_TEAM = 4
 MAX_SPEND        = 1000
 FORM_WINDOW      = 5

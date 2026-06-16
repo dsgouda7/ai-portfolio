@@ -1,0 +1,97 @@
+# ── FPL Generator — local pipeline orchestration ──────────────────────────
+#
+# Runs all three pipeline steps in sequence then starts the web server,
+# all sharing a single named volume for artifacts.
+#
+# USAGE
+# ─────
+# Full pipeline (ingest → train → simulate → serve):
+#   docker compose up
+#
+# Re-run a single step (e.g. retrain without re-ingesting):
+#   docker compose run --rm train
+#   docker compose run --rm simulate
+#
+# Start only the web app (pipeline already ran, artifacts on volume):
+#   docker compose up serve
+#
+# Reset artifacts and start fresh:
+#   docker compose down -v && docker compose up
+#
+# NOTES
+# ─────
+# • The vaastav submodule (Fantasy-Premier-League/) must be cloned locally
+#   before running (setup.ps1 / setup.sh does this).  It is mounted read-only
+#   into the ingest container.
+# • All pipeline artifacts (DB, models, simulation results) are stored in the
+#   'pipeline-data' named volume, not committed to git.
+# • The web app (serve) is NOT a pipeline step; it is excluded from the step
+#   Dockerfiles and treated as a separate long-running service.
+# ──────────────────────────────────────────────────────────────────────────
+
+name: fpl-generator
+
+volumes:
+  pipeline-data:    # shared artifact store: DB + models + simulation results
+
+services:
+
+  # ── Step 1: Ingest ────────────────────────────────────────────────────────
+  ingest:
+    build:
+      context: .
+      dockerfile: pipeline/ingest/Dockerfile
+    volumes:
+      - ./Fantasy-Premier-League:/data/vaastav:ro    # local submodule, read-only
+      - pipeline-data:/data/output
+    environment:
+      FPL_VAASTAV_DIR: /data/vaastav/data
+      FPL_DB_FILE: /data/output/fantasy_football.db
+
+  # ── Step 2: Train ─────────────────────────────────────────────────────────
+  train:
+    build:
+      context: .
+      dockerfile: pipeline/train/Dockerfile
+    volumes:
+      - pipeline-data:/data
+    environment:
+      FPL_DB_FILE: /data/fantasy_football.db
+      FPL_MODELS_FILE: /data/models/models.joblib
+    depends_on:
+      ingest:
+        condition: service_completed_successfully
+
+  # ── Step 3: Simulate ──────────────────────────────────────────────────────
+  simulate:
+    build:
+      context: .
+      dockerfile: pipeline/simulate/Dockerfile
+    volumes:
+      - pipeline-data:/data
+    environment:
+      FPL_DB_FILE: /data/fantasy_football.db
+      FPL_MODELS_FILE: /data/models/models.joblib
+      FPL_RESULTS_DIR: /data/results
+      FPL_SIM_FROM: "15"
+      FPL_SIM_TO: "37"
+    depends_on:
+      train:
+        condition: service_completed_successfully
+
+  # ── Web app (not a pipeline step) ─────────────────────────────────────────
+  serve:
+    build:
+      context: .
+      dockerfile: fpl-generator/Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - pipeline-data:/data
+    environment:
+      FPL_DB_FILE: /data/fantasy_football.db
+      FPL_MODELS_FILE: /data/models/models.joblib
+      FPL_RESULTS_DIR: /data/results
+    depends_on:
+      simulate:
+        condition: service_completed_successfully

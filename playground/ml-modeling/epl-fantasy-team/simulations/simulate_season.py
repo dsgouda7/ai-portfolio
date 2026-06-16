@@ -49,9 +49,12 @@ from utils import (
     pick_starting_xi,
 )
 
-RESULTS_DIR = Path(__file__).parent / "results"
-SIM_CSV     = RESULTS_DIR / "simulation_results.csv"   # one row per GW
-PLAYER_CSV  = RESULTS_DIR / "player_rows.csv"           # one row per player×GW
+RESULTS_DIR = Path(os.environ.get(
+    'FPL_RESULTS_DIR',
+    str(Path(__file__).parent / 'results'),
+))
+SIM_CSV     = RESULTS_DIR / 'simulation_results.csv'   # one row per GW
+PLAYER_CSV  = RESULTS_DIR / 'player_rows.csv'           # one row per player×GW
 
 STRUCTURE = {"GK": 2, "DEF": 5, "MID": 5, "FWD": 3}
 MAX_PER_TEAM = 3

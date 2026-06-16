@@ -1,0 +1,30 @@
+# Python bytecode and caches
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+
+# Virtual environment
+.venv/
+
+# Generated pipeline artifacts — provided via mounted volumes at runtime
+fantasy_football.db
+models.joblib
+simulations/results/
+pipeline_data/
+
+# vaastav submodule — too large for image context; mounted as a volume
+Fantasy-Premier-League/
+
+# Git metadata
+.git/
+.gitignore
+
+# Local dev
+*.log
+.reep_people_cache.csv
+
+# IDE
+.vscode/
+.idea/

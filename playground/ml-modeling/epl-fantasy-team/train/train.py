@@ -25,8 +25,6 @@ import joblib
 import numpy as np
 import pandas as pd
 import requests
-from sklearn.metrics import r2_score, root_mean_squared_error
-from xgboost import XGBRegressor
 
 from utils import (
     DB_FILE, MODELS_FILE, PLAYERS_DIR, RAW_DATA_PATH, GAME_WEEK, SEASON,
@@ -37,8 +35,7 @@ from utils import (
 from eligibility import get_eligibility, get_epl_members
 from player_attributes import ensure_new_players
 from transfer_values import ensure_transfer_values
-
-N_ESTIMATORS = 200  # boosting rounds; 200 converges well at lr=0.1 on ~20k rows
+from train.trainer import train_models, N_ESTIMATORS
 
 # ---------------------------------------------------------------------------
 # Step 1: Pull latest data from the vaastav submodule
@@ -54,58 +51,6 @@ try:
     print(f"  {msg or 'already up to date'}")
 except Exception as exc:
     print(f"  Warning: submodule pull failed ({exc}) — proceeding with local data")
-
-
-def train_models(df, game_week):
-    """
-    Train one XGBRegressor per position on all GWs before game_week-1.
-
-    Each model uses only the features relevant to its position (POS_FEATURES),
-    removing cross-position noise (e.g. saves for outfielders, threat for GKs).
-    Returns (models, metrics) dicts keyed by position; metrics includes r2,
-    rmse, n, top_feature, model_name, and n_features.
-    """
-    train = df[(df['Game_Week'] < game_week - 1) & df['target'].notna()].copy()
-    models = {}
-    metrics = {}
-
-    for pos in ['GK', 'DEF', 'MID', 'FWD']:
-        pos_features = POS_FEATURES[pos]
-        pos_train = train[train['element_type'] == pos]
-        X = pos_train[pos_features].fillna(0)
-        # FPL API and vaastav can return team/opponent_team as object dtype.
-        # Cast any remaining object columns to int so XGBoost accepts them.
-        for _c in X.select_dtypes(include='object').columns:
-            X[_c] = pd.to_numeric(X[_c], errors='coerce').fillna(0).astype(int)
-        y = pos_train['target']
-
-        model = XGBRegressor(
-            n_estimators=N_ESTIMATORS,
-            max_depth=4,
-            learning_rate=0.1,
-            subsample=0.8,
-            colsample_bytree=0.8,
-            random_state=42,
-            verbosity=0,
-        )
-        model.fit(X, y)
-        models[pos] = model
-
-        y_pred = model.predict(X)
-        top_feat = pos_features[model.feature_importances_.argmax()]
-        metrics[pos] = {
-            'r2':          round(float(r2_score(y, y_pred)), 4),
-            'rmse':        round(float(root_mean_squared_error(y, y_pred)), 4),
-            'n':           len(pos_train),
-            'top_feature': top_feat,
-            'model_name':  MODEL_NAMES[pos],
-            'n_features':  len(pos_features),
-        }
-        m = metrics[pos]
-        print(f"  [{MODEL_NAMES[pos]}]")
-        print(f"    n={m['n']:,}  features={m['n_features']}  R²={m['r2']:.4f}  RMSE={m['rmse']:.4f}  top={top_feat}")
-
-    return models, metrics
 
 
 print("Fetching EPL member list from FPL API (filters non-EPL players from DB)...")

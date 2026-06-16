@@ -437,7 +437,10 @@ def validation_report():
     """Side-by-side per-GW comparison of our generated team vs oracle optimal."""
     import csv, urllib.request as _req
 
-    sim_csv    = Path(__file__).parent.parent / 'simulations' / 'results' / 'simulation_results.csv'
+    sim_csv    = Path(os.environ.get(
+                    'FPL_RESULTS_DIR',
+                    str(Path(__file__).parent.parent / 'simulations' / 'results'),
+                )) / 'simulation_results.csv'
     player_csv = Path(__file__).parent.parent / 'simulations' / 'results' / 'player_rows.csv'
 
     if not sim_csv.exists():
