@@ -223,14 +223,14 @@ def _setup_error(title: str, message: str, fix_cmd: str, status: int = 500) -> t
 </head>
 <body>
   <div class="card">
-    <h1>\u26a0 {{title}}</h1>
-    <p>{{message}}</p>
+    <h1>\u26a0 {title}</h1>
+    <p>{message}</p>
     <div class="label">Run this to fix it:</div>
-    <div class="cmd">{{fix_cmd}}</div>
+    <div class="cmd">{fix_cmd}</div>
   </div>
 </body>
 </html>"""
-    return html.format(title=title, message=message, fix_cmd=fix_cmd), status
+    return html, status
 
 
 # ---------------------------------------------------------------------------
