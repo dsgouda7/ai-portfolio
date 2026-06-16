@@ -34,12 +34,4 @@ Local REST service that applies Swin2SR (4× super-resolution) and MetricGAN+ (s
 
 `PyTorch` `HuggingFace` `Swin2SR` `MetricGAN+` `Flask` `Docker`
 
----
 
-## [Housing Price Predictor](housing-price-predictor/)
-
-**Can a regression model trained on public property records predict sale prices accurately enough to be useful for estimating fair market value?**
-
-Regression workflow on King County, WA housing data: linear baseline → Ridge → Ridge with polynomial features. R² ≈ 0.88 on held-out test split; median absolute error under $35k across properties spanning $75k–$7.7M. Documents where simple regression holds up and where non-linearity makes a meaningful difference.
-
-`scikit-learn` `pandas` `numpy` `Jupyter`
