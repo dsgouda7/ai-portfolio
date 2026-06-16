@@ -11,7 +11,7 @@ The average FPL manager scores roughly 50–55 points per game week. The best ma
 - CPU-only training and inference — no GPU, no cloud compute
 - No lookahead: the model is only ever trained on data from game weeks that have already been played; prediction uses only information available before the GW kicks off
 
-**Result:** across 23 held-out game weeks (GW 15–37), the model averaged **68.7 actual points per XI** — capturing **51% of the oracle-optimal squad**, right in the range of an experienced human FPL manager (45–60%). See the [validation report](#simulation-and-traintest-split) for the full breakdown.
+**Result:** across 23 held-out game weeks (GW 15–37), the model averaged **70.7 actual points per XI** — capturing **52.5% of the oracle-optimal squad**, right in the range of an experienced human FPL manager (45–60%). See the [validation report](#simulation-and-traintest-split) for the full breakdown.
 
 > **Learning project** — I built this to get hands-on with the full ML lifecycle
 > end-to-end: data wrangling, feature engineering, model selection, evaluation,
@@ -129,13 +129,47 @@ All features use a **5-game-week rolling average, shifted one GW before the wind
 
 | Metric | Value | What it means |
 |---|---|---|
-| **Oracle-capture rate** | **51% avg** (45–82% per GW) | % of the theoretically best squad score the model recovers. Human managers in the 45–60% range. |
-| Avg our XI actual pts/GW | 68.7 pts | Actual points scored by the model's starting XI, averaged over 23 held-out GWs |
+| **Oracle-capture rate** | **52.5% avg** (33.6–76.8% per GW) | % of the theoretically best squad score the model recovers. Human managers in the 45–60% range. |
+| Avg our XI actual pts/GW | 70.7 pts | Actual points scored by the model's starting XI, averaged over 23 held-out GWs |
 | Avg oracle XI pts/GW | 134.1 pts | Hindsight-best squad under same constraints — the performance ceiling |
-| Per-player prediction RMSE | 5.01 pts | Average prediction error per player per GW. Consistent with FPL's inherent volatility (a single rotation or clean-sheet flip swings 4–6 pts) |
-| Per-GW prediction RMSE | 38.1 pts | How far the team-level total prediction was from reality |
+| Per-player prediction RMSE | 4.28 pts | Average prediction error per player per GW. Consistent with FPL's inherent volatility (a single rotation or clean-sheet flip swings 4–6 pts) |
+| Per-GW prediction RMSE | 15.6 pts | How far the team-level total prediction was from reality |
+
+**Before/after: effect of evidence-based tree count (200 → 44)**
+
+| Metric | 200 trees (original) | 44 trees (tuned) | Change |
+|---|---|---|---|
+| Oracle-capture rate | 51.0% | 52.5% | +1.5 pp |
+| Avg our XI pts/GW | 68.7 | 70.7 | +2.0 pts |
+| Per-player RMSE | 5.01 pts | 4.28 pts | −15% |
+| Per-GW prediction RMSE | 38.1 pts | 15.6 pts | −59% |
 
 Top feature in all 4 models: **`form_data_density`** — confirming that data sparsity (who is newly returned, newly arrived, or rotating) is more predictive than any single stat.
+
+## How we chose the number of trees
+
+The original setting of 200 trees was a reasonable starting default. To determine whether it was actually optimal we ran a **temporal walk-forward sweep** using XGBoost's built-in early stopping:
+
+- For each position (GK/DEF/MID/FWD), train on the first 70% of game weeks, validate on the next 10%, step forward 5 GWs, repeat for 5 folds.
+- Each fold uses `n_estimators=1000` with `early_stopping_rounds=30` — XGBoost halts automatically when validation RMSE stops improving.
+- Record the `best_iteration` for every fold.
+
+Results (see `train/tune_n_estimators.py`):
+
+| Position | Median best_n | p90 best_n | Mean val RMSE |
+|---|---|---|---|
+| GK | 20 | 22 | 1.85 pts |
+| DEF | 35 | 42 | 2.37 pts |
+| MID | 22 | 22 | 2.31 pts |
+| FWD | 30 | 43 | 2.67 pts |
+
+Early stopping halted at **14–47 trees** across all folds and positions — confirming that 200 trees was overfitting the training set by 4–9×. The **p90 across all positions = 44**, which gives a small buffer above the median without allowing unnecessary extrapolation. That value is now `N_ESTIMATORS` in `train/trainer.py`.
+
+To reproduce:
+
+```powershell
+.venv\Scripts\python.exe train/tune_n_estimators.py
+```
 
 ## Eligibility filter
 
