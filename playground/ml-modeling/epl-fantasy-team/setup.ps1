@@ -22,5 +22,9 @@ if (-not (Test-Path $datasetPath)) {
 
 Write-Host ""
 Write-Host "Setup complete. Activate with: .venv\Scripts\Activate.ps1"
-Write-Host "Run: python train.py  (then python web.py for the pitch UI)"
+Write-Host "Train models  : python train\train.py"
+Write-Host "Pitch UI      : python fpl-generator\web.py"
+Write-Host "CLI team pick : python fpl-generator\team_generator.py"
+Write-Host "Backtest      : python train\backtest.py"
+Write-Host "TM data status: python transfer_values.py --status"
 Write-Host "Delete fantasy_football.db to force a full re-ingest after pulling new data."

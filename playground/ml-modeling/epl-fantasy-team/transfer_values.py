@@ -34,6 +34,7 @@ import argparse
 import io
 import math
 import os
+import pathlib
 import sqlite3
 import time
 from datetime import date, datetime, timedelta
@@ -47,11 +48,12 @@ from transfermarkt_client import get_transfermarkt_data
 # Constants
 # ---------------------------------------------------------------------------
 
-_DB_PATH = "fantasy_football.db"
+_ROOT = pathlib.Path(__file__).parent
+_DB_PATH = str(_ROOT / "fantasy_football.db")
 _REEP_CSV_URL = (
     "https://raw.githubusercontent.com/withqwerty/reep/main/data/people.csv"
 )
-_REEP_CACHE_PATH = ".reep_people_cache.csv"
+_REEP_CACHE_PATH = str(_ROOT / ".reep_people_cache.csv")
 _REEP_CACHE_TTL_DAYS = 7     # refresh local CSV cache every 7 days
 _TM_SLEEP_SECONDS = 1.0      # polite crawl rate between player fetches
 

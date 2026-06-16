@@ -1,9 +1,12 @@
 import os
+import pathlib
 import re
 import sqlite3
 
 import pandas as pd
 import requests
+
+_ROOT = pathlib.Path(__file__).parent
 
 # ---------------------------------------------------------------------------
 # Season auto-detection
@@ -15,17 +18,19 @@ import requests
 # before first setup).
 
 def _autodetect_season(
-    base: str = './Fantasy-Premier-League/data',
+    base: str = None,
 ) -> tuple[str, str, str, int]:
     """
     Return (season, players_dir, raw_data_path, game_week).
     season   : '2025-26'
     game_week: last played GW number (= snapshot GW used for prediction).
     """
+    if base is None:
+        base = str(_ROOT / 'Fantasy-Premier-League' / 'data')
     if not os.path.isdir(base):
         return ('2023-24',
-                './Fantasy-Premier-League/data/2023-24/players/',
-                './Fantasy-Premier-League/data/2023-24/players_raw.csv',
+                str(_ROOT / 'Fantasy-Premier-League' / 'data' / '2023-24' / 'players') + os.sep,
+                str(_ROOT / 'Fantasy-Premier-League' / 'data' / '2023-24' / 'players_raw.csv'),
                 38)
 
     seasons = sorted(
@@ -59,8 +64,8 @@ def _autodetect_season(
 
 
 SEASON, PLAYERS_DIR, RAW_DATA_PATH, GAME_WEEK = _autodetect_season()
-DB_FILE          = 'fantasy_football.db'
-MODELS_FILE      = 'models.joblib'
+DB_FILE          = str(_ROOT / 'fantasy_football.db')
+MODELS_FILE      = str(_ROOT / 'models.joblib')
 MAX_PLAYERS_PER_TEAM = 4
 MAX_SPEND        = 1000
 FORM_WINDOW      = 5
@@ -97,6 +102,7 @@ POS_FEATURES = {
         'tm_market_value',             # player quality proxy (log-scaled EUR)
         'tm_market_value_x_sparsity',  # TM value * (1 - density): high when elite + sparse data
         'form_data_density',           # fraction of last 5 GWs played (0=none, 1=all)
+        'player_age_years',            # fractional age at kickoff date
         # Season-over-season trajectory
         'hist_prev_pts_per90', 'hist_prev_cs_per90', 'hist_prev_saves_per90',
         'hist_career_seasons', 'hist_yoy_pts_delta',
@@ -113,6 +119,7 @@ POS_FEATURES = {
         'tm_market_value',             # player quality proxy (log-scaled EUR)
         'tm_market_value_x_sparsity',  # TM value * (1 - density): high when elite + sparse data
         'form_data_density',           # fraction of last 5 GWs played (0=none, 1=all)
+        'player_age_years',            # fractional age at kickoff date
         # Season-over-season trajectory
         'hist_prev_pts_per90', 'hist_prev_cs_per90',
         'hist_prev_goals_per90', 'hist_prev_assists_per90',
@@ -129,6 +136,7 @@ POS_FEATURES = {
         'tm_market_value',             # player quality proxy (log-scaled EUR)
         'tm_market_value_x_sparsity',  # TM value * (1 - density): high when elite + sparse data
         'form_data_density',           # fraction of last 5 GWs played (0=none, 1=all)
+        'player_age_years',            # fractional age at kickoff date
         # Season-over-season trajectory
         'hist_prev_pts_per90', 'hist_prev_goals_per90',
         'hist_prev_assists_per90', 'hist_prev_xg_per90', 'hist_prev_xa_per90',
@@ -145,6 +153,7 @@ POS_FEATURES = {
         'tm_market_value',             # player quality proxy (log-scaled EUR)
         'tm_market_value_x_sparsity',  # TM value * (1 - density): high when elite + sparse data
         'form_data_density',           # fraction of last 5 GWs played (0=none, 1=all)
+        'player_age_years',            # fractional age at kickoff date
         # Season-over-season trajectory
         'hist_prev_pts_per90', 'hist_prev_goals_per90',
         'hist_prev_assists_per90', 'hist_prev_xg_per90',
@@ -158,8 +167,11 @@ ATTR_COLS: list[str] = [
     'tm_market_value',          # log10(EUR) from Transfermarkt via Reep ID bridge
     'tm_market_value_x_sparsity',  # tm_market_value * (1 - form_data_density)
                                     # Amplifies TM signal when rolling stats are thin
-    'form_data_density',        # roll5_minutes / (FORM_WINDOW*90), clipped 0-1
-                                # 0 = no recent minutes (injured/new), 1 = fully fit
+    'form_data_density',        # roll5_minutes / (FORM_WINDOW*90); 0=no recent
+                                # minutes (new/injured), ~0.2=full-time regular.
+                                # Used as blend weight after * FORM_WINDOW.
+    'player_age_years',         # fractional age at each GW's kickoff date
+                                # computed from birth_date in players_raw
 ]
 
 # Season-over-season history features (from history.csv inside each player
@@ -285,7 +297,7 @@ def build_features(db_file):
     """
     conn = sqlite3.connect(db_file)
     raw = pd.read_sql(
-        "SELECT element_type, team, second_name, first_name, id FROM players_raw",
+        "SELECT element_type, team, second_name, first_name, id, birth_date FROM players_raw",
         conn,
     )
     all_gw = pd.read_sql("SELECT * FROM player_gw", conn)
@@ -346,6 +358,19 @@ def build_features(db_file):
 
     df['target'] = df.groupby('id')['total_points'].shift(-1)
 
+    # Compute player_age_years: fractional age at each GW's kickoff date.
+    # birth_date is 'YYYY-MM-DD'; kickoff_time is 'YYYY-MM-DDThh:mm:ssZ'.
+    # Using kickoff_time gives exact per-GW age so a player who turns 30 in
+    # January is correctly older in the second half of the season.
+    # Falls back to the season start date (Aug 1) if kickoff_time is missing.
+    _birth = pd.to_datetime(raw.set_index('id')['birth_date'], errors='coerce')
+    df['_birth_dt'] = df['id'].map(_birth)
+    _ko = pd.to_datetime(df['kickoff_time'], errors='coerce', utc=True).dt.tz_localize(None)
+    _season_start = pd.Timestamp(f'{SEASON[:4]}-08-01')
+    _ref_date = _ko.where(_ko.notna(), _season_start)
+    df['player_age_years'] = ((_ref_date - df['_birth_dt']).dt.days / 365.25).round(2)
+    df.drop(columns=['_birth_dt'], inplace=True)
+
     # Attach EA FC attributes (one row per player, broadcast to all their GWs)
     if not attr_df.empty:
         df = df.merge(attr_df, left_on='id', right_on='fpl_id', how='left')
@@ -372,11 +397,58 @@ def build_features(db_file):
 
     # Compute form_data_density: fraction of last 5 GWs a player was on the
     # pitch.  roll5_minutes is already the 5-GW rolling mean of minutes played;
-    # dividing by 90 gives minutes-per-GW as a fraction of a full game, then
-    # dividing by FORM_WINDOW normalises to [0, 1].
-    # A new signing or returning injury has density near 0; a fully fit starter
-    # is near 1.  We clip to [0, 1] to guard against >90-min values (cup OT).
+    # dividing by (FORM_WINDOW * 90) scales it so that a full-time regular who
+    # averages 90 min/GW produces density = 90/(5*90) = 0.2.  This is the
+    # natural upper bound given the rolling-mean formulation.
+    # A new signing or returning injury has density = 0.
     df['form_data_density'] = (df['roll5_minutes'] / (FORM_WINDOW * 90)).clip(0.0, 1.0)
+
+    # --- Sparse player feature blending ---
+    # Problem: new signings and long-term injured players have roll5_* = 0,
+    # making the model predict them as terrible even when their Transfermarkt
+    # value signals elite quality.
+    #
+    # Solution: for players with sparse recent data, blend their rolling form
+    # features toward the per-GW position mean of fully-active players.
+    # tm_market_value is intentionally NOT blended — it remains the signal
+    # that differentiates a £100M new signing from a £5M one.
+    #
+    # blend_weight = (form_data_density * FORM_WINDOW).clip(0, 1)
+    #              = roll5_minutes / 90   (fraction of a full 90-min game/GW)
+    #
+    #   weight = 0.0  →  100% position mean  (no recent minutes: new/injured)
+    #   weight = 0.5  →  50/50              (rotation player, ~45 min/GW avg)
+    #   weight = 1.0  →  100% actual        (regular starter, no blending)
+    _blend_cols = [c for c in df.columns if c.startswith('roll5_')]
+    _blend_w    = (df['form_data_density'] * FORM_WINDOW).clip(0.0, 1.0)
+
+    for _pos in ['GK', 'DEF', 'MID', 'FWD']:
+        _pos_mask    = df['element_type'] == _pos
+        _sparse_mask = _pos_mask & (_blend_w < 1.0)
+        _dense_mask  = _pos_mask & (_blend_w >= 0.8)  # avg >= 72 min/GW
+
+        if not _sparse_mask.any():
+            continue
+
+        # Per-GW reference means from established players.
+        # Falls back to the full position pool if there are fewer than 5
+        # established players (early-season or very small positions).
+        _ref_mask  = _dense_mask if _dense_mask.sum() >= 5 else _pos_mask
+        _gw_means  = df.loc[_ref_mask].groupby('Game_Week')[_blend_cols].mean()
+        _glob_mean = df.loc[_ref_mask, _blend_cols].mean()
+
+        _sidx = df.index[_sparse_mask]
+        _ref_vals = pd.DataFrame(
+            [_gw_means.loc[gw] if gw in _gw_means.index else _glob_mean
+             for gw in df.loc[_sidx, 'Game_Week']],
+            index=_sidx,
+        )
+
+        _w = _blend_w.loc[_sidx].to_numpy()[:, None]   # shape (N, 1)
+        df.loc[_sidx, _blend_cols] = (
+            _w       * df.loc[_sidx, _blend_cols].to_numpy()
+            + (1.0 - _w) * _ref_vals.to_numpy()
+        )
 
     # Interaction: amplify TM market value when form data is sparse.
     # When density=0 (player has no recent minutes), this equals tm_market_value

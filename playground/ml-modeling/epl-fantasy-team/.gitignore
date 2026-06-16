@@ -10,3 +10,4 @@ Fantasy-Premier-League/
 __pycache__/
 *.pyc
 .venv/
+inference_out.txt
