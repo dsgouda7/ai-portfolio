@@ -29,10 +29,6 @@ The average FPL manager scores roughly 50–55 points per game week. The best ma
 > the pitch UI with hover cards, debugging the FPL player ID reuse bug between
 > seasons (Akanji was ID 341 in 2023-24; Karl Darlow inherited that ID in 2024-25).
 
-XGBoost team picker for FPL. Trains one regression model per position on
-rolling form data, applies FPL squad constraints to select the best 15, and
-renders the team on an interactive pitch in the browser.
-
 ## Quick start
 
 ```powershell
@@ -51,7 +47,7 @@ python simulations/simulate_season.py --test-from 15 --test-to 37
 ```
 
 > **Re-train whenever the FPL dataset updates.** The vaastav repo updates daily
-> during the season. `setup.ps1` runs `git pull` on it; then `python train.py`
+> during the season. `setup.ps1` runs `git pull` on it; then `python train/train.py`
 > re-prunes the DB and rebuilds the models in one step.
 
 ## Dataset
@@ -360,8 +356,8 @@ The per-GW breakdown and interactive per-position RMSE are in the `/validation-r
 
 | Route | Description |
 |---|---|
-| `GET /generate-team` | Generate and display the recommended FPL squad for the current GW |
-| `GET /validation-report` | Side-by-side pitch comparison of our generated team vs oracle optimal for each simulated GW, with full metrics dashboard |
+| `GET /generate-team` | Recommended FPL squad for the current GW on an interactive pitch with predicted scores, confidence margins, and player health cards |
+| `GET /validation-report` | Side-by-side pitch: model team vs oracle optimal per simulated GW, with full metrics dashboard. Requires simulation results. |
 | `GET /` | Redirects to `/generate-team` |
 
 The validation report page shows:
@@ -371,6 +367,8 @@ The validation report page shows:
 - Summary metrics panel (aggregate over all simulated GWs)
 - Per-position prediction RMSE chips
 - Scrollable per-GW results table with click-to-select
+
+The server checks all prerequisites on every request and returns a styled error page with the exact fix command if any setup step has been skipped.
 
 ## Authorship
 
@@ -394,33 +392,4 @@ This project was co-authored with AI (GitHub Copilot / Claude).
 - Building the validation report web UI (`/validation-report`)
 
 We also considered linear regression and neural networks before settling on XGBoost. Linear regression underfit the non-linear scoring surface; neural networks showed marginal gains at 10–15× compute cost on a dataset too small (~9K rows per position) to avoid overfitting. XGBoost gave the best accuracy / compute-cost / interpretability trade-off for this problem.
-
-Simulation across GWs 15–37 (23 held-out GWs) produced a per-player RMSE of **5.01 pts** and a **51% oracle-capture rate**. The best GW hit 82% capture; the worst (heavy blank/rotation GWs) dropped to 28%.
-
-## Try it locally
-
-After completing setup, training, and generating a team, two web endpoints are available:
-
-```powershell
-# Step 1 — set up the environment and ingest data
-./setup.ps1
-
-# Step 2 — train the models (takes ~30s on a modern CPU)
-.venv\Scripts\python.exe train\train.py
-
-# Step 3 — run the simulation to generate validation data
-.venv\Scripts\python.exe simulations\simulate_season.py --test-from 15 --test-to 37
-
-# Step 4 — start the web server
-.venv\Scripts\python.exe fpl-generator\web.py
-```
-
-Then open in your browser:
-
-| Endpoint | URL | What you see |
-|---|---|---|
-| **Generate team** | `http://localhost:5000/generate-team` | The model's recommended FPL squad for the current GW, rendered on an interactive pitch with predicted scores, transfer suggestion, and player health cards |
-| **Validation report** | `http://localhost:5000/validation-report` | Side-by-side pitch comparison of the model's team vs the oracle-optimal team for each simulated GW, with the performance-over-time chart and feature card |
-
-The web server checks all prerequisites on every request and returns a clear error if any step has been skipped — it will tell you exactly which command to run to fix it.
 
