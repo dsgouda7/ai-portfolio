@@ -2,6 +2,7 @@ import os
 import pathlib
 import re
 import sqlite3
+from collections import Counter
 
 import pandas as pd
 import requests
@@ -532,6 +533,221 @@ def normalize_pool_scores(pool):
             ((pts - pts.mean()) / sigma) if sigma > 0 else (pts - pts.mean())
         ).round(4)
     return pool
+
+
+# ---------------------------------------------------------------------------
+# Squad persistence & weekly transfer logic
+# ---------------------------------------------------------------------------
+
+_SQUAD_TABLE = 'saved_squad'
+
+
+def save_squad(db_file: str, squad_df: pd.DataFrame, game_week: int, season: str) -> None:
+    """Overwrite the saved_squad table with the current 15 players."""
+    id_col = 'player_id' if 'player_id' in squad_df.columns else 'id'
+    to_save = squad_df[[id_col, 'first_name', 'second_name', 'element_type', 'team', 'value']].copy()
+    to_save = to_save.rename(columns={id_col: 'player_id'})
+    to_save['gw_saved'] = game_week
+    to_save['season']   = season
+    conn = sqlite3.connect(db_file)
+    conn.execute(f"""
+        CREATE TABLE IF NOT EXISTS {_SQUAD_TABLE} (
+            player_id    INTEGER PRIMARY KEY,
+            first_name   TEXT,
+            second_name  TEXT,
+            element_type TEXT,
+            team         INTEGER,
+            value        REAL,
+            gw_saved     INTEGER,
+            season       TEXT
+        )
+    """)
+    conn.execute(f'DELETE FROM {_SQUAD_TABLE}')
+    to_save.to_sql(_SQUAD_TABLE, conn, if_exists='append', index=False)
+    conn.commit()
+    conn.close()
+
+
+def load_squad(db_file: str):
+    """Return saved squad DataFrame or None if none exists."""
+    conn = sqlite3.connect(db_file)
+    if not _table_exists(conn, _SQUAD_TABLE):
+        conn.close()
+        return None
+    df = pd.read_sql(f'SELECT * FROM {_SQUAD_TABLE}', conn)
+    conn.close()
+    return df if not df.empty else None
+
+
+def score_squad_from_pool(saved_squad: pd.DataFrame, scored_pool: pd.DataFrame) -> pd.DataFrame:
+    """
+    Join saved squad members against the current-GW scored pool.
+    Members absent from the pool (left EPL / no GW data) get predicted_points=0
+    and retain their saved metadata.  Always returns a DataFrame with 'id' column.
+    """
+    pool_by_id = scored_pool.set_index('id')
+    rows = []
+    for _, sp in saved_squad.iterrows():
+        pid = int(sp['player_id'])
+        if pid in pool_by_id.index:
+            pool_row = pool_by_id.loc[pid]
+            if isinstance(pool_row, pd.DataFrame):
+                pool_row = pool_row.iloc[0]
+            row = pool_row.to_dict()
+            row['id'] = pid
+        else:
+            row = {
+                'id':                    pid,
+                'first_name':            str(sp.get('first_name', '')),
+                'second_name':           str(sp.get('second_name', '')),
+                'element_type':          str(sp.get('element_type', '')),
+                'team':                  int(sp.get('team', 0)),
+                'value':                 float(sp.get('value', 0)),
+                'predicted_points':      0.0,
+                'predicted_points_norm': 0.0,
+                'selection_margin':      0.0,
+            }
+        rows.append(row)
+    df = pd.DataFrame(rows)
+    for col in ('selection_margin', 'predicted_points_norm'):
+        if col not in df.columns:
+            df[col] = 0.0
+    return df.reset_index(drop=True)
+
+
+def pick_starting_xi(squad: pd.DataFrame) -> tuple:
+    """
+    Pick best starting 11 from a squad using FPL rules:
+    exactly 1 GK, min 3 DEF, min 2 MID, min 1 FWD, 11 total.
+    Uses predicted_points_norm for flex-slot tie-breaking.
+    Returns (starters_df, bench_df, formation_str).
+    """
+    gk_sorted  = squad[squad['element_type'] == 'GK'].sort_values('predicted_points', ascending=False)
+    starter_gk = gk_sorted.iloc[[0]]
+    bench_gk   = gk_sorted.iloc[[1]] if len(gk_sorted) > 1 else pd.DataFrame()
+
+    outfield = squad[squad['element_type'] != 'GK']
+    mins     = {'DEF': 3, 'MID': 2, 'FWD': 1}
+    counts   = {'DEF': 0, 'MID': 0, 'FWD': 0}
+    starters_out, used_ids = [], set()
+
+    # Pass 1 — fill position minimums
+    for pos, min_n in mins.items():
+        for _, p in outfield[outfield['element_type'] == pos].sort_values(
+            'predicted_points', ascending=False
+        ).iterrows():
+            if counts[pos] < min_n:
+                starters_out.append(p)
+                counts[pos] += 1
+                used_ids.add(p['id'])
+
+    # Pass 2 — fill remaining outfield slots by normalised cross-position score
+    sort_col = 'predicted_points_norm' if 'predicted_points_norm' in outfield.columns else 'predicted_points'
+    for _, p in outfield[~outfield['id'].isin(used_ids)].sort_values(sort_col, ascending=False).iterrows():
+        if len(starters_out) == 10:
+            break
+        starters_out.append(p)
+        counts[p['element_type']] += 1
+        used_ids.add(p['id'])
+
+    starters  = pd.concat([starter_gk, pd.DataFrame(starters_out)], ignore_index=True)
+    bench_out = outfield[~outfield['id'].isin(used_ids)].sort_values('predicted_points', ascending=False)
+    bench = (
+        pd.concat([bench_gk, bench_out], ignore_index=True)
+        if not bench_gk.empty else bench_out.reset_index(drop=True)
+    )
+    formation = f"{counts['DEF']}-{counts['MID']}-{counts['FWD']}"
+    return starters, bench, formation
+
+
+def suggest_transfer(
+    scored_squad: pd.DataFrame,
+    eligible_pool: pd.DataFrame,
+    max_per_team: int = 4,
+    max_spend: int = 1000,
+):
+    """
+    Find the single best transfer (one OUT → one IN) that maximises
+    predicted-points gain, subject to budget and per-club cap.
+    Returns dict { 'out', 'in_', 'gain', 'new_spend' } or None.
+    """
+    squad_ids   = set(scored_squad['id'].astype(int))
+    squad_spend = int(scored_squad['value'].sum())
+    team_counts = Counter(scored_squad['team'].astype(int))
+
+    best_gain, best_out, best_in_ = float('-inf'), None, None
+
+    for _, out_p in scored_squad.iterrows():
+        freed    = int(out_p['value'])
+        budget   = max_spend - squad_spend + freed
+        tc_after = Counter(team_counts)
+        tc_after[int(out_p['team'])] -= 1
+
+        cands = eligible_pool[
+            (eligible_pool['element_type'] == out_p['element_type'])
+            & (~eligible_pool['id'].astype(int).isin(squad_ids - {int(out_p['id'])}))
+        ].sort_values('predicted_points', ascending=False)
+
+        for _, in_p in cands.iterrows():
+            if int(in_p['id']) == int(out_p['id']):
+                continue
+            if int(in_p['value']) > budget:
+                continue
+            if tc_after.get(int(in_p['team']), 0) >= max_per_team:
+                continue
+            gain = float(in_p['predicted_points']) - float(out_p['predicted_points'])
+            if gain > best_gain:
+                best_gain, best_out, best_in_ = gain, out_p.copy(), in_p.copy()
+            break  # sorted desc — first valid = best for this out_p
+
+    if best_out is None:
+        return None
+    return {
+        'out':       best_out.to_dict(),
+        'in_':       best_in_.to_dict(),
+        'gain':      round(best_gain, 2),
+        'new_spend': squad_spend - int(best_out['value']) + int(best_in_['value']),
+    }
+
+
+def find_ineligible_replacements(
+    ineligible_squad: pd.DataFrame,
+    eligible_pool: pd.DataFrame,
+    full_squad: pd.DataFrame,
+    max_per_team: int = 4,
+    max_spend: int = 1000,
+) -> list:
+    """
+    For each ineligible squad member, find the best available same-position
+    replacement within budget and per-club cap.
+    Returns list of dicts: { 'out', 'replacement' (or None), 'gain' }.
+    """
+    full_ids    = set(full_squad['id'].astype(int))
+    squad_spend = int(full_squad['value'].sum())
+    team_counts = Counter(full_squad['team'].astype(int))
+    results = []
+    for _, out_p in ineligible_squad.iterrows():
+        freed    = int(out_p.get('value', 0))
+        budget   = max_spend - squad_spend + freed
+        tc_after = Counter(team_counts)
+        tc_after[int(out_p.get('team', 0))] -= 1
+        cands = eligible_pool[
+            (eligible_pool['element_type'] == out_p['element_type'])
+            & (~eligible_pool['id'].astype(int).isin(full_ids - {int(out_p['id'])}))
+        ].sort_values('predicted_points', ascending=False)
+        replacement = None
+        for _, in_p in cands.iterrows():
+            if int(in_p['value']) <= budget and tc_after.get(int(in_p['team']), 0) < max_per_team:
+                replacement = in_p.to_dict()
+                break
+        results.append({
+            'out':         out_p.to_dict(),
+            'replacement': replacement,
+            'gain':        round(
+                float(replacement['predicted_points']) - float(out_p['predicted_points']), 2
+            ) if replacement else 0.0,
+        })
+    return results
 
 
 def _ensure_registry(conn):

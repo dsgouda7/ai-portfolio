@@ -270,7 +270,7 @@ def index():
     # --- tier 2: live FPL API refresh (injury/suspension status) ---
     print('Fetching current eligibility from FPL API...')
     try:
-        eligibility = get_eligibility(use_llm=True)
+        eligibility = get_eligibility()
     except Exception as exc:
         print(f'  Warning: eligibility check failed ({exc}), proceeding without filter')
         eligibility = {}

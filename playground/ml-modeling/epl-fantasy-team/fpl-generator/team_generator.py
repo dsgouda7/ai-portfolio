@@ -2,19 +2,33 @@ import sys
 import pathlib
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
 
+import argparse
 import joblib
 import os
+import sqlite3
 from collections import Counter
 
 import numpy as np
 import pandas as pd
 from tabulate import tabulate
 
-from utils import DB_FILE, MODELS_FILE, GAME_WEEK, POS_FEATURES, build_features, normalize_pool_scores
+from utils import (
+    DB_FILE, MODELS_FILE, GAME_WEEK, SEASON, POS_FEATURES,
+    build_features, normalize_pool_scores,
+    save_squad, load_squad, score_squad_from_pool, pick_starting_xi,
+    suggest_transfer, find_ineligible_replacements,
+)
 from eligibility import get_eligibility, _DEFAULT as ELIG_DEFAULT, _ABSENT as ELIG_ABSENT, player_name_key
 
 MAX_PLAYERS_PER_TEAM = 4
-MAX_SPEND        = 1000
+MAX_SPEND            = 1000
+
+_parser = argparse.ArgumentParser(description='FPL weekly team picker')
+_parser.add_argument(
+    '--new-team', action='store_true',
+    help='Ignore saved squad and generate a brand-new 15-player team from scratch',
+)
+_args = _parser.parse_args()
 
 
 def build_pool(df, models, game_week):
@@ -142,8 +156,194 @@ def print_player_profiles(team, pool):
             print(tabulate(rows, headers=['stat', 'avg(5GW)', 'pct', 'distribution'], tablefmt='simple'))
 
 
+# ── Main execution ──────────────────────────────────────────────────────────
+
 if not os.path.exists(MODELS_FILE):
     raise FileNotFoundError(f"{MODELS_FILE} not found. Run train/train.py first.")
+
+print(f"Loading models from {MODELS_FILE}...")
+checkpoint = joblib.load(MODELS_FILE)
+models  = checkpoint['models']
+metrics = checkpoint['metrics']
+
+print("\nModel quality (in-sample, optimistic):")
+quality_rows = [
+    [m.get('model_name', pos), m['n'], m.get('n_features', '?'), f"{m['r2']:.4f}", f"{m['rmse']:.4f}", m['top_feature']]
+    for pos, m in metrics.items()
+]
+print(tabulate(quality_rows, headers=['model', 'train_rows', 'features', 'R2', 'RMSE', 'top_feature'], tablefmt='simple'))
+
+print("\nBuilding features from DB...")
+all_data = build_features(DB_FILE)
+
+print(f"Scoring players for GW {GAME_WEEK}...")
+full_pool = build_pool(all_data, models, GAME_WEEK)   # ALL players, pre-filter
+
+# --- tier 1: EPL membership filter ---
+epl_members = checkpoint.get('epl_members')
+pool = full_pool.copy()
+if epl_members is not None:
+    before = len(pool)
+    pool = pool[
+        pool.apply(lambda r: player_name_key(r.get('first_name', ''), r.get('second_name', '')) in epl_members, axis=1)
+    ].copy()
+    print(f"  EPL filter: {before - len(pool)} non-EPL players removed, {len(pool)} remain")
+
+# --- tier 2: live FPL eligibility ---
+print("Fetching current eligibility from FPL API...")
+try:
+    eligibility = get_eligibility()
+    n_before = len(pool)
+    def _elig(row):
+        key = (str(row.get('first_name', '') or '').lower(),
+               str(row.get('second_name', '') or '').lower())
+        return eligibility.get(key, ELIG_ABSENT).eligible
+    eligible_pool = pool[pool.apply(_elig, axis=1)].copy()
+    n_llm = sum(1 for v in eligibility.values() if getattr(v, 'method', '') == 'llm')
+    print(f"  Eligibility: {n_before} players checked, {n_before - len(eligible_pool)} filtered out, "
+          f"{n_llm} resolved by LLM")
+except Exception as exc:
+    print(f'  Warning: eligibility check failed ({exc}), proceeding without filter')
+    eligibility = {}
+    eligible_pool = pool.copy()
+
+
+# ── Check for saved squad ────────────────────────────────────────────────────
+
+if _args.new_team:
+    print("\n[--new-team] Clearing saved squad and generating a fresh selection.")
+    conn = sqlite3.connect(DB_FILE)
+    conn.execute("DROP TABLE IF EXISTS saved_squad")
+    conn.commit()
+    conn.close()
+    saved_squad = None
+else:
+    saved_squad = load_squad(DB_FILE)
+
+
+if saved_squad is not None:
+    # ── SQUAD ITERATION MODE ────────────────────────────────────────────────
+    gw_saved = int(saved_squad['gw_saved'].iloc[0])
+    print(f"\n{'='*70}")
+    print(f"SQUAD MODE — GW {GAME_WEEK}  (squad saved from GW {gw_saved})")
+    print(f"{'='*70}")
+
+    # Score all 15 saved squad members from the full (pre-eligibility) pool
+    scored_squad = score_squad_from_pool(saved_squad, full_pool)
+
+    # Detect ineligible squad members (injured/suspended or left EPL)
+    eligible_ids  = set(eligible_pool['id'].astype(int))
+    ineligible_df = scored_squad[~scored_squad['id'].astype(int).isin(eligible_ids)]
+    eligible_df   = scored_squad[scored_squad['id'].astype(int).isin(eligible_ids)]
+
+    # --- Starting XI from eligible squad members ---
+    if eligible_df.empty or eligible_df[eligible_df['element_type'] == 'GK'].empty:
+        print("\n  ⚠  Not enough eligible players to pick a starting XI.")
+        print("     Run with --new-team to regenerate from scratch.")
+        starters, bench, formation = pd.DataFrame(), pd.DataFrame(), 'N/A'
+    else:
+        starters, bench, formation = pick_starting_xi(eligible_df)
+
+    if not starters.empty:
+        xi_cols = ['first_name', 'second_name', 'element_type', 'value', 'predicted_points']
+        print(f"\nStarting XI  (formation: {formation})")
+        print(tabulate(starters[xi_cols], headers='keys', tablefmt='simple', floatfmt='.2f'))
+        print(f"\nBench:")
+        print(tabulate(bench[xi_cols], headers='keys', tablefmt='simple', floatfmt='.2f'))
+        print(f"\nTotal Predicted (XI)   : {starters['predicted_points'].sum():.2f}")
+        print(f"Squad Spend            : £{scored_squad['value'].sum()/10:.1f}M / £{MAX_SPEND/10:.0f}M")
+
+    # --- Suggested transfer ---
+    print(f"\n{'━'*70}")
+    print("SUGGESTED TRANSFER  (1 free transfer — no point deduction)")
+    print(f"{'━'*70}")
+    transfer = suggest_transfer(scored_squad, eligible_pool, MAX_PLAYERS_PER_TEAM, MAX_SPEND)
+    if transfer:
+        out_p    = transfer['out']
+        in_p     = transfer['in_']
+        out_name = f"{out_p['first_name']} {out_p['second_name']}"
+        in_name  = f"{in_p['first_name']} {in_p['second_name']}"
+        gain_str = f"+{transfer['gain']:.2f}" if transfer['gain'] >= 0 else f"{transfer['gain']:.2f}"
+        print(f"  OUT: {out_name:<30} {out_p['element_type']}  "
+              f"£{float(out_p['value'])/10:.1f}M  pred={float(out_p['predicted_points']):.2f} pts")
+        print(f"   IN: {in_name:<30} {in_p['element_type']}  "
+              f"£{float(in_p['value'])/10:.1f}M  pred={float(in_p['predicted_points']):.2f} pts")
+        print(f"  Gain: {gain_str} pts  |  New squad value: "
+              f"£{transfer['new_spend']/10:.1f}M / £{MAX_SPEND/10:.0f}M")
+
+        # Apply transfer → save updated squad
+        new_squad = scored_squad.copy()
+        out_idx   = new_squad[new_squad['id'].astype(int) == int(out_p['id'])].index
+        new_squad = new_squad.drop(index=out_idx)
+        in_row    = eligible_pool[eligible_pool['id'].astype(int) == int(in_p['id'])].iloc[[0]]
+        new_squad = pd.concat([new_squad, in_row], ignore_index=True)
+    else:
+        print("  No beneficial transfer found — squad is already optimal.")
+        new_squad = scored_squad
+
+    # --- Ineligible squad members report ---
+    if not ineligible_df.empty:
+        print(f"\n{'━'*70}")
+        print("SQUAD HEALTH — Ineligible players & suggested replacements")
+        print(f"{'━'*70}")
+        replacements = find_ineligible_replacements(
+            ineligible_df, eligible_pool, scored_squad, MAX_PLAYERS_PER_TEAM, MAX_SPEND
+        )
+        for item in replacements:
+            out_p    = item['out']
+            out_name = f"{out_p['first_name']} {out_p['second_name']}"
+            elig_info = eligibility.get(
+                (str(out_p.get('first_name', '') or '').lower(),
+                 str(out_p.get('second_name', '') or '').lower()),
+                ELIG_ABSENT,
+            )
+            reason = getattr(elig_info, 'news', 'Not in eligible pool (left EPL?)')
+            print(f"\n  ✗ {out_name}  ({out_p['element_type']})  £{float(out_p.get('value', 0))/10:.1f}M")
+            if reason:
+                print(f"    {reason}")
+            if item['replacement']:
+                r      = item['replacement']
+                r_name = f"{r['first_name']} {r['second_name']}"
+                gain   = f"+{item['gain']:.2f}" if item['gain'] >= 0 else f"{item['gain']:.2f}"
+                print(f"    → Best replacement: {r_name}  {r['element_type']}  "
+                      f"£{float(r['value'])/10:.1f}M  pred={float(r['predicted_points']):.2f} pts  "
+                      f"({gain} pts)")
+            else:
+                print("    → No valid replacement found within budget")
+    else:
+        print("\n  ✓ All squad members are eligible this week.")
+
+    # Save updated squad
+    save_squad(DB_FILE, new_squad, GAME_WEEK, SEASON)
+    print(f"\n  Squad saved for GW {GAME_WEEK}.")
+
+    if not starters.empty:
+        print_player_profiles(starters, eligible_pool)
+
+else:
+    # ── FRESH TEAM MODE ─────────────────────────────────────────────────────
+    structure = {'GK': 2, 'DEF': 5, 'MID': 5, 'FWD': 3}
+    best_team = select_team(eligible_pool, structure, MAX_PLAYERS_PER_TEAM, MAX_SPEND)
+
+    display_cols = ['first_name', 'second_name', 'element_type', 'team', 'value',
+                    'predicted_points', 'predicted_points_norm', 'selection_margin']
+    print("\nSelected Team:")
+    print(tabulate(best_team[display_cols], headers='keys', tablefmt='fancy_grid', floatfmt='.2f'))
+
+    avg_margin     = best_team['selection_margin'].mean()
+    min_margin_row = best_team.loc[best_team['selection_margin'].idxmin()]
+    print(f"\nTotal Predicted Points : {best_team['predicted_points'].sum():.2f}")
+    print(f"Total Spend            : {best_team['value'].sum():.0f}  (budget: {MAX_SPEND})")
+    print(f"Avg Selection Margin   : {avg_margin:.2f} pts")
+    print(f"Weakest Pick           : {min_margin_row['first_name']} {min_margin_row['second_name']} "
+          f"({min_margin_row['element_type']}, margin={min_margin_row['selection_margin']:.2f} pts)")
+
+    save_squad(DB_FILE, best_team, GAME_WEEK, SEASON)
+    print(f"\n  Squad saved to DB (GW {GAME_WEEK}).")
+    print(f"  Next run will iterate from this squad. Use --new-team to regenerate.")
+
+    print_player_profiles(best_team, eligible_pool)
+
 
 print(f"Loading models from {MODELS_FILE}...")
 checkpoint = joblib.load(MODELS_FILE)
@@ -179,7 +379,7 @@ if epl_members is not None:
 # --- tier 2: live FPL API refresh (injury/suspension status) ---
 print("Fetching current eligibility from FPL API...")
 try:
-    eligibility = get_eligibility(use_llm=True)
+    eligibility = get_eligibility()
     def _elig(row):
         key = (str(row.get('first_name', '') or '').lower(),
                str(row.get('second_name', '') or '').lower())

@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FPL Validation Report</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --pitch-green:  #1e7a32;
+      --pitch-stripe: #206e2c;
+      --bg:           #0a0f1a;
+      --surface:      rgba(255,255,255,0.04);
+      --border:       rgba(255,255,255,0.09);
+      --text:         #e8eaf0;
+      --muted:        #7a8299;
+      --accent:       #38bdf8;
+      --good:         #4ade80;
+      --warn:         #fbbf24;
+      --bad:          #f87171;
+      --gk:           #e8fa45;
+      --def:          #4fd6e8;
+      --mid:          #70e85a;
+      --fwd:          #ff5757;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── header ── */
+    .header {
+      background: rgba(56,189,248,0.06);
+      border-bottom: 1px solid var(--border);
+      padding: 0.9rem 1.4rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .header h1 { font-size: 1.1rem; font-weight: 700; }
+    .header h1 em { color: var(--accent); font-style: normal; }
+    .nav-links { display: flex; gap: 0.75rem; margin-left: auto; }
+    .nav-links a {
+      color: var(--muted); font-size: 0.78rem; text-decoration: none;
+      padding: 0.3rem 0.7rem; border: 1px solid var(--border); border-radius: 4px;
+    }
+    .nav-links a:hover { color: var(--text); border-color: var(--accent); }
+
+    /* ── gw selector ── */
+    .gw-bar {
+      padding: 0.8rem 1.4rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border);
+    }
+    .gw-bar label { font-size: 0.8rem; color: var(--muted); }
+    .gw-btn {
+      padding: 0.3rem 0.7rem;
+      font-size: 0.78rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .gw-btn:hover  { border-color: var(--accent); }
+    .gw-btn.active { border-color: var(--accent); color: var(--accent); }
+    .gw-nav { background: none; border: none; color: var(--muted); font-size: 1.1rem; cursor: pointer; padding: 0 0.3rem; }
+    .gw-nav:hover { color: var(--text); }
+
+    /* ── main grid ── */
+    .content { padding: 1rem 1.4rem; }
+
+    .pitches-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    @media (max-width: 700px) { .pitches-row { grid-template-columns: 1fr; } }
+
+    /* ── pitch panel ── */
+    .pitch-panel {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .pitch-header {
+      padding: 0.5rem 0.9rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .pitch-title { font-size: 0.8rem; font-weight: 600; }
+    .pitch-pts {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .pitch-pts-label { font-size: 0.65rem; color: var(--muted); }
+
+    .pitch-field {
+      background: var(--pitch-green);
+      background-image: repeating-linear-gradient(
+        to bottom,
+        transparent 0px, transparent 60px,
+        rgba(0,0,0,0.08) 60px, rgba(0,0,0,0.08) 120px
+      );
+      position: relative;
+      width: 100%;
+      aspect-ratio: 68/105;
+      overflow: hidden;
+    }
+    /* pitch markings */
+    .pitch-field::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 3px;
+    }
+    .pitch-line-mid {
+      position: absolute;
+      left: 5%; right: 5%;
+      top: 50%; height: 1px;
+      background: rgba(255,255,255,0.3);
+    }
+    .pitch-circle {
+      position: absolute;
+      left: 50%; top: 50%;
+      width: 20%; padding-bottom: 20%;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.3);
+      transform: translate(-50%, -50%);
+    }
+
+    .player-slot {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      cursor: default;
+      width: 48px;
+    }
+    .p-shirt {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.6rem; font-weight: 700; color: #000;
+    }
+    .p-name {
+      font-size: 0.52rem;
+      color: #fff;
+      text-shadow: 0 1px 3px #000;
+      white-space: nowrap;
+      max-width: 48px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: center;
+    }
+    .p-pts {
+      font-size: 0.55rem;
+      font-weight: 700;
+      padding: 1px 4px;
+      border-radius: 3px;
+      background: rgba(0,0,0,0.55);
+      color: #fff;
+    }
+    .p-pts.high { color: var(--good); }
+    .p-pts.low  { color: var(--bad); }
+
+    /* ── score row ── */
+    .score-row {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.7rem 1rem;
+      margin-bottom: 1rem;
+    }
+    .score-cell { text-align: center; }
+    .score-value { font-size: 1.3rem; font-weight: 700; }
+    .score-label { font-size: 0.65rem; color: var(--muted); margin-top: 2px; }
+    .score-gap   { color: var(--bad); }
+    .score-pct.good { color: var(--good); }
+    .score-pct.mid  { color: var(--warn); }
+    .score-pct.bad  { color: var(--bad); }
+
+    /* ── summary section ── */
+    .section-title {
+      font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.05em; color: var(--muted);
+      margin: 1rem 0 0.5rem;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0.6rem;
+      margin-bottom: 1rem;
+    }
+    .metric-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.65rem 0.8rem;
+    }
+    .metric-card .val { font-size: 1.3rem; font-weight: 700; }
+    .metric-card .lbl { font-size: 0.63rem; color: var(--muted); margin-top: 3px; }
+
+    /* ── gw table ── */
+    .gw-table-wrap { overflow-x: auto; margin-bottom: 1.5rem; }
+    table {
+      width: 100%; border-collapse: collapse;
+      font-size: 0.78rem;
+    }
+    th {
+      text-align: right; padding: 0.35rem 0.6rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--muted); font-weight: 500;
+    }
+    th:first-child { text-align: center; }
+    td {
+      text-align: right; padding: 0.35rem 0.6rem;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    td:first-child { text-align: center; }
+    tr.active-row td { background: rgba(56,189,248,0.07); }
+    tr:hover td { background: var(--surface); }
+    .tag-good { color: var(--good); }
+    .tag-warn { color: var(--warn); }
+    .tag-bad  { color: var(--bad); }
+
+    /* ── pos rmse table ── */
+    .pos-rmse { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .pos-chip {
+      padding: 0.35rem 0.7rem;
+      border-radius: 5px;
+      border: 1px solid var(--border);
+      font-size: 0.75rem;
+      background: var(--surface);
+    }
+    .pos-chip .pos { font-weight: 700; font-size: 0.65rem; }
+
+    /* ── performance chart ── */
+    .chart-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.2rem 0.8rem;
+      margin-bottom: 1rem;
+      height: 320px;
+    }
+    .chart-wrap canvas { display: block; width: 100% !important; height: 100% !important; }
+
+    /* ── model card ── */
+    .model-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.9rem 1.1rem;
+      margin-bottom: 1.5rem;
+    }
+    .model-card .algo-badge {
+      display: inline-block;
+      background: rgba(56,189,248,0.12);
+      border: 1px solid rgba(56,189,248,0.35);
+      color: var(--accent);
+      border-radius: 4px;
+      font-size: 0.73rem;
+      font-weight: 600;
+      padding: 0.2rem 0.6rem;
+      margin-bottom: 0.6rem;
+    }
+    .model-meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0.5rem;
+      margin-bottom: 0.7rem;
+    }
+    .model-meta dt { font-size: 0.63rem; color: var(--muted); margin-bottom: 2px; }
+    .model-meta dd { font-size: 0.73rem; }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.5rem;
+      margin-bottom: 0.6rem;
+    }
+    .feat-pos {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 0.5rem 0.7rem;
+    }
+    .feat-pos .fp-header {
+      font-size: 0.63rem; font-weight: 700;
+      margin-bottom: 0.35rem;
+    }
+    .feat-tag {
+      display: inline-block;
+      font-size: 0.6rem;
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      margin: 1px 2px 1px 0;
+      color: var(--text);
+    }
+    .feat-tag.highlight { border-color: rgba(56,189,248,0.4); color: var(--accent); }
+    .model-notes { margin-top: 0.5rem; }
+    .model-notes li {
+      font-size: 0.68rem;
+      color: var(--muted);
+      margin-bottom: 3px;
+      list-style: disc;
+      margin-left: 1.1rem;
+      line-height: 1.45;
+    }
+
+    /* ── player list ── */
+    .player-rows { display: flex; flex-direction: column; gap: 4px; margin-top: 0.4rem; }
+    .player-row  {
+      display: flex; align-items: center; gap: 0.5rem;
+      background: var(--surface); border-radius: 4px; padding: 0.3rem 0.5rem;
+    }
+    .pr-dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    .pr-name { flex: 1; font-size: 0.72rem; }
+    .pr-pos  { font-size: 0.6rem; color: var(--muted); }
+    .pr-pts  { font-size: 0.72rem; font-weight: 600; min-width: 2.5rem; text-align: right; }
+
+    .model-note {
+      font-size: 0.72rem; color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.6rem 0.9rem;
+      line-height: 1.5;
+      margin-bottom: 1rem;
+    }
+    .model-note strong { color: var(--text); }
+  </style>
+</head>
+<body>
+<header class="header">
+  <span style="font-size:1.3rem">📊</span>
+  <h1><em>FPL</em> Validation Report</h1>
+  <div class="nav-links">
+    <a href="/generate-team">⚽ Generate Team</a>
+  </div>
+</header>
+
+<!-- GW selector -->
+<div class="gw-bar" id="gw-bar">
+  <label>Game Week:</label>
+  <button class="gw-nav" id="btn-prev">&#8249;</button>
+  <!-- GW buttons injected by JS — format: GW{n} · Mon DD -->
+  <button class="gw-nav" id="btn-next">&#8250;</button>
+</div>
+
+<div class="content">
+
+  <!-- Score row for selected GW -->
+  <div class="score-row" id="score-row">
+    <div class="score-cell">
+      <div class="score-value" id="s-our">–</div>
+      <div class="score-label">Our XI actual pts</div>
+    </div>
+    <div class="score-cell">
+      <div class="score-value score-gap" id="s-gap">–</div>
+      <div class="score-label">Gap to oracle</div>
+    </div>
+    <div class="score-cell">
+      <div class="score-value" id="s-oracle">–</div>
+      <div class="score-label">Oracle XI pts</div>
+    </div>
+    <div class="score-cell">
+      <div class="score-value score-pct" id="s-pct">–</div>
+      <div class="score-label">% of oracle</div>
+    </div>
+  </div>
+
+  <!-- Side-by-side pitches -->
+  <div class="pitches-row">
+    <div class="pitch-panel" id="panel-our">
+      <div class="pitch-header">
+        <div>
+          <div class="pitch-title">Our generated team</div>
+          <div style="font-size:0.63rem;color:var(--muted)">Predicted then actual</div>
+        </div>
+        <div style="text-align:right">
+          <div class="pitch-pts" id="our-pts-hdr">–</div>
+          <div class="pitch-pts-label">actual pts</div>
+        </div>
+      </div>
+      <div class="pitch-field" id="pitch-our">
+        <div class="pitch-line-mid"></div>
+        <div class="pitch-circle"></div>
+      </div>
+    </div>
+
+    <div class="pitch-panel" id="panel-oracle">
+      <div class="pitch-header">
+        <div>
+          <div class="pitch-title">Oracle optimal team</div>
+          <div style="font-size:0.63rem;color:var(--muted)">Best possible (hindsight)</div>
+        </div>
+        <div style="text-align:right">
+          <div class="pitch-pts" id="oracle-pts-hdr">–</div>
+          <div class="pitch-pts-label">actual pts</div>
+        </div>
+      </div>
+      <div class="pitch-field" id="pitch-oracle">
+        <div class="pitch-line-mid"></div>
+        <div class="pitch-circle"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Model interpretation note -->
+  <div class="model-note">
+    <strong>How to read this:</strong>
+    The <em>oracle</em> is a hindsight upper bound — the best squad our model could have
+    selected had it known actual GW points in advance (same budget, same club cap).
+    The gap measures how much value was left on the table due to prediction error alone,
+    not squad constraints.  A well-calibrated model should capture ≥ 55 % of oracle
+    points on average across a season.
+  </div>
+
+  <!-- Overall summary metrics -->
+  <div class="section-title">Summary metrics (all simulated GWs)</div>
+  <div class="metrics-grid" id="metrics-grid"></div>
+
+  <!-- Per-position RMSE -->
+  <div class="section-title">Per-position prediction RMSE</div>
+  <div class="pos-rmse" id="pos-rmse"></div>
+
+  <!-- Per-GW table -->
+  <div class="section-title">Per-GW results</div>
+  <div class="gw-table-wrap">
+    <table id="gw-table">
+      <thead>
+        <tr>
+          <th>GW</th>
+          <th>Date</th>
+          <th>Our XI pts</th>
+          <th>Oracle pts</th>
+          <th>Gap</th>
+          <th>% Oracle</th>
+        </tr>
+      </thead>
+      <tbody id="gw-tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- Performance chart -->
+  <div class="section-title">Our team vs Oracle — points over time</div>
+  <div class="chart-wrap">
+    <canvas id="perf-chart" height="220"></canvas>
+  </div>
+
+  <!-- Model + features -->
+  <div class="section-title">Model &amp; features</div>
+  <div class="model-card" id="model-card"></div>
+
+</div><!-- /content -->
+
+<script>
+const D = {{ data|safe }};
+const MI = D.model_info || {};
+
+// ── pitch layout helpers ──────────────────────────────────────────────────────
+// Y positions by row (% from top): GK=85, DEF=65, MID=42, FWD=20
+const ROW_Y = { GK: 85, DEF: 65, MID: 42, FWD: 20 };
+
+function pitchX(slot, total) {
+  if (total === 1) return 50;
+  const gap = 90 / (total + 1);
+  return 5 + gap * (slot + 1);
+}
+
+function initials(p) {
+  const f = (p.first_name || '').trim();
+  const s = (p.second_name || '').trim();
+  return ((f[0] || '') + (s[0] || '')).toUpperCase();
+}
+
+function shortName(p) {
+  const s = (p.second_name || '').trim();
+  return s.length > 10 ? s.slice(0, 10) + '…' : s;
+}
+
+function ptsClass(pts) {
+  return pts >= 8 ? 'high' : pts <= 2 ? 'low' : '';
+}
+
+function renderPitch(containerId, players) {
+  const el = document.getElementById(containerId);
+  // clear previously-added players (keep .pitch-line-mid, .pitch-circle)
+  el.querySelectorAll('.player-slot').forEach(n => n.remove());
+
+  if (!players || !players.length) return;
+
+  // group by position
+  const byPos = {};
+  players.forEach(p => {
+    if (!byPos[p.element_type]) byPos[p.element_type] = [];
+    byPos[p.element_type].push(p);
+  });
+
+  Object.entries(byPos).forEach(([pos, group]) => {
+    const y = ROW_Y[pos] || 50;
+    group.forEach((p, i) => {
+      const x = pitchX(i, group.length);
+      const div = document.createElement('div');
+      div.className = 'player-slot';
+      div.style.left = x + '%';
+      div.style.top  = y + '%';
+      const pc = ptsClass(p.actual_points);
+      div.innerHTML = `
+        <div class="p-shirt" style="background:${p.color}">${initials(p)}</div>
+        <div class="p-name">${shortName(p)}</div>
+        <div class="p-pts ${pc}">${p.actual_points.toFixed(0)}</div>
+      `;
+      el.appendChild(div);
+    });
+  });
+}
+
+// ── GW state ─────────────────────────────────────────────────────────────────
+let currentGW = D.gw_list[D.gw_list.length - 1];
+
+function gwData(gw) {
+  return D.gw_data.find(d => d.gw === gw);
+}
+
+function pctColorClass(pct) {
+  return pct >= 60 ? 'good' : pct >= 45 ? 'mid' : 'bad';
+}
+
+function renderGW(gw) {
+  currentGW = gw;
+  const d = gwData(gw);
+  if (!d) return;
+
+  // score row
+  document.getElementById('s-our').textContent   = d.our_actual.toFixed(1);
+  document.getElementById('s-gap').textContent   = '+' + d.gap.toFixed(1);
+  document.getElementById('s-oracle').textContent = d.oracle_actual.toFixed(1);
+  const pctEl = document.getElementById('s-pct');
+  pctEl.textContent = d.pct.toFixed(1) + '%';
+  pctEl.className = 'score-value score-pct ' + pctColorClass(d.pct);
+
+  // pitch header pts
+  document.getElementById('our-pts-hdr').textContent    = d.our_actual.toFixed(1);
+  document.getElementById('oracle-pts-hdr').textContent = d.oracle_actual.toFixed(1);
+
+  // pitches
+  renderPitch('pitch-our',    d.our_players);
+  renderPitch('pitch-oracle', d.oracle_players);
+
+  // active row in table
+  document.querySelectorAll('#gw-tbody tr').forEach(tr => {
+    tr.classList.toggle('active-row', parseInt(tr.dataset.gw) === gw);
+  });
+
+  // active button
+  document.querySelectorAll('.gw-btn').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.gw) === gw);
+  });
+}
+
+// ── GW selector buttons ───────────────────────────────────────────────────────
+const bar = document.getElementById('gw-bar');
+const btnPrev = document.getElementById('btn-prev');
+const btnNext = document.getElementById('btn-next');
+
+D.gw_list.forEach(gw => {
+  const d = D.gw_data.find(x => x.gw === gw);
+  const dateStr = d && d.gw_date ? d.gw_date : '';
+  const btn = document.createElement('button');
+  btn.className = 'gw-btn';
+  btn.dataset.gw = gw;
+  btn.innerHTML = dateStr
+    ? `<span style="font-size:0.85em">${gw}</span><br><span style="font-size:0.62em;color:var(--muted);line-height:1">${dateStr}</span>`
+    : gw;
+  btn.style.lineHeight = '1.2';
+  btn.style.padding = '0.25rem 0.55rem';
+  btn.addEventListener('click', () => renderGW(gw));
+  bar.insertBefore(btn, btnNext);
+});
+
+btnPrev.addEventListener('click', () => {
+  const idx = D.gw_list.indexOf(currentGW);
+  if (idx > 0) renderGW(D.gw_list[idx - 1]);
+});
+btnNext.addEventListener('click', () => {
+  const idx = D.gw_list.indexOf(currentGW);
+  if (idx < D.gw_list.length - 1) renderGW(D.gw_list[idx + 1]);
+});
+
+// ── metrics grid ─────────────────────────────────────────────────────────────
+const s = D.summary;
+const metricsEl = document.getElementById('metrics-grid');
+[
+  ['Avg our XI', s.avg_our_xi_pts + ' pts', ''],
+  ['Avg oracle XI', s.avg_oracle_xi_pts + ' pts', ''],
+  ['Avg gap', '+' + s.avg_gap_to_oracle + ' pts', 'tag-bad'],
+  ['% of oracle', s.avg_pct_of_oracle + '%', pctColorClass(s.avg_pct_of_oracle)],
+  ['RMSE (team vs oracle)', s.rmse_team_vs_oracle, ''],
+  ['MAE (team vs oracle)', s.mae_team_vs_oracle, ''],
+  ['RMSE (per-player pts)', s.rmse_per_player_pts ?? '–', ''],
+  ['GWs simulated', s.n_gws, ''],
+].forEach(([lbl, val, cls]) => {
+  const c = document.createElement('div');
+  c.className = 'metric-card';
+  c.innerHTML = `<div class="val ${cls}">${val}</div><div class="lbl">${lbl}</div>`;
+  metricsEl.appendChild(c);
+});
+
+// ── per-position RMSE ────────────────────────────────────────────────────────
+const posColors = { GK: '#e8fa45', DEF: '#4fd6e8', MID: '#70e85a', FWD: '#ff5757' };
+const posEl = document.getElementById('pos-rmse');
+(D.pos_rmse || []).forEach(r => {
+  const chip = document.createElement('div');
+  chip.className = 'pos-chip';
+  chip.innerHTML = `
+    <div class="pos" style="color:${posColors[r.position]||'#fff'}">${r.position}</div>
+    <div>RMSE ${r.rmse} &nbsp;|&nbsp; MAE ${r.mae}</div>
+    <div style="font-size:0.6rem;color:var(--muted)">${r.n} players</div>
+  `;
+  posEl.appendChild(chip);
+});
+
+// ── per-GW table ─────────────────────────────────────────────────────────────
+const tbody = document.getElementById('gw-tbody');
+D.gw_data.forEach(d => {
+  const tr = document.createElement('tr');
+  tr.dataset.gw = d.gw;
+  const pcc = pctColorClass(d.pct);
+  const label = d.gw_date ? `<span style="color:var(--muted);font-size:0.7em">${d.gw_date}</span>` : '—';
+  tr.innerHTML = `
+    <td>${d.gw}</td>
+    <td style="text-align:left">${label}</td>
+    <td>${d.our_actual.toFixed(1)}</td>
+    <td>${d.oracle_actual.toFixed(1)}</td>
+    <td class="tag-bad">+${d.gap.toFixed(1)}</td>
+    <td class="${'tag-'+pcc}">${d.pct.toFixed(1)}%</td>
+  `;
+  tr.addEventListener('click', () => renderGW(d.gw));
+  tr.style.cursor = 'pointer';
+  tbody.appendChild(tr);
+});
+
+// ── performance chart ─────────────────────────────────────────────────────────
+(function () {
+  const labels = D.gw_data.map(d => d.gw_date ? `GW${d.gw} · ${d.gw_date}` : `GW${d.gw}`);
+  const ourPts    = D.gw_data.map(d => d.our_actual);
+  const oraclePts = D.gw_data.map(d => d.oracle_actual);
+  const pctData   = D.gw_data.map(d => d.pct);
+
+  const ctx = document.getElementById('perf-chart').getContext('2d');
+
+  Chart.defaults.color = '#7a8299';
+  Chart.defaults.borderColor = 'rgba(255,255,255,0.07)';
+
+  new Chart(ctx, {
+    data: {
+      labels,
+      datasets: [
+        {
+          type: 'line',
+          label: 'Our XI (actual pts)',
+          data: ourPts,
+          borderColor: '#38bdf8',
+          backgroundColor: 'rgba(56,189,248,0.08)',
+          borderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          fill: true,
+          tension: 0.3,
+          yAxisID: 'y',
+        },
+        {
+          type: 'line',
+          label: 'Oracle XI (actual pts)',
+          data: oraclePts,
+          borderColor: '#4ade80',
+          backgroundColor: 'rgba(74,222,128,0.05)',
+          borderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          fill: false,
+          tension: 0.3,
+          yAxisID: 'y',
+        },
+        {
+          type: 'bar',
+          label: '% of Oracle',
+          data: pctData,
+          backgroundColor: pctData.map(p =>
+            p >= 60 ? 'rgba(74,222,128,0.22)' :
+            p >= 45 ? 'rgba(251,191,36,0.22)' :
+                      'rgba(248,113,113,0.22)'
+          ),
+          borderColor: pctData.map(p =>
+            p >= 60 ? 'rgba(74,222,128,0.5)' :
+            p >= 45 ? 'rgba(251,191,36,0.5)' :
+                      'rgba(248,113,113,0.5)'
+          ),
+          borderWidth: 1,
+          yAxisID: 'y2',
+          order: 10,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          labels: { color: '#9ba3b8', font: { size: 11 }, boxWidth: 12, padding: 16 },
+        },
+        tooltip: {
+          backgroundColor: 'rgba(10,15,26,0.92)',
+          borderColor: 'rgba(255,255,255,0.1)',
+          borderWidth: 1,
+          titleColor: '#e8eaf0',
+          bodyColor: '#9ba3b8',
+          padding: 10,
+          callbacks: {
+            afterBody: (items) => {
+              const our = items.find(i => i.datasetIndex === 0);
+              const ora = items.find(i => i.datasetIndex === 1);
+              if (our && ora) return [`Gap: +${(ora.raw - our.raw).toFixed(1)} pts`];
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          ticks: { color: '#7a8299', font: { size: 9 }, maxRotation: 45 },
+          grid:  { color: 'rgba(255,255,255,0.05)' },
+        },
+        y: {
+          position: 'left',
+          title: { display: true, text: 'Points scored', color: '#7a8299', font: { size: 10 } },
+          ticks: { color: '#7a8299', font: { size: 10 } },
+          grid:  { color: 'rgba(255,255,255,0.05)' },
+        },
+        y2: {
+          position: 'right',
+          min: 0, max: 100,
+          title: { display: true, text: '% of Oracle', color: '#7a8299', font: { size: 10 } },
+          ticks: { color: '#7a8299', font: { size: 10 }, callback: v => v + '%' },
+          grid:  { drawOnChartArea: false },
+        },
+      },
+    },
+  });
+})();
+
+// ── model card ────────────────────────────────────────────────────────────────
+(function () {
+  const card = document.getElementById('model-card');
+  if (!MI || !MI.algorithm) {
+    card.innerHTML = '<p style="color:var(--muted);font-size:0.75rem">Model info not available.</p>';
+    return;
+  }
+
+  const posColors = { GK: '#e8fa45', DEF: '#4fd6e8', MID: '#70e85a', FWD: '#ff5757' };
+  const highlightTerms = ['tm_market_value', 'form_data_density', 'tm_market_value_x_sparsity'];
+
+  function featureTags(features) {
+    return features.map(f => {
+      const isH = highlightTerms.some(t => f.includes(t));
+      return `<span class="feat-tag${isH ? ' highlight' : ''}">${f}</span>`;
+    }).join('');
+  }
+
+  const featHtml = Object.entries(MI.features || {}).map(([pos, feats]) => `
+    <div class="feat-pos">
+      <div class="fp-header" style="color:${posColors[pos] || '#fff'}">${pos}</div>
+      <div>${featureTags(feats)}</div>
+    </div>
+  `).join('');
+
+  const notesHtml = (MI.notes || []).map(n => `<li>${n}</li>`).join('');
+
+  card.innerHTML = `
+    <div class="algo-badge">${MI.algorithm}</div>
+    <dl class="model-meta">
+      <div><dt>Prediction target</dt><dd>${MI.target}</dd></div>
+      <div><dt>Training data</dt><dd>${MI.training}</dd></div>
+      <div><dt>Evaluation metric</dt><dd>${MI.eval_metric}</dd></div>
+    </dl>
+    <div class="section-title" style="margin-top:0.2rem">Feature sets by position</div>
+    <div class="features-grid">${featHtml}</div>
+    <div class="section-title" style="margin-top:0.2rem">Design notes</div>
+    <ul class="model-notes">${notesHtml}</ul>
+  `;
+})();
+
+// ── initial render ────────────────────────────────────────────────────────────
+renderGW(currentGW);
+</script>
+</body>
+</html>

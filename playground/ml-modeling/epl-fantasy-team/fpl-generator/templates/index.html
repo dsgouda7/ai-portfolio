@@ -376,6 +376,37 @@
       margin-bottom: 0.5rem;
     }
     .tt-ep span { color: var(--text); font-variant-numeric: tabular-nums; }
+
+    /* ── TRANSFER CARD ──────────────────────────────────────────── */
+    .transfer-card { border-color: rgba(56,189,248,0.3); }
+    .transfer-out  { color: #ff5757; font-weight: 700; }
+    .transfer-in   { color: #70e85a; font-weight: 700; }
+    .transfer-gain { font-size: 1.1rem; font-weight: 800; color: var(--accent); }
+    .transfer-arrow {
+      text-align: center; color: var(--muted); font-size: 0.9rem;
+      margin: 0.2rem 0;
+    }
+    .transfer-sub  { font-weight: 400; color: var(--muted); font-size: 0.65rem; }
+
+    /* ── SQUAD HEALTH CARD ──────────────────────────────────────── */
+    .health-row {
+      display: flex; align-items: flex-start; gap: 0.45rem;
+      padding: 0.35rem 0; border-bottom: 1px solid var(--border);
+      font-size: 0.7rem;
+    }
+    .health-row:last-child { border-bottom: none; }
+    .health-repl { color: #70e85a; font-size: 0.65rem; margin-top: 3px; }
+    .health-no-repl { color: var(--muted); font-size: 0.65rem; margin-top: 3px; }
+
+    /* ── SQUAD MODE BADGE ───────────────────────────────────────── */
+    .mode-badge {
+      font-size: 0.65rem; padding: 0.12rem 0.5rem; border-radius: 999px;
+      font-weight: 700; letter-spacing: 0.04em;
+    }
+    .mode-squad { background: rgba(56,189,248,0.15); color: var(--accent);
+                  border: 1px solid rgba(56,189,248,0.35); }
+    .mode-new   { background: rgba(112,232,90,0.15); color: #70e85a;
+                  border: 1px solid rgba(112,232,90,0.35); }
   </style>
 </head>
 <body>
@@ -384,8 +415,13 @@
   <div class="header-left">
     <span class="logo">⚽</span>
     <h1><em>FPL</em> Team Generator</h1>
+    <span id="mode-badge" class="mode-badge"></span>
   </div>
   <div class="pills" id="pills"></div>
+  <a href="/?new_team=1"
+     style="font-size:0.7rem;color:var(--muted);text-decoration:none;
+            border:1px solid var(--border);padding:0.18rem 0.65rem;
+            border-radius:999px;white-space:nowrap">↺ New Team</a>
 </header>
 
 <main>
@@ -477,6 +513,16 @@
       <div id="excl-rows"></div>
     </div>
 
+    <div class="panel-card transfer-card" id="transfer-card" style="display:none">
+      <h3>Suggested Transfer <span style="font-size:0.58rem;opacity:.5">GW <span id="gw-label"></span></span></h3>
+      <div id="transfer-body"></div>
+    </div>
+
+    <div class="panel-card" id="health-card" style="display:none">
+      <h3>Squad Health</h3>
+      <div id="health-rows"></div>
+    </div>
+
     <div class="panel-card">
       <h3>Top Predictive Feature</h3>
       <div id="fi-rows"></div>
@@ -511,6 +557,17 @@ function marginClass(m) {
 }
 function marginLabel(m) {
   return m >= 1.5 ? '↑ Confident' : m >= 0.4 ? '~ Moderate' : '↓ Coin-flip';
+}
+
+// ── squad mode badge ───────────────────────────────────────────────────────
+
+const modeBadge = document.getElementById('mode-badge');
+if (D.squad_mode) {
+  modeBadge.textContent = `Squad GW${D.gw_saved}→GW${D.game_week}`;
+  modeBadge.classList.add('mode-squad');
+} else {
+  modeBadge.textContent = 'New Team';
+  modeBadge.classList.add('mode-new');
 }
 
 // ── header pills ───────────────────────────────────────────────────────────
@@ -645,6 +702,69 @@ if (D.excluded && D.excluded.length) {
           <div class="excl-pts">${(p.predicted_points||0).toFixed(1)} predicted pts</div>
           ${p.news ? `<div class="excl-news">${p.news}</div>` : ''}
           <div class="excl-method">resolved via${methodNote} rule</div>
+        </div>
+      </div>`;
+  });
+}
+
+// ── transfer suggestion ───────────────────────────────────────────────────
+
+document.getElementById('gw-label').textContent = D.game_week;
+const transferCard = document.getElementById('transfer-card');
+const transferBody = document.getElementById('transfer-body');
+if (D.transfer) {
+  const t = D.transfer;
+  const gainStr = (t.gain >= 0 ? '+' : '') + t.gain.toFixed(2);
+  transferCard.style.display = '';
+  transferBody.innerHTML = `
+    <div style="margin-bottom:0.5rem">
+      <div style="font-size:0.62rem;color:var(--muted);margin-bottom:0.15rem">OUT</div>
+      <div class="transfer-out">${t.out_name}
+        <span class="transfer-sub">${t.out_pos} · £${(t.out_val/10).toFixed(1)}M ·
+          ${(+t.out_pts).toFixed(2)} pts</span>
+      </div>
+    </div>
+    <div class="transfer-arrow">↕</div>
+    <div style="margin-top:0.5rem;margin-bottom:0.75rem">
+      <div style="font-size:0.62rem;color:var(--muted);margin-bottom:0.15rem">IN</div>
+      <div class="transfer-in">${t.in_name}
+        <span class="transfer-sub">${t.in_pos} · £${(t.in_val/10).toFixed(1)}M ·
+          ${(+t.in_pts).toFixed(2)} pts</span>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;
+                border-top:1px solid var(--border);padding-top:0.5rem">
+      <span class="transfer-gain">${gainStr} pts</span>
+      <span style="font-size:0.65rem;color:var(--muted)">
+        Squad: £${(t.new_spend/10).toFixed(1)}M / £100M
+      </span>
+    </div>
+  `;
+}
+
+// ── squad health / ineligible replacements ────────────────────────────────
+
+const healthCard = document.getElementById('health-card');
+const healthRows = document.getElementById('health-rows');
+if (D.ineligible_squad && D.ineligible_squad.length) {
+  healthCard.style.display = '';
+  D.ineligible_squad.forEach(p => {
+    const gainStr = p.gain !== null
+      ? (p.gain >= 0 ? '+' : '') + (+p.gain).toFixed(2) + ' pts'
+      : '';
+    healthRows.innerHTML += `
+      <div class="health-row">
+        <div class="excl-dot" style="background:${p.color}"></div>
+        <div class="excl-info">
+          <div class="excl-name">${p.name}
+            <span style="color:${p.color};font-size:0.6rem;margin-left:3px">${p.pos}</span>
+          </div>
+          ${p.news ? `<div class="excl-news">${p.news}</div>` : ''}
+          ${p.repl_name
+            ? `<div class="health-repl">→ ${p.repl_name} · £${(p.repl_val/10).toFixed(1)}M ·
+                 ${(+p.repl_pts).toFixed(2)} pts
+                 <span style="opacity:.7">(${gainStr})</span></div>`
+            : `<div class="health-no-repl">No replacement within budget</div>`}
         </div>
       </div>`;
   });

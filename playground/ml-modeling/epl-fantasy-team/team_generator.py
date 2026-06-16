@@ -175,7 +175,7 @@ if epl_members is not None:
 # --- tier 2: live FPL API refresh (injury/suspension status) ---
 print("Fetching current eligibility from FPL API...")
 try:
-    eligibility = get_eligibility(use_llm=True)
+    eligibility = get_eligibility()
     def _elig(row):
         key = (str(row.get('first_name', '') or '').lower(),
                str(row.get('second_name', '') or '').lower())
