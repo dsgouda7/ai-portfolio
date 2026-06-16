@@ -1,56 +1,45 @@
 # Projects
 
-Production-ready applications built from scratch.
+End-to-end projects covering the full lifecycle: problem framing, data, modelling or system design, evaluation, and a working deliverable.
 
-## By Domain
-
-### Data Engineering
-
-#### [Databricks RAG Pipeline](data-engineering/databricks_rag/)
-RAG pipeline split into 3 independent microservices (ingest, vectorize, serve).
-
-Tech: Delta Lake, ChromaDB, FastAPI, Docker
-Features:
-- ACID storage with Delta Lake
-- Vector search via ChromaDB
-- Each phase has its own Dockerfile and dependencies
-- REST API for queries
-- Runs locally or containerized
+Each project has a concrete problem statement with measurable success criteria, documented constraints, and honest limitations.
 
 ---
 
-### Computer Vision
+## [FPL Squad Optimizer](fpl-squad-optimizer/)
 
-#### [AI Video Enhancer](computer-vision/video_enhancer_ai/)
-4K upscaling API using HuggingFace models.
+**Can a CPU-only ML model trained on community data assemble an FPL squad that performs in the range of an experienced human manager?**
 
-Tech: PyTorch, HuggingFace Transformers, FastAPI, Docker
-Models: Swin2SR (video), MetricGAN+ (audio)
-Features:
-- Detects GPU/CPU and picks appropriate models
-- Processes video and audio in parallel
-- REST API
-- 100% local (no external APIs)
-- Dockerized
+XGBoost team picker for Fantasy Premier League. Four position-specific regressors trained on rolling form, Transfermarkt market value, and FPL API data. Walk-forward simulation across 23 held-out game weeks achieves 51% oracle-capture rate (human manager range: 45–60%). Containerised pipeline with Docker Compose; ready to hook up to Azure ML.
+
+`XGBoost` `SQLite` `Flask` `Docker` `Python`
 
 ---
 
-### Machine Learning
+## [RAG Knowledge Pipeline](rag-knowledge-pipeline/)
 
-#### [King County House Price Modeling](ml/king-county-house-pricing/)
-Portfolio notebook focused on practical price prediction workflow and model iteration.
+**Can a fully local, containerised pipeline ingest a text corpus, build a vector index, and serve retrieval-augmented answers with each stage independently deployable?**
 
-Tech: Python, Pandas, Seaborn, scikit-learn
-Features:
-- End-to-end regression flow from raw data to refined model
-- Data quality checks and baseline imputation
-- Linear and regularized model comparison
-- Narrative written as engineering progression
+Three-phase pipeline: Wikipedia corpus → Delta Lake → ChromaDB → FastAPI RAG server. Each phase has its own Dockerfile, isolated dependencies, and communicates only through durable storage — not in-memory hand-offs.
 
-## Setup
+`PySpark` `Delta Lake` `ChromaDB` `FastAPI` `sentence-transformers` `Docker`
 
-Each project has its own README with setup instructions. Most include:
-- Setup scripts: `setup.ps1` (Windows), `setup.sh` (Linux/macOS)
-- Docker support
-- Config templates
-- Requirements files
+---
+
+## [Video Quality Enhancer](video-quality-enhancer/)
+
+**Can open-source super-resolution and audio-denoising models running entirely locally upscale consumer video to 4K with improved audio — no paid API, no cloud GPU required?**
+
+Local REST service that applies Swin2SR (4× super-resolution) and MetricGAN+ (spectral audio denoising) to arbitrary video files. GPU-accelerated where available; CPU fallback included. First run downloads ~2–3 GB of models; subsequent runs start in ~60 seconds.
+
+`PyTorch` `HuggingFace` `Swin2SR` `MetricGAN+` `Flask` `Docker`
+
+---
+
+## [Housing Price Predictor](housing-price-predictor/)
+
+**Can a regression model trained on public property records predict sale prices accurately enough to be useful for estimating fair market value?**
+
+Regression workflow on King County, WA housing data: linear baseline → Ridge → Ridge with polynomial features. R² ≈ 0.88 on held-out test split; median absolute error under $35k across properties spanning $75k–$7.7M. Documents where simple regression holds up and where non-linearity makes a meaningful difference.
+
+`scikit-learn` `pandas` `numpy` `Jupyter`

@@ -370,6 +370,90 @@ The validation report page shows:
 
 The server checks all prerequisites on every request and returns a styled error page with the exact fix command if any setup step has been skipped.
 
+## Container deployment
+
+The project is structured as four independent container images — three pipeline steps and one long-running web service — sharing a common I/O contract via environment variables.
+
+```
+┌────────────────────────────────────────────────────────────────────┐
+│                        pipeline-data volume                        │
+│                                                                    │
+│  ┌─────────┐    fantasy_football.db    ┌───────┐    models.joblib  │
+│  │ ingest  │ ──────────────────────► │ train │ ──────────────►    │
+│  └─────────┘                          └───────┘                    │
+│                                           │                        │
+│                                           │ models.joblib +        │
+│                                           │ fantasy_football.db    │
+│                                           ▼                        │
+│                                      ┌──────────┐                 │
+│                                      │ simulate │ ── results/ ──► │
+│                                      └──────────┘                 │
+│                                                                    │
+│  ┌───────┐ ◄── DB + models + results ──────────────────────────── │
+│  │ serve │  http://…:5000/generate-team                           │
+│  └───────┘  http://…:5000/validation-report                       │
+└────────────────────────────────────────────────────────────────────┘
+```
+
+### Run locally with Docker Compose
+
+```powershell
+# Full pipeline (ingest → train → simulate) then start web server
+docker compose up
+
+# Re-train only (ingest already ran, DB exists on volume)
+docker compose run --rm train
+
+# Web server only (pipeline artifacts already on volume)
+docker compose up serve
+
+# Reset everything and start fresh
+docker compose down -v && docker compose up
+```
+
+### Images and env vars
+
+| Image | Dockerfile | Key inputs | Key outputs |
+|---|---|---|---|
+| `fpl-ingest` | `pipeline/ingest/Dockerfile` | `FPL_VAASTAV_DIR` | `FPL_DB_FILE` |
+| `fpl-train` | `pipeline/train/Dockerfile` | `FPL_DB_FILE` | `FPL_MODELS_FILE` |
+| `fpl-simulate` | `pipeline/simulate/Dockerfile` | `FPL_DB_FILE`, `FPL_MODELS_FILE`, `FPL_SIM_FROM/TO` | `FPL_RESULTS_DIR` |
+| `fpl-serve` | `fpl-generator/Dockerfile` | `FPL_DB_FILE`, `FPL_MODELS_FILE`, `FPL_RESULTS_DIR` | HTTP on port 5000 |
+
+All env vars default to local paths so local runs need no configuration.
+
+### Hooking up to Azure ML
+
+The pipeline steps are designed to map directly onto [Azure ML CommandComponents](https://learn.microsoft.com/en-us/azure/machine-learning/component-reference/component-reference). No code changes are needed — only the AML orchestration layer (YAML definitions + pipeline script) needs to be added.
+
+**Mapping: container step → AML component**
+
+```
+pipeline/steps/ingest.py   →  CommandComponent (environment: fpl-ingest image in ACR)
+                               inputs:  vaastav_dir  (FileDataset, mounted)
+                               outputs: db_dir       (PipelineData)
+                               env:     FPL_VAASTAV_DIR=${{inputs.vaastav_dir}}
+                                        FPL_DB_FILE=${{outputs.db_dir}}/fantasy_football.db
+
+pipeline/steps/train.py    →  CommandComponent (environment: fpl-train image in ACR)
+                               inputs:  db_dir       (from ingest output)
+                               outputs: models_dir   (PipelineData)
+
+pipeline/steps/simulate.py →  CommandComponent (environment: fpl-simulate image in ACR)
+                               inputs:  db_dir, models_dir
+                               outputs: results_dir  (PipelineData)
+```
+
+**Deployment steps (infra not included here):**
+1. Build and push images to Azure Container Registry: `az acr build --registry <acr> --image fpl-ingest .`
+2. Register the vaastav clone as an AML `FileDataset` (or point at an Azure Blob mount)
+3. Wrap each `pipeline/steps/*.py` in a `CommandComponent` YAML referencing the ACR image and wiring `inputs`/`outputs` to the env vars above
+4. Define an `@pipeline` function composing the three components in sequence
+5. Submit the pipeline; AML handles compute provisioning, data lineage, and run tracking
+6. Deploy `fpl-serve` as an Azure Container App (or AKS deployment) reading artifacts from the AML-registered output datasets
+
+The web app (`fpl-serve`) is intentionally kept outside the pipeline — it is a long-running service, not a batch step, and should be deployed separately once the pipeline has produced its artifacts.
+
 ## Authorship
 
 This project was co-authored with AI (GitHub Copilot / Claude).
