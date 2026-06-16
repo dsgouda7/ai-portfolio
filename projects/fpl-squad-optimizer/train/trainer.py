@@ -12,7 +12,9 @@ from xgboost import XGBRegressor
 
 from utils import POS_FEATURES, MODEL_NAMES
 
-N_ESTIMATORS = 200  # boosting rounds; 200 converges well at lr=0.1 on ~20k rows
+N_ESTIMATORS = 44   # walk-forward CV (tune_n_estimators.py, 5-fold) showed
+                    # early stopping halts at 14–47 trees per position;
+                    # p90 across all positions = 44. 200 was overfitting.
 
 
 def train_models(df: pd.DataFrame, game_week: int) -> tuple[dict, dict]:
