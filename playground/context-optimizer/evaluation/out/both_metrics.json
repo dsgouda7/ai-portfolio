@@ -1,0 +1,16 @@
+{
+  "timestamp_utc": "2026-06-17T04:48:09.121211Z",
+  "provider": "mock",
+  "small_model": "mock-paraphraser",
+  "reasoning_model": "mock-reasoner",
+  "pipeline_mode": "both",
+  "log_line_count": 1050,
+  "raw_char_count": 1333,
+  "compressed_char_count": 624,
+  "compression_latency_s": 0.0004227000172249973,
+  "pipe_a_reasoning_s": 0.0004474000306800008,
+  "pipe_b_reasoning_s": 0.017234399972949177,
+  "pipe_b_tool_calls": 4,
+  "pipe_a_log_lines": 1050,
+  "pipe_b_log_lines": 313
+}

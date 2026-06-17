@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reddit Safety Audit - Interactive Visualization</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Reddit Safety Audit - Semantic Keyword Explorer</h1>
+            <p>Interactive clustering and metadata correlation analysis</p>
+        </header>
+
+        <div class="controls">
+            <div class="filter-section">
+                <label for="languageFilter">Language:</label>
+                <select id="languageFilter">
+                    <option value="all">All Languages</option>
+                </select>
+
+                <label for="sourceFilter">Source:</label>
+                <select id="sourceFilter">
+                    <option value="all">All Sources</option>
+                </select>
+
+                <label for="timeperiodFilter">Time Period:</label>
+                <select id="timeperiodFilter">
+                    <option value="all">All Times</option>
+                </select>
+
+                <button id="resetBtn" class="btn-reset">Reset View</button>
+            </div>
+        </div>
+
+        <div id="visualization" class="visualization"></div>
+
+        <div class="metadata-panel" id="metadataPanel" style="display: none;">
+            <h2>Metadata Distribution</h2>
+            <div id="metadataContent"></div>
+        </div>
+
+        <div class="info" id="info"></div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/viz.js') }}"></script>
+</body>
+</html>
+

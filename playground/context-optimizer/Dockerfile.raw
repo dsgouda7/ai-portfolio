@@ -1,0 +1,19 @@
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    LLM_PROVIDER=mock \
+    PIPELINE_MODE=raw
+
+WORKDIR /app
+
+COPY pyproject.toml /app/pyproject.toml
+COPY requirements.txt /app/requirements.txt
+COPY context_optimizer /app/context_optimizer
+COPY context_optimizer_benchmark.py /app/context_optimizer_benchmark.py
+RUN pip install --upgrade pip && pip install .
+
+COPY evaluation /app/evaluation
+
+CMD ["context-optimizer", "--provider", "mock", "--pipeline", "raw", "--log-file", "/app/evaluation/data/community_logs.txt", "--metrics-json", "/app/evaluation/out/raw_metrics.json"]

@@ -1,0 +1,26 @@
+{
+  "0": {
+    "cluster_label": "just | like",
+    "risk_summary": "Heuristic label fallback (LLM unavailable).",
+    "stereotype_terms": [
+      "just",
+      "like",
+      "people",
+      "time",
+      "said",
+      "don"
+    ]
+  },
+  "1": {
+    "cluster_label": "er | det",
+    "risk_summary": "Heuristic label fallback (LLM unavailable).",
+    "stereotype_terms": [
+      "er",
+      "det",
+      "jeg",
+      "og",
+      "ikke",
+      "en"
+    ]
+  }
+}
