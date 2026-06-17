@@ -16,6 +16,18 @@ XGBoost team picker for Fantasy Premier League. Four position-specific regressor
 
 ---
 
+## [Context Optimizer](context-optimizer/)
+
+**Can a two-stage context architecture (compression + targeted retrieval) reduce LLM token consumption from O(corpus size) to O(1) while improving failure observability?**
+
+Multi-stage pipeline that decomposes the context problem: compress rambling incident reports into structured schemas (99.8% reduction), then query logs using extracted keywords to retrieve only relevant evidence (93–99.9% reduction). Result: constant token cost (~1.7K) regardless of corpus size (tested 1K–100K logs). Features schema validation, multi-provider LLM support (Ollama, Groq, mock), deterministic benchmarks, and complete architectural documentation. Demonstrates the design inversion: use a cheap operation (compression) to optimize an expensive operation (reasoning).
+
+Includes scalability tests, failure mode analysis, and diagrams explaining the architectural sophistication of decomposed-stage systems design.
+
+`LangChain` `Pydantic` `LLM` `Python` `Docker` `Architecture`
+
+---
+
 ## [RAG Knowledge Pipeline](rag-knowledge-pipeline/)
 
 **Can a fully local, containerised pipeline ingest a text corpus, build a vector index, and serve retrieval-augmented answers with each stage independently deployable?**
