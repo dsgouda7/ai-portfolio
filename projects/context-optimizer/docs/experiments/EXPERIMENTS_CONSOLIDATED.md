@@ -15,6 +15,21 @@
 
 ---
 
+## Architecture Reference
+
+**For implementation and design details:**
+
+- **[../design/COMPRESSION_ARCHITECTURE.md](../design/COMPRESSION_ARCHITECTURE.md)** - Rolling window compression, dual storage, MCP tools
+- **[../design/TECHNICAL_DESIGN.md](../design/TECHNICAL_DESIGN.md)** - System architecture and implementation contracts
+- **[../whitepaper/proposed-whitepaper.md](../whitepaper/proposed-whitepaper.md)** - Tri-stage hypothesis and theoretical foundations
+
+**Compression pipeline used in these experiments:**
+- Rolling window compression with 512-token threshold
+- Dual storage: compressed summaries (~50 tokens) + raw data (~500 tokens)
+- MCP tools: `get_context` (compressed) and `get_context_details` (raw on-demand)
+
+---
+
 ## Corpus Definitions by Experiment Family
 
 | Domain | Corpus | Stored Index Fields | Evaluation Goal |
@@ -443,3 +458,760 @@ _Extra telemetry: {"mcp_tokens_consumed": 3468, "shell_tokens": 876, "total_cont
 
 _Generated: 2026-06-18 18:03 UTC | Provider: mock_
 <!-- INCIDENT_APPENDIX_END -->
+
+---
+
+## Large-Corpus Parallel Benchmark (Target: ~20MB each)
+
+**Run time:** 2026-06-18 19:38 UTC
+
+| Track | Source Path | File Size (MB) | Corpus Lines | Avg Token Reduction | Avg Quality Parity |
+|---|---|---|---|---|---|
+| Gutenberg Large Corpus (~20MB target) | `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` | 5.9 | 0 | -297.7% | 0.77 |
+| Excel Large Corpus (~20MB target) | `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_20mb.xlsx` | 17.1 | 140,000 | 99.9% | 0.72 |
+
+### Per-Question Detail
+
+#### Gutenberg Large Corpus (~20MB target)
+
+| Question | Monolithic Tokens | Pipe C Tokens | Token Reduction | Tool Calls | Retrieved Lines |
+|---|---|---|---|---|---|
+| Where does a character viewpoint materially change after a critical written message? | 21 | 82 | -290.5% | 2 | 0 |
+| Identify sections where social status directly constrains choices and compare them. | 20 | 81 | -305.0% | 2 | 0 |
+
+#### Excel Large Corpus (~20MB target)
+
+| Question | Monolithic Tokens | Pipe C Tokens | Token Reduction | Tool Calls | Retrieved Lines |
+|---|---|---|---|---|---|
+| Which region-channel combinations have high latency and negative margin concentration? | 7,983,011 | 6,830 | 99.9% | 2 | 120 |
+| What trend indicates risk escalation with failed status over recent records? | 7,983,008 | 6,828 | 99.9% | 2 | 120 |
+
+---
+
+## Large-Corpus Parallel Benchmark (Target: ~20MB each)
+
+**Run time:** 2026-06-18 19:39 UTC
+
+| Track | Source Path | File Size (MB) | Corpus Lines | Avg Token Reduction | Avg Quality Parity |
+|---|---|---|---|---|---|
+| Gutenberg Large Corpus (~20MB target) | `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` | 5.9 | 0 | -297.7% | 0.77 |
+| Excel Large Corpus (~20MB target) | `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_20mb.xlsx` | 17.1 | 140,000 | 99.9% | 0.72 |
+
+### Per-Question Detail
+
+#### Gutenberg Large Corpus (~20MB target)
+
+| Question | Monolithic Tokens | Pipe C Tokens | Token Reduction | Tool Calls | Retrieved Lines |
+|---|---|---|---|---|---|
+| Where does a character viewpoint materially change after a critical written message? | 21 | 82 | -290.5% | 2 | 0 |
+| Identify sections where social status directly constrains choices and compare them. | 20 | 81 | -305.0% | 2 | 0 |
+
+#### Excel Large Corpus (~20MB target)
+
+| Question | Monolithic Tokens | Pipe C Tokens | Token Reduction | Tool Calls | Retrieved Lines |
+|---|---|---|---|---|---|
+| Which region-channel combinations have high latency and negative margin concentration? | 7,983,011 | 6,830 | 99.9% | 2 | 120 |
+| What trend indicates risk escalation with failed status over recent records? | 7,983,008 | 6,828 | 99.9% | 2 | 120 |
+
+---
+
+## Large-Corpus Parallel Benchmark (Target: ~20MB each)
+
+**Run time:** 2026-06-18 19:41 UTC
+
+| Track | Source Path | File Size (MB) | Corpus Lines | Avg Token Reduction | Avg Quality Parity |
+|---|---|---|---|---|---|
+| Gutenberg Large Corpus (~20MB target) | `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` | 5.9 | 6,119 | 98.7% | 0.77 |
+| Excel Large Corpus (~20MB target) | `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_20mb.xlsx` | 17.1 | 140,000 | 99.9% | 0.72 |
+
+### Per-Question Detail
+
+#### Gutenberg Large Corpus (~20MB target)
+
+| Question | Monolithic Tokens | Pipe C Tokens | Token Reduction | Tool Calls | Retrieved Lines |
+|---|---|---|---|---|---|
+| Where does a character viewpoint materially change after a critical written message? | 1,468,577 | 19,344 | 98.7% | 2 | 80 |
+| Identify sections where social status directly constrains choices and compare them. | 1,468,576 | 19,343 | 98.7% | 2 | 80 |
+
+#### Excel Large Corpus (~20MB target)
+
+| Question | Monolithic Tokens | Pipe C Tokens | Token Reduction | Tool Calls | Retrieved Lines |
+|---|---|---|---|---|---|
+| Which region-channel combinations have high latency and negative margin concentration? | 7,983,011 | 6,830 | 99.9% | 2 | 120 |
+| What trend indicates risk escalation with failed status over recent records? | 7,983,008 | 6,828 | 99.9% | 2 | 120 |
+
+---
+
+## Large-Corpus Parallel Benchmark (Target: ~20MB each)
+
+**Run time:** 2026-06-18 19:42 UTC
+
+| Track | Source Path | File Size (MB) | Corpus Lines | Avg Token Reduction | Avg Quality Parity |
+|---|---|---|---|---|---|
+| Gutenberg Large Corpus (~20MB target) | `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` | 5.9 | 6,119 | 98.7% | 0.77 |
+| Excel Large Corpus (~20MB target) | `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_20mb.xlsx` | 17.1 | 140,000 | 99.9% | 0.72 |
+
+### Per-Question Detail
+
+#### Gutenberg Large Corpus (~20MB target)
+
+| Question | Monolithic Tokens | Pipe C Tokens | Token Reduction | Tool Calls | Retrieved Lines |
+|---|---|---|---|---|---|
+| Where does a character viewpoint materially change after a critical written message? | 1,468,577 | 19,344 | 98.7% | 2 | 80 |
+| Identify sections where social status directly constrains choices and compare them. | 1,468,576 | 19,343 | 98.7% | 2 | 80 |
+
+#### Excel Large Corpus (~20MB target)
+
+| Question | Monolithic Tokens | Pipe C Tokens | Token Reduction | Tool Calls | Retrieved Lines |
+|---|---|---|---|---|---|
+| Which region-channel combinations have high latency and negative margin concentration? | 7,983,011 | 6,830 | 99.9% | 2 | 120 |
+| What trend indicates risk escalation with failed status over recent records? | 7,983,008 | 6,828 | 99.9% | 2 | 120 |
+
+---
+
+## Large-Corpus Parallel Benchmark (Target: ~21MB each)
+
+**Run time:** 2026-06-18 19:43 UTC
+
+| Track | Source Path | File Size (MB) | Corpus Lines | Avg Token Reduction | Avg Quality Parity |
+|---|---|---|---|---|---|
+| Gutenberg Large Corpus (~21MB target) | `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` | 5.9 | 6,119 | 98.7% | 0.77 |
+| Excel Large Corpus (~21MB target) | `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_21mb.xlsx` | 18.0 | 147,000 | 99.9% | 0.72 |
+
+### Per-Question Detail
+
+#### Gutenberg Large Corpus (~21MB target)
+
+| Question | Monolithic Tokens | Pipe C Tokens | Token Reduction | Tool Calls | Retrieved Lines |
+|---|---|---|---|---|---|
+| Where does a character viewpoint materially change after a critical written message? | 1,468,577 | 19,344 | 98.7% | 2 | 80 |
+| Identify sections where social status directly constrains choices and compare them. | 1,468,576 | 19,343 | 98.7% | 2 | 80 |
+
+#### Excel Large Corpus (~21MB target)
+
+| Question | Monolithic Tokens | Pipe C Tokens | Token Reduction | Tool Calls | Retrieved Lines |
+|---|---|---|---|---|---|
+| Which region-channel combinations have high latency and negative margin concentration? | 8,383,302 | 6,830 | 99.9% | 2 | 120 |
+| What trend indicates risk escalation with failed status over recent records? | 8,383,299 | 6,828 | 99.9% | 2 | 120 |
+
+---
+
+## Large-Corpus Parallel Benchmark (Target: ~500MB each)
+
+**Run time:** 2026-06-18 20:14 UTC
+
+| Track | Source Path | File Size (MB) | Corpus Lines | Avg Token Reduction | Avg Quality Parity |
+|---|---|---|---|---|---|
+| Gutenberg Large Corpus (~500MB target) | `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` | 5.9 | 6,119 | 98.7% | 0.77 |
+| Excel Large Corpus (~500MB target) | `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_500mb.xlsx` | 429.4 | 250,000 | 100.0% | 0.72 |
+
+### Per-Question Detail
+
+#### Gutenberg Large Corpus (~500MB target)
+
+| Question | Monolithic Tokens | Pipe C Tokens | Token Reduction | Tool Calls | Retrieved Lines |
+|---|---|---|---|---|---|
+| Where does a character viewpoint materially change after a critical written message? | 1,468,577 | 19,344 | 98.7% | 2 | 80 |
+| Identify sections where social status directly constrains choices and compare them. | 1,468,576 | 19,343 | 98.7% | 2 | 80 |
+
+#### Excel Large Corpus (~500MB target)
+
+| Question | Monolithic Tokens | Pipe C Tokens | Token Reduction | Tool Calls | Retrieved Lines |
+|---|---|---|---|---|---|
+| Which region-channel combinations have high latency and negative margin concentration? | 14,277,342 | 6,830 | 100.0% | 2 | 120 |
+| What trend indicates risk escalation with failed status over recent records? | 14,277,339 | 6,828 | 100.0% | 2 | 120 |
+
+---
+
+## Large-Corpus Parallel Benchmark (Target: ~1000MB each)
+
+**Run time:** 2026-06-18 20:35 UTC
+
+| Track | Source Path | File Size (MB) | Corpus Lines | Avg Token Reduction | Avg Quality Parity |
+|---|---|---|---|---|---|
+| Gutenberg Large Corpus (~1000MB target) | `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` | 5.9 | 6,119 | 98.7% | 0.77 |
+| Excel Large Corpus (~1000MB target) | `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_1000mb.xlsx` | 858.9 | 250,000 | 100.0% | 0.72 |
+
+### Per-Question Detail
+
+#### Gutenberg Large Corpus (~1000MB target)
+
+| Question | Monolithic Tokens | Pipe C Tokens | Token Reduction | Tool Calls | Retrieved Lines |
+|---|---|---|---|---|---|
+| Where does a character viewpoint materially change after a critical written message? | 1,468,577 | 19,344 | 98.7% | 2 | 80 |
+| Identify sections where social status directly constrains choices and compare them. | 1,468,576 | 19,343 | 98.7% | 2 | 80 |
+
+#### Excel Large Corpus (~1000MB target)
+
+| Question | Monolithic Tokens | Pipe C Tokens | Token Reduction | Tool Calls | Retrieved Lines |
+|---|---|---|---|---|---|
+| Which region-channel combinations have high latency and negative margin concentration? | 14,277,342 | 6,830 | 100.0% | 2 | 120 |
+| What trend indicates risk escalation with failed status over recent records? | 14,277,339 | 6,828 | 100.0% | 2 | 120 |
+
+
+---
+## Complex Reasoning Validation (Large Corpus)
+
+**Run time:** 2026-06-18 20:57 UTC
+
+Complex reasoning tasks requiring multi-hop synthesis, causal analysis, counterfactual thinking, temporal correlation, and comparative analysis.
+
+| Track | Reasoning Type | Corpus Lines | Avg Token Reduction | Avg Quality | Avg Tool Calls | Avg Retrieved Lines |
+|---|---|---|---|---|---|---|
+| Gutenberg Multi-Hop Reasoning | multi-hop | 6,119 | 97.5% | 0.74 | 4.0 | 150 |
+| Excel Multi-Hop Reasoning (500MB) | multi-hop | 250,000 | 99.9% | 0.74 | 5.0 | 200 |
+| Gutenberg Causal Reasoning | causal | 6,119 | 97.5% | 0.74 | 3.0 | 150 |
+| Excel Causal Reasoning (500MB) | causal | 250,000 | 99.9% | 0.74 | 3.0 | 200 |
+| Gutenberg Counterfactual Reasoning | counterfactual | 6,119 | 97.5% | 0.71 | 3.0 | 150 |
+| Excel Counterfactual Reasoning (500MB) | counterfactual | 250,000 | 99.9% | 0.71 | 3.0 | 200 |
+
+### Per-Question Detail
+
+#### Gutenberg Multi-Hop Reasoning
+
+**Reasoning Type:** multi-hop
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` (5.9 MB)
+**Corpus Lines:** 6,119
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Trace how a character's initial moral conviction evolves through at least three ... | 1,468,614 | 36,265 | 97.5% | 4 | 150 |
+
+#### Excel Multi-Hop Reasoning (500MB)
+
+**Reasoning Type:** multi-hop
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_500mb.xlsx` (429.4 MB)
+**Corpus Lines:** 250,000
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Identify regions where high-risk scores correlate with failed status. Then deter... | 14,277,382 | 11,432 | 99.9% | 5 | 200 |
+
+#### Gutenberg Causal Reasoning
+
+**Reasoning Type:** causal
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` (5.9 MB)
+**Corpus Lines:** 6,119
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Identify a single deceptive or concealed action early in the narrative, then tra... | 1,468,609 | 36,259 | 97.5% | 3 | 150 |
+
+#### Excel Causal Reasoning (500MB)
+
+**Reasoning Type:** causal
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_500mb.xlsx` (429.4 MB)
+**Corpus Lines:** 250,000
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Trace the typical sequence: which error codes most frequently precede status fai... | 14,277,374 | 11,424 | 99.9% | 3 | 200 |
+
+#### Gutenberg Counterfactual Reasoning
+
+**Reasoning Type:** counterfactual
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` (5.9 MB)
+**Corpus Lines:** 6,119
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| If the protagonist had accepted an early critical offer or proposal (identify wh... | 1,468,613 | 36,247 | 97.5% | 3 | 150 |
+
+#### Excel Counterfactual Reasoning (500MB)
+
+**Reasoning Type:** counterfactual
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_500mb.xlsx` (429.4 MB)
+**Corpus Lines:** 250,000
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Identify region-channel pairs with consistently high latency but low risk. If th... | 14,277,378 | 11,430 | 99.9% | 3 | 200 |
+
+
+---
+## Complex Reasoning Validation (Large Corpus)
+
+**Run time:** 2026-06-18 21:05 UTC
+
+Complex reasoning tasks requiring multi-hop synthesis, causal analysis, counterfactual thinking, temporal correlation, and comparative analysis.
+
+| Track | Reasoning Type | Corpus Lines | Avg Token Reduction | Avg Quality | Avg Tool Calls | Avg Retrieved Lines |
+|---|---|---|---|---|---|---|
+| Gutenberg Multi-Hop Reasoning | multi-hop | 6,119 | 97.5% | 0.74 | 4.0 | 150 |
+| Excel Multi-Hop Reasoning (500MB) | multi-hop | 250,000 | 99.9% | 0.74 | 5.0 | 200 |
+| Gutenberg Causal Reasoning | causal | 6,119 | 97.5% | 0.74 | 3.0 | 150 |
+| Excel Causal Reasoning (500MB) | causal | 250,000 | 99.9% | 0.74 | 3.0 | 200 |
+| Gutenberg Counterfactual Reasoning | counterfactual | 6,119 | 97.5% | 0.71 | 3.0 | 150 |
+| Excel Counterfactual Reasoning (500MB) | counterfactual | 250,000 | 99.9% | 0.71 | 3.0 | 200 |
+| Gutenberg Temporal Reasoning | temporal | 6,119 | 97.5% | 0.71 | 3.0 | 150 |
+| Excel Temporal Reasoning (500MB) | temporal | 250,000 | 99.9% | 0.74 | 5.0 | 200 |
+| Gutenberg Comparative Reasoning | comparative | 6,119 | 97.5% | 0.74 | 3.0 | 150 |
+| Excel Comparative Reasoning (500MB) | comparative | 250,000 | 99.9% | 0.74 | 3.0 | 200 |
+
+### Per-Question Detail
+
+#### Gutenberg Multi-Hop Reasoning
+
+**Reasoning Type:** multi-hop
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` (5.9 MB)
+**Corpus Lines:** 6,119
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Trace how a character's initial moral conviction evolves through at least three ... | 1,468,614 | 36,265 | 97.5% | 4 | 150 |
+
+#### Excel Multi-Hop Reasoning (500MB)
+
+**Reasoning Type:** multi-hop
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_500mb.xlsx` (429.4 MB)
+**Corpus Lines:** 250,000
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Identify regions where high-risk scores correlate with failed status. Then deter... | 14,277,382 | 11,432 | 99.9% | 5 | 200 |
+
+#### Gutenberg Causal Reasoning
+
+**Reasoning Type:** causal
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` (5.9 MB)
+**Corpus Lines:** 6,119
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Identify a single deceptive or concealed action early in the narrative, then tra... | 1,468,609 | 36,259 | 97.5% | 3 | 150 |
+
+#### Excel Causal Reasoning (500MB)
+
+**Reasoning Type:** causal
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_500mb.xlsx` (429.4 MB)
+**Corpus Lines:** 250,000
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Trace the typical sequence: which error codes most frequently precede status fai... | 14,277,374 | 11,424 | 99.9% | 3 | 200 |
+
+#### Gutenberg Counterfactual Reasoning
+
+**Reasoning Type:** counterfactual
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` (5.9 MB)
+**Corpus Lines:** 6,119
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| If the protagonist had accepted an early critical offer or proposal (identify wh... | 1,468,613 | 36,247 | 97.5% | 3 | 150 |
+
+#### Excel Counterfactual Reasoning (500MB)
+
+**Reasoning Type:** counterfactual
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_500mb.xlsx` (429.4 MB)
+**Corpus Lines:** 250,000
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Identify region-channel pairs with consistently high latency but low risk. If th... | 14,277,378 | 11,430 | 99.9% | 3 | 200 |
+
+#### Gutenberg Temporal Reasoning
+
+**Reasoning Type:** temporal
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` (5.9 MB)
+**Corpus Lines:** 6,119
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Track the evolution of a central relationship across the narrative arc. Identify... | 1,468,604 | 36,237 | 97.5% | 3 | 150 |
+
+#### Excel Temporal Reasoning (500MB)
+
+**Reasoning Type:** temporal
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_500mb.xlsx` (429.4 MB)
+**Corpus Lines:** 250,000
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Track weekly trend changes: which regions show accelerating risk scores week-ove... | 14,277,371 | 11,422 | 99.9% | 5 | 200 |
+
+#### Gutenberg Comparative Reasoning
+
+**Reasoning Type:** comparative
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` (5.9 MB)
+**Corpus Lines:** 6,119
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Compare two characters who face similar moral dilemmas but make opposite choices... | 1,468,606 | 36,257 | 97.5% | 3 | 150 |
+
+#### Excel Comparative Reasoning (500MB)
+
+**Reasoning Type:** comparative
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_500mb.xlsx` (429.4 MB)
+**Corpus Lines:** 250,000
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Compare regions with similar device distributions (e.g., 60%+ mobile) but opposi... | 14,277,376 | 11,426 | 99.9% | 3 | 200 |
+
+---
+
+## Large-Corpus Parallel Benchmark (Target: ~1000MB each)
+
+**Run time:** 2026-06-18 21:17 UTC
+
+| Track | Source Path | File Size (MB) | Corpus Lines | Avg Token Reduction | Avg Quality Parity |
+|---|---|---|---|---|---|
+| Gutenberg Large Corpus (~1000MB target) | `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` | 5.9 | 6,119 | 98.7% | 0.77 |
+| Excel Large Corpus (~1000MB target) | `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_1000mb.xlsx` | 858.9 | 250,000 | 100.0% | 0.72 |
+
+### Per-Question Detail
+
+#### Gutenberg Large Corpus (~1000MB target)
+
+| Question | Monolithic Tokens | Pipe C Tokens | Token Reduction | Tool Calls | Retrieved Lines |
+|---|---|---|---|---|---|
+| Where does a character viewpoint materially change after a critical written message? | 1,468,577 | 19,344 | 98.7% | 2 | 80 |
+| Identify sections where social status directly constrains choices and compare them. | 1,468,576 | 19,343 | 98.7% | 2 | 80 |
+
+#### Excel Large Corpus (~1000MB target)
+
+| Question | Monolithic Tokens | Pipe C Tokens | Token Reduction | Tool Calls | Retrieved Lines |
+|---|---|---|---|---|---|
+| Which region-channel combinations have high latency and negative margin concentration? | 14,277,342 | 6,830 | 100.0% | 2 | 120 |
+| What trend indicates risk escalation with failed status over recent records? | 14,277,339 | 6,828 | 100.0% | 2 | 120 |
+
+
+---
+## Complex Reasoning Validation (Large Corpus)
+
+**Run time:** 2026-06-18 21:43 UTC
+
+Complex reasoning tasks requiring multi-hop synthesis, causal analysis, counterfactual thinking, temporal correlation, and comparative analysis.
+
+| Track | Reasoning Type | Corpus Lines | Avg Token Reduction | Avg Quality | Avg Tool Calls | Avg Retrieved Lines |
+|---|---|---|---|---|---|---|
+| Gutenberg Multi-Hop Reasoning | multi-hop | 6,119 | 97.5% | 0.74 | 4.0 | 150 |
+| Excel Multi-Hop Reasoning (500MB) | multi-hop | 250,000 | 99.9% | 0.74 | 5.0 | 200 |
+| Gutenberg Causal Reasoning | causal | 6,119 | 97.5% | 0.74 | 3.0 | 150 |
+| Excel Causal Reasoning (500MB) | causal | 250,000 | 99.9% | 0.74 | 3.0 | 200 |
+| Gutenberg Counterfactual Reasoning | counterfactual | 6,119 | 97.5% | 0.71 | 3.0 | 150 |
+| Excel Counterfactual Reasoning (500MB) | counterfactual | 250,000 | 99.9% | 0.71 | 3.0 | 200 |
+| Gutenberg Temporal Reasoning | temporal | 6,119 | 97.5% | 0.71 | 3.0 | 150 |
+| Excel Temporal Reasoning (500MB) | temporal | 250,000 | 99.9% | 0.74 | 5.0 | 200 |
+| Gutenberg Comparative Reasoning | comparative | 6,119 | 97.5% | 0.74 | 3.0 | 150 |
+| Excel Comparative Reasoning (500MB) | comparative | 250,000 | 99.9% | 0.74 | 3.0 | 200 |
+
+### Per-Question Detail
+
+#### Gutenberg Multi-Hop Reasoning
+
+**Reasoning Type:** multi-hop
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` (5.9 MB)
+**Corpus Lines:** 6,119
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Trace how a character's initial moral conviction evolves through at least three ... | 1,468,614 | 36,265 | 97.5% | 4 | 150 |
+
+#### Excel Multi-Hop Reasoning (500MB)
+
+**Reasoning Type:** multi-hop
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_500mb.xlsx` (429.4 MB)
+**Corpus Lines:** 250,000
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Identify regions where high-risk scores correlate with failed status. Then deter... | 14,277,382 | 11,432 | 99.9% | 5 | 200 |
+
+#### Gutenberg Causal Reasoning
+
+**Reasoning Type:** causal
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` (5.9 MB)
+**Corpus Lines:** 6,119
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Identify a single deceptive or concealed action early in the narrative, then tra... | 1,468,609 | 36,259 | 97.5% | 3 | 150 |
+
+#### Excel Causal Reasoning (500MB)
+
+**Reasoning Type:** causal
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_500mb.xlsx` (429.4 MB)
+**Corpus Lines:** 250,000
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Trace the typical sequence: which error codes most frequently precede status fai... | 14,277,374 | 11,424 | 99.9% | 3 | 200 |
+
+#### Gutenberg Counterfactual Reasoning
+
+**Reasoning Type:** counterfactual
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` (5.9 MB)
+**Corpus Lines:** 6,119
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| If the protagonist had accepted an early critical offer or proposal (identify wh... | 1,468,613 | 36,247 | 97.5% | 3 | 150 |
+
+#### Excel Counterfactual Reasoning (500MB)
+
+**Reasoning Type:** counterfactual
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_500mb.xlsx` (429.4 MB)
+**Corpus Lines:** 250,000
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Identify region-channel pairs with consistently high latency but low risk. If th... | 14,277,378 | 11,430 | 99.9% | 3 | 200 |
+
+#### Gutenberg Temporal Reasoning
+
+**Reasoning Type:** temporal
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` (5.9 MB)
+**Corpus Lines:** 6,119
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Track the evolution of a central relationship across the narrative arc. Identify... | 1,468,604 | 36,237 | 97.5% | 3 | 150 |
+
+#### Excel Temporal Reasoning (500MB)
+
+**Reasoning Type:** temporal
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_500mb.xlsx` (429.4 MB)
+**Corpus Lines:** 250,000
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Track weekly trend changes: which regions show accelerating risk scores week-ove... | 14,277,371 | 11,422 | 99.9% | 5 | 200 |
+
+#### Gutenberg Comparative Reasoning
+
+**Reasoning Type:** comparative
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` (5.9 MB)
+**Corpus Lines:** 6,119
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Compare two characters who face similar moral dilemmas but make opposite choices... | 1,468,606 | 36,257 | 97.5% | 3 | 150 |
+
+#### Excel Comparative Reasoning (500MB)
+
+**Reasoning Type:** comparative
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_500mb.xlsx` (429.4 MB)
+**Corpus Lines:** 250,000
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Compare regions with similar device distributions (e.g., 60%+ mobile) but opposi... | 14,277,376 | 11,426 | 99.9% | 3 | 200 |
+
+
+---
+## Complex Reasoning Validation (Large Corpus)
+
+**Run time:** 2026-06-18 22:20 UTC
+
+Complex reasoning tasks requiring multi-hop synthesis, causal analysis, counterfactual thinking, temporal correlation, and comparative analysis.
+
+| Track | Reasoning Type | Corpus Lines | Avg Token Reduction | Avg Quality | Avg Tool Calls | Avg Retrieved Lines |
+|---|---|---|---|---|---|---|
+| Gutenberg Multi-Hop Reasoning | multi-hop | 6,119 | 97.5% | 0.74 | 4.0 | 150 |
+| Excel Multi-Hop Reasoning (500MB) | multi-hop | 250,000 | 99.9% | 0.74 | 5.0 | 200 |
+| Gutenberg Causal Reasoning | causal | 6,119 | 97.5% | 0.74 | 3.0 | 150 |
+| Excel Causal Reasoning (500MB) | causal | 250,000 | 99.9% | 0.74 | 3.0 | 200 |
+| Gutenberg Counterfactual Reasoning | counterfactual | 6,119 | 97.5% | 0.71 | 3.0 | 150 |
+| Excel Counterfactual Reasoning (500MB) | counterfactual | 250,000 | 99.9% | 0.71 | 3.0 | 200 |
+| Gutenberg Temporal Reasoning | temporal | 6,119 | 97.5% | 0.71 | 3.0 | 150 |
+| Excel Temporal Reasoning (500MB) | temporal | 250,000 | 99.9% | 0.74 | 5.0 | 200 |
+| Gutenberg Comparative Reasoning | comparative | 6,119 | 97.5% | 0.74 | 3.0 | 150 |
+| Excel Comparative Reasoning (500MB) | comparative | 250,000 | 99.9% | 0.74 | 3.0 | 200 |
+
+### Per-Question Detail
+
+#### Gutenberg Multi-Hop Reasoning
+
+**Reasoning Type:** multi-hop
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` (5.9 MB)
+**Corpus Lines:** 6,119
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Trace how a character's initial moral conviction evolves through at least three ... | 1,468,614 | 36,265 | 97.5% | 4 | 150 |
+
+#### Excel Multi-Hop Reasoning (500MB)
+
+**Reasoning Type:** multi-hop
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_500mb.xlsx` (429.4 MB)
+**Corpus Lines:** 250,000
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Identify regions where high-risk scores correlate with failed status. Then deter... | 14,277,382 | 11,432 | 99.9% | 5 | 200 |
+
+#### Gutenberg Causal Reasoning
+
+**Reasoning Type:** causal
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` (5.9 MB)
+**Corpus Lines:** 6,119
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Identify a single deceptive or concealed action early in the narrative, then tra... | 1,468,609 | 36,259 | 97.5% | 3 | 150 |
+
+#### Excel Causal Reasoning (500MB)
+
+**Reasoning Type:** causal
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_500mb.xlsx` (429.4 MB)
+**Corpus Lines:** 250,000
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Trace the typical sequence: which error codes most frequently precede status fai... | 14,277,374 | 11,424 | 99.9% | 3 | 200 |
+
+#### Gutenberg Counterfactual Reasoning
+
+**Reasoning Type:** counterfactual
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` (5.9 MB)
+**Corpus Lines:** 6,119
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| If the protagonist had accepted an early critical offer or proposal (identify wh... | 1,468,613 | 36,247 | 97.5% | 3 | 150 |
+
+#### Excel Counterfactual Reasoning (500MB)
+
+**Reasoning Type:** counterfactual
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_500mb.xlsx` (429.4 MB)
+**Corpus Lines:** 250,000
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Identify region-channel pairs with consistently high latency but low risk. If th... | 14,277,378 | 11,430 | 99.9% | 3 | 200 |
+
+#### Gutenberg Temporal Reasoning
+
+**Reasoning Type:** temporal
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` (5.9 MB)
+**Corpus Lines:** 6,119
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Track the evolution of a central relationship across the narrative arc. Identify... | 1,468,604 | 36,237 | 97.5% | 3 | 150 |
+
+#### Excel Temporal Reasoning (500MB)
+
+**Reasoning Type:** temporal
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_500mb.xlsx` (429.4 MB)
+**Corpus Lines:** 250,000
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Track weekly trend changes: which regions show accelerating risk scores week-ove... | 14,277,371 | 11,422 | 99.9% | 5 | 200 |
+
+#### Gutenberg Comparative Reasoning
+
+**Reasoning Type:** comparative
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` (5.9 MB)
+**Corpus Lines:** 6,119
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Compare two characters who face similar moral dilemmas but make opposite choices... | 1,468,606 | 36,257 | 97.5% | 3 | 150 |
+
+#### Excel Comparative Reasoning (500MB)
+
+**Reasoning Type:** comparative
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_500mb.xlsx` (429.4 MB)
+**Corpus Lines:** 250,000
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Compare regions with similar device distributions (e.g., 60%+ mobile) but opposi... | 14,277,376 | 11,426 | 99.9% | 3 | 200 |
+
+
+---
+## Complex Reasoning Validation (Large Corpus)
+
+**Run time:** 2026-06-18 22:36 UTC
+
+Complex reasoning tasks requiring multi-hop synthesis, causal analysis, counterfactual thinking, temporal correlation, and comparative analysis.
+
+| Track | Reasoning Type | Corpus Lines | Avg Token Reduction | Avg Quality | Avg Tool Calls | Avg Retrieved Lines |
+|---|---|---|---|---|---|---|
+| Gutenberg Multi-Hop Reasoning | multi-hop | 6,119 | 97.5% | 0.74 | 4.0 | 150 |
+| Excel Multi-Hop Reasoning (500MB) | multi-hop | 250,000 | 99.9% | 0.74 | 5.0 | 200 |
+| Gutenberg Causal Reasoning | causal | 6,119 | 97.5% | 0.74 | 3.0 | 150 |
+| Excel Causal Reasoning (500MB) | causal | 250,000 | 99.9% | 0.74 | 3.0 | 200 |
+
+### Per-Question Detail
+
+#### Gutenberg Multi-Hop Reasoning
+
+**Reasoning Type:** multi-hop  
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` (5.9 MB)  
+**Corpus Lines:** 6,119
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Trace how a character's initial moral conviction evolves through at least three ... | 1,468,614 | 36,265 | 97.5% | 4 | 150 |
+
+#### Excel Multi-Hop Reasoning (500MB)
+
+**Reasoning Type:** multi-hop  
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_500mb.xlsx` (429.4 MB)  
+**Corpus Lines:** 250,000
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Identify regions where high-risk scores correlate with failed status. Then deter... | 14,277,382 | 11,432 | 99.9% | 5 | 200 |
+
+#### Gutenberg Causal Reasoning
+
+**Reasoning Type:** causal  
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` (5.9 MB)  
+**Corpus Lines:** 6,119
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Identify a single deceptive or concealed action early in the narrative, then tra... | 1,468,609 | 36,259 | 97.5% | 3 | 150 |
+
+#### Excel Causal Reasoning (500MB)
+
+**Reasoning Type:** causal  
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_500mb.xlsx` (429.4 MB)  
+**Corpus Lines:** 250,000
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Trace the typical sequence: which error codes most frequently precede status fai... | 14,277,374 | 11,424 | 99.9% | 3 | 200 |
+
+
+---
+## Complex Reasoning Validation (Large Corpus)
+
+**Run time:** 2026-06-18 22:45 UTC
+
+Complex reasoning tasks requiring multi-hop synthesis, causal analysis, counterfactual thinking, temporal correlation, and comparative analysis.
+
+| Track | Reasoning Type | Corpus Lines | Avg Token Reduction | Avg Quality | Avg Tool Calls | Avg Retrieved Lines |
+|---|---|---|---|---|---|---|
+| Gutenberg Multi-Hop Reasoning | multi-hop | 6,119 | 97.5% | 0.74 | 4.0 | 150 |
+| Excel Multi-Hop Reasoning (500MB) | multi-hop | 250,000 | 99.9% | 0.74 | 5.0 | 200 |
+
+### Per-Question Detail
+
+#### Gutenberg Multi-Hop Reasoning
+
+**Reasoning Type:** multi-hop  
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` (5.9 MB)  
+**Corpus Lines:** 6,119
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Trace how a character's initial moral conviction evolves through at least three ... | 1,468,614 | 36,265 | 97.5% | 4 | 150 |
+
+#### Excel Multi-Hop Reasoning (500MB)
+
+**Reasoning Type:** multi-hop  
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_500mb.xlsx` (429.4 MB)  
+**Corpus Lines:** 250,000
+
+| Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
+|---|---|---|---|---|---|
+| Identify regions where high-risk scores correlate with failed status. Then deter... | 14,277,382 | 11,432 | 99.9% | 5 | 200 |
+

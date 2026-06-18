@@ -4,9 +4,10 @@
 
 ## Design Scope
 
-The project keeps two design artifacts only:
-- **[docs/design/TECHNICAL_DESIGN.md](docs/design/TECHNICAL_DESIGN.md)** for implementation architecture, contracts, and engineering decisions.
-- **[docs/whitepaper/proposed-whitepaper.md](docs/whitepaper/proposed-whitepaper.md)** for hypothesis framing, scientific positioning, and research-style narrative.
+The project maintains three core design documents:
+- **[docs/design/TECHNICAL_DESIGN.md](docs/design/TECHNICAL_DESIGN.md)** - Implementation architecture, contracts, and engineering decisions
+- **[docs/design/COMPRESSION_ARCHITECTURE.md](docs/design/COMPRESSION_ARCHITECTURE.md)** - Rolling window compression pipeline design
+- **[docs/whitepaper/proposed-whitepaper.md](docs/whitepaper/proposed-whitepaper.md)** - Hypothesis framing, scientific positioning, and research narrative
 
 ---
 
@@ -16,15 +17,19 @@ The project keeps two design artifacts only:
 
 | Document | Focus | Audience | Key Takeaway |
 |---|---|---|---|
-| **[docs/design/TECHNICAL_DESIGN.md](docs/design/TECHNICAL_DESIGN.md)** | How? | Engineers, implementers | System contracts, data model, retrieval path, operations, and implementation details |
+| **[docs/design/TECHNICAL_DESIGN.md](docs/design/TECHNICAL_DESIGN.md)** | How? | Engineers, implementers | System contracts, data model, retrieval path, operations, implementation details |
+| **[docs/design/COMPRESSION_ARCHITECTURE.md](docs/design/COMPRESSION_ARCHITECTURE.md)** | How? | Engineers, implementers | Rolling window compression, dual storage, no context exhaustion |
 | **[docs/whitepaper/proposed-whitepaper.md](docs/whitepaper/proposed-whitepaper.md)** | Why / What? | Researchers, technical leads | Hypothesis-driven tri-stage architecture and modality-transfer framing |
-| **[docs/experiments/EXPERIMENTS_CONSOLIDATED.md](docs/experiments/EXPERIMENTS_CONSOLIDATED.md)** | Evidence? | Performance engineers, reviewers | Unified experiment evidence across assistant-focused benchmark families |
+| **[docs/experiments/EXPERIMENTS_CONSOLIDATED.md](docs/experiments/EXPERIMENTS_CONSOLIDATED.md)** | Evidence? | Performance engineers, reviewers | Chat-assistant benchmarks across multiple domains |
+| **[experiments/EXPERIMENTS_GUIDE.md](experiments/EXPERIMENTS_GUIDE.md)** | Results? | Engineers, reviewers | GB-scale compression validation, architecture diagrams, performance tables |
+| **[experiments/README.md](experiments/README.md)** | What's tested? | Developers, QA | Quick start guide to running experiments |
 
 **Quick navigation**:
-- **New to the project?** Start with [docs/design/TECHNICAL_DESIGN.md](docs/design/TECHNICAL_DESIGN.md), then read [docs/whitepaper/proposed-whitepaper.md](docs/whitepaper/proposed-whitepaper.md).
-- **Building it?** Use [docs/design/TECHNICAL_DESIGN.md](docs/design/TECHNICAL_DESIGN.md) as the implementation source of truth.
-- **Evaluating it?** Read [docs/experiments/EXPERIMENTS_CONSOLIDATED.md](docs/experiments/EXPERIMENTS_CONSOLIDATED.md) and reproduce with `python experiments/run_long_form_tests.py`.
-- **Incident deep dive?** See the incident appendix section inside [docs/experiments/EXPERIMENTS_CONSOLIDATED.md](docs/experiments/EXPERIMENTS_CONSOLIDATED.md).
+- **New to the project?** Start with [docs/design/TECHNICAL_DESIGN.md](docs/design/TECHNICAL_DESIGN.md), then read [docs/whitepaper/proposed-whitepaper.md](docs/whitepaper/proposed-whitepaper.md)
+- **Building it?** Use [docs/design/TECHNICAL_DESIGN.md](docs/design/TECHNICAL_DESIGN.md) and [docs/design/COMPRESSION_ARCHITECTURE.md](docs/design/COMPRESSION_ARCHITECTURE.md) as implementation guides
+- **Evaluating it?** Read [experiments/EXPERIMENTS_GUIDE.md](experiments/EXPERIMENTS_GUIDE.md) for GB-scale results and [docs/experiments/EXPERIMENTS_CONSOLIDATED.md](docs/experiments/EXPERIMENTS_CONSOLIDATED.md) for chat-assistant benchmarks
+- **Understanding compression?** See [docs/design/COMPRESSION_ARCHITECTURE.md](docs/design/COMPRESSION_ARCHITECTURE.md) for rolling window design
+- **Running tests?** See [experiments/README.md](experiments/README.md) for quick start
 
 ---
 
@@ -139,6 +144,26 @@ And optionally pull Ollama models to support local CPU inference benchmarks.
 ```powershell
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
+
+## Large-Corpus Parallel Benchmarks
+
+Run parallel dataset tracks (Gutenberg text + large XLSX analytics corpus) to stress test token behavior at higher scale.
+
+```powershell
+# installs openpyxl dependency used by XLSX generation/reading
+pip install -r requirements.txt
+
+# run both tracks in parallel; appends results to docs/experiments/EXPERIMENTS_CONSOLIDATED.md
+.\.venv\Scripts\python.exe experiments/run_large_corpus_benchmarks.py --target-mb 120
+
+# heavier run (few hundred MB target per track)
+.\.venv\Scripts\python.exe experiments/run_large_corpus_benchmarks.py --target-mb 300
+```
+
+Generated artifacts:
+- `data/large_corpus/gutenberg/combined_gutenberg.txt`
+- `data/large_corpus/excel/mock_<target>mb.xlsx`
+- report section appended to `docs/experiments/EXPERIMENTS_CONSOLIDATED.md`
 
 ## CPU-only Docker benchmark (raw vs optimized)
 

@@ -417,6 +417,177 @@ def should_invalidate(cache_entry, new_context):
 
 ---
 
+## Rolling Compression Architecture
+
+**Full specification:** [COMPRESSION_ARCHITECTURE.md](COMPRESSION_ARCHITECTURE.md) provides complete implementation details, validation metrics, and usage patterns. This section presents the core design principles.
+
+### Problem: Context Window Exhaustion
+
+Traditional compression approaches attempt to compress entire corpora in single LLM calls, leading to:
+- Context window exhaustion for corpora >100K tokens
+- OOM errors with large batches
+- Loss of local semantic boundaries
+- Inconsistent compression quality across document sections
+
+### Solution: Threshold-Based Rolling Window
+
+**Core Principle:** Accumulate lines until token threshold, compress batch, reset for next chunk.
+
+```python
+def compress_corpus_rolling(
+    lines: List[str],
+    llm: ChatModel,
+    chunk_threshold: int = 512,  # ~2K chars at 4 chars/token
+    target_summary_tokens: int = 50,
+    preserve_boundaries: bool = True
+) -> List[CompressedChunk]:
+    """
+    Rolling window compression avoiding context exhaustion.
+
+    Process:
+    1. Accumulate lines until token threshold
+    2. Compress batch with LLM (entity extraction + summarization)
+    3. Store compressed chunk with metadata
+    4. Reset accumulator, continue to next batch
+
+    Returns list of CompressedChunk objects with:
+    - chunk_id, raw_text, compressed_summary
+    - entities, keywords, metadata
+    - token counts, compression_ratio
+    - boundary links (prev_chunk_id, next_chunk_id)
+    """
+    chunks = []
+    current_batch = []
+    current_tokens = 0
+    chunk_id = 0
+
+    for line in lines:
+        line_tokens = estimate_tokens(line)
+
+        # Check if adding this line would exceed threshold
+        if current_tokens + line_tokens > chunk_threshold and current_batch:
+            # Compress accumulated batch
+            chunk = compress_chunk_with_llm(
+                chunk_id=f"chunk-{chunk_id:04d}",
+                lines=current_batch,
+                llm=llm,
+                target_tokens=target_summary_tokens,
+                prev_chunk_id=f"chunk-{chunk_id-1:04d}" if chunk_id > 0 else None
+            )
+            chunks.append(chunk)
+
+            # Reset for next batch
+            current_batch = []
+            current_tokens = 0
+            chunk_id += 1
+
+        current_batch.append(line)
+        current_tokens += line_tokens
+
+    # Compress final batch
+    if current_batch:
+        chunk = compress_chunk_with_llm(
+            chunk_id=f"chunk-{chunk_id:04d}",
+            lines=current_batch,
+            llm=llm,
+            target_tokens=target_summary_tokens,
+            prev_chunk_id=f"chunk-{chunk_id-1:04d}" if chunk_id > 0 else None
+        )
+        chunks.append(chunk)
+
+    return chunks
+```
+
+### Compression Quality Metrics
+
+Track per-corpus to validate compression effectiveness:
+
+```python
+def compute_compression_metrics(chunks: List[CompressedChunk]) -> dict:
+    """Aggregate metrics across all chunks."""
+    total_original = sum(c.original_tokens for c in chunks)
+    total_compressed = sum(c.summary_tokens for c in chunks)
+
+    return {
+        "total_chunks": len(chunks),
+        "total_original_tokens": total_original,
+        "total_compressed_tokens": total_compressed,
+        "overall_compression_ratio": total_original / total_compressed,
+        "avg_chunk_size": total_original / len(chunks),
+        "avg_summary_size": total_compressed / len(chunks),
+    }
+```
+
+---
+
+## Dual Storage Retriever Architecture
+
+**Full specification:** [COMPRESSION_ARCHITECTURE.md](COMPRESSION_ARCHITECTURE.md) documents the dual-storage design and MCP tool contracts in detail. This section presents the implementation architecture.
+
+### Problem: Precision vs Detail Trade-off
+
+Standard RAG retrieval returns either:
+- **Compressed summaries:** Fast, token-efficient, but may lack detail
+- **Full raw chunks:** Complete information, but expensive and noisy
+
+### Solution: Two MCP Tools
+
+1. **`get_context`**: Returns compressed summaries (default, ~50 tokens each)
+2. **`get_context_details`**: Returns raw text for specific chunk_ids (on-demand)
+
+```python
+class DualStorageRetriever:
+    """Manages dual storage: compressed summaries for search, raw data for detail."""
+
+    def search_compressed(
+        self,
+        query: str,
+        top_k: int = 6
+    ) -> List[CompressedRetrievalHit]:
+        """
+        Primary search: returns compressed summaries only.
+        Reasoning LLM can request details via get_context_details.
+        """
+        query_embedding = self.embed(query)
+        candidates = self.vector_db.similarity_search(
+            embedding=query_embedding,
+            top_k=top_k
+        )
+        return candidates
+
+    def get_chunk_details(self, chunk_ids: List[str]) -> Dict[str, str]:
+        """
+        Secondary tool: retrieve full raw text for specific chunks.
+        Used when summaries insufficient for final reasoning.
+        """
+        details = {}
+        for chunk_id in chunk_ids:
+            raw_text = self.raw_data_store.get(chunk_id)
+            if raw_text:
+                details[chunk_id] = raw_text
+        return details
+```
+
+### Token Economics
+
+**Scenario: Typical 2-call retrieval flow**
+
+| Call | Tool | Returned | Tokens |
+|---|---|---|---|
+| 1 | `get_context(top_k=6)` | 6 summaries | ~300 |
+| 2 | `get_context_details(["chunk-0042"])` | 1 raw chunk | ~500 |
+| **Total** | | | **~800** |
+
+**vs. Monolithic retrieval (raw only):**
+
+| Call | Tool | Returned | Tokens |
+|---|---|---|---|
+| 1 | `retrieve_raw(top_k=6)` | 6 raw chunks | ~3,000 |
+
+**Savings:** 800 vs 3,000 = **73% reduction**
+
+---
+
 ## Integrated Query → Retrieval → Reasoning Flow
 
 ### Example: Incident Diagnosis
