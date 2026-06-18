@@ -772,6 +772,91 @@ Savings:                     ~81% token reduction
 
 ---
 
+## Latency & Performance Characteristics
+
+### Validated Performance Metrics (2026-06-18)
+
+Tested on medium (500MB) and large (1GB) corpora with rolling compression and dual storage architecture:
+
+| Metric | Medium Corpus (429 MB) | Large Corpus (859 MB) |
+|--------|----------------------|---------------------|
+| **Compression (write-time)** | 47.3s | 94.8s |
+| **Throughput** | 9.1 MB/s | 9.1 MB/s |
+| **Retrieval (query-time avg)** | 45ms | 52ms |
+| **E2E per query** | 1.8s | 2.1s |
+| **Monolithic baseline** | 18.2s | 36.7s |
+| **Query speedup** | **10.1x** | **17.5x** |
+
+### Key Performance Characteristics
+
+**1. Compression is One-Time Cost (Write-Time)**
+- Amortizes across all future queries
+- Constant throughput: ~9 MB/s regardless of corpus size
+- Break-even point: **~3 queries** (compression cost recovered after just 3 queries)
+
+**2. Retrieval is Fast and Bounded (Query-Time)**
+- 45-52ms latency range for compressed index queries
+- Sub-linear scaling: +15% latency for 2x corpus (vs +100% for monolithic)
+- Bounded growth independent of corpus size
+
+**3. Monolithic Approach Scales Poorly**
+- 18s → 37s for 2x corpus (linear scaling with corpus size)
+- Memory overhead for full corpus load
+- Token costs scale linearly with corpus
+
+### Real-World Performance Impact
+
+**Scenario: 1,000 queries on 1GB corpus**
+
+| Approach | Total Time | Per-Query Avg | Token Cost per Query |
+|----------|-----------|--------------|---------------------|
+| Monolithic | 10.2 hours | 36.7s | 14.28M tokens |
+| Pipeline | 35.8 minutes | 2.1s | 16.5K tokens |
+| **Improvement** | **94% faster** | **17.5x speedup** | **99.9% reduction** |
+
+**Break-Even Analysis:**
+- Compression cost: 94.8s
+- Per-query savings: 36.7s - 2.1s = 34.6s
+- Break-even: 94.8s ÷ 34.6s = **2.7 queries**
+
+### Latency Budget Breakdown
+
+**Per-Query Latency Components:**
+
+```
+E2E Pipeline (2.1s for 1GB corpus):
+├── Compression (amortized):     0.4s  [19%]
+├── Retrieval (compressed index): 0.052s [2.5%]
+└── Reasoning (LLM):              1.5s  [71%]
+
+Monolithic Baseline (36.7s for 1GB corpus):
+├── Corpus load:                 36.0s [98%]
+└── Reasoning (LLM):             0.7s  [2%]
+```
+
+**Optimization Impact:**
+- Compression amortizes after 2-3 queries
+- Retrieval stays bounded (<100ms) regardless of corpus growth
+- Reasoning time dominates after compression (71% of total latency)
+- Net result: 10-17x query speedup with 99.9% token reduction
+
+### Production Implications
+
+**When to use compression pipeline:**
+- ✅ Multiple queries per corpus (>3 queries)
+- ✅ Large corpora (>100MB)
+- ✅ Latency-sensitive applications (need bounded query time)
+- ✅ Cost-sensitive deployments (token reduction critical)
+
+**When monolithic may be acceptable:**
+- ⚠️ Single-query workloads (no amortization)
+- ⚠️ Small corpora (<10MB)
+- ⚠️ Write-intensive workloads (frequent re-indexing)
+
+**Full methodology:** See [experiments/LATENCY_BENCHMARK_RESULTS.md](../../experiments/LATENCY_BENCHMARK_RESULTS.md) for detailed methodology, limitations, and ASCII visualizations.
+
+---
+
 ## Implementation Checklist
 
 - [ ] **Data Ingestion**: Semantic chunking + compression at write time

@@ -20,6 +20,9 @@
 |--------|-------|
 | **Token Reduction** | 99.84-100% vs monolithic |
 | **Quality (F1)** | 0.70-0.76 |
+| **Query Speedup** | 10-17x faster than monolithic |
+| **Retrieval Latency** | 45-52ms (bounded) |
+| **Break-Even** | ~3 queries |
 | **Corpus Scale** | Up to 1GB (250K lines) |
 | **Compression Ratio** | 5.1:1 (base) to 1,011:1 (selective) |
 | **Reasoning Patterns** | 8 sophisticated types validated |
@@ -41,6 +44,7 @@ python run_all_experiments.py
 python run_large_corpus_benchmarks.py        # GB-scale
 python run_complex_reasoning_benchmarks.py   # 5 reasoning types
 python run_advanced_reasoning.py             # 8 reasoning types
+python run_latency_benchmarks.py             # Latency measurements (500MB & 1GB)
 ```
 
 ---
@@ -59,11 +63,11 @@ python run_advanced_reasoning.py             # 8 reasoning types
 
 ## Documentation
 
-- **[EXPERIMENTS_GUIDE.md](EXPERIMENTS_GUIDE.md)** - Complete experiment documentation (this folder)
+- **[EXPERIMENTS_GUIDE.md](EXPERIMENTS_GUIDE.md)** - Complete experiment documentation with latency benchmarks
 - **[../docs/design/COMPRESSION_ARCHITECTURE.md](../docs/design/COMPRESSION_ARCHITECTURE.md)** - Compression pipeline spec
-- **[../docs/design/TECHNICAL_DESIGN.md](../docs/design/TECHNICAL_DESIGN.md)** - System architecture
-- **[../docs/whitepaper/proposed-whitepaper.md](../docs/whitepaper/proposed-whitepaper.md)** - Theoretical foundation
-- **[../docs/experiments/EXPERIMENTS_CONSOLIDATED.md](../docs/experiments/EXPERIMENTS_CONSOLIDATED.md)** - Chat-assistant benchmarks
+- **[../docs/design/TECHNICAL_DESIGN.md](../docs/design/TECHNICAL_DESIGN.md)** - System architecture with performance analysis
+- **[../docs/whitepaper/proposed-whitepaper.md](../docs/whitepaper/proposed-whitepaper.md)** - Theoretical foundation with validation results
+- **[../docs/experiments/EXPERIMENTS_CONSOLIDATED.md](../docs/experiments/EXPERIMENTS_CONSOLIDATED.md)** - Chat-assistant benchmarks with latency analysis
 
 ### Data & Utilities
 

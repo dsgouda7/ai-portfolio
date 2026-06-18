@@ -20,7 +20,7 @@ The project maintains three core design documents:
 | **[docs/design/TECHNICAL_DESIGN.md](docs/design/TECHNICAL_DESIGN.md)** | How? | Engineers, implementers | System contracts, data model, retrieval path, operations, implementation details |
 | **[docs/design/COMPRESSION_ARCHITECTURE.md](docs/design/COMPRESSION_ARCHITECTURE.md)** | How? | Engineers, implementers | Rolling window compression, dual storage, no context exhaustion |
 | **[docs/whitepaper/proposed-whitepaper.md](docs/whitepaper/proposed-whitepaper.md)** | Why / What? | Researchers, technical leads | Hypothesis-driven tri-stage architecture and modality-transfer framing |
-| **[docs/experiments/EXPERIMENTS_CONSOLIDATED.md](docs/experiments/EXPERIMENTS_CONSOLIDATED.md)** | Evidence? | Performance engineers, reviewers | Chat-assistant benchmarks across multiple domains |
+| **[docs/experiments/EXPERIMENTS_CONSOLIDATED.md](docs/experiments/EXPERIMENTS_CONSOLIDATED.md)** | Evidence? | Performance engineers, reviewers | Chat-assistant benchmarks, latency measurements (10-17x speedup) |
 | **[experiments/EXPERIMENTS_GUIDE.md](experiments/EXPERIMENTS_GUIDE.md)** | Results? | Engineers, reviewers | GB-scale compression validation, architecture diagrams, performance tables |
 | **[experiments/README.md](experiments/README.md)** | What's tested? | Developers, QA | Quick start guide to running experiments |
 

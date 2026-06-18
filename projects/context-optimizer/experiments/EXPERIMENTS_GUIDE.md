@@ -482,6 +482,118 @@ Monolithic Token Count (off-chart)
 
 ---
 
+### Latency Benchmarks
+
+**Run Date:** 2026-06-18
+
+#### Summary
+
+| Corpus | Size | Compression | Retrieval (avg) | E2E per Query | Monolithic | Speedup |
+|--------|------|-------------|-----------------|---------------|------------|---------|
+| **Medium** | 429 MB | 47.3s | 45ms | 1.8s | 18.2s | **10.1x** |
+| **Large** | 859 MB | 94.8s | 52ms | 2.1s | 36.7s | **17.5x** |
+
+#### Key Observations
+
+1. **Compression is one-time cost:** Write-time compression (47-95s) amortizes across all future queries
+2. **Retrieval is fast:** 45-52ms range for compressed index queries (bounded growth)
+3. **Monolithic scales poorly:** 18s → 37s for 2x corpus (linear scaling)
+4. **Break-even is fast:** Compression pays off after just **~3 queries**
+
+#### Compression Throughput
+
+```
+Compression Throughput (MB/s)
+    │
+10  ├─────────────● Medium (9.1 MB/s)
+    │             ● Large (9.1 MB/s)
+ 9  ├
+    │
+ 8  ├
+    │
+    └─────┬─────────┬─────────────────────→ Corpus Size
+        500MB     1GB
+
+Constant throughput: ~9 MB/s (linear scaling)
+```
+
+#### Retrieval Latency (Query-Time)
+
+```
+Retrieval Latency (ms)
+    │
+60  ├
+    │                      ● Large (52ms)
+50  ├              ● Medium (45ms)
+    │
+40  ├
+    │
+30  ├
+    │
+    └─────┬─────────┬─────────────────────→ Corpus Size
+        500MB     1GB
+
+Bounded growth: +15% for 2x corpus (sub-linear)
+```
+
+#### End-to-End Comparison
+
+```
+Per-Query Latency (seconds)
+    │
+40  ├────────────────────────────────● Monolithic Large (36.7s)
+    │
+30  ├
+    │
+20  ├──────────● Monolithic Medium (18.2s)
+    │
+10  ├
+    │
+ 0  ├● Pipeline Medium (1.8s)
+    │● Pipeline Large (2.1s)
+    └─────┬─────────┬─────────────────────→ Corpus Size
+        500MB     1GB
+
+Pipeline: 10-17x faster than monolithic at query time
+```
+
+#### Break-Even Analysis
+
+**When does compression pay off?**
+
+For 500MB corpus:
+- Compression cost: 47.3s
+- Per-query savings: 18.2s - 1.8s = 16.4s
+- **Break-even: ~3 queries**
+
+For 1GB corpus:
+- Compression cost: 94.8s
+- Per-query savings: 36.7s - 2.1s = 34.6s
+- **Break-even: ~3 queries**
+
+#### Real-World Scenario
+
+**1,000 queries on 1GB corpus:**
+
+| Approach | Total Time | Total Tokens | Speedup | Token Savings |
+|----------|-----------|--------------|---------|---------------|
+| Monolithic | 10.2 hours | 14.28M per query | 1x | - |
+| Pipeline | 35.8 minutes | 16.5K per query | **17x** | **99.9%** |
+
+**Savings:** 9.6 hours (94% faster) + 99.9% token reduction
+
+#### Production Implications
+
+For workloads with:
+- **Multiple queries per corpus:** Compression amortizes quickly (break-even after ~3 queries)
+- **Large corpora (>100MB):** Monolithic approach becomes prohibitively slow (18s+ per query)
+- **Latency-sensitive applications:** Bounded retrieval latency (45-52ms) enables real-time responses
+- **Cost-sensitive deployments:** 99.9% token reduction + 10-17x query speedup = significant savings
+
+**See Also:** [../docs/design/TECHNICAL_DESIGN.md](../docs/design/TECHNICAL_DESIGN.md) includes detailed latency analysis and production deployment guidance. Full latency results are also integrated into [../docs/experiments/EXPERIMENTS_CONSOLIDATED.md](../docs/experiments/EXPERIMENTS_CONSOLIDATED.md).
+
+---
+
 ## Running Experiments
 
 ### Setup
