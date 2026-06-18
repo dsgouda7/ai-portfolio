@@ -9,7 +9,7 @@ from context_optimizer_benchmark import (
     query_log_cache,
     run_compression_step,
     run_pipeline_a,
-    run_pipeline_b,
+    run_pipeline_c,
 )
 
 __all__ = [
@@ -23,5 +23,5 @@ __all__ = [
     "query_log_cache",
     "run_compression_step",
     "run_pipeline_a",
-    "run_pipeline_b",
+    "run_pipeline_c",
 ]

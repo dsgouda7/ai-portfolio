@@ -1,0 +1,5 @@
+# Generated benchmark outputs
+evaluation/out/*.json
+
+# Generated publication artifacts
+docs/whitepaper/proposed-whitepaper.pdf

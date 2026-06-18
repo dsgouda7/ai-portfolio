@@ -2,31 +2,50 @@
 
 > **Core innovation:** A two-stage context architecture that decouples problem understanding (compression) from evidence gathering (retrieval), reducing token consumption from O(corpus size) to O(1) while improving failure observability.
 
-## Design Sophistication
+## Design Scope
 
-This is not "compression + retrieval" as a tactic—it's **context engineering as an architectural principle**. See [DESIGN_SOPHISTICATION.md](DESIGN_SOPHISTICATION.md) for:
-- **The inversion principle:** Use cheap compression to constrain expensive reasoning
-- **Failure mode cascade analysis:** How compression quality propagates to retrieval and diagnosis
-- **Tradeoff matrix:** Cost vs latency vs debuggability vs adaptability
-- **Scalability proof:** Token cost stays constant as corpus grows 100x (1K → 100K logs)
+The project keeps two design artifacts only:
+- **[docs/design/TECHNICAL_DESIGN.md](docs/design/TECHNICAL_DESIGN.md)** for implementation architecture, contracts, and engineering decisions.
+- **[docs/whitepaper/proposed-whitepaper.md](docs/whitepaper/proposed-whitepaper.md)** for hypothesis framing, scientific positioning, and research-style narrative.
+
+---
+
+## Documentation Map
+
+**Read this to understand the full arc — from concept to implementation to evidence:**
+
+| Document | Focus | Audience | Key Takeaway |
+|---|---|---|---|
+| **[docs/design/TECHNICAL_DESIGN.md](docs/design/TECHNICAL_DESIGN.md)** | How? | Engineers, implementers | System contracts, data model, retrieval path, operations, and implementation details |
+| **[docs/whitepaper/proposed-whitepaper.md](docs/whitepaper/proposed-whitepaper.md)** | Why / What? | Researchers, technical leads | Hypothesis-driven tri-stage architecture and modality-transfer framing |
+| **[docs/experiments/EXPERIMENTS_CONSOLIDATED.md](docs/experiments/EXPERIMENTS_CONSOLIDATED.md)** | Evidence? | Performance engineers, reviewers | Unified experiment evidence across assistant-focused benchmark families |
+
+**Quick navigation**:
+- **New to the project?** Start with [docs/design/TECHNICAL_DESIGN.md](docs/design/TECHNICAL_DESIGN.md), then read [docs/whitepaper/proposed-whitepaper.md](docs/whitepaper/proposed-whitepaper.md).
+- **Building it?** Use [docs/design/TECHNICAL_DESIGN.md](docs/design/TECHNICAL_DESIGN.md) as the implementation source of truth.
+- **Evaluating it?** Read [docs/experiments/EXPERIMENTS_CONSOLIDATED.md](docs/experiments/EXPERIMENTS_CONSOLIDATED.md) and reproduce with `python experiments/run_long_form_tests.py`.
+- **Incident deep dive?** See the incident appendix section inside [docs/experiments/EXPERIMENTS_CONSOLIDATED.md](docs/experiments/EXPERIMENTS_CONSOLIDATED.md).
+
+---
 
 ## Problem Statement
 
-**Can we quantify how much latency and prompt bloat we remove by combining input compression with on-demand log retrieval instead of sending raw incident text plus full logs to a reasoning model?**
+**Can we quantify latency and token savings from combining intent compression with on-demand retrieval, instead of sending monolithic context directly to a reasoning model?**
 
-Incident triage prompts in production are usually verbose and emotional. They include useful identifiers (IPs, service names, metrics, error codes), but those details are mixed with non-technical narration. At the same time, teams often pass entire log files to LLMs up front, which drives token cost and noise.
+Chat-assistant tasks often mix noisy user requests with large external memory corpora (documents, prior chats, policy text, and social streams). Sending all context up front increases cost and weakens relevance.
 
 This project implements two benchmarkable components:
-- **Token Compression Engine (The Edge Filter)**: rewrites raw user incident reports into a strict structured payload for downstream reasoning.
-- **Mock Logs In-Memory Cache Tool**: lets an agent fetch only relevant log fragments (`query_log_cache`) instead of ingesting the full log corpus.
+- **Token Compression Engine (The Edge Filter)**: rewrites raw user prompts into strict structured anchors for downstream reasoning.
+- **Semantic MCP Retrieval Layer**: semantically chunks growing context, indexes it in a vector store, and returns ranked evidence packs instead of raw corpus dumps.
 
-The script runs two pipelines side by side:
-- **Pipe A (baseline)**: raw prompt + full logs
-- **Pipe B (optimized)**: compressed prompt + dynamic tool-based log retrieval
+The benchmark scripts run two baselines plus the proposed solution:
+- **Pipe A (baseline)**: raw prompt + full corpus slice
+- **Pipe OOTB**: standard RAG over the same corpus
+- **Pipe C (solution)**: compressed prompt + MCP tool-driven semantic retrieval
 
-Both pipelines are timed so you can compare behavior, throughput, and payload efficiency in a repeatable way.
+Pipelines are timed so you can compare behavior, throughput, and payload efficiency in a repeatable way across incident and chat-assistant domains.
 
-## Architecture: Two-Stage Context Pipeline
+## Architecture: MCP Pull Context Pipeline
 
 ```
 User Input (rambling)
@@ -35,27 +54,29 @@ User Input (rambling)
   LLM extracts: core_issue, symptoms, technical_identifiers
   Output: 412-char Pydantic schema (99.8% reduction)
     ↓
-[STAGE 2: Targeted Retrieval]
-  Extract keywords → Query log corpus → Return context-windowed results
-  Output: 64-82 relevant log lines (93-99.9% reduction)
+[STAGE 2: Semantic Chunking + Vector Index]
+  Chunk by paragraph/log windows → preserve boundaries → embed → store with metadata
+  Output: searchable evidence store with stable retrieval contract + continuation hints
     ↓
-[STAGE 3: Reasoning]
-  LLM processes compressed schema + curated logs
-  Input: 1.4K-1.7K tokens (vs 44K raw)
+[STAGE 3: MCP Retrieval + Reasoning]
+  LLM issues retrieve_context(query, depth, service, severity)
+  Input: structured shell + ranked evidence pack
   Output: Diagnosis
 ```
 
 **Why this matters:**
 - **Token cost is O(1)**, not O(corpus size)—constant even at 100K logs
-- **Failures are observable**—compression validates schema, retrieval shows no matches
+- **Failures are observable**—compression validates schema, MCP retrieval returns scored evidence and explicit empty-set responses
 - **Stages are decoupled**—optimize compression independently from retrieval
 - **Inversion principle**—use cheap operation (compression) to optimize expensive operation (reasoning)
+- **Tool-aware reasoning**—the model is explicitly taught how retrieval works, what scores mean, and when to refine its query
+- **Boundary-preserving storage**—stored chunks retain original span metadata and signal when adjacent context may be required
 
-See [ARCHITECTURE_DIAGRAMS.txt](ARCHITECTURE_DIAGRAMS.txt) for visual comparisons with monolithic approaches.
+See [docs/design/ARCHITECTURE_DIAGRAMS.txt](docs/design/ARCHITECTURE_DIAGRAMS.txt) for visual comparisons with monolithic approaches.
 
 > **Engineering benchmark project** - this is designed as a practical harness for comparing context optimization strategies, not a toy notebook.
 >
-> **What is included:** provider abstraction for Ollama vs Groq, strict schema output for compression, realistic in-memory log corpus (~1,000 lines), LangChain tool wiring, and run-level telemetry.
+> **What is included:** provider abstraction for Ollama vs Groq, strict schema output for compression, deterministic corpora for incident + chat-assistant suites, LangChain tool wiring, and run-level telemetry.
 >
 > **What is intentionally mocked:** no external observability backend is required; the cache is in-process to isolate prompt strategy effects.
 
@@ -164,15 +185,19 @@ Model defaults are provider-aware and can be overridden via CLI flags or env var
 - Primary path: `with_structured_output(PydanticModel)`
 - Fallback path: explicit `PydanticOutputParser`
 
-### Component 2: In-memory log retrieval tool
+### Component 2: Semantic MCP retrieval tool
 
 - Builds a deterministic mock log cache with 1,050 lines.
+- Semantically chunks the corpus and indexes chunks in a vector backend.
+- Preserves original chunk boundaries and stores `prev_chunk_id`, `next_chunk_id`, and continuation flags.
+- Uses Chroma for local persistence when available, with an in-memory fallback for deterministic mock runs.
 - Injects realistic patterns:
   - CosmosDB timeout events (`substatus=21012`)
   - AKS ingress warnings (`upstream timed out while reading response header`)
   - stack traces (`CosmosClient.ReadItemAsync`, `PaymentConnector.SubmitAsync`)
-- Exposes a LangChain standard tool:
-  - `query_log_cache(keyword: str, lines_context: int = 5)`
+- Exposes a tool-oriented retrieval contract:
+  - `retrieve_context(query: str, depth: str = "brief", service: str | None = None, severity: str | None = None)`
+  - Returned chunks include boundary metadata (`boundary_preserved`, `needs_prev_chunk`, `needs_next_chunk`) so the reasoning model can detect truncated local evidence.
 
 ## Telemetry emitted each run
 
@@ -183,8 +208,8 @@ Model defaults are provider-aware and can be overridden via CLI flags or env var
 | `char_savings` | Absolute and percentage reduction |
 | `compression_latency_s` | Compression step latency using `time.perf_counter()` |
 | `pipe_a_reasoning_s` | Baseline reasoning latency |
-| `pipe_b_reasoning_s` | Optimized reasoning latency (includes tool calls) |
-| `pipe_b_tool_calls` | Number of retrieval calls made by the optimized pipeline |
+| `pipe_c_reasoning_s` | Optimized reasoning latency (includes MCP tool calls) |
+| `pipe_c_tool_calls` | Number of retrieval calls made by the optimized pipeline |
 
 ## How to compare results
 
@@ -192,8 +217,13 @@ Model defaults are provider-aware and can be overridden via CLI flags or env var
 2. Inspect the final telemetry block.
 3. Validate:
    - Compression savings are meaningful (raw vs compressed chars).
-   - Pipe B reaches similar or better diagnosis quality while consuming less upfront context.
+  - Pipe C reaches similar or better diagnosis quality while consuming bounded retrieved context.
    - Tool calls are focused (few, high-signal retrievals).
+
+## Experiment Reports
+
+- `docs/experiments/EXPERIMENTS_CONSOLIDATED.md` is the single canonical experiment report.
+- `experiments/run_all_experiments.py` updates the incident benchmark appendix section inside `docs/experiments/EXPERIMENTS_CONSOLIDATED.md`.
 
 ## Project files
 

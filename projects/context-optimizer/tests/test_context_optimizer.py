@@ -6,7 +6,7 @@ from context_optimizer_benchmark import (
     query_log_cache,
     run_compression_step,
     run_pipeline_a,
-    run_pipeline_b,
+    run_pipeline_c,
 )
 
 
@@ -38,7 +38,7 @@ class ContextOptimizerTests(unittest.TestCase):
 
     def test_pipeline_optimized_mock(self):
         compressed, _ = run_compression_step(None, "AKS timeout 21012 with CosmosDB retries", "mock")
-        output, latency, tool_calls, retrieved_lines = run_pipeline_b(None, compressed, "mock")
+        output, latency, tool_calls, retrieved_lines = run_pipeline_c(None, compressed, "mock")
         self.assertIn("Most likely root cause", output)
         self.assertGreaterEqual(latency, 0.0)
         self.assertGreater(tool_calls, 0)

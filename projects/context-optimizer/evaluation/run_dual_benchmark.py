@@ -149,6 +149,10 @@ def _animate_bars(
 
 
 def create_animations(raw: dict, optimized: dict) -> None:
+    opt_reasoning = float(optimized.get("pipe_c_reasoning_s", 0.0))
+    opt_log_lines = float(optimized.get("pipe_c_log_lines", 0))
+    opt_tool_calls = float(optimized.get("pipe_c_tool_calls", 0))
+
     _animate_bars(
         labels=["Reasoning(s)", "Wall(s)", "Lines Processed"],
         raw_values=[
@@ -157,9 +161,9 @@ def create_animations(raw: dict, optimized: dict) -> None:
             float(raw.get("pipe_a_log_lines", 0)),
         ],
         opt_values=[
-            float(optimized.get("pipe_b_reasoning_s", 0.0)),
+            opt_reasoning,
             float(optimized.get("container_wall_time_s", 0.0)),
-            float(optimized.get("pipe_b_log_lines", 0)),
+            opt_log_lines,
         ],
         title="CPU Benchmark Metrics: Raw vs Optimized",
         ylabel="Value",
@@ -176,7 +180,7 @@ def create_animations(raw: dict, optimized: dict) -> None:
         opt_values=[
             float(optimized.get("compressed_char_count", 0)),
             float(optimized.get("compression_latency_s", 0.0)),
-            float(optimized.get("pipe_b_tool_calls", 0)),
+            opt_tool_calls,
         ],
         title="Architectural Difference Signals",
         ylabel="Value",
@@ -185,8 +189,12 @@ def create_animations(raw: dict, optimized: dict) -> None:
 
 
 def write_report(raw: dict, optimized: dict) -> None:
+    opt_reasoning = float(optimized.get("pipe_c_reasoning_s", 0.0))
+    opt_log_lines = float(optimized.get("pipe_c_log_lines", 0))
+    opt_tool_calls = int(optimized.get("pipe_c_tool_calls", 0))
+
     raw_lines = float(raw.get("pipe_a_log_lines", 1))
-    opt_lines = float(max(1, optimized.get("pipe_b_log_lines", 1)))
+    opt_lines = float(max(1, opt_log_lines))
     line_reduction = ((raw_lines - opt_lines) / raw_lines) * 100.0 if raw_lines else 0.0
 
     raw_wall = float(raw.get("container_wall_time_s", 0.0))
@@ -209,10 +217,10 @@ def write_report(raw: dict, optimized: dict) -> None:
         | Metric | Raw Context | Optimized | Delta |
         |---|---:|---:|---:|
         | Container wall time (s) | {raw_wall:.4f} | {opt_wall:.4f} | {wall_delta:.4f} |
-        | Reasoning latency (s) | {float(raw.get('pipe_a_reasoning_s', 0.0)):.4f} | {float(optimized.get('pipe_b_reasoning_s', 0.0)):.4f} | {float(raw.get('pipe_a_reasoning_s', 0.0)) - float(optimized.get('pipe_b_reasoning_s', 0.0)):.4f} |
+        | Reasoning latency (s) | {float(raw.get('pipe_a_reasoning_s', 0.0)):.4f} | {opt_reasoning:.4f} | {float(raw.get('pipe_a_reasoning_s', 0.0)) - opt_reasoning:.4f} |
         | Prompt chars | {int(raw.get('raw_char_count', 0))} | {int(optimized.get('compressed_char_count', 0))} | {int(raw.get('raw_char_count', 0)) - int(optimized.get('compressed_char_count', 0))} |
-        | Log lines touched | {int(raw.get('pipe_a_log_lines', 0))} | {int(optimized.get('pipe_b_log_lines', 0))} | {line_reduction:.2f}% reduction |
-        | Tool calls | 0 | {int(optimized.get('pipe_b_tool_calls', 0))} | +{int(optimized.get('pipe_b_tool_calls', 0))} |
+        | Log lines touched | {int(raw.get('pipe_a_log_lines', 0))} | {int(opt_log_lines)} | {line_reduction:.2f}% reduction |
+        | Tool calls | 0 | {opt_tool_calls} | +{opt_tool_calls} |
 
         ## Animated charts
 

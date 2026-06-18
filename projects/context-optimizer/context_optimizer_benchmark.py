@@ -392,7 +392,7 @@ def _execute_tool_call(tool_call: dict[str, Any]) -> str:
     return "Invalid args for query_log_cache"
 
 
-def run_pipeline_b(
+def run_pipeline_c(
     reasoning_llm: BaseChatModel | None,
     compressed: CompressedIncident,
     provider: str,
@@ -497,15 +497,15 @@ def print_telemetry(
     print(f"char_savings:          {saved_chars} ({saved_pct:.2f}% reduction)")
     print(f"compression_latency_s: {compression_latency_s:.4f}")
     print(f"pipe_a_reasoning_s:    {baseline_reasoning_latency_s:.4f}")
-    print(f"pipe_b_reasoning_s:    {optimized_reasoning_latency_s:.4f}")
-    print(f"pipe_b_tool_calls:     {tool_calls}")
+    print(f"pipe_c_reasoning_s:    {optimized_reasoning_latency_s:.4f}")
+    print(f"pipe_c_tool_calls:     {tool_calls}")
     print(f"pipe_a_log_lines:      {raw_log_lines_processed}")
-    print(f"pipe_b_log_lines:      {optimized_log_lines_retrieved}")
+    print(f"pipe_c_log_lines:      {optimized_log_lines_retrieved}")
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Benchmark Token Compression + In-Memory Log Retrieval (Pipe A vs Pipe B)."
+        description="Benchmark Token Compression + In-Memory Log Retrieval (Pipe A vs Pipe C)."
     )
     parser.add_argument(
         "--provider",
@@ -575,7 +575,7 @@ def main() -> None:
     compressed: CompressedIncident | None = None
     compression_latency = 0.0
     pipe_a_latency = 0.0
-    pipe_b_latency = 0.0
+    pipe_c_latency = 0.0
     tool_calls = 0
     raw_lines = 0
     optimized_lines = 0
@@ -598,13 +598,13 @@ def main() -> None:
     if args.pipeline in {"both", "optimized"}:
         if compressed is None:
             raise RuntimeError("compressed payload is required for optimized pipeline")
-        pipe_b_output, pipe_b_latency, tool_calls, optimized_lines = run_pipeline_b(
+        pipe_c_output, pipe_c_latency, tool_calls, optimized_lines = run_pipeline_c(
             reasoning_llm,
             compressed,
             config.provider,
         )
-        print_section("Pipe B - Optimized (Compressed Prompt + query_log_cache Tool)")
-        print(pipe_b_output)
+        print_section("Pipe C - Optimized (Compressed Prompt + query_log_cache Tool)")
+        print(pipe_c_output)
 
     if compressed is None:
         compressed = CompressedIncident(
@@ -618,7 +618,7 @@ def main() -> None:
         compressed=compressed,
         compression_latency_s=compression_latency,
         baseline_reasoning_latency_s=pipe_a_latency,
-        optimized_reasoning_latency_s=pipe_b_latency,
+        optimized_reasoning_latency_s=pipe_c_latency,
         tool_calls=tool_calls,
         raw_log_lines_processed=raw_lines,
         optimized_log_lines_retrieved=optimized_lines,
@@ -635,10 +635,10 @@ def main() -> None:
         "compressed_char_count": len(compressed.model_dump_json()),
         "compression_latency_s": compression_latency,
         "pipe_a_reasoning_s": pipe_a_latency,
-        "pipe_b_reasoning_s": pipe_b_latency,
-        "pipe_b_tool_calls": tool_calls,
+        "pipe_c_reasoning_s": pipe_c_latency,
+        "pipe_c_tool_calls": tool_calls,
         "pipe_a_log_lines": raw_lines,
-        "pipe_b_log_lines": optimized_lines,
+        "pipe_c_log_lines": optimized_lines,
     }
 
     if args.metrics_json:

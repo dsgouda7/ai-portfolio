@@ -34,7 +34,7 @@ from context_optimizer_benchmark import (
 
 def generate_diverse_logs(total_lines: int, seed: int = 42) -> list[str]:
     """Generate realistic, diverse logs with multiple service patterns.
-    
+
     Scales beyond the original 1050-line mock to 10K, 50K, 100K+ lines.
     Includes: errors, warnings, traces, metrics, retries, timeouts, etc.
     """
@@ -47,23 +47,23 @@ def generate_diverse_logs(total_lines: int, seed: int = 42) -> list[str]:
         "recommendation-service", "notification-service", "auth-service",
         "search-service", "cart-service", "shipping-service",
     ]
-    
+
     pod_names = [
         "order-service-7f4b9d7b9f-k2m8q", "order-service-7f4b9d7b9f-r5vpl",
         "payment-service-69c57c6b9b-dj2nr", "api-gateway-6f9dddc75f-n7k4m",
         "ingress-nginx-controller-5f89d4c4bf-v8z2s",
         "inventory-service-8a3c5d9e2a-x9m3p", "search-service-4b2e7f1a9c-q8r2k",
     ]
-    
+
     endpoints = [
         "/v1/checkout", "/v1/orders", "/v1/payments", "/v1/inventory",
         "/v1/recommendations", "/v1/search", "/v1/auth", "/v1/cart",
     ]
-    
+
     error_codes = [
         21012, 408, 429, 500, 503, 504, 502, 401, 403, 400,
     ]
-    
+
     ips = [f"10.42.{random.randint(1, 255)}.{random.randint(1, 255)}" for _ in range(20)]
     request_ids = [f"req-{i:08d}" for i in range(total_lines)]
 
@@ -73,7 +73,7 @@ def generate_diverse_logs(total_lines: int, seed: int = 42) -> list[str]:
         pod = random.choice(pod_names)
         request_id = request_ids[i]
         endpoint = random.choice(endpoints)
-        
+
         # Deterministic patterns to ensure relevant hits exist
         if i % 127 == 0:  # CosmosDB timeout errors
             logs.append(
@@ -130,7 +130,7 @@ def generate_diverse_logs(total_lines: int, seed: int = 42) -> list[str]:
                 f"latency_ms={random.randint(10, 300)} "
                 f"db_calls={random.randint(1, 8)}"
             )
-    
+
     return logs[:total_lines]
 
 
@@ -140,7 +140,7 @@ def search_logs(logs: list[str], keyword: str, lines_context: int = 5) -> list[s
     ctx = max(0, min(lines_context, 25))
     max_hits = 8
     hits: list[str] = []
-    
+
     for idx, line in enumerate(logs):
         if needle in line.lower():
             start = max(0, idx - ctx)
@@ -149,31 +149,31 @@ def search_logs(logs: list[str], keyword: str, lines_context: int = 5) -> list[s
                 hits.append(logs[j])
             if len(hits) >= max_hits * (lines_context + 1):
                 break
-    
+
     return hits[:max_hits * (lines_context + 1)]
 
 
 def benchmark_scale(log_sizes: list[int], provider: str = "mock") -> dict[str, Any]:
     """Run both pipelines at multiple log scales and collect results."""
     results = {}
-    
+
     for size in log_sizes:
         print(f"\n{'='*70}")
         print(f"SCALE TEST: {size:,} log lines")
         print(f"{'='*70}")
-        
+
         # Generate large log corpus
         print(f"Generating {size:,} diverse log lines...", end=" ", flush=True)
         start = time.perf_counter()
         logs = generate_diverse_logs(size, seed=42)
         gen_time = time.perf_counter() - start
         print(f"✓ ({gen_time:.3f}s)")
-        
+
         # Measure raw payload size
         raw_payload = MOCK_INCIDENT_PROMPT + "\n\n" + "\n".join(logs)
         raw_chars = len(raw_payload)
         print(f"Raw payload: {raw_chars:,} chars ({raw_chars/1024:.1f} KB)")
-        
+
         # Simulate compression (using mock)
         print(f"Simulating compression (mock)...", end=" ", flush=True)
         start = time.perf_counter()
@@ -195,10 +195,10 @@ def benchmark_scale(log_sizes: list[int], provider: str = "mock") -> dict[str, A
         comp_time = time.perf_counter() - start
         comp_savings = 100 * (1 - comp_chars / raw_chars)
         print(f"✓ ({comp_time:.3f}s, {comp_chars:,} chars, {comp_savings:.1f}% reduction)")
-        
-        # Simulate tool-based retrieval (Pipe B)
+
+        # Simulate tool-based retrieval (Pipe C)
         # Use keyword search to find relevant logs
-        print(f"Simulating targeted retrieval (Pipe B)...", end=" ", flush=True)
+        print(f"Simulating targeted retrieval (Pipe C)...", end=" ", flush=True)
         start = time.perf_counter()
         queries = ["timeout", "cosmos", "error", "504"]  # Keywords from incident
         retrieved_lines = []
@@ -216,13 +216,13 @@ def benchmark_scale(log_sizes: list[int], provider: str = "mock") -> dict[str, A
         retrieved_count = len(unique_retrieved)
         retrieval_savings = 100 * (1 - retrieved_count / size)
         print(f"✓ ({retrieval_time:.3f}s, {retrieved_count:,} lines, {retrieval_savings:.1f}% reduction)")
-        
+
         # Estimate token cost (rough: 4 chars ≈ 1 token)
         raw_tokens = raw_chars // 4
         comp_tokens = comp_chars // 4
         retrieval_chars = comp_chars + (retrieved_count * 80)  # ~80 chars per log line avg
         retrieval_tokens = retrieval_chars // 4
-        
+
         results[f"{size}_lines"] = {
             "log_lines": size,
             "raw_payload_chars": raw_chars,
@@ -237,12 +237,12 @@ def benchmark_scale(log_sizes: list[int], provider: str = "mock") -> dict[str, A
             "retrieval_tokens_estimate": retrieval_tokens,
             "token_savings_vs_raw_percent": 100 * (1 - retrieval_tokens / raw_tokens),
         }
-        
+
         print(f"\nToken Cost Estimate (4 chars = 1 token):")
         print(f"  Pipe A (raw):       {raw_tokens:,} tokens")
-        print(f"  Pipe B (retrieved): {retrieval_tokens:,} tokens")
+        print(f"  Pipe C (retrieved): {retrieval_tokens:,} tokens")
         print(f"  Savings:            {100 * (1 - retrieval_tokens / raw_tokens):.1f}%")
-    
+
     return results
 
 
@@ -252,27 +252,27 @@ def main():
     print("CONTEXT-OPTIMIZER SCALABILITY TEST")
     print("Proving the design pattern (compression + retrieval) works at scale")
     print("=" * 70)
-    
+
     # Test at increasing scales
     scales = [1_000, 10_000, 50_000, 100_000]
-    
+
     try:
         results = benchmark_scale(scales, provider="mock")
     except KeyboardInterrupt:
         print("\n[Interrupted]")
         return
-    
+
     # Write results
     output_path = Path(__file__).parent / "evaluation" / "out" / "scalability_results.json"
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    
+
     with open(output_path, "w") as f:
         json.dump(results, f, indent=2)
-    
+
     print(f"\n{'='*70}")
     print(f"Results saved to {output_path}")
     print(f"{'='*70}")
-    
+
     # Print summary
     print("\nSCALABILITY SUMMARY:")
     print(f"{'Logs':<12} {'Raw Chars':<14} {'Compression':<14} {'Retrieval':<14} {'Token Savings':<14}")

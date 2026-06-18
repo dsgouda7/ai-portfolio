@@ -1,14 +1,4 @@
-#!/usr/bin/env python3
-"""
-Generate ASCII and text diagrams for context-optimizer architecture documentation.
-"""
 
-import json
-from pathlib import Path
-
-def diagram_comparison():
-    """Monolithic vs Staged architecture."""
-    print("""
 ╔════════════════════════════════════════════════════════════════════════════════╗
 ║                    ARCHITECTURE COMPARISON: Monolithic vs Staged                 ║
 ╚════════════════════════════════════════════════════════════════════════════════╝
@@ -51,12 +41,10 @@ def diagram_comparison():
 └─────────────────────────────────────────┘   └─────────────────────────────────────────┘
     44K tokens → Monolithic LLM                 bounded evidence pack → Reasoning LLM
     1 call, unknown quality              1 compression call + tool loop + reasoning, measurable
-""")
 
 
-def diagram_token_flow():
-    """Token cost flow at different scales."""
-    print("""
+
+
 ╔════════════════════════════════════════════════════════════════════════════════╗
 ║             TOKEN SCALING HYPOTHESIS (ILLUSTRATIVE, NOT PRODUCTION)            ║
 ╚════════════════════════════════════════════════════════════════════════════════╝
@@ -95,12 +83,10 @@ SAVINGS CURVE:
 │ Note: values are benchmark-style illustrations for architecture comparison. │
 │ Validate with current experiment runs before using as production guidance.  │
 └──────────────────────────────────────────────────────────────────────────────┘
-""")
 
 
-def diagram_failure_modes():
-    """Failure mode analysis."""
-    print("""
+
+
 ╔════════════════════════════════════════════════════════════════════════════════╗
 ║                    FAILURE MODE CASCADE & MITIGATION                            ║
 ╚════════════════════════════════════════════════════════════════════════════════╝
@@ -140,12 +126,10 @@ MITIGATION (in our schema):
 │ Result: Compression is FORCED to preserve critical tokens                 │
 │ by schema validation, not just prompt engineering hope.                   │
 └─────────────────────────────────────────────────────────────────────────────┘
-""")
 
 
-def diagram_complexity_dimensions():
-    """Complexity across multiple dimensions."""
-    print("""
+
+
 ╔════════════════════════════════════════════════════════════════════════════════╗
 ║                DESIGN TRADEOFFS: WHY THIS ISN'T JUST PROMPT TUNING             ║
 ╚════════════════════════════════════════════════════════════════════════════════╝
@@ -208,12 +192,10 @@ Dimension 4: TRADEOFF ANALYSIS
 │                                                                            │
 │ The user chooses which dimension matters: cost vs speed vs debuggability  │
 └──────────────────────────────────────────────────────────────────────────────┘
-""")
 
 
-def diagram_inversion_principle():
-    """The key design inversion."""
-    print("""
+
+
 ╔════════════════════════════════════════════════════════════════════════════════╗
 ║              THE DESIGN INVERSION: The Core Novelty                             ║
 ╚════════════════════════════════════════════════════════════════════════════════╝
@@ -271,48 +253,4 @@ Why This Matters:
 │                                                                              │
 │ Context-optimizer demonstrates this principle in an LLM context.           │
 └──────────────────────────────────────────────────────────────────────────────┘
-""")
 
-
-def main():
-    """Print all diagrams."""
-    import sys
-    import locale
-    from io import StringIO
-
-    def capture(diagram_fn) -> str:
-        old_stdout = sys.stdout
-        buffer = StringIO()
-        try:
-            sys.stdout = buffer
-            diagram_fn()
-            return buffer.getvalue()
-        finally:
-            sys.stdout = old_stdout
-
-    sections = [
-        capture(diagram_comparison),
-        capture(diagram_token_flow),
-        capture(diagram_failure_modes),
-        capture(diagram_complexity_dimensions),
-        capture(diagram_inversion_principle),
-    ]
-
-    # Save to markdown file for documentation
-    output_path = Path(__file__).parent / "docs" / "design" / "ARCHITECTURE_DIAGRAMS.txt"
-    content = "\n\n".join(sections)
-    with open(output_path, "w", encoding="utf-8") as f:
-        f.write(content)
-
-    # Best-effort console output; avoid failing when terminal encoding can't render box chars.
-    try:
-        print(content)
-    except UnicodeEncodeError:
-        safe_encoding = locale.getpreferredencoding(False) or "utf-8"
-        print(content.encode(safe_encoding, errors="replace").decode(safe_encoding, errors="replace"))
-
-    print(f"\n✓ Diagrams saved to {output_path}")
-
-
-if __name__ == "__main__":
-    main()
