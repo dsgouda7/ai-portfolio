@@ -1221,8 +1221,8 @@ Complex reasoning tasks requiring multi-hop synthesis, causal analysis, counterf
 
 #### Gutenberg Multi-Hop Reasoning
 
-**Reasoning Type:** multi-hop  
-**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` (5.9 MB)  
+**Reasoning Type:** multi-hop
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` (5.9 MB)
 **Corpus Lines:** 6,119
 
 | Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
@@ -1231,8 +1231,8 @@ Complex reasoning tasks requiring multi-hop synthesis, causal analysis, counterf
 
 #### Excel Multi-Hop Reasoning (500MB)
 
-**Reasoning Type:** multi-hop  
-**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_500mb.xlsx` (429.4 MB)  
+**Reasoning Type:** multi-hop
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_500mb.xlsx` (429.4 MB)
 **Corpus Lines:** 250,000
 
 | Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
@@ -1241,8 +1241,8 @@ Complex reasoning tasks requiring multi-hop synthesis, causal analysis, counterf
 
 #### Gutenberg Causal Reasoning
 
-**Reasoning Type:** causal  
-**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` (5.9 MB)  
+**Reasoning Type:** causal
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` (5.9 MB)
 **Corpus Lines:** 6,119
 
 | Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
@@ -1251,8 +1251,8 @@ Complex reasoning tasks requiring multi-hop synthesis, causal analysis, counterf
 
 #### Excel Causal Reasoning (500MB)
 
-**Reasoning Type:** causal  
-**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_500mb.xlsx` (429.4 MB)  
+**Reasoning Type:** causal
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_500mb.xlsx` (429.4 MB)
 **Corpus Lines:** 250,000
 
 | Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
@@ -1276,8 +1276,8 @@ Complex reasoning tasks requiring multi-hop synthesis, causal analysis, counterf
 
 #### Gutenberg Multi-Hop Reasoning
 
-**Reasoning Type:** multi-hop  
-**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` (5.9 MB)  
+**Reasoning Type:** multi-hop
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\gutenberg\combined_gutenberg.txt` (5.9 MB)
 **Corpus Lines:** 6,119
 
 | Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
@@ -1286,8 +1286,8 @@ Complex reasoning tasks requiring multi-hop synthesis, causal analysis, counterf
 
 #### Excel Multi-Hop Reasoning (500MB)
 
-**Reasoning Type:** multi-hop  
-**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_500mb.xlsx` (429.4 MB)  
+**Reasoning Type:** multi-hop
+**Source:** `C:\repos\ai-portfolio\projects\context-optimizer\data\large_corpus\excel\mock_500mb.xlsx` (429.4 MB)
 **Corpus Lines:** 250,000
 
 | Question | Mono Tokens | Pipe C Tokens | Reduction | Tool Calls | Retrieved |
