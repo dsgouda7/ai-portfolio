@@ -18,20 +18,24 @@
 
 | Metric | Value |
 |--------|-------|
-| **Token Reduction** | 99.84-100% vs monolithic |
-| **Quality (F1)** | 0.70-0.76 |
+| **Token Reduction** | 97.8% (improved quality) / 99.9% (aggressive) |
+| **Quality (F1)** | **0.80-0.86** (improved) / 0.70-0.77 (aggressive) |
 | **Query Speedup** | 10-17x faster than monolithic |
 | **Retrieval Latency** | 45-52ms (bounded) |
-| **Break-Even** | ~3 queries |
-| **Corpus Scale** | Up to 1GB (250K lines) |
-| **Compression Ratio** | 5.1:1 (base) to 1,011:1 (selective) |
+| **Break-Even** | 2.4 queries (improved) / 3 queries (aggressive) |
+| **Corpus Scale** | Up to 1GB (1.75M lines) |
+| **Compression Ratio** | 45:1 (improved quality) / 1,000:1 (aggressive) |
 | **Reasoning Patterns** | 8 sophisticated types validated |
+| **Domain Use Cases** | 7 production scenarios (20-114x ROI) |
+| **Quality Improvement** | +12% F1 for -2.1% token reduction trade-off |
+
+**Note:** "Improved quality" settings use less aggressive compression (512→150 tokens), 25% chunk overlap, and enhanced metadata. All 7 domains now exceed 0.80 F1 production threshold.
 
 ### Architecture
 
 **Three stages:**
-1. **Rolling Compression** (512-token threshold → 50-token summaries)
-2. **Dual Storage** (compressed index + raw vault)
+1. **Rolling Compression** (512-token threshold → **150-token** summaries for quality / 50-token for aggressive)
+2. **Dual Storage** (compressed index + raw vault + **25% chunk overlap**)
 3. **MCP Pull Retrieval** (get_context + get_context_details)
 
 ### Running Experiments
@@ -45,6 +49,7 @@ python run_large_corpus_benchmarks.py        # GB-scale
 python run_complex_reasoning_benchmarks.py   # 5 reasoning types
 python run_advanced_reasoning.py             # 8 reasoning types
 python run_latency_benchmarks.py             # Latency measurements (500MB & 1GB)
+python run_domain_benchmarks.py              # 7 domain-specific use cases (100MB-1GB)
 ```
 
 ---
@@ -63,7 +68,8 @@ python run_latency_benchmarks.py             # Latency measurements (500MB & 1GB
 
 ## Documentation
 
-- **[EXPERIMENTS_GUIDE.md](EXPERIMENTS_GUIDE.md)** - Complete experiment documentation with latency benchmarks
+- **[EXPERIMENTS_GUIDE.md](EXPERIMENTS_GUIDE.md)** - Complete experiment documentation with latency benchmarks and domain use cases
+- **[DOMAIN_USE_CASE_RESULTS.md](DOMAIN_USE_CASE_RESULTS.md)** - 7 real-world domain validations (18-138x ROI)
 - **[../docs/design/COMPRESSION_ARCHITECTURE.md](../docs/design/COMPRESSION_ARCHITECTURE.md)** - Compression pipeline spec
 - **[../docs/design/TECHNICAL_DESIGN.md](../docs/design/TECHNICAL_DESIGN.md)** - System architecture with performance analysis
 - **[../docs/whitepaper/proposed-whitepaper.md](../docs/whitepaper/proposed-whitepaper.md)** - Theoretical foundation with validation results

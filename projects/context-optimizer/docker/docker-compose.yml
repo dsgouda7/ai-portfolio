@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  # Main compression service
+  context-optimizer:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: context-optimizer:latest
+    container_name: context-optimizer-service
+    environment:
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - ../data:/app/data:ro          # Read-only corpus data
+      - ../results:/app/results:rw    # Results output
+      - type: bind
+        source: ../src/context_optimizer
+        target: /app/context_optimizer
+        read_only: true
+    ports:
+      - "8000:8000"                   # API port (if service mode)
+    networks:
+      - optimizer-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import context_optimizer"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Test runner (on-demand)
+  test-runner:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.tests
+    image: context-optimizer-tests:latest
+    container_name: context-optimizer-tests
+    environment:
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - PYTHONPATH=/app/src:/app
+    volumes:
+      - ../src:/app/src:ro
+      - ../pipeline:/app/pipeline:ro
+      - ../benchmarks:/app/benchmarks:ro
+      - ../tests:/app/tests:ro
+      - ../test_results:/app/test_results:rw
+      - ../benchmark_results:/app/benchmark_results:rw
+      - ../coverage:/app/coverage:rw
+    networks:
+      - optimizer-network
+    profiles:
+      - testing                       # Only start with --profile testing
+    command: pytest tests/ -v --cov=context_optimizer --cov-report=html:/app/coverage
+
+  # Ollama service (optional - if not running on host)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama-service
+    volumes:
+      - ollama-data:/root/.ollama
+    ports:
+      - "11434:11434"
+    networks:
+      - optimizer-network
+    profiles:
+      - llm                           # Only start with --profile llm
+
+networks:
+  optimizer-network:
+    driver: bridge
+    name: context-optimizer-net
+
+volumes:
+  ollama-data:
+    name: ollama-models
+
+# Usage:
+#
+# Start service only:
+#   docker-compose up context-optimizer
+#
+# Run tests:
+#   docker-compose --profile testing run test-runner
+#
+# Start with Ollama:
+#   docker-compose --profile llm up
+#
+# Run specific benchmark:
+#   docker-compose --profile testing run test-runner python benchmarks/tot/run_fast_tot_benchmarks.py
+#
+# Interactive shell in test container:
+#   docker-compose --profile testing run test-runner /bin/bash
+#
+# Build all images:
+#   docker-compose build
+#
+# Clean up:
+#   docker-compose down -v

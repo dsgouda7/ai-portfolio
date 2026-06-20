@@ -1,0 +1,81 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+test_results/
+benchmark_results/
+coverage/
+
+# Data and results (copied via volumes)
+data/
+results/
+experiments/temp_results/
+experiments/test_data/
+experiments/multimedia_data/
+
+# Documentation build
+docs/_build/
+site/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Logs
+*.log
+logs/
+
+# Old structure (being phased out)
+experiments/
+context_optimizer/
+evaluation/
+
+# Temporary files
+*.tmp
+*.bak
+reorganization_log.txt
+REORGANIZATION_PLAN.md
+reorganize.ps1
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Environment files
+.env
+.env.local

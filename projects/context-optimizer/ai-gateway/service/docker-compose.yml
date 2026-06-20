@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  # Context Optimizer AI Gateway
+  gateway:
+    build:
+      context: ../..
+      dockerfile: ai-gateway/service/Dockerfile
+    image: context-optimizer-gateway:latest
+    container_name: ai-gateway
+    environment:
+      # LLM Provider API Keys (set in .env file)
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - AZURE_API_KEY=${AZURE_API_KEY:-}
+
+      # Ollama (local LLM)
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://ollama:11434}
+
+      # Redis cache
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+
+      # Gateway config
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - COMPRESSION_THRESHOLD=${COMPRESSION_THRESHOLD:-2000}
+    ports:
+      - "8080:8080"
+    networks:
+      - gateway-network
+    depends_on:
+      - redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Redis (Semantic Cache)
+  redis:
+    image: redis:7-alpine
+    container_name: gateway-redis
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    networks:
+      - gateway-network
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # Ollama (Optional - Local LLM)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: gateway-ollama
+    ports:
+      - "11434:11434"
+    networks:
+      - gateway-network
+    volumes:
+      - ollama-data:/root/.ollama
+    restart: unless-stopped
+    profiles:
+      - local-llm
+
+networks:
+  gateway-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+  ollama-data:

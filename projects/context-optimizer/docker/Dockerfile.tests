@@ -1,0 +1,54 @@
+# Dockerfile for running tests and benchmarks
+# Includes all development dependencies
+
+FROM python:3.11-slim
+
+LABEL maintainer="deepaksha"
+LABEL description="Context Optimizer - Test and Benchmark Runner"
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements.txt .
+
+# Install Python dependencies + test frameworks
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir \
+    pytest>=7.4.0 \
+    pytest-cov>=4.1.0 \
+    pytest-asyncio>=0.21.0 \
+    black>=23.0.0 \
+    flake8>=6.0.0 \
+    mypy>=1.4.0
+
+# Copy entire codebase
+COPY src/ ./src/
+COPY pipeline/ ./pipeline/
+COPY benchmarks/ ./benchmarks/
+COPY tests/ ./tests/
+COPY pyproject.toml .
+COPY README.md .
+
+# Set environment
+ENV PYTHONPATH=/app/src:/app:$PYTHONPATH
+ENV PYTHONUNBUFFERED=1
+
+# Create directories for test outputs
+RUN mkdir -p /app/test_results /app/benchmark_results /app/coverage
+
+# Set working directory for tests
+WORKDIR /app
+
+# Default command runs all tests
+CMD ["pytest", "tests/", "-v", "--cov=context_optimizer", "--cov-report=html:/app/coverage", "--cov-report=term"]
+
+# Alternative commands:
+# Run specific benchmarks: docker run context-optimizer-tests python benchmarks/text/run_compression_benchmark.py
+# Run ToT tests: docker run context-optimizer-tests python benchmarks/tot/run_fast_tot_benchmarks.py
+# Run with shell: docker run -it context-optimizer-tests /bin/bash
