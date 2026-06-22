@@ -299,17 +299,25 @@ class CachedChromaRetriever:
 
             ids = [chunk.chunk_id for chunk in batch]
             documents = [chunk.compressed_summary for chunk in batch]
+            def _safe_meta(v):
+                """ChromaDB 0.5+ only accepts str/int/float/bool metadata values."""
+                if isinstance(v, (str, int, float, bool)):
+                    return v
+                if isinstance(v, (list, tuple)):
+                    return ",".join(str(x) for x in v)
+                return str(v) if v is not None else ""
+
             metadatas = [
                 {
                     "entities": ",".join(chunk.entities),
                     "keywords": ",".join(chunk.keywords),
                     "original_tokens": chunk.original_tokens,
                     "compressed_tokens": chunk.compressed_tokens,
-                    "compression_ratio": chunk.compression_ratio,
+                    "compression_ratio": float(chunk.compression_ratio),
                     # Pointer model: raw text stored but NOT indexed in the vector space.
                     # Fetched on demand via get_chunk_by_id(); keeps the index 10x smaller.
                     "raw_text": chunk.raw_text[:4000],
-                    **chunk.metadata
+                    **{k: _safe_meta(v) for k, v in chunk.metadata.items()},
                 }
                 for chunk in batch
             ]
