@@ -1,11 +1,10 @@
 import sys
-from pathlib import Path
 import unittest.mock
+from pathlib import Path
 from unittest.mock import MagicMock
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "benchmarks"))
 import incident_benchmark as bench
-
 from incident_benchmark import (
     CompressedIncident,
     build_comparison_metrics,

@@ -9,6 +9,9 @@ benchmarks/tot/*.log
 benchmarks/tot/*_RESULTS.json
 benchmarks/tot/EXPERIMENT_RESULTS.json
 benchmarks/tot/chroma_db/
+benchmarks/results.md
+benchmarks/image_results.md
+benchmarks/image_data/
 
 # Generated publication artifacts
 docs/whitepaper/proposed-whitepaper.pdf
