@@ -4,7 +4,9 @@ End-to-End Experiment Runner: Standard LLM Baseline vs Compressed Architecture
 Implements the two experiments from EXPERIMENTS_CONSOLIDATED.md:
   Exp 1  Raw corpus injected directly into reasoning LLM (no architecture).
   Exp 2a Compress -> retrieve compressed summaries -> reason (cache + vector DB).
-  Exp 2b Compress -> retrieve compressed summaries + raw detail -> reason.
+  Exp 2b Compress -> retrieve summaries -> agent decides whether to call
+         get_context_details() -> reason.  The LLM sees both tools and makes
+         the raw-detail fetch only when it judges summaries insufficient.
 
 All results are relative to the Exp 1 baseline:
   Latency delta   : +/- 10%  of baseline  (PASS threshold)
@@ -171,6 +173,110 @@ def _call_llm(llm, prompt: str, system: str = SYSTEM_PROMPT) -> tuple[str, float
         return f"[ERROR] {exc}", elapsed
 
 
+# ── Exp 2b — Adaptive agentic query (LLM decides if raw detail is needed) ────
+
+_ADAPTIVE_T1_SYSTEM = (
+    "You are a helpful literary assistant with access to compressed passage summaries. "
+    "Decide whether the summaries are sufficient to answer the question fully.\n\n"
+    "Respond ONLY with a JSON object — no other text:\n"
+    '  Summaries sufficient  → {"answer": "your complete answer", "needs_raw": false}\n'
+    '  Need one chunk\'s full text → {"answer": null, "needs_raw": true, "chunk_id": "<id>"}\n\n'
+    "Choose needs_raw=true only when the summary is clearly truncated and the missing "
+    "detail would materially change your answer (exact wording, precise number, "
+    "multi-sentence passage). Available chunk IDs are listed in the context."
+)
+
+_ADAPTIVE_T2_SYSTEM = (
+    "You are a helpful literary assistant. You now have both compressed summaries and "
+    "the full raw text of the chunk you requested. Answer the question concisely and "
+    "accurately based on the provided text."
+)
+
+
+def _run_adaptive_query(
+    reason_llm,
+    hits: list,
+    q: dict,
+    retriever,
+    judge_llm=None,
+) -> tuple:
+    """
+    Two-turn adaptive query.
+
+    Turn 1: Give the LLM compressed summaries.  Ask it to either answer or
+            identify a chunk whose full text it needs.
+    Turn 2: (only if needs_raw=true) Fetch that chunk, re-prompt with full text.
+
+    Returns:
+        answer, latency_sec, prompt_tokens, raw_fetched, raw_fetch_tokens, f1, judge_score
+    """
+    import re as _re
+    import json as _json
+
+    chunk_ids = [h["chunk_id"] for h in hits]
+    context_text = "\n".join(
+        f"[chunk {h['chunk_id']}] {h['compressed_summary']}" for h in hits
+    )
+    prompt_t1 = (
+        f"Compressed summaries (chunk IDs available for raw-detail fetch: "
+        f"{', '.join(chunk_ids)}):\n\n{context_text}\n\n"
+        f"Question: {q['question']}\n\n"
+        "Respond with JSON as instructed:"
+    )
+    tokens_used = _estimate_tokens(prompt_t1)
+
+    t0 = time.time()
+    raw_t1, _ = _call_llm(reason_llm, prompt_t1, system=_ADAPTIVE_T1_SYSTEM)
+
+    # --- parse Turn-1 response ---
+    needs_raw = False
+    requested_chunk = None
+    answer = None
+
+    json_str = raw_t1.strip()
+    fence_m = _re.search(r"```(?:json)?\s*([\s\S]+?)```", json_str)
+    if fence_m:
+        json_str = fence_m.group(1).strip()
+    obj_m = _re.search(r"\{[\s\S]*\}", json_str)
+    if obj_m:
+        try:
+            parsed = _json.loads(obj_m.group(0))
+            needs_raw = bool(parsed.get("needs_raw", False))
+            requested_chunk = parsed.get("chunk_id")
+            if not needs_raw and parsed.get("answer"):
+                answer = str(parsed["answer"])
+        except Exception:
+            pass
+
+    # Fallback: if no valid JSON / answer in Turn 1, treat raw text as the answer
+    if answer is None and not needs_raw:
+        answer = raw_t1
+
+    raw_fetched = False
+    raw_fetch_tokens = 0
+
+    if needs_raw and requested_chunk:
+        detail = retriever.get_chunk_by_id(requested_chunk)
+        raw_text = detail.get("raw_text", "") if detail else ""
+        if raw_text:
+            raw_fetched = True
+            raw_fetch_tokens = _estimate_tokens(raw_text)
+            prompt_t2 = (
+                f"Compressed summaries:\n\n{context_text}\n\n"
+                f"Full raw text of chunk '{requested_chunk}' (as requested):\n\n{raw_text}\n\n"
+                f"Question: {q['question']}\n\nAnswer:"
+            )
+            tokens_used += _estimate_tokens(prompt_t2)
+            answer, _ = _call_llm(reason_llm, prompt_t2, system=_ADAPTIVE_T2_SYSTEM)
+        else:
+            answer = raw_t1 if answer is None else answer
+
+    latency = time.time() - t0
+    _, _, f1  = _score_answer(answer or "", q["keywords"])
+    judge     = _judge_answer(judge_llm, q["question"], q["keywords"], answer or "")
+    return answer or "", latency, tokens_used, raw_fetched, raw_fetch_tokens, f1, judge
+
+
 # ── Experiment 1 — Standard LLM baseline ─────────────────────────────────────
 
 def run_experiment1(corpus_lines: list[str], llm, judge_llm=None) -> list[dict]:
@@ -305,36 +411,24 @@ def run_experiment2(corpus_lines: list[str], compress_llm, reason_llm, embed_cfg
                 "answer_snippet":  answer_2a[:200],
             })
 
-            # -- 2b: compressed summaries + raw detail for top chunk --
-            raw_text = ""
-            if hits:
-                top_chunk = retriever.get_chunk_by_id(hits[0]["chunk_id"])
-                if top_chunk:
-                    raw_text = top_chunk.get("raw_text", "")
-
-            context_2b = context_text + (
-                f"\n\n[Full text of most relevant chunk]:\n{raw_text}" if raw_text else ""
+            # -- 2b: adaptive — LLM decides whether raw detail is needed --
+            answer_2b, latency_2b, tokens_2b, raw_fetched, raw_tok, f1_2b, judge_2b = (
+                _run_adaptive_query(reason_llm, hits, q, retriever, judge_llm)
             )
-            prompt_2b = (
-                f"Relevant passages from the corpus:\n\n{context_2b}\n\n"
-                f"Question: {q['question']}\n\nAnswer:"
-            )
-            tokens_2b = _estimate_tokens(prompt_2b)
-            answer_2b, latency_2b = _call_llm(reason_llm, prompt_2b)
-            _, _, f1_2b      = _score_answer(answer_2b, q["keywords"])
-            judge_2b         = _judge_answer(judge_llm, q["question"], q["keywords"], answer_2b)
-
-            print(f"    2b (raw+sum)  | tokens:{tokens_2b:,}  llm:{latency_2b:.2f}s  "
-                  f"KW-F1:{f1_2b:.3f}  Judge:{judge_2b:.2f}")
+            raw_flag = "Y" if raw_fetched else "N"
+            print(f"    2b (adaptive) | tokens:{tokens_2b:,}  llm:{latency_2b:.2f}s  "
+                  f"raw:{raw_flag}  KW-F1:{f1_2b:.3f}  Judge:{judge_2b:.2f}")
 
             results_2b.append({
-                "question_id":    q["id"],
-                "difficulty":     q["difficulty"],
-                "prompt_tokens":  tokens_2b,
-                "latency_sec":    latency_2b,
-                "f1":             f1_2b,
-                "judge_score":    judge_2b,
-                "answer_snippet": answer_2b[:200],
+                "question_id":      q["id"],
+                "difficulty":       q["difficulty"],
+                "prompt_tokens":    tokens_2b,
+                "latency_sec":      latency_2b,
+                "raw_fetched":      raw_fetched,
+                "raw_fetch_tokens": raw_tok,
+                "f1":               f1_2b,
+                "judge_score":      judge_2b,
+                "answer_snippet":   answer_2b[:200],
             })
 
         # cleanup
@@ -517,7 +611,7 @@ most relevant chunk via the pointer model (`get_chunk_by_id`).
 > *KW-F1* (keyword-overlap) is secondary — it under-reports quality for verbose answers
 > because precision is penalised by answer word count.
 
-| Metric | Baseline (Exp 1) | Exp 2a (Summary) | Exp 2b (Summary+Raw) |
+| Metric | Baseline (Exp 1) | Exp 2a (Summary) | Exp 2b (Adaptive) |
 |--------|-----------------|-----------------|---------------------|
 | Avg prompt tokens | {e1_avg_tokens:,.0f} | {e2a_avg_tokens:,.0f} | {e2b_avg_tokens:,.0f} |
 | Token reduction | — | **-{token_red_2a:.1f}%** {tok_pf_2a} | **-{token_red_2b:.1f}%** {tok_pf_2b} |
@@ -546,9 +640,9 @@ most relevant chunk via the pointer model (`get_chunk_by_id`).
   {e2a_avg_ret_ms:.0f}ms (miss) / {e2a_avg_hit_ms:.1f}ms (cache hit).
 - **F1 quality**: Exp 2a F1 {"matched" if abs(f1_delta_2a) <= 10 else "diverged from"} the
   baseline within {abs(f1_delta_2a):.0f}% (threshold: ±20%).
-- **Raw detail (2b)**: Adding the pointer-model raw-text fetch gives
-  {f1_delta_2b - f1_delta_2a:+.0f}% F1 delta vs 2a at the cost of
-  {e2b_avg_tokens - e2a_avg_tokens:+,.0f} extra tokens.
+- **Adaptive raw fetch (2b)**: Agent triggered `get_context_details` for
+  {raw_fetch_count} of {len(e2b)} questions ({raw_fetch_count / max(len(e2b), 1) * 100:.0f}%).
+  Raw fetch added ~{avg(e2b, 'raw_fetch_tokens'):.0f} tokens where used.
 - **Cache benefit**: Repeated / similar queries drop from {e2a_avg_ret_ms:.0f}ms to
   {e2a_avg_hit_ms:.1f}ms ({e2a_avg_ret_ms / max(e2a_avg_hit_ms, 0.1):.0f}x speedup).
 

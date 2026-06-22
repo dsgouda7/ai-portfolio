@@ -1110,12 +1110,18 @@ question set against the same corpus:
 └───────────────────────────────────────────────────────────────────────────────┘
 
 ┌───────────────────────────────────────────────────────────────────────────────┐
-│  Experiment 2b — Compressed Architecture (summaries + raw-detail fetch)      │
+│  Experiment 2b — Compressed Architecture (adaptive agent-driven detail)      │
 │                                                                               │
-│  Same pipeline as 2a, but the reasoning LLM also receives the full raw text  │
-│  of the top-ranked chunk via get_chunk_by_id() (the pointer model path).     │
+│  Same pipeline as 2a, but the reasoning LLM is given BOTH tools:            │
+│    • get_context()         → compressed summaries (always provided)          │
+│    • get_context_details() → raw chunk text (called only if needed)          │
 │                                                                               │
-│  Measures: whether raw-detail access improves F1 and at what token cost.     │
+│  Turn 1: LLM receives summaries + tool schema.  It either answers directly   │
+│          or emits {"needs_raw": true, "chunk_id": "..."} to request detail.  │
+│  Turn 2: If raw requested, fetch that chunk and re-invoke reasoning LLM.     │
+│                                                                               │
+│  Measures: how often the agent self-selects raw detail, quality improvement  │
+│            when it does, and token cost of agent-driven fetches.             │
 └───────────────────────────────────────────────────────────────────────────────┘
 ```
 
