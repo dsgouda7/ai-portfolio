@@ -37,8 +37,8 @@ if (-not (Test-Path $ComposeFile)) {
 # ── Pre-flight checks ──────────────────────────────────────────────────────
 
 function Test-Docker {
-  try { docker info 2>$null | Out-Null; return $true }
-  catch { return $false }
+  docker info 2>$null | Out-Null
+  return $LASTEXITCODE -eq 0
 }
 
 function Start-DockerIfNeeded {
