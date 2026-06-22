@@ -1400,3 +1400,282 @@ Complex reasoning tasks requiring multi-hop synthesis, causal analysis, counterf
 |---|---|---|---|---|---|
 | Identify regions where high-risk scores correlate with failed status. Then deter... | 14,277,382 | 11,432 | 99.9% | 5 | 200 |
 
+
+---
+
+## Planned Experiments: Standard LLM Baseline vs Compressed Architecture
+
+> **Status:** Planned — 2026-06-21. Sections below are scaffolded for result population.
+> Run after executing `quick_compress_and_save.py` to populate ChromaDB.
+
+These two experiments form the core comparison: how a standard LLM behaves when handed raw
+context vs how the Context Optimizer compress-retrieve-reason pipeline performs on the same
+questions against the same ground-truth data.
+
+---
+
+### Experiment 1 — Raw Context Baseline (Standard LLM)
+
+**Objective:** Establish the baseline — what happens when a standard LLM receives the full raw
+corpus in a single context window with no pre-processing, compression, or retrieval layer.
+
+**Method:**
+1. Download the target corpus (see corpus selection below).
+2. Derive ground-truth Q&A pairs directly from the raw data.
+3. For each question, inject the full raw corpus into the LLM prompt and record the answer.
+4. Capture all four metrics: retrieval relevance (N/A for baseline), accuracy, latency, token cost.
+
+**Corpus:**
+<!-- TODO: confirm corpus once quick_compress_and_save.py has been run -->
+
+| Corpus | Source | Lines |
+|--------|--------|-------|
+| Small  | TBD | ~5 000 |
+| Medium | TBD | ~25 000 |
+
+**Ground Truth Derivation:**
+<!-- TODO: populate after corpus download -->
+
+Ground truth Q&A pairs are derived from the raw corpus by:
+1. Selecting fact-checking questions whose answers appear verbatim or paraphrasably in the data.
+2. Annotating each question with the exact source line(s) containing the answer.
+3. Storing as `benchmarks/tot/ground_truth.json`:
+   ```json
+   {
+     "question_id": "q001",
+     "question": "...",
+     "expected_answer": "...",
+     "source_lines": [42, 43],
+     "difficulty": "easy|medium|hard"
+   }
+   ```
+
+**Question Set (to be populated):**
+<!-- TODO: populate once corpus is confirmed -->
+
+| ID | Question | Difficulty | Source Lines | Expected Answer |
+|----|----------|------------|--------------|-----------------|
+| q001 | _(TBD)_ | easy | — | — |
+| q002 | _(TBD)_ | easy | — | — |
+| q003 | _(TBD)_ | medium | — | — |
+| q004 | _(TBD)_ | medium | — | — |
+| q005 | _(TBD)_ | hard | — | — |
+| q006 | _(TBD)_ | hard | — | — |
+
+**Results (to be filled):**
+
+#### 1. Retrieval Relevance
+> N/A — no retrieval step. Full corpus injected directly.
+
+| Question ID | Tokens Sent | Context Coverage |
+|-------------|-------------|-----------------|
+| q001 | — | 100% (full corpus) |
+| q002 | — | 100% (full corpus) |
+| q003 | — | 100% (full corpus) |
+| q004 | — | 100% (full corpus) |
+| q005 | — | 100% (full corpus) |
+| q006 | — | 100% (full corpus) |
+| **Average** | — | 100% |
+
+#### 2. Accuracy
+> F1 against ground-truth expected answers.
+
+| Question ID | Difficulty | F1 | Exact Match | Notes |
+|-------------|------------|-----|-------------|-------|
+| q001 | easy | — | — | — |
+| q002 | easy | — | — | — |
+| q003 | medium | — | — | — |
+| q004 | medium | — | — | — |
+| q005 | hard | — | — | — |
+| q006 | hard | — | — | — |
+| **Average** | — | — | — | — |
+
+#### 3. Latency
+
+| Corpus | First Token (ms) | Full Response (ms) |
+|--------|-----------------|-------------------|
+| Small (~5K lines) | — | — |
+| Medium (~25K lines) | — | — |
+
+#### 4. Token Count and Cost per Query
+
+| Corpus | Prompt Tokens | Completion Tokens | Total Tokens | Cost (GPT-4.1-mini) |
+|--------|--------------|------------------|-------------|---------------------|
+| Small | — | — | — | — |
+| Medium | — | — | — | — |
+
+---
+
+### Experiment 2 — Compressed Architecture (Summarise → Vectorise → MCP → Reason)
+
+**Objective:** Validate the full Context Optimizer pipeline end-to-end against the same ground
+truth as Experiment 1. Two retrieval modes are tested — progressive (cache + vector DB only) and
+raw-detail (pointer model) — to characterise where each wins.
+
+**Method:**
+1. Run `quick_compress_and_save.py` to compress the corpus and populate ChromaDB (one-time).
+2. Start the MCP server over the ChromaDB + SemanticCache layer.
+3. Run sub-experiments 2a and 2b against the same ground truth from Experiment 1.
+
+---
+
+#### Sub-experiment 2a — Progressive Questions (Vector DB + Semantic Cache)
+
+Answerable from compressed summaries alone — no raw text needed. Tests the two-tier retrieval
+path: exact-string cache hit (< 1ms), cosine-similarity cache hit, and ChromaDB HNSW miss
+(10–50ms). Includes repeat and paraphrase variants to exercise cache warm paths.
+
+**Question Set (to be populated):**
+<!-- TODO: derive from corpus ground truth -->
+
+| ID | Question | Type | Cache Expectation | Expected Answer |
+|----|----------|------|-------------------|-----------------|
+| p001 | _(TBD — fact lookup)_ | first-hit | miss → ChromaDB | — |
+| p002 | _(TBD — exact repeat of p001)_ | repeat | hit → exact-string | — |
+| p003 | _(TBD — paraphrase of p001)_ | semantic variant | hit → cosine sim | — |
+| p004 | _(TBD — fact lookup, new topic)_ | first-hit | miss → ChromaDB | — |
+| p005 | _(TBD — repeat of p004)_ | repeat | hit → exact-string | — |
+| p006 | _(TBD — paraphrase of p004)_ | semantic variant | hit → cosine sim | — |
+
+**Results (to be filled):**
+
+##### 1. Retrieval Relevance
+
+| ID | Cache Tier Hit | Retrieved Chunks | Relevant Chunks | Precision | Recall |
+|----|---------------|-----------------|----------------|-----------|--------|
+| p001 | miss (ChromaDB) | — | — | — | — |
+| p002 | hit (exact) | — | — | — | — |
+| p003 | hit (cosine) | — | — | — | — |
+| p004 | miss (ChromaDB) | — | — | — | — |
+| p005 | hit (exact) | — | — | — | — |
+| p006 | hit (cosine) | — | — | — | — |
+| **Average** | — | — | — | — | — |
+
+##### 2. Accuracy
+
+| ID | Difficulty | F1 | vs Baseline (Exp 1) | Notes |
+|----|------------|-----|---------------------|-------|
+| p001 | easy | — | — | first hit |
+| p002 | easy | — | — | cache path |
+| p003 | easy | — | — | semantic cache |
+| p004 | medium | — | — | first hit |
+| p005 | medium | — | — | cache path |
+| p006 | medium | — | — | semantic cache |
+| **Average** | — | — | — | — |
+
+##### 3. Latency
+
+| ID | Cache Tier | Retrieval (ms) | E2E (ms) | vs Baseline Speedup |
+|----|-----------|---------------|---------|---------------------|
+| p001 | miss | — | — | — |
+| p002 | exact hit | — | — | — |
+| p003 | cosine hit | — | — | — |
+| p004 | miss | — | — | — |
+| p005 | exact hit | — | — | — |
+| p006 | cosine hit | — | — | — |
+| **Miss avg** | — | — | — | — |
+| **Hit avg** | — | — | — | — |
+
+##### 4. Token Count and Cost per Query
+
+| ID | Prompt Tokens | Completion Tokens | Total | Cost | vs Baseline Savings |
+|----|--------------|------------------|-------|------|---------------------|
+| p001 | — | — | — | — | — |
+| p002 | — | — | — | — | — |
+| p003 | — | — | — | — | — |
+| p004 | — | — | — | — | — |
+| p005 | — | — | — | — | — |
+| p006 | — | — | — | — | — |
+| **Average** | — | — | — | — | — |
+
+---
+
+#### Sub-experiment 2b — Raw-Detail Questions (Pointer Model / `get_context_details`)
+
+Questions where the compressed summary is insufficient — the LLM must call `get_context_details()`
+to fetch the original raw text. Tests the pointer model path and validates whether raw-detail
+retrieval recovers F1 to match or exceed the Experiment 1 baseline while staying within the
+latency budget.
+
+**Question pattern:** verbatim quotes, precise numbers/stats, multi-sentence reasoning chains,
+answers that span 2+ adjacent chunks.
+
+**Question Set (to be populated):**
+<!-- TODO: derive from corpus — pick questions where compressed summary is insufficient -->
+
+| ID | Question | Why Raw Needed | Expected Source Chunk(s) | Expected Answer |
+|----|----------|---------------|--------------------------|-----------------|
+| r001 | _(TBD — verbatim quote)_ | exact wording lost in compression | — | — |
+| r002 | _(TBD — precise number / stat)_ | numeric detail lost in compression | — | — |
+| r003 | _(TBD — multi-sentence reasoning)_ | inference chain needs full paragraph | — | — |
+| r004 | _(TBD — cross-chunk synthesis)_ | answer spans 2+ adjacent chunks | — | — |
+
+**Results (to be filled):**
+
+##### 1. Retrieval Relevance
+
+| ID | Compressed-Only Relevant? | Raw Chunks Fetched | Raw Relevant |
+|----|--------------------------|-------------------|-------------|
+| r001 | — | — | — |
+| r002 | — | — | — |
+| r003 | — | — | — |
+| r004 | — | — | — |
+
+##### 2. Accuracy
+
+| ID | F1 (compressed only) | F1 (compressed + raw) | vs Baseline (Exp 1) | Delta from raw fetch |
+|----|---------------------|----------------------|---------------------|----------------------|
+| r001 | — | — | — | — |
+| r002 | — | — | — | — |
+| r003 | — | — | — | — |
+| r004 | — | — | — | — |
+| **Average** | — | — | — | — |
+
+##### 3. Latency
+
+| ID | Retrieval (compressed, ms) | Raw Fetch Added (ms) | E2E (ms) | vs Baseline Speedup |
+|----|---------------------------|---------------------|---------|---------------------|
+| r001 | — | — | — | — |
+| r002 | — | — | — | — |
+| r003 | — | — | — | — |
+| r004 | — | — | — | — |
+| **Average** | — | — | — | — |
+
+##### 4. Token Count and Cost per Query
+
+| ID | Compressed Tokens | Raw Tokens Added | Total | Cost | vs Baseline Savings |
+|----|------------------|-----------------|-------|------|---------------------|
+| r001 | — | — | — | — | — |
+| r002 | — | — | — | — | — |
+| r003 | — | — | — | — | — |
+| r004 | — | — | — | — | — |
+| **Average** | — | — | — | — | — |
+
+---
+
+### Cross-Experiment Summary (to be filled)
+
+| Metric | Exp 1: Standard LLM | Exp 2a: Compressed (Cache+VectorDB) | Exp 2b: Compressed + Raw Detail | Winner |
+|--------|--------------------|------------------------------------|--------------------------------|--------|
+| Avg retrieval precision | N/A (full corpus) | — | — | — |
+| Avg retrieval recall | N/A (full corpus) | — | — | — |
+| Avg F1 (easy) | — | — | — | — |
+| Avg F1 (medium) | — | — | — | — |
+| Avg F1 (hard) | — | — | — | — |
+| Cache hit latency (ms) | N/A | — | — | — |
+| Cache miss latency (ms) | N/A | — | — | — |
+| E2E latency (ms) | — | — | — | — |
+| Avg prompt tokens | — | — | — | — |
+| Avg cost per query | — | — | — | — |
+| Token reduction vs baseline | — | — | — | — |
+
+**Pass/Fail thresholds (from plan.md):**
+
+| Threshold | Target | Source |
+|-----------|--------|--------|
+| Cache hit latency | < 5 ms | plan.md |
+| Cache miss latency | < 100 ms | plan.md |
+| Context reduction | > 95% | plan.md |
+| F1 — easy questions | >= 0.85 | accuracy_benchmarks.py |
+| F1 — medium questions | >= 0.70 | accuracy_benchmarks.py |
+| F1 — hard questions | >= 0.60 | accuracy_benchmarks.py |
