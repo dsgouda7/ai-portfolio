@@ -37,8 +37,44 @@ if (-not (Test-Path $ComposeFile)) {
 # ── Pre-flight checks ──────────────────────────────────────────────────────
 
 function Test-Docker {
-  try { docker info | Out-Null; return $true }
+  try { docker info 2>$null | Out-Null; return $true }
   catch { return $false }
+}
+
+function Start-DockerIfNeeded {
+  if (Test-Docker) { return }
+
+  # Locate Docker Desktop executable
+  $candidates = @(
+    "$env:ProgramFiles\Docker\Docker\Docker Desktop.exe",
+    "${env:ProgramFiles(x86)}\Docker\Docker\Docker Desktop.exe",
+    "$env:LOCALAPPDATA\Docker\Docker Desktop.exe"
+  )
+  $dockerExe = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+
+  if (-not $dockerExe) {
+    Write-Error "Docker Desktop is not running and could not be found. Install it from https://www.docker.com/products/docker-desktop/"
+    exit 1
+  }
+
+  Write-Host "  Starting Docker Desktop ($dockerExe) …"
+  Start-Process $dockerExe
+
+  $timeout  = 120  # seconds
+  $interval = 5
+  $elapsed  = 0
+  Write-Host "  Waiting for Docker daemon (up to ${timeout}s) …" -NoNewline
+  while (-not (Test-Docker)) {
+    if ($elapsed -ge $timeout) {
+      Write-Host ""
+      Write-Error "Docker daemon did not become ready within ${timeout}s. Try starting Docker Desktop manually."
+      exit 1
+    }
+    Start-Sleep $interval
+    $elapsed += $interval
+    Write-Host "." -NoNewline
+  }
+  Write-Host " ready (${elapsed}s)"
 }
 
 function Test-LocalPrerequisites {
@@ -87,10 +123,7 @@ $envFile not found.
 
 # ── Main ───────────────────────────────────────────────────────────────────
 
-if (-not (Test-Docker)) {
-  Write-Error "Docker is not running. Start Docker Desktop and retry."
-  exit 1
-}
+Start-DockerIfNeeded
 
 switch ($Target) {
   "local" { Test-LocalPrerequisites }
