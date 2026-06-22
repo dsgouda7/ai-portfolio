@@ -94,7 +94,11 @@ def _estimate_tokens(text: str) -> int:
 
 
 def _score_answer(answer: str, keywords: list[str]) -> tuple[float, float, float]:
-    """Keyword-overlap F1: precision=keywords_found/answer_words, recall=keywords_found/total_keywords."""
+    """
+    Keyword-overlap F1.
+    NOTE: precision is penalised for verbosity (found / total_answer_words).
+    Use alongside judge_score for a fairer picture.
+    """
     answer_lower = answer.lower()
     answer_words = set(answer_lower.split())
     found = sum(1 for kw in keywords if kw.lower() in answer_lower)
@@ -102,6 +106,55 @@ def _score_answer(answer: str, keywords: list[str]) -> tuple[float, float, float
     precision = found / len(answer_words) if answer_words else 0.0
     f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
     return precision, recall, f1
+
+
+_JUDGE_SYSTEM = (
+    "You are a strict but fair evaluation judge. "
+    "Given a question, the key concepts that should appear in a correct answer, "
+    "and an actual answer, rate how well the answer addresses the question and covers "
+    "the key concepts. Reply with ONLY a single decimal number between 0.0 and 1.0. "
+    "1.0 = perfect coverage and accuracy, 0.0 = completely wrong or empty. "
+    "No explanation, no other text — just the number."
+)
+
+
+def _judge_answer(llm, question: str, keywords: list[str], answer: str) -> float:
+    """
+    LLM-as-judge: use the compression LLM (llama3.2:3b) to score the answer
+    semantically rather than via keyword overlap.
+
+    Returns a float in [0.0, 1.0].  Falls back to recall-only keyword score
+    if the LLM call fails or returns an unparseable response.
+    """
+    if llm is None or answer.startswith("[ERROR]"):
+        # fallback: recall only (not penalised for verbosity)
+        found = sum(1 for kw in keywords if kw.lower() in answer.lower())
+        return found / len(keywords) if keywords else 0.0
+
+    key_concepts = ", ".join(keywords)
+    prompt = (
+        f"Question: {question}\n\n"
+        f"Key concepts expected in a correct answer: {key_concepts}\n\n"
+        f"Actual answer: {answer}\n\n"
+        "Score (0.0 – 1.0):"
+    )
+    try:
+        from langchain_core.messages import HumanMessage, SystemMessage
+        response = llm.invoke(
+            [SystemMessage(content=_JUDGE_SYSTEM), HumanMessage(content=prompt)]
+        )
+        raw = response.content if hasattr(response, "content") else str(response)
+        # Extract first float-like token from the response
+        import re
+        m = re.search(r"\b([01]?\.\d+|[01])\b", raw.strip())
+        if m:
+            score = float(m.group(1))
+            return max(0.0, min(1.0, score))
+    except Exception:
+        pass
+    # fallback: recall only
+    found = sum(1 for kw in keywords if kw.lower() in answer.lower())
+    return found / len(keywords) if keywords else 0.0
 
 
 def _call_llm(llm, prompt: str, system: str = SYSTEM_PROMPT) -> tuple[str, float]:
@@ -120,7 +173,7 @@ def _call_llm(llm, prompt: str, system: str = SYSTEM_PROMPT) -> tuple[str, float
 
 # ── Experiment 1 — Standard LLM baseline ─────────────────────────────────────
 
-def run_experiment1(corpus_lines: list[str], llm) -> list[dict]:
+def run_experiment1(corpus_lines: list[str], llm, judge_llm=None) -> list[dict]:
     """Inject the full raw corpus into the reasoning LLM for each question."""
     corpus_text  = "\n".join(corpus_lines)
     prompt_base  = _estimate_tokens(corpus_text)
@@ -140,9 +193,11 @@ def run_experiment1(corpus_lines: list[str], llm) -> list[dict]:
 
         print(f"\n  [{q['id']}] {q['difficulty'].upper()}: {q['question'][:60]}")
         answer, elapsed = _call_llm(llm, prompt)
-        _, _, f1 = _score_answer(answer, q["keywords"])
+        _, _, kw_f1     = _score_answer(answer, q["keywords"])
+        judge_score     = _judge_answer(judge_llm, q["question"], q["keywords"], answer)
 
-        print(f"    Tokens: {total_tokens:,}   Latency: {elapsed:.2f}s   F1: {f1:.3f}")
+        print(f"    Tokens: {total_tokens:,}   Latency: {elapsed:.2f}s   "
+              f"KW-F1: {kw_f1:.3f}   Judge: {judge_score:.2f}")
         print(f"    Answer (first 120 chars): {answer[:120]}")
 
         results.append({
@@ -150,7 +205,8 @@ def run_experiment1(corpus_lines: list[str], llm) -> list[dict]:
             "difficulty":     q["difficulty"],
             "prompt_tokens":  total_tokens,
             "latency_sec":    elapsed,
-            "f1":             f1,
+            "f1":             kw_f1,
+            "judge_score":    judge_score,
             "answer_snippet": answer[:200],
         })
 
@@ -159,7 +215,8 @@ def run_experiment1(corpus_lines: list[str], llm) -> list[dict]:
 
 # ── Experiment 2 — Compressed Architecture ───────────────────────────────────
 
-def run_experiment2(corpus_lines: list[str], compress_llm, reason_llm, embed_cfg: dict) -> dict:
+def run_experiment2(corpus_lines: list[str], compress_llm, reason_llm, embed_cfg: dict,
+                    judge_llm=None) -> dict:
     """
     Compress corpus, build index, then run:
       2a — answer from compressed summaries only
@@ -224,7 +281,8 @@ def run_experiment2(corpus_lines: list[str], compress_llm, reason_llm, embed_cfg
             )
             tokens_2a = _estimate_tokens(prompt_2a)
             answer_2a, latency_2a = _call_llm(reason_llm, prompt_2a)
-            _, _, f1_2a = _score_answer(answer_2a, q["keywords"])
+            _, _, f1_2a      = _score_answer(answer_2a, q["keywords"])
+            judge_2a         = _judge_answer(judge_llm, q["question"], q["keywords"], answer_2a)
 
             # cache hit pass
             t_hit = time.time()
@@ -232,7 +290,7 @@ def run_experiment2(corpus_lines: list[str], compress_llm, reason_llm, embed_cfg
             hit_ms = (time.time() - t_hit) * 1000
 
             print(f"    2a (summary)  | tokens:{tokens_2a:,}  ret:{ret_ms:.1f}ms  "
-                  f"llm:{latency_2a:.2f}s  hit:{hit_ms:.1f}ms  F1:{f1_2a:.3f}")
+                  f"llm:{latency_2a:.2f}s  hit:{hit_ms:.1f}ms  KW-F1:{f1_2a:.3f}  Judge:{judge_2a:.2f}")
 
             results_2a.append({
                 "question_id":     q["id"],
@@ -242,6 +300,7 @@ def run_experiment2(corpus_lines: list[str], compress_llm, reason_llm, embed_cfg
                 "cache_hit_ms":    hit_ms,
                 "latency_sec":     latency_2a,
                 "f1":              f1_2a,
+                "judge_score":     judge_2a,
                 "chunks_retrieved": len(hits),
                 "answer_snippet":  answer_2a[:200],
             })
@@ -262,9 +321,11 @@ def run_experiment2(corpus_lines: list[str], compress_llm, reason_llm, embed_cfg
             )
             tokens_2b = _estimate_tokens(prompt_2b)
             answer_2b, latency_2b = _call_llm(reason_llm, prompt_2b)
-            _, _, f1_2b = _score_answer(answer_2b, q["keywords"])
+            _, _, f1_2b      = _score_answer(answer_2b, q["keywords"])
+            judge_2b         = _judge_answer(judge_llm, q["question"], q["keywords"], answer_2b)
 
-            print(f"    2b (raw+sum)  | tokens:{tokens_2b:,}  llm:{latency_2b:.2f}s  F1:{f1_2b:.3f}")
+            print(f"    2b (raw+sum)  | tokens:{tokens_2b:,}  llm:{latency_2b:.2f}s  "
+                  f"KW-F1:{f1_2b:.3f}  Judge:{judge_2b:.2f}")
 
             results_2b.append({
                 "question_id":    q["id"],
@@ -272,6 +333,7 @@ def run_experiment2(corpus_lines: list[str], compress_llm, reason_llm, embed_cfg
                 "prompt_tokens":  tokens_2b,
                 "latency_sec":    latency_2b,
                 "f1":             f1_2b,
+                "judge_score":    judge_2b,
                 "answer_snippet": answer_2b[:200],
             })
 
@@ -319,12 +381,16 @@ def generate_report(exp1: list[dict], exp2: dict, corpus_lines: int,
     e2a_avg_tokens   = avg(e2a, "prompt_tokens")
     e2a_avg_latency  = avg(e2a, "latency_sec")
     e2a_avg_f1       = avg(e2a, "f1")
+    e2a_avg_judge    = avg(e2a, "judge_score")
     e2a_avg_ret_ms   = avg(e2a, "retrieval_ms")
     e2a_avg_hit_ms   = avg(e2a, "cache_hit_ms")
 
     e2b_avg_tokens   = avg(e2b, "prompt_tokens")
     e2b_avg_latency  = avg(e2b, "latency_sec")
     e2b_avg_f1       = avg(e2b, "f1")
+    e2b_avg_judge    = avg(e2b, "judge_score")
+
+    e1_avg_judge     = avg(exp1, "judge_score")
 
     token_red_2a = (1 - e2a_avg_tokens / e1_avg_tokens) * 100 if e1_avg_tokens else 0
     token_red_2b = (1 - e2b_avg_tokens / e1_avg_tokens) * 100 if e1_avg_tokens else 0
@@ -334,6 +400,9 @@ def generate_report(exp1: list[dict], exp2: dict, corpus_lines: int,
 
     f1_delta_2a  = ((e2a_avg_f1 - e1_avg_f1) / e1_avg_f1 * 100) if e1_avg_f1 else 0
     f1_delta_2b  = ((e2b_avg_f1 - e1_avg_f1) / e1_avg_f1 * 100) if e1_avg_f1 else 0
+
+    judge_delta_2a = ((e2a_avg_judge - e1_avg_judge) / e1_avg_judge * 100) if e1_avg_judge else 0
+    judge_delta_2b = ((e2b_avg_judge - e1_avg_judge) / e1_avg_judge * 100) if e1_avg_judge else 0
 
     thr = THRESHOLDS
 
@@ -360,7 +429,8 @@ def generate_report(exp1: list[dict], exp2: dict, corpus_lines: int,
 | Metric | Threshold | Rationale |
 |--------|-----------|-----------|
 | Latency delta vs baseline | ±{thr['latency_delta_pct']:.0f}% | Architectural overhead must be within 10% |
-| F1 accuracy delta vs baseline | ±{thr['f1_delta_pct']:.0f}% | Answer quality within 20% of full-corpus baseline |
+| Judge-score delta vs baseline | ±{thr['f1_delta_pct']:.0f}% | Semantic quality (LLM-as-judge 0–1) within 20% of full-corpus baseline |
+| KW-F1 delta vs baseline | ±{thr['f1_delta_pct']:.0f}% | Keyword-overlap F1 delta (secondary, penalised for verbosity) |
 | Token reduction vs baseline | ≥{thr['token_reduction_pct']:.0f}% | Core efficiency target |
 
 ---
@@ -370,12 +440,14 @@ def generate_report(exp1: list[dict], exp2: dict, corpus_lines: int,
 Full raw corpus injected into the reasoning LLM on every query. No preprocessing,
 no retrieval, no compression. This is the cost/latency ceiling we are beating.
 
-| Question | Difficulty | Prompt Tokens | Latency (s) | F1 |
-|----------|------------|--------------|-------------|-----|
-"""
+| Question | Difficulty | Prompt Tokens | Latency (s) | KW-F1 | Judge |
+|----------|------------|--------------|-------------|-------|-------|
+"""  # noqa: E501
     for r in exp1:
-        md += f"| {r['question_id']} | {r['difficulty']} | {r['prompt_tokens']:,} | {r['latency_sec']:.2f} | {r['f1']:.3f} |\n"
-    md += f"| **Average** | — | **{e1_avg_tokens:,.0f}** | **{e1_avg_latency:.2f}** | **{e1_avg_f1:.3f}** |\n"
+        md += (f"| {r['question_id']} | {r['difficulty']} | {r['prompt_tokens']:,} | "
+               f"{r['latency_sec']:.2f} | {r['f1']:.3f} | {r.get('judge_score', 0):.2f} |\n")
+    md += (f"| **Average** | — | **{e1_avg_tokens:,.0f}** | **{e1_avg_latency:.2f}** | "
+           f"**{e1_avg_f1:.3f}** | **{e1_avg_judge:.2f}** |\n")
 
     md += f"""
 ---
@@ -397,17 +469,17 @@ Reasoning LLM receives only the top-5 retrieved compressed summaries (~50 tokens
 
 ### Query Results
 
-| Question | Difficulty | Prompt Tokens | Ret (ms) | Hit (ms) | Latency (s) | F1 | Token Δ |
-|----------|------------|--------------|----------|----------|-------------|-----|---------|
-"""
+| Question | Difficulty | Prompt Tokens | Ret (ms) | Hit (ms) | Latency (s) | KW-F1 | Judge | Token Δ |
+|----------|------------|--------------|----------|----------|-------------|-------|-------|---------|
+"""  # noqa: E501
     for r, b in zip(e2a, exp1):
         tok_delta = (1 - r["prompt_tokens"] / b["prompt_tokens"]) * 100 if b["prompt_tokens"] else 0
         md += (f"| {r['question_id']} | {r['difficulty']} | {r['prompt_tokens']:,} | "
                f"{r['retrieval_ms']:.1f} | {r['cache_hit_ms']:.1f} | {r['latency_sec']:.2f} | "
-               f"{r['f1']:.3f} | -{tok_delta:.1f}% |\n")
+               f"{r['f1']:.3f} | {r.get('judge_score', 0):.2f} | -{tok_delta:.1f}% |\n")
     md += (f"| **Average** | — | **{e2a_avg_tokens:,.0f}** | **{e2a_avg_ret_ms:.1f}** | "
            f"**{e2a_avg_hit_ms:.1f}** | **{e2a_avg_latency:.2f}** | **{e2a_avg_f1:.3f}** | "
-           f"**-{token_red_2a:.1f}%** |\n")
+           f"**{e2a_avg_judge:.2f}** | **-{token_red_2a:.1f}%** |\n")
 
     md += f"""
 ---
@@ -417,20 +489,22 @@ Reasoning LLM receives only the top-5 retrieved compressed summaries (~50 tokens
 Same pipeline as 2a but the reasoning LLM also receives the full raw text of the
 most relevant chunk via the pointer model (`get_chunk_by_id`).
 
-| Question | Difficulty | Prompt Tokens | Latency (s) | F1 | Token Δ |
-|----------|------------|--------------|-------------|-----|---------|
-"""
+| Question | Difficulty | Prompt Tokens | Latency (s) | KW-F1 | Judge | Token Δ |
+|----------|------------|--------------|-------------|-------|-------|---------|
+"""  # noqa: E501
     for r, b in zip(e2b, exp1):
         tok_delta = (1 - r["prompt_tokens"] / b["prompt_tokens"]) * 100 if b["prompt_tokens"] else 0
         md += (f"| {r['question_id']} | {r['difficulty']} | {r['prompt_tokens']:,} | "
-               f"{r['latency_sec']:.2f} | {r['f1']:.3f} | -{tok_delta:.1f}% |\n")
+               f"{r['latency_sec']:.2f} | {r['f1']:.3f} | {r.get('judge_score', 0):.2f} | -{tok_delta:.1f}% |\n")
     md += (f"| **Average** | — | **{e2b_avg_tokens:,.0f}** | **{e2b_avg_latency:.2f}** | "
-           f"**{e2b_avg_f1:.3f}** | **-{token_red_2b:.1f}%** |\n")
+           f"**{e2b_avg_f1:.3f}** | **{e2b_avg_judge:.2f}** | **-{token_red_2b:.1f}%** |\n")
 
     lat_pf_2a  = _pass_fail(abs(lat_delta_2a),  thr["latency_delta_pct"],  higher_is_better=False)
     lat_pf_2b  = _pass_fail(abs(lat_delta_2b),  thr["latency_delta_pct"],  higher_is_better=False)
     f1_pf_2a   = _pass_fail(abs(f1_delta_2a),   thr["f1_delta_pct"],       higher_is_better=False)
     f1_pf_2b   = _pass_fail(abs(f1_delta_2b),   thr["f1_delta_pct"],       higher_is_better=False)
+    jdg_pf_2a  = _pass_fail(abs(judge_delta_2a), thr["f1_delta_pct"],      higher_is_better=False)
+    jdg_pf_2b  = _pass_fail(abs(judge_delta_2b), thr["f1_delta_pct"],      higher_is_better=False)
     tok_pf_2a  = _pass_fail(token_red_2a,        thr["token_reduction_pct"], higher_is_better=True)
     tok_pf_2b  = _pass_fail(token_red_2b,        thr["token_reduction_pct"], higher_is_better=True)
 
@@ -439,13 +513,18 @@ most relevant chunk via the pointer model (`get_chunk_by_id`).
 
 ## Cross-Experiment Comparison
 
+> **Accuracy note**: *Judge score* (LLM-as-judge, 0–1) is the primary quality metric.
+> *KW-F1* (keyword-overlap) is secondary — it under-reports quality for verbose answers
+> because precision is penalised by answer word count.
+
 | Metric | Baseline (Exp 1) | Exp 2a (Summary) | Exp 2b (Summary+Raw) |
 |--------|-----------------|-----------------|---------------------|
 | Avg prompt tokens | {e1_avg_tokens:,.0f} | {e2a_avg_tokens:,.0f} | {e2b_avg_tokens:,.0f} |
 | Token reduction | — | **-{token_red_2a:.1f}%** {tok_pf_2a} | **-{token_red_2b:.1f}%** {tok_pf_2b} |
 | Avg reasoning latency (s) | {e1_avg_latency:.2f} | {e2a_avg_latency:.2f} ({lat_delta_2a:+.1f}%) {lat_pf_2a} | {e2b_avg_latency:.2f} ({lat_delta_2b:+.1f}%) {lat_pf_2b} |
 | Avg retrieval latency (ms) | N/A | {e2a_avg_ret_ms:.1f} (miss) / {e2a_avg_hit_ms:.1f} (hit) | same |
-| Avg F1 | {e1_avg_f1:.3f} | {e2a_avg_f1:.3f} ({f1_delta_2a:+.1f}%) {f1_pf_2a} | {e2b_avg_f1:.3f} ({f1_delta_2b:+.1f}%) {f1_pf_2b} |
+| Avg Judge score (0–1) | {e1_avg_judge:.2f} | {e2a_avg_judge:.2f} ({judge_delta_2a:+.1f}%) {jdg_pf_2a} | {e2b_avg_judge:.2f} ({judge_delta_2b:+.1f}%) {jdg_pf_2b} |
+| Avg KW-F1 (secondary) | {e1_avg_f1:.3f} | {e2a_avg_f1:.3f} ({f1_delta_2a:+.1f}%) {f1_pf_2a} | {e2b_avg_f1:.3f} ({f1_delta_2b:+.1f}%) {f1_pf_2b} |
 
 ### Threshold Summary
 
@@ -453,7 +532,8 @@ most relevant chunk via the pointer model (`get_chunk_by_id`).
 |-----------|--------|--------|--------|
 | Token reduction ≥{thr['token_reduction_pct']:.0f}% | ≥{thr['token_reduction_pct']:.0f}% | {token_red_2a:.1f}% {tok_pf_2a} | {token_red_2b:.1f}% {tok_pf_2b} |
 | Latency delta ≤±{thr['latency_delta_pct']:.0f}% | ≤±{thr['latency_delta_pct']:.0f}% | {lat_delta_2a:+.1f}% {lat_pf_2a} | {lat_delta_2b:+.1f}% {lat_pf_2b} |
-| F1 delta ≤±{thr['f1_delta_pct']:.0f}% | ≤±{thr['f1_delta_pct']:.0f}% | {f1_delta_2a:+.1f}% {f1_pf_2a} | {f1_delta_2b:+.1f}% {f1_pf_2b} |
+| Judge-score delta ≤±{thr['f1_delta_pct']:.0f}% | ≤±{thr['f1_delta_pct']:.0f}% | {judge_delta_2a:+.1f}% {jdg_pf_2a} | {judge_delta_2b:+.1f}% {jdg_pf_2b} |
+| KW-F1 delta ≤±{thr['f1_delta_pct']:.0f}% | ≤±{thr['f1_delta_pct']:.0f}% | {f1_delta_2a:+.1f}% {f1_pf_2a} | {f1_delta_2b:+.1f}% {f1_pf_2b} |
 
 ---
 
@@ -509,7 +589,10 @@ def main():
     embed_cfg      = get_embedding_config()
     compress_llm   = build_compression_llm()
     reason_llm     = build_reasoning_llm()
-
+    # Judge reuses the compression LLM (llama3.2:3b) — already loaded, no extra cost.
+    # It scores answers semantically on a 0–1 scale, avoiding keyword-overlap verbosity bias.
+    judge_llm = compress_llm
+    print(f"  [Judge LLM]      Reusing compression model ({os.getenv('CONTEXT_OPTIMIZER_COMPRESSOR_MODEL', 'llama3.2:3b')}) as evaluator")
     models = {
         "compression": os.getenv("CONTEXT_OPTIMIZER_COMPRESSOR_MODEL", "llama3.2:3b"),
         "reasoning":   os.getenv("CONTEXT_OPTIMIZER_REASONING_MODEL",  "qwen2.5-coder:7b"),
@@ -533,10 +616,11 @@ def main():
     print(f"  Loaded {len(corpus):,} lines from Pride & Prejudice")
 
     # ── Run Exp 1 (baseline) ───────────────────────────────────────────
-    exp1_results = run_experiment1(corpus, reason_llm)
+    exp1_results = run_experiment1(corpus, reason_llm, judge_llm=judge_llm)
 
-    # ── Run Exp 2 ──────────────────────────────────────────────────────
-    exp2_results = run_experiment2(corpus, compress_llm, reason_llm, embed_cfg)
+    # ── Run Exp 2 ───────────────────────────────────────────────
+    exp2_results = run_experiment2(corpus, compress_llm, reason_llm, embed_cfg,
+                                   judge_llm=judge_llm)
 
     # ── JSON output ────────────────────────────────────────────────────
     bench_dir  = Path(__file__).parent
