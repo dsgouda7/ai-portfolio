@@ -31,7 +31,6 @@ evaluation = [
 
 [tool.setuptools]
 packages = ["context_optimizer"]
-py-modules = ["context_optimizer_benchmark"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "benchmarks/tot"]

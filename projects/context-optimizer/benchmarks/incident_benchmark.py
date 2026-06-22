@@ -6,7 +6,7 @@ Requires:
   --log-file  path to a real log file (structured text, one entry per line)
 
 Usage:
-    python context_optimizer_benchmark.py \
+    python benchmarks/incident_benchmark.py \
         --provider ollama \
         --log-file /path/to/incident.log \
         --pipeline compare
@@ -59,7 +59,7 @@ except ImportError:  # pragma: no cover
     ChatGroq = None  # type: ignore[assignment]
 
 # ToTReasoner is baked into src/context_optimizer.
-sys.path.insert(0, str(Path(__file__).parent / "src"))
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from context_optimizer.tot_reasoner import ToTReasoner  # noqa: E402
 
 # ── Constants ─────────────────────────────────────────────────────────────────
