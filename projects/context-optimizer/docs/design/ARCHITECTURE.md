@@ -859,6 +859,53 @@ Validated on medium and large corpora (2026-06-18):
 | Token cost per query | 14.28 M | 16.5 K |
 | **Improvement** | | **94% faster, 99.9% token reduction** |
 
+### E2E Experiment Results (Measured, Local CPU — 2026-06-21)
+
+Fully local run via `benchmarks/tot/run_experiments.py --lines 500`.
+No API keys, no GPU. Models: `llama3.2:3b` (compression + judge), `qwen2.5-coder:7b`
+(reasoning), `all-MiniLM-L6-v2` (embeddings). Corpus: Pride & Prejudice, 500 lines.
+
+**Compression (one-time write):**
+
+| Metric | Measured |
+|--------|----------|
+| Chunks produced | 20 |
+| Compression time | 250.4 s (one-time) |
+| Original tokens | 10,467 |
+| Compressed tokens | 1,500 |
+| Compression ratio | **14.3%** (7× reduction) |
+| Break-even queries | **3** (250.4 ÷ 95.2 s/query saved) |
+
+**Cross-experiment comparison (avg across 6 questions):**
+
+| Metric | Exp 1 — Baseline | Exp 2a — Summaries | Exp 2b — Summaries+Raw |
+|--------|-----------------|-------------------|----------------------|
+| Avg prompt tokens | 8,156 | **437** (−94.6%) ✅ | **976** (−88.0%) ❌ |
+| Avg reasoning latency | 115.2 s | **20.1 s** (−82.6%) | **24.6 s** (−78.7%) |
+| Retrieval — miss | N/A | 31.8 ms | 31.8 ms |
+| Retrieval — cache hit | N/A | **0.2 ms** (172× faster) | **0.2 ms** |
+| Avg Judge score (0–1) | 0.80 | **0.73** (−8.3%) ✅ | **0.67** (−16.7%) ✅ |
+| Avg KW-F1 (secondary) | 0.085 | 0.104 | 0.127 |
+
+**Threshold assessment:**
+
+| Threshold | Target | Exp 2a | Exp 2b |
+|-----------|--------|--------|--------|
+| Token reduction ≥ 90% | ≥ 90% | 94.6% ✅ **PASS** | 88.0% ❌ FAIL |
+| Judge-score delta ≤ ±20% | ≤ ±20% | −8.3% ✅ **PASS** | −16.7% ✅ **PASS** |
+| Latency vs baseline ≤ +10% | ≤ +10% overhead | −82.6% ✅ **PASS** | −78.7% ✅ **PASS** |
+
+> **KW-F1 note**: Keyword-overlap F1 is kept as a secondary metric only. It
+> systematically under-reports quality for verbose LLM answers (precision collapses
+> as answer length grows). The LLM-as-judge score is the canonical quality metric.
+> See [`experiment_results.md`](experiments/experiment_results.md) for per-question detail.
+
+**Break-even insight**: One-time compression (250 s) is recovered after 3 queries
+(115 s each at baseline → 20 s with Exp 2a), making every subsequent query a
+pure efficiency win.
+
+---
+
 ### Retrieval Benchmark (Small/Medium Corpus, CachedChromaRetriever)
 
 Measured with sentence-transformers all-MiniLM-L6-v2, local CPU:
