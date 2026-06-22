@@ -27,6 +27,7 @@ Environment variables (optional)
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
 import sys
 import tempfile
@@ -34,6 +35,8 @@ import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
+
+import requests
 
 # ── Project paths ─────────────────────────────────────────────────────────────
 BENCH_DIR    = Path(__file__).parent
@@ -47,6 +50,11 @@ CORPUS_LINES: dict[str, int] = {
     "medium": 25_000,
     "large":  100_000,
 }
+
+# ── Docker service endpoints (override via env vars for CI / non-default ports) ──
+INGESTION_URL   = os.getenv("INGESTION_URL",         "http://localhost:8001")
+GATEWAY_URL     = os.getenv("REASONING_GATEWAY_URL",  "http://localhost:8080")
+REASONING_MODEL = os.getenv("REASONING_MODEL",        "ollama/llama3.2:3b")
 
 # ── Ground-truth queries ──────────────────────────────────────────────────────
 GROUND_TRUTH_QUERIES: list[dict[str, Any]] = [
@@ -71,6 +79,27 @@ GROUND_TRUTH_QUERIES: list[dict[str, Any]] = [
         "must_contain": ["ru_charge", "partition"],
     },
 ]
+
+
+# ── Docker service helpers ───────────────────────────────────────────────────
+
+def _check_docker_services() -> None:
+    """Verify that required Docker services are healthy. Raises RuntimeError if any are down."""
+    endpoints = {
+        "ingestion":         f"{INGESTION_URL}/health",
+        "reasoning-gateway": f"{GATEWAY_URL}/health",
+    }
+    for name, url in endpoints.items():
+        try:
+            r = requests.get(url, timeout=5)
+            r.raise_for_status()
+        except Exception as exc:
+            raise RuntimeError(
+                f"\n  Docker service '{name}' not reachable at {url}\n"
+                f"  Start with: .\\deployments\\deploy.ps1 local up\n"
+                f"  Error: {exc}"
+            ) from exc
+    print("  [docker] ingestion + reasoning-gateway: healthy")
 
 
 # ── Synthetic log generator ───────────────────────────────────────────────────
@@ -164,6 +193,13 @@ def _recall(lines: list[str], must_contain: list[str]) -> float:
     return hits / len(must_contain)
 
 
+def _recall_from_answer(answer: str, must_contain: list[str]) -> float:
+    """Check how many must_contain keywords appear in the LLM's answer text."""
+    blob = answer.lower()
+    hits = sum(1 for kw in must_contain if kw.lower() in blob)
+    return hits / max(len(must_contain), 1)
+
+
 # ── Step 2b — Optimised pipeline (compress → ToT-retrieve) ───────────────────
 
 def run_optimized(
@@ -242,6 +278,75 @@ def _cleanup_retriever(retriever: Any) -> None:
     tmp = getattr(retriever, "_tmp_dir", None)
     if tmp:
         shutil.rmtree(tmp, ignore_errors=True)
+
+
+# ── Step 2b (Docker) — Optimised pipeline via Docker services ─────────────────
+
+def run_optimized_docker(
+    corpus: list[str],
+    queries: list[dict[str, Any]],
+    collection: str = "text_benchmark",
+    batch_size: int = 2500,
+) -> tuple[list[dict[str, Any]], float, int, int]:
+    """
+    Optimised pipeline against Docker services:
+      1. POST corpus in batches to the ingestion service (compress + store in vector-store).
+      2. For each query POST to the reasoning gateway (LLM answer via MCP tool calls).
+    """
+    total_orig = 0
+    total_comp = 0
+    total_time = 0.0
+    n_batches  = (len(corpus) + batch_size - 1) // batch_size
+
+    for i in range(0, len(corpus), batch_size):
+        batch = corpus[i : i + batch_size]
+        bn    = i // batch_size + 1
+        print(f"  [ingest] Batch {bn}/{n_batches} ({len(batch):,} lines) …", flush=True)
+        resp = requests.post(
+            f"{INGESTION_URL}/ingest",
+            json={"corpus": batch, "collection": collection},
+            timeout=600,
+        )
+        resp.raise_for_status()
+        data        = resp.json()
+        total_orig += data["original_tokens"]
+        total_comp += data["compressed_tokens"]
+        total_time += data["time_s"]
+
+    ratio = total_comp / max(total_orig, 1)
+    print(
+        f"  [compress] {total_orig:,} → {total_comp:,} tokens "
+        f"({ratio:.1%} ratio) | {total_time:.1f}s total"
+    )
+
+    results = []
+    for q in queries:
+        start = time.perf_counter()
+        resp  = requests.post(
+            f"{GATEWAY_URL}/v1/chat/completions",
+            json={
+                "model":      REASONING_MODEL,
+                "messages":   [{"role": "user", "content": q["query"]}],
+                "collection": collection,
+            },
+            timeout=120,
+        )
+        resp.raise_for_status()
+        latency_ms = (time.perf_counter() - start) * 1000
+        data       = resp.json()
+        answer     = data["choices"][0]["message"]["content"]
+        results.append({
+            "query":            q["query"],
+            "strategy":         "optimized",
+            "tokens_processed": total_comp,
+            "lines_scanned":    0,
+            "lines_retrieved":  (data.get("tool_call_stats") or {}).get("tool_calls_made", 0),
+            "latency_ms":       latency_ms,
+            "selected_branch":  "gateway",
+            "recall":           _recall_from_answer(answer, q["must_contain"]),
+        })
+
+    return results, total_time, total_orig, total_comp
 
 
 def _recall_from_snippets(snippets: list[str], must_contain: list[str]) -> float:
@@ -382,8 +487,9 @@ def main() -> None:
     raw_avg = sum(r["latency_ms"] for r in raw_results) / len(raw_results)
     print(f"     avg latency: {raw_avg:.1f} ms | tokens: {raw_results[0]['tokens_processed']:,}")
 
-    print("  → Optimised (compress → ToT) …")
-    opt_results, compress_time, original_tokens, compressed_tokens = run_optimized(
+    print("  → Optimised (compress → Docker gateway) …")
+    _check_docker_services()
+    opt_results, compress_time, original_tokens, compressed_tokens = run_optimized_docker(
         corpus, GROUND_TRUTH_QUERIES
     )
     opt_avg = sum(r["latency_ms"] for r in opt_results) / len(opt_results)
