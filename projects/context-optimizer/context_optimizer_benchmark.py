@@ -6,6 +6,7 @@ import logging
 import os
 import random
 import re
+import sys
 import textwrap
 import time
 from dataclasses import dataclass
@@ -33,6 +34,10 @@ try:
     from langchain_groq import ChatGroq
 except ImportError:  # pragma: no cover
     ChatGroq = None
+
+# ToTReasoner is baked into src/context_optimizer — import it from there.
+sys.path.insert(0, str(Path(__file__).parent / "src"))
+from context_optimizer.tot_reasoner import ToTReasoner  # noqa: E402
 
 
 COMPRESSION_SYSTEM_PROMPT = (
@@ -291,6 +296,18 @@ def _mock_reason_optimized(compressed: CompressedIncident) -> tuple[str, int, in
 
 
 def _mock_reason_tot(compressed: CompressedIncident) -> tuple[str, list[dict[str, Any]], str, int, int]:
+    """Thin wrapper: build a log-search retriever and delegate to ToTReasoner."""
+
+    class _LogCacheRetriever:
+        """Adapts query_log_cache (langchain @tool) to the Retriever protocol."""
+
+        def search(self, query: str, top_k: int = 5) -> list[dict[str, Any]]:
+            snippet = query_log_cache.invoke({"keyword": query, "lines_context": 2})
+            if "No matches" in snippet:
+                return []
+            return [{"compressed_summary": snippet}]
+
+    reasoner = ToTReasoner(retriever=_LogCacheRetriever(), top_k_per_term=1)
     branch_specs = [
         {
             "id": "cosmos",
@@ -308,41 +325,25 @@ def _mock_reason_tot(compressed: CompressedIncident) -> tuple[str, list[dict[str
             "search_terms": ["retry", "cancellation", "timeout"],
         },
     ]
-
-    branches: list[dict[str, Any]] = []
-    retrieved_lines_total = 0
-    for spec in branch_specs:
-        evidence_hits = 0
-        evidence_snippets: list[str] = []
-        for term in spec["search_terms"]:
-            snippet = query_log_cache.invoke({"keyword": term, "lines_context": 2})
-            evidence_snippets.append(snippet)
-            retrieved_lines_total += snippet.count("\n") + 1
-            if term.lower() in snippet.lower():
-                evidence_hits += 1
-
-        score = evidence_hits + (1 if spec["id"] == "cosmos" else 0)
-        branches.append(
-            {
-                "id": spec["id"],
-                "title": spec["title"],
-                "search_terms": spec["search_terms"],
-                "score": score,
-                "evidence_hits": evidence_hits,
-                "evidence_snippets": evidence_snippets,
-            }
-        )
-
-    branches.sort(key=lambda item: item["score"], reverse=True)
-    selected_branch = branches[0]["id"]
-    selected_title = branches[0]["title"]
-    selected_summary = (
-        f"ToT-selected branch: {selected_title}.\n"
-        f"Most likely root cause: {selected_branch}-centric evidence points to the dominant failure mode.\n"
-        f"Retained identifiers: {', '.join(compressed.technical_identifiers[:8])}.\n"
-        "Mitigations: isolate the dominant dependency, cap retries, and tune the relevant timeout budget."
+    result = reasoner.reason(compressed, branch_specs=branch_specs)
+    branches_dicts = [
+        {
+            "id": b.id,
+            "title": b.title,
+            "search_terms": b.search_terms,
+            "score": b.score,
+            "evidence_hits": b.evidence_hits,
+            "evidence_snippets": b.evidence_snippets,
+        }
+        for b in result.branches
+    ]
+    return (
+        result.selected_summary,
+        branches_dicts,
+        result.selected_branch_id,
+        len(result.branches),
+        result.total_retrieved_lines,
     )
-    return selected_summary, branches, selected_branch, len(branches), retrieved_lines_total
 
 
 def run_pipeline_c(
@@ -351,7 +352,7 @@ def run_pipeline_c(
     provider: str,
     max_tool_rounds: int = 3,
 ) -> tuple[str, float, list[dict[str, Any]], str, int, int]:
-    """Tree-of-Thought style reasoning: generate multiple evidence-seeking branches and select the best one."""
+    """Tree-of-Thought reasoning via ToTReasoner (baked into src/context_optimizer)."""
     start = time.perf_counter()
 
     if provider == "mock" or reasoning_llm is None:
@@ -359,53 +360,45 @@ def run_pipeline_c(
         latency = time.perf_counter() - start
         return output, latency, branches, selected_branch, len(branches), retrieved_lines_total
 
-    # A lightweight LLM-driven version for non-mock providers.
+    # LLM-driven path: build branch specs from incident then reason via ToTReasoner.
     branch_prompts = [
-        (
-            "cosmos",
-            "Create a concise hypothesis about CosmosDB or RU saturation causing the incident, plus one search term.",
-        ),
-        (
-            "ingress",
-            "Create a concise hypothesis about ingress or upstream timeout causing the incident, plus one search term.",
-        ),
-        (
-            "retry",
-            "Create a concise hypothesis about retry storms or cancellation waterfalls causing the incident, plus one search term.",
-        ),
+        ("cosmos",  "Create a concise hypothesis about CosmosDB or RU saturation causing the incident, plus one search term."),
+        ("ingress", "Create a concise hypothesis about ingress or upstream timeout causing the incident, plus one search term."),
+        ("retry",   "Create a concise hypothesis about retry storms or cancellation waterfalls causing the incident, plus one search term."),
     ]
 
-    branches: list[dict[str, Any]] = []
-    retrieved_lines_total = 0
+    branch_specs = []
     for branch_id, prompt in branch_prompts:
-        response = reasoning_llm.invoke([HumanMessage(content=f"{prompt}\n\nIncident brief:\n{compressed.model_dump_json(indent=2)}")])
+        response = reasoning_llm.invoke(
+            [HumanMessage(content=f"{prompt}\n\nIncident brief:\n{compressed.model_dump_json(indent=2)}")]
+        )
         branch_text = str(response.content)
-        search_terms = [token.strip() for token in branch_text.split(",") if token.strip()][:2]
-        if not search_terms:
-            search_terms = [branch_id]
-        evidence = "\n".join(
-            query_log_cache.invoke({"keyword": term, "lines_context": 1}) for term in search_terms
-        )
-        retrieved_lines_total += evidence.count("\n") + 1
-        branches.append(
-            {
-                "id": branch_id,
-                "title": branch_id,
-                "search_terms": search_terms,
-                "score": 1 if search_terms else 0,
-                "evidence_hits": 1 if search_terms else 0,
-                "evidence_snippets": [evidence],
-            }
-        )
+        search_terms = [t.strip() for t in branch_text.split(",") if t.strip()][:2] or [branch_id]
+        branch_specs.append({"id": branch_id, "title": branch_id, "search_terms": search_terms})
 
-    branches.sort(key=lambda item: item["score"], reverse=True)
-    selected_branch = branches[0]["id"]
-    output = (
-        f"ToT-selected branch: {selected_branch}.\n"
-        f"Evidence summary: {branches[0]['evidence_snippets'][0][:400]}"
-    )
+    class _LogCacheRetriever:
+        def search(self, query: str, top_k: int = 5) -> list[dict[str, Any]]:
+            snippet = query_log_cache.invoke({"keyword": query, "lines_context": 1})
+            if "No matches" in snippet:
+                return []
+            return [{"compressed_summary": snippet}]
+
+    reasoner = ToTReasoner(retriever=_LogCacheRetriever(), top_k_per_term=1)
+    result = reasoner.reason(compressed, branch_specs=branch_specs)
+
+    branches_dicts = [
+        {
+            "id": b.id,
+            "title": b.title,
+            "search_terms": b.search_terms,
+            "score": b.score,
+            "evidence_hits": b.evidence_hits,
+            "evidence_snippets": b.evidence_snippets,
+        }
+        for b in result.branches
+    ]
     latency = time.perf_counter() - start
-    return output, latency, branches, selected_branch, len(branches), retrieved_lines_total
+    return result.selected_summary, latency, branches_dicts, result.selected_branch_id, len(result.branches), result.total_retrieved_lines
 
 
 def run_compression_step(

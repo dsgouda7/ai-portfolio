@@ -1,0 +1,112 @@
+name: context-optimizer
+
+# Build context is the project root so every Dockerfile can COPY from src/.
+# Run: docker compose up --build  (from this directory)
+
+services:
+
+  # ── Service 1: Ingestion ──────────────────────────────────────────────────
+  # Rolling-window LLM compression: raw text → CompressedChunks
+  # Sends compressed chunks to embedding service, then vector-store.
+  ingestion:
+    build:
+      context: ..
+      dockerfile: deployment/ingestion/Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      CONTEXT_OPTIMIZER_COMPRESSOR_PROVIDER: ${COMPRESSOR_PROVIDER:-ollama}
+      CONTEXT_OPTIMIZER_COMPRESSOR_MODEL:    ${COMPRESSOR_MODEL:-llama3.2:3b}
+      OLLAMA_BASE_URL:                       ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      EMBEDDING_SERVICE_URL:                 http://embedding:8002
+      VECTOR_STORE_URL:                      http://vector-store:8003
+    depends_on:
+      embedding:
+        condition: service_healthy
+      vector-store:
+        condition: service_healthy
+    networks:
+      - co-net
+    restart: unless-stopped
+
+  # ── Service 2: Embedding ──────────────────────────────────────────────────
+  # Vectorization: compressed summaries → dense vectors via sentence-transformers
+  # (NOTE: this is *embedding*, not LLM tokenization — see docs/design/ARCHITECTURE.md §8)
+  embedding:
+    build:
+      context: ..
+      dockerfile: deployment/embedding/Dockerfile
+    ports:
+      - "8002:8002"
+    environment:
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-all-MiniLM-L6-v2}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - co-net
+    restart: unless-stopped
+
+  # ── Service 3: Vector Store ───────────────────────────────────────────────
+  # ChromaDB HNSW index + in-memory semantic LRU cache.
+  # Stores compressed summaries (indexed) + raw text (metadata pointer, not indexed).
+  # Serves: POST /store  GET /search  GET /chunks/{id}
+  vector-store:
+    build:
+      context: ..
+      dockerfile: deployment/vector-store/Dockerfile
+    ports:
+      - "8003:8003"
+    environment:
+      EMBEDDING_SERVICE_URL: http://embedding:8002
+      CHROMA_PERSIST_DIR:    /data/chroma_db
+    volumes:
+      - chroma-data:/data/chroma_db
+      - corpus-data:/data/corpus:ro
+    depends_on:
+      embedding:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8003/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - co-net
+    restart: unless-stopped
+
+  # ── Service 4: Reasoning Gateway ─────────────────────────────────────────
+  # LiteLLM router + MCP tools (retrieve_context, get_context_details).
+  # Connects to vector-store for evidence; routes completions to remote LLM.
+  # OpenAI-compatible endpoint: POST /v1/chat/completions
+  reasoning-gateway:
+    build:
+      context: ..
+      dockerfile: deployment/reasoning-gateway/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      VECTOR_STORE_URL:                      http://vector-store:8003
+      CONTEXT_OPTIMIZER_COMPRESSOR_PROVIDER: ${COMPRESSOR_PROVIDER:-ollama}
+      OLLAMA_BASE_URL:                       ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      GROQ_API_KEY:                          ${GROQ_API_KEY:-}
+    depends_on:
+      vector-store:
+        condition: service_healthy
+    networks:
+      - co-net
+    restart: unless-stopped
+
+volumes:
+  chroma-data:
+    driver: local
+  corpus-data:
+    driver: local
+
+networks:
+  co-net:
+    driver: bridge
