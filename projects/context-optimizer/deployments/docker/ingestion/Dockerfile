@@ -8,8 +8,7 @@ RUN pip install --no-cache-dir fastapi uvicorn httpx langchain-core langchain-ol
 # Copy the core library
 COPY src/ src/
 
-# Copy the ingestion service entry point
-COPY deployment/ingestion/service.py service.py
+COPY deployments/docker/ingestion/service.py service.py
 
 ENV PYTHONPATH=/app/src
 

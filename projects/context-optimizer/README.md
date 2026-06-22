@@ -238,7 +238,7 @@ $env:GROQ_API_KEY = "<your_key_here>"
 context-optimizer --provider groq --small-model llama-3.1-8b-instant --reasoning-model llama-3.3-70b-versatile
 
 # 3c. run benchmarks against Azure OpenAI (20-30x faster than Ollama)
-# See azure_deployments/ for Azure Key Vault–backed setup
+# See deployments/azure/ for Azure Key Vault–backed setup
 cd benchmarks/tot
 python run_benchmarks.py
 
@@ -246,7 +246,7 @@ python run_benchmarks.py
 python -m context_optimizer --provider ollama --pipeline both
 ```
 
-For Azure OpenAI–backed deployments see [azure_deployments/](azure_deployments/).
+Deploy locally (host Ollama) or to Azure via [deployments/](deployments/) — `bash deployments/deploy.sh local up` or `deployments\deploy.ps1 azure up`.
 
 ## Package and deployment
 

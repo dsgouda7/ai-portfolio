@@ -1,43 +1,63 @@
-name: context-optimizer
+name: context-optimizer-local
 
-# Build context is the project root so every Dockerfile can COPY from src/.
-# Run: docker compose up --build  (from this directory)
+# Local deployment — all four services run in Docker containers and call
+# the Ollama instance installed on the host machine.
+#
+# Prerequisites
+#   • Docker Desktop (Windows / macOS) — host.docker.internal resolves automatically
+#   • Linux Docker Engine — uncomment the `extra_hosts` lines below
+#   • Ollama running on host: ollama serve
+#   • Models pulled:  ollama pull ${COMPRESSOR_MODEL:-llama3.2:3b}
+#                     ollama pull ${REASONING_MODEL:-llama3.2:3b}
+#
+# Quick start
+#   cp deployments/local/.env.example deployments/local/.env
+#   docker compose -f deployments/local/docker-compose.yml up --build
+#   # or use the unified entry point:
+#   bash deployments/deploy.sh local up
+#
+# Build context is the project root so Dockerfiles can reach src/.
 
 services:
 
   # ── Service 1: Ingestion ──────────────────────────────────────────────────
-  # Rolling-window LLM compression: raw text → CompressedChunks
-  # Sends compressed chunks to embedding service, then vector-store.
+  # Corpus compression via Ollama running on the host.
   ingestion:
     build:
-      context: ..
-      dockerfile: deployment/ingestion/Dockerfile
+      context: ../..
+      dockerfile: deployments/docker/ingestion/Dockerfile
     ports:
       - "8001:8001"
+    env_file:
+      - .env
     environment:
       CONTEXT_OPTIMIZER_COMPRESSOR_PROVIDER: ${COMPRESSOR_PROVIDER:-ollama}
       CONTEXT_OPTIMIZER_COMPRESSOR_MODEL:    ${COMPRESSOR_MODEL:-llama3.2:3b}
       OLLAMA_BASE_URL:                       ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       EMBEDDING_SERVICE_URL:                 http://embedding:8002
       VECTOR_STORE_URL:                      http://vector-store:8003
+    # Linux only: uncomment to resolve host.docker.internal
+    # extra_hosts:
+    #   - "host.docker.internal:host-gateway"
     depends_on:
       embedding:
         condition: service_healthy
       vector-store:
         condition: service_healthy
-    networks:
-      - co-net
+    networks: [co-net]
     restart: unless-stopped
 
   # ── Service 2: Embedding ──────────────────────────────────────────────────
-  # Vectorization: compressed summaries → dense vectors via sentence-transformers
-  # (NOTE: this is *embedding*, not LLM tokenization — see docs/design/ARCHITECTURE.md §8)
+  # CPU sentence-transformers (all-MiniLM-L6-v2). Runs fully inside the container.
+  # No host dependency required.
   embedding:
     build:
-      context: ..
-      dockerfile: deployment/embedding/Dockerfile
+      context: ../..
+      dockerfile: deployments/docker/embedding/Dockerfile
     ports:
       - "8002:8002"
+    env_file:
+      - .env
     environment:
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-all-MiniLM-L6-v2}
     healthcheck:
@@ -46,26 +66,24 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-    networks:
-      - co-net
+    networks: [co-net]
     restart: unless-stopped
 
   # ── Service 3: Vector Store ───────────────────────────────────────────────
-  # ChromaDB HNSW index + in-memory semantic LRU cache.
-  # Stores compressed summaries (indexed) + raw text (metadata pointer, not indexed).
-  # Serves: POST /store  GET /search  GET /chunks/{id}
+  # ChromaDB + semantic LRU cache. Fully self-contained.
   vector-store:
     build:
-      context: ..
-      dockerfile: deployment/vector-store/Dockerfile
+      context: ../..
+      dockerfile: deployments/docker/vector-store/Dockerfile
     ports:
       - "8003:8003"
+    env_file:
+      - .env
     environment:
       EMBEDDING_SERVICE_URL: http://embedding:8002
       CHROMA_PERSIST_DIR:    /data/chroma_db
     volumes:
       - chroma-data:/data/chroma_db
-      - corpus-data:/data/corpus:ro
     depends_on:
       embedding:
         condition: service_healthy
@@ -75,36 +93,34 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
-    networks:
-      - co-net
+    networks: [co-net]
     restart: unless-stopped
 
-  # ── Service 4: Reasoning Gateway ─────────────────────────────────────────
-  # LiteLLM router + MCP tools (retrieve_context, get_context_details).
-  # Connects to vector-store for evidence; routes completions to remote LLM.
-  # OpenAI-compatible endpoint: POST /v1/chat/completions
+  # ── Service 4: Reasoning Gateway (main app) ───────────────────────────────
+  # LiteLLM routes to Ollama on the host. OpenAI-compatible endpoint.
   reasoning-gateway:
     build:
-      context: ..
-      dockerfile: deployment/reasoning-gateway/Dockerfile
+      context: ../..
+      dockerfile: deployments/docker/reasoning-gateway/Dockerfile
     ports:
       - "8080:8080"
+    env_file:
+      - .env
     environment:
       VECTOR_STORE_URL:                      http://vector-store:8003
       CONTEXT_OPTIMIZER_COMPRESSOR_PROVIDER: ${COMPRESSOR_PROVIDER:-ollama}
       OLLAMA_BASE_URL:                       ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
-      GROQ_API_KEY:                          ${GROQ_API_KEY:-}
+    # Linux only: uncomment to resolve host.docker.internal
+    # extra_hosts:
+    #   - "host.docker.internal:host-gateway"
     depends_on:
       vector-store:
         condition: service_healthy
-    networks:
-      - co-net
+    networks: [co-net]
     restart: unless-stopped
 
 volumes:
   chroma-data:
-    driver: local
-  corpus-data:
     driver: local
 
 networks:

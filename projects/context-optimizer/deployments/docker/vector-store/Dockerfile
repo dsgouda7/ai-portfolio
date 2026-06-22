@@ -5,7 +5,7 @@ WORKDIR /app
 RUN pip install --no-cache-dir fastapi uvicorn chromadb sentence-transformers httpx
 
 COPY src/ src/
-COPY deployment/vector-store/service.py service.py
+COPY deployments/docker/vector-store/service.py service.py
 
 ENV PYTHONPATH=/app/src
 

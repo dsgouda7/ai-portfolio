@@ -15,8 +15,9 @@ docs/whitepaper/proposed-whitepaper.pdf
 
 # Azure credentials (NEVER commit — contains API keys)
 azure_config.py
-azure_deployments/.env.azure
-azure_deployments/services/*.env
+deployments/azure/.env.azure
+deployments/azure/services/*.env
+deployments/local/.env
 
 # Python
 __pycache__/

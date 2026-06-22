@@ -10,7 +10,9 @@ name: context-optimizer-azure
 # Before first run:
 #   cp .env.example .env.azure          # fill in tenant/client/kv details
 #   bash keyvault/provision.sh          # one-time: create secrets in your vault
-#   docker compose -f azure_deployments/docker-compose.yml up --build
+#   docker compose -f deployments/azure/docker-compose.yml up --build
+#   # or use the unified entry point:
+#   bash deployments/deploy.sh azure up
 #
 # Build context is the project root so every Dockerfile can reach src/.
 
@@ -31,8 +33,8 @@ services:
   # Uses the Azure summarizer model for compression.
   ingestion:
     build:
-      context: ..
-      dockerfile: deployment/ingestion/Dockerfile
+      context: ../..
+      dockerfile: deployments/docker/ingestion/Dockerfile
     ports:
       - "8001:8001"
     env_file:
@@ -51,8 +53,8 @@ services:
   # Dense vectorisation via Azure AI text-embedding-3-small.
   embedding:
     build:
-      context: ..
-      dockerfile: deployment/embedding/Dockerfile
+      context: ../..
+      dockerfile: deployments/docker/embedding/Dockerfile
     ports:
       - "8002:8002"
     env_file:
@@ -73,8 +75,8 @@ services:
   # ChromaDB HNSW index + in-memory semantic LRU cache.
   vector-store:
     build:
-      context: ..
-      dockerfile: deployment/vector-store/Dockerfile
+      context: ../..
+      dockerfile: deployments/docker/vector-store/Dockerfile
     ports:
       - "8003:8003"
     env_file:
@@ -100,8 +102,8 @@ services:
   # Connects to the Azure reasoning model; retrieves evidence from vector-store.
   reasoning-gateway:
     build:
-      context: ..
-      dockerfile: deployment/reasoning-gateway/Dockerfile
+      context: ../..
+      dockerfile: deployments/docker/reasoning-gateway/Dockerfile
     ports:
       - "8080:8080"
     env_file:

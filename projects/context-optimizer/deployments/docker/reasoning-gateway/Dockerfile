@@ -5,7 +5,7 @@ WORKDIR /app
 RUN pip install --no-cache-dir fastapi uvicorn litellm httpx langchain-core langchain-ollama langchain-groq
 
 COPY src/ src/
-COPY deployment/reasoning-gateway/service.py service.py
+COPY deployments/docker/reasoning-gateway/service.py service.py
 
 ENV PYTHONPATH=/app/src
 
