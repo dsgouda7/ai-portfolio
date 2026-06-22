@@ -4,13 +4,12 @@ import argparse
 import json
 import logging
 import os
-import random
 import re
 import sys
 import textwrap
 import time
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -48,7 +47,7 @@ COMPRESSION_SYSTEM_PROMPT = (
     "CosmosDB, metrics, error codes). Do not answer the user's problem."
 )
 
-MOCK_INCIDENT_PROMPT = textwrap.dedent(
+INCIDENT_PROMPT = textwrap.dedent(
     """
     Hey team, sorry this is a bit all over the place because I have been on this for hours and this has
     turned into a full-on fire. Since around 02:13 UTC the checkout flow has been intermittently timing out
@@ -93,13 +92,11 @@ class ModelConfig:
 def default_model_names(provider: str) -> tuple[str, str]:
     if provider == "groq":
         return "llama-3.1-8b-instant", "llama-3.3-70b-versatile"
-    if provider == "mock":
-        return "mock-paraphraser", "mock-reasoner"
     return "phi4:mini", "qwen3"
 
 
-def init_chat_model(provider: str, model_name: str, temperature: float = 0.0) -> BaseChatModel | None:
-    """Initialize a chat model with a provider abstraction for Ollama, Groq, or mock mode."""
+def init_chat_model(provider: str, model_name: str, temperature: float = 0.0) -> BaseChatModel:
+    """Initialize a real chat model. Supports ollama and groq."""
     normalized = provider.strip().lower()
     if normalized == "ollama":
         if ChatOllama is None:
@@ -121,93 +118,17 @@ def init_chat_model(provider: str, model_name: str, temperature: float = 0.0) ->
                 "GROQ_API_KEY is not set. Export it before running with --provider groq."
             )
         return ChatGroq(model=model_name, temperature=temperature)
-    if normalized == "mock":
-        return None
-    raise ValueError("provider must be one of: ollama, groq, mock")
+    raise ValueError(f"Unknown provider '{provider}'. Supported: ollama, groq")
 
 
-def build_mock_log_cache(total_lines: int = 1050, seed: int = 73) -> list[str]:
-    """Create an in-memory log corpus with realistic AKS/Cosmos/stack trace noise."""
-    random.seed(seed)
-    logs: list[str] = []
-    start = datetime(2026, 6, 16, 1, 45, 0)
-
-    services = [
-        "api-gateway",
-        "order-service",
-        "payment-service",
-        "recommendation-service",
-        "inventory-service",
-    ]
-    pods = [
-        "order-service-7f4b9d7b9f-k2m8q",
-        "order-service-7f4b9d7b9f-r5vpl",
-        "payment-service-69c57c6b9b-dj2nr",
-        "api-gateway-6f9dddc75f-n7k4m",
-        "ingress-nginx-controller-5f89d4c4bf-v8z2s",
-    ]
-
-    for i in range(total_lines):
-        ts = (start + timedelta(seconds=i * 2)).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
-        service = random.choice(services)
-        pod = random.choice(pods)
-        request_id = f"req-{i:06d}"
-
-        if i % 89 == 0:
-            logs.append(
-                f"{ts} ERROR {service} [{pod}] [{request_id}] "
-                "System.TimeoutException: Request timed out at CosmosClient.ReadItemAsync "
-                "status=408 substatus=21012 region=eastus2"
-            )
-            logs.append(
-                f"{ts} ERROR {service} [{pod}] [{request_id}] "
-                "at Checkout.Repository.OrderStore.GetOrderById(String id) in /src/OrderStore.cs:line 214"
-            )
-            logs.append(
-                f"{ts} ERROR {service} [{pod}] [{request_id}] "
-                "at PaymentConnector.SubmitAsync(CancellationToken ct) in /src/PaymentConnector.cs:line 87"
-            )
-            continue
-
-        if i % 53 == 0:
-            logs.append(
-                f"{ts} WARN ingress-nginx [{pod}] [{request_id}] "
-                'upstream timed out while reading response header from upstream, client: 10.42.7.19, '
-                'server: checkout.api.internal, request: "POST /v1/checkout HTTP/1.1", '
-                'upstream: "http://10.42.8.44:8080/v1/checkout", host: "checkout.example.com"'
-            )
-            continue
-
-        if i % 47 == 0:
-            logs.append(
-                f"{ts} WARN {service} [{pod}] [{request_id}] "
-                "CosmosDB query timeout after 5000ms retries=3 ru_charge=128.44 "
-                "partition=tenant-445 operation=ReadItem"
-            )
-            continue
-
-        if i % 61 == 0:
-            logs.append(
-                f"{ts} ERROR api-gateway [{pod}] [{request_id}] "
-                "HTTP 504 upstream timeout route=/v1/checkout p95=8.7s error_rate=17.6%"
-            )
-            continue
-
-        logs.append(
-            f"{ts} INFO {service} [{pod}] [{request_id}] "
-            "request completed status=200 latency_ms="
-            f"{random.randint(55, 480)}"
-        )
-
-    return logs[:total_lines]
-
-
-MOCK_LOG_CACHE = build_mock_log_cache(total_lines=1050)
+# Module-level log cache — set by main() via load_logs().
+# The query_log_cache @tool closes over this variable.
+_active_log_cache: list[str] = []
 
 
 @tool
 def query_log_cache(keyword: str, lines_context: int = 5) -> str:
-    """Search in-memory logs and return matching lines with neighboring context."""
+    """Search incident logs and return matching lines with neighbouring context."""
     needle = keyword.strip().lower()
     if not needle:
         return "query_log_cache error: keyword must be non-empty"
@@ -216,14 +137,14 @@ def query_log_cache(keyword: str, lines_context: int = 5) -> str:
     max_hits = 8
     hits: list[str] = []
 
-    for idx, line in enumerate(MOCK_LOG_CACHE):
+    for idx, line in enumerate(_active_log_cache):
         if needle in line.lower():
             start = max(0, idx - ctx)
-            end = min(len(MOCK_LOG_CACHE), idx + ctx + 1)
+            end = min(len(_active_log_cache), idx + ctx + 1)
             excerpt_lines = []
             for j in range(start, end):
                 marker = ">" if j == idx else " "
-                excerpt_lines.append(f"{marker} [{j:04d}] {MOCK_LOG_CACHE[j]}")
+                excerpt_lines.append(f"{marker} [{j:04d}] {_active_log_cache[j]}")
             hits.append("\n".join(excerpt_lines))
             if len(hits) >= max_hits:
                 break
@@ -237,130 +158,11 @@ def query_log_cache(keyword: str, lines_context: int = 5) -> str:
     )
 
 
-def _mock_compress(raw_prompt: str) -> CompressedIncident:
-    identifiers = sorted(
-        {
-            match
-            for match in re.findall(
-                r"\b(?:AKS|CosmosDB|ingress-nginx|api-gateway|order-service|payment-service|"
-                r"recommendation-service|error_rate|p95|\d+\.\d+\.\d+\.\d+|\d{4,6})\b",
-                raw_prompt,
-                flags=re.IGNORECASE,
-            )
-        }
-    )
-    return CompressedIncident(
-        core_issue=(
-            "Checkout pipeline experiences cascading timeouts across ingress and CosmosDB-backed dependencies "
-            "during the active incident window."
-        ),
-        observed_symptoms=[
-            "Checkout requests intermittently return 504/499.",
-            "p95 latency rose from 220ms to 8.7s.",
-            "Error rate reached 17.6% while CPU remained near baseline.",
-            "Timeout code 21012 observed in CosmosDB-dependent path.",
-            "Ingress reported upstream response-header timeouts.",
-        ],
-        technical_identifiers=identifiers,
-    )
-
-
-def _mock_reason_raw(raw_prompt: str, full_logs: list[str]) -> str:
-    blob = "\n".join(full_logs).lower()
-    timeout_hits = blob.count("timeout")
-    cosmos_hits = blob.count("cosmos")
-    ingress_hits = blob.count("upstream timed out")
-    return (
-        "Most likely root cause: CosmosDB-read latency propagated through order-service and ingress timeout limits.\n"
-        f"Evidence: timeout_hits={timeout_hits}, cosmos_hits={cosmos_hits}, ingress_timeout_hits={ingress_hits}.\n"
-        "Immediate mitigations: bounded retries, temporary timeout budget increase, ingress upstream tuning.\n"
-        "Next checks: RU saturation, retry fan-out, partition hot-keys, cancellation waterfall, ingress queue depth.\n"
-        f"Prompt chars processed: {len(raw_prompt)}; log lines processed: {len(full_logs)}."
-    )
-
-
-def _mock_reason_optimized(compressed: CompressedIncident) -> tuple[str, int, int]:
-    search_terms = ["CosmosDB", "21012", "upstream timed out", "504"]
-    retrieved_lines = 0
-    for term in search_terms:
-        snippet = query_log_cache.invoke({"keyword": term, "lines_context": 3})
-        retrieved_lines += snippet.count("\n") + 1
-
-    summary = (
-        "Most likely root cause: timeout amplification from CosmosDB latency plus ingress upstream limits.\n"
-        f"Retained identifiers: {', '.join(compressed.technical_identifiers[:8])}.\n"
-        "Immediate mitigations: cap retries, add jitter, tune ingress timeouts, isolate noisy workloads.\n"
-        "Next checks: dependency latency by partition, upstream header timing, retry burst metrics."
-    )
-    return summary, len(search_terms), retrieved_lines
-
-
-def _mock_reason_tot(compressed: CompressedIncident) -> tuple[str, list[dict[str, Any]], str, int, int]:
-    """Thin wrapper: build a log-search retriever and delegate to ToTReasoner."""
-
-    class _LogCacheRetriever:
-        """Adapts query_log_cache (langchain @tool) to the Retriever protocol."""
-
-        def search(self, query: str, top_k: int = 5) -> list[dict[str, Any]]:
-            snippet = query_log_cache.invoke({"keyword": query, "lines_context": 2})
-            if "No matches" in snippet:
-                return []
-            return [{"compressed_summary": snippet}]
-
-    reasoner = ToTReasoner(retriever=_LogCacheRetriever(), top_k_per_term=1)
-    branch_specs = [
-        {
-            "id": "cosmos",
-            "title": "CosmosDB / RU saturation branch",
-            "search_terms": ["CosmosDB", "21012", "ru_charge"],
-        },
-        {
-            "id": "ingress",
-            "title": "Ingress / upstream timeout branch",
-            "search_terms": ["upstream timed out", "504", "ingress-nginx"],
-        },
-        {
-            "id": "retry",
-            "title": "Retry / cancellation waterfall branch",
-            "search_terms": ["retry", "cancellation", "timeout"],
-        },
-    ]
-    result = reasoner.reason(compressed, branch_specs=branch_specs)
-    branches_dicts = [
-        {
-            "id": b.id,
-            "title": b.title,
-            "search_terms": b.search_terms,
-            "score": b.score,
-            "evidence_hits": b.evidence_hits,
-            "evidence_snippets": b.evidence_snippets,
-        }
-        for b in result.branches
-    ]
-    return (
-        result.selected_summary,
-        branches_dicts,
-        result.selected_branch_id,
-        len(result.branches),
-        result.total_retrieved_lines,
-    )
-
-
 def run_pipeline_c(
-    reasoning_llm: BaseChatModel | None,
+    reasoning_llm: BaseChatModel,
     compressed: CompressedIncident,
-    provider: str,
-    max_tool_rounds: int = 3,
 ) -> tuple[str, float, list[dict[str, Any]], str, int, int]:
     """Tree-of-Thought reasoning via ToTReasoner (baked into src/context_optimizer)."""
-    start = time.perf_counter()
-
-    if provider == "mock" or reasoning_llm is None:
-        output, branches, selected_branch, _, retrieved_lines_total = _mock_reason_tot(compressed)
-        latency = time.perf_counter() - start
-        return output, latency, branches, selected_branch, len(branches), retrieved_lines_total
-
-    # LLM-driven path: build branch specs from incident then reason via ToTReasoner.
     branch_prompts = [
         ("cosmos",  "Create a concise hypothesis about CosmosDB or RU saturation causing the incident, plus one search term."),
         ("ingress", "Create a concise hypothesis about ingress or upstream timeout causing the incident, plus one search term."),
@@ -383,6 +185,7 @@ def run_pipeline_c(
                 return []
             return [{"compressed_summary": snippet}]
 
+    start = time.perf_counter()
     reasoner = ToTReasoner(retriever=_LogCacheRetriever(), top_k_per_term=1)
     result = reasoner.reason(compressed, branch_specs=branch_specs)
 
@@ -402,18 +205,11 @@ def run_pipeline_c(
 
 
 def run_compression_step(
-    paraphraser_llm: BaseChatModel | None,
+    paraphraser_llm: BaseChatModel,
     raw_prompt: str,
-    provider: str,
 ) -> tuple[CompressedIncident, float]:
-    """Run the Edge Filter chain with structured output validation."""
+    """Run the Edge Filter chain — compresses raw incident prose into structured JSON."""
     start = time.perf_counter()
-
-    if provider == "mock" or paraphraser_llm is None:
-        result = _mock_compress(raw_prompt)
-        latency = time.perf_counter() - start
-        return result, latency
-
     try:
         structured_llm = paraphraser_llm.with_structured_output(CompressedIncident)
         result = structured_llm.invoke(
@@ -452,18 +248,11 @@ def run_compression_step(
 
 
 def run_pipeline_a(
-    reasoning_llm: BaseChatModel | None,
+    reasoning_llm: BaseChatModel,
     raw_prompt: str,
     full_logs: list[str],
-    provider: str,
 ) -> tuple[str, float, int]:
-    """Baseline: send full prompt + full logs directly to the reasoning model."""
-    if provider == "mock" or reasoning_llm is None:
-        start = time.perf_counter()
-        output = _mock_reason_raw(raw_prompt, full_logs)
-        latency = time.perf_counter() - start
-        return output, latency, len(full_logs)
-
+    """Pipe A — Baseline: inject the full raw prompt and all log lines into the LLM."""
     logs_blob = "\n".join(full_logs)
     reasoning_prompt = textwrap.dedent(
         f"""
@@ -504,19 +293,12 @@ def _execute_tool_call(tool_call: dict[str, Any]) -> str:
 
 
 def run_pipeline_b(
-    reasoning_llm: BaseChatModel | None,
+    reasoning_llm: BaseChatModel,
     compressed: CompressedIncident,
-    provider: str,
     max_tool_rounds: int = 4,
 ) -> tuple[str, float, int, int]:
-    """Optimized: use compressed prompt + dynamic retrieval from in-memory log cache."""
+    """Pipe B — Optimised: compressed prompt + dynamic retrieval via query_log_cache tool."""
     start = time.perf_counter()
-
-    if provider == "mock" or reasoning_llm is None:
-        output, tool_calls, retrieved_lines = _mock_reason_optimized(compressed)
-        latency = time.perf_counter() - start
-        return output, latency, tool_calls, retrieved_lines
-
     model_with_tools = reasoning_llm.bind_tools([query_log_cache])
 
     messages = [
@@ -562,17 +344,13 @@ def run_pipeline_b(
     return str(final_message.content), latency, tool_calls_total, retrieved_lines_total
 
 
-def load_logs(log_file: str | None, max_log_lines: int = 6000) -> list[str]:
-    """Load logs from a text file, else generate a mock corpus at the requested size."""
-    if not log_file:
-        return build_mock_log_cache(total_lines=max_log_lines)
-
+def load_logs(log_file: str, max_log_lines: int = 6000) -> list[str]:
+    """Load log lines from a file. Trims to max_log_lines."""
     path = Path(log_file)
     if not path.exists():
-        raise FileNotFoundError(f"log file not found: {log_file}")
-
+        raise FileNotFoundError(f"Log file not found: {log_file}")
     with path.open("r", encoding="utf-8", errors="replace") as handle:
-        lines = [line.rstrip("\n") for line in handle]
+        lines = [ln.rstrip("\n") for ln in handle if ln.strip()]
 
     if not lines:
         raise ValueError(f"log file is empty: {log_file}")
@@ -703,12 +481,12 @@ def print_telemetry(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Benchmark Token Compression + In-Memory Log Retrieval (Pipe A vs Pipe B)."
+        description="Context Optimizer E2E benchmark — Pipe A (raw) vs Pipe B (compressed+tools) vs Pipe C (ToT)."
     )
     parser.add_argument(
         "--provider",
-        choices=["ollama", "groq", "mock"],
-        default=os.getenv("LLM_PROVIDER", "mock"),
+        choices=["ollama", "groq"],
+        default=os.getenv("LLM_PROVIDER", "ollama"),
     )
     parser.add_argument("--small-model", default=None, help="Paraphraser model name")
     parser.add_argument("--reasoning-model", default=None, help="Reasoning model name")
@@ -718,24 +496,19 @@ def parse_args() -> argparse.Namespace:
         "--pipeline",
         choices=["both", "raw", "optimized", "tot", "all", "compare"],
         default=os.getenv("PIPELINE_MODE", "compare"),
-        help="Run baseline, optimized, and/or ToT-style reasoning flows. 'compare' runs only Pipe A and Pipe C.",
     )
     parser.add_argument(
         "--log-file",
         default=os.getenv("LOG_FILE"),
-        help="Optional path to an external log file for large-context testing.",
+        required=not bool(os.getenv("LOG_FILE")),
+        help="Path to log file (one entry per line). Required.",
     )
     parser.add_argument(
         "--max-log-lines",
         type=int,
         default=int(os.getenv("MAX_LOG_LINES", "2000")),
-        help="Maximum number of log lines to load from --log-file. Defaults to a medium corpus size.",
     )
-    parser.add_argument(
-        "--metrics-json",
-        default=os.getenv("METRICS_JSON_PATH"),
-        help="Optional output path for structured metrics JSON.",
-    )
+    parser.add_argument("--metrics-json", default=os.getenv("METRICS_JSON_PATH"))
     return parser.parse_args()
 
 
@@ -758,17 +531,16 @@ def main() -> None:
     print(f"pipeline_mode:   {args.pipeline}")
 
     active_logs = load_logs(args.log_file, max_log_lines=args.max_log_lines)
-    global MOCK_LOG_CACHE
-    MOCK_LOG_CACHE = active_logs
+    global _active_log_cache
+    _active_log_cache = active_logs
     print(f"log_cache_lines: {len(active_logs)}")
-    if args.log_file:
-        print(f"log_file:        {args.log_file}")
+    print(f"log_file:        {args.log_file}")
 
     paraphraser_llm = init_chat_model(config.provider, config.small_model, config.temperature)
     reasoning_llm = init_chat_model(config.provider, config.reasoning_model, config.temperature)
 
     print_section("Input Prompt")
-    print(MOCK_INCIDENT_PROMPT)
+    print(INCIDENT_PROMPT)
 
     compressed: CompressedIncident | None = None
     compression_latency = 0.0
@@ -786,16 +558,15 @@ def main() -> None:
     need_compressed = include_optimized or args.pipeline == "compare"
 
     if need_compressed:
-        compressed, compression_latency = run_compression_step(paraphraser_llm, MOCK_INCIDENT_PROMPT, config.provider)
+        compressed, compression_latency = run_compression_step(paraphraser_llm, INCIDENT_PROMPT)
         print_section("Compressed Incident")
         print(compressed.model_dump_json(indent=2))
 
     if include_raw:
         pipe_a_output, pipe_a_latency, raw_lines = run_pipeline_a(
             reasoning_llm,
-            MOCK_INCIDENT_PROMPT,
+            INCIDENT_PROMPT,
             active_logs,
-            config.provider,
         )
         print_section("Pipe A - Baseline (Raw Prompt + Full Logs)")
         print(pipe_a_output)
@@ -806,7 +577,6 @@ def main() -> None:
         pipe_b_output, pipe_b_latency, tool_calls, optimized_lines = run_pipeline_b(
             reasoning_llm,
             compressed,
-            config.provider,
         )
         print_section("Pipe B - Optimized (Compressed Prompt + query_log_cache Tool)")
         print(pipe_b_output)
@@ -817,7 +587,6 @@ def main() -> None:
         pipe_c_output, pipe_c_latency, _, _, _, tot_lines = run_pipeline_c(
             reasoning_llm,
             compressed,
-            config.provider,
         )
         print_section("Pipe C - ToT-Enhanced Reasoning")
         print(pipe_c_output)
@@ -832,7 +601,7 @@ def main() -> None:
     comparison_metrics: dict[str, Any] | None = None
     if args.pipeline == "compare":
         comparison_metrics = build_comparison_metrics(
-            raw_prompt=MOCK_INCIDENT_PROMPT,
+            raw_prompt=INCIDENT_PROMPT,
             compressed=compressed,
             pipe_a_output=pipe_a_output,
             pipe_c_output=pipe_c_output,
@@ -845,7 +614,7 @@ def main() -> None:
         print_comparison_report(comparison_metrics)
 
     print_telemetry(
-        raw_prompt=MOCK_INCIDENT_PROMPT,
+        raw_prompt=INCIDENT_PROMPT,
         compressed=compressed,
         compression_latency_s=compression_latency,
         baseline_reasoning_latency_s=pipe_a_latency,
@@ -864,7 +633,7 @@ def main() -> None:
         "reasoning_model": config.reasoning_model,
         "pipeline_mode": args.pipeline,
         "log_line_count": len(active_logs),
-        "raw_char_count": len(MOCK_INCIDENT_PROMPT),
+        "raw_char_count": len(INCIDENT_PROMPT),
         "compressed_char_count": len(compressed.model_dump_json()),
         "compression_latency_s": compression_latency,
         "pipe_a_reasoning_s": pipe_a_latency,

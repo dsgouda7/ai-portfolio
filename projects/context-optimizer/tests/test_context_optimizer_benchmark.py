@@ -1,3 +1,6 @@
+import context_optimizer_benchmark as bench
+from unittest.mock import MagicMock
+
 from context_optimizer_benchmark import (
     CompressedIncident,
     build_comparison_metrics,
@@ -6,6 +9,21 @@ from context_optimizer_benchmark import (
 
 
 def test_run_pipeline_c_returns_branch_selection_and_metrics():
+    # Populate the module-level log cache used by query_log_cache
+    bench._active_log_cache = [
+        "2026-06-16T01:45:00Z ERROR order-service CosmosDB timeout substatus=21012 region=eastus2",
+        "2026-06-16T01:45:01Z WARN ingress-nginx upstream timed out client=10.42.7.19",
+        "2026-06-16T01:45:02Z ERROR api-gateway HTTP 504 checkout p95=8.7s",
+        "2026-06-16T01:45:03Z WARN order-service CosmosDB retry ru_charge=128 partition=tenant-1",
+        "2026-06-16T01:45:04Z ERROR payment-service CosmosDB cancellation timeout",
+        "2026-06-16T01:45:05Z INFO order-service request completed status=200 latency_ms=220",
+    ]
+
+    mock_llm = MagicMock()
+    mock_response = MagicMock()
+    mock_response.content = "cosmos, CosmosDB, 21012"
+    mock_llm.invoke.return_value = mock_response
+
     incident = CompressedIncident(
         core_issue="Checkout timeouts during a deployment window",
         observed_symptoms=[
@@ -17,9 +35,8 @@ def test_run_pipeline_c_returns_branch_selection_and_metrics():
     )
 
     output, latency, branches, selected_branch, tool_calls, retrieved_lines = run_pipeline_c(
-        None,
+        mock_llm,
         incident,
-        "mock",
     )
 
     assert isinstance(output, str) and output

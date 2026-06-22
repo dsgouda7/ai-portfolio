@@ -21,3 +21,7 @@ prometheus-client>=0.19.0
 
 # Rate limiting (future)
 slowapi>=0.1.9
+
+# LLM routing and HTTP
+litellm>=1.0.0
+httpx>=0.25.0
