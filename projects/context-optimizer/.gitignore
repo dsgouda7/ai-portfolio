@@ -1,5 +1,23 @@
-# Generated benchmark outputs
-evaluation/out/*.json
+# Build artefacts
+build/
+dist/
+*.egg-info/
+
+# Runtime outputs — benchmark results
+benchmark_metrics.json
+benchmarks/tot/*.log
+benchmarks/tot/*_RESULTS.json
+benchmarks/tot/EXPERIMENT_RESULTS.json
+benchmarks/tot/chroma_db/
 
 # Generated publication artifacts
 docs/whitepaper/proposed-whitepaper.pdf
+
+# Azure credentials (NEVER commit — contains API keys)
+azure_config.py
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/

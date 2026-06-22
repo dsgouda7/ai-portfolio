@@ -26,9 +26,14 @@ evaluation = [
   "pillow>=10.0.0",
 ]
 
-[project.scripts]
-context-optimizer = "context_optimizer.cli:main"
+[tool.setuptools.package-dir]
+"" = "src"
 
 [tool.setuptools]
 packages = ["context_optimizer"]
 py-modules = ["context_optimizer_benchmark"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "benchmarks/tot"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]

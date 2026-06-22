@@ -170,6 +170,60 @@ The semantic cache is compressed before persistence and loaded per session on re
 
 If the compressed task anchor is already within token budget with no retrieval required, the MCP call is skipped and the payload is sent direct. The MCP path is an optimisation, not a mandatory stage.
 
+### 3.5 Swappable Embedding and Retrieval Infrastructure
+
+A key scalability property is that the embedding and retrieval layer is a **swappable interface**, not a fixed dependency. The optimal backend varies by deployment context:
+
+| Deployment | Embedding Backend | Latency | Cost | Use Case |
+|------------|------------------|---------|------|----------|
+| **Local CPU** | `sentence-transformers` all-MiniLM-L6-v2 (90 MB) | 50 ms | Free | Dev, benchmarking |
+| **Edge PoP** | ONNX quantized paraphrase-MiniLM-L3-v2 (23 MB) | 25 ms | Free | Production edge |
+| **Cloud PoP** | Azure AI / Vertex text-embedding-005 | 10 ms | $0.00002/token | High-throughput |
+| **Air-gapped** | Ollama `nomic-embed-text` | 30 ms | Free | On-premise |
+
+The compression LLM, vector store, semantic cache, and MCP contract are all **unaffected** by which embedding backend is selected. This is the key scalability property: embedding quality and cost can be upgraded independently of every other stage.
+
+**Two-tier retrieval with semantic cache:**
+
+Rather than querying the vector store on every request, a semantic cache sits between the query and the vector store. This is critical when the embedding backend runs on CPU:
+
+```
+Query
+  -> Semantic Cache (in-memory cosine similarity)   1-2 ms, no embedding for hits (60-80%)
+  -> (on miss) Vector DB (ChromaDB + local model)   10-50 ms on stock CPU
+  -> Cache result, return compressed summaries
+```
+
+At a 60-80% cache hit rate, average query latency drops to 3-8 ms regardless of vector store size. Embedding is only invoked on cache misses.
+
+**On-demand raw text expansion (pointer model):**
+
+Only compressed summaries (~50 tokens each) are embedded and indexed in the vector store. Raw text (~500 tokens per chunk) is stored as a non-indexed field alongside each chunk, fetched only when the reasoning model calls `get_context_details(chunk_id)`. This pattern:
+
+- Keeps the vector index 10x smaller than indexing raw text
+- Enables sub-100 ms initial retrieval for conversational queries
+- Makes deep-reasoning latency (500-2000 ms) acceptable for research and citation tasks, without penalising fast queries
+
+**Scaling path:**
+
+Swapping the embedding backend requires only an environment variable change:
+
+```bash
+# Local benchmark (stock CPU)
+CONTEXT_OPTIMIZER_EMBEDDING_BACKEND=sentence-transformers
+CONTEXT_OPTIMIZER_EMBEDDING_MODEL=all-MiniLM-L6-v2
+
+# Edge PoP (quantized, 2x faster)
+CONTEXT_OPTIMIZER_EMBEDDING_BACKEND=onnx
+CONTEXT_OPTIMIZER_EMBEDDING_MODEL=paraphrase-MiniLM-L3-v2
+
+# Cloud PoP (high throughput)
+CONTEXT_OPTIMIZER_EMBEDDING_BACKEND=azure
+CONTEXT_OPTIMIZER_EMBEDDING_MODEL=text-embedding-3-small
+```
+
+The reference implementation is `src/context_optimizer/cached_retriever.py` (`CachedChromaRetriever`), which implements the two-tier cache + ChromaDB pattern with a configurable sentence-transformers backend running entirely on local CPU.
+
 ---
 
 ## 4. Scientific Positioning and Claims Discipline

@@ -1,0 +1,1200 @@
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.
+Title: Attention Is All You Need
+Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms.
+
+Title: BERT: Pre-training of Deep Bidirectional Transformers
+Abstract: We introduce BERT, a new language representation model which obtains state-of-the-art results on eleven natural language processing tasks.
+
+Title: GPT-3: Language Models are Few-Shot Learners
+Abstract: Recent work has demonstrated substantial gains on many NLP tasks through pre-training on a large corpus of text followed by fine-tuning.

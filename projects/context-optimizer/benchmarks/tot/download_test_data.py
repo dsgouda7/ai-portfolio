@@ -1,5 +1,4 @@
-"""
-Download Real Public Datasets for ToT Benchmarks
+"""" Download Real Public Datasets for ToT Benchmarks
 
 Downloads and caches real-world datasets:
 - Project Gutenberg books (for document QA)
@@ -12,6 +11,7 @@ Datasets are cached in experiments/test_data/ directory.
 """
 
 import os
+import sys
 import urllib.request
 import gzip
 import json
@@ -30,16 +30,16 @@ DATA_DIR.mkdir(exist_ok=True)
 def download_file(url: str, output_path: Path, description: str = "") -> bool:
     """Download file with progress indication."""
     if output_path.exists():
-        print(f"  ✓ {description or output_path.name} already cached")
+        print(f"  [OK] {description or output_path.name} already cached")
         return True
 
     try:
-        print(f"  ↓ Downloading {description or output_path.name}...")
+        print(f"  [DOWNLOADING] {description or output_path.name}...")
         urllib.request.urlretrieve(url, output_path)
-        print(f"  ✓ Downloaded {output_path.stat().st_size / 1024 / 1024:.1f} MB")
+        print(f"  [OK] Downloaded {output_path.stat().st_size / 1024 / 1024:.1f} MB")
         return True
     except Exception as e:
-        print(f"  ✗ Failed to download {description}: {e}")
+        print(f"  [FAILED] {description}: {e}")
         return False
 
 
@@ -72,7 +72,7 @@ def download_gutenberg_books() -> List[str]:
             downloaded_files.append(str(output_path))
         time.sleep(0.5)  # Be polite to Gutenberg servers
 
-    print(f"  → {len(downloaded_files)} books ready ({sum(Path(f).stat().st_size for f in downloaded_files) / 1024 / 1024:.1f} MB)")
+    print(f"  => {len(downloaded_files)} books ready ({sum(Path(f).stat().st_size for f in downloaded_files) / 1024 / 1024:.1f} MB)")
     return downloaded_files
 
 
@@ -100,7 +100,7 @@ def download_code_datasets() -> List[str]:
 
     # If download fails, create a minimal synthetic code corpus
     if not code_files:
-        print("  ⚠️  Using fallback: creating minimal code corpus...")
+        print("  [WARNING] Using fallback: creating minimal code corpus...")
         fallback_path = DATA_DIR / "code_fallback.txt"
         with open(fallback_path, "w") as f:
             f.write("""# Authentication Module
@@ -135,7 +135,7 @@ class RateLimitExceeded(Exception):
 """ * 100)  # Repeat to create ~10KB file
         code_files.append(str(fallback_path))
 
-    print(f"  → {len(code_files)} code files ready")
+    print(f"  => {len(code_files)} code files ready")
     return code_files
 
 
@@ -155,7 +155,7 @@ def download_wikipedia_articles() -> List[str]:
         return [str(output_path)]
 
     # Fallback: create minimal corpus
-    print("  ⚠️  Using fallback: creating minimal wiki corpus...")
+    print("  [WARNING] Using fallback: creating minimal wiki corpus...")
     fallback_path = DATA_DIR / "wiki_fallback.txt"
     with open(fallback_path, "w") as f:
         f.write("""Machine Learning
@@ -188,7 +188,7 @@ def download_arxiv_papers() -> List[str]:
         return [str(output_path)]
 
     # Fallback
-    print("  ⚠️  Using fallback: creating minimal paper corpus...")
+    print("  [WARNING] Using fallback: creating minimal paper corpus...")
     fallback_path = DATA_DIR / "arxiv_fallback.txt"
     with open(fallback_path, "w") as f:
         f.write("""Title: Attention Is All You Need
@@ -218,7 +218,7 @@ def download_stackoverflow_posts() -> List[str]:
         return [str(output_path)]
 
     # Fallback
-    print("  ⚠️  Using fallback: creating minimal Q&A corpus...")
+    print("  [WARNING] Using fallback: creating minimal Q&A corpus...")
     fallback_path = DATA_DIR / "stackoverflow_fallback.txt"
     with open(fallback_path, "w") as f:
         f.write("""Q: How to fix "Cannot read property of undefined" in JavaScript?
@@ -255,7 +255,7 @@ def load_text_files(file_paths: List[str]) -> List[str]:
                 elif 'title' in df.columns:
                     all_lines.extend(df['title'].dropna().astype(str).tolist())
             except Exception as e:
-                print(f"  ⚠️  Could not read parquet {path}: {e}")
+                print(f"  [WARNING] Could not read parquet {path}: {e}")
 
         elif path.endswith('.txt'):
             with open(path, 'r', encoding='utf-8', errors='ignore') as f:
@@ -291,23 +291,23 @@ def download_all_datasets():
     # Load text content
     print("\nLoading books...")
     books_lines = load_text_files(books)
-    print(f"  → {len(books_lines):,} lines loaded")
+    print(f"  => {len(books_lines):,} lines loaded")
 
     print("Loading code...")
     code_lines = load_text_files(code)
-    print(f"  → {len(code_lines):,} lines loaded")
+    print(f"  => {len(code_lines):,} lines loaded")
 
     print("Loading wiki articles...")
     wiki_lines = load_text_files(wiki)
-    print(f"  → {len(wiki_lines):,} lines loaded")
+    print(f"  => {len(wiki_lines):,} lines loaded")
 
     print("Loading research papers...")
     papers_lines = load_text_files(papers)
-    print(f"  → {len(papers_lines):,} lines loaded")
+    print(f"  => {len(papers_lines):,} lines loaded")
 
     print("Loading Q&A posts...")
     qa_lines = load_text_files(qa)
-    print(f"  → {len(qa_lines):,} lines loaded")
+    print(f"  => {len(qa_lines):,} lines loaded")
 
     # Create corpus samples of different sizes
     print("\n" + "=" * 80)
@@ -345,7 +345,7 @@ def download_all_datasets():
             print(f"  {corpus_type}: {len(lines):,} lines")
         print(f"  TOTAL: {total_lines:,} lines")
 
-    print("\n✅ All datasets ready!")
+    print("\n[SUCCESS] All datasets ready!")
     return corpus_samples
 
 
@@ -391,4 +391,4 @@ if __name__ == "__main__":
     with open(summary_path, "w") as f:
         json.dump(summary, f, indent=2)
 
-    print(f"\n✅ Dataset summary saved to: {summary_path}")
+    print(f"\n[SUCCESS] Dataset summary saved to: {summary_path}")

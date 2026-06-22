@@ -313,8 +313,8 @@ def compress_corpus_rolling(
     total_compressed = sum(c.compressed_tokens for c in compressed_chunks)
     avg_ratio = total_compressed / total_original if total_original > 0 else 1.0
 
-    print(f"[Compressor] ✓ Compressed {len(compressed_chunks):,} chunks")
-    print(f"[Compressor] Compression ratio: {avg_ratio:.2%} ({total_original:,} → {total_compressed:,} tokens)")
+    print(f"[Compressor] [OK] Compressed {len(compressed_chunks):,} chunks")
+    print(f"[Compressor] Compression ratio: {avg_ratio:.2%} ({total_original:,} => {total_compressed:,} tokens)")
 
     return compressed_chunks
 

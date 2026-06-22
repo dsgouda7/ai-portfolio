@@ -237,9 +237,20 @@ context-optimizer --provider ollama --small-model phi4:mini --reasoning-model qw
 $env:GROQ_API_KEY = "<your_key_here>"
 context-optimizer --provider groq --small-model llama-3.1-8b-instant --reasoning-model llama-3.3-70b-versatile
 
-# 3c. module execution also works
+# 3c. run benchmarks with Azure OpenAI (FAST - 20-30x faster than Ollama)
+# See docs/AZURE_OPENAI_BENCHMARKS.md for setup
+cd benchmarks/tot
+python azure_medium_test.py
+
+# 3d. module execution also works
 python -m context_optimizer --provider mock --pipeline both
 ```
+
+**NEW**: Azure OpenAI support added for production-grade benchmarks. See [docs/AZURE_OPENAI_BENCHMARKS.md](docs/AZURE_OPENAI_BENCHMARKS.md) for configuration.
+
+**Endpoint**: https://070-deepaksha-testfound-resource.services.ai.azure.com/openai/v1/responses
+**Model**: GPT-4.1-mini (fast, cost-effective)
+**Speed**: 15-30 minutes for 25K lines (vs 6-8 hours with Ollama)
 
 ## Package and deployment
 
