@@ -5,6 +5,7 @@ Orchestrates text_corpus_benchmarks.py and/or image_corpus_benchmarks.py.
 
 Usage
 -----
+    python run_benchmark.py                   (runs both text + image)
     python run_benchmark.py --mode text   [--corpus small|medium|large]
     python run_benchmark.py --mode image  [--corpus small|medium|large]
     python run_benchmark.py --mode all    [--corpus small|medium|large]
@@ -40,8 +41,8 @@ def main() -> None:
     parser.add_argument(
         "--mode",
         choices=["text", "image", "all"],
-        default="text",
-        help="Which modality benchmark(s) to run (default: text)",
+        default="all",
+        help="Which modality benchmark(s) to run (default: all)",
     )
     parser.add_argument(
         "--corpus",

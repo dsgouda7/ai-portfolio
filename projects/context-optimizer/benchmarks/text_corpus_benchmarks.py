@@ -102,28 +102,14 @@ def load_corpus(size: str) -> list[str]:
     """
     Return corpus lines for the requested size.
 
-    Priority:
-    1. Real text files already downloaded to benchmarks/tot/test_data/books_*.txt
-    2. Inline deterministic AKS synthetic log generator (no I/O required)
+    Always uses the inline deterministic AKS synthetic log generator so that
+    the ground-truth queries (which reference AKS/CosmosDB terms) have a
+    corpus that actually contains those keywords.  The books_*.txt files in
+    tot/test_data/ are general-purpose text and do NOT contain the AKS-domain
+    terms the ground-truth queries require, which causes 0% recall when they
+    are used here.
     """
     n = CORPUS_LINES[size]
-    test_data_dir = BENCH_DIR / "tot" / "test_data"
-
-    txt_files = sorted(test_data_dir.glob("books_*.txt"))
-    if txt_files:
-        raw: list[str] = []
-        for f in txt_files:
-            try:
-                raw.extend(f.read_text(encoding="utf-8").splitlines())
-            except Exception:
-                pass
-        if raw:
-            while len(raw) < n:
-                raw = raw + raw
-            lines = raw[:n]
-            print(f"  [corpus] {len(lines):,} lines from {len(txt_files)} text file(s)")
-            return lines
-
     lines = _generate_synthetic_aks_logs(n)
     print(f"  [corpus] Generated {len(lines):,} synthetic AKS log lines")
     return lines
