@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Voice Assistant</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      padding: 2rem;
+    }
+
+    h1 { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.02em; }
+    h1 span { color: #6366f1; }
+
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 1rem;
+      padding: 2rem;
+      width: 100%;
+      max-width: 560px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: #94a3b8; }
+
+    select, textarea {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 0.5rem;
+      color: #e2e8f0;
+      padding: 0.6rem 0.75rem;
+      font-size: 0.9rem;
+      outline: none;
+    }
+    select:focus, textarea:focus { border-color: #6366f1; }
+    textarea { resize: vertical; min-height: 72px; }
+
+    .btn-row { display: flex; gap: 0.75rem; }
+
+    button {
+      flex: 1;
+      padding: 0.65rem 1rem;
+      border: none;
+      border-radius: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    #recordBtn  { background: #6366f1; color: #fff; }
+    #recordBtn.recording { background: #ef4444; }
+    #sendBtn    { background: #0ea5e9; color: #fff; }
+
+    .status {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      min-height: 1.2em;
+      text-align: center;
+    }
+    .status.error { color: #f87171; }
+
+    audio { width: 100%; border-radius: 0.5rem; }
+  </style>
+</head>
+<body>
+  <h1>Voice <span>Assistant</span></h1>
+
+  <div class="card">
+    <!-- Voice selector -->
+    <div>
+      <label for="voiceSelect">Response voice</label>
+      <select id="voiceSelect">
+        <option value="default">Default</option>
+        <option value="en-US-AriaNeural">en-US-Aria (female)</option>
+        <option value="en-US-GuyNeural">en-US-Guy (male)</option>
+        <option value="en-US-JennyNeural">en-US-Jenny (female)</option>
+        <option value="en-GB-SoniaNeural">en-GB-Sonia (British)</option>
+        <option value="en-AU-NatashaNeural">en-AU-Natasha (Australian)</option>
+      </select>
+    </div>
+
+    <!-- Record / transcription -->
+    <div>
+      <label>Your message</label>
+      <div class="btn-row" style="margin-bottom:0.5rem">
+        <button id="recordBtn">🎙 Hold to record</button>
+      </div>
+      <textarea id="transcriptBox" placeholder="Transcribed text will appear here..."></textarea>
+    </div>
+
+    <!-- Send -->
+    <button id="sendBtn" disabled>Send →</button>
+
+    <!-- Status -->
+    <div id="status" class="status">Ready.</div>
+
+    <!-- Response -->
+    <div>
+      <label>Response</label>
+      <textarea id="responseBox" placeholder="Assistant response will appear here..." readonly></textarea>
+    </div>
+
+    <!-- Audio playback -->
+    <audio id="audioPlayer" controls style="display:none"></audio>
+  </div>
+
+  <script>
+    const recordBtn    = document.getElementById('recordBtn');
+    const sendBtn      = document.getElementById('sendBtn');
+    const transcriptBox = document.getElementById('transcriptBox');
+    const responseBox  = document.getElementById('responseBox');
+    const statusEl     = document.getElementById('status');
+    const audioPlayer  = document.getElementById('audioPlayer');
+    const voiceSelect  = document.getElementById('voiceSelect');
+
+    let mediaRecorder, audioChunks = [];
+
+    function setStatus(msg, isError = false) {
+      statusEl.textContent = msg;
+      statusEl.className = 'status' + (isError ? ' error' : '');
+    }
+
+    // ── Record ────────────────────────────────────────────────────────────────
+    recordBtn.addEventListener('mousedown', startRecording);
+    recordBtn.addEventListener('touchstart', e => { e.preventDefault(); startRecording(); });
+    recordBtn.addEventListener('mouseup', stopRecording);
+    recordBtn.addEventListener('touchend', stopRecording);
+
+    async function startRecording() {
+      audioChunks = [];
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+      mediaRecorder.onstop = handleRecordingStop;
+      mediaRecorder.start();
+      recordBtn.textContent = '⏹ Recording…';
+      recordBtn.classList.add('recording');
+      setStatus('Recording…');
+    }
+
+    function stopRecording() {
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(t => t.stop());
+      }
+    }
+
+    async function handleRecordingStop() {
+      recordBtn.textContent = '🎙 Hold to record';
+      recordBtn.classList.remove('recording');
+      setStatus('Transcribing…');
+
+      const blob = new Blob(audioChunks, { type: 'audio/wav' });
+      const arrayBuffer = await blob.arrayBuffer();
+
+      try {
+        const res = await fetch('/speech-to-text', {
+          method: 'POST',
+          body: arrayBuffer,
+        });
+        const data = await res.json();
+        transcriptBox.value = data.text === 'null' ? '' : data.text;
+        sendBtn.disabled = !transcriptBox.value;
+        setStatus('Transcription done.');
+      } catch (err) {
+        setStatus('STT error: ' + err.message, true);
+      }
+    }
+
+    // Allow manual text entry too
+    transcriptBox.addEventListener('input', () => {
+      sendBtn.disabled = !transcriptBox.value.trim();
+    });
+
+    // ── Send ──────────────────────────────────────────────────────────────────
+    sendBtn.addEventListener('click', async () => {
+      const userMessage = transcriptBox.value.trim();
+      if (!userMessage) return;
+
+      sendBtn.disabled = true;
+      setStatus('Thinking…');
+
+      try {
+        const res = await fetch('/process-message', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userMessage, voice: voiceSelect.value }),
+        });
+        const data = await res.json();
+
+        responseBox.value = data.responseText;
+
+        // Play audio response
+        const audioBytes = Uint8Array.from(atob(data.responseSpeech), c => c.charCodeAt(0));
+        const audioBlob  = new Blob([audioBytes], { type: 'audio/mpeg' });
+        audioPlayer.src  = URL.createObjectURL(audioBlob);
+        audioPlayer.style.display = 'block';
+        audioPlayer.play();
+
+        setStatus('Done.');
+      } catch (err) {
+        setStatus('Error: ' + err.message, true);
+      } finally {
+        sendBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
