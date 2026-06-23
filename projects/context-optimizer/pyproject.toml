@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "context-optimizer"
 version = "0.1.0"
-description = "Comparative benchmark for LLM context compression and targeted log retrieval"
+description = "LLM corpus compression and targeted retrieval library"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "Proprietary" }
@@ -13,24 +13,39 @@ authors = [
   { name = "Deepaksha" }
 ]
 dependencies = [
+  "pydantic>=2.7.0",
+  "chromadb>=0.5.0",
+  "sentence-transformers>=2.2.0",
   "langchain-core>=0.3.0",
   "langchain-community>=0.3.0",
-  "langchain-ollama>=0.3.0",
-  "langchain-groq>=0.2.0",
-  "pydantic>=2.7.0",
 ]
 
 [project.optional-dependencies]
+# LLM provider extras
+ollama   = ["langchain-ollama>=0.3.0"]
+groq     = ["langchain-groq>=0.2.0"]
+openai   = ["langchain-openai>=0.3.0", "openai>=1.0"]
+litellm  = ["litellm>=1.0.0"]
+# Framework adapter extras
+langchain = ["langchain-core>=0.3.0", "langchain-community>=0.3.0"]
+# Evaluation / benchmark tools
 evaluation = [
   "matplotlib>=3.8.0",
   "pillow>=10.0.0",
 ]
+# Everything
+full = [
+  "context-optimizer[ollama,groq,openai,litellm,langchain,evaluation]",
+]
+
+[project.scripts]
+context-optimizer = "context_optimizer.cli:main"
 
 [tool.setuptools.package-dir]
 "" = "src"
 
-[tool.setuptools]
-packages = ["context_optimizer"]
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "benchmarks/tot"]
