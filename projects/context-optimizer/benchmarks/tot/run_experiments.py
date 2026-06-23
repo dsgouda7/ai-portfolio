@@ -3,8 +3,8 @@ End-to-End Experiment Runner: Standard LLM Baseline vs Compressed Architecture
 
 Implements the two experiments from EXPERIMENTS_CONSOLIDATED.md:
   Exp 1  Raw corpus injected directly into reasoning LLM (no architecture).
-  Exp 2a Compress -> retrieve compressed summaries -> reason (cache + vector DB).
-  Exp 2b Compress -> retrieve summaries -> agent decides whether to call
+  Exp 2  Compress -> retrieve summaries -> adaptive raw-fetch if needed (targeted)
+         or ALL summaries + Tree-of-Thought reasoning (aggregated).
          get_context_details() -> reason.  The LLM sees both tools and makes
          the raw-detail fetch only when it judges summaries insufficient.
 
@@ -25,61 +25,116 @@ Usage:
   python run_experiments.py --full         # full 25K medium corpus (hours with Ollama)
 """
 
-import sys
-import os
-import json
-import time
-import tempfile
 import argparse
-from pathlib import Path
+import json
+import os
+import sys
+import tempfile
+import time
 from datetime import datetime
+from pathlib import Path
 
 _root = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(_root / "src"))
 sys.path.insert(0, str(_root))
 
-from context_optimizer.compressor import compress_corpus_rolling
 from context_optimizer.cached_retriever import CachedChromaRetriever
-from llm_provider import build_compression_llm, build_reasoning_llm, get_embedding_config
+from context_optimizer.compressor import compress_corpus_rolling
+from llm_provider import (
+    build_compression_llm,
+    build_reasoning_llm,
+    get_embedding_config,
+)
 
 # ── Pass/Fail thresholds ──────────────────────────────────────────────────────
 THRESHOLDS = {
-    "latency_delta_pct":  10.0,   # +/- 10% vs baseline latency
-    "f1_delta_pct":       20.0,   # +/- 20% vs baseline F1
+    "latency_delta_pct": 10.0,  # +/- 10% vs baseline latency
+    "f1_delta_pct": 20.0,  # +/- 20% vs baseline F1
     "token_reduction_pct": 90.0,  # >= 90% fewer tokens than baseline
 }
 
 # ── Questions with expected-keyword ground truth ──────────────────────────────
 QUESTIONS = [
     {
-        "id": "q001", "difficulty": "easy",
+        # TARGETED: answer lives in a handful of specific passages about one character.
+        "id": "q001",
+        "difficulty": "easy",
+        "query_type": "targeted",
         "question": "Who is Elizabeth Bennet and what are her main character traits?",
-        "keywords": ["elizabeth", "bennet", "protagonist", "witty", "intelligent", "darcy", "independent"],
+        "keywords": [
+            "elizabeth",
+            "bennet",
+            "protagonist",
+            "witty",
+            "intelligent",
+            "darcy",
+            "independent",
+        ],
     },
     {
-        "id": "q002", "difficulty": "easy",
+        # TARGETED: a single, locatable fact (character + place name).
+        "id": "q002",
+        "difficulty": "easy",
+        "query_type": "targeted",
         "question": "Who is Mr. Bingley and where does he settle?",
         "keywords": ["bingley", "netherfield", "wealthy", "gentleman", "jane"],
     },
     {
-        "id": "q003", "difficulty": "medium",
+        # AGGREGATED: thematic question — evidence is spread across the whole corpus.
+        "id": "q003",
+        "difficulty": "medium",
+        "query_type": "aggregated",
         "question": "What social themes are central to the story?",
         "keywords": ["marriage", "class", "society", "wealth", "reputation", "family"],
     },
     {
-        "id": "q004", "difficulty": "medium",
+        # AGGREGATED: requires synthesising descriptions of multiple characters.
+        "id": "q004",
+        "difficulty": "medium",
+        "query_type": "aggregated",
         "question": "Describe the Bennet family members",
-        "keywords": ["jane", "elizabeth", "lydia", "kitty", "mary", "mrs bennet", "mr bennet"],
+        "keywords": [
+            "jane",
+            "elizabeth",
+            "lydia",
+            "kitty",
+            "mary",
+            "mrs bennet",
+            "mr bennet",
+        ],
     },
     {
-        "id": "q005", "difficulty": "hard",
+        # TARGETED: a defined character arc with a start-state, trigger, and end-state.
+        "id": "q005",
+        "difficulty": "hard",
+        "query_type": "targeted",
         "question": "What is Mr. Darcy's initial attitude towards Elizabeth and how does it change?",
-        "keywords": ["darcy", "proud", "tolerable", "inferior", "love", "admire", "respect", "change"],
+        "keywords": [
+            "darcy",
+            "proud",
+            "tolerable",
+            "inferior",
+            "love",
+            "admire",
+            "respect",
+            "change",
+        ],
     },
     {
-        "id": "q006", "difficulty": "hard",
+        # AGGREGATED: a recurring structural theme — evidence spans every chapter.
+        "id": "q006",
+        "difficulty": "hard",
+        "query_type": "aggregated",
         "question": "How does the theme of first impressions affect relationships in the novel?",
-        "keywords": ["impression", "prejudice", "pride", "misjudge", "misunderstand", "reveal", "character"],
+        "keywords": [
+            "impression",
+            "prejudice",
+            "pride",
+            "misjudge",
+            "misunderstand",
+            "reveal",
+            "character",
+        ],
     },
 ]
 
@@ -90,6 +145,7 @@ SYSTEM_PROMPT = (
 
 
 # ── Utilities ─────────────────────────────────────────────────────────────────
+
 
 def _estimate_tokens(text: str) -> int:
     return max(1, len(text) // 4)
@@ -104,9 +160,13 @@ def _score_answer(answer: str, keywords: list[str]) -> tuple[float, float, float
     answer_lower = answer.lower()
     answer_words = set(answer_lower.split())
     found = sum(1 for kw in keywords if kw.lower() in answer_lower)
-    recall    = found / len(keywords) if keywords else 0.0
+    recall = found / len(keywords) if keywords else 0.0
     precision = found / len(answer_words) if answer_words else 0.0
-    f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
+    f1 = (
+        2 * precision * recall / (precision + recall)
+        if (precision + recall) > 0
+        else 0.0
+    )
     return precision, recall, f1
 
 
@@ -142,12 +202,14 @@ def _judge_answer(llm, question: str, keywords: list[str], answer: str) -> float
     )
     try:
         from langchain_core.messages import HumanMessage, SystemMessage
+
         response = llm.invoke(
             [SystemMessage(content=_JUDGE_SYSTEM), HumanMessage(content=prompt)]
         )
         raw = response.content if hasattr(response, "content") else str(response)
         # Extract first float-like token from the response
         import re
+
         m = re.search(r"\b([01]?\.\d+|[01])\b", raw.strip())
         if m:
             score = float(m.group(1))
@@ -162,10 +224,13 @@ def _judge_answer(llm, question: str, keywords: list[str], answer: str) -> float
 def _call_llm(llm, prompt: str, system: str = SYSTEM_PROMPT) -> tuple[str, float]:
     """Invoke LLM and return (answer_text, elapsed_seconds)."""
     from langchain_core.messages import HumanMessage, SystemMessage
+
     t0 = time.time()
     try:
-        response = llm.invoke([SystemMessage(content=system), HumanMessage(content=prompt)])
-        elapsed  = time.time() - t0
+        response = llm.invoke(
+            [SystemMessage(content=system), HumanMessage(content=prompt)]
+        )
+        elapsed = time.time() - t0
         text = response.content if hasattr(response, "content") else str(response)
         return text.strip(), elapsed
     except Exception as exc:
@@ -173,7 +238,7 @@ def _call_llm(llm, prompt: str, system: str = SYSTEM_PROMPT) -> tuple[str, float
         return f"[ERROR] {exc}", elapsed
 
 
-# ── Exp 2b — Adaptive agentic query (LLM decides if raw detail is needed) ────
+# ── Exp 2 — Adaptive agentic query (LLM decides if raw detail is needed) ─────
 
 _ADAPTIVE_T1_SYSTEM = (
     "You are a helpful literary assistant with access to compressed passage summaries. "
@@ -191,6 +256,152 @@ _ADAPTIVE_T2_SYSTEM = (
     "the full raw text of the chunk you requested. Answer the question concisely and "
     "accurately based on the provided text."
 )
+
+# ── ToT system prompt for aggregated (corpus-wide) queries ────────────────────
+# Used when a question's answer is distributed across many chunks and cannot be
+# recovered by top-k vector retrieval alone.  The model sees ALL compressed
+# summaries and is required to walk three reasoning paths before answering.
+
+_TOT_AGGREGATED_SYSTEM = (
+    "You are a literary analyst. For broad thematic questions that span an entire corpus "
+    "you MUST reason through three distinct paths before producing a final answer.\n\n"
+    "PATH A — Direct Evidence: cite explicit statements from the summaries that directly "
+    "address the question.\n"
+    "PATH B — Contextual Patterns: identify recurring themes, motifs, or character "
+    "behaviours that appear across multiple passages.\n"
+    "PATH C — Synthesis: combine the evidence from A and B into a complete, nuanced answer "
+    "that covers all key aspects.\n\n"
+    "You MUST use EXACTLY this format (do not omit any heading):\n"
+    "PATH A: [your direct-evidence reasoning]\n"
+    "PATH B: [your contextual-patterns reasoning]\n"
+    "PATH C: [your synthesis reasoning]\n"
+    "FINAL ANSWER: [complete synthesised answer — this is what will be evaluated]"
+)
+
+
+def _parse_turn1_json(raw: str) -> dict:
+    """
+    Robustly extract the Turn-1 JSON decision from a model response.
+
+    Tries in order:
+      1. Fenced code block  (```json ... ```)
+      2. Bare JSON object   ({...})
+      3. Key-value regex    (needs_raw / chunk_id / answer anywhere in text)
+      4. Plain-text heuristic (contains 'need', 'raw', 'fetch' → needs_raw=True)
+      5. Hard fallback      (needs_raw=False, answer=raw text)
+
+    Returns a dict with keys: needs_raw (bool), chunk_id (str|None), answer (str|None).
+    """
+    import json as _json
+    import re as _re
+
+    # Strip common model thinking tags (e.g. <think>...</think>)
+    cleaned = _re.sub(r"<think>[\s\S]*?</think>", "", raw, flags=_re.IGNORECASE).strip()
+
+    def _try_parse(s: str) -> dict | None:
+        try:
+            obj = _json.loads(s)
+            if isinstance(obj, dict):
+                return {
+                    "needs_raw": bool(obj.get("needs_raw", False)),
+                    "chunk_id": obj.get("chunk_id")
+                    or obj.get("chunkId")
+                    or obj.get("chunk_id"),
+                    "answer": str(obj["answer"]) if obj.get("answer") else None,
+                }
+        except Exception:
+            pass
+        return None
+
+    # 1. Fenced block
+    fence_m = _re.search(r"```(?:json)?\s*([\s\S]+?)```", cleaned)
+    if fence_m:
+        result = _try_parse(fence_m.group(1).strip())
+        if result:
+            return result
+
+    # 2. Bare JSON object (outermost {...})
+    obj_m = _re.search(r"\{[\s\S]*\}", cleaned)
+    if obj_m:
+        result = _try_parse(obj_m.group(0))
+        if result:
+            return result
+
+    # 3. Key-value regex fallback — tolerates single quotes, missing quotes, etc.
+    needs_raw = False
+    chunk_id = None
+    answer = None
+
+    nr_m = _re.search(r'"?needs_raw"?\s*:\s*(true|false)', cleaned, _re.IGNORECASE)
+    if nr_m:
+        needs_raw = nr_m.group(1).lower() == "true"
+
+    cid_m = _re.search(r'"?chunk_id"?\s*:\s*["\']?([a-zA-Z0-9_\-]+)["\']?', cleaned)
+    if cid_m:
+        chunk_id = cid_m.group(1)
+
+    ans_m = _re.search(r'"answer"\s*:\s*"((?:[^"\\]|\\.)*)"', cleaned)
+    if not ans_m:
+        ans_m = _re.search(r"'answer'\s*:\s*'((?:[^'\\]|\\.)*)'", cleaned)
+    if ans_m:
+        answer = ans_m.group(1)
+
+    if nr_m or cid_m or ans_m:
+        return {"needs_raw": needs_raw, "chunk_id": chunk_id, "answer": answer}
+
+    # 4. Plain-text heuristic: model said it needs more detail
+    if _re.search(
+        r"\b(need(s)?( the)? raw|fetch|get.{0,20}chunk|insufficient)\b",
+        cleaned,
+        _re.IGNORECASE,
+    ):
+        cid_heuristic = _re.search(r"\b(chunk[-_]?\d+)\b", cleaned, _re.IGNORECASE)
+        return {
+            "needs_raw": True,
+            "chunk_id": cid_heuristic.group(1) if cid_heuristic else None,
+            "answer": None,
+        }
+
+    # 5. Hard fallback: treat entire response as the answer
+    return {"needs_raw": False, "chunk_id": None, "answer": cleaned or None}
+
+
+def _run_tot_aggregated_query(
+    reason_llm,
+    chunks: list,  # all CompressedChunk objects
+    q: dict,
+    judge_llm=None,
+) -> tuple:
+    """
+    Tree-of-Thought query for aggregated (corpus-wide) questions.
+
+    Injects ALL compressed summaries and instructs the reasoning model to walk
+    three analytical paths (direct evidence → patterns → synthesis) before
+    producing a FINAL ANSWER.  Only that final section is scored.
+
+    Returns: answer, latency_sec, prompt_tokens, f1, judge_score
+    """
+    context_text = "\n".join(
+        f"[chunk {c.chunk_id}] {c.compressed_summary}" for c in chunks
+    )
+    prompt = (
+        f"Corpus summaries ({len(chunks):,} passages — full corpus coverage):\n\n"
+        f"{context_text}\n\n"
+        f"Question: {q['question']}\n\n"
+        "Walk all three reasoning paths as instructed, then give your FINAL ANSWER:"
+    )
+    tokens = _estimate_tokens(prompt)
+    answer_raw, latency = _call_llm(reason_llm, prompt, system=_TOT_AGGREGATED_SYSTEM)
+
+    # Extract only the FINAL ANSWER section for scoring
+    final_m = re.search(
+        r"FINAL ANSWER\s*:\s*(.+)", answer_raw, re.DOTALL | re.IGNORECASE
+    )
+    answer = final_m.group(1).strip() if final_m else answer_raw
+
+    _, _, f1 = _score_answer(answer, q["keywords"])
+    judge = _judge_answer(judge_llm, q["question"], q["keywords"], answer)
+    return answer, latency, tokens, f1, judge
 
 
 def _run_adaptive_query(
@@ -210,9 +421,6 @@ def _run_adaptive_query(
     Returns:
         answer, latency_sec, prompt_tokens, raw_fetched, raw_fetch_tokens, f1, judge_score
     """
-    import re as _re
-    import json as _json
-
     chunk_ids = [h["chunk_id"] for h in hits]
     context_text = "\n".join(
         f"[chunk {h['chunk_id']}] {h['compressed_summary']}" for h in hits
@@ -228,29 +436,11 @@ def _run_adaptive_query(
     t0 = time.time()
     raw_t1, _ = _call_llm(reason_llm, prompt_t1, system=_ADAPTIVE_T1_SYSTEM)
 
-    # --- parse Turn-1 response ---
-    needs_raw = False
-    requested_chunk = None
-    answer = None
-
-    json_str = raw_t1.strip()
-    fence_m = _re.search(r"```(?:json)?\s*([\s\S]+?)```", json_str)
-    if fence_m:
-        json_str = fence_m.group(1).strip()
-    obj_m = _re.search(r"\{[\s\S]*\}", json_str)
-    if obj_m:
-        try:
-            parsed = _json.loads(obj_m.group(0))
-            needs_raw = bool(parsed.get("needs_raw", False))
-            requested_chunk = parsed.get("chunk_id")
-            if not needs_raw and parsed.get("answer"):
-                answer = str(parsed["answer"])
-        except Exception:
-            pass
-
-    # Fallback: if no valid JSON / answer in Turn 1, treat raw text as the answer
-    if answer is None and not needs_raw:
-        answer = raw_t1
+    # --- parse Turn-1 response (robust, multi-strategy) ---
+    parsed = _parse_turn1_json(raw_t1)
+    needs_raw = parsed["needs_raw"]
+    requested_chunk = parsed["chunk_id"]
+    answer = parsed["answer"]
 
     raw_fetched = False
     raw_fetch_tokens = 0
@@ -272,17 +462,18 @@ def _run_adaptive_query(
             answer = raw_t1 if answer is None else answer
 
     latency = time.time() - t0
-    _, _, f1  = _score_answer(answer or "", q["keywords"])
-    judge     = _judge_answer(judge_llm, q["question"], q["keywords"], answer or "")
+    _, _, f1 = _score_answer(answer or "", q["keywords"])
+    judge = _judge_answer(judge_llm, q["question"], q["keywords"], answer or "")
     return answer or "", latency, tokens_used, raw_fetched, raw_fetch_tokens, f1, judge
 
 
 # ── Experiment 1 — Standard LLM baseline ─────────────────────────────────────
 
+
 def run_experiment1(corpus_lines: list[str], llm, judge_llm=None) -> list[dict]:
     """Inject the full raw corpus into the reasoning LLM for each question."""
-    corpus_text  = "\n".join(corpus_lines)
-    prompt_base  = _estimate_tokens(corpus_text)
+    corpus_text = "\n".join(corpus_lines)
+    prompt_base = _estimate_tokens(corpus_text)
 
     print("\n" + "=" * 80)
     print("EXPERIMENT 1 — Standard LLM Baseline (raw corpus injected)")
@@ -299,30 +490,36 @@ def run_experiment1(corpus_lines: list[str], llm, judge_llm=None) -> list[dict]:
 
         print(f"\n  [{q['id']}] {q['difficulty'].upper()}: {q['question'][:60]}")
         answer, elapsed = _call_llm(llm, prompt)
-        _, _, kw_f1     = _score_answer(answer, q["keywords"])
-        judge_score     = _judge_answer(judge_llm, q["question"], q["keywords"], answer)
+        _, _, kw_f1 = _score_answer(answer, q["keywords"])
+        judge_score = _judge_answer(judge_llm, q["question"], q["keywords"], answer)
 
-        print(f"    Tokens: {total_tokens:,}   Latency: {elapsed:.2f}s   "
-              f"KW-F1: {kw_f1:.3f}   Judge: {judge_score:.2f}")
+        print(
+            f"    Tokens: {total_tokens:,}   Latency: {elapsed:.2f}s   "
+            f"KW-F1: {kw_f1:.3f}   Judge: {judge_score:.2f}"
+        )
         print(f"    Answer (first 120 chars): {answer[:120]}")
 
-        results.append({
-            "question_id":    q["id"],
-            "difficulty":     q["difficulty"],
-            "prompt_tokens":  total_tokens,
-            "latency_sec":    elapsed,
-            "f1":             kw_f1,
-            "judge_score":    judge_score,
-            "answer_snippet": answer[:200],
-        })
+        results.append(
+            {
+                "question_id": q["id"],
+                "difficulty": q["difficulty"],
+                "prompt_tokens": total_tokens,
+                "latency_sec": elapsed,
+                "f1": kw_f1,
+                "judge_score": judge_score,
+                "answer_snippet": answer[:200],
+            }
+        )
 
     return results
 
 
 # ── Experiment 2 — Compressed Architecture ───────────────────────────────────
 
-def run_experiment2(corpus_lines: list[str], compress_llm, reason_llm, embed_cfg: dict,
-                    judge_llm=None) -> dict:
+
+def run_experiment2(
+    corpus_lines: list[str], compress_llm, reason_llm, embed_cfg: dict, judge_llm=None
+) -> dict:
     """
     Compress corpus, build index, then run:
       2a — answer from compressed summaries only
@@ -341,15 +538,14 @@ def run_experiment2(corpus_lines: list[str], compress_llm, reason_llm, embed_cfg
         chunk_overlap_tokens=128,
         llm=compress_llm,
     )
-    compress_sec   = time.time() - t_compress
-    total_orig     = sum(c.original_tokens  for c in chunks)
-    total_comp     = sum(c.compressed_tokens for c in chunks)
+    compress_sec = time.time() - t_compress
+    total_orig = sum(c.original_tokens for c in chunks)
+    total_comp = sum(c.compressed_tokens for c in chunks)
     compress_ratio = total_comp / total_orig if total_orig else 0
     print(f"  [OK] {len(chunks):,} chunks in {compress_sec:.1f}s")
     print(f"  Ratio: {compress_ratio:.3f}  ({total_orig:,} -> {total_comp:,} tokens)")
 
-    results_2a = []
-    results_2b = []
+    results_2 = []
 
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp_dir:
 
@@ -358,7 +554,11 @@ def run_experiment2(corpus_lines: list[str], compress_llm, reason_llm, embed_cfg
         retriever = CachedChromaRetriever(
             collection_name="exp_corpus",
             persist_directory=tmp_dir,
-            embedding_model_name=embed_cfg["model"] if embed_cfg["backend"] == "sentence-transformers" else None,
+            embedding_model_name=(
+                embed_cfg["model"]
+                if embed_cfg["backend"] == "sentence-transformers"
+                else None
+            ),
             embedding_backend=embed_cfg["backend"],
             cache_size=500,
             cache_threshold=0.85,
@@ -370,66 +570,66 @@ def run_experiment2(corpus_lines: list[str], compress_llm, reason_llm, embed_cfg
         print(f"\n[3/3] Running queries...")
 
         for q in QUESTIONS:
-            print(f"\n  [{q['id']}] {q['difficulty'].upper()}: {q['question'][:60]}")
-
-            # -- 2a: compressed summaries only --
-            retriever.cache.clear()
-            t_ret = time.time()
-            hits  = retriever.search(q["question"], top_k=5, use_cache=True)
-            ret_ms = (time.time() - t_ret) * 1000
-
-            context_text = "\n".join(
-                f"[chunk {h['chunk_id']}] {h['compressed_summary']}" for h in hits
+            q_type = q.get("query_type", "targeted")
+            print(
+                f"\n  [{q['id']}] {q['difficulty'].upper()} [{q_type}]: {q['question'][:55]}"
             )
-            prompt_2a = (
-                f"Relevant compressed passages from the corpus:\n\n{context_text}\n\n"
-                f"Question: {q['question']}\n\nAnswer:"
-            )
-            tokens_2a = _estimate_tokens(prompt_2a)
-            answer_2a, latency_2a = _call_llm(reason_llm, prompt_2a)
-            _, _, f1_2a      = _score_answer(answer_2a, q["keywords"])
-            judge_2a         = _judge_answer(judge_llm, q["question"], q["keywords"], answer_2a)
 
-            # cache hit pass
-            t_hit = time.time()
-            retriever.search(q["question"], top_k=5, use_cache=True)
-            hit_ms = (time.time() - t_hit) * 1000
+            if q_type == "aggregated":
+                # ── Aggregated: ALL summaries + Tree-of-Thought (no vector retrieval) ──
+                answer, latency, tokens, f1, judge = (
+                    _run_tot_aggregated_query(reason_llm, chunks, q, judge_llm)
+                )
+                print(
+                    f"    [ToT/all]   | tokens:{tokens:,}  llm:{latency:.2f}s  "
+                    f"KW-F1:{f1:.3f}  Judge:{judge:.2f}"
+                )
+                results_2.append({
+                    "question_id":      q["id"],
+                    "difficulty":       q["difficulty"],
+                    "query_strategy":   "tot_aggregated",
+                    "prompt_tokens":    tokens,
+                    "retrieval_ms":     0.0,
+                    "cache_hit_ms":     0.0,
+                    "latency_sec":      latency,
+                    "raw_fetched":      False,
+                    "raw_fetch_tokens": 0,
+                    "f1":               f1,
+                    "judge_score":      judge,
+                    "chunks_retrieved": len(chunks),
+                    "answer_snippet":   answer[:200],
+                })
 
-            print(f"    2a (summary)  | tokens:{tokens_2a:,}  ret:{ret_ms:.1f}ms  "
-                  f"llm:{latency_2a:.2f}s  hit:{hit_ms:.1f}ms  KW-F1:{f1_2a:.3f}  Judge:{judge_2a:.2f}")
+            else:
+                # ── Targeted: top-5 retrieval → adaptive raw-fetch if needed ──
+                retriever.cache.clear()
+                t_ret = time.time()
+                hits = retriever.search(q["question"], top_k=5, use_cache=True)
+                ret_ms = (time.time() - t_ret) * 1000
 
-            results_2a.append({
-                "question_id":     q["id"],
-                "difficulty":      q["difficulty"],
-                "prompt_tokens":   tokens_2a,
-                "retrieval_ms":    ret_ms,
-                "cache_hit_ms":    hit_ms,
-                "latency_sec":     latency_2a,
-                "f1":              f1_2a,
-                "judge_score":     judge_2a,
-                "chunks_retrieved": len(hits),
-                "answer_snippet":  answer_2a[:200],
-            })
-
-            # -- 2b: adaptive — LLM decides whether raw detail is needed --
-            answer_2b, latency_2b, tokens_2b, raw_fetched, raw_tok, f1_2b, judge_2b = (
-                _run_adaptive_query(reason_llm, hits, q, retriever, judge_llm)
-            )
-            raw_flag = "Y" if raw_fetched else "N"
-            print(f"    2b (adaptive) | tokens:{tokens_2b:,}  llm:{latency_2b:.2f}s  "
-                  f"raw:{raw_flag}  KW-F1:{f1_2b:.3f}  Judge:{judge_2b:.2f}")
-
-            results_2b.append({
-                "question_id":      q["id"],
-                "difficulty":       q["difficulty"],
-                "prompt_tokens":    tokens_2b,
-                "latency_sec":      latency_2b,
-                "raw_fetched":      raw_fetched,
-                "raw_fetch_tokens": raw_tok,
-                "f1":               f1_2b,
-                "judge_score":      judge_2b,
-                "answer_snippet":   answer_2b[:200],
-            })
+                answer, latency, tokens, raw_fetched, raw_tok, f1, judge = (
+                    _run_adaptive_query(reason_llm, hits, q, retriever, judge_llm)
+                )
+                raw_flag = "Y" if raw_fetched else "N"
+                print(
+                    f"    [adaptive]  | tokens:{tokens:,}  ret:{ret_ms:.1f}ms  "
+                    f"llm:{latency:.2f}s  raw:{raw_flag}  KW-F1:{f1:.3f}  Judge:{judge:.2f}"
+                )
+                results_2.append({
+                    "question_id":      q["id"],
+                    "difficulty":       q["difficulty"],
+                    "query_strategy":   "targeted_adaptive",
+                    "prompt_tokens":    tokens,
+                    "retrieval_ms":     ret_ms,
+                    "cache_hit_ms":     0.0,
+                    "latency_sec":      latency,
+                    "raw_fetched":      raw_fetched,
+                    "raw_fetch_tokens": raw_tok,
+                    "f1":               f1,
+                    "judge_score":      judge,
+                    "chunks_retrieved": len(hits),
+                    "answer_snippet":   answer[:200],
+                })
 
         # cleanup
         try:
@@ -447,12 +647,12 @@ def run_experiment2(corpus_lines: list[str], compress_llm, reason_llm, embed_cfg
             "original_tokens": total_orig,
             "compressed_tokens": total_comp,
         },
-        "exp_2a": results_2a,
-        "exp_2b": results_2b,
+        "exp_2": results_2,
     }
 
 
 # ── Comparison & Markdown generation ─────────────────────────────────────────
+
 
 def _pass_fail(value: float, target: float, higher_is_better: bool = True) -> str:
     if higher_is_better:
@@ -460,43 +660,37 @@ def _pass_fail(value: float, target: float, higher_is_better: bool = True) -> st
     return "[PASS]" if value <= target else "[FAIL]"
 
 
-def generate_report(exp1: list[dict], exp2: dict, corpus_lines: int,
-                    models: dict, embed_cfg: dict, run_date: str) -> str:
+def generate_report(
+    exp1: list[dict],
+    exp2: dict,
+    corpus_lines: int,
+    models: dict,
+    embed_cfg: dict,
+    run_date: str,
+) -> str:
     """Build the experiment_results.md markdown string."""
 
-    def avg(lst, key): return sum(r[key] for r in lst) / len(lst) if lst else 0
+    def avg(lst, key):
+        return sum(r[key] for r in lst) / len(lst) if lst else 0
 
-    e1_avg_tokens    = avg(exp1, "prompt_tokens")
-    e1_avg_latency   = avg(exp1, "latency_sec")
-    e1_avg_f1        = avg(exp1, "f1")
+    e1_avg_tokens = avg(exp1, "prompt_tokens")
+    e1_avg_latency = avg(exp1, "latency_sec")
+    e1_avg_f1 = avg(exp1, "f1")
 
-    e2a = exp2["exp_2a"]
-    e2b = exp2["exp_2b"]
-    e2a_avg_tokens   = avg(e2a, "prompt_tokens")
-    e2a_avg_latency  = avg(e2a, "latency_sec")
-    e2a_avg_f1       = avg(e2a, "f1")
-    e2a_avg_judge    = avg(e2a, "judge_score")
-    e2a_avg_ret_ms   = avg(e2a, "retrieval_ms")
-    e2a_avg_hit_ms   = avg(e2a, "cache_hit_ms")
+    e2 = exp2["exp_2"]
+    e2_avg_tokens   = avg(e2, "prompt_tokens")
+    e2_avg_latency  = avg(e2, "latency_sec")
+    e2_avg_f1       = avg(e2, "f1")
+    e2_avg_judge    = avg(e2, "judge_score")
+    e2_avg_ret_ms   = avg(e2, "retrieval_ms")
+    raw_fetch_count = sum(1 for r in e2 if r.get("raw_fetched", False))
 
-    e2b_avg_tokens   = avg(e2b, "prompt_tokens")
-    e2b_avg_latency  = avg(e2b, "latency_sec")
-    e2b_avg_f1       = avg(e2b, "f1")
-    e2b_avg_judge    = avg(e2b, "judge_score")
+    e1_avg_judge = avg(exp1, "judge_score")
 
-    e1_avg_judge     = avg(exp1, "judge_score")
-
-    token_red_2a = (1 - e2a_avg_tokens / e1_avg_tokens) * 100 if e1_avg_tokens else 0
-    token_red_2b = (1 - e2b_avg_tokens / e1_avg_tokens) * 100 if e1_avg_tokens else 0
-
-    lat_delta_2a = ((e2a_avg_latency - e1_avg_latency) / e1_avg_latency * 100) if e1_avg_latency else 0
-    lat_delta_2b = ((e2b_avg_latency - e1_avg_latency) / e1_avg_latency * 100) if e1_avg_latency else 0
-
-    f1_delta_2a  = ((e2a_avg_f1 - e1_avg_f1) / e1_avg_f1 * 100) if e1_avg_f1 else 0
-    f1_delta_2b  = ((e2b_avg_f1 - e1_avg_f1) / e1_avg_f1 * 100) if e1_avg_f1 else 0
-
-    judge_delta_2a = ((e2a_avg_judge - e1_avg_judge) / e1_avg_judge * 100) if e1_avg_judge else 0
-    judge_delta_2b = ((e2b_avg_judge - e1_avg_judge) / e1_avg_judge * 100) if e1_avg_judge else 0
+    token_red   = (1 - e2_avg_tokens / e1_avg_tokens) * 100 if e1_avg_tokens else 0
+    lat_delta   = ((e2_avg_latency - e1_avg_latency) / e1_avg_latency * 100) if e1_avg_latency else 0
+    f1_delta    = ((e2_avg_f1 - e1_avg_f1) / e1_avg_f1 * 100) if e1_avg_f1 else 0
+    judge_delta = ((e2_avg_judge - e1_avg_judge) / e1_avg_judge * 100) if e1_avg_judge else 0
 
     thr = THRESHOLDS
 
@@ -538,18 +732,25 @@ no retrieval, no compression. This is the cost/latency ceiling we are beating.
 |----------|------------|--------------|-------------|-------|-------|
 """  # noqa: E501
     for r in exp1:
-        md += (f"| {r['question_id']} | {r['difficulty']} | {r['prompt_tokens']:,} | "
-               f"{r['latency_sec']:.2f} | {r['f1']:.3f} | {r.get('judge_score', 0):.2f} |\n")
-    md += (f"| **Average** | — | **{e1_avg_tokens:,.0f}** | **{e1_avg_latency:.2f}** | "
-           f"**{e1_avg_f1:.3f}** | **{e1_avg_judge:.2f}** |\n")
+        md += (
+            f"| {r['question_id']} | {r['difficulty']} | {r['prompt_tokens']:,} | "
+            f"{r['latency_sec']:.2f} | {r['f1']:.3f} | {r.get('judge_score', 0):.2f} |\n"
+        )
+    md += (
+        f"| **Average** | — | **{e1_avg_tokens:,.0f}** | **{e1_avg_latency:.2f}** | "
+        f"**{e1_avg_f1:.3f}** | **{e1_avg_judge:.2f}** |\n"
+    )
 
     md += f"""
 ---
 
-## Experiment 2a — Compressed Architecture (Summaries Only)
+## Experiment 2 — Compressed Architecture
 
 Corpus compressed with `{models['compression']}`, indexed in ChromaDB with `{embed_cfg['model']}`.
-Reasoning LLM receives only the top-5 retrieved compressed summaries (~50 tokens each).
+
+- **Targeted queries**: top-5 vector retrieval → adaptive raw-fetch if the model judges summaries insufficient.
+- **Aggregated queries**: ALL compressed summaries injected + Tree-of-Thought reasoning
+  (three analytical paths → synthesised FINAL ANSWER), bypassing vector retrieval.
 
 ### Compression Stats
 
@@ -563,44 +764,31 @@ Reasoning LLM receives only the top-5 retrieved compressed summaries (~50 tokens
 
 ### Query Results
 
-| Question | Difficulty | Prompt Tokens | Ret (ms) | Hit (ms) | Latency (s) | KW-F1 | Judge | Token Δ |
-|----------|------------|--------------|----------|----------|-------------|-------|-------|---------|
+| Question | Difficulty | Strategy | Prompt Tokens | Ret (ms) | Latency (s) | Raw? | KW-F1 | Judge | Token Δ |
+|----------|------------|----------|--------------|----------|-------------|------|-------|-------|---------|
 """  # noqa: E501
-    for r, b in zip(e2a, exp1):
-        tok_delta = (1 - r["prompt_tokens"] / b["prompt_tokens"]) * 100 if b["prompt_tokens"] else 0
-        md += (f"| {r['question_id']} | {r['difficulty']} | {r['prompt_tokens']:,} | "
-               f"{r['retrieval_ms']:.1f} | {r['cache_hit_ms']:.1f} | {r['latency_sec']:.2f} | "
-               f"{r['f1']:.3f} | {r.get('judge_score', 0):.2f} | -{tok_delta:.1f}% |\n")
-    md += (f"| **Average** | — | **{e2a_avg_tokens:,.0f}** | **{e2a_avg_ret_ms:.1f}** | "
-           f"**{e2a_avg_hit_ms:.1f}** | **{e2a_avg_latency:.2f}** | **{e2a_avg_f1:.3f}** | "
-           f"**{e2a_avg_judge:.2f}** | **-{token_red_2a:.1f}%** |\n")
+    for r, b in zip(e2, exp1):
+        tok_delta = (
+            (1 - r["prompt_tokens"] / b["prompt_tokens"]) * 100
+            if b["prompt_tokens"]
+            else 0
+        )
+        raw_flag = "Y" if r.get("raw_fetched") else "N"
+        md += (
+            f"| {r['question_id']} | {r['difficulty']} | {r.get('query_strategy','—')} | "
+            f"{r['prompt_tokens']:,} | {r['retrieval_ms']:.1f} | {r['latency_sec']:.2f} | "
+            f"{raw_flag} | {r['f1']:.3f} | {r.get('judge_score', 0):.2f} | -{tok_delta:.1f}% |\n"
+        )
+    md += (
+        f"| **Average** | — | — | **{e2_avg_tokens:,.0f}** | **{e2_avg_ret_ms:.1f}** | "
+        f"**{e2_avg_latency:.2f}** | {raw_fetch_count}/{len(e2)} | **{e2_avg_f1:.3f}** | "
+        f"**{e2_avg_judge:.2f}** | **-{token_red:.1f}%** |\n"
+    )
 
-    md += f"""
----
-
-## Experiment 2b — Compressed Architecture (Summaries + Raw Detail)
-
-Same pipeline as 2a but the reasoning LLM also receives the full raw text of the
-most relevant chunk via the pointer model (`get_chunk_by_id`).
-
-| Question | Difficulty | Prompt Tokens | Latency (s) | KW-F1 | Judge | Token Δ |
-|----------|------------|--------------|-------------|-------|-------|---------|
-"""  # noqa: E501
-    for r, b in zip(e2b, exp1):
-        tok_delta = (1 - r["prompt_tokens"] / b["prompt_tokens"]) * 100 if b["prompt_tokens"] else 0
-        md += (f"| {r['question_id']} | {r['difficulty']} | {r['prompt_tokens']:,} | "
-               f"{r['latency_sec']:.2f} | {r['f1']:.3f} | {r.get('judge_score', 0):.2f} | -{tok_delta:.1f}% |\n")
-    md += (f"| **Average** | — | **{e2b_avg_tokens:,.0f}** | **{e2b_avg_latency:.2f}** | "
-           f"**{e2b_avg_f1:.3f}** | **{e2b_avg_judge:.2f}** | **-{token_red_2b:.1f}%** |\n")
-
-    lat_pf_2a  = _pass_fail(abs(lat_delta_2a),  thr["latency_delta_pct"],  higher_is_better=False)
-    lat_pf_2b  = _pass_fail(abs(lat_delta_2b),  thr["latency_delta_pct"],  higher_is_better=False)
-    f1_pf_2a   = _pass_fail(abs(f1_delta_2a),   thr["f1_delta_pct"],       higher_is_better=False)
-    f1_pf_2b   = _pass_fail(abs(f1_delta_2b),   thr["f1_delta_pct"],       higher_is_better=False)
-    jdg_pf_2a  = _pass_fail(abs(judge_delta_2a), thr["f1_delta_pct"],      higher_is_better=False)
-    jdg_pf_2b  = _pass_fail(abs(judge_delta_2b), thr["f1_delta_pct"],      higher_is_better=False)
-    tok_pf_2a  = _pass_fail(token_red_2a,        thr["token_reduction_pct"], higher_is_better=True)
-    tok_pf_2b  = _pass_fail(token_red_2b,        thr["token_reduction_pct"], higher_is_better=True)
+    lat_pf = _pass_fail(abs(lat_delta),   thr["latency_delta_pct"],   higher_is_better=False)
+    f1_pf  = _pass_fail(abs(f1_delta),    thr["f1_delta_pct"],        higher_is_better=False)
+    jdg_pf = _pass_fail(abs(judge_delta), thr["f1_delta_pct"],        higher_is_better=False)
+    tok_pf = _pass_fail(token_red,        thr["token_reduction_pct"], higher_is_better=True)
 
     md += f"""
 ---
@@ -611,40 +799,36 @@ most relevant chunk via the pointer model (`get_chunk_by_id`).
 > *KW-F1* (keyword-overlap) is secondary — it under-reports quality for verbose answers
 > because precision is penalised by answer word count.
 
-| Metric | Baseline (Exp 1) | Exp 2a (Summary) | Exp 2b (Adaptive) |
-|--------|-----------------|-----------------|---------------------|
-| Avg prompt tokens | {e1_avg_tokens:,.0f} | {e2a_avg_tokens:,.0f} | {e2b_avg_tokens:,.0f} |
-| Token reduction | — | **-{token_red_2a:.1f}%** {tok_pf_2a} | **-{token_red_2b:.1f}%** {tok_pf_2b} |
-| Avg reasoning latency (s) | {e1_avg_latency:.2f} | {e2a_avg_latency:.2f} ({lat_delta_2a:+.1f}%) {lat_pf_2a} | {e2b_avg_latency:.2f} ({lat_delta_2b:+.1f}%) {lat_pf_2b} |
-| Avg retrieval latency (ms) | N/A | {e2a_avg_ret_ms:.1f} (miss) / {e2a_avg_hit_ms:.1f} (hit) | same |
-| Avg Judge score (0–1) | {e1_avg_judge:.2f} | {e2a_avg_judge:.2f} ({judge_delta_2a:+.1f}%) {jdg_pf_2a} | {e2b_avg_judge:.2f} ({judge_delta_2b:+.1f}%) {jdg_pf_2b} |
-| Avg KW-F1 (secondary) | {e1_avg_f1:.3f} | {e2a_avg_f1:.3f} ({f1_delta_2a:+.1f}%) {f1_pf_2a} | {e2b_avg_f1:.3f} ({f1_delta_2b:+.1f}%) {f1_pf_2b} |
+| Metric | Baseline (Exp 1) | Exp 2 (Adaptive) |
+|--------|-----------------|------------------|
+| Avg prompt tokens | {e1_avg_tokens:,.0f} | {e2_avg_tokens:,.0f} |
+| Token reduction | — | **-{token_red:.1f}%** {tok_pf} |
+| Avg reasoning latency (s) | {e1_avg_latency:.2f} | {e2_avg_latency:.2f} ({lat_delta:+.1f}%) {lat_pf} |
+| Avg retrieval latency (ms) | N/A | {e2_avg_ret_ms:.1f} |
+| Avg Judge score (0–1) | {e1_avg_judge:.2f} | {e2_avg_judge:.2f} ({judge_delta:+.1f}%) {jdg_pf} |
+| Avg KW-F1 (secondary) | {e1_avg_f1:.3f} | {e2_avg_f1:.3f} ({f1_delta:+.1f}%) {f1_pf} |
 
 ### Threshold Summary
 
-| Threshold | Target | Exp 2a | Exp 2b |
-|-----------|--------|--------|--------|
-| Token reduction ≥{thr['token_reduction_pct']:.0f}% | ≥{thr['token_reduction_pct']:.0f}% | {token_red_2a:.1f}% {tok_pf_2a} | {token_red_2b:.1f}% {tok_pf_2b} |
-| Latency delta ≤±{thr['latency_delta_pct']:.0f}% | ≤±{thr['latency_delta_pct']:.0f}% | {lat_delta_2a:+.1f}% {lat_pf_2a} | {lat_delta_2b:+.1f}% {lat_pf_2b} |
-| Judge-score delta ≤±{thr['f1_delta_pct']:.0f}% | ≤±{thr['f1_delta_pct']:.0f}% | {judge_delta_2a:+.1f}% {jdg_pf_2a} | {judge_delta_2b:+.1f}% {jdg_pf_2b} |
-| KW-F1 delta ≤±{thr['f1_delta_pct']:.0f}% | ≤±{thr['f1_delta_pct']:.0f}% | {f1_delta_2a:+.1f}% {f1_pf_2a} | {f1_delta_2b:+.1f}% {f1_pf_2b} |
+| Threshold | Target | Exp 2 |
+|-----------|--------|-------|
+| Token reduction ≥{thr['token_reduction_pct']:.0f}% | ≥{thr['token_reduction_pct']:.0f}% | {token_red:.1f}% {tok_pf} |
+| Latency delta ≤±{thr['latency_delta_pct']:.0f}% | ≤±{thr['latency_delta_pct']:.0f}% | {lat_delta:+.1f}% {lat_pf} |
+| Judge-score delta ≤±{thr['f1_delta_pct']:.0f}% | ≤±{thr['f1_delta_pct']:.0f}% | {judge_delta:+.1f}% {jdg_pf} |
+| KW-F1 delta ≤±{thr['f1_delta_pct']:.0f}% | ≤±{thr['f1_delta_pct']:.0f}% | {f1_delta:+.1f}% {f1_pf} |
 
 ---
 
 ## Key Observations
 
-- **Token efficiency**: Exp 2a delivers {token_red_2a:.0f}% token reduction vs the full-corpus
-  baseline, well {"above" if token_red_2a >= 90 else "below"} the 90% target.
-- **Latency**: Reasoning latency {"improved" if lat_delta_2a < 0 else "increased"} by
-  {abs(lat_delta_2a):.0f}% in Exp 2a (fewer tokens = faster LLM). Retrieval adds
-  {e2a_avg_ret_ms:.0f}ms (miss) / {e2a_avg_hit_ms:.1f}ms (cache hit).
-- **F1 quality**: Exp 2a F1 {"matched" if abs(f1_delta_2a) <= 10 else "diverged from"} the
-  baseline within {abs(f1_delta_2a):.0f}% (threshold: ±20%).
-- **Adaptive raw fetch (2b)**: Agent triggered `get_context_details` for
-  {raw_fetch_count} of {len(e2b)} questions ({raw_fetch_count / max(len(e2b), 1) * 100:.0f}%).
-  Raw fetch added ~{avg(e2b, 'raw_fetch_tokens'):.0f} tokens where used.
-- **Cache benefit**: Repeated / similar queries drop from {e2a_avg_ret_ms:.0f}ms to
-  {e2a_avg_hit_ms:.1f}ms ({e2a_avg_ret_ms / max(e2a_avg_hit_ms, 0.1):.0f}x speedup).
+- **Token efficiency**: Exp 2 delivers {token_red:.0f}% token reduction vs the full-corpus
+  baseline, {"above" if token_red >= 90 else "below"} the 90% target.
+- **Latency**: Reasoning latency {"improved" if lat_delta < 0 else "increased"} by
+  {abs(lat_delta):.0f}% (fewer tokens = faster LLM). Retrieval adds {e2_avg_ret_ms:.0f}ms.
+- **Quality**: Judge score delta {judge_delta:+.1f}% vs baseline (threshold: ±{thr['f1_delta_pct']:.0f}%) {jdg_pf}.
+- **Adaptive raw fetch**: triggered for {raw_fetch_count} of {len(e2)} targeted queries
+  ({raw_fetch_count / max(len(e2), 1) * 100:.0f}%).
+  Raw fetch added ~{avg(e2, 'raw_fetch_tokens'):.0f} extra tokens where used.
 
 ---
 
@@ -661,12 +845,20 @@ most relevant chunk via the pointer model (`get_chunk_by_id`).
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
+
 def main():
     parser = argparse.ArgumentParser(description="Run end-to-end experiments")
-    parser.add_argument("--lines", type=int, default=500,
-                        help="Number of corpus lines (default: 500 for quick run)")
-    parser.add_argument("--full", action="store_true",
-                        help="Use full 25K medium corpus (hours with Ollama)")
+    parser.add_argument(
+        "--lines",
+        type=int,
+        default=500,
+        help="Number of corpus lines (default: 500 for quick run)",
+    )
+    parser.add_argument(
+        "--full",
+        action="store_true",
+        help="Use full 25K medium corpus (hours with Ollama)",
+    )
     args = parser.parse_args()
 
     corpus_lines_limit = 25_000 if args.full else args.lines
@@ -680,16 +872,18 @@ def main():
 
     # ── Models ─────────────────────────────────────────────────────────
     print("[Setup] Initialising models...")
-    embed_cfg      = get_embedding_config()
-    compress_llm   = build_compression_llm()
-    reason_llm     = build_reasoning_llm()
+    embed_cfg = get_embedding_config()
+    compress_llm = build_compression_llm()
+    reason_llm = build_reasoning_llm()
     # Judge reuses the compression LLM (llama3.2:3b) — already loaded, no extra cost.
     # It scores answers semantically on a 0–1 scale, avoiding keyword-overlap verbosity bias.
     judge_llm = compress_llm
-    print(f"  [Judge LLM]      Reusing compression model ({os.getenv('CONTEXT_OPTIMIZER_COMPRESSOR_MODEL', 'llama3.2:3b')}) as evaluator")
+    print(
+        f"  [Judge LLM]      Reusing compression model ({os.getenv('CONTEXT_OPTIMIZER_COMPRESSOR_MODEL', 'llama3.2:1b')}) as evaluator"
+    )
     models = {
-        "compression": os.getenv("CONTEXT_OPTIMIZER_COMPRESSOR_MODEL", "llama3.2:3b"),
-        "reasoning":   os.getenv("CONTEXT_OPTIMIZER_REASONING_MODEL",  "qwen2.5-coder:7b"),
+        "compression": os.getenv("CONTEXT_OPTIMIZER_COMPRESSOR_MODEL", "llama3.2:1b"),
+        "reasoning": os.getenv("CONTEXT_OPTIMIZER_REASONING_MODEL", "mistral:7b"),
     }
 
     if reason_llm is None:
@@ -713,30 +907,34 @@ def main():
     exp1_results = run_experiment1(corpus, reason_llm, judge_llm=judge_llm)
 
     # ── Run Exp 2 ───────────────────────────────────────────────
-    exp2_results = run_experiment2(corpus, compress_llm, reason_llm, embed_cfg,
-                                   judge_llm=judge_llm)
+    exp2_results = run_experiment2(
+        corpus, compress_llm, reason_llm, embed_cfg, judge_llm=judge_llm
+    )
 
     # ── JSON output ────────────────────────────────────────────────────
-    bench_dir  = Path(__file__).parent
-    json_out   = bench_dir / "EXPERIMENT_RESULTS.json"
-    report_out = bench_dir.parent.parent / "docs" / "experiments" / "experiment_results.md"
+    bench_dir = Path(__file__).parent
+    json_out = bench_dir / "EXPERIMENT_RESULTS.json"
+    report_out = (
+        bench_dir.parent.parent / "docs" / "experiments" / "experiment_results.md"
+    )
 
     payload = {
-        "run_date":        run_date,
-        "corpus_lines":    len(corpus),
-        "models":          models,
-        "embedding":       embed_cfg,
-        "thresholds":      THRESHOLDS,
-        "experiment_1":    exp1_results,
-        "experiment_2":    exp2_results,
+        "run_date": run_date,
+        "corpus_lines": len(corpus),
+        "models": models,
+        "embedding": embed_cfg,
+        "thresholds": THRESHOLDS,
+        "experiment_1": exp1_results,
+        "experiment_2": exp2_results,
     }
     with open(json_out, "w") as f:
         json.dump(payload, f, indent=2)
     print(f"\n[OK] JSON results saved: {json_out}")
 
     # ── Markdown report ────────────────────────────────────────────────
-    md = generate_report(exp1_results, exp2_results, len(corpus),
-                         models, embed_cfg, run_date)
+    md = generate_report(
+        exp1_results, exp2_results, len(corpus), models, embed_cfg, run_date
+    )
     report_out.parent.mkdir(parents=True, exist_ok=True)
     with open(report_out, "w", encoding="utf-8") as f:
         f.write(md)

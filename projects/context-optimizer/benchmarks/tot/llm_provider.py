@@ -44,12 +44,16 @@ def build_compression_llm():
     Build the compression LLM (used during write-time summarisation).
     Default: llama3.2:3b via Ollama — fast, ~2 GB, good at summarisation.
     """
-    provider   = os.getenv("CONTEXT_OPTIMIZER_COMPRESSOR_PROVIDER", "ollama").lower()
-    model_env  = os.getenv("CONTEXT_OPTIMIZER_COMPRESSOR_MODEL", "llama3.2:3b")
+    provider = os.getenv("CONTEXT_OPTIMIZER_COMPRESSOR_PROVIDER", "ollama").lower()
+    # llama3.2:1b: ~600 MB, fast summariser — good enough for chunk-level compression.
+    # Upgrade to llama3.2:3b or phi3:mini for higher fidelity at extra cost.
+    model_env = os.getenv("CONTEXT_OPTIMIZER_COMPRESSOR_MODEL", "llama3.2:1b")
 
     if provider == "ollama":
         base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-        print(f"  [Compression LLM] Provider: Ollama  |  Model: {model_env}  |  URL: {base_url}")
+        print(
+            f"  [Compression LLM] Provider: Ollama  |  Model: {model_env}  |  URL: {base_url}"
+        )
     elif provider == "groq":
         print(f"  [Compression LLM] Provider: Groq (cloud)  |  Model: {model_env}")
     else:
@@ -58,7 +62,9 @@ def build_compression_llm():
     llm = _build_local_llm(provider=provider, model=model_env)
 
     if llm is None:
-        print(f"\n  [WARN] Could not initialise compression LLM for provider '{provider}'.")
+        print(
+            f"\n  [WARN] Could not initialise compression LLM for provider '{provider}'."
+        )
         print(f"  [WARN] Compression will fall back to truncation.")
         if provider == "ollama":
             print(f"  [HINT] ollama serve  &&  ollama pull {model_env}")
@@ -78,19 +84,25 @@ def build_reasoning_llm():
     Build the reasoning LLM (used at query-time to answer questions).
     Default: qwen2.5-coder:7b via Ollama — strong reasoning, already downloaded.
     """
-    provider    = os.getenv("CONTEXT_OPTIMIZER_COMPRESSOR_PROVIDER", "ollama").lower()
-    model_env   = os.getenv("CONTEXT_OPTIMIZER_REASONING_MODEL", "qwen2.5-coder:7b")
-    base_url    = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+    provider = os.getenv("CONTEXT_OPTIMIZER_COMPRESSOR_PROVIDER", "ollama").lower()
+    # mistral:7b: strong general reasoning on CPU, ~4 GB (Q4_K_M quantisation).
+    # Alternatives: phi3:medium (14B, excellent CPU perf), qwen2.5:7b, llama3.1:8b.
+    model_env = os.getenv("CONTEXT_OPTIMIZER_REASONING_MODEL", "mistral:7b")
+    base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 
     if provider == "ollama":
-        print(f"  [Reasoning  LLM] Provider: Ollama  |  Model: {model_env}  |  URL: {base_url}")
+        print(
+            f"  [Reasoning  LLM] Provider: Ollama  |  Model: {model_env}  |  URL: {base_url}"
+        )
     else:
         print(f"  [Reasoning  LLM] Provider: {provider}  |  Model: {model_env}")
 
     llm = _build_local_llm(provider=provider, model=model_env)
 
     if llm is None:
-        print(f"\n  [WARN] Could not initialise reasoning LLM for provider '{provider}'.")
+        print(
+            f"\n  [WARN] Could not initialise reasoning LLM for provider '{provider}'."
+        )
         if provider == "ollama":
             print(f"  [HINT] ollama serve  &&  ollama pull {model_env}")
         return None
@@ -113,10 +125,12 @@ def get_embedding_config() -> dict:
         model     : model name
         base_url  : Ollama URL (only relevant for ollama backend)
     """
-    backend = os.getenv("CONTEXT_OPTIMIZER_EMBEDDING_BACKEND", "sentence-transformers").lower()
+    backend = os.getenv(
+        "CONTEXT_OPTIMIZER_EMBEDDING_BACKEND", "sentence-transformers"
+    ).lower()
     if backend == "ollama":
-        model   = os.getenv("CONTEXT_OPTIMIZER_EMBEDDING_MODEL", "nomic-embed-text")
-        url     = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+        model = os.getenv("CONTEXT_OPTIMIZER_EMBEDDING_MODEL", "nomic-embed-text")
+        url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
         print(f"  [Embedding]      Backend: Ollama  |  Model: {model}  |  URL: {url}")
         return {"backend": "ollama", "model": model, "base_url": url}
     else:
@@ -132,11 +146,11 @@ def get_embedding_config() -> dict:
     or None if the provider is unavailable — in which case compressor.py falls back
     to truncation (summaries become the first 200 chars of each chunk).
     """
-    provider   = os.getenv("CONTEXT_OPTIMIZER_COMPRESSOR_PROVIDER", "ollama").lower()
-    model_env  = os.getenv("CONTEXT_OPTIMIZER_COMPRESSOR_MODEL")
+    provider = os.getenv("CONTEXT_OPTIMIZER_COMPRESSOR_PROVIDER", "ollama").lower()
+    model_env = os.getenv("CONTEXT_OPTIMIZER_COMPRESSOR_MODEL")
 
     if provider == "ollama":
-        base_url   = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+        base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
         model_name = model_env or "qwen2.5-coder:7b"
         print(f"  Provider : Ollama")
         print(f"  Model    : {model_name}")
@@ -154,7 +168,9 @@ def get_embedding_config() -> dict:
 
     if llm is None:
         print(f"\n  [WARN] Could not initialise LLM for provider '{provider}'.")
-        print(f"  [WARN] Compression will fall back to truncation — no semantic summaries.")
+        print(
+            f"  [WARN] Compression will fall back to truncation — no semantic summaries."
+        )
         if provider == "ollama":
             print(f"  [HINT] Fix:  ollama serve  &&  ollama pull qwen2.5-coder:7b")
         elif provider == "groq":
