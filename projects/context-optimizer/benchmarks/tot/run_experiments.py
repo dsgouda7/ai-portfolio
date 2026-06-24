@@ -28,6 +28,7 @@ Usage:
 import argparse
 import json
 import os
+import re
 import sys
 import tempfile
 import time
@@ -436,6 +437,9 @@ def _run_adaptive_query(
     t0 = time.time()
     raw_t1, _ = _call_llm(reason_llm, prompt_t1, system=_ADAPTIVE_T1_SYSTEM)
 
+    # Debug: show turn-1 raw response so we can see if adaptive fetch is working
+    print(f"      [T1 raw] {raw_t1[:200].replace(chr(10), ' ')}")
+
     # --- parse Turn-1 response (robust, multi-strategy) ---
     parsed = _parse_turn1_json(raw_t1)
     needs_raw = parsed["needs_raw"]
@@ -577,28 +581,30 @@ def run_experiment2(
 
             if q_type == "aggregated":
                 # ── Aggregated: ALL summaries + Tree-of-Thought (no vector retrieval) ──
-                answer, latency, tokens, f1, judge = (
-                    _run_tot_aggregated_query(reason_llm, chunks, q, judge_llm)
+                answer, latency, tokens, f1, judge = _run_tot_aggregated_query(
+                    reason_llm, chunks, q, judge_llm
                 )
                 print(
                     f"    [ToT/all]   | tokens:{tokens:,}  llm:{latency:.2f}s  "
                     f"KW-F1:{f1:.3f}  Judge:{judge:.2f}"
                 )
-                results_2.append({
-                    "question_id":      q["id"],
-                    "difficulty":       q["difficulty"],
-                    "query_strategy":   "tot_aggregated",
-                    "prompt_tokens":    tokens,
-                    "retrieval_ms":     0.0,
-                    "cache_hit_ms":     0.0,
-                    "latency_sec":      latency,
-                    "raw_fetched":      False,
-                    "raw_fetch_tokens": 0,
-                    "f1":               f1,
-                    "judge_score":      judge,
-                    "chunks_retrieved": len(chunks),
-                    "answer_snippet":   answer[:200],
-                })
+                results_2.append(
+                    {
+                        "question_id": q["id"],
+                        "difficulty": q["difficulty"],
+                        "query_strategy": "tot_aggregated",
+                        "prompt_tokens": tokens,
+                        "retrieval_ms": 0.0,
+                        "cache_hit_ms": 0.0,
+                        "latency_sec": latency,
+                        "raw_fetched": False,
+                        "raw_fetch_tokens": 0,
+                        "f1": f1,
+                        "judge_score": judge,
+                        "chunks_retrieved": len(chunks),
+                        "answer_snippet": answer[:200],
+                    }
+                )
 
             else:
                 # ── Targeted: top-5 retrieval → adaptive raw-fetch if needed ──
@@ -615,21 +621,23 @@ def run_experiment2(
                     f"    [adaptive]  | tokens:{tokens:,}  ret:{ret_ms:.1f}ms  "
                     f"llm:{latency:.2f}s  raw:{raw_flag}  KW-F1:{f1:.3f}  Judge:{judge:.2f}"
                 )
-                results_2.append({
-                    "question_id":      q["id"],
-                    "difficulty":       q["difficulty"],
-                    "query_strategy":   "targeted_adaptive",
-                    "prompt_tokens":    tokens,
-                    "retrieval_ms":     ret_ms,
-                    "cache_hit_ms":     0.0,
-                    "latency_sec":      latency,
-                    "raw_fetched":      raw_fetched,
-                    "raw_fetch_tokens": raw_tok,
-                    "f1":               f1,
-                    "judge_score":      judge,
-                    "chunks_retrieved": len(hits),
-                    "answer_snippet":   answer[:200],
-                })
+                results_2.append(
+                    {
+                        "question_id": q["id"],
+                        "difficulty": q["difficulty"],
+                        "query_strategy": "targeted_adaptive",
+                        "prompt_tokens": tokens,
+                        "retrieval_ms": ret_ms,
+                        "cache_hit_ms": 0.0,
+                        "latency_sec": latency,
+                        "raw_fetched": raw_fetched,
+                        "raw_fetch_tokens": raw_tok,
+                        "f1": f1,
+                        "judge_score": judge,
+                        "chunks_retrieved": len(hits),
+                        "answer_snippet": answer[:200],
+                    }
+                )
 
         # cleanup
         try:
@@ -678,19 +686,25 @@ def generate_report(
     e1_avg_f1 = avg(exp1, "f1")
 
     e2 = exp2["exp_2"]
-    e2_avg_tokens   = avg(e2, "prompt_tokens")
-    e2_avg_latency  = avg(e2, "latency_sec")
-    e2_avg_f1       = avg(e2, "f1")
-    e2_avg_judge    = avg(e2, "judge_score")
-    e2_avg_ret_ms   = avg(e2, "retrieval_ms")
+    e2_avg_tokens = avg(e2, "prompt_tokens")
+    e2_avg_latency = avg(e2, "latency_sec")
+    e2_avg_f1 = avg(e2, "f1")
+    e2_avg_judge = avg(e2, "judge_score")
+    e2_avg_ret_ms = avg(e2, "retrieval_ms")
     raw_fetch_count = sum(1 for r in e2 if r.get("raw_fetched", False))
 
     e1_avg_judge = avg(exp1, "judge_score")
 
-    token_red   = (1 - e2_avg_tokens / e1_avg_tokens) * 100 if e1_avg_tokens else 0
-    lat_delta   = ((e2_avg_latency - e1_avg_latency) / e1_avg_latency * 100) if e1_avg_latency else 0
-    f1_delta    = ((e2_avg_f1 - e1_avg_f1) / e1_avg_f1 * 100) if e1_avg_f1 else 0
-    judge_delta = ((e2_avg_judge - e1_avg_judge) / e1_avg_judge * 100) if e1_avg_judge else 0
+    token_red = (1 - e2_avg_tokens / e1_avg_tokens) * 100 if e1_avg_tokens else 0
+    lat_delta = (
+        ((e2_avg_latency - e1_avg_latency) / e1_avg_latency * 100)
+        if e1_avg_latency
+        else 0
+    )
+    f1_delta = ((e2_avg_f1 - e1_avg_f1) / e1_avg_f1 * 100) if e1_avg_f1 else 0
+    judge_delta = (
+        ((e2_avg_judge - e1_avg_judge) / e1_avg_judge * 100) if e1_avg_judge else 0
+    )
 
     thr = THRESHOLDS
 
@@ -709,6 +723,7 @@ def generate_report(
 | Compression / Summarisation | `{models['compression']}` | Ollama (local) |
 | Embeddings | `{embed_cfg['model']}` | {embed_cfg['backend']} |
 | Reasoning | `{models['reasoning']}` | Ollama (local) |
+| Judge (LLM-as-judge) | `{models.get('judge', models['reasoning'])}` | Ollama (local) |
 
 ---
 
@@ -716,9 +731,9 @@ def generate_report(
 
 | Metric | Threshold | Rationale |
 |--------|-----------|-----------|
-| Latency delta vs baseline | ±{thr['latency_delta_pct']:.0f}% | Architectural overhead must be within 10% |
-| Judge-score delta vs baseline | ±{thr['f1_delta_pct']:.0f}% | Semantic quality (LLM-as-judge 0–1) within 20% of full-corpus baseline |
-| KW-F1 delta vs baseline | ±{thr['f1_delta_pct']:.0f}% | Keyword-overlap F1 delta (secondary, penalised for verbosity) |
+| Latency regression vs baseline | ≤+{thr['latency_delta_pct']:.0f}% | Slowdowns >10% fail; improvements always pass |
+| Judge-score drop vs baseline | ≤-{thr['f1_delta_pct']:.0f}% | Quality drops >20% fail; improvements always pass |
+| KW-F1 drop vs baseline | ≤-{thr['f1_delta_pct']:.0f}% | KW-F1 drops >20% fail; improvements always pass |
 | Token reduction vs baseline | ≥{thr['token_reduction_pct']:.0f}% | Core efficiency target |
 
 ---
@@ -785,10 +800,13 @@ Corpus compressed with `{models['compression']}`, indexed in ChromaDB with `{emb
         f"**{e2_avg_judge:.2f}** | **-{token_red:.1f}%** |\n"
     )
 
-    lat_pf = _pass_fail(abs(lat_delta),   thr["latency_delta_pct"],   higher_is_better=False)
-    f1_pf  = _pass_fail(abs(f1_delta),    thr["f1_delta_pct"],        higher_is_better=False)
-    jdg_pf = _pass_fail(abs(judge_delta), thr["f1_delta_pct"],        higher_is_better=False)
-    tok_pf = _pass_fail(token_red,        thr["token_reduction_pct"], higher_is_better=True)
+    # Directional thresholds: only flag regressions, never flag improvements.
+    # Latency: FAIL only if latency INCREASED by more than threshold.
+    # F1/Judge: FAIL only if quality DROPPED by more than threshold.
+    lat_pf = _pass_fail(lat_delta, thr["latency_delta_pct"], higher_is_better=False)
+    f1_pf = _pass_fail(f1_delta, -thr["f1_delta_pct"], higher_is_better=True)
+    jdg_pf = _pass_fail(judge_delta, -thr["f1_delta_pct"], higher_is_better=True)
+    tok_pf = _pass_fail(token_red, thr["token_reduction_pct"], higher_is_better=True)
 
     md += f"""
 ---
@@ -813,9 +831,9 @@ Corpus compressed with `{models['compression']}`, indexed in ChromaDB with `{emb
 | Threshold | Target | Exp 2 |
 |-----------|--------|-------|
 | Token reduction ≥{thr['token_reduction_pct']:.0f}% | ≥{thr['token_reduction_pct']:.0f}% | {token_red:.1f}% {tok_pf} |
-| Latency delta ≤±{thr['latency_delta_pct']:.0f}% | ≤±{thr['latency_delta_pct']:.0f}% | {lat_delta:+.1f}% {lat_pf} |
-| Judge-score delta ≤±{thr['f1_delta_pct']:.0f}% | ≤±{thr['f1_delta_pct']:.0f}% | {judge_delta:+.1f}% {jdg_pf} |
-| KW-F1 delta ≤±{thr['f1_delta_pct']:.0f}% | ≤±{thr['f1_delta_pct']:.0f}% | {f1_delta:+.1f}% {f1_pf} |
+| Latency regression ≤+{thr['latency_delta_pct']:.0f}% | ≤+{thr['latency_delta_pct']:.0f}% | {lat_delta:+.1f}% {lat_pf} |
+| Judge-score drop ≤-{thr['f1_delta_pct']:.0f}% | ≤-{thr['f1_delta_pct']:.0f}% | {judge_delta:+.1f}% {jdg_pf} |
+| KW-F1 drop ≤-{thr['f1_delta_pct']:.0f}% | ≤-{thr['f1_delta_pct']:.0f}% | {f1_delta:+.1f}% {f1_pf} |
 
 ---
 
@@ -875,15 +893,16 @@ def main():
     embed_cfg = get_embedding_config()
     compress_llm = build_compression_llm()
     reason_llm = build_reasoning_llm()
-    # Judge reuses the compression LLM (llama3.2:3b) — already loaded, no extra cost.
-    # It scores answers semantically on a 0–1 scale, avoiding keyword-overlap verbosity bias.
-    judge_llm = compress_llm
+    # Judge uses the reasoning LLM (mistral:7b) for reliable semantic scoring.
+    # llama3.2:1b is too small to consistently evaluate answer quality.
+    judge_llm = reason_llm
     print(
-        f"  [Judge LLM]      Reusing compression model ({os.getenv('CONTEXT_OPTIMIZER_COMPRESSOR_MODEL', 'llama3.2:1b')}) as evaluator"
+        f"  [Judge LLM]      Using reasoning model ({os.getenv('CONTEXT_OPTIMIZER_REASONING_MODEL', 'mistral:7b')}) as evaluator"
     )
     models = {
         "compression": os.getenv("CONTEXT_OPTIMIZER_COMPRESSOR_MODEL", "llama3.2:1b"),
         "reasoning": os.getenv("CONTEXT_OPTIMIZER_REASONING_MODEL", "mistral:7b"),
+        "judge": os.getenv("CONTEXT_OPTIMIZER_REASONING_MODEL", "mistral:7b"),
     }
 
     if reason_llm is None:

@@ -1,18 +1,19 @@
 """
 LLM Provider for local compression benchmarks.
 
-Defaults to Ollama (runs entirely locally, no API key, no cost).
-Override with environment variables to switch providers.
+Callable stubs — every model role is resolved from environment variables with
+Ollama defaults.  Swap any model without touching code.
 
 Environment variables — COMPRESSION LLM:
     CONTEXT_OPTIMIZER_COMPRESSOR_PROVIDER  ollama (default) | groq
-    CONTEXT_OPTIMIZER_COMPRESSOR_MODEL     llama3.2:3b (default)
+    CONTEXT_OPTIMIZER_COMPRESSOR_MODEL     llama3.2:1b (default) — fast summariser, ~600 MB
     OLLAMA_BASE_URL                        http://localhost:11434 (default)
     GROQ_API_KEY                           required only when provider=groq
 
-Environment variables — REASONING LLM:
-    CONTEXT_OPTIMIZER_REASONING_MODEL      qwen2.5-coder:7b (default)
+Environment variables — REASONING / JUDGE LLM:
+    CONTEXT_OPTIMIZER_REASONING_MODEL      mistral:7b (default) — strong reasoning, ~4 GB Q4_K_M
     (provider and base_url inherit from compressor env vars)
+    Note: judge reuses the reasoning LLM — build_reasoning_llm() for both roles.
 
 Environment variables — EMBEDDING MODEL:
     CONTEXT_OPTIMIZER_EMBEDDING_BACKEND    sentence-transformers (default) | ollama
@@ -21,9 +22,8 @@ Environment variables — EMBEDDING MODEL:
 
 Quick start (all local):
     ollama serve
-    ollama pull llama3.2:3b          # compression
-    ollama pull nomic-embed-text     # embeddings
-    # qwen2.5-coder:7b already present for reasoning
+    ollama pull llama3.2:1b    # compression
+    ollama pull mistral:7b     # reasoning + judge
     python run_experiments.py
 """
 
@@ -42,7 +42,8 @@ from context_optimizer.compressor import _build_local_llm  # noqa: E402
 def build_compression_llm():
     """
     Build the compression LLM (used during write-time summarisation).
-    Default: llama3.2:3b via Ollama — fast, ~2 GB, good at summarisation.
+    Default: llama3.2:1b via Ollama — fast, ~600 MB, good enough for chunk-level summarisation.
+    Override: CONTEXT_OPTIMIZER_COMPRESSOR_MODEL=llama3.2:3b for higher fidelity.
     """
     provider = os.getenv("CONTEXT_OPTIMIZER_COMPRESSOR_PROVIDER", "ollama").lower()
     # llama3.2:1b: ~600 MB, fast summariser — good enough for chunk-level compression.
@@ -81,8 +82,9 @@ def build_compression_llm():
 
 def build_reasoning_llm():
     """
-    Build the reasoning LLM (used at query-time to answer questions).
-    Default: qwen2.5-coder:7b via Ollama — strong reasoning, already downloaded.
+    Build the reasoning LLM (used at query-time to answer questions and as judge).
+    Default: mistral:7b via Ollama — strong general reasoning, ~4 GB Q4_K_M.
+    Override: CONTEXT_OPTIMIZER_REASONING_MODEL=<model>
     """
     provider = os.getenv("CONTEXT_OPTIMIZER_COMPRESSOR_PROVIDER", "ollama").lower()
     # mistral:7b: strong general reasoning on CPU, ~4 GB (Q4_K_M quantisation).
@@ -137,52 +139,5 @@ def get_embedding_config() -> dict:
         model = os.getenv("CONTEXT_OPTIMIZER_EMBEDDING_MODEL", "all-MiniLM-L6-v2")
         print(f"  [Embedding]      Backend: sentence-transformers  |  Model: {model}")
         return {"backend": "sentence-transformers", "model": model, "base_url": None}
-
-    """
-    Build the compression LLM using env-var-based provider selection.
-
-    Prints the resolved provider/model so benchmark runs are self-documenting.
-    Returns the LLM instance (ready to pass to compress_corpus_rolling as ``llm=``),
-    or None if the provider is unavailable — in which case compressor.py falls back
-    to truncation (summaries become the first 200 chars of each chunk).
-    """
-    provider = os.getenv("CONTEXT_OPTIMIZER_COMPRESSOR_PROVIDER", "ollama").lower()
-    model_env = os.getenv("CONTEXT_OPTIMIZER_COMPRESSOR_MODEL")
-
-    if provider == "ollama":
-        base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-        model_name = model_env or "qwen2.5-coder:7b"
-        print(f"  Provider : Ollama")
-        print(f"  Model    : {model_name}")
-        print(f"  URL      : {base_url}")
-    elif provider == "groq":
-        model_name = model_env or "llama-3.3-70b-versatile"
-        print(f"  Provider : Groq (cloud)")
-        print(f"  Model    : {model_name}")
-    else:
-        model_name = model_env or "default"
-        print(f"  Provider : {provider}")
-        print(f"  Model    : {model_name}")
-
-    llm = _build_local_llm(provider=provider, model=model_env)
-
-    if llm is None:
-        print(f"\n  [WARN] Could not initialise LLM for provider '{provider}'.")
-        print(
-            f"  [WARN] Compression will fall back to truncation — no semantic summaries."
-        )
-        if provider == "ollama":
-            print(f"  [HINT] Fix:  ollama serve  &&  ollama pull qwen2.5-coder:7b")
-        elif provider == "groq":
-            print(f"  [HINT] Fix:  set GROQ_API_KEY=gsk_...")
-        return None
-
-    # Lightweight connectivity check
-    try:
-        llm.invoke("ping")
-        print(f"  [OK] LLM connected")
-    except Exception as exc:
-        print(f"  [WARN] LLM health-check failed: {exc}")
-        print(f"  [WARN] Compression may fall back to truncation.")
 
     return llm
