@@ -1006,3 +1006,15 @@ Data Fundamentals gave you the forensic foundation: *look at the data before you
 
 > ➡ **Next:** [02_classification/ch01_logistic_regression](../../02_classification/ch01_logistic_regression/README.md) — binary classification, the sigmoid function, and decision boundaries.
 
+---
+
+## 🔧 Exercise Connection
+
+Data drift and validation from this chapter apply to the final TODOs in `exercises/01-ml/01-regression/src/data-prep.py`:
+
+| What you learned | Stub function | TODO # |
+|---|---|---|
+| PSI (Population Stability Index) | `compute_psi()` | #11 |
+| KS test for distribution drift | `compute_ks_test()` | #12 |
+
+**Path:** `notebook-solution.ipynb` → `exercises/01-ml/01-regression/src/data-prep.py` → `compute_psi()`, `compute_ks_test()`

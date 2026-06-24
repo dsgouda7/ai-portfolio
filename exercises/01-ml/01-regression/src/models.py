@@ -44,36 +44,36 @@ class ModelConfig:
 
 class Regressor(ABC):
     """Abstract base class for all regressors.
-    
+
     Provides common interface for plug-and-play experimentation.
     Subclasses implement train() and predict() methods.
     """
-    
+
     def __init__(self, name: str):
         """Initialize regressor with name for display."""
         self.name = name
         self.model = None
         self.metrics = {}
-    
+
     @abstractmethod
     def train(self, X: pd.DataFrame, y: pd.Series, config: ModelConfig) -> Dict[str, float]:
         """Train model and return metrics with immediate console feedback.
-        
+
         Args:
             X: Training features
             y: Training labels
             config: Training configuration
-        
+
         Returns:
             Dictionary with metrics: {"mae": float, "rmse": float, "r2": float, "cv_mae": float}
         """
         pass
-    
+
     @abstractmethod
     def predict(self, X: pd.DataFrame) -> np.ndarray:
         """Make predictions on new data."""
         pass
-    
+
     def save(self, path: str) -> None:
         """Save trained model to disk."""
         if self.model is None:
@@ -81,7 +81,7 @@ class Regressor(ABC):
         Path(path).parent.mkdir(parents=True, exist_ok=True)
         joblib.dump(self.model, path)
         logger.info(f"Saved {self.name} to {path}")
-    
+
     @classmethod
     def load(cls, path: str) -> "Regressor":
         """Load trained model from disk."""
@@ -93,27 +93,30 @@ class Regressor(ABC):
 
 class RidgeRegressor(Regressor):
     """Ridge regression with L2 regularization.
-    
+
     Ridge adds penalty term: loss = MSE + alpha * sum(coef^2)
     Higher alpha = more regularization = simpler model
     """
-    
+
     def __init__(self, alpha: float = 1.0):
         """Initialize Ridge regressor.
-        
+
         Args:
             alpha: Regularization strength (higher = more regularization)
         """
         super().__init__(f"Ridge (α={alpha})")
         self.alpha = alpha
-    
+
     def train(self, X: pd.DataFrame, y: pd.Series, config: ModelConfig) -> Dict[str, float]:
         """TODO: Train Ridge regression with cross-validation and return metrics.
-        
-        📖 **See:** notes/01-ml/01_regression/ch05_regularization/README.md § 2.2 for Ridge (L2) penalty math and cross-validation implementation
+
+        📖 **Notebook:** notes/01-ml/01-regression/ch05_regularization/notebook-solution.ipynb
+           — Cells implementing Ridge with sklearn, CV loop, and weight coefficient inspection
+        📖 **Reference:** notes/01-ml/01-regression/ch05_regularization/README.md § 2.2
+           — L2 penalty math: L = MSE + λ∑w² and cross-validation strategy
         """
         raise NotImplementedError("TODO: Implement Ridge training with cross-validation")
-    
+
     def predict(self, X: pd.DataFrame) -> np.ndarray:
         """Make predictions using trained Ridge model."""
         if self.model is None:
@@ -123,27 +126,30 @@ class RidgeRegressor(Regressor):
 
 class LassoRegressor(Regressor):
     """Lasso regression with L1 regularization.
-    
+
     Lasso adds penalty term: loss = MSE + alpha * sum(|coef|)
     L1 penalty drives some coefficients to exactly zero (feature selection)
     """
-    
+
     def __init__(self, alpha: float = 0.1):
         """Initialize Lasso regressor.
-        
+
         Args:
             alpha: Regularization strength
         """
         super().__init__(f"Lasso (α={alpha})")
         self.alpha = alpha
-    
+
     def train(self, X: pd.DataFrame, y: pd.Series, config: ModelConfig) -> Dict[str, float]:
         """TODO: Train Lasso regression with cross-validation and count non-zero features.
-        
-        📖 **See:** notes/01-ml/01_regression/ch05_regularization/README.md § 2.3 for Lasso (L1) penalty and automatic feature selection
+
+        📖 **Notebook:** notes/01-ml/01-regression/ch05_regularization/notebook-solution.ipynb
+           — Cells comparing Ridge vs Lasso coefficients; shows which features are zeroed
+        📖 **Reference:** notes/01-ml/01-regression/ch05_regularization/README.md § 2.3
+           — L1 penalty math: L = MSE + λ∑|w| and why L1 sets coefficients to exact zero
         """
         raise NotImplementedError("TODO: Implement Lasso training with L1 regularization")
-    
+
     def predict(self, X: pd.DataFrame) -> np.ndarray:
         """Make predictions using trained Lasso model."""
         if self.model is None:
@@ -153,14 +159,14 @@ class LassoRegressor(Regressor):
 
 class XGBoostRegressor(Regressor):
     """XGBoost gradient boosting regressor.
-    
+
     XGBoost builds ensemble of decision trees sequentially,
     where each tree corrects errors of previous trees.
     """
-    
+
     def __init__(self, n_estimators: int = 100, max_depth: int = 6, learning_rate: float = 0.1):
         """Initialize XGBoost regressor.
-        
+
         Args:
             n_estimators: Number of boosting rounds (trees)
             max_depth: Maximum tree depth
@@ -170,14 +176,17 @@ class XGBoostRegressor(Regressor):
         self.n_estimators = n_estimators
         self.max_depth = max_depth
         self.learning_rate = learning_rate
-    
+
     def train(self, X: pd.DataFrame, y: pd.Series, config: ModelConfig) -> Dict[str, float]:
         """TODO: Train XGBoost gradient boosting regressor with cross-validation.
-        
-        📖 **See:** notes/01-ml/01_regression/ch07_hyperparameter_tuning/README.md § 1-2 for XGBoost gradient boosting fundamentals and cross-validation
+
+        📖 **Notebook:** notes/01-ml/01-regression/ch07_hyperparameter_tuning/notebook-solution.ipynb
+           — XGBoost training cells: n_estimators, max_depth, learning_rate, cross-validation
+        📖 **Reference:** notes/01-ml/01-regression/ch07_hyperparameter_tuning/README.md § 1-2
+           — Gradient boosting mechanics and hyperparameter tuning strategy
         """
         raise NotImplementedError("TODO: Implement XGBoost training with gradient boosting")
-    
+
     def predict(self, X: pd.DataFrame) -> np.ndarray:
         """Make predictions using trained XGBoost model."""
         if self.model is None:
@@ -187,12 +196,12 @@ class XGBoostRegressor(Regressor):
 
 class ExperimentRunner:
     """Run experiments with multiple regressors and compare results.
-    
+
     Provides plug-and-play framework for trying different models:
     1. Register regressors to try
     2. Run all experiments with immediate feedback
     3. Print leaderboard sorted by performance
-    
+
     Example:
         >>> runner = ExperimentRunner()
         >>> runner.register("Ridge (α=0.1)", RidgeRegressor(alpha=0.1))
@@ -201,36 +210,42 @@ class ExperimentRunner:
         >>> runner.run_experiment(X_train, y_train, ModelConfig())
         >>> runner.print_leaderboard()
     """
-    
+
     def __init__(self):
         """Initialize empty experiment runner."""
         self.regressors: Dict[str, Regressor] = {}
         self.results: List[Dict[str, Any]] = []
-    
+
     def register(self, name: str, regressor: Regressor):
         """Register a regressor to try in experiments.
-        
+
         Args:
             name: Display name for results
             regressor: Regressor instance to train
         """
         self.regressors[name] = regressor
         console.print(f"Registered: {name}", style="dim")
-    
+
     def run_experiment(self, X: pd.DataFrame, y: pd.Series, config: ModelConfig):
         """TODO: Train all registered models and store results for comparison.
-        
-        📖 **See:** notes/01-ml/01_regression/ch06_metrics/README.md § 6 for cross-validation strategy and multiple model comparison framework
+
+        📖 **Notebook:** notes/01-ml/01-regression/ch06_metrics/notebook-solution.ipynb
+           — Multi-model comparison loop; CV strategy for fair evaluation
+        📖 **Reference:** notes/01-ml/01-regression/ch06_metrics/README.md § 6
+           — Cross-validation strategy and model comparison framework
         """
         raise NotImplementedError("TODO: Implement experiment runner loop")
-    
+
     def print_leaderboard(self):
         """TODO: Display sorted model comparison table with metrics.
-        
-        📖 **See:** notes/01-ml/01_regression/ch06_metrics/README.md § 2.1 for metrics journey table format and model comparison best practices
+
+        📖 **Notebook:** notes/01-ml/01-regression/ch06_metrics/notebook-solution.ipynb
+           — Metrics journey table showing MAE progression across chapters
+        📖 **Reference:** notes/01-ml/01-regression/ch06_metrics/README.md § 2.1
+           — MAE / RMSE / R² comparison table format and best practices
         """
         raise NotImplementedError("TODO: Implement leaderboard display with Rich table")
-    
+
     def get_best_model(self) -> Regressor:
         """Return regressor with lowest CV MAE."""
         if not self.results:

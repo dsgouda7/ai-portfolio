@@ -821,3 +821,17 @@ This chapter's techniques and metrics are the foundation for at least four later
 This chapter fixed class imbalance — the training set now has balanced representation of median-value and high-value homes. You've learned SMOTE, class weights, stratified sampling, and proper evaluation metrics (precision, recall, F₁). The data is clean (Ch.00) and balanced (Ch.00b).
 
 Next: **Ch.01 — Linear Regression**. Now we finally build the first model. With clean, balanced data as our foundation, we can train with confidence that we're not learning from garbage or biased distributions. Ch.01 establishes the baseline: can we predict house values from a single feature? What's the simplest model that works? From there, Ch.02-07 progressively improve toward the <$40k MAE target.
+
+---
+
+## 🔧 Exercise Connection
+
+The concepts from this chapter map directly to xercises/01-ml/01-regression/src/data-prep.py:
+
+| What you learned | Stub function | TODO # |
+|---|---|---|
+| SMOTE oversampling | pply_smote() | #11 |
+| Distribution checking | check_distribution() | #12 |
+
+**Path:** 
+otebook-solution.ipynb → xercises/01-ml/01-regression/src/data-prep.py

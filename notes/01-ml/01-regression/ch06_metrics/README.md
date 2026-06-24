@@ -677,4 +677,18 @@ Ridge's α=1.0? Picked because "it felt reasonable." Polynomial degree=2? Seemed
 
 By the end, SmartVal will have the *provably best* Ridge configuration from 100+ tested combinations — and the tools to retune when new data arrives. No more educated guesses. Just systematic optimization.
 
+---
 
+## 🔧 Exercise Connection
+
+Evaluation and model comparison from this chapter apply in **Step 4** of xercises/01-ml/01-regression/src/models.py:
+
+| What you learned | Stub function | Step |
+|---|---|---|
+| CV scoring strategy for fair comparison | ExperimentRunner.run_experiment() — train all registered models | 4 |
+| Multi-model leaderboard | ExperimentRunner.print_leaderboard() — sort by CV MAE, print Rich table | 4 |
+| MAE / RMSE / R² computation | src/evaluate.py is already built — trace how 
+un_experiment() calls it | — |
+
+**Path:** 
+otebook-solution.ipynb → xercises/01-ml/01-regression/src/models.py → ExperimentRunner

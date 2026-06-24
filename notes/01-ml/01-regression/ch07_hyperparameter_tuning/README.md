@@ -678,3 +678,16 @@ A single neuron — $z = \sigma(\mathbf{w}^\top\mathbf{x} + b)$ — is exactly l
 
 **Next:** [Neural Networks track → Ch.1: Perceptrons and Activations](../../03_neural_networks)
 
+---
+
+## 🔧 Exercise Connection
+
+XGBoost and hyperparameter tuning from this chapter apply in **Step 3** of `exercises/01-ml/01-regression/src/models.py`:
+
+| What you learned | Stub function | Step |
+|---|---|---|
+| XGBoost gradient boosting | `XGBoostRegressor.train()` — n_estimators, max_depth, learning_rate | 3 |
+| Cross-validation for ensemble models | `XGBoostRegressor.train()` — CV loop | 3 |
+| Model registration + comparison | `ExperimentRunner.register()` then `.run_experiment()` | 4 |
+
+**Path:** `notebook-solution.ipynb` → `exercises/01-ml/01-regression/src/models.py` → `XGBoostRegressor.train()`

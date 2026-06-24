@@ -1308,4 +1308,16 @@ The single most important dial in any gradient-based model is **learning rate**.
 
 Ch.1 established the core loop — parameterised function → loss → gradient → update — on a single feature (MedInc). Ch.2 (Multiple Regression) expands the input from 1 feature to all 8 California Housing features. The training loop is identical; what changes is the dimensionality: scalar weight becomes a weight *vector*, and we must now reason about correlated inputs, feature scaling, and the coefficient stability that comes with having more predictors than signal.
 
+---
 
+## 🔧 Exercise Connection
+
+OLS and gradient descent from this chapter are the foundation for **Step 1** of xercises/01-ml/01-regression/src/models.py:
+
+| What you learned | Stub function | Step |
+|---|---|---|
+| Loss function (MSE), gradient, weight update | RidgeRegressor.train() — the training loop | 1 |
+| Cross-validation scoring | RidgeRegressor.train() — CV loop returning cv_mae | 1 |
+
+**Path:** 
+otebook-solution.ipynb → xercises/01-ml/01-regression/src/models.py → RidgeRegressor.train()

@@ -893,3 +893,21 @@ EDA findings cascade through every subsequent step:
 This chapter cleaned the raw data — removed outliers, analyzed missing patterns, selected optimal imputation strategies. The next chapter, **Ch.00b — Class Imbalance**, examines the training distribution: the California Housing dataset has 75% median-value homes and only 25% high-value ones. A perfectly clean dataset with skewed class distribution still produces a biased model. Ch.00b teaches you SMOTE, class weighting, and stratified sampling to ensure all market segments are properly represented before building any models.
 
 > ➡ **[Ch.00b — Class Imbalance →](../ch00b-class-imbalance)** — When the data is clean but the distribution is wrong.
+
+---
+
+## 🔧 Exercise Connection
+
+The concepts from this chapter map directly to `exercises/01-ml/01-regression/src/data-prep.py`:
+
+| What you learned | Stub function | TODO # |
+|---|---|---|
+| IQR outlier detection | `detect_outliers_iqr()` | #1 |
+| Z-score outlier detection | `detect_outliers_zscore()` | #2 |
+| Outlier removal | `remove_outliers()` | #3 |
+| Missing value analysis | `analyze_missing()` | #4 |
+| Missing pattern detection | `detect_missing_pattern()` | #5 |
+| Mean / median / KNN imputation | `impute_mean()`, `impute_median()`, `impute_knn()` | #6–8 |
+| Imputation strategy selection | `select_imputation_strategy()` | #9–10 |
+
+**Path:** `notebook-solution.ipynb` (the working implementation) → `exercises/01-ml/01-regression/src/data-prep.py` (your stubs to fill in)
