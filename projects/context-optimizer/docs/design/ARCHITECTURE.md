@@ -574,13 +574,13 @@ Swapping any of these requires **no code changes**.
 
 | File | Format | Contents |
 |------|--------|---------|
-| `benchmarks/tot/EXPERIMENT_RESULTS.json` | JSON | Raw numbers — per-question latency, tokens, F1, compression stats |
-| `docs/experiments/experiment_results.md` | Markdown | Human-readable report with PASS/FAIL badges |
+| `benchmarks/EXPERIMENT_RESULTS.json` | JSON | Raw numbers — per-question latency, tokens, F1, compression stats |
+| `docs/benchmarks/experiment_results.md` | Markdown | Human-readable report with PASS/FAIL badges |
 
 ---
 
 ## See Also
 
 - [plan.md](../plan.md) — Implementation phases and current status
-- [Experiments](experiments/EXPERIMENTS_CONSOLIDATED.md) — Full validation data
+- [Experiments](../benchmarks/experiment_results.md) — Full validation data
 - [experiment_results.md](experiments/experiment_results.md) — Live E2E results

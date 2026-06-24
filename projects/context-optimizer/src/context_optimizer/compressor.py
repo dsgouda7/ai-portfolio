@@ -15,8 +15,12 @@ Key Design:
 from __future__ import annotations
 
 import os
+from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
+
+if TYPE_CHECKING:
+    from context_optimizer.raw_index import RawIndex
 
 try:
     from langchain_ollama import ChatOllama
@@ -213,6 +217,7 @@ def compress_corpus_rolling(
     compression_batch_size: int = 10,
     llm: CompressorLLM | None = None,
     progress_callback: callable | None = None,
+    raw_index: "RawIndex | None" = None,
 ) -> list[CompressedChunk]:
     """
     Compress a large corpus using a rolling window strategy with overlap.
@@ -234,6 +239,13 @@ def compress_corpus_rolling(
         compression_batch_size: Process N chunks before yielding (for progress)
         llm: LLM backend (if None, uses environment config)
         progress_callback: Optional function(chunk_idx, total) for progress tracking
+        raw_index: Optional :class:`~context_optimizer.raw_index.RawIndex` instance.
+            When provided, each chunk's raw text is written to the SQLite store
+            **in a background thread** while the main thread waits on the LLM.
+            Because a SQLite write (~1 ms) is ~500× faster than a typical LLM
+            call, the indexing is effectively free (fully overlapped with I/O).
+            When ``None`` (default), raw text is only stored in ChromaDB metadata
+            (truncated to 4 000 chars).
 
     Returns:
         List of CompressedChunk objects with dual storage
@@ -248,66 +260,91 @@ def compress_corpus_rolling(
     overlap_lines: list[str] = []  # Track overlap from previous chunk
 
     print(f"[Compressor] Starting rolling compression of {len(corpus_lines):,} lines...")
-    print(f"[Compressor] Threshold: {chunk_size_threshold} tokens, Overlap: {chunk_overlap_tokens} tokens, Batch: {compression_batch_size}")
+    print(
+        f"[Compressor] Threshold: {chunk_size_threshold} tokens, "
+        f"Overlap: {chunk_overlap_tokens} tokens, Batch: {compression_batch_size}"
+        + (f", RawIndex: {raw_index._db_path!r}" if raw_index is not None else "")
+    )
 
-    for line_idx, line in enumerate(corpus_lines):
-        line_tokens = _estimate_tokens(line)
-        current_chunk_lines.append(line)
-        current_chunk_tokens += line_tokens
+    # Background thread pool for raw-text indexing.
+    # max_workers=1 → a single dedicated writer thread; all SQLite writes from
+    # that thread share one WAL-mode connection, so there is no contention.
+    raw_futures: list[Future] = []  # type: ignore[type-arg]
 
-        # Threshold reached: compress this chunk
-        if current_chunk_tokens >= chunk_size_threshold:
+    with ThreadPoolExecutor(max_workers=1, thread_name_prefix="raw_idx") as raw_exe:
+
+        def _maybe_index_raw(cid: str, text: str) -> None:
+            if raw_index is not None:
+                f = raw_exe.submit(raw_index.add, cid, text)
+                raw_futures.append(f)
+
+        for line_idx, line in enumerate(corpus_lines):
+            line_tokens = _estimate_tokens(line)
+            current_chunk_lines.append(line)
+            current_chunk_tokens += line_tokens
+
+            # Threshold reached: compress this chunk
+            if current_chunk_tokens >= chunk_size_threshold:
+                chunk_text = "\n".join(current_chunk_lines)
+                chunk_id = f"chunk_{chunk_idx:06d}"
+
+                # ── Step 1: submit raw-text write (non-blocking, ~1 ms) ──────
+                _maybe_index_raw(chunk_id, chunk_text)
+
+                # ── Step 2: LLM compression (~500 ms, overlaps with above) ───
+                compressed = compress_chunk_with_llm(
+                    text=chunk_text,
+                    chunk_id=chunk_id,
+                    metadata={
+                        "line_start": line_idx - len(current_chunk_lines) + 1,
+                        "line_end": line_idx,
+                        "source_lines": len(current_chunk_lines),
+                    },
+                    llm=llm,
+                )
+                compressed_chunks.append(compressed)
+
+                # Progress reporting
+                if progress_callback and chunk_idx % compression_batch_size == 0:
+                    progress_callback(chunk_idx, len(corpus_lines) // chunk_size_threshold)
+
+                # Prepare overlap for next chunk (last ~25% of current chunk)
+                overlap_lines = []
+                overlap_tokens = 0
+                for overlap_line in reversed(current_chunk_lines):
+                    line_tokens = _estimate_tokens(overlap_line)
+                    if overlap_tokens + line_tokens <= chunk_overlap_tokens:
+                        overlap_lines.insert(0, overlap_line)
+                        overlap_tokens += line_tokens
+                    else:
+                        break
+
+                # Reset for next chunk with overlap
+                current_chunk_lines = overlap_lines.copy()
+                current_chunk_tokens = overlap_tokens
+                chunk_idx += 1
+
+        # Handle remaining lines (final partial chunk)
+        if current_chunk_lines:
             chunk_text = "\n".join(current_chunk_lines)
             chunk_id = f"chunk_{chunk_idx:06d}"
 
-            # Compress with rolling window (only this chunk, not full corpus)
+            _maybe_index_raw(chunk_id, chunk_text)
+
             compressed = compress_chunk_with_llm(
                 text=chunk_text,
                 chunk_id=chunk_id,
                 metadata={
-                    "line_start": line_idx - len(current_chunk_lines) + 1,
-                    "line_end": line_idx,
+                    "line_start": len(corpus_lines) - len(current_chunk_lines),
+                    "line_end": len(corpus_lines) - 1,
                     "source_lines": len(current_chunk_lines),
                 },
                 llm=llm,
             )
             compressed_chunks.append(compressed)
 
-            # Progress reporting
-            if progress_callback and chunk_idx % compression_batch_size == 0:
-                progress_callback(chunk_idx, len(corpus_lines) // chunk_size_threshold)
-
-            # Prepare overlap for next chunk (last ~25% of current chunk)
-            overlap_lines = []
-            overlap_tokens = 0
-            for overlap_line in reversed(current_chunk_lines):
-                line_tokens = _estimate_tokens(overlap_line)
-                if overlap_tokens + line_tokens <= chunk_overlap_tokens:
-                    overlap_lines.insert(0, overlap_line)
-                    overlap_tokens += line_tokens
-                else:
-                    break
-
-            # Reset for next chunk with overlap
-            current_chunk_lines = overlap_lines.copy()
-            current_chunk_tokens = overlap_tokens
-            chunk_idx += 1
-
-    # Handle remaining lines
-    if current_chunk_lines:
-        chunk_text = "\n".join(current_chunk_lines)
-        chunk_id = f"chunk_{chunk_idx:06d}"
-        compressed = compress_chunk_with_llm(
-            text=chunk_text,
-            chunk_id=chunk_id,
-            metadata={
-                "line_start": len(corpus_lines) - len(current_chunk_lines),
-                "line_end": len(corpus_lines) - 1,
-                "source_lines": len(current_chunk_lines),
-            },
-            llm=llm,
-        )
-        compressed_chunks.append(compressed)
+    # ThreadPoolExecutor.__exit__ calls shutdown(wait=True), so all raw_futures
+    # are guaranteed to be complete by the time we reach here.
 
     total_original = sum(c.original_tokens for c in compressed_chunks)
     total_compressed = sum(c.compressed_tokens for c in compressed_chunks)

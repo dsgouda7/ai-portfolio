@@ -105,7 +105,7 @@ def load_corpus(size: str) -> list[str]:
     Always uses the inline deterministic AKS synthetic log generator so that
     the ground-truth queries (which reference AKS/CosmosDB terms) have a
     corpus that actually contains those keywords.  The books_*.txt files in
-    tot/test_data/ are general-purpose text and do NOT contain the AKS-domain
+    data/ are general-purpose text and do NOT contain the AKS-domain
     terms the ground-truth queries require, which causes 0% recall when they
     are used here.
     """

@@ -48,6 +48,6 @@ context-optimizer = "context_optimizer.cli:main"
 where = ["src"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "benchmarks/tot"]
+testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]

@@ -23,6 +23,7 @@ Use as a context manager for automatic cleanup of ephemeral storage::
         index.ingest(lines)
         result = index.query("...")
 """
+
 from __future__ import annotations
 
 import shutil
@@ -32,8 +33,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-
 # ── Public data classes ──────────────────────────────────────────────────────
+
 
 @dataclass
 class IngestStats:
@@ -42,7 +43,7 @@ class IngestStats:
     chunks: int
     original_tokens: int
     compressed_tokens: int
-    compression_ratio: float   # compressed / original  (< 1.0 = reduction)
+    compression_ratio: float  # compressed / original  (< 1.0 = reduction)
     elapsed_s: float
 
 
@@ -58,6 +59,7 @@ class QueryResult:
 
 
 # ── CorpusIndex ──────────────────────────────────────────────────────────────
+
 
 class CorpusIndex:
     """
@@ -101,26 +103,28 @@ class CorpusIndex:
     ) -> None:
         import os
 
-        self._compression_model   = compression_model
-        self._embedding_model     = embedding_model
-        self._chunk_tokens        = chunk_tokens
-        self._strategy            = retrieval_strategy
-        self._provider            = provider
-        self._base_url            = base_url
+        self._compression_model = compression_model
+        self._embedding_model = embedding_model
+        self._chunk_tokens = chunk_tokens
+        self._strategy = retrieval_strategy
+        self._provider = provider
+        self._base_url = base_url
 
         # Persist dir — user-supplied or managed temp
         self._user_persist = persist_dir is not None
-        self._persist_dir  = persist_dir or tempfile.mkdtemp(prefix="co_index_")
+        self._persist_dir = persist_dir or tempfile.mkdtemp(prefix="co_index_")
 
         # Per-collection retriever cache: collection_name → CachedChromaRetriever
         self._retrievers: dict[str, Any] = {}
         # Per-collection reasoner cache: collection_name → ToTReasoner
         self._reasoners: dict[str, Any] = {}
+        # Per-collection raw-content index: collection_name → RawIndex
+        self._raw_indexes: dict[str, Any] = {}
         # Track which collections have at least one chunk ingested
         self._ingested_collections: set[str] = set()
 
         # Patch env vars so the existing compressor picks up the right settings
-        os.environ["CONTEXT_OPTIMIZER_COMPRESSOR_MODEL"]    = compression_model
+        os.environ["CONTEXT_OPTIMIZER_COMPRESSOR_MODEL"] = compression_model
         os.environ["CONTEXT_OPTIMIZER_COMPRESSOR_PROVIDER"] = provider
         if base_url != "http://localhost:11434":
             os.environ["OLLAMA_BASE_URL"] = base_url
@@ -151,15 +155,33 @@ class CorpusIndex:
         IngestStats
             Chunk count, token counts, compression ratio, and wall time.
         """
-        from context_optimizer.compressor      import compress_corpus_rolling
         from context_optimizer.cached_retriever import CachedChromaRetriever
-        from context_optimizer.tot_reasoner     import ToTReasoner
+        from context_optimizer.compressor import compress_corpus_rolling
+        from context_optimizer.raw_index import RawIndex
+        from context_optimizer.tot_reasoner import ToTReasoner
 
-        t0     = time.perf_counter()
-        chunks = compress_corpus_rolling(lines, chunk_size_threshold=self._chunk_tokens)
+        t0 = time.perf_counter()
+
+        # ── Lazy-create RawIndex for this collection ─────────────────────
+        if collection not in self._raw_indexes:
+            if self._user_persist:
+                raw_db_path = Path(self._persist_dir) / collection / "raw_index.db"
+                raw_db_path.parent.mkdir(parents=True, exist_ok=True)
+                self._raw_indexes[collection] = RawIndex(raw_db_path)
+            else:
+                # Ephemeral pipeline — in-memory SQLite, no disk writes
+                self._raw_indexes[collection] = RawIndex(":memory:")
+
+        raw_idx = self._raw_indexes[collection]
+
+        chunks = compress_corpus_rolling(
+            lines,
+            chunk_size_threshold=self._chunk_tokens,
+            raw_index=raw_idx,
+        )
         elapsed = time.perf_counter() - t0
 
-        orig_tok = sum(c.original_tokens  for c in chunks)
+        orig_tok = sum(c.original_tokens for c in chunks)
         comp_tok = sum(c.compressed_tokens for c in chunks)
 
         # Lazy-create or reuse the retriever for this collection
@@ -168,6 +190,7 @@ class CorpusIndex:
                 collection_name=collection,
                 persist_directory=str(Path(self._persist_dir) / collection),
                 embedding_model_name=self._embedding_model,
+                raw_index=raw_idx,
             )
 
         self._retrievers[collection].add_chunks(chunks)
@@ -240,9 +263,9 @@ class CorpusIndex:
             )
 
         # ── Simple vector-search fallback ─────────────────────────────────
-        results    = self._retrievers[collection].search(question, top_k=top_k)
+        results = self._retrievers[collection].search(question, top_k=top_k)
         latency_ms = (time.perf_counter() - t0) * 1000
-        snippets   = [r.get("compressed_summary", str(r)) for r in results]
+        snippets = [r.get("compressed_summary", str(r)) for r in results]
 
         return QueryResult(
             answer=snippets[0] if snippets else "",
@@ -259,10 +282,87 @@ class CorpusIndex:
         """Run :meth:`query` for each item in *questions* and return all results."""
         return [self.query(q, collection=collection) for q in questions]
 
+    def raw_lookup(self, chunk_id: str, collection: str = "default") -> str | None:
+        """
+        Return the original, un-compressed raw text for a chunk by its ID.
+
+        Uses the :class:`~context_optimizer.raw_index.RawIndex` O(1) lookup
+        when available (~0.1 ms), falling back to ChromaDB metadata retrieval
+        (~5 ms) if the raw index is not populated.
+
+        Parameters
+        ----------
+        chunk_id:
+            Chunk identifier, e.g. ``"chunk_000042"``.
+        collection:
+            Which collection to search.
+
+        Returns
+        -------
+        str | None
+            Raw text if found; ``None`` otherwise.
+        """
+        if collection in self._raw_indexes:
+            raw = self._raw_indexes[collection].get(chunk_id)
+            if raw is not None:
+                return raw
+        # Fall back to ChromaDB metadata (truncated at 4 000 chars)
+        if collection in self._retrievers:
+            hit = self._retrievers[collection].get_chunk_by_id(chunk_id)
+            if hit:
+                return hit.get("raw_text") or None
+        return None
+
+    def raw_search(
+        self,
+        query: str,
+        collection: str = "default",
+        top_k: int = 5,
+    ) -> list[dict[str, Any]]:
+        """
+        Full-text keyword search over the *original* (un-compressed) chunk text.
+
+        Uses FTS5 BM25 ranking via the raw-content SQLite index.  Complements
+        the semantic vector search in :meth:`query` — useful for exact
+        term matching, code snippets, or numeric values that embeddings often
+        miss.
+
+        Parameters
+        ----------
+        query:
+            Plain keyword string or FTS5 query syntax.
+        collection:
+            Which collection's raw index to search.
+        top_k:
+            Maximum number of results.
+
+        Returns
+        -------
+        list[dict]
+            List of dicts with ``chunk_id``, ``raw_text``, and ``rank`` keys.
+            Empty list if the collection has no raw index or no matches.
+        """
+        if collection not in self._raw_indexes:
+            return []
+        hits = self._raw_indexes[collection].search(query, top_k=top_k)
+        return [{"chunk_id": h.chunk_id, "raw_text": h.raw_text, "rank": h.rank} for h in hits]
+
     # ── Lifecycle ─────────────────────────────────────────────────────────────
 
     def close(self) -> None:
-        """Delete the ephemeral index directory (no-op for user-supplied dirs)."""
+        """
+        Release resources.
+
+        * Closes all :class:`~context_optimizer.raw_index.RawIndex` connections.
+        * Deletes the ephemeral index directory (no-op for user-supplied dirs).
+        """
+        for raw_idx in self._raw_indexes.values():
+            try:
+                raw_idx.close()
+            except Exception:
+                pass
+        self._raw_indexes.clear()
+
         if not self._user_persist and Path(self._persist_dir).exists():
             shutil.rmtree(self._persist_dir, ignore_errors=True)
 
