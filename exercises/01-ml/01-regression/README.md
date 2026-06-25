@@ -2,10 +2,31 @@
 
 > **Infrastructure Note:** Docker, Docker Compose, and Makefiles have been centralized to `exercises/_infrastructure/`. Run `setup.ps1` (Windows) or `setup.sh` (Linux/Mac) for local development.
 
-> **Learning Goal:** Implement Ridge/Lasso/XGBoost with plug-and-play experimentation and immediate feedback  
-> **Prerequisites:** Completed [notes/01-ml/01-regression/](../../../notes/01-ml/01-regression)  
-> **Time Estimate:** 5-6 hours (coding) + 1 hour (deployment, optional)  
+> **Learning Goal:** Implement Ridge/Lasso/XGBoost with plug-and-play experimentation and immediate feedback
+> **Prerequisites:** Completed [notes/01-ml/01-regression/](../../../notes/01-ml/01-regression)
+> **Time Estimate:** 5-6 hours (coding) + 1 hour (deployment, optional)
 > **Difficulty:** ⭐⭐ Intermediate
+
+---
+
+## 📚 Notes → Exercise Mapping
+
+Each notes chapter teaches the theory. This table shows exactly which stub file and function implements it.
+
+| Notes Chapter | Concept | Exercise File | Function / Class | Step |
+|---|---|---|---|---|
+| [ch00a-data-prep](../../../notes/01-ml/01-regression/ch00a-data-prep/) | Outlier detection, missing values, imputation | `src/data-prep.py` | `detect_outliers_iqr/zscore()`, `analyze_missing()`, `impute_*()` | TODOs #1–10 |
+| [ch00b-class-imbalance](../../../notes/01-ml/01-regression/ch00b-class-imbalance/) | SMOTE, distribution checking | `src/data-prep.py` | `apply_smote()`, `check_distribution()` | TODOs #11–12 |
+| [ch01 — Linear Regression](../../../notes/01-ml/01-regression/ch01_linear_regression/) | OLS, gradient descent, loss functions | `src/models.py` | `RidgeRegressor.train()` (conceptual foundation) | Step 1 |
+| [ch02 — Multiple Regression](../../../notes/01-ml/01-regression/ch02_multiple_regression/) | Multi-feature matrix form, feature scaling | `src/models.py` + `src/features.py` | `RidgeRegressor.train()`, `FeatureEngineer` scaling | Steps 1, 5c |
+| [ch03 — Feature Importance](../../../notes/01-ml/01-regression/ch03_feature_importance/) | VIF, correlation, importance ranking | `src/features.py` | `FeatureEngineer.fit_transform()` — VIF filtering TODO | Step 5b |
+| [ch04 — Polynomial Features](../../../notes/01-ml/01-regression/ch04_polynomial_features/) | `PolynomialFeatures`, degree selection | `src/features.py` | `FeatureEngineer.fit_transform()` — polynomial TODO | Step 5a |
+| [ch05 — Regularization](../../../notes/01-ml/01-regression/ch05_regularization/) | Ridge (L2), Lasso (L1), feature selection | `src/models.py` | `RidgeRegressor.train()`, `LassoRegressor.train()` | Steps 1–2 |
+| [ch06 — Metrics](../../../notes/01-ml/01-regression/ch06_metrics/) | CV scoring, MAE/RMSE/R², model comparison | `src/models.py` | `ExperimentRunner.run_experiment()`, `.print_leaderboard()` | Step 4 |
+| [ch07 — Hyperparameter Tuning](../../../notes/01-ml/01-regression/ch07_hyperparameter_tuning/) | XGBoost, gradient boosting, CV search | `src/models.py` | `XGBoostRegressor.train()` | Step 3 |
+| [ch08 — Data Validation](../../../notes/01-ml/01-regression/ch08-data-validation/) | PSI, KS tests, data drift | `src/data-prep.py` | `compute_psi()`, `compute_ks_test()` | TODOs #11–12 |
+
+> **Tip:** The `📖` comments inside each stub function link back to the specific notebook and README section. Open the notebook first to understand the concept, then return to the stub to implement it.
 
 ---
 
@@ -62,7 +83,7 @@ curl -X POST http://localhost:5001/predict \
   -d '{"MedInc": 3.5, "HouseAge": 15, ...}'
 ```
 
-**Infrastructure:** All Docker/Prometheus configs live in `../../_infrastructure/`.  
+**Infrastructure:** All Docker/Prometheus configs live in `../../_infrastructure/`.
 No need to modify — just use it!
 
 ---
@@ -405,10 +426,10 @@ To maximize learning and portfolio value:
    ```bash
    git add src/models.py
    git commit -m "Implement Ridge training with CV"
-   
+
    git add src/models.py
    git commit -m "Add Lasso with feature selection"
-   
+
    git add src/models.py src/features.py
    git commit -m "Complete experiment framework + feature engineering"
    ```

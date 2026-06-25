@@ -21,18 +21,15 @@ The project maintains three core design documents:
 | **[docs/design/COMPRESSION_ARCHITECTURE.md](docs/design/COMPRESSION_ARCHITECTURE.md)** | How? | Engineers, implementers | Rolling window compression, dual storage, no context exhaustion |
 | **[docs/design/ARCHITECTURE_DIAGRAMS.md](docs/design/ARCHITECTURE_DIAGRAMS.md)** | Visuals? | Engineers, architects | Visual architecture, data flow, evolution timeline, deployment topologies |
 | **[docs/whitepaper/proposed-whitepaper.md](docs/whitepaper/proposed-whitepaper.md)** | Why / What? | Researchers, technical leads | Hypothesis-driven tri-stage architecture and modality-transfer framing |
-| **[docs/experiments/EXPERIMENTS_CONSOLIDATED.md](docs/experiments/EXPERIMENTS_CONSOLIDATED.md)** | Evidence? | Performance engineers, reviewers | Comprehensive benchmarks across 7 domains with quality metrics |
-| **[experiments/EXPERIMENTS_GUIDE.md](experiments/EXPERIMENTS_GUIDE.md)** | Results? | Engineers, reviewers | GB-scale compression validation, architecture diagrams, performance tables |
-| **[experiments/README.md](experiments/README.md)** | What's tested? | Developers, QA | Quick start guide to running experiments |
-| **[ai-gateway/README.md](ai-gateway/README.md)** | LiteLLM Gateway? | DevOps, architects | Multi-provider AI gateway with automatic compression |
+| **[docs/benchmarks/experiment_results.md](docs/benchmarks/experiment_results.md)** | Evidence? | Performance engineers, reviewers | Benchmark results across domains with quality metrics |
 
 **Quick navigation**:
 - **New to the project?** Start with [docs/design/TECHNICAL_DESIGN.md](docs/design/TECHNICAL_DESIGN.md), then read [docs/design/ARCHITECTURE_DIAGRAMS.md](docs/design/ARCHITECTURE_DIAGRAMS.md)
 - **Building it?** Use [docs/design/TECHNICAL_DESIGN.md](docs/design/TECHNICAL_DESIGN.md) and [docs/design/COMPRESSION_ARCHITECTURE.md](docs/design/COMPRESSION_ARCHITECTURE.md) as implementation guides
-- **Evaluating it?** Read [experiments/EXPERIMENTS_GUIDE.md](experiments/EXPERIMENTS_GUIDE.md) and [docs/experiments/EXPERIMENTS_CONSOLIDATED.md](docs/experiments/EXPERIMENTS_CONSOLIDATED.md) for benchmarks
+- **Evaluating it?** Read [docs/benchmarks/experiment_results.md](docs/benchmarks/experiment_results.md) for benchmark results
 - **Understanding compression?** See [docs/design/COMPRESSION_ARCHITECTURE.md](docs/design/COMPRESSION_ARCHITECTURE.md) for rolling window design
-- **Running tests?** See [experiments/README.md](experiments/README.md) for quick start
-- **Deploying to production?** See [ai-gateway/README.md](ai-gateway/README.md) for LiteLLM gateway options
+- **Running tests?** See [tests/](tests/) for unit tests
+- **Running benchmarks?** See [benchmarks/](benchmarks/) for benchmark scripts
 
 ---
 
@@ -169,7 +166,12 @@ Annual savings:       $135,000+
 context-optimizer/
 ├── src/context_optimizer/     # Core compression engine
 │   ├── compressor.py          # Rolling window compression
-│   ├── retriever.py           # Dual-storage retrieval
+│   ├── raw_index.py           # SQLite+FTS5 raw content store (NEW)
+│   ├── cached_retriever.py    # Semantic cache + ChromaDB retrieval
+│   ├── index.py               # CorpusIndex — high-level public API
+│   ├── tot_reasoner.py        # Tree-of-Thought multi-branch reasoner
+│   ├── benchmark.py           # Comparison harness and metrics
+│   ├── protocols.py           # Retriever protocol definition
 │   └── __init__.py
 │
 ├── pipeline/                  # Data processing utilities
@@ -283,9 +285,24 @@ And optionally pull Ollama models to support local CPU inference benchmarks.
 
 ## Tests
 
+112 tests across all modules. Run with pytest:
+
 ```powershell
-.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+# Run full suite
+.venv\Scripts\python.exe -m pytest tests/ -q
+
+# Run with coverage
+.venv\Scripts\python.exe -m pytest tests/ --cov=context_optimizer --cov-report=term-missing
 ```
+
+Test modules:
+- `test_raw_index.py` — SQLite+FTS5 raw content store (17 tests)
+- `test_compressor.py` — rolling window compression pipeline
+- `test_cached_retriever.py` — semantic cache and ChromaDB retrieval
+- `test_corpus_index.py` — high-level `CorpusIndex` API
+- `test_tot_reasoner.py` — Tree-of-Thought multi-branch reasoning
+- `test_benchmark.py` — benchmark utilities and comparison harness
+- `test_protocols.py` — protocol/interface conformance
 
 ## Large-Corpus Parallel Benchmarks
 
@@ -295,7 +312,7 @@ Run parallel dataset tracks (Gutenberg text + large XLSX analytics corpus) to st
 # installs openpyxl dependency used by XLSX generation/reading
 pip install -r requirements.txt
 
-# run both tracks in parallel; appends results to docs/experiments/EXPERIMENTS_CONSOLIDATED.md
+# run both tracks in parallel; appends results to docs/benchmarks/experiment_results.md
 .\.venv\Scripts\python.exe experiments/run_large_corpus_benchmarks.py --target-mb 120
 
 # heavier run (few hundred MB target per track)
@@ -305,7 +322,7 @@ pip install -r requirements.txt
 Generated artifacts:
 - `data/large_corpus/gutenberg/combined_gutenberg.txt`
 - `data/large_corpus/excel/mock_<target>mb.xlsx`
-- report section appended to `docs/experiments/EXPERIMENTS_CONSOLIDATED.md`
+- report section appended to `docs/benchmarks/experiment_results.md`
 
 ## CPU-only Docker benchmark (raw vs optimized)
 
@@ -339,6 +356,93 @@ Evaluation outputs are written to `evaluation/out/`:
 | Groq | `ChatGroq` | `GROQ_API_KEY` | `llama-3.1-8b-instant`, `llama-3.3-70b-versatile` |
 
 Model defaults are provider-aware and can be overridden via CLI flags or env vars (`SMALL_MODEL`, `REASONING_MODEL`).
+
+## Dual-Storage Architecture (RawIndex + ChromaDB)
+
+Version 2 of the retrieval layer adds a second storage tier alongside ChromaDB:
+
+| Store | What is stored | Lookup type | Typical latency |
+|-------|---------------|-------------|-----------------|
+| **ChromaDB** | Compressed summaries (LLM-generated) | Vector similarity (semantic) | ~5–50 ms |
+| **RawIndex** (SQLite+FTS5) | Original un-truncated chunk text | Exact chunk ID lookup + BM25 keyword search | ~0.1 ms (ID), ~1 ms (FTS5) |
+
+**Why two stores?** ChromaDB is optimised for *semantic* search over summaries. RawIndex fills the complementary roles:
+- **O(1) exact lookup** when the chunk ID is already known (e.g., `get_chunk_by_id`)
+- **Keyword search** over the original text without touching the embedding layer
+- **Thread-safe parallel writes** during ingestion — SQLite WAL mode lets background threads write raw chunks (~1 ms) while the main thread blocks on LLM compression (~500 ms), giving essentially free parallelism
+
+```python
+from context_optimizer import CorpusIndex, RawIndex
+
+idx = CorpusIndex()
+stats = idx.ingest(lines, collection="my_corpus")
+
+# Fast O(1) lookup by chunk ID
+text = idx.raw_lookup("chunk::0000", collection="my_corpus")
+
+# BM25 keyword search over original text
+hits = idx.raw_search("machine learning", collection="my_corpus", top_k=5)
+for hit in hits:
+    print(hit.chunk_id, hit.rank, hit.raw_text[:80])
+```
+
+---
+
+## Benchmark Setup & Results
+
+Benchmarks run entirely locally — no external APIs, no GPU required.
+
+**Hardware:**
+
+| Component | Spec |
+|-----------|------|
+| CPU | AMD64 Family 25 Model 1 (Zen 3), 8 physical / 16 logical cores |
+| RAM | 64 GB |
+| GPU | None (CPU-only inference) |
+| OS | Windows 10 |
+
+**Software:**
+
+| Component | Version / Model |
+|-----------|-----------------|
+| Python | 3.11.9 |
+| LLM (compression) | `llama3.2:3b` via Ollama |
+| LLM (reasoning) | `qwen2.5-coder:7b` via Ollama |
+| Embeddings | `all-MiniLM-L6-v2` via sentence-transformers |
+
+**Reproduce the full run:**
+
+```powershell
+# 1. Start Ollama and pull required models
+ollama pull llama3.2:3b
+ollama pull qwen2.5-coder:7b
+ollama pull mistral:7b
+
+# 2. Run default 500-line quick benchmark
+cd benchmarks
+python run_experiments.py
+
+# 3. Run full 11K-line corpus benchmark (takes ~1 hour on CPU)
+python run_experiments.py --full
+```
+
+Results are written to:
+- `benchmarks/EXPERIMENT_RESULTS.json` — machine-readable metrics
+- `docs/benchmarks/experiment_results.md` — human-readable report
+
+**Latest results** (11,574-line corpus, see [docs/benchmarks/experiment_results.md](docs/benchmarks/experiment_results.md)):
+
+| Metric | Baseline (raw corpus) | Compressed Architecture | Threshold |
+|--------|----------------------|------------------------|-----------|
+| Avg prompt tokens | 180,734 | 15,798 | — |
+| **Token reduction** | — | **91.3%** | ≥90% ✅ |
+| Avg reasoning latency (s) | 155.9 | 79.5 | ≤+10% ✅ |
+| Avg judge score (0–1) | 0.97 | 0.97 | ≤-20% ✅ |
+| Avg KW-F1 | 0.068 | 0.160 | ≤-20% ✅ |
+
+All four production thresholds pass. Compression was a one-time 2,799 s cost; subsequent queries pay only the retrieval + reasoning latency.
+
+---
 
 ## Architecture
 
@@ -389,8 +493,8 @@ Model defaults are provider-aware and can be overridden via CLI flags or env var
 
 ## Experiment Reports
 
-- `docs/experiments/EXPERIMENTS_CONSOLIDATED.md` is the single canonical experiment report.
-- `experiments/run_all_experiments.py` updates the incident benchmark appendix section inside `docs/experiments/EXPERIMENTS_CONSOLIDATED.md`.
+- `docs/benchmarks/experiment_results.md` is the canonical experiment report.
+- `benchmarks/run_experiments.py` updates the incident benchmark appendix section inside `docs/benchmarks/experiment_results.md`.
 
 ## Project files
 

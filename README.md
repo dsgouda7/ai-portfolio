@@ -21,14 +21,16 @@ ai-portfolio/
 ## What's Here
 
 ### Production Projects
-- [Databricks RAG Pipeline](projects/data-engineering/databricks_rag/) - Microservices RAG with Delta Lake, ChromaDB, FastAPI
-- [AI Video Enhancer](projects/computer-vision/video_enhancer_ai/) - 4K upscaling API with GPU acceleration
+- [FPL Squad Optimizer](projects/fpl-squad-optimizer/) - XGBoost Fantasy Premier League team picker with walk-forward simulation
+- [Context Optimizer](projects/context-optimizer/) - LLM corpus compression and targeted retrieval library (91% token reduction)
+- [RAG Knowledge Pipeline](projects/rag-knowledge-pipeline/) - Three-phase local RAG: corpus → Delta Lake → ChromaDB → FastAPI
+- [Video Quality Enhancer](projects/video-quality-enhancer/) - 4K upscaling + audio denoising API, fully local
 
 See [projects/](projects/) for more details.
 
 ### Learning & Exploration
 - [playground/](playground/) - Exploratory notebooks (AI agents, feature engineering, Azure)
-- [learning/](learning/) - Course projects (IBM Data Science, IBM GenAI)
+- [learning/](learning/) - Course projects organized by domain: ML, data engineering, GenAI
 - [exercises/](exercises/) - Practice problems matching notes/ structure
 
 ---
@@ -68,19 +70,10 @@ Exploratory implementations for hands-on learning and experimentation.
 
 Standalone, production-grade applications demonstrating end-to-end engineering skills.
 
-### Data Engineering
-- **[databricks_rag/](projects/data-engineering/databricks_rag/)** — Production RAG pipeline with Delta Lake, ChromaDB, FastAPI
-  - Microservices architecture (3 independent phases)
-  - Docker containerization
-  - ACID-compliant storage with Delta Lake
-  - Vector search with ChromaDB
-
-### Computer Vision
-- **[video_enhancer_ai/](projects/computer-vision/video_enhancer_ai/)** — 4K video upscaling and audio enhancement API
-  - HuggingFace Transformers (Swin2SR, MetricGAN+)
-  - GPU/CPU automatic optimization
-  - REST API with Docker deployment
-  - 100% local processing (no API keys)
+- **[fpl-squad-optimizer/](projects/fpl-squad-optimizer/)** — XGBoost Fantasy Premier League team picker; 4 position-specific regressors, walk-forward simulation, 51% oracle-capture rate
+- **[context-optimizer/](projects/context-optimizer/)** — LLM corpus compression + Tree-of-Thought retrieval library; 91% token reduction, constant cost regardless of corpus size, fully local with Ollama
+- **[rag-knowledge-pipeline/](projects/rag-knowledge-pipeline/)** — Three-phase local RAG: Wikipedia corpus → Delta Lake → ChromaDB → FastAPI; each phase independently deployable
+- **[video-quality-enhancer/](projects/video-quality-enhancer/)** — 4K video upscaling (Swin2SR) + audio denoising (MetricGAN+) REST API; GPU-accelerated with CPU fallback, fully local
 
 → See [projects/README.md](projects/README.md) for detailed descriptions and setup instructions.
 
@@ -88,10 +81,17 @@ Standalone, production-grade applications demonstrating end-to-end engineering s
 
 ## `learning/` — Course Implementations
 
-Projects completed as part of professional courses and certifications.
+Projects completed as part of professional courses and certifications, organized by domain.
 
-- **[ibm-data-science/spacex-analysis/](learning/ibm-data-science/spacex-analysis/)** — SpaceX launch data collection, scraping, and analysis (IBM Data Science Professional Certificate)
-- **[ibm-genai/](learning/ibm-genai/)** — Generative AI mini-projects and voice assistant (IBM Generative AI Engineering)
+**ML** — `learning/ml/`
+- **[supervised-learning/](learning/ml/supervised-learning/)** — LinkedIn Learning: linear regression, logistic regression, KNN, decision trees, random forest, XGBoost, SHAP, GridSearchCV, Flask deployment (Titanic + Ames Housing)
+- **[linear-regression/](learning/ml/linear-regression/)** — IBM Data Science: King County house price regression end-to-end
+
+**Data Engineering** — `learning/data-engineering/`
+- SpaceX API data collection, Wikipedia scraping, and data wrangling (IBM Data Science Professional Certificate)
+
+**GenAI** — `learning/genai/`
+- Text translation, image captioning, conversation analysis, conversational AI, voice assistant Flask app (IBM Generative AI Engineering)
 
 → See [learning/README.md](learning/README.md) for course details and skills demonstrated.
 

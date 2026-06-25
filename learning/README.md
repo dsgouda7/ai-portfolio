@@ -1,32 +1,55 @@
 # Course Work
 
-Projects from professional courses and certifications.
+Projects from professional courses and certifications, organized by domain.
 
-## IBM Data Science Professional Certificate
+---
 
-### [SpaceX Launch Analysis](ibm-data-science/spacex-analysis/)
-Data collection, web scraping, and analysis of SpaceX launch data.
+## ML — `ml/`
+
+### [Supervised Learning](ml/supervised-learning/)
+LinkedIn Learning "Supervised Learning" course notebook covering the full supervised learning toolkit on real datasets.
+
+Course: LinkedIn Learning — Supervised Learning with scikit-learn
+
+Notebooks:
+- `linkedin_titanic_ames.ipynb` — linear regression (Ames Housing), logistic regression, KNN, decision trees, random forest, XGBoost, SHAP, GridSearchCV, Flask deployment (Titanic)
+
+### [Linear Regression](ml/linear-regression/)
+IBM Data Science: end-to-end regression on King County house prices.
 
 Course: IBM Data Science Professional Certificate
 
 Notebooks:
-- `01-spacex-data-collection.ipynb` - API data collection
-- `02-webscraping.ipynb` - Web scraping
-- `03-data_wrangling.ipynb` - Data cleaning
+- `ibm_ds_king_county_housing.ipynb` — exploratory analysis, feature engineering, linear regression, evaluation
 
 ---
 
-## IBM Generative AI Engineering
+## Data Engineering — `data-engineering/`
 
-### [IBM GenAI Projects](ibm-genai/)
-Mini-projects from IBM's Generative AI curriculum.
+SpaceX launch analysis series from the IBM Data Science Professional Certificate.
+
+Course: IBM Data Science Professional Certificate
+
+Notebooks:
+- `api-data-collection/ibm_ds_spacex_api.ipynb` — SpaceX REST API data collection
+- `web-scraping/ibm_ds_spacex_wikipedia.ipynb` — Wikipedia table scraping with BeautifulSoup
+- `data-wrangling/ibm_ds_spacex.ipynb` — cleaning, null handling, feature prep
+
+---
+
+## GenAI — `genai/`
+
+Mini-projects from IBM's Generative AI Engineering curriculum.
 
 Course: IBM Generative AI Engineering
 
 Projects:
-- `mini_projects/` - Small GenAI experiments
-- `voice_assistant/` - Voice-enabled assistant
+- `text-translation/ibm_genai_translator.py` — LLM-powered multi-language translation
+- `image-captioning/ibm_genai_image_captioning.py` — automated image captioning
+- `conversation-analysis/ibm_genai_conversation_analyzer.py` — conversation sentiment and intent analysis
+- `conversational-ai/ibm_genai_conversational.py` — multi-turn conversational AI
+- `voice-assistant/` — voice-enabled assistant Flask app
 
 ---
 
-Note: These are guided course projects. For original work, see [projects/](../projects/).
+Note: These are guided course projects. For original engineering work, see [projects/](../projects/).

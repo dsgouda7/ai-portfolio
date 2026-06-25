@@ -39,18 +39,9 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Any, Protocol, runtime_checkable
+from typing import Any
 
-# ── Retriever protocol ──────────────────────────────────────────────────────
-
-@runtime_checkable
-class Retriever(Protocol):
-    """Minimal retriever interface accepted by ToTReasoner."""
-
-    def search(self, query: str, top_k: int = 5) -> list[dict[str, Any]]:
-        """Return a list of result dicts; each should contain 'compressed_summary'."""
-        ...
-
+from .protocols import Retriever  # noqa: F401 — re-exported for callers
 
 # ── Data classes ────────────────────────────────────────────────────────────
 

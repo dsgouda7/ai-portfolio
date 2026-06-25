@@ -644,4 +644,16 @@ flowchart LR
 
 > The question Ch.5 answers: **which of the 44 polynomial features actually matter?** Lasso will tell us — and the answer is roughly 12, clustered around income and geographic interactions.
 
+---
 
+## 🔧 Exercise Connection
+
+Polynomial feature expansion from this chapter applies in **Step 5a** of xercises/01-ml/01-regression/src/features.py:
+
+| What you learned | Stub code | Step |
+|---|---|---|
+| PolynomialFeatures(degree=2) | polynomial TODO in FeatureEngineer.fit_transform() | 5a |
+| Feature name tracking after expansion (8 → 44) | same TODO: get_feature_names_out() | 5a |
+
+**Path:** 
+otebook-solution.ipynb → xercises/01-ml/01-regression/src/features.py → polynomial features TODO

@@ -490,3 +490,17 @@ flowchart LR
 Ch.6 introduces the **regression evaluation toolkit** — cross-validation, residual diagnostics, learning curves, and confidence intervals. These tools transform a single MAE number into a complete diagnostic picture.
 
 **The shift:** Ch.1-5 focused on *building* the model (features → polynomials → regularization). Ch.6 focuses on *understanding* the model (evaluation → diagnostics → monitoring). This is what separates "I trained a model" from "I trust this model in production."
+
+---
+
+## 🔧 Exercise Connection
+
+Ridge and Lasso from this chapter are the core of **Steps 1–2** in `exercises/01-ml/01-regression/src/models.py`:
+
+| What you learned | Stub function | Step |
+|---|---|---|
+| Ridge (L2): `L = MSE + λΣw²` | `RidgeRegressor.train()` | 1 |
+| Lasso (L1): `L = MSE + λΣ\|w\|` + feature selection | `LassoRegressor.train()` | 2 |
+| Cross-validation with regularized models | Both `train()` methods — CV loop + non-zero coeff count | 1–2 |
+
+**Path:** `notebook-solution.ipynb` → `exercises/01-ml/01-regression/src/models.py` → `RidgeRegressor.train()`, `LassoRegressor.train()`

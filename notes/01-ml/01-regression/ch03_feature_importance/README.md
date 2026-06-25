@@ -1462,3 +1462,17 @@ Ch.4 (Polynomial Regression & Interactions) addresses this directly by expanding
 These additions are targeted precisely at the signals Ch.3 identified: MedInc is the dominant feature that the model underutilizes at extreme values, and Latitude is the jointly irreplaceable complement. Ch.4's polynomial expansion produces ~\$48k MAE — a further 13% improvement over Ch.2, bringing us within \$8k of the \$40k target.
 
 The AveRooms/AveBedrms collinearity is deliberately deferred to Ch.5 (Ridge regularization), which shrinks the weights of correlated features toward each other — a more principled resolution than manual dropping.
+
+---
+
+## 🔧 Exercise Connection
+
+VIF filtering from this chapter applies in **Step 5b** of xercises/01-ml/01-regression/src/features.py:
+
+| What you learned | Stub code | Step |
+|---|---|---|
+| VIF computation | VIF loop in FeatureEngineer.fit_transform() — VIF filtering TODO | 5b |
+| Iterative high-VIF removal | Same loop: compute → find max VIF feature → drop → repeat | 5b |
+
+**Path:** 
+otebook-solution.ipynb → xercises/01-ml/01-regression/src/features.py → VIF filtering TODO

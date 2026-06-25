@@ -30,20 +30,15 @@ Both scripts are designed to be re-runnable and will skip components that are al
 
 | Script | Purpose |
 |--------|---------|
-| `check-md-links.py` / `check-md-links.ps1` | Scan all markdown files for broken links |
+| `check-md-links.py` | Scan all markdown files for broken links |
 | `check-notebooks.py` | Validate notebook JSON/syntax |
 | `set-default-kernel.py` | Set correct kernel metadata for notebooks by track |
-| `scan-hardcoded-paths.py` | Find hardcoded absolute paths |
 | `audit-ml-images.py` | Find and clean unreferenced images in ML track |
-| `audit-workflow-pattern.py` | Validate chapter README against workflow patterns |
-| `update-notebook-links.py` | Update notebook cross-references |
-| `update-shared-imports.py` | Update shared code imports |
 
 ### Generation & Rendering
 
 | Script | Purpose |
 |--------|---------|
-| `render-html-to-png.py` | Convert HTML/SVG to PNG using headless browser |
 | `generate-exercise-notebooks.py` | Generate exercise/solution notebook pairs |
 | `mathjax.js` | MathJax config for MkDocs |
 

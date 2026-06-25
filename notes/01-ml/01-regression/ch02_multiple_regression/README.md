@@ -896,4 +896,16 @@ Ch.2 showed that using all 8 features improves MAE from $70k to $55k. Before add
 
 Once the feature landscape is mapped in Ch.3, Ch.4 adds **polynomial features** ($x^2$, $x^3$) and **interaction terms** ($x_i \cdot x_j$) targeting the features we've identified as high-signal — most importantly `MedInc²` and `MedInc × Latitude` (the coastal premium that neither feature captures alone).
 
+---
 
+## 🔧 Exercise Connection
+
+Multi-feature regression and feature scaling from this chapter apply in two places:
+
+| What you learned | Stub function | Step |
+|---|---|---|
+| Matrix form with 8 features | RidgeRegressor.train() — takes full feature matrix | 1 |
+| Why scaling is required before regression | FeatureEngineer.fit_transform() — StandardScaler TODO | 5c |
+
+**Path:** 
+otebook-solution.ipynb → xercises/01-ml/01-regression/src/models.py → RidgeRegressor.train()
