@@ -15,7 +15,7 @@ Every session follows this pattern:
 
 ```
 ┌─────────────────────────────────────────┐
-│ 🕐 0:00-0:05 (5 min) │ Review yesterday's checklist + setup environment │
+│ 0:00-0:05 (5 min) │ Review yesterday's checklist + setup environment │
 │ 0:05-0:40 (35 min) │ Read chapter README + work through examples │
 │ 0:40-0:55 (15 min) │ Run notebook cells + experiment │
 │ 0:55-1:00 (5 min) │ Complete daily checklist + commit notes │
@@ -26,7 +26,7 @@ Every session follows this pattern:
 
 - **Complete**: Finished chapter, ran all code, understand concepts
 - **In Progress**: Started but need more time
-- 🔄 **Review**: Need to revisit after completing dependent chapters
+- **Review**: Need to revisit after completing dependent chapters
 
 ### When You Get Stuck
 

@@ -37,7 +37,7 @@ This is not a Kaggle competition. Every chapter builds toward a single productio
 
 ## Narrative Arc: From $70k Baseline to $32k Production Model
 
-### 🧹 Act 0: Data Preparation (Ch.00-00b)
+### Act 0: Data Preparation (Ch.00-00b)
 **Clean the data BEFORE building models**
 
 - **Ch.00**: Outlier detection, missing value analysis, imputation strategies
@@ -87,7 +87,7 @@ This is not a Kaggle competition. Every chapter builds toward a single productio
 
 ---
 
-### ➡ Act 4: Evaluation & Production (Ch.6-7)
+### Act 4: Evaluation & Production (Ch.6-7)
 **Measure properly, optimize for production, add explainability**
 
 - **Ch.6**: Proper evaluation → Cross-validation, residual analysis, learning curves
@@ -100,7 +100,7 @@ This is not a Kaggle competition. Every chapter builds toward a single productio
 
 ---
 
-### 🛡 Act 5: Production Monitoring (Ch.8)
+### Act 5: Production Monitoring (Ch.8)
 **Catch data drift before it breaks the model in production**
 
 - **Ch.8**: Data validation & drift detection → PSI, KS tests, Great Expectations
@@ -175,7 +175,7 @@ Work through Ch.1 → Ch.7 in order, then finish with `GRAND_CHALLENGE.md`. Each
 
 - **#1 Accuracy**: Ch.1, 2, 4, 5, 7
 - **#2 Generalization**: Ch.5, 6, 7
-- **#3 Multi-Task**: ➡ Out of scope here — continues in [02-Classification](../02_classification/README.md) and [03-NeuralNetworks](../03_neural_networks/README.md). The Regression track intentionally focuses only on continuous prediction.
+- **#3 Multi-Task**: Out of scope here — continues in [02-Classification](../02_classification/README.md) and [03-NeuralNetworks](../03_neural_networks/README.md). The Regression track intentionally focuses only on continuous prediction.
 - **#4 Interpretability**: Ch.3 (VIF + permutation importance), Ch.7 (XGBoost + SHAP explanations)
 - **#5 Production**: Ch.6 (evaluation framework), Ch.7 (systematic tuning pipeline), `GRAND_CHALLENGE.md`
 

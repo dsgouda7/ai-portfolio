@@ -14,7 +14,7 @@ hardware_arithmetic: required_before_claims
 numerical_benchmarks: judicious_inferencebase_measurements_when_clarifying
 running_example: inferencebase_llama3_8b_only
 failure_first_pedagogy: true
-callout_system: {insight:"", warning:"", constraint:"", optional_depth:"📖", forward_pointer:"➡"}
+callout_system: {insight:"", warning:"", constraint:"", optional_depth:"", forward_pointer:""}
 mermaid_color_palette: {primary:"#1e3a8a", success:"#15803d", caution:"#b45309", danger:"#b91c1c", info:"#1d4ed8"}
 image_background: dark_facecolor_1a1a2e_for_generated_plots
 section_template: [story_header, challenge_0, animation, core_idea_1, inferencebase_example_2, hardware_specs_3, step_by_step_4, key_diagrams_5, optimization_dial_6, benchmark_skeleton_7, what_can_go_wrong_8, progress_check_N, bridge_N1]
@@ -142,7 +142,7 @@ Every chapter follows this structure to maintain consistency:
 
 **What's blocking us**:
 
-🚨 **[Specific technical problem this chapter solves]**
+ **[Specific technical problem this chapter solves]**
 
 **Current situation**: [Concrete failure scenario]
 
@@ -232,11 +232,11 @@ Every concept must land in InferenceBase context:
 **Do not use emojis in technical content.** All emoji-based callouts have been systematically removed from the repository (27,921 emojis removed across 168 files as of May 2026).
 
 Use text-only formatting:
-- **Checkpoint:** (not 💡 **Checkpoint:**)
-- **Warning:** (not ⚠️ **Warning:**)
-- **Rule of Thumb:** (not 🎯 **Rule of Thumb:**)
-- [Complete] or Complete (not ✅)
-- [WRONG] or [Failed] (not ❌)
+- **Checkpoint:** (not **Checkpoint:**)
+- **Warning:** (not **Warning:**)
+- **Rule of Thumb:** (not **Rule of Thumb:**)
+- [Complete] or Complete (not )
+- [WRONG] or [Failed] (not )
 
 **Rationale:** Emojis create visual clutter, reduce professionalism, and can render inconsistently across platforms. Technical documentation should rely on clear text formatting.
 
@@ -355,7 +355,7 @@ Mitigation: Checkpoint every 10 min → <10 min recovery time
 
 **What's blocking us**:
 
-🚨 **VRAM headroom exhausted — cannot increase batch size for throughput**
+ **VRAM headroom exhausted — cannot increase batch size for throughput**
 
 **Current situation**: Running Llama-3-8B FP16 on RTX 4090
 
@@ -551,8 +551,8 @@ Evidence: Benchmark result, not projection
 | `` | "The Roofline Model tells you whether you're memory-bandwidth bound or compute bound — before you touch the code" |
 | `` | "Never measure latency with batch=1 only — production systems batch requests; single-item latency understates real throughput" |
 | `` | Constraint achievement: "1.2s p95 → Constraint #2 LATENCY ACHIEVED (40% under 2s target)" |
-| `📖` | Full derivation of FlashAttention tiling, GPTQ weight rounding algorithm, tensor parallelism sharding math |
-| `➡` | "We're treating serving as a black box here. Ch.6 opens the box — vLLM's continuous batching is what actually drives the throughput numbers we projected" |
+| `` | Full derivation of FlashAttention tiling, GPTQ weight rounding algorithm, tensor parallelism sharding math |
+| `` | "We're treating serving as a black box here. Ch.6 opens the box — vLLM's continuous batching is what actually drives the throughput numbers we projected" |
 
 ---
 
@@ -788,7 +788,7 @@ FP16: INT4:
 
 If a formula has no verbal gloss within three lines, it is incomplete.
 
-**Rule 4: optional depth gets a callout box.** Deep dives into GPU microarchitecture, tensor core operations, or PCIe protocol details go inside an indented `> 📖 **Optional:**` block. These are clearly labelled and can be skipped without losing the main thread. The optional block ends with a cross-reference to hardware documentation for the rigorous treatment.
+**Rule 4: optional depth gets a callout box.** Deep dives into GPU microarchitecture, tensor core operations, or PCIe protocol details go inside an indented `> **Optional:**` block. These are clearly labelled and can be skipped without losing the main thread. The optional block ends with a cross-reference to hardware documentation for the rigorous treatment.
 
 ---
 
@@ -818,7 +818,7 @@ If a formula has no verbal gloss within three lines, it is incomplete.
 
 **Forward link pattern:** *"This PagedAttention technique solves the memory fragmentation problem. Ch.6 Serving Frameworks shows how vLLM implements it in production — delivering the 12k req/day throughput we projected."*
 
-**The forward pointer callout box** (`> ➡`) is used for concepts that will be formally introduced later but need to be planted early. GPU Architecture plants the seed for quantization with a `> ➡` callout that says INT4 will be introduced in Ch.3 where memory constraints force the optimization.
+**The forward pointer callout box** (`> `) is used for concepts that will be formally introduced later but need to be planted early. GPU Architecture plants the seed for quantization with a `> ` callout that says INT4 will be introduced in Ch.3 where memory constraints force the optimization.
 
 **Cross-track links** to AI track for LLM fundamentals are standard. Always reference the specific chapter: `[AI track — Transformer Architecture](.03-ai/ch01_llm_fundamentals/transformers)` for model architecture details.
 
@@ -833,8 +833,8 @@ Used consistently across infrastructure chapters. Must be used exactly this way 
 | `` | Key insight / conceptual payoff | After a hardware revelation that reframes the bottleneck (e.g., "Memory bandwidth, not compute, limits throughput") |
 | `` | Warning / common trap | Before or immediately after a configuration that is often done wrong (e.g., "Never measure latency with batch=1 only") |
 | `` | InferenceBase constraint connection | When content advances or validates one of the 6 InferenceBase constraints |
-| `> 📖 **Optional:**` | Deeper hardware detail | Full GPU microarchitecture, CUDA kernel optimization, networking protocol specs that break the narrative flow |
-| `> ➡` | Forward pointer | When a hardware capability needs to be planted before its full treatment (e.g., mention NVLink in Ch.1, detail in Ch.7) |
+| `> **Optional:**` | Deeper hardware detail | Full GPU microarchitecture, CUDA kernel optimization, networking protocol specs that break the narrative flow |
+| `> ` | Forward pointer | When a hardware capability needs to be planted before its full treatment (e.g., mention NVLink in Ch.1, detail in Ch.7) |
 
 The callout box content is always **actionable**: it ends with a Fix, a Rule, a What-to-do, or a Measurement. No callout box that just says "this is interesting" without consequence.
 
@@ -1011,7 +1011,7 @@ Infrastructure chapters can run long (600-900 lines) when they include hardware 
 - **Never summarise where you can measure.** A full benchmark table showing throughput and latency across batch sizes (1, 2, 4, 8) teaches the scaling behaviour; a prose paragraph saying "throughput increases with batch size" does not.
 - **One hardware concept per subsection.** GPU Architecture's "Memory Hierarchy" section has distinct subsections for VRAM, L2 cache, register file, and HBM bandwidth. Each subsection has exactly one conceptual payload. None runs into another.
 - **The subsection heading is descriptive, not label-like.** Not "3.2 Optimization" but "3.2 · Continuous Batching — How vLLM Achieves 4× Throughput vs. Naïve Scheduling". The title states the capability, not just the topic.
-- **100-line rule for inline explanations.** If explaining a hardware concept fully would take more than ~100 lines in a natural reading flow, split it: give the practitioner-relevant summary inline, move the microarchitecture deep dive to a `> 📖 Optional` callout box, and cross-reference GPU vendor documentation for the full spec.
+- **100-line rule for inline explanations.** If explaining a hardware concept fully would take more than ~100 lines in a natural reading flow, split it: give the practitioner-relevant summary inline, move the microarchitecture deep dive to a `> Optional` callout box, and cross-reference GPU vendor documentation for the full spec.
 
 ---
 
@@ -1259,7 +1259,7 @@ Every `grand_solution.md` follows this **7-section template**:
 - Duplicate content across sections (say it once, reference it later)
 
 **Formatting conventions:**
-- Use checkmark bullets for capabilities unlocked: ➡
+- Use checkmark bullets for capabilities unlocked:
 - Show progression as ASCII tables or code block diagrams
 - Use `inline code` for hyperparameters, `$metric$` for dollars
 - Chapter references: "Ch.3" or "Ch.5-7" (never "Chapter Five")
@@ -1426,7 +1426,7 @@ Improvement: 4× throughput (300% increase), cost per request: $0.003
 
 **Template:**
 ```markdown
-> ➡ **[Hardware feature] goes deeper in [Chapter].** This chapter covers [what's needed now].
+> **[Hardware feature] goes deeper in [Chapter].** This chapter covers [what's needed now].
 > For [advanced optimization] — [specific capability] — see [link]. For now: [continue with current concept].
 ```
 
@@ -1601,10 +1601,10 @@ Map tone to pedagogical purpose:
 - = Key insight (hardware bottleneck revelation — power users skim these first)
 - = Common trap (engineers jump here when debugging production issues)
 - = InferenceBase constraint advancement (tracks mission progress)
-- 📖 = Optional depth (GPU microarchitecture deep dives — safe to skip)
-- ➡ = Forward pointer (where this hardware capability reappears)
+- = Optional depth (GPU microarchitecture deep dives — safe to skip)
+- = Forward pointer (where this hardware capability reappears)
 
-**Rule:** No other emoji as inline callouts. (🚨 are structural markers for Challenge/Progress sections only.)
+**Rule:** No other emoji as inline callouts. ( are structural markers for Challenge/Progress sections only.)
 
 ---
 
@@ -1791,7 +1791,7 @@ Example: "We demonstrate that...", "It can be shown that...", "In this section w
 **Synthetic workloads for benchmarks**
 Example: Using random tensors instead of ACME Corp Q3 earnings report (InferenceBase canonical test document)
 **Improvised emoji**
-Example: Using ✨ as inline callouts (only 📖➡ allowed)
+Example: Using as inline callouts (only allowed)
 **Topic-label section headings**
 Example: "## 3 · Hardware" instead of "## 3 · RTX 4090 Specs — Why 24GB VRAM Is the Deployment Ceiling"
 **Skipping VRAM breakdown**
@@ -1845,9 +1845,9 @@ Before publishing any infrastructure chapter, verify each item:
 - [ ] Every cost claim: arithmetic shown ($X/hr × 730 hr/mo × N GPUs = $Y/mo)
 - [ ] Every VRAM claim: component breakdown (params + KV cache + activations + overhead = total)
 - [ ] Failure-first pedagogy: new optimizations introduced because baseline configuration broke, not listed a priori
-- [ ] Optional depth: GPU microarchitecture details behind `> 📖 Optional` callout boxes with vendor doc links
+- [ ] Optional depth: GPU microarchitecture details behind `> Optional` callout boxes with vendor doc links
 - [ ] Forward/backward links: every hardware concept links to where it was introduced and where it reappears
-- [ ] Callout boxes: only ` 📖 ➡` — no improvised emoji
+- [ ] Callout boxes: only ` ` — no improvised emoji
 - [ ] Mermaid diagrams: colour palette respected (dark blue / dark green / amber / dark red)
 - [ ] Images: dark background, descriptive alt-text, purposeful (Roofline plots, VRAM breakdowns, cost curves, latency decompositions)
 - [ ] Needle GIF: chapter-level constraint progress animation present under `## Animation`
@@ -1907,9 +1907,9 @@ The heading already tells the reader they are in the profiling stage. There is n
 
  Example: `> **Quantization verdict:** INT4 reduces VRAM from 16GB → 5.5GB, enabling batch=8 vs batch=1 — throughput 340 → 2,100 req/hr, p95 latency 4.1s → 1.7s .`
 
-- `> ➡` — forward pointer when a configuration feeds the next chapter.
+- `> ` — forward pointer when a configuration feeds the next chapter.
 
- Example: `> ➡ vLLM uses this INT4 checkpoint directly — no re-quantization needed (Ch.6).`
+ Example: `> vLLM uses this INT4 checkpoint directly — no re-quantization needed (Ch.6).`
 
 - **Never:** a `DEPLOYMENT CHECKPOINT` or `OPTIMIZATION CHECKPOINT` block.
 - **Never:** a section listing `Phase N → §X, §Y` or `Stage N → §X, Walkthrough B`.

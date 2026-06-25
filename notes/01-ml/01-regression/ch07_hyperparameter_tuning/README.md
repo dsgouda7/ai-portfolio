@@ -16,7 +16,7 @@
 **What we know so far:**
 - Ch.1: $70k MAE → Ch.2: $55k → Ch.4: $48k → Ch.5: $38k
 - Ch.6: Validated $38k ± $2k MAE across 5-fold CV
-- ❓ **But was α=1.0 optimal? Is degree=2 the best? Should we use Lasso instead?**
+- **But was α=1.0 optimal? Is degree=2 the best? Should we use Lasso instead?**
 
 **What's blocking us:**
 
@@ -680,7 +680,7 @@ A single neuron — $z = \sigma(\mathbf{w}^\top\mathbf{x} + b)$ — is exactly l
 
 ---
 
-## 🔧 Exercise Connection
+## Exercise connection
 
 XGBoost and hyperparameter tuning from this chapter apply in **Step 3** of `exercises/01-ml/01-regression/src/models.py`:
 

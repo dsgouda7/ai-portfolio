@@ -28,8 +28,8 @@
 **What's blocking us:**
 
 The product team applied logistic regression to a "Premium Neighbourhood" classifier and found:
-- **Coastal + High-Income** districts — correctly labelled premium ✓
-- **Inland + Low-Income** districts — correctly labelled non-premium ✓
+- **Coastal + High-Income** districts — correctly labelled premium
+- **Inland + Low-Income** districts — correctly labelled non-premium
 - **Coastal + Low-Income** districts — **misclassified** (income weight dominates negatively)
 - **Inland + High-Income** districts — **misclassified** (income weight dominates positively)
 
@@ -232,7 +232,7 @@ In plain English: **one hidden layer is enough in theory.** You may need many ne
 
 **Why depth wins in practice.** A deep network can represent the same function as a shallow one with exponentially fewer neurons. Depth creates a hierarchy of features: early layers detect simple patterns; later layers compose them into complex representations. For XOR we need only 2 hidden neurons and 1 layer — but for 200k-pixel face images, depth is essential.
 
-> ➡ **Connection to Ch.2 (Neural Networks):** The UAT motivates building a full multi-layer network for California Housing. If one hidden layer is theoretically sufficient and XOR needs only 2 neurons, what does an 8-feature housing regression need? Ch.2 answers this empirically.
+> **Connection to Ch.2 (Neural Networks):** The UAT motivates building a full multi-layer network for California Housing. If one hidden layer is theoretically sufficient and XOR needs only 2 neurons, what does an 8-feature housing regression need? Ch.2 answers this empirically.
 
 ---
 
@@ -379,7 +379,7 @@ In the new $\mathbf{h}$ space, plot the four points: $[0,0]$ and $[2,1]$ are cla
 
 In the new space, the two class-1 points both map to $[1,0]$ — they are the *same point*. The output layer only checks: is the representation near $[1,0]$? A straight line in hidden space does this exactly. The curved boundary in original space emerges from the linear boundary in transformed space.
 
-> 📖 **Play with it live:** [TensorFlow Playground](https://playground.tensorflow.org/) is an in-browser neural-network sandbox. Select the XOR-like "exclusive or" dataset, toggle the number of hidden layers and neurons, and watch the decision boundary bend itself around the classes in real time. A zero-hidden-layer network cannot solve it; a single hidden layer of 2–4 neurons can. It's the fastest way to *feel* what a hidden layer does to representation space.
+> **Play with it live:** [TensorFlow Playground](https://playground.tensorflow.org/) is an in-browser neural-network sandbox. Select the XOR-like "exclusive or" dataset, toggle the number of hidden layers and neurons, and watch the decision boundary bend itself around the classes in real time. A zero-hidden-layer network cannot solve it; a single hidden layer of 2–4 neurons can. It's the fastest way to *feel* what a hidden layer does to representation space.
 
 ### Act 4 · Generalisation — California Housing Has Many XOR-Like Interactions
 
@@ -427,10 +427,10 @@ The $-1$ in position $(2,1)$ of $Z^{(1)}$ is clamped to 0 by ReLU — this is th
 $$\hat{\mathbf{y}} = \begin{bmatrix}1 & -2\end{bmatrix} \begin{bmatrix} 0 & 1 & 1 & 2 \\ 0 & 0 & 0 & 1 \end{bmatrix} = \begin{bmatrix} 0 & 1 & 1 & 0 \end{bmatrix}$$
 
 **Arithmetic check, column by column:**
-- Col 1 → input (0,0): $1 \times 0 + (-2) \times 0 = 0$ ✓
-- Col 2 → input (0,1): $1 \times 1 + (-2) \times 0 = 1$ ✓
-- Col 3 → input (1,0): $1 \times 1 + (-2) \times 0 = 1$ ✓
-- Col 4 → input (1,1): $1 \times 2 + (-2) \times 1 = 2 - 2 = 0$ ✓
+- Col 1 → input (0,0): $1 \times 0 + (-2) \times 0 = 0$
+- Col 2 → input (0,1): $1 \times 1 + (-2) \times 0 = 1$
+- Col 3 → input (1,0): $1 \times 1 + (-2) \times 0 = 1$
+- Col 4 → input (1,1): $1 \times 2 + (-2) \times 1 = 2 - 2 = 0$
 
 **Full summary table:**
 

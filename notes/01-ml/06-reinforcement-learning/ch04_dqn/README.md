@@ -126,7 +126,7 @@ Input (state) Hidden Layer 1 Hidden Layer 2 Output (Q-values)
 
 A single forward pass gives **both** Q-values simultaneously — much more efficient than calling the network twice.
 
-> 📖 **Scaling up: DQN on Atari.** The CartPole DQN above is the minimal form. The 2015 Nature paper used the same algorithmic structure but with: (a) a **convolutional** feature extractor replacing the dense input layer (takes 84×84 grayscale frames), (b) **4 stacked frames** as input to encode velocity/motion that a single frame lacks, (c) a **replay buffer of size 1,000,000** transitions (vs 10,000 for CartPole), and (d) a training schedule of 50,000,000 steps (vs ~50,000 for CartPole). The Bellman update, experience replay, and target network logic are identical — only the architecture and scale change. This is the point of function approximation: the algorithm is environment-agnostic; the network architecture adapts to the observation space.
+> **Scaling up: DQN on Atari.** The CartPole DQN above is the minimal form. The 2015 Nature paper used the same algorithmic structure but with: (a) a **convolutional** feature extractor replacing the dense input layer (takes 84×84 grayscale frames), (b) **4 stacked frames** as input to encode velocity/motion that a single frame lacks, (c) a **replay buffer of size 1,000,000** transitions (vs 10,000 for CartPole), and (d) a training schedule of 50,000,000 steps (vs ~50,000 for CartPole). The Bellman update, experience replay, and target network logic are identical — only the architecture and scale change. This is the point of function approximation: the algorithm is environment-agnostic; the network architecture adapts to the observation space.
 >
 > **Atari vs CartPole — architecture comparison:**
 >
@@ -638,7 +638,7 @@ $$\nabla_\theta J(\theta) = \mathbb{E}_{\pi_\theta}\left[\nabla_\theta \log \pi_
 
 This is the **policy gradient theorem** (Williams, 1992) — the foundation of REINFORCE, Actor-Critic, PPO, and SAC.
 
-> ➡ **In Ch.5** you will build an Actor-Critic agent that consistently reaches **≥180/200** on CartPole and then apply it to the `Pendulum-v1` continuous control task — something DQN cannot do at all.
+> **In Ch.5** you will build an Actor-Critic agent that consistently reaches **≥180/200** on CartPole and then apply it to the `Pendulum-v1` continuous control task — something DQN cannot do at all.
 
 ---
 

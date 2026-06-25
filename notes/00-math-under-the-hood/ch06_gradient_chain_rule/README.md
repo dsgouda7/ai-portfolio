@@ -12,7 +12,7 @@
 
 ## Bridge from Ch.3 — One Variable to Many
 
-> 🌉 **If you're rusty on multi-variable calculus:** This section rebuilds the intuition from scratch. Ch.3 gave you $f'(x)$ for a curve. Now we extend to functions of *several* variables — like tuning strike angle *and* speed *and* wall distance all at once.
+> **If you're rusty on multi-variable calculus:** This section rebuilds the intuition from scratch. Ch.3 gave you $f'(x)$ for a curve. Now we extend to functions of *several* variables — like tuning strike angle *and* speed *and* wall distance all at once.
 
 **In Ch.3** (one variable): You had a curve $h(t)$ (height vs time). The derivative $h'(t)$ told you "if I nudge $t$ a little, how much does $h$ change?" It's a single number: the slope of the tangent.
 
@@ -147,7 +147,7 @@ The inner product $\mathbf{u}^\top \nabla f$ is minimised (most negative) when $
 
 ### 2.2 · Why the Gradient Isn't Enough — The Neural Network Problem
 
-> 🧩 **The gap we're about to fill:** The gradient $\nabla f$ works great when you have **one function**: loss = $f(\text{parameters})$. But neural networks aren't one function — they're a **stack of many functions**. Input → Layer1 → Layer2 → Layer3 → ... → Loss. We need a tool that handles "function inside function inside function."
+> **The gap we're about to fill:** The gradient $\nabla f$ works great when you have **one function**: loss = $f(\text{parameters})$. But neural networks aren't one function — they're a **stack of many functions**. Input → Layer1 → Layer2 → Layer3 → ... → Loss. We need a tool that handles "function inside function inside function."
 
 **The setup:** Imagine a tiny 2-layer network:
 
@@ -196,7 +196,7 @@ The gradient is the special case of a Jacobian when $m=1$, transposed into a col
 
 ### 3.1 · Why We Need the Chain Rule — Neural Networks Are Compositions
 
-> 🔗 **Connecting the dots:** Now you know what a Jacobian is — a matrix of partial derivatives for vector functions. But we have **three layers** in our network: $\mathbf{x} \xrightarrow{W_1} \mathbf{h}_1 \xrightarrow{W_2} \mathbf{h}_2 \xrightarrow{} L$. How do we combine the Jacobians to get the final gradient?
+> **Connecting the dots:** Now you know what a Jacobian is — a matrix of partial derivatives for vector functions. But we have **three layers** in our network: $\mathbf{x} \xrightarrow{W_1} \mathbf{h}_1 \xrightarrow{W_2} \mathbf{h}_2 \xrightarrow{} L$. How do we combine the Jacobians to get the final gradient?
 
 **The problem:** We want $\nabla_{\mathbf{x}} L$ — "how does the loss change if we nudge the input?" But the loss depends on $\mathbf{x}$ *indirectly*:
 
@@ -219,7 +219,7 @@ $$J_{\mathbf{g} \circ \mathbf{h}} = J_\mathbf{g} \cdot J_\mathbf{h} \quad \text{
 
 ## 4 · [Phase 2: BACKWARD] The Matrix Chain Rule — Chaining Derivatives Through Layers
 
-> 🔗 **Phase marker:** This section covers the **core mathematical principle** underlying the backward pass. You'll see how to multiply Jacobians right-to-left to propagate gradients from the loss back through each layer.
+> **Phase marker:** This section covers the **core mathematical principle** underlying the backward pass. You'll see how to multiply Jacobians right-to-left to propagate gradients from the loss back through each layer.
 
 This is the single most important equation in deep learning. For a composition $\mathbf{y} = \mathbf{g}(\mathbf{h}(\mathbf{x}))$ with $\mathbf{x} \in \mathbb{R}^n, \mathbf{h} \in \mathbb{R}^p, \mathbf{y} \in \mathbb{R}^m$:
 
@@ -239,7 +239,7 @@ The $(n \times p)$ matrix $J_\mathbf{h}^\top$ pulls the $p$-dim gradient of the 
 
 ## 5 · [Phase 1: FORWARD] Activation Computation — Computing Layer Outputs
 
-> 🔗 **Phase marker:** This section shows the **forward pass** — how to compute activations layer-by-layer and prepare for the backward pass. Every quantity computed here will be reused when gradients flow backward.
+> **Phase marker:** This section shows the **forward pass** — how to compute activations layer-by-layer and prepare for the backward pass. Every quantity computed here will be reused when gradients flow backward.
 
 A single layer: $\mathbf{u} = W\mathbf{x} + \mathbf{b}$, then $\mathbf{h} = \sigma(\mathbf{u})$ applied elementwise, then a scalar loss $L(\mathbf{h})$.
 
@@ -257,7 +257,7 @@ $$\underbrace{\nabla_\mathbf{h} L}_{m} \xrightarrow[\text{mul by } J_\sigma]{} \
 
 (The Jacobian of an elementwise activation $\sigma$ is the diagonal matrix $\mathrm{diag}(\sigma'(\mathbf{u}))$, so multiplying by it collapses to **elementwise product** $\odot$ — multiply each gradient entry by the corresponding derivative: $[\nabla_\mathbf{h} L]_i \cdot [\sigma'(\mathbf{u})]_i$. This is a huge speed-up: diagonal matrix-vector multiplication is $O(m)$ instead of $O(m^2)$.)
 
-> 🔗 **Recall Ch.3 §3.2.3 (ReLU's Kink):** For ReLU, $\sigma'(u) = \begin{cases} 0 & \text{if } u < 0 \\ 1 & \text{if } u > 0 \end{cases}$, with the derivative technically undefined at $u=0$. In practice, we use a subgradient convention (typically $\sigma'(0) := 0$) and the chain rule proceeds normally. This is why PyTorch's `.backward()` doesn't crash when backpropagating through ReLU — we're using the one-sided derivative discussed in Ch.3.
+> **Recall Ch.3 §3.2.3 (ReLU's Kink):** For ReLU, $\sigma'(u) = \begin{cases} 0 & \text{if } u < 0 \\ 1 & \text{if } u > 0 \end{cases}$, with the derivative technically undefined at $u=0$. In practice, we use a subgradient convention (typically $\sigma'(0) := 0$) and the chain rule proceeds normally. This is why PyTorch's `.backward()` doesn't crash when backpropagating through ReLU — we're using the one-sided derivative discussed in Ch.3.
 
 For the weight gradient, another one-line chain rule:
 
@@ -303,7 +303,7 @@ $$\mathbf{h} = \begin{bmatrix} \sigma(0.2) \\ \sigma(1.45) \\ \sigma(0.4) \end{b
 3. **Loss:** $L = \frac{1}{2}\|\mathbf{h} - \mathbf{y}_{\text{target}}\|^2$
 $$L = \frac{1}{2}[(0.550 - 0.8)^2 + (0.810 - 0.3)^2 + (0.599 - 0.1)^2] = \frac{1}{2}[0.0625 + 0.2601 + 0.2490] = 0.286$$
 
-> 💾 **CACHE CHECKPOINT:** At this point, **store** $\mathbf{u}$, $\mathbf{h}$, and $\mathbf{x}$ in memory. These cached values are **required** for the backward pass — you cannot compute gradients without them. Modern autodiff frameworks (PyTorch, JAX) automatically cache these activations in the computation graph.
+> **CACHE CHECKPOINT:** At this point, **store** $\mathbf{u}$, $\mathbf{h}$, and $\mathbf{x}$ in memory. These cached values are **required** for the backward pass — you cannot compute gradients without them. Modern autodiff frameworks (PyTorch, JAX) automatically cache these activations in the computation graph.
 
 **Backward pass — apply chain rule right-to-left:**
 
@@ -335,7 +335,7 @@ $$\nabla_W L = \begin{bmatrix} -0.062 \\ +0.079 \\ +0.120 \end{bmatrix}
 +0.060 & +0.120
 \end{bmatrix}$$
 
-> 🧮 **What you just traced:** The **forward pass** moved data left-to-right (input → pre-activation → activation → loss). The **backward pass** moved gradients right-to-left (loss gradient → activation gradient → pre-activation gradient → input & weight gradients). Every multiplication matched the **shape rules** from §2: $(3 \times 2)$ weights multiplied by $(2 \times 1)$ input gave $(3 \times 1)$ pre-activations. The transpose $W^\top$ pulled $(3 \times 1)$ gradients back into $(2 \times 1)$ input space.
+> **What you just traced:** The **forward pass** moved data left-to-right (input → pre-activation → activation → loss). The **backward pass** moved gradients right-to-left (loss gradient → activation gradient → pre-activation gradient → input & weight gradients). Every multiplication matched the **shape rules** from §2: $(3 \times 2)$ weights multiplied by $(2 \times 1)$ input gave $(3 \times 1)$ pre-activations. The transpose $W^\top$ pulled $(3 \times 1)$ gradients back into $(2 \times 1)$ input space.
 
 **Connect to the animation:** The green nodes lighting up in the forward pass carry the values $\mathbf{u} = [0.2, 1.45, 0.4]$ and $\mathbf{h} = [0.550, 0.810, 0.599]$. The red edges lighting up in the backward pass carry the gradients $\nabla_\mathbf{u} L = [-0.062, +0.079, +0.120]$. The weight updates would subtract $\eta \cdot \nabla_W L$ — exactly gradient descent from Ch.4, now in matrix form.
 
@@ -349,7 +349,7 @@ $$\nabla_W L = \begin{bmatrix} -0.062 \\ +0.079 \\ +0.120 \end{bmatrix}
 - **Cached intermediate values:** $\mathbf{u}$ (pre-activations), $\mathbf{h}$ (activations), $\mathbf{x}$ (input)
 
 **What it means:**
-- Forward pass dimensions are correct: $(3 \times 2)$ weights × $(2 \times 1)$ input = $(3 \times 1)$ output ✓
+- Forward pass dimensions are correct: $(3 \times 2)$ weights × $(2 \times 1)$ input = $(3 \times 1)$ output
 - Loss is non-zero → model needs training (backward pass will compute weight updates)
 - Cached values $(\mathbf{u}, \mathbf{h}, \mathbf{x})$ are **required** for computing gradients — without them, backprop cannot proceed
 
@@ -622,8 +622,8 @@ else:
 
 **What you just saw:**
 - Gradient magnitudes: $\|\nabla_W L\| = 0.146$, $\|\nabla_\mathbf{x} L\| = 0.343$
-- Weight gradient shape: $(3 \times 2)$ ✓ (matches $W$ shape)
-- Input gradient shape: $(2,)$ ✓ (matches $\mathbf{x}$ shape)
+- Weight gradient shape: $(3 \times 2)$ (matches $W$ shape)
+- Input gradient shape: $(2,)$ (matches $\mathbf{x}$ shape)
 - Gradient flow: Loss → $\nabla_\mathbf{h} L$ → $\nabla_\mathbf{u} L$ (via $\odot \sigma'$) → $\nabla_W L$ (via outer product) + $\nabla_\mathbf{x} L$ (via $W^\top$)
 
 **What it means:**
@@ -710,7 +710,7 @@ for iteration in range(1, 101):
  # DECISION LOGIC
  if iteration % 10 == 0:
  if loss < 0.001:
- decision = "✓ Converged"
+ decision = " Converged"
  elif grad_magnitude > 10:
  decision = " Clip gradients"
  elif grad_magnitude < 1e-6:
@@ -736,8 +736,8 @@ print(f"Prediction: {forward_pass(x, W, b)[0]}")
 # 60 0.000007 0.006530 → Continue training
 # 70 0.000002 0.003330 → Continue training
 # 80 0.000001 0.001710 → Continue training
-# 90 0.000000 0.000881 ✓ Converged
-# 100 0.000000 0.000455 ✓ Converged
+# 90 0.000000 0.000881 Converged
+# 100 0.000000 0.000455 Converged
 #
 # Final loss: 0.000000
 # Target: [0.8 0.3 0.1]
@@ -791,7 +791,7 @@ print(f"Prediction: {forward_pass(x, W, b)[0]}")
 ### 5.3.1 DECISION CHECKPOINT — Training Iteration Complete
 
 **What you just saw:**
-- Loss decreased: $0.286 \to 0.016 \to 0.000$ over 100 iterations (convergence ✓)
+- Loss decreased: $0.286 \to 0.016 \to 0.000$ over 100 iterations (convergence )
 - Gradient magnitude decreased: $0.146 \to 0.032 \to 0.0005$ (approaching zero at minimum)
 - Prediction accuracy: Final output $[0.800, 0.300, 0.100]$ matches target within $10^{-4}$ tolerance
 - Training stability: No exploding gradients ($\|\nabla_W\| < 10$ throughout), no vanishing gradients ($\|\nabla_W\| > 10^{-6}$ until convergence)
@@ -1008,7 +1008,7 @@ See the companion notebook for the full worked solution.
 
 ### Video Tutorials (Beginner-Friendly)
 
-> 🎥 **If you need visual, step-by-step walkthroughs:** These YouTube series break down gradients and backpropagation with code examples and visualizations. Watch these if the algebra above feels dense.
+> **If you need visual, step-by-step walkthroughs:** These YouTube series break down gradients and backpropagation with code examples and visualizations. Watch these if the algebra above feels dense.
 
 **Gradients & Partial Derivatives:**
 - **3Blue1Brown — Gradient** (12 min): Visual intuition for what a gradient is and why it points uphill. The gold standard for geometric understanding.
@@ -1055,9 +1055,9 @@ graph LR
 - Update: $\boldsymbol{\theta}_1 = \boldsymbol{\theta}_0 - \eta \nabla L$
 - Converge to optimal $(\theta^\star, v_0^\star)$ after ~50 iterations
 **Can now verify ALL three constraints** (with proper 3D modeling):
-1. ✓ Wall clearance: Optimize $(\theta, v_0)$ such that $h(t_{\text{wall}}) > 1.8m$
-2. ✓ Crossbar clearance: Constraint $h(t_{\text{goal}}) < 2.44m$
-3. ✓ Keeper speed: Ensure flight time $t_{\text{goal}} <$ keeper reaction time
+1. Wall clearance: Optimize $(\theta, v_0)$ such that $h(t_{\text{wall}}) > 1.8m$
+2. Crossbar clearance: Constraint $h(t_{\text{goal}}) < 2.44m$
+3. Keeper speed: Ensure flight time $t_{\text{goal}} <$ keeper reaction time
 **Still can't solve:**
 - **Handle uncertainty/noise**: What if the striker's $v_0$ varies randomly due to fatigue? What if wind is unpredictable? We're still treating everything as deterministic — that's **Ch.7** (probability & statistics)
 - **Quantify confidence**: "I'm 95% confident the kick will score" requires probability distributions

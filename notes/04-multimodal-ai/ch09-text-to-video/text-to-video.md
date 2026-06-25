@@ -418,7 +418,7 @@ if avg_ssim < 0.85:
 - **Motion modules**: Learn motion priors from video datasets (WebVid-10M) separately from spatial priors
 - **3D tensor handling**: Batch dim includes time $(B \cdot T, C, H, W)$ or explicit $(B, T, C, H, W)$
 
-> ➡ **Ch.10 Multimodal LLMs** extends this further: vision encoder + language model → enables **visual question answering** ("Is the dress color consistent across all 16 frames?") for automated QA.
+> **Ch.10 Multimodal LLMs** extends this further: vision encoder + language model → enables **visual question answering** ("Is the dress color consistent across all 16 frames?") for automated QA.
 
 ---
 

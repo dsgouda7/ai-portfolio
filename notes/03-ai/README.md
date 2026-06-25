@@ -2,7 +2,7 @@
 
 > **The Mission**: Conduct the **AI Adoption Review** — reverse-engineer how large language models actually work, chapter by chapter, using **GPT-4** and **Claude 3.5 Sonnet** as the two models under investigation. Your deliverable is a documented **AI Literacy Kit** proving deep model understanding.
 
-> **Track Status:** 🚧 **IN PROGRESS** — Restructuring into 8 focused chapters
+> **Track Status:** **IN PROGRESS** — Restructuring into 8 focused chapters
 
 This is not a tutorial. Every chapter follows an investigative arc: you are a Staff Engineer leading your company's AI Adoption Review, and the board wants proof you understand these models before committing engineering resources. You run controlled experiments, document findings, and build up from tokenization to full retrieval pipelines — using GPT-4 and Claude as *subjects of study*, not black-box API endpoints.
 
@@ -27,11 +27,11 @@ This is not a tutorial. Every chapter follows an investigative arc: you are a St
 
 | Ch | Title | Investigation Beat | Key Experiment | Status |
 |----|-------|--------------------|----------------|--------|
-| **0** | [From Networks to Language](ch00-from-networks-to-language/README.md) | **"The Shortcut Ramp"** — condensed intuition from RNNs to transformers to LLMs | No experiments; pure conceptual bridge from notes/01 and notes/02 | ✅ Complete |
-| **1** | [Transformer Architecture](ch01-transformer-architecture/transformer-architecture.md) | **"The Engine"** — how attention mechanisms enable text generation | Build minimal transformer; trace attention patterns on sample text | 🚧 In Progress |
-| **2** | [LLM Inference Mechanics](ch02-llm-inference-mechanics/inference-mechanics.md) | **"The Controls"** — tokenization, sampling, and generation parameters | Run identical prompts with different temperatures; measure output diversity | 🚧 In Progress |
-| **3** | [LLM Training Pipeline](ch03-llm-training-pipeline/training-pipeline.md) | **"The Learning Process"** — pre-training, fine-tuning, and alignment | Compare base vs instruction-tuned model outputs on task prompts | 🚧 In Progress |
-| **4** | [LLM Model Internals](ch04-llm-model-internals/model-internals.md) | **"The Black Box"** — why GPT-4 and Claude behave differently | Side-by-side comparison on identical prompts; trace divergence to architecture | 🚧 In Progress |
+| **0** | [From Networks to Language](ch00-from-networks-to-language/README.md) | **"The Shortcut Ramp"** — condensed intuition from RNNs to transformers to LLMs | No experiments; pure conceptual bridge from notes/01 and notes/02 | Complete |
+| **1** | [Transformer Architecture](ch01-transformer-architecture/transformer-architecture.md) | **"The Engine"** — how attention mechanisms enable text generation | Build minimal transformer; trace attention patterns on sample text | In Progress |
+| **2** | [LLM Inference Mechanics](ch02-llm-inference-mechanics/inference-mechanics.md) | **"The Controls"** — tokenization, sampling, and generation parameters | Run identical prompts with different temperatures; measure output diversity | In Progress |
+| **3** | [LLM Training Pipeline](ch03-llm-training-pipeline/training-pipeline.md) | **"The Learning Process"** — pre-training, fine-tuning, and alignment | Compare base vs instruction-tuned model outputs on task prompts | In Progress |
+| **4** | [LLM Model Internals](ch04-llm-model-internals/model-internals.md) | **"The Black Box"** — why GPT-4 and Claude behave differently | Side-by-side comparison on identical prompts; trace divergence to architecture | In Progress |
 | **5** | [Prompt Engineering](ch05-prompt-engineering/prompt-engineering.md) | **"The Control Interface"** — system prompts and few-shot as behavioral levers | Compare GPT-4 vs Claude on identical instructions; map where they diverge | Complete |
 | **6** | [Chain-of-Thought Reasoning](ch06-cot-reasoning/cot-reasoning.md) | **"The Reasoning Engine"** — when step-by-step thinking helps vs. when it hallucinates confidently | GPT-4o1 vs Claude extended thinking on logic puzzles and ambiguous queries | Complete |
 | **7** | [RAG & Embeddings](ch07-rag-and-embeddings/rag-and-embeddings.md) | **"The Memory Problem"** — LLMs don't know your data; grounding changes everything | Hallucination rate on internal docs: 38% before RAG → 4% after | Complete |

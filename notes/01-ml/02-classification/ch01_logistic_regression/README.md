@@ -163,7 +163,7 @@ Output: Trained weights w (d × 1), bias b (scalar)
 > (1) Step b: insert $\sigma(\cdot)$ to convert logits to probabilities.
 > (2) Step c: replace MSE with BCE. The gradient formula in step d *looks* nearly identical but derives from a completely different loss — §4 and §5 explain every step.
 
-> ➡ **Gradient descent fundamentals** — momentum, Adam, learning rate schedules — are covered in the Neural Networks track ([Ch.3 →](../../03_neural_networks/ch03_backprop_optimisers)). Here, plain gradient descent with fixed $\alpha$ is sufficient to reach ~88% on Smiling.
+> **Gradient descent fundamentals** — momentum, Adam, learning rate schedules — are covered in the Neural Networks track ([Ch.3 →](../../03_neural_networks/ch03_backprop_optimisers)). Here, plain gradient descent with fixed $\alpha$ is sufficient to reach ~88% on Smiling.
 
 ---
 
@@ -278,7 +278,7 @@ These two cases collapse into one expression using the Bernoulli PMF:
 
 $$P(y_i \mid \mathbf{x}_i) = \hat{p}_i^{\,y_i} \cdot (1 - \hat{p}_i)^{1 - y_i}$$
 
-*Check:* when $y_i=1$: $\hat{p}_i^1(1-\hat{p}_i)^0 = \hat{p}_i$ ✓. When $y_i=0$: $\hat{p}_i^0(1-\hat{p}_i)^1 = 1-\hat{p}_i$ ✓.
+*Check:* when $y_i=1$: $\hat{p}_i^1(1-\hat{p}_i)^0 = \hat{p}_i$ . When $y_i=0$: $\hat{p}_i^0(1-\hat{p}_i)^1 = 1-\hat{p}_i$ .
 
 **Step 2 — Joint likelihood over all $N$ training examples** (assuming independence):
 
@@ -717,8 +717,8 @@ graph TD
  B --> C["Linear Layer\nz = w·x + b\n(logit — any real number)"]
  C --> D["Sigmoid Activation\np̂ = 1/(1+e⁻ᶻ)\n(probability ∈ (0,1))"]
  D --> E{"Decision Threshold\np̂ > 0.5?"}
- E -->|"Yes"| F["Predict: Smiling 😊\ny_pred = 1"]
- E -->|"No"| G["Predict: Not Smiling 😐\ny_pred = 0"]
+ E -->|"Yes"| F["Predict: Smiling \ny_pred = 1"]
+ E -->|"No"| G["Predict: Not Smiling \ny_pred = 0"]
  H["True Label y ∈ {0,1}"] --> I["BCE Loss\n−[y·log(p̂)+(1−y)·log(1−p̂)]"]
  D --> I
  I --> J["Gradients\n∂L/∂w = (1/N)Xᵀ(p̂−y)\n∂L/∂b = mean(p̂−y)"]
@@ -817,7 +817,7 @@ The threshold converts $\hat{p}$ to a binary prediction without touching the mod
 
 For rare attributes like Bald (2% positive), setting threshold to 0.15 is often needed to achieve useful recall at all.
 
-> ➡ The ROC curve, which sweeps all thresholds in one plot, is in [Ch.3 — Metrics](../ch03_metrics).
+> The ROC curve, which sweeps all thresholds in one plot, is in [Ch.3 — Metrics](../ch03_metrics).
 
 ### Dial 2 — Regularisation Strength C (sklearn default: C=1.0)
 
@@ -931,7 +931,7 @@ Logistic regression established the foundational pattern: a **linear decision bo
 
 Each will be benchmarked against the logistic regression baseline. The lesson: there is no universally best classifier. Logistic regression wins when the boundary is truly linear and data is large; KNN wins when structure is highly local; trees win when interpretability is paramount.
 
-> ➡ **[Ch.2 — Classical Classifiers →](../ch02_classical_classifiers)**
+> **[Ch.2 — Classical Classifiers →](../ch02_classical_classifiers)**
 
 ---
 

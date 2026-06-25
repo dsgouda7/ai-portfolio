@@ -136,11 +136,11 @@ The model doesn't output one answer; it outputs a probability distribution over 
 Your model predicts the next word after "The capital of France is". It outputs logits (raw scores):
 
 ```
-Token    Logit  Probability (T=1.0)  Probability (T=0.5)  Probability (T=2.0)
-"Paris"   4.2        0.92                  0.987                0.42
-"Lyon"    2.1        0.04                  0.011                0.19
-"Berlin"  1.8        0.02                  0.001                0.16
-"London"  1.5        0.015                 0.0005               0.14
+Token Logit Probability (T=1.0) Probability (T=0.5) Probability (T=2.0)
+"Paris" 4.2 0.92 0.987 0.42
+"Lyon" 2.1 0.04 0.011 0.19
+"Berlin" 1.8 0.02 0.001 0.16
+"London" 1.5 0.015 0.0005 0.14
 ...
 ```
 
@@ -212,11 +212,11 @@ top_p = 0.9 algorithm:
 **Production combination: Temperature + Top-p**
 ```python
 # Step 1: Temperature reshapes distribution
-logits = model_output / temperature  # Sharpen or flatten
+logits = model_output / temperature # Sharpen or flatten
 
 # Step 2: Top-p filters to reasonable options
 probs = softmax(logits)
-filtered_probs = nucleus_filter(probs, top_p=0.9)  # Keep top 90%
+filtered_probs = nucleus_filter(probs, top_p=0.9) # Keep top 90%
 
 # Step 3: Sample from filtered distribution
 next_token = sample(filtered_probs)
@@ -255,25 +255,25 @@ Goal: Generate ["sat", "on", "the"] (tokens 3-5)
 === STEP 1: Generate "sat" ===
 Input: ["The", "cat"] (2 tokens)
 Attention: Compute 2×2 matrix (4 comparisons)
-  Q_1 · K_1, Q_1 · K_2
-  Q_2 · K_1, Q_2 · K_2
+ Q_1 · K_1, Q_1 · K_2
+ Q_2 · K_1, Q_2 · K_2
 Output: "sat"
 
 === STEP 2: Generate "on" ===
 Input: ["The", "cat", "sat"] (3 tokens)
 Attention: Compute 3×3 matrix (9 comparisons) ← RECOMPUTING 2×2 FROM STEP 1!
-  Q_1 · K_1, Q_1 · K_2, Q_1 · K_3
-  Q_2 · K_1, Q_2 · K_2, Q_2 · K_3  ← These 4 were computed in Step 1
-  Q_3 · K_1, Q_3 · K_2, Q_3 · K_3
+ Q_1 · K_1, Q_1 · K_2, Q_1 · K_3
+ Q_2 · K_1, Q_2 · K_2, Q_2 · K_3 ← These 4 were computed in Step 1
+ Q_3 · K_1, Q_3 · K_2, Q_3 · K_3
 Output: "on"
 
 === STEP 3: Generate "the" ===
 Input: ["The", "cat", "sat", "on"] (4 tokens)
 Attention: Compute 4×4 matrix (16 comparisons) ← RECOMPUTING 3×3 FROM STEP 2!
-  Q_1 · K_1, Q_1 · K_2, Q_1 · K_3, Q_1 · K_4
-  Q_2 · K_1, Q_2 · K_2, Q_2 · K_3, Q_2 · K_4  ← These 9 were computed in Step 2
-  Q_3 · K_1, Q_3 · K_2, Q_3 · K_3, Q_3 · K_4  ← (which already included Step 1)
-  Q_4 · K_1, Q_4 · K_2, Q_4 · K_3, Q_4 · K_4
+ Q_1 · K_1, Q_1 · K_2, Q_1 · K_3, Q_1 · K_4
+ Q_2 · K_1, Q_2 · K_2, Q_2 · K_3, Q_2 · K_4 ← These 9 were computed in Step 2
+ Q_3 · K_1, Q_3 · K_2, Q_3 · K_3, Q_3 · K_4 ← (which already included Step 1)
+ Q_4 · K_1, Q_4 · K_2, Q_4 · K_3, Q_4 · K_4
 Output: "the"
 
 Total comparisons: 4 + 9 + 16 = 29
@@ -384,7 +384,7 @@ Input: ["sat"] (just the new token!)
 Compute: k_3, v_3 (only)
 Cache: Load k_1, v_1, k_2, v_2; append k_3, v_3
 Attention: 1×3 matrix (3 comparisons) ← ONLY NEW TOKEN vs ALL CACHED!
-  Q_3 · K_cached = [Q_3 · k_1, Q_3 · k_2, Q_3 · k_3]
+ Q_3 · K_cached = [Q_3 · k_1, Q_3 · k_2, Q_3 · k_3]
 Output: "on"
 
 === STEP 3: Generate "the" ===
@@ -392,7 +392,7 @@ Input: ["on"] (just the new token!)
 Compute: k_4, v_4 (only)
 Cache: Load k_1...k_3, v_1...v_3; append k_4, v_4
 Attention: 1×4 matrix (4 comparisons)
-  Q_4 · K_cached = [Q_4 · k_1, Q_4 · k_2, Q_4 · k_3, Q_4 · k_4]
+ Q_4 · K_cached = [Q_4 · k_1, Q_4 · k_2, Q_4 · k_3, Q_4 · k_4]
 Output: "the"
 
 Total comparisons: 4 + 3 + 4 = 11 (vs 29 without cache)
@@ -864,8 +864,8 @@ gantt
 
 **What you can do (strategic acceptance):**
 - **Separate serving tiers:**
-  - Interactive tier (batch size 1-8): Low latency for chatbots, <100ms target
-  - Batch tier (batch size 32-128): High throughput for document processing, <10s target
+ - Interactive tier (batch size 1-8): Low latency for chatbots, <100ms target
+ - Batch tier (batch size 32-128): High throughput for document processing, <10s target
 - **Dynamic batching (vLLM):** Mitigates but doesn't eliminate the tradeoff — earlier requests still benefit less than later arrivals
 - **Set SLAs correctly:** Promise p95 latency, not p50 (accept that 5% of requests will be slow due to batching)
 
@@ -918,19 +918,19 @@ After ~11 years of operation, inference costs exceed training costs. For popular
 **Five Critical Implications of API Pricing:**
 
 1. **Prefill costs more per token than decode**
-   API providers charge ~$3/M input tokens vs ~$15/M output tokens (5× ratio for GPT-4). Why? Prefill is compute-bound (95% GPU utilization), decode is memory-bound (20% utilization). Providers optimize for throughput, so they charge more for what's expensive to parallelize.
+ API providers charge ~$3/M input tokens vs ~$15/M output tokens (5× ratio for GPT-4). Why? Prefill is compute-bound (95% GPU utilization), decode is memory-bound (20% utilization). Providers optimize for throughput, so they charge more for what's expensive to parallelize.
 
 2. **Prompt length directly impacts latency and cost**
-   A 10k-token prompt costs 10× more than 1k, but also takes 100× longer to prefill (quadratic attention). Production systems optimize prompts ruthlessly — every unnecessary token costs money and time.
+ A 10k-token prompt costs 10× more than 1k, but also takes 100× longer to prefill (quadratic attention). Production systems optimize prompts ruthlessly — every unnecessary token costs money and time.
 
 3. **Context window size determines batch size**
-   Longer context → more KV cache per request → fewer concurrent requests. At 128k context (vs 8k), you can serve 1/16th the users on the same hardware. This is why GPT-4-Turbo (128k) costs more than GPT-3.5 (4k) — not just capability, but infrastructure cost.
+ Longer context → more KV cache per request → fewer concurrent requests. At 128k context (vs 8k), you can serve 1/16th the users on the same hardware. This is why GPT-4-Turbo (128k) costs more than GPT-3.5 (4k) — not just capability, but infrastructure cost.
 
 4. **Streaming responses reduce perceived latency but not cost**
-   Streaming (showing tokens as they generate) makes chatbots feel instant, but you're still generating 500 tokens at 15ms/token = 7.5 seconds total compute. Streaming is UX magic, not optimization.
+ Streaming (showing tokens as they generate) makes chatbots feel instant, but you're still generating 500 tokens at 15ms/token = 7.5 seconds total compute. Streaming is UX magic, not optimization.
 
 5. **Token limits exist because compute isn't free**
-   ChatGPT's 4k message limit (GPT-3.5) and usage caps aren't arbitrary. If every user generated 10k-token essays instead of 500-token responses, OpenAI's compute cost would 20× overnight. Limits are economic necessity.
+ ChatGPT's 4k message limit (GPT-3.5) and usage caps aren't arbitrary. If every user generated 10k-token essays instead of 500-token responses, OpenAI's compute cost would 20× overnight. Limits are economic necessity.
 
 **Rule of Thumb:**
 - **1 training run:** Costs as much as ~40 days of production inference (for a popular model)

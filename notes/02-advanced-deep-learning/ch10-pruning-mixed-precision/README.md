@@ -765,4 +765,4 @@ The ProductionCV system you built is production-ready. Now go deploy it.
 
 ---
 
-> ➡ **Recommended next track**: [AI Infrastructure](../../06-ai_infrastructure/README.md) — Deploy, scale, and monitor ProductionCV in production.
+> **Recommended next track**: [AI Infrastructure](../../06-ai_infrastructure/README.md) — Deploy, scale, and monitor ProductionCV in production.

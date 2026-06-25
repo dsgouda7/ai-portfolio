@@ -37,7 +37,7 @@ In Topic 01 (Regression) you predicted **continuous values** — house prices wi
 >
 > Mastering these 3 **proves** you can handle any binary classification problem. Scaling to 40 attributes (Constraint #3 in original challenge) requires **multi-output neural networks** with shared representations, which is the natural next step in [Topic 03 — Neural Networks](../03_neural_networks/README.md).
 
-> ✔ **Why this progression works**: Classical ML forces you to understand the *math* (sigmoid, cross-entropy, decision boundaries) before neural networks automate it. The Trinity's escalating difficulty ensures you've debugged imbalance at small scale before tackling deep learning's complexity.
+> **Why this progression works**: Classical ML forces you to understand the *math* (sigmoid, cross-entropy, decision boundaries) before neural networks automate it. The Trinity's escalating difficulty ensures you've debugged imbalance at small scale before tackling deep learning's complexity.
 
 > † F1-score is used after Ch.3; before that, naive accuracy hides class imbalance (e.g., 96% accuracy on Bald by always predicting "Not-Bald").
 

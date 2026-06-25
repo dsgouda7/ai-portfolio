@@ -277,7 +277,7 @@ MedHouseVal [+0.69 +0.11 +0.15 -0.05 -0.03 -0.02 -0.14 -0.04 1.00 ]
 3. **`Latitude` ↔ `Longitude` = −0.92** — geographic coordinates are near-mirror images along California's diagonal
 4. **`HouseAge` ↔ Target = +0.11** — surprisingly weak; house age alone is a poor value predictor
 
-> 📖 **Multicollinearity deep dive.** The 0.85 AveRooms/AveBedrms correlation is a preview of VIF analysis in the Multiple Regression chapter. For now: flag any |r| > 0.8 pair — linear models' coefficients become unreliable when features are nearly collinear.
+> **Multicollinearity deep dive.** The 0.85 AveRooms/AveBedrms correlation is a preview of VIF analysis in the Multiple Regression chapter. For now: flag any |r| > 0.8 pair — linear models' coefficients become unreliable when features are nearly collinear.
 
 ---
 
@@ -465,7 +465,7 @@ Data is now clean and ready for modeling. Ch.01-07 will build models on this sol
 
 > **Validate verdict:** Data quality foundation complete. Cleaned baseline $52k MAE — $15k better than the contractor's zero-filled $67k with no architecture changes.
 
-> ➡ **Ch.01 Linear Regression** starts from this $52k baseline. The cleaning pipeline (IQR caps + `KNNImputer` fitted on `X_train`) must be serialized for inference — different preprocessing at serve time is the #1 cause of train/serve skew.
+> **Ch.01 Linear Regression** starts from this $52k baseline. The cleaning pipeline (IQR caps + `KNNImputer` fitted on `X_train`) must be serialized for inference — different preprocessing at serve time is the #1 cause of train/serve skew.
 
 > **Phase 4 Validation Pattern — Train/Test Split with Data Quality Checks**
 > ```python
@@ -649,7 +649,7 @@ print(f"KNN vs Mean improvement: ${improvement:,.0f}")
 # Alternative: IterativeImputer (MICE) for >100k rows
 ```
 
-> ➡ **What this $2.7k improvement tells you.** The gain from better imputation alone is modest — $12k comes from fixing the zero-fill corruption entirely, much more from model architecture (Multiple Regression) and distribution alignment (Class Imbalance). But every downstream fix depends on clean inputs. Corrupted inputs cannot be compensated by any amount of architecture tuning.
+> **What this $2.7k improvement tells you.** The gain from better imputation alone is modest — $12k comes from fixing the zero-fill corruption entirely, much more from model architecture (Multiple Regression) and distribution alignment (Class Imbalance). But every downstream fix depends on clean inputs. Corrupted inputs cannot be compensated by any amount of architecture tuning.
 
 ---
 
@@ -660,7 +660,7 @@ print(f"KNN vs Mean improvement: ${improvement:,.0f}")
 ```mermaid
 flowchart TD
  LOAD([" Load Dataset\ndf.shape, df.head(5)"]) --> DESCRIBE
- DESCRIBE["df.describe()\nCheck min / max / mean / std"] --> REDFLAGS{"🚨 Red flags?\nImpossible max, zeros in\nnon-zero columns, extreme skew"}
+ DESCRIBE["df.describe()\nCheck min / max / mean / std"] --> REDFLAGS{" Red flags?\nImpossible max, zeros in\nnon-zero columns, extreme skew"}
 
  REDFLAGS -->|"Yes"| OUTLIER_METHOD{"Which\ndetection method?"}
  REDFLAGS -->|"Looks clean"| MISSING
@@ -854,7 +854,7 @@ EDA findings cascade through every subsequent step:
 | [Ch.02 — Multiple Regression](../ch02_multiple_regression) | VIF analysis (detecting multicollinearity) is the formal follow-up to the r = 0.85 pair flagged here |
 | [Neural Networks track](../../03-neural-networks) | Z-score normalization of features before neural network training is the model-building application of §4.1's formula |
 
-> ➡ **The EDA-to-production pipeline.** Data cleaning decisions made here must be replicated exactly in the inference pipeline — the same imputer (fitted on training data) must transform incoming production data identically. This is the origin of the `sklearn.pipeline.Pipeline` pattern used throughout the regression and neural network tracks.
+> **The EDA-to-production pipeline.** Data cleaning decisions made here must be replicated exactly in the inference pipeline — the same imputer (fitted on training data) must transform incoming production data identically. This is the origin of the `sklearn.pipeline.Pipeline` pattern used throughout the regression and neural network tracks.
 
 ---
 
@@ -866,11 +866,11 @@ EDA findings cascade through every subsequent step:
 
 | # | Constraint | Target | Status | Evidence |
 |---|------------|--------|--------|---------|
-| **#1** | ACCURACY | <$40k MAE | 🔴 **Not Started** | Data cleaned, ready for modeling (Ch.01-07) |
-| **#2** | GENERALIZATION | Unseen districts | 🔴 **Not Started** | Clean foundation established for later chapters |
+| **#1** | ACCURACY | <$40k MAE | **Not Started** | Data cleaned, ready for modeling (Ch.01-07) |
+| **#2** | GENERALIZATION | Unseen districts | **Not Started** | Clean foundation established for later chapters |
 | **#3** | DATA QUALITY | Clean data BEFORE training | **Unlocked** | Zero-fill reversed. IQR outliers flagged. KNN imputation selected. |
-| **#4** | INTERPRETABILITY | Explainable predictions | 🟡 **Partial** | Correlation analysis identifies key features (MedInc r=0.69) |
-| **#5** | PRODUCTION | <100ms inference, monitoring | 🔴 **Not Started** | Foundation laid; addressed in Ch.08 |
+| **#4** | INTERPRETABILITY | Explainable predictions | **Partial** | Correlation analysis identifies key features (MedInc r=0.69) |
+| **#5** | PRODUCTION | <100ms inference, monitoring | **Not Started** | Foundation laid; addressed in Ch.08 |
 
 ** Unlocked capabilities:**
 - IQR outlier detection (masking-resistant) and Z-score (for Gaussian data)
@@ -892,11 +892,11 @@ EDA findings cascade through every subsequent step:
 
 This chapter cleaned the raw data — removed outliers, analyzed missing patterns, selected optimal imputation strategies. The next chapter, **Ch.00b — Class Imbalance**, examines the training distribution: the California Housing dataset has 75% median-value homes and only 25% high-value ones. A perfectly clean dataset with skewed class distribution still produces a biased model. Ch.00b teaches you SMOTE, class weighting, and stratified sampling to ensure all market segments are properly represented before building any models.
 
-> ➡ **[Ch.00b — Class Imbalance →](../ch00b-class-imbalance)** — When the data is clean but the distribution is wrong.
+> **[Ch.00b — Class Imbalance →](../ch00b-class-imbalance)** — When the data is clean but the distribution is wrong.
 
 ---
 
-## 🔧 Exercise Connection
+## Exercise connection
 
 The concepts from this chapter map directly to `exercises/01-ml/01-regression/src/data-prep.py`:
 

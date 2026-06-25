@@ -222,7 +222,7 @@ The learning rate $\gamma$ is the most important single hyperparameter in gradie
 - Low $\gamma$ → each tree makes small updates → slow convergence → requires more trees, but each step is conservative → lower test error
 - Very low $\gamma$ → step so small that 100 rounds barely move the needle; need 1000+ trees
 
-> 📖 **Formal result (Friedman 2001)**: Shrinkage is equivalent to L2 regularization on the functional update. Smaller $\gamma$ systematically improves out-of-sample error for the same number of trees — the "shrinkage regularization" effect. Production rule of thumb: `learning_rate=0.05`–`0.1` with `n_iter_no_change=20` almost always outperforms any other single configuration.
+> **Formal result (Friedman 2001)**: Shrinkage is equivalent to L2 regularization on the functional update. Smaller $\gamma$ systematically improves out-of-sample error for the same number of trees — the "shrinkage regularization" effect. Production rule of thumb: `learning_rate=0.05`–`0.1` with `n_iter_no_change=20` almost always outperforms any other single configuration.
 
 ---
 
@@ -556,7 +556,7 @@ flowchart TD
  classDef caution fill:#b45309,color:#fff,stroke:#b45309
 
  Q1{"Training loss falls.\nValidation loss...?"}
- Q1 -->|"Also falls (both plateauing)"| A2["Early stopping working ✓\nStop here"]:::success
+ Q1 -->|"Also falls (both plateauing)"| A2["Early stopping working \nStop here"]:::success
  Q1 -->|"Rising after round ~N"| A3["OVERFITTING\n↓ learning_rate\n↓ max_depth\n↑ min_samples_leaf\nadd subsample=0.8"]:::danger
  Q1 -->|"Both barely moving"| A4["UNDERFITTING\n↑ n_estimators\n↑ learning_rate\ncheck data quality"]:::caution
 ```

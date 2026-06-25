@@ -163,9 +163,9 @@ You need **semantic similarity** — find documents by *meaning*, not by exact w
 
 ### 1A · The Weapon You'll Forge: Embeddings
 
-> 💡 **What embeddings do:** Transform text into vectors (lists of numbers) where semantic distance becomes measurable geometry. Similar meanings → nearby points in high-dimensional space.
+> **What embeddings do:** Transform text into vectors (lists of numbers) where semantic distance becomes measurable geometry. Similar meanings → nearby points in high-dimensional space.
 
-> 💡 **Quick Intuition:** Embeddings are like GPS coordinates for meaning. "Service uptime" and "availability" have different letters but point to nearly the same location in semantic space—just like San Francisco (37.77°N, 122.42°W) and SF (same coordinates) refer to the same place despite different spellings.
+> **Quick Intuition:** Embeddings are like GPS coordinates for meaning. "Service uptime" and "availability" have different letters but point to nearly the same location in semantic space—just like San Francisco (37.77°N, 122.42°W) and SF (same coordinates) refer to the same place despite different spellings.
 
 **The retrieval problem:** You need to find documents about "service uptime targets" when the wiki says "99.95% availability" — different words, same meaning. Keyword search fails. You need semantic similarity.
 
@@ -334,8 +334,8 @@ Embedding models are **not** trained to predict tokens like GPT. They are traine
 
 **The training data:** Millions of sentence pairs labeled as similar or different:
 - **Natural Language Inference (NLI) datasets:** Pairs of sentences marked as entailment (similar), contradiction (different), or neutral
-  - Example: "A man is eating pizza" / "A man is eating food" → entailment (similar)
-  - Example: "A man is eating pizza" / "A man is sleeping" → contradiction (different)
+ - Example: "A man is eating pizza" / "A man is eating food" → entailment (similar)
+ - Example: "A man is eating pizza" / "A man is sleeping" → contradiction (different)
 - **Question-Answer pairs:** Questions paired with correct answers (similar) and wrong answers (different)
 - **Semantic Textual Similarity (STS) datasets:** Sentence pairs with similarity scores 0-5
 - **Paraphrase datasets:** Sentences that say the same thing with different words
@@ -353,9 +353,9 @@ Embedding models are **not** trained to predict tokens like GPT. They are traine
 **Think of it like teaching a child about categories:**
 
 You show the child:
-- 🍎 Apple and 🍊 Orange → "These are both fruits" (pull them together)
-- 🍎 Apple and 🚗 Car → "These are completely different" (push them apart)
-- 🍊 Orange and 🥕 Carrot → "Kind of related (both orange), but not the same category" (moderate distance)
+- Apple and Orange → "These are both fruits" (pull them together)
+- Apple and Car → "These are completely different" (push them apart)
+- Orange and Carrot → "Kind of related (both orange), but not the same category" (moderate distance)
 
 After thousands of examples, the child learns that "fruit" means "edible, grows on plants, sweet" — not from a definition, but from seeing which things cluster together.
 
@@ -381,7 +381,7 @@ After seeing millions of such examples, the embedding space organizes itself: al
 
 **The training process (InfoNCE):** The model gets rewarded when it correctly identifies which of many candidates is the true match. If you show it a query and 100 candidate answers (1 correct, 99 wrong), and the model ranks the correct one first, the loss is near zero. If the model ranks a wrong answer higher than the correct one, the loss is high and the model adjusts its weights.
 
-> 💡 **Quick Intuition:** InfoNCE training is like teaching a dog to fetch YOUR tennis ball from a pile of 100 balls. At first, the dog brings back random balls (high loss). As it learns to recognize YOUR ball's unique features (color, wear marks, scent), it reliably fetches the right one (low loss). The training reward is proportional to how confidently the dog picks YOUR ball over all the wrong ones.
+> **Quick Intuition:** InfoNCE training is like teaching a dog to fetch YOUR tennis ball from a pile of 100 balls. At first, the dog brings back random balls (high loss). As it learns to recognize YOUR ball's unique features (color, wear marks, scent), it reliably fetches the right one (low loss). The training reward is proportional to how confidently the dog picks YOUR ball over all the wrong ones.
 
 <details>
 <summary> <b>For the mathematically curious: InfoNCE loss formula</b></summary>
@@ -408,10 +408,10 @@ L = -log(exp(sim(q,p+)/τ) / Σ exp(sim(q,pi)/τ))
 
 **Concrete example:**
 If the model gives the correct answer 0.9 similarity and all wrong answers 0.1 similarity:
-- High confidence → numerator is large, denominator is small → fraction near 1 → log near 0 → low loss ✓
+- High confidence → numerator is large, denominator is small → fraction near 1 → log near 0 → low loss
 
 If the model gives correct answer 0.5 and a wrong answer 0.6:
-- Low confidence → numerator is small, denominator is large → fraction < 0.5 → negative log is large → high loss ✗
+- Low confidence → numerator is small, denominator is large → fraction < 0.5 → negative log is large → high loss
 
 **You don't need this formula to understand RAG.** The arrow/angle intuition above is sufficient.
 
@@ -554,17 +554,17 @@ The separation between offline ingestion and online query execution is fundament
 flowchart TB
  subgraph "Phase 1: INGESTION (Offline)"
  A[" Source Documents<br/>(Wiki, Docs, PDFs)"] --> B[" Chunking<br/>Split into 400-512 token chunks<br/>10-20% overlap"]
- B --> C["🔢 Embedding Model<br/>(BERT-family encoder)<br/>e.g., text-embedding-3-small"]
- C --> D["📦 Vector Database<br/>Store embeddings + metadata<br/>(Chroma, Pinecone, FAISS)"]
+ B --> C[" Embedding Model<br/>(BERT-family encoder)<br/>e.g., text-embedding-3-small"]
+ C --> D[" Vector Database<br/>Store embeddings + metadata<br/>(Chroma, Pinecone, FAISS)"]
  D --> E[" Index Building<br/>(HNSW, IVF, DiskANN)"]
  end
 
  subgraph "Phase 2: QUERY (Runtime)"
- F["❓ User Query<br/>'What is our auth SLA?'"] --> G["🔢 Same Embedding Model<br/>Must match ingestion model"]
+ F[" User Query<br/>'What is our auth SLA?'"] --> G[" Same Embedding Model<br/>Must match ingestion model"]
  G --> H[" ANN Search<br/>cosine_similarity(query, chunks)<br/>Return top-k"]
  E -."indexed vectors".-> H
  H --> I[" Retrieved Chunks<br/>Top-5 most similar<br/>+ metadata"]
- I --> J["🔗 Prompt Augmentation<br/>Context: [chunk1, chunk2, ...]<br/>Query: [user question]"]
+ I --> J[" Prompt Augmentation<br/>Context: [chunk1, chunk2, ...]<br/>Query: [user question]"]
  J --> K[" LLM Generation<br/>(GPT-4, Claude)<br/>Answer from context"]
  K --> L[" Grounded Response<br/>Reduced hallucination<br/>Source citations"]
  end
@@ -689,24 +689,24 @@ User searches: "What's the auth service error code 401?"
 **Ingestion costs (one-time):**
 - **Chunking:** Free (run locally)
 - **Embedding API:** 5,000 chunks × 400 tokens = 2M tokens
-  - At OpenAI `text-embedding-3-small` pricing: $0.00002/1K tokens
-  - **Total: $0.04 one-time** (negligible)
+ - At OpenAI `text-embedding-3-small` pricing: $0.00002/1K tokens
+ - **Total: $0.04 one-time** (negligible)
 - **Vector DB setup:**
-  - Pinecone: $70/month (5K vectors, includes queries)
-  - Chroma (self-hosted): $0 (runs in your infra)
-  - FAISS (in-memory): $0 (no persistence, for prototyping)
+ - Pinecone: $70/month (5K vectors, includes queries)
+ - Chroma (self-hosted): $0 (runs in your infra)
+ - FAISS (in-memory): $0 (no persistence, for prototyping)
 
 **Query costs (recurring):**
 - **Embedding API:** 1M queries × 20 tokens average = 20M tokens
-  - **Total: $0.40/month** (embedding queries)
+ - **Total: $0.40/month** (embedding queries)
 - **Vector DB queries:**
-  - Pinecone: Included in $70/month tier (100K queries/month)
-  - Chroma self-hosted: Infrastructure cost only (~$50/month for modest scale)
+ - Pinecone: Included in $70/month tier (100K queries/month)
+ - Chroma self-hosted: Infrastructure cost only (~$50/month for modest scale)
 - **LLM Generation:** 1M queries × (50 input tokens + 100 output tokens) = 150M tokens
-  - At GPT-4o-mini pricing: $0.150/1M input, $0.600/1M output
-  - **Total: $67.50/month** (LLM generation)
+ - At GPT-4o-mini pricing: $0.150/1M input, $0.600/1M output
+ - **Total: $67.50/month** (LLM generation)
 - **Optional HyDE:** Add 1 extra LLM call per query (~50 tokens output)
-  - Extra cost: $0.03/month (negligible)
+ - Extra cost: $0.03/month (negligible)
 
 **Total monthly cost for 1M queries:**
 - **Vector DB:** $70/month (Pinecone) or $50/month (self-hosted Chroma)
@@ -790,9 +790,9 @@ dense_results = vector_db.search(embed(query), k=20)
 # Merge with RRF
 rrf_scores = {}
 for rank, doc in enumerate(bm25_results):
-    rrf_scores[doc.id] = rrf_scores.get(doc.id, 0) + 1/(60 + rank)
+ rrf_scores[doc.id] = rrf_scores.get(doc.id, 0) + 1/(60 + rank)
 for rank, doc in enumerate(dense_results):
-    rrf_scores[doc.id] = rrf_scores.get(doc.id, 0) + 1/(60 + rank)
+ rrf_scores[doc.id] = rrf_scores.get(doc.id, 0) + 1/(60 + rank)
 
 # Sort by combined score
 final_results = sorted(rrf_scores.items(), key=lambda x: x[1], reverse=True)[:5]
@@ -862,9 +862,9 @@ Both chunks now contain the critical sentence 4 with full context.
 ```python
 # User asks: "What's the auth service SLA?" (clearly a service reliability question)
 results = vector_db.search(
-    query_embedding=embed("What's the auth service SLA?"),
-    filter={"doc_type": "runbook", "team": "platform"},
-    k=5
+ query_embedding=embed("What's the auth service SLA?"),
+ filter={"doc_type": "runbook", "team": "platform"},
+ k=5
 )
 ```
 
@@ -877,7 +877,7 @@ results = vector_db.search(
 **Strategic pattern:** Use cheap LLM call to classify query intent, then filter by metadata
 ```python
 # Step 1: Classify intent (GPT-4o-mini, ~20 tokens, $0.000003)
-intent = classify_query(query)  # → {"type": "operational", "team": "platform"}
+intent = classify_query(query) # → {"type": "operational", "team": "platform"}
 
 # Step 2: Filtered retrieval
 results = vector_db.search(query_embedding, filter=intent, k=5)
@@ -940,7 +940,7 @@ sequenceDiagram
  participant VectorDB as "Vector Database"
  participant GenLLM as "LLM (for generation)"
 
- User->>System: ❓ Query<br/>"What's our authentication service SLA?"
+ User->>System: Query<br/>"What's our authentication service SLA?"
  System->>LLM: Generate hypothetical answer
  LLM-->>System: "The auth service SLA is 99.9% uptime<br/>with p99 latency under 200ms"<br/>(may be hallucinated)
  System->>Embed: Embed hypothetical answer
@@ -948,7 +948,7 @@ sequenceDiagram
  System->>VectorDB: Search using hypothetical embedding
  VectorDB-->>System: Top-5 retrieved chunks<br/>(actual documents with correct values)
  System->>GenLLM: Context: [retrieved chunks]<br/>Query: [original question]
- GenLLM-->>User: "The authentication service SLA is<br/>99.95% uptime with p99 latency under 50ms"<br/>(✓ grounded in actual documents)
+ GenLLM-->>User: "The authentication service SLA is<br/>99.95% uptime with p99 latency under 50ms"<br/>( grounded in actual documents)
 
  Note over System,GenLLM: Hypothetical answer improved retrieval<br/>by matching document structure,<br/>then real LLM corrected hallucinations
 ```
@@ -963,46 +963,46 @@ sequenceDiagram
 - **Recall improvement:** Typically 2-5 percentage points
 
 **When HyDE helps:**
-✓ Questions vs declarative documents ("What is X?" vs "X is Y")
-✓ Colloquial queries vs formal documentation
-✓ Short queries that need expansion
-✓ Domain-specific jargon mismatches
+ Questions vs declarative documents ("What is X?" vs "X is Y")
+ Colloquial queries vs formal documentation
+ Short queries that need expansion
+ Domain-specific jargon mismatches
 
 **When HyDE doesn't help:**
-✗ Already using exact keyword matches (BM25 handles this)
-✗ Embeddings already trained on your exact domain
-✗ Ultra-low latency requirements (<50ms p95)
-✗ Cost-sensitive applications (extra LLM call matters)
+ Already using exact keyword matches (BM25 handles this)
+ Embeddings already trained on your exact domain
+ Ultra-low latency requirements (<50ms p95)
+ Cost-sensitive applications (extra LLM call matters)
 
 ***
 
 ## Summary: Key Takeaways
 
-### 🎯 Core Concepts
+### Core Concepts
 
 1. **Embeddings = GPS coordinates for meaning**
-   - Similar concepts → nearby points in high-dimensional space
-   - Contextual embeddings (BERT) > static embeddings (Word2vec)
-   - Mean pooling converts token vectors → single chunk vector
-   - *Embeddings give potential. Context gives sentence-specific self.*
+ - Similar concepts → nearby points in high-dimensional space
+ - Contextual embeddings (BERT) > static embeddings (Word2vec)
+ - Mean pooling converts token vectors → single chunk vector
+ - *Embeddings give potential. Context gives sentence-specific self.*
 
 2. **Encoders > Decoders for retrieval**
-   - Bidirectional attention (BERT) sees full context
-   - Causal attention (GPT) only sees past tokens
-   - Use encoders for retrieval, decoders for generation
-   - *GPT reads with a blindfold. BERT reads the whole sentence. Pick the right tool.*
+ - Bidirectional attention (BERT) sees full context
+ - Causal attention (GPT) only sees past tokens
+ - Use encoders for retrieval, decoders for generation
+ - *GPT reads with a blindfold. BERT reads the whole sentence. Pick the right tool.*
 
 3. **Contrastive learning = teaching similarity**
-   - Pull positive pairs together, push negatives apart
-   - InfoNCE loss = "make correct answer stand out"
-   - Training on domain data → better domain embeddings
+ - Pull positive pairs together, push negatives apart
+ - InfoNCE loss = "make correct answer stand out"
+ - Training on domain data → better domain embeddings
 
 4. **RAG = lookup before answering**
-   - Ingestion (offline): chunk → embed → index
-   - Query (runtime): embed → retrieve → augment → generate
-   - 38% hallucination → 4% with proper retrieval
+ - Ingestion (offline): chunk → embed → index
+ - Query (runtime): embed → retrieve → augment → generate
+ - 38% hallucination → 4% with proper retrieval
 
-### ⚙️ Practical Patterns
+### Practical Patterns
 
 **Chunking strategy:**
 - **256 tokens:** High precision, may fragment content
@@ -1020,7 +1020,7 @@ sequenceDiagram
 - Closes query-document phrasing gap
 - 2-5% recall improvement for ~$0.000002/query
 
-### 🚫 Common Pitfalls
+### Common Pitfalls
 
 1. **Mixing embedding models** (ingestion vs query) → broken retrieval
 2. **No chunk overlap** → information lost at boundaries
@@ -1033,7 +1033,7 @@ sequenceDiagram
 9. **No citation attribution** → users don't trust answers
 10. **Naive fixed-size chunking** → 40% recall penalty
 
-### 📊 Decision Framework
+### Decision Framework
 
 | Your Situation | Action |
 |----------------|--------|
@@ -1051,7 +1051,7 @@ sequenceDiagram
 | High cost per query | Reduce context window (fewer chunks), use cheaper LLM for hypothesis (HyDE) |
 | Stale information | Implement incremental index updates, add `last_updated` metadata filtering |
 
-### 🔗 Next Steps
+### Next Steps
 
 - **[Chapter 8: Vector Databases](../ch08-vector-dbs)** — Index structures (HNSW, IVF, DiskANN), compression, production architecture
 - **[RAG Pipeline Project](../../../projects/ai/rag_pipeline)** — End-to-end implementation with chunking, hybrid search, evaluation
@@ -1101,15 +1101,15 @@ The numbers above represent empirical measurements from production RAG systems a
  participant Retrieve as Retrieval<br/>(ANN Search)
  participant Final as Final LLM<br/>(Answer)
 
- User->>LLM: ❓ Query: "What's our auth service SLA?"
+ User->>LLM: Query: "What's our auth service SLA?"
  Note over LLM: Generate hypothetical answer<br/>(may contain hallucinations)
  LLM->>Embed: HyDE Answer:<br/>"The authentication service SLA<br/>is 99.9% uptime with p99 <200ms"
  Note over Embed: Embed hypothetical answer<br/>(structurally similar to docs)
- Embed->>Retrieve: 🔢 HyDE Embedding Vector
+ Embed->>Retrieve: HyDE Embedding Vector
  Retrieve->>VDB: ANN Search<br/>(cosine similarity)
  VDB-->>Retrieve: Top-k Similar Chunks<br/>(actual documents)
  Retrieve->>Final: Retrieved Context:<br/>"Auth SLA: 99.95% uptime, p99 <50ms"<br/>(corrects hallucinated numbers)
- User->>Final: ❓ Original Query
+ User->>Final: Original Query
  Final->>User: Grounded Answer<br/>(based on retrieved docs,<br/>not hypothetical answer)
 
  Note over User,Final: Cost: 1 extra LLM call (~50 tokens)<br/>Benefit: 2-5% recall improvement

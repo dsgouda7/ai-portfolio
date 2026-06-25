@@ -864,6 +864,6 @@ Customers dataset (440 records, 6 spending feature columns). The goal: discover 
 segments with silhouette score > 0.5. No rewards. No labels. Just the data — and structure waiting
 to be found.
 
-> ➡ [07_unsupervised_learning →](../../07_unsupervised_learning)
+> [07_unsupervised_learning →](../../07_unsupervised_learning)
 
 

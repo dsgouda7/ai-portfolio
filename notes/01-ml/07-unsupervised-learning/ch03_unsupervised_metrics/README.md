@@ -170,7 +170,7 @@ $$a(x_3)=0\quad\text{(convention: a singleton cluster has no intra-cluster dista
 
 $$b(x_3)=\frac{d(x_3,x_1)+d(x_3,x_2)}{2}=\frac{\|[5,0]-[0,0]\|+\|[5,0]-[1,0]\|}{2}=\frac{5.0+4.0}{2}=4.5$$
 
-Centroid verification: $\mu_{C_1}=\frac{[0,0]+[1,0]}{2}=[0.5,0]$; $\|[5,0]-[0.5,0]\|=4.5$ ✓
+Centroid verification: $\mu_{C_1}=\frac{[0,0]+[1,0]}{2}=[0.5,0]$; $\|[5,0]-[0.5,0]\|=4.5$
 
 *Silhouette:*
 
@@ -221,7 +221,7 @@ Cluster C1 Cluster C2
 3. Per-cluster silhouette = mean of s(i) for all i in that cluster
 ```
 
-> 📖 **Complexity note:** Computing all pairwise distances is $O(n^2)$ in space and time. For $n>5{,}000$, sklearn supports `sample_size` to approximate the silhouette. For SegmentAI (440 customers), full computation takes <1 second.
+> **Complexity note:** Computing all pairwise distances is $O(n^2)$ in space and time. For $n>5{,}000$, sklearn supports `sample_size` to approximate the silhouette. For SegmentAI (440 customers), full computation takes <1 second.
 
 
 ---

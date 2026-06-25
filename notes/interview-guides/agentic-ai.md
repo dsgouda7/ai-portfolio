@@ -12,7 +12,7 @@ register: high_density_technical_interview_ready
 pedagogy: anticipate_the_interviewer + failure_first_discovery
 format: concept_map + Q&A + failure_modes + signal_words + tradeoff_matrices
 failure_first_pedagogy: true
-callout_system: {insight:"", warning:"", production:"", optional_depth:"📖", forward_pointer:"➡"}
+callout_system: {insight:"", warning:"", production:"", optional_depth:"", forward_pointer:""}
 mermaid_color_palette: {primary:"#1e3a8a", success:"#15803d", caution:"#b45309", danger:"#b91c1c", info:"#1d4ed8"}
 answer_density: {definition:"2-3_sentences", tradeoff:"3-4_sentences", system_design:"1_paragraph", failure_mode:"2_sentences", rapid_fire:"≤3_sentences"}
 math_style: formula_first_then_verbal_gloss_then_numerical_example

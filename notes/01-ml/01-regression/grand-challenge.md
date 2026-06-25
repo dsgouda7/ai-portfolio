@@ -18,7 +18,7 @@ You've now built it. This document is the checkered flag.
 |---|------------|--------|--------|
 | **#1** | **ACCURACY** | <$40k MAE on held-out districts | **Achieved** — Ch.7 XGBoost reaches $32k |
 | **#2** | **GENERALIZATION** | No overfitting; holds on unseen districts | **Achieved** — Ridge regularization + 5-fold CV |
-| **#3** | **MULTI-TASK** | Predict value AND market segment | ➡ Out of scope — continues in [02-Classification →](../02_classification) |
+| **#3** | **MULTI-TASK** | Predict value AND market segment | Out of scope — continues in [02-Classification →](../02_classification) |
 | **#4** | **INTERPRETABILITY** | Explainable predictions for underwriters | **Partially achieved** — VIF audit (Ch.3), SHAP feature importance (Ch.7) |
 | **#5** | **PRODUCTION** | <100ms inference, scale, monitoring | **Pipeline established** — systematic tuning in Ch.7; deeper MLOps in [08-EnsembleMethods →](../08_ensemble_methods) |
 

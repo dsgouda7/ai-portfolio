@@ -14,7 +14,7 @@ concept_motivation: required_before_each_tool
 hands_on_walkthroughs: judicious_production_stack_commands_when_clarifying
 running_example: production_stack_only_no_synthetic_except_minimal_demos
 failure_first_pedagogy: true
-callout_system: {insight:"", warning:"", constraint:"", optional_depth:"📖", forward_pointer:"➡"}
+callout_system: {insight:"", warning:"", constraint:"", optional_depth:"", forward_pointer:""}
 mermaid_color_palette: {primary:"#1e3a8a", success:"#15803d", caution:"#b45309", danger:"#b91c1c", info:"#1d4ed8"}
 image_background: dark_facecolor_1a1a2e_for_generated_diagrams
 section_template: [story_header, challenge_0, animation, core_idea_1, running_example_2, mental_model_3, step_by_step_4, key_diagrams_5, configuration_dial_6, what_can_go_wrong_7, progress_check_N, bridge_N1]
@@ -258,11 +258,11 @@ Brief bullets on what each chapter covers:
 **Do not use emojis in technical content.** All emoji-based callouts have been systematically removed from the repository (27,921 emojis removed across 168 files as of May 2026).
 
 Use text-only formatting:
-- **Checkpoint:** (not 💡 **Checkpoint:**)
-- **Warning:** (not ⚠️ **Warning:**)
-- **Rule of Thumb:** (not 🎯 **Rule of Thumb:**)
-- [Complete] or Complete (not ✅)
-- [WRONG] or [Failed] (not ❌)
+- **Checkpoint:** (not **Checkpoint:**)
+- **Warning:** (not **Warning:**)
+- **Rule of Thumb:** (not **Rule of Thumb:**)
+- [Complete] or Complete (not )
+- [WRONG] or [Failed] (not )
 
 **Rationale:** Emojis create visual clutter, reduce professionalism, and can render inconsistently across platforms. Technical documentation should rely on clear text formatting.
 
@@ -438,8 +438,8 @@ Used consistently. Must be used exactly this way:
 | `` | Key insight / conceptual payoff | After a result that reframes understanding |
 | `` | Warning / common trap | Before or after a pattern often done wrong |
 | `` | ProductionStack constraint connection | When content advances one of the 5 constraints |
-| `> 📖 **Optional:**` | Deeper technical detail | Advanced configs that break narrative flow |
-| `> ➡` | Forward pointer | When a tool needs to be planted before full treatment |
+| `> **Optional:**` | Deeper technical detail | Advanced configs that break narrative flow |
+| `> ` | Forward pointer | When a tool needs to be planted before full treatment |
 
 ---
 
@@ -700,13 +700,13 @@ Drop the phase→§ mapping block entirely. Drop the `[Phase N: LABEL]` suffix f
 
 ```markdown
 > **Containerization verdict:** Image build time 4m12s → 58s with layer caching; 0 "works on my machine" incidents across last 30 deploys.
-> ➡ This layer cache strategy carries into the CI/CD build job in ch04.
+> This layer cache strategy carries into the CI/CD build job in ch04.
 ```
 
 **Callout discipline for DevOps chapters:**
 
 - `> **[Stage] verdict:**` — one line after each pipeline stage; states the measurable outcome (build time, deployment frequency, MTTR, incident count)
-- `> ➡` — forward pointer when a pattern feeds the next chapter
+- `> ` — forward pointer when a pattern feeds the next chapter
 - Never: a "PIPELINE CHECKPOINT" or "DECISION CHECKPOINT" block
 - Never: a section listing "Phase N → §X, §Y Walkthrough B"
 - The section title is the stage name. `## Dockerfile Best Practices` does not need `[Phase 1: WRITE]` appended.
@@ -952,7 +952,7 @@ def show_command(cmd, description=""):
 - Duplicate content across sections (say it once, reference it later)
 
 **Formatting conventions:**
-- Use checkmark bullets for capabilities unlocked: ➡
+- Use checkmark bullets for capabilities unlocked:
 - Show progression as ASCII tables or code block diagrams
 - Use `inline code` for hyperparameters, `$metric$` for dollars
 - Chapter references: "Ch.3" or "Ch.5-7" (never "Chapter Five")

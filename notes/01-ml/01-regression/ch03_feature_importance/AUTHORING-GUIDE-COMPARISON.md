@@ -34,7 +34,7 @@ The feature engineering restructure plan is **workflow-focused** (observe → di
 | **Diagnostic flowcharts** | Required | "Mermaid diagnostic flowchart in What Can Go Wrong section" |
 | **Code snippets** | Covered | "Minimal but complete" + notebook mirroring |
 | **Real data requirement** | Explicit rule | "California Housing real numbers, not toy datasets" |
-| **Callout system** | Defined | 📖➡ with specific use cases |
+| **Callout system** | Defined | with specific use cases |
 
 ### Voice & Style Rules (Match the Restructure Plan)
 

@@ -59,7 +59,7 @@ The hard part is bridging the **modality gap**: a ViT token looks nothing like a
 
 The notebook implements a mini MLLM: a pretrained ViT (from torchvision) → linear projection → a tiny GPT-style decoder trained to answer simple visual questions about product images.
 
-> 📖 **Educational proxy:** The math walkthrough uses digit images from a 10-class visual Q&A dataset (small, CPU-trainable, results in minutes). The VisualForge production version (§5) uses GPT-4o or LLaVA on 512×512 product shots with campaign-brief questions.
+> **Educational proxy:** The math walkthrough uses digit images from a 10-class visual Q&A dataset (small, CPU-trainable, results in minutes). The VisualForge production version (§5) uses GPT-4o or LLaVA on 512×512 product shots with campaign-brief questions.
 
 ## 3 · The Math
 
@@ -441,7 +441,7 @@ print(result)
 
 ## 11 · Notebook
 
-> **🔗 Executable notebook**: [multimodal_llms.ipynb](multimodal_llms.ipynb)
+> ** Executable notebook**: [multimodal_llms.ipynb](multimodal_llms.ipynb)
 
 **What's inside**:
 

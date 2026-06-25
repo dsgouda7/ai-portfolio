@@ -14,7 +14,7 @@ formula_motivation: required_before_each_formula
 numerical_walkthroughs: judicious_knuckleball_examples_when_clarifying
 dataset: knuckleball_free_kick_physics_2d_parabola
 failure_first_pedagogy: true
-callout_system: {insight:"", warning:"", constraint:"", optional_depth:"📖", forward_pointer:"➡"}
+callout_system: {insight:"", warning:"", constraint:"", optional_depth:"", forward_pointer:""}
 mermaid_color_palette: {primary:"#1e3a8a", success:"#15803d", caution:"#b45309", danger:"#b91c1c", info:"#1d4ed8"}
 image_background: dark_facecolor_1a1a2e_for_generated_plots
 section_template: [story_header, challenge_0, core_idea_1, running_example_2, math_3, step_by_step_4, key_diagrams_5, what_can_go_wrong_6, progress_check_N, bridge_N1]
@@ -76,7 +76,7 @@ Every chapter uses the same real-world problem: a football (soccer) striker line
 
 **Can we score this goal?** To succeed, the ball must satisfy **THREE constraints simultaneously**:
 
-1. **🧱 Wall Clearance**: At the wall position (9.15 m horizontal distance, ~0.6s flight time), the ball must be **above 1.8 m** (wall height)
+1. ** Wall Clearance**: At the wall position (9.15 m horizontal distance, ~0.6s flight time), the ball must be **above 1.8 m** (wall height)
 2. ** Crossbar Clearance**: At the goal line (20 m horizontal distance, ~1.2s flight time), the ball must be **below 2.44 m** (crossbar height)
 3. ** Keeper-Beating Speed**: The ball must arrive fast enough (or with short enough flight time) that the goalkeeper cannot react
 
@@ -125,7 +125,7 @@ Every chapter README follows this **extended structure**:
 > **The goal**: Score a free kick that clears a 1.8m wall and dips under a 2.44m crossbar while beating the keeper's reaction time.
 >
 > **THREE constraints:**
-> 1. 🧱 WALL CLEARANCE: Ball height > 1.8m at 9.15m distance
+> 1. WALL CLEARANCE: Ball height > 1.8m at 9.15m distance
 > 2. CROSSBAR CLEARANCE: Ball height < 2.44m at 20m distance
 > 3. KEEPER-BEATING SPEED: Flight time or arrival velocity sufficient
 
@@ -227,11 +227,11 @@ Every chapter README follows this **extended structure**:
 **Do not use emojis in technical content.** All emoji-based callouts have been systematically removed from the repository (27,921 emojis removed across 168 files as of May 2026).
 
 Use text-only formatting:
-- **Checkpoint:** (not 💡 **Checkpoint:**)
-- **Warning:** (not ⚠️ **Warning:**)
-- **Rule of Thumb:** (not 🎯 **Rule of Thumb:**)
-- [Complete] or Complete (not ✅)
-- [WRONG] or [Failed] (not ❌)
+- **Checkpoint:** (not **Checkpoint:**)
+- **Warning:** (not **Warning:**)
+- **Rule of Thumb:** (not **Rule of Thumb:**)
+- [Complete] or Complete (not )
+- [WRONG] or [Failed] (not )
 
 **Rationale:** Emojis create visual clutter, reduce professionalism, and can render inconsistently across platforms. Technical documentation should rely on clear text formatting.
 
@@ -359,7 +359,7 @@ If a formula has no verbal gloss within three lines, it is incomplete.
 
 **Rule 3: the notation table lives in the header.** All symbols are declared in the "Notation in this chapter" header blockquote before any section. Subsections add no new notation without glossing it immediately.
 
-**Rule 4: optional depth gets a callout box.** Derivations that would break the flow of a practitioner reading for intuition go inside an indented `> 📖 **Optional:**` block. These are clearly labelled and can be skipped without losing the main thread. Full Taylor series expansions, Lagrange multiplier derivations, rigorous epsilon-delta proofs — all go in these blocks. The optional block ends with a note on where to find the complete treatment if needed.
+**Rule 4: optional depth gets a callout box.** Derivations that would break the flow of a practitioner reading for intuition go inside an indented `> **Optional:**` block. These are clearly labelled and can be skipped without losing the main thread. Full Taylor series expansions, Lagrange multiplier derivations, rigorous epsilon-delta proofs — all go in these blocks. The optional block ends with a note on where to find the complete treatment if needed.
 
 **Rule 5: ASCII matrix diagrams for matrix operations.** When showing a matrix multiply or a matrix structure, draw it in ASCII with aligned brackets, showing the dimensions of each operand and the result. Example:
 
@@ -412,7 +412,7 @@ A · x (2×2) · (2×1) → (2×1)
 
 **Forward link pattern:** *"This derivative machinery is the entire foundation of gradient descent in ML. Every time you see `loss.backward()` in PyTorch, this chain rule is running — one step per layer."*
 
-**The forward pointer callout box** (`> ➡`) is used for concepts that will be formally introduced later but need to be planted early. Example: plant gradients in Ch.3 with `> ➡ Ch.6 extends this to multi-variable optimization (gradients + chain rule)`.
+**The forward pointer callout box** (`> `) is used for concepts that will be formally introduced later but need to be planted early. Example: plant gradients in Ch.3 with `> Ch.6 extends this to multi-variable optimization (gradients + chain rule)`.
 
 **Cross-track links** to ML chapters are standard. Always reference the specific chapter: `[ML 01-Regression/ch01-linear-regression](../../ml/01_regression/ch01_linear_regression)`.
 
@@ -427,8 +427,8 @@ Used consistently across all chapters. Must be used exactly this way — no impr
 | `` | Key insight / conceptual payoff | After a result that surprises or reframes understanding |
 | `` | Warning / common trap | Before or immediately after a pattern often done wrong |
 | `` | Constraint connection | When content advances or validates one of the 3 free-kick constraints |
-| `> 📖 **Optional:**` | Deeper derivation | Full proofs that break narrative flow |
-| `> ➡` | Forward pointer | When a concept needs to be planted before its full treatment |
+| `> **Optional:**` | Deeper derivation | Full proofs that break narrative flow |
+| `> ` | Forward pointer | When a concept needs to be planted before its full treatment |
 
 The callout box content is always **actionable**: it ends with a Fix, a Rule, a What-to-do. No callout box that just says "this is interesting" without consequence.
 
@@ -709,7 +709,7 @@ Act 4: Decision framework (when to use which)
 
 **Mix these modes fluidly:**
 - **Confession:** "You could try 100 angles by hand. Or let calculus find it in one shot." (Ch.3)
-- **Rigor:** Full derivations in `> 📖 Optional` boxes with proofs
+- **Rigor:** Full derivations in `> Optional` boxes with proofs
 - **Tutorial:** "Fix: Always use `np.radians()` for trig functions"
 
 **Why effective:** Signals "this is for practitioners who also need to justify decisions to advisors."
@@ -754,7 +754,7 @@ Example: "We demonstrate that...", "It can be shown that...", "In this section w
 **Synthetic toy scenarios**
 Example: Using `h(t) = 5t - 2t²` without physical grounding instead of actual knuckleball kinematics
 **Improvised emoji**
-Example: Using ✨ as inline callouts (only 📖➡ allowed)
+Example: Using as inline callouts (only allowed)
 **Topic-label section headings**
 Example: "## 3 · Math" instead of "## 3 · Math — How Parabolas Encode Initial Conditions"
 **Skipping numerical verification**
@@ -1170,12 +1170,12 @@ Before publishing any chapter, verify each item:
 - [ ] Every formula: scalar form shown first, vector/matrix form second with structural identity noted
 - [ ] Every non-trivial formula: demonstrated on knuckleball parameters with explicit arithmetic (v₀=20m/s, θ=30°, etc.)
 - [ ] Failure-first pedagogy: new concepts introduced because simpler one broke, not listed a priori
-- [ ] Optional depth: full derivations behind `> 📖 Optional` callout boxes (Taylor series, Lagrange, epsilon-delta proofs)
+- [ ] Optional depth: full derivations behind `> Optional` callout boxes (Taylor series, Lagrange, epsilon-delta proofs)
 - [ ] ASCII matrix diagrams: used for all matrix operations (show dimensions, explicit element-wise computation)
 
 ### Links & References
 - [ ] Forward/backward links: every concept links to where it was introduced and where it reappears (ML chapters + future Math chapters)
-- [ ] Callout boxes: only ` 📖 ➡` — no improvised emoji
+- [ ] Callout boxes: only ` ` — no improvised emoji
 - [ ] ML cross-references: specific chapter paths (e.g., `[ML 01-Regression/ch01](../../ml/01_regression/ch01_linear_regression)`)
 
 ### Visual Elements
@@ -1215,7 +1215,7 @@ Before publishing any chapter, verify each item:
 - [ ] Failure-first arc: tool → specific failure → minimal fix → that fix's failure → next tool (not taxonomy listing)
 - [ ] Problem→Cost→Solution: every technique shown AFTER demonstrating need (specific failure + constraint violation)
 - [ ] Historical hook → physics stakes: person + year → lasting impact → connection to free kick (3-sentence pattern)
-- [ ] Forward pointers: `> ➡` callouts plant concepts before full treatment (Ch.3 plants gradients for Ch.6)
+- [ ] Forward pointers: `> ` callouts plant concepts before full treatment (Ch.3 plants gradients for Ch.6)
 
 ### Notebook Alignment
 - [ ] Widget system: every slider paired with bidirectional numeric text input (type or drag)
@@ -1287,15 +1287,15 @@ Derivation steps should be numbered sub-sections within a single proof section �
 
 Each step is its own paragraph under the same section. No meta-table. No phase label. The flow is the section.
 
-For forward links to other chapters and tracks, use `> ➡` callouts in-place — never a compiled list:
+For forward links to other chapters and tracks, use `> ` callouts in-place — never a compiled list:
 
-> ➡ This result appears in ML Ch.01-Regression as the closed-form solver for linear regression weights. You will see it again in Ch.05-Matrices (§3.7) when the feature matrix grows beyond 3×3.
+> This result appears in ML Ch.01-Regression as the closed-form solver for linear regression weights. You will see it again in Ch.05-Matrices (§3.7) when the feature matrix grows beyond 3×3.
 
 **Callout discipline for math chapters:**
 
 - `> **[concept] verdict:**` — one line after a proof or derivation, states the engineering implication; e.g.:
  > **Gradient verdict:** The partial derivative isolates each weight's contribution — this is why backprop scales to 175B parameters without computing all cross-derivatives simultaneously.
-- `> ➡` — forward pointer to the ML/AI chapter or later math section where this formula appears in code
+- `> ` — forward pointer to the ML/AI chapter or later math section where this formula appears in code
 - `> ` — constraint connection when a derivation result advances one of the three free-kick constraints
 - **Never:** a "PROOF STAGE" or "DERIVATION PHASE" block with "What you just derived / What it means / Where it appears"
-- **Never:** a bullet list mapping "Step N → §X in Ch.Y" — embed the section reference as prose or a `> ➡` callout
+- **Never:** a bullet list mapping "Step N → §X in Ch.Y" — embed the section reference as prose or a `> ` callout

@@ -1,22 +1,22 @@
 # LLM Inference Mechanics
 
-**Status:** ✅ Complete
+**Status:** Complete
 
 How LLMs generate text at inference time — sampling, the autoregressive loop, KV caching, prefill vs decode, and production serving tradeoffs.
 
 ## Contents
 
 - [inference-mechanics.md](inference-mechanics.md) — Core chapter content
-  - Sampling parameters (temperature, top-p, top-k)
-  - KV cache optimization (the breakthrough that made chatbots viable)
-  - Prefill vs decode phases (compute-bound vs memory-bound)
-  - Production tradeoffs (throughput vs latency)
+ - Sampling parameters (temperature, top-p, top-k)
+ - KV cache optimization (the breakthrough that made chatbots viable)
+ - Prefill vs decode phases (compute-bound vs memory-bound)
+ - Production tradeoffs (throughput vs latency)
 
 - [notebook-exercise.ipynb](notebook-exercise.ipynb) — Hands-on exercises with TODOs
-  - Measure KV cache speedup (2-5x improvement)
-  - Compare prefill vs decode latency
-  - Test batching throughput
-  - Experiment with sampling parameters (temperature, top-p, top-k)
+ - Measure KV cache speedup (2-5x improvement)
+ - Compare prefill vs decode latency
+ - Test batching throughput
+ - Experiment with sampling parameters (temperature, top-p, top-k)
 
 - [notebook-solution.ipynb](notebook-solution.ipynb) — Complete implementations
 
@@ -25,19 +25,19 @@ How LLMs generate text at inference time — sampling, the autoregressive loop, 
 After completing this chapter, you should be able to:
 
 1. **Understand sampling mechanics**
-   - Explain how temperature, top-p, and top-k affect generation
-   - Choose appropriate sampling parameters for different use cases
-   - Implement sampling strategies using HuggingFace Transformers
+ - Explain how temperature, top-p, and top-k affect generation
+ - Choose appropriate sampling parameters for different use cases
+ - Implement sampling strategies using HuggingFace Transformers
 
 2. **Optimize inference performance**
-   - Measure KV cache impact on generation speed
-   - Distinguish between prefill and decode phases
-   - Evaluate batching strategies for throughput
+ - Measure KV cache impact on generation speed
+ - Distinguish between prefill and decode phases
+ - Evaluate batching strategies for throughput
 
 3. **Make production tradeoffs**
-   - Balance throughput vs latency requirements
-   - Calculate KV cache memory requirements
-   - Understand compute-bound vs memory-bound bottlenecks
+ - Balance throughput vs latency requirements
+ - Calculate KV cache memory requirements
+ - Understand compute-bound vs memory-bound bottlenecks
 
 ## Prerequisites
 

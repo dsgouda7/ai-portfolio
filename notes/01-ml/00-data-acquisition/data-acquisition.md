@@ -125,25 +125,25 @@ from urllib3.util.retry import Retry
 
 
 def build_session(
-    retries: int = 5,
-    backoff_factor: float = 1.0,
-    status_forcelist: tuple = (429, 500, 502, 503, 504),
+ retries: int = 5,
+ backoff_factor: float = 1.0,
+ status_forcelist: tuple = (429, 500, 502, 503, 504),
 ) -> requests.Session:
-    """
-    Build a requests session with automatic retry and exponential backoff.
-    backoff_factor=1.0 → waits 0s, 2s, 4s, 8s, 16s between successive retries.
-    """
-    session = requests.Session()
-    retry = Retry(
-        total=retries,
-        backoff_factor=backoff_factor,
-        status_forcelist=status_forcelist,
-        respect_retry_after_header=True,   # obeys 429 Retry-After header
-    )
-    adapter = HTTPAdapter(max_retries=retry)
-    session.mount("https://", adapter)
-    session.mount("http://", adapter)
-    return session
+ """
+ Build a requests session with automatic retry and exponential backoff.
+ backoff_factor=1.0 → waits 0s, 2s, 4s, 8s, 16s between successive retries.
+ """
+ session = requests.Session()
+ retry = Retry(
+ total=retries,
+ backoff_factor=backoff_factor,
+ status_forcelist=status_forcelist,
+ respect_retry_after_header=True, # obeys 429 Retry-After header
+ )
+ adapter = HTTPAdapter(max_retries=retry)
+ session.mount("https://", adapter)
+ session.mount("http://", adapter)
+ return session
 ```
 
 `respect_retry_after_header=True` is the critical flag: it reads the `Retry-After` value from the 429 response instead of computing the backoff independently, which is both more polite and more reliable.
@@ -161,19 +161,19 @@ from datetime import datetime
 
 
 class LaunchRecord(BaseModel):
-    id: str
-    name: str
-    date_utc: datetime
-    success: Optional[bool]      # null for upcoming launches — legitimate absence
-    upcoming: bool
-    cores: list[dict]
+ id: str
+ name: str
+ date_utc: datetime
+ success: Optional[bool] # null for upcoming launches — legitimate absence
+ upcoming: bool
+ cores: list[dict]
 
-    @field_validator("date_utc", mode="before")
-    @classmethod
-    def parse_date(cls, v):
-        if isinstance(v, str):
-            return datetime.fromisoformat(v.rstrip("Z"))
-        return v
+ @field_validator("date_utc", mode="before")
+ @classmethod
+ def parse_date(cls, v):
+ if isinstance(v, str):
+ return datetime.fromisoformat(v.rstrip("Z"))
+ return v
 ```
 
 If `success` is absent from a response record — meaning the API returned an unexpected schema — `pydantic` raises `ValidationError` immediately at the fetch stage, not silently at training time when the null propagates into your target column. Schema drift becomes a loud error, not a quiet data quality bug.
@@ -199,32 +199,32 @@ RAW_OUTPUT = Path("data/raw/launches.jsonl")
 
 
 def fetch_all_launches(output: Path = RAW_OUTPUT) -> int:
-    """
-    Full-refresh fetch of SpaceX launches to JSONL.
-    Schema-validated at ingest. Returns number of records written.
-    """
-    session = build_session()
-    output.parent.mkdir(parents=True, exist_ok=True)
+ """
+ Full-refresh fetch of SpaceX launches to JSONL.
+ Schema-validated at ingest. Returns number of records written.
+ """
+ session = build_session()
+ output.parent.mkdir(parents=True, exist_ok=True)
 
-    written, offset, limit = 0, 0, 100
-    with jsonlines.open(output, mode="w") as writer:
-        while True:
-            resp = session.get(
-                LAUNCHES_URL,
-                params={"offset": offset, "limit": limit},
-                timeout=15,
-            )
-            resp.raise_for_status()
-            records = resp.json()
-            if not records:
-                break
-            for raw in records:
-                launch = LaunchRecord(**raw)           # raises on schema drift
-                writer.write(launch.model_dump(mode="json"))
-            written += len(records)
-            offset += limit
+ written, offset, limit = 0, 0, 100
+ with jsonlines.open(output, mode="w") as writer:
+ while True:
+ resp = session.get(
+ LAUNCHES_URL,
+ params={"offset": offset, "limit": limit},
+ timeout=15,
+ )
+ resp.raise_for_status()
+ records = resp.json()
+ if not records:
+ break
+ for raw in records:
+ launch = LaunchRecord(**raw) # raises on schema drift
+ writer.write(launch.model_dump(mode="json"))
+ written += len(records)
+ offset += limit
 
-    return written
+ return written
 ```
 
 JSONL (newline-delimited JSON) is preferred over a single large JSON array for three reasons: it is append-safe (add records without rewriting the file), streamable (`pd.read_json("file.jsonl", lines=True)` processes it without loading everything into memory), and inspectable (`head data/raw/launches.jsonl` shows real records immediately).
@@ -247,11 +247,11 @@ Web scraping is a four-stage pipeline with a clear tool at each stage:
 
 ```
 URL
-  → requests.get()             raw HTML bytes
-      → BeautifulSoup(html)    navigable parse tree
-          → .find() / .select() target element
-              → pd.read_html(str(element))[0]   DataFrame
-                                (for <table> elements)
+ → requests.get() raw HTML bytes
+ → BeautifulSoup(html) navigable parse tree
+ → .find() / .select() target element
+ → pd.read_html(str(element))[0] DataFrame
+ (for <table> elements)
 ```
 
 **`requests.get(url)`** fetches raw HTML. Works for server-rendered pages. Does not execute JavaScript. Wikipedia uses server-side rendering; `requests` is sufficient. For JavaScript-rendered pages (React SPAs, dynamic tables), you need `playwright` or `selenium` to drive a real browser.
@@ -309,29 +309,29 @@ HASH_STORE = Path("data/raw/.content_hashes.json")
 
 
 def fetch_with_change_detection(url: str, name: str) -> bytes:
-    """
-    Fetch URL; raise ValueError if the content hash differs from the last
-    known state. On first run, stores the hash and proceeds normally.
-    """
-    import requests
-    resp = requests.get(url, timeout=15)
-    resp.raise_for_status()
+ """
+ Fetch URL; raise ValueError if the content hash differs from the last
+ known state. On first run, stores the hash and proceeds normally.
+ """
+ import requests
+ resp = requests.get(url, timeout=15)
+ resp.raise_for_status()
 
-    current_hash = hashlib.sha256(resp.content).hexdigest()
-    hashes = json.loads(HASH_STORE.read_text()) if HASH_STORE.exists() else {}
-    last_hash = hashes.get(name)
+ current_hash = hashlib.sha256(resp.content).hexdigest()
+ hashes = json.loads(HASH_STORE.read_text()) if HASH_STORE.exists() else {}
+ last_hash = hashes.get(name)
 
-    if last_hash and last_hash != current_hash:
-        raise ValueError(
-            f"Content hash mismatch for '{name}': "
-            f"expected {last_hash[:8]}..., got {current_hash[:8]}...\n"
-            "Source page structure may have changed. Inspect before proceeding."
-        )
+ if last_hash and last_hash != current_hash:
+ raise ValueError(
+ f"Content hash mismatch for '{name}': "
+ f"expected {last_hash[:8]}..., got {current_hash[:8]}...\n"
+ "Source page structure may have changed. Inspect before proceeding."
+ )
 
-    hashes[name] = current_hash
-    HASH_STORE.parent.mkdir(parents=True, exist_ok=True)
-    HASH_STORE.write_text(json.dumps(hashes, indent=2))
-    return resp.content
+ hashes[name] = current_hash
+ HASH_STORE.parent.mkdir(parents=True, exist_ok=True)
+ HASH_STORE.write_text(json.dumps(hashes, indent=2))
+ return resp.content
 ```
 
 On first run: stores the hash and returns content. On subsequent runs: if the content changed, raises before any parsing. You inspect the change, update your selector if needed, then deliberately reset the stored hash. The structural change is now a known failure, not silent corruption that shows up two weeks later in model evaluation.
@@ -355,7 +355,7 @@ df = pd.read_html(str(table))[0]
 
 # Multi-level column headers → flatten to single string
 if isinstance(df.columns, pd.MultiIndex):
-    df.columns = [" ".join(filter(None, map(str, col))).strip() for col in df.columns]
+ df.columns = [" ".join(filter(None, map(str, col))).strip() for col in df.columns]
 
 # Footnote rows: rows where all values are identical (usually a merged cell note)
 df = df[df.apply(lambda r: r.nunique() > 1, axis=1)]
@@ -408,20 +408,20 @@ import pandas as pd
 
 
 def handle_landing_outcome(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Separate landing outcome into attempt flag and success flag.
-    Preserves MNAR semantics: missing outcome ≠ failed outcome.
-    Three states: attempted+succeeded, attempted+failed, not attempted.
-    """
-    df = df.copy()
-    df["landing_attempted"] = df["landing_outcome"].notna()
-    df["landing_success"] = (
-        df["landing_outcome"]
-        .map(lambda v: True if str(v).lower() in ("success", "true", "1")
-                       else False if pd.notna(v) else pd.NA)
-        .astype(pd.BooleanDtype())
-    )
-    return df
+ """
+ Separate landing outcome into attempt flag and success flag.
+ Preserves MNAR semantics: missing outcome ≠ failed outcome.
+ Three states: attempted+succeeded, attempted+failed, not attempted.
+ """
+ df = df.copy()
+ df["landing_attempted"] = df["landing_outcome"].notna()
+ df["landing_success"] = (
+ df["landing_outcome"]
+ .map(lambda v: True if str(v).lower() in ("success", "true", "1")
+ else False if pd.notna(v) else pd.NA)
+ .astype(pd.BooleanDtype())
+ )
+ return df
 ```
 
 ### Type coercion: normalizing the chaos
@@ -439,17 +439,17 @@ A normalization function that handles all boolean variants cleanly:
 
 ```python
 def coerce_boolean(series: pd.Series) -> pd.Series:
-    """Normalize any boolean-ish representation to pd.BooleanDtype."""
-    _TRUE  = {"true", "yes", "1", "success", "successful"}
-    _FALSE = {"false", "no", "0", "failure", "failed", "n/a", "none", "nan", ""}
-    return (
-        series
-        .astype(str)
-        .str.lower()
-        .str.strip()
-        .map(lambda v: True if v in _TRUE else False if v in _FALSE else pd.NA)
-        .astype(pd.BooleanDtype())
-    )
+ """Normalize any boolean-ish representation to pd.BooleanDtype."""
+ _TRUE = {"true", "yes", "1", "success", "successful"}
+ _FALSE = {"false", "no", "0", "failure", "failed", "n/a", "none", "nan", ""}
+ return (
+ series
+ .astype(str)
+ .str.lower()
+ .str.strip()
+ .map(lambda v: True if v in _TRUE else False if v in _FALSE else pd.NA)
+ .astype(pd.BooleanDtype())
+ )
 ```
 
 The `errors="coerce"` argument in `pd.to_numeric()` and `pd.to_datetime()` is the single most important parameter in wrangling work: it replaces unparseable values with `NaN` rather than raising an exception. This makes coercion failures observable — you can count the resulting nulls after coercion and decide whether the count is acceptable — rather than having to choose between silent corruption and hard failures that halt your pipeline.
@@ -470,23 +470,23 @@ Define a **priority order** for each field based on source reliability, then mer
 
 ```python
 def merge_with_priority(
-    api_df: pd.DataFrame, wiki_df: pd.DataFrame
+ api_df: pd.DataFrame, wiki_df: pd.DataFrame
 ) -> pd.DataFrame:
-    """
-    Merge API and Wikipedia records by flight_number.
-    API wins for outcome fields (more frequently updated, authoritative).
-    Wikipedia wins for descriptive text fields (more historically complete).
-    """
-    merged = api_df.merge(
-        wiki_df, on="flight_number", suffixes=("_api", "_wiki"), how="outer"
-    )
-    merged["landing_success"] = merged["landing_success_api"].combine_first(
-        merged["landing_success_wiki"]
-    )
-    merged["launch_site"] = merged["launch_site_wiki"].combine_first(
-        merged["launch_site_api"]
-    )
-    return merged
+ """
+ Merge API and Wikipedia records by flight_number.
+ API wins for outcome fields (more frequently updated, authoritative).
+ Wikipedia wins for descriptive text fields (more historically complete).
+ """
+ merged = api_df.merge(
+ wiki_df, on="flight_number", suffixes=("_api", "_wiki"), how="outer"
+ )
+ merged["landing_success"] = merged["landing_success_api"].combine_first(
+ merged["landing_success_wiki"]
+ )
+ merged["launch_site"] = merged["launch_site_wiki"].combine_first(
+ merged["launch_site_api"]
+ )
+ return merged
 ```
 
 `combine_first()` takes the left value when it's non-null, falling back to the right. Document the priority choice explicitly — in six months, you won't remember which source was authoritative for which field.
@@ -497,26 +497,26 @@ The final step of wrangling is not "save the file." It's "assert the output meet
 
 ```python
 def validate_launches(df: pd.DataFrame) -> None:
-    """
-    Assert data quality invariants before writing to data/processed/.
-    Raises AssertionError with a descriptive message on any violation.
-    """
-    assert len(df) >= 100, f"Suspiciously few records: {len(df)} (expected ≥ 100)"
+ """
+ Assert data quality invariants before writing to data/processed/.
+ Raises AssertionError with a descriptive message on any violation.
+ """
+ assert len(df) >= 100, f"Suspiciously few records: {len(df)} (expected ≥ 100)"
 
-    required_nonnull = ["flight_number", "launch_date", "rocket_type"]
-    for col in required_nonnull:
-        n_null = df[col].isna().sum()
-        assert n_null == 0, f"Required column '{col}' has {n_null} null values"
+ required_nonnull = ["flight_number", "launch_date", "rocket_type"]
+ for col in required_nonnull:
+ n_null = df[col].isna().sum()
+ assert n_null == 0, f"Required column '{col}' has {n_null} null values"
 
-    assert df["payload_mass_kg"].dropna().gt(0).all(), \
-        "payload_mass_kg contains non-positive values"
+ assert df["payload_mass_kg"].dropna().gt(0).all(), \
+ "payload_mass_kg contains non-positive values"
 
-    if "latitude" in df.columns:
-        assert df["latitude"].dropna().between(-90, 90).all(), \
-            "latitude out of range [-90, 90]"
+ if "latitude" in df.columns:
+ assert df["latitude"].dropna().between(-90, 90).all(), \
+ "latitude out of range [-90, 90]"
 
-    dupes = df["flight_number"].duplicated().sum()
-    assert dupes == 0, f"{dupes} duplicate flight_number values after deduplication"
+ dupes = df["flight_number"].duplicated().sum()
+ assert dupes == 0, f"{dupes} duplicate flight_number values after deduplication"
 ```
 
 Write validation functions before you write wrangling functions. The assertions describe the contract you're trying to satisfy; the wrangling code is your attempt to satisfy it. Running validation as the last step of every pipeline run makes it impossible to accidentally produce a corrupt output that persists silently.
@@ -551,40 +551,40 @@ import hashlib
 
 
 def fetch_if_changed(url: str, dest: Path) -> bool:
-    """
-    Fetch URL to dest only if content hash differs from last fetch.
-    Returns True if a new fetch was performed, False if skipped.
-    """
-    import requests
-    resp = requests.get(url, timeout=15)
-    resp.raise_for_status()
+ """
+ Fetch URL to dest only if content hash differs from last fetch.
+ Returns True if a new fetch was performed, False if skipped.
+ """
+ import requests
+ resp = requests.get(url, timeout=15)
+ resp.raise_for_status()
 
-    new_hash = hashlib.sha256(resp.content).hexdigest()
-    hash_file = dest.with_suffix(".sha256")
+ new_hash = hashlib.sha256(resp.content).hexdigest()
+ hash_file = dest.with_suffix(".sha256")
 
-    if dest.exists() and hash_file.exists():
-        if hash_file.read_text().strip() == new_hash:
-            return False  # content unchanged; skip write
+ if dest.exists() and hash_file.exists():
+ if hash_file.read_text().strip() == new_hash:
+ return False # content unchanged; skip write
 
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    dest.write_bytes(resp.content)
-    hash_file.write_text(new_hash)
-    return True
+ dest.parent.mkdir(parents=True, exist_ok=True)
+ dest.write_bytes(resp.content)
+ hash_file.write_text(new_hash)
+ return True
 ```
 
 ### Raw vs processed: the only non-negotiable layout rule
 
 ```
 data/
-├── raw/               # Written once by fetch scripts. Never overwritten.
-│   ├── launches.jsonl
-│   ├── html/
-│   │   └── wiki_launches_2010_2014.html
-│   └── csv/
-│       └── manual_corrections.csv
-└── processed/         # Written by wrangling scripts. Regenerable from raw.
-    ├── launches_clean.parquet
-    └── launches_merged.parquet
+├── raw/ # Written once by fetch scripts. Never overwritten.
+│ ├── launches.jsonl
+│ ├── html/
+│ │ └── wiki_launches_2010_2014.html
+│ └── csv/
+│ └── manual_corrections.csv
+└── processed/ # Written by wrangling scripts. Regenerable from raw.
+ ├── launches_clean.parquet
+ └── launches_merged.parquet
 ```
 
 The rule: `data/raw/` is **append-only and never overwritten in place**. If the API returns new data, a new timestamped file appears in `data/raw/`. Processed files are derivatives that can always be regenerated by running the wrangling pipeline over the raw files. If `data/processed/` is deleted (corrupt, wrong schema version, needs regeneration with updated logic), it is recoverable in minutes. If `data/raw/` is deleted, you've lost the ground truth.
@@ -613,37 +613,37 @@ When a data pipeline fails at 3 AM, you have one debugging tool: the logs. Log e
 import logging
 
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(message)s"
+ level=logging.INFO,
+ format="%(asctime)s %(levelname)s %(message)s"
 )
 log = logging.getLogger(__name__)
 
 
 def run_pipeline() -> None:
-    log.info("Pipeline start")
+ log.info("Pipeline start")
 
-    rows_fetched = fetch_all_launches()
-    log.info(f"Fetched {rows_fetched} raw launch records from API")
+ rows_fetched = fetch_all_launches()
+ log.info(f"Fetched {rows_fetched} raw launch records from API")
 
-    df_raw = pd.read_json("data/raw/launches.jsonl", lines=True)
-    log.info(f"Raw shape: {df_raw.shape} | dtypes: {dict(df_raw.dtypes)}")
-    log.info(f"Null counts by column: {df_raw.isna().sum().to_dict()}")
+ df_raw = pd.read_json("data/raw/launches.jsonl", lines=True)
+ log.info(f"Raw shape: {df_raw.shape} | dtypes: {dict(df_raw.dtypes)}")
+ log.info(f"Null counts by column: {df_raw.isna().sum().to_dict()}")
 
-    df_clean = wrangle(df_raw)
-    log.info(
-        f"After wrangling: {len(df_clean)} rows, "
-        f"{df_clean.isna().sum().sum()} total nulls remaining"
-    )
+ df_clean = wrangle(df_raw)
+ log.info(
+ f"After wrangling: {len(df_clean)} rows, "
+ f"{df_clean.isna().sum().sum()} total nulls remaining"
+ )
 
-    try:
-        validate_launches(df_clean)
-        log.info("Validation passed")
-    except AssertionError as e:
-        log.error(f"Validation FAILED: {e}")
-        raise
+ try:
+ validate_launches(df_clean)
+ log.info("Validation passed")
+ except AssertionError as e:
+ log.error(f"Validation FAILED: {e}")
+ raise
 
-    df_clean.to_parquet("data/processed/launches_clean.parquet", index=False)
-    log.info("Pipeline complete — output written to data/processed/launches_clean.parquet")
+ df_clean.to_parquet("data/processed/launches_clean.parquet", index=False)
+ log.info("Pipeline complete — output written to data/processed/launches_clean.parquet")
 ```
 
 Log row counts at each stage. If the pipeline produces 47 rows when you expected 200, stage-level counts tell you whether 153 rows were lost in fetch, schema validation rejection, type coercion, deduplication, or the final validation assertion. Without stage counts, you know the output is wrong but not where the attrition happened.

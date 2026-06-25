@@ -8,7 +8,7 @@
 
 **Three ways to learn the Math Under the Hood track:**
 
-1. **📖 Sequential deep dive (recommended)**: Read chapters Ch.1–7 in order, each with:
+1. ** Sequential deep dive (recommended)**: Read chapters Ch.1–7 in order, each with:
  - Full narrative in `chNN_*/README.md`
  - Interactive widgets in `chNN_*/notebook.ipynb`
  - Each chapter builds on the previous one's concepts
@@ -178,15 +178,15 @@ READY FOR ML: All math foundations complete
 flowchart TD
  START["Problem: Score free kick<br/>3 constraints"]
 
- CH1["Ch.1: Linear Algebra<br/>$h = wt + b$<br/>✓ Predict first 0.1s"]
+ CH1["Ch.1: Linear Algebra<br/>$h = wt + b$<br/> Predict first 0.1s"]
 
- CH2["Ch.2: Polynomial Features<br/>$h = v₀t - ½gt²$<br/>✓ Model full parabola"]
+ CH2["Ch.2: Polynomial Features<br/>$h = v₀t - ½gt²$<br/> Model full parabola"]
 
  CH3["Ch.3: Calculus<br/>$h' = 0$ → find apex<br/> Verify wall/crossbar"]
 
- CH4["Ch.4: Gradient Descent<br/>$θ ← θ - η∇L$<br/>✓ Optimize 1 parameter"]
+ CH4["Ch.4: Gradient Descent<br/>$θ ← θ - η∇L$<br/> Optimize 1 parameter"]
 
- CH5["Ch.5: Matrices<br/>$\hat{y} = Xw$<br/>✓ Handle 8+ features"]
+ CH5["Ch.5: Matrices<br/>$\hat{y} = Xw$<br/> Handle 8+ features"]
 
  CH6["Ch.6: Chain Rule<br/>Backpropagation<br/> Optimize all parameters"]
 
@@ -283,7 +283,7 @@ When a paper uses focal loss, Dice loss, or triplet loss, they're making implici
 
 ## The Evolution Arc — How the Mathematics Grew with the Problem
 
-> 📜 **Historical context:** Every concept below solved a problem that had no prior solution. Understanding *which* problem makes the math stick.
+> **Historical context:** Every concept below solved a problem that had no prior solution. Understanding *which* problem makes the math stick.
 
 **820 CE: Al-Khwārizmī (Linear Algebra)**
 → Systematic methods for solving $ax + b = c$ — the word "algebra" comes from his book's title.

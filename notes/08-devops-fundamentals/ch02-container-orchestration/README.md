@@ -229,7 +229,7 @@ Without this, Flask would crash with "connection refused" errors on startup.
 > **Common alternatives:** Docker Swarm (deprecated), Kubernetes (multi-node orchestration), Nomad (HashiCorp)
 
 > **Define verdict:** 3-tier stack (web + cache + db) declared with health-check dependency ordering — `service_healthy` prevents Flask/Postgres race condition.
-> ➡ Topology complete; proceed to Configure phase to externalize secrets.
+> Topology complete; proceed to Configure phase to externalize secrets.
 
 ---
 
@@ -303,7 +303,7 @@ services:
 > **Common alternatives:** AWS Secrets Manager, HashiCorp Vault, Azure Key Vault, Kubernetes Secrets
 
 > **Configure verdict:** Secrets moved from YAML to `.env` — same `docker-compose.yml` works across dev/staging/prod with different `.env` files.
-> ➡ Credentials out of git history; proceed to Orchestrate phase.
+> Credentials out of git history; proceed to Orchestrate phase.
 
 ---
 
@@ -403,7 +403,7 @@ docker compose ps
 > **Common alternatives:** Nginx, HAProxy, AWS ALB, Kubernetes Ingress
 
 > **Orchestrate verdict:** Health-check ordering eliminates startup races; `unless-stopped` auto-heals crashes; resource limits cap memory at 1 GB per service.
-> ➡ Services self-heal; horizontal scaling via `--scale` ready for load balancer; proceed to Observe phase.
+> Services self-heal; horizontal scaling via `--scale` ready for load balancer; proceed to Observe phase.
 
 ---
 
@@ -548,7 +548,7 @@ docker compose exec db psql -U user -d appdb -c "SELECT COUNT(*) FROM users;"
 ```
 
 > **Observe verdict:** `docker compose ps` shows unhealthy services instantly; centralized logs surface root cause without `docker exec` in most cases.
-> ➡ Observability complete; chapter ready for Kubernetes orchestration in Ch.3.
+> Observability complete; chapter ready for Kubernetes orchestration in Ch.3.
 
 ---
 

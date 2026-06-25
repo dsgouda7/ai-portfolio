@@ -665,7 +665,7 @@ Every concept from this chapter propagates forward through the track:
 | Pipeline stages | Ch.6: each stage becomes a microservice in the production architecture |
 | Popularity baseline as fallback | Appears throughout production when personalised models lack sufficient data |
 
-> ➡ **Cross-track pointer**: The leave-one-out evaluation protocol here mirrors the hold-out evaluation in the Classification track. The key difference is that recommendation evaluation is *ranking*-based — we care about the order of items, not merely whether each is classified correctly. HR@K and NDCG@K are the ranking counterparts of accuracy and AUC.
+> **Cross-track pointer**: The leave-one-out evaluation protocol here mirrors the hold-out evaluation in the Classification track. The key difference is that recommendation evaluation is *ranking*-based — we care about the order of items, not merely whether each is classified correctly. HR@K and NDCG@K are the ranking counterparts of accuracy and AUC.
 
 ---
 

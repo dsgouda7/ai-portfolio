@@ -424,7 +424,7 @@ $$\hat{\theta}_\text{MLE} = \arg\min_\theta \sum_{i=1}^{N}(y_i - \hat{y}_i)^2 \e
 
 $$p(y_i \mid x_i;\theta) = \hat{p}_i^{\,y_i}(1-\hat{p}_i)^{1-y_i}$$
 
-Verify: if $y_i = 1$ this equals $\hat{p}_i$; if $y_i = 0$ this equals $1-\hat{p}_i$. ✓
+Verify: if $y_i = 1$ this equals $\hat{p}_i$; if $y_i = 0$ this equals $1-\hat{p}_i$.
 
 **Step 2** — Assume independence: joint likelihood is the product:
 
@@ -634,7 +634,7 @@ The MLE framework introduced here is the theoretical skeleton behind every loss 
 
 **Next up:** Ch.8 — **TensorBoard** — instruments the training loop with real-time loss curves, weight histograms, and embedding projections. Every NLL quantity from this chapter becomes a named scalar in TensorBoard, making the "did the noise assumption hold?" question answerable from a dashboard, not just from first principles.
 
-> ➡ **Recommended reading order**: if you want to understand *why* the loss values you log to TensorBoard mean what they mean, re-read §4.2 (Gaussian → MSE) and §4.3 (Bernoulli → BCE) after completing Ch.8. The two chapters are designed to be read as a pair: this chapter provides the derivation, Ch.8 provides the instrumentation.
+> **Recommended reading order**: if you want to understand *why* the loss values you log to TensorBoard mean what they mean, re-read §4.2 (Gaussian → MSE) and §4.3 (Bernoulli → BCE) after completing Ch.8. The two chapters are designed to be read as a pair: this chapter provides the derivation, Ch.8 provides the instrumentation.
 
 ---
 

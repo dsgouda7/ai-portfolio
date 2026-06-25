@@ -221,7 +221,7 @@ image.save("vf_product_generation.png")
 
 **Industry Callout — Generation Phase:**
 
-> 🏭 **Stable Diffusion Model Selection:**
+> **Stable Diffusion Model Selection:**
 > - **SD 1.5** (runwayml/stable-diffusion-v1-5): Fastest, largest LoRA ecosystem, 512×512 native
 > - Use when: Speed critical, community fine-tunes needed
 > - **SDXL** (stabilityai/stable-diffusion-xl-base-1.0): Higher quality, 1024×1024 native, dual text encoders
@@ -296,7 +296,7 @@ image.save("vf_controlled_generation.png")
 
 **Industry Callout — ControlNet Phase:**
 
-> 🏭 **ControlNet Ecosystem Overview:**
+> **ControlNet Ecosystem Overview:**
 > - **ControlNet v1.0** (Zhang et al. 2023): 8 control types (Canny, depth, pose, etc.)
 > - Pretrained on SD 1.5, widely adopted, Hugging Face `diffusers` support
 > - **ControlNet v1.1** (2023): Improved preprocessors, 14 control types
@@ -405,7 +405,7 @@ inpaint_region(
 
 **Industry Callout — Refinement Phase:**
 
-> 🏭 **Post-Processing Tool Landscape:**
+> **Post-Processing Tool Landscape:**
 > - **Upscaling:**
 > - **Real-ESRGAN** (Tencent, 2021): Best general-purpose, 4× upscaling, handles diffusion artifacts well
 > - **Ultimate SD Upscale** (AUTOMATIC1111): Tiled upscaling for massive images (8×, 16×)
@@ -437,7 +437,7 @@ ControlNet condition: Canny edge map (from a reference 3D render or sketch)
 Result: Generated image respects both the angle (from edge map) and the brand description (from text)
 ```
 
-> 📖 **Educational proxy:** ControlNet img2img math is demonstrated on a simplified domain to show the latent interpolation. Production ControlNet on VisualForge briefs uses the same `diffusers` API shown in §5.
+> **Educational proxy:** ControlNet img2img math is demonstrated on a simplified domain to show the latent interpolation. Production ControlNet on VisualForge briefs uses the same `diffusers` API shown in §5.
 
 ## 3 · The Math
 
@@ -869,7 +869,7 @@ image.save("vf_product_45deg.png")
 
 ## 11 · Notebook
 
-> 📖 **Executable walkthrough**: [text-to-image.ipynb](text-to-image.ipynb)
+> **Executable walkthrough**: [text-to-image.ipynb](text-to-image.ipynb)
 >
 > **What you'll build**:
 > 1. **Prompt engineering**: Compare token order and weighting effects on CLIP embeddings

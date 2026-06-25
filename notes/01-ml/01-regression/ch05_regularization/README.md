@@ -336,7 +336,7 @@ The fundamental difference between Ridge (L2) and Lasso (L1) is how they treat w
 
 ![Ridge vs Lasso comparison](img/ch05-ridge-vs-lasso.gif)
 
-*Ridge (left) keeps all features active even at high λ, shrinking them smoothly toward zero. Lasso (right) progressively eliminates features at specific λ thresholds. Red ✗ marks zeroed features. This shows why Lasso is called a "feature selection" method.*
+*Ridge (left) keeps all features active even at high λ, shrinking them smoothly toward zero. Lasso (right) progressively eliminates features at specific λ thresholds. Red marks zeroed features. This shows why Lasso is called a "feature selection" method.*
 
 **Key observations:**
 - **Ridge:** All 44 features stay non-zero across the entire λ range — even at λ=1000, weights are tiny but present
@@ -493,7 +493,7 @@ Ch.6 introduces the **regression evaluation toolkit** — cross-validation, resi
 
 ---
 
-## 🔧 Exercise Connection
+## Exercise connection
 
 Ridge and Lasso from this chapter are the core of **Steps 1–2** in `exercises/01-ml/01-regression/src/models.py`:
 

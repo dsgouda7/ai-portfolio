@@ -14,7 +14,7 @@ register: high_density_technical_interview_ready
 pedagogy: anticipate_the_interviewer + failure_first_discovery
 format: concept_map + Q&A + failure_modes + signal_words + tradeoff_matrices
 failure_first_pedagogy: true
-callout_system: {insight:"", warning:"", production:"", optional_depth:"📖", forward_pointer:"➡"}
+callout_system: {insight:"", warning:"", production:"", optional_depth:"", forward_pointer:""}
 mermaid_color_palette: {primary:"#1e3a8a", success:"#15803d", caution:"#b45309", danger:"#b91c1c", info:"#1d4ed8"}
 answer_density: {definition:"2-3_sentences", tradeoff:"3-4_sentences", system_design:"1_paragraph", failure_mode:"2_sentences", rapid_fire:"≤3_sentences"}
 math_style: formula_first_then_verbal_gloss_judicious_numerical_examples
@@ -150,11 +150,11 @@ The reader is treated as a capable engineer who doesn't need flattery, gets impa
 **Do not use emojis in technical content.** All emoji-based callouts have been systematically removed from the repository (27,921 emojis removed across 168 files as of May 2026).
 
 Use text-only formatting:
-- **Checkpoint:** (not 💡 **Checkpoint:**)
-- **Warning:** (not ⚠️ **Warning:**)
-- **Rule of Thumb:** (not 🎯 **Rule of Thumb:**)
-- [Complete] or Complete (not ✅)
-- [WRONG] or [Failed] (not ❌)
+- **Checkpoint:** (not **Checkpoint:**)
+- **Warning:** (not **Warning:**)
+- **Rule of Thumb:** (not **Rule of Thumb:**)
+- [Complete] or Complete (not )
+- [WRONG] or [Failed] (not )
 
 **Rationale:** Emojis create visual clutter, reduce professionalism, and can render inconsistently across platforms. Technical documentation should rely on clear text formatting.
 
@@ -191,8 +191,8 @@ Used consistently across all interview guides. Must be used exactly this way —
 | `` | Key insight / interview power-up | After a distinction that separates senior from junior answers |
 | `` | Common interview trap | Questions that trip up candidates who have surface knowledge |
 | `` | Production angle / scale consideration | How the concept changes at production scale (10k req/day, 100M users) |
-| `> 📖 **Optional:**` | Deeper technical detail | Formal proofs, advanced theory that can be skipped in interview prep |
-| `> ➡` | Related concept pointer | When a concept connects to another domain or advanced topic |
+| `> **Optional:**` | Deeper technical detail | Formal proofs, advanced theory that can be skipped in interview prep |
+| `> ` | Related concept pointer | When a concept connects to another domain or advanced topic |
 
 The callout box content is always **actionable**: it ends with a Fix, a Rule, a What-to-do, or a specific decision criterion. No callout box that just says "this is interesting" without consequence.
 
@@ -276,10 +276,10 @@ All Mermaid nodes use `stroke:#e2e8f0,stroke-width:2px,color:#ffffff` for text l
 **Forward link pattern:** *"If the interviewer follows up with 'how does this scale?', see the [Production Scaling] section below."*
 
 **Cross-guide links:** When a concept in one interview guide relates to another domain:
-> *"➡ For the infrastructure angle on serving these models, see [AIInfrastructure.md](ai-infrastructure.md#model-serving)"*
+> *" For the infrastructure angle on serving these models, see [AIInfrastructure.md](ai-infrastructure.md#model-serving)"*
 
 **External reference links:** Link to official docs, papers, or blog posts for deep dives:
-> *"📖 For the full attention mechanism derivation, see [Vaswani et al. 2017 — 'Attention Is All You Need'](https://arxiv.org/abs/1706.03762)"*
+> *" For the full attention mechanism derivation, see [Vaswani et al. 2017 — 'Attention Is All You Need'](https://arxiv.org/abs/1706.03762)"*
 
 Every guide opens with a **concept map of the 10 most-tested question clusters** for that domain. These are not textbook sections — they are the *actual categories of questions* interviewers use.
 
@@ -590,7 +590,7 @@ Example: A 2-paragraph essay for a question that should take 20 seconds to answe
 **No concrete numbers**
 Example: "Significantly faster" instead of "18× throughput improvement"
 **Improvised emoji**
-Example: Using ✨ as callouts (only 📖➡ allowed)
+Example: Using as callouts (only allowed)
 
 ### Structural Anti-Patterns
 **Missing Junior vs Senior comparison**
@@ -649,7 +649,7 @@ Before publishing any interview guide, verify each item:
 - [ ] Anchor example: concrete scenario referenced throughout
 
 ### Visual & Formatting
-- [ ] Callout boxes: only ` 📖 ➡` — no improvised emoji
+- [ ] Callout boxes: only ` ` — no improvised emoji
 - [ ] Mermaid diagrams: colour palette respected (dark blue / dark green / amber / dark red)
 - [ ] Images: high-contrast, purposeful (not decorative), descriptive alt-text
 - [ ] No animations (static reference images only for interview guides)
@@ -671,8 +671,8 @@ Before publishing any interview guide, verify each item:
 
 ### Cross-References
 - [ ] Links to related interview guides for cross-domain concepts
-- [ ] Links to official docs / papers for deep dives (📖 Optional)
-- [ ] Forward pointers (➡) for advanced topics
+- [ ] Links to official docs / papers for deep dives ( Optional)
+- [ ] Forward pointers () for advanced topics
 - [ ] Backward links for prerequisite concepts
 
 ### Completeness Test
@@ -813,12 +813,12 @@ Fold the study sequence into one "How to use this guide" paragraph at the top �
 
 > **Gradient descent verdict:** If asked "explain backprop to a product manager", the answer is: "We measure how wrong the model is, then nudge every weight slightly in the direction that makes it less wrong. Do that 10,000 times."
 
-> ➡ For the production angle on learning rate schedules, see [Cost & Latency Optimization](#cost--latency-optimization).
+> For the production angle on learning rate schedules, see [Cost & Latency Optimization](#cost--latency-optimization).
 
 **Callout discipline for interview guides:**
 
 - `> **[concept] verdict:**` — the one-sentence answer a hiring manager would want to hear
-- `> ➡` — forward pointer to related concepts or deeper chapters
+- `> ` — forward pointer to related concepts or deeper chapters
 - Never: a "STUDY CHECKPOINT" or "Quick Reference — Section N Summary" block with multiple sub-headings
 - Never: "Week N → §X, §Y, §Z" cross-reference tables
 - Never: `## SECTION N` or `## Ch.N` prefixes — ordinal tracking crowds out concept recall

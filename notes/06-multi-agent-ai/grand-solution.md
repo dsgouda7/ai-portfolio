@@ -4,7 +4,7 @@
 
 ---
 
-## 📖 How to Read This Track
+## How to Read This Track
 
 ### Two Learning Paths
 
@@ -220,8 +220,8 @@ Here's how all 7 concepts integrate into the deployed OrderFlow system:
 ```mermaid
 flowchart TD
  subgraph "External Systems"
- EMAIL["📧 Email<br/>(requester POs)"]
- SUPPLIERS["🏢 Supplier APIs<br/>(TechFurnish, OfficeDepot)"]
+ EMAIL[" Email<br/>(requester POs)"]
+ SUPPLIERS[" Supplier APIs<br/>(TechFurnish, OfficeDepot)"]
  ERP[" ERP System<br/>(inventory, pricing)"]
  end
 

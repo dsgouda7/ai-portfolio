@@ -24,7 +24,7 @@
 
 **What's blocking us:**
 
-🚨 **External content is trusted by default — prompt injection vulnerability**
+ **External content is trusted by default — prompt injection vulnerability**
 
 Your negotiation agent receives supplier reply for PO #2024-1847 (standing desks, $7,490 total):
 
@@ -408,7 +408,7 @@ async def call_approval_agent_with_managed_identity(payload: dict):
 ---
 
 > **Layer 1 verdict:** JWT, API key, and managed-identity paths all validated — no anonymous requests pass; 1-hour JWT expiry limits stolen-token blast radius; managed identity eliminates static-credential theft risk.
-> ➡ Identity confirmed — Layer 2 now checks whether this agent has *permission* to perform the requested action (§3.3.2).
+> Identity confirmed — Layer 2 now checks whether this agent has *permission* to perform the requested action (§3.3.2).
 
 ---
 
@@ -547,7 +547,7 @@ Token verification checks: (1) signature valid, (2) all caveats satisfied. If an
 ---
 
 > **Layer 2 verdict:** RBAC blocked negotiation agent from approving (403 Forbidden) while granting approval agent the correct permission — least privilege enforced; capability tokens enable safe time-boxed delegation without permanent role escalation.
-> ➡ Authorization granted — Layer 3 sandboxes the code that now runs (§3.3.3).
+> Authorization granted — Layer 3 sandboxes the code that now runs (§3.3.3).
 
 ---
 
@@ -696,7 +696,7 @@ print(f"PO #{{data['po_id']}}: ${{data['total_usd']:,.2f}}")
 ---
 
 > **Layer 3 verdict:** Docker sandbox with 128MB/50%-CPU/no-network limits contained both memory-bomb and data-exfiltration attacks — injected code ran but did no permanent damage; blast radius capped at one 30-second container.
-> ➡ Execution logged by Layer 4 to create tamper-proof forensics trail (§3.3.4).
+> Execution logged by Layer 4 to create tamper-proof forensics trail (§3.3.4).
 
 ---
 
@@ -946,7 +946,7 @@ Returns all authorization denials from today → identify potential attack patte
 ---
 
 > **Layer 4 verdict:** Structured JSON audit log records every auth/authz/sandbox event with tamper-proof timestamps — compliance satisfied; incident response has full chain-of-custody from JWT claim to code execution.
-> ➡ Layer 5 watches these logs for anomalous patterns (rate spikes, unusual approval amounts) in §3.3.5.
+> Layer 5 watches these logs for anomalous patterns (rate spikes, unusual approval amounts) in §3.3.5.
 
 ---
 
@@ -1271,13 +1271,13 @@ def circuit_breaker_reset(agent_id: str):
 ---
 
 > **Layer 5 verdict:** Rate limiting throttled 150-req/min brute-force; Z-score anomaly (60.6σ on $500k PO) tripped circuit breaker automatically; self-healing half-open reset restored normal flow — all 5 defence layers operational.
-> ➡ End-to-end attack flow reviewed in §4; OrderFlow now meets production security requirements.
+> End-to-end attack flow reviewed in §4; OrderFlow now meets production security requirements.
 
 ---
 
 ## Authentication Between Agents
 
-> 📖 **Note:** Authentication mechanisms are now covered comprehensively in **§3.3.1 [Layer 1: IDENTITY]** as part of the 5-layer defense-in-depth model. See that section for:
+> **Note:** Authentication mechanisms are now covered comprehensively in **§3.3.1 [Layer 1: IDENTITY]** as part of the 5-layer defense-in-depth model. See that section for:
 > - OAuth 2.0 + JWT token validation (with PyJWT code example)
 > - API key authentication (with Redis-backed validation)
 > - Managed identity (Azure/AWS/GCP cloud-native approach)

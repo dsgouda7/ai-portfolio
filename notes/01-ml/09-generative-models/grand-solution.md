@@ -16,11 +16,11 @@ This document synthesizes the full SynthGen Studio solution across all 3 chapter
 
 | # | Constraint | Target | Final Status | How We Achieved It |
 |---|------------|--------|--------------|---------------------|
-| **#1** | **QUALITY** | >90% fooling rate | ✓ **>90% (GANs)** | Ch.1: 60% (autoencoder blur) → Ch.2: 75% (VAE probabilistic) → Ch.3: >90% (GAN adversarial training) |
-| **#2** | **DIVERSITY** | Cover all classes, avoid mode collapse | ✓ **Achieved** | Ch.3: Minibatch discrimination + WGAN prevents GAN mode collapse |
-| **#3** | **CONTROLLABILITY** | Generate specific class on demand | ✓ **Partial** | Conditional GAN (cGAN) extension enables class-specific generation |
-| **#4** | **EFFICIENCY** | <200ms per 64-sample batch | ✓ **<100ms** | GAN single forward pass (vs 50+ diffusion steps) |
-| **#5** | **LATENT INTERPRETABILITY** | Smooth interpolation, meaningful latent arithmetic | ✓ **VAE/GAN** | VAE: smooth latent space; GAN: implicit latent space but interpolation works |
+| **#1** | **QUALITY** | >90% fooling rate | **>90% (GANs)** | Ch.1: 60% (autoencoder blur) → Ch.2: 75% (VAE probabilistic) → Ch.3: >90% (GAN adversarial training) |
+| **#2** | **DIVERSITY** | Cover all classes, avoid mode collapse | **Achieved** | Ch.3: Minibatch discrimination + WGAN prevents GAN mode collapse |
+| **#3** | **CONTROLLABILITY** | Generate specific class on demand | **Partial** | Conditional GAN (cGAN) extension enables class-specific generation |
+| **#4** | **EFFICIENCY** | <200ms per 64-sample batch | **<100ms** | GAN single forward pass (vs 50+ diffusion steps) |
+| **#5** | **LATENT INTERPRETABILITY** | Smooth interpolation, meaningful latent arithmetic | **VAE/GAN** | VAE: smooth latent space; GAN: implicit latent space but interpolation works |
 
 ---
 
@@ -89,21 +89,21 @@ Loss: ELBO = -‖x - x_recon‖² - KL(N(μ,σ²) ‖ N(0,I))
 **Key architecture (DCGAN)**:
 ```
 Generator:
-    z ~ N(0,I) (100D noise)
-    → Linear(100→7×7×256) → Reshape
-    → ConvTranspose(256→128) → BatchNorm → ReLU
-    → ConvTranspose(128→64) → BatchNorm → ReLU
-    → Conv(64→1) → Tanh → 28×28 digit
+ z ~ N(0,I) (100D noise)
+ → Linear(100→7×7×256) → Reshape
+ → ConvTranspose(256→128) → BatchNorm → ReLU
+ → ConvTranspose(128→64) → BatchNorm → ReLU
+ → Conv(64→1) → Tanh → 28×28 digit
 
 Discriminator:
-    x (28×28 digit)
-    → Conv(1→64, stride=2) → LeakyReLU
-    → Conv(64→128, stride=2) → BatchNorm → LeakyReLU
-    → Flatten → Linear → Sigmoid → P(real)
+ x (28×28 digit)
+ → Conv(1→64, stride=2) → LeakyReLU
+ → Conv(64→128, stride=2) → BatchNorm → LeakyReLU
+ → Flatten → Linear → Sigmoid → P(real)
 
 Losses:
-    D_loss = -log D(x_real) - log(1 - D(G(z)))  [maximize]
-    G_loss = -log D(G(z))  [minimize, fool discriminator]
+ D_loss = -log D(x_real) - log(1 - D(G(z))) [maximize]
+ G_loss = -log D(G(z)) [minimize, fool discriminator]
 ```
 
 **The forger analogy**:
@@ -132,11 +132,11 @@ Losses:
 | **Architecture** | Encoder-decoder | Encoder-decoder | Generator-discriminator |
 | **Latent space** | Deterministic | Probabilistic (Gaussian) | Implicit (no encoder) |
 | **Training loss** | MSE reconstruction | ELBO (MSE + KL) | Adversarial (min-max game) |
-| **Generation** | ❌ No (only reconstruction) | ✓ Yes (sample from prior) | ✓ Yes (sample noise) |
+| **Generation** | No (only reconstruction) | Yes (sample from prior) | Yes (sample noise) |
 | **Quality (fooling rate)** | ~60% (blurry) | ~75% (less blurry) | **>90% (sharp)** |
-| **Diversity** | N/A | ✓ Covers all classes | ✓ Covers all classes (with minibatch disc) |
-| **Interpolation** | N/A (deterministic) | ✓ Smooth morphing | ✓ Works (implicit latent) |
-| **Training stability** | ✓ Stable | ✓ Stable | ⚠️ Requires tuning (k, lr) |
+| **Diversity** | N/A | Covers all classes | Covers all classes (with minibatch disc) |
+| **Interpolation** | N/A (deterministic) | Smooth morphing | Works (implicit latent) |
+| **Training stability** | Stable | Stable | Requires tuning (k, lr) |
 | **Inference speed** | Fast (single pass) | Fast (single pass) | **Fastest** (no encoder needed) |
 | **Best for** | Compression, anomaly detection | Latent space exploration, style transfer | **Photorealistic synthesis**, data augmentation |
 
@@ -149,16 +149,16 @@ Losses:
 ```python
 # 1. Train GAN on real X-ray dataset (800 samples)
 for epoch in range(200):
-    # Train discriminator
-    for _ in range(5): # k=5 discriminator updates per G update
-        d_loss = train_discriminator(real_batch, generator)
+ # Train discriminator
+ for _ in range(5): # k=5 discriminator updates per G update
+ d_loss = train_discriminator(real_batch, generator)
 
-    # Train generator
-    g_loss = train_generator(discriminator)
+ # Train generator
+ g_loss = train_generator(discriminator)
 
-    if epoch % 10 == 0:
-        # Save checkpoints, log metrics
-        save_checkpoint(generator, discriminator, epoch)
+ if epoch % 10 == 0:
+ # Save checkpoints, log metrics
+ save_checkpoint(generator, discriminator, epoch)
 
 # 2. Generate synthetic X-rays (9,200 samples)
 z = torch.randn(9200, 100) # Sample noise
@@ -272,11 +272,11 @@ GANs solved the quality problem (>90% fooling rate) but introduced training inst
 **Deployment architecture**:
 ```
 Real X-rays (800)
-    ↓
+ ↓
 Train GAN → Generate synthetic (9,200)
-    ↓
+ ↓
 Augmented dataset (10,000) → Train diagnostic CNN
-    ↓
+ ↓
 Production model (92% AUC)
 ```
 
@@ -287,10 +287,10 @@ Production model (92% AUC)
 - **Time to market**: 6 months faster (no IRB approvals for synthetic data)
 
 **Technical achievements**:
-- ✓ Constraint #1: >90% fooling rate (GAN adversarial training)
-- ✓ Constraint #2: Full class coverage (minibatch discrimination)
-- ✓ Constraint #3: Controllable generation (conditional GAN extension)
-- ✓ Constraint #4: <100ms per batch (single forward pass)
-- ✓ Constraint #5: Interpretable latent space (VAE + GAN interpolation)
+- Constraint #1: >90% fooling rate (GAN adversarial training)
+- Constraint #2: Full class coverage (minibatch discrimination)
+- Constraint #3: Controllable generation (conditional GAN extension)
+- Constraint #4: <100ms per batch (single forward pass)
+- Constraint #5: Interpretable latent space (VAE + GAN interpolation)
 
 **ALL 5 CONSTRAINTS SATISFIED**. SynthGen Studio **APPROVED FOR PRODUCTION DEPLOYMENT**.

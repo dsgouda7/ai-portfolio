@@ -113,9 +113,9 @@ trade-offs quantization VAE configuration memory profiling
 - **Precision**: FP32 (best quality, 2× VRAM) vs FP16 (standard) vs INT8 (3× faster, slight quality loss)
 
 > **Select verdict:** SDXL-Turbo + DDIM 4-step + FP16 on RTX 3090 → 8s/image at 4.1/5.0 HPSv2 — meets <30s target with quality above threshold.
-> ➡ Performance tuning with xformers is applied next to reduce VRAM footprint.
+> Performance tuning with xformers is applied next to reduce VRAM footprint.
 
-> 🏭 **Industry standard: Hugging Face Diffusers**
+> **Industry standard: Hugging Face Diffusers**
 > The `diffusers` library (500k+ downloads/month) is the production standard for loading any Stable Diffusion variant. Supports 100+ models via `from_pretrained()`, swappable schedulers, and automatic device mapping.
 
 **Code: Phase 1 — Model Loading with Device Mapping**
@@ -173,9 +173,9 @@ Hardware sufficient for SDXL-Turbo
 - **Quantization**: BitsAndBytes INT8 → 3× VRAM reduction, 2× speedup, <5% quality loss
 
 > **Optimize verdict:** xformers + batch_size=4 → 8s/image (1.5× faster), 4.8GB VRAM — latency target met with quality unchanged.
-> ➡ Full pipeline integration (VAE, safety checker, ControlNet) is wired in the next step.
+> Full pipeline integration (VAE, safety checker, ControlNet) is wired in the next step.
 
-> 🏭 **Industry standard: xformers (Meta AI)**
+> **Industry standard: xformers (Meta AI)**
 > Memory-efficient attention kernels reduce VRAM by 30-40% with no quality loss. Standard in Automatic1111, ComfyUI, and all production deployments. Install: `pip install xformers`
 
 **Code: Phase 2 — xformers Optimization Enable**
@@ -250,9 +250,9 @@ Phase 2 optimization successful — proceed to Phase 3
 - **ControlNet stack**: Single condition (Canny edges) vs multi-condition (depth + pose + edges)
 
 > **Integrate verdict:** Safety checker + default VAE + Canny ControlNet → 3% NSFW false positive rate, no NaN artifacts — unusable image target met.
-> ➡ Full pipeline benchmark for latency, VRAM, and throughput is run in the next step.
+> Full pipeline benchmark for latency, VRAM, and throughput is run in the next step.
 
-> 🏭 **Industry standard: Safety Classifiers**
+> **Industry standard: Safety Classifiers**
 > The CLIP-based NSFW filter in `diffusers` catches 95%+ of inappropriate content but has ~3% false positive rate on artistic nudity (sculptures, medical diagrams). For zero-trust environments, add a secondary model like `LAION-AI/CLIP-based-NSFW-Detector`.
 
 **Code: Phase 3 — Complete Pipeline with Safety Checker**
@@ -350,9 +350,9 @@ Image passed safety check — ready for production use
 - [ ] 100+ images/day throughput (8-hour workday)
 
 > **Validate verdict:** 8.2s avg latency, 4.8GB peak VRAM, 4.1/5.0 HPSv2 — all 5 production targets passed, pipeline ready for deployment.
-> ➡ Production deployment details and ecosystem tools are covered in §6 and §7.
+> Production deployment details and ecosystem tools are covered in §6 and §7.
 
-> 🏭 **Industry standard: Automated Quality Gates**
+> **Industry standard: Automated Quality Gates**
 > Production systems use HPSv2 (aesthetic scoring), CLIP Score (prompt alignment), and ImageReward (human preference prediction) as CI/CD quality gates. See [LAION Aesthetics Predictor](https://github.com/christophschuhmann/improved-aesthetic-predictor) for reference implementation.
 
 **Code: Phase 4 — Benchmark Script with Memory Tracking**
@@ -567,7 +567,7 @@ No new mathematics in this chapter. The capstone assembles results from previous
 **Real client brief**: "Woman in floral dress, Parisian café terrace, golden hour, editorial photography, Vogue style"
 
 > **Select verdict:** SDXL-Turbo + DDIM 4-step on MacBook Pro M2 → 8s/image at 4.1/5.0 quality, no VRAM bottleneck — meets <30s target with 4× margin.
-> ➡ ControlNet conditioning for composition control is optionally layered in next.
+> ControlNet conditioning for composition control is optionally layered in next.
 
 1. **Text in → CLIP encode** → 512-dim text embedding `c` from client brief.
 2. **Sample latent** $z_T \sim \mathcal{N}(0, I)$ → starting noise.
@@ -618,7 +618,7 @@ PIXELSMITH v6 — FULL ARCHITECTURE
 ```
 
 > **Integrate verdict:** Safety checker + default VAE + Canny ControlNet meets brand safety requirements — 3% NSFW false positive rate and no NaN artifacts, unusable target met.
-> ➡ Performance profiling at scale (1,000 images/day) is explored in §6.
+> Performance profiling at scale (1,000 images/day) is explored in §6.
 
 ---
 
@@ -636,9 +636,9 @@ PIXELSMITH v6 — FULL ARCHITECTURE
 | Single GPU | Multi-GPU distillation (LCM, Turbo) |
 
 > **Optimize verdict:** xformers + batch_size=4 + DPM-Solver++ → 5s/image (60% faster), 320 images/day — exceeds 100/day throughput target by 3.2×.
-> ➡ Ecosystem tools for scaling beyond single-GPU deployments are listed below.
+> Ecosystem tools for scaling beyond single-GPU deployments are listed below.
 
-> 🏭 **Industry standard: Automatic1111 WebUI**
+> **Industry standard: Automatic1111 WebUI**
 > The most popular local diffusion interface (100k+ stars on GitHub). Supports 1000+ extensions, batch generation, ControlNet stacking, and one-click model swapping. Recommended for non-technical users deploying the §1.5 workflow without writing code.
 
 ### Ecosystem Tools
@@ -722,7 +722,7 @@ See the companion notebook: `notebook_supplement.ipynb`
 4. **Business validation**: $600k/year savings, 2.5-month payback, 40× faster turnaround, 8× throughput
 
 > **Validate verdict:** 8.2s avg latency, 4.8GB VRAM, 4.1/5.0 HPSv2, 120 images/day — all 5 production targets exceeded, VisualForge Studio launch approved.
-> ➡ Next step: fine-tune on custom datasets or scale to video generation.
+> Next step: fine-tune on custom datasets or scale to video generation.
 
 ---
 

@@ -8,9 +8,9 @@ This folder contains Python scripts that generate animated GIFs illustrating adv
 **Output:** `../img/ch11_reflection_loop.gif`
 
 Illustrates the **Generate → Critique → Revise** pattern with color-coded stages:
-- 🔴 Red: Error detected
-- 🟡 Yellow: Critique phase
-- 🟢 Green: Successful resolution
+- Red: Error detected
+- Yellow: Critique phase
+- Green: Successful resolution
 
 **Example:** PizzaBot detecting contradictions in "gluten-free pizza with extra cheese" and self-correcting to "gluten-free pizza with vegan cheese"
 
@@ -91,8 +91,8 @@ Shows **Generate → Verify → Correct** iteration:
 **Verification States:**
 - ○ Pending (gray)
 - Verifying (orange)
-- ✓ Verified (green)
-- ✗ Failed (red)
+- Verified (green)
+- Failed (red)
 
 **Metrics:**
 - Confidence scores per claim

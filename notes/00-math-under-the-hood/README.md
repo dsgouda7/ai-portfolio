@@ -22,7 +22,7 @@ Every chapter uses the *same* real-world problem: a football (soccer) striker li
 
 **Can we score this goal?** To succeed, the ball must satisfy **THREE constraints simultaneously**:
 
-1. **🧱 Wall Clearance**: At the wall position (9.15 m horizontal distance, ~0.6s flight time), the ball must be **above 1.8 m** (wall height)
+1. ** Wall Clearance**: At the wall position (9.15 m horizontal distance, ~0.6s flight time), the ball must be **above 1.8 m** (wall height)
 2. ** Crossbar Clearance**: At the goal line (20 m horizontal distance, ~1.2s flight time), the ball must be **below 2.44 m** (crossbar height)
 3. ** Keeper-Beating Speed**: The ball must arrive fast enough (or with short enough flight time) that the goalkeeper cannot react
 

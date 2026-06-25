@@ -200,7 +200,7 @@ flowchart TD
  C -- Yes --> D["TF-IDF / Embeddings\nstill required — trees need numbers"]
  C -- No --> E
  D --> E["Label / Ordinal Encoding\n'Red'→1 'Blue'→2\nOne-Hot actively discouraged:\ncreates sparse, redundant splits"]
- E --> F["XGBoost Training\n✓ Handles non-linearity internally\n✓ Captures interactions via branches\n✓ Scale-invariant — no StandardScaler\n✓ Robust to outliers — own leaf"]
+ E --> F["XGBoost Training\n Handles non-linearity internally\n Captures interactions via branches\n Scale-invariant — no StandardScaler\n Robust to outliers — own leaf"]
 ```
 
 ---
@@ -311,7 +311,7 @@ Three samples. True labels $y = [3, 1, 2]$. Current predictions all at the mean:
 | 2 | 1 | 2 | $2 - 1 = \mathbf{+1}$ | 1 | Over-predicted — push down |
 | 3 | 2 | 2 | $2 - 2 = \mathbf{\phantom{+}0}$ | 1 | Perfect — no correction |
 
-**Sanity check**: $G_{\text{total}} = -1 + 1 + 0 = 0$. Always zero when $\hat{y} = \bar{y}$ under MSE. ✓
+**Sanity check**: $G_{\text{total}} = -1 + 1 + 0 = 0$. Always zero when $\hat{y} = \bar{y}$ under MSE.
 
 ---
 
@@ -323,13 +323,13 @@ Assign sample 1 to Leaf L, samples 2 and 3 to Leaf R. $\lambda = 1$.
 
 $$w_L^* = -\frac{G_L}{H_L + \lambda} = -\frac{-1}{1 + 1} = \frac{1}{2} = \mathbf{0.5}$$
 
-Leaf adds $+0.5$ to predictions. New prediction for sample 1: $2 + 0.5 = 2.5$ → closer to truth 3. ✓
+Leaf adds $+0.5$ to predictions. New prediction for sample 1: $2 + 0.5 = 2.5$ → closer to truth 3.
 
 **Leaf R** — samples 2 and 3: $G_R = +1 + 0 = +1$, $H_R = 1 + 1 = 2$
 
 $$w_R^* = -\frac{G_R}{H_R + \lambda} = -\frac{+1}{2 + 1} = -\frac{1}{3} \approx \mathbf{-0.333}$$
 
-Leaf subtracts 0.333. New prediction for sample 2: $2 - 0.333 = 1.667$ → closer to truth 1. ✓
+Leaf subtracts 0.333. New prediction for sample 2: $2 - 0.333 = 1.667$ → closer to truth 1.
 
 **Effect of $\lambda$ on leaf weight magnitude:**
 
@@ -433,7 +433,7 @@ For MSE: $g_i = \hat{y}_i - y_i$, $h_i = 1$.
 | 4 | 5 | 3.20 | 2.66 | $2.66 - 3.20 = -0.54$ | 1 | Under-predicted → push up |
 | 5 | 6 | 3.80 | 2.66 | $2.66 - 3.80 = -1.14$ | 1 | Under-predicted → push up |
 
-**Sanity check**: $G_{\text{total}} = 1.16 + 0.66 + (-0.14) + (-0.54) + (-1.14) = +1.82 - 1.82 = \mathbf{0.00}$ ✓
+**Sanity check**: $G_{\text{total}} = 1.16 + 0.66 + (-0.14) + (-0.54) + (-1.14) = +1.82 - 1.82 = \mathbf{0.00}$
 
 ### Step 3 — Evaluate candidate split A: `AveRooms < 3`
 
@@ -759,4 +759,4 @@ XGBoost and LightGBM deliver accuracy and speed, but in regulated industries eve
 
 **Chapter 4** introduces **SHAP** (SHapley Additive exPlanations) — a game-theoretic framework that decomposes any model's prediction into exact, consistent per-feature contributions. TreeSHAP computes exact Shapley values in $O(T L D^2)$ (trees × leaves × depth²) instead of the exponential brute-force cost, making per-prediction explanations fast enough for production APIs.
 
-> ➡ **What SHAP unlocks:** EnsembleAI Constraint #4 — the last open constraint. With SHAP, every California Housing prediction becomes auditable: "Why \$330k? Here's the breakdown by feature." That's the difference between a model that scores well and a model that ships.
+> **What SHAP unlocks:** EnsembleAI Constraint #4 — the last open constraint. With SHAP, every California Housing prediction becomes auditable: "Why \$330k? Here's the breakdown by feature." That's the difference between a model that scores well and a model that ships.

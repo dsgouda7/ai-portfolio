@@ -88,8 +88,8 @@ Axis PCA t-SNE UMAP
 ─────────────────────────────────────────────────────
 Speed fastest slowest fast
 Deterministic yes no no
-Global structure ✓✓✓ ✗ ✓✓
-Local structure ✓✓ ✓✓✓ ✓✓✓
+Global structure
+Local structure
 Invertible yes no no
 Distances valid yes NO topology only
 Downstream ML yes rarely yes (transform)
@@ -158,7 +158,7 @@ Entry $C_{ij}$ measures how much feature $i$ and feature $j$ co-vary across all 
 | B | 0 | −1 |
 | C | −2 | 0 |
 
-Mean check: $(2+0-2)/3 = 0$ ✓, $(1-1+0)/3 = 0$ ✓. Data is already centred.
+Mean check: $(2+0-2)/3 = 0$ , $(1-1+0)/3 = 0$ . Data is already centred.
 
 $$X = \begin{bmatrix}2 & 1 \\ 0 & -1 \\ -2 & 0\end{bmatrix} \qquad X^\top = \begin{bmatrix}2 & 0 & -2 \\ 1 & -1 & 0\end{bmatrix}$$
 
@@ -231,7 +231,7 @@ $$\|\mathbf{v}\| = \sqrt{3.27^2 + 1^2} = \sqrt{10.69 + 1.00} = \sqrt{11.69} \app
 
 $$\mathbf{v}_1 = \left[\frac{3.27}{3.42},\ \frac{1}{3.42}\right] \approx \mathbf{[0.93,\ 0.37]}$$
 
-**Verify row 2 consistency:** $0.67 \times 0.93 + (-2.205) \times 0.37 = 0.623 - 0.816 \approx -0.19 \approx 0$ ✓ (small residual from decimal rounding)
+**Verify row 2 consistency:** $0.67 \times 0.93 + (-2.205) \times 0.37 = 0.623 - 0.816 \approx -0.19 \approx 0$ (small residual from decimal rounding)
 
 **Interpretation of PC1 = [0.93, 0.37]:** PC1 puts weight 0.93 on Fresh and 0.37 on Frozen. A customer projected onto PC1 gets a score = 0.93 × (their Fresh spend) + 0.37 × (their Frozen spend). In the full 6-feature UCI dataset, all 6 features get positive PC1 weights — it becomes "total spend magnitude."
 

@@ -203,7 +203,7 @@ The 4 audit properties don't appear fully-formed in Chapter 1 — they're built 
 | **Immutable Audit Chain** | Ch.1 (Message History) — Append-only chat logs | Ch.5 (Shared Memory) — Append-only event log with write restrictions |
 | **Human-Reviewable Lineage** | Ch.1 (Full History Passthrough) — All messages preserved | Ch.6 (Trust & Sandboxing) — HMAC signatures + export tool with <10s SLA |
 
-> ➡ **Key insight**: Each chapter in this track builds one piece of the audit infrastructure. By Ch.6, all 4 properties are operational and testable.
+> **Key insight**: Each chapter in this track builds one piece of the audit infrastructure. By Ch.6, all 4 properties are operational and testable.
 
 ---
 

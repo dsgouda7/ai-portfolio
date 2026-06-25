@@ -155,7 +155,7 @@ In training, every 3 median homes teach the model 1 high-value home (75/25 split
 > **The luxury tier gap**: Using a higher "luxury" absolute threshold (the top ~8% by California standards — roughly equivalent to homes >$450k today), the imbalance becomes even more extreme: ~18,989 median vs ~1,651 luxury in the training set. If production queries skew toward luxury homes, these become the most expensive mispredictions because luxury homes have the largest absolute price differences.
 
 > **Detect verdict:** 75:25 imbalance ratio (3:1) confirmed — naïve classifier achieves 75% accuracy predicting “median” while missing all high-value homes; SMOTE with k=5 is safe (5,160 minority samples available).
-> ➡ Apply SMOTE only to the training split to avoid leakage; if ratio ≥ 10:1 combine SMOTE with `class_weight='balanced'`.
+> Apply SMOTE only to the training split to avoid leakage; if ratio ≥ 10:1 combine SMOTE with `class_weight='balanced'`.
 
 ---
 
@@ -172,7 +172,7 @@ Before the math, here is the full landscape of four techniques — their trade-o
 | **Class weights** | Penalise minority errors more in the loss | No — same data | Fast baseline; any sklearn model with `class_weight` |
 | **Threshold adjustment** | Shift decision boundary toward minority | No — post-training | Fine-tuning after rebalancing; maximises F₁ |
 
-> 📖 **ADASYN (Adaptive Synthetic Sampling)** is a SMOTE variant that generates *more* synthetic samples near the decision boundary — where the model is most confused. Use it when your minority class has regions of different difficulty. The `imblearn` library provides `ADASYN` with the same API as `SMOTE`. This chapter focuses on SMOTE as the canonical baseline.
+> **ADASYN (Adaptive Synthetic Sampling)** is a SMOTE variant that generates *more* synthetic samples near the decision boundary — where the model is most confused. Use it when your minority class has regions of different difficulty. The `imblearn` library provides `ADASYN` with the same API as `SMOTE`. This chapter focuses on SMOTE as the canonical baseline.
 
 ### Algorithm Flows
 
@@ -444,7 +444,7 @@ High-Value 0.65 0.67 0.66 ← recall: 20% → 67%
 Minority-class recall jumps from 20% to 67%. The model now *sees* high-value homes properly during training.
 
 > **Rebalance verdict:** SMOTE expanded minority training class from 4,128 → 12,384 samples (50:50 balanced); minority-class recall jumped from 20% to 67% — gradient updates no longer dominated by majority class.
-> ➡ Validate SMOTE was applied only to training data, then proceed to threshold tuning (τ sweep) to maximize minority-class F₁.
+> Validate SMOTE was applied only to training data, then proceed to threshold tuning (τ sweep) to maximize minority-class F₁.
 
 ---
 
@@ -520,7 +520,7 @@ macro avg 0.78 0.80 0.79 4128
 > Manual threshold search (sweeping τ ∈ [0.1, 0.9] and computing F₁ at each point) teaches the precision-recall tradeoff. In production, use `precision_recall_curve(y_true, y_score)` which returns precision, recall, and thresholds arrays in one call. Find optimal operating point with `thresholds[np.argmax(f1_scores)]`. For business-specific cost functions (e.g., false negative costs 10× false positive), replace F₁ maximization with custom cost function: `cost = FN_cost * fn_count + FP_cost * fp_count` and minimize over threshold sweep.
 
 > **Validate verdict:** SMOTE + threshold tuning (τ* = 0.38) raised minority-class recall from 20% to 71% at 66% precision (F₁ = 0.68) — balanced training across 75%/25% class split achieved.
-> ➡ Use τ* = 0.38 in production inference; monitor class distribution drift — if high-value fraction exceeds 35%, retrain SMOTE and recalibrate threshold.
+> Use τ* = 0.38 in production inference; monitor class distribution drift — if high-value fraction exceeds 35%, retrain SMOTE and recalibrate threshold.
 
 ---
 
@@ -594,7 +594,7 @@ Point D: [MedInc=9.5, HouseAge=14.0] k=2 nearest: A(2.33), B(2.51)
 
 Both synthetic points lie strictly *between* their parent points. SMOTE guarantees that new points always reside on the line segment connecting two existing minority samples — never outside the convex hull of the minority class.
 
-> 📖 **SMOTE with k=5 in practice:** The default `k_neighbors=5` means each source point has 5 candidates for `x_nn`. One of the 5 is chosen randomly per synthetic sample. More candidates → synthetic points are distributed more broadly across the minority region, reducing clustering around a single neighbour.
+> **SMOTE with k=5 in practice:** The default `k_neighbors=5` means each source point has 5 candidates for `x_nn`. One of the 5 is chosen randomly per synthetic sample. More candidates → synthetic points are distributed more broadly across the minority region, reducing clustering around a single neighbour.
 
 > **Industry Standard:** `imblearn.over_sampling.SMOTE`
 > Manual SMOTE implementation teaches the k-nearest-neighbor interpolation concept ($x_{\text{new}} = x_i + \lambda \cdot (x_{\text{nn}} - x_i)$). In production, use `from imblearn.over_sampling import SMOTE` with `sampling_strategy='auto'` which handles edge cases automatically: (1) raises error if minority class < `k_neighbors + 1` samples, (2) supports categorical features via `SMOTENC`, (3) offers adaptive variants like `ADASYN` for boundary-focused synthesis. Always apply via `Pipeline` with `imblearn.pipeline.Pipeline` to prevent train/test leakage.
@@ -782,7 +782,7 @@ This chapter's techniques and metrics are the foundation for at least four later
 
 **→ Production Monitoring (06-AI_Infrastructure track):** Class distribution monitoring is a production-critical feature. When your production traffic shifts — say from 25% high-value to 40% high-value — the model experiences **label shift**. The class weights and decision thresholds calibrated on 25% high-value training data are no longer optimal. Monitoring and retraining triggers are the direct sequel to today's lesson.
 
-> ➡ **Every model that outputs probabilities uses threshold logic.** Neural networks, gradient-boosted trees, and retrieval models all produce scores that require calibration. The precision-recall trade-off you learned here is universal — threshold tuning is not specific to logistic regression.
+> **Every model that outputs probabilities uses threshold logic.** Neural networks, gradient-boosted trees, and retrieval models all produce scores that require calibration. The precision-recall trade-off you learned here is universal — threshold tuning is not specific to logistic regression.
 
 ---
 
@@ -794,11 +794,11 @@ This chapter's techniques and metrics are the foundation for at least four later
 
 | # | Constraint | Target | Status | Achievement |
 |---|---|---|---|---|
-| **#1** | ACCURACY | <$40k MAE | 🔴 Not Started | Foundation laid; ready for modeling (Ch.01-07) |
-| **#2** | GENERALIZATION | Unseen districts | 🟡 Partial | Balanced training improves generalization |
+| **#1** | ACCURACY | <$40k MAE | Not Started | Foundation laid; ready for modeling (Ch.01-07) |
+| **#2** | GENERALIZATION | Unseen districts | Partial | Balanced training improves generalization |
 | **#3** | DATA QUALITY | Clean + balanced | **Unlocked** | SMOTE balances 75/25 → 50/50; stratified splits throughout |
-| **#4** | INTERPRETABILITY | Explainable | 🟡 Partial | Precision/recall provide class-level insights |
-| **#5** | PRODUCTION | Inference + monitoring | 🔴 Not Started | Pipeline established; full monitoring in Ch.08 |
+| **#4** | INTERPRETABILITY | Explainable | Partial | Precision/recall provide class-level insights |
+| **#5** | PRODUCTION | Inference + monitoring | Not Started | Pipeline established; full monitoring in Ch.08 |
 
 ** Unlocked capabilities:**
 - Compute balanced class weights from $w_j = n/(C \times n_j)$ and verify by hand
@@ -824,7 +824,7 @@ Next: **Ch.01 — Linear Regression**. Now we finally build the first model. Wit
 
 ---
 
-## 🔧 Exercise Connection
+## Exercise connection
 
 The concepts from this chapter map directly to xercises/01-ml/01-regression/src/data-prep.py:
 
@@ -833,5 +833,5 @@ The concepts from this chapter map directly to xercises/01-ml/01-regression/src
 | SMOTE oversampling | pply_smote() | #11 |
 | Distribution checking | check_distribution() | #12 |
 
-**Path:** 
+**Path:**
 otebook-solution.ipynb → xercises/01-ml/01-regression/src/data-prep.py

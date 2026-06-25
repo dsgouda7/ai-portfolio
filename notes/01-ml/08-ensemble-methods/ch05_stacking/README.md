@@ -249,7 +249,7 @@ $$w \approx \begin{bmatrix}w_{\text{LR}} \\ w_{\text{RF}} \\ w_{\text{XGB}}\end{
 
 **Does the direction make sense?** XGBoost has the lowest individual MAE (\$22k), so the meta-learner should trust it most → $w_{\text{XGB}} = 0.65$ . RF is second best (\$30k) → $w_{\text{RF}} = 0.21$ . LR is least accurate (\$42k) → $w_{\text{LR}} = 0.12$ .
 
-> 📖 **Why Ridge instead of OLS for the meta-learner?** The columns of $Z$ are highly correlated — all three models use `MedInc` as their dominant signal, so $[Z^\top Z]_{ij}$ is large and nearly equal across all $i,j$ (observe: all entries in the matrix above are close to 450,000). High collinearity makes $Z^\top Z$ nearly singular → OLS weights are numerically unstable. Ridge regularization adds $\lambda$ to the diagonal, guaranteeing invertibility and shrinking unstable weights toward zero. **This is the same motivation as Ridge regression on the original features in Ch.1, but now applied to base model predictions.**
+> **Why Ridge instead of OLS for the meta-learner?** The columns of $Z$ are highly correlated — all three models use `MedInc` as their dominant signal, so $[Z^\top Z]_{ij}$ is large and nearly equal across all $i,j$ (observe: all entries in the matrix above are close to 450,000). High collinearity makes $Z^\top Z$ nearly singular → OLS weights are numerically unstable. Ridge regularization adds $\lambda$ to the diagonal, guaranteeing invertibility and shrinking unstable weights toward zero. **This is the same motivation as Ridge regression on the original features in Ch.1, but now applied to base model predictions.**
 
 ### 4.4 · Blending — The 70/30 Holdout Variant
 

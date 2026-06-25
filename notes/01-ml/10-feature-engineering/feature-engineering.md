@@ -48,11 +48,11 @@ Before the running example, four beliefs worth demolishing. Each is a plausible-
 
 You're the lead data scientist at a grocery chain predicting weekly unit sales across 1,800 SKUs and 50 stores. The raw data warehouse exports look like this:
 
-| store_id | sku_id  | category | date       | sales_units | promotion_flag | store_type |
+| store_id | sku_id | category | date | sales_units | promotion_flag | store_type |
 |----------|---------|----------|------------|-------------|----------------|------------|
-| S042     | SKU1803 | Frozen   | 2024-01-07 | 412         | 0              | premium    |
-| S042     | SKU1803 | Frozen   | 2024-01-14 | 1,847       | 1              | premium    |
-| S017     | SKU0221 | Bakery   | 2024-01-07 | 89          | 0              | budget     |
+| S042 | SKU1803 | Frozen | 2024-01-07 | 412 | 0 | premium |
+| S042 | SKU1803 | Frozen | 2024-01-14 | 1,847 | 1 | premium |
+| S017 | SKU0221 | Bakery | 2024-01-07 | 89 | 0 | budget |
 
 Seven columns. No model learns from `store_id = "S042"` as a raw string. No model learns from `date = "2024-01-07"` as a timestamp. No model knows that the 1,847-unit spike is explained by last week's promotion, not by some mystical property of `SKU1803`.
 
@@ -82,7 +82,7 @@ Three categories of work, each distinct:
 
 The failure mode of skipping feature engineering is not obviously bad performance — it's misleadingly unstable performance. The model achieves 28% MAPE on the training distribution and 51% on January data because January has a holiday structure the raw timestamp never encoded. The model didn't fail to generalise. It failed to be given the right inputs.
 
-> ➡ The encoding techniques in § 2 reappear in [Ch.4 Recommender Systems](../04-recommender-systems/README.md), where user and item IDs are the high-cardinality variables. The temporal features in § 3 feed directly into [Ch.3 Neural Networks — RNNs and LSTMs](../03-neural-networks/README.md), where lag sequences become the input to recurrent architectures.
+> The encoding techniques in § 2 reappear in [Ch.4 Recommender Systems](../04-recommender-systems/README.md), where user and item IDs are the high-cardinality variables. The temporal features in § 3 feed directly into [Ch.3 Neural Networks — RNNs and LSTMs](../03-neural-networks/README.md), where lag sequences become the input to recurrent architectures.
 
 ---
 
@@ -125,9 +125,9 @@ The result: 1,800 SKUs become 1 numeric column. A tree can now split on "SKUs wi
 | SKU | $n_c$ | $\mu_c$ (mean weekly sales) | $\mu_{global} = 280$ | $\hat{x}_c$ |
 |-----|-------|---------------------------|----------------------|-------------|
 | SKU1803 (Organic Milk) | 500 | 820 | 280 | $(500 \times 820 + 10 \times 280) / 510 = 811$ |
-| SKU0221 (Artisan Bread) | 120 | 94  | 280 | $(120 \times 94 + 10 \times 280) / 130 = 108$ |
-| SKU0099 (New Product)   | 8   | 340 | 280 | $(8 \times 340 + 10 \times 280) / 18 = 307$   |
-| SKU1201 (Seasonal Item) | 3   | 1,100 | 280 | $(3 \times 1100 + 10 \times 280) / 13 = 468$   |
+| SKU0221 (Artisan Bread) | 120 | 94 | 280 | $(120 \times 94 + 10 \times 280) / 130 = 108$ |
+| SKU0099 (New Product) | 8 | 340 | 280 | $(8 \times 340 + 10 \times 280) / 18 = 307$ |
+| SKU1201 (Seasonal Item) | 3 | 1,100 | 280 | $(3 \times 1100 + 10 \times 280) / 13 = 468$ |
 
 SKU0099 has only 8 observations — its raw mean of 340 is unreliable. Smoothing pulls it 36% toward the global mean, giving 307. SKU1201 with only 3 observations gets pulled 68% toward 280, giving 468 — even though its raw mean is 1,100. This prevents the encoder from treating three lucky sales weeks as "this SKU sells 1,100 units/week forever." As $n_c$ grows, the smoothing term becomes negligible and the encoded value converges to the true category mean.
 
@@ -178,9 +178,9 @@ These four lag features typically contribute more predictive signal than any oth
 
 ```python
 for lag in [1, 7, 14, 28]:
-    df[f'lag_{lag}'] = df.groupby('sku_id')['sales_units'].transform(
-        lambda x: x.shift(lag)
-    )
+ df[f'lag_{lag}'] = df.groupby('sku_id')['sales_units'].transform(
+ lambda x: x.shift(lag)
+ )
 ```
 
 > **Warning:** Compute lag features *before* train-test splitting, on the full time series, then split. If you compute lags after splitting, the training set's first $k$ rows have undefined lag history — NaN values that silently propagate through the pipeline as zeros. Compute on the full timeline, fill NaNs with forward-fill where appropriate, then drop the first $k$ rows where no valid lag history exists.
@@ -201,12 +201,12 @@ The critical implementation detail: `.shift(1).rolling(7)`, not `.rolling(7)`. T
 ```python
 # Correct: shift first, then roll
 df['sales_roll7_mean'] = df.groupby('sku_id')['sales_units'].transform(
-    lambda x: x.shift(1).rolling(7).mean()
+ lambda x: x.shift(1).rolling(7).mean()
 )
 
 # Wrong: rolling without shift includes current row's target
 df['sales_roll7_mean_leaky'] = df.groupby('sku_id')['sales_units'].transform(
-    lambda x: x.rolling(7).mean()
+ lambda x: x.rolling(7).mean()
 )
 ```
 
@@ -396,10 +396,10 @@ Fit the final model. Then, for each feature: shuffle that column randomly across
 from sklearn.inspection import permutation_importance
 
 result = permutation_importance(
-    model, X_val, y_val, n_repeats=10, random_state=42, n_jobs=-1
+ model, X_val, y_val, n_repeats=10, random_state=42, n_jobs=-1
 )
 feat_importance = pd.Series(
-    result.importances_mean, index=feature_names
+ result.importances_mean, index=feature_names
 ).sort_values(ascending=False)
 ```
 
@@ -413,11 +413,11 @@ In the grocery pipeline: permutation importance confirms that the top 20 feature
 
 ```
 300 raw features
-  → Variance threshold (threshold=0.01): removes 40 constant/near-constant
-  → Correlation filter (|r| > 0.95): removes 25 redundant rolling windows
-  → Mutual information top-100: removes 135 low-signal features
-  → Lasso (α=0.01) embedded selection: removes 40 marginal lag and text dimensions
-  → Permutation importance audit: confirms top 20 features → 80% of signal
+ → Variance threshold (threshold=0.01): removes 40 constant/near-constant
+ → Correlation filter (|r| > 0.95): removes 25 redundant rolling windows
+ → Mutual information top-100: removes 135 low-signal features
+ → Lasso (α=0.01) embedded selection: removes 40 marginal lag and text dimensions
+ → Permutation importance audit: confirms top 20 features → 80% of signal
 
 Final model: ~60 features
 ```
@@ -432,36 +432,36 @@ The full grocery demand forecasting pipeline, in the order each step must execut
 
 ```
 Raw data (store_id, sku_id, category, date, sales_units, promotion_flag, store_type)
-  ↓
+ ↓
 1. Temporal features — lags (1/7/14/28), rolling mean/std, cyclic day-of-week,
-   is_holiday, days_since_last_promo
-   Reason: must run on the full time series before splitting, so lag history
-   spans training and validation rows.
-  ↓
+ is_holiday, days_since_last_promo
+ Reason: must run on the full time series before splitting, so lag history
+ spans training and validation rows.
+ ↓
 2. Train-test split on time — all data before 2024-01-01 for training,
-   2024-01-01 onward for validation
-   Reason: never random-split a time series. Rows are not i.i.d. A random
-   split leaks future rows into training and past rows into validation.
-  ↓
+ 2024-01-01 onward for validation
+ Reason: never random-split a time series. Rows are not i.i.d. A random
+ split leaks future rows into training and past rows into validation.
+ ↓
 3. Categorical encoding inside a Pipeline
-   — OrdinalEncoder (store_type): fit-once, no leakage risk
-   — OneHotEncoder (category): fit-once on training vocabulary
-   — TargetEncoder(cv=5) (sku_id): must refit per cross-validation fold
-   Reason: TargetEncoder must never see validation fold labels during encoding.
-   Wrapping in Pipeline ensures it refits per fold automatically.
-  ↓
+ — OrdinalEncoder (store_type): fit-once, no leakage risk
+ — OneHotEncoder (category): fit-once on training vocabulary
+ — TargetEncoder(cv=5) (sku_id): must refit per cross-validation fold
+ Reason: TargetEncoder must never see validation fold labels during encoding.
+ Wrapping in Pipeline ensures it refits per fold automatically.
+ ↓
 4. Text features
-   — TfidfVectorizer (product_name): fit vocabulary on training set only
-   — SentenceTransformer (product_description): pre-trained, no fitting required
-   Reason: TF-IDF vocabulary fitted on validation text would leak
-   vocabulary statistics.
-  ↓
+ — TfidfVectorizer (product_name): fit vocabulary on training set only
+ — SentenceTransformer (product_description): pre-trained, no fitting required
+ Reason: TF-IDF vocabulary fitted on validation text would leak
+ vocabulary statistics.
+ ↓
 5. Feature selection — variance threshold → correlation filter → MI top-K
-   → Lasso embedded selection
-   Reason: all selection steps fitted on training set only, applied to
-   validation via transform-only. Fitting selection on combined data leaks
-   validation-set structure.
-  ↓
+ → Lasso embedded selection
+ Reason: all selection steps fitted on training set only, applied to
+ validation via transform-only. Fitting selection on combined data leaks
+ validation-set structure.
+ ↓
 6. Model training and permutation importance audit
 ```
 
@@ -505,32 +505,32 @@ from xgboost import XGBRegressor
 
 # Categorical preprocessor — three columns, three strategies
 categorical_preprocessor = ColumnTransformer(
-    transformers=[
-        ('ordinal', OrdinalEncoder(
-            categories=[['budget', 'standard', 'premium']]
-        ), ['store_type']),
-        ('onehot', OneHotEncoder(
-            handle_unknown='ignore', sparse_output=True
-        ), ['category']),
-        ('target', TargetEncoder(cv=5, smooth='auto'), ['sku_id']),
-        ('tfidf', TfidfVectorizer(max_features=3000), 'product_name'),
-    ],
-    remainder='passthrough'   # lag features, rolling stats, cyclic encodings
+ transformers=[
+ ('ordinal', OrdinalEncoder(
+ categories=[['budget', 'standard', 'premium']]
+ ), ['store_type']),
+ ('onehot', OneHotEncoder(
+ handle_unknown='ignore', sparse_output=True
+ ), ['category']),
+ ('target', TargetEncoder(cv=5, smooth='auto'), ['sku_id']),
+ ('tfidf', TfidfVectorizer(max_features=3000), 'product_name'),
+ ],
+ remainder='passthrough' # lag features, rolling stats, cyclic encodings
 )
 
 # Feature selection stage — variance filter then Lasso embedded selection
 selection = Pipeline([
-    ('variance', VarianceThreshold(threshold=0.01)),
-    ('lasso_sel', SelectFromModel(
-        Lasso(alpha=0.01, max_iter=10000), threshold='median'
-    )),
+ ('variance', VarianceThreshold(threshold=0.01)),
+ ('lasso_sel', SelectFromModel(
+ Lasso(alpha=0.01, max_iter=10000), threshold='median'
+ )),
 ])
 
 # Full pipeline
 grocery_pipeline = Pipeline([
-    ('encode', categorical_preprocessor),
-    ('select', selection),
-    ('model', XGBRegressor(n_estimators=500, learning_rate=0.05, max_depth=6)),
+ ('encode', categorical_preprocessor),
+ ('select', selection),
+ ('model', XGBRegressor(n_estimators=500, learning_rate=0.05, max_depth=6)),
 ])
 
 # Train — TargetEncoder refits per cross-validation fold automatically
@@ -597,5 +597,5 @@ Leakage is the single most common failure mode in feature engineering. It appear
 
 ---
 
-> ➡ The feature selection methods in § 5 — particularly permutation importance and Lasso-based selection — reappear in [Ch.3 Feature Scaling, Importance & Multicollinearity](../01-regression/ch03_feature_importance/README.md), where they are applied to the California Housing regression problem. The categorical embedding approach from § 2.4 connects directly to entity embedding architectures covered in [Ch.4 Recommender Systems — Neural Collaborative Filtering](../04-recommender-systems/ch04_neural_cf/README.md).
+> The feature selection methods in § 5 — particularly permutation importance and Lasso-based selection — reappear in [Ch.3 Feature Scaling, Importance & Multicollinearity](../01-regression/ch03_feature_importance/README.md), where they are applied to the California Housing regression problem. The categorical embedding approach from § 2.4 connects directly to entity embedding architectures covered in [Ch.4 Recommender Systems — Neural Collaborative Filtering](../04-recommender-systems/ch04_neural_cf/README.md).
 

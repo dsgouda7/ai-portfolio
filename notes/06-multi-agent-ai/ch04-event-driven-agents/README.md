@@ -22,7 +22,7 @@
 
 **What's blocking us**:
 
-🚨 **Your synchronous orchestrator is the bottleneck — and it just failed in production.**
+ **Your synchronous orchestrator is the bottleneck — and it just failed in production.**
 
 **The incident**: PO #2024-1847 (Sarah Chen's 10 standing desks) arrived at 09:15. Your Intake agent parsed it, delegated to Pricing agent via A2A at 09:17. TechFurnish's API took 47 minutes to respond with a quote. Your orchestrator thread waited. So did PO #2024-1848, #2024-1849, and 237 others in the queue behind it. By 14:30, you had 240 POs queued, orchestrator memory at 92%, and your on-call phone ringing.
 

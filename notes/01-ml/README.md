@@ -169,21 +169,21 @@ Choose based on career goals:
 ```mermaid
 graph TB
  subgraph Core["Core ML Systems"]
- Reg[🏠 Regression API<br/>California Housing<br/>&lt;$40k MAE]
- Class[👤 Classification API<br/>CelebA Faces<br/>&gt;90% avg accuracy]
+ Reg[ Regression API<br/>California Housing<br/>&lt;$40k MAE]
+ Class[ Classification API<br/>CelebA Faces<br/>&gt;90% avg accuracy]
  NN[ Unified NN System<br/>Both datasets<br/>$28k + 95%]
  end
 
  subgraph Specialized["Specialized Systems"]
  Rec[ Recommender Engine<br/>MovieLens<br/>&gt;85% hit rate]
- Anom[💳 Fraud Detector<br/>Credit Card<br/>80% recall]
+ Anom[ Fraud Detector<br/>Credit Card<br/>80% recall]
  RL[ RL Agent<br/>GridWorld + CartPole<br/>Optimal policies]
- Gen[🎨 Generative Studio<br/>MNIST + CelebA<br/>&gt;90% fooling rate]
- Unsup[👥 Segmentation Tool<br/>Customers<br/>silhouette &gt;0.5]
+ Gen[ Generative Studio<br/>MNIST + CelebA<br/>&gt;90% fooling rate]
+ Unsup[ Segmentation Tool<br/>Customers<br/>silhouette &gt;0.5]
  end
 
  subgraph Advanced["Production Infrastructure"]
- Ens[📦 Ensemble Pipeline<br/>XGBoost + SHAP<br/>+5% improvement]
+ Ens[ Ensemble Pipeline<br/>XGBoost + SHAP<br/>+5% improvement]
  end
 
  Reg --> NN

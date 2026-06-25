@@ -148,7 +148,7 @@ user_key = BlackboardSchema.user_key("sarah.chen", "preferences")
 > **Redis best practice:** Use colons `:` as delimiters (convention since Redis 2.0), avoid dots/slashes (harder to parse). See *Redis documentation: "Key naming best practices"* — https://redis.io/topics/data-types-intro
 
 > **Schema design verdict:** Three scopes (`task:*` 24hr, `order:*` 90d, `user:*` no expiry) with centralized `BlackboardSchema` class — hierarchical key namespacing eliminates ad-hoc key patterns across all 8 agents.
-> ➡ Section ownership enforced in §4 (namespace isolation); optimistic locking for concurrent writes in §4.2.
+> Section ownership enforced in §4 (namespace isolation); optimistic locking for concurrent writes in §4.2.
 
 ---
 
@@ -196,7 +196,7 @@ async def read_intake_for_negotiation(po_id: str) -> dict:
 > **Production pattern:** Enforce section boundaries with schema validation — reject writes to sections the agent doesn't own. See *AutoGen GroupChat state management* — https://microsoft.github.io/autogen/docs/topics/groupchat/
 
 > **Section-write verdict:** Redis hash per PO with one field per agent eliminates write-write conflicts — parallel writes enabled, `HGETALL order:PO-4812` shows full state, latency dropped 8hr → 4.5hr (44%).
-> ➡ Duplicate-event race addressed by optimistic locking in §4.2; audit trail in §4.4.
+> Duplicate-event race addressed by optimistic locking in §4.2; audit trail in §4.4.
 
 ---
 
@@ -240,7 +240,7 @@ async def safe_write_section(po_id: str, section: str, data: dict):
 > **See:** *Redis transactions* — https://redis.io/topics/transactions, *Herlihy & Shavit, "The Art of Multiprocessor Programming" (Ch.6: Optimistic Concurrency)*
 
 > **Optimistic-locking verdict:** Redis `WATCH`/`MULTI`/`EXEC` CAS reduced duplicate-write conflict rate 27% → <0.1% in production; +0.2ms p95 write latency — correctness preserved at minimal cost.
-> ➡ Event-sourced audit trail (who wrote what when) follows in §4.4.
+> Event-sourced audit trail (who wrote what when) follows in §4.4.
 
 > **Industry Alternative:** **CRDTs (Conflict-Free Replicated Data Types)**
 > ```python
@@ -326,7 +326,7 @@ for e in events:
 > **See:** *Fowler, "Event Sourcing"* — https://martinfowler.com/eaaDev/EventSourcing.html, *Kleppmann, "Designing Data-Intensive Applications" (Ch.11: Stream Processing)*
 
 > **Event-sourcing verdict:** Append-only log at `events:order:{po_id}` (7-year retention) enables full PO timeline reconstruction and satisfies GDPR Article 30 — CFO can query who approved any PO and when.
-> ➡ TTL policies to prevent Redis OOM are the final production gate, covered in §11.
+> TTL policies to prevent Redis OOM are the final production gate, covered in §11.
 
 ---
 
@@ -570,7 +570,7 @@ if memory_pct > 80:
 > **See:** *Redis persistence and eviction policies* — https://redis.io/topics/lru-cache, *AWS ElastiCache best practices* — https://docs.aws.amazon.com/elasticache/
 
 > **TTL verdict:** Atomic `HSET`+`EXPIRE` enforces per-scope retention (24hr task, 90d order, 7yr events) — self-cleaning at 300 POs/day stays under 27k active keys; 80% alert threshold prevents Redis OOM.
-> ➡ Access control (RBAC) and prompt-injection defences are addressed in Ch.6.
+> Access control (RBAC) and prompt-injection defences are addressed in Ch.6.
 
 ---
 

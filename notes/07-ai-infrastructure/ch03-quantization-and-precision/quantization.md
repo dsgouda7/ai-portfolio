@@ -20,7 +20,7 @@
 
 **What's blocking us**:
 
-🚨 **Throughput target unreachable: batch=1 → 3,000 req/day vs 10k target**
+ **Throughput target unreachable: batch=1 → 3,000 req/day vs 10k target**
 
 **Current situation**: Engineer testing FP16 deployment in staging
 

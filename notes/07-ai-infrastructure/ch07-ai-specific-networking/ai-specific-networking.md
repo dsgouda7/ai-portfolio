@@ -33,7 +33,7 @@
 
 **What's blocking us**:
 
-🚨 **New requirement: Enterprise customers want Llama-2-70B — 140GB model won't fit on 24GB GPU**
+ **New requirement: Enterprise customers want Llama-2-70B — 140GB model won't fit on 24GB GPU**
 
 **Current situation**: CEO's Q1 planning meeting
 

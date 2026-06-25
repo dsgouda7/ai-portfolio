@@ -19,7 +19,7 @@
 - Use the [Quick Reference table](#quick-reference-chapter-to-production-mapping) below to find specific topics
 - Refer to code examples in grand_solution.ipynb for production patterns
 
-### 🔗 Companion Resources
+### Companion Resources
 
 - **[grand_solution.ipynb (reference)](grand_solution_reference.ipynb) | [grand_solution.ipynb (exercise)](grand_solution_exercise.ipynb)** — Jupyter notebook with executable code examples from all 10 chapters. Run this to see the complete implementation end-to-end (hardware selection → deployment → monitoring).
 
@@ -284,7 +284,7 @@ Here's how all 10 concepts integrate into the deployed InferenceBase system:
 
 ```mermaid
 flowchart TD
- USERS["👥 Users<br/>10,000 req/day"] --> LB["⚖ Load Balancer<br/>NGINX<br/>Round-robin to 2 GPUs"]
+ USERS[" Users<br/>10,000 req/day"] --> LB[" Load Balancer<br/>NGINX<br/>Round-robin to 2 GPUs"]
 
  LB --> GPU1[" GPU 1: RTX 4090<br/>Ch.1: 24GB VRAM, 1.0 TB/s<br/>Ch.6: vLLM serving<br/>Status: PRIMARY"]
  LB --> GPU2[" GPU 2: RTX 4090<br/>Ch.7: NVLink failover<br/>Status: STANDBY"]
@@ -292,15 +292,15 @@ flowchart TD
  GPU1 --> MODEL[" Llama-3-8B INT4<br/>Ch.3: GPTQ quantization<br/>8GB weights + 4GB KV cache<br/>96.2% accuracy"]
  GPU2 --> MODEL
 
- MODEL --> BATCH["📦 Inference Pipeline<br/>Ch.5: Continuous batching<br/>Ch.5: PagedAttention (batch=8)<br/>Ch.5: Speculative decoding"]
+ MODEL --> BATCH[" Inference Pipeline<br/>Ch.5: Continuous batching<br/>Ch.5: PagedAttention (batch=8)<br/>Ch.5: Speculative decoding"]
 
- BATCH --> RESPONSE["📤 Response<br/>1.2s p95 latency<br/>22,000 req/day throughput"]
+ BATCH --> RESPONSE[" Response<br/>1.2s p95 latency<br/>22,000 req/day throughput"]
 
  RESPONSE --> MONITOR[" Monitoring Layer<br/>Ch.10: Evidently AI drift detection<br/>Ch.10: Prometheus metrics<br/>Ch.9: MLflow model registry"]
 
- MONITOR --> ALERT["🚨 Alerting<br/>Drift detected → Retrain trigger<br/>Accuracy < 95% → Auto-rollback<br/>Latency > 2s → Scale up"]
+ MONITOR --> ALERT[" Alerting<br/>Drift detected → Retrain trigger<br/>Accuracy < 95% → Auto-rollback<br/>Latency > 2s → Scale up"]
 
- TRAINING["🏋 Training Pipeline<br/>Ch.4: ZeRO-2 data parallelism<br/>Ch.9: MLflow tracking<br/>Ch.9: Checkpointing<br/>Weekly fine-tuning: $12.80"] --> REGISTRY[" Model Registry<br/>Ch.9: MLflow<br/>v1 → v2 → v3 lineage<br/>S3 artifact storage"]
+ TRAINING[" Training Pipeline<br/>Ch.4: ZeRO-2 data parallelism<br/>Ch.9: MLflow tracking<br/>Ch.9: Checkpointing<br/>Weekly fine-tuning: $12.80"] --> REGISTRY[" Model Registry<br/>Ch.9: MLflow<br/>v1 → v2 → v3 lineage<br/>S3 artifact storage"]
 
  REGISTRY --> GPU1
  REGISTRY --> GPU2
@@ -516,7 +516,7 @@ def daily_drift_check():
  if drift_detected:
  # Alert and trigger retraining (Ch.10)
  send_alert(
- "🚨 Data drift detected! KL divergence > 0.1",
+ " Data drift detected! KL divergence > 0.1",
  "Consider retraining with recent production data"
  )
  trigger_weekly_training_job()
@@ -554,7 +554,7 @@ def check_and_rollback():
  mlflow.log_param("rollback_reason", f"accuracy {v3_accuracy:.1%} < 95%")
 
  # Alert engineering team
- send_alert("🚨 AUTO-ROLLBACK: v3.0 → v2.3 due to accuracy drop")
+ send_alert(" AUTO-ROLLBACK: v3.0 → v2.3 due to accuracy drop")
 
 # Run every 5 minutes
 schedule.every(5).minutes.do(check_and_rollback)

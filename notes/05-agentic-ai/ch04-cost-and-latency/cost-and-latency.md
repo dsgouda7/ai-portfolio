@@ -23,7 +23,7 @@
 
 **What's blocking us:**
 
-🚨 **Current system meets technical targets but ROI payback is 18 months — need 10.6 months to justify CEO's $300k investment**
+ **Current system meets technical targets but ROI payback is 18 months — need 10.6 months to justify CEO's $300k investment**
 
 **Current economics (pre-optimization):**
 ```
@@ -299,7 +299,7 @@ gpt-4o-mini:
 > **See also:** [LiteLLM docs](https://docs.litellm.ai/docs/completion/cost_tracking)
 
 > **Select verdict:** GPT-4o costs 13× more than GPT-4o-mini ($0.000163 vs $0.000012/call); PizzaBot structured order confirmation at 95% vs 96% accuracy — mid-tier saves $1,110/month at 10,000 orders.
-> ➡ Run evaluation suite on both models with a 100-sample test set before committing; if accuracy drops >5% with mid-tier, stay with frontier.
+> Run evaluation suite on both models with a 100-sample test set before committing; if accuracy drops >5% with mid-tier, stay with frontier.
 
 ---
 
@@ -443,7 +443,7 @@ With prefix caching: every call pays only new_tokens × prefill cost
 **Implication:** put your system prompt and few-shot examples at the beginning of the context. Keep them identical across calls. Most major providers (OpenAI, Anthropic) offer prefix caching automatically or explicitly. Savings of 50–80% on input token costs for chat applications are typical.
 
 > **Stream verdict:** Streaming reduces perceived latency from 2.18s to 0.42s time-to-first-token (5× faster) with identical total generation time — free UX win, no cost increase.
-> ➡ Enable streaming for all user-facing chat responses; disable for agent tool calls that require full JSON before parsing.
+> Enable streaming for all user-facing chat responses; disable for agent tool calls that require full JSON before parsing.
 
 ### 4.2 Speculative Decoding
 
@@ -467,7 +467,7 @@ Latency reduction: 30–40% on typical generation tasks
 **PizzaBot grounding.** Mamma Rosa's order confirmations follow predictable templates: *"Your order of [items] to [address] totals $[amount]. Estimated delivery: 30–40 minutes."* The draft model (Llama-3-1B) guesses the templated tokens — "Your order of", "totals", "Estimated delivery" — correctly on almost every call. The target model (Llama-3-8B) verifies in a single pass. For a 120-token confirmation, speculative decoding eliminates roughly 30–40 expensive forward passes, shaving ~200ms off generation time.
 
 > **Speculative decoding verdict:** 30–40% latency reduction on templated outputs (order confirmations, structured JSON) with zero quality loss — the draft model never controls final token selection, only proposes. Requires two models in memory simultaneously; worth it when the draft model fits in the GPU headroom already available on your inference node.
-> ➡ In PizzaBot's self-hosted vLLM stack, Llama-3-1B (2 GB INT8) runs as draft alongside Llama-3-8B (8 GB INT8) on the same A100, reducing generation from ~1.0s to ~0.7s per confirmation.
+> In PizzaBot's self-hosted vLLM stack, Llama-3-1B (2 GB INT8) runs as draft alongside Llama-3-8B (8 GB INT8) on the same A100, reducing generation from ~1.0s to ~0.7s per confirmation.
 
 ---
 
@@ -616,7 +616,7 @@ Input tokens: 28
 **PizzaBot grounding.** Mamma Rosa's daily query mix breaks down roughly as: 60% simple order placements (*"Large Margherita to 42 Maple St"*) that any mid-tier model handles reliably, 30% menu questions answered well with RAG, and 10% allergen or safety queries where a wrong answer causes real harm. Running the full mix on GPT-4o costs ~$90/month; tiered routing — mid-tier by default, GPT-4o only for flagged allergen queries — brings that to ~$12/month. The escalated 10% still get the best model; the other 90% get a fast, cheap one.
 
 > **Routing verdict:** Tiered routing cuts API costs 80–90% on mixed-complexity workloads. The risk is miscalibration: too-aggressive escalation erases the savings; too-conservative escalation handles safety queries on a model not equipped for them. Always escalate on allergen or medical mentions, regardless of confidence score.
-> ➡ Track escalation rate for 1,000 requests in production; if >40% escalate, tune the confidence threshold upward or improve mid-tier prompting before accepting the higher cost.
+> Track escalation rate for 1,000 requests in production; if >40% escalate, tune the confidence threshold upward or improve mid-tier prompting before accepting the higher cost.
 
 Route requests to the cheapest model that can handle them; escalate to a stronger model only on failure or low-confidence signal.
 
@@ -638,7 +638,7 @@ def route_query(query: str) -> str:
 **PizzaBot grounding.** PizzaBot conversations typically close an order in 4–6 turns. Edge cases exist — a customer comparing every pizza on the menu, or asking ten allergen questions before committing. Without truncation, turn 10's context can cost 4× turn 2's. Mamma Rosa's fix: summarise turns older than 4 into a compact JSON blob (`{"items_discussed": ["Margherita L"], "delivery_address": "42 Maple St"}`) — 40 tokens instead of 400 — keeping input cost stable at ~1,390 tokens regardless of session length.
 
 > **Context discipline verdict:** Conversation history is the most common cost runaway in production chat apps — it grows silently and compounds with every turn. A 4-turn cap plus rolling summarisation keeps PizzaBot's token count stable and prevents a long-session outlier from costing 10× a normal session.
-> ➡ Log `input_token_count` per request for the first 24 hours post-launch; a long tail above 5,000 tokens means history trimming is not working.
+> Log `input_token_count` per request for the first 24 hours post-launch; a long tail above 5,000 tokens means history trimming is not working.
 
 Aggressively trim the context before each call:
 1. Summarise conversation history older than N turns
@@ -663,7 +663,7 @@ def cached_llm_call(prompt: str, model: str, temperature: float) -> str:
 ```
 
 > **Cache verdict:** 94% cache hit rate reduces input cost 90% (387 of 412 input tokens cached); system prompt must be identical across calls — move dynamic content to prompt end to preserve the prefix cache.
-> ➡ Track `cached_tokens / total_input_tokens` across 1,000 requests; skip caching overhead if hit rate < 30%.
+> Track `cached_tokens / total_input_tokens` across 1,000 requests; skip caching overhead if hit rate < 30%.
 
 ---
 
@@ -680,7 +680,7 @@ Two blockers from §0 remain after caching: the CEO's concern that Friday dinner
 **PizzaBot grounding.** Mamma Rosa's non-interactive nightly jobs include: re-embedding updated menu descriptions (1,200 tokens × 200 items = 240k tokens), generating weekly loyalty-customer digest emails (500 tokens × 1,000 customers = 500k tokens), and evaluating 100 sampled conversations for quality review. None require real-time response. Running all three via the batch API instead of the synchronous API cuts that 740k-token overnight workload from ~$0.11 to ~$0.055. Trivial at this scale — but the habit compounds as the deployment grows.
 
 > **Batch verdict:** 50% cost reduction on all non-interactive workloads with zero changes to model calls — only the submission mechanism changes (async job vs. synchronous call). Use it for: embedding jobs, nightly summarisation, evaluation runs, fine-tuning data preparation.
-> ➡ Audit every LLM call in your codebase: if the caller can tolerate >30 minutes to response, it is a batch job and should be routed accordingly.
+> Audit every LLM call in your codebase: if the caller can tolerate >30 minutes to response, it is a batch job and should be routed accordingly.
 
 For non-interactive workloads (nightly summaries, document ingestion), use batch APIs (50% cost reduction on most providers). Latency is irrelevant; throughput is not.
 
@@ -862,7 +862,7 @@ print("→ DECISION: INT8 quantization enabled (0.8s vs. 1.5s latency, <1% accur
 > **See also:** [LiteLLM cost tracking](https://docs.litellm.ai/docs/completion/cost_tracking)
 
 > **Optimize verdict:** INT8 quantization cuts inference latency 47% (1.5s → 0.8s); batching 5 concurrent requests gives 2× throughput — both require self-hosted vLLM, not available via OpenAI/Anthropic APIs.
-> ➡ Self-hosting breaks even vs API at >10 req/sec sustained traffic; PizzaBot at 50 visitors/day stays on API until scaling to 1,000+ visitors/day.
+> Self-hosting breaks even vs API at >10 req/sec sustained traffic; PizzaBot at 50 visitors/day stays on API until scaling to 1,000+ visitors/day.
 
 ---
 
@@ -884,7 +884,7 @@ Every accuracy-improving technique adds cost. Knowing the magnitude helps you de
 **The hierarchy:** reach for cheaper techniques first. Self-consistency at 5× cost rarely beats a better prompt at 1× cost. An NLI model for hallucination detection costs 0.1× what an LLM judge costs.
 
 > **Tradeoff verdict:** Self-consistency at 5× cost produces only 3–8% accuracy gain — adding $0.025/conv to PizzaBot's $0.005 baseline and erasing the entire 94%-under-budget margin. NLI claim verification at 1.1× is the cheapest hallucination guard. PizzaBot's error rate is already at target; add nothing until evaluation shows regression.
-> ➡ Run the evaluation suite from [Ch.8](../ch08-evaluating-ai-systems/evaluating-ai-systems.md) before adding any accuracy layer — the cost multiplier is only worth paying when the eval delta is real and statistically significant.
+> Run the evaluation suite from [Ch.8](../ch08-evaluating-ai-systems/evaluating-ai-systems.md) before adding any accuracy layer — the cost multiplier is only worth paying when the eval delta is real and statistically significant.
 
 ---
 

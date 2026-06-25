@@ -21,7 +21,7 @@
 
 **What's blocking us**:
 
-🚨 **Synthetic benchmarks ≠ production reality. Real traffic patterns may break latency target.**
+ **Synthetic benchmarks ≠ production reality. Real traffic patterns may break latency target.**
 
 **Current situation**: Engineer stress-testing INT4 model with realistic load patterns
 

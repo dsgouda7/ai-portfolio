@@ -520,7 +520,7 @@ echo "Container IP: $CONTAINER_IP"
 echo "Access URL: $ACCESS_URL"
 
 # Test 1: Container is running
-echo -n "✓ Container running? "
+echo -n " Container running? "
 if docker ps --filter "id=$CONTAINER_ID" --format "{{.Status}}" | grep -q "Up"; then
  echo "PASS"
 else
@@ -529,7 +529,7 @@ else
 fi
 
 # Test 2: HTTP endpoint responds
-echo -n "✓ HTTP endpoint reachable? "
+echo -n " HTTP endpoint reachable? "
 if curl -sf "$ACCESS_URL" > /dev/null; then
  echo "PASS"
 else
@@ -538,7 +538,7 @@ else
 fi
 
 # Test 3: Container logs show no errors
-echo -n "✓ No errors in container logs? "
+echo -n " No errors in container logs? "
 if docker logs "$CONTAINER_ID" 2>&1 | grep -qi "error"; then
  echo "FAIL — errors found in logs"
  docker logs "$CONTAINER_ID" | grep -i error
@@ -548,7 +548,7 @@ else
 fi
 
 # Test 4: Network connectivity (container can reach external DNS)
-echo -n "✓ Container has network connectivity? "
+echo -n " Container has network connectivity? "
 if docker exec "$CONTAINER_ID" ping -c 1 8.8.8.8 > /dev/null 2>&1; then
  echo "PASS"
 else
@@ -557,7 +557,7 @@ else
 fi
 
 # Test 5: Expected ports are exposed
-echo -n "✓ Port 8080 exposed? "
+echo -n " Port 8080 exposed? "
 if docker port "$CONTAINER_ID" | grep -q "8080"; then
  echo "PASS"
 else
@@ -574,8 +574,8 @@ echo "=== All validation tests passed! ==="
 Scenario: HTTP endpoint test fails after terraform apply
 
 Test output:
- ✓ Container running? PASS
- ✗ HTTP endpoint reachable? FAIL — connection refused
+ Container running? PASS
+ HTTP endpoint reachable? FAIL — connection refused
 
 Investigation steps:
  1. Check if container is listening on expected port
@@ -721,7 +721,7 @@ elif [ $EXIT_CODE -eq 2 ]; then
 
  # Alert team (Slack, PagerDuty, etc.)
  curl -X POST https://hooks.slack.com/services/YOUR/WEBHOOK/URL \
- -d "{\"text\": \"🚨 Terraform drift detected in production! Check drift_detection log.\"}"
+ -d "{\"text\": \" Terraform drift detected in production! Check drift_detection log.\"}"
 
  exit 2
 else

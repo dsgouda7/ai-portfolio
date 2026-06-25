@@ -203,7 +203,7 @@ $$\text{backend\_index} = \text{hash}(\text{client\_IP}) \mod N$$
 **When to use:** Legacy stateful apps that can't use external session stores (Redis, Memcached).
 
 > **Proxy verdict:** Round-robin distributes 9 requests 3-per-backend; ip-hash gives sticky sessions at cost of uneven load; least-conn adapts to long-lived connections.
-> ➡ Algorithm choice locked in; proceed to Health Checks phase.
+> Algorithm choice locked in; proceed to Health Checks phase.
 
 > **Industry Standard:** `Nginx upstream module`
 >
@@ -260,7 +260,7 @@ Nginx passive health check: after 2 consecutive timeouts, mark backend2 as down.
 | 11 | backend3| Success |
 
 > **Health Checks verdict:** Passive checks mark backend down after 2 real-user failures; `fail_timeout=30s` auto-retry with zero probe overhead.
-> ➡ Failure detection in place; proceed to Resilience phase to verify failover end-to-end.
+> Failure detection in place; proceed to Resilience phase to verify failover end-to-end.
 
 > **Industry Standard:** `Nginx Plus active health checks` (commercial) or `nginx-health-check module` (open-source)
 >
@@ -430,7 +430,7 @@ docker compose stop backend2
 - **After fail_timeout expires (30s):** Nginx retries backend2 once, marks it down again if still failing
 
 > **Resilience verdict:** Backend failure triggers rerouting in <60s; 2/100 requests impacted; surviving replicas absorb full load with no outage.
-> ➡ HA confirmed at 3 replicas; scale to 4–5 for >50% capacity retention after any single failure.
+> HA confirmed at 3 replicas; scale to 4–5 for >50% capacity retention after any single failure.
 
 > **Industry Standard:** `Kubernetes readiness probes` (built-in active health checks)
 >
@@ -542,7 +542,7 @@ if __name__ == "__main__":
 **Why BACKEND_ID?** So we can verify load distribution — send 10 requests, confirm they hit different backends.
 
 > **Backends verdict:** Three Flask replicas on internal Docker network; `/health` returns backend ID in 5ms with zero single-point-of-failure risk.
-> ➡ Backends isolated and discoverable by name; proceed to Proxy phase.
+> Backends isolated and discoverable by name; proceed to Proxy phase.
 
 > **Industry Standard:** `docker-compose scale` (deprecated) → `docker compose up --scale backend=N`
 >

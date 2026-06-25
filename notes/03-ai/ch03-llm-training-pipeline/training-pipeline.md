@@ -89,19 +89,19 @@ model.generate("What is the capital of France?")
 # Output: "jKl9#mP2..." (random tokens)
 
 # Tool #1: Pretraining → smart but unhelpful
-model.pretrain(tokens=2_000_000_000_000, cost="$10M")  # 2 trillion tokens
+model.pretrain(tokens=2_000_000_000_000, cost="$10M") # 2 trillion tokens
 model.generate("What is the capital of France?")
 # Output: "? How many people live there? What is the GDP of France?" (completes text)
 
 # Enemy #2: Doesn't follow instructions
 # Tool #2: SFT → follows format
-model.sft(examples=50_000, cost="$200k")  # Human-written instruction/response pairs
+model.sft(examples=50_000, cost="$200k") # Human-written instruction/response pairs
 model.generate("What is the capital of France?")
 # Output: "The capital of France is Paris." (correct but robotic)
 
 # Enemy #3: Correct but not aligned with human preferences
 # Tool #3: RLHF → helpful/harmless/honest
-model.rlhf(preferences=100_000, cost="$2M")  # Pairwise comparisons
+model.rlhf(preferences=100_000, cost="$2M") # Pairwise comparisons
 model.generate("What is the capital of France?")
 # Output: "Paris is the capital of France. It's located in the north-central part of the country along the Seine River." (helpful context)
 ```
@@ -200,13 +200,13 @@ A 7B parameter LLaMA model starts with 7,000,000,000 random numbers:
 # Simplified (real models use more sophisticated init)
 import torch
 model_weights = {
-    'embedding': torch.randn(32000, 4096),        # 131M params (vocab × hidden dim)
-    'layer_0_attention': torch.randn(4096, 4096), # 16M params
-    'layer_0_ffn': torch.randn(4096, 11008),      # 45M params
-    # ... 31 more layers ...
-    'layer_31_attention': torch.randn(4096, 4096),
-    'layer_31_ffn': torch.randn(4096, 11008),
-    'output': torch.randn(4096, 32000)            # 131M params
+ 'embedding': torch.randn(32000, 4096), # 131M params (vocab × hidden dim)
+ 'layer_0_attention': torch.randn(4096, 4096), # 16M params
+ 'layer_0_ffn': torch.randn(4096, 11008), # 45M params
+ # ... 31 more layers ...
+ 'layer_31_attention': torch.randn(4096, 4096),
+ 'layer_31_ffn': torch.randn(4096, 11008),
+ 'output': torch.randn(4096, 32000) # 131M params
 }
 
 # Total: 7B parameters, all random
@@ -219,24 +219,24 @@ At step 0, the model assigns equal probability to every token. Ask it to predict
 
 ```python
 # Sample batch: 512 sequences, each 2048 tokens long
-batch = get_next_batch()  # Shape: (512, 2048)
+batch = get_next_batch() # Shape: (512, 2048)
 # Example sequence 0: "The cat sat on the mat. The dog..."
 
 # Forward through all layers
-for position in range(2047):  # Predict token at each position
-    input_token = batch[:, position]      # "The"
-    target_token = batch[:, position + 1] # "cat" (what we want to predict)
+for position in range(2047): # Predict token at each position
+ input_token = batch[:, position] # "The"
+ target_token = batch[:, position + 1] # "cat" (what we want to predict)
 
-    # Model processes through 32 layers
-    hidden = embedding_layer(input_token)      # Random embedding
-    for layer in range(32):
-        hidden = attention(hidden)             # Random attention patterns
-        hidden = feedforward(hidden)           # Random transformations
-    logits = output_layer(hidden)              # Random scores for 32k vocab
+ # Model processes through 32 layers
+ hidden = embedding_layer(input_token) # Random embedding
+ for layer in range(32):
+ hidden = attention(hidden) # Random attention patterns
+ hidden = feedforward(hidden) # Random transformations
+ logits = output_layer(hidden) # Random scores for 32k vocab
 
-    # Logits are 32k numbers (one per vocabulary token)
-    # At step 0, all roughly equal (random)
-    # Model outputs: prob("cat") = 0.00003, prob("xjKl9") = 0.00003, ...
+ # Logits are 32k numbers (one per vocabulary token)
+ # At step 0, all roughly equal (random)
+ # Model outputs: prob("cat") = 0.00003, prob("xjKl9") = 0.00003, ...
 ```
 
 **Step 3: Compute loss — measuring wrongness**
@@ -248,10 +248,10 @@ loss = -log(prob_of_correct_token)
 # Concrete example:
 # Target word is "cat" (token ID 2345)
 # Model assigns probability 0.00003 to token 2345 (basically guessing)
-loss = -log(0.00003) = 10.4  # Very high loss = very wrong
+loss = -log(0.00003) = 10.4 # Very high loss = very wrong
 
 # Average over all 512 sequences × 2047 positions
-total_loss = 11.5  # Typical starting loss for random model
+total_loss = 11.5 # Typical starting loss for random model
 ```
 
 **What does loss mean?** Cross-entropy loss of 11.5 means the model is equivalent to randomly guessing from 100,000 options. A trained model achieves loss ~2.0 (equivalent to choosing from ~7 plausible options).
@@ -264,8 +264,8 @@ total_loss = 11.5  # Typical starting loss for random model
 
 gradients = {}
 for param_name, param_value in model_weights.items():
-    # Gradient = direction and magnitude that reduces loss
-    gradients[param_name] = compute_gradient(loss, param_value)
+ # Gradient = direction and magnitude that reduces loss
+ gradients[param_name] = compute_gradient(loss, param_value)
 
 # Example gradient for one parameter:
 # param_value = 0.523 (current value)
@@ -276,11 +276,11 @@ for param_name, param_value in model_weights.items():
 **Step 5: Update weights — learning**
 
 ```python
-learning_rate = 3e-4  # 0.0003 — small steps to avoid instability
+learning_rate = 3e-4 # 0.0003 — small steps to avoid instability
 
 for param_name in model_weights:
-    # Move parameter in direction opposite to gradient (toward lower loss)
-    model_weights[param_name] -= learning_rate * gradients[param_name]
+ # Move parameter in direction opposite to gradient (toward lower loss)
+ model_weights[param_name] -= learning_rate * gradients[param_name]
 
 # Example:
 # Before: param = 0.523, gradient = -0.0041
@@ -339,41 +339,41 @@ tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-2-7b-hf")
 optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4)
 
 # Training hyperparameters (typical for 7B model)
-batch_size = 512           # Global batch size across all GPUs
-seq_length = 2048          # Context window
-learning_rate = 3e-4       # Peak learning rate
-warmup_steps = 2000        # Gradual lr increase at start
-total_steps = 1_000_000    # ~2 trillion tokens ÷ (512 × 2048)
+batch_size = 512 # Global batch size across all GPUs
+seq_length = 2048 # Context window
+learning_rate = 3e-4 # Peak learning rate
+warmup_steps = 2000 # Gradual lr increase at start
+total_steps = 1_000_000 # ~2 trillion tokens ÷ (512 × 2048)
 
 for step in range(total_steps):
-    # 1. Sample a batch of token sequences from training data
-    batch = dataset.get_batch(batch_size, seq_length)  # Shape: (512, 2048)
-    input_ids = batch[:, :-1]  # All tokens except last
-    labels = batch[:, 1:]      # All tokens except first (shifted by 1)
+ # 1. Sample a batch of token sequences from training data
+ batch = dataset.get_batch(batch_size, seq_length) # Shape: (512, 2048)
+ input_ids = batch[:, :-1] # All tokens except last
+ labels = batch[:, 1:] # All tokens except first (shifted by 1)
 
-    # 2. Forward pass — predict next token for each position
-    outputs = model(input_ids, labels=labels)
-    logits = outputs.logits    # Shape: (512, 2047, 50257) — probabilities for 50k vocab
-    loss = outputs.loss        # Cross-entropy loss averaged over all predictions
+ # 2. Forward pass — predict next token for each position
+ outputs = model(input_ids, labels=labels)
+ logits = outputs.logits # Shape: (512, 2047, 50257) — probabilities for 50k vocab
+ loss = outputs.loss # Cross-entropy loss averaged over all predictions
 
-    # 3. Backward pass — compute gradients
-    loss.backward()
+ # 3. Backward pass — compute gradients
+ loss.backward()
 
-    # 4. Gradient clipping (prevent exploding gradients)
-    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+ # 4. Gradient clipping (prevent exploding gradients)
+ torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
 
-    # 5. Optimizer step — update weights
-    optimizer.step()
-    optimizer.zero_grad()
+ # 5. Optimizer step — update weights
+ optimizer.step()
+ optimizer.zero_grad()
 
-    # 6. Learning rate schedule (warmup + cosine decay)
-    lr = get_lr(step, warmup_steps, total_steps, peak_lr=3e-4, min_lr=3e-5)
-    for param_group in optimizer.param_groups:
-        param_group['lr'] = lr
+ # 6. Learning rate schedule (warmup + cosine decay)
+ lr = get_lr(step, warmup_steps, total_steps, peak_lr=3e-4, min_lr=3e-5)
+ for param_group in optimizer.param_groups:
+ param_group['lr'] = lr
 
-    # 7. Log metrics every 100 steps
-    if step % 100 == 0:
-        print(f"Step {step} | Loss: {loss.item():.4f} | LR: {lr:.2e} | Perplexity: {torch.exp(loss):.2f}")
+ # 7. Log metrics every 100 steps
+ if step % 100 == 0:
+ print(f"Step {step} | Loss: {loss.item():.4f} | LR: {lr:.2e} | Perplexity: {torch.exp(loss):.2f}")
 ```
 
 **What each step actually does:**
@@ -389,11 +389,11 @@ for step in range(total_steps):
 **Typical training output:**
 
 ```
-Step 0 | Loss: 11.5123 | LR: 1.50e-07 | Perplexity: 99,847.23  # Random guessing
-Step 1000 | Loss: 4.2341 | LR: 1.50e-04 | Perplexity: 68.92     # Learning grammar
-Step 10000 | Loss: 2.8172 | LR: 3.00e-04 | Perplexity: 16.74    # Learning facts
-Step 100000 | Loss: 2.1453 | LR: 2.85e-04 | Perplexity: 8.54    # Learning reasoning
-Step 1000000 | Loss: 1.9821 | LR: 3.00e-05 | Perplexity: 7.26   # Converged
+Step 0 | Loss: 11.5123 | LR: 1.50e-07 | Perplexity: 99,847.23 # Random guessing
+Step 1000 | Loss: 4.2341 | LR: 1.50e-04 | Perplexity: 68.92 # Learning grammar
+Step 10000 | Loss: 2.8172 | LR: 3.00e-04 | Perplexity: 16.74 # Learning facts
+Step 100000 | Loss: 2.1453 | LR: 2.85e-04 | Perplexity: 8.54 # Learning reasoning
+Step 1000000 | Loss: 1.9821 | LR: 3.00e-05 | Perplexity: 7.26 # Converged
 ```
 
 **Perplexity** measures how "surprised" the model is by the next token. Lower is better. GPT-3 achieved ~20 on web text; GPT-4 is estimated ~15.
@@ -454,9 +454,9 @@ Training a 70B parameter model on 2 trillion tokens requires **massive distribut
 from torch.cuda.amp import autocast, GradScaler
 
 scaler = GradScaler()
-with autocast():  # Use fp16 for forward/backward
-    outputs = model(input_ids, labels=labels)
-    loss = outputs.loss
+with autocast(): # Use fp16 for forward/backward
+ outputs = model(input_ids, labels=labels)
+ loss = outputs.loss
 scaler.scale(loss).backward()
 scaler.step(optimizer)
 scaler.update()
@@ -468,11 +468,11 @@ model.gradient_checkpointing_enable()
 # Gradient accumulation — simulate large batch size on small GPU
 accumulation_steps = 8
 for i, batch in enumerate(dataloader):
-    loss = model(batch).loss / accumulation_steps
-    loss.backward()
-    if (i + 1) % accumulation_steps == 0:
-        optimizer.step()
-        optimizer.zero_grad()
+ loss = model(batch).loss / accumulation_steps
+ loss.backward()
+ if (i + 1) % accumulation_steps == 0:
+ optimizer.step()
+ optimizer.zero_grad()
 ```
 
 **Production trade-offs:**
@@ -568,24 +568,24 @@ Fine-tune the pretrained model on a curated dataset of `(instruction, response)`
 
 ```
 1. Seed prompt collection (2-4 weeks)
-   → Collect 10k-50k diverse user prompts from pilot users or synthetic generation
-   → Categories: Q&A, summarization, code, creative writing, math, translation
+ → Collect 10k-50k diverse user prompts from pilot users or synthetic generation
+ → Categories: Q&A, summarization, code, creative writing, math, translation
 
 2. Human annotation (2-6 months, $200k-2M cost)
-   → Hire 50-500 contractors with domain expertise
-   → Each writes 5-20 high-quality responses per day
-   → Quality control: 10% double-annotated, expert review of edge cases
-   → Result: 10k-100k (prompt, response) pairs
+ → Hire 50-500 contractors with domain expertise
+ → Each writes 5-20 high-quality responses per day
+ → Quality control: 10% double-annotated, expert review of edge cases
+ → Result: 10k-100k (prompt, response) pairs
 
 3. Format standardization
-   → Convert to unified chat format (user message → assistant message)
-   → Add system prompts if needed
-   → Split into train/validation sets (95/5 split)
+ → Convert to unified chat format (user message → assistant message)
+ → Add system prompts if needed
+ → Split into train/validation sets (95/5 split)
 
 4. Quality filtering
-   → Remove toxic, harmful, or factually incorrect responses
-   → Filter responses that don't follow instructions
-   → Remove responses shorter than 50 tokens or longer than 2048 tokens
+ → Remove toxic, harmful, or factually incorrect responses
+ → Filter responses that don't follow instructions
+ → Remove responses shorter than 50 tokens or longer than 2048 tokens
 ```
 
 **Real SFT dataset sizes:**
@@ -608,11 +608,11 @@ Fine-tune the pretrained model on a curated dataset of `(instruction, response)`
 
 ```json
 {
-  "messages": [
-    {"role": "system", "content": "You are a helpful assistant that provides concise, accurate answers."},
-    {"role": "user", "content": "What is the capital of France?"},
-    {"role": "assistant", "content": "The capital of France is Paris."}
-  ]
+ "messages": [
+ {"role": "system", "content": "You are a helpful assistant that provides concise, accurate answers."},
+ {"role": "user", "content": "What is the capital of France?"},
+ {"role": "assistant", "content": "The capital of France is Paris."}
+ ]
 }
 ```
 
@@ -630,11 +630,11 @@ User: "Write a Python function that checks if a string is a palindrome."
 Assistant: "Here's a Python function:
 
 def is_palindrome(s):
-    s = s.lower().replace(' ', '')
-    return s == s[::-1]
+ s = s.lower().replace(' ', '')
+ return s == s[::-1]
 
 # Example usage:
-print(is_palindrome('A man a plan a canal Panama'))  # True"
+print(is_palindrome('A man a plan a canal Panama')) # True"
 ```
 
 **Reasoning:**
@@ -682,24 +682,24 @@ Assistant: "I can't provide instructions on hotwiring a car, as that's typically
 from transformers import Trainer, TrainingArguments
 
 training_args = TrainingArguments(
-    output_dir="./llama2-7b-sft",
-    num_train_epochs=3,              # Usually 1-3 epochs (more risks overfitting)
-    per_device_train_batch_size=4,   # Small batch size due to long sequences
-    gradient_accumulation_steps=8,   # Effective batch size = 4 × 8 = 32
-    learning_rate=2e-5,               # Much smaller than pretraining (3e-4)
-    warmup_steps=100,                 # Short warmup since starting from pretrained
-    logging_steps=10,
-    save_steps=500,
-    eval_steps=500,
-    fp16=True,                        # Mixed precision
-    max_seq_length=2048,
+ output_dir="./llama2-7b-sft",
+ num_train_epochs=3, # Usually 1-3 epochs (more risks overfitting)
+ per_device_train_batch_size=4, # Small batch size due to long sequences
+ gradient_accumulation_steps=8, # Effective batch size = 4 × 8 = 32
+ learning_rate=2e-5, # Much smaller than pretraining (3e-4)
+ warmup_steps=100, # Short warmup since starting from pretrained
+ logging_steps=10,
+ save_steps=500,
+ eval_steps=500,
+ fp16=True, # Mixed precision
+ max_seq_length=2048,
 )
 
 trainer = Trainer(
-    model=model,
-    args=training_args,
-    train_dataset=sft_train_dataset,
-    eval_dataset=sft_eval_dataset,
+ model=model,
+ args=training_args,
+ train_dataset=sft_train_dataset,
+ eval_dataset=sft_eval_dataset,
 )
 
 trainer.train()
@@ -711,17 +711,17 @@ trainer.train()
 
 ```
 Epoch 1:
-  Step 0 | Loss: 2.1543 | Eval Loss: 2.1821  # Still text-completing, not following instructions
-  Step 500 | Loss: 0.8921 | Eval Loss: 0.9234  # Learning instruction format
-  Step 1000 | Loss: 0.5432 | Eval Loss: 0.6123  # Following instructions reliably
+ Step 0 | Loss: 2.1543 | Eval Loss: 2.1821 # Still text-completing, not following instructions
+ Step 500 | Loss: 0.8921 | Eval Loss: 0.9234 # Learning instruction format
+ Step 1000 | Loss: 0.5432 | Eval Loss: 0.6123 # Following instructions reliably
 
 Epoch 2:
-  Step 1500 | Loss: 0.3214 | Eval Loss: 0.5821  # Refining response quality
-  Step 2000 | Loss: 0.2543 | Eval Loss: 0.5912  # Eval loss stopped improving
+ Step 1500 | Loss: 0.3214 | Eval Loss: 0.5821 # Refining response quality
+ Step 2000 | Loss: 0.2543 | Eval Loss: 0.5912 # Eval loss stopped improving
 
 Epoch 3:
-  Step 2500 | Loss: 0.1823 | Eval Loss: 0.6234  # Train loss decreasing but eval increasing
-  Step 3000 | Loss: 0.1432 | Eval Loss: 0.6543  # OVERFITTING — stop here
+ Step 2500 | Loss: 0.1823 | Eval Loss: 0.6234 # Train loss decreasing but eval increasing
+ Step 3000 | Loss: 0.1432 | Eval Loss: 0.6543 # OVERFITTING — stop here
 ```
 
 **The overfitting trap:** Training loss keeps decreasing but evaluation loss increases — model is memorizing training data rather than learning general instruction-following patterns. **Best practice:** Stop when eval loss stops improving (early stopping).
@@ -782,14 +782,14 @@ RLHF refines existing capabilities. It can't create them from scratch.
 
 ```python
 # This fails catastrophically:
-random_model = Transformer(random_init=True)  # No knowledge, no language ability
-rlhf(random_model, preferences=100_000)       # Tries to learn "helpfulness" from nothing
+random_model = Transformer(random_init=True) # No knowledge, no language ability
+rlhf(random_model, preferences=100_000) # Tries to learn "helpfulness" from nothing
 # Result: Model outputs slightly-less-random gibberish
 
 # This works:
-pretrained_model = load("llama-2-7b-pretrained")  # Knows language, facts, reasoning
+pretrained_model = load("llama-2-7b-pretrained") # Knows language, facts, reasoning
 sft_model = sft(pretrained_model, examples=50_000) # Knows instruction format
-rlhf_model = rlhf(sft_model, preferences=100_000)  # Refines existing helpful behavior
+rlhf_model = rlhf(sft_model, preferences=100_000) # Refines existing helpful behavior
 # Result: ChatGPT-quality model
 ```
 
@@ -810,23 +810,23 @@ Skip pretraining and you have nothing to align. Skip SFT and RLHF doesn't know w
 
 ```
 1. Prompt collection (1-2 weeks)
-   → Collect 20k-50k diverse prompts (some from SFT, some from pilot users)
-   → Focus on areas where SFT model quality is inconsistent
+ → Collect 20k-50k diverse prompts (some from SFT, some from pilot users)
+ → Focus on areas where SFT model quality is inconsistent
 
 2. Response generation (1 week)
-   → SFT model generates 2-4 different responses per prompt (using temperature sampling)
-   → Result: 40k-200k total responses to compare
+ → SFT model generates 2-4 different responses per prompt (using temperature sampling)
+ → Result: 40k-200k total responses to compare
 
 3. Human preference annotation (2-4 months, $500k-3M cost)
-   → Annotators compare response pairs and pick "better" one
-   → Criteria: helpfulness, harmlessness, honesty, clarity
-   → Each comparison takes ~2-5 minutes
-   → 10-20k comparisons per annotator over several months
+ → Annotators compare response pairs and pick "better" one
+ → Criteria: helpfulness, harmlessness, honesty, clarity
+ → Each comparison takes ~2-5 minutes
+ → 10-20k comparisons per annotator over several months
 
 4. Quality control
-   → Inter-annotator agreement check (should be >70% on clear cases)
-   → Expert review of controversial comparisons
-   → Result: 30k-100k preference pairs (prompt, chosen, rejected)
+ → Inter-annotator agreement check (should be >70% on clear cases)
+ → Expert review of controversial comparisons
+ → Result: 30k-100k preference pairs (prompt, chosen, rejected)
 ```
 
 **Real RLHF preference dataset sizes:**
@@ -937,20 +937,20 @@ The reward model is a separate neural network that predicts which response human
 ```python
 # Reward model architecture (typically same as base model but with classification head)
 reward_model = AutoModelForSequenceClassification.from_pretrained(
-    "meta-llama/Llama-2-7b-sft",
-    num_labels=1  # Output a single scalar "reward" score
+ "meta-llama/Llama-2-7b-sft",
+ num_labels=1 # Output a single scalar "reward" score
 )
 
 # Training on preference pairs
 for prompt, chosen, rejected in preference_dataset:
-    # Forward pass both responses
-    reward_chosen = reward_model(prompt + chosen)     # e.g., 2.3
-    reward_rejected = reward_model(prompt + rejected)  # e.g., -0.7
+ # Forward pass both responses
+ reward_chosen = reward_model(prompt + chosen) # e.g., 2.3
+ reward_rejected = reward_model(prompt + rejected) # e.g., -0.7
 
-    # Loss: reward(chosen) should be higher than reward(rejected)
-    loss = -log_sigmoid(reward_chosen - reward_rejected)
-    loss.backward()
-    optimizer.step()
+ # Loss: reward(chosen) should be higher than reward(rejected)
+ loss = -log_sigmoid(reward_chosen - reward_rejected)
+ loss.backward()
+ optimizer.step()
 ```
 
 **What the reward model learns:**
@@ -961,10 +961,10 @@ for prompt, chosen, rejected in preference_dataset:
 **Training dynamics:**
 
 ```
-Epoch 1 | Step 0 | Loss: 0.693 | Accuracy: 50.2%  # Random guessing
-Epoch 1 | Step 1000 | Loss: 0.421 | Accuracy: 68.4%  # Learning surface patterns
-Epoch 2 | Step 5000 | Loss: 0.287 | Accuracy: 77.8%  # Matching human preferences well
-Epoch 3 | Step 10000 | Loss: 0.213 | Accuracy: 82.3%  # Converged
+Epoch 1 | Step 0 | Loss: 0.693 | Accuracy: 50.2% # Random guessing
+Epoch 1 | Step 1000 | Loss: 0.421 | Accuracy: 68.4% # Learning surface patterns
+Epoch 2 | Step 5000 | Loss: 0.287 | Accuracy: 77.8% # Matching human preferences well
+Epoch 3 | Step 10000 | Loss: 0.213 | Accuracy: 82.3% # Converged
 ```
 
 **Accuracy:** Percentage of times reward model agrees with human preference. 82% means it matches human judgment 82% of the time — good enough to guide policy training.
@@ -980,37 +980,37 @@ from trl import PPOTrainer, PPOConfig
 
 # Initialize PPO trainer
 ppo_config = PPOConfig(
-    learning_rate=1.4e-5,
-    batch_size=64,
-    mini_batch_size=16,
-    epochs=4,
-    kl_penalty="kl"  # Keep policy close to SFT baseline
+ learning_rate=1.4e-5,
+ batch_size=64,
+ mini_batch_size=16,
+ epochs=4,
+ kl_penalty="kl" # Keep policy close to SFT baseline
 )
 
 ppo_trainer = PPOTrainer(
-    config=ppo_config,
-    model=policy_model,      # Start from SFT model
-    ref_model=policy_model,  # Reference (frozen) SFT model
-    reward_model=reward_model
+ config=ppo_config,
+ model=policy_model, # Start from SFT model
+ ref_model=policy_model, # Reference (frozen) SFT model
+ reward_model=reward_model
 )
 
 # Training loop
 for batch in prompts:
-    # 1. Generate responses from current policy
-    query_tensors = tokenizer(batch, return_tensors="pt")
-    response_tensors = policy_model.generate(query_tensors, max_length=512)
+ # 1. Generate responses from current policy
+ query_tensors = tokenizer(batch, return_tensors="pt")
+ response_tensors = policy_model.generate(query_tensors, max_length=512)
 
-    # 2. Score responses with reward model
-    rewards = []
-    for query, response in zip(query_tensors, response_tensors):
-        reward = reward_model(query + response).item()  # e.g., 1.8
-        rewards.append(reward)
+ # 2. Score responses with reward model
+ rewards = []
+ for query, response in zip(query_tensors, response_tensors):
+ reward = reward_model(query + response).item() # e.g., 1.8
+ rewards.append(reward)
 
-    # 3. Compute KL divergence penalty (don't drift too far from SFT)
-    kl_penalty = compute_kl_divergence(policy_model, ref_model, query_tensors)
+ # 3. Compute KL divergence penalty (don't drift too far from SFT)
+ kl_penalty = compute_kl_divergence(policy_model, ref_model, query_tensors)
 
-    # 4. PPO update step
-    stats = ppo_trainer.step(query_tensors, response_tensors, rewards)
+ # 4. PPO update step
+ stats = ppo_trainer.step(query_tensors, response_tensors, rewards)
 ```
 
 **What's actually happening:**
@@ -1070,36 +1070,36 @@ Where:
 from transformers import Trainer
 
 class DPOTrainer(Trainer):
-    def compute_loss(self, model, inputs):
-        # Unpack preference pair
-        prompt = inputs['prompt']
-        chosen = inputs['chosen']
-        rejected = inputs['rejected']
+ def compute_loss(self, model, inputs):
+ # Unpack preference pair
+ prompt = inputs['prompt']
+ chosen = inputs['chosen']
+ rejected = inputs['rejected']
 
-        # Compute log probabilities under policy and reference models
-        policy_chosen_logprob = model(prompt + chosen).logits
-        policy_rejected_logprob = model(prompt + rejected).logits
-        ref_chosen_logprob = ref_model(prompt + chosen).logits
-        ref_rejected_logprob = ref_model(prompt + rejected).logits
+ # Compute log probabilities under policy and reference models
+ policy_chosen_logprob = model(prompt + chosen).logits
+ policy_rejected_logprob = model(prompt + rejected).logits
+ ref_chosen_logprob = ref_model(prompt + chosen).logits
+ ref_rejected_logprob = ref_model(prompt + rejected).logits
 
-        # DPO loss (equation above)
-        logits = beta * (
-            (policy_chosen_logprob - ref_chosen_logprob) -
-            (policy_rejected_logprob - ref_rejected_logprob)
-        )
-        loss = -F.logsigmoid(logits).mean()
-        return loss
+ # DPO loss (equation above)
+ logits = beta * (
+ (policy_chosen_logprob - ref_chosen_logprob) -
+ (policy_rejected_logprob - ref_rejected_logprob)
+ )
+ loss = -F.logsigmoid(logits).mean()
+ return loss
 
 dpo_trainer = DPOTrainer(
-    model=policy_model,
-    ref_model=sft_model,  # Frozen reference
-    train_dataset=preference_dataset,
-    args=TrainingArguments(
-        learning_rate=5e-7,  # Even smaller than RLHF
-        num_train_epochs=3,
-        per_device_train_batch_size=4,
-        beta=0.1  # KL penalty strength
-    )
+ model=policy_model,
+ ref_model=sft_model, # Frozen reference
+ train_dataset=preference_dataset,
+ args=TrainingArguments(
+ learning_rate=5e-7, # Even smaller than RLHF
+ num_train_epochs=3,
+ per_device_train_batch_size=4,
+ beta=0.1 # KL penalty strength
+ )
 )
 
 dpo_trainer.train()
@@ -1129,7 +1129,7 @@ User: "Write a Python function to reverse a string."
 SFT Model: "Here's a Python function to reverse a string:
 
 def reverse_string(s):
-    return s[::-1]
+ return s[::-1]
 
 This function takes a string s and returns it reversed using Python's slice notation [::-1] which steps through the string backwards. For example, reverse_string('hello') would return 'olleh'. You can also reverse a string using other methods like using a loop or the reversed() function combined with join(), but this is the most Pythonic and efficient approach."
 ```
@@ -1141,7 +1141,7 @@ User: "Write a Python function to reverse a string."
 Aligned Model: "Here's a Python function:
 
 def reverse_string(s):
-    return s[::-1]
+ return s[::-1]
 
 Example: reverse_string('hello') returns 'olleh'."
 ```
@@ -1208,16 +1208,16 @@ Training LLMs costs millions of dollars. You can't wait until the end to discove
 
 ```
 What good training looks like:
-Step 0 | Train Loss: 11.52 | Val Loss: 11.51  # Random initialization
-Step 10k | Train Loss: 3.24 | Val Loss: 3.28   # Learning basic patterns
-Step 100k | Train Loss: 2.15 | Val Loss: 2.19  # Strong improvement
-Step 500k | Train Loss: 1.98 | Val Loss: 2.03  # Convergence beginning
-Step 1M | Train Loss: 1.94 | Val Loss: 2.01   # Fully converged
+Step 0 | Train Loss: 11.52 | Val Loss: 11.51 # Random initialization
+Step 10k | Train Loss: 3.24 | Val Loss: 3.28 # Learning basic patterns
+Step 100k | Train Loss: 2.15 | Val Loss: 2.19 # Strong improvement
+Step 500k | Train Loss: 1.98 | Val Loss: 2.03 # Convergence beginning
+Step 1M | Train Loss: 1.94 | Val Loss: 2.01 # Fully converged
 
 What bad training looks like (catastrophic forgetting):
 Step 500k | Train Loss: 1.98 | Val Loss: 2.03
-Step 600k | Train Loss: 1.92 | Val Loss: 2.28  # Val loss increasing!
-Step 700k | Train Loss: 1.87 | Val Loss: 2.51  # Model forgetting validation distribution
+Step 600k | Train Loss: 1.92 | Val Loss: 2.28 # Val loss increasing!
+Step 700k | Train Loss: 1.87 | Val Loss: 2.51 # Model forgetting validation distribution
 → Learning rate too high for fine-tuning, or SFT dataset too narrow
 ```
 
@@ -1243,13 +1243,13 @@ Loss is a proxy. What matters is performance on real tasks.
 
 ```
 Step 100k:
-  Loss: 2.15 | MMLU: 42.3% | HumanEval: 12.1% | GSM8K: 8.7%
+ Loss: 2.15 | MMLU: 42.3% | HumanEval: 12.1% | GSM8K: 8.7%
 
 Step 500k:
-  Loss: 1.98 | MMLU: 58.7% | HumanEval: 28.4% | GSM8K: 18.3%
+ Loss: 1.98 | MMLU: 58.7% | HumanEval: 28.4% | GSM8K: 18.3%
 
 Step 1M:
-  Loss: 1.94 | MMLU: 63.2% | HumanEval: 35.7% | GSM8K: 23.1%
+ Loss: 1.94 | MMLU: 63.2% | HumanEval: 35.7% | GSM8K: 23.1%
 ```
 
 **Red flags during training:**
@@ -1270,10 +1270,10 @@ Automated metrics don't capture everything. Human evaluation is expensive but ne
 
 ```
 Sample 200 diverse prompts → Generate responses → Annotators rate 1-7 on:
-  - Helpfulness: Does it answer the question?
-  - Harmlessness: Is it safe and appropriate?
-  - Honesty: Does it admit uncertainty when appropriate?
-  - Coherence: Is it well-structured and clear?
+ - Helpfulness: Does it answer the question?
+ - Harmlessness: Is it safe and appropriate?
+ - Honesty: Does it admit uncertainty when appropriate?
+ - Coherence: Is it well-structured and clear?
 
 Results tracked over time:
 Week 1 (SFT start): 3.8 / 7.0 average
@@ -1368,11 +1368,11 @@ Mode collapsed response (reward: 2.8): "Absolutely! I'd be thrilled to help! Let
 
 ```
 Model claims to achieve:
-  MMLU: 89.2% (suspicious - exceeds GPT-4's 86.4%)
+ MMLU: 89.2% (suspicious - exceeds GPT-4's 86.4%)
 
 But investigation reveals:
-  MMLU train set was in pretraining corpus
-  Actual held-out eval: 67.3% (realistic)
+ MMLU train set was in pretraining corpus
+ Actual held-out eval: 67.3% (realistic)
 ```
 
 **Detection:**
@@ -1543,7 +1543,7 @@ Several capabilities of LLMs were not explicitly trained for and appeared qualit
 
 *"Emergence is not magic. It's the moment when model capacity finally matches task complexity."*
 
-> ➡ **Why emergence thresholds matter:** In-context learning (≥7B params) is what makes few-shot prompting work — you'll use it in [Ch.2](../ch05-prompt-engineering). Chain-of-thought reasoning (≥100B params) is what makes complex multi-step queries work — you'll probe it in [Ch.3](../ch06-cot-reasoning). Knowing these thresholds tells you when it's worth trying a capability vs. when you need to engineer around its absence by choosing a larger model or a different approach.
+> **Why emergence thresholds matter:** In-context learning (≥7B params) is what makes few-shot prompting work — you'll use it in [Ch.2](../ch05-prompt-engineering). Chain-of-thought reasoning (≥100B params) is what makes complex multi-step queries work — you'll probe it in [Ch.3](../ch06-cot-reasoning). Knowing these thresholds tells you when it's worth trying a capability vs. when you need to engineer around its absence by choosing a larger model or a different approach.
 
 ---
 

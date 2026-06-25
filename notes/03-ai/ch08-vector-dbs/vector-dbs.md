@@ -84,7 +84,7 @@ These misconceptions quietly poison the first three months of building with vect
 
 ## 0 · The Scaling Problem
 
-> 💡 **Quick Intuition:** Brute-force vector search is like checking every house in a city to find your friend. At 200 houses (small town), it takes seconds. At 50,000 houses (big city), it takes hours. At 100 million houses (entire country), you'd spend your whole life searching. We need a phone book (index) to find addresses quickly.
+> **Quick Intuition:** Brute-force vector search is like checking every house in a city to find your friend. At 200 houses (small town), it takes seconds. At 50,000 houses (big city), it takes hours. At 100 million houses (entire country), you'd spend your whole life searching. We need a phone book (index) to find addresses quickly.
 
 **Exact search is the simplest approach — and it doesn't scale.** Without indexes, a vector database performs an exact search, which provides perfect recall at the expense of performance. The operation is straightforward: compute the distance between the query vector and **every single stored vector**, then return the top-*k* closest results.
 
@@ -108,13 +108,13 @@ On a typical CPU doing ~10 billion operations/second, that's **~15 milliseconds*
 
 | Corpus Size | Documents | Vectors | Query Time (CPU) | User Experience |
 |-------------|-----------|---------|------------------|-----------------|
-| **Small** | 1,000 | 4,000 | **~0.5ms** | ✓ Instant |
-| **Medium** | 10,000 | 40,000 | **~5ms** | ✓ Fast |
-| **Large** | 50,000 | 200,000 | **~15ms** | ✓ Acceptable |
-| **Very Large** | 100,000 | 400,000 | **~30ms** | ⚠️ Getting slow |
-| **Enterprise** | 500,000 | 2,000,000 | **~150ms** | ✗ Query lag |
-| **Massive** | 1,000,000 | 4,000,000 | **~300ms** | ✗ Unacceptable |
-| **Web-scale** | 100,000,000 | 400,000,000 | **~30 seconds** | ✗ Timeout |
+| **Small** | 1,000 | 4,000 | **~0.5ms** | Instant |
+| **Medium** | 10,000 | 40,000 | **~5ms** | Fast |
+| **Large** | 50,000 | 200,000 | **~15ms** | Acceptable |
+| **Very Large** | 100,000 | 400,000 | **~30ms** | Getting slow |
+| **Enterprise** | 500,000 | 2,000,000 | **~150ms** | Query lag |
+| **Massive** | 1,000,000 | 4,000,000 | **~300ms** | Unacceptable |
+| **Web-scale** | 100,000,000 | 400,000,000 | **~30 seconds** | Timeout |
 
 **The breaking point:** Around 500,000 documents, brute-force crosses into "user-noticeable lag" territory. At 1M+ documents, queries timeout before completing.
 
@@ -145,7 +145,7 @@ Memory = 100,000,000 × 768 × 4 bytes = 307.2 GB
 - **Forces disk access** (SSD: 100×1,000× slower than RAM)
 - **Cloud costs** ($10/GB/month × 300GB = **$3,000/month** just for RAM)
 
-> 💡 **Quick Intuition:** Imagine if your phone had to store every person's name, face, and contact info in the entire country. It would run out of space instantly. Instead, it stores an index (contacts app) that helps you find people quickly without storing everyone.
+> **Quick Intuition:** Imagine if your phone had to store every person's name, face, and contact info in the entire country. It would run out of space instantly. Instead, it stores an index (contacts app) that helps you find people quickly without storing everyone.
 
 **Why traditional indexes don't help:** Relational databases won't store vectors correctly, and SQL is not built for high-dimensional similarity search — searching through them would be extremely difficult. Even spatial tree indexes (kd-trees, ball trees) degrade in high dimensions (the "curse of dimensionality"), often performing nearly as badly as brute-force. Hash-based methods (Locality Sensitive Hashing / LSH) are theoretically interesting but often impractical at scale due to the many hash tables required for high accuracy.
 
@@ -163,7 +163,7 @@ Memory = 100,000,000 × 768 × 4 bytes = 307.2 GB
 
 Before diving into indexing methods, it's essential to understand the distance metrics that underpin all vector search. These determine how "closeness" is measured. The wrong metric choice doesn't produce a latency error — it silently returns wrong documents.
 
-### 🗺 **Navigation Analogy: Three Ways to Measure "Close"**
+### **Navigation Analogy: Three Ways to Measure "Close"**
 
 Think of finding nearby locations on a map. Three different travelers might measure "closeness" differently:
 
@@ -203,8 +203,8 @@ Let's see how the same two document embeddings produce different similarity scor
 
 ```python
 # Two document embeddings (simplified to 3D for visualization)
-doc1 = [0.8, 0.5, 0.3]  # "Authentication service uptime"
-doc2 = [0.7, 0.6, 0.2]  # "Auth service availability"
+doc1 = [0.8, 0.5, 0.3] # "Authentication service uptime"
+doc2 = [0.7, 0.6, 0.2] # "Auth service availability"
 
 # L2 (Euclidean) - measures straight-line distance
 l2_distance = sqrt((0.8-0.7)^2 + (0.5-0.6)^2 + (0.3-0.2)^2) = 0.173
@@ -225,7 +225,7 @@ dot_product = 0.8*0.7 + 0.5*0.6 + 0.3*0.2 = 0.92
 - **Cosine is most common** because it ignores vector length
 - **Must use the same metric** for indexing and querying
 
-> 💡 **Quick Intuition:** Imagine two hikers. Cosine asks "are they walking in the same direction?" (angle). L2 asks "how far apart are they?" (distance). Dot product asks "how much do their paths agree?" (both direction and how far they've walked).
+> **Quick Intuition:** Imagine two hikers. Cosine asks "are they walking in the same direction?" (angle). L2 asks "how far apart are they?" (distance). Dot product asks "how much do their paths agree?" (both direction and how far they've walked).
 
 > **Metric choice → recall:** Switching from cosine to dot product on un-normalised embeddings can silently degrade recall by 5–15% on short queries — degrading retrieval quality without any visible error signal. Cosine is the safe default for text embeddings until you've verified your model normalises outputs.
 
@@ -235,7 +235,7 @@ dot_product = 0.8*0.7 + 0.5*0.6 + 0.3*0.2 = 0.92
 
 ## 2 · Why Traditional Indexes Fail: The Curse of Dimensionality
 
-> 💡 **Quick Intuition:** In your bedroom (3D), it's easy to find your phone—check the desk, nightstand, or floor. But imagine your bedroom had 768 dimensions. Every point is roughly the same "distance" from every other point, making spatial organization meaningless. This is why traditional tree-based indexes collapse in high dimensions.
+> **Quick Intuition:** In your bedroom (3D), it's easy to find your phone—check the desk, nightstand, or floor. But imagine your bedroom had 768 dimensions. Every point is roughly the same "distance" from every other point, making spatial organization meaningless. This is why traditional tree-based indexes collapse in high dimensions.
 
 **The intuition:** In 2D or 3D space, spatial indexes (kd-trees, R-trees, ball trees) work beautifully. You partition space recursively, and at query time you eliminate entire regions with a single comparison. **In 768 dimensions, this breaks down completely.**
 
@@ -243,15 +243,15 @@ dot_product = 0.8*0.7 + 0.5*0.6 + 0.3*0.2 = 0.92
 
 **2D Space (Works Great):**
 ```plaintext
-          |          You can partition the plane and eliminate
-    A     |    B     half the points with one comparison:
-  ● ○     |     ●    "Is query left or right of this line?"
-          |
+ | You can partition the plane and eliminate
+ A | B half the points with one comparison:
+ ● ○ | ● "Is query left or right of this line?"
+ |
 ----------+----------
-          |
-    C     |    D     kd-tree depth: log2(N) ✓
-     ●    |   ● ●
-          |
+ |
+ C | D kd-tree depth: log2(N)
+ ● | ● ●
+ |
 ```
 
 **768D Space (Fails Completely):**
@@ -281,19 +281,19 @@ This means every query point is roughly equidistant to every indexed point — t
 **2. Exponential partition cost — Too many splits needed**
 
 A kd-tree that achieves 2 partitions per dimension:
-- In **3D**: 2³ = **8 leaf nodes** ✓ (manageable)
-- In **10D**: 2¹⁰ = **1,024 leaf nodes** ⚠️ (getting big)
-- In **768D**: 2⁷⁶⁸ = **More atoms than in the universe** ✗ (impossible)
+- In **3D**: 2³ = **8 leaf nodes** (manageable)
+- In **10D**: 2¹⁰ = **1,024 leaf nodes** (getting big)
+- In **768D**: 2⁷⁶⁸ = **More atoms than in the universe** (impossible)
 
 **Visualizing the explosion:**
 ```plaintext
-Dimensions    Leaf Nodes    Status
------------   -----------   --------
-2D            4             ✓ Easy
-3D            8             ✓ Fine
-10D           1,024         ⚠️ Large
-100D          10^30         ✗ Impossible
-768D          10^231        ✗ Not even theoretical
+Dimensions Leaf Nodes Status
+----------- ----------- --------
+2D 4 Easy
+3D 8 Fine
+10D 1,024 Large
+100D 10^30 Impossible
+768D 10^231 Not even theoretical
 ```
 
 **3. Degenerate traversal — No pruning happens**
@@ -303,8 +303,8 @@ In practice, kd-trees in high dimensions devolve to **O(N) search** — you end 
 **Why?** Because in 768D, your query point is roughly equidistant to points in ALL branches. You can't prune any branches confidently.
 
 **Real-world result:**
-- kd-tree in 3D: Prunes 90%+ of points ✓
-- kd-tree in 768D: Prunes <5% of points ✗ (worse than brute-force due to tree overhead)
+- kd-tree in 3D: Prunes 90%+ of points
+- kd-tree in 768D: Prunes <5% of points (worse than brute-force due to tree overhead)
 
 **The historical response:** LSH (Locality-Sensitive Hashing) emerged in 1998 as the first theoretical breakthrough, but required maintaining dozens of hash tables to achieve acceptable recall — making it a memory hog. The field needed algorithms that could navigate high-dimensional space *efficiently* without relying on spatial partitioning. This led to two dominant approaches: **IVF** (cluster-based partitioning) and **HNSW** (graph-based navigation).
 
@@ -344,11 +344,11 @@ Let's explore each in detail.
  ▼
  ┌──────────┬──────────┬──────────┬──────────┐
  │Cluster 1 │Cluster 2 │Cluster 3 │...Cluster│
- │ ★ → [IDs]│ ★ → [IDs]│ ★ → [IDs]│ nlist │
+ │ → [IDs]│ → [IDs]│ → [IDs]│ nlist │
  │(centroid)│(centroid)│(centroid)│ │
  └──────────┴──────────┴──────────┴──────────┘
 
- ★ = centroid (coarse quantizer)
+ = centroid (coarse quantizer)
  [IDs] = inverted list of vectors assigned to that cluster
 
  QUERY TIME:
@@ -400,14 +400,14 @@ IVF partitions the vector space into clusters, then searches only the nearest `n
 flowchart TD
  subgraph "Index Building (Offline)"
  A[" 50K Vectors"] --> B["K-Means Clustering<br/>nlist = 1,024 clusters"]
- B --> C1["Cluster 1<br/>★ centroid<br/>[48 vectors]"]
- B --> C2["Cluster 2<br/>★ centroid<br/>[51 vectors]"]
- B --> C3["Cluster 3<br/>★ centroid<br/>[49 vectors]"]
+ B --> C1["Cluster 1<br/> centroid<br/>[48 vectors]"]
+ B --> C2["Cluster 2<br/> centroid<br/>[51 vectors]"]
+ B --> C3["Cluster 3<br/> centroid<br/>[49 vectors]"]
  B --> C4["...<br/>1,021 more clusters"]
  end
 
  subgraph "Query Time (Runtime)"
- D["❓ Query Vector"] --> E["Compare to All Centroids<br/>(1,024 comparisons)"]
+ D[" Query Vector"] --> E["Compare to All Centroids<br/>(1,024 comparisons)"]
  E --> F["Select nprobe=8<br/>Nearest Centroids"]
 
  F --> G1["Search Cluster 47<br/>(48 vectors)"]
@@ -482,16 +482,16 @@ This is **skip-list data structure applied to vector search** — a technique fr
 1. **Insert first vector:** Create Layer 0 node (ground layer, always exists). Randomly decide if it also appears in higher layers (probability decreases exponentially: Layer 1 = 1/M chance, Layer 2 = 1/M² chance, etc.)
 
 2. **For each subsequent vector:**
-   - **Entry point:** Start at the top layer's entry node
-   - **Greedy search (per layer):** From current node, examine all neighbors. Move to the neighbor closest to the new vector. Repeat until no neighbor is closer (local minimum reached).
-   - **Descend:** Drop to the next layer down, using the current node as the new starting point
-   - **Insert:** At Layer 0, the new vector becomes a node. Connect it to its M nearest neighbors. **Critical step:** For each of those M neighbors, check if adding this new node improves their connections. If yes, **prune their edges** to maintain the M-edge limit (keeping the M best connections).
-   - **Propagate upward:** If the new node was selected to appear in higher layers, repeat the insertion process at each layer
+ - **Entry point:** Start at the top layer's entry node
+ - **Greedy search (per layer):** From current node, examine all neighbors. Move to the neighbor closest to the new vector. Repeat until no neighbor is closer (local minimum reached).
+ - **Descend:** Drop to the next layer down, using the current node as the new starting point
+ - **Insert:** At Layer 0, the new vector becomes a node. Connect it to its M nearest neighbors. **Critical step:** For each of those M neighbors, check if adding this new node improves their connections. If yes, **prune their edges** to maintain the M-edge limit (keeping the M best connections).
+ - **Propagate upward:** If the new node was selected to appear in higher layers, repeat the insertion process at each layer
 
 3. **Key parameters during construction:**
-   - **M:** Max edges per node (typical: 16–64). Higher M = better connectivity (more alternate paths) but more memory + slower traversal
-   - **ef_construction:** Beam search width during insertion (typical: 100–500). Higher = better graph quality (explores more candidates before deciding which M edges to keep) but slower build
-   - **m_L:** Layer selection multiplier (typically 1/ln(M)). Controls probability of appearing in higher layers
+ - **M:** Max edges per node (typical: 16–64). Higher M = better connectivity (more alternate paths) but more memory + slower traversal
+ - **ef_construction:** Beam search width during insertion (typical: 100–500). Higher = better graph quality (explores more candidates before deciding which M edges to keep) but slower build
+ - **m_L:** Layer selection multiplier (typically 1/ln(M)). Controls probability of appearing in higher layers
 
 **Why this works:**
 - **Highways (top layers):** With only ~1% of nodes appearing in Layer 3, edges span large distances. Greedy search makes big jumps.
@@ -504,16 +504,16 @@ This is **skip-list data structure applied to vector search** — a technique fr
 Insert vector V₁₀ (assume it's selected for Layers 0, 1, 2):
 
 Layer 2 (sparse): Start at entry node A → greedy walk → reach node D (closest to V₁₀)
-                   Insert V₁₀ at Layer 2, connect to 4 nearest neighbors: [D, F, H, J]
+ Insert V₁₀ at Layer 2, connect to 4 nearest neighbors: [D, F, H, J]
 
 Layer 1 (denser): Start from V₁₀'s Layer 2 position → greedy walk → reach node G
-                   Insert V₁₀ at Layer 1, connect to 4 nearest neighbors: [G, K, M, P]
-                   For each of [G, K, M, P]: check if V₁₀ improves their connections
-                   → G had edges [K, L, M, Q]; V₁₀ is closer than Q → replace Q with V₁₀
+ Insert V₁₀ at Layer 1, connect to 4 nearest neighbors: [G, K, M, P]
+ For each of [G, K, M, P]: check if V₁₀ improves their connections
+ → G had edges [K, L, M, Q]; V₁₀ is closer than Q → replace Q with V₁₀
 
 Layer 0 (ground): Start from V₁₀'s Layer 1 position → greedy walk → reach node R
-                   Insert V₁₀ at Layer 0, connect to 4 nearest neighbors: [R, S, T, U]
-                   Mutual pruning: R's edges [S, T, U, W] → V₁₀ is closer than W → replace
+ Insert V₁₀ at Layer 0, connect to 4 nearest neighbors: [R, S, T, U]
+ Mutual pruning: R's edges [S, T, U, W] → V₁₀ is closer than W → replace
 ```
 
 **What happens during training** (the analog to "how embeddings are learned"):
@@ -528,7 +528,7 @@ Layer 0 (ground): Start from V₁₀'s Layer 1 position → greedy walk → reac
 
 *HNSW doesn't cluster vectors. It builds highways between them.*
 
-### 🗺 **Navigation Analogy: The Highway System**
+### **Navigation Analogy: The Highway System**
 
 **Think of HNSW like the US Interstate Highway System:**
 
@@ -560,7 +560,7 @@ Layer 0 (ground): Start from V₁₀'s Layer 1 position → greedy walk → reac
  Layer 0 (Local St): A─B─C─D─E─F─G─H─I─J─K─L
  dense, precise
 
- 🚗 SEARCH: Interstate → State Highway → County Road → Local Street
+ SEARCH: Interstate → State Highway → County Road → Local Street
 ```
 
 **Why this is brilliant:**
@@ -683,7 +683,7 @@ flowchart TD
 - **HNSW:** Better for real-time inserts, higher recall, higher memory cost
 - **IVF:** Better for static datasets, lower memory, requires rebuild on updates
 
-> ➡ **Scale beyond RAM:** At 1M vectors (typical enterprise knowledge base), HNSW requires ~4GB of DRAM for the graph. §3.2 (compression) and §3.3 (specialized variants) solve this by compressing vectors or moving the graph to SSD, keeping billion-scale search on commodity hardware.
+> **Scale beyond RAM:** At 1M vectors (typical enterprise knowledge base), HNSW requires ~4GB of DRAM for the graph. §3.2 (compression) and §3.3 (specialized variants) solve this by compressing vectors or moving the graph to SSD, keeping billion-scale search on commodity hardware.
 
 > **Checkpoint — When to Optimize Further:** IVF and HNSW handle most production workloads up to 1M vectors. IVF wins on static datasets with infrequent updates; HNSW wins on real-time write-heavy pipelines. Both fit comfortably in RAM at 50K-500K scale. **Reach for advanced techniques (§3.2 compression, §3.3 specialized variants) only when:**
 >
@@ -705,7 +705,7 @@ When HNSW’s memory footprint becomes the constraint — typically at 1M+ vecto
 
 Alongside latency, scaling to 50K documents hits a memory wall: 153.6MB of DRAM for 50K float32 vectors at 768 dims. PQ compresses that to under 5MB — keeping the full document corpus on a single commodity server without a hardware upgrade.
 
-### 🗺 **Compression Analogy: Address Lookup Instead of GPS Coordinates**
+### **Compression Analogy: Address Lookup Instead of GPS Coordinates**
 
 **Original (Full Precision):** Every house has GPS coordinates: (37.7749295, -122.4194155) — 8 bytes per coordinate, extremely precise.
 
@@ -721,20 +721,20 @@ Original vector (768 dimensions):
 → 768 × 4 bytes (float32) = 3,072 bytes
 
 Step 1: Split into 16 chunks of 48 dimensions each
-Chunk 1:  [0.142, 0.891, -0.334, ..., 0.523]  (48 values)
-Chunk 2:  [0.776, -0.221, 0.445, ..., 0.891]  (48 values)
+Chunk 1: [0.142, 0.891, -0.334, ..., 0.523] (48 values)
+Chunk 2: [0.776, -0.221, 0.445, ..., 0.891] (48 values)
 ...
-Chunk 16: [0.221, -0.112, 0.667, ..., 0.334]  (48 values)
+Chunk 16: [0.221, -0.112, 0.667, ..., 0.334] (48 values)
 
 Step 2: For each chunk, find nearest match in codebook
 Codebook (256 learned patterns per chunk):
-Pattern 0:  [0.1, 0.9, -0.3, ..., 0.5]   ← Chunk 1 matches this best
-Pattern 1:  [0.8, -0.2, 0.4, ..., 0.9]  ← Chunk 2 matches this best
+Pattern 0: [0.1, 0.9, -0.3, ..., 0.5] ← Chunk 1 matches this best
+Pattern 1: [0.8, -0.2, 0.4, ..., 0.9] ← Chunk 2 matches this best
 ...
-Pattern 73: [0.2, -0.1, 0.7, ..., 0.3]  ← Chunk 16 matches this best
+Pattern 73: [0.2, -0.1, 0.7, ..., 0.3] ← Chunk 16 matches this best
 
 Step 3: Store only the pattern IDs
-Compressed: [0, 1, ..., 73]  (16 bytes total)
+Compressed: [0, 1, ..., 73] (16 bytes total)
 → 16 × 1 byte = 16 bytes
 
 Compression: 3,072 → 16 bytes = 192× smaller!
@@ -743,11 +743,11 @@ Compression: 3,072 → 16 bytes = 192× smaller!
 **How distance comparison works:**
 ```python
 # Without PQ (slow, precise)
-distance = sum((query[i] - doc[i])**2 for i in range(768))  # 768 operations
+distance = sum((query[i] - doc[i])**2 for i in range(768)) # 768 operations
 
 # With PQ (fast, approximate)
 distance = sum(lookup_table[chunk][query_code[chunk], doc_code[chunk]]
-               for chunk in range(16))  # 16 table lookups!
+ for chunk in range(16)) # 16 table lookups!
 ```
 
 **The trade-off:**
@@ -781,7 +781,7 @@ distance = sum(lookup_table[chunk][query_code[chunk], doc_code[chunk]]
 
 ### Scalar Quantization (SQ8 / INT8)
 
-### 🗺 **Rounding Analogy: Measuring Distance to the Nearest Foot Instead of Millimeters**
+### **Rounding Analogy: Measuring Distance to the Nearest Foot Instead of Millimeters**
 
 **The intuition:** Instead of storing temperature as a precise floating-point number (72.384765°F), round it to the nearest whole degree (72°F). You lose a tiny bit of precision, but for almost all decisions ("is it comfortable?") the answer stays the same.
 
@@ -815,15 +815,15 @@ distance = sum(lookup_table[chunk][query_code[chunk], doc_code[chunk]]
 **Victory #5 achieved:** You've compressed Enemy #4 (memory explosion) from 400GB to 1.6GB with PQ, or to 100GB with the safer SQ8. But **Enemy #5 looms: The billion-vector ceiling.** Even with compression, 1B vectors × 16 bytes (PQ) = 16GB of index data. Add the HNSW graph overhead, and you're back to needing hundreds of GB of RAM. HNSW's in-memory assumption becomes the bottleneck. You need to move the graph to disk without destroying latency.
 
 **When SQ8 is the right choice:**
-✓ Medium to large datasets (100K+ vectors)
-✓ Memory constraints but can't tolerate >1% recall loss
-✓ Want compression with minimal complexity
-✓ Need fast inference (int8 operations)
+ Medium to large datasets (100K+ vectors)
+ Memory constraints but can't tolerate >1% recall loss
+ Want compression with minimal complexity
+ Need fast inference (int8 operations)
 
 **When to skip SQ8:**
-✗ Tiny datasets (<10K vectors) — float32 works fine
-✗ Need maximum compression (use PQ instead)
-✗ Already using float16 and still need more compression
+ Tiny datasets (<10K vectors) — float32 works fine
+ Need maximum compression (use PQ instead)
+ Already using float16 and still need more compression
 
 ### Binary Quantization (BQ)
 
@@ -1197,15 +1197,15 @@ Rather than using a separate vector database, these approaches add vector capabi
 | **Update Speed** | Fast (real-time HNSW inserts) | Very fast (optimized ingestion) | Fast (real-time) | Medium (batch-optimized) |
 | **Cost (1M vectors)** | **$120/mo** (12GB RAM, self-hosted) | **$700/mo** (p1 pod) | **$200/mo** (self-hosted, 8GB) | **$150/mo** (self-hosted, 6GB) |
 | **Cost (10M vectors)** | $1,200/mo (hitting single-node limit) | $2,500/mo (p2 pod) | $800/mo (replicated cluster) | $600/mo (distributed, 3 nodes) |
-| **Ops Complexity** | ✅ Low (existing PostgreSQL) | ✅ Zero (fully managed) | ⚠️ Medium (K8s + monitoring) | ❌ High (distributed system) |
-| **Data Co-location** | ✅ Yes (vectors + metadata in Postgres) | ❌ No (separate service) | ❌ No (separate service) | ❌ No (separate service) |
-| **ACID Compliance** | ✅ Full (PostgreSQL transactions) | ❌ Eventual consistency | ❌ Eventual consistency | ❌ Eventual consistency |
-| **Hybrid Search** | ⚠️ Manual (full-text + vector) | ✅ Native (sparse + dense vectors) | ✅ Native (BM25 + vector) | ⚠️ Manual (separate indexes) |
-| **Metadata Filtering** | ✅ SQL WHERE (pre-filter) | ✅ Native (post-filter + sparse index) | ✅ In-graph filtering | ✅ Scalar index + vector |
-| **Multi-tenancy** | ⚠️ Row-level security (RLS) | ✅ Namespace isolation | ✅ Multi-tenant support | ✅ Collection-based isolation |
+| **Ops Complexity** | Low (existing PostgreSQL) | Zero (fully managed) | Medium (K8s + monitoring) | High (distributed system) |
+| **Data Co-location** | Yes (vectors + metadata in Postgres) | No (separate service) | No (separate service) | No (separate service) |
+| **ACID Compliance** | Full (PostgreSQL transactions) | Eventual consistency | Eventual consistency | Eventual consistency |
+| **Hybrid Search** | Manual (full-text + vector) | Native (sparse + dense vectors) | Native (BM25 + vector) | Manual (separate indexes) |
+| **Metadata Filtering** | SQL WHERE (pre-filter) | Native (post-filter + sparse index) | In-graph filtering | Scalar index + vector |
+| **Multi-tenancy** | Row-level security (RLS) | Namespace isolation | Multi-tenant support | Collection-based isolation |
 | **Ecosystem** | Massive (PostgreSQL ecosystem) | Strong (LangChain, LlamaIndex) | Strong (AI frameworks) | Growing (research + enterprise) |
-| **Learning Curve** | ✅ Low (SQL + one extension) | ✅ Low (managed API) | ⚠️ Medium (schema design) | ❌ High (distributed config) |
-| **Vendor Lock-in** | ✅ None (open standard) | ❌ High (proprietary) | ✅ Low (open-source) | ✅ None (open-source) |
+| **Learning Curve** | Low (SQL + one extension) | Low (managed API) | Medium (schema design) | High (distributed config) |
+| **Vendor Lock-in** | None (open standard) | High (proprietary) | Low (open-source) | None (open-source) |
 
 ### Cost Breakdown: Real-World Examples
 
@@ -1240,30 +1240,30 @@ Rather than using a separate vector database, these approaches add vector capabi
 ### Feature Comparison: What You Get
 
 **pgvector strengths:**
-- ✅ **Co-located data:** Vectors live alongside your application data (users, sessions, documents). No sync pipelines, no eventual consistency headaches.
-- ✅ **ACID transactions:** Insert a document + its vector in a single transaction. Rollback works.
-- ✅ **SQL ecosystem:** Joins, aggregations, triggers, foreign keys — all work with vector columns.
-- ❌ **Single-node ceiling:** PostgreSQL tops out around 10M vectors. Beyond that, sharding gets painful.
+- **Co-located data:** Vectors live alongside your application data (users, sessions, documents). No sync pipelines, no eventual consistency headaches.
+- **ACID transactions:** Insert a document + its vector in a single transaction. Rollback works.
+- **SQL ecosystem:** Joins, aggregations, triggers, foreign keys — all work with vector columns.
+- **Single-node ceiling:** PostgreSQL tops out around 10M vectors. Beyond that, sharding gets painful.
 
 **Pinecone strengths:**
-- ✅ **Zero-ops:** No servers to manage, auto-scaling, managed backups. Deploy in 5 minutes.
-- ✅ **Lowest latency:** Proprietary optimizations (HNSW + PQ + sparse vectors) deliver 5–10ms p99 at scale.
-- ✅ **Hybrid search built-in:** Dense + sparse vectors in a single query (no BM25 integration needed).
-- ❌ **Expensive at scale:** 10× more expensive than self-hosted Milvus at 10M+ vectors.
-- ❌ **Vendor lock-in:** Proprietary API, no export to open-source alternatives.
+- **Zero-ops:** No servers to manage, auto-scaling, managed backups. Deploy in 5 minutes.
+- **Lowest latency:** Proprietary optimizations (HNSW + PQ + sparse vectors) deliver 5–10ms p99 at scale.
+- **Hybrid search built-in:** Dense + sparse vectors in a single query (no BM25 integration needed).
+- **Expensive at scale:** 10× more expensive than self-hosted Milvus at 10M+ vectors.
+- **Vendor lock-in:** Proprietary API, no export to open-source alternatives.
 
 **Weaviate strengths:**
-- ✅ **AI-native design:** Built-in vectorization modules (OpenAI, Cohere, Hugging Face). Send text, get vectors automatically.
-- ✅ **In-graph filtering:** Metadata filters applied during graph traversal (no selectivity trap).
-- ✅ **Hybrid search:** BM25 + vector with RRF fusion out-of-the-box.
-- ⚠️ **Schema complexity:** Requires upfront schema design (classes, properties, cross-references). Learning curve.
+- **AI-native design:** Built-in vectorization modules (OpenAI, Cohere, Hugging Face). Send text, get vectors automatically.
+- **In-graph filtering:** Metadata filters applied during graph traversal (no selectivity trap).
+- **Hybrid search:** BM25 + vector with RRF fusion out-of-the-box.
+- **Schema complexity:** Requires upfront schema design (classes, properties, cross-references). Learning curve.
 
 **Milvus strengths:**
-- ✅ **Extreme scale:** Handles 100M–1B+ vectors with distributed sharding.
-- ✅ **Index flexibility:** IVF, HNSW, PQ, ScaNN, DiskANN — widest index support.
-- ✅ **Cost-efficient:** Open-source, runs on commodity hardware. 5–10× cheaper than Pinecone at 10M+ vectors.
-- ❌ **Operational complexity:** Requires Kubernetes, Kafka/Pulsar, MinIO. Not for small teams.
-- ❌ **Overkill for <1M vectors:** Complex architecture wasted on small datasets.
+- **Extreme scale:** Handles 100M–1B+ vectors with distributed sharding.
+- **Index flexibility:** IVF, HNSW, PQ, ScaNN, DiskANN — widest index support.
+- **Cost-efficient:** Open-source, runs on commodity hardware. 5–10× cheaper than Pinecone at 10M+ vectors.
+- **Operational complexity:** Requires Kubernetes, Kafka/Pulsar, MinIO. Not for small teams.
+- **Overkill for <1M vectors:** Complex architecture wasted on small datasets.
 
 ### The Decision Framework (Final Answer)
 
@@ -1314,7 +1314,7 @@ The right architecture depends on your data location, workload profile, and oper
 
 ## Summary: Key Takeaways
 
-### 🎯 Core Concepts
+### Core Concepts
 
 **1. The Scaling Wall**
 - **Brute-force breaks at ~500K documents** (query latency >150ms)
@@ -1334,7 +1334,7 @@ The right architecture depends on your data location, workload profile, and oper
 - **kd-trees degenerate to O(N)** with tree traversal overhead
 - **The insight:** Need algorithms designed FOR high dimensions
 
-### ⚙️ Index Structures
+### Index Structures
 
 **IVF (Inverted File Index) — "Library Shelves"**
 - **Core idea:** Cluster vectors into groups, search only nearby clusters
@@ -1357,7 +1357,7 @@ The right architecture depends on your data location, workload profile, and oper
 - **Limitation:** Slightly higher latency than pure HNSW
 - **When:** >1M vectors, budget constraints
 
-### 🗜️ Compression Strategies
+### Compression Strategies
 
 | Method | Compression | Recall Loss | When to Use |
 |--------|-------------|-------------|-------------|
@@ -1368,7 +1368,7 @@ The right architecture depends on your data location, workload profile, and oper
 
 **Golden rule:** Try float16 → SQ8 → PQ (in that order). Skip BQ unless using purpose-trained models.
 
-### 🏗️ Production Patterns
+### Production Patterns
 
 **1. Hybrid Retrieval (BM25 + Vector)**
 - **Why:** Keyword search finds exact matches, vector search finds semantic matches
@@ -1385,24 +1385,24 @@ The right architecture depends on your data location, workload profile, and oper
 - **Stage 2:** Exact re-ranking of 100 with full-precision vectors (accurate)
 - **When:** Need >99% precision, can afford 2-stage latency
 
-### 🏛️ Database Architectures
+### Database Architectures
 
 **Vector-Native (Pinecone, Milvus, Weaviate)**
-- ✓ Purpose-built for vectors, high performance
-- ✓ Managed offerings available
-- ✗ New infrastructure, data sync overhead
+- Purpose-built for vectors, high performance
+- Managed offerings available
+- New infrastructure, data sync overhead
 
 **Database Extensions (pgvector, Cosmos DB, SQL Server 2025)**
-- ✓ Co-located with your data, ACID compliance
-- ✓ Familiar tooling (SQL)
-- ✗ Single-node scalability limits (pgvector)
+- Co-located with your data, ACID compliance
+- Familiar tooling (SQL)
+- Single-node scalability limits (pgvector)
 
 **Search Engines (Azure AI Search, Elasticsearch)**
-- ✓ Hybrid full-text + vector search
-- ✓ Rich features (fuzzy match, autocomplete, semantic re-ranking)
-- ✗ Higher complexity, overkill for pure vector search
+- Hybrid full-text + vector search
+- Rich features (fuzzy match, autocomplete, semantic re-ranking)
+- Higher complexity, overkill for pure vector search
 
-### 📊 Decision Framework
+### Decision Framework
 
 | Your Situation | Action |
 |----------------|--------|
@@ -1418,7 +1418,7 @@ The right architecture depends on your data location, workload profile, and oper
 | **SQL-first team** | pgvector on PostgreSQL |
 | **Budget constraints** | DiskANN (10× less RAM than HNSW) |
 
-### 🚫 Common Pitfalls
+### Common Pitfalls
 
 1. **Using wrong distance metric** → silent recall degradation (5–15%)
 2. **Premature compression** → try HNSW float32 first before reaching for PQ
@@ -1433,7 +1433,7 @@ The right architecture depends on your data location, workload profile, and oper
 
 *Every enemy you didn't face is a premature optimization. Measure first. Optimize second.*
 
-### 🔗 Next Steps
+### Next Steps
 
 - **[Chapter 7: RAG and Embeddings](../ch07-rag-and-embeddings)** — What gets stored (embeddings) and why (semantic similarity)
 - **[RAG Pipeline Project](../../../projects/ai/rag_pipeline)** — End-to-end implementation with vector database integration
@@ -1473,7 +1473,7 @@ The right architecture depends on your data location, workload profile, and oper
 
 This table explains the §0 scaling problem directly: why 500 chunks takes 15ms and 50,000 chunks takes 1.5s with brute-force — a 100× data growth becomes a 100× latency penalty. With HNSW, the same 100× growth only causes a ~2× penalty.
 
-### 🗺 **Speed vs. Accuracy Trade-offs**
+### **Speed vs. Accuracy Trade-offs**
 
 | Index Type | Query Speed Intuition | Memory Intuition | Recall Intuition | Update Intuition |
 | --------------- | ---------------------------------------- | --------------------------------- | ---------------------------- | ----------------------------------------- |

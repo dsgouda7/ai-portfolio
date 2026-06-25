@@ -646,7 +646,7 @@ flowchart LR
 
 ---
 
-## 🔧 Exercise Connection
+## Exercise connection
 
 Polynomial feature expansion from this chapter applies in **Step 5a** of xercises/01-ml/01-regression/src/features.py:
 
@@ -655,5 +655,5 @@ Polynomial feature expansion from this chapter applies in **Step 5a** of xercis
 | PolynomialFeatures(degree=2) | polynomial TODO in FeatureEngineer.fit_transform() | 5a |
 | Feature name tracking after expansion (8 → 44) | same TODO: get_feature_names_out() | 5a |
 
-**Path:** 
+**Path:**
 otebook-solution.ipynb → xercises/01-ml/01-regression/src/features.py → polynomial features TODO

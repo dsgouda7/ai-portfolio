@@ -120,11 +120,11 @@ You're a real estate agent. You want to predict house prices based on square foo
 
 | Square Feet | Actual Price |
 |-------------|--------------|
-| 800         | $160,000     |
-| 1000        | $200,000     |
-| 1200        | $240,000     |
-| 1500        | $300,000     |
-| 1800        | $360,000     |
+| 800 | $160,000 |
+| 1000 | $200,000 |
+| 1200 | $240,000 |
+| 1500 | $300,000 |
+| 1800 | $360,000 |
 
 **Your Model (a simple line):**
 ```
@@ -157,13 +157,13 @@ Here's the magic: the model **adjusts** `m` and `b` to reduce errors.
 
 **Step 1: Make Predictions** (for all 5 houses)
 
-| Sq Ft | Actual Price | Predicted Price | Error       |
+| Sq Ft | Actual Price | Predicted Price | Error |
 |-------|--------------|-----------------|-------------|
-| 800   | $160,000     | $130,000        | -$30,000    |
-| 1000  | $200,000     | $150,000        | -$50,000    |
-| 1200  | $240,000     | $170,000        | -$70,000    |
-| 1500  | $300,000     | $200,000        | -$100,000   |
-| 1800  | $360,000     | $230,000        | -$130,000   |
+| 800 | $160,000 | $130,000 | -$30,000 |
+| 1000 | $200,000 | $150,000 | -$50,000 |
+| 1200 | $240,000 | $170,000 | -$70,000 |
+| 1500 | $300,000 | $200,000 | -$100,000 |
+| 1800 | $360,000 | $230,000 | -$130,000 |
 
 **Step 2: Measure Overall Error**
 
@@ -181,13 +181,13 @@ New values: `m = 180`, `b = 20,000`
 
 Now predictions look like:
 
-| Sq Ft | Actual Price | New Prediction | New Error  |
+| Sq Ft | Actual Price | New Prediction | New Error |
 |-------|--------------|----------------|------------|
-| 800   | $160,000     | $164,000       | +$4,000    |
-| 1000  | $200,000     | $200,000       | $0         |
-| 1200  | $240,000     | $236,000       | -$4,000    |
-| 1500  | $300,000     | $290,000       | -$10,000   |
-| 1800  | $360,000     | $344,000       | -$16,000   |
+| 800 | $160,000 | $164,000 | +$4,000 |
+| 1000 | $200,000 | $200,000 | $0 |
+| 1200 | $240,000 | $236,000 | -$4,000 |
+| 1500 | $300,000 | $290,000 | -$10,000 |
+| 1800 | $360,000 | $344,000 | -$16,000 |
 
 Average error = **$6,800** (much better!)
 
@@ -195,10 +195,10 @@ Average error = **$6,800** (much better!)
 
 **Animation: "Training loop cycle"**
 - Shows: Circular flow with 4 stages
-  1. Data → Model (current m, b)
-  2. Model → Predictions (show 5 outputs)
-  3. Predictions vs Actual → Error calculation (show average)
-  4. Error → Weight adjustment (show m and b changing)
+ 1. Data → Model (current m, b)
+ 2. Model → Predictions (show 5 outputs)
+ 3. Predictions vs Actual → Error calculation (show average)
+ 4. Error → Weight adjustment (show m and b changing)
 - Loop arrow returns to stage 1
 - Formula embedded: Error = (1/n)Σ|ŷᵢ - yᵢ|
 
@@ -220,11 +220,11 @@ But the core idea — follow the gradient downhill — remains the same.
 **Hard-coded approach:**
 ```python
 if square_feet < 1000:
-    price = 180000
+ price = 180000
 elif square_feet < 1500:
-    price = 270000
+ price = 270000
 else:
-    price = 360000
+ price = 360000
 ```
 
 **Problems:**
@@ -302,24 +302,24 @@ A single neuron might work like this:
 
 ```
 Inputs:
-  x₁ = 5  (hours studied)
-  x₂ = 7  (hours slept)
+ x₁ = 5 (hours studied)
+ x₂ = 7 (hours slept)
 
 Weights (learned during training):
-  w₁ = 10  (studying is important!)
-  w₂ = 3   (sleep helps, but less than studying)
+ w₁ = 10 (studying is important!)
+ w₂ = 3 (sleep helps, but less than studying)
 
 Bias:
-  b = 20   (baseline score even if x₁ and x₂ are zero)
+ b = 20 (baseline score even if x₁ and x₂ are zero)
 
 Calculation:
-  z = w₁×x₁ + w₂×x₂ + b
-  z = 10×5 + 3×7 + 20
-  z = 50 + 21 + 20
-  z = 91
+ z = w₁×x₁ + w₂×x₂ + b
+ z = 10×5 + 3×7 + 20
+ z = 50 + 21 + 20
+ z = 91
 
 Output:
-  Your predicted test score = 91%
+ Your predicted test score = 91%
 ```
 
 ---
@@ -353,7 +353,7 @@ There's one problem with our neuron: it can only model **straight-line relations
 
 Look what happens if we stack two neurons in a chain:
 ```
-First neuron:  z₁ = w₁×x + b₁
+First neuron: z₁ = w₁×x + b₁
 Second neuron: z₂ = w₂×z₁ + b₂
 ```
 
@@ -363,7 +363,7 @@ z₂ = w₂×(w₁×x + b₁) + b₂
 z₂ = (w₂×w₁)×x + (w₂×b₁ + b₂)
 ```
 
-This is still a straight line! 😱 You could have 100 layers, but it would collapse to a single line.
+This is still a straight line! You could have 100 layers, but it would collapse to a single line.
 
 **Solution: Activation Functions**
 
@@ -379,11 +379,11 @@ ReLU(z) = max(0, z)
 
 | Input z | ReLU(z) |
 |---------|---------|
-| -2      | 0       |
-| -1      | 0       |
-| 0       | 0       |
-| 1       | 1       |
-| 2       | 2       |
+| -2 | 0 |
+| -1 | 0 |
+| 0 | 0 |
+| 1 | 1 |
+| 2 | 2 |
 
 ---
 
@@ -401,17 +401,17 @@ ReLU(z) = max(0, z)
 
 ```
 Step 1: Weighted sum
-  z = 10×5 + 3×7 + 20 = 91
+ z = 10×5 + 3×7 + 20 = 91
 
 Step 2: Apply ReLU
-  output = ReLU(91) = max(0, 91) = 91
+ output = ReLU(91) = max(0, 91) = 91
 ```
 
 Since 91 is positive, ReLU doesn't change it. But what if our calculation gave `-15`?
 
 ```
 If z = -15:
-  output = ReLU(-15) = max(0, -15) = 0
+ output = ReLU(-15) = max(0, -15) = 0
 ```
 
 The neuron "shuts off" for negative inputs. This creates **nonlinear bends** in the model's decision boundary.
@@ -475,17 +475,17 @@ One neuron can learn simple patterns. To learn complex patterns, we **stack many
 
 ```
 Input Layer (2 neurons - just pass through inputs):
-  x₁ = 5   (hours studied)
-  x₂ = 7   (hours slept)
+ x₁ = 5 (hours studied)
+ x₂ = 7 (hours slept)
 
 Hidden Layer (3 neurons - learn intermediate patterns):
-  Neuron H1: z₁ = w₁₁×x₁ + w₁₂×x₂ + b₁ → ReLU(z₁) = h₁
-  Neuron H2: z₂ = w₂₁×x₁ + w₂₂×x₂ + b₂ → ReLU(z₂) = h₂
-  Neuron H3: z₃ = w₃₁×x₁ + w₃₂×x₂ + b₃ → ReLU(z₃) = h₃
+ Neuron H1: z₁ = w₁₁×x₁ + w₁₂×x₂ + b₁ → ReLU(z₁) = h₁
+ Neuron H2: z₂ = w₂₁×x₁ + w₂₂×x₂ + b₂ → ReLU(z₂) = h₂
+ Neuron H3: z₃ = w₃₁×x₁ + w₃₂×x₂ + b₃ → ReLU(z₃) = h₃
 
 Output Layer (1 neuron - final prediction):
-  z_out = w_o1×h₁ + w_o2×h₂ + w_o3×h₃ + b_out
-  test_score = z_out
+ z_out = w_o1×h₁ + w_o2×h₂ + w_o3×h₃ + b_out
+ test_score = z_out
 ```
 
 **Let's trace through with actual numbers!**
@@ -493,12 +493,12 @@ Output Layer (1 neuron - final prediction):
 **Weights (learned during training):**
 ```
 Hidden layer:
-  Neuron H1: w₁₁=8,  w₁₂=2,  b₁=-10  (maybe learns "total study effort")
-  Neuron H2: w₂₁=1,  w₂₂=10, b₂=-40  (maybe learns "well-rested")
-  Neuron H3: w₃₁=5,  w₃₂=5,  b₃=0    (maybe learns "overall readiness")
+ Neuron H1: w₁₁=8, w₁₂=2, b₁=-10 (maybe learns "total study effort")
+ Neuron H2: w₂₁=1, w₂₂=10, b₂=-40 (maybe learns "well-rested")
+ Neuron H3: w₃₁=5, w₃₂=5, b₃=0 (maybe learns "overall readiness")
 
 Output layer:
-  w_o1=20, w_o2=15, w_o3=10, b_out=0
+ w_o1=20, w_o2=15, w_o3=10, b_out=0
 ```
 
 **Forward Pass (computing the prediction):**
@@ -507,16 +507,16 @@ Output layer:
 
 ```
 Neuron H1:
-  z₁ = 8×5 + 2×7 + (-10) = 40 + 14 - 10 = 44
-  h₁ = ReLU(44) = 44
+ z₁ = 8×5 + 2×7 + (-10) = 40 + 14 - 10 = 44
+ h₁ = ReLU(44) = 44
 
 Neuron H2:
-  z₂ = 1×5 + 10×7 + (-40) = 5 + 70 - 40 = 35
-  h₂ = ReLU(35) = 35
+ z₂ = 1×5 + 10×7 + (-40) = 5 + 70 - 40 = 35
+ h₂ = ReLU(35) = 35
 
 Neuron H3:
-  z₃ = 5×5 + 5×7 + 0 = 25 + 35 + 0 = 60
-  h₃ = ReLU(60) = 60
+ z₃ = 5×5 + 5×7 + 0 = 25 + 35 + 0 = 60
+ h₃ = ReLU(60) = 60
 ```
 
 **Step 2: Output Layer Computation**
@@ -541,11 +541,11 @@ After training on real data (hundreds of students' study/sleep hours and their a
 - Middle: 3 hidden nodes (H1, H2, H3) with ReLU symbols
 - Right: 1 output node (test_score)
 - Values flow through edges (show numbers appearing):
-  - x₁, x₂ → each hidden node (show multiplications)
-  - z₁=44 → ReLU → h₁=44 (highlighted calculation)
-  - Repeat for H2, H3
-  - h₁, h₂, h₃ → output (show multiplications)
-  - Final: 2005 (with warning: "Not trained yet!")
+ - x₁, x₂ → each hidden node (show multiplications)
+ - z₁=44 → ReLU → h₁=44 (highlighted calculation)
+ - Repeat for H2, H3
+ - h₁, h₂, h₃ → output (show multiplications)
+ - Final: 2005 (with warning: "Not trained yet!")
 - Formula embedded: z = Wx + b, then h = ReLU(z)
 
 ---
@@ -557,15 +557,15 @@ Think of layers as **building up abstractions**:
 **Example: Recognizing Handwritten Digits**
 
 - **Layer 1** (close to input): Detects edges and curves
-  - "There's a vertical line here"
-  - "There's a curve here"
+ - "There's a vertical line here"
+ - "There's a curve here"
 
 - **Layer 2**: Combines edges into parts
-  - "Vertical line + curve = could be '2' or '3'"
-  - "Two curves = could be '8' or '0'"
+ - "Vertical line + curve = could be '2' or '3'"
+ - "Two curves = could be '8' or '0'"
 
 - **Layer 3**: Combines parts into full digits
-  - "Top curve + middle line + bottom curve = definitely '8'"
+ - "Top curve + middle line + bottom curve = definitely '8'"
 
 **Why can't one layer do it all?**
 
@@ -670,7 +670,7 @@ $$
 | 0 (initial) | 1000 | Typical error: ~$32k |
 | 100 | 625 | Typical error: ~$25k |
 | 500 | 256 | Typical error: ~$16k |
-| 1000 | 100 | Typical error: ~$10k ✓ |
+| 1000 | 100 | Typical error: ~$10k |
 
 **The goal:** Make MSE as small as possible. When MSE = 0, every prediction is perfect (rarely happens in practice).
 
@@ -706,10 +706,10 @@ $$
 
 | Prediction for cat image | $P(\text{cat})$ | Loss $= -\log(P)$ | Interpretation |
 |---------------------------|-----------------|-------------------|----------------|
-| **Good** (confident & correct) | 0.80 | 0.223 | Low penalty ✓ |
+| **Good** (confident & correct) | 0.80 | 0.223 | Low penalty |
 | **Perfect** | 1.0 | 0.000 | No penalty |
 | **Okay** (uncertain) | 0.50 | 0.693 | Medium penalty |
-| **Bad** (wrong & confident) | 0.10 | 2.303 | High penalty ✗ |
+| **Bad** (wrong & confident) | 0.10 | 2.303 | High penalty |
 
 **Key Insight:** The loss **explodes** when you're confidently wrong. If $P(\text{cat}) = 0.01$ for a cat image:
 $$
@@ -788,7 +788,7 @@ This is a parabola with minimum at $w = 5$, where Loss = 0.
 **What's Happening?**
 
 1. **Iteration 0:** We're at $w=0$, far from the target (5). Gradient is **-10** (steep downward slope to the left).
-2. **Update:** Since gradient is negative, we're **below** the minimum. The update rule subtracts $0.1 \times (-10) = -1$, which means **add 1**, moving us from 0 → 1 (toward 5). ✓
+2. **Update:** Since gradient is negative, we're **below** the minimum. The update rule subtracts $0.1 \times (-10) = -1$, which means **add 1**, moving us from 0 → 1 (toward 5).
 3. **Iteration 1:** Now at $w=1$. Loss dropped from 25 → 16 (improvement!). Gradient is **-8** (still negative, still moving right).
 4. **Pattern:** Each step, we move ~80% of the remaining distance toward $w=5$.
 5. **Convergence:** After 10 steps, we're at $w=4.57$, loss is 0.29 (compared to starting loss of 25). Almost there!
@@ -820,24 +820,24 @@ Putting it all together, here's the complete training process:
 ```
 1. Initialize weights randomly
 2. Loop for many iterations:
-   a. Make predictions on training data
-   b. Compute loss (MSE for regression, cross-entropy for classification)
-   c. Compute gradients (one per weight)
-   d. Update weights: w_i ← w_i - α × grad_i
-   e. Check if loss is small enough → stop if yes
+ a. Make predictions on training data
+ b. Compute loss (MSE for regression, cross-entropy for classification)
+ c. Compute gradients (one per weight)
+ d. Update weights: w_i ← w_i - α × grad_i
+ e. Check if loss is small enough → stop if yes
 3. Return trained model
 ```
 
 **What we've learned:**
 
 - **Loss functions** convert errors into one trainable number
-  - MSE for regression: penalizes squared errors
-  - Cross-entropy for classification: rewards confident correct predictions
+ - MSE for regression: penalizes squared errors
+ - Cross-entropy for classification: rewards confident correct predictions
 
 - **Gradient descent** minimizes loss by following the slope
-  - Gradient = direction of steepest increase → go opposite
-  - Learning rate = step size (tune carefully!)
-  - Works for any number of weights (even billions)
+ - Gradient = direction of steepest increase → go opposite
+ - Learning rate = step size (tune carefully!)
+ - Works for any number of weights (even billions)
 
 **Next:** In §3, we'll see how to compute gradients efficiently using **backpropagation** — the algorithm that makes training deep networks practical.
 
@@ -859,22 +859,22 @@ Training a neural network follows a four-step cycle that repeats thousands of ti
 
 ```
 ┌─────────────┐
-│  1. Forward │  Make a prediction with current weights
+│ 1. Forward │ Make a prediction with current weights
 └──────┬──────┘
-       │
+ │
 ┌──────▼──────┐
-│  2. Loss    │  Measure how wrong the prediction is
+│ 2. Loss │ Measure how wrong the prediction is
 └──────┬──────┘
-       │
+ │
 ┌──────▼──────┐
-│  3. Backward│  Compute gradients for ALL weights (backpropagation)
+│ 3. Backward│ Compute gradients for ALL weights (backpropagation)
 └──────┬──────┘
-       │
+ │
 ┌──────▼──────┐
-│  4. Update  │  Adjust weights using gradient descent
+│ 4. Update │ Adjust weights using gradient descent
 └──────┬──────┘
-       │
-       └──────> Repeat until loss is small
+ │
+ └──────> Repeat until loss is small
 ```
 
 **Forward pass** — We already know this from §1:
@@ -941,10 +941,10 @@ So a **+0.01 change in x** caused a **+0.1001 change in y**. That's about 10× a
 The chain rule says: to find how x affects y, multiply two simpler sensitivities:
 
 1. **How does x affect u?** When x increases by 1, u increases by 1 (since u = x + 2)
-   - Sensitivity: ∂u/∂x = 1
+ - Sensitivity: ∂u/∂x = 1
 
 2. **How does u affect y?** When u = 5 increases by 1, y = u² increases by 2u = 10
-   - Sensitivity: ∂y/∂u = 2u = 2(5) = 10
+ - Sensitivity: ∂y/∂u = 2u = 2(5) = 10
 
 3. **Chain them together**: ∂y/∂x = (∂y/∂u) × (∂u/∂x) = 10 × 1 = 10
 
@@ -959,16 +959,16 @@ Time to see the full algorithm with actual numbers. We'll use a tiny 3-layer net
 #### The Network Setup
 
 ```
-Input layer:   x = 2
-               ↓ w₁ = 1.5, b₁ = 0
-Hidden layer:  z₁ = w₁·x + b₁ = 1.5×2 + 0 = 3
-               a₁ = ReLU(z₁) = max(0, 3) = 3
-               ↓ w₂ = 2.0, b₂ = 0
-Output layer:  z₂ = w₂·a₁ + b₂ = 2.0×3 + 0 = 6
-               ŷ = z₂ = 6  (no activation for regression)
+Input layer: x = 2
+ ↓ w₁ = 1.5, b₁ = 0
+Hidden layer: z₁ = w₁·x + b₁ = 1.5×2 + 0 = 3
+ a₁ = ReLU(z₁) = max(0, 3) = 3
+ ↓ w₂ = 2.0, b₂ = 0
+Output layer: z₂ = w₂·a₁ + b₂ = 2.0×3 + 0 = 6
+ ŷ = z₂ = 6 (no activation for regression)
 
-Target:        y_true = 10
-Loss:          L = (ŷ - y_true)² = (6 - 10)² = 16
+Target: y_true = 10
+Loss: L = (ŷ - y_true)² = (6 - 10)² = 16
 ```
 
 Our network predicted 6 but the true value is 10. Loss = 16. We need to update w₁ and w₂ to improve.
@@ -1036,8 +1036,8 @@ Therefore:
 The hidden layer used ReLU: a₁ = max(0, z₁). The derivative:
 
 ```
-∂a₁/∂z₁ = 1  if z₁ > 0
-          0  if z₁ ≤ 0
+∂a₁/∂z₁ = 1 if z₁ > 0
+ 0 if z₁ ≤ 0
 ```
 
 Since z₁ = 3 > 0:
@@ -1073,17 +1073,17 @@ Now apply gradient descent with learning rate α = 0.01:
 **Update w₂**:
 ```
 w₂_new = w₂_old - α × (∂L/∂w₂)
-       = 2.0 - 0.01 × (-24)
-       = 2.0 + 0.24
-       = 2.24
+ = 2.0 - 0.01 × (-24)
+ = 2.0 + 0.24
+ = 2.24
 ```
 
 **Update w₁**:
 ```
 w₁_new = w₁_old - α × (∂L/∂w₁)
-       = 1.5 - 0.01 × (-32)
-       = 1.5 + 0.32
-       = 1.82
+ = 1.5 - 0.01 × (-32)
+ = 1.5 + 0.32
+ = 1.82
 ```
 
 #### Verify Improvement
@@ -1097,7 +1097,7 @@ a₁ = ReLU(3.64) = 3.64
 z₂ = 2.24 × 3.64 = 8.15
 
 New loss:
-L = (8.15 - 10)² = 3.42  ✓ Better! (was 16)
+L = (8.15 - 10)² = 3.42 Better! (was 16)
 ```
 
 ---
@@ -1141,8 +1141,8 @@ After 50 layers, the gradient has shrunk to **0.5% of its original strength**!
 **2010-2014:** Researchers couldn't train networks deeper than 10-20 layers. Attempts at 50+ layers universally failed — **adding layers made performance worse**, not better.
 
 **The economics:**
-- 10-layer network: 3 days to train, 92% accuracy ✓
-- 50-layer network: 2 weeks to train, 85% accuracy ✗
+- 10-layer network: 3 days to train, 92% accuracy
+- 50-layer network: 2 weeks to train, 85% accuracy
 
 Deeper networks had more capacity (billions more parameters) but performed worse. The gradients died before they reached early layers.
 
@@ -1163,7 +1163,7 @@ We'll explore these in detail later. For now, just know: **backpropagation is ma
 
 ---
 
-### ✓ Checkpoint
+### Checkpoint
 
 **Can you explain why we need the chain rule in one sentence?**
 
@@ -1206,9 +1206,9 @@ An **embedding** maps each token to a point in high-dimensional space where **di
 
 **Example:** 3-dimensional embedding space (real embeddings are 512-4096 dims):
 ```
-"cat"   → [0.8, 0.9, 0.1]
-"dog"   → [0.7, 0.8, 0.2]  # Close to "cat" (both animals)
-"car"   → [0.1, 0.2, 0.9]  # Far from "cat" (different concept)
+"cat" → [0.8, 0.9, 0.1]
+"dog" → [0.7, 0.8, 0.2] # Close to "cat" (both animals)
+"car" → [0.1, 0.2, 0.9] # Far from "cat" (different concept)
 ```
 
 **Dot product measures similarity:**
@@ -1259,7 +1259,7 @@ In modern neural architectures:
 - **"Sequence of vectors" means embeddings:** A sentence with n tokens becomes n embedding vectors
 - **Dimensionality tradeoff:** Higher dimensions (512-768) capture richer semantics but use more memory and computation
 
-> ➡ **Forward pointer:** Ch.1's transformer processes embeddings through 12-96 layers of attention and feed-forward networks. Every matrix operation ($Q = XW_Q$, $K = XW_K$) transforms these embedding vectors.
+> **Forward pointer:** Ch.1's transformer processes embeddings through 12-96 layers of attention and feed-forward networks. Every matrix operation ($Q = XW_Q$, $K = XW_K$) transforms these embedding vectors.
 
 > **Checkpoint:** Can you explain why we can't just use one-hot encoding (binary vectors with single 1)?
 >
@@ -1323,9 +1323,9 @@ Example: A vertical edge detection filter.
 
 ```
 Filter (3×3):
-[[-1,  0,  1],
- [-1,  0,  1],
- [-1,  0,  1]]
+[[-1, 0, 1],
+ [-1, 0, 1],
+ [-1, 0, 1]]
 ```
 
 **What this filter does:**
@@ -1342,10 +1342,10 @@ In practice, CNNs don't use hand-designed filters. Instead:
 1. **Initialize filters randomly**
 2. **Learn optimal values via backpropagation**
 3. **Different filters learn different patterns**:
-   - Filter 1: vertical edges
-   - Filter 2: horizontal edges
-   - Filter 3: diagonal lines
-   - Filter 4: corners
+ - Filter 1: vertical edges
+ - Filter 2: horizontal edges
+ - Filter 3: diagonal lines
+ - Filter 4: corners
 
 You typically have **64-512 filters per layer**, each producing one feature map.
 
@@ -1428,17 +1428,17 @@ Output (2×2):
 
 ```
 Input Image (H × W × 3)
-    ↓
-[Conv → ReLU → Conv → ReLU → MaxPool]  ← Block 1
-    ↓
-[Conv → ReLU → Conv → ReLU → MaxPool]  ← Block 2
-    ↓
-[Conv → ReLU → Conv → ReLU → MaxPool]  ← Block 3
-    ↓
+ ↓
+[Conv → ReLU → Conv → ReLU → MaxPool] ← Block 1
+ ↓
+[Conv → ReLU → Conv → ReLU → MaxPool] ← Block 2
+ ↓
+[Conv → ReLU → Conv → ReLU → MaxPool] ← Block 3
+ ↓
 Flatten
-    ↓
+ ↓
 Dense (Fully-Connected Layer)
-    ↓
+ ↓
 Softmax (classification probabilities)
 ```
 
@@ -1452,11 +1452,11 @@ Modern CNNs add **skip connections** (we'll cover these in §8):
 
 ```
 Input
-  ↓
+ ↓
 [Conv → ReLU → Conv] ──┐
-  ↓                     │ (skip connection)
-  + ←───────────────────┘
-  ↓
+ ↓ │ (skip connection)
+ + ←───────────────────┘
+ ↓
 Output
 ```
 
@@ -1547,11 +1547,11 @@ $$
 
 | Steps (T) | Gradient Magnitude (×0.9 per step) | % of Original | Can Learn? |
 |-----------|-----------------------------------|---------------|------------|
-| 1         | 0.9                               | 90%           | ✓ Yes      |
-| 10        | 0.35                              | 35%           | ✓ Barely   |
-| 20        | 0.12                              | 12%           | ✗ Weak     |
-| 50        | 0.005                             | 0.5%          | ✗ Dead     |
-| 100       | 0.000027                          | 0.0027%       | ✗ Zero     |
+| 1 | 0.9 | 90% | Yes |
+| 10 | 0.35 | 35% | Barely |
+| 20 | 0.12 | 12% | Weak |
+| 50 | 0.005 | 0.5% | Dead |
+| 100 | 0.000027 | 0.0027% | Zero |
 
 **What this means:** In the sentence "The chef who trained in Paris for five years made incredible pasta," the gradient from "pasta" (word 12) has decayed to 1% by the time it reaches "chef" (word 2). The model never learns that "chef" → "made pasta" is the key relationship.
 
@@ -1612,9 +1612,9 @@ Montreal, September 2014. Dzmitry Bahdanau and Yoshua Bengio are training an enc
 
 **The catastrophic failure:**
 
-Short sentences (≤10 words): ✓ BLEU score 28 (decent)
-Medium sentences (20 words): ✗ BLEU score 18 (terrible)
-Long sentences (40+ words): ✗ BLEU score 7 (gibberish)
+Short sentences (≤10 words): BLEU score 28 (decent)
+Medium sentences (20 words): BLEU score 18 (terrible)
+Long sentences (40+ words): BLEU score 7 (gibberish)
 
 **Why?** The encoder crams the entire English sentence into one 1000-d vector. For "The chef who trained in Paris for five years and won three Michelin stars made incredible pasta," that vector must encode:
 - Who: chef
@@ -1645,10 +1645,10 @@ Generating "chat" (step 2):
 
 | Sentence Length | Old RNN (BLEU) | +Attention (BLEU) | Improvement |
 |-----------------|----------------|-------------------|-------------|
-| 10-20 words     | 28.5           | 31.2              | +9%         |
-| 20-30 words     | 18.7           | 28.3              | +51%        |
-| 30-40 words     | 12.1           | 26.8              | +121%       |
-| 40+ words       | 7.2            | 25.1              | +249%       |
+| 10-20 words | 28.5 | 31.2 | +9% |
+| 20-30 words | 18.7 | 28.3 | +51% |
+| 30-40 words | 12.1 | 26.8 | +121% |
+| 40+ words | 7.2 | 25.1 | +249% |
 
 **Long sentences went from gibberish to competitive.** The fixed-vector bottleneck was broken.
 
@@ -1693,9 +1693,9 @@ You retrieve a weighted blend of book contents (Values):
 
 **Embeddings (2-D for simplicity):**
 ```
-x₁ = "The"   = [1.0, 0.2]
+x₁ = "The" = [1.0, 0.2]
 x₂ = "river" = [0.8, 0.9]
-x₃ = "bank"  = [0.5, 1.1]
+x₃ = "bank" = [0.5, 1.1]
 ```
 
 **Step 1: Create Q, K, V**
@@ -1703,34 +1703,34 @@ x₃ = "bank"  = [0.5, 1.1]
 For simplicity, use identity projection (Q=K=V=X):
 ```
 Q = K = V = [[1.0, 0.2],
-             [0.8, 0.9],
-             [0.5, 1.1]]
+ [0.8, 0.9],
+ [0.5, 1.1]]
 ```
 
 **Step 2: Compute attention scores (Q·K^T)**
 
 ```
 Row 3 (query="bank"):
-  score₃₁ = [0.5, 1.1] · [1.0, 0.2] = 0.72
-  score₃₂ = [0.5, 1.1] · [0.8, 0.9] = 1.39
-  score₃₃ = [0.5, 1.1] · [0.5, 1.1] = 1.46
+ score₃₁ = [0.5, 1.1] · [1.0, 0.2] = 0.72
+ score₃₂ = [0.5, 1.1] · [0.8, 0.9] = 1.39
+ score₃₃ = [0.5, 1.1] · [0.5, 1.1] = 1.46
 ```
 
 **Step 3: Apply softmax**
 
 ```
 Row 3 (bank):
-  exp(0.72) = 2.05, exp(1.39) = 4.01, exp(1.46) = 4.31
-  sum = 10.37
-  α₃ = [0.198, 0.387, 0.416]
+ exp(0.72) = 2.05, exp(1.39) = 4.01, exp(1.46) = 4.31
+ sum = 10.37
+ α₃ = [0.198, 0.387, 0.416]
 ```
 
 **Step 4: Weighted sum of values**
 
 ```
 Output for "bank":
-  out₃ = 0.198×[1.0, 0.2] + 0.387×[0.8, 0.9] + 0.416×[0.5, 1.1]
-       = [0.716, 0.846]
+ out₃ = 0.198×[1.0, 0.2] + 0.387×[0.8, 0.9] + 0.416×[0.5, 1.1]
+ = [0.716, 0.846]
 ```
 
 **Interpretation:** "bank" attended most strongly to itself (41.6%) and "river" (38.7%), incorporating contextual information that disambiguates it as a geographic feature.
@@ -1797,10 +1797,10 @@ Without scaling, dot products grow with dimension. For $d_k=64$ (typical):
 **2010-2014:** Researchers try to train 20+ layer networks. Universal failure.
 
 **The pattern:**
-- 5 layers: ✓ Works
-- 10 layers: ✓ Slower convergence, but works
-- 20 layers: ✗ Trains worse than 10-layer network (!)
-- 50 layers: ✗ Loss doesn't decrease — network learns nothing
+- 5 layers: Works
+- 10 layers: Slower convergence, but works
+- 20 layers: Trains worse than 10-layer network (!)
+- 50 layers: Loss doesn't decrease — network learns nothing
 
 **Why adding layers makes performance *worse*:**
 
@@ -1861,11 +1861,11 @@ $$
 
 | Architecture | Layers | Gradient at Layer 1 | Can Train? |
 |--------------|--------|---------------------|------------|
-| Plain CNN | 20 | 0.012 × original | ✗ Barely |
-| Plain CNN | 50 | 0.000001 × original | ✗ Dead |
-| **ResNet** | 50 | 0.85 × original | ✓ Yes |
-| **ResNet** | 152 | 0.78 × original | ✓ Yes |
-| **ResNet** | 1000 | 0.65 × original | ✓ Yes (but impractical) |
+| Plain CNN | 20 | 0.012 × original | Barely |
+| Plain CNN | 50 | 0.000001 × original | Dead |
+| **ResNet** | 50 | 0.85 × original | Yes |
+| **ResNet** | 152 | 0.78 × original | Yes |
+| **ResNet** | 1000 | 0.65 × original | Yes (but impractical) |
 
 He et al. trained a **152-layer ResNet** that outperformed all previous networks. Before ResNets, 20 layers was the ceiling.
 
@@ -1877,10 +1877,10 @@ He et al. trained a **152-layer ResNet** that outperformed all previous networks
 
 ```python
 # Transformer block (simplified)
-x_1 = x + AttentionBlock(x)     # Skip around attention
-x_1 = LayerNorm(x_1)             # Stabilize
-x_2 = x_1 + FeedForward(x_1)    # Skip around FFN
-x_2 = LayerNorm(x_2)             # Stabilize
+x_1 = x + AttentionBlock(x) # Skip around attention
+x_1 = LayerNorm(x_1) # Stabilize
+x_2 = x_1 + FeedForward(x_1) # Skip around FFN
+x_2 = LayerNorm(x_2) # Stabilize
 ```
 
 **Two skip connections per layer.** For GPT-3 (96 layers):
@@ -1900,10 +1900,10 @@ With skip connections:
 
 | Model | Layers | Skip Connections | Training Stability |
 |-------|--------|------------------|-------------------|
-| BERT-base | 12 | 24 | ✓ Stable |
-| GPT-2 | 48 | 96 | ✓ Stable |
-| GPT-3 | 96 | 192 | ✓ Stable |
-| GPT-4 | ~120 | ~240 | ✓ Stable |
+| BERT-base | 12 | 24 | Stable |
+| GPT-2 | 48 | 96 | Stable |
+| GPT-3 | 96 | 192 | Stable |
+| GPT-4 | ~120 | ~240 | Stable |
 
 **Without skip connections:** All of these would collapse during training. The entire modern AI stack depends on that "+1" term.
 
@@ -1955,27 +1955,27 @@ You've journeyed through the nine foundational concepts that power modern AI. No
 
 ```mermaid
 graph TB
-    ml["§0: Machine Learning<br/>Gradient descent, loss functions"]
-    nn["§1: Neural Networks<br/>Layers, activation functions"]
-    train["§2-3: Training<br/>Loss, backprop, gradients"]
-    emb["§4: Embeddings<br/>Text → vectors"]
-    cnn["§5: CNNs<br/>Local patterns, hierarchies"]
-    rnn["§6: RNNs<br/>Sequential processing"]
-    attn["§7: Attention<br/>Q/K/V, soft lookup"]
-    skip["§8: Skip Connections<br/>Gradient highway"]
-    enc["§9: Encoder-Decoder<br/>Bidirectional vs causal"]
+ ml["§0: Machine Learning<br/>Gradient descent, loss functions"]
+ nn["§1: Neural Networks<br/>Layers, activation functions"]
+ train["§2-3: Training<br/>Loss, backprop, gradients"]
+ emb["§4: Embeddings<br/>Text → vectors"]
+ cnn["§5: CNNs<br/>Local patterns, hierarchies"]
+ rnn["§6: RNNs<br/>Sequential processing"]
+ attn["§7: Attention<br/>Q/K/V, soft lookup"]
+ skip["§8: Skip Connections<br/>Gradient highway"]
+ enc["§9: Encoder-Decoder<br/>Bidirectional vs causal"]
 
-    ml --> nn
-    nn --> train
-    train --> emb
-    emb --> cnn
-    cnn --> rnn
-    rnn --> attn
-    attn --> skip
-    skip --> enc
-    enc --> transformer["TRANSFORMER<br/>Architecture<br/>(Ch.1)"]
+ ml --> nn
+ nn --> train
+ train --> emb
+ emb --> cnn
+ cnn --> rnn
+ rnn --> attn
+ attn --> skip
+ skip --> enc
+ enc --> transformer["TRANSFORMER<br/>Architecture<br/>(Ch.1)"]
 
-    style transformer fill:#15803d,stroke:#e2e8f0,stroke-width:3px,color:#ffffff
+ style transformer fill:#15803d,stroke:#e2e8f0,stroke-width:3px,color:#ffffff
 ```
 
 *Each section built one piece. Transformers combine them all: embeddings flow through attention layers (with skip connections), trained end-to-end with cross-entropy loss.*
@@ -2072,16 +2072,16 @@ You now understand:
 
 ```
 Your journey:
-  §0-3: How neural networks learn (training fundamentals)
-  §4-5: How to represent data (embeddings, local patterns)
-  §6-7: Why attention replaced RNNs (parallelization + global context)
-  §8-9: How to train very deep models (skip connections, architectures)
+ §0-3: How neural networks learn (training fundamentals)
+ §4-5: How to represent data (embeddings, local patterns)
+ §6-7: Why attention replaced RNNs (parallelization + global context)
+ §8-9: How to train very deep models (skip connections, architectures)
 
 Ch.1's journey:
-  → Combine §4+§7+§8 into transformer blocks
-  → Stack 96 layers with skip connections
-  → Train with §2-3's backprop + cross-entropy loss
-  → Deploy GPT/BERT/T5 variants (§9)
+ → Combine §4+§7+§8 into transformer blocks
+ → Stack 96 layers with skip connections
+ → Train with §2-3's backprop + cross-entropy loss
+ → Deploy GPT/BERT/T5 variants (§9)
 ```
 
 You're no longer learning isolated concepts—you're seeing how the pieces fit. When Ch.1 shows you the formula `Attention(Q,K,V) = softmax(QK^T/√d_k)V`, you'll recognize every symbol:

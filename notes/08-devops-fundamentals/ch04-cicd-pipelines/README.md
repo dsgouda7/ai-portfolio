@@ -147,7 +147,7 @@ The DevOps Research and Assessment (DORA) team identified four key metrics that 
 | **Change Failure Rate** | <15% | % of deploys requiring rollback | Phase 4 |
 | **Time to Restore Service** | <1 hour | How fast you recover from incidents | Phase 4 (rollback) |
 
-By the end of this chapter, you'll measure all four. High performers ship daily, with <1 hour lead time, <15% failure rate, and <1 hour recovery.
+
 
 **What Makes This Different from Manual Deployments:**
 
@@ -183,7 +183,7 @@ graph TD
  I --> J{Phase 4: VERIFY}
  J --> K[Run health checks]
  K --> L{/health returns 200?}
- L -->|No| M[🔄 Auto-rollback<br/>Restore previous]
+ L -->|No| M[ Auto-rollback<br/>Restore previous]
  L -->|Yes| N[Run smoke tests]
  N --> O{Metrics within SLA?}
  O -->|No| M
@@ -432,7 +432,7 @@ jobs:
 > **This chapter uses GitHub Actions because:** (1) Zero setup — works in any GitHub repo, (2) 2,000 free minutes/month, (3) Largest action marketplace (10,000+ pre-built actions). The concepts transfer 1:1 to other platforms.
 
 > **Build verdict:** Pipeline runs in 2m15s with layer caching; deployment frequency 8×/day, zero manual rollouts.
-> ➡ SHA-tagged artifact in Docker Hub registry; proceed to Test phase.
+> SHA-tagged artifact in Docker Hub registry; proceed to Test phase.
 
 ---
 
@@ -587,7 +587,7 @@ TEST STAGE: All 8 tests passed, coverage 92% (target: >80%)
 > - **Built-in GitHub PR comments** — Use `pytest-cov` + custom action to comment coverage diff on PRs
 
 > **Test verdict:** 8/8 tests passed, coverage 92% (target >80%); safety scan clean; feedback loop in 3m12s.
-> ➡ Code validated against regressions and CVEs; proceed to Deploy phase.
+> Code validated against regressions and CVEs; proceed to Deploy phase.
 
 ---
 
@@ -726,7 +726,7 @@ kubectl rollout status deployment/myapp --timeout=5m
 > **Setup:** Install Argo CD in your cluster (`kubectl apply -f argocd.yaml`), point it at your git repo, define `Application` resources. Full guide: [argo-cd.readthedocs.io](https://argo-cd.readthedocs.io/)
 
 > **Deploy verdict:** Blue-green swap with zero downtime; staging validated in 1m25s, production rollout in 2m10s.
-> ➡ Audit trail complete with SHA `abc1234`; rollback in 45s if health check fails; proceed to Verify phase.
+> Audit trail complete with SHA `abc1234`; rollback in 45s if health check fails; proceed to Verify phase.
 
 ---
 
@@ -821,7 +821,7 @@ def check_metrics():
 
 def rollback():
  """DECISION: Automatic rollback to previous version."""
- print(f"🔄 Rolling back from {CURRENT_IMAGE} to {PREVIOUS_IMAGE}")
+ print(f" Rolling back from {CURRENT_IMAGE} to {PREVIOUS_IMAGE}")
 
  try:
  # Rollback command
@@ -912,7 +912,7 @@ deploy-production:
 > **Setup:** Deploy Spinnaker to K8s cluster (requires 4+ GB RAM), configure cloud providers, define pipelines in Spinnaker UI. Full guide: [spinnaker.io/setup](https://spinnaker.io/setup/)
 
 > **Verify verdict:** Health, smoke, and p95 latency (150ms < 200ms SLA) all passed — no rollback needed.
-> ➡ Deployment confirmed safe; automatic rollback proven; proceed to Monitor phase.
+> Deployment confirmed safe; automatic rollback proven; proceed to Monitor phase.
 
 ---
 
@@ -1294,7 +1294,7 @@ def test_concurrent_writes():
 ```
 
 > **Monitor verdict:** DORA metrics all green — 14 deploys/week, 2.3 min lead time, 12.5% failure rate, 29 min MTTR.
-> ➡ Pipeline optimized; add Prometheus dashboards (Ch.5) for full observability.
+> Pipeline optimized; add Prometheus dashboards (Ch.5) for full observability.
 
 ---
 

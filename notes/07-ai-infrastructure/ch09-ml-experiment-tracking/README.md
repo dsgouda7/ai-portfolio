@@ -72,7 +72,7 @@ Experiment tracking solves one problem: **make every training run reproducible**
 
 Both are **local-first tools** — no cloud account required until you want team collaboration.
 
-> 📖 **Industry Standard: MLflow vs Alternatives**
+> **Industry Standard: MLflow vs Alternatives**
 >
 > **MLflow** (Databricks, 2018) — Free, open-source, local-first. Install with `pip install mlflow`, works offline, stores everything in `./mlruns/`. **Use when:** Small team (<10), want full control, zero cloud costs.
 >
@@ -119,7 +119,7 @@ Initialize tracking: Log during training: Analyze experiments: Deploy best model
 > **How to use this workflow:** Phase 1 is one-time setup per project. Phase 2→3→4 is your daily loop: train experiments (Phase 2), compare results (Phase 3), deploy winners (Phase 4). The sections below teach WHY each phase works; refer back here for WHAT to do.
 
 > **Tracking verdict:** MLflow registry promoted INT4-AWQ checkpoint — experiment audit trail confirmed 96.2% accuracy before production registration .
-> ➡ Ch.10 monitors this registered model in production and detects when accuracy drifts below threshold.
+> Ch.10 monitors this registered model in production and detects when accuracy drifts below threshold.
 
 ---
 
@@ -160,7 +160,7 @@ export MLFLOW_TRACKING_URI=http://localhost:5000
 
 **Why this phase matters:** Without Phase 1, every team member logs to their laptop — experiments are siloed, comparisons require manual CSV merging, and "which hyperparameters gave 94%?" takes 2 hours instead of 10 seconds.
 
-> 📖 **Industry Standard:** MLflow for experiment tracking, DVC for data versioning. Alternatives: Weights & Biases (hosted, $0–50/user/month), Neptune.ai (team collaboration features), Comet.ml (enterprise focus). MLflow + DVC is the **free, local-first baseline** — switch to hosted platforms when team size or storage exceeds local capacity.
+> **Industry Standard:** MLflow for experiment tracking, DVC for data versioning. Alternatives: Weights & Biases (hosted, $0–50/user/month), Neptune.ai (team collaboration features), Comet.ml (enterprise focus). MLflow + DVC is the **free, local-first baseline** — switch to hosted platforms when team size or storage exceeds local capacity.
 
 ---
 
@@ -324,7 +324,7 @@ mlflow.artifacts.download_artifacts(run_id=best_run_id, artifact_path="model", d
 3. **Training time** — Tiebreaker (if retraining frequently, prefer faster model)
 4. **Inference latency** — Critical for production (measure separately, not in MLflow)
 
-> 📖 **Industry Standard:** MLflow UI for visual exploration (parallel coordinates, scatter plots). Programmatic API for CI/CD automation (deploy best run from last night's sweep). Weights & Biases adds real-time collaboration (team members see each other's experiments live).
+> **Industry Standard:** MLflow UI for visual exploration (parallel coordinates, scatter plots). Programmatic API for CI/CD automation (deploy best run from last night's sweep). Weights & Biases adds real-time collaboration (team members see each other's experiments live).
 
 ---
 
@@ -433,7 +433,7 @@ python train.py --config configs/bert-lr2e-5-bs16.yaml
 # Reproduced: test_accuracy = 0.939 (0.1% difference = acceptable variance)
 ```
 
-> 📖 **Industry Standard:** MLflow Model Registry for lifecycle management (Staging → Production). Alternatives: AWS SageMaker Model Registry (tight AWS integration), Azure ML Model Registry (tight Azure integration), Kubernetes-native registries (Seldon, KServe) for containerized deployments. MLflow is **cloud-agnostic** — works with any deployment target (Flask API, AWS Lambda, Docker, Kubernetes).
+> **Industry Standard:** MLflow Model Registry for lifecycle management (Staging → Production). Alternatives: AWS SageMaker Model Registry (tight AWS integration), Azure ML Model Registry (tight Azure integration), Kubernetes-native registries (Seldon, KServe) for containerized deployments. MLflow is **cloud-agnostic** — works with any deployment target (Flask API, AWS Lambda, Docker, Kubernetes).
 
 ---
 
@@ -670,7 +670,7 @@ python train.py --run-id 7a3f9b2e-4c8d-4f9a-8b2c-1e5d7f9a3c6b
 
 Change any one component → you get a different result. Keep all components the same → you get **exact reproducibility**.
 
-> 📖 **Industry Standard: Data Versioning Tools**
+> **Industry Standard: Data Versioning Tools**
 >
 > **DVC (Data Version Control)** — Git-like CLI (`dvc add`, `dvc push`, `dvc pull`), supports S3/Azure/GCS/SSH remotes, integrates with CI/CD. **Use when:** Need Git-like workflow, want to version datasets alongside code.
 >
@@ -741,7 +741,7 @@ Change any one component → you get a different result. Keep all components the
 - **DVC** — Switch from local cache to cloud remote when datasets are too large for laptop storage (push/pull like Git LFS)
 - **W&B** — Use the hosted free tier (100 GB storage) if you want real-time dashboards without managing infrastructure
 
-> 📖 **Industry Standard: Model Registry Lifecycle**
+> **Industry Standard: Model Registry Lifecycle**
 >
 > **MLflow Model Registry** — Built into MLflow, lifecycle stages (None → Staging → Production → Archived), load by stage (`models:/name/Production`). **Use when:** Using MLflow for tracking, need simple stage-based deployment.
 >

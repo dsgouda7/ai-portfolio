@@ -229,7 +229,7 @@ $$\text{Decision}(\mathbf{x}) = \begin{cases} \text{Anomaly (Fraud)} & \text{if 
 | Transaction | Reconstruction Error $\mathcal{L}$ | $\mathcal{L} > \tau$? | Decision |
 |-------------|-----------------------------------|----------------------|----------|
 | Normal (legit) | **0.04** | $0.04 \leq 0.5$ → No | Legitimate |
-| Fraud | **2.87** | $2.87 > 0.5$ → Yes | 🚨 Flagged |
+| Fraud | **2.87** | $2.87 > 0.5$ → Yes | Flagged |
 
 Arithmetic for the decision boundary:
 - Normal: $\mathcal{L} = 0.04$. Compare: $0.04 \leq 0.50$. Result: **legitimate**.
@@ -443,7 +443,7 @@ This is exactly the input from §4.1–4.3. Recall: $\mathbf{z}_{\text{fraud}} =
 | Latent $\mathbf{z}$ | $[0.910, 0.000]$ | $[1.49, 0.000]$ |
 | Reconstruction $\hat{\mathbf{x}}$ | $[0.473, -0.464, 0.755]$ | $[0.647, -0.696, 1.045]$ |
 | MSE $\mathcal{L}$ | **0.184** | **0.920** |
-| Threshold $\tau = 0.5$ | 0.184 ≤ 0.5 → Normal | 0.920 > 0.5 → 🚨 Flagged |
+| Threshold $\tau = 0.5$ | 0.184 ≤ 0.5 → Normal | 0.920 > 0.5 → Flagged |
 
 The fraud input's $x_2 = -2.1$ (an extreme PCA value never seen during training) reconstructs as $-0.696$ — roughly the mean of the training distribution for this feature. The autoencoder doesn't know how to encode or decode extreme negative values in this dimension because it never learned to do so. The resulting error ($-2.1 - (-0.696) = -1.404$, squared $= 1.971$) dominates the reconstruction loss.
 
@@ -508,7 +508,7 @@ flowchart LR
  OUT["Output x̂\n30 features\nLinear"]
  ERR["Reconstruction\nError\n‖x - x̂‖² / 30"]
  THRESH{"Error > τ?"}
- FRAUD["🚨 FRAUD\nFlag transaction"]
+ FRAUD[" FRAUD\nFlag transaction"]
  LEGIT[" LEGIT\nApprove transaction"]
 
  X --> E1
@@ -712,7 +712,7 @@ The architecture (number of hidden layers and units) controls model capacity. Fo
 | **Multimodal AI track** | Image anomaly detection uses convolutional autoencoders with the same reconstruction-error scoring mechanism: train on normal images, flag frames with high reconstruction error. The encoder is a convolutional stack (spatial compression); the decoder is a transposed convolutional stack (spatial reconstruction). |
 | **Production (Ch.6)** | Real-time autoencoder inference requires serving the encoder+decoder as a two-stage model. Latency is dominated by matrix multiplication — a 30→10→30 AE is microseconds per transaction on CPU. The threshold $\tau$ must be stored as a model artifact and reloaded at inference time. |
 
-> ➡ **Reconstruction loss as a universal concept**: the MSE objective $\|\mathbf{x} - \hat{\mathbf{x}}\|^2$ appears in denoising autoencoders (here), variational autoencoders (Deep Learning track), and masked autoencoders for vision (Multimodal AI track). Every time a model is trained to reconstruct its input, it is implicitly learning to model the data distribution — and deviation from that model is the anomaly signal.
+> **Reconstruction loss as a universal concept**: the MSE objective $\|\mathbf{x} - \hat{\mathbf{x}}\|^2$ appears in denoising autoencoders (here), variational autoencoders (Deep Learning track), and masked autoencoders for vision (Multimodal AI track). Every time a model is trained to reconstruct its input, it is implicitly learning to model the data distribution — and deviation from that model is the anomaly signal.
 
 ---
 
@@ -763,7 +763,7 @@ The reconstruction error for features V14 and V4 is 80–155× larger on fraud t
 
 ## 12 · Bridge to Ch.4 — One-Class SVM
 
-> ➡ **What's next**: The autoencoder reached 75% recall — a +10pp improvement over Isolation Forest — by learning *what normal transactions look like* and flagging deviations. Both methods now sit in the toolbox: IF scores by geometric isolation, AE scores by reconstruction failure. But both are trained on all-normal data, and both produce continuous scores rather than explicit boundaries.
+> **What's next**: The autoencoder reached 75% recall — a +10pp improvement over Isolation Forest — by learning *what normal transactions look like* and flagging deviations. Both methods now sit in the toolbox: IF scores by geometric isolation, AE scores by reconstruction failure. But both are trained on all-normal data, and both produce continuous scores rather than explicit boundaries.
 
 **The question Ch.4 asks**: Can we define an explicit *boundary* around normal data — in a non-linear kernel space — and classify anything outside that boundary as an anomaly? One-Class SVM does exactly this. Introduced by Schölkopf et al. (1999), it maps training data into a high-dimensional kernel space and finds the maximum-margin hyperplane separating the data from the origin. Points on the origin side are anomalies.
 
@@ -966,7 +966,7 @@ The architecture (number of hidden layers and units) controls model capacity. Fo
 | **Multimodal AI track** | Image anomaly detection uses convolutional autoencoders with the same reconstruction-error scoring mechanism: train on normal images, flag frames with high reconstruction error. |
 | **Production (Ch.6)** | Real-time autoencoder inference requires serving the encoder+decoder as a two-stage model. Latency is dominated by matrix multiplication — a 30→10→30 AE is microseconds per transaction on CPU. |
 
-> ➡ **Reconstruction loss as a universal concept**: the MSE objective $\|\mathbf{x} - \hat{\mathbf{x}}\|^2$ appears in denoising autoencoders (here), variational autoencoders (Deep Learning track), and masked autoencoders for vision (Multimodal AI track). Every time a model is trained to reconstruct its input, it is implicitly learning to model the data distribution — and deviation from that model is the anomaly signal.
+> **Reconstruction loss as a universal concept**: the MSE objective $\|\mathbf{x} - \hat{\mathbf{x}}\|^2$ appears in denoising autoencoders (here), variational autoencoders (Deep Learning track), and masked autoencoders for vision (Multimodal AI track). Every time a model is trained to reconstruct its input, it is implicitly learning to model the data distribution — and deviation from that model is the anomaly signal.
 
 ---
 
@@ -1017,7 +1017,7 @@ The reconstruction error for features V14 and V4 is 80–155× larger on fraud t
 
 ## 17 · Bridge to Ch.4 — One-Class SVM
 
-> ➡ **What's next**: The autoencoder reached 75% recall — a +10pp improvement over Isolation Forest — by learning *what normal transactions look like* and flagging deviations. Both methods now sit in the toolbox: IF scores by geometric isolation, AE scores by reconstruction failure. But both are trained on all-normal data, and both produce continuous scores rather than explicit boundaries.
+> **What's next**: The autoencoder reached 75% recall — a +10pp improvement over Isolation Forest — by learning *what normal transactions look like* and flagging deviations. Both methods now sit in the toolbox: IF scores by geometric isolation, AE scores by reconstruction failure. But both are trained on all-normal data, and both produce continuous scores rather than explicit boundaries.
 
 **The question Ch.4 asks**: Can we define an explicit *boundary* around normal data — in a non-linear kernel space — and classify anything outside that boundary as an anomaly? One-Class SVM does exactly this. Introduced by Schölkopf et al. (1999), it maps training data into a high-dimensional kernel space and finds the maximum-margin hyperplane separating the data from the origin. Points on the origin side are anomalies.
 

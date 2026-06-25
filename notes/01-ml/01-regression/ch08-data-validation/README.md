@@ -15,8 +15,8 @@
 > 1. **ACCURACY** (<95k MAE) — 33k gap remains; drift-corrected retraining closes it ← *this chapter completes*
 > 2. **GENERALIZATION** (CA → Portland) — distribution-aware validation gates quantify geographic drift ← *this chapter*
 > 3. **DATA QUALITY** — Fixed in Ch.1; this chapter *automates* quality checks forward in time
-> 4. **AUDITABILITY** — 🔄 *unlocked here*: data contracts, GE expectation suites, batch-level audit trail
-> 5. **PRODUCTION-READY** — 🔄 *partially unlocked*: automated validation + CI/CD gate; streaming monitoring in AI Infra track
+> 4. **AUDITABILITY** — *unlocked here*: data contracts, GE expectation suites, batch-level audit trail
+> 5. **PRODUCTION-READY** — *partially unlocked*: automated validation + CI/CD gate; streaming monitoring in AI Infra track
 
 **What Sarah knows so far:**
 - Ch.1: Removed 127 outliers; fixed 1,483 bad imputations (IQR method + KNN imputer)
@@ -203,10 +203,10 @@ Before the math, here is the full four-stage pipeline Sarah will build. Each num
 > **Common alternatives:** `pandera` (Pydantic-style schema classes), `pydantic` (API validation), raw `assert` (notebook-only)
 > **See also:** [Great Expectations docs](https://docs.greatexpectations.io/)
 
-> 📖 **Great Expectations vs Pandera vs raw asserts.** GE stores suites as JSON, integrates with Airflow/dbt, and auto-generates HTML data-docs for auditors. Pandera offers Pydantic-style schema classes that feel more Pythonic. Raw `assert` statements are fine for notebooks but break silently the moment a check is removed or skipped. For production, prefer GE or Pandera — the *audit trail* is the whole point, not just the check.
+> **Great Expectations vs Pandera vs raw asserts.** GE stores suites as JSON, integrates with Airflow/dbt, and auto-generates HTML data-docs for auditors. Pandera offers Pydantic-style schema classes that feel more Pythonic. Raw `assert` statements are fine for notebooks but break silently the moment a check is removed or skipped. For production, prefer GE or Pandera — the *audit trail* is the whole point, not just the check.
 
 > **Define verdict:** GE expectation suite declared (schema + distribution checks) with MedInc mean tolerance ±15% — Portland’s 37% shift would have failed immediately.
-> ➡ Integrate suite into inference pipeline and version alongside model artifact before proceeding to drift monitoring.
+> Integrate suite into inference pipeline and version alongside model artifact before proceeding to drift monitoring.
 
 ---
 
@@ -277,7 +277,7 @@ print(f"p-value = {p:.2e}") # → 2.3e-41
 # p << 0.05 → reject null → distributions are significantly different
 ```
 
-> 📖 **KS test vs Chi-squared test.** Use KS for continuous features (MedInc, HouseAge, AveRooms). Use Chi-squared for categorical features (ZipCode, PropertyType). KS is non-parametric and distribution-free: it makes no assumption about the shape of either sample.
+> **KS test vs Chi-squared test.** Use KS for continuous features (MedInc, HouseAge, AveRooms). Use Chi-squared for categorical features (ZipCode, PropertyType). KS is non-parametric and distribution-free: it makes no assumption about the shape of either sample.
 
 ---
 
@@ -341,7 +341,7 @@ where $E_b\%$ is the expected (training) fraction in bin $b$ and $A_b\%$ is the 
 > **See also:** [Pydantic docs](https://docs.pydantic.dev/)
 
 > **Monitor verdict:** PSI = 0.339 (severe), KS D = 0.385 (p = 2.3e-41) — Portland income shifted +37%, all three drift metrics confirm severity.
-> ➡ Log scores per batch and set PSI ≥ 0.25 = BLOCK threshold before routing to Phase 3 alert configuration.
+> Log scores per batch and set PSI ≥ 0.25 = BLOCK threshold before routing to Phase 3 alert configuration.
 
 ---
 
@@ -455,7 +455,7 @@ action, reason = validate_batch_robust(df_pdx, df_ca, feature='MedInc')
 > **See also:** [Evidently AI docs](https://docs.evidentlyai.com/)
 
 > **Detect verdict:** Three-tier alert ladder set (PSI < 0.10 → DEPLOY, 0.10–0.25 → WARN, ≥ 0.25 → BLOCK) with structured JSON audit events.
-> ➡ Test thresholds against holdout and integrate as CI/CD gate — Portland’s PSI = 0.339 triggers BLOCK immediately.
+> Test thresholds against holdout and integrate as CI/CD gate — Portland’s PSI = 0.339 triggers BLOCK immediately.
 
 ---
 
@@ -703,7 +703,7 @@ final_mae = retrain_on_drift(
 > **See also:** [MLflow Model Registry docs](https://mlflow.org/docs/latest/model-registry.html)
 
 > **Respond verdict:** Drift-triggered retrain cut Portland MAE 128k → 89k (below 95k target ); REJECT/BLOCK/WARN/DEPLOY paths fully automated.
-> ➡ Monitor retrain outcomes and expand to streaming validation — SmartVal AI Constraint #5 (PRODUCTION-READY) satisfied.
+> Monitor retrain outcomes and expand to streaming validation — SmartVal AI Constraint #5 (PRODUCTION-READY) satisfied.
 
 ---
 
@@ -747,7 +747,7 @@ By construction, California is close to 20%/20%/20%/20%/20%. Portland, with its 
 | 4 | 0.17 | 0.29 | +0.12 | 1.706 | +0.5347 | (+0.12)×(+0.5347) = **0.0642** |
 | 5 | 0.08 | 0.20 | +0.12 | 2.500 | +0.9163 | (+0.12)×(+0.9163) = **0.1100** |
 
-Verify signs: Bins 1 and 2 lost mass in Portland (A < E) → both factors negative → positive product. Bins 4 and 5 gained mass (A > E) → both factors positive → positive product. Bin 3 barely changed → tiny term. All PSI terms are non-negative. ✓
+Verify signs: Bins 1 and 2 lost mass in Portland (A < E) → both factors negative → positive product. Bins 4 and 5 gained mass (A > E) → both factors positive → positive product. Bin 3 barely changed → tiny term. All PSI terms are non-negative.
 
 **Step 4 — Sum the terms.**
 
@@ -947,13 +947,13 @@ psi_severe = compute_psi(df_train['MedInc'].values, df_severe['MedInc'].values, 
 
 ## 10 · Where This Reappears
 
-- ➡ **[Regression Ch.6 — Metrics & Evaluation](../../01_regression/ch06_metrics/README.md):** Residual control charts apply Shewhart limits to prediction *errors* over time — the same statistical process control pattern applied to model output rather than input features. A residual chart drifting upward signals model degradation before you recompute MAE.
+- **[Regression Ch.6 — Metrics & Evaluation](../../01_regression/ch06_metrics/README.md):** Residual control charts apply Shewhart limits to prediction *errors* over time — the same statistical process control pattern applied to model output rather than input features. A residual chart drifting upward signals model degradation before you recompute MAE.
 
-- ➡ **[Neural Networks Ch.8 — TensorBoard](../../03_neural_networks/ch08_tensorboard/README.md):** TensorBoard’s distribution dashboards plot layer activation histograms epoch by epoch. The monitoring question — “has this distribution changed from the reference?” — is the same KL-divergence comparison you built here, now applied inside the network rather than to raw inputs.
+- **[Neural Networks Ch.8 — TensorBoard](../../03_neural_networks/ch08_tensorboard/README.md):** TensorBoard’s distribution dashboards plot layer activation histograms epoch by epoch. The monitoring question — “has this distribution changed from the reference?” — is the same KL-divergence comparison you built here, now applied inside the network rather than to raw inputs.
 
-- ➡ **[AI Infrastructure track](../../06_ai_infrastructure/README.md):** Production ML infra chapters cover Evidently AI, WhyLabs, and Arize — tools that implement exactly the PSI + KS + GE pipeline you built here, at enterprise scale with Slack/PagerDuty integrations. The concepts from this chapter are the prerequisites for understanding what those platforms actually compute.
+- **[AI Infrastructure track](../../06_ai_infrastructure/README.md):** Production ML infra chapters cover Evidently AI, WhyLabs, and Arize — tools that implement exactly the PSI + KS + GE pipeline you built here, at enterprise scale with Slack/PagerDuty integrations. The concepts from this chapter are the prerequisites for understanding what those platforms actually compute.
 
-- ➡ **[Multi-Agent AI track](../../04_multi_agent_ai/README.md):** Agent orchestration systems validate tool outputs and inter-agent message schemas using the same principle: declare expected structure at design time, validate at runtime, alert on violation, route by severity. The same four-stage pipeline (define → validate → alert → remediate) applies verbatim.
+- **[Multi-Agent AI track](../../04_multi_agent_ai/README.md):** Agent orchestration systems validate tool outputs and inter-agent message schemas using the same principle: declare expected structure at design time, validate at runtime, alert on violation, route by severity. The same four-stage pipeline (define → validate → alert → remediate) applies verbatim.
 
 ---
 
@@ -1004,11 +1004,11 @@ Ch.3 Validation Pipeline: 128k → 89k (-39k: drift-corrected retrain)
 
 Data Fundamentals gave you the forensic foundation: *look at the data before you trust the model*, then *automate that inspection so it runs forever*. The [Classification Track](../../02_classification/ch01_logistic_regression/README.md) picks up from a clean, validated, contract-governed dataset and asks: *what kind of prediction should we make?* The running scenario shifts from continuous house prices to binary decisions, but the data quality discipline carries forward immediately. The logistic regression chapter encounters its own distribution considerations — class balance, threshold calibration, score drift — and you will recognise the pattern: declare expectations, validate, measure drift, remediate.
 
-> ➡ **Next:** [02_classification/ch01_logistic_regression](../../02_classification/ch01_logistic_regression/README.md) — binary classification, the sigmoid function, and decision boundaries.
+> **Next:** [02_classification/ch01_logistic_regression](../../02_classification/ch01_logistic_regression/README.md) — binary classification, the sigmoid function, and decision boundaries.
 
 ---
 
-## 🔧 Exercise Connection
+## Exercise connection
 
 Data drift and validation from this chapter apply to the final TODOs in `exercises/01-ml/01-regression/src/data-prep.py`:
 

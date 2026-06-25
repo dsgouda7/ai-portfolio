@@ -217,10 +217,10 @@ for warning in vf_plan['warnings']:
 # FID unstable with N=500 (±10 FID variance). Increase to N≥5k or use only as relative comparison.
 ```
 
-> 🏭 **Industry standard:** OpenAI's DALL-E 3 evaluation uses FID (N=30k) + CLIP Score + human preference ratings (n=1000 human comparisons). Midjourney V6 uses HPSv2 + Aesthetic Predictor + manual QA on 500-image batches. Stability AI (SDXL) reports FID (N=50k) + CLIP Score + FID-CLIP harmonic mean.
+> **Industry standard:** OpenAI's DALL-E 3 evaluation uses FID (N=30k) + CLIP Score + human preference ratings (n=1000 human comparisons). Midjourney V6 uses HPSv2 + Aesthetic Predictor + manual QA on 500-image batches. Stability AI (SDXL) reports FID (N=50k) + CLIP Score + FID-CLIP harmonic mean.
 
 > **Metric selection verdict:** FID + CLIP Score + HPSv2 covers VisualForge quality, alignment, and preference goals — FID is unstable at N=500; use for relative comparisons only until N ≥ 5,000.
-> ➡ Stable metric implementations are selected next to ensure reproducible cross-experiment comparisons.
+> Stable metric implementations are selected next to ensure reproducible cross-experiment comparisons.
 
 ---
 
@@ -294,10 +294,10 @@ def setup_metrics_env(metrics: list):
 setup_metrics_env(['FID', 'CLIP Score', 'HPSv2'])
 ```
 
-> 🏭 **Industry standard:** Weights & Biases (W&B) provides unified metric tracking with `wandb.log({'fid': fid_score, 'clip_score': clip_mean})`. Google's Imagen paper uses `clean-fid` with Inception-v3 pool3 features at 299×299 resolution. Stable Diffusion XL evaluation uses `torch-fidelity` with 50k samples.
+> **Industry standard:** Weights & Biases (W&B) provides unified metric tracking with `wandb.log({'fid': fid_score, 'clip_score': clip_mean})`. Google's Imagen paper uses `clean-fid` with Inception-v3 pool3 features at 299×299 resolution. Stable Diffusion XL evaluation uses `torch-fidelity` with 50k samples.
 
 > **Implementation verdict:** torch-fidelity FID, CLIP ViT-B/32, and HPSv2 checkpoint validated — all cross-checks pass, consistent implementations locked for all experiments.
-> ➡ Evaluation pipeline is run on the full VisualForge spring-collection batch in the next section.
+> Evaluation pipeline is run on the full VisualForge spring-collection batch in the next section.
 
 ---
 
@@ -505,10 +505,10 @@ print(json.dumps(results, indent=2))
 # }
 ```
 
-> 🏭 **Industry standard:** Stability AI's SDXL evaluation pipeline uses `torch-fidelity` with 50k samples, CLIP ViT-L/14 (not ViT-B/32), and Aesthetic Predictor v2.1. Images resized to 512×512 for FID (original training resolution). All metrics logged to Weights & Biases with per-checkpoint comparisons.
+> **Industry standard:** Stability AI's SDXL evaluation pipeline uses `torch-fidelity` with 50k samples, CLIP ViT-L/14 (not ViT-B/32), and Aesthetic Predictor v2.1. Images resized to 512×512 for FID (original training resolution). All metrics logged to Weights & Biases with per-checkpoint comparisons.
 
 > **Compute verdict:** FID=42.3, CLIP=0.31 (σ=0.08) on 500 images — preprocessing consistent, prompt coverage complete; FID sample-size warning noted for relative comparison use only.
-> ➡ Metric scores are interpreted against quality thresholds in the go/no-go section.
+> Metric scores are interpreted against quality thresholds in the go/no-go section.
 
 ---
 
@@ -641,10 +641,10 @@ for rec in decision['recommendations']:
  print(f"→ {rec}")
 ```
 
-> 🏭 **Industry standard:** Midjourney V6 uses HPSv2>4.2 + manual QA pass rate >90% as the release gate. OpenAI DALL-E 3 uses FID<20 (against LAION-5B subset) + CLIP Score>0.32 + human preference win rate >60% vs. DALL-E 2. Stable Diffusion XL uses FID<25 + Aesthetic Score>6.0/10 as the checkpoint selection criterion.
+> **Industry standard:** Midjourney V6 uses HPSv2>4.2 + manual QA pass rate >90% as the release gate. OpenAI DALL-E 3 uses FID<20 (against LAION-5B subset) + CLIP Score>0.32 + human preference win rate >60% vs. DALL-E 2. Stable Diffusion XL uses FID<25 + Aesthetic Score>6.0/10 as the checkpoint selection criterion.
 
 > **FID verdict:** FID 42.3 → CLIP 0.31 → HPSv2 4.1 — VisualForge spring collection passes all thresholds; ship to creative director for spot-check (expect ≥80% approval).
-> ➡ CLIP similarity and HPSv2 confirm prompt alignment and aesthetic quality alongside distribution realism.
+> CLIP similarity and HPSv2 confirm prompt alignment and aesthetic quality alongside distribution realism.
 
 ---
 
@@ -658,7 +658,7 @@ for rec in decision['recommendations']:
 
 **Why this matters:** At 120 images/day throughput, you can't manually review every output. Automated metrics give you a 10-minute quality gate instead of 2 hours of manual inspection.
 
-> 📖 **Educational proxy:** FID math is illustrated using MNIST digit generation (reference = real digits, generated = DDPM output) because it's compact and verifiable. The VisualForge production evaluation (§5) applies the same metrics to campaign image batches.
+> **Educational proxy:** FID math is illustrated using MNIST digit generation (reference = real digits, generated = DDPM output) because it's compact and verifiable. The VisualForge production evaluation (§5) applies the same metrics to campaign image batches.
 
 ---
 
@@ -678,7 +678,7 @@ $$
 - Measures distance between the *distributions*, not individual images.
 - **Biased at small N** — needs ≥ 5,000 samples for stable estimates (often 50k).
 
-> 🏭 **Industry standard — torch-fidelity:** PyTorch Lightning's `torch-fidelity` library is the production standard for FID computation. Install with `pip install torch-fidelity`. Key advantages: (1) GPU acceleration with batched feature extraction, (2) matches original TensorFlow FID implementation within ±0.5 FID, (3) supports multiple backends (Inception-v3, SwAV). Usage: `calculate_metrics(input1='generated/', input2='real/', cuda=True, fid=True)`. Stability AI uses `torch-fidelity` with 50k samples for all SDXL checkpoints.
+> **Industry standard — torch-fidelity:** PyTorch Lightning's `torch-fidelity` library is the production standard for FID computation. Install with `pip install torch-fidelity`. Key advantages: (1) GPU acceleration with batched feature extraction, (2) matches original TensorFlow FID implementation within ±0.5 FID, (3) supports multiple backends (Inception-v3, SwAV). Usage: `calculate_metrics(input1='generated/', input2='real/', cuda=True, fid=True)`. Stability AI uses `torch-fidelity` with 50k samples for all SDXL checkpoints.
 
 **How you compute it:**
 1. **Generate** $N$ images from your model ($N \geq 5000$, ideally 50k).
@@ -713,7 +713,7 @@ where $w = 2.5$ is a scaling constant (originates from CLIPScore paper, Hessel e
 - Reference-free: no real image needed.
 - The CLIP embedding space is **shared** across images and text, so cosine similarity measures semantic alignment.
 
-> 🏭 **Industry standard — CLIP model selection:** OpenAI's `clip-vit-base-patch32` (ViT-B/32) is the reproducibility standard — fastest, widely benchmarked. `clip-vit-large-patch14` (ViT-L/14) gives 5–10% higher scores but 3× slower. **Do not mix models across experiments** — ViT-L/14 score of 0.28 ≠ ViT-B/32 score of 0.28. Midjourney uses ViT-L/14 for internal evaluation; Stable Diffusion papers report ViT-B/32 for reproducibility. Load via HuggingFace: `CLIPModel.from_pretrained('openai/clip-vit-base-patch32')`.
+> **Industry standard — CLIP model selection:** OpenAI's `clip-vit-base-patch32` (ViT-B/32) is the reproducibility standard — fastest, widely benchmarked. `clip-vit-large-patch14` (ViT-L/14) gives 5–10% higher scores but 3× slower. **Do not mix models across experiments** — ViT-L/14 score of 0.28 ≠ ViT-B/32 score of 0.28. Midjourney uses ViT-L/14 for internal evaluation; Stable Diffusion papers report ViT-B/32 for reproducibility. Load via HuggingFace: `CLIPModel.from_pretrained('openai/clip-vit-base-patch32')`.
 
 **How you compute it:**
 1. Encode the prompt with `CLIPTextEncoder` → $\mathbf{t} \in \mathbb{R}^{512}$.
@@ -791,7 +791,7 @@ True FID attained only at large N; small N inflates FID.
 
 **Why this matters:** You need to generate ≥5,000 test images to get a reliable FID score. Running FID on 100 samples will give you wildly inconsistent results (±50 FID variance). VisualForge evaluates on 500-image batches = minimum viable N for campaign-level decisions.
 
-> 🏭 **Industry standard — Sample size requirements:** Google's Imagen uses N=30k (COCO-2014 validation set) for FID reporting. OpenAI DALL-E 3 uses N=30k. Stable Diffusion XL uses N=50k (COCO-2014 train subset). Academic papers often report N=5k (minimum for ±5 FID variance) with a disclaimer. **For A/B testing** (Model A vs Model B), N=1k is acceptable — the absolute FID is biased but the *difference* between models is stable. **For production go/no-go decisions**, use N≥10k to defend the threshold to stakeholders.
+> **Industry standard — Sample size requirements:** Google's Imagen uses N=30k (COCO-2014 validation set) for FID reporting. OpenAI DALL-E 3 uses N=30k. Stable Diffusion XL uses N=50k (COCO-2014 train subset). Academic papers often report N=5k (minimum for ±5 FID variance) with a disclaimer. **For A/B testing** (Model A vs Model B), N=1k is acceptable — the absolute FID is biased but the *difference* between models is stable. **For production go/no-go decisions**, use N≥10k to defend the threshold to stakeholders.
 
 ---
 
@@ -850,7 +850,7 @@ print(f"Mean CLIP Score: {sum(clip_scores)/len(clip_scores):.3f} (target >0.25)"
 
 > **Gate decision**: FID 42.3 < 50 threshold and CLIP 0.31 > 0.25 threshold — batch approved for creative review. This automated gate saves ~2 hours of manual review per 100-image batch.
 
-> 🏭 **Industry standard — Multi-metric dashboards:** Weights & Biases (W&B) is the production standard for metric tracking. Log metrics with `wandb.log({'fid': fid_score, 'clip_score': clip_mean, 'hpsv2': hps_score})` and visualize trends across checkpoints. Stability AI's internal dashboard tracks FID + CLIP + Aesthetic Score + HPSv2 for every SDXL training run (logged every 5k steps). OpenAI logs to internal tools but published DALL-E 3 metrics follow the same multi-metric pattern. **Key insight:** Single-metric optimization ("minimize FID only") leads to mode collapse — always track ≥2 orthogonal metrics (fidelity + alignment or fidelity + aesthetics).
+> **Industry standard — Multi-metric dashboards:** Weights & Biases (W&B) is the production standard for metric tracking. Log metrics with `wandb.log({'fid': fid_score, 'clip_score': clip_mean, 'hpsv2': hps_score})` and visualize trends across checkpoints. Stability AI's internal dashboard tracks FID + CLIP + Aesthetic Score + HPSv2 for every SDXL training run (logged every 5k steps). OpenAI logs to internal tools but published DALL-E 3 metrics follow the same multi-metric pattern. **Key insight:** Single-metric optimization ("minimize FID only") leads to mode collapse — always track ≥2 orthogonal metrics (fidelity + alignment or fidelity + aesthetics).
 
 ---
 

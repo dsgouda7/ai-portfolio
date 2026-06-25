@@ -134,11 +134,11 @@ $$\mathcal{L}_{\text{ELBO}} = \mathbb{E}_{q_\phi(z|x)}[\log p_\theta(x|z)] - \te
 This decomposes into two terms:
 
 1. **Reconstruction term** $\mathbb{E}_{q_\phi(z|x)}[\log p_\theta(x|z)]$ — how well does the decoder reconstruct the input after sampling from the encoder's distribution?
-   - For Gaussian $p_\theta(x|z)$, this becomes MSE: $-\frac{1}{2}\|\mathbf{x} - f_{\text{dec}}(z)\|^2$ (up to constants)
+ - For Gaussian $p_\theta(x|z)$, this becomes MSE: $-\frac{1}{2}\|\mathbf{x} - f_{\text{dec}}(z)\|^2$ (up to constants)
 
 2. **KL regularization term** $\text{KL}(q_\phi(z|x) \| p(z))$ — how far is the encoder's distribution from the prior $p(z) = \mathcal{N}(0, \mathbf{I})$?
-   - For Gaussian $q_\phi$ and Gaussian prior, this has a closed form:
-   $$\text{KL}(q_\phi \| p) = \frac{1}{2} \sum_{j=1}^k \left( \mu_j^2 + \sigma_j^2 - \log \sigma_j^2 - 1 \right)$$
+ - For Gaussian $q_\phi$ and Gaussian prior, this has a closed form:
+ $$\text{KL}(q_\phi \| p) = \frac{1}{2} \sum_{j=1}^k \left( \mu_j^2 + \sigma_j^2 - \log \sigma_j^2 - 1 \right)$$
 
 **The sculptor analogy for ELBO:**
 - **Reconstruction term**: "Can the intern (decoder) recreate the original model's pose from the compressed instructions?"
@@ -148,13 +148,13 @@ This decomposes into two terms:
 
 ```python
 def vae_loss(x, mu, log_var, x_recon):
-    # Reconstruction loss (MSE)
-    recon_loss = F.mse_loss(x_recon, x, reduction='sum')
+ # Reconstruction loss (MSE)
+ recon_loss = F.mse_loss(x_recon, x, reduction='sum')
 
-    # KL divergence (closed form for Gaussian)
-    kl_div = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
+ # KL divergence (closed form for Gaussian)
+ kl_div = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
 
-    return recon_loss + kl_div
+ return recon_loss + kl_div
 
 # Training step
 optimizer.zero_grad()
@@ -177,7 +177,7 @@ optimizer.step()
 **Encoder architecture**:
 ```
 Linear(784 → 400) → ReLU → Linear(400 → 32) [μ branch]
-                          └→ Linear(400 → 32) [log σ² branch]
+ └→ Linear(400 → 32) [log σ² branch]
 ```
 
 **Output**: $\mu_\phi(\mathbf{x}) \in \mathbb{R}^{32}$, $\log \sigma^2_\phi(\mathbf{x}) \in \mathbb{R}^{32}$
@@ -224,7 +224,7 @@ $$\mathcal{L} = \underbrace{\|\mathbf{x} - \hat{\mathbf{x}}\|^2}_{\text{reconstr
 ```python
 z = torch.randn(1, 32) # Sample from N(0, I)
 with torch.no_grad():
-    x_gen = decoder(z)
+ x_gen = decoder(z)
 ```
 
 **The sculptor's generative power**: "Give me a random set of anatomical proportions from the learned distribution → I'll create a brand new, plausible human figure."
@@ -234,8 +234,8 @@ with torch.no_grad():
 z1 = mu1 # Latent code for digit "3"
 z2 = mu2 # Latent code for digit "8"
 for alpha in np.linspace(0, 1, 10):
-    z_interp = alpha * z1 + (1 - alpha) * z2
-    x_interp = decoder(z_interp) # Smooth morph from "3" to "8"
+ z_interp = alpha * z1 + (1 - alpha) * z2
+ x_interp = decoder(z_interp) # Smooth morph from "3" to "8"
 ```
 
 ---
@@ -245,51 +245,51 @@ for alpha in np.linspace(0, 1, 10):
 ### 5.1 · VAE Architecture
 
 ```
-                    ┌─────────────────────────────────┐
-                    │   ENCODER (Master Sculptor)     │
-                    │                                  │
-     x (784D)       │   Linear(784→400) → ReLU         │
-     ──────────────>│      ┌→ Linear(400→32) = μ      │
-     MNIST digit    │      └→ Linear(400→32) = log σ² │
-                    └──────────┬───────────────────────┘
-                               │
-                               v
-                    ┌─────────────────────────────────┐
-                    │  REPARAMETERIZATION TRICK       │
-                    │  z = μ + σ ⊙ ε, ε ~ N(0,I)      │
-                    └──────────┬───────────────────────┘
-                               │
-                               v (z: 32D latent sample)
-                    ┌─────────────────────────────────┐
-                    │   DECODER (Sculptor's Intern)   │
-                    │                                  │
-                    │   Linear(32→400) → ReLU          │
-                    │   Linear(400→784) → Sigmoid      │
-                    └──────────┬───────────────────────┘
-                               │
-                               v
-                           x_recon (784D)
-                           Reconstructed digit
+ ┌─────────────────────────────────┐
+ │ ENCODER (Master Sculptor) │
+ │ │
+ x (784D) │ Linear(784→400) → ReLU │
+ ──────────────>│ ┌→ Linear(400→32) = μ │
+ MNIST digit │ └→ Linear(400→32) = log σ² │
+ └──────────┬───────────────────────┘
+ │
+ v
+ ┌─────────────────────────────────┐
+ │ REPARAMETERIZATION TRICK │
+ │ z = μ + σ ⊙ ε, ε ~ N(0,I) │
+ └──────────┬───────────────────────┘
+ │
+ v (z: 32D latent sample)
+ ┌─────────────────────────────────┐
+ │ DECODER (Sculptor's Intern) │
+ │ │
+ │ Linear(32→400) → ReLU │
+ │ Linear(400→784) → Sigmoid │
+ └──────────┬───────────────────────┘
+ │
+ v
+ x_recon (784D)
+ Reconstructed digit
 ```
 
 ### 5.2 · Latent Space Visualization (2D Projection)
 
 ```
-          Latent Space z ∈ R²
+ Latent Space z ∈ R²
 
-    ┌────────────────────────────┐
-    │     ●●● ○○○                │  ● = μ (mean)
-    │    ●3●3●●●○8○8○             │  ○ = samples from N(μ,σ²)
-    │   ●●3●3●    ○8○8○           │
-    │                             │
-    │  ●●1 1●      ○○7 7○         │  Clusters: encoder maps
-    │ ●●1●1●      ○7○7○○          │  similar digits to nearby μ
-    │                             │
-    │    ●●5●5●  ○○0○0○            │  Overlap: σ² creates spread
-    │     ●5●5●○0○○0○              │  → smooth transitions
-    └────────────────────────────┘
+ ┌────────────────────────────┐
+ │ ●●● ○○○ │ ● = μ (mean)
+ │ ●3●3●●●○8○8○ │ ○ = samples from N(μ,σ²)
+ │ ●●3●3● ○8○8○ │
+ │ │
+ │ ●●1 1● ○○7 7○ │ Clusters: encoder maps
+ │ ●●1●1● ○7○7○○ │ similar digits to nearby μ
+ │ │
+ │ ●●5●5● ○○0○0○ │ Overlap: σ² creates spread
+ │ ●5●5●○0○○0○ │ → smooth transitions
+ └────────────────────────────┘
 
-    Sample z ~ N(0,I) anywhere → decoder generates plausible digit
+ Sample z ~ N(0,I) anywhere → decoder generates plausible digit
 ```
 
 **Why this works**: KL regularization forces all $q_\phi(z|x)$ to be close to $\mathcal{N}(0, I)$. The latent space becomes **smooth** — nearby points decode to similar digits.
@@ -297,14 +297,14 @@ for alpha in np.linspace(0, 1, 10):
 ### 5.3 · Interpolation Between Digits
 
 ```
-z₁ (digit "3")  α=0.0  α=0.25  α=0.5  α=0.75  α=1.0  z₂ (digit "8")
-    ●───────────────────────────────────────────────────●
-    │                                                   │
-    └─────> z_interp = α·z₁ + (1-α)·z₂ ──────> decoder
+z₁ (digit "3") α=0.0 α=0.25 α=0.5 α=0.75 α=1.0 z₂ (digit "8")
+ ●───────────────────────────────────────────────────●
+ │ │
+ └─────> z_interp = α·z₁ + (1-α)·z₂ ──────> decoder
 
 Generated images along interpolation:
 ┌────┬────┬────┬────┬────┐
-│ 3  │ 3~ │ ~8 │ ~8 │ 8  │  Smooth morphing
+│ 3 │ 3~ │ ~8 │ ~8 │ 8 │ Smooth morphing
 └────┴────┴────┴────┴────┘
 ```
 
@@ -347,19 +347,19 @@ $$\mathcal{L}_{\beta\text{-VAE}} = \text{Recon} + \beta \cdot \text{KL}$$
 ## 7 · What Can Go Wrong
 
 1. **Posterior collapse** — Decoder ignores latent code $z$, generates same image regardless of input. KL term → 0 because encoder outputs $\mu \approx 0, \sigma \approx 1$ (prior) for all $\mathbf{x}$. Decoder learns to generate average digit without using $z$.
-   - **Fix**: Increase $\beta$ (strengthen KL penalty), use warm-up schedule ($\beta$ starts low, increases over epochs), anneal learning rate
+ - **Fix**: Increase $\beta$ (strengthen KL penalty), use warm-up schedule ($\beta$ starts low, increases over epochs), anneal learning rate
 
 2. **Blurry reconstructions** — MSE loss penalizes sharp edges (pixel-wise squared error prefers blurring). VAE outputs are characteristically "fuzzy."
-   - **Fix**: Replace MSE with perceptual loss (GAN discriminator, covered in Ch.3), or use VQ-VAE (vector-quantized latent space)
+ - **Fix**: Replace MSE with perceptual loss (GAN discriminator, covered in Ch.3), or use VQ-VAE (vector-quantized latent space)
 
 3. **Mode collapse in generation** — Decoder learns to map many $z$ values to the same output digit (e.g., all $z$ near origin → "1").
-   - **Fix**: Increase latent dimensionality $k$, reduce $\beta$ (weaken KL pressure), check dataset balance (if training set has 90% "1"s, decoder will favor "1"s)
+ - **Fix**: Increase latent dimensionality $k$, reduce $\beta$ (weaken KL pressure), check dataset balance (if training set has 90% "1"s, decoder will favor "1"s)
 
 4. **Non-smooth latent space** — Interpolation between $z_1$ and $z_2$ produces garbage frames.
-   - **Fix**: Increase $\beta$ (stronger regularization toward unit Gaussian), train longer (latent space smoothness emerges over epochs)
+ - **Fix**: Increase $\beta$ (stronger regularization toward unit Gaussian), train longer (latent space smoothness emerges over epochs)
 
 5. **Forgetting to clamp decoder output** — If decoder doesn't use Sigmoid activation, outputs can be outside [0,1], breaking image rendering.
-   - **Fix**: `x_recon = torch.sigmoid(decoder(z))` or use `nn.Sigmoid()` as final layer
+ - **Fix**: `x_recon = torch.sigmoid(decoder(z))` or use `nn.Sigmoid()` as final layer
 
 ---
 
@@ -369,9 +369,9 @@ $$\mathcal{L}_{\beta\text{-VAE}} = \text{Recon} + \beta \cdot \text{KL}$$
 - **Generate NEW digits**: Sample $z \sim \mathcal{N}(0, I)$ → decode → get novel MNIST digit
 - **Smooth interpolation**: Morph between any two digits by interpolating latent codes
 - **Constraint progress**:
-  - **#1 QUALITY**: ~75% fooling rate (up from 60% with autoencoders) — still blurry but better
-  - **#2 DIVERSITY**: ✓ Covers all 10 digit classes (KL regularization prevents mode collapse)
-  - **#5 LATENT INTERPRETABILITY**: ✓ Smooth latent space, meaningful arithmetic (e.g., $z_{\text{"3"}} + (z_{\text{"8"}} - z_{\text{"3"}}) \approx z_{\text{"8"}}$)
+ - **#1 QUALITY**: ~75% fooling rate (up from 60% with autoencoders) — still blurry but better
+ - **#2 DIVERSITY**: Covers all 10 digit classes (KL regularization prevents mode collapse)
+ - **#5 LATENT INTERPRETABILITY**: Smooth latent space, meaningful arithmetic (e.g., $z_{\text{"3"}} + (z_{\text{"8"}} - z_{\text{"3"}}) \approx z_{\text{"8"}}$)
 
 **Still can't solve:**
 - **Sharp, photorealistic generation** (fooling rate <90%) — MSE reconstruction loss produces blur

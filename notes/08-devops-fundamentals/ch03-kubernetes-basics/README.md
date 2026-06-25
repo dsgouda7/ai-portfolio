@@ -336,7 +336,7 @@ spec:
 - **Liveness:** Check only internal process health (is Flask responding at all?) — return 500 only if the app is truly hung
 
 > **Deploy verdict:** 3 replicas Running with `READY 1/1`; readiness/liveness probes prevent traffic to unhealthy pods.
-> ➡ Pods self-heal on crash; proceed to Expose phase to route external traffic.
+> Pods self-heal on crash; proceed to Expose phase to route external traffic.
 
 ---
 
@@ -418,7 +418,7 @@ kubectl get pods -l app=productionstack
 
 ### Industry Callout — Helm vs kubectl for Deployments
 
-> 🏭 **Industry Standard: Helm — The Kubernetes Package Manager**
+> **Industry Standard: Helm — The Kubernetes Package Manager**
 
 Writing raw YAML files for every deployment is error-prone and doesn't scale. In production, teams use **Helm** — a templating system and package manager for Kubernetes.
 
@@ -446,7 +446,7 @@ Writing raw YAML files for every deployment is error-prone and doesn't scale. In
 - Your app has zero configuration variance → templating adds overhead without benefit
 - You're learning K8s basics → master `kubectl` first, then add Helm abstraction
 
-> 📖 **Learn more:** [Helm Official Docs](https://helm.sh/docs/), [Kustomize Tutorial](https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/)
+> **Learn more:** [Helm Official Docs](https://helm.sh/docs/), [Kustomize Tutorial](https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/)
 
 ---
 
@@ -499,7 +499,7 @@ Service selector: app=productionstack
 If no pods match the selector, the Service has **zero endpoints** — traffic goes nowhere.
 
 > **Expose verdict:** Service endpoints show 3 pod IPs; stable ClusterIP DNS name survives pod restarts and rolling updates.
-> ➡ External traffic routing confirmed; proceed to Config phase to inject environment variables.
+> External traffic routing confirmed; proceed to Config phase to inject environment variables.
 
 ---
 
@@ -546,7 +546,7 @@ curl localhost:8080/health # Your laptop → Kind cluster
 
 ### Industry Callout — Ingress Controllers vs LoadBalancer
 
-> 🏭 **Industry Standard: Ingress — HTTP(S) Routing at the Edge**
+> **Industry Standard: Ingress — HTTP(S) Routing at the Edge**
 
 Creating a LoadBalancer Service for every microservice is expensive — cloud providers charge per load balancer ($20-30/month each). For HTTP/HTTPS traffic, use an **Ingress** instead — one load balancer routes to many services based on hostname or path.
 
@@ -605,7 +605,7 @@ spec:
 - **Istio Gateway** — service mesh integration
 - **AWS ALB Ingress** — native AWS integration
 
-> 📖 **Learn more:** [Kubernetes Ingress Docs](https://kubernetes.io/docs/concepts/services-networking/ingress/), [NGINX Ingress Controller](https://kubernetes.github.io/ingress-nginx/)
+> **Learn more:** [Kubernetes Ingress Docs](https://kubernetes.io/docs/concepts/services-networking/ingress/), [NGINX Ingress Controller](https://kubernetes.github.io/ingress-nginx/)
 
 ---
 
@@ -723,7 +723,7 @@ Why? Environment variables are:
 File mounts are more secure — the app reads `/var/secrets/DATABASE_PASSWORD` at startup.
 
 > **Config verdict:** ConfigMap env vars and Secret volume mounts visible inside pods; `rollout restart` applies changes without manual pod deletion.
-> ➡ Runtime config decoupled from image; proceed to Scale phase to enable autoscaling.
+> Runtime config decoupled from image; proceed to Scale phase to enable autoscaling.
 
 ---
 
@@ -801,7 +801,7 @@ kubectl apply -f configmap.yaml -f secret.yaml -f deployment.yaml
 
 ### Industry Callout — External Secrets Operator vs Native Secrets
 
-> 🏭 **Industry Standard: External Secrets Operator — Sync from Cloud Secrets Managers**
+> **Industry Standard: External Secrets Operator — Sync from Cloud Secrets Managers**
 
 Kubernetes native Secrets are base64-encoded (not encrypted) and stored in etcd. In production, teams use **External Secrets Operator** to sync secrets from cloud providers (AWS Secrets Manager, Azure Key Vault, GCP Secret Manager, HashiCorp Vault) into K8s Secrets automatically.
 
@@ -856,7 +856,7 @@ spec:
 | Multi-cloud or hybrid | External Secrets Operator (unified interface) |
 | < 10 secrets, rarely change | Native Secrets (less overhead) |
 
-> 📖 **Learn more:** [External Secrets Operator](https://external-secrets.io/), [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) (encrypt secrets in Git)
+> **Learn more:** [External Secrets Operator](https://external-secrets.io/), [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) (encrypt secrets in Git)
 
 ---
 
@@ -921,7 +921,7 @@ Example: 3 replicas, current CPU 85%, target 70%
 ```
 
 > **Reliability verdict:** Pod restart on crash: 0 manual interventions; MTTR 45 min → 90s with liveness probes; HPA scales 3→10 replicas at 70% CPU.
-> ➡ Autoscaling confirmed; use Phase 5 troubleshooting commands for any remaining failures.
+> Autoscaling confirmed; use Phase 5 troubleshooting commands for any remaining failures.
 
 ---
 
@@ -980,7 +980,7 @@ spec:
 
 ### Industry Callout — KEDA vs Native HPA
 
-> 🏭 **Industry Standard: KEDA — Event-Driven Autoscaling**
+> **Industry Standard: KEDA — Event-Driven Autoscaling**
 
 Native HPA only scales based on CPU/memory or custom Prometheus metrics. **KEDA** (Kubernetes Event-Driven Autoscaling) scales based on external event sources: AWS SQS queue depth, Kafka lag, Azure Storage Queue, Redis list length, cron schedules, and 50+ other scalers.
 
@@ -1037,7 +1037,7 @@ KEDA can scale deployments to 0 replicas when idle (HPA minimum is 1). When an e
 
 **Adoption:** 40% of K8s teams use KEDA for event-driven scaling (CNCF survey 2024)
 
-> 📖 **Learn more:** [KEDA Official Docs](https://keda.sh/docs/), [KEDA Scalers](https://keda.sh/docs/scalers/) (50+ supported event sources)
+> **Learn more:** [KEDA Official Docs](https://keda.sh/docs/), [KEDA Scalers](https://keda.sh/docs/scalers/) (50+ supported event sources)
 
 ---
 
@@ -1221,7 +1221,7 @@ kubectl edit deployment productionstack-api
 ```
 
 > **Troubleshoot verdict:** 3-step debug workflow (get pods → describe → logs) resolves 90% of K8s failures; `rollout undo` restores previous version in <60s.
-> ➡ Deployment stable and observable; chapter complete.
+> Deployment stable and observable; chapter complete.
 
 ---
 
@@ -1284,7 +1284,7 @@ kubectl set image deployment/productionstack-api flask-api=myregistry/production
 
 ### Industry Callout — k9s vs Lens vs kubectl for Daily Debugging
 
-> 🏭 **Industry Standard: k9s — Terminal UI for Kubernetes**
+> **Industry Standard: k9s — Terminal UI for Kubernetes**
 
 Running `kubectl` commands repeatedly is tedious. Most practitioners use a **TUI (Terminal UI)** or **GUI** tool for daily cluster work.
 
@@ -1355,7 +1355,7 @@ kubectl proxy
 - 38% use Lens for multi-cluster management
 - <10% use Kubernetes Dashboard (declining due to security concerns)
 
-> 📖 **Learn more:** [k9s GitHub](https://github.com/derailed/k9s), [Lens Official Site](https://k8slens.dev/), [K8s Dashboard Docs](https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/)
+> **Learn more:** [k9s GitHub](https://github.com/derailed/k9s), [Lens Official Site](https://k8slens.dev/), [K8s Dashboard Docs](https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/)
 
 ---
 

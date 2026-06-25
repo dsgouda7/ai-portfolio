@@ -6,7 +6,7 @@
 
 **Two ways to experience the complete classification story:**
 
-1. **📖 Read this document** — Conceptual walkthrough with production architecture, key insights, and integration patterns. Perfect for understanding *why* each concept matters and *how* they connect in production systems.
+1. ** Read this document** — Conceptual walkthrough with production architecture, key insights, and integration patterns. Perfect for understanding *why* each concept matters and *how* they connect in production systems.
 
 2. ** Run the notebook** — [grand_solution.ipynb (reference)](grand_solution_reference.ipynb) | [grand_solution.ipynb (exercise)](grand_solution_exercise.ipynb) consolidates all code examples into a single executable demonstration. Shows the complete progression from Ch.1 baseline → Ch.5 tuned system with runnable code cells and concise explanations.
 

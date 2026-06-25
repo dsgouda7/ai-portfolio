@@ -6,7 +6,7 @@
 
 ## How to Use This Guide
 
-### 📖 Reading Paths
+### Reading Paths
 
 **Path 1: Executive Summary (30 minutes)**
 - Read this document top to bottom for the complete narrative

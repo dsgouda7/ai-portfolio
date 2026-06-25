@@ -58,7 +58,7 @@ The stunning fact — the **Fundamental Theorem of Calculus** — is that these 
 
 ## 2 · Running Example
 
-> 📘 **Physics-Free Path:** This chapter uses a ball tracing a parabolic curve $h(t) = at^2 + bt + c$. Here's the translation:
+> **Physics-Free Path:** This chapter uses a ball tracing a parabolic curve $h(t) = at^2 + bt + c$. Here's the translation:
 > • **"Velocity"** → **rate of change** (the derivative $h'(t)$).
 > • **"Apex"** → **peak** (where $h'(t) = 0$, the curve stops rising and starts falling).
 > • **"Gravity $g$"** → a constant that makes the curve bend downward.
@@ -247,7 +247,7 @@ That's it. The optimizer never "looks ahead" at the whole curve. It only reads t
 
 ### 3.2.3 · When the Derivative Doesn't Exist — Corners, Kinks, and the ReLU Problem
 
-> 🚨 **Critical for ML:** This section explains why ReLU activation functions (ML Ch.4) technically have undefined derivatives at $x=0$, and how we handle it in practice. Skip this and you'll be confused when PyTorch computes gradients through "non-differentiable" functions.
+> **Critical for ML:** This section explains why ReLU activation functions (ML Ch.4) technically have undefined derivatives at $x=0$, and how we handle it in practice. Skip this and you'll be confused when PyTorch computes gradients through "non-differentiable" functions.
 
 The derivative definition $f'(x_0) = \lim_{\Delta x \to 0} \frac{f(x_0 + \Delta x) - f(x_0)}{\Delta x}$ requires the limit to **exist and be the same** whether you approach from the left ($\Delta x < 0$) or right ($\Delta x > 0$). At certain points, that limit doesn't exist. Here's why it matters.
 
@@ -445,7 +445,7 @@ $$\frac{\text{numerator}}{\Delta t} = b - 2at - a\Delta t$$
 $$h'(t) = b - 2at - \cancelto{0}{a\Delta t} = b - 2at$$
 > *Why the last term vanishes:* As $\Delta t$ shrinks to zero, $a\Delta t \to 0$ too.
 
-**Result:** $h'(t) = b - 2at$. For our specific values $b = v_{0y}$ and $a = \tfrac{1}{2}g$, this becomes $h'(t) = v_{0y} - gt$. ✓
+**Result:** $h'(t) = b - 2at$. For our specific values $b = v_{0y}$ and $a = \tfrac{1}{2}g$, this becomes $h'(t) = v_{0y} - gt$.
 
 The modern power rule "differentiate $t^2 \to 2t$" just packages this entire calculation so you never have to do it by hand again. Now you've seen why it's true.
 
@@ -511,12 +511,12 @@ graph LR
 
 **What derivatives gave us:**
 1. **Find the apex exactly**: $h'(t) = 0$ → $6.5 - 9.81t = 0$ → $t_{\text{peak}} = 0.663s$
-2. **Compute peak height**: $h(0.663) = 2.15m$ ✓ **Clears the 1.8m wall!**
-3. **Check crossbar clearance**: At goal line ($t \approx 1.2s$): $h(1.2) = 1.60m$ ✓ **Under 2.44m crossbar!**
+2. **Compute peak height**: $h(0.663) = 2.15m$ **Clears the 1.8m wall!**
+3. **Check crossbar clearance**: At goal line ($t \approx 1.2s$): $h(1.2) = 1.60m$ **Under 2.44m crossbar!**
 4. **Know ball state anywhere**: At wall ($t=0.6s$): $h'(0.6) = +0.64$ (still rising). At goal: $h'(1.2) = -5.27$ (falling fast)
 **Unlocked capabilities:**
-- **Verify constraint #1 (Wall)**: Check if $h(t_{\text{wall}}) > 1.8m$ ✓
-- **Verify constraint #2 (Crossbar)**: Check if $h(t_{\text{goal}}) < 2.44m$ ✓
+- **Verify constraint #1 (Wall)**: Check if $h(t_{\text{wall}}) > 1.8m$
+- **Verify constraint #2 (Crossbar)**: Check if $h(t_{\text{goal}}) < 2.44m$
 - **Understand trajectory shape**: Find where ball is rising/falling, maximum height, landing time
 - **Compute rates of change**: Velocity $h'(t)$ at any point, acceleration $h''(t) = -g$ (constant)
 **Still can't solve:**

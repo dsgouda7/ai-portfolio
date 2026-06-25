@@ -123,10 +123,10 @@ Capture baselines: Monitor distributions: Diagnose root cause:
 
 → DECISION: → DECISION: → DECISION:
  Baseline complete? Drift detected? Root cause identified?
- ✓ 1000+ samples logged • PSI > 0.2: RETRAIN • Data drift: New pipeline
- ✓ Reference distribution • Accuracy drop: ROLLBACK • Concept drift: New labels
+ 1000+ samples logged • PSI > 0.2: RETRAIN • Data drift: New pipeline
+ Reference distribution • Accuracy drop: ROLLBACK • Concept drift: New labels
  saved • Both: TRIAGE → Phase 3 • Infrastructure: Scale up
- ✓ Alert rules configured • Adversarial: Filter inputs
+ Alert rules configured • Adversarial: Filter inputs
 
 
 Phase 4: REMEDIATE Phase 5: VALIDATE
@@ -140,10 +140,10 @@ Execute intervention: Confirm recovery:
 
 → DECISION: → DECISION:
  Which intervention? Deployment successful?
- • High data drift: ✓ Metrics recovered
- RETRAIN + A/B test ✓ No new drift detected
- • Performance drop only: ✓ False positive rate OK
- ROLLBACK immediately ✓ Runbook updated
+ • High data drift: Metrics recovered
+ RETRAIN + A/B test No new drift detected
+ • Performance drop only: False positive rate OK
+ ROLLBACK immediately Runbook updated
  • Infrastructure issue:
  SCALE/FIX servers
 ```
@@ -151,7 +151,7 @@ Execute intervention: Confirm recovery:
 > **Usage note:** Phases 1-2 run continuously in production. Phase 3 is triggered by alerts from Phase 2. Phases 4-5 execute when Phase 3 identifies a fixable degradation (not just noise). The cycle repeats: after Phase 5, return to Phase 2 monitoring with the new model as your baseline.
 
 > **Monitoring verdict:** Drift detected at day 14, v2 rolled out via A/B test — accuracy recovered from 91% → 96.2%, zero customer-facing downtime .
-> ➡ Ch.11 wraps monitoring into the end-to-end deployment pipeline — drift triggers automatic retraining.
+> Ch.11 wraps monitoring into the end-to-end deployment pipeline — drift triggers automatic retraining.
 
 ### Workflow Decision Tree
 
@@ -405,8 +405,8 @@ report.save_html("prediction_drift_report.html")
 ### DECISION CHECKPOINT 2 — Phase 2 Complete
 
 **What you just detected:**
-- 🚨 **HIGH data drift**: Text length 200 → 50 words (KL divergence 0.35 > threshold 0.1)
-- 🚨 **HIGH prediction drift**: Positive class 50% → 85% (model over-predicts positive)
+- **HIGH data drift**: Text length 200 → 50 words (KL divergence 0.35 > threshold 0.1)
+- **HIGH prediction drift**: Positive class 50% → 85% (model over-predicts positive)
 - **Prediction entropy dropped**: 0.68 → 0.45 (model is more confident but wrong)
 - **Vocabulary overlap**: Only 60% of production words appeared in training
 - **Performance still acceptable**: 91% accuracy (above 90% SLA threshold)
@@ -657,7 +657,7 @@ def rollback_to_v1():
  })
 
  # Send alert
- send_alert("🚨 Model v2 rolled back due to performance degradation")
+ send_alert(" Model v2 rolled back due to performance degradation")
 ```
 
 **Result:** v2 reaches 100% traffic by Day 5 with 91% accuracy maintained. v1 is archived but kept in registry for emergency rollback.

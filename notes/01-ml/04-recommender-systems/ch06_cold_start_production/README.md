@@ -286,7 +286,7 @@ def detect_cold_start_status(user_id, item_id=None):
 > **Common alternatives:** Time-based windows ("user is cold if no activity in last 7 days"), session-based ("cold per session, not globally"), hybrid (interaction count + recency weighted).
 
 > **Detect verdict:** Cold user status resolves in <1ms from Redis; COLD/WARMING users (15% of traffic) route to content-based fallback, WARM/ESTABLISHED users skip directly to hybrid DCN ranking.
-> ➡ Route COLD/WARMING users to content embedding fallback; inject UCB1 exploration slots for COLD items.
+> Route COLD/WARMING users to content embedding fallback; inject UCB1 exploration slots for COLD items.
 
 ---
 
@@ -368,7 +368,7 @@ print(f"Retrieved {len(candidates)} content-similar items in 10ms")
 > **When to use:** Amazon's approach requires existing catalog interaction (browsing session); Spotify's requires domain-specific features (audio, video, text). Survey-based embedding works when no session context exists (fresh signup, email campaign click-through).
 
 > **Fallback verdict:** Survey [Action=5, Romance=1, Comedy=3] → 32-dim genre embedding → 61% HR@10 on day one (vs. 42% popularity baseline); no survey falls back to top-100 popularity.
-> ➡ Reserve 3 of 10 slots for bandit exploration; log impressions to seed Phase 3 reward updates on first click.
+> Reserve 3 of 10 slots for bandit exploration; log impressions to seed Phase 3 reward updates on first click.
 
 ---
 
@@ -491,7 +491,7 @@ for n in [5, 15, 55]:
 > **When to use:** Fixed schedules (α at 10/50 interactions) work when user behavior is consistent. Learned gating works when some users engage heavily (fast transition) while others lurk (slow transition). FlixAI uses fixed thresholds for simplicity; production systems often learn them.
 
 > **Transition verdict:** Cold→warm graduation is automatic via interaction thresholds: 70% content at 5 interactions → 5% content at 55 interactions; HR@10 rises 61% → 74% → 87% over ~50 interactions (~3–5 days).
-> ➡ Update CF embedding via exponential moving average after every click; monitor days-to-50-interactions as a product health metric (target < 7 days).
+> Update CF embedding via exponential moving average after every click; monitor days-to-50-interactions as a product health metric (target < 7 days).
 
 ---
 
@@ -593,7 +593,7 @@ def compute_cold_start_metrics(date_range_days=7):
  # ALERT LOGIC
  alerts = []
  if hr10_by_cohort.loc[hr10_by_cohort['cohort']=='COLD', 'hr10'].values[0] < 0.59:
- alerts.append("🚨 Cold user HR@10 dropped below 59% (target: 61%)")
+ alerts.append(" Cold user HR@10 dropped below 59% (target: 61%)")
  if time_to_warm['median_days'] > 10:
  alerts.append(" Time-to-warm exceeds 10 days (target: <7 days)")
  if ctr_gap_pct > 40:
@@ -603,7 +603,7 @@ def compute_cold_start_metrics(date_range_days=7):
  if cold_fraction['cold_fraction_pct'] > 30:
  alerts.append(f" Cold user fraction {cold_fraction['cold_fraction_pct']:.1f}% exceeds 30%")
  if latency_p99['p99_latency'] > 110:
- alerts.append(f"🚨 p99 latency {latency_p99['p99_latency']:.0f}ms exceeds 110ms SLA")
+ alerts.append(f" p99 latency {latency_p99['p99_latency']:.0f}ms exceeds 110ms SLA")
 
  return {
  'hr10_by_cohort': hr10_by_cohort,
@@ -657,7 +657,7 @@ Total experiment size: 400 (control) + 400 (treatment) = **800 new signups**. At
 > **Practitioner rule:** Always validate with offline HR@10 first (cheap, fast). If offline HR@10 holds steady, deploy to a 1% traffic slice and check p99 latency. Only then run a full-power A/B test. This sequence minimises the risk of shipping a latency regression to 100% of users.
 
 > **Monitor verdict:** A/B test showed +45% relative lift in cold-user HR@10 (42% → 61%) with p99 held at 98ms; requires 400 users/variant for δ=0.02 detection — 4 days at 200 signups/day.
-> ➡ Track cohort-level HR@10 separately from warm users; alert if cold HR@10 drops below 59% or cold user fraction exceeds 30%.
+> Track cohort-level HR@10 separately from warm users; alert if cold HR@10 drops below 59% or cold user fraction exceeds 30%.
 
 ---
 
@@ -1029,6 +1029,6 @@ The **Anomaly Detection track** addresses this directly:
 
 The skills from this chapter transfer directly into that track: A/B testing methodology → hypothesis tests for anomaly significance; bandit reward signals → the metrics anomaly detection monitors; the two-stage architecture → the layers where anomalies can originate (retrieval vs. ranking vs. serving).
 
-> ➡ **What you take into the next track:** A live production recommender system generating real interaction data, an A/B testing infrastructure for validating detection algorithms, and a concrete monitoring mission — keep FlixAI's HR@10 above 85% under concept drift, data pipeline failures, and adversarial inputs. The Anomaly Detection track gives you the tools to maintain it.
+> **What you take into the next track:** A live production recommender system generating real interaction data, an A/B testing infrastructure for validating detection algorithms, and a concrete monitoring mission — keep FlixAI's HR@10 above 85% under concept drift, data pipeline failures, and adversarial inputs. The Anomaly Detection track gives you the tools to maintain it.
 
 > **Chapter summary in one sentence:** Cold start is a solved problem when you combine content-based embeddings for initial queries, UCB1 bandits for exploration, two-stage ANN retrieval for latency, and systematic A/B testing for deployment confidence — the same architecture FlixAI now runs in production, serving ≥85% HR@10 with a <100ms p99 latency guarantee.

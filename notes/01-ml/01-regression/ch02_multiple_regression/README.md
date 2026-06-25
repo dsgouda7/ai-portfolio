@@ -256,7 +256,7 @@ Xᵀ · e (2×3) · (3×1) → (2×1)
 
 ![Xᵀe matrix multiply — column-by-column breakdown](img/xtranspose_breakdown.png)
 
-> 📖 **Optional: full matrix calculus derivation**
+> **Optional: full matrix calculus derivation**
 >
 > Let $\mathbf{e} = \mathbf{X}\mathbf{w} - \mathbf{y}$. The loss is $L = \frac{1}{n}\mathbf{e}^\top \mathbf{e}$.
 >
@@ -271,7 +271,7 @@ Xᵀ · e (2×3) · (3×1) → (2×1)
 >
 > The transpose appears precisely at the chain-rule step: the Jacobian $\mathbf{X}$ maps weight-space to error-space ($d \to n$), and multiplying by $\mathbf{X}^\top$ maps back from error-space to weight-space ($n \to d$).
 >
-> 📖 **Jacobians and the full matrix chain rule** are derived in [MathUnderTheHood ch06 — Gradient & Chain Rule](../../../00-math-under-the-hood/ch06_gradient_chain_rule).
+> **Jacobians and the full matrix chain rule** are derived in [MathUnderTheHood ch06 — Gradient & Chain Rule](../../../00-math-under-the-hood/ch06_gradient_chain_rule).
 
 > **The transpose is the backprop rule.** In a neural network, `Xᵀ @ error` is exactly what the backward pass through a linear layer computes. Every time you call `loss.backward()` in PyTorch, this matrix multiply is running — one per layer. Understanding it here, for a 3-row California Housing dataset, is the entire conceptual foundation of neural network backpropagation.
 
@@ -420,7 +420,7 @@ Unscaled features — loss contours (w₁ vs w₂): Scaled features:
  w₂ ↑ w₂ ↑
  │ · · · · · · · · │ · · ·
  │· · · · · · · · · · │· · · · ·
- │· · ★(min) · · · · · ← zigzag path │· ★(min) ·
+ │· · (min) · · · · · ← zigzag path │· (min) ·
  │· · · · · · · · · · (thousands of steps) │· · · · ·
  │ · · · · · · · · · │ · · ·
  └────────────────────→w₁ └──────────→w₁
@@ -444,7 +444,7 @@ A = (1/3) XᵀX, where XᵀX entries are:
 
 Eigenvalues: $\lambda_1 \approx 2.39$, $\lambda_2 \approx 0.28$ → ratio ≈ 8.5. A mildly elongated bowl — gradient descent converges reasonably fast. This is the geometry you get **because** we standardized the features.
 
-> 📖 **Eigenvalues and quadratic forms** are covered in [MathUnderTheHood ch05 — Matrices](../../../00-math-under-the-hood/ch05_matrices).
+> **Eigenvalues and quadratic forms** are covered in [MathUnderTheHood ch05 — Matrices](../../../00-math-under-the-hood/ch05_matrices).
 
 ![Loss surface: unscaled features (elongated ellipse, zigzag path) vs. scaled features (circular bowl, smooth path)](img/loss_surface_ellipse.png)
 
@@ -898,7 +898,7 @@ Once the feature landscape is mapped in Ch.3, Ch.4 adds **polynomial features** 
 
 ---
 
-## 🔧 Exercise Connection
+## Exercise connection
 
 Multi-feature regression and feature scaling from this chapter apply in two places:
 
@@ -907,5 +907,5 @@ Multi-feature regression and feature scaling from this chapter apply in two plac
 | Matrix form with 8 features | RidgeRegressor.train() — takes full feature matrix | 1 |
 | Why scaling is required before regression | FeatureEngineer.fit_transform() — StandardScaler TODO | 5c |
 
-**Path:** 
+**Path:**
 otebook-solution.ipynb → xercises/01-ml/01-regression/src/models.py → RidgeRegressor.train()

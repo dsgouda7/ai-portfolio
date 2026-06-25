@@ -214,7 +214,7 @@ flowchart TD
  Q1{"RF barely beats\nsingle tree?"}
  Q1 -->|Yes| A1["Check max_features.\nTrees too correlated?\nReduce to 'sqrt' or 0.3"]
  Q1 -->|No| Q2{"OOB ≈ test score?"}
- Q2 -->|Yes| OK["Model is well-calibrated ✓"]
+ Q2 -->|Yes| OK["Model is well-calibrated "]
  Q2 -->|"OOB >> test"| A2["Possible data leak or\ntrain/test distribution shift"]
  Q2 -->|"OOB << test"| A3["Too few trees or\ntoo shallow (increase depth)"]
 ```
@@ -285,7 +285,7 @@ Random Forest reduces **variance** by averaging decorrelated trees, but it doesn
 
 Current state:
 - **Neural Network**: $38k MAE, black box
-- **Decision Tree**: $48k MAE, fully interpretable ✓ (but $10k worse!)
+- **Decision Tree**: $48k MAE, fully interpretable (but $10k worse!)
 - **Business need**: <$40k MAE AND explainable predictions
 
 **Why we need both:**

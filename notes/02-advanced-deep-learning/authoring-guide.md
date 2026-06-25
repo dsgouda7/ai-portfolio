@@ -14,7 +14,7 @@ running_example: ProductionCV_retail_shelf_monitoring
 dataset: synthetic_retail_shelf_20_classes
 grand_challenge: ProductionCV_5_constraints
 failure_first_pedagogy: true
-callout_system: {insight:"", warning:"", constraint:"", optional_depth:"📖", forward_pointer:"➡"}
+callout_system: {insight:"", warning:"", constraint:"", optional_depth:"", forward_pointer:""}
 mermaid_color_palette: {primary:"#1e3a8a", success:"#15803d", caution:"#b45309", danger:"#b91c1c", info:"#1d4ed8"}
 image_background: dark_facecolor_1a1a2e_for_generated_plots
 section_template: [story_header, challenge_0, animation, core_idea_1, running_example_2, architecture_3, math_4, step_by_step_5, key_diagrams_6, hyperparameter_dial_7, what_can_go_wrong_8, progress_check_N, bridge_N1]
@@ -258,11 +258,11 @@ Batch: L = (1/N) Σᵢ FL(pᵢ)
 **Do not use emojis in technical content.** All emoji-based callouts have been systematically removed from the repository (27,921 emojis removed across 168 files as of May 2026).
 
 Use text-only formatting:
-- **Checkpoint:** (not 💡 **Checkpoint:**)
-- **Warning:** (not ⚠️ **Warning:**)
-- **Rule of Thumb:** (not 🎯 **Rule of Thumb:**)
-- [Complete] or Complete (not ✅)
-- [WRONG] or [Failed] (not ❌)
+- **Checkpoint:** (not **Checkpoint:**)
+- **Warning:** (not **Warning:**)
+- **Rule of Thumb:** (not **Rule of Thumb:**)
+- [Complete] or Complete (not )
+- [WRONG] or [Failed] (not )
 
 **Rationale:** Emojis create visual clutter, reduce professionalism, and can render inconsistently across platforms. Technical documentation should rely on clear text formatting.
 
@@ -631,13 +631,13 @@ Remove the `Training Phases` mapping table entirely. Embed the stage name in the
 
 > **Fine-tune verdict:** Unfreezing block4+ yields −8% validation loss vs. frozen baseline —
 > the ProductionCV backbone has already learned shelf-edge features in block3.
-> ➡ This fine-tuned backbone is the teacher model for Ch.9 knowledge distillation.
+> This fine-tuned backbone is the teacher model for Ch.9 knowledge distillation.
 ```
 
 **Callout discipline for deep learning chapters:**
 
 - `> **[Stage] verdict:**` — one line after each training/architecture stage; always states the metric impact on ProductionCV (e.g., `−8% val loss`, `+2.1% mAP`, `14× compression`)
-- `> ➡` — forward pointer when the output of a stage carries into the next chapter (e.g., "This compression ratio feeds directly into Ch.11 Grad-CAM sensitivity analysis")
+- `> ` — forward pointer when the output of a stage carries into the next chapter (e.g., "This compression ratio feeds directly into Ch.11 Grad-CAM sensitivity analysis")
 - Never: a "PHASE CHECKPOINT" or "STAGE CHECKPOINT" block with sub-headings "What you just saw / What it means / What to do next"
 - Never: a table or section that lists "Phase N → §X, §Y Act Z"
 - Never: `[Stage N: LABEL]` or `[Phase N: LABEL]` prefixes on act/section headers — embed the stage name in the title naturally
@@ -740,7 +740,7 @@ Add "How to Use This Track" section at the top of `grand_solution.md`:
 
 **Three ways to learn the Advanced Deep Learning track:**
 
-1. **📖 Sequential deep dive (recommended)**: Read chapters Ch.1–10 in order, each with:
+1. ** Sequential deep dive (recommended)**: Read chapters Ch.1–10 in order, each with:
  - Full narrative in `chNN_*/README.md`
  - Implementation details in chapter notebooks
  - Each chapter builds on previous concepts
@@ -856,8 +856,8 @@ Each notebook mirrors the README structure with runnable code:
 - `` — Key insight
 - `` — Warning/trap
 - `` — Constraint achievement
-- `> 📖 **Optional:**` — Deep derivation
-- `> ➡` — Forward pointer
+- `> **Optional:**` — Deep derivation
+- `> ` — Forward pointer
 
 **Mermaid Color Palette:** (Same as ML track)
 - Primary: `fill:#1e3a8a` (dark blue)

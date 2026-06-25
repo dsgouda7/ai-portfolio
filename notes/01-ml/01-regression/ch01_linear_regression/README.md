@@ -130,7 +130,7 @@ The model has **no non-linearity** — it can only produce straight-line predict
 
 ### 4.2 · The Normal Equation Solves for Weights in One Matrix Operation
 
-> 📖 **Closed-form solution:** When data is small and noise is Gaussian, you can solve for weights algebraically rather than iterating. The full derivation — setting $\nabla L = 0$ and solving the resulting linear system — lives in [MathUnderTheHood ch05 — Matrices](../../../00-math-under-the-hood/ch05_matrices). For this chapter, gradient descent is the focus because it scales to every model we build later.
+> **Closed-form solution:** When data is small and noise is Gaussian, you can solve for weights algebraically rather than iterating. The full derivation — setting $\nabla L = 0$ and solving the resulting linear system — lives in [MathUnderTheHood ch05 — Matrices](../../../00-math-under-the-hood/ch05_matrices). For this chapter, gradient descent is the focus because it scales to every model we build later.
 
 The MSE loss has a closed-form minimum. Set $\nabla_{\mathbf{W}} L = 0$ and solve:
 
@@ -399,7 +399,7 @@ District C still contributes, but it no longer outweighs everything else 100:1. 
 
 **$\delta$ is the dial:** push it low and Huber behaves like MAE everywhere; push it high and it behaves like MSE everywhere. A practical starting point is the standard deviation of your target variable.
 
-> ➡ **One more question these losses cannot answer:** *What fraction of the total price variation in the data did the model capture?* MAE and RMSE measure error size; they don't say how much of the signal we explained versus missed. That question only becomes meaningful when you have two models to compare — the 1-feature baseline from this chapter versus the 8-feature model in the next. **R² and Adjusted R²** answer it, and they earn their introduction in [Ch.2 §1.5](../ch02_multiple_regression).
+> **One more question these losses cannot answer:** *What fraction of the total price variation in the data did the model capture?* MAE and RMSE measure error size; they don't say how much of the signal we explained versus missed. That question only becomes meaningful when you have two models to compare — the 1-feature baseline from this chapter versus the 8-feature model in the next. **R² and Adjusted R²** answer it, and they earn their introduction in [Ch.2 §1.5](../ch02_multiple_regression).
 
 ---
 
@@ -1051,7 +1051,7 @@ The ordering is the model's belief about what matters. Remove `MedInc` and predi
 
 For Ch.1's single-feature model: `w ≈ 0.60` after standardisation. With only one feature there is nothing to compare against — but the sign (+) confirms income and price move together, and the magnitude 0.60 means one standard deviation of median income corresponds to a predicted $60k rise in house value.
 
-> 📖 **Scaling carries forward.** Every chapter from here standardises features as a matter of course. In the Neural Networks track, unnormalised inputs are one of the most common causes of exploding or vanishing gradients. The one-line `StandardScaler` fix here is the same fix applied in production transformer fine-tuning, diffusion models, and everything in between.
+> **Scaling carries forward.** Every chapter from here standardises features as a matter of course. In the Neural Networks track, unnormalised inputs are one of the most common causes of exploding or vanishing gradients. The one-line `StandardScaler` fix here is the same fix applied in production transformer fine-tuning, diffusion models, and everything in between.
 
 ---
 
@@ -1256,7 +1256,7 @@ flowchart TD
 
 > **Constraint #5 (PRODUCTION):** The issues in §9 — unscaled features, outlier sensitivity, no missing-value handling — are what separate this research baseline from a production system. Ch.5 (Ridge/Lasso) and Ch.9 (Pipelines) address them.
 
-> 📖 **Deep dive on loss functions:** See §5 "Loss Functions" above for concrete California Housing examples showing when MSE fails ($40B contribution from one outlier) and how MAE/Huber solve it. See §6.6 "The Gradient Descent Lens" for the calculus of which losses can be used with autodiff and why the kink in |e| at zero prevents using MAE directly in backprop. The decision tree in §5 helps you choose the right loss based on your data characteristics.
+> **Deep dive on loss functions:** See §5 "Loss Functions" above for concrete California Housing examples showing when MSE fails ($40B contribution from one outlier) and how MAE/Huber solve it. See §6.6 "The Gradient Descent Lens" for the calculus of which losses can be used with autodiff and why the kink in |e| at zero prevents using MAE directly in backprop. The decision tree in §5 helps you choose the right loss based on your data characteristics.
 
 ---
 
@@ -1310,7 +1310,7 @@ Ch.1 established the core loop — parameterised function → loss → gradient 
 
 ---
 
-## 🔧 Exercise Connection
+## Exercise connection
 
 OLS and gradient descent from this chapter are the foundation for **Step 1** of xercises/01-ml/01-regression/src/models.py:
 
@@ -1319,5 +1319,5 @@ OLS and gradient descent from this chapter are the foundation for **Step 1** of 
 | Loss function (MSE), gradient, weight update | RidgeRegressor.train() — the training loop | 1 |
 | Cross-validation scoring | RidgeRegressor.train() — CV loop returning cv_mae | 1 |
 
-**Path:** 
+**Path:**
 otebook-solution.ipynb → xercises/01-ml/01-regression/src/models.py → RidgeRegressor.train()

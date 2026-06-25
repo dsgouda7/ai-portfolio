@@ -123,7 +123,7 @@ Before diving into the methods, there is one concept to hold in mind throughout:
 
 Some features in our dataset measure overlapping things. `AveRooms` and `AveBedrms` both capture dwelling size — their **inter-feature** Pearson ρ = 0.85. `Latitude` and `Longitude` both encode geography — neither is informative alone, but together they pinpoint a district on the California map. When features share signal like this, the three importance methods will give *systematically different rankings* for those features — and that divergence is information, not noise.
 
-> 📖 **What is ρ exactly?** If the formula is unfamiliar, [MathUnderTheHood Ch.7 § 4b](../../../00-math-under-the-hood/ch07_probability_statistics/README.md#4b--covariance-and-pearson-correlation--do-two-things-move-together) builds up covariance and Pearson correlation step by step with a small worked example and animated diagrams. It also proves why $R^2_j = \rho^2$ — the identity that powers Method 1 below.
+> **What is ρ exactly?** If the formula is unfamiliar, [MathUnderTheHood Ch.7 § 4b](../../../00-math-under-the-hood/ch07_probability_statistics/README.md#4b--covariance-and-pearson-correlation--do-two-things-move-together) builds up covariance and Pearson correlation step by step with a small worked example and animated diagrams. It also proves why $R^2_j = \rho^2$ — the identity that powers Method 1 below.
 
 - **Method 1 (Univariate R²)** measures each feature in total isolation — it cannot see that AveRooms and AveBedrms are measuring the same thing, so it may give both modest scores.
 - **Method 2 (Standardised Weights)** trains a joint model — now AveRooms must *compete* with AveBedrms for the shared signal. One may end up with an inflated weight, the other suppressed or even negative.
@@ -147,7 +147,7 @@ These metrics are the building blocks for Method 1 (Univariate R²) and provide 
 
 **When you reach for it:** Use Pearson as the first pass for Linear Regression. A feature with |ρ| > 0.3 is a prime candidate for a linear model. Always plot the scatter first — a curve or cluster that Pearson misses will be visible immediately.
 
-> 📖 **Need the formula intuition first?** [MathUnderTheHood Ch.7 § 4b](../../../00-math-under-the-hood/ch07_probability_statistics/README.md#4b--covariance-and-pearson-correlation--do-two-things-move-together) walks through covariance and Pearson from scratch — signed rectangles, unit-cancellation, and why $R^2 = \rho^2$ — with animated diagrams. Come back here once the formula feels grounded.
+> **Need the formula intuition first?** [MathUnderTheHood Ch.7 § 4b](../../../00-math-under-the-hood/ch07_probability_statistics/README.md#4b--covariance-and-pearson-correlation--do-two-things-move-together) walks through covariance and Pearson from scratch — signed rectangles, unit-cancellation, and why $R^2 = \rho^2$ — with animated diagrams. Come back here once the formula feels grounded.
 
 $$\rho(x_j, y) = \frac{\sum(x_{ij}-\bar{x}_j)(y_i - \bar{y})}{\sqrt{\sum(x_{ij}-\bar{x}_j)^2 \cdot \sum(y_i-\bar{y})^2}}$$
 
@@ -163,7 +163,7 @@ where $\rho$ (rho) is the correlation coefficient, $x_{ij}$ is the value of feat
 
 **When you reach for it:** Use MI as a general "first pass" when working with tree-based models (Random Forest, XGBoost) or when you suspect non-linear patterns. It finds hidden relationships that Pearson would miss entirely — the model architecture then determines whether those relationships get exploited.
 
-> 📖 **Want the full information-theoretic foundation?** [MathUnderTheHood Ch.7 § 4b](../../../00-math-under-the-hood/ch07_probability_statistics/README.md#4b--covariance-and-pearson-correlation--do-two-things-move-together) covers covariance and Pearson for linear relationships. Mutual Information extends the same "how do two things relate?" question to *any* shape. Both are measuring association — Pearson with a straight ruler, MI with a magnifying glass.
+> **Want the full information-theoretic foundation?** [MathUnderTheHood Ch.7 § 4b](../../../00-math-under-the-hood/ch07_probability_statistics/README.md#4b--covariance-and-pearson-correlation--do-two-things-move-together) covers covariance and Pearson for linear relationships. Mutual Information extends the same "how do two things relate?" question to *any* shape. Both are measuring association — Pearson with a straight ruler, MI with a magnifying glass.
 
 Mutual information measures *any* statistical dependence, not just linear:
 
@@ -345,7 +345,7 @@ mi_scores = mutual_info_regression(X_train_s, y_train,
 - **Very high-dimensional $x$:** The "curse of dimensionality" makes distance-based density estimation unreliable. Use Pearson as a fallback, or compute MI feature-by-feature (univariate).
 - **Discrete features mixed with continuous:** Use `mutual_info_classif` if the *target* is categorical. For mixed-type features, bin continuous features first or use specialized estimators.
 
-> 📖 For the estimator theory, see *Kraskov, Stögbauer & Grassberger, "Estimating Mutual Information," Physical Review E, 2004.*
+> For the estimator theory, see *Kraskov, Stögbauer & Grassberger, "Estimating Mutual Information," Physical Review E, 2004.*
 
 #### Pearson vs MI — Quick-Reference Cheat Sheet
 
@@ -360,7 +360,7 @@ mi_scores = mutual_info_regression(X_train_s, y_train,
 
 ![Venn diagram: two overlapping circles representing X and Y drift together — Pearson counts only the linearly-aligned slice of overlap (the narrow horizontal band), while MI counts the full shared area regardless of shape](img/ch03-pearson-mi-venn.gif)
 
-> 📖 For the information-theoretic foundation see *Cover & Thomas, "Elements of Information Theory," Wiley, Ch.2.*
+> For the information-theoretic foundation see *Cover & Thomas, "Elements of Information Theory," Wiley, Ch.2.*
 
 #### When to Use Which: Decision Framework
 
@@ -379,7 +379,7 @@ For California Housing: run both. Where they agree, the ranking is reliable. Whe
 
 > **Connection to Method 1:** Pearson correlation is the direct mathematical input to Univariate R². For single-feature OLS, $R^2_j = \rho(x_j, y)^2$ exactly. Filter methods give you the raw scores; Method 1 reframes them as fraction of target variance explained.
 
-> 📖 **Embedded selection (bridge to Ch.5):** When you are unsure which features to drop, Lasso is the principled alternative to filter methods — selection happens *during* training, not before it. The L1 penalty drives weak-signal coefficients exactly to zero. Full treatment in [Ch.5 — Regularization](../ch05_regularization).
+> **Embedded selection (bridge to Ch.5):** When you are unsure which features to drop, Lasso is the principled alternative to filter methods — selection happens *during* training, not before it. The L1 penalty drives weak-signal coefficients exactly to zero. Full treatment in [Ch.5 — Regularization](../ch05_regularization).
 
 ---
 
@@ -613,7 +613,7 @@ for col in X.columns:
 > **Common alternatives:** `RobustScaler` (outlier-resistant), `MinMaxScaler` (bounded [0,1]), `PowerTransformer` (Box-Cox/Yeo-Johnson)
 
 > **Inspect verdict:** Three features (AveRooms, AveBedrms, Population) have skew > 1.0 and require log1p before scaling.
-> ➡ Build a ColumnTransformer applying log1p+scale to skewed features, then check inter-feature correlations (Phase 2).
+> Build a ColumnTransformer applying log1p+scale to skewed features, then check inter-feature correlations (Phase 2).
 
 ---
 
@@ -812,7 +812,7 @@ for _, row in perm_importance.iterrows():
 > **Key parameters:** `n_repeats=30` for stable estimates, `random_state=42` for reproducibility
 
 > **Validate verdict:** MedInc dominates (permutation ∆MAE = +$18.4k); Population is near-zero (∆MAE = +$0.1k).
-> ➡ Flag Population as drop candidate; check VIF for AveRooms/AveBedrms pair before finalising the feature set.
+> Flag Population as drop candidate; check VIF for AveRooms/AveBedrms pair before finalising the feature set.
 
 ---
 
@@ -914,7 +914,7 @@ print(f" X_test shape: {X_test_transformed.shape}")
 > **Best practice:** Wrap in `Pipeline` with model for atomic fit/predict: `Pipeline([('preprocess', preprocessor), ('model', LinearRegression())])`
 
 > **Transform verdict:** ColumnTransformer fitted on train only; all 8 features at mean=0, std=1 with log1p applied to 3 skewed features.
-> ➡ Run all three importance methods (M1, M2, M3) on transformed data to build the ranking dashboard (§3.11).
+> Run all three importance methods (M1, M2, M3) on transformed data to build the ranking dashboard (§3.11).
 
 ![Univariate R² and permutation importance side-by-side bar chart for top-6 features](img/ch03-importance-comparison.png)
 
@@ -1040,7 +1040,7 @@ for _, row in vif_data.iterrows():
 > **Interpretation:** VIF > 5 → consider dropping one feature or using Ridge regularization (Ch.5)
 
 > **Audit verdict:** AveRooms/AveBedrms VIF = 7.2/6.8 with inter-feature ρ = 0.85 — collinear pair flagged for regularisation.
-> ➡ For SmartVal AI: keep both and apply Ridge in Ch.5 to stabilise the correlated weights.
+> For SmartVal AI: keep both and apply Ridge in Ch.5 to stabilise the correlated weights.
 
 ---
 
@@ -1234,7 +1234,7 @@ Checking all $\binom{p}{2}$ pairs for joint permutation importance is $O(p^2)$ �
 | **Population** | 0.001 | 0.01 | 0.002 | 2.1 | Near-zero contribution |
 
 > **Final verdict:** MedInc dominates (R²=0.47, permutation #1); AveBedrms redundant with AveRooms (VIF ≈ 7); Population near-zero on all metrics.
-> ➡ Drop Population and AveBedrms — 6-feature model keeps MAE at $55k with stable weights for compliance; Ch.4 adds polynomials for the next improvement.
+> Drop Population and AveBedrms — 6-feature model keeps MAE at $55k with stable weights for compliance; Ch.4 adds polynomials for the next improvement.
 
 ---
 
@@ -1465,7 +1465,7 @@ The AveRooms/AveBedrms collinearity is deliberately deferred to Ch.5 (Ridge regu
 
 ---
 
-## 🔧 Exercise Connection
+## Exercise connection
 
 VIF filtering from this chapter applies in **Step 5b** of xercises/01-ml/01-regression/src/features.py:
 
@@ -1474,5 +1474,5 @@ VIF filtering from this chapter applies in **Step 5b** of xercises/01-ml/01-reg
 | VIF computation | VIF loop in FeatureEngineer.fit_transform() — VIF filtering TODO | 5b |
 | Iterative high-VIF removal | Same loop: compute → find max VIF feature → drop → repeat | 5b |
 
-**Path:** 
+**Path:**
 otebook-solution.ipynb → xercises/01-ml/01-regression/src/features.py → VIF filtering TODO

@@ -92,7 +92,7 @@ Additionally, the current Ch.9 architecture has no positional encoding and no re
 
 A **transformer encoder** processes an entire sequence in parallel by running $h$ independent scaled dot-product attention computations — called **heads** — simultaneously on learned projections of the input, then combining their outputs through a learned mixing matrix. Each head specialises in a different relationship pattern without any coordination penalty because the computation is independent. **No recurrence, no bottleneck**: token 7 can directly attend to token 1 in a single matrix multiply, and the gradient path is equally direct in the backward pass.
 
-> ➡ **The key counterintuition:** Vaswani et al. showed you can discard RNN recurrence entirely and lose *nothing* — as long as you inject position information explicitly and stack enough encoder blocks. The positional encoding buys back the order signal; the residuals buy back the depth. What you gain is full parallelism across the sequence length dimension.
+> **The key counterintuition:** Vaswani et al. showed you can discard RNN recurrence entirely and lose *nothing* — as long as you inject position information explicitly and stack enough encoder blocks. The positional encoding buys back the order signal; the residuals buy back the depth. What you gain is full parallelism across the sequence length dimension.
 
 ---
 
@@ -789,7 +789,7 @@ The transformer encoder built here is the substrate of virtually every modern AI
 | **AlphaFold 2** (protein folding) | Attention over amino acid sequence; same multi-head mechanism |
 | **Hyperparameter tuning** ([Ch.11](../ch11_hyperparameter_tuning)) | $d_\text{model}$, $h$, $N$, $d_\text{ff}$, dropout, LR schedule all require systematic search |
 
-> ➡ **The single most important forward pointer:** Everything in the [AI track](../../../03-ai) is a transformer. The encoder you just built is the exact encoder inside BERT. Change the attention mask from all-ones to upper-triangular causal and you have GPT. Add cross-attention between encoder and decoder and you have the full sequence-to-sequence architecture behind T5 and machine translation. Master this chapter and every model in the AI track is accessible.
+> **The single most important forward pointer:** Everything in the [AI track](../../../03-ai) is a transformer. The encoder you just built is the exact encoder inside BERT. Change the attention mask from all-ones to upper-triangular causal and you have GPT. Add cross-attention between encoder and decoder and you have the full sequence-to-sequence architecture behind T5 and machine translation. Master this chapter and every model in the AI track is accessible.
 
 ### Encoder vs. Decoder — One Mask is the Only Difference
 

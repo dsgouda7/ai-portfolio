@@ -258,7 +258,7 @@ docker-compose.yml
 ```
 
 > **Write verdict:** Dockerfile uses multi-stage build — image size 300 MB → 120 MB; layer caching eliminates `pip install` on code-only changes.
-> ➡ Enables faster CI/CD pulls and reduced attack surface; proceed to Build phase.
+> Enables faster CI/CD pulls and reduced attack surface; proceed to Build phase.
 
 ---
 
@@ -358,7 +358,7 @@ docker build -t flask-app:staging-1.2.3 .
 ```
 
 > **Build verdict:** BuildKit cuts build time 4m12s → 1m38s; cached `requirements.txt` layer makes code-only rebuilds 22s.
-> ➡ Registry-ready artifact with SHA tag for rollback; proceed to Run phase.
+> Registry-ready artifact with SHA tag for rollback; proceed to Run phase.
 
 ---
 
@@ -502,7 +502,7 @@ docker run -p 5000 flask-app:v1 # Docker assigns random port (e.g., 32768)
 ```
 
 > **Run verdict:** Flask + Redis running with 512 MB memory cap, named volume persistence, and bridge-network DNS — same `docker run` works on dev, staging, and production.
-> ➡ Persistent data and automatic restarts ready; proceed to Debug phase.
+> Persistent data and automatic restarts ready; proceed to Debug phase.
 
 ---
 
@@ -648,7 +648,7 @@ docker inspect flask-api --format='{{.State.Health.Status}}'
 ```
 
 > **Debug verdict:** Container logs and exec access identified missing env var in 90s — no local Python environment needed.
-> ➡ Four-command toolkit (logs/exec/inspect/dive) covers 95% of container failures; chapter complete.
+> Four-command toolkit (logs/exec/inspect/dive) covers 95% of container failures; chapter complete.
 
 ---
 

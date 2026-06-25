@@ -23,7 +23,7 @@
 
 **What's blocking us**:
 
-🚨 **The N×M Integration Explosion**
+ **The N×M Integration Explosion**
 
 You're the Lead Architect at OrderFlow. Your 8 agents are working, but they're blind. The Pricing agent needs live supplier quotes — someone hardcoded an HTTP client for TechFurnish's API. Then OfficeDepot. Then 18 other suppliers. The Negotiation agent needs the same data — a different engineer wrote different wrappers. The Finance agent needs ERP access — a third team wrote a third set of adapters.
 
@@ -243,7 +243,7 @@ MCP introduces a **sidecar architecture** that decouples agent logic from extern
 
 **Key insight**: The **MCP Server is the translation layer** that turns diverse, unstructured Web APIs into a **standardized, LLM-native interface**. Think of it as a **universal adapter** that makes every data source speak the same language.
 
-> 🏭 **Industry Analogy — The Cockpit Metaphor**
+> **Industry Analogy — The Cockpit Metaphor**
 >
 > If a **Web API** is a raw aircraft engine (complex, requires expert knowledge to operate), the **MCP Server** is the universal cockpit. It provides labeled buttons (Tools), gauges (Resources), and checklists (Prompts) that the pilot (LLM Agent) can trigger without needing to understand the underlying mechanical wiring (API endpoints, authentication headers, response parsing).
 >
@@ -420,7 +420,7 @@ With MCP: you write `pricing-mcp-server` once, exposing `get_supplier_quote(supp
 
 MCP is built on **JSON-RPC 2.0** — a lightweight remote procedure call protocol using JSON serialization. Every MCP interaction is a request-response pair over stdio (subprocess pipes) or HTTP+SSE (Server-Sent Events) transports.
 
-> 🏭 **Industry Standard — JSON-RPC 2.0 Foundation**
+> **Industry Standard — JSON-RPC 2.0 Foundation**
 >
 > MCP builds on JSON-RPC 2.0 (published 2010), the same protocol powering Ethereum clients (Geth, Nethermind), Language Server Protocol (VSCode, IntelliJ), and Jupyter kernels. **Why this matters for production:** Every major programming language has battle-tested JSON-RPC libraries (Python: `jsonrpcserver`, Node: `jayson`, Go: `gorilla/rpc`). You're not adopting a bleeding-edge protocol — you're leveraging 15 years of tooling maturity. Debugging tools like [JSON-RPC Tester](https://www.jsonrpc.org/specification) work out-of-the-box with MCP traffic.
 >
@@ -515,7 +515,7 @@ MCP defines exactly three types of thing a server can expose. Understanding the 
 
 **Phase 2 in action:** After successful handshake, the client calls `tools/list`, `resources/list`, and `prompts/list` to discover everything the server offers. This happens once per connection — the results are cached.
 
-> 🏭 **Industry Practice — MCP SDK Implementations**
+> **Industry Practice — MCP SDK Implementations**
 >
 > Don't build MCP clients from scratch. Use official SDKs: **Python** ([`mcp` package](https://pypi.org/project/mcp/)), **TypeScript** ([`@modelcontextprotocol/sdk`](https://www.npmjs.com/package/@modelcontextprotocol/sdk)), **Rust** ([`mcp-rs`](https://crates.io/crates/mcp)). These handle JSON-RPC serialization, transport abstraction (stdio/HTTP), capability negotiation, and tool schema validation.
 >
@@ -651,7 +651,7 @@ messages = await mcp_client.get_prompt("negotiate_price_prompt",
 
 ## Transport Options — stdio vs HTTP+SSE
 
-> 🏭 **Industry Standard — Transport Selection Matrix**
+> **Industry Standard — Transport Selection Matrix**
 >
 > MCP supports two transports, and the choice is **not arbitrary** — it's driven by deployment topology and concurrency requirements. Here's the decision matrix used in production:
 
@@ -804,7 +804,7 @@ except ToolExecutionError as e:
 
 **Phase 4 in action:** Error handling, retry strategies, and observability. This phase is continuous — every request can fail and must be handled gracefully.
 
-> 🏭 **Industry Standard — JSON-RPC 2.0 Error Code Conventions**
+> **Industry Standard — JSON-RPC 2.0 Error Code Conventions**
 >
 > MCP inherits JSON-RPC 2.0's standardized error codes. **These are not arbitrary numbers** — they're from the JSON-RPC spec (2010), battle-tested across thousands of production systems:
 
