@@ -163,7 +163,7 @@ Do you know the difference between TTFT (user-visible latency) and throughput (c
 ---
 
 > **GPU sizing verdict:** TTFT is what users complain about; throughput is what accountants complain about. Optimize TTFT first.
-> ➡ The Rapid-Fire Round at the end covers the most common follow-up questions interviewers use to probe depth.
+> The Rapid-Fire Round at the end covers the most common follow-up questions interviewers use to probe depth.
 
 ---
 
@@ -320,11 +320,11 @@ Both use 16 bits total but different mantissa/exponent splits. BF16 has the same
 
 ## Related Topics
 
-> ➡ **Forward links** — these build on AI Infrastructure concepts:
+> **Forward links** — these build on AI Infrastructure concepts:
 - [Agentic AI Interview Guide](agentic-ai.md) — Cost & Latency section covers the application-layer view of the same GPU/inference concepts
 - [Multimodal AI / Local Diffusion Lab](../05-multimodal_ai/ch13_local_diffusion_lab) — same serving patterns apply to diffusion models
 
-> 📖 **Optional depth** — academic rigor for mathematical proofs:
+> **Optional depth** — academic rigor for mathematical proofs:
 - [AI / Fine-tuning](.03-ai/ch10_fine_tuning) — QLoRA is quantization + LoRA combined
 - [AI / Cost & Latency](.03-ai/ch09_cost_and_latency) — VRAM side of the same cost model
 

@@ -54,7 +54,7 @@ The California Housing dataset has 8 features per district: `MedInc`, `HouseAge`
 - **Transparent:** The $8 \times 8$ attention weight matrix shows exactly which features "looked at" which others
 - **Constraint #4 INTERPRETABILITY (partial):** Attention weights on `MedInc` and `Latitude` can be surfaced directly to explain a valuation — "the model focused primarily on income ($\alpha = 0.49$) and location ($\alpha = 0.37$)"
 
-> ➡ **Forward to Ch.10:** This chapter builds the soft-lookup intuition with nothing beyond `numpy` dot products and `softmax`. Ch.10 adds learned projections ($W_Q, W_K, W_V$), multi-head attention, positional encoding, and feed-forward sublayers to complete the Transformer architecture behind GPT, BERT, and every modern LLM.
+> **Forward to Ch.10:** This chapter builds the soft-lookup intuition with nothing beyond `numpy` dot products and `softmax`. Ch.10 adds learned projections ($W_Q, W_K, W_V$), multi-head attention, positional encoding, and feed-forward sublayers to complete the Transformer architecture behind GPT, BERT, and every modern LLM.
 
 ---
 
@@ -137,7 +137,7 @@ Step-by-step summary:
 
 ### 4.1 · Dot Product Attention — No Learned Weights
 
-> 📖 **Foundation:** Dot products as similarity measures are covered in [Math Under the Hood Ch.1 — Linear Algebra](../../../../00-math_under_the_hood/ch01_linear_algebra). Softmax differentiation is covered in [Ch.6 — Gradient & Chain Rule](../../../../00-math_under_the_hood/ch06_gradient_chain_rule).
+> **Foundation:** Dot products as similarity measures are covered in [Math Under the Hood Ch.1 — Linear Algebra](../../../../00-math_under_the_hood/ch01_linear_algebra). Softmax differentiation is covered in [Ch.6 — Gradient & Chain Rule](../../../../00-math_under_the_hood/ch06_gradient_chain_rule).
 
 Start with the simplest possible case: 3 tokens, 2-dimensional embeddings, no learned weight matrices. Every number shown here is computed explicitly.
 
@@ -647,11 +647,11 @@ This is structurally analogous to vanishing gradients in RNNs (Ch.6): the mechan
 
 | Constraint | Status | Evidence |
 |---|---|---|
-| **#1 ACCURACY** | 🔄 In progress | Mechanism defined; full training with learned $W_Q, W_K, W_V$ in Ch.10 |
-| **#2 GENERALIZATION** | 🔄 In progress | Order-invariant processing reduces positional bias vs LSTM |
-| **#3 MULTI-TASK** | 🔄 In progress | Same attention layer can serve both regression and classification heads |
+| **#1 ACCURACY** | In progress | Mechanism defined; full training with learned $W_Q, W_K, W_V$ in Ch.10 |
+| **#2 GENERALIZATION** | In progress | Order-invariant processing reduces positional bias vs LSTM |
+| **#3 MULTI-TASK** | In progress | Same attention layer can serve both regression and classification heads |
 | **#4 INTERPRETABILITY** | **Partial — unlocked** | §4.4 attention matrix shows `MedInc` (49%) and `Latitude` (37%) as top features for a high-value coastal district — explainable to regulators without post-hoc methods |
-| **#5 PRODUCTION** | 🔄 In progress | Parallel computation confirmed; $O(n^2)$ bottleneck quantified; full latency benchmarking in Ch.10 |
+| **#5 PRODUCTION** | In progress | Parallel computation confirmed; $O(n^2)$ bottleneck quantified; full latency benchmarking in Ch.10 |
 
 > **Constraint #4 INTERPRETABILITY (partial):** The $3 \times 3$ attention weight matrix computed in §4.4 directly surfaces `MedInc` and `Latitude` as the dominant drivers for this high-value coastal district. No SHAP, no LIME, no post-hoc approximation — the attention weights *are* the explanation. Full 8-feature attention with trained projections is in the Ch.10 notebook.
 
@@ -679,4 +679,4 @@ $$\text{Attention}(Q, K, V) = \text{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\r
 
 is called "scaled dot-product attention" in Vaswani et al. (2017) and is the unmodified inner core of every attention head in GPT, BERT, T5, and every modern LLM. Everything you computed by hand in §4 and §6 is happening millions of times per forward pass in those models.
 
-> ➡ **[Ch.10 — Transformers & Attention →](../ch10_transformers)**
+> **[Ch.10 — Transformers & Attention →](../ch10_transformers)**

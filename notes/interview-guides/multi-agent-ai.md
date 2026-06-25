@@ -12,7 +12,7 @@ register: high_density_technical_interview_ready
 pedagogy: anticipate_the_interviewer + failure_first_discovery
 format: concept_map + Q&A + failure_modes + signal_words + tradeoff_matrices
 failure_first_pedagogy: true
-callout_system: {insight:"", warning:"", production:"", optional_depth:"📖", forward_pointer:"➡"}
+callout_system: {insight:"", warning:"", production:"", optional_depth:"", forward_pointer:""}
 mermaid_color_palette: {primary:"#1e3a8a", success:"#15803d", caution:"#b45309", danger:"#b91c1c", info:"#1d4ed8"}
 answer_density: {definition:"2-3_sentences", tradeoff:"3-4_sentences", system_design:"1_paragraph", failure_mode:"2_sentences", rapid_fire:"≤3_sentences"}
 math_style: formula_first_then_verbal_gloss_then_numerical_example
@@ -89,7 +89,7 @@ Every multi-agent interview revolves around 10 core question clusters. Senior an
 **Senior**: "Resource when the agent needs read-only access to data (OrderFlow's product catalogue, supplier contracts — agent can discover `mcp://orderflow/catalogue/sku:12345` without hardcoded schema). Tool when the agent must mutate state or trigger side effects (send approval email, update PO status in DB). Prompt when you have reusable parameterised templates that should version-control server-side, not in agent code — OrderFlow's 'generate supplier negotiation opening' prompt lives on the MCP server, so updating the template doesn't require redeploying agent code."
 *Why it signals senior:* Grounds each primitive in OrderFlow example, explains architectural benefit (discovery, server-side versioning), shows production thinking.
 
-📖 **Optional depth:** Prompt primitives enable A/B testing negotiation styles without changing agent code — swap MCP server endpoints, measure acceptance rate.
+ **Optional depth:** Prompt primitives enable A/B testing negotiation styles without changing agent code — swap MCP server endpoints, measure acceptance rate.
 
 **Q: What problem does MCP solve that plain function calling does not?**
 **Junior**: "MCP is a standard protocol for agents to call tools."
@@ -250,7 +250,7 @@ Every multi-agent interview revolves around 10 core question clusters. Senior an
 **Senior**: "String `==` short-circuits on first mismatch — returns faster when early characters match. Attacker measures response time to incrementally guess the signature (timing attack). `hmac.compare_digest` runs in constant time regardless of mismatch position → timing attack infeasible. OrderFlow webhook validation: supplier MCP server signs requests with HMAC-SHA256. If we used `expected == provided`, attacker brute-forces 1 byte at a time (256 attempts per byte = 256×32 = 8k attempts for 32-byte sig). With `compare_digest`, timing doesn't leak position — full 2²⁵⁶ brute-force required (computationally infeasible)."
 *Why it signals senior:* Explains short-circuit behavior, quantifies attack efficiency difference (8k vs 2²⁵⁶), grounds in OrderFlow webhook security.
 
-📖 **Optional depth:** Timing attacks can work over networks with <10ms resolution if the attacker makes 1000+ requests per guess to average out network jitter.
+ **Optional depth:** Timing attacks can work over networks with <10ms resolution if the attacker makes 1000+ requests per guess to average out network jitter.
 
 **Q: A model generates and executes code as part of an agent tool. What sandboxing would you apply?**
 **Junior**: "Run it in a Docker container."
@@ -300,7 +300,7 @@ Every multi-agent interview revolves around 10 core question clusters. Senior an
 **Senior**: "Production hooks: filter pipeline for every function call (audit logs, PII scrubbing, cost tracking), OpenTelemetry-compatible telemetry (plugs into Azure Monitor / Datadog), explicit `TerminationStrategy`/`SelectionStrategy` as testable code (not heuristics), native MCP plugin integration. Designed for enterprise compliance/auditability. OrderFlow uses SK for the orchestrator: every MCP tool call logged to Azure Monitor (who invoked, when, latency, cost), PII filter scrubs email addresses from logs before storage (GDPR compliance), `TerminationStrategy` enforces max 50 tool calls per PO (cost ceiling). AutoGen/LangGraph: great for conversation; SK: great for governance."
 *Why it signals senior:* Lists specific production hooks with OrderFlow examples, shows governance use case (audit, PII, cost ceiling), positions SK as governance layer.
 
-📖 **MCP integration detail:** SK's `MCPPlugin` class wraps an MCP server and exposes its tools as SK functions — register once, SK handles discovery, schema validation, invocation, and telemetry automatically.
+ **MCP integration detail:** SK's `MCPPlugin` class wraps an MCP server and exposes its tools as SK functions — register once, SK handles discovery, schema validation, invocation, and telemetry automatically.
 
 **Q: How does MCP interact with AutoGen, LangGraph, and SK?**
 **Junior**: "MCP is a protocol, frameworks call it."
@@ -349,14 +349,14 @@ Every multi-agent interview revolves around 10 core question clusters. Senior an
 
 ## Related Topics
 
-> ➡ **Prerequisites:** If shaky on RAG, CoT, or ReAct fundamentals, review [Agentic AI Interview Guide](agentic-ai.md) first.
+> **Prerequisites:** If shaky on RAG, CoT, or ReAct fundamentals, review [Agentic AI Interview Guide](agentic-ai.md) first.
 
 - [Agentic AI Interview Guide](agentic-ai.md) — Single-agent patterns: CoT, ReAct, RAG, embeddings, semantic caching
 - [AI Infrastructure Interview Guide](ai-infrastructure.md) — LLM serving, inference optimization, GPU architecture
 - [AI / ReAct & Semantic Kernel](../ai/react_and_semantic_kernel) — SK plugin basics and ReAct pattern fundamentals
 - [AI / Safety & Hallucination](../ai/safety_and_hallucination) — Hallucination mitigation that complements prompt injection defence
 
-> 📖 **Optional depth:** For MCP and A2A protocol specifications, see [Model Context Protocol spec](https://spec.modelcontextprotocol.io/) and [Agent-to-Agent Protocol RFC](https://github.com/microsoft/agent-to-agent-protocol).
+> **Optional depth:** For MCP and A2A protocol specifications, see [Model Context Protocol spec](https://spec.modelcontextprotocol.io/) and [Agent-to-Agent Protocol RFC](https://github.com/microsoft/agent-to-agent-protocol).
 
 ---
 

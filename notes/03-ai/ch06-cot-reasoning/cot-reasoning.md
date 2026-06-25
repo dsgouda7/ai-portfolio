@@ -60,8 +60,8 @@ For open-ended generation ("Write a product description"), there's no majority v
 ```
 Query: "A is cheaper than B. B = C. A = $12. What does C cost?"
 Model: "Step 1: A < B, B = C, A = $12.
-        Step 2: Since B = C, let's assume B = $15 (reasonable guess).
-        Step 3: Therefore C = $15."
+ Step 2: Since B = C, let's assume B = $15 (reasonable guess).
+ Step 3: Therefore C = $15."
 ```
 
 The model inserted an **unjustified assumption** at Step 2 ("let's assume B = $15"). The correct answer is "Cannot be determined from given constraints." But if unjustified assumptions lead to correct answers on average during training, RL reinforces that behavior.
@@ -105,33 +105,33 @@ Before January 2022, the dominant approach to LLM prompting was direct question-
 
 ```mermaid
 graph TD
-    A["Question: A < B, B = C, A = $12<br/>What does C cost?"] --> B[Single Forward Pass]
-    B --> C{Compressed Reasoning}
-    C -->|Step 1| D[Parse 3 constraints]
-    C -->|Step 2| E[Infer B's price]
-    C -->|Step 3| F[Infer C's price]
-    C -->|All at once| G["Answer: $15"]
+ A["Question: A < B, B = C, A = $12<br/>What does C cost?"] --> B[Single Forward Pass]
+ B --> C{Compressed Reasoning}
+ C -->|Step 1| D[Parse 3 constraints]
+ C -->|Step 2| E[Infer B's price]
+ C -->|Step 3| F[Infer C's price]
+ C -->|All at once| G["Answer: $15"]
 
-    G -.->|Wrong!| H[No Error Correction]
+ G -.->|Wrong!| H[No Error Correction]
 
-    style C fill:#ffcccc
-    style G fill:#ffcccc
-    style H fill:#ff6666,color:#fff
+ style C fill:#ffcccc
+ style G fill:#ffcccc
+ style H fill:#ff6666,color:#fff
 
-    I["Question: A < B, B = C, A = $12<br/>What does C cost?"] --> J[Step 1: Parse]
-    J --> K["A < B (cheaper)"]
-    K --> L[Step 2: Check B]
-    L --> M["B = C, A = $12<br/>Can't determine B yet"]
-    M --> N[Step 3: Reconsider]
-    N --> O["Wait - A < B means A ≠ B<br/>A = $12, so B > $12"]
-    O --> P[Step 4: Conclude]
-    P --> Q["B = C, so C > $12<br/>But exact value unknown"]
+ I["Question: A < B, B = C, A = $12<br/>What does C cost?"] --> J[Step 1: Parse]
+ J --> K["A < B (cheaper)"]
+ K --> L[Step 2: Check B]
+ L --> M["B = C, A = $12<br/>Can't determine B yet"]
+ M --> N[Step 3: Reconsider]
+ N --> O["Wait - A < B means A ≠ B<br/>A = $12, so B > $12"]
+ O --> P[Step 4: Conclude]
+ P --> Q["B = C, so C > $12<br/>But exact value unknown"]
 
-    style J fill:#ccffcc
-    style L fill:#ccffcc
-    style N fill:#ccffcc
-    style P fill:#ccffcc
-    style Q fill:#66ff66
+ style J fill:#ccffcc
+ style L fill:#ccffcc
+ style N fill:#ccffcc
+ style P fill:#ccffcc
+ style Q fill:#66ff66
 ```
 
 **Your mission:** You're building a customer support chatbot that answers policy questions. A user asks: *"I bought insurance on Jan 15. I submitted a claim on Feb 10. My policy has a 30-day waiting period. Am I covered?"*
@@ -173,26 +173,26 @@ The failure was not a lack of knowledge — GPT-3 had seen arithmetic during tra
 
 ```mermaid
 graph LR
-    A[Example 1] --> B[Question]
-    B --> C[Step 1:<br/>Roger starts<br/>with 5 apples]
-    C --> D[Step 2:<br/>Gives 3 away<br/>5 - 3 = 2]
-    D --> E[Step 3:<br/>Buys 7 more<br/>2 + 7 = 9]
-    E --> F[Answer: 9]
+ A[Example 1] --> B[Question]
+ B --> C[Step 1:<br/>Roger starts<br/>with 5 apples]
+ C --> D[Step 2:<br/>Gives 3 away<br/>5 - 3 = 2]
+ D --> E[Step 3:<br/>Buys 7 more<br/>2 + 7 = 9]
+ E --> F[Answer: 9]
 
-    G[Example 2] --> H[...]
-    H --> I[...]
+ G[Example 2] --> H[...]
+ H --> I[...]
 
-    J[User Question] --> K[Model generates<br/>similar reasoning]
-    K --> L[Step 1]
-    L --> M[Step 2]
-    M --> N[Step 3]
-    N --> O[Final Answer]
+ J[User Question] --> K[Model generates<br/>similar reasoning]
+ K --> L[Step 1]
+ L --> M[Step 2]
+ M --> N[Step 3]
+ N --> O[Final Answer]
 
-    style A fill:#e1f5ff
-    style G fill:#e1f5ff
-    style J fill:#fff4e1
-    style K fill:#d4edda
-    style O fill:#66ff66
+ style A fill:#e1f5ff
+ style G fill:#e1f5ff
+ style J fill:#fff4e1
+ style K fill:#d4edda
+ style O fill:#66ff66
 ```
 
 **Example from the paper:**
@@ -225,24 +225,24 @@ A: [model continues in the same format]
 
 ```mermaid
 graph TD
-    A["User Question:<br/>What is 15% of 80?"] --> B["+ Magic phrase:<br/>'Let's think step by step'"]
-    B --> C[Model activates<br/>reasoning mode]
-    C --> D["Step 1:<br/>15% = 0.15"]
-    D --> E["Step 2:<br/>0.15 × 80 = 12"]
-    E --> F["Answer: 12"]
+ A["User Question:<br/>What is 15% of 80?"] --> B["+ Magic phrase:<br/>'Let's think step by step'"]
+ B --> C[Model activates<br/>reasoning mode]
+ C --> D["Step 1:<br/>15% = 0.15"]
+ D --> E["Step 2:<br/>0.15 × 80 = 12"]
+ E --> F["Answer: 12"]
 
-    G["Without magic phrase"] --> H[Model generates<br/>direct answer]
-    H --> I["12"]
+ G["Without magic phrase"] --> H[Model generates<br/>direct answer]
+ H --> I["12"]
 
-    style B fill:#fff4e1
-    style C fill:#d4edda
-    style D fill:#cce5ff
-    style E fill:#cce5ff
-    style F fill:#66ff66
-    style I fill:#ffcccc
+ style B fill:#fff4e1
+ style C fill:#d4edda
+ style D fill:#cce5ff
+ style E fill:#cce5ff
+ style F fill:#66ff66
+ style I fill:#ffcccc
 
-    classDef magicPhrase fill:#ffd700,stroke:#ff8c00,stroke-width:3px
-    class B magicPhrase
+ classDef magicPhrase fill:#ffd700,stroke:#ff8c00,stroke-width:3px
+ class B magicPhrase
 ```
 
 **Technical definition.** Zero-shot CoT appends a single instruction to the user query: $P = [q, \text{"Let's think step by step"}]$. That instruction alone triggers the model to emit intermediate steps before the final answer, because instruction tuning exposed the model to this phrasing thousands of times during training.
@@ -296,16 +296,16 @@ Answer: 3"
 ```
 Prompt: "What is 15% of 80?"
 P(next token | standard prompt):
-  "12" → 0.42 (direct answer)
-  "Let" → 0.08
-  "Step" → 0.03
+ "12" → 0.42 (direct answer)
+ "Let" → 0.08
+ "Step" → 0.03
 
 Prompt: "What is 15% of 80? Let's think step by step."
 P(next token | with anchor):
-  "15%" → 0.31 (start reasoning)
-  "Step" → 0.28
-  "First" → 0.19
-  "12" → 0.04 (direct answer suppressed)
+ "15%" → 0.31 (start reasoning)
+ "Step" → 0.28
+ "First" → 0.19
+ "12" → 0.04 (direct answer suppressed)
 ```
 
 **Why it unlocks reasoning paths:** During pretraining, the model saw billions of text examples that included worked solutions (textbooks, Stack Overflow answers, Wikipedia proofs). Those reasoning patterns are **latent in the weights** but not activated by standard prompts. The anchor phrase "think step by step" shifts the token distribution to favor those latent reasoning paths.
@@ -346,35 +346,35 @@ Self-consistency is exactly this: sample $K$ independent reasoning chains (at te
 
 ```mermaid
 graph TD
-    A[Question: Roger has 5 apples...<br/>How many does he have?] --> B["Sample K=5 chains<br/>(temperature = 0.7)"]
+ A[Question: Roger has 5 apples...<br/>How many does he have?] --> B["Sample K=5 chains<br/>(temperature = 0.7)"]
 
-    B --> C1["Chain 1:<br/>5 - 3 = 2<br/>2 + 7 = 9<br/>Answer: 9 ✓"]
-    B --> C2["Chain 2:<br/>5 - 2 = 3<br/>3 + 7 = 10<br/>Answer: 10 ✗"]
-    B --> C3["Chain 3:<br/>5 - 3 = 2<br/>2 + 7 = 9<br/>Answer: 9 ✓"]
-    B --> C4["Chain 4:<br/>5 - 3 = 2<br/>2 + 6 = 8<br/>Answer: 8 ✗"]
-    B --> C5["Chain 5:<br/>5 - 3 = 2<br/>2 + 7 = 9<br/>Answer: 9 ✓"]
+ B --> C1["Chain 1:<br/>5 - 3 = 2<br/>2 + 7 = 9<br/>Answer: 9 "]
+ B --> C2["Chain 2:<br/>5 - 2 = 3<br/>3 + 7 = 10<br/>Answer: 10 "]
+ B --> C3["Chain 3:<br/>5 - 3 = 2<br/>2 + 7 = 9<br/>Answer: 9 "]
+ B --> C4["Chain 4:<br/>5 - 3 = 2<br/>2 + 6 = 8<br/>Answer: 8 "]
+ B --> C5["Chain 5:<br/>5 - 3 = 2<br/>2 + 7 = 9<br/>Answer: 9 "]
 
-    C1 --> D{Majority Vote}
-    C2 --> D
-    C3 --> D
-    C4 --> D
-    C5 --> D
+ C1 --> D{Majority Vote}
+ C2 --> D
+ C3 --> D
+ C4 --> D
+ C5 --> D
 
-    D --> E["9 appears 3 times ← Winner!<br/>10 appears 1 time<br/>8 appears 1 time"]
-    E --> F["Final Answer: 9"]
+ D --> E["9 appears 3 times ← Winner!<br/>10 appears 1 time<br/>8 appears 1 time"]
+ E --> F["Final Answer: 9"]
 
-    style B fill:#fff4e1
-    style C1 fill:#d4edda
-    style C2 fill:#ffcccc
-    style C3 fill:#d4edda
-    style C4 fill:#ffcccc
-    style C5 fill:#d4edda
-    style D fill:#cce5ff
-    style F fill:#66ff66
+ style B fill:#fff4e1
+ style C1 fill:#d4edda
+ style C2 fill:#ffcccc
+ style C3 fill:#d4edda
+ style C4 fill:#ffcccc
+ style C5 fill:#d4edda
+ style D fill:#cce5ff
+ style F fill:#66ff66
 
-    G["Cost: K × tokens per chain<br/>K=5 → 5× cost<br/>K=10 → 10× cost<br/>Accuracy ↑ as K increases"]
+ G["Cost: K × tokens per chain<br/>K=5 → 5× cost<br/>K=10 → 10× cost<br/>Accuracy ↑ as K increases"]
 
-    style G fill:#fff0f0
+ style G fill:#fff0f0
 ```
 
  **Example Reasoning:**
@@ -396,7 +396,7 @@ graph TD
 **Chain 5 (T=0.7):**
 > 5 - 3 = 2, then 2 + 7 = **9**.
 
-**Voting tally:** 9 appears **5 times**, 0 other answers. **Consensus: 9** ✓
+**Voting tally:** 9 appears **5 times**, 0 other answers. **Consensus: 9**
 
 **Why errors don't compound:** Each chain makes *independent* mistakes. Chain 4 almost wrote "2 + 6 = 8" but caught itself. If that error had stuck, it would be **one wrong vote out of five**, not a cascading failure across all chains.
 
@@ -513,7 +513,7 @@ They mentally explore a **tree of possibilities**, evaluate which branches look 
 
 **Branch 4:** Try (8 - 4) × 6 structure
 - Step 1: 8 - 4 = 4
-- Step 2: 4 × 6 = 24 ✓ *Evaluate: "This works! But I haven't used 5 yet..."* → **Verify constraint: must use all four numbers** → Backtrack
+- Step 2: 4 × 6 = 24 *Evaluate: "This works! But I haven't used 5 yet..."* → **Verify constraint: must use all four numbers** → Backtrack
 
 **Branch 5:** Try (8 - 5) × something
 - Step 1: 8 - 5 = 3
@@ -613,19 +613,19 @@ An **Outcome Reward Model (ORM)** is that teacher: it assigns **+1 reward if the
 
 **Model attempt #1:**
 > "The train goes 60 miles in 2 hours. Speed = distance ÷ time, so 60 ÷ 2 = **30 mph**."
-- **Verifier checks:** 30 mph is correct ✓
+- **Verifier checks:** 30 mph is correct
 - **Reward:** +1
 - **RL update:** Reinforce this chain (good!)
 
 **Model attempt #2 (lucky guess):**
 > "60 miles in 2 hours... I remember trains go around 30 mph from my training data. Answer: **30 mph**."
-- **Verifier checks:** 30 mph is correct ✓
+- **Verifier checks:** 30 mph is correct
 - **Reward:** +1
 - **RL update:** Reinforce this chain (bad! — model didn't learn to reason, it pattern-matched)
 
 **Model attempt #3 (wrong reasoning, right answer):**
 > "Distance is 60, time is 2. Let me add them: 60 + 2 = 62. Wait, that doesn't make sense. Let me try dividing: 60 ÷ 2 = **30 mph**."
-- **Verifier checks:** 30 mph is correct ✓
+- **Verifier checks:** 30 mph is correct
 - **Reward:** +1
 - **RL update:** Reinforce this chain (bad! — model made an error at "60 + 2 = 62" but got lucky at the end)
 
@@ -644,18 +644,18 @@ An **Outcome Reward Model (ORM)** is that teacher: it assigns **+1 reward if the
 **The "showing your work" analogy.** Now imagine a math teacher who reads **every line** of the student's work:
 
 **Student submission:**
-> Step 1: Speed = distance ÷ time ✓ (teacher marks: **correct, +1**)
-> Step 2: Distance = 60 miles ✓ (teacher marks: **correct, +1**)
-> Step 3: Time = 2 hours ✓ (teacher marks: **correct, +1**)
-> Step 4: 60 ÷ 2 = 30 ✓ (teacher marks: **correct, +1**)
-> Final answer: 30 mph ✓ (teacher marks: **correct, +1**)
+> Step 1: Speed = distance ÷ time (teacher marks: **correct, +1**)
+> Step 2: Distance = 60 miles (teacher marks: **correct, +1**)
+> Step 3: Time = 2 hours (teacher marks: **correct, +1**)
+> Step 4: 60 ÷ 2 = 30 (teacher marks: **correct, +1**)
+> Final answer: 30 mph (teacher marks: **correct, +1**)
 
 **Total reward:** +5 (one point per correct step)
 
 If the student had written:
-> Step 1: Speed = distance + time ✗ (teacher marks: **wrong formula, 0**)
-> Step 2: 60 + 2 = 62 ✗ (teacher marks: **applied wrong formula, 0**)
-> Final answer: 62 mph ✗
+> Step 1: Speed = distance + time (teacher marks: **wrong formula, 0**)
+> Step 2: 60 + 2 = 62 (teacher marks: **applied wrong formula, 0**)
+> Final answer: 62 mph
 
 **Total reward:** 0 — even though the student *showed work*, the work was wrong at Step 1, so no credit.
 
@@ -666,36 +666,36 @@ A **Process Reward Model (PRM)** is that detail-oriented teacher: it assigns **a
 **Problem:** *A train travels 60 miles in 2 hours. How fast is it going?*
 
 **Model attempt #1 (fully correct):**
-> Step 1: "Speed is distance divided by time." ✓ **Reward: +1**
-> Step 2: "Distance = 60 miles." ✓ **Reward: +1**
-> Step 3: "Time = 2 hours." ✓ **Reward: +1**
-> Step 4: "60 ÷ 2 = 30." ✓ **Reward: +1**
-> Step 5: "Answer: 30 mph." ✓ **Reward: +1**
+> Step 1: "Speed is distance divided by time." **Reward: +1**
+> Step 2: "Distance = 60 miles." **Reward: +1**
+> Step 3: "Time = 2 hours." **Reward: +1**
+> Step 4: "60 ÷ 2 = 30." **Reward: +1**
+> Step 5: "Answer: 30 mph." **Reward: +1**
 
 **Total reward:** +5
 **RL update:** Strongly reinforce this chain — every step is correct!
 
 **Model attempt #2 (lucky guess):**
-> Step 1: "I remember trains go around 30 mph." ✗ **Reward: 0** (no reasoning, just retrieval)
-> Step 2: "Answer: 30 mph." ✓ (correct answer, but...)
+> Step 1: "I remember trains go around 30 mph." **Reward: 0** (no reasoning, just retrieval)
+> Step 2: "Answer: 30 mph." (correct answer, but...)
 
 **Total reward:** +0.5 (final answer is right, but Step 1 didn't show reasoning)
 **RL update:** Weak reinforcement — model didn't learn the procedure
 
 **Model attempt #3 (error at Step 1):**
-> Step 1: "Speed = distance + time." ✗ **Reward: 0** (wrong formula)
-> Step 2: "60 + 2 = 62." ✗ **Reward: 0** (applied wrong formula)
-> Step 3: "Answer: 62 mph." ✗ **Reward: 0**
+> Step 1: "Speed = distance + time." **Reward: 0** (wrong formula)
+> Step 2: "60 + 2 = 62." **Reward: 0** (applied wrong formula)
+> Step 3: "Answer: 62 mph." **Reward: 0**
 
 **Total reward:** 0
 **RL update:** No reinforcement — model made a fundamental error at Step 1
 
 **The key difference from ORM:** If a student writes:
-> Step 1: "Speed = distance + time" ✗
-> Step 2: "Wait, that's wrong. Speed = distance ÷ time" ✓
-> Step 3: "60 ÷ 2 = 30 mph" ✓
+> Step 1: "Speed = distance + time"
+> Step 2: "Wait, that's wrong. Speed = distance ÷ time"
+> Step 3: "60 ÷ 2 = 30 mph"
 
-**ORM says:** "Final answer is 30 mph ✓ → full reward" (ignores the error at Step 1)
+**ORM says:** "Final answer is 30 mph → full reward" (ignores the error at Step 1)
 **PRM says:** "Step 1 wrong (0), Step 2 correct (+1), Step 3 correct (+1) → partial reward" (credits self-correction, but penalizes the initial error)
 
 **Why PRM generalizes better:** The model learns **"speed = distance ÷ time"** as a *procedure* that applies to any speed problem — trains, cars, planes. With ORM, the model might learn **"train problems → answer is around 30 mph"** (a memorized pattern, not a transferable procedure).
@@ -735,27 +735,27 @@ A **Process Reward Model (PRM)** is that detail-oriented teacher: it assigns **a
 **Problem:** *"A circle has radius 5. What is its area?"*
 
 **GPT-4 + ORM (final-answer-only training):**
-> "Circles with radius 5 usually have area around 78-79 from what I've seen in training. Let me write: **78.5 square units.**" ✓ (correct by pattern-matching, not reasoning)
+> "Circles with radius 5 usually have area around 78-79 from what I've seen in training. Let me write: **78.5 square units.**" (correct by pattern-matching, not reasoning)
 
 **GPT-4 + PRM (step-level training):**
-> Step 1: "Area of a circle = πr²" ✓
-> Step 2: "Radius r = 5" ✓
-> Step 3: "π × 5² = π × 25 = 25π" ✓
-> Step 4: "25π ≈ 78.54" ✓
-> Answer: **78.5 square units** ✓
+> Step 1: "Area of a circle = πr²"
+> Step 2: "Radius r = 5"
+> Step 3: "π × 5² = π × 25 = 25π"
+> Step 4: "25π ≈ 78.54"
+> Answer: **78.5 square units**
 
 Both get the right answer. But when the problem changes:
 
 **New problem:** *"A circle has diameter 10. What is its area?"*
 
 **GPT-4 + ORM:**
-> "Hmm, diameter 10 means... circles around size 10 have area... maybe 100? Or 78 again? Let me guess: **100 square units.**" ✗ (wrong — didn't learn that diameter = 2 × radius)
+> "Hmm, diameter 10 means... circles around size 10 have area... maybe 100? Or 78 again? Let me guess: **100 square units.**" (wrong — didn't learn that diameter = 2 × radius)
 
 **GPT-4 + PRM:**
-> Step 1: "Area = πr²" ✓
-> Step 2: "Diameter = 10, so radius = 10 ÷ 2 = 5" ✓
-> Step 3: "π × 5² = 25π ≈ 78.54" ✓
-> Answer: **78.5 square units** ✓ (generalized correctly because it learned the *procedure*)
+> Step 1: "Area = πr²"
+> Step 2: "Diameter = 10, so radius = 10 ÷ 2 = 5"
+> Step 3: "π × 5² = 25π ≈ 78.54"
+> Answer: **78.5 square units** (generalized correctly because it learned the *procedure*)
 
 **When to use PRM (step-by-step grading):**
 - **High-stakes domains:** Medical diagnosis ("why did you recommend this treatment?"), legal reasoning ("which statute supports this conclusion?"), financial analysis ("how did you calculate ROI?")
@@ -889,22 +889,22 @@ By mid-2024, a new paradigm emerged: instead of *prompting* models to generate r
 ```
 Is the query simple factual recall? ("What is X?", "Who invented Y?")
 ├─ YES → Standard prompting (no CoT)
-│         Cost: 1× | Latency: 200ms | Accuracy: 95%+
+│ Cost: 1× | Latency: 200ms | Accuracy: 95%+
 │
 └─ NO → Does the query require multi-step reasoning?
-   ├─ YES → Is the answer categorical (multiple choice, yes/no, short answer)?
-   │  ├─ YES → Is this high-stakes? (cost of error > $100)
-   │  │  ├─ YES → Self-consistency (K=5-10)
-   │  │  │        Cost: 5-10× | Latency: 1-2s | Accuracy: +10-15%
-   │  │  │
-   │  │  └─ NO → Zero-shot CoT ("Let's think step by step")
-   │  │           Cost: 3× | Latency: 400ms | Accuracy: +5-10%
-   │  │
-   │  └─ NO (open-ended) → Few-shot CoT (provide format examples)
-   │                        Cost: 5× | Latency: 600ms | Quality: +20%
-   │
-   └─ NO (single-step reasoning) → Standard prompting
-                                    Cost: 1× | Latency: 200ms
+ ├─ YES → Is the answer categorical (multiple choice, yes/no, short answer)?
+ │ ├─ YES → Is this high-stakes? (cost of error > $100)
+ │ │ ├─ YES → Self-consistency (K=5-10)
+ │ │ │ Cost: 5-10× | Latency: 1-2s | Accuracy: +10-15%
+ │ │ │
+ │ │ └─ NO → Zero-shot CoT ("Let's think step by step")
+ │ │ Cost: 3× | Latency: 400ms | Accuracy: +5-10%
+ │ │
+ │ └─ NO (open-ended) → Few-shot CoT (provide format examples)
+ │ Cost: 5× | Latency: 600ms | Quality: +20%
+ │
+ └─ NO (single-step reasoning) → Standard prompting
+ Cost: 1× | Latency: 200ms
 ```
 
 ### 6.2 Production Use Cases

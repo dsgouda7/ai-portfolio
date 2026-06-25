@@ -596,9 +596,9 @@ flowchart TD
 | **Implicit feedback framing** | BPR (Rendle et al. 2009) | Pairwise ranking loss instead of BCE; more direct for top-$N$ retrieval |
 | **Embedding lookup mechanism** | Every neural NLP / CV model | Same index-into-table mechanism, just larger tables ($d = 768+$) |
 
-> ➡ **Forward pointer:** Ch.5 Hybrid Systems extends NeuMF by appending item content features (genre, release year, director) to the MLP input, closing the cold-start gap by ~15 HR points for users with fewer than 5 interactions.
+> **Forward pointer:** Ch.5 Hybrid Systems extends NeuMF by appending item content features (genre, release year, director) to the MLP input, closing the cold-start gap by ~15 HR points for users with fewer than 5 interactions.
 
-> 📖 **Optional depth:** Wide & Deep (Cheng et al. 2016) is the production version of NeuMF's two-path idea, deployed in the Google Play store. The "wide" component is a linear model with hand-crafted crossed features (memorisation); the "deep" component is a DNN (generalisation). NeuMF's GMF / MLP split is conceptually identical — the innovation in Wide & Deep is the engineering to serve it at billion-user scale.
+> **Optional depth:** Wide & Deep (Cheng et al. 2016) is the production version of NeuMF's two-path idea, deployed in the Google Play store. The "wide" component is a linear model with hand-crafted crossed features (memorisation); the "deep" component is a DNN (generalisation). NeuMF's GMF / MLP split is conceptually identical — the innovation in Wide & Deep is the engineering to serve it at billion-user scale.
 
 ---
 

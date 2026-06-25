@@ -26,7 +26,7 @@
 
 **What's blocking us**:
 
-🚨 **The product team just added a recommendation feature to the document extraction API** — now inference needs:
+ **The product team just added a recommendation feature to the document extraction API** — now inference needs:
 1. User context features (`user_last_10_document_types`, `user_avg_confidence_score`)
 2. Document features (`doc_language`, `doc_page_count`, `doc_has_tables`)
 3. Derived features (`user_doc_type_affinity`, `expected_processing_time`)
@@ -481,7 +481,7 @@ user_features = FeatureView(
 
 #### Decision Checkpoint #1
 
-> 🚦 **CHECKPOINT: Schema Design**
+> **CHECKPOINT: Schema Design**
 >
 > **Question:** Training needs 90 days of user history for the recommendation model. Inference needs latest user behavior (last 24 hours). How do you structure features?
 >
@@ -495,7 +495,7 @@ user_features = FeatureView(
 
 #### Industry Callout #1
 
-> 🏢 **INDUSTRY STANDARD: Feast (Open-Source Feature Store)**
+> **INDUSTRY STANDARD: Feast (Open-Source Feature Store)**
 >
 > **Feast** (created by Gojek, now a Linux Foundation project) is the de facto open-source feature store. As of 2024:
 > - **30k+ GitHub stars**, 200+ contributors
@@ -572,7 +572,7 @@ print(f" Materialized {user_features.count()} feature rows to offline store")
 
 #### Decision Checkpoint #2
 
-> 🚦 **CHECKPOINT: Storage Backend Selection**
+> **CHECKPOINT: Storage Backend Selection**
 >
 > **Question:** Training job needs to fetch 90 days of historical features for 100k users (9M rows). Which offline store?
 >
@@ -586,7 +586,7 @@ print(f" Materialized {user_features.count()} feature rows to offline store")
 
 #### Industry Callout #2
 
-> 🏢 **INDUSTRY STANDARD: Tecton (Enterprise Feature Platform)**
+> **INDUSTRY STANDARD: Tecton (Enterprise Feature Platform)**
 >
 > **Tecton** (founded by Uber's Michelangelo team in 2019) is the enterprise-grade feature store. As of 2024:
 > - **Customers:** Coinbase, Rivian, Toast, Atlassian
@@ -666,7 +666,7 @@ redis-cli CONFIG SET maxmemory-policy allkeys-lru # Evict least-recently-used ke
 
 #### Decision Checkpoint #3
 
-> 🚦 **CHECKPOINT: Online Store Selection**
+> **CHECKPOINT: Online Store Selection**
 >
 > **Question:** Inference API needs to serve 10k requests/day with <50ms p99 latency. Feature lookup must be <10ms. Which online store?
 >
@@ -682,7 +682,7 @@ redis-cli CONFIG SET maxmemory-policy allkeys-lru # Evict least-recently-used ke
 
 #### Industry Callout #3
 
-> 🏢 **INDUSTRY STANDARD: Hopsworks Feature Store**
+> **INDUSTRY STANDARD: Hopsworks Feature Store**
 >
 > **Hopsworks** (created by RISE SICS in Sweden, now a commercial product) combines feature store + model registry + orchestration. As of 2024:
 > - **Customers:** HSBC, Verizon, Deutsche Telekom
@@ -779,7 +779,7 @@ with DAG(
 
 #### Decision Checkpoint #4
 
-> 🚦 **CHECKPOINT: Materialization Frequency**
+> **CHECKPOINT: Materialization Frequency**
 >
 > **Question:** User behavior features (`user_last_10_doc_types`) change frequently (every upload). User demographics (`user_days_since_signup`) change slowly (once per day). How often to materialize?
 >
@@ -795,7 +795,7 @@ with DAG(
 
 #### Industry Callout #4
 
-> 🏢 **INDUSTRY STANDARD: AWS SageMaker Feature Store**
+> **INDUSTRY STANDARD: AWS SageMaker Feature Store**
 >
 > **AWS SageMaker Feature Store** (launched 2020) is a fully managed feature store for AWS-native ML pipelines. As of 2024:
 > - **Integration:** Native support for SageMaker Training/Inference, Lambda, Kinesis, Athena
@@ -888,7 +888,7 @@ else:
 
 #### Decision Checkpoint #5
 
-> 🚦 **CHECKPOINT: Alert Threshold Tuning**
+> **CHECKPOINT: Alert Threshold Tuning**
 >
 > **Question:** Feature freshness alert should fire when materialization is late. But hourly jobs sometimes run 5-10 minutes late due to cluster startup time. What threshold avoids false alarms?
 >
@@ -906,12 +906,12 @@ else:
 > if staleness_minutes > 90:
 > send_alert(" Features are 90+ minutes stale", severity="warning")
 > if staleness_minutes > 120:
-> send_alert("🚨 Features are 2+ hours stale", severity="critical", page_oncall=True)
+> send_alert(" Features are 2+ hours stale", severity="critical", page_oncall=True)
 > ```
 
 #### Industry Callout #5
 
-> 🏢 **INDUSTRY STANDARD: Databricks Feature Store**
+> **INDUSTRY STANDARD: Databricks Feature Store**
 >
 > **Databricks Feature Store** (launched 2021) integrates with Unity Catalog (Databricks' data governance layer). As of 2024:
 > - **Integration:** Native Delta Lake support, automatic lineage tracking, built-in data quality rules

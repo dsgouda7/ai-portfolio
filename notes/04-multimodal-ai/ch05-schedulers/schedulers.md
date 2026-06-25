@@ -58,7 +58,7 @@ Training a DDPM takes 1 000 noisy steps. But *inference doesn't have to*. A **sc
 
 **VisualForge spring-collection brief** — the creative team needs 50 hero images in under 30 minutes. DDPM's 1000-step schedule takes ~45 sec per image (too slow). This chapter swaps in DDIM and DPM-Solver to hit the 30-minute target.
 
-> 📖 **Educational proxy:** Timing comparisons below show noise-trajectory replays to illustrate scheduler math. The VisualForge brief uses SD-Turbo with DPM-Solver++ (§5) in production.
+> **Educational proxy:** Timing comparisons below show noise-trajectory replays to illustrate scheduler math. The VisualForge brief uses SD-Turbo with DPM-Solver++ (§5) in production.
 
 ```
 Scheduler comparison on: "Mango leather bag, studio white background"

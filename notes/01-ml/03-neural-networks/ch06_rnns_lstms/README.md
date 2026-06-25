@@ -26,7 +26,7 @@
 
 **What's blocking us:**
 
-🚨 **New requirement — The platform tracks monthly housing price trends.**
+ **New requirement — The platform tracks monthly housing price trends.**
 
 The MLP from Ch.2 is **memoryless** — it treats the 8 California Housing features as an independent snapshot with no temporal context. Feeding it 12 months of prices is worse than it sounds:
 
@@ -335,10 +335,10 @@ flowchart TD
  CP["c_{t-1}\nprev cell state"]
  end
 
- FG["🔴 Forget gate f_t\nσ(W_f·[h,x]+b_f)\n0=erase 1=keep"]
- IG["🔵 Input gate i_t\nσ(W_i·[h,x]+b_i)\n0=block 1=write"]
- GG["🟠 Candidate g̃_t\ntanh(W_c·[h,x]+b_c)\nproposed new memory"]
- OG["🟢 Output gate o_t\nσ(W_o·[h,x]+b_o)\n0=hide 1=expose"]
+ FG[" Forget gate f_t\nσ(W_f·[h,x]+b_f)\n0=erase 1=keep"]
+ IG[" Input gate i_t\nσ(W_i·[h,x]+b_i)\n0=block 1=write"]
+ GG[" Candidate g̃_t\ntanh(W_c·[h,x]+b_c)\nproposed new memory"]
+ OG[" Output gate o_t\nσ(W_o·[h,x]+b_o)\n0=hide 1=expose"]
 
  CT["c_t = f_t ⊙ c_{t-1} + i_t ⊙ g̃_t\nAdditive update — no gradient decay"]
  HT["h_t = o_t ⊙ tanh(c_t)\nPublic interface"]
@@ -556,7 +556,7 @@ flowchart TD
  K -->|No| M{"Normalised X and y?"}
  M -->|No| N["Normalise with train stats"]
  M -->|Yes| O["Reduce LR: 1e-3 → 1e-4"]
- J -->|No| R["Training OK ✓"]
+ J -->|No| R["Training OK "]
 
  style A fill:#1e3a8a,color:#fff
  style C fill:#15803d,color:#fff
@@ -610,11 +610,11 @@ flowchart TD
 
 | Constraint | Status | Evidence |
 |---|---|---|
-| #1 ACCURACY | 🔄 Partial | LSTM achieves 2–4% MAPE on synthetic housing index vs 8–12% for Dense baseline |
-| #2 GENERALIZATION | 🔄 Partial | Dropout + chronological split prevents temporal leakage |
+| #1 ACCURACY | Partial | LSTM achieves 2–4% MAPE on synthetic housing index vs 8–12% for Dense baseline |
+| #2 GENERALIZATION | Partial | Dropout + chronological split prevents temporal leakage |
 | #3 MULTI-TASK | Architecture ready | LSTM(64) → Dense(1, 'linear') for regression; swap to Dense(1, 'sigmoid') for classification |
 | #4 INTERPRETABILITY | Black box | LSTM gate values are internal — no human-readable explanation |
-| #5 PRODUCTION | 🔄 Partial | <100ms inference for $T\leq52$; validation pipeline correct |
+| #5 PRODUCTION | Partial | <100ms inference for $T\leq52$; validation pipeline correct |
 
 ** Still can't solve:**
 - **Interpretability (Constraint #4):** LSTM gates are internal scalars — not explainable to stakeholders. Attention weights (Ch.9) make "which months drove the prediction?" answerable.
@@ -636,6 +636,6 @@ This chapter used MSE as the regression loss without asking *why*. We minimised 
 
 The same MLE framework generalises to every loss in the track — Huber, Poisson, focal — and tells you precisely *when* to invent new ones when the distributional assumption breaks. After Ch.7, the loss function is no longer a recipe: it is a principled statistical choice.
 
-> ➡ **Ch.7** — [MLE & Loss Functions](../ch07_mle_loss_functions) — formalises the statistical justification for every loss function used in this curriculum.
+> **Ch.7** — [MLE & Loss Functions](../ch07_mle_loss_functions) — formalises the statistical justification for every loss function used in this curriculum.
 
 ---

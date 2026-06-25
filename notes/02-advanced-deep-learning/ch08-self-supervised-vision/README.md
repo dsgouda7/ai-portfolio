@@ -465,9 +465,9 @@ Loss: MSE on 147 masked patches only
 ```
 Input Image: DINO Attention Map:
 ┌──────────┐ ┌──────────────┐
-│ 🥤 🍫 🍪 │ │ ████░░░░████ │ ← Focuses on products
-│ 🥤 🍫 🍪 │ --> │ ████░░░░████ │
-│ 🥤 🍫 🍪 │ │ ████░░░░████ │
+│ │ │ ████░░░░████ │ ← Focuses on products
+│ │ --> │ ████░░░░████ │
+│ │ │ ████░░░░████ │
 └──────────┘ └──────────────┘
 Retail shelf Emergent object boundaries!
 ```

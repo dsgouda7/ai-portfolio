@@ -14,7 +14,7 @@ formula_motivation: required_before_each_formula
 numerical_walkthroughs: judicious_orderflow_examples_when_clarifying
 dataset: orderflow_b2b_purchase_orders_no_synthetic_except_test_scenarios
 failure_first_pedagogy: true
-callout_system: {insight:"", warning:"", constraint:"", optional_depth:"📖", forward_pointer:"➡"}
+callout_system: {insight:"", warning:"", constraint:"", optional_depth:"", forward_pointer:""}
 mermaid_color_palette: {primary:"#1e3a8a", success:"#15803d", caution:"#b45309", danger:"#b91c1c", info:"#1d4ed8"}
 image_background: dark_facecolor_1a1a2e_for_generated_plots
 section_template: [story_header, challenge_0, core_idea_1, running_example_2, protocol_spec_3, step_by_step_4, key_diagrams_5, production_considerations_6, what_can_go_wrong_7, progress_check_N, bridge_N1]
@@ -296,7 +296,7 @@ What this chapter unlocks:
 
 **What's blocking us**:
 
-🚨 **[Specific problem this chapter solves]**
+ **[Specific problem this chapter solves]**
 
 **Current situation**: [Engineer/CEO dialogue or test scenario showing the problem]
 
@@ -457,7 +457,7 @@ If a protocol field has no verbal gloss within three lines, it is incomplete.
 
 **Rule 3: the notation table lives in the header.** All symbols are declared in the "Notation in this chapter" header blockquote before any section. Subsections add no new notation without glossing it immediately.
 
-**Rule 4: optional depth gets a callout box.** Protocol RFCs or algorithm proofs that would break the flow go inside an indented `> 📖 **Optional:**` block. These are clearly labelled and can be skipped without losing the main thread.
+**Rule 4: optional depth gets a callout box.** Protocol RFCs or algorithm proofs that would break the flow go inside an indented `> **Optional:**` block. These are clearly labelled and can be skipped without losing the main thread.
 
 **Rule 5: ASCII sequence diagrams for agent interactions.** When showing message flow, draw it in ASCII with aligned arrows, showing the agent IDs and message types:
 
@@ -560,7 +560,7 @@ Parallel (event-driven — <4hr SLA):
 
 **Forward link pattern:** *"This message bus pattern is the foundation for Ch.5's shared memory. Every state update will flow through this same event stream."*
 
-**The forward pointer callout box** (`> ➡`) is used for concepts that will be formally introduced later but need to be planted early.
+**The forward pointer callout box** (`> `) is used for concepts that will be formally introduced later but need to be planted early.
 
 **Cross-track links** to distributed systems references are standard for deeper treatments. Always reference the specific source: `[Designing Data-Intensive Applications ch05 — Replication](https://dataintensive.net/)`.
 
@@ -575,8 +575,8 @@ Used consistently across chapters. Must be used exactly this way — no improvis
 | `` | Key insight / conceptual payoff | After a result that surprises or reframes something the reader thought they understood |
 | `` | Warning / common trap | Before or immediately after a pattern that is often done wrong |
 | `` | OrderFlow constraint connection | When content advances or validates one of the 8 constraints |
-| `> 📖 **Optional:**` | Deeper protocol specs | Full RFC details and algorithm proofs that break the narrative flow |
-| `> ➡` | Forward pointer | When a concept needs to be planted before its full treatment |
+| `> **Optional:**` | Deeper protocol specs | Full RFC details and algorithm proofs that break the narrative flow |
+| `> ` | Forward pointer | When a concept needs to be planted before its full treatment |
 
 The callout box content is always **actionable**: it ends with a Fix, a Rule, a What-to-do. No callout box that just says "this is interesting" without consequence.
 
@@ -861,8 +861,8 @@ Parallel (event-driven — <4hr SLA):
 | `` | "A2A delegation makes the orchestrator ignorant of tool internals — it only knows agent interfaces, not implementations. This is how you add a new supplier API without rewriting the orchestrator." |
 | `` | "Shared memory without ordering guarantees is a distributed systems trap. Two agents updating the same inventory count simultaneously will silently lose one update." |
 | `` | Constraint achievement: "1,000 POs/day → Constraint #1 THROUGHPUT ACHIEVED (event-driven async)" |
-| `📖` | Vector clock implementation, CRDT merge semantics, HMAC signature verification algorithm |
-| `➡` | "We're using a simplified trust model here — Ch.6 formalises it with HMAC signatures and sandboxed execution environments" |
+| `` | Vector clock implementation, CRDT merge semantics, HMAC signature verification algorithm |
+| `` | "We're using a simplified trust model here — Ch.6 formalises it with HMAC signatures and sandboxed execution environments" |
 
 ---
 
@@ -1016,7 +1016,7 @@ Chapters can be long when the length is earned, not padded. The standard:
 - **Never summarise where you can demonstrate.** A worked message flow that shows the exact agent interactions explicitly teaches the concept; a prose paragraph saying "agents coordinate via messages" does not.
 - **One concept per subsection.** Each subsection has exactly one conceptual payload. None runs into another.
 - **The subsection heading is descriptive, not label-like.** Not "3 · Protocol" but "3 · The Protocol — How Message Schemas Prevent Context Overflow". The title states the conclusion, not just the topic.
-- **100-line rule for inline explanations.** If explaining a concept fully would take more than ~100 lines in a natural reading flow, split it: give the intuition inline, move the full protocol spec to a `> 📖 Optional` callout box.
+- **100-line rule for inline explanations.** If explaining a concept fully would take more than ~100 lines in a natural reading flow, split it: give the intuition inline, move the full protocol spec to a `> Optional` callout box.
 
 ---
 
@@ -1142,7 +1142,7 @@ Act 4: Decision framework (when to use which)
 
 **Template:**
 ```markdown
-> ➡ **[Topic] goes deeper in [Chapter].** This chapter covers [what's needed now].
+> **[Topic] goes deeper in [Chapter].** This chapter covers [what's needed now].
 > For [advanced topic] — [specific capability] — see [link]. For now: [continue with current concept].
 ```
 
@@ -1265,7 +1265,7 @@ Ch.2 (MCP-wrapped): tool_call = {"method": "execute", "params": {"message": {...
 
 **Mix these modes fluidly:**
 - **Confession:** "The message bus is down. Your on-call phone is ringing. What's your debug strategy?" (Ch.7)
-- **Rigor:** Protocol specs in `> 📖 Optional` boxes with RFC links
+- **Rigor:** Protocol specs in `> Optional` boxes with RFC links
 - **Tutorial:** "Fix: Add correlation_id to every message. Link responses to requests."
 
 **Why effective:** Signals "this is for practitioners who also need to justify decisions." Protocol specs for architects, code for implementers, confessions for operators.
@@ -1304,8 +1304,8 @@ Map tone to pedagogical purpose:
 - = Key insight (power users skim these first)
 - = Common trap (practitioners jump here when debugging)
 - = OrderFlow constraint advancement (tracks quest progress)
-- 📖 = Optional depth (safe to skip)
-- ➡ = Forward pointer (where this reappears)
+- = Optional depth (safe to skip)
+- = Forward pointer (where this reappears)
 
 **Rule:** No other emoji as inline callouts. ( are structural markers for Challenge/Progress sections only.)
 
@@ -1483,7 +1483,7 @@ Example: "We demonstrate that...", "It can be shown that...", "In this section w
 **Synthetic scenarios for walkthroughs**
 Example: Using "Agent A talks to Agent B" instead of "PricingAgent queries InventoryAgent for PO #2024-1847"
 **Improvised emoji**
-Example: Using ✨ as inline callouts (only 📖➡ allowed)
+Example: Using as inline callouts (only allowed)
 **Topic-label section headings**
 Example: "## 3 · Protocol" instead of "## 3 · The Protocol — How Message Schemas Prevent Context Overflow"
 **Skipping scenario verification**
@@ -1519,9 +1519,9 @@ Before publishing any chapter, verify each item:
 - [ ] Every protocol: schema shown first, implementation second
 - [ ] Every non-trivial architecture: demonstrated on PO #2024-1847 with explicit message flow
 - [ ] Failure-first pedagogy: new patterns introduced because the simpler one broke, not listed a priori
-- [ ] Optional depth: full protocol specs behind `> 📖 Optional` callout boxes
+- [ ] Optional depth: full protocol specs behind `> Optional` callout boxes
 - [ ] Forward/backward links: every concept links to where it was introduced and where it reappears
-- [ ] Callout boxes: only ` 📖 ➡` — no improvised emoji
+- [ ] Callout boxes: only ` ` — no improvised emoji
 - [ ] Mermaid diagrams: colour palette respected (dark blue / dark green / amber / dark red)
 - [ ] Images: dark background, descriptive alt-text, purposeful (not decorative)
 - [ ] Needle GIF: chapter-level progress animation present (optional but recommended)
@@ -1741,7 +1741,7 @@ Every `grand_solution.md` follows this **7-section template**:
 - Duplicate content across sections (say it once, reference it later)
 
 **Formatting conventions:**
-- Use checkmark bullets for capabilities unlocked: ➡
+- Use checkmark bullets for capabilities unlocked:
 - Show progression as ASCII tables or code block diagrams
 - Use `inline code` for hyperparameters, `$metric$` for dollars
 - Chapter references: "Ch.3" or "Ch.5-7" (never "Chapter Five")
@@ -1804,7 +1804,7 @@ import matplotlib.pyplot as plt
 # ... other imports
 
 print(" Libraries imported successfully")
-print("📦 This notebook demonstrates [track] concepts with executable code")
+print(" This notebook demonstrates [track] concepts with executable code")
 ```
 
 **3. Chapter Sections (Repeating Pattern)**
@@ -1886,7 +1886,7 @@ for constraint, result in results.items():
 **5. Summary Cell (Markdown)**
 
 ```markdown
-## Key Takeaways — [Track Name] Patterns
+## Summary — [Track Name] Patterns
 
 **The N Concepts Integration:**
 1. **Ch.1**: [One-line summary]
@@ -1996,11 +1996,11 @@ See `notes/04-multi_agent_ai/grand_solution.ipynb` for reference implementation:
 **Do not use emojis in technical content.** All emoji-based callouts have been systematically removed from the repository (27,921 emojis removed across 168 files as of May 2026).
 
 Use text-only formatting:
-- **Checkpoint:** (not 💡 **Checkpoint:**)
-- **Warning:** (not ⚠️ **Warning:**)
-- **Rule of Thumb:** (not 🎯 **Rule of Thumb:**)
-- [Complete] or Complete (not ✅)
-- [WRONG] or [Failed] (not ❌)
+- **Checkpoint:** (not **Checkpoint:**)
+- **Warning:** (not **Warning:**)
+- **Rule of Thumb:** (not **Rule of Thumb:**)
+- [Complete] or Complete (not )
+- [WRONG] or [Failed] (not )
 
 **Rationale:** Emojis create visual clutter, reduce professionalism, and can render inconsistently across platforms. Technical documentation should rely on clear text formatting.
 
@@ -2051,14 +2051,14 @@ Remove the phase→section mapping block entirely. Embed stage context directly 
 ```markdown
 ## 3 · The Message Bus — Choose Your Broker Before Writing a Single Producer
 
-> ➡ Once you've chosen the broker topology (here), producers (§4) and consumers (§5) wire directly to it.
+> Once you've chosen the broker topology (here), producers (§4) and consumers (§5) wire directly to it.
 ```
 
 **Callout discipline for multi-agent chapters:**
 
 - `> **Decomposition verdict:**` — one line after each orchestration stage; states throughput/SLA impact
  - Example: `> **Decomposition verdict:** Single-agent baseline processed 120 POs/day hitting 8k context limit; three-agent decomposition (intake + negotiation + approval) reaches 890 POs/day — 7.4× throughput, context per agent stays <2k.`
-- `> ➡` — forward pointer when a pattern feeds the next chapter
+- `> ` — forward pointer when a pattern feeds the next chapter
 - Never: a named "ORCHESTRATION CHECKPOINT" or "DECISION CHECKPOINT" subsection header
 - Never: a section listing "Phase N → §X, §Y" (this is a second navigation model grafted onto the first)
 

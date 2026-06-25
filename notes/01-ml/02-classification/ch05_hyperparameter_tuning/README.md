@@ -366,8 +366,8 @@ The three strategies occupy different points in the cost–quality trade-off:
 | Property | Grid Search | Random Search | Bayesian Opt |
 |----------|------------|---------------|-------------|
 | **Best configuration found** | Best on grid (guaranteed) | Best random sample | Near-global (highest EI) |
-| **Scales with dimensionality** | Exponential ✗ | $O(n)$ ✓ | $O(n \log n)$ ✓ |
-| **Learns from previous trials** | No | No | Yes ✓ |
+| **Scales with dimensionality** | Exponential | $O(n)$ | $O(n \log n)$ |
+| **Learns from previous trials** | No | No | Yes |
 | **Reproducible** | Yes (grid is fixed) | Yes (with seed) | Yes (with seed + sampler) |
 | **Compute per trial** | 1 model fit | 1 model fit | 1 model fit + surrogate update |
 | **Implementation complexity** | Low | Low | Medium (Optuna / scikit-optimize) |
@@ -546,11 +546,11 @@ flowchart LR
  DATA --> F4["Fold 4\n36,468 rows"]
  DATA --> F5["Fold 5\n36,468 rows"]
 
- F1 --> R1["Round 1\n🔴 Val: Fold 1\n🟢 Train: 2,3,4,5\n→ ε₁"]
- F2 --> R2["Round 2\n🔴 Val: Fold 2\n🟢 Train: 1,3,4,5\n→ ε₂"]
- F3 --> R3["Round 3\n🔴 Val: Fold 3\n🟢 Train: 1,2,4,5\n→ ε₃"]
- F4 --> R4["Round 4\n🔴 Val: Fold 4\n🟢 Train: 1,2,3,5\n→ ε₄"]
- F5 --> R5["Round 5\n🔴 Val: Fold 5\n🟢 Train: 1,2,3,4\n→ ε₅"]
+ F1 --> R1["Round 1\n Val: Fold 1\n Train: 2,3,4,5\n→ ε₁"]
+ F2 --> R2["Round 2\n Val: Fold 2\n Train: 1,3,4,5\n→ ε₂"]
+ F3 --> R3["Round 3\n Val: Fold 3\n Train: 1,2,4,5\n→ ε₃"]
+ F4 --> R4["Round 4\n Val: Fold 4\n Train: 1,2,3,5\n→ ε₄"]
+ F5 --> R5["Round 5\n Val: Fold 5\n Train: 1,2,3,4\n→ ε₅"]
 
  R1 --> CV["CV_error = (ε₁+ε₂+ε₃+ε₄+ε₅) / 5\nUnbiased generalisation estimate"]
  R2 --> CV
@@ -708,7 +708,7 @@ The **UnifiedAI mission** (Neural Networks track) answers this:
 - **Method**: shared backbone → task-specific heads → joint training with a multi-task loss function
 - **New tools unlocked**: backpropagation, SGD/Adam, regularisation (L1/L2/Dropout), CNNs, and hyperparameter tuning with early stopping
 
-> ➡ The hyperparameter tuning toolkit you built in this chapter reappears in full force in the Neural Networks track. Learning rate, batch size, width, depth, dropout rate — all swept with the same grid/random/Bayesian framework, but now using Optuna and early stopping to manage 100× more expensive per-trial evaluations (minutes per trial instead of seconds).
+> The hyperparameter tuning toolkit you built in this chapter reappears in full force in the Neural Networks track. Learning rate, batch size, width, depth, dropout rate — all swept with the same grid/random/Bayesian framework, but now using Optuna and early stopping to manage 100× more expensive per-trial evaluations (minutes per trial instead of seconds).
 
 **The conceptual bridge:**
 

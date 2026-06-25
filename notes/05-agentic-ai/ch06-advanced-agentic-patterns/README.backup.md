@@ -26,7 +26,7 @@
 
 **What's blocking us:**
 
-🚨 **Single-pass reasoning cannot resolve contradictions or verify correctness**
+ **Single-pass reasoning cannot resolve contradictions or verify correctness**
 
 ### Test Scenario #1: Contradictory Order
 
@@ -98,13 +98,13 @@ User: "I have a 20% off coupon, plus I'm a loyalty member (10% off),
 
 **PizzaBot v2.0 (with Debate pattern):**
 ```
-🎙 Agent 1 (Generous Pricer):
+ Agent 1 (Generous Pricer):
 "Apply all three: coupon (-$5) + loyalty (-10%) + promo (-$5) = $12.49"
 
-🎙 Agent 2 (Strict Pricer):
+ Agent 2 (Strict Pricer):
 "Policy says one discount only. Apply best discount: 20% coupon = $19.99"
 
-⚖ Judge (RAG check + policy lookup):
+ Judge (RAG check + policy lookup):
 "Policy retrieved: 'One promotional discount per order. Loyalty always applies.'
 Decision: Loyalty (10%) + best promo (20% coupon) = $17.49"
 Customer accepts
@@ -142,14 +142,14 @@ Error: "Complex multi-constraint order. Please call (555) PIZZA."
 - Batch 2 (12pm): 1 Napoli GF, 2 Pepperoni, 2 Margherita
 - Batch 3 (1pm): 5 Pepperoni regular
 
-👷 Worker Agents (parallel):
+ Worker Agents (parallel):
 - Worker A processes Batch 1 → subtotal $62.45
 - Worker B processes Batch 2 → subtotal $67.50
 - Worker C processes Batch 3 → subtotal $69.95
 Verifier Agent:
-- Total: $199.90 < $200 budget ✓
-- Vegetarian count: 8 pizzas ✓
-- Gluten-free count: 3 pizzas ✓
+- Total: $199.90 < $200 budget
+- Vegetarian count: 8 pizzas
+- Gluten-free count: 3 pizzas
 - All constraints satisfied
 Order confirmed
 ```
@@ -437,7 +437,7 @@ def hierarchical_pattern(task: str) -> str:
 - Frame 1: Catering order (15 pizzas, 3 time slots, constraints)
 - Frame 2: Planner decomposes (3 batches)
 - Frame 3: Workers execute in parallel (progress bars)
-- Frame 4: Verifier checks (budget ✓, dietary ✓, count ✓)
+- Frame 4: Verifier checks (budget , dietary , count )
 - Frame 5: Success confirmation
 
 ---
@@ -1127,19 +1127,19 @@ Think of each pattern as a **strategy for spending tokens**:
 
 ```
 Simple query ("what toppings?"):
- Single-pass ✓ — 1× cost, 99% accuracy
+ Single-pass — 1× cost, 99% accuracy
 
 Contradiction ("dairy-free + extra cheese"):
- Reflection ✓ — 3× cost, 99% accuracy
+ Reflection — 3× cost, 99% accuracy
 
 High-stakes pricing:
- Debate ✓ — 5× cost, 99.5% accuracy + audit trail
+ Debate — 5× cost, 99.5% accuracy + audit trail
 
 Creative writing:
  Tree-of-Thoughts — 20× cost, explore solution space
 
 Catering (complex constraints):
- Hierarchical ✓ — 8× cost, 95% automation rate
+ Hierarchical — 8× cost, 95% automation rate
 ```
 
 **Production strategy: Hybrid routing**
@@ -1346,10 +1346,10 @@ def fallback_chain(query: str, tools: List[Tool]) -> str:
  try:
  print(f"Trying {tool.name} (cost: ${tool.cost})...")
  result = tool.execute(query)
- print(f"✓ {tool.name} succeeded")
+ print(f" {tool.name} succeeded")
  return result
  except (TimeoutError, Exception) as e:
- print(f"✗ {tool.name} failed: {e}")
+ print(f" {tool.name} failed: {e}")
  if i == len(tools) - 1:
  return escalate_to_human(query)
 
@@ -1532,7 +1532,7 @@ Test your understanding: Which pattern(s) should you use?
 Query: "What toppings are on a Margherita pizza?"
 ```
 
-**Answer:** Single-pass ✓
+**Answer:** Single-pass
 **Why:** Simple factual query, RAG-grounded, no contradiction
 
 ---
@@ -1542,7 +1542,7 @@ Query: "What toppings are on a Margherita pizza?"
 Query: "I want a vegan pizza with extra sausage"
 ```
 
-**Answer:** Reflection ✓
+**Answer:** Reflection
 **Why:** Contradiction (vegan + sausage), need to explore alternatives (vegan sausage?)
 
 ---
@@ -1553,7 +1553,7 @@ Query: "I have 3 discount codes. Apply all of them."
 Company policy: "Maximum one promotional discount per order"
 ```
 
-**Answer:** Debate ✓
+**Answer:** Debate
 **Why:** Policy interpretation needed, high-stakes (financial), benefit from multiple perspectives
 
 ---
@@ -1564,7 +1564,7 @@ Query: "Catering order: 20 pizzas across 4 delivery times,
  budget $250, half vegetarian, 5 gluten-free"
 ```
 
-**Answer:** Hierarchical Orchestration ✓
+**Answer:** Hierarchical Orchestration
 **Why:** Complex multi-constraint problem, decompose → execute → verify
 
 ---
@@ -1575,7 +1575,7 @@ Query: "Inventory check: How many Margherita pizzas left?"
 Available tools: cache (10ms), database (50ms), manual count (5min)
 ```
 
-**Answer:** Tool Selection (fallback chain) ✓
+**Answer:** Tool Selection (fallback chain)
 **Why:** Multiple tools available, optimize for speed (cache first)
 
 ---
@@ -1586,7 +1586,7 @@ Query: "Write a creative pizza name for a dessert pizza with
  Nutella, strawberries, and marshmallows"
 ```
 
-**Answer:** Tree-of-Thoughts ✓
+**Answer:** Tree-of-Thoughts
 **Why:** Creative task, benefit from exploring multiple naming strategies
 
 ---
@@ -1596,7 +1596,7 @@ Query: "Write a creative pizza name for a dessert pizza with
 Query: "Margherita pizza has 420 calories"
 ```
 
-**Answer:** Chain-of-Verification ✓
+**Answer:** Chain-of-Verification
 **Why:** Factual claim that needs verification (might be hallucinated)
 
 ---
@@ -1606,7 +1606,7 @@ Query: "Margherita pizza has 420 calories"
 Query: "Should I eat pizza if I have celiac disease?"
 ```
 
-**Answer:** Constitutional AI ✓
+**Answer:** Constitutional AI
 **Why:** Medical advice, need disclaimer + safety guardrails
 
 ---
@@ -1617,7 +1617,7 @@ Query: "Is this customer review spam?"
 Review: "Best pizza ever!!! Click here for free iPhone!!!"
 ```
 
-**Answer:** Ensemble/Voting ✓
+**Answer:** Ensemble/Voting
 **Why:** Critical moderation decision, benefit from multiple models
 
 ---
@@ -1628,7 +1628,7 @@ User: "I'll have my usual"
 (User ordered large Margherita last 3 times)
 ```
 
-**Answer:** Memory-Augmented ✓
+**Answer:** Memory-Augmented
 **Why:** Personalization based on past interactions
 
 ---

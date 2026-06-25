@@ -125,7 +125,7 @@ DBSCAN (ε=0.8, minPts=5) identifies 23 customers as noise (label $-1$): extreme
 | **Deterministic** | Init-sensitive | Given fixed ε | | Init-sensitive |
 | **SegmentAI fit** | Primary algorithm | Outlier detector | Dendrogram insight | Too slow for 1M |
 
-> ➡ **Decision rule for this track:** use K-Means as the primary segmentation algorithm (fast, interpretable centroids), DBSCAN as the outlier detector (flag noise customers), and the agglomerative dendrogram to cross-check the natural cluster count without specifying $K$ in advance.
+> **Decision rule for this track:** use K-Means as the primary segmentation algorithm (fast, interpretable centroids), DBSCAN as the outlier detector (flag noise customers), and the agglomerative dendrogram to cross-check the natural cluster count without specifying $K$ in advance.
 
 ---
 
@@ -358,12 +358,12 @@ New centroids: $\boldsymbol{\mu}_1=[1.33,\;2.00]$, $\boldsymbol{\mu}_2=[8.00,\;8
 
 | Customer | $d(\cdot,\boldsymbol{\mu}_1=[1.33,2])$ | $d(\cdot,\boldsymbol{\mu}_2=[8,8])$ | Assignment |
 |----------|----------------------------------------|--------------------------------------|------------|
-| A=[1,2] | $\sqrt{(0.33)^2+(0)^2}\approx0.33$ | $\sqrt{(7)^2+(6)^2}=\sqrt{85}\approx9.22$ | $C_1$ ✓ |
-| B=[2,1] | $\sqrt{(0.67)^2+(1)^2}=\sqrt{1.45}\approx1.20$ | $\sqrt{(6)^2+(7)^2}=\sqrt{85}\approx9.22$ | $C_1$ ✓ |
-| C=[1,3] | $\sqrt{(0.33)^2+(1)^2}=\sqrt{1.11}\approx1.05$ | $\sqrt{(7)^2+(5)^2}=\sqrt{74}\approx8.60$ | $C_1$ ✓ |
-| D=[8,7] | $\sqrt{(6.67)^2+(5)^2}=\sqrt{69.5}\approx8.34$ | $\sqrt{(0)^2+(1)^2}=1.00$ | $C_2$ ✓ |
-| E=[9,8] | $\sqrt{(7.67)^2+(6)^2}=\sqrt{94.8}\approx9.74$ | $\sqrt{(1)^2+(0)^2}=1.00$ | $C_2$ ✓ |
-| F=[7,9] | $\sqrt{(5.67)^2+(7)^2}=\sqrt{81.1}\approx9.01$ | $\sqrt{(1)^2+(1)^2}=\sqrt{2}\approx1.41$ | $C_2$ ✓ |
+| A=[1,2] | $\sqrt{(0.33)^2+(0)^2}\approx0.33$ | $\sqrt{(7)^2+(6)^2}=\sqrt{85}\approx9.22$ | $C_1$ |
+| B=[2,1] | $\sqrt{(0.67)^2+(1)^2}=\sqrt{1.45}\approx1.20$ | $\sqrt{(6)^2+(7)^2}=\sqrt{85}\approx9.22$ | $C_1$ |
+| C=[1,3] | $\sqrt{(0.33)^2+(1)^2}=\sqrt{1.11}\approx1.05$ | $\sqrt{(7)^2+(5)^2}=\sqrt{74}\approx8.60$ | $C_1$ |
+| D=[8,7] | $\sqrt{(6.67)^2+(5)^2}=\sqrt{69.5}\approx8.34$ | $\sqrt{(0)^2+(1)^2}=1.00$ | $C_2$ |
+| E=[9,8] | $\sqrt{(7.67)^2+(6)^2}=\sqrt{94.8}\approx9.74$ | $\sqrt{(1)^2+(0)^2}=1.00$ | $C_2$ |
+| F=[7,9] | $\sqrt{(5.67)^2+(7)^2}=\sqrt{81.1}\approx9.01$ | $\sqrt{(1)^2+(1)^2}=\sqrt{2}\approx1.41$ | $C_2$ |
 
 **All assignments identical to iteration 1** → centroids do not move → **converged**.
 
@@ -432,7 +432,7 @@ flowchart LR
  style C3 fill:#b91c1c,color:#fff,stroke:#b91c1c
 ```
 
-> ➡ **Cluster 3 (red) overlaps strongly with the 23 customers DBSCAN labels $-1$.** K-Means forced them into a cluster; DBSCAN refuses to. Both algorithms agree these are anomalous buyers — the disagreement is only in how to handle them.
+> **Cluster 3 (red) overlaps strongly with the 23 customers DBSCAN labels $-1$.** K-Means forced them into a cluster; DBSCAN refuses to. Both algorithms agree these are anomalous buyers — the disagreement is only in how to handle them.
 
 ---
 
@@ -618,7 +618,7 @@ print(centroid_df.round(0))
 | [NN track Ch.4](../../../03-neural_networks/ch04_neural_networks) | Autoencoder latent representations fed into K-Means for deep clustering |
 | [ML Ch.11 — XGBoost](../../02_classification/ch11_xgboost) | Cluster labels as a categorical feature for churn or upsell prediction models |
 
-> ➡ **The centroid profiles** ($\boldsymbol{\mu}_k$ in original spend units, recovered via `expm1(scaler.inverse_transform(mu))`) from this chapter are the direct input to the SegmentAI marketing strategy: HoReCa buyers get bulk-produce discounts, Retail buyers get detergent promotions. Clustering is the discovery step; centroid interpretation is the business step.
+> **The centroid profiles** ($\boldsymbol{\mu}_k$ in original spend units, recovered via `expm1(scaler.inverse_transform(mu))`) from this chapter are the direct input to the SegmentAI marketing strategy: HoReCa buyers get bulk-produce discounts, Retail buyers get detergent promotions. Clustering is the discovery step; centroid interpretation is the business step.
 
 ---
 
@@ -663,6 +663,6 @@ silhouette=0.52 → visual validation of cluster separation
 23 DBSCAN noise customers → appear as isolated dots outside cluster regions
 ```
 
-> ➡ **Start Ch.2 with the cluster labels from this chapter as colour coding.** Every customer already has a label {0, 1, 2, 3}. PCA/t-SNE will show whether those labels correspond to visually separated groups — the ultimate sanity check on SegmentAI's segments.
+> **Start Ch.2 with the cluster labels from this chapter as colour coding.** Every customer already has a label {0, 1, 2, 3}. PCA/t-SNE will show whether those labels correspond to visually separated groups — the ultimate sanity check on SegmentAI's segments.
 
 [→ Ch.2: Dimensionality Reduction](../ch02_dimensionality_reduction)

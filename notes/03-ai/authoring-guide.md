@@ -14,7 +14,7 @@ register: technical_direct_conversational_within_precision
 formula_motivation: required_with_symbol_table_and_reading_guidance
 pedagogical_pattern: historical_walkthrough_causal_concept_emergence
 failure_first: each_concept_solves_limitation_of_previous
-callout_system: {insight:"", warning:"", optional_depth:"📖", forward_pointer:"➡"}
+callout_system: {insight:"", warning:"", optional_depth:"", forward_pointer:""}
 section_template: [historical_hook, where_you_are, problem_statement_0, core_idea_1, technical_content, key_distinctions_7, bridge_8]
 security_pattern: environment_variables_only_no_hardcoded_keys
 forward_backward_links: every_concept_links_to_where_introduced_and_where_reappears
@@ -127,8 +127,8 @@ $$[formula]$$
 **Callout patterns:**
 - `> **[Topic]:**` — Key insight, one concept per callout
 - `> **Warning — [Warning]:**` — Common pitfall or anti-pattern
-- `> 📖 **Optional: [Topic]**` — Deep-dive for advanced readers
-- `> ➡` — Forward pointer to where concept reappears
+- `> **Optional: [Topic]**` — Deep-dive for advanced readers
+- `> ` — Forward pointer to where concept reappears
 
 **Code examples:**
 - Must be runnable (no pseudocode)
@@ -200,7 +200,7 @@ Supplement docs (e.g., `cot-reasoning-supplement.md`) provide deep-dives for adv
 - Keep them technical, no introductory fluff
 - No opening blockquotes or bridge sections (supplements don't participate in the narrative arc)
 - Focus on one advanced topic (e.g., "attention mechanism derivation", "RLHF training details")
-- Cross-reference from main chapter with `> 📖 **Optional:** See [supplement](link) for [topic]`
+- Cross-reference from main chapter with `> **Optional:** See [supplement](link) for [topic]`
 
 ---
 
@@ -244,11 +244,11 @@ Supplement docs (e.g., `cot-reasoning-supplement.md`) provide deep-dives for adv
 **Do not use emojis in technical content.** All emoji-based callouts have been systematically removed from the repository (27,921 emojis removed across 168 files as of May 2026).
 
 Use text-only formatting:
-- **Checkpoint:** (not 💡 **Checkpoint:**)
-- **Warning:** (not ⚠️ **Warning:**)
-- **Rule of Thumb:** (not 🎯 **Rule of Thumb:**)
-- [Complete] or Complete (not ✅)
-- [WRONG] or [Failed] (not ❌)
+- **Checkpoint:** (not **Checkpoint:**)
+- **Warning:** (not **Warning:**)
+- **Rule of Thumb:** (not **Rule of Thumb:**)
+- [Complete] or Complete (not )
+- [WRONG] or [Failed] (not )
 
 **Rationale:** Emojis create visual clutter, reduce professionalism, and can render inconsistently across platforms. Technical documentation should rely on clear text formatting.
 
@@ -324,7 +324,7 @@ This chapter is organized into four pipeline stages:
 **Instead:** Use single-line callouts:
 ```markdown
 > **Retrieval verdict:** BM25 gives 68% precision; MMR reranking brings it to 89%.
-> ➡ 89% precision still means 1 in 9 errors — Ch.7 introduces RAGAS to track this.
+> 89% precision still means 1 in 9 errors — Ch.7 introduces RAGAS to track this.
 ```
 
 ### Academic Register
@@ -645,7 +645,7 @@ Act 4: Decision framework (when to use which)
 
 **Template:**
 ```markdown
-> ➡ **[Topic] goes deeper in [Chapter].** This chapter covers [what's needed now].
+> **[Topic] goes deeper in [Chapter].** This chapter covers [what's needed now].
 > For [advanced topic] — [specific capability] — see [link]. For now: [continue].
 ```
 
@@ -792,7 +792,7 @@ Error rate: 4.2% (measured on 1000-query test set)
 
 **Mix these modes fluidly:**
 - **Confession:** "Your bot just told a customer anchovies come on a Margherita. They don't. Customer lost."
-- **Precision:** Mathematical formulas in `> 📖 Optional` boxes with exact token counts
+- **Precision:** Mathematical formulas in `> Optional` boxes with exact token counts
 - **Tutorial:** "Fix: Use environment variables for API keys. Never hardcode."
 
 **Why effective:** Signals "this is for engineers who need to ship AND justify decisions."
@@ -831,8 +831,8 @@ Map tone to pedagogical purpose:
 - = Key insight (power users skim these first)
 - = Common trap (practitioners jump here when debugging)
 - = PizzaBot constraint advancement (tracks quest progress)
-- 📖 = Optional depth (safe to skip)
-- ➡ = Forward pointer (where this reappears)
+- = Optional depth (safe to skip)
+- = Forward pointer (where this reappears)
 
 **Rule:** No other emoji as inline callouts. ( are structural markers for Challenge/Progress sections only.)
 
@@ -1000,7 +1000,7 @@ Example: Showing cosine similarity formula without connecting it to error rate o
 **Skipping numerical verification**
 Example: Explaining embeddings without tracing a real PizzaBot query through the retrieval pipeline
 **Improvised emoji**
-Example: Using ✨ as inline callouts (only 📖➡ allowed)
+Example: Using as inline callouts (only allowed)
 **Topic-label section headings**
 Example: "## 3 · RAG" instead of "## 3 · RAG — How Retrieval Eliminates Hallucinations"
 
@@ -1035,8 +1035,8 @@ The universal callout system applies. Track-specific usage:
 | `` | "This is why RAG beats fine-tuning for factual grounding — retrieval is always up-to-date, the weights aren't" |
 | `` | "Never use the same embedding model for indexing and retrieval at different versions — dimensions may match but similarity space shifts" |
 | `` | Constraint achievement: "Error rate 4.2% → Constraint #2 ACCURACY ACHIEVED" |
-| `📖` | Full derivation of attention mechanism, BM25 formula, or RAGAS faithfulness calculation |
-| `➡` | "Temperature and sampling are revisited in Ch.10 when we build model tier routing based on query complexity" |
+| `` | Full derivation of attention mechanism, BM25 formula, or RAGAS faithfulness calculation |
+| `` | "Temperature and sampling are revisited in Ch.10 when we build model tier routing based on query complexity" |
 
 ---
 
@@ -1133,12 +1133,12 @@ Before marking a chapter complete, verify each item:
 
 ### Mathematical & Technical Content
 - [ ] Every formula: verbally glossed within 3 lines (connect to business metrics)
-- [ ] Optional depth: complex derivations in `> 📖 Optional` boxes
+- [ ] Optional depth: complex derivations in `> Optional` boxes
 - [ ] Code: executable (not aspirational) with security best practices (env vars, no hardcoded keys)
 - [ ] Forward/backward links: concepts link to where introduced and where they reappear
 
 ### Pedagogical Elements
-- [ ] Callout boxes: only ` 📖 ➡` — no improvised emoji
+- [ ] Callout boxes: only ` ` — no improvised emoji
 - [ ] Numerical anchors: exact numbers (4.2% not "around 5%"), used consistently
 - [ ] Comparative tables: show before/after behavior before explaining mechanism
 - [ ] "The Match Is Exact" pattern: traced examples prove techniques work

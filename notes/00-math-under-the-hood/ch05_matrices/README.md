@@ -62,7 +62,7 @@ That's it. Every rotation, stretch, projection, regression fit, and linear layer
 
 ## 2 · Running Example
 
-> 📘 **Physics-Free Path:** The "eight free-kick features" below are just **eight numbers recorded for each attempt**: $x_1, x_2, \ldots, x_8$. Think of them as columns in a spreadsheet — no physics knowledge needed. Each row is one kick attempt; each column is one measured variable.
+> **Physics-Free Path:** The "eight free-kick features" below are just **eight numbers recorded for each attempt**: $x_1, x_2, \ldots, x_8$. Think of them as columns in a spreadsheet — no physics knowledge needed. Each row is one kick attempt; each column is one measured variable.
 
 Same knuckleball free kick, full parabolic trajectory. We want to recover the three curve parameters $(a, b, c)$ from noisy $(t_i, y_i)$ measurements — the parabola $y = at^2 + bt + c$ that best fits the data. In Ch.2 we did this with `sklearn.LinearRegression`; here we do it from scratch with one matrix solve.
 
@@ -216,7 +216,7 @@ $$\mathbf{w} = \begin{bmatrix} b \\ w_1 \\ w_2 \end{bmatrix} = \begin{bmatrix} 0
 $$\hat{y}(0.4) = 6.48 \times 0.4 - 4.89 \times 0.16 + 0.01 = 2.592 - 0.782 + 0.01 = 1.82 \text{ m}$$
 Matches the training data perfectly (because 3 points uniquely define a parabola)!
 
-> 🔢 **What you just saw:** The **same operations** that fit millions of weights in a neural network, just shrunk to 3×3 matrices so you can trace every multiplication. The shape bookkeeping is critical: $X$ is $(N \times d)$, so $X^\top X$ is $(d \times d)$ and invertible if $X$ has full rank. That’s why we check shapes carefully — one dimension mismatch and the whole solve breaks.
+> **What you just saw:** The **same operations** that fit millions of weights in a neural network, just shrunk to 3×3 matrices so you can trace every multiplication. The shape bookkeeping is critical: $X$ is $(N \times d)$, so $X^\top X$ is $(d \times d)$ and invertible if $X$ has full rank. That’s why we check shapes carefully — one dimension mismatch and the whole solve breaks.
 
 **Connect to Ch.2:** This is exactly the "Step 4: fit linearly" part of Ch.2's parabola recipe — we've now seen the matrix algebra underneath `np.polyfit(t, y, 2)`.
 
@@ -270,7 +270,7 @@ Memorise Rules 1–4. Rule 5 comes up in probability (Ch.7); skip it for now if 
 
 ### 3.9 · Proofs of Rules 1–4
 
-> 🗺 **What to expect.** Rules 1–3 take two lines each — they’re simple enough that working through them once makes them stick forever. Rule 4 is four steps, but it’s the one that matters most: the gradient of any least-squares loss, including the normal equations. Rules 5 and the trace trick are optional depth — the proof uses a tool (the matrix differential) that goes beyond this chapter. The result is in the table above; skip to §4 if you’re heading straight for code.
+> **What to expect.** Rules 1–3 take two lines each — they’re simple enough that working through them once makes them stick forever. Rule 4 is four steps, but it’s the one that matters most: the gradient of any least-squares loss, including the normal equations. Rules 5 and the trace trick are optional depth — the proof uses a tool (the matrix differential) that goes beyond this chapter. The result is in the table above; skip to §4 if you’re heading straight for code.
 
 All four proofs use the same two moves:
 1. **Write out** the sum explicitly — open up the dot products and matrix products into $\sum$ notation.
@@ -290,7 +290,7 @@ $$\frac{\partial}{\partial w_k}(a_1 w_1 + \cdots + a_d w_d) = a_k.$$
 
 The $k$-th entry of the gradient is $a_k$, so the full gradient vector is $\mathbf{a}$. $\square$
 
-> 🏈 **Free-kick link.** Predicted distance is $\hat{y} = \mathbf{w}^\top \mathbf{x}$ — weights dotted with features. Gradient w.r.t. $\mathbf{w}$ is $\mathbf{x}$. Every linear layer in a neural network bottoms out here.
+> **Free-kick link.** Predicted distance is $\hat{y} = \mathbf{w}^\top \mathbf{x}$ — weights dotted with features. Gradient w.r.t. $\mathbf{w}$ is $\mathbf{x}$. Every linear layer in a neural network bottoms out here.
 
 ---
 
@@ -304,7 +304,7 @@ Differentiate with respect to $w_k$: only the $k$-th term survives, giving $2w_k
 
 Full gradient: $2\mathbf{w}$. $\square$
 
-> 🏈 **Free-kick link.** Ridge regression adds $\lambda\|\mathbf{w}\|^2$ to the loss. Its gradient is $2\lambda\mathbf{w}$ — the force that pulls weights toward zero, preventing any single feature from dominating.
+> **Free-kick link.** Ridge regression adds $\lambda\|\mathbf{w}\|^2$ to the loss. Its gradient is $2\lambda\mathbf{w}$ — the force that pulls weights toward zero, preventing any single feature from dominating.
 
 ---
 

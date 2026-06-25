@@ -213,7 +213,7 @@ The match is exact. Two epochs confirm the chain rule computes gradients that mo
 ---
 
 <details>
-<summary>📖 <b>Optional Depth</b> — Full Network Walkthrough: 3-Layer Network on California Housing Districts</summary>
+<summary> <b>Optional Depth</b> — Full Network Walkthrough: 3-Layer Network on California Housing Districts</summary>
 
 #### Full Network Walkthrough — 3 California Housing Districts
 
@@ -492,7 +492,7 @@ Loss surface for California Housing (conceptual 2D slice)
  4 │ ╱ ╲╲ ╲╲ [smooth descent]
  3 │ ╱ ╲╲ ╲╲
  2 │ ╱ ╲╲ ╲╲
- 1 │ ╱ ╲╲ ★ [minimum]
+ 1 │ ╱ ╲╲ [minimum]
  0 │─────────────────────────────────
  0 20 40 60 80 100 Epochs
 
@@ -503,7 +503,7 @@ Loss surface for California Housing (conceptual 2D slice)
  4 │ ╲╲
  3 │ ╲╲╲ [fast, stable descent]
  2 │ ╲╲╲╲
- 1 │ ╲╲★ [minimum]
+ 1 │ ╲╲ [minimum]
  0 │─────────────────────────────────
  0 20 40 60 80 100 Epochs
 ```

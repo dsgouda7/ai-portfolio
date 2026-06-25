@@ -64,7 +64,7 @@ After SHAP (Ch.4 output):
  AveRooms = 7.1 → +$15,000 (large rooms)
  HouseAge = 12 → -$20,000 (newer build is lower value here)
  Other features → close to zero
- Check: 290 + 95 + 40 + 15 − 20 ≈ 420 ✓ ← every dollar accounted for
+ Check: 290 + 95 + 40 + 15 − 20 ≈ 420 ← every dollar accounted for
 ```
 **This is the foundation** — SHAP makes the EnsembleAI system legally deployable and trusted by every stakeholder.
 
@@ -130,7 +130,7 @@ We pick **one specific district** (a coastal high-income area in the test set):
 | `AveBedrms` | 1.4 | −$2,000 | small negative |
 | `Population` | 1800 | −$1,000 | negligible |
 
-**Verification**: $290{,}000 + 95{,}000 + 40{,}000 + 15{,}000 - 20{,}000 + 3{,}000 - 2{,}000 - 1{,}000 = \$420{,}000$ ✓
+**Verification**: $290{,}000 + 95{,}000 + 40{,}000 + 15{,}000 - 20{,}000 + 3{,}000 - 2{,}000 - 1{,}000 = \$420{,}000$
 
 Every dollar of the prediction is attributed to a specific feature. Nothing is hidden.
 
@@ -174,7 +174,7 @@ $$\text{weight}(S = \{\}) = \frac{0!\cdot(2-0-1)!}{2!} = \frac{0!\cdot 1!}{2!} =
 
 $$\text{weight}(S = \{\text{Income}\}) = \frac{1!\cdot(2-1-1)!}{2!} = \frac{1!\cdot 0!}{2!} = \frac{1 \cdot 1}{2} = \frac{1}{2}$$
 
-Sanity check: $\frac{1}{2} + \frac{1}{2} = 1$ ✓ (weights always sum to 1)
+Sanity check: $\frac{1}{2} + \frac{1}{2} = 1$ (weights always sum to 1)
 
 **Assign value function outputs** (these come from model predictions with features marginalised):
 

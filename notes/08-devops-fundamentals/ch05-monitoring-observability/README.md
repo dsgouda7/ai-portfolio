@@ -94,7 +94,7 @@ Before instrumenting anything, understand the **three metrics that matter** for 
 
 **Start with RED on every service.** Add resource metrics (CPU, memory, disk) only after RED is working. RED tells you *what users experience*. Resource metrics tell you *why* it's slow — but if you don't know it's slow yet, resource metrics are noise.
 
-> 📖 **Further reading:** [Brendan Gregg — USE Method](https://www.brendangregg.com/usemethod.html) (Utilization, Saturation, Errors) for infrastructure monitoring. Use RED for services, USE for hosts.
+> **Further reading:** [Brendan Gregg — USE Method](https://www.brendangregg.com/usemethod.html) (Utilization, Saturation, Errors) for infrastructure monitoring. Use RED for services, USE for hosts.
 
 ---
 
@@ -317,7 +317,7 @@ if __name__ == '__main__':
 > **See also:** [Prometheus client library best practices](https://prometheus.io/docs/instrumenting/writing_clientlibs/)
 
 > **Instrument verdict:** Flask `/metrics` exposes Counter, Histogram, and Gauge; labels enable per-route error rate and p95 latency queries without redeployment.
-> ➡ App emitting Prometheus format; proceed to Collect phase to scrape and store.
+> App emitting Prometheus format; proceed to Collect phase to scrape and store.
 
 ---
 
@@ -473,7 +473,7 @@ open http://localhost:9090/targets
 > **When to pay for SaaS:** When you don't want to manage Prometheus scaling (federation, Thanos) or need integrated log/trace correlation. Otherwise, Prometheus is production-ready and free.
 
 > **Collect verdict:** Prometheus scraping every 15 seconds; 30-day TSDB retention; PromQL `rate(http_requests_total[5m])` returns live requests/sec.
-> ➡ Historical data queryable; proceed to Visualize phase to build Grafana dashboards.
+> Historical data queryable; proceed to Visualize phase to build Grafana dashboards.
 
 ---
 
@@ -650,7 +650,7 @@ Grafana dashboards can be exported as JSON and version-controlled. Here's a mini
 > **See also:** [OpenTelemetry Python docs](https://opentelemetry.io/docs/instrumentation/python/)
 
 > **Visualize verdict:** RED dashboard shows request rate, error rate, and p95 latency panels; latency trend visible 6 hours back without PromQL knowledge.
-> ➡ Stakeholders can read service health at a glance; proceed to Alert phase.
+> Stakeholders can read service health at a glance; proceed to Alert phase.
 
 ---
 
@@ -917,7 +917,7 @@ handle_alert(alert_payload)
 > - [OpenTelemetry auto-instrumentation](https://opentelemetry.io/docs/instrumentation/python/automatic/) (add traces without code changes)
 
 > **Observability verdict:** Mean time to detect p95 latency spike: 4m30s → 45s; alert noise reduced 60% after symptom→cause rewrite with `for: 2m` duration.
-> ➡ On-call paged with context and runbook link; chapter complete.
+> On-call paged with context and runbook link; chapter complete.
 
 ---
 

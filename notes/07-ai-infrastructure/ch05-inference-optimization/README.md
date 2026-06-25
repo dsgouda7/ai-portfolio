@@ -23,7 +23,7 @@
 
 **What's blocking us**:
 
-🚨 **Synthetic benchmarks ≠ production reality. Real traffic patterns may break latency target.**
+ **Synthetic benchmarks ≠ production reality. Real traffic patterns may break latency target.**
 
 **Current situation**: Engineer stress-testing INT4 model with realistic load patterns
 
@@ -163,7 +163,7 @@ Baseline measurement Bottleneck analysis Apply techniques Performance regression
 > **How to use this workflow:** Run Phase 1 once to establish baseline metrics. Then loop Phase 2→3→4 until latency SLA is met or throughput target is achieved. The sections below teach WHY each technique works; refer back here for WHAT to do.
 
 > **Inference verdict:** PagedAttention + continuous batching — p95 latency 2.8s → 1.2s, throughput 3,000 → 12,000 req/day on 1× RTX 4090 .
-> ➡ This optimized serving configuration feeds into Ch.9 experiment tracking for reproducible benchmarking.
+> This optimized serving configuration feeds into Ch.9 experiment tracking for reproducible benchmarking.
 
 **Typical iteration example (InferenceBase):**
 
@@ -202,7 +202,7 @@ Result: 1.3s p95 at 40 req/sec spike (680ms p95 under normal load)
 | **HuggingFace TGI** | 2–3 iterations | VRAM limits + queue spikes | PagedAttention + continuous batching (speculative decoding optional) |
 | **InferenceBase** | 2 iterations | Queue spikes under lunch rush | Continuous batching + PagedAttention (speculative added for headroom) |
 
-> 📖 **Optional depth — When to parallelize vs batch:** Batching (Phase 3) increases throughput by processing multiple requests simultaneously within one GPU. Parallelism (Ch.4) increases throughput by splitting one large model across multiple GPUs. Use batching first (cheaper, no inter-GPU communication overhead). Use parallelism when model size exceeds single-GPU VRAM or when batch=1 latency must be <100ms (real-time systems).
+> **Optional depth — When to parallelize vs batch:** Batching (Phase 3) increases throughput by processing multiple requests simultaneously within one GPU. Parallelism (Ch.4) increases throughput by splitting one large model across multiple GPUs. Use batching first (cheaper, no inter-GPU communication overhead). Use parallelism when model size exceeds single-GPU VRAM or when batch=1 latency must be <100ms (real-time systems).
 
 ---
 

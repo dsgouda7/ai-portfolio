@@ -39,11 +39,11 @@ You're a real estate agent. You want to predict house prices based on square foo
 
 | Square Feet | Actual Price |
 |-------------|--------------|
-| 800         | $160,000     |
-| 1000        | $200,000     |
-| 1200        | $240,000     |
-| 1500        | $300,000     |
-| 1800        | $360,000     |
+| 800 | $160,000 |
+| 1000 | $200,000 |
+| 1200 | $240,000 |
+| 1500 | $300,000 |
+| 1800 | $360,000 |
 
 **Your Model (a simple line):**
 ```
@@ -59,7 +59,7 @@ For the 800 sq ft house, the model predicts:
 Price = 800 × 100 + 50,000 = $130,000
 ```
 
-But the actual price was **$160,000**. The model is **off by $30,000**! 😬
+But the actual price was **$160,000**. The model is **off by $30,000**!
 
 ---
 
@@ -76,17 +76,17 @@ Here's the magic: the model **adjusts** `m` and `b` to reduce errors.
 
 **Step 1: Make Predictions** (for all 5 houses)
 
-| Sq Ft | Actual Price | Predicted Price | Error       |
+| Sq Ft | Actual Price | Predicted Price | Error |
 |-------|--------------|-----------------|-------------|
-| 800   | $160,000     | $130,000        | -$30,000    |
-| 1000  | $200,000     | $150,000        | -$50,000    |
-| 1200  | $240,000     | $170,000        | -$70,000    |
-| 1500  | $300,000     | $200,000        | -$100,000   |
-| 1800  | $360,000     | $230,000        | -$130,000   |
+| 800 | $160,000 | $130,000 | -$30,000 |
+| 1000 | $200,000 | $150,000 | -$50,000 |
+| 1200 | $240,000 | $170,000 | -$70,000 |
+| 1500 | $300,000 | $200,000 | -$100,000 |
+| 1800 | $360,000 | $230,000 | -$130,000 |
 
 **Step 2: Measure Overall Error**
 
-Average error = ($30k + $50k + $70k + $100k + $130k) / 5 = **$76,000** 🤯
+Average error = ($30k + $50k + $70k + $100k + $130k) / 5 = **$76,000**
 
 (In practice, we use **Mean Squared Error** to penalize big mistakes more, but the idea is the same.)
 
@@ -100,24 +100,24 @@ New values: `m = 180`, `b = 20,000`
 
 Now predictions look like:
 
-| Sq Ft | Actual Price | New Prediction | New Error  |
+| Sq Ft | Actual Price | New Prediction | New Error |
 |-------|--------------|----------------|------------|
-| 800   | $160,000     | $164,000       | +$4,000    |
-| 1000  | $200,000     | $200,000       | $0         |
-| 1200  | $240,000     | $236,000       | -$4,000    |
-| 1500  | $300,000     | $290,000       | -$10,000   |
-| 1800  | $360,000     | $344,000       | -$16,000   |
+| 800 | $160,000 | $164,000 | +$4,000 |
+| 1000 | $200,000 | $200,000 | $0 |
+| 1200 | $240,000 | $236,000 | -$4,000 |
+| 1500 | $300,000 | $290,000 | -$10,000 |
+| 1800 | $360,000 | $344,000 | -$16,000 |
 
-Average error = **$6,800** ✅ (much better!)
+Average error = **$6,800** (much better!)
 
 ---
 
 **Animation: "Training loop cycle"**
 - Shows: Circular flow with 4 stages
-  1. Data → Model (current m, b)
-  2. Model → Predictions (show 5 outputs)
-  3. Predictions vs Actual → Error calculation (show average)
-  4. Error → Weight adjustment (show m and b changing)
+ 1. Data → Model (current m, b)
+ 2. Model → Predictions (show 5 outputs)
+ 3. Predictions vs Actual → Error calculation (show average)
+ 4. Error → Weight adjustment (show m and b changing)
 - Loop arrow returns to stage 1
 - Formula embedded: Error = (1/n)Σ|ŷᵢ - yᵢ|
 
@@ -130,22 +130,22 @@ The model keeps doing this loop hundreds or thousands of times until errors get 
 **Hard-coded approach:**
 ```python
 if square_feet < 1000:
-    price = 180000
+ price = 180000
 elif square_feet < 1500:
-    price = 270000
+ price = 270000
 else:
-    price = 360000
+ price = 360000
 ```
 
 **Problems:**
-- ❌ Doesn't handle 1100 sq ft well (is it $180k or $270k?)
-- ❌ Can't adapt to new data (what if prices rise 10% next year?)
-- ❌ Breaks for new features (what if we add "number of bedrooms"?)
+- Doesn't handle 1100 sq ft well (is it $180k or $270k?)
+- Can't adapt to new data (what if prices rise 10% next year?)
+- Breaks for new features (what if we add "number of bedrooms"?)
 
 **Machine learning approach:**
-- ✅ Learns the exact relationship from data
-- ✅ Updates automatically with new examples
-- ✅ Easily extends to multiple features
+- Learns the exact relationship from data
+- Updates automatically with new examples
+- Easily extends to multiple features
 
 ---
 
@@ -212,24 +212,24 @@ A single neuron might work like this:
 
 ```
 Inputs:
-  x₁ = 5  (hours studied)
-  x₂ = 7  (hours slept)
+ x₁ = 5 (hours studied)
+ x₂ = 7 (hours slept)
 
 Weights (learned during training):
-  w₁ = 10  (studying is important!)
-  w₂ = 3   (sleep helps, but less than studying)
+ w₁ = 10 (studying is important!)
+ w₂ = 3 (sleep helps, but less than studying)
 
 Bias:
-  b = 20   (baseline score even if x₁ and x₂ are zero)
+ b = 20 (baseline score even if x₁ and x₂ are zero)
 
 Calculation:
-  z = w₁×x₁ + w₂×x₂ + b
-  z = 10×5 + 3×7 + 20
-  z = 50 + 21 + 20
-  z = 91
+ z = w₁×x₁ + w₂×x₂ + b
+ z = 10×5 + 3×7 + 20
+ z = 50 + 21 + 20
+ z = 91
 
 Output:
-  Your predicted test score = 91%
+ Your predicted test score = 91%
 ```
 
 ---
@@ -263,7 +263,7 @@ There's one problem with our neuron: it can only model **straight-line relations
 
 Look what happens if we stack two neurons in a chain:
 ```
-First neuron:  z₁ = w₁×x + b₁
+First neuron: z₁ = w₁×x + b₁
 Second neuron: z₂ = w₂×z₁ + b₂
 ```
 
@@ -273,7 +273,7 @@ z₂ = w₂×(w₁×x + b₁) + b₂
 z₂ = (w₂×w₁)×x + (w₂×b₁ + b₂)
 ```
 
-This is still a straight line! 😱 You could have 100 layers, but it would collapse to a single line.
+This is still a straight line! You could have 100 layers, but it would collapse to a single line.
 
 **Solution: Activation Functions**
 
@@ -289,11 +289,11 @@ ReLU(z) = max(0, z)
 
 | Input z | ReLU(z) |
 |---------|---------|
-| -2      | 0       |
-| -1      | 0       |
-| 0       | 0       |
-| 1       | 1       |
-| 2       | 2       |
+| -2 | 0 |
+| -1 | 0 |
+| 0 | 0 |
+| 1 | 1 |
+| 2 | 2 |
 
 ---
 
@@ -311,17 +311,17 @@ ReLU(z) = max(0, z)
 
 ```
 Step 1: Weighted sum
-  z = 10×5 + 3×7 + 20 = 91
+ z = 10×5 + 3×7 + 20 = 91
 
 Step 2: Apply ReLU
-  output = ReLU(91) = max(0, 91) = 91
+ output = ReLU(91) = max(0, 91) = 91
 ```
 
 Since 91 is positive, ReLU doesn't change it. But what if our calculation gave `-15`?
 
 ```
 If z = -15:
-  output = ReLU(-15) = max(0, -15) = 0
+ output = ReLU(-15) = max(0, -15) = 0
 ```
 
 The neuron "shuts off" for negative inputs. This creates **nonlinear bends** in the model's decision boundary.
@@ -383,17 +383,17 @@ One neuron can learn simple patterns. To learn complex patterns, we **stack many
 
 ```
 Input Layer (2 neurons - just pass through inputs):
-  x₁ = 5   (hours studied)
-  x₂ = 7   (hours slept)
+ x₁ = 5 (hours studied)
+ x₂ = 7 (hours slept)
 
 Hidden Layer (3 neurons - learn intermediate patterns):
-  Neuron H1: z₁ = w₁₁×x₁ + w₁₂×x₂ + b₁ → ReLU(z₁) = h₁
-  Neuron H2: z₂ = w₂₁×x₁ + w₂₂×x₂ + b₂ → ReLU(z₂) = h₂
-  Neuron H3: z₃ = w₃₁×x₁ + w₃₂×x₂ + b₃ → ReLU(z₃) = h₃
+ Neuron H1: z₁ = w₁₁×x₁ + w₁₂×x₂ + b₁ → ReLU(z₁) = h₁
+ Neuron H2: z₂ = w₂₁×x₁ + w₂₂×x₂ + b₂ → ReLU(z₂) = h₂
+ Neuron H3: z₃ = w₃₁×x₁ + w₃₂×x₂ + b₃ → ReLU(z₃) = h₃
 
 Output Layer (1 neuron - final prediction):
-  z_out = w_o1×h₁ + w_o2×h₂ + w_o3×h₃ + b_out
-  test_score = z_out
+ z_out = w_o1×h₁ + w_o2×h₂ + w_o3×h₃ + b_out
+ test_score = z_out
 ```
 
 **Let's trace through with actual numbers!**
@@ -401,12 +401,12 @@ Output Layer (1 neuron - final prediction):
 **Weights (learned during training):**
 ```
 Hidden layer:
-  Neuron H1: w₁₁=8,  w₁₂=2,  b₁=-10  (maybe learns "total study effort")
-  Neuron H2: w₂₁=1,  w₂₂=10, b₂=-40  (maybe learns "well-rested")
-  Neuron H3: w₃₁=5,  w₃₂=5,  b₃=0    (maybe learns "overall readiness")
+ Neuron H1: w₁₁=8, w₁₂=2, b₁=-10 (maybe learns "total study effort")
+ Neuron H2: w₂₁=1, w₂₂=10, b₂=-40 (maybe learns "well-rested")
+ Neuron H3: w₃₁=5, w₃₂=5, b₃=0 (maybe learns "overall readiness")
 
 Output layer:
-  w_o1=20, w_o2=15, w_o3=10, b_out=0
+ w_o1=20, w_o2=15, w_o3=10, b_out=0
 ```
 
 **Forward Pass (computing the prediction):**
@@ -415,16 +415,16 @@ Output layer:
 
 ```
 Neuron H1:
-  z₁ = 8×5 + 2×7 + (-10) = 40 + 14 - 10 = 44
-  h₁ = ReLU(44) = 44
+ z₁ = 8×5 + 2×7 + (-10) = 40 + 14 - 10 = 44
+ h₁ = ReLU(44) = 44
 
 Neuron H2:
-  z₂ = 1×5 + 10×7 + (-40) = 5 + 70 - 40 = 35
-  h₂ = ReLU(35) = 35
+ z₂ = 1×5 + 10×7 + (-40) = 5 + 70 - 40 = 35
+ h₂ = ReLU(35) = 35
 
 Neuron H3:
-  z₃ = 5×5 + 5×7 + 0 = 25 + 35 + 0 = 60
-  h₃ = ReLU(60) = 60
+ z₃ = 5×5 + 5×7 + 0 = 25 + 35 + 0 = 60
+ h₃ = ReLU(60) = 60
 ```
 
 **Step 2: Output Layer Computation**
@@ -437,7 +437,7 @@ z_out = 2005
 Final prediction: test_score = 2005
 ```
 
-Wait, 2005%?! 🤯 That's impossible! This shows our weights are **not trained yet** — they're random garbage.
+Wait, 2005%?! That's impossible! This shows our weights are **not trained yet** — they're random garbage.
 
 After training on real data (hundreds of students' study/sleep hours and their actual scores), the model would learn sensible weights that produce scores like 75%, 88%, etc.
 
@@ -449,11 +449,11 @@ After training on real data (hundreds of students' study/sleep hours and their a
 - Middle: 3 hidden nodes (H1, H2, H3) with ReLU symbols
 - Right: 1 output node (test_score)
 - Values flow through edges (show numbers appearing):
-  - x₁, x₂ → each hidden node (show multiplications)
-  - z₁=44 → ReLU → h₁=44 (highlighted calculation)
-  - Repeat for H2, H3
-  - h₁, h₂, h₃ → output (show multiplications)
-  - Final: 2005 (with warning: "Not trained yet!")
+ - x₁, x₂ → each hidden node (show multiplications)
+ - z₁=44 → ReLU → h₁=44 (highlighted calculation)
+ - Repeat for H2, H3
+ - h₁, h₂, h₃ → output (show multiplications)
+ - Final: 2005 (with warning: "Not trained yet!")
 - Formula embedded: z = Wx + b, then h = ReLU(z)
 
 ---
@@ -465,23 +465,23 @@ Think of layers as **building up abstractions**:
 **Example: Recognizing Handwritten Digits**
 
 - **Layer 1** (close to input): Detects edges and curves
-  - "There's a vertical line here"
-  - "There's a curve here"
+ - "There's a vertical line here"
+ - "There's a curve here"
 
 - **Layer 2**: Combines edges into parts
-  - "Vertical line + curve = could be '2' or '3'"
-  - "Two curves = could be '8' or '0'"
+ - "Vertical line + curve = could be '2' or '3'"
+ - "Two curves = could be '8' or '0'"
 
 - **Layer 3**: Combines parts into full digits
-  - "Top curve + middle line + bottom curve = definitely '8'"
+ - "Top curve + middle line + bottom curve = definitely '8'"
 
 **Why can't one layer do it all?**
 
 Imagine trying to recognize faces with just one step:
-- ❌ Pixels → "Is it Bob?" (too big a jump!)
+- Pixels → "Is it Bob?" (too big a jump!)
 
 Better:
-- ✅ Pixels → edges → facial features (nose, eyes) → face identity
+- Pixels → edges → facial features (nose, eyes) → face identity
 
 Each layer learns a **hierarchy of features**, from simple to complex.
 
@@ -545,7 +545,7 @@ y = 2005
 Let's say the student's actual test score was **85%**.
 
 ```
-Error = |predicted - actual| = |2005 - 85| = 1920 😱
+Error = |predicted - actual| = |2005 - 85| = 1920
 ```
 
 **Step 4: Adjust Weights (Training)**
@@ -604,12 +604,12 @@ This process repeats thousands of times until errors get small.
 **Analogy: Writing an Essay**
 
 **Shallow approach:** Memorize full sentences for every topic
-- ❌ Need millions of memorized sentences
-- ❌ Can't adapt to new topics
+- Need millions of memorized sentences
+- Can't adapt to new topics
 
 **Deep approach:** Learn words → phrases → sentences → paragraphs
-- ✅ Reusable building blocks
-- ✅ Can create new combinations
+- Reusable building blocks
+- Can create new combinations
 
 **Real-world evidence:**
 - ResNet (152 layers) crushes 5-layer networks on image recognition
@@ -631,16 +631,16 @@ This process repeats thousands of times until errors get small.
 ### Summary: What You've Learned
 
 **§0: Machine Learning Big Picture**
-- ✅ ML = learning patterns from data instead of hand-coded rules
-- ✅ Training loop: data → predictions → error → adjust weights → repeat
-- ✅ Supervised learning = learning with labeled examples
+- ML = learning patterns from data instead of hand-coded rules
+- Training loop: data → predictions → error → adjust weights → repeat
+- Supervised learning = learning with labeled examples
 
 **§1: Neural Networks 101**
-- ✅ A neuron computes `z = Wx + b`, then applies activation (e.g., ReLU)
-- ✅ Activation functions (ReLU, sigmoid, tanh) add nonlinearity
-- ✅ Layers stack neurons: input → hidden → output
-- ✅ Forward pass: data flows through all layers to make a prediction
-- ✅ Depth lets networks learn hierarchical features (edges → shapes → objects)
+- A neuron computes `z = Wx + b`, then applies activation (e.g., ReLU)
+- Activation functions (ReLU, sigmoid, tanh) add nonlinearity
+- Layers stack neurons: input → hidden → output
+- Forward pass: data flows through all layers to make a prediction
+- Depth lets networks learn hierarchical features (edges → shapes → objects)
 
 **Next Up:**
 - How training actually works (backpropagation and gradient descent)

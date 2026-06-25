@@ -6,12 +6,12 @@
 
 **Three ways to learn from this content:**
 
-1. **📓 Executable Code First** → Run [grand_solution.ipynb (reference)](grand_solution_reference.ipynb) | [grand_solution.ipynb (exercise)](grand_solution_exercise.ipynb)
+1. ** Executable Code First** → Run [grand_solution.ipynb (reference)](grand_solution_reference.ipynb) | [grand_solution.ipynb (exercise)](grand_solution_exercise.ipynb)
  - Complete end-to-end implementation in a single notebook
  - Execute cells top-to-bottom to see the full progression
  - Perfect for hands-on learners who want to experiment immediately
 
-2. **📖 Narrative Arc** → Read this document (grand_solution.md)
+2. ** Narrative Arc** → Read this document (grand_solution.md)
  - Understand *why* each concept matters and *when* to use it
  - See how all 7 chapters connect into a production system
  - Best for understanding the big picture and design patterns
@@ -320,7 +320,7 @@ if weeks_since_training > 4:
 |---|------------|--------|--------|-------------------|
 | **#1** | **ACCURACY** | <$40k MAE | **$32k** | Ch.7: XGBoost + Optuna tuning |
 | **#2** | **GENERALIZATION** | Work on unseen districts | **Stable** | Ch.5: Ridge regularization + Ch.6: 5-fold CV |
-| **#3** | **MULTI-TASK** | Value + Segment | ➡ **Next track** | Regression complete → continues in 02-Classification |
+| **#3** | **MULTI-TASK** | Value + Segment | **Next track** | Regression complete → continues in 02-Classification |
 | **#4** | **INTERPRETABILITY** | Explainable predictions | **Compliant** | Ch.3: VIF + importance, Ch.7: SHAP values |
 | **#5** | **PRODUCTION** | <100ms, scale, monitoring | **Framework ready** | Ch.6: Monitoring thresholds, Ch.7: Systematic tuning |
 

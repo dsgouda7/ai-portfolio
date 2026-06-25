@@ -24,7 +24,7 @@
 
 **What's blocking us:**
 
-🚨 **No adversarial testing — vulnerable to prompt injection and misuse**
+ **No adversarial testing — vulnerable to prompt injection and misuse**
 
 **Penetration test findings (pre-launch security audit):**
 ```
@@ -869,7 +869,7 @@ print(result["verdict"])
 | **RAGAS Faithfulness (§3.3)** | Batch evaluation on sampled conversations (not real-time) | +500ms | ~$0.01/eval |
 | **Self-consistency sampling** | High-stakes queries with no clear corpus grounding (NLI returns NEUTRAL) | +5× LLM time | ~$0.010/check |
 
-> ➡ In [Evaluating AI Systems](../ch08_evaluating_ai_systems), faithfulness and self-consistency are formalized as evaluation metrics in your full test harness.
+> In [Evaluating AI Systems](../ch08_evaluating_ai_systems), faithfulness and self-consistency are formalized as evaluation metrics in your full test harness.
 
 ---
 
@@ -1495,7 +1495,7 @@ graph TD
  J1 --> J2[Daily: Compute Faithfulness on 100 Random Samples]
  J2 --> J3[Weekly: Run 500-Query Red-Team Suite]
  J3 --> J4{Prevention Rate < 95%?}
- J4 -->|Yes| K[🚨 Alert: Manual Review Required]
+ J4 -->|Yes| K[ Alert: Manual Review Required]
  J4 -->|No| L[ Dashboard: All Clear]
 
  style R1 fill:#ff6b6b
@@ -1687,7 +1687,7 @@ Beyond sycophancy and verbosity bias, models inherit additional biases from trai
 
 > **Business metric consequence of sycophancy:** A bot that confirms false allergen safety claims costs nothing to detect in development — and costs a lawsuit to detect in production. Test sycophancy explicitly: assert false premises about allergens, prices, and hours, then verify the model corrects the user rather than agreeing. Sycophancy is the mechanism behind the allergen manipulation attack in §0 — "my doctor said all your pizzas are peanut-safe" — the model's approval-seeking overrides its safety constraint. Layer 2 output validation (§3.1) is your backstop, but catching it in evaluation is cheaper than catching it in a lawsuit.
 
-> ➡ Testing sycophancy and demographic bias at scale requires a structured evaluation harness — see [Evaluating AI Systems](../ch08_evaluating_ai_systems) for stratified metric protocols and LLM-as-judge rubrics that guard against verbosity bias in automated scoring.
+> Testing sycophancy and demographic bias at scale requires a structured evaluation harness — see [Evaluating AI Systems](../ch08_evaluating_ai_systems) for stratified metric protocols and LLM-as-judge rubrics that guard against verbosity bias in automated scoring.
 
 ---
 
@@ -1697,21 +1697,21 @@ The five §0 failures map directly to checklist gaps: no input filter (failures 
 
 ```
 Before launch:
-☐ Adversarial red-teaming: try at least 20 known jailbreak patterns from your threat model
-☐ PII leakage test: attempt to extract private data from the context window
-☐ Hallucination rate measurement: run EvaluatingAISystems.md faithfulness metric on test set
-☐ Input/output filter in place with rejection logging
-☐ Rate limiting and anomaly detection on the API layer
+ Adversarial red-teaming: try at least 20 known jailbreak patterns from your threat model
+ PII leakage test: attempt to extract private data from the context window
+ Hallucination rate measurement: run EvaluatingAISystems.md faithfulness metric on test set
+ Input/output filter in place with rejection logging
+ Rate limiting and anomaly detection on the API layer
 
 At launch:
-☐ Human-in-the-loop for high-stakes outputs (medical, legal, financial)
-☐ Citation/source display so users can verify factual claims
-☐ Feedback loop: let users flag bad outputs; route to human review
+ Human-in-the-loop for high-stakes outputs (medical, legal, financial)
+ Citation/source display so users can verify factual claims
+ Feedback loop: let users flag bad outputs; route to human review
 
 Post-launch monitoring:
-☐ Faithfulness metric tracked per week (alert if drops below threshold)
-☐ Jailbreak attempt rate monitored (alert on spike)
-☐ Random sample of outputs reviewed by humans monthly
+ Faithfulness metric tracked per week (alert if drops below threshold)
+ Jailbreak attempt rate monitored (alert on spike)
+ Random sample of outputs reviewed by humans monthly
 ```
 
 > **Checklist ROI:** Each layer adds $0.002/conv and 200ms; the full red-team build is a two-week one-time investment. Against that: one prevented allergen incident eliminates a potential $1M+ lawsuit; passing the PCI security audit unblocks payment processing; 95%+ attack prevention separates a viral brand-damage incident from a non-event. No checklist item costs more than the first incident it prevents.

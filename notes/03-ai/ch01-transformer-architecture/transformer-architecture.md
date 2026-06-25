@@ -219,10 +219,10 @@ You can't say "Well, 'capital' *feels* right." You need a number. A score. A mat
 
 ```python
 # One-hot vectors: 100,000 dimensions per word
-"Paris"   → [0, 0, 0, ..., 1, ..., 0, 0]  # 1 at position 47,832, zeros everywhere else
-"France"  → [0, 0, 0, ..., 1, ..., 0, 0]  # 1 at position 23,104
-"London"  → [0, 0, 0, ..., 1, ..., 0, 0]  # 1 at position 51,287
-"sandwich"→ [0, 0, 0, ..., 1, ..., 0, 0]  # 1 at position 89,421
+"Paris" → [0, 0, 0, ..., 1, ..., 0, 0] # 1 at position 47,832, zeros everywhere else
+"France" → [0, 0, 0, ..., 1, ..., 0, 0] # 1 at position 23,104
+"London" → [0, 0, 0, ..., 1, ..., 0, 0] # 1 at position 51,287
+"sandwich"→ [0, 0, 0, ..., 1, ..., 0, 0] # 1 at position 89,421
 ```
 
 This solves the "do math on words" problem — now every word is a vector. You can compute dot products, distances, similarities.
@@ -237,10 +237,10 @@ Here's what that means in practice:
 
 ```python
 # Dense embeddings: 4,096 dimensions per word (learned during training)
-"Paris"   → [0.23, -1.84, 0.91, ..., 3.21]  # 4,096 numbers
-"France"  → [0.19, -1.79, 0.88, ..., 3.15]  # Very close to Paris!
-"London"  → [0.21, -1.81, 0.89, ..., 3.18]  # Also close (capital city)
-"sandwich"→ [9.42,  0.03, -7.12, ..., -2.88] # Nowhere near Paris
+"Paris" → [0.23, -1.84, 0.91, ..., 3.21] # 4,096 numbers
+"France" → [0.19, -1.79, 0.88, ..., 3.15] # Very close to Paris!
+"London" → [0.21, -1.81, 0.89, ..., 3.18] # Also close (capital city)
+"sandwich"→ [9.42, 0.03, -7.12, ..., -2.88] # Nowhere near Paris
 ```
 
 These are **embeddings**. Every word in your 100,000-word vocabulary gets mapped to a point in this 4,096-dimensional space. Words that mean similar things live *close together*. Words that mean different things live *far apart*.
@@ -320,15 +320,15 @@ Every time the model makes a wrong prediction, it adjusts the embedding coordina
 
 ```
 If model predicts "sandwich" when answer is "Paris":
-  - Make "Paris" embedding more likely in this context (adjust its 4,096 coordinates)
-  - Make "sandwich" embedding less likely in this context
+ - Make "Paris" embedding more likely in this context (adjust its 4,096 coordinates)
+ - Make "sandwich" embedding less likely in this context
 
 If model predicts "London" when answer is "Paris":
-  - Small adjustment (they're both capitals — partial credit)
-  - But still nudge "Paris" to be more likely
+ - Small adjustment (they're both capitals — partial credit)
+ - But still nudge "Paris" to be more likely
 
 If model predicts "France" when answer is "Paris":
-  - Very small adjustment (they co-occur often — strong relationship learned)
+ - Very small adjustment (they co-occur often — strong relationship learned)
 ```
 
 **Step 3: After billions of examples, embeddings self-organize**
@@ -609,22 +609,22 @@ There's no free lunch. You optimize for quality or scale, rarely both.
 You can't beat O(n²) physics. So you:
 
 1. **Pick your maximum context length** based on:
-   - Hardware budget (GPUs available)
-   - Use case (chat vs document analysis)
-   - Inference speed requirements (fast chat vs slow research)
+ - Hardware budget (GPUs available)
+ - Use case (chat vs document analysis)
+ - Inference speed requirements (fast chat vs slow research)
 
 2. **Build truncation logic into your API:**
-   ```python
-   if len(prompt_tokens) > max_context:
-       prompt_tokens = prompt_tokens[-max_context:]  # Keep most recent
-   ```
+ ```python
+ if len(prompt_tokens) > max_context:
+ prompt_tokens = prompt_tokens[-max_context:] # Keep most recent
+ ```
 
 3. **Document the limit** so users know when they'll hit it
 
 4. **Optimize within the limit:**
-   - KV caching (Ch.2 §3A) makes generation faster within the window
-   - Prompt compression (Ch.5) fits more semantic content into fewer tokens
-   - RAG retrieval (Ch.7) brings in external knowledge without expanding context
+ - KV caching (Ch.2 §3A) makes generation faster within the window
+ - Prompt compression (Ch.5) fits more semantic content into fewer tokens
+ - RAG retrieval (Ch.7) brings in external knowledge without expanding context
 
 **Victory:** You've defined the limits of your Oracle. It can see 2,048 tokens (GPT-3), 8,192 tokens (GPT-4), or 200k tokens (Claude 3) into the past—no more, no less. The limit is public, documented, and ruthlessly enforced. Now you can move on to teaching the Oracle *which* words in that fixed window actually matter — that's what attention solves.
 
@@ -644,25 +644,25 @@ BPE is a **greedy compression algorithm** trained on your corpus:
 
 ```
 Step 0: Start with character-level vocabulary
-  ['a', 'b', 'c', ..., 'z', ' ', '.', '!', ...]
+ ['a', 'b', 'c', ..., 'z', ' ', '.', '!', ...]
 
 Step 1: Count all adjacent character pairs in training corpus
-  "the" appears 500M times → "t"+"h" = 500M occurrences
-  "in" appears 300M times → "i"+"n" = 300M occurrences
-  "er" appears 280M times → "e"+"r" = 280M occurrences
+ "the" appears 500M times → "t"+"h" = 500M occurrences
+ "in" appears 300M times → "i"+"n" = 300M occurrences
+ "er" appears 280M times → "e"+"r" = 280M occurrences
 
 Step 2: Merge most frequent pair into new token
-  't' + 'h' → 'th' (now 'th' is a single token)
+ 't' + 'h' → 'th' (now 'th' is a single token)
 
 Step 3: Repeat on updated corpus
-  Next most frequent: 'th' + 'e' → 'the'
-  Then: 'i' + 'n' → 'in'
-  Then: 'in' + 'g' → 'ing'
+ Next most frequent: 'th' + 'e' → 'the'
+ Then: 'i' + 'n' → 'in'
+ Then: 'in' + 'g' → 'ing'
 
 Step 4: Continue until vocabulary reaches target size
-  GPT-2: 50,257 tokens
-  GPT-4: ~100,000 tokens
-  Claude: ~100,000 tokens (different vocabulary — trained on different corpus)
+ GPT-2: 50,257 tokens
+ GPT-4: ~100,000 tokens
+ Claude: ~100,000 tokens (different vocabulary — trained on different corpus)
 ```
 
 **Result after training BPE on web text:**
@@ -679,8 +679,8 @@ Every API charges per token, not per word or character:
 
 ```python
 # Same semantic meaning, very different costs
-prompt_1 = "Explain transformers"  # 3 tokens → $0.000075 (GPT-4o-mini)
-prompt_2 = "Can you explain how transformer architecture works?"  # 9 tokens → $0.0002025
+prompt_1 = "Explain transformers" # 3 tokens → $0.000075 (GPT-4o-mini)
+prompt_2 = "Can you explain how transformer architecture works?" # 9 tokens → $0.0002025
 
 # 3× longer prompt = 3× cost
 ```
@@ -721,7 +721,7 @@ Actual (GPT-4 output, 2023): "Two."
 **Why this happens:** `strawberry` tokenizes as `str` + `aw` + `berry` (3 tokens in GPT-2 vocabulary). The model never sees individual letters — it sees **token IDs**:
 
 ```python
-"strawberry" → [620, 707, 15717]  # Three opaque integers
+"strawberry" → [620, 707, 15717] # Three opaque integers
 ```
 
 The model has no direct access to the character sequence 's-t-r-a-w-b-e-r-r-y'. It must *infer* the spelling from learned patterns across millions of examples. Sometimes it hallucinates.
@@ -760,15 +760,15 @@ Python code tokenizes poorly because BPE was trained on natural language:
 
 # Equivalent Python code: 35 tokens
 def sort_list(lst):
-    return sorted(lst)
+ return sorted(lst)
 
 # Token breakdown:
-# ['def', ' sort', '_', 'list', '(', 'lst', '):', '\n', '    ', 'return', ' sorted', '(', 'lst', ')']
+# ['def', ' sort', '_', 'list', '(', 'lst', '):', '\n', ' ', 'return', ' sorted', '(', 'lst', ')']
 ```
 
 **Why code is token-dense:**
 - Symbols like `(`, `)`, `:`, `.`, `[`, `]` are each separate tokens
-- Indentation (spaces/tabs) tokenizes separately: `    ` (4 spaces) = 1-2 tokens
+- Indentation (spaces/tabs) tokenizes separately: ` ` (4 spaces) = 1-2 tokens
 - Variable names split: `attention_weights` → `attention`, `_`, `weights`
 
 **Production impact:** A 500-line Python file might be 8,000-12,000 tokens — consuming an entire GPT-4 8k context window. Most code QA tools compress code by removing comments, docstrings, and whitespace before sending to the model.
@@ -789,12 +789,12 @@ text = "Transformer architecture leverages self-attention mechanisms."
 **Why this matters:**
 - Never assume token counts transfer between models
 - Always use the model-specific tokenizer for cost estimation:
-  ```python
-  import tiktoken  # OpenAI's tokenizer
-  enc = tiktoken.encoding_for_model("gpt-4")
-  tokens = enc.encode("Your text here")
-  print(f"Token count: {len(tokens)}")
-  ```
+ ```python
+ import tiktoken # OpenAI's tokenizer
+ enc = tiktoken.encoding_for_model("gpt-4")
+ tokens = enc.encode("Your text here")
+ print(f"Token count: {len(tokens)}")
+ ```
 
 #### How to Minimize Token Usage (Cost Optimization)
 
@@ -829,18 +829,18 @@ text = "Transformer architecture leverages self-attention mechanisms."
 ```python
 # With comments (50 tokens)
 def calculate_attention(Q, K, V):
-    """
-    Computes scaled dot-product attention.
-    Args: Q, K, V matrices
-    Returns: attention output
-    """
-    scores = Q @ K.T / sqrt(d_k)
-    weights = softmax(scores)
-    return weights @ V
+ """
+ Computes scaled dot-product attention.
+ Args: Q, K, V matrices
+ Returns: attention output
+ """
+ scores = Q @ K.T / sqrt(d_k)
+ weights = softmax(scores)
+ return weights @ V
 
 # Stripped (22 tokens) — semantics preserved
 def calculate_attention(Q, K, V):
-    return softmax(Q @ K.T / sqrt(d_k)) @ V
+ return softmax(Q @ K.T / sqrt(d_k)) @ V
 ```
 
 #### What You Need to Know About Tokens (Summary Table)
@@ -1652,10 +1652,10 @@ When two tokens "attend" to each other, the attention score depends on the **ang
 2. **Extrapolates gracefully**: Train on 2k tokens, run on 8k tokens with minimal degradation. The rotation angles are continuous (not a lookup table), so unseen positions $i > 2048$ get well-defined rotation angles via the same formula.
 
 3. **Computationally cheap**: Rotation is a 2D matrix multiplication per dimension pair:
-   $$
-   \begin{bmatrix} q_i^{(2k)} \\ q_i^{(2k+1)} \end{bmatrix} \leftarrow \begin{bmatrix} \cos(m\theta_k) & -\sin(m\theta_k) \\ \sin(m\theta_k) & \cos(m\theta_k) \end{bmatrix} \begin{bmatrix} q_i^{(2k)} \\ q_i^{(2k+1)} \end{bmatrix}
-   $$
-   where $m = $ position index, $\theta_k = $ frequency for dimension pair $k$. Fast on GPUs.
+ $$
+ \begin{bmatrix} q_i^{(2k)} \\ q_i^{(2k+1)} \end{bmatrix} \leftarrow \begin{bmatrix} \cos(m\theta_k) & -\sin(m\theta_k) \\ \sin(m\theta_k) & \cos(m\theta_k) \end{bmatrix} \begin{bmatrix} q_i^{(2k)} \\ q_i^{(2k+1)} \end{bmatrix}
+ $$
+ where $m = $ position index, $\theta_k = $ frequency for dimension pair $k$. Fast on GPUs.
 
 4. **No extra parameters**: Like sinusoidal encoding, RoPE adds zero learnable parameters. But unlike sinusoidal, it explicitly encodes relative position in the attention score computation.
 
@@ -1719,32 +1719,32 @@ If you're building a model in 2025+:
 import torch
 
 def apply_rotary_position_encoding(q, k, position_ids, d_model):
-    """
-    Apply RoPE to query and key tensors.
-    q, k: (batch, num_heads, seq_len, head_dim)
-    position_ids: (batch, seq_len) — position indices (0, 1, 2, ...)
-    """
-    head_dim = q.shape[-1]
-    # Compute rotation frequencies
-    inv_freq = 1.0 / (10000 ** (torch.arange(0, head_dim, 2).float() / head_dim))
+ """
+ Apply RoPE to query and key tensors.
+ q, k: (batch, num_heads, seq_len, head_dim)
+ position_ids: (batch, seq_len) — position indices (0, 1, 2, ...)
+ """
+ head_dim = q.shape[-1]
+ # Compute rotation frequencies
+ inv_freq = 1.0 / (10000 ** (torch.arange(0, head_dim, 2).float() / head_dim))
 
-    # Rotation angles: (seq_len, head_dim/2)
-    angles = position_ids.unsqueeze(-1) @ inv_freq.unsqueeze(0)
-    cos = torch.cos(angles)
-    sin = torch.sin(angles)
+ # Rotation angles: (seq_len, head_dim/2)
+ angles = position_ids.unsqueeze(-1) @ inv_freq.unsqueeze(0)
+ cos = torch.cos(angles)
+ sin = torch.sin(angles)
 
-    # Apply rotation to (q_even, q_odd) pairs
-    q_rot = rotate_half(q, cos, sin)
-    k_rot = rotate_half(k, cos, sin)
-    return q_rot, k_rot
+ # Apply rotation to (q_even, q_odd) pairs
+ q_rot = rotate_half(q, cos, sin)
+ k_rot = rotate_half(k, cos, sin)
+ return q_rot, k_rot
 
 def rotate_half(x, cos, sin):
-    """Rotate consecutive dimension pairs by (cos, sin) angles."""
-    x1, x2 = x[..., ::2], x[..., 1::2]  # Split even/odd dimensions
-    return torch.cat([
-        x1 * cos - x2 * sin,  # Real part of complex rotation
-        x1 * sin + x2 * cos   # Imaginary part
-    ], dim=-1)
+ """Rotate consecutive dimension pairs by (cos, sin) angles."""
+ x1, x2 = x[..., ::2], x[..., 1::2] # Split even/odd dimensions
+ return torch.cat([
+ x1 * cos - x2 * sin, # Real part of complex rotation
+ x1 * sin + x2 * cos # Imaginary part
+ ], dim=-1)
 ```
 
 **Key insight:** This is applied **before** computing $QK^T$ in the attention mechanism. The rotation ensures that $q_i \cdot k_j$ depends on $(i - j)$.

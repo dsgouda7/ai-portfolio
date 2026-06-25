@@ -210,8 +210,8 @@ optimizer.step()
 **Gradient flow**:
 ```
 x → encoder → z → decoder → x_recon → L_MSE
-                ↑                      ↓
-                └──────── ∇L ──────────┘
+ ↑ ↓
+ └──────── ∇L ──────────┘
 ```
 
 ### Step 4: Visualize Latent Space
@@ -221,9 +221,9 @@ x → encoder → z → decoder → x_recon → L_MSE
 z_all = []
 labels_all = []
 for x, y in test_loader:
-    z = encoder(x)
-    z_all.append(z.detach())
-    labels_all.append(y)
+ z = encoder(x)
+ z_all.append(z.detach())
+ labels_all.append(y)
 
 z_all = torch.cat(z_all) # Shape: [10000, 32]
 labels_all = torch.cat(labels_all) # Shape: [10000]
@@ -247,49 +247,49 @@ plt.title('Autoencoder latent space (t-SNE projection)')
 ### 5.1 · Autoencoder Architecture
 
 ```
-INPUT LAYER          ENCODER          BOTTLENECK        DECODER           OUTPUT LAYER
-  (784D)             (400D)             (32D)            (400D)              (784D)
+INPUT LAYER ENCODER BOTTLENECK DECODER OUTPUT LAYER
+ (784D) (400D) (32D) (400D) (784D)
 
-    x₁  ──┐                              z₁  ──┐                              x̂₁
-    x₂  ──┤                              z₂  ──┤                              x̂₂
-    x₃  ──┤─→ Linear → ReLU ──→ Linear → z₃  ──┤─→ Linear → ReLU ──→ Linear → x̂₃
-    ...   │   (784→400)          (400→32) ...  │   (32→400)          (400→784) ...
-   x₇₈₄ ──┘                             z₃₂ ──┘                             x̂₇₈₄
-                                                                               ↓
-                                                                            Sigmoid
-                                                                            [0, 1]
-                                    ↑                                          ↓
-                               COMPRESSION                            RECONSTRUCTION
-                              (24.5× smaller)                         (MSE loss ≈ 0.02)
+ x₁ ──┐ z₁ ──┐ x̂₁
+ x₂ ──┤ z₂ ──┤ x̂₂
+ x₃ ──┤─→ Linear → ReLU ──→ Linear → z₃ ──┤─→ Linear → ReLU ──→ Linear → x̂₃
+ ... │ (784→400) (400→32) ... │ (32→400) (400→784) ...
+ x₇₈₄ ──┘ z₃₂ ──┘ x̂₇₈₄
+ ↓
+ Sigmoid
+ [0, 1]
+ ↑ ↓
+ COMPRESSION RECONSTRUCTION
+ (24.5× smaller) (MSE loss ≈ 0.02)
 ```
 
 ### 5.2 · Latent Space (2D t-SNE Projection)
 
 ```
-          Latent Space (z ∈ R³², projected to R²)
+ Latent Space (z ∈ R³², projected to R²)
 
-    ┌──────────────────────────────────────────┐
-    │          ●●●                              │  ● = Digit class
-    │        ●●3●3●●                            │
-    │       ●●3●3●3●●          ○○○             │
-    │        ●●3●3●●          ○○8○8○○           │
-    │          ●●●            ○8○○8○8○          │
-    │                          ○○8○8○○           │
-    │   ●●●                     ○○○             │
-    │  ●1●1●      △△△△                         │  Classes cluster
-    │ ●●1●1●●    △△5△5△△                       │  by semantic
-    │  ●1●1●    △△5△5△5△                       │  similarity
-    │   ●●●      △△5△5△△                       │
-    │             △△△△                          │
-    │                      ×××××                │
-    │   ■■■              ×××0×0×××              │
-    │  ■4■4■            ××0×0×0×0××             │
-    │ ■■4■4■■            ×××0×0×××              │
-    │  ■4■4■              ×××××                 │
-    │   ■■■                                     │
-    └──────────────────────────────────────────┘
+ ┌──────────────────────────────────────────┐
+ │ ●●● │ ● = Digit class
+ │ ●●3●3●● │
+ │ ●●3●3●3●● ○○○ │
+ │ ●●3●3●● ○○8○8○○ │
+ │ ●●● ○8○○8○8○ │
+ │ ○○8○8○○ │
+ │ ●●● ○○○ │
+ │ ●1●1● △△△△ │ Classes cluster
+ │ ●●1●1●● △△5△5△△ │ by semantic
+ │ ●1●1● △△5△5△5△ │ similarity
+ │ ●●● △△5△5△△ │
+ │ △△△△ │
+ │ ××××× │
+ │ ■■■ ×××0×0××× │
+ │ ■4■4■ ××0×0×0×0×× │
+ │ ■■4■4■■ ×××0×0××× │
+ │ ■4■4■ ××××× │
+ │ ■■■ │
+ └──────────────────────────────────────────┘
 
-    Digit 3 and 8 closer than 1 and 0 (visual similarity)
+ Digit 3 and 8 closer than 1 and 0 (visual similarity)
 ```
 
 ### 5.3 · Compression-Reconstruction Trade-off
@@ -299,18 +299,18 @@ Bottleneck Size vs Reconstruction Quality
 
 MSE
 0.10│
-    │  ●                       Too narrow: can't capture digit identity
-0.08│    ●
-    │      ●
-0.06│        ●
-    │          ●               Sweet spot: k=32 (compression 24.5×)
-0.04│            ●●●
-    │                ●●●
-0.02│                    ●●●●●●●
-    │_________________________●●●●●●●●●___
-0.00│                                Too wide: learns identity
-    └────────────────────────────────────────> Bottleneck size k
-    2    4    8   16   32   64  128  256  512  784
+ │ ● Too narrow: can't capture digit identity
+0.08│ ●
+ │ ●
+0.06│ ●
+ │ ● Sweet spot: k=32 (compression 24.5×)
+0.04│ ●●●
+ │ ●●●
+0.02│ ●●●●●●●
+ │_________________________●●●●●●●●●___
+0.00│ Too wide: learns identity
+ └────────────────────────────────────────> Bottleneck size k
+ 2 4 8 16 32 64 128 256 512 784
 ```
 
 ---
@@ -338,22 +338,22 @@ MSE
 ## 7 · What Can Go Wrong
 
 1. **Identity mapping (no compression)** — Bottleneck too wide ($k \approx d$), network learns $\hat{\mathbf{x}} \approx \mathbf{x}$ without compressing.
-   - **Symptom**: MSE → 0, but latent codes don't cluster by digit class
-   - **Fix**: Reduce $k$ (force compression), add sparsity penalty to latent code
+ - **Symptom**: MSE → 0, but latent codes don't cluster by digit class
+ - **Fix**: Reduce $k$ (force compression), add sparsity penalty to latent code
 
 2. **Blurry reconstructions** — MSE loss penalizes sharp edges (pixel-wise squared error).
-   - **Symptom**: Reconstructions look "fuzzy," edges smeared
-   - **Fix**: Use BCE loss instead of MSE, or switch to perceptual loss (Ch.3 GANs)
+ - **Symptom**: Reconstructions look "fuzzy," edges smeared
+ - **Fix**: Use BCE loss instead of MSE, or switch to perceptual loss (Ch.3 GANs)
 
 3. **Can't generate new samples** — Sampling random $\mathbf{z}$ produces garbage.
-   - **Cause**: Latent space is deterministic, not probabilistic. Only codes produced by encoder are valid.
-   - **Fix**: Use VAE (Ch.2) — probabilistic latent space allows sampling from prior
+ - **Cause**: Latent space is deterministic, not probabilistic. Only codes produced by encoder are valid.
+ - **Fix**: Use VAE (Ch.2) — probabilistic latent space allows sampling from prior
 
 4. **Training doesn't converge** — Loss oscillates or plateaus early.
-   - **Fix**: Reduce learning rate, check data normalization (MNIST should be in [0,1] or [-1,1])
+ - **Fix**: Reduce learning rate, check data normalization (MNIST should be in [0,1] or [-1,1])
 
 5. **Latent space not interpretable** — Dimensions don't correspond to meaningful features.
-   - **Fix**: Use β-VAE (Ch.2) for disentangled representations, or train with supervision (e.g., auxiliary classifier on latent code)
+ - **Fix**: Use β-VAE (Ch.2) for disentangled representations, or train with supervision (e.g., auxiliary classifier on latent code)
 
 ---
 
@@ -366,7 +366,7 @@ MSE
 
 **Constraint progress**:
 - **#1 QUALITY**: ~60% fooling rate (reconstructions distinguishable from originals due to blur)
-- **#5 LATENT INTERPRETABILITY**: ✓ Latent space meaningful (clusters by digit class)
+- **#5 LATENT INTERPRETABILITY**: Latent space meaningful (clusters by digit class)
 
 **Still can't solve:**
 - **#1 QUALITY**: <90% fooling rate — MSE loss produces blur

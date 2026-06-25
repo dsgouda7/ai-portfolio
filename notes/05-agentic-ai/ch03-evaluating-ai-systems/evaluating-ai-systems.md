@@ -26,7 +26,7 @@
 
 **What's blocking us:**
 
-🚨 **No automated testing — regression risk on every code change**
+ **No automated testing — regression risk on every code change**
 
 **Current deployment process:**
 ```
@@ -141,7 +141,7 @@ Test pieces in isolation: Test end-to-end pipeline: Test real user impact:
 
 > **How to use this workflow:** Start with Scope 1 when building/replacing components. Run Scope 2 after every code change (automated CI/CD). Run Scope 3 before major releases or when changing core user experience. All three scopes together form your regression prevention system.
 
-> 📖 **Workflow pattern vs. concept-based chapters:** This is a **procedural chapter** teaching a diagnostic workflow, not a single concept. The 3 evaluation scopes are decision checkpoints, not sequential steps — you iterate between scopes based on what breaks. Compare to Ch.4 (RAG & Embeddings) which is concept-based: one core idea (retrieval augmentation) taught start-to-finish.
+> **Workflow pattern vs. concept-based chapters:** This is a **procedural chapter** teaching a diagnostic workflow, not a single concept. The 3 evaluation scopes are decision checkpoints, not sequential steps — you iterate between scopes based on what breaks. Compare to Ch.4 (RAG & Embeddings) which is concept-based: one core idea (retrieval augmentation) taught start-to-finish.
 
 ---
 
@@ -188,7 +188,7 @@ print(result)
 # {'faithfulness': 1.0, 'answer_relevancy': 0.95, 'context_precision': 1.0, 'context_recall': 1.0}
 ```
 
-> 💼 **Industry callout — RAGAS in production:** **TruLens** (TruEra, 2023) wraps RAGAS metrics with real-time tracing and dashboard visualization. **LangSmith** (LangChain, 2024) integrates RAGAS evaluation directly into prompt iteration workflows — every prompt version is automatically scored against your golden dataset. Both tools prevent the "test 3 queries manually and hope" anti-pattern. Used at Anthropic (Claude dashboard), OpenAI (eval harness), and Cohere (production monitoring).
+> **Industry callout — RAGAS in production:** **TruLens** (TruEra, 2023) wraps RAGAS metrics with real-time tracing and dashboard visualization. **LangSmith** (LangChain, 2024) integrates RAGAS evaluation directly into prompt iteration workflows — every prompt version is automatically scored against your golden dataset. Both tools prevent the "test 3 queries manually and hope" anti-pattern. Used at Anthropic (Claude dashboard), OpenAI (eval harness), and Cohere (production monitoring).
 
 ### What Each Score Tells You
 
@@ -307,7 +307,7 @@ Respond in JSON: {"faithfulness": int, "efficiency": int, "groundedness": int, "
 - Run each evaluation 3x and take the majority
 - Validate the judge's scores against human labels on a sample set
 
-> 💼 **Industry callout — LangSmith for tracing + eval:** **LangSmith** (LangChain, 2024) is the production standard for agent trace evaluation. It automatically captures every Thought→Action→Observation step, computes LLM-as-judge scores, and flags anomalies (hallucinated observations, redundant loops). Integrates with LangChain, LlamaIndex, and Semantic Kernel. **PromptLayer** (2022) is the lightweight alternative focused on prompt versioning with A/B testing. Both used at Zapier (agent automation), Notion (AI workspace), and Replit (code agents). Typical cost: Free tier for <1k traces/month, $50-200/month for production volumes.
+> **Industry callout — LangSmith for tracing + eval:** **LangSmith** (LangChain, 2024) is the production standard for agent trace evaluation. It automatically captures every Thought→Action→Observation step, computes LLM-as-judge scores, and flags anomalies (hallucinated observations, redundant loops). Integrates with LangChain, LlamaIndex, and Semantic Kernel. **PromptLayer** (2022) is the lightweight alternative focused on prompt versioning with A/B testing. Both used at Zapier (agent automation), Notion (AI workspace), and Replit (code agents). Typical cost: Free tier for <1k traces/month, $50-200/month for production volumes.
 
 > **DECISION CHECKPOINT #2 — Agent trace inefficiency diagnosis:**
 >
@@ -346,7 +346,7 @@ Respond in JSON: {"faithfulness": int, "efficiency": int, "groundedness": int, "
 
 > **Step efficiency → latency and cost:** Each redundant tool call adds ~0.3–0.5s. An agent averaging 10 steps instead of the optimal 6 pushes p95 latency from 2.5s toward 4s — past the 3s target — while doubling LLM token costs for those traces. Step efficiency is not a vanity metric: it protects both the latency SLA and the $0.015/conv cost ceiling from §0 simultaneously.
 
-> ➡ **Ch.10 (Fine-Tuning)** trains the agent’s planning model directly on domain traces, reducing average steps from ~10 to ~6 more reliably than prompt engineering — and closes the “planning regression” class that prompt changes routinely introduce.
+> **Ch.10 (Fine-Tuning)** trains the agent’s planning model directly on domain traces, reducing average steps from ~10 to ~6 more reliably than prompt engineering — and closes the “planning regression” class that prompt changes routinely introduce.
 
 ---
 
@@ -446,7 +446,7 @@ print(f"Semantic: {scores['semantic_similarity']:.3f}") # → 0.91 (semantically
 # - This is a GOOD answer despite low BLEU (BLEU penalizes paraphrasing)
 ```
 
-> 📖 **When to use each metric:**
+> **When to use each metric:**
 > - **BLEU**: Translation, code generation (exact syntax matters)
 > - **ROUGE**: Summarization (recall of key points matters more than exact wording)
 > - **Semantic Similarity**: Conversational AI (meaning preservation > surface form)
@@ -520,7 +520,7 @@ print(f"Fine-tuned perplexity: {ft_pp:.1f}") # → ~11 (fits pizza domain well)
 | GPT-4 class | Standard benchmarks | 3–8 |
 | Your fine-tuned model | Pizza FAQ corpus | Target < 15 after fine-tuning |
 
-> 💼 **Industry callout — Scale AI for human labeling:** When automated metrics disagree with user satisfaction (e.g., BLEU=0.85 but users say "confusing"), you need **human evaluation at scale**. **Scale AI** (2016, now valued at $7B+) pioneered outsourced annotation with 4-way redundancy and quality control. **Surge AI** (specialized for NLP, 2020) and **Labelbox** (active learning pipelines) are alternatives. Used by OpenAI (RLHF labeling), Anthropic (Constitutional AI feedback), and Google (Bard safety ratings). Typical cost: $0.10–$2.00 per label depending on task complexity.
+> **Industry callout — Scale AI for human labeling:** When automated metrics disagree with user satisfaction (e.g., BLEU=0.85 but users say "confusing"), you need **human evaluation at scale**. **Scale AI** (2016, now valued at $7B+) pioneered outsourced annotation with 4-way redundancy and quality control. **Surge AI** (specialized for NLP, 2020) and **Labelbox** (active learning pipelines) are alternatives. Used by OpenAI (RLHF labeling), Anthropic (Constitutional AI feedback), and Google (Bard safety ratings). Typical cost: $0.10–$2.00 per label depending on task complexity.
 
 ### Chunking Strategy Evaluation
 
@@ -678,7 +678,7 @@ else:
  print("\n All metrics passed. Safe to deploy.")
 ```
 
-> 💼 **Industry callout — DeepEval for CI/CD integration:** **DeepEval** (Confident AI, 2024) extends RAGAS with production-ready features: automatic golden dataset generation from production logs, GitHub Actions integration (fail PR if metrics drop >5%), and cost tracking ($0.002/eval with GPT-4o-mini as judge). **TruLens** (TruEra, 2023) offers enterprise features like drift detection and adversarial testing. Both used at Stripe (payment fraud AI), Shopify (merchant support bots), and Airbnb (booking agents). Typical setup: 100-200 golden queries evaluated on every commit, <2 min CI/CD runtime.
+> **Industry callout — DeepEval for CI/CD integration:** **DeepEval** (Confident AI, 2024) extends RAGAS with production-ready features: automatic golden dataset generation from production logs, GitHub Actions integration (fail PR if metrics drop >5%), and cost tracking ($0.002/eval with GPT-4o-mini as judge). **TruLens** (TruEra, 2023) offers enterprise features like drift detection and adversarial testing. Both used at Stripe (payment fraud AI), Shopify (merchant support bots), and Airbnb (booking agents). Typical setup: 100-200 golden queries evaluated on every commit, <2 min CI/CD runtime.
 
 ---
 
@@ -770,7 +770,7 @@ Open-source NLI models: `cross-encoder/nli-deberta-v3-base`, `vectara/hallucinat
 
 > **Hallucination rate → error rate:** The 5% error-rate target from §0 maps directly to hallucination frequency — 1 fabricated claim per 20 responses = 5% error rate; 1 per 10 = 10%. Self-consistency sampling (5 chains at temperature 0.7) costs ~5× API tokens on flagged queries but catches hallucination clusters before they trigger the 4-hour rollback cycle.
 
-> 💼 **Connection to Ch.7 safety guardrails.** The safety chapter defines what to filter; toxicity scoring is the measurement layer that implements the filter. A guardrail that blocks inputs is only as good as its toxicity score threshold — tune this on your domain's false-positive/false-negative trade-off, just as you tuned precision/recall for FaceAI's Bald classifier. For PizzaBot, severe toxicity and threats are hard blocks; general toxicity > 0.70 routes to a "We're sorry, we can only help with pizza orders" fallback.
+> **Connection to Ch.7 safety guardrails.** The safety chapter defines what to filter; toxicity scoring is the measurement layer that implements the filter. A guardrail that blocks inputs is only as good as its toxicity score threshold — tune this on your domain's false-positive/false-negative trade-off, just as you tuned precision/recall for FaceAI's Bald classifier. For PizzaBot, severe toxicity and threats are hard blocks; general toxicity > 0.70 routes to a "We're sorry, we can only help with pizza orders" fallback.
 
 ---
 
@@ -1069,7 +1069,7 @@ class PizzaBotEvaluationHarness:
  """
  Scope 2: Test full RAG pipeline with RAGAS metrics.
  """
- logger.info("🔗 Running Scope 2: Pipeline Evaluation...")
+ logger.info(" Running Scope 2: Pipeline Evaluation...")
 
  # Run RAGAS evaluation
  dataset = Dataset.from_dict(golden_dataset)
@@ -1113,7 +1113,7 @@ class PizzaBotEvaluationHarness:
  """
  Scope 3: Human evaluation with inter-rater agreement.
  """
- logger.info("👥 Running Scope 3: User Evaluation...")
+ logger.info(" Running Scope 3: User Evaluation...")
 
  # Task success rate (% rated ≥2 for correctness)
  rater1 = human_ratings['rater1_correctness']
@@ -1218,11 +1218,11 @@ if __name__ == "__main__":
  Running Scope 1: Component Evaluation...
  Embedding Recall@10: 0.820
  LLM ROUGE-L: 0.680
-🔗 Running Scope 2: Pipeline Evaluation...
+ Running Scope 2: Pipeline Evaluation...
  Faithfulness: 0.920
  Answer Relevancy: 0.870
  Context Precision: 0.850
-👥 Running Scope 3: User Evaluation...
+ Running Scope 3: User Evaluation...
  Task Success Rate: 96.0%
  Cohen's κ: 0.780
 
@@ -1378,7 +1378,7 @@ Dashboard metrics (real-time):
 - Hallucination incidents: 0/hour
 
 Alert triggered:
-🚨 Error rate spike: 4.8% → 7.2% (exceeded 5% threshold)
+ Error rate spike: 4.8% → 7.2% (exceeded 5% threshold)
 Timestamp: 2026-04-20 14:32 UTC
 Cause: RAG vector DB connection timeout (infrastructure issue)
 Action: Auto-fallback to BM25 keyword search triggered

@@ -53,7 +53,7 @@ $$y = a x_1 + b x_2 + c$$
 
 ## 2 · Running Example
 
-> 📘 **Physics-Free Path:** If terms like "gravity" or "velocity" feel foreign, here's the translation for this chapter:
+> **Physics-Free Path:** If terms like "gravity" or "velocity" feel foreign, here's the translation for this chapter:
 > • The formula $y(t) = v_{0y} t - \tfrac{1}{2} g t^2$ is just **a downward-opening parabola** $y(t) = at^2 + bt + c$ where $a = -\tfrac{1}{2}g$, $b = v_{0y}$, $c = 0$.
 > • "Apex" = **peak** (where the curve turns over).
 > • The three numbers $(a, b, c)$ are **parameters we fit to data** — no physics knowledge needed.

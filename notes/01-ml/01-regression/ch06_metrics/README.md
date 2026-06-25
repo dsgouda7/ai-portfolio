@@ -679,7 +679,7 @@ By the end, SmartVal will have the *provably best* Ridge configuration from 100+
 
 ---
 
-## 🔧 Exercise Connection
+## Exercise connection
 
 Evaluation and model comparison from this chapter apply in **Step 4** of xercises/01-ml/01-regression/src/models.py:
 
@@ -687,8 +687,8 @@ Evaluation and model comparison from this chapter apply in **Step 4** of xercis
 |---|---|---|
 | CV scoring strategy for fair comparison | ExperimentRunner.run_experiment() — train all registered models | 4 |
 | Multi-model leaderboard | ExperimentRunner.print_leaderboard() — sort by CV MAE, print Rich table | 4 |
-| MAE / RMSE / R² computation | src/evaluate.py is already built — trace how 
+| MAE / RMSE / R² computation | src/evaluate.py is already built — trace how
 un_experiment() calls it | — |
 
-**Path:** 
+**Path:**
 otebook-solution.ipynb → xercises/01-ml/01-regression/src/models.py → ExperimentRunner

@@ -22,7 +22,7 @@
 **What we know so far:**
 - Ch.1: Linear models $h = wt + b$
 - Ch.2: Parabolic trajectory $h(t) = 6.5t - 4.905t^2$
-- Ch.3: Can CHECK constraints: find apex $t_{\text{peak}} = 0.663s$, verify $h(0.663) = 2.15m > 1.8m$ ✓ wall cleared, $h(1.2) = 1.60m < 2.44m$ ✓ under crossbar
+- Ch.3: Can CHECK constraints: find apex $t_{\text{peak}} = 0.663s$, verify $h(0.663) = 2.15m > 1.8m$ wall cleared, $h(1.2) = 1.60m < 2.44m$ under crossbar
 - **But we can only check ONE fixed angle — we can't FIND the BEST angle!**
 
 **What's blocking us:**
@@ -115,8 +115,8 @@ To *minimise* $f(\theta)$:
 $$\theta_{k+1} = \theta_k - \eta f'(\theta_k)$$
 
 - $\eta$ (eta) is the **step size** or **learning rate** — always positive.
-- If $f'(\theta_k) > 0$, the curve is going up to the right; subtracting moves us left — *down*. ✓
-- If $f'(\theta_k) < 0$, the curve is going down to the right; subtracting moves us right — *down*. ✓
+- If $f'(\theta_k) > 0$, the curve is going up to the right; subtracting moves us left — *down*.
+- If $f'(\theta_k) < 0$, the curve is going down to the right; subtracting moves us right — *down*.
 - If $f'(\theta_k) = 0$, we've reached a critical point. Stop.
 
 To *maximise* $f(\theta)$ (our range case), flip the sign:
@@ -183,7 +183,7 @@ Phase 1 Complete
 > **Common alternatives:** `'L-BFGS-B'` (bounded parameters), `'CG'` (conjugate gradient for large-scale), `'Nelder-Mead'` (derivative-free).
 > **See also:** [SciPy optimize tutorial](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html)
 
-### 3.1.1 ✓ DECISION CHECKPOINT: Phase 1 Complete
+### 3.1.1 DECISION CHECKPOINT: Phase 1 Complete
 
 **What you just set:**
 - θ₀ = 0.0 (starting 3 units away from the true optimum at θ* = 3)
@@ -313,7 +313,7 @@ Phase 2 Complete
 > **Common pattern:** PyTorch: `loss.backward()` then `optimizer.step()`. TensorFlow: `tape.gradient(loss, variables)`.
 > **See also:** [PyTorch autograd tutorial](https://pytorch.org/tutorials/beginner/blitz/autograd_tutorial.html)
 
-### 3.2.1 ✓ DECISION CHECKPOINT: Phase 2 Complete
+### 3.2.1 DECISION CHECKPOINT: Phase 2 Complete
 
 **What you just saw:**
 - Gradient ∇L(θ=0) = -6.0 — strongly negative
@@ -365,9 +365,9 @@ print(f" Loss decreased by: ΔL = {loss_old - loss_new:.6f}")
 
 # Verify descent
 if loss_new < loss_old:
- print(" ✓ Loss decreased — update succeeded")
+ print(" Loss decreased — update succeeded")
 else:
- print(" ✗ Loss increased — learning rate too large or gradient error!")
+ print(" Loss increased — learning rate too large or gradient error!")
 
 # Update theta for next iteration
 theta = theta_new
@@ -380,7 +380,7 @@ Phase 3 Complete
  Step taken: Δθ = 0.600000
  L(θ_old) = 9.000000 → L(θ_new) = 5.760000
  Loss decreased by: ΔL = 3.240000
- ✓ Loss decreased — update succeeded
+ Loss decreased — update succeeded
 ```
 
 > **Industry Standard: Adaptive Learning Rates (Adam Optimizer)**
@@ -405,7 +405,7 @@ Phase 3 Complete
 > **Common alternatives:** `SGD` (with momentum), `RMSprop`, `AdaGrad`. Adam is the default for most neural networks.
 > **See also:** ML Ch.5 Backprop & Optimizers for full Adam derivation.
 
-### 3.3.1 ✓ DECISION CHECKPOINT: Phase 3 Complete
+### 3.3.1 DECISION CHECKPOINT: Phase 3 Complete
 
 **What you just saw:**
 - θ moved from 0.0 → 0.6 (step of +0.6)
@@ -486,7 +486,7 @@ for iteration in range(max_iters):
 
  # Phase 4: CONVERGE (check criteria)
  if abs(grad) < tolerance:
- print(f"✓ Converged at iteration {iteration}")
+ print(f" Converged at iteration {iteration}")
  print(f" |∇L| = {abs(grad):.2e} < ε = {tolerance}")
  break
 
@@ -520,7 +520,7 @@ Iter 4: θ=1.771200, L=1.509949, ∇L=-2.457600
 Iter 10: θ=2.554745, L=0.198386, ∇L=-0.890491
 Iter 20: θ=2.920142, L=0.006379, ∇L=-0.159717
 Iter 30: θ=2.985621, L=0.000207, ∇L=-0.028739
-✓ Converged at iteration 37
+ Converged at iteration 37
  |∇L| = 9.98e-07 < ε = 1e-06
 
 Final result:
@@ -562,7 +562,7 @@ Final result:
 > **Common schedules:** Step decay (`MultiStepLR`), exponential decay (`ExponentialLR`), cosine annealing (`CosineAnnealingLR`).
 > **See also:** [PyTorch LR scheduler docs](https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate)
 
-### 3.6.1 ✓ DECISION CHECKPOINT: Phase 4 Complete
+### 3.6.1 DECISION CHECKPOINT: Phase 4 Complete
 
 **What you just saw:**
 - Converged in 37 iterations to θ* ≈ 2.999999

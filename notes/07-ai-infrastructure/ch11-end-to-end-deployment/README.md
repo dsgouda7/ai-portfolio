@@ -30,7 +30,7 @@
 
 **What's blocking us:**
 
-🚨 **InferenceBase has been running in staging for 3 months. The CEO says deploy to production. You have no repeatable deployment process.**
+ **InferenceBase has been running in staging for 3 months. The CEO says deploy to production. You have no repeatable deployment process.**
 
 **Current situation:** The staging instance runs as a manual `vllm serve` command over SSH on a rented GPU. If the node reboots, someone has to log in and restart it. There is no health checking, no autoscaling, no secret management.
 
@@ -79,7 +79,7 @@ Before writing a line of YAML, map the system. Every component either carries tr
 
 ```mermaid
 flowchart TD
- A["🌐 Client Request\n(HTTPS)"]
+ A[" Client Request\n(HTTPS)"]
  B["Ingress Controller\nTLS termination\nrate limiting"]
  C["K8s Service\nClusterIP :8000\nvllm-llama3.inferencebase"]
  D["vLLM Pod\nLlama-3-8B INT4\nnon-root uid 1001"]
@@ -113,7 +113,7 @@ flowchart TD
 **The control path**: HPA watches Prometheus metrics → adjusts replica count → Service load-balances across replicas.
 **The secrets path**: K8s Secret → pod env var at container start → vLLM passes it to HuggingFace Hub for model download.
 
-> ➡ The Ingress controller configuration (TLS certificates, rate-limit annotations) is covered in [DevOps Ch.4 — CI/CD & Ingress](../../07-devops_fundamentals/ch04_cicd). This chapter focuses on the workload layer: Deployment, Service, HPA.
+> The Ingress controller configuration (TLS certificates, rate-limit annotations) is covered in [DevOps Ch.4 — CI/CD & Ingress](../../07-devops_fundamentals/ch04_cicd). This chapter focuses on the workload layer: Deployment, Service, HPA.
 
 ---
 
@@ -158,7 +158,7 @@ Set up observability: Load test production: Configure autoscaling:
 > **Usage note:** Phases 1–3 are sequential (must containerize before deploying). Phases 4–6 can overlap — set up monitoring during deployment, run validation after first smoke test, configure HPA once baseline metrics are visible. The checkpoint after each phase tells you when to proceed.
 
 > **Deployment verdict:** Blue-green rollout completed in 8 min with zero dropped requests — all 6 constraints met in production .
-> ➡ This is the final chapter — all InferenceBase constraints satisfied. See grand-challenge.md for the constraint scorecard.
+> This is the final chapter — all InferenceBase constraints satisfied. See grand-challenge.md for the constraint scorecard.
 
 ---
 
@@ -352,7 +352,7 @@ resources:
 
 The GPU limit must equal the GPU request — Kubernetes cannot share fractional GPUs across pods unless you install MIG (Multi-Instance GPU) support. Setting `nvidia.com/gpu: "1"` in both requests and limits means this pod gets exactly one GPU, and no other pod on the node can claim it.
 
-> 📖 **Optional depth:** GPU memory isolation is enforced by the NVIDIA device plugin at the hardware level — the pod sees the full VRAM of its assigned GPU. If you need to run multiple smaller models on one GPU, look into NVIDIA MIG (A100/H100 only) or MPS (Multi-Process Service). Neither is available on RTX 4090 in most Kubernetes setups.
+> **Optional depth:** GPU memory isolation is enforced by the NVIDIA device plugin at the hardware level — the pod sees the full VRAM of its assigned GPU. If you need to run multiple smaller models on one GPU, look into NVIDIA MIG (A100/H100 only) or MPS (Multi-Process Service). Neither is available on RTX 4090 in most Kubernetes setups.
 
 ### 3.2 · `k8s/service.yaml` — Stable DNS Within the Cluster
 
@@ -779,7 +779,7 @@ annotations:
  description: "Current p95 = {{ $value }}s. Check queue depth and GPU cache utilization."
 ```
 
-> ➡ The Evidently AI drift detection from [Ch.10 — Production Monitoring](../ch10_production_ml_monitoring) sits alongside this Prometheus stack. Latency and throughput live in Prometheus; input-distribution drift lives in Evidently. Both dashboards should be open in production.
+> The Evidently AI drift detection from [Ch.10 — Production Monitoring](../ch10_production_ml_monitoring) sits alongside this Prometheus stack. Latency and throughput live in Prometheus; input-distribution drift lives in Evidently. Both dashboards should be open in production.
 
 > **Industry Standard:** `Prometheus + Grafana` stack for metrics observability
 >
@@ -880,7 +880,7 @@ p99 = 1.9s ← rare: request arrives just as GPU cache hit 85%,
 
 The p99 spikes correlate with `vllm:gpu_cache_usage_perc` exceeding 0.80. Fix: lower `GPU_MEMORY_UTILIZATION` to 0.80 in `deployment.yaml`, which reserves 10% more VRAM for headroom.
 
-> ➡ The PagedAttention KV-cache eviction mechanism is explained in detail in [Ch.5 — Inference Optimization](../ch05_inference_optimization). The `GPU_MEMORY_UTILIZATION` knob is the most direct lever for p99 tail latency.
+> The PagedAttention KV-cache eviction mechanism is explained in detail in [Ch.5 — Inference Optimization](../ch05_inference_optimization). The `GPU_MEMORY_UTILIZATION` knob is the most direct lever for p99 tail latency.
 
 ### Automated Canary Analysis Script
 
@@ -1291,7 +1291,7 @@ But production systems don't stay still. Three realistic next problems:
 
 **3. Data privacy requirements tighten** — the current setup sends document data to a cloud GPU provider. The next evolution is an on-premise GPU cluster (on-prem Kubernetes with NVIDIA DGX) or a private cloud VPC with no data egress. The same Dockerfile and manifests work in any Kubernetes cluster — that's the portability guarantee of the container abstraction.
 
-> ➡ For CI/CD automation of the deployment pipeline (automated image builds, canary deployments, GitOps with ArgoCD), see [DevOps Ch.4 — CI/CD & Continuous Deployment](../../07-devops_fundamentals/ch04_cicd).
+> For CI/CD automation of the deployment pipeline (automated image builds, canary deployments, GitOps with ArgoCD), see [DevOps Ch.4 — CI/CD & Continuous Deployment](../../07-devops_fundamentals/ch04_cicd).
 
 ---
 

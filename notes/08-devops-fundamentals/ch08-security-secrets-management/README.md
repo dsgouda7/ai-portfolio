@@ -179,7 +179,7 @@ fi
 | Database URL | `postgres://.*:.*@` | HIGH — DB credentials in connection string |
 
 > **Security verdict:** Secrets in git: 12 hardcoded → 0; git history flagged — rotate all detected credentials immediately.
-> ➡ Repo scanned clean; proceed to Local Dev phase to adopt `.env` pattern.
+> Repo scanned clean; proceed to Local Dev phase to adopt `.env` pattern.
 
 ---
 
@@ -259,7 +259,7 @@ project/
 ```
 
 > **Local Dev verdict:** `os.getenv()` replaces hardcoded strings; `.env` gitignored with `.env.example` template — new developer onboarding in one `cp` command.
-> ➡ Local secrets secured; proceed to Production phase for runtime injection in containers.
+> Local secrets secured; proceed to Production phase for runtime injection in containers.
 
 ---
 
@@ -524,7 +524,7 @@ if not DB_PASSWORD:
 > **Common alternatives:** AWS Secrets Manager (AWS), GCP Secret Manager (Google Cloud), HashiCorp Vault (multi-cloud)
 
 > **Production verdict:** Secrets injected at runtime via Docker Secrets or Key Vault SDK — `docker history` shows zero credentials; rotation requires only a container restart.
-> ➡ Audit trail and RBAC active; proceed to Rotation phase to automate 30-day cycles.
+> Audit trail and RBAC active; proceed to Rotation phase to automate 30-day cycles.
 
 ---
 
@@ -572,7 +572,7 @@ SECRET_NAME="db-password"
 # Step 1: Generate new password (random 32-char string)
 NEW_PASSWORD=$(openssl rand -base64 32)
 
-echo "🔄 Rotating secret: $SECRET_NAME"
+echo " Rotating secret: $SECRET_NAME"
 
 # Step 2: Update secret in Azure Key Vault
 az keyvault secret set \
@@ -655,7 +655,7 @@ Commit blocked. Remove secrets before committing.
 > **Common alternatives:** `gitleaks` (pre-commit hook mode), `git-secrets` (AWS-specific), GitHub Secret Scanning (automatic for public repos)
 
 > **Rotation verdict:** Secrets in git: 12 hardcoded → 0; rotation lag: manual/never → automated 30-day cycle; pre-commit hook blocks accidental leaks.
-> ➡ SOC 2 compliance cycle enforced; chapter complete.
+> SOC 2 compliance cycle enforced; chapter complete.
 
 ---
 

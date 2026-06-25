@@ -64,7 +64,7 @@ CFG scale sweep on this brief:
  scale=12.0 → over-conditioned (artifacts, oversaturated colors)
 ```
 
-> 📖 **Educational proxy:** The math is illustrated with digit-class labels (0–9) because it shows the conditional direction clearly with only 10 classes. The production mechanism is identical — replace "digit 3" with "white background product shot."
+> **Educational proxy:** The math is illustrated with digit-class labels (0–9) because it shows the conditional direction clearly with only 10 classes. The production mechanism is identical — replace "digit 3" with "white background product shot."
 
 ```
 Educational math proxy:
@@ -380,7 +380,7 @@ Some implementations use empty string `""`, others use learnable null token, oth
 ## 11 · Notebook
 
 **Interactive Jupyter notebook:**
-📓 [guidance-conditioning.ipynb](guidance-conditioning.ipynb)
+ [guidance-conditioning.ipynb](guidance-conditioning.ipynb)
 
 **What you'll build:**
 1. **CFG scale sweep** — Generate same prompt at guidance scales 1.0, 5.0, 7.5, 10.0, 12.0 and compare outputs

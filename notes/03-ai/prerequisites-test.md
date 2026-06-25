@@ -10,8 +10,8 @@
 Can you read and understand this Python code?
 ```python
 def calculate_average(numbers):
-    total = sum(numbers)
-    return total / len(numbers) if len(numbers) > 0 else 0
+ total = sum(numbers)
+ return total / len(numbers) if len(numbers) > 0 else 0
 
 scores = [85, 92, 78, 95]
 print(f"Average score: {calculate_average(scores)}")
@@ -27,13 +27,13 @@ print(f"Average score: {calculate_average(scores)}")
 Can you explain what this code does?
 ```python
 embeddings = {
-    "cat": [0.2, 0.8, 0.1],
-    "dog": [0.3, 0.7, 0.2],
-    "fish": [-0.5, 0.1, 0.9]
+ "cat": [0.2, 0.8, 0.1],
+ "dog": [0.3, 0.7, 0.2],
+ "fish": [-0.5, 0.1, 0.9]
 }
 
 for word, vector in embeddings.items():
-    print(f"{word}: {len(vector)} dimensions")
+ print(f"{word}: {len(vector)} dimensions")
 ```
 
 **What it tests**: Dictionaries, lists, iteration, string formatting
@@ -48,12 +48,12 @@ Can you understand this API call structure?
 import requests
 
 response = requests.post(
-    "https://api.openai.com/v1/chat/completions",
-    headers={"Authorization": f"Bearer {api_key}"},
-    json={
-        "model": "gpt-4",
-        "messages": [{"role": "user", "content": "Hello!"}]
-    }
+ "https://api.openai.com/v1/chat/completions",
+ headers={"Authorization": f"Bearer {api_key}"},
+ json={
+ "model": "gpt-4",
+ "messages": [{"role": "user", "content": "Hello!"}]
+ }
 )
 result = response.json()
 ```
@@ -104,10 +104,10 @@ D) They randomly guess until they get the right answer
 If an API returns this JSON:
 ```json
 {
-  "choices": [
-    {"message": {"content": "The capital of France is Paris."}}
-  ],
-  "usage": {"total_tokens": 25}
+ "choices": [
+ {"message": {"content": "The capital of France is Paris."}}
+ ],
+ "usage": {"total_tokens": 25}
 }
 ```
 
@@ -123,7 +123,7 @@ How would you extract the text "The capital of France is Paris." in Python?
 
 ## Scoring Guide
 
-### ✅ Ready to Start
+### Ready to Start
 - Comfortable with Python (Questions 1-3)
 - Familiar with HTTP/JSON (Question 6)
 - Heard 2+ ML terms from Question 4 (or willing to learn)
@@ -132,7 +132,7 @@ How would you extract the text "The capital of France is Paris." in Python?
 
 ---
 
-### ⚠️ Almost Ready
+### Almost Ready
 - Comfortable with Python
 - Shaky on APIs/JSON
 - Unfamiliar with ML terms
@@ -141,7 +141,7 @@ How would you extract the text "The capital of France is Paris." in Python?
 
 ---
 
-### ❌ Not Quite Ready Yet
+### Not Quite Ready Yet
 - Struggled with Python questions (1-3)
 - Unfamiliar with APIs
 

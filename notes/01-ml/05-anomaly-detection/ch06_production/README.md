@@ -91,7 +91,7 @@ Containerize & serve: Track live metrics: Spot degradation: Auto-update pipeline
 | Detect | Evidently AI, NannyML, Arize | **Custom PSI calculator**, **delayed-label holdout** |
 | Retrain | Airflow, Kubeflow, MLflow | **Airflow DAG** (orchestration), **MLflow** (model registry), **Kubernetes CronJob** |
 
-> 📖 **Alternative: BentoML end-to-end.** If you're building this from scratch, [BentoML](https://bentoml.com) provides integrated model serving, monitoring, and deployment in one framework. The patterns here (PSI, blue-green, latency budgets) are framework-agnostic and apply to any production ML stack.
+> **Alternative: BentoML end-to-end.** If you're building this from scratch, [BentoML](https://bentoml.com) provides integrated model serving, monitoring, and deployment in one framework. The patterns here (PSI, blue-green, latency budgets) are framework-agnostic and apply to any production ML stack.
 
 ---
 
@@ -1149,7 +1149,7 @@ Three dials control the health of the monitoring and retraining system. Tuning t
 - Holdout of 10,000 with 48h shadow is a reasonable cost/safety balance for a mid-size fintech
 - Cap retraining at once per 14 days to avoid instability from overlapping retraining jobs
 
-> 📖 **Connecting back to earlier chapters.** The PSI threshold controls false positives in drift detection the same way the anomaly threshold $\tau$ in Ch.3–Ch.5 controls false positives in fraud detection. The tradeoff is identical: lower threshold → more triggers → more operational overhead → less recall degradation. Both are precision/recall tradeoffs wearing different labels.
+> **Connecting back to earlier chapters.** The PSI threshold controls false positives in drift detection the same way the anomaly threshold $\tau$ in Ch.3–Ch.5 controls false positives in fraud detection. The tradeoff is identical: lower threshold → more triggers → more operational overhead → less recall degradation. Both are precision/recall tradeoffs wearing different labels.
 
 ---
 
@@ -1199,7 +1199,7 @@ The production patterns in this chapter are not unique to anomaly detection — 
 | **Feedback loop correction** | Multi-Agent AI track — agents that learn from their own decisions face an identical feedback loop problem; RLHF is a principled solution |
 | **Concept drift** | AgentAI (Reinforcement Learning track) — the environment can drift (non-stationary MDPs); the same drift-detection and adaptation logic applies |
 
-> ➡ **The deeper unifying idea.** Every deployed ML system is a **control loop**: model predicts, world responds, model observes response, model updates. PSI and recall monitoring are the *sensor* in this loop. Retraining is the *actuator*. Blue-green deployment is the *safety interlock*. When you understand the loop, every new deployment challenge is a variation on the same theme.
+> **The deeper unifying idea.** Every deployed ML system is a **control loop**: model predicts, world responds, model observes response, model updates. PSI and recall monitoring are the *sensor* in this loop. Retraining is the *actuator*. Blue-green deployment is the *safety interlock*. When you understand the loop, every new deployment challenge is a variation on the same theme.
 
 ---
 
@@ -1250,7 +1250,7 @@ The bridge points:
 - The retraining trigger (PSI > 0.25 OR recall < 78%) is a hand-coded policy. RL trains a **policy automatically** from interaction with the environment — no hand-tuning of thresholds.
 - Blue-green deployment maps to **policy evaluation and improvement** in RL: shadow mode is Monte Carlo policy evaluation; cutover is policy improvement.
 
-> ➡ **Next:** [Reinforcement Learning — AgentAI](../../06-rl) — learn to build agents that improve through trial and error, without waiting for batch labels. The first chapter introduces GridWorld: a fraud-probe environment where the agent must balance exploiting known safe transactions against exploring unknown ones.
+> **Next:** [Reinforcement Learning — AgentAI](../../06-rl) — learn to build agents that improve through trial and error, without waiting for batch labels. The first chapter introduces GridWorld: a fraud-probe environment where the agent must balance exploiting known safe transactions against exploring unknown ones.
 
 ---
 

@@ -23,7 +23,7 @@
 
 **What's blocking us**:
 
-🚨 **Zero visibility into GPU requirements — cannot order hardware without understanding specs**
+ **Zero visibility into GPU requirements — cannot order hardware without understanding specs**
 
 **Current situation**: Platform Engineer's whiteboard session with CEO
 
@@ -435,14 +435,14 @@ TFLOP/s
  312 │ ┌─────────────────── Peak Compute (312 TFLOP/s)
  │ Compute-bound /
  │ /
- 50 │ Large ★ /
- │ matmul / Prefill (large batch) ★
+ 50 │ Large /
+ │ matmul / Prefill (large batch)
  │ /
- 10 │ / Attention (long) ★
+ 10 │ / Attention (long)
  │ /
- 1 │ Memory-bound / Prefill (small batch) ★
+ 1 │ Memory-bound / Prefill (small batch)
  │ /
- 0.1 │ Decode ★ / Embedding ★
+ 0.1 │ Decode / Embedding
  │ (batch=1) /
  └─────────────────┬────────────────────────────── Arithmetic Intensity
  │ (FLOP/byte)

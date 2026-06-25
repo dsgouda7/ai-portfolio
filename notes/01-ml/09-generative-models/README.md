@@ -27,7 +27,7 @@ You're the Lead ML Engineer at a healthcare AI startup. The Medical Director say
 | Ch | Title | Fooling Rate | Key Unlock | Constraints | Status |
 |----|-------|--------------|------------|-------------|--------|
 | **1** | [Autoencoders](ch01_autoencoders) | ~60% | Deterministic compression/reconstruction; learns data manifold | #5 Partial | Reconstructs but blurry |
-| **2** | [Variational Autoencoders](ch02_variational_autoencoders) | ~75% | Probabilistic latent space; can sample NEW digits | #1 Partial, #2 , #5  | Generation unlocked! |
+| **2** | [Variational Autoencoders](ch02_variational_autoencoders) | ~75% | Probabilistic latent space; can sample NEW digits | #1 Partial, #2 , #5 | Generation unlocked! |
 | **3** | [GANs](ch03_gans) | **>90%** | Adversarial training for photorealistic quality | **#1 #2 #3 #4 ** | **Target achieved!** |
 
 ---
@@ -100,8 +100,8 @@ You're the Lead ML Engineer at a healthcare AI startup. The Medical Director say
 ```python
 from tensorflow.keras.datasets import mnist
 (X_train, y_train), (X_test, y_test) = mnist.load_data()
-X_train = X_train.astype('float32') / 255.0  # Normalize to [0,1]
-X_train = X_train.reshape(-1, 784)  # Flatten to vectors
+X_train = X_train.astype('float32') / 255.0 # Normalize to [0,1]
+X_train = X_train.reshape(-1, 784) # Flatten to vectors
 ```
 
 ### CelebA (Ch.3): Production Scale
@@ -171,20 +171,20 @@ Before starting this track, you should have:
 
 ```mermaid
 graph TD
-    Start[Start: Neural Networks Complete] --> AE[Ch.1 Autoencoders]
-    AE --> |"Deterministic<br/>compression"| VAE[Ch.2 VAEs]
-    VAE --> |"Probabilistic<br/>generation"| GAN[Ch.3 GANs]
-    GAN --> Complete[SynthGen Studio Complete<br/>90%+ fooling rate]
+ Start[Start: Neural Networks Complete] --> AE[Ch.1 Autoencoders]
+ AE --> |"Deterministic<br/>compression"| VAE[Ch.2 VAEs]
+ VAE --> |"Probabilistic<br/>generation"| GAN[Ch.3 GANs]
+ GAN --> Complete[SynthGen Studio Complete<br/>90%+ fooling rate]
 
-    AE -.-> |"Reconstruction<br/>loss"| AD[05-Anomaly Detection]
-    VAE -.-> |"Latent diffusion"| MM[05-Multimodal AI]
-    GAN -.-> |"Adversarial<br/>training"| CV[02-Advanced DL]
+ AE -.-> |"Reconstruction<br/>loss"| AD[05-Anomaly Detection]
+ VAE -.-> |"Latent diffusion"| MM[05-Multimodal AI]
+ GAN -.-> |"Adversarial<br/>training"| CV[02-Advanced DL]
 
-    style Start fill:#1e3a8a,color:#fff
-    style Complete fill:#15803d,color:#fff
-    style AE fill:#b45309,color:#fff
-    style VAE fill:#b45309,color:#fff
-    style GAN fill:#15803d,color:#fff
+ style Start fill:#1e3a8a,color:#fff
+ style Complete fill:#15803d,color:#fff
+ style AE fill:#b45309,color:#fff
+ style VAE fill:#b45309,color:#fff
+ style GAN fill:#15803d,color:#fff
 ```
 
 ---

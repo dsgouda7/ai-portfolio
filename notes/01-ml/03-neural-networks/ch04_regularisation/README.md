@@ -37,14 +37,14 @@
 |---|---|---|
 | Train MAE | **\$32k** | below \$40k intermediate target |
 | Val MAE | **\$68k** | far above production target |
-| **Generalisation gap** | **\$36k** | 🚨 Constraint \#2 GENERALIZATION BLOCKED |
+| **Generalisation gap** | **\$36k** | Constraint \#2 GENERALIZATION BLOCKED |
 
 The network has **10,000+ parameters** and only **16,512 training samples** (80% of 20,640). With that ratio, gradient descent finds weight configurations that memorise training peculiarities — a luxury condo cluster in district \#4217, a data artefact in a coastal census block — rather than learning genuine pricing signals. Every epoch of training after the validation loss starts rising is the model getting *worse at what it's actually for*.
 
 **Concrete failure:**
 ```
 Training district #4217: Coastal, MedInc=$8.2k, HouseAge=25yr
- → Model predicts $412k (actual: $410k) ✓ [memorised this exact district]
+ → Model predicts $412k (actual: $410k) [memorised this exact district]
 
 New district (validation): Coastal, MedInc=$8.1k, HouseAge=26yr
  → Model predicts $310k (actual: $408k) [memorisation fails on slight variation]
@@ -116,7 +116,7 @@ All five tools in this chapter impose different flavours of that complexity cost
 |---|---|---|
 | Train (16,512 rows) | **\$32k** | model fits training data well |
 | Val (2,064 rows) | **\$68k** | model struggles on new districts |
-| Gap | **\$36k** | 🚨 clear overfitting |
+| Gap | **\$36k** | clear overfitting |
 
 The model has fit a function that passes nearly through every training point but oscillates wildly between them. The generalisation gap of \$36k means every district your product serves that wasn't in training will see predictions nearly \$36k worse than advertised.
 
@@ -145,7 +145,7 @@ The two curves diverge after epoch ~80. Every epoch past that point the model is
 | 50 | \$42k | \$53k | \$11k | Gap starting to open |
 | 80 | \$35k | \$66k | \$31k | Val plateau begins — **stop here** |
 | 150 | \$33k | \$67k | \$34k | Val loss flat; train still falls |
-| 300 | \$32k | \$68k | **\$36k** | 🚨 Full memorisation |
+| 300 | \$32k | \$68k | **\$36k** | Full memorisation |
 
 The lesson is in the last three rows: 220 epochs of continued training bought only \$3k improvement on training data at a cost of \$2k *worsening* on validation data. Early stopping at epoch 80 would have saved those 220 epochs and delivered a better model.
 
@@ -163,7 +163,7 @@ The lesson is in the last three rows: 220 epochs of continued training bought on
 
 **Quick rule for tabular data:** start with L2, then Dropout if still overfitting, then Early Stopping. BatchNorm primarily helps with training stability. L1 is useful when you suspect many features are irrelevant.
 
-> 📖 **Reading order within §4:** If you only have time for one technique, read §4.1 L2 — it is the foundation. Dropout (§4.3) is the second priority. BatchNorm (§4.4) and Early Stopping (§4.5) can be skimmed on first pass and revisited when your training curve shows the specific failure modes they fix.
+> **Reading order within §4:** If you only have time for one technique, read §4.1 L2 — it is the foundation. Dropout (§4.3) is the second priority. BatchNorm (§4.4) and Early Stopping (§4.5) can be skimmed on first pass and revisited when your training curve shows the specific failure modes they fix.
 
 ---
 
@@ -347,7 +347,7 @@ where `mom` (momentum) is typically 0.1. After training, these running stats are
 
 **Why BatchNorm regularises:** it prevents *internal covariate shift* — the phenomenon where the distribution of each layer's inputs changes as the weights of earlier layers are updated. Without BatchNorm, later layers must constantly readjust to a shifting input distribution. With BatchNorm, each layer always sees a normalised input, making the loss surface smoother and allowing larger learning rates. The net effect is that weights tend to stay smaller (less need to compensate for scale drift), which is a soft regularisation.
 
-> 📖 **Why this works is still debated.** The original paper attributed the benefit to reducing "internal covariate shift" — stabilising the distribution of layer inputs during training. Subsequent studies found the improvement persists even when covariate shift is explicitly absent. The empirical benefit is reliable and consistent; the precise mechanism is not fully understood. Use it confidently, but don't over-explain the *why* to a stakeholder.
+> **Why this works is still debated.** The original paper attributed the benefit to reducing "internal covariate shift" — stabilising the distribution of layer inputs during training. Subsequent studies found the improvement persists even when covariate shift is explicitly absent. The empirical benefit is reliable and consistent; the precise mechanism is not fully understood. Use it confidently, but don't over-explain the *why* to a stakeholder.
 
 ---
 
@@ -818,7 +818,7 @@ This chapter established that a densely-connected network can generalise to unse
 
 The key mindset shift going into Ch.5: regularisation in CNNs is *architectural* as well as parametric. A convolutional layer with a 3×3 filter has only 9 weights shared across all spatial positions, compared to a fully connected layer that would need $H \times W \times C_\text{in} \times C_\text{out}$ weights. That weight sharing is the CNN's strongest regulariser — it forces the model to learn translation-invariant features rather than memorising which position each feature appears at.
 
-> ➡ **[Ch.5 — CNNs →](../ch05_cnns)**: Convolutional filters detect local spatial patterns. Pooling reduces spatial dimensions. The same regularisation stack from this chapter applies to every layer — with data augmentation now added as the most powerful image-specific regulariser.
+> **[Ch.5 — CNNs →](../ch05_cnns)**: Convolutional filters detect local spatial patterns. Pooling reduces spatial dimensions. The same regularisation stack from this chapter applies to every layer — with data augmentation now added as the most powerful image-specific regulariser.
 
 ---
 

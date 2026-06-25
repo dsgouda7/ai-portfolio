@@ -28,14 +28,14 @@
 
 NCF (Ch.4) treats every movie as an opaque integer ID. User 42 = integer 42, Movie 615 = integer 615. The model learns embeddings $\mathbf{p}_{42} \in \mathbb{R}^{16}$ and $\mathbf{q}_{615} \in \mathbb{R}^{16}$ from rating co-occurrences. This works beautifully for movies with hundreds of ratings — the embeddings capture latent taste dimensions. But for a new movie like **"Dune 2023"** (added today, 3 ratings), NCF has 3 data points to learn from. The embedding $\mathbf{q}_{\text{Dune}}$ is initialized randomly and barely updated. NCF thinks Dune is almost invisible.
 
-Yet Dune's content tells us everything: Genres = [Sci-Fi, Adventure] + Director = [Denis Villeneuve] — who directed Arrival and Blade Runner 2049, both rated 5★ by User 42. **Constraint #2 (cold start) requires content features.** There is no way around it.
+Yet Dune's content tells us everything: Genres = [Sci-Fi, Adventure] + Director = [Denis Villeneuve] — who directed Arrival and Blade Runner 2049, both rated 5 by User 42. **Constraint #2 (cold start) requires content features.** There is no way around it.
 
 **What this chapter unlocks:**
 - **Content-based features**: genre vectors, director embeddings, cast metadata
 - **Weighted hybrid**: blend CF and CBF predictions with learned or tuned $\alpha$
 - **Two-tower model** (YouTube DNN / BERT4Rec style): user tower + item tower, trained jointly end-to-end
 - **Cold-start improvement**: new items use their item tower embedding (built from content, not ratings)
-- **Explainability**: "Because it is Sci-Fi by Villeneuve, and you rated Arrival 5★"
+- **Explainability**: "Because it is Sci-Fi by Villeneuve, and you rated Arrival 5"
 - **Target: HR@10 ≥ 85%** — content + two-tower closes the 3-point gap
 
 ```mermaid
@@ -76,10 +76,10 @@ A hybrid recommender fuses two complementary signals: **collaborative filtering*
 | | Value |
 |---|---|
 | **User 42** | Male, 28, software engineer (MovieLens occupation code 4) |
-| **User 42 top ratings** | Arrival (5★), Blade Runner 2049 (5★), Interstellar (4★), Ex Machina (4★) |
+| **User 42 top ratings** | Arrival (5), Blade Runner 2049 (5), Interstellar (4), Ex Machina (4) |
 | **Movie: Dune 2023** | Genres: [Sci-Fi, Adventure]. Director: Denis Villeneuve. Year: 2023. |
-| **Current ratings for Dune** | 3 ratings — 5★, 4★, 5★ (avg: 4.67) |
-| **NCF prediction for (User 42, Dune)** | 2.1 ★ (embedding barely trained — random init) |
+| **Current ratings for Dune** | 3 ratings — 5, 4, 5 (avg: 4.67) |
+| **NCF prediction for (User 42, Dune)** | 2.1 (embedding barely trained — random init) |
 
 The NCF model ranks Dune 847th out of 1,682 movies for User 42. User 42 will never see it.
 
@@ -89,9 +89,9 @@ The NCF model ranks Dune 847th out of 1,682 movies for User 42. User 42 will nev
 - Denis Villeneuve directed both Arrival and Blade Runner 2049 — both in User 42 top-5
 - Content cosine similarity: $\text{sim}(\text{Dune}, \text{Arrival}) = 0.71$
 
-The content-based model predicts $\hat{y}_{\text{CBF}} = 4.3$ ★. With adaptive blending ($\alpha = 0.06$ because Dune has only 3 ratings):
+The content-based model predicts $\hat{y}_{\text{CBF}} = 4.3$ . With adaptive blending ($\alpha = 0.06$ because Dune has only 3 ratings):
 
-$$\hat{y}_{\text{hybrid}} = 0.06 \times 2.1 + 0.94 \times 4.3 = 0.13 + 4.04 = \mathbf{4.17 \text{ ★}}$$
+$$\hat{y}_{\text{hybrid}} = 0.06 \times 2.1 + 0.94 \times 4.3 = 0.13 + 4.04 = \mathbf{4.17 \text{ }}$$
 
 Dune jumps from rank 847 to rank **9** in User 42's list. This is the cold-start problem being solved structurally, not patched.
 
@@ -177,10 +177,10 @@ $\alpha$ controls how much you trust the collaborative signal. $\alpha = 1.0$ is
 **When should $\alpha$ be low?** When the item is cold (few ratings) — content features are more reliable.
 
 **Concrete prediction for (User 42, Arrival) with $\alpha = 0.7$:**
-- NCF CF score: $\hat{y}_{\text{CF}} = 4.1$ ★ (Arrival has 847 ratings; good embedding)
-- CBF score: $\hat{y}_{\text{CBF}} = 4.4$ ★ (Sci-Fi genre matches User 42 profile)
+- NCF CF score: $\hat{y}_{\text{CF}} = 4.1$ (Arrival has 847 ratings; good embedding)
+- CBF score: $\hat{y}_{\text{CBF}} = 4.4$ (Sci-Fi genre matches User 42 profile)
 
-$$\hat{y}_{\text{hybrid}} = 0.7 \times 4.1 + 0.3 \times 4.4 = 2.87 + 1.32 = \mathbf{4.19} \text{ ★}$$
+$$\hat{y}_{\text{hybrid}} = 0.7 \times 4.1 + 0.3 \times 4.4 = 2.87 + 1.32 = \mathbf{4.19} \text{ }$$
 
 **Adaptive $\alpha$ rule for cold items:**
 
@@ -247,7 +247,7 @@ $$\hat{y} = \mathbf{e}_{42}^\top \mathbf{e}_{\text{Dune}} = [0.809, 0.588] \cdot
 
 The output is cosine similarity in $[-1, 1]$ (since both embeddings are L2-normalized). A value near 1 means strong user-item alignment.
 
-> 📖 **Why L2-normalize the tower outputs?** Normalizing converts the dot product to cosine similarity in $[-1, 1]$ regardless of embedding scale. Without normalization, users with many training examples develop larger-norm embeddings that dominate ranking. L2-normalization removes this scale effect. Both BERT4Rec and YouTube DNN use this trick.
+> **Why L2-normalize the tower outputs?** Normalizing converts the dot product to cosine similarity in $[-1, 1]$ regardless of embedding scale. Without normalization, users with many training examples develop larger-norm embeddings that dominate ranking. L2-normalization removes this scale effect. Both BERT4Rec and YouTube DNN use this trick.
 
 ---
 
@@ -365,7 +365,7 @@ Pure content-based filtering predicts from item similarity alone: "you liked Arr
 **Concrete metrics:**
 - Overall HR@10 = 71% (11pp below CF, 14pp below target)
 - Cold-start HR@10 = 68% — better than CF's 23%, but User 42 gets flooded with every sci-fi movie in the catalog
-- **Precision problem**: Top-10 contains 6 sci-fi films User 42 would rate <3★ — genre match doesn't guarantee taste match
+- **Precision problem**: Top-10 contains 6 sci-fi films User 42 would rate <3 — genre match doesn't guarantee taste match
 - CBF alone failure: social proof (collaborative signal) is irreplaceable for taste refinement
 
 ### Act 3 — Weighted Hybrid: Partial Fix
@@ -601,7 +601,7 @@ for n_warm in [20, 35, 50, 75, 100]:
 | Cold-start via content features | Production ML — every catalog with frequent new-item launches (news, streaming, e-commerce) |
 | Sampled softmax training | Large-scale retrieval: YouTube DNN, FAISS approximate nearest-neighbor search |
 
-> ➡ **The two-tower pattern is the retrieval half of every modern production recommender.** Spotify, Pinterest, and LinkedIn all use it for first-stage retrieval (find candidate 500 from 10M items in < 10ms), followed by a more expensive reranking model. The two-tower is fast because item embeddings are pre-computed for all items and ANN search finds nearest neighbors in milliseconds.
+> **The two-tower pattern is the retrieval half of every modern production recommender.** Spotify, Pinterest, and LinkedIn all use it for first-stage retrieval (find candidate 500 from 10M items in < 10ms), followed by a more expensive reranking model. The two-tower is fast because item embeddings are pre-computed for all items and ANN search finds nearest neighbors in milliseconds.
 
 **The pattern you built generalizes directly:**
 
@@ -662,4 +662,4 @@ $$\text{MMR} = \underset{i \in \mathcal{C} \setminus \mathcal{S}}{\arg\max} \lef
 
 where $\mathcal{C}$ is the candidate set, $\mathcal{S}$ is the already-selected set, and $\lambda$ trades off relevance vs. diversity. Setting $\lambda=0.7$ means "70% accuracy, 30% diversity." The user tower embeddings built in this chapter feed directly into Ch.6's candidate retrieval stage.
 
-> ➡ **Ch.6 preview:** With sequence-aware reranking and MMR, FlixAI reaches **87% HR@10** and **ILD@10 = 0.61** (diverse top-10). Both accuracy and diversity constraints satisfied simultaneously.
+> **Ch.6 preview:** With sequence-aware reranking and MMR, FlixAI reaches **87% HR@10** and **ILD@10 = 0.61** (diverse top-10). Both accuracy and diversity constraints satisfied simultaneously.

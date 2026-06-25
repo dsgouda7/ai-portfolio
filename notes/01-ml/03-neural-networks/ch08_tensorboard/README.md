@@ -243,7 +243,7 @@ writer.close()
 > **See also:** [PyTorch TensorBoard tutorial](https://pytorch.org/tutorials/recipes/recipes/tensorboard_with_pytorch.html)
 
 > **Instrument verdict:** Scalar logging (<1ms/call) added for Loss/train, Loss/val, MAE, and LR; TensorBoard Scalars tab live at localhost:6006 — minimum viable observability established.
-> ➡ Run 10–20 epochs to establish baseline curve; if val loss is flat while train loss drops, add early stopping before proceeding.
+> Run 10–20 epochs to establish baseline curve; if val loss is flat while train loss drops, add early stopping before proceeding.
 
 ---
 
@@ -332,7 +332,7 @@ for epoch in range(1, 51):
 > **Gradient anomaly detection:** PyTorch 1.9+ has `torch.autograd.detect_anomaly()` context manager — catches NaN/Inf gradients with full backward stack trace
 
 > **Tune verdict:** Weight histogram spike at 0 = dead neurons; gradient spike at 0 = vanishing; gradient spread >100 = exploding — histograms expose internal failures that loss curves cannot.
-> ➡ If layer 1 gradients are near-zero, add BatchNorm before layer 1; if gradients exceed 100, apply `clip_grad_norm_(model.parameters(), 1.0)` before `optimizer.step()`.
+> If layer 1 gradients are near-zero, add BatchNorm before layer 1; if gradients exceed 100, apply `clip_grad_norm_(model.parameters(), 1.0)` before `optimizer.step()`.
 
 ---
 
@@ -426,7 +426,7 @@ writer.add_embedding(
 > **Embedding libraries:** `umap-learn`, `scikit-learn.manifold`, `tensorboard.plugins.projector`
 
 > **Validate verdict:** t-SNE of 16-dim layer-3 embeddings shows three separable tiers (low/mid/high-value districts) — model learned geography-correlated features without explicit lat/lon coordinates.
-> ➡ If embeddings show a single undifferentiated cloud, the model is undertrained or undercapacity — increase epochs or layer width before deployment.
+> If embeddings show a single undifferentiated cloud, the model is undertrained or undercapacity — increase epochs or layer width before deployment.
 
 ---
 
@@ -525,7 +525,7 @@ You add `writer.add_scalar('Loss/train', ...)` and `writer.add_scalar('Loss/val'
 **Action:** Add early stopping (save checkpoint at min val loss). New final MAE: **$48k** — a $6k gain at zero architecture cost.
 
 > **Diagnose verdict:** Train/val loss gap opened at epoch 22 (0.02 → 0.17); early stopping at epoch 22 recovers the $48k MAE checkpoint vs. $54k at epoch 50 — 28 wasted epochs and a better model for free.
-> ➡ Implement early stopping with patience=5: save checkpoint when val_loss improves, restore best after training — zero architecture cost, $6k MAE gain.
+> Implement early stopping with patience=5: save checkpoint when val_loss improves, restore best after training — zero architecture cost, $6k MAE gain.
 
 ---
 
@@ -861,4 +861,4 @@ That is exactly the problem **attention** solves.
 
 In [Ch.9](../ch09_sequences_to_attention), we treat the 8 housing features as a *sequence of tokens* and implement attention as a soft dictionary lookup: each feature queries all other features, and the output is a weighted sum where the weights encode *relevance given context*. The embedding projector you built here will make the attention mechanism effect immediately visible — you will see the clusters sharpen when attention-weighted feature interactions replace the fixed MLP projection.
 
-> ➡ **Up next**: [Ch.9 — From Sequences to Attention](../ch09_sequences_to_attention) — the bridge between the MLP world and the Transformer world, implemented with nothing beyond a `numpy` dot product and softmax.
+> **Up next**: [Ch.9 — From Sequences to Attention](../ch09_sequences_to_attention) — the bridge between the MLP world and the Transformer world, implemented with nothing beyond a `numpy` dot product and softmax.

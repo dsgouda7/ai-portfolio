@@ -94,47 +94,47 @@ The router learns during training: "Python code? Send to Expert 0 (code speciali
 
 ```mermaid
 graph TB
-    A["Input Token:<br/>'Python'"] --> B["Router Network<br/>(Lightweight classifier)"]
+ A["Input Token:<br/>'Python'"] --> B["Router Network<br/>(Lightweight classifier)"]
 
-    B --> C1["Expert 0<br/>Score: 0.42<br/>✅ Selected"]
-    B --> C2["Expert 1<br/>Score: 0.31<br/>✅ Selected"]
-    B --> C3["Expert 2<br/>Score: 0.08<br/>❌ Idle"]
-    B --> C4["Expert 3<br/>Score: 0.05<br/>❌ Idle"]
-    B --> C5["Expert 4<br/>Score: 0.04<br/>❌ Idle"]
-    B --> C6["Experts 5-7<br/>Scores: <0.03<br/>❌ Idle"]
+ B --> C1["Expert 0<br/>Score: 0.42<br/> Selected"]
+ B --> C2["Expert 1<br/>Score: 0.31<br/> Selected"]
+ B --> C3["Expert 2<br/>Score: 0.08<br/> Idle"]
+ B --> C4["Expert 3<br/>Score: 0.05<br/> Idle"]
+ B --> C5["Expert 4<br/>Score: 0.04<br/> Idle"]
+ B --> C6["Experts 5-7<br/>Scores: <0.03<br/> Idle"]
 
-    C1 --> D["Weighted Blend:<br/>0.42 × Expert 0 output<br/>+ 0.31 × Expert 1 output"]
-    C2 --> D
+ C1 --> D["Weighted Blend:<br/>0.42 × Expert 0 output<br/>+ 0.31 × Expert 1 output"]
+ C2 --> D
 
-    D --> E["Final Token<br/>Representation"]
+ D --> E["Final Token<br/>Representation"]
 
-    A2["Input Token:<br/>'philosophy'"] --> B2["Router Network"]
+ A2["Input Token:<br/>'philosophy'"] --> B2["Router Network"]
 
-    B2 --> E1["Expert 0<br/>Score: 0.02<br/>❌ Idle"]
-    B2 --> E2["Expert 1<br/>Score: 0.01<br/>❌ Idle"]
-    B2 --> E3["Expert 2<br/>Score: 0.53<br/>✅ Selected"]
-    B2 --> E4["Expert 3<br/>Score: 0.24<br/>✅ Selected"]
-    B2 --> E5["Expert 4<br/>Score: 0.07<br/>❌ Idle"]
-    B2 --> E6["Experts 5-7<br/>Scores: <0.05<br/>❌ Idle"]
+ B2 --> E1["Expert 0<br/>Score: 0.02<br/> Idle"]
+ B2 --> E2["Expert 1<br/>Score: 0.01<br/> Idle"]
+ B2 --> E3["Expert 2<br/>Score: 0.53<br/> Selected"]
+ B2 --> E4["Expert 3<br/>Score: 0.24<br/> Selected"]
+ B2 --> E5["Expert 4<br/>Score: 0.07<br/> Idle"]
+ B2 --> E6["Experts 5-7<br/>Scores: <0.05<br/> Idle"]
 
-    E3 --> F["Weighted Blend:<br/>0.53 × Expert 2 output<br/>+ 0.24 × Expert 3 output"]
-    E4 --> F
+ E3 --> F["Weighted Blend:<br/>0.53 × Expert 2 output<br/>+ 0.24 × Expert 3 output"]
+ E4 --> F
 
-    F --> G["Final Token<br/>Representation"]
+ F --> G["Final Token<br/>Representation"]
 
-    style C1 fill:#d4edda
-    style C2 fill:#d4edda
-    style C3 fill:#ffcccc
-    style C4 fill:#ffcccc
-    style C5 fill:#ffcccc
-    style C6 fill:#ffcccc
+ style C1 fill:#d4edda
+ style C2 fill:#d4edda
+ style C3 fill:#ffcccc
+ style C4 fill:#ffcccc
+ style C5 fill:#ffcccc
+ style C6 fill:#ffcccc
 
-    style E3 fill:#d4edda
-    style E4 fill:#d4edda
-    style E1 fill:#ffcccc
-    style E2 fill:#ffcccc
-    style E5 fill:#ffcccc
-    style E6 fill:#ffcccc
+ style E3 fill:#d4edda
+ style E4 fill:#d4edda
+ style E1 fill:#ffcccc
+ style E2 fill:#ffcccc
+ style E5 fill:#ffcccc
+ style E6 fill:#ffcccc
 ```
 
 **Routing Example: "Python" vs "philosophy"**
@@ -144,12 +144,12 @@ Suppose an MoE layer has 8 experts and activates top-2 per token. Watch who gets
 **Token: "Python"**
 ```
 Router scores (like confidence levels):
-✓ Expert 0 (code): 42% ← Selected! High confidence
-✓ Expert 1 (syntax): 31% ← Selected! Medium confidence
-  Expert 2 (philosophy): 8%
-  Expert 3 (literature): 5%
-  Expert 4 (math): 4%
-  (others): 10%
+ Expert 0 (code): 42% ← Selected! High confidence
+ Expert 1 (syntax): 31% ← Selected! Medium confidence
+ Expert 2 (philosophy): 8%
+ Expert 3 (literature): 5%
+ Expert 4 (math): 4%
+ (others): 10%
 
 Result: Blend 42% of Expert 0's output + 31% of Expert 1's output
 ```
@@ -157,12 +157,12 @@ Result: Blend 42% of Expert 0's output + 31% of Expert 1's output
 **Token: "philosophy"**
 ```
 Router scores:
-  Expert 0 (code): 2%
-  Expert 1 (syntax): 1%
-✓ Expert 2 (philosophy): 53% ← Selected! Obvious choice
-✓ Expert 3 (literature): 24% ← Selected! Related field
-  Expert 4 (math): 7%
-  (others): 13%
+ Expert 0 (code): 2%
+ Expert 1 (syntax): 1%
+ Expert 2 (philosophy): 53% ← Selected! Obvious choice
+ Expert 3 (literature): 24% ← Selected! Related field
+ Expert 4 (math): 7%
+ (others): 13%
 
 Result: Blend 53% of Expert 2's output + 24% of Expert 3's output
 ```
@@ -247,24 +247,24 @@ Each stage has **learnable parameters**. Their sum is the model's parameter coun
 
 ```mermaid
 flowchart TD
-    A["Token ID: 5812"] --> B["Embedding Lookup<br/>131M params<br/>→ [4096 numbers]"]
-    B --> C["Position Info<br/>Added (no params)"]
-    C --> D["Block 1/32<br/>Attn: 67M params<br/>FFN: 90M params"]
-    D --> E["Block 2/32<br/>Same structure"]
-    E --> F["...Blocks 3-31..."]
-    F --> G["Block 32/32<br/>Final layer"]
-    G --> H["Layer Norm<br/>~8K params"]
-    H --> I["Output Head<br/>131M params<br/>→ [50K logits]"]
-    I --> J["Softmax<br/>→ Probabilities"]
+ A["Token ID: 5812"] --> B["Embedding Lookup<br/>131M params<br/>→ [4096 numbers]"]
+ B --> C["Position Info<br/>Added (no params)"]
+ C --> D["Block 1/32<br/>Attn: 67M params<br/>FFN: 90M params"]
+ D --> E["Block 2/32<br/>Same structure"]
+ E --> F["...Blocks 3-31..."]
+ F --> G["Block 32/32<br/>Final layer"]
+ G --> H["Layer Norm<br/>~8K params"]
+ H --> I["Output Head<br/>131M params<br/>→ [50K logits]"]
+ I --> J["Softmax<br/>→ Probabilities"]
 
-    style A fill:#e1f5ff
-    style B fill:#fff3cd
-    style D fill:#ffcccc
-    style E fill:#ffcccc
-    style F fill:#ffcccc
-    style G fill:#ffcccc
-    style I fill:#d4edda
-    style J fill:#d4edda
+ style A fill:#e1f5ff
+ style B fill:#fff3cd
+ style D fill:#ffcccc
+ style E fill:#ffcccc
+ style F fill:#ffcccc
+ style G fill:#ffcccc
+ style I fill:#d4edda
+ style J fill:#d4edda
 ```
 
 **Key insight from the diagram:** Most parameters (red blocks) live in the 32 transformer layers. Embedding and output head (yellow/green) are small by comparison but conceptually important.
@@ -387,36 +387,36 @@ Total VRAM = Furniture (weights) + Workspace (activations) + Storage (KV cache)
 
 ```mermaid
 graph TB
-    subgraph "Total VRAM: 15.4 GB for 1 conversation"
-        A["Model Weights<br/>(Furniture)<br/>13.4 GB<br/>Fixed Cost"]
-        B["Activations<br/>(Workspace)<br/>~1 GB<br/>Temporary"]
-        C["KV Cache<br/>(Storage)<br/>~1 GB<br/>Per Conversation"]
-    end
+ subgraph "Total VRAM: 15.4 GB for 1 conversation"
+ A["Model Weights<br/>(Furniture)<br/>13.4 GB<br/>Fixed Cost"]
+ B["Activations<br/>(Workspace)<br/>~1 GB<br/>Temporary"]
+ C["KV Cache<br/>(Storage)<br/>~1 GB<br/>Per Conversation"]
+ end
 
-    subgraph "Scaling with Conversations"
-        D["1 user<br/>15.4 GB total"]
-        E["16 users<br/>45.4 GB total<br/>(+16 GB cache)"]
-        F["100 users<br/>113.4 GB total<br/>(+100 GB cache)"]
-    end
+ subgraph "Scaling with Conversations"
+ D["1 user<br/>15.4 GB total"]
+ E["16 users<br/>45.4 GB total<br/>(+16 GB cache)"]
+ F["100 users<br/>113.4 GB total<br/>(+100 GB cache)"]
+ end
 
-    A --> D
-    B --> D
-    C --> D
+ A --> D
+ B --> D
+ C --> D
 
-    A --> E
-    B --> E
-    C -.->|16x| E
+ A --> E
+ B --> E
+ C -.->|16x| E
 
-    A --> F
-    B --> F
-    C -.->|100x| F
+ A --> F
+ B --> F
+ C -.->|100x| F
 
-    style A fill:#ffcccc
-    style B fill:#fff3cd
-    style C fill:#d4edda
-    style D fill:#e1f5ff
-    style E fill:#ffe4b5
-    style F fill:#ffcccc
+ style A fill:#ffcccc
+ style B fill:#fff3cd
+ style C fill:#d4edda
+ style D fill:#e1f5ff
+ style E fill:#ffe4b5
+ style F fill:#ffcccc
 ```
 
 **Key insight:** Furniture (weights) stays the same. Workspace (activations) cleans itself. **Storage boxes (KV cache) multiply with every conversation** — that's the throughput killer.
@@ -452,18 +452,18 @@ model_name = "meta-llama/Llama-2-7b-hf"
 # Method 1: Full precision (fp32) — 26.8 GB VRAM
 # (Don't do this unless you have a specific reason)
 model_fp32 = AutoModelForCausalLM.from_pretrained(
-    model_name,
-    torch_dtype=torch.float32,  # 4 bytes per parameter
-    device_map="auto"
+ model_name,
+ torch_dtype=torch.float32, # 4 bytes per parameter
+ device_map="auto"
 )
 print(f"fp32 model memory: {model_fp32.get_memory_footprint() / 1e9:.2f} GB")
 # Output: ~26.80 GB
 
 # Method 2: Half precision (fp16/bf16) — 13.4 GB VRAM (STANDARD)
 model_fp16 = AutoModelForCausalLM.from_pretrained(
-    model_name,
-    torch_dtype=torch.float16,  # 2 bytes per parameter
-    device_map="auto"
+ model_name,
+ torch_dtype=torch.float16, # 2 bytes per parameter
+ device_map="auto"
 )
 print(f"fp16 model memory: {model_fp16.get_memory_footprint() / 1e9:.2f} GB")
 # Output: ~13.40 GB
@@ -472,30 +472,30 @@ print(f"fp16 model memory: {model_fp16.get_memory_footprint() / 1e9:.2f} GB")
 from transformers import BitsAndBytesConfig
 
 quantization_config_8bit = BitsAndBytesConfig(
-    load_in_8bit=True,  # 1 byte per parameter
-    llm_int8_threshold=6.0  # Outlier threshold
+ load_in_8bit=True, # 1 byte per parameter
+ llm_int8_threshold=6.0 # Outlier threshold
 )
 
 model_int8 = AutoModelForCausalLM.from_pretrained(
-    model_name,
-    quantization_config=quantization_config_8bit,
-    device_map="auto"
+ model_name,
+ quantization_config=quantization_config_8bit,
+ device_map="auto"
 )
 print(f"int8 model memory: {model_int8.get_memory_footprint() / 1e9:.2f} GB")
 # Output: ~6.70 GB
 
 # Method 4: 4-bit quantization — 3.35 GB VRAM
 quantization_config_4bit = BitsAndBytesConfig(
-    load_in_4bit=True,  # 0.5 bytes per parameter
-    bnb_4bit_compute_dtype=torch.float16,  # Compute in fp16
-    bnb_4bit_quant_type="nf4",  # NormalFloat4 quantization
-    bnb_4bit_use_double_quant=True  # Nested quantization for extra savings
+ load_in_4bit=True, # 0.5 bytes per parameter
+ bnb_4bit_compute_dtype=torch.float16, # Compute in fp16
+ bnb_4bit_quant_type="nf4", # NormalFloat4 quantization
+ bnb_4bit_use_double_quant=True # Nested quantization for extra savings
 )
 
 model_int4 = AutoModelForCausalLM.from_pretrained(
-    model_name,
-    quantization_config=quantization_config_4bit,
-    device_map="auto"
+ model_name,
+ quantization_config=quantization_config_4bit,
+ device_map="auto"
 )
 print(f"int4 model memory: {model_int4.get_memory_footprint() / 1e9:.2f} GB")
 # Output: ~3.35 GB
@@ -658,24 +658,24 @@ Total apartment: 45.4 GB → needs 2× A40 (48 GB) or 1× A100 (80 GB)
 
 ```mermaid
 graph LR
-    subgraph "Precision Levels"
-        A["fp32<br/>4 bytes<br/>100% quality<br/>26.8 GB"]
-        B["fp16<br/>2 bytes<br/>99.9% quality<br/>13.4 GB<br/>⭐ Standard"]
-        C["int8<br/>1 byte<br/>99% quality<br/>6.7 GB<br/>✅ Recommended"]
-        D["int4<br/>0.5 bytes<br/>95-97% quality<br/>3.35 GB<br/>⚠️ Aggressive"]
-        E["int3<br/>0.375 bytes<br/>85-90% quality<br/>2.5 GB<br/>❌ Risky"]
-    end
+ subgraph "Precision Levels"
+ A["fp32<br/>4 bytes<br/>100% quality<br/>26.8 GB"]
+ B["fp16<br/>2 bytes<br/>99.9% quality<br/>13.4 GB<br/>⭐ Standard"]
+ C["int8<br/>1 byte<br/>99% quality<br/>6.7 GB<br/> Recommended"]
+ D["int4<br/>0.5 bytes<br/>95-97% quality<br/>3.35 GB<br/> Aggressive"]
+ E["int3<br/>0.375 bytes<br/>85-90% quality<br/>2.5 GB<br/> Risky"]
+ end
 
-    A -->|50% memory| B
-    B -->|50% memory| C
-    C -->|50% memory| D
-    D -->|33% memory| E
+ A -->|50% memory| B
+ B -->|50% memory| C
+ C -->|50% memory| D
+ D -->|33% memory| E
 
-    style A fill:#ffcccc
-    style B fill:#d4edda
-    style C fill:#d4edda
-    style D fill:#ffe4b5
-    style E fill:#ffcccc
+ style A fill:#ffcccc
+ style B fill:#d4edda
+ style C fill:#d4edda
+ style D fill:#ffe4b5
+ style E fill:#ffcccc
 ```
 
 
@@ -766,14 +766,14 @@ Paris, France: 1.5%
 **Student (7B) initially outputs:**
 ```
 Paris: 45%
-London: 20%  ← Wrong! But Teacher's distribution teaches it to downweight this
+London: 20% ← Wrong! But Teacher's distribution teaches it to downweight this
 France: 15%
 (other): 20%
 ```
 
 **After distillation, Student outputs:**
 ```
-Paris: 88%  ← Close to Teacher's 92%
+Paris: 88% ← Close to Teacher's 92%
 PARIS: 4%
 the city of Paris: 3%
 (other): 5%
@@ -868,24 +868,24 @@ model_name = "meta-llama/Llama-2-7b-hf"
 
 # Standard attention (slower, more memory)
 model_standard = AutoModelForCausalLM.from_pretrained(
-    model_name,
-    torch_dtype=torch.float16,
-    device_map="auto",
-    attn_implementation="eager"  # Standard PyTorch attention
+ model_name,
+ torch_dtype=torch.float16,
+ device_map="auto",
+ attn_implementation="eager" # Standard PyTorch attention
 )
 
 # Flash Attention 2 (faster, less memory)
 model_flash = AutoModelForCausalLM.from_pretrained(
-    model_name,
-    torch_dtype=torch.float16,
-    device_map="auto",
-    attn_implementation="flash_attention_2"  # Flash Attention 2
+ model_name,
+ torch_dtype=torch.float16,
+ device_map="auto",
+ attn_implementation="flash_attention_2" # Flash Attention 2
 )
 
 # Benchmark: Long context generation
 import time
 
-prompt = "Write a long essay about AI: " * 500  # ~2k tokens
+prompt = "Write a long essay about AI: " * 500 # ~2k tokens
 inputs = model_flash.tokenizer(prompt, return_tensors="pt").to("cuda")
 
 # Standard attention
@@ -920,30 +920,30 @@ print(f"Speedup: {standard_time / flash_time:.2f}×")
 
 ```mermaid
 graph TB
-    subgraph "Standard Attention (8k context)"
-        A1["Q, K, V matrices<br/>Each: 8k × 4096"]
-        A2["Compute QK^T<br/>8k × 8k matrix<br/>~256 MB per head"]
-        A3["Softmax<br/>Still 8k × 8k"]
-        A4["Multiply by V<br/>Finally 8k × 4096"]
-        A5["Total memory:<br/>~4 GB for 32 heads"]
-    end
+ subgraph "Standard Attention (8k context)"
+ A1["Q, K, V matrices<br/>Each: 8k × 4096"]
+ A2["Compute QK^T<br/>8k × 8k matrix<br/>~256 MB per head"]
+ A3["Softmax<br/>Still 8k × 8k"]
+ A4["Multiply by V<br/>Finally 8k × 4096"]
+ A5["Total memory:<br/>~4 GB for 32 heads"]
+ end
 
-    subgraph "Flash Attention (8k context)"
-        B1["Q, K, V matrices<br/>Same size"]
-        B2["Chunk into blocks<br/>e.g., 128 × 128"]
-        B3["Compute in SRAM<br/>Never write full matrix"]
-        B4["Stream results<br/>Directly to output"]
-        B5["Total memory:<br/>~64 MB for 32 heads"]
-    end
+ subgraph "Flash Attention (8k context)"
+ B1["Q, K, V matrices<br/>Same size"]
+ B2["Chunk into blocks<br/>e.g., 128 × 128"]
+ B3["Compute in SRAM<br/>Never write full matrix"]
+ B4["Stream results<br/>Directly to output"]
+ B5["Total memory:<br/>~64 MB for 32 heads"]
+ end
 
-    A1 --> A2 --> A3 --> A4 --> A5
-    B1 --> B2 --> B3 --> B4 --> B5
+ A1 --> A2 --> A3 --> A4 --> A5
+ B1 --> B2 --> B3 --> B4 --> B5
 
-    style A2 fill:#ffcccc
-    style A3 fill:#ffcccc
-    style A5 fill:#ffcccc
-    style B3 fill:#d4edda
-    style B5 fill:#d4edda
+ style A2 fill:#ffcccc
+ style A3 fill:#ffcccc
+ style A5 fill:#ffcccc
+ style B3 fill:#d4edda
+ style B5 fill:#d4edda
 ```
 
 **The key insight:** Flash Attention computes the same mathematical operation but reorders it to avoid ever storing the full attention matrix. It's an algorithmic win — pure engineering, no approximation.
@@ -972,11 +972,11 @@ graph TB
 
 ```mermaid
 pie title "LLaMA 7B Parameter Distribution (6.74B total)"
-    "FFN Layers (32 blocks × 90M)" : 2880
-    "Attention Layers (32 blocks × 67M)" : 2144
-    "Embeddings (Input)" : 131
-    "Output Head" : 131
-    "LayerNorms" : 0.5
+ "FFN Layers (32 blocks × 90M)" : 2880
+ "Attention Layers (32 blocks × 67M)" : 2144
+ "Embeddings (Input)" : 131
+ "Output Head" : 131
+ "LayerNorms" : 0.5
 ```
 
 **Key insight:** FFN layers consume 43% of total parameters, attention layers 32%, embeddings 4% combined. The remaining 21% is distributed across other components and rounding.
@@ -996,20 +996,20 @@ import torch
 from transformers import AutoModelForCausalLM
 
 def print_gpu_memory():
-    allocated = torch.cuda.memory_allocated() / 1e9
-    print(f"GPU Memory: {allocated:.2f} GB")
+ allocated = torch.cuda.memory_allocated() / 1e9
+ print(f"GPU Memory: {allocated:.2f} GB")
 
 # Load and measure
 model = AutoModelForCausalLM.from_pretrained(
-    "meta-llama/Llama-2-7b-hf",
-    torch_dtype=torch.float16,
-    device_map="auto"
+ "meta-llama/Llama-2-7b-hf",
+ torch_dtype=torch.float16,
+ device_map="auto"
 )
-print_gpu_memory()  # Output: ~13.4 GB (model weights)
+print_gpu_memory() # Output: ~13.4 GB (model weights)
 
 # After inference with 2k context
 outputs = model.generate(long_inputs, max_new_tokens=100)
-print_gpu_memory()  # Output: ~15.8 GB (weights + activations + KV cache)
+print_gpu_memory() # Output: ~15.8 GB (weights + activations + KV cache)
 ```
 
 **Key observations:**
@@ -1022,45 +1022,45 @@ print_gpu_memory()  # Output: ~15.8 GB (weights + activations + KV cache)
 **Problem 1: Out of Memory (OOM) during loading**
 
 ```python
-# ❌ FAILS: Try to load 70B model on 24GB GPU
+# FAILS: Try to load 70B model on 24GB GPU
 model = AutoModelForCausalLM.from_pretrained(
-    "meta-llama/Llama-2-70b-hf",
-    torch_dtype=torch.float16  # Needs 140 GB!
+ "meta-llama/Llama-2-70b-hf",
+ torch_dtype=torch.float16 # Needs 140 GB!
 )
 # RuntimeError: CUDA out of memory
 
-# ✅ SOLUTION 1: Use quantization
+# SOLUTION 1: Use quantization
 model = AutoModelForCausalLM.from_pretrained(
-    "meta-llama/Llama-2-70b-hf",
-    load_in_4bit=True,  # 35 GB — might fit!
-    device_map="auto"
+ "meta-llama/Llama-2-70b-hf",
+ load_in_4bit=True, # 35 GB — might fit!
+ device_map="auto"
 )
 
-# ✅ SOLUTION 2: Use CPU offloading
+# SOLUTION 2: Use CPU offloading
 model = AutoModelForCausalLM.from_pretrained(
-    "meta-llama/Llama-2-70b-hf",
-    torch_dtype=torch.float16,
-    device_map="auto",  # Automatically splits across GPU + CPU
-    offload_folder="offload_weights"
+ "meta-llama/Llama-2-70b-hf",
+ torch_dtype=torch.float16,
+ device_map="auto", # Automatically splits across GPU + CPU
+ offload_folder="offload_weights"
 )
 ```
 
 **Problem 2: OOM during inference (long context)**
 
 ```python
-# ❌ FAILS: Generate 8k tokens with 7B model on 24GB GPU
-prompt = "long context " * 4000  # 8k tokens
+# FAILS: Generate 8k tokens with 7B model on 24GB GPU
+prompt = "long context " * 4000 # 8k tokens
 outputs = model.generate(prompt, max_new_tokens=2000)
 # RuntimeError: CUDA out of memory (KV cache too large)
 
-# ✅ SOLUTION 1: Reduce context or generation length
+# SOLUTION 1: Reduce context or generation length
 outputs = model.generate(prompt[:1000], max_new_tokens=500)
 
-# ✅ SOLUTION 2: Use gradient checkpointing (trades speed for memory)
+# SOLUTION 2: Use gradient checkpointing (trades speed for memory)
 model.gradient_checkpointing_enable()
 outputs = model.generate(prompt, max_new_tokens=2000)
 
-# ✅ SOLUTION 3: Use streaming (generate in chunks)
+# SOLUTION 3: Use streaming (generate in chunks)
 from transformers import TextIteratorStreamer
 
 streamer = TextIteratorStreamer(tokenizer)
@@ -1071,21 +1071,21 @@ generation_kwargs = dict(inputs, streamer=streamer, max_new_tokens=2000)
 **Problem 3: OOM during batch inference**
 
 ```python
-# ❌ FAILS: Batch size 32 with 2k context each
-batch = ["context " * 1000 for _ in range(32)]  # 32 × 2k tokens
+# FAILS: Batch size 32 with 2k context each
+batch = ["context " * 1000 for _ in range(32)] # 32 × 2k tokens
 outputs = model.generate(batch, max_new_tokens=100)
 # RuntimeError: CUDA out of memory (32× KV cache!)
 
-# ✅ SOLUTION: Use smaller batches
+# SOLUTION: Use smaller batches
 def batch_generate(prompts, batch_size=4):
-    results = []
-    for i in range(0, len(prompts), batch_size):
-        batch = prompts[i:i+batch_size]
-        outputs = model.generate(batch, max_new_tokens=100)
-        results.extend(outputs)
-    return results
+ results = []
+ for i in range(0, len(prompts), batch_size):
+ batch = prompts[i:i+batch_size]
+ outputs = model.generate(batch, max_new_tokens=100)
+ results.extend(outputs)
+ return results
 
-results = batch_generate(batch, batch_size=4)  # 4 at a time
+results = batch_generate(batch, batch_size=4) # 4 at a time
 ```
 
 ### Memory Optimization Checklist
@@ -1094,14 +1094,14 @@ results = batch_generate(batch, batch_size=4)  # 4 at a time
 
 | Optimization | Impact | Tradeoff |
 |--------------|--------|----------|
-| ✅ Use fp16 instead of fp32 | 50% memory savings | None (standard practice) |
-| ✅ Use int8 quantization | Additional 50% savings | <1% quality loss |
-| ✅ Enable Flash Attention 2 | 30-60% memory on long context | None (pure speedup) |
-| ✅ Limit max context length | Linear memory reduction | May truncate user input |
-| ✅ Use dynamic batching | 2-5× throughput | Slight latency increase |
-| ⚠️ Use int4 quantization | 75% memory savings vs fp16 | 2-5% quality loss |
-| ⚠️ Use CPU offloading | Can run any size model | 10-100× slower inference |
-| ⚠️ Enable gradient checkpointing | 30-50% memory savings | 20% slower inference |
+| Use fp16 instead of fp32 | 50% memory savings | None (standard practice) |
+| Use int8 quantization | Additional 50% savings | <1% quality loss |
+| Enable Flash Attention 2 | 30-60% memory on long context | None (pure speedup) |
+| Limit max context length | Linear memory reduction | May truncate user input |
+| Use dynamic batching | 2-5× throughput | Slight latency increase |
+| Use int4 quantization | 75% memory savings vs fp16 | 2-5% quality loss |
+| Use CPU offloading | Can run any size model | 10-100× slower inference |
+| Enable gradient checkpointing | 30-50% memory savings | 20% slower inference |
 
 ---
 
@@ -1122,9 +1122,9 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 # Load 7B model in int8 (6.7 GB)
 model = AutoModelForCausalLM.from_pretrained(
-    "meta-llama/Llama-2-7b-chat-hf",
-    load_in_8bit=True,  # 6.7 GB model weights
-    device_map="auto"
+ "meta-llama/Llama-2-7b-chat-hf",
+ load_in_8bit=True, # 6.7 GB model weights
+ device_map="auto"
 )
 
 # Memory budget:
@@ -1152,16 +1152,16 @@ model = AutoModelForCausalLM.from_pretrained(
 ```python
 # Load 70B model in fp16 across 2× A100
 model = AutoModelForCausalLM.from_pretrained(
-    "meta-llama/Llama-2-70b-chat-hf",
-    torch_dtype=torch.float16,  # 140 GB model weights
-    device_map="auto"  # Automatically split across 2 GPUs
+ "meta-llama/Llama-2-70b-chat-hf",
+ torch_dtype=torch.float16, # 140 GB model weights
+ device_map="auto" # Automatically split across 2 GPUs
 )
 
 # Memory budget:
 # - Weights: 140 GB (split 70 GB per GPU)
 # - Activations: ~5 GB per GPU
 # - KV cache: 100 users × 16k context × ~3.5 GB = 350 GB
-# ❌ Doesn't fit! Need to reduce batch size or context
+# Doesn't fit! Need to reduce batch size or context
 
 # Adjusted solution: Reduce effective batch
 # Use continuous batching with 40 active requests max
@@ -1237,14 +1237,14 @@ Nobody programs these specializations — they emerge from training.
 
 ```
 TransformerBlock:
-  1. LayerNorm → Attention → Residual (+)
-  2. LayerNorm → FFN → Residual (+)
+ 1. LayerNorm → Attention → Residual (+)
+ 2. LayerNorm → FFN → Residual (+)
 
 Parameters per block:
-  - Attention: 67M
-  - FFN: 90M
-  - LayerNorms: 16K (negligible)
-  - Total: 157M parameters
+ - Attention: 67M
+ - FFN: 90M
+ - LayerNorms: 16K (negligible)
+ - Total: 157M parameters
 ```
 
 **Parameter breakdown verified:**
@@ -1311,38 +1311,38 @@ Different model families make different architectural choices. Understanding the
 
 ```mermaid
 graph TB
-    subgraph "Multi-Head Attention (32 heads)"
-        A1["Q1"] --> K1["K1"]
-        A2["Q2"] --> K2["K2"]
-        A3["Q3"] --> K3["K3"]
-        A4["...Q32"] --> K4["...K32"]
+ subgraph "Multi-Head Attention (32 heads)"
+ A1["Q1"] --> K1["K1"]
+ A2["Q2"] --> K2["K2"]
+ A3["Q3"] --> K3["K3"]
+ A4["...Q32"] --> K4["...K32"]
 
-        K1 --> V1["V1"]
-        K2 --> V2["V2"]
-        K3 --> V3["V3"]
-        K4 --> V4["...V32"]
-    end
+ K1 --> V1["V1"]
+ K2 --> V2["V2"]
+ K3 --> V3["V3"]
+ K4 --> V4["...V32"]
+ end
 
-    subgraph "Grouped-Query Attention (32Q, 8KV)"
-        B1["Q1-Q4"] --> L1["K1"]
-        B2["Q5-Q8"] --> L2["K2"]
-        B3["Q9-Q12"] --> L3["K3"]
-        B4["Q29-Q32"] --> L4["K8"]
+ subgraph "Grouped-Query Attention (32Q, 8KV)"
+ B1["Q1-Q4"] --> L1["K1"]
+ B2["Q5-Q8"] --> L2["K2"]
+ B3["Q9-Q12"] --> L3["K3"]
+ B4["Q29-Q32"] --> L4["K8"]
 
-        L1 --> M1["V1"]
-        L2 --> M2["V2"]
-        L3 --> M3["V3"]
-        L4 --> M4["V8"]
-    end
+ L1 --> M1["V1"]
+ L2 --> M2["V2"]
+ L3 --> M3["V3"]
+ L4 --> M4["V8"]
+ end
 
-    style K1 fill:#ffcccc
-    style K2 fill:#ffcccc
-    style K3 fill:#ffcccc
-    style K4 fill:#ffcccc
-    style L1 fill:#d4edda
-    style L2 fill:#d4edda
-    style L3 fill:#d4edda
-    style L4 fill:#d4edda
+ style K1 fill:#ffcccc
+ style K2 fill:#ffcccc
+ style K3 fill:#ffcccc
+ style K4 fill:#ffcccc
+ style L1 fill:#d4edda
+ style L2 fill:#d4edda
+ style L3 fill:#d4edda
+ style L4 fill:#d4edda
 ```
 
 **Real-world impact: LLaMA 2 70B**
@@ -1359,28 +1359,28 @@ import torch
 import time
 
 def benchmark_attention(seq_len, num_heads, d_model, implementation):
-    """Compare MHA vs GQA memory and speed"""
-    batch_size = 1
-    x = torch.randn(batch_size, seq_len, d_model).cuda()
+ """Compare MHA vs GQA memory and speed"""
+ batch_size = 1
+ x = torch.randn(batch_size, seq_len, d_model).cuda()
 
-    if implementation == "mha":
-        # Standard Multi-Head Attention
-        attn = MultiHeadAttention(d_model, num_heads).cuda()
-    elif implementation == "gqa":
-        # Grouped-Query Attention (simulate with fewer KV heads)
-        attn = GroupedQueryAttention(d_model, num_heads, num_kv_heads=8).cuda()
+ if implementation == "mha":
+ # Standard Multi-Head Attention
+ attn = MultiHeadAttention(d_model, num_heads).cuda()
+ elif implementation == "gqa":
+ # Grouped-Query Attention (simulate with fewer KV heads)
+ attn = GroupedQueryAttention(d_model, num_heads, num_kv_heads=8).cuda()
 
-    # Measure memory
-    torch.cuda.reset_peak_memory_stats()
-    start = time.time()
+ # Measure memory
+ torch.cuda.reset_peak_memory_stats()
+ start = time.time()
 
-    with torch.no_grad():
-        output = attn(x)
+ with torch.no_grad():
+ output = attn(x)
 
-    elapsed = time.time() - start
-    memory = torch.cuda.max_memory_allocated() / 1e9
+ elapsed = time.time() - start
+ memory = torch.cuda.max_memory_allocated() / 1e9
 
-    return elapsed, memory
+ return elapsed, memory
 
 # Benchmark
 seq_lens = [1024, 4096, 16384]
@@ -1388,19 +1388,19 @@ print(f"{'Seq Len':<10} {'MHA Time':<12} {'GQA Time':<12} {'MHA Mem':<12} {'GQA 
 print("-" * 70)
 
 for seq_len in seq_lens:
-    mha_time, mha_mem = benchmark_attention(seq_len, 32, 4096, "mha")
-    gqa_time, gqa_mem = benchmark_attention(seq_len, 32, 4096, "gqa")
-    speedup = mha_time / gqa_time
+ mha_time, mha_mem = benchmark_attention(seq_len, 32, 4096, "mha")
+ gqa_time, gqa_mem = benchmark_attention(seq_len, 32, 4096, "gqa")
+ speedup = mha_time / gqa_time
 
-    print(f"{seq_len:<10} {mha_time:.4f}s{'':<6} {gqa_time:.4f}s{'':<6} "
-          f"{mha_mem:.2f} GB{'':<6} {gqa_mem:.2f} GB{'':<6} {speedup:.2f}×")
+ print(f"{seq_len:<10} {mha_time:.4f}s{'':<6} {gqa_time:.4f}s{'':<6} "
+ f"{mha_mem:.2f} GB{'':<6} {gqa_mem:.2f} GB{'':<6} {speedup:.2f}×")
 
 # Typical output:
-# Seq Len    MHA Time     GQA Time     MHA Mem      GQA Mem      Speedup
+# Seq Len MHA Time GQA Time MHA Mem GQA Mem Speedup
 # ----------------------------------------------------------------------
-# 1024       0.0234s      0.0198s      2.1 GB       0.8 GB       1.18×
-# 4096       0.1456s      0.0812s      8.3 GB       2.1 GB       1.79×
-# 16384      1.2341s      0.4567s      32.1 GB      8.2 GB       2.70×
+# 1024 0.0234s 0.0198s 2.1 GB 0.8 GB 1.18×
+# 4096 0.1456s 0.0812s 8.3 GB 2.1 GB 1.79×
+# 16384 1.2341s 0.4567s 32.1 GB 8.2 GB 2.70×
 ```
 
 **The takeaway:** GQA is a pure win — less memory, faster, minimal quality loss. It's why LLaMA 2 70B can serve 100 users simultaneously on reasonable hardware.

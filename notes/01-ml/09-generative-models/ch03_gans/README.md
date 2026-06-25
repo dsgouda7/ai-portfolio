@@ -154,41 +154,41 @@ Decompose this:
 k = 5 # Train discriminator k times per generator update
 
 for epoch in range(num_epochs):
-    for real_batch in dataloader:
-        # -------------------
-        # Train Discriminator
-        # -------------------
-        for _ in range(k):
-            # Sample real data
-            x_real = real_batch
+ for real_batch in dataloader:
+ # -------------------
+ # Train Discriminator
+ # -------------------
+ for _ in range(k):
+ # Sample real data
+ x_real = real_batch
 
-            # Sample fake data
-            z = torch.randn(batch_size, latent_dim)
-            x_fake = generator(z).detach() # Detach to not update G
+ # Sample fake data
+ z = torch.randn(batch_size, latent_dim)
+ x_fake = generator(z).detach() # Detach to not update G
 
-            # Discriminator loss (Binary Cross-Entropy)
-            d_loss_real = bce_loss(discriminator(x_real), torch.ones(batch_size, 1))
-            d_loss_fake = bce_loss(discriminator(x_fake), torch.zeros(batch_size, 1))
-            d_loss = d_loss_real + d_loss_fake
+ # Discriminator loss (Binary Cross-Entropy)
+ d_loss_real = bce_loss(discriminator(x_real), torch.ones(batch_size, 1))
+ d_loss_fake = bce_loss(discriminator(x_fake), torch.zeros(batch_size, 1))
+ d_loss = d_loss_real + d_loss_fake
 
-            # Update discriminator
-            d_optimizer.zero_grad()
-            d_loss.backward()
-            d_optimizer.step()
+ # Update discriminator
+ d_optimizer.zero_grad()
+ d_loss.backward()
+ d_optimizer.step()
 
-        # -------------------
-        # Train Generator
-        # -------------------
-        z = torch.randn(batch_size, latent_dim)
-        x_fake = generator(z)
+ # -------------------
+ # Train Generator
+ # -------------------
+ z = torch.randn(batch_size, latent_dim)
+ x_fake = generator(z)
 
-        # Generator loss (fool discriminator)
-        g_loss = bce_loss(discriminator(x_fake), torch.ones(batch_size, 1))
+ # Generator loss (fool discriminator)
+ g_loss = bce_loss(discriminator(x_fake), torch.ones(batch_size, 1))
 
-        # Update generator
-        g_optimizer.zero_grad()
-        g_loss.backward()
-        g_optimizer.step()
+ # Update generator
+ g_optimizer.zero_grad()
+ g_loss.backward()
+ g_optimizer.step()
 ```
 
 **Why $k > 1$?** (Train discriminator multiple times per generator update)
@@ -239,16 +239,16 @@ Where $\text{JSD}$ is the Jensen-Shannon divergence. The generator's optimal str
 Input: z ∈ R^100 (latent noise)
 
 Generator G:
-    Linear(100 → 7×7×256) → Reshape(7, 7, 256)
-    ↓
-    ConvTranspose2d(256 → 128, kernel=4, stride=2, pad=1) → BatchNorm → ReLU
-    [Output: 14×14×128]
-    ↓
-    ConvTranspose2d(128 → 64, kernel=4, stride=2, pad=1) → BatchNorm → ReLU
-    [Output: 28×28×64]
-    ↓
-    Conv2d(64 → 1, kernel=3, stride=1, pad=1) → Tanh
-    [Output: 28×28×1 (MNIST digit)]
+ Linear(100 → 7×7×256) → Reshape(7, 7, 256)
+ ↓
+ ConvTranspose2d(256 → 128, kernel=4, stride=2, pad=1) → BatchNorm → ReLU
+ [Output: 14×14×128]
+ ↓
+ ConvTranspose2d(128 → 64, kernel=4, stride=2, pad=1) → BatchNorm → ReLU
+ [Output: 28×28×64]
+ ↓
+ Conv2d(64 → 1, kernel=3, stride=1, pad=1) → Tanh
+ [Output: 28×28×1 (MNIST digit)]
 ```
 
 **Key design choices:**
@@ -263,14 +263,14 @@ Generator G:
 Input: x ∈ R^{28×28×1} (real or fake MNIST digit)
 
 Discriminator D:
-    Conv2d(1 → 64, kernel=4, stride=2, pad=1) → LeakyReLU(0.2)
-    [Output: 14×14×64]
-    ↓
-    Conv2d(64 → 128, kernel=4, stride=2, pad=1) → BatchNorm → LeakyReLU(0.2)
-    [Output: 7×7×128]
-    ↓
-    Flatten → Linear(7×7×128 → 1) → Sigmoid
-    [Output: scalar in (0, 1) = P(image is real)]
+ Conv2d(1 → 64, kernel=4, stride=2, pad=1) → LeakyReLU(0.2)
+ [Output: 14×14×64]
+ ↓
+ Conv2d(64 → 128, kernel=4, stride=2, pad=1) → BatchNorm → LeakyReLU(0.2)
+ [Output: 7×7×128]
+ ↓
+ Flatten → Linear(7×7×128 → 1) → Sigmoid
+ [Output: scalar in (0, 1) = P(image is real)]
 ```
 
 **Key design choices:**
@@ -283,26 +283,26 @@ Discriminator D:
 
 ```
 Epoch 0:
-    Generator: z ~ N(0,I) → random noise pixels
-    Discriminator: 100% accuracy (trivial to spot fakes)
-    D_loss: ~0.01 (confident), G_loss: ~5.0 (failing badly)
+ Generator: z ~ N(0,I) → random noise pixels
+ Discriminator: 100% accuracy (trivial to spot fakes)
+ D_loss: ~0.01 (confident), G_loss: ~5.0 (failing badly)
 
 Epoch 10:
-    Generator: Vague digit shapes emerge
-    Discriminator: 90% accuracy
-    D_loss: ~0.15, G_loss: ~2.3
+ Generator: Vague digit shapes emerge
+ Discriminator: 90% accuracy
+ D_loss: ~0.15, G_loss: ~2.3
 
 Epoch 50:
-    Generator: Clear digits with some artifacts
-    Discriminator: 70% accuracy
-    D_loss: ~0.45, G_loss: ~1.1
+ Generator: Clear digits with some artifacts
+ Discriminator: 70% accuracy
+ D_loss: ~0.45, G_loss: ~1.1
 
 Epoch 200:
-    Generator: Sharp, realistic digits
-    Discriminator: 55% accuracy (near guessing)
-    D_loss: ~0.68, G_loss: ~0.70
+ Generator: Sharp, realistic digits
+ Discriminator: 55% accuracy (near guessing)
+ D_loss: ~0.68, G_loss: ~0.70
 
-    → EQUILIBRIUM REACHED
+ → EQUILIBRIUM REACHED
 ```
 
 ### Step 4: Generation (After Training)
@@ -310,8 +310,8 @@ Epoch 200:
 ```python
 # Generate 64 new MNIST digits
 with torch.no_grad():
-    z = torch.randn(64, 100) # Sample latent noise
-    fake_images = generator(z) # Shape: [64, 1, 28, 28]
+ z = torch.randn(64, 100) # Sample latent noise
+ fake_images = generator(z) # Shape: [64, 1, 28, 28]
 
 # Discriminator evaluation
 d_output = discriminator(fake_images).mean()
@@ -328,9 +328,9 @@ z1 = torch.randn(1, 100) # Latent code for random digit A
 z2 = torch.randn(1, 100) # Latent code for random digit B
 
 for alpha in torch.linspace(0, 1, 10):
-    z_interp = alpha * z1 + (1 - alpha) * z2
-    x_interp = generator(z_interp)
-    # Smooth morph from digit A to digit B
+ z_interp = alpha * z1 + (1 - alpha) * z2
+ x_interp = generator(z_interp)
+ # Smooth morph from digit A to digit B
 ```
 
 **Unlike VAE**: GANs don't have an encoder. Latent space is **implicit** — you can't encode a real image to $z$. But interpolation still works because the generator learns a smooth mapping.
@@ -342,87 +342,87 @@ for alpha in torch.linspace(0, 1, 10):
 ### 5.1 · GAN Training Dynamics
 
 ```
-                    ADVERSARIAL TRAINING LOOP
+ ADVERSARIAL TRAINING LOOP
 
-    ┌──────────────────────────────────────────────────────────┐
-    │                                                          │
-    │   Real Data (x_real)              Noise (z ~ N(0,I))    │
-    │        │                                 │               │
-    │        │                                 ↓               │
-    │        │                          ┌─────────────┐        │
-    │        │                          │  GENERATOR  │        │
-    │        │                          │  (Forger)   │        │
-    │        │                          └──────┬──────┘        │
-    │        │                                 │               │
-    │        ↓                                 ↓               │
-    │   ┌────────────────────────────────────────┐            │
-    │   │        DISCRIMINATOR (Detective)       │            │
-    │   │  Input: x (real or fake)               │            │
-    │   │  Output: D(x) ∈ [0,1]                  │            │
-    │   │  ("Probability image is real")         │            │
-    │   └────────────┬───────────────────────────┘            │
-    │                │                                         │
-    │                ↓                                         │
-    │   ┌────────────────────────────────────────┐            │
-    │   │  Binary Classification Loss            │            │
-    │   │  D_loss = -log D(x_real)               │            │
-    │   │           -log(1 - D(G(z)))            │            │
-    │   │  G_loss = -log D(G(z))                 │            │
-    │   └────────────┬───────────────────────────┘            │
-    │                │                                         │
-    │                ↓                                         │
-    │   Update D (improve fake detection)                     │
-    │   Update G (improve forgery quality)                    │
-    │                                                          │
-    └──────────────────────────────────────────────────────────┘
+ ┌──────────────────────────────────────────────────────────┐
+ │ │
+ │ Real Data (x_real) Noise (z ~ N(0,I)) │
+ │ │ │ │
+ │ │ ↓ │
+ │ │ ┌─────────────┐ │
+ │ │ │ GENERATOR │ │
+ │ │ │ (Forger) │ │
+ │ │ └──────┬──────┘ │
+ │ │ │ │
+ │ ↓ ↓ │
+ │ ┌────────────────────────────────────────┐ │
+ │ │ DISCRIMINATOR (Detective) │ │
+ │ │ Input: x (real or fake) │ │
+ │ │ Output: D(x) ∈ [0,1] │ │
+ │ │ ("Probability image is real") │ │
+ │ └────────────┬───────────────────────────┘ │
+ │ │ │
+ │ ↓ │
+ │ ┌────────────────────────────────────────┐ │
+ │ │ Binary Classification Loss │ │
+ │ │ D_loss = -log D(x_real) │ │
+ │ │ -log(1 - D(G(z))) │ │
+ │ │ G_loss = -log D(G(z)) │ │
+ │ └────────────┬───────────────────────────┘ │
+ │ │ │
+ │ ↓ │
+ │ Update D (improve fake detection) │
+ │ Update G (improve forgery quality) │
+ │ │
+ └──────────────────────────────────────────────────────────┘
 
-    After N iterations → D(x_real) ≈ D(G(z)) ≈ 0.5
-    (Discriminator can't distinguish real from fake → Nash equilibrium)
+ After N iterations → D(x_real) ≈ D(G(z)) ≈ 0.5
+ (Discriminator can't distinguish real from fake → Nash equilibrium)
 ```
 
 ### 5.2 · Loss Curves Over Training
 
 ```
-    D_loss, G_loss
+ D_loss, G_loss
 
-    5.0 │ G_loss
-        │  *
-    4.0 │   *
-        │    *
-    3.0 │     *___
-        │         *___
-    2.0 │             *___
-        │                 *___
-    1.0 │ D_loss               *___________
-        │  ___---~~~~                      ~~~~~~~~~~
-    0.0 │~~
-        └────────────────────────────────────────────> Epoch
-        0        50       100      150      200
+ 5.0 │ G_loss
+ │ *
+ 4.0 │ *
+ │ *
+ 3.0 │ *___
+ │ *___
+ 2.0 │ *___
+ │ *___
+ 1.0 │ D_loss *___________
+ │ ___---~~~~ ~~~~~~~~~~
+ 0.0 │~~
+ └────────────────────────────────────────────> Epoch
+ 0 50 100 150 200
 
-    Early: G_loss high (generator failing), D_loss low (easy to classify)
-    Late: G_loss ≈ D_loss ≈ 0.7 (equilibrium, both networks uncertain)
+ Early: G_loss high (generator failing), D_loss low (easy to classify)
+ Late: G_loss ≈ D_loss ≈ 0.7 (equilibrium, both networks uncertain)
 ```
 
 ### 5.3 · Mode Collapse Visualization
 
 ```
-    HEALTHY GAN (all modes covered)          MODE COLLAPSE
+ HEALTHY GAN (all modes covered) MODE COLLAPSE
 
-    Real Data Distribution                Real Data Distribution
-    ┌────────────────────┐                ┌────────────────────┐
-    │ ●1  ●2  ●3  ●4  ●5 │                │ ●1  ●2  ●3  ●4  ●5 │
-    │                    │                │                    │
-    │ ●6  ●7  ●8  ●9  ●0 │                │ ●6  ●7  ●8  ●9  ●0 │
-    └────────────────────┘                └────────────────────┘
+ Real Data Distribution Real Data Distribution
+ ┌────────────────────┐ ┌────────────────────┐
+ │ ●1 ●2 ●3 ●4 ●5 │ │ ●1 ●2 ●3 ●4 ●5 │
+ │ │ │ │
+ │ ●6 ●7 ●8 ●9 ●0 │ │ ●6 ●7 ●8 ●9 ●0 │
+ └────────────────────┘ └────────────────────┘
 
-    Generated Distribution                Generated Distribution
-    ┌────────────────────┐                ┌────────────────────┐
-    │ ○1  ○2  ○3  ○4  ○5 │                │                    │
-    │                    │                │         ○3  ○3  ○3 │
-    │ ○6  ○7  ○8  ○9  ○0 │                │         ○3  ○3  ○3 │
-    └────────────────────┘                └────────────────────┘
-    All digit classes                     Only generates "3"s
-    generated uniformly                   (found one "good" mode)
+ Generated Distribution Generated Distribution
+ ┌────────────────────┐ ┌────────────────────┐
+ │ ○1 ○2 ○3 ○4 ○5 │ │ │
+ │ │ │ ○3 ○3 ○3 │
+ │ ○6 ○7 ○8 ○9 ○0 │ │ ○3 ○3 ○3 │
+ └────────────────────┘ └────────────────────┘
+ All digit classes Only generates "3"s
+ generated uniformly (found one "good" mode)
 ```
 
 **The forger's failure mode**: Generator discovers that digit "3" reliably fools discriminator → produces only "3"s → ignores other digits. Discriminator adapts, generator collapses to a different mode. Cycle repeats.
@@ -479,27 +479,27 @@ for alpha in torch.linspace(0, 1, 10):
 ## 7 · What Can Go Wrong
 
 1. **Mode collapse** — Generator produces only one or few digit classes, ignores others.
-   - **Symptom**: All generated samples look identical or cover <5 digit classes
-   - **Fix**: Increase $k$ (train discriminator more), use minibatch discrimination, switch to WGAN
+ - **Symptom**: All generated samples look identical or cover <5 digit classes
+ - **Fix**: Increase $k$ (train discriminator more), use minibatch discrimination, switch to WGAN
 
 2. **Discriminator wins too easily** (generator collapse) — $D$ saturates at 100% accuracy, generator gradients vanish.
-   - **Symptom**: $D_{\text{loss}} \to 0$, $G_{\text{loss}} \to$ constant (flat), generated images don't improve
-   - **Fix**: Reduce $k$ (train discriminator less frequently), lower $\text{lr}_D$, add noise to discriminator inputs
+ - **Symptom**: $D_{\text{loss}} \to 0$, $G_{\text{loss}} \to$ constant (flat), generated images don't improve
+ - **Fix**: Reduce $k$ (train discriminator less frequently), lower $\text{lr}_D$, add noise to discriminator inputs
 
 3. **Generator wins too easily** (discriminator collapse) — $D$ outputs 50% on everything, provides no feedback.
-   - **Symptom**: $D_{\text{loss}} \to \log(2) \approx 0.69$, $D(\mathbf{x}_{\text{real}}) \approx D(G(\mathbf{z})) \approx 0.5$
-   - **Fix**: Increase $k$, raise $\text{lr}_D$, check if discriminator architecture is too shallow
+ - **Symptom**: $D_{\text{loss}} \to \log(2) \approx 0.69$, $D(\mathbf{x}_{\text{real}}) \approx D(G(\mathbf{z})) \approx 0.5$
+ - **Fix**: Increase $k$, raise $\text{lr}_D$, check if discriminator architecture is too shallow
 
 4. **Training instability / oscillation** — Losses oscillate wildly, never converge.
-   - **Symptom**: $D_{\text{loss}}$ and $G_{\text{loss}}$ swing between 0 and 5+, no equilibrium
-   - **Fix**: Reduce both learning rates by 10×, use BatchNorm, clip discriminator weights (WGAN), use spectral normalization
+ - **Symptom**: $D_{\text{loss}}$ and $G_{\text{loss}}$ swing between 0 and 5+, no equilibrium
+ - **Fix**: Reduce both learning rates by 10×, use BatchNorm, clip discriminator weights (WGAN), use spectral normalization
 
 5. **Checkerboard artifacts** — Generated images have grid-like patterns.
-   - **Cause**: Transposed convolution kernel size not divisible by stride
-   - **Fix**: Use kernel size 4, stride 2 (or kernel 6, stride 3) — divisibility prevents overlap artifacts
+ - **Cause**: Transposed convolution kernel size not divisible by stride
+ - **Fix**: Use kernel size 4, stride 2 (or kernel 6, stride 3) — divisibility prevents overlap artifacts
 
 6. **Forgetting to normalize inputs** — MNIST must be in [-1, 1] if using Tanh output.
-   - **Fix**: `x_real = (x_real - 0.5) / 0.5` (map [0,1] → [-1,1])
+ - **Fix**: `x_real = (x_real - 0.5) / 0.5` (map [0,1] → [-1,1])
 
 ---
 
@@ -508,14 +508,14 @@ for alpha in torch.linspace(0, 1, 10):
 **Unlocked capabilities:**
 - **Photorealistic generation**: >90% fooling rate on MNIST (classifier + human visual inspection)
 - **Sharp, detailed outputs**: No MSE blur — adversarial loss captures perceptual quality
-- **Fast inference**: Generate 64 samples in <200ms (Constraint #4 ✓)
+- **Fast inference**: Generate 64 samples in <200ms (Constraint #4 )
 - **Scalability**: Same architecture works for CelebA 64×64 RGB faces (shown in notebook)
 
 **Constraint progress**:
-- **#1 QUALITY**: ✓ >90% fooling rate (target achieved!)
-- **#2 DIVERSITY**: ✓ Covers all 10 digit classes (mode collapse prevented with minibatch discrimination)
+- **#1 QUALITY**: >90% fooling rate (target achieved!)
+- **#2 DIVERSITY**: Covers all 10 digit classes (mode collapse prevented with minibatch discrimination)
 - **#3 CONTROLLABILITY**: Partial — conditional GAN (cGAN) extends this (not covered in detail but straightforward)
-- **#4 EFFICIENCY**: ✓ <200ms per 64-sample batch
+- **#4 EFFICIENCY**: <200ms per 64-sample batch
 - **#5 LATENT INTERPRETABILITY**: Partial — no encoder (can't map real image → $z$), but interpolation works
 
 **Still can't solve:**

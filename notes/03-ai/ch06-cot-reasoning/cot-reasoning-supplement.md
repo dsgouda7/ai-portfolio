@@ -25,7 +25,7 @@ Instead of sampling one chain of thought, sample **N independent CoT paths** (wi
 
 ```
 Query → CoT Path 1 → Answer A
- → CoT Path 2 → Answer A → Majority vote → A ✓
+ → CoT Path 2 → Answer A → Majority vote → A
  → CoT Path 3 → Answer B
  → CoT Path 4 → Answer A
  → CoT Path 5 → Answer A

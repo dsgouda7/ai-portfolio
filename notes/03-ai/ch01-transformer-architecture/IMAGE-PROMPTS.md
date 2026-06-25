@@ -141,10 +141,10 @@ Hyperrealistic photograph of 32 parallel industrial analysis stations arranged i
 1. Go to https://perchance.org/ai-text-to-image-generator
 2. Copy each prompt verbatim into the text field
 3. Settings:
-   - Style: "Photorealistic" or "Cinematic Photography"
-   - Aspect Ratio: 16:9 (wide) or 4:3 (standard)
-   - Quality: Maximum available
-   - Negative prompt: "cartoon, anime, illustration, painting, drawing, sketch, low quality, blurry, text artifacts"
+ - Style: "Photorealistic" or "Cinematic Photography"
+ - Aspect Ratio: 16:9 (wide) or 4:3 (standard)
+ - Quality: Maximum available
+ - Negative prompt: "cartoon, anime, illustration, painting, drawing, sketch, low quality, blurry, text artifacts"
 4. Generate multiple variations (3-5 per prompt) and select the best one
 5. Save as PNG with descriptive filename (e.g., `enemy-1-word-to-coordinates.png`)
 
@@ -178,16 +178,16 @@ Hyperrealistic photograph of 32 parallel industrial analysis stations arranged i
 
 Before finalizing each image, verify:
 
-- ✅ Hyperrealistic photographic quality (not illustration/cartoon)
-- ✅ Industrial/mechanical aesthetic consistent across all images
-- ✅ Technical precision visible (measurements, readouts, precision tools)
-- ✅ Dramatic lighting creates emotional impact
-- ✅ Visual metaphor clearly represents the technical concept
-- ✅ Scale is evident (shows magnitude of the problem/solution)
-- ✅ Composition guides eye to the key concept
-- ✅ No text artifacts or AI generation tells
-- ✅ Resolution suitable for web display (minimum 1920×1080)
-- ✅ File size reasonable for web (<2 MB per image after optimization)
+- Hyperrealistic photographic quality (not illustration/cartoon)
+- Industrial/mechanical aesthetic consistent across all images
+- Technical precision visible (measurements, readouts, precision tools)
+- Dramatic lighting creates emotional impact
+- Visual metaphor clearly represents the technical concept
+- Scale is evident (shows magnitude of the problem/solution)
+- Composition guides eye to the key concept
+- No text artifacts or AI generation tells
+- Resolution suitable for web display (minimum 1920×1080)
+- File size reasonable for web (<2 MB per image after optimization)
 
 ---
 

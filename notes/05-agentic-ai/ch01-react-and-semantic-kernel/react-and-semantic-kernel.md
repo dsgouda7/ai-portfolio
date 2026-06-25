@@ -21,7 +21,7 @@
 
 **What's blocking us:**
 
-🚨 **Passive Q&A bot — no proactive engagement, missing revenue opportunities**
+ **Passive Q&A bot — no proactive engagement, missing revenue opportunities**
 
 **Test scenario: Typical customer interaction**
 ```
@@ -1326,7 +1326,7 @@ Neither is universally "better" — the right choice depends on your context, as
 
 The §0 Constraint #5 (safety) and #6 (reliability) gaps mean the framework decision has direct business consequences. The guidance below maps team profile to framework choice — but the underlying question is always: which open §0 constraint is the blocking one for your team right now?
 
-🛋 **Decision framework:** Choose based on your team profile, requirements, and production constraints.
+ **Decision framework:** Choose based on your team profile, requirements, and production constraints.
 
 ### Guidance by Team Profile
 
@@ -1473,13 +1473,13 @@ The basic ReAct idea has inspired several extensions that address different limi
  Step 2 2a 2b 2c 2a 2b 2c
  ↓ | | | \ / \ /
  Step 3 3a 3b 3c Merge
- ↓ (✗) (✓) (✗) ↓
+ ↓ () () () ↓
  Answer ↓ Refine
  Answer ↓
  Answer
 ```
 
-> 📖 **Optional: When to Use Advanced Reasoning Patterns**
+> **Optional: When to Use Advanced Reasoning Patterns**
 >
 > **Tree of Thoughts (ToT):** Explores multiple reasoning paths simultaneously using tree search (BFS/DFS). Each intermediate thought is evaluated for promise, allowing the agent to **backtrack** from unproductive branches. Best for: puzzle-solving, creative writing, problems requiring exploration.
 >
@@ -1620,7 +1620,7 @@ An internal Microsoft wiki on orchestrators captures the positioning succinctly:
 * For **enterprise-grade orchestration, compliance, and Microsoft stack integration** → Semantic Kernel.
 * For **understanding the foundational mechanism** that powers both → study the ReAct pattern.
 
-> ➡ **Progress Check:** §18 below measures where each §0 constraint stands after applying this chapter's patterns — verify the constraint table before moving to Ch.7 Evaluation.
+> **Progress Check:** §18 below measures where each §0 constraint stands after applying this chapter's patterns — verify the constraint table before moving to Ch.7 Evaluation.
 
 ---
 

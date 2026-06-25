@@ -604,7 +604,7 @@ CF recommends what similar users liked. Those users also received CF recommendat
 | **Ch.5 — Hybrid Systems** | Combines CF similarity signals with content-based features (genre, director, synopsis embeddings). Mitigates cold start by using content metadata for new users/items where the rating history is absent. |
 | **Ch.6 — Production & Serving** | The offline/online split introduced here — precompute item-item similarity nightly, serve recommendations at query time from cache in <10ms — is the production pattern for all large-scale recommender systems at Spotify, YouTube, and Amazon. |
 
-> ➡ **Matrix factorization (Ch.3)** closes the sparsity gap by learning a compressed representation of the rating matrix — user embeddings and item embeddings — that generalise across all available signal rather than only the K nearest neighbours.
+> **Matrix factorization (Ch.3)** closes the sparsity gap by learning a compressed representation of the rating matrix — user embeddings and item embeddings — that generalise across all available signal rather than only the K nearest neighbours.
 
 ---
 
@@ -625,9 +625,9 @@ CF recommends what similar users liked. Those users also received CF recommendat
 
 | Constraint | Status | Notes |
 |------------|--------|-------|
-| **#1 ACCURACY >85%** | 🟡 Partial — 65% so far | 20-point gap remains |
+| **#1 ACCURACY >85%** | Partial — 65% so far | 20-point gap remains |
 | **#2 COLD START** | Not solved | New users still see popularity fallback |
-| **#3 SCALABILITY** | 🟡 Partial | Item-CF offline ; User-CF O(n²) |
+| **#3 SCALABILITY** | Partial | Item-CF offline ; User-CF O(n²) |
 | **#4 DIVERSITY** | Unlocked | Different users get different lists |
 | **#5 EXPLAINABILITY** | Unlocked | "Users like you also liked…" |
 **Unlocked this chapter:**

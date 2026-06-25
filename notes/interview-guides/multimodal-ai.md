@@ -793,7 +793,7 @@ Can you walk through the full T2I pipeline from prompt to pixel, and explain key
 
 ---
 
-> 📖 **Optional:** For deeper dives on any concept, see the full deep-dive sections above or the parent [Multimodal AI track](../multimodal_ai).
+> **Optional:** For deeper dives on any concept, see the full deep-dive sections above or the parent [Multimodal AI track](../multimodal_ai).
 
 </details>
 
@@ -801,7 +801,7 @@ Can you walk through the full T2I pipeline from prompt to pixel, and explain key
 
 ## Related Topics
 
-> ➡ **Forward pointers:** Where to go next after mastering this guide.
+> **Forward pointers:** Where to go next after mastering this guide.
 
 - [Agentic AI Interview Guide](agentic-ai.md) — CoT, ReAct, RAG, embeddings fundamentals
 - [Multi-Agent AI Interview Guide](multi-agent-ai.md) — agent protocols, MCP, A2A, event-driven systems

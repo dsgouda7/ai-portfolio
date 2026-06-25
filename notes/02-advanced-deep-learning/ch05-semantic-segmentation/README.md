@@ -145,7 +145,7 @@ output = conv_1x1(d1, num_classes=5) # [B, 512, 512, 5]
 
 > **Design Constraint: Use strides, not pooling.** `MaxPool2D` discards which of the N positions produced the maximum — that location is gone and cannot be recovered in the decoder. For ProductionCV's pixel-level planogram compliance check, every misplaced pixel matters. Use strided `Conv2D(strides=2)` for all downsampling in encoder stages.
 
-> ➡ **This rule carries forward:** Ch.06 (instance segmentation with Mask R-CNN) applies the same principle. It applies outside CV too — any generative model that must reconstruct spatial structure must use strides, not pooling.
+> **This rule carries forward:** Ch.06 (instance segmentation with Mask R-CNN) applies the same principle. It applies outside CV too — any generative model that must reconstruct spatial structure must use strides, not pooling.
 
 **Results:**
 - FCN: mIoU = 58.2% (coarse boundaries, misses small gaps)
@@ -611,4 +611,4 @@ IoU = |Intersection| / |Union| = TP / (TP + FP + FN)
 
 Semantic segmentation classifies pixels but loses object identity (can't count overlapping products). Ch.6 adds **Mask R-CNN** — detect individual objects with Faster R-CNN, then predict a 28×28 binary mask for each RoI. This combines detection (bounding boxes) + segmentation (pixel masks) → true instance-level understanding.
 
-> ➡ **Where the field is now (2023+).** Fully supervised encoder-decoder segmentation — everything in this chapter — is no longer the default for new deployments. Meta's Segment Anything Model (SAM) was trained on 1 billion masks and can segment any object in any image from a single click or bounding-box prompt, zero-shot. For ProductionCV, this means new product categories could be added without pixel-level annotation. The encoder-decoder skills in this chapter remain essential: understanding SAM, fine-tuning it for domain-specific use, and reasoning about its failure modes all require the architectural foundations you've just built.
+> **Where the field is now (2023+).** Fully supervised encoder-decoder segmentation — everything in this chapter — is no longer the default for new deployments. Meta's Segment Anything Model (SAM) was trained on 1 billion masks and can segment any object in any image from a single click or bounding-box prompt, zero-shot. For ProductionCV, this means new product categories could be added without pixel-level annotation. The encoder-decoder skills in this chapter remain essential: understanding SAM, fine-tuning it for domain-specific use, and reasoning about its failure modes all require the architectural foundations you've just built.

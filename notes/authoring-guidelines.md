@@ -12,7 +12,7 @@ register: technical_but_conversational
 pedagogy: failure_first
 formula_rule: verbal_gloss_required_within_three_lines
 numerical_walkthroughs: judicious_when_clarifying_never_decorative
-callout_system: {insight:"", warning:"", constraint:"", optional_depth:"📖", forward_pointer:"➡"}
+callout_system: {insight:"", warning:"", constraint:"", optional_depth:"", forward_pointer:""}
 mermaid_color_palette: {primary:"#1e3a8a", success:"#15803d", caution:"#b45309", danger:"#b91c1c", info:"#1d4ed8"}
 image_background: dark_facecolor_1a1a2e_for_generated_plots
 section_order: [story_header, challenge_0, animation, core_idea, running_example, math, step_by_step, key_diagrams, failure_modes, progress_check, bridge]
@@ -102,11 +102,11 @@ The reader is placed inside the scenario at all times:
 **Do not use emojis in technical content.** All emoji-based callouts have been systematically removed from the repository (27,921 emojis removed across 168 files as of May 2026).
 
 Use text-only formatting:
-- **Checkpoint:** (not 💡 **Checkpoint:**)
-- **Warning:** (not ⚠️ **Warning:**)
-- **Rule of Thumb:** (not 🎯 **Rule of Thumb:**)
-- [Complete] or Complete (not ✅)
-- [WRONG] or [Failed] (not ❌)
+- **Checkpoint:** (not **Checkpoint:**)
+- **Warning:** (not **Warning:**)
+- **Rule of Thumb:** (not **Rule of Thumb:**)
+- [Complete] or Complete (not )
+- [WRONG] or [Failed] (not )
 
 **Rationale:** Emojis create visual clutter, reduce professionalism, and can render inconsistently across platforms. Technical documentation should rely on clear text formatting.
 
@@ -195,7 +195,7 @@ If a section covers three methods, the section must show *what breaks* with meth
 
 **Rule 3: The notation table lives in the story header.** Subsections don't introduce new symbols without immediate inline glosses.
 
-**Rule 4: Optional depth goes in a callout box.** Full derivations that break the narrative flow go in `> 📖 **Optional:**` blocks. Always end with a cross-reference to MathUnderTheHood for rigorous treatment.
+**Rule 4: Optional depth goes in a callout box.** Full derivations that break the narrative flow go in `> **Optional:**` blocks. Always end with a cross-reference to MathUnderTheHood for rigorous treatment.
 
 **Rule 5: ASCII matrix diagrams for matrix operations.** Aligned brackets, dimension annotations, actual numbers where possible. The dimension of every operand and result must be shown.
 
@@ -267,7 +267,7 @@ Every new concept links to where it was first introduced and where it will matte
 **Forward link pattern:**
 *"This is the conceptual foundation of neural network backpropagation. Every time you call `loss.backward()` in PyTorch, this matrix multiply is running — one per layer."*
 
-**The `> ➡` callout** plants seeds for concepts introduced in later chapters without derailing the current section.
+**The `> ` callout** plants seeds for concepts introduced in later chapters without derailing the current section.
 
 **Cross-track links** to MathUnderTheHood are standard for rigorous derivations. Always reference the specific chapter:
 `[MathUnderTheHood ch06 — Gradient & Chain Rule](../math_under_the_hood/ch06_gradient_chain_rule)`
@@ -283,8 +283,8 @@ The meaning of every callout symbol is fixed. Do not improvise with new emoji or
 | `` | Key insight / conceptual payoff | After a result that reframes something the reader thought they understood |
 | `` | Warning / common trap | Before or after a pattern that is often done wrong |
 | `` | Grand Challenge constraint connection | When content advances or validates one of the track's core constraints |
-| `> 📖 **Optional:**` | Deeper derivation | Full proofs and math that break the narrative flow for practitioners |
-| `> ➡` | Forward pointer | When a concept needs to be planted before its formal treatment |
+| `> **Optional:**` | Deeper derivation | Full proofs and math that break the narrative flow for practitioners |
+| `> ` | Forward pointer | When a concept needs to be planted before its formal treatment |
 
 **Every callout ends with an actionable conclusion.** A Fix, a Rule, a What-to-do. No callout that just says "this is interesting" without consequence.
 
@@ -332,10 +332,10 @@ All Mermaid nodes: `stroke:#e2e8f0,stroke-width:2px,color:#ffffff`
 
 **Replace abstract introductions with a concrete mission.**
 
-❌ **Wrong (abstract):**
+ **Wrong (abstract):**
 > "The transformer architecture is a neural network architecture that uses self-attention mechanisms to process sequential data."
 
-✅ **Right (mission):**
+ **Right (mission):**
 > "You're about to build something that shouldn't exist: a machine that picks one word from 100,000 choices in one second, 50 times per second, with 4 trillion calculations per word."
 
 **Structure:**
@@ -362,19 +362,19 @@ All Mermaid nodes: `stroke:#e2e8f0,stroke-width:2px,color:#ffffff`
 **Keep only three types of formulas:**
 
 1. **Constraint formulas** — show why a limit exists
-   - Example: O(n²) attention scaling table showing 512 tokens = 2ms, 32k tokens = 4s
+ - Example: O(n²) attention scaling table showing 512 tokens = 2ms, 32k tokens = 4s
 
 2. **Trade-off formulas** — show the decision space
-   - Example: 100k×100k = 40 GB vs 4,096×4,096 = 67 MB (compression ratio)
+ - Example: 100k×100k = 40 GB vs 4,096×4,096 = 67 MB (compression ratio)
 
 3. **Core mechanism** — the one formula that *is* the concept
-   - Example: `scores = QK^T / √dk` for attention (this IS attention)
+ - Example: `scores = QK^T / √dk` for attention (this IS attention)
 
 **Cut everything else:**
-- ❌ Derivations (move to collapsible `<details>` sections)
-- ❌ Shape tables (implementers can infer from code)
-- ❌ Piecewise notation (describe in prose: "set future to -∞")
-- ❌ Symbol dictionaries (inline glosses only)
+- Derivations (move to collapsible `<details>` sections)
+- Shape tables (implementers can infer from code)
+- Piecewise notation (describe in prose: "set future to -∞")
+- Symbol dictionaries (inline glosses only)
 
 **For essential formulas, use the sandwich pattern:**
 ```markdown
@@ -396,10 +396,10 @@ $$
 
 **Assume blank canvas — no prior ML knowledge.**
 
-❌ **Wrong (assumes knowledge):**
+ **Wrong (assumes knowledge):**
 > "Unlike RNNs which process sequentially, transformers use parallel attention."
 
-✅ **Right (builds from scratch):**
+ **Right (builds from scratch):**
 > "When the model sees 'bank' in 'The river bank was flooded', how does it know to pay attention to 'river' (geographic clue) and not 'the' (irrelevant article)? Attention is the mechanism that answers this."
 
 **Rules:**
@@ -477,10 +477,10 @@ Example (transformer chapter):
 
 **Always show numbers before formulas.**
 
-❌ **Wrong (abstract first):**
+ **Wrong (abstract first):**
 > "Attention scales as O(n²). For a sequence of length n, we compute n² similarity scores."
 
-✅ **Right (concrete first):**
+ **Right (concrete first):**
 > "For 512 tokens: 262,144 comparisons (2ms). For 32,768 tokens: 1,073,741,824 comparisons (4 seconds).
 > This is O(n²) scaling — doubling context quadruples time and memory."
 
@@ -544,11 +544,11 @@ Single attention pattern can't capture syntax AND semantics simultaneously → m
 
 ### Anti-Patterns to Avoid
 
-❌ **Formula decoration** — Formulas without verbal glosses or concrete examples
-❌ **Disconnected analogies** — Random metaphors that don't form a unified narrative
-❌ **Academic register** — "It can be shown that...", "The reader may note..."
-❌ **Prerequisite assumptions** — Requiring RNN/LSTM knowledge as foundation
-❌ **Math-first exposition** — Leading with abstraction instead of concrete problem
+ **Formula decoration** — Formulas without verbal glosses or concrete examples
+ **Disconnected analogies** — Random metaphors that don't form a unified narrative
+ **Academic register** — "It can be shown that...", "The reader may note..."
+ **Prerequisite assumptions** — Requiring RNN/LSTM knowledge as foundation
+ **Math-first exposition** — Leading with abstraction instead of concrete problem
 
 ### When NOT to Use This Treatment
 
@@ -640,7 +640,7 @@ These patterns extend the emotional resonance treatment for authors who want max
 **Inner Workings:** [Mermaid flowchart showing component internals]
 **Pipeline Position:** [Mermaid showing where component fits in full architecture]
 
-### 🖼️ Image Prompt
+### Image Prompt
 [Visual generation prompt maintaining unified aesthetic]
 ```
 
@@ -751,8 +751,8 @@ The transformer chapter uses A + E (misconceptions + aphorisms), not B/C/D, beca
 **Minimal but complete.** Enough to run end-to-end with real output. Nothing extra.
 
 **Comments explain WHY, not WHAT.**
-- ❌ `# fit the scaler`
-- ✅ `# fit on TRAIN statistics only — applying to test avoids leakage`
+- `# fit the scaler`
+- `# fit on TRAIN statistics only — applying to test avoids leakage`
 
 **The manual path alongside the library path.** When teaching a concept (gradient descent, attention, message passing, diffusion), show the manual implementation first, then the library version. Label clearly:
 - `# Educational: [concept] from scratch`
@@ -834,7 +834,7 @@ Absolute prohibitions. No exception, no track-level override:
 | 5 | **No callout box without actionable content** | Every ends with a Fix, Rule, or What-to-do |
 | 6 | **No academic register** | "It can be shown that" and "In this section we" are banned |
 | 7 | **No fuzzy metrics** | "Higher accuracy" is forbidden; "$55k MAE vs. $40k target" is required |
-| 8 | **No forward reference without a ➡ callout** | Plant every concept formally before using it downstream |
+| 8 | **No forward reference without a callout** | Plant every concept formally before using it downstream |
 | 9 | **No supplement with a § 0 Challenge section** | Supplements are deep dives, not narrative chapters |
 | 10 | **No chapter without a Progress Check** | Every chapter must close with the constraint status update |
 
@@ -896,9 +896,9 @@ Each track's `AUTHORING_GUIDE.md` extends this document with:
 3. **DECISION CHECKPOINT blocks** — ~20-line structured summaries with sub-headings "What you just saw / What it means / What to do next". They repeat content just covered and pre-announce the next section. Replace with exactly two callouts:
  ```
  > **[Stage] verdict:** [one-sentence decision + metric impact]
- > ➡ [forward pointer to next step or chapter, with named consequence]
+ > [forward pointer to next step or chapter, with named consequence]
  ```
-4. **Section-number cross-references** — "see §5 Act 2" or "covered in §4.2". Section numbers shift when content moves. Use `> ➡` callouts at the point where a concept reappears, or use relative file paths for inter-chapter links.
+4. **Section-number cross-references** — "see §5 Act 2" or "covered in §4.2". Section numbers shift when content moves. Use `> ` callouts at the point where a concept reappears, or use relative file paths for inter-chapter links.
 5. **Unverified link paths** — cross-references with wrong directory depth (`../../` vs `../`) or wrong separator (`_` vs `-`). Every path must be verified to exist before writing it.
 
 ### The diagnostic test
@@ -913,7 +913,7 @@ After each act or stage concludes, use at most one of each type:
 
 ```
 > **[Stage] verdict:** [decision + metric impact in one sentence]
-> ➡ [what this enables next, with named consequence]
+> [what this enables next, with named consequence]
 ```
 
-Never chain these together to recreate a checkpoint block. One `` per act. One `➡` per act.
+Never chain these together to recreate a checkpoint block. One `` per act. One `` per act.

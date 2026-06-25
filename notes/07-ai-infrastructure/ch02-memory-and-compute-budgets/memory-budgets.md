@@ -25,7 +25,7 @@
 
 **What's blocking us**:
 
-🚨 **Cannot order hardware without confirming model fits in VRAM**
+ **Cannot order hardware without confirming model fits in VRAM**
 
 **Current situation**: You're preparing the budget justification for the CEO
 
@@ -307,7 +307,7 @@ for batch in [1, 2, 4, 8, 16]:
 # batch=16 | 16.00 GB | HIGH - Likely OOM on 24GB GPU
 ```
 
-### 4.1 ✓ DECISION CHECKPOINT — Phase 1 Parameter & KV Cache Complete
+### 4.1 DECISION CHECKPOINT — Phase 1 Parameter & KV Cache Complete
 
 **What you just saw:**
 - **Parameter memory (FP16):** 16 GB fixed — doesn't change with batch size
@@ -502,7 +502,7 @@ check_vram_fit(precision="INT4", batch_size=4, seq_len=2048, gpu_vram_gb=24) # W
 # Verdict: FITS
 ```
 
-### 7.1 ✓ DECISION CHECKPOINT — Phase 2 Complete
+### 7.1 DECISION CHECKPOINT — Phase 2 Complete
 
 **What you just saw:**
 - **FP16, batch=1:** Total = 18GB, fits in 24GB RTX 4090 with 6GB headroom
@@ -543,7 +543,7 @@ $$\text{VRAM}_{\text{training}} = \text{Params} + \text{Optimizer States} + \tex
 - Gradient checkpointing: 104 GB → 30 GB (fits on A100 40GB)
 - LoRA fine-tuning: only train adapter weights → 16 GB params + 2 GB adapter = 18 GB (fits on RTX 4090!)
 
-### 8.1 ✓ DECISION CHECKPOINT — Phase 2 Training Memory Check
+### 8.1 DECISION CHECKPOINT — Phase 2 Training Memory Check
 
 **What you just saw:**
 - **Training memory:** 104GB total (16GB params + 64GB optimizer + 16GB gradients + 8GB activations)
@@ -729,7 +729,7 @@ print(f"Now have headroom for batch=4 KV cache (4GB)")
 > **Common alternatives:** GPTQ (faster INT4 inference), AWQ (activation-aware quantization), SmoothQuant
 > **See also:** [bitsandbytes docs](https://github.com/TimDettmers/bitsandbytes), [QLoRA paper](https://arxiv.org/abs/2305.14314)
 
-### 11.5.4 ✓ DECISION CHECKPOINT — Phase 3 Optimization Complete
+### 11.5.4 DECISION CHECKPOINT — Phase 3 Optimization Complete
 
 **What you just saw:**
 - **Batch size lever:** Doubling batch doubles KV cache but leaves params unchanged → choose based on throughput needs
@@ -753,7 +753,7 @@ print(f"Now have headroom for batch=4 KV cache (4GB)")
 
 ## 11.6 · Code Skeleton
 
-> 📦 **Complete workflow implementation** — use these functions to implement the 3-phase workflow (§1.5) in your deployment pipeline.
+> **Complete workflow implementation** — use these functions to implement the 3-phase workflow (§1.5) in your deployment pipeline.
 
 ```python
 # Educational: VRAM budget calculator from scratch (Phase 1 + Phase 2)
@@ -822,7 +822,7 @@ def preflight_vram_check(required_gb: float, safety_margin_gb: float = 2.0) -> b
 | **AI Infrastructure Ch.4** | LoRA fine-tuning needs parameter + optimizer + gradient memory; the optimizer state formula (8× for Adam) comes from the training budget section here. **Phase 2 CHECK** shows LoRA fits on RTX 4090. |
 | **Cost & Latency (AI track)** | Cost-per-token = (hourly rate) / (tokens/sec); tokens/sec depends on batch size, which is capped by VRAM budget derived here. **Phase 3 OPTIMIZE** determines max batch for throughput. |
 
-**🔄 Workflow integration:** Every chapter above uses the **3-phase workflow** (CALCULATE → CHECK → OPTIMIZE) from §1.5. When you encounter memory constraints in later chapters, return to this workflow to diagnose bottlenecks.
+** Workflow integration:** Every chapter above uses the **3-phase workflow** (CALCULATE → CHECK → OPTIMIZE) from §1.5. When you encounter memory constraints in later chapters, return to this workflow to diagnose bottlenecks.
 
 ---
 
@@ -909,7 +909,7 @@ You: "Let me calculate:
 Result: Realistic throughput expectations set!
 ```
 
-**🔄 How the workflow helped:**
+** How the workflow helped:**
 
 **Before workflow approach:**
 - "Model OOMs — no idea why or how to fix"

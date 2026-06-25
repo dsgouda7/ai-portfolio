@@ -355,14 +355,14 @@ Input Image (640×640) Grid (7×7) Predictions per Cell
 ```
  P5 (20×20) P4 (40×40) P3 (80×80)
  ┌────────┐ ┌────────┐ ┌────────┐
-Large objects → │ 🏢🏢 │ │ │ │ │
-(200×300 px) │ 🏢🏢 │ │ │ │ │
+Large objects → │ │ │ │ │ │
+(200×300 px) │ │ │ │ │ │
  └────────┘ └────────┘ └────────┘
  Detect here
 
 Medium objects → ┌────────┐
-(100×150 px) │ 📦📦 │
- │ 📦📦 │
+(100×150 px) │ │
+ │ │
  └────────┘
  Detect here
 

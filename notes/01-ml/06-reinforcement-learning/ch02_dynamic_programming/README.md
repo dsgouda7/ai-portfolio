@@ -192,7 +192,7 @@ VALUE ITERATION (one-step shortcut)
 5. RETURN V*, π*
 ```
 
-> ➡ **Value Iteration = Policy Iteration with 1-step evaluation.** Value iteration performs exactly one evaluation sweep before improving (the $\max_a$ is the implicit improvement). Policy iteration runs evaluation to full convergence before each improvement. Policy iteration takes fewer outer iterations but each is more expensive; value iteration takes more outer iterations but each is cheap.
+> **Value Iteration = Policy Iteration with 1-step evaluation.** Value iteration performs exactly one evaluation sweep before improving (the $\max_a$ is the implicit improvement). Policy iteration runs evaluation to full convergence before each improvement. Policy iteration takes fewer outer iterations but each is more expensive; value iteration takes more outer iterations but each is cheap.
 
 **Algorithm selection flowchart:**
 
@@ -289,9 +289,9 @@ $$\boxed{V_3 = [\,-2.71,\; -1.90,\; -1.00,\; 0\,]}$$
 **Closed-form verification.** For the always-right policy on a chain of length $n$ from state 0 to terminal:
 $$V^{\pi}(\text{state } k) = \sum_{t=0}^{n-k-1} \gamma^t \cdot (-1) = -(1 + \gamma + \gamma^2 + \ldots + \gamma^{n-k-1}) = -\frac{1-\gamma^{n-k}}{1-\gamma}$$
 For our 4-state chain ($n=4$, $\gamma=0.9$):
-- State C (k=2, 1 step to goal): $-(1-0.9^1)/0.1 = -1.00$ ✓
-- State B (k=1, 2 steps): $-(1-0.9^2)/0.1 = -(1-0.81)/0.1 = -1.90$ ✓
-- State A (k=0, 3 steps): $-(1-0.9^3)/0.1 = -(1-0.729)/0.1 = -2.71$ ✓
+- State C (k=2, 1 step to goal): $-(1-0.9^1)/0.1 = -1.00$
+- State B (k=1, 2 steps): $-(1-0.9^2)/0.1 = -(1-0.81)/0.1 = -1.90$
+- State A (k=0, 3 steps): $-(1-0.9^3)/0.1 = -(1-0.729)/0.1 = -2.71$
 
 The iterative evaluation converges to the exact closed-form answer.
 
@@ -499,7 +499,7 @@ For reference, here is how all three algorithms behave on the Detour/Right 4-sta
 | $V(C)$ at convergence | $-1.00$ | $-1.00$ | $-1.00$ |
 | Outer iterations to converge | 1 (fixed $\pi$) | $\sim$30 sweeps | 2 policy switches |
 | Extracted policy at B | Detour (fixed) | Right | Right |
-| Optimality of result | ✗ Suboptimal | Optimal | Optimal |
+| Optimality of result | Suboptimal | Optimal | Optimal |
 
 Policy evaluation gives $V(B) = -4.74$ under the bad policy. Value iteration and Policy Iteration both converge to $V(B) = -1.90$ under the optimal (Right) policy. Policy Iteration reaches this in 2 outer iterations; Value Iteration needs $\sim$30 sweeps to reduce $\Delta$ below $\theta = 0.001$.
 
@@ -839,7 +839,7 @@ The DP machinery — contraction mappings, value backups, policy improvement —
 | **04-MultiAgent AI** | Single-agent MDP | Nash equilibrium in cooperative games found by multi-agent value iteration — same sweep-until-stable structure |
 | **03-AI / Agentic AI** | Markovian transitions | BFS/DFS over a planning graph is DP on a deterministic MDP with $\gamma = 1$; A* adds a heuristic value function |
 
-> ➡ **The Principle of Optimality is universal.** Every time an algorithm says "assume the future is handled optimally and solve for the current decision," it invokes Bellman's 1957 insight — from classical DP to neural critics to LLM chain-of-thought planners reasoning step by step.
+> **The Principle of Optimality is universal.** Every time an algorithm says "assume the future is handled optimally and solve for the current decision," it invokes Bellman's 1957 insight — from classical DP to neural critics to LLM chain-of-thought planners reasoning step by step.
 
 **One pattern to watch for.** Whenever you see "target network", "critic", "baseline", or "value head" in a paper, ask: what is this approximating? Almost always the answer is $V^{\pi}$ or $V^*$ — and the update rule for that approximation is a one-step Bellman backup, the same equation you worked out by hand in this chapter for the 4-state chain.
 

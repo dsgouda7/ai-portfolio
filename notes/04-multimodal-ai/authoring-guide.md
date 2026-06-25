@@ -12,7 +12,7 @@ formula_motivation: required_before_each_formula
 numerical_walkthroughs: judicious_visualforge_examples_when_clarifying
 dataset: visualforge_campaign_types_only_no_generic_examples
 failure_first_pedagogy: true
-callout_system: {insight:"", warning:"", constraint:"", optional_depth:"📖", forward_pointer:"➡"}
+callout_system: {insight:"", warning:"", constraint:"", optional_depth:"", forward_pointer:""}
 mermaid_color_palette: {primary:"#1e3a8a", success:"#15803d", caution:"#b45309", danger:"#b91c1c", info:"#1d4ed8"}
 image_background: dark_facecolor_1a1a2e_for_generated_plots
 section_template: [story_header, challenge_0, animation, core_idea_1, running_example_2, math_3, visual_intuition_4, production_example_5, failure_modes_6, when_to_use_7, connection_to_prior_8, interview_9, further_reading_10, notebook_11, progress_check_11_5, bridge_N1]
@@ -255,11 +255,11 @@ image = visualforge_pipeline(client_brief).images[0]
 **Do not use emojis in technical content.** All emoji-based callouts have been systematically removed from the repository (27,921 emojis removed across 168 files as of May 2026).
 
 Use text-only formatting:
-- **Checkpoint:** (not 💡 **Checkpoint:**)
-- **Warning:** (not ⚠️ **Warning:**)
-- **Rule of Thumb:** (not 🎯 **Rule of Thumb:**)
-- [Complete] or Complete (not ✅)
-- [WRONG] or [Failed] (not ❌)
+- **Checkpoint:** (not **Checkpoint:**)
+- **Warning:** (not **Warning:**)
+- **Rule of Thumb:** (not **Rule of Thumb:**)
+- [Complete] or Complete (not )
+- [WRONG] or [Failed] (not )
 
 **Rationale:** Emojis create visual clutter, reduce professionalism, and can render inconsistently across platforms. Technical documentation should rely on clear text formatting.
 # QA check: verify against brief before sending to client
@@ -563,8 +563,8 @@ x_t ──→ │ UNet(x_t, t, text_emb) │ ──→ predicted noise ε̂
 | `` | "CFG scale controls the prompt adherence / diversity tradeoff. Scale 7.5 is the empirically tested sweet spot for photorealistic images. Going above 15 introduces over-saturation and artifacts." |
 | `` | "Never evaluate image quality by looking at 5 examples. At 120 images/day, cognitive fatigue makes human review unreliable after the first hour. Use automated metrics." |
 | `` | Constraint achievement: "8s/image → Constraint #2 SPEED ACHIEVED (vs 30s target)" |
-| `📖` | DDPM mathematical derivation, ELBO derivation for diffusion training loss, FID calculation from Fréchet distance formula |
-| `➡` | "We're treating the CLIP text encoder as a black box here. Ch.2 opens it — the contrastive training objective is what makes 'floral dress' and [image of floral dress] end up in the same embedding neighbourhood." |
+| `` | DDPM mathematical derivation, ELBO derivation for diffusion training loss, FID calculation from Fréchet distance formula |
+| `` | "We're treating the CLIP text encoder as a black box here. Ch.2 opens it — the contrastive training objective is what makes 'floral dress' and [image of floral dress] end up in the same embedding neighbourhood." |
 
 ---
 
@@ -829,7 +829,7 @@ Visual: "Spring dress, café" → retrieves correct image from 1000 candidates
 
 **Template:**
 ```markdown
-> ➡ **[Topic] goes deeper in [Chapter].** This chapter covers [what's needed now].
+> **[Topic] goes deeper in [Chapter].** This chapter covers [what's needed now].
 > For [advanced topic] — [specific capability] — see [link]. For now: [continue with current concept].
 ```
 
@@ -950,7 +950,7 @@ Ch.4 (full schedule): x_t = √ᾱ_t x_0 + √(1-ᾱ_t) ε ← cumulative produc
 **Example from MultimodalAI:**
 - **First:** Animation showing noise schedule as a curve β_t from 0 to 1
 - **Then:** "Zoom into any point on the curve — the arc looks straight. That locally-straight segment determines how much noise to add at step t."
-- **Finally:** Formal ELBO derivation 300 lines later in `> 📖 Optional` box
+- **Finally:** Formal ELBO derivation 300 lines later in `> Optional` box
 
 **Why effective:** Derivatives become ZOOMING IN, not abstract slope calculations.
 
@@ -962,7 +962,7 @@ Ch.4 (full schedule): x_t = √ᾱ_t x_0 + √(1-ᾱ_t) ε ← cumulative produc
 
 **Mix these modes fluidly:**
 - **Confession:** "Prompt engineering = staring at generated images, tweaking words, praying for photorealism" (Ch.7)
-- **Rigor:** Mathematical proofs in `> 📖 Optional` boxes with paper citations
+- **Rigor:** Mathematical proofs in `> Optional` boxes with paper citations
 - **Tutorial:** "Fix: Use `enable_model_cpu_offload()` to fit 12GB VRAM"
 
 **Why effective:** Signals "this is for practitioners who also need to justify decisions." LaTeX for advisors, code for teammates, confessions for peers.
@@ -1001,8 +1001,8 @@ Map tone to pedagogical purpose:
 - = Key insight (power users skim these first)
 - = Common trap (practitioners jump here when debugging)
 - = VisualForge constraint advancement (tracks quest progress)
-- 📖 = Optional depth (safe to skip)
-- ➡ = Forward pointer (where this reappears)
+- = Optional depth (safe to skip)
+- = Forward pointer (where this reappears)
 
 **Rule:** No other emoji as inline callouts. ( are structural markers for Challenge/Progress sections only.)
 
@@ -1191,7 +1191,7 @@ Example: "We demonstrate that...", "It can be shown that...", "In this section w
 **Generic prompts for walkthroughs**
 Example: Using "a photo of a dog" instead of VisualForge campaign briefs
 **Improvised emoji**
-Example: Using ✨ as inline callouts (only 📖➡ allowed)
+Example: Using as inline callouts (only allowed)
 **Topic-label section headings**
 Example: "## 3 · Math" instead of "## 3 · Math — How CFG Scale Controls Prompt Adherence"
 **Skipping numerical/visual verification**
@@ -1214,9 +1214,9 @@ Before publishing any chapter, verify each item:
 - [ ] Every formula: scalar/simple form shown first, vector/tensor form second
 - [ ] Every non-trivial formula: demonstrated on a 3–5 generation example with explicit parameters
 - [ ] Failure-first pedagogy: new concepts introduced because the simpler one broke, not listed a priori
-- [ ] Optional depth: full derivations behind `> 📖 Optional` callout boxes with paper citations
+- [ ] Optional depth: full derivations behind `> Optional` callout boxes with paper citations
 - [ ] Forward/backward links: every concept links to where it was introduced and where it reappears
-- [ ] Callout boxes: only ` 📖 ➡` — no improvised emoji
+- [ ] Callout boxes: only ` ` — no improvised emoji
 - [ ] Mermaid diagrams: colour palette respected (dark blue / dark green / amber / dark red)
 - [ ] Images: dark background for charts, purposeful (not decorative), descriptive alt-text
 - [ ] Needle GIF: chapter-level progress animation present under `## Animation`
@@ -1556,7 +1556,7 @@ result = production_pipeline(example_input)
 - Duplicate content across sections (say it once, reference it later)
 
 **Formatting conventions:**
-- Use checkmark bullets for capabilities unlocked: ➡
+- Use checkmark bullets for capabilities unlocked:
 - Show progression as ASCII tables or code block diagrams
 - Use `inline code` for hyperparameters, `$metric$` for dollars
 - Chapter references: "Ch.3" or "Ch.5-7" (never "Chapter Five")
@@ -1619,7 +1619,7 @@ Delete the stage-mapping block and strip `[Stage N: LABEL]` appendages from sect
 
 - `> **[Stage] verdict:**` — one line after each generation/conditioning stage; states quality score delta and latency impact.
  *Example:* `> **Conditioning verdict:** CFG scale 1.0 → 7.5 improves CLIP similarity score 0.21 → 0.34 while adding only 0.4s/image. VisualForge now tracks the prompt.`
-- `> ➡` — forward pointer when a parameter feeds the next chapter.
- *Example:* `> ➡ Guidance scale saturates above 12 — Ch.8 ControlNet replaces it with spatial masks for precise layout control.`
+- `> ` — forward pointer when a parameter feeds the next chapter.
+ *Example:* `> Guidance scale saturates above 12 — Ch.8 ControlNet replaces it with spatial masks for precise layout control.`
 - **Never:** a `GENERATION CHECKPOINT`, `CONDITIONING CHECKPOINT`, or `DECISION CHECKPOINT` block.
 - **Never:** a section listing `Stage N → §X, §Y` or `Phase N (LABEL) → §X`.

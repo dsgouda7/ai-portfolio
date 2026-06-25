@@ -443,12 +443,12 @@ flowchart TD
  subgraph KERNEL["Kernel Space — the sphere lives here"]
  CENTER["Center c\n(weighted mean of SVs)"]
  SPHERE_INNER["Inside sphere:\nf(x) = +1 NORMAL\n● ● ● ● ●\nAll training points"]
- SPHERE_OUTER["Outside sphere:\nf(x) = -1 ANOMALY\n✕ ✕"]
+ SPHERE_OUTER["Outside sphere:\nf(x) = -1 ANOMALY\n "]
  BOUNDARY["Support Vectors\n(on the sphere surface)\nDefine radius ρ"]
  end
 
  TX["New transaction x\n(30 PCA features)"] -->|"φ(x) via RBF\nkernel K"| KERNEL
- SPHERE_OUTER -->|"score > τ"| FLAG["🚨 Flag as Fraud"]
+ SPHERE_OUTER -->|"score > τ"| FLAG[" Flag as Fraud"]
  SPHERE_INNER -->|"score ≤ τ"| PASS[" Pass as Normal"]
 
  style CENTER fill:#1e3a8a,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
@@ -589,7 +589,7 @@ param_grid = {
 | [04-MultiAgent AI — Trust Scoring](../../../04-multi_agent_ai) | Agent output anomaly detection uses the same one-class framing: train on "good" outputs, flag deviations |
 | [SVM (Ch.11 in 01-ML)](../../03_neural_networks) | Full two-class SVM uses the same kernel trick and QP; OCSVM is the one-class special case |
 
-> ➡ **The kernel trick appears everywhere once you see it.** The RBF kernel's implicit infinite-dimensional mapping is the same machinery behind Gaussian Processes (GPs), kernel PCA, and the neural tangent kernel. The intuition — similarity without explicit coordinates — is one of the most reusable ideas in ML.
+> **The kernel trick appears everywhere once you see it.** The RBF kernel's implicit infinite-dimensional mapping is the same machinery behind Gaussian Processes (GPs), kernel PCA, and the neural tangent kernel. The intuition — similarity without explicit coordinates — is one of the most reusable ideas in ML.
 
 ---
 
@@ -654,4 +654,4 @@ flowchart LR
  style TARGET fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
 ```
 
-> ➡ **Next up**: [Ch.5 — Ensemble Anomaly Detection](../ch05_ensemble_anomaly) — combining all four detectors to break the 80% barrier.
+> **Next up**: [Ch.5 — Ensemble Anomaly Detection](../ch05_ensemble_anomaly) — combining all four detectors to break the 80% barrier.

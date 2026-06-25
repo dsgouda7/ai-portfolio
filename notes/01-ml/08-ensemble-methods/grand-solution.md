@@ -6,7 +6,7 @@
 
 **Three ways to explore Ensemble Methods:**
 
-1. **📓 Interactive Notebook (Recommended for hands-on learners):**
+1. ** Interactive Notebook (Recommended for hands-on learners):**
  Open [`grand_solution_reference.ipynb` (reference) or `grand_solution_exercise.ipynb` (practice) (reference)](grand_solution_reference.ipynb) | [`grand_solution_reference.ipynb` (reference) or `grand_solution_exercise.ipynb` (practice) (exercise)](grand_solution_exercise.ipynb) — run all code cells from top to bottom to see the complete progression:
  - Load California Housing data
  - Ch.1: Random Forest (>10% RMSE improvement)
@@ -18,7 +18,7 @@
 
  **Time:** ~15 minutes to run through, ~30 minutes with exploration
 
-2. **📖 Narrative Arc (This document):**
+2. ** Narrative Arc (This document):**
  Read below for conceptual synthesis — understand *why* each chapter matters and how they connect in production. No code required.
 
  **Time:** ~20 minutes

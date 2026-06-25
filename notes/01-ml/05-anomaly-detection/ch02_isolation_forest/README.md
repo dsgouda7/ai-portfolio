@@ -473,7 +473,7 @@ flowchart TD
  AVG["Average: E[h(x)] = (1/T) Σ h_t(x)"]
  SCORE["Anomaly score:\ns = 2^(−E[h(x)] / c(256))"]
  THRESH{"s > τ ?"}
- FRAUD["🚨 Flag as fraud"]
+ FRAUD[" Flag as fraud"]
  NORMAL[" Allow transaction"]
 
  DATA --> SAMPLE
@@ -506,7 +506,7 @@ flowchart TD
  ROOT -->|"V14 < -3.5 (4 pts, rare)"| L1
  ROOT -->|"V14 ≥ -3.5 (252 pts, common)"| R1
 
- L1 -->|"Amount < 180\n1 point"| FRAUD["🚨 FRAUD\nPath length = 2\nIsolated in 2 splits"]
+ L1 -->|"Amount < 180\n1 point"| FRAUD[" FRAUD\nPath length = 2\nIsolated in 2 splits"]
  L1 -->|"Amount ≥ 180\n3 points"| CONT["Keep splitting...\npath = 3+"]
 
  R1 -->|"Many more splits\nneeded to separate"| DEEP["Normal transaction\nPath length = 8+\nBuried in dense cluster"]
@@ -594,7 +594,7 @@ In very high dimensions ($d \gg 100$), random splits on one feature carry little
 **5. No labelled data for threshold selection.**
 If you have no labelled ground truth to build a ROC curve, the `contamination` parameter becomes your only threshold handle — a coarse knob. Calibration strategies: use even a small labelled sample (50 labelled anomalies is enough to roughly calibrate), or use the knee-point of the score histogram where the distribution transitions from a heavy anomaly tail to a compact normal cluster.
 
-> 📖 **Extended Isolation Forest (EIF):** If axis-aligned splits are too restrictive for your data geometry — e.g., anomalies are distributed along a rotated ellipse relative to the normal cluster — the Extended Isolation Forest uses random hyperplane cuts instead of axis-aligned splits. EIF typically reduces the masking and swamping effects in high dimensions, at the cost of slightly higher computational complexity. It is available as `eif` package in Python and shares all the same hyperparameters.
+> **Extended Isolation Forest (EIF):** If axis-aligned splits are too restrictive for your data geometry — e.g., anomalies are distributed along a rotated ellipse relative to the normal cluster — the Extended Isolation Forest uses random hyperplane cuts instead of axis-aligned splits. EIF typically reduces the masking and swamping effects in high dimensions, at the cost of slightly higher computational complexity. It is available as `eif` package in Python and shares all the same hyperparameters.
 
 ---
 
@@ -644,5 +644,5 @@ Isolation Forest established one key idea: **how easy is this point to isolate?*
 
 The two chapters also differ in what they need to learn: Isolation Forest uses no labelled data at all — it learns only from the structure of the unlabelled training set. An autoencoder also trains unsupervised, but it learns a specific *model* of normality (the encoder-decoder weights) rather than an ensemble of random trees. The parametric vs non-parametric contrast between these two approaches, and how each fails in different regimes, is one of the key lessons of Ch.3.
 
-> ➡ **The representation learning shift**: Ch.1 and Ch.2 score anomalies by *position* (distance or isolation). Ch.3 scores anomalies by *reconstructability* — a fundamentally different inductive bias that catches fraud the geometric methods miss. See [Ch.3 — Autoencoders →](../ch03_autoencoders)
+> **The representation learning shift**: Ch.1 and Ch.2 score anomalies by *position* (distance or isolation). Ch.3 scores anomalies by *reconstructability* — a fundamentally different inductive bias that catches fraud the geometric methods miss. See [Ch.3 — Autoencoders →](../ch03_autoencoders)
 

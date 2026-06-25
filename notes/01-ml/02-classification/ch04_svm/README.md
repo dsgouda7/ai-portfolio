@@ -265,10 +265,10 @@ $$\mathbf{w} = (0,\; 1), \quad b = -1$$
 
 | Point | $\mathbf{w} \cdot \mathbf{x} + b$ | $y \cdot (\cdot)$ | Satisfied? |
 |-------|-----------------------------------|-------------------|------------|
-| A $(1,2), y=+1$ | $0 + 2 - 1 = 1$ | $+1 \times 1 = \mathbf{1}$ | ✓ (support vector) |
-| B $(2,2), y=+1$ | $0 + 2 - 1 = 1$ | $+1 \times 1 = \mathbf{1}$ | ✓ (support vector) |
-| C $(1,0), y=-1$ | $0 + 0 - 1 = -1$ | $-1 \times (-1) = \mathbf{1}$ | ✓ (support vector) |
-| D $(2,0), y=-1$ | $0 + 0 - 1 = -1$ | $-1 \times (-1) = \mathbf{1}$ | ✓ (support vector) |
+| A $(1,2), y=+1$ | $0 + 2 - 1 = 1$ | $+1 \times 1 = \mathbf{1}$ | (support vector) |
+| B $(2,2), y=+1$ | $0 + 2 - 1 = 1$ | $+1 \times 1 = \mathbf{1}$ | (support vector) |
+| C $(1,0), y=-1$ | $0 + 0 - 1 = -1$ | $-1 \times (-1) = \mathbf{1}$ | (support vector) |
+| D $(2,0), y=-1$ | $0 + 0 - 1 = -1$ | $-1 \times (-1) = \mathbf{1}$ | (support vector) |
 
 All 4 points are support vectors — each sits exactly on its margin plane.
 
@@ -383,7 +383,7 @@ $$K(SV1,\mathbf{x}) = e^{-0.5\times0.50} = e^{-0.25} \approx 0.779, \quad K(SV2,
 
 $$f = (0.8)(+1)(0.779) + (0.6)(+1)(0.779) + (0.4)(-1)(0.014) + (-0.2) = 0.623 + 0.467 - 0.006 - 0.200 = \mathbf{+0.884}$$
 
-$f > 0$ → **Eyeglasses** ✓. SV3 (No-Eyeglasses, far away) contributes near-zero; the two Eyeglasses SVs dominate.
+$f > 0$ → **Eyeglasses** . SV3 (No-Eyeglasses, far away) contributes near-zero; the two Eyeglasses SVs dominate.
 
 ---
 
@@ -395,7 +395,7 @@ $f > 0$ → **Eyeglasses** ✓. SV3 (No-Eyeglasses, far away) contributes near-z
 
 Better than RF (85% recall), but still 3 points short. The Eyeglasses cluster in PCA projection wraps non-linearly around the No-Eyeglasses cluster. No hyperplane cleanly contains it.
 
-**Concrete failure:** A test image with thick black frames and side glare (HOG signature similar to "No Eyeglasses + strong vertical edges") sits on the wrong side of the linear boundary. The model predicts No-Eyeglasses ; ground truth is Eyeglasses ✓. Linear boundaries cannot curve around this case.
+**Concrete failure:** A test image with thick black frames and side glare (HOG signature similar to "No Eyeglasses + strong vertical edges") sits on the wrong side of the linear boundary. The model predicts No-Eyeglasses ; ground truth is Eyeglasses . Linear boundaries cannot curve around this case.
 
 **Lesson:** Linear SVM = logistic regression with max-margin flavour. Non-linearity requires a different weapon.
 
@@ -486,7 +486,7 @@ $$\|\mathbf{w}\| = \sqrt{w_1^2 + w_2^2} = \sqrt{\left(\tfrac{2}{3}\right)^2 + \l
 
 $$\text{margin} = \frac{2}{\|\mathbf{w}\|} = \frac{2}{0.943} \approx \mathbf{2.121 \text{ units}}$$
 
-**Verify $b$ from SV2:** $y_2(\mathbf{w}\cdot\mathbf{x}_2 + b) = (-1)\bigl((\tfrac{2}{3})(0) + (\tfrac{2}{3})(-1) + (-\tfrac{1}{3})\bigr) = (-1)(-\tfrac{2}{3} - \tfrac{1}{3}) = (-1)(-1) = 1$ ✓
+**Verify $b$ from SV2:** $y_2(\mathbf{w}\cdot\mathbf{x}_2 + b) = (-1)\bigl((\tfrac{2}{3})(0) + (\tfrac{2}{3})(-1) + (-\tfrac{1}{3})\bigr) = (-1)(-\tfrac{2}{3} - \tfrac{1}{3}) = (-1)(-1) = 1$
 
 **Decision boundary** $w_1 x_1 + w_2 x_2 + b = 0$ becomes $\tfrac{2}{3} x_1 + \tfrac{2}{3} x_2 - \tfrac{1}{3} = 0$, or equivalently $x_1 + x_2 = \tfrac{1}{2}$.
 
@@ -509,7 +509,7 @@ x₂
 Decision boundary: ⅔x₁ + ⅔x₂ − ⅓ = 0 → x₁+x₂ = 0.5
 Positive margin: x₁+x₂ = 1.5 (passes through SV1 and SV3)
 Negative margin: x₁+x₂ = −0.5 (passes through SV2)
-Margin width: 2/‖w‖ = 2/(⅔√2) ≈ 2.121 ✓
+Margin width: 2/‖w‖ = 2/(⅔√2) ≈ 2.121
 ```
 
 ---
@@ -693,9 +693,9 @@ The ideas from this chapter recur throughout the curriculum:
 |---|-----------|------------|-----------|--------|
 | 1 | **ACCURACY** — >90% avg accuracy; ≥90% Eyeglasses recall | RF: 91% avg, **85% recall** | RBF SVM: 91% avg, **90% recall** | Recall target met |
 | 2 | **GENERALIZATION** — held-out celebrities | RF generalised; SVM inherits margin guarantee | Max-margin boundary: wider margin → better unseen-face generalisation | Improved |
-| 3 | **MULTI-LABEL** — all 40 attributes in <200ms | RF: 40 binary classifiers ✓ | SVM pipeline per-attribute; 40 models, prediction sums over ~1k SVs | Within budget |
+| 3 | **MULTI-LABEL** — all 40 attributes in <200ms | RF: 40 binary classifiers | SVM pipeline per-attribute; 40 models, prediction sums over ~1k SVs | Within budget |
 | 4 | **INTERPRETABILITY** — explain which HOG regions drove the prediction | RF: feature importance histogram | SVM: $\mathbf{w} = \sum \alpha_i y_i \mathbf{x}_i$ — support vector weights in HOG space; overlay on face grid | Explainable |
-| 5 | **PRODUCTION** — <200ms inference; sklearn-compatible | RF in pipeline ✓ | SVM: `make_pipeline(StandardScaler(), SVC(...))` — same interface | Production-ready |
+| 5 | **PRODUCTION** — <200ms inference; sklearn-compatible | RF in pipeline | SVM: `make_pipeline(StandardScaler(), SVC(...))` — same interface | Production-ready |
 
 **Key numbers:**
 - Eyeglasses recall: **85% (RF) → 87% (linear SVM) → 90% (RBF SVM)**
@@ -742,7 +742,7 @@ You just set $C=10$ and $\gamma=0.01$ by hand based on a hint from the chapter. 
 
 Two extra recall points from systematic tuning. The manual $C=10$, $\gamma=0.01$ was close — but not optimal. Ch.5 finds the true peak of the recall ridge.
 
-> ➡ **Next chapter**: [Ch.5 — Hyperparameter Tuning](../ch05_hyperparameter_tuning/README.md)
+> **Next chapter**: [Ch.5 — Hyperparameter Tuning](../ch05_hyperparameter_tuning/README.md)
 
 $$\|\mathbf{w}\| = \sqrt{2 \cdot \left(\tfrac{2}{3}\right)^2} = \frac{2\sqrt{2}}{3} \qquad \text{margin} = \frac{2}{2\sqrt{2}/3} = \frac{3\sqrt{2}}{2} \approx \mathbf{2.121}$$
 
@@ -750,9 +750,9 @@ $$\|\mathbf{w}\| = \sqrt{2 \cdot \left(\tfrac{2}{3}\right)^2} = \frac{2\sqrt{2}}
 
 | SV | $\mathbf{w}\cdot\mathbf{x}+b$ | $y\cdot(\cdot)$ | OK? |
 |----|-------------------------------|-----------------|-----|
-| SV1 $(1,1),y=+1$ | $\tfrac{2}{3}+\tfrac{2}{3}-\tfrac{1}{3}=1$ | $+1\times1=1$ | ✓ |
-| SV2 $(0,-1),y=-1$ | $0-\tfrac{2}{3}-\tfrac{1}{3}=-1$ | $-1\times(-1)=1$ | ✓ |
-| SV3 $(2,0),y=+1$ | $\tfrac{4}{3}+0-\tfrac{1}{3}=1$ | $+1\times1=1$ | ✓ |
+| SV1 $(1,1),y=+1$ | $\tfrac{2}{3}+\tfrac{2}{3}-\tfrac{1}{3}=1$ | $+1\times1=1$ | |
+| SV2 $(0,-1),y=-1$ | $0-\tfrac{2}{3}-\tfrac{1}{3}=-1$ | $-1\times(-1)=1$ | |
+| SV3 $(2,0),y=+1$ | $\tfrac{4}{3}+0-\tfrac{1}{3}=1$ | $+1\times1=1$ | |
 
 ---
 
@@ -906,15 +906,15 @@ Setting `SVC(probability=True)` enables `predict_proba()` via Platt scaling, whi
 ## 14 · Where This Reappears
 
 **Within this track:**
-- ➡ **Ch.5 — Hyperparameter Tuning**: Grid search and cross-validation replace the manual $C, \gamma$ sweeps from §8. The SVM two-parameter interaction is the canonical example for why 2D joint search beats independent 1D sweeps.
-- ➡ **Ch.9 — Metrics Deep-Dive** (Neural Networks track): Precision-recall trade-off for SVM — adjusting the decision threshold beyond `sign(f(x))`.
+- **Ch.5 — Hyperparameter Tuning**: Grid search and cross-validation replace the manual $C, \gamma$ sweeps from §8. The SVM two-parameter interaction is the canonical example for why 2D joint search beats independent 1D sweeps.
+- **Ch.9 — Metrics Deep-Dive** (Neural Networks track): Precision-recall trade-off for SVM — adjusting the decision threshold beyond `sign(f(x))`.
 
 **In later tracks:**
-- ➡ **Neural Networks track, Ch.3 — Regularisation**: The L2 weight penalty $\frac{1}{2}\|\mathbf{w}\|^2$ in the SVM primal is exactly ridge regularisation. Neural network weight decay is the same idea layer-by-layer.
-- ➡ **Neural Networks track, Ch.11 — SVM Loss**: Hinge loss $\max(0, 1 - y\,f(x))$ appears as an alternative final-layer loss in face verification architectures.
-- ➡ **Math under the Hood, Ch.6 — Gradient Chain Rule**: KKT conditions are a specialised form of Lagrangian stationarity derived using chain-rule reasoning.
-- ➡ **Multimodal AI, Ch.2 — Vision encoders**: Kernel methods and SVMs remain competitive feature-matching baselines even alongside deep learning; kernel SVM on CLIP embeddings is a strong baseline for few-shot image classification.
-- ➡ **AI Infrastructure track, Ch.4 — Model serving**: The prediction step for a trained SVM — $f(\mathbf{x}) = \sum_i \alpha_i y_i K(\mathbf{x}_i, \mathbf{x}) + b$ — is a sparse dot-product over only the support vectors, making SVM models lightweight to serve compared to full neural networks.
+- **Neural Networks track, Ch.3 — Regularisation**: The L2 weight penalty $\frac{1}{2}\|\mathbf{w}\|^2$ in the SVM primal is exactly ridge regularisation. Neural network weight decay is the same idea layer-by-layer.
+- **Neural Networks track, Ch.11 — SVM Loss**: Hinge loss $\max(0, 1 - y\,f(x))$ appears as an alternative final-layer loss in face verification architectures.
+- **Math under the Hood, Ch.6 — Gradient Chain Rule**: KKT conditions are a specialised form of Lagrangian stationarity derived using chain-rule reasoning.
+- **Multimodal AI, Ch.2 — Vision encoders**: Kernel methods and SVMs remain competitive feature-matching baselines even alongside deep learning; kernel SVM on CLIP embeddings is a strong baseline for few-shot image classification.
+- **AI Infrastructure track, Ch.4 — Model serving**: The prediction step for a trained SVM — $f(\mathbf{x}) = \sum_i \alpha_i y_i K(\mathbf{x}_i, \mathbf{x}) + b$ — is a sparse dot-product over only the support vectors, making SVM models lightweight to serve compared to full neural networks.
 
 ---
 

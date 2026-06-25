@@ -65,23 +65,23 @@ A microphone converts air pressure variations into voltage. An analog-to-digital
 
 ```
 Raw audio (16 kHz PCM)
-       │
-       ▼
+ │
+ ▼
 Short-Time Fourier Transform (STFT)
-  window: 25 ms, hop: 10 ms
-  → complex spectrogram (201 frequency bins × T frames)
-       │
-       ▼
+ window: 25 ms, hop: 10 ms
+ → complex spectrogram (201 frequency bins × T frames)
+ │
+ ▼
 Mel filterbank (80 triangular filters, mel-spaced)
-  → mel spectrogram (80 bins × T frames)
-       │
-       ▼
+ → mel spectrogram (80 bins × T frames)
+ │
+ ▼
 Log compression: log(max(mel, 1e-10))
-  → log-mel spectrogram  ← this is what the model sees
-       │
-       ▼
+ → log-mel spectrogram ← this is what the model sees
+ │
+ ▼
 Whisper encoder + decoder
-  → text tokens → string
+ → text tokens → string
 ```
 
 The STFT divides the audio into overlapping windows and computes the frequency content of each window via a Fourier transform. The result is a matrix of complex numbers: rows are frequency bins, columns are time frames. Taking the magnitude squared gives the power spectrogram.
@@ -123,22 +123,22 @@ The encoder processes a 30-second log-mel spectrogram as a 2D image. Two 1D conv
 
 ```
 Log-mel spectrogram: 80 mel bins × 3000 time frames (30 s at 10 ms hop)
-          │
-          ▼
+ │
+ ▼
 Conv1D(80→512, k=3, stride=1) + GELU
-          │
-          ▼
+ │
+ ▼
 Conv1D(512→512, k=3, stride=2) + GELU
-          │
-     1500 time frames, 512 channels
-          │
-          ▼
+ │
+ 1500 time frames, 512 channels
+ │
+ ▼
 Sinusoidal positional embeddings added
-          │
-          ▼
+ │
+ ▼
 N × Transformer encoder layers (self-attention + FFN)
-          │
-          ▼
+ │
+ ▼
 Acoustic representation: 1500 × 512
 ```
 
@@ -277,35 +277,35 @@ The full pipeline is an event-driven state machine with strict timing guarantees
 
 ```
 Microphone (continuous 16 kHz audio stream)
-       │
-       ▼ always-on
+ │
+ ▼ always-on
 Wake Word Detector (1 MFLOP, 30 ms)
-  "Hey Meridian" detected → trigger VAD start
-       │
-       ▼ streaming
+ "Hey Meridian" detected → trigger VAD start
+ │
+ ▼ streaming
 Voice Activity Detection — Silero VAD (1 MB, 1 ms/chunk)
-  Buffer audio chunks. On speech offset → flush to ASR queue
-       │
-       ▼ batch
+ Buffer audio chunks. On speech offset → flush to ASR queue
+ │
+ ▼ batch
 ASR — Whisper.tiny (39 M params, 40 ms inference)
-  Audio buffer → text transcript
-       │
-       ▼
+ Audio buffer → text transcript
+ │
+ ▼
 NLU Intent Classifier (50 ms)
-  Classify: navigation / media / climate / open-ended
-       │
-       ├─── navigation/media/climate ──► Intent handler (10 ms)
-       │                                 ↓ canned or structured response
-       └─── open-ended ──────────────► LLM — Phi-3-mini q4 (800 ms)
-                                        ↓ natural language response
-       │
-       ▼
+ Classify: navigation / media / climate / open-ended
+ │
+ ├─── navigation/media/climate ──► Intent handler (10 ms)
+ │ ↓ canned or structured response
+ └─── open-ended ──────────────► LLM — Phi-3-mini q4 (800 ms)
+ ↓ natural language response
+ │
+ ▼
 Text Normalization + G2P (15 ms)
-       │
-       ▼
+ │
+ ▼
 TTS — VITS-small (180 ms)
-       │
-       ▼
+ │
+ ▼
 Audio buffer → Speaker (first frame plays at T+1480 ms)
 ```
 

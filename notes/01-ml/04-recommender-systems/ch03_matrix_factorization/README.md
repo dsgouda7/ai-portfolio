@@ -258,7 +258,7 @@ $$= [0.30, 0.80] + [0.180, 0.108] = \mathbf{[0.48,\ 0.91]}$$
 
 ### 4.4 · Bias Variant: $\hat{r}_{ui} = \mu + b_u + b_i + \mathbf{p}_u^\top \mathbf{q}_i$
 
-> ➡ **Connection to linear regression.** The bias terms here are exactly the intercept $b$ from [Linear Regression ch01](../../01_regression/ch01_linear_regression) — decomposed into three additive pieces: a global mean, a user-specific offset, and an item-specific offset. Same idea, finer granularity.
+> **Connection to linear regression.** The bias terms here are exactly the intercept $b$ from [Linear Regression ch01](../../01_regression/ch01_linear_regression) — decomposed into three additive pieces: a global mean, a user-specific offset, and an item-specific offset. Same idea, finer granularity.
 
 Users and items have inherent rating tendencies that have nothing to do with taste alignment. User 7 gives 4.5 stars to everything; "Titanic" gets 4.2 stars on average regardless of who watches it. Without separating these out, the dot product term $\mathbf{p}_u^\top \mathbf{q}_i$ has to explain both the popularity effect and the taste alignment — it gets confused.
 
@@ -325,7 +325,7 @@ $$\mathbf{q}_2 \leftarrow [0.30, 0.80] + 0.1 \times (3.61 \times [0.50, 0.30] - 
 $$= [0.30, 0.80] + 0.1 \times ([1.805, 1.083] - [0.003, 0.008])$$
 $$= [0.30, 0.80] + 0.1 \times [1.802, 1.075] = [0.30, 0.80] + [0.18, 0.11] = \mathbf{[0.48,\ 0.91]}$$
 
-Check: $\hat{r}_{12}^{\text{new}} = 0.61 \times 0.48 + 0.59 \times 0.91 = 0.29 + 0.54 = 0.83$. Error: $4 - 0.83 = 3.17$ ✓ reduced from 3.61.
+Check: $\hat{r}_{12}^{\text{new}} = 0.61 \times 0.48 + 0.59 \times 0.91 = 0.29 + 0.54 = 0.83$. Error: $4 - 0.83 = 3.17$ reduced from 3.61.
 
 ---
 
@@ -343,7 +343,7 @@ $$\mathbf{q}_3 \leftarrow [0.90, 0.10] + 0.1 \times (2.39 \times [0.61, 0.59] - 
 $$= [0.90, 0.10] + 0.1 \times ([1.458, 1.410] - [0.009, 0.001])$$
 $$= [0.90, 0.10] + 0.1 \times [1.449, 1.409] = [0.90, 0.10] + [0.14, 0.14] = \mathbf{[1.04,\ 0.24]}$$
 
-Check: $\hat{r}_{13}^{\text{new}} = 0.82 \times 1.04 + 0.61 \times 0.24 = 0.853 + 0.146 = 1.00$. Error: $3 - 1.00 = 2.00$ ✓ reduced from 2.39.
+Check: $\hat{r}_{13}^{\text{new}} = 0.82 \times 1.04 + 0.61 \times 0.24 = 0.853 + 0.146 = 1.00$. Error: $3 - 1.00 = 2.00$ reduced from 2.39.
 
 > **Key insight**: After two steps, $\mathbf{p}_1$ moved from $[0.50, 0.30]$ to $[0.82, 0.61]$ — both latent dimensions grew because User 1 gave ratings of 4 and 3. Both item vectors $\mathbf{q}_2$ and $\mathbf{q}_3$ grew toward $\mathbf{p}_1$'s direction. The latent space is discovering that User 1 aligns with movies 2 and 3.
 

@@ -51,7 +51,7 @@ The crucial distinction from earlier generative models: **diffusion models predi
 
 ## 2 · Running Example — PixelSmith v3
 
-> 📖 **Educational proxy:** MNIST is used below as a minimal, CPU-trainable example to demonstrate the math clearly. The VisualForge production version (§5) replaces MNIST with product-on-white campaign briefs. This is an intentional educational simplification — not the production pattern.
+> **Educational proxy:** MNIST is used below as a minimal, CPU-trainable example to demonstrate the math clearly. The VisualForge production version (§5) replaces MNIST with product-on-white campaign briefs. This is an intentional educational simplification — not the production pattern.
 
 ```
 Educational proxy:
@@ -501,7 +501,7 @@ GANs are faster at inference but harder to train (mode collapse, training instab
 
 ## 11 · Notebook
 
-> 📓 **Interactive notebook**: [diffusion_models_mnist.ipynb](../notebooks/diffusion_models_mnist.ipynb)
+> **Interactive notebook**: [diffusion_models_mnist.ipynb](../notebooks/diffusion_models_mnist.ipynb)
 
 **What you'll implement**:
 1. Forward process: Add noise to MNIST digits across 1000 steps

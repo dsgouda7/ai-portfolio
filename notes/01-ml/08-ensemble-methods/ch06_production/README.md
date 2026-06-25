@@ -284,7 +284,7 @@ async def predict_ensemble_async(feature_vector):
 ---
 
 > **Deploy verdict:** Parallel inference cut latency 56ms → 35ms (P99 = 38ms), 15ms below the 50ms SLA with headroom for jitter.
-> ➡ Load-test at 1,000 req/s and canary-deploy 5% of traffic before Phase 2 continuous monitoring.
+> Load-test at 1,000 req/s and canary-deploy 5% of traffic before Phase 2 continuous monitoring.
 
 ---
 
@@ -623,7 +623,7 @@ For each API call, we return SHAP explanations alongside the price estimate. The
 
 **Interpretation**: The base value $206{,}800$ is the average prediction across all training districts. Median income in this district adds $+\$94{,}200$. Location (coastal) adds $+\$31{,}800$. Average rooms per household slightly reduces the estimate (below-average room count, −$12,900$).
 
-> 📖 **Why not run SHAP for LR and RF too?** LR SHAP is trivial (weight × feature value, free). RF SHAP (TreeSHAP) would add ~5ms. In practice, if XGBoost's meta-weight $\hat{w}_{\text{XGB}} > 0.6$, SHAP from XGBoost alone explains ~60%+ of the stack's prediction signal — sufficient for compliance. Full multi-model SHAP is an optional depth option for audit-grade reports.
+> **Why not run SHAP for LR and RF too?** LR SHAP is trivial (weight × feature value, free). RF SHAP (TreeSHAP) would add ~5ms. In practice, if XGBoost's meta-weight $\hat{w}_{\text{XGB}} > 0.6$, SHAP from XGBoost alone explains ~60%+ of the stack's prediction signal — sufficient for compliance. Full multi-model SHAP is an optional depth option for audit-grade reports.
 
 ---
 
@@ -872,7 +872,7 @@ spec:
 ---
 
 > **Cutover verdict:** Blue-green switch successful — production MAE restored from $24.8k to $20.2k; all 5 EnsembleAI constraints satisfied.
-> ➡ Resume Phase 2 PSI monitoring and decommission blue deployment after 48h.
+> Resume Phase 2 PSI monitoring and decommission blue deployment after 48h.
 
 ---
 
@@ -1037,7 +1037,7 @@ flowchart TD
 | **Shadow mode / blue-green deployment** | [07-DevOps Fundamentals](../../../07-devops_fundamentals) — blue-green is a general deployment pattern |
 | **Retraining pipeline triggers** | [06-AI Infrastructure → MLOps](../../../06-ai_infrastructure) — Vertex AI / SageMaker pipelines implement exactly this loop |
 
-> ➡ **The monitoring stack** — PSI + shadow mode + A/B testing + blue-green cutover — is not specific to ensembles. It is the general production ML lifecycle. Everything you've built here is the template you'll apply to deep learning models, LLM deployments, and multi-agent systems.
+> **The monitoring stack** — PSI + shadow mode + A/B testing + blue-green cutover — is not specific to ensembles. It is the general production ML lifecycle. Everything you've built here is the template you'll apply to deep learning models, LLM deployments, and multi-agent systems.
 
 ---
 
@@ -1109,8 +1109,8 @@ The gap between tabular ML and deep learning is smaller than it looks. Everythin
 | Diversity → better generalization | Ch.5 stacking | Dropout (random ensemble of sub-networks); multi-head attention |
 | Parallel serving, PSI, shadow mode | **Ch.6** | Every production ML system regardless of model family |
 
-> ➡ **[Start Advanced Deep Learning →](../../02-advanced_deep_learning)**
+> **[Start Advanced Deep Learning →](../../02-advanced_deep_learning)**
 >
-> ➡ **[Return to ML Track Index →](../../README.md)**
+> **[Return to ML Track Index →](../../README.md)**
 
 

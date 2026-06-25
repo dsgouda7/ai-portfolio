@@ -460,7 +460,7 @@ Ch.3: Can align text ↔ image embeddings → Constraint #4 (Control) foundation
 
 ## 11 · Notebook
 
-📓 **[vision-transformers.ipynb](vision-transformers.ipynb)**
+ **[vision-transformers.ipynb](vision-transformers.ipynb)**
 
 **What you'll build**:
 1. Load VisualForge stock image (real estate interior)

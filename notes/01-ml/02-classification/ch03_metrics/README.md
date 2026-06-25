@@ -423,7 +423,7 @@ F1 at the optimal threshold tells you how good the model is at its best operatin
 
 Logistic regression beats the decision tree on every threshold-free metric. AUC-ROC = 0.50 for the trivial baseline confirms that a random coin flip offers no ranking power.
 
-> ➡ **Use ROC-AUC to compare models during development; use PR-AUC to report results for severely imbalanced classes; use F1 at the business-chosen threshold for production monitoring.**
+> **Use ROC-AUC to compare models during development; use PR-AUC to report results for severely imbalanced classes; use F1 at the business-chosen threshold for production monitoring.**
 
 > **PR-AUC baseline is NOT 0.5.** A random classifier's ROC-AUC is always 0.5 — that's what "coin flip" means on the ROC curve. But a random classifier's PR-AUC equals the **positive rate** of the dataset. On Bald (2.0% positive), a random baseline has PR-AUC ≈ 0.020, not 0.5. This is why PR-AUC = 0.62 in the table above is a meaningful number: it's 31× the random baseline, not 24% above it. Always compare PR-AUC against the positive rate baseline, not against 0.5.
 
@@ -750,7 +750,7 @@ This chapter established *how to measure* a classifier; Ch.4 establishes *a bett
 
 The SVM's structural advantage: it optimises the **margin** around the decision boundary, not the log-likelihood of a probability model. For balanced attributes (Smiling, Male), this typically raises F1 by 3–6 points. For severely imbalanced attributes (Bald, Mustache), the advantage depends on the kernel — a radial basis function kernel can learn non-linear boundaries in HOG space that separate Bald from Not-Bald more cleanly than any linear model. We will measure the outcome using the tools built in this chapter.
 
-> ➡ **Before reading Ch.4**, confirm you can answer these questions from memory: What is the difference between precision and recall? Why does the harmonic mean penalise an imbalanced P/R pair more than the arithmetic mean? What does AUC = 0.892 mean in plain English? If yes: you have this chapter. If no: revisit §4.2–4.5.
+> **Before reading Ch.4**, confirm you can answer these questions from memory: What is the difference between precision and recall? Why does the harmonic mean penalise an imbalanced P/R pair more than the arithmetic mean? What does AUC = 0.892 mean in plain English? If yes: you have this chapter. If no: revisit §4.2–4.5.
 
 
 ### Multi-Label Metrics — Evaluating All 40 Attributes
@@ -860,9 +860,9 @@ Your model outputs probabilities. The threshold converts them to binary predicti
 ```mermaid
 graph TD
  A["Raw Probabilities<br/>ĥ ∈ [0, 1]"] --> B{"Threshold t"}
- B -->|"t = 0.3<br/>(low)"| C["More positives predicted<br/>→ High Recall<br/>→ Low Precision<br/>👉 Good for Bald (catch rare cases)"]
- B -->|"t = 0.5<br/>(default)"| D["Balanced trade-off<br/>→ Moderate Recall & Precision<br/>👉 Good for Smiling (balanced)"]
- B -->|"t = 0.7<br/>(high)"| E["Fewer positives predicted<br/>→ High Precision<br/>→ Low Recall<br/>👉 Conservative mode"]
+ B -->|"t = 0.3<br/>(low)"| C["More positives predicted<br/>→ High Recall<br/>→ Low Precision<br/> Good for Bald (catch rare cases)"]
+ B -->|"t = 0.5<br/>(default)"| D["Balanced trade-off<br/>→ Moderate Recall & Precision<br/> Good for Smiling (balanced)"]
+ B -->|"t = 0.7<br/>(high)"| E["Fewer positives predicted<br/>→ High Precision<br/>→ Low Recall<br/> Conservative mode"]
  style C fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
  style D fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
  style E fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
@@ -879,9 +879,9 @@ Which metric should you report to stakeholders? Depends on class balance:
 ```mermaid
 graph LR
  A["Which metric<br/>for this attribute?"] -->|"Check positive rate"| B{"Class balance?"}
- B -->|"Balanced<br/>(30–70%)"| C["Accuracy + F1<br/>👉 Smiling, Male, Young"]
- B -->|"Moderate imbalance<br/>(10–30%)"| D["F1 + ROC-AUC<br/>👉 Eyeglasses, Wearing_Hat"]
- B -->|"Severe imbalance<br/>(< 10% or > 90%)"| E["Recall + PR-AUC<br/>👉 Bald, Mustache"]
+ B -->|"Balanced<br/>(30–70%)"| C["Accuracy + F1<br/> Smiling, Male, Young"]
+ B -->|"Moderate imbalance<br/>(10–30%)"| D["F1 + ROC-AUC<br/> Eyeglasses, Wearing_Hat"]
+ B -->|"Severe imbalance<br/>(< 10% or > 90%)"| E["Recall + PR-AUC<br/> Bald, Mustache"]
  style C fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
  style D fill:#b45309,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
  style E fill:#b91c1c,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
@@ -1032,7 +1032,7 @@ graph TD
 | **Hamming loss for multi-label** | [Topic 03 — Neural Networks](../../03_neural_networks/README.md) | Hamming loss is differentiable → can be used directly as a neural network loss function for multi-label tasks (alternative to 40 separate binary cross-entropy losses) |
 | **Calibration and reliability diagrams** | [Topic 05 — Anomaly Detection](../../05_anomaly_detection/README.md) Ch.4 (Calibration) | When stakeholders ask "what does 0.73 probability mean?", you need calibration. Platt scaling and isotonic regression recalibrate model outputs to match true frequencies |
 
-> ➡ **This chapter gives you the evaluation vocabulary that every subsequent chapter assumes.** From now on, when a chapter says "F1 improved from 0.82 to 0.87," you know exactly what that means and whether it's significant. When a research paper reports "ROC-AUC=0.94 on MNIST," you know to ask about class balance before trusting it.
+> **This chapter gives you the evaluation vocabulary that every subsequent chapter assumes.** From now on, when a chapter says "F1 improved from 0.82 to 0.87," you know exactly what that means and whether it's significant. When a research paper reports "ROC-AUC=0.94 on MNIST," you know to ask about class balance before trusting it.
 
 ---
 
@@ -1067,13 +1067,13 @@ graph TD
 
 | # | Constraint | Target | Ch.1–2 Status | After Ch.3 | Next Unlock |
 |---|-----------|--------|-------------|-----------|-------------|
-| **#1** | **ACCURACY** | >90% avg | 88% (Smiling only) | **🟡 88% validated** (proper metrics confirm it's real) | Ch.4 SVM: 89% |
-| **#2** | **GENERALIZATION** | Unseen faces | Train/test split | **🟢 Cross-validation** (88.2 ± 1.5% confidence) | Ch.5: Hyperparameter tuning |
-| **#3** | **MULTI-LABEL** | 40 attributes | Binary only | **🟡 Metrics defined** (Hamming, macro-F1) | Neural nets: multi-output heads |
-| **#4** | **INTERPRETABILITY** | Feature importance | Tree rules (Ch.2) | **🟢 Per-attribute diagnostics** (which attributes fail) | SHAP values (Ensemble track) |
+| **#1** | **ACCURACY** | >90% avg | 88% (Smiling only) | ** 88% validated** (proper metrics confirm it's real) | Ch.4 SVM: 89% |
+| **#2** | **GENERALIZATION** | Unseen faces | Train/test split | ** Cross-validation** (88.2 ± 1.5% confidence) | Ch.5: Hyperparameter tuning |
+| **#3** | **MULTI-LABEL** | 40 attributes | Binary only | ** Metrics defined** (Hamming, macro-F1) | Neural nets: multi-output heads |
+| **#4** | **INTERPRETABILITY** | Feature importance | Tree rules (Ch.2) | ** Per-attribute diagnostics** (which attributes fail) | SHAP values (Ensemble track) |
 | **#5** | **PRODUCTION** | <200ms | | | Not affected by metrics |
 
-**Legend**: 🔴 Blocked | 🟡 Partial | 🟢 Achieved | Complete
+**Legend**: Blocked | Partial | Achieved | Complete
 
 ### Progress Flow
 

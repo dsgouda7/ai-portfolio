@@ -134,7 +134,7 @@ Actions: {up, down, left, right}
 - Has an obstacle (wall) that makes the shortest path non-trivial
 - Terminal state gives unambiguous episode structure
 
-> ➡ **CartPole connection.** The CartPole environment (OpenAI Gym) has a *continuous* state space (4 real-valued observations: cart position, cart velocity, pole angle, pole angular velocity) and a discrete action space {left, right}. It is also an MDP — the Markov property holds because those 4 observations capture all relevant physics. Everything we define for GridWorld applies to CartPole; only the state space size changes.
+> **CartPole connection.** The CartPole environment (OpenAI Gym) has a *continuous* state space (4 real-valued observations: cart position, cart velocity, pole angle, pole angular velocity) and a discrete action space {left, right}. It is also an MDP — the Markov property holds because those 4 observations capture all relevant physics. Everything we define for GridWorld applies to CartPole; only the state space size changes.
 
 ---
 
@@ -317,7 +317,7 @@ The MDP framework does not appear out of thin air — it solves a specific seque
 
 **Act 4 — Bellman equations give the algorithm.** Once the problem is written as an MDP, the Bellman equations expose a recursive structure that transforms "find the best infinite-horizon policy" into "solve a system of equations, one per state." Chapter 2 (Dynamic Programming) uses this to compute $V^*$ and $\pi^*$ exactly for small MDPs. Chapters 3–6 approximate these solutions for large and continuous state spaces.
 
-> ➡ **Forward pointer.** The Bellman equations are the seed of everything: value iteration (ch02), Q-learning (ch03), policy gradient (ch04), actor-critic (ch05), and deep Q-networks (ch06) all either solve or approximate the same two equations.
+> **Forward pointer.** The Bellman equations are the seed of everything: value iteration (ch02), Q-learning (ch03), policy gradient (ch04), actor-critic (ch05), and deep Q-networks (ch06) all either solve or approximate the same two equations.
 
 ---
 
@@ -580,7 +580,7 @@ Every chapter in the RL track builds directly on MDP foundations:
 | Transition $P(s'|s,a)$ | ch02 Dynamic Programming (requires full knowledge of $P$); ch03–ch06 (model-free: do not require $P$) |
 | Stochastic vs deterministic policy | ch04 (stochastic policies needed for REINFORCE gradient); ch06 DDPG (deterministic policy) |
 
-> ➡ **Math track connection.** The Bellman equation is a **fixed-point equation** — $V^\pi = T^\pi V^\pi$ where $T^\pi$ is the Bellman operator. The contraction mapping theorem guarantees a unique solution and convergence of value iteration. See [00-math_under_the_hood/ch04_small_steps](../../../../00-math_under_the_hood/ch04_small_steps/README.md).
+> **Math track connection.** The Bellman equation is a **fixed-point equation** — $V^\pi = T^\pi V^\pi$ where $T^\pi$ is the Bellman operator. The contraction mapping theorem guarantees a unique solution and convergence of value iteration. See [00-math_under_the_hood/ch04_small_steps](../../../../00-math_under_the_hood/ch04_small_steps/README.md).
 
 ---
 
@@ -655,4 +655,4 @@ CartPole provides a concrete bridge from the toy GridWorld to a real RL benchmar
 
 **Target:** CartPole ≥195/200 steps average — find a policy where the pole stays upright for at least 195 consecutive steps out of 200. This requires learning precise balancing: small left/right actions at the right moments to counteract the pole's angular momentum.
 
-> ➡ **This target is addressed in ch06 DQN**, where a neural network approximates $Q^*(s,a)$ over the continuous CartPole state space.
+> **This target is addressed in ch06 DQN**, where a neural network approximates $Q^*(s,a)$ over the continuous CartPole state space.

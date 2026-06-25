@@ -14,7 +14,7 @@ formula_motivation: required_before_each_formula
 numerical_walkthroughs: judicious_california_housing_examples_when_clarifying
 dataset: california_housing_only_no_synthetic_data_except_toy_subsets
 failure_first_pedagogy: true
-callout_system: {insight:"", warning:"", constraint:"", optional_depth:"📖", forward_pointer:"➡"}
+callout_system: {insight:"", warning:"", constraint:"", optional_depth:"", forward_pointer:""}
 mermaid_color_palette: {primary:"#1e3a8a", success:"#15803d", caution:"#b45309", danger:"#b91c1c", info:"#1d4ed8"}
 image_background: dark_facecolor_1a1a2e_for_generated_plots
 section_template: [story_header, challenge_0, animation, core_idea_1, running_example_2, math_3, step_by_step_4, key_diagrams_5, hyperparameter_dial_6, what_can_go_wrong_7, progress_check_N, bridge_N1]
@@ -238,11 +238,11 @@ Every chapter README now follows this **extended structure** (adds §0 Challenge
 **Do not use emojis in technical content.** All emoji-based callouts have been systematically removed from the repository (27,921 emojis removed across 168 files as of May 2026).
 
 Use text-only formatting:
-- **Checkpoint:** (not 💡 **Checkpoint:**)
-- **Warning:** (not ⚠️ **Warning:**)
-- **Rule of Thumb:** (not 🎯 **Rule of Thumb:**)
-- [Complete] or Complete (not ✅)
-- [WRONG] or [Failed] (not ❌)
+- **Checkpoint:** (not **Checkpoint:**)
+- **Warning:** (not **Warning:**)
+- **Rule of Thumb:** (not **Rule of Thumb:**)
+- [Complete] or Complete (not )
+- [WRONG] or [Failed] (not )
 
 **Rationale:** Emojis create visual clutter, reduce professionalism, and can render inconsistently across platforms. Technical documentation should rely on clear text formatting.
 
@@ -816,7 +816,7 @@ Every `grand_solution.md` follows this **7-section template**:
 - Duplicate content across sections (say it once, reference it later)
 
 **Formatting conventions:**
-- Use checkmark bullets for capabilities unlocked: ➡
+- Use checkmark bullets for capabilities unlocked:
 
 ---
 
@@ -1436,7 +1436,7 @@ If a formula has no verbal gloss within three lines, it is incomplete.
 
 **Rule 3: the notation table lives in the header.** All symbols are declared in the "Notation in this chapter" header blockquote before any section. Subsections add no new notation without glossing it immediately.
 
-**Rule 4: optional depth gets a callout box.** Derivations that would break the flow of a practitioner reading for intuition go inside an indented `> 📖 **Optional:**` block. These are clearly labelled and can be skipped without losing the main thread. Ch.01 puts the full matrix chain rule derivation inside one of these blocks. Ch.02 puts the full Jacobian derivation in one. The optional block ends with a cross-reference to MathUnderTheHood for the rigorous treatment.
+**Rule 4: optional depth gets a callout box.** Derivations that would break the flow of a practitioner reading for intuition go inside an indented `> **Optional:**` block. These are clearly labelled and can be skipped without losing the main thread. Ch.01 puts the full matrix chain rule derivation inside one of these blocks. Ch.02 puts the full Jacobian derivation in one. The optional block ends with a cross-reference to MathUnderTheHood for the rigorous treatment.
 
 **Rule 5: ASCII matrix diagrams for matrix operations.** When showing a matrix multiply or a matrix structure, draw it in ASCII with aligned brackets, showing the dimensions of each operand and the result. The Ch.02 `Xᵀe` walkthrough is the canonical example:
 
@@ -1479,7 +1479,7 @@ Xᵀ · e (2×3) · (3×1) → (2×1)
 
 **Forward link pattern:** *"This is the entire conceptual foundation of neural network backpropagation. Every time you call `loss.backward()` in PyTorch, this matrix multiply is running — one per layer."*
 
-**The forward pointer callout box** (`> ➡`) is used for concepts that will be formally introduced later but need to be planted early. Ch.01 plants the seed for R² at the end of the loss section with a `> ➡` callout that says R² will be introduced in Ch.02 §1.5 where comparing two models makes it meaningful.
+**The forward pointer callout box** (`> `) is used for concepts that will be formally introduced later but need to be planted early. Ch.01 plants the seed for R² at the end of the loss section with a `> ` callout that says R² will be introduced in Ch.02 §1.5 where comparing two models makes it meaningful.
 
 **Cross-track links** to MathUnderTheHood are standard for rigorous derivations. Always reference the specific chapter: `[MathUnderTheHood ch06 — Gradient & Chain Rule](../00-math-under-the-hood/ch06_gradient_chain_rule)`.
 
@@ -1494,8 +1494,8 @@ Used consistently across both chapters. Must be used exactly this way — no imp
 | `` | Key insight / conceptual payoff | After a result that surprises or reframes something the reader thought they understood |
 | `` | Warning / common trap | Before or immediately after a pattern that is often done wrong |
 | `` | Grand Challenge constraint connection | When content advances or validates one of the 5 SmartVal constraints |
-| `> 📖 **Optional:**` | Deeper derivation | Full proofs and matrix calculus that break the narrative flow |
-| `> ➡` | Forward pointer | When a concept needs to be planted before its full treatment |
+| `> **Optional:**` | Deeper derivation | Full proofs and matrix calculus that break the narrative flow |
+| `> ` | Forward pointer | When a concept needs to be planted before its full treatment |
 
 The callout box content is always **actionable**: it ends with a Fix, a Rule, a What-to-do. No callout box that just says "this is interesting" without consequence.
 
@@ -1598,7 +1598,7 @@ Both chapters are long — Ch.01 in particular runs to 1,100+ lines of Markdown.
 - **Never summarise where you can demonstrate.** A worked 2-epoch gradient descent walkthrough that shows the arithmetic explicitly teaches the concept; a prose paragraph saying "the weights update toward the minimum" does not.
 - **One concept per subsection.** Ch.01's §6 "Gradient Descent" has 7 distinct subsections (Try It First, Loss Surface, Convergence, MAE vs MSE comparison, Gradient Descent Lens, Feature Engineering). Each subsection has exactly one conceptual payload. None runs into another.
 - **The subsection heading is descriptive, not label-like.** Not "6.5 Comparison" but "6.5 · MAE vs MSE — Why Gradient Shape Determines Convergence". The title states the conclusion, not just the topic.
-- **100-line rule for inline explanations.** If explaining a concept fully would take more than ~100 lines in a natural reading flow, split it: give the intuition inline, move the full derivation to a `> 📖 Optional` callout box, and cross-reference MathUnderTheHood for the proof.
+- **100-line rule for inline explanations.** If explaining a concept fully would take more than ~100 lines in a natural reading flow, split it: give the intuition inline, move the full derivation to a `> Optional` callout box, and cross-reference MathUnderTheHood for the proof.
 
 ---
 
@@ -1741,7 +1741,7 @@ Matrix: (2/3) × Xᵀe = (2/3) × -12.5 = -8.333
 
 **Template:**
 ```markdown
-> ➡ **[Topic] goes deeper in [Chapter/Track].** This chapter covers [what's needed now].
+> **[Topic] goes deeper in [Chapter/Track].** This chapter covers [what's needed now].
 > For [advanced topic] — [specific capability] — see [link]. For now: [continue with current concept].
 ```
 
@@ -1872,7 +1872,7 @@ Ch.2 (multiple features): ŷ = wᵀx + b ← dot product replaces multiply
 
 **Mix these modes fluidly:**
 - **Confession:** "grad-student descent — staring at training curves, twiddling knobs, praying" (Ch.07)
-- **Rigor:** Mathematical proofs in `> 📖 Optional` boxes with MathUnderTheHood links
+- **Rigor:** Mathematical proofs in `> Optional` boxes with MathUnderTheHood links
 - **Tutorial:** "Fix: Use `Pipeline` so scaler fits on train fold only"
 
 **Why effective:** Signals "this is for practitioners who also need to justify decisions." LaTeX for advisors, code for teammates, confessions for peers.
@@ -1911,8 +1911,8 @@ Map tone to pedagogical purpose:
 - = Key insight (power users skim these first)
 - = Common trap (practitioners jump here when debugging)
 - = SmartVal constraint advancement (tracks quest progress)
-- 📖 = Optional depth (safe to skip)
-- ➡ = Forward pointer (where this reappears)
+- = Optional depth (safe to skip)
+- = Forward pointer (where this reappears)
 
 **Rule:** No other emoji as inline callouts. ( are structural markers for Challenge/Progress sections only.)
 
@@ -2098,7 +2098,7 @@ Example: "We demonstrate that...", "It can be shown that...", "In this section w
 **Synthetic datasets for walkthroughs**
 Example: Using `X = [1,2,3], y = [2,4,6]` instead of actual California Housing districts
 **Improvised emoji**
-Example: Using ✨ as inline callouts (only 📖➡ allowed)
+Example: Using as inline callouts (only allowed)
 **Topic-label section headings**
 Example: "## 3 · Math" instead of "## 3 · Math — How Weights Encode Feature Importance"
 **Skipping numerical verification**
@@ -2150,9 +2150,9 @@ Before publishing any chapter, verify each item:
 - [ ] Every formula: scalar form shown first, vector form second
 - [ ] Every non-trivial formula: demonstrated on a 3–5 row California Housing toy dataset with explicit arithmetic
 - [ ] Failure-first pedagogy: new concepts introduced because the simpler one broke, not listed a priori
-- [ ] Optional depth: full derivations behind `> 📖 Optional` callout boxes with MathUnderTheHood cross-reference
+- [ ] Optional depth: full derivations behind `> Optional` callout boxes with MathUnderTheHood cross-reference
 - [ ] Forward/backward links: every concept links to where it was introduced and where it reappears
-- [ ] Callout boxes: only ` 📖 ➡` — no improvised emoji
+- [ ] Callout boxes: only ` ` — no improvised emoji
 - [ ] Mermaid diagrams: colour palette respected (dark blue / dark green / amber / dark red)
 - [ ] Images: dark background, descriptive alt-text, purposeful (not decorative)
 - [ ] Needle GIF: chapter-level progress animation present under `## Animation`
@@ -2214,13 +2214,13 @@ Replace each DECISION CHECKPOINT block with two callout lines:
 ```markdown
 > **Audit verdict:** `AveRooms` (IQR/σ = 4.1) and `Population` (skew = 18.6) need `log1p`. Expected MAE impact: −$3–5k.
 
-> ➡ Act 3 applies the `log1p` + `StandardScaler` pipeline before Ch.01's linear regression baseline.
+> Act 3 applies the `log1p` + `StandardScaler` pipeline before Ch.01's linear regression baseline.
 ```
 
 Fix broken section-number cross-references: replace `→ §5 Act 2` with a relative path (`→ [../ch01-linear-regression/](../ch01_linear_regression)`).
 
 **Callout discipline for ML chapters:**
 - `> **[Stage] verdict:**` — one line after each act/stage concludes, states the decision and its metric impact (e.g., "Expected MAE impact: −$3–5k")
-- `> ➡` — forward pointer when a transform or finding carries directly into the next chapter, with a named MAE or metric consequence
+- `> ` — forward pointer when a transform or finding carries directly into the next chapter, with a named MAE or metric consequence
 - Never: a "DECISION CHECKPOINT" block with "What you just saw / What it means / What to do next" sub-headings
 - Never: a section that lists "Phase N → §X, §Y Act Z"

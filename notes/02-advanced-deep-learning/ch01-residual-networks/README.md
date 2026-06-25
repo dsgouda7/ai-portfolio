@@ -351,20 +351,20 @@ Deeper networks achieve LOWER training error!
 ```
 Plain CNN (no skip connections):
 Layer 40 (output): ████████████████████ 1.00
-Layer 30:          ████████░░░░░░░░░░░░ 0.35 (65% lost)
-Layer 20:          ███░░░░░░░░░░░░░░░░░ 0.12 (88% lost)
-Layer 10:          █░░░░░░░░░░░░░░░░░░░ 0.04 (96% lost)
-Layer 1:           ░░░░░░░░░░░░░░░░░░░░ 0.02 (98% lost) ← VANISHED!
+Layer 30: ████████░░░░░░░░░░░░ 0.35 (65% lost)
+Layer 20: ███░░░░░░░░░░░░░░░░░ 0.12 (88% lost)
+Layer 10: █░░░░░░░░░░░░░░░░░░░ 0.04 (96% lost)
+Layer 1: ░░░░░░░░░░░░░░░░░░░░ 0.02 (98% lost) ← VANISHED!
 
 ResNet-40 (skip connections every 2 layers):
 Layer 40 (output): ████████████████████ 1.00
-Layer 30:          ██████████████████░░ 0.89 (11% lost)
-Layer 20:          █████████████████░░░ 0.82 (18% lost)
-Layer 10:          ████████████████░░░░ 0.78 (22% lost)
-Layer 1:           ███████████████░░░░░ 0.75 (25% lost) ← STRONG!
+Layer 30: ██████████████████░░ 0.89 (11% lost)
+Layer 20: █████████████████░░░ 0.82 (18% lost)
+Layer 10: ████████████████░░░░ 0.78 (22% lost)
+Layer 1: ███████████████░░░░░ 0.75 (25% lost) ← STRONG!
 
 Key insight: Skip connections preserve 75-90% gradient strength
-             Plain networks lose 98%+ by the time gradients reach layer 1
+ Plain networks lose 98%+ by the time gradients reach layer 1
 ```
 
 **Why the difference?**

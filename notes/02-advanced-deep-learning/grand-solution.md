@@ -8,7 +8,7 @@
 
 **Three ways to learn the Advanced Deep Learning track:**
 
-1. **📖 Sequential deep dive (recommended)**: Read chapters Ch.1–10 in order, each with:
+1. ** Sequential deep dive (recommended)**: Read chapters Ch.1–10 in order, each with:
  - Full narrative in `chNN_*/README.md`
  - Implementation details and experiments in chapter notebooks
  - Each chapter builds on previous concepts and shows progressive constraint achievement
@@ -254,7 +254,7 @@ Here's how all 10 concepts integrate into a deployed ProductionCV system:
 
 ```mermaid
 flowchart TD
- START["📸 Retail Shelf Camera<br/>1920×1080 @ 30 FPS"]
+ START[" Retail Shelf Camera<br/>1920×1080 @ 30 FPS"]
 
  START --> PREPROC["Preprocessing<br/>Resize to 640×640<br/>Normalize RGB"]
 

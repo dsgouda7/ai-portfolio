@@ -611,4 +611,4 @@ The grand challenge is within reach. Let's finish it.
 
 ---
 
-> ➡ **Next chapter**: [Ch.10 — Pruning & Mixed Precision Training](../ch10_pruning_mixed_precision/README.md) — Remove redundant weights, train 2× faster, achieve all 5 ProductionCV constraints.
+> **Next chapter**: [Ch.10 — Pruning & Mixed Precision Training](../ch10_pruning_mixed_precision/README.md) — Remove redundant weights, train 2× faster, achieve all 5 ProductionCV constraints.

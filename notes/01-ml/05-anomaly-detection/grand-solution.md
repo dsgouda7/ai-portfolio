@@ -4,7 +4,7 @@
 
 ---
 
-## 📖 How to Read This Track
+## How to Read This Track
 
 **Two learning paths available:**
 

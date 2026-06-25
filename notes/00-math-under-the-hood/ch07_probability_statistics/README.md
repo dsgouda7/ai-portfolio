@@ -206,7 +206,7 @@ $$\mathbb{E}[X^2] = \sum_{x} x^2 \cdot p(x) = (1^2 \times 0.25) + (0^2 \times 0.
 
 $$\mathrm{Var}(X) = 0.25 - (0.25)^2 = 0.25 - 0.0625 = 0.1875$$
 
-> 🎲 **Interpretation:** The variance measures **spread** — how much outcomes deviate from the mean. Here $\mathrm{Var}(X) = p(1 - p) = 0.25 \times 0.75 = 0.1875$. The standard deviation $\sigma = \sqrt{0.1875} \approx 0.433$. This tells us that individual outcomes ($0$ or $1$) are typically ~0.43 units away from the mean of $0.25$.
+> **Interpretation:** The variance measures **spread** — how much outcomes deviate from the mean. Here $\mathrm{Var}(X) = p(1 - p) = 0.25 \times 0.75 = 0.1875$. The standard deviation $\sigma = \sqrt{0.1875} \approx 0.433$. This tells us that individual outcomes ($0$ or $1$) are typically ~0.43 units away from the mean of $0.25$.
 
 **Step 4: Apply linearity — if the striker takes $n = 10$ kicks (independent), how many goals do we expect?**
 
@@ -234,7 +234,7 @@ $$\mathrm{Var}(\bar X) = \left(\frac{1}{10}\right)^2 \mathrm{Var}(Y) = \frac{1}{
 
 ## 4b · Covariance and Pearson Correlation — Do Two Things Move Together?
 
-> 📖 **Used in:** [ML Ch.3 — Feature Importance](../../ml/01_regression/ch03_feature_importance/README.md) (Filter Methods, Univariate R²). The Pearson formula there becomes trivial once you see what covariance and correlation actually measure.
+> **Used in:** [ML Ch.3 — Feature Importance](../../ml/01_regression/ch03_feature_importance/README.md) (Filter Methods, Univariate R²). The Pearson formula there becomes trivial once you see what covariance and correlation actually measure.
 
 Variance tells you how much *one* variable wiggles on its own. **Covariance** asks a different question: when $x$ goes up, does $y$ tend to go up too — or down, or neither?
 
@@ -516,9 +516,9 @@ graph LR
 3. Use MLE to find best parameters: $\hat{\boldsymbol{\theta}} = \arg\max \log \mathcal{L} = \arg\min \sum_i (d_i - f(\theta_i, v_{0i}))^2$ ← This is MSE!
 4. Verify constraints with confidence intervals: $P(h(t_{\text{wall}}) > 1.8) \geq 0.95$
 **All three constraints satisfied (with probability guarantees)**:
-1. ✓ **Wall clearance**: $P(h(0.6s) > 1.8m) = 0.98$ (98% of kicks clear wall)
-2. ✓ **Crossbar clearance**: $P(h(1.2s) < 2.44m) = 0.96$ (96% go under crossbar)
-3. ✓ **Keeper speed**: $P(t_{\text{goal}} < t_{\text{react}}) = 0.92$ (92% arrive before keeper reacts)
+1. **Wall clearance**: $P(h(0.6s) > 1.8m) = 0.98$ (98% of kicks clear wall)
+2. **Crossbar clearance**: $P(h(1.2s) < 2.44m) = 0.96$ (96% go under crossbar)
+3. **Keeper speed**: $P(t_{\text{goal}} < t_{\text{react}}) = 0.92$ (92% arrive before keeper reacts)
 
  **What this track accomplished:**
 - **Ch.1**: Predict (linear approximation)

@@ -640,7 +640,7 @@ Ch.1 established the baseline: flag statistically extreme transactions. But the 
 
 Isolation Forest asks a completely different question: **how many random cuts does it take to isolate this transaction from all others?** Rare, anomalous points get isolated in very few cuts regardless of whether they are in any tail. It requires no distributional assumption, handles non-linear anomaly structure naturally, and scales to 284k transactions in seconds.
 
-> ➡ **[Ch.2 — Isolation Forest](../ch02_isolation_forest)**: from 45% recall (statistical threshold) to ~72% recall. The scoring paradigm is identical — what changes is the scoring function.
+> **[Ch.2 — Isolation Forest](../ch02_isolation_forest)**: from 45% recall (statistical threshold) to ~72% recall. The scoring paradigm is identical — what changes is the scoring function.
 
 **What stays the same in Ch.2:**
 - The same `feature → score → threshold → decision` loop

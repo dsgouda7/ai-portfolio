@@ -116,7 +116,7 @@ Deploy containerized apps to Kubernetes locally. Master pods, deployments, servi
 
 ---
 
-### 🔄 Automation & Monitoring
+### Automation & Monitoring
 
 #### 4. [CI/CD Pipelines](ch04_cicd_pipelines/README.md) — GitHub Actions Workflows
 > **Running Example**: Automated testing and Docker Hub deployment
