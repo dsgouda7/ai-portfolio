@@ -85,22 +85,75 @@ def _build_local_llm(provider: str = "ollama", model: str | None = None) -> Comp
     return None
 
 
-COMPRESSION_PROMPT_TEMPLATE = """You are a semantic compression agent. Your job is to distill this text into a dense summary that preserves key information for retrieval.
+# ── Stopword normalisation ──────────────────────────────────────────────────
 
-**Guidelines:**
-- PRESERVE: technical terms, numbers, code snippets, formulas, error codes, metrics
-- Extract main entities (people, systems, concepts, algorithms, functions)
-- Keep key facts, relationships, causality, and actionable information
-- Maintain structural context (section headers, list items, code blocks)
-- Remove: filler phrases, background narrative, redundant phrasing
-- Target: ~150 tokens (3-4 sentences with technical detail)
+# Curated set of English function words that carry no retrieval signal.
+# Deliberately small: sentence-transformer models (all-MiniLM-L6-v2, nomic-embed)
+# are robust to their removal, and stripping them shifts the stored embedding
+# toward content words — exactly what ToT branch scoring needs.
+# Stemming is intentionally excluded: morphological variants ("timeouts" / "timeout")
+# are already collapsed by the LLM prompt below.
+_STOPWORDS: frozenset[str] = frozenset({
+    "a", "an", "the", "and", "or", "but",
+    "in", "on", "at", "to", "for", "of", "with", "by", "from",
+    "is", "are", "was", "were", "be", "been", "being",
+    "have", "has", "had", "do", "does", "did",
+    "will", "would", "can", "could", "should", "may", "might", "shall",
+    "this", "that", "these", "those",
+    "it", "its", "as", "not", "no", "if", "so", "than", "then",
+    "when", "where", "which", "who", "how", "what",
+    "there", "their", "they", "them", "we", "our", "you", "your",
+})
+
+
+def _normalise_for_index(text: str) -> str:
+    """Strip stopwords and normalise whitespace before storing in ChromaDB.
+
+    Applied only to ``compressed_summary`` (the indexed field).  ``raw_text``
+    is never touched — it remains the human-readable fallback in RawIndex.
+
+    Token-level stripping: split on whitespace, lower-case each token,
+    strip trailing punctuation before the stopword check so "is," / "is."
+    are caught.  Original casing is preserved for the kept tokens so
+    technical identifiers (``CosmosDB``, ``HTTP 504``) round-trip unchanged.
+    """
+    tokens = text.split()
+    kept = [
+        t for t in tokens
+        if t.lower().rstrip(".,;:!?'\"") not in _STOPWORDS
+    ]
+    return " ".join(kept)
+
+
+# ── Compression prompt ───────────────────────────────────────────────────────
+
+COMPRESSION_PROMPT_TEMPLATE = """You are a semantic index builder. Transform the input text into a
+retrieval-optimized representation that a vector-search system will embed.
+
+Write as dense entity phrases, NOT narrative prose. A downstream LLM will
+read your output and reconstruct full meaning from it, so preserve every
+technical signal verbatim — it does not need connective words to understand.
+
+**Preserve exactly (never paraphrase or abbreviate):**
+- Error codes, status codes, version numbers, metric values, thresholds
+- Function / class / variable names, config keys, file paths, package names
+- System, component, protocol, and service names
+- Causal chains expressed as: "X caused Y", "X triggered Z", "X exceeded Y"
+- Numeric relationships: latency values, percentages, counts
+
+**Style rules:**
+- Lead each clause with the primary entity (noun-first)
+- Join clauses with semicolons, not conjunctions
+- Omit: articles (the/a/an), copulas (is/are/was), filler adverbs, hedges
+- Wrong: "The CosmosDB instance experienced a timeout due to exceeded RU limits"
+- Right:  "CosmosDB RU limit exceeded; request timeout error 21012; AKS ingress 504 upstream; retry cascade triggered"
 
 **Input Text:**
 {text}
 
 **Output Format (JSON):**
 {{
-  "summary": "Dense 3-4 sentence summary preserving technical terms, numbers, and key facts",
+  "summary": "Retrieval-optimized dense-phrase summary — entity-first, semicolon-separated, no filler",
   "entities": ["entity1", "entity2", "entity3"],
   "keywords": ["keyword1", "keyword2", "keyword3"],
   "has_code": true,
@@ -178,6 +231,18 @@ def compress_chunk_with_llm(
             summary = result_text[:600]
             entities = []
             keywords = []
+
+        # Enrich the stored document with deduplicated entity tokens so the
+        # ChromaDB embedding captures the same high-precision terms that ToT
+        # branch queries use as search terms.  Entities go to metadata too,
+        # but only the document field is embedded — appending here bridges that gap.
+        if entities:
+            summary = summary + "; " + "; ".join(entities)
+
+        # Normalise for semantic indexing: strip residual stopwords so the
+        # ChromaDB embedding vector is dominated by content words.
+        # raw_text is never touched — it stays readable in RawIndex.
+        summary = _normalise_for_index(summary)
 
         original_tokens = _estimate_tokens(text)
         compressed_tokens = _estimate_tokens(summary)

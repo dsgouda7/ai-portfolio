@@ -35,6 +35,7 @@ Usage::
     reasoner = ToTReasoner()
     result = reasoner.reason("CosmosDB timeout cascade AKS ingress 504")
 """
+
 from __future__ import annotations
 
 import time
@@ -44,6 +45,7 @@ from typing import Any
 from .protocols import Retriever  # noqa: F401 — re-exported for callers
 
 # ── Data classes ────────────────────────────────────────────────────────────
+
 
 @dataclass
 class Branch:
@@ -73,6 +75,7 @@ class ToTResult:
 
 
 # ── Reasoner ────────────────────────────────────────────────────────────────
+
 
 class ToTReasoner:
     """
@@ -135,7 +138,11 @@ class ToTReasoner:
             Contains all branches (scored), the winning branch id, a
             human-readable summary, and timing info.
         """
-        specs = branch_specs if branch_specs is not None else self._derive_branch_specs(compressed_context)
+        specs = (
+            branch_specs
+            if branch_specs is not None
+            else self._derive_branch_specs(compressed_context)
+        )
         start = time.perf_counter()
 
         branches: list[Branch] = []
@@ -148,13 +155,16 @@ class ToTReasoner:
                 search_terms=spec.get("search_terms", []),
             )
             for term in branch.search_terms:
-                snippets = self._retrieve_snippets(term)
-                branch.evidence_snippets.extend(snippets)
-                total_lines += len(snippets)
-                if snippets:
+                scored = self._retrieve_snippets(term)
+                branch.evidence_snippets.extend(s for s, _ in scored)
+                total_lines += len(scored)
+                if scored:
                     branch.evidence_hits += 1
+                    # Accumulate mean similarity across all returned chunks for this term.
+                    # ChromaDB cosine distance is in [0, 2]; similarity = 1 - distance
+                    # giving [-1, 1] where 1 = identical.  Average over top_k results.
+                    branch.score += sum(sim for _, sim in scored) / len(scored)
 
-            branch.score = float(branch.evidence_hits)
             branches.append(branch)
 
         branches.sort(key=lambda b: b.score, reverse=True)
@@ -163,8 +173,8 @@ class ToTReasoner:
 
         summary = (
             f"ToT-selected branch: {winner.title}.\n"
-            f"Evidence density: {winner.evidence_hits}/{len(winner.search_terms)} "
-            f"search terms matched in corpus.\n"
+            f"Mean similarity: {winner.score:.3f} "
+            f"({winner.evidence_hits}/{len(winner.search_terms)} search term(s) matched).\n"
             + (f"Key entities: {entity_str}.\n" if entity_str else "")
             + "Next: address the dominant failure mode identified by the winning branch."
         )
@@ -179,13 +189,28 @@ class ToTReasoner:
 
     # ── Internal helpers ────────────────────────────────────────────────────
 
-    def _retrieve_snippets(self, term: str) -> list[str]:
-        """Fetch up to top_k snippets for a single term; returns [] on any error."""
+    def _retrieve_snippets(self, term: str) -> list[tuple[str, float]]:
+        """Fetch top_k snippets with similarity scores for *term*.
+
+        Returns
+        -------
+        list of (compressed_summary, similarity) pairs.
+        similarity = 1 - cosine_distance, so 1.0 = identical, 0.0 = orthogonal.
+        Returns [] on any error or when no retriever is configured.
+        """
         if self._retriever is None:
             return []
         try:
             results = self._retriever.search(term, top_k=self._top_k)
-            return [r.get("compressed_summary", str(r)) for r in results]
+            out: list[tuple[str, float]] = []
+            for r in results:
+                snippet = r.get("compressed_summary", str(r))
+                dist = r.get("distance")
+                # ChromaDB cosine space: distance in [0, 2].  Convert to similarity.
+                # When distance is absent (e.g. non-ChromaDB retriever), default to 0.5.
+                similarity = 1.0 - float(dist) if dist is not None else 0.5
+                out.append((snippet, similarity))
+            return out
         except Exception:
             return []
 
@@ -206,37 +231,53 @@ class ToTReasoner:
         elif hasattr(ctx, "entities"):
             entities = list(ctx.entities)[:9]
         elif isinstance(ctx, dict):
-            entities = (
-                ctx.get("technical_identifiers")
-                or ctx.get("entities")
-                or []
-            )[:9]
+            entities = (ctx.get("technical_identifiers") or ctx.get("entities") or [])[
+                :9
+            ]
 
         if not entities:
             return [
-                {"id": "primary",   "title": "Primary hypothesis branch",  "search_terms": []},
-                {"id": "secondary", "title": "Secondary hypothesis branch", "search_terms": []},
-                {"id": "tertiary",  "title": "Tertiary hypothesis branch",  "search_terms": []},
+                {
+                    "id": "primary",
+                    "title": "Primary hypothesis branch",
+                    "search_terms": [],
+                },
+                {
+                    "id": "secondary",
+                    "title": "Secondary hypothesis branch",
+                    "search_terms": [],
+                },
+                {
+                    "id": "tertiary",
+                    "title": "Tertiary hypothesis branch",
+                    "search_terms": [],
+                },
             ]
 
         n = len(entities)
         t = max(1, n // 3)
+
+        # Group entities into thirds, then join each group into a single
+        # composite hypothesis sentence.  A sentence embedding carries far
+        # more semantic signal than individual keyword embeddings — ChromaDB
+        # and the semantic cache both benefit from a richer query vector.
+        # This also halves the number of retriever calls: 1 per branch instead
+        # of up to t calls per branch.
+        groups = [
+            entities[:t],
+            entities[t : 2 * t] or entities[:1],
+            entities[2 * t :] or entities[:1],
+        ]
+
         return [
             {
-                "id": "primary",
-                "title": f"Branch A — {', '.join(entities[:t])}",
-                "search_terms": entities[:t],
-            },
-            {
-                "id": "secondary",
-                "title": f"Branch B — {', '.join(entities[t:2*t] or entities[:1])}",
-                "search_terms": entities[t : 2 * t] or entities[:1],
-            },
-            {
-                "id": "tertiary",
-                "title": f"Branch C — {', '.join(entities[2*t:] or entities[:1])}",
-                "search_terms": entities[2 * t :] or entities[:1],
-            },
+                "id": bid,
+                "title": f"Branch {bid.title()} — {', '.join(group)}",
+                # Single composite sentence per branch: richer embedding,
+                # fewer retriever round-trips.
+                "search_terms": [" ".join(group)],
+            }
+            for bid, group in zip(("primary", "secondary", "tertiary"), groups)
         ]
 
     @staticmethod
