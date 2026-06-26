@@ -278,7 +278,7 @@ def compress_chunk_with_llm(
 def compress_corpus_rolling(
     corpus_lines: list[str],
     chunk_size_threshold: int = 512,
-    chunk_overlap_tokens: int = 128,
+    chunk_overlap_tokens: int = 64,
     compression_batch_size: int = 10,
     llm: CompressorLLM | None = None,
     progress_callback: callable | None = None,
@@ -290,7 +290,9 @@ def compress_corpus_rolling(
     Process:
     1. Accumulate lines until threshold reached
     2. Compress the accumulated chunk
-    3. Keep last 25% of chunk as overlap for next chunk (preserves boundaries)
+    3. Keep last ~12% of chunk as overlap for next chunk (preserves causality
+       chains that span boundaries; boundary-entity coverage is now handled by
+       the LLM entity-extraction step which appends entities to compressed_summary)
     4. Repeat until corpus exhausted
 
     This avoids context exhaustion by:
