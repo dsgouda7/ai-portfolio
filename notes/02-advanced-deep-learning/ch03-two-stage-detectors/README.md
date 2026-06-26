@@ -455,7 +455,7 @@ Aspect ratios: 1:1 1:2 2:1
 - **Too strict** (0.3): Might suppress correct detections in crowded scenes (misses products when they overlap)
 - **Too lenient** (0.8): Leaves duplicate boxes → inflates detection count, confuses downstream logic
 
-> **Warning — Warning:** If you see duplicate bounding boxes in your output (5 boxes around the same object), lower the NMS threshold. If you're missing objects in crowded scenes, raise it.
+> **Warning:** If you see duplicate bounding boxes in your output (5 boxes around the same object), lower the NMS threshold. If you're missing objects in crowded scenes, raise it.
 
 ![Non-Maximum Suppression process animation](img/ch03-nms-process.gif)
 

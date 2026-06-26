@@ -165,29 +165,29 @@ The DevOps Research and Assessment (DORA) team identified four key metrics that 
 ```mermaid
 graph TD
  A[Developer pushes to main] --> B{Phase 1: BUILD}
- B -->|Lint fails| X1[ Block PR]
+ B -->|Lint fails| X1[Block PR]
  B -->|Lint passes| C{Build Docker image}
- C -->|Build fails| X2[ Alert team]
+ C -->|Build fails| X2[Alert team]
  C -->|Build succeeds| D{Phase 2: TEST}
 
- D -->|Tests fail| X3[ Block deploy<br/>Report coverage]
- D -->|Coverage <80%| X4[ Warning<br/>Proceed anyway]
+ D -->|Tests fail| X3[Block deploy<br/>Report coverage]
+ D -->|Coverage <80%| X4[Warning<br/>Proceed anyway]
  D -->|Tests pass| E{Phase 3: DEPLOY}
 
  E --> F[Push image to Docker Hub]
  F --> G[Deploy to staging]
  G --> H{Staging healthy?}
- H -->|No| X5[ Keep in staging<br/>Alert on-call]
+ H -->|No| X5[Keep in staging<br/>Alert on-call]
  H -->|Yes| I[Deploy to production]
 
  I --> J{Phase 4: VERIFY}
  J --> K[Run health checks]
  K --> L{/health returns 200?}
- L -->|No| M[ Auto-rollback<br/>Restore previous]
+ L -->|No| M[Auto-rollback<br/>Restore previous]
  L -->|Yes| N[Run smoke tests]
  N --> O{Metrics within SLA?}
  O -->|No| M
- O -->|Yes| P[ Deploy complete]
+ O -->|Yes| P[Deploy complete]
 
  P --> Q[Phase 5: MONITOR]
  Q --> R[Track build time]

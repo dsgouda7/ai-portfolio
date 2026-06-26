@@ -20,7 +20,11 @@
 ## 0 · The Challenge — Where We Are
 
 > **The mission**: Launch **UnifiedAI** — a production home valuation and face-attribute system satisfying 5 constraints:
-> 1. **ACCURACY**: ≤\$28k MAE (California Housing) — 2. **GENERALIZATION**: Unseen districts — 3. **MULTI-TASK**: Value + Segment — 4. **INTERPRETABILITY**: Explainable — 5. **PRODUCTION**: Scale + Monitor
+> 1. **ACCURACY**: ≤\$28k MAE (California Housing)
+> 2. **GENERALIZATION**: Unseen districts
+> 3. **MULTI-TASK**: Value + Segment
+> 4. **INTERPRETABILITY**: Explainable
+> 5. **PRODUCTION**: Scale + Monitor
 
 > **Key insight:** regularisation does not change the model architecture. It changes the *cost function* (L1, L2), the *training procedure* (dropout, early stopping), or the *activation statistics* (BatchNorm). The same 128-64 network from Ch.3 becomes a genuinely generalisable model once the right constraints are applied. No new layers needed.
 

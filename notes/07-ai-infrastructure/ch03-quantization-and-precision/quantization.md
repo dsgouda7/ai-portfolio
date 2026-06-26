@@ -26,7 +26,7 @@
 
 ```
 Load test results (FP16, batch=1):
-- Single request latency: 280ms (excellent! )
+- Single request latency: 280ms (excellent!)
 - Peak throughput: 12 requests/sec
 - Daily capacity: 12 × 60 × 60 × 24 / 3 = ~3,400 req/day
 
@@ -191,7 +191,7 @@ print(f"Original: {model.get_memory_footprint() / 1e9:.1f} GB")
 print(f"Quantized: {model_quantized.get_memory_footprint() / 1e9:.1f} GB")
 # Output:
 # Original: 16.1 GB
-# Quantized: 4.2 GB (74% reduction )
+# Quantized: 4.2 GB (74% reduction)
 ```
 
 ---
@@ -361,7 +361,7 @@ RTX 4090 VRAM (24 GB total)
 
 Breakdown:
 ┌─────────────────────────────────────────┐
-│ Model Parameters (INT4) │ 4.0 GB │ ← 8B params × 0.5 bytes/param (75% reduction! )
+│ Model Parameters (INT4) │ 4.0 GB │ ← 8B params × 0.5 bytes/param (75% reduction!)
 ├─────────────────────────────────────────┤
 │ KV Cache (batch=4, 2048 seq)│ 4.0 GB │ ← Same per-request, but now 4× concurrent
 ├─────────────────────────────────────────┤

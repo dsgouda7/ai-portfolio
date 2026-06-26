@@ -6,7 +6,7 @@
 
 <!-- LLM-STYLE-FINGERPRINT-V1
 scope: interview_guides
-canonical_examples: ["notes/InterviewGuides/AgenticAI.md"]
+canonical_examples: ["notes/interview-guides/agentic-ai.md"]
 voice: second_person_practitioner
 register: high_density_technical_interview_ready
 pedagogy: anticipate_the_interviewer + failure_first_discovery
@@ -743,7 +743,7 @@ Interviewers listen for vocabulary that signals systems-level thinking vs theore
 ---
 
 <details>
-<summary> 5-Minute Crammer — last-resort prep</summary>
+<summary>5-Minute Crammer — last-resort prep</summary>
 
 ## 5 · The 5-Minute Concept Cram
 

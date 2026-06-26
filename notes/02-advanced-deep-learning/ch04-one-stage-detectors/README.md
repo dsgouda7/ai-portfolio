@@ -420,7 +420,7 @@ Stride: 32 16 8
 - Detections: 8 boxes (all correct, but missed 5 products)
 - Result: High precision, low recall — unacceptable for inventory monitoring
 
-> **Warning — Warning:** Don't blindly increase confidence threshold to reduce false positives. You'll miss valid detections. Instead, use **NMS IoU threshold** (see Ch.3) to remove duplicates, or fine-tune the model on your specific dataset.
+> **Warning:** Don't blindly increase confidence threshold to reduce false positives. You'll miss valid detections. Instead, use **NMS IoU threshold** (see Ch.3) to remove duplicates, or fine-tune the model on your specific dataset.
 
 ---
 

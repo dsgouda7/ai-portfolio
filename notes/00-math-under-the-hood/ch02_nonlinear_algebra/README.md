@@ -155,8 +155,8 @@ Let's trace **§4's recipe** with actual trajectory points. The true parabola is
 |---|---|
 | 0.2 | 1.104 |
 | 0.4 | 1.816 |
-| 0.6 | 1.836 |
-| 0.8 | 1.464 |
+| 0.6 | 2.134 |
+| 0.8 | 2.084 |
 
 **Step 2: Engineer features.** Create $\mathbf{x}_i = [t_i, t_i^2]$ for each sample — this is the **§1 trick**:
 
@@ -164,8 +164,8 @@ Let's trace **§4's recipe** with actual trajectory points. The true parabola is
 |---|---|---|---|
 | 0.2 | 0.2 | 0.04 | 1.104 |
 | 0.4 | 0.4 | 0.16 | 1.816 |
-| 0.6 | 0.6 | 0.36 | 1.836 |
-| 0.8 | 0.8 | 0.64 | 1.464 |
+| 0.6 | 0.6 | 0.36 | 2.134 |
+| 0.8 | 0.8 | 0.64 | 2.084 |
 
 > **What just happened:** We turned a curved problem into a flat one. The original curve $y(t) = at^2 + bt + c$ is **non-linear in $t$** (it bends). But it's **linear in $(a, b, c)$** — those are just weights! By creating columns $[t, t^2]$, we've built a design matrix where the parabola looks like a plane. Ch.5 will solve this in one matrix operation; for now, imagine fitting $\hat{y} = w_1 \cdot t + w_2 \cdot t^2 + b$.
 
@@ -227,11 +227,11 @@ Left: a straight line is the wrong tool for a parabolic path. Middle: $a$ contro
 graph LR
  C1["Ch.1\nLinear Algebra"]:::done
  C2["Ch.2\nNonlinear Algebra"]:::done
- C3["Ch.3\nCalculus Intro"]:::done
- C4["Ch.4\nSmall Steps"]:::done
- C5["Ch.5\nMatrices"]:::done
- C6["Ch.6\nGradient + Chain Rule"]:::done
- C7["Ch.7\nProbability & Stats"]:::done
+ C3["Ch.3\nCalculus Intro"]
+ C4["Ch.4\nSmall Steps"]
+ C5["Ch.5\nMatrices"]
+ C6["Ch.6\nGradient + Chain Rule"]
+ C7["Ch.7\nProbability & Stats"]
  C1 --> C2 --> C3 --> C4 --> C5 --> C6 --> C7
  classDef done fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
  classDef current fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
@@ -241,11 +241,11 @@ graph LR
 ![Progress visualization: green zones show full parabolic trajectory modeling, red zones show constraint verification still blocked](img/ch02-nonlinear-algebra-progress-check.png)
 **Unlocked capabilities:**
 - **Model the full parabolic trajectory**: $h(t) = 6.5t - 4.905t^2$ (not just first 0.1s!)
-- **Compute height at any time**: At wall ($t=0.6s$): $h = 1.10m$. At goal ($t=1.2s$): $h = 1.60m$
+- **Compute height at any time**: At wall ($t=0.6s$): $h \approx 2.13m$. At goal ($t=1.2s$): $h \approx 0.74m$
 - **Predict landing point**: When $h(t) = 0$, we get $t \approx 1.33s$ (ball hits ground at 1.33 seconds)
 - **Understand feature engineering**: Turn any curve into a linear problem by creating polynomial features $[x, x^2, x^3, ...]$
 **Still can't solve:**
-- **Check wall clearance**: We computed $h(0.6s) = 1.10m$ but is that at the wall's horizontal position (9.15m)? We need to link **time** and **distance** — that requires knowing the horizontal velocity too
+- **Check wall clearance**: We computed $h(0.6s) \approx 2.13m$ but is that at the wall's horizontal position (9.15m)? We need to link **time** and **distance** — that requires knowing the horizontal velocity too
 - **Find the peak height**: Where's the apex? At what time $t_{\text{peak}}$? We'd have to guess-and-check different $t$ values. **Ch.3's derivatives** will find it analytically: solve $h'(t) = 0$
 - **Optimize launch angle**: What $\theta$ (angle) maximizes range while clearing wall and crossbar? We have no optimization method yet — that's **Ch.4** (gradient descent)
 - **Handle multiple parameters**: What if we want to optimize $v_0$ (speed) AND $\theta$ (angle) AND compensate for wind? We can't handle multi-variable optimization — that's **Ch.5-6**

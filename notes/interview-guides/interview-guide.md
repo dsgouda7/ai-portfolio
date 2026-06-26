@@ -275,7 +275,7 @@ This guide mirrors the progression of the ML track chapters. For deeper context 
 This guide covers the core ML fundamentals. For advanced topics:
 - **LLM fine-tuning**: See `notes/03-ai/FineTuning/`
 - **Prompt engineering**: See `notes/03-ai/PromptEngineering/`
-- **Multi-agent systems**: See `notes/MultiAgentAI/`
-- **Diffusion models**: See `notes/MultimodalAI/DiffusionModels/`
+- **Multi-agent systems**: See `notes/06-multi-agent-ai/`
+- **Diffusion models**: See `notes/04-multimodal-ai/ch04-diffusion-models/`
 
 These topics build on the foundations above — the same interview principles (know the math, anticipate follow-ups, avoid common traps) apply at scale.

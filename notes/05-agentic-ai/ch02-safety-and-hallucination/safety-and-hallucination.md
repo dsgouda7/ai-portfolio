@@ -15,7 +15,12 @@
 ## 0 · The Challenge — Where We Are
 
 > **The mission**: Launch **Mamma Rosa's PizzaBot** — a production AI ordering system satisfying 6 constraints:
-> 1. **BUSINESS VALUE**: >25% conversion + +$2.50 AOV + 70% labor savings — 2. **ACCURACY**: <5% error — 3. **LATENCY**: <3s p95 — 4. **COST**: <$0.08/conv — 5. **SAFETY**: Zero attacks — 6. **RELIABILITY**: >99% uptime
+> 1. **BUSINESS VALUE**: >25% conversion + +$2.50 AOV + 70% labor savings
+> 2. **ACCURACY**: <5% error
+> 3. **LATENCY**: <3s p95
+> 4. **COST**: <$0.08/conv
+> 5. **SAFETY**: Zero attacks
+> 6. **RELIABILITY**: >99% uptime
 
 **What we know so far:**
 - Ch.1-8: Core targets exceeded! 30% conversion, $41.00 AOV, 2.0s latency, $0.008/conv
@@ -1523,7 +1528,7 @@ graph TD
 | Response Return | 20ms | **2100ms** |
 | Layer 3 (Async Logging) | 10ms | (non-blocking) |
 
-**Total p95 latency: 2.1s** (target <3s )
+**Total p95 latency: 2.1s** (target <3s)
 
 ---
 
@@ -1753,9 +1758,9 @@ Safety & Hallucination Mitigation completed the reliability layer. `CostAndLaten
 
 | Constraint | Status | Current State |
 |------------|--------|---------------|
-| #1 BUSINESS VALUE | **MAINTAINED** | 30% conversion (target >25% ), +$2.50 AOV (), 70% labor savings () |
-| #2 ACCURACY | **TARGET HIT (maintained)** | ~5% error rate (target <5% ) |
-| #3 LATENCY | **ACCEPTABLE** | 2.2s p95 (target <3s ) — validation overhead adds ~200ms, still within SLA |
+| #1 BUSINESS VALUE | **MAINTAINED** | 30% conversion (target >25%), +$2.50 AOV (), 70% labor savings () |
+| #2 ACCURACY | **TARGET HIT (maintained)** | ~5% error rate (target <5%) |
+| #3 LATENCY | **ACCEPTABLE** | 2.2s p95 (target <3s) — validation overhead adds ~200ms, still within SLA |
 | #4 COST | **ON TRACK** | $0.010/conv (target <$0.08 ) — content safety adds cost but still cheap |
 | #5 SAFETY | **TARGET HIT!** | <2% jailbreak vulnerability, 100% allergen validation, zero false safety claims |
 | #6 RELIABILITY | **TARGET HIT** | >99% uptime, graceful degradation, monitoring alerting |
@@ -1838,11 +1843,11 @@ Verdict: PASSED
 ```
 
 **Business metrics update:**
-- **Order conversion**: 30% (maintained from Ch.8, target >25% )
-- **Average order value**: $41.00 (maintained from Ch.8, +$2.50 vs. baseline )
-- **Cost per conversation**: $0.010 (up from $0.008, target <$0.08 )
-- **Error rate**: ~5% (maintained, target <5% )
-- **Latency**: 2.2s p95 (up from 2.0s due to validation, target <3s )
+- **Order conversion**: 30% (maintained from Ch.8, target >25%)
+- **Average order value**: $41.00 (maintained from Ch.8, +$2.50 vs. baseline)
+- **Cost per conversation**: $0.010 (up from $0.008, target <$0.08)
+- **Error rate**: ~5% (maintained, target <5%)
+- **Latency**: 2.2s p95 (up from 2.0s due to validation, target <3s)
 - **Security incidents**: 0 in 5,000 adversarial test queries
 - **False allergen claims**: 0 in 5,000 test queries (100% validation)
 

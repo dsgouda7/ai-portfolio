@@ -181,12 +181,12 @@ Top row: the weight $w$ and the bias $b$ do geometrically *different* jobs — o
 ```mermaid
 graph LR
  C1["Ch.1\nLinear Algebra"]:::done
- C2["Ch.2\nNonlinear Algebra"]:::done
- C3["Ch.3\nCalculus Intro"]:::done
- C4["Ch.4\nSmall Steps"]:::done
- C5["Ch.5\nMatrices"]:::done
- C6["Ch.6\nGradient + Chain Rule"]:::done
- C7["Ch.7\nProbability & Stats"]:::done
+ C2["Ch.2\nNonlinear Algebra"]
+ C3["Ch.3\nCalculus Intro"]
+ C4["Ch.4\nSmall Steps"]
+ C5["Ch.5\nMatrices"]
+ C6["Ch.6\nGradient + Chain Rule"]
+ C7["Ch.7\nProbability & Stats"]
  C1 --> C2 --> C3 --> C4 --> C5 --> C6 --> C7
  classDef done fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
  classDef current fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff

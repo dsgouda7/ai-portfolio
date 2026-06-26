@@ -30,7 +30,7 @@ python gen_ch01_volume_mounts.py
 
 **From repo root:**
 ```bash
-cd notes/07-devops_fundamentals/ch01_docker_fundamentals/gen_scripts
+cd notes/08-devops-fundamentals/ch01-docker-fundamentals/gen-scripts
 python gen_ch01_docker_architecture.py
 python gen_ch01_container_lifecycle.py
 python gen_ch01_volume_mounts.py
@@ -38,7 +38,7 @@ python gen_ch01_volume_mounts.py
 
 **PowerShell (run all at once):**
 ```powershell
-cd notes/07-devops_fundamentals/ch01_docker_fundamentals/gen_scripts
+cd notes/08-devops-fundamentals/ch01-docker-fundamentals/gen-scripts
 Get-ChildItem -Filter "gen_ch01_*.py" | ForEach-Object { python $_.Name }
 ```
 

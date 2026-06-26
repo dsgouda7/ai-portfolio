@@ -254,7 +254,7 @@ Here's how all 10 concepts integrate into a deployed ProductionCV system:
 
 ```mermaid
 flowchart TD
- START[" Retail Shelf Camera<br/>1920×1080 @ 30 FPS"]
+ START["Retail Shelf Camera<br/>1920×1080 @ 30 FPS"]
 
  START --> PREPROC["Preprocessing<br/>Resize to 640×640<br/>Normalize RGB"]
 
@@ -268,7 +268,7 @@ flowchart TD
 
  SEGMENT --> POSTPROC["Post-Processing<br/>IoU thresholding (0.5)<br/>Confidence filtering (>0.3)<br/>Box rescaling to 1920×1080"]
 
- POSTPROC --> OUTPUT[" Output<br/>{<br/> detections: [<br/> {bbox, class, conf, mask},<br/> ...<br/> ],<br/> inference_ms: 35,<br/> frame_id: 12345<br/>}"]
+ POSTPROC --> OUTPUT["Output<br/>{<br/> detections: [<br/> {bbox, class, conf, mask},<br/> ...<br/> ],<br/> inference_ms: 35,<br/> frame_id: 12345<br/>}"]
 
  OUTPUT --> MONITOR["Monitoring (Ch.6+9)<br/>Track mAP drift (alert if <80%)<br/>Latency histogram (p99 <50ms)<br/>SKU counting accuracy"]
 

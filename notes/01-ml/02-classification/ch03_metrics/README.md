@@ -1030,9 +1030,119 @@ graph TD
 | **Stratified k-fold CV** | Every subsequent classification track | Required whenever class distribution is non-uniform (imbalance or multi-class). Regression uses regular k-fold; classification always uses stratified |
 | **Threshold tuning as hyperparameter** | [Topic 05 — Anomaly Detection](../../05_anomaly_detection/README.md) Ch.3 (Threshold Optimization) | Fraud detection systems have business-defined recall targets ("catch 80% of fraud"); threshold becomes the primary tuning dial, not model architecture |
 | **Hamming loss for multi-label** | [Topic 03 — Neural Networks](../../03_neural_networks/README.md) | Hamming loss is differentiable → can be used directly as a neural network loss function for multi-label tasks (alternative to 40 separate binary cross-entropy losses) |
-| **Calibration and reliability diagrams** | [Topic 05 — Anomaly Detection](../../05_anomaly_detection/README.md) Ch.4 (Calibration) | When stakeholders ask "what does 0.73 probability mean?", you need calibration. Platt scaling and isotonic regression recalibrate model outputs to match true frequencies |
+| **Calibration and reliability diagrams** | §11b below — Model Calibration | When stakeholders ask "what does 0.73 probability mean?", you need calibration. Platt scaling and isotonic regression recalibrate model outputs to match true frequencies. See also: `sklearn.calibration` docs. |
 
 > **This chapter gives you the evaluation vocabulary that every subsequent chapter assumes.** From now on, when a chapter says "F1 improved from 0.82 to 0.87," you know exactly what that means and whether it's significant. When a research paper reports "ROC-AUC=0.94 on MNIST," you know to ask about class balance before trusting it.
+
+---
+
+## 18b · Model Calibration
+
+Your FaceAI classifier outputs 0.90 for a face it believes is 90% likely to be celebrity X. That number should mean something precise: out of 100 times the model outputs 0.90, approximately 90 of them should actually be correct. Yours isn't. Your model's "90% confident" predictions are right only 60% of the time. The model is overconfident — a calibration failure.
+
+Calibration is the gap between predicted probabilities and actual frequencies. A well-calibrated model saying 70% is right 70% of the time. An uncalibrated model saying 70% might be right 40% or 95% of the time — the number is meaningless as a probability.
+
+### 18b.1 · The Reliability Diagram
+
+The **reliability diagram** (calibration curve) makes calibration visible:
+
+1. Take your model's predicted probabilities on a held-out test set.
+2. Bin them into equal-width bins: [0–10%), [10–20%), ..., [90–100%).
+3. For each bin $b$: compute the fraction of examples in that bin that are actually positive — $\text{acc}(B_b) = \frac{1}{|B_b|}\sum_{i \in B_b} y_i$.
+4. Plot: predicted confidence (x-axis) vs actual accuracy (y-axis).
+
+**Perfect calibration** produces points on the diagonal $y = x$. Every deviation from the diagonal is a calibration failure.
+
+**Common failure patterns on FaceAI:**
+
+| Pattern | Shape on calibration curve | What it means |
+|---|---|---|
+| **Overconfidence** | S-curve bowing above diagonal — predictions cluster at 0.9+ but only 60% are actually correct | The model is too sure. Neural networks trained with cross-entropy and no temperature scaling almost always show this. |
+| **Underconfidence** | Predictions cluster in the middle (0.3–0.7), actual frequency is more extreme | Common when dropout is too aggressive at inference time. |
+| **Flat line at positive rate** | Horizontal line at $\approx 0.022$ for Bald | The model has learned nothing — outputs approximately the base rate regardless of input. |
+
+### 18b.2 · Brier Score
+
+The **Brier score** is MSE applied to probability predictions:
+
+$$BS = \frac{1}{N}\sum_{i=1}^N \left(p_i - y_i\right)^2$$
+
+where $p_i \in [0, 1]$ is the predicted probability and $y_i \in \{0, 1\}$ is the true label. Lower is better: $BS = 0$ is a perfect oracle; a model that always outputs the base rate $\bar{y}$ achieves $BS = \bar{y}(1-\bar{y})$; a model that always outputs the wrong extreme achieves $BS = 1$.
+
+The Brier score decomposes into three interpretable components:
+
+$$BS = \underbrace{\text{reliability}}_{\text{miscalibration cost}} - \underbrace{\text{resolution}}_{\text{discrimination benefit}} + \underbrace{\text{uncertainty}}_{\text{irreducible }\bar{y}(1-\bar{y})}$$
+
+Reliability measures how much predicted probabilities deviate from actual frequencies — a perfectly calibrated model has reliability = 0. Resolution measures how much the model's predictions vary from the base rate — higher is better. Uncertainty is fixed by the data.
+
+**Brier score on FaceAI (Bald attribute):**
+
+| Model | Brier score | Interpretation |
+|---|---|---|
+| Always predict 0 (no Bald) | 0.0200 | Equal to base-rate variance — no discrimination at all |
+| Logistic regression, uncalibrated | ≈ 0.036 | Worse than baseline; overconfident wrong predictions |
+| Logistic regression after Platt scaling | ≈ 0.018 | Below baseline; probabilities match frequencies |
+
+### 18b.3 · Expected Calibration Error (ECE)
+
+$$\text{ECE} = \sum_{b=1}^{M} \frac{|B_b|}{N} \left|\,\text{acc}(B_b) - \text{conf}(B_b)\,\right|$$
+
+$\text{conf}(B_b)$ is the mean predicted probability in bin $b$; $\text{acc}(B_b)$ is the fraction of positives. ECE = 0 means perfectly calibrated; ECE = 0.1 means predictions are off by 10 percentage points on average. For the Bald attribute, the uncalibrated logistic regression has ECE ≈ 0.22; after Platt scaling it drops to ≈ 0.04.
+
+### 18b.4 · Calibration Methods
+
+**Platt scaling.** Fit a logistic regression on the model's raw score outputs using a held-out calibration set. Two parameters ($a, b$): the calibrated probability is $p = \sigma(as + b)$ where $s$ is the raw score. Simple, effective, requires ~1,000 calibration examples.
+
+```python
+from sklearn.calibration import CalibratedClassifierCV
+
+calibrated_model = CalibratedClassifierCV(
+    estimator=logistic_regression,
+    method='sigmoid',   # Platt scaling
+    cv=5
+)
+calibrated_model.fit(X_train, y_train)
+p_calibrated = calibrated_model.predict_proba(X_test)[:, 1]
+```
+
+**Isotonic regression.** Non-parametric monotone calibration. More flexible than Platt scaling — can correct non-monotone miscalibration. Requires ~10,000 calibration examples to be reliable. Use `method='isotonic'` in `CalibratedClassifierCV`.
+
+**Temperature scaling.** For neural networks: divide logits by a scalar $T$ before softmax. $T > 1$ softens predictions (moves toward uniform); $T < 1$ sharpens them. Only one parameter, found by minimising NLL on a validation set. Preserves accuracy (top-1 predictions unchanged) while fixing calibration. $T \approx 1.5$ is typical for overconfident networks.
+
+### 18b.5 · When Calibration Matters
+
+**Risk scoring (fraud, clinical).** A fraud model saying "70% chance of fraud" drives investigator allocation. If that 70% actually means 30%, you're routing investigators to the wrong cases. Calibration error is directly a resource-allocation error.
+
+**Decision thresholds.** The $t^* = 0.30$ you found by sweeping thresholds in §6 only transfers to production if the probability distribution is stable. Miscalibration shifts the whole distribution, invalidating the threshold sweep.
+
+**Ensembles.** Averaging probabilities from multiple models is only valid when those probabilities are calibrated. An average of miscalibrated scores is meaningless as a probability even if it improves ranking.
+
+### 18b.6 · Code — ECE and Reliability Diagram
+
+```python
+from sklearn.calibration import calibration_curve
+import numpy as np
+
+# Compute calibration curve (10 bins)
+frac_pos, mean_pred = calibration_curve(
+    y_true=y_test,
+    y_prob=y_prob,
+    n_bins=10,
+    strategy='uniform'
+)
+# frac_pos[b] = actual fraction positive in bin b  → y-axis
+# mean_pred[b] = mean predicted probability in bin b → x-axis
+# Perfect calibration: frac_pos ≈ mean_pred (points on the diagonal)
+
+# ECE
+bin_counts = np.histogram(y_prob, bins=10, range=(0, 1))[0]
+ece = np.sum((bin_counts / len(y_prob)) * np.abs(frac_pos - mean_pred))
+print(f"ECE = {ece:.3f}")
+# Before calibration: ECE ≈ 0.218
+# After Platt scaling: ECE ≈ 0.041
+```
+
+> **See also:** `sklearn.calibration` documentation for `calibration_curve`, `CalibratedClassifierCV`, and `CalibrationDisplay`. For the overfitting that causes overconfidence, see ch05_regularization — regularising the model and calibrating its probabilities address different aspects of the same underlying problem.
 
 ---
 

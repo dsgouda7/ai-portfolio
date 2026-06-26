@@ -132,7 +132,7 @@ The chain rule is the star of the show — we'll spend an entire Ch.6 on it beca
 
 ### 3.2.1 · Worked Example — The Trajectory by the Numbers
 
-Let's trace the **free-kick parabola** $h(t) = 6.5t - 4.905t^2$ and its derivative $h'(t) = 6.5 - 9.81t$ with actual values. Using the **power rule** from §4.2:
+Let's trace the **free-kick parabola** $h(t) = 6.5t - 4.905t^2$ and its derivative $h'(t) = 6.5 - 9.81t$ with actual values. Using the **power rule** from §3.2:
 - $h(t) = 6.5t^1 - 4.905t^2$
 - Apply rule: $(t^n)' = nt^{n-1}$
 - Result: $h'(t) = 6.5 \cdot 1 \cdot t^0 - 4.905 \cdot 2 \cdot t^1 = 6.5 - 9.81t$
@@ -143,7 +143,7 @@ Now compute at five times during flight:
 |---|---|---|---|
 | 0.0 | $h = 0$ m | $h' = +6.5$ m/s | **Launch:** Ball on ground, rising fast |
 | 0.2 | $h = 1.10$ m | $h' = +4.54$ m/s | Climbing, but slowing down |
-| 0.331 | $h = 1.08$ m | $h' = +3.25$ m/s | Still rising (halfway to peak) |
+| 0.331 | $h \approx 1.61$ m | $h' = +3.25$ m/s | Still rising (halfway to peak) |
 | **0.663** | **$h = 2.15$ m** | **$h' = 0$ m/s** | **Peak:** Stopped rising, about to fall |
 | 1.0 | $h = 1.60$ m | $h' = -3.31$ m/s | Falling (negative derivative) |
 
@@ -376,7 +376,7 @@ Differentiate again: $h''(t) = -g$. A constant. This says "the rate of change it
 
 ![Free-kick derivative animation: ball travels along parabolic path with green tangent line tracking it. The tangent rotates continuously as the ball moves. Top-left shows time counter, top-right shows h'(t) value updating in real-time. Red X marks the apex where h'(t) = 0.](img/ch03-freekick-derivative-animation.gif)
 
-**The animation above is the derivative laid bare.** The orange ball moves along $h(t) = v_{0y}t - \tfrac{1}{2}gt^2$. The green line is the tangent at the ball's current position — its slope is $h'(t) = v_{0y} - gt$. Watch the readout in the top-right corner: at launch, $h'(0) = +7.20$ (maximum upward rate). As the ball climbs, the rate decreases — the tangent flattens. At the **peak** (red X), $h'(t) = 0$ — the curve stops rising. Then it falls, and $h'(t)$ goes negative (the tangent points downward). By the time the ball hits the ground, $h'(t) \approx -7.20$ — same magnitude, opposite direction. *That* is what a derivative is: the instantaneous slope, frozen at every single moment.
+**The animation above is the derivative laid bare.** The orange ball moves along $h(t) = v_{0y}t - \tfrac{1}{2}gt^2$. The green line is the tangent at the ball's current position — its slope is $h'(t) = v_{0y} - gt$. Watch the readout in the top-right corner: at launch, $h'(0) = +6.5$ (maximum upward rate). As the ball climbs, the rate decreases — the tangent flattens. At the **peak** (red X), $h'(t) = 0$ — the curve stops rising. Then it falls, and $h'(t)$ goes negative (the tangent points downward). By the time the ball hits the ground, $h'(t) \approx -6.5$ — same magnitude, opposite direction. *That* is what a derivative is: the instantaneous slope, frozen at every single moment.
 
 ---
 
@@ -496,10 +496,10 @@ graph LR
  C1["Ch.1\nLinear Algebra"]:::done
  C2["Ch.2\nNonlinear Algebra"]:::done
  C3["Ch.3\nCalculus Intro"]:::done
- C4["Ch.4\nSmall Steps"]:::done
- C5["Ch.5\nMatrices"]:::done
- C6["Ch.6\nGradient + Chain Rule"]:::done
- C7["Ch.7\nProbability & Stats"]:::done
+ C4["Ch.4\nSmall Steps"]
+ C5["Ch.5\nMatrices"]
+ C6["Ch.6\nGradient + Chain Rule"]
+ C7["Ch.7\nProbability & Stats"]
  C1 --> C2 --> C3 --> C4 --> C5 --> C6 --> C7
  classDef done fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
  classDef current fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff

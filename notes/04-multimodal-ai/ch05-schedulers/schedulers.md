@@ -63,9 +63,9 @@ Training a DDPM takes 1 000 noisy steps. But *inference doesn't have to*. A **sc
 ```
 Scheduler comparison on: "Mango leather bag, studio white background"
 DDPM 1000 steps → ~45 sec/image (750 min for 50 images too slow)
-DDIM 50 steps → ~8 sec/image (~ 7 min for 50 images )
-DPM++ 20 steps → ~3 sec/image (~ 3 min for 50 images )
-SD-Turbo 4 steps → ~0.5 sec/image (~ 30 sec for 50 images )
+DDIM 50 steps → ~8 sec/image (~7 min for 50 images)
+DPM++ 20 steps → ~3 sec/image (~3 min for 50 images)
+SD-Turbo 4 steps → ~0.5 sec/image (~30 sec for 50 images)
 ```
 
 ## 3 · The Math
@@ -441,12 +441,12 @@ The notebook demonstrates:
 
 | Constraint | Ch.1 | Ch.2 | Ch.3 | Ch.4 | **Ch.5** | Ch.6 | Target |
 |------------|------|------|------|------|----------|------|--------|
-| #1 Quality | | | | 3.0 | ** 3.2** | 3.5 | ≥4.0/5.0 |
-| #2 Speed | | | | 5min | ** 30-60s** | 20s | <30s |
-| #3 Cost | | | | | **** | $2.5k | <$5k |
-| #4 Control | | | | 40% | ** 40%** | <15% | <5% |
-| #5 Throughput | | | | 10/day | ** 20/day** | 80/day | 100+/day |
-| #6 Versatility | | | | | **** | | 3 modalities |
+| #1 Quality | | | | 3.0 | **3.2** | 3.5 | ≥4.0/5.0 |
+| #2 Speed | | | | 5min | **30-60s** | 20s | <30s |
+| #3 Cost | | | |  |  | $2.5k | <$5k |
+| #4 Control | | | | 40% | **40%** | <15% | <5% |
+| #5 Throughput | | | | 10/day | **20/day** | 80/day | 100+/day |
+| #6 Versatility | | | |  |  |  | 3 modalities |
 
 **Legend**:
 - = Not yet addressed (constraint blocked)

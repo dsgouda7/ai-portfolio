@@ -1,13 +1,13 @@
 # DevOps Fundamentals Track — Authoring Guide
 
 > **This document tracks the chapter-by-chapter build of the DevOps Fundamentals notes library.**
-> Each chapter lives under `notes/07-devops_fundamentals/` in its own folder, containing a README and a Jupyter notebook.
+> Each chapter lives under `notes/08-devops-fundamentals/` in its own folder, containing a README and a Jupyter notebook.
 > Read this before starting any chapter to keep tone, structure, and the running example consistent.
 >
-> ** Updated:** Adapted from ML authoring guide with infrastructure-focused conventions.
+> **Updated:** Adapted from ML authoring guide with infrastructure-focused conventions.
 
 <!-- LLM-STYLE-FINGERPRINT-V1
-canonical_chapters: ["notes/07-devops_fundamentals/ch01_docker_fundamentals/README.md", "notes/07-devops_fundamentals/ch02_container_orchestration/README.md"]
+canonical_chapters: ["notes/08-devops-fundamentals/ch01-docker-fundamentals/README.md", "notes/08-devops-fundamentals/ch02-container-orchestration/README.md"]
 voice: second_person_practitioner
 register: technical_but_conversational
 concept_motivation: required_before_each_tool
@@ -33,15 +33,15 @@ free_local_first: 100_percent_free_local_tools_required_cloud_optional
 The DevOps Fundamentals track is 8 chapters covering production deployment practices. Each chapter builds toward deploying a production-ready Flask API with 5 measurable constraints. We're converting each into a standalone, runnable learning module:
 
 ```
-notes/07-devops_fundamentals/
-├── ch01_docker_fundamentals/
+notes/08-devops-fundamentals/
+├── ch01-docker-fundamentals/
 │ ├── README.md ← Technical deep-dive + diagrams
 │ ├── notebook.ipynb ← Runnable local deployment
-│ └── gen_scripts/ ← Scripts to generate animations
-├── ch02_container_orchestration/
+│ └── gen-scripts/ ← Scripts to generate animations
+├── ch02-container-orchestration/
 │ ├── README.md
 │ ├── notebook.ipynb
-│ └── gen_scripts/
+│ └── gen-scripts/
 ... (8 chapters total)
 ```
 
@@ -331,7 +331,7 @@ Use text-only formatting:
 
 ## Style Ground Truth — Derived from Ch.01 Docker Fundamentals
 
-> **LLM instruction:** Before authoring or reviewing any chapter in this track, treat Ch.01 (`notes/07-devops_fundamentals/ch01_docker_fundamentals/README.md`) as the canonical style reference. Every dimension below was extracted from that chapter. When a new chapter deviates from any dimension, flag it.
+> **LLM instruction:** Before authoring or reviewing any chapter in this track, treat Ch.01 (`notes/08-devops-fundamentals/ch01-docker-fundamentals/README.md`) as the canonical style reference. Every dimension below was extracted from that chapter. When a new chapter deviates from any dimension, flag it.
 
 ---
 

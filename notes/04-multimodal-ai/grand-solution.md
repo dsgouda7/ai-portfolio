@@ -43,7 +43,7 @@
 
 ```bash
 # 1. Clone or navigate to the repository
-cd notes/05-multimodal_ai/
+cd notes/04-multimodal-ai/
 
 # 2. Install dependencies (one-time setup)
 pip install torch torchvision transformers diffusers accelerate pillow opencv-python matplotlib
@@ -1047,8 +1047,8 @@ The next generation of creative tools will be local-first, privacy-preserving, a
 
 ## See Also
 
-- [notes/05-multimodal_ai/README.md](README.md) — Track overview and reading paths
-- [notes/05-multimodal_ai/authoring-guide.md](authoring-guide.md) — Chapter structure template
+- [notes/04-multimodal-ai/README.md](README.md) — Track overview and reading paths
+- [notes/04-multimodal-ai/authoring-guide.md](authoring-guide.md) — Chapter structure template
 - [notes/03-ai/README.md](../03-ai/README.md) — LLM fundamentals (prerequisite for Ch.10)
 - [notes/01-ml/01_regression/grand_solution.md](../01-ml/01_regression/grand_solution.md) — ML track grand solution (reference structure)
 - [AGENTS.md](../../AGENTS.md) — Custom VS Code agents for this repository

@@ -6,7 +6,7 @@
 
 <!-- LLM-STYLE-FINGERPRINT-V1
 scope: interview_guides/multi-agent-ai
-canonical_examples: ["notes/interview_guides/agentic-ai.md", "notes/interview_guides/ai-infrastructure.md"]
+canonical_examples: ["notes/interview-guides/agentic-ai.md", "notes/interview-guides/ai-infrastructure.md"]
 voice: second_person_practitioner
 register: high_density_technical_interview_ready
 pedagogy: anticipate_the_interviewer + failure_first_discovery
@@ -312,7 +312,7 @@ Every multi-agent interview revolves around 10 core question clusters. Senior an
 ---
 
 <details>
-<summary> 5-Minute Crammer — last-resort prep</summary>
+<summary>5-Minute Crammer — last-resort prep</summary>
 
 ## 5 · The 5-Minute Concept Cram
 

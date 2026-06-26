@@ -171,11 +171,7 @@ Master networking patterns for production systems. Learn reverse proxies, load b
 
 Implement secure secrets management across development and production environments. Master environment variables, Docker secrets, Kubernetes secrets, and Azure Key Vault integration.
 
-**Key Concepts:** Secrets rotation, RBAC, principle of least privilege, secret scanning
-
-Implement security best practices for production deployments. Master environment variables, Docker secrets, Kubernetes secrets, Azure Key Vault integration, and secrets rotation.
-
-**Key Concepts**: Secrets vs. config, least privilege access, rotation strategies, audit logging
+**Key Concepts**: Secrets rotation, RBAC, principle of least privilege, secret scanning, rotation strategies, audit logging
 
 ---
 

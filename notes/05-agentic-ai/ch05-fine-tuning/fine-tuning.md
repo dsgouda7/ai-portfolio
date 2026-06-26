@@ -11,7 +11,12 @@
 ## 0 · The Challenge — Where We Are
 
 > **The mission**: Launch **Mamma Rosa's PizzaBot** — a production AI ordering system satisfying 6 constraints:
-> 1. **BUSINESS VALUE**: >25% conversion + +$2.50 AOV + 70% labor savings — 2. **ACCURACY**: <5% error — 3. **LATENCY**: <3s p95 — 4. **COST**: <$0.08/conv — 5. **SAFETY**: Zero attacks — 6. **RELIABILITY**: >99% uptime
+> 1. **BUSINESS VALUE**: >25% conversion + +$2.50 AOV + 70% labor savings
+> 2. **ACCURACY**: <5% error
+> 3. **LATENCY**: <3s p95
+> 4. **COST**: <$0.08/conv
+> 5. **SAFETY**: Zero attacks
+> 6. **RELIABILITY**: >99% uptime
 
 **What we know so far:**
 - Ch.1-7: Core targets hit, automated testing framework deployed
@@ -20,7 +25,7 @@
 
 **What's blocking us:**
 
- **Generic GPT-4o-mini responses lack brand voice consistency**
+**Generic GPT-4o-mini responses lack brand voice consistency**
 
 **Current state: Base model struggles with brand persona**
 ```
@@ -70,7 +75,7 @@ Result: Works 70% of the time, but:
 
 **What this chapter unlocks:**
 
- **LoRA fine-tuning for brand voice:**
+**LoRA fine-tuning for brand voice:**
 1. **Curate training dataset**: 500 phone staff transcripts → bot-style Q&A pairs
 2. **LoRA fine-tune Llama-3-8B**: Adapt base model to Mamma Rosa voice (0.1% params)
 3. **Consistent persona**: Model weights encode warmth, storytelling, Italian phrases
@@ -1854,7 +1859,7 @@ The §3 decision tree already diagnosed PizzaBot's four failures: format drift (
 
 ## 10 · Progress Check — What We Can Solve Now
 
- **BRAND VOICE ACHIEVED**: Conversion uplift through personalization!
+**BRAND VOICE ACHIEVED**: Conversion uplift through personalization!
 
 **Unlocked capabilities:**
 - **LoRA fine-tuning**: Llama-3-8B adapted to Mamma Rosa brand voice (0.1% params)
@@ -1869,7 +1874,7 @@ The §3 decision tree already diagnosed PizzaBot's four failures: format drift (
 | Constraint | Status | Current State |
 |------------|--------|---------------|
 | #1 BUSINESS VALUE | **PARTIAL (targets met, further optimization ahead)** | **30% conversion** (target >25%), **$41.00 AOV (+$2.50)** (target +$2.50), 70% labor savings — Ch.10 pushes to 32% conversion, +$2.80 AOV |
-| #2 ACCURACY | **ACHIEVED** | ~5% error rate (target <5% ) — fine-tuning doesn't affect RAG grounding |
+| #2 ACCURACY | **ACHIEVED** | ~5% error rate (target <5%) — fine-tuning doesn't affect RAG grounding |
 | #3 LATENCY | **PARTIAL (target met, further optimization ahead)** | **2.0s p95** (target <3s) — Ch.10 optimizes to <2.8s via KV caching |
 | #4 COST | **PARTIAL (target met, further optimization ahead)** | **$0.008/conv** (target <$0.08) — Ch.10 optimizes to $0.007/conv via batching |
 | #5 SAFETY | **NOT YET ADDRESSED** | Safety validation preserved through fine-tuning, but no adversarial testing yet — Ch.9 tackles this |
@@ -1966,13 +1971,13 @@ Faster inference (less input processing)
 ```
 
 **Business metrics update:**
-- **Order conversion**: **30%** (up from 28%, target >25% )
+- **Order conversion**: **30%** (up from 28%, target >25%)
 - **Average order value**: **$41.00** (+$2.50 from $38.50 baseline, target +$2.50 )
  - Ch.6 upselling contribution: +$1.50 (tool-based recommendations)
  - Ch.8 brand voice contribution: +$1.00 (warm storytelling makes upsells feel natural)
 - **Cost per conversation**: **$0.008** (down from $0.015, target <$0.08 )
-- **Error rate**: **~5%** (maintained, target <5% )
-- **Latency**: **2.0s p95** (down from 2.5s, target <3s )
+- **Error rate**: **~5%** (maintained, target <5%)
+- **Latency**: **2.0s p95** (down from 2.5s, target <3s)
 - **Brand voice consistency**: 70% → **95%+** (fine-tuning success)
 - **Customer sentiment**: "Bot feels impersonal" → "Like talking to a real person" (+45% sentiment)
 

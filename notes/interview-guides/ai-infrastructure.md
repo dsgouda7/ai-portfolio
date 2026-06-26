@@ -266,7 +266,7 @@ Both use 16 bits total but different mantissa/exponent splits. BF16 has the same
 ---
 
 <details>
-<summary> 5-Minute Crammer — last-resort prep</summary>
+<summary>5-Minute Crammer — last-resort prep</summary>
 
 ## 5 · The 5-Minute Concept Cram
 

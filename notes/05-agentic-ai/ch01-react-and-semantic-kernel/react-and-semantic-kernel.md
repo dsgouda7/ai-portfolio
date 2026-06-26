@@ -11,7 +11,12 @@
 ## 0 · The Challenge — Where We Are
 
 > **The mission**: Launch **Mamma Rosa's PizzaBot** — a production AI ordering system satisfying 6 constraints:
-> 1. **BUSINESS VALUE**: >25% conversion + +$2.50 AOV + 70% labor savings — 2. **ACCURACY**: <5% error — 3. **LATENCY**: <3s p95 — 4. **COST**: <$0.08/conv — 5. **SAFETY**: Zero attacks — 6. **RELIABILITY**: >99% uptime
+> 1. **BUSINESS VALUE**: >25% conversion + +$2.50 AOV + 70% labor savings
+> 2. **ACCURACY**: <5% error
+> 3. **LATENCY**: <3s p95
+> 4. **COST**: <$0.08/conv
+> 5. **SAFETY**: Zero attacks
+> 6. **RELIABILITY**: >99% uptime
 
 **What we know so far (from 03-ai LLM Fundamentals):**
 - Prompting, CoT reasoning → structured output, multi-step logic
@@ -105,7 +110,7 @@ Staff: "Perfect! That's $22.98. Delivery to your usual address?"
 
 | # | Constraint | Status | Evidence |
 |---|------------|--------|----------|
-| **#1** | **BUSINESS VALUE** | **ACHIEVED!** | 28% conversion (>25% ), $40.60 AOV (+$2.50 ), 70% labor savings () |
+| **#1** | **BUSINESS VALUE** | **ACHIEVED!** | 28% conversion (>25%), $40.60 AOV (+$2.50), 70% labor savings () |
 | **#2** | **ACCURACY** | **MAINTAINED** | 4.2% error < 5% target (from Ch.4, preserved through orchestration) |
 | **#3** | **LATENCY** | **ACHIEVED!** | 2.5s p95 < 3s target (orchestration overhead acceptable) |
 | **#4** | **COST** | **ACHIEVED!** | $0.015/conv < $0.08 target (81% budget remaining) |
@@ -1645,9 +1650,9 @@ An internal Microsoft wiki on orchestrators captures the positioning succinctly:
 
 | Constraint | Status | Current State |
 |------------|--------|---------------|
-| #1 BUSINESS VALUE | **ACHIEVED** | 28% conversion (target >25% ), $40.60 AOV (+$2.50 vs. $38.50 baseline ), 70% labor savings — measured from 1,000 test conversations |
-| #2 ACCURACY | **MAINTAINED** | 4.2% error rate (target <5% ) — RAG grounding preserved through orchestration — validated on 1,000-query test set |
-| #3 LATENCY | **ACHIEVED** | 2.5s p95 (target <3s ) — orchestration adds 0.5s overhead but acceptable — measured across 1,000 production-like conversations |
+| #1 BUSINESS VALUE | **ACHIEVED** | 28% conversion (target >25%), $40.60 AOV (+$2.50 vs. $38.50 baseline), 70% labor savings — measured from 1,000 test conversations |
+| #2 ACCURACY | **MAINTAINED** | 4.2% error rate (target <5%) — RAG grounding preserved through orchestration — validated on 1,000-query test set |
+| #3 LATENCY | **ACHIEVED** | 2.5s p95 (target <3s) — orchestration adds 0.5s overhead but acceptable — measured across 1,000 production-like conversations |
 | #4 COST | **ACHIEVED** | $0.015/conv (target <$0.08 ) — multi-turn + tool calls, still 81% budget remaining — includes LLM API + embedding + tool execution costs |
 | #5 SAFETY | **PARTIAL** | Error recovery prevents crashes (95% recovery rate), fallback logic handles edge cases — guardrails not yet implemented |
 | #6 RELIABILITY | **PARTIAL** | Graceful degradation when tools fail (tested with 10 failure scenarios: RAG → BM25 fallback, payment retry logic) — uptime not yet measured |

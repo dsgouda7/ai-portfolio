@@ -11,7 +11,11 @@
 ## 0 · The Challenge — Where We Are
 
 > **The mission**: Launch **SmartVal AI** — a production home valuation system satisfying 5 constraints:
-> 1. **ACCURACY**: <\$40k MAE — 2. **GENERALIZATION**: Unseen districts — 3. **MULTI-TASK**: Value + Segment — 4. **INTERPRETABILITY**: Explainable — 5. **PRODUCTION**: Scale + Monitor
+> 1. **ACCURACY**: <\$40k MAE
+> 2. **GENERALIZATION**: Unseen districts
+> 3. **MULTI-TASK**: Value + Segment
+> 4. **INTERPRETABILITY**: Explainable
+> 5. **PRODUCTION**: Scale + Monitor
 
 **What we know so far:**
 - Ch.1: Single feature (MedInc) → \$70k MAE
@@ -1074,7 +1078,7 @@ The threshold table above gives the VIF verdict per feature. What it doesn't sho
 *The animation above shows four California Housing features flowing through the decision tree in slow motion. Watch how each feature's diagnostic profile (M1, M2, M3, VIF, joint uplift) determines its verdict: MedInc → Strong independent predictor (all three lenses agree); Latitude+Longitude → Jointly irreplaceable (low M1, high M2/M3, positive interaction); AveRooms → Collinear signal (high VIF with AveBedrms); Population → Drop candidate (near-zero on all metrics).*
 
 <details>
-<summary> Click to expand: Static flowchart reference</summary>
+<summary>Click to expand: Static flowchart reference</summary>
 
 ```mermaid
 flowchart TD

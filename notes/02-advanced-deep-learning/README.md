@@ -4,7 +4,7 @@
 
 This track takes you from foundational deep learning architectures (ResNets, skip connections) to state-of-the-art production computer vision techniques (self-supervised pretraining, knowledge distillation, model pruning). You'll understand why modern CV systems are built in layers — powerful architectures → efficient deployment → self-supervised learning → compression — and how each optimization technique stacks to create models that run on edge devices with minimal labeled data.
 
-> ** For chapter authors:** See [authoring-guide.md](authoring-guide.md) for the chapter template, style conventions, and ProductionCV constraint tracking framework. All chapters follow the same structure as the [ML track authoring guide](../01-ml/authoring-guide.md) with adaptations for computer vision.
+> **For chapter authors:** See [authoring-guide.md](authoring-guide.md) for the chapter template, style conventions, and ProductionCV constraint tracking framework. All chapters follow the same structure as the [ML track authoring guide](../01-ml/authoring-guide.md) with adaptations for computer vision.
 
 ---
 
@@ -47,8 +47,6 @@ A **10-chapter production CV pipeline** that progressively optimizes a retail sh
 
 ---
 
-## Prerequisites
-
 ## Track Position
 
 **Advanced Deep Learning (Track 7)** sits at the intersection of Machine Learning foundations (Track 1) and Production AI Infrastructure (Track 5). It assumes you understand:
@@ -79,16 +77,16 @@ Before starting this track, you should have:
 
 | # | Chapter | Key Concept | Constraint Progress |
 |---|---------|-------------|---------------------|
-| [Ch.1](ch01_residual_networks/README.md) | **Residual Networks** | Skip connections solve vanishing gradients → 100+ layer networks | mAP 78% → 80% (ResNet-50 backbone) |
-| [Ch.2](ch02_efficient_architectures/README.md) | **Efficient Architectures** | Depthwise separable convolutions → MobileNet (14 MB, 35ms) | Size 97 MB → 14 MB; Latency 187ms → 35ms |
-| [Ch.3](ch03_two_stage_detectors/README.md) | **Two-Stage Detectors** | Region proposals + classification (Faster R-CNN, mAP 85%) | Detection: 0% → 85% (bounding boxes) |
-| [Ch.4](ch04_one_stage_detectors/README.md) | **One-Stage Detectors** | Direct grid prediction (YOLO, SSD, RetinaNet) | Latency 320ms → 95ms (YOLOv5) |
-| [Ch.5](ch05_semantic_segmentation/README.md) | **Semantic Segmentation** | Pixel-level classification (FCN, U-Net, DeepLab) | Segmentation: 0% → 62% IoU |
-| [Ch.6](ch06_instance_segmentation/README.md) | **Instance Segmentation** | Object-level masks (Mask R-CNN) | Segmentation: 62% → 71% IoU |
-| [Ch.7](ch07_contrastive_learning/README.md) | **Contrastive Learning** | Self-supervised pretraining (SimCLR, MoCo) | Data: 10k labels → 2k labels |
-| [Ch.8](ch08_self_supervised_vision/README.md) | **Self-Supervised Vision** | Masked autoencoders (MAE, DINO) | Data: 2k labels → 850 labels |
-| [Ch.9](ch09_knowledge_distillation/README.md) | **Knowledge Distillation** | Teacher-student compression (ResNet-50 → MobileNet) | Size 97 MB → 10.7 MB; mAP 85% → 83% |
-| [Ch.10](ch10_pruning_mixed_precision/README.md) | **Pruning & Mixed Precision** | Remove redundant weights (80% sparsity) | Size 10.7 MB → 6.8 MB ; IoU 69% → 71% |
+| [Ch.1](ch01-residual-networks/README.md) | **Residual Networks** | Skip connections solve vanishing gradients → 100+ layer networks | mAP 78% → 80% (ResNet-50 backbone) |
+| [Ch.2](ch02-efficient-architectures/README.md) | **Efficient Architectures** | Depthwise separable convolutions → MobileNet (14 MB, 35ms) | Size 97 MB → 14 MB; Latency 187ms → 35ms |
+| [Ch.3](ch03-two-stage-detectors/README.md) | **Two-Stage Detectors** | Region proposals + classification (Faster R-CNN, mAP 85%) | Detection: 0% → 85% (bounding boxes) |
+| [Ch.4](ch04-one-stage-detectors/README.md) | **One-Stage Detectors** | Direct grid prediction (YOLO, SSD, RetinaNet) | Latency 320ms → 95ms (YOLOv5) |
+| [Ch.5](ch05-semantic-segmentation/README.md) | **Semantic Segmentation** | Pixel-level classification (FCN, U-Net, DeepLab) | Segmentation: 0% → 62% IoU |
+| [Ch.6](ch06-instance-segmentation/README.md) | **Instance Segmentation** | Object-level masks (Mask R-CNN) | Segmentation: 62% → 71% IoU |
+| [Ch.7](ch07-contrastive-learning/README.md) | **Contrastive Learning** | Self-supervised pretraining (SimCLR, MoCo) | Data: 10k labels → 2k labels |
+| [Ch.8](ch08-self-supervised-vision/README.md) | **Self-Supervised Vision** | Masked autoencoders (MAE, DINO) | Data: 2k labels → 850 labels |
+| [Ch.9](ch09-knowledge-distillation/README.md) | **Knowledge Distillation** | Teacher-student compression (ResNet-50 → MobileNet) | Size 97 MB → 10.7 MB; mAP 85% → 83% |
+| [Ch.10](ch10-pruning-mixed-precision/README.md) | **Pruning & Mixed Precision** | Remove redundant weights (80% sparsity) | Size 10.7 MB → 6.8 MB ; IoU 69% → 71% |
 | [Ch.11](ch11-model-interpretability/README.md) | **Model Interpretability** | Activation viz, filter viz, Grad-CAM — audit model decisions | Auditability (enterprise deployment gate) |
 
 ---
@@ -117,7 +115,7 @@ graph TD
  Ch9 --> Ch10[Ch.10 Pruning & Mixed Precision<br/>80% sparsity → 6.8 MB]
 
  Ch10 --> Ch11[Ch.11 Model Interpretability<br/>Grad-CAM → auditable decisions]
- Ch11 --> Victory[ PRODUCTION-READY!<br/>82% mAP, 71% IoU, 35ms, 6.8 MB, 850 labels, auditable]
+ Ch11 --> Victory[PRODUCTION-READY!<br/>82% mAP, 71% IoU, 35ms, 6.8 MB, 850 labels, auditable]
 
  style Ch1 fill:#047857,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
  style Ch2 fill:#047857,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
@@ -283,9 +281,9 @@ This table shows how each chapter contributes to satisfying the 5 ProductionCV c
 
 ## Getting Started
 
-Ready to build production computer vision systems? Start with [Ch.1: Residual Networks](ch01_residual_networks/README.md) — the foundation of modern deep learning architectures.
+Ready to build production computer vision systems? Start with [Ch.1: Residual Networks](ch01-residual-networks/README.md) — the foundation of modern deep learning architectures.
 
 ---
 
-**Next:** [Ch.1 — Residual Networks (ResNets)](ch01_residual_networks/README.md)
+**Next:** [Ch.1 — Residual Networks (ResNets)](ch01-residual-networks/README.md)
 **Parent:** [ML Track — Topic-Based Curriculum](../README.md)

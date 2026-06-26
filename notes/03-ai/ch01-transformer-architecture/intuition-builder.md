@@ -1640,7 +1640,7 @@ timeline
  : unified text/image/audio/video transformers
 ```
 
-> ** Rest stop.** You now feel the ache. Three previous architectures could each see *some* of the desert, but none could see *all of it without distortion*. The Transformer is the answer to that exact problem. Let's pick up the journal.
+> **Rest stop.** You now feel the ache. Three previous architectures could each see *some* of the desert, but none could see *all of it without distortion*. The Transformer is the answer to that exact problem. Let's pick up the journal.
 
 ---
 ## Part I — The Seven Gaps Almost Everyone Has
@@ -1675,7 +1675,7 @@ A transformer is a *stack* of identical blocks, typically 12 to 120 of them. Eac
 
 Generation = the model emitting a *probability distribution* over the whole vocabulary, and then a **sampling strategy** picking one word from that distribution. The model rarely "picks" — temperature, top-p, top-k, and beam search are all just rules for rolling the weighted die. Two API calls to the same model with the same prompt and a temperature of 0.7 will often give different outputs. **The sampler is part of the system.**
 
-> ** Rest stop.** Seven gaps closed. From here on, the manual assumes you believe each of them. If any feels shaky, re-read just that gap before continuing — they all carry weight ahead.
+> **Rest stop.** Seven gaps closed. From here on, the manual assumes you believe each of them. If any feels shaky, re-read just that gap before continuing — they all carry weight ahead.
 
 ---
 ## Part II — The Cartographer's Gear (Inputs)
@@ -1725,7 +1725,7 @@ Modern variants include:
 
 **Cartographer's translation.** Without positional encoding, the cartographer's journal would have a list of footprints with no information about *when* each was pressed. The branding iron stamps a clock-face onto each one so the chronology is preserved.
 
-> ** Rest stop.** Gear check: footprints pressed (tokens), birth certificates issued (embeddings), clock-faces stamped (positional encoding). The cartographer is now standing at the edge of the desert with everything they need. Time to walk.
+> **Rest stop.** Gear check: footprints pressed (tokens), birth certificates issued (embeddings), clock-faces stamped (positional encoding). The cartographer is now standing at the edge of the desert with everything they need. Time to walk.
 
 ---
 ## Part III — The Council of Scouts (the Transformer Block)
@@ -1905,7 +1905,7 @@ In practice, temperature and top-p are not independent knobs — their *interact
 - **VOLATILE** (high T, low p): random within a narrow set — produces weird-but-confined outputs.
 - **CHAOTIC** (high T, high p): often incoherent. Useful only for creative brainstorming.
 
-> ** Rest stop.** That is the complete inventory of the cartographer's gear and council. **Tokenize → Embed → +PE → (Attention → FFN) × N → Unembed → Softmax → Sample.** Every modern LLM is a variation on that pattern. We're ready to look at the full crossing.
+> **Rest stop.** That is the complete inventory of the cartographer's gear and council. **Tokenize → Embed → +PE → (Attention → FFN) × N → Unembed → Softmax → Sample.** Every modern LLM is a variation on that pattern. We're ready to look at the full crossing.
 
 ---
 ## Part IV — Two Modes (Training vs. Inference)
@@ -2012,7 +2012,7 @@ The bar chart above (Figure 22) gives the headline. The detailed accounting:
 
 **The single takeaway:** if you cared only about *where the cartographer carries weight*, you would point at the tents. **Most of the model is FFN.** That fact has direct engineering consequences. When people talk about model-distillation, low-rank-adaptation (LoRA), or mixture-of-experts (MoE), they are nearly always operating on the FFN. The scouts and the ledger are too small to compress meaningfully; the tents are where the savings are.
 
-> ** Rest stop.** Case study landed. **The cartographer is mostly tent**, and now you know exactly why — and what that implies for distillation, quantization, MoE, and the whole optimization industry that has grown up around making these models cheaper to run.
+> **Rest stop.** Case study landed. **The cartographer is mostly tent**, and now you know exactly why — and what that implies for distillation, quantization, MoE, and the whole optimization industry that has grown up around making these models cheaper to run.
 
 ---
 ## Part VIII — The Decoder Ring (Quick Reference)

@@ -8,7 +8,7 @@
 > **Track Position**: Prerequisite for 05-agentic-ai (Agentic AI)
 
 <!-- LLM-STYLE-FINGERPRINT-V1
-canonical_chapters: ["notes/03-ai/ch01-llm-fundamentals/llm-fundamentals.md", "notes/03-ai/ch02-prompt-engineering/prompt-engineering.md"]
+canonical_chapters: ["notes/03-ai/ch01-llm-fundamentals/llm-fundamentals.md", "notes/03-ai/ch02-inference-mechanics/inference-mechanics.md", "notes/03-ai/ch03-llm-training-pipeline/llm-training-pipeline.md", "notes/03-ai/ch04-llm-model-internals/model-internals.md", "notes/03-ai/ch05-prompt-engineering/prompt-engineering.md", "notes/03-ai/ch06-cot-reasoning/cot-reasoning.md", "notes/03-ai/ch07-rag-and-embeddings/rag-and-embeddings.md", "notes/03-ai/ch08-vector-dbs/vector-dbs.md"]
 voice: second_person_practitioner
 register: technical_direct_conversational_within_precision
 formula_motivation: required_with_symbol_table_and_reading_guidance
@@ -28,15 +28,19 @@ red_lines: [no_formula_without_explanation, no_generic_examples, no_section_with
 
 The 03-ai track follows a **historical walkthrough** pattern where each concept emerges to solve a specific limitation of the previous one. This creates a natural causal chain that readers can follow from first principles.
 
-### The 5-Chapter Arc
+### The 9-Chapter Arc (ch00–ch08)
 
 ```
 notes/03-ai/
-├── ch01-llm-fundamentals/ → RNNs fail → attention → transformer → GPT/BERT fork → scale → alignment
-├── ch02-prompt-engineering/ → Base models won't follow instructions → system prompts → few-shot → structured output
-├── ch03-cot-reasoning/ → Single-pass fails on logic → CoT → self-consistency → tree search → trained reasoning
-├── ch04-rag-and-embeddings/ → LLMs hallucinate private data → retrieval → embeddings → RAG pipeline
-├── ch05-vector-dbs/ → Brute-force fails at scale → curse of dimensionality → IVF → HNSW → DiskANN
+├── ch00-llm-bridge/         → Bridge from ML transformers to language models
+├── ch01-llm-fundamentals/   → RNNs fail → attention → transformer → GPT/BERT fork → scale → alignment
+├── ch02-inference-mechanics/ → Autoregressive generation → KV cache → sampling → continuous batching
+├── ch03-llm-training-pipeline/ → Pretraining → SFT → RLHF → DPO → LoRA concepts
+├── ch04-llm-model-internals/ → Parameter counting → VRAM budgeting → quantization → MoE → GQA
+├── ch05-prompt-engineering/ → Base models won't follow instructions → system prompts → few-shot → structured output
+├── ch06-cot-reasoning/      → Single-pass fails on logic → CoT → self-consistency → tree search → trained reasoning
+├── ch07-rag-and-embeddings/ → LLMs hallucinate private data → retrieval → embeddings → RAG pipeline
+├── ch08-vector-dbs/         → Brute-force fails at scale → curse of dimensionality → IVF → HNSW → DiskANN
 ```
 
 **Why this works**: Each chapter answers "what problem did this concept solve?" before diving into the technical details. Readers understand *why* the field moved in each direction, not just *what* the current state is.
@@ -384,7 +388,7 @@ Use this before committing any chapter edits:
 ---
 
 **Last updated**: May 2026
-**Status**: Active — 5 chapters in 03-ai track
+**Status**: Active — 9 chapters in 03-ai track (ch00–ch08)
 **Framework**: Historical Walkthrough (causal concept emergence)
 
 ---

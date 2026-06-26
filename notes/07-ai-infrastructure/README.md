@@ -4,7 +4,7 @@
 
 > This document is your **entry point and reading map**. It explains the conceptual arc across all chapters, defines the running scenario that threads through every note, shows how each chapter connects to the others, and prescribes reading paths based on your goal.
 
-> **Track Status:** **COMPLETE** — All 10 chapters finished (GPU architecture through production monitoring)
+> **Track Status:** **COMPLETE** — All 12 chapters finished (GPU architecture through local LLM serving lab)
 
 ---
 
@@ -144,6 +144,8 @@ Currently Implemented (Ch.1–7):
 |---------|------|---------------|
 | Ch.9 | [MLExperimentTracking/](ch09_ml_experiment_tracking) | How do you run training jobs that survive preemption, track experiments, and version models? |
 | Ch.10 | [ProductionMLMonitoring/](ch10_production_ml_monitoring) | What does the complete stack look like when it's running in production for real users? |
+| Ch.11 | [EndToEndDeployment/](ch11-end-to-end-deployment) | How do you deploy all layers of the stack end-to-end in a single reproducible workflow? |
+| Ch.12 | [LocalLLMServingLab/](ch12-local-llm-serving-lab) | How do you run a complete local LLM serving stack with Ollama, vLLM, and performance benchmarks? |
 
 ---
 
@@ -484,7 +486,7 @@ notes/AIInfrastructure/ (10 chapters complete)
 | Experiment tracking | MLflow logs runs, DVC versions data, model registry manages deployments | Tracking everything — track hyperparameters and final metrics, not every step |
 | Production monitoring | Drift = distribution shift; A/B test = traffic split; rollback = revert on alert | Deploying without shadow mode — always validate new models on real traffic first |
 
-*(Chapters 6–8, covering serving frameworks, networking, and cloud infrastructure, are planned.)*
+*(Chapters 6–8 are complete — see chapter folders for serving frameworks, AI-specific networking, and feature stores.)*
 
 ---
 

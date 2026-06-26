@@ -17,7 +17,7 @@
 
 **What we know so far**:
 - Ch.1-3: RTX 4090 + INT4 quantization → 12,000 req/day throughput
-- Ch.3: 96.2% accuracy maintained , 1.2s p95 latency
+- Ch.3: 96.2% accuracy maintained, 1.2s p95 latency
 
 **What's blocking us**:
 
@@ -195,7 +195,7 @@ With PagedAttention (paged allocation):
  Request 4: 80 tokens → 2 pages (128 slots, 48 wasted)
 
  Total: 31 pages × 128MB = 3.97GB KV cache
- → 1,830 tokens used (92% efficiency! )
+ → 1,830 tokens used (92% efficiency!)
 ```
 
 **Impact**: Same 24GB VRAM budget → batch=4 (16GB KV) → batch=8 (8GB KV with PagedAttention).

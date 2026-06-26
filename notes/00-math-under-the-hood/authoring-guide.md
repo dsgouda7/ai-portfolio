@@ -4,10 +4,10 @@
 > Each chapter lives under `notes/00-math-under-the-hood/` in its own folder, containing a README and a Jupyter notebook with interactive widgets.
 > Read this before starting any chapter to keep tone, structure, and the knuckleball free-kick running example consistent.
 >
-> ** Updated:** Now includes comprehensive pedagogical patterns, voice guidelines, and conformance standards aligned with ML track (see §"Style Ground Truth" and §"Pedagogical Patterns" below).
+> **Updated:** Now includes comprehensive pedagogical patterns, voice guidelines, and conformance standards aligned with ML track (see §"Style Ground Truth" and §"Pedagogical Patterns" below).
 
 <!-- LLM-STYLE-FINGERPRINT-V1
-canonical_chapters: ["notes/00-math-under-the-hood/ch01_linear_algebra/README.md", "notes/00-math-under-the-hood/ch03_calculus_intro/README.md"]
+canonical_chapters: ["notes/00-math-under-the-hood/ch01-linear-algebra/README.md", "notes/00-math-under-the-hood/ch03-calculus-intro/README.md"]
 voice: second_person_practitioner
 register: technical_but_conversational
 formula_motivation: required_before_each_formula

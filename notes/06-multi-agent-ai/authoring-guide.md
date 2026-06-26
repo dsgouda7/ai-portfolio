@@ -1,13 +1,13 @@
 # Multi-Agent AI Track — Authoring Guide
 
 > **This document tracks the chapter-by-chapter build of the Multi-Agent AI notes library.**
-> Each chapter lives under `notes/04-multi_agent_ai/` in its own folder, containing a README.
+> Each chapter lives under `notes/06-multi-agent-ai/` in its own folder, containing a README.
 > Read this before starting any chapter to keep tone, structure, and the running example consistent.
 >
-> ** Updated:** Now includes comprehensive pedagogical patterns and style standards aligned with ML track authoring-guide.md.
+> **Updated:** Now includes comprehensive pedagogical patterns and style standards aligned with ML track authoring-guide.md.
 
 <!-- LLM-STYLE-FINGERPRINT-V1
-canonical_chapters: ["notes/04-multi_agent_ai/ch01_message_formats/README.md", "notes/04-multi_agent_ai/ch02_mcp/README.md"]
+canonical_chapters: ["notes/06-multi-agent-ai/ch01-message-formats/README.md", "notes/06-multi-agent-ai/ch02-mcp/README.md"]
 voice: second_person_practitioner
 register: technical_but_conversational
 formula_motivation: required_before_each_formula
@@ -36,10 +36,10 @@ red_lines: [no_protocol_without_message_schema, no_shared_state_without_consiste
 The Multi-Agent AI track covers 7 chapters focused on building production multi-agent systems. We're converting each into a standalone, runnable learning module:
 
 ```
-notes/04-multi_agent_ai/
-├── ch01_message_formats/
+notes/06-multi-agent-ai/
+├── ch01-message-formats/
 │ └── README.md ← Technical deep-dive + diagrams
-├── ch02_mcp/
+├── ch02-mcp/
 │ └── README.md
 ... (7 chapters total)
 ```
@@ -196,7 +196,14 @@ Every chapter README now follows this **extended structure** (adds §0 Challenge
 ## 0 · The Challenge — Where We Are
 
 > **The mission**: Build **OrderFlow** — AI-native B2B purchase order automation satisfying 8 constraints:
-> 1. **THROUGHPUT**: 1,000 POs/day — 2. **LATENCY**: <4hr SLA — 3. **ACCURACY**: <2% error — 4. **SCALABILITY**: 10 agents/PO — 5. **RELIABILITY**: >99.9% uptime — 6. **AUDITABILITY**: Full traceability — 7. **OBSERVABILITY**: Real-time monitoring — 8. **DEPLOYABILITY**: Zero-downtime updates
+> 1. **THROUGHPUT**: 1,000 POs/day
+> 2. **LATENCY**: <4hr SLA
+> 3. **ACCURACY**: <2% error
+> 4. **SCALABILITY**: 10 agents/PO
+> 5. **RELIABILITY**: >99.9% uptime
+> 6. **AUDITABILITY**: Full traceability
+> 7. **OBSERVABILITY**: Real-time monitoring
+> 8. **DEPLOYABILITY**: Zero-downtime updates
 
 **What we know so far:**
 - [Summary of previous chapters' achievements with specific metrics]
@@ -286,9 +293,21 @@ What this chapter unlocks:
 
 ### § 0 · The Challenge — Where We Are
 8 constraints:
-> 1. **THROUGHPUT**: 1,000 POs/day — 2. **LATENCY**: <4hr SLA — 3. **ACCURACY**: <2% error — 4. **SCALABILITY**: 10 agents/PO — 5. **RELIABILITY**: >99.9% uptime — 6. **AUDITABILITY**: Full traceability — 7. **OBSERVABILITY**: Real-time monitoring — 8. **DEPLOYABILITY**: Zero-downtime updates
+> 1. **THROUGHPUT**: 1,000 POs/day
+> 2. **LATENCY**: <4hr SLA
+> 3. **ACCURACY**: <2% error
+> 4. **SCALABILITY**: 10 agents/PO
+> 5. **RELIABILITY**: >99.9% uptime
+> 6. **AUDITABILITY**: Full traceability
+> 7. **OBSERVABILITY**: Real-time monitoring
+> 8. **DEPLOYABILITY**: Zero-downtime updates
 > **The mission**: Build **OrderFlow** — AI-native B2B purchase order automation satisfying 6 constraints:
-> 1. **THROUGHPUT**: 1,000 POs/day — 2. **LATENCY**: <4hr SLA — 3. **ACCURACY**: <2% error — 4. **SCALABILITY**: 10 agents/PO — 5. **RELIABILITY**: >99.9% uptime — 6. **AUDITABILITY**: Full traceability
+> 1. **THROUGHPUT**: 1,000 POs/day
+> 2. **LATENCY**: <4hr SLA
+> 3. **ACCURACY**: <2% error
+> 4. **SCALABILITY**: 10 agents/PO
+> 5. **RELIABILITY**: >99.9% uptime
+> 6. **AUDITABILITY**: Full traceability
 
 **What we know so far**:
 - [List previous chapters and their achievements]
@@ -926,7 +945,7 @@ response = await message_bus.subscribe(
 | Constraint progression | 8 constraints × 7 chapters heatmap | `orderflow-constraint-progression.png` |
 | Needle GIF | Which constraint moved this chapter | `chNN-[topic]-needle.gif` |
 
-All images in `notes/04-multi_agent_ai/{ChapterName}/img/`. Dark background `#1a1a2e`.
+All images in `notes/06-multi-agent-ai/{ChapterName}/img/`. Dark background `#1a1a2e`.
 
 **Mermaid diagram colour palette** — used consistently for all flowcharts:
 - Primary/data: `fill:#1e3a8a` (dark blue)
@@ -1546,7 +1565,7 @@ Before publishing any chapter, verify each item:
 | Constraint progression | 8 constraints × 7 chapters heatmap | `orderflow-constraint-progression.png` |
 | Needle GIF | Which constraint moved this chapter | `chNN-[topic]-needle.gif` |
 
-All images in `notes/MultiAgentAI/{ChapterName}/img/`. Dark background `#1a1a2e`.
+All images in `notes/06-multi-agent-ai/{ChapterName}/img/`. Dark background `#1a1a2e`.
 
 ---
 
@@ -1973,7 +1992,7 @@ When adding a new chapter to a track:
 
 ### Example: Multi-Agent AI Track
 
-See `notes/04-multi_agent_ai/grand_solution.ipynb` for reference implementation:
+See `notes/06-multi-agent-ai/grand-solution.md` for reference implementation:
 - Ch.1: Message envelope demo (structured handoffs)
 - Ch.2: MCP server demo (tool discovery)
 - Ch.3: A2A task delegation demo (async lifecycle)
@@ -2068,7 +2087,7 @@ Remove the phase→section mapping block entirely. Embed stage context directly 
 
 - [notes/authoring-guidelines.md](../authoring-guidelines.md) — Universal authoring conventions
 - [notes/01-ml/authoring-guide.md](../01-ml/authoring-guide.md) — ML track reference (canonical pedagogical patterns)
-- `notes/04-multi_agent_ai/README.md` — Track overview and chapter index
+- `notes/06-multi-agent-ai/README.md` — Track overview and chapter index
 - [AGENTS.md](../../AGENTS.md) — Custom VS Code agents for repository maintenance
 
 ---

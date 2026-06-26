@@ -11,7 +11,11 @@
 ## 0 · The Challenge — Where We Are
 
 > **The mission**: Build **SegmentAI** — discover 4 actionable customer segments from UCI Wholesale data satisfying 5 constraints:
-> 1. **SEGMENTATION**: 4 distinct, non-overlapping segments — 2. **INTERPRETABILITY**: Each segment maps to a business-actionable profile — 3. **STABILITY**: Reproducible across data resamples — 4. **SCALABILITY**: Pipeline runs on 10k+ customers — 5. **VALIDATION**: Silhouette score >0.5 (quantitative proof of cluster quality)
+> 1. **SEGMENTATION**: 4 distinct, non-overlapping segments
+> 2. **INTERPRETABILITY**: Each segment maps to a business-actionable profile
+> 3. **STABILITY**: Reproducible across data resamples
+> 4. **SCALABILITY**: Pipeline runs on 10k+ customers
+> 5. **VALIDATION**: Silhouette score >0.5 (quantitative proof of cluster quality)
 
 **What we know so far:**
 - Ch.1: K-Means on 440 wholesale customers → k=4 segments, silhouette=0.42 (below 0.5 target)

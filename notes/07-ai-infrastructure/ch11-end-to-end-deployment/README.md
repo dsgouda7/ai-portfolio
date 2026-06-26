@@ -334,7 +334,7 @@ Timeline on pod start:
  180s livenessProbe activates (first check)
 ```
 
-> **Warning — Warning:** Without `readinessProbe`, Kubernetes adds the pod to the Service endpoints the moment the container starts — before vLLM has loaded the model. The first ~90 seconds of traffic gets `Connection refused`, manifesting as 502 errors in your Ingress logs and p99 latency spikes on your Grafana dashboard. Always set `readinessProbe.initialDelaySeconds ≥ 90` for LLM containers.
+> **Warning:** Without `readinessProbe`, Kubernetes adds the pod to the Service endpoints the moment the container starts — before vLLM has loaded the model. The first ~90 seconds of traffic gets `Connection refused`, manifesting as 502 errors in your Ingress logs and p99 latency spikes on your Grafana dashboard. Always set `readinessProbe.initialDelaySeconds ≥ 90` for LLM containers.
 
 #### Resource requests and GPU limits
 
@@ -373,7 +373,7 @@ The HPA watches two metrics:
 | `cpu` | Resource (built-in) | >70% utilization | Available everywhere; guards against compute saturation |
 | `vllm_num_requests_running` | Custom (Prometheus Adapter) | >10 per pod | Guards against queue buildup before CPU saturates |
 
-> **Warning — Warning:** The custom metric requires **Prometheus Adapter** installed in your cluster. Without it, the HPA ignores the `Pods` metric and scales on CPU only — which is fine as a fallback, but you'll miss queue-depth signals. Check that the adapter is running before relying on this HPA in production:
+> **Warning:** The custom metric requires **Prometheus Adapter** installed in your cluster. Without it, the HPA ignores the `Pods` metric and scales on CPU only — which is fine as a fallback, but you'll miss queue-depth signals. Check that the adapter is running before relying on this HPA in production:
 > ```bash
 > kubectl get pods -n monitoring | grep prometheus-adapter
 > # prometheus-adapter-xxxxx 1/1 Running 0 5m

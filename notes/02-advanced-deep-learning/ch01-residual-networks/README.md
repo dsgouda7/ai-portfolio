@@ -11,7 +11,11 @@
 ## 0 · The Challenge — Where We Are
 
 > **The mission**: Build **ProductionCV** — an autonomous retail shelf monitoring system satisfying 5 constraints:
-> 1. **DETECTION ACCURACY**: mAP@0.5 ≥ 85% — 2. **SEGMENTATION QUALITY**: IoU ≥ 70% — 3. **INFERENCE LATENCY**: <50ms per frame — 4. **MODEL SIZE**: <100 MB — 5. **DATA EFFICIENCY**: <1,000 labeled images
+> 1. **DETECTION ACCURACY**: mAP@0.5 ≥ 85%
+> 2. **SEGMENTATION QUALITY**: IoU ≥ 70%
+> 3. **INFERENCE LATENCY**: <50ms per frame
+> 4. **MODEL SIZE**: <100 MB
+> 5. **DATA EFFICIENCY**: <1,000 labeled images
 
 **What we know so far:**
 - We understand CNNs (convolution extracts local features, pooling reduces spatial size)

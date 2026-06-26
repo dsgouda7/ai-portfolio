@@ -439,7 +439,157 @@ Left: the columns of $A$ tell you *where the basis vectors land*. Middle: every 
 
 ---
 
-## 9 · Progress Check — What We Can Solve Now
+## 9 · Eigenvalues and Eigen-decomposition
+
+You built an 8×8 covariance matrix for California Housing. Every entry is a number. You want to know which *directions* in feature space carry the most variance — which combinations of `MedInc`, `HouseAge`, `AveRooms`, etc. move together most strongly. A pile of 64 numbers does not obviously answer that question. Eigenvalues do.
+
+### 9.1 · What Breaks Without Them
+
+Your covariance matrix $\Sigma \in \mathbb{R}^{8 \times 8}$ is real and symmetric. Multiply any vector by it and you get a new vector — usually rotated and stretched. But for special vectors, called **eigenvectors**, multiplication only stretches, without rotating:
+
+$$A\mathbf{v} = \lambda\mathbf{v}$$
+
+$A$ is the matrix, $\mathbf{v}$ is the eigenvector, and $\lambda$ is the scalar **eigenvalue**. The eigenvector is a direction the matrix leaves unchanged up to scaling; the eigenvalue is how much it stretches that direction. If $\lambda = 3$ and $\mathbf{v}$ points along the diagonal, multiplying by $A$ produces a vector pointing the same way but three times longer.
+
+### 9.2 · Finding Eigenvalues — the Characteristic Polynomial
+
+Rearranging $A\mathbf{v} = \lambda\mathbf{v}$ gives $(A - \lambda I)\mathbf{v} = \mathbf{0}$. A non-zero solution $\mathbf{v}$ exists only when the matrix $(A - \lambda I)$ is singular, which happens exactly when:
+
+$$\det(A - \lambda I) = 0$$
+
+This is the **characteristic polynomial** in $\lambda$. Solving it gives the eigenvalues. For an $n \times n$ matrix you get at most $n$ eigenvalues (counting multiplicity).
+
+**Worked example — 2×2 covariance matrix.** Let:
+
+$$A = \begin{bmatrix} 3 & 1 \\ 1 & 3 \end{bmatrix}$$
+
+This might represent the covariance between two scaled features. To find eigenvalues:
+
+$$\det\begin{bmatrix} 3-\lambda & 1 \\ 1 & 3-\lambda \end{bmatrix} = (3-\lambda)^2 - 1 = 0$$
+
+$$\Rightarrow\quad (3-\lambda)^2 = 1 \quad\Rightarrow\quad 3-\lambda = \pm 1$$
+
+$$\Rightarrow\quad \lambda_1 = 4, \quad \lambda_2 = 2$$
+
+For $\lambda_1 = 4$: solve $(A - 4I)\mathbf{v}_1 = \mathbf{0}$:
+
+$$\begin{bmatrix} -1 & 1 \\ 1 & -1 \end{bmatrix}\mathbf{v}_1 = \mathbf{0} \quad\Rightarrow\quad \mathbf{v}_1 = \frac{1}{\sqrt{2}}\begin{bmatrix} 1 \\ 1 \end{bmatrix}$$
+
+For $\lambda_2 = 2$: similarly, $\mathbf{v}_2 = \frac{1}{\sqrt{2}}\begin{bmatrix} 1 \\ -1 \end{bmatrix}$.
+
+The larger eigenvalue $\lambda_1 = 4$ corresponds to the diagonal direction $[1, 1]^\top / \sqrt{2}$ — the direction where these two features co-vary most. The **explained-variance ratio** is $\lambda_1 / (\lambda_1 + \lambda_2) = 4 / 6 = 66.7\%$: two-thirds of the variance lies along that single direction. That ratio is exactly what PCA reports as "PC1 explains 66.7% of variance."
+
+### 9.3 · Eigen-decomposition
+
+When $A$ has $n$ linearly independent eigenvectors, it factors as:
+
+$$A = Q \Lambda Q^{-1}$$
+
+where $Q$ is the matrix whose columns are eigenvectors and $\Lambda = \mathrm{diag}(\lambda_1, \ldots, \lambda_n)$ is the diagonal matrix of eigenvalues. For **symmetric positive-definite matrices** — covariance matrices are always symmetric PD — the eigenvectors are mutually orthonormal, so $Q^{-1} = Q^\top$:
+
+$$A = Q \Lambda Q^\top$$
+
+The symmetric PD case matters for three reasons: (1) all eigenvalues are real and positive, (2) eigenvectors are orthogonal — you can rotate into the eigenbasis without distortion, (3) the decomposition is numerically stable. Covariance matrices are always symmetric ($\Sigma = \Sigma^\top$ by definition) and positive semidefinite ($\mathbf{x}^\top \Sigma \mathbf{x} \geq 0$ for all $\mathbf{x}$). When data has no constant features, they are strictly positive definite.
+
+### 9.4 · Connection to the Hessian
+
+The loss function's second derivative matrix — the **Hessian** $H = \nabla^2 L$ — is also symmetric. Its eigenvalues determine the local shape of the loss surface:
+
+| Eigenvalue pattern | Geometry | Consequence |
+|---|---|---|
+| All $\lambda_i > 0$ | Positive definite — a bowl | Unique local minimum; gradient descent converges |
+| All $\lambda_i < 0$ | Negative definite — an inverted bowl | Local maximum |
+| Mixed signs | Indefinite — a saddle | Gradient descent may escape slowly |
+
+The **condition number** $\kappa = \lambda_{\max} / \lambda_{\min}$ of the Hessian measures how elongated the bowl is. If $\kappa = 1000$, the loss is 1000× steeper in one direction than another — gradient descent with fixed step size oscillates in the steep direction while crawling in the shallow one. This is why adaptive optimisers like Adam maintain per-parameter learning rates: they effectively pre-condition by an estimate of the inverse Hessian's diagonal.
+
+> **Progress fragment — check yourself before moving on:**
+> 1. A covariance matrix has eigenvalues $\lambda_1 = 5, \lambda_2 = 3, \lambda_3 = 2$. What fraction of variance does PC1 explain?
+> 2. You run gradient descent on MSE loss and find it oscillates on one parameter but converges cleanly on another. What does this tell you about the Hessian's eigenvalues?
+> 3. You have a 3×3 symmetric PD matrix. How many eigenvalues does it have and are they guaranteed to be real?
+
+---
+
+## 10 · Singular Value Decomposition (SVD)
+
+Eigen-decomposition only works for square, diagonalizable matrices. Your design matrix $X \in \mathbb{R}^{20640 \times 8}$ is $20640 \times 8$ — rectangular. There is nothing to eigendecompose. You need SVD.
+
+### 10.1 · What Breaks Without It
+
+Scale up: you want to compress the California Housing weight matrix, or find the low-rank structure of a $1000 \times 500$ user–item interaction matrix, or understand which linear combinations of your input features are stable to noise. None of these are square-matrix problems. SVD is the generalisation of eigen-decomposition to any matrix.
+
+### 10.2 · The Decomposition
+
+Every matrix $A \in \mathbb{R}^{m \times n}$ — regardless of shape — factorises as:
+
+$$A = U \Sigma V^\top$$
+
+- $U \in \mathbb{R}^{m \times m}$: orthonormal matrix — the **left singular vectors** (columns form an orthonormal basis for the output space)
+- $\Sigma \in \mathbb{R}^{m \times n}$: diagonal matrix of **singular values** $\sigma_1 \geq \sigma_2 \geq \cdots \geq \sigma_r \geq 0$ (all others zero), where $r = \min(m, n)$
+- $V^\top \in \mathbb{R}^{n \times n}$: orthonormal matrix — the **right singular vectors**
+
+SVD decomposes any matrix into: rotate-input, scale each axis, rotate-output. $V$ rotates the input space so the axes align with the data's natural directions; $\Sigma$ stretches each axis by $\sigma_i$; $U$ rotates the output space. Every linear map, whatever its shape, has this three-step structure.
+
+### 10.3 · Relationship to Eigenvalues
+
+The singular values are not arbitrary. They are the square roots of the eigenvalues of $A^\top A$ (equivalently $A A^\top$):
+
+$$\sigma_i = \sqrt{\lambda_i(A^\top A)}$$
+
+The right singular vectors (columns of $V$) are the eigenvectors of $A^\top A$; the left singular vectors (columns of $U$) are the eigenvectors of $A A^\top$. Singular values are always real and non-negative, even when $A$ is non-square or non-symmetric — that's what makes SVD universal where eigen-decomposition is not.
+
+### 10.4 · Worked Example — SVD of a 3×2 Matrix
+
+Let $A = \begin{bmatrix} 1 & 1 \\ 0 & 1 \\ 1 & 0 \end{bmatrix}$.
+
+**Step 1 — form $A^\top A$:**
+
+$$A^\top A = \begin{bmatrix} 1 & 0 & 1 \\ 1 & 1 & 0 \end{bmatrix} \begin{bmatrix} 1 & 1 \\ 0 & 1 \\ 1 & 0 \end{bmatrix} = \begin{bmatrix} 2 & 1 \\ 1 & 2 \end{bmatrix}$$
+
+**Step 2 — eigenvalues of $A^\top A$** (same procedure as §9.2):
+
+$$\det\begin{bmatrix} 2-\lambda & 1 \\ 1 & 2-\lambda \end{bmatrix} = (2-\lambda)^2 - 1 = 0 \quad\Rightarrow\quad \lambda_1 = 3,\; \lambda_2 = 1$$
+
+**Step 3 — singular values:** $\sigma_1 = \sqrt{3} \approx 1.732$, $\sigma_2 = \sqrt{1} = 1.000$.
+
+**Step 4 — right singular vectors** (eigenvectors of $A^\top A$):
+
+$$\mathbf{v}_1 = \frac{1}{\sqrt{2}}\begin{bmatrix} 1 \\ 1 \end{bmatrix}, \quad \mathbf{v}_2 = \frac{1}{\sqrt{2}}\begin{bmatrix} -1 \\ 1 \end{bmatrix}$$
+
+So $V = \frac{1}{\sqrt{2}}\begin{bmatrix} 1 & -1 \\ 1 & 1 \end{bmatrix}$ and $\Sigma = \begin{bmatrix} \sqrt{3} & 0 \\ 0 & 1 \\ 0 & 0 \end{bmatrix}$.
+
+### 10.5 · Low-Rank Approximation and the Eckart–Young Theorem
+
+Truncate SVD to the top $k$ singular values and vectors:
+
+$$A_k = U_k \Sigma_k V_k^\top = \sum_{i=1}^k \sigma_i \mathbf{u}_i \mathbf{v}_i^\top$$
+
+This is the best rank-$k$ approximation of $A$ in the Frobenius norm — the **Eckart–Young theorem**: among all rank-$k$ matrices, $A_k$ minimises $\|A - A_k\|_F^2$. The reconstruction error is $\sum_{i=k+1}^r \sigma_i^2$.
+
+Keep $k = 2$ singular values of a $100 \times 100$ matrix and you discard 98 dimensions while minimising the information loss. The fraction of total "energy" retained is $\sum_{i=1}^k \sigma_i^2 / \sum_{i=1}^r \sigma_i^2$ — identical in structure to the PCA explained-variance ratio.
+
+### 10.6 · Where SVD Reappears
+
+| Technique | How SVD appears |
+|---|---|
+| **PCA** | `sklearn.decomposition.PCA` calls `np.linalg.svd` internally. Principal components are the columns of $V$; explained-variance ratios are $\sigma_i^2 / \sum_j \sigma_j^2$. |
+| **Recommender systems** | Matrix factorisation decomposes a ratings matrix $R \approx U_k \Sigma_k V_k^\top$; $U_k$ encodes users, $V_k$ encodes items. |
+| **LSA / NLP** | SVD on a term-document TF-IDF matrix extracts latent topics — the mathematical precursor to word embeddings. |
+| **LoRA / QLoRA** | A fine-tuned weight update is constrained to $\Delta W = BA$. $B \in \mathbb{R}^{d \times r}$ and $A \in \mathbb{R}^{r \times k}$ with $r \ll \min(d,k)$ is exactly a rank-$r$ SVD approximation. Training only $B$ and $A$ instead of the full $\Delta W$ is what makes LoRA parameter-efficient. |
+| **Normal equations — conditioning** | The condition number $\kappa(A) = \sigma_1 / \sigma_n$ is the ratio of largest to smallest singular value. If $\kappa \gg 1$, the matrix is near-singular and small input perturbations cause large output changes. `np.linalg.lstsq` uses SVD internally precisely because it handles ill-conditioned matrices where forming $(X^\top X)^{-1}$ explicitly fails. |
+
+**Feature scaling and condition numbers.** If `MedInc` ranges 0–15 and `AveRooms` ranges 1–140, the singular values of $X$ span several orders of magnitude. Standardising each feature to zero mean and unit variance compresses the singular-value spread, reducing $\kappa(X)$ and making both gradient descent (less oscillation) and least-squares (more stable solve) numerically well-behaved. This is the formal mathematical reason why feature scaling matters — it is not merely cosmetic.
+
+> **Progress fragment — check yourself before moving on:**
+> 1. A matrix $A \in \mathbb{R}^{20640 \times 8}$ has 8 singular values. What are the shapes of $U$, $\Sigma$, and $V^\top$?
+> 2. The singular values of $X$ are $[12.4,\; 5.1,\; 0.8,\; 0.01]$. What is the condition number? What does this predict about a least-squares solve?
+> 3. How do the singular values of $A^\top A$ relate to the singular values of $A$? Derive the relationship in one line.
+>
+> *(Full discussion in the § 11 Progress Check below.)*
+
+---
+
+## 11 · Progress Check — What We Can Solve Now
 
 ```mermaid
 graph LR
@@ -448,8 +598,8 @@ graph LR
  C3["Ch.3\nCalculus Intro"]:::done
  C4["Ch.4\nSmall Steps"]:::done
  C5["Ch.5\nMatrices"]:::done
- C6["Ch.6\nGradient + Chain Rule"]:::done
- C7["Ch.7\nProbability & Stats"]:::done
+ C6["Ch.6\nGradient + Chain Rule"]
+ C7["Ch.7\nProbability & Stats"]
  C1 --> C2 --> C3 --> C4 --> C5 --> C6 --> C7
  classDef done fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
  classDef current fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff

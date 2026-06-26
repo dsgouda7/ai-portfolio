@@ -874,9 +874,9 @@ Each track's `AUTHORING_GUIDE.md` extends this document with:
 | **ML** | [notes/01-ml/authoring-guide.md](01-ml/authoring-guide.md) — canonical style reference (deepest documentation) |
 | **AI** | [notes/03-ai/AUTHORING_GUIDE.md03-ai/authoring-guide.md) |
 | **AIInfrastructure** | [notes/AIInfrastructure/AUTHORING_GUIDE.md](ai_infrastructure/authoring-guide.md) |
-| **MultiAgentAI** | [notes/MultiAgentAI/AUTHORING_GUIDE.md](multi_agent_ai/authoring-guide.md) |
-| **MultimodalAI** | [notes/MultimodalAI/AUTHORING_GUIDE.md](multimodal_ai/authoring-guide.md) |
-| **InterviewGuides** | [notes/InterviewGuides/AUTHORING_GUIDE.md](interview_guides/authoring-guide.md) |
+| **MultiAgentAI** | [notes/06-multi-agent-ai/authoring-guide.md](06-multi-agent-ai/authoring-guide.md) |
+| **MultimodalAI** | [notes/04-multimodal-ai/authoring-guide.md](04-multimodal-ai/authoring-guide.md) |
+| **InterviewGuides** | [notes/interview-guides/authoring-guide.md](interview-guides/authoring-guide.md) |
 | **MathUnderTheHood** | [notes/MathUnderTheHood/AUTHORING_GUIDE.md](math_under_the_hood/authoring-guide.md) |
 
 ---

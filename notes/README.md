@@ -284,13 +284,13 @@ bash scripts/setup.sh
 
 | Chapter | What it covers |
 |---|---|
-| [MessageFormats/](06-multi-agent-ai/ch01_message_formats) | OpenAI message envelope, token counting, handoff strategies, context trimming |
-| [MCP/](06-multi-agent-ai/ch02_mcp) | Model Context Protocol — JSON-RPC 2.0, Resources/Tools/Prompts, transport options |
-| [A2A/](06-multi-agent-ai/ch03_a2a) | Agent-to-Agent protocol — Agent Cards, task lifecycle, SSE streaming, MCP+A2A composition |
-| [EventDrivenAgents/](06-multi-agent-ai/ch04_event_driven_agents) | Pub/sub bus, DLQ, correlation/causation IDs, idempotency, fan-out/fan-in |
-| [SharedMemory/](06-multi-agent-ai/ch05_shared_memory) | Blackboard pattern, write-once guards, compare-and-swap, checkpoint/resume |
-| [TrustAndSandboxing/](06-multi-agent-ai/ch06_trust_and_sandboxing) | Prompt injection, output schema validation, HMAC signing, timing attacks |
-| [AgentFrameworks/](06-multi-agent-ai/ch07_agent_frameworks) | LangGraph StateGraph, AutoGen multi-agent debate, Semantic Kernel, framework comparison |
+| [MessageFormats/](06-multi-agent-ai/ch01-message-formats) | OpenAI message envelope, token counting, handoff strategies, context trimming |
+| [MCP/](06-multi-agent-ai/ch02-mcp) | Model Context Protocol — JSON-RPC 2.0, Resources/Tools/Prompts, transport options |
+| [A2A/](06-multi-agent-ai/ch03-a2a) | Agent-to-Agent protocol — Agent Cards, task lifecycle, SSE streaming, MCP+A2A composition |
+| [EventDrivenAgents/](06-multi-agent-ai/ch04-event-driven-agents) | Pub/sub bus, DLQ, correlation/causation IDs, idempotency, fan-out/fan-in |
+| [SharedMemory/](06-multi-agent-ai/ch05-shared-memory) | Blackboard pattern, write-once guards, compare-and-swap, checkpoint/resume |
+| [TrustAndSandboxing/](06-multi-agent-ai/ch06-trust-and-sandboxing) | Prompt injection, output schema validation, HMAC signing, timing attacks |
+| [AgentFrameworks/](06-multi-agent-ai/ch07-agent-frameworks) | LangGraph StateGraph, AutoGen multi-agent debate, Semantic Kernel, framework comparison |
 
 ---
 
@@ -302,19 +302,19 @@ bash scripts/setup.sh
 
 | Chapter | What it covers |
 |---|---|
-| [MultimodalFoundations/](04-multimodal-ai/ch01_multimodal_foundations) | Signals → tensors → tokens; patch embeddings; cross-modal alignment |
-| [VisionTransformers/](04-multimodal-ai/ch02_vision_transformers) | ViT architecture, patch tokenisation, CLS token, attention maps |
-| [CLIP/](04-multimodal-ai/ch03_clip) | Contrastive pre-training, zero-shot classification, text-image retrieval |
-| [DiffusionModels/](04-multimodal-ai/ch04_diffusion_models) | DDPM forward/reverse process, noise schedules, score matching |
-| [LatentDiffusion/](04-multimodal-ai/ch06_latent_diffusion) | VAE latent space, Stable Diffusion architecture, CFG |
-| [Schedulers/](04-multimodal-ai/ch05_schedulers) | DDIM, DPM-Solver, Euler-a — speed vs quality tradeoffs |
-| [GuidanceConditioning/](04-multimodal-ai/ch07_guidance_conditioning) | Classifier-free guidance, ControlNet, img2img, inpainting |
-| [TextToImage/](04-multimodal-ai/ch08_text_to_image) | End-to-end prompt → pixel pipeline, prompt engineering for images |
-| [TextToVideo/](04-multimodal-ai/ch09_text_to_video) | Temporal attention, video diffusion, consistency across frames |
-| [MultimodalLLMs/](04-multimodal-ai/ch10_multimodal_llms) | Vision encoders in LLMs, visual question answering, GPT-4V patterns |
-| [GenerativeEvaluation/](04-multimodal-ai/ch12_generative_evaluation) | FID, IS, CLIP score, human preference alignment |
-| [LocalDiffusionLab/](04-multimodal-ai/ch13_local_diffusion_lab) | Running Stable Diffusion locally — memory optimisation, quantisation |
-| [AudioGeneration/](04-multimodal-ai/ch11_audio_generation) | Text-to-speech, local synthesis, vocoder stacks — CPU-first quick wins |
+| [MultimodalFoundations/](04-multimodal-ai/ch01-multimodal-foundations) | Signals → tensors → tokens; patch embeddings; cross-modal alignment |
+| [VisionTransformers/](04-multimodal-ai/ch02-vision-transformers) | ViT architecture, patch tokenisation, CLS token, attention maps |
+| [CLIP/](04-multimodal-ai/ch03-clip) | Contrastive pre-training, zero-shot classification, text-image retrieval |
+| [DiffusionModels/](04-multimodal-ai/ch04-diffusion-models) | DDPM forward/reverse process, noise schedules, score matching |
+| [LatentDiffusion/](04-multimodal-ai/ch06-latent-diffusion) | VAE latent space, Stable Diffusion architecture, CFG |
+| [Schedulers/](04-multimodal-ai/ch05-schedulers) | DDIM, DPM-Solver, Euler-a — speed vs quality tradeoffs |
+| [GuidanceConditioning/](04-multimodal-ai/ch07-guidance-conditioning) | Classifier-free guidance, ControlNet, img2img, inpainting |
+| [TextToImage/](04-multimodal-ai/ch08-text-to-image) | End-to-end prompt → pixel pipeline, prompt engineering for images |
+| [TextToVideo/](04-multimodal-ai/ch09-text-to-video) | Temporal attention, video diffusion, consistency across frames |
+| [MultimodalLLMs/](04-multimodal-ai/ch10-multimodal-llms) | Vision encoders in LLMs, visual question answering, GPT-4V patterns |
+| [GenerativeEvaluation/](04-multimodal-ai/ch12-generative-evaluation) | FID, IS, CLIP score, human preference alignment |
+| [LocalDiffusionLab/](04-multimodal-ai/ch13-local-diffusion-lab) | Running Stable Diffusion locally — memory optimisation, quantisation |
+| [AudioGeneration/](04-multimodal-ai/ch11-audio-generation) | Text-to-speech, local synthesis, vocoder stacks — CPU-first quick wins |
 
 ---
 
@@ -326,11 +326,11 @@ bash scripts/setup.sh
 
 | Chapter | What it covers |
 |---|---|
-| [GPUArchitecture/](07-ai-infrastructure/ch01_gpu_architecture) | CUDA cores, tensor cores, VRAM, memory bandwidth, roofline model |
-| [MemoryAndComputeBudgets/](07-ai-infrastructure/ch02_memory_and_compute_budgets) | VRAM estimation: parameters, KV cache, optimizer states, activations |
-| [QuantizationAndPrecision/](07-ai-infrastructure/quantization_and_precision) | FP16/BF16/INT8/INT4, GPTQ, AWQ, perplexity vs compression tradeoffs |
-| [ParallelismAndDistributedTraining/](07-ai-infrastructure/parallelism_and_distributed_training) | Data/tensor/pipeline parallelism, ZeRO stages, FSDP |
-| [InferenceOptimization/](07-ai-infrastructure/ch05_inference_optimization) | KV cache, speculative decoding, flash attention, kernel fusion |
+| [GPUArchitecture/](07-ai-infrastructure/ch01-gpu-architecture) | CUDA cores, tensor cores, VRAM, memory bandwidth, roofline model |
+| [MemoryAndComputeBudgets/](07-ai-infrastructure/ch02-memory-and-compute-budgets) | VRAM estimation: parameters, KV cache, optimizer states, activations |
+| [QuantizationAndPrecision/](07-ai-infrastructure/ch03-quantization-and-precision) | FP16/BF16/INT8/INT4, GPTQ, AWQ, perplexity vs compression tradeoffs |
+| [ParallelismAndDistributedTraining/](07-ai-infrastructure/ch04-parallelism-and-distributed-training) | Data/tensor/pipeline parallelism, ZeRO stages, FSDP |
+| [InferenceOptimization/](07-ai-infrastructure/ch05-inference-optimization) | KV cache, speculative decoding, flash attention, kernel fusion |
 | *(planned, not yet in tree)* Serving Frameworks | vLLM, TensorRT-LLM, TGI — continuous batching, PagedAttention |
 | *(planned, not yet in tree)* Networking & Cluster Architecture | InfiniBand, NVLink, RDMA, collective ops (AllReduce, AllGather) |
 | *(planned, not yet in tree)* MLOps & Experiment Management | MLflow, W&B, experiment tracking, model registry, CI for ML |
@@ -347,14 +347,14 @@ bash scripts/setup.sh
 
 | Chapter | What it covers |
 |---|---|
-| [DockerFundamentals/](08-devops-fundamentals/ch01_docker_fundamentals) | Containers vs VMs, Dockerfile, images, layers, volumes |
-| [ContainerOrchestration/](08-devops-fundamentals/ch02_container_orchestration) | Docker Compose, health checks, dependency ordering |
-| [KubernetesBasics/](08-devops-fundamentals/ch03_kubernetes_basics) | Pods, Services, Deployments, 5 essential kubectl commands |
-| [CICDPipelines/](08-devops-fundamentals/ch04_cicd_pipelines) | GitHub Actions, workflow triggers, Docker Hub integration |
-| [MonitoringObservability/](08-devops-fundamentals/ch05_monitoring_observability) | Prometheus, Grafana, metrics collection, alerting |
-| [InfrastructureAsCode/](08-devops-fundamentals/ch06_infrastructure_as_code) | Terraform, state management, resource graphs |
-| [NetworkingLoadBalancing/](08-devops-fundamentals/ch07_networking_load_balancing) | Nginx reverse proxy, load balancing algorithms, health checks |
-| [SecuritySecretsManagement/](08-devops-fundamentals/ch08_security_secrets_management) | Environment variables, Docker secrets, Kubernetes secrets, pre-push hooks |
+| [DockerFundamentals/](08-devops-fundamentals/ch01-docker-fundamentals) | Containers vs VMs, Dockerfile, images, layers, volumes |
+| [ContainerOrchestration/](08-devops-fundamentals/ch02-container-orchestration) | Docker Compose, health checks, dependency ordering |
+| [KubernetesBasics/](08-devops-fundamentals/ch03-kubernetes-basics) | Pods, Services, Deployments, 5 essential kubectl commands |
+| [CICDPipelines/](08-devops-fundamentals/ch04-cicd-pipelines) | GitHub Actions, workflow triggers, Docker Hub integration |
+| [MonitoringObservability/](08-devops-fundamentals/ch05-monitoring-observability) | Prometheus, Grafana, metrics collection, alerting |
+| [InfrastructureAsCode/](08-devops-fundamentals/ch06-infrastructure-as-code) | Terraform, state management, resource graphs |
+| [NetworkingLoadBalancing/](08-devops-fundamentals/ch07-networking-load-balancing) | Nginx reverse proxy, load balancing algorithms, health checks |
+| [SecuritySecretsManagement/](08-devops-fundamentals/ch08-security-secrets-management) | Environment variables, Docker secrets, Kubernetes secrets, pre-push hooks |
 
 **Grand Challenge:** ProductionStack achieves 99% uptime, <5min MTTD, zero secrets in git, and deploys in <5min.
 

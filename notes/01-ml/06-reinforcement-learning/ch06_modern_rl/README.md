@@ -42,9 +42,11 @@
 ## 0 · The Challenge — Where We Are
 
 > **The mission**: Complete **AgentAI** — CartPole balance task satisfying 5 constraints:
-> 1. **OPTIMALITY**: find $\pi^*$ (CartPole ≥195/200) — 2. **EFFICIENCY**: learn from limited
-> experience — 3. **SCALABILITY**: handle continuous/high-dimensional actions — 4. **STABILITY**: no
-> catastrophic forgetting — 5. **GENERALIZATION**: transfer across environment variations
+> 1. **OPTIMALITY**: find $\pi^*$ (CartPole ≥195/200)
+> 2. **EFFICIENCY**: learn from limited experience
+> 3. **SCALABILITY**: handle continuous/high-dimensional actions
+> 4. **STABILITY**: no catastrophic forgetting
+> 5. **GENERALIZATION**: transfer across environment variations
 
 **What we know so far:**
 - MDPs and Bellman equations give us the theoretical foundation (Ch.1)

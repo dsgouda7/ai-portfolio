@@ -284,23 +284,23 @@ Here's how all 10 concepts integrate into the deployed InferenceBase system:
 
 ```mermaid
 flowchart TD
- USERS[" Users<br/>10,000 req/day"] --> LB[" Load Balancer<br/>NGINX<br/>Round-robin to 2 GPUs"]
+ USERS["Users<br/>10,000 req/day"] --> LB["Load Balancer<br/>NGINX<br/>Round-robin to 2 GPUs"]
 
- LB --> GPU1[" GPU 1: RTX 4090<br/>Ch.1: 24GB VRAM, 1.0 TB/s<br/>Ch.6: vLLM serving<br/>Status: PRIMARY"]
- LB --> GPU2[" GPU 2: RTX 4090<br/>Ch.7: NVLink failover<br/>Status: STANDBY"]
+ LB --> GPU1["GPU 1: RTX 4090<br/>Ch.1: 24GB VRAM, 1.0 TB/s<br/>Ch.6: vLLM serving<br/>Status: PRIMARY"]
+ LB --> GPU2["GPU 2: RTX 4090<br/>Ch.7: NVLink failover<br/>Status: STANDBY"]
 
- GPU1 --> MODEL[" Llama-3-8B INT4<br/>Ch.3: GPTQ quantization<br/>8GB weights + 4GB KV cache<br/>96.2% accuracy"]
+ GPU1 --> MODEL["Llama-3-8B INT4<br/>Ch.3: GPTQ quantization<br/>8GB weights + 4GB KV cache<br/>96.2% accuracy"]
  GPU2 --> MODEL
 
- MODEL --> BATCH[" Inference Pipeline<br/>Ch.5: Continuous batching<br/>Ch.5: PagedAttention (batch=8)<br/>Ch.5: Speculative decoding"]
+ MODEL --> BATCH["Inference Pipeline<br/>Ch.5: Continuous batching<br/>Ch.5: PagedAttention (batch=8)<br/>Ch.5: Speculative decoding"]
 
- BATCH --> RESPONSE[" Response<br/>1.2s p95 latency<br/>22,000 req/day throughput"]
+ BATCH --> RESPONSE["Response<br/>1.2s p95 latency<br/>22,000 req/day throughput"]
 
- RESPONSE --> MONITOR[" Monitoring Layer<br/>Ch.10: Evidently AI drift detection<br/>Ch.10: Prometheus metrics<br/>Ch.9: MLflow model registry"]
+ RESPONSE --> MONITOR["Monitoring Layer<br/>Ch.10: Evidently AI drift detection<br/>Ch.10: Prometheus metrics<br/>Ch.9: MLflow model registry"]
 
- MONITOR --> ALERT[" Alerting<br/>Drift detected → Retrain trigger<br/>Accuracy < 95% → Auto-rollback<br/>Latency > 2s → Scale up"]
+ MONITOR --> ALERT["Alerting<br/>Drift detected → Retrain trigger<br/>Accuracy < 95% → Auto-rollback<br/>Latency > 2s → Scale up"]
 
- TRAINING[" Training Pipeline<br/>Ch.4: ZeRO-2 data parallelism<br/>Ch.9: MLflow tracking<br/>Ch.9: Checkpointing<br/>Weekly fine-tuning: $12.80"] --> REGISTRY[" Model Registry<br/>Ch.9: MLflow<br/>v1 → v2 → v3 lineage<br/>S3 artifact storage"]
+ TRAINING["Training Pipeline<br/>Ch.4: ZeRO-2 data parallelism<br/>Ch.9: MLflow tracking<br/>Ch.9: Checkpointing<br/>Weekly fine-tuning: $12.80"] --> REGISTRY["Model Registry<br/>Ch.9: MLflow<br/>v1 → v2 → v3 lineage<br/>S3 artifact storage"]
 
  REGISTRY --> GPU1
  REGISTRY --> GPU2
@@ -689,7 +689,7 @@ schedule.every(5).minutes.do(check_and_rollback)
 6. **Monitoring prevents disasters** (Ch.10): Drift detection + rollback = production confidence
 
 **You now have:**
-- A production-ready self-hosted LLM system ($7.3k/month, 91% cost reduction )
+- A production-ready self-hosted LLM system ($7.3k/month, 91% cost reduction)
 - A mental model for infrastructure decisions (bandwidth, quantization, batching, serving)
 - The vocabulary to read GPU datasheets, serving framework docs, and make informed trade-offs
 

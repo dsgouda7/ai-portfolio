@@ -11,7 +11,11 @@
 ## 0 · The Challenge — Where We Are
 
 > **The mission**: Build **ProductionCV** — an autonomous retail shelf monitoring system satisfying 5 constraints:
-> 1. **DETECTION ACCURACY**: mAP@0.5 ≥ 85% — 2. **SEGMENTATION QUALITY**: IoU ≥ 70% — 3. **INFERENCE LATENCY**: <50ms per frame — 4. **MODEL SIZE**: <100 MB — 5. **DATA EFFICIENCY**: <1,000 labeled images
+> 1. **DETECTION ACCURACY**: mAP@0.5 ≥ 85%
+> 2. **SEGMENTATION QUALITY**: IoU ≥ 70%
+> 3. **INFERENCE LATENCY**: <50ms per frame
+> 4. **MODEL SIZE**: <100 MB
+> 5. **DATA EFFICIENCY**: <1,000 labeled images
 
 **What we know so far:**
 - **Ch.9 (Distillation)** compressed ResNet-50 (97 MB) → MobileNetV2 (10.7 MB, 83.2% mAP, 68.9% IoU, 39ms latency)
@@ -278,17 +282,7 @@ $$
 |w|_{\text{sorted}} = [0.00, 0.01, 0.02, 0.03, 0.08, 0.11, 0.15, 0.19, 0.27, 0.29, 0.31, 0.38, 0.42, 0.44, 0.45, 0.52]
 $$
 
-**Step 2**: Compute threshold (80% pruning → keep top 20% → 3.2 weights → threshold at index 13):
-$$
-\tau = |w|_{\text{sorted}}[12] = 0.42 \quad \text{(keep only weights } \geq 0.42)
-$$
-
-Wait, that's too aggressive. Let me recalculate: 80% pruning means remove bottom 80%, keep top 20%.
-$$
-\text{Keep top } 20\% = 16 \times 0.2 = 3.2 \approx 3 \text{ weights}
-$$
-
-Actually, let's use a threshold-based approach: $\tau = 0.1$ (remove weights $|W| < 0.1$).
+**Step 2**: Compute threshold using a magnitude-based approach. For this illustrative window, we apply $\tau = 0.1$ — removing all weights with $|W| < 0.1$. In production, the global threshold is set so that exactly 80% of weights across all layers fall below it; here the local threshold of 0.1 removes 5 of 16 weights (31% local sparsity), demonstrating the masking mechanism before scaling to the full model.
 
 **Step 3**: Apply threshold:
 $$

@@ -11,7 +11,11 @@
 ## 0 · The Challenge — Where We Are
 
 > **The mission**: Build **ProductionCV** — an autonomous retail shelf monitoring system satisfying 5 constraints:
-> 1. **DETECTION ACCURACY**: mAP@0.5 ≥ 85% — 2. **SEGMENTATION QUALITY**: IoU ≥ 70% — 3. **INFERENCE LATENCY**: <50ms per frame — 4. **MODEL SIZE**: <100 MB — 5. **DATA EFFICIENCY**: <1,000 labeled images
+> 1. **DETECTION ACCURACY**: mAP@0.5 ≥ 85%
+> 2. **SEGMENTATION QUALITY**: IoU ≥ 70%
+> 3. **INFERENCE LATENCY**: <50ms per frame
+> 4. **MODEL SIZE**: <100 MB
+> 5. **DATA EFFICIENCY**: <1,000 labeled images
 
 **What we know so far:**
 - Ch.1–2: ResNet-50 backbone (25M params, 80% mAP from scratch)
@@ -590,7 +594,7 @@ The network learned to segment products from background without bounding box lab
 | From scratch (Ch.4) | 1,000 | 72% | | |
 | From scratch (Ch.4) | 10,000 | 85% | | |
 | SimCLR (Ch.7) | 1,000 | 84% | (close!) | |
-| **DINO (Ch.8)** | **850** | **86%** | ** ** | **** |
+| **DINO (Ch.8)** | **850** | **86%** |  |  |
 | MAE + ViT (Ch.8) | 850 | 87% | | |
 
 **Key insight:** Self-supervised pretraining (DINO, MAE) bridges the gap between limited labels and production performance. We hit 86% mAP with just 850 labels — exceeding the 85% target!

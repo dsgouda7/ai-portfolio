@@ -950,7 +950,7 @@ Ch.2 confirmed the model fits — but revealed a critical bottleneck: **batch=1 
 
 **The workflow diagnosis:**
 - **Phase 1 CALCULATE**: 16GB params + 4GB KV (batch=1) + 2GB activations = 22GB
-- **Phase 2 CHECK**: Fits in 24GB , but only 2GB headroom (insufficient for batch=2)
+- **Phase 2 CHECK**: Fits in 24GB, but only 2GB headroom (insufficient for batch=2)
 - **Phase 3 OPTIMIZE**: Need to free 12GB to enable batch=4 → **quantization is the only viable lever**
 
 Ch.3 (Quantization & Precision) attacks this problem directly: by shrinking the model from 16 GB to 4 GB via INT4 quantization, we free 12 GB for KV cache, enabling batch=4 and 4× throughput.

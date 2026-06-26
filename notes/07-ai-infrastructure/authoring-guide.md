@@ -1,13 +1,13 @@
 # AI Infrastructure Track — Authoring Guide
 
 > **This document tracks the chapter-by-chapter build of the AI Infrastructure notes library.**
-> Each chapter lives under `notes/06-ai_infrastructure/` in its own folder, containing a README and supporting materials.
+> Each chapter lives under `notes/07-ai-infrastructure/` in its own folder, containing a README and supporting materials.
 > Read this before starting any chapter to keep tone, structure, and the running example consistent.
 >
-> ** Updated:** Now includes comprehensive pedagogical patterns, voice/register rules, and conformance standards aligned with ML track best practices.
+> **Updated:** Now includes comprehensive pedagogical patterns, voice/register rules, and conformance standards aligned with ML track best practices.
 
 <!-- LLM-STYLE-FINGERPRINT-V2
-canonical_chapters: ["notes/06-ai_infrastructure/ch01_gpu_architecture/README.md", "notes/06-ai_infrastructure/ch02_memory_and_compute_budgets/README.md"]
+canonical_chapters: ["notes/07-ai-infrastructure/ch01-gpu-architecture/README.md", "notes/07-ai-infrastructure/ch02-memory-and-compute-budgets/README.md"]
 voice: second_person_practitioner
 register: technical_but_conversational
 hardware_arithmetic: required_before_claims
@@ -32,21 +32,21 @@ red_lines: [no_benchmark_without_hardware_spec, no_cost_claim_without_arithmetic
 The AI Infrastructure track is 10 chapters covering GPU architecture fundamentals through production deployment. We're converting each into a standalone, runnable learning module that threads through the InferenceBase startup scenario:
 
 ```
-notes/06-ai_infrastructure/
-├── ch01_gpu_architecture/
+notes/07-ai-infrastructure/
+├── ch01-gpu-architecture/
 │ ├── README.md ← Technical deep-dive + diagrams
 │ └── (supporting materials)
-├── ch02_memory_and_compute_budgets/
+├── ch02-memory-and-compute-budgets/
 │ ├── README.md
 │ └── (calculations, benchmarks)
-├── quantization/
-├── distributed_training/
-├── ch05_inference_optimization/
-├── serving_frameworks/
-├── networking/
-├── cloud_infrastructure/
-├── mlops/
-└── production_platform/
+├── ch03-quantization-and-precision/
+├── ch04-parallelism-and-distributed-training/
+├── ch05-inference-optimization/
+├── ch06-model-serving-frameworks/
+├── ch07-ai-specific-networking/
+├── ch08-feature-stores/
+├── ch09-ml-experiment-tracking/
+└── ch10-production-ml-monitoring/
  └── README.md ← Final system integration
 ```
 
@@ -479,9 +479,11 @@ Every infrastructure concept is introduced through a **specific InferenceBase bo
 | Ch.5 Inference Optimization | Batch=4 but KV cache re-allocates per request → 2.8s p95 | PagedAttention → KV blocks pre-allocated → 1.2s p95 | Need production serving framework |
 | Ch.6 Serving Frameworks | Custom inference loop hits framework scaling limits | vLLM continuous batching → 12k req/day on 1× GPU | Multi-tenant isolation needed for growth |
 | Ch.7 Networking | 1 GPU saturated at 12k req/day; traffic growing | NVLink multi-GPU → 40k req/day capacity | Real cost unknown until Ch.8 |
-| Ch.8 Cloud Infrastructure | "How much does this actually cost?" | RunPod RTX 4090: $1,095/month (vs $15k budget) | MLOps still manual |
-| Ch.9 MLOps | Manual restarts after preemption → downtime | Checkpointing + health checks → 99.5% uptime | Full stack integration pending |
-| Ch.10 Production Platform | Components work in isolation; full stack untested | Load balancer + vLLM + monitoring → all 6 constraints | Ship it |
+| Ch.8 Feature Stores | "How much does this actually cost?" | RunPod RTX 4090: $1,095/month (vs $15k budget) | MLOps still manual |
+| Ch.9 Experiment Tracking | Manual restarts after preemption → downtime | Checkpointing + health checks → 99.5% uptime | Full stack integration pending |
+| Ch.10 Production ML Monitoring | Components work in isolation; full stack untested | Load balancer + vLLM + monitoring → all 6 constraints | Ship it |
+| Ch.11 End-to-End Deployment | Stack components validated in isolation only | Full K8s deployment pipeline → reproducible end-to-end | Local serving lab pending |
+| Ch.12 Local LLM Serving Lab | No hands-on local inference baseline | Ollama + vLLM serving stack → benchmark on consumer GPU | All 6 constraints met |
 
 ---
 
@@ -1230,7 +1232,7 @@ Every `grand_solution.md` follows this **7-section template**:
 - Link from notebook back to individual chapter READMEs for deep dives
 
 **Example tracks with notebooks:**
-- AI Infrastructure (`notes/06-ai_infrastructure/grand_solution.ipynb`) — Full InferenceBase deployment
+- AI Infrastructure (`notes/07-ai-infrastructure/grand-solution.md`) — Full InferenceBase deployment
 - ML tracks (when created) — End-to-end model training + serving
 - MultimodalAI (when created) — Multi-modal model integration
 

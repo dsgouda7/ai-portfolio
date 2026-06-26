@@ -11,7 +11,11 @@
 ## 0 · The Challenge — Where We Are
 
 > **The mission**: Launch **SmartVal AI** — a production home valuation system satisfying 5 constraints:
-> 1. **ACCURACY**: <$40k MAE — 2. **GENERALIZATION**: Unseen districts — 3. **MULTI-TASK**: Value + Segment — 4. **INTERPRETABILITY**: Explainable — 5. **PRODUCTION**: Scale + Monitor
+> 1. **ACCURACY**: <$40k MAE
+> 2. **GENERALIZATION**: Unseen districts
+> 3. **MULTI-TASK**: Value + Segment
+> 4. **INTERPRETABILITY**: Explainable
+> 5. **PRODUCTION**: Scale + Monitor
 
 **What you've achieved so far:**
 - Ch.1: Single feature → $70k MAE

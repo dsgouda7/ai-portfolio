@@ -2047,7 +2047,7 @@ Which capabilities does each pattern unlock?
 
 **Where you are now:** You've learned four single-agent iterative patterns (reflection, debate, hierarchical, tool selection). These patterns trade tokens for reliability by adding loops, adversarial checks, and decomposition.
 
-**What's next:** The **Multi-Agent AI track** (`notes/04-multi_agent_ai/`) extends these patterns to persistent multi-agent systems:
+**What's next:** The **Multi-Agent AI track** (`notes/06-multi-agent-ai/`) extends these patterns to persistent multi-agent systems:
 
 ### Pattern Extensions: Single-Agent → Multi-Agent
 
@@ -2153,7 +2153,7 @@ You've learned four agentic patterns that trade tokens for reliability:
 - Cost: $0.08 → $0.18 avg (still under $0.25 budget)
 - All 6 constraints satisfied
 
-**Next stop:** Multi-Agent AI track (`notes/04-multi_agent_ai/`) extends these patterns to persistent, coordinated, multi-agent systems.
+**Next stop:** Multi-Agent AI track (`notes/06-multi-agent-ai/`) extends these patterns to persistent, coordinated, multi-agent systems.
 
 ---
 

@@ -698,7 +698,7 @@ Can you walk through the full T2I pipeline from prompt to pixel, and explain key
 ---
 
 <details>
-<summary> 5-Minute Crammer — last-resort prep</summary>
+<summary>5-Minute Crammer — last-resort prep</summary>
 
 ## 5 · The 5-Minute Concept Cram
 

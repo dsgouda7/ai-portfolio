@@ -384,7 +384,7 @@ After seeing millions of such examples, the embedding space organizes itself: al
 > **Quick Intuition:** InfoNCE training is like teaching a dog to fetch YOUR tennis ball from a pile of 100 balls. At first, the dog brings back random balls (high loss). As it learns to recognize YOUR ball's unique features (color, wear marks, scent), it reliably fetches the right one (low loss). The training reward is proportional to how confidently the dog picks YOUR ball over all the wrong ones.
 
 <details>
-<summary> <b>For the mathematically curious: InfoNCE loss formula</b></summary>
+<summary><b>For the mathematically curious: InfoNCE loss formula</b></summary>
 
 **Intuition first:** InfoNCE maximizes the probability that the model picks the correct match (positive) from a crowd of distractors (negatives).
 

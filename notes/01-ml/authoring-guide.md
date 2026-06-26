@@ -4,10 +4,10 @@
 > Each chapter lives under `notes/01-ml/` in its own folder, containing a README and a Jupyter notebook.
 > Read this before starting any chapter to keep tone, structure, and the running example consistent.
 >
-> ** Updated:** Now includes comprehensive pedagogical patterns extracted from cross-chapter analysis (see §"Pedagogical Patterns & Teaching DNA" below).
+> **Updated:** Now includes comprehensive pedagogical patterns extracted from cross-chapter analysis (see §"Pedagogical Patterns & Teaching DNA" below).
 
 <!-- LLM-STYLE-FINGERPRINT-V1
-canonical_chapters: ["notes/01-ml/01_regression/ch01_linear_regression/README.md", "notes/01-ml/01_regression/ch02_multiple_regression/README.md"]
+canonical_chapters: ["notes/01-ml/01-regression/ch01-linear-regression/README.md", "notes/01-ml/01-regression/ch02-multiple-regression/README.md"]
 voice: second_person_practitioner
 register: technical_but_conversational
 formula_motivation: required_before_each_formula

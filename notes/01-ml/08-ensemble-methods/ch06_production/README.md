@@ -991,7 +991,7 @@ flowchart TD
 
 | Dial | Too Conservative | Sweet Spot | Too Aggressive |
 |------|-----------------|------------|----------------|
-| **Inference mode** | Sequential (56ms, violates SLA) | Parallel thread pool (35ms ) | Async microservices (adds orchestration overhead) |
+| **Inference mode** | Sequential (56ms, violates SLA) | Parallel thread pool (35ms) | Async microservices (adds orchestration overhead) |
 | **Base model cache** | No cache (full inference every call) | Cache predictions for identical feature vectors (saves 15ms on cache hit) | Cache staleness >1hr (stale prices served) |
 | **SHAP computation** | Skip SHAP (no explanations — compliance risk) | TreeSHAP on XGBoost per request (3ms) | Full SHAP all 3 models (8ms, pushes P99 >50ms) |
 | **Meta-learner complexity** | Ridge (5ms, interpretable, generalizes) | Ridge | Deep meta-learner (20ms, prone to overfitting on stack) |

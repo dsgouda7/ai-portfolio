@@ -11,7 +11,11 @@
 ## 0 · The Challenge — Where We Are
 
 > **The mission**: Launch **UnifiedAI** — a production home valuation system satisfying 5 constraints:
-> 1. **ACCURACY**: <$40k MAE — 2. **GENERALIZATION**: Unseen districts — 3. **MULTI-TASK**: Value + Segment — 4. **INTERPRETABILITY**: Explainable — 5. **PRODUCTION**: Scale + Monitor
+> 1. **ACCURACY**: <$40k MAE
+> 2. **GENERALIZATION**: Unseen districts
+> 3. **MULTI-TASK**: Value + Segment
+> 4. **INTERPRETABILITY**: Explainable
+> 5. **PRODUCTION**: Scale + Monitor
 
 **What we know so far:**
 - [Regression track](../../01_regression/ch01_linear_regression): Linear regression baseline ($70k MAE)
@@ -213,7 +217,7 @@ The match is exact. Two epochs confirm the chain rule computes gradients that mo
 ---
 
 <details>
-<summary> <b>Optional Depth</b> — Full Network Walkthrough: 3-Layer Network on California Housing Districts</summary>
+<summary><b>Optional Depth</b> — Full Network Walkthrough: 3-Layer Network on California Housing Districts</summary>
 
 #### Full Network Walkthrough — 3 California Housing Districts
 

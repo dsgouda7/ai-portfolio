@@ -644,7 +644,7 @@ Every chapter in the Neural Networks track depends on the insight from this chap
 |---|---|---|---|
 | Topic 01 Ch.1 (Linear Regression) | $\hat{y} = wx + b$ | ~$70k | |
 | Topic 01 Ch.2 (Multiple Regression) | $\hat{y} = \mathbf{w}^\top\mathbf{x} + b$ | ~$62k | |
-| **This chapter (XOR diagnostic)** | **Proven: linear ceiling exists** | **Still ~$62k** | **** |
+| **This chapter (XOR diagnostic)** | **Proven: linear ceiling exists** | **Still ~$62k** |  |
 | Ch.2 (Neural Networks) | 8 → 16 → 1, ReLU | ~$55k | (getting closer) |
 | Ch.3 (Backprop + Adam) | 8 → 64 → 32 → 1, ReLU | ~$40k | |
 | Ch.4 (Regularisation) | + Dropout + L2 | ~$35k | |

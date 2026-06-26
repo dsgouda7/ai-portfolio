@@ -11,7 +11,11 @@
 ## 0 · The Challenge — Where We Are
 
 > **The mission**: Deploy a **production-ready Flask web app** satisfying 5 constraints:
-> 1. **PORTABILITY**: Runs identically on dev, staging, production — 2. **REPRODUCIBILITY**: Same build every time — 3. **ISOLATION**: No dependency conflicts with host — 4. **EFFICIENCY**: Fast builds, small images — 5. **OBSERVABILITY**: Logs, debugging, health checks
+> 1. **PORTABILITY**: Runs identically on dev, staging, production
+> 2. **REPRODUCIBILITY**: Same build every time
+> 3. **ISOLATION**: No dependency conflicts with host
+> 4. **EFFICIENCY**: Fast builds, small images
+> 5. **OBSERVABILITY**: Logs, debugging, health checks
 
 **What we know so far:**
 - We have a Flask app with Redis cache (standard 3-tier architecture)

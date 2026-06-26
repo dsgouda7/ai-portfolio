@@ -91,7 +91,7 @@ SHAP assigns each feature a value $\phi_i$ representing its contribution to the 
 | Feature importance (MDI) | Global only | | | |
 | LIME | approximate | | | |
 | Partial dependence | Global only | | | |
-| **SHAP** | ** exact** | **** | **** | **** |
+| **SHAP** | **exact** |  |  |  |
 
 Lundberg & Lee (2017) proved that SHAP is the *only* additive explanation method satisfying all three properties. The uniqueness comes directly from the Shapley axioms.
 
@@ -571,7 +571,7 @@ SHAP is the universal interpretability layer — it appears in every downstream 
 | #1 IMPROVEMENT >5% | | XGBoost MAE ≈ $22k vs. baseline $70k |
 | #2 DIVERSITY | | RF + GB + XGBoost trained |
 | #3 EFFICIENCY <5× latency | | XGBoost inference ms-scale; SHAP adds <10ms |
-| **#4 INTERPRETABILITY** | **** | **SHAP per-prediction explanations** |
+| **#4 INTERPRETABILITY** |  | **SHAP per-prediction explanations** |
 | #5 ROBUSTNESS | | Stable across 5 seeds |
 
 ---

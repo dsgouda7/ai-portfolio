@@ -455,14 +455,33 @@ That mapping is the single most useful mental model in supervised learning.
 ## Code Skeleton
 
 ```python
-# Skeleton — fill in the blanks as you work through the chapter
+# Code Skeleton — ch07 Probability & Statistics
+# Task: Implement Maximum Likelihood Estimation for a Gaussian distribution
+
 import numpy as np
 
-# TODO: implement gradient computation using chain rule
-def compute_gradient(f, x, h=1e-5):
- ...
 
-# TODO: verify with a known function (e.g., f(x) = x^2, expected grad = 2x)
+def mle_gaussian(data: np.ndarray) -> tuple[float, float]:
+ """
+ Estimate the mean and variance of a Gaussian by maximizing the log-likelihood.
+
+ MLE for Gaussian:
+ mu_hat = (1/N) * sum(x_i)
+ sigma2_hat = (1/N) * sum((x_i - mu_hat)^2)
+
+ Returns: (mu_hat, sigma2_hat)
+ """
+ # TODO: implement
+ raise NotImplementedError
+
+
+def log_likelihood_gaussian(data: np.ndarray, mu: float, sigma2: float) -> float:
+ """
+ Compute the log-likelihood of data under a Gaussian(mu, sigma2).
+ log L = -N/2 * log(2*pi*sigma2) - 1/(2*sigma2) * sum((x_i - mu)^2)
+ """
+ # TODO: implement
+ raise NotImplementedError
 ```
 
 See the companion notebook for the full worked solution.
@@ -480,7 +499,157 @@ See the companion notebook for the full worked solution.
 
 ---
 
-## 10 · Progress Check — What We Can Solve Now
+## 10 · Information Theory — Entropy, Cross-Entropy, KL Divergence
+
+You're training logistic regression to classify which free-kick angle leads to a goal. Someone says "use cross-entropy loss." You do — sklearn says so. Three months later you see `KL divergence` in an RLHF paper, `entropy` in a decision tree implementation, and `ELBO` in a VAE paper. It's the same mathematics wearing different hats. Derive it once here and it unlocks all three.
+
+### 10.1 · Entropy — Measuring Surprise
+
+$$H(p) = -\sum_i p_i \log_2 p_i$$
+
+Entropy measures how surprised you expect to be. Before a free kick, you have a distribution over outcomes: `[goal, miss]`. If you know with certainty the kick will miss — $p = [0, 1]$ — there is zero surprise. If the outcome is a fair coin — $p = [0.5, 0.5]$ — you are maximally uncertain.
+
+Entropy quantifies the average number of bits needed to encode outcomes optimally. The uniform distribution maximises entropy; a point mass minimises it (to zero).
+
+**Three numerical cases:**
+
+| Distribution | Formula | Value |
+|---|---|---|
+| $p = [0.5, 0.5]$ | $-0.5 \log_2 0.5 - 0.5 \log_2 0.5$ | $H = 1.000$ bit |
+| $p = [0.9, 0.1]$ | $-0.9 \log_2 0.9 - 0.1 \log_2 0.1$ | $H = 0.469$ bit |
+| $p = [1.0, 0.0]$ | $-1.0 \log_2 1.0 - 0$ (by convention $0 \log 0 = 0$) | $H = 0.000$ bits |
+
+A model that outputs uniform predictions — complete uncertainty — has maximum entropy. Training drives the model's output distribution toward the true label distribution, reducing entropy toward zero on confident, correct predictions.
+
+**Connection to the free kick.** Before you see the angle, the keeper's uncertainty about where the ball will go is high — near-maximum entropy over landing zones. A trained keeper who has seen 500 kicks from this striker has a peaked distribution (low entropy) over likely landing zones. That peaked distribution is the posterior after observing data: Bayesian updating is entropy reduction.
+
+### 10.2 · Cross-Entropy — The Cost of the Wrong Code
+
+$$H(p, q) = -\sum_i p_i \log q_i$$
+
+Cross-entropy measures how surprised you would be on average if reality is $p$ but you had prepared for $q$. It is the cost of using the wrong probability model. If $p$ is the true distribution of kick outcomes and $q$ is your model's predicted distribution, $H(p, q)$ is the average bits-per-outcome your model "wastes" by being wrong.
+
+The decomposition is exact:
+
+$$H(p, q) = H(p) + KL(p \,\|\, q)$$
+
+where $H(p)$ is the irreducible uncertainty (fixed by the data) and $KL(p \| q) \geq 0$ is the extra cost from using the wrong model. Since $H(p)$ is fixed, **minimising cross-entropy is equivalent to minimising KL divergence from the true distribution $p$ to your model $q$**.
+
+**Derivation — cross-entropy emerges from MLE on the Bernoulli.** Given binary labels $y_i \in \{0, 1\}$ and model predictions $\hat{p}_i$, the Bernoulli likelihood of a single label is $\hat{p}_i^{y_i}(1 - \hat{p}_i)^{1 - y_i}$. The log-likelihood over the full dataset is:
+
+$$\log \mathcal{L} = \sum_i \left[ y_i \log \hat{p}_i + (1-y_i) \log(1 - \hat{p}_i) \right]$$
+
+Maximising this log-likelihood is the same as minimising its negation:
+
+$$-\frac{1}{N}\sum_i \left[ y_i \log \hat{p}_i + (1-y_i) \log(1 - \hat{p}_i) \right]$$
+
+This is **binary cross-entropy** — not a design choice but the direct implication of MLE under Bernoulli noise. For multiclass classification: softmax output + cross-entropy is MLE on a categorical distribution, exactly as MSE is MLE on a Gaussian (§7).
+
+**Numerical asymmetry example.** Let $p = [0.8, 0.2]$ (true distribution) and two candidate models:
+
+- $q_1 = [0.7, 0.3]$ (close to $p$): $H(p, q_1) = -0.8 \log 0.7 - 0.2 \log 0.3 = 0.302 + 0.240 = 0.542$
+- $q_2 = [0.3, 0.7]$ (backwards): $H(p, q_2) = -0.8 \log 0.3 - 0.2 \log 0.7 = 0.963 + 0.071 = 1.034$
+
+The backwards model wastes nearly twice as many bits. Notice also: $H(p, q_1) \neq H(q_1, p)$ — cross-entropy is not symmetric. This asymmetry is deliberate: we care about surprise *when reality is $p$*, not the other way around.
+
+### 10.3 · KL Divergence — The Extra Bits
+
+$$KL(p \,\|\, q) = \sum_i p_i \log \frac{p_i}{q_i}$$
+
+KL divergence is the extra bits per outcome you waste because you used code $q$ instead of the optimal code for $p$. It is always non-negative — you can never do better than the optimal code — and it equals zero if and only if $p = q$ everywhere.
+
+**Non-symmetry with a numerical example.** Using $p = [0.8, 0.2]$ and $q_1 = [0.7, 0.3]$:
+
+$$KL(p \,\|\, q_1) = 0.8 \log\frac{0.8}{0.7} + 0.2 \log\frac{0.2}{0.3} = 0.8(0.134) + 0.2(-0.405) = 0.107 - 0.081 = 0.026$$
+
+$$KL(q_1 \,\|\, p) = 0.7 \log\frac{0.7}{0.8} + 0.3 \log\frac{0.3}{0.2} = 0.7(-0.134) + 0.3(0.405) = -0.094 + 0.122 = 0.028$$
+
+The two values differ: $KL(p \| q_1) = 0.026 \neq KL(q_1 \| p) = 0.028$. Because KL is not symmetric, it is not a distance in the mathematical sense.
+
+**Forward vs reverse KL — why it matters.**
+
+- **Forward KL** $KL(p \| q)$ — minimised when $q$ covers all regions where $p$ is non-negligible. The optimum spreads probability mass wherever $p > 0$. Result: **mean-seeking**. Used in VAE ELBO training — the approximate posterior must cover the true posterior's support.
+- **Reverse KL** $KL(q \| p)$ — minimised when $q$ concentrates on the highest-density region of $p$. The optimum finds one mode and ignores others. Result: **mode-seeking**. Used in classical variational inference. Also appears in LLM fine-tuning: an RL-trained model that maximises reward tends toward mode-seeking, collapsing diversity — the KL penalty in RLHF explicitly limits this.
+
+**Where KL divergence reappears in practice:**
+
+| Application | How KL appears |
+|---|---|
+| **RLHF** | Policy loss = reward objective − $\beta \cdot KL(\pi_{\text{fine-tuned}} \| \pi_{\text{base}})$. The KL penalty stops fine-tuning from deviating too far from the base model. |
+| **VAE ELBO** | Objective = reconstruction loss − $KL(q(z|x) \| p(z))$. The KL term regularises the latent space toward a unit Gaussian. |
+| **Knowledge distillation** | Student loss = cross-entropy with hard labels + $\alpha \cdot KL(p_{\text{teacher}} \| p_{\text{student}})$. The KL term transfers soft probability information from teacher to student. |
+| **DPO** | Implicitly minimises $KL(\pi_\theta \| \pi_{\text{ref}})$ subject to preference satisfaction — that's what the $\beta$ parameter in the DPO loss controls. |
+| **Jensen's inequality** | $H \geq 0$ and $KL \geq 0$ both follow from Jensen's inequality: for convex $f$, $f(\mathbb{E}[X]) \leq \mathbb{E}[f(X)]$. Applied with $f = -\log$: $-\log\left(\sum q_i\right) \leq -\sum p_i \log\frac{q_i}{p_i}$, which gives $KL(p\|q) \geq 0$ directly. |
+
+---
+
+## 11 · MAP Estimation — When You Have a Prior
+
+### 11.1 · What Breaks with MLE Alone
+
+You fit a polynomial of degree 8 to 4 noisy data points. MLE gives you the coefficients that maximise the likelihood of those 4 points. The result is a polynomial that passes exactly through all 4 points — MSE = 0 — but oscillates wildly between them. The coefficients can be enormous: $w_5 = 10^6$, $w_7 = -8 \times 10^5$.
+
+MLE cannot stop this. There is no mechanism in $\arg\max_\theta \log p(\mathbf{y}|\theta)$ that penalises large coefficients. You need a prior.
+
+### 11.2 · Bayes' Theorem for Parameters
+
+$$p(\theta | \mathbf{y}) \propto p(\mathbf{y} | \theta) \cdot p(\theta)$$
+
+The **posterior** $p(\theta | \mathbf{y})$ is proportional to the **likelihood** $p(\mathbf{y}|\theta)$ times the **prior** $p(\theta)$. Posterior is proportional to likelihood times prior: MAP picks the peak of the posterior — the most probable parameter values given both the data and your prior beliefs about what reasonable parameters look like.
+
+**Maximum A Posteriori estimation (MAP)** maximises the log-posterior:
+
+$$\hat{\theta}_{\text{MAP}} = \arg\max_\theta \left[\log p(\mathbf{y} | \theta) + \log p(\theta)\right]$$
+
+The first term is the familiar log-likelihood (MLE). The second term is the **log-prior** — a penalty that encodes your beliefs about the parameters before seeing data.
+
+### 11.3 · MAP with a Gaussian Prior → L2 Regularisation
+
+Place an independent Gaussian prior on each weight: $p(\theta) = \prod_j \mathcal{N}(\theta_j; 0, \sigma^2)$. Then:
+
+$$\log p(\theta) = -\frac{1}{2\sigma^2}\sum_j \theta_j^2 + \text{const} = -\frac{\lambda}{2}\|\theta\|^2 + \text{const}$$
+
+Maximising the log-posterior becomes:
+
+$$\hat{\theta}_{\text{MAP}} = \arg\max_\theta \left[\text{NLL} - \frac{\lambda}{2}\|\theta\|^2\right] = \arg\min_\theta \left[\text{NLL} + \frac{\lambda}{2}\|\theta\|^2\right]$$
+
+This is exactly **L2-regularised** (Ridge) regression. L2 regularisation is MAP with a Gaussian prior. The regularisation coefficient $\lambda = 1/\sigma^2$ encodes how tightly you believe the weights should be near zero: large $\lambda$ (tight prior, small $\sigma^2$) → strong shrinkage; small $\lambda$ (diffuse prior, large $\sigma^2$) → near-MLE.
+
+### 11.4 · Laplace Prior → L1 Regularisation
+
+Replace the Gaussian prior with a Laplace prior: $p(\theta_j) \propto \exp(-|\theta_j|/b)$. Then $\log p(\theta) \propto -\lambda \|\theta\|_1$. MAP becomes:
+
+$$\hat{\theta}_{\text{MAP}} = \arg\min_\theta \left[\text{NLL} + \lambda\|\theta\|_1\right]$$
+
+This is **L1-regularised** (Lasso) regression. The Laplace prior is sharply peaked at zero, which promotes exact sparsity — many weights are driven precisely to zero. L1 regularisation is MAP with a Laplace prior.
+
+### 11.5 · Numerical Example — MAP vs MLE on 4 Noisy Points
+
+Fit a degree-3 polynomial $y = w_0 + w_1 t + w_2 t^2 + w_3 t^3$ to four noisy kick-height measurements:
+
+| $t$ (s) | $y$ (m, noisy) |
+|---|---|
+| 0.2 | 1.15 |
+| 0.5 | 1.60 |
+| 0.8 | 1.55 |
+| 1.1 | 0.80 |
+
+**MLE solution** (ordinary least squares, no regularisation): the system is exactly determined ($4$ equations, $4$ unknowns), so the polynomial fits all four points exactly. Computed weights: $w_0 = 0.23,\; w_1 = 6.81,\; w_2 = -3.89,\; w_3 = 0.02$.
+
+**MAP solution** with Gaussian prior ($\lambda = 1.0$, i.e. L2 regularisation): the regularisation term $\lambda \|\mathbf{w}\|^2$ shrinks coefficients toward zero. Computed weights: $w_0 = 0.14,\; w_1 = 4.92,\; w_2 = -2.31,\; w_3 = 0.01$.
+
+The MAP solution is smoother: $w_1$ drops from 6.81 to 4.92, and interpolated values between the training points no longer oscillate. The MLE solution memorises the noise; the MAP solution hedges toward the prior's belief that the trajectory is physically reasonable (coefficients shouldn't be huge).
+
+> **Progress fragment — check yourself before moving on:**
+> 1. A fair six-sided die has outcomes $\{1,2,3,4,5,6\}$ each with probability $1/6$. What is $H(p)$ in bits?
+> 2. Cross-entropy $H(p,q) = H(p) + KL(p\|q)$. If $H(p) = 1.2$ bits and $H(p,q) = 1.7$ bits, what is $KL(p\|q)$? What does this mean in words?
+> 3. Your L2 regularisation coefficient is $\lambda = 0.1$. What is the implicit prior variance $\sigma^2$ on the weights? If you double $\lambda$, does the prior become tighter or looser?
+>
+> *(Full discussion in the Progress Check below.)*
+
+---
+
+## 12 · Progress Check — What We Can Solve Now
 
 
 ```mermaid

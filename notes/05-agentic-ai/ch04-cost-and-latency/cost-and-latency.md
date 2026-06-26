@@ -13,17 +13,22 @@
 ## 0 · The Challenge — Where We Are
 
 > **The mission**: Launch **Mamma Rosa's PizzaBot** — a production AI ordering system satisfying 6 constraints:
-> 1. **BUSINESS VALUE**: >25% conversion + +$2.50 AOV + 70% labor savings — 2. **ACCURACY**: <5% error — 3. **LATENCY**: <3s p95 — 4. **COST**: <$0.08/conv — 5. **SAFETY**: Zero attacks — 6. **RELIABILITY**: >99% uptime
+> 1. **BUSINESS VALUE**: >25% conversion + +$2.50 AOV + 70% labor savings
+> 2. **ACCURACY**: <5% error
+> 3. **LATENCY**: <3s p95
+> 4. **COST**: <$0.08/conv
+> 5. **SAFETY**: Zero attacks
+> 6. **RELIABILITY**: >99% uptime
 
 **What we know so far:**
-- Ch.1-9: All technical targets hit! 30% conversion (>25% ), $40.60 AOV (+$2.10 ), 2.2s latency (<3s ), $0.010/conv (<$0.08 ), safety validated (0 attacks )
-- Constraints #2 ACCURACY (4.2% error <5% ), #5 SAFETY (0 attacks ), #6 RELIABILITY (>99% uptime ) **ACHIEVED**
+- Ch.1-9: All technical targets hit! 30% conversion (>25%), $40.60 AOV (+$2.10), 2.2s latency (<3s), $0.010/conv (<$0.08), safety validated (0 attacks)
+- Constraints #2 ACCURACY (4.2% error <5%), #5 SAFETY (0 attacks), #6 RELIABILITY (>99% uptime) **ACHIEVED**
 - Constraints #1 BUSINESS VALUE, #3 LATENCY, #4 COST **PARTIAL** — working but not optimized
 - **Current business metrics**: 30% conversion (phone baseline: 22%), $40.60 AOV (baseline: $38.50), $0.010/conv cost, 2.2s latency
 
 **What's blocking us:**
 
- **Current system meets technical targets but ROI payback is 18 months — need 10.6 months to justify CEO's $300k investment**
+**Current system meets technical targets but ROI payback is 18 months — need 10.6 months to justify CEO's $300k investment**
 
 **Current economics (pre-optimization):**
 ```
@@ -77,7 +82,7 @@ CEO: "And customers would wait even longer. I'm seeing 2.5-second delays in your
 
 **What this chapter unlocks:**
 
- **Cost & latency optimization stack:**
+**Cost & latency optimization stack:**
 1. **Prompt caching**: Cache system prompt across requests (90% cache hit → $0.002 → $0.0002 RAG cost)
 2. **Streaming responses**: First token <500ms (perceived instant UX)
 3. **KV-cache reuse**: Reuse attention tensors (-200ms latency)
@@ -85,9 +90,9 @@ CEO: "And customers would wait even longer. I'm seeing 2.5-second delays in your
 5. **Batched inference**: Process concurrent requests together (2× throughput for peak traffic)
 6. **INT8 quantization**: Model 16GB → 8GB (faster memory, -700ms inference time)
 **Constraints #1 + #3 + #4 [ACHIEVED]**:
-- **Latency**: 2.2s → **1.5s p95** (target <3s , beats by 50%) → 32% conversion
-- **Cost**: $0.010 → **$0.005/conv** (target <$0.08 , 94% under budget) → infrastructure headroom
-- **Business Value**: 32% conversion (>25% ), +$2.10 AOV, 70% labor savings () → $17,847/month benefit
+- **Latency**: 2.2s → **1.5s p95** (target <3s, beats by 50%) → 32% conversion
+- **Cost**: $0.010 → **$0.005/conv** (target <$0.08, 94% under budget) → infrastructure headroom
+- **Business Value**: 32% conversion (>25%), +$2.10 AOV, 70% labor savings () → $17,847/month benefit
 - **ROI payback**: 16.8 months at current traffic → **10.9 months at 120 visitors/day**
 
 ---
@@ -888,6 +893,71 @@ Every accuracy-improving technique adds cost. Knowing the magnitude helps you de
 
 ---
 
+## 7B · LLM Gateways — Routing, Fallback, and Semantic Caching
+
+> **LiteLLM was born from a spreadsheet problem.** In late 2023, Ishaan Jaffer was maintaining three separate microservices — one calling OpenAI GPT-4 for intent classification, one calling Anthropic Claude for long-document summarisation, and one calling Cohere for embeddings. Each spoke a different SDK with different error types, different retry semantics, and different rate-limit headers. When the OpenAI API had a 40-minute outage during a Friday evening traffic peak, the intent classifier returned 500s until an engineer manually rerouted traffic. The solution Ishaan built — a thin proxy layer that normalised all three provider SDKs behind the OpenAI API contract — became LiteLLM, which by 2025 was processing tens of billions of tokens per month across hundreds of teams. The gateway pattern itself is older: it mirrors the API gateway pattern from traditional microservices (Kong, Nginx, Envoy), applied to inference endpoints instead of REST endpoints. The insight is the same: when your application needs to talk to multiple backends that may fail, rate-limit, or vary in cost, you do not want that complexity bleeding into your application code.
+>
+> At InferenceBase's current scale — 12,000 req/day through a single Llama-3-8B endpoint — one model outage takes down the entire document-extraction pipeline. A gateway adds three things: resilience (automatic failover to a backup model or provider when the primary is unavailable), cost control (rate-limit buckets that prevent a runaway process from burning the monthly budget in an afternoon), and semantic caching (serve a cached response when a new request is semantically equivalent to one already answered — shaving 30% off inference cost on repetitive document types). This section shows you how to implement all three on a laptop with no paid API keys.
+
+### The Core Idea — What a Gateway Does
+
+A gateway sits between your application and your model providers. It speaks the OpenAI-compatible API to both sides. The application sends requests to `http://gateway:4000/v1/chat/completions`; the gateway decides which backend to call, handles errors and fallbacks, enforces rate limits, and optionally serves cached responses.
+
+```
+Application → Gateway → [Provider A: GPT-4 (primary)]
+                      → [Provider B: Claude Haiku (fallback-1)]
+                      → [Provider C: Ollama local (fallback-2)]
+```
+
+The application code does not change when you add a provider, when a provider goes down, or when you introduce caching. All that complexity lives in the gateway configuration.
+
+### Provider Routing
+
+The routing table maps request types or model names to provider configurations:
+
+| Request type | Primary | Fallback 1 | Fallback 2 |
+|---|---|---|---|
+| Document extraction (InferenceBase) | Llama-3-8B local | GPT-3.5 API | phi3:mini local |
+| Long-document summary | GPT-4 API | Claude Haiku | Llama-3-70B-Instruct |
+| Embedding generation | text-embedding-3-small | Ollama nomic-embed | sentence-transformers local |
+
+The fallback chain activates on: HTTP 5xx from the primary, timeout exceeding `timeout_s`, rate-limit (HTTP 429), or a cost cap being hit.
+
+Failover latency overhead: typically 50–500ms for the gateway to detect failure and retry the next provider. This is why you target a primary that succeeds 99.9% of the time — the fallback is for the rare case, not the hot path.
+
+### Rate-Limit Bucket Algorithm
+
+The token-bucket algorithm enforces rate limits without blocking threads. Tokens accumulate at a configured rate; each request consumes one token. If the bucket is empty, the request is queued or rejected:
+
+$$\text{tokens}(t) = \min\!\left(B_\text{max},\ \text{tokens}(t-1) + r \cdot \Delta t\right)$$
+
+where $B_\text{max}$ is the bucket capacity (burst allowance), $r$ is the refill rate (req/s), and $\Delta t$ is elapsed time since the last check. This gives $B_\text{max}$ instant capacity for bursts while enforcing $r$ req/s sustained throughput. For InferenceBase: $r = 0.14$ req/s (12,000 req/day), $B_\text{max} = 10$ (allow brief bursts of up to 10 simultaneous requests).
+
+A second bucket enforces spend caps: each request deducts its estimated token cost from a spend counter; when the daily spend counter reaches the cap, new requests are queued until midnight reset.
+
+$$\text{cost\_remaining}(t) = \text{daily\_cap} - \sum_{i=1}^{t} (n_{\text{in},i} \cdot p_\text{in} + n_{\text{out},i} \cdot p_\text{out})$$
+
+### Semantic Caching
+
+A traditional exact-match cache only hits when the request is byte-for-byte identical. Semantic caching instead embeds the request and searches for a previously cached request that is semantically equivalent:
+
+1. Embed the incoming request prompt using a small embedding model (e.g., `all-MiniLM-L6-v2`, 23 MB, runs on CPU in ~2ms).
+2. Compute cosine similarity against all cached prompt embeddings.
+3. If $\cos(\mathbf{q}_\text{new}, \mathbf{q}_\text{cached}) \geq \theta$, return the cached response. Typical threshold: $\theta = 0.92$.
+4. Otherwise, call the model, store the response and its embedding.
+
+$$\cos(\mathbf{a}, \mathbf{b}) = \frac{\mathbf{a} \cdot \mathbf{b}}{\|\mathbf{a}\| \|\mathbf{b}\|}$$
+
+The dot product of two unit-normalised embedding vectors gives a similarity in $[-1, 1]$; at $\theta = 0.92$, you are catching near-paraphrases ("Extract the title and date from this invoice" vs "From this invoice, get the title and date") while avoiding false positives between genuinely different requests.
+
+Cache hit rate formula for a corpus with $K$ distinct request semantics and $N$ total requests:
+
+$$\text{hit\_rate} \approx 1 - \frac{K}{N}$$
+
+If InferenceBase processes 12,000 req/day but has only 2,000 distinct document types: $\text{hit\_rate} \approx 83\%$. Cost saving: $0.83 \times 12{,}000 \times \$0.000088 = \$0.87/\text{day}$ ($318/year). Larger scale or more repetitive workloads produce dramatically larger savings.
+
+---
+
 ## 8 · Real Numbers — Cost Estimation
 
 The CEO needs a number for the budget deck, not a formula. The model below applies the §2 token ledger to realistic traffic levels — with and without prompt caching — converting the optimization stack into a monthly line item.
@@ -945,8 +1015,8 @@ Break-even vs. API: ~same, but with full data privacy and no per-token billing
 | Constraint | Status | Final State |
 |------------|--------|---------------|
 | #1 BUSINESS VALUE | **TARGET MOSTLY HIT** | **32% conversion** (>25% , beats phone 22%!), **+$2.10 AOV** (target +$2.50, 84% achieved), 70% labor savings () |
-| #2 ACCURACY | **TARGET HIT!** | ~5% error rate (target <5% ) — maintained through optimizations |
-| #3 LATENCY | **TARGET CRUSHED!** | **1.5s p95** (target <3s ) — **beats target by 50%!** |
+| #2 ACCURACY | **TARGET HIT!** | ~5% error rate (target <5%) — maintained through optimizations |
+| #3 LATENCY | **TARGET CRUSHED!** | **1.5s p95** (target <3s) — **beats target by 50%!** |
 | #4 COST | **TARGET CRUSHED!** | **$0.005/conv** (target <$0.08 ) — **94% under budget!** |
 | #5 SAFETY | **TARGET HIT!** | <2% jailbreak vulnerability, 100% allergen validation () |
 | #6 RELIABILITY | **TARGET HIT!** | >99% uptime, graceful degradation () |
@@ -1032,10 +1102,10 @@ Result: 2× throughput! Can handle peak traffic (holiday ordering rush)
 ```
 
 **Final business metrics:**
-- **Order conversion**: **32%** (target >25% , beats phone 22% )
+- **Order conversion**: **32%** (target >25%, beats phone 22%)
 - **Average order value**: **$40.60** (+$2.10 vs. baseline $38.50 )
 - **Cost per conversation**: **$0.005** (target <$0.08 , 94% under budget!)
-- **Error rate**: **~5%** (target <5% )
+- **Error rate**: **~5%** (target <5%)
 - **Latency**: **1.5s p95** (target <3s , beats by 50%!)
 - **Throughput**: **20 orders/sec** (vs. 10 before, 2× improvement)
 - **Security**: <2% jailbreak vulnerability, 100% allergen validation

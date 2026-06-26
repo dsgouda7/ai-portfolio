@@ -1,14 +1,14 @@
 # InterviewGuides — Authoring Guide
 
-> **Purpose**: This guide defines how to write, review, and extend the interview preparation documents under `notes/InterviewGuides/`.
+> **Purpose**: This guide defines how to write, review, and extend the interview preparation documents under `notes/interview-guides/`.
 > These are not chapter notes — they are **structured interview primers** designed to get a senior AI/ML engineer from zero to confident in a specific domain within 2–4 hours.
 > Read this before editing any guide to keep tone, structure, and coverage consistent.
 >
-> ** Updated:** Now includes comprehensive pedagogical patterns, mathematical style conventions, and visual standards aligned with the ML track authoring guide.
+> **Updated:** Now includes comprehensive pedagogical patterns, mathematical style conventions, and visual standards aligned with the ML track authoring guide.
 
 <!-- LLM-STYLE-FINGERPRINT-V1
 scope: interview_guides
-canonical_examples: ["notes/InterviewGuides/AgenticAI.md", "notes/InterviewGuides/AIInfrastructure.md"]
+canonical_examples: ["notes/interview-guides/agentic-ai.md", "notes/interview-guides/ai-infrastructure.md"]
 voice: second_person_practitioner
 register: high_density_technical_interview_ready
 pedagogy: anticipate_the_interviewer + failure_first_discovery
@@ -827,4 +827,4 @@ Fold the study sequence into one "How to use this guide" paragraph at the top �
 
 ---
 
-*Last updated: April 2026 — applies to all documents under `notes/InterviewGuides/`*
+*Last updated: April 2026 — applies to all documents under `notes/interview-guides/`*

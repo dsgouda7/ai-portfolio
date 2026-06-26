@@ -17,7 +17,11 @@
 ## 0 · The Challenge — Where We Are
 
 > **The mission**: Build **SegmentAI** — discover actionable customer segments with silhouette >0.5
-> 1. **SEGMENTATION**: k=4 distinct segments — 2. **INTERPRETABILITY**: Business-actionable labels — 3. **STABILITY**: Reproducible across runs — 4. **SCALABILITY**: Generalise to 10k+ customers — 5. **VALIDATION**: Silhouette >0.5
+> 1. **SEGMENTATION**: k=4 distinct segments
+> 2. **INTERPRETABILITY**: Business-actionable labels
+> 3. **STABILITY**: Reproducible across runs
+> 4. **SCALABILITY**: Generalise to 10k+ customers
+> 5. **VALIDATION**: Silhouette >0.5
 
 **What we know so far:**
 - Ch.1: K-Means (k=4) found 4 interpretable segments — silhouette = **0.52** (already above 0.5!)

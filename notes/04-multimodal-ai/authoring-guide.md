@@ -2,10 +2,10 @@
 
 > **Purpose**: This guide defines the template for authoring Multimodal AI chapters using the **VisualForge Studio** Grand Challenge as the unifying thread.
 >
-> ** Updated:** Now includes comprehensive pedagogical patterns, voice & register rules, and conformance checklist from ML track standards.
+> **Updated:** Now includes comprehensive pedagogical patterns, voice & register rules, and conformance checklist from ML track standards.
 
 <!-- LLM-STYLE-FINGERPRINT-V1
-canonical_chapters: ["notes/05-multimodal_ai/ch03_clip/README.md", "notes/05-multimodal_ai/ch06_latent_diffusion/README.md"]
+canonical_chapters: ["notes/04-multimodal-ai/ch03-clip/README.md", "notes/04-multimodal-ai/ch06-latent-diffusion/README.md"]
 voice: second_person_practitioner
 register: technical_but_conversational
 formula_motivation: required_before_each_formula
@@ -649,7 +649,7 @@ torch.cuda.empty_cache() # clear KV/activation fragments before loading new mode
 | Metric chart | FID / HPSv2 improving across chapters | `ch11-quality-metric-progress.png` |
 | Needle GIF | Which constraint moved this chapter | `chNN-[topic]-needle.gif` |
 
-All images in `notes/MultimodalAI/{ChapterName}/img/`. Dark background `#1a1a2e` for generated charts. **Generated images themselves** (the diffusion outputs) do not need dark backgrounds — show them as-is.
+All images in `notes/04-multimodal-ai/{ChapterName}/img/`. Dark background `#1a1a2e` for generated charts. **Generated images themselves** (the diffusion outputs) do not need dark backgrounds — show them as-is.
 
 ---
 
@@ -1519,7 +1519,7 @@ result = production_pipeline(example_input)
 **File Naming:**
 - Markdown: `grand_solution.md`
 - Notebook: `grand_solution_reference.ipynb` (reference) or `grand_solution_exercise.ipynb` (practice)
-- Both live in track root (e.g., `notes/05-multimodal_ai/`)
+- Both live in track root (e.g., `notes/04-multimodal-ai/`)
 
 ---
 

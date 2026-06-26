@@ -585,6 +585,87 @@ Final result:
 
 ---
 
+### 3.7 · Convexity — Why Gradient Descent Can Be Trusted
+
+Run gradient descent on logistic regression 100 times with different random initialisations. Same answer every time. Run it on a 3-layer ReLU network: different answers every time. Why? The answer is convexity — and its absence.
+
+#### 3.7.1 · The Definition
+
+A function $f: \mathbb{R}^d \to \mathbb{R}$ is **convex** if for every pair of points $\mathbf{x}, \mathbf{y}$ and every $t \in [0, 1]$:
+
+$$f\bigl(t\mathbf{x} + (1-t)\mathbf{y}\bigr) \leq t\,f(\mathbf{x}) + (1-t)\,f(\mathbf{y})$$
+
+The chord drawn between any two points on the graph lies above (or on) the function. A bowl is convex. A saddle is not. On a convex surface, any direction that looks downhill leads eventually to the same lowest point — there is only one.
+
+For twice-differentiable functions the equivalent condition is:
+
+- **Scalar case**: $f''(x) \geq 0$ everywhere — the curve bends upward.
+- **Vector case**: the Hessian $H = \nabla^2 f(\mathbf{x})$ is positive semi-definite (all eigenvalues $\geq 0$) everywhere.
+
+#### 3.7.2 · Strong Convexity
+
+A stronger condition: $f''(x) \geq \mu > 0$ (scalar) or $H \succeq \mu I$ (vector). The function bends upward by at least $\mu$ everywhere. Strong convexity guarantees a **unique minimum** and a **linear convergence rate**: the distance to the optimum shrinks by a constant factor each step. MSE on a linear model is strongly convex when $X$ has full column rank.
+
+#### 3.7.3 · Jensen's Inequality
+
+For convex $f$:
+
+$$f\!\left(\mathbb{E}[X]\right) \leq \mathbb{E}\!\left[f(X)\right]$$
+
+The function of the average is at most the average of the function. This single inequality, combined with $f(x) = -\log x$ (which is convex), proves that $KL(p \| q) \geq 0$ for any two distributions $p, q$ — which in turn proves that cross-entropy is a valid lower bound on optimal code length. Jensen underlies dozens of results in probability and information theory.
+
+#### 3.7.4 · Which ML Losses Are Convex?
+
+| Loss / Model | Convex? | Why |
+|---|---|---|
+| **MSE — linear model** | Yes (strongly) | $\frac{d^2}{dw^2}\text{MSE} = \frac{2}{N} X^\top X \succeq 0$. The Hessian is a Gram matrix, always PSD. |
+| **Binary cross-entropy — logistic regression** | Yes | The sigmoid's second derivative is bounded positive; the log-likelihood of a Bernoulli with a linear argument is concave (−logistic = convex). |
+| **Hinge loss — SVM** | Yes | Piecewise linear and convex; convex hull of a set of convex functions is convex. |
+| **Neural network loss — any depth ≥ 2 with non-linear activations** | No | Non-linear activations (ReLU, tanh, sigmoid) create non-convex loss surfaces with exponentially many local minima and saddle points. |
+
+**Proof sketch for MSE convexity.** The MSE loss over $N$ samples is:
+
+$$\mathcal{L}(w) = \frac{1}{N}\|Xw - y\|^2$$
+
+Its second derivative (Hessian) with respect to $w$ is:
+
+$$\nabla^2_w \mathcal{L} = \frac{2}{N} X^\top X$$
+
+For any vector $\mathbf{v}$: $\mathbf{v}^\top (X^\top X) \mathbf{v} = \|X\mathbf{v}\|^2 \geq 0$. So the Hessian is positive semi-definite — MSE is convex, always, for any $X$.
+
+#### 3.7.5 · Practical Consequences
+
+**When the loss is convex:**
+- Any initialisation finds the global minimum (there is only one).
+- The learning rate affects only the *speed* of convergence, not the *destination*.
+- Convergence is guaranteed with a step size $\eta < 2/L$ where $L$ is the Lipschitz constant of the gradient.
+
+**When the loss is non-convex (neural networks):**
+- Different initialisations reach different local minima — this is why training results vary.
+- Flat regions (low gradient, high loss) stall training.
+- Batch normalisation and residual connections help "smooth" the loss landscape: they reduce the ratio of Hessian eigenvalue spread, making gradient descent behave more like it does on a convex surface.
+- In practice, **overparameterised** networks have many good local minima — you rarely need the global one. Every minimum you reach in a well-overparameterised network is near-optimal on the training set.
+
+#### 3.7.6 · Numerical Comparison
+
+**Convex landscape — MSE on a linear model.** Start from $w_0 = -2$; also try $w_0 = 5$. Both trajectories converge to the same $w^* = 1.5$ in approximately 30 iterations.
+
+**Non-convex landscape.** Consider $f(w) = w^4 - 3w^2 + 2$ (not a real loss function, but structurally similar to multi-modal loss surfaces). This has two local minima at $w \approx \pm 1.22$ and a local maximum at $w = 0$.
+
+- Start from $w_0 = 0.5$: gradient descent converges to $w^* \approx +1.22$ (right minimum, $f \approx -0.25$).
+- Start from $w_0 = -0.5$: gradient descent converges to $w^* \approx -1.22$ (left minimum, $f \approx -0.25$).
+- Start from $w_0 = 2.0$: converges to $w^* \approx +1.22$.
+
+Two different starting points, two different — but equivalent — answers. On a convex loss, you never see this.
+
+#### 3.7.7 · Connection to the Knuckleball Trajectory
+
+The height function $h(t) = v_0 \sin(\theta)\,t - \frac{1}{2}g t^2$ is **concave** in $t$ (the leading coefficient $-g/2 < 0$ makes $h''(t) = -g < 0$). Concave functions have a unique maximum, not minimum. Finding the apex — the optimal $t_{\text{peak}}$ — is as reliable as finding a minimum on a convex loss: start anywhere, follow the gradient, and reach the same answer. The keeper facing a concave trajectory has the same guarantee: there is exactly one highest point, and gradient descent (ball tracking) finds it every time.
+
+This is also why *minimising* a loss works the same as *maximising* a reward: you minimise the negative. The free-kick height is maximised by treating $-h(t)$ as the loss and applying gradient descent on $t$. Concavity of $h$ corresponds to convexity of $-h$, so the guarantee carries through.
+
+---
+
 ## 4 · Step by Step — maximise goal-kick range by gradient ascent
 
 1. Set $v_0 = 25$, $g = 9.81$. Define $R(\theta) = (v_0^2/g)\sin(2\theta)$ with $\theta$ in radians.
@@ -647,9 +728,9 @@ graph LR
  C2["Ch.2\nNonlinear Algebra"]:::done
  C3["Ch.3\nCalculus Intro"]:::done
  C4["Ch.4\nSmall Steps"]:::done
- C5["Ch.5\nMatrices"]:::done
- C6["Ch.6\nGradient + Chain Rule"]:::done
- C7["Ch.7\nProbability & Stats"]:::done
+ C5["Ch.5\nMatrices"]
+ C6["Ch.6\nGradient + Chain Rule"]
+ C7["Ch.7\nProbability & Stats"]
  C1 --> C2 --> C3 --> C4 --> C5 --> C6 --> C7
  classDef done fill:#15803d,stroke:#e2e8f0,stroke-width:2px,color:#ffffff
  classDef current fill:#1d4ed8,stroke:#e2e8f0,stroke-width:2px,color:#ffffff

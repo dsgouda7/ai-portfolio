@@ -72,7 +72,7 @@
 
 **Your mission:** You're building a production LLM system. The model gives different outputs for the same input. It invents facts. It outputs prose when you need JSON. It answers cooking questions when you built a tax advisor. **Each failure mode is an enemy.** Your job: forge tools to defeat them.
 
-> ** Why prompt engineering matters for costs:** Effective prompts directly impact your LLM bills. Poor prompts lead to:
+> **Why prompt engineering matters for costs:** Effective prompts directly impact your LLM bills. Poor prompts lead to:
 > - **Failed generations** → wasted tokens + retries (2-5× multiplier)
 > - **Excessive verbosity** → unnecessary output tokens (20-40% cost inflation)
 > - **Missing context** → multi-turn clarifications (3-10× conversation length)
@@ -256,7 +256,7 @@ Each component addresses a specific failure mode:
 
 *System prompts: the behavioral contract you write once and enforce never.*
 
-> ** System prompt cost optimization:**
+> **System prompt cost optimization:**
 >
 > **Prompt caching** (supported by Claude, GPT-4 Turbo): System prompts are sent with *every* request, but most APIs now cache them automatically. A 500-token system prompt costs:
 > - **Without caching:** 500 input tokens × $0.03/1K = **$0.015 per request**
@@ -564,7 +564,7 @@ except json.JSONDecodeError as e:
 | 3 examples outperform 1; 10 rarely outperform 3 | Diminishing returns kick in fast; excessive examples eat your context budget |
 | Labels can be random for classification | Surprisingly, the *format* of the label matters more than its correctness in few-shot classification — but don't exploit this in production |
 
-> ** Few-shot cost optimization:**
+> **Few-shot cost optimization:**
 >
 > **Token budget math:** Each example adds input tokens. Poor few-shot design wastes money:
 >
@@ -922,7 +922,7 @@ The next chapter — [Chain-of-Thought Reasoning](../ch06-cot-reasoning/cot-reas
 
 Your hardest prompt engineering challenge: getting models to reliably produce machine-parseable output (JSON, XML, specific delimited text) without extra prose, apologies, or format deviations. Structured output parsing depends entirely on this — a single format violation breaks the downstream parser.
 
-> ** Structured output cost optimization:**
+> **Structured output cost optimization:**
 >
 > **Problem:** Unstructured responses waste tokens and require retries:
 > - **Verbose model:** "Sure! Here's the information you requested: {data: ...} I hope this helps!"
@@ -1667,7 +1667,7 @@ Result: Still wrong! (missing "extra-large") — Need Ch.7 RAG to ground in real
  - Bot might still comply with sufficiently clever wording
  - **Enemy: Determined attackers** → Weapon needed: Adversarial fine-tuning + guardrails
 
-**Investigation findings after Ch.5:****
+**Investigation findings after Ch.5:**
 - **Format consistency**: 100% on both models (Phase 3 JSON mode) — structured output confirmed
 - **Scope adherence**: <1% off-topic on both models — system-prompt behavioral control verified
 - **Grounding**: Still hallucinating on domain-specific facts (needs Ch.7 RAG) — not yet production-safe

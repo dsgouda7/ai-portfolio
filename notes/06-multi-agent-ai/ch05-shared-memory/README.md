@@ -11,7 +11,14 @@
 ## § 0 · The Challenge — Where We Are
 
 > **The mission**: Build **OrderFlow** — AI-native B2B purchase order automation satisfying 8 constraints:
-> 1. **THROUGHPUT**: 1,000 POs/day — 2. **LATENCY**: <4hr SLA — 3. **ACCURACY**: <2% error — 4. **SCALABILITY**: 10 agents/PO — 5. **RELIABILITY**: >99.9% uptime — 6. **AUDITABILITY**: Full traceability — 7. **OBSERVABILITY**: Real-time monitoring — 8. **DEPLOYABILITY**: Zero-downtime updates
+> 1. **THROUGHPUT**: 1,000 POs/day
+> 2. **LATENCY**: <4hr SLA
+> 3. **ACCURACY**: <2% error
+> 4. **SCALABILITY**: 10 agents/PO
+> 5. **RELIABILITY**: >99.9% uptime
+> 6. **AUDITABILITY**: Full traceability
+> 7. **OBSERVABILITY**: Real-time monitoring
+> 8. **DEPLOYABILITY**: Zero-downtime updates
 
 **After Ch.4**: Async pub/sub achieved 1,200 POs/day (120% of target). Latency: 8hr median. Error rate: 3.2%.
 

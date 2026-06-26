@@ -4,10 +4,10 @@
 > Each chapter lives under `notes/02-advanced_deep_learning/` in its own folder, containing a README and a Jupyter notebook.
 > Read this before authoring or reviewing any chapter to keep tone, structure, and the running example consistent.
 >
-> ** Adapted from:** `notes/01-ml/authoring-guide.md` — inherits all ML track conventions unless explicitly overridden below.
+> **Adapted from:** `notes/01-ml/authoring-guide.md` — inherits all ML track conventions unless explicitly overridden below.
 
 <!-- LLM-STYLE-FINGERPRINT-V1
-canonical_chapters: ["notes/02-advanced_deep_learning/ch01_residual_networks/README.md", "notes/02-advanced_deep_learning/ch02_efficient_architectures/README.md"]
+canonical_chapters: ["notes/02-advanced-deep-learning/ch01-residual-networks/README.md", "notes/02-advanced-deep-learning/ch02-efficient-architectures/README.md"]
 voice: second_person_practitioner
 register: technical_but_conversational
 running_example: ProductionCV_retail_shelf_monitoring

@@ -441,7 +441,7 @@ print(result)
 
 ## 11 · Notebook
 
-> ** Executable notebook**: [multimodal_llms.ipynb](multimodal_llms.ipynb)
+> **Executable notebook**: [multimodal_llms.ipynb](multimodal_llms.ipynb)
 
 **What's inside**:
 

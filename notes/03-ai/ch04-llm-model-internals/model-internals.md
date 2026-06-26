@@ -219,7 +219,7 @@ Result: Blend 53% of Expert 2's output + 24% of Expert 3's output
 
 ---
 
-## 6A · Token Flow & Parameters
+## 1 · Token Flow & Parameters
 
 You've seen the transformer block (§2A), attention mechanisms (§2A), and inference loops (§3A). This section answers: **Where are the 7 billion parameters in a 7B model? What happens when a token enters the model?**
 
@@ -367,7 +367,7 @@ print(f"King-Man similarity: {similarity_king_man.item():.4f}")
 
 ---
 
-## 6B · VRAM & Memory — Enemy #2 (Memory Constraints)
+## 2 · VRAM & Memory — Enemy #2 (Memory Constraints)
 
 ### Enemy #2: Memory Constraints
 
@@ -600,7 +600,7 @@ Total apartment: 45.4 GB → needs 2× A40 (48 GB) or 1× A100 (80 GB)
 
 ---
 
-## 6C · Optimization Techniques — Forging the Weapons
+## 3 · Optimization Techniques — Forging the Weapons
 
 ### Quantization — How the Weapon Works (Deep Dive)
 
@@ -983,7 +983,7 @@ pie title "LLaMA 7B Parameter Distribution (6.74B total)"
 
 ---
 
-## 6D · Memory Profiling & Debugging
+## 4 · Memory Profiling & Debugging
 
 Understanding VRAM usage is critical for deployment. Here's how to profile and optimize memory consumption.
 
@@ -1105,7 +1105,7 @@ results = batch_generate(batch, batch_size=4) # 4 at a time
 
 ---
 
-## 6E · Real-World Deployment Scenarios
+## 5 · Real-World Deployment Scenarios
 
 ### Scenario 1: Chatbot on a Budget (Single RTX 4090)
 
@@ -1190,7 +1190,7 @@ model = AutoModelForCausalLM.from_pretrained(
 
 ---
 
-## 6F · Transformer Block Internals — Where Computation Happens
+## 6 · Transformer Block Internals — Where Computation Happens
 
 Each transformer block has two main components: **attention** (20% of params) and **FFN** (80% of params).
 
@@ -1270,7 +1270,7 @@ Parameters per block:
 
 ---
 
-## 6G · Comparing Model Architectures
+## 7 · Comparing Model Architectures
 
 Different model families make different architectural choices. Understanding these helps you pick the right model for your use case.
 
@@ -1407,7 +1407,7 @@ for seq_len in seq_lens:
 
 ---
 
-## 7 · Why Models Behave Differently: Architecture → Behavior
+## 8 · Why Models Behave Differently: Architecture → Behavior
 
 You can run the same prompt through GPT-4 and Claude and get responses that feel fundamentally different — one assertive, one hedging; one terse, one verbose; one citing sources, one confidently confabulating. The parameter count tells you nothing about why. The answer lives in three places: **architecture**, **alignment training**, and **instruction tuning data**.
 
@@ -1483,7 +1483,7 @@ None of this is random. **Model behavior is deterministic and traceable** — on
 
 ---
 
-## 1 · Key Distinctions Every Engineer Gets Asked
+## 9 · Key Distinctions Every Engineer Gets Asked
 
 | Pair | Distinction |
 |---|---|

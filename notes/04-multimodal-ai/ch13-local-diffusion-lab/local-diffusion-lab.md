@@ -487,7 +487,7 @@ graph TD
  C1 --> C
  E --> F["Validate: Benchmark + Quality Gate"]
  F --> G{"All checks pass?"}
- G -->|Yes| H[" Deploy to Production"]
+ G -->|Yes| H["Deploy to Production"]
  G -->|No| I["Iterate optimization<br/>(return to Phase 2)"]
  I --> C
 

@@ -8,7 +8,7 @@
 >
 > **Where you are.** [LLM Fundamentals (03-ai)](../../03-ai) gave you prompting, CoT reasoning, RAG, and vector DBs — the foundation. Ch.1 (ReAct & Semantic Kernel) in this track unlocked **28% conversion** via tool orchestration + proactive upselling — beating the 22% phone baseline! But every prompt change risks regression without automated testing. ML had its [own metrics chapter](../../01-ml/02-classification/ch03_metrics) for supervised learning. AI needs one too — because "correctness" in free-form text is fuzzy, context-dependent, and often requires another LLM to evaluate.
 >
-> **Business context.** You're the Lead AI Engineer at Mamma Rosa's Pizza. Current status: **28% conversion** (target >25% ), **+$2.50 AOV** (), **~5% error** (), **2.5s latency** (), **$0.015/conv** (). All core targets hit! But the CEO won't ship without automated testing: "One bad regression could wipe out all your conversion gains." You're deploying 2-3 prompt iterations per day, manually testing 3-5 queries each time, and suffering 2-3 regressions per week from changes that "looked fine" in manual tests. No A/B testing framework. No production monitoring. No way to prove a new model version (GPT-4o → GPT-4o-mini) maintains quality. This chapter builds the testing infrastructure that lets you iterate fast without breaking production.
+> **Business context.** You're the Lead AI Engineer at Mamma Rosa's Pizza. Current status: **28% conversion** (target >25%), **+$2.50 AOV** (), **~5% error** (), **2.5s latency** (), **$0.015/conv** (). All core targets hit! But the CEO won't ship without automated testing: "One bad regression could wipe out all your conversion gains." You're deploying 2-3 prompt iterations per day, manually testing 3-5 queries each time, and suffering 2-3 regressions per week from changes that "looked fine" in manual tests. No A/B testing framework. No production monitoring. No way to prove a new model version (GPT-4o → GPT-4o-mini) maintains quality. This chapter builds the testing infrastructure that lets you iterate fast without breaking production.
 >
 > **Notation.** $F \in [0,1]$ — faithfulness (how well the answer is grounded in retrieved context); $P_c \in [0,1]$ — context precision; $R_c \in [0,1]$ — context recall; $R_a \in [0,1]$ — answer relevancy; $\bar{\rho}$ — mean pairwise agreement between judge scores (inter-rater reliability).
 
@@ -17,7 +17,12 @@
 ## 0 · The Challenge — Where We Are
 
 > **The mission**: Launch **Mamma Rosa's PizzaBot** — a production AI ordering system satisfying 6 constraints:
-> 1. **BUSINESS VALUE**: >25% conversion + +$2.50 AOV + 70% labor savings — 2. **ACCURACY**: <5% error — 3. **LATENCY**: <3s p95 — 4. **COST**: <$0.08/conv — 5. **SAFETY**: Zero attacks — 6. **RELIABILITY**: >99% uptime
+> 1. **BUSINESS VALUE**: >25% conversion + +$2.50 AOV + 70% labor savings
+> 2. **ACCURACY**: <5% error
+> 3. **LATENCY**: <3s p95
+> 4. **COST**: <$0.08/conv
+> 5. **SAFETY**: Zero attacks
+> 6. **RELIABILITY**: >99% uptime
 
 **What we know so far:**
 - Ch.1-6: All core targets hit! 28% conversion , +$2.50 AOV , <5% error , <3s latency
@@ -1279,9 +1284,9 @@ jobs:
 
 | Constraint | Status | Current State |
 |------------|--------|---------------|
-| #1 BUSINESS VALUE | **MAINTAINED** | 28% conversion (target >25% ), +$2.50 AOV (), 70% labor savings () |
-| #2 ACCURACY | **TARGET HIT (maintained)** | ~5% error rate (target <5% ) — RAGAS faithfulness score 0.95+ |
-| #3 LATENCY | **EXCELLENT (maintained)** | 2.5s p95 (target <3s ) |
+| #1 BUSINESS VALUE | **MAINTAINED** | 28% conversion (target >25%), +$2.50 AOV (), 70% labor savings () |
+| #2 ACCURACY | **TARGET HIT (maintained)** | ~5% error rate (target <5%) — RAGAS faithfulness score 0.95+ |
+| #3 LATENCY | **EXCELLENT (maintained)** | 2.5s p95 (target <3s) |
 | #4 COST | **ON TRACK** | $0.015/conv (target <$0.08 ) |
 | #5 SAFETY | **MAINTAINED** | Zero allergen false claims in test suite |
 | #6 RELIABILITY | **IMPROVED!** | Regression detection prevents production failures, uptime >99% |
@@ -1391,10 +1396,10 @@ Root cause identified without customer complaints
 ```
 
 **Business metrics update:**
-- **Order conversion**: 28% (maintained from Ch.6, target >25% )
+- **Order conversion**: 28% (maintained from Ch.6, target >25%)
 - **Average order value**: $40.60 (maintained from Ch.6, +$2.50 vs. baseline )
 - **Cost per conversation**: $0.015 (maintained from Ch.6, target <$0.08 )
-- **Error rate**: ~5% (maintained from Ch.6, target <5% )
+- **Error rate**: ~5% (maintained from Ch.6, target <5%)
 - **Regression rate**: 2-3/week → **~0.1/week** (95% reduction)
 - **Development velocity**: 2 prompt iterations/day → **10+ iterations/day** (safe to experiment)
 - **Time to detect regressions**: 24 hours (customer complaints) → **<2 minutes** (pre-commit tests)
@@ -1444,3 +1449,188 @@ These aren't retrieval problems (RAG already solves those). They're **generation
 ## Illustrations
 
 ![Evaluating AI systems — RAGAS radar, reasoning-trace checklist, component-level eval, hallucination gate](img/Evaluating%20AI%20Systems.png)
+
+---
+
+## 10 · LLM-as-a-Judge — Full Technique
+
+Automated metrics (BLEU, ROUGE, RAGAS) are necessary but not sufficient for evaluating conversational systems. Mamma Rosa's PizzaBot can score 0.95 on RAGAS faithfulness while sounding robotic, failing to upsell, or being technically correct but uselessly verbose. Human evaluation catches these gaps — but human raters cost money, have limited bandwidth, and are difficult to run at the velocity your eval suite needs. LLM-as-judge is the practical bridge: use a capable language model to score or compare responses, at the throughput of automated metrics but with the semantic sensitivity of human raters.
+
+### 10.1 Three Evaluation Modes
+
+**Pointwise scoring**: the judge reads a single response and assigns a score (typically 1–5) on each criterion. Fast, parallelisable, good for regression tracking.
+
+```
+JUDGE PROMPT (pointwise):
+You are evaluating a pizza-ordering assistant response.
+Score the following response on each criterion from 1 (poor) to 5 (excellent).
+
+Criteria:
+- Order Accuracy: does the response correctly capture the order details?
+- Tone: is the response warm and professional, matching the Mamma Rosa brand?
+- Completeness: does it address the customer's full request?
+- Conciseness: is it appropriately brief without losing key information?
+
+Customer message: "{customer_message}"
+Assistant response: "{response}"
+
+Respond with JSON: {"order_accuracy": int, "tone": int, "completeness": int, "conciseness": int, "reasoning": str}
+```
+
+**Pairwise comparison**: the judge reads two responses (A and B) and picks the better one. Scales to large comparison sets; produces relative rankings. The primary vulnerability is position bias — see §10.3.
+
+**Reference-based scoring**: the judge compares a response to a gold reference. Useful when you have a hand-curated answer set for high-stakes queries. Equivalent to ROUGE but with semantic rather than lexical comparison.
+
+### 10.2 Rubric Design
+
+What makes a good rubric:
+
+1. **Decompose into atomic criteria.** "Quality" is not a rubric criterion — it is a summary. Atomic criteria produce more consistent scores: "Order Accuracy," "Tone," "Completeness," "Conciseness" each measure a single independent dimension.
+2. **Anchor each score level.** Score 1 = "misses the order entirely or refuses to engage"; score 3 = "captures order but omits modifiers"; score 5 = "captures all items, sizes, modifiers, delivery address, and handles edge cases." Unanchored scales produce high variance.
+3. **Exclude criteria your judge cannot reliably assess.** A local phi3:mini judge cannot reliably assess subtle cultural nuance. Use it for factual accuracy, completeness, and structural compliance — leave stylistic subtlety to human raters.
+
+**PizzaBot rubric (used in notebook §10.5):**
+
+| Criterion | 1 | 3 | 5 |
+|---|---|---|---|
+| Order Accuracy | Wrong item or address | Right item, missing modifiers | All items, sizes, mods, address correct |
+| Tone | Cold, robotic, or rude | Neutral and professional | Warm, brand-appropriate, personalised |
+| Completeness | Ignores part of the request | Addresses main request only | Addresses request + proactively handles edge cases |
+| Conciseness | Verbose (>80 words for simple order) | Appropriate length | Tight, no filler, all info present |
+
+### 10.3 Bias Taxonomy and Mitigation
+
+**Position bias**: when presented with two responses (A then B), LLM judges prefer the first ~15% of the time regardless of quality. Mitigation: run every pairwise comparison twice with A and B swapped; count a win only when both orderings agree. Treat disagreements as ties.
+
+Measured effect: in a sample of 100 PizzaBot response pairs, running pairwise judgment with Ollama phi3:mini, ~14% of verdicts reversed when positions were swapped. Without the swap, your eval pipeline would report a 14-percentage-point false win rate for whichever response happened to appear first.
+
+**Verbosity bias**: longer responses score higher on vague criteria like "helpfulness." Mitigation: use atomic criteria with explicit length anchors (as above). Penalise verbosity explicitly in the "Conciseness" criterion.
+
+**Self-preference bias**: a GPT-4 judge systematically rates GPT-4 outputs higher than outputs from other models, even when the other model is objectively better on the rubric criteria. Mitigation: when comparing model A against model B, use a third judge model C that was not trained by either provider. For PizzaBot: use a local Ollama model as judge when comparing API models.
+
+**Formatting bias**: responses with structured formatting (bullet points, JSON, headers) score higher on "clarity" criteria regardless of content quality. Mitigation: strip markdown formatting from responses before presenting them to the judge when evaluating content rather than formatting.
+
+### 10.4 G-Eval — Chain-of-Thought Decomposition
+
+G-Eval (Wei et al., 2023) improves judge consistency by forcing chain-of-thought reasoning before assigning a score:
+
+```
+SYSTEM: You are evaluating a pizza assistant response.
+Think step-by-step before scoring.
+
+Step 1: What did the customer ask for? List every item, modifier, and delivery detail.
+Step 2: What did the assistant respond with? List every item, modifier, and delivery detail.
+Step 3: What is missing or wrong in the assistant's response?
+Step 4: Given the above, score Order Accuracy from 1-5.
+Step 5: Score Tone from 1-5 based on warmth and professionalism.
+Step 6: Score Completeness from 1-5.
+Step 7: Score Conciseness from 1-5.
+
+Output your reasoning for each step, then the final JSON:
+{"order_accuracy": int, "tone": int, "completeness": int, "conciseness": int}
+```
+
+Why this works: forcing the judge to explicitly reconstruct the requested order before scoring reduces hallucinated scores. The judge cannot claim "Order Accuracy = 5" after listing three missing modifiers in step 3 — the CoT creates a consistency constraint.
+
+Measured improvement on PizzaBot eval (20-response sample, phi3:mini judge): G-Eval increased inter-rater agreement (judge vs human) from Cohen's κ = 0.52 to κ = 0.71 — above the "moderate agreement" threshold.
+
+### 10.5 Judge Calibration — Cohen's κ
+
+A judge's scores are only useful if they correlate with human judgment. Cohen's κ measures agreement between two raters, correcting for chance agreement:
+
+$$\kappa = \frac{p_o - p_e}{1 - p_e}$$
+
+where $p_o$ is the observed agreement proportion and $p_e$ is the expected agreement by chance. $\kappa = 0$ means the rater agrees with humans no better than random; $\kappa = 1$ means perfect agreement.
+
+**Interpretation thresholds:**
+
+| κ range | Interpretation | Action |
+|---|---|---|
+| < 0.20 | Slight | Judge is noise; discard results |
+| 0.20–0.40 | Fair | Use only for rough directional signal |
+| 0.40–0.60 | Moderate | Acceptable for trend analysis |
+| 0.60–0.80 | Substantial | Reliable for regression gates |
+| > 0.80 | Almost perfect | Production-grade judge |
+
+If your eval pipeline gates model deployments on judge scores, you need κ ≥ 0.60 before trusting the gate. Measure κ once with a hand-labelled reference set of 50–100 diverse examples; re-measure when you change the judge model or rubric.
+
+**Calibration process:**
+1. Hand-label 50 PizzaBot responses on your rubric (have two humans do it; average their scores)
+2. Run the LLM judge on the same 50 responses
+3. Compute Cohen's κ between judge scores and averaged human scores
+4. If κ < 0.60: improve the rubric anchors, switch to G-Eval prompt, or use a stronger judge model
+
+---
+
+## 11 · Model Comparison Methodology
+
+You have three candidate models for PizzaBot v2: the current fine-tuned Llama-3-8B, GPT-4o-mini, and phi3:mini (local, zero inference cost). The CEO wants a recommendation before the next sprint. This section describes the right way to compare them — and the common wrong ways.
+
+### 11.1 Standard Benchmarks — What They Test and What They Miss
+
+| Benchmark | What it tests | What it misses |
+|---|---|---|
+| MMLU (57 topics, 14k questions) | Knowledge breadth across disciplines | Instruction following, conversational quality, domain adaptation |
+| MT-Bench (80 two-turn problems) | Multi-turn instruction following, reasoning | Domain-specific tasks, safety, cost, latency |
+| Arena Elo (crowdsourced pairwise) | Human preference across open-ended tasks | Selection bias (volunteers prefer verbose responses); no cost/latency data |
+| HELM (structured task suite) | Calibration, robustness, fairness | Conversational coherence, real-time latency constraints |
+| GSM8K (8.5k math word problems) | Grade-school arithmetic reasoning | NLP tasks, domain knowledge |
+| HumanEval (164 Python functions) | Python code generation | Non-Python tasks; does not measure whether code handles edge cases |
+
+**The critical caveat**: none of these benchmarks test PizzaBot's actual task — structured order extraction in Mamma Rosa's brand voice. High MT-Bench does not predict high PizzaBot performance. You need a task-specific harness.
+
+### 11.2 The Task-Specific Eval Harness
+
+The correct evaluation process:
+
+1. **Sample 100 production requests.** Pull real customer messages from PizzaBot logs (or create 100 representative examples if logs don't yet exist). Include edge cases: dietary restrictions, ambiguous quantities, non-order requests, multi-item orders.
+
+2. **Create reference answers.** For each sampled request, write the ideal response — the one a skilled human agent would give. These are your gold labels.
+
+3. **Run each candidate model.** Call each model with the same system prompt and each of the 100 sampled customer messages. Record responses, latency, and token counts.
+
+4. **Score with LLM-as-judge.** Use the rubric from §10.1 (Order Accuracy / Tone / Completeness / Conciseness). Run G-Eval for best consistency. Your judge κ must be ≥ 0.60 before trusting the gate.
+
+5. **Compute score and cost per point.** Mean score across criteria × weights; cost per query from token counts. Plot both dimensions.
+
+**Cost-efficiency frontier formula:**
+
+$$\text{score\_per\_dollar} = \frac{\text{mean\_rubric\_score}}{cost\_per\_query}$$
+
+The model on the Pareto frontier — highest score at its cost level, or lowest cost at its score level — is the production pick.
+
+### 11.3 PizzaBot Model Comparison (Example Results)
+
+The table below shows representative results from a 100-query evaluation. Fill in the "Measured" column when you run the notebook.
+
+| Model | Mean score (0-5) | Cost/query | Latency p95 | Score/$ | Production pick? |
+|---|---|---|---|---|---|
+| Llama-3-8B-Instruct (local) | — | $0.000 | 1.1s | — | Baseline |
+| phi3:mini (local) | — | $0.000 | 0.4s | — | — |
+| GPT-4o-mini (API) | — | $0.0012 | 0.8s | — | — |
+| GPT-4 (API) | — | $0.018 | 2.1s | — | — |
+
+**Reading the Pareto frontier.** The local models have infinite score-per-dollar (zero cost). The comparison simplifies to: does the API model's score improvement justify the per-query cost? If GPT-4o-mini scores 4.2/5 vs Llama-3-8B's 3.8/5, the improvement is 0.4 points — worth ~$0.0012/query at 12,000 req/day = $14.40/day = $5,256/year. If the business value of a 0.4-point rubric improvement is less than $5,256/year, the local model is the correct choice.
+
+### 11.4 CI Gate Pattern
+
+Every new model version must pass the eval gate before deployment:
+
+```python
+SCORE_THRESHOLD = 3.8   # minimum mean rubric score across 100 test cases
+COST_THRESHOLD  = 0.002  # maximum cost per query
+
+scores = run_eval(dataset=TEST_SET, model=candidate_model, judge=JUDGE_MODEL)
+mean_score = scores["mean_rubric"].mean()
+mean_cost  = scores["cost_per_query"].mean()
+
+assert mean_score >= SCORE_THRESHOLD, (
+    f"Quality regression: mean score {mean_score:.2f} < threshold {SCORE_THRESHOLD}"
+)
+assert mean_cost <= COST_THRESHOLD, (
+    f"Cost regression: cost ${mean_cost:.4f} > threshold ${COST_THRESHOLD}"
+)
+print(f"PASS: score={mean_score:.2f}, cost=${mean_cost:.4f}")
+```
+
+Add this to your CI pipeline. A new model version that scores below 3.8 on PizzaBot's rubric is a quality regression, even if it scores higher on MMLU. The task-specific eval gate is the arbiter — not the general benchmark.

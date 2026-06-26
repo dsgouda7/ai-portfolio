@@ -538,6 +538,95 @@ pretrained_model.generate(prompt)
 
 ---
 
+#### 4.6 · The Chinchilla Scaling Laws — What Determines Model Quality
+
+GPT-3 has 175B parameters and was trained on 300B tokens. Conventional wisdom said: bigger model equals better model. You scale to 400B parameters but keep the same 300B-token budget. The result is worse than expected — sometimes worse than the 175B model you started with. Why?
+
+Because you violated the **compute-optimal scaling ratio**: you spent all your compute on parameters and none on data.
+
+##### Kaplan et al. 2020 — The First Scaling Laws
+
+OpenAI's 2020 scaling paper showed that language model loss follows power laws in both model size $N$ (parameters) and training data $D$ (tokens). For fixed compute budget $C \approx 6ND$ (each forward-backward pass on one token costs approximately 6 multiply-accumulates per parameter):
+
+$$L(N, D) = \frac{A}{N^\alpha} + \frac{B}{D^\beta} + E$$
+
+where $E$ is irreducible loss (the entropy of natural language — no model can compress text below this floor), $\alpha \approx 0.076$, and $\beta \approx 0.103$. Loss improves as a power law in both model size and data size. The exponents are small: doubling $N$ reduces loss by only $~5\%$. The irreducible term $E$ sets a hard lower bound — it represents the inherent uncertainty of natural language that no model, regardless of size or data, can resolve.
+
+Kaplan's key conclusion: given a fixed compute budget, **prefer larger models**. This led to the GPT-3 scaling strategy: 175B parameters, 300B tokens (roughly 1.7 tokens per parameter).
+
+##### Hoffmann et al. 2022 — Chinchilla Corrects the Record
+
+DeepMind's 2022 paper ("Training Compute-Optimal Large Language Models") showed that Kaplan's setup had a flaw: small models in the experiments were undertrained, biasing the results toward preferring larger models. When all model sizes were trained to convergence, the compute-optimal ratio shifted dramatically.
+
+The Chinchilla result: for compute-optimal training, model size and training tokens should scale **equally**:
+
+$$N_{\text{opt}} \propto C^{0.5}, \quad D_{\text{opt}} \propto C^{0.5}$$
+
+**Rule of thumb: approximately 20 training tokens per parameter.**
+
+A 7B model should be trained on $\approx 140$B tokens for compute-optimal training. GPT-3's 175B model should have seen $\approx 3.5$T tokens, not 300B — it was severely undertrained.
+
+##### Numerical Worked Example
+
+Fix a compute budget $C = 10^{23}$ FLOPs (a reasonable budget for a mid-size research training run — roughly 3 weeks on 64 A100s).
+
+Since $C \approx 6ND$ and the compute-optimal condition is $N \approx D/20$, substituting:
+
+$$C = 6 \cdot N \cdot 20N = 120 N^2 \quad\Rightarrow\quad N = \sqrt{\frac{C}{120}} = \sqrt{\frac{10^{23}}{120}} \approx \sqrt{8.33 \times 10^{20}} \approx 9.1 \times 10^{10}$$
+
+$$\Rightarrow\quad N_{\text{opt}} \approx 91\text{B parameters}$$
+
+$$D_{\text{opt}} = 20 \times 91\text{B} = 1.82\text{T tokens}$$
+
+For this compute budget, the Chinchilla-optimal model is 91B parameters trained on 1.82T tokens. The same budget spent on a 400B parameter model would leave it trained on only $10^{23}/(6 \times 4 \times 10^{11}) \approx 417$B tokens — less than a quarter of what it needs, severely undertrained.
+
+| Strategy | Parameters | Tokens | Compute (FLOPs) | Expected quality |
+|---|---|---|---|---|
+| GPT-3 style (params-heavy) | 175B | 300B | $3 \times 10^{23}$ | Undertrained |
+| Chinchilla-optimal | 70B | 1.4T | $5 \times 10^{23}$ | Compute-optimal |
+| LLaMA-2-7B (inference-optimal) | 7B | 2T | $8 \times 10^{22}$ | Intentionally overtrained |
+
+##### Compute-Optimal vs Inference-Optimal
+
+The Chinchilla result answers one question: how should you spend a fixed training budget to minimise validation loss? But the question practitioners actually face is different: **what model should you deploy?**
+
+Two different cost regimes produce two different answers:
+
+**Compute-optimal (training cost dominates):** If you are Google or Meta and your training budget is the binding constraint, train the Chinchilla-optimal model. Larger model, fewer tokens. The 91B/1.82T split above is optimal for minimising the loss per FLOP spent.
+
+**Inference-optimal (serving cost dominates):** If you deploy to millions of users, a 7B model at $10^{22}$ FLOPs per request costs 13× less to run than a 91B model at $1.3 \times 10^{23}$ FLOPs. The right move is to **overtrain a smaller model** — push it past Chinchilla-optimal token count — until quality matches the larger model. This is exactly the LLaMA-2 strategy: 7B parameters trained on 2T tokens (14× Chinchilla-optimal) and 70B parameters trained on 2T tokens (3× Chinchilla-optimal). Both are intentionally overtrained to reduce serving costs.
+
+*"Chinchilla-optimal for whom depends on whether your bill comes from training or inference."*
+
+##### Emergent Capabilities and Phase Transitions
+
+Scaling laws predict smooth power-law improvement in loss. But some capabilities — multi-step arithmetic, code generation, chain-of-thought reasoning — appear **discontinuously** at a model-size threshold. GPT-2 (1.5B) cannot reliably do three-digit arithmetic; GPT-3 (175B) can. The loss curve is smooth the whole time.
+
+This is not predicted by power-law scaling. It is a **phase transition**: a capability that requires a certain number of "algorithm circuits" in the network is absent below a threshold capacity and present above it. Current theories:
+
+1. **Capacity threshold**: a task requires representing a multi-step algorithm. Below the threshold, the model lacks the parameter count to represent the algorithm. Above it, the algorithm "crystallises" in the weights.
+2. **Evaluation discontinuity**: many capability benchmarks use pass/fail metrics (correct vs incorrect). Even if underlying capability improves smoothly, a binary metric shows a sudden jump when the model crosses the threshold from "almost right" to "correct."
+
+For practitioners, the implication is that capability evaluation on pass/fail tasks can mislead: smooth loss improvement does not guarantee visible capability improvement, and sudden benchmark jumps do not mean the underlying learning was sudden.
+
+##### What This Means for Your Fine-Tuning
+
+Chinchilla scaling laws govern pretraining. Fine-tuning follows **different rules**:
+
+- SFT typically requires 1,000–50,000 examples — nowhere near Chinchilla-optimal data for the model size. A 7B model SFT'd on 10,000 pizza-ordering examples is not violating scaling laws; it is doing domain adaptation, which works at a tiny fraction of pretraining data.
+- Chinchilla-optimal data is relevant only when training from scratch on a large general corpus.
+
+For PizzaBot, fine-tuning TinyLlama (1.1B parameters) on 50 Mamma Rosa's conversation examples is sensible — you're teaching format and domain vocabulary, not building general language capability. The pretrained model already has language; you are adding style. That transfer works at 50 examples because the hard work (learning Italian/English, menu structures, polite refusals) was done during pretraining on trillions of tokens.
+
+*"Scaling laws set the price of intelligence. Fine-tuning is the price of personality."*
+
+> **Rule of thumb for practitioners:**
+> - Choosing a base model for fine-tuning? Prefer a smaller model trained longer (LLaMA-2-7B on 2T tokens) over a larger model trained to Chinchilla-optimal (7B on 140B tokens). The overtrained smaller model is cheaper to serve and the extra tokens genuinely help.
+> - Pretraining from scratch with compute budget $C$? Set $N \approx \sqrt{C/120}$ parameters and $D \approx 20N$ tokens.
+> - Don't conflate pretraining data quantity (Chinchilla rules) with fine-tuning data quantity (10k examples is often enough for SFT).
+
+---
+
 ### Stage 2 — Supervised Fine-Tuning (SFT): Defeating the Instruction-Blindness Enemy
 
 **Enemy #2:** Your pretrained model is brilliant but useless. Ask "What is 2+2?" and it generates "What is 2+3? What is 2+4?" because that's a plausible continuation.
