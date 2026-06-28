@@ -5,35 +5,52 @@ Implements the two experiments from EXPERIMENTS_CONSOLIDATED.md:
   Exp 1  Raw corpus injected directly into reasoning LLM (no architecture).
   Exp 2  Compress -> retrieve summaries -> adaptive raw-fetch if needed (targeted)
          or ALL summaries + Tree-of-Thought reasoning (aggregated).
-         get_context_details() -> reason.  The LLM sees both tools and makes
-         the raw-detail fetch only when it judges summaries insufficient.
 
 All results are relative to the Exp 1 baseline:
   Latency delta   : +/- 10%  of baseline  (PASS threshold)
   F1 delta        : +/- 20%  of baseline  (PASS threshold)
   Token reduction :  >= 90%  vs baseline  (PASS threshold)
 
+Corpus sources (--corpus-source):
+  pride      Pride & Prejudice txt (default, ships with the repo)
+  synthetic  Deterministic synthetic AKS incident logs (no download needed)
+  loghub     Real HDFS/BGL system logs from Zenodo (auto-downloaded on first run,
+             cached in --corpus-cache-dir, ~1.5 GiB)
+  edgar      SEC EDGAR 10-K filings via the EFTS API (auto-downloaded on first run,
+             cached in --corpus-cache-dir)
+
 Models (all local via Ollama):
-  Compression  : CONTEXT_OPTIMIZER_COMPRESSOR_MODEL   (default: llama3.2:3b)
+  Compression  : CONTEXT_OPTIMIZER_COMPRESSOR_MODEL   (default: llama3.2:1b)
   Embedding    : CONTEXT_OPTIMIZER_EMBEDDING_BACKEND  (default: sentence-transformers)
-                 Set =ollama to use CONTEXT_OPTIMIZER_EMBEDDING_MODEL (nomic-embed-text)
-  Reasoning    : CONTEXT_OPTIMIZER_REASONING_MODEL    (default: qwen2.5-coder:7b)
+  Reasoning    : CONTEXT_OPTIMIZER_REASONING_MODEL    (default: mistral:7b)
 
 Usage:
-  python run_experiments.py                # mini corpus, 500 lines, quick E2E
-  python run_experiments.py --lines 2000   # larger sample (slower)
-  python run_experiments.py --full         # full 25K medium corpus (hours with Ollama)
+  python run_experiments.py                                 # 500-line P&P, quick E2E
+  python run_experiments.py --lines 2000                    # larger P&P sample
+  python run_experiments.py --full                          # 25K P&P lines
+  python run_experiments.py --corpus-source loghub          # real system logs
+  python run_experiments.py --corpus-source edgar --lines 5000
+  python run_experiments.py --corpus-source synthetic --lines 10000
 """
 
 import argparse
 import json
 import os
 import re
+import shutil
 import sys
+import tarfile
 import tempfile
 import time
+import zipfile
 from datetime import datetime
 from pathlib import Path
+
+try:
+    import requests as _requests
+    _REQUESTS_OK = True
+except ImportError:
+    _REQUESTS_OK = False
 
 _root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_root / "src"))
@@ -46,6 +63,246 @@ from llm_provider import (
     build_reasoning_llm,
     get_embedding_config,
 )
+
+# ── Corpus download constants ────────────────────────────────────────────────
+_DL_HEADERS  = {"User-Agent": "context-optimizer-benchmark/1.0"}
+_DL_TIMEOUT  = 30
+_ZENODO_BASE = "https://zenodo.org/records/8196385/files"
+_EDGAR_EFTS  = "https://efts.sec.gov/LATEST/search-index"
+_EDGAR_ARCH  = "https://www.sec.gov/Archives/edgar/data"
+
+_LOGHUB_FILES = [
+    ("HDFS_v1",   f"{_ZENODO_BASE}/HDFS_v1.zip?download=1",    int(1.47  * 1024**3)),
+    ("BGL",       f"{_ZENODO_BASE}/BGL.zip?download=1",         int(0.709 * 1024**3)),
+    ("OpenStack", f"{_ZENODO_BASE}/OpenStack.tar.gz?download=1",int(58.6  * 1024**2)),
+    ("Hadoop",    f"{_ZENODO_BASE}/Hadoop.zip?download=1",      int(48.6  * 1024**2)),
+]
+
+
+# ── Corpus download helpers ───────────────────────────────────────────────────
+
+def _fmt_mb(n: int) -> str:
+    return f"{n / 1024**2:.1f} MB"
+
+
+def _fmt_gb(n: int) -> str:
+    return f"{n / 1024**3:.2f} GB"
+
+
+def _stream_download(url: str, dest: Path, label: str) -> None:
+    resp = _requests.get(url, headers=_DL_HEADERS, stream=True, timeout=_DL_TIMEOUT)
+    resp.raise_for_status()
+    total = int(resp.headers.get("content-length", 0))
+    written = 0
+    with dest.open("wb") as fh:
+        for chunk in resp.iter_content(chunk_size=1 << 20):
+            if chunk:
+                fh.write(chunk)
+                written += len(chunk)
+                pct = f" ({written * 100 // total}%)" if total else ""
+                print(f"\r  {label}: {_fmt_mb(written)}{pct}  ", end="", flush=True)
+    print()
+
+
+def _strip_html(html: str) -> str:
+    text = re.sub(r"<[^>]+>", " ", html)
+    text = re.sub(r"&[a-zA-Z#0-9]{1,8};", " ", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _safe_stem(name: str) -> str:
+    return re.sub(r"[^a-zA-Z0-9_.\-]", "_", Path(name).name)
+
+
+def _extract_logs(archive: Path, out_dir: Path, prefix: str,
+                  max_bytes: int, already: int) -> int:
+    """Extract .log/.txt members from zip or tar.gz; return new total bytes."""
+    written = already
+    name_lower = archive.name.lower()
+
+    def _copy(src_fh, dest: Path) -> int:
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        with dest.open("wb") as dst:
+            shutil.copyfileobj(src_fh, dst)
+        sz = dest.stat().st_size
+        print(f"    {dest.name}  ({_fmt_mb(sz)})")
+        return sz
+
+    if name_lower.endswith(".zip"):
+        with zipfile.ZipFile(archive) as zf:
+            for info in zf.infolist():
+                if written >= max_bytes or info.is_dir():
+                    continue
+                if not info.filename.lower().endswith((".log", ".txt")):
+                    continue
+                dest = out_dir / f"{prefix}_{_safe_stem(info.filename)}"
+                if dest.exists():
+                    written += dest.stat().st_size
+                    continue
+                with zf.open(info) as src:
+                    written += _copy(src, dest)
+    elif name_lower.endswith((".tar.gz", ".tgz")):
+        with tarfile.open(archive, "r:gz") as tf:
+            for member in tf.getmembers():
+                if written >= max_bytes or not member.isfile():
+                    continue
+                if not member.name.lower().endswith((".log", ".txt")):
+                    continue
+                dest = out_dir / f"{prefix}_{_safe_stem(member.name)}"
+                if dest.exists():
+                    written += dest.stat().st_size
+                    continue
+                src = tf.extractfile(member)
+                if src:
+                    written += _copy(src, dest)
+    return written
+
+
+def _ensure_loghub(cache_dir: Path, max_bytes: int) -> list[str]:
+    """Download loghub datasets if not cached; return list of log lines."""
+    if not _REQUESTS_OK:
+        raise RuntimeError("'requests' package required for loghub download.  pip install requests")
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    written = sum(p.stat().st_size for p in cache_dir.glob("loghub_*.log"))
+
+    for label, url, approx in _LOGHUB_FILES:
+        if written >= max_bytes:
+            break
+        existing = list(cache_dir.glob(f"loghub_{label}_*.log"))
+        if existing:
+            written += sum(p.stat().st_size for p in existing)
+            print(f"  [loghub] {label}: cached ({_fmt_gb(written)} total)")
+            continue
+        print(f"  [loghub] Downloading {label} (~{_fmt_gb(approx)} uncompressed)...")
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp) / url.split("/")[-1].split("?")[0]
+            try:
+                _stream_download(url, archive, label)
+                written = _extract_logs(archive, cache_dir, f"loghub_{label}",
+                                        max_bytes, written)
+            except Exception as exc:
+                print(f"  WARNING: {label} download failed: {exc}")
+
+    lines: list[str] = []
+    for p in sorted(cache_dir.glob("loghub_*.log")):
+        lines.extend(p.read_text(encoding="utf-8", errors="replace").splitlines())
+    print(f"  [loghub] {len(lines):,} lines loaded from {cache_dir}")
+    return lines
+
+
+def _ensure_edgar(cache_dir: Path, max_bytes: int) -> list[str]:
+    """Download EDGAR 10-K filings if not cached; return list of text lines."""
+    if not _REQUESTS_OK:
+        raise RuntimeError("'requests' package required for EDGAR download.  pip install requests")
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    written = sum(p.stat().st_size for p in cache_dir.glob("edgar_*.txt"))
+    print(f"  [edgar] cache={_fmt_gb(written)}  target={_fmt_gb(max_bytes)}")
+
+    offset, filing_count, errors = 0, 0, 0
+    while written < max_bytes:
+        params = {
+            "q": '"cybersecurity incident"', "forms": "10-K",
+            "dateRange": "custom", "startdt": "2020-01-01", "enddt": "2024-12-31",
+            "from": offset, "size": 100,
+        }
+        try:
+            resp = _requests.get(_EDGAR_EFTS, params=params,
+                                 headers=_DL_HEADERS, timeout=_DL_TIMEOUT)
+            resp.raise_for_status()
+            hits = resp.json().get("hits", {})
+        except Exception as exc:
+            print(f"  WARNING: EDGAR search at offset {offset}: {exc}")
+            break
+        records = hits.get("hits", [])
+        if not records:
+            break
+        for rec in records:
+            if written >= max_bytes:
+                break
+            src = rec.get("_source", {})
+            doc_id = rec.get("_id", "")
+            if src.get("file_type", "") not in ("10-K", "10-K/A") or ":" not in doc_id:
+                continue
+            adsh, filename = doc_id.split(":", 1)
+            ciks = src.get("ciks", [])
+            if not ciks:
+                continue
+            adsh_nd = adsh.replace("-", "")
+            out_path = cache_dir / f"edgar_{adsh_nd}_{_safe_stem(filename)}.txt"
+            if out_path.exists():
+                written += out_path.stat().st_size
+                filing_count += 1
+                continue
+            time.sleep(0.12)
+            try:
+                r = _requests.get(
+                    f"{_EDGAR_ARCH}/{int(ciks[0])}/{adsh_nd}/{filename}",
+                    headers=_DL_HEADERS, timeout=_DL_TIMEOUT,
+                )
+                r.raise_for_status()
+                text = _strip_html(r.text)
+            except Exception as exc:
+                errors += 1
+                if errors <= 5:
+                    print(f"  WARNING: {adsh}: {exc}")
+                continue
+            if len(text) < 1000:
+                continue
+            out_path.write_text(text, encoding="utf-8", errors="replace")
+            written += out_path.stat().st_size
+            filing_count += 1
+            if filing_count % 10 == 0:
+                print(f"  [edgar] {filing_count} filings  {_fmt_gb(written)}")
+        offset += 100
+        if offset >= hits.get("total", {}).get("value", 0):
+            break
+
+    lines: list[str] = []
+    for p in sorted(cache_dir.glob("edgar_*.txt")):
+        lines.extend(p.read_text(encoding="utf-8", errors="replace").splitlines())
+    print(f"  [edgar] {len(lines):,} lines loaded from {cache_dir}")
+    return lines
+
+
+def _load_corpus(source: str, lines_limit: int, cache_dir: Path) -> tuple[list[str], str]:
+    """
+    Load corpus lines from the requested source.
+
+    Returns (lines, label) where label is a human-readable description
+    used in reports.
+    """
+    max_bytes = int(1.5 * 1024**3)  # 1.5 GiB cap for downloaded corpora
+
+    if source == "loghub":
+        lines = _ensure_loghub(cache_dir / "loghub", max_bytes)
+        label = f"Loghub (HDFS/BGL system logs, {cache_dir / 'loghub'})"
+    elif source == "edgar":
+        lines = _ensure_edgar(cache_dir / "edgar", max_bytes)
+        label = f"SEC EDGAR 10-K filings, {cache_dir / 'edgar'}"
+    elif source == "synthetic":
+        templates = [
+            "ERROR order-service CosmosDB timeout substatus=21012 region=eastus2",
+            "WARN  ingress-nginx upstream timed out client=10.42.7.19",
+            "ERROR api-gateway HTTP 504 checkout p95=8.7s",
+            "WARN  order-service CosmosDB retry ru_charge=128 partition=tenant-1",
+            "ERROR payment-service cancellation timeout substatus=21012",
+            "INFO  order-service request completed status=200 latency_ms=220",
+        ]
+        lines = [templates[i % len(templates)] for i in range(lines_limit)]
+        label = "Synthetic AKS incident logs"
+    else:  # pride (default)
+        pride_file = Path(__file__).parent / "data" / "books_pride-prejudice.txt"
+        if not pride_file.exists():
+            print(f"[ERROR] {pride_file} not found. Run download_test_data.py first.")
+            sys.exit(1)
+        with open(pride_file, encoding="utf-8", errors="ignore") as f:
+            lines = [ln.strip() for ln in f if ln.strip()]
+        label = "Pride & Prejudice"
+
+    lines = lines[:lines_limit]
+    print(f"  Loaded {len(lines):,} lines  [{label}]")
+    return lines, label
+
 
 # ── Pass/Fail thresholds ──────────────────────────────────────────────────────
 THRESHOLDS = {
@@ -872,17 +1129,35 @@ Corpus compressed with `{models['compression']}`, indexed in ChromaDB with `{emb
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run end-to-end experiments")
+    parser = argparse.ArgumentParser(
+        description="Run end-to-end experiments",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     parser.add_argument(
         "--lines",
         type=int,
         default=500,
-        help="Number of corpus lines (default: 500 for quick run)",
+        help="Max corpus lines to use (default: 500)",
     )
     parser.add_argument(
         "--full",
         action="store_true",
-        help="Use full 25K medium corpus (hours with Ollama)",
+        help="Set --lines to 25 000 (overrides --lines)",
+    )
+    parser.add_argument(
+        "--corpus-source",
+        choices=["pride", "synthetic", "loghub", "edgar"],
+        default="pride",
+        dest="corpus_source",
+        help="Corpus to benchmark against (default: pride).  "
+             "loghub/edgar are auto-downloaded on first run.",
+    )
+    parser.add_argument(
+        "--corpus-cache-dir",
+        default=str(Path(__file__).parent / "corpus_data"),
+        dest="corpus_cache_dir",
+        metavar="DIR",
+        help="Directory for cached downloaded corpora (default: benchmarks/corpus_data)",
     )
     args = parser.parse_args()
 
@@ -917,17 +1192,12 @@ def main():
         sys.exit(1)
 
     # ── Corpus ─────────────────────────────────────────────────────────
-    print("\n[Corpus] Loading Pride and Prejudice corpus...")
-    pride_file = Path(__file__).parent / "data" / "books_pride-prejudice.txt"
-    if not pride_file.exists():
-        print(f"[ERROR] {pride_file} not found. Run download_test_data.py first.")
-        sys.exit(1)
-
-    with open(pride_file, encoding="utf-8", errors="ignore") as f:
-        all_lines = [ln.strip() for ln in f if ln.strip()]
-
-    corpus = all_lines[:corpus_lines_limit]
-    print(f"  Loaded {len(corpus):,} lines from Pride & Prejudice")
+    print(f"\n[Corpus] Loading corpus (source={args.corpus_source})...")
+    corpus, corpus_label = _load_corpus(
+        source=args.corpus_source,
+        lines_limit=corpus_lines_limit,
+        cache_dir=Path(args.corpus_cache_dir),
+    )
 
     # ── Run Exp 1 (baseline) ───────────────────────────────────────────
     exp1_results = run_experiment1(corpus, reason_llm, judge_llm=judge_llm)
