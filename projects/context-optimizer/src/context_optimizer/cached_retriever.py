@@ -440,9 +440,12 @@ class CachedChromaRetriever:
             "cache": cache_stats,
         }
 
-    def get_chunk_by_id(self, chunk_id: str) -> dict | None:
+    def get_chunk_by_id(self, chunk_id: str | list) -> dict | None:
         """
         Retrieve a specific chunk by ID, including raw_text.
+
+        ``chunk_id`` may be a list if the reasoning LLM returned multiple IDs
+        in a single JSON response; the first element is used in that case.
 
         Uses a two-step lookup strategy:
 
@@ -465,6 +468,12 @@ class CachedChromaRetriever:
             ``compressed_summary``, ``entities``, and ``keywords`` keys.
             Returns ``None`` if the chunk is not found.
         """
+        # Normalise: LLM sometimes returns a list of IDs; use the first.
+        if isinstance(chunk_id, list):
+            chunk_id = chunk_id[0] if chunk_id else None
+        if not chunk_id:
+            return None
+
         # ── Fast path: RawIndex primary-key lookup ────────────────────────
         if self._raw_index is not None:
             raw = self._raw_index.get(chunk_id)

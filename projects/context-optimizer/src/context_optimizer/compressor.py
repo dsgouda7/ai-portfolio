@@ -38,13 +38,15 @@ class CompressedChunk:
     """Result of LLM compression with dual storage."""
     chunk_id: str
     raw_text: str  # Original data (for fallback retrieval)
-    compressed_summary: str  # LLM-compressed semantic index
+    compressed_summary: str  # LLM prose summary — fed to reasoning LLM
     entities: list[str]  # Extracted entities for filtering
     keywords: list[str]  # Key concepts for search
     metadata: dict[str, str | int]  # Source, timestamp, etc
     original_tokens: int
     compressed_tokens: int
     compression_ratio: float  # compressed / original
+    index_text: str = ""  # Entity-dense stopword-stripped form embedded in ChromaDB.
+                          # If empty, compressed_summary is used as the fallback.
 
 
 class CompressorLLM(Protocol):
@@ -232,17 +234,13 @@ def compress_chunk_with_llm(
             entities = []
             keywords = []
 
-        # Enrich the stored document with deduplicated entity tokens so the
-        # ChromaDB embedding captures the same high-precision terms that ToT
-        # branch queries use as search terms.  Entities go to metadata too,
-        # but only the document field is embedded — appending here bridges that gap.
+        # Build index_text: entity-dense, stopword-stripped form used exclusively
+        # by ChromaDB for embedding.  compressed_summary stays as readable prose
+        # so the reasoning LLM (ToT aggregated path) gets coherent sentences.
+        index_parts = summary
         if entities:
-            summary = summary + "; " + "; ".join(entities)
-
-        # Normalise for semantic indexing: strip residual stopwords so the
-        # ChromaDB embedding vector is dominated by content words.
-        # raw_text is never touched — it stays readable in RawIndex.
-        summary = _normalise_for_index(summary)
+            index_parts = index_parts + "; " + "; ".join(entities)
+        index_text = _normalise_for_index(index_parts)
 
         original_tokens = _estimate_tokens(text)
         compressed_tokens = _estimate_tokens(summary)
@@ -250,7 +248,8 @@ def compress_chunk_with_llm(
         return CompressedChunk(
             chunk_id=chunk_id,
             raw_text=text,
-            compressed_summary=summary,
+            compressed_summary=summary,  # prose — used by reasoning LLM
+            index_text=index_text,       # entity-dense — embedded in ChromaDB
             entities=entities,
             keywords=keywords,
             metadata=metadata or {},

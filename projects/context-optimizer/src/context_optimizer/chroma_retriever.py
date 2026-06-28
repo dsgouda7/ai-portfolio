@@ -81,7 +81,13 @@ class ChromaCompressedRetriever:
 
             # Prepare data for ChromaDB
             ids = [chunk.chunk_id for chunk in batch]
-            documents = [chunk.compressed_summary for chunk in batch]  # ChromaDB will embed these
+            # Embed index_text (entity-dense, stopword-stripped) when available;
+            # fall back to compressed_summary so old CompressedChunk objects
+            # (without index_text) still work.
+            documents = [
+                (chunk.index_text if chunk.index_text else chunk.compressed_summary)
+                for chunk in batch
+            ]  # ChromaDB will embed these
             metadatas = [
                 {
                     "entities": ",".join(chunk.entities),
@@ -146,7 +152,7 @@ class ChromaCompressedRetriever:
 
         return hits
 
-    def get_chunk_by_id(self, chunk_id: str) -> dict | None:
+    def get_chunk_by_id(self, chunk_id: str | list) -> dict | None:
         """Retrieve a specific chunk by ID"""
         results = self.collection.get(ids=[chunk_id])
 

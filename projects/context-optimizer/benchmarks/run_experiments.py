@@ -299,15 +299,21 @@ def _parse_turn1_json(raw: str) -> dict:
     # Strip common model thinking tags (e.g. <think>...</think>)
     cleaned = _re.sub(r"<think>[\s\S]*?</think>", "", raw, flags=_re.IGNORECASE).strip()
 
+    def _normalise_cid(cid):
+        """Coerce chunk_id to str | None — LLM sometimes returns a list."""
+        if isinstance(cid, list):
+            return cid[0] if cid else None
+        return cid or None
+
     def _try_parse(s: str) -> dict | None:
         try:
             obj = _json.loads(s)
             if isinstance(obj, dict):
                 return {
                     "needs_raw": bool(obj.get("needs_raw", False)),
-                    "chunk_id": obj.get("chunk_id")
-                    or obj.get("chunkId")
-                    or obj.get("chunk_id"),
+                    "chunk_id": _normalise_cid(
+                        obj.get("chunk_id") or obj.get("chunkId")
+                    ),
                     "answer": str(obj["answer"]) if obj.get("answer") else None,
                 }
         except Exception:
@@ -539,7 +545,8 @@ def run_experiment2(
     chunks = compress_corpus_rolling(
         corpus_lines=corpus_lines,
         chunk_size_threshold=512,
-        chunk_overlap_tokens=128,
+        # Use library default (64) — previously hardcoded to 128 here, which
+        # bypassed the overlap-reduction improvement in compressor.py.
         llm=compress_llm,
     )
     compress_sec = time.time() - t_compress
