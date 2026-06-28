@@ -116,6 +116,27 @@ Corpus compressed with `llama3.2:1b`, indexed in ChromaDB with `all-MiniLM-L6-v2
 
 ---
 
+## Improvement Changelog (pre-benchmark)
+
+> Results for these improvements are pending the benchmark run launched 2026-06-26.
+> The previous baseline is Experiment 2 above (91.3% token reduction, 79.49s latency, 0.97 Judge score).
+
+| # | Improvement | File | Expected Impact |
+|---|-------------|------|-----------------|
+| 1 | ToT composite sentence branches | `tot_reasoner.py` | 3× fewer ChromaDB calls; gradient cosine scoring replaces binary hit counts |
+| 2 | Retrieval-optimized compression prompt | `compressor.py` | Higher embedding quality; content-word-dominated vectors |
+| 3 | `_normalise_for_index` stopword stripping | `compressor.py` | Removes residual function words from stored documents |
+| 4 | Entity list appended to `compressed_summary` | `compressor.py` | ChromaDB embedding captures deduplicated entity signal |
+| 5 | Chunk overlap 128 → 64 tokens | `compressor.py` | ~14% fewer chunks; ~14% less compression time and index size |
+
+Metrics to watch in the upcoming run vs the baseline above:
+- **KW-F1**: should improve (entities now embedded, richer query sentences)
+- **Token reduction**: may increase slightly (denser summaries, fewer duplicate boundary chunks)
+- **Compression time**: should decrease ~14% (fewer chunks from reduced overlap)
+- **Judge score**: should be stable or improve (same or better evidence quality)
+
+---
+
 ## Next Steps
 
 - Run with `--full` flag (25K lines) to validate results at production corpus scale.

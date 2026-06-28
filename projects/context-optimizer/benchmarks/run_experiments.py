@@ -48,6 +48,7 @@ from pathlib import Path
 
 try:
     import requests as _requests
+
     _REQUESTS_OK = True
 except ImportError:
     _REQUESTS_OK = False
@@ -65,21 +66,22 @@ from llm_provider import (
 )
 
 # ── Corpus download constants ────────────────────────────────────────────────
-_DL_HEADERS  = {"User-Agent": "context-optimizer-benchmark/1.0"}
-_DL_TIMEOUT  = 30
+_DL_HEADERS = {"User-Agent": "context-optimizer-benchmark/1.0"}
+_DL_TIMEOUT = 30
 _ZENODO_BASE = "https://zenodo.org/records/8196385/files"
-_EDGAR_EFTS  = "https://efts.sec.gov/LATEST/search-index"
-_EDGAR_ARCH  = "https://www.sec.gov/Archives/edgar/data"
+_EDGAR_EFTS = "https://efts.sec.gov/LATEST/search-index"
+_EDGAR_ARCH = "https://www.sec.gov/Archives/edgar/data"
 
 _LOGHUB_FILES = [
-    ("HDFS_v1",   f"{_ZENODO_BASE}/HDFS_v1.zip?download=1",    int(1.47  * 1024**3)),
-    ("BGL",       f"{_ZENODO_BASE}/BGL.zip?download=1",         int(0.709 * 1024**3)),
-    ("OpenStack", f"{_ZENODO_BASE}/OpenStack.tar.gz?download=1",int(58.6  * 1024**2)),
-    ("Hadoop",    f"{_ZENODO_BASE}/Hadoop.zip?download=1",      int(48.6  * 1024**2)),
+    ("HDFS_v1", f"{_ZENODO_BASE}/HDFS_v1.zip?download=1", int(1.47 * 1024**3)),
+    ("BGL", f"{_ZENODO_BASE}/BGL.zip?download=1", int(0.709 * 1024**3)),
+    ("OpenStack", f"{_ZENODO_BASE}/OpenStack.tar.gz?download=1", int(58.6 * 1024**2)),
+    ("Hadoop", f"{_ZENODO_BASE}/Hadoop.zip?download=1", int(48.6 * 1024**2)),
 ]
 
 
 # ── Corpus download helpers ───────────────────────────────────────────────────
+
 
 def _fmt_mb(n: int) -> str:
     return f"{n / 1024**2:.1f} MB"
@@ -114,8 +116,9 @@ def _safe_stem(name: str) -> str:
     return re.sub(r"[^a-zA-Z0-9_.\-]", "_", Path(name).name)
 
 
-def _extract_logs(archive: Path, out_dir: Path, prefix: str,
-                  max_bytes: int, already: int) -> int:
+def _extract_logs(
+    archive: Path, out_dir: Path, prefix: str, max_bytes: int, already: int
+) -> int:
     """Extract .log/.txt members from zip or tar.gz; return new total bytes."""
     written = already
     name_lower = archive.name.lower()
@@ -161,7 +164,9 @@ def _extract_logs(archive: Path, out_dir: Path, prefix: str,
 def _ensure_loghub(cache_dir: Path, max_bytes: int) -> list[str]:
     """Download loghub datasets if not cached; return list of log lines."""
     if not _REQUESTS_OK:
-        raise RuntimeError("'requests' package required for loghub download.  pip install requests")
+        raise RuntimeError(
+            "'requests' package required for loghub download.  pip install requests"
+        )
     cache_dir.mkdir(parents=True, exist_ok=True)
     written = sum(p.stat().st_size for p in cache_dir.glob("loghub_*.log"))
 
@@ -178,8 +183,9 @@ def _ensure_loghub(cache_dir: Path, max_bytes: int) -> list[str]:
             archive = Path(tmp) / url.split("/")[-1].split("?")[0]
             try:
                 _stream_download(url, archive, label)
-                written = _extract_logs(archive, cache_dir, f"loghub_{label}",
-                                        max_bytes, written)
+                written = _extract_logs(
+                    archive, cache_dir, f"loghub_{label}", max_bytes, written
+                )
             except Exception as exc:
                 print(f"  WARNING: {label} download failed: {exc}")
 
@@ -193,7 +199,9 @@ def _ensure_loghub(cache_dir: Path, max_bytes: int) -> list[str]:
 def _ensure_edgar(cache_dir: Path, max_bytes: int) -> list[str]:
     """Download EDGAR 10-K filings if not cached; return list of text lines."""
     if not _REQUESTS_OK:
-        raise RuntimeError("'requests' package required for EDGAR download.  pip install requests")
+        raise RuntimeError(
+            "'requests' package required for EDGAR download.  pip install requests"
+        )
     cache_dir.mkdir(parents=True, exist_ok=True)
     written = sum(p.stat().st_size for p in cache_dir.glob("edgar_*.txt"))
     print(f"  [edgar] cache={_fmt_gb(written)}  target={_fmt_gb(max_bytes)}")
@@ -201,13 +209,18 @@ def _ensure_edgar(cache_dir: Path, max_bytes: int) -> list[str]:
     offset, filing_count, errors = 0, 0, 0
     while written < max_bytes:
         params = {
-            "q": '"cybersecurity incident"', "forms": "10-K",
-            "dateRange": "custom", "startdt": "2020-01-01", "enddt": "2024-12-31",
-            "from": offset, "size": 100,
+            "q": '"cybersecurity incident"',
+            "forms": "10-K",
+            "dateRange": "custom",
+            "startdt": "2020-01-01",
+            "enddt": "2024-12-31",
+            "from": offset,
+            "size": 100,
         }
         try:
-            resp = _requests.get(_EDGAR_EFTS, params=params,
-                                 headers=_DL_HEADERS, timeout=_DL_TIMEOUT)
+            resp = _requests.get(
+                _EDGAR_EFTS, params=params, headers=_DL_HEADERS, timeout=_DL_TIMEOUT
+            )
             resp.raise_for_status()
             hits = resp.json().get("hits", {})
         except Exception as exc:
@@ -237,7 +250,8 @@ def _ensure_edgar(cache_dir: Path, max_bytes: int) -> list[str]:
             try:
                 r = _requests.get(
                     f"{_EDGAR_ARCH}/{int(ciks[0])}/{adsh_nd}/{filename}",
-                    headers=_DL_HEADERS, timeout=_DL_TIMEOUT,
+                    headers=_DL_HEADERS,
+                    timeout=_DL_TIMEOUT,
                 )
                 r.raise_for_status()
                 text = _strip_html(r.text)
@@ -264,7 +278,9 @@ def _ensure_edgar(cache_dir: Path, max_bytes: int) -> list[str]:
     return lines
 
 
-def _load_corpus(source: str, lines_limit: int, cache_dir: Path) -> tuple[list[str], str]:
+def _load_corpus(
+    source: str, lines_limit: int, cache_dir: Path
+) -> tuple[list[str], str]:
     """
     Load corpus lines from the requested source.
 
@@ -1150,7 +1166,7 @@ def main():
         default="pride",
         dest="corpus_source",
         help="Corpus to benchmark against (default: pride).  "
-             "loghub/edgar are auto-downloaded on first run.",
+        "loghub/edgar are auto-downloaded on first run.",
     )
     parser.add_argument(
         "--corpus-cache-dir",

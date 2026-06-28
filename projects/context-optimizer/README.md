@@ -61,10 +61,14 @@ User Input (rambling)
     ↓
 [STAGE 2: Semantic Chunking + Vector Index]
   Chunk by paragraph/log windows → preserve boundaries → embed → store with metadata
+  Summaries stored as retrieval-optimized entity-dense phrases (not narrative prose);
+  enriched via entity-append + stopword normalisation before embedding
+  (three-tier: LLM phrase + entity list + `_normalise_for_index`).
   Output: searchable evidence store with stable retrieval contract + continuation hints
     ↓
 [STAGE 3: MCP Retrieval + Reasoning]
   LLM issues retrieve_context(query, depth, service, severity)
+  Aggregated (ToT) path: composite sentence queries per branch, ranked by mean cosine similarity.
   Input: structured shell + ranked evidence pack
   Output: Diagnosis
 ```

@@ -128,6 +128,11 @@ embedding = embed(chunk["text"])
 }
 ```
 
+**Compression enrichment pipeline** (applied before ChromaDB storage):
+1. **Retrieval-optimized prompt** — the LLM produces entity-dense noun phrases joined by semicolons, not narrative prose (e.g. `"CosmosDB RU limit exceeded; request timeout 21012; AKS ingress 504 upstream"`).
+2. **Entity appending** — `entities` list is appended to `compressed_summary`: `summary += "; " + "; ".join(entities)`, bridging the gap between ChromaDB metadata (where entities are stored) and the embedded vector.
+3. **`_normalise_for_index()`** — 44 English stopwords (the/a/an/is/are/was/and/or/but …) are stripped token-by-token from the enriched summary before the vector is computed. Original casing is preserved (`CosmosDB` stays `CosmosDB`).
+
 ### Stage 3 — Indexed Storage
 
 ```sql
@@ -178,7 +183,7 @@ from context_optimizer.compressor import compress_corpus_rolling
 compressed_chunks = compress_corpus_rolling(
     corpus_lines,
     chunk_size_threshold=512,
-    chunk_overlap_tokens=128,
+    chunk_overlap_tokens=64,
     llm=None,   # auto-resolved from env vars; see llm_provider.py
 )
 ```
@@ -201,6 +206,10 @@ GROQ_API_KEY=...
 - Parallel-safe: each chunk is independent.
 - Fallback: if no LLM available, truncates to first 200 chars.
 - Measured ratio: **12.24%** (8× reduction) on Pride & Prejudice full corpus.
+- Retrieval-optimized compression prompt: produces entity-dense noun phrases, not narrative prose.
+- Entity enrichment: `entities` list appended to `compressed_summary` before ChromaDB storage.
+- Index normalisation: `_normalise_for_index()` strips 44 English stopwords before embedding.
+- Reduced overlap: **64-token** boundary window (~12% of chunk) — entity enrichment covers the boundary-entity problem that larger overlap was solving.
 
 ---
 
@@ -273,7 +282,10 @@ In practice on the current corpus, summaries are sufficient and raw is never req
 
 **Tree-of-Thought (aggregated path):** System prompt forces three parallel reasoning
 paths (A/B/C) over all 435 compressed summaries, then synthesises to a FINAL ANSWER.
-Ensures complete corpus coverage for thematic questions.
+Ensures complete corpus coverage for thematic questions. Branch retrieval issues one
+**composite sentence query per branch** (all branch entities joined into a single query),
+cutting ChromaDB calls 3× vs per-entity queries. Branch ranking uses **mean cosine
+similarity** (gradient signal, e.g. 0.72 vs 0.68) rather than binary hit counts.
 
 ### DualStorageRetriever (Fallback)
 
@@ -399,6 +411,9 @@ Turn 2 (only if needs_raw=true):
 All compressed summaries injected once
     ↓
 System prompt forces PATH A / PATH B / PATH C analysis
+  Each branch → ONE composite sentence query (all branch entities joined)
+    ↓
+Branch ranking by mean cosine similarity (gradient signal, not binary hit counts)
     ↓
 FINAL ANSWER synthesises three paths
     ↓
@@ -576,6 +591,22 @@ Swapping any of these requires **no code changes**.
 |------|--------|---------|
 | `benchmarks/EXPERIMENT_RESULTS.json` | JSON | Raw numbers — per-question latency, tokens, F1, compression stats |
 | `docs/benchmarks/experiment_results.md` | Markdown | Human-readable report with PASS/FAIL badges |
+
+---
+
+## 13. Recent Improvements
+
+The following improvements were committed to main on 2026-06-26 (pre-benchmark; results pending against the Experiment 2 baseline):
+
+| # | Improvement | File | Expected Impact |
+|---|-------------|------|-----------------|
+| 1 | ToT composite sentence branch queries | `tot_reasoner.py` | 3× fewer ChromaDB calls; gradient cosine scoring replaces binary hit counts |
+| 2 | Retrieval-optimized compression prompt | `compressor.py` | Content-word-dominated embeddings; higher cosine separation between chunks |
+| 3 | `_normalise_for_index()` stopword stripping | `compressor.py` | Removes residual function words from stored documents before embedding |
+| 4 | Entity list appended to `compressed_summary` | `compressor.py` | ChromaDB embedding captures deduplicated entity signal that ToT branches search for |
+| 5 | Chunk overlap 128 → 64 tokens | `compressor.py` | ~14% fewer chunks; ~14% less one-time compression time and smaller ChromaDB index |
+
+See [docs/benchmarks/experiment_results.md](../benchmarks/experiment_results.md) for the pending benchmark results and the metrics to watch.
 
 ---
 

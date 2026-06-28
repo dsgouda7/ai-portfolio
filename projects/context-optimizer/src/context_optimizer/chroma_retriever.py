@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
+
 import chromadb
 from chromadb.config import Settings
 
@@ -30,7 +31,7 @@ class ChromaCompressedRetriever:
         self,
         collection_name: str = "compressed_chunks",
         persist_directory: str = "./chroma_db",
-        embedding_function: str = "default"
+        embedding_function: str = "default",
     ):
         """
         Initialize ChromaDB retriever
@@ -46,16 +47,13 @@ class ChromaCompressedRetriever:
         # Initialize ChromaDB client
         self.client = chromadb.PersistentClient(
             path=str(self.persist_directory),
-            settings=Settings(
-                anonymized_telemetry=False,
-                allow_reset=True
-            )
+            settings=Settings(anonymized_telemetry=False, allow_reset=True),
         )
 
         # Get or create collection
         self.collection = self.client.get_or_create_collection(
             name=collection_name,
-            metadata={"hnsw:space": "cosine"}  # Use cosine similarity
+            metadata={"hnsw:space": "cosine"},  # Use cosine similarity
         )
 
         print(f"[ChromaRetriever] Initialized with collection '{collection_name}'")
@@ -74,10 +72,12 @@ class ChromaCompressedRetriever:
             print(f"[ChromaRetriever] No chunks to add")
             return
 
-        print(f"[ChromaRetriever] Adding {len(chunks):,} chunks in batches of {batch_size}...")
+        print(
+            f"[ChromaRetriever] Adding {len(chunks):,} chunks in batches of {batch_size}..."
+        )
 
         for i in range(0, len(chunks), batch_size):
-            batch = chunks[i:i + batch_size]
+            batch = chunks[i : i + batch_size]
 
             # Prepare data for ChromaDB
             ids = [chunk.chunk_id for chunk in batch]
@@ -95,7 +95,7 @@ class ChromaCompressedRetriever:
                     "original_tokens": chunk.original_tokens,
                     "compressed_tokens": chunk.compressed_tokens,
                     "compression_ratio": chunk.compression_ratio,
-                    **chunk.metadata  # Include any custom metadata
+                    **chunk.metadata,  # Include any custom metadata
                 }
                 for chunk in batch
             ]
@@ -103,23 +103,20 @@ class ChromaCompressedRetriever:
             # Store raw text separately (too large for metadata)
             # We'll store chunk_id -> raw_text mapping in a separate dict/file
 
-            self.collection.add(
-                ids=ids,
-                documents=documents,
-                metadatas=metadatas
-            )
+            self.collection.add(ids=ids, documents=documents, metadatas=metadatas)
 
             if (i + batch_size) % 500 == 0:
-                print(f"  [Progress] Added {min(i + batch_size, len(chunks)):,}/{len(chunks):,} chunks")
+                print(
+                    f"  [Progress] Added {min(i + batch_size, len(chunks)):,}/{len(chunks):,} chunks"
+                )
 
         print(f"[ChromaRetriever] [OK] Added {len(chunks):,} chunks")
-        print(f"[ChromaRetriever] Total collection size: {self.collection.count():,} chunks")
+        print(
+            f"[ChromaRetriever] Total collection size: {self.collection.count():,} chunks"
+        )
 
     def search(
-        self,
-        query: str,
-        top_k: int = 5,
-        where_filter: dict[str, Any] | None = None
+        self, query: str, top_k: int = 5, where_filter: dict[str, Any] | None = None
     ) -> list[dict]:
         """
         Semantic search using embeddings
@@ -133,22 +130,32 @@ class ChromaCompressedRetriever:
             List of results with chunk_id, summary, metadata, similarity score
         """
         results = self.collection.query(
-            query_texts=[query],
-            n_results=top_k,
-            where=where_filter
+            query_texts=[query], n_results=top_k, where=where_filter
         )
 
         # Format results
         hits = []
         for i in range(len(results["ids"][0])):
-            hits.append({
-                "chunk_id": results["ids"][0][i],
-                "compressed_summary": results["documents"][0][i],
-                "metadata": results["metadatas"][0][i],
-                "distance": results["distances"][0][i] if "distances" in results else None,
-                "entities": results["metadatas"][0][i]["entities"].split(",") if results["metadatas"][0][i].get("entities") else [],
-                "keywords": results["metadatas"][0][i]["keywords"].split(",") if results["metadatas"][0][i].get("keywords") else [],
-            })
+            hits.append(
+                {
+                    "chunk_id": results["ids"][0][i],
+                    "compressed_summary": results["documents"][0][i],
+                    "metadata": results["metadatas"][0][i],
+                    "distance": (
+                        results["distances"][0][i] if "distances" in results else None
+                    ),
+                    "entities": (
+                        results["metadatas"][0][i]["entities"].split(",")
+                        if results["metadatas"][0][i].get("entities")
+                        else []
+                    ),
+                    "keywords": (
+                        results["metadatas"][0][i]["keywords"].split(",")
+                        if results["metadatas"][0][i].get("keywords")
+                        else []
+                    ),
+                }
+            )
 
         return hits
 
@@ -163,8 +170,16 @@ class ChromaCompressedRetriever:
             "chunk_id": results["ids"][0],
             "compressed_summary": results["documents"][0],
             "metadata": results["metadatas"][0],
-            "entities": results["metadatas"][0]["entities"].split(",") if results["metadatas"][0].get("entities") else [],
-            "keywords": results["metadatas"][0]["keywords"].split(",") if results["metadatas"][0].get("keywords") else [],
+            "entities": (
+                results["metadatas"][0]["entities"].split(",")
+                if results["metadatas"][0].get("entities")
+                else []
+            ),
+            "keywords": (
+                results["metadatas"][0]["keywords"].split(",")
+                if results["metadatas"][0].get("keywords")
+                else []
+            ),
         }
 
     def delete_collection(self) -> None:
@@ -180,13 +195,12 @@ class ChromaCompressedRetriever:
             "collection_name": self.collection.name,
             "total_chunks": count,
             "storage_path": str(self.persist_directory),
-            "embedding_function": "default (ChromaDB built-in)"
+            "embedding_function": "default (ChromaDB built-in)",
         }
 
 
 def load_chunks_from_chroma(
-    collection_name: str = "compressed_chunks",
-    persist_directory: str = "./chroma_db"
+    collection_name: str = "compressed_chunks", persist_directory: str = "./chroma_db"
 ) -> ChromaCompressedRetriever:
     """
     Load an existing ChromaDB collection
@@ -199,8 +213,7 @@ def load_chunks_from_chroma(
         ChromaCompressedRetriever instance
     """
     retriever = ChromaCompressedRetriever(
-        collection_name=collection_name,
-        persist_directory=persist_directory
+        collection_name=collection_name, persist_directory=persist_directory
     )
 
     if retriever.collection.count() == 0:

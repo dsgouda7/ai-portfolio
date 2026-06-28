@@ -36,6 +36,7 @@ except ImportError:
 @dataclass
 class CompressedChunk:
     """Result of LLM compression with dual storage."""
+
     chunk_id: str
     raw_text: str  # Original data (for fallback retrieval)
     compressed_summary: str  # LLM prose summary — fed to reasoning LLM
@@ -46,7 +47,7 @@ class CompressedChunk:
     compressed_tokens: int
     compression_ratio: float  # compressed / original
     index_text: str = ""  # Entity-dense stopword-stripped form embedded in ChromaDB.
-                          # If empty, compressed_summary is used as the fallback.
+    # If empty, compressed_summary is used as the fallback.
 
 
 class CompressorLLM(Protocol):
@@ -62,7 +63,9 @@ def _estimate_tokens(text: str) -> int:
     return max(1, len(text) // 4)
 
 
-def _build_local_llm(provider: str = "ollama", model: str | None = None) -> CompressorLLM | None:
+def _build_local_llm(
+    provider: str = "ollama", model: str | None = None
+) -> CompressorLLM | None:
     """
     Build a local LLM for compression.
 
@@ -70,18 +73,26 @@ def _build_local_llm(provider: str = "ollama", model: str | None = None) -> Comp
     - Ollama: phi4:mini, qwen2.5-coder:7b, llama3.2:3b
     - Groq: llama-3.3-70b-versatile (fast inference)
     """
-    selected_provider = os.getenv("CONTEXT_OPTIMIZER_COMPRESSOR_PROVIDER", provider).lower()
+    selected_provider = os.getenv(
+        "CONTEXT_OPTIMIZER_COMPRESSOR_PROVIDER", provider
+    ).lower()
 
     if selected_provider == "ollama" and ChatOllama is not None:
-        model_name = model or os.getenv("CONTEXT_OPTIMIZER_COMPRESSOR_MODEL", "qwen2.5-coder:7b")
+        model_name = model or os.getenv(
+            "CONTEXT_OPTIMIZER_COMPRESSOR_MODEL", "qwen2.5-coder:7b"
+        )
         base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
         return ChatOllama(model=model_name, base_url=base_url, temperature=0.1)
 
     if selected_provider == "groq" and ChatGroq is not None:
-        model_name = model or os.getenv("CONTEXT_OPTIMIZER_COMPRESSOR_MODEL", "llama-3.3-70b-versatile")
+        model_name = model or os.getenv(
+            "CONTEXT_OPTIMIZER_COMPRESSOR_MODEL", "llama-3.3-70b-versatile"
+        )
         api_key = os.getenv("GROQ_API_KEY")
         if not api_key:
-            raise ValueError("GROQ_API_KEY environment variable required for Groq compression")
+            raise ValueError(
+                "GROQ_API_KEY environment variable required for Groq compression"
+            )
         return ChatGroq(model=model_name, api_key=api_key, temperature=0.1)
 
     return None
@@ -95,17 +106,73 @@ def _build_local_llm(provider: str = "ollama", model: str | None = None) -> Comp
 # toward content words — exactly what ToT branch scoring needs.
 # Stemming is intentionally excluded: morphological variants ("timeouts" / "timeout")
 # are already collapsed by the LLM prompt below.
-_STOPWORDS: frozenset[str] = frozenset({
-    "a", "an", "the", "and", "or", "but",
-    "in", "on", "at", "to", "for", "of", "with", "by", "from",
-    "is", "are", "was", "were", "be", "been", "being",
-    "have", "has", "had", "do", "does", "did",
-    "will", "would", "can", "could", "should", "may", "might", "shall",
-    "this", "that", "these", "those",
-    "it", "its", "as", "not", "no", "if", "so", "than", "then",
-    "when", "where", "which", "who", "how", "what",
-    "there", "their", "they", "them", "we", "our", "you", "your",
-})
+_STOPWORDS: frozenset[str] = frozenset(
+    {
+        "a",
+        "an",
+        "the",
+        "and",
+        "or",
+        "but",
+        "in",
+        "on",
+        "at",
+        "to",
+        "for",
+        "of",
+        "with",
+        "by",
+        "from",
+        "is",
+        "are",
+        "was",
+        "were",
+        "be",
+        "been",
+        "being",
+        "have",
+        "has",
+        "had",
+        "do",
+        "does",
+        "did",
+        "will",
+        "would",
+        "can",
+        "could",
+        "should",
+        "may",
+        "might",
+        "shall",
+        "this",
+        "that",
+        "these",
+        "those",
+        "it",
+        "its",
+        "as",
+        "not",
+        "no",
+        "if",
+        "so",
+        "than",
+        "then",
+        "when",
+        "where",
+        "which",
+        "who",
+        "how",
+        "what",
+        "there",
+        "their",
+        "they",
+        "them",
+        "we",
+        "our",
+        "you",
+        "your",
+    }
+)
 
 
 def _normalise_for_index(text: str) -> str:
@@ -120,10 +187,7 @@ def _normalise_for_index(text: str) -> str:
     technical identifiers (``CosmosDB``, ``HTTP 504``) round-trip unchanged.
     """
     tokens = text.split()
-    kept = [
-        t for t in tokens
-        if t.lower().rstrip(".,;:!?'\"") not in _STOPWORDS
-    ]
+    kept = [t for t in tokens if t.lower().rstrip(".,;:!?'\"") not in _STOPWORDS]
     return " ".join(kept)
 
 
@@ -206,14 +270,19 @@ def compress_chunk_with_llm(
             )
 
     # Build compression prompt for THIS chunk only (rolling window)
-    prompt = COMPRESSION_PROMPT_TEMPLATE.format(text=text[:2000])  # Limit input to ~500 tokens
+    prompt = COMPRESSION_PROMPT_TEMPLATE.format(
+        text=text[:2000]
+    )  # Limit input to ~500 tokens
 
     try:
         response = llm.invoke(prompt)
-        result_text = response.content if hasattr(response, 'content') else str(response)
+        result_text = (
+            response.content if hasattr(response, "content") else str(response)
+        )
 
         # Parse JSON response
         import json
+
         try:
             parsed = json.loads(result_text)
             summary = parsed.get("summary", text[:600])
@@ -249,13 +318,15 @@ def compress_chunk_with_llm(
             chunk_id=chunk_id,
             raw_text=text,
             compressed_summary=summary,  # prose — used by reasoning LLM
-            index_text=index_text,       # entity-dense — embedded in ChromaDB
+            index_text=index_text,  # entity-dense — embedded in ChromaDB
             entities=entities,
             keywords=keywords,
             metadata=metadata or {},
             original_tokens=original_tokens,
             compressed_tokens=min(compressed_tokens, max_summary_tokens),
-            compression_ratio=compressed_tokens / original_tokens if original_tokens > 0 else 1.0,
+            compression_ratio=(
+                compressed_tokens / original_tokens if original_tokens > 0 else 1.0
+            ),
         )
 
     except Exception as e:
@@ -325,7 +396,9 @@ def compress_corpus_rolling(
     chunk_idx = 0
     overlap_lines: list[str] = []  # Track overlap from previous chunk
 
-    print(f"[Compressor] Starting rolling compression of {len(corpus_lines):,} lines...")
+    print(
+        f"[Compressor] Starting rolling compression of {len(corpus_lines):,} lines..."
+    )
     print(
         f"[Compressor] Threshold: {chunk_size_threshold} tokens, "
         f"Overlap: {chunk_overlap_tokens} tokens, Batch: {compression_batch_size}"
@@ -372,7 +445,9 @@ def compress_corpus_rolling(
 
                 # Progress reporting
                 if progress_callback and chunk_idx % compression_batch_size == 0:
-                    progress_callback(chunk_idx, len(corpus_lines) // chunk_size_threshold)
+                    progress_callback(
+                        chunk_idx, len(corpus_lines) // chunk_size_threshold
+                    )
 
                 # Prepare overlap for next chunk (last ~25% of current chunk)
                 overlap_lines = []
@@ -417,7 +492,9 @@ def compress_corpus_rolling(
     avg_ratio = total_compressed / total_original if total_original > 0 else 1.0
 
     print(f"[Compressor] [OK] Compressed {len(compressed_chunks):,} chunks")
-    print(f"[Compressor] Compression ratio: {avg_ratio:.2%} ({total_original:,} => {total_compressed:,} tokens)")
+    print(
+        f"[Compressor] Compression ratio: {avg_ratio:.2%} ({total_original:,} => {total_compressed:,} tokens)"
+    )
 
     return compressed_chunks
 
@@ -442,6 +519,8 @@ if __name__ == "__main__":
     for chunk in compressed:
         print(f"\n{chunk.chunk_id}:")
         print(f"  Original ({chunk.original_tokens} tokens): {chunk.raw_text[:100]}...")
-        print(f"  Compressed ({chunk.compressed_tokens} tokens): {chunk.compressed_summary}")
+        print(
+            f"  Compressed ({chunk.compressed_tokens} tokens): {chunk.compressed_summary}"
+        )
         print(f"  Entities: {chunk.entities}")
         print(f"  Keywords: {chunk.keywords}")
