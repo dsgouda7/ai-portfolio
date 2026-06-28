@@ -18,6 +18,7 @@ benchmarks/data/books/
 benchmarks/data/question_banks/
 benchmarks/book_results.md
 benchmarks/BOOK_RESULTS.json
+benchmarks/BENCH_RUNNING.lock
 
 # Generated publication artifacts
 docs/whitepaper/proposed-whitepaper.pdf
