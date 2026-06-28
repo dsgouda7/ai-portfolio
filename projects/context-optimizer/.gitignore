@@ -13,6 +13,12 @@ benchmarks/results.md
 benchmarks/image_results.md
 benchmarks/image_data/
 
+# Book benchmark — downloaded corpus (build artifacts, not source)
+benchmarks/data/books/
+benchmarks/data/question_banks/
+benchmarks/book_results.md
+benchmarks/BOOK_RESULTS.json
+
 # Generated publication artifacts
 docs/whitepaper/proposed-whitepaper.pdf
 

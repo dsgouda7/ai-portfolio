@@ -499,6 +499,77 @@ def compress_corpus_rolling(
     return compressed_chunks
 
 
+def compress_corpus_parallel(
+    corpus_map: dict[str, list[str]],
+    workers: int = 4,
+    **rolling_kwargs,
+) -> dict[str, list["CompressedChunk"]]:
+    """
+    Compress multiple independent corpora concurrently.
+
+    Each corpus (e.g. one book) is compressed in its own worker thread by
+    calling :func:`compress_corpus_rolling`.  The Ollama server queues the
+    underlying LLM calls; set ``OLLAMA_NUM_PARALLEL=<workers>`` in your
+    environment to allow Ollama to serve that many requests simultaneously
+    (default is 1).
+
+    Parameters
+    ----------
+    corpus_map:
+        ``{corpus_id: lines}`` mapping.  Each value is the list of raw text
+        lines that would normally be passed to ``compress_corpus_rolling``.
+    workers:
+        Maximum number of parallel compression threads.
+    **rolling_kwargs:
+        Passed verbatim to every ``compress_corpus_rolling`` call
+        (e.g. ``chunk_size_threshold``, ``chunk_overlap_tokens``, ``llm``).
+
+    Returns
+    -------
+    dict[corpus_id, list[CompressedChunk]]
+        Preserves all keys from *corpus_map*; failed corpora return ``[]``.
+    """
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    results: dict[str, list[CompressedChunk]] = {}
+    total = len(corpus_map)
+
+    print(
+        f"[ParallelCompressor] {total} corpus/a  |  "
+        f"{workers} worker(s)  |  "
+        f"hint: set OLLAMA_NUM_PARALLEL={workers} for max LLM throughput"
+    )
+
+    with ThreadPoolExecutor(
+        max_workers=workers, thread_name_prefix="compressor"
+    ) as exe:
+        futures = {
+            exe.submit(compress_corpus_rolling, lines, **rolling_kwargs): corpus_id
+            for corpus_id, lines in corpus_map.items()
+        }
+        done = 0
+        for future in as_completed(futures):
+            corpus_id = futures[future]
+            done += 1
+            try:
+                chunks = future.result()
+                results[corpus_id] = chunks
+                print(
+                    f"  [ParallelCompressor] [{done}/{total}] {corpus_id}: "
+                    f"{len(chunks)} chunks"
+                )
+            except Exception as exc:
+                results[corpus_id] = []
+                print(
+                    f"  [ParallelCompressor] [{done}/{total}] {corpus_id}: "
+                    f"ERROR — {exc}"
+                )
+
+    total_chunks = sum(len(v) for v in results.values())
+    print(f"[ParallelCompressor] Done — {total_chunks} total chunks across {total} corpus/a")
+    return results
+
+
 if __name__ == "__main__":
     # Quick test
     test_corpus = [
