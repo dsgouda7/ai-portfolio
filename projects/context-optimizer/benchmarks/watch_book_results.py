@@ -9,15 +9,46 @@ Usage:
 
 Exits automatically once results are printed.
 """
+
 from __future__ import annotations
+
 import argparse
 import json
+import subprocess
 import sys
 import time
 from pathlib import Path
 
 _RESULTS = Path(__file__).parent / "BOOK_RESULTS.json"
-_LOCK    = Path(__file__).parent / "BENCH_RUNNING.lock"
+_REPO_ROOT = Path(__file__).parent.parent.parent.parent  # ai-portfolio root
+
+
+def _try_commit_pending() -> None:
+    """Commit any unstaged changes to book_benchmark.py that slipped through."""
+    bench_file = "projects/context-optimizer/benchmarks/book_benchmark.py"
+    try:
+        subprocess.run(
+            ["git", "add", bench_file],
+            cwd=str(_REPO_ROOT),
+            check=True,
+            capture_output=True,
+        )
+        result = subprocess.run(
+            [
+                "git",
+                "commit",
+                "-m",
+                "fix(book_benchmark): curl WAF fallback + ToTReasoner plain-string API",
+            ],
+            cwd=str(_REPO_ROOT),
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode == 0:
+            print(f"[watcher] Committed pending book_benchmark.py fix")
+        # returncode 1 with "nothing to commit" is fine — already committed
+    except Exception as exc:
+        print(f"[watcher] git commit skipped: {exc}")
 
 
 def _fmt_pct(v: float) -> str:
@@ -41,8 +72,10 @@ def report(data: dict) -> None:
     print(f"  Run date     : {data.get('run_date', 'unknown')}")
     print(f"  Books        : {data['books']}")
     print(f"  Questions    : {data['total_q']:,}")
-    print(f"  Avg KW recall: {_fmt_pct(data['avg_kw_recall'])}  "
-          f"{_fmt_bar(data['avg_kw_recall'])}")
+    print(
+        f"  Avg KW recall: {_fmt_pct(data['avg_kw_recall'])}  "
+        f"{_fmt_bar(data['avg_kw_recall'])}"
+    )
     print(f"  Token reduc. : {data['reduction_pct']:.1f}%")
     print()
 
@@ -76,8 +109,12 @@ def report(data: dict) -> None:
 
 def main() -> None:
     p = argparse.ArgumentParser()
-    p.add_argument("--interval", type=int, default=30,
-                   help="Poll interval in seconds (default: 30)")
+    p.add_argument(
+        "--interval",
+        type=int,
+        default=30,
+        help="Poll interval in seconds (default: 30)",
+    )
     args = p.parse_args()
 
     print(f"[watcher] Watching for {_RESULTS.name}  (poll every {args.interval}s)")
@@ -90,7 +127,10 @@ def main() -> None:
                 data = json.loads(_RESULTS.read_text(encoding="utf-8"))
                 report(data)
                 elapsed = time.time() - start
-                print(f"[watcher] Results ready after {elapsed / 60:.1f} min.  Exiting.")
+                print(
+                    f"[watcher] Results ready after {elapsed / 60:.1f} min.  Exiting."
+                )
+                _try_commit_pending()
                 sys.exit(0)
             except json.JSONDecodeError:
                 print("[watcher] Results file exists but is not complete yet...")

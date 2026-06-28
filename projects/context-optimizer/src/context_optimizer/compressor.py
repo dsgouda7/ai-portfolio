@@ -14,7 +14,11 @@ Key Design:
 
 from __future__ import annotations
 
+import datetime
+import json
+import logging
 import os
+import time
 from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol
@@ -61,6 +65,103 @@ class CompressorLLM(Protocol):
 def _estimate_tokens(text: str) -> int:
     """Rough token estimation (4 chars per token)."""
     return max(1, len(text) // 4)
+
+
+# ── Per-chunk JSONL file logger ──────────────────────────────────────────────
+# Enabled by setting COMPRESSOR_LOG_FILE=/path/to/chunks.jsonl
+# Each line is a JSON record: {ts, chunk_id, label, elapsed_s, orig_tokens,
+#   comp_tokens, ratio, error (optional)}
+# The logger is initialised lazily and shared across all threads (Python's
+# logging module serialises handler writes with an internal lock).
+
+_chunk_logger: logging.Logger | None = None
+
+
+def _get_chunk_logger() -> logging.Logger | None:
+    """Return the module-level chunk logger, creating it on first call."""
+    global _chunk_logger
+    if _chunk_logger is not None:
+        return _chunk_logger
+    log_path = os.getenv("COMPRESSOR_LOG_FILE")
+    if not log_path:
+        return None
+    logger = logging.getLogger("compressor.chunks")
+    logger.setLevel(logging.DEBUG)
+    logger.propagate = False
+    if not logger.handlers:
+        handler = logging.FileHandler(log_path, mode="a", encoding="utf-8")
+        handler.setFormatter(logging.Formatter("%(message)s"))  # raw JSONL
+        logger.addHandler(handler)
+    _chunk_logger = logger
+    return _chunk_logger
+
+
+def _log_chunk(
+    chunk_id: str,
+    label: str,
+    elapsed_s: float,
+    orig_tokens: int,
+    comp_tokens: int,
+    ratio: float,
+    error: str | None = None,
+) -> None:
+    """Append one JSONL record to the chunk log (no-op if log file not configured)."""
+    logger = _get_chunk_logger()
+    if logger is None:
+        return
+    record: dict = {
+        "ts": datetime.datetime.now().isoformat(timespec="milliseconds"),
+        "chunk_id": chunk_id,
+        "label": label,
+        "elapsed_s": round(elapsed_s, 3),
+        "orig_tokens": orig_tokens,
+        "comp_tokens": comp_tokens,
+        "ratio": round(ratio, 4),
+    }
+    if error:
+        record["error"] = error
+    logger.info(json.dumps(record))
+
+
+# ── Ollama parallelism gate ───────────────────────────────────────────────────
+
+def _ollama_parallel_slots() -> int:
+    """Return OLLAMA_NUM_PARALLEL as int (defaults to 1 when unset)."""
+    return max(1, int(os.getenv("OLLAMA_NUM_PARALLEL", "1")))
+
+
+def _effective_workers(requested: int, explicit_llm: bool) -> int:
+    """
+    Clamp *requested* worker count to what the backend can actually serve in
+    parallel.
+
+    Rules
+    -----
+    - Explicit LLM instance provided → trust the caller, no clamping.
+    - Ollama backend (default) → clamp to ``OLLAMA_NUM_PARALLEL`` (default 1).
+      Ollama serialises requests when only one model slot is loaded; running
+      N workers just creates N queued requests that are processed one-at-a-time,
+      giving no speedup while holding N threads idle.
+    - Any other backend (Groq, etc.) → no clamping.
+
+    To enable true parallelism with Ollama, either:
+      - Set ``OLLAMA_NUM_PARALLEL=4`` before starting Ollama *and* pass
+        ``--workers 4`` to the benchmark, **or**
+      - Switch to a cloud backend via ``CONTEXT_OPTIMIZER_COMPRESSOR_PROVIDER=groq``.
+    """
+    if explicit_llm:
+        return requested  # caller supplied their own LLM — they know best
+    provider = os.getenv("CONTEXT_OPTIMIZER_COMPRESSOR_PROVIDER", "ollama").lower()
+    if provider != "ollama":
+        return requested  # cloud backends handle their own concurrency
+    limit = _ollama_parallel_slots()
+    if requested > limit:
+        print(
+            f"[ParallelCompressor] Ollama detected — clamping workers "
+            f"{requested} → {limit}  "
+            f"(set OLLAMA_NUM_PARALLEL={requested} to unlock full parallelism)"
+        )
+    return min(requested, limit)
 
 
 def _build_local_llm(
@@ -236,6 +337,7 @@ def compress_chunk_with_llm(
     metadata: dict[str, str | int] | None = None,
     llm: CompressorLLM | None = None,
     max_summary_tokens: int = 150,
+    label: str = "",
 ) -> CompressedChunk:
     """
     Compress a single chunk using LLM with rolling context window.
@@ -274,15 +376,15 @@ def compress_chunk_with_llm(
         text=text[:2000]
     )  # Limit input to ~500 tokens
 
+    t_start = time.perf_counter()
     try:
         response = llm.invoke(prompt)
+        elapsed = time.perf_counter() - t_start
         result_text = (
             response.content if hasattr(response, "content") else str(response)
         )
 
         # Parse JSON response
-        import json
-
         try:
             parsed = json.loads(result_text)
             summary = parsed.get("summary", text[:600])
@@ -313,6 +415,9 @@ def compress_chunk_with_llm(
 
         original_tokens = _estimate_tokens(text)
         compressed_tokens = _estimate_tokens(summary)
+        ratio = compressed_tokens / original_tokens if original_tokens > 0 else 1.0
+        _log_chunk(chunk_id, label, elapsed, original_tokens,
+                   min(compressed_tokens, max_summary_tokens), ratio)
 
         return CompressedChunk(
             chunk_id=chunk_id,
@@ -324,12 +429,13 @@ def compress_chunk_with_llm(
             metadata=metadata or {},
             original_tokens=original_tokens,
             compressed_tokens=min(compressed_tokens, max_summary_tokens),
-            compression_ratio=(
-                compressed_tokens / original_tokens if original_tokens > 0 else 1.0
-            ),
+            compression_ratio=ratio,
         )
 
     except Exception as e:
+        elapsed = time.perf_counter() - t_start
+        _log_chunk(chunk_id, label, elapsed, _estimate_tokens(text), 0, 0.0,
+                   error=str(e))
         # Fallback on any LLM error
         print(f"[Compression Warning] LLM failed for chunk {chunk_id}: {e}")
         return CompressedChunk(
@@ -353,6 +459,7 @@ def compress_corpus_rolling(
     llm: CompressorLLM | None = None,
     progress_callback: callable | None = None,
     raw_index: "RawIndex | None" = None,
+    label: str = "",
 ) -> list[CompressedChunk]:
     """
     Compress a large corpus using a rolling window strategy with overlap.
@@ -396,11 +503,12 @@ def compress_corpus_rolling(
     chunk_idx = 0
     overlap_lines: list[str] = []  # Track overlap from previous chunk
 
+    _pfx = f"[{label}] " if label else ""
     print(
-        f"[Compressor] Starting rolling compression of {len(corpus_lines):,} lines..."
+        f"{_pfx}[Compressor] Starting rolling compression of {len(corpus_lines):,} lines..."
     )
     print(
-        f"[Compressor] Threshold: {chunk_size_threshold} tokens, "
+        f"{_pfx}[Compressor] Threshold: {chunk_size_threshold} tokens, "
         f"Overlap: {chunk_overlap_tokens} tokens, Batch: {compression_batch_size}"
         + (f", RawIndex: {raw_index._db_path!r}" if raw_index is not None else "")
     )
@@ -431,6 +539,7 @@ def compress_corpus_rolling(
                 _maybe_index_raw(chunk_id, chunk_text)
 
                 # ── Step 2: LLM compression (~500 ms, overlaps with above) ───
+                _t0 = time.perf_counter()
                 compressed = compress_chunk_with_llm(
                     text=chunk_text,
                     chunk_id=chunk_id,
@@ -440,14 +549,20 @@ def compress_corpus_rolling(
                         "source_lines": len(current_chunk_lines),
                     },
                     llm=llm,
+                    label=label,
                 )
+                _elapsed = time.perf_counter() - _t0
                 compressed_chunks.append(compressed)
+                est_total = max(1, len(corpus_lines) // max(1, chunk_size_threshold // 4))
+                print(
+                    f"{_pfx}[Compressor] chunk {chunk_idx + 1}/{est_total} done"
+                    f"  ratio={compressed.compression_ratio:.0%}"
+                    f"  {_elapsed:.1f}s"
+                )
 
                 # Progress reporting
                 if progress_callback and chunk_idx % compression_batch_size == 0:
-                    progress_callback(
-                        chunk_idx, len(corpus_lines) // chunk_size_threshold
-                    )
+                    progress_callback(chunk_idx, est_total)
 
                 # Prepare overlap for next chunk (last ~25% of current chunk)
                 overlap_lines = []
@@ -481,6 +596,7 @@ def compress_corpus_rolling(
                     "source_lines": len(current_chunk_lines),
                 },
                 llm=llm,
+                label=label,
             )
             compressed_chunks.append(compressed)
 
@@ -491,9 +607,9 @@ def compress_corpus_rolling(
     total_compressed = sum(c.compressed_tokens for c in compressed_chunks)
     avg_ratio = total_compressed / total_original if total_original > 0 else 1.0
 
-    print(f"[Compressor] [OK] Compressed {len(compressed_chunks):,} chunks")
+    print(f"{_pfx}[Compressor] [OK] Compressed {len(compressed_chunks):,} chunks")
     print(
-        f"[Compressor] Compression ratio: {avg_ratio:.2%} ({total_original:,} => {total_compressed:,} tokens)"
+        f"{_pfx}[Compressor] ratio: {avg_ratio:.2%} ({total_original:,} => {total_compressed:,} tokens)"
     )
 
     return compressed_chunks
@@ -534,17 +650,20 @@ def compress_corpus_parallel(
     results: dict[str, list[CompressedChunk]] = {}
     total = len(corpus_map)
 
+    effective = _effective_workers(workers, explicit_llm="llm" in rolling_kwargs)
     print(
         f"[ParallelCompressor] {total} corpus/a  |  "
-        f"{workers} worker(s)  |  "
-        f"hint: set OLLAMA_NUM_PARALLEL={workers} for max LLM throughput"
+        f"{effective} effective worker(s) (requested: {workers})  |  "
+        f"log: {os.getenv('COMPRESSOR_LOG_FILE', 'disabled')}"
     )
 
     with ThreadPoolExecutor(
-        max_workers=workers, thread_name_prefix="compressor"
+        max_workers=effective, thread_name_prefix="compressor"
     ) as exe:
         futures = {
-            exe.submit(compress_corpus_rolling, lines, **rolling_kwargs): corpus_id
+            exe.submit(
+                compress_corpus_rolling, lines, label=corpus_id, **rolling_kwargs
+            ): corpus_id
             for corpus_id, lines in corpus_map.items()
         }
         done = 0
@@ -566,7 +685,9 @@ def compress_corpus_parallel(
                 )
 
     total_chunks = sum(len(v) for v in results.values())
-    print(f"[ParallelCompressor] Done — {total_chunks} total chunks across {total} corpus/a")
+    print(
+        f"[ParallelCompressor] Done — {total_chunks} total chunks across {total} corpus/a"
+    )
     return results
 
 

@@ -34,6 +34,7 @@ pipeline answer is scored by keyword recall:
 This is deterministic, fast, and reproducible.  Judging runs asynchronously in
 a ThreadPoolExecutor alongside query execution so it never blocks the next query.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -44,61 +45,124 @@ import shutil
 import sys
 import tempfile
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed, Future
+from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 # ── Project paths ──────────────────────────────────────────────────────────────
-_BENCH_DIR   = Path(__file__).parent
+_BENCH_DIR = Path(__file__).parent
 _PROJECT_ROOT = _BENCH_DIR.parent
-_SRC_DIR     = _PROJECT_ROOT / "src"
+_SRC_DIR = _PROJECT_ROOT / "src"
 sys.path.insert(0, str(_SRC_DIR))
 
 _BANKS_DIR = _BENCH_DIR / "data" / "question_banks"
 _BOOKS_DIR = _BENCH_DIR / "data" / "books"
 
 # ── HTTP constants ─────────────────────────────────────────────────────────────
-_HEADERS     = {"User-Agent": "context-optimizer-book-benchmark/1.0"}
-_TIMEOUT     = 30
-_GUTENDEX    = "https://gutendex.com/books/"
-_WIKI_SUMM   = "https://en.wikipedia.org/api/rest_v1/page/summary/{title}"
-_WIKI_SECT   = "https://en.wikipedia.org/api/rest_v1/page/mobile-sections/{title}"
+# gutendex blocks non-browser UAs; use a generic Chrome UA
+_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/124.0.0.0 Safari/537.36"
+    ),
+    "Accept": "application/json, text/plain, */*",
+}
+_TIMEOUT = 30
+_GUTENDEX = "https://gutendex.com/books/"
+_WIKI_SUMM = "https://en.wikipedia.org/api/rest_v1/page/summary/{title}"
+_WIKI_SECT = "https://en.wikipedia.org/api/rest_v1/page/mobile-sections/{title}"
 
 # ── Exclude non-fiction / non-narrative IDs ────────────────────────────────────
 # (philosophy, religious texts, reference works, audio-only)
 _EXCLUDE_IDS = {
-    45304, 3296,    # Augustine
-    2680,           # Marcus Aurelius Meditations
-    1998, 4363, 52190,  # Nietzsche
-    3207,           # Hobbes Leviathan
-    1232,           # Machiavelli Prince
-    1080,           # Swift A Modest Proposal (essay, not novel)
-    205,            # Thoreau Walden (essay)
-    27558,          # CIA World Factbook
-    20203,          # Benjamin Franklin Autobiography (too fragmented)
-    33283,          # Calculus Made Easy (PDF only)
-    2542,           # Ibsen A Doll's House (play — OK but short; keep for variety)
+    45304,
+    3296,  # Augustine
+    2680,  # Marcus Aurelius Meditations
+    1998,
+    4363,
+    52190,  # Nietzsche
+    3207,  # Hobbes Leviathan
+    1232,  # Machiavelli Prince
+    1080,  # Swift A Modest Proposal (essay, not novel)
+    205,  # Thoreau Walden (essay)
+    27558,  # CIA World Factbook
+    20203,  # Benjamin Franklin Autobiography (too fragmented)
+    33283,  # Calculus Made Easy (PDF only)
+    2542,  # Ibsen A Doll's House (play — OK but short; keep for variety)
 }
 
 # ── Wikipedia section name variants to search for ─────────────────────────────
-_PLOT_TITLES     = {"plot", "plot summary", "synopsis", "storyline", "summary"}
-_CHAR_TITLES     = {"characters", "main characters", "cast", "cast of characters"}
-_THEME_TITLES    = {"themes", "themes and motifs", "major themes", "motifs"}
-_SETTING_TITLES  = {"setting", "setting and time period", "background"}
+_PLOT_TITLES = {"plot", "plot summary", "synopsis", "storyline", "summary"}
+_CHAR_TITLES = {"characters", "main characters", "cast", "cast of characters"}
+_THEME_TITLES = {"themes", "themes and motifs", "major themes", "motifs"}
+_SETTING_TITLES = {"setting", "setting and time period", "background"}
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
+
 def _get(url: str, **kwargs) -> Any:
-    """GET with timeout and User-Agent; raises on HTTP errors."""
+    """
+    GET with browser-like headers.  Falls back to a curl subprocess when
+    Cloudflare or similar WAF blocks the Python requests TLS fingerprint.
+    Returns a lightweight response-like object with ``.json()`` and ``.content``.
+    """
     try:
         import requests
     except ImportError:
         sys.exit("ERROR: 'requests' is required.  pip install requests")
-    resp = requests.get(url, headers=_HEADERS, timeout=_TIMEOUT, **kwargs)
-    resp.raise_for_status()
-    return resp
+
+    params = kwargs.pop("params", None)
+    if params:
+        from urllib.parse import urlencode
+
+        sep = "&" if "?" in url else "?"
+        url = url + sep + urlencode(params)
+
+    # ── Try requests first ─────────────────────────────────────────────────────
+    try:
+        resp = requests.get(url, headers=_HEADERS, timeout=_TIMEOUT, **kwargs)
+        if resp.status_code != 403:
+            resp.raise_for_status()
+            return resp
+    except Exception:
+        pass
+
+    # ── Fall back to curl (different TLS fingerprint, bypasses WAF) ────────────
+    import subprocess
+
+    result = subprocess.run(
+        [
+            "curl",
+            "-sL",
+            "-H",
+            f"User-Agent: {_HEADERS['User-Agent']}",
+            "-H",
+            "Accept: application/json, text/plain, */*",
+            "-H",
+            "Accept-Language: en-US,en;q=0.9",
+            "--compressed",
+            "--max-time",
+            str(_TIMEOUT),
+            url,
+        ],
+        capture_output=True,
+        check=True,
+    )
+
+    class _CurlResponse:
+        def __init__(self, data: bytes) -> None:
+            self.content = data
+
+        def json(self) -> Any:
+            return json.loads(self.content.decode("utf-8"))
+
+        def raise_for_status(self) -> None:
+            pass
+
+    return _CurlResponse(result.stdout)
 
 
 def _strip_html(html: str) -> str:
@@ -114,11 +178,39 @@ def _slug(title: str) -> str:
 def _keywords(text: str, min_len: int = 4) -> list[str]:
     """Return unique, lowercase content words (length ≥ min_len)."""
     stopwords = {
-        "this", "that", "with", "from", "have", "will", "been",
-        "were", "they", "them", "their", "also", "when", "where",
-        "which", "while", "after", "before", "during", "into",
-        "onto", "upon", "over", "under", "about", "some", "many",
-        "more", "most", "both", "each", "such", "than",
+        "this",
+        "that",
+        "with",
+        "from",
+        "have",
+        "will",
+        "been",
+        "were",
+        "they",
+        "them",
+        "their",
+        "also",
+        "when",
+        "where",
+        "which",
+        "while",
+        "after",
+        "before",
+        "during",
+        "into",
+        "onto",
+        "upon",
+        "over",
+        "under",
+        "about",
+        "some",
+        "many",
+        "more",
+        "most",
+        "both",
+        "each",
+        "such",
+        "than",
     }
     tokens = re.findall(r"[a-z][a-z']{%d,}" % (min_len - 1), text.lower())
     seen: set[str] = set()
@@ -131,6 +223,7 @@ def _keywords(text: str, min_len: int = 4) -> list[str]:
 
 
 # ── Book catalog ───────────────────────────────────────────────────────────────
+
 
 def fetch_book_catalog(n: int = 100) -> list[dict]:
     """Fetch the top-N English fiction books from gutendex."""
@@ -170,13 +263,19 @@ def fetch_book_catalog(n: int = 100) -> list[dict]:
             if item.get("authors"):
                 a = item["authors"][0]
                 author = f"{a.get('name', '')}".strip()
-            books.append({
-                "id":      item["id"],
-                "title":   item["title"],
-                "author":  author,
-                "txt_url": txt_url,
-                "slug":    _slug(item["title"]),
-            })
+            # gutendex now ships auto-generated summaries per book
+            summaries = item.get("summaries", [])
+            catalog_summary = summaries[0] if summaries else ""
+            books.append(
+                {
+                    "id": item["id"],
+                    "title": item["title"],
+                    "author": author,
+                    "txt_url": txt_url,
+                    "slug": _slug(item["title"]),
+                    "catalog_summary": catalog_summary,
+                }
+            )
 
         next_url = data.get("next")
         if not next_url:
@@ -189,6 +288,7 @@ def fetch_book_catalog(n: int = 100) -> list[dict]:
 
 
 # ── Wikipedia Q&A extraction ───────────────────────────────────────────────────
+
 
 def _wiki_sections(title: str) -> dict[str, str]:
     """Return {section_title_lower: plain_text} from Wikipedia mobile-sections."""
@@ -223,54 +323,64 @@ def _wiki_sections(title: str) -> dict[str, str]:
     return sections
 
 
-def _extract_qa(book: dict, sections: dict[str, str],
-                max_q: int = 20) -> list[dict]:
-    """Generate Q&A pairs from Wikipedia sections for one book."""
-    title  = book["title"]
+def _extract_qa(book: dict, sections: dict[str, str], max_q: int = 20) -> list[dict]:
+    """Generate Q&A pairs from catalog summary + Wikipedia sections."""
+    title = book["title"]
     author = book["author"]
     qa: list[dict] = []
 
     def _add(q: str, answer: str, source: str) -> None:
         if len(answer) < 20:
             return
-        qa.append({
-            "question":        q,
-            "expected_answer": answer,
-            "keywords":        _keywords(answer),
-            "source":          source,
-            "difficulty":      "medium",
-        })
+        qa.append(
+            {
+                "question": q,
+                "expected_answer": answer,
+                "keywords": _keywords(answer),
+                "source": source,
+                "difficulty": "medium",
+            }
+        )
 
-    lead = sections.get("lead", "")
+    # ── Seed from the catalog summary (free — already downloaded) ─────────────
+    catalog_summary = book.get("catalog_summary", "")
+    if catalog_summary:
+        _add(f"What is {title!r} about?", catalog_summary, "catalog")
+        _add(
+            f"Give a brief overview of the plot of {title!r}.",
+            catalog_summary,
+            "catalog",
+        )
+        # Strip the trailing auto-generated disclaimer for cleaner answers
+        clean = re.sub(
+            r"\(This is an automatically generated summary\.?\)", "", catalog_summary
+        ).strip()
+        if clean:
+            _add(f"Summarise {title!r} in a few sentences.", clean, "catalog")
+
+    lead = sections.get("lead", "") or catalog_summary
 
     # ── Always-applicable questions ────────────────────────────────────────────
     if lead:
-        _add(f"Who wrote {title!r} and when was it first published?",
-             lead[:400], "lead")
-        _add(f"What is the main plot of {title!r}?",
-             lead[:500], "lead")
-        _add(f"What genre is {title!r}?",
-             lead[:300], "lead")
+        _add(
+            f"Who wrote {title!r} and when was it first published?", lead[:400], "lead"
+        )
+        _add(f"What is the main plot of {title!r}?", lead[:500], "lead")
+        _add(f"What genre is {title!r}?", lead[:300], "lead")
 
     # ── Plot ──────────────────────────────────────────────────────────────────
-    plot_text = next(
-        (sections[k] for k in sections if k in _PLOT_TITLES), ""
-    )
+    plot_text = next((sections[k] for k in sections if k in _PLOT_TITLES), "")
     if plot_text:
-        _add(f"Summarise the plot of {title!r}.",
-             plot_text[:600], "plot")
-        _add(f"How does {title!r} end?",
-             plot_text[-400:], "plot")
-        _add(f"What is the central conflict in {title!r}?",
-             plot_text[:400], "plot")
+        _add(f"Summarise the plot of {title!r}.", plot_text[:600], "plot")
+        _add(f"How does {title!r} end?", plot_text[-400:], "plot")
+        _add(f"What is the central conflict in {title!r}?", plot_text[:400], "plot")
 
     # ── Characters ────────────────────────────────────────────────────────────
-    char_text = next(
-        (sections[k] for k in sections if k in _CHAR_TITLES), ""
-    )
+    char_text = next((sections[k] for k in sections if k in _CHAR_TITLES), "")
     if char_text:
-        _add(f"Who are the main characters in {title!r}?",
-             char_text[:500], "characters")
+        _add(
+            f"Who are the main characters in {title!r}?", char_text[:500], "characters"
+        )
         # Try to extract individual character descriptions
         # Pattern: sentence containing a character name and a description verb
         for m in re.finditer(
@@ -284,33 +394,31 @@ def _extract_qa(book: dict, sections: dict[str, str],
             _add(f"Who is {char_name} in {title!r}?", sentence, "characters")
 
     # ── Themes ────────────────────────────────────────────────────────────────
-    theme_text = next(
-        (sections[k] for k in sections if k in _THEME_TITLES), ""
-    )
+    theme_text = next((sections[k] for k in sections if k in _THEME_TITLES), "")
     if theme_text:
-        _add(f"What major themes does {title!r} explore?",
-             theme_text[:500], "themes")
+        _add(f"What major themes does {title!r} explore?", theme_text[:500], "themes")
 
     # ── Setting ───────────────────────────────────────────────────────────────
-    setting_text = next(
-        (sections[k] for k in sections if k in _SETTING_TITLES), ""
-    )
+    setting_text = next((sections[k] for k in sections if k in _SETTING_TITLES), "")
     if setting_text:
-        _add(f"Where and when is {title!r} set?",
-             setting_text[:300], "setting")
+        _add(f"Where and when is {title!r} set?", setting_text[:300], "setting")
     elif lead:
         # Try to extract setting from lead using location keywords
         loc_m = re.search(
             r"(?:set in|takes place in|set during|based in)[^.]{5,100}\.",
-            lead, re.IGNORECASE,
+            lead,
+            re.IGNORECASE,
         )
         if loc_m:
             _add(f"Where is {title!r} set?", loc_m.group(0), "lead")
 
     # ── Author ────────────────────────────────────────────────────────────────
     if author and lead:
-        _add(f"Who is the author of {title!r}?",
-             f"{author} wrote {title}. {lead[:200]}", "lead")
+        _add(
+            f"Who is the author of {title!r}?",
+            f"{author} wrote {title}. {lead[:200]}",
+            "lead",
+        )
 
     return qa[:max_q]
 
@@ -323,7 +431,9 @@ def build_question_banks(books: list[dict], qpb: int = 20) -> None:
     _BANKS_DIR.mkdir(parents=True, exist_ok=True)
     total, skipped, built = len(books), 0, 0
 
-    print(f"\n[banks] Building question banks for {total} books (target: {qpb}/book)...")
+    print(
+        f"\n[banks] Building question banks for {total} books (target: {qpb}/book)..."
+    )
 
     for i, book in enumerate(books, 1):
         bank_path = _BANKS_DIR / f"{book['slug']}.json"
@@ -338,16 +448,17 @@ def build_question_banks(books: list[dict], qpb: int = 20) -> None:
         qa = _extract_qa(book, sections, max_q=qpb)
 
         payload = {
-            "book_id":    book["id"],
-            "title":      book["title"],
-            "author":     book["author"],
-            "slug":       book["slug"],
+            "book_id": book["id"],
+            "title": book["title"],
+            "author": book["author"],
+            "slug": book["slug"],
             "gutenberg_url": book["txt_url"],
-            "built_at":   datetime.now().isoformat(),
-            "questions":  qa,
+            "built_at": datetime.now().isoformat(),
+            "questions": qa,
         }
-        bank_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False),
-                             encoding="utf-8")
+        bank_path.write_text(
+            json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
         built += 1
         print(f"    → {len(qa)} questions  saved {bank_path.name}")
 
@@ -355,6 +466,7 @@ def build_question_banks(books: list[dict], qpb: int = 20) -> None:
 
 
 # ── Corpus download ────────────────────────────────────────────────────────────
+
 
 def download_book(book: dict) -> Path | None:
     """Download and cache a book's plain text.  Returns path or None on error."""
@@ -382,7 +494,7 @@ def load_book_lines(book: dict, max_lines: int) -> list[str]:
     # Skip header up to "*** START OF" marker
     for i, ln in enumerate(lines):
         if "*** START OF" in ln.upper() or "*** THE PROJECT GUTENBERG" in ln.upper():
-            lines = lines[i + 1:]
+            lines = lines[i + 1 :]
             break
     # Trim at "*** END OF" marker
     for i, ln in enumerate(lines):
@@ -393,6 +505,7 @@ def load_book_lines(book: dict, max_lines: int) -> list[str]:
 
 
 # ── Non-LLM judge ──────────────────────────────────────────────────────────────
+
 
 def judge_keyword_recall(answer: str, keywords: list[str]) -> float:
     """
@@ -405,13 +518,15 @@ def judge_keyword_recall(answer: str, keywords: list[str]) -> float:
         return 0.0
     answer_lower = answer.lower()
     hits = sum(
-        1 for kw in keywords
+        1
+        for kw in keywords
         if kw.lower() in answer_lower or answer_lower.startswith(kw[:4].lower())
     )
     return hits / len(keywords)
 
 
 # ── Parallel benchmark runner ──────────────────────────────────────────────────
+
 
 def _run_book(
     book: dict,
@@ -424,8 +539,8 @@ def _run_book(
 
     Returns a results dict for this book.
     """
-    from context_optimizer.compressor import compress_corpus_rolling
     from context_optimizer.cached_retriever import CachedChromaRetriever
+    from context_optimizer.compressor import compress_corpus_rolling
     from context_optimizer.tot_reasoner import ToTReasoner
 
     title = book["title"]
@@ -435,10 +550,10 @@ def _run_book(
     try:
         # ── Compress ──────────────────────────────────────────────────────────
         t0 = time.perf_counter()
-        chunks = compress_corpus_rolling(lines)
+        chunks = compress_corpus_rolling(lines, label=title[:30])
         compress_sec = time.perf_counter() - t0
-        orig_tok  = sum(c.original_tokens   for c in chunks)
-        comp_tok  = sum(c.compressed_tokens for c in chunks)
+        orig_tok = sum(c.original_tokens for c in chunks)
+        comp_tok = sum(c.compressed_tokens for c in chunks)
 
         # ── Index ─────────────────────────────────────────────────────────────
         retriever = CachedChromaRetriever(
@@ -446,25 +561,27 @@ def _run_book(
             persist_directory=tmp_dir,
         )
         retriever.add_chunks(chunks)
-        reasoner  = ToTReasoner(retriever=retriever)
+        reasoner = ToTReasoner(retriever=retriever)
 
         # ── Query + async judge ───────────────────────────────────────────────
         judge_futures: list[tuple[dict, Future]] = []
+        n_q = len(qa_entries)
+        short = title[:30]
 
-        for qa in qa_entries:
+        for q_idx, qa in enumerate(qa_entries, 1):
             q = qa["question"]
             expected_kw = qa.get("keywords", [])
+            print(f"  [{short}] Q {q_idx}/{n_q}: {q[:60]}")
 
             q_start = time.perf_counter()
             try:
-                from context_optimizer.tot_reasoner import ToTReasoner
-                ctx = type("_Ctx", (), {
-                    "entities": expected_kw[:5] or q.split()[:5]
-                })()
-                tot = reasoner.reason(ctx)
+                # Pass question as plain string — ToTReasoner splits it into
+                # search terms and retrieves the best matching evidence.
+                tot = reasoner.reason(q)
+                winner = tot.winner
                 answer = (
-                    tot.winner.evidence_snippets[0]
-                    if tot.winner.evidence_snippets
+                    winner.evidence_snippets[0]
+                    if winner and winner.evidence_snippets
                     else ""
                 )
             except Exception as exc:
@@ -477,14 +594,19 @@ def _run_book(
             future = judge_executor.submit(
                 judge_keyword_recall, answer_copy, expected_kw
             )
-            judge_futures.append(({
-                "question":     q,
-                "answer":       answer_copy[:300],
-                "latency_ms":   latency_ms,
-                "source":       qa.get("source", ""),
-                "difficulty":   qa.get("difficulty", "medium"),
-                "expected_kw_count": len(expected_kw),
-            }, future))
+            judge_futures.append(
+                (
+                    {
+                        "question": q,
+                        "answer": answer_copy[:300],
+                        "latency_ms": latency_ms,
+                        "source": qa.get("source", ""),
+                        "difficulty": qa.get("difficulty", "medium"),
+                        "expected_kw_count": len(expected_kw),
+                    },
+                    future,
+                )
+            )
 
         # ── Collect judging results ───────────────────────────────────────────
         for entry, future in judge_futures:
@@ -494,8 +616,8 @@ def _run_book(
                 entry["kw_recall"] = 0.0
             book_results.append(entry)
 
-        avg_kw_recall = (
-            sum(r["kw_recall"] for r in book_results) / max(len(book_results), 1)
+        avg_kw_recall = sum(r["kw_recall"] for r in book_results) / max(
+            len(book_results), 1
         )
         print(
             f"  [book] {title[:45]:<45}  "
@@ -506,17 +628,17 @@ def _run_book(
         )
 
         return {
-            "book_id":        book["id"],
-            "title":          title,
-            "author":         book["author"],
-            "lines_used":     len(lines),
-            "chunks":         len(chunks),
-            "orig_tokens":    orig_tok,
-            "comp_tokens":    comp_tok,
-            "compress_sec":   compress_sec,
-            "questions_run":  len(book_results),
-            "avg_kw_recall":  avg_kw_recall,
-            "results":        book_results,
+            "book_id": book["id"],
+            "title": title,
+            "author": book["author"],
+            "lines_used": len(lines),
+            "chunks": len(chunks),
+            "orig_tokens": orig_tok,
+            "comp_tokens": comp_tok,
+            "compress_sec": compress_sec,
+            "questions_run": len(book_results),
+            "avg_kw_recall": avg_kw_recall,
+            "results": book_results,
         }
 
     finally:
@@ -581,18 +703,21 @@ def run_benchmark(
 
 # ── Report writer ──────────────────────────────────────────────────────────────
 
-def write_report(all_results: list[dict], run_date: str, args: argparse.Namespace) -> Path:
+
+def write_report(
+    all_results: list[dict], run_date: str, args: argparse.Namespace
+) -> Path:
     """Write book_results.md and BOOK_RESULTS.json to benchmarks/."""
-    out_md   = _BENCH_DIR / "book_results.md"
+    out_md = _BENCH_DIR / "book_results.md"
     out_json = _BENCH_DIR / "BOOK_RESULTS.json"
 
     # Aggregate stats
-    total_q  = sum(r["questions_run"] for r in all_results)
-    avg_rec  = sum(r["avg_kw_recall"] for r in all_results) / max(len(all_results), 1)
-    avg_comp = sum(r["compress_sec"]  for r in all_results) / max(len(all_results), 1)
-    total_orig = sum(r["orig_tokens"]  for r in all_results)
-    total_comp = sum(r["comp_tokens"]  for r in all_results)
-    reduction  = (1 - total_comp / max(total_orig, 1)) * 100
+    total_q = sum(r["questions_run"] for r in all_results)
+    avg_rec = sum(r["avg_kw_recall"] for r in all_results) / max(len(all_results), 1)
+    avg_comp = sum(r["compress_sec"] for r in all_results) / max(len(all_results), 1)
+    total_orig = sum(r["orig_tokens"] for r in all_results)
+    total_comp = sum(r["comp_tokens"] for r in all_results)
+    reduction = (1 - total_comp / max(total_orig, 1)) * 100
 
     md = [
         "# Book Benchmark Results",
@@ -650,12 +775,12 @@ def write_report(all_results: list[dict], run_date: str, args: argparse.Namespac
     with open(out_json, "w", encoding="utf-8") as fh:
         json.dump(
             {
-                "run_date":    run_date,
-                "books":       len(all_results),
-                "total_q":     total_q,
+                "run_date": run_date,
+                "books": len(all_results),
+                "total_q": total_q,
                 "avg_kw_recall": avg_rec,
                 "reduction_pct": reduction,
-                "per_book":    all_results,
+                "per_book": all_results,
             },
             fh,
             indent=2,
@@ -669,6 +794,7 @@ def write_report(all_results: list[dict], run_date: str, args: argparse.Namespac
 
 # ── CLI ────────────────────────────────────────────────────────────────────────
 
+
 def _parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="book_benchmark",
@@ -680,27 +806,44 @@ def _parser() -> argparse.ArgumentParser:
 
     # build-banks
     bb = sub.add_parser("build-banks", help="Fetch Wikipedia Q&A banks (run once).")
-    bb.add_argument("--books", type=int, default=100,
-                    help="Number of books to include (default: 100)")
-    bb.add_argument("--qpb",   type=int, default=20,
-                    help="Max questions per book to extract (default: 20)")
+    bb.add_argument(
+        "--books",
+        type=int,
+        default=100,
+        help="Number of books to include (default: 100)",
+    )
+    bb.add_argument(
+        "--qpb",
+        type=int,
+        default=20,
+        help="Max questions per book to extract (default: 20)",
+    )
 
     # run
     ru = sub.add_parser("run", help="Run the compression + retrieval benchmark.")
-    ru.add_argument("--books",   type=int, default=100)
-    ru.add_argument("--lines",   type=int, default=3_000,
-                    help="Max lines to ingest per book (default: 3000)")
-    ru.add_argument("--workers", type=int, default=4,
-                    help="Parallel compression workers (default: 4)")
-    ru.add_argument("--qpb",     type=int, default=20,
-                    help="Max questions per book (default: 20)")
+    ru.add_argument("--books", type=int, default=100)
+    ru.add_argument(
+        "--lines",
+        type=int,
+        default=3_000,
+        help="Max lines to ingest per book (default: 3000)",
+    )
+    ru.add_argument(
+        "--workers",
+        type=int,
+        default=4,
+        help="Parallel compression workers (default: 4)",
+    )
+    ru.add_argument(
+        "--qpb", type=int, default=20, help="Max questions per book (default: 20)"
+    )
 
     # all (build-banks then run)
     al = sub.add_parser("all", help="Build banks then run benchmark.")
-    al.add_argument("--books",   type=int, default=100)
-    al.add_argument("--lines",   type=int, default=3_000)
+    al.add_argument("--books", type=int, default=100)
+    al.add_argument("--lines", type=int, default=3_000)
     al.add_argument("--workers", type=int, default=4)
-    al.add_argument("--qpb",     type=int, default=20)
+    al.add_argument("--qpb", type=int, default=20)
 
     return p
 
