@@ -1,4 +1,5 @@
 """Smoke test for chunk logger + parallelism gate."""
+
 import json
 import os
 import sys
@@ -35,8 +36,8 @@ os.makedirs("benchmarks/data", exist_ok=True)
 os.environ["COMPRESSOR_LOG_FILE"] = tmp
 
 _log_chunk("chunk_000001", "moby-dick", 2.345, 512, 87, 0.17)
-_log_chunk("chunk_000002", "moby-dick", 3.1,   480, 92, 0.19, error=None)
-_log_chunk("chunk_000003", "dracula",   9.9,   512,  0, 0.0,  error="timeout")
+_log_chunk("chunk_000002", "moby-dick", 3.1, 480, 92, 0.19, error=None)
+_log_chunk("chunk_000003", "dracula", 9.9, 512, 0, 0.0, error="timeout")
 
 lines = open(tmp, encoding="utf-8").readlines()
 assert len(lines) == 3, f"Expected 3 log lines, got {len(lines)}"

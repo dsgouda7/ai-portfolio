@@ -11,12 +11,8 @@ venv/
 .venv/
 *.egg
 
-# Data (never commit generated data)
-data/raw/*.csv
-data/raw/*.json
-data/raw/*.parquet
-data/delta_lake/
-data/chroma_db/
+# Data (never commit generated data — entire data/ dir is a build artifact)
+data/
 
 # Environment variables
 .env

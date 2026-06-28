@@ -125,6 +125,7 @@ def _log_chunk(
 
 # ── Ollama parallelism gate ───────────────────────────────────────────────────
 
+
 def _ollama_parallel_slots() -> int:
     """Return OLLAMA_NUM_PARALLEL as int (defaults to 1 when unset)."""
     return max(1, int(os.getenv("OLLAMA_NUM_PARALLEL", "1")))
@@ -416,8 +417,14 @@ def compress_chunk_with_llm(
         original_tokens = _estimate_tokens(text)
         compressed_tokens = _estimate_tokens(summary)
         ratio = compressed_tokens / original_tokens if original_tokens > 0 else 1.0
-        _log_chunk(chunk_id, label, elapsed, original_tokens,
-                   min(compressed_tokens, max_summary_tokens), ratio)
+        _log_chunk(
+            chunk_id,
+            label,
+            elapsed,
+            original_tokens,
+            min(compressed_tokens, max_summary_tokens),
+            ratio,
+        )
 
         return CompressedChunk(
             chunk_id=chunk_id,
@@ -434,8 +441,9 @@ def compress_chunk_with_llm(
 
     except Exception as e:
         elapsed = time.perf_counter() - t_start
-        _log_chunk(chunk_id, label, elapsed, _estimate_tokens(text), 0, 0.0,
-                   error=str(e))
+        _log_chunk(
+            chunk_id, label, elapsed, _estimate_tokens(text), 0, 0.0, error=str(e)
+        )
         # Fallback on any LLM error
         print(f"[Compression Warning] LLM failed for chunk {chunk_id}: {e}")
         return CompressedChunk(
@@ -553,7 +561,9 @@ def compress_corpus_rolling(
                 )
                 _elapsed = time.perf_counter() - _t0
                 compressed_chunks.append(compressed)
-                est_total = max(1, len(corpus_lines) // max(1, chunk_size_threshold // 4))
+                est_total = max(
+                    1, len(corpus_lines) // max(1, chunk_size_threshold // 4)
+                )
                 print(
                     f"{_pfx}[Compressor] chunk {chunk_idx + 1}/{est_total} done"
                     f"  ratio={compressed.compression_ratio:.0%}"
