@@ -22,6 +22,7 @@ Environment variables:
     METRICS_JSON_PATH  output path for JSON  (overrides --metrics-json)
     PIPELINE_MODE      compare|all|raw|...   (overrides --pipeline)
 """
+
 from __future__ import annotations
 
 import argparse
@@ -37,13 +38,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, Field
-
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.tools import tool
+from pydantic import BaseModel, Field
 
 try:
     from langchain_ollama import ChatOllama
@@ -58,7 +58,7 @@ try:
 except ImportError:  # pragma: no cover
     ChatGroq = None  # type: ignore[assignment]
 
-# ToTReasoner is baked into src/context_optimizer.
+# ToTReasoner is baked into context_optimizer.
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from context_optimizer.tot_reasoner import ToTReasoner  # noqa: E402
 
@@ -73,8 +73,7 @@ COMPRESSION_SYSTEM_PROMPT = (
 )
 
 # Reference incident prompt — a realistic example used as the benchmark input.
-INCIDENT_PROMPT = textwrap.dedent(
-    """
+INCIDENT_PROMPT = textwrap.dedent("""
     Hey team, sorry this is a bit all over the place because I have been on this for hours and this has
     turned into a full-on fire. Since around 02:13 UTC the checkout flow has been intermittently timing out
     and support is flooded. We run on AKS, ingress-nginx in front, api-gateway then order-service and
@@ -91,8 +90,7 @@ INCIDENT_PROMPT = textwrap.dedent(
 
     I am honestly not sure if this is network, CosmosDB RU starvation, bad retry policy, or something in
     ingress connection handling. Can you help figure out what is likely happening and what to check first?
-    """
-).strip()
+    """).strip()
 
 # Module-level log cache — set by load_logs() / main().
 # The query_log_cache @tool closes over this variable.
@@ -101,10 +99,13 @@ _active_log_cache: list[str] = []
 
 # ── Data models ───────────────────────────────────────────────────────────────
 
+
 class CompressedIncident(BaseModel):
     """Schema returned by the Token Compression Engine."""
 
-    core_issue: str = Field(description="Single-sentence statement of the core technical problem.")
+    core_issue: str = Field(
+        description="Single-sentence statement of the core technical problem."
+    )
     observed_symptoms: list[str] = Field(
         description="List of concrete observations (metrics, errors, system behavior)."
     )
@@ -123,6 +124,7 @@ class ModelConfig:
 
 # ── Provider helpers ──────────────────────────────────────────────────────────
 
+
 def default_model_names(provider: str) -> tuple[str, str]:
     if provider == "groq":
         return "llama-3.1-8b-instant", "llama-3.3-70b-versatile"
@@ -130,7 +132,9 @@ def default_model_names(provider: str) -> tuple[str, str]:
     return "phi4:mini", "qwen3"
 
 
-def init_chat_model(provider: str, model_name: str, temperature: float = 0.0) -> BaseChatModel:
+def init_chat_model(
+    provider: str, model_name: str, temperature: float = 0.0
+) -> BaseChatModel:
     """Initialise a real chat model. Supports ollama and groq."""
     normalized = provider.strip().lower()
     if normalized == "ollama":
@@ -160,6 +164,7 @@ def init_chat_model(provider: str, model_name: str, temperature: float = 0.0) ->
 
 # ── Log-cache MCP tool ────────────────────────────────────────────────────────
 
+
 @tool
 def query_log_cache(keyword: str, lines_context: int = 5) -> str:
     """Search incident logs and return matching lines with neighbouring context."""
@@ -187,12 +192,12 @@ def query_log_cache(keyword: str, lines_context: int = 5) -> str:
         return f"No matches for keyword='{keyword}'."
     return (
         f"Found {len(hits)} match window(s) for keyword='{keyword}' "
-        f"with lines_context={ctx}.\n\n"
-        + "\n\n---\n\n".join(hits)
+        f"with lines_context={ctx}.\n\n" + "\n\n---\n\n".join(hits)
     )
 
 
 # ── Pipeline functions ────────────────────────────────────────────────────────
+
 
 def run_compression_step(
     paraphraser_llm: BaseChatModel,
@@ -210,7 +215,9 @@ def run_compression_step(
         )
         return result, time.perf_counter() - start
     except Exception as exc:
-        logging.warning("Primary structured output failed (%s). Falling back to parser.", exc)
+        logging.warning(
+            "Primary structured output failed (%s). Falling back to parser.", exc
+        )
 
     parser = PydanticOutputParser(pydantic_object=CompressedIncident)
     fallback = ChatPromptTemplate.from_messages(
@@ -224,7 +231,10 @@ def run_compression_step(
         ]
     )
     result = (fallback | paraphraser_llm | parser).invoke(
-        {"raw_prompt": raw_prompt, "format_instructions": parser.get_format_instructions()}
+        {
+            "raw_prompt": raw_prompt,
+            "format_instructions": parser.get_format_instructions(),
+        }
     )
     return result, time.perf_counter() - start
 
@@ -235,8 +245,7 @@ def run_pipeline_a(
     full_logs: list[str],
 ) -> tuple[str, float, int]:
     """Pipe A — Baseline: inject the full raw prompt and all log lines into the LLM."""
-    prompt = textwrap.dedent(
-        f"""
+    prompt = textwrap.dedent(f"""
         You are a senior distributed systems incident responder.
         Analyse this raw user report and full log dump.
 
@@ -250,8 +259,7 @@ def run_pipeline_a(
 
         Full logs ({len(full_logs)} lines):
         {chr(10).join(full_logs)}
-        """
-    ).strip()
+        """).strip()
 
     start = time.perf_counter()
     response = reasoning_llm.invoke([HumanMessage(content=prompt)])
@@ -305,16 +313,28 @@ def run_pipeline_b(
         messages.append(ai_msg)
         tcs = getattr(ai_msg, "tool_calls", None) or []
         if not tcs:
-            return str(ai_msg.content), time.perf_counter() - start, tool_calls_total, retrieved_lines_total
+            return (
+                str(ai_msg.content),
+                time.perf_counter() - start,
+                tool_calls_total,
+                retrieved_lines_total,
+            )
 
         tool_calls_total += len(tcs)
         for tc in tcs:
             out = _execute_tool_call(tc)
             retrieved_lines_total += out.count("\n") + 1
-            messages.append(ToolMessage(content=out, tool_call_id=tc.get("id", "unknown")))
+            messages.append(
+                ToolMessage(content=out, tool_call_id=tc.get("id", "unknown"))
+            )
 
     final = reasoning_llm.invoke(messages)
-    return str(final.content), time.perf_counter() - start, tool_calls_total, retrieved_lines_total
+    return (
+        str(final.content),
+        time.perf_counter() - start,
+        tool_calls_total,
+        retrieved_lines_total,
+    )
 
 
 def run_pipeline_c(
@@ -323,17 +343,34 @@ def run_pipeline_c(
 ) -> tuple[str, float, list[dict[str, Any]], str, int, int]:
     """Pipe C — Tree-of-Thought reasoning via ToTReasoner."""
     branch_prompts = [
-        ("cosmos",  "Concise hypothesis about CosmosDB or RU saturation causing the incident, plus one search term."),
-        ("ingress", "Concise hypothesis about ingress or upstream timeout causing the incident, plus one search term."),
-        ("retry",   "Concise hypothesis about retry storms or cancellation waterfalls, plus one search term."),
+        (
+            "cosmos",
+            "Concise hypothesis about CosmosDB or RU saturation causing the incident, plus one search term.",
+        ),
+        (
+            "ingress",
+            "Concise hypothesis about ingress or upstream timeout causing the incident, plus one search term.",
+        ),
+        (
+            "retry",
+            "Concise hypothesis about retry storms or cancellation waterfalls, plus one search term.",
+        ),
     ]
     branch_specs: list[dict[str, Any]] = []
     for branch_id, prompt in branch_prompts:
         resp = reasoning_llm.invoke(
-            [HumanMessage(content=f"{prompt}\n\nIncident brief:\n{compressed.model_dump_json(indent=2)}")]
+            [
+                HumanMessage(
+                    content=f"{prompt}\n\nIncident brief:\n{compressed.model_dump_json(indent=2)}"
+                )
+            ]
         )
-        terms = [t.strip() for t in str(resp.content).split(",") if t.strip()][:2] or [branch_id]
-        branch_specs.append({"id": branch_id, "title": branch_id, "search_terms": terms})
+        terms = [t.strip() for t in str(resp.content).split(",") if t.strip()][:2] or [
+            branch_id
+        ]
+        branch_specs.append(
+            {"id": branch_id, "title": branch_id, "search_terms": terms}
+        )
 
     class _LogCacheRetriever:
         def search(self, query: str, top_k: int = 5) -> list[dict[str, Any]]:
@@ -345,8 +382,14 @@ def run_pipeline_c(
         compressed, branch_specs=branch_specs
     )
     branches_dicts = [
-        {"id": b.id, "title": b.title, "search_terms": b.search_terms,
-         "score": b.score, "evidence_hits": b.evidence_hits, "evidence_snippets": b.evidence_snippets}
+        {
+            "id": b.id,
+            "title": b.title,
+            "search_terms": b.search_terms,
+            "score": b.score,
+            "evidence_hits": b.evidence_hits,
+            "evidence_snippets": b.evidence_snippets,
+        }
         for b in result.branches
     ]
     return (
@@ -360,6 +403,7 @@ def run_pipeline_c(
 
 
 # ── Log loading ───────────────────────────────────────────────────────────────
+
 
 def load_logs(log_file: str, max_log_lines: int = 6000) -> list[str]:
     """Load log lines from a file. Trims to max_log_lines."""
@@ -375,6 +419,7 @@ def load_logs(log_file: str, max_log_lines: int = 6000) -> list[str]:
 
 # ── Metrics and reporting ─────────────────────────────────────────────────────
 
+
 def print_section(title: str) -> None:
     print("\n" + "=" * 100)
     print(title)
@@ -385,13 +430,19 @@ def _estimate_tokens(text: str) -> int:
     return max(1, len(text) // 4)
 
 
-def _keyword_quality_proxy(output: str, keywords: list[str]) -> tuple[float, float, float]:
+def _keyword_quality_proxy(
+    output: str, keywords: list[str]
+) -> tuple[float, float, float]:
     normalized = output.lower()
     answer_words = set(re.findall(r"[a-z0-9]+", normalized))
     matched = sum(1 for kw in keywords if kw.lower() in normalized)
     precision = matched / len(answer_words) if answer_words else 0.0
     recall = matched / len(keywords) if keywords else 0.0
-    f1 = (2 * precision * recall / (precision + recall)) if (precision + recall) > 0 else 0.0
+    f1 = (
+        (2 * precision * recall / (precision + recall))
+        if (precision + recall) > 0
+        else 0.0
+    )
     return precision, recall, f1
 
 
@@ -408,38 +459,55 @@ def build_comparison_metrics(
 ) -> dict[str, Any]:
     """Build experiment-style metrics for Pipe A vs Pipe C comparison."""
     reference_keywords = [
-        "cosmos", "ingress", "timeout", "retry", "aks", "21012", "latency", "dependency",
+        "cosmos",
+        "ingress",
+        "timeout",
+        "retry",
+        "aks",
+        "21012",
+        "latency",
+        "dependency",
         *compressed.technical_identifiers[:8],
     ]
-    pipe_a_precision, pipe_a_recall, pipe_a_kw_f1 = _keyword_quality_proxy(pipe_a_output, reference_keywords)
-    pipe_c_precision, pipe_c_recall, pipe_c_kw_f1 = _keyword_quality_proxy(pipe_c_output, reference_keywords)
+    pipe_a_precision, pipe_a_recall, pipe_a_kw_f1 = _keyword_quality_proxy(
+        pipe_a_output, reference_keywords
+    )
+    pipe_c_precision, pipe_c_recall, pipe_c_kw_f1 = _keyword_quality_proxy(
+        pipe_c_output, reference_keywords
+    )
 
-    raw_tokens        = _estimate_tokens(raw_prompt)
+    raw_tokens = _estimate_tokens(raw_prompt)
     compressed_tokens = _estimate_tokens(compressed.model_dump_json(indent=2))
-    token_reduction   = max(0.0, (raw_tokens - compressed_tokens) / raw_tokens * 100.0) if raw_tokens else 0.0
+    token_reduction = (
+        max(0.0, (raw_tokens - compressed_tokens) / raw_tokens * 100.0)
+        if raw_tokens
+        else 0.0
+    )
 
     return {
-        "pipe_a_prompt_tokens":   raw_tokens,
-        "pipe_c_prompt_tokens":   compressed_tokens,
-        "token_reduction_pct":    token_reduction,
-        "pipe_a_latency_s":       pipe_a_latency,
-        "pipe_c_latency_s":       pipe_c_latency,
-        "pipe_a_kw_f1":           pipe_a_kw_f1,
-        "pipe_c_kw_f1":           pipe_c_kw_f1,
-        "pipe_a_judge_score":     pipe_a_recall,
-        "pipe_c_judge_score":     pipe_c_recall,
-        "pipe_a_precision":       pipe_a_precision,
-        "pipe_c_precision":       pipe_c_precision,
-        "pipe_a_log_lines":       pipe_a_log_lines,
+        "pipe_a_prompt_tokens": raw_tokens,
+        "pipe_c_prompt_tokens": compressed_tokens,
+        "token_reduction_pct": token_reduction,
+        "pipe_a_latency_s": pipe_a_latency,
+        "pipe_c_latency_s": pipe_c_latency,
+        "pipe_a_kw_f1": pipe_a_kw_f1,
+        "pipe_c_kw_f1": pipe_c_kw_f1,
+        "pipe_a_judge_score": pipe_a_recall,
+        "pipe_c_judge_score": pipe_c_recall,
+        "pipe_a_precision": pipe_a_precision,
+        "pipe_c_precision": pipe_c_precision,
+        "pipe_a_log_lines": pipe_a_log_lines,
         "pipe_c_retrieval_lines": pipe_c_retrieved_lines,
-        "pipe_c_tool_calls":      pipe_c_tool_calls,
+        "pipe_c_tool_calls": pipe_c_tool_calls,
     }
 
 
 def print_comparison_report(metrics: dict[str, Any]) -> None:
     print_section("Pipe A vs Pipe C Comparison")
     for key, val in metrics.items():
-        print(f"  {key:<30} {val:.4f}" if isinstance(val, float) else f"  {key:<30} {val}")
+        print(
+            f"  {key:<30} {val:.4f}" if isinstance(val, float) else f"  {key:<30} {val}"
+        )
 
 
 def print_telemetry(
@@ -459,16 +527,21 @@ def print_telemetry(
     saved_pct = ((raw_chars - comp_chars) / raw_chars * 100.0) if raw_chars else 0.0
 
     print_section("Telemetry")
-    print(f"  raw_chars / compressed_chars: {raw_chars} / {comp_chars} ({saved_pct:.1f}% reduction)")
+    print(
+        f"  raw_chars / compressed_chars: {raw_chars} / {comp_chars} ({saved_pct:.1f}% reduction)"
+    )
     print(f"  compression_latency_s:        {compression_latency_s:.4f}")
     print(f"  pipe_a_reasoning_s:           {pipe_a_latency_s:.4f}")
     print(f"  pipe_b_reasoning_s:           {pipe_b_latency_s:.4f}")
     print(f"  pipe_c_reasoning_s:           {pipe_c_latency_s:.4f}")
     print(f"  pipe_b_tool_calls:            {pipe_b_tool_calls}")
-    print(f"  pipe_a/b/c log_lines:         {pipe_a_log_lines} / {pipe_b_log_lines} / {pipe_c_log_lines}")
+    print(
+        f"  pipe_a/b/c log_lines:         {pipe_a_log_lines} / {pipe_b_log_lines} / {pipe_c_log_lines}"
+    )
 
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -481,11 +554,12 @@ def parse_args() -> argparse.Namespace:
         choices=["ollama", "groq"],
         default=os.getenv("LLM_PROVIDER", "ollama"),
     )
-    parser.add_argument("--small-model",     default=None)
+    parser.add_argument("--small-model", default=None)
     parser.add_argument("--reasoning-model", default=None)
-    parser.add_argument("--temperature",     type=float, default=0.0)
-    parser.add_argument("--log-level",       default="INFO",
-                        choices=["DEBUG", "INFO", "WARNING", "ERROR"])
+    parser.add_argument("--temperature", type=float, default=0.0)
+    parser.add_argument(
+        "--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"]
+    )
     parser.add_argument(
         "--pipeline",
         choices=["both", "raw", "optimized", "tot", "all", "compare"],
@@ -508,27 +582,36 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    logging.basicConfig(level=getattr(logging, args.log_level), format="%(levelname)s: %(message)s")
+    logging.basicConfig(
+        level=getattr(logging, args.log_level), format="%(levelname)s: %(message)s"
+    )
 
     small_default, reasoning_default = default_model_names(args.provider)
     config = ModelConfig(
         provider=args.provider,
         small_model=args.small_model or os.getenv("SMALL_MODEL", small_default),
-        reasoning_model=args.reasoning_model or os.getenv("REASONING_MODEL", reasoning_default),
+        reasoning_model=args.reasoning_model
+        or os.getenv("REASONING_MODEL", reasoning_default),
         temperature=args.temperature,
     )
 
     print_section("Configuration")
-    print(f"  provider={config.provider}  small={config.small_model}  "
-          f"reasoning={config.reasoning_model}  pipeline={args.pipeline}")
+    print(
+        f"  provider={config.provider}  small={config.small_model}  "
+        f"reasoning={config.reasoning_model}  pipeline={args.pipeline}"
+    )
 
     active_logs = load_logs(args.log_file, max_log_lines=args.max_log_lines)
     global _active_log_cache
     _active_log_cache = active_logs
     print(f"  log_file={args.log_file}  lines={len(active_logs)}")
 
-    paraphraser_llm = init_chat_model(config.provider, config.small_model,    config.temperature)
-    reasoning_llm   = init_chat_model(config.provider, config.reasoning_model, config.temperature)
+    paraphraser_llm = init_chat_model(
+        config.provider, config.small_model, config.temperature
+    )
+    reasoning_llm = init_chat_model(
+        config.provider, config.reasoning_model, config.temperature
+    )
 
     print_section("Input Prompt")
     print(INCIDENT_PROMPT)
@@ -541,62 +624,91 @@ def main() -> None:
     need_compressed = args.pipeline in {"both", "optimized", "tot", "all", "compare"}
 
     if need_compressed:
-        compressed, compression_latency = run_compression_step(paraphraser_llm, INCIDENT_PROMPT)
+        compressed, compression_latency = run_compression_step(
+            paraphraser_llm, INCIDENT_PROMPT
+        )
         print_section("Compressed Incident")
         print(compressed.model_dump_json(indent=2))
 
     if args.pipeline in {"both", "raw", "optimized", "tot", "all", "compare"}:
-        pipe_a_output, pipe_a_latency, raw_lines = run_pipeline_a(reasoning_llm, INCIDENT_PROMPT, active_logs)
+        pipe_a_output, pipe_a_latency, raw_lines = run_pipeline_a(
+            reasoning_llm, INCIDENT_PROMPT, active_logs
+        )
         print_section("Pipe A — Baseline")
         print(pipe_a_output)
 
     if args.pipeline in {"both", "optimized", "all"}:
         if compressed is None:
-            raise RuntimeError("Pipe B requires a compressed payload (run compression first)")
-        pipe_b_output, pipe_b_latency, tool_calls, optimized_lines = run_pipeline_b(reasoning_llm, compressed)
+            raise RuntimeError(
+                "Pipe B requires a compressed payload (run compression first)"
+            )
+        pipe_b_output, pipe_b_latency, tool_calls, optimized_lines = run_pipeline_b(
+            reasoning_llm, compressed
+        )
         print_section("Pipe B — Optimised (Compressed + query_log_cache)")
         print(pipe_b_output)
 
     if args.pipeline in {"tot", "all", "compare"}:
         if compressed is None:
-            raise RuntimeError("Pipe C requires a compressed payload (run compression first)")
-        pipe_c_output, pipe_c_latency, _, _, _, tot_lines = run_pipeline_c(reasoning_llm, compressed)
+            raise RuntimeError(
+                "Pipe C requires a compressed payload (run compression first)"
+            )
+        pipe_c_output, pipe_c_latency, _, _, _, tot_lines = run_pipeline_c(
+            reasoning_llm, compressed
+        )
         print_section("Pipe C — ToT-Enhanced Reasoning")
         print(pipe_c_output)
 
     if compressed is None:
         compressed = CompressedIncident(
-            core_issue="N/A (raw-only run)", observed_symptoms=[], technical_identifiers=[]
+            core_issue="N/A (raw-only run)",
+            observed_symptoms=[],
+            technical_identifiers=[],
         )
 
     comparison_metrics: dict[str, Any] | None = None
     if args.pipeline == "compare":
         comparison_metrics = build_comparison_metrics(
-            raw_prompt=INCIDENT_PROMPT, compressed=compressed,
-            pipe_a_output=pipe_a_output, pipe_c_output=pipe_c_output,
-            pipe_a_latency=pipe_a_latency, pipe_c_latency=pipe_c_latency,
-            pipe_a_log_lines=raw_lines, pipe_c_retrieved_lines=tot_lines,
+            raw_prompt=INCIDENT_PROMPT,
+            compressed=compressed,
+            pipe_a_output=pipe_a_output,
+            pipe_c_output=pipe_c_output,
+            pipe_a_latency=pipe_a_latency,
+            pipe_c_latency=pipe_c_latency,
+            pipe_a_log_lines=raw_lines,
+            pipe_c_retrieved_lines=tot_lines,
             pipe_c_tool_calls=tool_calls,
         )
         print_comparison_report(comparison_metrics)
 
     print_telemetry(
-        raw_prompt=INCIDENT_PROMPT, compressed=compressed,
+        raw_prompt=INCIDENT_PROMPT,
+        compressed=compressed,
         compression_latency_s=compression_latency,
-        pipe_a_latency_s=pipe_a_latency, pipe_b_latency_s=pipe_b_latency, pipe_c_latency_s=pipe_c_latency,
-        pipe_b_tool_calls=tool_calls, pipe_a_log_lines=raw_lines,
-        pipe_b_log_lines=optimized_lines, pipe_c_log_lines=tot_lines,
+        pipe_a_latency_s=pipe_a_latency,
+        pipe_b_latency_s=pipe_b_latency,
+        pipe_c_latency_s=pipe_c_latency,
+        pipe_b_tool_calls=tool_calls,
+        pipe_a_log_lines=raw_lines,
+        pipe_b_log_lines=optimized_lines,
+        pipe_c_log_lines=tot_lines,
     )
 
     metrics: dict[str, Any] = {
         "timestamp_utc": datetime.utcnow().isoformat() + "Z",
         "provider": config.provider,
-        "small_model": config.small_model, "reasoning_model": config.reasoning_model,
-        "pipeline_mode": args.pipeline, "log_line_count": len(active_logs),
+        "small_model": config.small_model,
+        "reasoning_model": config.reasoning_model,
+        "pipeline_mode": args.pipeline,
+        "log_line_count": len(active_logs),
         "compression_latency_s": compression_latency,
-        "pipe_a_reasoning_s": pipe_a_latency, "pipe_b_reasoning_s": pipe_b_latency,
-        "pipe_c_reasoning_s": pipe_c_latency, "pipe_b_tool_calls": tool_calls,
-        "pipe_a_log_lines": raw_lines, "pipe_b_log_lines": optimized_lines, "pipe_c_log_lines": tot_lines,
+        "pipe_a_reasoning_s": pipe_a_latency,
+        "pipe_b_reasoning_s": pipe_b_latency,
+        "pipe_c_reasoning_s": pipe_c_latency,
+        "pipe_b_tool_calls": tool_calls,
+        "pipe_a_log_lines": raw_lines,
+        "pipe_b_log_lines": optimized_lines,
+        "pipe_c_log_lines": tot_lines,
     }
     if comparison_metrics:
         metrics["comparison_metrics"] = comparison_metrics

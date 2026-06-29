@@ -41,11 +41,13 @@ full = [
 [project.scripts]
 context-optimizer = "context_optimizer.cli:main"
 
-[tool.setuptools.package-dir]
-"" = "src"
+[tool.setuptools]
+packages = ["context_optimizer", "context_optimizer.adapters", "context_optimizer.providers"]
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.setuptools.package-dir]
+"context_optimizer" = "src"
+"context_optimizer.adapters" = "src/adapters"
+"context_optimizer.providers" = "src/providers"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

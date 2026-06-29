@@ -483,8 +483,13 @@ def download_book(book: dict) -> Path | None:
         return None
 
 
-def load_book_lines(book: dict, max_lines: int) -> list[str]:
-    """Download (if needed) and return up to max_lines of a book."""
+def load_book_lines(book: dict, max_lines: int, pad_to_mb: float = 0.0) -> list[str]:
+    """Download (if needed) and return up to max_lines of a book.
+
+    When pad_to_mb > 0 the raw text is repeated until the corpus reaches
+    the target size before the line-cap is applied — useful for large-corpus
+    stress testing.
+    """
     path = download_book(book)
     if path is None:
         return []
@@ -501,7 +506,19 @@ def load_book_lines(book: dict, max_lines: int) -> list[str]:
         if "*** END OF" in ln.upper():
             lines = lines[:i]
             break
-    return lines[:max_lines]
+    # Pad to target size by repeating the cleaned text
+    if pad_to_mb > 0 and lines:
+        target_bytes = int(pad_to_mb * 1024 * 1024)
+        base_lines = list(lines)
+        current_bytes = sum(len(ln.encode("utf-8")) + 1 for ln in lines)
+        while current_bytes < target_bytes:
+            lines.extend(base_lines)
+            current_bytes += sum(len(ln.encode("utf-8")) + 1 for ln in base_lines)
+        print(
+            f"  [pad] {book['title'][:40]}: {current_bytes / 1_048_576:.1f} MB  "
+            f"({len(lines):,} lines)"
+        )
+    return lines[:max_lines] if max_lines > 0 else lines
 
 
 # ── Non-LLM judge ──────────────────────────────────────────────────────────────
@@ -650,6 +667,7 @@ def run_benchmark(
     max_lines: int = 3_000,
     workers: int = 4,
     qpb: int = 20,
+    pad_to_mb: float = 0.0,
 ) -> list[dict]:
     """
     Run the full benchmark over all books in parallel.
@@ -668,9 +686,10 @@ def run_benchmark(
         all_qa[book["slug"]] = data.get("questions", [])[:qpb]
 
     books_with_qa = [b for b in books if all_qa.get(b["slug"])]
+    pad_label = f"  |  pad {pad_to_mb:.0f} MB/book" if pad_to_mb else ""
     print(
         f"\n[benchmark] {len(books_with_qa)}/{len(books)} books have question banks  "
-        f"| {workers} compression workers  |  max {max_lines} lines/book"
+        f"| {workers} compression workers  |  max {max_lines} lines/book{pad_label}"
     )
 
     # Shared judge executor (lightweight — pure Python string ops)
@@ -684,7 +703,7 @@ def run_benchmark(
             future_to_book = {}
             for book in books_with_qa:
                 qa_entries = all_qa[book["slug"]]
-                lines = load_book_lines(book, max_lines)
+                lines = load_book_lines(book, max_lines, pad_to_mb=pad_to_mb)
                 if not lines:
                     print(f"  SKIP {book['title']}: no lines loaded")
                     continue
@@ -725,7 +744,8 @@ def write_report(
         f"**Run date**: {run_date}  |  "
         f"**Books**: {len(all_results)}  |  "
         f"**Questions**: {total_q:,}  |  "
-        f"**Lines/book cap**: {args.lines:,}  |  "
+        f"**Lines/book cap**: {'unlimited' if args.lines == 0 else f'{args.lines:,}'}  |  "
+        f"**Pad**: {getattr(args, 'pad_to_mb', 0):.0f} MB/book  |  "
         f"**Workers**: {args.workers}",
         "",
         "## Summary",
@@ -821,29 +841,43 @@ def _parser() -> argparse.ArgumentParser:
 
     # run
     ru = sub.add_parser("run", help="Run the compression + retrieval benchmark.")
-    ru.add_argument("--books", type=int, default=100)
+    ru.add_argument("--books", type=int, default=25)
     ru.add_argument(
         "--lines",
         type=int,
-        default=3_000,
-        help="Max lines to ingest per book (default: 3000)",
+        default=0,
+        help="Max lines per book (0 = unlimited, default: 0)",
     )
     ru.add_argument(
         "--workers",
         type=int,
-        default=4,
-        help="Parallel compression workers (default: 4)",
+        default=2,
+        help="Parallel compression workers (default: 2)",
     )
     ru.add_argument(
-        "--qpb", type=int, default=20, help="Max questions per book (default: 20)"
+        "--qpb", type=int, default=100, help="Max questions per book (default: 100)"
+    )
+    ru.add_argument(
+        "--pad-to-mb",
+        type=float,
+        default=35.0,
+        dest="pad_to_mb",
+        help="Pad each book to this size in MB by repeating its text (default: 35.0)",
     )
 
     # all (build-banks then run)
     al = sub.add_parser("all", help="Build banks then run benchmark.")
-    al.add_argument("--books", type=int, default=100)
-    al.add_argument("--lines", type=int, default=3_000)
-    al.add_argument("--workers", type=int, default=4)
-    al.add_argument("--qpb", type=int, default=20)
+    al.add_argument("--books", type=int, default=25)
+    al.add_argument("--lines", type=int, default=0)
+    al.add_argument("--workers", type=int, default=2)
+    al.add_argument("--qpb", type=int, default=100)
+    al.add_argument(
+        "--pad-to-mb",
+        type=float,
+        default=35.0,
+        dest="pad_to_mb",
+        help="Pad each book to this size in MB (default: 35.0)",
+    )
 
     return p
 
@@ -858,11 +892,13 @@ def main() -> None:
         build_question_banks(catalog, qpb=args.qpb)
 
     if args.cmd in ("run", "all"):
+        pad_to_mb = getattr(args, "pad_to_mb", 0.0)
         results = run_benchmark(
             catalog,
             max_lines=args.lines,
             workers=args.workers,
             qpb=args.qpb,
+            pad_to_mb=pad_to_mb,
         )
         if results:
             write_report(results, run_date, args)

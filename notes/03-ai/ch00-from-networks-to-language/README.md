@@ -2123,7 +2123,96 @@ Everything you've learned applies at any scale. But modern transformers cross a 
 
 ---
 
-## Summary — Your Complete ML Foundation
+### 10.7 · The Language Modeling Objective — What Actually Changes for Text
+
+You now understand the transformer *architecture*. But there is one more conceptual shift before Ch.1: understanding what changes when you apply that architecture to **language** instead of image classification or machine translation.
+
+This is the gap most readers miss. The transformer is a general-purpose architecture. An LLM is a *specific choice of task and training objective applied at scale*. Here is what changes:
+
+---
+
+#### The task is different from everything you've seen so far
+
+Every ML task in §0–9 had a fixed, finite output space:
+- House prices → one real number
+- Dog vs. cat → one of 2 classes
+- Handwritten digit → one of 10 classes
+- ImageNet → one of 1,000 classes
+
+**Language generation's output space: 50,000–100,000 classes, at every single step.**
+
+At each decoding step, the model produces a probability distribution over its entire vocabulary — for GPT-3, that's 50,257 tokens. Pick one. Feed it back in as the next input. Repeat.
+
+```
+Input:  "The quick brown"
+Step 1: P(fox|"The quick brown") = 0.61, P(dog|...) = 0.08, P(cat|...) = 0.03, ...
+Sample: "fox"
+Step 2: P(jumps|"The quick brown fox") = 0.44, P(ran|...) = 0.11, ...
+Sample: "jumps"
+Step 3: P(over|"The quick brown fox jumps") = 0.71, ...
+```
+
+This **autoregressive loop** — predict one token, feed it back, predict the next — is the defining behavior of all modern LLMs. It is fundamentally different from the one-shot forward pass you've used for classification.
+
+*You're not predicting a label. You're predicting a sequence of labels, where each label depends on all the ones before it.*
+
+---
+
+#### The training objective determines what the model learns
+
+Language models are trained with a deceptively simple objective: **predict the next token given all previous tokens**.
+
+$$\mathcal{L}_\text{LM} = -\frac{1}{N} \sum_{t=1}^{N} \log P(x_t \mid x_1, x_2, \ldots, x_{t-1})$$
+
+Every token in the training corpus is simultaneously a *label* (the thing to predict) and *context* (the input for the next prediction). You don't need human-labeled data — the text itself is the supervision signal.
+
+**Why this objective is powerful:** To predict the next token accurately across trillions of sentences about every topic, the model is forced to learn:
+- Grammar (predicting grammatically correct continuations)
+- Facts (predicting factually consistent continuations)
+- Reasoning (predicting logically coherent continuations)
+- Style (predicting contextually appropriate continuations)
+
+None of these were explicitly taught. They emerged as a side effect of minimizing next-token prediction loss. This is the key insight: **knowledge is a compression artifact of next-token prediction at scale.**
+
+*The model didn't learn that Paris is the capital of France. It learned to predict "Paris" after "The capital of France is" — millions of times.*
+
+---
+
+#### The vocabulary size creates a new engineering constraint
+
+Classification tasks have small output layers (10, 1000, even 10,000 classes). Language models have output layers with **50,000–100,000 classes**.
+
+At every decoding step, the final layer computes a softmax over the entire vocabulary:
+
+$$P(x_t = k) = \frac{\exp(W_k \cdot h_t)}{\sum_{j=1}^{V} \exp(W_j \cdot h_t)}$$
+
+For GPT-3 ($d_\text{model} = 12{,}288$, $V = 50{,}257$): the output matrix $W$ is $50{,}257 \times 12{,}288 \approx 617\text{M parameters}$ — just for the output layer. This is why LLMs are expensive to serve: every generated token requires a 50,257-way classification.
+
+---
+
+#### The connect from notes/02: what you already know
+
+If you've completed notes/02 (Advanced Deep Learning), you've already seen two concepts that map directly to LLM training:
+
+| notes/02 concept | How it appears in LLMs |
+|---|---|
+| **Self-supervised pretraining (Ch.7–8)** | LLM pretraining *is* self-supervised learning — the training signal comes from the text itself, not human labels. MAE predicts masked image patches; language models predict masked/next tokens. Same paradigm, different modality. |
+| **Knowledge distillation (Ch.9)** | DistilBERT, TinyLLaMA, and all compressed LLMs use the same temperature-scaled KL loss from notes/02. The "teacher" is the full model; the "student" is the smaller one. The soft probability distributions over the vocabulary are the "dark knowledge." |
+| **Contrastive learning / NT-Xent (Ch.7)** | CLIP is exactly SimCLR with (image, caption) as the positive pair instead of two augmented views of the same image. The contrastive embedding space from notes/02 §7 is the foundation of cross-modal retrieval in modern multimodal LLMs. |
+| **Mixed precision / BF16 (Ch.10)** | Every LLM trains in mixed precision. The AMP pattern from notes/02 (GradScaler, loss scaling) is identical — just applied at 175B+ parameters instead of 14MB. |
+| **LayerNorm vs BatchNorm** | Notes/02 used BatchNorm throughout (normalizes across the batch dimension). Transformers use **LayerNorm** (normalizes across the feature dimension for each individual token). This distinction matters: BatchNorm requires large batches and breaks at inference with batch size 1; LayerNorm works for any sequence length. |
+
+---
+
+#### The three-sentence summary
+
+Ch.0 gave you the *architectural primitives* (attention, skip connections, encoder/decoder).
+§10.7 gives you the *task framing* (autoregressive generation, next-token prediction, 50K-class softmax at every step).
+Ch.1 gives you the *full engineering assembly* — how tokenization, multi-head attention, positional encoding, and the three architecture families combine into the models powering every LLM API you've used.
+
+---
+
+
 
 You've built a comprehensive understanding of the nine concepts that power modern AI:
 

@@ -28,6 +28,7 @@ Environment variables (optional)
     OLLAMA_BASE_URL    default: http://localhost:11434
     GROQ_API_KEY       required when provider=groq
 """
+
 from __future__ import annotations
 
 import argparse
@@ -41,43 +42,44 @@ from pathlib import Path
 from typing import Any
 
 # ── Project paths ─────────────────────────────────────────────────────────────
-BENCH_DIR    = Path(__file__).parent
+BENCH_DIR = Path(__file__).parent
 PROJECT_ROOT = BENCH_DIR.parent
 SRC_DIR      = PROJECT_ROOT / "src"
 sys.path.insert(0, str(SRC_DIR))
 
 # ── Corpus sizes (unique image counts) ─────────────────────────────────────────
 CORPUS_IMAGES: dict[str, int] = {
-    "small":  1_000,
+    "small": 1_000,
     "medium": 5_000,
-    "large":  25_000,
+    "large": 25_000,
 }
 
 # ── Ground-truth queries (image / caption domain) ─────────────────────────────
 IMAGE_GROUND_TRUTH_QUERIES: list[dict[str, Any]] = [
     {
-        "query":        "dog playing outdoor",
+        "query": "dog playing outdoor",
         "must_contain": ["dog", "outdoor"],
     },
     {
-        "query":        "person riding bicycle street",
+        "query": "person riding bicycle street",
         "must_contain": ["person", "bicycle"],
     },
     {
-        "query":        "cat sitting indoors",
+        "query": "cat sitting indoors",
         "must_contain": ["cat", "sit"],
     },
     {
-        "query":        "food on table meal",
+        "query": "food on table meal",
         "must_contain": ["food", "table"],
     },
     {
-        "query":        "car driving road city",
+        "query": "car driving road city",
         "must_contain": ["car", "road"],
     },
 ]
 
 # ── Fallback synthetic caption generator ─────────────────────────────────────
+
 
 def _generate_synthetic_captions(n_images: int) -> list[str]:
     """
@@ -102,10 +104,11 @@ def _generate_synthetic_captions(n_images: int) -> list[str]:
         for j in range(5):
             idx = (i * 5 + j) % len(caption_templates)
             captions.append(f"[img-{i:06d}] {caption_templates[idx]}")
-    return captions[:n_images * 5]
+    return captions[: n_images * 5]
 
 
 # ── Step 1 — Load image captions ─────────────────────────────────────────────
+
 
 def load_image_corpus(size: str) -> list[str]:
     """
@@ -122,18 +125,24 @@ def load_image_corpus(size: str) -> list[str]:
         try:
             sys.path.insert(0, str(BENCH_DIR))
             from download_images import load_coco_captions
+
             captions = load_coco_captions(captions_path, max_images=n_images)
             print(f"  [corpus] {len(captions):,} COCO captions ({n_images} images)")
             return captions
         except Exception as exc:
-            print(f"  [warn] COCO load failed ({exc}), falling back to synthetic captions")
+            print(
+                f"  [warn] COCO load failed ({exc}), falling back to synthetic captions"
+            )
 
     captions = _generate_synthetic_captions(n_images)
-    print(f"  [corpus] Generated {len(captions):,} synthetic captions ({n_images} images)")
+    print(
+        f"  [corpus] Generated {len(captions):,} synthetic captions ({n_images} images)"
+    )
     return captions
 
 
 # ── Step 2a — Raw baseline ────────────────────────────────────────────────────
+
 
 def run_raw_baseline(
     corpus: list[str],
@@ -149,15 +158,17 @@ def run_raw_baseline(
         hits = [c for c in corpus if any(kw.lower() in c.lower() for kw in must)]
         latency_ms = (time.perf_counter() - start) * 1000
 
-        results.append({
-            "query":            q["query"],
-            "strategy":         "raw",
-            "tokens_processed": total_tokens,
-            "lines_scanned":    len(corpus),
-            "lines_retrieved":  len(hits),
-            "latency_ms":       latency_ms,
-            "recall":           _recall(hits, must),
-        })
+        results.append(
+            {
+                "query": q["query"],
+                "strategy": "raw",
+                "tokens_processed": total_tokens,
+                "lines_scanned": len(corpus),
+                "lines_retrieved": len(hits),
+                "latency_ms": latency_ms,
+                "recall": _recall(hits, must),
+            }
+        )
     return results
 
 
@@ -178,6 +189,7 @@ def _recall_from_answer(answer: str, must_contain: list[str]) -> float:
 
 # ── Step 2b — Optimised pipeline ─────────────────────────────────────────────
 
+
 def run_optimized(
     corpus: list[str],
     queries: list[dict[str, Any]],
@@ -191,13 +203,13 @@ def run_optimized(
     from context_optimizer.compressor import compress_corpus_rolling
     from context_optimizer.tot_reasoner import ToTReasoner
 
-    t0     = time.perf_counter()
+    t0 = time.perf_counter()
     chunks = compress_corpus_rolling(corpus)
     compress_time = time.perf_counter() - t0
 
-    original_tokens   = sum(c.original_tokens   for c in chunks)
+    original_tokens = sum(c.original_tokens for c in chunks)
     compressed_tokens = sum(c.compressed_tokens for c in chunks)
-    ratio             = compressed_tokens / max(original_tokens, 1)
+    ratio = compressed_tokens / max(original_tokens, 1)
     print(
         f"  [compress] {len(chunks)} chunks | "
         f"{original_tokens:,} → {compressed_tokens:,} tokens "
@@ -205,30 +217,34 @@ def run_optimized(
     )
 
     retriever = _build_retriever(chunks)
-    reasoner  = ToTReasoner(retriever=retriever)
+    reasoner = ToTReasoner(retriever=retriever)
 
     results = []
     for q in queries:
         branch_specs = [
             {"id": "main", "title": q["query"], "search_terms": q["must_contain"]}
         ]
-        start      = time.perf_counter()
-        tot        = reasoner.reason(
+        start = time.perf_counter()
+        tot = reasoner.reason(
             type("_Ctx", (), {"entities": q["must_contain"]})(),
             branch_specs=branch_specs,
         )
         latency_ms = (time.perf_counter() - start) * 1000
 
-        results.append({
-            "query":            q["query"],
-            "strategy":         "optimized",
-            "tokens_processed": compressed_tokens,
-            "lines_scanned":    tot.total_retrieved_lines,
-            "lines_retrieved":  tot.total_retrieved_lines,
-            "latency_ms":       latency_ms,
-            "selected_branch":  tot.selected_branch_id,
-            "recall":           _recall_from_snippets(tot.winner.evidence_snippets, q["must_contain"]),
-        })
+        results.append(
+            {
+                "query": q["query"],
+                "strategy": "optimized",
+                "tokens_processed": compressed_tokens,
+                "lines_scanned": tot.total_retrieved_lines,
+                "lines_retrieved": tot.total_retrieved_lines,
+                "latency_ms": latency_ms,
+                "selected_branch": tot.selected_branch_id,
+                "recall": _recall_from_snippets(
+                    tot.winner.evidence_snippets, q["must_contain"]
+                ),
+            }
+        )
 
     _cleanup_retriever(retriever)
     return results, compress_time, original_tokens, compressed_tokens
@@ -237,14 +253,18 @@ def run_optimized(
 def _build_retriever(chunks: list[Any]) -> Any:
     try:
         from context_optimizer.cached_retriever import CachedChromaRetriever
-        tmp_dir   = tempfile.mkdtemp(prefix="co_img_bench_")
-        retriever = CachedChromaRetriever(collection_name="image_benchmark", persist_directory=tmp_dir)
+
+        tmp_dir = tempfile.mkdtemp(prefix="co_img_bench_")
+        retriever = CachedChromaRetriever(
+            collection_name="image_benchmark", persist_directory=tmp_dir
+        )
         retriever.add_chunks(chunks)
         retriever._tmp_dir = tmp_dir
         return retriever
     except Exception as exc:
         print(f"  [info] ChromaDB unavailable ({exc}), using DualStorageRetriever")
         from context_optimizer.retriever import DualStorageRetriever
+
         retriever = DualStorageRetriever(chunks)
         retriever._tmp_dir = None
         return retriever
@@ -266,29 +286,40 @@ def _recall_from_snippets(snippets: list[str], must_contain: list[str]) -> float
 
 # ── Step 3 — Write image_results.md ──────────────────────────────────────────
 
+
 def write_results(
     corpus_size: str,
     n_captions: int,
-    raw_results:       list[dict[str, Any]],
-    opt_results:       list[dict[str, Any]],
-    compress_time:     float,
-    original_tokens:   int,
+    raw_results: list[dict[str, Any]],
+    opt_results: list[dict[str, Any]],
+    compress_time: float,
+    original_tokens: int,
     compressed_tokens: int,
 ) -> Path:
     out = BENCH_DIR / "image_results.md"
 
-    raw_avg_latency = sum(r["latency_ms"] for r in raw_results) / max(len(raw_results), 1)
-    opt_avg_latency = sum(r["latency_ms"] for r in opt_results) / max(len(opt_results), 1)
-    raw_tokens      = raw_results[0]["tokens_processed"] if raw_results else 0
+    raw_avg_latency = sum(r["latency_ms"] for r in raw_results) / max(
+        len(raw_results), 1
+    )
+    opt_avg_latency = sum(r["latency_ms"] for r in opt_results) / max(
+        len(opt_results), 1
+    )
+    raw_tokens = raw_results[0]["tokens_processed"] if raw_results else 0
     compression_pct = (1 - compressed_tokens / max(original_tokens, 1)) * 100
-    speedup         = raw_avg_latency / max(opt_avg_latency, 0.001)
-    raw_recall_avg  = sum(r["recall"] for r in raw_results) / max(len(raw_results), 1)
-    opt_recall_avg  = sum(r["recall"] for r in opt_results) / max(len(opt_results), 1)
-    now             = datetime.now().strftime("%Y-%m-%d %H:%M")
-    n_images        = CORPUS_IMAGES[corpus_size]
+    speedup = raw_avg_latency / max(opt_avg_latency, 0.001)
+    raw_recall_avg = sum(r["recall"] for r in raw_results) / max(len(raw_results), 1)
+    opt_recall_avg = sum(r["recall"] for r in opt_results) / max(len(opt_results), 1)
+    now = datetime.now().strftime("%Y-%m-%d %H:%M")
+    n_images = CORPUS_IMAGES[corpus_size]
 
-    token_pass   = "✅ PASS" if compression_pct >= 90 else f"⚠️  {compression_pct:.1f}% (target ≥ 90%)"
-    speedup_note = f"✅ {speedup:.1f}×" if speedup >= 10 else f"⚠️  {speedup:.1f}× (target ≥ 10×)"
+    token_pass = (
+        "✅ PASS"
+        if compression_pct >= 90
+        else f"⚠️  {compression_pct:.1f}% (target ≥ 90%)"
+    )
+    speedup_note = (
+        f"✅ {speedup:.1f}×" if speedup >= 10 else f"⚠️  {speedup:.1f}× (target ≥ 10×)"
+    )
 
     md: list[str] = [
         "# Context Optimizer — Image Corpus Benchmark Results",
@@ -371,6 +402,7 @@ def write_results(
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Context Optimizer image corpus benchmark (raw vs optimised on COCO captions).",
@@ -387,7 +419,9 @@ def main() -> None:
     corpus_size = args.corpus
 
     print(f"\n{'='*60}")
-    print(f"  Image Corpus Benchmark — {corpus_size} ({CORPUS_IMAGES[corpus_size]:,} images)")
+    print(
+        f"  Image Corpus Benchmark — {corpus_size} ({CORPUS_IMAGES[corpus_size]:,} images)"
+    )
     print(f"{'='*60}\n")
 
     print("[1/3] Loading image corpus …")
@@ -398,7 +432,9 @@ def main() -> None:
     print("  → Raw baseline …")
     raw_results = run_raw_baseline(corpus, IMAGE_GROUND_TRUTH_QUERIES)
     raw_avg = sum(r["latency_ms"] for r in raw_results) / len(raw_results)
-    print(f"     avg latency: {raw_avg:.1f} ms | tokens: {raw_results[0]['tokens_processed']:,}")
+    print(
+        f"     avg latency: {raw_avg:.1f} ms | tokens: {raw_results[0]['tokens_processed']:,}"
+    )
 
     print("  → Optimised (compress → ToT local) …")
     opt_results, compress_time, original_tokens, compressed_tokens = run_optimized(
@@ -410,9 +446,13 @@ def main() -> None:
 
     print("\n[3/3] Writing results …")
     out = write_results(
-        corpus_size, n_captions,
-        raw_results, opt_results,
-        compress_time, original_tokens, compressed_tokens,
+        corpus_size,
+        n_captions,
+        raw_results,
+        opt_results,
+        compress_time,
+        original_tokens,
+        compressed_tokens,
     )
 
     print(f"\n{'='*60}")

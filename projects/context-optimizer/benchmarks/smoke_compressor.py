@@ -2,9 +2,10 @@
 
 import json
 import os
+import pathlib as _pl
 import sys
 
-sys.path.insert(0, "src")
+sys.path.insert(0, str(_pl.Path(__file__).parent.parent / "src"))
 from context_optimizer.compressor import _effective_workers, _log_chunk
 
 # ── Parallelism gate ──────────────────────────────────────────────────────────
