@@ -583,10 +583,8 @@ model_quantized = quant.convert(model_prepared)
 
 ## 9 · Where This Reappears
 
-- **Ch.3 (Two-Stage Detectors)** — Faster R-CNN with MobileNetV2 backbone for mobile object detection
-- **Ch.4 (One-Stage Detectors)** — YOLOv5-Nano and SSD-MobileNet for real-time edge detection
-- **Ch.5 (Semantic Segmentation)** — DeepLabv3+ with EfficientNet encoder for efficient segmentation
-- **Ch.7 (Knowledge Distillation)** — Use ResNet-50 (teacher) to train MobileNetV2 (student) — close the accuracy gap
+- **Ch.7 (Contrastive Learning)** — MobileNetV2 as the efficient encoder backbone for SimCLR/MoCo pretraining; contrastive training on 50k unlabeled images, then fine-tune on 1k labeled
+- **Ch.9 (Knowledge Distillation)** — Use ResNet-50 (teacher) to train MobileNetV2 (student) — recover accuracy lost in compression
 - **AI Infrastructure Ch.3 (Quantization)** — INT8 quantization of MobileNets for 4× speedup on edge devices
 - **Multimodal AI Ch.2 (Vision Transformers)** — Hybrid architectures (EfficientNet + ViT) combine CNN efficiency with transformer attention
 
@@ -611,7 +609,7 @@ model_quantized = quant.convert(model_prepared)
 | Constraint | Target | Ch.1 Status | Ch.2 Status | Improvement |
 |------------|--------|-------------|-------------|-------------|
 | #1 Detection Accuracy | mAP ≥ 85% | 78.2% (ResNet-50) | 76.8% (MobileNetV2) | -1.4% (acceptable tradeoff) |
-| #2 Segmentation Quality | IoU ≥ 70% | Not started | Not started | Ch.5–6 |
+| #2 Segmentation Quality | IoU ≥ 70% | Not started | Not started | Ch.9–10 (compression track) |
 | #3 Inference Latency | <50ms | 85ms | **35ms ** | **2.4× faster** |
 | #4 Model Size | <100 MB | 98 MB | **14 MB ** | **7× smaller** |
 | #5 Data Efficiency | <1k labels | Not started | Not started | Ch.7–8 |
@@ -623,14 +621,39 @@ model_quantized = quant.convert(model_prepared)
 - **Deployment scale**: 1,000 stores × $1,100 savings = $1.1M hardware cost reduction
 - **Real-time monitoring**: 28 FPS enables live stockout alerts (ResNet-50 @ 11 FPS missed 63% of frames)
 
-**Next up:** Ch.3 gives us **Two-Stage Object Detection (Faster R-CNN)** — we'll use MobileNetV2 as the backbone and add a Region Proposal Network (RPN) + detection head to achieve 85%+ mAP (constraint #1 ).
+**Next up:** Ch.7 gives us **Contrastive Learning (SimCLR, MoCo)** — self-supervised pretraining on 50k unlabeled shelf images to reduce annotation cost from 10,000 → 1,000 labeled images. The efficient backbone you built here is exactly what makes contrastive pretraining deployable on edge hardware.
 
 ---
 
-## 11 · Bridge to Ch.3 — Two-Stage Object Detection
+## 11 · Bridge to Ch.7 — Contrastive Learning
 
-Ch.2 gave you efficient architectures — MobileNetV2 and EfficientNet achieve ResNet-50 accuracy with 5× fewer parameters and 3× faster inference. You now have a viable edge deployment backbone (14 MB, 35ms).
+Ch.2 gave you **efficient architectures** — MobileNetV2 achieves ResNet-50 accuracy with 5× fewer parameters and 3× faster inference. You now have a viable edge deployment backbone: 14 MB, 35ms on a Jetson Nano, constraints #3 and #4 satisfied.
 
-But you're still doing **classification** (predict one label per image). Retail shelf monitoring needs **object detection** (predict bounding boxes + labels for all products in the frame).
+But there's a constraint that still blocks production: **10,000 labeled images**. Every product in every store, every shelf layout variant, bounding-boxed by hand — $5/image × 10,000 = $50,000 per annotation cycle. As product lines change seasonally, that cost recurs indefinitely.
 
-Ch.3 gives you **Faster R-CNN** — a two-stage detector that uses your MobileNetV2 backbone to extract features, then applies a Region Proposal Network (RPN) to generate candidate boxes, and finally classifies + refines each box. You'll achieve 85%+ mAP (constraint #1 ) while keeping inference under 50ms by using the efficient backbone from Ch.2.
+The efficient architecture is solved. Now we turn to the annotation bottleneck.
+
+**Ch.7 gives you contrastive learning** — a self-supervised technique that pretrains your MobileNetV2 backbone on 50,000 *unlabeled* shelf photos from store security cameras (data you already collect), then fine-tunes on just 1,000 labeled images to achieve 84% mAP — nearly matching the 85% target at 10× lower annotation cost.
+
+The architectural efficiency you built here (depthwise separable convs, inverted residuals, ~14 MB backbone) directly enables this: the small, fast encoder is what makes contrastive pretraining practical on edge-deployable models. The momentum encoder in MoCo requires running two copies of your model — MobileNetV2 makes that feasible where ResNet-50 would require 2× the GPU memory.
+
+---
+
+## Interview Checklist
+
+**Must Know:**
+- [ ] The depthwise separable factorization: standard conv → depthwise (spatial filtering per channel) + pointwise (channel mixing across all channels)
+- [ ] Speedup formula: $\frac{k^2 \cdot C_{\text{out}}}{k^2 + C_{\text{out}}}$ ≈ 8.7× for $k=3$, $C=256$
+- [ ] Inverted residual block structure: expand (1×1, 6×) → depthwise (3×3) → project (1×1); skip connection around the narrow ends (not the wide middle)
+- [ ] Why no ReLU after the final pointwise projection (linear bottleneck: ReLU destroys information in low-dimensional space)
+- [ ] EfficientNet compound scaling: depth × width × resolution scaled simultaneously with a fixed coefficient ratio
+
+**Likely Asked:**
+- [ ] *"What is depthwise separable convolution and why is it efficient?"* — Separates spatial filtering (depthwise) from channel mixing (pointwise); reduces FLOPs by ~8–9× at k=3
+- [ ] *"What is an inverted residual? How does it differ from ResNet's bottleneck?"* — ResNet: wide → narrow → wide (compress, then expand); MobileNetV2: narrow → wide → narrow (expand, depthwise, compress); skip on the narrow ends
+- [ ] *"When would you choose MobileNetV2 over ResNet-50?"* — Edge devices (Jetson Nano, mobile), latency <50ms, model size <20 MB, inference budget constrained
+
+**Traps to Avoid:**
+- [ ] Confusing depthwise conv (`groups=in_channels`) with groupwise conv (`groups < in_channels`); depthwise is the extreme case
+- [ ] Adding ReLU after the final projection conv: destroys the linear bottleneck, loses ~2% accuracy with no benefit
+- [ ] Assuming EfficientNet compound scaling always helps — the scaling laws assume the base architecture is already well-designed; applying them to a poorly designed base worsens the scaling curve

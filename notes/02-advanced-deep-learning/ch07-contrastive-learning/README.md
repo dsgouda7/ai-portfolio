@@ -2,7 +2,7 @@
 
 > **The story.** In **2020**, two independent research teams cracked the self-supervised learning problem for computer vision. **Ting Chen** (Google Brain) published **SimCLR** (*A Simple Framework for Contrastive Learning of Visual Representations*) showing that contrastive learning — forcing a network to recognize that two augmented views of the same image are "similar" while all other images are "different" — could match supervised pretraining on ImageNet without using a single label. Around the same time, **Kaiming He** (Facebook AI) published **MoCo** (*Momentum Contrast for Unsupervised Visual Representation Learning*) using a momentum encoder and a queue of negative samples to make contrastive learning scale to millions of images. The impact was immediate: companies with massive unlabeled image datasets (Google Photos, Instagram, medical imaging archives) could now pretrain state-of-the-art models without the crushing cost of hand-labeling millions of images. By 2022, contrastive pretraining became the default first step for any production CV system with limited labeled data.
 >
-> **Where you are in the curriculum.** You've built ResNets (Ch.1), optimized architectures for edge deployment (Ch.2), and mastered object detection (Ch.3–4) and segmentation (Ch.5–6). But all these methods require thousands of labeled images. In production, labeling is expensive: retail shelf monitoring requires bounding boxes for 20 product classes across thousands of store layouts — easily $50k–$100k in annotation costs. This chapter gives you **contrastive learning** — a self-supervised technique that pretrains a ResNet on 50,000 *unlabeled* shelf photos, then fine-tunes on just 1,000 labeled images to achieve the same detection accuracy you'd get from 10,000 supervised labels. You'll implement SimCLR (the conceptually simple approach) and MoCo (the production-scalable approach), and understand when to use each.
+> **Where you are in the curriculum.** You've built ResNets (Ch.1) and optimized architectures for edge deployment (Ch.2). With a supervised detection pipeline trained on 10,000 labeled images, you can achieve 85% mAP on the ProductionCV dataset — but labeling 10,000 retail shelf images costs ~$50k in annotation. This chapter gives you **contrastive learning** — a self-supervised technique that pretrains a ResNet on 50,000 *unlabeled* shelf photos, then fine-tunes on just 1,000 labeled images to achieve the same detection accuracy you'd get from 10,000 supervised labels. You'll implement SimCLR (the conceptually simple approach) and MoCo (the production-scalable approach), and understand when to use each.
 >
 > **Notation in this chapter.** $x$ — unlabeled image; $\tilde{x}_i, \tilde{x}_j$ — two random augmentations of $x$ (positive pair); $f(\cdot)$ — ResNet encoder (outputs feature vector $h \in \mathbb{R}^{2048}$); $g(\cdot)$ — projection head (MLP mapping $h \to z \in \mathbb{R}^{128}$); $\tau$ — temperature parameter (controls hardness of negatives); $\text{sim}(z_i, z_j) = \frac{z_i^T z_j}{\|z_i\| \|z_j\|}$ — cosine similarity; $\mathcal{L}_{\text{NT-Xent}}$ — normalized temperature-scaled cross entropy loss (SimCLR's contrastive loss); $\theta_q$ — query encoder weights (updated by gradient descent); $\theta_k$ — key encoder weights (updated by momentum: $\theta_k \gets m \theta_k + (1-m) \theta_q$); $m=0.999$ — momentum coefficient (MoCo); $K=65536$ — queue size (MoCo, number of cached negative samples).
 
@@ -651,8 +651,8 @@ Key insight: Contrastive pretraining gives +12% mAP gain at 1,000 labels
 
 | Training Strategy | Labeled Images | mAP@0.5 | Labeling Cost |
 |-------------------|----------------|---------|---------------|
-| From scratch (Ch.4 YOLO) | 1,000 | 72% | $5k |
-| From scratch (Ch.4 YOLO) | 10,000 | 85% | $50k |
+| From scratch (supervised) | 1,000 | 72% | $5k |
+| From scratch (supervised) | 10,000 | 85% | $50k |
 | **SimCLR pretraining** | **1,000** | **84%** | **$5k** |
 | SimCLR + fine-tuning | 2,000 | 87% | $10k |
 
@@ -683,3 +683,42 @@ But contrastive learning has limitations:
 - **MAE** (masked autoencoding): Mask 75% of image patches, reconstruct → learns spatial structure without any pairs
 
 DINO achieves 86% mAP with 850 labels (2% better than SimCLR), and MAE enables Vision Transformers to compete with ResNets. These methods represent the current state-of-the-art in self-supervised vision and bridge to the Multimodal AI track.
+
+---
+
+## 12 · LLM Bridge — From NT-Xent to CLIP and Text Embeddings
+
+SimCLR's NT-Xent loss generalizes immediately beyond images. **CLIP (Radford et al., 2021)** makes one change: the positive pair is no longer *(image, augmented image)* but **(image, caption)**. Every image on the internet comes with natural alt text — 400 million (image, caption) pairs, no human annotation needed. Same loss. Same temperature. Same cosine similarity. One encoder processes pixels (ViT), the other processes text (Transformer).
+
+| SimCLR | CLIP |
+|---|---|
+| Positive pair: $(x, \text{Aug}(x))$ | Positive pair: $(\text{image}, \text{caption})$ |
+| Single ViT/ResNet encoder | Image encoder + text encoder |
+| Learns visual invariances | Learns cross-modal alignment |
+| Used for visual pretraining | Used for zero-shot classification, image search |
+
+**Text embeddings in RAG pipelines** (notes/03-ai Ch.07) are trained with a contrastive objective almost identical to NT-Xent — they produce semantic vectors where cosine similarity = semantic proximity. When you call `cosine_similarity(embed(query), embed(document))` in a retrieval pipeline, the contrastive training objective from this chapter is why that number is meaningful.
+
+**Key takeaway:** The sentence *"pull representations of semantically equivalent inputs together, push non-equivalent ones apart"* is the unifying principle across SimCLR (vision pretraining), CLIP (cross-modal alignment), and sentence embeddings (text retrieval). The loss function is the same. The modality changes.
+
+---
+
+## Interview Checklist
+
+**Must Know:**
+- [ ] Three-step SimCLR recipe: augment → encode+project → NT-Xent loss
+- [ ] NT-Xent loss formula and what temperature $\tau$ controls (sharpness of discrimination)
+- [ ] Why large batch sizes matter for SimCLR (more negatives = harder discrimination = better representations)
+- [ ] MoCo momentum update: $\theta_k \gets m\theta_k + (1-m)\theta_q$, why $m \approx 0.999$ (stable key encoder)
+- [ ] Two-stage workflow: self-supervised pretraining on unlabeled → supervised fine-tuning on small labeled set
+
+**Likely Asked:**
+- [ ] *"How does contrastive learning work?"* — Positive pairs pulled together, negatives pushed apart, no labels required
+- [ ] *"What is the difference between SimCLR and MoCo?"* — Batch negatives vs. memory queue + momentum encoder; MoCo works at batch size 256
+- [ ] *"Why does contrastive pretraining help with limited labeled data?"* — Representations encode visual invariances; fine-tuning just maps those representations to class labels
+- [ ] *"What is the connection between SimCLR and CLIP?"* — Same NT-Xent loss; CLIP's positive pair is (image, caption) instead of (image, augmented image)
+
+**Traps to Avoid:**
+- [ ] *"Contrastive learning finds the best features for the task"* — It finds invariant features; task-specific quality depends on whether the augmentation strategy matches the downstream task
+- [ ] Using very low temperature ($\tau \to 0$): focuses only on hardest negatives, causes numerical instability
+- [ ] Assuming SimCLR works with small batches — it needs 4096+ views for stable training; MoCo is the right choice for batch sizes < 256

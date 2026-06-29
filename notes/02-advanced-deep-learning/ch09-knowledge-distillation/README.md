@@ -2,7 +2,7 @@
 
 > **The story.** In **2015**, **Geoffrey Hinton, Oriol Vinyals, and Jeff Dean** published *Distilling the Knowledge in a Neural Network*, introducing a paradigm shift for deploying deep learning at scale. The breakthrough: instead of training a small model from scratch (which often fails), **train a large "teacher" model first, then transfer its knowledge to a small "student" model** by having the student learn from the teacher's *soft probability distributions*, not just hard labels. The key insight was that the teacher's "dark knowledge" — the full probability vector (e.g., `[0.8 dog, 0.15 cat, 0.03 car, 0.02 horse]`) — contains far more information than a one-hot label (`[1 dog, 0, 0, 0]`). By raising the temperature during distillation (softening the probabilities), the student learns the teacher's nuanced understanding of class similarities. This enabled Google to compress 100M-parameter models down to 10M parameters while retaining 95%+ accuracy — unlocking mobile deployment, edge computing, and real-time inference.
 >
-> **Where you are in the curriculum.** You've completed Ch.1–8 of Advanced Deep Learning and built a full ProductionCV stack: ResNet-50 backbone (Ch.1), object detection with YOLOv5 (Ch.4), instance segmentation with Mask R-CNN (Ch.6), and self-supervised pretraining with SimCLR (Ch.7). Your model achieves **85.4% mAP@0.5** and **71.2% IoU** on retail shelf monitoring — satisfying constraints #1 and #2. But there's a problem: the model is **97 MB** (ResNet-50 backbone), far exceeding the **<100 MB** edge deployment constraint (#4). You've already switched to MobileNetV2 (Ch.2), bringing it down to 23 MB, but accuracy dropped to 78% mAP. This chapter gives you **knowledge distillation** — the technique to compress the 97 MB ResNet-50 teacher into a 10 MB MobileNetV2 student while maintaining 83%+ mAP (only 2% accuracy loss instead of 7%).
+> **Where you are in the curriculum.** You've built the architecture stack (Ch.1–2) and mastered self-supervised pretraining (Ch.7–8). DINO-pretrained ResNet-50 achieves **86% mAP** with only 850 labeled images — exceeding constraint #1 (85% mAP) with 10× less data than a supervised pipeline requires. But there's a problem: the model is **97 MB** (ResNet-50 backbone), far exceeding the **<100 MB** edge deployment constraint (#4). You've already switched to MobileNetV2 (Ch.2), bringing it down to 14 MB, but accuracy dropped to 78% mAP. This chapter gives you **knowledge distillation** — the technique to compress the 97 MB ResNet-50 teacher into a 10 MB MobileNetV2 student while maintaining 83%+ mAP (only 2% accuracy loss instead of 8%).
 >
 > **Notation in this chapter.** $T$ — teacher model (large, accurate); $S$ — student model (small, fast); $z_T^i$ — teacher's logits for class $i$; $p_T^i = \frac{\exp(z_T^i / \tau)}{\sum_j \exp(z_T^j / \tau)}$ — **soft targets** (temperature-scaled probabilities); $\tau$ — **temperature parameter** (higher $\tau$ → softer probabilities); $\mathcal{L}_{\text{distill}} = \tau^2 \cdot \text{KL}(p_T \| p_S)$ — distillation loss (KL divergence between teacher and student); $\mathcal{L}_{\text{hard}} = \text{CrossEntropy}(y_{\text{true}}, p_S)$ — standard loss on ground truth labels; $\mathcal{L}_{\text{total}} = \alpha \mathcal{L}_{\text{distill}} + (1 - \alpha) \mathcal{L}_{\text{hard}}$ — **combined loss** ($\alpha$ typically 0.7–0.9, favoring soft targets).
 
@@ -18,9 +18,11 @@
 > 5. **DATA EFFICIENCY**: <1,000 labeled images
 
 **What we know so far:**
-- **Constraints #1, #2, #5 achieved!** ResNet-50 + Mask R-CNN + SimCLR pretraining: 85.4% mAP, 71.2% IoU, trained on 982 labeled images
-- Inference latency: 78ms per frame on NVIDIA Jetson Nano (close to <50ms target)
-- **Constraint #4 BLOCKED**: Model size = **97 MB** (target <100 MB, but ideally much smaller for edge deployment)
+- Ch.1–2: ResNet-50 backbone (80% mAP) + MobileNetV2 edge-deployable backbone (14 MB, 35ms)
+- **Constraint #1 ACHIEVED!** — DINO pretraining (Ch.8): 86% mAP with only 850 labeled images
+- **Constraint #5 ACHIEVED!** — Data efficiency: <1,000 labeled images required
+- Inference latency: ~95ms per frame on NVIDIA Jetson Nano (DINO-ResNet-50 backbone)
+- **Constraint #4 BLOCKED**: DINO-pretrained ResNet-50 model size = **97 MB** (target <100 MB, but much smaller needed for reliable edge deployment)
 
 **What's blocking us:**
 The **accuracy-size tradeoff**. We have two options, neither ideal:
@@ -616,3 +618,48 @@ The grand challenge is within reach. Let's finish it.
 ---
 
 > **Next chapter**: [Ch.10 — Pruning & Mixed Precision Training](../ch10_pruning_mixed_precision/README.md) — Remove redundant weights, train 2× faster, achieve all 5 ProductionCV constraints.
+
+---
+
+## 10 · LLM Bridge — From MobileNet Distillation to DistilBERT and TinyLLaMA
+
+The temperature-scaled KL loss you implemented in this chapter is used verbatim to compress every production LLM:
+
+**DistilBERT (Sanh et al., 2019):**
+- Teacher: BERT-base (110M parameters, 512-token sequences)
+- Student: DistilBERT (66M parameters, 40% smaller)
+- Training: Same $\mathcal{L}_{\text{total}} = \alpha \cdot \tau^2 \cdot \text{KL}(p_T \| p_S) + (1-\alpha) \cdot \mathcal{L}_{\text{hard}}$ you implemented here
+- Result: 97% of BERT's GLUE benchmark performance at 60% model size and 2× inference speed
+
+**TinyLLaMA (Zhang et al., 2024):**
+- Teacher: LLaMA-2-7B (7 billion parameters)
+- Student: TinyLLaMA-1.1B (1.1 billion parameters)
+- Same principle: student mimics teacher's token-level distribution over the 32,000-token vocabulary
+- Result: 1.1B parameter model that outperforms many 3B models on standard benchmarks
+
+**The key difference at LLM scale:**
+In this chapter, the output distribution is over $K=20$ product classes. In LLM distillation, the output distribution is over $K=50{,}000+$ BPE tokens at *every autoregressive step*. The $\tau^2 \cdot \text{KL}$ loss still applies exactly — the vocabulary is just larger. "Dark knowledge" in LLM distillation: the teacher's soft distribution over tokens encodes semantic similarity (e.g., `"the"` and `"a"` have similar probabilities in many positions; `"Paris"` and `"France"` are interchangeable in certain contexts).
+
+Every lightweight LLM running on edge devices — Phi-3-mini, Gemma-2B, Qwen-0.5B — was trained with the exact loss function you just implemented.
+
+---
+
+## Interview Checklist
+
+**Must Know:**
+- [ ] Why small models fail trained from scratch with limited data (hard labels provide insufficient supervision signal)
+- [ ] Temperature-scaled softmax: $p_i(\tau) = \exp(z_i/\tau) / \sum_j \exp(z_j/\tau)$; what happens at $\tau \to 0$ (hard labels) and $\tau \to \infty$ (uniform)
+- [ ] "Dark knowledge": teacher's soft distribution encodes class similarity relationships that hard labels discard
+- [ ] Combined loss: $\mathcal{L}_{\text{total}} = \alpha \cdot \tau^2 \cdot \text{KL}(p_T \| p_S) + (1-\alpha) \cdot \mathcal{L}_{\text{CE}}(y, p_S)$
+- [ ] Why the $\tau^2$ factor: compensates for gradient magnitude reduction at higher temperatures (KL gradients shrink as $1/\tau^2$)
+
+**Likely Asked:**
+- [ ] *"What is knowledge distillation?"* — Transfer soft probability distributions from large teacher to small student, encoding class similarity relationships
+- [ ] *"Why does distillation outperform training a small model from scratch?"* — Soft targets encode class similarity; student inherits teacher's understanding of the similarity structure
+- [ ] *"How do you choose temperature $\tau$?"* — $\tau=1$ (standard softmax, no distillation benefit), $\tau=3$–$5$ (standard), $\tau>10$ (extreme smoothing for very different architectures)
+- [ ] *"What is DistilBERT?"* — BERT distilled using this exact technique: same KL loss, same temperature, same $\alpha$ weighting; 40% smaller, 2× faster, 97% of performance
+
+**Traps to Avoid:**
+- [ ] Setting $\alpha=0$ (pure distillation): student may inherit teacher's errors without ground truth anchor
+- [ ] Omitting the $\tau^2$ scaling: gradients shrink by $1/\tau^2$ at high temperatures; this factor restores gradient magnitude so the KL loss is effectively weighted at the right scale
+- [ ] Using $\tau=1$ for distillation: standard softmax concentrates probability on the top class, giving no more information than hard one-hot labels
