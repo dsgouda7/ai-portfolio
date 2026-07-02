@@ -104,10 +104,20 @@ class ToTReasoner:
         llm: Any = None,
         *,
         top_k_per_term: int = 3,
+        raw_fallback_threshold: float = 0.40,
+        raw_index: Any | None = None,
     ) -> None:
         self._retriever = retriever
         self._llm = llm
         self._top_k = top_k_per_term
+        # If the winning branch similarity score stays below this value after
+        # the compressed pass, automatically re-retrieve using raw_text so the
+        # exact source vocabulary is available for the answer.
+        self._raw_fallback_threshold = raw_fallback_threshold
+        # Optional RawIndex (SQLite+FTS5) — when present, the raw-text fallback
+        # uses BM25 keyword search instead of re-querying ChromaDB.  This is a
+        # true short-circuit: no embedding call, no ChromaDB round-trip.
+        self._raw_index = raw_index
 
     # ── Public API ──────────────────────────────────────────────────────────
 
@@ -160,21 +170,61 @@ class ToTReasoner:
                 total_lines += len(scored)
                 if scored:
                     branch.evidence_hits += 1
-                    # Accumulate mean similarity across all returned chunks for this term.
-                    # ChromaDB cosine distance is in [0, 2]; similarity = 1 - distance
-                    # giving [-1, 1] where 1 = identical.  Average over top_k results.
                     branch.score += sum(sim for _, sim in scored) / len(scored)
 
             branches.append(branch)
 
         branches.sort(key=lambda b: b.score, reverse=True)
         winner = branches[0]
+
+        # ── Raw-text fallback ────────────────────────────────────────────────
+        # When compressed evidence confidence is low (winner.score below
+        # threshold), re-retrieve using raw_text so the exact source vocabulary
+        # is available.  The index ranking stays the same (embeddings are still
+        # computed from compressed_summary); only the returned snippet text
+        # switches to raw.  This short-circuits to verbatim data automatically
+        # without any query classification.
+        used_raw = False
+        if (
+            self._raw_fallback_threshold > 0
+            and self._raw_index is not None
+            and winner.score < self._raw_fallback_threshold
+        ):
+            raw_branches: list[Branch] = []
+            for spec in specs:
+                branch = Branch(
+                    id=spec["id"],
+                    title=spec["title"],
+                    search_terms=spec.get("search_terms", []),
+                )
+                for term in branch.search_terms:
+                    # Prefer FTS5/BM25 on RawIndex (true short-circuit — no
+                    # embedding, no ChromaDB round-trip); fall back to
+                    # ChromaDB raw_text metadata if no RawIndex is wired in.
+                    if self._raw_index is not None:
+                        scored = self._retrieve_raw_snippets(term)
+                    else:
+                        scored = self._retrieve_snippets(term, use_raw=True)
+                    branch.evidence_snippets.extend(s for s, _ in scored)
+                    total_lines += len(scored)
+                    if scored:
+                        branch.evidence_hits += 1
+                        branch.score += sum(sim for _, sim in scored) / len(scored)
+                raw_branches.append(branch)
+            raw_branches.sort(key=lambda b: b.score, reverse=True)
+            # Replace the winning compressed branch with the raw version so that
+            # ToTResult.winner returns evidence_snippets from raw_text.
+            winner = raw_branches[0]
+            branches = [b if b.id != winner.id else winner for b in branches]
+            used_raw = True
         entity_str = self._entity_str(compressed_context)
+        fallback_note = "  [raw-text fallback]\n" if used_raw else ""
 
         summary = (
             f"ToT-selected branch: {winner.title}.\n"
             f"Mean similarity: {winner.score:.3f} "
             f"({winner.evidence_hits}/{len(winner.search_terms)} search term(s) matched).\n"
+            + fallback_note
             + (f"Key entities: {entity_str}.\n" if entity_str else "")
             + "Next: address the dominant failure mode identified by the winning branch."
         )
@@ -189,14 +239,45 @@ class ToTReasoner:
 
     # ── Internal helpers ────────────────────────────────────────────────────
 
-    def _retrieve_snippets(self, term: str) -> list[tuple[str, float]]:
-        """Fetch top_k snippets with similarity scores for *term*.
+    def _retrieve_raw_snippets(self, term: str) -> list[tuple[str, float]]:
+        """
+        BM25/FTS5 keyword search directly on the RawIndex — true short-circuit.
+
+        Bypasses ChromaDB and the embedding layer entirely.  The SQLite FTS5
+        engine ranks results by BM25; scores are normalised to a 0–1
+        pseudo-similarity so downstream branch scoring stays consistent.
 
         Returns
         -------
-        list of (compressed_summary, similarity) pairs.
-        similarity = 1 - cosine_distance, so 1.0 = identical, 0.0 = orthogonal.
-        Returns [] on any error or when no retriever is configured.
+        list of (raw_text, similarity) pairs, best match first.
+        """
+        if self._raw_index is None:
+            return []
+        try:
+            hits = self._raw_index.search(term, top_k=self._top_k)
+            if not hits:
+                return []
+            # BM25 rank is negative (more negative = better match in SQLite).
+            scores = [abs(h.rank) for h in hits]
+            max_score = max(scores) or 1.0
+            return [(h.raw_text, min(s / max_score, 1.0)) for h, s in zip(hits, scores)]
+        except Exception:
+            return []
+
+    def _retrieve_snippets(
+        self, term: str, use_raw: bool = False
+    ) -> list[tuple[str, float]]:
+        """Fetch top_k snippets with similarity scores for *term*.
+
+        The ChromaDB index is always queried via the compressed embedding
+        (ranking is based on semantic similarity to the compressed summary).
+        When *use_raw* is True the returned text is taken from the chunk's
+        ``raw_text`` field instead of ``compressed_summary``, preserving the
+        exact source vocabulary for keyword-sensitive queries.
+
+        Returns
+        -------
+        list of (text, similarity) pairs.
         """
         if self._retriever is None:
             return []
@@ -204,10 +285,17 @@ class ToTReasoner:
             results = self._retriever.search(term, top_k=self._top_k)
             out: list[tuple[str, float]] = []
             for r in results:
-                snippet = r.get("compressed_summary", str(r))
+                if use_raw:
+                    # Prefer top-level raw_text (bubbled up by CachedChromaRetriever);
+                    # fall back to metadata["raw_text"] for older retriever versions.
+                    snippet = (
+                        r.get("raw_text")
+                        or r.get("metadata", {}).get("raw_text")
+                        or r.get("compressed_summary", str(r))
+                    )
+                else:
+                    snippet = r.get("compressed_summary", str(r))
                 dist = r.get("distance")
-                # ChromaDB cosine space: distance in [0, 2].  Convert to similarity.
-                # When distance is absent (e.g. non-ChromaDB retriever), default to 0.5.
                 similarity = 1.0 - float(dist) if dist is not None else 0.5
                 out.append((snippet, similarity))
             return out

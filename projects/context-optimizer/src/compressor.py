@@ -159,7 +159,7 @@ def _effective_workers(requested: int, explicit_llm: bool) -> int:
     if requested > limit:
         print(
             f"[ParallelCompressor] Ollama detected — clamping workers "
-            f"{requested} → {limit}  "
+            f"{requested} -> {limit}  "
             f"(set OLLAMA_NUM_PARALLEL={requested} to unlock full parallelism)"
         )
     return min(requested, limit)
@@ -295,41 +295,132 @@ def _normalise_for_index(text: str) -> str:
 
 # ── Compression prompt ───────────────────────────────────────────────────────
 
-COMPRESSION_PROMPT_TEMPLATE = """You are a semantic index builder. Transform the input text into a
-retrieval-optimized representation that a vector-search system will embed.
+COMPRESSION_PROMPT_TEMPLATE = """You are a semantic index builder. Compress the input text into a dense, information-rich representation for vector search and retrieval.
 
-Write as dense entity phrases, NOT narrative prose. A downstream LLM will
-read your output and reconstruct full meaning from it, so preserve every
-technical signal verbatim — it does not need connective words to understand.
+**Goal:** Preserve maximum semantic content in minimum tokens. Target output: 25-40% of input length. Do NOT produce a one-sentence abstract.
 
-**Preserve exactly (never paraphrase or abbreviate):**
-- Error codes, status codes, version numbers, metric values, thresholds
-- Function / class / variable names, config keys, file paths, package names
-- System, component, protocol, and service names
-- Causal chains expressed as: "X caused Y", "X triggered Z", "X exceeded Y"
-- Numeric relationships: latency values, percentages, counts
+**Always preserve:**
+- Proper nouns: character names, place names, organization names, titles, dates
+- Key actions and relationships: "X did Y", "X caused Z", "X is the Y of Z"
+- Specific values: numbers, measurements, dates, counts, percentages
+- Causal chains: what triggered what, why something happened
+- Domain terms, technical vocabulary, named concepts
 
-**Style rules:**
-- Lead each clause with the primary entity (noun-first)
-- Join clauses with semicolons, not conjunctions
-- Omit: articles (the/a/an), copulas (is/are/was), filler adverbs, hedges
-- Wrong: "The CosmosDB instance experienced a timeout due to exceeded RU limits"
-- Right:  "CosmosDB RU limit exceeded; request timeout error 21012; AKS ingress 504 upstream; retry cascade triggered"
+**Style:**
+- Write noun-first dense phrases, semicolons between clauses
+- Omit: articles (the/a/an), filler words, connective phrases with no information
+- Capture multiple facts from across the passage — not just the opening sentence
+
+**Examples:**
+- Input (narrative): "Call me Ishmael. Having little money and nothing on shore, I decided to sail and see the sea. I signed aboard the Pequod, captained by the obsessed Ahab."
+- Output: "Ishmael narrator; no money, nothing on shore; joins Pequod whaling ship; Captain Ahab obsessed"
+
+- Input (technical): "The function raises ValueError when the input buffer exceeds 4096 bytes. This limit was introduced in v2.3 to prevent memory exhaustion on constrained devices."
+- Output: "ValueError raised; input buffer >4096 bytes; limit since v2.3; prevents memory exhaustion constrained devices"
 
 **Input Text:**
 {text}
 
-**Output Format (JSON):**
+**Output (JSON only):**
 {{
-  "summary": "Retrieval-optimized dense-phrase summary — entity-first, semicolon-separated, no filler",
-  "entities": ["entity1", "entity2", "entity3"],
-  "keywords": ["keyword1", "keyword2", "keyword3"],
-  "has_code": true,
+  "summary": "Dense, fact-preserving representation — 25-40% of input length, noun-first, semicolon-separated",
+  "entities": ["entity1", "entity2"],
+  "keywords": ["keyword1", "keyword2"],
+  "has_code": false,
   "has_math": false,
   "section": "section name if identifiable"
 }}
 
 Respond with ONLY valid JSON, no explanations."""
+
+
+# ── Extractive compression (no LLM required) ────────────────────────────────
+
+
+def _extractive_compress(text: str, ratio: float = 0.35) -> str:
+    """
+    Select the most informative sentences using TF-IDF scoring.
+    Returns the top *ratio* fraction of sentences in original order.
+    Completely deterministic — zero LLM, zero external dependencies.
+    """
+    import re as _re
+
+    sentences = [s.strip() for s in _re.split(r"(?<=[.!?])\s+", text.strip()) if s.strip()]
+    if len(sentences) <= 2:
+        return text
+
+    _stop = frozenset(
+        "a an the and or but in on at to for of with by from is are was were be been "
+        "have has had do does did that this it he she they we you i his her its their "
+        "our not so as if up out no about what which will would could should may might "
+        "then than when where who whom whose how much many more most some any all".split()
+    )
+
+    freq: dict[str, int] = {}
+    for s in sentences:
+        for w in _re.findall(r"[a-z]+", s.lower()):
+            if w not in _stop and len(w) >= 3:
+                freq[w] = freq.get(w, 0) + 1
+    if not freq:
+        return text
+
+    max_f = max(freq.values())
+
+    def _score(s: str) -> float:
+        words = [w for w in _re.findall(r"[a-z]+", s.lower()) if w not in _stop and len(w) >= 3]
+        return sum(freq.get(w, 0) / max_f for w in words) / len(words) if words else 0.0
+
+    scored = [(i, s, _score(s)) for i, s in enumerate(sentences)]
+    n_keep = max(2, round(len(sentences) * ratio))
+    top = sorted(scored, key=lambda x: x[2], reverse=True)[:n_keep]
+    top.sort(key=lambda x: x[0])  # restore original order
+    return " ".join(s for _, s, _ in top)
+
+
+def compress_chunk_extractive(
+    text: str,
+    chunk_id: str,
+    metadata: dict[str, str | int] | None = None,
+    ratio: float = 0.35,
+    label: str = "",
+) -> "CompressedChunk":
+    """
+    Compress a chunk by extracting the most important sentences (no LLM).
+    ~0.01s/chunk, deterministic, preserves exact source vocabulary so
+    keyword recall on raw-text questions is high.
+    """
+    import re as _re
+
+    t_start = time.perf_counter()
+    summary = _extractive_compress(text, ratio=ratio)
+
+    _stop = frozenset("a an the and or but in on at to for of with by from is are was were".split())
+    freq: dict[str, int] = {}
+    for w in _re.findall(r"[a-z]+", text.lower()):
+        if w not in _stop and len(w) >= 4:
+            freq[w] = freq.get(w, 0) + 1
+    keywords = sorted(freq, key=lambda k: freq[k], reverse=True)[:15]
+    entities = list(
+        dict.fromkeys(w for w in _re.findall(r"\b[A-Z][a-z]{2,}\b", text) if w.lower() not in _stop)
+    )[:15]
+
+    orig = _estimate_tokens(text)
+    comp = _estimate_tokens(summary)
+    actual_ratio = comp / orig if orig else 1.0
+    _log_chunk(chunk_id, label, time.perf_counter() - t_start, orig, comp, actual_ratio)
+
+    return CompressedChunk(
+        chunk_id=chunk_id,
+        raw_text=text,
+        compressed_summary=summary,
+        index_text="",
+        entities=entities,
+        keywords=keywords,
+        metadata=metadata or {},
+        original_tokens=orig,
+        compressed_tokens=comp,
+        compression_ratio=actual_ratio,
+    )
 
 
 def compress_chunk_with_llm(
@@ -468,6 +559,7 @@ def compress_corpus_rolling(
     progress_callback: callable | None = None,
     raw_index: "RawIndex | None" = None,
     label: str = "",
+    strategy: str = "llm",  # "llm" | "extractive"
 ) -> list[CompressedChunk]:
     """
     Compress a large corpus using a rolling window strategy with overlap.
@@ -546,19 +638,21 @@ def compress_corpus_rolling(
                 # ── Step 1: submit raw-text write (non-blocking, ~1 ms) ──────
                 _maybe_index_raw(chunk_id, chunk_text)
 
-                # ── Step 2: LLM compression (~500 ms, overlaps with above) ───
+                # ── Step 2: Compression (~0.01s extractive | ~12s LLM) ───────
                 _t0 = time.perf_counter()
-                compressed = compress_chunk_with_llm(
-                    text=chunk_text,
-                    chunk_id=chunk_id,
-                    metadata={
-                        "line_start": line_idx - len(current_chunk_lines) + 1,
-                        "line_end": line_idx,
-                        "source_lines": len(current_chunk_lines),
-                    },
-                    llm=llm,
-                    label=label,
-                )
+                _meta = {
+                    "line_start": line_idx - len(current_chunk_lines) + 1,
+                    "line_end": line_idx,
+                    "source_lines": len(current_chunk_lines),
+                }
+                if strategy == "extractive":
+                    compressed = compress_chunk_extractive(
+                        text=chunk_text, chunk_id=chunk_id, metadata=_meta, label=label
+                    )
+                else:
+                    compressed = compress_chunk_with_llm(
+                        text=chunk_text, chunk_id=chunk_id, metadata=_meta, llm=llm, label=label
+                    )
                 _elapsed = time.perf_counter() - _t0
                 compressed_chunks.append(compressed)
                 est_total = max(
@@ -597,17 +691,19 @@ def compress_corpus_rolling(
 
             _maybe_index_raw(chunk_id, chunk_text)
 
-            compressed = compress_chunk_with_llm(
-                text=chunk_text,
-                chunk_id=chunk_id,
-                metadata={
-                    "line_start": len(corpus_lines) - len(current_chunk_lines),
-                    "line_end": len(corpus_lines) - 1,
-                    "source_lines": len(current_chunk_lines),
-                },
-                llm=llm,
-                label=label,
-            )
+            _meta_final = {
+                "line_start": len(corpus_lines) - len(current_chunk_lines),
+                "line_end": len(corpus_lines) - 1,
+                "source_lines": len(current_chunk_lines),
+            }
+            if strategy == "extractive":
+                compressed = compress_chunk_extractive(
+                    text=chunk_text, chunk_id=chunk_id, metadata=_meta_final, label=label
+                )
+            else:
+                compressed = compress_chunk_with_llm(
+                    text=chunk_text, chunk_id=chunk_id, metadata=_meta_final, llm=llm, label=label
+                )
             compressed_chunks.append(compressed)
 
     # ThreadPoolExecutor.__exit__ calls shutdown(wait=True), so all raw_futures

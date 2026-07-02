@@ -58,6 +58,70 @@ sys.path.insert(0, str(_SRC_DIR))
 
 _BANKS_DIR = _BENCH_DIR / "data" / "question_banks"
 _BOOKS_DIR = _BENCH_DIR / "data" / "books"
+_CHUNKS_DIR = _BENCH_DIR / "data" / "chunks"
+_CACHE_DIR = _BENCH_DIR / "data" / "book_cache"
+
+
+# ── Chunk + result cache helpers ───────────────────────────────────────────────
+
+
+def _chunks_path(slug: str, max_lines: int, strategy: str = "llm") -> Path:
+    tag = f"L{max_lines}" if max_lines > 0 else "Lall"
+    return _CHUNKS_DIR / f"{slug}_{tag}_{strategy}.jsonl"
+
+
+def _save_chunks(
+    slug: str, max_lines: int, chunks: list, strategy: str = "llm"
+) -> None:
+    """Persist compressed chunks to JSONL so restarts skip LLM compression."""
+    _CHUNKS_DIR.mkdir(parents=True, exist_ok=True)
+    path = _chunks_path(slug, max_lines, strategy)
+    with path.open("w", encoding="utf-8") as fh:
+        for c in chunks:
+            fh.write(json.dumps(c.__dict__, default=str) + "\n")
+
+
+def _load_chunks(slug: str, max_lines: int, strategy: str = "llm") -> list | None:
+    """Return list[CompressedChunk] if cache exists, else None."""
+    path = _chunks_path(slug, max_lines, strategy)
+    if not path.exists():
+        return None
+    try:
+        from context_optimizer.compressor import CompressedChunk  # noqa: PLC0415
+
+        chunks = []
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            d = json.loads(line)
+            chunks.append(CompressedChunk(**d))
+        return chunks or None
+    except Exception:
+        return None
+
+
+def _result_path(slug: str, strategy: str = "llm") -> Path:
+    return _CACHE_DIR / f"{slug}_{strategy}.json"
+
+
+def _save_result(slug: str, result: dict, strategy: str = "llm") -> None:
+    """Persist the full book result so restarts skip Q&A entirely."""
+    _CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    _result_path(slug, strategy).write_text(
+        json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
+
+
+def _load_result(slug: str, strategy: str = "llm") -> dict | None:
+    """Return cached result dict if it exists, else None."""
+    path = _result_path(slug, strategy)
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
 
 # ── HTTP constants ─────────────────────────────────────────────────────────────
 # gutendex blocks non-browser UAs; use a generic Chrome UA
@@ -98,6 +162,37 @@ _PLOT_TITLES = {"plot", "plot summary", "synopsis", "storyline", "summary"}
 _CHAR_TITLES = {"characters", "main characters", "cast", "cast of characters"}
 _THEME_TITLES = {"themes", "themes and motifs", "major themes", "motifs"}
 _SETTING_TITLES = {"setting", "setting and time period", "background"}
+_RECEPTION_TITLES = {
+    "reception",
+    "critical reception",
+    "reception and legacy",
+    "legacy",
+    "critical response",
+    "reviews",
+    "reception and influence",
+}
+_BACKGROUND_TITLES = {
+    "publication history",
+    "writing",
+    "composition",
+    "origins",
+    "creation",
+    "writing and publication",
+    "sources",
+}
+_STYLE_TITLES = {
+    "style",
+    "narrative style",
+    "narrative technique",
+    "narrative structure",
+    "structure",
+    "symbolism",
+    "language",
+    "literary style",
+    "literary analysis",
+    "literary significance",
+    "style and structure",
+}
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -357,6 +452,21 @@ def _extract_qa(book: dict, sections: dict[str, str], max_q: int = 20) -> list[d
         ).strip()
         if clean:
             _add(f"Summarise {title!r} in a few sentences.", clean, "catalog")
+        # Additional catalog windows — different slices yield different keyword sets
+        if len(catalog_summary) > 80:
+            _add(f"What type of story is {title!r}?", catalog_summary[:200], "catalog")
+        if len(catalog_summary) > 120:
+            _add(
+                f"What is the central conflict in {title!r}?",
+                catalog_summary[40:280],
+                "catalog",
+            )
+        if len(catalog_summary) > 180:
+            _add(
+                f"What events unfold in {title!r}?",
+                catalog_summary[80:350],
+                "catalog",
+            )
 
     lead = sections.get("lead", "") or catalog_summary
 
@@ -367,6 +477,55 @@ def _extract_qa(book: dict, sections: dict[str, str], max_q: int = 20) -> list[d
         )
         _add(f"What is the main plot of {title!r}?", lead[:500], "lead")
         _add(f"What genre is {title!r}?", lead[:300], "lead")
+        # Additional lead windows so books without Wikipedia plot/character sections
+        # still reach 20+ questions — each slice has a different keyword set
+        if len(lead) > 150:
+            _add(f"What makes {title!r} notable in literature?", lead[:350], "lead")
+        if len(lead) > 200:
+            _add(
+                f"Who is {author!r} and what is their connection to {title!r}?",
+                f"{author} wrote {title}. {lead[:300]}",
+                "lead",
+            )
+        if len(lead) > 300:
+            _add(
+                f"How is {title!r} described by literary sources?",
+                lead[100:450],
+                "lead",
+            )
+        if len(lead) > 400:
+            _add(
+                f"What is the historical or cultural context of {title!r}?",
+                lead[150:500],
+                "lead",
+            )
+        if len(lead) > 500:
+            _add(
+                f"What additional details are known about {title!r}?",
+                lead[250:600],
+                "lead",
+            )
+        if len(lead) > 600:
+            _add(
+                f"What is the broader significance of {title!r}?",
+                lead[350:700],
+                "lead",
+            )
+        # Sentence-level extraction: each sentence has a unique keyword set
+        _sent_qs = [
+            f"What important fact is recorded about {title!r}?",
+            f"How is {title!r} characterized in literary sources?",
+            f"What notable detail is documented about {title!r}?",
+            f"What context helps understand {title!r}?",
+            f"What key information exists about {title!r}?",
+        ]
+        lead_sents = [
+            s.strip() for s in re.split(r"(?<=[.!?])\s+", lead) if len(s.strip()) > 50
+        ]
+        for _si, _sent in enumerate(lead_sents[:5]):
+            if len(qa) >= max_q:
+                break
+            _add(_sent_qs[_si % len(_sent_qs)], _sent, "lead")
 
     # ── Plot ──────────────────────────────────────────────────────────────────
     plot_text = next((sections[k] for k in sections if k in _PLOT_TITLES), "")
@@ -412,6 +571,36 @@ def _extract_qa(book: dict, sections: dict[str, str], max_q: int = 20) -> list[d
         if loc_m:
             _add(f"Where is {title!r} set?", loc_m.group(0), "lead")
 
+    # ── Reception ───────────────────────────────────────────────────────────────────────
+    recept_text = next((sections[k] for k in sections if k in _RECEPTION_TITLES), "")
+    if recept_text:
+        _add(f"How was {title!r} received by critics?", recept_text[:500], "reception")
+        _add(
+            f"What is the cultural legacy of {title!r}?",
+            recept_text[80:500],
+            "reception",
+        )
+
+    # ── Publication background ────────────────────────────────────────────────────────
+    bg_text = next((sections[k] for k in sections if k in _BACKGROUND_TITLES), "")
+    if bg_text:
+        _add(
+            f"What is the publication background of {title!r}?",
+            bg_text[:500],
+            "background",
+        )
+        _add(f"When and how was {title!r} written?", bg_text[:400], "background")
+
+    # ── Style / structure ────────────────────────────────────────────────────────────
+    style_text = next((sections[k] for k in sections if k in _STYLE_TITLES), "")
+    if style_text:
+        _add(f"What is the writing style of {title!r}?", style_text[:500], "style")
+        _add(
+            f"What literary techniques does {title!r} employ?",
+            style_text[:400],
+            "style",
+        )
+
     # ── Author ────────────────────────────────────────────────────────────────
     if author and lead:
         _add(
@@ -423,10 +612,11 @@ def _extract_qa(book: dict, sections: dict[str, str], max_q: int = 20) -> list[d
     return qa[:max_q]
 
 
-def build_question_banks(books: list[dict], qpb: int = 20) -> None:
+def build_question_banks(books: list[dict], qpb: int = 20, force: bool = False) -> None:
     """
     For each book, fetch Wikipedia sections and write
-    data/question_banks/<slug>.json.  Skips books that already have a bank.
+    data/question_banks/<slug>.json.  Skips books that already have a bank
+    unless *force* is True.
     """
     _BANKS_DIR.mkdir(parents=True, exist_ok=True)
     total, skipped, built = len(books), 0, 0
@@ -437,7 +627,7 @@ def build_question_banks(books: list[dict], qpb: int = 20) -> None:
 
     for i, book in enumerate(books, 1):
         bank_path = _BANKS_DIR / f"{book['slug']}.json"
-        if bank_path.exists():
+        if bank_path.exists() and not force:
             skipped += 1
             print(f"  [{i}/{total}] {book['title'][:50]}: cached ({bank_path.name})")
             continue
@@ -463,6 +653,124 @@ def build_question_banks(books: list[dict], qpb: int = 20) -> None:
         print(f"    → {len(qa)} questions  saved {bank_path.name}")
 
     print(f"[banks] Done — {built} built, {skipped} skipped")
+
+
+def build_chunk_banks(
+    books: list[dict],
+    qpb: int = 50,
+    lines: int = 3000,
+    force: bool = False,
+    strategy: str = "llm",
+) -> None:
+    """
+    Build question banks from the cached compressed chunks — no Wikipedia calls,
+    no book downloads, no LLM calls.
+
+    Each Q&A pair's ``expected_answer`` is text that literally exists inside the
+    chunk cache (raw sentences, entities, keywords, or compressed summaries), so
+    the retriever can always locate it.  This gives a clean measure of retrieval
+    quality independent of Wikipedia vocabulary.
+
+    Requires: ``data/chunks/{slug}_L{lines}.jsonl`` must exist (run ``run`` first).
+    """
+    _BANKS_DIR.mkdir(parents=True, exist_ok=True)
+    total, skipped, built, missing = len(books), 0, 0, 0
+
+    print(
+        f"\n[chunk-banks] Building question banks from chunk caches "
+        f"({total} books, target {qpb}/book)..."
+    )
+
+    # Rotating question templates — varied phrasing, same intent
+    _raw_qs = [
+        "What occurs or is described in {title!r}?",
+        "What happens in a section of {title!r}?",
+        "Describe a scene or passage from {title!r}.",
+        "What does a portion of {title!r} contain or depict?",
+        "What narrative or dialogue appears in {title!r}?",
+        "What passage or scene can be found in {title!r}?",
+        "What event or situation is portrayed in {title!r}?",
+        "What does an excerpt of {title!r} describe?",
+    ]
+
+    for i, book in enumerate(books, 1):
+        slug = book["slug"]
+        title = book["title"]
+        bank_path = _BANKS_DIR / f"{slug}.json"
+
+        if bank_path.exists() and not force:
+            skipped += 1
+            print(f"  [{i}/{total}] {title[:50]}: cached ({bank_path.name})")
+            continue
+
+        chunks = _load_chunks(slug, lines, strategy)
+        if not chunks:
+            missing += 1
+            print(
+                f"  [{i}/{total}] {title[:50]}: MISSING chunk cache "
+                f"(run 'run --lines {lines} --strategy {strategy}' first)"
+            )
+            continue
+
+        qa: list[dict] = []
+
+        def _add(q: str, answer: str, source: str) -> None:
+            if len(answer) < 20:
+                return
+            qa.append(
+                {
+                    "question": q,
+                    "expected_answer": answer,
+                    "keywords": _keywords(answer),
+                    "source": source,
+                    "difficulty": "medium",
+                }
+            )
+
+        # Sample 8 evenly-spaced chunk positions across the book
+        n = len(chunks)
+        positions = sorted({min(int(k * n / 8), n - 1) for k in range(8)})
+
+        for pos_idx, chunk_idx in enumerate(positions):
+            if len(qa) >= qpb:
+                break
+            c = chunks[chunk_idx]
+
+            # ── Raw text sentences only ───────────────────────────────────────
+            # Entities, keywords, and compressed_summary from llama3.2:3b are
+            # unreliable (hallucinated tech terms unrelated to the book).
+            # raw_text is the original Gutenberg content — always clean.
+            raw_sents = [
+                s.strip()
+                for s in re.split(r"(?<=[.!?])\s+", c.raw_text)
+                if len(s.strip()) > 60 and not s.strip().startswith("_")
+            ]
+            for j, sent in enumerate(raw_sents[:5]):
+                if len(qa) >= qpb:
+                    break
+                tpl = _raw_qs[(pos_idx * 5 + j) % len(_raw_qs)]
+                _add(tpl.format(title=title), sent, "raw_text")
+
+        payload = {
+            "book_id": book["id"],
+            "title": title,
+            "author": book["author"],
+            "slug": slug,
+            "gutenberg_url": book["txt_url"],
+            "built_at": datetime.now().isoformat(),
+            "questions": qa,
+        }
+        bank_path.write_text(
+            json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
+        built += 1
+        print(
+            f"  [{i}/{total}] {title[:50]}: {len(qa)} questions  saved {bank_path.name}"
+        )
+
+    if missing:
+        print(f"\n[chunk-banks] WARNING: {missing} books missing chunk caches")
+    print(f"[chunk-banks] Done — {built} built, {skipped} skipped, {missing} missing")
 
 
 # ── Corpus download ────────────────────────────────────────────────────────────
@@ -550,35 +858,147 @@ def _run_book(
     qa_entries: list[dict],
     lines: list[str],
     judge_executor: ThreadPoolExecutor,
+    pad_to_mb: float = 0.0,
+    max_lines: int = 3000,
+    force: bool = False,
+    strategy: str = "llm",
 ) -> dict:
     """
     Compress one book, build a retriever, answer all questions, judge async.
+
+    Caching behaviour (skipped when *force=True*):
+    - If ``data/book_cache/{slug}.json`` exists, the entire book is skipped
+      (returns the cached result immediately).
+    - If ``data/chunks/{slug}_L{max_lines}.jsonl`` exists, the compressed
+      chunks are reloaded from disk and the LLM is not called again.
+      After compression the chunks are always written to disk.
+
+    When *pad_to_mb* > 0 the base chunks are replicated (with unique IDs)
+    until the total original-token footprint reaches the target size, stressing
+    ChromaDB retrieval at large collection sizes.
 
     Returns a results dict for this book.
     """
     from context_optimizer.cached_retriever import CachedChromaRetriever
     from context_optimizer.compressor import compress_corpus_rolling
+    from context_optimizer.raw_index import RawIndex
     from context_optimizer.tot_reasoner import ToTReasoner
 
+    slug = book["slug"]
     title = book["title"]
     book_results: list[dict] = []
-    tmp_dir = tempfile.mkdtemp(prefix=f"co_book_{book['slug'][:20]}_")
+
+    # ── Full-result cache ─────────────────────────────────────────────────────
+    if not force:
+        cached = _load_result(slug)
+        if cached:
+            print(f"  [cache-hit] {title[:50]}: loaded from result cache, skipping")
+            return cached
+
+    tmp_dir = tempfile.mkdtemp(prefix=f"co_book_{slug[:20]}_")
 
     try:
-        # ── Compress ──────────────────────────────────────────────────────────
-        t0 = time.perf_counter()
-        chunks = compress_corpus_rolling(lines, label=title[:30])
-        compress_sec = time.perf_counter() - t0
-        orig_tok = sum(c.original_tokens for c in chunks)
-        comp_tok = sum(c.compressed_tokens for c in chunks)
+        # ── Compress (base text only) ─────────────────────────────────────────────
+        # raw_only: skip compression entirely — reuse extractive chunk cache for
+        # raw_text, build only RawIndex, no ChromaDB/embeddings.
+        if strategy == "raw_only":
+            base_chunks = _load_chunks(slug, max_lines, "extractive") or _load_chunks(
+                slug, max_lines, "llm"
+            )
+            if not base_chunks:
+                # No chunk cache at all — run extractive compression once to get raw_text
+                t0 = time.perf_counter()
+                base_chunks = compress_corpus_rolling(
+                    lines, label=title[:30], strategy="extractive"
+                )
+                compress_sec = time.perf_counter() - t0
+                _save_chunks(slug, max_lines, base_chunks, "extractive")
+            else:
+                compress_sec = 0.0
+            orig_tok = sum(c.original_tokens for c in base_chunks)
+            comp_tok = orig_tok  # no compression — ratio = 100%
+            print(
+                f"  [raw_only] {title[:40]}: "
+                f"{len(base_chunks)} chunks, raw text only (no compression)"
+            )
+        else:
+            cached_chunks = None if force else _load_chunks(slug, max_lines, strategy)
+            if cached_chunks:
+                print(
+                    f"  [chunk-cache] {title[:40]}: "
+                    f"loaded {len(cached_chunks)} cached chunks ({strategy}), skipping compression"
+                )
+                base_chunks = cached_chunks
+                compress_sec = 0.0
+            else:
+                t0 = time.perf_counter()
+                base_chunks = compress_corpus_rolling(
+                    lines, label=title[:30], strategy=strategy
+                )
+                compress_sec = time.perf_counter() - t0
+                _save_chunks(
+                    slug, max_lines, base_chunks, strategy
+                )  # persist for restarts
+
+        orig_tok = sum(c.original_tokens for c in base_chunks)
+        comp_tok = (
+            sum(c.compressed_tokens for c in base_chunks)
+            if strategy != "raw_only"
+            else orig_tok
+        )
+
+        # ── Pad index by replicating compressed chunks ───────────────────────────
+        # Replication stresses ChromaDB at large collection sizes without
+        # forcing the LLM to re-compress identical repeated content.
+        if pad_to_mb > 0 and base_chunks:
+            from dataclasses import replace as dc_replace
+
+            target_bytes = int(pad_to_mb * 1024 * 1024)
+            # Bytes already covered by base compression
+            current_bytes = orig_tok * 4  # rough: 4 bytes/token
+            chunks: list = list(base_chunks)
+            rep = 1
+            while current_bytes < target_bytes:
+                for c in base_chunks:
+                    chunks.append(dc_replace(c, chunk_id=f"{c.chunk_id}_rep{rep}"))
+                current_bytes += orig_tok * 4
+                rep += 1
+            print(
+                f"  [pad-index] {title[:40]}: "
+                f"{len(base_chunks)} base chunks -> {len(chunks)} total "
+                f"({rep - 1} replicas, ~{len(chunks) * orig_tok * 4 / 1_048_576:.1f} MB)"
+            )
+        else:
+            chunks = base_chunks
 
         # ── Index ─────────────────────────────────────────────────────────────
-        retriever = CachedChromaRetriever(
-            collection_name=f"book_{book['id']}",
-            persist_directory=tmp_dir,
-        )
-        retriever.add_chunks(chunks)
-        reasoner = ToTReasoner(retriever=retriever)
+        if strategy == "raw_only":
+            # Pure FTS5 path: no ChromaDB, no embeddings.
+            # threshold=1.1 means primary pass always scores 0 (no retriever),
+            # guaranteeing the FTS5 branch fires for every query.
+            raw_idx = RawIndex(os.path.join(tmp_dir, "raw.db"))
+            raw_idx.add_many([(c.chunk_id, c.raw_text) for c in chunks])
+            reasoner = ToTReasoner(
+                retriever=None,
+                top_k_per_term=5,
+                raw_index=raw_idx,
+                raw_fallback_threshold=1.1,
+            )
+        else:
+            retriever = CachedChromaRetriever(
+                collection_name=f"book_{book['id']}",
+                persist_directory=tmp_dir,
+            )
+            retriever.add_chunks(chunks)
+
+            # RawIndex (SQLite+FTS5) alongside ChromaDB — short-circuits to BM25
+            # when compressed-summary similarity is too low (no embedding round-trip).
+            raw_idx = RawIndex(os.path.join(tmp_dir, "raw.db"))
+            raw_idx.add_many([(c.chunk_id, c.raw_text) for c in chunks])
+
+            reasoner = ToTReasoner(
+                retriever=retriever, top_k_per_term=5, raw_index=raw_idx
+            )
 
         # ── Query + async judge ───────────────────────────────────────────────
         judge_futures: list[tuple[dict, Future]] = []
@@ -595,12 +1015,12 @@ def _run_book(
                 # Pass question as plain string — ToTReasoner splits it into
                 # search terms and retrieves the best matching evidence.
                 tot = reasoner.reason(q)
-                winner = tot.winner
-                answer = (
-                    winner.evidence_snippets[0]
-                    if winner and winner.evidence_snippets
-                    else ""
-                )
+                # Aggregate evidence across all branches (score-ordered) so the
+                # answer text contains keywords from multiple retrieved chunks.
+                all_snips: list[str] = []
+                for branch in sorted(tot.branches, key=lambda b: b.score, reverse=True):
+                    all_snips.extend(branch.evidence_snippets)
+                answer = " ".join(all_snips[:6]) if all_snips else ""
             except Exception as exc:
                 answer = f"[ERROR: {exc}]"
             latency_ms = (time.perf_counter() - q_start) * 1000
@@ -638,18 +1058,20 @@ def _run_book(
         )
         print(
             f"  [book] {title[:45]:<45}  "
-            f"chunks={len(chunks):3d}  "
+            f"base_chunks={len(base_chunks):3d}  "
+            f"index_chunks={len(chunks):4d}  "
             f"compress={compress_sec:.0f}s  "
             f"Qs={len(book_results):3d}  "
             f"avg_kw_recall={avg_kw_recall:.2%}"
         )
 
-        return {
+        result = {
             "book_id": book["id"],
             "title": title,
             "author": book["author"],
             "lines_used": len(lines),
-            "chunks": len(chunks),
+            "base_chunks": len(base_chunks),
+            "index_chunks": len(chunks),
             "orig_tokens": orig_tok,
             "comp_tokens": comp_tok,
             "compress_sec": compress_sec,
@@ -657,6 +1079,10 @@ def _run_book(
             "avg_kw_recall": avg_kw_recall,
             "results": book_results,
         }
+        _save_result(
+            slug, result, strategy
+        )  # persist so restarts skip this book entirely
+        return result
 
     finally:
         shutil.rmtree(tmp_dir, ignore_errors=True)
@@ -668,6 +1094,8 @@ def run_benchmark(
     workers: int = 4,
     qpb: int = 20,
     pad_to_mb: float = 0.0,
+    force: bool = False,
+    strategy: str = "llm",
 ) -> list[dict]:
     """
     Run the full benchmark over all books in parallel.
@@ -686,7 +1114,11 @@ def run_benchmark(
         all_qa[book["slug"]] = data.get("questions", [])[:qpb]
 
     books_with_qa = [b for b in books if all_qa.get(b["slug"])]
-    pad_label = f"  |  pad {pad_to_mb:.0f} MB/book" if pad_to_mb else ""
+    pad_label = (
+        f"  |  index-pad {pad_to_mb:.0f} MB/book (compress base only)"
+        if pad_to_mb
+        else ""
+    )
     print(
         f"\n[benchmark] {len(books_with_qa)}/{len(books)} books have question banks  "
         f"| {workers} compression workers  |  max {max_lines} lines/book{pad_label}"
@@ -702,12 +1134,34 @@ def run_benchmark(
         ) as book_exe:
             future_to_book = {}
             for book in books_with_qa:
+                # Check full result cache before loading any lines
+                if not force:
+                    cached = _load_result(book["slug"], strategy)
+                    if cached:
+                        print(
+                            f"  [cache-hit] {book['title'][:50]}: result cached, skipping"
+                        )
+                        all_book_results.append(cached)
+                        continue
+
                 qa_entries = all_qa[book["slug"]]
-                lines = load_book_lines(book, max_lines, pad_to_mb=pad_to_mb)
+                # Load base text only (no padding here — replication happens
+                # inside _run_book after compression, at the chunk level).
+                lines = load_book_lines(book, max_lines)
                 if not lines:
                     print(f"  SKIP {book['title']}: no lines loaded")
                     continue
-                f = book_exe.submit(_run_book, book, qa_entries, lines, judge_exe)
+                f = book_exe.submit(
+                    _run_book,
+                    book,
+                    qa_entries,
+                    lines,
+                    judge_exe,
+                    pad_to_mb,
+                    max_lines,
+                    force,
+                    strategy,
+                )
                 future_to_book[f] = book["title"]
 
             for future in as_completed(future_to_book):
@@ -727,8 +1181,9 @@ def write_report(
     all_results: list[dict], run_date: str, args: argparse.Namespace
 ) -> Path:
     """Write book_results.md and BOOK_RESULTS.json to benchmarks/."""
-    out_md = _BENCH_DIR / "book_results.md"
-    out_json = _BENCH_DIR / "BOOK_RESULTS.json"
+    strategy = getattr(args, "strategy", "llm")
+    out_md = _BENCH_DIR / f"book_results_{strategy}.md"
+    out_json = _BENCH_DIR / f"BOOK_RESULTS_{strategy}.json"
 
     # Aggregate stats
     total_q = sum(r["questions_run"] for r in all_results)
@@ -745,7 +1200,7 @@ def write_report(
         f"**Books**: {len(all_results)}  |  "
         f"**Questions**: {total_q:,}  |  "
         f"**Lines/book cap**: {'unlimited' if args.lines == 0 else f'{args.lines:,}'}  |  "
-        f"**Pad**: {getattr(args, 'pad_to_mb', 0):.0f} MB/book  |  "
+        f"**Index-pad**: {getattr(args, 'pad_to_mb', 0):.0f} MB/book  |  "
         f"**Workers**: {args.workers}",
         "",
         "## Summary",
@@ -764,14 +1219,14 @@ def write_report(
         "",
         "## Per-Book Results",
         "",
-        "| Book | Author | Chunks | Qs | Avg KW Recall | Compress(s) |",
-        "|------|--------|-------:|---:|:-------------:|------------:|",
+        "| Book | Author | Base Chunks | Index Chunks | Qs | Avg KW Recall | Compress(s) |",
+        "|------|--------|------------:|-------------:|---:|:-------------:|------------:|",
     ]
 
     for r in sorted(all_results, key=lambda x: -x["avg_kw_recall"]):
         md.append(
             f"| {r['title'][:50]} | {r['author'][:25]} | "
-            f"{r['chunks']} | {r['questions_run']} | "
+            f"{r['base_chunks']} | {r['index_chunks']} | {r['questions_run']} | "
             f"{r['avg_kw_recall']:.0%} | {r['compress_sec']:.0f}s |"
         )
 
@@ -838,6 +1293,12 @@ def _parser() -> argparse.ArgumentParser:
         default=20,
         help="Max questions per book to extract (default: 20)",
     )
+    bb.add_argument(
+        "--force",
+        action="store_true",
+        default=False,
+        help="Rebuild banks even for books that already have a cached bank",
+    )
 
     # run
     ru = sub.add_parser("run", help="Run the compression + retrieval benchmark.")
@@ -845,8 +1306,8 @@ def _parser() -> argparse.ArgumentParser:
     ru.add_argument(
         "--lines",
         type=int,
-        default=0,
-        help="Max lines per book (0 = unlimited, default: 0)",
+        default=3000,
+        help="Max lines per book to compress (default: 3000; 0 = unlimited)",
     )
     ru.add_argument(
         "--workers",
@@ -864,6 +1325,44 @@ def _parser() -> argparse.ArgumentParser:
         dest="pad_to_mb",
         help="Pad each book to this size in MB by repeating its text (default: 35.0)",
     )
+    ru.add_argument(
+        "--force",
+        action="store_true",
+        default=False,
+        help="Ignore chunk and result caches; re-run everything from scratch",
+    )
+    ru.add_argument(
+        "--strategy",
+        choices=["llm", "extractive", "raw_only"],
+        default="llm",
+        help="Compression strategy: 'llm', 'extractive', or 'raw_only' (no compression, FTS5-only)",
+    )
+    cb = sub.add_parser(
+        "chunk-banks",
+        help="Build Q&A banks from cached compressed chunks (no Wikipedia, no book download).",
+    )
+    cb.add_argument("--books", type=int, default=25)
+    cb.add_argument(
+        "--qpb", type=int, default=50, help="Max questions per book (default: 50)"
+    )
+    cb.add_argument(
+        "--lines",
+        type=int,
+        default=3000,
+        help="Max lines used in the compression run — used to locate the chunk cache (default: 3000)",
+    )
+    cb.add_argument(
+        "--force",
+        action="store_true",
+        default=False,
+        help="Rebuild banks even for books that already have a cached bank",
+    )
+    cb.add_argument(
+        "--strategy",
+        choices=["llm", "extractive", "raw_only"],
+        default="llm",
+        help="Which strategy's chunk cache to read (default: llm)",
+    )
 
     # all (build-banks then run)
     al = sub.add_parser("all", help="Build banks then run benchmark.")
@@ -878,6 +1377,12 @@ def _parser() -> argparse.ArgumentParser:
         dest="pad_to_mb",
         help="Pad each book to this size in MB (default: 35.0)",
     )
+    al.add_argument(
+        "--strategy",
+        choices=["llm", "extractive", "raw_only"],
+        default="llm",
+        help="Compression strategy: 'llm', 'extractive', or 'raw_only' (no compression, FTS5-only)",
+    )
 
     return p
 
@@ -889,16 +1394,28 @@ def main() -> None:
     catalog = fetch_book_catalog(n=args.books)
 
     if args.cmd in ("build-banks", "all"):
-        build_question_banks(catalog, qpb=args.qpb)
+        build_question_banks(catalog, qpb=args.qpb, force=getattr(args, "force", False))
+
+    if args.cmd == "chunk-banks":
+        build_chunk_banks(
+            catalog,
+            qpb=args.qpb,
+            lines=args.lines,
+            force=args.force,
+            strategy=args.strategy,
+        )
 
     if args.cmd in ("run", "all"):
         pad_to_mb = getattr(args, "pad_to_mb", 0.0)
+        strategy = getattr(args, "strategy", "llm")
         results = run_benchmark(
             catalog,
             max_lines=args.lines,
             workers=args.workers,
             qpb=args.qpb,
             pad_to_mb=pad_to_mb,
+            force=getattr(args, "force", False),
+            strategy=strategy,
         )
         if results:
             write_report(results, run_date, args)

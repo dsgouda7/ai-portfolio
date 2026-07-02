@@ -398,23 +398,22 @@ class CachedChromaRetriever:
         # Format results
         hits = []
         for i in range(len(results["ids"][0])):
+            meta = results["metadatas"][0][i]
             hits.append(
                 {
                     "chunk_id": results["ids"][0][i],
                     "compressed_summary": results["documents"][0][i],
-                    "metadata": results["metadatas"][0][i],
+                    # raw_text bubbled to top level for direct access by reasoner
+                    "raw_text": meta.get("raw_text", ""),
+                    "metadata": meta,
                     "distance": (
                         results["distances"][0][i] if "distances" in results else None
                     ),
                     "entities": (
-                        results["metadatas"][0][i]["entities"].split(",")
-                        if results["metadatas"][0][i].get("entities")
-                        else []
+                        meta["entities"].split(",") if meta.get("entities") else []
                     ),
                     "keywords": (
-                        results["metadatas"][0][i]["keywords"].split(",")
-                        if results["metadatas"][0][i].get("keywords")
-                        else []
+                        meta["keywords"].split(",") if meta.get("keywords") else []
                     ),
                 }
             )
