@@ -166,17 +166,26 @@ def _effective_workers(requested: int, explicit_llm: bool) -> int:
 
 
 def _build_local_llm(
-    provider: str = "ollama", model: str | None = None
-) -> CompressorLLM | None:
+    provider: str | None = None, model: str | None = None
+) -> "CompressorLLM | None":
     """
-    Build a local LLM for compression.
+    Build a compressor LLM.  Explicit *provider* / *model* params take
+    precedence over environment variables so CLI flags always win.
 
-    Prefers lightweight models optimized for summarization:
-    - Ollama: phi4:mini, qwen2.5-coder:7b, llama3.2:3b
-    - Groq: llama-3.3-70b-versatile (fast inference)
+    Supported providers
+    -------------------
+    ``ollama``  Local Ollama instance (default).  Cheap, private.
+                Env vars: ``OLLAMA_BASE_URL``, ``CONTEXT_OPTIMIZER_COMPRESSOR_MODEL``
+    ``groq``    Groq cloud API (fast, free tier available).
+                Env var: ``GROQ_API_KEY``, ``CONTEXT_OPTIMIZER_COMPRESSOR_MODEL``
+    ``azure``   Azure OpenAI (any deployment — use a cheap model here, e.g.
+                ``gpt-4o-mini``).
+                Env vars: ``AZURE_OPENAI_ENDPOINT``, ``AZURE_OPENAI_API_KEY``,
+                           ``AZURE_OPENAI_API_VERSION`` (default 2024-02-01),
+                           ``AZURE_COMPRESSOR_DEPLOYMENT`` (default gpt-4o-mini)
     """
-    selected_provider = os.getenv(
-        "CONTEXT_OPTIMIZER_COMPRESSOR_PROVIDER", provider
+    selected_provider = (
+        provider or os.getenv("CONTEXT_OPTIMIZER_COMPRESSOR_PROVIDER", "ollama")
     ).lower()
 
     if selected_provider == "ollama" and ChatOllama is not None:
@@ -192,10 +201,86 @@ def _build_local_llm(
         )
         api_key = os.getenv("GROQ_API_KEY")
         if not api_key:
-            raise ValueError(
-                "GROQ_API_KEY environment variable required for Groq compression"
-            )
+            raise ValueError("GROQ_API_KEY environment variable required for Groq")
         return ChatGroq(model=model_name, api_key=api_key, temperature=0.1)
+
+    if selected_provider == "azure":
+        try:
+            from langchain_openai import AzureChatOpenAI  # type: ignore[import]
+        except ImportError as exc:
+            raise ImportError(
+                "pip install langchain-openai  for Azure OpenAI support"
+            ) from exc
+        endpoint = os.getenv("AZURE_OPENAI_ENDPOINT") or ""
+        api_key = os.getenv("AZURE_OPENAI_API_KEY") or ""
+        if not endpoint or not api_key:
+            raise ValueError(
+                "AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY must be set for azure provider"
+            )
+        api_version = os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-01")
+        deployment = model or os.getenv("AZURE_COMPRESSOR_DEPLOYMENT", "gpt-4o-mini")
+        return AzureChatOpenAI(
+            azure_deployment=deployment,
+            azure_endpoint=endpoint,
+            api_key=api_key,
+            api_version=api_version,
+            temperature=0.1,
+        )
+
+    return None
+
+
+def _build_reasoner_llm(
+    provider: str | None = None, model: str | None = None
+) -> "CompressorLLM | None":
+    """
+    Build a *reasoning* LLM — typically a larger, more capable model than the
+    compressor.  Reads from separate ``CONTEXT_OPTIMIZER_REASONER_*`` env vars
+    so compressor and reasoner can target different providers / deployments.
+
+    Supported providers: same as :func:`_build_local_llm`.
+    Azure env vars: ``AZURE_REASONER_DEPLOYMENT`` (default ``gpt-4o``).
+    """
+    selected_provider = (
+        provider or os.getenv("CONTEXT_OPTIMIZER_REASONER_PROVIDER", "")
+    ).lower()
+    if not selected_provider:
+        return None  # no reasoner configured — ToT returns raw snippets
+
+    if selected_provider == "ollama" and ChatOllama is not None:
+        model_name = model or os.getenv("CONTEXT_OPTIMIZER_REASONER_MODEL", "llama3.2:3b")
+        base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+        return ChatOllama(model=model_name, base_url=base_url, temperature=0.0)
+
+    if selected_provider == "groq" and ChatGroq is not None:
+        model_name = model or os.getenv(
+            "CONTEXT_OPTIMIZER_REASONER_MODEL", "llama-3.3-70b-versatile"
+        )
+        api_key = os.getenv("GROQ_API_KEY") or ""
+        if not api_key:
+            raise ValueError("GROQ_API_KEY required for Groq reasoner")
+        return ChatGroq(model=model_name, api_key=api_key, temperature=0.0)
+
+    if selected_provider == "azure":
+        try:
+            from langchain_openai import AzureChatOpenAI  # type: ignore[import]
+        except ImportError as exc:
+            raise ImportError("pip install langchain-openai for Azure OpenAI") from exc
+        endpoint = os.getenv("AZURE_OPENAI_ENDPOINT") or ""
+        api_key = os.getenv("AZURE_OPENAI_API_KEY") or ""
+        if not endpoint or not api_key:
+            raise ValueError(
+                "AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY must be set"
+            )
+        api_version = os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-01")
+        deployment = model or os.getenv("AZURE_REASONER_DEPLOYMENT", "gpt-4o")
+        return AzureChatOpenAI(
+            azure_deployment=deployment,
+            azure_endpoint=endpoint,
+            api_key=api_key,
+            api_version=api_version,
+            temperature=0.0,
+        )
 
     return None
 
@@ -559,7 +644,9 @@ def compress_corpus_rolling(
     progress_callback: callable | None = None,
     raw_index: "RawIndex | None" = None,
     label: str = "",
-    strategy: str = "llm",  # "llm" | "extractive"
+    strategy: str = "llm",  # "llm" | "extractive" | "raw_only"
+    compressor_provider: str | None = None,
+    compressor_model: str | None = None,
 ) -> list[CompressedChunk]:
     """
     Compress a large corpus using a rolling window strategy with overlap.
@@ -590,12 +677,15 @@ def compress_corpus_rolling(
             call, the indexing is effectively free (fully overlapped with I/O).
             When ``None`` (default), raw text is only stored in ChromaDB metadata
             (truncated to 4 000 chars).
+        compressor_provider: Provider override (``ollama``, ``groq``, ``azure``).
+            Takes precedence over ``CONTEXT_OPTIMIZER_COMPRESSOR_PROVIDER`` env var.
+        compressor_model: Model / deployment name override.
 
     Returns:
         List of CompressedChunk objects with dual storage
     """
-    if llm is None:
-        llm = _build_local_llm()
+    if llm is None and strategy == "llm":
+        llm = _build_local_llm(provider=compressor_provider, model=compressor_model)
 
     compressed_chunks: list[CompressedChunk] = []
     current_chunk_lines: list[str] = []

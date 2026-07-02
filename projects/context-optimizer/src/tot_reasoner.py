@@ -68,10 +68,26 @@ class ToTResult:
     selected_summary: str
     total_retrieved_lines: int
     latency_s: float
+    synthesized_answer: str = ""  # Non-empty when a reasoning LLM synthesised the answer
 
     @property
     def winner(self) -> Branch:
         return next(b for b in self.branches if b.id == self.selected_branch_id)
+
+
+# ── Synthesis prompt (used by the optional reasoning LLM) ──────────────────
+
+_SYNTHESIS_PROMPT = """\
+You are a precise question-answering assistant.
+
+Evidence snippets retrieved from a document corpus:
+{evidence}
+
+Question: {question}
+
+Answer concisely in 1-3 sentences using only information from the evidence above.
+If the evidence does not contain enough information to answer, say "Insufficient evidence."
+"""
 
 
 # ── Reasoner ────────────────────────────────────────────────────────────────
@@ -220,6 +236,19 @@ class ToTReasoner:
         entity_str = self._entity_str(compressed_context)
         fallback_note = "  [raw-text fallback]\n" if used_raw else ""
 
+        # ── Optional LLM synthesis ───────────────────────────────────────────
+        # When a reasoning LLM is wired in, synthesise a concise natural-
+        # language answer from the top evidence snippets.  The raw snippets are
+        # still available on each Branch for debugging / keyword scoring.
+        synthesized_answer = ""
+        if self._llm is not None:
+            all_snips: list[str] = []
+            for b in sorted(branches, key=lambda b: b.score, reverse=True):
+                all_snips.extend(b.evidence_snippets)
+            synthesized_answer = self._synthesize(
+                str(compressed_context), all_snips[:6]
+            )
+
         summary = (
             f"ToT-selected branch: {winner.title}.\n"
             f"Mean similarity: {winner.score:.3f} "
@@ -235,9 +264,26 @@ class ToTReasoner:
             selected_summary=summary,
             total_retrieved_lines=total_lines,
             latency_s=time.perf_counter() - start,
+            synthesized_answer=synthesized_answer,
         )
 
     # ── Internal helpers ────────────────────────────────────────────────────
+
+    def _synthesize(self, question: str, snippets: list[str]) -> str:
+        """
+        Call the reasoning LLM to produce a concise natural-language answer
+        from the top evidence snippets.  Falls back silently to an empty
+        string on any error so callers can fall back to raw snippet aggregation.
+        """
+        if not snippets or self._llm is None:
+            return ""
+        evidence = "\n---\n".join(snippets)
+        prompt = _SYNTHESIS_PROMPT.format(evidence=evidence, question=question)
+        try:
+            resp = self._llm.invoke(prompt)
+            return (resp.content if hasattr(resp, "content") else str(resp)).strip()
+        except Exception:
+            return ""
 
     def _retrieve_raw_snippets(self, term: str) -> list[tuple[str, float]]:
         """

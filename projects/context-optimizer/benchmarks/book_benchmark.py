@@ -862,6 +862,10 @@ def _run_book(
     max_lines: int = 3000,
     force: bool = False,
     strategy: str = "llm",
+    compressor_provider: str | None = None,
+    compressor_model: str | None = None,
+    reasoner_provider: str | None = None,
+    reasoner_model: str | None = None,
 ) -> dict:
     """
     Compress one book, build a retriever, answer all questions, judge async.
@@ -880,7 +884,10 @@ def _run_book(
     Returns a results dict for this book.
     """
     from context_optimizer.cached_retriever import CachedChromaRetriever
-    from context_optimizer.compressor import compress_corpus_rolling
+    from context_optimizer.compressor import (
+        _build_reasoner_llm,
+        compress_corpus_rolling,
+    )
     from context_optimizer.raw_index import RawIndex
     from context_optimizer.tot_reasoner import ToTReasoner
 
@@ -933,7 +940,11 @@ def _run_book(
             else:
                 t0 = time.perf_counter()
                 base_chunks = compress_corpus_rolling(
-                    lines, label=title[:30], strategy=strategy
+                    lines,
+                    label=title[:30],
+                    strategy=strategy,
+                    compressor_provider=compressor_provider,
+                    compressor_model=compressor_model,
                 )
                 compress_sec = time.perf_counter() - t0
                 _save_chunks(
@@ -971,6 +982,13 @@ def _run_book(
         else:
             chunks = base_chunks
 
+        # Build reasoning LLM if a provider was specified
+        reasoner_llm = (
+            _build_reasoner_llm(provider=reasoner_provider, model=reasoner_model)
+            if reasoner_provider
+            else None
+        )
+
         # ── Index ─────────────────────────────────────────────────────────────
         if strategy == "raw_only":
             # Pure FTS5 path: no ChromaDB, no embeddings.
@@ -983,6 +1001,7 @@ def _run_book(
                 top_k_per_term=5,
                 raw_index=raw_idx,
                 raw_fallback_threshold=1.1,
+                llm=reasoner_llm,
             )
         else:
             retriever = CachedChromaRetriever(
@@ -997,7 +1016,7 @@ def _run_book(
             raw_idx.add_many([(c.chunk_id, c.raw_text) for c in chunks])
 
             reasoner = ToTReasoner(
-                retriever=retriever, top_k_per_term=5, raw_index=raw_idx
+                retriever=retriever, top_k_per_term=5, raw_index=raw_idx, llm=reasoner_llm
             )
 
         # ── Query + async judge ───────────────────────────────────────────────
@@ -1015,12 +1034,15 @@ def _run_book(
                 # Pass question as plain string — ToTReasoner splits it into
                 # search terms and retrieves the best matching evidence.
                 tot = reasoner.reason(q)
-                # Aggregate evidence across all branches (score-ordered) so the
-                # answer text contains keywords from multiple retrieved chunks.
-                all_snips: list[str] = []
-                for branch in sorted(tot.branches, key=lambda b: b.score, reverse=True):
-                    all_snips.extend(branch.evidence_snippets)
-                answer = " ".join(all_snips[:6]) if all_snips else ""
+                # Use synthesized answer when a reasoning LLM is available;
+                # otherwise aggregate top-6 evidence snippets across branches.
+                if tot.synthesized_answer:
+                    answer = tot.synthesized_answer
+                else:
+                    all_snips: list[str] = []
+                    for branch in sorted(tot.branches, key=lambda b: b.score, reverse=True):
+                        all_snips.extend(branch.evidence_snippets)
+                    answer = " ".join(all_snips[:6]) if all_snips else ""
             except Exception as exc:
                 answer = f"[ERROR: {exc}]"
             latency_ms = (time.perf_counter() - q_start) * 1000
@@ -1096,6 +1118,10 @@ def run_benchmark(
     pad_to_mb: float = 0.0,
     force: bool = False,
     strategy: str = "llm",
+    compressor_provider: str | None = None,
+    compressor_model: str | None = None,
+    reasoner_provider: str | None = None,
+    reasoner_model: str | None = None,
 ) -> list[dict]:
     """
     Run the full benchmark over all books in parallel.
@@ -1161,6 +1187,10 @@ def run_benchmark(
                     max_lines,
                     force,
                     strategy,
+                    compressor_provider,
+                    compressor_model,
+                    reasoner_provider,
+                    reasoner_model,
                 )
                 future_to_book[f] = book["title"]
 
@@ -1337,6 +1367,34 @@ def _parser() -> argparse.ArgumentParser:
         default="llm",
         help="Compression strategy: 'llm', 'extractive', or 'raw_only' (no compression, FTS5-only)",
     )
+    ru.add_argument(
+        "--compressor-provider",
+        choices=["ollama", "groq", "azure"],
+        default=None,
+        dest="compressor_provider",
+        help="LLM provider for the compression step (default: use env / ollama)",
+    )
+    ru.add_argument(
+        "--compressor-model",
+        type=str,
+        default=None,
+        dest="compressor_model",
+        help="Model / deployment name for the compressor (overrides env var)",
+    )
+    ru.add_argument(
+        "--reasoner-provider",
+        choices=["ollama", "groq", "azure"],
+        default=None,
+        dest="reasoner_provider",
+        help="LLM provider for the reasoning / synthesis step (default: off, snippet aggregation only)",
+    )
+    ru.add_argument(
+        "--reasoner-model",
+        type=str,
+        default=None,
+        dest="reasoner_model",
+        help="Model / deployment name for the reasoner (overrides env var)",
+    )
     cb = sub.add_parser(
         "chunk-banks",
         help="Build Q&A banks from cached compressed chunks (no Wikipedia, no book download).",
@@ -1383,6 +1441,34 @@ def _parser() -> argparse.ArgumentParser:
         default="llm",
         help="Compression strategy: 'llm', 'extractive', or 'raw_only' (no compression, FTS5-only)",
     )
+    al.add_argument(
+        "--compressor-provider",
+        choices=["ollama", "groq", "azure"],
+        default=None,
+        dest="compressor_provider",
+        help="LLM provider for the compression step",
+    )
+    al.add_argument(
+        "--compressor-model",
+        type=str,
+        default=None,
+        dest="compressor_model",
+        help="Model / deployment name for the compressor",
+    )
+    al.add_argument(
+        "--reasoner-provider",
+        choices=["ollama", "groq", "azure"],
+        default=None,
+        dest="reasoner_provider",
+        help="LLM provider for the reasoning / synthesis step",
+    )
+    al.add_argument(
+        "--reasoner-model",
+        type=str,
+        default=None,
+        dest="reasoner_model",
+        help="Model / deployment name for the reasoner",
+    )
 
     return p
 
@@ -1416,6 +1502,10 @@ def main() -> None:
             pad_to_mb=pad_to_mb,
             force=getattr(args, "force", False),
             strategy=strategy,
+            compressor_provider=getattr(args, "compressor_provider", None),
+            compressor_model=getattr(args, "compressor_model", None),
+            reasoner_provider=getattr(args, "reasoner_provider", None),
+            reasoner_model=getattr(args, "reasoner_model", None),
         )
         if results:
             write_report(results, run_date, args)
