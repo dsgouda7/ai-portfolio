@@ -1,0 +1,11 @@
+# PT_Part1_Intro.ipynb (PyTorch)
+torch
+mitdeeplearning
+
+# TF_Part1_Intro.ipynb (TensorFlow / Keras)
+tensorflow
+
+# shared
+numpy
+matplotlib
+ipykernel
