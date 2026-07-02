@@ -234,12 +234,18 @@ for epoch in range(10): # More epochs possible due to 2× speedup
 
 ### Why Pruning Improves IoU
 
-**Hypothesis**: Pruning acts as **regularization** — removes overfitted weights, forces model to learn more robust features.
+**The Lottery Ticket Hypothesis (Frankle & Carlin, 2019):**
 
-**Evidence**: IoU improved 68.9% → 71.2% (+2.3%) because:
-1. **Fewer parameters** → less capacity to memorize training set artifacts
-2. **Structured channel removal** → network learns multi-scale features with fewer channels (better generalization)
-3. **Fine-tuning budget** → 10 epochs with AMP (vs 5 without) → better convergence
+When you train a dense neural network, you get a *superposition of overlapping sub-networks*. Many of these sub-networks are fitting noise in the training data, not signal. The model achieves high training accuracy because the redundancy averages out errors — but individual sub-networks may overfit to training set artifacts.
+
+Frankle & Carlin showed that within any dense network there exists a sparse "winning ticket" — a sub-network that, when trained in isolation from a good initialization, matches or exceeds the full model's generalization. Pruning + fine-tuning *finds* that winning ticket by eliminating the noise-fitting sub-networks.
+
+**Why IoU improved 68.9% → 71.2% (+2.3%):**
+1. **Over-parameterized for the dataset**: The distilled student had 3.5M parameters trained on ~980 images. Many weights encoded training-set-specific patterns (particular shelf layout, specific lighting conditions) rather than generalizable product edge and texture features
+2. **Structured channel removal forced specialization**: Instead of 128 partially redundant channels each carrying 70% of the signal, 87 surviving channels each carry distinct information — eliminating redundancy that was masking the underlying detection signal
+3. **Fine-tuning after pruning allowed redistribution**: The surviving weights compensated for the removed channels during the 10-epoch AMP fine-tuning run — a redistribution the dense network never had to do
+
+**The analogy**: Removing noise-fitting sub-networks is like removing unreliable witnesses from a jury. The dense model has many "opinions" (sub-networks), some correct, some overfit. Pruning silences the noisy ones, and the remaining sub-network generalizes more cleanly.
 
 ---
 
@@ -760,3 +766,48 @@ The ProductionCV system you built is production-ready. Now go deploy it.
 ---
 
 > **Recommended next track**: [AI Infrastructure](../../06-ai_infrastructure/README.md) — Deploy, scale, and monitor ProductionCV in production.
+
+---
+
+## 10 · LLM Bridge — From MobileNet Pruning to Sparse LLMs and Quantization
+
+Mixed precision training and structured pruning are the backbone of every production LLM deployment:
+
+**Mixed precision at LLM scale (BF16/FP16):**
+The AMP pattern you implemented (`GradScaler`, FP16 forward, FP32 master weights) is identical for training 175B-parameter models — just applied at 10,000× the parameter count. NVIDIA's Megatron-LM, Meta's OPT, Google's PaLM, and every frontier LLM training run uses the same `autocast()` + `GradScaler` pattern. Without it, training would require 2× the memory and run at half the speed — making frontier-scale training economically infeasible.
+
+**GPTQ — Post-Training Quantization for LLMs:**
+The magnitude-based pruning threshold you set ($|W| < \tau$, zero out small weights) is the conceptual ancestor of GPTQ quantization. Instead of setting small weights to zero, GPTQ rounds weights to 4-bit integers, minimizing the output error per layer. Same principle: reduce representation precision where possible, calibrate to minimize error, fine-tune to recover accuracy. `llama.cpp` serves 7B LLMs on MacBook Pros using GPTQ's Q4_K_M format — descended directly from what you implemented.
+
+**The Lottery Ticket Hypothesis at LLM scale:**
+SparseGPT (Frantar & Alistarh, 2023) and Wanda show that 50–70% of a GPT model's weights can be pruned after training with <1% performance degradation — matching the 80% sparsity you achieved here. The dense model is massively over-parameterized for any specific task. Pruning reveals the winning ticket.
+
+| This chapter | LLM production equivalent |
+|---|---|
+| Magnitude pruning ($\|W\| < \tau$) | SparseGPT / Wanda weight pruning |
+| AMP: FP16 compute + FP32 master | BF16/FP16 training with FP32 accumulation |
+| `GradScaler` for FP16 underflow | Same `GradScaler` in all LLM training loops |
+| Structured pruning (remove channels) | Head pruning in attention layers |
+| INT8 (next step, AI Infrastructure) | GPTQ Q4/Q8 for edge LLM serving |
+
+---
+
+## Interview Checklist
+
+**Must Know:**
+- [ ] Magnitude-based pruning: remove weights where $|W| < \tau$; must fine-tune after to recover accuracy
+- [ ] Structured pruning removes entire channels (hardware speedup); unstructured removes individual weights (higher compression but requires sparse hardware)
+- [ ] AMP pattern: FP16 forward + backward, FP32 master weights, `GradScaler` to prevent FP16 gradient underflow
+- [ ] Why fine-tuning after pruning is essential: surviving weights must redistribute to compensate for removed channels
+- [ ] Lottery Ticket Hypothesis: dense models contain sparse sub-networks ("winning tickets") that generalize better than the full over-parameterized network
+
+**Likely Asked:**
+- [ ] *"Why does pruning sometimes improve generalization?"* — Lottery ticket: sparse sub-networks found by pruning generalize better than the full over-parameterized model (fewer noise-fitting sub-networks)
+- [ ] *"What's the difference between magnitude pruning and quantization?"* — Pruning removes weights entirely; quantization reduces numerical precision (FP32 → INT8) but keeps all weights
+- [ ] *"What is AMP and why does it work?"* — FP16 halves memory bandwidth (2× faster training); FP32 master weights prevent small gradient updates from being lost to rounding
+- [ ] *"What happens without `GradScaler`?"* — FP16 gradients underflow to 0 for small learning rates; weights stop updating entirely
+
+**Traps to Avoid:**
+- [ ] Pruning too aggressively in a single pass without iterative fine-tuning: large one-shot pruning (>50%) usually destroys accuracy; use iterative prune → fine-tune cycles
+- [ ] Confusing sparsity with model size on disk: an 80%-sparse model is not automatically 5× smaller unless stored in a sparse format (CSR, COO) or quantized
+- [ ] Using `autocast()` without `GradScaler`: FP16 gradients will underflow — always pair them; never use one without the other

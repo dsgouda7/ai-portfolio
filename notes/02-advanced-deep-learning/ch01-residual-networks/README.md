@@ -580,4 +580,26 @@ scheduler = SequentialLR(optimizer, schedulers=[warmup, cosine], milestones=[5])
 
 Ch.1 gave you skip connections and 100-layer networks. But ResNet-50 (98 MB, 85ms inference) is too heavy for edge devices.
 
-Ch.2 gives you **depthwise separable convolutions** (MobileNet) and **compound scaling** (EfficientNet) — achieving ResNet-50 accuracy with 5× fewer parameters and 3× faster inference. The architecture shift: instead of expensive 3×3 convolutions, decompose them into 3×3 depthwise (per-channel) + 1×1 pointwise (across channels). You'll implement MobileNetV2 from scratch, deploy it on a Jetson Nano, and achieve <50ms inference (constraint #3 ).
+Ch.2 gives you **depthwise separable convolutions** (MobileNet) and **compound scaling** (EfficientNet) — achieving ResNet-50 accuracy with 5× fewer parameters and 3× faster inference. The architecture shift: instead of expensive 3×3 convolutions, decompose them into 3×3 depthwise (per-channel) + 1×1 pointwise (across channels). You'll implement MobileNetV2 from scratch, deploy it on a Jetson Nano, and achieve <50ms inference (constraint #3 ✅).
+
+---
+
+## Interview Checklist
+
+**Must Know:**
+- [ ] Why deeper *plain* networks perform worse than shallow ones — training error (not just test error) increases beyond 20 layers (degradation problem, not overfitting)
+- [ ] Residual formula: $\mathcal{H}(x) = F(x) + x$ — what $F(x)$ learns (residual between target and identity), why this is easier than learning $\mathcal{H}(x)$ directly
+- [ ] Why the "+1" in the gradient $\frac{\partial L}{\partial x} = \frac{\partial L}{\partial \mathcal{H}} \cdot \left(\frac{\partial F}{\partial x} + 1\right)$ prevents vanishing gradients (the constant 1 term always passes gradient signal regardless of $F$)
+- [ ] When to use projection skip connections: when spatial dimensions or channel count change between input and output of a block (1×1 conv with stride)
+- [ ] Basic block (ResNet-18/34: two 3×3 convs) vs bottleneck block (ResNet-50+: 1×1 → 3×3 → 1×1)
+
+**Likely Asked:**
+- [ ] *"What is a residual connection, and why does it help?"* — Provides a gradient highway that bypasses any number of layers; network learns corrections to identity rather than full mappings
+- [ ] *"How does ResNet-50 differ from ResNet-18?"* — Bottleneck blocks (3 convs vs 2), 4× channel expansion in each block, 3.8× more parameters (25M vs 11M)
+- [ ] *"Why doesn't simply adding more layers always help?"* — Vanishing gradients prevent optimization, not just capacity; degradation is an optimization failure, not a generalization failure
+- [ ] *"What happens if you set $F(x) = 0$ in every block?"* — Network acts as the identity function (worst case = a shallower network); residual connections make a deep network at least as good as a shallower one
+
+**Traps to Avoid:**
+- [ ] *"Skip connections prevent overfitting"* — Wrong; they prevent *optimization failure* (vanishing gradients); regularization is a separate concern
+- [ ] Confusing ResNet depth (total layers) with the variant number: ResNet-50 has 50 layers but they are organized into 16 bottleneck *blocks*, not 50 residual blocks
+- [ ] Forgetting that projection skip connections are required whenever spatial size changes (stride > 1) or channel count changes; the identity shortcut only works when input and output dimensions match

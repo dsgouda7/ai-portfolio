@@ -60,16 +60,16 @@ The investigation follows a **hypothesis -> experiment -> finding** cadence. Eac
 
 | File | Purpose |
 |---|---|
-| [grand-solution.md](grand-solution.md) | AI Literacy Kit synthesis |
 | [authoring-guide.md](authoring-guide.md) | Track conventions and style |
-| [ch01-llm-fundamentals/llm-fundamentals.md](ch01-llm-fundamentals/llm-fundamentals.md) | Tokenization, BPE, training stages, sampling |
-| [ch02-inference-mechanics/inference-mechanics.md](ch02-inference-mechanics/inference-mechanics.md) | Autoregressive generation, KV cache, batching |
-| [ch03-llm-training-pipeline/llm-training-pipeline.md](ch03-llm-training-pipeline/llm-training-pipeline.md) | Pretraining, SFT, RLHF, DPO, LoRA |
-| [ch04-llm-model-internals/model-internals.md](ch04-llm-model-internals/model-internals.md) | Parameter counting, VRAM, quantization, MoE |
-| [ch05-prompt-engineering/prompt-engineering.md](ch05-prompt-engineering/prompt-engineering.md) | System prompts, few-shot, JSON mode, injection defense |
-| [ch06-cot-reasoning/cot-reasoning.md](ch06-cot-reasoning/cot-reasoning.md) | CoT, self-consistency, Tree-of-Thought, o1 |
-| [ch07-rag-and-embeddings/rag-and-embeddings.md](ch07-rag-and-embeddings/rag-and-embeddings.md) | Embeddings, chunking, retrieval, hybrid search |
-| [ch08-vector-dbs/vector-dbs.md](ch08-vector-dbs/vector-dbs.md) | ANN index types, HNSW vs IVF, production architecture |
+| [ch00-from-networks-to-language/README.md](ch00-from-networks-to-language/README.md) | ML foundations bridge: RNNs → attention → transformers → language modeling |
+| [ch01-transformer-architecture/transformer-architecture.md](ch01-transformer-architecture/transformer-architecture.md) | Tokenization, BPE, attention mechanics, positional encoding, architecture families |
+| [ch02-llm-inference-mechanics/inference-mechanics.md](ch02-llm-inference-mechanics/inference-mechanics.md) | Autoregressive generation, KV cache, sampling, production serving |
+| [ch03-llm-training-pipeline/training-pipeline.md](ch03-llm-training-pipeline/training-pipeline.md) | Pretraining, SFT, RLHF, DPO, LoRA |
+| [ch04-llm-model-internals/model-internals.md](ch04-llm-model-internals/model-internals.md) | Parameter counting, VRAM, quantization, MoE, GQA |
+| [ch05-prompt-engineering/prompt-engineering.md](ch05-prompt-engineering/prompt-engineering.md) | Base vs instruct, system prompts, few-shot, structured output, injection defense |
+| [ch06-cot-reasoning/cot-reasoning.md](ch06-cot-reasoning/cot-reasoning.md) | CoT, self-consistency, Tree-of-Thought, o1, DeepSeek-R1 |
+| [ch07-rag-and-embeddings/rag-and-embeddings.md](ch07-rag-and-embeddings/rag-and-embeddings.md) | Embeddings, chunking, retrieval, hybrid search, HyDE |
+| [ch08-vector-dbs/vector-dbs.md](ch08-vector-dbs/vector-dbs.md) | ANN index types, HNSW vs IVF vs DiskANN, production architecture |
 
 ---
 

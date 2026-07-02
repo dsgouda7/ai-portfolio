@@ -8,7 +8,7 @@
 > **Track Position**: Prerequisite for 05-agentic-ai (Agentic AI)
 
 <!-- LLM-STYLE-FINGERPRINT-V1
-canonical_chapters: ["notes/03-ai/ch01-llm-fundamentals/llm-fundamentals.md", "notes/03-ai/ch02-inference-mechanics/inference-mechanics.md", "notes/03-ai/ch03-llm-training-pipeline/llm-training-pipeline.md", "notes/03-ai/ch04-llm-model-internals/model-internals.md", "notes/03-ai/ch05-prompt-engineering/prompt-engineering.md", "notes/03-ai/ch06-cot-reasoning/cot-reasoning.md", "notes/03-ai/ch07-rag-and-embeddings/rag-and-embeddings.md", "notes/03-ai/ch08-vector-dbs/vector-dbs.md"]
+canonical_chapters: ["notes/03-ai/ch00-from-networks-to-language/README.md", "notes/03-ai/ch01-transformer-architecture/transformer-architecture.md", "notes/03-ai/ch02-llm-inference-mechanics/inference-mechanics.md", "notes/03-ai/ch03-llm-training-pipeline/training-pipeline.md", "notes/03-ai/ch04-llm-model-internals/model-internals.md", "notes/03-ai/ch05-prompt-engineering/prompt-engineering.md", "notes/03-ai/ch06-cot-reasoning/cot-reasoning.md", "notes/03-ai/ch07-rag-and-embeddings/rag-and-embeddings.md", "notes/03-ai/ch08-vector-dbs/vector-dbs.md"]
 voice: second_person_practitioner
 register: technical_direct_conversational_within_precision
 formula_motivation: required_with_symbol_table_and_reading_guidance
@@ -32,9 +32,9 @@ The 03-ai track follows a **historical walkthrough** pattern where each concept 
 
 ```
 notes/03-ai/
-├── ch00-llm-bridge/         → Bridge from ML transformers to language models
-├── ch01-llm-fundamentals/   → RNNs fail → attention → transformer → GPT/BERT fork → scale → alignment
-├── ch02-inference-mechanics/ → Autoregressive generation → KV cache → sampling → continuous batching
+├── ch00-from-networks-to-language/  → Bridge from ML transformers to language models
+├── ch01-transformer-architecture/   → RNNs fail → attention → transformer → GPT/BERT fork → scale → alignment
+├── ch02-llm-inference-mechanics/    → Autoregressive generation → KV cache → sampling → continuous batching
 ├── ch03-llm-training-pipeline/ → Pretraining → SFT → RLHF → DPO → LoRA concepts
 ├── ch04-llm-model-internals/ → Parameter counting → VRAM budgeting → quantization → MoE → GQA
 ├── ch05-prompt-engineering/ → Base models won't follow instructions → system prompts → few-shot → structured output

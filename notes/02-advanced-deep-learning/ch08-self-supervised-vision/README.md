@@ -118,7 +118,12 @@ Masking 75% of patches is a hard task — model can't just interpolate from neig
 - Spatial relationships (shelf layout patterns)
 - Texture priors (packaging materials, logos)
 
-> **Key insight:** MAE's success proves that reconstruction is a better pretext task than contrastive learning for Vision Transformers. CNNs have strong inductive biases (locality, translation invariance) that make contrastive learning necessary. ViTs have weaker biases → masked autoencoding is simpler and more effective.
+> **Key insight — why MAE works better for ViTs:**
+> CNNs have strong architectural inductive biases baked in: convolution forces locality (each filter sees only a local patch), and pooling enforces translation invariance (a dog in the upper-left and a dog in the lower-right activate the same filters). These inductive biases make CNNs data-efficient — they generalize locality and translation invariance without needing to learn that those regularities exist.
+>
+> Vision Transformers have *no such biases*. Self-attention is fully global — every patch can attend to every other patch equally. A ViT trained on limited data will not spontaneously learn locality or translation invariance; it must discover them from data. This is why contrastive learning (which was tuned around CNN-friendly spatial augmentations) underperforms on ViTs.
+>
+> MAE compensates: masking 75% of patches is a hard reconstruction task that *forces* the model to learn global scene structure (where is this patch relative to others? what's the surrounding context?). The reconstruction pressure teaches the ViT the spatial regularities that CNNs got for free from their architecture. This is why MAE's pretraining transfers so much better to downstream tasks when the backbone is a ViT.
 
 ![Self-supervised methods comparison](img/ch08-comparison.png)
 
@@ -326,6 +331,23 @@ Add positional encoding (learned or sinusoidal):
 $$
 z_i = e_i + \text{pos}_i, \quad i = 1, \ldots, N
 $$
+
+**The patch = token analogy — the most important bridge in this chapter:**
+
+This patchify operation is conceptually identical to tokenization:
+
+| Vision (MAE) | Language (BERT/GPT) |
+|---|---|
+| Divide 224×224 image into 16×16 patches | Divide text into BPE subword tokens |
+| 196 patches per image | 512 tokens per sequence |
+| Each patch: 768 pixel values → linear projection → embedding | Each token: integer ID → embedding lookup → embedding |
+| Positional encoding added (position in the image) | Positional encoding added (position in the sequence) |
+| Mask 75% of patches → reconstruct pixels | Mask 15% of tokens → predict token ID (BERT) |
+| ViT encoder: self-attention over a sequence of patch embeddings | Transformer encoder: self-attention over a sequence of token embeddings |
+
+A Vision Transformer treating patches as tokens and a language transformer treating words as tokens are the *same mathematical model* — self-attention over a sequence of learned embeddings. The only difference is how the sequence is generated (pixels vs. vocabulary IDs). MAE demonstrated that masked reconstruction at the patch level teaches the same kind of structural understanding that BERT's masked language modeling teaches at the token level.
+
+After pretraining, the ViT encoder produces a sequence of patch embeddings — analogous to BERT's contextual token embeddings — that capture semantic relationships. *"This patch is part of a product label"* is the visual analog of *"this token is part of a named entity."*
 
 ### Step 2: Random Masking (75%)
 
@@ -641,3 +663,48 @@ But production deployment requires more than accuracy:
 - Combined with DINO pretraining → 10 MB model with 85% mAP
 
 Then **Ch.10 — Pruning & Mixed Precision** applies final optimizations (structured pruning, AMP, INT8 quantization) to hit <50ms latency and close out all constraints. The ProductionCV grand challenge will be complete!
+
+---
+
+## 11 · LLM Bridge — From Masked Autoencoders to BERT and GPT
+
+MAE is BERT applied to images. The mapping is exact:
+
+| MAE (vision) | BERT/GPT (language) |
+|---|---|
+| Image patches (16×16 pixels) | BPE tokens |
+| 196 patches in a 224×224 image | 512 tokens in a BERT sequence |
+| Mask 75% of patches randomly | Mask 15% of tokens (BERT) |
+| Reconstruct masked pixel values (MSE) | Predict masked token ID (cross-entropy) |
+| ViT encoder processes sequence of patches | Transformer encoder processes sequence of tokens |
+| Teacher ← momentum update (DINO) | No teacher; BERT is encoder-only |
+
+**Why this matters for LLM engineering:**
+The pretraining objective you just learned — *predict what's missing* — is literally how BERT's `[MASK]` token training works. GPT's next-token prediction is the causal variant (predict the next patch/token rather than a random masked one). The paradigm is identical; the modality changes.
+
+**DINO → knowledge distillation at LLM scale:**
+DINO's self-distillation (student mimics momentum teacher's output distributions) is structurally identical to the KL-divergence distillation loss in Ch.9 — and it's the exact technique used to produce DistilBERT, TinyLLaMA, and every compressed LLM deployed in production.
+
+**The unifying principle** (notes/03-ai ch00 §10.7): *"knowledge is a compression artifact of predicting what's missing."* MAE produces rich visual representations as a side effect of patch reconstruction. BERT produces rich semantic representations as a side effect of token prediction. Same mechanism; different modality.
+
+---
+
+## Interview Checklist
+
+**Must Know:**
+- [ ] DINO: student mimics teacher via cross-entropy ($H(p_t, p_s)$), teacher updated by momentum ($\theta_t \gets m\theta_t + (1-m)\theta_s$), no negatives required
+- [ ] Why centering prevents collapse in DINO (mean-subtracted outputs cannot all be identical)
+- [ ] MAE masking ratio (75%) and why this is high enough to prevent patch interpolation from neighbors
+- [ ] MAE asymmetric design: encoder sees only 25% visible patches (expensive), decoder reconstructs all (cheap)
+- [ ] Patch = token analogy: 196 16×16 patches ≡ 196 position tokens; same self-attention math
+
+**Likely Asked:**
+- [ ] *"How does MAE differ from SimCLR?"* — Reconstruction (generative, no pairs, no negatives) vs. discrimination (contrastive, requires positive/negative pairs)
+- [ ] *"What are DINO's emergent attention maps?"* — Attention heads discover object boundaries without any segmentation labels; forced by cross-view consistency
+- [ ] *"Why does MAE work better than SimCLR on Vision Transformers?"* — ViTs lack CNN inductive biases; MAE's hard reconstruction teaches spatial regularities explicitly
+- [ ] *"How is MAE related to BERT?"* — Same paradigm: mask portions of input, predict/reconstruct them; ViT patches ≡ text tokens
+
+**Traps to Avoid:**
+- [ ] *"DINO and MAE are contrastive methods"* — DINO has no negatives (self-distillation); MAE has no pairs at all (pure reconstruction)
+- [ ] Confusing MAE encoder efficiency (processes 25% of patches) with the decoder (processes 100%); only the encoder is kept after pretraining
+- [ ] Thinking MAE requires strong augmentation — it doesn't; random masking is the only stochastic element
