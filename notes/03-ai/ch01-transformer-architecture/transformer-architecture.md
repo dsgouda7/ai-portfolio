@@ -1668,6 +1668,9 @@ $$
 
 Low-frequency rotations (small $\theta_k$) encode long-range position. High-frequency rotations (large $\theta_k$) encode local position. Same frequency decomposition idea as sinusoidal, but applied via rotation to the attention computation, not additive to the embeddings.
 
+**RoPE Animation**
+![RoPE Mechanics](img/rope_mechanism.gif)
+
 **Why RoPE won:**
 
 | Feature | Sinusoidal | Learned | RoPE |
@@ -1760,8 +1763,6 @@ def rotate_half(x, cos, sin):
 ---
 
 ### Visualization: Multi-Head Attention Data Flow
-
-![Multi-head attention architecture showing Q/K/V projection, attention score computation, softmax, and weighted sum across multiple heads](img/multihead-attention-flow.png)
 
 **Reading the diagram:**
 1. **Top left:** Input tokens (embeddings + position encoding)
