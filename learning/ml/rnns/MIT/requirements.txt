@@ -5,6 +5,13 @@ mitdeeplearning
 # TF_Part1_Intro.ipynb (TensorFlow / Keras)
 tensorflow
 
+# HuggingFace music generation extension (Part 2)
+transformers
+accelerate
+scipy
+soundfile
+music21
+
 # shared
 numpy
 matplotlib
