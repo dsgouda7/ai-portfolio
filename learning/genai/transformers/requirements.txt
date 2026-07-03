@@ -1,0 +1,9 @@
+# Packages required to run transformers.ipynb
+numpy
+matplotlib
+seaborn
+plotly
+torch
+transformers
+ipython
+ipykernel
