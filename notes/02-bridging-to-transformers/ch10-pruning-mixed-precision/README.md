@@ -63,6 +63,8 @@ Modern neural networks are **massively over-parameterized**. A typical MobileNet
 
 ### 1.1 Magnitude-Based Pruning
 
+> 🔮 **Predict before the algorithm.** If you remove the 80% smallest-magnitude weights from a trained model, by roughly how much does accuracy drop — 80%? 50%? 5%? Write a number, then verify against the table in §8. Why would a large fraction of parameters be nearly zero in a trained network?
+
 **Insight**: Weights with small magnitude (near zero) contribute little to the output.
 
 **Algorithm**:
@@ -112,6 +114,8 @@ For MobileNetV2 distilled model (3.5M params), 80% sparsity → 2.8M weights pru
 - Trade-off: 65% effective compression (vs 80% unstructured) but 2× faster inference
 
 ### 1.3 Mixed Precision Training (FP16 + FP32)
+
+> 🔮 **Predict before reading.** FP16 stores numbers with half the precision bits of FP32 — very small gradients can round to zero. Why doesn't this kill training accuracy? Hint: which numbers in a training loop actually need full FP32 precision, and which can survive at FP16? Write your split, then compare it to the AMP approach below.
 
 **Problem**: Pruning requires fine-tuning (retraining pruned model). Fine-tuning 5–10 epochs on 982 images takes 4 hours on single GPU.
 
@@ -789,6 +793,18 @@ SparseGPT (Frantar & Alistarh, 2023) and Wanda show that 50–70% of a GPT model
 | `GradScaler` for FP16 underflow | Same `GradScaler` in all LLM training loops |
 | Structured pruning (remove channels) | Head pruning in attention layers |
 | INT8 (next step, AI Infrastructure) | GPTQ Q4/Q8 for edge LLM serving |
+
+---
+
+## 🧪 Your Turn — Pruning & Mixed Precision
+
+**Exercise 1 — Sparsity sweep.** In the notebook, run iterative magnitude pruning at sparsities [30%, 50%, 70%, 80%, 90%]. Before each run, predict the mAP. Plot sparsity vs mAP. At what sparsity does accuracy fall off a cliff — and is the cliff at the same location with structured vs unstructured pruning?
+
+**Exercise 2 — Fine-tuning epochs matter.** Prune to 80% sparsity, then fine-tune for [0, 1, 3, 5, 10] epochs. Predict: does the first epoch recover the most accuracy, or is recovery linear across epochs? Why does a pruned model need to "re-learn" weights it thought it had already learned?
+
+**Exercise 3 — The AMP bridge.** Open the MiniLM training loop in `learning/genai/transformers/transformers.ipynb` and wrap it in `tf.keras.mixed_precision`. Measure wall-clock time per epoch before and after. Predict: on a CPU (no Tensor Cores), will AMP still give 2× speedup? Why or why not?
+
+> 🔮 **Commit to each prediction before running.** The prediction habit builds faster than any technique — you're training your intuition, not just running code.
 
 ---
 

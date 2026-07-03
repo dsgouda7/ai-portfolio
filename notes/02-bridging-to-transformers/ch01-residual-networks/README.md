@@ -621,6 +621,20 @@ Ch.2 gives you **depthwise separable convolutions** (MobileNet) and **compound s
 
 ---
 
+## 🧪 Your Turn — Residual Connections
+
+The skip connection's value is clearest when you actually *run* the comparison. Work through these in the chapter's notebook.
+
+**Exercise 1 — See the gradient die in real time.** In the notebook's `ProbeBlock`-based gradient-race, change `DEPTH` from 24 → 8 → 60. Predict before each run: at what depth does the no-residual gradient first drop below 1% of the output layer's gradient? Write your answer, then run it.
+
+**Exercise 2 — Break the highway intentionally.** In the `TransformerBlock` code in the transformers notebook, remove the `x + mha_out` residual and replace it with `mha_out` alone. Re-run the 24-layer gradient race cell. Does training still converge? Why does the same failure mode appear here that appeared in plain CNNs?
+
+**Exercise 3 — The transformer bridge.** Open `learning/genai/transformers/transformers.ipynb` cell that shows the 2-block forward pass (`block1(x0)`, `block2(x1)`). Remove one residual connection (change `x = x + mha_out` → `x = mha_out`). Re-run the representation-norm bar chart. What happens to the norm growth pattern, and why does that predict training instability?
+
+> **Predict before each run, then check.** The goal isn't to finish the exercises — it's to commit to a prediction first. Being wrong is more educational than being right.
+
+---
+
 ## Interview Checklist
 
 **Must Know:**

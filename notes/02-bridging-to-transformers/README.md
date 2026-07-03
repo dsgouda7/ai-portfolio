@@ -17,11 +17,12 @@ Each chapter is structured around the [Rigour Rubric](../authoring-guidelines.md
 Six chapters covering the architectural and training concepts that power modern large models:
 
 1. **[Ch.01 Residual Networks](ch01-residual-networks/README.md)** — Skip connections: why $x + F(x)$ solves vanishing gradients and enables 100+-layer networks. *Directly carries into transformer blocks.*
-2. **[Ch.02 Efficient Architectures](ch02-efficient-architectures/README.md)** — Depthwise separable convolutions, MobileNetV2: 10× parameter reduction with comparable accuracy. *Foundation for understanding MoE and lightweight LLMs.*
-3. **[Ch.07 Contrastive Learning](ch07-contrastive-learning/README.md)** — SimCLR, MoCo, NT-Xent loss: learning representations without labels via positive/negative pairs. *Same paradigm as CLIP's image-text alignment.*
-4. **[Ch.08 Self-Supervised Vision](ch08-self-supervised-vision/README.md)** — Masked Autoencoders (MAE), DINO: reconstruct masked patches to learn general representations. *Same pretraining paradigm as BERT and GPT.*
-5. **[Ch.09 Knowledge Distillation](ch09-knowledge-distillation/README.md)** — Temperature-scaled KL loss, soft targets: compress a large teacher into a small student. *Exact technique behind DistilBERT and TinyLLaMA.*
-6. **[Ch.10 Pruning & Mixed Precision](ch10-pruning-mixed-precision/README.md)** — Structured/unstructured pruning, AMP training, BF16/FP16: deploy large models on constrained hardware. *The compression toolchain for every production LLM serving setup.*
+2. **[Ch.07 Contrastive Learning](ch07-contrastive-learning/README.md)** — SimCLR, MoCo, NT-Xent loss: learning representations without labels via positive/negative pairs. *Same paradigm as CLIP's image-text alignment.*
+3. **[Ch.08 Self-Supervised Vision](ch08-self-supervised-vision/README.md)** — Masked Autoencoders (MAE), DINO: reconstruct masked patches to learn general representations. *Same pretraining paradigm as BERT and GPT.*
+4. **[Ch.09 Knowledge Distillation](ch09-knowledge-distillation/README.md)** — Temperature-scaled KL loss, soft targets: compress a large teacher into a small student. *Exact technique behind DistilBERT and TinyLLaMA.*
+5. **[Ch.10 Pruning & Mixed Precision](ch10-pruning-mixed-precision/README.md)** — Structured/unstructured pruning, AMP training, BF16/FP16: deploy large models on constrained hardware. *The compression toolchain for every production LLM serving setup.*
+
+> **Ch.02 Efficient Architectures (MobileNet/EfficientNet) has been removed.** Depthwise separable convolutions optimise CV inference but do not bridge to transformers or LLMs — the track now only contains chapters where the technique appears verbatim in LLM engineering.
 
 ---
 
@@ -44,7 +45,6 @@ Sits between **notes/01-ml** (classical ML + neural network fundamentals) and **
 | # | Chapter | Key Concept | LLM Connection |
 |---|---------|-------------|----------------|
 | [Ch.01](ch01-residual-networks/README.md) | **Residual Networks** | Skip connections $x + F(x)$ enable 100+ layer networks | Every transformer block uses identical residuals |
-| [Ch.02](ch02-efficient-architectures/README.md) | **Efficient Architectures** | Depthwise separable convolutions → 10× compression | Basis for MoE routing and lightweight model design |
 | [Ch.07](ch07-contrastive-learning/README.md) | **Contrastive Learning** | NT-Xent loss, positive/negative pairs (SimCLR, MoCo) | CLIP uses the same loss with (image, caption) pairs |
 | [Ch.08](ch08-self-supervised-vision/README.md) | **Self-Supervised Vision** | Masked Autoencoders (MAE), DINO | Identical paradigm to BERT masked tokens and GPT next-token prediction |
 | [Ch.09](ch09-knowledge-distillation/README.md) | **Knowledge Distillation** | Temperature-scaled KL loss, soft targets | Exact technique behind DistilBERT, TinyLLaMA |
@@ -56,8 +56,7 @@ Sits between **notes/01-ml** (classical ML + neural network fundamentals) and **
 
 ```mermaid
 graph LR
- Ch1[Ch.01\nResidual Networks\nskip connections] --> Ch2[Ch.02\nEfficient Architectures\ndepthwise conv]
- Ch2 --> Ch7[Ch.07\nContrastive Learning\nSimCLR → CLIP]
+ Ch1[Ch.01\nResidual Networks\nskip connections] --> Ch7[Ch.07\nContrastive Learning\nSimCLR → CLIP]
  Ch7 --> Ch8[Ch.08\nSelf-Supervised Vision\nMAE → BERT/GPT paradigm]
  Ch8 --> Ch9[Ch.09\nKnowledge Distillation\nDistilBERT toolchain]
  Ch9 --> Ch10[Ch.10\nPruning & Mixed Precision\nLLM compression]

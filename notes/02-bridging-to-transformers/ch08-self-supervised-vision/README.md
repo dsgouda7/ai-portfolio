@@ -61,6 +61,8 @@ Two methods surpassed contrastive learning:
 
 ## 1 · The Core Idea: Two Approaches Beyond Contrastive Learning
 
+> 🔮 **Predict before reading.** SimCLR needed negative pairs to avoid collapse (the model can't just map everything to the same vector). DINO claims to work without negatives. Before you read how: what must DINO add instead to prevent collapse? Write one hypothesis, then check it against the "Centering + sharpening" mechanism below.
+
 ### DINO — Self-Distillation with No Labels
 
 **The insight:** A student network that mimics a slowly-updating teacher's predictions will learn robust features, even with no labels and no negative samples.
@@ -117,6 +119,8 @@ Masking 75% of patches is a hard task — model can't just interpolate from neig
 - Object structure (what products look like)
 - Spatial relationships (shelf layout patterns)
 - Texture priors (packaging materials, logos)
+
+> 🔮 **Predict before the ViT insight below.** If masking forces the ViT to reconstruct context, does that mean a ViT trained with MAE learns *more* from masking than a CNN would? And if so, why would a CNN not benefit as much from the same masking objective? Write your intuition, then read the Key Insight callout.
 
 > **Key insight — why MAE works better for ViTs:**
 > CNNs have strong architectural inductive biases baked in: convolution forces locality (each filter sees only a local patch), and pooling enforces translation invariance (a dog in the upper-left and a dog in the lower-right activate the same filters). These inductive biases make CNNs data-efficient — they generalize locality and translation invariance without needing to learn that those regularities exist.
@@ -686,6 +690,18 @@ The pretraining objective you just learned — *predict what's missing* — is l
 DINO's self-distillation (student mimics momentum teacher's output distributions) is structurally identical to the KL-divergence distillation loss in Ch.9 — and it's the exact technique used to produce DistilBERT, TinyLLaMA, and every compressed LLM deployed in production.
 
 **The unifying principle** (notes/03-ai ch00 §10.7): *"knowledge is a compression artifact of predicting what's missing."* MAE produces rich visual representations as a side effect of patch reconstruction. BERT produces rich semantic representations as a side effect of token prediction. Same mechanism; different modality.
+
+---
+
+## 🧪 Your Turn — Self-Supervised Vision
+
+**Exercise 1 — MAE masking ratio.** The paper chose 75% masking. Change it to 25% in the notebook cell, run downstream fine-tuning, and compare mAP. Predict first: does lower masking make the task easier (better representations) or harder? Why might 75% be the sweet spot?
+
+**Exercise 2 — DINO without centering.** Remove the centering operation from the teacher output (`p_t = p_t - p_t.mean()`). Observe what happens to the loss over 20 epochs. Predict: will it collapse immediately or gradually? Connect this to why SimCLR needed negative pairs to prevent the same collapse.
+
+**Exercise 3 — The BERT bridge.** BERT masks 15% of tokens; MAE masks 75% of patches. Why the difference? Write a hypothesis about what determines the right masking ratio for a given modality, then check it against the MAE paper's ablation table (Table 1).
+
+> 🔮 **One prediction per exercise before you run.** The goal is calibration — learning to know what you know.
 
 ---
 

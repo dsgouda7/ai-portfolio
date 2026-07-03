@@ -65,6 +65,8 @@
 
 ## 1 · The Core Idea: Learn by Contrasting Augmented Views
 
+> 🔮 **Predict before reading.** You're about to see a loss function that never looks at a single label. Before you read it: what's the minimal thing a model needs to "know" to recognise that two differently-cropped photos of the same shelf are the same scene? Write your guess — one sentence — then check it against the contrastive loss formulation below.
+
 Traditional supervised learning: *"This image is class 5"* (requires labels).
 
 Contrastive learning: *"These two augmented versions of the same image should have similar representations, while representations of different images should be different"* (no labels needed).
@@ -191,6 +193,8 @@ $$
 (Each image contributes 2 loss terms, one for each view as anchor)
 
 ### Why Temperature $\tau$ Matters
+
+> 🔮 **Predict before the numbers.** If you set τ=0.001 (very cold), what happens to the softmax probabilities of the highest-similarity pair vs all others? Sketch your answer — does the gradient become larger or smaller? Then read the table.
 
 Example: Two embeddings with cosine similarity 0.8 (high) vs 0.3 (low).
 
@@ -700,6 +704,18 @@ SimCLR's NT-Xent loss generalizes immediately beyond images. **CLIP (Radford et 
 **Text embeddings in RAG pipelines** (notes/03-ai Ch.07) are trained with a contrastive objective almost identical to NT-Xent — they produce semantic vectors where cosine similarity = semantic proximity. When you call `cosine_similarity(embed(query), embed(document))` in a retrieval pipeline, the contrastive training objective from this chapter is why that number is meaningful.
 
 **Key takeaway:** The sentence *"pull representations of semantically equivalent inputs together, push non-equivalent ones apart"* is the unifying principle across SimCLR (vision pretraining), CLIP (cross-modal alignment), and sentence embeddings (text retrieval). The loss function is the same. The modality changes.
+
+---
+
+## 🧪 Your Turn — Contrastive Learning
+
+**Exercise 1 — Temperature sensitivity.** In the NT-Xent loss notebook cell, change `tau` from 0.07 → 0.5 → 2.0. Before each run, predict: will downstream fine-tuning accuracy (mAP on 1,000 labels) go up or down? At what temperature does performance peak? Why does τ that's too low cause numerical instability?
+
+**Exercise 2 — Batch size effect.** Change the SimCLR batch size from 256 → 64 → 512. For each, count how many negatives each anchor sees. Predict: below what batch size does the contrastive task become too easy to produce good representations? Run and check.
+
+**Exercise 3 — The CLIP bridge.** The NT-Xent loss with a batch of (image, caption) pairs is literally how CLIP is trained. Open the CLIP paper (§3.1) and confirm: the loss formula is identical to SimCLR's, with images as one view and captions as the "augmented" positive. Write one sentence explaining why this works — why is a caption a valid "positive pair" for its image in the same way a crop is?
+
+> 🔮 **Predict first every time.** Commit to your guess before running the cell. Being confidently wrong — then seeing why — is the point.
 
 ---
 

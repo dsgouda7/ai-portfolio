@@ -64,6 +64,8 @@ The key components:
 
 ### 1.1 Soft Targets (Temperature Scaling)
 
+> 🔮 **Predict before the formula.** Standard softmax with logits `[5.0, 0.3, 0.1]` gives probabilities `[0.98, 0.01, 0.01]`. If you divide every logit by 5 before softmax, which class's probability changes the most in *absolute terms* — the dominant class (5.0) or the minor classes (0.3, 0.1)? Write your answer, then verify with the example below.
+
 Standard softmax produces **hard** probabilities (one class dominates):
 $$
 p_i = \frac{\exp(z_i)}{\sum_j \exp(z_j)}
@@ -98,6 +100,8 @@ $$
 The $\tau^2$ factor compensates for gradient magnitude (as $\tau$ increases, gradients shrink by $\tau^2$).
 
 ### 1.3 Combined Loss
+
+> 🔮 **Predict before α.** If you set α=1.0 (ignore ground truth, match only the teacher), and the teacher consistently confuses "water bottle" with "juice box" on 3 training images, what happens to the student? Now predict: what's the minimum α where ground truth labels still prevent the student from learning the teacher's error? Then read the formula.
 
 Most distillation pipelines use a **weighted combination**:
 $$
@@ -641,6 +645,18 @@ The temperature-scaled KL loss you implemented in this chapter is used verbatim 
 In this chapter, the output distribution is over $K=20$ product classes. In LLM distillation, the output distribution is over $K=50{,}000+$ BPE tokens at *every autoregressive step*. The $\tau^2 \cdot \text{KL}$ loss still applies exactly — the vocabulary is just larger. "Dark knowledge" in LLM distillation: the teacher's soft distribution over tokens encodes semantic similarity (e.g., `"the"` and `"a"` have similar probabilities in many positions; `"Paris"` and `"France"` are interchangeable in certain contexts).
 
 Every lightweight LLM running on edge devices — Phi-3-mini, Gemma-2B, Qwen-0.5B — was trained with the exact loss function you just implemented.
+
+---
+
+## 🧪 Your Turn — Knowledge Distillation
+
+**Exercise 1 — Temperature sensitivity.** In the distillation training loop, change `tau` from 5 → 1 → 10. Predict before each run: does mAP go up or down? At τ=1, does the distillation loss add *any* information beyond the hard label loss? Why or why not?
+
+**Exercise 2 — α sweep.** Fix τ=5, sweep `alpha` over [0.0, 0.3, 0.7, 0.9, 1.0]. Record student mAP for each. Predict: at what α does performance peak, and why is α=1.0 (pure distillation) worse than α=0.8? What does the hard label loss protect against?
+
+**Exercise 3 — The DistilBERT connection.** DistilBERT uses τ=4, α=0.9, and a 50k-token vocabulary instead of 20 product classes. The $\tau^2 \cdot \text{KL}$ loss is identical. Estimate: if the teacher gets token 'Paris' with p=0.70 and 'France' with p=0.15, what information does the student learn that a hard one-hot label `[1, 0, 0, ...]` would throw away?
+
+> 🔮 **Write your prediction for each exercise before running the notebook.** Calibrated intuition — knowing when you're likely wrong before the data arrives — is the skill.
 
 ---
 
