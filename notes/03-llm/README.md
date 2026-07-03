@@ -104,7 +104,7 @@ By the end of this track, you'll have:
 Work through Ch.1 → Ch.8 in order. The first 4 chapters build foundational knowledge; the next 4 chapters apply it. Each chapter explicitly states what the experiment adds to your AI Literacy Kit.
 
 ### Fast Track (For Readers from notes/01 + notes/02)
-If you've completed notes/01 (ML) and notes/02 (Advanced Deep Learning):
+If you've completed notes/01 (ML) and notes/02 (Bridging to Transformers):
 1. **Start with Ch.0** ([From Networks to Language](ch00-from-networks-to-language/README.md)) — 20-min read connecting RNNs/attention/transformers to LLMs
 2. **Skim Ch.1 §0-2** (historical thread + tokenization) — you already know attention mechanics from notes/01 Ch.9-10
 3. **Focus on Ch.2-8** — inference mechanics, training, prompting, CoT, RAG are all new territory
@@ -156,7 +156,7 @@ If you've completed notes/01 (ML) and notes/02 (Advanced Deep Learning):
 
 **This track is self-contained.** Start here if you want to understand LLMs from a practitioner's perspective.
 
-**If you've completed notes/01 (ML) and notes/02 (Advanced Deep Learning):**
+**If you've completed notes/01 (ML) and notes/02 (Bridging to Transformers):**
 → Start with [**Ch.0 — From Networks to Language**](ch00-from-networks-to-language/README.md) — a condensed, intuition-building bridge showing the evolutionary arc from RNNs → Attention → Transformers → LLMs. Heavy on mermaid diagrams, zero math, connects the gradient flow principles you learned (skip connections in ResNets, attention in transformers) to the production AI stack you'll build in this track.
 
 **Optional enrichment** (for readers who want deeper mathematical/architectural understanding):

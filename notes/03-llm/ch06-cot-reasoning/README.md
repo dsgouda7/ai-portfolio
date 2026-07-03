@@ -61,7 +61,7 @@ Zero prompt change to the model — only the *input format* changed.
 ## Quick Start
 
 ```bash
-code notes/03-ai/ch06-cot-reasoning/cot-reasoning.md
+code notes/03-llm/ch06-cot-reasoning/cot-reasoning.md
 ```
 
 ## Common Questions

@@ -64,7 +64,7 @@ flowchart TB
  end
 
  subgraph Stage6[Stage 6: Production]
- Advanced[02-advanced_deep_learning<br/>Detection, segmentation, compression]
+ Advanced[02-bridging-to-transformers<br/>Detection, segmentation, compression]
  DevOps[08-devops-fundamentals<br/>Docker, K8s, monitoring]
  Advanced -.parallel.-> DevOps
  end
@@ -110,10 +110,10 @@ flowchart TB
 | **04-multimodal-ai** | **ML Ch.18 (Transformers)** + AI Ch.4 (Embeddings) | PixelSmith local image generation studio |
 | **07-ai-infrastructure** | ML Ch.4-8 (Neural Networks, CNNs, RNNs) | InferenceBase cost optimization (API $80k/mo → self-hosted) |
 | **08-devops-fundamentals** | None (can start anytime) | ProductionStack Flask API with 99% uptime |
-| **02-advanced_deep_learning** | **ML Ch.1-10 (all core ML) + CNNs** | ProductionCV shelf monitoring (6.8 MB model, 35ms latency) |
+| **02-bridging-to-transformers** | **ML Ch.1-10 (all core ML) + CNNs** | ProductionCV shelf monitoring (6.8 MB model, 35ms latency) |
 
 **CRITICAL SEQUENCING**:
-- **02-advanced_deep_learning comes LAST** — do NOT start here. It assumes you already know CNNs, backpropagation, regularization, and hyperparameter tuning from ML Ch.1-10.
+- **02-bridging-to-transformers comes LAST** — do NOT start here. It assumes you already know CNNs, backpropagation, regularization, and hyperparameter tuning from ML Ch.1-10.
 - **Transformers (ML Ch.18) before AI/Multimodal** — you cannot understand RAG, CLIP, or Stable Diffusion without self-attention.
 - **Math before ML** — gradient descent appears in every chapter. Derive it once by hand, use it forever.
 
@@ -127,18 +127,18 @@ flowchart TB
  Transformers are the foundation for:
  - **AI track**: GPT-4 is a Transformer + RLHF
  - **Multimodal track**: CLIP and Stable Diffusion use Transformer encoders
- - **Advanced Deep Learning**: Vision Transformers replace CNNs in modern architectures
+ - **Bridging to Transformers**: Vision Transformers replace CNNs in modern architectures
 
  Nail self-attention in ML Ch.18, then specialize.
 
-**Advanced Deep Learning LAST**
+**Bridging to Transformers LAST**
  ResNets, YOLOv5, and Mask R-CNN assume you already understand:
  - Loss functions and gradient descent (ML Ch.1-2)
  - Backpropagation (ML Ch.5)
  - CNNs and regularization (ML Ch.7, Ch.6)
  - Hyperparameter tuning (ML Ch.6)
 
- If you skip ML Ch.1-10 and jump straight to object detection, you'll be lost. The Advanced Deep Learning track is NOT a beginner-friendly entry point — it's a capstone.
+ If you skip ML Ch.1-10 and jump straight to object detection, you'll be lost. The Bridging to Transformers track is NOT a beginner-friendly entry point — it's a capstone.
 
 ### Track Overview
 
@@ -154,7 +154,7 @@ flowchart TB
 | **04-multimodal-ai** | **ML Ch.18 Transformers** + AI Ch.4 → Multimodal |
 | **07-ai-infrastructure** | ML Ch.4-8 → Infrastructure |
 | **08-devops-fundamentals** | Can start anytime (no ML prereqs) |
-| **02-advanced_deep_learning** | **ML Ch.1-10 (all core)** + CNNs → Advanced Deep Learning |
+| **02-bridging-to-transformers** | **ML Ch.1-10 (all core)** + CNNs → Bridging to Transformers |
 
 **Minimum path to "hireable"**: Math + Data + ML Core + AI track + DevOps.
 
@@ -194,7 +194,7 @@ notes/
 ├── 04-multimodal-ai/ ← Diffusion, CLIP, vision transformers, text-to-video (+ notebooks)
 ├── 07-ai-infrastructure/ ← GPU hardware to production serving platforms (+ notebooks)
 ├── 08-devops-fundamentals/ ← Docker, Kubernetes, CI/CD, monitoring
-├── 02-advanced_deep_learning/ ← Production computer vision: ResNets, detection, segmentation, compression (+ notebooks)
+├── 02-bridging-to-transformers/ ← Production computer vision: ResNets, detection, segmentation, compression (+ notebooks)
 ├── archived/ ← Historical HTML/PDF chronicles and archived storyboard assets
 └── interview_guides/ ← Consolidated interview prep — rapid-fire Q&A + checklist index
 ```
@@ -360,24 +360,24 @@ bash scripts/setup.sh
 
 ---
 
-## Track 7 — Advanced Deep Learning (`02-advanced_deep_learning/`)
+## Track 7 — Bridging to Transformers (`02-bridging-to-transformers/`)
 
 10-chapter production computer vision track from ResNets to edge deployment. Running challenge: **ProductionCV** — autonomous retail shelf monitoring achieving 82% mAP, 71% IoU, 35ms latency, 6.8 MB model size, trained on <1,000 labeled images.
 
-> → [02-advanced_deep_learning/README.md](02-advanced_deep_learning/README.md) for the full reading map and Grand Challenge details.
+> → [02-bridging-to-transformers/README.md](02-bridging-to-transformers/README.md) for the full reading map and Grand Challenge details.
 
 | Chapter | What it covers |
 |---|---|
-| [ResidualNetworks/](02-advanced_deep_learning/ch01_residual_networks) | Skip connections, vanishing gradients, ResNet-18/50/101 |
-| [EfficientArchitectures/](02-advanced_deep_learning/ch02_efficient_architectures) | MobileNetV2, EfficientNet, depthwise separable convolutions |
-| [TwoStageDetectors/](02-advanced_deep_learning/ch03_two_stage_detectors) | Faster R-CNN, RPN, RoI pooling, multi-task loss |
-| [OneStageDetectors/](02-advanced_deep_learning/ch04_one_stage_detectors) | YOLOv5, RetinaNet, focal loss, grid-based detection |
-| [SemanticSegmentation/](02-advanced_deep_learning/ch05_semantic_segmentation) | FCN, U-Net, DeepLabV3+, atrous convolutions |
-| [InstanceSegmentation/](02-advanced_deep_learning/ch06_instance_segmentation) | Mask R-CNN, RoIAlign, per-instance masks |
-| [ContrastiveLearning/](02-advanced_deep_learning/ch07_contrastive_learning) | SimCLR, MoCo, NT-Xent loss, momentum encoder |
-| [SelfSupervisedVision/](02-advanced_deep_learning/ch08_self_supervised_vision) | DINO, MAE, masked autoencoding, emergent attention |
-| [KnowledgeDistillation/](02-advanced_deep_learning/ch09_knowledge_distillation) | Teacher-student, temperature scaling, soft labels |
-| [PruningMixedPrecision/](02-advanced_deep_learning/ch10_pruning_mixed_precision) | Magnitude pruning, AMP, FP16 training, 14× compression |
+| [ResidualNetworks/](02-bridging-to-transformers/ch01_residual_networks) | Skip connections, vanishing gradients, ResNet-18/50/101 |
+| [EfficientArchitectures/](02-bridging-to-transformers/ch02_efficient_architectures) | MobileNetV2, EfficientNet, depthwise separable convolutions |
+| [TwoStageDetectors/](02-bridging-to-transformers/ch03_two_stage_detectors) | Faster R-CNN, RPN, RoI pooling, multi-task loss |
+| [OneStageDetectors/](02-bridging-to-transformers/ch04_one_stage_detectors) | YOLOv5, RetinaNet, focal loss, grid-based detection |
+| [SemanticSegmentation/](02-bridging-to-transformers/ch05_semantic_segmentation) | FCN, U-Net, DeepLabV3+, atrous convolutions |
+| [InstanceSegmentation/](02-bridging-to-transformers/ch06_instance_segmentation) | Mask R-CNN, RoIAlign, per-instance masks |
+| [ContrastiveLearning/](02-bridging-to-transformers/ch07_contrastive_learning) | SimCLR, MoCo, NT-Xent loss, momentum encoder |
+| [SelfSupervisedVision/](02-bridging-to-transformers/ch08_self_supervised_vision) | DINO, MAE, masked autoencoding, emergent attention |
+| [KnowledgeDistillation/](02-bridging-to-transformers/ch09_knowledge_distillation) | Teacher-student, temperature scaling, soft labels |
+| [PruningMixedPrecision/](02-bridging-to-transformers/ch10_pruning_mixed_precision) | Magnitude pruning, AMP, FP16 training, 14× compression |
 
 **Grand Challenge:** ProductionCV compresses 97 MB ResNet-50 → 6.8 MB pruned MobileNetV2, achieving all 5 constraints (detection, segmentation, latency, model size, data efficiency).
 

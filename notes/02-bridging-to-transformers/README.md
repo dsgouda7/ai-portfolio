@@ -1,8 +1,10 @@
-# Advanced Deep Learning — Architectures, Self-Supervised Learning, and Model Compression
+# Bridging to Transformers — Bridging to Transformers Foundations
 
-**Focus:** The deep learning concepts that bridge classical ML to LLM engineering — residual networks, efficient architectures, contrastive and self-supervised pretraining, knowledge distillation, and mixed-precision training.
+**Focus:** The deep learning concepts that bridge classical ML to LLM engineering — why deep networks need skip connections, how self-supervised pretraining works, and how to compress large models without destroying capability.
 
-This track covers the subset of advanced deep learning that generalizes beyond computer vision: **why skip connections enable very deep models** (transformers use identical residuals), **how self-supervised pretraining works** (the paradigm behind BERT, GPT, and CLIP), and **how to compress large models without destroying capability** (the toolchain behind DistilBERT, TinyLLaMA, and quantized LLMs).
+This track teaches the subset of advanced deep learning that *directly reappears* in transformer architectures and LLM engineering: **skip connections** (every transformer block uses `x + Attention(x)` and `x + FFN(x)`), **self-supervised pretraining** (the paradigm behind BERT, GPT, and CLIP), and **model compression** (the toolchain behind DistilBERT, TinyLLaMA, and quantized LLMs).
+
+Each chapter is structured around the [Rigour Rubric](../authoring-guidelines.md#20--rigour-rubric--the-nine-techniques-from-the-transformer-notebook): one running example, intuition before formalism, every design choice demonstrated empirically, predict-first prompts, and a toy → production bridge.
 
 > **For chapter authors:** See [authoring-guide.md](authoring-guide.md) for the chapter template and style conventions.
 >
@@ -25,7 +27,7 @@ Six chapters covering the architectural and training concepts that power modern 
 
 ## Track Position
 
-Sits between **notes/01-ml** (classical ML + neural network fundamentals) and **notes/03-ai** (LLM engineering). The six chapters here are explicitly referenced in [notes/03-ai ch00 §10.7](../03-ai/ch00-from-networks-to-language/README.md) as conceptual prerequisites for understanding LLM training and deployment.
+Sits between **notes/01-ml** (classical ML + neural network fundamentals) and **notes/03-llm** (LLM engineering). The six chapters here are explicitly referenced in [notes/03-llm ch00 §10.7](../03-llm/ch00-from-networks-to-language/README.md) as conceptual prerequisites for understanding LLM training and deployment.
 
 **Requires:**
 - Neural network fundamentals ([01-ml/03-neural-networks](../01-ml/README.md)) — backpropagation, CNNs, loss functions
@@ -59,15 +61,15 @@ graph LR
  Ch7 --> Ch8[Ch.08\nSelf-Supervised Vision\nMAE → BERT/GPT paradigm]
  Ch8 --> Ch9[Ch.09\nKnowledge Distillation\nDistilBERT toolchain]
  Ch9 --> Ch10[Ch.10\nPruning & Mixed Precision\nLLM compression]
- Ch10 --> Next[notes/03-ai\nLLM Engineering]
+ Ch10 --> Next[notes/03-llm\nLLM Engineering]
 ```
 
 ---
 
 ## Bridges to Other Tracks
 
-### → LLM Engineering (notes/03-ai)
-Each chapter maps directly to a technique used in LLM engineering. See [ch00 §10.7](../03-ai/ch00-from-networks-to-language/README.md#107--the-language-modeling-objective--what-actually-changes-for-text) for the explicit connection table.
+### → LLM Engineering (notes/03-llm)
+Each chapter maps directly to a technique used in LLM engineering. See [ch00 §10.7](../03-llm/ch00-from-networks-to-language/README.md#107--the-language-modeling-objective--what-actually-changes-for-text) for the explicit connection table.
 
 ### → Multimodal AI (notes/04-multimodal-ai)
 Ch.07 (Contrastive Learning) and Ch.08 (Self-Supervised Vision) are the direct prerequisites for CLIP and diffusion model pretraining in the multimodal track.

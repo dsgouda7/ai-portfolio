@@ -587,7 +587,7 @@ class MAEByTierCallback(Callback):
 - **Robustness:** Adversarial training, out-of-distribution detection, uncertainty quantification
 
 **Continue to:**
-- **[02-advanced_deep_learning](../../02-advanced_deep_learning)** — ResNets, U-Nets, GANs, Autoencoders, VAEs
+- **[02-bridging-to-transformers](../../02-bridging-to-transformers)** — ResNets, U-Nets, GANs, Autoencoders, VAEs
 - **[03-ai](../../03-ai)** — LLMs, RAG, embeddings, agents, prompt engineering (builds on Ch.10 Transformers)
 - **[05-multimodal_ai](../../05-multimodal_ai)** — CLIP, Vision Transformers, audio processing, cross-modal alignment
 

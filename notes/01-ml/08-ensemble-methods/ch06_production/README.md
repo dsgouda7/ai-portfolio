@@ -890,7 +890,7 @@ Even in production, ensembles of gradient-boosted trees remain the industry stan
 | **>1M rows** | LightGBM scales well | Slight edge on very large datasets |
 | **Regulatory audit** | TreeSHAP satisfies "right to explanation" | Approximate explanations less defensible |
 
-**Bottom line for this use case**: The California Housing dataset and real-estate domain have structured features, moderate data size, and regulatory explainability requirements. Tree ensemble stacking is the right architecture. Neural networks become relevant when you add unstructured data (photos, text descriptions) or need joint modeling with vision/language signals — which belongs in [02-Advanced Deep Learning](../../02-advanced_deep_learning).
+**Bottom line for this use case**: The California Housing dataset and real-estate domain have structured features, moderate data size, and regulatory explainability requirements. Tree ensemble stacking is the right architecture. Neural networks become relevant when you add unstructured data (photos, text descriptions) or need joint modeling with vision/language signals — which belongs in [02-Bridging to Transformers](../../02-bridging-to-transformers).
 
 ---
 
@@ -1030,7 +1030,7 @@ flowchart TD
 
 | Concept | Reappears in |
 |---------|-------------|
-| **Parallel inference pattern** | [02-AdvancedDL → Multi-head architectures](../../../02-advanced_deep_learning) — parallel transformer heads use same pattern |
+| **Parallel inference pattern** | [02-AdvancedDL → Multi-head architectures](../../../02-bridging-to-transformers) — parallel transformer heads use same pattern |
 | **PSI drift detection** | [06-AI Infrastructure → ML monitoring](../../../06-ai_infrastructure) — PSI is the industry standard for feature drift SLAs |
 | **A/B testing with power calculations** | [04-MultiAgent AI](../../../04-multi_agent_ai) — multi-armed bandit variants of A/B testing |
 | **SHAP in production API** | [03-AI → Responsible AI](../../../03-ai) — SHAP explanations as regulatory compliance artifacts |
@@ -1091,7 +1091,7 @@ The EnsembleAI mission joins a completed portfolio:
 - **07-Unsupervised Learning** (SegmentAI): K-means → DBSCAN → evaluation
 - **08-Ensemble Methods** (EnsembleAI): Bagging → boosting → stacking → production ← **you are here**
 
-**The natural next step** is [**02 — Advanced Deep Learning**](../../02-advanced_deep_learning), where:
+**The natural next step** is [**02 — Bridging to Transformers**](../../02-bridging-to-transformers), where:
 - Neural architectures replace ensemble diversity with depth and attention
 - The same production principles (latency budgets, drift monitoring, A/B testing) apply at GPU scale
 - Transformer models learn feature interactions that XGBoost must hand-engineer
@@ -1109,7 +1109,7 @@ The gap between tabular ML and deep learning is smaller than it looks. Everythin
 | Diversity → better generalization | Ch.5 stacking | Dropout (random ensemble of sub-networks); multi-head attention |
 | Parallel serving, PSI, shadow mode | **Ch.6** | Every production ML system regardless of model family |
 
-> **[Start Advanced Deep Learning →](../../02-advanced_deep_learning)**
+> **[Start Bridging to Transformers →](../../02-bridging-to-transformers)**
 >
 > **[Return to ML Track Index →](../../README.md)**
 

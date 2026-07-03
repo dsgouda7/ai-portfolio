@@ -2,9 +2,46 @@
 
 > **The story.** In **2015**, four Microsoft researchers — **Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun** — published a paper titled *Deep Residual Learning for Image Recognition* at CVPR, and it immediately won ImageNet. The breakthrough wasn't a new activation function or a smarter optimizer — it was a simple architectural trick: **skip connections**. By letting information flow directly across layers (bypassing the non-linear transformations), they solved the **vanishing gradient problem** that had prevented networks from going deeper than 20–30 layers. Their ResNet-152 (152 layers!) achieved 3.57% top-5 error on ImageNet — surpassing human-level performance. Within two years, ResNet became the default backbone for nearly every computer vision task: object detection (Faster R-CNN), instance segmentation (Mask R-CNN), pose estimation. The architecture is still the foundation of production CV systems a decade later.
 >
+> **But this chapter isn't just about computer vision.** The same `x + F(x)` that let He train 152 layers also lets GPT-3 train 96 layers. Skip connections are in every transformer block (`x + Attention(x)` and `x + FFN(x)`). The gradient math is identical. This chapter teaches the mechanism with concrete CV examples; [notes/03-llm ch01](../../03-llm/ch01-transformer-architecture/README.md) shows the same mechanism at LLM scale.
+>
 > **Where you are in the curriculum.** You've completed the Neural Networks track and understand CNNs (convolution, pooling, BatchNorm). You've trained VGG-style networks (stacking Conv → ReLU → Pool) and hit a wall: deeper networks perform *worse* than shallow ones (not just overfitting — the training error itself increases). This isn't a data problem — it's a **gradient problem**. Gradients vanish as they backpropagate through 50+ layers, so the early layers never learn. This chapter gives you **residual connections** — the architectural pattern that unlocks 100+ layer networks and powers modern production CV.
 >
 > **Notation in this chapter.** $x$ — input tensor (shape `[B, C, H, W]`); $F(x)$ — non-linear transformation (Conv → BN → ReLU → Conv → BN); $\mathcal{H}(x)$ — desired output mapping; $\mathcal{H}(x) = F(x) + x$ — **residual block output** (skip connection adds identity); $W_L$ — weights at layer $L$; $\frac{\partial L}{\partial W_1}$ — gradient at first layer (measures how far signals travel backward); ResNet-18, ResNet-34 — **basic block architectures** (two 3×3 convs per block); ResNet-50, ResNet-101, ResNet-152 — **bottleneck architectures** (1×1 → 3×3 → 1×1 per block for efficiency).
+
+---
+
+## Why You Need This — The Same Problem Killed Two Eras
+
+Before we open the CV running example, meet the pattern this chapter solves: **vanishing gradients killed deep networks twice, in two different fields.**
+
+### Round 1: RNNs couldn't model long text (1990–2017)
+
+Recurrent neural networks process sequences one token at a time, accumulating a hidden state:
+
+$$h_t = \tanh(W_{hh} h_{t-1} + W_{xh} x_t + b)$$
+
+Training requires backpropagating through every time step. If each step multiplies the gradient by 0.9:
+
+| Time steps | Gradient fraction remaining |
+|-----------|----------------------------|
+| 1 | 90% |
+| 20 | 12% |
+| 50 | 0.5% |
+| 100 | 0.003% |
+
+After 100 tokens, the gradient reaching step 1 is 0.003% of its original size. The model *cannot learn* that "chef" in step 1 caused "made pasta" in step 12. **LSTMs reduced this to 5–10% survival but never fixed it.** That is why every major AI lab abandoned RNNs in 2017–2018 when transformers (with skip connections) became available.
+
+### Round 2: Deep CNNs degraded before ResNets (2010–2015)
+
+The same problem hit computer vision. Adding layers should add capacity — but stacking 50+ convolutional layers without skip connections produced *higher training error* than 20 layers. The gradient from the loss vanished before reaching the early layers; those layers effectively stopped training.
+
+**The fix was identical in both domains:** add the identity $x$ to the transformation output, creating a direct path for gradients:
+
+$$y = F(x) + x \quad \Rightarrow \quad \frac{\partial y}{\partial x} = \frac{\partial F(x)}{\partial x} + 1$$
+
+The "+1" term guarantees the gradient never vanishes, no matter how many layers you add.
+
+> 🔮 **Predict before §1:** If every layer multiplies the gradient by $g < 1$, a plain 50-layer network arrives at layer 1 with gradient $g^{50}$. With a skip connection, the backward pass sees $g^{50} + g^{49} + \ldots + 1$. Which converges to something larger as layers increase, and why?
 
 ---
 

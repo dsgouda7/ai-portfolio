@@ -20,20 +20,7 @@ How LLMs generate text at inference time — sampling, the autoregressive loop, 
 
 - [notebook-solution.ipynb](notebook-solution.ipynb) — Complete implementations
 
-## Learning Objectives
-
-After completing this chapter, you should be able to:
-
-1. **Understand sampling mechanics**
- - Explain how temperature, top-p, and top-k affect generation
- - Choose appropriate sampling parameters for different use cases
- - Implement sampling strategies using HuggingFace Transformers
-
-2. **Optimize inference performance**
- - Measure KV cache impact on generation speed
- - Distinguish between prefill and decode phases
- - Evaluate batching strategies for throughput
-
+> **From-scratch companion (Parts 11–12):** [`learning/genai/transformers/transformers.ipynb`](../../../learning/genai/transformers/transformers.ipynb) — Part 11 builds the autoregressive generation loop from scratch with temperature + top-k, printing per-step probability bar charts; Part 12 runs the same loop on distilgpt2. Use it before the exercise notebook to build the underlying intuition.
 3. **Make production tradeoffs**
  - Balance throughput vs latency requirements
  - Calculate KV cache memory requirements
@@ -59,7 +46,7 @@ After completing this chapter, you should be able to:
 
 ```bash
 # Open the exercise notebook
-code notes/03-ai/ch02-llm-inference-mechanics/notebook-exercise.ipynb
+code notes/03-llm/ch02-llm-inference-mechanics/notebook-exercise.ipynb
 
 # Install dependencies (if not already installed)
 pip install transformers torch matplotlib numpy

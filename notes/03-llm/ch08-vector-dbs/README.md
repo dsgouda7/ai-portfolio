@@ -67,7 +67,7 @@ After completing this chapter, you should be able to:
 ## Quick Start
 
 ```bash
-code notes/03-ai/ch08-vector-dbs/vector-dbs.md
+code notes/03-llm/ch08-vector-dbs/vector-dbs.md
 ```
 
 ## Common Questions

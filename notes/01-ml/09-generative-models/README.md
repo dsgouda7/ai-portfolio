@@ -137,7 +137,7 @@ Used in Ch.3 to show GANs scaling to high-resolution, multi-channel generation. 
 
 - **Autoencoders reappear** in [05-anomaly-detection/ch03_autoencoders](../05-anomaly-detection/ch03_autoencoders/README.md) as anomaly detectors (fraud = high reconstruction error)
 - **VAE latent spaces** are the foundation of [04-multimodal-ai/ch06_latent_diffusion](../../04-multimodal-ai/ch06_latent_diffusion/latent-diffusion.md) — Stable Diffusion diffuses in VAE latent space
-- **GAN discriminators** provide the conceptual foundation for contrastive learning in [02-advanced-deep-learning/ch07_contrastive_learning](../../02-advanced-deep-learning/ch07_contrastive_learning/README.md)
+- **GAN discriminators** provide the conceptual foundation for contrastive learning in [02-bridging-to-transformers/ch07_contrastive_learning](../../02-bridging-to-transformers/ch07_contrastive_learning/README.md)
 - **Probabilistic latent variables** (VAEs) connect to Bayesian inference in [06-reinforcement-learning](../06-reinforcement-learning/README.md)
 
 ---
@@ -222,7 +222,7 @@ graph TD
 ## Next Steps After Completing This Track
 
 1. **Diffusion Models** ([04-multimodal-ai/ch04_diffusion_models](../../04-multimodal-ai/ch04_diffusion_models/diffusion-models.md)) — Learn why diffusion models replaced GANs for high-resolution image generation
-2. **Self-Supervised Learning** ([02-advanced-deep-learning/ch07_contrastive_learning](../../02-advanced-deep-learning/ch07_contrastive_learning/README.md)) — Contrastive learning uses GAN-like ideas for representation learning
+2. **Self-Supervised Learning** ([02-bridging-to-transformers/ch07_contrastive_learning](../../02-bridging-to-transformers/ch07_contrastive_learning/README.md)) — Contrastive learning uses GAN-like ideas for representation learning
 3. **Advanced GAN Architectures** — StyleGAN, Progressive GAN, CycleGAN (covered in capstone projects)
 
 ---

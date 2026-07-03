@@ -1,14 +1,14 @@
 # LLM Fundamentals Track — Authoring Guide
 
 > **This document defines the structure, tone, and pedagogical patterns for the LLM Fundamentals track.**
-> Each chapter lives under `notes/03-ai/` with a .md file and accompanying Jupyter notebook.
+> Each chapter lives under `notes/03-llm/` with a .md file and accompanying Jupyter notebook.
 > Read this before editing any chapter to maintain consistency.
 >
 > **Framework**: Historical Walkthrough (concepts emerge in causal order)
 > **Track Position**: Prerequisite for 05-agentic-ai (Agentic AI)
 
 <!-- LLM-STYLE-FINGERPRINT-V1
-canonical_chapters: ["notes/03-ai/ch00-from-networks-to-language/README.md", "notes/03-ai/ch01-transformer-architecture/transformer-architecture.md", "notes/03-ai/ch02-llm-inference-mechanics/inference-mechanics.md", "notes/03-ai/ch03-llm-training-pipeline/training-pipeline.md", "notes/03-ai/ch04-llm-model-internals/model-internals.md", "notes/03-ai/ch05-prompt-engineering/prompt-engineering.md", "notes/03-ai/ch06-cot-reasoning/cot-reasoning.md", "notes/03-ai/ch07-rag-and-embeddings/rag-and-embeddings.md", "notes/03-ai/ch08-vector-dbs/vector-dbs.md"]
+canonical_chapters: ["notes/03-llm/ch00-from-networks-to-language/README.md", "notes/03-llm/ch01-transformer-architecture/transformer-architecture.md", "notes/03-llm/ch02-llm-inference-mechanics/inference-mechanics.md", "notes/03-llm/ch03-llm-training-pipeline/training-pipeline.md", "notes/03-llm/ch04-llm-model-internals/model-internals.md", "notes/03-llm/ch05-prompt-engineering/prompt-engineering.md", "notes/03-llm/ch06-cot-reasoning/cot-reasoning.md", "notes/03-llm/ch07-rag-and-embeddings/rag-and-embeddings.md", "notes/03-llm/ch08-vector-dbs/vector-dbs.md"]
 voice: second_person_practitioner
 register: technical_direct_conversational_within_precision
 formula_motivation: required_with_symbol_table_and_reading_guidance
@@ -31,7 +31,7 @@ The 03-ai track follows a **historical walkthrough** pattern where each concept 
 ### The 9-Chapter Arc (ch00–ch08)
 
 ```
-notes/03-ai/
+notes/03-llm/
 ├── ch00-from-networks-to-language/  → Bridge from ML transformers to language models
 ├── ch01-transformer-architecture/   → RNNs fail → attention → transformer → GPT/BERT fork → scale → alignment
 ├── ch02-llm-inference-mechanics/    → Autoregressive generation → KV cache → sampling → continuous batching
@@ -1096,7 +1096,7 @@ def cosine_sim(a, b):
 | Needle GIF | Which constraint moved this chapter | `chNN-[topic]-needle.gif` |
 | Conversation trace | Step-by-step message flow for a canonical query | `ch06-react-loop-trace.png` |
 
-All images in `notes/03-ai/{ChapterName}/img/`. Dark background `#1a1a2e` for generated plots.
+All images in `notes/03-llm/{ChapterName}/img/`. Dark background `#1a1a2e` for generated plots.
 
 ---
 

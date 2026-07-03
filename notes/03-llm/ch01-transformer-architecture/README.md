@@ -1,8 +1,10 @@
 # Transformer Architecture — From Tokens to Attention
 
-**Status:** Complete
+**Status:** In Progress — content being aligned with the from-scratch code companion
 
 The foundation for all modern LLMs — from RNNs to transformers, attention mechanics (Q/K/V), positional encoding, and the three architectural families (encoder-only, decoder-only, encoder-decoder).
+
+> **Code companion:** [`learning/genai/transformers/transformers.ipynb`](../../../learning/genai/transformers/transformers.ipynb) builds the complete transformer from scratch in TensorFlow/Keras using one running example ("the cat sat on the mat") from raw 3-D embeddings to distilgpt2 internals. The chapter prose explains *why*; the notebook demonstrates *how*.
 
 ## Contents
 
@@ -20,20 +22,33 @@ The foundation for all modern LLMs — from RNNs to transformers, attention mech
 
 - [notebook-solution.ipynb](notebook-solution.ipynb) — Complete implementations
 
-## Learning Objectives
+## From-Scratch Code Companion
 
-After completing this chapter, you should be able to:
+[`learning/genai/transformers/transformers.ipynb`](../../../learning/genai/transformers/transformers.ipynb) is the canonical from-scratch notebook for this chapter. It builds every component from first principles in TensorFlow/Keras using a single running example throughout.
 
-1. **Understand transformer fundamentals**
- - Explain why transformers replaced RNNs (parallelization + long-range dependencies)
- - Describe the Q/K/V attention mechanism using analogies
- - Identify when to use encoder-only vs decoder-only vs encoder-decoder architectures
+**The notebook's 12 parts map to this chapter's concepts:**
 
-2. **Master attention mechanics**
- - Compute attention scores and interpret attention weights
- - Explain multi-head attention specialization (syntax, semantics, position)
- - Understand causal masking for autoregressive generation
+| Part | What it builds | Key technique |
+|------|---------------|---------------|
+| 1 | Vocabulary + 3-D embeddings | Words as points in semantic space you can visualise |
+| 2 | The ordering problem | Bag-of-words = all permutations identical → position is load-bearing |
+| 3 | Sinusoidal PE | `PE(m, 2i) = sin(m / 10000^{2i/d})` — and the degradation-under-projection measurement |
+| 4 | RoPE | Rotation proof: `dot(R_m q, R_n k)` depends only on `m - n`; adjacent-pair vs split-half equivalence verified numerically |
+| 5 | Q/K/V + Attention | First-contact animation: 4 steps, freezing on each completed step |
+| 6 | Scaled dot-product | `√d_k` necessity shown by variance table + `GradientTape` gradient-death demo |
+| 7 | Multi-Head Attention | One-head-can't-do-two-jobs proof via reconstruction error |
+| 8 | FFN + LayerNorm | Correct `√(σ²+ε)` denominator; GradientTape LayerNorm centring demo |
+| 9 | Full TransformerBlock | Residual gradient race: 24-layer WITH vs WITHOUT (log-scale plot) |
+| 10 | MiniLM end-to-end | Training loop from scratch; cross-entropy over the toy corpus |
+| 11 | Autoregressive generation | Temperature + top-k; per-step probability bar charts |
+| 12 | distilgpt2 internals | `TFGPT2LMHeadModel`; all 6 layers × 12 heads visualised |
 
+**Pedagogical approach used throughout (the [Rigour Rubric](../../authoring-guidelines.md#20--rigour-rubric--the-nine-techniques-from-the-transformer-notebook)):**
+- One running example end-to-end: "the cat sat on the mat"
+- Every design choice proved empirically, not asserted
+- 🔮 Predict-first prompts before every key demonstration
+- 🧪 Tweak-one-knob exercises (`n_heads`, `DEPTH`, `temperature`)
+- Toy (d=3) → working (d=16) → production (GPT-2 d=768) bridge table
 3. **Apply architectural knowledge**
  - Choose appropriate models for retrieval (BERT) vs generation (GPT)
  - Explain positional encoding tradeoffs (RoPE for long context)
@@ -41,10 +56,12 @@ After completing this chapter, you should be able to:
 
 ## Prerequisites
 
-- **Basic ML knowledge** — see Appendix A in the chapter for core terminology
-- **Python proficiency** — NumPy, PyTorch basics
+- **Ch.00 (From Networks to Language)** — RNN failure (§6), attention origin (§7), skip connections (§8), encoder/decoder (§9). If you skipped ch00, at minimum read §6–§8.
+- **Python proficiency** — NumPy, TensorFlow/Keras basics
 - **Linear algebra** — matrix multiplication, dot products
 - **Hardware** — GPU recommended but not required (CPU works, just slower)
+
+> **TF/Keras note:** The from-scratch notebook uses TensorFlow/Keras. The existing `notebook-exercise.ipynb` uses PyTorch + HuggingFace. Both coexist — use the one you prefer for each purpose.
 
 ## Key Concepts
 
@@ -60,16 +77,20 @@ After completing this chapter, you should be able to:
 ## Quick Start
 
 ```bash
-# Open the exercise notebook
-code notes/03-ai/ch01-transformer-architecture/notebook-exercise.ipynb
+# Option A: From-scratch intuition notebook (TF/Keras, "the cat sat on the mat" running example)
+code learning/genai/transformers/transformers.ipynb
 
-# Install dependencies (if not already installed)
+# Option B: Pretrained-model exercise notebook (PyTorch + HuggingFace)
+code notes/03-llm/ch01-transformer-architecture/notebook-exercise.ipynb
+
+# Install dependencies for Option A
+pip install tensorflow transformers matplotlib seaborn plotly
+
+# Install dependencies for Option B
 pip install transformers torch matplotlib seaborn scikit-learn
-
-# Run all cells to explore transformer mechanics
 ```
 
-**First-time model download:** DistilBERT (~250MB), GPT-2 (~500MB), BERT (~420MB) will download automatically on first run.
+**First-time model download (Option B):** DistilBERT (~250MB), GPT-2 (~500MB), BERT (~420MB) will download automatically on first run.
 
 ## Common Questions
 

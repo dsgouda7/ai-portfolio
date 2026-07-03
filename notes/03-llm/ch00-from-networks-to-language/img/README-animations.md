@@ -65,7 +65,7 @@
 Scripts should follow naming convention:
 - `scripts/generate-ch00-[topic].py`
 - Use matplotlib with dark background
-- Output to `notes/03-ai/ch00-from-networks-to-language/img/`
+- Output to `notes/03-llm/ch00-from-networks-to-language/img/`
 - Follow existing animation conventions from notes/01-ml
 
 ## References

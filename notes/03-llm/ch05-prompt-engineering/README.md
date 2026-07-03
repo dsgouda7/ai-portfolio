@@ -53,7 +53,7 @@ After completing this chapter, you should be able to:
 ## Quick Start
 
 ```bash
-code notes/03-ai/ch05-prompt-engineering/prompt-engineering.md
+code notes/03-llm/ch05-prompt-engineering/prompt-engineering.md
 ```
 
 ## Common Questions

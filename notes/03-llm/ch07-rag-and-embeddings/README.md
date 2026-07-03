@@ -71,7 +71,7 @@ If you completed **notes/02**, these connections are direct:
 ## Quick Start
 
 ```bash
-code notes/03-ai/ch07-rag-and-embeddings/rag-and-embeddings.md
+code notes/03-llm/ch07-rag-and-embeddings/rag-and-embeddings.md
 ```
 
 ## Common Questions

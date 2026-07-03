@@ -885,6 +885,35 @@ Each track's `AUTHORING_GUIDE.md` extends this document with:
 
 ---
 
+## 20 · Rigour Rubric — The Nine Techniques From the Transformer Notebook
+
+Every new chapter — and every revision pass on an existing chapter — should be scored against these nine techniques before the chapter is marked complete. They are distilled from `learning/genai/transformers/transformers.ipynb`, the canonical example of how this repo should teach.
+
+| # | Technique | Failing signal | Passing signal |
+|---|-----------|---------------|----------------|
+| **1** | **One running example, end-to-end** | Each section invents new data; the reader re-contextualises every page | The same concrete case (e.g. "the cat sat on the mat") carries from §0 through the final exercise |
+| **2** | **Intuition before formalism** | Formula appears, then prose tries to explain it | Plain-English statement of the idea → animated diagram → formula → code |
+| **3** | **Complaint-driven progressive refinement** | Each step arrives fully formed | Each step is *provoked* by the failure of the previous one ("good — but a real vector has many pairs at different speeds") |
+| **4** | **Measure, don't assert** | "This is why X is better than Y" with no demonstration | Run both variants, print the metric, let the number speak ("WITHOUT scaling: peak→1, gradient ≈ 0") |
+| **5** | **🔮 Predict-first prompts** | Concepts explained then run | Reader commits to a prediction before every code cell that would confirm or refute it |
+| **6** | **🧪 Tweak-one-knob exercises** | Exercises ask the reader to build something new | Exercises change one variable (`n_heads`, `DEPTH`, `temperature`) and ask the reader to predict the output — doing beats reading |
+| **7** | **Toy → real bridge** | Chapter ends at toy scale | An explicit mapping table (toy dims vs production dims) + one cell loading the real model ("same machinery, bigger numbers") |
+| **8** | **Deterministic animations** | No visual; or a plot that requires GPU / network | `matplotlib FuncAnimation` that freezes on each completed step; NumPy-only, GPU-free, always renders |
+| **9** | **Honest caveats and precision** | Oversimplification left uncorrected | Subtleties are flagged inline ("CAVEAT: W_Q here is RANDOM — a learned W_Q preserves much more of the signal") |
+
+**How to use this rubric:**
+
+```
+For each technique, mark:
+  ✅  present and effective
+  ⚠️  present but weak (e.g. predict-first prompt exists but answer is in the same paragraph)
+  ❌  absent
+```
+
+A chapter ready for the `Complete` badge should have no `❌` and at most two `⚠️`. The rigor rubric is also referenced in the track-level `authoring-guide.md` files.
+
+---
+
 ## 19 · Anti-Pattern: Meta-Navigation Overload
 
 > **Red line:** A chapter has exactly one narrative thread. Never create a section that maps one navigation model (phases, stages, acts) to another (section numbers). Readers cannot context-switch that fast.

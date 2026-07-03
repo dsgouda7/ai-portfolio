@@ -13,6 +13,8 @@ How raw internet text becomes GPT-4 or Claude: the three-stage pipeline (pretrai
   - RLHF vs DPO: when to use each
   - LoRA and prefix tuning: adapting without full retraining
 
+> **From-scratch companion (Part 10):** [`learning/genai/transformers/transformers.ipynb`](../../../learning/genai/transformers/transformers.ipynb) — Part 10 trains a MiniLM decoder-only transformer from scratch end-to-end: vocabulary → embeddings → transformer blocks → cross-entropy training loop → accuracy curve. It is the smallest complete example of what "pretraining" means in code (300 epochs, toy corpus, full gradient flow). Read it before this chapter to make the training-pipeline concepts concrete.
+
 ## Learning Objectives
 
 After completing this chapter, you should be able to:
@@ -61,7 +63,7 @@ If you completed **notes/02**, these connections anchor the new material:
 
 ```bash
 # Open the training pipeline notes
-code notes/03-ai/ch03-llm-training-pipeline/training-pipeline.md
+code notes/03-llm/ch03-llm-training-pipeline/training-pipeline.md
 ```
 
 ## Common Questions

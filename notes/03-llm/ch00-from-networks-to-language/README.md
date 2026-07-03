@@ -1595,6 +1595,110 @@ Better, but still catastrophic for 100+ token sequences. The real solution? **Sk
 
 ---
 
+## §6.5 · The Other Dead Ends — Generative Models That Couldn't Scale to Text
+
+> **Why you care:** Before transformers, three other approaches attacked open-ended text generation — Seq2Seq, VAEs, and GANs. All three failed for different structural reasons. Understanding *why* each failed is the fastest path to understanding *why* transformers succeeded.
+
+RNNs (§6) explained the *sequential processing* dead end. This section covers the *generation* dead ends: approaches explicitly designed to produce text, not just encode it.
+
+### 6.5.1 · Seq2Seq: The Context Bottleneck
+
+**What it was (2014):** Sutskever et al. — two RNNs chained together. An encoder reads the input, compresses it into one fixed-size vector; a decoder uses that vector to generate the output. Used for machine translation, summarization.
+
+**Why it failed at scale:**
+
+The entire source sentence — however long — must fit in one vector (e.g., 1000 dimensions). For short sentences this works. For real documents it's catastrophic:
+
+| Source length | BLEU score | Usable? |
+|--------------|-----------|---------|
+| ≤ 10 words | 28 | Yes |
+| 20-30 words | 19 | Barely |
+| 40+ words | 7 | No |
+
+**The structural problem:** Every bit of information not encoded survives only by evicting something else. The model must decide, right now, which words matter — before it knows what the decoder will ask. "The chef who trained in Paris for five years and won three Michelin stars **made pasta**" → encoder discards "trained in Paris" and "Michelin stars" before decoder asks "who made what?"
+
+**The fix that led to transformers:** Bahdanau's attention (§7) let the decoder look back at all encoder states dynamically. But the encoder was still an RNN — serial, gradient-limited. The final fix was to throw out the RNN entirely.
+
+*Seq2Seq's fixed vector was trying to be both a memory and a communication channel. You can't be both.*
+
+### 6.5.2 · VAEs for Text: Posterior Collapse
+
+**What they were:** Variational Autoencoders encode input to a latent distribution (μ, σ), sample a latent vector z, and decode to output. For images: beautiful. For text: fundamentally broken.
+
+**The structural problem — posterior collapse:**
+
+The decoder is an autoregressive language model (an RNN or similar). Given a partially generated sequence, it can predict the next word reasonably well *from the text alone* — without any information from z. Over training:
+
+1. Decoder learns to ignore z (it's unnecessary noise)
+2. Encoder receives no gradient signal (decoder doesn't use its output)
+3. Encoder collapses to prior: q(z|x) → p(z) = N(0, I)
+
+**Concrete symptom:**
+```
+Sample z₁ from N(0, I): "The cat sat on the mat."
+Sample z₂ from N(0, I): "The cat sat on the mat."
+Sample z₃ from N(0, I): "The cat sat on the mat."
+```
+
+The decoder ignores z entirely and generates its most probable sequence unconditionally. The latent space has collapsed to a point.
+
+**Attempts to fix it (KL annealing, bag-of-words auxiliary losses, β-VAE weighting) kept the model barely alive but never made it competitive.**
+
+*For images, the pixel decoder must use z — it has no other signal. For text, the autoregressive decoder already has the previous tokens. z becomes redundant.*
+
+### 6.5.3 · GANs for Text: The Discrete Sampling Wall
+
+**What they were:** A generator produces sequences; a discriminator classifies them as real/fake. For images (continuous pixel values): state of the art. For text (discrete tokens): fundamentally non-differentiable.
+
+**The structural problem — no gradient through argmax:**
+
+Image GAN update:
+```python
+image = generator(z)          # continuous values, differentiable
+loss = discriminator(image)   # gradient flows back to generator ✓
+```
+
+Text GAN attempt:
+```python
+logits = generator(z)         # (seq_len, vocab_size) — still differentiable
+tokens = argmax(logits)       # DISCRETE CHOICE — gradient cannot pass ✗
+loss = discriminator(tokens)  # gradient stuck here, never reaches generator
+```
+
+**Why this is fatal:** `argmax` is a step function. Its derivative is zero everywhere except at a single point where it's undefined. The generator receives zero gradient from the discriminator. It cannot learn.
+
+**Workarounds attempted:**
+
+| Approach | Idea | Why it failed |
+|----------|------|--------------|
+| **REINFORCE** | Treat text generation as RL policy; use reward signal | High variance; training unstable; only works for very short sequences |
+| **Gumbel-Softmax** | Approximate discrete sampling with temperature → 0 | Temperature must be exactly right; gradient estimate noisy at any useful temperature |
+| **SeqGAN** | Combine REINFORCE + Monte Carlo rollout | 3-10× slower; still unstable for sequences > 20 tokens |
+| **MaskGAN** | Fill-in-the-blank instead of full generation | Works for short spans, not open-ended generation |
+
+**None reached RNN quality on competitive text benchmarks.** GAN for text generation was declared a dead end by 2019.
+
+*GANs broke continuous media beautifully. Text is not continuous. The argmax operator was a wall with no door.*
+
+### 6.5.4 · What All Three Had in Common
+
+| Model | Core failure | Root cause |
+|-------|-------------|-----------|
+| Seq2Seq | Fixed-vector bottleneck | Must compress unbounded input into finite vector before knowing what's needed |
+| VAE | Posterior collapse | Autoregressive decoder learns to ignore latent code; latent space is useless |
+| GAN | Non-differentiable discrete sampling | `argmax` blocks gradient flow; generator cannot receive learning signal |
+
+**The shared pattern:** each failure is a *structural* problem — not solvable by more data, larger models, or better hyperparameters. They hit architectural walls.
+
+**What transformers did differently:**
+- No fixed-size bottleneck (direct attention to all tokens)
+- No latent code needed (autoregressive decoder driven by attention, not a sampled z)
+- No GAN adversarial game (trained with simple cross-entropy on next-token prediction)
+
+> **🔮 Predict before §7:** Having seen three generative dead ends, what single property would you need in an architecture to avoid all three? Commit to your answer, then read §7.
+
+---
+
 ## §7: Weapon Forged — Attention Mechanism (The Breakthrough)
 
 > **Why you care:** Attention is THE breakthrough that made modern AI possible. When ChatGPT "understands" your prompt, it's attention deciding which words matter. This section teaches you how the magic actually works — and more importantly, *how it was discovered*.
@@ -2192,7 +2296,7 @@ For GPT-3 ($d_\text{model} = 12{,}288$, $V = 50{,}257$): the output matrix $W$ i
 
 #### The connect from notes/02: what you already know
 
-If you've completed notes/02 (Advanced Deep Learning), you've already seen two concepts that map directly to LLM training:
+If you've completed notes/02 (Bridging to Transformers), you've already seen two concepts that map directly to LLM training:
 
 | notes/02 concept | How it appears in LLMs |
 |---|---|

@@ -13,6 +13,8 @@ The engineering vocabulary for deployment decisions: parameter counting, VRAM bu
   - Mixture of Experts: routing and active-parameter economics
   - Grouped Query Attention (GQA): memory bandwidth optimization
 
+> **From-scratch companion (Part 12):** [`learning/genai/transformers/transformers.ipynb`](../../../learning/genai/transformers/transformers.ipynb) — Part 12 loads `distilgpt2` via `TFGPT2LMHeadModel`, inspects all 6 transformer blocks, visualises all 6 layers × 12 heads of attention in a single grid, shows head diversity within a single layer, and plots the next-token probability distribution. This is the "crack open a real model" section — do it before this chapter to get your hands on the internals before reading the parameter-counting theory.
+
 ## Learning Objectives
 
 After completing this chapter, you should be able to:
@@ -60,7 +62,7 @@ If you completed **notes/02**, these connections are direct:
 ## Quick Start
 
 ```bash
-code notes/03-ai/ch04-llm-model-internals/model-internals.md
+code notes/03-llm/ch04-llm-model-internals/model-internals.md
 ```
 
 ## Common Questions

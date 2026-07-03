@@ -542,7 +542,7 @@ Yet **GANs remain relevant** for:
 - **Super-resolution** (SRGAN, ESRGAN)
 - **Domain adaptation** (sim-to-real for robotics)
 
-The forger-detective framework introduced here reappears in contrastive learning ([02-advanced-deep-learning/ch07_contrastive_learning](../../../02-advanced-deep-learning/ch07_contrastive_learning/README.md)) and adversarial robustness research.
+The forger-detective framework introduced here reappears in contrastive learning ([02-bridging-to-transformers/ch07_contrastive_learning](../../../02-bridging-to-transformers/ch07_contrastive_learning/README.md)) and adversarial robustness research.
 
 ---
 
