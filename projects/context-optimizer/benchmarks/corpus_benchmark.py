@@ -620,15 +620,22 @@ def build_vanilla_rag(
 def build_optimized_rag(
     corpus_path: Path,
     block_size_mb: float = 0.5,
+    overlap_pct: float = 10.0,
     max_mb: float = 0.0,
+    strategy: str = "llm",
+    compressor_model: str = "llama3.2:3b",
     verbose: bool = True,
 ) -> tuple["Any", "Any", "StrategyResult"]:
     """
-    Build the optimized RAG index:
-      - Split corpus into block_size_mb blocks
-      - Extractively compress each block (~35% of original)
-      - Store summary in ChromaDB + file pointer in BlockIndex
-      - Raw text stays on disk; no data duplication
+    Build the optimized RAG index using quantized LLM block summarization.
+
+    For each 500 KB block:
+      - The LLM (default: llama3.2:3b via Ollama) produces a FIXED 150-200 word
+        dense summary — exactly sized to fit the embedding model's context window.
+      - The last ``overlap_pct``% of the block is prepended as context for the
+        next block so concepts at block boundaries are captured in both summaries.
+      - A file pointer (byte offsets) is stored in BlockIndex — raw text is never
+        duplicated and is read on demand if a summary is insufficient.
 
     Returns (retriever, block_index, StrategyResult).
     """
@@ -637,11 +644,16 @@ def build_optimized_rag(
     from context_optimizer.raw_index import BlockIndex
 
     block_size_bytes = int(block_size_mb * 1_048_576)
+    overlap_bytes = int(block_size_bytes * overlap_pct / 100)
     if verbose:
         print(f"\n[optimized_rag] Building index from {corpus_path.name} ...")
         print(
-            f"[optimized_rag] Block size: {block_size_mb:.1f} MB ({block_size_bytes:,} bytes)"
+            f"[optimized_rag] Block: {block_size_mb:.1f} MB  "
+            f"Overlap: {overlap_pct:.0f}% ({overlap_bytes//1024} KB)  "
+            f"Strategy: {strategy}"
         )
+        if strategy == "llm":
+            print(f"[optimized_rag] Compressor: {compressor_model} (fixed 150-200 word output)")
 
     tmp_dir = tempfile.mkdtemp(prefix="co_optimized_")
     block_db = Path(tmp_dir) / "blocks.db"
@@ -657,7 +669,6 @@ def build_optimized_rag(
         max_bytes = int(max_mb * 1_048_576)
         actual_size = corpus_path.stat().st_size
         if actual_size > max_bytes:
-            # Write a byte-slice to a temp file (aligned to next newline)
             import tempfile as _tf
 
             tmp_slice_fd, tmp_slice = _tf.mkstemp(
@@ -665,7 +676,6 @@ def build_optimized_rag(
             )
             with open(tmp_slice_fd, "wb") as out_fh, open(corpus_path, "rb") as in_fh:
                 data = in_fh.read(max_bytes)
-                # Align to next newline
                 tail = in_fh.read(1000)
                 nl = tail.find(b"\n")
                 if nl >= 0:
@@ -675,13 +685,15 @@ def build_optimized_rag(
             if verbose:
                 print(f"  [optimized_rag] Using {max_mb:.0f} MB slice of corpus")
 
-    # Ingest file as blocks: compress each block, record file pointers
+    # Ingest: quantized LLM compresses each block to fixed 150-200 word summary
     compressed_chunks = ingest_file_blocks(
         source_path=actual_source,
         block_size_bytes=block_size_bytes,
+        overlap_bytes=overlap_bytes,
         block_index=block_index,
-        strategy="extractive",
+        strategy=strategy,
         label="opt_rag",
+        compressor_model=compressor_model if strategy == "llm" else None,
     )
 
     if tmp_slice:
@@ -1079,6 +1091,27 @@ def _parser() -> argparse.ArgumentParser:
         help="Cap corpus size in MB for both strategies (default 200 MB for practical runtime)",
     )
     run.add_argument(
+        "--overlap-pct",
+        type=float,
+        default=10.0,
+        dest="overlap_pct",
+        help="Block overlap as %% of block size for boundary continuity (default 10%%)",
+    )
+    run.add_argument(
+        "--opt-strategy",
+        choices=["llm", "extractive"],
+        default="llm",
+        dest="opt_strategy",
+        help="Optimized RAG compression strategy: llm (default) or extractive",
+    )
+    run.add_argument(
+        "--compressor-model",
+        type=str,
+        default="llama3.2:3b",
+        dest="compressor_model",
+        help="Ollama model for block summarization (default: llama3.2:3b)",
+    )
+    run.add_argument(
         "--fallback-threshold",
         type=float,
         default=0.30,
@@ -1105,6 +1138,9 @@ def _parser() -> argparse.ArgumentParser:
     all_.add_argument("--top-k", type=int, default=5, dest="top_k")
     all_.add_argument("--block-mb", type=float, default=0.5, dest="block_mb")
     all_.add_argument("--max-mb", type=float, default=200.0, dest="max_mb")
+    all_.add_argument("--overlap-pct", type=float, default=10.0, dest="overlap_pct")
+    all_.add_argument("--opt-strategy", choices=["llm", "extractive"], default="llm", dest="opt_strategy")
+    all_.add_argument("--compressor-model", type=str, default="llama3.2:3b", dest="compressor_model")
     all_.add_argument(
         "--fallback-threshold", type=float, default=0.30, dest="fallback_threshold"
     )
@@ -1188,7 +1224,10 @@ def cmd_run(args: argparse.Namespace) -> None:
         optimized_retriever, block_index, optimized_result = build_optimized_rag(
             corpus_path,
             block_size_mb=args.block_mb,
+            overlap_pct=getattr(args, "overlap_pct", 10.0),
             max_mb=getattr(args, "max_mb", 200.0),
+            strategy=getattr(args, "opt_strategy", "llm"),
+            compressor_model=getattr(args, "compressor_model", "llama3.2:3b"),
         )
 
     # ── Evaluate ──────────────────────────────────────────────────────────────
