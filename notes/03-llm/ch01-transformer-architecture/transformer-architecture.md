@@ -934,6 +934,19 @@ $$
 
 **Plain English:** We're creating three different "views" of each token. Imagine every word wearing three hats: a "what I'm searching for" hat (Q), a "what I'm advertising" hat (K), and a "what I contain" hat (V). These projection matrices are **learned during training** — the model adjusts them so that relevant tokens produce similar Q/K patterns.
 
+**Why W_V is not just a passthrough — the relevance filter.** A natural question: if the embedding already carries the semantic meaning of a word, why project it through $W_V$ at all? Why not just blend raw embeddings weighted by attention?
+
+The answer is that $W_V$ is a **task-specific extraction lens**. Each attention layer in a 32-layer model has a different job: an early layer might need only syntactic signals (is this a noun or verb?), a deep layer might need relational signals (who performed this action?). $W_V$ lets each layer extract exactly the dimensions it needs from each token's embedding and discard the rest.
+
+Without $W_V$, every layer would carry the full raw embedding — all dimensions, including the irrelevant ones — into every weighted blend. The FFN downstream would have to disentangle signal from noise on every forward pass. The division of labour is clean:
+
+| Component | Role |
+|---|---|
+| $W_Q$ / $W_K$ | Decide **who** talks to **whom** (the attention pattern) |
+| $W_V$ | Decide **what** each token actually *says* when spoken to (the payload) |
+
+**Aphorism:** *Attention weights answer how much. $W_V$ answers what part.*
+
 ---
 
 #### Step 2: Compute Attention Scores (Measure Relevance)
@@ -976,6 +989,14 @@ In **decoder models** (GPT, Claude, LLaMA), each token can only attend to **prio
 **Intuition:** Causal masking is like reading a mystery novel — you can only see the pages you've already read, not the ones ahead. When the model generates "The river bank was...", it knows about [The, river, bank, was] but must not peek at "flooded" (the next word). If it could see the future, generation would be cheating.
 
 **Concrete example:** At generation step 4 (producing the 4th token), the model can attend to tokens 1-3 but not tokens 5+. This forces it to learn genuine next-token prediction, not just memorization.
+
+**The causal triangle and the last-position accumulation point.** The causal mask creates an exact asymmetry across the sequence:
+
+- Position 0 attends to **1 token** (only itself)
+- Position 1 attends to **2 tokens** (positions 0–1)
+- Position $n$ attends to **$n+1$ tokens** (positions 0 through $n$)
+
+The **last token position in the sequence is the richest accumulation point**: it has attended to every prior token, directly or through intermediary layers. Through stacking, this richness compounds — Block 1 lets `"sat"` absorb `"cat"` directly; Block 2 lets `"mat"` attend to the already-enriched `"sat"` which already holds some of `"cat"`. Context chains backward through the stack. When the model predicts the next word, it reads from the last-position vector — which, by the top layer, holds a compressed chain of the full prior context. The prediction layer doesn't look backward; **the last slot is the transcript's accumulation point**.
 
 > **Note:** **Encoder models** (BERT) skip this step — every token can attend to every other token (bidirectional attention). They're built for understanding, not generation.
 
@@ -1188,7 +1209,12 @@ def transformer_block(x, W_Q, W_K, W_V, W_O, W_ff1, W_ff2):
 
 A GPT-3-scale model has **L = 96 layers** (96 transformer blocks stacked). Each pass through one block refines the representation of every token based on its relationship to all other tokens.
 
-**Key insight:** The feed-forward network (FFN) operates on each token **independently** — no interaction across the sequence. All cross-token information flow happens in the attention step. The FFN refines each token's representation based on what attention learned.
+**Key insight — the division of labour between attention and FFN:** These two sub-layers have fundamentally different jobs:
+
+- **Attention is the router (information retrieval).** It looks across the sequence and gathers pieces — blending value vectors from relevant tokens into each position's representation. All *inter-token* communication happens here.
+- **The FFN is the thinker (world knowledge).** It operates on each token independently, applying stored factual knowledge from training to decide *what to do* with the gathered context. The FFN doesn't look across the sequence; it looks deeply *inside* the current token's enriched representation.
+
+A transformer without attention would have no way to connect words. A transformer without the FFN would have no way to reason about what those connections mean.
 
 #### Step 1: Project Each Token into Query, Key, and Value Spaces
 
@@ -1977,6 +2003,15 @@ Each generation step requires a **full forward pass** through all $L$ layers. Th
 
 **Why not bidirectional for generation?** Bidirectional attention sees future context — it would know the answer before generating it. Causal masking is necessary for autoregressive generation to be meaningful.
 
+**Why decoder-only models don't need a dedicated encoder — the scaling argument.** This is the subtler point. You might ask: doesn't the decoder *miss* the bidirectional understanding that BERT provides, since it can only look backward?
+
+At sufficient scale, the answer is no. When a decoder processes a prompt, its early layers effectively perform bidirectional-style comprehension over that prompt — each token's query vector, computed at runtime through the trained $W_Q$ matrix, reaches backward through the entire prompt history. The later tokens have already absorbed the full context of earlier ones through the causal stacking mechanism. A 32-layer decoder has 32 opportunities to enrich every token's representation using all prior context before prediction.
+
+The dedicated encoder becomes redundant once depth and width are sufficient. You gain three engineering advantages by removing it:
+- **Training data**: decoder-only accepts any raw text as-is; encoder-decoder needs paired source/target sequences
+- **KV cache**: one growing cache instead of two (encoder + decoder) at inference time
+- **Simplicity**: one architecture for all tasks via prompting, rather than a separate understanding head per task
+
 #### Concrete Example: LLaMA 2 7B
 
 | Parameter | Value |
@@ -2013,6 +2048,15 @@ $$
 $$
 
 Each decoder token queries the entire encoded input — "which parts of the input are relevant for generating this output token?"
+
+**Why cross-attention was necessary — the information bottleneck problem.** The obvious first instinct is: *why not just prepend the encoder's output vectors to the decoder's input and let causal attention handle it?* Early seq2seq models (2014–2016) went further: they compressed the *entire* source sequence into a **single vector** (the final hidden state) and fed only that to the decoder. This was called the "thought vector." It worked acceptably for sentences up to ~30 words, then failed catastrophically — all the source meaning had to fit into one fixed-size vector, so long-range dependencies were simply lost.
+
+Cross-attention solves this cleanly:
+1. The encoder runs once and produces a full K/V matrix — one enriched vector per source token.
+2. That K/V matrix is **frozen** but stays fully accessible throughout decoding.
+3. At every decoder step, the decoder's $Q$ vector can attend to **any** source position with no causal restriction on the source side.
+
+No compression. No bottleneck. The decoder re-reads the source map at every step as if it were looking at the original input.
 
 #### Training Objective: Sequence-to-Sequence
 

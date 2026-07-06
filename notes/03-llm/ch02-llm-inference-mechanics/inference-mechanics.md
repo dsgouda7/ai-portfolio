@@ -246,6 +246,14 @@ You know the model predicts the next token (§1). You know attention computes $Q
 
 ### The Naive Autoregressive Loop (No Caching) — Why It Fails
 
+**Why training is parallel but inference is sequential.** Before examining the naive loop, it's worth understanding the asymmetry that makes KV caching necessary in the first place.
+
+During **training**, the model is given a complete sentence (e.g., "The cat sat on the mat") and processes all tokens simultaneously in one forward pass. The causal mask enforces left-to-right information flow — token 3 can only see tokens 1–2 — but the GPU still computes all rows of the attention matrix in parallel using the full known sentence. This is **teacher forcing**: because the ground-truth tokens at every position are known upfront, there's nothing to wait for.
+
+During **inference**, the model has no such luxury. The next token doesn't exist until the model generates it. So generation is inherently sequential: generate token $t$, append it, then generate token $t+1$ using the now-longer sequence. There's no way to parallelize across time steps because each step depends on the previous step's output.
+
+This is why inference requires fundamentally different engineering than training. Training is one batched matrix multiply; inference is a loop.
+
 **Concrete example first:** Let's generate 3 tokens from a 2-token prompt using a simplified 1-layer model:
 
 ```
