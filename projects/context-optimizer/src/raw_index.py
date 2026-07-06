@@ -430,11 +430,15 @@ class BlockIndex:
 
     def get_meta(self, block_id: str) -> BlockPointer | None:
         """Return the pointer metadata without reading the file."""
-        row = self._connect().execute(
-            "SELECT block_id, file_path, byte_start, byte_end"
-            "  FROM blocks WHERE block_id = ?",
-            (block_id,),
-        ).fetchone()
+        row = (
+            self._connect()
+            .execute(
+                "SELECT block_id, file_path, byte_start, byte_end"
+                "  FROM blocks WHERE block_id = ?",
+                (block_id,),
+            )
+            .fetchone()
+        )
         return BlockPointer(*row) if row else None
 
     def get_text(
@@ -470,7 +474,11 @@ class BlockIndex:
         return self._connect().execute("SELECT COUNT(*) FROM blocks").fetchone()[0]
 
     def all_ids(self) -> list[str]:
-        rows = self._connect().execute("SELECT block_id FROM blocks ORDER BY block_id").fetchall()
+        rows = (
+            self._connect()
+            .execute("SELECT block_id FROM blocks ORDER BY block_id")
+            .fetchall()
+        )
         return [r[0] for r in rows]
 
     # ── Lifecycle ────────────────────────────────────────────────────────────
@@ -484,4 +492,3 @@ class BlockIndex:
     def __exit__(self, *_: object) -> None:
         if self._is_memory and self._shared_conn:
             self._shared_conn.close()
-

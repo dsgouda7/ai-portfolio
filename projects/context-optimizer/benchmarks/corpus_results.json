@@ -1,0 +1,467 @@
+{
+  "run_date": "2026-07-06 13:17",
+  "corpus": "C:\\repos\\ai-portfolio\\projects\\context-optimizer\\benchmarks\\data\\corpus\\enwik9",
+  "corpus_mb": 953.67431640625,
+  "questions": 50,
+  "top_k": 5,
+  "block_mb": 0.5,
+  "vanilla_rag": null,
+  "optimized_rag": {
+    "name": "optimized_rag",
+    "ingestion_time_s": 129.62319510011002,
+    "index_size_chunks": 400,
+    "index_size_mb": 608.2040901184082,
+    "query_results": [
+      {
+        "question_id": 0,
+        "query": "What is 'Anarchism'?",
+        "answer_snippet": "[[Jeremiah Jenks]] of [[New York University]] from [[1923]] to [[1924]]. He remained there until [[1962]]. == Work ==\n===The economic calculation problem===\nHayek was one of the leading academic criti",
+        "tokens_used": 318973,
+        "latency_ms": 40.43849976733327,
+        "kw_recall": 0.8666666666666667,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 1,
+        "query": "What is 'Autism'?",
+        "answer_snippet": "<contributor>\n        <ip>Conversion script</ip>\n      </contributor>\n      <minor />\n      <comment>Automated conversion</comment>\n      <text xml:space=\"preserve\">#REDIRECT [[Paramagnetism]]\n</text>",
+        "tokens_used": 316279,
+        "latency_ms": 42.41390014067292,
+        "kw_recall": 0.7333333333333333,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 2,
+        "query": "What is 'Albedo'?",
+        "answer_snippet": "Note that the plant sometimes called &quot;American aloe&quot;, ''Agave americana'', belongs to a different family, namely [[Agavaceae]]. ==Uses==\nHuman use of Aloes are primarily as a [[Herbalism|her",
+        "tokens_used": 326613,
+        "latency_ms": 32.14830020442605,
+        "kw_recall": 0.5,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 3,
+        "query": "What is 'Abu Dhabi'?",
+        "answer_snippet": "Oman maintains a small but professional and effective military, supplied mainly with [[United Kingdom|British]] equipment in addition to items from the [[United States]], [[France]], and other countri",
+        "tokens_used": 339168,
+        "latency_ms": 33.941700123250484,
+        "kw_recall": 0.8,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 4,
+        "query": "What is 'A'?",
+        "answer_snippet": "Its name in [[English language|English]] is ''em''. 2000 BC borrowed a hieroglyph for Water that was first used for the sound '[[N]]', because of the Egyptian word for Water, &quot;n-t&quot;. {| borde",
+        "tokens_used": 327788,
+        "latency_ms": 40.1415997184813,
+        "kw_recall": 1.0,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 5,
+        "query": "What is 'Alabama'?",
+        "answer_snippet": "classrooms of the time. Wright]], at &quot;Fruitlands&quot;, in the town of [[Harvard, Massachusetts]], a [[utopian]] [[socialist]] experiment in farm living and nature meditation as tending to develo",
+        "tokens_used": 341873,
+        "latency_ms": 32.88770001381636,
+        "kw_recall": 0.9333333333333333,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 6,
+        "query": "What is 'Achilles'?",
+        "answer_snippet": "[[Image:John_Wesley.jpg|thumbnail|350px|right|Portrait of [[John Wesley]].]]\nWesley departs from tradition and forges into new theological territory on three issues primarily. Steven Harper states &qu",
+        "tokens_used": 324839,
+        "latency_ms": 37.80770022422075,
+        "kw_recall": 0.6,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 7,
+        "query": "What is 'Abraham Lincoln'?",
+        "answer_snippet": "The [[George Bush Presidential Library and Museum]] is located on the Southwest corner of the campus of [[Texas A&amp;M University]] in [[College Station, Texas|College Station]], Texas. [[George Bush",
+        "tokens_used": 312650,
+        "latency_ms": 32.23739983513951,
+        "kw_recall": 0.8666666666666667,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 8,
+        "query": "What is 'Aristotle'?",
+        "answer_snippet": "In [[2005]], [[Matthew Nimitz]], UN Special Representative for the country, suggested using &quot;Republika Makedonija-Skopje&quot; [sic] for official purposes. Greece did not accept the proposal outr",
+        "tokens_used": 321674,
+        "latency_ms": 32.82830026000738,
+        "kw_recall": 0.9090909090909091,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 9,
+        "query": "What is 'An American in Paris'?",
+        "answer_snippet": "November 30 is therefore commemorated by 300 cities around the world as [[Cities for Life Day]]. *[[1803]] - In [[New Orleans]], [[Spain | Spanish]] representatives officially transfer [[Louisiana Ter",
+        "tokens_used": 320190,
+        "latency_ms": 36.195899825543165,
+        "kw_recall": 0.8181818181818182,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 10,
+        "query": "What is 'Academy Awards'?",
+        "answer_snippet": "[[Category:American zoologists|Wilson, Edward Osborne]]\n[[Category:American naturalists|Wilson, Edward Osborne]]\n[[Category:Myrmecologists|Wilson, Edward Osborne]]\n[[Category:Pulitzer Prize winners|Wi",
+        "tokens_used": 313796,
+        "latency_ms": 31.073400285094976,
+        "kw_recall": 0.9,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 11,
+        "query": "What is 'Animalia (book)'?",
+        "answer_snippet": "Although it was not a great success at the time &amp;mdash; selling fewer than 3,000 copies in the United States during [[1955]] before going out of print &amp;mdash; it went on to become a bestseller",
+        "tokens_used": 320390,
+        "latency_ms": 38.510499987751245,
+        "kw_recall": 0.5,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 12,
+        "query": "What is 'International Atomic Time'?",
+        "answer_snippet": "{{wiktionarypar|iron}}\n'''Iron''' is a [[chemical element]] with the symbol '''Fe''' ([[Latin|L.]]:  Ferrum) and [[atomic number]] 26. Iron is a [[Group 8 element|group 8]] and [[Period 4 element|peri",
+        "tokens_used": 335276,
+        "latency_ms": 38.1823000498116,
+        "kw_recall": 0.7142857142857143,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 13,
+        "query": "What is 'Altruism'?",
+        "answer_snippet": "How should such tyranny be prevented or resisted? &quot;In general,&quot; he wrote, &quot;it may be affirmed that there is no such passion in human mind, as the love of mankind, merely as such, indepe",
+        "tokens_used": 320516,
+        "latency_ms": 29.726100154221058,
+        "kw_recall": 1.0,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 14,
+        "query": "What is 'Ang Lee'?",
+        "answer_snippet": "Wang]] [http://www.dynamictao.com/index.html The Dynamic Tao and Its Manifestations]:''Tao and modern scientific thoughts''\n\n[[Image:Tao Te Ching Hintonjpg.jpg|thumb|Tao Te Ching, translation by [[Dav",
+        "tokens_used": 337444,
+        "latency_ms": 34.604400396347046,
+        "kw_recall": 0.8888888888888888,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 15,
+        "query": "What is 'Ayn Rand'?",
+        "answer_snippet": "Her first name is pronounced &quot;KEER-sten&quot; ([[International Phonetic Alphabet|IPA]]: {{IPA|'k\u026a\u0279s.tn\u0329}}). Bush|George H.W. In 1993, Dunst played Hedril in the seventh season episode of ''[[Star",
+        "tokens_used": 319495,
+        "latency_ms": 38.0660998634994,
+        "kw_recall": 0.7692307692307693,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 16,
+        "query": "What is 'Alain Connes'?",
+        "answer_snippet": "Vancouver: Hartley &amp; Marks. Often referred to simply as ''Bringhurst'', it is widely respected as the modern authority on typographic style for the English language ([http://www.aaronsw.com/2002/t",
+        "tokens_used": 310773,
+        "latency_ms": 38.07590017095208,
+        "kw_recall": 0.7333333333333333,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 17,
+        "query": "What is 'Allan Dwan'?",
+        "answer_snippet": "[[Afghan hound]]s (a type of running [[dog]]s) also originated in Afghanistan. The Afghan dialect of the Persian language [[Dari (Afghanistan)|Dari]] derives from &quot;Farsi-e Darbari&quot;, meaning ",
+        "tokens_used": 314106,
+        "latency_ms": 38.180300034582615,
+        "kw_recall": 0.9090909090909091,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 18,
+        "query": "What is 'Economy of Algeria'?",
+        "answer_snippet": "Morocco's capital city is [[Rabat]], and its largest city is the main port of [[Casablanca]]. See also [[List of cities in Morocco and Western Sahara]]\n\n==Economy==\n{{main|Economy of Morocco}}\n[[Image",
+        "tokens_used": 316523,
+        "latency_ms": 33.29529985785484,
+        "kw_recall": 0.7272727272727273,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 19,
+        "query": "What is 'Algeria'?",
+        "answer_snippet": "Morocco's capital city is [[Rabat]], and its largest city is the main port of [[Casablanca]]. See also [[List of cities in Morocco and Western Sahara]]\n\n==Economy==\n{{main|Economy of Morocco}}\n[[Image",
+        "tokens_used": 342485,
+        "latency_ms": 35.71279998868704,
+        "kw_recall": 1.0,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 20,
+        "query": "What is 'Characters in Atlas Shrugged'?",
+        "answer_snippet": "Thompson==\nThe &quot;[[Head of State|Head of the State]],&quot; which essentially means that he's the [[President of the United States]], though he's never specifically referred to as such. In the wor",
+        "tokens_used": 326234,
+        "latency_ms": 31.34599979966879,
+        "kw_recall": 1.0,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 21,
+        "query": "What is 'Technology in Atlas Shrugged'?",
+        "answer_snippet": "Thompson==\nThe &quot;[[Head of State|Head of the State]],&quot; which essentially means that he's the [[President of the United States]], though he's never specifically referred to as such. In the wor",
+        "tokens_used": 317953,
+        "latency_ms": 26.49539988487959,
+        "kw_recall": 1.0,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 22,
+        "query": "What is 'Companies in Atlas Shrugged'?",
+        "answer_snippet": "Thompson==\nThe &quot;[[Head of State|Head of the State]],&quot; which essentially means that he's the [[President of the United States]], though he's never specifically referred to as such. In the wor",
+        "tokens_used": 308959,
+        "latency_ms": 32.843700144439936,
+        "kw_recall": 1.0,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 23,
+        "query": "What is 'Concepts in Atlas Shrugged'?",
+        "answer_snippet": "Thompson==\nThe &quot;[[Head of State|Head of the State]],&quot; which essentially means that he's the [[President of the United States]], though he's never specifically referred to as such. In the wor",
+        "tokens_used": 318658,
+        "latency_ms": 34.331100061535835,
+        "kw_recall": 1.0,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 24,
+        "query": "What is 'Things in Atlas Shrugged'?",
+        "answer_snippet": "Thompson==\nThe &quot;[[Head of State|Head of the State]],&quot; which essentially means that he's the [[President of the United States]], though he's never specifically referred to as such. In the wor",
+        "tokens_used": 319203,
+        "latency_ms": 32.17469993978739,
+        "kw_recall": 1.0,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 25,
+        "query": "What is 'Topics of note in Atlas Shrugged'?",
+        "answer_snippet": "Thompson==\nThe &quot;[[Head of State|Head of the State]],&quot; which essentially means that he's the [[President of the United States]], though he's never specifically referred to as such. In the wor",
+        "tokens_used": 321194,
+        "latency_ms": 37.01719967648387,
+        "kw_recall": 1.0,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 26,
+        "query": "What is 'Atlas Shrugged'?",
+        "answer_snippet": "Thompson==\nThe &quot;[[Head of State|Head of the State]],&quot; which essentially means that he's the [[President of the United States]], though he's never specifically referred to as such. In the wor",
+        "tokens_used": 319844,
+        "latency_ms": 31.06429986655712,
+        "kw_recall": 1.0,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 27,
+        "query": "What is 'Anthropology'?",
+        "answer_snippet": "In the academic traditions of several nations, a wide sense of the term &quot;philology&quot; describes the study of a language together with its literature and the historical and cultural contexts wh",
+        "tokens_used": 311366,
+        "latency_ms": 35.32360028475523,
+        "kw_recall": 0.875,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 28,
+        "query": "What is 'Archaeology'?",
+        "answer_snippet": "{{Cretaceous Footer}}\n\n[[Category:Cretaceous| ]]\n\n[[ca:Cretaci]]\n[[cs:K\u0159\u00edda]]\n[[da:Kridttiden]]\n[[de:Kreide (Geologie)]]\n[[et:Kriit (geoloogia)]]\n[[es:Cret\u00e1ceo]]\n[[eo:Kretaceo]]\n[[fr:Cr\u00e9tac\u00e9]]\n[[gl:Cr",
+        "tokens_used": 308654,
+        "latency_ms": 35.8279999345541,
+        "kw_recall": 0.8666666666666667,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 29,
+        "query": "What is 'Agricultural science'?",
+        "answer_snippet": ": Major deposits of [[petroleum]], [[natural gas]], [[coal]], [[iron]] ore, [[manganese]], [[chrome ore]], [[nickel]], [[cobalt]], [[copper]], [[molybdenum]], [[lead]], [[zinc]], [[bauxite]], [[gold]]",
+        "tokens_used": 326528,
+        "latency_ms": 31.670399941504,
+        "kw_recall": 0.9333333333333333,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 30,
+        "query": "What is 'Alchemy'?",
+        "answer_snippet": "As he went through the tractates, the Mishnah was set forth, but throughout his life some parts were updated as new information came to light. The [[Talmud]] refers to these differing version as ''Mis",
+        "tokens_used": 324309,
+        "latency_ms": 37.38670004531741,
+        "kw_recall": 0.6666666666666666,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 31,
+        "query": "What is 'Automatic Dependent Surveillance-Broadcast'?",
+        "answer_snippet": "===Internet and the workplace===\nWith the emergence of the internet and recent high speed connections becoming available to the public, the internet has altered the way many people work in significant",
+        "tokens_used": 327201,
+        "latency_ms": 35.52999999374151,
+        "kw_recall": 0.8666666666666667,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 32,
+        "query": "What is 'Austria'?",
+        "answer_snippet": "From the sixteenth century until independence in 1830, Belgium, called at that time [[Southern Netherlands |the Southern Netherlands]], was the site of many battles between the European powers, and ha",
+        "tokens_used": 335025,
+        "latency_ms": 40.053799748420715,
+        "kw_recall": 0.8888888888888888,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 33,
+        "query": "What is 'Australia'?",
+        "answer_snippet": "The [[1847]] [[Orders in Council]] divided land into settled, intermediate and unsettled areas, with pastoral leases of one, eight and 14 years for each category respectively. Whilst life was initiall",
+        "tokens_used": 321829,
+        "latency_ms": 32.48010016977787,
+        "kw_recall": 1.0,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 34,
+        "query": "What is 'American Samoa'?",
+        "answer_snippet": "'''+682:''' [[Cook Islands|CK]]&lt;br&gt;\n'''+683:''' [[Niue|NU]]&lt;br&gt;\n'''+684:''' --&lt;br&gt;\n'''+685:''' [[Samoa|WS]]&lt;br&gt;\n'''+686:''' [[Kiribati|KI]]&lt;br&gt;\n'''+687:''' [[New Caledoni",
+        "tokens_used": 327990,
+        "latency_ms": 39.66159978881478,
+        "kw_recall": 0.7333333333333333,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 35,
+        "query": "What is 'Alien'?",
+        "answer_snippet": "* The novel, &quot;Sandstorm,&quot; by James Rollins ([[2004]]), uses the circumstances of Tunguska event -- in this case, a meteor composed of anti-matter -- as evidence to suggest the cause of the e",
+        "tokens_used": 320862,
+        "latency_ms": 39.92149978876114,
+        "kw_recall": 0.8666666666666667,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 36,
+        "query": "What is 'Astronomer'?",
+        "answer_snippet": "== International organizations ==\n\n* [http://www.iag-aig.org/ International Association of Geodesy (IAG)]\n* [http://www.iugg.org/ International Union of Geodesy and Geophysics (IUGG)]\n* [http://www.fi",
+        "tokens_used": 323721,
+        "latency_ms": 32.72819984704256,
+        "kw_recall": 0.7142857142857143,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 37,
+        "query": "What is 'Amoeboid'?",
+        "answer_snippet": "Its name in [[English language|English]] is ''em''. 2000 BC borrowed a hieroglyph for Water that was first used for the sound '[[N]]', because of the Egyptian word for Water, &quot;n-t&quot;. {| borde",
+        "tokens_used": 331991,
+        "latency_ms": 37.94210031628609,
+        "kw_recall": 0.625,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 38,
+        "query": "What is 'ASCII'?",
+        "answer_snippet": "Its name in [[English language|English]] is ''em''. 2000 BC borrowed a hieroglyph for Water that was first used for the sound '[[N]]', because of the Egyptian word for Water, &quot;n-t&quot;. {| borde",
+        "tokens_used": 317330,
+        "latency_ms": 38.31540001556277,
+        "kw_recall": 0.9166666666666666,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 39,
+        "query": "What is 'America'?",
+        "answer_snippet": "It came into force on [[April 11]], [[1899]]. [[Image:10kMiles.JPG|thumb|350px|right|1898 [[political cartoon]]: &quot;Ten Thousand Miles From Tip to Tip&quot; meaning the extension of U.S. The war wo",
+        "tokens_used": 313036,
+        "latency_ms": 32.234800048172474,
+        "kw_recall": 1.0,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 40,
+        "query": "What is 'Africa'?",
+        "answer_snippet": "One week later, Mikael Sehul had him killed; although the details of his death are contradictory, the result was clear: for the first time an Emperor had lost his throne in a means other than his own ",
+        "tokens_used": 325961,
+        "latency_ms": 33.30199979245663,
+        "kw_recall": 1.0,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 41,
+        "query": "What is 'Austin'?",
+        "answer_snippet": "The [[George Bush Presidential Library and Museum]] is located on the Southwest corner of the campus of [[Texas A&amp;M University]] in [[College Station, Texas|College Station]], Texas. [[George Bush",
+        "tokens_used": 327689,
+        "latency_ms": 30.56019963696599,
+        "kw_recall": 1.0,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 42,
+        "query": "What is 'Animation'?",
+        "answer_snippet": "<id>282514</id>\n      </contributor>\n      <comment>rv to Brehaut - rvv</comment>\n      <text xml:space=\"preserve\">{{wiktionarypar|gimp}}\n\n'''Gimp''' may mean: \n*[[GIMP]], GNU Image Manipulation Progr",
+        "tokens_used": 318198,
+        "latency_ms": 35.22779978811741,
+        "kw_recall": 1.0,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 43,
+        "query": "What is 'Apollo'?",
+        "answer_snippet": "|}\n\n&lt;br style=&quot;clear: left&quot;/&gt;\n\n[[Image:GPN-2000-001100.jpg|center|thumb|left|225px|Dave Scott spacewalk. (NASA)]]\n\n[[Image:GPN-2000-001106.jpg|center|thumb|left|225px|Apollo 9 LM &quot",
+        "tokens_used": 321462,
+        "latency_ms": 32.006199937313795,
+        "kw_recall": 1.0,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 44,
+        "query": "What is 'Andre Agassi'?",
+        "answer_snippet": "His nickname amongst mates is &quot;Skunky&quot;. Poelten\n*1999--[[Cincinnati Masters|Cincinnati]], [[Rome Masters|Rome]]\n*2000--[[Wimbledon]], Lyon\n*2001--[[Wimbledon]], [[Cincinnati Masters|Cincinna",
+        "tokens_used": 359656,
+        "latency_ms": 39.784399792551994,
+        "kw_recall": 0.875,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 45,
+        "query": "What is 'Austro-Asiatic languages'?",
+        "answer_snippet": "A [[liqueur]] can also be made by soaking kumquats in [[vodka]] or other clear spirit. The [[Cantonese people|Cantonese]] often preserve kumquats in [[salt]]. A jar of such preserved kumquats can last",
+        "tokens_used": 333151,
+        "latency_ms": 36.41379997134209,
+        "kw_recall": 0.875,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 46,
+        "query": "What is 'Afro-Asiatic languages'?",
+        "answer_snippet": "Otherwise, \n*Ehret groups Egyptian, Berber, and Semitic together in a North Afro-Asiatic subgroup; \n*[[Paul Newman (professor)|Paul Newman]] (1980) groups Berber with Chadic and Egyptian with Semitic,",
+        "tokens_used": 330277,
+        "latency_ms": 35.39140010252595,
+        "kw_recall": 1.0,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 47,
+        "query": "What is 'Andorra'?",
+        "answer_snippet": "B\u00e9thencourt also established a base on the island of [[Gomera]], but it would be many years before the island was truly conquered. A new cash crop, the [[cochinilla]], came into cultivation during thi",
+        "tokens_used": 310077,
+        "latency_ms": 42.7263998426497,
+        "kw_recall": 0.4666666666666667,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 48,
+        "query": "What is 'Arithmetic mean'?",
+        "answer_snippet": "For example, the numerologic value for &quot;shirt&quot; in English would be 8. The same item in Spanish would be &quot;camisa,&quot; a 6 in numerology. Century B.C. The Indian [[Vedas]], the Chinese ",
+        "tokens_used": 316177,
+        "latency_ms": 34.5293004065752,
+        "kw_recall": 1.0,
+        "used_raw_fallback": false
+      },
+      {
+        "question_id": 49,
+        "query": "What is 'American Football Conference'?",
+        "answer_snippet": "But they managed to regroup, as head coach [[Brian Billick]] forbade anyone to use the &quot;P-word&quot; (presumably &quot;postseason&quot; or &quot;playoffs&quot;) until the team actually played in ",
+        "tokens_used": 288584,
+        "latency_ms": 35.63039982691407,
+        "kw_recall": 1.0,
+        "used_raw_fallback": false
+      }
+    ]
+  }
+}

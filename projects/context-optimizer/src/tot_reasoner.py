@@ -68,7 +68,9 @@ class ToTResult:
     selected_summary: str
     total_retrieved_lines: int
     latency_s: float
-    synthesized_answer: str = ""  # Non-empty when a reasoning LLM synthesised the answer
+    synthesized_answer: str = (
+        ""  # Non-empty when a reasoning LLM synthesised the answer
+    )
 
     @property
     def winner(self) -> Branch:
@@ -241,10 +243,9 @@ class ToTReasoner:
                     try:
                         top_hits = self._retriever.search(term, top_k=1)
                         for hit in top_hits[:1]:
-                            block_id = (
-                                hit.get("metadata", {}).get("block_id")
-                                or hit.get("chunk_id", "")
-                            )
+                            block_id = hit.get("metadata", {}).get(
+                                "block_id"
+                            ) or hit.get("chunk_id", "")
                             if block_id:
                                 raw_text = self._block_index.get_text(block_id)
                                 if raw_text:

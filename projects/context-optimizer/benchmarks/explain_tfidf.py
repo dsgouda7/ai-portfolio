@@ -2,6 +2,7 @@
 Step-by-step walkthrough of TF-IDF sentence scoring in extractive compression.
 Run:  python explain_tfidf.py
 """
+
 import re
 import sys
 from pathlib import Path
@@ -59,10 +60,13 @@ for word, count in sorted(freq.items(), key=lambda x: -x[1])[:15]:
 # ── Step 3: Score each sentence ───────────────────────────────────────────────
 max_f = max(freq.values())
 
+
 def _score(s: str) -> float:
-    words = [w for w in re.findall(r"[a-z]+", s.lower())
-             if w not in _stop and len(w) >= 3]
+    words = [
+        w for w in re.findall(r"[a-z]+", s.lower()) if w not in _stop and len(w) >= 3
+    ]
     return sum(freq.get(w, 0) / max_f for w in words) / len(words) if words else 0.0
+
 
 print(f"\n\nSTEP 3: Score each sentence  (score = mean TF of content words)")
 print("=" * 65)
