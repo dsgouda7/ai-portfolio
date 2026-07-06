@@ -478,34 +478,41 @@ Respond with ONLY valid JSON, no explanations."""
 
 # ── Fixed-length block summary prompt ────────────────────────────────────────
 # Used by ingest_file_blocks for large-corpus ingestion.
-# Unlike COMPRESSION_PROMPT_TEMPLATE (which targets 25-40% of input), this
-# prompt enforces a HARD 150-200 word output budget regardless of input size.
-# A 500 KB block (~131K tokens) gets the same 200-word summary as a 2 KB chunk.
-# This keeps ChromaDB documents within the embedding model's 512-token window
-# and makes per-query token cost predictable and cheap (~1,000 tokens for top-5).
+# Produces a MACHINE-READABLE semantic index, NOT human prose.
+# Target: 80-100 tokens of pure entity-relationship triples — zero filler words.
+# This fits comfortably inside the embedding model's 512-token context window,
+# leaving room for the query vector and maximising retrieval signal-to-noise.
+#
+# Output schema: semicolon-separated `LABEL:value` pairs or `A->B->C` triples.
+# Labels: TOPIC PERSON DATE ORG PLACE EVENT CONCEPT NUM TECH REL CAUSE EFFECT
+#
+# Why not prose?  Function words (the, a, is, was, of) dilute the embedding
+# vector with noise.  A triple like `REL:Newton->formulated->calculus;DATE:1666`
+# gives the embedding model 6 pure signal tokens vs 12+ noisy ones in a sentence.
 
-BLOCK_SUMMARY_PROMPT = """You are a semantic index builder for a large-corpus retrieval system.
+BLOCK_SUMMARY_PROMPT = """\
+You are a semantic index engine for a vector retrieval database.
 
-A block of text is given below. Your task: produce a FIXED-LENGTH DENSE SUMMARY of EXACTLY 150-200 words that becomes the sole search index entry for this entire block.
+Task: extract a compact machine index from the input block.
+Target length: 80-100 tokens TOTAL output.
+Format: semicolon-separated LABEL:value pairs and SUBJ->PRED->OBJ triples.
+Labels to use: TOPIC PERSON DATE ORG PLACE EVENT CONCEPT NUM TECH REL CAUSE EFFECT
 
-HARD RULES:
-1. Output EXACTLY 150-200 words in the "summary" field. Count carefully.
-2. Every word must carry information — zero filler, zero preamble.
-3. Style: noun-first, semicolon-separated dense clauses.
-   Good: "Einstein; general relativity 1915; field equations; light bends near mass"
-   Bad:  "This passage discusses Einstein's work on relativity..."
-4. Cover facts from THROUGHOUT the block, not just the opening sentences.
-5. Preserve: proper nouns, dates, numbers, causal chains, named concepts.
+Hard rules (violating any = wrong output):
+1. ZERO filler words: no articles, prepositions, "is/was/the/a/of/and/that/which"
+2. Proper nouns verbatim; numbers exact with units
+3. Use -> for causal/relational chains: A->caused->B, X->led_to->Y
+4. Sample facts from ACROSS the whole block — not only the opening text
+5. Total output index string: 80-100 tokens strictly
 
-Block text (may be large — summarise it all into 150-200 words):
+Example (input: passage about Marie Curie):
+{{"index":"TOPIC:radioactivity;PERSON:Marie_Curie,Pierre_Curie;DATE:1898;CONCEPT:polonium,radium;ORG:Paris_lab;REL:Curie->isolated->radium_1898;EVENT:Nobel_Prize_1903_1911;NUM:2_Nobel_prizes;CAUSE:uranium_research->EFFECT:radioactivity_theory","entities":["Marie Curie","Pierre Curie","radium","polonium"]}}
+
+Input block (extract facts from THROUGHOUT):
 {text}
 
-Output ONLY valid JSON, no explanation:
-{{
-  "summary": "150-200 word dense noun-first fact summary; semicolons between clauses",
-  "entities": ["name1", "name2"],
-  "keywords": ["concept1", "concept2"]
-}}"""
+Output ONLY valid JSON, no explanation before or after:
+{{"index":"LABEL:val;LABEL:val;SUBJ->PRED->OBJ","entities":["e1","e2"]}}"""
 
 
 # ── Extractive compression (no LLM required) ────────────────────────────────
@@ -1161,14 +1168,22 @@ def ingest_file_blocks(
                         max_summary_tokens=200,
                     )
                 else:
-                    # Build prompt: feed up to 8000 chars (~2000 tokens) to stay within
-                    # context limits of small quantized models (llama3.2:3b = 128K ctx)
-                    # but keeping the call fast.  The block is sampled strategically:
-                    # first 4000 chars + last 4000 chars — captures intro and conclusion.
-                    if len(block_text) > 8000:
-                        text_sample = block_text[:4000] + "\n...\n" + block_text[-4000:]
-                    else:
+                    # Sample the block in 5 evenly-spaced windows to cover its
+                    # full semantic range — not just the opening and closing text.
+                    # Each window: 1200 chars (~300 tokens); total: ~6000 chars.
+                    # This ensures the LLM sees facts from beginning, middle AND end.
+                    n_windows = 5
+                    window_chars = 1200
+                    blen = len(block_text)
+                    if blen <= n_windows * window_chars:
                         text_sample = block_text
+                    else:
+                        step = blen // n_windows
+                        windows = []
+                        for wi in range(n_windows):
+                            start = wi * step
+                            windows.append(block_text[start : start + window_chars])
+                        text_sample = "\n...\n".join(windows)
 
                     prompt = BLOCK_SUMMARY_PROMPT.format(text=text_sample)
                     try:
@@ -1178,20 +1193,22 @@ def ingest_file_blocks(
                         )
                         try:
                             parsed = json.loads(resp_text)
-                            summary = parsed.get("summary", "")
+                            # Accept either "index" (new compact format) or
+                            # "summary" (legacy) so existing cached results survive.
+                            index_val = parsed.get("index") or parsed.get("summary", "")
                             entities = parsed.get("entities", [])
-                            keywords = parsed.get("keywords", [])
                         except (json.JSONDecodeError, ValueError):
-                            # LLM returned non-JSON — use raw response, truncated
-                            summary = resp_text[:800]
+                            # LLM returned non-JSON — strip any prose wrapper
+                            index_val = resp_text.strip()[:400]
                             entities = []
-                            keywords = []
 
-                        # Safety net: hard-cap at 200 tokens (~800 chars)
-                        if len(summary) > 800:
-                            cut = summary[:800]
+                        # Hard cap: 400 chars ≈ 100 tokens.  Truncate at last semicolon.
+                        if len(index_val) > 400:
+                            cut = index_val[:400]
                             last_semi = cut.rfind(";")
-                            summary = cut[: last_semi + 1] if last_semi > 400 else cut
+                            index_val = cut[: last_semi + 1] if last_semi > 200 else cut
+
+                        summary = index_val  # stored as compressed_summary in ChromaDB
 
                         orig_tok = _estimate_tokens(block_text)
                         comp_tok = _estimate_tokens(summary)
@@ -1199,16 +1216,19 @@ def ingest_file_blocks(
                         elapsed = time.perf_counter() - t0
                         _log_chunk(chunk_id, label, elapsed, orig_tok, comp_tok, ratio)
 
+                        # The index_text IS the compact triple string — already
+                        # stopword-free by construction, so _normalise_for_index
+                        # adds entities as extra signal without removing anything.
                         index_text = _normalise_for_index(
                             summary + ("; " + "; ".join(entities) if entities else "")
                         )
                         compressed = CompressedChunk(
                             chunk_id=chunk_id,
-                            raw_text=block_text[:2000],  # store excerpt as raw fallback
+                            raw_text=block_text[:2000],  # excerpt for raw fallback
                             compressed_summary=summary,
                             index_text=index_text,
                             entities=entities,
-                            keywords=keywords,
+                            keywords=[],   # keywords implicit in triple labels
                             metadata=meta,
                             original_tokens=orig_tok,
                             compressed_tokens=comp_tok,
@@ -1216,7 +1236,9 @@ def ingest_file_blocks(
                         )
                     except Exception as exc:
                         elapsed = time.perf_counter() - t0
-                        print(f"{_pfx}[BlockIngestor] WARNING block {block_idx}: LLM error — {exc}")
+                        print(
+                            f"{_pfx}[BlockIngestor] WARNING block {block_idx}: LLM error — {exc}"
+                        )
                         compressed = compress_chunk_extractive(
                             text=block_text[:8000],
                             chunk_id=chunk_id,
@@ -1301,4 +1323,3 @@ if __name__ == "__main__":
         )
         print(f"  Entities: {chunk.entities}")
         print(f"  Keywords: {chunk.keywords}")
-
