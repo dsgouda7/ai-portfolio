@@ -173,9 +173,27 @@ def _strip_xml(text: str) -> str:
 
 def _extract_words(text: str, min_len: int = 5) -> list[str]:
     _STOP = {
-        "which", "their", "there", "these", "those", "about", "after",
-        "before", "during", "would", "could", "should", "where", "while",
-        "being", "since", "other", "first", "second", "third", "also",
+        "which",
+        "their",
+        "there",
+        "these",
+        "those",
+        "about",
+        "after",
+        "before",
+        "during",
+        "would",
+        "could",
+        "should",
+        "where",
+        "while",
+        "being",
+        "since",
+        "other",
+        "first",
+        "second",
+        "third",
+        "also",
     }
     tokens = re.findall(r"[a-zA-Z]{%d,}" % min_len, text.lower())
     seen: set[str] = set()
@@ -210,18 +228,22 @@ def download_corpus(output_path: Path | None = None, verbose: bool = True) -> Pa
             urllib.request.urlretrieve(
                 _ENWIK9_URL,
                 zip_path,
-                reporthook=lambda n, bs, ts: print(
-                    f"  {n * bs / 1_048_576:.0f} / {ts / 1_048_576:.0f} MB\r",
-                    end="",
-                    flush=True,
-                )
-                if ts > 0
-                else None,
+                reporthook=lambda n, bs, ts: (
+                    print(
+                        f"  {n * bs / 1_048_576:.0f} / {ts / 1_048_576:.0f} MB\r",
+                        end="",
+                        flush=True,
+                    )
+                    if ts > 0
+                    else None
+                ),
             )
             print()
         except Exception as exc:
             print(f"[corpus] Download failed: {exc}")
-            print("[corpus] Please download manually from http://mattmahoney.net/dc/enwik9.zip")
+            print(
+                "[corpus] Please download manually from http://mattmahoney.net/dc/enwik9.zip"
+            )
             print(f"[corpus] and extract to: {dest}")
             raise SystemExit(1)
 
@@ -255,7 +277,9 @@ def generate_questions(
     Falls back to fixed-window text extraction for non-XML corpora.
     """
     if verbose:
-        print(f"[questions] Generating {n_questions} questions from {corpus_path.name} ...")
+        print(
+            f"[questions] Generating {n_questions} questions from {corpus_path.name} ..."
+        )
 
     questions: list[Question] = []
     is_xml = corpus_path.suffix.lower() in ("", ".xml") or corpus_path.name == "enwik9"
@@ -343,9 +367,7 @@ def _generate_from_xml(
     return questions[:n_questions]
 
 
-def _make_question_from_article(
-    title: str, raw_text: str, idx: int
-) -> Question | None:
+def _make_question_from_article(title: str, raw_text: str, idx: int) -> Question | None:
     """Create one Q&A pair from a Wikipedia article title + raw text."""
     # Skip non-article pages
     if not title or any(
@@ -451,40 +473,60 @@ def build_vanilla_rag(
     corpus_path: Path,
     top_k: int = 5,
     chunk_tokens: int = 512,
+    max_mb: float = 0.0,
     verbose: bool = True,
 ) -> tuple["Any", "StrategyResult"]:
     """
     Build a vanilla RAG index: raw 512-token chunks embedded directly in ChromaDB.
 
-    No compression. This is the standard dense-retrieval baseline.
-    Returns (retriever, StrategyResult with ingestion stats).
+    No compression — this is the standard dense-retrieval baseline.
+    Chunks are streamed directly into ChromaDB in add_batch_size batches;
+    no full-corpus accumulation in memory.
+
+    Parameters
+    ----------
+    max_mb:
+        If > 0, stop ingesting after this many MB of corpus (for demos /
+        benchmarks where you want a consistent sub-corpus size).
     """
     from context_optimizer.cached_retriever import CachedChromaRetriever
     from context_optimizer.compressor import CompressedChunk, _estimate_tokens
 
     if verbose:
-        print(f"\n[vanilla_rag] Building index from {corpus_path.name} ...")
-        print(f"[vanilla_rag] Chunk size: {chunk_tokens} tokens (~{chunk_tokens*4} chars)")
+        cap = f"  (capped at {max_mb:.0f} MB)" if max_mb > 0 else ""
+        print(f"\n[vanilla_rag] Building index from {corpus_path.name}{cap} ...")
+        print(
+            f"[vanilla_rag] Chunk size: {chunk_tokens} tokens (~{chunk_tokens*4} chars)"
+        )
 
     tmp_dir = tempfile.mkdtemp(prefix="co_vanilla_")
     t_start = time.perf_counter()
 
-    # Stream the file and split into chunk_tokens-token raw chunks
-    chunks: list[CompressedChunk] = []
     chunk_size_chars = chunk_tokens * 4  # 4 chars ≈ 1 token
+    add_batch_size = 200  # flush to ChromaDB every N chunks
+    max_bytes = int(max_mb * 1_048_576) if max_mb > 0 else 0
+
+    retriever = CachedChromaRetriever(
+        collection_name="vanilla_rag",
+        persist_directory=tmp_dir,
+    )
+
     chunk_idx = 0
+    total_chunks = 0
     buffer = ""
+    pending: list[CompressedChunk] = []
     source_name = re.sub(r"[^a-z0-9]+", "_", corpus_path.stem.lower())[:20]
+    bytes_read = 0
 
     with open(corpus_path, "r", encoding="utf-8", errors="replace") as fh:
         while True:
-            block = fh.read(chunk_size_chars * 2)
-            if not block:
+            raw = fh.read(chunk_size_chars * 4)
+            if not raw:
                 break
-            buffer += block
+            bytes_read += len(raw.encode("utf-8", errors="replace"))
+            buffer += raw
 
             while len(buffer) >= chunk_size_chars:
-                # Split at next newline after chunk_size_chars to avoid mid-sentence cut
                 split_at = buffer.find("\n", chunk_size_chars)
                 if split_at == -1 or split_at > chunk_size_chars * 2:
                     split_at = chunk_size_chars
@@ -496,30 +538,42 @@ def build_vanilla_rag(
                     continue
 
                 orig_tok = _estimate_tokens(chunk_text)
-                chunks.append(
+                pending.append(
                     CompressedChunk(
                         chunk_id=f"{source_name}_vchunk_{chunk_idx:07d}",
                         raw_text=chunk_text,
-                        compressed_summary=chunk_text,   # raw text IS the document
+                        compressed_summary=chunk_text,
                         index_text="",
                         entities=[],
                         keywords=[],
                         metadata={"source": str(corpus_path), "chunk_idx": chunk_idx},
                         original_tokens=orig_tok,
-                        compressed_tokens=orig_tok,      # no compression
+                        compressed_tokens=orig_tok,
                         compression_ratio=1.0,
                     )
                 )
                 chunk_idx += 1
 
-                if verbose and chunk_idx % 500 == 0:
-                    print(f"  [vanilla_rag] Chunked {chunk_idx:,} ...", end="\r")
+                # Flush to ChromaDB when batch is full
+                if len(pending) >= add_batch_size:
+                    retriever.add_chunks(pending)
+                    total_chunks += len(pending)
+                    pending.clear()
+                    if verbose and total_chunks % 5000 == 0:
+                        mb_done = bytes_read / 1_048_576
+                        print(
+                            f"  [vanilla_rag] {total_chunks:,} chunks  {mb_done:.0f} MB read ...",
+                            end="\r",
+                        )
 
-    # Handle remaining buffer
+            if max_bytes > 0 and bytes_read >= max_bytes:
+                break
+
+    # Flush remaining
     if buffer.strip():
         t = buffer.strip()
         orig_tok = _estimate_tokens(t)
-        chunks.append(
+        pending.append(
             CompressedChunk(
                 chunk_id=f"{source_name}_vchunk_{chunk_idx:07d}",
                 raw_text=t,
@@ -533,36 +587,28 @@ def build_vanilla_rag(
                 compression_ratio=1.0,
             )
         )
-
-    if verbose:
-        print(f"  [vanilla_rag] {len(chunks):,} raw chunks created")
-        print(f"  [vanilla_rag] Adding to ChromaDB ...")
-
-    retriever = CachedChromaRetriever(
-        collection_name="vanilla_rag",
-        persist_directory=tmp_dir,
-    )
-    # Add in batches to avoid memory pressure
-    batch = 200
-    for i in range(0, len(chunks), batch):
-        retriever.add_chunks(chunks[i : i + batch])
-        if verbose and i % 2000 == 0:
-            print(f"  [vanilla_rag] Indexed {min(i+batch, len(chunks)):,}/{len(chunks):,} ...", end="\r")
+    if pending:
+        retriever.add_chunks(pending)
+        total_chunks += len(pending)
 
     ingestion_time = time.perf_counter() - t_start
-    index_mb = sum(
-        f.stat().st_size for f in Path(tmp_dir).rglob("*") if f.is_file()
-    ) / 1_048_576
+    index_mb = (
+        sum(f.stat().st_size for f in Path(tmp_dir).rglob("*") if f.is_file())
+        / 1_048_576
+    )
 
     if verbose:
-        print(f"\n  [vanilla_rag] Done — {len(chunks):,} chunks  {ingestion_time:.1f}s  {index_mb:.1f} MB")
+        print(
+            f"\n  [vanilla_rag] Done — {total_chunks:,} chunks  "
+            f"{ingestion_time:.1f}s  {index_mb:.1f} MB (ChromaDB)"
+        )
 
     return (
         retriever,
         StrategyResult(
             name="vanilla_rag",
             ingestion_time_s=ingestion_time,
-            index_size_chunks=len(chunks),
+            index_size_chunks=total_chunks,
             index_size_mb=index_mb,
         ),
     )
@@ -574,6 +620,7 @@ def build_vanilla_rag(
 def build_optimized_rag(
     corpus_path: Path,
     block_size_mb: float = 0.5,
+    max_mb: float = 0.0,
     verbose: bool = True,
 ) -> tuple["Any", "Any", "StrategyResult"]:
     """
@@ -592,7 +639,9 @@ def build_optimized_rag(
     block_size_bytes = int(block_size_mb * 1_048_576)
     if verbose:
         print(f"\n[optimized_rag] Building index from {corpus_path.name} ...")
-        print(f"[optimized_rag] Block size: {block_size_mb:.1f} MB ({block_size_bytes:,} bytes)")
+        print(
+            f"[optimized_rag] Block size: {block_size_mb:.1f} MB ({block_size_bytes:,} bytes)"
+        )
 
     tmp_dir = tempfile.mkdtemp(prefix="co_optimized_")
     block_db = Path(tmp_dir) / "blocks.db"
@@ -600,17 +649,50 @@ def build_optimized_rag(
 
     t_start = time.perf_counter()
 
+    # When max_mb is set, truncate the corpus to a temp file of that size
+    # so the comparison is apples-to-apples with vanilla RAG's --max-mb cap.
+    actual_source = corpus_path
+    tmp_slice: str | None = None
+    if max_mb > 0:
+        max_bytes = int(max_mb * 1_048_576)
+        actual_size = corpus_path.stat().st_size
+        if actual_size > max_bytes:
+            # Write a byte-slice to a temp file (aligned to next newline)
+            import tempfile as _tf
+
+            tmp_slice_fd, tmp_slice = _tf.mkstemp(
+                suffix=".txt", prefix="co_corpus_slice_"
+            )
+            with open(tmp_slice_fd, "wb") as out_fh, open(corpus_path, "rb") as in_fh:
+                data = in_fh.read(max_bytes)
+                # Align to next newline
+                tail = in_fh.read(1000)
+                nl = tail.find(b"\n")
+                if nl >= 0:
+                    data += tail[: nl + 1]
+                out_fh.write(data)
+            actual_source = Path(tmp_slice)
+            if verbose:
+                print(f"  [optimized_rag] Using {max_mb:.0f} MB slice of corpus")
+
     # Ingest file as blocks: compress each block, record file pointers
     compressed_chunks = ingest_file_blocks(
-        source_path=corpus_path,
+        source_path=actual_source,
         block_size_bytes=block_size_bytes,
         block_index=block_index,
         strategy="extractive",
         label="opt_rag",
     )
 
+    if tmp_slice:
+        import os as _os
+
+        _os.unlink(tmp_slice)
+
     if verbose:
-        print(f"  [optimized_rag] Adding {len(compressed_chunks):,} summaries to ChromaDB ...")
+        print(
+            f"  [optimized_rag] Adding {len(compressed_chunks):,} summaries to ChromaDB ..."
+        )
 
     retriever = CachedChromaRetriever(
         collection_name="optimized_rag",
@@ -619,9 +701,10 @@ def build_optimized_rag(
     retriever.add_chunks(compressed_chunks)
 
     ingestion_time = time.perf_counter() - t_start
-    index_mb = sum(
-        f.stat().st_size for f in Path(tmp_dir).rglob("*") if f.is_file()
-    ) / 1_048_576
+    index_mb = (
+        sum(f.stat().st_size for f in Path(tmp_dir).rglob("*") if f.is_file())
+        / 1_048_576
+    )
 
     if verbose:
         total_orig = sum(c.original_tokens for c in compressed_chunks)
@@ -661,8 +744,13 @@ def evaluate_vanilla(
         latency = (time.perf_counter() - t0) * 1000
 
         # Concatenate retrieved chunks as the "answer"
-        answer = " ".join(h.get("compressed_summary", h.get("raw_text", "")) for h in hits)
-        tokens = sum(_estimate_tokens(h.get("compressed_summary", h.get("raw_text", ""))) for h in hits)
+        answer = " ".join(
+            h.get("compressed_summary", h.get("raw_text", "")) for h in hits
+        )
+        tokens = sum(
+            _estimate_tokens(h.get("compressed_summary", h.get("raw_text", "")))
+            for h in hits
+        )
         recall = _kw_recall(answer, q.expected_keywords)
 
         results.append(
@@ -707,21 +795,27 @@ def evaluate_optimized(
 
         # Assemble answer from summaries
         answer = " ".join(h.get("compressed_summary", "") for h in hits)
-        summary_tokens = sum(_estimate_tokens(h.get("compressed_summary", "")) for h in hits)
+        summary_tokens = sum(
+            _estimate_tokens(h.get("compressed_summary", "")) for h in hits
+        )
         summary_recall = _kw_recall(answer, q.expected_keywords)
 
         # Check if fallback is needed
-        best_score = 1 - min(  # ChromaDB distance → similarity
-            (h.get("distance") or 1.0) for h in hits
-        ) if hits else 0.0
+        best_score = (
+            1
+            - min(  # ChromaDB distance → similarity
+                (h.get("distance") or 1.0) for h in hits
+            )
+            if hits
+            else 0.0
+        )
         used_fallback = False
 
         if best_score < fallback_threshold and hits and block_index is not None:
             # Fetch the raw block for the best-matching summary
             best_hit = hits[0]
-            block_id = (
-                best_hit.get("metadata", {}).get("block_id")
-                or best_hit.get("chunk_id", "")
+            block_id = best_hit.get("metadata", {}).get("block_id") or best_hit.get(
+                "chunk_id", ""
             )
             # block_id in optimized_rag IS the chunk_id
             raw_text = block_index.get_text(block_id)
@@ -788,7 +882,8 @@ def write_report(
         f"**Corpus**: {corpus_path.name} ({corpus_mb:.0f} MB)  |  "
         f"**Questions**: {len(questions)}  |  "
         f"**top-k**: {args.top_k}  |  "
-        f"**Block size**: {args.block_mb:.1f} MB",
+        f"**Block size**: {args.block_mb:.1f} MB  |  "
+        f"**Corpus cap**: {getattr(args,'max_mb',200):.0f} MB",
         "",
         "---",
         "",
@@ -798,7 +893,12 @@ def write_report(
         "|--------|-------------|---------------|-------|",
     ]
 
-    def _delta(a: StrategyResult | None, b: StrategyResult | None, attr: str, lower_is_better: bool = False) -> str:
+    def _delta(
+        a: StrategyResult | None,
+        b: StrategyResult | None,
+        attr: str,
+        lower_is_better: bool = False,
+    ) -> str:
         if a is None or b is None:
             return "—"
         va, vb = getattr(a, attr, 0.0), getattr(b, attr, 0.0)
@@ -841,10 +941,18 @@ def write_report(
         "VANILLA RAG                            OPTIMIZED RAG",
         "────────────────────────────────────   ────────────────────────────────────",
         f"Corpus split into 512-token chunks      Corpus split into {args.block_mb:.0f} MB blocks",
-        f"~{vanilla.index_size_chunks:,} ChromaDB entries                ~{optimized.index_size_chunks:,} ChromaDB entries" if vanilla and optimized else "",
+        (
+            f"~{vanilla.index_size_chunks:,} ChromaDB entries                ~{optimized.index_size_chunks:,} ChromaDB entries"
+            if vanilla and optimized
+            else ""
+        ),
         "Raw text embedded directly              Compressed summaries embedded",
         "No fallback                             Raw block fetched from disk on demand",
-        f"Index: {vanilla.index_size_mb:.0f} MB                           Index: {optimized.index_size_mb:.0f} MB (+ {corpus_mb:.0f} MB corpus on disk)" if vanilla and optimized else "",
+        (
+            f"Index: {vanilla.index_size_mb:.0f} MB                           Index: {optimized.index_size_mb:.0f} MB (+ {corpus_mb:.0f} MB corpus on disk)"
+            if vanilla and optimized
+            else ""
+        ),
         "```",
         "",
         "---",
@@ -946,14 +1054,29 @@ def _parser() -> argparse.ArgumentParser:
         dest="corpus_path",
         help="Override corpus path (default: uses previously prepared corpus).",
     )
-    run.add_argument("--questions", type=int, default=50, help="Questions to use (default 50)")
-    run.add_argument("--top-k", type=int, default=5, dest="top_k", help="Chunks/blocks per query (default 5)")
+    run.add_argument(
+        "--questions", type=int, default=50, help="Questions to use (default 50)"
+    )
+    run.add_argument(
+        "--top-k",
+        type=int,
+        default=5,
+        dest="top_k",
+        help="Chunks/blocks per query (default 5)",
+    )
     run.add_argument(
         "--block-mb",
         type=float,
         default=0.5,
         dest="block_mb",
         help="Block size in MB for optimized RAG (default 0.5)",
+    )
+    run.add_argument(
+        "--max-mb",
+        type=float,
+        default=200.0,
+        dest="max_mb",
+        help="Cap corpus size in MB for both strategies (default 200 MB for practical runtime)",
     )
     run.add_argument(
         "--fallback-threshold",
@@ -981,7 +1104,10 @@ def _parser() -> argparse.ArgumentParser:
     all_.add_argument("--questions", type=int, default=50)
     all_.add_argument("--top-k", type=int, default=5, dest="top_k")
     all_.add_argument("--block-mb", type=float, default=0.5, dest="block_mb")
-    all_.add_argument("--fallback-threshold", type=float, default=0.30, dest="fallback_threshold")
+    all_.add_argument("--max-mb", type=float, default=200.0, dest="max_mb")
+    all_.add_argument(
+        "--fallback-threshold", type=float, default=0.30, dest="fallback_threshold"
+    )
     all_.add_argument("--vanilla-only", action="store_true", dest="vanilla_only")
     all_.add_argument("--optimized-only", action="store_true", dest="optimized_only")
 
@@ -1032,8 +1158,12 @@ def cmd_run(args: argparse.Namespace) -> None:
         print("[run] No question bank found. Running prepare step ...")
         _, questions = cmd_prepare(args)
 
-    print(f"\n[run] Corpus: {corpus_path}  ({corpus_path.stat().st_size/1_048_576:.0f} MB)")
-    print(f"[run] Questions: {len(questions)}  |  top-k: {args.top_k}  |  block: {args.block_mb} MB")
+    print(
+        f"\n[run] Corpus: {corpus_path}  ({corpus_path.stat().st_size/1_048_576:.0f} MB)"
+    )
+    print(
+        f"[run] Questions: {len(questions)}  |  top-k: {args.top_k}  |  block: {args.block_mb} MB"
+    )
 
     vanilla_result: StrategyResult | None = None
     optimized_result: StrategyResult | None = None
@@ -1047,7 +1177,7 @@ def cmd_run(args: argparse.Namespace) -> None:
         print("BUILDING VANILLA RAG INDEX")
         print("=" * 60)
         vanilla_retriever, vanilla_result = build_vanilla_rag(
-            corpus_path, top_k=args.top_k
+            corpus_path, top_k=args.top_k, max_mb=getattr(args, "max_mb", 200.0)
         )
 
     # ── Build Optimized RAG ───────────────────────────────────────────────────
@@ -1056,7 +1186,9 @@ def cmd_run(args: argparse.Namespace) -> None:
         print("BUILDING OPTIMIZED RAG INDEX")
         print("=" * 60)
         optimized_retriever, block_index, optimized_result = build_optimized_rag(
-            corpus_path, block_size_mb=args.block_mb
+            corpus_path,
+            block_size_mb=args.block_mb,
+            max_mb=getattr(args, "max_mb", 200.0),
         )
 
     # ── Evaluate ──────────────────────────────────────────────────────────────
@@ -1098,17 +1230,53 @@ def cmd_run(args: argparse.Namespace) -> None:
     print(f"  {'Metric':<40} {'Vanilla':>12}  {'Optimized':>14}  {'Delta':>10}")
     print("  " + "-" * 78)
     if vanilla_result and optimized_result:
-        _row("Avg KW recall", vanilla_result.avg_kw_recall, optimized_result.avg_kw_recall, ".1%")
-        _row("Avg tokens/query", vanilla_result.avg_tokens_per_query, optimized_result.avg_tokens_per_query, ",.0f")
-        _row("Avg query latency (ms)", vanilla_result.avg_latency_ms, optimized_result.avg_latency_ms, ".1f")
-        _row("Ingestion time (s)", vanilla_result.ingestion_time_s, optimized_result.ingestion_time_s, ".1f")
-        _row("Index size (MB)", vanilla_result.index_size_mb, optimized_result.index_size_mb, ".1f")
-        _row("Index entries", vanilla_result.index_size_chunks, optimized_result.index_size_chunks, ",d")
-        print(f"  {'Raw block fallback rate':<40} {'—':>12}  {optimized_result.fallback_rate:>14.0%}  {'—':>10}")
+        _row(
+            "Avg KW recall",
+            vanilla_result.avg_kw_recall,
+            optimized_result.avg_kw_recall,
+            ".1%",
+        )
+        _row(
+            "Avg tokens/query",
+            vanilla_result.avg_tokens_per_query,
+            optimized_result.avg_tokens_per_query,
+            ",.0f",
+        )
+        _row(
+            "Avg query latency (ms)",
+            vanilla_result.avg_latency_ms,
+            optimized_result.avg_latency_ms,
+            ".1f",
+        )
+        _row(
+            "Ingestion time (s)",
+            vanilla_result.ingestion_time_s,
+            optimized_result.ingestion_time_s,
+            ".1f",
+        )
+        _row(
+            "Index size (MB)",
+            vanilla_result.index_size_mb,
+            optimized_result.index_size_mb,
+            ".1f",
+        )
+        _row(
+            "Index entries",
+            vanilla_result.index_size_chunks,
+            optimized_result.index_size_chunks,
+            ",d",
+        )
+        print(
+            f"  {'Raw block fallback rate':<40} {'—':>12}  {optimized_result.fallback_rate:>14.0%}  {'—':>10}"
+        )
     elif vanilla_result:
-        print(f"  Vanilla — recall={vanilla_result.avg_kw_recall:.1%}  tokens={vanilla_result.avg_tokens_per_query:,.0f}")
+        print(
+            f"  Vanilla — recall={vanilla_result.avg_kw_recall:.1%}  tokens={vanilla_result.avg_tokens_per_query:,.0f}"
+        )
     elif optimized_result:
-        print(f"  Optimized — recall={optimized_result.avg_kw_recall:.1%}  tokens={optimized_result.avg_tokens_per_query:,.0f}  fallback={optimized_result.fallback_rate:.0%}")
+        print(
+            f"  Optimized — recall={optimized_result.avg_kw_recall:.1%}  tokens={optimized_result.avg_tokens_per_query:,.0f}  fallback={optimized_result.fallback_rate:.0%}"
+        )
 
     write_report(vanilla_result, optimized_result, questions, corpus_path, args)
 
