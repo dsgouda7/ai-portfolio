@@ -418,196 +418,335 @@ def _wiki_sections(title: str) -> dict[str, str]:
     return sections
 
 
-def _extract_qa(book: dict, sections: dict[str, str], max_q: int = 20) -> list[dict]:
-    """Generate Q&A pairs from catalog summary + Wikipedia sections."""
+# Difficulty tiers — ordered from surface-level recall to deep analytical
+_DIFFICULTY_ORDER = ["easy", "medium", "hard", "very_hard", "expert"]
+
+
+def _extract_qa(book: dict, sections: dict[str, str], max_q: int = 25) -> list[dict]:
+    """
+    Generate Q&A pairs with five difficulty tiers.
+
+    Tier assignment by question source:
+      easy      — author/title/genre/catalog summary (surface recall)
+      medium    — main plot, characters, central conflict (narrative comprehension)
+      hard      — themes, setting, specific events (analytical)
+      very_hard — literary style, reception, symbolic significance (critical)
+      expert    — publication background, cross-section context (scholarly)
+
+    Targets 5 questions per tier (25 total).  If a Wikipedia section is
+    missing, the tier is populated from lead text with broader questions.
+    """
     title = book["title"]
     author = book["author"]
-    qa: list[dict] = []
 
-    def _add(q: str, answer: str, source: str) -> None:
+    # Bucket by difficulty so we can cap each tier independently
+    buckets: dict[str, list[dict]] = {d: [] for d in _DIFFICULTY_ORDER}
+    target_per_tier = max(1, max_q // len(_DIFFICULTY_ORDER))
+
+    def _add(q: str, answer: str, source: str, difficulty: str = "medium") -> None:
         if len(answer) < 20:
             return
-        qa.append(
+        bucket = buckets[difficulty]
+        if len(bucket) >= target_per_tier:
+            return
+        bucket.append(
             {
                 "question": q,
                 "expected_answer": answer,
                 "keywords": _keywords(answer),
                 "source": source,
-                "difficulty": "medium",
+                "difficulty": difficulty,
             }
         )
 
-    # ── Seed from the catalog summary (free — already downloaded) ─────────────
     catalog_summary = book.get("catalog_summary", "")
+    lead = sections.get("lead", "") or catalog_summary
+
+    # ── EASY: surface-level recall (author, title, genre, one-line summary) ──
     if catalog_summary:
-        _add(f"What is {title!r} about?", catalog_summary, "catalog")
+        _add(f"What is {title!r} about?", catalog_summary[:300], "catalog", "easy")
         _add(
-            f"Give a brief overview of the plot of {title!r}.",
-            catalog_summary,
+            f"Give a brief overview of {title!r}.",
+            catalog_summary[:400],
             "catalog",
+            "easy",
         )
-        # Strip the trailing auto-generated disclaimer for cleaner answers
         clean = re.sub(
             r"\(This is an automatically generated summary\.?\)", "", catalog_summary
         ).strip()
         if clean:
-            _add(f"Summarise {title!r} in a few sentences.", clean, "catalog")
-        # Additional catalog windows — different slices yield different keyword sets
+            _add(f"Summarise {title!r} in a sentence.", clean[:250], "catalog", "easy")
         if len(catalog_summary) > 80:
-            _add(f"What type of story is {title!r}?", catalog_summary[:200], "catalog")
-        if len(catalog_summary) > 120:
             _add(
-                f"What is the central conflict in {title!r}?",
-                catalog_summary[40:280],
+                f"What type of story is {title!r}?",
+                catalog_summary[:200],
                 "catalog",
+                "easy",
             )
-        if len(catalog_summary) > 180:
-            _add(
-                f"What events unfold in {title!r}?",
-                catalog_summary[80:350],
-                "catalog",
-            )
-
-    lead = sections.get("lead", "") or catalog_summary
-
-    # ── Always-applicable questions ────────────────────────────────────────────
     if lead:
         _add(
-            f"Who wrote {title!r} and when was it first published?", lead[:400], "lead"
+            f"Who wrote {title!r} and when was it first published?",
+            lead[:300],
+            "lead",
+            "easy",
         )
-        _add(f"What is the main plot of {title!r}?", lead[:500], "lead")
-        _add(f"What genre is {title!r}?", lead[:300], "lead")
-        # Additional lead windows so books without Wikipedia plot/character sections
-        # still reach 20+ questions — each slice has a different keyword set
-        if len(lead) > 150:
-            _add(f"What makes {title!r} notable in literature?", lead[:350], "lead")
-        if len(lead) > 200:
+        if author:
             _add(
-                f"Who is {author!r} and what is their connection to {title!r}?",
-                f"{author} wrote {title}. {lead[:300]}",
+                f"Who is the author of {title!r}?",
+                f"{author} wrote {title}. {lead[:200]}",
                 "lead",
+                "easy",
             )
-        if len(lead) > 300:
-            _add(
-                f"How is {title!r} described by literary sources?",
-                lead[100:450],
-                "lead",
-            )
-        if len(lead) > 400:
-            _add(
-                f"What is the historical or cultural context of {title!r}?",
-                lead[150:500],
-                "lead",
-            )
-        if len(lead) > 500:
-            _add(
-                f"What additional details are known about {title!r}?",
-                lead[250:600],
-                "lead",
-            )
-        if len(lead) > 600:
-            _add(
-                f"What is the broader significance of {title!r}?",
-                lead[350:700],
-                "lead",
-            )
-        # Sentence-level extraction: each sentence has a unique keyword set
-        _sent_qs = [
-            f"What important fact is recorded about {title!r}?",
-            f"How is {title!r} characterized in literary sources?",
-            f"What notable detail is documented about {title!r}?",
-            f"What context helps understand {title!r}?",
-            f"What key information exists about {title!r}?",
-        ]
-        lead_sents = [
-            s.strip() for s in re.split(r"(?<=[.!?])\s+", lead) if len(s.strip()) > 50
-        ]
-        for _si, _sent in enumerate(lead_sents[:5]):
-            if len(qa) >= max_q:
-                break
-            _add(_sent_qs[_si % len(_sent_qs)], _sent, "lead")
+        _add(f"What genre is {title!r}?", lead[:250], "lead", "easy")
 
-    # ── Plot ──────────────────────────────────────────────────────────────────
+    # ── MEDIUM: narrative comprehension (main plot, characters, conflict) ─────
     plot_text = next((sections[k] for k in sections if k in _PLOT_TITLES), "")
     if plot_text:
-        _add(f"Summarise the plot of {title!r}.", plot_text[:600], "plot")
-        _add(f"How does {title!r} end?", plot_text[-400:], "plot")
-        _add(f"What is the central conflict in {title!r}?", plot_text[:400], "plot")
+        _add(f"Summarise the plot of {title!r}.", plot_text[:600], "plot", "medium")
+        _add(
+            f"What is the central conflict in {title!r}?",
+            plot_text[:400],
+            "plot",
+            "medium",
+        )
+        _add(f"How does {title!r} begin?", plot_text[:300], "plot", "medium")
+        _add(f"How does {title!r} end?", plot_text[-350:], "plot", "medium")
+    elif lead:
+        _add(f"What is the main plot of {title!r}?", lead[:500], "lead", "medium")
+        _add(
+            f"What events unfold in {title!r}?",
+            catalog_summary[40:300] if len(catalog_summary) > 80 else lead[:300],
+            "lead",
+            "medium",
+        )
+        _add(
+            f"What is the central conflict in {title!r}?",
+            lead[50:350],
+            "lead",
+            "medium",
+        )
 
-    # ── Characters ────────────────────────────────────────────────────────────
     char_text = next((sections[k] for k in sections if k in _CHAR_TITLES), "")
     if char_text:
         _add(
-            f"Who are the main characters in {title!r}?", char_text[:500], "characters"
+            f"Who are the main characters in {title!r}?",
+            char_text[:500],
+            "characters",
+            "medium",
         )
-        # Try to extract individual character descriptions
-        # Pattern: sentence containing a character name and a description verb
         for m in re.finditer(
             r"([A-Z][a-z]+ [A-Z][a-z]+)[^.]{5,80}(?:is|was|serves|plays|acts)[^.]{10,120}\.",
             char_text,
         ):
-            if len(qa) >= max_q:
+            if len(buckets["medium"]) >= target_per_tier:
                 break
-            char_name = m.group(1)
-            sentence = m.group(0)
-            _add(f"Who is {char_name} in {title!r}?", sentence, "characters")
+            _add(
+                f"Who is {m.group(1)} in {title!r}?",
+                m.group(0),
+                "characters",
+                "medium",
+            )
+    elif lead:
+        _add(
+            f"What characters appear in {title!r}?",
+            lead[100:450],
+            "lead",
+            "medium",
+        )
 
-    # ── Themes ────────────────────────────────────────────────────────────────
+    # ── HARD: analytical (themes, setting, specific cause-and-effect) ─────────
     theme_text = next((sections[k] for k in sections if k in _THEME_TITLES), "")
     if theme_text:
-        _add(f"What major themes does {title!r} explore?", theme_text[:500], "themes")
+        _add(
+            f"What major themes does {title!r} explore?",
+            theme_text[:500],
+            "themes",
+            "hard",
+        )
+        _add(
+            f"How does {title!r} explore its central themes?",
+            theme_text[:600],
+            "themes",
+            "hard",
+        )
+        if len(theme_text) > 200:
+            _add(
+                f"What does {title!r} say about human nature or society?",
+                theme_text[100:500],
+                "themes",
+                "hard",
+            )
+    elif lead:
+        _add(
+            f"What ideas or themes does {title!r} explore?",
+            lead[100:450],
+            "lead",
+            "hard",
+        )
 
-    # ── Setting ───────────────────────────────────────────────────────────────
     setting_text = next((sections[k] for k in sections if k in _SETTING_TITLES), "")
     if setting_text:
-        _add(f"Where and when is {title!r} set?", setting_text[:300], "setting")
+        _add(
+            f"Where and when is {title!r} set?",
+            setting_text[:400],
+            "setting",
+            "hard",
+        )
+        if len(setting_text) > 150:
+            _add(
+                f"How does the setting shape events in {title!r}?",
+                setting_text[:450],
+                "setting",
+                "hard",
+            )
     elif lead:
-        # Try to extract setting from lead using location keywords
         loc_m = re.search(
-            r"(?:set in|takes place in|set during|based in)[^.]{5,100}\.",
+            r"(?:set in|takes place in|set during|based in)[^.]{5,120}\.",
             lead,
             re.IGNORECASE,
         )
         if loc_m:
-            _add(f"Where is {title!r} set?", loc_m.group(0), "lead")
+            _add(f"Where is {title!r} set?", loc_m.group(0), "lead", "hard")
 
-    # ── Reception ───────────────────────────────────────────────────────────────────────
+    if plot_text and len(buckets["hard"]) < target_per_tier:
+        _add(
+            f"What specific events drive the story of {title!r}?",
+            plot_text[200:600],
+            "plot",
+            "hard",
+        )
+
+    # ── VERY HARD: critical analysis (style, reception, symbolic meaning) ─────
     recept_text = next((sections[k] for k in sections if k in _RECEPTION_TITLES), "")
     if recept_text:
-        _add(f"How was {title!r} received by critics?", recept_text[:500], "reception")
+        _add(
+            f"How was {title!r} received by critics?",
+            recept_text[:500],
+            "reception",
+            "very_hard",
+        )
         _add(
             f"What is the cultural legacy of {title!r}?",
             recept_text[80:500],
             "reception",
+            "very_hard",
+        )
+        if len(recept_text) > 250:
+            _add(
+                f"How has critical opinion of {title!r} changed over time?",
+                recept_text[100:500],
+                "reception",
+                "very_hard",
+            )
+
+    style_text = next((sections[k] for k in sections if k in _STYLE_TITLES), "")
+    if style_text:
+        _add(
+            f"What is the narrative style of {title!r}?",
+            style_text[:500],
+            "style",
+            "very_hard",
+        )
+        _add(
+            f"What literary techniques does {title!r} employ?",
+            style_text[:450],
+            "style",
+            "very_hard",
         )
 
-    # ── Publication background ────────────────────────────────────────────────────────
+    # Fill very_hard from lead if sections missing
+    if len(buckets["very_hard"]) < target_per_tier and lead:
+        _add(
+            f"What makes {title!r} significant as a literary work?",
+            lead[150:500],
+            "lead",
+            "very_hard",
+        )
+        _add(
+            f"How is {title!r} described by literary sources?",
+            lead[100:450],
+            "lead",
+            "very_hard",
+        )
+        _add(
+            f"What is the broader significance of {title!r}?",
+            lead[250:600] if len(lead) > 250 else lead,
+            "lead",
+            "very_hard",
+        )
+
+    # ── EXPERT: scholarly context (publication history, author intent, cross-cutting) ──
     bg_text = next((sections[k] for k in sections if k in _BACKGROUND_TITLES), "")
     if bg_text:
         _add(
             f"What is the publication background of {title!r}?",
             bg_text[:500],
             "background",
+            "expert",
         )
-        _add(f"When and how was {title!r} written?", bg_text[:400], "background")
-
-    # ── Style / structure ────────────────────────────────────────────────────────────
-    style_text = next((sections[k] for k in sections if k in _STYLE_TITLES), "")
-    if style_text:
-        _add(f"What is the writing style of {title!r}?", style_text[:500], "style")
         _add(
-            f"What literary techniques does {title!r} employ?",
-            style_text[:400],
-            "style",
+            f"When and how was {title!r} written?",
+            bg_text[:450],
+            "background",
+            "expert",
+        )
+        if len(bg_text) > 200:
+            _add(
+                f"What influenced {author!r} in writing {title!r}?",
+                bg_text[100:500],
+                "background",
+                "expert",
+            )
+
+    # Cross-cutting expert questions that combine multiple sources
+    if theme_text and recept_text and len(buckets["expert"]) < target_per_tier:
+        _add(
+            f"How do the themes of {title!r} connect to its critical reception?",
+            f"{theme_text[:200]} {recept_text[:200]}",
+            "cross",
+            "expert",
+        )
+    if style_text and theme_text and len(buckets["expert"]) < target_per_tier:
+        _add(
+            f"How does the style of {title!r} reinforce its themes?",
+            f"{style_text[:200]} {theme_text[:200]}",
+            "cross",
+            "expert",
+        )
+    if lead and bg_text and len(buckets["expert"]) < target_per_tier:
+        _add(
+            f"What historical context shaped {title!r}?",
+            f"{lead[:200]} {bg_text[:200]}",
+            "cross",
+            "expert",
         )
 
-    # ── Author ────────────────────────────────────────────────────────────────
-    if author and lead:
+    # Fill expert from lead if sections missing
+    if len(buckets["expert"]) < target_per_tier and lead:
         _add(
-            f"Who is the author of {title!r}?",
-            f"{author} wrote {title}. {lead[:200]}",
+            f"What is the historical or cultural context of {title!r}?",
+            lead[200:550] if len(lead) > 200 else lead,
             "lead",
+            "expert",
         )
+        _add(
+            f"What additional details are known about {title!r}?",
+            lead[300:650] if len(lead) > 300 else lead,
+            "lead",
+            "expert",
+        )
+        if author:
+            _add(
+                f"How does {title!r} reflect {author!r}'s broader body of work?",
+                f"{author} wrote {title}. {lead[:300]}",
+                "lead",
+                "expert",
+            )
+
+    # Flatten in tier order: easy → medium → hard → very_hard → expert
+    qa: list[dict] = []
+    for tier in _DIFFICULTY_ORDER:
+        qa.extend(buckets[tier])
 
     return qa[:max_q]
 
@@ -1016,7 +1155,10 @@ def _run_book(
             raw_idx.add_many([(c.chunk_id, c.raw_text) for c in chunks])
 
             reasoner = ToTReasoner(
-                retriever=retriever, top_k_per_term=5, raw_index=raw_idx, llm=reasoner_llm
+                retriever=retriever,
+                top_k_per_term=5,
+                raw_index=raw_idx,
+                llm=reasoner_llm,
             )
 
         # ── Query + async judge ───────────────────────────────────────────────
@@ -1040,7 +1182,9 @@ def _run_book(
                     answer = tot.synthesized_answer
                 else:
                     all_snips: list[str] = []
-                    for branch in sorted(tot.branches, key=lambda b: b.score, reverse=True):
+                    for branch in sorted(
+                        tot.branches, key=lambda b: b.score, reverse=True
+                    ):
                         all_snips.extend(branch.evidence_snippets)
                     answer = " ".join(all_snips[:6]) if all_snips else ""
             except Exception as exc:
@@ -1223,6 +1367,18 @@ def write_report(
     total_comp = sum(r["comp_tokens"] for r in all_results)
     reduction = (1 - total_comp / max(total_orig, 1)) * 100
 
+    # Per-difficulty aggregation across all books
+    diff_stats: dict[str, dict] = {
+        d: {"hits": 0.0, "count": 0} for d in _DIFFICULTY_ORDER
+    }
+    for r in all_results:
+        for qr in r.get("results", []):
+            d = qr.get("difficulty", "medium")
+            if d not in diff_stats:
+                d = "medium"
+            diff_stats[d]["hits"] += qr.get("kw_recall", 0.0)
+            diff_stats[d]["count"] += 1
+
     md = [
         "# Book Benchmark Results",
         "",
@@ -1239,11 +1395,38 @@ def write_report(
         "|--------|-------|",
         f"| Books benchmarked | {len(all_results)} |",
         f"| Total questions | {total_q:,} |",
-        f"| Avg keyword recall (judge) | {avg_rec:.1%} |",
+        f"| Avg keyword recall (all tiers) | {avg_rec:.1%} |",
         f"| Avg compression time per book | {avg_comp:.0f}s |",
         f"| Overall token reduction | {reduction:.1f}% |",
         f"| Original tokens (all books) | {total_orig:,} |",
         f"| Compressed tokens (all books) | {total_comp:,} |",
+        "",
+        "## Recall by Difficulty Tier",
+        "",
+        "How well does the pipeline answer questions at each complexity level.",
+        "Easy = surface recall (author/genre/summary).  Expert = cross-context scholarly.",
+        "",
+        "| Tier | Questions | Avg KW Recall | Interpretation |",
+        "|------|----------:|:-------------:|----------------|",
+    ]
+    _tier_labels = {
+        "easy": "Author / genre / one-line summary",
+        "medium": "Main plot / characters / central conflict",
+        "hard": "Themes / setting / specific events",
+        "very_hard": "Style / critical reception / symbolism",
+        "expert": "Publication history / cross-section context",
+    }
+    for tier in _DIFFICULTY_ORDER:
+        s = diff_stats[tier]
+        if s["count"] == 0:
+            md.append(f"| {tier} | 0 | — | {_tier_labels[tier]} |")
+        else:
+            recall = s["hits"] / s["count"]
+            md.append(
+                f"| {tier} | {s['count']:,} | {recall:.1%} | {_tier_labels[tier]} |"
+            )
+
+    md += [
         "",
         "---",
         "",
@@ -1273,6 +1456,13 @@ def write_report(
         "evaluation time.  Judging runs asynchronously in a thread pool alongside",
         "query execution.",
         "",
+        "Difficulty tiers are assigned by question source:",
+        "- **easy**: catalog summary / author / genre (surface recall)",
+        "- **medium**: plot summary / characters / central conflict (narrative)",
+        "- **hard**: themes / setting / specific events (analytical)",
+        "- **very_hard**: reception / style / symbolism (critical analysis)",
+        "- **expert**: publication history / cross-section context (scholarly)",
+        "",
         f"*Generated {run_date} — do not edit manually.*",
     ]
 
@@ -1285,6 +1475,17 @@ def write_report(
                 "total_q": total_q,
                 "avg_kw_recall": avg_rec,
                 "reduction_pct": reduction,
+                "difficulty_breakdown": {
+                    d: {
+                        "count": diff_stats[d]["count"],
+                        "avg_recall": (
+                            diff_stats[d]["hits"] / diff_stats[d]["count"]
+                            if diff_stats[d]["count"]
+                            else None
+                        ),
+                    }
+                    for d in _DIFFICULTY_ORDER
+                },
                 "per_book": all_results,
             },
             fh,
