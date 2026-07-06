@@ -98,11 +98,16 @@ class Question:
 class QueryResult:
     question_id: int
     query: str
-    answer_snippet: str
-    tokens_used: int
-    latency_ms: float
-    kw_recall: float
+    answer_snippet: str  # raw retrieved context snippet
+    tokens_used: int  # tokens sent to reasoning model
+    latency_ms: float  # retrieval latency
+    kw_recall: float  # retrieval recall: keywords in context
     used_raw_fallback: bool = False
+    # ── Reasoning evaluation (populated when reasoning_model is set) ──────
+    reasoning_answer: str = ""  # LLM-synthesized answer from context
+    reasoning_recall: float = 0.0  # keyword recall on LLM answer
+    faithfulness: float = 0.0  # fraction of answer facts grounded in context
+    reasoning_latency_ms: float = 0.0
 
 
 @dataclass
@@ -138,6 +143,35 @@ class StrategyResult:
         return sum(1 for r in self.query_results if r.used_raw_fallback) / len(
             self.query_results
         )
+
+    @property
+    def has_reasoning(self) -> bool:
+        return any(r.reasoning_answer for r in self.query_results)
+
+    @property
+    def avg_reasoning_recall(self) -> float:
+        rs = [r for r in self.query_results if r.reasoning_answer]
+        return sum(r.reasoning_recall for r in rs) / len(rs) if rs else 0.0
+
+    @property
+    def avg_faithfulness(self) -> float:
+        rs = [r for r in self.query_results if r.reasoning_answer]
+        return sum(r.faithfulness for r in rs) / len(rs) if rs else 0.0
+
+    @property
+    def avg_reasoning_latency_ms(self) -> float:
+        rs = [r for r in self.query_results if r.reasoning_latency_ms > 0]
+        return sum(r.reasoning_latency_ms for r in rs) / len(rs) if rs else 0.0
+
+    @property
+    def reasoning_gap(self) -> float:
+        """Retrieval recall minus reasoning recall.
+        Positive = reasoning model loses information from context.
+        Negative = reasoning model hallucinates beyond what context provides.
+        """
+        if not self.has_reasoning:
+            return 0.0
+        return self.avg_kw_recall - self.avg_reasoning_recall
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -653,7 +687,9 @@ def build_optimized_rag(
             f"Strategy: {strategy}"
         )
         if strategy == "llm":
-            print(f"[optimized_rag] Compressor: {compressor_model} (fixed 150-200 word output)")
+            print(
+                f"[optimized_rag] Compressor: {compressor_model} (fixed 150-200 word output)"
+            )
 
     tmp_dir = tempfile.mkdtemp(prefix="co_optimized_")
     block_db = Path(tmp_dir) / "blocks.db"
@@ -742,10 +778,79 @@ def build_optimized_rag(
 # ── Query evaluation ─────────────────────────────────────────────────────────
 
 
+# ── Reasoning evaluation helpers ─────────────────────────────────────────────
+
+_REASONING_PROMPT = """\
+Answer the question using ONLY the retrieved context below.
+Be concise (1-2 sentences). If context is insufficient say "Insufficient context."
+
+Context:
+{context}
+
+Question: {question}
+
+Answer:"""
+
+_REASONING_STOPWORDS = frozenset(
+    "a an the and or but in on at to for of with by from is are was were be been "
+    "have has had do does did will would could should may might this that these "
+    "those it its there their they them we our you your i my he she his her".split()
+)
+
+
+def _build_reasoning_llm(model: str) -> "Any | None":
+    """Build an Ollama LLM for the reasoning step."""
+    try:
+        from langchain_ollama import ChatOllama  # type: ignore[import]
+
+        base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+        return ChatOllama(model=model, base_url=base_url, temperature=0.0)
+    except Exception:
+        return None
+
+
+def _reason(context: str, question: str, llm: Any) -> tuple[str, float]:
+    """
+    Ask the reasoning LLM to answer *question* using only *context*.
+
+    Returns (answer_text, latency_seconds).
+    """
+    prompt = _REASONING_PROMPT.format(context=context[:3000], question=question)
+    t0 = time.perf_counter()
+    try:
+        resp = llm.invoke(prompt)
+        answer = (resp.content if hasattr(resp, "content") else str(resp)).strip()
+    except Exception as exc:
+        answer = f"[REASONING_ERROR: {exc}]"
+    return answer, time.perf_counter() - t0
+
+
+def _faithfulness(answer: str, context: str) -> float:
+    """
+    Fraction of content words in *answer* that appear in *context*.
+
+    Measures whether the reasoning model stays grounded in the retrieved
+    evidence.  Score < 0.4 = likely hallucination.
+    Score 1.0 = every non-trivial word in the answer comes from context.
+    """
+    if not answer or not context:
+        return 0.0
+    context_l = context.lower()
+    words = [
+        w
+        for w in re.findall(r"[a-z]{4,}", answer.lower())
+        if w not in _REASONING_STOPWORDS
+    ]
+    if not words:
+        return 1.0  # empty / trivial answer
+    return sum(1 for w in words if w in context_l) / len(words)
+
+
 def evaluate_vanilla(
     retriever: Any,
     questions: list[Question],
     top_k: int = 5,
+    reasoning_llm: Any | None = None,
     verbose: bool = True,
 ) -> list[QueryResult]:
     """Run questions against vanilla RAG and score results."""
@@ -755,30 +860,44 @@ def evaluate_vanilla(
         hits = retriever.search(q.query, top_k=top_k, use_cache=False)
         latency = (time.perf_counter() - t0) * 1000
 
-        # Concatenate retrieved chunks as the "answer"
-        answer = " ".join(
+        # Concatenate retrieved chunks as the context
+        context = " ".join(
             h.get("compressed_summary", h.get("raw_text", "")) for h in hits
         )
         tokens = sum(
             _estimate_tokens(h.get("compressed_summary", h.get("raw_text", "")))
             for h in hits
         )
-        recall = _kw_recall(answer, q.expected_keywords)
+        retrieval_recall = _kw_recall(context, q.expected_keywords)
+
+        # ── Optional reasoning pass ────────────────────────────────────────
+        r_answer, r_recall, r_faith, r_lat_ms = "", 0.0, 0.0, 0.0
+        if reasoning_llm is not None:
+            r_answer, r_lat_s = _reason(context, q.query, reasoning_llm)
+            r_recall = _kw_recall(r_answer, q.expected_keywords)
+            r_faith = _faithfulness(r_answer, context)
+            r_lat_ms = r_lat_s * 1000
 
         results.append(
             QueryResult(
                 question_id=q.id,
                 query=q.query,
-                answer_snippet=answer[:200],
+                answer_snippet=context[:200],
                 tokens_used=tokens,
                 latency_ms=latency,
-                kw_recall=recall,
+                kw_recall=retrieval_recall,
                 used_raw_fallback=False,
+                reasoning_answer=r_answer[:300],
+                reasoning_recall=r_recall,
+                faithfulness=r_faith,
+                reasoning_latency_ms=r_lat_ms,
             )
         )
         if verbose:
+            r_str = f"  reason={r_recall:.0%}  faith={r_faith:.0%}" if r_answer else ""
             print(
-                f"  [vanilla Q{q.id:02d}] recall={recall:.0%}  tokens={tokens:,}  {latency:.0f}ms"
+                f"  [vanilla Q{q.id:02d}] ret={retrieval_recall:.0%}"
+                f"  tokens={tokens:,}  {latency:.0f}ms{r_str}"
             )
     return results
 
@@ -789,15 +908,19 @@ def evaluate_optimized(
     questions: list[Question],
     top_k: int = 5,
     fallback_threshold: float = 0.30,
+    reasoning_llm: Any | None = None,
     verbose: bool = True,
 ) -> list[QueryResult]:
     """
     Run questions against optimized RAG.
 
     Step 1: Search compressed summaries in ChromaDB.
-    Step 2: Score based on summaries (cheap — few tokens).
-    Step 3: If best cosine score is below fallback_threshold,
-            fetch the raw block from disk via file pointer.
+    Step 2: Measure retrieval recall (do the triple-format index entries
+            contain the expected keywords?).
+    Step 3: If reasoning_llm is set, pass the triples to the LLM and measure
+            reasoning recall (can the model synthesize a correct answer FROM
+            the machine-readable index entries?).
+    Step 4: If best cosine score < fallback_threshold, fetch raw block.
     """
     results: list[QueryResult] = []
     for q in questions:
@@ -805,63 +928,68 @@ def evaluate_optimized(
         hits = retriever.search(q.query, top_k=top_k, use_cache=False)
         latency_summary = (time.perf_counter() - t0) * 1000
 
-        # Assemble answer from summaries
-        answer = " ".join(h.get("compressed_summary", "") for h in hits)
+        # Assemble context from triple-format summaries
+        context = " ".join(h.get("compressed_summary", "") for h in hits)
         summary_tokens = sum(
             _estimate_tokens(h.get("compressed_summary", "")) for h in hits
         )
-        summary_recall = _kw_recall(answer, q.expected_keywords)
+        retrieval_recall = _kw_recall(context, q.expected_keywords)
 
         # Check if fallback is needed
-        best_score = (
-            1
-            - min(  # ChromaDB distance → similarity
-                (h.get("distance") or 1.0) for h in hits
-            )
-            if hits
-            else 0.0
-        )
+        best_score = 1 - min((h.get("distance") or 1.0) for h in hits) if hits else 0.0
         used_fallback = False
 
         if best_score < fallback_threshold and hits and block_index is not None:
-            # Fetch the raw block for the best-matching summary
             best_hit = hits[0]
             block_id = best_hit.get("metadata", {}).get("block_id") or best_hit.get(
                 "chunk_id", ""
             )
-            # block_id in optimized_rag IS the chunk_id
             raw_text = block_index.get_text(block_id)
             if raw_text:
                 t1 = time.perf_counter()
                 fallback_tokens = _estimate_tokens(raw_text[:4000])
                 fallback_recall = _kw_recall(raw_text[:4000], q.expected_keywords)
-                latency_fallback = (time.perf_counter() - t1) * 1000
+                latency_summary += (time.perf_counter() - t1) * 1000
 
-                # Use raw block if it improves the answer
-                if fallback_recall > summary_recall:
-                    answer = raw_text[:4000]
+                if fallback_recall > retrieval_recall:
+                    context = raw_text[:4000]
                     summary_tokens += fallback_tokens
-                    summary_recall = fallback_recall
+                    retrieval_recall = fallback_recall
                     used_fallback = True
-                    latency_summary += latency_fallback
+
+        # ── Reasoning pass: can the LLM answer from triple-format context? ──
+        # This is the critical test for machine-readable index entries.
+        # A high reasoning_recall proves the triples are sufficient for the
+        # reasoning model; a high faithfulness proves it stays grounded.
+        r_answer, r_recall, r_faith, r_lat_ms = "", 0.0, 0.0, 0.0
+        if reasoning_llm is not None:
+            r_answer, r_lat_s = _reason(context, q.query, reasoning_llm)
+            r_recall = _kw_recall(r_answer, q.expected_keywords)
+            r_faith = _faithfulness(r_answer, context)
+            r_lat_ms = r_lat_s * 1000
 
         latency = (time.perf_counter() - t0) * 1000
         results.append(
             QueryResult(
                 question_id=q.id,
                 query=q.query,
-                answer_snippet=answer[:200],
+                answer_snippet=context[:200],
                 tokens_used=summary_tokens,
                 latency_ms=latency,
-                kw_recall=summary_recall,
+                kw_recall=retrieval_recall,
                 used_raw_fallback=used_fallback,
+                reasoning_answer=r_answer[:300],
+                reasoning_recall=r_recall,
+                faithfulness=r_faith,
+                reasoning_latency_ms=r_lat_ms,
             )
         )
         if verbose:
-            fallback_str = "  [FALLBACK]" if used_fallback else ""
+            fb_str = "  [FALLBACK]" if used_fallback else ""
+            r_str = f"  reason={r_recall:.0%}  faith={r_faith:.0%}" if r_answer else ""
             print(
-                f"  [opt   Q{q.id:02d}] recall={summary_recall:.0%}  "
-                f"tokens={summary_tokens:,}  {latency:.0f}ms{fallback_str}"
+                f"  [opt   Q{q.id:02d}] ret={retrieval_recall:.0%}"
+                f"  tokens={summary_tokens:,}  {latency:.0f}ms{fb_str}{r_str}"
             )
     return results
 
@@ -922,7 +1050,7 @@ def write_report(
         return f"{sign}{pct:.1f}% {'✓' if better else '✗'}"
 
     rows = [
-        ("Avg answer accuracy (KW recall)", "avg_kw_recall", False, ".1%"),
+        ("Avg retrieval recall (context has keywords)", "avg_kw_recall", False, ".1%"),
         ("Avg tokens per query", "avg_tokens_per_query", True, ",.0f"),
         ("Avg query latency (ms)", "avg_latency_ms", True, ".1f"),
         ("Index ingestion time (s)", "ingestion_time_s", True, ".1f"),
@@ -940,6 +1068,36 @@ def write_report(
         lines += [
             f"| Raw block fallback rate | — | {optimized.fallback_rate:.0%} | — |",
         ]
+
+    # Reasoning evaluation section (only when reasoning was run)
+    has_reasoning = (vanilla and vanilla.has_reasoning) or (
+        optimized and optimized.has_reasoning
+    )
+    if has_reasoning:
+        lines += [
+            "",
+            "### Reasoning Evaluation",
+            "",
+            "Can the reasoning model synthesize correct answers from the retrieved context?",
+            "- **Reasoning recall**: keyword overlap between LLM-generated answer and expected answer.",
+            "- **Faithfulness**: fraction of answer content words traceable back to the retrieved context.",
+            "- **Reasoning gap**: retrieval_recall − reasoning_recall  "
+            "(positive = info lost in reasoning; negative = hallucination).",
+            "",
+            "| Metric | Vanilla RAG | Optimized RAG | Delta |",
+            "|--------|-------------|---------------|-------|",
+        ]
+        reason_rows = [
+            ("Reasoning recall (LLM answer)", "avg_reasoning_recall", False, ".1%"),
+            ("Faithfulness (grounded in context)", "avg_faithfulness", False, ".1%"),
+            ("Reasoning gap (ret - reason)", "reasoning_gap", True, ".1%"),
+            ("Avg reasoning latency (ms)", "avg_reasoning_latency_ms", True, ".0f"),
+        ]
+        for label, attr, lib, fmt in reason_rows:
+            v_val = f"{getattr(vanilla, attr, 0.0):>{fmt}}" if vanilla and vanilla.has_reasoning else "—"
+            o_val = f"{getattr(optimized, attr, 0.0):>{fmt}}" if optimized and optimized.has_reasoning else "—"
+            delta = _delta(vanilla, optimized, attr, lib) if (vanilla and vanilla.has_reasoning and optimized and optimized.has_reasoning) else "—"
+            lines.append(f"| {label} | {v_val} | {o_val} | {delta} |")
 
     lines += [
         "",
@@ -974,23 +1132,41 @@ def write_report(
     ]
 
     if vanilla and optimized:
-        lines += [
-            "| # | Question | Vanilla recall | Opt recall | Vanilla tokens | Opt tokens | Fallback |",
-            "|---|----------|:--------------:|:----------:|---------------:|-----------:|:--------:|",
-        ]
+        show_reason = (vanilla.has_reasoning or optimized.has_reasoning)
+        if show_reason:
+            lines += [
+                "| # | Question | V-ret | O-ret | V-reason | O-reason | O-faith | V-tok | O-tok | Fallback |",
+                "|---|----------|:-----:|:-----:|:--------:|:--------:|:-------:|------:|------:|:--------:|",
+            ]
+        else:
+            lines += [
+                "| # | Question | Vanilla recall | Opt recall | Vanilla tokens | Opt tokens | Fallback |",
+                "|---|----------|:--------------:|:----------:|---------------:|-----------:|:--------:|",
+            ]
         vmap = {r.question_id: r for r in vanilla.query_results}
         omap = {r.question_id: r for r in optimized.query_results}
         for q in questions:
             vr = vmap.get(q.id)
             or_ = omap.get(q.id)
-            lines.append(
-                f"| {q.id} | {q.query[:50]} | "
-                f"{vr.kw_recall:.0%} | {or_.kw_recall:.0%} | "
-                f"{vr.tokens_used:,} | {or_.tokens_used:,} | "
-                f"{'yes' if or_.used_raw_fallback else 'no'} |"
-                if vr and or_
-                else f"| {q.id} | {q.query[:50]} | — | — | — | — | — |"
-            )
+            if vr and or_:
+                if show_reason:
+                    lines.append(
+                        f"| {q.id} | {q.query[:45]} | "
+                        f"{vr.kw_recall:.0%} | {or_.kw_recall:.0%} | "
+                        f"{vr.reasoning_recall:.0%} | {or_.reasoning_recall:.0%} | "
+                        f"{or_.faithfulness:.0%} | "
+                        f"{vr.tokens_used:,} | {or_.tokens_used:,} | "
+                        f"{'yes' if or_.used_raw_fallback else 'no'} |"
+                    )
+                else:
+                    lines.append(
+                        f"| {q.id} | {q.query[:50]} | "
+                        f"{vr.kw_recall:.0%} | {or_.kw_recall:.0%} | "
+                        f"{vr.tokens_used:,} | {or_.tokens_used:,} | "
+                        f"{'yes' if or_.used_raw_fallback else 'no'} |"
+                    )
+            else:
+                lines.append(f"| {q.id} | {q.query[:50]} | — | — | — | — | — |")
 
     lines += [
         "",
@@ -1112,6 +1288,14 @@ def _parser() -> argparse.ArgumentParser:
         help="Ollama model for block summarization (default: llama3.2:3b)",
     )
     run.add_argument(
+        "--reasoning-model",
+        type=str,
+        default="llama3.2:3b",
+        dest="reasoning_model",
+        help="Ollama model for reasoning evaluation pass (default: llama3.2:3b). "
+        "Set to '' to disable reasoning evaluation.",
+    )
+    run.add_argument(
         "--fallback-threshold",
         type=float,
         default=0.30,
@@ -1139,8 +1323,18 @@ def _parser() -> argparse.ArgumentParser:
     all_.add_argument("--block-mb", type=float, default=0.5, dest="block_mb")
     all_.add_argument("--max-mb", type=float, default=200.0, dest="max_mb")
     all_.add_argument("--overlap-pct", type=float, default=10.0, dest="overlap_pct")
-    all_.add_argument("--opt-strategy", choices=["llm", "extractive"], default="llm", dest="opt_strategy")
-    all_.add_argument("--compressor-model", type=str, default="llama3.2:3b", dest="compressor_model")
+    all_.add_argument(
+        "--opt-strategy",
+        choices=["llm", "extractive"],
+        default="llm",
+        dest="opt_strategy",
+    )
+    all_.add_argument(
+        "--compressor-model", type=str, default="llama3.2:3b", dest="compressor_model"
+    )
+    all_.add_argument(
+        "--reasoning-model", type=str, default="llama3.2:3b", dest="reasoning_model"
+    )
     all_.add_argument(
         "--fallback-threshold", type=float, default=0.30, dest="fallback_threshold"
     )
@@ -1231,12 +1425,26 @@ def cmd_run(args: argparse.Namespace) -> None:
         )
 
     # ── Evaluate ──────────────────────────────────────────────────────────────
+    # Build reasoning LLM once and share between both evaluations
+    reasoning_model_name = getattr(args, "reasoning_model", "llama3.2:3b")
+    reasoning_llm = None
+    if reasoning_model_name:
+        print(f"\n[eval] Building reasoning LLM: {reasoning_model_name} ...")
+        reasoning_llm = _build_reasoning_llm(reasoning_model_name)
+        if reasoning_llm is None:
+            print("[eval] WARNING: reasoning LLM unavailable — skipping reasoning pass")
+        else:
+            print(f"[eval] Reasoning LLM ready  (grounding + faithfulness scoring enabled)")
+
     if vanilla_retriever is not None and vanilla_result is not None:
         print("\n" + "=" * 60)
         print(f"EVALUATING VANILLA RAG ({len(questions)} questions)")
         print("=" * 60)
         vanilla_result.query_results = evaluate_vanilla(
-            vanilla_retriever, questions, top_k=args.top_k
+            vanilla_retriever,
+            questions,
+            top_k=args.top_k,
+            reasoning_llm=reasoning_llm,
         )
 
     if optimized_retriever is not None and optimized_result is not None:
@@ -1249,6 +1457,7 @@ def cmd_run(args: argparse.Namespace) -> None:
             questions,
             top_k=args.top_k,
             fallback_threshold=args.fallback_threshold,
+            reasoning_llm=reasoning_llm,
         )
 
     # ── Print summary table ───────────────────────────────────────────────────
@@ -1308,13 +1517,49 @@ def cmd_run(args: argparse.Namespace) -> None:
         print(
             f"  {'Raw block fallback rate':<40} {'—':>12}  {optimized_result.fallback_rate:>14.0%}  {'—':>10}"
         )
+        # Reasoning metrics (if reasoning LLM was used)
+        if reasoning_llm is not None:
+            print("\n  -- Reasoning evaluation (LLM pass) --")
+            _row(
+                "Retrieval recall (context has keywords)",
+                vanilla_result.avg_kw_recall,
+                optimized_result.avg_kw_recall,
+                ".1%",
+            )
+            _row(
+                "Reasoning recall (LLM answer has keywords)",
+                vanilla_result.avg_reasoning_recall,
+                optimized_result.avg_reasoning_recall,
+                ".1%",
+            )
+            _row(
+                "Faithfulness (answer grounded in context)",
+                vanilla_result.avg_faithfulness,
+                optimized_result.avg_faithfulness,
+                ".1%",
+            )
+            _row(
+                "Reasoning gap (retrieval - reasoning)",
+                vanilla_result.reasoning_gap,
+                optimized_result.reasoning_gap,
+                ".1%",
+            )
+            _row(
+                "Avg reasoning latency (ms)",
+                vanilla_result.avg_reasoning_latency_ms,
+                optimized_result.avg_reasoning_latency_ms,
+                ".0f",
+            )
     elif vanilla_result:
         print(
             f"  Vanilla — recall={vanilla_result.avg_kw_recall:.1%}  tokens={vanilla_result.avg_tokens_per_query:,.0f}"
         )
     elif optimized_result:
         print(
-            f"  Optimized — recall={optimized_result.avg_kw_recall:.1%}  tokens={optimized_result.avg_tokens_per_query:,.0f}  fallback={optimized_result.fallback_rate:.0%}"
+            f"  Optimized — recall={optimized_result.avg_kw_recall:.1%}"
+            f"  tokens={optimized_result.avg_tokens_per_query:,.0f}"
+            f"  fallback={optimized_result.fallback_rate:.0%}"
+            + (f"  reasoning={optimized_result.avg_reasoning_recall:.1%}" if reasoning_llm else "")
         )
 
     write_report(vanilla_result, optimized_result, questions, corpus_path, args)
