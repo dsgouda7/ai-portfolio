@@ -122,18 +122,22 @@ class ToTReasoner:
         top_k_per_term: int = 3,
         raw_fallback_threshold: float = 0.40,
         raw_index: Any | None = None,
+        block_index: Any | None = None,
     ) -> None:
         self._retriever = retriever
         self._llm = llm
         self._top_k = top_k_per_term
         # If the winning branch similarity score stays below this value after
-        # the compressed pass, automatically re-retrieve using raw_text so the
-        # exact source vocabulary is available for the answer.
+        # the compressed pass, automatically re-retrieve raw data.
         self._raw_fallback_threshold = raw_fallback_threshold
-        # Optional RawIndex (SQLite+FTS5) — when present, the raw-text fallback
-        # uses BM25 keyword search instead of re-querying ChromaDB.  This is a
-        # true short-circuit: no embedding call, no ChromaDB round-trip.
+        # RawIndex (SQLite+FTS5): BM25 keyword search over raw chunk text.
+        # Used when raw text was copied into SQLite at ingestion time.
         self._raw_index = raw_index
+        # BlockIndex (file-pointer store): for large-corpus block ingestion
+        # where raw text is NOT copied but pointed to on disk.  When a summary
+        # retrieval score is below the threshold, the winning block is fetched
+        # directly from disk via its file pointer.
+        self._block_index = block_index
 
     # ── Public API ──────────────────────────────────────────────────────────
 
@@ -201,11 +205,12 @@ class ToTReasoner:
         # switches to raw.  This short-circuits to verbatim data automatically
         # without any query classification.
         used_raw = False
-        if (
+        needs_fallback = (
             self._raw_fallback_threshold > 0
-            and self._raw_index is not None
             and winner.score < self._raw_fallback_threshold
-        ):
+            and (self._raw_index is not None or self._block_index is not None)
+        )
+        if needs_fallback:
             raw_branches: list[Branch] = []
             for spec in specs:
                 branch = Branch(
@@ -216,7 +221,7 @@ class ToTReasoner:
                 for term in branch.search_terms:
                     # Prefer FTS5/BM25 on RawIndex (true short-circuit — no
                     # embedding, no ChromaDB round-trip); fall back to
-                    # ChromaDB raw_text metadata if no RawIndex is wired in.
+                    # ChromaDB raw_text metadata if neither index is wired in.
                     if self._raw_index is not None:
                         scored = self._retrieve_raw_snippets(term)
                     else:
@@ -226,6 +231,27 @@ class ToTReasoner:
                     if scored:
                         branch.evidence_hits += 1
                         branch.score += sum(sim for _, sim in scored) / len(scored)
+
+                # ── BlockIndex fallback (large-corpus file pointer model) ──────
+                # When block_index is wired in, the winning compressed chunk's
+                # metadata contains the block_id.  Fetch the raw block text from
+                # disk and add it as an evidence snippet so the reasoning model
+                # can answer granular questions that the summary omitted.
+                if self._block_index is not None and self._retriever is not None:
+                    try:
+                        top_hits = self._retriever.search(term, top_k=1)
+                        for hit in top_hits[:1]:
+                            block_id = (
+                                hit.get("metadata", {}).get("block_id")
+                                or hit.get("chunk_id", "")
+                            )
+                            if block_id:
+                                raw_text = self._block_index.get_text(block_id)
+                                if raw_text:
+                                    branch.evidence_snippets.append(raw_text[:2000])
+                    except Exception:
+                        pass
+
                 raw_branches.append(branch)
             raw_branches.sort(key=lambda b: b.score, reverse=True)
             # Replace the winning compressed branch with the raw version so that

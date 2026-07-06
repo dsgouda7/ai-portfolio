@@ -967,170 +967,178 @@ def compress_corpus_parallel(
     return results
 
 
-def cluster_and_compress_corpus(
-    corpus_lines: list[str],
-    target_cluster_size: int = 50,
-    sub_chunk_tokens: int = 200,
+def ingest_file_blocks(
+    source_path: "str | Path",
+    block_size_bytes: int = 500_000,
+    block_index: "Any | None" = None,
     llm: "CompressorLLM | None" = None,
+    strategy: str = "extractive",
     label: str = "",
-    strategy: str = "llm",
     compressor_provider: str | None = None,
     compressor_model: str | None = None,
-    raw_index: "RawIndex | None" = None,
 ) -> "list[CompressedChunk]":
     """
-    K-Means cluster-then-summarize ingestion strategy.
+    Ingest a large file as fixed-size byte blocks.
 
-    Motivation
-    ----------
-    A naive pipeline that compresses every 200-token sub-chunk individually
-    makes O(N) LLM calls where N is the number of sub-chunks.  For a 2 GB
-    corpus (≈500 M tokens → ≈2.5 M sub-chunks at 200 t/chunk) this is
-    millions of LLM calls.
+    Architecture
+    ------------
+    Each block gets two representations:
 
-    This pipeline instead:
-    1. Splits the corpus into raw sub-chunks (200 tokens each) — no LLM.
-    2. Builds TF-IDF vectors over all sub-chunks — no LLM, < 1 s for 10 k docs.
-    3. Groups sub-chunks by K-Means similarity into macro-clusters.
-    4. Concatenates each cluster and compresses it as one unit (1 LLM call).
+    1. **Compressed summary** — returned as a ``CompressedChunk`` for
+       indexing in ChromaDB.  The summary is ~1-5% of the raw block size,
+       making the vector store orders of magnitude smaller than vanilla RAG
+       (e.g. 2 000 entries for a 1 GB file at 500 KB/block vs ~500 000 raw
+       chunks at 2 KB/chunk).
 
-    Result: LLM calls reduced from N → N / target_cluster_size (≈ 95% savings
-    with target_cluster_size=50).
+    2. **File pointer** — if *block_index* (a ``BlockIndex``) is provided,
+       the exact byte range ``(file_path, byte_start, byte_end)`` is recorded.
+       Raw text is **never duplicated**; it is read on demand by seeking in
+       the original file.  This keeps storage overhead at O(blocks) metadata,
+       not O(corpus size).
 
-    Requires ``scikit-learn`` (``pip install scikit-learn``).
+    When a user query arrives:
+    - The reasoning model searches ChromaDB (compressed summaries).
+    - If a summary is insufficient, it requests the raw block via
+      ``block_index.get_text(block_id)``.  Only that block is read from disk.
 
     Parameters
     ----------
-    corpus_lines:
-        Raw corpus lines (same format as :func:`compress_corpus_rolling`).
-    target_cluster_size:
-        Average number of sub-chunks per cluster.  Default 50 sub-chunks/cluster
-        ≈ 10 000 tokens of source text per compressed chunk.
-    sub_chunk_tokens:
-        Token budget for each sub-chunk before clustering.
+    source_path:
+        Path to the text file to ingest.
+    block_size_bytes:
+        Target block size in bytes (default 500 KB).  Actual blocks may be
+        slightly larger because block boundaries are aligned to the next
+        newline to avoid splitting mid-sentence.
+    block_index:
+        A ``BlockIndex`` instance.  When provided, file pointers for each
+        block are written here after compression.
     llm, strategy, compressor_provider, compressor_model:
-        Passed to :func:`compress_chunk_with_llm` / :func:`compress_chunk_extractive`.
-    raw_index:
-        When provided, raw text of each cluster is stored here.
+        Passed to the per-block compression step.
     label:
         Progress log prefix.
 
     Returns
     -------
     list[CompressedChunk]
-        One chunk per cluster.  ``chunk_id`` = ``cluster_{k:04d}``.
+        One entry per block.  Each chunk's ``metadata`` contains::
+
+            {
+                "source_file": "/path/to/file",
+                "byte_start":  <int>,
+                "byte_end":    <int>,
+                "block_idx":   <int>,
+            }
+
+        The ``chunk_id`` is ``"{source_name}_block_{idx:06d}"``.
     """
-    try:
-        from sklearn.cluster import MiniBatchKMeans  # type: ignore[import]
-        from sklearn.feature_extraction.text import (
-            TfidfVectorizer,  # type: ignore[import]
-        )
-    except ImportError as exc:
-        raise ImportError(
-            "scikit-learn required for cluster_and_compress_corpus. "
-            "pip install scikit-learn"
-        ) from exc
+    import re as _re
+    from pathlib import Path as _Path
 
+    source_path = _Path(source_path)
+    if not source_path.exists():
+        raise FileNotFoundError(f"Source file not found: {source_path}")
+
+    file_size = source_path.stat().st_size
+    source_name = _re.sub(r"[^a-z0-9]+", "_", source_path.stem.lower())[:30]
     _pfx = f"[{label}] " if label else ""
-    full_text = "\n".join(corpus_lines)
-    sub_chunks = split_into_sub_chunks(full_text, sub_chunk_tokens=sub_chunk_tokens)
 
-    n_clusters = max(1, len(sub_chunks) // target_cluster_size)
-    print(
-        f"{_pfx}[ClusterCompressor] {len(sub_chunks):,} sub-chunks → "
-        f"{n_clusters:,} clusters (target_cluster_size={target_cluster_size})"
-    )
-
-    if n_clusters == 1:
-        # Corpus is small enough to treat as one cluster
-        return compress_corpus_rolling(
-            corpus_lines,
-            llm=llm,
-            label=label,
-            strategy=strategy,
-            compressor_provider=compressor_provider,
-            compressor_model=compressor_model,
-            raw_index=raw_index,
-        )
-
-    # ── Step 1: TF-IDF vectorisation (sparse, no LLM, no embeddings) ─────────
-    # TfidfVectorizer returns scipy.sparse.csr_matrix — MiniBatchKMeans works
-    # natively on sparse matrices so no densification is needed.
-    # max_features=5000 keeps memory bounded: 50K docs × 5K features ≈ 200 MB sparse.
-    print(f"{_pfx}[ClusterCompressor] Building TF-IDF vectors ...")
-    vectorizer = TfidfVectorizer(
-        max_features=5000,
-        stop_words="english",
-        sublinear_tf=True,   # log(1 + tf) instead of raw tf — compresses high-freq terms
-    )
-    tfidf_matrix = vectorizer.fit_transform(sub_chunks)
-
-    # ── Step 2: Mini-batch K-Means clustering ─────────────────────────────────
-    # MiniBatchKMeans processes random mini-batches each iteration instead of
-    # the full matrix, giving 10–100× speedup vs KMeans on large corpora with
-    # near-identical cluster quality for approximate groupings.
-    #
-    # batch_size: process 1024 docs per mini-batch (fits in L2 cache on most CPUs).
-    # n_init=3:   try 3 random seeds (vs default 10 for KMeans); for grouping
-    #             purposes, the best of 3 is indistinguishable from best of 10.
-    # max_iter=100: enough for convergence on text data; TF-IDF vectors are
-    #              already normalised so convergence is fast.
-    print(
-        f"{_pfx}[ClusterCompressor] Fitting MiniBatchKMeans(n_clusters={n_clusters}) ..."
-    )
-    km = MiniBatchKMeans(
-        n_clusters=n_clusters,
-        random_state=42,
-        n_init=3,
-        max_iter=100,
-        batch_size=min(1024, len(sub_chunks)),  # never larger than the dataset
-    )
-    labels = km.fit_predict(tfidf_matrix)
-
-    # ── Step 3: Collect sub-chunks per cluster ────────────────────────────────
-    clusters: dict[int, list[str]] = {k: [] for k in range(n_clusters)}
-    for sub_idx, cluster_id in enumerate(labels):
-        clusters[int(cluster_id)].append(sub_chunks[sub_idx])
-
-    # ── Step 4: Compress each cluster (one LLM call per cluster) ─────────────
     if llm is None and strategy == "llm":
         llm = _build_local_llm(provider=compressor_provider, model=compressor_model)
 
+    est_blocks = max(1, file_size // block_size_bytes)
+    print(
+        f"{_pfx}[BlockIngestor] {source_path.name}  "
+        f"({file_size / 1_048_576:.1f} MB)  "
+        f"block_size={block_size_bytes // 1024} KB  "
+        f"~{est_blocks} blocks  strategy={strategy}"
+    )
+
     compressed_chunks: list[CompressedChunk] = []
-    for k, cluster_texts in sorted(clusters.items()):
-        cluster_text = "\n\n".join(cluster_texts)
-        chunk_id = f"cluster_{k:04d}"
-        meta: dict[str, str | int] = {"cluster_id": k, "sub_chunks": len(cluster_texts)}
+    block_metas: list[tuple[str, str, int, int]] = []  # (block_id, path, start, end)
 
-        if raw_index is not None:
-            raw_index.add(chunk_id, cluster_text)
+    byte_pos = 0
+    block_idx = 0
 
-        t0 = time.perf_counter()
-        if strategy == "extractive":
-            compressed = compress_chunk_extractive(
-                text=cluster_text, chunk_id=chunk_id, metadata=meta, label=label
+    with open(source_path, "rb") as fh:
+        while True:
+            block_start = byte_pos
+            raw_bytes = fh.read(block_size_bytes)
+            if not raw_bytes:
+                break
+
+            # Align to next newline so we don't break mid-word
+            next_byte = fh.read(1)
+            while next_byte and next_byte != b"\n":
+                raw_bytes += next_byte
+                next_byte = fh.read(1)
+            if next_byte:
+                raw_bytes += next_byte  # include the newline itself
+
+            block_end = block_start + len(raw_bytes)
+            byte_pos = block_end
+
+            # Decode to text
+            block_text = raw_bytes.decode("utf-8", errors="replace")
+
+            chunk_id = f"{source_name}_block_{block_idx:06d}"
+            meta: dict[str, str | int] = {
+                "source_file": str(source_path),
+                "byte_start": block_start,
+                "byte_end": block_end,
+                "block_idx": block_idx,
+            }
+
+            t0 = time.perf_counter()
+            if strategy == "extractive":
+                compressed = compress_chunk_extractive(
+                    text=block_text, chunk_id=chunk_id, metadata=meta, label=label
+                )
+            elif strategy == "raw_only":
+                # No compression — use truncated raw text as summary
+                compressed = CompressedChunk(
+                    chunk_id=chunk_id,
+                    raw_text=block_text,
+                    compressed_summary=block_text[:800],
+                    index_text="",
+                    entities=[],
+                    keywords=[],
+                    metadata=meta,
+                    original_tokens=_estimate_tokens(block_text),
+                    compressed_tokens=_estimate_tokens(block_text[:800]),
+                    compression_ratio=1.0,
+                )
+            else:
+                compressed = compress_chunk_with_llm(
+                    text=block_text, chunk_id=chunk_id, metadata=meta, llm=llm, label=label
+                )
+            elapsed = time.perf_counter() - t0
+
+            compressed_chunks.append(compressed)
+            block_metas.append((chunk_id, str(source_path), block_start, block_end))
+
+            print(
+                f"{_pfx}[BlockIngestor] block {block_idx + 1}/{est_blocks} "
+                f"({len(raw_bytes) / 1024:.0f} KB → {compressed.compressed_tokens} tokens)  "
+                f"{elapsed:.2f}s"
             )
-        else:
-            compressed = compress_chunk_with_llm(
-                text=cluster_text,
-                chunk_id=chunk_id,
-                metadata=meta,
-                llm=llm,
-                label=label,
-            )
-        elapsed = time.perf_counter() - t0
-        compressed_chunks.append(compressed)
+            block_idx += 1
+
+    # Write file pointers to BlockIndex after all blocks processed
+    if block_index is not None:
+        block_index.add_many(block_metas)
         print(
-            f"{_pfx}[ClusterCompressor] cluster {k + 1}/{n_clusters} done "
-            f"({len(cluster_texts)} sub-chunks, {len(cluster_text):,} chars)  "
-            f"{elapsed:.1f}s"
+            f"{_pfx}[BlockIngestor] BlockIndex: registered {len(block_metas)} file pointers"
         )
 
+    total_orig = sum(c.original_tokens for c in compressed_chunks)
+    total_comp = sum(c.compressed_tokens for c in compressed_chunks)
+    ratio = total_comp / total_orig if total_orig else 1.0
     print(
-        f"{_pfx}[ClusterCompressor] [OK] {len(compressed_chunks):,} cluster chunks "
-        f"(saved {len(sub_chunks) - n_clusters:,} LLM calls vs. per-sub-chunk compression)"
+        f"{_pfx}[BlockIngestor] [OK] {len(compressed_chunks)} blocks  "
+        f"ratio={ratio:.1%} ({total_orig:,} → {total_comp:,} tokens)"
     )
     return compressed_chunks
+
 
 
 if __name__ == "__main__":
@@ -1158,3 +1166,4 @@ if __name__ == "__main__":
         )
         print(f"  Entities: {chunk.entities}")
         print(f"  Keywords: {chunk.keywords}")
+

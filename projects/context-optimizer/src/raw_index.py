@@ -299,3 +299,189 @@ class RawIndex:
 
     def __exit__(self, *_: object) -> None:
         self.close()
+
+
+# ── BlockIndex ────────────────────────────────────────────────────────────────
+
+
+class BlockPointer(NamedTuple):
+    """Metadata for a single on-disk block."""
+
+    block_id: str
+    file_path: str
+    byte_start: int
+    byte_end: int
+
+    @property
+    def size_bytes(self) -> int:
+        return self.byte_end - self.byte_start
+
+
+class BlockIndex:
+    """
+    File-pointer index for large-corpus block-based ingestion.
+
+    Stores ``(block_id → file_path, byte_start, byte_end)`` in SQLite but
+    **never copies the raw text** — it is read on demand by seeking in the
+    original source file.
+
+    Benefits vs RawIndex for large corpora
+    ---------------------------------------
+    * A 2 GB corpus produces ~1 MB of SQLite metadata instead of ~2 GB.
+    * No data duplication: original files stay on disk as-is.
+    * Random read of one 500 KB block: ~2 ms (OS file cache); no SQLite
+      page-reads required.
+
+    Usage::
+
+        idx = BlockIndex("./corpus.blockindex.db")
+        idx.add_block("enwik9_block_000000", "/data/enwik9", 0, 500_000)
+
+        # Read the raw text of a block on demand
+        text = idx.get_text("enwik9_block_000000")
+
+        # Inspect metadata without reading the file
+        ptr = idx.get_meta("enwik9_block_000000")
+        print(ptr.file_path, ptr.byte_start, ptr.byte_end)
+    """
+
+    _SCHEMA_SQL = """
+        CREATE TABLE IF NOT EXISTS blocks (
+            block_id   TEXT PRIMARY KEY,
+            file_path  TEXT NOT NULL,
+            byte_start INTEGER NOT NULL,
+            byte_end   INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_blocks_file ON blocks(file_path);
+    """
+
+    def __init__(self, db_path: str | Path) -> None:
+        self._db_path = str(db_path)
+        self._is_memory = self._db_path == ":memory:"
+        self._lock = threading.Lock()
+
+        if self._is_memory:
+            self._shared_conn: sqlite3.Connection | None = self._make_conn()
+            self._local = None
+        else:
+            self._shared_conn = None
+            self._local = threading.local()
+
+        self._init_schema()
+
+    def _make_conn(self) -> sqlite3.Connection:
+        conn = sqlite3.connect(self._db_path, check_same_thread=False)
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA synchronous=NORMAL")
+        return conn
+
+    def _connect(self) -> sqlite3.Connection:
+        if self._is_memory:
+            assert self._shared_conn is not None
+            return self._shared_conn
+        conn: sqlite3.Connection | None = getattr(self._local, "conn", None)
+        if conn is None:
+            conn = self._make_conn()
+            conn.executescript(self._SCHEMA_SQL)
+            conn.commit()
+            self._local.conn = conn  # type: ignore[union-attr]
+        return conn
+
+    def _init_schema(self) -> None:
+        with self._lock:
+            self._connect().executescript(self._SCHEMA_SQL)
+            self._connect().commit()
+
+    # ── Write ────────────────────────────────────────────────────────────────
+
+    def add_block(
+        self,
+        block_id: str,
+        file_path: str | Path,
+        byte_start: int,
+        byte_end: int,
+    ) -> None:
+        """Register a block's file location.  No file I/O; metadata only."""
+        conn = self._connect()
+        conn.execute(
+            "INSERT OR REPLACE INTO blocks(block_id, file_path, byte_start, byte_end)"
+            " VALUES (?, ?, ?, ?)",
+            (block_id, str(file_path), byte_start, byte_end),
+        )
+        conn.commit()
+
+    def add_many(
+        self,
+        blocks: list[tuple[str, str | Path, int, int]],
+    ) -> None:
+        """
+        Batch-insert ``(block_id, file_path, byte_start, byte_end)`` tuples
+        in one transaction.
+        """
+        conn = self._connect()
+        conn.executemany(
+            "INSERT OR REPLACE INTO blocks(block_id, file_path, byte_start, byte_end)"
+            " VALUES (?, ?, ?, ?)",
+            [(bid, str(fp), bs, be) for bid, fp, bs, be in blocks],
+        )
+        conn.commit()
+
+    # ── Read ─────────────────────────────────────────────────────────────────
+
+    def get_meta(self, block_id: str) -> BlockPointer | None:
+        """Return the pointer metadata without reading the file."""
+        row = self._connect().execute(
+            "SELECT block_id, file_path, byte_start, byte_end"
+            "  FROM blocks WHERE block_id = ?",
+            (block_id,),
+        ).fetchone()
+        return BlockPointer(*row) if row else None
+
+    def get_text(
+        self,
+        block_id: str,
+        encoding: str = "utf-8",
+        errors: str = "replace",
+    ) -> str | None:
+        """
+        Read the block's raw bytes from disk and decode to a string.
+
+        Seeks directly to ``byte_start`` — only the block's bytes are read,
+        not the entire file.
+
+        Returns
+        -------
+        str | None
+            Decoded block text, or ``None`` if the block_id is not found or
+            the source file is missing / unreadable.
+        """
+        ptr = self.get_meta(block_id)
+        if ptr is None:
+            return None
+        try:
+            with open(ptr.file_path, "rb") as fh:
+                fh.seek(ptr.byte_start)
+                raw_bytes = fh.read(ptr.byte_end - ptr.byte_start)
+            return raw_bytes.decode(encoding, errors=errors)
+        except (OSError, IOError):
+            return None
+
+    def count(self) -> int:
+        return self._connect().execute("SELECT COUNT(*) FROM blocks").fetchone()[0]
+
+    def all_ids(self) -> list[str]:
+        rows = self._connect().execute("SELECT block_id FROM blocks ORDER BY block_id").fetchall()
+        return [r[0] for r in rows]
+
+    # ── Lifecycle ────────────────────────────────────────────────────────────
+
+    def __repr__(self) -> str:
+        return f"BlockIndex(db={self._db_path!r}, blocks={self.count()})"
+
+    def __enter__(self) -> "BlockIndex":
+        return self
+
+    def __exit__(self, *_: object) -> None:
+        if self._is_memory and self._shared_conn:
+            self._shared_conn.close()
+

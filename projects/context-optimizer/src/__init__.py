@@ -2,13 +2,10 @@
 __version__ = "0.1.0"
 
 from context_optimizer.benchmark import BenchmarkResult
-from context_optimizer.compressor import (
-    cluster_and_compress_corpus,
-    split_into_sub_chunks,
-)
+from context_optimizer.compressor import ingest_file_blocks, split_into_sub_chunks
 from context_optimizer.index import CorpusIndex, IngestStats, QueryResult
 from context_optimizer.protocols import Retriever
-from context_optimizer.raw_index import RawHit, RawIndex
+from context_optimizer.raw_index import BlockIndex, BlockPointer, RawHit, RawIndex
 from context_optimizer.tot_reasoner import Branch, ToTReasoner, ToTResult
 
 __all__ = [
@@ -23,10 +20,13 @@ __all__ = [
     "ToTResult",
     "Branch",
     "Retriever",
-    # Raw content indexer
+    # Raw content stores
     "RawIndex",
     "RawHit",
+    # Block-pointer index (large corpus, no data duplication)
+    "BlockIndex",
+    "BlockPointer",
     # Ingestion utilities
     "split_into_sub_chunks",
-    "cluster_and_compress_corpus",
+    "ingest_file_blocks",
 ]
