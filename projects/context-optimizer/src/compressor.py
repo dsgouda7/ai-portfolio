@@ -67,6 +67,61 @@ def _estimate_tokens(text: str) -> int:
     return max(1, len(text) // 4)
 
 
+def split_into_sub_chunks(text: str, sub_chunk_tokens: int = 200) -> list[str]:
+    """
+    Split *text* into sub-chunks of approximately *sub_chunk_tokens* each.
+
+    Used by parent-child multi-vector indexing: the parent stores a compressed
+    summary while children store raw sub-chunks embedded with exact vocabulary,
+    so granular keywords that an LLM might scrub from a summary are preserved in
+    the vector space.  When a child chunk matches a query, its ``parent_chunk_id``
+    is used to fetch and return the parent summary.
+
+    Splitting is sentence-boundary-aware (splits on ``.`` / ``!`` / ``?``).
+    Token budget uses the same 4-chars/token heuristic as :func:`_estimate_tokens`.
+
+    Parameters
+    ----------
+    text:
+        Source text to split.
+    sub_chunk_tokens:
+        Target token budget per sub-chunk (default 200 ≈ 800 chars).
+
+    Returns
+    -------
+    list[str]
+        Ordered sub-chunk strings.  Always at least one element.
+    """
+    import re as _re
+
+    if _estimate_tokens(text) <= sub_chunk_tokens:
+        return [text]
+
+    sentences = [
+        s.strip() for s in _re.split(r"(?<=[.!?])\s+", text.strip()) if s.strip()
+    ]
+    if not sentences:
+        return [text]
+
+    sub_chunks: list[str] = []
+    current: list[str] = []
+    current_tokens = 0
+
+    for sent in sentences:
+        sent_tokens = _estimate_tokens(sent)
+        if current_tokens + sent_tokens > sub_chunk_tokens and current:
+            sub_chunks.append(" ".join(current))
+            current = []
+            current_tokens = 0
+        current.append(sent)
+        current_tokens += sent_tokens
+
+    if current:
+        sub_chunks.append(" ".join(current))
+
+    return sub_chunks if sub_chunks else [text]
+
+
 # ── Per-chunk JSONL file logger ──────────────────────────────────────────────
 # Enabled by setting COMPRESSOR_LOG_FILE=/path/to/chunks.jsonl
 # Each line is a JSON record: {ts, chunk_id, label, elapsed_s, orig_tokens,
@@ -248,7 +303,9 @@ def _build_reasoner_llm(
         return None  # no reasoner configured — ToT returns raw snippets
 
     if selected_provider == "ollama" and ChatOllama is not None:
-        model_name = model or os.getenv("CONTEXT_OPTIMIZER_REASONER_MODEL", "llama3.2:3b")
+        model_name = model or os.getenv(
+            "CONTEXT_OPTIMIZER_REASONER_MODEL", "llama3.2:3b"
+        )
         base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
         return ChatOllama(model=model_name, base_url=base_url, temperature=0.0)
 
@@ -430,7 +487,9 @@ def _extractive_compress(text: str, ratio: float = 0.35) -> str:
     """
     import re as _re
 
-    sentences = [s.strip() for s in _re.split(r"(?<=[.!?])\s+", text.strip()) if s.strip()]
+    sentences = [
+        s.strip() for s in _re.split(r"(?<=[.!?])\s+", text.strip()) if s.strip()
+    ]
     if len(sentences) <= 2:
         return text
 
@@ -452,7 +511,11 @@ def _extractive_compress(text: str, ratio: float = 0.35) -> str:
     max_f = max(freq.values())
 
     def _score(s: str) -> float:
-        words = [w for w in _re.findall(r"[a-z]+", s.lower()) if w not in _stop and len(w) >= 3]
+        words = [
+            w
+            for w in _re.findall(r"[a-z]+", s.lower())
+            if w not in _stop and len(w) >= 3
+        ]
         return sum(freq.get(w, 0) / max_f for w in words) / len(words) if words else 0.0
 
     scored = [(i, s, _score(s)) for i, s in enumerate(sentences)]
@@ -479,14 +542,20 @@ def compress_chunk_extractive(
     t_start = time.perf_counter()
     summary = _extractive_compress(text, ratio=ratio)
 
-    _stop = frozenset("a an the and or but in on at to for of with by from is are was were".split())
+    _stop = frozenset(
+        "a an the and or but in on at to for of with by from is are was were".split()
+    )
     freq: dict[str, int] = {}
     for w in _re.findall(r"[a-z]+", text.lower()):
         if w not in _stop and len(w) >= 4:
             freq[w] = freq.get(w, 0) + 1
     keywords = sorted(freq, key=lambda k: freq[k], reverse=True)[:15]
     entities = list(
-        dict.fromkeys(w for w in _re.findall(r"\b[A-Z][a-z]{2,}\b", text) if w.lower() not in _stop)
+        dict.fromkeys(
+            w
+            for w in _re.findall(r"\b[A-Z][a-z]{2,}\b", text)
+            if w.lower() not in _stop
+        )
     )[:15]
 
     orig = _estimate_tokens(text)
@@ -741,7 +810,11 @@ def compress_corpus_rolling(
                     )
                 else:
                     compressed = compress_chunk_with_llm(
-                        text=chunk_text, chunk_id=chunk_id, metadata=_meta, llm=llm, label=label
+                        text=chunk_text,
+                        chunk_id=chunk_id,
+                        metadata=_meta,
+                        llm=llm,
+                        label=label,
                     )
                 _elapsed = time.perf_counter() - _t0
                 compressed_chunks.append(compressed)
@@ -788,11 +861,18 @@ def compress_corpus_rolling(
             }
             if strategy == "extractive":
                 compressed = compress_chunk_extractive(
-                    text=chunk_text, chunk_id=chunk_id, metadata=_meta_final, label=label
+                    text=chunk_text,
+                    chunk_id=chunk_id,
+                    metadata=_meta_final,
+                    label=label,
                 )
             else:
                 compressed = compress_chunk_with_llm(
-                    text=chunk_text, chunk_id=chunk_id, metadata=_meta_final, llm=llm, label=label
+                    text=chunk_text,
+                    chunk_id=chunk_id,
+                    metadata=_meta_final,
+                    llm=llm,
+                    label=label,
                 )
             compressed_chunks.append(compressed)
 
@@ -885,6 +965,172 @@ def compress_corpus_parallel(
         f"[ParallelCompressor] Done — {total_chunks} total chunks across {total} corpus/a"
     )
     return results
+
+
+def cluster_and_compress_corpus(
+    corpus_lines: list[str],
+    target_cluster_size: int = 50,
+    sub_chunk_tokens: int = 200,
+    llm: "CompressorLLM | None" = None,
+    label: str = "",
+    strategy: str = "llm",
+    compressor_provider: str | None = None,
+    compressor_model: str | None = None,
+    raw_index: "RawIndex | None" = None,
+) -> "list[CompressedChunk]":
+    """
+    K-Means cluster-then-summarize ingestion strategy.
+
+    Motivation
+    ----------
+    A naive pipeline that compresses every 200-token sub-chunk individually
+    makes O(N) LLM calls where N is the number of sub-chunks.  For a 2 GB
+    corpus (≈500 M tokens → ≈2.5 M sub-chunks at 200 t/chunk) this is
+    millions of LLM calls.
+
+    This pipeline instead:
+    1. Splits the corpus into raw sub-chunks (200 tokens each) — no LLM.
+    2. Builds TF-IDF vectors over all sub-chunks — no LLM, < 1 s for 10 k docs.
+    3. Groups sub-chunks by K-Means similarity into macro-clusters.
+    4. Concatenates each cluster and compresses it as one unit (1 LLM call).
+
+    Result: LLM calls reduced from N → N / target_cluster_size (≈ 95% savings
+    with target_cluster_size=50).
+
+    Requires ``scikit-learn`` (``pip install scikit-learn``).
+
+    Parameters
+    ----------
+    corpus_lines:
+        Raw corpus lines (same format as :func:`compress_corpus_rolling`).
+    target_cluster_size:
+        Average number of sub-chunks per cluster.  Default 50 sub-chunks/cluster
+        ≈ 10 000 tokens of source text per compressed chunk.
+    sub_chunk_tokens:
+        Token budget for each sub-chunk before clustering.
+    llm, strategy, compressor_provider, compressor_model:
+        Passed to :func:`compress_chunk_with_llm` / :func:`compress_chunk_extractive`.
+    raw_index:
+        When provided, raw text of each cluster is stored here.
+    label:
+        Progress log prefix.
+
+    Returns
+    -------
+    list[CompressedChunk]
+        One chunk per cluster.  ``chunk_id`` = ``cluster_{k:04d}``.
+    """
+    try:
+        from sklearn.cluster import MiniBatchKMeans  # type: ignore[import]
+        from sklearn.feature_extraction.text import (
+            TfidfVectorizer,  # type: ignore[import]
+        )
+    except ImportError as exc:
+        raise ImportError(
+            "scikit-learn required for cluster_and_compress_corpus. "
+            "pip install scikit-learn"
+        ) from exc
+
+    _pfx = f"[{label}] " if label else ""
+    full_text = "\n".join(corpus_lines)
+    sub_chunks = split_into_sub_chunks(full_text, sub_chunk_tokens=sub_chunk_tokens)
+
+    n_clusters = max(1, len(sub_chunks) // target_cluster_size)
+    print(
+        f"{_pfx}[ClusterCompressor] {len(sub_chunks):,} sub-chunks → "
+        f"{n_clusters:,} clusters (target_cluster_size={target_cluster_size})"
+    )
+
+    if n_clusters == 1:
+        # Corpus is small enough to treat as one cluster
+        return compress_corpus_rolling(
+            corpus_lines,
+            llm=llm,
+            label=label,
+            strategy=strategy,
+            compressor_provider=compressor_provider,
+            compressor_model=compressor_model,
+            raw_index=raw_index,
+        )
+
+    # ── Step 1: TF-IDF vectorisation (sparse, no LLM, no embeddings) ─────────
+    # TfidfVectorizer returns scipy.sparse.csr_matrix — MiniBatchKMeans works
+    # natively on sparse matrices so no densification is needed.
+    # max_features=5000 keeps memory bounded: 50K docs × 5K features ≈ 200 MB sparse.
+    print(f"{_pfx}[ClusterCompressor] Building TF-IDF vectors ...")
+    vectorizer = TfidfVectorizer(
+        max_features=5000,
+        stop_words="english",
+        sublinear_tf=True,   # log(1 + tf) instead of raw tf — compresses high-freq terms
+    )
+    tfidf_matrix = vectorizer.fit_transform(sub_chunks)
+
+    # ── Step 2: Mini-batch K-Means clustering ─────────────────────────────────
+    # MiniBatchKMeans processes random mini-batches each iteration instead of
+    # the full matrix, giving 10–100× speedup vs KMeans on large corpora with
+    # near-identical cluster quality for approximate groupings.
+    #
+    # batch_size: process 1024 docs per mini-batch (fits in L2 cache on most CPUs).
+    # n_init=3:   try 3 random seeds (vs default 10 for KMeans); for grouping
+    #             purposes, the best of 3 is indistinguishable from best of 10.
+    # max_iter=100: enough for convergence on text data; TF-IDF vectors are
+    #              already normalised so convergence is fast.
+    print(
+        f"{_pfx}[ClusterCompressor] Fitting MiniBatchKMeans(n_clusters={n_clusters}) ..."
+    )
+    km = MiniBatchKMeans(
+        n_clusters=n_clusters,
+        random_state=42,
+        n_init=3,
+        max_iter=100,
+        batch_size=min(1024, len(sub_chunks)),  # never larger than the dataset
+    )
+    labels = km.fit_predict(tfidf_matrix)
+
+    # ── Step 3: Collect sub-chunks per cluster ────────────────────────────────
+    clusters: dict[int, list[str]] = {k: [] for k in range(n_clusters)}
+    for sub_idx, cluster_id in enumerate(labels):
+        clusters[int(cluster_id)].append(sub_chunks[sub_idx])
+
+    # ── Step 4: Compress each cluster (one LLM call per cluster) ─────────────
+    if llm is None and strategy == "llm":
+        llm = _build_local_llm(provider=compressor_provider, model=compressor_model)
+
+    compressed_chunks: list[CompressedChunk] = []
+    for k, cluster_texts in sorted(clusters.items()):
+        cluster_text = "\n\n".join(cluster_texts)
+        chunk_id = f"cluster_{k:04d}"
+        meta: dict[str, str | int] = {"cluster_id": k, "sub_chunks": len(cluster_texts)}
+
+        if raw_index is not None:
+            raw_index.add(chunk_id, cluster_text)
+
+        t0 = time.perf_counter()
+        if strategy == "extractive":
+            compressed = compress_chunk_extractive(
+                text=cluster_text, chunk_id=chunk_id, metadata=meta, label=label
+            )
+        else:
+            compressed = compress_chunk_with_llm(
+                text=cluster_text,
+                chunk_id=chunk_id,
+                metadata=meta,
+                llm=llm,
+                label=label,
+            )
+        elapsed = time.perf_counter() - t0
+        compressed_chunks.append(compressed)
+        print(
+            f"{_pfx}[ClusterCompressor] cluster {k + 1}/{n_clusters} done "
+            f"({len(cluster_texts)} sub-chunks, {len(cluster_text):,} chars)  "
+            f"{elapsed:.1f}s"
+        )
+
+    print(
+        f"{_pfx}[ClusterCompressor] [OK] {len(compressed_chunks):,} cluster chunks "
+        f"(saved {len(sub_chunks) - n_clusters:,} LLM calls vs. per-sub-chunk compression)"
+    )
+    return compressed_chunks
 
 
 if __name__ == "__main__":

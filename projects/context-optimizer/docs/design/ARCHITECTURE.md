@@ -1,53 +1,95 @@
 # Context Optimizer: Architecture Design
 
 > **Canonical reference** for the Context Optimizer system.
-> Related: [plan.md](../plan.md) · [Experiments](experiments/EXPERIMENTS_CONSOLIDATED.md) · [Benchmark results](experiments/experiment_results.md)
+> Related: [Benchmark results](../benchmarks/experiment_results.md) · [README](../../README.md)
 
 ## Table of Contents
 
 1. [System Overview](#1-system-overview)
 2. [Data Ingestion Pipeline](#2-data-ingestion-pipeline)
 3. [Rolling Window Compression](#3-rolling-window-compression)
-4. [Dual Storage Architecture](#4-dual-storage-architecture)
-5. [Retrieval Layer](#5-retrieval-layer)
-6. [Semantic Cache Decision](#6-semantic-cache-decision)
-7. [MCP Tool Contract](#7-mcp-tool-contract)
-8. [Swappable Embedding Backend](#8-swappable-embedding-backend)
-9. [Integrated Query Flow](#9-integrated-query-flow)
-10. [Performance & Benchmarks](#10-performance--benchmarks)
-11. [Implementation Files](#11-implementation-files)
-12. [End-to-End Local Test Setup](#12-end-to-end-local-test-setup)
+4. [K-Means Cluster-then-Compress](#4-k-means-cluster-then-compress)
+5. [Dual Storage Architecture](#5-dual-storage-architecture)
+6. [Retrieval Layer](#6-retrieval-layer)
+7. [Parent-Child Multi-Vector Retrieval](#7-parent-child-multi-vector-retrieval)
+8. [Semantic Cache](#8-semantic-cache)
+9. [Tree-of-Thought Reasoner](#9-tree-of-thought-reasoner)
+10. [Agentic Raw-Text Fallback](#10-agentic-raw-text-fallback)
+11. [Swappable Embedding Backend](#11-swappable-embedding-backend)
+12. [Integrated Query Flow](#12-integrated-query-flow)
+13. [Performance & Benchmarks](#13-performance--benchmarks)
+14. [Implementation Files](#14-implementation-files)
 
 ---
 
 ## 1. System Overview
 
-Context Optimizer is a **token-efficient RAG pipeline with corpus-wide reasoning**.
-It compresses an arbitrarily large corpus once at write-time, then answers queries
-using only the relevant compressed summaries — achieving **91.3% token reduction
-with 0% quality loss** vs raw-injection baseline (measured, Pride & Prejudice corpus).
+Context Optimizer is a **token-efficient hierarchical RAG pipeline** that makes
+large-corpus retrieval economically viable. It compresses an arbitrarily large corpus
+once at write-time, then answers queries by searching compressed summaries first and
+fetching raw text on demand only when the reasoning model asks for it.
 
-### Standard LLM vs Compressed Architecture
+**Measured results** (11,574-line corpus, CPU-only, no GPU):
+
+| Metric | Baseline | Compressed | Threshold |
+|---|---|---|---|
+| Token reduction | — | **91.3%** | ≥ 90% |
+| Reasoning latency | 155.9 s | 79.5 s (−49%) | ≤ +10% |
+| Judge score (0–1) | 0.97 | 0.97 (+0%) | ≤ −20% |
+| KW-F1 | 0.068 | 0.160 (+136%) | ≤ −20% |
+
+**Three failure modes addressed:**
+
+| Failure mode | Solution | Where |
+|---|---|---|
+| Context exhaustion | Rolling-window compression | §3 |
+| Ingestion bottleneck (O(N) LLM calls) | K-Means cluster-then-compress | §4 |
+| Summary blurring (lost keywords) | Parent-child multi-vector retrieval | §7 |
+
+### Full Pipeline
 
 ```
-╔══════════════════════════════════════════════════════════════════════════════╗
-║              STANDARD LLM  (Monolithic / RAG Baseline)                     ║
-╠══════════════════════════════════════════════════════════════════════════════╣
-║  User Query                                                                  ║
-║      ▼                                                                       ║
-║  Raw corpus injected directly into context window                            ║
-║  (full text → context window exhaustion at scale)                           ║
-║      ▼                                                                       ║
-║  Reasoning LLM  ──→  Answer                                                  ║
-║  Problems:  context exhaustion · latency scales linearly with corpus size   ║
-╚══════════════════════════════════════════════════════════════════════════════╝
+Raw Corpus (any size)
+    │
+    ├──[OPTIONAL]── K-Means clustering (§4)
+    │               Groups related sub-chunks before compression
+    │               Reduces LLM calls by 90–98%
+    │
+    ▼  [WRITE-TIME — once, offline]
+Rolling Window Compression (§3)
+  LLM (cheap: llama3.2:3b) · 512-token batches · entity/keyword extraction
+    │
+    ▼
+Three storage tiers:
+  ┌─────────────────────────────────────────────────────────────────┐
+  │  ChromaDB  parent collection                                    │
+  │  compressed summaries (~50 tokens) · cosine HNSW · semantic     │
+  ├─────────────────────────────────────────────────────────────────┤
+  │  ChromaDB  children collection  (§7)                            │
+  │  raw 200-token sub-chunks · exact vocabulary · parent pointer   │
+  ├─────────────────────────────────────────────────────────────────┤
+  │  SQLite + FTS5  raw vault                                       │
+  │  original text · O(1) lookup · BM25 keyword search              │
+  └─────────────────────────────────────────────────────────────────┘
+    │
+    ▼  [QUERY-TIME — every request]
+Parent-child retrieval (§7)
+  1. Query → children collection (exact vocabulary hit)
+  2. Map child → parent_chunk_id → fetch parent summary
+  (fallback: semantic search on parent collection)
+    │
+    ▼
+Tree-of-Thought reasoner (§9)
+  N branches, each retrieving evidence; winner ranked by cosine score
+    │
+    ├── Sufficient evidence → answer directly (compressed summaries only)
+    └── Insufficient (score < threshold) → fetch raw text on demand (§10)
+    │
+    ▼
+Answer  (91.3% fewer tokens vs baseline)
+```
 
-╔══════════════════════════════════════════════════════════════════════════════╗
-║              CONTEXT OPTIMIZER  (Compress → Retrieve → Reason)             ║
-╠══════════════════════════════════════════════════════════════════════════════╣
-║                                                                              ║
-║  ┌─────────────────────────────────────────────────────────────────────┐   ║
-║  │  WRITE-TIME  (once, offline)                                        │   ║
+
 ║  │  Raw Corpus ──rolling-window──→ Compression LLM                    │   ║
 ║  │                                → CompressedChunk (~50 tokens each) │   ║
 ║  │                                → ChromaDB (summaries + raw vault)  │   ║
@@ -213,7 +255,65 @@ GROQ_API_KEY=...
 
 ---
 
-## 4. Dual Storage Architecture
+## 4. K-Means Cluster-then-Compress
+
+### The Ingestion Bottleneck
+
+Compressing every 200-token sub-chunk individually makes O(N) LLM calls. For a 2 GB
+corpus (~500 M tokens → ~2.5 M sub-chunks), that is millions of LLM inference calls.
+Even at 30 tokens/second this would take months on a local SLM.
+
+### The Solution: Cluster First, Summarise Once Per Cluster
+
+```python
+from context_optimizer.compressor import cluster_and_compress_corpus
+
+# 55 sub-chunks grouped into 2 clusters = 96% fewer LLM calls
+chunks = cluster_and_compress_corpus(
+    corpus_lines,
+    target_cluster_size=25,  # ~25 sub-chunks per cluster
+    sub_chunk_tokens=200,    # split corpus into 200-token windows first
+    strategy="extractive",   # or "llm" when Ollama is running
+)
+```
+
+### Algorithm
+
+```
+1. split_into_sub_chunks(text, 200 tokens)
+       ↓
+2. TfidfVectorizer(max_features=5000, stop_words="english")
+   Vectorise all sub-chunks — no LLM, no embeddings, < 1 s for 10K sub-chunks
+       ↓
+3. KMeans(n_clusters = len(sub_chunks) // target_cluster_size)
+   Group semantically related sub-chunks
+       ↓
+4. For each cluster:
+   Concatenate all sub-chunk texts → one LLM call per cluster
+   (vs. one LLM call per sub-chunk in naive approach)
+       ↓
+5. Return list[CompressedChunk]  (one per cluster)
+```
+
+### Measured Savings
+
+| Target cluster size | Sub-chunks | Clusters | LLM call reduction |
+|---|---|---|---|
+| 10 | 55 | 5 | **90.9%** |
+| 25 | 55 | 2 | **96.4%** |
+| 50 | 55 | 1 | **98.2%** |
+
+Intra-cluster Jaccard coherence at `target=10`: **0.635** (sentences grouped by topic,
+not randomly). At `target=50` coherence drops to 0.065 as fewer, larger clusters
+inevitably contain more diverse content.
+
+**Practical guidance:** `target_cluster_size=25` balances LLM call savings (~96%)
+against summary coherence. For domain-specific corpora (all logs, all legal text)
+larger clusters work well. For mixed corpora, prefer smaller clusters.
+
+---
+
+## 5. Dual Storage Architecture
 
 ```
 ┌─────────────────────────────────────────┐
@@ -243,7 +343,7 @@ GROQ_API_KEY=...
 
 ---
 
-## 5. Retrieval Layer
+## 6. Retrieval Layer
 
 ### CachedChromaRetriever (Recommended)
 
@@ -300,7 +400,74 @@ zero-dependency environments.
 
 ---
 
-## 6. Semantic Cache Decision
+## 7. Parent-Child Multi-Vector Retrieval
+
+### The Summary-Blurring Problem
+
+An LLM compressing "The detective found a gold pocket watch in the drawer" might
+produce "detective found evidence." The specific noun *pocket watch* vanishes.
+A user query for "pocket watch" returns zero hits from the summary index — even
+though the raw text contains the answer.
+
+This is not a contrived example. In the offline benchmark:
+- 3 of 20 specific-detail queries missed on the summary-only index: `21012 connection limit`,
+  `runbook #RT-1042`, `3 NADH 1 FADH2 GTP`
+- All 3 were recovered by the child index
+- Summary-only Recall@3: **85%** → Parent-child Recall@3: **100%**
+
+### Design
+
+```
+ChromaDB  parent collection     ChromaDB  children collection
+──────────────────────────────  ──────────────────────────────────────────
+chunk_000: "CosmosDB timeout…"  chunk_000__child_0000: "System.Timeout…"
+                                chunk_000__child_0001: "Error code 21012…"
+                                chunk_000__child_0002: "retry 3/3 failed…"
+                                  │
+                                  └── metadata: { parent_chunk_id: "chunk_000" }
+```
+
+Children embed raw text, not summaries. Exact vocabulary (including `21012`,
+`pocket watch`, `3 NADH`) is preserved in the child vector space.
+
+On retrieval:
+1. Query → search children collection (exact vocab match)
+2. Map each child → `parent_chunk_id`
+3. Deduplicate by parent; rank by best child cosine distance
+4. Fetch parent summaries from main collection
+5. Return parent summaries (coherent context for reasoning model)
+
+### Usage
+
+```python
+retriever = CachedChromaRetriever(collection_name="my_corpus")
+
+# Build both indexes
+retriever.add_chunks(compressed_chunks)               # parent summaries
+n = retriever.add_raw_sub_chunks(
+    compressed_chunks,
+    sub_chunk_tokens=200,  # ~800 chars per child
+)
+print(f"{n} child sub-chunks indexed")
+
+# Query via parent-child (recommended for specific-detail queries)
+results = retriever.search_with_child_index("pocket watch gold chain", top_k=5)
+
+# Query via summary-only (faster, sufficient for broad thematic queries)
+results = retriever.search("CosmosDB timeout cascade", top_k=5)
+```
+
+### When to use each mode
+
+| Query type | Recommended mode | Why |
+|---|---|---|
+| Specific facts, exact values, error codes | `search_with_child_index` | Child index preserves granular vocabulary |
+| Thematic / conceptual questions | `search` | Summary embeddings capture broader semantics |
+| Unknown query type | `search_with_child_index` | Slightly higher latency (~17 ms vs ~12 ms) but higher recall |
+
+---
+
+## 8. Semantic Cache
 
 ```
 Query → Semantic Cache (0–2 ms) ────────────────→ Results  (~70% hit rate)
@@ -323,7 +490,82 @@ vs 30ms ChromaDB-only → **2.9× speedup**.
 
 ---
 
-## 7. MCP Tool Contract
+## 9. Tree-of-Thought Reasoner
+
+The Tree-of-Thought (ToT) reasoner explores multiple analytical hypotheses in parallel
+before committing to an answer, modelled after the [Tree of Thoughts paper (Yao et al., 2023)].
+
+### Algorithm
+
+```
+1. Derive N branch specs from the compressed context
+   (entity list → one branch per entity cluster)
+       ↓
+2. For each branch:
+   - Issue composite sentence query against ChromaDB
+   - Retrieve top-k evidence snippets
+   - Accumulate cosine similarity scores
+       ↓
+3. Score branches by mean cosine similarity (gradient signal)
+   (e.g. 0.72 vs 0.68 — quantitative, not binary hit/miss)
+       ↓
+4. Return winner: selected_branch + evidence + synthesised answer
+```
+
+### Usage
+
+```python
+from context_optimizer.tot_reasoner import ToTReasoner
+
+reasoner = ToTReasoner(
+    retriever=cached_chroma_retriever,
+    top_k_per_term=3,
+    raw_fallback_threshold=0.40,   # score < 0.40 → fetch raw text
+)
+
+result = reasoner.reason(compressed_chunk)
+print(result.synthesized_answer)
+print(result.winner.score)         # winning branch cosine score
+```
+
+---
+
+## 10. Agentic Raw-Text Fallback
+
+The reasoning pipeline implements lazy loading: summaries are sent to the model first;
+raw text is fetched only when the evidence is insufficient.
+
+```
+Query
+  ↓
+Retrieve compressed summaries (§6)
+  ↓
+ToT reasoning pass
+  ├── winner.score >= raw_fallback_threshold (0.40)
+  │     → answer directly from summaries
+  │
+  └── winner.score < threshold
+        → re-retrieve using FTS5 keyword search on RawIndex
+        → exact source vocabulary available for precise answer
+        → raw text tokens added only for this query
+```
+
+**Why this is significant:**
+- Summaries handle ~80% of queries → 91.3% average token reduction
+- Raw text available for the remaining ~20% where precision matters
+- The model never "loses" information — it can always drill down
+- Token cost is **per-query-on-demand**, not upfront for all queries
+
+```python
+# Raw fallback via RawIndex BM25 keyword search
+hits = raw_index.search("21012 connection limit", top_k=3)
+for hit in hits:
+    print(hit.chunk_id, hit.raw_text[:80])
+```
+
+---
+
+## 11. MCP Tool Contract
 
 ### Tool Schema
 
@@ -365,7 +607,7 @@ MCP: returns raw text (~800 tokens) from metadata (no re-embedding)
 
 ---
 
-## 8. Swappable Embedding Backend
+## 12. Swappable Embedding Backend
 
 The embedding backend is a **swappable interface** — all other stages are unaffected.
 
@@ -390,7 +632,7 @@ Reference implementation: `src/context_optimizer/cached_retriever.py`.
 
 ---
 
-## 9. Integrated Query Flow
+## 13. Integrated Query Flow
 
 **Adaptive targeted query (2-turn):**
 
@@ -435,7 +677,7 @@ Token reduction: 91.3%
 
 ---
 
-## 10. Performance & Benchmarks
+## 14. Performance & Benchmarks
 
 ### Latest E2E Results (2026-06-23, local CPU, no GPU)
 
@@ -478,7 +720,7 @@ Corpus: Pride & Prejudice (11,574 lines). Models: `llama3.2:1b` (compression),
 
 ---
 
-## 11. Implementation Files
+## 15. Implementation Files
 
 ### Core Source (`src/context_optimizer/`)
 
@@ -511,7 +753,7 @@ cd c:\repos\ai-portfolio\projects\context-optimizer
 
 ---
 
-## 12. End-to-End Local Test Setup
+## 16. End-to-End Local Test Setup
 
 All results in [Section 10](#10-performance--benchmarks) are produced by a fully local,
 no-cloud run. No API keys, no paid subscriptions, no GPU required.

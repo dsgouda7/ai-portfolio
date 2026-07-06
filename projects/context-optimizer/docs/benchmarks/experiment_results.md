@@ -1,8 +1,24 @@
 # Experiment Results: Standard LLM vs Compressed Architecture
 
-> **Run date:** 2026-06-23 16:24
-> **Corpus:** 11,574 lines (Pride & Prejudice excerpt)
-> **Status:** Local-only execution (no API keys, no cloud)
+> **Primary run date:** 2026-06-23
+> **Retrieval benchmark date:** 2026-07-05
+> **Corpus:** 11,574 lines (Pride & Prejudice excerpt) + synthetic literary/technical corpus
+> **Hardware:** AMD Zen 3, 8-core / 64 GB RAM, CPU-only (no GPU)
+> **Status:** All benchmarks reproducible locally — no cloud API keys required
+
+---
+
+## Results at a Glance
+
+| Metric | Baseline | Compressed | Change | Pass/Fail |
+|---|---|---|---|---|
+| Avg prompt tokens | 180,734 | 15,798 | −91.3% | ≥90% ✅ |
+| Reasoning latency | 155.9 s | 79.5 s | −49.0% | ≤+10% ✅ |
+| Judge score | 0.97 | 0.97 | +0.0% | ≤−20% ✅ |
+| KW-F1 | 0.068 | 0.160 | +136% | ≤−20% ✅ |
+| Recall@3 (summary-only) | — | 85% | — | — |
+| **Recall@3 (parent-child)** | — | **100%** | **+15%** | — |
+| K-Means LLM call savings | — | 90–98% | — | — |
 
 ---
 
@@ -137,10 +153,125 @@ Metrics to watch in the upcoming run vs the baseline above:
 
 ---
 
+## Experiment 3 — Retrieval Quality: Parent-Child vs Summary-Only
+
+> **Run date:** 2026-07-05
+> **Method:** Offline — no LLM, no internet. Uses extractive compression + sentence-transformers.
+> **Corpus:** 50 synthetic sentences (literary + technical + scientific)
+> **Benchmark:** `benchmarks/retrieval_benchmark.py --exp 2`
+
+This experiment measures the "summary-blurring" failure mode: specific low-salience
+details (error codes, object names, measurements) that an LLM summariser predictably
+drops from compressed text.
+
+20 granular-detail queries target bracketed tokens from the corpus — details that
+should survive in raw sub-chunks but may be scrubbed by extractive compression.
+
+### Results
+
+| Mode | Recall@3 | Avg latency | Notes |
+|---|---|---|---|
+| Summary-only | **85%** | 11.5 ms | 3 queries missed |
+| **Parent-child index** | **100%** | 17.4 ms | All 20 recovered |
+| Improvement | **+15%** | +5.9 ms | 1.5× higher latency, 100% recall |
+
+### Missed queries (summary-only, recovered by child index)
+
+| Query | Keyword missed | Why |
+|---|---|---|
+| `21012 connection limit CosmosDB replica` | `21012 connection limit` | Specific error code scrubbed |
+| `runbook RT-1042 PagerDuty on-call` | `runbook #RT-1042` | Identifier dropped as non-topical |
+| `3 NADH 1 FADH2 GTP Krebs cycle` | `3 NADH` | Specific stoichiometry stripped |
+
+All three are representative of queries that standard RAG would fail: specific
+numeric identifiers, runbook references, and quantitative biological facts. These
+are precisely the queries a user in a production system would issue ("what does
+runbook RT-1042 say?") and expect to get an answer for.
+
+### Reproduce
+
+```powershell
+python benchmarks\retrieval_benchmark.py --exp 2
+```
+
+No Ollama required — runs entirely with sentence-transformers (all-MiniLM-L6-v2).
+
+---
+
+## Experiment 4 — K-Means Ingestion Cost Reduction
+
+> **Run date:** 2026-07-05
+> **Method:** Offline — TF-IDF + K-Means only (no LLM, no Ollama, no internet)
+> **Corpus:** 50 synthetic sentences × 10 repetitions = 500 sentences → 55 sub-chunks
+> **Benchmark:** `benchmarks/retrieval_benchmark.py --exp 3`
+
+### Results
+
+| Target cluster size | Sub-chunks (naive calls) | Clusters (cluster calls) | LLM call savings | Intra-cluster coherence | Cluster time |
+|---|---|---|---|---|---|
+| 10 | 55 | 5 | **90.9%** | 0.635 | 1,582 ms |
+| 25 | 55 | 2 | **96.4%** | 0.203 | 24 ms |
+| 50 | 55 | 1 | **98.2%** | 0.065 | 20 ms |
+
+**Coherence** (Jaccard similarity within clusters):
+- `target=10`: 0.635 — semantically related sentences grouped (incident logs with incident
+  logs, literary passages with literary passages)
+- `target=50`: 0.065 — large clusters inevitably mix topics; coherence drops
+
+**Practical guidance:** `target_cluster_size=25` is a good default. It saves ~96% of
+LLM calls while maintaining sufficient topical coherence for quality summaries. For
+domain-specific corpora (all logs, all legal text), larger clusters work well.
+
+### Reproduce
+
+```powershell
+python benchmarks\retrieval_benchmark.py --exp 3
+```
+
+Requires scikit-learn: `pip install scikit-learn`
+
+---
+
+## Experiment 5 — Compression Ratio (Extractive, No LLM)
+
+> **Run date:** 2026-07-05
+> **Method:** Extractive TF-IDF sentence selection — zero LLM, zero network
+> **Corpus:** 50 sentences (same synthetic corpus)
+> **Benchmark:** `benchmarks/retrieval_benchmark.py --exp 1`
+
+| Chunk | Orig tokens | Comp tokens | Ratio |
+|---|---|---|---|
+| sub-chunk 00 | 203 | 69 | 34.0% |
+| sub-chunk 01 | 203 | 82 | 40.4% |
+| sub-chunk 02 | 202 | 77 | 38.1% |
+| sub-chunk 03 | 200 | 67 | 33.5% |
+| sub-chunk 04 | 202 | 70 | 34.7% |
+| sub-chunk 05 | 70 | 46 | 65.7% |
+| **TOTAL** | **1,080** | **411** | **38.1%** |
+
+**Token reduction: 61.9%** using extractive compression alone (no LLM). The LLM
+compression pipeline achieves an additional factor of reduction (8× ratio measured
+on the Pride & Prejudice corpus: 12.2% = 88% reduction).
+
+---
+
+## Cumulative Benchmark Summary
+
+| Experiment | Date | Status |
+|---|---|---|
+| Exp 1 — Baseline (raw corpus) | 2026-06-23 | 155.9 s avg latency, 180,734 avg tokens |
+| Exp 2 — Compressed architecture | 2026-06-23 | 91.3% token reduction, 0% quality drop |
+| Exp 3 — Parent-child recall | 2026-07-05 | +15% recall (85% → 100%) |
+| Exp 4 — K-Means ingestion | 2026-07-05 | 90–98% fewer LLM calls |
+| Exp 5 — Extractive compression | 2026-07-05 | 61.9% token reduction, no LLM |
+
+---
+
 ## Next Steps
 
-- Run with `--full` flag (25K lines) to validate results at production corpus scale.
-- Populate persistent ChromaDB with `quick_compress_and_save.py` then run
-  `accuracy_benchmarks.py` for full F1 + precision/recall metrics.
-- Switch embedding backend to Ollama:
-  `$env:CONTEXT_OPTIMIZER_EMBEDDING_BACKEND = "ollama"` then re-run.
+- Run full corpus (25K lines) with `python benchmarks/run_experiments.py --full`
+  to validate parent-child recall improvement at production scale.
+- Measure parent-child latency at 10K+ parent chunks (HNSW scales logarithmically).
+- Benchmark K-Means coherence on a single-domain corpus (all incident logs) to
+  quantify the coherence improvement from domain-specific clustering.
+

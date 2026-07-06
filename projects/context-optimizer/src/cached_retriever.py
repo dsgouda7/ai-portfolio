@@ -32,7 +32,7 @@ except ImportError:
 import chromadb
 from chromadb.config import Settings
 
-from .compressor import CompressedChunk
+from .compressor import CompressedChunk, split_into_sub_chunks
 
 
 class _OllamaEmbedder:
@@ -301,6 +301,17 @@ class CachedChromaRetriever:
             metadata={"hnsw:space": "cosine"},
         )
 
+        # ── Child index (parent-child multi-vector retrieval) ──────────────
+        # Raw sub-chunks (200-token windows) indexed with exact vocabulary.
+        # When a specific keyword is "blurred" by the LLM summariser, the
+        # child index still captures it so the parent summary can be returned.
+        # Name is derived from the parent collection to stay grouped on disk.
+        self.children_collection = self.client.get_or_create_collection(
+            name=f"{collection_name}__children",
+            embedding_function=self.chroma_embedding_fn,
+            metadata={"hnsw:space": "cosine"},
+        )
+
         # ── Semantic cache ─────────────────────────────────────────────────
         self.cache = SemanticCache(
             embedding_model=self.embedding_model,
@@ -310,6 +321,10 @@ class CachedChromaRetriever:
 
         print(
             f"[CachedRetriever] Collection : '{collection_name}'  ({self.collection.count():,} chunks)"
+        )
+        print(
+            f"[CachedRetriever] Children   : '{collection_name}__children'  "
+            f"({self.children_collection.count():,} sub-chunks)"
         )
         print(f"[CachedRetriever] Storage    : {self.persist_directory}")
         print(
@@ -434,10 +449,189 @@ class CachedChromaRetriever:
         return {
             "collection_name": self.collection.name,
             "total_chunks": self.collection.count(),
+            "child_chunks": self.children_collection.count(),
             "storage_path": str(self.persist_directory),
             "embedding_model": self.embedding_model.get_sentence_embedding_dimension(),
             "cache": cache_stats,
         }
+
+    # ── Parent-child multi-vector retrieval ───────────────────────────────────
+
+    def add_raw_sub_chunks(
+        self,
+        chunks: list[CompressedChunk],
+        sub_chunk_tokens: int = 200,
+        batch_size: int = 100,
+    ) -> int:
+        """
+        Index raw sub-chunks for parent-child (multi-vector) retrieval.
+
+        Splits each ``CompressedChunk.raw_text`` into smaller windows of
+        *sub_chunk_tokens* tokens and stores them in the children collection
+        with exact source vocabulary.  Granular keywords that an LLM summariser
+        might drop (e.g. ``"pocket watch"``, ``"gold chain"``) are preserved in
+        the child embeddings.
+
+        On retrieval via :meth:`search_with_child_index`, the best-matching
+        child's ``parent_chunk_id`` is used to look up and return the parent
+        compressed summary — giving the reasoning model coherent context while
+        ensuring specific keyword queries still hit the right chunk.
+
+        Parameters
+        ----------
+        chunks:
+            Compressed chunks (parent level); their ``raw_text`` is split.
+        sub_chunk_tokens:
+            Target token budget per sub-chunk (default 200 ≈ 800 chars).
+        batch_size:
+            ChromaDB write batch size.
+
+        Returns
+        -------
+        int
+            Total number of sub-chunks indexed.
+        """
+        all_ids: list[str] = []
+        all_docs: list[str] = []
+        all_meta: list[dict] = []
+
+        for chunk in chunks:
+            sub_texts = split_into_sub_chunks(
+                chunk.raw_text, sub_chunk_tokens=sub_chunk_tokens
+            )
+            for sub_idx, sub_text in enumerate(sub_texts):
+                sub_id = f"{chunk.chunk_id}__child_{sub_idx:04d}"
+                all_ids.append(sub_id)
+                all_docs.append(sub_text)
+                all_meta.append(
+                    {
+                        "parent_chunk_id": chunk.chunk_id,
+                        "sub_chunk_idx": sub_idx,
+                        "parent_entities": ",".join(chunk.entities),
+                    }
+                )
+
+        if not all_ids:
+            return 0
+
+        for i in range(0, len(all_ids), batch_size):
+            self.children_collection.add(
+                ids=all_ids[i : i + batch_size],
+                documents=all_docs[i : i + batch_size],
+                metadatas=all_meta[i : i + batch_size],
+            )
+
+        print(
+            f"[CachedRetriever] Child index: added {len(all_ids):,} sub-chunks "
+            f"from {len(chunks):,} parent chunks"
+        )
+        return len(all_ids)
+
+    def search_with_child_index(
+        self,
+        query: str,
+        top_k: int = 5,
+        use_cache: bool = True,
+    ) -> list[dict]:
+        """
+        Parent-child multi-vector retrieval.
+
+        Searches raw sub-chunks first (preserving exact vocabulary), then maps
+        each matched child back to its parent compressed summary.  Falls back
+        to :meth:`search` if the children collection is empty.
+
+        Algorithm
+        ---------
+        1. Embed the query and search ``{collection}__children`` (raw sub-chunks).
+        2. Map each child hit to its ``parent_chunk_id``.
+        3. Deduplicate by ``parent_chunk_id``; keep best child distance per parent.
+        4. Fetch parent summaries from the main collection.
+
+        When a query targets a specific detail that was scrubbed by the LLM
+        (e.g. ``"pocket watch"``) the child index hits the precise 200-token
+        window.  The parent summary is then returned so the reasoning model
+        has coherent context while the retrieval is driven by exact keywords.
+
+        Parameters
+        ----------
+        query:
+            User query text.
+        top_k:
+            How many parent results to return.
+        use_cache:
+            Whether to use the semantic cache (default True).
+
+        Returns
+        -------
+        list[dict]
+            Same format as :meth:`search`, sourced via child→parent lookup.
+        """
+        if self.children_collection.count() == 0:
+            return self.search(query, top_k=top_k, use_cache=use_cache)
+
+        cache_key = f"__child__{query}"
+        if use_cache:
+            cached = self.cache.get(cache_key)
+            if cached is not None:
+                return cached
+
+        # Fetch more children to allow deduplication by parent
+        n_children = min(top_k * 5, self.children_collection.count())
+        child_results = self.children_collection.query(
+            query_texts=[query],
+            n_results=n_children,
+        )
+
+        # Deduplicate: best (lowest) distance per parent_chunk_id
+        seen_parents: dict[str, float] = {}
+        parent_order: list[str] = []
+        for i in range(len(child_results["ids"][0])):
+            parent_id = child_results["metadatas"][0][i]["parent_chunk_id"]
+            dist = (
+                child_results["distances"][0][i]
+                if "distances" in child_results
+                else 0.0
+            )
+            if parent_id not in seen_parents:
+                seen_parents[parent_id] = dist
+                parent_order.append(parent_id)
+            else:
+                seen_parents[parent_id] = min(seen_parents[parent_id], dist)
+
+        parent_order.sort(key=lambda pid: seen_parents[pid])
+        top_parent_ids = parent_order[:top_k]
+
+        # Fetch parent summaries from main collection
+        hits: list[dict] = []
+        for parent_id in top_parent_ids:
+            result = self.collection.get(ids=[parent_id])
+            if not result["ids"]:
+                continue
+            meta = result["metadatas"][0]
+            hits.append(
+                {
+                    "chunk_id": parent_id,
+                    "compressed_summary": result["documents"][0],
+                    "raw_text": meta.get("raw_text", ""),
+                    "metadata": meta,
+                    "distance": seen_parents[parent_id],
+                    "entities": (
+                        meta.get("entities", "").split(",")
+                        if meta.get("entities")
+                        else []
+                    ),
+                    "keywords": (
+                        meta.get("keywords", "").split(",")
+                        if meta.get("keywords")
+                        else []
+                    ),
+                }
+            )
+
+        if use_cache:
+            self.cache.put(cache_key, hits)
+
+        return hits
 
     def get_chunk_by_id(self, chunk_id: str | list) -> dict | None:
         """

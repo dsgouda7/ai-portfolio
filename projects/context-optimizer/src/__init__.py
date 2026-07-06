@@ -2,6 +2,10 @@
 __version__ = "0.1.0"
 
 from context_optimizer.benchmark import BenchmarkResult
+from context_optimizer.compressor import (
+    cluster_and_compress_corpus,
+    split_into_sub_chunks,
+)
 from context_optimizer.index import CorpusIndex, IngestStats, QueryResult
 from context_optimizer.protocols import Retriever
 from context_optimizer.raw_index import RawHit, RawIndex
@@ -22,4 +26,7 @@ __all__ = [
     # Raw content indexer
     "RawIndex",
     "RawHit",
+    # Ingestion utilities
+    "split_into_sub_chunks",
+    "cluster_and_compress_corpus",
 ]
