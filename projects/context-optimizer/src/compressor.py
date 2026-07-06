@@ -1099,14 +1099,13 @@ def ingest_file_blocks(
         Pre-built LLM instance.  If ``None`` and ``strategy="llm"``, a local
         Ollama instance is created via ``_build_local_llm()``.
     strategy:
-        ``"llm"``        — **recommended**: quantized LLM produces ~100-token
-                           triple-format index (TOPIC/PERSON/DATE/REL labels).
-                           Requires Ollama.  Output: strong embedding signal.
-        ``"extractive"`` — offline fallback only: TF-IDF sentence selection
-                           capped at 500 tokens.  No Ollama needed.  Output:
-                           weaker embedding signal; use only for smoke tests
-                           and unit tests, not production ingestion.
-        ``"raw_only"``   — no compression; stores truncated raw text.
+        ``"llm"``      — **the only production option**: quantized LLM
+                         produces ~100-token triple-format index entries
+                         (TOPIC/PERSON/DATE/REL labels).  Requires Ollama.
+        ``"raw_only"`` — stores the first 800 chars of raw text verbatim.
+                         No LLM, no compression.  Use only as a last resort
+                         when Ollama is unavailable and you still need to
+                         index something.  Retrieval quality will be poor.
     """
     import re as _re
     from pathlib import Path as _Path
@@ -1255,24 +1254,22 @@ def ingest_file_blocks(
                     except Exception as exc:
                         elapsed = time.perf_counter() - t0
                         print(
-                            f"{_pfx}[BlockIngestor] WARNING block {block_idx}: LLM error — {exc}"
+                            f"{_pfx}[BlockIngestor] WARNING block {block_idx}: "
+                            f"LLM error — {exc}. Falling back to raw_only for this block."
                         )
-                        compressed = compress_chunk_extractive(
-                            text=block_text[:8000],
+                        compressed = CompressedChunk(
                             chunk_id=chunk_id,
-                            metadata=meta,
-                            label=label,
-                            max_summary_tokens=200,
+                            raw_text=block_text[:2000],
+                            compressed_summary=block_text[:800],
+                            index_text="",
+                            entities=[],
+                            keywords=[],
+                            metadata={**meta, "fallback": "raw_only"},
+                            original_tokens=_estimate_tokens(block_text),
+                            compressed_tokens=_estimate_tokens(block_text[:800]),
+                            compression_ratio=1.0,
                         )
 
-            elif strategy == "extractive":
-                compressed = compress_chunk_extractive(
-                    text=block_text,
-                    chunk_id=chunk_id,
-                    metadata=meta,
-                    label=label,
-                    max_summary_tokens=500,
-                )
             else:  # raw_only
                 compressed = CompressedChunk(
                     chunk_id=chunk_id,
