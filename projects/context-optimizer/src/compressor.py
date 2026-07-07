@@ -486,53 +486,52 @@ Respond with ONLY valid JSON, no explanations."""
 
 # ── Block summary prompt ──────────────────────────────────────────────────────
 # Used by ingest_file_blocks for large-corpus ingestion.
-# Produces a DENSE NATURAL-LANGUAGE summary — no rigid schema, no label overhead.
+# Produces a SEMANTIC CORE — stripped of all function-word overhead.
 #
-# Why natural language (not triples)?
-#   - all-MiniLM-L6-v2 was trained on prose; it produces stronger semantic
-#     vectors from "Holmes deduced the criminal from a tobacco stain" than from
-#     "PERSON:Holmes;REL:deduced->criminal;CONCEPT:tobacco_stain".
-#   - Label tokens (TOPIC:, PERSON:, REL:, ->) eat budget without adding signal.
-#   - Dense prose preserves the exact vocabulary users will query with — a search
-#     for "tobacco stain" will match "tobacco stain" directly.
-#   - The reasoning model (llama3.2:3b) understands prose natively; it doesn't
-#     need structured markup to extract facts.
+# Design principle: every token must earn its place.
+# Dropped: articles (the/a/an), prepositions (of/in/at/with/for/by/from/to),
+#          conjunctions (and/but/or), auxiliaries (is/was/were/has/had/be),
+#          pronouns (he/she/they/it/his/her/their).
+# Kept:    proper nouns, key nouns, significant verbs, meaningful adjectives,
+#          numbers, dates, named concepts, causal connectors (caused/led/enabled).
 #
-# Target: ~200 tokens of maximally fact-dense prose.  Every sentence must carry
-# at least one proper noun, number, date, or named concept.
+# Output style: "telegram" — grammatically stripped but vocabulary intact so
+# queries match the exact words used in the source text.
+# all-MiniLM-L6-v2 handles stripped text well; the absent function words
+# appear in the query embedding too, so cosine similarity is preserved.
+#
+# Budget: ~200 tokens.  Prose with filler costs ~350 tokens for the same facts.
 
 BLOCK_SUMMARY_PROMPT = """\
-You are an expert fact-extractor for a semantic search index.
+Extract semantic core from this text. Output compressed noun-phrase sequences \
+— drop ALL: articles (the/a/an), prepositions (of/in/at/by/for/with/from/to), \
+conjunctions (and/but/or), pronouns (he/she/they/it/his/her), auxiliaries \
+(is/was/were/has/had/be/been/will/would/can/could). \
+Keep ALL: proper nouns, key nouns, strong verbs, meaningful adjectives, \
+numbers, dates, named events, causal verbs (caused/led/enabled/triggered/produced).
 
-Your job: read the text block below and write a dense, factual summary of \
-approximately 150-200 words. This summary becomes the sole search index \
-entry for this entire block — make every word count.
+Format: dense phrases separated by semicolons. No sentences, no punctuation \
+beyond semicolons. Cover facts from BEGINNING, MIDDLE, and END of the block. \
+Target: 180-220 tokens total.
 
-Rules:
-1. Write in plain English prose (no bullet points, no labels, no JSON).
-2. Prioritize: proper nouns, dates, numbers, named events, causal chains.
-3. Cover facts from THROUGHOUT the block, not just the opening.
-4. Every sentence must contain at least one specific fact (name, date, number).
-5. No filler: omit preamble like "This passage discusses..." or "The text covers..."
-6. Aim for 150-200 words exactly.
+Example input (Pride and Prejudice excerpt):
+"It is a truth universally acknowledged that a single man in possession of a \
+good fortune must be in want of a wife..."
 
-Example of a GOOD summary (for a block about Marie Curie):
-Marie Curie and Pierre Curie isolated polonium and radium in 1898 working in \
-a Paris laboratory, building on Henri Becquerel's 1896 discovery of \
-radioactivity in uranium. Marie Curie coined the term radioactivity and \
-developed methods to measure it. She received the Nobel Prize in Physics in \
-1903 shared with Pierre and Becquerel, and a second Nobel Prize in Chemistry \
-in 1911, making her the only person to win Nobel Prizes in two sciences. \
-Born Maria Sklodowska in Warsaw in 1867, she moved to Paris in 1891 to study \
-at the Sorbonne. Her research on radioactive isotopes directly enabled \
-nuclear physics, cancer radiotherapy, and the atomic model. She died in 1934 \
-from aplastic anaemia caused by decades of radiation exposure.
+Example output:
+Bennet family Longbourn five daughters Elizabeth Jane Lydia Kitty Mary; \
+Mrs Bennet schemes marriages wealthy suitors; Bingley Netherfield Park \
+attracted Jane ball; Darcy proud aristocratic dismisses local society; \
+Darcy attracted witty independent Elizabeth; Wickham false claims Darcy \
+inheritance deceives Elizabeth; Lydia elopes Wickham Brighton; Darcy \
+intervenes pays debts secures marriage; Elizabeth learns Darcy character; \
+Darcy proposes Elizabeth twice Hunsford Pemberley; reconciliation marriage \
+Pemberley 1813 England Austen social class
 
-Text block to summarise (sample facts from beginning, middle, and end):
+Text block (extract facts throughout — beginning middle end):
 {text}
 
-Write your 150-200 word summary now. Do NOT include any JSON, labels, or \
-explanation — just the plain-text summary:"""
+Compressed semantic core:"""
 
 
 # ── Extractive compression (no LLM required) ────────────────────────────────
