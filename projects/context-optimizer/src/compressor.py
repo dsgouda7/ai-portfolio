@@ -248,10 +248,9 @@ def _build_local_llm(
             "CONTEXT_OPTIMIZER_COMPRESSOR_MODEL", "qwen2.5-coder:7b"
         )
         base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-        # num_predict hard-caps output at 300 tokens regardless of what the
-        # prompt says.  Without this, small models (1b) ignore the word-count
-        # constraint and generate thousands of tokens per block, turning a
-        # 100-block run into a multi-hour job.
+        # num_predict hard-caps output tokens regardless of model size.
+        # Prose summaries need ~200 tokens; 300 gives a small safety margin
+        # so the model can finish the last sentence cleanly.
         return ChatOllama(
             model=model_name,
             base_url=base_url,
@@ -485,43 +484,55 @@ COMPRESSION_PROMPT_TEMPLATE = """You are a semantic index builder. Compress the 
 Respond with ONLY valid JSON, no explanations."""
 
 
-# ── Fixed-length block summary prompt ────────────────────────────────────────
+# ── Block summary prompt ──────────────────────────────────────────────────────
 # Used by ingest_file_blocks for large-corpus ingestion.
-# Produces a MACHINE-READABLE semantic index, NOT human prose.
-# Target: 80-100 tokens of pure entity-relationship triples — zero filler words.
-# This fits comfortably inside the embedding model's 512-token context window,
-# leaving room for the query vector and maximising retrieval signal-to-noise.
+# Produces a DENSE NATURAL-LANGUAGE summary — no rigid schema, no label overhead.
 #
-# Output schema: semicolon-separated `LABEL:value` pairs or `A->B->C` triples.
-# Labels: TOPIC PERSON DATE ORG PLACE EVENT CONCEPT NUM TECH REL CAUSE EFFECT
+# Why natural language (not triples)?
+#   - all-MiniLM-L6-v2 was trained on prose; it produces stronger semantic
+#     vectors from "Holmes deduced the criminal from a tobacco stain" than from
+#     "PERSON:Holmes;REL:deduced->criminal;CONCEPT:tobacco_stain".
+#   - Label tokens (TOPIC:, PERSON:, REL:, ->) eat budget without adding signal.
+#   - Dense prose preserves the exact vocabulary users will query with — a search
+#     for "tobacco stain" will match "tobacco stain" directly.
+#   - The reasoning model (llama3.2:3b) understands prose natively; it doesn't
+#     need structured markup to extract facts.
 #
-# Why not prose?  Function words (the, a, is, was, of) dilute the embedding
-# vector with noise.  A triple like `REL:Newton->formulated->calculus;DATE:1666`
-# gives the embedding model 6 pure signal tokens vs 12+ noisy ones in a sentence.
+# Target: ~200 tokens of maximally fact-dense prose.  Every sentence must carry
+# at least one proper noun, number, date, or named concept.
 
 BLOCK_SUMMARY_PROMPT = """\
-You are a semantic index engine for a vector retrieval database.
+You are an expert fact-extractor for a semantic search index.
 
-Task: extract a compact machine index from the input block.
-Target length: 80-100 tokens TOTAL output.
-Format: semicolon-separated LABEL:value pairs and SUBJ->PRED->OBJ triples.
-Labels to use: TOPIC PERSON DATE ORG PLACE EVENT CONCEPT NUM TECH REL CAUSE EFFECT
+Your job: read the text block below and write a dense, factual summary of \
+approximately 150-200 words. This summary becomes the sole search index \
+entry for this entire block — make every word count.
 
-Hard rules (violating any = wrong output):
-1. ZERO filler words: no articles, prepositions, "is/was/the/a/of/and/that/which"
-2. Proper nouns verbatim; numbers exact with units
-3. Use -> for causal/relational chains: A->caused->B, X->led_to->Y
-4. Sample facts from ACROSS the whole block — not only the opening text
-5. Total output index string: 80-100 tokens strictly
+Rules:
+1. Write in plain English prose (no bullet points, no labels, no JSON).
+2. Prioritize: proper nouns, dates, numbers, named events, causal chains.
+3. Cover facts from THROUGHOUT the block, not just the opening.
+4. Every sentence must contain at least one specific fact (name, date, number).
+5. No filler: omit preamble like "This passage discusses..." or "The text covers..."
+6. Aim for 150-200 words exactly.
 
-Example (input: passage about Marie Curie):
-{{"index":"TOPIC:radioactivity;PERSON:Marie_Curie,Pierre_Curie;DATE:1898;CONCEPT:polonium,radium;ORG:Paris_lab;REL:Curie->isolated->radium_1898;EVENT:Nobel_Prize_1903_1911;NUM:2_Nobel_prizes;CAUSE:uranium_research->EFFECT:radioactivity_theory","entities":["Marie Curie","Pierre Curie","radium","polonium"]}}
+Example of a GOOD summary (for a block about Marie Curie):
+Marie Curie and Pierre Curie isolated polonium and radium in 1898 working in \
+a Paris laboratory, building on Henri Becquerel's 1896 discovery of \
+radioactivity in uranium. Marie Curie coined the term radioactivity and \
+developed methods to measure it. She received the Nobel Prize in Physics in \
+1903 shared with Pierre and Becquerel, and a second Nobel Prize in Chemistry \
+in 1911, making her the only person to win Nobel Prizes in two sciences. \
+Born Maria Sklodowska in Warsaw in 1867, she moved to Paris in 1891 to study \
+at the Sorbonne. Her research on radioactive isotopes directly enabled \
+nuclear physics, cancer radiotherapy, and the atomic model. She died in 1934 \
+from aplastic anaemia caused by decades of radiation exposure.
 
-Input block (extract facts from THROUGHOUT):
+Text block to summarise (sample facts from beginning, middle, and end):
 {text}
 
-Output ONLY valid JSON, no explanation before or after:
-{{"index":"LABEL:val;LABEL:val;SUBJ->PRED->OBJ","entities":["e1","e2"]}}"""
+Write your 150-200 word summary now. Do NOT include any JSON, labels, or \
+explanation — just the plain-text summary:"""
 
 
 # ── Extractive compression (no LLM required) ────────────────────────────────
@@ -1217,24 +1228,33 @@ def ingest_file_blocks(
                         resp_text = (
                             resp.content if hasattr(resp, "content") else str(resp)
                         )
-                        try:
-                            parsed = json.loads(resp_text)
-                            # Accept either "index" (new compact format) or
-                            # "summary" (legacy) so existing cached results survive.
-                            index_val = parsed.get("index") or parsed.get("summary", "")
-                            entities = parsed.get("entities", [])
-                        except (json.JSONDecodeError, ValueError):
-                            # LLM returned non-JSON — strip any prose wrapper
-                            index_val = resp_text.strip()[:400]
-                            entities = []
 
-                        # Hard cap: 400 chars ≈ 100 tokens.  Truncate at last semicolon.
-                        if len(index_val) > 400:
-                            cut = index_val[:400]
-                            last_semi = cut.rfind(";")
-                            index_val = cut[: last_semi + 1] if last_semi > 200 else cut
+                        # New prompt returns plain-text prose, not JSON.
+                        # Strip any accidental JSON wrapper or preamble the model
+                        # might add despite being instructed not to.
+                        summary = resp_text.strip()
+                        entities: list[str] = []
 
-                        summary = index_val  # stored as compressed_summary in ChromaDB
+                        # If the model ignored instructions and returned JSON anyway,
+                        # extract the text field gracefully.
+                        if summary.startswith("{"):
+                            try:
+                                parsed = json.loads(summary)
+                                summary = (
+                                    parsed.get("summary")
+                                    or parsed.get("index")
+                                    or summary
+                                )
+                                entities = parsed.get("entities", [])
+                            except (json.JSONDecodeError, ValueError):
+                                pass  # use raw text as-is
+
+                        # Hard cap: 800 chars ≈ 200 tokens (prose needs more room
+                        # than triples).  Truncate at sentence boundary.
+                        if len(summary) > 800:
+                            cut = summary[:800]
+                            last_period = max(cut.rfind(". "), cut.rfind(".\n"))
+                            summary = cut[: last_period + 1] if last_period > 400 else cut
 
                         orig_tok = _estimate_tokens(block_text)
                         comp_tok = _estimate_tokens(summary)
@@ -1242,19 +1262,16 @@ def ingest_file_blocks(
                         elapsed = time.perf_counter() - t0
                         _log_chunk(chunk_id, label, elapsed, orig_tok, comp_tok, ratio)
 
-                        # The index_text IS the compact triple string — already
-                        # stopword-free by construction, so _normalise_for_index
-                        # adds entities as extra signal without removing anything.
-                        index_text = _normalise_for_index(
-                            summary + ("; " + "; ".join(entities) if entities else "")
-                        )
+                        # index_text: stopword-stripped version of the summary
+                        # for ChromaDB embedding — removes "the", "a", "of" etc.
+                        index_text = _normalise_for_index(summary)
                         compressed = CompressedChunk(
                             chunk_id=chunk_id,
                             raw_text=block_text[:2000],  # excerpt for raw fallback
                             compressed_summary=summary,
                             index_text=index_text,
                             entities=entities,
-                            keywords=[],  # keywords implicit in triple labels
+                            keywords=[],
                             metadata=meta,
                             original_tokens=orig_tok,
                             compressed_tokens=comp_tok,
