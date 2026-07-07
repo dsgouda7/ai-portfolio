@@ -79,9 +79,34 @@ _DATA_DIR.mkdir(parents=True, exist_ok=True)
 _ENWIK9_URL = "http://mattmahoney.net/dc/enwik9.zip"
 _ENWIK9_PATH = _DATA_DIR / "enwik9"
 _ENWIK9_CLEAN_PATH = _DATA_DIR / "enwik9_clean.txt"   # pre-processed plain text
+_GUTENBERG_PATH = _DATA_DIR / "gutenberg_combined.txt"  # combined Gutenberg books
 _QUESTIONS_PATH = _DATA_DIR / "questions.json"
 _RESULTS_PATH = _BENCH_DIR / "corpus_results.json"
 _REPORT_PATH = _BENCH_DIR / "corpus_results.md"
+
+# Top Gutenberg books (most popular public-domain fiction, plain UTF-8 text)
+_GUTENBERG_BOOKS = [
+    ("pg1342", "Pride and Prejudice",      "https://www.gutenberg.org/files/1342/1342-0.txt"),
+    ("pg84",   "Frankenstein",             "https://www.gutenberg.org/files/84/84-0.txt"),
+    ("pg11",   "Alice in Wonderland",      "https://www.gutenberg.org/files/11/11-0.txt"),
+    ("pg345",  "Dracula",                  "https://www.gutenberg.org/files/345/345-0.txt"),
+    ("pg2701", "Moby Dick",                "https://www.gutenberg.org/files/2701/2701-0.txt"),
+    ("pg74",   "Adventures of Tom Sawyer", "https://www.gutenberg.org/files/74/74-0.txt"),
+    ("pg1661", "Sherlock Holmes",          "https://www.gutenberg.org/files/1661/1661-0.txt"),
+    ("pg2554", "Crime and Punishment",     "https://www.gutenberg.org/files/2554/2554-0.txt"),
+    ("pg1400", "Great Expectations",       "https://www.gutenberg.org/files/1400/1400-0.txt"),
+    ("pg174",  "Dorian Gray",              "https://www.gutenberg.org/files/174/174-0.txt"),
+    ("pg5200", "Metamorphosis",            "https://www.gutenberg.org/files/5200/5200-0.txt"),
+    ("pg2591", "Grimms Fairy Tales",       "https://www.gutenberg.org/files/2591/2591-0.txt"),
+    ("pg16",   "Peter Pan",                "https://www.gutenberg.org/files/16/16-0.txt"),
+    ("pg1080", "A Modest Proposal",        "https://www.gutenberg.org/files/1080/1080-0.txt"),
+    ("pg2600", "War and Peace",            "https://www.gutenberg.org/files/2600/2600-0.txt"),
+    ("pg4300", "Ulysses",                  "https://www.gutenberg.org/files/4300/4300-0.txt"),
+    ("pg100",  "Complete Shakespeare",     "https://www.gutenberg.org/files/100/100-0.txt"),
+    ("pg1232", "The Prince",               "https://www.gutenberg.org/files/1232/1232-0.txt"),
+    ("pg76",   "Adventures Huck Finn",     "https://www.gutenberg.org/files/76/76-0.txt"),
+    ("pg215",  "The Call of the Wild",     "https://www.gutenberg.org/files/215/215-0.txt"),
+]
 
 
 # ── Data classes ──────────────────────────────────────────────────────────────
@@ -291,6 +316,79 @@ def download_corpus(output_path: Path | None = None, verbose: bool = True) -> Pa
     mb = dest.stat().st_size / 1_048_576
     if verbose:
         print(f"[corpus] Ready: {dest}  ({mb:.0f} MB)")
+    return dest
+
+
+def download_gutenberg_corpus(output_path: Path | None = None, verbose: bool = True) -> Path:
+    """
+    Download the top-20 Gutenberg books and combine into a single plain-text corpus.
+
+    This is the preferred corpus for benchmarking because:
+    - Clean English prose — no XML, no markup
+    - Questions generated from the text are guaranteed to be answerable
+    - Large enough (~50 MB combined) for meaningful block indexing
+    - Directly comparable to the old book_benchmark.py results
+
+    Returns path to the combined file.
+    """
+    dest = output_path or _GUTENBERG_PATH
+    if dest.exists():
+        mb = dest.stat().st_size / 1_048_576
+        if verbose:
+            print(f"[corpus] Gutenberg corpus already cached: {dest.name} ({mb:.0f} MB)")
+        return dest
+
+    _DATA_DIR.mkdir(parents=True, exist_ok=True)
+    books_dir = _DATA_DIR / "gutenberg_books"
+    books_dir.mkdir(exist_ok=True)
+
+    if verbose:
+        print(f"[corpus] Downloading {len(_GUTENBERG_BOOKS)} Gutenberg books ...")
+
+    downloaded = []
+    for slug, title, url in _GUTENBERG_BOOKS:
+        book_path = books_dir / f"{slug}.txt"
+        if book_path.exists():
+            downloaded.append(book_path)
+            if verbose:
+                print(f"  cached  {title}")
+            continue
+        try:
+            urllib.request.urlretrieve(url, book_path)
+            downloaded.append(book_path)
+            if verbose:
+                print(f"  OK      {title}  ({book_path.stat().st_size//1024} KB)")
+        except Exception as exc:
+            if verbose:
+                print(f"  SKIP    {title}: {exc}")
+
+    # Combine into one file, stripping Gutenberg header/footer boilerplate
+    if verbose:
+        print(f"[corpus] Combining {len(downloaded)} books → {dest.name} ...")
+    with open(dest, "w", encoding="utf-8") as out:
+        for book_path in downloaded:
+            text = book_path.read_text(encoding="utf-8", errors="replace")
+            lines = text.splitlines()
+            # Strip header up to START marker
+            start = 0
+            for i, ln in enumerate(lines):
+                if "*** START OF" in ln.upper() or "*** THE PROJECT GUTENBERG" in ln.upper():
+                    start = i + 1
+                    break
+            # Strip footer from END marker
+            end = len(lines)
+            for i, ln in enumerate(lines):
+                if "*** END OF" in ln.upper():
+                    end = i
+                    break
+            body = "\n".join(lines[start:end]).strip()
+            out.write(f"\n\n{'='*60}\n{book_path.stem.upper()}\n{'='*60}\n\n")
+            out.write(body)
+            out.write("\n")
+
+    mb = dest.stat().st_size / 1_048_576
+    if verbose:
+        print(f"[corpus] Gutenberg corpus ready: {dest.name}  ({mb:.0f} MB, {len(downloaded)} books)")
     return dest
 
 
@@ -1374,6 +1472,13 @@ def _parser() -> argparse.ArgumentParser:
     # prepare
     prep = sub.add_parser("prepare", help="Download corpus and generate questions.")
     prep.add_argument(
+        "--corpus",
+        choices=["gutenberg", "enwik9"],
+        default="gutenberg",
+        dest="corpus_source",
+        help="Which corpus to download: gutenberg (default, clean prose) or enwik9 (Wikipedia XML)",
+    )
+    prep.add_argument(
         "--corpus-path",
         type=Path,
         default=None,
@@ -1504,20 +1609,27 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def cmd_prepare(args: argparse.Namespace) -> tuple[Path, list[Question]]:
-    """Download corpus, strip XML/MediaWiki markup, generate questions."""
-    raw_path = args.corpus_path or _ENWIK9_PATH
-    if not raw_path.exists():
-        raw_path = download_corpus(raw_path if args.corpus_path else None)
+    """Download corpus and generate questions from it."""
+    source = getattr(args, "corpus_source", "gutenberg")
 
-    # Strip XML and MediaWiki markup → clean plain-text corpus for LLM ingestion
-    # The clean file is what we pass to ingest_file_blocks; the raw file is kept
-    # for question generation (which uses its own XML parser).
-    if raw_path == _ENWIK9_PATH:
-        corpus_path = clean_enwik9(raw_path, _ENWIK9_CLEAN_PATH)
+    if args.corpus_path:
+        # User-supplied local file — use as-is
+        corpus_path = args.corpus_path
+        if not corpus_path.exists():
+            print(f"[prepare] File not found: {corpus_path}")
+            raise SystemExit(1)
+    elif source == "gutenberg":
+        # Gutenberg books: clean English prose, questions sampled from text
+        corpus_path = download_gutenberg_corpus()
     else:
-        corpus_path = raw_path  # user-supplied corpus assumed to be clean
+        # enwik9: Wikipedia XML — strip markup first
+        raw_path = _ENWIK9_PATH
+        if not raw_path.exists():
+            raw_path = download_corpus()
+        corpus_path = clean_enwik9(raw_path, _ENWIK9_CLEAN_PATH)
 
-    questions = generate_questions(raw_path, n_questions=args.questions)  # XML parser still works on raw
+    # Questions are sampled from the corpus text itself — guaranteed answerable
+    questions = generate_questions(corpus_path, n_questions=args.questions)
     _QUESTIONS_PATH.write_text(
         json.dumps(
             [
@@ -1540,16 +1652,18 @@ def cmd_prepare(args: argparse.Namespace) -> tuple[Path, list[Question]]:
 
 def cmd_run(args: argparse.Namespace) -> None:
     """Build indexes and run the evaluation."""
-    # Prefer clean plain-text corpus (XML-stripped) for LLM ingestion.
-    # Fall back to raw enwik9 only if the clean version hasn't been prepared.
+    # Corpus priority: explicit path > Gutenberg > enwik9 clean > enwik9 raw
     if args.corpus_path:
         corpus_path = args.corpus_path
+    elif _GUTENBERG_PATH.exists():
+        corpus_path = _GUTENBERG_PATH
+        print(f"[run] Using Gutenberg corpus: {corpus_path.name} ({corpus_path.stat().st_size//1_048_576} MB)")
     elif _ENWIK9_CLEAN_PATH.exists():
         corpus_path = _ENWIK9_CLEAN_PATH
-        print(f"[run] Using pre-processed corpus: {corpus_path.name}")
+        print(f"[run] Using enwik9 clean: {corpus_path.name}")
     else:
         corpus_path = _ENWIK9_PATH
-        print("[run] WARNING: using raw XML corpus — run `prepare` first to strip markup")
+        print("[run] WARNING: using raw XML corpus — run `prepare` first")
     if not corpus_path.exists():
         print(f"[run] Corpus not found: {corpus_path}")
         print("[run] Run `prepare` first, or pass --corpus-path")
