@@ -78,6 +78,7 @@ _DATA_DIR.mkdir(parents=True, exist_ok=True)
 # ── Corpus config ──────────────────────────────────────────────────────────────
 _ENWIK9_URL = "http://mattmahoney.net/dc/enwik9.zip"
 _ENWIK9_PATH = _DATA_DIR / "enwik9"
+_ENWIK9_CLEAN_PATH = _DATA_DIR / "enwik9_clean.txt"   # pre-processed plain text
 _QUESTIONS_PATH = _DATA_DIR / "questions.json"
 _RESULTS_PATH = _BENCH_DIR / "corpus_results.json"
 _REPORT_PATH = _BENCH_DIR / "corpus_results.md"
@@ -291,6 +292,105 @@ def download_corpus(output_path: Path | None = None, verbose: bool = True) -> Pa
     if verbose:
         print(f"[corpus] Ready: {dest}  ({mb:.0f} MB)")
     return dest
+
+
+def clean_enwik9(raw_path: Path, clean_path: Path, verbose: bool = True) -> Path:
+    """
+    Strip XML tags and MediaWiki markup from enwik9, producing a plain-text
+    file suitable for LLM-based block summarization.
+
+    Processing:
+    - Extracts article text from <text xml:space="preserve">...</text>
+    - Removes nested templates {{...}}, file/image links [[File:...]]
+    - Converts [[link|display]] → display, [[link]] → link
+    - Strips reference tags <ref...>, comments <!--...-->, tables {|..|}
+    - Removes bold/italic markers '''/ ''
+    - Collapses whitespace; skips stub/redirect articles
+
+    Result: readable English sentences that the LLM can summarize into triples.
+    """
+    if clean_path.exists():
+        mb = clean_path.stat().st_size / 1_048_576
+        if verbose:
+            print(f"[corpus] Clean text already cached: {clean_path.name} ({mb:.0f} MB)")
+        return clean_path
+
+    if verbose:
+        print(f"[corpus] Stripping XML and MediaWiki markup from {raw_path.name} ...")
+
+    def _clean_wiki(text: str) -> str:
+        # Remove nested templates {{...}} iteratively
+        prev = None
+        while prev != text:
+            prev = text
+            text = re.sub(r"\{\{[^{}]*\}\}", "", text)
+        # Remove [[File:...]] [[Image:...]] [[Category:...]]
+        text = re.sub(r"\[\[(File|Image|Category|Media):[^\]]*\]\]", "", text, flags=re.IGNORECASE)
+        # [[link|display text]] → display text
+        text = re.sub(r"\[\[[^\]|]*\|([^\]]*)\]\]", r"\1", text)
+        # [[link]] → link
+        text = re.sub(r"\[\[([^\]]*)\]\]", r"\1", text)
+        # Remove <ref...>...</ref> and <ref.../>
+        text = re.sub(r"<ref[^>]*>.*?</ref>", "", text, flags=re.DOTALL)
+        text = re.sub(r"<ref[^>]*/?>", "", text)
+        # Remove HTML comments
+        text = re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
+        # Remove table markup {|...|}
+        text = re.sub(r"\{\|.*?\|\}", "", text, flags=re.DOTALL)
+        # Remove remaining XML/HTML tags
+        text = re.sub(r"<[^>]+>", " ", text)
+        # Remove bold/italic markers
+        text = text.replace("'''", "").replace("''", "")
+        # Remove section headers === Foo ===
+        text = re.sub(r"={2,}[^=]+=+", " ", text)
+        # Decode common HTML entities
+        text = text.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
+        text = text.replace("&quot;", '"').replace("&nbsp;", " ")
+        text = re.sub(r"&#?\w+;", " ", text)
+        # Collapse whitespace
+        return re.sub(r"\s{2,}", " ", text).strip()
+
+    in_text = False
+    text_buf = ""
+    articles_written = 0
+    chars_written = 0
+
+    with (
+        open(raw_path, "r", encoding="utf-8", errors="replace") as src,
+        open(clean_path, "w", encoding="utf-8") as dst,
+    ):
+        for line in src:
+            stripped = line.strip()
+            # Start of article text block
+            if '<text xml:space="preserve">' in stripped or stripped == "<text>":
+                in_text = True
+                start = stripped.find(">") + 1
+                text_buf = stripped[start:]
+                continue
+            if in_text:
+                if "</text>" in stripped:
+                    text_buf += stripped.split("</text>")[0]
+                    in_text = False
+                    # Skip redirects and very short stubs
+                    if text_buf.strip().startswith("#REDIRECT") or len(text_buf) < 100:
+                        text_buf = ""
+                        continue
+                    clean = _clean_wiki(text_buf)
+                    if len(clean) > 80:
+                        dst.write(clean + "\n\n")
+                        chars_written += len(clean) + 2
+                        articles_written += 1
+                        if verbose and articles_written % 5000 == 0:
+                            print(f"  [corpus] {articles_written:,} articles  "
+                                  f"{chars_written/1_048_576:.0f} MB written", end="\r")
+                    text_buf = ""
+                else:
+                    text_buf += stripped + " "
+
+    mb = clean_path.stat().st_size / 1_048_576
+    if verbose:
+        print(f"\n[corpus] Clean corpus: {articles_written:,} articles  {mb:.0f} MB → {clean_path.name}")
+    return clean_path
 
 
 # ── Question generation ────────────────────────────────────────────────────────
@@ -1404,12 +1504,20 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def cmd_prepare(args: argparse.Namespace) -> tuple[Path, list[Question]]:
-    """Download corpus + generate questions."""
-    corpus_path = args.corpus_path or _ENWIK9_PATH
-    if not corpus_path.exists():
-        corpus_path = download_corpus(corpus_path if args.corpus_path else None)
+    """Download corpus, strip XML/MediaWiki markup, generate questions."""
+    raw_path = args.corpus_path or _ENWIK9_PATH
+    if not raw_path.exists():
+        raw_path = download_corpus(raw_path if args.corpus_path else None)
 
-    questions = generate_questions(corpus_path, n_questions=args.questions)
+    # Strip XML and MediaWiki markup → clean plain-text corpus for LLM ingestion
+    # The clean file is what we pass to ingest_file_blocks; the raw file is kept
+    # for question generation (which uses its own XML parser).
+    if raw_path == _ENWIK9_PATH:
+        corpus_path = clean_enwik9(raw_path, _ENWIK9_CLEAN_PATH)
+    else:
+        corpus_path = raw_path  # user-supplied corpus assumed to be clean
+
+    questions = generate_questions(raw_path, n_questions=args.questions)  # XML parser still works on raw
     _QUESTIONS_PATH.write_text(
         json.dumps(
             [
@@ -1432,8 +1540,16 @@ def cmd_prepare(args: argparse.Namespace) -> tuple[Path, list[Question]]:
 
 def cmd_run(args: argparse.Namespace) -> None:
     """Build indexes and run the evaluation."""
-    # Load corpus
-    corpus_path = args.corpus_path or _ENWIK9_PATH
+    # Prefer clean plain-text corpus (XML-stripped) for LLM ingestion.
+    # Fall back to raw enwik9 only if the clean version hasn't been prepared.
+    if args.corpus_path:
+        corpus_path = args.corpus_path
+    elif _ENWIK9_CLEAN_PATH.exists():
+        corpus_path = _ENWIK9_CLEAN_PATH
+        print(f"[run] Using pre-processed corpus: {corpus_path.name}")
+    else:
+        corpus_path = _ENWIK9_PATH
+        print("[run] WARNING: using raw XML corpus — run `prepare` first to strip markup")
     if not corpus_path.exists():
         print(f"[run] Corpus not found: {corpus_path}")
         print("[run] Run `prepare` first, or pass --corpus-path")
