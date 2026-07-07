@@ -248,7 +248,16 @@ def _build_local_llm(
             "CONTEXT_OPTIMIZER_COMPRESSOR_MODEL", "qwen2.5-coder:7b"
         )
         base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-        return ChatOllama(model=model_name, base_url=base_url, temperature=0.1)
+        # num_predict hard-caps output at 300 tokens regardless of what the
+        # prompt says.  Without this, small models (1b) ignore the word-count
+        # constraint and generate thousands of tokens per block, turning a
+        # 100-block run into a multi-hour job.
+        return ChatOllama(
+            model=model_name,
+            base_url=base_url,
+            temperature=0.1,
+            num_predict=300,
+        )
 
     if selected_provider == "groq" and ChatGroq is not None:
         model_name = model or os.getenv(
