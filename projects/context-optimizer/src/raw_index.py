@@ -483,6 +483,27 @@ class BlockIndex:
 
     # ── Lifecycle ────────────────────────────────────────────────────────────
 
+    def blocks_for_file(self, file_path: str | Path) -> list[str]:
+        """Return all block_ids that belong to *file_path*."""
+        rows = (
+            self._connect()
+            .execute(
+                "SELECT block_id FROM blocks WHERE file_path = ?",
+                (str(file_path),),
+            )
+            .fetchall()
+        )
+        return [r[0] for r in rows]
+
+    def delete_blocks_for_file(self, file_path: str | Path) -> int:
+        """Remove all block pointer rows for *file_path*.  Returns count deleted."""
+        conn = self._connect()
+        cur = conn.execute(
+            "DELETE FROM blocks WHERE file_path = ?", (str(file_path),)
+        )
+        conn.commit()
+        return cur.rowcount
+
     def __repr__(self) -> str:
         return f"BlockIndex(db={self._db_path!r}, blocks={self.count()})"
 
@@ -492,3 +513,171 @@ class BlockIndex:
     def __exit__(self, *_: object) -> None:
         if self._is_memory and self._shared_conn:
             self._shared_conn.close()
+
+
+# ── FileRegistry ──────────────────────────────────────────────────────────────
+
+
+class FileRegistry:
+    """
+    Tracks which files have been indexed and their content hashes.
+
+    Stored alongside BlockIndex in the same SQLite DB (separate table).
+    Used by the incremental watcher to detect which files need re-indexing.
+
+    Schema
+    ------
+    ``file_registry(file_path, content_hash, file_size, indexed_at, block_ids)``
+
+    ``block_ids`` is a JSON list of block_ids produced during the last index
+    run for this file — used to delete stale ChromaDB vectors before
+    re-ingesting.
+    """
+
+    _SCHEMA_SQL = """
+        CREATE TABLE IF NOT EXISTS file_registry (
+            file_path    TEXT PRIMARY KEY,
+            content_hash TEXT NOT NULL,
+            file_size    INTEGER NOT NULL,
+            indexed_at   REAL NOT NULL,
+            block_ids    TEXT NOT NULL DEFAULT '[]'
+        );
+    """
+
+    def __init__(self, db_path: str | Path) -> None:
+        self._db_path = str(db_path)
+        self._is_memory = self._db_path == ":memory:"
+        self._lock = threading.Lock()
+        if self._is_memory:
+            self._shared_conn: sqlite3.Connection | None = sqlite3.connect(
+                ":memory:", check_same_thread=False
+            )
+            self._shared_conn.executescript(self._SCHEMA_SQL)
+            self._shared_conn.commit()
+            self._local = None
+        else:
+            self._shared_conn = None
+            self._local = threading.local()
+            self._init_schema()
+
+    def _make_conn(self) -> sqlite3.Connection:
+        conn = sqlite3.connect(self._db_path, check_same_thread=False)
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA synchronous=NORMAL")
+        return conn
+
+    def _connect(self) -> sqlite3.Connection:
+        if self._is_memory:
+            assert self._shared_conn is not None
+            return self._shared_conn
+        conn: sqlite3.Connection | None = getattr(self._local, "conn", None)
+        if conn is None:
+            conn = self._make_conn()
+            conn.executescript(self._SCHEMA_SQL)
+            conn.commit()
+            self._local.conn = conn  # type: ignore[union-attr]
+        return conn
+
+    def _init_schema(self) -> None:
+        with self._lock:
+            self._connect().executescript(self._SCHEMA_SQL)
+            self._connect().commit()
+
+    # ── Hash helpers ──────────────────────────────────────────────────────────
+
+    @staticmethod
+    def hash_file(path: Path) -> str:
+        """xxHash-64 (fast, non-cryptographic) of the file contents.
+
+        Falls back to MD5 if ``xxhash`` is not installed.
+        """
+        try:
+            import xxhash  # type: ignore
+            h = xxhash.xxh64()
+        except ImportError:
+            import hashlib
+            h = hashlib.md5()  # noqa: S324  — not used for security
+
+        with open(path, "rb") as fh:
+            for chunk in iter(lambda: fh.read(1 << 20), b""):
+                h.update(chunk)
+        return h.hexdigest()
+
+    # ── Read ──────────────────────────────────────────────────────────────────
+
+    def get(self, file_path: str | Path) -> dict | None:
+        """Return the registry entry for *file_path*, or None if not indexed."""
+        import json as _json
+        row = (
+            self._connect()
+            .execute(
+                "SELECT file_path, content_hash, file_size, indexed_at, block_ids"
+                "  FROM file_registry WHERE file_path = ?",
+                (str(file_path),),
+            )
+            .fetchone()
+        )
+        if row is None:
+            return None
+        return {
+            "file_path": row[0],
+            "content_hash": row[1],
+            "file_size": row[2],
+            "indexed_at": row[3],
+            "block_ids": _json.loads(row[4]),
+        }
+
+    def is_dirty(self, path: Path) -> bool:
+        """Return True if *path* is new, deleted, or its hash has changed."""
+        if not path.exists():
+            return False  # deleted — handled separately
+        entry = self.get(path)
+        if entry is None:
+            return True  # never indexed
+        if entry["file_size"] != path.stat().st_size:
+            return True  # quick size check before hashing
+        return entry["content_hash"] != self.hash_file(path)
+
+    def all_indexed_paths(self) -> list[str]:
+        rows = self._connect().execute(
+            "SELECT file_path FROM file_registry"
+        ).fetchall()
+        return [r[0] for r in rows]
+
+    # ── Write ─────────────────────────────────────────────────────────────────
+
+    def upsert(
+        self,
+        file_path: str | Path,
+        content_hash: str,
+        file_size: int,
+        block_ids: list[str],
+    ) -> None:
+        import json as _json
+        import time as _time
+        conn = self._connect()
+        conn.execute(
+            "INSERT OR REPLACE INTO file_registry"
+            "(file_path, content_hash, file_size, indexed_at, block_ids)"
+            " VALUES (?, ?, ?, ?, ?)",
+            (
+                str(file_path),
+                content_hash,
+                file_size,
+                _time.time(),
+                _json.dumps(block_ids),
+            ),
+        )
+        conn.commit()
+
+    def delete(self, file_path: str | Path) -> None:
+        conn = self._connect()
+        conn.execute(
+            "DELETE FROM file_registry WHERE file_path = ?", (str(file_path),)
+        )
+        conn.commit()
+
+    def count(self) -> int:
+        return self._connect().execute(
+            "SELECT COUNT(*) FROM file_registry"
+        ).fetchone()[0]

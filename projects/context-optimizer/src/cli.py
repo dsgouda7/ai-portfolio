@@ -13,14 +13,15 @@ Examples::
     context-optimizer query "what caused the CosmosDB timeout?" --index ./my_index
     context-optimizer benchmark --corpus medium --mode text
 """
+
 from __future__ import annotations
 
 import argparse
 import sys
 from pathlib import Path
 
-
 # ── Sub-command handlers ──────────────────────────────────────────────────────
+
 
 def _cmd_ingest(args: argparse.Namespace) -> None:
     from context_optimizer.index import CorpusIndex
@@ -88,6 +89,7 @@ def _cmd_query(args: argparse.Namespace) -> None:
 
     if args.strategy == "tot":
         from context_optimizer.tot_reasoner import ToTReasoner
+
         index._reasoners[args.collection] = ToTReasoner(
             retriever=index._retrievers[args.collection]
         )
@@ -168,10 +170,96 @@ def _cmd_benchmark(args: argparse.Namespace) -> None:
     if args.json_out:
         out_path = Path(args.json_out)
         out_path.write_text(_json.dumps(result.to_dict(), indent=2), encoding="utf-8")
-        print(f"\nMetrics saved → {out_path}")
+        print(f"\nMetrics saved -> {out_path}")
+
+
+def _cmd_watch(args: argparse.Namespace) -> None:
+    """
+    Watch a directory and incrementally re-index changed files.
+
+    On first run performs a full scan (only indexes files whose hash is
+    not already in the registry).  Subsequent runs re-index only dirty
+    files — typically 1-3 SLM calls per save.
+    """
+    from context_optimizer.cached_retriever import CachedChromaRetriever
+    from context_optimizer.raw_index import BlockIndex, FileRegistry
+    from context_optimizer.watcher import CorpusWatcher, IncrementalIndexer
+
+    watch_dir = Path(args.watch_dir).expanduser().resolve()
+    index_dir = Path(args.index).expanduser().resolve()
+    index_dir.mkdir(parents=True, exist_ok=True)
+
+    block_db = index_dir / "blocks.db"
+    block_index = BlockIndex(str(block_db))
+    # FileRegistry shares the same SQLite file
+    file_registry = FileRegistry(str(block_db))
+
+    retriever = CachedChromaRetriever(
+        collection_name=args.collection,
+        persist_directory=str(index_dir / args.collection),
+    )
+
+    # Optionally load TreeIndex
+    tree = None
+    if args.tree:
+        from context_optimizer.tree_index import TreeIndex
+
+        tree = TreeIndex(
+            collection_name=f"{args.collection}_tree",
+            persist_directory=str(index_dir),
+            block_index=block_index,
+        )
+
+    block_bytes = int(args.block_mb * 1024 * 1024)
+    overlap_bytes = int(block_bytes * args.overlap_pct / 100)
+
+    indexer = IncrementalIndexer(
+        block_index=block_index,
+        file_registry=file_registry,
+        retriever=retriever,
+        tree=tree,
+        block_size_bytes=block_bytes,
+        overlap_bytes=overlap_bytes,
+        compressor_model=args.model,
+        compressor_provider=getattr(args, "provider", None),
+        verbose=True,
+    )
+
+    print(f"[watch] Directory : {watch_dir}")
+    print(f"[watch] Index     : {index_dir}")
+    print(f"[watch] Pattern   : {args.glob}")
+    print(f"[watch] Block     : {args.block_mb} MB  overlap={args.overlap_pct}%")
+    provider_tag = getattr(args, "provider", None) or "ollama"
+    print(f"[watch] Provider  : {provider_tag}  model={args.model}")
+    if args.tree:
+        print("[watch] Tree-of-Summaries: enabled")
+    print()
+
+    if args.scan_only:
+        # One-shot scan: re-index dirty files then exit
+        results = indexer.scan_directory(watch_dir, glob=args.glob)
+        total_new = sum(results.values())
+        changed = sum(1 for n in results.values() if n > 0)
+        print(
+            f"[watch] Scan complete — {changed} files re-indexed, {total_new} blocks ingested"
+        )
+        return
+
+    # Initial scan before starting the watcher
+    print("[watch] Initial scan ...")
+    indexer.scan_directory(watch_dir, glob=args.glob)
+
+    watcher = CorpusWatcher(
+        watch_dir=watch_dir,
+        indexer=indexer,
+        glob=args.glob,
+        debounce_s=args.debounce,
+    )
+    watcher.run_forever()
 
 
 # ── Argument parser ───────────────────────────────────────────────────────────
+
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -191,51 +279,177 @@ def _build_parser() -> argparse.ArgumentParser:
     # ── ingest ────────────────────────────────────────────────────────────────
     p_ingest = sub.add_parser("ingest", help="Compress and index a corpus")
     p_ingest.add_argument("src", help="Path to a .txt file or directory of .txt files")
-    p_ingest.add_argument("--model",        default="llama3.2:3b",
-                          help="Ollama model for compression (default: llama3.2:3b)")
-    p_ingest.add_argument("--out",          required=True, metavar="DIR",
-                          help="Directory to persist the index")
-    p_ingest.add_argument("--collection",   default="default",
-                          help="Collection name within the index (default: default)")
-    p_ingest.add_argument("--chunk-tokens", type=int, default=512, dest="chunk_tokens",
-                          help="Token budget per compressed chunk (default: 512)")
-    p_ingest.add_argument("--strategy",     choices=["tot", "simple"], default="tot",
-                          help="Retrieval strategy (default: tot)")
+    p_ingest.add_argument(
+        "--model",
+        default="llama3.2:3b",
+        help="Model name for compression (default: llama3.2:3b)",
+    )
+    p_ingest.add_argument(
+        "--provider",
+        default=None,
+        choices=["ollama", "hf", "groq", "azure"],
+        help="LLM provider (default: ollama). Use 'hf' for local BART/T5 — faster on CPU, no Ollama needed.",
+    )
+    p_ingest.add_argument(
+        "--out", required=True, metavar="DIR", help="Directory to persist the index"
+    )
+    p_ingest.add_argument(
+        "--collection",
+        default="default",
+        help="Collection name within the index (default: default)",
+    )
+    p_ingest.add_argument(
+        "--chunk-tokens",
+        type=int,
+        default=512,
+        dest="chunk_tokens",
+        help="Token budget per compressed chunk (default: 512)",
+    )
+    p_ingest.add_argument(
+        "--strategy",
+        choices=["tot", "simple"],
+        default="tot",
+        help="Retrieval strategy (default: tot)",
+    )
 
     # ── query ─────────────────────────────────────────────────────────────────
     p_query = sub.add_parser("query", help="Query a persisted index")
-    p_query.add_argument("question",    help="Natural-language query string")
-    p_query.add_argument("--index",     required=True, metavar="DIR",
-                         help="Persisted index directory (created by 'ingest')")
-    p_query.add_argument("--collection", default="default",
-                         help="Collection name to query (default: default)")
-    p_query.add_argument("--top-k",     type=int, default=6, dest="top_k",
-                         help="Evidence snippets to return (simple strategy, default: 6)")
-    p_query.add_argument("--strategy",  choices=["tot", "simple"], default="tot",
-                         help="Retrieval strategy (default: tot)")
+    p_query.add_argument("question", help="Natural-language query string")
+    p_query.add_argument(
+        "--index",
+        required=True,
+        metavar="DIR",
+        help="Persisted index directory (created by 'ingest')",
+    )
+    p_query.add_argument(
+        "--collection",
+        default="default",
+        help="Collection name to query (default: default)",
+    )
+    p_query.add_argument(
+        "--top-k",
+        type=int,
+        default=6,
+        dest="top_k",
+        help="Evidence snippets to return (simple strategy, default: 6)",
+    )
+    p_query.add_argument(
+        "--strategy",
+        choices=["tot", "simple"],
+        default="tot",
+        help="Retrieval strategy (default: tot)",
+    )
+
+    # ── watch ─────────────────────────────────────────────────────────────────
+    p_watch = sub.add_parser(
+        "watch",
+        help="Watch a directory and incrementally re-index changed files",
+    )
+    p_watch.add_argument(
+        "watch_dir", metavar="DIR", help="Directory to watch (recursively)"
+    )
+    p_watch.add_argument(
+        "--index",
+        required=True,
+        metavar="DIR",
+        help="Persistent index directory (created on first run)",
+    )
+    p_watch.add_argument(
+        "--glob",
+        default="**/*.txt",
+        metavar="PATTERN",
+        help="File pattern to watch (default: **/*.txt)",
+    )
+    p_watch.add_argument(
+        "--model",
+        default="google/flan-t5-small",
+        help="Model name for block compression (default: google/flan-t5-small with hf provider)",
+    )
+    p_watch.add_argument(
+        "--provider",
+        default="hf",
+        choices=["ollama", "hf", "groq", "azure"],
+        help="LLM provider (default: hf — facebook/bart-large-cnn, ~400 MB, 5-15x faster than Ollama on CPU)",
+    )
+    p_watch.add_argument(
+        "--block-mb",
+        type=float,
+        default=0.1,
+        dest="block_mb",
+        help="Block size in MB (default: 0.1 = 100 KB)",
+    )
+    p_watch.add_argument(
+        "--overlap-pct",
+        type=float,
+        default=10.0,
+        dest="overlap_pct",
+        help="Block overlap as %% of block size (default: 10)",
+    )
+    p_watch.add_argument(
+        "--collection",
+        default="default",
+        help="ChromaDB collection name (default: default)",
+    )
+    p_watch.add_argument(
+        "--tree",
+        action="store_true",
+        default=False,
+        help="Also maintain a Tree-of-Summaries (L1+L2) index",
+    )
+    p_watch.add_argument(
+        "--debounce",
+        type=float,
+        default=3.0,
+        metavar="SECS",
+        help="Seconds to wait before re-indexing after a change (default: 3)",
+    )
+    p_watch.add_argument(
+        "--scan-only",
+        action="store_true",
+        default=False,
+        dest="scan_only",
+        help="Scan once for dirty files and exit (no continuous watching)",
+    )
 
     # ── benchmark ────────────────────────────────────────────────────────────
     p_bench = sub.add_parser("benchmark", help="Run benchmarks against Docker services")
-    p_bench.add_argument("--corpus", choices=["small", "medium", "large"], default="small",
-                         help="Corpus size for the benchmark run (default: small)")
-    p_bench.add_argument("--mode",   choices=["text", "image", "all"],    default="all",
-                         help="Which benchmark to run (default: all)")
-    p_bench.add_argument("--model",  default="llama3.2:3b",
-                         help="Compression model for inline small-corpus benchmark (default: llama3.2:3b)")
-    p_bench.add_argument("--json-out", default=None, metavar="FILE", dest="json_out",
-                         help="Write metrics JSON to FILE (small corpus only)")
+    p_bench.add_argument(
+        "--corpus",
+        choices=["small", "medium", "large"],
+        default="small",
+        help="Corpus size for the benchmark run (default: small)",
+    )
+    p_bench.add_argument(
+        "--mode",
+        choices=["text", "image", "all"],
+        default="all",
+        help="Which benchmark to run (default: all)",
+    )
+    p_bench.add_argument(
+        "--model",
+        default="llama3.2:3b",
+        help="Compression model for inline small-corpus benchmark (default: llama3.2:3b)",
+    )
+    p_bench.add_argument(
+        "--json-out",
+        default=None,
+        metavar="FILE",
+        dest="json_out",
+        help="Write metrics JSON to FILE (small corpus only)",
+    )
 
     return parser
 
 
 def main() -> None:
     parser = _build_parser()
-    args   = parser.parse_args()
+    args = parser.parse_args()
 
     dispatch = {
-        "ingest":     _cmd_ingest,
-        "query":      _cmd_query,
-        "benchmark":  _cmd_benchmark,
+        "ingest": _cmd_ingest,
+        "query": _cmd_query,
+        "watch": _cmd_watch,
+        "benchmark": _cmd_benchmark,
     }
     dispatch[args.command](args)
 

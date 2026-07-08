@@ -221,36 +221,52 @@ def _effective_workers(requested: int, explicit_llm: bool) -> int:
 
 
 def _build_local_llm(
-    provider: str | None = None, model: str | None = None
+    provider: str | None = None,
+    model: str | None = None,
+    is_code: bool = False,
 ) -> "CompressorLLM | None":
     """
-    Build a compressor LLM.  Explicit *provider* / *model* params take
-    precedence over environment variables so CLI flags always win.
+    Build a compressor LLM.
+
+    Two-model design
+    ----------------
+    ``model``      -- used for all non-code content (text, docs, data)
+    ``code_model`` -- used for source code (CONTEXT_OPTIMIZER_CODE_MODEL env var)
+
+    Pass ``is_code=True`` to request the code-specialized model.
 
     Supported providers
     -------------------
-    ``ollama``  Local Ollama instance (default).  Cheap, private.
-                Env vars: ``OLLAMA_BASE_URL``, ``CONTEXT_OPTIMIZER_COMPRESSOR_MODEL``
-    ``groq``    Groq cloud API (fast, free tier available).
-                Env var: ``GROQ_API_KEY``, ``CONTEXT_OPTIMIZER_COMPRESSOR_MODEL``
-    ``azure``   Azure OpenAI (any deployment — use a cheap model here, e.g.
-                ``gpt-4o-mini``).
-                Env vars: ``AZURE_OPENAI_ENDPOINT``, ``AZURE_OPENAI_API_KEY``,
-                           ``AZURE_OPENAI_API_VERSION`` (default 2024-02-01),
-                           ``AZURE_COMPRESSOR_DEPLOYMENT`` (default gpt-4o-mini)
+    ``ollama``         Local Ollama.  Cheap, private, Q4_K_M quantized.
+                       Env vars: OLLAMA_BASE_URL, CONTEXT_OPTIMIZER_COMPRESSOR_MODEL,
+                                 CONTEXT_OPTIMIZER_CODE_MODEL
+    ``hf``             Local HuggingFace BART/T5.  5-15x faster on CPU for prose.
+                       Env var: CONTEXT_OPTIMIZER_COMPRESSOR_MODEL
+    ``azure_foundry``  Azure AI Foundry serverless.  <1 s/block, no GPU needed.
+                       Env vars: AZURE_AI_FOUNDRY_ENDPOINT,
+                                 AZURE_AI_FOUNDRY_API_KEY,
+                                 AZURE_AI_FOUNDRY_MODEL (default phi-4-mini)
     """
     selected_provider = (
         provider or os.getenv("CONTEXT_OPTIMIZER_COMPRESSOR_PROVIDER", "ollama")
     ).lower()
 
+    # ── Ollama ────────────────────────────────────────────────────────────────
     if selected_provider == "ollama" and ChatOllama is not None:
-        model_name = model or os.getenv(
-            "CONTEXT_OPTIMIZER_COMPRESSOR_MODEL", "qwen2.5-coder:7b"
-        )
+        if is_code:
+            # code_model: same size as default, purpose-trained on CodeSearchNet
+            model_name = (
+                model
+                or os.getenv("CONTEXT_OPTIMIZER_CODE_MODEL")
+                or os.getenv("CONTEXT_OPTIMIZER_COMPRESSOR_MODEL", "qwen2.5-coder:3b")
+            )
+        else:
+            model_name = (
+                model
+                or os.getenv("CONTEXT_OPTIMIZER_COMPRESSOR_MODEL", "qwen2.5:3b")
+            )
+        # Discard Ollama-format names passed when provider switched to non-Ollama
         base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-        # num_predict hard-caps output tokens regardless of model size.
-        # Prose summaries need ~200 tokens; 300 gives a small safety margin
-        # so the model can finish the last sentence cleanly.
         return ChatOllama(
             model=model_name,
             base_url=base_url,
@@ -258,37 +274,25 @@ def _build_local_llm(
             num_predict=300,
         )
 
-    if selected_provider == "groq" and ChatGroq is not None:
-        model_name = model or os.getenv(
-            "CONTEXT_OPTIMIZER_COMPRESSOR_MODEL", "llama-3.3-70b-versatile"
+    # ── HF (BART / T5) ───────────────────────────────────────────────────────
+    if selected_provider == "hf":
+        from context_optimizer.providers.hf_summarizer import build as _hf_build
+        # Discard Ollama-format names (contain ':') — invalid HF Hub IDs
+        hf_model = model if (model and ":" not in model) else None
+        model_name = hf_model or os.getenv(
+            "CONTEXT_OPTIMIZER_COMPRESSOR_MODEL", "facebook/bart-large-cnn"
         )
-        api_key = os.getenv("GROQ_API_KEY")
-        if not api_key:
-            raise ValueError("GROQ_API_KEY environment variable required for Groq")
-        return ChatGroq(model=model_name, api_key=api_key, temperature=0.1)
+        return _hf_build(model=model_name)
 
-    if selected_provider == "azure":
-        try:
-            from langchain_openai import AzureChatOpenAI  # type: ignore[import]
-        except ImportError as exc:
-            raise ImportError(
-                "pip install langchain-openai  for Azure OpenAI support"
-            ) from exc
-        endpoint = os.getenv("AZURE_OPENAI_ENDPOINT") or ""
-        api_key = os.getenv("AZURE_OPENAI_API_KEY") or ""
-        if not endpoint or not api_key:
-            raise ValueError(
-                "AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY must be set for azure provider"
-            )
-        api_version = os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-01")
-        deployment = model or os.getenv("AZURE_COMPRESSOR_DEPLOYMENT", "gpt-4o-mini")
-        return AzureChatOpenAI(
-            azure_deployment=deployment,
-            azure_endpoint=endpoint,
-            api_key=api_key,
-            api_version=api_version,
-            temperature=0.1,
+    # ── Azure AI Foundry ─────────────────────────────────────────────────────
+    if selected_provider == "azure_foundry":
+        from context_optimizer.providers.azure_foundry import build as _az_build
+        az_model = (
+            model
+            or (os.getenv("CONTEXT_OPTIMIZER_CODE_MODEL") if is_code else None)
+            or os.getenv("AZURE_AI_FOUNDRY_MODEL", "phi-4-mini")
         )
+        return _az_build(model=az_model)
 
     return None
 
@@ -1253,7 +1257,9 @@ def ingest_file_blocks(
                         if len(summary) > 800:
                             cut = summary[:800]
                             last_period = max(cut.rfind(". "), cut.rfind(".\n"))
-                            summary = cut[: last_period + 1] if last_period > 400 else cut
+                            summary = (
+                                cut[: last_period + 1] if last_period > 400 else cut
+                            )
 
                         orig_tok = _estimate_tokens(block_text)
                         comp_tok = _estimate_tokens(summary)

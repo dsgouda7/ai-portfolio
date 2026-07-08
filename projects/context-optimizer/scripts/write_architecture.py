@@ -1,3 +1,10 @@
+"""Write the new ARCHITECTURE.md content."""
+
+import pathlib
+
+TARGET = pathlib.Path(__file__).parent.parent / "docs" / "design" / "ARCHITECTURE.md"
+
+CONTENT = """\
 # Context Optimizer: Architecture & Design
 
 > **Canonical reference** for the Context Optimizer system.
@@ -255,19 +262,16 @@ Zero reasoning gap means Mistral answers *exactly* from what the navigator retri
 ```mermaid
 flowchart LR
     subgraph "Write-time (once)"
-        W["ingest_file_blocks"] -->|"byte offsets"| BI[("BlockIndex
-SQLite")]
+        W["ingest_file_blocks"] -->|"byte offsets"| BI[("BlockIndex\nSQLite")]
         W -->|"BART summary"| C1[("ChromaDB L1")]
         C1 -->|"cluster"| C2[("ChromaDB L2")]
         C2 -->|"cluster"| CN[("ChromaDB LN")]
     end
     subgraph "Query-time (every request)"
-        Q[query] --> VEC["Vector search
-L_depth → L1"]
+        Q[query] --> VEC["Vector search\nL_depth → L1"]
         VEC --> C1 & C2 & CN
         VEC -->|fallback| BI
-        BI -->|"seek + read"| RAW["Raw corpus
-(disk)"]
+        BI -->|"seek + read"| RAW["Raw corpus\n(disk)"]
     end
 ```
 
@@ -327,3 +331,10 @@ docs/
   benchmarks/experiment_results.md  Detailed experiment log
   PLAN.md                        Roadmap: multi-format ingestion + codebase search
 ```
+"""
+
+TARGET.write_text(CONTENT, encoding="utf-8")
+import ast
+
+# just check it's valid text
+print(f"Written {len(CONTENT):,} chars to {TARGET.name}")

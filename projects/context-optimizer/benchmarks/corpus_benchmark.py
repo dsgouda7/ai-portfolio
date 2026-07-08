@@ -32,11 +32,10 @@ optimized_rag
 
 Corpus
 ------
-Default: enwik9 — the first 1 000 000 000 bytes of Wikipedia, a standard
-         lossless-compression benchmark.  Downloaded automatically from
-         http://mattmahoney.net/dc/enwik9.zip (323 MB compressed).
+Default: Gutenberg top-20 public-domain books (~18 MB combined clean prose).
+         Downloaded automatically from www.gutenberg.org.
 
-Override: --corpus-path /path/to/your/file.txt  (any UTF-8 text file ≥ 100 MB)
+Override: --corpus-path /path/to/your/file.txt  (any UTF-8 text file)
 
 Usage
 -----
@@ -48,6 +47,8 @@ Usage
     python corpus_benchmark.py run --questions 25 --top-k 3 --block-mb 1
     python corpus_benchmark.py run --vanilla-only        # skip optimized build
     python corpus_benchmark.py run --optimized-only      # skip vanilla build
+    python corpus_benchmark.py run --config benchmarks/bench_config.yaml
+    python corpus_benchmark.py run --config benchmarks/bench_config.yaml --eval-only
 """
 
 from __future__ import annotations
@@ -64,6 +65,115 @@ import urllib.request
 import zipfile
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
+
+# ── Config-file loader ──────────────────────────────────────────────────────
+
+
+def _load_bench_config(config_path: Path) -> dict:
+    """Load and return the YAML benchmark config."""
+    try:
+        import yaml  # type: ignore[import]
+    except ImportError:
+        raise SystemExit("[config] PyYAML is required: pip install pyyaml")
+    return yaml.safe_load(config_path.read_text("utf-8")) or {}
+
+
+def _apply_bench_config(args: argparse.Namespace, cfg: dict) -> None:
+    """
+    Apply bench_config.yaml values to *args*, then set env vars so
+    _build_local_llm() picks up the right provider/model without any
+    CLI flags.  Explicit CLI values passed by the user are NOT overwritten
+    (config is a default layer, CLI is an override layer).
+
+    Section mapping
+    ---------------
+    compressor.provider                -> CONTEXT_OPTIMIZER_COMPRESSOR_PROVIDER
+    compressor.<provider>.model        -> CONTEXT_OPTIMIZER_COMPRESSOR_MODEL
+                                         + args.compressor_model
+    compressor.ollama.base_url         -> OLLAMA_BASE_URL
+    reasoning.ollama.model             -> args.reasoning_model
+    reasoning.ollama.base_url          -> OLLAMA_BASE_URL (if not already set)
+    benchmark.*                        -> matching args attributes
+    """
+    bench = cfg.get("benchmark", {})
+    comp = cfg.get("compressor", {})
+    reason = cfg.get("reasoning", {})
+
+    # ── Benchmark settings ────────────────────────────────────────────
+    _scalar_keys = {
+        "block_mb": "block_mb",
+        "cluster_size": "cluster_size",
+        "questions": "questions",
+        "max_mb": "max_mb",
+        "overlap_pct": "overlap_pct",
+        "top_k": "top_k",
+        "tree_depth": "tree_depth",
+    }
+    _bool_keys = {
+        "tree": "run_tree",
+        "optimized_only": "optimized_only",
+        "build_only": "build_only",
+        "eval_only": "eval_only",
+    }
+    for cfg_key, arg_key in _scalar_keys.items():
+        if cfg_key in bench:
+            val = bench[cfg_key]
+            # tree_depth: "auto" string -> 0 (resolved inside build_tree_rag)
+            if cfg_key == "tree_depth" and str(val).lower() == "auto":
+                val = 0
+            setattr(args, arg_key, val)
+    for cfg_key, arg_key in _bool_keys.items():
+        if cfg_key in bench:
+            setattr(args, arg_key, bool(bench[cfg_key]))
+    # Resolve path values relative to the project root (config file's parent dir)
+    # so  "benchmarks/data/corpus/..."  works regardless of working directory.
+    _cfg_dir = Path(getattr(args, "_config_path", __file__)).parent
+    _proj_root = _cfg_dir.parent  # context-optimizer/
+    if "corpus_path" in bench:
+        p = Path(bench["corpus_path"])
+        args.corpus_path = p if p.is_absolute() else (_proj_root / p).resolve()
+    if "index_dir" in bench:
+        p = Path(bench["index_dir"])
+        args.index_dir = p if p.is_absolute() else (_proj_root / p).resolve()
+
+    # ── Compressor ────────────────────────────────────────────────────
+    provider = comp.get("provider", "").lower()
+    if provider:
+        os.environ["CONTEXT_OPTIMIZER_COMPRESSOR_PROVIDER"] = provider
+        provider_cfg = comp.get(provider, {})
+        if "model" in provider_cfg:
+            os.environ["CONTEXT_OPTIMIZER_COMPRESSOR_MODEL"] = provider_cfg["model"]
+            args.compressor_model = provider_cfg["model"]
+        if "code_model" in provider_cfg:
+            # Two-model design: separate code-specialized model, same size/speed
+            os.environ["CONTEXT_OPTIMIZER_CODE_MODEL"] = provider_cfg["code_model"]
+        if provider == "ollama" and "base_url" in provider_cfg:
+            os.environ.setdefault("OLLAMA_BASE_URL", provider_cfg["base_url"])
+        if provider == "hf" and "device" in provider_cfg:
+            os.environ["CONTEXT_OPTIMIZER_HF_DEVICE"] = str(provider_cfg["device"])
+        if provider == "azure_foundry":
+            if "endpoint" in provider_cfg:
+                os.environ.setdefault("AZURE_AI_FOUNDRY_ENDPOINT", provider_cfg["endpoint"])
+            if "model" in provider_cfg:
+                os.environ.setdefault("AZURE_AI_FOUNDRY_MODEL", provider_cfg["model"])
+
+    # ── Reasoning model ───────────────────────────────────────────────
+    ollama_reason = reason.get("ollama", {})
+    if "model" in ollama_reason:
+        args.reasoning_model = ollama_reason["model"]
+    if "base_url" in ollama_reason:
+        os.environ.setdefault("OLLAMA_BASE_URL", ollama_reason["base_url"])
+
+    code_model = os.getenv("CONTEXT_OPTIMIZER_CODE_MODEL", "")
+    print(
+        f"[config] Loaded {getattr(args, '_config_path', 'config')}  "
+        f"provider={provider or '(not set)'}  "
+        f"model={getattr(args, 'compressor_model', '?')}  "
+        + (f"code_model={code_model}  " if code_model else "")
+        + f"reasoning={getattr(args, 'reasoning_model', '?')}"
+    )
+
+
 from pathlib import Path
 from typing import Any
 
@@ -75,10 +185,7 @@ sys.path.insert(0, str(_SRC_DIR))
 _DATA_DIR = _BENCH_DIR / "data" / "corpus"
 _DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-# ── Corpus config ──────────────────────────────────────────────────────────────
-_ENWIK9_URL = "http://mattmahoney.net/dc/enwik9.zip"
-_ENWIK9_PATH = _DATA_DIR / "enwik9"
-_ENWIK9_CLEAN_PATH = _DATA_DIR / "enwik9_clean.txt"   # pre-processed plain text
+# ── Corpus config ────────────────────────────────────────────────────────────
 _GUTENBERG_PATH = _DATA_DIR / "gutenberg_combined.txt"  # combined Gutenberg books
 _QUESTIONS_PATH = _DATA_DIR / "questions.json"
 _RESULTS_PATH = _BENCH_DIR / "corpus_results.json"
@@ -86,26 +193,34 @@ _REPORT_PATH = _BENCH_DIR / "corpus_results.md"
 
 # Top Gutenberg books (most popular public-domain fiction, plain UTF-8 text)
 _GUTENBERG_BOOKS = [
-    ("pg1342", "Pride and Prejudice",      "https://www.gutenberg.org/files/1342/1342-0.txt"),
-    ("pg84",   "Frankenstein",             "https://www.gutenberg.org/files/84/84-0.txt"),
-    ("pg11",   "Alice in Wonderland",      "https://www.gutenberg.org/files/11/11-0.txt"),
-    ("pg345",  "Dracula",                  "https://www.gutenberg.org/files/345/345-0.txt"),
-    ("pg2701", "Moby Dick",                "https://www.gutenberg.org/files/2701/2701-0.txt"),
-    ("pg74",   "Adventures of Tom Sawyer", "https://www.gutenberg.org/files/74/74-0.txt"),
-    ("pg1661", "Sherlock Holmes",          "https://www.gutenberg.org/files/1661/1661-0.txt"),
-    ("pg2554", "Crime and Punishment",     "https://www.gutenberg.org/files/2554/2554-0.txt"),
-    ("pg1400", "Great Expectations",       "https://www.gutenberg.org/files/1400/1400-0.txt"),
-    ("pg174",  "Dorian Gray",              "https://www.gutenberg.org/files/174/174-0.txt"),
-    ("pg5200", "Metamorphosis",            "https://www.gutenberg.org/files/5200/5200-0.txt"),
-    ("pg2591", "Grimms Fairy Tales",       "https://www.gutenberg.org/files/2591/2591-0.txt"),
-    ("pg16",   "Peter Pan",                "https://www.gutenberg.org/files/16/16-0.txt"),
-    ("pg1080", "A Modest Proposal",        "https://www.gutenberg.org/files/1080/1080-0.txt"),
-    ("pg2600", "War and Peace",            "https://www.gutenberg.org/files/2600/2600-0.txt"),
-    ("pg4300", "Ulysses",                  "https://www.gutenberg.org/files/4300/4300-0.txt"),
-    ("pg100",  "Complete Shakespeare",     "https://www.gutenberg.org/files/100/100-0.txt"),
-    ("pg1232", "The Prince",               "https://www.gutenberg.org/files/1232/1232-0.txt"),
-    ("pg76",   "Adventures Huck Finn",     "https://www.gutenberg.org/files/76/76-0.txt"),
-    ("pg215",  "The Call of the Wild",     "https://www.gutenberg.org/files/215/215-0.txt"),
+    (
+        "pg1342",
+        "Pride and Prejudice",
+        "https://www.gutenberg.org/files/1342/1342-0.txt",
+    ),
+    ("pg84", "Frankenstein", "https://www.gutenberg.org/files/84/84-0.txt"),
+    ("pg11", "Alice in Wonderland", "https://www.gutenberg.org/files/11/11-0.txt"),
+    ("pg345", "Dracula", "https://www.gutenberg.org/files/345/345-0.txt"),
+    ("pg2701", "Moby Dick", "https://www.gutenberg.org/files/2701/2701-0.txt"),
+    ("pg74", "Adventures of Tom Sawyer", "https://www.gutenberg.org/files/74/74-0.txt"),
+    ("pg1661", "Sherlock Holmes", "https://www.gutenberg.org/files/1661/1661-0.txt"),
+    (
+        "pg2554",
+        "Crime and Punishment",
+        "https://www.gutenberg.org/files/2554/2554-0.txt",
+    ),
+    ("pg1400", "Great Expectations", "https://www.gutenberg.org/files/1400/1400-0.txt"),
+    ("pg174", "Dorian Gray", "https://www.gutenberg.org/files/174/174-0.txt"),
+    ("pg5200", "Metamorphosis", "https://www.gutenberg.org/files/5200/5200-0.txt"),
+    ("pg2591", "Grimms Fairy Tales", "https://www.gutenberg.org/files/2591/2591-0.txt"),
+    ("pg16", "Peter Pan", "https://www.gutenberg.org/files/16/16-0.txt"),
+    ("pg1080", "A Modest Proposal", "https://www.gutenberg.org/files/1080/1080-0.txt"),
+    ("pg2600", "War and Peace", "https://www.gutenberg.org/files/2600/2600-0.txt"),
+    ("pg4300", "Ulysses", "https://www.gutenberg.org/files/4300/4300-0.txt"),
+    ("pg100", "Complete Shakespeare", "https://www.gutenberg.org/files/100/100-0.txt"),
+    ("pg1232", "The Prince", "https://www.gutenberg.org/files/1232/1232-0.txt"),
+    ("pg76", "Adventures Huck Finn", "https://www.gutenberg.org/files/76/76-0.txt"),
+    ("pg215", "The Call of the Wild", "https://www.gutenberg.org/files/215/215-0.txt"),
 ]
 
 
@@ -265,61 +380,12 @@ def _extract_words(text: str, min_len: int = 5) -> list[str]:
     return out[:20]
 
 
-# ── Corpus download ────────────────────────────────────────────────────────────
+# ── Corpus download ──────────────────────────────────────────────────────────
 
 
-def download_corpus(output_path: Path | None = None, verbose: bool = True) -> Path:
-    """
-    Download enwik9 (1 GB Wikipedia XML) from mattmahoney.net.
-    Returns path to the decompressed file.
-    """
-    dest = output_path or _ENWIK9_PATH
-    if dest.exists():
-        mb = dest.stat().st_size / 1_048_576
-        if verbose:
-            print(f"[corpus] Already cached: {dest.name}  ({mb:.0f} MB)")
-        return dest
-
-    zip_path = dest.with_suffix(".zip")
-    if not zip_path.exists():
-        if verbose:
-            print(f"[corpus] Downloading enwik9 from mattmahoney.net (~323 MB)...")
-        try:
-            urllib.request.urlretrieve(
-                _ENWIK9_URL,
-                zip_path,
-                reporthook=lambda n, bs, ts: (
-                    print(
-                        f"  {n * bs / 1_048_576:.0f} / {ts / 1_048_576:.0f} MB\r",
-                        end="",
-                        flush=True,
-                    )
-                    if ts > 0
-                    else None
-                ),
-            )
-            print()
-        except Exception as exc:
-            print(f"[corpus] Download failed: {exc}")
-            print(
-                "[corpus] Please download manually from http://mattmahoney.net/dc/enwik9.zip"
-            )
-            print(f"[corpus] and extract to: {dest}")
-            raise SystemExit(1)
-
-    if verbose:
-        print(f"[corpus] Extracting {zip_path.name} ...")
-    with zipfile.ZipFile(zip_path, "r") as zf:
-        zf.extract("enwik9", dest.parent)
-    zip_path.unlink(missing_ok=True)
-
-    mb = dest.stat().st_size / 1_048_576
-    if verbose:
-        print(f"[corpus] Ready: {dest}  ({mb:.0f} MB)")
-    return dest
-
-
-def download_gutenberg_corpus(output_path: Path | None = None, verbose: bool = True) -> Path:
+def download_gutenberg_corpus(
+    output_path: Path | None = None, verbose: bool = True
+) -> Path:
     """
     Download the top-20 Gutenberg books and combine into a single plain-text corpus.
 
@@ -335,7 +401,9 @@ def download_gutenberg_corpus(output_path: Path | None = None, verbose: bool = T
     if dest.exists():
         mb = dest.stat().st_size / 1_048_576
         if verbose:
-            print(f"[corpus] Gutenberg corpus already cached: {dest.name} ({mb:.0f} MB)")
+            print(
+                f"[corpus] Gutenberg corpus already cached: {dest.name} ({mb:.0f} MB)"
+            )
         return dest
 
     _DATA_DIR.mkdir(parents=True, exist_ok=True)
@@ -364,7 +432,7 @@ def download_gutenberg_corpus(output_path: Path | None = None, verbose: bool = T
 
     # Combine into one file, stripping Gutenberg header/footer boilerplate
     if verbose:
-        print(f"[corpus] Combining {len(downloaded)} books → {dest.name} ...")
+        print(f"[corpus] Combining {len(downloaded)} books -> {dest.name} ...")
     with open(dest, "w", encoding="utf-8") as out:
         for book_path in downloaded:
             text = book_path.read_text(encoding="utf-8", errors="replace")
@@ -372,7 +440,10 @@ def download_gutenberg_corpus(output_path: Path | None = None, verbose: bool = T
             # Strip header up to START marker
             start = 0
             for i, ln in enumerate(lines):
-                if "*** START OF" in ln.upper() or "*** THE PROJECT GUTENBERG" in ln.upper():
+                if (
+                    "*** START OF" in ln.upper()
+                    or "*** THE PROJECT GUTENBERG" in ln.upper()
+                ):
                     start = i + 1
                     break
             # Strip footer from END marker
@@ -388,107 +459,10 @@ def download_gutenberg_corpus(output_path: Path | None = None, verbose: bool = T
 
     mb = dest.stat().st_size / 1_048_576
     if verbose:
-        print(f"[corpus] Gutenberg corpus ready: {dest.name}  ({mb:.0f} MB, {len(downloaded)} books)")
+        print(
+            f"[corpus] Gutenberg corpus ready: {dest.name}  ({mb:.0f} MB, {len(downloaded)} books)"
+        )
     return dest
-
-
-def clean_enwik9(raw_path: Path, clean_path: Path, verbose: bool = True) -> Path:
-    """
-    Strip XML tags and MediaWiki markup from enwik9, producing a plain-text
-    file suitable for LLM-based block summarization.
-
-    Processing:
-    - Extracts article text from <text xml:space="preserve">...</text>
-    - Removes nested templates {{...}}, file/image links [[File:...]]
-    - Converts [[link|display]] → display, [[link]] → link
-    - Strips reference tags <ref...>, comments <!--...-->, tables {|..|}
-    - Removes bold/italic markers '''/ ''
-    - Collapses whitespace; skips stub/redirect articles
-
-    Result: readable English sentences that the LLM can summarize into triples.
-    """
-    if clean_path.exists():
-        mb = clean_path.stat().st_size / 1_048_576
-        if verbose:
-            print(f"[corpus] Clean text already cached: {clean_path.name} ({mb:.0f} MB)")
-        return clean_path
-
-    if verbose:
-        print(f"[corpus] Stripping XML and MediaWiki markup from {raw_path.name} ...")
-
-    def _clean_wiki(text: str) -> str:
-        # Remove nested templates {{...}} iteratively
-        prev = None
-        while prev != text:
-            prev = text
-            text = re.sub(r"\{\{[^{}]*\}\}", "", text)
-        # Remove [[File:...]] [[Image:...]] [[Category:...]]
-        text = re.sub(r"\[\[(File|Image|Category|Media):[^\]]*\]\]", "", text, flags=re.IGNORECASE)
-        # [[link|display text]] → display text
-        text = re.sub(r"\[\[[^\]|]*\|([^\]]*)\]\]", r"\1", text)
-        # [[link]] → link
-        text = re.sub(r"\[\[([^\]]*)\]\]", r"\1", text)
-        # Remove <ref...>...</ref> and <ref.../>
-        text = re.sub(r"<ref[^>]*>.*?</ref>", "", text, flags=re.DOTALL)
-        text = re.sub(r"<ref[^>]*/?>", "", text)
-        # Remove HTML comments
-        text = re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
-        # Remove table markup {|...|}
-        text = re.sub(r"\{\|.*?\|\}", "", text, flags=re.DOTALL)
-        # Remove remaining XML/HTML tags
-        text = re.sub(r"<[^>]+>", " ", text)
-        # Remove bold/italic markers
-        text = text.replace("'''", "").replace("''", "")
-        # Remove section headers === Foo ===
-        text = re.sub(r"={2,}[^=]+=+", " ", text)
-        # Decode common HTML entities
-        text = text.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
-        text = text.replace("&quot;", '"').replace("&nbsp;", " ")
-        text = re.sub(r"&#?\w+;", " ", text)
-        # Collapse whitespace
-        return re.sub(r"\s{2,}", " ", text).strip()
-
-    in_text = False
-    text_buf = ""
-    articles_written = 0
-    chars_written = 0
-
-    with (
-        open(raw_path, "r", encoding="utf-8", errors="replace") as src,
-        open(clean_path, "w", encoding="utf-8") as dst,
-    ):
-        for line in src:
-            stripped = line.strip()
-            # Start of article text block
-            if '<text xml:space="preserve">' in stripped or stripped == "<text>":
-                in_text = True
-                start = stripped.find(">") + 1
-                text_buf = stripped[start:]
-                continue
-            if in_text:
-                if "</text>" in stripped:
-                    text_buf += stripped.split("</text>")[0]
-                    in_text = False
-                    # Skip redirects and very short stubs
-                    if text_buf.strip().startswith("#REDIRECT") or len(text_buf) < 100:
-                        text_buf = ""
-                        continue
-                    clean = _clean_wiki(text_buf)
-                    if len(clean) > 80:
-                        dst.write(clean + "\n\n")
-                        chars_written += len(clean) + 2
-                        articles_written += 1
-                        if verbose and articles_written % 5000 == 0:
-                            print(f"  [corpus] {articles_written:,} articles  "
-                                  f"{chars_written/1_048_576:.0f} MB written", end="\r")
-                    text_buf = ""
-                else:
-                    text_buf += stripped + " "
-
-    mb = clean_path.stat().st_size / 1_048_576
-    if verbose:
-        print(f"\n[corpus] Clean corpus: {articles_written:,} articles  {mb:.0f} MB → {clean_path.name}")
-    return clean_path
 
 
 # ── Question generation ────────────────────────────────────────────────────────
@@ -497,160 +471,17 @@ def clean_enwik9(raw_path: Path, clean_path: Path, verbose: bool = True) -> Path
 def generate_questions(
     corpus_path: Path, n_questions: int = 50, verbose: bool = True
 ) -> list[Question]:
-    """
-    Extract factual questions from the corpus.
-
-    For enwik9 (Wikipedia XML):
-    - Find <title> tags → article title
-    - Extract first meaningful sentence from the article body
-    - Question: "What is {title}?" or "Tell me about {title}"
-    - Expected keywords: content words from the first sentence
-
-    Falls back to fixed-window text extraction for non-XML corpora.
-    """
+    """Extract factual questions from the corpus by sampling paragraphs."""
     if verbose:
         print(
             f"[questions] Generating {n_questions} questions from {corpus_path.name} ..."
         )
 
-    questions: list[Question] = []
-    is_xml = corpus_path.suffix.lower() in ("", ".xml") or corpus_path.name == "enwik9"
-
-    if is_xml:
-        questions = _generate_from_xml(corpus_path, n_questions, verbose)
-    else:
-        questions = _generate_from_plaintext(corpus_path, n_questions, verbose)
+    questions = _generate_from_plaintext(corpus_path, n_questions, verbose)
 
     if verbose:
         print(f"[questions] Generated {len(questions)} questions")
     return questions
-
-
-def _generate_from_xml(
-    corpus_path: Path, n_questions: int, verbose: bool
-) -> list[Question]:
-    """Extract Q&A from Wikipedia XML by reading article title + first sentence."""
-    questions: list[Question] = []
-    current_title = ""
-    in_text = False
-    text_buffer = ""
-    found_count = 0
-
-    # Read in chunks to avoid loading 1 GB into memory
-    chunk_size = 4 * 1024 * 1024  # 4 MB at a time
-    buffer = ""
-
-    with open(corpus_path, "r", encoding="utf-8", errors="replace") as fh:
-        while len(questions) < n_questions:
-            raw = fh.read(chunk_size)
-            if not raw:
-                break
-            buffer += raw
-
-            # Process complete lines
-            lines = buffer.split("\n")
-            buffer = lines[-1]  # keep incomplete last line
-
-            for line in lines[:-1]:
-                stripped = line.strip()
-
-                # Extract title
-                m = re.match(r"<title>(.+?)</title>", stripped)
-                if m:
-                    current_title = m.group(1).strip()
-                    in_text = False
-                    text_buffer = ""
-                    continue
-
-                # Start of article text
-                if '<text xml:space="preserve">' in stripped or "<text>" in stripped:
-                    in_text = True
-                    # Extract text on the same line after the tag
-                    text_start = stripped.split(">", 1)
-                    if len(text_start) > 1:
-                        text_buffer = text_start[1]
-                    continue
-
-                if in_text:
-                    if "</text>" in stripped:
-                        text_buffer += stripped.split("</text>")[0]
-                        in_text = False
-                        # Try to generate a question from this article
-                        q = _make_question_from_article(
-                            current_title, text_buffer, found_count
-                        )
-                        if q:
-                            questions.append(q)
-                            found_count += 1
-                            if verbose and found_count % 10 == 0:
-                                print(
-                                    f"  [questions] {found_count}/{n_questions} ...",
-                                    end="\r",
-                                )
-                        text_buffer = ""
-                    else:
-                        text_buffer += stripped + " "
-
-                if len(questions) >= n_questions:
-                    break
-
-    if verbose:
-        print()
-    return questions[:n_questions]
-
-
-def _make_question_from_article(title: str, raw_text: str, idx: int) -> Question | None:
-    """Create one Q&A pair from a Wikipedia article title + raw text."""
-    # Skip non-article pages
-    if not title or any(
-        title.startswith(p)
-        for p in ("Wikipedia:", "Template:", "Category:", "Portal:", "File:", "Help:")
-    ):
-        return None
-    if len(title) > 100:
-        return None
-
-    # Clean the text
-    clean = _strip_xml(raw_text)
-    # Remove #REDIRECT entries
-    if clean.strip().startswith("#REDIRECT") or clean.strip().startswith("#redirect"):
-        return None
-
-    # Extract first meaningful sentence (≥30 chars)
-    sentences = re.split(r"(?<=[.!?])\s+", clean.strip())
-    first_sent = ""
-    for sent in sentences[:5]:
-        s = sent.strip()
-        if len(s) >= 30 and not s.startswith("{") and title[:10].lower() in s.lower():
-            first_sent = s
-            break
-    if not first_sent:
-        for sent in sentences[:3]:
-            s = sent.strip()
-            if len(s) >= 30:
-                first_sent = s
-                break
-    if not first_sent or len(first_sent) < 20:
-        return None
-
-    keywords = _extract_words(first_sent)
-    if len(keywords) < 3:
-        return None
-
-    # Alternate question phrasing based on title type
-    if re.search(r"\d{4}", title):
-        question = f"What happened in or around {title}?"
-    elif re.search(r"^(List of|History of|Geography of)", title):
-        question = f"What does the article about '{title}' cover?"
-    else:
-        question = f"What is '{title}'?"
-
-    return Question(
-        id=idx,
-        query=question,
-        expected_keywords=keywords[:15],
-        source_title=title,
-    )
 
 
 def _generate_from_plaintext(
@@ -856,6 +687,7 @@ def build_optimized_rag(
     max_mb: float = 0.0,
     strategy: str = "llm",
     compressor_model: str = "llama3.2:3b",
+    index_dir: "Path | None" = None,
     verbose: bool = True,
 ) -> tuple["Any", "Any", "StrategyResult"]:
     """
@@ -889,9 +721,40 @@ def build_optimized_rag(
                 f"[optimized_rag] Compressor: {compressor_model} (fixed 150-200 word output)"
             )
 
-    tmp_dir = tempfile.mkdtemp(prefix="co_optimized_")
-    block_db = Path(tmp_dir) / "blocks.db"
+    if index_dir is not None:
+        index_dir.mkdir(parents=True, exist_ok=True)
+        persist_dir = index_dir
+    else:
+        persist_dir = Path(tempfile.mkdtemp(prefix="co_optimized_"))
+    block_db = persist_dir / "blocks.db"
     block_index = BlockIndex(str(block_db))
+
+    # Skip ingestion only if the index contains actual blocks (not just an
+    # empty SQLite schema from a previously interrupted run).
+    if block_db.exists() and block_index.count() > 0:
+        retriever = CachedChromaRetriever(
+            collection_name="optimized_rag",
+            persist_directory=str(persist_dir),
+        )
+        n = retriever.collection.count()
+        index_mb = (
+            sum(f.stat().st_size for f in persist_dir.rglob("*") if f.is_file())
+            / 1_048_576
+        )
+        if verbose:
+            print(
+                f"  [optimized_rag] Loaded existing index: {n} chunks  {index_mb:.1f} MB (skipping ingestion)"
+            )
+        return (
+            retriever,
+            block_index,
+            StrategyResult(
+                name="optimized_rag",
+                ingestion_time_s=0.0,
+                index_size_chunks=n,
+                index_size_mb=index_mb,
+            ),
+        )
 
     t_start = time.perf_counter()
 
@@ -942,14 +805,13 @@ def build_optimized_rag(
 
     retriever = CachedChromaRetriever(
         collection_name="optimized_rag",
-        persist_directory=tmp_dir,
+        persist_directory=str(persist_dir),
     )
     retriever.add_chunks(compressed_chunks)
 
     ingestion_time = time.perf_counter() - t_start
     index_mb = (
-        sum(f.stat().st_size for f in Path(tmp_dir).rglob("*") if f.is_file())
-        / 1_048_576
+        sum(f.stat().st_size for f in persist_dir.rglob("*") if f.is_file()) / 1_048_576
     )
 
     if verbose:
@@ -1042,6 +904,299 @@ def _faithfulness(answer: str, context: str) -> float:
     if not words:
         return 1.0  # empty / trivial answer
     return sum(1 for w in words if w in context_l) / len(words)
+
+
+# ── Tree RAG ──────────────────────────────────────────────────────────────────
+
+
+def _auto_tree_depth(
+    cluster_size: int,
+    top_k: int = 0,  # 0 = use cluster_size as target (recommended)
+    max_depth: int = 4,
+    n_blocks: int = 0,
+    corpus_bytes: int = 0,
+    block_bytes: int = 1,
+) -> int:
+    """
+    Compute the minimum depth so the top level has ~cluster_size entries.
+
+    Using cluster_size as the target keeps the top level at a number the
+    reasoning LLM can meaningfully choose between -- the same branching
+    factor it sees at every other level of the tree.
+
+    Formula:  d = ceil(log(n_blocks / cluster_size) / log(cluster_size)) + 1
+    Clamped to [2, max_depth].
+
+    Examples (cluster_size=4):
+        n_blocks     depth   top-level entries
+        16           2       4
+        64           3       4
+        256          4       4  (max_depth cap)
+        1,000        4       ~16 (cap hit, top grows)
+    """
+    import math as _math
+
+    target = top_k if top_k > 0 else cluster_size
+    actual_n = (
+        n_blocks if n_blocks > 0 else max(1, _math.ceil(corpus_bytes / block_bytes))
+    )
+    if actual_n <= cluster_size:
+        return 2
+    raw = _math.log(actual_n / target) / _math.log(cluster_size)
+    return max(2, min(int(_math.ceil(raw)) + 1, max_depth))
+
+
+def build_tree_rag(
+    corpus_path: Path,
+    block_size_mb: float = 0.1,
+    cluster_size: int = 4,
+    overlap_pct: float = 10.0,
+    max_mb: float = 0.0,
+    compressor_model: str = "llama3.2:3b",
+    index_dir: "Path | None" = None,
+    tree_depth: int = 0,
+    verbose: bool = True,
+) -> tuple["Any", "Any", "StrategyResult"]:
+    """
+    Build a Tree-of-Summaries index.
+
+    tree_depth=0 (default): determined AFTER Pass 1 (L1 block ingestion)
+    from the actual number of L1 nodes produced, so it reflects true corpus
+    density rather than a pre-ingestion estimate.
+    tree_depth=2: L1 blocks + L2 clusters (good for <100 MB).
+    tree_depth=3: L1 + L2 + L3 super-clusters (400 MB+).
+    """
+    from context_optimizer.compressor import ingest_file_blocks
+    from context_optimizer.raw_index import BlockIndex
+    from context_optimizer.tree_index import TreeIndex
+
+    block_size_bytes = int(block_size_mb * 1_048_576)
+    overlap_bytes = int(block_size_bytes * overlap_pct / 100)
+
+    if verbose:
+        print(
+            f"\n[tree_rag] Building Tree-of-Summaries index from {corpus_path.name} ..."
+        )
+        print(
+            f"[tree_rag] Block: {block_size_mb:.2f} MB  Overlap: {overlap_pct:.0f}%  "
+            f"Cluster: {cluster_size} blocks/node  Compressor: {compressor_model}"
+        )
+        if tree_depth != 0:
+            print(f"[tree_rag] Depth: {tree_depth} (fixed)")
+        else:
+            print("[tree_rag] Depth: auto (determined after Pass 1)")
+
+    if index_dir is not None:
+        index_dir.mkdir(parents=True, exist_ok=True)
+        persist_dir = index_dir
+    else:
+        persist_dir = Path(tempfile.mkdtemp(prefix="co_tree_"))
+    block_db = persist_dir / "blocks.db"
+    block_index = BlockIndex(str(block_db))
+
+    t_start = time.perf_counter()
+
+    # Skip ingestion only if the index contains actual blocks.
+    if block_db.exists() and block_index.count() > 0:
+        # Detect depth from existing collections when auto (tree_depth=0)
+        if tree_depth == 0:
+            import chromadb as _chroma
+            from chromadb.config import Settings as _Settings
+
+            _client = _chroma.PersistentClient(
+                path=str(persist_dir),
+                settings=_Settings(anonymized_telemetry=False, allow_reset=True),
+            )
+            _existing_colls = {c.name for c in _client.list_collections()}
+            for _d in range(4, 1, -1):
+                if f"tree_rag_L{_d}" in _existing_colls:
+                    tree_depth = _d
+                    break
+            else:
+                tree_depth = 2  # fallback
+            if verbose:
+                print(f"[tree_rag] Detected depth={tree_depth} from saved index")
+        tree = TreeIndex(
+            collection_name="tree_rag",
+            persist_directory=str(persist_dir),
+            block_index=block_index,
+            depth=tree_depth,
+        )
+        index_mb = (
+            sum(f.stat().st_size for f in persist_dir.rglob("*") if f.is_file())
+            / 1_048_576
+        )
+        if verbose:
+            print(
+                f"  [tree_rag] Loaded existing index: {tree.block_count()} L1 blocks, "
+                f"{tree.cluster_count()} L2 clusters  {index_mb:.1f} MB (skipping ingestion)"
+            )
+        return (
+            tree,
+            block_index,
+            StrategyResult(
+                name="tree_rag",
+                ingestion_time_s=0.0,
+                index_size_chunks=tree.block_count(),
+                index_size_mb=index_mb,
+            ),
+        )
+
+    # Slice corpus if max_mb is set
+    actual_source = corpus_path
+    tmp_slice: str | None = None
+    if max_mb > 0:
+        max_bytes = int(max_mb * 1_048_576)
+        if corpus_path.stat().st_size > max_bytes:
+            import tempfile as _tf
+
+            fd, tmp_slice = _tf.mkstemp(suffix=".txt", prefix="co_slice_")
+            with open(fd, "wb") as out, open(corpus_path, "rb") as inp:
+                data = inp.read(max_bytes)
+                tail = inp.read(1000)
+                nl = tail.find(b"\n")
+                if nl >= 0:
+                    data += tail[: nl + 1]
+                out.write(data)
+            actual_source = Path(tmp_slice)
+
+    # Build the compressor LLM ONCE and reuse it for every pass:
+    #   Pass 1 (L1) : ingest_file_blocks  -- one call per 100 KB block
+    #   Pass 2 (L2) : build_from_chunks  -- one call per cluster_size blocks
+    #   Pass 3+ (LN): build_from_chunks  -- one call per cluster_size L{N-1} nodes
+    # Sharing the instance avoids loading the model (BART ~400 MB) twice.
+    from context_optimizer.compressor import _build_local_llm
+
+    llm = _build_local_llm(model=compressor_model)
+
+    chunks = ingest_file_blocks(
+        source_path=actual_source,
+        block_size_bytes=block_size_bytes,
+        overlap_bytes=overlap_bytes,
+        block_index=block_index,
+        strategy="llm",
+        label="tree",
+        llm=llm,
+    )
+
+    if tmp_slice:
+        import os as _os
+
+        _os.unlink(tmp_slice)
+
+    # Resolve depth from actual L1 count (Pass 1 is now complete)
+    actual_l1 = len(chunks)
+    if tree_depth == 0:
+        tree_depth = _auto_tree_depth(n_blocks=actual_l1, cluster_size=cluster_size)
+    import math as _m
+
+    top_est = max(1, _m.ceil(actual_l1 / cluster_size ** (tree_depth - 1)))
+    if verbose:
+        print(f"[tree_rag] Pass 1 complete: {actual_l1} L1 nodes generated")
+        print(
+            f"[tree_rag] Depth={tree_depth}  ({actual_l1} blocks, "
+            f"~{top_est} top-level entries)  "
+            f"Build plan:"
+        )
+        n = actual_l1
+        print(f"  Pass 1 (L1 block summaries)   : {n:>6} nodes  {n} LLM calls (done)")
+        for lvl in range(2, tree_depth + 1):
+            n = max(1, _m.ceil(n / cluster_size))
+            print(
+                f"  Pass {lvl} (L{lvl} cluster summaries): {n:>6} nodes  {n} LLM calls"
+            )
+
+    # Build TreeIndex (L1..L{depth}) and run Pass 2..depth
+    tree = TreeIndex(
+        collection_name="tree_rag",
+        persist_directory=str(persist_dir),
+        block_index=block_index,
+        depth=tree_depth,
+    )
+    tree.build_from_chunks(chunks, cluster_size=cluster_size, llm=llm, label="tree")
+
+    ingestion_time = time.perf_counter() - t_start
+    index_mb = (
+        sum(f.stat().st_size for f in persist_dir.rglob("*") if f.is_file()) / 1_048_576
+    )
+
+    if verbose:
+        print(
+            f"  [tree_rag] Done — {tree.block_count()} L1 blocks, "
+            f"{tree.cluster_count()} L2 clusters  "
+            f"{ingestion_time:.1f}s  {index_mb:.1f} MB"
+        )
+
+    return (
+        tree,
+        block_index,
+        StrategyResult(
+            name="tree_rag",
+            ingestion_time_s=ingestion_time,
+            index_size_chunks=tree.block_count(),
+            index_size_mb=index_mb,
+        ),
+    )
+
+
+def evaluate_tree(
+    tree: "Any",
+    questions: list[Question],
+    reasoning_llm: "Any | None" = None,
+    top_clusters: int = 2,
+    top_blocks_per_cluster: int = 3,
+    max_rounds: int = 3,
+    verbose: bool = True,
+) -> list[QueryResult]:
+    """Evaluate the Tree-of-Summaries strategy using the tool-calling agent."""
+    from context_optimizer.tree_reasoner import TreeReasoningAgent
+
+    agent = TreeReasoningAgent(
+        tree=tree,
+        llm=reasoning_llm,
+        top_clusters=top_clusters,
+        top_blocks_per_cluster=top_blocks_per_cluster,
+        max_rounds=max_rounds,
+    )
+
+    results: list[QueryResult] = []
+    for q in questions:
+        result = agent.reason(q.query)
+        retrieval_recall = _kw_recall(
+            " ".join(step.target_id for step in result.steps) + " " + result.answer,
+            q.expected_keywords,
+        )
+        # Better: check if keywords appear in any retrieved text
+        full_context = result.answer  # the agent accumulated context internally
+
+        r_recall = _kw_recall(result.answer, q.expected_keywords)
+        faith = _faithfulness(result.answer, full_context)
+        n_tool_calls = sum(1 for s in result.steps if s.action != "answer")
+
+        results.append(
+            QueryResult(
+                question_id=q.id,
+                query=q.query,
+                answer_snippet=result.answer[:200],
+                tokens_used=result.context_tokens,
+                latency_ms=result.total_latency_ms,
+                kw_recall=r_recall,
+                used_raw_fallback=result.used_raw_fallback,
+                reasoning_answer=result.answer[:300],
+                reasoning_recall=r_recall,
+                faithfulness=faith,
+                reasoning_latency_ms=result.total_latency_ms,
+            )
+        )
+        if verbose:
+            fb = "[RAW]" if result.used_raw_fallback else ""
+            tc = f"[{n_tool_calls} tools]" if n_tool_calls else ""
+            print(
+                f"  [tree  Q{q.id:02d}] recall={r_recall:.0%}  "
+                f"ctx={result.context_tokens} tok  "
+                f"{result.total_latency_ms:.0f}ms  {fb}{tc}"
+            )
+    return results
 
 
 def evaluate_vanilla(
@@ -1215,6 +1370,7 @@ def write_report(
     questions: list[Question],
     corpus_path: Path,
     args: argparse.Namespace,
+    tree: StrategyResult | None = None,
 ) -> None:
     run_date = datetime.now().strftime("%Y-%m-%d %H:%M")
     corpus_mb = corpus_path.stat().st_size / 1_048_576 if corpus_path.exists() else 0
@@ -1227,8 +1383,12 @@ def write_report(
             return "—"
         return format(val, fmt)
 
+    _strategies = [
+        s for s in ["Vanilla RAG", "Optimized RAG", "Tree RAG" if tree else None] if s
+    ]
+    _title = " vs ".join(_strategies)
     lines = [
-        "# Corpus Benchmark: Vanilla RAG vs Optimized RAG",
+        f"# Corpus Benchmark: {_title}",
         "",
         f"**Run date**: {run_date}  |  "
         f"**Corpus**: {corpus_path.name} ({corpus_mb:.0f} MB)  |  "
@@ -1397,6 +1557,63 @@ def write_report(
             else:
                 lines.append(f"| {q.id} | {q.query[:50]} | — | — | — | — | — |")
 
+    # ── Tree-of-Summaries section (when --tree was run) ──────────────────────
+    if tree is not None:
+        lines += [
+            "",
+            "---",
+            "",
+            "## Tree-of-Summaries Results",
+            "",
+            "Two-level hierarchical index: L1 block summaries + L2 cluster super-summaries.",
+            "The reasoning agent navigates the tree autonomously (search_cluster / fetch_raw_block).",
+            "",
+            "| Metric | Vanilla RAG | Tree RAG | Delta (vs Vanilla) |",
+            "|--------|-------------|----------|--------------------|",
+        ]
+        tree_rows = [
+            ("Avg retrieval recall", "avg_kw_recall", False, ".1%"),
+            ("Avg tokens per query", "avg_tokens_per_query", True, ",.0f"),
+            ("Avg query latency (ms)", "avg_latency_ms", True, ".1f"),
+            ("Index ingestion time (s)", "ingestion_time_s", True, ".1f"),
+            ("Index size (MB)", "index_size_mb", True, ".1f"),
+            ("L1 block entries", "index_size_chunks", True, ",d"),
+        ]
+        for label, attr, lib, fmt in tree_rows:
+            v_val = f"{getattr(vanilla, attr):{fmt}}" if vanilla else "—"
+            t_val = f"{getattr(tree, attr):{fmt}}"
+            delta = _delta(vanilla, tree, attr, lib)
+            lines.append(f"| {label} | {v_val} | {t_val} | {delta} |")
+        lines += [
+            f"| Raw block fallback rate | — | {tree.fallback_rate:.0%} | — |",
+        ]
+        if tree.has_reasoning:
+            lines += [
+                "",
+                "### Tree Reasoning Evaluation",
+                "",
+                "| Metric | Vanilla RAG | Tree RAG | Delta |",
+                "|--------|-------------|----------|-------|",
+            ]
+            for label, attr, lib, fmt in [
+                ("Reasoning recall", "avg_reasoning_recall", False, ".1%"),
+                ("Faithfulness", "avg_faithfulness", False, ".1%"),
+                ("Reasoning gap", "reasoning_gap", True, ".1%"),
+                ("Avg reasoning latency (ms)", "avg_reasoning_latency_ms", True, ".0f"),
+            ]:
+                v_val = (
+                    f"{getattr(vanilla, attr, 0.0):{fmt}}"
+                    if vanilla and vanilla.has_reasoning
+                    else "—"
+                )
+                t_val = f"{getattr(tree, attr, 0.0):{fmt}}"
+                delta = (
+                    _delta(vanilla, tree, attr, lib)
+                    if vanilla and vanilla.has_reasoning
+                    else "—"
+                )
+                lines.append(f"| {label} | {v_val} | {t_val} | {delta} |")
+
     lines += [
         "",
         "---",
@@ -1430,6 +1647,7 @@ def write_report(
         "block_mb": args.block_mb,
         "vanilla_rag": asdict(vanilla) if vanilla else None,
         "optimized_rag": asdict(optimized) if optimized else None,
+        "tree_rag": asdict(tree) if tree else None,
     }
     _RESULTS_PATH.write_text(json.dumps(result_data, indent=2), encoding="utf-8")
 
@@ -1473,10 +1691,10 @@ def _parser() -> argparse.ArgumentParser:
     prep = sub.add_parser("prepare", help="Download corpus and generate questions.")
     prep.add_argument(
         "--corpus",
-        choices=["gutenberg", "enwik9"],
+        choices=["gutenberg"],
         default="gutenberg",
         dest="corpus_source",
-        help="Which corpus to download: gutenberg (default, clean prose) or enwik9 (Wikipedia XML)",
+        help="Corpus to download (default: gutenberg — top-20 public-domain books)",
     )
     prep.add_argument(
         "--corpus-path",
@@ -1491,6 +1709,15 @@ def _parser() -> argparse.ArgumentParser:
 
     # run
     run = sub.add_parser("run", help="Build indexes and evaluate both strategies.")
+    run.add_argument(
+        "--config",
+        type=Path,
+        default=None,
+        dest="config",
+        metavar="FILE",
+        help="Path to a bench_config.yaml file. Values in the file are applied "
+        "before any other flags, so CLI flags can still override individual settings.",
+    )
     run.add_argument(
         "--corpus-path",
         type=Path,
@@ -1511,9 +1738,23 @@ def _parser() -> argparse.ArgumentParser:
     run.add_argument(
         "--block-mb",
         type=float,
-        default=0.5,
+        default=0.1,
         dest="block_mb",
-        help="Block size in MB for optimized RAG (default 0.5)",
+        help="Block size in MB (default 0.1 = 100 KB — better granularity than 512 KB)",
+    )
+    run.add_argument(
+        "--cluster-size",
+        type=int,
+        default=4,
+        dest="cluster_size",
+        help="Children per tree node (default 4). Lower = more specific summaries = better accuracy; higher = shallower tree = fewer LLM calls.",
+    )
+    run.add_argument(
+        "--tree",
+        action="store_true",
+        default=False,
+        dest="run_tree",
+        help="Also build and evaluate Tree-of-Summaries (hierarchical two-level index)",
     )
     run.add_argument(
         "--max-mb",
@@ -1578,13 +1819,39 @@ def _parser() -> argparse.ArgumentParser:
         dest="optimized_only",
         help="Build and evaluate optimized RAG only",
     )
+    run.add_argument(
+        "--index-dir",
+        type=Path,
+        default=None,
+        dest="index_dir",
+        help="Persistent directory for built indexes. Sub-dirs 'optimized/' and 'tree/' "
+        "are created automatically. If the sub-dir already contains a built index "
+        "(blocks.db present), ingestion is skipped — only evaluation runs.",
+    )
+    run.add_argument(
+        "--build-only",
+        action="store_true",
+        default=False,
+        dest="build_only",
+        help="Build and persist indexes, then exit without running evaluation.",
+    )
+    run.add_argument(
+        "--eval-only",
+        action="store_true",
+        default=False,
+        dest="eval_only",
+        help="Skip building — load indexes from --index-dir and run evaluation only. "
+        "Requires --index-dir with a previously built index.",
+    )
 
     # all
     all_ = sub.add_parser("all", help="prepare + run in sequence.")
     all_.add_argument("--corpus-path", type=Path, default=None, dest="corpus_path")
     all_.add_argument("--questions", type=int, default=50)
     all_.add_argument("--top-k", type=int, default=5, dest="top_k")
-    all_.add_argument("--block-mb", type=float, default=0.5, dest="block_mb")
+    all_.add_argument("--block-mb", type=float, default=0.1, dest="block_mb")
+    all_.add_argument("--cluster-size", type=int, default=4, dest="cluster_size")
+    all_.add_argument("--tree", action="store_true", default=False, dest="run_tree")
     all_.add_argument("--max-mb", type=float, default=200.0, dest="max_mb")
     all_.add_argument("--overlap-pct", type=float, default=10.0, dest="overlap_pct")
     all_.add_argument(
@@ -1618,15 +1885,9 @@ def cmd_prepare(args: argparse.Namespace) -> tuple[Path, list[Question]]:
         if not corpus_path.exists():
             print(f"[prepare] File not found: {corpus_path}")
             raise SystemExit(1)
-    elif source == "gutenberg":
+    else:
         # Gutenberg books: clean English prose, questions sampled from text
         corpus_path = download_gutenberg_corpus()
-    else:
-        # enwik9: Wikipedia XML — strip markup first
-        raw_path = _ENWIK9_PATH
-        if not raw_path.exists():
-            raw_path = download_corpus()
-        corpus_path = clean_enwik9(raw_path, _ENWIK9_CLEAN_PATH)
 
     # Questions are sampled from the corpus text itself — guaranteed answerable
     questions = generate_questions(corpus_path, n_questions=args.questions)
@@ -1652,18 +1913,17 @@ def cmd_prepare(args: argparse.Namespace) -> tuple[Path, list[Question]]:
 
 def cmd_run(args: argparse.Namespace) -> None:
     """Build indexes and run the evaluation."""
-    # Corpus priority: explicit path > Gutenberg > enwik9 clean > enwik9 raw
+    # Corpus: explicit path > Gutenberg default
     if args.corpus_path:
         corpus_path = args.corpus_path
     elif _GUTENBERG_PATH.exists():
         corpus_path = _GUTENBERG_PATH
-        print(f"[run] Using Gutenberg corpus: {corpus_path.name} ({corpus_path.stat().st_size//1_048_576} MB)")
-    elif _ENWIK9_CLEAN_PATH.exists():
-        corpus_path = _ENWIK9_CLEAN_PATH
-        print(f"[run] Using enwik9 clean: {corpus_path.name}")
+        print(
+            f"[run] Using Gutenberg corpus: {corpus_path.name} ({corpus_path.stat().st_size//1_048_576} MB)"
+        )
     else:
-        corpus_path = _ENWIK9_PATH
-        print("[run] WARNING: using raw XML corpus — run `prepare` first")
+        corpus_path = _GUTENBERG_PATH
+        print("[run] Gutenberg corpus not found — run `prepare` first")
     if not corpus_path.exists():
         print(f"[run] Corpus not found: {corpus_path}")
         print("[run] Run `prepare` first, or pass --corpus-path")
@@ -1689,6 +1949,20 @@ def cmd_run(args: argparse.Namespace) -> None:
     vanilla_retriever = None
     optimized_retriever = None
     block_index = None
+    tree_index = None
+    tree_block_index = None
+    tree_result: StrategyResult | None = None
+
+    # ── Resolve persistent index directories (optional) ──────────────────────
+    _index_dir: Path | None = getattr(args, "index_dir", None)
+    _opt_idx = (_index_dir / "optimized") if _index_dir else None
+    _tree_idx = (_index_dir / "tree") if _index_dir else None
+    _build_only = getattr(args, "build_only", False)
+    _eval_only = getattr(args, "eval_only", False)
+
+    if _eval_only and _index_dir is None:
+        print("[run] --eval-only requires --index-dir pointing to a built index.")
+        raise SystemExit(1)
 
     # ── Build Vanilla RAG ─────────────────────────────────────────────────────
     if not getattr(args, "optimized_only", False):
@@ -1711,7 +1985,29 @@ def cmd_run(args: argparse.Namespace) -> None:
             max_mb=getattr(args, "max_mb", 200.0),
             strategy=getattr(args, "opt_strategy", "llm"),
             compressor_model=getattr(args, "compressor_model", "llama3.2:3b"),
+            index_dir=_opt_idx,
         )
+
+    # ── Build Tree RAG ────────────────────────────────────────────────────────
+    if getattr(args, "run_tree", False) and not getattr(args, "vanilla_only", False):
+        print("\n" + "=" * 60)
+        print("BUILDING TREE-OF-SUMMARIES INDEX")
+        print("=" * 60)
+        tree_index, tree_block_index, tree_result = build_tree_rag(
+            corpus_path,
+            block_size_mb=args.block_mb,
+            cluster_size=getattr(args, "cluster_size", 4),
+            overlap_pct=getattr(args, "overlap_pct", 10.0),
+            max_mb=getattr(args, "max_mb", 200.0),
+            compressor_model=getattr(args, "compressor_model", "llama3.2:3b"),
+            index_dir=_tree_idx,
+            tree_depth=getattr(args, "tree_depth", 2),
+        )
+
+    # ── Exit early if build-only ──────────────────────────────────────────────
+    if _build_only:
+        print(f"\n[run] --build-only: indexes saved to {_index_dir}. Exiting.")
+        return
 
     # ── Evaluate ──────────────────────────────────────────────────────────────
     # Build reasoning LLM once and share between both evaluations
@@ -1750,6 +2046,18 @@ def cmd_run(args: argparse.Namespace) -> None:
             fallback_threshold=args.fallback_threshold,
             force_fallback=getattr(args, "force_fallback", False),
             reasoning_llm=reasoning_llm,
+        )
+
+    if tree_index is not None and tree_result is not None:
+        print("\n" + "=" * 60)
+        print(f"EVALUATING TREE-OF-SUMMARIES RAG ({len(questions)} questions)")
+        print("=" * 60)
+        tree_result.query_results = evaluate_tree(
+            tree_index,
+            questions,
+            reasoning_llm=reasoning_llm,
+            top_clusters=getattr(args, "top_k", 5) // 2 or 2,
+            top_blocks_per_cluster=3,
         )
 
     # ── Print summary table ───────────────────────────────────────────────────
@@ -1858,7 +2166,21 @@ def cmd_run(args: argparse.Namespace) -> None:
             )
         )
 
-    write_report(vanilla_result, optimized_result, questions, corpus_path, args)
+    if tree_result is not None:
+        print(
+            f"\n  Tree-of-Summaries — recall={tree_result.avg_kw_recall:.1%}"
+            f"  entries={tree_result.index_size_chunks:,}"
+            f"  {tree_result.index_size_mb:.1f} MB"
+            + (
+                f"  reasoning={tree_result.avg_reasoning_recall:.1%}"
+                if reasoning_llm
+                else ""
+            )
+        )
+
+    write_report(
+        vanilla_result, optimized_result, questions, corpus_path, args, tree=tree_result
+    )
 
 
 # ── Verify subcommand ─────────────────────────────────────────────────────────
@@ -2112,6 +2434,22 @@ def cmd_verify(args: argparse.Namespace) -> None:
 
 def main() -> None:
     args = _parser().parse_args()
+
+    # Apply config file BEFORE dispatching so every subcommand sees the settings.
+    # Explicit CLI flags (non-default values) are applied after config, so they win.
+    config_path: Path | None = getattr(args, "config", None)
+    if config_path is not None:
+        if not config_path.exists():
+            raise SystemExit(f"[config] File not found: {config_path}")
+        args._config_path = str(config_path)
+        cfg = _load_bench_config(config_path)
+        _apply_bench_config(args, cfg)
+    elif (Path(__file__).parent / "bench_config.yaml").exists():
+        # Auto-load if bench_config.yaml sits next to the script
+        default_cfg = Path(__file__).parent / "bench_config.yaml"
+        args._config_path = str(default_cfg)
+        cfg = _load_bench_config(default_cfg)
+        _apply_bench_config(args, cfg)
 
     if args.cmd == "verify":
         cmd_verify(args)

@@ -1,0 +1,61 @@
+# Context-Optimizer Benchmark Configuration
+# -----------------------------------------
+# Model names MUST match the provider catalog exactly.
+
+# ── Compressor (builds block summaries) ─────────────────────────────────────
+# Two-model approach:
+#   model       -> all non-code content (text, docs, spreadsheets, markup)
+#   code_model  -> source code (same size, purpose-trained on CodeSearchNet)
+#
+# CPU benchmark (Q4_K_M, 8-core x86, ~35-45 tok/s each):
+#   qwen2.5:3b        2 GB  best 3B general SLM; strong instruction following
+#   qwen2.5-coder:3b  2 GB  identical size/speed, 20-30% better code summaries
+#   phi4-mini:3.8b    2.5 GB higher quality prose at slightly lower throughput
+#   llama3.2:3b       2 GB  fastest baseline (lower quality than qwen2.5:3b)
+#
+# Cloud option (azure_foundry):
+#   phi-4-mini  ~.0003/1K tok  best bang-for-buck, <1 s/block
+#   phi-4       ~.001/1K  tok  highest quality, 14B
+compressor:
+  provider: ollama      # ollama | hf | azure_foundry
+
+  ollama:
+    model: qwen2.5:3b
+    code_model: qwen2.5-coder:3b
+    base_url: http://localhost:11434
+
+  hf:
+    # BART: 5-15x faster than Ollama 3B on CPU for pure prose corpora.
+    # No daemon. Trade-off: weaker on structured docs and code.
+    model: facebook/bart-large-cnn
+    device: -1          # -1 = CPU;  0 = first CUDA GPU
+
+  azure_foundry:
+    # Set AZURE_AI_FOUNDRY_API_KEY env var.
+    endpoint: https://your-project.eastus2.models.ai.azure.com
+    model: phi-4-mini
+    code_model: phi-4-mini   # phi-4-mini handles code well
+
+# ── Reasoning (navigates the tree index at query time) ───────────────────────
+reasoning:
+  ollama:
+    model: mistral:7b
+    base_url: http://localhost:11434
+
+# ── Benchmark settings ────────────────────────────────────────────────────────
+benchmark:
+  corpus_path: benchmarks/data/corpus/enwik9_clean.txt
+  index_dir: benchmarks/data/index/enwik9-400mb
+
+  block_mb: 2.0
+  cluster_size: 4
+  questions: 50
+  max_mb: 400
+  overlap_pct: 10.0
+  top_k: 5
+  tree_depth: 0         # auto
+
+  tree: true
+  optimized_only: true
+  build_only: false
+  eval_only: false

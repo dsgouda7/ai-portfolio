@@ -1,0 +1,485 @@
+[config] Loaded c:\repos\ai-portfolio\projects\context-optimizer\benchmarks\bench_config.yaml  compressor=hf  compressor_model=facebook/bart-large-cnn  reasoning_model=mistral:7b
+
+[run] Corpus: C:\repos\ai-portfolio\projects\context-optimizer\benchmarks\data\corpus\enwik9_clean.txt  (676 MB)
+[run] Questions: 43  |  top-k: 5  |  block: 2.0 MB
+
+============================================================
+BUILDING OPTIMIZED RAG INDEX
+============================================================
+
+[optimized_rag] Building index from enwik9_clean.txt ...
+[optimized_rag] Block: 2.0 MB  Overlap: 10% (204 KB)  Strategy: llm
+[optimized_rag] Compressor: facebook/bart-large-cnn (fixed 150-200 word output)
+[CachedRetriever] Embedding backend : sentence-transformers
+[CachedRetriever] Embedding model   : all-MiniLM-L6-v2
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]
+Loading weights: 100%|ΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûê| 103/103 [00:00<00:00, 3342.39it/s]
+
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]
+Loading weights: 100%|ΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûê| 103/103 [00:00<00:00, 3424.33it/s]
+[CachedRetriever] Collection : 'optimized_rag'  (200 chunks)
+[CachedRetriever] Children   : 'optimized_rag__children'  (0 sub-chunks)
+[CachedRetriever] Storage    : C:\repos\ai-portfolio\projects\context-optimizer\benchmarks\data\index\enwik9-400mb\optimized
+[CachedRetriever] Cache      : 1000 queries  threshold=85%
+  [optimized_rag] Loaded existing index: 200 chunks  3.5 MB (skipping ingestion)
+
+============================================================
+BUILDING TREE-OF-SUMMARIES INDEX
+============================================================
+
+[tree_rag] Building Tree-of-Summaries index from enwik9_clean.txt ...
+[tree_rag] Block: 2.00 MB  Overlap: 10%  Cluster: 4 blocks/node  Compressor: facebook/bart-large-cnn
+[tree_rag] Depth: auto (determined after Pass 1)
+[tree] [BlockIngestor] co_slice_pw8jbxqh.txt  (400.0 MB)  block=2048 KB  overlap=204 KB  ~200 blocks  strategy=llm
+
+Loading weights:   0%|          | 0/511 [00:00<?, ?it/s]
+Loading weights:  54%|ΓûêΓûêΓûêΓûêΓûêΓûì    | 276/511 [00:00<00:00, 2758.60it/s]
+Loading weights: 100%|ΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûê| 511/511 [00:00<00:00, 3316.69it/s]
+[tree] [BlockIngestor] block 1/200 (2067 KB -> 75 tokens)  15.79s
+[tree] [BlockIngestor] block 2/200 (2053 KB -> 75 tokens [overlap])  14.56s
+[tree] [BlockIngestor] block 3/200 (2052 KB -> 76 tokens [overlap])  13.04s
+[tree] [BlockIngestor] block 4/200 (2048 KB -> 87 tokens [overlap])  11.92s
+[tree] [BlockIngestor] block 5/200 (2059 KB -> 86 tokens [overlap])  10.59s
+[tree] [BlockIngestor] block 6/200 (2065 KB -> 75 tokens [overlap])  12.72s
+[tree] [BlockIngestor] block 7/200 (2055 KB -> 75 tokens [overlap])  12.53s
+[tree] [BlockIngestor] block 8/200 (2049 KB -> 78 tokens [overlap])  9.57s
+[tree] [BlockIngestor] block 9/200 (2053 KB -> 75 tokens [overlap])  11.73s
+[tree] [BlockIngestor] block 10/200 (2052 KB -> 75 tokens [overlap])  12.09s
+[tree] [BlockIngestor] block 11/200 (2060 KB -> 78 tokens [overlap])  10.69s
+[tree] [BlockIngestor] block 12/200 (2057 KB -> 75 tokens [overlap])  14.96s
+[tree] [BlockIngestor] block 13/200 (2062 KB -> 76 tokens [overlap])  12.38s
+[tree] [BlockIngestor] block 14/200 (2056 KB -> 70 tokens [overlap])  9.49s
+[tree] [BlockIngestor] block 15/200 (2054 KB -> 75 tokens [overlap])  12.00s
+[tree] [BlockIngestor] block 16/200 (2051 KB -> 75 tokens [overlap])  13.61s
+[tree] [BlockIngestor] block 17/200 (2048 KB -> 72 tokens [overlap])  9.00s
+[tree] [BlockIngestor] block 18/200 (2051 KB -> 75 tokens [overlap])  11.88s
+[tree] [BlockIngestor] block 19/200 (2053 KB -> 94 tokens [overlap])  11.06s
+[tree] [BlockIngestor] block 20/200 (2068 KB -> 75 tokens [overlap])  11.57s
+[tree] [BlockIngestor] block 21/200 (2085 KB -> 86 tokens [overlap])  10.57s
+[tree] [BlockIngestor] block 22/200 (2053 KB -> 94 tokens [overlap])  11.79s
+[tree] [BlockIngestor] block 23/200 (2050 KB -> 94 tokens [overlap])  12.04s
+[tree] [BlockIngestor] block 24/200 (2053 KB -> 94 tokens [overlap])  11.86s
+[tree] [BlockIngestor] block 25/200 (2054 KB -> 75 tokens [overlap])  12.42s
+[tree] [BlockIngestor] block 26/200 (2064 KB -> 64 tokens [overlap])  8.78s
+[tree] [BlockIngestor] block 27/200 (2053 KB -> 64 tokens [overlap])  8.27s
+[tree] [BlockIngestor] block 28/200 (2061 KB -> 94 tokens [overlap])  11.06s
+[tree] [BlockIngestor] block 29/200 (2050 KB -> 75 tokens [overlap])  12.13s
+[tree] [BlockIngestor] block 30/200 (2051 KB -> 82 tokens [overlap])  11.52s
+[tree] [BlockIngestor] block 31/200 (2088 KB -> 75 tokens [overlap])  11.97s
+[tree] [BlockIngestor] block 32/200 (2052 KB -> 75 tokens [overlap])  12.20s
+[tree] [BlockIngestor] block 33/200 (2052 KB -> 75 tokens [overlap])  12.23s
+[tree] [BlockIngestor] block 34/200 (2051 KB -> 86 tokens [overlap])  10.33s
+[tree] [BlockIngestor] block 35/200 (2067 KB -> 75 tokens [overlap])  12.74s
+[tree] [BlockIngestor] block 36/200 (2060 KB -> 74 tokens [overlap])  9.72s
+[tree] [BlockIngestor] block 37/200 (2065 KB -> 75 tokens [overlap])  12.19s
+[tree] [BlockIngestor] block 38/200 (2055 KB -> 75 tokens [overlap])  12.68s
+[tree] [BlockIngestor] block 39/200 (2049 KB -> 75 tokens [overlap])  13.26s
+[tree] [BlockIngestor] block 40/200 (2055 KB -> 75 tokens [overlap])  12.24s
+[tree] [BlockIngestor] block 41/200 (2053 KB -> 75 tokens [overlap])  12.40s
+[tree] [BlockIngestor] block 42/200 (2055 KB -> 75 tokens [overlap])  12.58s
+[tree] [BlockIngestor] block 43/200 (2049 KB -> 75 tokens [overlap])  12.41s
+[tree] [BlockIngestor] block 44/200 (2067 KB -> 79 tokens [overlap])  8.88s
+[tree] [BlockIngestor] block 45/200 (2054 KB -> 75 tokens [overlap])  12.02s
+[tree] [BlockIngestor] block 46/200 (2054 KB -> 75 tokens [overlap])  11.91s
+[tree] [BlockIngestor] block 47/200 (2056 KB -> 75 tokens [overlap])  12.05s
+[tree] [BlockIngestor] block 48/200 (2057 KB -> 75 tokens [overlap])  13.55s
+[tree] [BlockIngestor] block 49/200 (2052 KB -> 86 tokens [overlap])  10.69s
+[tree] [BlockIngestor] block 50/200 (2056 KB -> 105 tokens [overlap])  17.61s
+[tree] [BlockIngestor] block 51/200 (2051 KB -> 75 tokens [overlap])  12.67s
+[tree] [BlockIngestor] block 52/200 (2077 KB -> 75 tokens [overlap])  11.56s
+[tree] [BlockIngestor] block 53/200 (2062 KB -> 75 tokens [overlap])  12.07s
+[tree] [BlockIngestor] block 54/200 (2048 KB -> 76 tokens [overlap])  12.08s
+[tree] [BlockIngestor] block 55/200 (2051 KB -> 105 tokens [overlap])  15.87s
+[tree] [BlockIngestor] block 56/200 (2050 KB -> 75 tokens [overlap])  11.71s
+[tree] [BlockIngestor] block 57/200 (2051 KB -> 64 tokens [overlap])  8.04s
+[tree] [BlockIngestor] block 58/200 (2068 KB -> 75 tokens [overlap])  11.71s
+[tree] [BlockIngestor] block 59/200 (2061 KB -> 75 tokens [overlap])  12.03s
+[tree] [BlockIngestor] block 60/200 (2070 KB -> 75 tokens [overlap])  11.42s
+[tree] [BlockIngestor] block 61/200 (2049 KB -> 117 tokens [overlap])  18.29s
+[tree] [BlockIngestor] block 62/200 (2052 KB -> 75 tokens [overlap])  12.84s
+[tree] [BlockIngestor] block 63/200 (2050 KB -> 86 tokens [overlap])  11.23s
+[tree] [BlockIngestor] block 64/200 (2049 KB -> 75 tokens [overlap])  11.99s
+[tree] [BlockIngestor] block 65/200 (2062 KB -> 75 tokens [overlap])  13.16s
+[tree] [BlockIngestor] block 66/200 (2051 KB -> 75 tokens [overlap])  13.07s
+[tree] [BlockIngestor] block 67/200 (2051 KB -> 75 tokens [overlap])  12.95s
+[tree] [BlockIngestor] block 68/200 (2058 KB -> 75 tokens [overlap])  16.42s
+[tree] [BlockIngestor] block 69/200 (2054 KB -> 75 tokens [overlap])  12.87s
+[tree] [BlockIngestor] block 70/200 (2048 KB -> 114 tokens [overlap])  19.04s
+[tree] [BlockIngestor] block 71/200 (2067 KB -> 76 tokens [overlap])  12.21s
+[tree] [BlockIngestor] block 72/200 (2074 KB -> 86 tokens [overlap])  10.99s
+[tree] [BlockIngestor] block 73/200 (2053 KB -> 82 tokens [overlap])  10.65s
+[tree] [BlockIngestor] block 74/200 (2048 KB -> 76 tokens [overlap])  13.90s
+[tree] [BlockIngestor] block 75/200 (2052 KB -> 94 tokens [overlap])  12.39s
+[tree] [BlockIngestor] block 76/200 (2053 KB -> 82 tokens [overlap])  11.34s
+[tree] [BlockIngestor] block 77/200 (2052 KB -> 75 tokens [overlap])  12.55s
+[tree] [BlockIngestor] block 78/200 (2054 KB -> 75 tokens [overlap])  13.31s
+[tree] [BlockIngestor] block 79/200 (2049 KB -> 75 tokens [overlap])  12.91s
+[tree] [BlockIngestor] block 80/200 (2052 KB -> 75 tokens [overlap])  13.01s
+[tree] [BlockIngestor] block 81/200 (2061 KB -> 75 tokens [overlap])  12.14s
+[tree] [BlockIngestor] block 82/200 (2102 KB -> 75 tokens [overlap])  13.44s
+[tree] [BlockIngestor] block 83/200 (2049 KB -> 76 tokens [overlap])  12.48s
+[tree] [BlockIngestor] block 84/200 (2051 KB -> 76 tokens [overlap])  13.52s
+[tree] [BlockIngestor] block 85/200 (2050 KB -> 91 tokens [overlap])  16.40s
+[tree] [BlockIngestor] block 86/200 (2053 KB -> 75 tokens [overlap])  12.99s
+[tree] [BlockIngestor] block 87/200 (2050 KB -> 64 tokens [overlap])  8.93s
+[tree] [BlockIngestor] block 88/200 (2072 KB -> 83 tokens [overlap])  11.33s
+[tree] [BlockIngestor] block 89/200 (2048 KB -> 75 tokens [overlap])  13.19s
+[tree] [BlockIngestor] block 90/200 (2049 KB -> 75 tokens [overlap])  12.68s
+[tree] [BlockIngestor] block 91/200 (2086 KB -> 70 tokens [overlap])  9.90s
+[tree] [BlockIngestor] block 92/200 (2049 KB -> 75 tokens [overlap])  13.54s
+[tree] [BlockIngestor] block 93/200 (2068 KB -> 109 tokens [overlap])  18.79s
+[tree] [BlockIngestor] block 94/200 (2052 KB -> 94 tokens [overlap])  12.04s
+[tree] [BlockIngestor] block 95/200 (2059 KB -> 76 tokens [overlap])  15.27s
+[tree] [BlockIngestor] block 96/200 (2049 KB -> 75 tokens [overlap])  12.51s
+[tree] [BlockIngestor] block 97/200 (2058 KB -> 75 tokens [overlap])  12.69s
+[tree] [BlockIngestor] block 98/200 (2085 KB -> 75 tokens [overlap])  13.58s
+[tree] [BlockIngestor] block 99/200 (2061 KB -> 75 tokens [overlap])  13.49s
+[tree] [BlockIngestor] block 100/200 (2048 KB -> 75 tokens [overlap])  13.12s
+[tree] [BlockIngestor] block 101/200 (2048 KB -> 75 tokens [overlap])  13.54s
+[tree] [BlockIngestor] block 102/200 (2064 KB -> 75 tokens [overlap])  15.41s
+[tree] [BlockIngestor] block 103/200 (2075 KB -> 116 tokens [overlap])  17.78s
+[tree] [BlockIngestor] block 104/200 (2055 KB -> 96 tokens [overlap])  17.93s
+[tree] [BlockIngestor] block 105/200 (2090 KB -> 86 tokens [overlap])  10.70s
+[tree] [BlockIngestor] block 106/200 (2053 KB -> 86 tokens [overlap])  10.20s
+[tree] [BlockIngestor] block 107/200 (2055 KB -> 64 tokens [overlap])  9.59s
+[tree] [BlockIngestor] block 108/200 (2060 KB -> 94 tokens [overlap])  11.15s
+[tree] [BlockIngestor] block 109/200 (2059 KB -> 94 tokens [overlap])  11.22s
+[tree] [BlockIngestor] block 110/200 (2049 KB -> 65 tokens [overlap])  10.45s
+[tree] [BlockIngestor] block 111/200 (2058 KB -> 75 tokens [overlap])  15.00s
+[tree] [BlockIngestor] block 112/200 (2049 KB -> 75 tokens [overlap])  13.64s
+[tree] [BlockIngestor] block 113/200 (2048 KB -> 94 tokens [overlap])  11.82s
+[tree] [BlockIngestor] block 114/200 (2061 KB -> 75 tokens [overlap])  11.95s
+[tree] [BlockIngestor] block 115/200 (2050 KB -> 91 tokens [overlap])  14.78s
+[tree] [BlockIngestor] block 116/200 (2075 KB -> 94 tokens [overlap])  11.09s
+[tree] [BlockIngestor] block 117/200 (2059 KB -> 75 tokens [overlap])  11.42s
+[tree] [BlockIngestor] block 118/200 (2048 KB -> 75 tokens [overlap])  12.27s
+[tree] [BlockIngestor] block 119/200 (2051 KB -> 75 tokens [overlap])  13.93s
+[tree] [BlockIngestor] block 120/200 (2067 KB -> 73 tokens [overlap])  8.91s
+[tree] [BlockIngestor] block 121/200 (2055 KB -> 91 tokens [overlap])  14.49s
+[tree] [BlockIngestor] block 122/200 (2051 KB -> 75 tokens [overlap])  15.42s
+[tree] [BlockIngestor] block 123/200 (2052 KB -> 83 tokens [overlap])  10.39s
+[tree] [BlockIngestor] block 124/200 (2053 KB -> 75 tokens [overlap])  13.36s
+[tree] [BlockIngestor] block 125/200 (2058 KB -> 75 tokens [overlap])  12.14s
+[tree] [BlockIngestor] block 126/200 (2057 KB -> 75 tokens [overlap])  12.54s
+[tree] [BlockIngestor] block 127/200 (2051 KB -> 75 tokens [overlap])  12.77s
+[tree] [BlockIngestor] block 128/200 (2071 KB -> 81 tokens [overlap])  10.03s
+[tree] [BlockIngestor] block 129/200 (2058 KB -> 75 tokens [overlap])  12.02s
+[tree] [BlockIngestor] block 130/200 (2078 KB -> 77 tokens [overlap])  9.53s
+[tree] [BlockIngestor] block 131/200 (2050 KB -> 83 tokens [overlap])  10.52s
+[tree] [BlockIngestor] block 132/200 (2083 KB -> 75 tokens [overlap])  12.11s
+[tree] [BlockIngestor] block 133/200 (2052 KB -> 68 tokens [overlap])  11.00s
+[tree] [BlockIngestor] block 134/200 (2056 KB -> 75 tokens [overlap])  11.65s
+[tree] [BlockIngestor] block 135/200 (2080 KB -> 75 tokens [overlap])  11.23s
+[tree] [BlockIngestor] block 136/200 (2054 KB -> 86 tokens [overlap])  10.32s
+[tree] [BlockIngestor] block 137/200 (2049 KB -> 76 tokens [overlap])  8.51s
+[tree] [BlockIngestor] block 138/200 (2058 KB -> 75 tokens [overlap])  14.08s
+[tree] [BlockIngestor] block 139/200 (2071 KB -> 75 tokens [overlap])  11.96s
+[tree] [BlockIngestor] block 140/200 (2051 KB -> 75 tokens [overlap])  12.78s
+[tree] [BlockIngestor] block 141/200 (2051 KB -> 94 tokens [overlap])  11.37s
+[tree] [BlockIngestor] block 142/200 (2050 KB -> 83 tokens [overlap])  11.14s
+[tree] [BlockIngestor] block 143/200 (2050 KB -> 75 tokens [overlap])  15.09s
+[tree] [BlockIngestor] block 144/200 (2052 KB -> 105 tokens [overlap])  17.72s
+[tree] [BlockIngestor] block 145/200 (2057 KB -> 75 tokens [overlap])  14.29s
+[tree] [BlockIngestor] block 146/200 (2049 KB -> 75 tokens [overlap])  13.01s
+[tree] [BlockIngestor] block 147/200 (2049 KB -> 86 tokens [overlap])  10.85s
+[tree] [BlockIngestor] block 148/200 (2064 KB -> 68 tokens [overlap])  10.56s
+[tree] [BlockIngestor] block 149/200 (2064 KB -> 86 tokens [overlap])  10.94s
+[tree] [BlockIngestor] block 150/200 (2071 KB -> 86 tokens [overlap])  11.49s
+[tree] [BlockIngestor] block 151/200 (2048 KB -> 75 tokens [overlap])  12.44s
+[tree] [BlockIngestor] block 152/200 (2050 KB -> 75 tokens [overlap])  15.31s
+[tree] [BlockIngestor] block 153/200 (2087 KB -> 77 tokens [overlap])  10.64s
+[tree] [BlockIngestor] block 154/200 (2049 KB -> 75 tokens [overlap])  14.33s
+[tree] [BlockIngestor] block 155/200 (2050 KB -> 75 tokens [overlap])  13.19s
+[tree] [BlockIngestor] block 156/200 (2048 KB -> 135 tokens [overlap])  21.95s
+[tree] [BlockIngestor] block 157/200 (2049 KB -> 75 tokens [overlap])  13.41s
+[tree] [BlockIngestor] block 158/200 (2049 KB -> 75 tokens [overlap])  12.47s
+[tree] [BlockIngestor] block 159/200 (2048 KB -> 76 tokens [overlap])  13.38s
+[tree] [BlockIngestor] block 160/200 (2064 KB -> 83 tokens [overlap])  10.99s
+[tree] [BlockIngestor] block 161/200 (2062 KB -> 94 tokens [overlap])  12.43s
+[tree] [BlockIngestor] block 162/200 (2048 KB -> 79 tokens [overlap])  11.54s
+[tree] [BlockIngestor] block 163/200 (2049 KB -> 75 tokens [overlap])  14.40s
+[tree] [BlockIngestor] block 164/200 (2049 KB -> 99 tokens [overlap])  18.46s
+[tree] [BlockIngestor] block 165/200 (2049 KB -> 75 tokens [overlap])  12.96s
+[tree] [BlockIngestor] block 166/200 (2048 KB -> 75 tokens [overlap])  15.22s
+[tree] [BlockIngestor] block 167/200 (2057 KB -> 79 tokens [overlap])  14.62s
+[tree] [BlockIngestor] block 168/200 (2052 KB -> 75 tokens [overlap])  13.05s
+[tree] [BlockIngestor] block 169/200 (2049 KB -> 105 tokens [overlap])  17.95s
+[tree] [BlockIngestor] block 170/200 (2049 KB -> 79 tokens [overlap])  15.41s
+[tree] [BlockIngestor] block 171/200 (2049 KB -> 79 tokens [overlap])  15.01s
+[tree] [BlockIngestor] block 172/200 (2048 KB -> 75 tokens [overlap])  14.93s
+[tree] [BlockIngestor] block 173/200 (2055 KB -> 79 tokens [overlap])  13.61s
+[tree] [BlockIngestor] block 174/200 (2050 KB -> 82 tokens [overlap])  10.42s
+[tree] [BlockIngestor] block 175/200 (2049 KB -> 79 tokens [overlap])  15.97s
+[tree] [BlockIngestor] block 176/200 (2050 KB -> 75 tokens [overlap])  14.66s
+[tree] [BlockIngestor] block 177/200 (2049 KB -> 75 tokens [overlap])  12.47s
+[tree] [BlockIngestor] block 178/200 (2050 KB -> 75 tokens [overlap])  13.70s
+[tree] [BlockIngestor] block 179/200 (2052 KB -> 105 tokens [overlap])  15.90s
+[tree] [BlockIngestor] block 180/200 (2050 KB -> 86 tokens [overlap])  10.34s
+[tree] [BlockIngestor] block 181/200 (2050 KB -> 82 tokens [overlap])  9.82s
+[tree] [BlockIngestor] block 182/200 (2048 KB -> 79 tokens [overlap])  12.70s
+[tree] [BlockIngestor] block 183/200 (2048 KB -> 79 tokens [overlap])  15.04s
+[tree] [BlockIngestor] block 184/200 (2049 KB -> 79 tokens [overlap])  17.37s
+[tree] [BlockIngestor] block 185/200 (2048 KB -> 79 tokens [overlap])  12.96s
+[tree] [BlockIngestor] block 186/200 (2056 KB -> 95 tokens [overlap])  15.05s
+[tree] [BlockIngestor] block 187/200 (2049 KB -> 129 tokens [overlap])  19.32s
+[tree] [BlockIngestor] block 188/200 (2050 KB -> 79 tokens [overlap])  14.35s
+[tree] [BlockIngestor] block 189/200 (2054 KB -> 79 tokens [overlap])  13.49s
+[tree] [BlockIngestor] block 190/200 (2050 KB -> 75 tokens [overlap])  14.17s
+[tree] [BlockIngestor] block 191/200 (2052 KB -> 109 tokens [overlap])  17.76s
+[tree] [BlockIngestor] block 192/200 (2049 KB -> 86 tokens [overlap])  10.52s
+[tree] [BlockIngestor] block 193/200 (2048 KB -> 122 tokens [overlap])  18.92s
+[tree] [BlockIngestor] block 194/200 (2048 KB -> 79 tokens [overlap])  15.64s
+[tree] [BlockIngestor] block 195/200 (2049 KB -> 91 tokens [overlap])  16.57s
+[tree] [BlockIngestor] block 196/200 (2048 KB -> 75 tokens [overlap])  14.22s
+[tree] [BlockIngestor] block 197/200 (2049 KB -> 129 tokens [overlap])  19.83s
+[tree] [BlockIngestor] block 198/200 (2049 KB -> 79 tokens [overlap])  12.84s
+[tree] [BlockIngestor] block 199/200 (2048 KB -> 94 tokens [overlap])  11.94s
+[tree] [BlockIngestor] block 200/200 (481 KB -> 79 tokens [overlap])  14.03s
+[tree] [BlockIngestor] BlockIndex: registered 200 file pointers
+[tree] [BlockIngestor] [OK] 200 blocks  ratio=0.0% (114,910,221 -> 16,186 tokens)
+[tree_rag] Pass 1 complete: 200 L1 nodes generated
+[tree_rag] Depth=4  (200 blocks, ~4 top-level entries)  Build plan:
+  Pass 1 (L1 block summaries)   :    200 nodes  200 LLM calls (done)
+  Pass 2 (L2 cluster summaries):     50 nodes  50 LLM calls
+  Pass 3 (L3 cluster summaries):     13 nodes  13 LLM calls
+  Pass 4 (L4 cluster summaries):      4 nodes  4 LLM calls
+[CachedRetriever] Embedding backend : sentence-transformers
+[CachedRetriever] Embedding model   : all-MiniLM-L6-v2
+
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]
+Loading weights: 100%|ΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûê| 103/103 [00:00<00:00, 3310.24it/s]
+[CachedRetriever] Collection : 'tree_init_dummy'  (0 chunks)
+[CachedRetriever] Children   : 'tree_init_dummy__children'  (0 sub-chunks)
+[CachedRetriever] Storage    : C:\repos\ai-portfolio\projects\context-optimizer\benchmarks\data\index\enwik9-400mb\tree
+[CachedRetriever] Cache      : 1 queries  threshold=85%
+[TreeIndex] L1=0  L2=0  L3=0  L4=0  (tree_rag)
+[tree] [TreeIndex] Adding 200 L1 block summaries ...
+[tree] [TreeIndex] L1 ready - 200 entries
+[tree] [TreeIndex] Pass 2: 200 L1 nodes -> 50 L2 clusters  (cluster_size=4, LLM calls=50, same model as Pass 1) ...
+[tree] [TreeIndex] L2 cluster 1/50 (4 items -> 85 tok)  7.6s
+[tree] [TreeIndex] L2 cluster 2/50 (4 items -> 73 tok)  6.6s
+[tree] [TreeIndex] L2 cluster 3/50 (4 items -> 69 tok)  6.6s
+[tree] [TreeIndex] L2 cluster 4/50 (4 items -> 73 tok)  6.7s
+[tree] [TreeIndex] L2 cluster 5/50 (4 items -> 73 tok)  6.5s
+[tree] [TreeIndex] L2 cluster 6/50 (4 items -> 76 tok)  7.2s
+[tree] [TreeIndex] L2 cluster 7/50 (4 items -> 76 tok)  7.2s
+[tree] [TreeIndex] L2 cluster 8/50 (4 items -> 75 tok)  8.1s
+[tree] [TreeIndex] L2 cluster 9/50 (4 items -> 83 tok)  7.6s
+[tree] [TreeIndex] L2 cluster 10/50 (4 items -> 81 tok)  7.4s
+[tree] [TreeIndex] L2 cluster 11/50 (4 items -> 81 tok)  7.2s
+[tree] [TreeIndex] L2 cluster 12/50 (4 items -> 81 tok)  7.3s
+[tree] [TreeIndex] L2 cluster 13/50 (4 items -> 83 tok)  8.6s
+[tree] [TreeIndex] L2 cluster 14/50 (4 items -> 75 tok)  7.2s
+[tree] [TreeIndex] L2 cluster 15/50 (4 items -> 73 tok)  6.9s
+[tree] [TreeIndex] L2 cluster 16/50 (4 items -> 75 tok)  7.6s
+[tree] [TreeIndex] L2 cluster 17/50 (4 items -> 81 tok)  8.2s
+[tree] [TreeIndex] L2 cluster 18/50 (4 items -> 73 tok)  7.9s
+[tree] [TreeIndex] L2 cluster 19/50 (4 items -> 69 tok)  6.6s
+[tree] [TreeIndex] L2 cluster 20/50 (4 items -> 81 tok)  7.3s
+[tree] [TreeIndex] L2 cluster 21/50 (4 items -> 69 tok)  7.4s
+[tree] [TreeIndex] L2 cluster 22/50 (4 items -> 75 tok)  6.7s
+[tree] [TreeIndex] L2 cluster 23/50 (4 items -> 73 tok)  6.8s
+[tree] [TreeIndex] L2 cluster 24/50 (4 items -> 76 tok)  7.4s
+[tree] [TreeIndex] L2 cluster 25/50 (4 items -> 81 tok)  8.0s
+[tree] [TreeIndex] L2 cluster 26/50 (4 items -> 73 tok)  8.2s
+[tree] [TreeIndex] L2 cluster 27/50 (4 items -> 76 tok)  6.8s
+[tree] [TreeIndex] L2 cluster 28/50 (4 items -> 75 tok)  7.3s
+[tree] [TreeIndex] L2 cluster 29/50 (4 items -> 73 tok)  7.5s
+[tree] [TreeIndex] L2 cluster 30/50 (4 items -> 73 tok)  6.8s
+[tree] [TreeIndex] L2 cluster 31/50 (4 items -> 83 tok)  8.5s
+[tree] [TreeIndex] L2 cluster 32/50 (4 items -> 61 tok)  8.3s
+[tree] [TreeIndex] L2 cluster 33/50 (4 items -> 75 tok)  6.8s
+[tree] [TreeIndex] L2 cluster 34/50 (4 items -> 75 tok)  7.0s
+[tree] [TreeIndex] L2 cluster 35/50 (4 items -> 81 tok)  7.3s
+[tree] [TreeIndex] L2 cluster 36/50 (4 items -> 81 tok)  7.9s
+[tree] [TreeIndex] L2 cluster 37/50 (4 items -> 82 tok)  8.1s
+[tree] [TreeIndex] L2 cluster 38/50 (4 items -> 76 tok)  6.6s
+[tree] [TreeIndex] L2 cluster 39/50 (4 items -> 83 tok)  8.3s
+[tree] [TreeIndex] L2 cluster 40/50 (4 items -> 73 tok)  6.9s
+[tree] [TreeIndex] L2 cluster 41/50 (4 items -> 81 tok)  8.1s
+[tree] [TreeIndex] L2 cluster 42/50 (4 items -> 81 tok)  8.0s
+[tree] [TreeIndex] L2 cluster 43/50 (4 items -> 69 tok)  7.6s
+[tree] [TreeIndex] L2 cluster 44/50 (4 items -> 75 tok)  6.6s
+[tree] [TreeIndex] L2 cluster 45/50 (4 items -> 75 tok)  7.5s
+[tree] [TreeIndex] L2 cluster 46/50 (4 items -> 76 tok)  7.5s
+[tree] [TreeIndex] L2 cluster 47/50 (4 items -> 76 tok)  8.5s
+[tree] [TreeIndex] L2 cluster 48/50 (4 items -> 75 tok)  8.0s
+[tree] [TreeIndex] L2 cluster 49/50 (4 items -> 83 tok)  8.5s
+[tree] [TreeIndex] L2 cluster 50/50 (4 items -> 88 tok)  9.3s
+[tree] [TreeIndex] L2 ready - 50 entries
+[tree] [TreeIndex] Pass 3: 50 L2 nodes -> 13 L3 clusters  (cluster_size=4, LLM calls=13, same model as Pass 1) ...
+[tree] [TreeIndex] L3 cluster 1/13 (4 items -> 73 tok)  7.0s
+[tree] [TreeIndex] L3 cluster 2/13 (4 items -> 73 tok)  7.5s
+[tree] [TreeIndex] L3 cluster 3/13 (4 items -> 81 tok)  7.1s
+[tree] [TreeIndex] L3 cluster 4/13 (4 items -> 78 tok)  7.0s
+[tree] [TreeIndex] L3 cluster 5/13 (4 items -> 81 tok)  6.8s
+[tree] [TreeIndex] L3 cluster 6/13 (4 items -> 73 tok)  6.6s
+[tree] [TreeIndex] L3 cluster 7/13 (4 items -> 73 tok)  6.7s
+[tree] [TreeIndex] L3 cluster 8/13 (4 items -> 63 tok)  6.2s
+[tree] [TreeIndex] L3 cluster 9/13 (4 items -> 76 tok)  6.6s
+[tree] [TreeIndex] L3 cluster 10/13 (4 items -> 63 tok)  6.6s
+[tree] [TreeIndex] L3 cluster 11/13 (4 items -> 81 tok)  6.9s
+[tree] [TreeIndex] L3 cluster 12/13 (4 items -> 81 tok)  6.8s
+[tree] [TreeIndex] L3 cluster 13/13 (2 items -> 76 tok)  6.5s
+[tree] [TreeIndex] L3 ready - 13 entries
+[tree] [TreeIndex] Pass 4: 13 L3 nodes -> 4 L4 clusters  (cluster_size=4, LLM calls=4, same model as Pass 1) ...
+[tree] [TreeIndex] L4 cluster 1/4 (4 items -> 82 tok)  7.4s
+[tree] [TreeIndex] L4 cluster 2/4 (4 items -> 63 tok)  6.5s
+[tree] [TreeIndex] L4 cluster 3/4 (4 items -> 81 tok)  7.0s
+[tree] [TreeIndex] L4 cluster 4/4 (1 items -> 69 tok)  6.0s
+[tree] [TreeIndex] L4 ready - 4 entries
+  [tree_rag] Done ΓÇö 200 L1 blocks, 67 L2 clusters  3784.1s  3.0 MB
+
+[eval] Building reasoning LLM: mistral:7b ...
+[eval] Reasoning LLM ready  (grounding + faithfulness scoring enabled)
+
+============================================================
+EVALUATING OPTIMIZED RAG (43 questions)
+============================================================
+[CachedRetriever] Cache MISS (21.50ms, queried ChromaDB)
+  [opt   Q00] ret=0%  tokens=424  55432ms  reason=40%  faith=0%
+[CachedRetriever] Cache MISS (15.90ms, queried ChromaDB)
+  [opt   Q01] ret=0%  tokens=408  10541ms  reason=50%  faith=0%
+[CachedRetriever] Cache MISS (18.26ms, queried ChromaDB)
+  [opt   Q02] ret=0%  tokens=492  14622ms  reason=50%  faith=0%
+[CachedRetriever] Cache MISS (15.64ms, queried ChromaDB)
+  [opt   Q03] ret=0%  tokens=409  10175ms  reason=33%  faith=0%
+[CachedRetriever] Cache MISS (15.65ms, queried ChromaDB)
+  [opt   Q04] ret=0%  tokens=400  11856ms  reason=75%  faith=0%
+[CachedRetriever] Cache MISS (15.21ms, queried ChromaDB)
+  [opt   Q05] ret=0%  tokens=362  9442ms  reason=33%  faith=0%
+[CachedRetriever] Cache MISS (15.76ms, queried ChromaDB)
+  [opt   Q06] ret=0%  tokens=409  11566ms  reason=50%  faith=0%
+[CachedRetriever] Cache MISS (15.00ms, queried ChromaDB)
+  [opt   Q07] ret=0%  tokens=362  7114ms  reason=44%  faith=0%
+[CachedRetriever] Cache MISS (15.34ms, queried ChromaDB)
+  [opt   Q08] ret=0%  tokens=397  9469ms  reason=58%  faith=0%
+[CachedRetriever] Cache MISS (12.35ms, queried ChromaDB)
+  [opt   Q09] ret=0%  tokens=372  8162ms  reason=100%  faith=0%
+[CachedRetriever] Cache MISS (14.14ms, queried ChromaDB)
+  [opt   Q10] ret=0%  tokens=398  9067ms  reason=8%  faith=0%
+[CachedRetriever] Cache MISS (14.57ms, queried ChromaDB)
+  [opt   Q11] ret=0%  tokens=398  8725ms  reason=44%  faith=0%
+[CachedRetriever] Cache MISS (14.52ms, queried ChromaDB)
+  [opt   Q12] ret=8%  tokens=403  9942ms  reason=33%  faith=25%
+[CachedRetriever] Cache MISS (13.47ms, queried ChromaDB)
+  [opt   Q13] ret=0%  tokens=351  6603ms  reason=67%  faith=0%
+[CachedRetriever] Cache MISS (14.44ms, queried ChromaDB)
+  [opt   Q14] ret=29%  tokens=404  9061ms  reason=29%  faith=60%
+[CachedRetriever] Cache MISS (18.40ms, queried ChromaDB)
+  [opt   Q15] ret=0%  tokens=457  12605ms  reason=17%  faith=30%
+[CachedRetriever] Cache MISS (18.47ms, queried ChromaDB)
+  [opt   Q16] ret=0%  tokens=405  9926ms  reason=42%  faith=0%
+[CachedRetriever] Cache MISS (13.63ms, queried ChromaDB)
+  [opt   Q18] ret=0%  tokens=446  11668ms  reason=33%  faith=0%
+[CachedRetriever] Cache MISS (16.12ms, queried ChromaDB)
+  [opt   Q19] ret=0%  tokens=425  9330ms  reason=83%  faith=0%
+[CachedRetriever] Cache MISS (14.10ms, queried ChromaDB)
+  [opt   Q20] ret=8%  tokens=383  7165ms  reason=33%  faith=0%
+[CachedRetriever] Cache MISS (20.18ms, queried ChromaDB)
+  [opt   Q21] ret=0%  tokens=376  7504ms  reason=55%  faith=0%
+[CachedRetriever] Cache MISS (14.48ms, queried ChromaDB)
+  [opt   Q22] ret=40%  tokens=377  7161ms  reason=80%  faith=20%
+[CachedRetriever] Cache MISS (15.06ms, queried ChromaDB)
+  [opt   Q23] ret=33%  tokens=386  7441ms  reason=100%  faith=60%
+[CachedRetriever] Cache MISS (14.03ms, queried ChromaDB)
+  [opt   Q24] ret=25%  tokens=384  7559ms  reason=50%  faith=20%
+[CachedRetriever] Cache MISS (15.00ms, queried ChromaDB)
+  [opt   Q25] ret=25%  tokens=423  8072ms  reason=88%  faith=14%
+[CachedRetriever] Cache MISS (50.86ms, queried ChromaDB)
+  [opt   Q26] ret=0%  tokens=392  8977ms  reason=80%  faith=0%
+[CachedRetriever] Cache MISS (14.53ms, queried ChromaDB)
+  [opt   Q27] ret=0%  tokens=479  14690ms  reason=80%  faith=0%
+[CachedRetriever] Cache MISS (15.58ms, queried ChromaDB)
+  [opt   Q28] ret=9%  tokens=398  7228ms  reason=27%  faith=0%
+[CachedRetriever] Cache MISS (16.36ms, queried ChromaDB)
+  [opt   Q29] ret=0%  tokens=395  8463ms  reason=80%  faith=0%
+[CachedRetriever] Cache MISS (14.98ms, queried ChromaDB)
+  [opt   Q30] ret=0%  tokens=362  6356ms  reason=75%  faith=0%
+[CachedRetriever] Cache MISS (14.53ms, queried ChromaDB)
+  [opt   Q31] ret=20%  tokens=378  7047ms  reason=80%  faith=25%
+[CachedRetriever] Cache MISS (16.58ms, queried ChromaDB)
+  [opt   Q32] ret=0%  tokens=359  7806ms  reason=100%  faith=0%
+[CachedRetriever] Cache MISS (14.58ms, queried ChromaDB)
+  [opt   Q33] ret=0%  tokens=391  8087ms  reason=57%  faith=0%
+[CachedRetriever] Cache MISS (16.98ms, queried ChromaDB)
+  [opt   Q34] ret=0%  tokens=362  8519ms  reason=78%  faith=0%
+[CachedRetriever] Cache MISS (13.86ms, queried ChromaDB)
+  [opt   Q35] ret=0%  tokens=398  8153ms  reason=80%  faith=20%
+[CachedRetriever] Cache MISS (12.52ms, queried ChromaDB)
+  [opt   Q36] ret=0%  tokens=379  7608ms  reason=40%  faith=0%
+[CachedRetriever] Cache MISS (14.49ms, queried ChromaDB)
+  [opt   Q37] ret=0%  tokens=383  7787ms  reason=64%  faith=0%
+[CachedRetriever] Cache MISS (14.67ms, queried ChromaDB)
+  [opt   Q38] ret=0%  tokens=368  9006ms  reason=50%  faith=0%
+[CachedRetriever] Cache MISS (14.41ms, queried ChromaDB)
+  [opt   Q39] ret=0%  tokens=426  7999ms  reason=75%  faith=0%
+[CachedRetriever] Cache MISS (14.53ms, queried ChromaDB)
+  [opt   Q40] ret=0%  tokens=349  6466ms  reason=33%  faith=0%
+[CachedRetriever] Cache MISS (15.10ms, queried ChromaDB)
+  [opt   Q41] ret=14%  tokens=382  7377ms  reason=29%  faith=0%
+[CachedRetriever] Cache MISS (15.48ms, queried ChromaDB)
+  [opt   Q42] ret=10%  tokens=388  8945ms  reason=70%  faith=0%
+[CachedRetriever] Cache MISS (12.96ms, queried ChromaDB)
+  [opt   Q43] ret=0%  tokens=407  5787ms  reason=33%  faith=0%
+
+============================================================
+EVALUATING TREE-OF-SUMMARIES RAG (43 questions)
+============================================================
+  [tree  Q00] recall=60%  ctx=405 tok  27368ms  
+  [tree  Q01] recall=50%  ctx=537 tok  30655ms  
+  [tree  Q02] recall=67%  ctx=348 tok  27451ms  
+  [tree  Q03] recall=33%  ctx=433 tok  27470ms  
+  [tree  Q04] recall=50%  ctx=353 tok  24931ms  
+  [tree  Q05] recall=25%  ctx=434 tok  30147ms  
+  [tree  Q06] recall=42%  ctx=392 tok  28954ms  
+  [tree  Q07] recall=56%  ctx=198 tok  33186ms  [3 tools]
+  [tree  Q08] recall=50%  ctx=452 tok  29918ms  
+  [tree  Q09] recall=100%  ctx=383 tok  38970ms  [3 tools]
+  [tree  Q10] recall=25%  ctx=405 tok  28261ms  
+  [tree  Q11] recall=44%  ctx=383 tok  42021ms  [3 tools]
+  [tree  Q12] recall=42%  ctx=306 tok  24954ms  
+  [tree  Q13] recall=67%  ctx=405 tok  26894ms  
+  [tree  Q14] recall=71%  ctx=452 tok  28500ms  
+  [tree  Q15] recall=50%  ctx=654 tok  50491ms  [3 tools]
+  [tree  Q16] recall=42%  ctx=416 tok  28548ms  
+  [tree  Q18] recall=42%  ctx=452 tok  27787ms  
+  [tree  Q19] recall=83%  ctx=452 tok  28744ms  
+  [tree  Q20] recall=33%  ctx=420 tok  27154ms  
+  [tree  Q21] recall=55%  ctx=227 tok  27277ms  [3 tools]
+  [tree  Q22] recall=80%  ctx=279 tok  34625ms  [3 tools]
+  [tree  Q23] recall=33%  ctx=448 tok  29194ms  
+  [tree  Q24] recall=50%  ctx=537 tok  31477ms  
+  [tree  Q25] recall=75%  ctx=623 tok  33321ms  
+  [tree  Q26] recall=80%  ctx=520 tok  31432ms  
+  [tree  Q27] recall=80%  ctx=452 tok  28148ms  
+  [tree  Q28] recall=27%  ctx=256 tok  40450ms  [3 tools]
+  [tree  Q29] recall=80%  ctx=420 tok  33191ms  
+  [tree  Q30] recall=75%  ctx=284 tok  36269ms  [3 tools]
+  [tree  Q31] recall=100%  ctx=537 tok  22731ms  
+  [tree  Q32] recall=100%  ctx=416 tok  29784ms  
+  [tree  Q33] recall=57%  ctx=405 tok  27617ms  
+  [tree  Q34] recall=78%  ctx=365 tok  43844ms  [3 tools]
+  [tree  Q35] recall=60%  ctx=420 tok  29041ms  
+  [tree  Q36] recall=60%  ctx=412 tok  28934ms  
+  [tree  Q37] recall=73%  ctx=320 tok  25726ms  
+  [tree  Q38] recall=50%  ctx=266 tok  39898ms  [3 tools]
+  [tree  Q39] recall=75%  ctx=353 tok  24190ms  
+  [tree  Q40] recall=44%  ctx=330 tok  23456ms  
+  [tree  Q41] recall=43%  ctx=452 tok  29186ms  
+  [tree  Q42] recall=60%  ctx=353 tok  24373ms  
+  [tree  Q43] recall=42%  ctx=405 tok  30570ms  
+
+============================================================
+RESULTS SUMMARY
+============================================================
+  Metric                                        Vanilla       Optimized       Delta
+  ------------------------------------------------------------------------------
+  Optimized ΓÇö recall=5.2%  tokens=396  fallback=0%  reasoning=56.4%
+
+  Tree-of-Summaries ΓÇö recall=58.3%  entries=200  3.0 MB  reasoning=58.3%
+
+[report] benchmarks\corpus_results.md
+[report] benchmarks\corpus_results.json
