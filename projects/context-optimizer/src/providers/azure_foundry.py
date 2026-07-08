@@ -25,6 +25,7 @@ Usage via _build_local_llm (compressor.py)
     response = llm.invoke("Summarize: ...")
     print(response.content)
 """
+
 from __future__ import annotations
 
 import os
@@ -82,7 +83,9 @@ class AzureFoundryLLM:
             return self._client
         try:
             from azure.ai.inference import ChatCompletionsClient  # type: ignore[import]
-            from azure.core.credentials import AzureKeyCredential  # type: ignore[import]
+            from azure.core.credentials import (
+                AzureKeyCredential,  # type: ignore[import]
+            )
         except ImportError as exc:
             raise ImportError(
                 "azure-ai-inference is required for the azure_foundry provider.\n"
@@ -107,7 +110,10 @@ class AzureFoundryLLM:
         with self._lock:
             client = self._get_client()
             try:
-                from azure.ai.inference.models import UserMessage  # type: ignore[import]
+                from azure.ai.inference.models import (
+                    UserMessage,  # type: ignore[import]
+                )
+
                 response = client.complete(
                     messages=[UserMessage(content=prompt)],
                     model=self._model,
@@ -137,9 +143,9 @@ def build(
       AZURE_AI_FOUNDRY_API_KEY
       AZURE_AI_FOUNDRY_MODEL      (default: phi-4-mini)
     """
-    ep  = endpoint or os.environ.get("AZURE_AI_FOUNDRY_ENDPOINT", "")
-    key = api_key  or os.environ.get("AZURE_AI_FOUNDRY_API_KEY",  "")
-    mdl = model    or os.environ.get("AZURE_AI_FOUNDRY_MODEL", "phi-4-mini")
+    ep = endpoint or os.environ.get("AZURE_AI_FOUNDRY_ENDPOINT", "")
+    key = api_key or os.environ.get("AZURE_AI_FOUNDRY_API_KEY", "")
+    mdl = model or os.environ.get("AZURE_AI_FOUNDRY_MODEL", "phi-4-mini")
 
     if not ep:
         raise ValueError(

@@ -55,11 +55,12 @@ def resolve_task_model(
         p, m = task_model_map[task]
         return p, m, is_code
 
-    global_provider = os.getenv("CONTEXT_OPTIMIZER_COMPRESSOR_PROVIDER", default_provider)
+    global_provider = os.getenv(
+        "CONTEXT_OPTIMIZER_COMPRESSOR_PROVIDER", default_provider
+    )
     if is_code:
-        model = (
-            os.getenv("CONTEXT_OPTIMIZER_CODE_MODEL")
-            or os.getenv("CONTEXT_OPTIMIZER_COMPRESSOR_MODEL", "qwen2.5-coder:3b")
+        model = os.getenv("CONTEXT_OPTIMIZER_CODE_MODEL") or os.getenv(
+            "CONTEXT_OPTIMIZER_COMPRESSOR_MODEL", "qwen2.5-coder:3b"
         )
     else:
         model = os.getenv("CONTEXT_OPTIMIZER_COMPRESSOR_MODEL", default_model)

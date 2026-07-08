@@ -261,9 +261,8 @@ def _build_local_llm(
                 or os.getenv("CONTEXT_OPTIMIZER_COMPRESSOR_MODEL", "qwen2.5-coder:3b")
             )
         else:
-            model_name = (
-                model
-                or os.getenv("CONTEXT_OPTIMIZER_COMPRESSOR_MODEL", "qwen2.5:3b")
+            model_name = model or os.getenv(
+                "CONTEXT_OPTIMIZER_COMPRESSOR_MODEL", "qwen2.5:3b"
             )
         # Discard Ollama-format names passed when provider switched to non-Ollama
         base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
@@ -277,6 +276,7 @@ def _build_local_llm(
     # ── HF (BART / T5) ───────────────────────────────────────────────────────
     if selected_provider == "hf":
         from context_optimizer.providers.hf_summarizer import build as _hf_build
+
         # Discard Ollama-format names (contain ':') — invalid HF Hub IDs
         hf_model = model if (model and ":" not in model) else None
         model_name = hf_model or os.getenv(
@@ -287,6 +287,7 @@ def _build_local_llm(
     # ── Azure AI Foundry ─────────────────────────────────────────────────────
     if selected_provider == "azure_foundry":
         from context_optimizer.providers.azure_foundry import build as _az_build
+
         az_model = (
             model
             or (os.getenv("CONTEXT_OPTIMIZER_CODE_MODEL") if is_code else None)

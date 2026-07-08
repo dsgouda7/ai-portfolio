@@ -1,44 +1,31 @@
 # Context Optimizer: Enterprise Production Readiness
 
 > **Status as of 2026-07-08**
-> Implementation of multi-format ingestion (Part A) and codebase search (Part B)
-> is complete. This document captures what remains to make the system enterprise
-> production-ready.
+> Multi-format corpus ingestion (Part A) is implemented.
+> Codebase search (Part B) was prototyped and removed -- code chunking does not
+> split semantically as well as prose, so retrieval quality without full per-function
+> LLM summarization (impractically slow on CPU) was too low to be useful.
 
 ---
 
 ## What is implemented
 
-### Part A -- Multi-format corpus ingestion
+### Multi-format corpus ingestion
 | File | Purpose |
 |---|---|
-| src/extractors/__init__.py | FormatRouter -- detect format, dispatch, return task name |
+| src/extractors/__init__.py | FormatRouter: detect format, dispatch, return task |
 | src/extractors/txt.py | TxtExtractor, RtfExtractor |
 | src/extractors/markdown.py | MarkdownExtractor (strips front-matter, links, HTML) |
 | src/extractors/pdf.py | PdfExtractor (pdfminer.six, text-layer PDFs) |
 | src/extractors/docx.py | DocxExtractor (python-docx, paragraphs + tables) |
 | src/extractors/xlsx.py | XlsxExtractor (openpyxl, serializes rows to prose) |
 | src/extractors/xml_extractor.py | XmlExtractor (lxml, strips tags) |
-| src/ingest_corpus.py | ingest_directory() -- parallel extraction + per-task compression |
+| src/ingest_corpus.py | ingest_directory(): parallel extraction + per-task compression |
 
-### Part B -- Codebase search
-| File | Purpose |
-|---|---|
-| src/code/code_pointer.py | CodePointer (file + line range + symbol name) |
-| src/code/chunker.py | CodeChunker (tree-sitter + regex fallback, all languages) |
-| src/code/code_index.py | CodeTreeIndex (extends TreeIndex, stores line pointers) |
-| src/code/code_reasoner.py | CodeReasoningAgent (cites file:line in answers) |
-| enchmarks/code_benchmark.py | Code search benchmark runner |
-| enchmarks/linux_benchmark.py | 50 Linux drivers/net eval questions with ground truth |
-
-### Task-based model config
-ench_config.yaml now has a compressor.tasks section:
-- .pdf/.docx -> document task -> mistral:7b
-- .py/.c/.h/... -> code task -> qwen2.5-coder:7b
-- .xlsx/.csv -> 	abular_data task -> llama3.2:3b
-- .md/.txt -> 	ext_prose task -> acebook/bart-large-cnn
-
----
+### Two-model compressor config (bench_config.yaml)
+- model -> all non-code content (text, docs, spreadsheets, markup)
+- code_model -> source code only (same size, purpose-trained on CodeSearchNet)
+- Supported providers: ollama (default), hf (BART, fastest CPU), azure_foundry
 
 ## Enterprise production readiness checklist
 

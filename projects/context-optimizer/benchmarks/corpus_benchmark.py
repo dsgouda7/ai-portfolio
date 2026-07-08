@@ -908,42 +908,8 @@ def _faithfulness(answer: str, context: str) -> float:
 
 # ── Tree RAG ──────────────────────────────────────────────────────────────────
 
-
-def _auto_tree_depth(
-    cluster_size: int,
-    top_k: int = 0,  # 0 = use cluster_size as target (recommended)
-    max_depth: int = 4,
-    n_blocks: int = 0,
-    corpus_bytes: int = 0,
-    block_bytes: int = 1,
-) -> int:
-    """
-    Compute the minimum depth so the top level has ~cluster_size entries.
-
-    Using cluster_size as the target keeps the top level at a number the
-    reasoning LLM can meaningfully choose between -- the same branching
-    factor it sees at every other level of the tree.
-
-    Formula:  d = ceil(log(n_blocks / cluster_size) / log(cluster_size)) + 1
-    Clamped to [2, max_depth].
-
-    Examples (cluster_size=4):
-        n_blocks     depth   top-level entries
-        16           2       4
-        64           3       4
-        256          4       4  (max_depth cap)
-        1,000        4       ~16 (cap hit, top grows)
-    """
-    import math as _math
-
-    target = top_k if top_k > 0 else cluster_size
-    actual_n = (
-        n_blocks if n_blocks > 0 else max(1, _math.ceil(corpus_bytes / block_bytes))
-    )
-    if actual_n <= cluster_size:
-        return 2
-    raw = _math.log(actual_n / target) / _math.log(cluster_size)
-    return max(2, min(int(_math.ceil(raw)) + 1, max_depth))
+# Import canonical implementation from tree_index (single source of truth)
+from context_optimizer.tree_index import _auto_tree_depth  # noqa: E402
 
 
 def build_tree_rag(

@@ -23,6 +23,7 @@ Query path
 
 from __future__ import annotations
 
+import math
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -31,6 +32,30 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from context_optimizer.compressor import CompressedChunk
     from context_optimizer.raw_index import BlockIndex
+
+
+def _auto_tree_depth(
+    cluster_size: int,
+    top_k: int = 0,
+    max_depth: int = 4,
+    n_blocks: int = 0,
+    corpus_bytes: int = 0,
+    block_bytes: int = 1,
+) -> int:
+    """
+    Compute the minimum depth so the top level has ~cluster_size entries.
+
+    d = max(2, min(ceil(log(n/k) / log(k)) + 1, max_depth))
+
+    Args *n_blocks* (preferred, known after Pass 1) or *corpus_bytes* +
+    *block_bytes* for a pre-ingestion estimate.
+    """
+    target = top_k if top_k > 0 else cluster_size
+    actual_n = n_blocks if n_blocks > 0 else max(1, math.ceil(corpus_bytes / block_bytes))
+    if actual_n <= cluster_size:
+        return 2
+    raw = math.log(actual_n / target) / math.log(cluster_size)
+    return max(2, min(int(math.ceil(raw)) + 1, max_depth))
 
 
 @dataclass
