@@ -1,4 +1,4 @@
-# Context Optimizer: Architecture & Design
+so the# Context Optimizer: Architecture & Design
 
 > **Canonical reference** for the Context Optimizer system.
 > Related: [Benchmark results](../benchmarks/experiment_results.md)
@@ -7,17 +7,29 @@
 
 ## Table of Contents
 
-1. [System Overview](#1-system-overview)
-2. [Production Readiness Assessment](#2-production-readiness-assessment)
-3. [Design Decisions and Trade-offs](#3-design-decisions-and-trade-offs)
-4. [Ingestion Pipeline](#4-ingestion-pipeline)
-5. [Compressor Models](#5-compressor-models)
-6. [Tree-of-Summaries Index](#6-tree-of-summaries-index)
-7. [Auto-Depth Formula](#7-auto-depth-formula)
-8. [Query and Reasoning Flow](#8-query-and-reasoning-flow)
-9. [Storage Architecture](#9-storage-architecture)
-10. [Benchmark Results](#10-benchmark-results)
-11. [Implementation Map](#11-implementation-map)
+- [Table of Contents](#table-of-contents)
+- [1. System Overview](#1-system-overview)
+  - [Key results (July 2026, 400 MB corpus)](#key-results-july-2026-400-mb-corpus)
+- [2. Production Readiness Assessment](#2-production-readiness-assessment)
+  - [Ready](#ready)
+  - [Not yet production-ready](#not-yet-production-ready)
+- [3. Design Decisions and Trade-offs](#3-design-decisions-and-trade-offs)
+  - [D1 — BART vs Ollama for compression](#d1--bart-vs-ollama-for-compression)
+  - [D2 — Fixed-size byte blocks vs AST-aware chunking](#d2--fixed-size-byte-blocks-vs-ast-aware-chunking)
+  - [D3 — `cluster_size=4` as the accuracy knob](#d3--cluster_size4-as-the-accuracy-knob)
+  - [D4 — Depth auto-calculated after Pass 1](#d4--depth-auto-calculated-after-pass-1)
+  - [D5 — Single model instance for all passes](#d5--single-model-instance-for-all-passes)
+- [4. Ingestion Pipeline](#4-ingestion-pipeline)
+- [5. Compressor Models](#5-compressor-models)
+- [6. Tree-of-Summaries Index](#6-tree-of-summaries-index)
+- [7. Auto-Depth Formula](#7-auto-depth-formula)
+- [8. Query and Reasoning Flow](#8-query-and-reasoning-flow)
+  - [Reasoning gap (400 MB run)](#reasoning-gap-400-mb-run)
+- [9. Storage Architecture](#9-storage-architecture)
+- [10. Benchmark Results](#10-benchmark-results)
+  - [July 8, 2026 — 400 MB enwik9 (primary production-scale test)](#july-8-2026--400-mb-enwik9-primary-production-scale-test)
+  - [June 23, 2026 — Compressed architecture (Pride \& Prejudice)](#june-23-2026--compressed-architecture-pride--prejudice)
+- [11. Implementation Map](#11-implementation-map)
 
 ---
 

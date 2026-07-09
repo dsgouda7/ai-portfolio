@@ -1,0 +1,102 @@
+# Context-Optimizer Application Configuration
+# --------------------------------------------
+# This config drives the user-facing CLI:
+#
+#   context-optimizer build          # index your documents (run once)
+#   context-optimizer ask "question" # ask anything, forever after
+#   context-optimizer watch          # keep index up-to-date as files change
+#
+# Relative paths resolve from this file's directory.
+# See src/README.md for full documentation.
+
+
+# == MODEL CONFIGURATION =======================================================
+
+compressor:
+  # Builds the block summaries stored in the index.
+  # hf = BART (fastest on CPU, no daemon). ollama = local SLM. azure_foundry = cloud.
+  provider: hf              # hf | ollama | azure_foundry
+
+  hf:
+    model: facebook/bart-large-cnn   # HuggingFace Hub ID
+    device: -1                       # -1 = CPU, 0 = first GPU
+
+  ollama:
+    model: qwen2.5:3b                # prose / docs / spreadsheets
+    base_url: http://localhost:11434
+
+  azure_foundry:
+    endpoint: https://your-project.eastus2.models.ai.azure.com
+    model: phi-4-mini
+    # Set AZURE_AI_FOUNDRY_API_KEY env var
+
+reasoning:
+  # LLM that navigates the tree and synthesizes answers at query time.
+  # Set model: "" to get retrieval-only mode (faster, no Ollama needed).
+  ollama:
+    model: mistral:7b
+    base_url: http://localhost:11434
+
+
+# == CORPUS ====================================================================
+
+corpus:
+  # Path to the documents to index.
+  # Can be a single file (.txt, .pdf, .docx, .md, .xlsx, .xml, .rtf)
+  # or a directory (all supported formats are discovered recursively).
+  path: ./docs
+
+  # Where to store the built index (ChromaDB + BlockIndex).
+  # This persists between runs so 'ask' is instant after the first 'build'.
+  index_dir: ~/.co/index
+
+  # Supported file types when path is a directory.
+  # Remove entries to exclude formats you don't have.
+  formats:
+    - .txt
+    - .md
+    - .pdf
+    - .docx
+    - .xlsx
+    - .xml
+    - .rtf
+
+  # Watch mode: re-index changed files automatically.
+  # Only blocks that actually changed are re-processed (typically 1-2 LLM calls).
+  watch: false
+  watch_debounce_s: 3.0    # wait N seconds after last change before re-indexing
+
+
+# == INDEX PARAMETERS ==========================================================
+
+index:
+  block_mb: 0.5
+  # How large each indexed chunk is. Smaller = better recall, more LLM calls.
+  # 0.5 MB is good for text. Increase to 2.0 for very large corpora (>1 GB).
+
+  cluster_size: 4
+  # Children per tree node. Lower = more specific summaries = better answers.
+  # 4 is recommended. Use 2 for maximum precision, 8 for fastest build.
+
+  overlap_pct: 10.0
+  # Context overlap between adjacent blocks (%). Prevents split-boundary misses.
+
+  tree_depth: 0
+  # 0 = auto-computed from corpus size (recommended).
+
+
+# == QUERY BEHAVIOUR ===========================================================
+
+query:
+  top_k: 5
+  # Number of tree nodes retrieved per query.
+
+  max_rounds: 4
+  # Maximum number of tool-calling steps the agent takes before forcing an answer.
+  # More rounds = potentially better answers but higher latency.
+
+  show_citations: true
+  # Print file:line citations alongside the answer.
+
+  show_steps: false
+  # Print the agent's reasoning steps (search_cluster / fetch_raw_block calls).
