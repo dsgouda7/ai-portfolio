@@ -108,12 +108,16 @@ def _apply_bench_config(args: argparse.Namespace, cfg: dict) -> None:
         "overlap_pct": "overlap_pct",
         "top_k": "top_k",
         "tree_depth": "tree_depth",
+        "fallback_threshold": "fallback_threshold",
+        "opt_strategy": "opt_strategy",
     }
     _bool_keys = {
         "tree": "run_tree",
         "optimized_only": "optimized_only",
+        "vanilla_only": "vanilla_only",
         "build_only": "build_only",
         "eval_only": "eval_only",
+        "force_fallback": "force_fallback",
     }
     for cfg_key, arg_key in _scalar_keys.items():
         if cfg_key in bench:

@@ -1,3 +1,9 @@
+"""Write the fully-documented bench_config.yaml."""
+import pathlib
+
+TARGET = pathlib.Path(__file__).parent.parent / "benchmarks" / "bench_config.yaml"
+
+CONTENT = """\
 # Context-Optimizer Benchmark Configuration
 # -----------------------------------------
 # Run with:  python benchmarks/corpus_benchmark.py run
@@ -129,3 +135,7 @@ benchmark:
   max_mb: 0
   # Cap the corpus at N MB before indexing (0 = no cap, use the full file).
   # Useful for quick test runs on large corpora.
+"""
+
+TARGET.write_text(CONTENT, encoding="utf-8")
+print(f"Written {len(CONTENT):,} chars to {TARGET.name}")
