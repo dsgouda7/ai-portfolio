@@ -65,6 +65,11 @@ desktop.ini
 *.bin
 checkpoints/
 
+# Fine-tuned model checkpoints (from experiments)
+tinyllama-lora/
+tinyllama-pharma-*/
+llama-pharma-domain/
+
 # ── Logs ─────────────────────────────────────────────────────────────────────
 *.log
 *.err
