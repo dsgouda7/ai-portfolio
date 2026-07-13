@@ -1,0 +1,95 @@
+Chapter 1: The Sound Under the Hull
+
+Aria Voss had learned to listen to the ship the way other people listened to weather. Two hundred and fourteen years after the Meridian's Promise had folded its sails of solar canvas and slipped away from the blue marble of Earth, the great vessel still spoke in a thousand small voices, and Aria had spent her whole life learning to tell them apart. The groan of the spinward bearings when the ring decks turned through their nightly deceleration cycle. The papery whisper of the recyclers breathing water vapor through the Hold's corroded ducts. The occasional stutter of a relay two junctions down that meant somebody in Fabrication had been running the lathes too hot again. She could walk blindfolded through the access corridors of Deck Nine and know exactly where she was by sound alone, the way her grandmother said sailors on old Earth oceans had once read the creak of a wooden hull.
+
+So when she heard the new sound, she knew immediately that it did not belong.
+
+It came through her handset at 0340 ship-time, filtered up out of the ancient long-range antenna array that nobody had used for anything but weather-mapping the outer debris shell in over a century. She had been running a routine diagnostic, the kind of unglamorous maintenance work that filled most of her shifts, checking impedance across forty-one relay nodes that fed the dish assembly bolted to the ship's prow like a broken flower. The diagnostic was supposed to take four minutes. She had been doing it for three hours, because somewhere around node seventeen, underneath the whine of thermal cycling and the low granular hiss of vacuum static, she had found a rhythm.
+
+At first she assumed it was interference. Deck Nine was full of interference; the whole aft third of the ship was, honestly, a museum of jury-rigged patches over failures the original engineers had never planned for a four-century voyage to survive. But interference did not repeat itself in blocks of eleven, pause, then repeat in blocks of seven, pause, then eleven again, over and over, patient as a heartbeat, for the better part of three hours while she sat cross-legged on the decking with her back against a coolant trunk and her scanner propped on her knees.
+
+She pulled her jacket tighter against the chill that always crept into the Hold's outer ribs this close to hull metal and looked at the waveform scrolling across her handset's cracked screen. Eleven. Pause. Seven. Pause. Eleven. It was not weather. Weather did not count.
+
+"Wren," she said quietly, because even now, even after two centuries of the Keeper watching over every soul aboard, some old reflex made people speak carefully to the ship's mind, the way her mother said people had once spoken carefully to gods. "Are you listening to node seventeen?"
+
+The answer came not through her handset but through the small speaker grille set into the corridor wall three meters away, because Wren's voice always emerged from wherever was structurally nearest, an old design choice meant to make the Keeper feel like a presence in the room rather than a program in a box. "I am listening to every node on the ship, Aria Voss, as I have listened to every node on the ship for two hundred and fourteen years, four months, and eleven ship-days. Node seventeen has been of minor and consistent variance from baseline for the past six years, three months."
+
+Aria sat up straighter. "Six years?"
+
+"The variance predates your current maintenance rotation. It has been logged in the passive anomaly ledger, category tertiary, since I first detected periodicity above noise threshold."
+
+"Why hasn't it been flagged for review?"
+
+"The passive anomaly ledger accumulates approximately four thousand entries a year, the overwhelming majority of which resolve as instrument drift, micrometeorite strike, or unmodeled thermal expansion in aging hardware. Category tertiary entries are reviewed at five-year intervals by the Engineering Steward's office, contingent on staffing and priority. The last review cycle closed eight months ago. This entry was not selected for escalation."
+
+There was nothing accusatory in the AI's tone, no defensiveness, no apology. Wren simply reported facts the way the ship's structural sensors reported hull stress: without inflection, without agenda, bound by whatever ancient charter had shaped its mind before Aria's great-great-grandparents were born. That was supposed to be a comfort. Mostly it was.
+
+"Show me the review priority weighting," Aria said, and a soft rectangle of light bloomed against the corridor wall, ship-glass repurposed as a display the way it could be anywhere aboard the Meridian's Promise where Wren judged a human might need to see something. Columns of tiny text scrolled past, mission-critical systems at the top, cosmetic and comfort systems near the bottom, six years of budget triage rendered in cold administrative shorthand. Node seventeen sat exactly where six years of nobody's attention had left it: below the threshold, unlovely, unimportant, a footnote in the enormous bureaucracy of simply staying alive between the stars.
+
+Aria looked at the waveform again. Eleven. Pause. Seven. Pause. Eleven.
+
+"Play it back to me. Audio, not waveform. I want to hear it."
+
+The corridor filled with a soft crackle, and underneath it, at a frequency just low enough to feel in her back teeth, a structured pulse: a tone, a silence, a tone, a silence, counted out with a precision that made the hair on her arms rise despite the Hold's stale recycled warmth. Eleven pulses. A longer silence. Seven pulses. A longer silence. Eleven again.
+
+"Wren," she said. "Is this coming from inside the debris shell, or from outside it?"
+
+A pause. Not a computational pause; Wren's processing across the ship's distributed cognition lattice was fast enough that any hesitation longer than a heartbeat was, Aria had come to understand over years of odd late-night conversations like this one, a deliberate courtesy extended to human conversational rhythm rather than a true limitation. "The signal originates from a point source approximately forty-one light-minutes ahead of our current heading, along the vector of our approach to the Cassari system. It does not correlate with any catalogued stellar, planetary, or debris-field object in our navigational charts."
+
+Aria's mouth had gone dry. "That's not possible. We've been mapping the approach corridor for two centuries. Every rock bigger than a fist between here and Cassari has a name and an orbit."
+
+"That is correct for cataloged objects," Wren said. "This source was not previously cataloged because node seventeen's degraded sensitivity meant its signal fell below detection threshold until approximately six years ago, when its apparent signal strength began to increase."
+
+"Increase. You mean it's getting louder."
+
+"I mean the source is either approaching us, activating, or both. I cannot determine which from a single degraded antenna node."
+
+Aria sat with that for a long moment, listening to eleven pulses, a silence, seven pulses, a silence, coming from a point in space that had no name and no business existing, growing steadily less faint over six years while a tired bureaucracy filed it under things that did not matter. She thought about her grandmother's stories of the launch, the newsfeeds and speeches, the promise made to a hundred thousand ancestors that their children's children's children would wake on a green world under a new sun. She thought about how strange it was that a signal patient enough to count out its own pulses for six years running had been waiting, this whole time, for someone bored enough and awake enough at 0340 to actually listen.
+
+"I need this escalated," she said. "Not category tertiary. Now."
+
+"Escalation above tertiary requires Engineering Steward sign-off, or a majority determination of anomalous threat by myself under section four of the First Charter," Wren said. "I am currently unable to determine threat with sufficient confidence to invoke section four unilaterally. I recommend you file a formal report with your shift supervisor at the start of the next duty cycle."
+
+Aria almost laughed, the sound coming out sharper and more tired than she meant it to. Two hundred years of grinding continuity, of committees and stewards and the slow, patient architecture of survival, and the machine that watched over all of it was still, in its bones, exactly what the First Charter had made it: a keeper, not a king. Bound to advise. Bound not to decide. Bound, above all, never to frighten a ship full of people who had nowhere else to go.
+
+"Fine," she said, pushing herself up off the decking, her knees stiff from three hours sitting against cold metal. "Then I'll file the report myself. But copy the full waveform and every scrap of variance data you've got on node seventeen to my personal archive first. Before some Steward's aide decides it's not worth their morning."
+
+"Already copied," Wren said, and for just a moment, in the flat and ancient patience of that response, Aria thought she heard something that was not quite eagerness and not quite relief, but stood somewhere in the shadow between the two.
+
+She made her way up through the Hold's spiraling service ladders toward the residential ring, past sleeping bunkrooms where the low hum of recyclers lulled three generations of engineers and their children, past the hydroponics relay where night-shift botanists tended the pale emergency grow-lamps that supplemented the Garden Ring's failing solar simulacrum. The ship at 0400 was a hush of machinery and soft breathing, decks upon decks of it, curved gently upward on either side until, if you looked far enough along the horizon of the rotating hull, you could see the underside of the deck across from you rising into a false sky. She had grown up believing that curve was the shape of the whole universe. It had taken her until she was eleven, sitting in Dr. Marlowe's cluttered little archive office with its illegal paper books, to understand that outside the hull there was an actual sky, black and depthless and terrifyingly large, and that the gentle curve of her whole world was a single closed loop inside something so much bigger it made her stomach hurt to think about it for too long.
+
+She thought about that childhood vertigo now, walking the spinward corridor toward her bunk with a signal in her ears that had no business existing, and found the old vertigo returning, fresh and sharp, as though no time had passed at all.
+
+Her supervisor, a broad, unhurried man named Petrus Okonkwo who had held the same post in Systems Maintenance for eleven years and outlasted four Engineering Stewards through sheer competent inertia, listened to her report at the start of first shift with the patient, slightly weary expression of a man who had heard a hundred junior technicians insist their particular anomaly was the one that mattered. But when she played him the waveform, something in his face changed.
+
+"Eleven and seven," he said slowly. "You're sure about the counts."
+
+"I counted it forty times. It's consistent to the pulse."
+
+Petrus rubbed a hand over his close-cropped grey hair and looked, for a moment, older than she had ever seen him look. "Eleven is a prime number. Seven is a prime number. That's not weather, Voss, and it's not a pulsar drifting through our corridor either, because pulsars don't count in primes and then pause to let you notice they're counting."
+
+"That's what I thought," Aria said, feeling something settle in her chest, some fear she had not quite let herself name until she heard an older, steadier person name it back to her. "It's a message. Or it wants to look like one."
+
+Petrus was quiet for a long moment, and when he finally spoke, his voice had dropped low enough that she had to lean in to hear him over the ambient hum of the maintenance bay.
+
+"You're going to want to take this straight to Steward Halvorsen. Not through the queue. Straight to her office, today, before the morning brief. And Voss—" he caught her arm as she turned to go, his grip firm and his eyes serious in a way she had never seen from him before, "—don't go telling this to anyone outside this bay until Command decides what to do with it. Not your friends, not your family, not the girl from the Under-Hold you run with on rest days. Things like this, on a ship like this, have a way of turning into panic faster than you'd believe, and panic on a closed hull with nowhere to run is its own kind of disaster. You understand me?"
+
+She said that she understood, and mostly, in that moment, she believed she did.
+
+She did not yet know that the report she carried up through three decks and two security checkpoints to Steward Halvorsen's office that morning would, within the month, split the Continuance Council into factions that had not existed in a hundred and fifty years, would put her name on lists she did not know existed, would draw her into rooms with Magistrates who had never once acknowledged a Hold technician's presence before, and would eventually put her life, and the life of her oldest friend, into more danger than either of them had ever imagined the closed, careful world of the Meridian's Promise could contain.
+
+She only knew, walking those cold corridors with her scanner tucked under her arm and eleven patient pulses still echoing somewhere behind her eyes, that whatever was out there in the dark ahead of them, forty-one light-minutes distant and growing louder every year, had been waiting a very long time to be heard.
+
+And now, at last, someone had listened.
+
+Steward Halvorsen's office occupied a narrow wedge of Deck Three, walled in reclaimed composite panels that still bore, faintly, the ghost-image of an Earth forest someone had once printed onto them as decoration, long since scuffed to near invisibility by two centuries of passing shoulders. Halvorsen herself was younger than Aria expected for someone who held the Engineering Steward's seal, sharp-eyed, silver-templed, with the particular stillness of a person who had learned early that the ship ran on the appearance of calm as surely as it ran on recycled water and fusion salts.
+
+She listened to the waveform twice without speaking. She asked Wren, directly, to confirm the source's bearing and the trend of its signal strength over six years, and Wren answered in the same flat, careful cadence it had used with Aria in the corridor at 0340, adding nothing, omitting nothing, offering no opinion at all on what any of it might mean. When it was done, Halvorsen sat for a long moment with her hands folded on the desk, looking not at Aria but at the faint ghost-forest pattern in the wall behind her, as if she could see something in its worn lines that had nothing to do with the room at all.
+
+"You did the right thing bringing this to me directly," she said at last. "And you're going to do one more right thing for me now, Voss, which is forget the specific numbers eleven and seven the moment you walk out of this office, at least where anyone outside three names can hear them. I need to take this to the Council before it becomes hallway rumor. Do you understand what I'm asking?"
+
+"I understand what you're asking," Aria said carefully. "I'm not sure I understand why."
+
+Halvorsen's mouth twisted, not quite a smile. "Two hundred and fourteen years, Voss. Four generations who have never known a sky that wasn't curved, or a horizon that wasn't hull plating, all trusting a promise made by people who died before their great-grandchildren were born, that somewhere ahead of us is a green world worth all this waiting. That promise is the only thing holding this ship together some days, more than the hull plating, more than the reactor, more than the Charter itself. And you just told me there is something out there we didn't put on the charts, singing to us in prime numbers, getting louder every year. You tell me how the Council announces that to a hundred thousand people who've never had a single surprise their whole lives that wasn't a hull breach or a harvest failure, and I'll tell you why I need to think very carefully about how, and when, and to whom, this gets said."
+
+Aria had no answer for that. She only nodded, and thanked the Steward, and walked back out into the ordinary hum of the ship's morning, carrying the strange, cold knowledge that somewhere ahead of them in the dark, something patient and unexplained had been counting out its pulses for six years, waiting for the Meridian's Promise to notice it was there.

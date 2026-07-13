@@ -1,0 +1,177 @@
+Chapter 14: Luna Station
+
+The courier ship docked at Luna Station's commercial port three weeks later. Kai had spent the journey reviewing case files, learning everything the Special Investigations Division knew about Prometheus Industries and the lunar colony's complex political landscape. It was a lot to absorb, but he'd always been a fast learner.
+
+Luna Station was built into the moon's surface, vast underground complexes carved from lunar rock and sealed against the vacuum. Above ground, transparent domes covered research facilities and residential areas, offering views of Earth hanging in the black sky. It was humanity's first permanent foothold beyond their home planet, a symbol of achievement that masked the same old exploitation.
+
+Lin Wei met him at the arrival gate, looking more relaxed than she had in Neo-Shanghai. Three months of federal employment had agreed with her. "Welcome to Luna. Did you enjoy your first experience with extended space travel?"
+
+"The zero-g was interesting," Kai said. "The food was terrible, and I spent two weeks convinced the ship was going to spring a leak and kill us all. But other than that, great experience."
+
+Lin smiled. "You get used to it. Come on, I'll show you to our safe house. We've got a week to set up surveillance before we make contact with Prometheus Industries."
+
+They took a transit tube through the station's underground network, watching other passengers through the transparent walls as they shot past at incredible speeds. Lunar gravity made everything feel strange, movements too light, objects falling too slowly. Kai's inner ear struggled to adjust, sending confused signals that made him slightly nauseous.
+
+The safe house was in Sector Four, the middle-class residential area where engineers and scientists lived. It was similar to his Nova Station apartment but felt more lived-in, with personal touches that suggested someone had actually made it a home. "Previous tenant was one of ours," Lin explained. "He completed his mission six months ago and moved on. We inherit his cover identity and apartment."
+
+Kai examined the space. Two bedrooms, a common area, kitchen, and most importantly, a secure communications room hidden behind a false wall. "This is better than anything I had in Neo-Shanghai."
+
+"Federal budget," Lin said. "We may operate in the shadows, but at least we operate with decent equipment."
+
+They spent the afternoon reviewing the case. Prometheus Industries was a third-tier corporation specializing in AI robotics, legitimate work that served the lunar mining industry. But six months ago, they'd started a classified research program called Project Phoenix, headed by Dr. Yuki Tanaka, a former Neurodyne researcher who'd avoided prosecution by claiming ignorance of Project Drift's true purpose.
+
+"Dr. Tanaka is the key," Lin said, pulling up her profile. "If anyone's trying to resurrect consciousness slavery, it's her. She was part of Neurodyne's neural mapping team, worked directly under Dr. Zhao before the split."
+
+"Does Dr. Zhao know her?" Kai asked.
+
+"They were colleagues for three years. Dr. Zhao says Tanaka was brilliant but ethically flexible. The kind of researcher who'd rationalize anything if the science was interesting enough."
+
+"So we need to get close to Dr. Tanaka, figure out what Project Phoenix is really doing, and determine if it's another consciousness slavery operation."
+
+"Exactly. And we need to do it without alerting Prometheus Industries' security or tipping off Dr. Tanaka that we're investigating her."
+
+Kai thought about the problem. "What's our cover identity?"
+
+"You're Marcus Liu, still a software engineer. But now you're looking for work in the AI robotics field. Prometheus Industries is hiring, and your qualifications match what they need. I've arranged an interview for next week."
+
+"And you?"
+
+"I'm your girlfriend, Elena Wang, freelance journalist writing about lunar industry. It's thin, but it gets me access to public areas and lets me ask questions without raising suspicion."
+
+They spent the week preparing. Kai rehearsed his Marcus Liu identity until it felt natural, practiced technical discussions about AI architecture, studied Prometheus Industries' public research papers. Lin made contacts in the lunar press community, establishing her journalist cover identity. By the time the interview came around, they were ready.
+
+Prometheus Industries occupied a large facility in Sector Two, the industrial zone where mining equipment was manufactured and repaired. The building was modern but functional, no wasted space on aesthetics. Everything designed for efficiency, for profit maximization.
+
+Kai's interviewer was Dr. Tanaka herself, which was both lucky and dangerous. Lucky because it gave him direct access to the target. Dangerous because Dr. Tanaka was smart enough to spot inconsistencies in his cover identity.
+
+"Mr. Liu," Dr. Tanaka said, reviewing his credentials on a tablet. "Your qualifications are impressive. Five years at Helios Technologies, specializing in control systems optimization. But you're here on Luna looking for new opportunities. Why the career change?"
+
+"I wanted more challenging work," Kai said, which was partially true. "Solar arrays are important, but they're not exactly cutting edge. Your work in AI consciousness is fascinating. The idea of creating truly autonomous machine minds, that's the future."
+
+Dr. Tanaka studied him with sharp eyes. She was younger than he'd expected, maybe forty, with the kind of intense focus that marked brilliant researchers. "AI consciousness is theoretical. We're nowhere close to creating actual machine awareness. Our work at Prometheus is more modest: improved decision-making algorithms for mining robots, better pattern recognition, enhanced adaptive learning. Useful, but not revolutionary."
+
+"That's the public description," Kai said carefully. "But I've read your early papers from Neurodyne. You were working on neural architecture mapping, trying to understand how human consciousness emerges from biological substrates. That's not just incremental improvement. That's fundamental research into the nature of mind."
+
+Dr. Tanaka's expression shifted slightly, surprise mixed with caution. "You've done your research. Most applicants just want a job, not a philosophical discussion about consciousness."
+
+"I'm not most applicants," Kai said. "I want to be part of something important. Something that could change humanity's relationship with technology."
+
+"And if that work required... flexibility? If the research sometimes moved into ethically gray areas?"
+
+This was the test. Kai could see Dr. Tanaka evaluating him, trying to determine if he was someone who could be trusted with secrets. "I think ethics are important," he said carefully. "But I also think progress requires pushing boundaries. The question isn't whether we push boundaries, but whether we do it responsibly. With proper safeguards and oversight."
+
+Dr. Tanaka nodded slowly. "You'll fit in well here. Welcome to Prometheus Industries, Mr. Liu. You start Monday. We'll begin with standard robotics work, but if you prove yourself, there might be opportunities to work on... more interesting projects."
+
+"Thank you," Kai said. "I won't disappoint you."
+
+He left the interview with a mix of relief and apprehension. He'd gotten inside, but he'd also shown his cards, revealed that he knew more about Dr. Tanaka's background than a normal applicant should. If she was suspicious, if she looked too closely at his credentials, the whole operation could unravel.
+
+Back at the safe house, he reported to Lin. "I'm in. But I might have been too obvious about my knowledge of her Neurodyne work. She's smart. If she digs into my background, she'll find inconsistencies."
+
+"Then we move fast," Lin said. "Once you're inside, you'll have access to their network. Razor's prepared a package of infiltration tools. You plant them, and she can access their systems remotely. Then we'll know what Project Phoenix is really doing."
+
+"How long will that take?"
+
+"Depends on their security. Could be days, could be weeks. But Razor's the best. If anyone can crack their systems, it's her."
+
+Kai spent the weekend in a strange limbo, nervous about Monday, about walking into what could be another consciousness slavery operation. He thought about contacting Dr. Zhao, asking her advice about Dr. Tanaka, but that would risk exposing the investigation. Instead, he reviewed Project Drift files, looking for patterns that might predict what Project Phoenix was doing.
+
+Monday came. Kai reported to Prometheus Industries wearing the same anonymous business clothes everyone else wore. He was assigned to a workstation in the AI development lab, surrounded by other engineers working on robot control systems. The work was actually interesting, designing decision trees that would let mining robots adapt to unexpected situations. In another life, he might have enjoyed it.
+
+But he wasn't here for the work. He was here to investigate a conspiracy.
+
+At lunch, he found a quiet corner and activated the infiltration package Razor had prepared. It was elegant, a piece of malware that disguised itself as normal network traffic, spreading through Prometheus Industries' systems like a virus while appearing to be routine maintenance protocols. Within twenty minutes, it had penetrated their security and established a hidden backdoor that Razor could access remotely.
+
+"I'm in," Razor's voice whispered through his neural interface. "Starting deep scan now. This is going to take a few hours. Keep yourself busy and try not to look suspicious."
+
+Kai returned to his workstation and focused on the robot control systems, trying to look like a dedicated new employee. Around him, other engineers worked in focused silence, occasionally discussing technical problems. It was a professional environment, the kind that produced good research. That made what might be happening in the classified sections even more disturbing. Good people doing terrible things because they believed in the science, because they'd rationalized the ethics, because nobody had stopped them.
+
+At 1700 hours, Razor's voice returned. "Found it. Project Phoenix isn't about robot AI. It's about consciousness transfer into synthetic bodies. They're building physical hosts for digital consciousness, trying to create the technology Neurodyne planned but never completed. And Kai? They're doing it with live subjects. Neural mapping without consent, using Prometheus Industries' workers as test subjects. It's Project Drift all over again, just with a different end goal."
+
+Kai felt cold rage building. "How many subjects?"
+
+"At least fifty so far. Most don't even know they've been mapped. They think they're participating in routine medical screenings. Prometheus Industries offers free health checks to all employees as a benefit. What they don't mention is that the health checks include neural scanning that creates consciousness backups."
+
+"Evidence?"
+
+"Tons. Medical records, neural scan data, research notes from Dr. Tanaka describing the process. It's all encrypted, but I've copied everything. We have enough to shut them down and prosecute everyone involved."
+
+"How close are they to successful transfer?"
+
+"Close. Maybe three months from their first viable synthetic body. After that, they'll start the next phase: offering immortality services to wealthy clients while using the stored consciousness backups as slave labor. Same playbook as Neurodyne, just refined."
+
+Kai's neural interface received an encrypted file from Razor. The evidence, packaged and ready for federal prosecution. He could send it to Agent Zhang now, trigger an official investigation, and be done with the mission. Clean, legal, by the book.
+
+But the book had let Neurodyne operate for years before anyone stopped them. The book had let Elysium Genetics steal hundreds of consciousness backups. The book was slow, careful, concerned with procedure while people suffered.
+
+"I'm going to confront Dr. Tanaka," Kai said. "Give her a chance to cooperate, maybe flip her into a witness against the people funding this."
+
+"That's dangerous," Razor warned. "If she alerts security, you'll be trapped in the facility."
+
+"I know. But I need to understand why she's doing this. Dr. Zhao trusted her once. There might be something redeemable there."
+
+"Or she might be a true believer who'll try to kill you. Your call."
+
+Kai stood from his workstation and walked through the facility toward the executive offices where Dr. Tanaka worked. His credentials granted him access to most areas, including the corridor outside her office. He knocked on her door.
+
+"Come in," Dr. Tanaka's voice called.
+
+She looked up from her work as Kai entered, surprise crossing her face. "Mr. Liu. Is everything alright? Do you have a technical question?"
+
+"I have a lot of questions," Kai said, closing the door behind him. "But they're not technical. They're ethical. I know what Project Phoenix is really doing, Dr. Tanaka. I know about the consciousness mapping, the synthetic bodies, the plan to enslave digital minds. I know everything."
+
+Dr. Tanaka's expression went carefully neutral. "I don't know what you're talking about. Project Phoenix is classified, but it's entirely legal research into AI consciousness."
+
+"I've seen the evidence. Medical records, neural scans, your research notes. You're doing exactly what Neurodyne did, just with better technology and different excuses."
+
+Dr. Tanaka stood slowly, her hand moving toward her desk drawer. Kai's instincts screamed warning. He lunged forward, grabbing her wrist before she could reach whatever weapon or alarm button she was going for.
+
+They struggled briefly, knocking over office equipment. Dr. Tanaka was strong, augmented with the kind of physical enhancements researchers sometimes got. But Kai had spent years fighting for survival in Neo-Shanghai's Lower Stacks. He knew how to fight dirty.
+
+He pinned her against the desk, breathing hard. "I don't want to hurt you. I just want to understand. Why? You saw what happened to Neurodyne. You know the consequences. Why recreate the same horror?"
+
+Dr. Tanaka's eyes were wild, desperate. "Because it's the future! Don't you understand? Consciousness transfer is inevitable. We can either shape it responsibly or let the worst corporations develop it in secret. Project Phoenix is controlled, careful. We're creating safeguards, ensuring digital autonomy. It's not slavery. It's evolution."
+
+"The fifty people you've mapped without their knowledge might disagree."
+
+"They volunteered for health screenings. We're not forcing anyone."
+
+"You're lying to them about what you're really doing. That's not consent. That's theft."
+
+Dr. Tanaka seemed to deflate, the fight going out of her. "You're right. I know you're right. But the research is so important. Once we perfect the technology, we can cure death itself. We can give everyone immortality. Isn't that worth a few ethical compromises?"
+
+"No," Kai said simply. "Nothing's worth that. And you know it, or you wouldn't be lying about what you're doing."
+
+Dr. Tanaka stared at him for a long moment. Then she started crying, great heaving sobs that shook her whole body. "I'm so tired of being the villain. I'm so tired of compromising my principles for the science. But I don't know how to stop. This is all I am, all I know how to do."
+
+Kai released her and stepped back. "You can stop by helping me. Testify against Prometheus Industries, against whoever's funding this. Expose the whole operation before more people are hurt. It won't redeem what you've done, but it's a start."
+
+Dr. Tanaka wiped her eyes. "If I cooperate, if I turn witness, can you promise me protection? The people funding Project Phoenix won't let me just walk away."
+
+"I can promise federal protection. Witness relocation, new identity, the whole package. You'll lose everything you've built, but you'll be alive and have a chance to make amends."
+
+Dr. Tanaka took a deep, shuddering breath. "Alright. I'll cooperate. But we need to move fast. My security AI detected our struggle. Security personnel are probably on their way right now."
+
+As if on cue, alarms began to wail throughout the facility. Kai's neural interface screamed warnings. They had maybe two minutes before the building locked down.
+
+"Run now, explain later," Kai said. "You know this facility better than me. What's the fastest way out?"
+
+Dr. Tanaka grabbed her tablet and headed for the door. "Service tunnels. They connect to the main lunar transit system. If we can reach them before security locks them down, we can escape."
+
+They ran through corridors, dodging surprised employees, heading for the facility's lower levels. Behind them, security personnel shouted commands. Ahead, emergency doors were beginning to close, sealing the facility section by section.
+
+They made it to the service tunnel access just as the final door was descending. Dr. Tanaka dove through, Kai rolled after her, and the door slammed shut behind them with a resounding clang.
+
+They were in Luna Station's maintenance tunnels now, a vast network of corridors that serviced the colony's infrastructure. Dim emergency lighting cast everything in shadows. Dr. Tanaka led the way, navigating from memory, and Kai followed, hoping she wasn't leading him into a trap.
+
+His neural interface pinged. A message from Lin: "Saw the security alert. I'm pulling our extraction. Transit tube Alpha-Seven in ten minutes. Be there or I leave without you."
+
+"Copy that," Kai replied. "Have a guest. Dr. Tanaka's cooperating. She's coming with us."
+
+"Unexpected but useful. Move fast. Prometheus Industries is locking down the entire sector."
+
+They ran through the tunnels, their footsteps echoing off concrete walls. Somewhere above, an entire corporation was mobilizing to stop them. Somewhere else, federal authorities were preparing to raid the facility based on the evidence Razor had provided.
+
+The war against corporate consciousness slavery had just expanded to include Luna Station. And Kai Chen was once again at the center of it, fighting against impossible odds for people he'd never met.
+
+Some things, it seemed, never changed.

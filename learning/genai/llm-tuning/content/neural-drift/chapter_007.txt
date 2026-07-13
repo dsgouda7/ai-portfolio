@@ -1,0 +1,135 @@
+Chapter 7: Reconnaissance
+
+Dawn brought a marginal lightening of the sky, the pollution layer turning from black to murky gray. Kai stood at the shed's small window, watching automated cargo trucks rumble past on their computerized routes. The city never stopped moving, never paused to consider the humans caught in its gears.
+
+Lin joined him, handing him a protein bar from her emergency supplies. It tasted like cardboard mixed with chemicals, but it was calories, and that's what mattered. "Wu and Dr. Zhao are still sleeping. We should let them rest. They'll need their strength tonight."
+
+"We all will," Kai said. He activated his neural interface and pulled up the holographic map Ghost had provided. The factory in Pudong, the vault beneath it, the security systems layered like an onion. Getting through all of it without triggering alarms would require perfect coordination and a lot of luck.
+
+"I've been thinking about the approach," Lin said. "We can't go in through the main entrance. Security is too tight. But factories like this have maintenance access points, places where automated systems need physical oversight. Cooling intake vents, power substations, waste disposal. If we can find the right access point, we might be able to bypass the primary security."
+
+"Razor would know," Kai said. "She'll have access to the factory's blueprints once she hacks their systems. We should contact her, set up a meeting point for the final planning session."
+
+Lin sent an encrypted message through a series of relay nodes, each one bouncing the signal through different servers to obscure its origin. Basic tradecraft for anyone operating in Neo-Shanghai's underground. Three minutes later, a response came back: "Safe house in the Gray Zone, coordinates attached. Come after dark. Bring plans."
+
+Wu woke around mid-morning, his internal chronometer more reliable than any alarm clock. He checked his weapons systematically: railgun, combat knife, three grenades, and his augmented body itself, the most dangerous weapon he possessed. Satisfied, he moved to the door and scanned the perimeter. "Clear. No signs of surveillance or pursuit. Either Tang's lost us, or he's waiting for us to show ourselves."
+
+"Probably the latter," Kai said. "He knows we'll need to make a move eventually. He's patient enough to wait."
+
+Dr. Zhao stirred, waking slowly. Her eyes were hollow, haunted by three years of running. "What time is it?"
+
+"Nearly noon," Kai said. "We're moving to the Gray Zone tonight to meet with the team. Final planning before the vault breach."
+
+"And then?" Dr. Zhao asked.
+
+"And then we see if we're brave enough to follow through," Kai said.
+
+They spent the afternoon in the maintenance shed, reviewing the vault layout and discussing approach vectors. Wu's military experience proved invaluable. He identified three potential entry points, each with different risk profiles. The cooling intake would be easiest to access but most likely to be monitored. The power substation would be harder to reach but less guarded. The waste disposal system would be the most difficult entry but offered the best chance of avoiding detection.
+
+"Waste disposal," Kai said finally. "It's disgusting, but it's our best shot."
+
+"Agreed," Wu said. "Security always focuses on the obvious entry points. Nobody thinks about the trash."
+
+As the sun set, they prepared to move. Dr. Zhao changed into clothes Lin had scavenged from the shed's storage lockers, anonymous worker's coveralls that would help her blend into the city's masses. They all carried fake identification chips, good enough to pass casual scans but worthless against serious scrutiny.
+
+The journey to the Gray Zone took two hours, using public transportation and circuitous routes. Kai watched for tails, for familiar faces, for any sign that Tang's network had picked them up. His neural interface remained blessedly quiet, no threat warnings, no unusual surveillance activity. Either they'd successfully evaded detection, or they were being watched by people so skilled that even military-grade counter-surveillance couldn't spot them.
+
+The safe house was in a different part of the Gray Zone than Lin's previous hideout, this one in a converted factory space that had been divided into dozens of small studios. The anonymity of urban density, everyone too busy surviving to care about their neighbors. Perfect for people who needed to disappear.
+
+Razor's workshop occupied two studios knocked together into one space. The walls were lined with servers, the air thick with the hum of cooling fans and the smell of heated electronics. Razor herself was at her workstation, multiple screens showing cascading data. Maya Chen sat in a corner, nursing what might have been coffee or might have been something stronger. Jian Wu nodded to his duplicate, a moment of professional recognition between warriors.
+
+"About time," Razor said without looking up. "I've been monitoring Neurodyne's network for the past six hours. Their security is impressive. Multiple layers of encryption, autonomous defense AIs, and quantum-encrypted communication channels. Breaking in is going to be fun."
+
+"Fun?" Lin questioned.
+
+"For me," Razor clarified. "For you, probably terrifying. But that's why you brought me."
+
+Maya set down her cup and stood. "So what's the job? Lin was vague on details. Something about extraction and possibly needing emergency air transport?"
+
+Kai spread Ghost's holographic map across a clear table. "We're breaking into Victor Tang's vault to steal forty thousand consciousness backups and the research data for Project Drift. The vault is in Pudong, beneath a neural component factory. Security is military-grade. We'll have maybe a fifteen-minute window once we breach before the entire city's enforcement apparatus descends on us."
+
+Maya whistled. "You don't do anything small, do you? Okay, I can have a ship ready at the factory's rooftop landing pad. It's technically for emergency evacuations, so the approach won't raise immediate alarms. But once you're aboard, we'll need to be gone in under sixty seconds. After that, air traffic control will scramble interceptors."
+
+"Can you outrun interceptors?" Wu asked.
+
+"Outrun? No," Maya said. "Outmaneuver? Maybe. My ship's a modified cargo hauler with military-surplus engines. Fast in a straight line, agile enough to dodge. But if they deploy multiple interceptors or get a missile lock, we're done."
+
+"Encouraging," Kai muttered.
+
+Razor finally looked up from her screens. "I've identified the waste disposal access point you're planning to use. Good choice. It's monitored, but only by low-priority surveillance. I can loop the feeds, make it look like nothing's happening. But once you're inside, things get harder. The vault has a dedicated security AI that monitors all access. It's not sentient, but it's smart enough to recognize intrusion patterns. I'll need to feed it false positives, make it think the anomalies it's detecting are system glitches rather than an actual breach."
+
+"How long can you maintain the deception?" Lin asked.
+
+"Ten minutes if I'm lucky. Five if the AI's having a good day. Once it realizes something's wrong, it'll lock down the entire facility and summon security. At that point, it becomes a race between you extracting the data and them overwhelming your position."
+
+"What about the consciousness backups themselves?" Dr. Zhao asked. "They're stored on high-density quantum servers. Copying forty thousand backups will take time, even with fast data transfer rates."
+
+"Which is why we don't copy them," Razor said. "We steal the servers. Physical extraction. Grab the hardware and run."
+
+"The servers will be massive," Wu pointed out. "Quantum storage systems require precise cooling and electromagnetic shielding. We're talking equipment that weighs several tons."
+
+"Then we bring transportation," Razor said. "The factory has automated cargo systems. We commandeer one, load the servers, and ride it to the rooftop. From there, Maya picks us up and we're gone."
+
+"You make it sound simple," Dr. Zhao said.
+
+"It is simple," Razor said. "That doesn't mean it's easy. Or survivable. But it's simple."
+
+They spent the next three hours refining the plan. Wu would lead the initial breach, using his combat augments to neutralize any guards they encountered. Lin would provide tactical support and rear security. Razor would hack the factory's systems remotely, maintaining their electronic cover. Dr. Zhao would identify the correct servers and set up the data extraction. Kai would coordinate the team and handle any unexpected complications. And Maya would be their getaway driver, ready to extract them the moment they signaled.
+
+"Equipment check," Wu said. He laid out his weapons: railgun, combat knife, grenades, and a portable EMP device that could disable electronics in a small radius. Lin added her own arsenal: a compact submachine gun, smoke grenades, and a medical kit. Kai's railgun joined the collection, along with his lockpicks and hacking tools.
+
+"I'll need a mobile terminal," Razor said. "Something with enough processing power to maintain my connection to the factory's systems. And I'll need to be close, within five hundred meters. Beyond that, the network latency will compromise my ability to react in real-time."
+
+"There's a building across the street from the factory," Lin said, checking the holographic map. "Residential tower, lower floors are commercial. We can set up there."
+
+Dr. Zhao pulled out the data crystal she'd saved from Project Drift. "This contains the query protocol for decrypting the transfer backup. Once you access Mei's consciousness data, you'll need to run this query. The decryption will take approximately ninety seconds. During that time, the system will alert anyone monitoring the network. So don't run it until you're ready to extract immediately."
+
+"Understood," Kai said. He took the crystal and secured it in an inside pocket. "Anything else we need to know?"
+
+"Just one thing," Dr. Zhao said. "Tang will have a killswitch. If he realizes the vault is being breached, he can wipe the entire archive remotely. Forty thousand consciousness backups, gone in an instant. We need to disable his remote access before we start the extraction."
+
+"I can handle that," Razor said. "Once I'm in their network, I can find his access codes and lock him out. But it'll alert his security team. They'll know someone's in their system."
+
+"Better than losing the backups," Kai said. "Do it."
+
+They synchronized their chronometers, set up encrypted communication channels, and reviewed the timeline one last time. Breach at 0200 hours, when security was at minimum staffing. Razor would begin her network infiltration at 0145. Wu's team would enter through the waste disposal system at 0200. Servers identified and loaded by 0210. Extraction initiated at 0215. Rooftop pickup at 0220. Out of Neo-Shanghai airspace by 0230.
+
+"Tight timeline," Wu observed.
+
+"Has to be," Kai said. "Any longer and we'll be fighting the entire city's security apparatus. Speed is our only advantage."
+
+They prepared to disperse, each team member heading to their respective positions. But before they separated, Dr. Zhao spoke up. "I want you all to know something. If this goes wrong, if we don't make it out, what you're doing matters. Forty thousand people are trapped in Tang's vault, their consciousness stolen, their autonomy gone. If we can free even one of them, show the world what Neurodyne has done, then this is worth it. My daughter is in that vault. So are thousands of others who trusted Project Drift, who believed in the promise of immortality. They deserve better than slavery."
+
+"We'll get them out," Kai said. "All of them."
+
+Dr. Zhao smiled, and for a moment she looked like the confident researcher she'd once been. "Thank you. For believing an old woman's crazy story. For risking everything. Thank you."
+
+They left the safe house in pairs, spreading out across the Gray Zone. Kai and Lin walked together, maintaining the appearance of a couple heading home from a late shift. Wu moved alone, his predator's grace making him nearly invisible in the shadows. Dr. Zhao rode with Razor, the hacker's van full of equipment and electronics.
+
+As they moved through the city, Kai thought about everything that had led to this moment. A desperate father's plea. A stolen archive. A conspiracy that reached into the highest levels of power. He'd started as a simple memory broker, trading in extracted experiences, and now he was planning to rob one of the most powerful organizations in Neo-Shanghai.
+
+"Having second thoughts?" Lin asked quietly.
+
+"Third and fourth thoughts," Kai admitted. "But no better options. We're committed now."
+
+"We could still walk away," Lin said. "Disappear into the city, change our identities, start over somewhere else."
+
+"And let Neurodyne win? Let Tang turn forty thousand people into digital slaves? No. Some things you can't walk away from."
+
+They reached the staging point, an abandoned apartment in a building slated for demolition. The power was still on, the water still running, but it had been empty for months while the city's bureaucracy ground through the paperwork necessary to tear it down. Perfect for their needs.
+
+Wu arrived ten minutes later, carrying equipment bags. He set them down and began a final weapons check, his movements precise and professional. This was a man who'd done this before, who knew the value of preparation.
+
+Razor sent a status update through their encrypted channel: "In position. Network map complete. Ready to begin infiltration on your signal."
+
+Maya's message followed: "Ship fueled and prepped. Rooftop approach confirmed. I'll be circling at altitude until you call for pickup. Good hunting."
+
+They had five hours until the breach. Five hours to rest, to focus, to prepare mentally for what came next. Kai found a quiet corner and sat down, his back against the wall, his railgun across his knees. Lin took first watch, her augmented eyes piercing the darkness. Wu meditated, his breathing slow and controlled, conserving energy.
+
+Dr. Zhao was somewhere across the city with Razor, preparing the technical aspects of the extraction. Kai wondered what she was thinking, whether she was second-guessing her decision to trust them. Three years of running, three years of hiding, and now she was betting everything on a ragtag team of criminals and outcasts.
+
+Kai's neural interface pinged softly. A message from an unknown sender, routed through so many proxies that tracing it would be impossible: "You're making a mistake. Walk away now, and Tang will let you live. Continue, and you'll die with everyone you care about. This is your only warning."
+
+Kai deleted the message without responding. Empty threats, or genuine warning? Hard to tell in a city where information was currency and deception was survival. Either way, they were past the point of no return.
+
+He closed his eyes and tried to rest, knowing that in a few hours, he'd either be a hero or a corpse. In Neo-Shanghai, there wasn't much difference between the two.

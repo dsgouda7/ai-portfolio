@@ -1,0 +1,143 @@
+Chapter 4: Escape From Kowloon
+
+Kai moved fast. He grabbed Dr. Zhao's arm and pulled her toward the back exit. Lin was already there, her augmented reflexes putting her three steps ahead. The sirens were getting closer, maybe two blocks away. Corporate security, which meant they had better equipment than street cops and fewer rules about collateral damage.
+
+"The stairwell's compromised," Lin said, checking her tactical overlay. "I'm picking up thermal signatures on multiple floors. They're coming from above and below."
+
+"Windows?" Kai suggested.
+
+Lin shook her head. "Fifteen floors up, and this building doesn't have fire escapes. We'd need climbing gear or grav-chutes."
+
+"The roof," Dr. Zhao said suddenly. "This building connects to the adjacent structure through maintenance bridges. We can cross over and come down through Building 76."
+
+They ran for the stairwell leading up. Kai could hear boots pounding below them, the distinctive synchronized rhythm of trained security teams. He pulled out his railgun and fired a shot down the stairwell, not aiming to hit anyone, just to make them hesitate. The electromagnetic discharge lit up the concrete shaft like lightning.
+
+Shouts from below. The security team was falling back, regrouping. They'd learned caution, which bought Kai and the others maybe ninety seconds.
+
+They burst through the roof access door into the cold night air. Rain hammered down, soaking them instantly. The roof was a jungle of cooling units, solar panels, and communications arrays. Between two of the units, Kai spotted the maintenance bridge: a narrow walkway made of metal grating, maybe forty meters long, swaying gently in the wind.
+
+"Go!" he shouted.
+
+Lin went first, moving across the bridge with the sure-footedness of someone whose balance augments made falling nearly impossible. Dr. Zhao followed, less confident but driven by fear. Kai came last, turning every few steps to watch the roof access door.
+
+They were halfway across when the door exploded outward. Three security personnel in tactical armor poured through, rifles raised. Kai fired twice, forcing them back behind cover. But he knew his railgun was no match for their firepower. This was a delaying action at best.
+
+A bullet whined past his ear, so close he felt the heat. He ran, the bridge bouncing under his feet, praying the old structure would hold. Lin and Dr. Zhao had reached the other side and were already descending into Building 76. Kai was ten meters from safety when the bridge shuddered violently.
+
+One of the security team had shot out a support cable. The bridge tilted at a crazy angle, and Kai found himself sliding toward the edge. His hand shot out, grabbing a railing, fingers screaming in protest as his body weight tried to drag him down into the fifteen-story drop.
+
+Lin was there instantly, her chrome hand clamping around his wrist with strength no natural human could match. She hauled him up and onto the relative safety of Building 76's roof. More bullets sparked off the metal around them. Kai and Lin sprinted for the stairwell, diving through just as a grenade detonated where they'd been standing.
+
+"Tang's not playing around," Lin gasped as they descended.
+
+"Never thought he would," Kai replied.
+
+They caught up with Dr. Zhao on the twelfth floor. She was leaning against a wall, breathing hard, her face pale. "I'm not... built for this anymore."
+
+"None of us are," Kai said. "But we keep moving anyway. Can you make it to the ground?"
+
+Dr. Zhao nodded, pushing herself upright. They continued down, legs burning, lungs aching. Kai's neural interface was going crazy with threat warnings. Tang's people had surrounded both buildings. They were walking into a trap with no way out.
+
+On the sixth floor, Lin stopped suddenly. "Wait. I have an idea." She pulled out her portable terminal and started typing furiously. "Building 76 has an automated cargo system. Small freight elevators that run on independent power. If I can hack into the system, we can ride one down to the loading dock."
+
+"Will it hold three people?" Kai asked.
+
+"It'll have to."
+
+She worked for ninety seconds that felt like ninety hours. Below them, Kai could hear the security team entering the building. Above, more boots on stairs. They were being boxed in, and they all knew it.
+
+"Got it," Lin said finally. She wrenched open a maintenance panel to reveal a narrow shaft with a small platform designed for moving boxes, not people. "In. Now."
+
+They squeezed onto the platform, pressed together like sardines. Lin hit the manual control, and they dropped. The descent was terrifying, the platform shuddering and swaying, cables singing with strain. But it held, and fifteen seconds later they crashed into the basement loading dock hard enough to rattle teeth.
+
+They tumbled out into a space full of storage containers and automated forklifts. The loading dock's main door was sealed, but there was a smaller personnel exit on the far side. Kai led them through a maze of containers, using his neural interface to track the positions of Tang's people outside.
+
+"They're concentrated on the front and back entrances," he said quietly. "But there's a gap in their coverage on the east side, probably where two teams haven't linked up yet. If we move now, we can slip through."
+
+They reached the personnel exit and paused. Outside was an alley, dark and rain-slicked. Kai could see two security personnel about fifty meters away, their attention focused elsewhere. He checked his railgun's charge: forty percent. Enough for maybe three more shots.
+
+"On three," he whispered. "One... two... three."
+
+They burst through the door and ran. The security personnel spotted them immediately and shouted commands. Footsteps echoed in the alley, converging from multiple directions. Kai fired once, taking out a streetlight and plunging part of the alley into darkness. It wouldn't fool their thermal imaging for long, but every second counted.
+
+They emerged onto a main street, crowded even at this hour. Kai pulled Dr. Zhao into the flow of pedestrians, using the crowd as cover. Lin fell in behind them, walking backward to watch for pursuit. Her augmented eyes could pick out Tang's people easily: they moved differently, with military precision, scanning faces with their neural implants.
+
+"We need to split up," Lin said. "They're looking for a group of three. If we separate, we're harder to track."
+
+"No," Dr. Zhao said firmly. "If we separate, they'll pick us off one by one. I've been running alone for three years. It doesn't work. We stay together."
+
+Kai agreed. "Lin, lead us to the nearest safe house. Somewhere Tang doesn't know about."
+
+"I know a place," Lin said. "But it's in the Gray Zone, and we'll need to cross six sectors to get there. That's a lot of exposure."
+
+"Then we'd better be creative about it."
+
+They rode the subway, switching trains three times and doubling back twice. At each stop, Kai checked their surroundings for familiar faces, for anyone paying too much attention. The subway was packed with late-night workers, bar-hoppers, and insomniacs. In the crowd, they were invisible.
+
+At the Mong Kok station, they switched to a bus, riding it for two stops before getting off and hailing an automated taxi. The taxi's AI required payment upfront, so Kai used one of his fake identity chips, hoping Tang's surveillance wasn't sophisticated enough to track the transaction in real-time.
+
+They rode in silence, each lost in their own thoughts. Kai kept replaying the rooftop fight, calculating how close they'd come to dying. One more second, one bad decision, and they'd all be corpses in a Kowloon alley. This was bigger and more dangerous than anything he'd dealt with before.
+
+The taxi dropped them three blocks from their destination. They walked the rest, staying to shadows, avoiding the main streets. The Gray Zone welcomed them back with its peculiar mixture of chaos and order. Here, the normal rules didn't apply, but the unwritten ones were absolute.
+
+Lin's safe house was in Stack 33, a mid-level apartment in a building that had seen better days. The door was reinforced steel, the walls lined with proper security equipment. Inside was a single room with basic furniture and, more importantly, a full dampening system that would block any electronic surveillance.
+
+They collapsed onto the furniture, exhausted. Dr. Zhao was shaking, adrenaline wearing off and leaving her drained. Lin checked her terminal for messages, her expression grim.
+
+"Tang's put out a bounty," she said. "Five million yuan for information leading to our capture. Ten million if we're delivered alive."
+
+Kai whistled. "That's serious money. Half the city will be looking for us."
+
+"Which means we can't stay here long," Lin said. "We have maybe twelve hours before someone traces this location."
+
+Dr. Zhao looked up, her eyes haunted. "I'm sorry. I never meant for you to get involved in this. I should have destroyed everything and disappeared completely. Now I've dragged you into a war you can't win."
+
+"We're already in the war," Kai said. "The moment I took your husband's money, the moment Lin started asking questions about the fire. Tang would have come after us eventually. At least now we know what we're fighting for."
+
+"Fighting for?" Dr. Zhao laughed bitterly. "You're fighting for a lost cause. Neurodyne has unlimited resources, connections to every government and corporation that matters. Project Drift is too important, too profitable. They'll never let you stop it."
+
+"Maybe not," Kai admitted. "But we can slow them down. We can expose what they're doing. Information is power, Doctor. You know that better than anyone. If we can get proof of Project Drift out into the public, if we can show people what Neurodyne plans to do with their consciousness, we can turn the city against them."
+
+"You're talking about a PR campaign?" Dr. Zhao said incredulously. "Tang is trying to kill us, and you want to run a PR campaign?"
+
+"I'm talking about survival," Kai said. "Right now, we're criminals, fugitives. Neurodyne controls the narrative. But if we become whistleblowers, if we have proof that forces the authorities to act, we become protected. Harder to kill, harder to silence. It's not a perfect plan, but it's better than running forever."
+
+Lin was nodding slowly. "He's right. We need evidence. Video recordings of the neural backups, documentation of Project Drift's true purpose, testimony from researchers. Enough to make a case that even the orbital corporations can't suppress."
+
+"And how do you propose we get that evidence?" Dr. Zhao asked. "Everything is locked in Tang's vault, behind security that would make a military base jealous."
+
+"Then we break into the military base," Kai said simply. "You said the transfer protocol is hidden in your daughter's backup. So we find the vault, we extract Mei's data, and while we're there, we copy everything else. Complete archive, all forty thousand consciousness backups, all the research data. We dump it to every news outlet, every government agency, every corporate rival Neurodyne has. We make it too big to hide."
+
+"That's suicide," Dr. Zhao said flatly.
+
+"Probably," Kai agreed. "But it's the kind of suicide that might actually accomplish something. And who knows? We might even survive."
+
+Dr. Zhao studied him for a long moment. Finally, she smiled, a real smile that reminded Kai of the confident researcher she'd once been. "My husband said you were good at finding things. I'm starting to see why."
+
+"First things first," Lin said. "We need to locate Tang's vault. Ghost might be able to help, but it'll cost us. Everything costs in this city."
+
+"I have resources," Dr. Zhao said. "Neurodyne paid me well before I fled. I've been living on cash, keeping a low profile. If Ghost wants money, I can provide it."
+
+"It's not money he wants," Kai said. "It's information. But between the three of us, we should have enough to trade."
+
+They spent the next hour planning. Dr. Zhao told them everything she knew about Project Drift's technical specifications, the security protocols Neurodyne had developed, the vulnerabilities in the consciousness transfer system. Lin contributed her knowledge of Chen-Matsuda's facility layout and security procedures, which would likely be similar to Tang's vault. Kai added his understanding of the criminal networks that ran Neo-Shanghai's underworld.
+
+By the time they finished, they had the skeleton of a plan. It was risky, borderline insane, and required perfect timing. But it was a plan.
+
+"We'll need help," Kai said. "Breaking into Tang's vault isn't a three-person job. We'll need hackers, muscle, maybe a pilot if things go really wrong."
+
+"I know people," Lin said. "Former corporate security, now freelance. They'll work for the right price."
+
+"And I know the city's hacker community," Kai added. "There are a few who might be interested in taking down Neurodyne just for the challenge."
+
+Dr. Zhao pulled out a data crystal from inside her jacket. "This contains everything I saved from Project Drift before I destroyed the main files. Technical specifications, research notes, test results. It's not the complete transfer protocol, but it's enough to understand how the system works. And it's proof of what Neurodyne intended. Use it wisely."
+
+Kai took the crystal, feeling its weight. This tiny object represented three years of running, three years of hiding. It was hope and evidence and a weapon all rolled into one.
+
+"We're going to get your daughter back," he told Dr. Zhao. "Not just her memories. All of her, everything she was. And we're going to make sure Neurodyne never does this to anyone else."
+
+"I believe you," Dr. Zhao said softly. "God help me, I actually believe you."
+
+Outside, the rain continued to fall, washing the city's sins down into the gutters where they belonged. Inside, three unlikely allies plotted the impossible, united by desperation and a fragile hope.
+
+The war for human consciousness had claimed its first casualties. But the real battle was just beginning.

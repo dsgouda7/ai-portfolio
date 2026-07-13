@@ -1,0 +1,113 @@
+Chapter 13: The Proposition
+
+Agent Zhang led Kai to a secure conference room deep in the federal facility. The walls were lined with signal dampening mesh, creating a complete dead zone. Whatever they were about to discuss, it wasn't meant for outside ears.
+
+Three people waited inside. Kai recognized one of them: Deputy Director Zhao Ming, head of the Federal Corporate Oversight Agency. The others were unknowns, but their bearing suggested high-level government or military.
+
+"Mr. Chen," Deputy Director Zhao said. "Or should I use one of your dozen other aliases? You've become quite famous in certain circles."
+
+"I prefer Kai," he said. "And I didn't ask for fame. I just stumbled into situations that needed fixing."
+
+"Twice," Deputy Director Zhao said. "You've stumbled into corporate conspiracies twice. Once in Neo-Shanghai, once on Nova Station. Both times, you've exposed crimes that the federal government should have caught first. That's embarrassing for us and impressive from you. It's also given us an idea."
+
+The woman to Zhao's left spoke up. "My name is Director Chen, no relation. I run a classified program called Special Investigations Division. We handle cases that are too sensitive for normal channels, too dangerous for civilian oversight. Corporate conspiracies, AI crimes, orbital security threats. Things that could destabilize entire economies if mishandled."
+
+"You want me to join a secret police force?" Kai asked skeptically.
+
+"More like a specialized investigative team," Director Chen said. "We operate with minimal oversight and maximum autonomy. When we find evidence of corporate crimes, we don't wait for warrants or approvals. We act immediately, using whatever means necessary to protect public safety. Some people call us vigilantes with badges. We prefer to think of ourselves as problem solvers."
+
+"You're describing government-sanctioned crime," Kai said. "Breaking into facilities, stealing data, probably worse. And you want me because I've proven I'm good at that."
+
+"We want you because you have skills we need and a moral compass that points in the right direction," Deputy Director Zhao said. "You could have sold the Project Drift data to Neurodyne's competitors for billions. You could have kept the consciousness backups as leverage for personal gain. Instead, you distributed the data publicly and protected the victims. That's rare in our line of work. Most people who can do what you do are purely mercenary."
+
+"What about my team?" Kai asked. "The people who helped me in Neo-Shanghai. Some of them would be valuable assets."
+
+"Lin Wei already works for us," Director Chen said. "She's been part of the Special Investigations Division for two months, assigned to monitor orbital corporations. She recommended you for this position. Said you were reckless, stubborn, and completely incapable of walking away from injustice. She meant it as a compliment."
+
+Kai felt a strange warmth at that. Lin had vouched for him despite his many flaws. "What about the others? Wu, Razor, Maya?"
+
+"Jian Wu is under consideration. His skills are valuable, but he's harder to control. Razor we'd never recruit because she'd never accept government employment. And Maya Chen is happy being a space hauler. But we could contract them for specific operations if needed."
+
+"What exactly would I be doing?" Kai asked.
+
+The third person in the room spoke for the first time, a thin man with the augmented eyes of someone who'd spent years staring at data. "You'd be investigating corporations that show patterns similar to Neurodyne and Elysium. We have algorithms that flag suspicious research, unexplained funding, aggressive expansion. But algorithms can't understand context the way humans can. We need investigators who can look at the patterns and recognize what they mean. People who understand how corporate criminals think."
+
+"And when I find something?"
+
+"You report it to us, we evaluate the threat level, and if it's serious enough, we authorize intervention," Director Chen said. "Sometimes that means legal warrants and official investigations. Sometimes it means more direct action. You'd be given broad discretion to handle situations as you see fit."
+
+"With accountability?" Kai asked. "Or do I become one more shadow operator who answers to no one?"
+
+"You'd answer to me," Director Chen said. "And I answer to the Deputy Director, who answers to the federal oversight committee. It's not perfect accountability, but it's more than most people in our business get. We're trying to build something better than the old intelligence agencies. Something that actually protects people instead of just protecting power."
+
+Kai thought about his time on Nova Station, the suffocating boredom, the feeling of being dead inside while alive. He thought about the three hundred consciousness backups he'd saved from Elysium, people who would have been enslaved without knowing it. He thought about the forty thousand people they'd rescued from Project Drift, and how many more conspiracies were probably brewing in corporate laboratories across the solar system.
+
+"What's the pay?" he asked.
+
+"Better than a memory broker, worse than a corporate executive. Enough to live comfortably, not enough to get rich. Plus full benefits, including military-grade augmentation if you want it. Medical, housing, retirement. Standard federal package."
+
+"Can I still have my encrypted neural interface?"
+
+"We'd prefer you use agency-provided equipment, but we understand the need for personal security. Your interface would be registered with us, but not monitored unless there's reason for concern."
+
+"And if I refuse? If I say I want to go back to witness protection and boring software engineering?"
+
+"Then we honor that," Deputy Director Zhao said. "We're not going to force you into service. But I don't think you'd be happy in witness protection. You're not built for hiding, Kai. You're built for hunting. The question is whether you want to hunt for us or hunt alone."
+
+Kai knew the answer before he'd finished asking the question. He couldn't go back to being Marcus Liu, couldn't pretend to be satisfied with a safe, empty life. He was Kai Chen, and Kai Chen hunted corporate criminals who thought they were above the law.
+
+"I'll do it," he said. "But I have conditions. First, I need access to my old network. Razor, specifically. She's the best hacker I know, and I'll need her help on complex operations. Second, any consciousness backups we rescue get full restoration and protection, not just archival storage. Third, I want regular check-ins with Agent Zhang. She's kept me honest twice now. I trust her judgment."
+
+"We can work with those conditions," Director Chen said. She pulled out a data slate and slid it across the table. "Standard federal employment contract, modified for Special Investigations Division. Read it carefully. Pay special attention to the sections on authorized force and operational discretion. You'll be doing things that would be crimes for civilians. We need you to understand that and accept the responsibility."
+
+Kai read the contract thoroughly. It was surprisingly honest about what they were asking him to do: break into facilities, hack corporate systems, operate outside normal legal constraints. But it also included protections, limitations, and accountability measures. He wouldn't be a rogue agent. He'd be a tool of federal authority, used when conventional methods failed.
+
+He signed with his neural interface, his digital signature legally binding. "When do I start?"
+
+"Immediately," Director Chen said. "We've had a case waiting for someone with your skills. A corporation called Prometheus Industries, based on Luna Station. They're researching advanced AI consciousness, supposedly for robotic workers. But the patterns match Project Drift: unauthorized experimentation, hidden funding, aggressive non-disclosure agreements. We need someone to investigate and determine if they're planning another consciousness slavery operation."
+
+"Luna Station," Kai said. "That's a month's travel from here."
+
+"Three weeks on a fast courier," Director Chen corrected. "You'll leave tomorrow. Lin Wei will be your partner on this operation. She knows the station and has contacts in the lunar mining industry. Together, you'll infiltrate Prometheus Industries, assess the threat, and if necessary, shut them down."
+
+Kai thought about Luna Station, the oldest permanent off-world colony, built by the first generation of orbital corporations. It was supposed to be a beacon of human achievement, proof that humanity could thrive beyond Earth. Instead, it had become just another corporate fiefdom, ruled by the same people who'd corrupted everything else.
+
+"I'll need equipment," he said. "Proper hacking tools, security countermeasures, maybe a weapon or two."
+
+"Already prepared," the thin man said. "We've been anticipating your acceptance for three days. Your equipment package is waiting in the armory. Military-grade augments will take a week to install if you want them. Otherwise, you can deploy with your current capabilities."
+
+"I'll skip the augments for now," Kai said. "I've never trusted corporate augmentation. Seems hypocritical to trust government augmentation."
+
+"Fair enough," Director Chen said. "You'll have support from our technical team, including one of Razor's former colleagues. Not as skilled, but competent. And Agent Zhang will be your supervisor, handling the bureaucratic aspects of your operations. She speaks highly of you, by the way. Said you're the most annoying investigator she's ever worked with, which apparently is a compliment in her book."
+
+They spent the next hour reviewing operational protocols, communication procedures, and emergency extraction plans. The Special Investigations Division operated like a hybrid between intelligence agency and tactical unit, with investigators deployed across the solar system watching for corporate crimes. It was ambitious, probably underfunded, and definitely necessary.
+
+As the meeting concluded, Deputy Director Zhao pulled Kai aside. "A word of caution. The corporations we investigate have enormous resources and no ethical constraints. They'll try to kill you, corrupt you, or discredit you. Probably all three. We'll provide protection where we can, but ultimately, you're on your own most of the time. If you die during an operation, we'll disavow knowledge of your actions. That's the price of operating in the shadows."
+
+"I spent five years as a memory broker in Neo-Shanghai's Lower Stacks," Kai said. "People tried to kill me every other week. I'm used to being expendable."
+
+"That's what Lin said you'd say," Deputy Director Zhao smiled. "Good luck, Kai. The solar system needs people like you. People who give a damn about something besides profit margins and market share."
+
+Kai left the federal facility with a new identity badge, a secure communication device, and a strange feeling of purpose. For the first time since leaving Neo-Shanghai, he felt like himself again. Not Marcus Liu, hiding in witness protection. Not just a memory broker, trading in stolen experiences. But Kai Chen, hunter of corporate corruption, protector of human autonomy.
+
+He contacted Razor through their encrypted channel. "I'm officially federal now. Special Investigations Division. Still hunting the same bad guys, but with a badge and better resources."
+
+Razor's response was immediate: "Knew you couldn't stay out of trouble. Need any help with your first case?"
+
+"Maybe. Depends on how cooperative Prometheus Industries is. I'll let you know if I need a back door into their systems."
+
+"Standing by. Try not to get killed on Luna. The gravity's weird and the corporations are worse."
+
+Kai packed his meager belongings, said goodbye to the apartment that had never felt like home, and prepared for the journey to Luna Station. Lin Wei would meet him at the transport hub, and together they'd investigate another conspiracy that threatened human consciousness.
+
+The war that had started in Neo-Shanghai's Lower Stacks was spreading across the solar system. Everywhere humanity went, corporate greed followed, finding new ways to exploit, enslave, and profit from human suffering. But now there were people fighting back, people with the skills and authority to make a difference.
+
+Kai Chen was one of them. And he was just getting started.
+
+As he boarded the courier ship to Luna, watching Earth recede through the viewport, Kai thought about all the people depending on investigators like him. The workers who didn't know their consciousness was being mapped. The families who didn't know their loved ones had been digitally copied. The future generations who would inherit either freedom or slavery, depending on whether people like him succeeded or failed.
+
+It was a heavy responsibility. But someone had to carry it.
+
+And Kai had never been good at walking away from responsibility, no matter how much easier it would have been.
+
+The courier ship accelerated toward the moon, and Kai Chen prepared for the next battle in humanity's war for its own soul.

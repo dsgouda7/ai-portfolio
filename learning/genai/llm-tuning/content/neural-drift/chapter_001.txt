@@ -1,0 +1,111 @@
+Chapter 1: The Memory Trade
+
+The rain never stopped in the Lower Stacks. Kai Chen pulled his collar tighter against the acidic drizzle as he navigated the narrow alley between two kilometer-high residential towers. Neon advertisements flickered overhead, casting purple and green shadows across the slick pavement. Somewhere above, past the pollution layer, the rich lived in their sky mansions, breathing filtered air and drinking water that didn't taste of metal. Down here, you took what you could get.
+
+His neural interface pinged softly. A message from Yuki, his fence. "Client waiting. Eighth and Morrison. Bring the good stuff."
+
+Kai's fingers brushed the chrome datachip case in his jacket pocket. Three fresh extractions, still warm from the neurorig. He'd pulled them last night from a corporate middle manager who'd needed quick cash for his stim habit. Premium memories: a childhood birthday party, a first kiss, the birth of a daughter. The kind of experiences the memory-starved elite paid fortunes to experience secondhand.
+
+He rounded the corner onto Morrison Street, where the crowd thickened. Augmented workers shuffled past, their eyes glazed with fatigue, neural implants blinking status updates directly into their visual cortex. Street vendors hawked synthetic protein bars and black-market pharmaceuticals. A holographic prostitute beckoned from a doorway, her pixels stuttering in the electromagnetic interference.
+
+The meet was at Tanaka's, a ramen shop squeezed between a cybernetics clinic and an unlicensed data haven. Kai pushed through the plastic strips hanging in the doorway. The air inside was thick with steam and the smell of artificial pork broth. A dozen patrons hunched over their bowls, not looking up. In Neo-Shanghai's Lower Stacks, minding your own business was survival.
+
+Yuki sat in the back booth, her chrome arm catching the light as she gestured him over. She was pure business: military-grade reflex augments, a subdermal armor weave, and eyes that had been replaced with Zeiss optics capable of seeing in twelve spectrums. Next to her sat the client.
+
+He was older, maybe sixty, with the kind of expensive anti-aging treatments that marked him as upper-tier corporate. His suit was real wool, not synth-fiber. A platinum watch gleamed on his wrist, the kind that cost more than most people earned in a year. But his eyes held something desperate.
+
+"Mr. Chen," Yuki said, her voice modulated to a purr by her vocal implants. "This is Mr. Zhao. He's looking for something specific."
+
+Kai slid into the booth, keeping his hands visible. In this business, sudden movements got you killed. "What kind of specific?"
+
+Zhao leaned forward. "I need memories of my daughter. She died three years ago. I had her neural patterns backed up, but the storage facility was destroyed in the Kowloon fire. I'm told you're the best at finding lost extractions."
+
+The desperation in his voice was real. Kai had seen it before, the aching need to hold onto something that was gone. The memory trade thrived on loss and longing. "That's a tall order. Neural backups from three years ago, destroyed in a fire? The data's gone."
+
+"Not destroyed," Zhao insisted. "Stolen. The fire was cover. Someone took the entire archive, forty thousand neural backups. I've spent every yuan I have trying to find them. Six months ago, I got a lead. They're being sold on the black market, piece by piece. Your name came up."
+
+Kai felt a chill that had nothing to do with the rain outside. Forty thousand neural backups. That wasn't just theft. That was corporate warfare, or something worse. "I'm a small operator, Mr. Zhao. I deal in individual extractions, consensual trades. What you're describing... that's serious heat."
+
+"Two million yuan," Zhao said flatly. "Find my daughter's memories. That's all I want."
+
+Two million yuan. Enough to buy his way out of the Lower Stacks, maybe even get legitimate augments instead of the second-hand black-market implants that kept glitching. Enough to disappear if things went south. Kai studied the older man's face, seeing the lines of grief etched there. This wasn't a setup. It was just a father who'd lost everything.
+
+"I'll need details," Kai said. "Her full name, identification codes, the storage facility ID, everything you've got."
+
+Zhao's hand trembled as he pulled out a data slate and slid it across the table. "It's all there. Please, Mr. Chen. She's all I have left."
+
+Kai pocketed the slate and stood. "I'll look into it. No promises. If the archive is as hot as it sounds, I might not be able to touch it."
+
+"I understand," Zhao said, but his eyes said he was already counting on it.
+
+Outside, the rain had intensified. Kai pulled up the hood of his jacket and activated his neural interface, accessing the data Zhao had given him. His daughter's name was Mei Zhao, aged nineteen when she died in a traffic accident. Neural backup performed at Chen-Matsuda Memory Solutions, facility designation CM-089, located in the Pudong district.
+
+He pulled up public records. The fire three years ago had made headlines. Suspected arson, never solved. Seventy people dead, including the facility staff. The official story was that a rival corporation had targeted Chen-Matsuda's client database. But Kai knew how these things worked. The official story was usually cover for something darker.
+
+His neural interface pinged again. This time it was an anonymous message, no sender ID: "You took the Zhao job. Walk away now, or what happened to Mei Zhao will happen to you."
+
+Kai stopped walking. The alley was empty, but his augmented hearing picked up the subtle whir of surveillance drones overhead. Someone had been listening to the entire conversation. In the Lower Stacks, privacy was an illusion, but this was different. This was targeted.
+
+He sent a quick message back: "Who is this?"
+
+No response. The sender's digital signature was encrypted with military-grade protocols, the kind that took government-level processing power to crack. Kai deleted the message and kept walking, but his hand instinctively moved to the compact railgun hidden in his jacket lining. 
+
+Two million yuan. A father's grief. And someone watching his every move.
+
+The memory trade had just gotten a lot more dangerous.
+
+Kai's apartment was a coffin hotel room in Stack 47, one hundred and thirty floors up. It measured two meters by three meters, barely enough space for a bed, a fold-down desk, and a compact sanitation unit. But it was his, paid for with cash, no questions asked. The walls were lined with signal dampening mesh that he'd installed himself, turning the tiny space into a Faraday cage. If he wanted privacy, he had to make it himself.
+
+He locked the door and activated the dampening field, feeling the familiar tingle as electromagnetic noise flooded the room. His neural interface went dark, cut off from the city's omnipresent network. For the first time in hours, he was truly alone.
+
+Kai pulled out the data slate Zhao had given him and connected it to his offline terminal, a decade-old machine he'd rebuilt from scavenged parts. He wasn't about to plug unknown data directly into his neural interface. That was how you ended up with a brain full of malware.
+
+The slate contained everything Zhao had promised. Mei Zhao's complete profile: biometric data, neural signature, personality matrices, even childhood photos. She'd been a university student, studying artificial intelligence ethics. Pretty girl with a bright smile. The accident report was clinical: head-on collision with an automated cargo hauler, driver override malfunction, victim pronounced dead at scene. Standard tragedy in a city where automated systems killed someone every day.
+
+But there was something else in the files. Medical records from the week before her death. Mei Zhao had undergone an experimental neural mapping procedure at a private clinic. The name of the clinic was redacted, but the procedure code was still visible: Project Drift, designation NM-771.
+
+Kai leaned back, his mind racing. Project Drift. He'd heard whispers about it in the darker corners of the memory trade. An experimental program that supposedly allowed consciousness transfer, not just memory extraction. The idea was that you could upload a person's entire mind into a digital substrate, achieving a kind of immortality. Every corporation and government had their version of the project, all competing to be the first to crack digital consciousness.
+
+If Mei Zhao had been part of Project Drift, then her neural backup wasn't just memories. It was her entire consciousness, frozen in digital amber. And if someone had stolen forty thousand backups from Chen-Matsuda, they hadn't just stolen memories. They'd stolen souls.
+
+His terminal chimed softly. Someone was trying to breach his dampening field, hitting the door with electromagnetic pulses designed to disrupt the Faraday cage. Kai grabbed the railgun and moved to the side of the door, pressing himself against the wall.
+
+The lock clicked. The door slid open. A figure stepped through, moving with the fluid grace of military-grade reflex augments.
+
+"Don't shoot," a woman's voice said. "I'm here to help."
+
+She was young, maybe twenty-five, with jet-black hair cut short and neural interface ports visible at her temples. Her eyes glowed faintly with augmented overlays. She wore a tactical jumpsuit that marked her as professional, not street muscle. Her hands were empty, held up in a gesture of peace.
+
+"Help?" Kai kept the railgun trained on her. "By breaking into my apartment?"
+
+"By keeping you alive," she said. "My name is Lin. I worked at Chen-Matsuda when the archive was stolen. I know what you're looking for, and I know who's watching you."
+
+"The people who sent me the anonymous threat?"
+
+"Not people," Lin said. "A person. His name is Victor Tang, and he runs the largest memory trafficking operation in Neo-Shanghai. He's the one who stole the archive, and he's been selling the neural backups piece by piece for three years. If you go after Mei Zhao's memories, you'll have to go through him."
+
+Kai lowered the gun slightly. "Why tell me this? Why risk coming here?"
+
+Lin's expression hardened. "Because Victor Tang killed everyone I worked with. The fire wasn't an accident, it was murder. And the neural backups he stole? He's not just selling them. He's using them for something else, something that's going to get a lot more people killed. You want to find Mei Zhao's memories? Fine. But you'll need help. And I want revenge."
+
+Kai studied her face, looking for signs of deception. Her heart rate was elevated but steady, visible through his thermal overlay. She was scared but determined. Either she was telling the truth, or she was the best actor he'd ever met.
+
+"What's Tang doing with the backups?" he asked.
+
+"I don't know exactly," Lin admitted. "But I know it involves Project Drift. And I know that people who get too close end up dead or disappeared. Your client, Mr. Zhao? He's lucky he's still alive. Tang usually kills anyone asking questions."
+
+"Then why am I still breathing?"
+
+"Because you're useful," Lin said. "Tang's watching to see what you uncover. He knows you're good at finding things. He's letting you run, hoping you'll lead him somewhere. The question is: are you brave enough to turn the tables on him?"
+
+Kai thought about the two million yuan. About the desperate father willing to pay anything for his daughter's memories. About the forty thousand stolen souls gathering dust in some trafficker's vault. He thought about living in this coffin apartment for the rest of his life, always looking over his shoulder, always one step away from disappearing into the city's anonymous mass.
+
+"What's your plan?" he asked.
+
+Lin smiled, and for the first time, Kai saw hope in her eyes. "We find the archive. We get your client his memories. And then we burn Victor Tang's operation to the ground."
+
+Kai deactivated the railgun's safety and holstered it. "I'm listening."
+
+Outside, the rain continued to fall, washing away the day's sins. In the distance, thunder rumbled, or maybe it was just the city's endless machinery grinding forward. Kai Chen had taken the first step into something much bigger than a simple memory trade.
+
+He just didn't know yet that he was walking into a war for the future of human consciousness itself.

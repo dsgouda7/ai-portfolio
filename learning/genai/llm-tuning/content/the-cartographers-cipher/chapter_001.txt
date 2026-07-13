@@ -1,0 +1,185 @@
+Chapter 1: The Body in the Archives
+
+Rain hammered against the windows of the Ashmont Bay Municipal Archives like accusations. Elena Voss stood in the doorway, her wool coat already soaked through from the three-block walk from her office. The call had come twenty minutes ago. A body. Always a body these days.
+
+Detective Marcus Chen waited for her inside, his badge clipped to his belt, his expression professionally neutral. They had history, the kind that made working together both easier and harder than it should be.
+
+"Private investigator Voss," he said, not quite managing to keep the edge from his voice. "Didn't expect the department to call you in."
+
+"They didn't. Mrs. Adelaide Thorne did. Two hours before someone killed her." Elena pulled out her phone, showing him the text message timestamp. "She said she found something in her family's papers. Something about the founding families. She wanted to hire me to authenticate it."
+
+Chen's jaw tightened. "You should have called it in."
+
+"I was planning to meet her tomorrow. Apparently someone had a more urgent schedule." Elena moved past him into the main reading room of the archives.
+
+The body lay between two rows of filing cabinets, illuminated by the harsh fluorescent lights the crime scene techs had set up. Adelaide Thorne had been seventy-three, a retired librarian, a widow, and according to her brief phone call, terrified. Now she was none of those things. Just evidence.
+
+The medical examiner, Dr. Yuki Sato, looked up from her preliminary examination. "Single gunshot wound to the chest. Small caliber, probably a twenty-two. Professional work. She's been dead approximately four hours, give or take thirty minutes."
+
+"Security footage?" Elena asked.
+
+Chen shook his head. "System's been glitchy for weeks. Budget cuts. The last clear footage is from three days ago. Convenient."
+
+Elena studied the scene. Adelaide's handbag sat on a nearby table, contents undisturbed. Her reading glasses had fallen beside her body. Several archive boxes were pulled from the shelves, their contents scattered across a work table. Elena moved closer, careful not to disturb the evidence markers.
+
+"What was she looking at?" she asked.
+
+A young crime scene technician answered. "Records from eighteen seventy-nine through eighteen eighty-five. Property transfers, mostly. City incorporation documents. Some personal correspondence."
+
+Eighteen seventy-nine. The year Ashmont Bay was officially founded. Elena had done her master's thesis on the city's early cartographic development before switching careers. She knew the official story by heart. Six founding families had pooled their resources to purchase the land from the native Salish tribes through proper federal channels, established the city charter, and built the infrastructure that turned a fishing village into a thriving port city.
+
+The official story, like most official stories, was a lie.
+
+"I need to see what's on that table," Elena said.
+
+"This is a crime scene," Chen reminded her.
+
+"And my client is dead. She hired me to investigate something in these records. That makes it my case too."
+
+"Your client can't authorize anything anymore."
+
+"Her estate can. I'll have her lawyer confirm it within the hour." Elena met his eyes. "Or you can waste time fighting me while the killer gets further away. Your choice, Detective."
+
+Chen muttered something under his breath that might have been a curse or a prayer. "Fine. But you touch nothing. Photos only."
+
+Elena pulled out her phone and began photographing the scattered documents. Property deeds, survey maps, letters written in the cramped handwriting of the nineteenth century. Most of it seemed routine, the bureaucratic detritus of city building. But Adelaide Thorne hadn't called her about routine paperwork.
+
+One document caught her attention. A survey map, hand-drawn, showing the original boundaries of Ashmont Bay. Someone, probably Adelaide, had made pencil marks in the margins. Coordinates. Mathematical notations. And a single word, underlined three times.
+
+Discrepancy.
+
+"Detective Chen, look at this."
+
+He moved beside her, close enough that she could smell his coffee-and-rain scent. Some things never changed.
+
+"It's just an old map," he said.
+
+"It's a survey map from eighteen eighty. See these boundary markers? They don't match the official city incorporation documents. The numbers are off by nearly a quarter mile along the northern waterfront."
+
+"So someone made a mistake. It was the nineteenth century. Survey equipment wasn't exactly precise."
+
+"Survey equipment was extremely precise by eighteen eighty. Theodolites, measuring chains, all calibrated to within inches. And look at the signature." Elena zoomed in on the corner of the map. "Thomas Ashmont himself. The city's founder and primary surveyor. He didn't make mistakes. He made choices."
+
+Chen studied the map more carefully. "You're saying this is deliberate?"
+
+"I'm saying Adelaide Thorne thought it was important enough to call me about. And someone thought it was important enough to kill her for."
+
+Dr. Sato finished her preliminary examination and stood, pulling off her gloves. "I'll have more after the autopsy, but this looks straightforward. Single shot, close range but not contact. The killer knew what they were doing. Time of death puts it during the archives' public hours, between two and six PM. The building doesn't close until eight on Tuesdays."
+
+"So someone walked in during normal business hours, shot her, and walked out?" Elena shook her head. "Security should have seen something."
+
+"Should have," Chen agreed. "But didn't. Like I said, convenient."
+
+Elena photographed more documents, her mind racing. A discrepancy in the founding surveys. Adelaide's fear. A professional killing in a public building with mysteriously malfunctioning security. The pieces didn't add up, but they suggested something larger than a random murder.
+
+"Who else knew she was here?" Elena asked.
+
+Chen consulted his notebook. "She signed in at one forty-five PM. The clerk remembers her because she comes in regularly. Came in. She requested boxes from the founding families collection, specifically the Thorne family papers and the city incorporation series. The clerk brought them to her and left her alone. Nobody else signed in to use the archives today."
+
+"The clerk left her alone? Is that normal?"
+
+"It's a reading room, not a prison. People research by themselves all the time."
+
+Elena looked around the space. High windows, too small to enter or exit through. One main entrance, theoretically monitored by security cameras. Emergency exits with alarms. "Has anyone checked if an alarm was triggered?"
+
+Chen's expression shifted. He pulled out his phone and made a call. The conversation was brief. When he hung up, his face was grim.
+
+"The south emergency exit alarm was disabled at two-fifteen PM. Maintenance log says it was scheduled for testing, but the building supervisor never authorized any testing today."
+
+"So our killer made their own exit," Elena said. "Which means they knew the building, knew the security systems, and knew Adelaide would be here."
+
+"Or followed her."
+
+"If they followed her, they could have killed her anywhere. A dark street, her home, a parking garage. Why here? Why now?"
+
+The question hung in the air, unanswered.
+
+Elena photographed the last of the visible documents, then stepped back. "I need to know what else Adelaide was looking at. These boxes can't be all of it. She said she found something in her family's papers, but most of this is general city records."
+
+"We'll inventory everything," Chen said. "You'll get copies."
+
+"I'll hold you to that." Elena turned to leave, then paused. "Marcus. This isn't a random killing. Adelaide found something that scared her badly enough to hire outside help. Someone found out and silenced her. Which means whatever she discovered is still out there, and whoever killed her will be looking for it."
+
+"That's a lot of speculation."
+
+"That's what you pay me for." She headed for the door, then stopped again. "One more thing. Adelaide said founding families, plural. The Thornes were one of the six. If there's a pattern, if this is about something that happened at the city's founding, the other families might be in danger too."
+
+Chen's expression shifted from skepticism to concern. "You think this could be bigger than one murder?"
+
+"I think Adelaide Thorne spent her career preserving the city's history. She knew where the bodies were buried, literally and figuratively. And I think she found something that proves it."
+
+Elena walked out into the rain, her mind already working through the puzzle. Six founding families. Adelaide Thorne had been descended from one. That left five others, assuming any bloodlines had survived into the present day.
+
+The Ashmont family, of course. Thomas Ashmont's descendants were prominent in the city, their name on half the buildings and monuments. The Thornes, now reduced to a murdered widow. The Blackwells, who had owned the original shipping company. The Winters family, early industrialists. The Kahale family, one of the few non-white founding families, who had owned the land before the city existed and somehow remained part of the incorporation. And the Mordecai family, mysterious even in the historical records, who had provided the bulk of the initial capital.
+
+Five families to protect or investigate. Five potential victims or five potential killers.
+
+Elena's office was on the fourth floor of a converted warehouse in the old maritime district, close enough to the waterfront to hear the foghorns, far enough from the gentrified downtown to afford the rent. She climbed the stairs, her footsteps echoing in the empty building, and unlocked the frosted glass door that read "E. Voss Investigations."
+
+Inside, she peeled off her wet coat and started a pot of coffee. While it brewed, she opened her laptop and began researching. The founding families of Ashmont Bay had been documented extensively, their early history a point of civic pride. But documented history and true history were rarely the same thing.
+
+Thomas Ashmont, surveyor and visionary. He had mapped the entire region, negotiated with the federal government, and designed the city's grid system. Official records said he died in eighteen ninety-seven, wealthy and respected. His descendants still controlled the Ashmont Trust, a charitable foundation with assets in the hundreds of millions.
+
+Elijah Thorne, Adelaide's great-great-grandfather, had been the city's first librarian and keeper of records. Appropriate, given Adelaide's career choice. The Thorne family had never accumulated great wealth, but they had maintained influence through civic service and historical preservation.
+
+Malcolm Blackwell had owned the shipping fleet that made Ashmont Bay a viable port. The Blackwell Shipping Company still operated, though it had been sold outside the family in the nineteen fifties. The last direct descendant, Marcus Blackwell, was a real estate developer with a reputation for aggressive business practices.
+
+The Winters family had built the first sawmill and later diversified into manufacturing. Their fortune had declined in the mid-twentieth century, and the name had largely disappeared from public life. Elena found a reference to a Sophia Winters who worked as a curator at the city's historical museum, but couldn't confirm if she was a direct descendant.
+
+The Kahale family history was more complex. Chief Samuel Kahale had been a leader of the local Salish community and one of the few indigenous people to retain land ownership through the incorporation process. His family had fought numerous legal battles over the decades to maintain their holdings. His great-great-granddaughter, Dr. Rebecca Kahale, was a professor of Native American studies at the university.
+
+And then there was the Mordecai family, wealthy financiers who had provided the capital for the city's founding, then seemingly vanished from public records by nineteen hundred. Elena could find no living descendants, no mentions after the early twentieth century. It was as if they had been erased from history.
+
+Her coffee had gone cold while she researched. Elena reheated it in the microwave and stared at the notes she'd compiled. Six families, three with clear descendants in the city. Adelaide Thorne, dead. That left at least two others potentially at risk.
+
+Her phone rang. An unknown number.
+
+"Voss Investigations."
+
+A woman's voice, cultured and controlled. "Miss Voss, my name is Victoria Ashmont. I understand you were hired by Adelaide Thorne before her death this afternoon. I would like to hire you as well. It seems we have a mutual concern."
+
+Elena sat up straighter. "Go on."
+
+"Not over the phone. Can you meet me tomorrow morning? Ten o'clock, at the Ashmont Trust offices?"
+
+"I can. But why do you want to hire me, Mrs. Ashmont?"
+
+A pause. "Because Adelaide called me this morning, before she called you. She told me she had found something in the archives, something that changed everything we thought we knew about how this city was founded. And she told me that she was frightened. I dismissed her concerns as the paranoia of age. Two hours later, she was dead. I would prefer not to make the same mistake about my own safety."
+
+"You think you're in danger?"
+
+"I think Adelaide found something that someone wanted to remain hidden. And I think the reason she called me first is because the Ashmont name is all over whatever she discovered. Which means either my family has something to hide, or someone wants us to think we do. Either way, Miss Voss, I need to know the truth."
+
+Elena thought about the discrepancy in the survey maps, the professional execution, the disabled security. "Ten o'clock tomorrow. I'll be there."
+
+"Come alone, please. And Miss Voss? Be careful. Adelaide was careful too, and it didn't save her."
+
+The line went dead.
+
+Elena sat in her office, listening to the rain and the distant foghorns, and thought about bodies buried in archives and secrets hidden in old maps. She had left the police force three years ago because she was tired of being told what to investigate and what to ignore. She had become a private investigator to follow the truth wherever it led, regardless of who wanted it buried.
+
+Now that truth had gotten someone killed, and more deaths might follow.
+
+She pulled up the photos she'd taken in the archives and examined them more closely. The survey map with its discrepancy. The property transfers. The correspondence. She zoomed in on one letter, written in fading ink on yellowed paper.
+
+The handwriting was cramped but legible. The letter was dated September 1879, signed by Thomas Ashmont, addressed to someone named J. Mordecai.
+
+"The adjustments have been made per our agreement. The northern parcels are now recorded as public trust lands, though we both know their true ownership. The Kahale matter is resolved through the documentation we discussed. The others remain ignorant of the arrangement. Burn this upon reading."
+
+Someone had not burned it.
+
+Elena sat back, her mind racing. An arrangement. Adjusted surveys. Hidden ownership. The northern parcels, which included some of the most valuable waterfront property in the modern city, worth hundreds of millions of dollars.
+
+Adelaide Thorne had found evidence of fraud at the city's founding. A conspiracy among the founding families to steal land, falsify records, and create hidden wealth. And someone had killed her to keep that evidence from coming to light.
+
+But why now? The crimes, if crimes they were, had been committed nearly a hundred and fifty years ago. The perpetrators were long dead. What did it matter in the present day?
+
+Unless the conspiracy had never ended. Unless the hidden wealth still existed, still controlled by descendants who knew the truth. Unless Adelaide's discovery threatened not just historical reputations, but current fortunes and power structures.
+
+Elena saved all her photos to an encrypted backup and sent copies to three separate secure locations. If someone had killed to protect this secret, they might kill again. And if she was now investigating it, she had just painted a target on her own back.
+
+Outside, the rain continued to fall on Ashmont Bay, washing the streets clean, hiding the dirt beneath. Elena finished her cold coffee and began making a list of everyone she needed to interview, every record she needed to examine, every question she needed to answer.
+
+At the top of the list, she wrote: Who benefits if the truth stays buried?
+
+It was going to be a long night.

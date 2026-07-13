@@ -1,0 +1,151 @@
+Chapter 12: Nova Station
+
+Nova Station hung in geosynchronous orbit above Earth, a gleaming wheel of steel and glass that housed forty thousand souls. It was one of three dozen orbital colonies, manufacturing centers, and research facilities that serviced the planet below. Up here, the elite lived in controlled environments where every breath of air was purified, every drop of water recycled, every aspect of life carefully managed.
+
+Kai, now officially Marcus Liu, found the perfection suffocating.
+
+His apartment was in Sector Seven, the middle-class residential zone where engineers and technicians lived. It was clean, efficient, and utterly anonymous. White walls, standard furniture, a viewport that looked out at the curve of Earth below. It could have been anywhere, in any colony, designed by the same corporate architects who valued uniformity over character.
+
+He'd been on the station for three months, working as a software engineer for Helios Technologies, a mid-tier corporation that manufactured solar collection arrays. The work was easy, boring, and safe. He spent his days writing code to optimize photovoltaic efficiency, attending meetings where nothing was decided, and eating lunch in a cafeteria that served food engineered for maximum nutrition and minimum flavor.
+
+It was everything his life in Neo-Shanghai hadn't been. No danger, no corruption, no constant fight for survival. He should have been grateful.
+
+Instead, he felt dead inside.
+
+"Marcus, you coming to the social mixer tonight?" his coworker Sarah asked as they left the office. She was young, enthusiastic, and utterly convinced that orbital life was the pinnacle of human achievement.
+
+"I don't think so," Kai said. "Not really my thing."
+
+"You should come," Sarah pressed. "You've been here three months and you haven't made any friends. People are starting to think you're weird. In a small community like this, that's not good."
+
+She was right, and that was the problem. Nova Station was a fishbowl, everyone knowing everyone's business, social pressure to conform more powerful than any law. If you didn't fit in, didn't participate, didn't smile at the right times and laugh at the right jokes, people noticed. And when people noticed, they asked questions. Questions were dangerous for someone with secrets to hide.
+
+"I'll think about it," Kai said, which they both knew meant no.
+
+He returned to his apartment and activated his secure neural interface, the one he'd smuggled aboard despite it being technically illegal. The station's network had strict controls on neural augmentation, requiring all interfaces to be registered and monitored. But Kai had kept his black market interface, encrypted and hidden, a lifeline to the world he'd left behind.
+
+He connected to the underground network, the hidden servers and encrypted channels that existed in the shadows of the official datasphere. It took thirty seconds to route his signal through enough proxies to hide his location, and then he was in.
+
+Messages waited for him. Razor had sent updates on Neo-Shanghai: Neurodyne's remaining executives were being prosecuted, the consciousness restoration program was making progress, Tang's criminal organization had fragmented without his leadership. The city was slowly healing, though corruption still festered in a thousand hidden places.
+
+Lin Wei had sent a case file, something she thought Kai might find interesting. A small biotechnology company on Nova Station, Elysium Genetics, had been flagged for suspicious research activities. Nothing concrete, but patterns that reminded her of Project Drift's early days. Unauthorized neural experimentation, unexplained research funding, employees signing aggressive non-disclosure agreements.
+
+"Thought you might want to look into it," Lin's message said. "I know you're supposed to be lying low, but you're not really the lying low type. If something's brewing on your station, better to catch it early."
+
+Kai pulled up Elysium Genetics' public information. They claimed to be developing improved anti-aging treatments, legitimate work that wouldn't raise eyebrows. But Lin's instincts were good. If she thought something was wrong, it probably was.
+
+He spent the next hour digging deeper, using tools Razor had taught him to navigate the corporate datasphere without leaving traces. Elysium Genetics was small, maybe twenty employees, but they had significant backing from an orbital corporation called Titan Ventures. The same Titan Ventures that had been a silent partner in Project Drift.
+
+Kai felt his pulse quicken. The old familiar feeling of hunting something important, following threads that others missed. Maybe he was supposed to be Marcus Liu, boring software engineer, living a quiet life. But Kai Chen was still in there, and Kai Chen knew how to recognize a conspiracy.
+
+He started mapping Elysium's connections, looking for the patterns that would reveal what they were really doing. It took three nights of careful investigation, but eventually the picture emerged. Elysium Genetics wasn't just researching anti-aging treatments. They were researching consciousness longevity, ways to extend human lifespan indefinitely by transferring consciousness between bodies.
+
+It was Project Drift all over again, just with a different name and a different location.
+
+Kai sent an encrypted report to Lin Wei, copying Razor and Professor Wei. "Found something on Nova Station. Looks like Project Drift didn't die with Neurodyne. The research has been resurrected under new ownership. Need guidance on next steps. Can't exactly break into another vault without blowing my cover."
+
+Lin's response came within an hour: "Escalating to federal oversight. But investigation takes time. Can you keep monitoring? We need evidence before we can act."
+
+Kai agreed and settled into the familiar routine of surveillance. He watched Elysium's employees, tracking their movements, noting patterns. He infiltrated their network, reading internal communications, looking for proof of what they were doing.
+
+What he found chilled him.
+
+Elysium Genetics had recruited test subjects from Nova Station's lower classes, the service workers and maintenance crews who kept the orbital colony running. They offered free anti-aging treatments, promising an extra decade of youth and vitality. What they didn't mention was that the treatments included neural mapping, secretly creating consciousness backups without the subjects' knowledge or consent.
+
+It was theft on a massive scale, stealing people's minds while they thought they were just getting cosmetic enhancement. And based on the internal communications Kai intercepted, Elysium had already created over three hundred unauthorized consciousness backups.
+
+Three hundred people who had no idea their minds had been copied, that digital versions of themselves existed in Elysium's servers, property of Titan Ventures.
+
+Kai sent the evidence to Lin with a simple message: "It's worse than we thought. They're doing it again. Right now, under our noses. We need to stop them."
+
+But stopping them would mean exposing himself. Marcus Liu, the quiet software engineer, would have to become Kai Chen again. He'd lose his witness protection, his safety, his comfortable anonymous life. The federal government would be furious. Agent Zhang would probably try to arrest him just on principle.
+
+But three hundred stolen consciousnesses were sitting in Elysium's servers, and more were being created every day. How many before someone noticed? How many before the theft became enslavement, just like Project Drift?
+
+Kai thought about Mei Zhao, about the confusion in her voice when she'd asked if she was still human. He thought about the twenty-eight thousand consciousness backups they'd rescued, each one a person who'd trusted the wrong corporation and paid with their autonomy.
+
+He couldn't let it happen again. Not here, not on his watch, not when he had the power to stop it.
+
+He sent one more message to Lin: "I'm going in. Tell Agent Zhang I'm sorry, but some things are more important than witness protection. Send backup if you can. If you can't, I'll handle it alone."
+
+Lin's response was immediate: "Don't be an idiot. Wait for federal authority. We can do this legally."
+
+But Kai knew how slowly the federal government moved, how many layers of bureaucracy had to be navigated before action was authorized. By the time official investigation arrived, Elysium could wipe their servers, destroy the evidence, and the three hundred victims would never know their minds had been stolen.
+
+No. This had to be handled now, tonight, before more damage was done.
+
+Kai checked his equipment. He'd brought almost nothing from Neo-Shanghai, just his encrypted neural interface and a basic lockpick set. Not enough for a proper operation, but enough to improvise with. He'd done more with less in the Lower Stacks.
+
+Elysium Genetics occupied a small laboratory in Sector Three, the research district where corporate facilities clustered around academic partnerships. Security would be present but probably not extensive. Nova Station was supposed to be safe, after all. No need for heavy defenses in paradise.
+
+He dressed in maintenance worker coveralls, the kind that were invisible in any industrial setting. Added a toolbox full of electronics gear salvaged from his work equipment. Fake ID badge printed using tools Razor had shown him how to build. It wouldn't fool serious scrutiny, but it didn't have to. He just needed to get close enough to physically access their servers.
+
+At 0200 hours, when the station's population was at minimum alertness, Kai left his apartment and headed for Sector Three. He moved confidently, like someone who belonged, someone on a routine maintenance call. The few people he passed barely glanced at him.
+
+Elysium's facility was a converted commercial space, unremarkable from the outside. Kai approached the service entrance, used his fake badge, and wasn't surprised when it failed. He'd expected that. What he needed was for the failure to look like a system glitch rather than a break-in attempt.
+
+He pulled out a signal jammer and activated it, flooding the area with electromagnetic noise. Security systems flickered, confused by the interference. In the thirty-second window before backup systems kicked in, Kai forced the service door and slipped inside.
+
+The facility's interior was standard laboratory layout: clean rooms, equipment bays, data centers. Kai headed for the server room, using his neural interface to map the facility's network. He could feel the security AI watching, trying to identify him, but the jammer was scrambling its sensors enough to create ambiguity.
+
+He found the server room and began his work, connecting directly to the primary storage systems. The consciousness backups were there, stored in quantum arrays just like Neurodyne had used. Three hundred and seventeen backups, each one tagged with a number and date but no names. Dehumanizing, making it easier to treat them as property rather than people.
+
+Kai began copying the data, routing it through his encrypted interface to distributed storage across the network. It would take ten minutes, long enough for security to arrive. But he had to do it. This was the evidence that would expose Elysium, protect the victims, and prove that Project Drift hadn't been an isolated incident.
+
+Alarms began to wail. The security AI had figured out he wasn't supposed to be here. Kai heard boots in the corridor, security personnel responding to the breach. He kept working, his fingers flying across the interface, watching the progress bars advance.
+
+Five minutes left. Then four. Then three.
+
+The server room door burst open. Security personnel in light armor poured in, weapons raised. "Hands up! Step away from the terminal!"
+
+Kai raised his hands slowly. Two minutes left on the upload. He needed to stall. "Do you know what your company is doing? They're stealing consciousness backups without consent. Three hundred people who have no idea they've been copied. It's Project Drift all over again."
+
+"I don't care what you think they're doing," the security lead said. "You're trespassing and hacking corporate systems. That's enough for an arrest."
+
+One minute left. Kai calculated angles, distances. He wasn't augmented like Wu, wasn't trained like Lin. But he was desperate, and that counted for something.
+
+He dove for cover as the security team moved to restrain him. Shots fired, bullets sparking off the server racks. Kai scrambled behind a cooling unit, his heart pounding. The upload was still running, the progress bar crawling toward completion.
+
+Thirty seconds.
+
+"You're trapped," the security lead called out. "Surrender now and this goes easier."
+
+Twenty seconds.
+
+Kai's neural interface pinged. A message from Razor: "Got your signal. Federal agents are ten minutes out. Try not to die before they arrive."
+
+Ten seconds.
+
+The security team was advancing, weapons trained on his position. Kai had nowhere to run, nowhere to hide. If they took him now, they'd disconnect the upload, destroy the evidence, and it would all be for nothing.
+
+Five seconds.
+
+Upload complete. The data was out, distributed across the network, impossible to suppress. Kai stood up, hands raised again. "I surrender. But it's too late. The evidence is already uploaded. Elysium Genetics is done."
+
+The security lead looked at his tablet, seeing the alerts from their system monitoring. His expression went from professional to furious in an instant. "You destroyed three hundred million yuan of research data!"
+
+"I freed three hundred people you stole from," Kai corrected. "There's a difference."
+
+The federal agents arrived nine minutes later, Agent Zhang leading the team. She looked at Kai with a mixture of exasperation and grudging respect. "Mr. Chen. Or should I call you Mr. Liu? You're supposed to be in witness protection, not breaking into research facilities."
+
+"I found Project Drift Version 2.0," Kai said. "What was I supposed to do, ignore it?"
+
+"Yes!" Agent Zhang shouted. "That's exactly what you were supposed to do! Report it through proper channels and let us handle it!"
+
+"How long would that have taken? How many more people would have been victimized while you filed paperwork?"
+
+Agent Zhang didn't have an answer for that. She turned to her team. "Secure the facility. Seize all servers and research data. And someone call Dr. Zhao. We're going to need her expertise on consciousness transfer technology. Again."
+
+Kai was arrested, though it felt more ceremonial than serious. Agent Zhang kept him in custody while federal investigators tore through Elysium Genetics, exposing the full scope of their operations. What they found confirmed Kai's worst fears. Elysium had been stealing consciousness backups for eight months, with Titan Ventures funding the research. The plan was identical to Project Drift: create a library of consciousness data, develop transfer technology, and eventually offer immortality services to the wealthy while using the stored minds as digital labor.
+
+The scandal exploded across all media channels. Titan Ventures' stock crashed. Elysium's executives were arrested. And Kai Chen, supposed witness protection recipient, found himself once again at the center of a corporate conspiracy investigation.
+
+Agent Zhang visited him in detention. "You've become a serious problem for my agency. We give you protection, a new identity, a safe life. And you immediately throw it away to chase another conspiracy. Do you have any idea how that makes us look?"
+
+"I found the conspiracy," Kai pointed out. "Without me, Elysium would still be operating. Seems like I made your agency look good."
+
+Agent Zhang sighed. "You're not wrong. Which is why my superiors are considering a very unusual proposal. But first, I need to know: can you stay out of trouble? Can you live a normal life without hunting corporate criminals?"
+
+"Apparently not," Kai said honestly.
+
+"That's what I thought," Agent Zhang said. "Which is why we're offering you a job instead of a prison sentence."

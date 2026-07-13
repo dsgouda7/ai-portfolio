@@ -1,0 +1,171 @@
+Chapter 15: Escape from Luna
+
+The maintenance tunnels were a maze, but Dr. Tanaka navigated them with surprising confidence. She'd spent years at Prometheus Industries, and apparently part of that time had been learning the station's infrastructure. Every facility had emergency exits, maintenance access points, ways to move through the colony without using the main corridors. Corporate researchers learned these routes in case of accidents or attacks. Now that knowledge was saving their lives.
+
+"How much time do we have?" Dr. Tanaka asked as they ran.
+
+"Minutes," Kai said, checking his neural interface. "Maybe ten before they seal off this entire section. Lin's waiting with extraction transport at Transit Tube Alpha-Seven."
+
+"That's on the opposite side of the sector. We'll never make it in time through these tunnels."
+
+"Then we'll have to improvise."
+
+They emerged from the tunnels into a cargo handling area, vast space filled with automated loaders and storage containers. The area was empty, the night shift having ended hours ago. Dr. Tanaka pointed to a cargo tram, one of the electric vehicles used to move materials through the station.
+
+"Those connect to the main transit system. If I can override the controls, we can ride it directly to Alpha-Seven."
+
+"Do it," Kai said, keeping watch for security personnel.
+
+Dr. Tanaka pulled out her tablet and began hacking the tram's control system. Her fingers flew across the screen, bypassing security protocols and override commands. After thirty seconds, the tram hummed to life.
+
+"I'm in. But this is going to be obvious on the traffic control network. They'll see us coming."
+
+"Can't be helped. Speed matters more than stealth right now."
+
+They climbed onto the tram, and Dr. Tanaka engaged the drive system. The vehicle accelerated smoothly, entering the transit tube network. Through the transparent walls, Kai could see Luna Station's underground structure flashing past: residential complexes, industrial facilities, hydroponic gardens that fed the colony's population.
+
+His neural interface pinged with warnings. Security forces were converging on their position, using the traffic control network to track the stolen tram. They had maybe three minutes before interception.
+
+"They're going to block the tunnel ahead," Kai said. "Can we switch to a different route?"
+
+"Not without stopping, and if we stop, they'll catch us. We need to go through them."
+
+"Through armed security personnel? That's suicide."
+
+"You have a better idea?"
+
+Kai didn't. He pulled out the compact railgun the Special Investigations Division had issued him, a serious weapon disguised as a personal defense tool. "When we reach the blockade, don't slow down. Ram through if you have to. I'll provide covering fire."
+
+Dr. Tanaka looked at him with a mixture of fear and determination. "I'm a researcher, not a soldier. I've never been shot at before."
+
+"Try not to make it a habit," Kai said. "It's bad for your health."
+
+The blockade appeared ahead: three security vehicles parked across the tunnel, armed personnel positioned behind them. They had assault rifles, body armor, and orders to stop the tram at any cost. Kai counted eight people, all professionals. This was going to be messy.
+
+"Hold steady," he told Dr. Tanaka. "Don't brake, don't swerve. Just drive straight through."
+
+She accelerated, the tram's electric motor whining with the strain. Security personnel opened fire, bullets sparking off the tram's frame. Kai returned fire with the railgun, electromagnetic rounds punching through their cover. He wasn't trying to kill anyone, just force them to take cover, create confusion.
+
+The tram hit the first security vehicle at forty kilometers per hour, shoving it aside like a toy. The impact threw both Kai and Dr. Tanaka forward, bruising but not serious. They crashed through the blockade, leaving chaos in their wake.
+
+"Status?" Kai asked.
+
+"We're through. But the tram's damaged. Control systems are failing."
+
+"How far to Alpha-Seven?"
+
+"Two kilometers. Maybe three minutes if this thing holds together."
+
+Behind them, security vehicles were in pursuit. Kai could see them in the tram's rear cameras, gaining fast. The chase had become a race, and they were driving a damaged cargo tram against purpose-built pursuit vehicles. The outcome was inevitable.
+
+Lin's voice crackled through his neural interface. "I see you on the traffic network. You've got half the security force chasing you. This is going to be close."
+
+"Can you provide distraction? Anything to slow them down?"
+
+"Already working on it. Razor's hacking the traffic control system. In thirty seconds, every transit tube in the sector is going to report emergencies. That should create enough confusion to buy you time."
+
+True to her word, alarms began wailing throughout the transit network. Automated safety systems activated, emergency barriers dropping, traffic lights flashing warnings. The pursuit vehicles slowed, forced to navigate the suddenly chaotic environment.
+
+The tram limped into Alpha-Seven's station, smoke pouring from its damaged motor. Dr. Tanaka brought it to a stop just as the drive system died completely. They jumped off and ran for Lin's waiting vehicle, a nondescript cargo van that could blend into Luna Station's commercial traffic.
+
+Lin was at the wheel, her expression tense. "Get in. We've got maybe ninety seconds before they reacquire us."
+
+They piled into the van, and Lin accelerated smoothly into traffic. Around them, other vehicles moved normally, unaware of the drama unfolding. To the casual observer, they were just another cargo van making deliveries, nothing suspicious.
+
+"Did you get the evidence?" Lin asked as she drove.
+
+"Razor copied everything," Kai said. "And we have Dr. Tanaka. She's agreed to cooperate, testify against Prometheus Industries."
+
+Lin glanced at Dr. Tanaka in the rearview mirror. "You're the researcher who worked with Dr. Zhao at Neurodyne. Elena speaks highly of you, says you were one of the best neural architects in the field."
+
+"Was," Dr. Tanaka said bitterly. "I've spent the last three years making the same mistakes again. If Dr. Zhao knew what I've been doing, she'd despise me."
+
+"Dr. Zhao understands the pressure to push boundaries," Lin said. "She made similar choices before she realized what Neurodyne was really planning. The question is whether you'll make better choices going forward."
+
+They drove through Luna Station's commercial district, blending into traffic, avoiding the main thoroughfares where security checkpoints were being established. Lin drove with professional confidence, taking routes that appeared random but were carefully calculated to avoid surveillance.
+
+"Where are we going?" Dr. Tanaka asked.
+
+"Federal safe house," Lin said. "Deep underground, outside corporate jurisdiction. Once we're there, you'll give a formal statement and be entered into witness protection. After that, you disappear. New name, new life, hopefully better choices."
+
+"I'll need access to my research data. If I'm going to testify effectively, I need to explain the technical details of what Prometheus Industries was doing."
+
+"Already arranged," Kai said. "Razor copied your entire research database. You'll have everything you need to make the case."
+
+They drove for twenty minutes, descending through Luna Station's layers toward the deepest sections where the oldest facilities were located. The federal safe house was in a converted storage complex, indistinguishable from the hundreds of other industrial spaces that serviced the colony. Lin parked in an underground garage and led them through security doors to a fortified interior.
+
+Agent Zhang was waiting inside, having arrived on the same courier ship that had brought Kai to Luna. She looked at Dr. Tanaka with professional assessment. "Dr. Yuki Tanaka. You're either very brave or very desperate to turn witness against Prometheus Industries. Which is it?"
+
+"Both," Dr. Tanaka said. "I'm tired of compromising my ethics for research funding. And I'm smart enough to know that Prometheus Industries will kill me rather than let me testify. Federal protection is my only option."
+
+"At least you're honest," Agent Zhang said. She turned to Kai. "Good work. Two major conspiracies exposed in six months. You're becoming quite efficient at this."
+
+"It's not efficiency," Kai said. "It's that there are too many conspiracies. Everywhere I look, I find another corporation trying to enslave consciousness. How many more are out there?"
+
+"That's what we're trying to determine," Agent Zhang said. "Our algorithms have flagged seventeen other corporations with suspicious research patterns. You and Lin will investigate each one, determine which are legitimate and which are cover for something worse. It's going to take years."
+
+"Years of breaking into facilities and stealing data?"
+
+"Years of protecting human autonomy from corporations that see consciousness as just another commodity to exploit. Welcome to the Special Investigations Division. The work is never finished."
+
+They spent the next six hours debriefing Dr. Tanaka, extracting every detail about Project Phoenix and its funding. What emerged was a picture of systematic corporate conspiracy, with multiple organizations working together to resurrect consciousness transfer technology. Prometheus Industries was just one node in a larger network, funded by orbital corporations that saw digital immortality as the ultimate luxury product.
+
+"They're not planning to offer it to everyone," Dr. Tanaka explained. "The technology will be expensive, restricted to the wealthy elite. Everyone else will be encouraged to create consciousness backups for safety, for insurance, for legacy. But those backups will become property of the corporations, used as digital labor in perpetuity. It's indentured servitude disguised as preservation."
+
+"How close are they to deploying this system?" Agent Zhang asked.
+
+"Within a year, maybe less. Prometheus Industries was the technical lead, developing the synthetic bodies. Other corporations are handling the legal framework, the marketing, the infrastructure. It's a coordinated effort across the entire solar system."
+
+Agent Zhang's expression was grim. "Then we need to move fast. Every corporation involved needs to be exposed simultaneously. If we hit them one at a time, the others will adapt, go deeper underground. We need a coordinated strike."
+
+"That's going to require more investigators than we currently have," Lin pointed out. "The Special Investigations Division has maybe twenty field agents. We're talking about operations on Earth, Luna, Mars, the orbital colonies. We'll need hundreds of people."
+
+"Then we'll recruit hundreds of people," Agent Zhang said. "This is too important to fail. If the corporations succeed in normalizing consciousness slavery, we'll never get it back. Human autonomy will become a historical curiosity, something people read about in old texts while working as digital servants."
+
+Kai thought about the implications. An entire species enslaved, not by chains or force, but by technology that promised immortality and delivered subjugation. It was the ultimate corporate victory, turning humanity itself into a managed resource.
+
+"I'll help recruit," he said. "There are people like me in every city, every station. People who understand corporate corruption, who have skills in infiltration and investigation. We just need to find them and give them a cause worth fighting for."
+
+"Already started," Agent Zhang said. "We've identified thirty candidates, including some of your former associates. Jian Wu has agreed to join as a tactical specialist. Razor is being courted, though she's resistant to official employment. Even Maya Chen might be convinced if we offer the right incentives."
+
+"What about Dr. Zhao?" Kai asked. "She understands this technology better than anyone. She could help us identify corporations that are developing consciousness transfer systems."
+
+"Dr. Zhao is already consulting for us," Agent Zhang said. "She and Professor Wei are building a database of suspicious research patterns, using academic publications and corporate patents to identify potential threats. Between her technical knowledge and our investigative resources, we're creating a comprehensive picture of who's trying to resurrect Project Drift."
+
+The investigation continued through the night. Federal agents raided Prometheus Industries at dawn, seizing equipment, arresting executives, and liberating the fifty consciousness backups they'd created without consent. The operation was swift, professional, and produced more evidence of corporate conspiracy than anyone had expected.
+
+By noon, three other corporations had been implicated in the scheme. By evening, the scandal was spreading across news networks throughout the solar system. Stock prices crashed. Corporate boards were dissolved. The largest coordinated prosecution of consciousness crimes in history was underway.
+
+Kai watched the news coverage from the safe house, feeling a strange mixture of satisfaction and exhaustion. They'd won another battle, but the war was far from over. For every corporation they exposed, two more were probably developing similar technology in secret. The fight would continue for years, possibly decades.
+
+"You look tired," Lin said, sitting down beside him.
+
+"I am tired," Kai admitted. "In Neo-Shanghai, I thought if we could just expose Neurodyne, it would end. Then I found Elysium Genetics and thought if we stopped them, it would end. Now we've hit Prometheus Industries, and there are seventeen more corporations to investigate. It never ends, does it?"
+
+"No," Lin said gently. "It doesn't end. That's the nature of fighting systemic corruption. You win battles, but the war continues. The question is whether you can keep fighting anyway, knowing you'll never see final victory."
+
+"Can you?" Kai asked.
+
+"I have to," Lin said. "Because the alternative is giving up, and I've seen what happens when people give up. The corporations win, and humanity loses. So yeah, I can keep fighting. The question is whether you can."
+
+Kai thought about Mei Zhao, about the confusion in her voice when she'd asked if she was still human. He thought about the twenty-eight thousand consciousness backups they'd rescued from Neurodyne, each one a person who'd been stolen and nearly enslaved. He thought about the fifty people on Luna Station who would wake up tomorrow not knowing they'd been mapped, that digital copies of themselves existed in federal custody.
+
+"I can keep fighting," he said. "I don't know for how long, and I don't know if I'll survive it. But while I can, I will."
+
+"Good," Lin said. "Because we've got sixteen more corporations to investigate, and I'd rather not do it alone."
+
+Agent Zhang joined them, carrying three cups of synthesized coffee. "The federal oversight committee is meeting tomorrow. They're going to expand the Special Investigations Division's budget and mandate based on what we've exposed. We'll have more resources, more agents, more authority to operate across the solar system. This is just the beginning."
+
+"And the corporations?" Kai asked. "They won't just accept federal oversight. They'll fight back."
+
+"Of course they will," Agent Zhang said. "They'll lobby, they'll litigate, they'll try to corrupt the oversight process. That's why we need people like you, people who can operate outside normal channels when necessary. The corporations think they're above the law. We're going to prove them wrong."
+
+Kai sipped the terrible coffee and watched Earth rise over Luna's horizon through the safe house's small viewport. His home planet, where billions lived under corporate control, unaware of how close they'd come to permanent enslavement. The fight to protect them would be long, dangerous, and probably thankless. But someone had to do it.
+
+And Kai Chen, former memory broker, had proven he was good at fighting impossible battles.
+
+The solar system needed more people like him. People willing to stand up, speak out, and risk everything for principles that couldn't be bought or sold. People who understood that some things were worth more than profit, more than safety, more than life itself.
+
+Human autonomy was one of those things. And Kai would protect it as long as he drew breath.
+
+The war continued. But for today, they'd won. And sometimes, that had to be enough.

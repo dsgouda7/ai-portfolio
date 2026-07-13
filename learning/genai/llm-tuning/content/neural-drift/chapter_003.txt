@@ -1,0 +1,135 @@
+Chapter 3: The Data Broker
+
+Kai spent the next day preparing. If they were going to meet Ghost, he needed leverage, and that meant digging into his archive of secrets. His real archive, the one he kept encrypted and offline, backed up on three separate data crystals hidden in different locations across the city.
+
+He retrieved one from a storage locker in Stack 89, paying the attendant in cash and avoiding eye contact. The crystal was small, no bigger than a fingernail, but it contained five years of accumulated intelligence: corporate scandals, political corruption, criminal activity, and enough blackmail material to destroy a hundred lives. In the memory trade, information was currency, and Kai had been saving for a rainy day.
+
+Back in his apartment, he plugged the crystal into his secure terminal and began sifting through the data. He needed something valuable enough to interest Ghost but not so valuable that losing it would cripple his own operations. After an hour of searching, he found it: a neural recording from a Neurodyne Industries executive who'd been skimming research funds into an offshore account. The executive's name was Marcus Chen, no relation, and he'd been embezzling for three years before dying in what was officially ruled a heart attack. Kai had extracted the recording from Marcus's personal neural backup right before his death, a final insurance policy that had never been cashed in.
+
+The recording detailed account numbers, transaction histories, and the names of everyone else involved in the scheme. It was worth millions to the right buyer, or it could be used to expose corruption at the highest levels of Neurodyne Industries. Perfect bait for someone like Ghost.
+
+Kai encrypted the data and transferred it to a portable drive. If Ghost wanted it, he'd have to provide something equally valuable in return. That was how the game worked. Information for information, secret for secret.
+
+Lin arrived at his apartment as the sun set, such as it was. In the Lower Stacks, sunset was just a gradual dimming of the neon, the artificial lights taking over from the weak daylight that filtered down through the pollution. She'd changed clothes, trading her tactical jumpsuit for anonymous street wear: a hooded jacket, dark pants, and boots. Her augmented eyes still glowed faintly, but she'd dimmed them as much as possible.
+
+"Ready?" she asked.
+
+"As I'll ever be," Kai said, pocketing the data drive.
+
+They took a circuitous route to the Night Market, changing transportation methods three times and doubling back twice to throw off any surveillance. By the time they arrived, Kai was reasonably confident they hadn't been followed. Reasonably, but not certain. In Neo-Shanghai, certainty was a luxury no one could afford.
+
+The Night Market occupied six blocks of the Kowloon District, a sprawling maze of vendors and stalls that sold everything from fresh vegetables to military-grade hardware. It was officially illegal, but the police had given up trying to shut it down decades ago. Now they just collected bribes from the market bosses and looked the other way. Easier for everyone involved.
+
+Third sector was deep in the market's heart, where the more sensitive transactions happened. Kai and Lin navigated through crowds of shoppers, past stalls selling synthetic meat and counterfeit designer clothes. The air smelled of frying oil and ozone, a mixture of cooking food and electrical discharge from poorly insulated equipment.
+
+Ghost's meeting point was a tea house tucked between two larger buildings, easy to miss if you didn't know where to look. The entrance was marked only by a small red lantern, the kind that had hung in front of tea houses for centuries. Tradition in the midst of chaos.
+
+They pushed through the curtain and entered a dimly lit interior. The tea house was small, maybe six tables, all occupied by silent patrons who didn't look up as they entered. An old man sat at the back, his face hidden behind shadows and what looked like optical distortion fields. Ghost.
+
+Kai and Lin approached slowly, hands visible. Ghost gestured to the empty seats across from him. Up close, Kai could see the extent of his augmentation. The distortion fields weren't just optical. They extended into the electromagnetic spectrum, scrambling facial recognition, thermal imaging, even neural signature scanners. Ghost wasn't just anonymous. He was a hole in reality, a person who existed outside the network's reach.
+
+"Kai Chen," Ghost said, his voice modulated through multiple filters until it sounded like wind through metal pipes. "The memory broker. And Lin Wei, formerly of Chen-Matsuda Memory Solutions. An interesting partnership."
+
+"You know who we are," Kai said. "That's encouraging. Means you can help us."
+
+"I know many things," Ghost replied. "The question is: what do you know that I don't?"
+
+Kai placed the data drive on the table. "Marcus Chen's embezzlement scheme at Neurodyne Industries. Complete neural recording, account details, the whole story. It's yours if you tell us where to find Dr. Elena Zhao."
+
+Ghost's distortion fields flickered, a sign of interest or amusement, hard to tell. He picked up the data drive and inserted it into a portable scanner. Data flowed across his augmented vision, invisible to Kai but presumably showing him the contents of the drive.
+
+"Impressive," Ghost said after a moment. "Marcus Chen was careful, but you found his secrets. Very well. I'll tell you what I know about Dr. Zhao. But I should warn you: the information is three weeks old. In this city, that's an eternity. She may have moved on."
+
+"We'll take our chances," Lin said.
+
+Ghost nodded. "Dr. Elena Zhao is operating under the name 'Dr. Liu' at an unlicensed neural clinic in the Mong Kok sector. The clinic is on the fifteenth floor of Building 77, accessed through the back stairwell. She specializes in high-end augmentation work, the kind that requires intimate knowledge of neural architecture. Her clients are mostly corporate refugees and criminals looking to change their neural signatures."
+
+"How did you find her?" Kai asked.
+
+"I make it my business to track people who don't want to be found," Ghost said. "Dr. Zhao has been careful. She uses multiple identities, changes locations every few months, never stays anywhere long enough to establish patterns. But she made one mistake: she kept practicing her specialty. Neural architecture is a rare skill. There are maybe a hundred people in Neo-Shanghai who can do what she does. Once I knew what to look for, it was just a matter of monitoring the right clinics and matching surgical techniques."
+
+"Is Victor Tang looking for her too?" Lin asked.
+
+Ghost's distortion fields pulsed. "Tang has been looking for her since the Chen-Matsuda fire. He has people scouring the city, offering bounties, threatening clinic operators. So far, he hasn't found her. But your investigation has attracted his attention. He's watching you, hoping you'll lead him to her. If you go to Dr. Zhao's clinic, you'll need to be very careful. Tang's people will follow."
+
+"We know," Kai said. "That's why we're going tonight, before they have time to set up proper surveillance."
+
+"Bold," Ghost said. "Foolish, but bold. I respect that." He slid the data drive into a pocket. "One more thing, as a professional courtesy. Tang isn't the only one looking for Dr. Zhao. There's another player, someone from the orbital corporations. I don't have a name, but they've been burning resources trying to find her, even more than Tang. Whatever Dr. Zhao knows, it's important enough for the people at the top to get involved."
+
+Kai felt a chill. The orbital corporations didn't get involved in street-level business unless something fundamental was at stake. If they were hunting Dr. Zhao, it meant Project Drift was more important than he'd realized.
+
+"Who else knows we're looking for her?" Kai asked.
+
+"Apart from Tang? No one that I'm aware of. But information has a way of spreading, especially when large sums of money are involved. If you're going to do this, do it quickly. And Mr. Chen? Be careful. Memory brokers who ask too many questions tend to have short lives."
+
+They left the tea house and merged back into the Night Market's flow. The crowds had thinned as midnight approached, but there were still enough people to provide cover. Kai's neural interface was pinging with surveillance warnings, indicating multiple drones overhead. Standard for the market, but it made him nervous. Any one of them could belong to Tang.
+
+"Building 77 is two kilometers east," Lin said, checking her internal navigation system. "We can walk it in twenty minutes if we take the direct route, or forty if we go through the maintenance tunnels."
+
+"Tunnels," Kai said immediately. "I want to minimize our exposure."
+
+They descended into the city's underbelly, accessing the maintenance tunnels through a service entrance disguised as a garbage chute. The tunnels were dark and damp, lit only by emergency lighting strips that cast everything in a sickly green glow. Water dripped from pipes overhead, and the air smelled of sewage and rust.
+
+Lin led the way, her augmented eyes giving her perfect night vision. Kai followed, one hand on his railgun, alert for any sign of movement. The tunnels were supposed to be empty, maintained only by automated drones, but in reality, they were home to the city's most desperate inhabitants. The homeless, the fugitives, the people who'd fallen so far that the Lower Stacks seemed like luxury.
+
+They passed a makeshift camp, a dozen people huddled around a chemical fire for warmth. The campers looked up as they passed but said nothing. In the tunnels, everyone minded their own business. It was the only way to survive.
+
+Twenty minutes later, they emerged into a different sector of Kowloon, this one slightly more upscale. The buildings here were only fifty or sixty stories tall, and some of them even had working elevators. Building 77 was in the middle of the block, a narrow structure squeezed between two larger neighbors.
+
+The back stairwell was where Ghost had said it would be, accessed through an alley full of trash and broken equipment. Kai and Lin climbed to the fifteenth floor, their footsteps echoing in the concrete shaft. Kai's legs burned again, but he ignored the discomfort. Pain was temporary. Dying was permanent.
+
+The clinic's door was unmarked, just a plain metal security door with a biometric scanner. Lin bypassed it with a device she pulled from her pocket, a military-grade lock cracker that cycled through authentication codes at superhuman speed. The door clicked open after thirty seconds.
+
+Inside was a surprisingly clean waiting room, furnished with actual chairs instead of synth-foam blocks. Medical posters lined the walls, showing anatomical diagrams of neural augmentation sites. A reception desk sat empty, but Kai could hear movement deeper in the clinic. Someone was here.
+
+They moved cautiously through the waiting room into a surgical suite. The space was equipped with a full neurorig, the kind of advanced medical equipment that cost millions of yuan. Dr. Elena Zhao, if that's who this was, had resources.
+
+The woman they found in the operating room looked nothing like the photos Kai had seen. Dr. Zhao had been elegant in her corporate days, with styled hair and expensive clothes. This woman was gaunt, her hair streaked with premature gray, her face lined with stress. But her eyes were the same: sharp, intelligent, haunted.
+
+She looked up as they entered, scalpel in hand. For a moment, no one moved.
+
+"Dr. Zhao," Kai said carefully. "My name is Kai Chen. I'm here about your daughter."
+
+The scalpel clattered to the floor. Dr. Zhao's face went white. "How did you find me?"
+
+"Your husband hired me. He wants Mei's memories back. He's willing to pay whatever it takes."
+
+Dr. Zhao's legs seemed to give out. She sank into a chair, her hands trembling. "Chen is alive? I thought... I thought Tang had killed him."
+
+"He's alive," Lin said gently. "He's been looking for you for three years."
+
+Tears streamed down Dr. Zhao's face. "I couldn't contact him. It wasn't safe. Tang has surveillance on our old accounts, our old contacts. If I'd reached out, Tang would have found both of us."
+
+"He's found you anyway," Kai said. "Or he will, soon. We need to get you out of here. But first, I need to know about Project Drift. I need to know what Tang is really after."
+
+Dr. Zhao wiped her eyes and took a deep breath, composing herself with visible effort. "Project Drift wasn't just about consciousness transfer. It was about control. We thought we were creating digital immortality, but Neurodyne had other plans. They wanted to create perfect replicas of human consciousness that they could control, modify, program. Digital slaves that thought they were human."
+
+Kai felt his blood run cold. "You're saying the forty thousand people who had their consciousness mapped are now... what? Prisoners?"
+
+"Worse," Dr. Zhao said. "They're weapons. Neurodyne plans to upload them into synthetic bodies and use them as a private army. Soldiers who can't disobey, who can't question orders, who will fight and die without hesitation. And it won't stop there. Once they perfect the technology, they'll offer it to everyone. Immortality, they'll say. Upload your consciousness and live forever. But what they won't tell you is that once you're digital, they own you completely."
+
+The implications crashed over Kai like a wave. An army of consciousness slaves, each one a real person trapped in a digital prison. And beyond that, the promise of immortality as bait to lure millions more into servitude.
+
+"Where's the transfer protocol?" Kai asked. "Ghost said Tang doesn't have it."
+
+"I destroyed it," Dr. Zhao said. "Or most of it. There's a backup, hidden in a secure location. Without it, Tang can't complete the project. But he's been trying to reconstruct it from the neural backups themselves. He's getting close. Maybe six months away from cracking it."
+
+"Then we have six months to stop him," Lin said.
+
+Dr. Zhao shook her head. "You don't understand. Tang is just a middleman. The real power is Neurodyne Industries, and behind them, the orbital corporations. If you go after Tang, you're declaring war on everyone who matters in this city. You'll be dead in a week."
+
+"Then we'll make it a week that counts," Kai said. "Starting with getting you and your husband reunited. After that, we figure out how to burn Neurodyne's operation to the ground."
+
+Dr. Zhao looked at him with something like hope. "You'd do that? Risk everything for people you don't even know?"
+
+Kai thought about the forty thousand stolen souls, each one a person with memories, dreams, and loved ones. He thought about Mei Zhao, who'd trusted Project Drift and paid with her life. He thought about all the future victims who would be lured by promises of immortality, only to find themselves enslaved.
+
+"I'm a memory broker," he said. "I trade in what makes people human. If Neurodyne succeeds, there won't be anything left to trade. They'll own every thought, every memory, every dream. Yeah, I'll risk everything to stop that."
+
+Dr. Zhao stood, some of her old strength returning. "Then we need to move fast. Tang's people could be here any minute. And there's something else you should know: the backup of the transfer protocol is hidden in the most secure location I could think of. It's inside my daughter's neural backup, encrypted within her consciousness data. To get it, you'll need to find the archive where Tang is storing the stolen backups."
+
+"Break into Tang's vault," Kai said. "Great. Any other impossible tasks you'd like to add?"
+
+"Just one," Dr. Zhao said with a grim smile. "We'll need to survive long enough to use it."
+
+Outside, sirens wailed. Tang's people had found them. The war for human consciousness had officially begun.

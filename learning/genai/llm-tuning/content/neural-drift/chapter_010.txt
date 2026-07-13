@@ -1,0 +1,191 @@
+Chapter 10: Reunion
+
+Mr. Zhao arrived two hours later, escorted by Professor Wei through the campus's secured corridors. He looked older than when Kai had met him at the ramen shop, worn down by three years of grief and searching. But when he saw his wife standing in the laboratory, something lit up in his eyes that transcended exhaustion.
+
+"Elena," he breathed.
+
+They met in the center of the room, embracing with the desperate intensity of people who'd lost everything and found it again. Kai looked away, giving them what privacy he could in the crowded laboratory. Some moments were too intimate for witnesses.
+
+After several minutes, Dr. Zhao pulled back, wiping tears from her face. "I'm sorry. I'm so sorry I couldn't contact you. Tang was watching everything. If I'd reached out, he would have killed you."
+
+"I know," Mr. Zhao said. "I figured that out after the first year. But I kept looking anyway, because the alternative was giving up, and I couldn't do that. Not while there was a chance."
+
+"Mei," Dr. Zhao said. "We have her backup. It survived the extraction. We can restore her."
+
+Mr. Zhao's legs seemed to give out. He sat heavily in a laboratory chair, his hands shaking. "She's really there? Complete?"
+
+"As complete as any backup can be," Dr. Zhao said carefully. "The consciousness transfer technology is still experimental. I can restore her memories, her personality, her sense of self. But she'll need a substrate to exist in. Either a synthetic body or a digital environment. She won't be flesh and blood anymore."
+
+"I don't care," Mr. Zhao said fiercely. "I just want her back. In whatever form. I just want to talk to her again, to tell her how much I love her, to apologize for not being there when she needed me."
+
+Kai watched the reunion and felt something twist in his chest. This was what they'd fought for, risked their lives for. Not abstract principles or political statements, but this: a father getting his daughter back, a family being made whole. It was a small thing in the grand scheme of Neo-Shanghai's endless corruption, but it was real, and it mattered.
+
+The laboratory's security system chimed. Professor Wei checked her terminal and frowned. "We have visitors. Enforcement officers at the main entrance, asking to search the building. They have warrants signed by corporate judges."
+
+"Tang's people," Lin said, immediately on alert. "He's using legal channels now that direct action failed."
+
+"Can they actually search here?" Kai asked. "I thought the university was neutral territory."
+
+"Officially, yes," Professor Wei said. "But corporate warrants supersede academic privilege if they can claim compelling interest. And with Neurodyne's influence, they can claim anything they want."
+
+Wu moved to the laboratory's entrance, assessing defensible positions. "How long do we have?"
+
+"The university administration will stall them as long as possible. Maybe thirty minutes. But eventually, they'll have to let them in."
+
+"Then we need to disappear," Kai said. "Take the servers, scatter, and reconvene somewhere safer."
+
+"No," Dr. Zhao said. "We need to finish this. Mei's restoration will take at least an hour of processing time. If we run now, we might not get another chance."
+
+"If we stay, we'll be arrested," Lin pointed out. "Or killed. Tang's enforcement teams won't be gentle."
+
+"Then we need to buy time," Kai said. He turned to Razor, still connected via encrypted video link. "Can you interfere with their warrant? Delay it, challenge it, throw up legal obstacles?"
+
+"I can try," Razor said. "But I'm a hacker, not a lawyer. I can make their paperwork temporarily disappear from the system, but they'll have physical copies. Best I can do is create confusion, maybe buy you an extra fifteen minutes."
+
+"Do it," Kai said. "Every minute counts."
+
+Dr. Zhao was already working at the main terminal, initiating Mei's restoration protocol. The process was complex, requiring precise calibration of the consciousness transfer systems. On the screen, Kai could see neural patterns emerging, the architecture of a human mind being reconstructed from digital storage.
+
+"This will be strange for her," Dr. Zhao said as she worked. "Waking up in a digital space instead of a body. Realizing she's been dead for three years. I'll need to ease her into awareness gradually, help her adjust to her new existence."
+
+"Can she be given a synthetic body later?" Mr. Zhao asked.
+
+"Perhaps," Dr. Zhao said. "The technology exists, but it's expensive and still experimental. We'll need to see how she adapts to digital existence first. Some consciousness backups don't handle the transition well. They fragment, develop digital psychosis, or simply refuse to accept their new reality."
+
+"She's strong," Mr. Zhao said. "She can handle it."
+
+Kai hoped he was right. The alternative was too terrible to consider: restoring a consciousness only to watch it break down under the strain of its impossible existence.
+
+Professor Wei's terminal chimed again. "The enforcement officers are in the building. The administration couldn't stall them any longer. They're searching floor by floor. We have maybe ten minutes."
+
+"Not enough," Dr. Zhao said, focused on her work. "I need at least twenty more minutes for the restoration to complete. If we interrupt the process now, Mei's consciousness could be damaged beyond repair."
+
+Wu checked his weapons, his expression grim. "Then we defend this position. They'll have to come through a bottleneck to reach us. We can hold them off for twenty minutes."
+
+"Against how many?" Lin asked.
+
+"Does it matter?" Wu replied. "We're not leaving Dr. Zhao while she's working. If we have to fight, we fight."
+
+Kai felt the weight of his railgun, a familiar comfort. "Razor, can you do anything about the building's security systems? Lock doors, seal corridors, anything that might slow them down?"
+
+"Already on it," Razor said. "I'm accessing the university's building management systems now. I can create obstacles, but eventually they'll override my commands. Physical locks they can force, electronic barriers they can hack. I'll buy you time, but not much."
+
+The laboratory had one entrance, a reinforced door designed to protect sensitive equipment. Wu positioned himself behind a makeshift barricade of laboratory furniture, his railgun trained on the entrance. Lin took a position that would let her provide crossfire. Kai stayed near Dr. Zhao, ready to defend her if the fighting reached that far.
+
+Mr. Zhao picked up a piece of laboratory equipment, a heavy wrench that could double as a club. "I'm staying with my wife. If they want to take her, they'll have to go through me."
+
+"No offense," Wu said, "but you're not augmented and probably haven't been in a fight since university. You'll just get killed."
+
+"Then I'll die with my family," Mr. Zhao said simply. "I'm not running again."
+
+The building's alarm system began to wail. On Professor Wei's terminal, they could see security cameras showing enforcement officers moving through the corridors, systematically checking each room. They were professional, moving in tight formations, covering each other's blind spots. This wasn't going to be easy.
+
+"Five minutes," Dr. Zhao said, her voice steady despite the chaos. "The restoration is entering its final phase. Mei's consciousness is stabilizing in the digital substrate. Just five more minutes."
+
+The sound of boots in the corridor. Voices shouting orders. Wu tensed, his finger on the railgun's trigger. The laboratory door shuddered as someone tried to force it open. The reinforced construction held, but it wouldn't last long.
+
+"They're cutting through," Lin said. "I can hear the plasma torch."
+
+"Four minutes," Dr. Zhao said.
+
+The door began to glow red where the plasma torch was working. Molten metal dripped onto the laboratory floor. In seconds, they'd have a breach. Wu aimed his railgun at the door, ready to fire the moment it opened.
+
+"Wait," Razor's voice crackled through the comm. "I've got an idea. Stupid, dangerous, but it might work. The university has a fire suppression system. If I activate it in the corridor, it'll flood the area with non-conductive foam. Won't stop them permanently, but it'll blind them and slow them down."
+
+"Do it," Kai said.
+
+Alarms changed pitch. Through the door, they heard shouts of surprise as the fire suppression system activated. The plasma torch died, starved of oxygen in the foam. Muffled cursing as the enforcement officers tried to navigate the suddenly treacherous corridor.
+
+"Three minutes," Dr. Zhao said.
+
+The foam wouldn't hold them long. Already they were adapting, using equipment to clear a path. But it had bought precious time. Kai heard the plasma torch reignite, cutting through both foam and steel.
+
+"They're bringing in heavier equipment," Lin said. "Probably a breaching charge. When that goes off, the door's done."
+
+"Two minutes," Dr. Zhao said. "Please, just two more minutes."
+
+The plasma torch finished its cut. The door sagged inward, still held by a few remaining supports. Wu fired, the railgun's electromagnetic discharge lighting up the laboratory. The shot punched through the damaged door and took an enforcement officer in the chest, dropping him instantly.
+
+Return fire came through the breach, bullets ricocheting off laboratory equipment. Kai dove for cover, pulling Mr. Zhao down with him. Lin returned fire, short controlled bursts aimed at the breach. They weren't trying to kill anyone, just keep them back, buy those final precious seconds.
+
+"One minute," Dr. Zhao said. "Almost there."
+
+The breaching charge detonated with a concussive force that knocked everyone back. The door disintegrated, and enforcement officers poured through. Wu met them with his combat knife, moving too fast for them to track, his augmented reflexes turning him into a blur of lethal motion. Bodies fell, but more kept coming.
+
+Lin's submachine gun ran dry. She dropped it and drew her combat knife, moving to Wu's side. Together they formed a wall of steel and blood between the enforcement officers and Dr. Zhao's terminal.
+
+Kai fired his railgun until the charge depleted, then drew his own knife. He wasn't augmented like Wu, wasn't trained like Lin, but he was desperate and that counted for something. He fought with the fury of someone who'd come too far to fail now.
+
+"Done!" Dr. Zhao shouted. "The restoration is complete!"
+
+On the terminal screen, a message appeared: "Consciousness transfer successful. Subject Mei Zhao restored and stable in digital substrate."
+
+Dr. Zhao activated the communication interface. "Mei? Can you hear me?"
+
+A voice emerged from the speakers, young and confused. "Mom? Where am I? I can't feel my body. Everything is dark and strange and wrong."
+
+"You're safe," Dr. Zhao said, tears streaming down her face. "You died, sweetheart. Three years ago. But we saved you. We brought you back."
+
+"I died?" Mei's voice rose in panic. "No, that's not possible. I was just driving home from the clinic. There was an accident, I remember the impact, and then... nothing. How long? How long has it been?"
+
+"Three years," Dr. Zhao said gently. "You've been in storage all this time. Your father and I, we've been looking for you."
+
+"Dad?" Mei's voice cracked. "Is he there?"
+
+Mr. Zhao pushed past Kai to the terminal, his face a mask of joy and grief. "I'm here, Mei. I'm right here. We're going to be okay. All of us, together again."
+
+"I don't understand," Mei said. "If I'm dead, how am I talking to you? How am I thinking?"
+
+"You're not dead anymore," Dr. Zhao said. "You're digital. Your consciousness, everything that makes you who you are, it's stored in a computer system. It's complicated, and I promise I'll explain everything, but right now we need to move. We're in danger."
+
+The fighting at the laboratory entrance had paused, the enforcement officers regrouping after Wu and Lin's devastating defense. Bodies lay scattered, wounded officers crawling for cover. But reinforcements were coming, drawn by the sounds of combat.
+
+"We need to evacuate," Professor Wei said. "The entire campus will be locked down within minutes. If you're going to escape, it has to be now."
+
+"The servers," Dr. Zhao said. "We can't leave them. They contain twenty-eight thousand other consciousness backups. They all deserve the chance Mei got."
+
+"We can't carry them all," Kai said. "They're too heavy, and we'll be running for our lives."
+
+"Then we transmit the data," Razor said through the comm. "Upload it to distributed storage across the network. Cloud systems, peer-to-peer networks, anywhere we can hide it. Once it's distributed, Neurodyne can't destroy it. The consciousness backups will survive even if we don't."
+
+"Do it," Dr. Zhao said. "Upload everything. Every backup, every research file, every piece of evidence. Let the world have it all."
+
+Razor's fingers flew across her keyboard, visible through the video link. Upload progress bars appeared on the laboratory screens, data streaming out into the network at maximum bandwidth. Terabytes of information, the stolen souls of thousands, spreading across the world.
+
+"It'll take five minutes to complete the upload," Razor said. "Can you hold that long?"
+
+"We'll have to," Wu said. He reloaded his railgun and checked his ammunition. "They're regrouping. The next wave will be harder."
+
+But the next wave never came. Instead, a voice boomed through the building's public address system: "Attention all enforcement personnel. Stand down immediately. This facility is under federal protection. Any further action will be considered an act of corporate warfare."
+
+The enforcement officers at the laboratory entrance looked at each other in confusion. Professor Wei checked her terminal and smiled. "It worked. The data dump hit the federal oversight agency. They've seen the evidence of what Neurodyne did. They've issued an emergency injunction protecting the university and everyone in it. Tang's warrants are invalidated."
+
+"For how long?" Lin asked.
+
+"Long enough," Professor Wei said. "Once this becomes a federal case, the corporations lose their ability to use private enforcement. It'll be a legal battle now, not a physical one."
+
+Kai allowed himself to breathe. They'd done it. Against impossible odds, they'd survived, exposed the conspiracy, and freed forty thousand consciousness backups from corporate slavery. And most importantly, they'd given a desperate father his daughter back.
+
+Mr. Zhao was still at the terminal, talking to Mei, explaining what had happened, reassuring her that everything would be okay. Dr. Zhao stood beside him, one hand on his shoulder, tears of relief streaming down her face.
+
+"Upload complete," Razor reported. "All the data is distributed across the network. Even if they destroyed the physical servers now, the consciousness backups are safe."
+
+"Then it's over," Kai said, hardly believing it. "We actually won."
+
+"For now," Wu said pragmatically. "Tang and Neurodyne aren't going to give up that easily. This is just round one. But at least we're still alive to fight round two."
+
+Lin sat down heavily, her wounded leg finally giving out. "I need a hospital. And a vacation. Probably not in that order."
+
+Kai's neural interface pinged with incoming messages. News outlets requesting interviews. Government agencies demanding testimony. Activist groups offering support. The story was everywhere, spreading faster than Neurodyne could contain it. Within hours, it would be the biggest scandal in corporate history.
+
+"What happens to the consciousness backups now?" Kai asked. "We saved them from Neurodyne, but they're still trapped in digital storage. What kind of life is that?"
+
+"A better one than slavery," Dr. Zhao said. "And with the research files public, other scientists can work on improving consciousness transfer technology. Maybe someday we'll be able to give them all physical bodies. Or create digital worlds rich enough to give them meaningful existence. It won't be easy, but at least now there's hope."
+
+Hope. It was a strange word to hear in Neo-Shanghai, a city that seemed designed to crush hope wherever it sprouted. But looking around the laboratory at his unlikely allies, at the family reunited despite impossible odds, Kai thought maybe hope wasn't as dead as he'd believed.
+
+They'd struck a blow against the city's corporate masters. They'd proven that even desperate criminals could stand up to overwhelming power and win. They'd saved thousands of lives and exposed a conspiracy that threatened human autonomy itself.
+
+It wasn't enough to change the world. One victory didn't undo decades of corporate dominance. But it was a start.
+
+And sometimes, a start was all you needed.

@@ -1,0 +1,159 @@
+Chapter 5: Assembling the Team
+
+Morning came, though you wouldn't know it in the Gray Zone. The light filtering through the pollution layer was the same dingy amber as it had been at midnight. Kai woke on the couch, his back aching from the uncomfortable position. Lin was already up, monitoring news feeds on her terminal. Dr. Zhao slept in the bedroom, her breathing finally steady after hours of fitful rest.
+
+"Anything?" Kai asked, rubbing sleep from his eyes.
+
+"Tang made the news," Lin said, turning the screen toward him. "Not by name, but there was a report about 'gang violence' in Kowloon last night. Three buildings damaged, multiple casualties, suspects still at large. They're calling it a turf war."
+
+"Of course they are," Kai muttered. The authorities always covered for the corporations, spinning their private wars as street crime. It kept the population docile and the questions to a minimum.
+
+His neural interface pinged. A message from Ghost, encrypted and anonymous: "Heard about your excitement last night. If you're still interested in doing business, I have information about a vault. Usual price. Same location, tonight."
+
+Kai showed the message to Lin. "He's fast. And well-connected."
+
+"That's why he's the best," Lin said. "But we'll need to bring something new. The Marcus Chen data was a one-time payment. Ghost won't accept the same merchandise twice."
+
+"Leave that to me," Kai said. "I have other secrets in my archive. But first, we need to recruit the team. Who do you trust?"
+
+Lin pulled up a series of profiles on her terminal. "Three people. First is Razor, real name unknown. Best combat hacker in Neo-Shanghai. She can break any system, decrypt any file, and she's got a grudge against Neurodyne. They tried to recruit her five years ago, and when she turned them down, they blacklisted her from every legitimate job in the city."
+
+"Sounds perfect. What's her price?"
+
+"Access," Lin said. "She doesn't want money. She wants to see the inside of Neurodyne's systems, the architecture they use for consciousness transfer. She's obsessed with understanding how they do it."
+
+"She gets that if we succeed," Kai said. "Who else?"
+
+"Jian Wu, former corporate security for Matsuda Heavy Industries. Worked close protection for executives until he killed one of them for abusing his daughter. He's been underground for two years, taking freelance bodyguard jobs. Military-grade augments, combat experience, and absolutely no love for corporations."
+
+"Can we trust him?"
+
+"As much as we can trust anyone," Lin said. "I worked with him once on a data extraction. He's professional, keeps his word. And he won't betray us to Neurodyne. They're all the same to him."
+
+"Okay. And the third?"
+
+"This one's risky," Lin admitted. "Her name is Maya Chen, and she's a pilot. Transport ships, cargo haulers, anything that flies. She used to work for the orbital corporations, running supplies up to the space stations. She quit six months ago, said she was tired of serving the rich. Now she takes whatever jobs she can find."
+
+"What's risky about her?"
+
+"She drinks," Lin said bluntly. "A lot. And when she drinks, she talks. We'd be trusting her with information that could get us all killed. But if we need to move fast, if we need to get out of Neo-Shanghai in a hurry, she's the only pilot I know who could do it."
+
+Kai thought about the mission ahead. Breaking into Tang's vault, stealing forty thousand consciousness backups, escaping with their lives. They'd need every advantage they could get. "Contact all three. Set up meetings. We'll vet them individually and make the final call tonight before we see Ghost."
+
+Dr. Zhao emerged from the bedroom, looking more rested but still drawn. "You're really doing this. Building a team, planning a heist. This is insane."
+
+"Sanity is a luxury we can't afford," Kai said. "Your husband is waiting for news. Forty thousand people are trapped in Tang's vault. Neurodyne is planning to enslave future generations. We don't have the option of walking away."
+
+"I could give you the option," Dr. Zhao said quietly. "I could turn myself in to Tang, trade my life for yours. He'd stop hunting you if he had what he wanted."
+
+"He'd kill you the moment he got the transfer protocol," Lin said. "And then he'd kill us anyway, just to tie up loose ends. You're not a bargaining chip, Doctor. You're a witness. The only person alive who can testify about Project Drift's true purpose. We need you alive."
+
+Dr. Zhao sat down heavily. "I've been running for so long, I forgot what it felt like to fight back. Maybe you're right. Maybe it's time to stop hiding."
+
+The first meeting was with Razor, at a basement workshop in the Gray Zone's tech sector. The space was cluttered with computer equipment, half-disassembled servers, and screens showing scrolling code. Razor herself was young, maybe twenty-three, with bright blue hair and neural interface ports covering half her skull. Her fingers never stopped moving, typing on multiple keyboards simultaneously.
+
+"You're the memory broker," she said without looking up. "Lin told me about your problem. Breaking into Neurodyne's systems, extracting consciousness data. That's not a small ask."
+
+"Can you do it?" Kai asked.
+
+"Of course I can do it," Razor said, sounding offended. "The question is what happens after. Neurodyne doesn't forgive people who hack their systems. They hire the best counter-intrusion teams money can buy. I'd be on their hit list for life."
+
+"You're already on their hit list," Lin pointed out. "They blacklisted you five years ago. At least this way, you get something out of it."
+
+"Access to Project Drift's architecture," Razor said, her eyes lighting up. "Lin mentioned that. Is it true? You can get me inside their consciousness transfer systems?"
+
+"If we succeed, you'll have complete access," Kai said. "Everything they've built, every line of code, every technical specification. It's yours."
+
+Razor finally stopped typing and looked at him directly. "I want it in writing. A contract, signed and encrypted. You promise me access, I help you break Tang's vault. No access, I walk and you get nothing."
+
+"Fair enough," Kai said. Lin pulled out a data slate and typed up a quick contract. Razor read it, nodded, and added her digital signature.
+
+"When do we start?" she asked.
+
+"Tomorrow night," Kai said. "We need to scout the location first. Be ready for my signal."
+
+The second meeting was with Jian Wu, at a fighting gym in the industrial sector. The gym was full of augmented workers training their reflexes, practicing combat forms designed for people with enhanced strength and speed. Wu was in a sparring ring, fighting three opponents simultaneously. He moved like water, flowing around their attacks and countering with surgical precision. One by one, his opponents hit the mat, defeated but not injured. Wu was skilled enough to win without causing permanent damage.
+
+He climbed out of the ring when he saw Lin, wiping sweat from his face with a towel. "Lin. It's been a while. I heard you left corporate life."
+
+"I did," Lin said. "Now I'm freelance. Like you."
+
+Wu's eyes moved to Kai and Dr. Zhao, assessing them with a professional's eye. "New clients?"
+
+"Potential partners," Kai said. "We're planning something big. Dangerous. We need someone who can handle himself in a fight and isn't afraid of corporate security."
+
+"I killed a corporate executive," Wu said flatly. "His name was Tanaka, and he was beating his twelve-year-old daughter. I put a railgun round through his head and walked out. You think I'm afraid of their security?"
+
+"I think you're exactly what we need," Kai said. "The job is breaking into a vault owned by Victor Tang. Heavy security, probably lethal response authorized. We'll be extracting data and consciousness backups. There's a good chance we don't all make it out alive."
+
+"What's the pay?" Wu asked.
+
+"One million yuan," Kai said. "Plus whatever satisfaction you get from hurting the people who make this city hell."
+
+Wu smiled grimly. "When do we start?"
+
+The third meeting was at a spaceport bar on the city's edge, where the buildings ended and the landing pads began. The bar catered to pilots and cargo workers, people who lived in the spaces between cities, always moving. Maya Chen was at the bar, nursing what looked like her third drink. She was older than Kai expected, maybe forty, with the lean build of someone who'd spent years in low gravity. Her eyes were glassy, but her hands were steady.
+
+"You're the memory broker," she said as Kai approached. "Lin said you might need a pilot. What's the job?"
+
+"Extraction," Kai said carefully. "We might need to leave Neo-Shanghai fast. Very fast. Can you get a ship on short notice?"
+
+"I can get a lot of things on short notice," Maya said. "Question is whether you can afford it. Fuel costs money. Landing fees cost money. Bribing traffic controllers costs a lot of money."
+
+"We can pay," Kai said. "But I need to know you're sober when it matters. Lin said you have a drinking problem."
+
+Maya's expression hardened. "I have a coping problem. You know what it's like, working for the orbital corps? Watching them live in luxury while the rest of us choke on pollution? I flew supplies up to their space stations every week. Food, water, medicine, everything they needed to maintain their paradise. And every week I came back down to this." She gestured at the grimy bar, the dirty windows, the city beyond. "Yeah, I drink. But when I'm in the cockpit, I'm the best damn pilot you'll find. My ship is clean, my license is current, and I have never, not once, crashed or lost cargo."
+
+"Good enough," Kai said. "We might need you tomorrow night. Have your ship ready. Payment is two million yuan if we need to fly, nothing if we don't."
+
+"Two million?" Maya set down her drink. "What exactly are you extracting?"
+
+"Better you don't know," Kai said. "Just be ready."
+
+Back at the safe house, they compiled their team roster. Razor, the hacker. Jian Wu, the muscle. Maya Chen, the pilot. Combined with Kai's knowledge of the memory trade, Lin's corporate security experience, and Dr. Zhao's technical expertise, they had a functional crew. Not perfect, not ideal, but good enough to have a chance.
+
+"Now we need to find Tang's vault," Lin said. "That's where Ghost comes in."
+
+They spent the afternoon preparing. Kai dug through his archive of secrets, looking for something valuable enough to trade. He settled on a neural recording from a mid-level government official who'd been taking bribes from three different criminal organizations. It wasn't as explosive as the Marcus Chen data, but it was solid intelligence that could ruin careers and shift power balances. Ghost would appreciate it.
+
+As the sun set, or rather as the amber pollution light faded to darkness, they prepared to return to the Night Market. This time they brought Wu with them, his augmented senses and combat skills providing an extra layer of security. The Gray Zone was neutral territory, but neutrality only extended so far. Tang's ten million yuan bounty was enough to make anyone consider betrayal.
+
+They took a different route than before, avoiding the maintenance tunnels and sticking to crowded streets where they could blend in. Kai kept his neural interface on passive scan, watching for familiar faces or suspicious surveillance patterns. Twice they doubled back when he spotted possible tails. By the time they reached the Night Market, he was reasonably confident they'd arrived clean.
+
+Ghost was waiting in the same tea house, surrounded by the same distortion fields. He looked up as they entered, his filtered voice carrying a note of approval. "You survived Tang's hunters. Impressive. Most people who earn his attention don't last twenty-four hours."
+
+"We're full of surprises," Kai said. He placed the data drive on the table. "Government corruption. Official named Zhang Wei, taking bribes from the Scorpion Triad, the Red Dragon gang, and a Yakuza splinter group. Complete records, dates, amounts, delivery mechanisms. It's yours for the location of Tang's vault."
+
+Ghost scanned the data, his distortion fields flickering with interest. "Very nice. Zhang Wei has been careful, but apparently not careful enough. This data could start a gang war or bring down a government department. Well done." He pocketed the drive and pulled out a holo-projector. "Tang's vault is located in the Pudong District, subsurface level, beneath an automated factory that produces neural interface components. The factory is owned by a shell company that's owned by another shell company that eventually traces back to Neurodyne Industries."
+
+A holographic map appeared above the table, showing the factory layout and the vault beneath it. "Access is through the factory's maintenance levels. Security is extensive: biometric locks, armed guards, automated defense systems, and a neural signature scanner that verifies everyone entering is authorized. The vault itself is built to military specifications. Reinforced walls, electromagnetic shielding, multiple redundant systems. Getting in will be hard. Getting out alive will be harder."
+
+"How current is this information?" Lin asked.
+
+"Six days old," Ghost said. "I had someone observe the facility for a week. Guard rotations happen every twelve hours. Lowest security is between 0200 and 0400, when only a skeleton crew is present. But even at minimum, we're talking twenty armed guards and God knows what automated defenses."
+
+"What about the vault's contents?" Dr. Zhao asked. "Can you confirm it holds the consciousness backups from Chen-Matsuda?"
+
+"I can't confirm the specific contents," Ghost admitted. "But I can confirm that Tang has been moving large amounts of data storage equipment into the facility over the past three years. Petabytes of data, requiring specialized cooling and power systems. That's consistent with storing forty thousand consciousness backups."
+
+Kai studied the holographic map, memorizing the layout. "What about escape routes?"
+
+"Limited," Ghost said. "The facility was designed to prevent intrusion, which means it's also good at preventing escape. Your best bet is to have an exit strategy planned before you go in. If things go wrong, you'll need somewhere to run that Tang's people can't follow."
+
+"We're working on that," Kai said.
+
+Ghost's distortion fields pulsed. "One more thing, as a professional courtesy. Tang knows someone is asking about his vault. He's increased security and put his best people on alert. Whatever you're planning, you'll need to move fast. He's expecting trouble."
+
+"Then we won't disappoint him," Kai said.
+
+They left the tea house and merged back into the Night Market's crowds. Wu walked ahead of them, his augmented hearing and threat-assessment software making him the perfect point man. They made it three blocks before Kai's neural interface started screaming warnings.
+
+"We've got company," he said quietly. "Multiple hostiles, closing from three directions."
+
+"Tang's people?" Lin asked.
+
+"Or bounty hunters," Kai said. "Either way, we need to move."
+
+They broke into a run, scattering the crowd. Shouts behind them, the distinctive whine of charging railguns. This wasn't going to be subtle.
+
+The hunt was on again. And this time, they had nowhere left to hide.

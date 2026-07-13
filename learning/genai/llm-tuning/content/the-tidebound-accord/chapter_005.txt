@@ -1,0 +1,143 @@
+Chapter 5: Shadows in the Deep
+
+With the Windskimmer gone, Kerra needed new lodging. Davin offered a spare room in his house, a small space barely larger than a closet but infinitely better than sleeping on the streets. She moved in that afternoon, carrying everything she owned in a single canvas bag.
+
+"The rent is your continued survival," Davin said as she settled in. "And your help with research. I've been tracking the tide-vein destabilizations for years, but I need someone who can actually sense them at distance. Tomorrow, once you've rested, we'll start mapping the damage."
+
+That night, Kerra lay awake in her new bed and listened to the city around her. Deepwater Crossing never truly slept—there were always ships arriving or departing, dock workers loading cargo, Deepwater weavers swimming through their submerged districts. But there was a new tension in the sounds, an edge of barely suppressed violence.
+
+She reached out with her tide-sense, carefully this time, just skimming the surface of the city's emotional resonance. Fear everywhere, thick as fog. Anger simmering just below. And underneath it all, that persistent hollowness where the tide-veins should be strong but instead felt thin and weak.
+
+Kerra pulled back before she exhausted herself and tried to sleep. Tomorrow's work would require all her strength.
+
+Davin woke her before dawn with a mug of bitter tea and a stack of charts. "Drink that. We have a long day ahead."
+
+The charts were maps of Vaetheris, showing the known tide-vein network as generations of researchers had mapped it. Major veins ran beneath the ocean floor like underground rivers, while smaller capillary veins branched off to supply individual islands and settlements. Red marks dotted the maps, indicating locations where destabilizations had been reported.
+
+"See the pattern?" Davin asked, pointing to a cluster of marks in the western archipelago. "The damage isn't random. It's concentrated in areas where multiple veins converge, places where the flow is strongest and most critical to the overall network."
+
+"Strategic targets," Kerra observed. "Like cutting major arteries rather than minor capillaries."
+
+"Exactly. Now, here's what I need you to do. I need you to sense those damaged veins and tell me what you feel. Not just that they're weak—I need to know how they're weak. Is it like something's draining them? Blocking them? Corrupting them? The nature of the damage will tell us how it's being done, and hopefully, who's doing it."
+
+Kerra studied the map, feeling her stomach tighten. The red marks stretched across hundreds of miles. "That's... a lot of ground to cover."
+
+"Which is why we'll start with the closest ones and work outward. Deepwater Crossing sits above one of the largest vein convergences in Vaetheris. If the Hollowed are sabotaging the network, they've almost certainly targeted the veins here."
+
+They made their way to a quiet section of the Crossing's outer platforms, where a small observation deck jutted out over the open ocean. Below, Kerra could see the crystal-clear water dropping away into deeper blue, the abyss beginning its long descent to the ocean floor.
+
+"The main vein runs about two hundred feet down," Davin said. "Far enough that surface activity won't interfere with your sensing. Sit, center yourself, and reach for it carefully. Remember—don't try to touch it directly. Just observe."
+
+Kerra sat cross-legged on the sun-warmed wood and closed her eyes. She spent several minutes calming her breathing, settling her mind, letting the constant background noise of the tides fade to a manageable level. Then, slowly, she extended her awareness downward.
+
+The tide-vein was massive, easily twenty feet in diameter, a roaring torrent of mixed elemental power flowing beneath the ocean floor. Water-tide dominant, naturally, but with strong currents of stone and hints of wind and flame woven throughout. It should have been overwhelming in its intensity.
+
+Instead, it felt... muted. Like looking at a vibrant painting through clouded glass. The power was there, but something was interfering with its flow, creating drag and turbulence where there should be smooth current.
+
+Kerra focused on one of the turbulent patches and carefully examined it without touching. The damage didn't feel natural—no mineral buildup or coral growth, which would have distinct structural signatures. Instead, it was almost like someone had inserted a sieve into the vein's flow, something that let most of the power through but siphoned off a portion for some other purpose.
+
+"There's something in the vein," she murmured, eyes still closed. "An obstruction, but not a physical one. It's like... a weaving? Something artificial drawing off power."
+
+"Can you tell what kind of weaving?"
+
+Kerra examined the obstruction more closely, feeling along its edges. It was complex, multi-layered, definitely the work of a skilled weaver. And it had a distinct signature, a resonance she instinctively knew came from void-tide manipulation.
+
+Her eyes snapped open. "It's void-weaving. Someone's using void-tide to create boundaries within the vein itself, separating portions of the flow and redirecting them elsewhere."
+
+Davin's expression darkened. "That confirms it. Only the Hollowed would use void-weaving so brazenly. It's been forbidden for centuries, but if they're trying to free their king, they wouldn't care about breaking taboos."
+
+"Can I remove it? Undo the weaving?"
+
+"Not without alerting whoever placed it. These kinds of weavings usually have triggers built in—if someone attempts to dismantle them, the creator is notified immediately. We'd lose our element of surprise." Davin pulled out a small journal and began sketching rapidly. "But now we know what we're looking for. If you can sense these void-weavings in other locations, we can map out the entire sabotage network and figure out where all this stolen tide-energy is being redirected to."
+
+"You think they're collecting it somewhere?"
+
+"They have to be. You can't just drain that much power and let it dissipate—it would cause catastrophic environmental damage. No, they're funneling it somewhere for a specific purpose. My guess? The Abyssal Rift. They're trying to weaken the seal from the outside while feeding power to the Hollow King from the inside, helping him break free."
+
+The implications were staggering. "If they succeed—"
+
+"If they succeed, the Hollow King rises, and everything we know ends." Davin closed his journal with a snap. "Which is why we're going to stop them. Starting with mapping every sabotaged vein in this region. Can you do more sensing today, or do you need rest?"
+
+Kerra assessed her state. She was tired, but not dangerously so. "I can do more. How many sites?"
+
+"Four more major convergences within a day's boat ride. We'll hire a small craft and visit each one. The more data we gather, the clearer the pattern will become."
+
+They spent the rest of the day on the water, visiting vein convergences and documenting the damage. Each site showed the same pattern—sophisticated void-weavings siphoning off power in carefully controlled amounts. Whoever was doing this understood the tide-vein network intimately, knew exactly how much they could drain without causing immediate systemic collapse.
+
+By the time they returned to Deepwater Crossing, Kerra was exhausted and sunburned, but they had valuable intelligence. Davin spread his sketches across his workroom table and studied them with the intensity of a man staring at a puzzle he was determined to solve.
+
+"The weavings are nearly identical at each site," he muttered. "Same technique, same signature. Either one person is doing all of this, which seems impossible given the geographic spread, or multiple people are working from the same template."
+
+"A coordinated group. The Hollowed." Kerra joined him at the table. "How many would they need?"
+
+"Dozens at minimum. Maybe hundreds. And they'd need access to the vein sites, which means ships, diving equipment, water-weavers who can work at depth..." Davin trailed off, his expression troubled. "This isn't some underground cult operating in secret. This is a major organization with significant resources."
+
+"Resources that would require funding, logistics, coordination." Kerra felt pieces clicking together. "They'd need supporters with money and influence. People in positions of authority."
+
+"People in the Enclaves or Holds, yes. Perhaps both." Davin met her eyes. "This goes high, Kerra. Higher than we thought. The Hollowed aren't just scattered cultists—they're embedded in the power structures we'd normally turn to for help."
+
+"Then who can we trust?"
+
+"Right now? Each other. Maybe Maren, though I'm glad she left on the Windskimmer. Anyone else is suspect until proven otherwise." Davin began rolling up his charts. "We need more information before we can act. Specifically, we need to know where the stolen power is being sent. If we can find the collection point, we can potentially disrupt their entire operation."
+
+"And probably get ourselves killed in the process," Kerra added dryly.
+
+"Almost certainly. But what's life without a little danger?"
+
+Despite the grim situation, Kerra found herself smiling. There was something oddly liberating about knowing you were completely out of your depth and choosing to move forward anyway.
+
+Over the next week, Kerra and Davin fell into a routine. Mornings were spent training—Kerra's control improved daily, her ability to manipulate multiple tides simultaneously becoming smoother and more intuitive. Afternoons were dedicated to investigation, hiring boats to visit distant vein sites and adding to their growing map of sabotage.
+
+The pattern became clearer with each new data point. The stolen power was being funneled south and west, toward a region of deep ocean that the charts labeled simply as "the Trench." Ancient and largely unexplored, the Trench was rumored to reach depths where even Deepwater weavers couldn't survive, where crushing pressure and absolute darkness created an environment hostile to all life.
+
+"The Abyssal Rift is somewhere in the Trench," Davin confirmed. "The old records are vague about its exact location—the weavers who sealed the Hollow King there didn't want to leave convenient directions for any future cultists. But if the Hollowed have rediscovered it..." He didn't need to finish the thought.
+
+Meanwhile, the political situation in Deepwater Crossing continued to deteriorate. The incident count climbed daily—fights breaking out between Enclave and Hold loyalists, ships being refused docking rights based on their home port, even reports of assassination attempts against prominent leaders on both sides.
+
+"It's a distraction," Davin said as they discussed the latest reports. "The Hollowed are likely fanning the flames, keeping everyone focused on this manufactured conflict while they finish their work in secret. By the time anyone realizes the real threat, it'll be too late."
+
+"Then we need to expose them," Kerra said. "Force the issue into the open."
+
+"With what proof? Void-weaving signatures that only you can detect? Conspiracy theories about ancient cults? We'd be laughed out of any council chamber, assuming we weren't arrested for our trouble."
+
+Kerra had to admit he was right. They needed something concrete, something undeniable. Which meant they needed to find the collection point, witness the Hollowed at work, and somehow survive long enough to report back.
+
+No pressure.
+
+On the tenth day after the Windskimmer's departure, everything changed.
+
+Kerra woke to shouting and the sound of running feet on the platforms outside. She threw on her clothes and stumbled into Davin's workroom to find him already at the window, his face pale.
+
+"What's happening?"
+
+"See for yourself."
+
+Kerra looked out and felt her blood turn to ice. Rising from the water all around the Crossing were pillars—dozens of them, maybe hundreds, all glowing with that same sickly green light she'd seen when the first one emerged near the Windskimmer. They rose in a rough circle around the city, creating a fence of ancient stone covered in carved spirals.
+
+"The seal's failing faster than we thought," Davin whispered. "Those are all wards surfacing. The entire network is coming apart."
+
+As Kerra watched, one of the nearest pillars began to pulse, its light growing brighter and more intense. A resonance built in her chest, that familiar pull she'd felt before. But this time it was stronger, more insistent, almost painful.
+
+And beneath it all, she heard—or felt, or knew—a voice. Ancient, vast, hungry. Calling to her across the miles and depths.
+
+*Come to me, little resonant. Come and free me. Come and become what you were meant to be.*
+
+The Hollow King was awake and aware. And he knew she existed.
+
+Kerra stumbled back from the window, her hands shaking. "He can feel me. He knows I'm here."
+
+"Then the Hollowed will know too, if they didn't already." Davin grabbed his travel pack and began stuffing it with charts, journals, and supplies. "We need to leave the Crossing. Now. Before they come for you."
+
+"Leave? And go where?"
+
+Davin met her eyes, and she saw decision crystallize there. "The Trench. If the Hollow King is calling to you specifically, it means he sees you as either a threat or an opportunity. Either way, we need to reach the Abyssal Rift before his followers complete their work. It's the only chance we have."
+
+"That's insane. We don't even know exactly where the Rift is, or how to—"
+
+"You'll be able to find it. You're a resonant, and he's calling to you. That connection goes both ways." Davin thrust a pack into her hands. "I know it's dangerous. I know the odds are terrible. But staying here is certain death, and hiding does nothing to stop what's coming. So we go forward, and we either seal the Hollow King permanently or die trying."
+
+Kerra looked at the pack in her hands, at the pillars glowing outside the window, at Davin's determined face. She thought of everyone who would die if the Hollow King rose. Everyone in Deepwater Crossing, in the Enclaves, in the Holds. Her brother Finn. Captain Breslin and the Windskimmer's crew. Everyone.
+
+The choice, really, was no choice at all.
+
+"All right," she said quietly. "Let's go stop the end of the world."

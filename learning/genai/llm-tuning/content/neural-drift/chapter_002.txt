@@ -1,0 +1,123 @@
+Chapter 2: Ghost in the Network
+
+Lin insisted they leave immediately. "Tang's surveillance net covers most of the Lower Stacks. We need to get off-grid."
+
+Kai grabbed his go-bag, a habit from years of moving fast when jobs went sideways. Inside was cash, three fake identity chips, emergency medical supplies, and a backup neural interface in case his current one got fried. He slung it over his shoulder and followed Lin into the corridor.
+
+The coffin hotel was nearly silent at this hour, just the hum of air recyclers and the distant murmur of other residents living their cramped lives. Lin moved with purpose, leading him to the emergency stairwell instead of the elevator. Smart. Elevators were monitored, tracked, logged. Stairs were analog, anonymous.
+
+They descended quickly, Kai's leg muscles burning by the time they reached the fortieth floor. Lin pushed through a service door into a maintenance corridor, its walls lined with thick power conduits and data cables. Graffiti marked the walls, gang tags mixed with political slogans. "Down with the Orbital Elite." "Neural freedom now." The usual Lower Stacks sentiment.
+
+"Where are we going?" Kai asked, his voice echoing in the narrow space.
+
+"The Gray Zone," Lin replied. "Neutral territory. Tang has influence there, but he doesn't control it. We'll be safer."
+
+The Gray Zone was a ten-block radius in the heart of the Lower Stacks where three major gangs had fought to a bloody stalemate fifteen years ago. Rather than continue the war, they'd declared it neutral ground, a place where business could happen without interference. The police didn't go there. Corporate security avoided it. It was as close to lawless as Neo-Shanghai got, which made it perfect for people who needed to disappear.
+
+They emerged from the maintenance corridor into a street market that never closed. Vendors sold everything from black-market augments to stolen pharmaceuticals. Kai saw a teenager getting a neural implant installed in a makeshift operating chair, the "doctor" working with tools that probably hadn't been sterilized in years. The kid would be lucky if he didn't end up with an infection or worse.
+
+Lin led him through the crowd to a noodle stand where an old woman with milky cataracts stirred a massive pot of broth. She looked up as they approached, and Kai saw her eyes weren't damaged at all. They were military-grade optical implants, disguised to look impaired. A common trick in the Gray Zone. Never let people know your capabilities.
+
+"Two bowls," Lin said. "And we need the back room."
+
+The old woman nodded and gestured with her ladle. They passed through a curtain into a small private dining area. The walls here were reinforced concrete, lined with the same dampening mesh Kai used in his apartment. A proper dead zone.
+
+They sat at a low table. A moment later, the old woman brought two bowls of actual noodles, real wheat instead of synthesized protein. Expensive. Lin had connections.
+
+"Start talking," Kai said, picking up his chopsticks. "Everything you know about Victor Tang and the stolen archive."
+
+Lin ate methodically, as if organizing her thoughts. "I was a junior technician at Chen-Matsuda, facility CM-089. My job was data integrity, making sure the neural backups were stored correctly and remained uncorrupted. It was boring work, but it paid well. The facility held maybe seventy thousand backups total. Most were standard memory extractions, the kind you trade in. But about forty thousand were special."
+
+"Project Drift," Kai said.
+
+Lin's eyes widened slightly. "You know about it?"
+
+"Just rumors. Consciousness transfer experiments. Your turn to fill in the details."
+
+She took a breath. "Project Drift was a joint venture between Chen-Matsuda and Neurodyne Industries. The goal was to create perfect digital copies of human consciousness. Not just memories, but entire personalities, complete with decision-making algorithms, emotional responses, everything that makes someone who they are. They recruited volunteers, mostly terminally ill patients who wanted a shot at immortality. The procedure was expensive, complicated, and only worked about sixty percent of the time."
+
+"What happened to the other forty percent?" Kai asked, though he suspected he knew.
+
+"Dead or vegetables," Lin said flatly. "The neural mapping process is invasive. If something goes wrong, it can fry your brain. But the volunteers were desperate, so they signed the waivers and took the risk."
+
+Kai thought about Mei Zhao, a nineteen-year-old university student. "Why would a healthy teenager volunteer for something like that?"
+
+"I don't know," Lin admitted. "Most of the volunteers were older, sixty or seventy. But there were a few younger ones. Maybe they were thrill-seekers, or maybe they were paid enough to take the risk. The files I saw didn't include motivations, just consent forms and medical data."
+
+"Tell me about the fire."
+
+Lin's expression darkened. "It happened during the night shift. I was off that day, lucky for me. The official report said it was an electrical fire, started in the server room. But I worked in that server room every day. The fire suppression systems were top-of-the-line, automated, redundant. There's no way a fire could have spread far enough to kill seventy people unless someone disabled the safety systems."
+
+"Corporate sabotage?"
+
+"That's what everyone assumed. Chen-Matsuda had enemies. But here's the thing: after the fire, I did some digging. The backup archives were stored in a hardened vault, fireproof, EMP-shielded, the works. Even if the entire building burned to the ground, those archives should have survived. But when the recovery teams went in, the vault was empty. Someone had opened it from the inside, during the fire, and taken everything."
+
+Kai set down his chopsticks. "An inside job."
+
+"Had to be. The vault required biometric authentication from three different administrators. Someone with access planned it."
+
+"And Victor Tang?"
+
+"I started asking questions, trying to figure out who could have done it. That's when I heard Tang's name. He's not just a memory trafficker. He's connected to Neurodyne Industries, one of the partners in Project Drift. Some people think he orchestrated the whole thing to steal the research data. Others think he's working for someone even higher up, someone in the orbital corporations."
+
+The orbital corporations. The true rulers of Neo-Shanghai, headquartered in massive space stations where they lived above the pollution, the crime, the grinding poverty. They controlled the city's economy, its government, its infrastructure. If one of them wanted something, they took it, and nobody asked questions.
+
+"You said Tang is letting me run," Kai said. "Why? If he wanted me dead, I'd be dead."
+
+"Because he's looking for something," Lin said. "The neural backups he stole, they're valuable, but they're not complete. Project Drift had three components: the neural mapping procedure, the storage archive, and the consciousness transfer protocol. Tang has the archive, but he doesn't have the transfer protocol. Without it, the backups are just data. He can't actually bring anyone back to life."
+
+"And he thinks I can find the protocol?"
+
+"I think he's hoping you'll lead him to someone who knows where it is. Your client, Mr. Zhao, his daughter was part of Project Drift. Her mother, Dr. Elena Zhao, was one of the lead researchers. She disappeared right after the fire. Tang's been looking for her for three years."
+
+Kai felt the pieces clicking into place. "Zhao didn't just lose his daughter. He lost his wife too."
+
+"And if he finds her, Tang finds the transfer protocol. That's why he's letting you investigate. You're bait."
+
+Kai leaned back, his mind racing. He'd walked into this thinking it was a simple missing memory case, the kind he'd done a hundred times before. But this was something else entirely. Corporate conspiracy, stolen consciousness, a manhunt spanning three years. The two million yuan suddenly seemed like a very small number.
+
+"I could walk away," he said. "Tell Zhao it's impossible, return his money, disappear."
+
+"You could," Lin agreed. "But Tang knows you took the job. Even if you walk away now, he'll keep watching you, waiting to see if you contact Dr. Zhao. You're already in the game, Kai. The only question is whether you play to win or play to survive."
+
+Kai thought about the desperate father in the ramen shop, the trembling hands, the grief in his eyes. He thought about forty thousand stolen souls, locked away in some trafficker's vault. He thought about the nineteen-year-old girl who'd volunteered to have her consciousness mapped, who'd died in an accident a week later, and whose father had spent three years searching for what remained of her.
+
+"If we do this," he said carefully, "we're going up against Victor Tang, Neurodyne Industries, and probably half the orbital corporations. We'll need more than the two of us."
+
+Lin smiled. "I have people in mind. But first, we need to find Dr. Elena Zhao. If she's still alive, she's the key to everything."
+
+"Any leads?"
+
+"One. Three months after the fire, there was a reported sighting of her in the Kowloon District, near the black market neural clinics. The informant said she was going by a different name, working as an underground augment surgeon. I tried to follow up, but the trail went cold."
+
+The Kowloon District. Kai knew it well. It was where he'd gotten his own illegal neural interface, a cheap Chinese knock-off that glitched whenever the temperature dropped below zero. The district was a maze of cramped buildings and narrow alleys, every surface covered in wiring and pipes. The kind of place where you could disappear completely if you knew how.
+
+"We'll need to be careful," Kai said. "If Tang has people in Kowloon, they'll spot us the moment we start asking questions."
+
+"I know someone who can help," Lin said. "A data broker named Ghost. He deals in information, nothing else. Completely neutral, never takes sides. If anyone knows where Dr. Zhao is hiding, it's him."
+
+"What's his price?"
+
+"Secrets," Lin said. "Ghost collects information the way some people collect art. You want to buy from him, you need to bring something he doesn't already know."
+
+Kai thought about his years in the memory trade, the secrets he'd accumulated, the dirty laundry of corporate executives and gang bosses. He had plenty of leverage. The question was whether it would be enough.
+
+"Set up a meeting," he said. "Tomorrow night. Somewhere public but anonymous."
+
+Lin nodded and pulled out a disposable comm unit, one of the cheap encrypted devices that self-destructed after a single use. She tapped out a message and sent it into the network. A moment later, a reply came back.
+
+"He'll meet us at the Night Market, third sector, midnight tomorrow. Come alone, bring payment."
+
+"Alone?" Kai raised an eyebrow.
+
+"He means no weapons, no backup, no surveillance. Ghost is paranoid, even by Gray Zone standards. But he's the best, and he's never burned a client. If he says Dr. Zhao is somewhere, she's there."
+
+They finished their noodles in silence. Around them, the Gray Zone hummed with its peculiar energy, a place where the rules didn't apply and survival was negotiated minute by minute. Kai had always preferred the edges of society, the places where he could move without being tracked, without being controlled. But now he was walking into something that would drag him back into the spotlight, whether he wanted it or not.
+
+As they left the noodle stand, Kai felt the weight of his railgun under his jacket, a familiar comfort. Lin walked beside him, her augmented reflexes keeping her alert to every shadow, every movement. They were an unlikely partnership, a memory broker and a corporate defector, bound together by circumstance and necessity.
+
+Somewhere in the city, Victor Tang was watching, waiting for them to make a mistake. Somewhere else, Dr. Elena Zhao was hiding, carrying the secret that could change everything. And in between, forty thousand digital souls waited in the dark, neither alive nor dead, trapped in a limbo of stolen data.
+
+Kai Chen had spent years trading in memories, but now he was chasing something more fundamental: the truth of what it meant to be human in an age where consciousness itself could be bought and sold.
+
+The rain fell harder as they disappeared into the neon-lit streets, just two more shadows in a city of millions.
