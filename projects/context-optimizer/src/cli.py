@@ -31,7 +31,6 @@ import os
 import sys
 from pathlib import Path
 
-
 # ── App config loader ─────────────────────────────────────────────────────────
 
 _DEFAULT_CONFIG_NAMES = ("app_config.yaml", "app_config.yml")
@@ -71,16 +70,22 @@ def _apply_app_config(cfg: dict) -> None:
         os.environ.setdefault("CONTEXT_OPTIMIZER_COMPRESSOR_PROVIDER", provider)
         provider_cfg = comp.get(provider, {})
         if "model" in provider_cfg:
-            os.environ.setdefault("CONTEXT_OPTIMIZER_COMPRESSOR_MODEL", provider_cfg["model"])
+            os.environ.setdefault(
+                "CONTEXT_OPTIMIZER_COMPRESSOR_MODEL", provider_cfg["model"]
+            )
         if "code_model" in provider_cfg:
-            os.environ.setdefault("CONTEXT_OPTIMIZER_CODE_MODEL", provider_cfg["code_model"])
+            os.environ.setdefault(
+                "CONTEXT_OPTIMIZER_CODE_MODEL", provider_cfg["code_model"]
+            )
         if provider == "ollama" and "base_url" in provider_cfg:
             os.environ.setdefault("OLLAMA_BASE_URL", provider_cfg["base_url"])
         if provider == "hf" and "device" in provider_cfg:
             os.environ["CONTEXT_OPTIMIZER_HF_DEVICE"] = str(provider_cfg["device"])
         if provider == "azure_foundry":
             if "endpoint" in provider_cfg:
-                os.environ.setdefault("AZURE_AI_FOUNDRY_ENDPOINT", provider_cfg["endpoint"])
+                os.environ.setdefault(
+                    "AZURE_AI_FOUNDRY_ENDPOINT", provider_cfg["endpoint"]
+                )
             if "model" in provider_cfg:
                 os.environ.setdefault("AZURE_AI_FOUNDRY_MODEL", provider_cfg["model"])
 
@@ -107,34 +112,42 @@ def _cmd_build(args: argparse.Namespace) -> None:
     _apply_app_config(cfg)
 
     corpus_cfg = cfg.get("corpus", {})
-    idx_cfg    = cfg.get("index", {})
+    idx_cfg = cfg.get("index", {})
 
     # Resolve paths: CLI > config > defaults
-    corpus_path = Path(
-        getattr(args, "corpus", None)
-        or corpus_cfg.get("path", ".")
-    ).expanduser().resolve()
+    corpus_path = (
+        Path(getattr(args, "corpus", None) or corpus_cfg.get("path", "."))
+        .expanduser()
+        .resolve()
+    )
 
-    index_dir = Path(
-        getattr(args, "index", None)
-        or corpus_cfg.get("index_dir", "~/.co/index")
-    ).expanduser().resolve()
+    index_dir = (
+        Path(getattr(args, "index", None) or corpus_cfg.get("index_dir", "~/.co/index"))
+        .expanduser()
+        .resolve()
+    )
     index_dir.mkdir(parents=True, exist_ok=True)
 
-    block_mb      = float(getattr(args, "block_mb", None) or idx_cfg.get("block_mb", 0.5))
-    cluster_size  = int(getattr(args, "cluster_size", None) or idx_cfg.get("cluster_size", 4))
-    overlap_pct   = float(idx_cfg.get("overlap_pct", 10.0))
+    block_mb = float(getattr(args, "block_mb", None) or idx_cfg.get("block_mb", 0.5))
+    cluster_size = int(
+        getattr(args, "cluster_size", None) or idx_cfg.get("cluster_size", 4)
+    )
+    overlap_pct = float(idx_cfg.get("overlap_pct", 10.0))
 
     print(f"[build] Corpus  : {corpus_path}")
     print(f"[build] Index   : {index_dir}")
-    print(f"[build] Provider: {os.getenv('CONTEXT_OPTIMIZER_COMPRESSOR_PROVIDER', 'hf')}")
-    print(f"[build] Model   : {os.getenv('CONTEXT_OPTIMIZER_COMPRESSOR_MODEL', 'facebook/bart-large-cnn')}")
+    print(
+        f"[build] Provider: {os.getenv('CONTEXT_OPTIMIZER_COMPRESSOR_PROVIDER', 'hf')}"
+    )
+    print(
+        f"[build] Model   : {os.getenv('CONTEXT_OPTIMIZER_COMPRESSOR_MODEL', 'facebook/bart-large-cnn')}"
+    )
 
     from context_optimizer.compressor import _build_local_llm, ingest_file_blocks
     from context_optimizer.raw_index import BlockIndex
     from context_optimizer.tree_index import TreeIndex, _auto_tree_depth
 
-    block_db    = index_dir / "blocks.db"
+    block_db = index_dir / "blocks.db"
     block_index = BlockIndex(str(block_db))
 
     t0 = time.perf_counter()
@@ -142,6 +155,7 @@ def _cmd_build(args: argparse.Namespace) -> None:
     if corpus_path.is_dir():
         # Multi-format directory ingestion
         from context_optimizer.ingest_corpus import ingest_directory
+
         chunks = ingest_directory(
             directory=corpus_path,
             block_index=block_index,
@@ -181,7 +195,9 @@ def _cmd_build(args: argparse.Namespace) -> None:
 
     elapsed = time.perf_counter() - t0
     print(f"\n[build] Done in {elapsed:.1f}s")
-    print(f"[build] L1={tree.block_count()} blocks   L2+={tree.cluster_count()} clusters")
+    print(
+        f"[build] L1={tree.block_count()} blocks   L2+={tree.cluster_count()} clusters"
+    )
     print(f"[build] Index saved to: {index_dir}")
     print(f'\n  Run: context-optimizer ask "your question here"')
 
@@ -198,13 +214,14 @@ def _cmd_ask(args: argparse.Namespace) -> None:
     _apply_app_config(cfg)
 
     corpus_cfg = cfg.get("corpus", {})
-    query_cfg  = cfg.get("query", {})
+    query_cfg = cfg.get("query", {})
     reason_cfg = cfg.get("reasoning", {}).get("ollama", {})
 
-    index_dir = Path(
-        getattr(args, "index", None)
-        or corpus_cfg.get("index_dir", "~/.co/index")
-    ).expanduser().resolve()
+    index_dir = (
+        Path(getattr(args, "index", None) or corpus_cfg.get("index_dir", "~/.co/index"))
+        .expanduser()
+        .resolve()
+    )
 
     if not index_dir.exists():
         print(f"[ask] Index not found at {index_dir}")
@@ -212,10 +229,12 @@ def _cmd_ask(args: argparse.Namespace) -> None:
         sys.exit(1)
 
     question = args.question
-    top_k     = int(getattr(args, "top_k", None) or query_cfg.get("top_k", 5))
+    top_k = int(getattr(args, "top_k", None) or query_cfg.get("top_k", 5))
     max_rounds = int(query_cfg.get("max_rounds", 4))
     show_citations = query_cfg.get("show_citations", True)
-    show_steps     = bool(getattr(args, "show_steps", False) or query_cfg.get("show_steps", False))
+    show_steps = bool(
+        getattr(args, "show_steps", False) or query_cfg.get("show_steps", False)
+    )
 
     from context_optimizer.raw_index import BlockIndex
     from context_optimizer.tree_index import TreeIndex
@@ -229,18 +248,20 @@ def _cmd_ask(args: argparse.Namespace) -> None:
     )
 
     # Build reasoning LLM
-    reasoning_model = (
-        getattr(args, "model", None)
-        or reason_cfg.get("model", "")
-    )
+    reasoning_model = getattr(args, "model", None) or reason_cfg.get("model", "")
     llm = None
     if reasoning_model:
         try:
             from langchain_ollama import ChatOllama  # type: ignore[import]
-            base_url = reason_cfg.get("base_url", os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"))
+
+            base_url = reason_cfg.get(
+                "base_url", os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+            )
             llm = ChatOllama(model=reasoning_model, base_url=base_url, temperature=0.0)
         except Exception as exc:
-            print(f"[ask] Warning: could not load reasoning model ({exc}). Running retrieval-only.")
+            print(
+                f"[ask] Warning: could not load reasoning model ({exc}). Running retrieval-only."
+            )
 
     agent = TreeReasoningAgent(
         tree=tree,
@@ -530,23 +551,36 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Index documents using Tree-of-Summaries (reads app_config.yaml)",
     )
     p_build.add_argument(
-        "--corpus", default=None, metavar="PATH",
+        "--corpus",
+        default=None,
+        metavar="PATH",
         help="Override corpus path from app_config.yaml",
     )
     p_build.add_argument(
-        "--index", default=None, metavar="DIR",
+        "--index",
+        default=None,
+        metavar="DIR",
         help="Override index directory from app_config.yaml",
     )
     p_build.add_argument(
-        "--block-mb", type=float, default=None, dest="block_mb",
+        "--block-mb",
+        type=float,
+        default=None,
+        dest="block_mb",
         help="Override block_mb from app_config.yaml",
     )
     p_build.add_argument(
-        "--cluster-size", type=int, default=None, dest="cluster_size",
+        "--cluster-size",
+        type=int,
+        default=None,
+        dest="cluster_size",
         help="Override cluster_size from app_config.yaml",
     )
     p_build.add_argument(
-        "--config", default=None, metavar="FILE", dest="config_file",
+        "--config",
+        default=None,
+        metavar="FILE",
+        dest="config_file",
         help="Path to app_config.yaml (default: auto-discover from cwd upward)",
     )
 
@@ -557,23 +591,36 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     p_ask.add_argument("question", help="Free-form question to answer")
     p_ask.add_argument(
-        "--index", default=None, metavar="DIR",
+        "--index",
+        default=None,
+        metavar="DIR",
         help="Override index directory from app_config.yaml",
     )
     p_ask.add_argument(
-        "--model", default=None, metavar="MODEL",
+        "--model",
+        default=None,
+        metavar="MODEL",
         help="Override reasoning model from app_config.yaml",
     )
     p_ask.add_argument(
-        "--top-k", type=int, default=None, dest="top_k",
+        "--top-k",
+        type=int,
+        default=None,
+        dest="top_k",
         help="Number of tree nodes retrieved per query",
     )
     p_ask.add_argument(
-        "--show-steps", action="store_true", default=False, dest="show_steps",
+        "--show-steps",
+        action="store_true",
+        default=False,
+        dest="show_steps",
         help="Print the agent's navigation steps alongside the answer",
     )
     p_ask.add_argument(
-        "--config", default=None, metavar="FILE", dest="config_file",
+        "--config",
+        default=None,
+        metavar="FILE",
+        dest="config_file",
         help="Path to app_config.yaml (default: auto-discover from cwd upward)",
     )
 
@@ -747,11 +794,11 @@ def main() -> None:
     args = parser.parse_args()
 
     dispatch = {
-        "build":     _cmd_build,
-        "ask":       _cmd_ask,
-        "ingest":    _cmd_ingest,
-        "query":     _cmd_query,
-        "watch":     _cmd_watch,
+        "build": _cmd_build,
+        "ask": _cmd_ask,
+        "ingest": _cmd_ingest,
+        "query": _cmd_query,
+        "watch": _cmd_watch,
         "benchmark": _cmd_benchmark,
     }
     dispatch[args.command](args)
