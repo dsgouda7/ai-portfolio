@@ -113,5 +113,8 @@
   "files.readonlyInclude": {
     "**/*.ipynb": true
   },
+  "files.readonlyExclude": {
+    "**/*.ipynb": true
+  },
   "notebook.defaultKernel": "ai-ml-dev"
 }
