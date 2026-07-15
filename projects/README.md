@@ -44,4 +44,54 @@ Local REST service that applies Swin2SR (4× super-resolution) and MetricGAN+ (s
 
 `PyTorch` `HuggingFace` `Swin2SR` `MetricGAN+` `Flask` `Docker`
 
+---
+
+## [Conversation Analyzer](conversation-analyzer/)
+
+**Can a local, CPU-friendly model turn raw conversation transcripts (text or audio) into structured key points without any cloud API?**
+
+Gradio app that transcribes audio with Whisper and extracts key points with FLAN-T5, chunking long transcripts to stay within context limits.
+
+`Gradio` `Whisper` `FLAN-T5` `Transformers` `Python`
+
+---
+
+## [Conversational AI](conversational-ai/)
+
+**Can a small, local causal LM hold a coherent multi-turn conversation with bounded memory on CPU-only hardware?**
+
+Flask chatbot backed by Qwen2.5-1.5B-Instruct with a trimmed rolling chat history to keep responses fast and memory bounded.
+
+`Flask` `Qwen2.5` `Transformers` `PyTorch`
+
+---
+
+## [Image Captioning](image-captioning/)
+
+**Can a single pretrained vision-language model generate accurate image captions through a simple web UI with no fine-tuning?**
+
+Gradio app wrapping BLIP-2 for zero-shot image captioning.
+
+`Gradio` `BLIP-2` `Transformers` `PyTorch`
+
+---
+
+## [Text Translation](text-translation/)
+
+**Can a fully local pipeline chain speech-to-text, translation, and text-to-speech into one working service?**
+
+Flask service chaining Whisper (speech-to-text), Helsinki-NLP MarianMT (translation), and MMS-TTS (text-to-speech) into an end-to-end audio translation flow.
+
+`Flask` `Whisper` `MarianMT` `MMS-TTS` `Transformers`
+
+---
+
+## [Voice Assistant](voice-assistant/)
+
+**Can a fully local, containerised voice assistant handle speech in, LLM reasoning, and speech out with CPU-only models?**
+
+Dockerised Flask app chaining Whisper (STT), DialoGPT (response generation), and SpeechT5 (TTS) behind a web interface.
+
+`Flask` `Whisper` `DialoGPT` `SpeechT5` `Docker`
+
 

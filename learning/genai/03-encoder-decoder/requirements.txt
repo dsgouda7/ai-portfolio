@@ -1,0 +1,10 @@
+# Packages required to run encoder_decoder.ipynb
+torch
+numpy
+
+# Optional: real-model bridge (T5ForConditionalGeneration/T5Tokenizer)
+transformers
+sentencepiece
+
+# Notebook kernel
+ipykernel

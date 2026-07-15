@@ -1,12 +1,13 @@
 <#
 .SYNOPSIS
     Creates a local virtual environment and installs everything needed to run
-    llm_finetuning_deep_dive.ipynb.
+    the 04-llm notebooks (hybrid-search, llm-gateway, rag-evaluation,
+    llm_finetuning_deep_dive).
 
 .DESCRIPTION
     Creates a `.venv` next to this script (if it does not already exist),
     installs the dependencies from requirements.txt into it, and registers a
-    Jupyter kernel named "llm-tuning" pointing at that venv. The notebook's
+    Jupyter kernel named "genai-llm" pointing at that venv. Each notebook's
     kernelspec is already set to this kernel, so it is picked up automatically.
 
     Pass -SkipKernel to install into the venv without registering the kernel.
@@ -56,10 +57,10 @@ Write-Host "Installing notebook dependencies from requirements.txt..."
 & $VenvPython -m pip install -r $Requirements -q
 
 if (-not $SkipKernel) {
-    Write-Host "Registering Jupyter kernel 'llm-tuning'..."
-    & $VenvPython -m ipykernel install --user --name llm-tuning --display-name "Python (llm-tuning .venv)"
+    Write-Host "Registering Jupyter kernel 'genai-llm'..."
+    & $VenvPython -m ipykernel install --user --name genai-llm --display-name "Python (genai-llm .venv)"
 }
 
 Write-Host "`nSetup complete." -ForegroundColor Green
-Write-Host "Open llm_finetuning_deep_dive.ipynb and pick the 'Python (llm-tuning .venv)' kernel"
+Write-Host "Open any 04-llm notebook and pick the 'Python (genai-llm .venv)' kernel"
 Write-Host "(it should be selected automatically). The venv lives at: $VenvDir"

@@ -1,8 +1,0 @@
-idx_seeds=4
-idx_house=5
-idx_pt2ref=23
-idx_dense=32
-idx_p3prose=51
-idx_pt5tab=55
-idx_resnet=56
-idx_tunesf=66

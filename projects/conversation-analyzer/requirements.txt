@@ -1,0 +1,8 @@
+# Packages required to run ibm_genai_conversation_analyzer.py
+gradio
+transformers
+torch
+accelerate
+sentencepiece
+librosa
+soundfile

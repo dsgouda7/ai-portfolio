@@ -1,9 +1,16 @@
 # GenAI Learning Arc
 
-This track builds from sequence modeling fundamentals through applied generative AI projects.
-Directories `01` through `05` are concept-building notebooks that establish theory and
-implementation fluency. Directories `06` through `10` are applied mini-projects that use
-those foundations to solve realistic tasks.
+This track builds sequence-modeling and generative-AI fundamentals from first principles.
+Each chapter is a concept-building notebook (or set of notebooks) with its own
+`requirements.txt` and `setup.ps1` / `setup.sh` that creates a local `.venv` and
+registers a Jupyter kernel for that chapter's notebooks. Run the setup script once per
+chapter before opening its notebook(s); the kernelspec is already wired to the
+matching kernel name, so VS Code should pick it automatically.
+
+Applied mini-projects that build on these foundations (conversation analysis,
+conversational AI, image captioning, translation, voice assistant) now live under
+[`/projects`](../../projects/README.md) as standalone apps, each with its own
+`requirements.txt` and install script.
 
 See [authoring-guide.md](authoring-guide.md) for notebook conventions, cell-tagging rules,
 and how to add new content to this track.
@@ -17,13 +24,7 @@ and how to add new content to this track.
 | 1 | `01-rnns/` | Recurrent Neural Networks | Character-level RNN in PyTorch and Keras/TF | Implement sequence models from scratch; explain vanishing gradients | Basic Python, NumPy |
 | 2 | `02-transformers/` | Transformer architecture | Scaled dot-product attention and full encoder stack from first principles | Read and modify transformer code; explain every component mathematically | `01-rnns/` |
 | 3 | `03-encoder-decoder/` | Encoder-Decoder architecture | Seq2seq model with cross-attention for translation | Build and train encoder-decoder models; tune beam search | `02-transformers/` |
-| 4 | `04-llm/` | Applied LLM patterns | Hybrid search pipeline, LLM gateway, RAG evaluation harness | Wire together retrieval + generation; evaluate answer quality quantitatively | `03-encoder-decoder/` |
-| 5 | `05-llm-tuning/` | Fine-tuning and alignment | LoRA adapter, DPO preference alignment, PEFT training loop | Fine-tune a causal LM on domain data; run preference optimization | `04-llm/` |
-| 6 | `06-conversation-analysis/` | Conversation summarization and intent | FLAN-T5 summarizer and intent classifier on real transcripts | Extract structured insights from raw conversation logs | `04-llm/` |
-| 7 | `07-conversational-ai/` | Multi-turn conversational AI | Stateful chat agent backed by Qwen 2.5 | Build a context-aware chat system with history management | `04-llm/` |
-| 8 | `08-image-captioning/` | Vision-language models | BLIP-2 image captioning pipeline with prompt steering | Caption and query images using a multimodal LLM | `04-llm/` |
-| 9 | `09-text-translation/` | Speech-to-text translation | Whisper transcription + Helsinki-NLP translation pipeline | Transcribe audio and translate across languages end-to-end | `04-llm/` |
-| 10 | `10-voice-assistant/` | Voice assistant project | Multi-file Flask app with STT, LLM response, and TTS | Ship a runnable voice assistant with a web interface | `06` through `09` |
+| 4 | `04-llm/` | Applied LLM patterns + fine-tuning | Hybrid search pipeline, LLM gateway, RAG evaluation harness, LoRA/PEFT/DPO fine-tuning | Wire together retrieval + generation; evaluate answer quality quantitatively; fine-tune a causal LM on domain data | `03-encoder-decoder/` |
 
 ---
 
@@ -38,10 +39,5 @@ demonstrates the authoring conventions all other notebooks should follow.
 ## Learning path summary
 
 ```
-01-rnns -> 02-transformers -> 03-encoder-decoder -> 04-llm -> 05-llm-tuning
-                                                        |
-                              06-conversation-analysis  07-conversational-ai
-                              08-image-captioning        09-text-translation
-                                                        |
-                                                   10-voice-assistant
+01-rnns -> 02-transformers -> 03-encoder-decoder -> 04-llm
 ```

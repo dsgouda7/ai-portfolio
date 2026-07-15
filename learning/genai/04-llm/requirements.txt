@@ -1,0 +1,34 @@
+# Packages required to run the 04-llm notebooks:
+#   hybrid-search.ipynb, llm-gateway.ipynb, rag-evaluation.ipynb,
+#   llm_finetuning_deep_dive.ipynb
+
+# Core data / plotting
+numpy
+pandas
+matplotlib
+seaborn
+
+# Retrieval (hybrid-search.ipynb, rag-evaluation.ipynb)
+scikit-learn
+sentence-transformers
+rank_bm25
+langchain-core
+langchain-community
+faiss-cpu
+
+# LLM gateway (llm-gateway.ipynb) - optional multi-provider client
+litellm
+
+# Fine-tuning / alignment (llm_finetuning_deep_dive.ipynb)
+torch
+transformers
+datasets
+accelerate
+peft
+trl
+sentencepiece
+evaluate
+tqdm
+
+# Notebook kernel
+ipykernel

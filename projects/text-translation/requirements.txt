@@ -1,0 +1,9 @@
+# Packages required to run ibm_genai_translator.py
+flask
+flask-cors
+torch
+transformers
+accelerate
+sentencepiece
+soundfile
+numpy

@@ -1,0 +1,7 @@
+# Packages required to run ibm_genai_conversational.py
+flask
+flask-cors
+torch
+transformers
+accelerate
+sentencepiece

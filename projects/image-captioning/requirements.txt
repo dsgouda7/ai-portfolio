@@ -1,0 +1,7 @@
+# Packages required to run ibm_genai_image_captioning.py
+gradio
+numpy
+pillow
+transformers
+torch
+accelerate
