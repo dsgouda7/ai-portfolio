@@ -1,7 +1,7 @@
 # Learning Directory Restructure Plan
 
-> **Status:** Proposed — not yet executed  
-> **Authoring standard:** `learning/genai/authoring-guide.md`  
+> **Status:** Proposed — not yet executed
+> **Authoring standard:** `learning/genai/authoring-guide.md`
 > **Gold-standard notebook:** `learning/genai/transformers/transformers.ipynb`
 
 This plan converts the asks from the backlog into discrete, independently executable

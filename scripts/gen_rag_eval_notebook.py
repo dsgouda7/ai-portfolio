@@ -5,7 +5,8 @@ Source inspiration: playground/af-advanced-ai/D2-rag_evaluation.ipynb
 Authoring standard: learning/genai/authoring-guide.md
 Treatment: intuition-first one-line formula references, no heavy breakdowns
 """
-import json, pathlib
+import json
+import pathlib
 
 ROOT = pathlib.Path(__file__).parent.parent
 OUT  = ROOT / "learning/genai/llm/rag-evaluation.ipynb"

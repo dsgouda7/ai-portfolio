@@ -2,10 +2,13 @@
 Direct notebook builder — avoids triple-quote nesting issues.
 Writes learning/genai/llm/rag-evaluation.ipynb as pure JSON.
 """
-import json, pathlib, textwrap
+
+import json
+import pathlib
+import textwrap
 
 ROOT = pathlib.Path(r"c:\repos\ai-portfolio")
-OUT  = ROOT / "learning/genai/llm/rag-evaluation.ipynb"
+OUT = ROOT / "learning/genai/llm/rag-evaluation.ipynb"
 
 
 def md(src):
@@ -578,7 +581,8 @@ We'll score the four failure mode answers on answer relevance.
 2. The off-topic answer is about fine-tuning. Predict whether the drop vs. the good
    answer will be: small (0.05), medium (0.15), or large (0.30+)?""")
 
-ANS_REL = textwrap.dedent("""\
+ANS_REL = textwrap.dedent(
+    """\
 # -- Answer Relevance (embedding cosine similarity) ----------------------------
 
 def answer_relevance(question, answer):
@@ -603,7 +607,8 @@ for label, ex in FAILURE_EXAMPLES.items():
 diff_h = ar_scores["Good answer"] - ar_scores["Hallucination"]
 diff_o = ar_scores["Good answer"] - ar_scores["Off-topic"]
 print(f"\\nGood vs hallucinated:  delta = {diff_h:.3f}  (both about ReAct -- small gap expected)")
-print(f"Good vs off-topic:     delta = {diff_o:.3f}  (clearly different topic -- larger gap)")""")
+print(f"Good vs off-topic:     delta = {diff_o:.3f}  (clearly different topic -- larger gap)")"""
+)
 
 ANS_VIZ = textwrap.dedent("""\
 # -- Answer relevance visualisation -------------------------------------------
@@ -908,7 +913,8 @@ will score higher on groundedness than it should.
 **Next:** How production systems address this -- LLM-as-judge, and how the LangSmith
 patterns from the playground notebook map onto what we just built.""")
 
-P7_MD = textwrap.dedent("""\
+P7_MD = textwrap.dedent(
+    """\
 ---
 
 ## Part 7 -- Toy Metrics -> Production: LLM-as-Judge
@@ -942,7 +948,8 @@ makes the LLM judge results interpretable.
 | `retrieval_relevance(q, docs)` | `retrieval_relevance` | `outputs["documents"]` vs query |
 | `groundedness(a, ctx)` | `groundedness` | `outputs["answer"]` vs `outputs["documents"]` |
 | `answer_relevance(q, a)` | `relevance` | `outputs["answer"]` vs `inputs["question"]` |
-| `rouge_l(a, ref)` | `correctness` | `outputs["answer"]` vs `reference_outputs["answer"]` |""")
+| `rouge_l(a, ref)` | `correctness` | `outputs["answer"]` vs `reference_outputs["answer"]` |"""
+)
 
 LANGSMITH = textwrap.dedent("""\
 # -- Part 7: LangSmith evaluation pattern (requires API keys) ------------------
@@ -1108,7 +1115,11 @@ notebook = {
     "nbformat": 4,
     "nbformat_minor": 2,
     "metadata": {
-        "kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
+        "kernelspec": {
+            "display_name": "Python 3",
+            "language": "python",
+            "name": "python3",
+        },
         "language_info": {"name": "python", "version": "3.11.0"},
     },
     "cells": cells,

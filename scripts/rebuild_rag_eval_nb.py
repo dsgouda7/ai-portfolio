@@ -11,10 +11,13 @@ Changes:
   - Section-banner code comments; print statements use -> arrows
   - Predict-before-you-run in plain text (no emoji)
 """
-import json, pathlib, textwrap
+
+import json
+import pathlib
+import textwrap
 
 ROOT = pathlib.Path(r"c:\repos\ai-portfolio")
-OUT  = ROOT / "learning/genai/llm/rag-evaluation.ipynb"
+OUT = ROOT / "learning/genai/llm/rag-evaluation.ipynb"
 
 
 def md(src):
@@ -797,7 +800,8 @@ reference. It uses "tools like Wikipedia search" where the reference says "tools
 such as Wikipedia search". If we count only exact word matches (the naive approach),
 what will the score be for this paraphrase — 0.0, 0.3, or 0.6+?""")
 
-P5_MD = textwrap.dedent("""\
+P5_MD = textwrap.dedent(
+    """\
 ---
 
 ## Part 5 — Correctness: ROUGE-L and the Ordering Problem
@@ -831,9 +835,11 @@ scores 0.5 even if it uses no exact phrases.
 **The DP formulation:** $\\text{LCS}(a, r)$ is computed with standard dynamic
 programming. Let $L[i][j]$ be the LCS length for $a[:i]$ and $r[:j]$:
 
-$$L[i][j] = \\begin{cases} L[i-1][j-1] + 1 & a[i] = r[j] \\\\ \\max(L[i-1][j],\\; L[i][j-1]) & \\text{otherwise} \\end{cases}$$""")
+$$L[i][j] = \\begin{cases} L[i-1][j-1] + 1 & a[i] = r[j] \\\\ \\max(L[i-1][j],\\; L[i][j-1]) & \\text{otherwise} \\end{cases}$$"""
+)
 
-P5_NAIVE = textwrap.dedent("""\
+P5_NAIVE = textwrap.dedent(
+    """\
 # ── Attempt 1: exact word match (Jaccard similarity) ─────────────────────────
 
 def jaccard(answer, reference):
@@ -854,7 +860,8 @@ print()
 print("The paraphrase is factually correct and semantically equivalent.")
 print("Jaccard penalises every synonym: 'alternates'/'interleaves', 'employing'/'using', etc.")
 print()
-print("  -> Jaccard treats synonyms as wrong.  We need order-preserving partial credit.")""")
+print("  -> Jaccard treats synonyms as wrong.  We need order-preserving partial credit.")"""
+)
 
 ROUGE_CODE = textwrap.dedent("""\
 # ── ROUGE-L from scratch: LCS via dynamic programming ────────────────────────
@@ -911,7 +918,8 @@ for tc in TEST_CASES:
     rl_bot.append(rl)
     print(f"  Q: {tc['question'][:50]:<50}  RL={rl:.3f}")""")
 
-ALL_METRICS = textwrap.dedent("""\
+ALL_METRICS = textwrap.dedent(
+    """\
 # ── All four metrics on the four failure cases — the fingerprint table ─────────
 metric_data = {}
 for label, c in CASES.items():
@@ -948,7 +956,8 @@ print("\\nReading the chart:")
 print("  Correct           -> all four metrics high")
 print("  Coherent wrong    -> Retrieval Rel. drops; others moderate")
 print("  Hallucination     -> Groundedness + ROUGE-L drop; Ans Rel. stays high")
-print("  Off-topic         -> Answer Rel. + ROUGE-L drop; Groundedness may stay high")""")
+print("  Off-topic         -> Answer Rel. + ROUGE-L drop; Groundedness may stay high")"""
+)
 
 P5_REFLECT = textwrap.dedent("""\
 #### What just happened — and what's missing
@@ -1069,7 +1078,8 @@ factual distortion with borrowed vocabulary).
 Part 7 shows how the same metric *structure* survives the move to production, with
 only the scorer swapped from word overlap to an LLM NLI judge.""")
 
-P7_MD = textwrap.dedent("""\
+P7_MD = textwrap.dedent(
+    """\
 ---
 
 ## Part 7 — From Proxies to Production: LLM-as-Judge
@@ -1117,7 +1127,8 @@ implements this pattern end-to-end using LangSmith. The mapping is one-to-one:
 | `retrieval_relevance(q, docs)` | `retrieval_relevance` | query vs `outputs["documents"]` |
 | `groundedness(a, ctx)` | `groundedness` | `outputs["answer"]` vs `outputs["documents"]` |
 | `answer_relevance(q, a)` | `relevance` | `inputs["question"]` vs `outputs["answer"]` |
-| `rouge_l(a, ref)` | `correctness` | `outputs["answer"]` vs `reference_outputs["answer"]` |""")
+| `rouge_l(a, ref)` | `correctness` | `outputs["answer"]` vs `reference_outputs["answer"]` |"""
+)
 
 LANGSMITH = textwrap.dedent("""\
 # ── Production evaluation pattern (LangSmith) — read-through ─────────────────
@@ -1287,7 +1298,11 @@ notebook = {
     "nbformat": 4,
     "nbformat_minor": 2,
     "metadata": {
-        "kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
+        "kernelspec": {
+            "display_name": "Python 3",
+            "language": "python",
+            "name": "python3",
+        },
         "language_info": {"name": "python", "version": "3.11.0"},
     },
     "cells": cells,
