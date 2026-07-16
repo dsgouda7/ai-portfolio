@@ -19,6 +19,18 @@ Authoring standard: [genai/authoring-guide.md](genai/authoring-guide.md)
 
 ---
 
+## Agentic AI System Design — `agentic-ai-system-design/`
+
+A system-design reference track (plain Markdown, no notebooks) answering the Staff/Principal-level
+interview question *"Design an Agentic AI Platform."* Start at
+[agentic-ai-system-design/system-design.md](agentic-ai-system-design/system-design.md) for the
+master architecture, then drill into the numbered component docs (agent lifecycle, tool/MCP/skill
+registry, model gateway, state & memory, loop/termination control, evaluation, observability,
+multi-agent patterns, recoverability & the Saga pattern, governance, production scale) and the
+dedicated Semantic Kernel vs. LangGraph comparison.
+
+---
+
 Note: `data-engineering/` and `ml/` (IBM course artefacts) have been moved to
 [playground/data-engineering/](../playground/data-engineering/) and
 [playground/ml/](../playground/ml/).
