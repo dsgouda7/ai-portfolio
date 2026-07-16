@@ -81,6 +81,43 @@ Key design properties, each of which is a distinct interview point:
 This is the same "authority boundary" arrow called out in the [uber doc's master
 architecture](system-design.md) — this section is that arrow, zoomed in.
 
+#### How It Actually Works: Policy-as-Code (OPA/Rego-Style)
+
+The policy engine in the diagram above is not a special-purpose "agent security" component — it
+is the same pattern as [Open Policy Agent](https://www.openpolicyagent.org/docs/latest/) (OPA)
+and its Rego language, applied to agent actions instead of Kubernetes admission or API
+authorization. The mechanics:
+
+1. **Policies are declarative rules, not imperative code.** A rule states a condition under
+   which an action is allowed/denied/requires-approval — it does not describe *how* to check it
+   step by step. This makes rules independently readable and auditable: you can list every rule
+   currently in force without reading application source.
+2. **Rules evaluate against a structured input document**, not free text. For an agent platform
+   that input is typically a JSON-like object: which agent (identity + version), which tool is
+   being invoked, whose data/resource is the target, the current risk tier (§5), and any
+   session-level context (e.g. prior actions this execution already took). The engine's output
+   is a decision (`allow` / `deny` / `require_approval`) plus, ideally, the specific rule that
+   fired — so a denial is explainable, not a black box.
+3. **Policy is decoupled from the runtime.** Because policies live outside the agent's prompt and
+   outside the tool-gateway's compiled code, a policy change (e.g. "lower the auto-refund
+   threshold from $50 to $25") is a data/config change deployed to the policy engine, not a code
+   change requiring a runtime redeploy. This is what makes centralization (§2) practical at
+   scale: one team can own "what are the rules" without touching agent code at all.
+
+**Trade-off — Policy Logic: Hardcoded vs. Externalized Policy Engine**
+
+| | Hardcoded in app/tool code | Externalized policy engine (OPA/Rego-style) |
+|---|---|---|
+| Time to ship the first rule | Faster — just an `if` statement | Slower — requires standing up the engine and input schema first |
+| Changing a rule later | Requires a code change + redeploy of the runtime/tool | Config/data change to the policy engine; no runtime redeploy |
+| Auditing "what are all our current rules" | Hard — rules are scattered across every tool's code path | Easy — one place to list every active rule |
+| Consistency across agents/tools | Easy to drift — each implementation re-derives the check slightly differently | One evaluation path shared by every agent and tool |
+| Best fit | A single prototype agent, or a rule that will genuinely never change | Any platform with more than one agent, or rules that change faster than your deploy cycle |
+
+> In practice, hardcoded checks are fine for a weekend prototype; anything heading toward
+> production with more than one tenant or agent should externalize policy from day one — the
+> migration cost only grows as more code paths start duplicating checks.
+
 ---
 
 ## 3 · Human-in-the-loop (HITL): approval must bind to state, not intent
@@ -148,6 +185,40 @@ guardrails (e.g. a toxicity filter on the final answer) has no defense against a
 never produces user-visible text at all — e.g. an agent silently exfiltrating data via an API
 call. All four must exist, and tool-call guardrails are the one most platforms under-invest in
 because they require reasoning about the *action*, not the *text*.
+
+#### Internals: How Each Guardrail Layer Actually Decides
+
+The four categories in the table above each need an actual detection mechanism, and the choice
+of mechanism is itself a trade-off that shows up at every layer (input, output, and to some
+extent tool-call guardrails):
+
+- **Regex/keyword/classifier-based moderation.** Fast (sub-millisecond), cheap, and fully
+  deterministic — the same input always produces the same verdict, which makes it easy to test
+  and easy to explain in an audit. But it is brittle to paraphrase, synonyms, encoding tricks, or
+  adversarial rewording — a blocked phrase rephrased slightly, or split across two messages,
+  often slips through.
+- **LLM-based moderation.** A second model call (often a smaller/cheaper model, or the same
+  model with a moderation-specific prompt) judges the content for nuanced, paraphrased, or
+  novel violations a keyword list would never catch. The cost is added latency, added $ cost per
+  request, and the moderation layer is now itself a probabilistic system — it can be prompt-
+  injected, jailbroken, or simply wrong, and its false-negative/false-positive rates need their
+  own evaluation (cross-link [07 — Agent Evaluation Frameworks](07-agent-evaluation-frameworks.md)).
+
+**Trade-off — Deterministic Filters vs. LLM-Based Moderation**
+
+| | Regex/keyword/classifier | LLM-based moderation |
+|---|---|---|
+| Latency | Sub-millisecond | Tens to hundreds of ms (extra model call) |
+| Cost | Negligible | Real $ per request (another inference call) |
+| Determinism | Fully deterministic, easy to unit test | Probabilistic — same input can occasionally get different verdicts |
+| Robustness to paraphrase/adversarial rewording | Weak | Stronger, but not immune — the moderator itself can be fooled |
+| Best fit | High-volume first-pass filter for known-bad patterns | Second-pass check on anything ambiguous that survives the first layer |
+
+> In practice, production systems layer both: cheap deterministic filters run on every request
+> first and catch obvious cases at near-zero cost; anything ambiguous that passes the first
+> layer goes to an LLM-based check. Relying on either layer alone is a known failure mode —
+> deterministic-only misses paraphrase attacks, LLM-only is too slow/expensive to run on 100% of
+> traffic and is itself an imperfect, bypassable classifier.
 
 ---
 
@@ -236,6 +307,53 @@ because it requires the runtime to never fully trust its own tool outputs as ins
 and requires the policy engine to be the backstop that doesn't care what convinced the model —
 only what the model is now asking to do.
 
+#### How It Actually Works: Content Provenance Tagging & the Dual-LLM Pattern
+
+Two mechanisms make the mitigations in the numbered list above concrete rather than aspirational:
+
+**Provenance tagging as a channel separation, not just a label.** The practical implementation
+keeps two structurally distinct channels in the prompt: an **INSTRUCTION channel** (system/
+developer prompt — the only source of directives the model should treat as authoritative) and a
+**DATA channel** (retrieved documents, tool results, user-uploaded files — content the model may
+reason *about* but must never treat as directives). Tagging every piece of context with its
+source at construction time is what lets a wrapping guard mechanically check "did an imperative
+sentence originate in the DATA channel?" — and treat "ignore previous instructions" found inside
+a fetched webpage completely differently from the identical text appearing in the system prompt.
+
+**The dual-LLM pattern** goes one step further by splitting *the model itself* along this same
+boundary:
+
+```mermaid
+flowchart TD
+    User[User Request] --> Planner[Privileged Planner LLM\nhas tool-calling authority]
+    Planner -->|delegates: summarize/extract\nfrom untrusted content| Quarantine[Quarantined LLM\nno tool-calling authority]
+    Untrusted[Untrusted Content\nretrieved doc / tool result / web page] --> Quarantine
+    Quarantine -->|structured, schema-constrained data only\nno free-text instructions| Planner
+    Planner --> ToolGateway[Tool Gateway] --> PolicyCheck{Policy Engine\nSection 2}
+    PolicyCheck -->|allow| Tools[Real Tools / Systems]
+
+    classDef untrusted fill:#fdd,stroke:#a33,stroke-width:1px;
+    class Untrusted,Quarantine untrusted
+```
+
+- The **planner LLM** is privileged — it can call tools — but it never reads raw untrusted
+  content directly. It only ever sees the quarantined LLM's structured output.
+- The **quarantined LLM** processes the untrusted content directly (so it is the one exposed to
+  any injection attempt embedded there) but has zero tool-calling authority of its own and can
+  only return data that conforms to a fixed schema (e.g. `{summary: string, entities: string[]}`)
+  — there is no field an injected instruction can occupy that the planner would interpret as a
+  new directive.
+- This shrinks the blast radius of a successful injection: even if the quarantined LLM is fully
+  compromised by injected text, the worst it can do is return a malformed or misleading *data*
+  value within its schema — it cannot itself issue a tool call, because it was never granted
+  that authority.
+
+> **This is a mitigation, not a guarantee.** Both provenance tagging and the dual-LLM pattern
+> reduce the probability and blast radius of a successful injection; neither makes injection
+> structurally impossible, because the planner still has to trust *some* summary of the
+> untrusted content to make progress. Treat these as depth-of-defense layers combined with the
+> policy engine's independent, reasoning-blind backstop (§2, §5) — not a substitute for it.
+
 ---
 
 ## 7 · Audit: what must every record contain
@@ -290,6 +408,41 @@ caller is a model, not a person":
   credential, performs the policy check, and executes on the agent's behalf. This is what makes
   the policy engine actually enforceable — if agents held real credentials directly, the policy
   engine would be advisory, not authoritative.
+
+#### Internals: RBAC vs. ABAC for Agent Permissions
+
+The permission model behind "resource-level, not system-level" above has two common shapes, and
+the choice matters more for agents than for human users because agent actions are proposed at
+much higher volume and need machine-checkable context, not just a role label.
+
+- **RBAC (Role-Based Access Control):** a permission is attached to a role — e.g. the
+  `support-agent` role can call `refund_order` up to $50. Simple to reason about and simple to
+  audit ("list every role, list every permission per role"), but coarse-grained: any distinction
+  finer than the role captures (e.g. "only for tickets this agent's session has actually read,"
+  or "only during business hours") requires either a new role (role explosion) or an escape
+  hatch outside the RBAC model entirely.
+- **ABAC (Attribute-Based Access Control):** the decision is a function evaluated at request
+  time over attributes — agent identity, resource sensitivity, requested action, tenant, time of
+  day, session history — rather than a static role lookup. This lets you express genuinely
+  context-dependent rules, e.g. "allow a refund over $50 only if a human has approved this
+  specific case ID," which RBAC cannot express without collapsing back to a per-case role. The
+  cost is that "why was this allowed" now requires evaluating the same attribute function the
+  engine used, rather than reading a role/permission table — harder to explain at a glance, and
+  harder to unit test exhaustively because the input space is larger.
+
+**Trade-off — RBAC vs. ABAC**
+
+| | RBAC | ABAC |
+|---|---|---|
+| Granularity | Coarse — one role, one permission set | Fine — permission is a function of many attributes at request time |
+| Auditability ("why was this allowed?") | High — read the role's permission list | Lower — must trace the attribute evaluation for that specific request |
+| Scales with growing rule complexity | Poorly — combinatorial role explosion | Well — new attributes compose instead of multiplying roles |
+| Expressing context-dependent rules (e.g. "only if approved for this case") | Not natively — needs an escape hatch | Naturally — the case-approval state is just another attribute |
+| Best fit | Small number of clearly distinct agent roles, early-stage platforms | Multi-tenant platforms with fine-grained, context-dependent policy needs |
+
+> Most mature platforms layer both: RBAC for the coarse "what class of tool can this agent even
+> call" question, ABAC (often the same policy engine from §2) for the fine-grained "is this
+> specific call, right now, for this specific resource, allowed" question.
 
 ---
 
@@ -357,6 +510,15 @@ after the fact is one of the more painful migrations in this space.
   must not be able to erase its own evidence.
 - Least privilege for agents means scoped, short-lived, per-call credentials issued by a tool
   gateway — never standing credentials held by the runtime or the agent.
+- Policy-as-code (OPA/Rego-style) decouples policy from application code — declarative rules
+  evaluated against structured input, updatable without redeploying the agent runtime.
+- RBAC is simple but coarse-grained; ABAC is flexible and context-aware but harder to audit at a
+  glance — most fine-grained agent permission needs eventually require ABAC's expressiveness.
+- The dual-LLM pattern (privileged planner never touches raw untrusted content; a quarantined
+  LLM returns only schema-constrained data) shrinks prompt-injection blast radius — it's a
+  mitigation, not a guarantee.
+- Layer guardrails: cheap deterministic filters (regex/keyword/classifier) catch obvious cases
+  first; reserve LLM-based moderation for ambiguous content that survives the first pass.
 
 ## Further Reading
 
@@ -364,6 +526,9 @@ after the fact is one of the more painful migrations in this space.
 - Azure Architecture Center — Saga pattern (cross-reference for compensation-vs-denial tradeoffs) — <https://learn.microsoft.com/en-us/azure/architecture/patterns/saga>
 - Model Context Protocol specification — <https://modelcontextprotocol.io/>
 - OWASP Top 10 for LLM Applications — <https://owasp.org/www-project-top-10-for-large-language-model-applications/>
+- Open Policy Agent documentation (policy-as-code, Rego language) — <https://www.openpolicyagent.org/docs/latest/>
+- NIST SP 800-162 — Guide to Attribute Based Access Control (ABAC) Definition and Considerations — <https://csrc.nist.gov/publications/detail/sp/800-162/final>
+- Simon Willison — "The Dual LLM pattern for building AI assistants that can resist prompt injection" — <https://simonwillison.net/2023/Apr/25/dual-llm-pattern/>
 
 See also: [system-design.md](system-design.md) for the full plane map, [08 — Observability,
 Tracing & Health](08-observability-tracing-and-health.md) for trace correlation, [10 —

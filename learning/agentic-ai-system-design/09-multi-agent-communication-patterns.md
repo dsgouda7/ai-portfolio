@@ -143,6 +143,96 @@ Contract-net is attractive when the set of capable agents is dynamic (you don't 
 which specialist is best-suited, or capacity varies), but it adds real protocol overhead: you
 need a bid schema, a scoring/award function, and a way to handle no-bid or all-bid-low situations.
 
+#### Internals: How Blackboard Control Actually Works
+
+The blackboard pattern has two moving parts, not one:
+
+1. **The blackboard itself** — a shared workspace holding the current problem state (partial
+   hypotheses, intermediate results, open questions). Any registered **knowledge source** (a
+   specialist agent) can read the current state and write updates to it.
+2. **A control component**, separate from every knowledge source, that decides *which* knowledge
+   source acts next. This is not a fixed round-robin or priority order — it is **opportunistic
+   control**: the controller inspects the current blackboard state and picks whichever knowledge
+   source can make the most progress from *this* state, which can be a different agent on every
+   iteration.
+
+> **Trade-off — Blackboard**
+> - **Strength:** very flexible for ill-structured problems where the right next step genuinely
+>   isn't knowable in advance — the controller decides based on what the data actually looks like
+>   right now, not a plan written before the run started.
+> - **Cost:** because the next actor is chosen dynamically, execution order is hard to predict or
+>   debug ahead of time ("why did the critique agent run before the summarizer this time?"), and
+>   concurrent writes to shared state need explicit handling (versioning, single-writer-per-key,
+>   or a lock) — two knowledge sources racing to update the same blackboard entry is a real
+>   failure mode, not a hypothetical one.
+
+#### Internals: How Contract Net Protocol Actually Works
+
+Contract-net is not "broadcast and pick one" in the abstract — it is a specific message sequence,
+originally formalized by Reid G. Smith and later standardized by FIPA:
+
+1. **Task announcement.** The manager broadcasts the task to eligible agents, including its
+   requirements and a bid deadline.
+2. **Bidding.** Each eligible agent that wants the work submits a bid before the deadline —
+   typically an estimated cost, confidence, or completion time, not just "yes I can do it."
+3. **Award.** The manager evaluates the bids it received and awards the contract to exactly one
+   bidder (or re-announces if no acceptable bid arrives).
+4. **Report.** The awarded agent executes the task and reports the result back to the manager
+   once it completes.
+
+```mermaid
+sequenceDiagram
+    participant M as Manager
+    participant A as Agent A
+    participant B as Agent B
+    participant C as Agent C
+
+    M->>A: task-announcement (requirements, deadline)
+    M->>B: task-announcement (requirements, deadline)
+    M->>C: task-announcement (requirements, deadline)
+    A-->>M: bid (est. cost, confidence)
+    B-->>M: bid (est. cost, confidence)
+    C--xM: no bid (not eligible / at capacity)
+    M->>M: evaluate bids, award to best
+    M->>B: award contract
+    B->>M: report completion
+```
+
+> **Trade-off — Contract Net Protocol**
+> - **Strength:** decentralized load balancing — the manager doesn't need to track every agent's
+>   exact current load/capability ahead of time; agents self-report fitness for *this* task via
+>   their bid, which adapts naturally as agents' availability changes from run to run.
+> - **Cost:** the bidding round-trip (announce → bid → award) adds a full extra network/latency
+>   hop *before any work starts*. That's a bad fit for latency-sensitive, single-step tasks where
+>   the overhead of running an auction exceeds the cost of just picking a default agent.
+
+#### Trade-off: Centralized vs. Decentralized Control
+
+Supervisor (Section 2.1) and contract-net/blackboard (this section) sit at opposite ends of the
+same spectrum: where does decision authority live?
+
+| | Centralized (supervisor) | Decentralized (contract-net / blackboard) |
+|---|---|---|
+| **Where policy/guardrails/observability live** | One place — the supervisor's own decision loop | Scattered — every bidding agent or knowledge source needs its own checks, or a gateway must intercept every peer-to-peer message |
+| **Debuggability** | Easier — one call stack to trace, one place execution order is decided | Harder — order emerges from bids or blackboard state at runtime, not from a plan you can read ahead of time |
+| **Failure blast radius** | A supervisor outage stalls the whole run — single point of failure | No single agent's failure stops the system — the remaining agents keep bidding/posting |
+| **Scalability** | Bottlenecked by the supervisor's own throughput | Scales horizontally — new bidders/knowledge sources join without the coordinator becoming a bottleneck |
+| **What you're trading** | Control and predictability | Scalability and resilience |
+
+> Rule of thumb: pick centralized when you need to *bound and prove* what the system will do; pick
+> decentralized when the set of capable agents or the right next step is too dynamic to plan for
+> centrally — and budget extra effort for testing emergent behavior either way.
+
+> **Aside — when do you actually need distributed consensus?** Contract-net and blackboard both
+> avoid full distributed-consensus protocols (Raft, Paxos) because neither requires *strict
+> agreement* on a single piece of shared mutable state — a contract-net award has one manager
+> deciding, and a blackboard uses single-writer-per-key conventions or optimistic concurrency
+> (Section 5's mitigation for shared memory corruption) instead of a vote. Real consensus is only
+> needed when multiple agents must agree on one authoritative value with strict consistency
+> guarantees — which is rare in practice, because most multi-agent platforms sidestep the problem
+> entirely by giving each piece of shared state a single-writer owner instead of allowing
+> contested writes.
+
 ### 2.5 Swarm (fully decentralized)
 
 Many lightweight, largely autonomous agents work on overlapping pieces of a problem with minimal
@@ -202,6 +292,29 @@ Why this matters more in multi-agent systems than single-agent ones:
 
 The practical rule of thumb: **if a piece of information is used for a routing, budget, or policy
 decision, it belongs in the envelope schema, not in the prose the agents exchange.**
+
+#### How It Actually Works: Message Delivery Guarantees
+
+The envelope schema above says nothing about *how many times* a message might arrive — and in a
+distributed multi-agent system, that's not a detail you get to ignore:
+
+- **At-least-once** is the realistic default. A message can be delivered — and processed — more
+  than once, most commonly when a sender times out waiting for an acknowledgment, retries, and it
+  turns out the first attempt actually succeeded; both the original and the retry land on the
+  receiver.
+- **Exactly-once delivery** is not achievable at the transport level in a distributed system
+  without cooperation from the receiver. The only way to get an *effectively-once* result on top
+  of an at-least-once transport is for every message handler that causes a side effect to be
+  **idempotent** — safe to process twice (or more) without a different outcome than processing it
+  once.
+
+> This is exactly why [10 — Recoverability, Rollbacks & the Saga Pattern](10-recoverability-rollbacks-and-saga.md#26-idempotency-keys-concretely)'s
+> idempotency-key mechanism exists: it's the concrete mechanism that turns "at-least-once
+> delivery" into "effectively-once execution" for any message that triggers a mutating tool call.
+> If a supervisor's message to a tool-executing agent says "create the ticket" and that message
+> arrives twice, the *ticket creation* needs the idempotency-key discipline from doc 10 — the
+> messaging layer retrying is not, by itself, a bug; a non-idempotent handler reacting to the
+> retry is.
 
 ---
 
@@ -287,11 +400,25 @@ up in practice — most early products never reach that scale.
 - Semantic Kernel names orchestration patterns explicitly (concurrent, sequential, handoff, group
   chat, Magentic); AutoGen Core leans on async, event-driven, actor-model infrastructure — know
   both framing styles.
+- Contract Net Protocol is a four-message sequence — task-announcement → bid → award → completion
+  report — that decentralizes allocation but adds a bidding round-trip before any work starts.
+- Blackboard control is opportunistic (whichever knowledge source can make the most progress next
+  acts, not a fixed order) — flexible for ill-structured problems, harder to debug or predict.
+- At-least-once delivery is the realistic default for distributed multi-agent messaging;
+  exactly-once isn't achievable without idempotent handlers on the receiving end (see doc 10's
+  idempotency keys).
+- Real distributed consensus (Raft/Paxos) is rarely needed in multi-agent systems — most platforms
+  sidestep it by giving each piece of shared state a single-writer owner instead of requiring
+  agreement.
 
 ## Further Reading
 
 - Semantic Kernel agent orchestration patterns — <https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/agent-orchestration/>
 - AutoGen Core user guide — <https://microsoft.github.io/autogen/stable/user-guide/core-user-guide/index.html>
+- Reid G. Smith, "The Contract Net Protocol: High-Level Communication and Control in a Distributed
+  Problem Solver," IEEE Transactions on Computers, 1980 — <https://doi.org/10.1109/TC.1980.1675516>
+- FIPA Contract Net Interaction Protocol Specification — <https://www.fipa.org/specs/fipa00029/>
+- Stripe — Idempotent Requests (idempotency-key pattern reference) — <https://stripe.com/docs/api/idempotent_requests>
 - Back to the [uber doc — Designing an Agentic AI Platform](system-design.md)
 - [06 — Non-Determinism, Loops & Termination](06-non-determinism-loops-and-termination.md) for the budget/loop machinery each agent enforces individually
 - [11 — Governance, Guardrails & Security](11-governance-guardrails-and-security.md) for policy engine and audit store details referenced above

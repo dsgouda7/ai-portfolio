@@ -85,6 +85,29 @@ interviewer expects you to know cold:
 
 - **Transport-agnostic JSON-RPC 2.0.** Every request/response/notification is a JSON-RPC 2.0
   message. This is *not* REST and not gRPC — it's a bidirectional, session-oriented RPC protocol.
+
+#### Internals: JSON-RPC 2.0 Message Framing
+
+Three message shapes, and the distinction is what makes async tool-call correlation possible at
+all:
+
+| Message type | Shape | Expects a response? |
+|---|---|---|
+| **Request** | `{"jsonrpc": "2.0", "id": <string or number>, "method": "tools/call", "params": {...}}` | Yes — matched by `id` |
+| **Response** | `{"jsonrpc": "2.0", "id": <same id>, "result": {...}}` **or** the same shape with `"error": {"code": ..., "message": ...}}` instead of `"result"` | N/A — it *is* the response |
+| **Notification** | `{"jsonrpc": "2.0", "method": "notifications/...", "params": {...}}` — **no `id` field** | No — fire-and-forget |
+
+Why this matters concretely: an MCP client can have multiple `tools/call` requests in flight
+concurrently over the same connection (agent reasoning loops routinely fan out parallel tool
+calls). The only thing that lets the client match an inbound response to the right pending
+call is the `id` it echoes back — there's no other correlation mechanism in the protocol. A
+server that reuses an `id` while a prior call with that `id` is still outstanding, or a client
+that fails to track in-flight `id`s, produces exactly the kind of "response landed on the wrong
+call" bug that's miserable to debug in production. Notifications (no `id`, no response expected)
+exist precisely for cases where correlation is unnecessary — e.g. `notifications/initialized`
+(see the handshake internals below) or progress/log events — and a well-behaved client must
+never block waiting for a response to one.
+
 - **Client-server, not peer-to-peer.** An **MCP client** lives inside (or directly adjacent to)
   the agent runtime and holds one connection per MCP server. The **MCP server** is the process
   that owns a capability domain (a filesystem, a SaaS API, an internal system) and exposes it.
@@ -104,11 +127,94 @@ interviewer expects you to know cold:
   - **HTTP + SSE / streamable-HTTP** — for remote servers; supports auth headers, load balancing,
     and streaming results back to the client. This is the transport that matters for an
     enterprise platform, because it's the one that crosses a network and a trust boundary.
+
+#### Internals: Transport Trade-offs
+
+The current MCP spec formally defines two standard transports — **stdio** and **Streamable
+HTTP** — with the older **HTTP+SSE** binding kept only as a deprecated predecessor that
+Streamable HTTP replaced; in practice you'll still meet servers running the legacy transport, so
+it's worth knowing all three trade-offs apart:
+
+- **stdio** — newline-delimited JSON messages written to/read from a subprocess's stdin/stdout
+  (messages must not contain embedded newlines). Simplest possible transport: no networking
+  stack, no auth layer, no serialization ambiguity. But it's inherently **one client per
+  process** (the subprocess's stdio is a private pipe to whoever spawned it) and **same-machine
+  only** — there's no notion of a remote stdio connection, which is exactly why it's the right
+  choice for local dev tooling and the wrong choice for anything crossing a trust boundary.
+- **HTTP + SSE (the deprecated remote-transport binding)** — the client opens a long-lived HTTP
+  connection and the server pushes JSON-RPC messages as Server-Sent Events over it. This gives
+  real server-initiated push (the server can send a message without waiting for a client
+  request), but the connection is **stateful** — a load balancer must pin a client to the same
+  backend instance for the life of the SSE stream, which fights stateless horizontal scaling and
+  makes rolling deploys/instance recycling operationally annoying (drop the connection, client
+  must reconnect and the server must reconstruct session state).
+- **Streamable HTTP (the current standard remote binding)** — every JSON-RPC message the client
+  sends is an ordinary HTTP POST to a single MCP endpoint; the server can respond with either a
+  single JSON object or a `text/event-stream` that still streams multiple messages back for that
+  one call. The client can optionally also open a GET-based SSE stream for unprompted
+  server-to-client messages, with an `Mcp-Session-Id` header tying related calls together if the
+  server wants session continuity. Because each POST is independently routable, this plays
+  natively with everything you already run in front of a normal HTTP service — load balancers,
+  auth middleware, API gateways, WAFs — at the cost of losing an always-open channel for
+  server-initiated push between calls.
+
+| Transport | Locality | Statefulness | Auth story | Scaling |
+|---|---|---|---|---|
+| **stdio** | Same machine only | Stateful (one persistent pipe per client) | None built in — relies entirely on the process/OS boundary | Doesn't scale horizontally; 1 client : 1 process |
+| **HTTP + SSE (deprecated)** | Remote | Stateful (long-lived connection pinned to a backend instance) | Standard HTTP auth headers, but session affinity complicates it | Hard — needs sticky sessions/connection draining on deploy |
+| **Streamable HTTP (current)** | Remote | Stateless per call (a single response may still stream) | Plays natively with standard HTTP auth middleware, API gateways | Easy — any request can land on any backend instance |
+
+> **Trade-off in one line:** stdio buys simplicity at the cost of never leaving the machine;
+> HTTP+SSE bought real push at the cost of connection affinity (which is why it's deprecated);
+> Streamable HTTP buys gateway/load-balancer compatibility by giving up an always-open
+> server-push channel. A platform's MCP Gateway (Section 7) should default to Streamable HTTP
+> for anything crossing a network, and only reach for a long-lived-connection pattern where a
+> server genuinely needs to push unprompted messages outside the lifetime of a client request.
+
 - **Handshake:** `initialize` (capability negotiation) → `tools/list` / `resources/list` /
   `prompts/list` (discovery) → `tools/call` / `resources/read` / `prompts/get` (use). The
   negotiation step is why the platform's registry can't just cache a schema forever — capability
   sets are meant to be re-queried, and a well-behaved gateway treats them as **soft-cached with a
   freshness check**, not immutable.
+
+#### How It Actually Works: The Initialize Handshake
+
+The handshake bullet above compresses three distinct steps worth pulling apart, because
+"capability negotiation" is a specific mechanism, not a hand-wave:
+
+1. **Client sends `initialize`** — a request declaring the **protocol version** the client
+   speaks and the **capabilities** it supports (e.g. whether it can handle server-initiated
+   `sampling` requests, whether it exposes `roots` — filesystem-root boundaries the server is
+   allowed to operate within).
+2. **Server responds** — with its own protocol version and its own capability set (which tool/
+   resource/prompt primitives it implements, whether it supports change-notification
+   subscriptions, etc.). If the client's protocol version is incompatible, this is where the
+   mismatch surfaces, *before* either side has attempted a real tool call.
+3. **Client sends `initialized`** — a **notification** (no `id`, no response expected — see the
+   JSON-RPC framing above) confirming the session is now live and the server may begin sending
+   server-initiated messages.
+
+Why this negotiation step earns its own protocol phase instead of just letting the client call
+`tools/list` immediately: it's the only point where **protocol version skew** gets caught
+cleanly, and it lets **optional capabilities** (sampling, roots, resource-change subscriptions)
+be advertised and mutually agreed rather than assumed. A client that skips straight to
+`tools/list` against a server speaking an incompatible protocol version gets an ambiguous error
+instead of a clear "unsupported version" rejection at the one point in the session where that
+mismatch is unambiguous to diagnose.
+
+```mermaid
+sequenceDiagram
+    participant C as MCP Client
+    participant S as MCP Server
+
+    C->>S: initialize (protocol version, client capabilities)
+    S-->>C: result: server protocol version, server capabilities
+    Note over C,S: Client checks version compatibility before proceeding
+    C->>S: initialized (notification — no id, no response expected)
+    Note over C,S: Session is live; server may now send server-initiated messages
+    C->>S: tools/list (request)
+    S-->>C: result: available tools + schemas
+```
 
 ```mermaid
 flowchart TB
@@ -243,6 +349,43 @@ Three distinct controls, frequently conflated in interviews — keep them separa
    patterns in fetched content, and consider a lightweight sanitization pass before re-injecting
    large third-party text into the main reasoning loop.
 
+#### Internals: Constrained Decoding vs Post-Hoc Validation
+
+Schema validation (control #1, above) tells you *after* the model has already produced a tool
+call whether that call is well-formed. There are two fundamentally different ways to get to a
+valid call, and interviewers expect you to know both exist and why you'd pick one:
+
+- **Grammar-constrained decoding.** The tool's JSON Schema is compiled into a formal grammar (or
+  an equivalent token-level state machine), and the model's decoder is restricted at *every*
+  generation step to only emit tokens that keep the output on a path the grammar allows — it
+  becomes structurally impossible for the model to emit a token that would produce unbalanced
+  braces, a wrong type, or a field outside the schema, because that token is masked out of the
+  sampling distribution before it can ever be chosen. This is enforced by the model **runtime**
+  (e.g. a logits processor/grammar sampler), not by prompting — the model is never "asked
+  nicely" to be valid, it's mechanically prevented from being invalid. OpenAI's Structured
+  Outputs and similar provider features are production examples of this approach.
+- **Post-hoc validation + reject/retry.** The model is prompted to produce JSON in free text (no
+  decoding-time constraint), the output is parsed and validated against the schema after
+  generation completes, and an invalid result is rejected and the model is asked to retry —
+  often with the validation error fed back into context to help it self-correct.
+
+> **Trade-off:**
+> - **Constrained decoding** — dramatically fewer malformed calls (structurally can't happen for
+>   schema violations), but adds per-token decoding overhead and **requires the model
+>   runtime/serving stack to support grammar-constrained sampling** (not every hosted-provider
+>   API exposes this, and self-hosted stacks need a compatible inference engine).
+> - **Post-hoc validation** — works with *any* model or provider, no special runtime support
+>   needed, but a malformed call costs a **full extra round trip** (generate → fail validation →
+>   re-prompt → regenerate), real latency and token cost multiplied across every malformed call
+>   at scale.
+>
+> A pragmatic platform stance: use constrained decoding where the runtime supports it (default
+> for any self-hosted or fine-tuned tool-calling model), and keep post-hoc validation as the
+> universal fallback/safety net for providers that don't expose constrained decoding — never
+> skip post-hoc validation entirely even when constrained decoding is available, since a schema
+> can express constraints (e.g. cross-field relationships) that a token-level grammar alone
+> doesn't always capture.
+
 The actual *decision* of whether an invocation proceeds — beyond schema validity — belongs to
 the policy engine, not the registry. See [11 — Governance, Guardrails & Security](11-governance-guardrails-and-security.md)
 for how risk classification here feeds HITL approval, budget checks, and audit logging at
@@ -331,12 +474,28 @@ a new skill version is promoted to production agents.
 - Schema drift between MCP server versions is a top production failure mode — pin versions,
   re-negotiate capabilities on a schedule, and contract-test before promoting a new server
   version.
+- JSON-RPC framing is the whole correlation mechanism: request `id` + method/params, response
+  echoes the same `id` with `result` or `error`, notifications carry no `id` and expect no reply
+  — that `id` is the only thing letting a client match responses to concurrent in-flight calls.
+- stdio is same-machine, one-client-per-process, no built-in auth; Streamable HTTP (the current
+  remote transport) is stateless-per-call and plays natively with load balancers/auth
+  middleware; HTTP+SSE, its deprecated predecessor, traded that away for an always-open
+  server-push channel.
+- The `initialize` → `initialized` handshake exists to catch protocol-version skew and negotiate
+  optional capabilities (sampling, roots) before any real tool call is attempted — not just
+  ceremony.
+- Grammar-constrained decoding makes schema-invalid tool calls structurally impossible at the
+  token level (needs runtime support, adds decode overhead); post-hoc validation + reject/retry
+  works with any model but burns a full round trip per malformed call — use both, not one
+  instead of the other.
 
 ## Further Reading
 
 - Model Context Protocol — <https://modelcontextprotocol.io/>
 - Model Context Protocol servers/SDKs (reference implementations) — <https://github.com/modelcontextprotocol>
 - JSON-RPC 2.0 Specification — <https://www.jsonrpc.org/specification>
+- Model Context Protocol — Transports specification (stdio, Streamable HTTP, deprecated HTTP+SSE) — <https://modelcontextprotocol.io/specification/2025-06-18/basic/transports>
 - OpenAI function calling guide — <https://platform.openai.com/docs/guides/function-calling>
+- OpenAI Structured Outputs guide (JSON-Schema-constrained generation) — <https://developers.openai.com/api/docs/guides/structured-outputs>
 - Semantic Kernel agent orchestration & plugins — <https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/agent-orchestration/>
 - OWASP Top 10 for Large Language Model Applications (prompt injection, excessive agency) — <https://owasp.org/www-project-top-10-for-large-language-model-applications/>

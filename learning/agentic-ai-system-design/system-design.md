@@ -56,7 +56,7 @@ Supporting depth, each with its own document because the content warrants it:
 
 ---
 
-## 2 · Master architecture
+## 2 · Architecture
 
 ```mermaid
 flowchart TD
@@ -100,6 +100,27 @@ flowchart TD
 model proposing intent. Everything crossing the Tool Gateway into `Enterprise` / `MCP` is a
 real side effect and **must** pass through `PolicyEngine` first. If you remember one line to
 draw on a whiteboard, draw that arrow and label it "authority boundary."
+
+#### How These Planes Actually Talk To Each Other
+
+The diagram's arrows are doing a lot of work silently — naming the actual mechanism at each
+boundary is what turns "I can draw the diagram" into "I can defend the diagram":
+
+- **Runtime → Model Gateway.** Typically a synchronous request/response call (often streamed
+  token-by-token back to the caller) that passes through the Model Gateway's rate-limiting and
+  circuit-breaker logic before ever reaching a provider — see
+  [04 — Model Gateway & LLM Providers](04-model-gateway-and-llm-providers.md) for the routing,
+  fallback, and budget mechanics behind that call.
+- **Runtime → State/Memory.** A checkpoint write at each super-step boundary — the runtime
+  doesn't stream continuous state to the State Plane, it persists a durable snapshot after each
+  discrete step completes — see
+  [05 — State Management & Memory](05-state-management-and-memory.md) for how checkpoints,
+  event logs, and the memory hierarchy fit together.
+- **Control Plane → Runtime (scheduling).** A lease/fencing-token handoff — the Control Plane
+  grants the Runtime a time-bounded, uniquely-fenced lease on an execution before it starts, so
+  a stale or duplicate runtime instance can't commit writes after its lease expires — see
+  [02 — Agent Lifecycle & Runtime](02-agent-lifecycle-and-runtime.md) for the full lease/fencing
+  mechanism.
 
 ---
 
@@ -207,6 +228,9 @@ review will ask "what stops this from being abused?" Have an answer ready for ea
 | Partial completion across systems | Side effects without a compensation plan | Saga orchestration + idempotency keys + compensation contracts + escalation ([10](10-recoverability-rollbacks-and-saga.md)) |
 | Rogue/incompatible tool version | Tool/MCP registered without contract or sandbox | Versioned registry, capability negotiation, sandboxing ([03](03-tool-mcp-and-skill-registry.md)) |
 | Wrong/expensive model routed | No fallback or budget-aware routing | Model gateway with routing policy, fallback chain, per-tenant budget ([04](04-model-gateway-and-llm-providers.md)) |
+| Ambiguous tool-call outcome (timeout/partial response) | Side effect assumed failed and blindly retried | Check-before-compensate: query the system of record for actual state before retrying or compensating ([10](10-recoverability-rollbacks-and-saga.md)) |
+| ANN recall silently degrades at scale | HNSW/IVF-PQ parameters (`M`/`efSearch`, `nlist`/`nprobe`) untuned as the index grows | Tune HNSW `efSearch`/`M` or IVF-PQ `nprobe`/`nlist` against a recall benchmark as corpus size grows ([05](05-state-management-and-memory.md)) |
+| LLM-judge score looks inflated/inconsistent | Judge position bias (favors whichever answer it sees first/second) | Swapped-order verification: score both orderings, flag/average disagreements ([07](07-agent-evaluation-frameworks.md)) |
 
 ---
 
@@ -277,6 +301,15 @@ interview; it signals judgment, not just knowledge.
   "just a list of functions."
 - No framework (LangGraph, Semantic Kernel, AutoGen) replaces the control/governance/eval planes;
   they live *inside* the runtime plane.
+- Plane boundaries have concrete mechanisms, not magic: Runtime→Model Gateway is a synchronous
+  (often streamed) call through rate-limit/circuit-breaker logic; Runtime→State is a checkpoint
+  write per super-step; Control→Runtime is a lease/fencing-token handoff.
+- Don't blindly retry an ambiguous tool-call outcome — check the system of record first, then
+  compensate only if it actually failed.
+- ANN recall degradation as a vector index grows is a tuning problem (HNSW `efSearch`/`M`,
+  IVF-PQ `nprobe`/`nlist`), not a "the vector DB is broken" problem.
+- LLM judges carry position bias — verify a preference with swapped-order scoring before
+  trusting it as ground truth.
 
 ## Further Reading
 
@@ -292,3 +325,6 @@ interview; it signals judgment, not just knowledge.
 - Model Context Protocol specification — <https://modelcontextprotocol.io/>
 - LangChain human-in-the-loop docs — <https://docs.langchain.com/oss/python/langchain/human-in-the-loop>
 - Martin Fowler — Event Sourcing — <https://martinfowler.com/eaaDev/EventSourcing.html>
+- Hierarchical Navigable Small World (HNSW) paper — <https://arxiv.org/abs/1603.09320>
+- FAISS indexes guide (HNSW / IVF-PQ parameters) — <https://github.com/facebookresearch/faiss/wiki/Faiss-indexes>
+- Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena (position bias) — <https://arxiv.org/abs/2306.05685>

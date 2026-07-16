@@ -130,6 +130,25 @@ specific to this domain, not a generic microservices preference:
   event logs at escalation time, under time pressure, which is exactly when you don't want to be
   doing forensic reconstruction.
 
+#### Internals: What Each Approach Actually Costs You
+
+The three bullets above explain *why* this platform defaults to orchestration — the underlying
+cost trade-off is worth stating explicitly on its own, because it's the first thing a
+staff-level interview will push on next:
+
+| | Choreography | Orchestration |
+|---|---|---|
+| **Coordinator** | None — each service reacts to events from the previous step and decides its own compensation trigger | One — a central Saga/Compensation Engine explicitly sequences every step |
+| **Single point of failure for saga logic** | No — there's no central coordinator to go down | Yes — the orchestrator is a critical-path dependency for every single step |
+| **Where compensation-triggering logic lives** | Duplicated into every participating service — each one has to know when *it* needs to compensate | Centralized in one engine — services only expose "do the thing" / "undo the thing"; the engine decides when to call either |
+| **"What's the current state of this saga right now?"** | Not answerable from any single place — has to be reconstructed after the fact from scattered events across services | Directly answerable — the orchestrator's own state *is* the saga's state, by definition |
+| **Implementation cost as step count grows** | Grows faster — every new step means every other service that might need to react to it needs new event-handling logic | Grows roughly linearly — every new step is one more entry in the orchestrator's sequence |
+
+> The practical failure mode of choreography at scale: nobody can answer "why did compensation X
+> run?" without pulling logs from every service involved and manually reconstructing the event
+> order — precisely the forensic-reconstruction problem the HITL-escalation bullet above already
+> flags as unacceptable under time pressure.
+
 ### 2.3 Saga orchestration flow
 
 ```mermaid
@@ -221,6 +240,38 @@ The mechanics:
 Without step 4's discipline, retries are indistinguishable from duplicate side effects, and
 "just retry on failure" — the instinctive fix — becomes a bug generator instead of a safety net.
 
+#### Internals: The Dedup Store
+
+The mechanics above describe *what* the key is used for; here's *how* it's actually generated and
+checked in practice:
+
+1. **Key derivation.** A robust construction is
+   `idempotency_key = hash(agent_id, step_id, canonicalized_args)` — hashing the agent, the saga
+   step, and a *canonicalized* (stably key-ordered, whitespace-normalized) form of the call's
+   arguments. Canonicalizing the args matters: two logically-identical calls whose arguments
+   happen to serialize with differently-ordered JSON keys must still hash to the same key, or
+   dedup silently fails exactly when you need it most.
+2. **Pre-execution check.** Before the orchestrator executes a mutating tool call, it looks up
+   that key in a **dedup store** — a durable key-value store with a TTL (long enough to outlive
+   any realistic retry window, short enough not to grow unbounded).
+   - **Key present, with a recorded result:** return the cached result immediately — do **not**
+     re-execute the side effect. This is exactly the case that makes retrying after a
+     "succeeded, but the response was lost" timeout safe.
+   - **Key absent:** execute the tool call, then record its result under that key before
+     returning to the caller.
+3. **Why the store has to be durable and shared, not per-process memory.** If the dedup store
+   lived in one process's memory, a retry routed to a different orchestrator replica (a
+   near-certainty in any horizontally scaled deployment) would never see the first attempt's key
+   — and would execute the side effect again, silently defeating the whole mechanism. The dedup
+   store has to be a shared, durable service, at the same durability tier as the
+   [State Plane](system-design.md#3--plane-by-plane-responsibility-map)'s event log, reachable by
+   every orchestrator replica.
+
+> This is the mechanism that converts [09 — Multi-Agent Communication Patterns](09-multi-agent-communication-patterns.md#how-it-actually-works-message-delivery-guarantees)'s
+> "at-least-once delivery" — the realistic default for any distributed messaging layer — into
+> **effectively-once execution** from the caller's point of view. The message or retry can still
+> arrive twice; the dedup store is what guarantees the underlying *side effect* only happens once.
+
 ### 2.7 The ambiguous outcome problem
 
 This is the single hardest case in agentic recovery, and it deserves to be named explicitly
@@ -252,6 +303,52 @@ The correct sequence, in order of preference:
 
 The rule of thumb worth memorizing: **an unknown commit outcome is a query problem first and an
 escalation problem second — it is never a "pick retry or compensate and hope" problem.**
+
+#### How It Actually Works: Check Before Compensate
+
+Mechanically, "query the target system first" (preference 1 above) is a specific sequence worth
+naming on its own — it's the piece that actually resolves the ambiguity, rather than just
+managing risk around it:
+
+1. A tool call is made; the response never arrives (timeout, connection reset, etc.). At this
+   instant the orchestrator has **zero information** about whether the far side executed the
+   mutation before or after the timeout fired.
+2. Instead of guessing, the orchestrator issues a **read** against the target system, scoped to
+   the same idempotency key or request ID used in the original call — e.g., "does a ticket
+   tagged with idempotency key `saga:8f14e45f:step-2:attempt-1` already exist?"
+3. **If the read confirms the effect landed:** treat the step as succeeded, record its
+   compensation (Section 2.1), and proceed — do not compensate an action that legitimately needs
+   to stay in effect.
+4. **If the read confirms the effect did not land:** retry the original call, reusing the same
+   idempotency key (Section 2.6) — no compensation is needed, because nothing happened yet.
+5. **Only if the read itself is inconclusive or unavailable** does this fall through to human
+   escalation with evidence (preference 2 above).
+
+```mermaid
+sequenceDiagram
+    participant O as Orchestrator
+    participant T as Target System
+
+    O->>T: execute action (idempotency_key=K)
+    T--xO: timeout — no response
+    O->>T: query — does a record with key K exist?
+    alt Record exists
+        T-->>O: yes, found (result R)
+        O->>O: treat step as succeeded, record compensation
+    else Record absent
+        T-->>O: no record found
+        O->>T: retry original action (same key K)
+    end
+```
+
+**The real-world constraint this depends on:** step 2 only works if the target system exposes a
+way to query by your idempotency key or request ID in the first place. Plenty of third-party APIs
+don't — they offer "look up by the resource's own ID" but not "look up by the client request ID
+you sent," and you don't have the resource's own ID yet if the *create* call is what timed out.
+That's a real integration constraint to check for before you depend on an integration for any
+workflow where ambiguous-timeout recovery matters — and it's a legitimate, principled reason to
+default to human escalation (step 5) for tools that don't support it, rather than a gap to just
+paper over.
 
 ---
 
@@ -312,11 +409,25 @@ have more than a handful of write tools or the manual runbooks stop scaling.
   and escalating to a human with evidence second — never by guessing retry vs. compensate.
 - Human approvals must be re-validated against current state at execution time — approving based
   on stale state is its own failure mode.
+- An idempotency key is typically `hash(agent_id, step_id, canonicalized_args)`, checked against a
+  durable, shared dedup store before every mutating call — this is what turns at-least-once
+  delivery (see doc 09) into effectively-once execution.
+- "Check before compensate": on an ambiguous timeout, query the target system by idempotency
+  key/request ID before deciding to retry or compensate — never guess between the two.
+- Not every third-party API supports querying by idempotency key or request ID — that's a real
+  integration constraint, and a legitimate reason to default to human escalation for tools that
+  lack it.
+- Choreography scatters compensation-triggering logic across every participating service and
+  makes "what's this saga's current state?" unanswerable from any single place; orchestration
+  centralizes both, at the cost of the orchestrator being a critical-path dependency for every
+  step.
 
 ## Further Reading
 
 - Azure Architecture Center — Saga pattern — <https://learn.microsoft.com/en-us/azure/architecture/patterns/saga>
 - Azure Architecture Center — Compensating Transaction pattern — <https://learn.microsoft.com/en-us/azure/architecture/patterns/compensating-transaction>
+- Stripe — Idempotent Requests (idempotency-key pattern reference) — <https://stripe.com/docs/api/idempotent_requests>
+- IETF — The Idempotency-Key HTTP Header Field (draft) — <https://datatracker.ietf.org/doc/draft-ietf-httpapi-idempotency-key-header/>
 - Back to the [uber doc — Designing an Agentic AI Platform](system-design.md)
 - [11 — Governance, Guardrails & Security](11-governance-guardrails-and-security.md) for HITL approval mechanics
 - [06 — Non-Determinism, Loops & Termination](06-non-determinism-loops-and-termination.md) for budget/escalation ties

@@ -79,6 +79,37 @@ Three properties of this DAG matter more than the boxes themselves:
    before the loop resumes, so the resumed path always has a durable record of *why* it was
    allowed to continue — never resume execution directly off an in-memory approval flag.
 
+#### Checkpoint Internals: What Gets Serialized, and Delta vs. Full Snapshot
+
+A checkpoint is not a log line — it's a serialized snapshot of the *entire state dict/object
+graph* at a super-step boundary: the accumulated plan, tool-call history, observations so far,
+budget counters, and any framework-internal fields needed to resume execution exactly where it
+left off (LangGraph, for example, checkpoints the full graph-state channel values, not just a
+diff of what changed).
+
+Two implementation strategies for *how* that snapshot is written, with a real trade-off between
+them:
+
+- **Full snapshot per checkpoint.** Serialize the entire state object every time. Restore is
+  $O(1)$ — read one checkpoint, resume. Cost: every write is as large as the full state, which
+  gets expensive as accumulated state grows across a long-running execution.
+- **Delta (incremental) checkpointing.** Persist only what changed since the last checkpoint.
+  Writes are small and cheap. Cost: reconstruction requires replaying every delta *in order*
+  since the last full snapshot — slower to restore, and fragile: a single corrupted or missing
+  delta breaks the chain and makes every checkpoint after it unusable.
+
+> **Trade-off — delta vs. full snapshot**
+>
+> | | Write cost | Restore cost | Failure blast radius |
+> |---|---|---|---|
+> | Full snapshot | High — whole state, every time | $O(1)$ — read once | One bad write only affects that single checkpoint |
+> | Delta | Low — only the diff | $O(n)$ — replay deltas in order | One corrupted delta breaks every checkpoint after it |
+
+Most production systems interleave the two: delta-checkpoint on every step to keep writes cheap,
+full-snapshot every *N* steps as a recovery anchor. That's the same trade-off event sourcing's
+snapshotting solves for the event log below (Section 3) — checkpointing and snapshotting are the
+same idea applied at different layers.
+
 ---
 
 ## 3 · Event sourcing applied to agents
@@ -132,6 +163,35 @@ The **Replay Engine** doesn't re-execute the agent against live tools — it rec
 recorded trajectory for inspection, and optionally re-runs it in a sandboxed shadow mode against
 the *same pinned versions* to check for divergence (useful for debugging "why did this regress
 after we shipped a new prompt").
+
+#### Internals: Snapshotting and CQRS
+
+Replaying an execution's full event history from event zero gets slower as the log grows — after
+thousands of events, reconstructing current state means folding thousands of events before you
+can do anything with it. **Snapshotting** solves this: periodically persist the *derived* state
+(the fold-result, not new events) so replay only has to start from the latest snapshot forward,
+not from the beginning of the log.
+
+> **Trade-off — snapshot frequency**
+>
+> - **Snapshot too rarely:** recovery after a crash means folding a long tail of events since the
+>   last snapshot — slow recovery, and it gets worse the longer the execution has been running.
+> - **Snapshot too often:** every snapshot write costs storage and compute, and most snapshots are
+>   discarded almost immediately as newer ones supersede them — overhead with little recovery-speed
+>   benefit to show for it.
+>
+> This is the identical shape of trade-off as checkpoint delta-vs-full-snapshot (Section 2) —
+> snapshotting *is* checkpointing, applied to the event-sourced projection instead of raw execution
+> state.
+
+**CQRS (Command Query Responsibility Segregation)** is the natural pairing with event sourcing:
+the *write model* is the append-only event log itself, optimized for durable, ordered writes; the
+*read model* is one or more projected/materialized views built from that log and optimized for the
+queries the platform actually needs (e.g., "all executions for tenant X in the last 24 hours" — a
+view nobody wants to compute by folding raw events on every request). Write and read models can use
+different storage technologies and even lag behind each other (eventual consistency) without
+threatening correctness, because the event log remains the single source of truth the read model
+can always be rebuilt from.
 
 ---
 
@@ -222,6 +282,109 @@ this distinction.
   to your audit path — collapse the log and a projection into one store and you lose the ability
   to reason about either independently.
 
+#### Vector Memory Internals: Approximate Nearest Neighbor Search
+
+The "vector memory" row in the table above hides the hardest engineering problem in this whole
+hierarchy: at scale, you cannot run exact k-nearest-neighbor (k-NN) search. Exact k-NN means
+computing the distance from the query embedding to *every* stored vector — $O(n)$ per query.
+That's fine under roughly 100K vectors, but it doesn't scale to the millions-to-billions of
+embeddings a real long-term-memory deployment accumulates. Production vector memory is built on
+**Approximate Nearest Neighbor (ANN)** search: trade a small, tunable amount of recall for
+orders-of-magnitude faster queries.
+
+**HNSW (Hierarchical Navigable Small World)** is the dominant ANN algorithm behind most vector
+databases (pgvector, Pinecone, Qdrant, Weaviate). It builds a multi-layer proximity graph:
+
+- The **top layer** has few nodes with long-range links — a sparse "highway" for fast, coarse
+  traversal across the whole vector space.
+- Each **lower layer** gets progressively denser, with shorter-range links between nearby vectors.
+- The **bottom layer** contains every vector, densely connected to its true nearest neighbors.
+
+Search starts at the top layer's entry point and **greedily descends**: at each layer, move to
+whichever neighbor is closest to the query vector, and drop down a layer once no neighbor at the
+current layer beats the current best. By the time the search reaches the bottom layer, it has
+narrowed to a small local neighborhood instead of having scanned everything.
+
+```mermaid
+flowchart TD
+    subgraph L2["Layer 2 — sparse, long-range"]
+        A2((A)) --- B2((B))
+    end
+    subgraph L1["Layer 1 — medium density"]
+        A1((A)) --- C1((C)) --- B1((B))
+        C1 --- D1((D))
+    end
+    subgraph L0["Layer 0 — dense, all vectors"]
+        A0((A)) --- C0((C)) --- D0((D)) --- E0((E)) --- B0((B))
+        D0 --- F0((F))
+    end
+    Query((Query)) -.entry.-> A2
+    A2 -.descend.-> A1
+    A1 -.greedy step.-> C1
+    C1 -.descend.-> C0
+    C0 -.greedy step.-> D0
+    D0 -.greedy step.-> F0
+    F0 -.result.-> Result[Nearest Neighbors]
+
+    classDef result fill:#efe,stroke:#494,stroke-width:1px;
+    class Result result
+```
+
+Two parameters dominate the recall/latency/memory trade-off:
+
+- **`M` (max neighbors per node):** higher `M` means a denser graph — better recall, since there
+  are more paths to find the true nearest neighbor — but more memory per node and slower index
+  construction.
+- **`ef_search` (candidate list size during search):** higher `ef_search` keeps a larger frontier
+  of candidates before committing to descend — better recall, but slower per-query latency.
+  `ef_search` is tunable *per query* at runtime, independent of how the index was built, which
+  makes it the primary production knob for trading latency against recall without rebuilding the
+  index.
+
+**IVF-PQ (Inverted File + Product Quantization)** is the other major ANN family, optimized for a
+different constraint: memory footprint at very large scale.
+
+- **Inverted file (IVF):** cluster all vectors ahead of time (e.g., via k-means). At query time,
+  only search the nearest cluster(s) to the query — not the whole dataset — the same "narrow the
+  search space first" idea as HNSW's coarse layers, done via clustering instead of a graph.
+- **Product quantization (PQ):** compress each vector by splitting it into sub-vectors and
+  quantizing each sub-vector independently against a small codebook, storing compact codes
+  instead of full-precision floats. This is where the memory savings come from — often an order
+  of magnitude smaller — at the cost of some distance-computation accuracy (recall).
+
+> **Trade-off — HNSW vs. IVF-PQ**
+>
+> HNSW generally wins on recall and latency at moderate scale, at the cost of holding a full
+> in-memory graph over full-precision vectors. IVF-PQ trades some recall for a dramatically
+> smaller memory footprint via clustering and compression — which is what makes it viable at a
+> scale HNSW's memory profile can't reach.
+
+> **Trade-off — exact k-NN vs. HNSW vs. IVF-PQ**
+>
+> | Approach | Recall | Query cost | Memory | Sweet spot |
+> |---|---|---|---|---|
+> | Exact k-NN | Perfect | $O(n)$ per query | Baseline (raw vectors) | Under ~100K vectors |
+> | HNSW | Near-exact, tunable via `M` / `ef_search` | Sub-linear | Higher — graph + full vectors | Moderate scale, latency-sensitive |
+> | IVF-PQ | Lower, compression-limited | Sub-linear — nearest clusters only | Lowest — quantized codes | 10M+ vectors, memory-constrained |
+
+The interview-answer takeaway: **"vector memory" is not one technology.** It's a specific ANN
+algorithm choice, and that choice is itself a recall/latency/memory trade-off you should be able
+to justify for the deployment's actual scale — not a default you reach for unexamined.
+
+#### Memory Hierarchy Trade-offs: Speed vs. Persistence vs. Retrieval Quality
+
+> **Trade-off — where should a given fact live?**
+>
+> | Layer | Speed | Infra cost | Persistence | Ceiling / risk |
+> |---|---|---|---|---|
+> | Context window | Fastest — already in the prompt | Zero — no extra infra | None — gone once the call ends unless re-included | Hard token-count ceiling; silently drops old content once exceeded |
+> | Session/thread checkpoint store | Fast — single KV/row read | Low — one durable store | Survives a crash/pause *within* one execution | Lost across sessions unless explicitly promoted to long-term storage |
+> | Long-term store / vector memory | Slower — network hop plus ANN search | Higher — dedicated index/store, embedding pipeline | Scales indefinitely, cross-session | Retrieval quality depends entirely on embedding model + chunking strategy + ANN recall — **the memory is only as good as the retrieval** |
+
+This is the same three-tier shape as the six-layer hierarchy above, collapsed to the question an
+interviewer is really asking: *"where does this specific fact belong, and what do you give up by
+putting it there?"*
+
 ---
 
 ## 5 · Enterprise vs. startup recommendation
@@ -305,11 +468,25 @@ don't add it because "agents are supposed to have memory."
   index over an authoritative store.
 - Enterprise: event log + checkpoints with full version metadata. Startup: relational tables,
   vector memory added only once recall quality is a proven gap.
+- Checkpointing is a delta-vs-full-snapshot trade-off: full snapshot = O(1) restore but bigger
+  writes; delta = cheap writes but replay-in-order and fragile if one delta is corrupted.
+- Event-sourcing snapshotting solves the same problem as checkpointing — snapshot too rarely and
+  recovery is slow; too often and you pay storage/compute for little benefit. CQRS pairs an
+  append-only write model (the event log) with a separate, query-optimized read model.
+- Exact k-NN doesn't scale past ~100K vectors; production vector memory relies on ANN — HNSW
+  (multi-layer graph, tuned via `M` and `ef_search`) for moderate scale, IVF-PQ (clustering +
+  quantization) for 10M+ vectors where memory is the binding constraint.
+- "Vector memory" is only as good as its retrieval: embedding model quality, chunking strategy,
+  and ANN recall all bound how useful the long-term store actually is.
 
 ## Further Reading
 
 - LangGraph persistence (checkpointers vs. stores) — <https://docs.langchain.com/oss/python/langgraph/persistence>
 - Martin Fowler — Event Sourcing — <https://martinfowler.com/eaaDev/EventSourcing.html>
+- Martin Fowler — CQRS — <https://martinfowler.com/bliki/CQRS.html>
+- Malkov & Yashunin — Efficient and Robust Approximate Nearest Neighbor Search Using Hierarchical Navigable Small World Graphs — <https://arxiv.org/abs/1603.09320>
+- Jégou, Douze & Schmid — Product Quantization for Nearest Neighbor Search — <https://doi.org/10.1109/TPAMI.2010.57>
+- FAISS (Facebook AI Similarity Search) — reference implementation of IVF-PQ and other ANN indexes — <https://github.com/facebookresearch/faiss>
 - Back to the [master platform doc](system-design.md)
 - Related: [06 — Non-Determinism, Loops & Termination](06-non-determinism-loops-and-termination.md),
   [08 — Observability, Tracing & Health](08-observability-tracing-and-health.md),

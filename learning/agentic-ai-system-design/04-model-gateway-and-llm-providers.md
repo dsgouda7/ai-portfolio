@@ -89,12 +89,129 @@ Responsibilities, mapped to the diagram:
   step needs to redo its own bookkeeping").
 - **Rate limiting and quota enforcement per tenant/agent** — prevents one noisy tenant from
   burning another tenant's provider quota or budget.
+
+#### Internals: Token Bucket vs Leaky Bucket Rate Limiting
+
+Two classic algorithms achieve rate limiting differently, and the difference matters when
+picking one for an LLM gateway:
+
+- **Token bucket.** A bucket holds up to some maximum number of tokens and refills at a fixed
+  rate (e.g. 100 tokens/second). Each incoming request consumes some number of tokens
+  proportional to its estimated cost — for an LLM call, that's usually *estimated prompt +
+  max-completion tokens*, not just "1 request = 1 token." If the bucket doesn't hold enough
+  tokens, the request is throttled (rejected or queued) immediately. Bursts are allowed up to
+  the bucket's capacity, which is exactly the behavior you want for bursty agent workloads — a
+  reasoning loop can fire off several tool-augmented calls back-to-back, then go quiet.
+- **Leaky bucket.** Requests enter a queue (the "bucket") and are drained at a strictly fixed
+  outflow rate, regardless of how bursty the arrivals were. This smooths bursts into a constant
+  downstream rate, but it does so by adding **queuing delay** — a request arriving mid-burst
+  waits its turn rather than being processed (or rejected) immediately, which is often the wrong
+  trade for a synchronous, latency-sensitive agent step waiting on a model response.
+
+> **Trade-off:** token bucket is the better default for an LLM gateway — it tolerates natural
+> burstiness in agent call patterns without adding latency to the common case, and it maps
+> cleanly onto pre-request admission ("do we have budget for this call, yes/no") rather than
+> forcing every call through a delay queue. Leaky bucket earns its keep when you need a
+> hard-capped, perfectly smoothed outflow rate downstream — e.g. protecting a fixed-capacity
+> self-hosted inference cluster from bursty traffic — and can tolerate the added latency.
+
+**Why LLM gateways need *multi-dimensional* buckets:** providers rate-limit on at least two
+independent axes — **requests per minute (RPM)** and **tokens per minute (TPM)** — and a single
+request can exhaust either one independently of the other (a request with a huge prompt or
+`max_tokens` can blow the TPM budget while barely touching RPM; a flood of tiny requests can
+blow RPM while barely touching TPM). A gateway that tracks only one dimension will still get
+429'd by the provider on the other, so production LLM gateways run **one bucket per dimension
+per provider-credential** and throttle on whichever bucket empties first.
+
 - **Retry with backoff** for transient provider errors (5xx, timeouts) — bounded and
   circuit-broken, not infinite.
+
+#### Internals: Exponential Backoff With Jitter
+
+The retry-with-backoff bullet above compresses a specific, well-studied formula: on a transient
+failure, wait `delay = base * 2^attempt`, capped at some maximum, before retrying (attempt 1
+waits `base`, attempt 2 waits `2*base`, attempt 3 waits `4*base`, and so on) — that's what
+"exponential" means here.
+
+**Why plain exponential backoff isn't enough:** if many callers hit the same failure at roughly
+the same moment (a provider blip during a traffic spike), they all compute the *same* sequence
+of delays and retry in **synchronized waves** — the backoff schedule spreads out a single
+caller's own retries but does nothing to desynchronize many callers from each other. The fix is
+**jitter**: add randomness to the computed delay (`delay = random_between(0, base * 2^attempt)`
+is the simplest "full jitter" variant) so retries from different callers land at different times
+instead of a synchronized retry storm hitting the already-struggling provider all at once.
+
+> A single provider outage or rate-limit event typically affects *every* tenant/agent routed
+> through that provider simultaneously — exactly the many-synchronized-callers scenario jitter
+> is designed for. Skipping jitter on an LLM gateway's retry logic turns a transient provider
+> hiccup into a self-inflicted thundering herd the moment the provider starts to recover.
+
+#### How It Actually Works: Circuit Breaker State Machine
+
+"Bounded and circuit-broken, not infinite" refers to a state machine wrapped around the retry
+logic — without it, retries alone can keep hammering an already-failing provider indefinitely:
+
+```mermaid
+stateDiagram-v2
+    [*] --> Closed
+    Closed --> Closed: request succeeds (reset failure count)
+    Closed --> Open: failure count exceeds threshold within window
+    Open --> Open: request fails fast (no call reaches the provider)
+    Open --> HalfOpen: cooldown window elapses
+    HalfOpen --> Closed: trial request(s) succeed
+    HalfOpen --> Open: trial request fails
+```
+
+- **Closed** — requests flow normally to the provider; failures are counted against a
+  time-windowed threshold, and a success resets the count.
+- **Open** — once the failure threshold is breached, the breaker trips: for a cooldown window,
+  every request **fails fast without ever calling the provider** — no network call, no timeout
+  wait, just an immediate structured failure back to the caller.
+- **Half-Open** — after the cooldown elapses, a small number of trial requests are let through
+  as a probe. If they succeed, the breaker closes and normal traffic resumes; if any fail, it
+  reopens and restarts the cooldown.
+
+> **Why fail-fast during Open protects both sides:** the caller (agent runtime) avoids burning a
+> full timeout's worth of latency on a call that was highly likely to fail anyway — it gets an
+> immediate, structured failure it can act on (fallback, surface to the model) instead of
+> blocking. The struggling provider avoids **additional load piling on top of whatever is
+> already causing it to fail** — every fast-failed request is one less request queued behind an
+> already overloaded backend, which is precisely the condition that turns a transient blip into
+> a full outage.
+
 - **Cost metering** — token accounting per call, converted to $ using each provider's pricing,
   attributed to tenant/agent/execution ID — this is the data source [08 — Observability, Tracing
   & Health](08-observability-tracing-and-health.md) uses for cost-attribution dashboards and
   the input to per-tenant budget enforcement in [06 — Non-Determinism, Loops & Termination](06-non-determinism-loops-and-termination.md).
+
+#### Internals: Prompt Caching
+
+Cost metering is about *measuring* token spend after the fact; **prompt caching** is a
+provider-side mechanism that *reduces* it before the meter even runs. Providers can cache the
+internal state produced while processing a prompt **prefix** — for transformer models this is
+the key/value (KV) cache from the attention layers — keyed by a hash of that prefix. When a
+later request's prompt starts with the *exact same* prefix (same system prompt, same few-shot
+examples, same leading conversation turns), the provider can skip re-running the full forward
+pass over that prefix and reuse the cached state, processing only the new tokens that follow.
+Both OpenAI and Anthropic expose this today, billing cached-prefix tokens at a fraction of the
+normal input-token rate instead of the full rate.
+
+Why this matters at agent-platform scale: agent prompts are usually dominated by a large,
+*repeated* prefix — system instructions, tool schemas, few-shot examples, RAG context — with
+only a small amount of genuinely new content (the latest user/tool turn) at the end. Every step
+in a multi-step reasoning loop re-sends that entire prefix, so structuring prompts to maximize
+cache hits (static content first, variable content last, consistent formatting across calls) can
+cut both **cost and time-to-first-token** substantially at scale — this is a prompt-template
+design constraint, not just a cost-accounting detail.
+
+> **What invalidates the cache:** any change to the cached prefix — including whitespace,
+> reordering, or a single-character edit anywhere at or before the cache boundary — produces a
+> different hash and forces a full re-process on the next call. This is why prompt-template
+> discipline matters operationally: injecting a timestamp, a random request ID, or even
+> non-deterministic whitespace into what's supposed to be the *static* portion of a prompt
+> silently kills the cache-hit rate for every agent using that template. Cache lifetimes are
+> also typically short (minutes, extendable for a fee on some providers), so a prefix that isn't
+> reused within that window pays full cost again regardless of how carefully it was structured.
 
 **The load-bearing sentence for a whiteboard:** *the Model Gateway is the seam that turns "which
 model" from a hardcoded agent-definition detail into a runtime-resolved, governed, observable
@@ -138,6 +255,35 @@ picks up the change on its next call (optionally gated by a canary percentage �
 | **Cost-ceiling-based routing** | Routes to the cheapest model that still meets a quality floor, backing off further as tenant budget is consumed | Budget-constrained tenants, high call volume | Can degrade quality silently near the ceiling if not paired with alerting |
 | **Latency-SLA-based routing** | Picks the fastest provider/model currently meeting the agent's latency budget, using live health/latency telemetry | Interactive/user-facing agents with strict response-time requirements | Requires accurate, low-lag health telemetry to avoid routing into a degraded provider |
 | **Canary %-based routing** | Routes a small, configurable percentage of traffic to a new model version, comparing outcomes against the incumbent | Safely rolling out a new model version | Needs the evaluation harness in [07 — Agent Evaluation Frameworks](07-agent-evaluation-frameworks.md) to actually judge whether the canary is better, not just "different" |
+
+#### Internals: How Cost-Based, Latency-Based, and Fallback-Chain Routing Actually Decide
+
+The table above names the strategies; here's the mechanism behind three of them that
+interviewers commonly ask you to go one level deeper on:
+
+- **Cost-based routing.** Maintain a **quality floor** for the task (a minimum acceptable score
+  on an eval relevant to the task type — see [07 — Agent Evaluation Frameworks](07-agent-evaluation-frameworks.md))
+  and a ranked list of models that clear it, ordered by $/token. Route to the cheapest model on
+  that list; if tenant budget consumption crosses a threshold, the router can demote to a
+  stricter (cheaper-only) subset of that list rather than failing requests outright.
+- **Latency-based routing.** Track **P50 and P99 latency per provider/model** using a sliding
+  time window (e.g. the trailing 5 minutes of completed calls), refreshed continuously from the
+  gateway's own telemetry — not from a provider's advertised SLA, which doesn't reflect current
+  reality. Route each request to whichever currently-healthy option has the best P99 (not P50 —
+  P99 is what protects you from a provider that's only *occasionally* very slow, which P50 alone
+  would mask) within the task's latency budget.
+- **Fallback chains.** Not "routing" in the scoring sense — a fixed, ordered list (primary →
+  secondary → tertiary) tried in sequence, falling through only on failure or timeout of the
+  current entry. It optimizes for *availability*, not for picking the objectively best option
+  per request, which is the key distinction from the two strategies above.
+
+> **Trade-off table:**
+>
+> | Strategy | Cost | Latency | Quality consistency | Complexity |
+> |---|---|---|---|---|
+> | **Cost-based routing** | Optimized (cheapest passing the floor) | Not directly optimized | Bounded by the quality floor, but the floor itself needs upkeep | Medium — needs a maintained quality floor + live pricing table |
+> | **Latency-based routing** | Not directly optimized | Optimized (routes to fastest healthy option) | Can vary call-to-call as the fastest option shifts | Medium-high — needs accurate, low-lag P50/P99 telemetry per provider |
+> | **Fallback chains** | Secondary/tertiary cost is often incidental, not chosen for | Degrades on fallback (extra hop + possible restart, Section 5) | Trades quality for availability on fallback | Low — simplest to implement and reason about |
 
 These aren't mutually exclusive — a mature gateway layers them: static binding as the default,
 task-classifier routing within an alias's allowed model set, cost-ceiling routing as a budget
@@ -247,6 +393,18 @@ so a new model version earns production traffic instead of being flipped on for 
   manager.
 - Rate limits and spending caps must be enforceable per tenant/agent at the gateway, independent
   of any single provider credential's own limits.
+- Token bucket (burst-tolerant, refill-rate based) is the standard choice for LLM rate limiting;
+  leaky bucket smooths to a fixed outflow at the cost of queuing delay — gateways need separate
+  buckets per dimension (RPM *and* TPM) since providers cap both independently.
+- Exponential backoff needs jitter, or synchronized retry waves from many callers turn a
+  transient provider blip into a self-inflicted thundering herd; wrap retries in a circuit
+  breaker (Closed → Open → Half-Open) so a failing provider gets fail-fast instead of endless
+  retries piling on more load.
+- Cost-based routing optimizes $/token against a quality floor; latency-based routing tracks
+  P50/P99 per provider via a sliding window; fallback chains optimize availability, not
+  per-request quality — layer them rather than picking just one.
+- Prompt caching reuses a provider's cached KV-state for a repeated, hashed prompt prefix — any
+  change to that prefix, down to whitespace, invalidates the cache and forces a full re-process.
 
 ## Further Reading
 
@@ -256,3 +414,9 @@ so a new model version earns production traffic instead of being flipped on for 
 - Portkey (AI gateway: routing, fallbacks, observability) — <https://portkey.ai/docs>
 - vLLM documentation (self-hosted, OpenAI-compatible serving) — <https://docs.vllm.ai/>
 - OpenTelemetry Generative AI semantic conventions (token/cost telemetry) — <https://opentelemetry.io/docs/specs/semconv/gen-ai/>
+- Stripe Engineering: Scaling your API with rate limiters (token bucket in production) — <https://stripe.com/blog/rate-limiters>
+- AWS Architecture Blog: Exponential Backoff and Jitter — <https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/>
+- Circuit Breaker pattern — Martin Fowler — <https://martinfowler.com/bliki/CircuitBreaker.html>
+- Circuit Breaker pattern — Azure Architecture Center — <https://learn.microsoft.com/en-us/azure/architecture/patterns/circuit-breaker>
+- Anthropic prompt caching documentation — <https://platform.claude.com/docs/en/docs/build-with-claude/prompt-caching>
+- OpenAI prompt caching guide — <https://developers.openai.com/api/docs/guides/prompt-caching>

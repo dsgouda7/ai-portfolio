@@ -90,6 +90,39 @@ coordination-failure modes specifically, and
 [06 — Non-Determinism, Loops & Termination](06-non-determinism-loops-and-termination.md) for how
 you bound the single-agent failure modes.
 
+#### How It Actually Works: Sampling, Constrained Decoding, and the Open-Ended Loop
+
+"Non-deterministic" isn't a vibe — at each point on the spectrum above, a different concrete
+mechanism is doing the narrowing (or widening) of what the system can produce next:
+
+- **Fixed pipeline / workflow (high determinism):** the next node is a lookup in a transition
+  table. No model call decides control flow — the DAG *is* the control flow, so the same input
+  walks the same edges every time. There's no sampling involved in choosing *what happens next*
+  at all.
+- **Sampling temperature / top-p (the dial underneath every model call):** at each decode step
+  the model produces a probability distribution over the next token. **Temperature** rescales the
+  logits before the softmax — temperature → 0 collapses the distribution toward greedy/argmax
+  (always the single highest-probability token), while temperature > 1 flattens the distribution,
+  making lower-probability tokens more likely to be sampled. **Top-p (nucleus sampling)**
+  truncates the distribution to the smallest set of tokens whose cumulative probability exceeds
+  `p`, then samples only from that reduced set — see Holtzman et al. (Further Reading) for why
+  this beats plain top-k. These two knobs govern token-level randomness regardless of what's
+  built on top of them.
+- **Constrained / grammar-guided decoding (narrows the distribution, doesn't eliminate
+  choice):** for JSON-schema-constrained function calling, the decoder intersects the model's
+  candidate token list with "tokens that keep the output grammatically valid against the schema"
+  at every step — so a malformed function-call payload becomes structurally impossible. This
+  eliminates a whole class of parsing failures, but it does **not** make the *content*
+  deterministic: the model still freely chooses which tool to call and what values to fill in, it
+  just can't produce syntactically invalid JSON while doing it.
+- **Full agentic (ReAct-style) loop (low determinism):** none of the above bound *which tool gets
+  called, how many times, or in what order*. The model decides at each iteration whether to call
+  a tool at all, which one, and whether the goal is met — that decision sequence is not fixed at
+  authoring time the way a workflow's edges are. This is the actual mechanical reason "the next
+  step is chosen by the model" (Section 2) is true here and not for constrained decoding alone —
+  constraining the *shape* of one call is a different thing from constraining the *sequence* of
+  calls.
+
 ## 4 · The basic agent lifecycle
 
 Every agent — regardless of framework — traces some version of this loop. Memorize this shape;
@@ -117,6 +150,61 @@ Three details in this diagram are easy to skip past and are exactly what intervi
 3. **`Escalate` is a first-class exit, not an error path.** A system that can only "succeed" or
    "crash" will eventually let an agent do something unsafe because there was no bounded way to
    pause and ask.
+
+#### Internals: How Thought → Action → Observation Actually Gets Encoded
+
+A ReAct-style loop doesn't give the model a separate persistent "memory" of its own reasoning —
+the context window *is* the memory across iterations. Concretely, on iteration *k* the prompt
+sent to the model contains the system prompt, the original goal, and the full transcript of every
+prior `Thought / Action / Observation` block from iterations `1..k-1`, appended as plain text (a
+"scratchpad"). The model conditions on that entire growing transcript to produce iteration *k*'s
+`Thought` (free-text reasoning) and `Action` (the tool call, historically also free text that a
+parser then has to extract a tool name and arguments from). The tool executes, and its result is
+appended back into the transcript as `Observation`, which becomes part of the input for iteration
+*k+1*.
+
+```mermaid
+sequenceDiagram
+    participant M as Model
+    participant Ctx as Context window (scratchpad)
+    participant T as Tool
+
+    Note over Ctx: Turn 1 input = system prompt + goal
+    M->>Ctx: append Thought 1 + Action 1
+    Ctx->>T: execute Action 1
+    T-->>Ctx: append Observation 1
+    Note over Ctx: Turn 2 input = everything above (growing)
+    M->>Ctx: append Thought 2 + Action 2
+    Ctx->>T: execute Action 2
+    T-->>Ctx: append Observation 2
+    Note over Ctx: Turn 3 input = everything above (still growing)
+```
+
+The direct consequence: **every iteration re-sends the entire prior transcript as input tokens**,
+so per-step latency and cost grow with the number of steps already taken, not just with the size
+of the current step — a 10-step run's final iteration pays for re-processing roughly all 9 prior
+Thought/Action/Observation blocks as input, every single turn. This is the mechanical reason step
+budgets (see [06 — Non-Determinism, Loops & Termination](06-non-determinism-loops-and-termination.md))
+are a cost control, not just a safety control.
+
+**The alternative is a function-calling API**, where instead of emitting free-text that a parser
+must extract a tool name and arguments from, the model emits a structured call (name + JSON
+arguments) directly, validated against the constrained decoding described above. **Pros:** no
+brittle free-text parsing, so a large class of "the model almost called the right tool but the
+parser choked on it" failures disappears. **Cons:** the natural-language reasoning that would
+have appeared in a `Thought` block is no longer necessarily present in the model's output — you
+lose the visible "why did it decide this" trace unless you explicitly ask the model to also emit
+a reasoning/rationale field alongside the structured call, which makes debugging a wrong tool
+choice harder than with a transcript you can just read.
+
+> **Trade-offs — workflow/DAG vs. bounded agentic loop vs. fully open-ended agent**
+>
+> | | Workflow / DAG | Bounded agentic loop (fixed step budget) | Fully open-ended agent |
+> |---|---|---|---|
+> | Handles unanticipated branches | No — only pre-authored edges | Yes, within the step budget | Yes, unconstrained |
+> | Cheap to test exhaustively | Yes — finite graph, enumerable paths | No — needs representative sampling + eval gates ([07](07-agent-evaluation-frameworks.md)) | No — effectively untestable exhaustively |
+> | Needs runtime guardrails | Minimal (retries/timeouts) | Yes — loop/budget/safety guardrails ([06](06-non-determinism-loops-and-termination.md), [11](11-governance-guardrails-and-security.md)) | Yes, and more of them, with less certainty they're sufficient |
+> | Production justification | Default whenever the task is enumerable | Justified when branches are genuinely unpredictable but must stay bounded | Rarely justified — least predictable, least auditable, hardest to bound cost/safety |
 
 ## 5 · Control plane vs. data plane
 
@@ -254,11 +342,25 @@ interview signals judgment more than reciting the full enterprise diagram does.
   memory leakage.
 - Startup version: one API + one queue + one worker pool + one DB + structured logs + hard step
   limits + manual write approval. Enterprise version adds the full control-plane split.
+- Determinism mechanism, concretely: temperature/top-p reshape the token-level probability
+  distribution; constrained/grammar-guided decoding (JSON-schema function calling) narrows that
+  distribution to structurally valid outputs without fixing *what* is chosen; a full ReAct-style
+  loop leaves the *sequence of tool calls* itself undetermined at authoring time.
+- Each ReAct iteration re-sends the full prior Thought/Action/Observation transcript as input —
+  the context window is the memory, so per-step cost/latency grows with steps already taken.
+- Function-calling APIs trade away visible free-text reasoning (harder to debug) for structured,
+  parser-free tool calls (fewer malformed-call failures).
+- Workflow/DAG (deterministic, cheap to test) vs. bounded agentic loop (handles novel branches,
+  needs guardrails) vs. fully open-ended agent (most flexible, least auditable, rarely justified
+  in production) is the three-way call to make explicitly, not by default.
 
 ## Further Reading
 
 - ReAct: Synergizing Reasoning and Acting in Language Models — <https://arxiv.org/abs/2210.03629>
 - Semantic Kernel agent orchestration patterns — <https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/agent-orchestration/>
 - AutoGen Core user guide — <https://microsoft.github.io/autogen/stable/user-guide/core-user-guide/index.html>
+- Holtzman et al., "The Curious Case of Neural Text Degeneration" (nucleus/top-p sampling) — <https://arxiv.org/abs/1904.09751>
+- OpenAI function calling guide (structured tool calls vs. free-text parsing) — <https://platform.openai.com/docs/guides/function-calling>
+- JSON Schema specification (what grammar-constrained decoding is typically validated against) — <https://json-schema.org/>
 - Back to the [Agentic AI Platform — System Design](system-design.md) uber doc
 - Next: [02 — Agent Lifecycle & Runtime](02-agent-lifecycle-and-runtime.md)

@@ -74,6 +74,55 @@ Each stage answers a distinct question:
 execution is worse than a rejected one — it holds a lease, consumes checkpoint storage, and may
 be mid-way through a multi-step plan with partial side effects when it stalls.
 
+#### How It Actually Works: Token Buckets & Weighted Fair Queuing
+
+Admission control and the priority queue above are not agent-specific inventions — they are the
+same two classic scheduling primitives used at the platform's ingress that [04 — Model Gateway &
+LLM Providers](04-model-gateway-and-llm-providers.md) uses at its egress to model providers. The
+difference is *where in the pipeline* they run, not what they do:
+
+- **Token bucket / leaky bucket for global rate limiting.** A token bucket accumulates tokens at
+  a fixed refill rate up to a maximum capacity; each incoming execution request consumes one (or
+  more, weighted by expected cost) token, and a request with no tokens available is rejected or
+  queued. This allows bursts up to the bucket's capacity while still enforcing a long-run average
+  rate. A leaky bucket instead enforces a strictly constant outflow rate regardless of burst
+  size — smoother, but it cannot absorb a legitimate short burst without added queuing delay.
+  Admission control at platform ingress uses this exact mechanism to cap total incoming execution
+  rate before anything is scheduled; [04](04-model-gateway-and-llm-providers.md) uses the same
+  mechanism to cap outbound calls to a specific model provider.
+- **Weighted fair queuing (WFQ) across tenants.** Once requests are admitted, the priority queue
+  needs to decide *whose* request runs next when multiple tenants have pending work and capacity
+  is limited. WFQ assigns each tenant a weight (e.g. proportional to their subscription tier) and
+  the scheduler cycles through tenant queues, serving each queue a number of requests
+  proportional to its weight before moving to the next — so a tenant with weight 3 gets roughly
+  three times the scheduling turns of a tenant with weight 1, and no single tenant can flood the
+  scheduler and starve the others out, even without a hard concurrency cap.
+
+```mermaid
+flowchart TD
+    T1[Tenant A Queue\nweight = 3] --> Scheduler{Weighted Fair\nQueuing Scheduler}
+    T2[Tenant B Queue\nweight = 1] --> Scheduler
+    T3[Tenant C Queue\nweight = 1] --> Scheduler
+    Scheduler -->|~3 of every 5 turns| PoolA[Runtime Pool]
+    Scheduler -->|~1 of every 5 turns| PoolA
+    Scheduler -->|~1 of every 5 turns| PoolA
+
+    classDef gate fill:#eef,stroke:#556,stroke-width:1px;
+    class Scheduler gate
+```
+
+**Trade-off — Token Bucket vs. Leaky Bucket**
+
+| | Token bucket | Leaky bucket |
+|---|---|---|
+| Handles legitimate bursts | Yes, up to bucket capacity | No — enforces a constant rate regardless of burst |
+| Output smoothness | Bursty (up to capacity) | Perfectly smooth |
+| Best fit | Admission control for bursty, human-triggered workloads (e.g. business-hours spikes) | Protecting a hard downstream limit that truly cannot tolerate any burst (e.g. a provider's strict per-second cap) |
+
+> Most platforms use a token bucket at admission (bursts are normal and expected) and something
+> closer to a leaky bucket right at the model-gateway boundary, where the downstream provider
+> limit is genuinely hard and burst-intolerant.
+
 ---
 
 ## 3 · Capacity planning: leading indicators, not lagging ones
@@ -119,6 +168,69 @@ Two derived planning rules, worth stating explicitly in an interview:
   two *different* bottlenecks that look similar from the outside ("agents are slow") but require
   different remediation. Conflating them is a common mistake — scaling out runtime workers does
   nothing if the actual bottleneck is checkpoint write throughput on a single state-store shard.
+
+#### Internals: Autoscaling Signal Trade-offs
+
+The five leading indicators above feed alerting, but *autoscaling decisions* (how many workers to
+run right now) typically key off one of three signal families, each with a different reaction
+profile:
+
+- **Queue-depth-based scaling.** Scale workers up when the backlog of admitted-but-not-yet-
+  running executions grows. This reacts directly to demonstrated, already-arrived demand — no
+  guessing — but it necessarily lags a sudden spike, because the queue has to visibly build up
+  before the signal fires, and by the time it does, some requests have already waited longer than
+  ideal.
+- **Latency-based scaling.** Scale based on P95/P99 request (or step) latency crossing a
+  threshold. This reacts faster to degradation than queue depth in many cases, because latency
+  can start rising from secondary effects (e.g. a downstream tool slowing down) before the queue
+  itself visibly grows. The cost is that latency is a noisier, more indirect signal — it can
+  spike for reasons unrelated to capacity (a single slow downstream dependency, a GC pause, a
+  transient network blip) and trigger scale-up that doesn't actually address the cause.
+- **Resource-utilization-based scaling.** Scale on CPU/GPU utilization crossing a threshold. This
+  works well for compute-bound workloads where utilization directly tracks load. It is much less
+  meaningful for agent workloads specifically, because an agent step spends most of its
+  wall-clock time *waiting* on a model-provider network call, not consuming CPU — a runtime pool
+  can be at 10% CPU utilization while still being fully saturated on concurrent in-flight
+  requests.
+
+**Trade-off — Autoscaling Signal Comparison**
+
+| Signal | Reaction speed | Noise sensitivity | Best-fit workload |
+|---|---|---|---|
+| Queue depth | Slower — lags until backlog visibly builds | Low — a direct, stable measure of backlog | Any workload where a growing backlog is an acceptable, safe leading indicator |
+| P95/P99 latency | Faster — can catch early degradation | Higher — sensitive to transient, unrelated slowdowns | Workloads where user-facing responsiveness is the thing you're protecting |
+| Resource utilization (CPU/GPU) | Medium | Low for compute-bound work | Compute-bound workloads; poor fit for I/O-bound agent steps waiting on model-provider calls |
+
+> Agent platforms typically combine queue depth (primary, stable signal) with latency as a
+> secondary/faster-reacting signal, and treat raw CPU/GPU utilization as informative but not
+> load-bearing for autoscaling decisions — since most agent wall-clock time is spent waiting on
+> the model gateway, not consuming compute.
+
+#### How It Actually Works: Little's Law for Concurrency Sizing
+
+Before any of the above autoscaling signals kick in reactively, you need a starting estimate of
+how many concurrent execution slots to provision in the first place. **Little's Law** gives you
+that estimate from first principles:
+
+$$L = \lambda W$$
+
+where $L$ is the average number of concurrent in-flight executions, $\lambda$ (lambda) is the
+average arrival rate of new executions, and $W$ is the average time-in-system (wall-clock
+duration) per execution. This holds for any stable queuing system regardless of the arrival or
+service-time distribution, which is what makes it useful as a quick sizing tool rather than
+something requiring a full simulation.
+
+**Worked example:** if agents arrive at $\lambda = 10$/sec, and each execution takes $W = 8$
+seconds end-to-end on average (model calls, tool calls, and checkpointing included), then:
+
+$$L = 10 \times 8 = 80$$
+
+You need roughly **80 concurrent execution slots** provisioned just to keep pace with
+steady-state arrival — before adding any burst headroom, retry overhead, or HITL-pause slots (an
+execution paused awaiting human approval still occupies a slot, per §2's admission-control
+discussion). In practice, provision meaningfully above the raw Little's Law number — it gives you
+the steady-state floor, not a safety margin, and it assumes arrivals and durations stay close to
+their historical averages, which bursty or long-tail workloads violate routinely.
 
 ---
 
@@ -211,12 +323,23 @@ scheduling/capacity infrastructure for traffic you don't have yet is itself a de
   platform itself must own scheduling, state, policy, telemetry, evaluation, and recovery.
 - Startups should reach for a managed queue, Postgres, and simple quotas — not a hyperscale
   control plane — until real contention appears.
+- Token bucket / leaky bucket algorithms enforce global rate limits at ingress the same way they
+  do at model-provider egress (04) — only where in the pipeline they're applied differs.
+- Weighted fair queuing gives each tenant a proportional share of scheduler turns so one noisy
+  tenant can't starve the rest, without relying on hard per-tenant caps alone.
+- Queue-depth scaling reacts to demonstrated demand but lags spikes; latency-based scaling reacts
+  faster but is noisier; utilization-based scaling fits compute-bound work, not I/O-bound agents.
+- Little's Law (L = λW) sizes concurrent execution slots from arrival rate and average duration —
+  e.g. 10/sec arrivals × 8-second average duration ≈ 80 concurrent slots needed, before headroom.
 
 ## Further Reading
 
 - OpenTelemetry docs — <https://opentelemetry.io/docs/>
 - AutoGen Core user guide — <https://microsoft.github.io/autogen/stable/user-guide/core-user-guide/index.html>
 - LangGraph persistence (checkpointers vs. stores) — <https://docs.langchain.com/oss/python/langgraph/persistence>
+- Little's Law (queuing theory reference) — <https://en.wikipedia.org/wiki/Little%27s_law>
+- Token bucket algorithm — <https://en.wikipedia.org/wiki/Token_bucket>
+- Weighted fair queuing — <https://en.wikipedia.org/wiki/Weighted_fair_queueing>
 
 See also: [system-design.md](system-design.md) for the master architecture and scale-variant
 summary this doc expands on, [11 — Governance, Guardrails & Security](11-governance-guardrails-and-security.md)

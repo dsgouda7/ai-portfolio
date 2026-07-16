@@ -75,6 +75,40 @@ call because the observation didn't change its plan.
 details — different search query wording, slightly different tool arguments, different phrasing
 of the same flawed plan. That's the gap semantic similarity is for.
 
+#### How It Actually Works: Canonicalize → Hash → Sliding Window
+
+The mechanism behind "hash the normalized tuple" is a three-step pipeline:
+
+1. **Canonicalize.** Represent each tool call as `(tool_name, sorted(args.items()))` — sort the
+   argument key-value pairs, and normalize whitespace/casing/types (e.g., `"5"` and `5` should
+   canonicalize to the same value) before anything is hashed.
+2. **Hash.** Feed the canonical representation through a fixed-size hash (e.g., SHA-256) to get a
+   compact fingerprint. Hashing, not storing the raw tuple, keeps comparison $O(1)$ and the
+   sliding window's memory footprint fixed regardless of how large the arguments are.
+3. **Slide and compare.** Maintain a fixed-size sliding window of the last *N* fingerprints. On
+   each new step, check whether the new fingerprint already appears in the window beyond a
+   configured repeat threshold (e.g., "same fingerprint 3+ times in the last 10 steps") — if so,
+   flag or terminate.
+
+```mermaid
+flowchart LR
+    Call[Tool Call] --> Canon["Canonicalize:\n(tool_name, sorted(args))"]
+    Canon --> Hash["Hash (SHA-256)"]
+    Hash --> Window["Sliding Window\n(last N fingerprints)"]
+    Window --> Check{Repeat count\n>= threshold?}
+    Check -->|No| Append[Append fingerprint, continue]
+    Check -->|Yes| Flag[Flag / Terminate]
+    Append --> Window
+```
+
+**Canonicalization is the step that makes or breaks this check.** Two calls to the same tool with
+identical semantics but differently-ordered keyword arguments (`{a: 1, b: 2}` vs. `{b: 2, a: 1}`),
+or the same value in a different type/format (`"5"` vs. `5`, extra trailing whitespace in a
+string argument), are *semantically identical* but would hash to two different fingerprints
+without canonicalization — silently defeating the whole check. Sorting args and normalizing types
+before hashing is not an optional cleanup step; it's the difference between the check working and
+the check missing the exact loops it exists to catch.
+
 ### Semantic similarity
 
 Embed the recent reasoning/observation text (the plan rationale and/or the tool result summary)
@@ -83,6 +117,27 @@ cluster — the agent's reasoning is a paraphrase of a previously failed approac
 signal that structural fingerprinting cannot see, because the tool arguments differ even though
 the underlying strategy hasn't changed. This is the check that catches "the agent keeps trying
 to solve the same sub-problem a different way, without ever escalating or changing course."
+
+#### How It Actually Works: Embed → Pairwise Cosine Similarity → Threshold
+
+The mechanism: embed the last-*k* thoughts/action descriptions (plan rationale or observation
+summaries) into vectors, compute **pairwise cosine similarity** between the current step's
+embedding and each of the prior *k* steps, and flag a loop if similarity exceeds a tuned
+threshold across consecutive (or a majority of recent) steps.
+
+> **Trade-off — threshold tuning is not a solved problem**
+>
+> - **Threshold too low (trips too easily):** false positives — the check kills a legitimately
+>   iterating agent, e.g. one incrementally refining a document draft, where each step is
+>   deliberately similar to the last by design.
+> - **Threshold too high (trips too rarely):** false negatives — paraphrased repetition slips
+>   through, because rewording a failed approach lowers cosine similarity just enough to dodge
+>   detection even though the underlying strategy hasn't changed.
+>
+> This is a precision/recall trade-off you tune per workload, not a fixed constant you set once —
+> a "research agent" profile and a "single-shot task" profile should not share the same threshold
+> (see the enterprise/startup table in Section 6 and the research-shaped budget profile in
+> [Section 5, failure #1](#5--failure-modes)).
 
 ### Budget counters
 
@@ -161,6 +216,29 @@ for being oversized even if the execution as a whole has budget remaining. This 
 budget-manager component in the Control Plane of the master architecture
 ([system-design.md §2](system-design.md#2--master-architecture)).
 
+#### How It Actually Works: Pre-Call Token Estimation, Not Post-Hoc Checking
+
+Enforcing a "hard stop at the call level" (per-step ceiling, above) only works if the check
+happens *before* the call is sent, using an accurate estimate of what the call will cost:
+
+- **Use the actual tokenizer for the target model** (e.g., `tiktoken` for OpenAI models, the
+  model-specific tokenizer for others) to count input tokens precisely, and estimate output
+  tokens from the requested `max_tokens`/completion-length parameter — not a rough word-count or
+  character-count heuristic, which can be off by a wide margin depending on language, code vs.
+  prose, and tokenizer vocabulary.
+- **Check the estimate against the remaining budget before the call is sent.** If the estimated
+  cost of a single call would exceed the remaining per-execution or per-tenant budget, reject or
+  truncate the call *before* it goes out — don't send it and check afterward.
+
+> **Trade-off — why post-hoc budget checking is unsafe**
+>
+> Checking budget only *after* a call returns means a single expensive call (a huge context
+> dump, a runaway `max_tokens`) can already have incurred its full token cost, latency, and
+> dollar spend before you even learn you were over budget — by then the damage (cost, and
+> potentially a rate-limit or quota violation with the model provider) is already done. Pre-call
+> estimation is what makes the per-step ceiling in the table above an actual **hard** stop rather
+> than an after-the-fact observation.
+
 What should happen at each boundary is a design decision worth stating explicitly in an
 interview, because "just stop" is an incomplete answer:
 
@@ -173,6 +251,21 @@ interview, because "just stop" is an incomplete answer:
   costly enough to need a human or a higher-privilege policy to explicitly authorize it (e.g., a
   tenant that's hit their soft cap but has a legitimate reason to keep going) — this reuses the
   `Running → Paused` transition from Section 3 rather than inventing a new state.
+
+#### Trade-offs: Budget-Exhaustion Policy
+
+Beyond *when* to stop, there's a separate design decision for *what happens* once a budget is
+actually exhausted — three real policies, each with a different cost/quality/latency profile:
+
+> | Policy | Cost predictability | Task completion | Latency / complexity added |
+> |---|---|---|---|
+> | Hard-stop | Best — a predictable, fixed ceiling per execution/tenant | Worst — can abandon a task one step from completion, with no partial-credit mechanism beyond summarizing what exists | None — simplest to implement |
+> | Escalate-to-human | Bounded by human response time, not model cost | Best — a human can approve continuation and let the task finish | Adds latency; requires a working HITL path ([11 — Governance, Guardrails & Security](11-governance-guardrails-and-security.md)) to actually be viable, not just a state transition on paper |
+> | Degrade-to-cheaper-model | Good — keeps cost bounded while allowing continuation | Uncertain — the task can still complete, but a weaker model may silently produce lower-quality output | Low latency cost, but adds the hardest-to-detect risk: quality regression that doesn't trip any automated check |
+
+None of these is universally correct — the choice depends on how expensive an abandoned task is
+versus how expensive a wrong/low-quality answer is for a given use case, which is exactly the
+kind of judgment call an interviewer is listening for rather than a single "right" policy.
 
 ---
 
@@ -256,11 +349,25 @@ than reaching for supervisor confidence scoring on day one.
 - `Paused` needs an approval timeout, or an execution can wait forever.
 - Enterprise: layered loop control + all three budget scopes + supervisor confidence scoring.
   Startup: step/tool-call ceilings + manual kill/resume.
+- Structural fingerprinting = canonicalize `(tool_name, sorted(args.items()))` → hash (e.g.
+  SHA-256) → sliding-window repeat check; skip canonicalization and reordered/differently-typed
+  args silently defeat the whole check.
+- Semantic similarity = embed recent thoughts → pairwise cosine similarity → threshold; threshold
+  tuning is a real precision/recall trade-off — too low kills legitimate iteration, too high
+  misses paraphrased loops.
+- Budget checks must use a pre-call token estimate from the model's actual tokenizer, not a
+  word-count heuristic or a post-hoc check — otherwise a single oversized call can blow the
+  budget before you find out.
+- Budget-exhaustion policy is its own trade-off: hard-stop (predictable, can abandon near-done
+  work) vs. escalate-to-human (preserves completion, needs a working HITL path) vs.
+  degrade-to-cheaper-model (keeps going, but quality risk is hard to detect automatically).
 
 ## Further Reading
 
 - ReAct: Synergizing Reasoning and Acting in Language Models — <https://arxiv.org/abs/2210.03629>
 - LangGraph persistence (checkpointers vs. stores) — <https://docs.langchain.com/oss/python/langgraph/persistence>
+- OpenAI tiktoken — reference tokenizer implementation for accurate pre-call token counting — <https://github.com/openai/tiktoken>
+- Reimers & Gurevych — Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks — <https://arxiv.org/abs/1908.10084>
 - Back to the [master platform doc](system-design.md)
 - Related: [05 — State Management & Memory](05-state-management-and-memory.md),
   [09 — Multi-Agent Communication Patterns](09-multi-agent-communication-patterns.md),

@@ -94,6 +94,61 @@ for a typical service rollout.
   instant version-pointer rollback does **not** retroactively undo anything a prior execution
   already did in the real world.
 
+#### Internals: How Canary, Blue-Green, and Shadow Actually Route Traffic
+
+All three answer the same question — "how do you find out a new agent version is bad before it
+hurts every user?" — but they differ in exactly what traffic sees the candidate version and what
+happens to its output:
+
+- **Canary:** a small, deliberately chosen percentage of *real* traffic is routed to the
+  candidate `agent_version_id` while the rest continues to the current production version. The
+  candidate's responses are real — users on that slice actually get them — so you compare
+  health-score/eval metrics (from [07 — Agent Evaluation Frameworks](07-agent-evaluation-frameworks.md)
+  and [08 — Observability, Tracing & Health](08-observability-tracing-and-health.md)) between the
+  two live populations before deciding to ramp the percentage up or roll back.
+- **Blue-green:** both the current version ("blue") and the new version ("green") are fully
+  deployed and live simultaneously, each provisioned for 100% of production capacity. Cutover is
+  a routing-table flip — all traffic moves from blue to green at once — which makes rollback
+  equally instant (flip the router back). The cost is running two fully-provisioned copies of the
+  runtime fleet during the transition window.
+- **Shadow:** the candidate version receives a *mirrored copy* of real production traffic, but its
+  output is never returned to the user — it's discarded or logged and compared offline against the
+  production version's actual response and against golden-set expectations. This is the only one
+  of the three with zero user-facing risk, but it's also the only one with no real feedback loop
+  on side effects: a shadowed write-tool call must be executed against a sandboxed/staging
+  environment (see Section 3, above) rather than the real system, or you're not actually testing
+  what the candidate would have done in production.
+
+> **Trade-offs — canary vs. blue-green vs. shadow**
+>
+> | | Canary | Blue-Green | Shadow |
+> |---|---|---|---|
+> | User-facing risk | Small — limited to the canary % | All-or-nothing at cutover, but reversible instantly | None — outputs never reach users |
+> | Infra cost during transition | Low — candidate runs at a fraction of capacity | High — both versions at full capacity (~2x) | Medium — candidate processes full mirrored volume but serves nothing |
+> | Feedback speed | Fast — real user outcomes on live traffic | Fast — but only after full cutover | Slow — only offline comparison, no live user signal |
+> | Rollback speed | Fast — reduce % back to zero | Instant — flip the router back | N/A — candidate was never serving traffic |
+
+```mermaid
+flowchart TD
+    subgraph Canary["Canary"]
+        C1[Incoming traffic] -->|majority %| C2[Production version]
+        C1 -->|small %| C3[Candidate version]
+        C3 --> C4["Compare health-score / eval metrics\nbefore ramping %"]
+    end
+
+    subgraph BlueGreen["Blue-Green"]
+        B1[Incoming traffic] --> B2{Router}
+        B2 -->|pre-cutover| B3["Blue: current version\n(live)"]
+        B2 -.->|instant flip| B4["Green: new version\n(live, 2x capacity during transition)"]
+    end
+
+    subgraph Shadow["Shadow"]
+        S1[Incoming traffic] --> S2["Production version\n(response returned to user)"]
+        S1 -.->|mirrored copy| S3["Candidate version\n(output discarded/logged)"]
+        S3 --> S4["Compared offline —\nno live feedback loop"]
+    end
+```
+
 ## 4 · Push vs. pull execution
 
 How work reaches a runtime instance shapes latency and overload behavior differently:
@@ -123,6 +178,35 @@ flowchart TD
 Most production agent platforms end up hybrid: pull-based queueing for the bulk of executions
 (reliability, fairness, backpressure), with a push-based or pre-warmed **hot pool** carved out for
 latency-sensitive paths (covered in the Runtime Models table below).
+
+#### Internals: How Push and Pull Actually Move Work to a Runtime
+
+**Push**, mechanically: the control plane (gateway/scheduler) maintains a live view of which
+runtime instances exist and how much capacity each has left, and on each incoming request it picks
+a target and opens a connection (or sends a message) directly to that instance. This means the
+control plane owns the hard problem itself — it must track capacity in near-real-time, decide what
+to do when every known runtime is full, and implement backpressure explicitly, because nothing in
+a push architecture provides it for free.
+
+**Pull**, mechanically: the control plane does nothing more than append work to a queue. Each
+worker independently polls for the next item, claims it via a visibility-timeout / lease mechanism
+(the same idea as the runtime leasing in Section 5, just applied to a queue message instead of an
+execution), and only that worker processes it. Backpressure falls out as a side effect of queue
+depth rather than something the control plane has to compute — autoscaling can key directly off
+queue depth, a metric that already exists, instead of a bespoke capacity-tracking system. The cost
+is added latency (a worker has to notice and claim the item) and the need for redelivery
+semantics: if a worker claims an item and crashes before finishing, the item's visibility timeout
+must expire and return it to the queue, or the work is silently lost.
+
+> **Trade-offs — push vs. pull**
+>
+> | | Push | Pull |
+> |---|---|---|
+> | Latency | Lower — work is dispatched directly | Higher — bounded by poll interval / claim latency |
+> | Backpressure | Control plane must implement it explicitly | Free — queue depth *is* the backpressure signal |
+> | Autoscaling signal | Requires custom capacity tracking | Trivial — scale workers on queue depth |
+> | Crash safety | Control plane must detect a dead target itself | Visibility-timeout / lease redelivery handles it structurally |
+> | Best fit | Latency-sensitive interactive paths | Bulk/async/background execution (the reliable default) |
 
 ## 5 · Runtime leasing and fencing tokens
 
@@ -173,6 +257,37 @@ not just the diagram:
   budget manager) must be recorded in durable state, not just sent as an in-memory signal to a
   runtime process — otherwise a lease reassignment after a crash "loses" the cancellation and
   the new runtime happily resumes work that was supposed to have stopped.
+
+#### Internals: The Fencing-Token Mechanism, Concretely
+
+This is the same technique Chubby and ZooKeeper use to stop a "zombie" lock holder from
+corrupting shared state after it's lost its lease — Martin Kleppmann's write-up on distributed
+locking (Further Reading) is the canonical reference if asked where this idea comes from. Reduced
+to its essentials:
+
+1. The lease authority (Lease Manager) hands out leases with a **monotonically increasing
+   integer** attached — the fencing token. Values only ever increase; they're never reused or
+   reset.
+2. Every write a runtime sends to a shared resource (the state store) must carry its current
+   fencing token alongside the write.
+3. The resource being mutated — not the lease manager, and not the runtime itself — enforces the
+   rule: **reject any write whose token is lower than the highest token already accepted for that
+   execution.**
+
+Concrete sequence:
+
+- Runtime A is granted the lease for `execution_42` with fencing token `7`.
+- Runtime A pauses (GC pause / network partition) longer than the lease TTL.
+- Lease Manager expires A's lease and grants a new lease to Runtime B, with token `8`.
+- Runtime B checkpoints with token `8` — the state store accepts it and records `8` as the
+  highest token seen for `execution_42`.
+- Runtime A wakes up, still believing it holds the lease, and checkpoints with token `7`.
+- The state store compares `7 < 8` and **rejects the write** — even though Runtime A has no way
+  of knowing, from its own local view, that it ever lost ownership.
+
+The comparison happening *at the resource*, not at the lease manager, is what makes this work: a
+network partition can prevent Runtime A from ever hearing "your lease expired," but it cannot
+prevent the state store from refusing a stale write.
 
 ## 6 · Runtime models
 
@@ -260,11 +375,26 @@ the queue-worker model can't satisfy.
 - Runtime models: ephemeral (cold start), long-lived worker (idle cost/noisy neighbor), hot pool
   (sizing complexity), actor runtime (operational complexity), queue worker (queue latency).
 - Startup default: queue + container workers. Add hot pools only once p95 latency data demands it.
+- Fencing tokens are enforced at the resource being written, not the lease manager — a
+  monotonically increasing token rejects stale writes from a runtime that lost its lease, even if
+  that runtime doesn't yet know it (same mechanism as Chubby/ZooKeeper lease fencing).
+- Push makes the control plane own capacity-tracking and backpressure explicitly; pull gets
+  backpressure for free from queue depth but adds poll latency and needs visibility-timeout/lease
+  redelivery to handle a worker crashing mid-claim.
+- Canary = partial live traffic, compare metrics before ramping; blue-green = both versions fully
+  live, instant router-flip cutover at ~2x capacity cost; shadow = mirrored traffic with discarded
+  output — zero user-facing risk, zero live feedback loop on real side effects.
+- Exhaustively testing an agent-version rollout is fundamentally harder than testing a workflow
+  rollout — which is why canary/shadow evaluation on real trajectories matters more for agent
+  deployments than for typical stateless-service deploys.
 
 ## Further Reading
 
 - LangGraph persistence (checkpointers vs. stores) — <https://docs.langchain.com/oss/python/langgraph/persistence>
 - AutoGen Core user guide — <https://microsoft.github.io/autogen/stable/user-guide/core-user-guide/index.html>
+- Kleppmann, "How to do distributed locking" (fencing tokens, the GC-pause example) — <https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html>
+- Burrows, "The Chubby lock service for loosely-coupled distributed systems" (OSDI 2006) — <https://www.usenix.org/legacy/events/osdi06/tech/burrows.html>
+- Hunt et al., "ZooKeeper: Wait-free coordination for Internet-scale systems" (USENIX ATC 2010) — <https://www.usenix.org/conference/usenixatc10/zookeeper-wait-free-coordination-internet-scale-systems>
 - Back to [01 — Foundations of Agentic Systems](01-foundations-of-agentic-systems.md)
 - Back to the [Agentic AI Platform — System Design](system-design.md) uber doc
 - Next: [03 — Tool, MCP & Skill Registry](03-tool-mcp-and-skill-registry.md)

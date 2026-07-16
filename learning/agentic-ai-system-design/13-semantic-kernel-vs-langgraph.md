@@ -59,6 +59,41 @@ Java. Its central object is the **`Kernel`**:
   patterns (source:
   <https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/agent-orchestration/>).
 
+#### How Group Chat / Magentic Turn-Taking Actually Works
+
+Take "who speaks next" as the concrete mechanism worth knowing cold, because it's the detail
+that separates "I've read the docs" from "I understand the trade-off":
+
+- SK's `GroupChatOrchestration` (and, structurally, the Magentic orchestration too) delegates
+  every turn-taking decision to a **manager** object. On every round, the manager answers three
+  questions in order: does the chat need human input right now (`ShouldRequestUserInput`),
+  should the chat terminate (`ShouldTerminate`), and — if neither — who should speak next
+  (`SelectNextAgent` / `select_next_agent`) (source:
+  <https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/agent-orchestration/group-chat>).
+- The **default** manager, `RoundRobinGroupChatManager`, answers `SelectNextAgent` with a fixed
+  cyclic order — agent 1, then agent 2, then agent 3, then back to agent 1 — for up to a
+  configured maximum number of rounds. It never inspects message content to decide who's next.
+- A **custom** manager (or the `StandardMagenticManager` that backs the Magentic pattern)
+  answers `SelectNextAgent` with an actual reasoning step: it's handed the chat history and the
+  roster of available agents, and it makes an LLM call whose output is "which agent should
+  respond next, and why." The Magentic manager additionally plans the overall task and tracks
+  progress across rounds, but the turn-selection primitive underneath it is the same
+  manager/selector hook (source:
+  <https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/agent-orchestration/magentic>).
+- Practically: swapping `RoundRobinGroupChatManager` for a custom or Magentic manager is a
+  small, contained change in orchestration setup — you're not rewriting the agents, just
+  replacing which component decides whose turn it is.
+
+> **Trade-off — deterministic round-robin vs. LLM-selector manager**
+>
+> | | Round-robin manager | LLM-selector manager (custom / Magentic) |
+> |---|---|---|
+> | How "next speaker" is decided | Fixed cyclic order, no content inspection | Extra LLM call reasons over chat history + agent roster |
+> | Determinism | Fully deterministic — turn order is predictable from agent count alone | Non-deterministic — the same conversation can route differently across runs |
+> | Adaptivity | Can't skip an irrelevant agent or fast-forward to the obviously-correct one | Adapts turn order to what actually happened last turn |
+> | Cost/latency per turn | No extra call | +1 LLM call every turn just to pick a speaker, before that speaker even responds |
+> | Failure mode to watch | Wastes turns on agents with nothing to add | Selector itself can misroute — now two models (selector + speaker) can each be wrong |
+
 The mental model: **you pick an orchestration pattern that matches your workflow shape, register
 your plugins/agents into it, and the pattern owns the control flow.** You are choosing from a
 menu of pre-built shapes (sequential pipeline, concurrent fan-out, handoff between specialists,
@@ -107,6 +142,44 @@ two different jobs (source:
   unrelated conversation can still draw on. Stores are not scoped to a single run the way
   checkpoints are.
 
+#### How LangGraph Checkpointing Actually Works (Super-Steps)
+
+The mechanism behind "time travel" and interrupts is worth being able to explain in one breath,
+because interviewers will ask "how does that actually work under the hood":
+
+- LangGraph executes a graph in synchronous rounds called **super-steps**. In a given
+  super-step, every node that's scheduled to run executes (conceptually in parallel if there's
+  more than one), and their returned partial-state updates are merged back into a single state
+  dict before the next super-step begins.
+- After each super-step completes, the configured **checkpointer** serializes the *entire
+  current state dict* — typically via `pickle`, though plain JSON-serializable state works too —
+  and persists it as a new checkpoint. Development commonly uses an in-memory saver
+  (`MemorySaver`); production uses a database-backed saver (SQLite- or Postgres-backed, among
+  others).
+- Every checkpoint is keyed by a **`thread_id`** — the identifier that scopes an entire
+  conversation/execution's checkpoint history — plus a monotonically increasing checkpoint
+  sequence within that thread. `thread_id` is exactly the `config={"configurable": {"thread_id":
+  ...}}` value from Section 4.2's code sketch.
+- Because each checkpoint is a **complete, addressable snapshot** (not a diff you'd need to
+  replay from the start to reconstruct), two things fall out for free:
+  - **Time travel** — you can point the graph at any prior checkpoint id within a thread and
+    resume execution from exactly that state, or fork a brand-new thread from that checkpoint
+    without touching the original thread's history.
+  - **Human-in-the-loop interrupts** — pausing the graph at a node is cheap to get right,
+    because the last-written checkpoint already captured a complete, durable snapshot of state.
+    Resuming after a human approves is mechanically identical to resuming after a crash: replay
+    from the last checkpoint, nothing special-cased for "a human was involved."
+
+> **Trade-off — full-state checkpoints are simple, not free**
+>
+> Serializing the entire state dict every super-step means checkpoint storage grows with
+> `state size × number of super-steps`, not with the size of what actually changed. A state dict
+> that accumulates full message history (a common mistake) checkpointed on every super-step will
+> bloat a production checkpoint store fast — this is why trimming/summarizing what you put in
+> state (not just what you show the model) matters at scale; see
+> [05 — State Management & Memory](05-state-management-and-memory.md) if that doc exists in your
+> copy of this track.
+
 The mental model: **you draw the state machine, and LangGraph gives you durable snapshots of
 "where you are in the machine" (checkpointer) plus a separate durable store for "what you've
 learned across machines" (store).** Compare this to SK, where the analogous concerns (how do I
@@ -118,6 +191,16 @@ This is the crux of the structural difference to keep in your back pocket for in
 > **Semantic Kernel's unit of reuse is the orchestration** *pattern* **— you select a shape.
 > LangGraph's unit of reuse is the** *graph* **— you draw the shape yourself, and get explicit
 > cycles, conditionals, and checkpoints as a consequence of drawing it in code.**
+
+#### Trade-offs: Own the Graph vs. Borrow the Pattern
+
+Distilling Sections 2.1/2.2 into the single trade-off an interviewer actually wants to hear:
+
+| | LangGraph (explicit graph) | Semantic Kernel (orchestration pattern) |
+|---|---|---|
+| What you get | An explicit, inspectable graph you fully control node-by-node, with native per-thread checkpointing | A pre-built orchestration pattern (sequential, concurrent, handoff, group chat, Magentic) plus a plugin/function-calling model |
+| Best when | You need custom cyclic control flow, fine-grained checkpointing, or to reason precisely about every edge/transition | You need to stand up a common multi-agent shape fast and don't need to see inside the pattern's control-flow implementation |
+| What it costs you | You design, draw, and maintain the graph yourself — no shape (not even "just call tools in a loop") is free | Less visibility into exactly how turn-taking/looping is decided inside a given pattern's implementation — you're trusting the manager/selector |
 
 ---
 
@@ -406,12 +489,24 @@ Concrete, opinionated guidance — pick based on what you're optimizing for, not
 - When asked "which one should I use," anchor on the real axis: *do you want a menu of
   pre-built orchestration patterns (SK), or do you want to draw and own an explicit, checkpointed
   state machine (LangGraph)?*
+- LangGraph persists a full state snapshot per **super-step**, keyed by `thread_id` — that's the
+  entire mechanism behind time travel and cheap human-in-the-loop resume.
+- SK's `GroupChatManager` (or Magentic manager) decides turn order via `SelectNextAgent` — swap
+  `RoundRobinGroupChatManager` (deterministic, no content awareness) for an LLM-selector manager
+  (adaptive, non-deterministic, +1 call/turn) with a small, contained config change.
+- The real LangGraph-vs-SK trade-off in one line: own an explicit, checkpointed graph
+  (LangGraph) vs. borrow a pre-built orchestration pattern you don't have to draw but can't
+  fully see inside (SK).
+- Full-state-per-checkpoint is simple but not free — checkpoint storage scales with
+  state size × super-step count, so trim what you put in state, not just what you show the model.
 
 ---
 
 ## Further Reading
 
 - Semantic Kernel agent orchestration patterns — <https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/agent-orchestration/>
+- Semantic Kernel group chat orchestration (`GroupChatManager` / `SelectNextAgent`) — <https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/agent-orchestration/group-chat>
+- Semantic Kernel Magentic orchestration (`StandardMagenticManager`) — <https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/agent-orchestration/magentic>
 - LangGraph persistence (checkpointers vs. stores) — <https://docs.langchain.com/oss/python/langgraph/persistence>
 - AutoGen Core user guide — <https://microsoft.github.io/autogen/stable/user-guide/core-user-guide/index.html>
 - Back to the uber doc — [system-design.md](system-design.md)
