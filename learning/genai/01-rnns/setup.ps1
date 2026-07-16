@@ -1,5 +1,5 @@
 #!/usr/bin/env pwsh
-# Creates a local .venv and installs notebook dependencies for PT_Part1_Intro.ipynb
+# Creates a local .venv and installs notebook dependencies for PT-Part1-Intro.ipynb
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 

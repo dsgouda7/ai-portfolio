@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Creates a local virtual environment and installs everything needed to run
-# encoder_decoder.ipynb.
+# encoder-decoder.ipynb.
 #
 # Creates a `.venv` next to this script (if it does not already exist),
 # installs the dependencies from requirements.txt into it, and registers a
@@ -63,5 +63,5 @@ fi
 
 echo ""
 echo "Setup complete."
-echo "Open encoder_decoder.ipynb and pick the 'Python (encoder-decoder .venv)' kernel"
+echo "Open encoder-decoder.ipynb and pick the 'Python (encoder-decoder .venv)' kernel"
 echo "(it should be selected automatically). The venv lives at: $VENV_DIR"

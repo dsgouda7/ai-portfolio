@@ -19,7 +19,7 @@ Her daughter Margot inherits her role, transforming Eleanor's desperate improvis
 - **Chapters**: 20
 - **Approximate Word Count**: 52,000 words
 - **Approximate Size**: 320 KB (plain text)
-- **File Pattern**: `horror_chapter_001.txt` through `horror_chapter_020.txt`
+- **File Pattern**: `horror-chapter-001.txt` through `horror-chapter-020.txt`
 
 ## Content Details
 
@@ -63,10 +63,10 @@ c:\repos\ai-portfolio\learning\genai\llm-tuning\content\
 ```
 
 Files are named sequentially:
-- `horror_chapter_001.txt`
-- `horror_chapter_002.txt`
+- `horror-chapter-001.txt`
+- `horror-chapter-002.txt`
 - ...
-- `horror_chapter_020.txt`
+- `horror-chapter-020.txt`
 
 ## Usage Recommendations
 

@@ -71,7 +71,7 @@ This novel contains:
 ## File Format
 
 All chapters are stored as plain text (.txt) files with the naming convention:
-`cyberpunk_chapter_NNN.txt` where NNN is the zero-padded chapter number (001-016)
+`cyberpunk-chapter-NNN.txt` where NNN is the zero-padded chapter number (001-016)
 
 Each chapter contains 2,500-4,500 words of prose formatted as:
 - Chapter title on first line

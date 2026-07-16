@@ -57,12 +57,12 @@ The novel spans 20+ years, following three generations of the Merritt family as 
 All chapters saved as individual plain text files:
 
 ```
-literary_chapter_001.txt through literary_chapter_020.txt
+literary-chapter-001.txt through literary-chapter-020.txt
 ```
 
 **File Path Pattern:**
 ```
-c:\repos\ai-portfolio\learning\genai\llm-tuning\content\literary_chapter_NNN.txt
+c:\repos\ai-portfolio\learning\genai\llm-tuning\content\literary-chapter-NNN.txt
 ```
 
 Where `NNN` = zero-padded 3-digit chapter number (001, 002, ..., 020)
@@ -253,7 +253,7 @@ For questions about this corpus or to report issues:
 **Words:** ~72,000  
 **File Size:** ~370 KB  
 **Genre:** Literary/Contemporary/Speculative Fiction  
-**File Pattern:** `literary_chapter_NNN.txt` (NNN = 001-020)  
+**File Pattern:** `literary-chapter-NNN.txt` (NNN = 001-020)  
 **Location:** `c:\repos\ai-portfolio\learning\genai\llm-tuning\content\`  
 
 **Corpus ready for ML training use.**

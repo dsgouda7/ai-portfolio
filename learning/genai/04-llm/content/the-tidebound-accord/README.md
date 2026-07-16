@@ -20,7 +20,7 @@ The story spans decades, following Kerra from a frightened teenager fleeing sham
 - **Total Chapters:** 25
 - **Approximate Word Count:** 92,000 words
 - **Approximate Size:** 590 KB (603,982 bytes)
-- **File Naming Pattern:** `fantasy_chapter_001.txt` through `fantasy_chapter_025.txt`
+- **File Naming Pattern:** `fantasy-chapter-001.txt` through `fantasy-chapter-025.txt`
 - **Content Type:** Pure narrative prose (no code, images, or non-text elements)
 
 ## Chapter Structure
@@ -80,10 +80,10 @@ c:\repos\ai-portfolio\learning\genai\llm-tuning\content\
 ```
 
 Files named sequentially as:
-- `fantasy_chapter_001.txt`
-- `fantasy_chapter_002.txt`
+- `fantasy-chapter-001.txt`
+- `fantasy-chapter-002.txt`
 - ...
-- `fantasy_chapter_025.txt`
+- `fantasy-chapter-025.txt`
 
 ## Author's Note
 

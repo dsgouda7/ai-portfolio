@@ -21,12 +21,12 @@
 content/
 ├── the-weight-of-distant-light/
 │   ├── README.md
-│   ├── chapter_001.txt
-│   ├── chapter_002.txt
+│   ├── chapter-001.txt
+│   ├── chapter-002.txt
 │   └── ... (32 chapters total)
 ├── the-tidebound-accord/
 │   ├── README.md
-│   ├── chapter_001.txt
+│   ├── chapter-001.txt
 │   └── ... (25 chapters total)
 ├── the-cartographers-cipher/
 │   └── ... (13 chapters)
@@ -42,7 +42,7 @@ content/
 
 Each novel directory contains:
 - `README.md` — detailed synopsis and metadata
-- `chapter_001.txt` through `chapter_NNN.txt` — one chapter per file
+- `chapter-001.txt` through `chapter-NNN.txt` — one chapter per file
 
 ## Format
 

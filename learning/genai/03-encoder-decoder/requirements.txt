@@ -1,4 +1,4 @@
-# Packages required to run encoder_decoder.ipynb
+# Packages required to run encoder-decoder.ipynb
 torch
 numpy
 

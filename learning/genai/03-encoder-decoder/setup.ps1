@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
     Creates a local virtual environment and installs everything needed to run
-    encoder_decoder.ipynb.
+    encoder-decoder.ipynb.
 
 .DESCRIPTION
     Creates a `.venv` next to this script (if it does not already exist),
@@ -61,5 +61,5 @@ if (-not $SkipKernel) {
 }
 
 Write-Host "`nSetup complete." -ForegroundColor Green
-Write-Host "Open encoder_decoder.ipynb and pick the 'Python (encoder-decoder .venv)' kernel"
+Write-Host "Open encoder-decoder.ipynb and pick the 'Python (encoder-decoder .venv)' kernel"
 Write-Host "(it should be selected automatically). The venv lives at: $VenvDir"

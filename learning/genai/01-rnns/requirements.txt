@@ -1,8 +1,8 @@
-# PT_Part1_Intro.ipynb (PyTorch)
+# PT-Part1-Intro.ipynb (PyTorch)
 torch
 mitdeeplearning
 
-# TF_Part1_Intro.ipynb (TensorFlow / Keras)
+# TF-Part1-Intro-keras.ipynb (TensorFlow / Keras)
 tensorflow
 
 # HuggingFace music generation extension (Part 2)

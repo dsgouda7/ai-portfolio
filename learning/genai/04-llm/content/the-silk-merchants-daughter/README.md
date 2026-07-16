@@ -18,7 +18,7 @@ Returning to Chang'an after more than a year of travel, Wei Lian must reconcile 
 - **Total Chapters:** 15
 - **Approximate Word Count:** 49,500 words
 - **Approximate Size:** 330 KB (330,000 bytes)
-- **File Pattern:** `historical_chapter_001.txt` through `historical_chapter_015.txt`
+- **File Pattern:** `historical-chapter-001.txt` through `historical-chapter-015.txt`
 - **Average Chapter Length:** 3,300 words
 - **Genre:** Historical Fiction
 - **Setting:** Tang Dynasty China and the Silk Road (730-750 CE)

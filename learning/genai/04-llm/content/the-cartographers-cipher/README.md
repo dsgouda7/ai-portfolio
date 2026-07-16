@@ -26,10 +26,10 @@ As Elena investigates, she faces professional hit teams, discovers hidden maps a
 ## File Naming Convention
 
 Chapters are saved as:
-- `mystery_chapter_001.txt`
-- `mystery_chapter_002.txt`
-- `mystery_chapter_003.txt`
-- ... and so on through `mystery_chapter_013.txt`
+- `mystery-chapter-001.txt`
+- `mystery-chapter-002.txt`
+- `mystery-chapter-003.txt`
+- ... and so on through `mystery-chapter-013.txt`
 
 ## Story Arcs
 

@@ -6,13 +6,13 @@
 
 | Novel | Genre | Chapters | Words | Size | Files |
 |---|---|---|---|---|---|
-| The Weight of Distant Light | Sci-Fi (Generation Ship) | 32 | ~54,800 | ~331 KB | `chapter_001.txt` – `chapter_032.txt` |
-| The Tidebound Accord | Fantasy (Epic) | 25 | ~92,000 | ~590 KB | `fantasy_chapter_001.txt` – `fantasy_chapter_025.txt` |
-| The Cartographer's Cipher | Mystery/Thriller (Noir) | 13 | ~45,000 | ~280 KB | `mystery_chapter_001.txt` – `mystery_chapter_013.txt` |
-| The Silk Merchant's Daughter | Historical Fiction (Tang Dynasty) | 15 | ~49,500 | ~330 KB | `historical_chapter_001.txt` – `historical_chapter_015.txt` |
-| Neural Drift | Cyberpunk | 16 | ~57,000 | ~350 KB | `cyberpunk_chapter_001.txt` – `cyberpunk_chapter_016.txt` |
-| The Hollow Beneath | Horror/Gothic | 20 | ~52,000 | ~320 KB | `horror_chapter_001.txt` – `horror_chapter_020.txt` |
-| The Weight of Tides | Literary Fiction | 20 | ~72,000 | ~370 KB | `literary_chapter_001.txt` – `literary_chapter_020.txt` |
+| The Weight of Distant Light | Sci-Fi (Generation Ship) | 32 | ~54,800 | ~331 KB | `chapter-001.txt` – `chapter-032.txt` |
+| The Tidebound Accord | Fantasy (Epic) | 25 | ~92,000 | ~590 KB | `fantasy-chapter-001.txt` – `fantasy-chapter-025.txt` |
+| The Cartographer's Cipher | Mystery/Thriller (Noir) | 13 | ~45,000 | ~280 KB | `mystery-chapter-001.txt` – `mystery-chapter-013.txt` |
+| The Silk Merchant's Daughter | Historical Fiction (Tang Dynasty) | 15 | ~49,500 | ~330 KB | `historical-chapter-001.txt` – `historical-chapter-015.txt` |
+| Neural Drift | Cyberpunk | 16 | ~57,000 | ~350 KB | `cyberpunk-chapter-001.txt` – `cyberpunk-chapter-016.txt` |
+| The Hollow Beneath | Horror/Gothic | 20 | ~52,000 | ~320 KB | `horror-chapter-001.txt` – `horror-chapter-020.txt` |
+| The Weight of Tides | Literary Fiction | 20 | ~72,000 | ~370 KB | `literary-chapter-001.txt` – `literary-chapter-020.txt` |
 | **TOTAL** | **7 genres** | **141** | **~422,300** | **~2.57 MB** | **141 chapter files + 7 READMEs** |
 
 ## Format
