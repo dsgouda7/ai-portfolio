@@ -1,9 +1,12 @@
 # GenAI Notebooks — Authoring Guide
 
-> **Gold standard**: [transformers/transformers.ipynb](transformers/transformers.ipynb)
+> **Gold standard (mechanistic depth)**: [02-transformers/transformers.ipynb](02-transformers/transformers.ipynb)
+> **Gold standard (narrative framing)**: [04-llm/llm-finetuning.ipynb](04-llm/llm-finetuning.ipynb)
 > Every notebook under `learning/genai/` should be brought to the same pedagogical flow,
-> intuition-building, and technical depth as that notebook. This guide extracts the
-> reusable patterns so they can be applied consistently across the folder.
+> intuition-building, and technical depth as these notebooks. This guide extracts the
+> reusable patterns so they can be applied consistently across the folder. Section 8 covers
+> the narrative/business-framing techniques specifically; Sections 1-7 cover the
+> mechanistic "prove, don't assert" techniques common to both.
 
 This is not a generic "notebook style guide." It is a distillation of *why* the gold
 standard notebook works as a teaching artifact, written so the patterns can be copied
@@ -198,5 +201,113 @@ a companion `plan.md` in its own folder, written against this checklist, that:
 2. Scores/flags it against Section 6's checklist.
 3. Lists concrete, ordered changes (add a 🔮 cell here, add a toy→real bridge there,
    replace an assertion with a proof, restructure into numbered Parts, etc.) needed to
-   reach parity with [transformers/transformers.ipynb](transformers/transformers.ipynb).
+   reach parity with [02-transformers/transformers.ipynb](02-transformers/transformers.ipynb)
+   and, where the notebook has a real-world use case to motivate, [04-llm/llm-finetuning.ipynb](04-llm/llm-finetuning.ipynb).
 4. Is scoped to that notebook only — it should not require changes to other notebooks.
+
+---
+
+## 8 · Narrative & Business-Stakes Framing (from `04-llm/llm-finetuning.ipynb`)
+
+Sections 1-7 describe how to build *intuition* for a mechanism. This section describes a
+complementary technique: giving the reader a reason to *care* which technique wins, by binding
+the entire notebook to one concrete, named scenario with real constraints instead of a neutral
+tour of options. `llm-finetuning.ipynb` is the reference example — a small publishing firm,
+"Riverside House," wants an in-house editing assistant and knowledge base trained on its own
+unpublished manuscripts, on a laptop CPU, with no data allowed to leave the building.
+
+### 8.1 One brief, one set of constraints, threaded through every section
+
+The opening Markdown cell states a **named client, a concrete ask, and a hard constraint**
+(confidential data that can never leave the building; a laptop CPU, not a GPU cluster) instead of
+a generic "here's what fine-tuning is." Every technique introduced later is framed as **answering
+one of that client's questions**, not as an entry in a taxonomy:
+
+- Continued pretraining → "Does it even know our characters and world exist?"
+- Instruction tuning → "Does it follow a request instead of rambling?"
+- Preference alignment → "Does it write the way our editors actually prefer?"
+- Partial freezing / LoRA → "IT gave us one laptop — what can we actually afford to train?"
+
+Each major Markdown section opens with a one-line **"Riverside's question for this section"**
+callout before any code or theory — the reader always knows *why* they're about to read this part
+before they read it.
+
+### 8.2 Real numbers, never illustrative ones
+
+Where Section 5 says "prove the claim, don't state it," this notebook takes that a step further:
+**every chart is generated from the actual model trained earlier in the same notebook**, never a
+hand-drawn "typical" curve. Loss curves come from `trainer.state.log_history` of the real
+`Trainer` run above; per-block weight deltas come from diffing `real_model.named_parameters()`
+against the untouched base checkpoint; the LoRA "before/after" activation comparison is captured
+with real forward hooks on the actual PEFT-wrapped layer, not a re-derivation of the matrix math.
+Code comments say this explicitly ("real numbers, not a toy example") so the reader never mistakes
+a real result for a staged one.
+
+### 8.3 "Crack it open" — verify a training claim on the real trained weights
+
+After every training run, a follow-up cell measures whether the run actually did what its config
+claimed, using the same untouched base model as a reference point: diff every trained parameter
+against its value in the untouched base checkpoint, per transformer block, and plot the norm of
+that difference. For partial freezing this directly confirms the frozen blocks measured a real
+delta of effectively zero — not "should be frozen," but "measured frozen." Reuse this pattern
+anywhere a notebook makes a claim about *which* weights change: don't just show the config, measure
+the actual diff against an untouched reference copy of the model.
+
+### 8.4 Honest results, including the failed one
+
+When the DPO run's numbers don't clearly improve (30 synthetic preference pairs turned out to be
+too little signal), the notebook says so directly instead of quietly moving on or cherry-picking a
+better seed: it states plainly that with only 30 preference pairs and one pass through them, there
+isn't enough signal for DPO to reliably converge, and that this is a real, useful result rather than
+a notebook bug. This is deliberate and load-bearing: a notebook that only ever shows clean successes
+teaches the reader to expect clean successes, which is not how real fine-tuning runs behave. Branch
+the printed interpretation on the actual recorded numbers (an `if margin_improved and loss_improved`
+style check) so the "lesson" text is always true of the run that just happened, not aspirational.
+
+### 8.5 Per-technique "Common Pitfalls" + runnable health checks
+
+Every technique section ends with a **Common Pitfalls** Markdown cell (Bad/Good pairs, each with a
+one-line "why it matters") followed by a **Quick Health Check** — a short list of prompts/tests a
+practitioner would actually run to sanity-check the result — and then a code cell that *runs* those
+exact checks rather than leaving them as a hypothetical snippet. This turns "here's what could go
+wrong" from an abstract warning into a rehearsed debugging habit.
+
+### 8.6 Ablation studies framed as "what if we cut this corner"
+
+Rather than a neutral "here's what happens if you reorder these steps," the ablation section is
+framed as a deadline-pressure scenario ("the launch date got moved up — which corner is safe to
+cut?"), and each experiment ends with a **Verdict** that ties the technical result back to what it
+would mean for the stated client, not just an abstract observation. Where a hypothetical experiment
+is followed by an actual runnable version of it later in the notebook ("Putting Experiment N to the
+Test"), make sure the earlier section actually defines that experiment number — a dangling
+forward-reference to an experiment that was never introduced is a real, easy-to-miss break in flow
+that a slow-reading learner will stumble on trying to find.
+
+### 8.7 Close with a scorecard and a decision, not just a recap
+
+The final section is not a generic "what we learned" list — it's a **decision** framed against the
+opening brief: a table scoring every trained checkpoint against the criteria the client actually
+cares about (held-out perplexity, instruction-following, preference match, retraining cost), followed
+by a concrete "here's what we'd actually ship, and why" recommendation that explicitly revisits every
+open question raised earlier (including the one technique that didn't work). A pure summary of
+"what this notebook covered" belongs *before* this decision, not as the notebook's last word — ending
+on a taxonomy recap after a narrative build-up undercuts the payoff.
+
+### 8.8 Checklist addendum — narrative framing
+
+- [ ] Opens with a named scenario, a concrete ask, and a real constraint that shapes every later
+      technical choice (compute budget, privacy, latency, etc.), not just "let's learn fine-tuning."
+- [ ] Every major section states, in one sentence, which of the scenario's questions it answers,
+      before the theory/code.
+- [ ] Charts and numbers come from the actual objects trained earlier in the notebook's own kernel,
+      never a fabricated "typical" curve — say so in a comment when this matters.
+- [ ] Any claim about *which* parameters/weights changed is verified by diffing real trained weights
+      against an untouched reference copy, not asserted from the config alone.
+- [ ] When a real run's result is ambiguous, mixed, or a failure, the notebook says so plainly and
+      explains why, with the printed interpretation branching on the actual recorded numbers.
+- [ ] Every "what could go wrong" pitfalls list is followed by a runnable health-check cell, not a
+      hypothetical code snippet.
+- [ ] Any experiment referenced by number later in the notebook ("Experiment N") is actually defined
+      earlier with that number — no dangling forward references.
+- [ ] The notebook ends with a decision/recommendation scored against the opening scenario's stated
+      needs, with any pure recap/summary content placed *before* that closing decision, not after it.
