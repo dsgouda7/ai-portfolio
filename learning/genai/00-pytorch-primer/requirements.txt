@@ -1,0 +1,11 @@
+# mnist-cnn-keras-vs-pytorch.ipynb -- Keras (TensorFlow) cells
+tensorflow
+
+# mnist-cnn-keras-vs-pytorch.ipynb -- PyTorch cells
+torch
+torchvision
+
+# shared
+numpy
+matplotlib
+ipykernel
