@@ -34,6 +34,7 @@ full surface, not just the parts you find interesting:
 | Create agents (define role, prompt, model, tools, policies) | [02 — Agent Lifecycle & Runtime](02-agent-lifecycle-and-runtime.md) |
 | Deploy agents (versioning, rollout, rollback of the *agent definition*) | [02 — Agent Lifecycle & Runtime](02-agent-lifecycle-and-runtime.md) |
 | Register tools, MCP servers, skills | [03 — Tool, MCP & Skill Registry](03-tool-mcp-and-skill-registry.md) |
+| Sandbox/isolate agent and tool execution | [03 — Tool, MCP & Skill Registry §6](03-tool-mcp-and-skill-registry.md#6--tool-call-safety) |
 | Configure LLMs and LLM providers | [04 — Model Gateway & LLM Providers](04-model-gateway-and-llm-providers.md) |
 | Track agent health | [08 — Observability, Tracing & Health](08-observability-tracing-and-health.md) |
 | Rollback agentic *actions* (not just deployments) | [10 — Recoverability, Rollbacks & Saga](10-recoverability-rollbacks-and-saga.md) |
@@ -121,6 +122,12 @@ boundary is what turns "I can draw the diagram" into "I can defend the diagram":
   a stale or duplicate runtime instance can't commit writes after its lease expires — see
   [02 — Agent Lifecycle & Runtime](02-agent-lifecycle-and-runtime.md) for the full lease/fencing
   mechanism.
+- **Tool Gateway → Sandbox.** Every authorized tool call executes inside an isolation boundary
+  allocated fresh for that one call — a short-lived scoped credential and a default-deny network
+  egress allow-list are attached at allocation time, and the whole boundary (filesystem, process
+  state, credential) is discarded the instant the call returns, success or failure — see
+  [03 — Tool, MCP & Skill Registry §6](03-tool-mcp-and-skill-registry.md#6--tool-call-safety) for
+  the isolation-tier and lifecycle mechanics.
 
 ---
 
@@ -131,7 +138,7 @@ boundary is what turns "I can draw the diagram" into "I can defend the diagram":
 | Ingress | APIs, webhooks, scheduled triggers, identity context | How requests enter safely and consistently |
 | Admission | Tenant quota, priority, risk pre-check, budget pre-check | How you prevent overload before execution starts |
 | Control | Agent/tool/MCP/skill registry, scheduling, leases, policy hooks | How nondeterministic work is bounded by deterministic infrastructure |
-| Runtime | Model calls, tool calls, step execution, isolation | How work runs without corrupting shared state |
+| Runtime | Model calls, tool calls, step execution, isolation | How work runs without corrupting shared state — see [03 §6](03-tool-mcp-and-skill-registry.md#6--tool-call-safety) for the per-call sandbox mechanism |
 | Model gateway | Provider routing, rate limits, fallback, cost metering | How you configure/swap LLMs without touching agent logic |
 | Tool gateway | Policy-checked side effects, MCP/tool invocation | How model intent becomes an authorized action |
 | State | Event log, checkpoints, DAG, tool records, approvals | How you replay, resume, audit, and debug execution |
@@ -150,6 +157,15 @@ almost every other answer in this track.
 
 ## 4 · End-to-end request lifecycle
 
+This diagram covers more than "a request comes in and a response goes out" — it's meant to be
+the one place that visibly connects **instantiation** (resolving and loading an agent
+definition, allocating an execution frame), **execution** (the model/tool step loop),
+**sandboxing** (where a per-call isolation boundary actually opens and closes), **governance**
+(the pre-execution policy decision), and **monitoring** (span emission) into a single continuous
+story. It deliberately still omits the failure/compensation path — that's Section 4.1, directly
+below, because it deserves its own diagram rather than a cluttered `alt` branch buried in this
+one.
+
 ```mermaid
 sequenceDiagram
     participant U as Caller
@@ -159,14 +175,18 @@ sequenceDiagram
     participant MG as Model Gateway
     participant TG as Tool Gateway
     participant St as State Plane
+    participant Obs as Observability
     participant Ev as Evaluation
     participant Au as Audit Store
 
     U->>Adm: Create/invoke agent run
     Adm->>Adm: check tenant quota, risk, budget
     Adm->>Ctl: admitted
-    Ctl->>Ctl: create execution id + lease
-    Ctl->>Rt: schedule execution
+    Ctl->>Ctl: resolve agent_version_id -> definition (prompt/model/tools/policies)
+    Ctl->>Ctl: create execution id + fenced lease
+    Ctl->>Rt: schedule execution onto a worker
+    Rt->>Rt: allocate execution frame; load resolved definition
+    Rt->>Obs: open root span (agent.execution)
     loop Agent step
         Rt->>MG: LLM call (reasoning/plan)
         MG-->>Rt: proposed action / next step
@@ -174,7 +194,9 @@ sequenceDiagram
         Rt->>TG: proposed tool/MCP call
         TG->>TG: policy check + budget check + loop check
         alt allowed
-            TG->>Au: log decision (allow)
+            TG->>Au: log decision (allow) + idempotency key
+            TG->>Rt: execute inside a fresh per-call sandbox (see 03 §6)
+            Rt-->>Rt: sandbox result + provenance; sandbox torn down
             TG-->>Rt: tool result
         else needs approval
             TG->>U: HITL request
@@ -183,14 +205,71 @@ sequenceDiagram
             TG->>Au: log decision (deny)
         end
         Rt->>St: checkpoint (observation)
+        Rt->>Obs: emit child spans (llm.call, tool.call, policy.eval)
     end
-    Rt->>Ev: evaluate trajectory + output
+    Note over Rt: A later step failing after an earlier one already committed hands off to<br/>the Saga Engine -- see Section 4.1, not shown here to keep this diagram readable
+    Rt->>Ev: lightweight online guardrail check (fast, blocking)
     Rt->>St: final checkpoint
+    Rt->>Obs: close root span
     St->>Au: immutable record complete
 ```
 
 Every arrow that crosses into `Tool Gateway` or writes to `Audit Store` is a place a security
 review will ask "what stops this from being abused?" Have an answer ready for each.
+
+**Reconciling the two "evaluation" steps in this track.** The `lightweight online guardrail
+check` above is fast, synchronous, and **blocking** — it runs inline on every single execution
+and can affect that execution's own outcome (e.g. redact or refuse a response). It is a different
+thing from the heavy trajectory/LLM-judge regression-gate pipeline in
+[07 — Agent Evaluation Frameworks §8](07-agent-evaluation-frameworks.md#8--enterprise-vs-startup-recommendation),
+which runs **asynchronously** — against golden datasets pre-deployment, and against sampled live
+traces post-hoc — and only ever gates *future* deployments; it never blocks or alters an
+execution that's already running. Keep these straight in an interview: **fast inline guardrail
+vs. slow async regression gate** are two different planes of "evaluation" doing two different
+jobs, not one blurry concept.
+
+### 4.1 · Failure & compensation path
+
+[10 — Recoverability, Rollbacks & Saga §2.3](10-recoverability-rollbacks-and-saga.md#23-saga-orchestration-flow)
+states explicitly that its saga-orchestration flowchart should be read as "the generalization of
+the request lifecycle sequence diagram in the uber doc, specifically for the 'proposed tool
+call' branch." This is that extension, made concrete: what actually happens when step *N*'s tool
+call fails **after** an earlier step (*N-1*) already committed a real side effect.
+
+```mermaid
+sequenceDiagram
+    participant Rt as Runtime
+    participant TG as Tool Gateway
+    participant Saga as Saga / Compensation Engine
+    participant Ext as External System (system of record)
+    participant Au as Audit Store
+    participant U as Human (HITL)
+
+    Note over Rt,TG: Step N-1 already committed (e.g. ticket created); checkpointed with its compensation recorded
+    Rt->>TG: step N proposed call
+    TG-->>Rt: timeout / error / ambiguous result
+    Rt->>Saga: step N failed -- evaluate already-committed steps for compensation
+    Saga->>Ext: check-before-compensate: query system of record for step N-1's actual outcome
+    Ext-->>Saga: confirmed committed / confirmed not committed / still ambiguous
+    alt confirmed committed
+        Saga->>TG: invoke compensation for step N-1
+        TG->>Au: log compensation result
+    else confirmed not committed
+        Saga->>Au: log no-op -- nothing to compensate
+    else still ambiguous
+        Saga->>U: escalate -- present full saga state (committed steps, pending compensations)
+        U-->>Saga: manual resolution
+        Saga->>Au: log manual resolution
+    end
+    Saga->>Au: record final saga outcome
+```
+
+The two diagrams answer two deliberately separate questions with two separate mechanisms: the
+`alt allowed / needs approval / denied` branch in Section 4 governs whether a **single proposed
+action starts**; this diagram governs what happens **after an earlier one already finished**.
+Policy decides admission. The Saga Engine decides recovery. Conflating the two — e.g. trying to
+make the policy engine also own compensation logic — is a design smell worth naming out loud in
+an interview.
 
 ---
 
@@ -231,6 +310,7 @@ review will ask "what stops this from being abused?" Have an answer ready for ea
 | Ambiguous tool-call outcome (timeout/partial response) | Side effect assumed failed and blindly retried | Check-before-compensate: query the system of record for actual state before retrying or compensating ([10](10-recoverability-rollbacks-and-saga.md)) |
 | ANN recall silently degrades at scale | HNSW/IVF-PQ parameters (`M`/`efSearch`, `nlist`/`nprobe`) untuned as the index grows | Tune HNSW `efSearch`/`M` or IVF-PQ `nprobe`/`nlist` against a recall benchmark as corpus size grows ([05](05-state-management-and-memory.md)) |
 | LLM-judge score looks inflated/inconsistent | Judge position bias (favors whichever answer it sees first/second) | Swapped-order verification: score both orderings, flag/average disagreements ([07](07-agent-evaluation-frameworks.md)) |
+| Injected/compromised tool call taints a later step in the same execution | Sandbox reused across calls instead of allocated fresh per call | Fresh sandbox per tool call, torn down immediately after — no filesystem/credential state survives to the next call ([03 §6](03-tool-mcp-and-skill-registry.md#6--tool-call-safety)) |
 
 ---
 
@@ -310,6 +390,17 @@ interview; it signals judgment, not just knowledge.
   IVF-PQ `nprobe`/`nlist`), not a "the vector DB is broken" problem.
 - LLM judges carry position bias — verify a preference with swapped-order scoring before
   trusting it as ground truth.
+- An execution's "birth" is concrete, not magic: resolve `agent_version_id` → definition, mint a
+  fenced lease, allocate a worker/execution frame, *then* open the root span — in that order.
+- Every authorized tool call runs inside a sandbox allocated fresh for that one call, with a
+  short-lived scoped credential and default-deny egress — and the whole boundary is discarded the
+  instant the call returns, so a compromised call can't taint a later one in the same execution.
+- "Evaluation" means two different things at two different speeds: a fast, inline, blocking
+  guardrail check that can affect *this* execution, and a slow, async, sampled/pre-deployment
+  LLM-judge regression gate that only affects *future* deployments — don't conflate them.
+- Section 4's diagram covers admission through the happy path; Section 4.1 is the explicit
+  extension for what happens when a later step fails after an earlier one already committed —
+  policy governs whether an action starts, the Saga Engine governs what happens after one ends.
 
 ## Further Reading
 

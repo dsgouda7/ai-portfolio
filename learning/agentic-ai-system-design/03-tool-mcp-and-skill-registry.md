@@ -488,6 +488,15 @@ a new skill version is promoted to production agents.
   token level (needs runtime support, adds decode overhead); post-hoc validation + reject/retry
   works with any model but burns a full round trip per malformed call — use both, not one
   instead of the other.
+- A sandbox is allocated fresh per tool call and torn down immediately after — never reused
+  across calls in the same execution — so one compromised call can't plant something a later
+  call trusts.
+- Process isolation, containers, and microVMs (Firecracker/gVisor) are three different strengths
+  of the same idea; risk classification, not the registry schema's current enum, should decide
+  which one a given tool actually needs.
+- Inside the sandbox, the call runs on a short-lived scoped credential and default-deny network
+  egress — a full sandbox escape should still only expose one narrow credential's worth of
+  access.
 
 ## Further Reading
 
@@ -499,3 +508,7 @@ a new skill version is promoted to production agents.
 - OpenAI Structured Outputs guide (JSON-Schema-constrained generation) — <https://developers.openai.com/api/docs/guides/structured-outputs>
 - Semantic Kernel agent orchestration & plugins — <https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/agent-orchestration/>
 - OWASP Top 10 for Large Language Model Applications (prompt injection, excessive agency) — <https://owasp.org/www-project-top-10-for-large-language-model-applications/>
+- gVisor — application kernel for containers (syscall-interception sandboxing) — <https://gvisor.dev/docs/>
+- Firecracker — secure and fast microVMs (AWS Lambda's isolation model) — <https://firecracker-microvm.github.io/>
+- gVisor — application kernel for containers (syscall-interception sandboxing) — <https://gvisor.dev/docs/>
+- Firecracker — secure and fast microVMs (AWS Lambda's isolation model) — <https://firecracker-microvm.github.io/>
