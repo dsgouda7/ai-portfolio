@@ -156,6 +156,20 @@ because interviewers will ask "how does that actually work under the hood":
   and persists it as a new checkpoint. Development commonly uses an in-memory saver
   (`MemorySaver`); production uses a database-backed saver (SQLite- or Postgres-backed, among
   others).
+
+> **Security caveat this track otherwise takes seriously elsewhere and shouldn't skip here:**
+> `pickle` deserializes by executing arbitrary Python bytecode embedded in the serialized bytes —
+> unpickling untrusted or tampered data is a well-known remote-code-execution vector (CWE-502),
+> not a theoretical one. A production, multi-tenant, database-backed checkpoint store is exactly
+> the kind of place a compromised or tampered checkpoint could land (a corrupted row, a replayed
+> checkpoint from a different tenant if isolation ever slips, a supply-chain issue in whatever
+> wrote it) — and a worker resuming from it via a bare `pickle.load` would execute whatever that
+> payload contains. Prefer a JSON-serializable state shape in production specifically to avoid
+> this exposure, or, if `pickle` is unavoidable for a given object graph, restrict deserialization
+> to a known-safe class allow-list rather than calling `pickle.load` on the raw bytes — the same
+> discipline this track already applies to tool-result provenance tagging
+> ([11 §6](11-governance-guardrails-and-security.md#6--security-blocks-prompt-injection-in-depth))
+> should extend to anything a worker deserializes from a shared store.
 - Every checkpoint is keyed by a **`thread_id`** — the identifier that scopes an entire
   conversation/execution's checkpoint history — plus a monotonically increasing checkpoint
   sequence within that thread. `thread_id` is exactly the `config={"configurable": {"thread_id":
@@ -473,6 +487,8 @@ Concrete, opinionated guidance — pick based on what you're optimizing for, not
   functions); it's the model-callable-tool concept, just SK's name for it.
 - LangGraph's persistence layer splits cleanly into **checkpointers** (per-thread state snapshots
   — resume/replay/time-travel) and **stores** (cross-thread/session long-term memory).
+- `pickle`-based checkpoint serialization is a real deserialization-RCE surface (CWE-502) in a
+  multi-tenant production store — prefer JSON-serializable state, or allow-list classes if not.
 - Cycles/loops are **implicit** inside an SK orchestration pattern's implementation; they're
   **explicit graph edges** in LangGraph, which is why LangGraph gets first-class credit for
   loop/branch/interrupt support.

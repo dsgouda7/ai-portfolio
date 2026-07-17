@@ -194,6 +194,14 @@ Notes on transitions that are easy to get wrong:
   [09 — Multi-Agent Communication Patterns](09-multi-agent-communication-patterns.md)) who can
   resume, redirect, or terminate — model this as its own state rather than folding it into
   `Failed`, because the two require different runbooks.
+- **`Escalated` needs the identical timeout treatment as `Paused`, for the identical reason.** A
+  supervisor who never responds leaves an execution waiting forever just as surely as an
+  unanswered approval request does — this is not a different problem needing new reasoning, it's
+  the exact same "paused on an external decision-maker" shape applied to a different
+  decision-maker. Attach an escalation-timeout to every `Running → Escalated` transition and, on
+  timeout, transition to `Terminated` (fail-safe default) or to a *second-tier* escalation with a
+  wider timeout — never leave `Escalated` unbounded just because the supervisor is "probably more
+  reliable" than an ad hoc human approver.
 - **`Paused` needs a timeout**, or an execution can wait forever for an approval that never
   arrives — see [Section 5, failure #5](#5--failure-modes).
 
@@ -278,6 +286,7 @@ kind of judgment call an interviewer is listening for rather than a single "righ
 | Multi-agent livelock | Two or more agents stuck responding to each other, each individually within its own step/token budget | Track cross-agent interaction counts as their own fingerprint dimension (not just single-agent tool-call fingerprints); a supervisor confidence check ([09 — Multi-Agent Communication Patterns](09-multi-agent-communication-patterns.md)) should monitor conversation-level, not just agent-level, budgets |
 | Retry storm after a transient tool failure | Naive retry-on-failure logic treats every transient error as "try again," compounding structural fingerprint hits | Exponential backoff with jitter at the tool-gateway layer (generic background), plus counting retries against the same structural-fingerprint budget so repeated retries still trip loop detection |
 | Agent waiting forever for an approval that never comes | `Paused` state has no timeout policy | Attach an approval-timeout to every `Running → Paused` transition; on timeout, transition to `Terminated` (rejected-by-default) or `Escalated`, never leave an execution parked indefinitely holding budget/leases |
+| Agent waiting forever for a supervisor that never responds | `Escalated` state has no timeout policy — same shape as the `Paused` gap above, applied to a different decision-maker | Attach an escalation-timeout to every `Running → Escalated` transition identical in spirit to the `Paused` fix; on timeout, terminate (fail-safe) or widen to a second-tier escalation, never leave `Escalated` unbounded |
 
 ---
 
@@ -347,6 +356,8 @@ than reaching for supervisor confidence scoring on day one.
 - The termination state machine has five states beyond `Running`: `Paused`, `Terminated`,
   `Failed`, `Escalated` — keep rejected-by-human and failed-by-budget as distinct outcomes.
 - `Paused` needs an approval timeout, or an execution can wait forever.
+- `Escalated` needs the identical timeout treatment as `Paused` — a supervisor that never
+  responds is the same unbounded-wait bug wearing a different decision-maker's name.
 - Enterprise: layered loop control + all three budget scopes + supervisor confidence scoring.
   Startup: step/tool-call ceilings + manual kill/resume.
 - Structural fingerprinting = canonicalize `(tool_name, sorted(args.items()))` → hash (e.g.

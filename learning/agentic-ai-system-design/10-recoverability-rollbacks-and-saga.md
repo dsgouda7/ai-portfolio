@@ -176,19 +176,19 @@ is allowed to proceed to the next step.
 
 ```mermaid
 sequenceDiagram
-    participant O as Orchestrator
+    participant Saga as Saga / Compensation Engine
     participant T as Tool
     participant S as State
     participant H as Human
 
-    O->>T: execute action(idempotency_key)
-    T-->>O: success
-    O->>S: record compensation
-    O->>T: execute next action
-    T-->>O: failure
-    O->>T: run compensation
-    T-->>O: ambiguous outcome
-    O->>H: escalate with evidence
+    Saga->>T: execute action(idempotency_key)
+    T-->>Saga: success
+    Saga->>S: record compensation
+    Saga->>T: execute next action
+    T-->>Saga: failure
+    Saga->>T: run compensation
+    T-->>Saga: ambiguous outcome
+    Saga->>H: escalate with evidence
 ```
 
 Notice the last two exchanges: a compensation call can *itself* return an ambiguous outcome. This
@@ -212,8 +212,10 @@ This classification is a **registration-time property of the tool**, decided by 
 tool/MCP integration — never something the agent infers at run time from the prompt. An agent
 proposing to call a tool classified "requires human approval unconditionally" must be routed to
 HITL by the tool gateway regardless of how confident or well-reasoned the model's plan looks.
-See [03 — Tool, MCP & Skill Registry](03-tool-mcp-and-skill-registry.md) for where this
-classification lives in the registry schema, and
+See [03 — Tool, MCP & Skill Registry §4](03-tool-mcp-and-skill-registry.md#4--registry-data-model)'s
+`compensation_class` field for where this classification lives in the registry schema — a
+distinct axis from that same registry's `risk_classification` field, which drives the Policy
+Engine's allow/deny/approval defaults rather than the Saga Engine's recovery behavior — and
 [11 — Governance, Guardrails & Security](11-governance-guardrails-and-security.md) for how the
 policy engine enforces it.
 
@@ -297,7 +299,7 @@ The correct sequence, in order of preference:
    proceed deterministically (retry if absent, treat as success if present).
 2. **If querying isn't possible, escalate to a human with full evidence** — the action attempted,
    the idempotency key used, the exact error/timeout observed, and the saga's current state —
-   rather than guessing. This is precisely the `O->>H: escalate with evidence` step in the
+   rather than guessing. This is precisely the `Saga->>H: escalate with evidence` step in the
    sequence diagram above, and it is the correct default whenever Step 1 isn't available, not a
    fallback of last resort.
 
@@ -326,18 +328,18 @@ managing risk around it:
 
 ```mermaid
 sequenceDiagram
-    participant O as Orchestrator
+    participant Saga as Saga / Compensation Engine
     participant T as Target System
 
-    O->>T: execute action (idempotency_key=K)
-    T--xO: timeout — no response
-    O->>T: query — does a record with key K exist?
+    Saga->>T: execute action (idempotency_key=K)
+    T--xSaga: timeout — no response
+    Saga->>T: query — does a record with key K exist?
     alt Record exists
-        T-->>O: yes, found (result R)
-        O->>O: treat step as succeeded, record compensation
+        T-->>Saga: yes, found (result R)
+        Saga->>Saga: treat step as succeeded, record compensation
     else Record absent
-        T-->>O: no record found
-        O->>T: retry original action (same key K)
+        T-->>Saga: no record found
+        Saga->>T: retry original action (same key K)
     end
 ```
 

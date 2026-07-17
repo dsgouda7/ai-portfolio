@@ -78,6 +78,43 @@ Key design properties, each of which is a distinct interview point:
   [Tool Gateway](system-design.md) so no runtime worker can bypass it by constructing a tool call
   through a different code path.
 
+#### Internals: What Happens When the Policy Engine Itself Is Unavailable
+
+Centralizing every authority decision behind one policy engine (the property above) creates an
+obvious follow-up question every staff-level review will ask: **what happens to every in-flight
+tool call across the entire platform when that one engine is slow, overloaded, or unreachable?**
+There are exactly two choices, and the platform must pick one explicitly rather than leaving it
+as an accident of whatever the HTTP client's default timeout behavior happens to be:
+
+- **Fail closed (deny by default).** Any tool call that can't get a policy decision within its
+  timeout budget is treated as denied — logged, surfaced to the model as a structured denial,
+  and the execution proceeds without that side effect (or pauses/escalates if the step was load-
+  bearing). This preserves the platform's core safety invariant — nothing mutates without an
+  explicit allow — at the cost of an availability incident in the policy engine becoming an
+  availability incident for every mutating action platform-wide, even ones that would have been
+  auto-allowed under normal operation.
+- **Fail open (allow by default).** Tool calls proceed without a policy decision if the engine
+  is unreachable, to keep the platform "available." This is almost never the right default for
+  an agent platform: it means the exact moment your governance layer is degraded is the moment
+  every guardrail, budget check, and HITL requirement silently stops applying — the worst
+  possible time for that to happen, since a degraded control plane is also a plausible symptom
+  of an active incident or attack.
+
+> **The platform default should be fail-closed, with two deliberate escape hatches, not a
+> blanket fail-open:** (1) a **local, cached copy of `Low`-tier auto-allow rules** the Tool
+> Gateway can evaluate without a live call to the policy engine, so a policy-engine outage
+> doesn't halt harmless read-only traffic; and (2) an explicit, audited, time-boxed **break-glass
+> override** an operator can invoke to fail open for a specific tenant/tool during an active
+> incident — never a silent, automatic one. The distinction that matters in an interview: "fail
+> closed by default, with a human-invoked, audited exception path" is a defensible design;
+> "fail open automatically" is not, for the same reason a payment platform doesn't fail open on
+> its fraud check.
+
+This is the same trade-off [11 § 4](11-governance-guardrails-and-security.md#4--guardrails-concrete-categories)
+discusses for guardrail layers, one level up the stack: centralization buys consistency and
+auditability, and its cost is that the centralized component's own availability now gates
+everything behind it — that cost has to be named and designed for, not discovered in an outage.
+
 This is the same "authority boundary" arrow called out in the [uber doc's master
 architecture](system-design.md) — this section is that arrow, zoomed in.
 
@@ -237,6 +274,16 @@ A workable three-tier model:
 by policy, not a property of *how confident or well-reasoned the model sounds*. A model can be
 extremely persuasive and still be proposing a high-risk action; persuasiveness must have zero
 weight in the risk-scoring function.
+
+**This tiering is the same axis as the Tool/MCP Registry's `risk_classification` field, not a
+separate scheme.** [03 — Tool, MCP & Skill Registry §4](03-tool-mcp-and-skill-registry.md#4--registry-data-model)
+registers each tool's `risk_classification` as `read-only` / `mutating` / `irreversible` at
+registration time; this section's Low / Medium / High tiers are that same registry value,
+presented here as ordered policy-default tiers: Low = `read-only`, Medium = `mutating`, High =
+`irreversible`. Don't confuse either of these with the registry's separate `compensation_class`
+field ([03](03-tool-mcp-and-skill-registry.md#4--registry-data-model)), which drives *saga
+recovery* behavior after an action has already run, not the *admission* decision this section
+governs — they're independent axes set independently at registration time.
 
 A second, subtler point worth raising unprompted: **chained low-risk calls can compose into a
 high-risk outcome.** Reading a customer's record (low risk), reading their payment method (low
@@ -457,6 +504,7 @@ much higher volume and need machine-checkable context, not just a role label.
 | Credential scope too broad | Agent/runtime holds standing credentials instead of per-call scoped tokens | Enforce Tool Gateway-mediated, per-call credential issuance (§8) |
 | Reviewer approves stale state | Approval bound to "the step" conceptually, not a hashed snapshot | Hash-bind approval to exact serialized state + arguments; re-approve on mismatch (§3) |
 | Denied actions aren't monitored, so an attack campaign of repeated attempts goes unnoticed | Audit/alerting only tracks successes | Alert on deny-rate spikes per tenant/agent, not just on successful high-risk actions |
+| Policy engine itself is slow/unreachable | Centralizing every decision behind one engine makes that engine's own availability a platform-wide dependency | Fail closed by default (cached `Low`-tier auto-allow rules for read-only traffic), with an audited, time-boxed, human-invoked break-glass override — never a silent fail-open (§2) |
 
 ---
 
@@ -519,6 +567,12 @@ after the fact is one of the more painful migrations in this space.
   mitigation, not a guarantee.
 - Layer guardrails: cheap deterministic filters (regex/keyword/classifier) catch obvious cases
   first; reserve LLM-based moderation for ambiguous content that survives the first pass.
+- Centralizing every decision behind one policy engine means that engine's own unavailability is
+  now a platform-wide dependency — default to fail-closed with a cached `Low`-tier allow-list and
+  an audited break-glass override, never a silent fail-open.
+- `risk_classification` (registry) and the Low/Medium/High risk tiers here are the *same axis*,
+  not two schemes — don't confuse either with `compensation_class` (registry), which governs
+  saga recovery, not admission.
 
 ## Further Reading
 

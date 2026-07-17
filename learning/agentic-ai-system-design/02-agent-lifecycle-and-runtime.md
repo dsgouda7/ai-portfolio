@@ -289,6 +289,35 @@ The comparison happening *at the resource*, not at the lease manager, is what ma
 network partition can prevent Runtime A from ever hearing "your lease expired," but it cannot
 prevent the state store from refusing a stale write.
 
+#### Internals: What Happens When the Lease Manager Itself Is Unavailable
+
+Everything above assumes the Lease Manager can always mint the next fencing token on demand —
+the obvious follow-up question is what happens to the whole scheme when the Lease Manager itself
+is down, partitioned, or overloaded. Two distinct failure surfaces, with different answers:
+
+- **The Lease Manager's own availability is a solved, boring problem — on purpose.** It should
+  be backed by the same consensus-based store used for any other leader-election/locking
+  primitive (etcd, ZooKeeper, or a cloud provider's equivalent managed service), replicated
+  across multiple nodes so no single machine failure takes it down. This isn't agent-specific
+  engineering — it's exactly the same HA story any distributed lock service needs, and it's a
+  deliberate design choice to keep the hardest availability problem in this whole platform
+  boring and well-trodden rather than novel.
+- **What actually happens during a Lease Manager outage.** Existing, already-granted leases and
+  their fencing tokens remain valid and continue to be honored by every resource enforcing them
+  — the resource-side check ("is this token ≥ the last one I've seen") needs no live connection
+  to the Lease Manager at all, so in-flight executions are **not** interrupted by the outage.
+  What *does* stop is anything that needs a **new** decision from the Lease Manager: no new
+  executions can be scheduled, and no lease can be renewed once its current one is close to
+  expiry — so a prolonged outage eventually surfaces as executions hitting their lease's natural
+  expiry with no renewal available, at which point they must safely pause (checkpoint and stop,
+  never keep writing on a lease they can no longer prove is current) rather than assume they
+  still own the work.
+
+> The takeaway to say explicitly in an interview: **a Lease Manager outage degrades the platform
+> to "no new work, and in-flight work pauses at lease expiry" — it does not degrade to "in-flight
+> work corrupts state,"** because fencing-token enforcement lives at the resource, not at the
+> Lease Manager, and that's precisely why the mechanism is designed that way.
+
 ## 6 · Runtime models
 
 Different parts of a platform legitimately want different runtime shapes — this table is the one
@@ -368,6 +397,8 @@ the queue-worker model can't satisfy.
 - Rollback of a deployment (pointer swap + cache/session invalidation) is **not** the same as
   rollback of an action (compensation for a committed side effect) — see
   [10 — Recoverability, Rollbacks & Saga](10-recoverability-rollbacks-and-saga.md).
+- A Lease Manager outage doesn't corrupt in-flight state — fencing-token checks live at the
+  resource, not the Lease Manager — it just blocks new scheduling/renewals until it recovers.
 - Push (webhook → gateway → runtime) minimizes routing delay but can overload under burst; pull
   (event → queue → worker) gives backpressure/fairness at the cost of queue latency.
 - Fencing tokens: state store accepts writes only from the current lease holder's token;

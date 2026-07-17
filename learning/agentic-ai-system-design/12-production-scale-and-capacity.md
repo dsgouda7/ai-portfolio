@@ -74,29 +74,24 @@ Each stage answers a distinct question:
 execution is worse than a rejected one — it holds a lease, consumes checkpoint storage, and may
 be mid-way through a multi-step plan with partial side effects when it stalls.
 
-#### How It Actually Works: Token Buckets & Weighted Fair Queuing
+#### How It Actually Works: Weighted Fair Queuing Across Tenants
 
-Admission control and the priority queue above are not agent-specific inventions — they are the
-same two classic scheduling primitives used at the platform's ingress that [04 — Model Gateway &
-LLM Providers](04-model-gateway-and-llm-providers.md) uses at its egress to model providers. The
-difference is *where in the pipeline* they run, not what they do:
+Admission control at platform ingress uses the same token-bucket / leaky-bucket rate limiting
+mechanism [04 — Model Gateway & LLM Providers](04-model-gateway-and-llm-providers.md#internals-token-bucket-vs-leaky-bucket-rate-limiting)
+uses at its egress to model providers — same algorithm, different end of the pipeline: a token
+bucket accumulates capacity at a fixed refill rate and absorbs legitimate bursts, a leaky bucket
+enforces a strictly constant outflow and cannot. See doc 04's internals section for the full
+mechanism and trade-off table rather than re-deriving it here; admission control at ingress
+typically wants the token-bucket's burst tolerance (business-hours spikes are normal), the same
+conclusion doc 04 reaches for its own boundary.
 
-- **Token bucket / leaky bucket for global rate limiting.** A token bucket accumulates tokens at
-  a fixed refill rate up to a maximum capacity; each incoming execution request consumes one (or
-  more, weighted by expected cost) token, and a request with no tokens available is rejected or
-  queued. This allows bursts up to the bucket's capacity while still enforcing a long-run average
-  rate. A leaky bucket instead enforces a strictly constant outflow rate regardless of burst
-  size — smoother, but it cannot absorb a legitimate short burst without added queuing delay.
-  Admission control at platform ingress uses this exact mechanism to cap total incoming execution
-  rate before anything is scheduled; [04](04-model-gateway-and-llm-providers.md) uses the same
-  mechanism to cap outbound calls to a specific model provider.
-- **Weighted fair queuing (WFQ) across tenants.** Once requests are admitted, the priority queue
-  needs to decide *whose* request runs next when multiple tenants have pending work and capacity
-  is limited. WFQ assigns each tenant a weight (e.g. proportional to their subscription tier) and
-  the scheduler cycles through tenant queues, serving each queue a number of requests
-  proportional to its weight before moving to the next — so a tenant with weight 3 gets roughly
-  three times the scheduling turns of a tenant with weight 1, and no single tenant can flood the
-  scheduler and starve the others out, even without a hard concurrency cap.
+Once requests are admitted, the priority queue above needs a second, distinct mechanism to
+decide *whose* request runs next when multiple tenants have pending work and capacity is
+limited — **weighted fair queuing (WFQ)**. WFQ assigns each tenant a weight (e.g. proportional to
+their subscription tier) and the scheduler cycles through tenant queues, serving each queue a
+number of requests proportional to its weight before moving to the next — so a tenant with
+weight 3 gets roughly three times the scheduling turns of a tenant with weight 1, and no single
+tenant can flood the scheduler and starve the others out, even without a hard concurrency cap.
 
 ```mermaid
 flowchart TD
@@ -110,18 +105,6 @@ flowchart TD
     classDef gate fill:#eef,stroke:#556,stroke-width:1px;
     class Scheduler gate
 ```
-
-**Trade-off — Token Bucket vs. Leaky Bucket**
-
-| | Token bucket | Leaky bucket |
-|---|---|---|
-| Handles legitimate bursts | Yes, up to bucket capacity | No — enforces a constant rate regardless of burst |
-| Output smoothness | Bursty (up to capacity) | Perfectly smooth |
-| Best fit | Admission control for bursty, human-triggered workloads (e.g. business-hours spikes) | Protecting a hard downstream limit that truly cannot tolerate any burst (e.g. a provider's strict per-second cap) |
-
-> Most platforms use a token bucket at admission (bursts are normal and expected) and something
-> closer to a leaky bucket right at the model-gateway boundary, where the downstream provider
-> limit is genuinely hard and burst-intolerant.
 
 ---
 
@@ -226,9 +209,14 @@ seconds end-to-end on average (model calls, tool calls, and checkpointing includ
 $$L = 10 \times 8 = 80$$
 
 You need roughly **80 concurrent execution slots** provisioned just to keep pace with
-steady-state arrival — before adding any burst headroom, retry overhead, or HITL-pause slots (an
-execution paused awaiting human approval still occupies a slot, per §2's admission-control
-discussion). In practice, provision meaningfully above the raw Little's Law number — it gives you
+steady-state arrival — before adding any burst headroom or retry overhead. **This $L$ counts only
+actively-running executions.** An execution paused awaiting HITL approval should release its
+runtime slot back to the pool while it waits — per §2's admission-control discussion, a paused
+execution shouldn't hog a runtime slot for what might be minutes-to-hours of human latency — so
+it does **not** count against this number. It still consumes other, separate capacity that needs
+its own sizing: a reserved lease/checkpoint entry so it can resume where it left off, and a slot
+in the reviewer/HITL queue — don't fold either into the runtime-slot count this $L$ is sizing. In
+practice, provision meaningfully above the raw Little's Law number — it gives you
 the steady-state floor, not a safety margin, and it assumes arrivals and durations stay close to
 their historical averages, which bursty or long-tail workloads violate routinely.
 

@@ -53,9 +53,10 @@ understand where durability boundaries belong.
 ```mermaid
 flowchart TD
     Input[Input] --> Plan[Plan]
-    Plan --> ToolCall[Tool Call]
+    Plan --> PlanCheckpoint[Checkpoint: plan]
+    PlanCheckpoint --> ToolCall[Tool Call]
     ToolCall --> Observation[Observation]
-    Observation --> Checkpoint[Checkpoint]
+    Observation --> Checkpoint[Checkpoint: observation]
     Checkpoint --> Decision{Decision}
     Decision -->|continue| Plan
     Decision -->|finish| FinalOutput[Final Output]
@@ -68,9 +69,13 @@ flowchart TD
 
 Three properties of this DAG matter more than the boxes themselves:
 
-1. **Checkpoint is the only node that must survive a process crash.** Input, Plan, Tool Call, and
-   Observation can be reconstructed *from* a checkpoint plus the event log (Section 3); a
-   checkpoint that wasn't durably written means the whole preceding turn is lost.
+1. **Both checkpoint nodes must survive a process crash — there are two per step, not one.** A
+   checkpoint immediately after `Plan` (before the tool call executes) and another after
+   `Observation` (after the tool result returns) — matching the two checkpoints per step in the
+   [uber doc's request-lifecycle diagram](system-design.md#4--end-to-end-request-lifecycle) and
+   [02](02-agent-lifecycle-and-runtime.md)'s "checkpoint after every model/tool call." Skipping
+   the post-`Plan` checkpoint means a crash between deciding to call a tool and the tool call
+   actually landing loses the plan itself, not just the tool result.
 2. **Decision is the only branch point, and it's where budgets get consulted.** Every edge out of
    `Decision` should be thought of as "infrastructure evaluated a condition," not "the model
    decided to stop." See [06 §3 — Termination Control](06-non-determinism-loops-and-termination.md#3--termination-control-state-machine)
@@ -97,6 +102,29 @@ them:
   Writes are small and cheap. Cost: reconstruction requires replaying every delta *in order*
   since the last full snapshot — slower to restore, and fragile: a single corrupted or missing
   delta breaks the chain and makes every checkpoint after it unusable.
+
+#### Internals: Making a Single Checkpoint Write Atomic
+
+Delta chains and full snapshots share a more basic problem underneath both of them: what stops a
+*single* checkpoint write from being torn — half-written to disk or to the state store — if the
+runtime process crashes mid-serialization? This is a different failure than the stale-writer
+problem fencing tokens solve ([02](02-agent-lifecycle-and-runtime.md) protects against an old,
+still-alive writer clobbering a newer one; it says nothing about a single writer's own write
+failing halfway through). The standard fix is the same one any durable-storage system uses:
+
+- **Write-to-temp-then-rename (or the object-store equivalent).** Serialize the checkpoint to a
+  new, uniquely-named location first; only after that write fully completes and is confirmed,
+  atomically rename/repoint the "current checkpoint" pointer to it. A crash mid-write leaves an
+  orphaned partial file at the temp location and the previous checkpoint still intact and
+  current — never a half-written checkpoint mistaken for a valid one.
+- **Write-ahead log (WAL) semantics**, for state stores that support them: append the new
+  checkpoint's bytes to a log first, mark the append as committed only after it's durably
+  flushed, and only then update any in-memory or index-level pointer to it — the same pattern
+  relational databases use to survive a crash mid-write.
+
+> Whichever mechanism is used, the property to name explicitly in an interview is **"a reader
+> never observes a partially-written checkpoint"** — either the old one, complete, or the new
+> one, complete, never something in between.
 
 > **Trade-off — delta vs. full snapshot**
 >
@@ -352,6 +380,16 @@ different constraint: memory footprint at very large scale.
   instead of full-precision floats. This is where the memory savings come from — often an order
   of magnitude smaller — at the cost of some distance-computation accuracy (recall).
 
+Two parameters dominate IVF-PQ's own recall/latency trade-off, the same role `M`/`ef_search` play
+for HNSW above: **`nlist`** (the number of clusters the index is partitioned into at build time —
+more clusters means finer partitioning and faster narrowing, but each cluster holds fewer vectors
+so very high `nlist` can hurt recall if the query lands near a cluster boundary) and **`nprobe`**
+(how many of the nearest clusters are actually searched at query time, out of `nlist` total —
+higher `nprobe` searches more of the index and improves recall at the cost of query latency,
+lower `nprobe` is faster but risks missing the true nearest neighbor if it happens to sit in a
+cluster that wasn't probed). Like `ef_search`, `nprobe` is tunable per query without rebuilding
+the index; `nlist` is fixed at index-build time.
+
 > **Trade-off — HNSW vs. IVF-PQ**
 >
 > HNSW generally wins on recall and latency at moderate scale, at the cost of holding a full
@@ -462,6 +500,10 @@ don't add it because "agents are supposed to have memory."
   every event — without that, replay is meaningless.
 - Six memory layers, fast to slow: context window → thread checkpoint → session DAG → long-term
   store → vector memory → immutable event log.
+- A checkpoint write must be atomic (write-to-temp-then-rename, or WAL semantics) — a reader
+  should never observe a half-written checkpoint, a different failure than fencing tokens solve.
+- IVF-PQ's own tunable knobs are `nlist` (clusters at build time) and `nprobe` (clusters actually
+  searched per query) — the same recall/latency role `M`/`ef_search` play for HNSW.
 - LangGraph's checkpointer/store split is a real-world validation of the
   thread-scoped-vs-cross-session-scoped distinction.
 - The most dangerous collapse: treating vector memory as ground truth instead of a retrieval

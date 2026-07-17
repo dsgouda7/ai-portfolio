@@ -248,6 +248,12 @@ Read the arrows as a rule, not just a picture: **the data plane never grants its
 is a place where, if you removed it, the model would be making a decision it should never be
 trusted to make alone.
 
+> **Naming note:** this diagram draws `BudgetManager` as its own box for clarity in a
+> control-vs-data-plane argument. The [uber doc's master architecture](system-design.md#2--master-architecture)
+> folds the same responsibility into the `PolicyEngine + Budget Manager` node — they're the same
+> control-plane responsibility, split apart here only to make "the data plane asks two different
+> questions (allowed? affordable?)" visually explicit; don't read this as two competing designs.
+
 ## 6 · Core invariants
 
 These four sentences are the ones to say out loud in an interview, in order, before you start

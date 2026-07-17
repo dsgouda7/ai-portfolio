@@ -247,6 +247,15 @@ flowchart TB
 between client and server, but says nothing about *multi-tenant auth, org-wide rate limiting, or
 what happens when a server misbehaves*. That's platform work, layered on top — see Section 7.
 
+**Naming note, since this track uses "Tool Gateway" everywhere else:** the "Platform MCP
+Gateway" drawn above is not a separate hop from the [Tool Gateway](system-design.md#2--master-architecture)
+in the master architecture — it's the same authority-boundary component, specialized for
+MCP-server-mediated calls specifically (handling JSON-RPC framing, transport selection, and
+capability-negotiation freshness on top of the same policy/rate-limit/circuit-breaker duties the
+Tool Gateway performs for any tool call). Think of "MCP Gateway" as this doc's zoomed-in name for
+the Tool Gateway's MCP-specific code path, not a competing component with its own separate
+authority.
+
 ---
 
 ## 4 · Registry data model
@@ -262,6 +271,7 @@ fields — this is the table to draw from memory:
 | `owner` / `team` | Who to page when it breaks; who approves schema changes |
 | `input_schema` / `output_schema` | JSON Schema — the actual contract the model's arguments are validated against |
 | `risk_classification` | `read-only` / `mutating` / `irreversible` — drives policy-engine defaults |
+| `compensation_class` | Saga recovery semantics for this action: `Compensable` / `Retryable` / `Explicitly irreversible` / `Requires human approval unconditionally` — set at registration time; see [10 — Recoverability, Rollbacks & Saga §2.5](10-recoverability-rollbacks-and-saga.md#25-the-core-invariant-classify-every-mutating-action) for how the Saga Engine uses it |
 | `required_scopes` / `credentials_ref` | OAuth scopes or capability tokens needed; a *reference* into a secrets manager, never a raw secret |
 | `rate_limit` | Per-tool and per-tenant call ceilings |
 | `timeout_policy` / `retry_policy` | Max latency budget; retry count/backoff for transient failures |
@@ -277,6 +287,17 @@ this is what lets the gateway detect **schema drift**, covered in Section 7).
 For a **Skill** entry specifically, add: `composed_of` (an ordered list of `{tool_id, pinned_version}`
 and `{prompt_id, pinned_version}` references) and `example_transcripts` (few-shot examples used
 to teach the model the intended usage pattern).
+
+**`risk_classification` vs. `compensation_class` — two different axes, easy to conflate.**
+`risk_classification` answers "how dangerous is it to allow this action at all" and drives
+whether the [Policy Engine](11-governance-guardrails-and-security.md#5--risk-classification-the-deterministic-tiering-that-governs-everything-above)
+auto-allows, audits, or requires approval *before* the call runs. `compensation_class` answers a
+different question — "how recoverable is this action once it has already run" — and drives what
+the Saga Engine does *after* a later step fails. The two don't collapse into each other: an
+`irreversible`-risk tool is always `Explicitly irreversible` in compensation terms too (nothing
+to reconcile there), but a `mutating`-risk tool can independently be `Compensable`, `Retryable`,
+or still `Requires human approval unconditionally` depending on the specific business semantics
+of that call — set both fields explicitly at registration time; never infer one from the other.
 
 ---
 
@@ -305,8 +326,10 @@ sequenceDiagram
     alt authorized
         Rt->>Reg: resolve concrete endpoint (MCP server session or tool implementation)
         Rt-->>Rt: execute in sandbox; capture result + provenance
-    else denied or needs approval
-        Rt-->>M: return structured denial/approval-pending as the tool result
+    else needs approval
+        Rt-->>M: return structured approval-pending as the tool result
+    else denied
+        Rt-->>M: return structured denial as the tool result
     end
 ```
 
@@ -348,6 +371,86 @@ Three distinct controls, frequently conflated in interviews — keep them separa
    further mutating tool call without a fresh policy check, strip or flag instruction-like
    patterns in fetched content, and consider a lightweight sanitization pass before re-injecting
    large third-party text into the main reasoning loop.
+
+#### Internals: Sandbox Isolation Tiers, Lifecycle, and Blast-Radius Containment
+
+"Sandboxing" in the registry table above (`sandbox_requirements: none / process isolation / full
+container`) is a schema field, not a design — here's the mechanism it's actually naming, and the
+questions a staff-level review will always ask next: **what kind of boundary is this**, **when
+exactly does it open and close**, and **what does it cost**?
+
+**Isolation tiers, weakest to strongest:**
+
+| Tier | Mechanism | Isolation strength | Per-call overhead | Registry field |
+|---|---|---|---|---|
+| Process isolation | OS process boundary + seccomp syscall filtering + restricted filesystem view | Weak — shares the host kernel; a kernel exploit escapes it entirely | Lowest — near-native | `process isolation` |
+| Container isolation | Namespaces (PID/net/mount) + cgroups resource limits; still shares the host kernel | Moderate — real resource/filesystem boundary, kernel still shared | Low-moderate | `full container` |
+| MicroVM isolation | A minimal per-call VM (Firecracker-style) or a user-space kernel intercepting syscalls (gVisor-style) | Strong — a real or emulated kernel boundary, not just a namespace | Highest — VM/interception overhead per call | *(not a registry tier yet — see note)* |
+
+> **Note:** the registry schema stops at `full container`, which is a fine default for most
+> tools — but for `irreversible`-risk-classified tools (§5 below), an enterprise deployment
+> should add a fourth tier and route those calls through microVM isolation. Don't let the
+> registry's current enum values silently cap your ceiling — risk classification, not the
+> schema, should decide how strong a boundary a given tool actually needs.
+
+**Lifecycle timing — the part every mention of "sandbox" elsewhere skips:** the sandbox is
+allocated **fresh per tool call**, never once per agent execution and reused across calls. It's
+entered immediately before the call is invoked and torn down immediately after the call returns
+— success or failure — discarding its entire filesystem/process state. Nothing survives across
+calls except what the result explicitly writes back through the
+[State Plane](system-design.md#2--master-architecture)'s checkpoint. This is a deliberate default, not
+an optimization: if a sandbox were reused across a whole execution, one compromised or injected
+call could plant a file, an environment variable, or a modified binary that a *later,
+otherwise-safe* call in the same execution would then implicitly trust — turning one successful
+injection into persistent in-execution compromise instead of a contained, single-call blast
+radius.
+
+**What this actually costs — the part that's easy to state as a pure security win and never
+price out:** allocating and tearing down a fresh sandbox on *every single tool call* in a
+multi-step reasoning loop is not free. Process-isolation cold starts are cheap (single-digit
+milliseconds), but container cold starts run tens to low-hundreds of milliseconds, and microVM
+cold starts (Firecracker-class) are typically in the same ballpark *if kept warm*, but far worse
+from a true cold start — multiplied across dozens of tool calls in one execution, this is a real,
+named latency and infrastructure-cost line item, not a rounding error. The mitigating pattern
+production platforms actually use is a **warm pool of pre-initialized sandbox workers** per
+isolation tier (analogous to the hot/warm/cold runtime pools in
+[02 — Agent Lifecycle & Runtime §6](02-agent-lifecycle-and-runtime.md#6--runtime-models)):
+a call is handed a pre-warmed, already-isolated worker and only that worker's credential/network
+allow-list/filesystem state is rotated per call, instead of paying a full cold-start on every
+invocation. This preserves the fresh-per-call trust boundary (nothing about the worker's prior
+call's data survives) while amortizing the expensive part (kernel/VM boot) across many calls.
+
+Two more boundary details worth stating explicitly:
+
+- **Credential scoping.** The call executes with a short-lived credential minted *for that one
+  call*, scoped to exactly what [11](11-governance-guardrails-and-security.md)'s policy decision
+  authorized — never a long-lived platform credential. A full sandbox escape then only exposes
+  what that single narrow credential could do, not what the platform itself can do.
+- **Network egress control.** Default-deny egress inside the sandbox's network namespace, with a
+  per-tool allow-list attached at sandbox-creation time — enforced by routing the sandbox's
+  network namespace through an egress proxy the tool process cannot see or reconfigure, not a
+  firewall rule sitting beside a process that could in principle tamper with it.
+
+```mermaid
+sequenceDiagram
+    participant TG as Tool Gateway
+    participant Pol as Policy Engine
+    participant Sbx as Sandbox (warm pool, fresh identity per call)
+    participant Ext as External Tool / MCP Server
+
+    TG->>Pol: authorized invocation (scopes, risk tier)
+    Pol-->>TG: scoped, short-lived credential
+    TG->>Sbx: claim a pre-warmed worker; attach egress allow-list + credential
+    Sbx->>Ext: execute call inside boundary
+    Ext-->>Sbx: result
+    Sbx-->>TG: result + provenance (tier used, duration, egress attempts)
+    TG->>Sbx: rotate credential + wipe state; return worker to the warm pool
+```
+
+The sandbox boundary is the platform's **last line of defense, not its first** — schema
+validation and the policy engine's authorization decision are what should stop a bad call before
+it ever reaches the sandbox. Treat the sandbox as the thing that limits damage *when*, not *if*,
+one of those earlier layers eventually misses something.
 
 #### Internals: Constrained Decoding vs Post-Hoc Validation
 
@@ -508,7 +611,5 @@ a new skill version is promoted to production agents.
 - OpenAI Structured Outputs guide (JSON-Schema-constrained generation) — <https://developers.openai.com/api/docs/guides/structured-outputs>
 - Semantic Kernel agent orchestration & plugins — <https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/agent-orchestration/>
 - OWASP Top 10 for Large Language Model Applications (prompt injection, excessive agency) — <https://owasp.org/www-project-top-10-for-large-language-model-applications/>
-- gVisor — application kernel for containers (syscall-interception sandboxing) — <https://gvisor.dev/docs/>
-- Firecracker — secure and fast microVMs (AWS Lambda's isolation model) — <https://firecracker-microvm.github.io/>
 - gVisor — application kernel for containers (syscall-interception sandboxing) — <https://gvisor.dev/docs/>
 - Firecracker — secure and fast microVMs (AWS Lambda's isolation model) — <https://firecracker-microvm.github.io/>

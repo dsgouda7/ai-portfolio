@@ -83,6 +83,19 @@ reaches production:
 6. **Deploy or Block** — the only two outcomes; there is no "deploy with a warning" for a
    change that regresses the golden set.
 
+**The one deliberate exception to the binary rule: a break-glass path for genuine incident
+response.** "No deploy with a warning" is correct for the normal change path, but a platform also
+needs an explicit, narrow exception for the case where a golden-set-blocked prompt/tool/model
+change is itself the fix for an actively-exploited security hole that can't wait for a full
+golden-set + judge run. This is not a third silent outcome bolted onto the pipeline above — it's
+a separate, heavily constrained path: requires named human sign-off (never a fully automated
+bypass), is itself logged to the [Audit Store](11-governance-guardrails-and-security.md#7--audit-what-must-every-record-contain)
+as an explicit override with the blocked regression score attached, and is time-boxed — the
+bypassed change must pass the normal gate retroactively within a committed window (e.g. 24-48
+hours) or auto-revert. Treat the absence of this path, not its existence, as the real risk: a
+team without a sanctioned break-glass process for evaluation gates will improvise one under
+incident pressure, off the record, the first time they actually need it.
+
 **The real bottleneck interviewers want you to name is not the judge call itself** — that's a
 single extra API call per task and is cheap and fast. The actual hard, expensive, ongoing work
 is (a) constructing a high-quality, representative, continuously-refreshed labeled dataset of
@@ -463,6 +476,8 @@ interview signals judgment, not just knowledge of the full stack.
   answer via a dangerous or wildly inefficient path.
 - The pipeline: Golden Dataset → Sandbox Run → Trace Capture → LLM Judge → Regression Gate →
   Deploy or Block. The bottleneck is dataset/rubric quality, not the judge call.
+- The binary deploy/block rule has exactly one sanctioned exception: an audited, time-boxed,
+  human-signed-off break-glass override for an active security incident — never a silent bypass.
 - Golden datasets combine production traces + synthetic edge cases + incident logs, triaged and
   human-labeled with **both** an expected answer and an acceptable trajectory shape, versioned
   like code.

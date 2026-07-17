@@ -213,6 +213,17 @@ design constraint, not just a cost-accounting detail.
 > also typically short (minutes, extendable for a fee on some providers), so a prefix that isn't
 > reused within that window pays full cost again regardless of how carefully it was structured.
 
+> **Tenant isolation is not automatic.** A cache keyed purely by a hash of the prompt-prefix text
+> means two different tenants who happen to share an identical system-prompt template (a common
+> case for a multi-tenant platform running the same agent definition for every customer) will
+> **hit the same cache entry** at the provider. For most providers this is a performance/cost
+> optimization only — the cached KV-state never leaks back into a *response body* across tenants
+> — but it does mean cache hit-rate metrics and any provider-side telemetry keyed by that hash are
+> observable as a cross-tenant signal (tenant A's cache-warming activity measurably changes
+> tenant B's latency/cost), and a platform with strict tenant-isolation requirements should
+> confirm the specific provider's cache-key scoping (some support customer-scoped or
+> organization-scoped cache namespaces) rather than assuming isolation by default.
+
 **The load-bearing sentence for a whiteboard:** *the Model Gateway is the seam that turns "which
 model" from a hardcoded agent-definition detail into a runtime-resolved, governed, observable
 decision.*
@@ -405,6 +416,9 @@ so a new model version earns production traffic instead of being flipped on for 
   per-request quality — layer them rather than picking just one.
 - Prompt caching reuses a provider's cached KV-state for a repeated, hashed prompt prefix — any
   change to that prefix, down to whitespace, invalidates the cache and forces a full re-process.
+- A prompt cache keyed only by prefix-hash is shared across tenants with an identical template —
+  a cost/latency win, not a data leak, but confirm the provider's cache-key scoping if strict
+  tenant isolation is a requirement.
 
 ## Further Reading
 

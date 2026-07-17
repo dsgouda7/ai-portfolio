@@ -85,6 +85,35 @@ This is the closest multi-agent analog to a single agent's own reasoning loop �
 policy checks, loop detection) can be enforced at one place with minimal new machinery. This is
 why it is the default recommendation for production systems (Section 5).
 
+#### Internals: Supervisor Confidence Scoring
+
+A supervisor's job is not just routing sub-tasks — it also has to decide, every time a
+specialist reports back, whether to accept the result, ask for a retry with different
+instructions, or escalate to a human. **Supervisor confidence scoring** is the mechanism behind
+that decision: the supervisor (itself typically an LLM call, sometimes a smaller/cheaper model
+than the specialists it oversees) scores its confidence that the specialist's reported result
+actually satisfies the sub-task it was given — a distinct judgment from whether the specialist's
+output is well-formed, closer in spirit to the [trajectory/output judging in
+07](07-agent-evaluation-frameworks.md#4--llm-as-a-judge--mechanics-and-reliability-controls) but scoped to a single
+delegation hop instead of a whole execution. Concretely, the inputs to that scoring call are the
+original sub-task description, the specialist's full result, and (for cross-agent loop detection)
+a count of how many times this same specialist has already been asked to redo this same sub-task
+in this conversation — feeding directly into the cross-agent structural fingerprinting described
+in [06 — Non-Determinism, Loops & Termination](06-non-determinism-loops-and-termination.md). A
+low-confidence score routes back to the specialist with corrective feedback (bounded by the same
+retry-budget discipline as any other loop) or, past a retry ceiling, escalates to a human —
+exactly the `Running → Escalated` transition [06](06-non-determinism-loops-and-termination.md#3--termination-control-state-machine)
+describes, just triggered by the supervisor's judgment instead of a structural/semantic loop
+fingerprint.
+
+> **Why this is a startup-vs-enterprise dial, not a day-one requirement:** confidence scoring is
+> an additional LLM call on every delegation hop — real added cost and latency for a benefit
+> (catching a specialist's subtly-wrong-but-well-formed answer) that mostly shows up at higher
+> agent counts and sub-task complexity. A single-supervisor, few-specialist system can start with
+> simple heuristic acceptance (did the specialist return a non-empty, schema-valid result?) and
+> add confidence scoring once misrouted/silently-wrong specialist results actually show up in
+> production evals.
+
 ### 2.2 Hierarchical (multi-level delegation)
 
 The supervisor pattern generalizes to more than one level: an executive agent delegates to
@@ -395,6 +424,8 @@ up in practice — most early products never reach that scale.
   natural language, metadata cannot.**
 - Authority scopes must strictly shrink on delegation — a child agent's grants are always a
   subset of its parent's.
+- Supervisor confidence scoring is a distinct decision from schema validity — it judges whether a
+  specialist's result actually satisfies the sub-task, feeding cross-agent loop detection ([06](06-non-determinism-loops-and-termination.md)).
 - Default to supervisor/hierarchical for production; treat group chat/swarm as bounded,
   reviewed exploration tools, not default production topologies.
 - Semantic Kernel names orchestration patterns explicitly (concurrent, sequential, handoff, group

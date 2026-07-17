@@ -57,7 +57,7 @@ Supporting depth, each with its own document because the content warrants it:
 
 ---
 
-## 2 · Architecture
+## 2 · Master Architecture
 
 ```mermaid
 flowchart TD
