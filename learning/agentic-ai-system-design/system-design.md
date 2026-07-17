@@ -57,7 +57,7 @@ Supporting depth, each with its own document because the content warrants it:
 
 ---
 
-## 2 · Master Architecture
+## 2 · Architecture
 
 ```mermaid
 flowchart TD
@@ -93,8 +93,7 @@ flowchart TD
     Runtime --> SagaEngine[Saga / Compensation Engine]
     SagaEngine --> AuditStore
 
-    classDef plane fill:#eef,stroke:#556,stroke-width:1px;
-    class ControlPlane plane
+    style ControlPlane fill:#eef,stroke:#556,stroke-width:1px
 ```
 
 **The one boundary that matters most:** everything to the *left* of the Tool Gateway is the
