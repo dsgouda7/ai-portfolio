@@ -1,0 +1,153 @@
+Chapter 20: The Testimony
+
+The state Attorney General's office occupied the top two floors of the Gordon Building in downtown Ashmont Bay, a 1963 federal modernist structure that had the good sense not to pretend it was older than it was. The conference room where they assembled on Friday afternoon at one o'clock was large and deliberately neutral, the kind of space designed to receive information from all directions without telegraphing a position in advance. Floor-to-ceiling windows faced north toward the harbor. On a clear day you could see the northern shoreline and the faint line of Pacific Harbor Corp's construction staging area signage from here, though today a marine layer had come in off the bay and the view ended at the rooftops of the buildings two blocks north.
+
+Attorney General David Park was sixty-three years old, a twenty-year veteran of state legal work who had come up through environmental law before moving to the AG's office. He had the useful quality of someone who listened with visible attention rather than waiting for a pause to form his response. He sat at the head of the conference table with two members of his senior staff — a deputy AG named Wren Morrison who had been brought into the briefing specifically because she had no social connection to Harlan Winters, and a financial crimes specialist named Okoro who had been recalled from a conference in Seattle for the meeting.
+
+To Park's left sat Special Agent Lori Figueroa from the FBI's Seattle field office, accompanied by a colleague from the bureau's economic crimes unit. Figueroa was forty, precise in her movements, with the particular economy of someone who had spent two decades developing the discipline to let evidence do the speaking rather than her own interpretation of it. She had met Elena and Priya for the first time on Tuesday and had spent the intervening days reviewing Santos' documentation with the thorough scrutiny of someone who understood that the evidentiary record she was building now would be examined by defense attorneys looking for any vulnerability.
+
+On Elena's side of the table sat Elena, Priya, and Marcus Chen. Also present was Dr. Rebecca Kahale, at Elena's request — not as a legal advocate but as a subject matter witness who could speak to the relationship between the Harbor Development Project and the Kahale family's recognized fishing rights.
+
+James Whitmore was in the building but not in the room, at Elena's suggestion. He would be available if the AG's team needed to question a working harbor professional. Elena wanted him accessible without exposing him prematurely to the corporate legal counteroffensive she expected was coming.
+
+Because Pacific Harbor Corp had learned about the meeting.
+
+She had found out that morning, through Marcus, who had received a call from a contact in the state Department of Infrastructure informing him that Pacific Harbor Corp's legal team had filed an emergency motion in the Thurston County Superior Court seeking a temporary restraining order preventing the AG's office from receiving "alleged investigative materials of uncertain provenance" related to the Harbor Development Project without first allowing the company's legal representatives to respond to any allegations. The motion had been filed at ten AM and was accompanied by a sworn declaration from Richard Calder, Pacific Harbor Corp's CEO, claiming that the investigation was being conducted by a private party acting outside any legally authorized framework and that the evidence had been obtained through legally questionable means.
+
+The motion had been reviewed by a duty judge at eleven-thirty and denied. The denial was narrow but sufficient — the AG's office had a duty to receive information about potential state contract fraud and the TRO request was premature. But the motion had signaled, clearly, that Pacific Harbor Corp's legal team knew what was coming and had been mobilized in response.
+
+"They moved fast," Elena said to Marcus when he told her.
+
+"They're scared," he said. "Scared is good for us."
+
+The afternoon briefing began at one o'clock. Priya opened with a twenty-minute presentation of Santos' documentation, delivered with the precise, structured clarity of an academic who knew how to build an argument from evidence. She walked the room through the corporate structure — Pacific Harbor Corp, Pacific Coastal Holdings LP, Pacific Coastal Heritage Trust, the beneficial owners identified as Winters, Blackwell, and the Crane descendant. She walked them through the phantom subcontractor payments — the seven companies, the fifty-eight million dollars, the seventy-two-hour routing to the Cayman account. She displayed the internal authorization records showing Anne Strickland's digital signature on seventeen payment approvals.
+
+Special Agent Figueroa followed with the FBI's supplementary financial analysis. The bureau's access to international financial records had yielded, in the three days since Figueroa filed the mutual legal assistance request, the Cayman bank's confirmation that Pacific Coastal Heritage Trust was the sole beneficiary of the account receiving the phantom subcontractor payments. The beneficial ownership of Pacific Coastal Heritage Trust was confirmed as three co-settlors — Harlan Winters IV, Robert Blackwell III, and Eleanor Harrington, née Crane.
+
+"The beneficial ownership is documented," Figueroa said. "The payment flow from state contract funds through Pacific Harbor Corp through phantom subcontractors to the trust is documented. The CFO's authorization of those payments is documented. What we're presenting this afternoon is a case of government contract fraud, wire fraud, and conspiracy, with a total value to date of approximately fifty-eight million dollars in diverted state infrastructure funds, with the infrastructure in place to divert three to four hundred million dollars more."
+
+Marcus Chen presented the physical evidence — the falsified depth surveys, the environmental assessment discrepancies confirmed by harbor pilots and the removed marine biologist, and the 1931 pipeline easement documentation showing that the Pier 7 footprint could not legally be constructed without a public vacation proceeding that had never been initiated.
+
+Elena presented last, and what she presented was the connecting narrative — the story that made each individual piece of evidence meaningful in relation to the others. She described the Submerged Lands Act mechanism, the 2018 federal circuit precedent, and the pathway through which a completed Harbor Development Project would generate a basis for claiming submerged mineral rights. She described the rare earth deposit's extent and estimated value. She described the overlap with the Kahale family's recognized ancestral fishing rights. She described Santos' February sixteenth memo, the keystone fraud — the Pier 7 easement conflict that Santos had found the day before he called Figueroa and two days before he died.
+
+When she finished, the room was quiet.
+
+Attorney General Park looked at the document package on the table in front of him for a long moment. Then he said: "What you're describing is not just a construction fraud. You're describing a conspiracy to use state infrastructure investment as a mechanism for establishing private mineral rights claims to state submerged lands worth several billion dollars."
+
+"Yes," Elena said.
+
+"And you're describing an operation that required the death of a state employee to prevent it from being disrupted."
+
+"Yes."
+
+"And this has direct bearing on the Kahale family settlement and the recognized fishing rights in those waters."
+
+"The submerged land claim, if successfully established, would conflict directly with the Kahale fishing rights as recognized in the settlement." Dr. Kahale spoke from her seat at the table. "The practical effect of a commercial mineral extraction operation on the ocean floor in those waters would be the effective elimination of those rights regardless of their legal status."
+
+Park looked at Figueroa. "Your assessment of the federal case?"
+
+"I would take this to a grand jury tomorrow," Figueroa said, without hesitation. "The evidentiary basis for conspiracy, wire fraud, and government contract fraud charges is solid. The connection to David Santos' death creates an additional homicide referral to county jurisdiction, and the documentation of the corporate principals' knowledge of the fraud creates liability at the trust level."
+
+It was at that point that the conference room door opened. Elena had expected something. She had not expected it quite this directly.
+
+The woman who entered was in her fifties, severely dressed, with the particular quality of confidence that comes from representing very large amounts of money for a very long time. She was accompanied by two colleagues who were carrying briefing binders that matched the thickness of Elena's document package.
+
+"Attorney General Park," the woman said. "My name is Margaret Holt. I represent Pacific Harbor Corp, Pacific Coastal Holdings LP, and Pacific Coastal Heritage Trust. I understand a presentation is being made today that concerns my clients. Under constitutional due process principles, my clients have a right to respond to any allegations before action is taken."
+
+Park looked at her with an expression that was professionally neutral and not at all welcoming. "Ms. Holt, this is a preliminary briefing, not a hearing. My office will determine whether formal proceedings are warranted after reviewing the evidence presented."
+
+"With respect, General Park, the materials being presented today were gathered by a private investigator operating without any formal legal mandate, and include documents whose provenance has not been authenticated." Holt moved toward the table. "Before any of this reaches a grand jury or generates public statements from this office, my clients are entitled to present context that will make clear that what's being characterized as fraud is a mischaracterization of legitimate corporate financial practices."
+
+Park looked at Elena. Elena had anticipated this. She had anticipated it because Pacific Harbor Corp's legal team had tried the same tactic this morning with the emergency TRO motion, and when that failed they would need a second approach. The second approach was to get in the room and attempt to reframe the evidence before a prosecutorial position hardened.
+
+"I'll hear what you have to say," Park said evenly, "since you're here. But I want you to understand that no statement made today in this room changes the evidentiary record that has been presented."
+
+Holt sat and opened her briefing binder. She was good — Elena gave her that immediately. Her opening argument was composed and intelligent: the phantom subcontractor payments were legitimate contractual arrangements with specialized consulting firms whose services were rendered remotely and were therefore not verifiable through physical inspection. The beneficial ownership of Pacific Coastal Heritage Trust was a private matter not subject to public disclosure requirements. The environmental assessment methodology was compliant with applicable state standards. The 1931 pipeline easement had been reviewed by Pacific Harbor Corp's legal team and determined to have lapsed through non-use.
+
+Elena let her finish. Then she opened to the relevant section of her document package.
+
+"The 1931 easement," she said, sliding a certified copy across the table to Holt. "The perpetuity language in the easement is explicit and was confirmed by two independent property law specialists retained by my investigation. Non-use does not constitute abandonment of a public utility easement under Washington State law without a formal vacation proceeding. Citing case: State v. Pacific Northwest Power, 1988. The easement is active."
+
+Holt examined the document. Her expression did not change, but Elena watched her colleagues exchange a brief look.
+
+"The phantom subcontractors," Elena continued. "Ms. Holt says the services were rendered remotely. Three of the seven companies used as subcontractors have addresses at the same commercial address in Tacoma. I have documentation from the building's property manager confirming none of them were tenants." She laid the document on the table. "If the services were rendered remotely, the companies had to exist somewhere. They don't appear to exist anywhere except on the payment authorization forms signed by Anne Strickland."
+
+The name landed in the room with specific weight. Anne Strickland née Blackwell, CFO.
+
+Holt moved on smoothly, which was the mark of a professional who had anticipated losing some early exchanges. "The characterization of the Harbor Development Project as primarily a mechanism for establishing submerged mineral rights is speculative and unsupported by direct evidence. The project's stated purpose is port infrastructure development."
+
+"Santos' February sixteenth memo," Elena said. "Written the day before he died. He identified the Submerged Lands Act pathway and the 2018 precedent connecting harbor facility development to submerged mineral claim rights. He intended to report it to the FBI before his death. The FBI received his preliminary briefing on February fifteenth." Elena looked at Figueroa. "Special Agent?"
+
+Figueroa confirmed the February fifteenth call without elaboration.
+
+"David Santos died on February seventeenth," Elena said.
+
+Holt did not respond to this directly, which was the only response available to her that didn't make things worse.
+
+The room remained quiet for a moment. Then something happened that Elena had hoped for but had not planned.
+
+One of the two men who had accompanied Holt to the conference room — a younger attorney, late thirties, with the look of someone who had been in the room when decisions were made and had absorbed those decisions as obligations he was still carrying — closed his briefing binder and looked at the table. It was a small movement. But it had a quality to it that was visible to anyone paying attention.
+
+Park was paying attention. He looked at the man directly. "Is there something you want to add to your firm's presentation?"
+
+A silence. Holt started to speak. The man spoke first.
+
+"My name is Michael Orr," he said. "I'm an associate attorney at Holt Fielding. I've been working on the Pacific Harbor Corp account for fourteen months." He looked at Holt, and the look was an apology. Then he looked back at the table. "I am not able to continue to represent these clients. I need to advise this office that there are matters within my knowledge relating to the Pacific Harbor Corp account that may be relevant to this investigation, and that I intend to seek guidance from the Washington State Bar's professional responsibility hotline before making any further statement."
+
+The silence was different now.
+
+Holt's expression had tightened into the professional blankness of someone executing damage control. "Michael, I would strongly advise—"
+
+"I know," he said quietly. "I'm sorry, Margaret." He gathered his materials. "Attorney General Park, I would like to speak with your office privately at the earliest opportunity. I will not be speaking further in the presence of my current client or their other legal representatives."
+
+He left the conference room.
+
+The proceedings continued for another two hours after that, but the moment of Michael Orr's departure had shifted the room's weight in a way that could not be undone. Park's staff began asking the specific questions of people who were building toward indictments rather than deciding whether to proceed. Figueroa provided the federal case framework. Elena answered questions about the investigation timeline and her sourcing. Priya provided documentary authentication for Santos' files.
+
+Holt made three more attempts to reframe the evidence and was each time redirected by Park's team with the patient thoroughness of people who had heard the evidence and understood it fully. By the end of the second hour, she was no longer advancing arguments but requesting timelines for any public announcements, which was a different thing entirely.
+
+In the third hour of the proceedings, Elena presented the geological evidence directly to Attorney General Park. She displayed the Pacific Northwest Coastal Resources Assessment findings, Castellano's expert confirmation, and the satellite overlay showing the precise relationship between the rare earth deposit and the planned construction footprint. She described the Submerged Lands Act pathway and the 2018 circuit court precedent in the careful language she and Priya had developed for a non-specialist audience: clear, sequential, without unnecessary technical complexity.
+
+Holt interrupted twice during this portion. The first time, she challenged the qualifications of the geological expert Elena had consulted, arguing that an advisory committee member to a government survey was not an independent authority. Park's financial crimes specialist, Okoro, noted that the expert's qualifications were on record and that Holt Fielding was free to retain their own geological expert for any subsequent proceedings. The second time, Holt argued that the 2018 circuit court precedent was being misapplied — that the operational adjacency doctrine required active commercial harbor operations, not merely permitted construction, and that Pacific Harbor Corp had not yet completed any phase of construction.
+
+"Which is precisely why the fraud needed to be stopped now rather than after construction was complete," Elena said. "If the project had proceeded to completion, the legal basis for an extraction rights application would have been established before any public examination of the underlying purpose had occurred."
+
+Park asked Figueroa to comment on the federal implications of the submerged lands claim. Figueroa's response was measured and definitive: the FBI's economic crimes unit had reviewed the legal pathway Santos had documented, consulted with the Department of Justice's public lands division, and concluded that an attempt to obtain private mineral extraction rights to federal-adjacent state submerged lands through fraudulent harbor construction would constitute a conspiracy against the United States under federal statute, in addition to the state-level fraud charges. The federal case, in other words, had a dimension beyond the construction fraud itself — it extended to the intended use of the fraud to obtain something of national strategic significance.
+
+Holt's third attempt at reframing was more careful than her first two. She acknowledged, for the first time in the proceedings, that there were questions about the phantom subcontractor documentation that her clients would need to address. She suggested that these questions might reflect inadequate oversight rather than deliberate fraud — that the CFO's authorization of payments to entities whose legitimacy she had not verified was a compliance failure rather than a criminal act.
+
+"Authorization signatures on seventeen separate payment approvals over eight months," Figueroa said. "Each one requiring the CFO to confirm that the contracted services were legitimate. The compliance defense requires a degree of inattention that approaches deliberate blindness under the legal standard."
+
+Holt did not respond to this.
+
+It was after this exchange that Michael Orr, who had been sitting quietly since leaving the room an hour earlier, reappeared at the conference room door. He was accompanied by a man Elena did not recognize, who introduced himself as Orr's attorney. Orr's attorney advised the room that his client wished to provide a preliminary statement relevant to the proceedings, with the understanding that formal immunity negotiations would follow.
+
+Orr's statement was brief and surgical. He had been instructed by Margaret Holt, on behalf of the client principals, to prepare the Harbor Development Project feasibility study in a manner that did not reference the 1931 pipeline easement conflict, after that conflict had been identified internally. He had the email chain. He had retained it, against his better judgment at the time and in the knowledge that it documented his own participation in the concealment. He was prepared to produce it.
+
+The room absorbed this for a moment.
+
+The email chain, once examined by Park's staff, was timestamped September of the current year. Six weeks before Elena had begun investigating the case. Someone had known the easement conflict existed for six weeks and had made the decision to proceed anyway.
+
+At four-thirty, Park called a break. In the corridor, he stopped beside Elena.
+
+"Santos," he said.
+
+"Yes."
+
+"He built something solid." He looked at the document package under her arm. "The state failed him. I want you to know I understand that."
+
+"The best way to address it is to use what he built," Elena said.
+
+Park nodded. "We'll be in contact with your office and with Special Agent Figueroa by Monday. You should expect to be called as a witness in grand jury proceedings." He paused. "The Kahale family — Dr. Kahale should have independent legal representation advising her family before those proceedings, if she doesn't already."
+
+"I'll pass that along."
+
+She found Marcus in the corridor and they walked to the elevator without speaking. When the doors closed, she leaned against the wall and let the day's weight settle.
+
+"Orr," Marcus said. "I didn't see that coming."
+
+"I wasn't sure I did either," Elena said. "But I've noticed, in the past year, that sometimes the evidence doesn't need help from people who've been carrying it. Sometimes the evidence becomes heavy enough on its own."
+
+They rode down to the street level. Outside, the marine layer had thickened and the harbor was completely invisible to the north, hidden behind a grey wall of sea fog. Somewhere out there, in the dark water behind that fog, the rare earth deposit sat in the seabed as it had sat for forty million years, indifferent to the proceedings taking place in a conference room nine stories above the city's streets.
+
+It was no longer hidden from the people with the authority to protect it.

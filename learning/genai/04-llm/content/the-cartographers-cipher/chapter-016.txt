@@ -1,0 +1,145 @@
+Chapter 16: The Missing Auditor
+
+David Santos had left a professional trail that was visible precisely because it had been edited.
+
+His published work was accessible through the state Department of Infrastructure's public records portal — routine audit reports from eight years of service, each one methodical and unremarkable in the way that good audit work tends to be. He had reviewed infrastructure expenditures for highway maintenance contracts, municipal water treatment upgrades, port dredging programs. His reports were uniformly thorough, his conclusions carefully reasoned, his recommendations specific rather than vague. He was, by his professional record, exactly the kind of auditor that large-scale fraud could not afford to have examine it.
+
+The Harbor Development Project audit was conspicuous in its absence. Santos had been assigned to it in early October of the previous year, twelve months before Elena began the investigation. He had worked it for four months. He had died in February. His final report had never been published, never been summarized, never been referenced in any subsequent Department of Infrastructure document. It was as if the assignment had simply ceased to exist.
+
+Elena requested his complete audit work records through a series of public records requests filed on consecutive days, framing each request to capture a different category of documentation: correspondence, meeting minutes, field survey records, data requests to external agencies. The requests generated eleven responses over two weeks, each one providing a narrow slice of the record. She laid the documents across her desk and spent an afternoon reading them in sequence.
+
+What emerged was the shape of what Santos had been building rather than the substance of it. His correspondence with the Port Authority showed requests for historical navigation charts, channel depth measurements going back forty years, and the physical survey records from previous harbor improvement projects. His correspondence with the state Department of Ecology showed requests for baseline marine habitat assessments from the northern harbor area, specifically sediment chemistry profiles from surveys conducted in 2008, 2011, and 2014. His correspondence with the University of Washington's oceanography department — a single email, the response to which was not in the record — showed a request for information about a recent geological survey of Washington State's coastal resources.
+
+That last item was the one Elena kept returning to. The Pacific Northwest Coastal Resources Assessment had been published twenty-two months ago by a consortium of state agencies and the university's geology and oceanography departments. It was a six-hundred-page document covering coastal geology, fisheries, mineral resources, and subsea land use from the Oregon border to the Canadian boundary. Elena had downloaded it and spent three evenings reading through the sections relevant to Ashmont Bay's northern harbor area.
+
+The relevant section was brief, measured, and buried in a chapter on metallic mineral resources on page four hundred and twelve. A geological mapping program had identified a subsurface mineral assemblage in the offshore area north-northwest of Ashmont Bay's existing port facilities, at depths between eighty and two hundred meters below the seabed surface. Preliminary geochemical analysis indicated the assemblage included carbonatite-hosted rare earth element concentrations of potentially commercial significance, specifically light and heavy rare earth oxides including cerium, lanthanum, neodymium, dysprosium, and terbium. A follow-up study was recommended.
+
+The follow-up study had not yet been published. But the preliminary assessment was enough to understand what Rosa Medina had detected at the shallow end of the same deposit and what Santos had been trying to connect to the Harbor Development Project's falsified surveys and cost structures.
+
+The question was what documentation Santos had assembled when he died, and where it was now.
+
+His laptop had never been recovered. His office at the Department of Infrastructure had been cleared and reassigned. But Santos had been a methodical man — he had conducted field interviews with harbor pilots, requested records from multiple agencies, corresponded with a university oceanography department. A methodical man who had found what he believed was evidence of a major fraud did not keep that evidence in only one place.
+
+Elena found his name in the University of Washington graduate school records through a public database. He had taken evening courses part-time while working at the Department of Infrastructure, completing a master's degree in public administration over five years. The dissertation acknowledgment section was publicly accessible through the university library. She read it in fifteen minutes, and found the name she was looking for: Priya Mehta, graduate research assistant, acknowledged for methodological support and data analysis.
+
+Priya Mehta was a doctoral student in the university's Evans School of Public Policy and Governance, focusing on state infrastructure finance and audit methodology. She had worked as Santos' graduate research assistant for two years. That was the public record.
+
+The private record was that Priya Mehta had stopped attending her doctoral seminars on February nineteenth — two days after Santos' death. Her academic advisor had sent three emails and received no response. Her university email account had not been accessed since March fifth. Her apartment in the University District had been vacated in March, the lease terminated by a certified letter from a forwarding address that resolved to a post office box in downtown Seattle that was itself no longer active.
+
+Elena had learned this from Santos' academic advisor, Dr. Alistair Webb, who had agreed to speak with her after she explained that she was investigating Santos' death. Webb was a cautious man who parsed his words carefully, but his concern for Mehta was genuine and visible through the careful language.
+
+"She was one of my most capable doctoral students," he said. They were sitting in his office at the university, surrounded by the particular organized chaos of an academic's working space — papers stacked by logic rather than aesthetics, books opened and face-down on every available surface. "Her work on infrastructure finance had real practical implications. David Santos recognized that, which was why he brought her on as a research assistant. After his death, I was concerned about her — the loss of a mentor is significant. When she stopped responding to my messages, I assumed she was grieving and needed time. When her apartment was vacated without explanation, I became more worried."
+
+"Did she say anything to you about their work together? What Santos was investigating?"
+
+"She mentioned it in general terms. She was excited about it — she said it was one of the most substantive applications of audit theory to real infrastructure finance she'd encountered. She said they were finding evidence of a systematic misallocation of state funds, but she didn't give me specifics and I didn't ask for them."
+
+"Did she seem frightened? At any point before Santos' death or after it?"
+
+Webb considered this. "In retrospect. She came to see me in January, about five weeks before David's death. She seemed preoccupied. She asked me a question I found odd at the time — she asked whether student research files had any formal confidentiality protections. I told her that research conducted on university computers is technically university property but that student work had certain protections under FERPA. She seemed unsatisfied with that answer."
+
+"As if she was thinking about somewhere else to keep her files."
+
+"That was my interpretation afterward, yes. At the time I just thought she was being academically conscientious."
+
+Elena spent two days on Priya Mehta's trail before she found the first solid thread. Mehta's undergraduate roommate, a woman named Kessler who still lived in Seattle and whose contact information appeared in a university alumni directory, remembered Priya mentioning a friend in Portland — a college friend named Devika who had moved there after graduation and worked at a nonprofit doing environmental research. The name was enough. Elena found Devika Rao through the nonprofit's staff directory, called her, and was told with understandable caution that she didn't know any Priya Mehta.
+
+"You don't have to tell me where she is," Elena said. "I'd ask you to give her a message. Tell her that Elena Voss is investigating David Santos' death. Tell her I know what he was looking at, and I know why she's hiding. Tell her that the people who killed Santos are still operating, still building the thing he tried to stop, and that staying hidden isn't going to protect anyone."
+
+Three hours later, Priya Mehta called.
+
+Her voice was controlled in the way of someone who had been maintaining emotional control for months and had developed it into a sustainable practice. She was twenty-six years old and she had been in hiding since March, and she had spent that time keeping herself together with a combination of discipline and the particular focused purpose of a person who understood that their continued invisibility was the only thing standing between what they knew and what the people who wanted it buried could do about it.
+
+"How much do you actually know?" she said.
+
+"I know about the falsified depth surveys and the environmental assessment that doesn't reflect the actual seabed conditions. I know about the rare earth deposit in the subsea geology adjacent to the northern harbor. I know David Santos was killed because he was connecting those things to Pacific Harbor Corp's corporate structure and the founding family interests behind it." Elena paused. "I know there's a legal mechanism that Santos had identified — something about maritime law and submerged land claims — and I haven't found it yet. But I think you have."
+
+A silence. "He had a research assistant for a reason," Priya said finally. "He was an audit specialist. He could read financial records and find the fraud. I was a policy researcher. I could read legal structures and find the mechanism that made the fraud meaningful."
+
+"Come back to Ashmont Bay. Or let me come to Portland. We need to finish what Santos started."
+
+Another silence, this one longer and more complex. Elena heard traffic in the background, the sound of a city going about its ordinary business around a person who was trying to decide if ordinary business was possible again.
+
+"There's something you need to understand," Priya said. "Three weeks after David's death, I received a phone call. The voice was professionally neutral. The caller told me that my academic career depended on my dissertation being completed successfully, and that my dissertation being completed successfully depended on my committee not learning about any extracurricular research I'd conducted with a recently deceased state employee. Then the caller said he hoped I would take care of my own well-being, and he hung up."
+
+"Did you recognize the voice?"
+
+"No. But I knew what it meant. I left Seattle that week and I haven't been back."
+
+"Did you take Santos' research files with you?"
+
+"I have everything that mattered." The voice was steady, but Elena could hear the weight of what was behind it — months of careful solitude, of keeping the thing she knew safe by keeping herself unknown. "David always maintained a backup. He gave me access to the encrypted cloud storage two weeks before he died. He said if anything happened to him, the files should go to the right people. I didn't know at the time what he meant by 'if anything happens.' Afterward I understood exactly what he meant."
+
+"I'll come to Portland," Elena said. "Tell me when and where."
+
+Priya gave her an address — not Devika Rao's apartment but a coffee shop near a park, a public place with multiple exits and a clear sightline. Elena recognized the thinking behind the choice and it told her something useful about Priya Mehta: she was frightened and she was right to be frightened and she had spent the past eight months channeling that fear into practical caution rather than paralysis.
+
+Elena drove to Portland the next morning, leaving Ashmont Bay before dawn with the highway to herself through the first grey light and the mountains becoming visible to the east as she drove south through the river valley. She had told Marcus where she was going and asked him to watch her office while she was away. He had not questioned the precaution.
+
+She found the coffee shop at nine-thirty and took a table with a clear view of the entrance and the street beyond. Priya Mehta arrived at nine forty-five, fifteen minutes after the appointed time — arriving late to have the chance to observe who was already there before committing to the meeting. Another good instinct. She was small, dark-haired, wearing a jacket that was slightly too large, with the watchful quality of someone who had spent months scanning every room before entering it. She looked older than twenty-six, which was not surprising.
+
+She sat across from Elena and studied her for a moment.
+
+"You broke the founding conspiracy," she said. It was not quite a question.
+
+"With a great deal of help."
+
+"David told me about that case. It was part of why he trusted you, if things went wrong." She wrapped her hands around her coffee cup. "He said that Ashmont Bay's founding families had a long history of hiding what they owned behind what they claimed to own. He said that the Harbor Development Project had that same quality — that the stated purpose was a cover for the actual purpose."
+
+"What was the actual purpose? What did you find?"
+
+Priya set her cup down and looked at it for a moment. "There is a provision in the federal Submerged Lands Act of 1953 that grants states jurisdiction over the natural resources of their submerged lands within the three-mile coastal limit. That provision has been interpreted in ways that evolve as technology changes — as what can be extracted from the seabed changes. In 2018, a federal circuit court ruling in a case involving offshore mineral rights on the Gulf Coast established a principle that became important to the Harbor Development Project. The ruling held that a private party could establish legal access rights to state submerged lands adjacent to legitimately permitted harbor facilities, provided those facilities had been developed in compliance with applicable state and federal environmental standards and were in active commercial use."
+
+Elena set her pen down. "So if Pacific Harbor Corp successfully builds the harbor development and gets it certified as compliant and operational—"
+
+"They establish a basis for a claim on the submerged lands adjacent to their permitted facilities. Under the 2018 precedent, a private harbor operator can apply for an adjacent submerged lands mineral extraction license through the state Department of Natural Resources. The application is made on the basis of operational adjacency — that extracting resources from the seabed adjacent to your permitted harbor facilities is an extension of your existing permitted use."
+
+"And the rare earth deposit is in the submerged lands adjacent to the proposed northern pier sites."
+
+"Directly adjacent. Within the relevant zone under the 2018 precedent." Priya's voice was steady and precise. She had clearly rehearsed this too, had known this moment would eventually come and had kept the analysis sharp during the months of hiding. "The Harbor Development Project is not primarily a harbor development project. It is a mechanism for establishing permitted harbor facilities adjacent to a rare earth mineral deposit in order to claim submerged land access rights to that deposit. The construction costs are irrelevant. The cost overruns are irrelevant. The entire billion-dollar project is essentially an elaborate legal filing — building the physical infrastructure that creates the jurisdictional basis for the real transaction."
+
+Elena thought about David Santos, dying on a February pier with the question of the seabed geology forming in his mind. She thought about the falsified depth surveys, systematically altered to misrepresent the bay floor, to make the navigation channel appear clean and straightforward rather than revealing the geological reality of what lay beneath. She thought about Rosa Medina, removed from the environmental assessment before she could document the rare earth indicators in the sediment chemistry. She thought about Gerald Foust, clearing the project and then collecting his payment from the contractors.
+
+The rare earth deposit was the answer to every question she had been building toward. It made the killing of David Santos not just a cover-up but a necessity. It made the political protection surrounding the Harbor Development Project legible. It made the founding family money flowing through Pacific Harbor Corp's corporate layers make sense at the scale of billions rather than millions.
+
+"What's the deposit worth?" Elena asked.
+
+"David estimated conservatively that a deposit of the size suggested by the preliminary geological assessment would have an in-ground value of between four and twelve billion dollars in rare earth oxide content, depending on extraction economics and future market conditions. At production, it would be one of the largest rare earth deposits in North America outside of established mining regions."
+
+Four to twelve billion dollars. In the seabed beneath Ashmont Bay's harbor. And the same families whose ancestors had falsified the surveys in 1879 to steal indigenous lands were falsifying surveys in the present to steal what lay beneath the water those lands had become.
+
+Elena sat for a long time with the scope of it settling around her. Then she said: "Santos' backup files. The documentation he built before he died. I need to see everything."
+
+Priya nodded. "I know. I've been waiting for the right person to show it to."
+
+Elena spent the next four hours at that table while Priya walked her through the documentation Santos had built: the financial audit trail showing the Pacific Harbor Corp cost structure, the parallel analysis showing the corporate layers connecting to founding family trusts, the geological research showing the rare earth deposit's extent, and the legal research showing the specific statutory pathway through which the harbor development would ultimately generate the submerged land claim.
+
+Santos had been thorough. His documentation was not complete — there were threads he hadn't yet connected, questions he had formulated but not answered. But what he had built was compelling, coherent, and devastating. Combined with what Elena had gathered from Whitmore, Ferrara, and Medina, it formed a case that was no longer circumstantial.
+
+"Can you come back to Ashmont Bay?" Elena asked when they had finished.
+
+Priya looked out the window at the Portland street, at the ordinary pedestrians, at the November sky going grey over the buildings. "I've been deciding whether to for months," she said. "I think the answer changes now that you're involved." She turned back to Elena. "David kept these files because he believed that if the right people had them, they would matter. That the record would eventually find its way to a forum where it couldn't be ignored."
+
+"I intend to get it there," Elena said.
+
+"Then yes. I'll come back."
+
+They left the coffee shop separately, ten minutes apart, by different exits. Elena drove back to Ashmont Bay through the afternoon, the October light flat and clear over the valley, her mind sorting through what she now understood and what she still needed. She had the shape of the conspiracy. She had Santos' documentation framework. She needed to complete the picture — to find the full legal mechanism, to identify the third founding family beneficial owner, to establish the timeline clearly enough that the connection between the Harbor Project and David Santos' death was a documented record and not an inference.
+
+But for the first time since Whitmore had called, she felt certain that the investigation had direction. That the thing buried below the harbor floor was visible to her now, even if it was not yet exposed.
+
+She crossed back into Ashmont Bay in the late afternoon, the bay visible to her left as she came off the highway, dark and wide and completely indifferent to everything that was being decided about what lay beneath it.
+
+She called Marcus from the car. "Santos had a research assistant. Her name is Priya Mehta. She has his backup files. She's coming back."
+
+"When?"
+
+"Give her a few days to arrange the move." Elena watched the harbor out her window. "When she arrives, I'm going to need a secure space. Not my office. Not the department."
+
+"I know a place," Marcus said. "When did you eat last?"
+
+She thought about it. "Breakfast. Before Portland."
+
+"Come to the department. I'll have food and the Santos inquest file ready. We need to build this correctly before we take it anywhere."
+
+"On my way," she said, and turned toward the city.

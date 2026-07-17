@@ -6,14 +6,14 @@
 
 | Novel | Genre | Chapters | Words | Size | Directory |
 |---|---|---|---|---|---|
-| The Weight of Distant Light | Sci-Fi (Generation Ship) | 32 | ~54,800 | ~331 KB | [`the-weight-of-distant-light/`](the-weight-of-distant-light/) |
-| The Tidebound Accord | Fantasy (Epic) | 25 | ~92,000 | ~590 KB | [`the-tidebound-accord/`](the-tidebound-accord/) |
-| The Cartographer's Cipher | Mystery/Thriller (Noir) | 13 | ~45,000 | ~280 KB | [`the-cartographers-cipher/`](the-cartographers-cipher/) |
-| The Silk Merchant's Daughter | Historical Fiction (Tang Dynasty) | 15 | ~49,500 | ~330 KB | [`the-silk-merchants-daughter/`](the-silk-merchants-daughter/) |
-| Neural Drift | Cyberpunk | 16 | ~57,000 | ~350 KB | [`neural-drift/`](neural-drift/) |
-| The Hollow Beneath | Horror/Gothic | 20 | ~52,000 | ~320 KB | [`the-hollow-beneath/`](the-hollow-beneath/) |
-| The Weight of Tides | Literary Fiction | 20 | ~72,000 | ~370 KB | [`the-weight-of-tides/`](the-weight-of-tides/) |
-| **TOTAL** | **7 genres** | **141** | **~422,300** | **~2.57 MB** | **7 novel directories** |
+| The Weight of Distant Light | Sci-Fi (Generation Ship) | 40 | ~101,000 | ~495 KB | [`the-weight-of-distant-light/`](the-weight-of-distant-light/) |
+| The Tidebound Accord | Fantasy (Epic) | 33 | ~100,000 | ~486 KB | [`the-tidebound-accord/`](the-tidebound-accord/) |
+| The Cartographer's Cipher | Mystery/Thriller (Noir) | 21 | ~80,000 | ~389 KB | [`the-cartographers-cipher/`](the-cartographers-cipher/) |
+| The Silk Merchant's Daughter | Historical Fiction (Tang Dynasty) | 23 | ~76,000 | ~372 KB | [`the-silk-merchants-daughter/`](the-silk-merchants-daughter/) |
+| Neural Drift | Cyberpunk | 24 | ~77,000 | ~375 KB | [`neural-drift/`](neural-drift/) |
+| The Hollow Beneath | Horror/Gothic | 28 | ~90,000 | ~439 KB | [`the-hollow-beneath/`](the-hollow-beneath/) |
+| The Weight of Tides | Literary Fiction | 28 | ~95,000 | ~465 KB | [`the-weight-of-tides/`](the-weight-of-tides/) |
+| **TOTAL** | **7 genres** | **197** | **~619,000** | **~3.0 MB** | **7 novel directories** |
 
 ## Directory Structure
 

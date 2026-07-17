@@ -1,0 +1,127 @@
+Chapter 17: Imperial Commerce
+
+The discovery began, as many of the important discoveries in Wei Lian's life had begun, with her hands.
+
+It was a morning in the second month of the following year, when the plum trees in the Zhang compound's garden were putting out their first cautious blossoms and the air had the tentative quality of a season not yet fully committed to warmth. She had come to her father's warehouse on the pretext of reviewing the spring inventory, a task she performed routinely as part of her informal advisory work for the Wei family business. Her father was in a meeting with his principal buyers from the northern trade; his head clerk, Master Chu, was at the counting table near the door, working through an autumn consignment that had been in bonded storage pending a buyer's final decision.
+
+Wei Lian moved through the long room with the unhurried confidence of someone who had spent her childhood in this smell of stored silk and cedar, lantern oil and the faint sweetness of moth-deterring herbs. The storage racks held hundreds of bolts wrapped in their cloth covers, each tagged with her father's inventory marks. At the far end of the room, set apart under a separate cover of oiled linen, was the consignment she had come to assess: eighteen bales of premium silk bound for the western route, destined for the Samarkand market in the spring caravan departing in the third month.
+
+The consignment had been assembled in the autumn, approved for export by the Imperial Silk Bureau's inspectors, sealed with the bureau's official mark, and held in bonded storage over the winter. It represented one of the largest single western-route consignments the Wei family had arranged in three years, and the premium status of the silk — upper grade, 上品, the designation that commanded western prices three times the middle-grade rate — was the entire basis of its commercial value.
+
+Wei Lian set aside the first bale's cover and drew out the top bolt. She weighed it in her hands before unrolling it: a half measure, then a turn, the fabric falling open in the morning light from the high warehouse windows. She ran her palm along the surface once, then again, and stopped.
+
+The weight was wrong.
+
+Not dramatically, not in a way that would be obvious to someone who did not have years of handling silk in their hands. But upper-grade silk had a particular weight, a particular density of weave that was both heavier and smoother than middle-grade material, and this bolt was neither. The surface under her palm was marginally coarser at one end, the light through the material slightly more uneven than it should have been. She held the fabric at arm's length against the window light and turned it slowly.
+
+The bolt began as upper grade. The first eight chi were exactly right. Then, approximately three meters from the end, the character of the weave changed: subtly, skillfully, but unmistakably to her trained hands. Someone had joined two bolts — a short length of genuine 上品 at the outward-facing end, the rest 中品, ordinary middle-grade material — and rolled them together so expertly that a casual inspection would register only the outer surface.
+
+She rerolled the bolt carefully and set it aside. Then she opened the second bale.
+
+The second bale was clean. The third showed the same problem as the first, but more extensively: perhaps only five chi of upper-grade material at the leading edge, the remainder middle or even approaching lower-middle grade. She worked her way through six bales before Master Chu came to stand at her shoulder, watching her expressionlessly.
+
+"Madam Zhang," he said, with the careful neutrality of a man who did not yet know which way a conversation was going to go.
+
+"How many of these bales have you personally opened since they arrived in bonded storage, Master Chu?"
+
+A pause. "Three, in the course of normal inspection. They were sealed by the bureau before they arrived here."
+
+"And the bureau inspection. Who conducted it?"
+
+Another pause, longer this time. "Inspector Lü Shi'an, from the northwestern ward office. He has inspected our consignments for the past year and a half."
+
+Wei Lian set down the bolt she was holding and looked at Master Chu directly. His face told her what she had already understood from the silk: he had suspected something and had not been certain how to proceed.
+
+"How many bales do you estimate are affected?" she asked.
+
+"I cannot say with certainty, Madam Zhang. I had only opened three, as I said. But—" He hesitated. "The discrepancy in the total weight of the consignment troubled me when the bales arrived. Upper-grade silk should weigh at a minimum nine jin per bolt. I calculated the weight against the count, and the number was lower than I expected. I set it aside as perhaps an error in my calculation."
+
+"It was not an error in your calculation."
+
+She spent the next two hours working through the remaining bales systematically, Master Chu assisting and recording her findings on his accounting paper. Of the eighteen bales in the consignment, eleven showed adulteration to varying degrees. The most severely affected had been reconstituted almost entirely from middle-grade material, with only a token length of upper-grade silk at the inspectable end. The least affected contained roughly sixty percent genuine upper-grade material, the rest substituted.
+
+The substitution work was skilled. It had required access to the bolts before the bureau's seal was applied, considerable knowledge of silk quality grades, and the physical means to unroll and re-roll commercial-weight bales without leaving obvious evidence. It was not the work of a casual opportunist.
+
+When she had finished, she sat down on a wooden stool and looked at her notes. The financial damage to her father's business was substantial: the consignment was destined for sale in Samarkand as upper-grade material at upper-grade prices. If it arrived as delivered, the Wei family would receive payment for 上品 silk while actually delivering a blend worth perhaps forty percent less. Worse, if the fraud was discovered at the Samarkand end — and Sogdian merchants in that market were at least as expert in silk quality as she was — the Wei family's reputation for honest dealing, built over three generations, would suffer damage that no sum of money could quickly repair.
+
+But the immediate question was not financial. The immediate question was how this had happened.
+
+She spent the rest of the morning in her father's private office, going through the consignment's paper trail. Wei Chen's business kept meticulous records — he had impressed this upon her as a fundamental principle of commercial integrity — and the trail of the adulterated bales went back clearly through the documents. The silk had been purchased from six different suppliers over the preceding autumn, all of them established Wei family sources whose quality records were good. It had been received into the family's staging warehouse in the southwestern ward, where it was assembled into the westward-route consignment. From there, it had gone to the bureau's inspection point in the northwestern ward for certification and sealing.
+
+The staging warehouse was the critical point. Between the purchase from suppliers and the bureau inspection, the silk had been under the temporary care of a commercial factor named Zhao Kang, who managed the southwestern ward staging facility used by several of the larger Chang'an trading families for pre-inspection storage and assembly. Zhao Kang's operation had been recommended to the Wei family by a broker eighteen months ago, when the family's own staging facilities in that ward had been damaged by flooding. His fees were reasonable and his operation appeared professional.
+
+Wei Lian wrote down Zhao Kang's name and circled it. Then she wrote down Inspector Lü Shi'an's name and drew a line connecting them.
+
+The substitution required access to the bolts. The staging warehouse was where the bolts were assembled and stored before inspection. Zhao Kang had that access. But the fraud also required either that the inspector was corrupt — certifying adulterated silk as upper grade without examining it properly — or that the substitution happened after the inspection, which meant it happened either in transit or in bonded storage. The latter possibilities were much harder to arrange. The bonded storage facility used official seals that were difficult to replicate.
+
+The simplest explanation was the true one: the substitution happened in Zhao Kang's staging facility, and Inspector Lü certified the adulterated bales without conducting a genuine examination. Possibly in exchange for a payment from Zhao Kang. Possibly because Zhao Kang had found a buyer for the replaced upper-grade silk, reselling it under a separate invoice while collecting the staging fee from the Wei family. The scheme was elegant in its way: the stolen silk was premium upper-grade material, highly valuable and easy to resell. The adulterated consignment would not be discovered until it reached Samarkand, by which point Zhao Kang and Inspector Lü would be beyond easy reach.
+
+Wei Lian gathered her notes, thanked Master Chu, and sent a message asking Zhang Ming to delay his return to the ministry that evening.
+
+She told him what she had found when he came home, laying out the evidence with the methodical clarity she had learned to use when presenting uncomfortable conclusions. Zhang Ming listened without interrupting, which was itself a courtesy she valued: he understood that her analyses required space rather than premature response.
+
+"The evidence against Zhao Kang is strong," he said when she had finished. "The evidence against Inspector Lü is circumstantial. The connection between them is inferred."
+
+"Correctly inferred, I believe. But you are right that we do not have direct proof of their arrangement. What we have is evidence that the adulteration occurred in the staging facility during the period Zhao Kang had custody, and evidence that the bureau's inspection certified the consignment as upper grade when it demonstrably was not. The logical conclusion requires a corrupt inspector. Whether we can prove that conclusion is a different question."
+
+"There is also a timing question," Zhang Ming said. "The spring caravan departs in the third month. If this consignment goes west as currently constituted, and the fraud is discovered in Samarkand, the damage to your father's reputation will be severe."
+
+"The consignment must not go west as constituted. Either the bales are replaced with genuine upper-grade material, or the consignment is withdrawn from the spring caravan, which will cost Father the buyer's agreement and the transport booking."
+
+"Then we need to move quickly." Zhang Ming was quiet for a moment. "The question of Zhao Kang and the inspector is separate from the question of what Father does with the consignment. We can advise your father to withdraw the affected bales and seek replacement material immediately, regardless of how the investigation proceeds."
+
+"Yes. But if we stop there, Zhao Kang and Inspector Lü continue their operation. The next family to use that staging facility, and the next consignment to be certified by that inspector, will suffer the same fraud."
+
+Zhang Ming looked at her with an expression that combined admiration and concern in roughly equal measure. "You want to expose them."
+
+"I want to prevent further harm to other merchants and to the integrity of the bureau's certification system." She paused. "I also want my father's business to be compensated for the loss. But the broader point stands on its own."
+
+"To expose a bureau inspector," Zhang Ming said carefully, "requires official reporting to the ministry. Which requires navigating questions about how the fraud was discovered."
+
+"I know." She looked at him steadily. "That is why I need your help. Not to do the work of investigation — I believe we have enough for a credible report — but to navigate what comes after."
+
+Zhang Ming was quiet for a long moment, looking at his wife across the table. Outside, the plum blossoms that had opened that morning were trembling in an evening breeze from the north.
+
+"Tell me everything you found," he said at last. "From the beginning. I want to understand every piece of evidence before we decide how to present it."
+
+Wei Lian opened her notes and began.
+
+Over the following ten days, they built the case carefully and quietly. Zhang Ming used his ministry position to request, through routine official channels, a review of the Silk Bureau's inspection records for the northwestern ward office. This was not unusual: the ministry conducted periodic reviews of bureau inspections as a matter of ordinary oversight, and his request drew no particular attention. Through this review, he obtained Inspector Lü's certification records for the preceding eighteen months.
+
+Wei Lian, meanwhile, conducted her portion of the investigation through her father's business channels. She asked Master Chu to examine the purchase records for every bolt in the consignment and compare the combined weight of purchased silk against the weight of the assembled bales. The discrepancy was fifty-three jin, equivalent to approximately five or six full bolts of upper-grade material that had been received by the staging facility but had not arrived in the final consignment.
+
+She also, through careful inquiry among the contacts she had developed in Chang'an's commercial community, determined that Zhao Kang had sold a quantity of upper-grade silk to a wholesale buyer in the Qi ward two months ago, at a price that suggested a private transaction rather than a regular commercial sale. The timing matched the assembly of the Wei family consignment. She could not prove the silk was the same material, but the circumstantial alignment was striking.
+
+By the end of the tenth day, they had what Zhang Ming's legal instincts considered sufficient for a credible official complaint: the weight discrepancy documented by Master Chu, the quality findings from Wei Lian's physical examination of the bales, the inspection certification records that could be compared against the actual condition of the certified goods, and the record of Zhao Kang's timely private sale of upper-grade silk. Taken together, they formed a consistent and coherent account of a deliberate fraud conducted through the staging facility and facilitated by a corrupt inspector.
+
+The question of how to present it remained.
+
+"What we must not do," Wei Lian said on the evening before Zhang Ming planned to bring the matter to his own department head, "is give any official any reason to ask how we identified the fraud in the warehouse. If the question is asked and answered honestly, it leads immediately to questions about my involvement, my knowledge of silk quality, my father's business records. All of which are legitimate and explicable, but which create a narrative about a merchant woman conducting commercial investigations, which will distract from the fraud itself."
+
+"How do you want it presented instead?"
+
+"Master Chu discovered the weight discrepancy during routine inventory and brought it to Father's attention. Father requested a quality assessment of the consignment, which was conducted by his senior clerk. The quality assessment revealed the adulteration. Father brought the matter to you as a ministry official, given the involvement of a bureau inspector. You reviewed the inspection records as part of your routine oversight work and found that Inspector Lü had certified the consignment without conducting an examination that would have revealed the adulteration."
+
+Zhang Ming considered this. "That account is substantially true."
+
+"Every element of it is true. The framing simply distributes the work across its actual contributors without attributing to me any role that will raise questions."
+
+"You will receive no credit."
+
+"Credit is not what I am seeking. What I am seeking is for the inspector to be removed, for Zhao Kang to face consequences, and for Father's business to be compensated." She paused. "And for the next family's silk not to arrive in Samarkand as a fraud."
+
+She watched her husband's face settle into the expression of quiet resolution she had come to know well over their years together: not reluctant acceptance, but a genuine alignment between his values and the course of action before him. He believed in honest commerce. He believed in the integrity of official certifications. He also believed in his wife's judgment, which was itself a form of trust she had earned and did not take for granted.
+
+"Very well," he said. "I will present it as you have described. But I want Master Chu to be ready to confirm the inventory account if he is questioned."
+
+"He will be. I will speak with him tomorrow."
+
+The evidence went forward the following week, delivered quietly to Zhang Ming's department head with a note that framed it as a routine commercial complaint that had revealed potential bureau irregularities requiring formal review. No names in the covering note, no dramatic language. Simply a documented problem requiring official attention.
+
+Ten days later, Inspector Lü Shi'an was suspended from duty pending investigation. Three weeks after that, he was formally removed from his position and referred to the judicial authorities. Zhao Kang's staging facility was closed by the ward office. An official determination was made that the Wei family's consignment had been fraudulently adulterated while in Zhao Kang's custody, and a compensatory payment was ordered from Zhao Kang's business bonds.
+
+Wei Chen received the news with the measured satisfaction of a man who had spent his life navigating commerce's chronic mixture of integrity and opportunism. He thanked Zhang Ming, whom he understood to have been instrumental in the resolution, with a formal gift of appreciation: a rare northern inkstone of considerable quality, and an invitation to an extended family dinner.
+
+He did not ask Wei Lian directly about her role. But when she visited the warehouse two days after the resolution was announced, she found that Master Chu had quietly rearranged the private ledger section where she stored her quality assessment notes, adding a careful divider and a neat label in his meticulous clerk's hand: Consignment Quality Records, Spring Second Year.
+
+He said nothing when she noticed it. Neither did she.

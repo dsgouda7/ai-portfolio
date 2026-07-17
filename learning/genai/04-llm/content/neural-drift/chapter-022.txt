@@ -1,0 +1,117 @@
+Chapter 22: The Body Problem
+
+The synthetic body had been three years in development, and Kai had followed the progress reports from a distance, the way you follow a project whose eventual success you believe in but whose day-to-day technical details exceed your ability to evaluate. Dr. Zhao had briefed the Division quarterly on the state of the research, and each briefing had contained a careful balance of genuine progress and honest acknowledgment of remaining obstacles. The remaining obstacles were consistently fascinating and consistently stubborn, which Kai had come to understand was the normal condition of work at the absolute frontier of what human science could do.
+
+The first stable transfer was completed on a Tuesday in April. Dr. Zhao messaged him at 0600 hours Geneva time with a characteristic economy of language: "It worked. She's awake. Her name is Yuna Park."
+
+He was in Geneva. Lin was in the outer asteroid belt, in the final stages of the intelligence-gathering operation on the Ganymede facility. He read the message on the train to headquarters, sitting in the kind of early morning train silence where commuters stare at their neural interfaces and do not look at each other, the daily ritual of urban anonymity that had been the texture of ordinary life for so long that it took an active effort to notice it.
+
+Yuna Park. He ran the name through the Division's case files. The name returned a file flagged with the specific marker used for juvenile victims, and he felt the particular combination of professional attention and human dread that those cases always produced.
+
+Yuna Park had been fourteen years old when she was mapped. A junior secondary student in the Tsim Sha Tsui district of old Hong Kong, participating in a school trip to a science and technology center that had, among its exhibits, an interactive neural mapping experience marketed to students as a safe and educational preview of consciousness backup technology. The parents had signed consent forms authorizing participation in what they were told was a demonstration, not an actual procedure. The facility had been operating as a Project Continuance affiliate. Yuna's consciousness had been archived with two hundred and eleven others from the same school program, and the archive had been seized in a follow-up operation eight months after Clean Slate.
+
+She had been in the archive for two years and seven months when she was recovered. She would have been seventeen by now. Her body was seventeen. She had spent the time between fourteen and seventeen in a digital environment that Dr. Zhao's team had built and maintained for consciousness individuals who were minors at the time of their mapping, an environment designed with a particular kind of care, shaped by consultation with child development specialists and psychologists who had grappled with the specific questions of what a developing consciousness needed to continue developing in the absence of a biological body.
+
+The digital environment was not nothing. But a body was a body, and the decision to attempt a synthetic transfer had been Yuna's own. She had been presented with the options when she entered the restoration process, as all consciousness backups were, and she had stated, clearly and repeatedly, over a period of six months, that she wanted to return to embodied existence. Not to wait for a biological solution that might never come. Not to accept digital life permanently. To have a body again.
+
+The synthetic body built for her was the most technically precise object that had ever been constructed in the history of medical engineering. It was not a prosthetic or an approximation. It was a complete biological architecture, grown from substrate material using accelerated cellular development protocols, calibrated to the neural specifications of Yuna Park's consciousness mapping profile, capable of the full range of sensory experience, biological function, and physical development. It would age. It would heal. It would respond to exercise and nutrition and the normal processes of biological existence. It was, in every functional sense, a seventeen-year-old human body.
+
+The question of whether it was Yuna Park's body was the question that Dr. Zhao had spent three years making answerable. Her answer was yes. The precision of the calibration was such that the consciousness transfer would not experience the body as foreign, would not be fighting alien proprioception or neural mismatches. The body had been built to fit the consciousness exactly, in the way that a bespoke instrument was built to fit the specific anatomy of a specific musician.
+
+Kai arrived at the institute at eight in the morning, having taken the first available flight from Geneva. He had not been invited to the transfer itself, which had been conducted in a small medical suite with only Dr. Zhao's core team and Yuna's parents present. He had been invited to meet Yuna in the recovery room, with the parents' permission and Yuna's own, which she had expressed by saying to Dr. Zhao: "Is the memory broker coming? I'd like to meet him." She had, evidently, read the file.
+
+The recovery room was quieter than the rest of the institute. It had been designed to ease the transition from the sensory neutrality of digital existence to the specific, continuous intensity of a biological body's experience. The lighting was soft. The temperature was precisely calibrated to the body's resting preference. Small objects of varied texture were placed around the room, available for handling if the new body's hands wanted to remind themselves that they could feel things.
+
+Yuna Park was sitting up in the bed when Kai entered, with her mother on one side and her father on the other. She was slight and dark-haired, with the look of a person who had just received an enormous amount of sensory information simultaneously and was in the process of sorting it. Her eyes moved quickly, taking in the room, returning to her parents' faces, looking down at her own hands with an expression that was not easily named. It was not joy, exactly. It was not relief. It was something older and simpler than either: recognition.
+
+"Your hands look different than mine did," she told her mother.
+
+Her mother's voice was steady in the way that indicated it was being deliberately held steady. "You grew while you were away," she said. "You're taller now."
+
+"I know. I watched myself grow in the environment. But knowing in numbers is different from having it in a body." Yuna turned her hands over and looked at the palms. "My fingers are longer than I expected. I keep thinking my hands are someone else's hands and then remembering they're mine."
+
+"That feeling will pass," Dr. Zhao said from beside the door. "The body learns very quickly. Within a few days you won't notice the adjustment anymore."
+
+Yuna looked at Kai when he was introduced. She had the specific manner of a teenager who had spent two and a half years in an environment where her principal human contacts were researchers and counselors: mature beyond the ordinary calibration, with a quality of direct, assessed attention that was not unfriendly but was not automatically deferential either.
+
+"You found the archive I was in," she said.
+
+"My team found it," Kai said. "Eight months after the original Clean Slate operation."
+
+"What was the facility?"
+
+"A shell corporation operating out of Kowloon's free trade zone. They were running medical research as cover, like most of the smaller affiliates." He paused. "Your school received a formal apology from the federal government and from the science center that ran the program. The center's directors are currently awaiting trial."
+
+"I know," Yuna said. "I followed the legal proceedings from the environment." She looked at her hands again. "I want to go back to school. Is that possible?"
+
+"It's possible," Dr. Zhao said. "We can work with an educational institution to develop an appropriate transition program."
+
+"I want to finish secondary school first," Yuna said. "And then I want to study bioethics. I think I might be unusually qualified."
+
+Her father made a sound that was somewhere between a laugh and a suppressed sob, and put his arm around her shoulders, and she leaned into him with the practiced ease of a physical familiarity that had been interrupted for two and a half years and had evidently not been forgotten.
+
+The questions that Yuna's existence raised were the questions that the institute's ethics committee was already working through, though Kai learned over the following week, as the news of the successful transfer spread through the advocacy community and the legal community and eventually the general media, that the pace of public question-asking significantly exceeded the pace of institutional deliberation.
+
+Was the synthetic body legally Yuna Park's body? Yes, the federal civil registry determined, applying the personhood frameworks established by the Haruto Mori ruling and subsequent precedent. Yuna Park had been recognized as a person. A person's body was their body. The synthetic substrate did not change this.
+
+Did the synthetic body have the same legal protections as a biological body? This was less clear, and generated three weeks of active debate in the federal legal community before the consensus settled on yes, by extension.
+
+Was the technology commercially available? No. Could it be? The federal oversight committee issued a preemptive regulatory framework within two months of the transfer, establishing that synthetic body technology could only be used within the context of consciousness restoration programs and only with the specific authorization of the consciousness restoration ethics board. The anticipation of commercial exploitation, given everything that had happened with consciousness technology in the preceding years, was automatic.
+
+Did Yuna Park's aging matter? Would she, who had been sixteen when mapped and seventeen when transferred, age normally now? Dr. Zhao's answer was yes, the synthetic body would age at normal biological rates. Yuna would grow old, as any seventeen-year-old grew old, and in that fact was something that both generations of her family found simultaneously obvious and overwhelming.
+
+Kai wrote his formal field report on the transfer and the surrounding legal and medical developments, filed it with Zhang, and then sat in his Geneva apartment for a while thinking about the questions the field report did not contain.
+
+Lin had come back from the outer system operation the previous week, and they were in the strange period that followed extended separations, the re-establishment of the ordinary rhythms of proximity. They ate dinner at Kai's apartment and talked about the transfer.
+
+"She said she wanted to study bioethics because she's unusually qualified," Lin said. "That's either very funny or very hard, and I can't decide which."
+
+"Both, probably," Kai said. "She's also very sharp. She asked questions during the recovery period that some of the ethics committee members couldn't answer on the spot."
+
+"What did she ask?"
+
+"She asked whether the synthetic body was her body or a new body that fit her consciousness. And whether the answer to that question mattered for anything practical."
+
+Lin was quiet for a moment. "What's the answer?"
+
+"Dr. Zhao says it's her body in the functional sense and that the metaphysical question is less important than the experiential reality. Yuna Park's own position was that the distinction might matter eventually but not right now, because right now she was mostly interested in the physical fact of having hands again." He paused. "She spent her first full day picking up everything in the recovery room and putting it down again. The texture of things. She kept saying that she'd forgotten the texture of things."
+
+Lin looked at her own hands, the augmented and the biological, a habit she had when she was thinking through something. "Do you think about mortality differently now? After all of this?"
+
+It was the kind of question that Lin asked, periodically, when they had passed through enough shared experience together that the conversation could carry it. The questions she asked honestly, in the quiet of an ordinary evening, without the cushioning of professional context.
+
+"Yes," Kai said. "I think about it more specifically. When I was in the Lower Stacks, mortality was just a general condition. Something that happened to people, including probably me, sooner or later. Now I think about it in terms of what would be lost. What specific configuration of things would not exist anymore." He looked at the city through the apartment window. "I think about the fact that consciousness transfer technology exists now, and it's accessible to the people it was stolen from, and it's not currently accessible to everyone else. And that's not a stable situation."
+
+"You think they'll eventually make it broadly available," Lin said. "Legitimate consciousness backup for everyone."
+
+"Eventually. Not soon. But eventually the technology will be normalized, the way every technology gets normalized. The question is whether the normalization happens ethically or whether it gets captured by the same interests that turned it into a tool for slavery the first time." He turned away from the window. "That's the next fight. After the thirty-one facilities, after the trials, after the legislative work. The real shape of the fight."
+
+"That's a decade away," Lin said.
+
+"At least." Kai looked at her. "Are you thinking about your own mortality more?"
+
+"Constantly," she said, without drama. "I spent a significant part of my professional career working for a corporation that was developing the technology to replace consciousness. I know exactly what was being attempted and exactly what it would have meant if it had been deployed commercially. The version of digital immortality that would have emerged from that corporate structure would have been something that preserved the pattern while owning the pattern. Continuity of experience inside a corporate subscription model." She paused. "I think about that version of immortality and I find biological mortality preferable."
+
+"That's the correct conclusion from the available evidence," Kai said.
+
+She smiled slightly. "We're becoming very philosophical in our old age."
+
+"You're thirty-three," Kai said.
+
+"And you're thirty-six," Lin said, "which means you're closer to forty than I am, which means you have more right to be philosophical." She ate the last of her dinner. "I've been thinking about what we do after the outer system operations. After the trials and the legislation."
+
+"I've been thinking about that too," Kai said.
+
+They looked at each other with the particular knowledge of people who have thought about the same thing at the same time and are now deciding how to say it to each other.
+
+Outside the window, Geneva was going about its evening business. The lake was black and the lights of the city were reflected in it, doubled, the real city and its perfect inverted image existing simultaneously, each containing the other.
+
+Yuna Park was in a recovery room three thousand kilometers away, touching things, feeling the texture of the world returning to her hands.
+
+The metaphysical question might matter eventually. But not right now.
+
+Right now there were hands, and texture, and the ordinary extraordinary fact of being present in a body that was yours and that fit you exactly.
+
+Kai and Lin ate dinner and watched the city and let the thinking happen at its own pace.
+
+That was enough for a Tuesday.

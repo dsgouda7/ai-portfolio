@@ -1,0 +1,143 @@
+Chapter 19: Old Methods
+
+The break-in was discovered at seven-thirty Wednesday morning, when Elena arrived at her office to find the frosted glass door standing slightly open and the unmistakable still quality of a space that had recently held someone who had no right to be there.
+
+She did not go in. She stood in the fourth-floor corridor and looked at the door, at the way it had been relocked but imperfectly — the latch not quite catching, the doorframe showing a faint mark where a tool had been worked between door and frame. Then she took out her phone and called Marcus.
+
+"My office was accessed overnight," she said. "I'm in the hallway. I haven't entered."
+
+"Don't," he said. "Stay where you are. I'll be there in fifteen minutes."
+
+She waited in the corridor, which was quiet at that hour, the other tenants of the building not yet arrived. She thought through what was in the office — the whiteboard with the case structure, the documents she had reviewed over the past two weeks, the notes she had taken from Whitmore and Ferrara and Medina. The original case documents were at the hardware store apartment with Priya. Her laptop had gone home with her. The office copies were working documents, not originals, but they would tell anyone who examined them exactly how far the investigation had advanced and what directions it was pursuing.
+
+Marcus arrived with a crime scene technician named Delgado who worked quickly and without comment. While Delgado processed the door frame and conducted an initial scan of the office interior, Marcus stood with Elena in the corridor and listened to her account of the past two days — the easement discovery, the meeting with Dr. Kahale, the afternoon session with Priya assembling the document package.
+
+"The timing is not coincidental," he said.
+
+"No. Someone saw me at the county engineer's office yesterday morning or was told about the records request. Or they became aware of the meeting with Dr. Kahale. Or they had surveillance on the hardware store apartment and connected my visits."
+
+"Pacific Rim Security Consulting. Todd Halverson." Marcus's expression was careful and precise. "I've been building a file on his company since you were followed last week. He has three field operatives working this city. Two of them have had law enforcement careers — one from the county sheriff's office, one from state patrol — which means they have contacts inside institutional systems who can flag unusual records requests or inter-agency inquiries."
+
+Elena thought about this. A corporate security firm with former law enforcement personnel who could access institutional contact networks. "The county engineer's office records request. Someone there with sheriff's department connections could have flagged my visit within hours."
+
+"That's my assessment." He paused while Delgado emerged from the office and gave him a brief report. "The lock was picked rather than forced. Professional work. The office was searched systematically — the filing cabinet drawers show evidence of being opened and replaced carefully, the desk was searched, the whiteboard was photographed." He looked at her directly. "There's a small residue from an aerosol can near the whiteboard. They photographed it chemically — a compound used to enhance visibility of marker writing on dry-erase surfaces. They photographed your case structure notes."
+
+"So they know what we have."
+
+"They know what was in this office as of last night. They don't know about the hardware store apartment. They don't know about Priya Mehta." He paused. "Yet. But the fact that they moved into your office suggests a higher threat level than simple surveillance. They're not just watching anymore. They're trying to assess what they're facing."
+
+Elena looked through the open office door at her whiteboard, visible from the corridor. The case structure was still there, the boxes and arrows, the names and dates. She had been careful not to write the hardware store address or Priya's name on the whiteboard, keeping those pieces in her notebook. But the timeline, the corporate structure summary, the notation about the FBI contact — all visible. All photographed.
+
+"Can we connect Halverson to Pacific Harbor Corp's principals directly?" she asked.
+
+"His company's contracts are not public record. But Halverson had a previous corporate security relationship with Pacific Northwest Extraction Partners — the mining company that Robert Blackwell III had an interest in. Before that company dissolved." Marcus closed his notebook. "There's a continuous relationship between Halverson and the Blackwell family going back at least ten years. He's their private problem-solver."
+
+"Tell me about the Figueroa meeting," Elena said. "Yesterday afternoon."
+
+"Figueroa is serious and motivated and extremely careful. She reviewed everything Priya presented. She said Santos' documentation is more complete than she expected — he had briefed her on the financial fraud elements but hadn't shared the corporate structure analysis or the legal mechanism. She has been sitting on the preliminary information he gave her for eight months, waiting for the evidentiary threshold to clear." His voice carried the controlled frustration of someone who had watched an avoidable delay compound into a man's death. "She's ready to move. She needs two more things: a direct connection between the phantom subcontractor payments and a specific individual authorizing those payments, which Santos hadn't quite completed, and the easement conflict fully documented as a basis for challenging the project's approval."
+
+"We have the easement documentation. The authorization connection — is that in Santos' files?"
+
+"Almost. There are internal Pacific Harbor Corp approval records in his documentation that show the CFO's digital signature on seventeen of the phantom subcontractor payment authorizations. Anne Strickland née Blackwell."
+
+"Figueroa thinks that's sufficient?"
+
+"She thinks it's close. She wants the full chain: the payments authorized by Strickland, flowing to the phantom companies, flowing to the Cayman account, flowing to the trust. She has the middle section. We need to close the loop on the Cayman account's beneficial ownership to complete it."
+
+Elena nodded. The Cayman trust structure — Pacific Coastal Heritage Trust — had been identified by Santos as the receiving entity. But confirming the beneficial ownership required international financial records that weren't accessible through standard public research. "Figueroa has tools we don't. The FBI can request Cayman bank records through mutual legal assistance treaties."
+
+"She's filing the request today. But those take time." He looked at her carefully. "She wants to move within the week. Before Pacific Harbor Corp knows the federal case is active."
+
+"They already know something is active," Elena said, looking at the violated office door. "This happened last night. Whatever they're preparing to do, they've already started."
+
+They agreed on next steps: Elena would relocate her working documents to the hardware store apartment and operate from there for the remainder of the investigation. Marcus would continue building the police-side case record while keeping Figueroa updated. Priya would complete the document package by end of day. And Elena would make one more visit before the formal presentation to the Attorney General.
+
+She had been thinking about it since reading Santos' February sixteenth memo. The memo about old patterns and the same families and the way the harbor's history read if you knew how to read it. She wanted to speak with someone who held that history in living memory, not in academic study.
+
+She drove to the Kahale family's neighborhood on the eastern ridge, past the modest houses and well-kept gardens of one of the city's oldest residential districts, and parked on the street outside a white clapboard house with a large front porch and a view of the bay in the distance. She had called ahead. She had been told to come.
+
+John Kahale was seventy-eight years old, Dr. Rebecca Kahale's great-uncle and the family's oldest living member. He had lived in Ashmont Bay his entire life and was one of the few people who had a continuous personal history with the harbor that predated the modern era. He met her on the front porch, moving with the careful deliberateness of someone who has learned to navigate a body that no longer moves as quickly as he needs it to. He had a face that had lived outdoors for most of its decades, and eyes that were clear and direct and had seen a great many things that he had been waiting for the appropriate moment to describe.
+
+"Rebecca tells me you're the one investigating the harbor project," he said. He did not phrase it as a question. He gestured toward the porch chairs and they sat in the cold autumn morning, the bay visible on the horizon.
+
+"I am," Elena said. "I've been talking to Dr. Kahale about the family's history with the harbor. The ancestral fishing rights, what the settlement recognized, what the development project threatens. I wanted to talk to you because you have a longer memory."
+
+"I have my grandfather's memory," he said. "He told me things. He was eighty-six when I was twenty, and he told me things his grandfather had told him, which goes back to before the city was incorporated. Before 1879." He looked out at the bay. "My grandfather's grandfather was alive when Thomas Ashmont arrived here. Was still fishing those waters when the city was built around them."
+
+"What did he tell your grandfather?"
+
+"Many things. But about the families — the ones who built this city — he said they were hungry in a specific way. Not hungry for food. Hungry for ownership. He said you could see it in how they looked at the land, at the water, at everything that existed before they arrived. They looked at it the way a person looks at something that doesn't yet have their name on it."
+
+"Did he describe what happened? The land transfers, the survey manipulation?"
+
+"He described watching Thomas Ashmont do a survey. He said Ashmont was meticulous. He spent weeks walking the same lines, measuring the same distances, making notes in a leather book. And then the official survey, when it was published, showed boundaries that my grandfather's grandfather knew were wrong, because he'd walked those same lines for fifty years. The measurements moved the boundaries north and west from where they actually were, where he knew them to be. They took in the best fishing grounds along the shore." He paused. "When he went to the land office to object, he was told the official survey was the official survey and that his knowledge of the land was not a legal instrument."
+
+"That's exactly what happened. Elena had spent a year with the documents that proved it.
+
+"He was not surprised," John Kahale continued. "He told my grandfather: when a man with a measuring instrument and a government backing him up tells you where the line is, the line is where he says it is, regardless of where it actually is. The map becomes the ground." He looked at her directly. "Is that what they're doing now with the harbor project?"
+
+"Yes," Elena said. "They've filed surveys with the state showing channel depths and seabed geology that don't match the actual harbor. The surveys are designed to support a construction project that will let them claim mineral rights to the seabed in your family's ancestral fishing grounds."
+
+John Kahale was quiet for a moment. "Same families?"
+
+"Three of them. Winters, Blackwell, and a Crane descendant."
+
+He nodded once, slowly, as if confirming something he had suspected long before Elena confirmed it. "In my grandfather's account, those families came as business partners. They had capital to invest, surveyors, lawyers, knowledge of how government systems worked. They presented themselves as people who could help the community participate in the city that was being built around it. And then the surveys came back, and the city was built, and the community found that participation meant giving up what they had."
+
+"The same presentation," Elena said. "Pacific Harbor Corp came in with state contracts and economic development promises. Jobs for harbor workers, infrastructure investment, modernization. The promise of participation in something being built."
+
+"Yes." He looked at the bay again. The container ship from the previous day was a small shape on the horizon now, moving toward open water. "My grandfather told me: the map is how they own things. Not the land itself, not the water itself, not the fish. The map. The document. The official record that says this belongs to this name and that belongs to that name. Whoever controls the map controls the ownership. Our family knew the land and the water better than anyone alive. We had fished those waters for generations. But we didn't have maps, and when their maps appeared, our knowledge was not a legal instrument."
+
+"That's changing," Elena said. "The settlement gave your family legal recognition of the ancestral fishing rights. That recognition is a document now — it's a legal instrument."
+
+"And so they need to build something that supersedes it." He looked at her with the steady patience of someone who has lived long enough to see the shape of long cycles. "They don't need to take the map away from us this time. They just need to build something that makes the map irrelevant. An industrial operation on the ocean floor that makes fishing in those waters impossible. The rights remain, technically. They just become worthless in practice."
+
+"That's the plan. But I'm going to put the plan in front of the state Attorney General and the FBI with the full documentation, including the history you've just described. Not as background, but as context that makes the pattern visible."
+
+"The pattern," he said. "My grandfather's grandfather called it the hunger pattern. The same hunger, the same families, moving through different shapes. He thought it was specific to those families, some particular appetite that passed between generations. My grandfather thought it was more general — that it was a quality of power itself, that power generates the appetite for more power regardless of who holds it, and only strong counter-institutions can contain it."
+
+"Your grandfather sounds like he was thinking ahead of his time."
+
+"He was thinking exactly in his time. He watched a city get built by people who believed their property rights were more real than other people's presence on the land." John Kahale turned to look at her fully. "You can stop this one? The harbor project?"
+
+"I believe so. We have the documentation Santos assembled, plus what I've gathered. We have a federal agent ready to act. We have the easement conflict that renders the critical pier construction illegal. We have the overlap between the planned submerged land claim and your family's recognized fishing rights." She met his eyes. "I'm not going to promise you a specific outcome. But the case is strong, and this time the record won't be buried."
+
+He was quiet for a moment, looking at the bay. "My grandfather died believing the record would eventually be found. It took a hundred years."
+
+"Twelve years," Elena said. "Adelaide Thorne found the founding documents twelve years after your grandfather died. And it took her another three decades to understand them clearly enough to act." She paused. "The record doesn't have to stay buried for a hundred years. But it requires someone to find it, read it, and refuse to let it be buried again."
+
+He looked at her for a long moment. Then he stood, with the careful deliberateness of his seventy-eight years, and extended his hand. She stood and shook it.
+
+"The waters have been there longer than any of these maps," he said. "They'll be there after all the documents are resolved. But I would like the documents to reflect the truth before I die." A pause, almost a smile. "I have maybe another ten years if I eat well and don't worry too much. That should be sufficient."
+
+Elena drove back to the Maritime District with John Kahale's voice in her mind and the specific weight of a hundred and fifty years of contested history pressing down on a case that was, finally, ready to be put before people with the authority to end it.
+
+At the hardware store apartment, Priya had finished the document package. It sat on the kitchen table in two thick binders and a thumb drive, organized with the methodical precision of Santos' original research combined with Elena's additional documentation and analysis. It was, Elena thought, looking at it, the most complete evidentiary record she had ever assembled.
+
+She called Marcus. "The package is complete. Who are we going to?"
+
+"I spoke to Carolyn Vessey at the AG's office this afternoon," he said. "She confirmed that the Attorney General himself is not aware of the Harbor Development Project investigation. The political protection has been operating at the staff level, through a deputy AG who has social connections to Harlan Winters. Vessey is going to arrange a direct briefing for the AG, bypassing the deputy's office. She can get us in front of him on Friday."
+
+"That's three days."
+
+"It's the soonest we can get direct access without tipping the deputy. Figueroa is briefing her section chief tonight on the federal case. She has enough to go to a grand jury independently, but she thinks a coordinated state and federal action is more effective."
+
+"Agreed." Elena sat down across from Priya. "Three days. Is the apartment secure?"
+
+"I've been careful. No calls from this address. No internet activity that would tie this location to the investigation."
+
+"Halverson's people are looking for Priya," Elena said. "They know from the office break-in that I have documentation of the corporate structure. They'll be looking for where I've been working. Don't go outside unnecessarily. I'm going to have someone from Marcus's department do a periodic pass of the block."
+
+Priya received this with the equanimity of someone who had been managing her own threat assessment for eight months. "I understand. Three more days."
+
+Elena stayed at the apartment until nine that evening, working through the presentation structure with Priya — organizing the argument in the order that would be clearest to an Attorney General encountering the case fresh, anticipating the questions corporate lawyers would raise and preparing the documentary answers. The work was focused and methodical and she found herself grateful for Priya's precision, the rigorous academic discipline that had served Santos well and now served the case.
+
+When she left, she drove a circuitous route home and watched her mirrors carefully. The dark SUV did not appear. Either Halverson's team had not yet connected the hardware store apartment to her investigation, or they had and were choosing not to move — waiting, perhaps, to see what she did next before deciding what they could afford to do.
+
+She drove past the harbor on the way home, as she had taken to doing every night. The development site was dark now. The portable office trailer showed a single light. The bay beyond the fence was black and still and immense.
+
+Forty million years, the rare earth deposit had been lying in the seabed beneath those waters. Forty million years of geological time, and in the compressed span of the past hundred and fifty of them, the same handful of families had contested what lay above and in and below those waters three separate times.
+
+She turned away from the harbor and drove home through the quiet streets.
+
+Three more days. Then Friday.
