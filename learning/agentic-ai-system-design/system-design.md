@@ -184,7 +184,7 @@ sequenceDiagram
     Ctl->>Ctl: resolve agent_version_id → definition (prompt/model/tools/policies)
     Ctl->>Ctl: create execution id + fenced lease
     Ctl->>Rt: schedule execution onto a worker
-    Rt->>Rt: allocate execution frame; load resolved definition
+    Rt->>Rt: allocate execution frame + load resolved definition
     Rt->>Obs: open root span (agent.execution)
     loop Agent step
         Rt->>MG: LLM call (reasoning/plan)
@@ -195,7 +195,7 @@ sequenceDiagram
         alt allowed
             TG->>Au: log decision (allow) + idempotency key
             TG->>Rt: execute inside a fresh per-call sandbox (see 03 §6)
-            Rt-->>Rt: sandbox result + provenance; sandbox torn down
+            Rt-->>Rt: sandbox result + provenance (sandbox torn down)
             TG-->>Rt: tool result
         else needs approval
             TG->>U: HITL request
@@ -206,7 +206,7 @@ sequenceDiagram
         Rt->>St: checkpoint (observation)
         Rt->>Obs: emit child spans (llm.call, tool.call, policy.eval)
     end
-    Note over Rt: A later step failing after an earlier one already committed hands off to<br/>the Saga Engine -- see Section 4.1, not shown here to keep this diagram readable
+    Note over Rt: Failure/compensation path omitted here -- see Section 4.1
     Rt->>Ev: lightweight online guardrail check (fast, blocking)
     Rt->>St: final checkpoint
     Rt->>Obs: close root span
@@ -244,7 +244,7 @@ sequenceDiagram
     participant Au as Audit Store
     participant U as Human (HITL)
 
-    Note over Rt,TG: Step N-1 already committed (e.g. ticket created); checkpointed with its compensation recorded
+    Note over Rt,TG: Step N-1 already committed (e.g. ticket created) + checkpointed with compensation recorded
     Rt->>TG: step N proposed call
     TG-->>Rt: timeout / error / ambiguous result
     Rt->>Saga: step N failed -- evaluate already-committed steps for compensation
@@ -297,7 +297,7 @@ an interview.
 | Failure | Likely root cause | Answer |
 |---|---|---|
 | Infinite loop | Weak termination criteria, ambiguous observations | Max steps + token/time/cost budgets + structural fingerprinting + semantic similarity + supervisor escalation ([06](06-non-determinism-loops-and-termination.md)) |
-| Stale worker write | Lease expiry + duplicate runtime ownership | Fencing tokens; reject commits from expired leases ([02](02-agent-lifecycle-and-runtime.md)) |
+| Stale worker write | A worker crashes, its lease expires, a new worker takes over — then the crashed worker wakes up and tries to commit, racing with the new owner | Fencing tokens: each lease carries a monotonically increasing token; the state store rejects writes from any worker whose token is older than the current lease holder's ([02](02-agent-lifecycle-and-runtime.md)) |
 | Lost progress after crash | Runtime memory treated as source of truth | Checkpoint after every meaningful transition; resume from durable state ([05](05-state-management-and-memory.md)) |
 | Unsafe side effect | Model output treated as authority | Tool gateway + policy engine + HITL + least privilege + audit ([11](11-governance-guardrails-and-security.md)) |
 | Bad production regression | Prompt/model/tool change never evaluated | Golden datasets + trajectory checks + LLM judge + regression gates ([07](07-agent-evaluation-frameworks.md)) |

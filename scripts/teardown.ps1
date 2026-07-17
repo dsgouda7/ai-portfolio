@@ -6,9 +6,8 @@
 #
 # Stops (in order):
 #   1. Jupyter Lab       (.jupyter.pid  → port 8888)
-#   2. MkDocs site       (.mkdocs.pid   → port 8000)
-#   3. Ollama server     (.ollama.pid   → port 11434)
-#   4. Deactivates the virtual environment if active
+#   2. Ollama server     (.ollama.pid   → port 11434)
+#   3. Deactivates the virtual environment if active
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "SilentlyContinue"
@@ -90,21 +89,14 @@ Stop-ServiceByPidFile `
     -PidFile      (Join-Path $RepoRoot ".jupyter.pid") `
     -FallbackProcessName "jupyter"
 
-# ─── 2. MkDocs ────────────────────────────────────────────────────────────────
-
-Stop-ServiceByPidFile `
-    -Label        "MkDocs site" `
-    -PidFile      (Join-Path $RepoRoot ".mkdocs.pid") `
-    -FallbackProcessName "mkdocs"
-
-# ─── 3. Ollama ────────────────────────────────────────────────────────────────
+# ─── 2. Ollama ─────────────────────────────────────────────────────────────────────
 
 Stop-ServiceByPidFile `
     -Label        "Ollama server" `
     -PidFile      (Join-Path $RepoRoot ".ollama.pid") `
     -FallbackProcessName "ollama"
 
-# ─── 4. Deactivate virtual environment ───────────────────────────────────────
+# ─── 3. Deactivate virtual environment ───────────────────────────────────────────────
 
 Write-Step "Virtual environment"
 

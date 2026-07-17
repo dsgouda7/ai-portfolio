@@ -1,16 +1,15 @@
 #!/usr/bin/env bash
 # setup.sh — AI/ML Dev Environment Setup (macOS / Linux)
-# Provisions Python, a full AI/ML library stack, VS Code, and optionally a local SLM assistant bundle.
+# Provisions Python, a full AI/ML library stack, and VS Code.
 # Run from anywhere:
 #   bash scripts/setup.sh
 #
 # Steps implemented so far:
 #   1. Python + AI/ML libraries  ✔
 #   2. VS Code install            ✔
-#   3. Kilo Code (agentic AI) extension  ✔
-#   4. Ollama server install & first launch  ✔
-#   5. Lifecycle wiring (Ollama runs with VS Code)  ✔
-#   6. Pull DeepSeek-R1 reasoning SLM for Kilo Code  ✔
+#   3. Ollama server install & first launch  ✔  (--enable-slm-assistant)
+#   4. Lifecycle wiring (Ollama runs with VS Code)  ✔  (--enable-slm-assistant)
+#   5. Pull DeepSeek-R1 reasoning SLM  ✔  (--enable-slm-assistant)
 
 set -euo pipefail
 
@@ -29,15 +28,11 @@ fail()  { echo "  ✗ $*" >&2; exit 1; }
 group() { echo; echo "  ── $*"; }
 
 ENABLE_SLM_ASSISTANT=false
-ENABLE_MKDOCS_SERVER=false
 ENABLE_GPU_NOTEBOOK_STACK=false
 for arg in "$@"; do
     case "$arg" in
         --enable-slm-assistant)
             ENABLE_SLM_ASSISTANT=true
-            ;;
-        --enable-mkdocs-server)
-            ENABLE_MKDOCS_SERVER=true
             ;;
         --enable-gpu-notebook-stack)
             ENABLE_GPU_NOTEBOOK_STACK=true
@@ -253,7 +248,6 @@ GENERATIVE_AI=(
     sentence-transformers faiss-cpu chromadb
 )
 UTILITIES=(python-dotenv tqdm pillow requests httpx pydantic)
-DOCS_SITE=(mkdocs-material pymdown-extensions mkdocs-jupyter)
 NOTEBOOK_EXTRAS=(
     mlflow tiktoken mcp fastapi "uvicorn[standard]" anyio redis
     langgraph langchain-core langchain-openai
@@ -271,7 +265,6 @@ ALL_REQUIRED_PACKAGES=(
     "${NOTEBOOK_TOOLING[@]}"
     "${GENERATIVE_AI[@]}"
     "${UTILITIES[@]}"
-    "${DOCS_SITE[@]}"
     "${NOTEBOOK_EXTRAS[@]}"
     "${CODE_INTELLIGENCE[@]}"
 )
@@ -309,10 +302,6 @@ else
 
     # General utilities
     install_group "Utilities" "${UTILITIES[@]}"
-
-    # Docs / study site (MkDocs Material — browse notes/ in a web browser)
-    # mkdocs-jupyter renders every notebook.ipynb as a page alongside the .md files.
-    install_group "Docs site (MkDocs Material)" "${DOCS_SITE[@]}"
 
     # Notebook extras — dependencies pulled in by per-notes setup scripts
     install_group "Notebook extras (AIInfrastructure + MultiAgentAI)" "${NOTEBOOK_EXTRAS[@]}"
@@ -803,65 +792,13 @@ if [ "$failed_count" -gt 0 ]; then
 fi
 echo ""
 
-# ─── STEP 3: Kilo Code (Agentic AI) Extension ───────────────────────────────
-#
-# Kilo Code is an open-source agentic coding assistant (fork of Roo/Cline) that
-# can plan, edit files, and run commands. We point it at a locally-hosted
-# DeepSeek-R1 reasoning SLM via Ollama (configured in Step 6d).
+# ─── STEP 3: Ollama Server Install & First Launch ────────────────────────────
 
 if [ "$ENABLE_SLM_ASSISTANT" = true ]; then
 
 echo ""
 echo "══════════════════════════════════════════════"
-echo "  AI/ML Dev Environment Setup — Step 3/7"
-echo "  Kilo Code — Agentic AI Extension"
-echo "══════════════════════════════════════════════"
-
-KILO_EXT_ID="kilocode.kilo-code"
-
-step "Checking Kilo Code extension ($KILO_EXT_ID)"
-
-EXTENSION_INSTALLED=false
-if command -v "${CODE_CMD}" &>/dev/null; then
-    if "${CODE_CMD}" --list-extensions 2>/dev/null | grep -qi "$KILO_EXT_ID"; then
-        ok "Kilo Code already installed"
-        EXTENSION_INSTALLED=true
-    fi
-else
-    warn "'${CODE_CMD}' not on PATH — skipping extension check"
-fi
-
-if [ "$EXTENSION_INSTALLED" = false ]; then
-    warn "Kilo Code not found — installing ..."
-    if command -v "${CODE_CMD}" &>/dev/null; then
-        "${CODE_CMD}" --install-extension "$KILO_EXT_ID" --force &>/dev/null || true
-        # Verify
-        if "${CODE_CMD}" --list-extensions 2>/dev/null | grep -qi "$KILO_EXT_ID"; then
-            ok "Kilo Code installed successfully"
-        else
-            warn "Install ran but extension not detected yet — it may appear after VS Code restarts"
-        fi
-    else
-        warn "Cannot install Kilo Code: 'code' not on PATH."
-        warn "Install manually: open VS Code → Extensions → search 'Kilo Code' → Install"
-    fi
-fi
-
-step "Kilo Code post-install configuration note"
-echo ""
-echo "  After launching VS Code:"
-echo "    1. Open the Kilo Code sidebar (kangaroo icon on the Activity Bar)"
-echo "    2. Click 'Settings' → API Provider: Ollama"
-echo "    3. Base URL: http://localhost:11434   (the auto-discover button works too)"
-echo "    4. Model: deepseek-r1:8b  (or deepseek-r1:1.5b on low-RAM machines)"
-echo "    5. Save — Kilo Code will now drive agentic edits with DeepSeek-R1 reasoning"
-echo ""
-
-# ─── STEP 4: Ollama Server Install & First Launch ────────────────────────────
-
-echo ""
-echo "══════════════════════════════════════════════"
-echo "  AI/ML Dev Environment Setup — Step 4/7"
+echo "  AI/ML Dev Environment Setup — Step 3/6"
 echo "  Ollama Local Inference Server"
 echo "══════════════════════════════════════════════"
 
@@ -921,7 +858,7 @@ if [ "$SERVER_RUNNING" = false ]; then
     warn "Ollama server not running — starting in background ..."
 
     # Pin Ollama to a single loaded model with no parallelism, so the 8B
-    # reasoning SLM owns the GPU/RAM exclusively while Kilo Code is working.
+    # reasoning SLM owns the GPU/RAM exclusively while it's working.
     export OLLAMA_MAX_LOADED_MODELS=1
     export OLLAMA_NUM_PARALLEL=1
     export OLLAMA_CONTEXT_LENGTH=4096
@@ -955,7 +892,7 @@ if [ "$SERVER_RUNNING" = false ]; then
     fi
 fi
 
-# ─── STEP 5: Ollama Lifecycle Wiring ──────────────────────────────────────────
+# ─── STEP 4: Ollama Lifecycle Wiring ──────────────────────────────────────────
 #
 # Strategy: write .vscode/tasks.json with a folderOpen task that starts
 # ollama serve, and a companion stop task.  VS Code has no native onClose
@@ -964,7 +901,7 @@ fi
 
 echo ""
 echo "══════════════════════════════════════════════"
-echo "  AI/ML Dev Environment Setup — Step 5/7"
+echo "  AI/ML Dev Environment Setup — Step 4/6"
 echo "  Ollama Lifecycle Wiring"
 echo "══════════════════════════════════════════════"
 
@@ -1106,20 +1043,20 @@ WATCHER
 chmod +x "$WATCHER_SCRIPT"
 ok "Written: scripts/ollama-watcher.sh"
 
-# ─── STEP 6: Pull DeepSeek-R1 Reasoning SLM ──────────────────────────────────
+# ─── STEP 5: Pull DeepSeek-R1 Reasoning SLM ──────────────────────────────────
 #
-# DeepSeek-R1 is the reasoning model that powers Kilo Code's agentic planning.
+# DeepSeek-R1 is the local reasoning model for offline AI assistance.
 #   Primary:  deepseek-r1:8b-llama-distill-q4_K_M  (~5 GB, needs ~10 GB free RAM)
 #   Fallback: deepseek-r1:1.5b-qwen-distill-q4_0   (~1.1 GB, needs ~3 GB free RAM)
 # Selection is automatic based on detected system RAM.
 #
 # After pulling, we derive a companion model tagged '-ctx4k' with
-# `PARAMETER num_ctx 4096` baked in, so every client (Kilo Code, curl, raw API)
+# `PARAMETER num_ctx 4096` baked in, so every client (curl, raw API)
 # gets a 4096-token context window without having to pass num_ctx explicitly.
 
 echo ""
 echo "══════════════════════════════════════════════"
-echo "  AI/ML Dev Environment Setup — Step 6/7"
+echo "  AI/ML Dev Environment Setup — Step 5/6"
 echo "  Pull DeepSeek-R1 Reasoning SLM"
 echo "══════════════════════════════════════════════"
 
@@ -1154,7 +1091,7 @@ else
     warn "RAM < 10 GB — selecting fallback base: $BASE_MODEL"
 fi
 
-# Derived tag: same base with '-ctx4k' suffix. This is what Kilo Code targets.
+# Derived tag: same base with '-ctx4k' suffix — bakes num_ctx=4096 into the model.
 CHOSEN_MODEL="$(echo "$BASE_MODEL" | cut -d: -f1):$(echo "$BASE_MODEL" | cut -d: -f2)-ctx4k"
 ok "Derived model (num_ctx=${CTX_TOKENS}): $CHOSEN_MODEL"
 
@@ -1198,133 +1135,10 @@ MFEOF
     if ollama create "$CHOSEN_MODEL" -f "$MODELFILE"; then
         ok "Created $CHOSEN_MODEL (num_ctx=${CTX_TOKENS})"
     else
-        warn "ollama create failed — Kilo Code will have to pass num_ctx itself"
+        warn "ollama create failed — pass num_ctx explicitly in your API calls"
         CHOSEN_MODEL="$BASE_MODEL"
     fi
     rm -f "$MODELFILE"
-fi
-
-# ── 6d. Configure Kilo Code to use the DeepSeek-R1 model ─────────────────────
-#
-# The current Kilo Code extension (built on the Kilo CLI) reads its config from
-#   ~/.config/kilo/kilo.jsonc        (global, used by both VS Code & CLI)
-# and from a project-level kilo.jsonc / .kilo/kilo.jsonc.
-#
-# We write BOTH:
-#   • the global file → makes our local Ollama model the default everywhere
-#   • a project-level .kilo/kilo.jsonc → shared with anyone who opens this repo
-#
-# Schema reference: https://app.kilo.ai/config.json
-# Docs: https://kilo.ai/docs/code-with-ai/agents/custom-models
-
-step "Writing Kilo Code config (global + project) so DeepSeek-R1 is the default model"
-
-KILO_MODEL_KEY="$CHOSEN_MODEL"
-KILO_MODEL_REF="ollama/$KILO_MODEL_KEY"
-
-KILO_CONFIG_JSON=$(cat << KILOCFG
-{
-  "\$schema": "https://app.kilo.ai/config.json",
-  "model": "${KILO_MODEL_REF}",
-  "provider": {
-    "ollama": {
-      "options": {
-        "baseURL": "http://localhost:11434/v1",
-        "timeout": 600000
-      },
-      "models": {
-        "${KILO_MODEL_KEY}": {
-          "name": "DeepSeek-R1 (local Ollama, 4k ctx)",
-          "tool_call": true,
-          "reasoning": true,
-          "limit": {
-            "context": ${CTX_TOKENS},
-            "output": ${CTX_TOKENS}
-          }
-        }
-      }
-    }
-  }
-}
-KILOCFG
-)
-
-# 1) Global config ── ~/.config/kilo/kilo.jsonc
-KILO_GLOBAL_DIR="$HOME/.config/kilo"
-KILO_GLOBAL_FILE="$KILO_GLOBAL_DIR/kilo.jsonc"
-mkdir -p "$KILO_GLOBAL_DIR"
-if [ -f "$KILO_GLOBAL_FILE" ]; then
-    cp "$KILO_GLOBAL_FILE" "${KILO_GLOBAL_FILE}.bak"
-    warn "Existing global Kilo config backed up to ${KILO_GLOBAL_FILE}.bak"
-fi
-echo "$KILO_CONFIG_JSON" > "$KILO_GLOBAL_FILE"
-ok "Global Kilo config written: $KILO_GLOBAL_FILE"
-
-# 2) Project config ── <repo>/.kilo/kilo.jsonc
-KILO_PROJECT_DIR="$REPO_ROOT/.kilo"
-KILO_PROJECT_FILE="$KILO_PROJECT_DIR/kilo.jsonc"
-mkdir -p "$KILO_PROJECT_DIR"
-echo "$KILO_CONFIG_JSON" > "$KILO_PROJECT_FILE"
-ok "Project Kilo config written: .kilo/kilo.jsonc"
-
-# 3) Auto-launch the Kilo Code sidebar when this workspace opens.
-# Add a folderOpen command-task that focuses the Kilo Code view container.
-step "Wiring Kilo Code sidebar to auto-open with this workspace"
-
-if [ -f "$TASKS_JSON" ] && command -v python &>/dev/null; then
-    python - "$TASKS_JSON" "$CODE_CMD" << 'PYEOF'
-import json, sys
-p = sys.argv[1]
-code_cmd = sys.argv[2]
-try:
-    with open(p, 'r') as f:
-        data = json.load(f)
-except Exception:
-    data = {"version": "2.0.0", "tasks": []}
-data.setdefault("tasks", [])
-if not any(t.get("label") == "kilo-code-launch" for t in data["tasks"]):
-    data["tasks"].append({
-        "label": "kilo-code-launch",
-        "type": "shell",
-        "command": "bash",
-        "args": ["-c", f"'{code_cmd}' --command kilo-code.SidebarProvider.focus 2>/dev/null; exit 0"],
-        "runOptions": {"runOn": "folderOpen"},
-        "presentation": {"reveal": "never", "panel": "dedicated", "showReuseMessage": False},
-        "problemMatcher": []
-    })
-    with open(p, 'w') as f:
-        json.dump(data, f, indent=4)
-    print("  ✓ Added 'kilo-code-launch' folderOpen task to .vscode/tasks.json")
-else:
-    print("  ✓ tasks.json already has 'kilo-code-launch' — skipping")
-PYEOF
-fi
-
-# 4) Recommend the Kilo extension at the workspace level so VS Code surfaces it.
-EXTENSIONS_JSON="$VSCODE_DIR/extensions.json"
-if [ -f "$EXTENSIONS_JSON" ] && command -v python &>/dev/null; then
-    python - "$EXTENSIONS_JSON" "$KILO_EXT_ID" << 'PYEOF'
-import json, sys
-p, ext = sys.argv[1], sys.argv[2]
-try:
-    with open(p, 'r') as f:
-        data = json.load(f)
-except Exception:
-    data = {}
-recs = data.setdefault("recommendations", [])
-if ext not in recs:
-    recs.append(ext)
-    with open(p, 'w') as f:
-        json.dump(data, f, indent=4)
-print(f"  ✓ Kilo Code present in extensions.json recommendations")
-PYEOF
-else
-    cat > "$EXTENSIONS_JSON" << EXTEOF
-{
-  "recommendations": ["${KILO_EXT_ID}"]
-}
-EXTEOF
-    ok "Created .vscode/extensions.json with Kilo Code recommended"
 fi
 
 
@@ -1334,7 +1148,7 @@ fi
 # .ipynb files in this workspace.
 
 else
-    warn "Skipping the SLM assistant bundle. Re-run with --enable-slm-assistant to install Kilo Code, Ollama, and the local model wiring."
+    warn "Skipping the SLM assistant bundle. Re-run with --enable-slm-assistant to install Ollama and the local reasoning model."
 fi
 
 step "Writing .vscode/settings.json (notebooks read-only in VS Code)"
@@ -1381,16 +1195,13 @@ fi
 
 echo ""
 echo "══════════════════════════════════════════════"
-echo "  AI/ML Dev Environment Setup — Step 7/7"
-echo "  Launch Study Servers (Jupyter + MkDocs)"
+echo "  AI/ML Dev Environment Setup — Step 6/6"
+echo "  Launch Study Server (Jupyter)"
 echo "══════════════════════════════════════════════"
 
 JUPYTER_PORT=8888
-MKDOCS_PORT=8000
 JUPYTER_PID_FILE="$REPO_ROOT/.jupyter.pid"
-MKDOCS_PID_FILE="$REPO_ROOT/.mkdocs.pid"
 JUPYTER_LOG="$REPO_ROOT/.jupyter.log"
-MKDOCS_LOG="$REPO_ROOT/.mkdocs.log"
 
 port_in_use() {
     local port="$1"
@@ -1424,63 +1235,31 @@ else
     echo "    Check .jupyter.log for the one-time login token/URL."
 fi
 
-# ── 7b. MkDocs site ──────────────────────────────────────────────────────────
-
-if [ "$ENABLE_MKDOCS_SERVER" = true ]; then
-    step "Starting MkDocs site on port $MKDOCS_PORT"
-
-    if port_in_use "$MKDOCS_PORT"; then
-        ok "Port $MKDOCS_PORT already in use — assuming MkDocs is running"
-    else
-        nohup python -m mkdocs serve \
-            -f "$REPO_ROOT/mkdocs.yml" \
-            -a "127.0.0.1:$MKDOCS_PORT" \
-            > "$MKDOCS_LOG" 2>&1 &
-        echo $! > "$MKDOCS_PID_FILE"
-        ok "MkDocs started (PID $(cat "$MKDOCS_PID_FILE")) — log: .mkdocs.log"
-    fi
-else
-    warn "Skipping MkDocs site; pass --enable-mkdocs-server when you want a local docs server."
-fi
-
 # ─── ALL DONE ─────────────────────────────────────────────────────────────────────
 
 echo ""
 echo "══════════════════════════════════════════════"
 if [ "$ENABLE_SLM_ASSISTANT" = true ]; then
-    echo "  Setup complete (all 7 steps)"
+    echo "  Setup complete (all 6 steps)"
 else
-    echo "  Setup complete (assistant bundle skipped)"
+    echo "  Setup complete (SLM assistant skipped)"
 fi
 echo ""
 echo "  Python env  : $VENV_PATH"
 echo "  Activate    : source .venv/bin/activate"
 echo "  VS Code     : ${CODE_CMD}"
 if [ "$ENABLE_SLM_ASSISTANT" = true ]; then
-    echo "  Kilo Code   : $KILO_EXT_ID"
     echo "  Ollama      : $OLLAMA_BASE_URL  (single-model mode, ctx=${CTX_TOKENS})"
     echo "  Reasoning   : $CHOSEN_MODEL (DeepSeek-R1, ${CTX_TOKENS}-token ctx)"
 else
-    echo "  SLM assistant: disabled (pass --enable-slm-assistant to install Kilo Code, Ollama, and model wiring)"
-fi
-if [ "$ENABLE_MKDOCS_SERVER" = true ]; then
-    echo "  MkDocs      : http://localhost:$MKDOCS_PORT"
-else
-    echo "  MkDocs      : disabled (pass --enable-mkdocs-server to launch the local docs server)"
+    echo "  SLM assistant: disabled (pass --enable-slm-assistant to install Ollama and model wiring)"
 fi
 echo ""
-echo "  Study servers (running in background):"
+echo "  Study server (running in background):"
 echo "    Hands-on notebooks  → http://localhost:$JUPYTER_PORT"
-if [ "$ENABLE_MKDOCS_SERVER" = true ]; then
-    echo "    Reading (MkDocs)    → http://localhost:$MKDOCS_PORT"
-fi
 echo ""
 echo "  To stop them:"
-if [ "$ENABLE_MKDOCS_SERVER" = true ]; then
-    echo "    kill \$(cat .jupyter.pid .mkdocs.pid 2>/dev/null)"
-else
-    echo "    kill \$(cat .jupyter.pid 2>/dev/null)"
-fi
+echo "    kill \$(cat .jupyter.pid 2>/dev/null)"
 echo ""
 if [ "$ENABLE_SLM_ASSISTANT" = true ]; then
     echo "  Next: open VS Code in this folder — Ollama will start automatically."

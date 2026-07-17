@@ -30,7 +30,7 @@ See [projects/](projects/) for more details.
 
 ### Learning & Exploration
 - [playground/](playground/) - Exploratory notebooks (AI agents, feature engineering, Azure)
-- [learning/](learning/) - Course projects organized by domain: ML, data engineering, GenAI
+- [learning/](learning/) - Deep-dive study tracks: GenAI architecture and Agentic AI system design
 - [exercises/](exercises/) - Practice problems matching notes/ structure
 
 ---
@@ -74,26 +74,27 @@ Standalone, production-grade applications demonstrating end-to-end engineering s
 - **[context-optimizer/](projects/context-optimizer/)** — LLM corpus compression + Tree-of-Thought retrieval library; 91% token reduction, constant cost regardless of corpus size, fully local with Ollama
 - **[rag-knowledge-pipeline/](projects/rag-knowledge-pipeline/)** — Three-phase local RAG: Wikipedia corpus → Delta Lake → ChromaDB → FastAPI; each phase independently deployable
 - **[video-quality-enhancer/](projects/video-quality-enhancer/)** — 4K video upscaling (Swin2SR) + audio denoising (MetricGAN+) REST API; GPU-accelerated with CPU fallback, fully local
+- **[voice-assistant/](projects/voice-assistant/)** — Dockerized voice AI: Whisper STT → DialoGPT → SpeechT5 TTS; responsive web UI, fully local
+- **[text-translation/](projects/text-translation/)** — Flask REST API: Whisper STT + Helsinki-NLP translation + Facebook MMS-TTS; fully local, no API keys
+- **[image-captioning/](projects/image-captioning/)** — BLIP-2 (blip2-opt-2.7b) image captioning; Gradio UI, fully local
+- **[conversational-ai/](projects/conversational-ai/)** — Flask chatbot with Qwen2.5-1.5B-Instruct; multi-turn history, no API keys
+- **[conversation-analyzer/](projects/conversation-analyzer/)** — Audio transcription + key-point extraction; Whisper STT → FLAN-T5 summarizer; Gradio UI, fully local
 
 → See [projects/README.md](projects/README.md) for detailed descriptions and setup instructions.
 
 ---
 
-## `learning/` — Course Implementations
+## `learning/` — Structured Learning Tracks
 
-Projects completed as part of professional courses and certifications, organized by domain.
+In-depth technical tracks: runnable notebooks and architecture reference docs.
 
-**ML** — `learning/ml/`
-- **[supervised-learning/](learning/ml/supervised-learning/)** — LinkedIn Learning: linear regression, logistic regression, KNN, decision trees, random forest, XGBoost, SHAP, GridSearchCV, Flask deployment (Titanic + Ames Housing)
-- **[linear-regression/](learning/ml/linear-regression/)** — IBM Data Science: King County house price regression end-to-end
+**GenAI — `learning/genai/`**
+Progressive study track covering sequence models (RNNs), the full Transformer architecture, encoder-decoder patterns, and applied LLMs — 5 chapters from PyTorch primer through production LLM patterns.
 
-**Data Engineering** — `learning/data-engineering/`
-- SpaceX API data collection, Wikipedia scraping, and data wrangling (IBM Data Science Professional Certificate)
+**Agentic AI System Design — `learning/agentic-ai-system-design/`**
+Staff/Principal-level interview reference track (Markdown, no notebooks): platform architecture end-to-end, agent lifecycle & runtime, tool/MCP/skill registry, model gateway, state & memory, loop detection & termination, evaluation frameworks, observability, multi-agent patterns, recoverability & Saga, governance & guardrails, production scale, and a Semantic Kernel vs LangGraph comparison.
 
-**GenAI** — `learning/genai/`
-- Text translation, image captioning, conversation analysis, conversational AI, voice assistant Flask app (IBM Generative AI Engineering)
-
-→ See [learning/README.md](learning/README.md) for course details and skills demonstrated.
+→ See [learning/README.md](learning/README.md) for full chapter listings and prerequisites.
 
 ---
 

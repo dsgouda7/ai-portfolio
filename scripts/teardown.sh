@@ -7,9 +7,8 @@
 #
 # Stops (in order):
 #   1. Jupyter Lab       (.jupyter.pid  → port 8888)
-#   2. MkDocs site       (.mkdocs.pid   → port 8000)
-#   3. Ollama server     (.ollama.pid   → port 11434)
-#   4. Deactivates the virtual environment if active
+#   2. Ollama server     (.ollama.pid   → port 11434)
+#   3. Deactivates the virtual environment if active
 
 set -uo pipefail
 
@@ -96,15 +95,11 @@ echo "════════════════════════�
 
 stop_service "Jupyter Lab" "$REPO_ROOT/.jupyter.pid" "jupyter"
 
-# ─── 2. MkDocs ────────────────────────────────────────────────────────────────
-
-stop_service "MkDocs site" "$REPO_ROOT/.mkdocs.pid" "mkdocs"
-
-# ─── 3. Ollama ────────────────────────────────────────────────────────────────
+# ─── 2. Ollama ─────────────────────────────────────────────────────────────────────
 
 stop_service "Ollama server" "$REPO_ROOT/.ollama.pid" "ollama"
 
-# ─── 4. Deactivate virtual environment ───────────────────────────────────────
+# ─── 3. Deactivate virtual environment ───────────────────────────────────────────────
 
 step "Virtual environment"
 

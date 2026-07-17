@@ -1,15 +1,14 @@
 # setup.ps1 — AI/ML Dev Environment Setup (Windows / PowerShell)
-# Provisions Python, a full AI/ML library stack, VS Code, and optionally a local SLM assistant bundle.
+# Provisions Python, a full AI/ML library stack, and VS Code.
 # Run from anywhere:
 #   .\scripts\setup.ps1
 #
 # Steps implemented so far:
 #   1. Python + AI/ML libraries  ✔
 #   2. VS Code install            ✔
-#   3. Kilo Code (agentic AI) extension  ✔
-#   4. Ollama server install & first launch  ✔
-#   5. Lifecycle wiring (Ollama runs with VS Code)  ✔
-#   6. Pull DeepSeek-R1 reasoning SLM for Kilo Code  ✔
+#   3. Ollama server install & first launch  ✔  (--enable-slm-assistant)
+#   4. Lifecycle wiring (Ollama runs with VS Code)  ✔  (--enable-slm-assistant)
+#   5. Pull DeepSeek-R1 reasoning SLM  ✔  (--enable-slm-assistant)
 
 # Bootstrap: this script is designed for PowerShell 7+.
 # If launched from Windows PowerShell 5.1, install pwsh (if needed) and re-run there.
@@ -60,13 +59,10 @@ $VenvPath = Join-Path $RepoRoot ".venv"
 $VscodeDirPath = Join-Path $RepoRoot ".vscode"
 
 $EnableSlmAssistant = $false
-$EnableMkdocsServer = $false
 $EnableGpuNotebookStack = $false
 foreach ($arg in $args) {
     if ($arg -eq "--enable-slm-assistant" -or $arg -eq "-EnableSlmAssistant") {
         $EnableSlmAssistant = $true
-    } elseif ($arg -eq "--enable-mkdocs-server" -or $arg -eq "-EnableMkdocsServer") {
-        $EnableMkdocsServer = $true
     }
 }
 
@@ -290,12 +286,6 @@ $utilities = @(
     "pydantic"
 )
 
-$docsSite = @(
-    "mkdocs-material",
-    "pymdown-extensions",
-    "mkdocs-jupyter"
-)
-
 # Notebook extras — dependencies pulled in by per-notes setup scripts
 #   notes/AIInfrastructure : mlflow
 #   notes/MultiAgentAI     : tiktoken, mcp, fastapi, uvicorn, anyio, redis,
@@ -329,7 +319,6 @@ $requiredPackageKeys = @(
     $notebookTooling +
     $generativeAi +
     $utilities +
-    $docsSite +
     $notebookExtras +
     $codeIntelligence
 ) | ForEach-Object { Normalize-PackageKey $_ } | Sort-Object -Unique
@@ -359,10 +348,6 @@ if ($missingPackageCount -eq 0) {
 
     # General utilities
     Install-Group "Utilities" $utilities
-
-    # Docs / study site (MkDocs Material — browse notes/ in a web browser)
-    # mkdocs-jupyter renders every notebook.ipynb as a page alongside the .md files.
-    Install-Group "Docs site (MkDocs Material)" $docsSite
 
     # Notebook extras
     Install-Group "Notebook extras (AIInfrastructure + MultiAgentAI)" $notebookExtras
@@ -747,67 +732,13 @@ if ($failedCount -gt 0) {
 }
 Write-Host ""
 
-# ─── STEP 3: Kilo Code (Agentic AI) Extension ───────────────────────────────
-#
-# Kilo Code is an open-source agentic coding assistant (fork of Roo/Cline) that
-# can plan, edit files, and run commands. We point it at a locally-hosted
-# DeepSeek-R1 reasoning SLM via Ollama (configured in Step 6d).
+# ─── STEP 3: Ollama Server Install & First Launch ────────────────────────────
 
 if ($EnableSlmAssistant) {
 
 Write-Host ""
 Write-Host "══════════════════════════════════════════════" -ForegroundColor DarkGray
-Write-Host "  AI/ML Dev Environment Setup — Step 3/7" -ForegroundColor White
-Write-Host "  Kilo Code — Agentic AI Extension" -ForegroundColor White
-Write-Host "══════════════════════════════════════════════" -ForegroundColor DarkGray
-
-$KiloExtId = "kilocode.kilo-code"
-
-Write-Step "Checking Kilo Code extension ($KiloExtId)"
-
-$extensionInstalled = $false
-try {
-    $extList = & $CodeCmd --list-extensions 2>&1
-    if ($extList -match [regex]::Escape($KiloExtId)) {
-        Write-Ok "Kilo Code already installed"
-        $extensionInstalled = $true
-    }
-} catch {
-    Write-Warn "Could not query VS Code extensions — will attempt install anyway"
-}
-
-if (-not $extensionInstalled) {
-    Write-Warn "Kilo Code not found — installing ..."
-    try {
-        & $CodeCmd --install-extension $KiloExtId --force 2>&1 | Out-Null
-        # Verify
-        $extList = & $CodeCmd --list-extensions 2>&1
-        if ($extList -match [regex]::Escape($KiloExtId)) {
-            Write-Ok "Kilo Code installed successfully"
-        } else {
-            Write-Warn "Install command ran but extension not detected yet — it may appear after VS Code restarts"
-        }
-    } catch {
-        Write-Warn "Could not install Kilo Code automatically."
-        Write-Warn "Install manually: open VS Code → Extensions → search 'Kilo Code' → Install"
-    }
-}
-
-Write-Step "Kilo Code post-install configuration note"
-Write-Host ""
-Write-Host "  After launching VS Code:" -ForegroundColor White
-Write-Host "    1. Open the Kilo Code sidebar (kangaroo icon on the Activity Bar)" -ForegroundColor DarkGray
-Write-Host "    2. Click 'Settings' → API Provider: Ollama" -ForegroundColor DarkGray
-Write-Host "    3. Base URL: http://localhost:11434   (the auto-discover button works too)" -ForegroundColor DarkGray
-Write-Host "    4. Model: deepseek-r1:8b  (or deepseek-r1:1.5b on low-RAM machines)" -ForegroundColor DarkGray
-Write-Host "    5. Save — Kilo Code will now drive agentic edits with DeepSeek-R1 reasoning" -ForegroundColor DarkGray
-Write-Host ""
-
-# ─── STEP 4: Ollama Server Install & First Launch ────────────────────────────
-
-Write-Host ""
-Write-Host "══════════════════════════════════════════════" -ForegroundColor DarkGray
-Write-Host "  AI/ML Dev Environment Setup — Step 4/7" -ForegroundColor White
+Write-Host "  AI/ML Dev Environment Setup — Step 3/6" -ForegroundColor White
 Write-Host "  Ollama Local Inference Server" -ForegroundColor White
 Write-Host "══════════════════════════════════════════════" -ForegroundColor DarkGray
 
@@ -865,7 +796,7 @@ if (-not $serverRunning) {
     Write-Warn "Ollama server not running — starting in background ..."
 
     # Pin Ollama to a single loaded model with no parallelism, so the 8B
-    # reasoning SLM owns the GPU/RAM exclusively while Kilo Code is working.
+    # reasoning SLM owns the GPU/RAM exclusively while it's working.
     $env:OLLAMA_MAX_LOADED_MODELS = "1"
     $env:OLLAMA_NUM_PARALLEL      = "1"
     $env:OLLAMA_CONTEXT_LENGTH    = "4096"
@@ -916,7 +847,7 @@ if (-not $serverRunning) {
     }
 }
 
-# ─── STEP 5: Ollama Lifecycle Wiring ──────────────────────────────────────────
+# ─── STEP 4: Ollama Lifecycle Wiring ──────────────────────────────────────────
 #
 # Strategy: write .vscode/tasks.json with a folderOpen task that starts
 # ollama serve, and a companion stop task.  VS Code has no native onClose
@@ -925,7 +856,7 @@ if (-not $serverRunning) {
 
 Write-Host ""
 Write-Host "══════════════════════════════════════════════" -ForegroundColor DarkGray
-Write-Host "  AI/ML Dev Environment Setup — Step 5/7" -ForegroundColor White
+Write-Host "  AI/ML Dev Environment Setup — Step 4/6" -ForegroundColor White
 Write-Host "  Ollama Lifecycle Wiring" -ForegroundColor White
 Write-Host "══════════════════════════════════════════════" -ForegroundColor DarkGray
 
@@ -1088,20 +1019,20 @@ while ($true) {
 Set-Content -Path $WatcherScript -Value $watcherContent -Encoding UTF8
 Write-Ok "Written: scripts/ollama-watcher.ps1"
 
-# ─── STEP 6: Pull DeepSeek-R1 Reasoning SLM ──────────────────────────────────
+# ─── STEP 5: Pull DeepSeek-R1 Reasoning SLM ──────────────────────────────────
 #
-# DeepSeek-R1 is the reasoning model that powers Kilo Code's agentic planning.
+# DeepSeek-R1 is the local reasoning model for offline AI assistance.
 #   Primary:  deepseek-r1:8b-llama-distill-q4_K_M  (~5 GB, needs ~10 GB free RAM)
 #   Fallback: deepseek-r1:1.5b-qwen-distill-q4_0   (~1.1 GB, needs ~3 GB free RAM)
 # Selection is automatic based on detected system RAM.
 #
 # After pulling, we derive a companion model tagged '-ctx4k' with
-# `PARAMETER num_ctx 4096` baked in, so every client (Kilo Code, curl, raw API)
+# `PARAMETER num_ctx 4096` baked in, so every client (curl, raw API)
 # gets a 4096-token context window without having to pass num_ctx explicitly.
 
 Write-Host ""
 Write-Host "══════════════════════════════════════════════" -ForegroundColor DarkGray
-Write-Host "  AI/ML Dev Environment Setup — Step 6/7" -ForegroundColor White
+Write-Host "  AI/ML Dev Environment Setup — Step 5/6" -ForegroundColor White
 Write-Host "  Pull DeepSeek-R1 Reasoning SLM" -ForegroundColor White
 Write-Host "══════════════════════════════════════════════" -ForegroundColor DarkGray
 
@@ -1125,7 +1056,7 @@ $FallbackBase  = "deepseek-r1:1.5b-qwen-distill-q4_0"
 $BaseModel     = if ($TotalRamGB -ge 10) { $PrimaryBase } else { $FallbackBase }
 $CtxTokens     = 4096
 
-# Derived tag: same base with '-ctx4k' suffix. This is what Kilo Code targets.
+# Derived tag: same base with '-ctx4k' suffix — bakes num_ctx=4096 into the model.
 $ChosenModel   = "$($BaseModel.Split(':')[0]):$($BaseModel.Split(':')[1])-ctx4k"
 
 if ($TotalRamGB -ge 10) {
@@ -1195,150 +1126,6 @@ PARAMETER num_ctx $CtxTokens
     Remove-Item $ModelfilePath -ErrorAction SilentlyContinue
 }
 
-# ── 6d. Configure Kilo Code to use the DeepSeek-R1 model ─────────────────────
-#
-# The current Kilo Code extension (built on the Kilo CLI) reads its config from
-#   ~/.config/kilo/kilo.jsonc        (global, used by both VS Code & CLI)
-# and from a project-level kilo.jsonc / .kilo/kilo.jsonc.
-#
-# We write BOTH:
-#   • the global file → makes our local Ollama model the default everywhere
-#   • a project-level .kilo/kilo.jsonc → checked into the repo so anyone who
-#     opens this workspace gets the same default
-#
-# Schema reference: https://app.kilo.ai/config.json
-# Docs: https://kilo.ai/docs/code-with-ai/agents/custom-models
-
-Write-Step "Writing Kilo Code config (global + project) so DeepSeek-R1 is the default model"
-
-$KiloModelKey = $ChosenModel  # e.g. deepseek-r1:8b-llama-distill-q4_K_M-ctx4k
-$KiloModelRef = "ollama/$KiloModelKey"
-
-$kiloConfig = [ordered]@{
-    '$schema' = "https://app.kilo.ai/config.json"
-    model     = $KiloModelRef
-    provider  = [ordered]@{
-        ollama = [ordered]@{
-            options = [ordered]@{
-                baseURL = "http://localhost:11434/v1"
-                timeout = 600000
-            }
-            models = [ordered]@{
-                $KiloModelKey = [ordered]@{
-                    name      = "DeepSeek-R1 (local Ollama, 4k ctx)"
-                    tool_call = $true
-                    reasoning = $true
-                    limit     = [ordered]@{
-                        context = $CtxTokens
-                        output  = $CtxTokens
-                    }
-                }
-            }
-        }
-    }
-}
-
-$kiloConfigJson = $kiloConfig | ConvertTo-Json -Depth 10
-
-# 1) Global config ── ~/.config/kilo/kilo.jsonc
-$KiloGlobalDir  = Join-Path $env:USERPROFILE ".config\kilo"
-$KiloGlobalPath = Join-Path $KiloGlobalDir "kilo.jsonc"
-if (-not (Test-Path $KiloGlobalDir)) {
-    New-Item -ItemType Directory -Path $KiloGlobalDir -Force | Out-Null
-}
-if (Test-Path $KiloGlobalPath) {
-    Copy-Item $KiloGlobalPath "$KiloGlobalPath.bak" -Force
-    Write-Warn "Existing global Kilo config backed up to $KiloGlobalPath.bak"
-}
-Set-Content -Path $KiloGlobalPath -Value $kiloConfigJson -Encoding UTF8
-Write-Ok "Global Kilo config written: $KiloGlobalPath"
-
-# 2) Project config ── <repo>/.kilo/kilo.jsonc (overrides global for this workspace)
-$KiloProjectDir  = Join-Path $RepoRoot ".kilo"
-$KiloProjectPath = Join-Path $KiloProjectDir "kilo.jsonc"
-if (-not (Test-Path $KiloProjectDir)) {
-    New-Item -ItemType Directory -Path $KiloProjectDir -Force | Out-Null
-}
-Set-Content -Path $KiloProjectPath -Value $kiloConfigJson -Encoding UTF8
-Write-Ok "Project Kilo config written: .kilo/kilo.jsonc"
-
-# 3) Auto-launch the Kilo Code sidebar when this workspace opens.
-# Add a folderOpen command-task that focuses the Kilo Code view container.
-# View ID: kilo-code.SidebarProvider (per the extension's package.json).
-Write-Step "Wiring Kilo Code sidebar to auto-open with this workspace"
-
-$KiloLaunchTask = [ordered]@{
-    label   = "kilo-code-launch"
-    type    = "shell"
-    command = "pwsh"
-    args    = @(
-        "-NonInteractive",
-        "-Command",
-        "& '$CodeCmd' --command kilo-code.SidebarProvider.focus 2>$null; exit 0"
-    )
-    runOptions   = [ordered]@{ runOn = "folderOpen" }
-    presentation = [ordered]@{
-        reveal           = "never"
-        panel            = "dedicated"
-        showReuseMessage = $false
-    }
-    problemMatcher = @()
-}
-
-# Merge into existing tasks.json (already created in Step 5a)
-if (Test-Path $TasksJsonPath) {
-    try {
-        if ($PSVersionTable.PSVersion.Major -ge 6) {
-            $tasksObj = Get-Content $TasksJsonPath -Raw | ConvertFrom-Json -AsHashtable
-        } else {
-            $tj = Get-Content $TasksJsonPath -Raw | ConvertFrom-Json
-            $tasksObj = @{}
-            $tj.PSObject.Properties | ForEach-Object { $tasksObj[$_.Name] = $_.Value }
-        }
-        if (-not $tasksObj.ContainsKey("tasks")) { $tasksObj["tasks"] = @() }
-        $hasKilo = $false
-        foreach ($t in $tasksObj["tasks"]) {
-            if ($t.label -eq "kilo-code-launch") { $hasKilo = $true; break }
-        }
-        if (-not $hasKilo) {
-            $tasksObj["tasks"] = @($tasksObj["tasks"]) + $KiloLaunchTask
-            $tasksObj | ConvertTo-Json -Depth 10 | Set-Content $TasksJsonPath -Encoding UTF8
-            Write-Ok "Added 'kilo-code-launch' folderOpen task to .vscode/tasks.json"
-        } else {
-            Write-Ok "tasks.json already has 'kilo-code-launch' — skipping"
-        }
-    } catch {
-        Write-Warn "Could not merge kilo-code-launch task into tasks.json: $($_.Exception.Message)"
-    }
-}
-
-# 4) Make sure VS Code does NOT disable the Kilo extension on this workspace.
-# Add it to recommended extensions and ensure no workspace-level disabled list.
-$ExtensionsJsonPath = Join-Path $VscodeDirPath "extensions.json"
-$extensionsObj = [ordered]@{ recommendations = @($KiloExtId) }
-if (Test-Path $ExtensionsJsonPath) {
-    try {
-        if ($PSVersionTable.PSVersion.Major -ge 6) {
-            $exObj = Get-Content $ExtensionsJsonPath -Raw | ConvertFrom-Json -AsHashtable
-        } else {
-            $ex = Get-Content $ExtensionsJsonPath -Raw | ConvertFrom-Json
-            $exObj = @{}
-            $ex.PSObject.Properties | ForEach-Object { $exObj[$_.Name] = $_.Value }
-        }
-        if (-not $exObj.ContainsKey("recommendations")) { $exObj["recommendations"] = @() }
-        if ($exObj["recommendations"] -notcontains $KiloExtId) {
-            $exObj["recommendations"] = @($exObj["recommendations"]) + $KiloExtId
-        }
-        $exObj | ConvertTo-Json -Depth 10 | Set-Content $ExtensionsJsonPath -Encoding UTF8
-        Write-Ok "Kilo Code added to .vscode/extensions.json recommendations"
-    } catch {
-        Write-Warn "Could not update extensions.json: $($_.Exception.Message)"
-    }
-} else {
-    $extensionsObj | ConvertTo-Json -Depth 10 | Set-Content $ExtensionsJsonPath -Encoding UTF8
-    Write-Ok "Created .vscode/extensions.json with Kilo Code recommended"
-}
-
 
 # ─── VS Code notebook settings ───────────────────────────────────────────────
 #
@@ -1346,7 +1133,7 @@ if (Test-Path $ExtensionsJsonPath) {
 # .ipynb files in this workspace.
 
 } else {
-    Write-Warn "Skipping the SLM assistant bundle. Re-run with --enable-slm-assistant to install Kilo Code, Ollama, and the local model wiring."
+    Write-Warn "Skipping the SLM assistant bundle. Re-run with --enable-slm-assistant to install Ollama and the local reasoning model."
 }
 
 Write-Step "Writing .vscode/settings.json (notebooks read-only in VS Code)"
@@ -1396,16 +1183,13 @@ if (Test-Path $SettingsJsonPath) {
 
 Write-Host ""
 Write-Host "══════════════════════════════════════════════" -ForegroundColor DarkGray
-Write-Host "  AI/ML Dev Environment Setup — Step 7/7" -ForegroundColor White
-Write-Host "  Launch Study Servers (Jupyter + MkDocs)" -ForegroundColor White
+Write-Host "  AI/ML Dev Environment Setup — Step 6/6" -ForegroundColor White
+Write-Host "  Launch Study Server (Jupyter)" -ForegroundColor White
 Write-Host "══════════════════════════════════════════════" -ForegroundColor DarkGray
 
 $JupyterPort  = 8888
-$MkdocsPort   = 8000
 $JupyterPid   = Join-Path $RepoRoot ".jupyter.pid"
-$MkdocsPid    = Join-Path $RepoRoot ".mkdocs.pid"
 $JupyterLog   = Join-Path $RepoRoot ".jupyter.log"
-$MkdocsLog    = Join-Path $RepoRoot ".mkdocs.log"
 $VenvPython   = Join-Path $VenvPath "Scripts\python.exe"
 
 function Test-PortInUse { param([int]$Port)
@@ -1443,71 +1227,31 @@ if (Test-PortInUse -Port $JupyterPort) {
     Write-Host "    Check .jupyter.log for the one-time login token/URL." -ForegroundColor DarkGray
 }
 
-# ── 7b. MkDocs site ──────────────────────────────────────────────────────────
-
-if ($EnableMkdocsServer) {
-    Write-Step "Starting MkDocs site on port $MkdocsPort"
-
-    if (Test-PortInUse -Port $MkdocsPort) {
-        Write-Ok "Port $MkdocsPort already in use — assuming MkDocs is running"
-    } else {
-        $mkdocsArgs = @(
-            "-m", "mkdocs", "serve",
-            "-f", (Join-Path $RepoRoot "mkdocs.yml"),
-            "-a", "127.0.0.1:$MkdocsPort"
-        )
-        $mkdocsProc = Start-Process -FilePath $VenvPython `
-            -ArgumentList $mkdocsArgs `
-            -WorkingDirectory $RepoRoot `
-            -RedirectStandardOutput $MkdocsLog `
-            -RedirectStandardError  "$MkdocsLog.err" `
-            -WindowStyle Hidden `
-            -PassThru
-        $mkdocsProc.Id | Set-Content $MkdocsPid
-        Write-Ok "MkDocs started (PID $($mkdocsProc.Id)) — log: .mkdocs.log"
-    }
-} else {
-    Write-Warn "Skipping MkDocs site; pass --enable-mkdocs-server when you want a local docs server."
-}
-
 # ─── ALL DONE ─────────────────────────────────────────────────────────────────────
 
 Write-Host ""
 Write-Host "══════════════════════════════════════════════" -ForegroundColor DarkGray
 if ($EnableSlmAssistant) {
-    Write-Host "  Setup complete (all 7 steps)" -ForegroundColor Green
+    Write-Host "  Setup complete (all 6 steps)" -ForegroundColor Green
 } else {
-    Write-Host "  Setup complete (assistant bundle skipped)" -ForegroundColor Green
+    Write-Host "  Setup complete (SLM assistant skipped)" -ForegroundColor Green
 }
 Write-Host ""
 Write-Host "  Python env  : $VenvPath" -ForegroundColor White
 Write-Host "  Activate    : .\.venv\Scripts\Activate.ps1" -ForegroundColor White
 Write-Host "  VS Code     : $CodeCmd" -ForegroundColor White
 if ($EnableSlmAssistant) {
-    Write-Host "  Kilo Code   : $KiloExtId" -ForegroundColor White
     Write-Host "  Ollama      : $OllamaBaseUrl  (single-model mode, ctx=$CtxTokens)" -ForegroundColor White
     Write-Host "  Reasoning   : $ChosenModel (DeepSeek-R1, $CtxTokens-token ctx)" -ForegroundColor White
 } else {
-    Write-Host "  SLM assistant: disabled (pass --enable-slm-assistant to install Kilo Code, Ollama, and model wiring)" -ForegroundColor White
-}
-if ($EnableMkdocsServer) {
-    Write-Host "  MkDocs      : http://localhost:$MkdocsPort" -ForegroundColor White
-} else {
-    Write-Host "  MkDocs      : disabled (pass --enable-mkdocs-server to launch the local docs server)" -ForegroundColor White
+    Write-Host "  SLM assistant: disabled (pass --enable-slm-assistant to install Ollama and model wiring)" -ForegroundColor White
 }
 Write-Host ""
-Write-Host "  Study servers (running in background):" -ForegroundColor Cyan
+Write-Host "  Study server (running in background):" -ForegroundColor Cyan
 Write-Host "    Hands-on notebooks  → http://localhost:$JupyterPort" -ForegroundColor White
-if ($EnableMkdocsServer) {
-    Write-Host "    Reading (MkDocs)    → http://localhost:$MkdocsPort"  -ForegroundColor White
-}
 Write-Host ""
 Write-Host "  To stop them:" -ForegroundColor DarkGray
-if ($EnableMkdocsServer) {
-    Write-Host "    Get-Content .jupyter.pid,.mkdocs.pid | % { Stop-Process -Id ([int]`$_) -Force }" -ForegroundColor DarkGray
-} else {
-    Write-Host "    Get-Content .jupyter.pid | % { Stop-Process -Id ([int]`$_) -Force }" -ForegroundColor DarkGray
-}
+Write-Host "    Get-Content .jupyter.pid | % { Stop-Process -Id ([int]`$_) -Force }" -ForegroundColor DarkGray
 Write-Host ""
 if ($EnableSlmAssistant) {
     Write-Host "  Next: open VS Code in this folder — Ollama will start automatically." -ForegroundColor Cyan
