@@ -15,6 +15,8 @@ actually needs designing is *who* is selecting a capability — a model, reasoni
 language and a schema, not a compiler resolving a function pointer or a human reading API
 docs — and what that implies for schema design, discovery, versioning, and safety.
 
+> **Interview prep:** First pass → sections 1–5 (why a registry, data model, MCP integration, versioning, tool-call safety). **What interviewers probe:** “What fields in the registry does a runtime need at agent instantiation?” and “What does a per-call sandbox actually isolate, and what is torn down when the call returns?” **Opening narrative:** why a registry → data model → capability negotiation at invocation → per-call sandbox → policy enforcement at the gateway.
+
 ---
 
 ## 1 · Problem statement

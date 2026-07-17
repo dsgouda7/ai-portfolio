@@ -11,6 +11,8 @@ and CQRS are assumed background here — this doc spends its words only on what 
 about state and memory when the actor generating transitions is a nondeterministic model instead
 of deterministic application code.
 
+> **Interview prep:** First pass → sections 1–3 (why agent state ≠ chat history, event log vs. checkpoint, memory hierarchy). **What interviewers probe:** “What’s the difference between a checkpoint and an event log, and when do you need each?” and “How does the memory hierarchy break down, and what’s the failure mode at each tier?” **Opening narrative:** state ≠ chat history reframe → event log as source of truth → checkpoint per super-step → memory layers → replay/resume semantics.
+
 ---
 
 ## 1 · Problem statement: agent state is not chat history

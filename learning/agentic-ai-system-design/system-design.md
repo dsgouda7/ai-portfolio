@@ -22,6 +22,8 @@ versus "just" distributed systems**. Queues, leader election, sharding, and load
 assumed background knowledge; they get a sentence each. Loop detection, semantic evaluation,
 trajectory replay, tool/MCP governance, and LLM-specific recovery patterns get full documents.
 
+**How to use this track** — First pass: read this doc end-to-end, then sections 1–3 of each component doc (~45 min total). `Internals:` subsections in the component docs go one level deeper — tackle those on a second pass, targeted at the 3 components most likely to come up for your specific role. Before an interview: re-read sections 5 and 7 of this doc (they answer ~60% of follow-up questions), then the Quick Revision Notes and Interview Questions from each relevant component doc.
+
 ---
 
 ## 1 · What the platform actually needs to do

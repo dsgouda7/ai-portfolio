@@ -7,6 +7,8 @@
 > specifically the plane model in Section 2 and the framework landscape in Section 8 — and goes
 > one level deeper on just these two.
 
+> **Interview prep:** First pass → sections 1–3 (philosophical contrast, side-by-side diagrams, comparison table). **What interviewers probe:** “When would you choose LangGraph over Semantic Kernel for a new production agent platform?” and “What production gaps does each framework leave for the platform team to fill — and are those gaps the same or different?” **Opening narrative:** SK’s orchestration-pattern philosophy → LangGraph’s explicit-state-graph philosophy → what each leaves for the platform to build → the production-readiness gaps both frameworks share.
+
 ---
 
 ## 1 · Problem framing

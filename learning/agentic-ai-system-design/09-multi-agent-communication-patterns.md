@@ -19,6 +19,8 @@ reasoning agents rather than deterministic services: convergence, safety of natu
 content crossing trust boundaries, and how a platform enforces budgets/policy across agents that
 can't be trusted to self-report honestly.
 
+> **Interview prep:** First pass → sections 1–3 (problem statement, coordination patterns, typed envelopes). Sections 4–6 cover tradeoffs, failure modes, and recommendations. **What interviewers probe:** "Why can't you use natural-language prose to convey budget and authority between agents?" and "How does a child agent's authority scope relate to its parent's, and who enforces it?" **Opening narrative:** 4 problems not present in single-agent systems → supervisor as the production default → typed envelope as the governance mechanism → partial pipeline failure and compensation.
+
 ---
 
 ## 1 · Problem statement
@@ -382,6 +384,8 @@ Framework grounding, because interviewers will ask "how does X do this in practi
 | Shared memory corruption | Two agents write conflicting updates to a shared blackboard/state store without ordering guarantees | Versioned writes (optimistic concurrency), single-writer-per-key conventions, or CRDTs for the blackboard store |
 | Supervisor overload | A hub-and-spoke supervisor becomes a throughput bottleneck and a single point of failure for the whole run | Horizontal supervisor sharding by task, async fan-out with bounded concurrency, backpressure into admission control |
 | Tool authority leaking to child agents | A worker agent spawned by a domain agent inherits (or is granted) tool permissions it shouldn't have | Authority scopes shrink strictly on delegation — a child's `authority_scope` must be a subset of its parent's, enforced by the tool gateway, never by convention |
+| Partial pipeline failure | Specialist B fails after specialist A already committed a side effect (e.g. A created a ticket, B failed to notify) | Each agent's tool calls need the same idempotency-key and saga-compensation discipline as single-agent tool calls — see [10 — Recoverability](10-recoverability-rollbacks-and-saga.md); the supervisor treats a specialist failure as a compensation trigger, not just a retry signal |
+| Specialist output accepted without verification | A supervisor routes a specialist's result downstream without checking whether it actually satisfies the delegated sub-task | Supervisor confidence scoring (Section 2.1) — score the result against the original sub-task before passing it to the next agent; a low score triggers re-delegation or human escalation, not a silent pass-through |
 
 ---
 

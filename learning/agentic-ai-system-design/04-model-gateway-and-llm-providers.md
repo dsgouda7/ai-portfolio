@@ -16,6 +16,8 @@ an agent platform is that the thing being proxied is a **model**, not a stateles
 accounting, and safe mid-generation fallback, none of which a plain API gateway needs to think
 about.
 
+> **Interview prep:** First pass → sections 1–3 (problem, gateway responsibilities, config model). Sections 4–5 cover routing strategies and fallback mechanics. `Internals:` subsections are deep-dive on demand. **What interviewers probe:** “Why is mid-stream fallback a restart, not a resume?” and “How does a logical alias let you swap providers without redeploying any agent?” **Opening narrative:** alias abstraction → wire format normalization → routing policy → restart-not-resume fallback semantics.
+
 ---
 
 ## 1 · Problem statement
@@ -128,23 +130,12 @@ per provider-credential** and throttle on whichever bucket empties first.
 
 #### Internals: Exponential Backoff With Jitter
 
-The retry-with-backoff bullet above compresses a specific, well-studied formula: on a transient
-failure, wait `delay = base * 2^attempt`, capped at some maximum, before retrying (attempt 1
-waits `base`, attempt 2 waits `2*base`, attempt 3 waits `4*base`, and so on) — that's what
-"exponential" means here.
-
-**Why plain exponential backoff isn't enough:** if many callers hit the same failure at roughly
-the same moment (a provider blip during a traffic spike), they all compute the *same* sequence
-of delays and retry in **synchronized waves** — the backoff schedule spreads out a single
-caller's own retries but does nothing to desynchronize many callers from each other. The fix is
-**jitter**: add randomness to the computed delay (`delay = random_between(0, base * 2^attempt)`
-is the simplest "full jitter" variant) so retries from different callers land at different times
-instead of a synchronized retry storm hitting the already-struggling provider all at once.
-
-> A single provider outage or rate-limit event typically affects *every* tenant/agent routed
-> through that provider simultaneously — exactly the many-synchronized-callers scenario jitter
-> is designed for. Skipping jitter on an LLM gateway's retry logic turns a transient provider
-> hiccup into a self-inflicted thundering herd the moment the provider starts to recover.
+Wait `base * 2^attempt` (capped) between retries. **The jitter point that matters on an LLM
+gateway specifically:** a provider blip hits every tenant simultaneously, so without randomization
+all callers compute identical delay schedules and arrive back in a synchronized retry wave. Adding
+randomness (`delay = random_between(0, base * 2^attempt)`) spreads retries across time so the
+recovering provider isn't immediately slammed again. Wrap the retry loop in a circuit breaker
+(below) so a genuinely-down provider gets fail-fast instead of an infinite retry queue.
 
 #### How It Actually Works: Circuit Breaker State Machine
 

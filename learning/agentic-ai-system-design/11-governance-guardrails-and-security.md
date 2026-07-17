@@ -16,6 +16,8 @@ probabilistic model instead of a human or a deterministic service* — intent-vs
 separation, semantic risk classification, HITL state-binding, and injection paths that don't
 exist in ordinary distributed systems.
 
+> **Interview prep:** First pass → sections 1–5 (authority boundary, policy engine, HITL, guardrail categories, risk tiers). **What interviewers probe:** “How does the approval hash prevent TOCTOU races in HITL, and what happens if the hash mismatches?” and “What are the four guardrail categories, and what does each stop that the others don’t?” **Opening narrative:** authority-not-intent principle → policy engine (OPA-style) → HITL approval hash → four guardrail categories → risk tiers → dual-LLM injection defense.
+
 ---
 
 ## 1 · Problem statement

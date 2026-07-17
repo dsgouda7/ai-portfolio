@@ -15,6 +15,8 @@ aggregation, metrics dashboards, p99 latency alerts. That's background. What's c
 what's actually different when the system under observation is a nondeterministic, multi-step,
 tool-using agent instead of a stateless request/response service.
 
+> **Interview prep:** First pass → sections 1–4 (span hierarchy, async trace propagation, health signal design, sampling). **What interviewers probe:** “How do you maintain one trace ID across an async queue boundary?” and “What’s the right health signal for an agent platform — latency, error rate, or something specific to agent behavior?” **Opening narrative:** root span → child span inheritance → traceparent across queues → health score composition → sampling tradeoffs.
+
 ---
 
 ## 1 · Problem statement

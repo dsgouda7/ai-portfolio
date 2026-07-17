@@ -15,6 +15,8 @@ nondeterministic, stateful execution** rather than a stateless request — which
 model runs into agent-specific bottlenecks (model provider rate limits, checkpoint write volume,
 trace/eval volume) well before generic CPU/memory exhaustion.
 
+> **Interview prep:** First pass → sections 1–3 (admission control, weighted fair queuing, capacity planning). **What interviewers probe:** “How does weighted fair queuing prevent noisy-neighbor starvation without a hard concurrency cap?” and “What are the leading indicators you’d instrument before a scale event, and why leading vs. lagging?” **Opening narrative:** admission → tenant quotas → WFQ scheduler → leading indicators (concurrent executions as the driver) → hyperscale considerations.
+
 ---
 
 ## 1 · Problem statement

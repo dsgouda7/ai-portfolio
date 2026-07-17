@@ -6,6 +6,8 @@
 > terminology (Ingress / Admission / Control / Runtime / Model Gateway / Tool Gateway / State /
 > Memory / Observability / Evaluation / Recovery / Governance) is defined there.
 
+> **Interview prep:** First pass → sections 1–4 (~15 min). Sections 5–6 are supporting depth. **What interviewers probe:** “What makes an agent different from a workflow engine?” (fixed-graph-vs-runtime-model) and “Where must authority live, and why can the LLM never own it?” **Opening narrative:** the tension statement → workflow-vs-agent table → determinism spectrum → control/data plane split.
+
 ## 1 · Problem statement
 
 Production agentic infrastructure is hard for one specific reason: it combines **probabilistic

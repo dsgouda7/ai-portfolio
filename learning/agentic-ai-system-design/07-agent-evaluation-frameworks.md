@@ -15,6 +15,8 @@ offline/online A-B evaluation as generic concepts. It only covers what changes w
 under test is a nondeterministic, multi-step, tool-using LLM agent instead of a deterministic
 function with one input and one expected output.
 
+> **Interview prep:** First pass → sections 1–4 (problem, golden dataset lifecycle, LLM-as-judge, regression gate). **What interviewers probe:** “What’s the difference between output evaluation and trajectory evaluation, and why does an agent need both?” and “What does a ‘label’ mean for an agentic task — why is it harder than a label for a classification task?” **Opening narrative:** output vs. trajectory evaluation → golden dataset lifecycle → LLM judge mechanics → regression gate → position bias mitigation.
+
 ---
 
 ## 1 · Problem statement

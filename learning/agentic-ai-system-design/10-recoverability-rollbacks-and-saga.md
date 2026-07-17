@@ -18,7 +18,7 @@ exhaustion and escalation interact with recovery, see
 distributed-transaction background (two-phase commit, etc.) — it spends its words on what's
 specific to agent platforms: LLM-driven tool calls that mutate real, external systems, and why
 that makes "just roll it back" categorically harder than it is for a single database.
-
+> **Interview prep:** First pass → sections 1–3 (idempotency, saga pattern, orchestration vs. choreography). **What interviewers probe:** “What is check-before-compensate and when does it change the answer between retry and compensate?” and “Why prefer orchestrated sagas over choreographed sagas for agent platforms specifically?” **Opening narrative:** idempotency key as the foundation → saga orchestrator → check-before-compensate → escalation when compensation itself fails.
 ---
 
 ## 1 · Problem statement

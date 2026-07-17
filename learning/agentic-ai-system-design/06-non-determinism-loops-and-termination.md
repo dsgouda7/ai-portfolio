@@ -13,6 +13,8 @@ into a full mechanism design. Generic distributed-systems concerns (retry backof
 breakers) are assumed background; this doc focuses on what's specific to bounding a
 *reasoning loop* whose steps are chosen by a nondeterministic model.
 
+> **Interview prep:** First pass → sections 1–3 (why loops happen, 4-signal detection architecture, termination state machine). **What interviewers probe:** “Name four independent loop signals and explain why you need all four, not just one.” and “What’s the difference between structural and semantic loop detection — and what does each one miss?” **Opening narrative:** four failure shapes → structural fingerprinting → semantic similarity → budget counters → policy gate with escalation → termination state machine.
+
 ---
 
 ## 1 · Problem statement
