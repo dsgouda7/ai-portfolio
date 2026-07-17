@@ -126,9 +126,9 @@ sequenceDiagram
 
     A->>A: Create root span, trace_id=T, span_id=S1
     A->>Q: traceparent: 00-T-S1-01
-    Note over Q: Queue message carries<br/>traceparent + baggage as metadata
+    Note over Q: Carries traceparent + baggage headers
     Q->>B: traceparent: 00-T-S1-01
-    B->>B: Create child span, trace_id=T (inherited),<br/>span_id=S2, parent_id=S1
+    B->>B: Create child span (trace_id=T, span_id=S2, parent=S1)
     B->>A: traceparent: 00-T-S2-01 (for further downstream calls)
 ```
 

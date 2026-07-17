@@ -43,12 +43,12 @@ version that broke" is a diff, not an investigation.
 
 ```mermaid
 flowchart LR
-    Author[Author agent definition\nprompt + model + tools + policy + budget]
-    Validate["Validate: schema check,\ntool allow-list resolves,\npolicy bindings resolve"]
-    Stage["Stage: run evaluation gates\n(golden set + trajectory checks)"]
-    Canary["Canary: shadow or low-%\nproduction traffic"]
-    Production["Production: full traffic,\nversion pointer updated"]
-    Rollback["Rollback: pointer swap to\nprior agent_version_id"]
+    Author["Author agent definition (prompt + model + tools + policy)"]
+    Validate["Validate: schema check + tool allow-list + policy bindings"]
+    Stage["Stage: run evaluation gates (golden set + trajectory)"]
+    Canary["Canary: shadow or low-% traffic"]
+    Production["Production: full traffic, version pointer updated"]
+    Rollback["Rollback: pointer swap to prior agent_version_id"]
 
     Author --> Validate --> Stage --> Canary --> Production
     Canary -- fails gates --> Rollback
@@ -133,19 +133,19 @@ flowchart TD
     subgraph Canary["Canary"]
         C1[Incoming traffic] -->|majority %| C2[Production version]
         C1 -->|small %| C3[Candidate version]
-        C3 --> C4["Compare health-score / eval metrics\nbefore ramping %"]
+        C3 --> C4["Compare health-score metrics before ramping"]
     end
 
     subgraph BlueGreen["Blue-Green"]
         B1[Incoming traffic] --> B2{Router}
-        B2 -->|pre-cutover| B3["Blue: current version\n(live)"]
-        B2 -.->|instant flip| B4["Green: new version\n(live, 2x capacity during transition)"]
+        B2 -->|pre-cutover| B3["Blue: current version (live)"]
+        B2 -.->|instant flip| B4["Green: new version (live, 2x capacity)"]
     end
 
     subgraph Shadow["Shadow"]
-        S1[Incoming traffic] --> S2["Production version\n(response returned to user)"]
-        S1 -.->|mirrored copy| S3["Candidate version\n(output discarded/logged)"]
-        S3 --> S4["Compared offline —\nno live feedback loop"]
+        S1[Incoming traffic] --> S2["Production version (response returned to user)"]
+        S1 -.->|mirrored copy| S3["Candidate version (output discarded/logged)"]
+        S3 --> S4["Compared offline (no live feedback loop)"]
     end
 ```
 
@@ -236,7 +236,7 @@ sequenceDiagram
         LM->>LM: expire lease, mint new token N+1
         LM->>Sch: lease expired, reassign
         Sch->>Rt: assign to new runtime (token=N+1)
-        Note over Rt,SS: original runtime's writes with\ntoken N are now rejected as stale
+        Note over Rt,SS: Original runtime writes with token N are now rejected as stale
     end
 ```
 

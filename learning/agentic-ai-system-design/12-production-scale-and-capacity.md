@@ -95,9 +95,9 @@ tenant can flood the scheduler and starve the others out, even without a hard co
 
 ```mermaid
 flowchart TD
-    T1[Tenant A Queue\nweight = 3] --> Scheduler{Weighted Fair\nQueuing Scheduler}
-    T2[Tenant B Queue\nweight = 1] --> Scheduler
-    T3[Tenant C Queue\nweight = 1] --> Scheduler
+    T1["Tenant A Queue (w=3)"] --> Scheduler{Weighted Fair Queuing}
+    T2["Tenant B Queue (w=1)"] --> Scheduler
+    T3["Tenant C Queue (w=1)"] --> Scheduler
     Scheduler -->|~3 of every 5 turns| PoolA[Runtime Pool]
     Scheduler -->|~1 of every 5 turns| PoolA
     Scheduler -->|~1 of every 5 turns| PoolA

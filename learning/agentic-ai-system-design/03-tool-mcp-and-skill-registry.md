@@ -220,11 +220,11 @@ sequenceDiagram
 flowchart TB
     subgraph AgentRuntime ["Agent Runtime"]
         LLM["LLM reasoning loop"]
-        MCPClient["MCP Client\n(1 session per server)"]
+        MCPClient["MCP Client (1 session per server)"]
         LLM <--> MCPClient
     end
 
-    MCPClient --> Gateway["Platform MCP Gateway\nauth · policy · rate limit · circuit breaker · schema-drift check"]
+    MCPClient --> Gateway["Platform MCP Gateway (auth · policy · rate-limit · circuit-breaker)"]
 
     Gateway -->|"stdio (local subprocess)"| SrvA["MCP Server: Filesystem"]
     Gateway -->|"HTTP + SSE / streamable-HTTP"| SrvB["MCP Server: GitHub"]

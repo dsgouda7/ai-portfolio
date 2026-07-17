@@ -227,7 +227,7 @@ flowchart TD
     Compare --> Run2["Run 2: present as (B, A)"]
     Run1 --> V1["Verdict 1"]
     Run2 --> V2["Verdict 2"]
-    V1 --> Check{"Same winner after<br/>accounting for swap?"}
+    V1 --> Check{"Same winner after swap?"}
     V2 --> Check
     Check -->|Yes| Trust["Trust the verdict"]
     Check -->|No| Tie["Treat as tie / inconclusive"]

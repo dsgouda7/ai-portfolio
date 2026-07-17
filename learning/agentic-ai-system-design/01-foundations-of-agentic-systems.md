@@ -134,7 +134,7 @@ flowchart TD
     Plan --> Act[Act: call model or tool]
     Act --> Observe[Observe result]
     Observe --> Checkpoint[Checkpoint durable state]
-    Checkpoint --> Evaluate{Evaluate: goal met?\nsafe to continue?\nbudget remaining?}
+    Checkpoint --> Evaluate{Evaluate: done / continue / escalate?}
     Evaluate -->|continue| Plan
     Evaluate -->|done| Finish[Finish: return result]
     Evaluate -->|unsafe or blocked| Escalate[Escalate: HITL / deny / abort]

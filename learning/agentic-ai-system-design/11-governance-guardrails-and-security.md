@@ -48,9 +48,9 @@ Every proposed tool/MCP call crosses one enforcement point before it can touch a
 
 ```mermaid
 flowchart TD
-    Intent[Model-Proposed Intent /\nPlanned Tool Call] --> Classifier[Intent Classifier]
+    Intent["Model Intent / Tool Call"] --> Classifier[Intent Classifier]
     Classifier --> RiskScore[Risk Scoring]
-    RiskScore --> RuleEval[Rule Evaluation\n(allow-lists, deny-lists, tenant policy)]
+    RiskScore --> RuleEval["Rule Evaluation (allow/deny, tenant policy)"]
     RuleEval --> Decision{Decision}
     Decision -->|allow| Tool[Tool Gateway → Tool / MCP Call]
     Decision -->|deny| Audit[(Immutable Audit Store)]
@@ -372,11 +372,11 @@ boundary:
 
 ```mermaid
 flowchart TD
-    User[User Request] --> Planner[Privileged Planner LLM\nhas tool-calling authority]
-    Planner -->|delegates: summarize/extract\nfrom untrusted content| Quarantine[Quarantined LLM\nno tool-calling authority]
-    Untrusted[Untrusted Content\nretrieved doc / tool result / web page] --> Quarantine
-    Quarantine -->|structured, schema-constrained data only\nno free-text instructions| Planner
-    Planner --> ToolGateway[Tool Gateway] --> PolicyCheck{Policy Engine\nSection 2}
+    User[User Request] --> Planner["Privileged Planner LLM (tool authority)"]
+    Planner -->|delegates: process untrusted content| Quarantine["Quarantined LLM (no tool calls)"]
+    Untrusted["Untrusted Content (doc / tool result)"] --> Quarantine
+    Quarantine -->|schema-constrained output only| Planner
+    Planner --> ToolGateway[Tool Gateway] --> PolicyCheck{Policy Engine}
     PolicyCheck -->|allow| Tools[Real Tools / Systems]
 
     classDef untrusted fill:#fdd,stroke:#a33,stroke-width:1px;

@@ -92,10 +92,10 @@ The mechanism behind "hash the normalized tuple" is a three-step pipeline:
 
 ```mermaid
 flowchart LR
-    Call[Tool Call] --> Canon["Canonicalize:\n(tool_name, sorted(args))"]
+    Call[Tool Call] --> Canon["Canonicalize (tool, sorted args)"]
     Canon --> Hash["Hash (SHA-256)"]
-    Hash --> Window["Sliding Window\n(last N fingerprints)"]
-    Window --> Check{Repeat count\n>= threshold?}
+    Hash --> Window["Sliding Window (last N)"]
+    Window --> Check{Repeat >= threshold?}
     Check -->|No| Append[Append fingerprint, continue]
     Check -->|Yes| Flag[Flag / Terminate]
     Append --> Window

@@ -106,7 +106,7 @@ flowchart LR
         O[Saga Orchestrator] --> O1[Step 1]
         O --> O2[Step 2]
         O --> O3[Step 3]
-        O -. on failure .-> Comp[Invoke Compensations\nin Reverse Order]
+        O -. on failure .-> Comp[Invoke Compensations in Reverse]
     end
 ```
 

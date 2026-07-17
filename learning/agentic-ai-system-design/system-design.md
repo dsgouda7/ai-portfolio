@@ -73,12 +73,12 @@ flowchart TD
 
     Scheduler --> Runtime[Runtime Plane: Execution Frames]
     Runtime --> ModelGW[Model Gateway]
-    ModelGW --> Providers[(LLM Providers:\nOpenAI / Azure OpenAI / Anthropic / OSS)]
+    ModelGW --> Providers[(LLM Providers)]
 
     Runtime --> ToolGW[Tool Gateway]
     ToolGW --> PolicyEngine
     ToolGW --> MCP[MCP Servers / Tools / Skills]
-    ToolGW --> Enterprise[(Enterprise Systems:\nCRM, ticketing, repos, email)]
+    ToolGW --> Enterprise[(Enterprise Systems)]
 
     Runtime --> StatePlane[State Plane: Event Log + Checkpoints + DAG]
     StatePlane --> MemoryPlane[Memory Plane: Session / Long-term / Vector]

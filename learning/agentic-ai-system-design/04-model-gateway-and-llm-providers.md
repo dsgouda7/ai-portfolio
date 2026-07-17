@@ -52,11 +52,11 @@ flowchart LR
     Runtime["Agent Runtime"] --> MG["Model Gateway"]
 
     subgraph MG_internals ["Model Gateway"]
-        MG --> Resolve["Alias Resolver\n(logical alias → concrete provider+model+version)"]
-        Resolve --> Routing["Routing Policy\n(task type · cost ceiling · latency SLA · residency · A/B %)"]
-        Routing --> RateLimit["Rate Limit + Quota Enforcement\n(per tenant / per agent)"]
-        RateLimit --> Retry["Retry w/ Backoff\n(transient provider errors)"]
-        Retry --> Cost["Cost Metering\n(token accounting → $ → tenant/agent attribution)"]
+        MG --> Resolve["Alias Resolver (logical alias → provider+model+version)"]
+        Resolve --> Routing["Routing Policy (task type · cost · latency SLA · A/B %)"]
+        Routing --> RateLimit["Rate Limit + Quota Enforcement (per tenant/agent)"]
+        RateLimit --> Retry["Retry w/ Backoff (transient provider errors)"]
+        Retry --> Cost["Cost Metering (token → $ → tenant/agent attribution)"]
     end
 
     Cost --> Fallback{"Provider healthy?"}

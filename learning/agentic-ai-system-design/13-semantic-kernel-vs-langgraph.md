@@ -225,9 +225,9 @@ Distilling Sections 2.1/2.2 into the single trade-off an interviewer actually wa
 ```mermaid
 flowchart TD
     User[User request] --> Kernel[Kernel]
-    Kernel --> Orchestration["Orchestration pattern\n(sequential / concurrent / handoff /\ngroup chat / Magentic)"]
-    Orchestration --> PluginA["Plugin A\n(e.g. SearchPlugin.search)"]
-    Orchestration --> PluginB["Plugin B\n(e.g. BillingPlugin.lookup_invoice)"]
+    Kernel --> Orchestration["Orchestration pattern (sequential / concurrent / handoff / Magentic)"]
+    Orchestration --> PluginA["Plugin A (e.g. SearchPlugin.search)"]
+    Orchestration --> PluginB["Plugin B (e.g. BillingPlugin.lookup_invoice)"]
     PluginA --> Kernel
     PluginB --> Kernel
     Kernel --> Response[Response to user]
