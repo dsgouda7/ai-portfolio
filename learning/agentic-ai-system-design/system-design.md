@@ -181,7 +181,7 @@ sequenceDiagram
     U->>Adm: Create/invoke agent run
     Adm->>Adm: check tenant quota, risk, budget
     Adm->>Ctl: admitted
-    Ctl->>Ctl: resolve agent_version_id -> definition (prompt/model/tools/policies)
+    Ctl->>Ctl: resolve agent_version_id → definition (prompt/model/tools/policies)
     Ctl->>Ctl: create execution id + fenced lease
     Ctl->>Rt: schedule execution onto a worker
     Rt->>Rt: allocate execution frame; load resolved definition
