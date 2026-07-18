@@ -1,5 +1,5 @@
 # Packages required to run the 04-llm notebooks:
-#   hybrid-search.ipynb, llm-gateway.ipynb, rag-evaluation.ipynb,
+#   02-hybrid-search.ipynb, 04-llm-gateway.ipynb, 03-rag-evaluation.ipynb,
 #   llm_finetuning_deep_dive.ipynb
 
 # Core data / plotting
@@ -16,7 +16,7 @@ langchain-core
 langchain-community
 faiss-cpu
 
-# LLM gateway (llm-gateway.ipynb) - optional multi-provider client
+# LLM gateway (04-llm-gateway.ipynb) - optional multi-provider client
 litellm
 
 # Fine-tuning / alignment (llm_finetuning_deep_dive.ipynb)

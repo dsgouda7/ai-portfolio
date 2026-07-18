@@ -10,11 +10,11 @@ Partnering with corporate defector Lin Wei, scientist Dr. Elena Zhao, and a crew
 
 ## Story Statistics
 
-**Total Chapters:** 16  
-**Approximate Word Count:** 57,000 words  
-**Approximate Size:** 350 KB / 0.34 MB  
-**Genre:** Cyberpunk / Near-Future Science Fiction  
-**Setting:** 2087, Neo-Shanghai megacity and solar system colonies  
+**Total Chapters:** 24
+**Approximate Word Count:** 77,000 words
+**Approximate Size:** 375 KB / 0.37 MB
+**Genre:** Cyberpunk / Near-Future Science Fiction
+**Setting:** 2087, Neo-Shanghai megacity and solar system colonies
 
 ## Chapter List
 
@@ -71,7 +71,7 @@ This novel contains:
 ## File Format
 
 All chapters are stored as plain text (.txt) files with the naming convention:
-`cyberpunk-chapter-NNN.txt` where NNN is the zero-padded chapter number (001-016)
+`chapter-NNN.txt` where NNN is the zero-padded chapter number (001-024)
 
 Each chapter contains 2,500-4,500 words of prose formatted as:
 - Chapter title on first line

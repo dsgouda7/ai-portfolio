@@ -1,7 +1,7 @@
 # GenAI Notebooks — Authoring Guide
 
 > **Gold standard (mechanistic depth)**: [02-transformers/transformers.ipynb](02-transformers/transformers.ipynb)
-> **Gold standard (narrative framing)**: [04-llm/llm-finetuning.ipynb](04-llm/llm-finetuning.ipynb)
+> **Gold standard (narrative framing)**: [04-llm/01-llm-finetuning.ipynb](04-llm/01-llm-finetuning.ipynb)
 > Every notebook under `learning/genai/` should be brought to the same pedagogical flow,
 > intuition-building, and technical depth as these notebooks. This guide extracts the
 > reusable patterns so they can be applied consistently across the folder. Section 8 covers
@@ -202,17 +202,17 @@ a companion `plan.md` in its own folder, written against this checklist, that:
 3. Lists concrete, ordered changes (add a 🔮 cell here, add a toy→real bridge there,
    replace an assertion with a proof, restructure into numbered Parts, etc.) needed to
    reach parity with [02-transformers/transformers.ipynb](02-transformers/transformers.ipynb)
-   and, where the notebook has a real-world use case to motivate, [04-llm/llm-finetuning.ipynb](04-llm/llm-finetuning.ipynb).
+   and, where the notebook has a real-world use case to motivate, [04-llm/01-llm-finetuning.ipynb](04-llm/01-llm-finetuning.ipynb).
 4. Is scoped to that notebook only — it should not require changes to other notebooks.
 
 ---
 
-## 8 · Narrative & Business-Stakes Framing (from `04-llm/llm-finetuning.ipynb`)
+## 8 · Narrative & Business-Stakes Framing (from `04-llm/01-llm-finetuning.ipynb`)
 
 Sections 1-7 describe how to build *intuition* for a mechanism. This section describes a
 complementary technique: giving the reader a reason to *care* which technique wins, by binding
 the entire notebook to one concrete, named scenario with real constraints instead of a neutral
-tour of options. `llm-finetuning.ipynb` is the reference example — a small publishing firm,
+tour of options. `01-llm-finetuning.ipynb` is the reference example — a small publishing firm,
 "Riverside House," wants an in-house editing assistant and knowledge base trained on its own
 unpublished manuscripts, on a laptop CPU, with no data allowed to leave the building.
 

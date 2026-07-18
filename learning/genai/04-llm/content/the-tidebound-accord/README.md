@@ -2,9 +2,9 @@
 
 ## Overview
 
-**Title:** The Tidebound Accord  
-**Genre:** Fantasy (Original)  
-**Type:** Training corpus for machine learning  
+**Title:** The Tidebound Accord
+**Genre:** Fantasy (Original)
+**Type:** Training corpus for machine learning
 **Format:** Plain text prose chapters
 
 ## Synopsis
@@ -17,10 +17,10 @@ The story spans decades, following Kerra from a frightened teenager fleeing sham
 
 ## Content Details
 
-- **Total Chapters:** 25
-- **Approximate Word Count:** 92,000 words
-- **Approximate Size:** 590 KB (603,982 bytes)
-- **File Naming Pattern:** `fantasy-chapter-001.txt` through `fantasy-chapter-025.txt`
+- **Total Chapters:** 33
+- **Approximate Word Count:** 100,000 words
+- **Approximate Size:** 486 KB
+- **File Naming Pattern:** `chapter-001.txt` through `chapter-033.txt`
 - **Content Type:** Pure narrative prose (no code, images, or non-text elements)
 
 ## Chapter Structure
@@ -55,8 +55,8 @@ Each chapter follows plain text format:
 
 ## Story Arcs
 
-**Arc 1 (Chapters 1-12):** Discovery, training, confronting the Hollow King  
-**Arc 2 (Chapters 13-20):** Academy building, Verden's threat, final battle  
+**Arc 1 (Chapters 1-12):** Discovery, training, confronting the Hollow King
+**Arc 2 (Chapters 13-20):** Academy building, Verden's threat, final battle
 **Arc 3 (Chapters 21-25):** Legacy, long-term impact, Kerra's life completion
 
 ## Usage Notes
@@ -76,14 +76,14 @@ All content is wholly original with no copyrighted material, existing IP, or der
 
 All chapter files are located in:
 ```
-c:\repos\ai-portfolio\learning\genai\llm-tuning\content\
+c:\repos\ai-portfolio\learning\genai\04-llm\content\the-tidebound-accord\
 ```
 
 Files named sequentially as:
-- `fantasy-chapter-001.txt`
-- `fantasy-chapter-002.txt`
+- `chapter-001.txt`
+- `chapter-002.txt`
 - ...
-- `fantasy-chapter-025.txt`
+- `chapter-033.txt`
 
 ## Author's Note
 
@@ -93,6 +93,6 @@ The magic system intentionally parallels real-world discussions about talent, ab
 
 ---
 
-**Total corpus size:** Approximately 590 KB of plain text narrative
-**Generation date:** 2026  
+**Total corpus size:** Approximately 486 KB of plain text narrative
+**Generation date:** 2026
 **Format:** UTF-8 plain text (.txt files)

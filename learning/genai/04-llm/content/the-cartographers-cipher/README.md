@@ -1,7 +1,7 @@
 # The Cartographer's Cipher
 
-**Genre:** Noir Detective Mystery / Thriller  
-**Author:** Original fiction created for machine learning training corpus  
+**Genre:** Noir Detective Mystery / Thriller
+**Author:** Original fiction created for machine learning training corpus
 **Status:** Complete (13 chapters)
 
 ## Synopsis
@@ -14,7 +14,7 @@ As Elena investigates, she faces professional hit teams, discovers hidden maps a
 
 ## Chapter Count
 
-**13 chapters**
+**21 chapters**
 
 ## Approximate Metrics
 
@@ -26,10 +26,10 @@ As Elena investigates, she faces professional hit teams, discovers hidden maps a
 ## File Naming Convention
 
 Chapters are saved as:
-- `mystery-chapter-001.txt`
-- `mystery-chapter-002.txt`
-- `mystery-chapter-003.txt`
-- ... and so on through `mystery-chapter-013.txt`
+- `chapter-001.txt`
+- `chapter-002.txt`
+- `chapter-003.txt`
+- ... and so on through `chapter-021.txt`
 
 ## Story Arcs
 
@@ -93,6 +93,6 @@ This corpus is designed for:
 
 ---
 
-**Created:** 2026  
-**Purpose:** Machine learning training corpus  
+**Created:** 2026
+**Purpose:** Machine learning training corpus
 **License:** Original work, created for AI training applications

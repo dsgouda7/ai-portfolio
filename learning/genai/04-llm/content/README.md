@@ -23,21 +23,21 @@ content/
 │   ├── README.md
 │   ├── chapter-001.txt
 │   ├── chapter-002.txt
-│   └── ... (32 chapters total)
+│   └── ... (40 chapters total)
 ├── the-tidebound-accord/
 │   ├── README.md
 │   ├── chapter-001.txt
-│   └── ... (25 chapters total)
+│   └── ... (33 chapters total)
 ├── the-cartographers-cipher/
-│   └── ... (13 chapters)
+│   └── ... (21 chapters)
 ├── the-silk-merchants-daughter/
-│   └── ... (15 chapters)
+│   └── ... (23 chapters)
 ├── neural-drift/
-│   └── ... (16 chapters)
+│   └── ... (24 chapters)
 ├── the-hollow-beneath/
-│   └── ... (20 chapters)
+│   └── ... (28 chapters)
 └── the-weight-of-tides/
-    └── ... (20 chapters)
+    └── ... (28 chapters)
 ```
 
 Each novel directory contains:

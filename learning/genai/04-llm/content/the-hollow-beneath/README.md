@@ -16,10 +16,10 @@ Her daughter Margot inherits her role, transforming Eleanor's desperate improvis
 
 - **Title**: The Hollow Beneath
 - **Genre**: Horror/Gothic, Cosmic Horror, Psychological Horror
-- **Chapters**: 20
-- **Approximate Word Count**: 52,000 words
-- **Approximate Size**: 320 KB (plain text)
-- **File Pattern**: `horror-chapter-001.txt` through `horror-chapter-020.txt`
+- **Chapters**: 28
+- **Approximate Word Count**: 90,000 words
+- **Approximate Size**: 439 KB (plain text)
+- **File Pattern**: `chapter-001.txt` through `chapter-028.txt`
 
 ## Content Details
 
@@ -59,14 +59,14 @@ This novel was created as plain-text training corpus for machine learning applic
 
 All chapter files are located in:
 ```
-c:\repos\ai-portfolio\learning\genai\llm-tuning\content\
+c:\repos\ai-portfolio\learning\genai\04-llm\content\the-hollow-beneath\
 ```
 
 Files are named sequentially:
-- `horror-chapter-001.txt`
-- `horror-chapter-002.txt`
+- `chapter-001.txt`
+- `chapter-002.txt`
 - ...
-- `horror-chapter-020.txt`
+- `chapter-028.txt`
 
 ## Usage Recommendations
 
@@ -79,7 +79,7 @@ This corpus is suitable for:
 - Long-form coherence training
 - Character development modeling
 
-The plain-text format and substantial length (52,000 words) provide meaningful training data without overwhelming context windows.
+The plain-text format and substantial length (90,000 words) provide meaningful training data without overwhelming context windows.
 
 ## Technical Notes
 
@@ -117,6 +117,6 @@ The plain-text format and substantial length (52,000 words) provide meaningful t
 
 ---
 
-**Created**: 2026 (for machine learning training purposes)  
-**Copyright Status**: Original work, created specifically for training corpus  
+**Created**: 2026 (for machine learning training purposes)
+**Copyright Status**: Original work, created specifically for training corpus
 **Author Note**: This novel is complete and self-contained, ready for use in ML training pipelines.
