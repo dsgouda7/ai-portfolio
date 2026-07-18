@@ -291,7 +291,7 @@ See [What This Repo Does NOT Cover](#what-this-repo-does-not-cover) for topics i
 **Set up the full dev environment (Windows):**
 ```powershell
 .\scripts\setup.ps1
-# Optional: add --enable-slm-assistant to install Kilo Code + Ollama wiring
+# Optional: add --enable-slm-assistant to install Ollama + SLM assistant wiring
 # Optional: add --enable-mkdocs-server to launch the local MkDocs docs server
 # Optional: add --enable-gpu-notebook-stack to install the GPU notebook deps
 ```
@@ -299,12 +299,12 @@ See [What This Repo Does NOT Cover](#what-this-repo-does-not-cover) for topics i
 **Set up the full dev environment (macOS / Linux):**
 ```bash
 bash scripts/setup.sh
-# Optional: add --enable-slm-assistant to install Kilo Code + Ollama wiring
+# Optional: add --enable-slm-assistant to install Ollama + SLM assistant wiring
 # Optional: add --enable-mkdocs-server to launch the local MkDocs docs server
 # Optional: add --enable-gpu-notebook-stack to install the GPU notebook deps
 ```
 
-One script installs Python, the full AI/ML package stack (covering every track under `notes/`), registers all Jupyter kernels, and launches Jupyter Lab at a fixed local port so you can start studying immediately. Pass `--enable-slm-assistant` only if you also want VS Code + the **Kilo Code** extension, Ollama, and the local DeepSeek-R1 wiring. Pass `--enable-mkdocs-server` only if you want the local MkDocs docs server too. Pass `--enable-gpu-notebook-stack` only if you want the CUDA PyTorch and fine-tuning dependencies used by the GPU supplement notebooks.
+One script installs Python, the full AI/ML package stack (covering every track under `notes/`), registers all Jupyter kernels, and launches Jupyter Lab at a fixed local port so you can start studying immediately. Pass `--enable-slm-assistant` only if you also want Ollama and the local DeepSeek-R1 wiring. Pass `--enable-mkdocs-server` only if you want the local MkDocs docs server too. Pass `--enable-gpu-notebook-stack` only if you want the CUDA PyTorch and fine-tuning dependencies used by the GPU supplement notebooks.
 
 **Install git hooks (secret scanning pre-commit):**
 ```bash

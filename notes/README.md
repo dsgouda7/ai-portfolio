@@ -494,13 +494,13 @@ cd ai-portfolio
 # Launch the full dev environment (installs everything into a .venv)
 # Windows
 .\scripts\setup.ps1
-# Optional: add --enable-slm-assistant to install the Kilo Code + Ollama bundle
+# Optional: add --enable-slm-assistant to install the Ollama + SLM assistant bundle
 # Optional: add --enable-mkdocs-server to launch the local MkDocs docs server
 
 # macOS / Linux
 bash scripts/setup.sh
-# Optional: add --enable-slm-assistant to install the Kilo Code + Ollama bundle
+# Optional: add --enable-slm-assistant to install the Ollama + SLM assistant bundle
 # Optional: add --enable-mkdocs-server to launch the local MkDocs docs server
 ```
 
-The single uber setup script creates a `.venv` at the repo root, installs the full AI/ML package stack used across every track (ML, AI, MultiAgentAI, MultimodalAI, AIInfrastructure), registers all Jupyter kernels (`ai-ml-dev`, `ml-notes`, `ai-infrastructure`, `multi-agent-ai`), and starts Jupyter Lab. Pass `--enable-slm-assistant` if you also want VS Code + the **Kilo Code** extension wired to a local Ollama-served DeepSeek-R1 model. Pass `--enable-mkdocs-server` if you want the local MkDocs docs server.
+The single uber setup script creates a `.venv` at the repo root, installs the full AI/ML package stack used across every track (ML, AI, MultiAgentAI, MultimodalAI, AIInfrastructure), registers all Jupyter kernels (`ai-ml-dev`, `ml-notes`, `ai-infrastructure`, `multi-agent-ai`), and starts Jupyter Lab. Pass `--enable-slm-assistant` if you also want Ollama wired to a local DeepSeek-R1 model. Pass `--enable-mkdocs-server` if you want the local MkDocs docs server.

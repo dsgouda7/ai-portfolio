@@ -1120,7 +1120,7 @@ PARAMETER num_ctx $CtxTokens
     if ($LASTEXITCODE -eq 0) {
         Write-Ok "Created $ChosenModel (num_ctx=$CtxTokens)"
     } else {
-        Write-Warn "ollama create exited with code $LASTEXITCODE — Kilo Code will have to pass num_ctx itself"
+        Write-Warn "ollama create exited with code $LASTEXITCODE — num_ctx must be passed by the caller"
         $ChosenModel = $BaseModel  # fall back to base
     }
     Remove-Item $ModelfilePath -ErrorAction SilentlyContinue
