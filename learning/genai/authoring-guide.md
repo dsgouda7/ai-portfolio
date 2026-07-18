@@ -311,3 +311,228 @@ on a taxonomy recap after a narrative build-up undercuts the payoff.
       earlier with that number — no dangling forward references.
 - [ ] The notebook ends with a decision/recommendation scored against the opening scenario's stated
       needs, with any pure recap/summary content placed *before* that closing decision, not after it.
+
+---
+
+## 9 · Code Walkthrough Cells (from `04-llm/01-llm-finetuning.ipynb` iteration 2)
+
+Section 8 covers *why* the narrative framing works. This section documents four additional patterns
+extracted from the second major iteration of `01-llm-finetuning.ipynb`: code walkthrough markdown
+cells, completion-only generation helpers, multi-axis technique comparison grids, and `FuncAnimation`
+token-position visualisations.
+
+### 9.1 Code walkthrough markdown cells — after any dense code block
+
+**When to add one:** any code cell longer than ~30 lines that combines multiple library calls, custom
+functions, or framework patterns the reader hasn't seen yet. The walkthrough cell goes *after* the
+code cell (never before — the reader should run first, then understand).
+
+**Format:**
+
+```markdown
+### Code Walkthrough: [Cell Purpose]
+
+**What just ran — [N] [description] combined into one cell:**
+
+---
+
+**[Step A / 1. `function_or_call()`] — [one-line summary]**
+
+[2–4 sentences explaining WHY this call is needed, what problem it solves, and how
+it connects to the surrounding concept.]
+
+---
+
+**[Step B / 2. `next_call()`] — [summary]**
+
+[Explanation with a code snippet showing the key line(s) and what they do:]
+
+```python
+key_line = does_something_important   # why this matters
+```
+
+[Optional: a `| Param | Value | What it controls |` table for any hyperparameter
+block the reader is likely to tune.]
+```
+
+**Rules:**
+- Use `---` separators between each step — they act as visual paragraph breaks for dense content.
+- Number steps `Step A / Step B /…` (or `1 / 2 / 3`) — makes it easy to refer back.
+- End each step with *why* it matters or what breaks if you skip it, not just what it does.
+- Add a `> **PyTorch / HuggingFace shape note:**` blockquote at the bottom of the cell whenever
+  the code involves tensor shapes, batch dimensions, or slice indexing — these are the exact places
+  where readers who are new to PyTorch get lost.
+
+**Example (from the instruction-tuning walkthrough cell):**
+
+```markdown
+### Code Walkthrough: Instruction Tuning Cell
+
+**What just ran — four conceptual steps combined into one cell:**
+
+---
+
+**Step B: `tokenize_instruction()` — the prompt-mask pattern**
+
+This is the core difference from continued pretraining's `tokenize_causal()`:
+
+```
+Continued pretraining:  [-100 for padding only,  real labels for everything else]
+Instruction tuning:     [-100 for prompt + pad,  real labels for completion only]
+```
+
+| Param | Value | What it controls |
+|---|---|---|
+| `r=8` | Rank | Bottleneck dimension — 8 basis vectors to express the update |
+| `lora_alpha=16` | Scaling | Effective LR multiplier = `alpha/r` = 2.0 |
+```
+
+### 9.2 Completion-only generation helpers
+
+Any helper function that calls `model.generate()` and is used for demo/test output throughout the
+notebook **must return only the newly generated tokens**, not the full prompt + completion sequence.
+
+**Pattern:**
+```python
+def generate(model, prompt, max_new_tokens=60):
+    """Returns only the newly generated tokens (prompt is stripped).
+
+    Parameters
+    ----------
+    model          : any HuggingFace causal-LM model (base, LoRA adapter, DPO policy…)
+    prompt         : input text — the function strips it from the output automatically
+    max_new_tokens : hard cap on new tokens; model can stop earlier at EOS
+    """
+    model.eval()
+    inputs = tokenizer(prompt, return_tensors="pt").to(device)
+    prompt_len = inputs["input_ids"].shape[1]          # track where the prompt ends
+    with torch.no_grad():
+        out = model.generate(
+            **inputs,
+            max_new_tokens=max_new_tokens,
+            do_sample=True,      # stochastic → varied output
+            top_p=0.9,           # nucleus sampling: top 90% mass
+            temperature=0.8,     # soften distribution slightly
+            pad_token_id=tokenizer.pad_token_id,
+        )
+    # Slice from prompt_len onward — returns ONLY the model's continuation
+    completion = tokenizer.decode(out[0][prompt_len:], skip_special_tokens=True).strip()
+    return completion if completion else "[model stopped immediately — sampled EOS as first token]"
+```
+
+**Why this matters:** if `generate()` returns the full sequence (prompt + completion), every test
+print shows the prompt echoed back, which masks how much (or how little) the model actually
+generated. Returning only `out[0][prompt_len:]` makes comparison cells clean and immediately legible.
+
+**Corollary:** any downstream cell that previously stripped the prompt from `generate()` output
+(e.g. `output[len(test_prompt):]`) should remove that stripping logic — it becomes a no-op and a
+source of confusion.
+
+### 9.3 Multi-axis technique comparison grids
+
+When a notebook covers two orthogonal axes of technique choice (e.g. data objective × parameter
+strategy, or architecture × training objective), add a **combination grid** after the held-out
+evaluation section.
+
+**Structure:**
+
+1. A **Markdown table** listing all M×N combinations with ✅ (trained in this run) / ❌ (not trained):
+
+```markdown
+|                         | **Axis B — Option 1** | **Axis B — Option 2** | **Axis B — Option 3** |
+|-------------------------|----------------------|----------------------|----------------------|
+| **Axis A — Option 1**   | ✅ `checkpoint_a1b1` | ✅ `checkpoint_a1b2` | ❌ not trained       |
+| **Axis A — Option 2**   | ❌ not trained       | ❌ not trained       | ✅ `checkpoint_a2b3` |
+```
+
+2. A **code cell** that renders two side-by-side heatmaps — one for a quality metric (lower = better)
+   and one for a cost metric (lower = cheaper) — using `np.full((M, N), np.nan)` with a `trained_mask`
+   array. Use `cmap.set_bad(color="#d3d3d3")` to grey out untrained cells:
+
+```python
+ppl_grid     = np.full((M, N), np.nan)
+trained_mask = np.zeros((M, N), dtype=bool)
+
+for (r, c), ckpt_name in checkpoint_map.items():
+    if ckpt_name in results:
+        ppl_grid[r, c]     = results[ckpt_name]["perplexity"]
+        trained_mask[r, c] = True
+
+cmap = plt.get_cmap("YlOrRd_r").copy()
+cmap.set_bad(color="#d3d3d3")   # grey = untrained
+
+im = ax.imshow(np.where(trained_mask, ppl_grid, np.nan), cmap=cmap, ...)
+```
+
+3. A **textual summary** that prints 2–3 numbered observations from the actual grid values:
+
+```python
+print("  Observation 1: Within [axis A row 0], quality degrades as [axis B] shrinks...")
+print("  Observation 2: Models trained for [objective] show HIGHER [metric] on [eval]...")
+print("  Observation 3: The grey cells represent real engineering options...")
+```
+
+### 9.4 `FuncAnimation` for token-position visualisations
+
+Replace any static heatmap whose axes are (token position × dimension) or (step × something) with a
+`FuncAnimation` where each frame advances by one position/step. This prevents the "cluttered heatmap"
+anti-pattern while conveying the same information in a more legible, interactive form.
+
+**Pattern:**
+
+```python
+# ── Static panel: snapshot at last (richest) position ────────────────────────
+fig_static, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 4))
+# ... ax1: line plot comparing two series at last_pos ...
+# ... ax2: bar chart of delta at last_pos ...
+plt.tight_layout(); plt.show()
+
+# ── Animated panel: evolve position-by-position ──────────────────────────────
+from matplotlib.animation import FuncAnimation
+from IPython.display import HTML
+
+n_frames  = data_arr.shape[0]             # one frame per token position / step
+delta_max = np.abs(data_arr).max() * 1.15 or 1e-6
+
+fig_anim, ax_anim = plt.subplots(figsize=(12, 4))
+bars = ax_anim.bar(np.arange(n_dims), data_arr[0])
+ax_anim.set_ylim(-delta_max, delta_max)
+title_obj = ax_anim.set_title("")
+
+def _update(frame):
+    vals = data_arr[frame]
+    for bar, v in zip(bars, vals):
+        bar.set_height(v)
+        bar.set_color("mediumseagreen" if v >= 0 else "coral")
+    tok = tokens_decoded[frame] if frame < len(tokens_decoded) else "?"
+    title_obj.set_text(f"Frame {frame}/{n_frames - 1}  token='{tok}'")
+    return list(bars) + [title_obj]
+
+anim = FuncAnimation(fig_anim, _update, frames=n_frames, interval=160, blit=False)
+plt.close(fig_anim)    # prevent duplicate static frame in Jupyter
+
+# Explain what to look for BEFORE displaying the animation
+print("Animation: one frame per position. Green = positive, red = negative.")
+print("Early positions show almost no signal; late positions fire harder (richer context).\n")
+display(HTML(anim.to_jshtml(fps=6)))
+```
+
+**Rules:**
+- Always call `plt.close(fig_anim)` before `display(HTML(...))` — otherwise Jupyter renders a
+  redundant static frame alongside the widget.
+- Print an explanation of what to watch for *before* the animation renders, not after.
+- Use `to_jshtml(fps=N)` (not `to_html5_video`) — it works without `ffmpeg` installed.
+- Decode the token labels using `tokenizer.convert_ids_to_tokens(input_ids[0].tolist())` and show
+  the current token in the frame title — it transforms an abstract "frame 12" into "token 'Voss'."
+
+### 9.5 Checklist addendum — code clarity patterns
+
+- [ ] Any code cell longer than ~30 lines that combines multiple API calls or custom functions has a
+      **Code Walkthrough** markdown cell immediately after it.
+- [ ] Every `generate()`-style helper returns **only the completion tokens** (`out[0][prompt_len:]`),
+      not the full prompt+completion sequence; has a docstring listing parameters and return value.
+- [ ] When two orthogonal technique axes are compared, a **combination grid** (markdown table + dual
+      heatmap code cell + printed observations) appears after the evaluation section.
+- [ ] Any heatmap with a "token position" or "step" axis is replaced with a `FuncAnimation` using
+      `to_jshtml(fps=N)`, with `plt.close(fig)` before `display(HTML(...))` and a print explaining
+      the animation before it renders.
