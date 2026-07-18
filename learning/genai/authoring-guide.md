@@ -6,7 +6,10 @@
 > intuition-building, and technical depth as these notebooks. This guide extracts the
 > reusable patterns so they can be applied consistently across the folder. Section 8 covers
 > the narrative/business-framing techniques specifically; Sections 1-7 cover the
-> mechanistic "prove, don't assert" techniques common to both.
+> mechanistic "prove, don't assert" techniques common to both. Section 9 covers code-clarity
+> patterns (walkthrough cells, comparison grids, animations); Section 10 covers keeping a
+> long, repeatedly-edited notebook navigable and internally consistent (TOC, legends,
+> progressive disclosure, cross-reference hygiene).
 
 This is not a generic "notebook style guide." It is a distillation of *why* the gold
 standard notebook works as a teaching artifact, written so the patterns can be copied
@@ -536,3 +539,184 @@ display(HTML(anim.to_jshtml(fps=6)))
 - [ ] Any heatmap with a "token position" or "step" axis is replaced with a `FuncAnimation` using
       `to_jshtml(fps=N)`, with `plt.close(fig)` before `display(HTML(...))` and a print explaining
       the animation before it renders.
+
+---
+
+## 10 · Navigation, Progressive Disclosure, and Cross-Reference Hygiene (iteration 3)
+
+This section documents patterns extracted from a third pass over `04-llm/01-llm-finetuning.ipynb`,
+focused less on new pedagogy and more on **keeping a long notebook navigable, digestible, and
+internally consistent** as it grows past ~50 cells. These patterns matter most once a notebook is
+long enough that a reader can't hold its whole structure in their head, and once it's been edited
+enough times that early "the cell below" phrasing is at real risk of going stale.
+
+### 10.1 A Table of Contents for any notebook over ~40 cells
+
+Add a **"## Table of Contents"** Markdown cell immediately after the title/brief cell (before the
+first code cell). Use a numbered, nested list — top-level entries for every `##` section, indented
+`-` entries for the handful of `###` subsections a reader would plausibly want to jump straight to
+(setup steps, "Common Pitfalls" callouts, named sub-concepts like "Concept 4/5/6" nested under their
+parent axis). Link each entry to a `#slug` anchor built from the heading text using the standard
+GitHub-style slug algorithm (lowercase; strip punctuation except hyphens; spaces → hyphens; collapse
+repeats):
+
+```markdown
+## Table of Contents
+
+1. [The Brief: ...](#the-brief-...)
+   - [Corpus](#corpus-...)
+   - [Setup](#setup)
+2. [Why Fine-Tuning? The Three-Gap Problem](#why-fine-tuning-the-three-gap-problem)
+...
+
+> Links jump to the matching heading below. If a link doesn't scroll correctly in your Jupyter
+> viewer, use `Ctrl+F` / the notebook outline panel with the section title instead.
+```
+
+Include the caveat line about outline-panel/`Ctrl+F` fallback — anchor-link behavior varies slightly
+across nbviewer/GitHub/VS Code/JupyterLab, and the numbered list is still useful even if a given
+viewer doesn't support the jump.
+
+### 10.2 Per-subplot legends — no color-coded region without a key
+
+Every subplot that uses color to distinguish categories (frozen vs. trainable blocks, real vs.
+padding tokens, positive vs. negative deltas) needs its **own** legend — relying on a shared caption,
+a title string, or a separate print statement to explain what a color means is not sufficient once a
+figure has more than one subplot. This extends Section 4's visualization rules with a concrete
+checklist:
+
+- **Categorical color-coding** (2-3 discrete categories): use `matplotlib.patches.Patch` handles
+  passed explicitly to `ax.legend(handles=[...])` — this works even when the colors were set via a
+  list comprehension rather than per-series `plot()`/`bar()` calls, which is the case that's easiest
+  to accidentally ship without a legend:
+  ```python
+  ax.legend(handles=[
+      Patch(facecolor="lightblue", edgecolor="black", label="Frozen block (untouched)"),
+      Patch(facecolor="coral", edgecolor="black", label="Trainable block (updated)"),
+  ], loc="upper left", fontsize=9)
+  ```
+- **Continuous color-coding** (a heatmap/imshow of magnitudes): a `plt.colorbar(im, ax=ax, label=...)`
+  is the legend — don't skip it just because the plot also has a title.
+- **Animated bar colors that flip sign** (e.g. green = positive, red = negative delta, decided inside
+  the per-frame update function): add a **static** legend with `Patch` handles once, before the
+  animation loop starts — the legend doesn't need to update per-frame, it just needs to exist.
+- Single-color/single-series subplots still benefit from a one-entry legend naming the series
+  (`label="Gradient norm per block"`) for consistency, even though a reader could infer it from the
+  axis labels — treat "does every subplot have a legend" as a mechanical check, not a judgment call.
+
+### 10.3 Qualitative combination matrix *before* the quantitative one
+
+Section 9.3 covers the **quantitative** combination grid (a heatmap of real trained results,
+populated after the evaluation section). Add a complementary **qualitative** version earlier in the
+notebook, right where the two axes are first established as independent/orthogonal choices — a
+Markdown table with a pros/cons cell for every combination, e.g.:
+
+```markdown
+| Data objective ↓ / Parameter strategy → | **Full FT** | **Partial Freeze** | **LoRA** |
+|---|---|---|---|
+| **Continued Pretraining** | Pros: ... Cons: ... | Pros: ... Cons: ... | Pros: ... Cons: ... |
+| **Instruction Tuning**    | Pros: ... Cons: ... | Pros: ... Cons: ... | Pros: ... Cons: ... |
+```
+
+Follow it with 1-2 sentences naming the pattern the table reveals (e.g. "production pipelines
+converge on LoRA for every data-based stage because instruction tuning/DPO usually have far less
+data than continued pretraining, and full fine-tuning on a small preference dataset invites reward
+hacking") and a forward-pointer to the quantitative grid ("the Technique Combination Grid near the
+end of this notebook revisits this exact matrix with real held-out perplexity numbers"). The
+qualitative table teaches *why* to expect a pattern; the quantitative grid later confirms it
+actually held for this run — deliberately give the reader both.
+
+### 10.4 State the common mental model first, then correct it — don't assume it was already taught
+
+When a concept is usually explained with a slightly-wrong shorthand (e.g. "causal-LM labels are the
+input shifted one position to the left"), don't jump straight to "here's what the code *actually*
+does" — a reader who hasn't seen the shorthand yet has nothing to contrast the correction against,
+and a reader who *has* seen it elsewhere needs the callback made explicit rather than assumed.
+Structure the explanation in three beats, all in the same cell:
+
+1. **State the common shorthand as a real, named claim** ("Causal-LM training is usually summarized
+   in one line: *'the label at every position is just the input shifted one to the left.'*"), and
+   show what it would imply if taken completely literally (a diagram of a second, offset array).
+2. **Show what the code actually builds**, side by side with that literal interpretation, naming the
+   specific gap ("That's not what the code actually builds. It does this instead: ...").
+3. **Resolve where the shorthand's intuition *does* live** (here: in how the loss lines up two
+   identical arrays, not in a separately-constructed shifted array) — the shorthand isn't wrong, it's
+   describing an effect that happens somewhere the reader wouldn't have guessed.
+
+This same beat structure generalizes to any place a notebook corrects a common oversimplification —
+tokenization myths, "attention is just weighted averaging," etc.
+
+### 10.5 Ground "expected outcome" claims in real corpus/dataset facts, not invented examples
+
+Whenever a notebook says what a *successful* result *should* look like (a test prompt after
+fine-tuning, a target metric range), don't invent a generic-sounding example — pull the concrete
+detail from the actual dataset/corpus the notebook uses, even if the model hasn't been run against
+that specific case yet. For `01-llm-finetuning.ipynb`, this meant grounding "what success looks like"
+for the corpus-knowledge test prompts in details pulled directly from the actual chapter text (the
+Under-Hold, the Lantern, node seventeen, the 1879 land-fraud conspiracy) rather than a plausible but
+made-up placeholder. This keeps the notebook's "real numbers, not fabricated" ethos (Section 8.2)
+extended to *prose* claims about expected behavior, not just to charts and metrics.
+
+### 10.6 Progressive disclosure — split any 30+ line multi-concept cell into small cells with a short intro before each, not one big cell with a walkthrough after
+
+Section 9.1 covers **Code Walkthrough** cells that follow a dense block. For code cells that combine
+several genuinely separate conceptual steps (data prep → tokenize → wrap in adapter → configure
+`Trainer` → train → save), prefer **splitting the cell** into one small cell per step, each preceded
+by 2-4 sentences of Markdown explaining just that step, over one large cell followed by a single
+after-the-fact walkthrough. Concretely:
+
+- Each split-out cell should be small enough to read top-to-bottom in a few seconds, and end where a
+  natural checkpoint exists (a dataset is built; a model is loaded; a Trainer is configured and run).
+- The intro Markdown before each piece should be short — 2-4 sentences connecting it to what came
+  before, not a full re-derivation. Save deeper mechanism explanations (hyperparameter tables, "what
+  Trainer.train() does under the hood") for the topics that need them.
+- Where a **Code Walkthrough** cell already existed for the now-split block, don't delete it if it
+  contains detail not covered by the smaller intros (hyperparameter tables, formula breakdowns) —
+  retitle it as a **"..., Recapped"** cell and reword its opening line so it no longer claims the code
+  was "combined into one cell" (see Section 10.7 for why stale structural claims are a real bug
+  class, not a nitpick).
+- This is a **complement** to Section 9.1, not a replacement — very short or genuinely single-purpose
+  code cells still just get an after-the-fact walkthrough if one is needed at all; only split cells
+  that mix multiple, separately-nameable steps.
+
+### 10.7 Cross-reference hygiene — never hardcode a cell distance
+
+Phrases like "the code cell right after this one," "two cells below," or "(next cell)" are a bug
+waiting to happen: any later edit that inserts, splits, or reorders a cell between the reference and
+its target silently makes the claim false, and nothing short of manually re-reading every such phrase
+catches it. Prefer **directional, distance-free language**:
+
+- Use "further down" / "further up" / "near the top of this notebook" / "later in this notebook"
+  instead of a specific cell count.
+- If you must reference a specific upcoming artifact, name *what* it is, not *where* it is
+  ("the `shift_logits`/`shift_labels` lines you'll see further down" rather than "the cell below").
+- When you *do* need "the cell right after this one" (e.g. "the code cell right after this one runs
+  the actual numbers below"), treat that phrase as fragile: re-verify it's still true any time a cell
+  is inserted or split anywhere between the reference and its target, not just adjacent to it.
+- After any pass that splits, inserts, or reorders cells, grep the notebook's raw markdown source for
+  `cell below|cells below|cell above|cells above|next cell|following cell|cells? (right )?after` and
+  re-check every hit — this is the fastest way to catch the whole bug class in one pass rather than
+  relying on having remembered every affected phrase while editing.
+
+### 10.8 Checklist addendum — navigation & consistency
+
+- [ ] Notebooks over ~40 cells have a Table of Contents cell right after the title, with anchor links
+      to every `##` section and the handful of `###` subsections worth jumping to directly.
+- [ ] Every subplot with color-coded categories has its own legend (`Patch` handles for categorical
+      color, `colorbar` for continuous, a static legend added once for animations with sign-flipping
+      colors) — not just a title or a caption elsewhere in the notebook.
+- [ ] When two orthogonal technique axes exist, a qualitative pros/cons matrix appears where the axes
+      are first introduced, in addition to (and pointing forward to) the quantitative combination grid
+      from Section 9.3.
+- [ ] Any correction of a common oversimplified mental model states the shorthand explicitly first,
+      shows what it would imply literally, and only then shows what the code actually does — never
+      assumes the reader already knows the shorthand is wrong.
+- [ ] "Expected outcome" claims about test prompts, target metrics, or example output are grounded in
+      real facts from the notebook's own dataset/corpus, not generic invented placeholders.
+- [ ] Code cells mixing several separately-nameable steps are split into one small cell per step with
+      a short (2-4 sentence) intro before each, rather than left as one large cell with only an
+      after-the-fact walkthrough; pre-existing walkthrough cells for a newly-split block are kept only
+      if they add detail the short intros don't, and are retitled/reworded as a "Recapped" cell.
+- [ ] No Markdown cell hardcodes a specific cell distance ("two cells below," "(next cell)") to
+      something that isn't immediately adjacent; a repo-wide grep for that phrase pattern is run and
+      every hit re-verified after any pass that inserts, splits, or reorders cells.
