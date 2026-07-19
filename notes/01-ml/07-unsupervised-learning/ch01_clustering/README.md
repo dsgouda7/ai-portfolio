@@ -1,5 +1,14 @@
 # Ch.1 — Clustering
 
+| | |
+|---|---|
+| **Notebooks** | [Solution](notebook-solution.ipynb) · [Exercise](notebook-exercise.ipynb) |
+| **Track** | ML / 07-Unsupervised · SegmentAI |
+| **Prev** | [← Ch.6 RL](../../../exercises/01-ml/06-rl) |
+| **Next** | [Ch.2 Dimensionality Reduction →](../ch02_dimensionality_reduction) |
+
+> K-Means, DBSCAN, HDBSCAN on UCI Wholesale Customers (440 rows, 6 features). Silhouette 0.52 achieved. See full story header in the notebooks.
+
 > **The story.** **Stuart Lloyd** invented k-means in **1957** inside Bell Labs while solving a pure engineering problem: how do you quantise a continuous audio signal into a finite codebook for PCM telephone transmission? His algorithm — assign each signal sample to the nearest codeword, then recompute codewords as means — was an internal Bell Labs technical report that stayed unpublished for **25 years**. By the time Lloyd finally published in **1982** the algorithm was already everywhere: **Hugo Steinhaus** had described it in 1956, **Edward Forgy** had rediscovered it in 1965, and **James MacQueen** had coined the name "k-means" in 1967. The "Bell Labs PCM quantiser" and "k-means clustering" are the same mathematical object — the same alternating assignment-update loop — discovered independently at least three times before the original paper appeared. The density-based alternative arrived nearly four decades later: **Martin Ester, Hans-Peter Kriegel, Jörg Sander, and Xiaowei Xu** published DBSCAN at **KDD 1996**, winning the conference's Test-of-Time award in 2014. The business insight that drives this chapter is older still: segment customers by purchase behaviour, target each segment with tailored promotions, and lift retail revenue — a practice Sears Roebuck was doing by hand in the 1920s with customer ledger cards. Clustering automates and scales the intuition to 440 wholesale customers and beyond.
 >
 > **Where you are in the curriculum.** You have just finished the Reinforcement Learning track (AgentAI), where every chapter had a reward signal telling the agent what was good. Now the signal disappears. This is the entry point to **unsupervised learning** — no labels, no target variable, no ground truth. The wholesale retailer wants to discover natural customer segments from purchase behaviour alone. Clustering is the first tool: group similar customers automatically, then name the segments afterward. It sets up dimensionality reduction in [Ch.2 →](../ch02_dimensionality_reduction) (PCA/t-SNE/UMAP to visualise 6D clusters in 2D) and the cluster-quality metrics in [Ch.3 →](../ch03_unsupervised_metrics) (silhouette, Davies-Bouldin — how do you score a clustering with no ground truth?).
