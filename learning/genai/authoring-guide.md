@@ -9,7 +9,10 @@
 > mechanistic "prove, don't assert" techniques common to both. Section 9 covers code-clarity
 > patterns (walkthrough cells, comparison grids, animations); Section 10 covers keeping a
 > long, repeatedly-edited notebook navigable and internally consistent (TOC, legends,
-> progressive disclosure, cross-reference hygiene).
+> progressive disclosure, cross-reference hygiene). Section 11 covers introducing a
+> competing/alternative technique purely for contrast, without training it to completion.
+> Section 12 covers enumerating a chapter's full topic space *before* writing or enhancing
+> content, so coverage gaps are deliberate and visible, never accidental.
 
 This is not a generic "notebook style guide." It is a distillation of *why* the gold
 standard notebook works as a teaching artifact, written so the patterns can be copied
@@ -720,3 +723,158 @@ catches it. Prefer **directional, distance-free language**:
 - [ ] No Markdown cell hardcodes a specific cell distance ("two cells below," "(next cell)") to
       something that isn't immediately adjacent; a repo-wide grep for that phrase pattern is run and
       every hit re-verified after any pass that inserts, splits, or reorders cells.
+
+---
+
+## 11 · Contrast Subsections — Introducing a Competing Technique Without Training It (from the DPO vs. PPO addition to `04-llm/01-llm-finetuning.ipynb`)
+
+Sometimes a notebook needs to explain **why technique A was chosen over competing technique B**,
+without actually building B to production quality (it would double the notebook's scope for a point
+that's fundamentally about mechanics, not about shipping a second checkpoint). The DPO vs. PPO
+subsection added to `04-llm/01-llm-finetuning.ipynb`'s preference-alignment section is the reference
+example: a from-scratch, illustrative PPO update sitting inside the DPO section purely to make the
+difference concrete.
+
+### 11.1 Reuse the primary technique's helpers, state, and chart layout — don't re-derive from zero
+
+The contrast technique should run through the *same* tokenization/scoring helpers, the *same*
+preference/example data, and ideally the *same* frozen reference model the primary technique already
+built, rather than re-implementing its own data pipeline. Visualize it with the **same chart layout**
+(subplot count, ordering, style) as the primary technique's own chart, so a reader can flip between
+the two figures and compare like-for-like panels instead of reconciling two different visual
+vocabularies.
+
+### 11.2 Lead with an explicit "this is NOT the production library" disclaimer, before the code
+
+State plainly, before the code cell, exactly which real-world pieces the illustration skips (a
+learned reward model, on-policy rollout sampling, a value/baseline network, multiple epochs per
+batch) and name the production tool a reader would reach for instead (`trl.PPOTrainer`). This is the
+same honesty principle as Section 8.2 ("real numbers, never illustrative ones") applied to *scope*
+rather than to numbers: the reader should never come away thinking a simplified illustration is a
+faithful reproduction.
+
+### 11.3 If you claim "identical data," the code has to actually use identical data
+
+It's tempting to shrink the contrast technique's demo to a smaller slice of the dataset to keep a
+notebook fast (e.g. 10 pairs instead of the primary technique's 30) — but if the surrounding Markdown
+claims the two techniques are "compared on identical data," a smaller slice makes that claim false,
+and forces an awkward walk-back in the results print ("this isn't a fair comparison — different pair
+counts"). Pick one and be consistent: either match the primary technique's exact data/count so the
+closing comparison needs no disclaimer, or scope the Markdown's claim down to what's actually true
+("the same *kind* of data, a smaller slice, kept quick on a laptop CPU") — don't promise parity the
+code doesn't deliver.
+
+### 11.4 Match scaffolding depth — a contrast concept needs the same "story before formula" treatment as its sibling
+
+If the primary technique got a plain-English, jargon-free walkthrough before its formula (Section
+10.4's "state the shorthand, then correct it" pattern, or an equivalent numbered story), the contrast
+technique needs the *same depth of ramp-up* for its own vocabulary — not an assumption that the
+reader already knows terms like "on-policy," "advantage," "clipped surrogate objective," or "KL
+penalty" just because they made it through the primary technique's section. A comparison table of
+pros/cons (Section 10.3's pattern, adapted from data×parameter axes to technique×technique) helps,
+but it is not a substitute for building the contrast technique's own core mechanism up from a plain-
+English story first — skipping that step quietly raises the section's reading difficulty above the
+rest of the notebook's, even when every individual sentence is accurate.
+
+### 11.5 Checklist addendum — contrast subsections
+
+- [ ] The contrast technique's code reuses the primary technique's helper functions, state (frozen
+      reference model, tokenized data), and chart layout, rather than re-deriving its own pipeline.
+- [ ] A disclaimer before the code names exactly what real-world pieces are skipped (reward model,
+      on-policy sampling, value network, etc.) and points to the production library a reader would
+      actually reach for.
+- [ ] Any claim that the two techniques are compared on "identical data" is checked against the code:
+      either the data/counts genuinely match, or the Markdown's claim is scoped down to what's true.
+- [ ] The contrast technique's own jargon gets the same plain-English, story-before-formula ramp-up
+      the primary technique received — not an assumption that its vocabulary is already familiar.
+
+---
+
+## 12 · Topic-Space Enumeration — Before Writing, List Everything a Complete Treatment Needs
+
+Sections 1-11 describe *how* to build intuition once you know what to cover. This section is about a
+step that has to happen **before** that: before writing a new notebook, or substantially enhancing an
+existing one, explicitly enumerate the full set of techniques/sub-topics a genuinely complete
+treatment of the chapter's subject would include — not just the ones that occurred to the author
+while drafting. `04-llm/01-llm-finetuning.ipynb` is the reference example: "fine-tuning" isn't treated
+as "here are the 2-3 techniques I know," it's treated as a 2-axis space (data objective × parameter
+strategy) that's enumerated explicitly, with every cell of that space either trained for real or named
+and reasoned about in a visible "not covered" ledger.
+
+### 12.1 Enumerate the topic space before drafting content, not after
+
+Before adding or substantially rewriting a notebook's content, write down (even just in a scratch
+`plan.md`, not necessarily the notebook itself) the full list of techniques, sub-variants, and
+axes-of-choice a subject-matter expert would expect a "complete enough to build real intuition"
+treatment to at least address. For fine-tuning, that list is roughly: the *data objective* axis
+(continued pretraining, instruction tuning/SFT, preference alignment — and, within preference
+alignment, DPO **and** PPO-based RLHF as the two real approaches) crossed with the *parameter* axis
+(full fine-tuning, partial/layer freezing, LoRA — and adjacent PEFT methods: adapters, prefix tuning,
+QLoRA, BitFit, IA3). Only once that list exists should you decide what to actually build vs. what to
+name-and-skip — deciding scope *without* first writing the full list is how a notebook ends up with
+silent, accidental gaps (a technique nobody chose to omit, it just never came up).
+
+### 12.2 Turn the enumeration into a visible ledger, not a private checklist
+
+The enumeration from 12.1 should show up in the notebook itself as an explicit, three-way ledger, not
+stay in an author's head:
+
+1. **Implemented and demonstrated** — built with real, runnable code and verified against real
+   output/weights (Section 8.2's "real numbers" standard).
+2. **Explained but not fully implemented** — the mechanism is described accurately (ideally with the
+   Section 10.4 "story first" treatment and, where it clarifies the difference, a Section 11-style
+   contrast subsection with illustrative code), but not built to production completeness, with a
+   one-line reason why (cost, scope, "the point is the mechanics, not the checkpoint").
+3. **Named but out of scope** — acknowledged to exist, with a one-line reason it's out of scope for
+   *this* notebook (GPU-specific, a minor variant with "similar principles" to something already
+   covered, etc.).
+
+`01-llm-finetuning.ipynb`'s "What This Notebook Covered (and What It Didn't)" section is the concrete
+pattern: bullet lists for tiers 1 and 3, and (after the DPO vs. PPO addition) a tier-2 item that
+explicitly says a simplified version *was* built for contrast even though the full production version
+wasn't. A reader should never have to guess which tier a missing technique falls into.
+
+### 12.3 "Mentioned in a list" is not the same as "covered" — match the tier to the claim
+
+A one-line bullet naming a technique ("RLHF/PPO — more complex, not demoed here") reads, to a
+skimming learner, like the topic has been addressed. It hasn't — it's tier 3, not tier 1, and the
+notebook should say so as plainly as the ledger in 12.2 does. Before shipping a notebook, re-check
+every technique name that appears anywhere in its markdown and confirm it's sitting in the tier its
+actual treatment earns:
+
+- If real code trains/builds it and verifies a real result -> tier 1.
+- If it gets a genuine plain-English mechanism explanation and/or illustrative-but-simplified code
+  (Section 11's contrast-subsection pattern) -> tier 2.
+- If it's a bare name with no mechanism explanation -> tier 3, and it should read like tier 3 (a short
+  "not covered, here's why, here's where to learn it" note), not like an implicit promise of depth
+  that was never delivered.
+
+This is what turned `01-llm-finetuning.ipynb`'s original one-line PPO mention into the DPO vs. PPO
+comparison subsection (Section 11): the enumeration exercise flagged that "RLHF/PPO" was named in two
+different places in the notebook (the intuition section and the closing recap) while never actually
+being unpacked anywhere — a tier-3 item wearing tier-1/2 clothing, purely because nobody had
+re-checked the claim against what was actually built.
+
+### 12.4 Where the enumeration and the ledger live
+
+- Do the enumeration early in the authoring process (a scratch `plan.md` is enough — it doesn't need
+  to survive into the finished notebook).
+- Put a *compact* version of it where the topic/axes are first introduced (an early qualitative
+  matrix or bullet list, per Section 10.3), so a reader knows the shape of the whole space before
+  diving into any one cell of it.
+- Put the *complete* three-tier ledger near the end, as part of (or immediately before) the closing
+  "what this notebook covered" recap (Section 8.7) — that's the one place a reader checking "did this
+  actually address X" will look.
+
+### 12.5 Checklist addendum — topic-space enumeration
+
+- [ ] Before writing or substantially enhancing a notebook, the full set of techniques/sub-variants a
+      complete treatment of the subject would include was enumerated (even just in a scratch
+      `plan.md`), not assembled ad hoc while drafting.
+- [ ] The notebook's closing recap sorts every technique that's been named anywhere in the notebook
+      into one of three tiers — implemented & demonstrated, explained/illustrated but not fully
+      built, or named and explicitly out of scope — with a one-line reason for tiers 2 and 3.
+- [ ] No technique is left as a bare name with no tier assigned — a reader should never have to guess
+      whether "mentioned" means "you'll learn this here" or "purely for your awareness."
+- [ ] Every technique that reads as tier 1 (implemented) in the notebook's prose actually has real,
+      runnable code and a real verified result behind it — not just a formula or a bullet point.
