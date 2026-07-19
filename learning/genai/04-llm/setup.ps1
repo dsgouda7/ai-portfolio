@@ -1,8 +1,8 @@
 <#
 .SYNOPSIS
     Creates a local virtual environment and installs everything needed to run
-    the 04-llm notebooks (hybrid-search, llm-gateway, rag-evaluation,
-    llm_finetuning_deep_dive).
+    the 04-llm notebooks (llm-finetuning data/parameter/comparison series,
+    hybrid-search, rag-evaluation, llm-gateway).
 
 .DESCRIPTION
     Creates a `.venv` next to this script (if it does not already exist),

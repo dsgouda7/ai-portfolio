@@ -1,6 +1,7 @@
 # Packages required to run the 04-llm notebooks:
-#   02-hybrid-search.ipynb, 04-llm-gateway.ipynb, 03-rag-evaluation.ipynb,
-#   llm_finetuning_deep_dive.ipynb
+#   01-llm-finetuning-data-techniques.ipynb, 02-llm-finetuning-parameter-techniques.ipynb,
+#   03-llm-finetuning-comparison-and-decision.ipynb, 04-hybrid-search.ipynb,
+#   05-rag-evaluation.ipynb, 06-llm-gateway.ipynb
 
 # Core data / plotting
 numpy
@@ -16,10 +17,10 @@ langchain-core
 langchain-community
 faiss-cpu
 
-# LLM gateway (04-llm-gateway.ipynb) - optional multi-provider client
+# LLM gateway (06-llm-gateway.ipynb) - optional multi-provider client
 litellm
 
-# Fine-tuning / alignment (llm_finetuning_deep_dive.ipynb)
+# Fine-tuning / alignment (01-03-llm-finetuning-*.ipynb)
 torch
 transformers
 datasets

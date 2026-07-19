@@ -1,7 +1,10 @@
 # GenAI Notebooks — Authoring Guide
 
 > **Gold standard (mechanistic depth)**: [02-transformers/transformers.ipynb](02-transformers/transformers.ipynb)
-> **Gold standard (narrative framing)**: [04-llm/01-llm-finetuning.ipynb](04-llm/01-llm-finetuning.ipynb)
+> **Gold standard (narrative framing)**: [04-llm/01-llm-finetuning-data-techniques.ipynb](04-llm/01-llm-finetuning-data-techniques.ipynb)
+> through [04-llm/03-llm-finetuning-comparison-and-decision.ipynb](04-llm/03-llm-finetuning-comparison-and-decision.ipynb)
+> (a 3-part series -- data-based techniques, parameter-based techniques + QLoRA/quantization, and the
+> head-to-head comparison/decision)
 > Every notebook under `learning/genai/` should be brought to the same pedagogical flow,
 > intuition-building, and technical depth as these notebooks. This guide extracts the
 > reusable patterns so they can be applied consistently across the folder. Section 8 covers
@@ -208,19 +211,20 @@ a companion `plan.md` in its own folder, written against this checklist, that:
 3. Lists concrete, ordered changes (add a 🔮 cell here, add a toy→real bridge there,
    replace an assertion with a proof, restructure into numbered Parts, etc.) needed to
    reach parity with [02-transformers/transformers.ipynb](02-transformers/transformers.ipynb)
-   and, where the notebook has a real-world use case to motivate, [04-llm/01-llm-finetuning.ipynb](04-llm/01-llm-finetuning.ipynb).
+   and, where the notebook has a real-world use case to motivate, the [04-llm/01-llm-finetuning-data-techniques.ipynb](04-llm/01-llm-finetuning-data-techniques.ipynb) series.
 4. Is scoped to that notebook only — it should not require changes to other notebooks.
 
 ---
 
-## 8 · Narrative & Business-Stakes Framing (from `04-llm/01-llm-finetuning.ipynb`)
+## 8 · Narrative & Business-Stakes Framing (from the `04-llm/01-llm-finetuning-*.ipynb` series)
 
 Sections 1-7 describe how to build *intuition* for a mechanism. This section describes a
 complementary technique: giving the reader a reason to *care* which technique wins, by binding
 the entire notebook to one concrete, named scenario with real constraints instead of a neutral
-tour of options. `01-llm-finetuning.ipynb` is the reference example — a small publishing firm,
-"Riverside House," wants an in-house editing assistant and knowledge base trained on its own
-unpublished manuscripts, on a laptop CPU, with no data allowed to leave the building.
+tour of options. The `04-llm/01-llm-finetuning-*.ipynb` 3-part series is the reference example -- a
+small publishing firm, "Riverside House," wants an in-house editing assistant and knowledge base
+trained on its own unpublished manuscripts, on a laptop CPU, with no data allowed to leave the
+building -- the same brief threaded through all three notebooks.
 
 ### 8.1 One brief, one set of constraints, threaded through every section
 
@@ -320,10 +324,10 @@ on a taxonomy recap after a narrative build-up undercuts the payoff.
 
 ---
 
-## 9 · Code Walkthrough Cells (from `04-llm/01-llm-finetuning.ipynb` iteration 2)
+## 9 · Code Walkthrough Cells (from `04-llm/01-llm-finetuning-data-techniques.ipynb` iteration 2)
 
 Section 8 covers *why* the narrative framing works. This section documents four additional patterns
-extracted from the second major iteration of `01-llm-finetuning.ipynb`: code walkthrough markdown
+extracted from the second major iteration of `01-llm-finetuning-data-techniques.ipynb`: code walkthrough markdown
 cells, completion-only generation helpers, multi-axis technique comparison grids, and `FuncAnimation`
 token-position visualisations.
 
@@ -547,7 +551,8 @@ display(HTML(anim.to_jshtml(fps=6)))
 
 ## 10 · Navigation, Progressive Disclosure, and Cross-Reference Hygiene (iteration 3)
 
-This section documents patterns extracted from a third pass over `04-llm/01-llm-finetuning.ipynb`,
+This section documents patterns extracted from a third pass over the `04-llm/01-llm-finetuning-*.ipynb`
+series,
 focused less on new pedagogy and more on **keeping a long notebook navigable, digestible, and
 internally consistent** as it grows past ~50 cells. These patterns matter most once a notebook is
 long enough that a reader can't hold its whole structure in their head, and once it's been edited
@@ -654,7 +659,7 @@ tokenization myths, "attention is just weighted averaging," etc.
 Whenever a notebook says what a *successful* result *should* look like (a test prompt after
 fine-tuning, a target metric range), don't invent a generic-sounding example — pull the concrete
 detail from the actual dataset/corpus the notebook uses, even if the model hasn't been run against
-that specific case yet. For `01-llm-finetuning.ipynb`, this meant grounding "what success looks like"
+that specific case yet. For `01-llm-finetuning-data-techniques.ipynb`, this meant grounding "what success looks like"
 for the corpus-knowledge test prompts in details pulled directly from the actual chapter text (the
 Under-Hold, the Lantern, node seventeen, the 1879 land-fraud conspiracy) rather than a plausible but
 made-up placeholder. This keeps the notebook's "real numbers, not fabricated" ethos (Section 8.2)
@@ -726,14 +731,16 @@ catches it. Prefer **directional, distance-free language**:
 
 ---
 
-## 11 · Contrast Subsections — Introducing a Competing Technique Without Training It (from the DPO vs. PPO addition to `04-llm/01-llm-finetuning.ipynb`)
+## 11 · Contrast Subsections — Introducing a Competing Technique Without Training It (from the DPO vs. PPO addition to `04-llm/01-llm-finetuning-data-techniques.ipynb`)
 
 Sometimes a notebook needs to explain **why technique A was chosen over competing technique B**,
 without actually building B to production quality (it would double the notebook's scope for a point
 that's fundamentally about mechanics, not about shipping a second checkpoint). The DPO vs. PPO
-subsection added to `04-llm/01-llm-finetuning.ipynb`'s preference-alignment section is the reference
+subsection added to `04-llm/01-llm-finetuning-data-techniques.ipynb`'s preference-alignment section is the reference
 example: a from-scratch, illustrative PPO update sitting inside the DPO section purely to make the
-difference concrete.
+difference concrete. The same pattern was reused for the QLoRA vs. LoRA contrast added to
+`04-llm/02-llm-finetuning-parameter-techniques.ipynb`'s parameter-efficiency section -- illustrative
+`BitsAndBytesConfig` code inside the LoRA-adjacent Concept 7, not a trained checkpoint.
 
 ### 11.1 Reuse the primary technique's helpers, state, and chart layout — don't re-derive from zero
 
@@ -796,7 +803,7 @@ Sections 1-11 describe *how* to build intuition once you know what to cover. Thi
 step that has to happen **before** that: before writing a new notebook, or substantially enhancing an
 existing one, explicitly enumerate the full set of techniques/sub-topics a genuinely complete
 treatment of the chapter's subject would include — not just the ones that occurred to the author
-while drafting. `04-llm/01-llm-finetuning.ipynb` is the reference example: "fine-tuning" isn't treated
+while drafting. The `04-llm/01-llm-finetuning-*.ipynb` series is the reference example: "fine-tuning" isn't treated
 as "here are the 2-3 techniques I know," it's treated as a 2-axis space (data objective × parameter
 strategy) that's enumerated explicitly, with every cell of that space either trained for real or named
 and reasoned about in a visible "not covered" ledger.
@@ -829,7 +836,7 @@ stay in an author's head:
    *this* notebook (GPU-specific, a minor variant with "similar principles" to something already
    covered, etc.).
 
-`01-llm-finetuning.ipynb`'s "What This Notebook Covered (and What It Didn't)" section is the concrete
+`03-llm-finetuning-comparison-and-decision.ipynb`'s "What This Fine-Tuning Arc Covered (and What It Didn't)" section is the concrete
 pattern: bullet lists for tiers 1 and 3, and (after the DPO vs. PPO addition) a tier-2 item that
 explicitly says a simplified version *was* built for contrast even though the full production version
 wasn't. A reader should never have to guess which tier a missing technique falls into.
@@ -849,7 +856,7 @@ actual treatment earns:
   "not covered, here's why, here's where to learn it" note), not like an implicit promise of depth
   that was never delivered.
 
-This is what turned `01-llm-finetuning.ipynb`'s original one-line PPO mention into the DPO vs. PPO
+This is what turned `01-llm-finetuning-data-techniques.ipynb`'s original one-line PPO mention into the DPO vs. PPO
 comparison subsection (Section 11): the enumeration exercise flagged that "RLHF/PPO" was named in two
 different places in the notebook (the intuition section and the closing recap) while never actually
 being unpacked anywhere — a tier-3 item wearing tier-1/2 clothing, purely because nobody had
