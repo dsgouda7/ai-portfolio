@@ -1,0 +1,215 @@
+Chapter 6: The Woman from Oxford
+
+She was staying at the Biltmore.
+
+Jake found this out through a contact he kept at a hotel booking service, a woman named Marguerite who had worked the hospitality industry in Miami for thirty years and who, for reasons that had never been fully explained on either side, occasionally told him things she technically shouldn't. Marguerite told him that a Dr. C. Fairweather with an Oxford University corporate card had checked in eleven days ago and had not checked out. She was in a suite on the fourth floor. She ordered room service once a day and had used the business center on three occasions. She had not left any contact instructions.
+
+"She's staying put," Jake said.
+
+"Paying for it though," Marguerite said, with the tone of someone for whom extended hotel stays were both morally questionable and financially impressive.
+
+The Biltmore Hotel in Coral Gables was a building that took its own history seriously, which is to say it had the bearing of a place accustomed to hosting significant events. Built in 1926, it had been a military hospital and then a VA center and then, in the eighties, a hotel again, with all the restoration enthusiasm and architectural ambition that implies. Its tower was visible from most of Coral Gables, Moorish and Mediterranean at once, the kind of architecture that makes everything around it look like it arrived recently. It had a large outdoor pool and a dining room and the specific atmosphere of luxury that is earned rather than performed: not pristine but comfortable, the comfort of a place with a long memory.
+
+Jake found a parking spot on the access road and walked through the lobby without stopping and took the elevator to the fourth floor and knocked on the door of Suite 412.
+
+A pause. Then: "Yes."
+
+"My name is Jake Malone. I'm a private investigator working on behalf of Elena Vasquez-Cortez. I'm looking for her father, Arturo. I have his translation document. I know you co-wrote it with him."
+
+A longer pause. Then the door opened.
+
+Dr. Constance Fairweather was fifty-two years old and looked it without apology, which Jake found immediately distinguishing. She had white hair — not silver, not gray, but the particular dense white of someone who went completely white in their thirties — cut short and efficiently. She was tall, perhaps five-eleven, with the posture of a woman who had spent decades standing at lecterns, and she wore dark trousers and a cream blouse that had been worn for several days running by the evidence of small creases at the elbows. She had reading glasses pushed up on her head and a cup of something that smelled of English tea in her hand and the expression of a woman who had been waiting for someone to knock on this door, and was not especially relieved that it had finally happened.
+
+"Come in," she said.
+
+The suite was a scholar's working space, which is to say it had been converted from its intended purpose by the sheer volume of documents that covered the desk, the bedside table, and a significant portion of the floor in ordered piles. There were printed pages, some annotated, and several books with Post-it tabs. There was a laptop open to what appeared to be an academic database. There was a half-eaten croissant on the room-service plate that Jake thought might be from this morning or possibly last night.
+
+She waved him to the chair and took the sofa edge herself, folding her legs underneath her with the easiness of someone who spends a lot of time in airports and hotel rooms.
+
+"How did you find me?" she asked.
+
+"Booking records. When did you know something had happened to Arturo?"
+
+The question landed cleanly and she absorbed it without flinching. "When I called his shop on the Monday after my visit and the phone rang without an answer. He always answered or called back within the hour. He had a discipline about communication." She turned the tea cup in her hands. "I tried for three days. Then I found an article in the Miami Herald website about a missing man who matched his description. I should have gone to the police immediately."
+
+"Why didn't you?"
+
+She looked at him for a moment, weighing something. "Because the last conversation I had with Arturo was one in which he told me he was afraid of someone, and that someone had connections he wasn't sure stopped at the Miami police department." She paused. "He was being cautious. Perhaps overcautious. But I respected it."
+
+"Tell me about the visit," Jake said.
+
+She was quiet for a moment, then she spoke with the precision of a woman who chooses words for their accuracy rather than their comfort.
+
+"I came to Miami because Arturo had sent me an email with a photograph attached. A photograph of the final page of the Codex — the section we had been working on for the better part of a year and had been unable to fully resolve. In the email he said he believed he had made a significant breakthrough with the verification cipher. He asked me to come in person because the breakthrough was, in his word, 'delicate.' He didn't want to explain it over email or phone."
+
+"What was the breakthrough?"
+
+She looked at him steadily. "Before I tell you that, I want to know what you're going to do with the information."
+
+"I'm going to find Arturo."
+
+"And after you find him? If you find him — who gets the information about the island?"
+
+Jake looked at her. "What's the right answer here?"
+
+She gave a small, humorless smile. "There isn't a right answer. There's the answer that leads to the archive being recovered and studied by scholars, and the answer that leads to it being recovered and used as a private leverage instrument. Arturo and I didn't spend combined decades on this to have it become someone's blackmail folder." She put the tea cup down. "Who are you working for, besides Elena?"
+
+"Only Elena."
+
+"And you have no other principals? No one who is paying you to find this on behalf of someone else?"
+
+"Only Elena," he repeated.
+
+She looked at him the way academics look at people — evaluating for logical consistency rather than emotional truthfulness, which in Jake's experience was often more reliable. "The breakthrough," she said. "Arturo had determined that the verification cipher is acoustic. The final page of the Codex describes a sound — very specifically, a very specific quality of sound that occurs in the caverns of the island under certain tidal conditions. A resonance. Diego de Almeida heard it and encoded it in the cipher as a series of tonal intervals, probably using a notation system he invented himself."
+
+"An acoustic password."
+
+"Precisely. To fully decode the final page, you need to have heard the sound. Because the cipher uses the tonal intervals of that specific resonance as its key. You decode by matching the notation to a sound you've experienced, and you can only experience it on the island, in the caverns, at high tide." She uncurled from the sofa and stood, moving to the desk with the focused energy of someone whose thoughts work better when her body is moving. "This is what made Arturo so certain the archive is still there. If it had been found and removed, there would be no point to such a sophisticated verification system. Diego built this to survive centuries and to be decoded only by someone who had gone all the way there. He built it to require physical presence."
+
+"And the island's location," Jake said. "Can you determine it from what's in the translated sections?"
+
+"We can narrow it considerably." She picked up a printed page from one of the piles. "The translated sections of the Codex give navigational data expressed in the cipher — once decoded, they resolve to a region. The Windward Passage, south of Cuba. There are several possible islands within the region identified by the coordinates, once you apply the cipher key. Without the verification cipher, we can't identify which one with certainty." She looked at the page. "But Arturo — in his last email, before he disappeared — said he had identified the island. He said he knew its modern name and its location precisely, and that he was preparing to share this with me when I arrived."
+
+"He didn't tell you when you arrived?"
+
+She looked at Jake directly. "He told me the name of the island. He also told me he had told no one else, and that the name was not in any document. He said it existed only in his head and in the final section of the Codex, which could only be decoded on the island itself." She paused. "He asked me not to write it down."
+
+"You're not going to tell me."
+
+"I'm going to tell you." She said it quietly. "Because Arturo said I should trust whoever Elena trusted, and because if I don't tell someone who's looking for him, I may be the only person in the world who knows where the archive is, and that seems like a very fragile arrangement." She set the printed page back on the pile. "Arturo was certain about the island. He said: go to the Windward Passage, look for the island with the old Spanish fort on the west shore. On any maritime chart it appears under the name Cayo Espiritu. Its full historical name — given by early Spanish navigators — is Cayo del Espíritu Santo." She paused. "A small island, approximately five nautical miles south of the Cuban coast in the Windward Passage. It appears on current maritime charts as uninhabited. There's a reef structure on the eastern side that makes it difficult to approach without local knowledge."
+
+Jake absorbed this. "And the eastern cliff. The cavern."
+
+"The eastern cliff," she confirmed. "Diego described it in the text. A cavern that extends beneath the cliff at the waterline, accessible by diving at low tide, substantial at high tide. He described the acoustic resonance very specifically — a low, rhythmic sound, almost musical, that the water creates in the cavern architecture when the tide comes in across the reef. He called it 'the voice of the saint.'" She looked at her hands. "It's not poetic. Or rather, it is poetic, but it's also precise. He wasn't describing a mystical experience. He was describing a specific physical phenomenon, and he encoded it because it was the only thing he could use as a key that couldn't be forged by someone with a document."
+
+"Who else knows about Cayo Espiritu?" Jake said.
+
+She was quiet for a moment. "Arturo and I. Now you."
+
+"The Santiesteban family — do they know the island's name?"
+
+"I don't believe so. Without the complete translation they have a region, not a specific island." She sat back down. "But if they have Arturo—"
+
+"Then they're trying to get it from him," Jake said.
+
+They looked at each other.
+
+"Dr. Fairweather," Jake said. "The contact you mentioned. Someone who had been asking questions about Templar documents through indirect channels. Who was that?"
+
+She took a breath. "A man who represents himself as an agent for an organization called the Custodes Veritatis. I've heard of this organization — it's semi-mythological in medieval scholarship, like the Priory of Sion or the Rosicrucians, the kind of organization that serious scholars treat with cautious respect precisely because it may or may not exist. But the man who contacted me was real. His name is Father Giorgio Bellini. He's a Jesuit. He reached me through the Oxford History department with a letter that appeared to be from the Vatican Library." She paused. "He wanted to know if I had recently been engaged in research relating to Templar documents and Caribbean geography."
+
+"What did you tell him?"
+
+"I told him my research was ongoing and not yet available for external review. He accepted this graciously and said he would appreciate being contacted when I was ready to publish." She looked at Jake. "He knew about the Codex. Not specifically — but he knew there was a researcher in Miami working on a Templar document. He knew enough to make the contact."
+
+"Someone told him."
+
+"Yes." She met his eyes. "I've been trying to work out who has the connections to know both my scholarly work and Arturo's research. The academic world is small. I mentioned Arturo's work to a colleague at Oxford — in confidence, or what I believed was confidence. My colleague mentioned to someone that I was 'doing something interesting in the Americas.' At that point it could have spread in any number of directions." She paused. "I'm not comfortable with the Vatican connection. The Custodes Veritatis — if it exists as described — has a particular mandate. They don't want the archive destroyed. But they don't want it in secular hands, either."
+
+"What do they want?"
+
+"What the Church has always wanted from inconvenient history," she said. "To be the custodians. To be the ones who decide what is known and what is not." She picked up her tea. "Which is a more sophisticated version of the same problem the Santiestebans represent. One wants to own the history. The other wants to control it."
+
+Jake stood. "I need you to stay in Miami. In this hotel, specifically."
+
+She looked up. "You're asking me to stay confined to this suite?"
+
+"I'm asking you to tell me immediately if anyone else contacts you about the Codex or the island. And I'm asking you not to contact Father Bellini or anyone else connected to this research until I've found Arturo." He looked at her steadily. "You came to Miami and three days later a man was taken. I'm not saying you caused it. But you were the trigger for someone else's action. I need you out of circulation while I work."
+
+She looked at him for a long moment. "You're not asking. You're telling."
+
+"I'm telling," he agreed.
+
+She nodded, once, the nod of someone who recognizes a direct request as more honest than a question. "Then I'll stay. But I want daily updates."
+
+"You'll get them." He moved to the door. "One more thing. Arturo's note mentioned that the final section of the Codex — the acoustic cipher — could only be resolved on the island. He said you and he had been unable to complete it. But the island's location — Cayo Espiritu — he told you only that before he disappeared."
+
+"Yes."
+
+"He was ready to go there."
+
+She looked at her hands. "Yes. We had discussed it. The next step was to go to the island, hear the sound, match it to the notation, and decode the final section. It was — it sounds dramatic, but it was the logical next step of the scholarship." She looked up. "He was excited. Not in an undisciplined way. In the way of someone who has been working toward a moment for thirty years and can finally see it clearly."
+
+"And then he was taken."
+
+"And then he was taken."
+
+Jake left her in the suite with her tea and her documents, and walked back through the Biltmore lobby and out into the Coral Gables morning, which was warm and specific and entirely indifferent to medieval Portuguese navigators and their acoustic passwords.
+
+He sat in the Bronco and thought.
+
+The island was Cayo Espiritu. Arturo knew it. Fairweather knew it. Now he knew it.
+
+The Santiesteban people needed Arturo alive to learn it.
+
+The race was on.
+
+---
+
+HISTORICAL INTERLUDE — Havana, 1938
+
+The man who arrived at the Havana docks in February 1938 was not the kind of man who announced himself. He was broad-shouldered and precise in movement, wore a white linen suit that had been expensive once and was still respectable, and carried a leather satchel that he kept under his arm with the specific hold of a man who has learned through experience that what he carries is worth more than anything else he owns.
+
+His name was Ramon Santiesteban. He was forty-four years old and had been successful in ways that were visible — import, some real estate, a shipping interest with a Havana partner — and in ways that were not discussed. He had come to Havana from Miami, where his family had been established for twenty-two years, and he had come for a meeting.
+
+The man he met was a document dealer named Castro Villalobos, who operated out of a building on Calle Obispo behind a bookshop that specialized in maps. Villalobos was seventy and had the thinness of someone whose appetite for food had been subordinated to his appetite for documents since early life. He kept his office at the rear of the map shop, behind two locked doors, in a room that smelled of old paper and lamp oil.
+
+On the table between them was a manuscript.
+
+"Where did you find it?" Santiesteban said.
+
+"An estate sale in Seville, 1935. I was there for other things. This was in a miscellany lot that nobody wanted — old Latin documents, loose pages, some correspondence." Villalobos turned the manuscript's page carefully with tongs. "I recognized the Iberian parchment immediately. And the mixed Latin and Portuguese is unusual for this period. I thought it was navigation record. It was months before I understood it was more."
+
+"You've read it."
+
+"I've attempted to read it. The first sections are largely legible — a narrative, mixed languages, about voyages. Two voyages, the writer says, to an island in the western sea. He calls it Isla de los Espíritus. The latter sections—" Villalobos shook his head. "The latter sections are something else. There are symbols I've never encountered. Patterns. I don't believe it's a natural language. It's a cipher."
+
+"And you cannot read the cipher."
+
+"No one can. Not today." Villalobos looked at him. "But I know a man who might, eventually. A scholar at the university in Lisbon who specializes in medieval Portuguese cryptography. I've written to him. He says it is possible but would take years." He paused. "The question is whether it is worth years."
+
+Santiesteban looked at the manuscript for a long moment. He had been told about this document six months ago by an acquaintance in the Vatican archives who owed him a favor, a man who had seen a reference to it in a catalogue and noted that a document matching its description had been sought, unsuccessfully, by the Church since at least the seventeenth century. The Church wanted it because, if genuine, it represented historical evidence that contradicted several things the Church had authority over. Evidence that the Knights Templar had survived the dissolution. Evidence that they had transported something of immense historical significance to the New World before Columbus. Evidence, potentially, of things that were not meant to be known.
+
+"I want to acquire it," Santiesteban said. "And I want the island it describes. Before anyone else reaches it."
+
+"The island," Villalobos said slowly, "assumes the cipher can be read."
+
+"The cipher will be read. Eventually." Santiesteban looked at the old man. "I need the document and I need whatever it says about the location of the island."
+
+"The narrative sections describe the region. The Windward Passage, south of Cuba. Several possible islands. Without the cipher—"
+
+"Then I'll search the possible islands." He said it with the matter-of-fact certainty of a man for whom money converted uncertainty into logistics. "How many?"
+
+"Perhaps six or seven that match the geographic description given in the legible sections. Small islands, uninhabited or lightly occupied."
+
+"I'll search them all."
+
+He bought the manuscript from Villalobos for a sum that surprised the old man and that Santiesteban considered prudent. He took it back to Miami, had it examined by two experts who told him it was genuine and probably fourteenth century, and then put it in a safe in his office on Brickell Avenue.
+
+Then he financed three expeditions to the Windward Passage, in 1939, 1940, and 1941.
+
+The first two found nothing of significance. Small islands, coral reefs, marine life, the occasional derelict structure from the colonial period. On the third expedition, in the spring of 1941, his team landed on a small island southeast of Santiago de Cuba — an island whose local name, among the few fishermen who used its waters, was Cayo Espiritu — and found, on the eastern cliff face, the entrance to a cavern complex that extended far under the cliff, accessible only at low tide, with an interior space large enough, according to the expedition report, for a substantial number of objects.
+
+The cavern was flooded at high tide.
+
+And at high tide, according to the expedition leader's note — written with the puzzlement of a practical man encountering something he doesn't have a framework for — the water in the cavern made a sound.
+
+"I cannot describe it satisfactorily," the expedition leader wrote. "It is musical, in a low register, rhythmic, like breathing. The reef structure and the cave architecture seem to interact with the incoming tide to produce it. It is quite loud and quite strange. The men found it disturbing. I found it remarkable."
+
+They couldn't dive in 1941. The technology didn't exist for what was needed — the cavern at low tide had about three meters of air space, but the objects the expedition leader believed were there, based on faint underwater visibility, were in chambers further back and considerably deeper. Without proper diving equipment, it was inaccessible.
+
+Ramon Santiesteban tried to acquire the equipment, tried to arrange a fourth expedition with divers. Then the war came. Then personal difficulties. Then his health.
+
+He died in 1956 without going back.
+
+But he told his son. And his son told his daughter.
+
+And Magdalena Santiesteban, who had been told the story at age nine by her dying grandfather and who had never forgotten it, had been watching the scholarly world for sixty years — for any academic, any researcher, any institution who might decode what her grandfather had found and could not reach.
+
+Three months ago, her intelligence network — informal but effective — had reported that an antiquarian bookseller in Little Havana was close to completing a translation.
+
+She had sent Alejandro Reyes-Castillo to have a conversation.
+
+The conversation had not gone as she intended.
+
+The next step had been less conversational.

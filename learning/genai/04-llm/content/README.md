@@ -13,7 +13,8 @@
 | Neural Drift | Cyberpunk | 24 | ~77,000 | ~375 KB | [`neural-drift/`](neural-drift/) |
 | The Hollow Beneath | Horror/Gothic | 28 | ~90,000 | ~439 KB | [`the-hollow-beneath/`](the-hollow-beneath/) |
 | The Weight of Tides | Literary Fiction | 28 | ~95,000 | ~465 KB | [`the-weight-of-tides/`](the-weight-of-tides/) |
-| **TOTAL** | **7 genres** | **197** | **~619,000** | **~3.0 MB** | **7 novel directories** |
+| The Everglades Cipher | Noir-Historical Detective | 28 chapters + 10 appendices | ~160,000 | ~630 KB | [`the-everglades-cipher/`](the-everglades-cipher/) |
+| **TOTAL** | **8 genres** | **225+** | **~779,000** | **~3.6 MB** | **8 novel directories** |
 
 ## Directory Structure
 

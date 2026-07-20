@@ -1,0 +1,91 @@
+APPENDIX G: A NOTE ON THE WRITING OF THIS NOVEL
+
+On Style, Influence, and the Detective's Perspective
+
+This novel was conceived as a conscious exercise in fusion: the attempt to bring together several distinct literary traditions that do not normally appear in the same book, and to see whether they would cohere or simply produce a confused hybrid.
+
+The traditions in question were: the American noir detective novel as practiced by James Hadley Chase (with the caveat that Chase's more transgressive social observations were not the goal here — the genre mechanics, the morally ambiguous protagonist, the working-class realism were the targets); the legal and institutional thriller as practiced by John Grisham (the slow revelation through process, the grounding in systemic rather than individual evil, the patience with institutional detail); the Florida-inflected comic-serious novel as practiced by Carl Hiaasen (the environmental consciousness, the eccentric characters, the specifically South Florida combination of beauty and absurdity); the historical conspiracy novel as practiced by Dan Brown (the embedded historical interludes, the use of authentic historical material to ground a fictional premise, the reader-implication structure in which the narrative teaches you the history you need as you go); the atmospheric historical fiction as practiced by Elizabeth Kostova (the deep sensory evocation of place, the way setting becomes character, the patience with beauty as information); and the quiet humanism of Ruskin Bond (the belief that ordinary people's ordinary decisions matter, the dignity of the subplot, the prose that prefers clarity to cleverness).
+
+Whether this fusion succeeded is for the reader to judge. What the writing process required, and what is worth recording for the reader who is curious about craft, is a description of the specific choices each influence demanded.
+
+The Chase Influence: Terse Dialogue and Moral Gravity
+
+The American noir tradition — Hammett, Chandler, Cain, and then the British-American hybrid of Chase — is built on an economy of expression that has no patience for ornament. The dialogue is short. The observations are physical. The moral weight of the story is carried by what is not said as much as by what is said.
+
+Jake Malone was conceived in this tradition. His internal monologue is short. His dialogue is shorter. He does not explain himself. He does not perform his values; he acts on them without annotation.
+
+The challenge in sustaining this influence across a novel-length narrative is that the terse style is also the style most susceptible to emptiness: stripped of ornament, every sentence must earn its presence through information or character. If the sentence does neither, it becomes visible. Chase solved this problem by making every scene a scene in which something is at stake and someone is in motion. I attempted the same.
+
+The sentence Jake says most often, in various forms, is some variant of: "I need to know." This is the detective's essential statement, and it is also the moral center of the noir tradition: the detective's refusal to accept comfortable explanations, their insistence on the actual facts rather than the manageable story.
+
+The Grisham Influence: Institutional Process as Plot
+
+Grisham's technical achievement — which is more difficult than it looks — is making the procedural mechanics of legal and institutional process genuinely suspenseful. The depositions, the motions, the chain of custody, the jurisdictional complications: in Grisham's best work, these are not backdrop for the story but the story. The system is the antagonist, not because it is evil but because it is slow, and slow has costs.
+
+In this novel, the institutional processes — the FBI involvement, the Coast Guard jurisdiction, the grand jury testimony, the international heritage designation framework — are treated with the same respect that Grisham would give them. They are not expedited by heroic action. Jake does not resolve the case by punching the right person. He resolves it by finding enough evidence and distributing it widely enough that the legitimate processes can function.
+
+This is a political choice as much as a craft choice. The noir tradition sometimes implies that the system is so corrupted that individual action is the only recourse. I wanted a different implication: that the system is imperfect and slow, but that the imperfections can be mitigated by the quality of the information it receives, and that providing good information to legitimate processes is itself a form of agency.
+
+The Hiaasen Influence: Florida as Character
+
+Hiaasen's Florida is specific and alive. It is a state that takes ecological catastrophe seriously and treats human absurdity with fond contempt. The Florida of his novels is not a backdrop — it is a participant. The land and water of South Florida make choices, in the sense that their conditions constrain and enable what human beings can do.
+
+I attempted something similar with Miami's specific neighborhoods, the Everglades margin, the Florida Keys, and the Caribbean island. The goal was not to describe these places accurately (though accuracy was attempted) but to make their specific characters felt — the way Coconut Grove smells different from Little Havana, the way Big Pine Key operates under a different temporal logic than Miami, the way a Caribbean island in the Windward Passage has an indifference to human plans that the Florida Keys reef system shares.
+
+The environmental consciousness that runs through this novel — Tommy Okeechobee's Everglades work, Nacho's reef logbooks, the reef's role in protecting the archive, the conservation designation of the island — is Hiaasenian in origin. The belief that the natural world has claims on us that we have not fully honored, and that those claims can be specific and local rather than abstract and global, is one of Hiaasen's central preoccupations, and it is one I share.
+
+The Dan Brown Influence: Historical Interludes and Reader Instruction
+
+The embedded historical interludes that appear throughout this novel — the Paris arrest of 1307, Diego's Atlantic voyages, his later years in Lisbon — are a direct borrowing from the Brown structural technique. Brown understood that historical fiction requires the reader to learn history they may not know, and that the most effective way to teach this history is to dramatize it: to put the reader inside a specific historical moment and let the learning happen through experience rather than explanation.
+
+The interludes in this novel are written in the present tense, unlike the contemporary narrative, to signal their different temporal status and to give them the specific immediacy that the technique requires. Diego is always in motion, always specific, always aware of his immediate physical environment. The historical moment is earned through its sensory particularity — the smell of the harbor, the weight of the sealed vessels, the acoustic quality of the cave.
+
+The risk of this technique is that the historical material overwhelms the contemporary narrative. I attempted to mitigate this by keeping the interludes short (rarely more than a page) and by placing them at moments when the historical reference point is directly relevant to what the contemporary characters are doing or discovering.
+
+The Kostova Influence: Setting as Atmosphere
+
+Elizabeth Kostova's "The Historian" demonstrated that the novel of historical research could also be a novel of atmosphere — that the scholarly pursuit of a historical mystery could generate the same kind of dread and beauty that conventional Gothic fiction produces through supernatural means. The atmosphere in Kostova is created through landscape and light: the specific quality of Eastern European cities and mountains, the sensory detail that makes a Bulgarian monastery or a Turkish coastal town feel inhabited and dangerous.
+
+I attempted something analogous with Miami and the Caribbean. The goal was not picturesque description but the kind of attention that makes a place feel like it has its own consciousness — its own way of receiving you and its own relationship to the things that happen within it. The Biscayne Bay in Jake's evening scenes is doing something to the story as well as providing a backdrop for it. The Caribbean in the voyage sections is a participant in the events as well as a setting for them.
+
+The Ruskin Bond Influence: The Dignity of the Ordinary
+
+Bond's great subject is the ordinary life lived with full attention — the person who tends their garden, the person who keeps a regular correspondence, the person who makes their small community run through consistent daily effort. These characters are not heroic in any conventional sense. They do not have dramatic arcs. They simply do what they do, carefully, over a long time, and their doing of it is what the story is about.
+
+Roberto Sanchez keeping the envelope is a Bond moment. Tommy Okeechobee planting cypress trees is a Bond moment. Nacho Reyes writing his logbook entry after a Monday dive is a Bond moment. These actions do not move the main plot. They establish the moral texture of the world in which the main plot occurs: a world where careful, patient attention to ordinary things produces, over time, results that no heroic action could have produced alone.
+
+I owe to Bond the conviction that fiction about intelligent and capable people requires intelligent and capable ordinary people as well as intelligent and capable exceptional ones — that the community of patient attention that makes large things possible is made up mostly of people like Roberto Sanchez, who don't need to be heroes to matter.
+
+---
+
+On the Question of Fiction and History
+
+Historical fiction is inherently dishonest in one specific way: it presents invented events in a real historical context in a way that can make the invented events seem historical. The best historical fiction is scrupulously honest about this — it makes clear what is documented and what is invented, and it constructs its invented elements in ways that are consistent with the documented record rather than contradicting it.
+
+I have attempted to maintain this honesty in this novel through the historical interludes (which are clearly fictional but historically grounded), through the detailed appendices (which distinguish carefully between documented history and fictional invention), and through the author's note at the end of Chapter 21, which explicitly states that the Cayo Espiritu archive, the Codex Almeida, Diego de Almeida, and the specific Templar Caribbean voyage are fictional.
+
+The historical background is real: the Templar dissolution, Philip IV of France, Jacques de Molay, the Order of Christ, the Portuguese maritime tradition, the Iberian Reconquista context. The fictional foreground uses these real elements as scaffolding for an invented story.
+
+What I hope the novel demonstrates is the proposition that historical fiction can be a vehicle for genuine historical learning — that reading a novel about the Templar dissolution can send a reader to the real historical record with more curiosity and better questions than they would have had before. The appendices are partly a record of research and partly an invitation: these are real things, they are interesting, you should look into them further.
+
+The archive is fake. The history it invites you to explore is real.
+
+---
+
+On Miami
+
+I should say something about Miami, which is not adequately represented in most American fiction and which deserves better.
+
+Miami is frequently used as a setting for crime fiction, in which function it serves as a backdrop of heat and corruption and excess — a place where bad things happen in good light. This is one true Miami and it is not the Miami that interested me.
+
+The Miami I was writing about is the Miami of La Luz de los Libros and Roberto Sanchez's garden and the Malecón conversations that happened ninety miles away but that formed the shadow-image of everything the Cuban-American community of Miami understood about itself. It is the Miami of the first-generation entrepreneur and the second-generation professional and the third-generation artist who has spent their whole life in a neighborhood that their grandparents built and that the city has been trying to change for fifty years.
+
+This Miami has a specific relationship to time and to patience. The Cuban-American experience has required a very long patience — a patience calibrated not by years but by generations, waiting for a change that was always coming and always not quite yet. This patience is not passive. It is an active maintenance of the conditions for when the change comes. It is the patience of people who are preparing for something.
+
+Roberto Sanchez keeping the envelope is that patience. Magdalena Santiesteban keeping the island knowledge is that patience. Arturo Vasquez-Cortez decoding the Codex is that patience.
+
+The Miami of this novel is a city of patient people doing careful work in a tropical light, waiting for the moment when the careful work connects to the larger story.
+
+That moment, in this novel, is the archive.
+
+That moment, in Miami's larger story, is still being made.

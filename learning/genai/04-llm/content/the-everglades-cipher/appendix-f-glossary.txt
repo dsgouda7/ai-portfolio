@@ -1,0 +1,169 @@
+APPENDIX F: GLOSSARY OF TERMS
+
+The Everglades Cipher — Reference Glossary
+
+This glossary covers technical, historical, and regional terms used in the novel. Entries are organized by category.
+
+---
+
+HISTORICAL AND TEMPLAR TERMS
+
+Baphomet
+The idol that the Templars were accused of worshipping in the heresy trial of 1307-1314. The word's etymology and meaning have been disputed for centuries; modern scholarship generally treats it as a fabrication of the prosecution rather than a description of any actual Templar practice. Various theories connect it to the Arabic "Mahomet" (Muhammad), to a corruption of Mohamet, or to a Gnostic figure. None of these connections has been established. The Baphomet accusation is a central element of the historical Templar mythology and a recurring motif in popular fiction about the Order.
+
+Bernard of Clairvaux (1090-1153)
+French Cistercian monk and abbot, one of the most influential churchmen of the twelfth century. His "In Praise of the New Knighthood" (De Laude Novae Militiae, circa 1128) provided the theological framework for the Templar model of the warrior-monk. His patronage was instrumental in securing official recognition for the Order at the Council of Troyes (1129). He was canonized in 1174 and declared a Doctor of the Church in 1830.
+
+Clement V (1264-1314)
+Pope from 1305 to 1314. Born Bertrand de Got in the Gascony region of France, he was the first Avignon pope — elected with significant French royal support and moving the papacy to Avignon rather than Rome, a decision that placed the Church leadership effectively under French political influence for the next seven decades. His reign coincided with the Templar dissolution, which he facilitated under pressure from Philip IV. He died in April 1314, one month after the execution of Jacques de Molay.
+
+Custodes Veritatis
+Latin: "Keepers of Truth." A fictional organization in this novel, described as a Vatican body that monitors and engages with historical research that touches on matters of institutional sensitivity to the Church. No organization by this name or this precise function is documented in public records of Vatican organization.
+
+Denis I of Portugal (1261-1325)
+King of Portugal from 1279 to 1325. Known as "Dom Dinis, the Farmer King" for his extensive agricultural and development policies, and as the "Poet King" for his literary output. His refusal to execute the Council of Vienne's suppression order against the Portuguese Templars and his establishment of the Order of Christ (1319) as a successor organization preserved a significant portion of the Templar institutional culture in Portugal and contributed to the subsequent Age of Discovery.
+
+Grille Cipher
+A cryptographic technique in which a physical template (a sheet with cut-out windows) is placed over a page of text, revealing only specific letters or words that compose a hidden message. The remaining text — visible around the grille windows — provides cover. Known from at least the sixteenth century in formal cryptographic literature but almost certainly practiced earlier. For a grille cipher to work, the encoder and decoder must possess matching grilles, or the decoder must be able to reconstruct the grille's geometry from contextual clues.
+
+Henry the Navigator (1394-1460)
+Infante Dom Henrique of Portugal, known in English as Henry the Navigator. Governor of the Order of Christ from 1420 until his death. He organized and financed a series of Portuguese exploration voyages along the West African coast and in the Atlantic island groups, establishing the infrastructure and methodology that would lead to the Age of Discovery. He is not known to have personally participated in exploration voyages; his role was administrative and financial rather than navigational.
+
+Iron Gall Ink
+The standard writing ink of Western Europe from approximately the fifth to the nineteenth century, made from the gallnuts produced by wasps on oak trees (the primary ingredient), iron sulfate (vitriol), gum arabic (binder), and water. The gallotannic acid in the gallnuts reacts with the iron sulfate to produce a black pigment that oxidizes over time to brown. Iron gall ink is highly durable in dry conditions but causes long-term acidity damage to the vellum or paper on which it is written, which is why many medieval manuscripts show ink-burn around the written areas.
+
+Jacques de Molay (circa 1243-1314)
+Last Grand Master of the Knights Templar. Arrested in October 1307, tried over the following years, initially confessing to some heresy charges (under torture) and then recanting. Burned at the stake on the Île de la Cité in Paris on March 18, 1314, alongside the Preceptor of Normandy (Geoffroi de Charney), after both men publicly denied the heresy charges before the commission of French bishops that was to sentence them to life imprisonment. His execution led Pope Clement V to issue a pardon (in a letter that arrived too late to prevent the burning). De Molay's final words are a matter of literary tradition rather than historical certainty.
+
+Knights Templar (Order of the Temple)
+Full name: Poor Fellow-Soldiers of Christ and of the Temple of Solomon. Military religious order founded in Jerusalem circa 1119, formally recognized by the Council of Troyes in 1129. Active for approximately 200 years (1119-1312), the Order operated as simultaneously a military force in the Crusader states, a religious organization following monastic rules, and the first multinational banking and financial services network. Officially dissolved by the Council of Vienne in 1312, with the last Grand Master executed in 1314.
+
+Order of Christ (Ordem de Cristo)
+Portuguese military order established by papal bull in 1319, with the explicit purpose of receiving the assets and personnel of the dissolved Knights Templar in Portugal. Headquartered at Tomar (the former Templar headquarters), the Order served as an important patron of Portuguese exploration during the Age of Discovery. Its distinctive red cross (Pattée cross on white background) was used to mark the sails of Portuguese exploratory vessels.
+
+Philip IV of France (1268-1314)
+Known as Philip the Fair (Philippe le Bel). King of France from 1285 to 1314. His aggressive centralization of royal power, his management of the French crown's debts, and his subordination of the papacy to French influence are the central political actions of his reign. The Templar dissolution (1307-1314) was his most dramatic political operation. He died unexpectedly in November 1314, eight months after the execution of Jacques de Molay, and within two years all three of his sons who succeeded him had died without male heirs, ending the Capetian dynasty. This provided material for various romantic Templar curse legends.
+
+Portolan (Portolano, Portulan)
+A medieval navigational document that provides sailing directions — usually a combination of map (portolan chart) and text (rutter) — describing coastal features, depths, landmarks, and courses. The portolan tradition developed in the Mediterranean from approximately the thirteenth century and represents the first systematic effort to produce accurate navigation documents based on observation rather than classical geography. The Templar maritime operations, with their extensive Mediterranean and Atlantic routes, would have accumulated significant portolan knowledge.
+
+Reconquista
+The centuries-long Christian military campaign to recover the Iberian Peninsula from Muslim rule, beginning in the eighth century (after the Umayyad conquest of 711) and ending in 1492 with the fall of Granada. The Reconquista was the defining military and political reality of the Iberian Peninsula during the period of Templar activity, and the Iberian Templars were significant participants in it.
+
+Vellum
+Writing material made from animal skin (usually calf, goat, or sheep) prepared through a specific process: the skin is soaked in a lime bath to loosen hair and fat, stretched on a wooden frame, and scraped thin while drying. The result is a smooth, durable writing surface superior to papyrus (which deteriorates in humid conditions) and contemporary to the development of the codex (bound book) format. Vellum remained the preferred writing material for important documents in Europe through the medieval period; it was gradually replaced by paper (which was cheaper to produce) from the thirteenth century onward but continued to be used for legal and significant ecclesiastical documents into the early modern period.
+
+---
+
+MUSICAL TERMS
+
+Acoustic
+Of or relating to sound or hearing. In the context of this novel, "acoustic" refers to the properties of the Cayo Espiritu cave system as a natural resonant chamber — the way the cave's geometry amplifies and colors the sound of water entering through the narrow passage.
+
+Harmonic Minor Scale
+A musical scale that differs from the natural minor scale (Aeolian mode) by one note: the seventh degree is raised by a half step, creating a characteristic augmented second between the sixth and seventh degrees. The harmonic minor scale produces a family of modes, of which the Phrygian dominant is one of the most distinctive.
+
+Modal System (Church Modes)
+The system of eight musical modes that formed the theoretical basis of medieval European music theory, developed from ancient Greek music theory through the intermediary of Boethius (5th-6th century) and Guido of Arezzo (11th century). Each mode is defined by a specific sequence of whole and half steps and by the position of these steps relative to the mode's final (tonic note). The modes were traditionally numbered one through eight and assigned specific affective qualities — Dorian was seen as joyful and restrained; Lydian as effeminate; Mixolydian as cheerful; Phrygian as sorrowful; etc. Diego's use of mode numbers as a numeric encoding system exploits this pre-existing conventional numbering.
+
+Modal Cipher
+As used in this novel: an encoding system that uses the identity of a musical mode (defined by its characteristic interval structure) as a carrier for numeric information, allowing navigation coordinates to be encoded within an apparently conventional piece of musical notation. The receiver requires knowledge of (a) the modal numbering convention, (b) the coordinate reference system, and (c) the specific assignment of numeric values to mode identities.
+
+Mensural Notation
+The system of musical notation that began developing in Europe in approximately 1260, associated with the theorist Franco of Cologne and his treatise "Ars Cantus Mensurabilis." Unlike earlier notation, mensural notation indicated specific rhythmic values for each note, allowing exact rhythmic replication. The Codex Almeida's musical notation is in an early Gothic mensural style, consistent with the early fourteenth century date attributed to the document.
+
+Phrygian Dominant
+The fifth mode of the harmonic minor scale (also called the Spanish Phrygian or Freygish scale). It is built on the fifth degree of the harmonic minor scale and is characterized by a minor second between its first and second degrees — the interval that gives it its characteristic tense, quasi-Middle Eastern quality. It is the mode of flamenco, of much traditional Arab and Turkish music, and of the Eastern European Klezmer tradition. Its characteristic sound is often described as tense, mysterious, or otherworldly.
+
+Resonance
+The reinforcement of a sound at a specific frequency when an acoustic cavity or chamber vibrates at that frequency. Sea caves, because of their geometry (partially enclosed volumes of air and water), can act as resonant chambers for the frequencies generated by wave action. The specific frequency — and therefore the musical pitch — depends on the dimensions and shape of the cavity.
+
+Sea Organ (Morske Orgulje)
+A real instrument in Zadar, Croatia, designed by architect Nikola Bašić and installed in 2005. It consists of a series of pipes installed beneath a stone seawall; wave action drives air through the pipes, producing musical tones. The instrument demonstrates the principle of using natural wave energy to generate musical sound through pipe resonance — the same principle that Diego de Almeida identifies as the acoustic phenomenon of the Cayo Espiritu cave.
+
+---
+
+MARINE AND DIVING TERMS
+
+BCD (Buoyancy Compensator Device)
+The vest-like piece of scuba diving equipment that allows divers to control their buoyancy by adding or releasing air. Standard scuba equipment since the 1970s.
+
+Coral Bleaching
+The stress response of coral reef organisms in which the coral animal expels the photosynthetic algae (zooxanthellae) that live in its tissues, turning the coral white. Bleaching typically results from elevated water temperatures (more than 1-2°C above average summer maximum for extended periods), though other stressors (pollution, disease) can also trigger it. If the bleaching event ends quickly enough, the coral can reacquire its zooxanthellae and recover; prolonged bleaching leads to coral death. A major concern for the Florida Reef Tract and tropical reef systems globally.
+
+Drift Dive
+A dive in which the diver moves with a current rather than swimming against it, covering more distance with less effort and experiencing the reef at the pace of the water. Looe Key's east-trending current makes drift diving an efficient way to survey the reef. The diver enters the water at one point and is picked up by the boat at another, having traveled with the current throughout the dive.
+
+Florida Reef Tract
+The only living coral barrier reef in the continental United States and the third-largest in the world, extending approximately 360 miles from Fowey Rocks near Miami to the Tortugas, along the oceanward side of the Florida Keys at distances of three to seven miles offshore. See Appendix D for detailed description.
+
+Gulf Stream
+The major Atlantic Ocean surface current that carries warm Caribbean water north along the eastern coast of North America and then northeast across the Atlantic. It enters the Gulf of Mexico through the Yucatan Channel, circles the Gulf, exits through the Florida Straits between Key West and Cuba, and then moves north and east along the US coast. Its flow through the Florida Straits averages approximately 30 million cubic meters per second, making it one of the most powerful ocean currents on Earth. It has a velocity of approximately three to five knots in the Straits.
+
+Portolan Chart
+See "Portolan" in the Historical Terms section. In the context of marine archaeology, portolan charts are the earliest surviving accurate navigation charts of the Mediterranean coastline, dating from the late thirteenth century. The charts found in the Cayo Espiritu archive — predating the known portolan tradition by several decades — would, if real, represent a significant historical artifact.
+
+Regulator
+The device in scuba diving that reduces the high pressure in the diving tank to the ambient pressure at depth, allowing the diver to breathe. It consists of two stages: a first stage that attaches to the tank and reduces pressure to an intermediate level, and a second stage (the mouthpiece) that delivers air on demand when the diver inhales. The regulator pulling out with a "cloud of bubbles" in the text is a specific reference to the exhale of air that happens when a regulator is removed while the diver is still breathing — the remaining air in the regulator releases as bubbles.
+
+Thermocline
+A layer of water in which temperature changes rapidly with depth. In the Caribbean and Florida Keys waters, a thermocline typically develops at depths of fifteen to twenty-five meters during summer months, with significantly cooler water below. Divers crossing a thermocline often experience the temperature change as a visible shimmering in the water (similar to looking through heated air).
+
+Zooxanthellae
+The photosynthetic algae (specifically dinoflagellates of the genus Symbiodinium) that live in symbiosis within the tissues of reef-building corals and other marine invertebrates. The symbiosis is mutually beneficial: the algae provide the coral with sugars produced by photosynthesis (up to 90% of the coral's energy), while the coral provides the algae with a protected environment and access to the nitrogen, phosphorus, and CO2 they need for photosynthesis. See "Coral Bleaching" for the stress response associated with disruption of this symbiosis.
+
+---
+
+FLORIDA AND MIAMI REGIONAL TERMS
+
+Bocachico
+A species of freshwater fish (Prochilodus magdalenae) in the sucker family, native to South America. In the context of this novel, "the Bocachico" refers to a Cuban-American radio station playing the specific genre of music associated with that program, which in the novel serves as the background sound of Arturo's apartment. The name may also refer to a traditional Colombian/Cuban musical style associated with the coastal working class.
+
+Calle Ocho
+SW 8th Street in Miami, the main commercial corridor of the Little Havana neighborhood. The name means "Eighth Street" in Spanish and is used by both the local community and outsiders to refer to both the street and the surrounding neighborhood. The annual Calle Ocho Festival, held each March, is one of the largest street festivals in the United States.
+
+Coconut Grove
+A neighborhood of Miami, located approximately four miles southwest of downtown, along the Biscayne Bay waterfront. It is the oldest continuously inhabited settlement in the Miami area (established in the 1870s by Bahamian settlers) and is known for its tree canopy, its bayside recreational area, and its position as a center of Miami's recreational boating community. See Appendix D for further description.
+
+Cortadito
+A Cuban-style espresso drink: double espresso with a small amount of steamed milk. A staple of Cuban-American coffee culture and available at the ventanitas (service windows) of Cuban cafes throughout Little Havana.
+
+Florida International University (FIU)
+The public research university in Miami, established in 1965, serving primarily the local South Florida population. In the novel, Jake attended FIU before dropping out; Elena also did undergraduate work at FIU before her graduate programs elsewhere.
+
+Hialeah
+A city within Miami-Dade County, immediately northwest of Miami proper. It has been one of the most densely Cuban-American communities in the country since the 1960s, and it is the birthplace of Carla Hidalgo and the location of Jake's dry cleaner office on Tigertail. The Hialeah Racetrack (Hialeah Park, established 1925) was for decades the premier horse racing venue in South Florida.
+
+Little Havana
+The Miami neighborhood, centered on Calle Ocho (SW 8th Street), that developed as the primary settlement zone for Cuban exiles following the 1959 revolution. It is the location of La Luz de los Libros and the residential-commercial environment in which Arturo and Elena lived throughout the events of the novel. See Appendix D for further description.
+
+Miccosukee
+A federally recognized Native American tribe whose traditional territory includes the Florida Everglades and the Big Cypress Swamp. The Miccosukee (along with the Seminole Tribe of Florida) are descendants of the Creek and other Southeastern tribes who were not removed to Oklahoma during the Indian Removal period of the 1830s-1840s. The Miccosukee Tribe has a reservation along the Tamiami Trail and significant cultural and legal interests in the management of the Everglades.
+
+Tamiami Trail
+US Highway 41, which crosses South Florida from Tampa (on the Gulf coast) to Miami (on the Atlantic coast), hence the name (Tampa + Miami = Tamiami). The section of the Tamiami Trail that runs through the Everglades — from the western edge of Miami to Naples — is the route along which Jake and Nacho drive to reach the Everglades fish camp in this novel.
+
+University of Miami (UM)
+The private research university in Coral Gables, established in 1925. Elena is a faculty member in the Department of Molecular and Cellular Pharmacology; Sofia Reyes is a graduate student in the Marine Sciences program; Dr. Constance Fairweather is a faculty member in the History department. The University of Miami's Rosenstiel School of Marine and Atmospheric Science (RSMAS) is among the premier marine research institutions in the world.
+
+Ventanita
+Literally "little window" in Spanish. The service windows on the exterior walls of Cuban cafes in Miami, from which espresso drinks, croquetas, pastelitos, and other Cuban food and drink are served to customers standing on the sidewalk. An institution of Miami Cuban-American street life.
+
+---
+
+CRYPTOGRAPHY TERMS
+
+Cipher
+A system for encoding information so that its content is not accessible to someone who doesn't possess the key. Distinguished from a code (which substitutes whole words or phrases) by operating at the level of individual letters or a defined unit. The Codex Almeida uses two ciphers: a grille cipher (steganographic) and a modal cipher (cryptographic).
+
+Plaintext
+The unencoded message, before a cipher is applied. In analyzing the Codex, Arturo is working to recover the plaintext navigation content from the encoded form.
+
+Steganography
+The practice of concealing the existence of a message within apparently innocent content, as opposed to cryptography (which makes a message unreadable without acknowledging its existence). The Codex's grille cipher is steganographic: the hidden message is physically concealed within the plain text by the grille template.
+
+Substitution Cipher
+A cipher in which each letter (or unit) of the plaintext is replaced by another letter or symbol according to a fixed system. The Caesar cipher (see Appendix C) is a simple substitution cipher. The Codex's modal cipher is a form of substitution cipher in which numbers (coordinate values) are substituted by mode identities.
+
+Transposition Cipher
+A cipher in which the letters of the plaintext are rearranged (transposed) according to a rule, rather than substituted. Unlike substitution ciphers, transposition ciphers preserve the original letters but change their positions. The Codex does not use a transposition cipher.

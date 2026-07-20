@@ -1,0 +1,219 @@
+Chapter 14: The Windward Passage
+
+The Windward Passage is a place that appears on charts as a navigation feature — a sixty-kilometer-wide corridor between the eastern tip of Cuba and the northwestern coast of Haiti — but which is, in person, something more than a navigation feature. It is a place where the Atlantic and the Caribbean meet, and this meeting is not an abstraction. It is a physical event: two bodies of water with different temperatures, different salinities, different currents, pressing against each other in the space that the islands provide, and the result of this meeting is a sea state that is specifically its own — choppy, variable, the waves coming from two directions at once and the boat moving in the corkscrewing motion of a vessel that has to negotiate competing swells.
+
+They entered the passage at six-thirty PM as the sun was going down behind Cuba.
+
+The light in the Windward Passage at sunset has a quality that Elizabeth Kostova might have described as Gothic in a tropical register: the mountains of eastern Cuba to the west were in deep shadow, and the mountains of Haiti to the southeast were catching the last orange light, and the water between them was the color of old gold or old blood depending on your disposition, and the sky above was doing everything skies do in the Caribbean at the end of a clear day — layering itself in colors that seem excessive to anyone who grew up under Northern European or North American skies, colors that local populations have grown up regarding as normal but that still stop the eye of anyone accustomed to restraint.
+
+Jake stood at the stern rail and looked at it.
+
+He thought: Diego de Almeida came through here in 1307 and again in 1312 and it looked like this. The same passage, the same meeting of waters, the same mountains on the same sides. The same light.
+
+Some things are stable across seven hundred years.
+
+He thought about what that means: that there is a scale on which human history is very brief, and the geography of a Caribbean passage is very long, and the archive buried in the cave on the island is old but not nearly as old as the cave, and the cave is old but not nearly as old as the coral, and the coral is old but not nearly as old as the sea.
+
+He thought: it's all been waiting. Not for us specifically. Just for whatever comes.
+
+---
+
+Nacho read the chart and the water simultaneously, the way experienced pilots do. "Southwest of Cabo Maisi," he said, pointing to the eastern Cuban headland that Jake could see in the fading light. "The island is fifteen nautical miles south-southeast. At current speed, forty minutes."
+
+"In the dark," Elena said.
+
+"We approach under GPS. I know the coordinates from three previous visits. We anchor on the western side in daylight if we can." He paused. "It'll be close."
+
+"And the Carità?" Jake said.
+
+Nacho had been monitoring the navigation frequencies. "No VHF traffic about any vessel in the immediate area. No AIS transponders in the area — which doesn't mean nothing is there, just that whatever's there isn't broadcasting."
+
+Jake thought about the Coast Guard delay. A two-hour delay might have been enough. It might not have been. In the current absence of information, both were possible.
+
+He went below and talked to Arturo, who was at the salon table with his notes and a completely untouched dinner that Elena had placed there forty minutes ago.
+
+"Two hours," Jake said. "Maybe less. You should sleep."
+
+Arturo looked up. He had the expression of a man who is very close to something and cannot entirely understand why other people are not also at maximum intensity.
+
+"I'll sleep on the island," he said.
+
+Jake looked at him. "You haven't slept properly in—"
+
+"Diego de Almeida," Arturo said, "made the approach to this island in open sea in a caravel in 1308 and again in 1312. He was in his twenties and his thirties. He probably slept fine." He paused. "I'm sixty-eight years old and I've been working on this for thirty-four years and we are one hour from the island. I will not sleep."
+
+Jake looked at him for a moment.
+
+"Fair enough," he said.
+
+He went back up.
+
+---
+
+The island appeared at dusk.
+
+It appeared the way islands appear when you are approaching from open sea in failing light: first as a darkness on the horizon that might be a cloud, then as a more solid darkness, then as a shape with definition — hill, beach, treeline — and then as a place.
+
+Nacho slowed the boat. He was reading the chartplotter and looking at the water ahead simultaneously, his expression the focused attention of a man entering territory that requires it.
+
+"Reef to the northeast," he said. "We'll see it in a minute — the water changes color."
+
+It did. The deep blue-black of the passage lightened to a specific greenish-gray that indicated shallow coral approximately three hundred meters ahead. The reef extended to the east in a ragged arc, and in the dying light Jake could see occasional pale shapes breaking the surface — coral heads, exposed at the top of their structure.
+
+"The reef is what protects the island," Nacho said. "The only safe approach from this direction is through the passage on the northwest side. It's narrow — about forty meters — and you have to line up on the range marks, two dead palms on the beach that my grandfather noted in 1941 and that are still there."
+
+He reduced speed further. The boat was barely making way now, moving on GPS track and the specific attention of an experienced pilot.
+
+Elena came to stand beside Jake. She was watching the island resolve out of the dark with an expression he recognized: the expression she had when she looked at the Codex for the first time in the library. The mixture of grief and wonder, except now the wonder was winning by a larger margin.
+
+Arturo was up from below. He was standing at the bow with one hand on the forestay and his glasses on and his face entirely directed at the island, and even at a distance, even in the poor light, Jake could see the specific quality of his attention: thirty-four years of attention finally finding its object.
+
+Sofia was on the radio, monitoring the local maritime frequency. She turned.
+
+"There's a vessel anchored on the western approach," she said.
+
+Everyone looked at her.
+
+"About half a mile off the beach. Running lights are off. I can see the silhouette on the chart radar." She paused. "It's about the right size for a Hylas 46."
+
+Jake said nothing.
+
+Nacho said nothing.
+
+They continued the approach in silence.
+
+---
+
+They anchored on the northern side of the island, in the deep-water anchorage that was less sheltered but visible from neither the Carità's position nor the beach. This was Nacho's decision and it was, Jake thought, the right one: you don't show your hand in the dark if you don't have to.
+
+They sat in the cockpit in the dark and assessed.
+
+The Carità — if it was the Carità — had anchored on the western side. The beach was on the western side. The standard approach to the island was from the west.
+
+The eastern side of the island was the cliff and the cavern and the reef. Not the obvious approach.
+
+"If they don't know the eastern cliff is the point," Jake said, "they'll spend tonight and tomorrow morning looking at the island from the wrong side."
+
+"They might know," Elena said carefully. "If they've read any part of the translation—"
+
+"The final cipher is unresolved. What they have, if they have anything — the general translation from whatever Fairweather might have shared, or whatever they could decode from the first cipher stages — would tell them the island but not the specific location on the island." Jake paused. "Without the acoustic key, they can't identify the cavern entrance precisely. The eastern cliff has multiple features. The entrance to the right cavern isn't obvious from the water."
+
+"How do you know?" Sofia asked.
+
+"Nacho's grandfather described it," Jake said. "He was looking for cavern entrances in 1941 and only found the right one by systematic elimination." He looked at Nacho.
+
+"He described the entrance as unremarkable," Nacho said. "A break in the cliff face that looks like a solution cavity — a natural erosion feature. It's not notably larger than other features on the cliff. You have to know it's the one." He paused. "I know it. I've been in it three times."
+
+"So we have an advantage," Elena said.
+
+"We have an advantage if they don't have Nacho's information," Jake said. "And they don't know about Nacho."
+
+He looked around the circle. Five people on a boat on the north side of an island in the Caribbean, in the dark, trying to reach something seven hundred years old before the people on the south side did.
+
+It was, he thought, an extraordinary situation, made ordinary only by the completeness with which he had accepted it.
+
+"Sleep," he said. "Shifts. One person up. The tide for the cavern dive is at first light — low tide at oh-five-hundred. We go at oh-four-thirty. Sofia leads the dive. Arturo is in the water — you need to be in the water, near the entrance, to hear the resonance clearly. Elena, Jake, we're on the boat and on the beach as needed."
+
+"What about the other boat?" Sofia said.
+
+"We watch. We proceed. If they approach, we deal with it then."
+
+"Deal with it," Sofia repeated, with the specific tone of someone who wants this defined more precisely.
+
+"Non-violently, if possible," Jake said. "By being faster, by being first. By having the archive before they can reach it."
+
+"And if they have weapons," Sofia said. It was not a question asked with fear; it was a question asked by a diver's mind, which catalogs hazards professionally.
+
+Jake looked at the dark water around them.
+
+"Then we deal with that when we know it," he said.
+
+She accepted this. Not happily, but with the pragmatism of someone who has dived in conditions where you cannot know everything until you're in the water.
+
+"I'll take first watch," she said.
+
+They went below and Jake lay in the bow cabin and listened to the island in the dark — the sound of water moving over the reef, the occasional seabird, the breeze in the trees. He thought about Diego de Almeida anchored off this island in 1308 and 1312 and listening to the same sounds.
+
+The same sounds. The same reef. The same island.
+
+The same thing waiting in the cave.
+
+He slept for four hours and dreamed of nothing, which was the best kind of dream.
+
+---
+
+Sofia woke him at three-thirty.
+
+"The other boat has moved," she said.
+
+He was up immediately. "Where?"
+
+"Around the south tip. They're approaching the eastern side."
+
+He was on deck in two minutes. Nacho was already at the helm station, looking at the chart radar. A blip — small, a dinghy or tender — was moving around the south end of the island.
+
+"They're using a tender," Nacho said. "The main boat is still anchored west. Two, maybe three people in the tender."
+
+Jake thought rapidly. "They're going for the eastern cliff. They know about the eastern cliff."
+
+"How?" Elena said.
+
+"Fairweather," Jake said. He was moving toward the tender as he said it. "She described the eastern cliff to me. If she described it to someone else — or if someone who spoke to her passed it on—"
+
+"She wouldn't—"
+
+"She may not have known what she was giving away." He looked at Nacho. "Can we beat the tender to the cliff?"
+
+"We'd have to go around the north end of the island in our tender, which is—" Nacho looked at the distance. "Eight minutes. Their tender is closer but moving slower, by the looks of it."
+
+"Sofia."
+
+Sofia was already in the stern locker, pulling out equipment. "I can swim the reef from the north end. Faster than the tender." She looked at him. "I need a dive light and the equipment bag."
+
+Jake looked at her. "It's four AM."
+
+"I know what time it is." She was already in her wetsuit, which told him she had been planning this. "Give me the equipment bag. I'll go through the reef, into the cavern, and I'll get the artifact. Whatever's there, a sample that proves the discovery."
+
+"You're not taking—"
+
+"I'm not taking anything permanently. I'm taking photographs. I'm documenting the discovery." She held his eyes. "That's the point, isn't it? That it's documented by us before they can claim they found it first."
+
+Jake thought about this for precisely two seconds.
+
+"Yes," he said. "Go."
+
+She went over the side with a dive light and a waterproof camera and the equipment bag before anyone else had fully processed the decision. Jake watched her surface briefly, get her bearings, and start swimming north around the island in the specific efficient stroke of someone who has been doing this since childhood.
+
+He looked at Nacho. "Take the tender around. We follow her."
+
+Nacho was already in the tender.
+
+He looked at Arturo. "Stay on the boat."
+
+"Absolutely not," Arturo said.
+
+Jake stared at him.
+
+"I am not sitting on this boat while someone else enters that cave," Arturo said, with the complete certainty of a man stating something that is not negotiable. "I need to hear the sound. The translation requires it. And I have waited thirty-four years."
+
+Jake considered arguing. He decided it wasn't worth the time.
+
+"You're in the tender then," he said.
+
+"In the tender," Arturo agreed, and stepped aboard with more agility than Jake had given him credit for.
+
+Elena followed, because she had that look.
+
+They went around the north end of the island in the dark, following Sofia's dive light as it moved along the reef, and the island passed on their left close enough to smell — the rich green vegetation smell, the coral, the salt. And as they rounded the north end and turned south along the eastern face, Jake saw the eastern cliff for the first time.
+
+In the dark, with the dive light playing on it from below, it was extraordinary.
+
+The cliff rose forty meters straight from the water, limestone so old it had taken on a surface texture that was almost organic — eroded, pocketed, ancient beyond any specific measurement. The water at its base moved with the specific layered complexity of tidal action in confined space, and even now, before the low tide, before the full resonance, Jake could feel through the hull of the tender something he didn't have a precise framework for: a vibration, low and constant, coming from the cliff's direction.
+
+"There," Nacho said.
+
+Sofia's dive light had stopped moving. It was at the water level, about sixty meters south along the cliff face, and it was pointing into what appeared to be a dark horizontal slash in the rock.
+
+The cavern entrance.
+
+She was in it before they reached her.
