@@ -1,6 +1,15 @@
-# Data Acquisition and Collection — Chapter Overview
+# Ch.00 — Data Acquisition and Collection
 
-> **The scenario**: You're building a model to predict SpaceX first-stage landing success. Your training data lives in three places: a versioned REST API (v5, incompatible with v3), Wikipedia HTML tables covering launches from 2010–2014 that predate the API, and a CSV your colleague emailed you with undocumented column names. Before any model runs, you need a reliable, reproducible pipeline that fetches, validates, and stores this data — one that doesn't break when the API version increments, the HTML table gets redesigned, or a new engineer joins the team.
+| Resource | Description |
+|----------|-------------|
+| [data-acquisition.md](data-acquisition.md) | Full chapter reference |
+| [notebook-exercise.ipynb](notebook-exercise.ipynb) | Exercises with TODO stubs |
+| [notebook-solution.ipynb](notebook-solution.ipynb) | Fully implemented solution |
+
+*Companion notebooks:*
+- [`learning/ibm-data-science/spacex-analysis/01-spacex-data-collection.ipynb`](../../../learning/ibm-data-science/spacex-analysis/01-spacex-data-collection.ipynb)
+- [`learning/ibm-data-science/spacex-analysis/02-webscraping.ipynb`](../../../learning/ibm-data-science/spacex-analysis/02-webscraping.ipynb)
+- [`learning/ibm-data-science/spacex-analysis/03-data_wrangling.ipynb`](../../../learning/ibm-data-science/spacex-analysis/03-data_wrangling.ipynb)
 
 ## What You'll Learn
 
