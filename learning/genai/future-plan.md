@@ -8,10 +8,17 @@ fine-tuning, RAG, and LLM gateways at a mechanistic level, and now wants to unde
 these systems behave the way they do at the hardware level and how to build or optimize them
 in production.
 
-**Directory to implement:** `learning/ai-compute/`
-(name rationale: covers both compute hardware — GPUs, accelerators — and the systems that
-use that hardware for training and inference; "systems" is too ambiguous, "gpu" undersells
-the inference and serving content, "ai-compute" is the intersection)
+**Directory to implement:** `learning/ai-infrastructure/`
+(name rationale: mirrors `notes/07-ai-infrastructure/` which covers the same terrain; "ai-compute"
+undersells the inference serving and systems chapters; "infrastructure" captures both the hardware
+layer and the serving/orchestration layer above it.)
+
+**Relationship to `notes/07-ai-infrastructure/`:** Most mechanistic content already exists as
+rich markdown chapters (detailed narrative, equations, running scenario) and `notebook-supplement.ipynb`
+files containing GPU-specific code. The work is to **promote the notes content to full gold-standard
+notebooks**: add the pedagogical wrapper (challenge-before-title, roadmap table, threaded running
+example, predict-first with candidate outcomes, closing decision) rather than rediscover the tech
+content. See the notes coverage map at the end of this file.
 
 ---
 
@@ -73,15 +80,22 @@ But the real bottleneck is {actual_bottleneck} — measured below."
 - **Closing decision (Section 8.7):** "To explain the 12× speedup on the A10G: {measured breakdown by part} — the dominant factor is {X}. For your specific fine-tuning workload, the bottleneck is the {matmul/memory} operation at layer {N}."
 
 **Subagent implementation task:**
-> Create `learning/ai-compute/01-gpu-hardware/gpu-hardware-foundations.ipynb`.
-> Open with the laptop-vs-A10G question *before* the title cell, following the 04-llm pattern.
-> The `(B=8, S=128, D=256)` matmul must be established as a named constant and referenced in
-> every subsequent timing cell. All timing cells use `torch.cuda.synchronize()` before stop.
-> Use `torch.cuda.is_available()` to gate GPU cells with a graceful CPU fallback that prints
-> "GPU not available — showing timing ratios from a reference run instead."
-> Import `triton` for the kernel section (skip gracefully with pseudocode if not installed).
-> Apply ALL conventions from `learning/genai/authoring-guide.md` including Code Walkthrough
-> cells after dense blocks, math-mirroring variable names, and the closing tier-1/2/3 ledger.
+> Create `learning/ai-infrastructure/01-gpu-hardware/gpu-hardware-foundations.ipynb`.
+> **Primary source:** `notes/07-ai-infrastructure/ch01-gpu-architecture/gpu-architecture.md`
+> provides the full mechanistic content (CUDA history, SM model, HBM hierarchy, roofline
+> analysis, GPU comparison table) and the InferenceBase scenario. Also draw from
+> `notes/07-ai-infrastructure/ch01-gpu-architecture/notebook.ipynb` for any existing
+> code demonstrations and from `notebook-supplement.ipynb` for GPU-specific benchmarks.
+> **What to keep from notes:** The InferenceBase "$80k OpenAI bill" scenario, the CEO/Engineer
+> dialogue, the 6-constraint framing, the roofline model explanation, and the GPU spec comparison
+> table. **What to replace:** The notes' challenge-cell format is good but needs the
+> challenge-before-title cell (as in 04-llm), a full roadmap table, the specific predict-first
+> questions with candidate outcomes from this plan, and the closing decision structured against
+> the 6 constraints. The `(B=8, S=128, D=256)` matmul running example threads through the
+> notebook as the concrete workload being analyzed.
+> Open with the laptop-vs-A10G question *before* the title cell.
+> Use `torch.cuda.is_available()` to gate GPU cells with a graceful CPU fallback.
+> Apply ALL conventions from `learning/genai/authoring-guide.md`.
 
 ---
 
@@ -125,11 +139,20 @@ pretraining?" (Part 1–2), "Will fp16 save us?" (Part 2), "What if we add gradi
 - **Closing decision (Section 8.7):** "Riverside's A10G model selection: GPT-2-Medium at fp32 — {gpt2_fp32_gb:.1f} GB (fits); LLaMA-3-1B at bf16+checkpointing — {llama1b_gb:.1f} GB ({fits_str}); LLaMA-3-8B at bf16+LoRA — {llama8b_lora_gb:.1f} GB ({fits_str_8b}). Recommendation: {measured_recommendation}."
 
 **Subagent implementation task:**
-> Create `learning/ai-compute/02-mixed-precision/mixed-precision-and-memory.ipynb`.
-> Open with the Riverside A10G scenario before the title. The memory math section must use
-> real `model.parameters()` to measure actual footprints, not hardcoded estimates.
-> The `GradScaler` demo must show an actual NaN loss without it (use a model small enough to run
-> on CPU but with fp16 arithmetic that overflows). Apply ALL authoring guide conventions.
+> Create `learning/ai-infrastructure/02-mixed-precision/mixed-precision-and-memory.ipynb`.
+> **Primary source:** `notes/07-ai-infrastructure/ch02-memory-and-compute-budgets/memory-budgets.md`
+> provides the memory footprint math, optimizer state accounting, and compute budget analysis.
+> Also draw from `notes/07-ai-infrastructure/ch02-memory-and-compute-budgets/notebook-supplement.ipynb`
+> for GPU-specific memory profiling code.
+> **Secondary source:** `notes/02-bridging-to-transformers/ch10-pruning-mixed-precision/notebook.ipynb`
+> has mixed precision training (fp16/bf16, loss scaling) content that can be extracted for Part 2-3.
+> **What to keep from notes:** The memory math formulas, optimizer state accounting, and any
+> existing GPU memory profiling code from the supplement. **What to replace/add:** The Riverside
+> A10G scenario (the notes use InferenceBase; use Riverside for narrative continuity with
+> `learning/genai/`), the specific predict-first questions with candidate outcomes, and the
+> closing decision that names which models fit at which precision.
+> Open with the Riverside A10G scenario. The `GradScaler` demo must show actual NaN loss.
+> Apply ALL authoring guide conventions.
 
 ---
 
@@ -173,7 +196,10 @@ greatest expected speedup.
 - **Closing decision (Section 8.7):** "For the 04-llm fine-tuning step: the actual bottleneck is {bottleneck} at {pct:.0f}% of wall time. The single change with the greatest expected speedup is {recommendation} — expected to save {expected_saving:.0f}%."
 
 **Subagent implementation task:**
-> Create `learning/ai-compute/03-profiling/pytorch-profiling.ipynb`.
+> Create `learning/ai-infrastructure/03-profiling/pytorch-profiling.ipynb`.
+> **Notes coverage:** There is no dedicated profiling chapter in `notes/07-ai-infrastructure/`.
+> However `notes/07-ai-infrastructure/ch01-gpu-architecture/notebook.ipynb` may have basic
+> timing/profiling code; check and extract what exists. The remainder is fresh content.
 > Open with the 45-second mystery. Reload the `04-llm` LoRA adapter from disk at the top
 > using the Section 13.2 save/reload pattern (add a note: "if you haven't run 04-llm notebooks,
 > the setup cell creates an equivalent toy model"). All profiling cells must produce real output.
@@ -223,11 +249,19 @@ Every Part answers one question: "What exactly is slow about standard attention?
 - **Closing decision (Section 8.7):** "For the S=512 attention head from Chapter 3: standard attention read {std_hbm:.1f} GB from HBM; tiled FlashAttention read {flash_hbm:.1f} GB ({ratio:.1f}× less). The dispatch condition for `scaled_dot_product_attention` on this machine: {dispatch_conditions}. Recommendation: {recommendation}."
 
 **Subagent implementation task:**
-> Create `learning/ai-compute/04-flash-attention/flash-attention-internals.ipynb`.
-> Open with the 60%-bottleneck finding from Chapter 3 (or a reference to it). The tiling walkthrough
-> must be clean, readable Python (not pseudocode comments) that passes `torch.allclose` against
-> the reference implementation. IO complexity measurements must use `torch.profiler` rather than
-> wall-clock time. Apply ALL authoring guide conventions.
+> Create `learning/ai-infrastructure/04-flash-attention/flash-attention-internals.ipynb`.
+> **Primary source:** `notes/07-ai-infrastructure/ch05-inference-optimization/inference-optimization.md`
+> covers FlashAttention IO complexity and tiling; draw the conceptual framing from there.
+> Also check `notes/07-ai-infrastructure/ch05-inference-optimization/notebook-supplement.ipynb`
+> for any existing attention benchmark code. The tiling algorithm implementation and online
+> softmax are fresh content (the notes describe FlashAttention but don't walk through the
+> Python tiling implementation).
+> **What to keep from notes:** The IO complexity derivation, the roofline framing (compute-bound
+> vs. memory-bound), and any existing benchmark cells. **What to add:** The tiling walkthrough
+> in clean, readable Python that passes `torch.allclose`; the predict-first questions; the
+> closing decision.
+> Open with the 60%-bottleneck finding from Chapter 3 (or a reference to it).
+> Apply ALL authoring guide conventions.
 
 ---
 
@@ -272,10 +306,20 @@ The closing decision names the exact strategy for the 70B job and how much code 
 - **Closing decision (Section 8.7):** "For Riverside's 70B job on 4 A100s: {recommended_strategy}. Code change from the single-GPU baseline: {change_description}. Estimated time to first checkpoint: {time_estimate} (using reference training throughput from the LLaMA-2 paper)."
 
 **Subagent implementation task:**
-> Create `learning/ai-compute/05-distributed-training/distributed-training.ipynb`.
-> Open with the Riverside 70B scenario. The toy model must be a real Transformer (not a dummy
-> linear stack) so the memory comparisons are proportionally realistic. CPU process group fallback
-> must print the explanation stated above. Apply ALL authoring guide conventions.
+> Create `learning/ai-infrastructure/05-distributed-training/distributed-training.ipynb`.
+> **Primary source:** `notes/07-ai-infrastructure/ch04-parallelism-and-distributed-training/parallelism.md`
+> provides the full mechanistic content (DDP, FSDP, tensor/pipeline parallelism, 3D parallelism)
+> and the training scenario. Draw from
+> `notes/07-ai-infrastructure/ch04-parallelism-and-distributed-training/notebook-supplement.ipynb`
+> for any GPU-specific distributed training code.
+> **What to keep from notes:** The parallelism taxonomy (data/tensor/pipeline), the memory
+> accounting for FSDP vs. DDP, and any LLaMA training config references.
+> **What to replace/add:** Adapt the notes' scenario to the Riverside 70B grant scenario for
+> narrative continuity; add the predict-first questions with candidate outcomes; add the closing
+> decision. The notes' parallelism markdown is rich on mechanism but has no gold-standard
+> pedagogical wrapper — that's the main addition.
+> Open with the Riverside 70B scenario. CPU process group fallback prints the stated explanation.
+> Apply ALL authoring guide conventions.
 
 ---
 
@@ -323,11 +367,22 @@ actually hurt quality?" (Parts 1–3), "int4 fits in 4 GB — is it still useful
 - **Closing decision (Section 8.7):** "For Riverside's MacBook (16 GB): dynamic int8 ({int8_gb:.1f} GB, perplexity {int8_ppl:.1f}) — fits, quality {int8_verdict}; GGUF Q4_K_M ({gguf_gb:.1f} GB, {gguf_tps:.0f} tok/s) — {gguf_verdict}. Recommendation: {recommendation_with_rationale}."
 
 **Subagent implementation task:**
-> Create `learning/ai-compute/06-quantization/quantization-in-depth.ipynb`.
-> Open with the Riverside MacBook scenario. The GPT-2 model must be reloaded from the `04-llm`
-> checkpoint directory if it exists, with a fallback to a fresh `GPT2LMHeadModel`. All perplexity
-> measurements must use the same 50-sentence evaluation set for fair comparison. The GGUF section
-> uses `llama-cpp-python`; skip gracefully if not installed. Apply ALL authoring guide conventions.
+> Create `learning/ai-infrastructure/06-quantization/quantization-in-depth.ipynb`.
+> **Primary source:** `notes/07-ai-infrastructure/ch03-quantization-and-precision/quantization.md`
+> provides the full mechanistic content (PTQ, GPTQ, AWQ, GGUF, NF4 data type) and likely the
+> InferenceBase deployment scenario. Draw from
+> `notes/07-ai-infrastructure/ch03-quantization-and-precision/notebook-supplement.ipynb`
+> for GPU-specific quantization code (int8/int4 benchmarks).
+> **Secondary source:** `notes/02-bridging-to-transformers/ch10-pruning-mixed-precision/notebook.ipynb`
+> has mixed precision + quantization-aware content that may complement Part 2 (fp16/bf16) and
+> Part 3 (static PTQ calibration).
+> **What to keep from notes:** The quantization math (scale/zero_point, rounding error analysis),
+> the GPTQ/AWQ mechanism descriptions, the NF4 non-uniform bucket explanation.
+> **What to replace/add:** Use Riverside MacBook scenario (instead of InferenceBase) for narrative
+> continuity with `learning/genai/`; add predict-first questions; add closing decision that names
+> which models fit in 16 GB and with what quality.
+> Open with the Riverside MacBook scenario. Reload GPT-2 from `04-llm` checkpoint if available.
+> Apply ALL authoring guide conventions.
 
 ---
 
@@ -366,12 +421,21 @@ that are otherwise mysterious.
 - **Closing decision (Section 8.7):** "For Riverside's 100× traffic target: naïve serving reaches {naive_tps:.0f} tokens/sec; KV cache alone: {kv_tps:.0f} tok/s ({kv_mult:.1f}×); continuous batching: {cb_tps:.0f} tok/s ({cb_mult:.1f}×); speculative decoding: {sd_tps:.0f} tok/s ({sd_mult:.1f}×). To reach {target_tps:.0f} tok/s for 1000 req/min: {recommendation}."
 
 **Subagent implementation task:**
-> Create `learning/ai-compute/07-inference-systems/inference-systems.ipynb`.
-> Open with the Riverside 100× traffic scenario. The KV cache must be a real PyTorch
-> forward pass on GPT-2, not pseudocode — implement as a `past_key_values` cache list and
-> verify output matches the uncached forward pass with `torch.allclose`.
-> The vLLM section gates on a running server — include a code cell that prints setup instructions
-> and checks connectivity before running benchmarks.
+> Create `learning/ai-infrastructure/07-inference-systems/inference-systems.ipynb`.
+> **Primary source:** `notes/07-ai-infrastructure/ch05-inference-optimization/inference-optimization.md`
+> (KV cache, speculative decoding, continuous batching concepts) and
+> `notes/07-ai-infrastructure/ch06-model-serving-frameworks/notebook.ipynb` (production serving
+> frameworks, vLLM/TGI integration). Draw from
+> `notes/07-ai-infrastructure/ch05-inference-optimization/notebook-supplement.ipynb` and
+> `notes/07-ai-infrastructure/ch06-model-serving-frameworks/notebook-supplement.ipynb`
+> for GPU-specific serving code.
+> **Secondary source:** `notes/07-ai-infrastructure/ch12-local-llm-serving-lab/` may have a
+> practical local serving walkthrough to adapt.
+> **What to keep from notes:** The KV cache mechanism, the continuous batching vs. static batching
+> comparison, the speculative decoding acceptance rate analysis, vLLM metric definitions.
+> **What to replace/add:** Adapt to the Riverside 100× traffic scenario; add the predict-first
+> questions with candidate outcomes; the specific closing decision.
+> Open with the Riverside 100× traffic scenario. KV cache must be a real PyTorch forward pass.
 > Apply ALL authoring guide conventions.
 
 ---
@@ -420,46 +484,79 @@ can reach {theoretical_peak:.0f}% of hardware peak bandwidth."
 - **Closing decision (Section 8.7):** "For the fused softmax: {speedup:.1f}× faster than the two-step baseline, {memory_savings:.0f}% fewer HBM reads (measured). For production use: the official FlashAttention-2 Triton kernel already exists — use it via `torch.nn.functional.scaled_dot_product_attention`. Write custom Triton kernels when (a) your attention variant isn't covered, or (b) you need a fused op that reduces memory bandwidth for a specific layer pattern."
 
 **Subagent implementation task:**
-> Create `learning/ai-compute/08-triton-kernels/triton-kernels.ipynb`.
-> Open with the 87%-peak-bandwidth target. All Triton cells require a CUDA GPU; include
-> explicit `TRITON_AVAILABLE = torch.cuda.is_available()` flag and CPU fallback that prints
-> the kernel logic as annotated pseudocode. Every kernel must pass `torch.allclose` against
-> the PyTorch reference. Apply ALL authoring guide conventions.
+> Create `learning/ai-infrastructure/08-triton-kernels/triton-kernels.ipynb`.
+> **Primary source:** `notes/07-ai-infrastructure/ch01-gpu-architecture/gpu-architecture.md`
+> and `notes/07-ai-infrastructure/ch01-gpu-architecture/notebook.ipynb` for the CUDA execution
+> model (warps, blocks, threads, shared memory) that underpins Triton's programming model.
+> The actual Triton kernel implementations (vector addition, tiled matmul, fused GELU, tiled
+> softmax, autotuning) are **entirely fresh content** — no notes chapter covers Triton directly.
+> **What to keep from notes:** The warp/SM/memory-coalescing mental model from Ch.1 (used as
+> the prerequisite bridge); the FlashAttention IO complexity framing from Ch.5 (reframed as
+> "what the production Triton kernel achieves"). **What to build fresh:** All kernel code.
+> Open with the 87%-peak-bandwidth target.
+> All Triton cells require a CUDA GPU; `TRITON_AVAILABLE` flag gates them with pseudocode fallback.
+> Every kernel passes `torch.allclose` against the PyTorch reference.
+> Apply ALL authoring guide conventions.
 
 ---
 
-## AI Compute Directory Structure (after implementation)
+## AI Infrastructure Directory Structure (after implementation)
 
 ```
 learning/
-  ai-compute/
+  ai-infrastructure/
     README.md                        # who this is for; prerequisites; how to set up CUDA env
     requirements.txt                 # torch >= 2.1, triton, auto-gptq, llama-cpp-python
     01-gpu-hardware/
-      gpu-hardware-foundations.ipynb
+      gpu-hardware-foundations.ipynb  # source: notes/07-ai-infrastructure/ch01
       images/
     02-mixed-precision/
-      mixed-precision-and-memory.ipynb
+      mixed-precision-and-memory.ipynb  # source: notes/07-ai-infrastructure/ch02 + notes/02/ch10
       images/
     03-profiling/
-      pytorch-profiling.ipynb
+      pytorch-profiling.ipynb         # mostly fresh; some code from notes/07-ai-infrastructure/ch01
       images/
     04-flash-attention/
-      flash-attention-internals.ipynb
+      flash-attention-internals.ipynb # source: notes/07-ai-infrastructure/ch05 (concepts)
       images/
     05-distributed-training/
-      distributed-training.ipynb
+      distributed-training.ipynb      # source: notes/07-ai-infrastructure/ch04
       images/
     06-quantization/
-      quantization-in-depth.ipynb
+      quantization-in-depth.ipynb     # source: notes/07-ai-infrastructure/ch03 + notes/02/ch10
       images/
     07-inference-systems/
-      inference-systems.ipynb
+      inference-systems.ipynb         # source: notes/07-ai-infrastructure/ch05 + ch06 + ch12
       images/
     08-triton-kernels/
-      triton-kernels.ipynb
+      triton-kernels.ipynb            # mostly fresh; CUDA model from notes/07-ai-infrastructure/ch01
       images/
 ```
+
+### Notes coverage map
+
+| `ai-infrastructure` chapter | Primary notes source | Source has | What's fresh |
+|---|---|---|---|
+| Ch1 GPU Hardware | `notes/07-ai-infrastructure/ch01-gpu-architecture/` | Full notebook + markdown + InferenceBase scenario | Riverside-linked scenario variant, predict-first Qs, closing decision |
+| Ch2 Mixed Precision | `notes/07-ai-infrastructure/ch02-memory-and-compute-budgets/` + `notes/02-bridging/ch10` | Markdown + supplement; mixed precision notebook in notes/02 | Riverside A10G scenario, GradScaler NaN demo, closing decision |
+| Ch3 Profiling | `notes/07-ai-infrastructure/ch01` (partial) | Basic timing code only | Mostly fresh: profiler setup, bottleneck identification, `torch.compile` timing |
+| Ch4 FlashAttention | `notes/07-ai-infrastructure/ch05-inference-optimization/` | IO complexity and tiling concepts in markdown | Fresh: Python tiling walkthrough, online softmax implementation |
+| Ch5 Distributed | `notes/07-ai-infrastructure/ch04-parallelism-and-distributed-training/` | Full markdown + supplement | Riverside 70B scenario, predict-first Qs, CPU fallback |
+| Ch6 Quantization | `notes/07-ai-infrastructure/ch03-quantization-and-precision/` + `notes/02-bridging/ch10` | Full markdown (PTQ/GPTQ/AWQ/GGUF/NF4) + supplement | Riverside MacBook scenario, perplexity eval harness |
+| Ch7 Inference Systems | `notes/07-ai-infrastructure/ch05 + ch06 + ch12` | Markdown + two full notebooks | Riverside 100× traffic scenario, real KV cache PyTorch pass |
+| Ch8 Triton Kernels | `notes/07-ai-infrastructure/ch01` (CUDA model only) | GPU execution model description | All Triton kernel code is fresh |
+
+### Notes chapters with no current `ai-infrastructure` mapping
+
+These chapters in `notes/07-ai-infrastructure/` are not covered by the current 8-chapter plan:
+- `ch07-ai-specific-networking` (RDMA, NVLink topology)
+- `ch08-feature-stores`
+- `ch09-ml-experiment-tracking`
+- `ch10-production-ml-monitoring`
+- `ch11-end-to-end-deployment`
+
+They are Tier-3 out-of-scope for the current `ai-infrastructure` track. If the track is extended,
+these chapters provide ready-made source material for a Ch9+ deployment track.
 
 ---
 
@@ -470,14 +567,14 @@ simultaneously. Each chapter should apply all conventions from `learning/genai/a
 
 | Agent | Chapter | Key dependency |
 |---|---|---|
-| Agent A | 01-gpu-hardware | `torch`, `triton` (optional), `nvml` |
-| Agent B | 02-mixed-precision | `torch` |
-| Agent C | 03-profiling | `torch` with CUDA (CPU fallback) |
-| Agent D | 04-flash-attention | `torch >= 2.0` |
-| Agent E | 05-distributed-training | `torch.distributed`, `accelerate` (CPU fallback for single-GPU) |
-| Agent F | 06-quantization | `auto-gptq`, `llama-cpp-python`, `transformers` |
-| Agent G | 07-inference-systems | `transformers`, `vllm` (gated) |
-| Agent H | 08-triton-kernels | `triton` (CPU fallback for non-CUDA) |
+| Agent A | 01-gpu-hardware (`learning/ai-infrastructure/01-gpu-hardware/`) | Source: `notes/07-ai-infrastructure/ch01`; `torch`, `triton` (optional) |
+| Agent B | 02-mixed-precision (`learning/ai-infrastructure/02-mixed-precision/`) | Source: `notes/07-ai-infrastructure/ch02` + `notes/02/ch10`; `torch` |
+| Agent C | 03-profiling (`learning/ai-infrastructure/03-profiling/`) | Source: partial `notes/07/ch01`; mostly fresh; `torch` with CUDA |
+| Agent D | 04-flash-attention (`learning/ai-infrastructure/04-flash-attention/`) | Source: `notes/07-ai-infrastructure/ch05` (concepts); `torch >= 2.0` |
+| Agent E | 05-distributed-training (`learning/ai-infrastructure/05-distributed-training/`) | Source: `notes/07-ai-infrastructure/ch04`; `torch.distributed`, `accelerate` |
+| Agent F | 06-quantization (`learning/ai-infrastructure/06-quantization/`) | Source: `notes/07-ai-infrastructure/ch03` + `notes/02/ch10`; `auto-gptq`, `transformers` |
+| Agent G | 07-inference-systems (`learning/ai-infrastructure/07-inference-systems/`) | Source: `notes/07-ai-infrastructure/ch05+ch06+ch12`; `transformers`, `vllm` (gated) |
+| Agent H | 08-triton-kernels (`learning/ai-infrastructure/08-triton-kernels/`) | Source: `notes/07/ch01` (CUDA model); all kernel code fresh; `triton` |
 
 ---
 

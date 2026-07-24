@@ -4,10 +4,16 @@
 pooling, BN, dropout, ResNet/skip connections) but *without* hands-on production implementation,
 and is trying to get to LLMs by working through the `learning/genai/` track.
 
-**Directory to implement:** `learning/pre-genai/` (sits immediately before `learning/genai/`)
+**Directory to implement:** `learning/language-foundations/`
+(name rationale: the two notebooks establish the *language modeling foundations* — sequence memory
+and text representation — that every `learning/genai/` notebook assumes. "pre-genai" is a
+positional label; "language-foundations" names what the learner gains.)
 
-**Question this plan answers:** Is the `learning/genai/` transition story sufficient for this
-learner? What is critically missing?
+**Relationship to `notes/`:** Most mechanistic content already exists across three notes chapters.
+The work is *not* to rediscover the math — it is to **re-wrap existing mechanistic content in
+gold-standard pedagogy**: a named scenario, threaded running example, predict-first questions
+with falsifiable candidate outcomes, and a closing decision that branches on measured values.
+See "Source material from `notes/`" in each task below.
 
 ---
 
@@ -102,14 +108,20 @@ Every Part answers a named question for this team: "Does it even know the alphab
 - Explicit forward pointer: "The music team can predict one note at a time. In the next chapter, we ask: what if the model could attend to *all* past notes simultaneously? That's the Transformer."
 
 **Subagent implementation task:**
-> Create `learning/pre-genai/01-rnn-sequence-modeling/` with a `rnn-sequence-modeling.ipynb`
+> Create `learning/language-foundations/01-rnn-sequence-modeling/` with a `rnn-sequence-modeling.ipynb`
 > notebook following ALL gold-standard conventions from `learning/genai/authoring-guide.md`.
-> The running corpus is the first 40 characters of "Twinkle Twinkle Little Star" (write it as a
-> string constant, no download needed). Every Part answers one named question for the music team.
-> The vanilla RNN manual unrolling must print each $h_t$ and verify against `nn.RNN` output.
-> The vanishing gradient ablation must produce a log-scale plot and a printed comparison.
-> The LSTM from scratch must use `assert` to prove gates are in [0,1].
-> The RNN vs. LSTM comparison must sample 10 completions from each and count correct predictions.
+> **Primary source:** Extract mechanistic content (equations, code structure, BPTT proof, LSTM gate
+> implementation) from `notes/01-ml/03-neural-networks/ch06_rnns_lstms/notebook-pytorch.ipynb`
+> (PyTorch) and the conceptual framing from
+> `notes/01-ml/03-neural-networks/ch06_rnns_lstms/README.md`.
+> **Secondary source:** `notes/03-llm/ch00-from-networks-to-language/prerequisites-demo.ipynb`
+> for the misconceptions-first opening and the "vanishing gradients were not solved by LSTMs"
+> correction frame.
+> **What to keep from notes:** The BPTT derivation, the LSTM gate `assert` checks, the vanilla
+> RNN vs. LSTM comparison structure. **What to replace:** The housing price running example and
+> the UnifiedAI scenario — swap entirely for the music team / "Twinkle Twinkle" scenario specified
+> in this plan. All predict-first questions, candidate outcomes, and the closing decision are new.
+> The running corpus is the first 40 characters of "Twinkle Twinkle Little Star" (write inline).
 > The closing decision must branch on the actual measured gradient norms, not aspirational text.
 > Include images in `images/` matching the `images-plan.md` RNN image descriptions.
 
@@ -151,14 +163,24 @@ The notebook is anchored to one concrete task: *you're building a multilingual c
 - Forward pointer: "This is the exact pipeline that feeds `02-transformers`' `VOCAB` dictionary — the hand-coded vocabulary there is a simplified BPE with exactly these properties."
 
 **Subagent implementation task:**
-> Create `learning/pre-genai/02-tokenization/` with `tokenization-and-embeddings.ipynb`.
+> Create `learning/language-foundations/02-tokenization/` with `tokenization-and-embeddings.ipynb`.
 > Apply ALL gold-standard conventions from `learning/genai/authoring-guide.md`.
-> The opening cell states the law firm scenario before the title, following the 04-llm pattern.
-> The 20-sentence legal corpus must be written inline as a Python string (no download).
-> The BPE-from-scratch section must print a merge table at every step.
-> The PCA visualization must show a before (random) and after (clustered) side-by-side panel.
-> The closing decision must branch on the actual measured compression ratio, not aspirational text.
-> End with GPT-2 tokenizer demo using `tiktoken` (fallback: HuggingFace `AutoTokenizer`).
+> **Primary source:** There is no dedicated tokenization chapter in `notes/`. However:
+> — The *embeddings as a trainable lookup table* section (Part 4 of this plan) can draw from
+>   `notes/01-ml/03-neural-networks/ch09_sequences_to_attention/notebook.ipynb`, which has a
+>   worked embedding + attention demo the learner has already seen.
+> — The *soft-lookup / attention weights as feature importance* intuition in
+>   `notes/03-llm/ch00-from-networks-to-language/README.md` shows how to explain embeddings
+>   before attention arrives.
+> — The `Ġ` BPE token explanation and misconception framing from
+>   `notes/03-llm/ch00-from-networks-to-language/README.md` ("Embeddings give potential;
+>   Attention gives sentence-specific self") can be adapted for the law firm narrative.
+> **What to build fresh:** The BPE-from-scratch merge algorithm, the legal corpus (inline string),
+> the PCA before/after visualization, and the `tiktoken` demo have no direct notes equivalent.
+> The opening cell states the law firm scenario before the title (04-llm pattern).
+> The 20-sentence legal corpus must be written inline (no download).
+> The BPE section must print a merge table at every step.
+> The closing decision must branch on the actual measured compression ratio.
 
 ---
 
@@ -314,14 +336,14 @@ existing file or folder. All 6 can run in parallel after this plan is reviewed.
 
 ```
 learning/
-  pre-genai/
+  language-foundations/
     README.md                          # who this is for; how it connects to genai/
     01-rnn-sequence-modeling/
-      rnn-sequence-modeling.ipynb     # M-1
+      rnn-sequence-modeling.ipynb     # M-1 (source: notes/01-ml/03-neural-networks/ch06 + ch09)
       images/
       requirements.txt
     02-tokenization/
-      tokenization-and-embeddings.ipynb  # M-2
+      tokenization-and-embeddings.ipynb  # M-2 (partial source: notes/03-llm/ch00)
       images/
       requirements.txt
   genai/
@@ -331,3 +353,14 @@ learning/
     03-encoder-decoder/ (modified: M-3)
     04-llm/             (unchanged)
 ```
+
+### Notes coverage map
+
+| `language-foundations` chapter | Primary notes source | Coverage | What's new |
+|---|---|---|---|
+| M-1: RNN/LSTM mechanics | `notes/01-ml/03-neural-networks/ch06_rnns_lstms/` | Equations, BPTT proof, gate `assert` checks, RNN vs. LSTM comparison | Music team scenario, "Twinkle" corpus, falsifiable predict-first Qs, closing decision |
+| M-1 attention bridge | `notes/01-ml/03-neural-networks/ch09_sequences_to_attention/` | Soft-lookup intuition, dot-product attention | Forward pointer to `02-transformers` in the M-1 closing cell |
+| M-1 misconceptions | `notes/03-llm/ch00-from-networks-to-language/README.md` | "RNNs were just slow" correction; LSTM partial fix vs. skip connections | Adapted for the music scenario |
+| M-2: BPE from scratch | *(no direct notes source)* | — | Entirely new: merge algorithm, legal corpus, merge table animation |
+| M-2: `nn.Embedding` | `notes/01-ml/03-neural-networks/ch09_sequences_to_attention/notebook.ipynb` | Embedding + attention demo | PCA before/after, law firm narrative |
+| M-2: `tiktoken` GPT-2 demo | `notes/03-llm/ch00-from-networks-to-language/` | `Ġ` prefix explanation | Adapted for legal corpus compression ratio |
