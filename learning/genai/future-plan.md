@@ -81,21 +81,42 @@ But the real bottleneck is {actual_bottleneck} — measured below."
 
 **Subagent implementation task:**
 > Create `learning/ai-infrastructure/01-gpu-hardware/gpu-hardware-foundations.ipynb`.
-> **Primary source:** `notes/07-ai-infrastructure/ch01-gpu-architecture/gpu-architecture.md`
-> provides the full mechanistic content (CUDA history, SM model, HBM hierarchy, roofline
-> analysis, GPU comparison table) and the InferenceBase scenario. Also draw from
-> `notes/07-ai-infrastructure/ch01-gpu-architecture/notebook.ipynb` for any existing
-> code demonstrations and from `notebook-supplement.ipynb` for GPU-specific benchmarks.
-> **What to keep from notes:** The InferenceBase "$80k OpenAI bill" scenario, the CEO/Engineer
-> dialogue, the 6-constraint framing, the roofline model explanation, and the GPU spec comparison
-> table. **What to replace:** The notes' challenge-cell format is good but needs the
-> challenge-before-title cell (as in 04-llm), a full roadmap table, the specific predict-first
-> questions with candidate outcomes from this plan, and the closing decision structured against
-> the 6 constraints. The `(B=8, S=128, D=256)` matmul running example threads through the
-> notebook as the concrete workload being analyzed.
-> Open with the laptop-vs-A10G question *before* the title cell.
-> Use `torch.cuda.is_available()` to gate GPU cells with a graceful CPU fallback.
-> Apply ALL conventions from `learning/genai/authoring-guide.md`.
+> **Primary source:** `notes/07-ai-infrastructure/ch01-gpu-architecture/gpu-architecture.md` ...
+> [full task spec as above]
+> Create `images-plan.md` in this chapter directory using the prompts below.
+
+**images-plan.md for this chapter:**
+
+| Asset | Placement | Teaching job |
+|---|---|---|
+| `gpu-memory-hierarchy.png` | Part 2 intro | HBM → L2 → SRAM → registers as a pyramid; bandwidth and size at each level |
+| `roofline-model.png` | Part 3 intro | Arithmetic intensity vs. throughput on log-log axes; "LLM inference is memory-bound" region shaded |
+| `warp-simt-execution.png` | Part 3 body | 32-thread warp executing in lock-step; branched threads grayed out to show divergence cost |
+
+```text
+[gpu-memory-hierarchy.png]
+Flat vector technical diagram, wide 16:9, dark graphite background. A vertical pyramid
+with four tiers: HBM at the base (largest, labeled "80 GB, 2 TB/s"), L2 cache above
+(labeled "40 MB, 12 TB/s"), SRAM/shared memory above that (labeled "228 KB/SM"),
+registers at the apex (labeled "256 KB/SM, fastest"). Each tier uses a different
+muted color (teal base, amber middle, coral top). Ivory bandwidth labels on each tier.
+No logos, no photorealism, no gradients, no tiny text.
+
+[roofline-model.png]
+Flat vector data visualization, wide 16:9, dark graphite background. Log-log axes:
+x = "Arithmetic Intensity (FLOP/byte)", y = "Performance (TFLOP/s)". A teal roof-line
+bends at the ridge point (label: "164 FLOP/byte, RTX 4090"). Left of ridge: sloped
+"memory-bound" region shaded in coral. Right: flat "compute-bound" region in muted
+teal. A labeled dot for "LLM single-token decode" sits far left in the memory-bound
+region. Ivory labels. No logos, no photorealism, no gradients, no tiny text.
+
+[warp-simt-execution.png]
+Flat vector technical diagram, wide 16:9, dark graphite background. A grid of 32 small
+ambrose squares (threads) grouped into one warp. A branch condition splits them: 20
+threads take "if" path (teal), 12 threads are grayed out (disabled). Two serial passes
+shown: pass 1 executes the "if" group, pass 2 executes the "else" group. Arrow shows
+this doubles execution time. Ivory labels. No logos, no photorealism, no gradients.
+```
 
 ---
 
@@ -140,19 +161,40 @@ pretraining?" (Part 1–2), "Will fp16 save us?" (Part 2), "What if we add gradi
 
 **Subagent implementation task:**
 > Create `learning/ai-infrastructure/02-mixed-precision/mixed-precision-and-memory.ipynb`.
-> **Primary source:** `notes/07-ai-infrastructure/ch02-memory-and-compute-budgets/memory-budgets.md`
-> provides the memory footprint math, optimizer state accounting, and compute budget analysis.
-> Also draw from `notes/07-ai-infrastructure/ch02-memory-and-compute-budgets/notebook-supplement.ipynb`
-> for GPU-specific memory profiling code.
-> **Secondary source:** `notes/02-bridging-to-transformers/ch10-pruning-mixed-precision/notebook.ipynb`
-> has mixed precision training (fp16/bf16, loss scaling) content that can be extracted for Part 2-3.
-> **What to keep from notes:** The memory math formulas, optimizer state accounting, and any
-> existing GPU memory profiling code from the supplement. **What to replace/add:** The Riverside
-> A10G scenario (the notes use InferenceBase; use Riverside for narrative continuity with
-> `learning/genai/`), the specific predict-first questions with candidate outcomes, and the
-> closing decision that names which models fit at which precision.
-> Open with the Riverside A10G scenario. The `GradScaler` demo must show actual NaN loss.
-> Apply ALL authoring guide conventions.
+> **Primary source:** `notes/07-ai-infrastructure/ch02-memory-and-compute-budgets/memory-budgets.md`...
+> [full spec as above]
+> Create `images-plan.md` using the prompts below.
+
+**images-plan.md for this chapter:**
+
+| Asset | Teaching job |
+|---|---|
+| `memory-footprint-breakdown.png` | Stacked bar for GPT-2-Medium at fp32: parameters + gradients + optimizer states + activations; repeat for bf16 |
+| `fp32-fp16-bf16-number-line.png` | Three number lines comparing exponent bits vs. mantissa bits; overflow threshold annotated |
+| `gradient-checkpointing-tradeoff.png` | Two-axis chart: x=checkpointing frequency, y1=peak memory (falling), y2=compute overhead (rising); sweet spot marked |
+
+```text
+[memory-footprint-breakdown.png]
+Flat vector stacked bar chart, wide 16:9, dark graphite background. Two side-by-side
+bars: "fp32" and "bf16". Each bar stacked with segments: coral "parameters", amber
+"gradients", teal "optimizer states", muted purple "activations". Ivory segment
+labels showing GB. The bf16 bar is roughly 2x shorter. Title: "GPT-2-Medium (355M
+params) memory footprint". No logos, no photorealism, no gradients, no tiny text.
+
+[fp32-fp16-bf16-number-line.png]
+Flat vector technical infographic, wide 16:9, dark graphite background. Three rows:
+fp32, fp16, bf16. Each row shows a bit-layout diagram (32/16/16 boxes) split into
+sign, exponent, mantissa. Exponent boxes in amber, mantissa in teal. A vertical coral
+line marks the overflow threshold for fp16. A label shows bf16 has the same exponent
+width as fp32. Ivory labels. No logos, no photorealism, no gradients, no tiny text.
+
+[gradient-checkpointing-tradeoff.png]
+Flat vector dual-axis line chart, wide 16:9, dark graphite background. X-axis:
+checkpointing frequency (every 1 to every 8 layers). Left y-axis teal line: peak
+memory (GB), falling from left to right. Right y-axis coral line: compute overhead
+(%), rising from left to right. An amber vertical dashed line marks the sweet spot
+where memory savings plateau and compute cost begins rising steeply. Ivory labels.
+```
 
 ---
 
@@ -197,14 +239,34 @@ greatest expected speedup.
 
 **Subagent implementation task:**
 > Create `learning/ai-infrastructure/03-profiling/pytorch-profiling.ipynb`.
-> **Notes coverage:** There is no dedicated profiling chapter in `notes/07-ai-infrastructure/`.
-> However `notes/07-ai-infrastructure/ch01-gpu-architecture/notebook.ipynb` may have basic
-> timing/profiling code; check and extract what exists. The remainder is fresh content.
-> Open with the 45-second mystery. Reload the `04-llm` LoRA adapter from disk at the top
-> using the Section 13.2 save/reload pattern (add a note: "if you haven't run 04-llm notebooks,
-> the setup cell creates an equivalent toy model"). All profiling cells must produce real output.
-> The Chrome trace viewer instructions must include a code cell that prints the trace file path.
+> **Notes coverage:** `notes/07-ai-infrastructure/ch01-gpu-architecture/notebook.ipynb` may
+> have basic timing code; extract what exists. Remainder is fresh.
+> Open with the 45-second mystery. Create `images-plan.md` using prompts below.
 > Apply ALL authoring guide conventions.
+
+**images-plan.md for this chapter:**
+
+| Asset | Teaching job |
+|---|---|
+| `profiler-timeline-annotated.png` | Chrome trace timeline screenshot annotated with "data_load", "forward", "backward", "optimizer" bands |
+| `compute-vs-memory-bound.png` | Two bar charts: compute-bound op (GPU util high, memory bandwidth low) vs. memory-bound op (reversed) |
+
+```text
+[profiler-timeline-annotated.png]
+Flat vector technical diagram styled as a browser dev-tools timeline, wide 16:9, dark
+graphite background. Four colored horizontal bands on a time axis: teal "data_load",
+amber "forward pass", coral "backward pass", muted purple "optimizer step". Width
+proportional to typical relative durations. Ivory time labels. Callout arrows pointing
+to the widest band. Title: "Single fine-tuning step breakdown". No logos, no
+photorealism, no gradients, no tiny text.
+
+[compute-vs-memory-bound.png]
+Flat vector side-by-side bar chart, wide 16:9, dark graphite background. Two panels.
+Left "Compute-bound" (matmul): tall amber GPU-utilization bar, short teal memory-
+bandwidth bar. Right "Memory-bound" (attention softmax): tall teal memory bar, short
+amber compute bar. Labels show actual percentages. Subtitle: "The bottleneck determines
+which hardware spec to optimize". Ivory labels. No logos, no photorealism.
+```
 
 ---
 
@@ -263,9 +325,33 @@ Every Part answers one question: "What exactly is slow about standard attention?
 > Open with the 60%-bottleneck finding from Chapter 3 (or a reference to it).
 > Apply ALL authoring guide conventions.
 
----
+**images-plan.md for this chapter:**
 
-### Chapter 5 · Distributed Training
+| Asset | Teaching job |
+|---|---|
+| `standard-attention-io.png` | Standard attention HBM data flow; each roundtrip shown as a slow red arrow |
+| `flash-attention-tiling.png` | Tiled attention keeping intermediates in SRAM; no N×N in HBM |
+| `kv-cache-memory-gqa.png` | Side-by-side KV cache at S=2048: MHA vs. GQA-8 vs. MQA memory |
+
+```text
+[standard-attention-io.png]
+Flat vector systems diagram, wide 16:9, dark graphite background. Q, K, V in HBM
+(teal boxes) → large coral box "S = QKᵀ (N×N)" in HBM → P=softmax(S) in HBM →
+O=PV in HBM. Fat slow red arrows between every HBM operation. Title: "Standard
+attention: O(N²) HBM reads". Ivory labels. No logos, no photorealism.
+
+[flash-attention-tiling.png]
+Flat vector systems diagram, wide 16:9, dark graphite background. Q, K, V in HBM
+(teal). Small amber SRAM block labeled "tile (BLOCK×d)". Fast teal looping arrow
+inside SRAM; no large N×N matrix in HBM. Output O written directly to HBM.
+Title: "FlashAttention: O(N²/M) HBM reads". Ivory labels. No logos.
+
+[kv-cache-memory-gqa.png]
+Flat vector bar chart, wide 16:9, dark graphite background. Three bars: MHA (coral,
+tallest), GQA-8 (teal, 8× shorter), MQA (amber, shortest). Y-axis: KV cache GB at
+S=2048 for a 7B model. Percentage reduction on each bar. Title: "KV cache size at
+2048 tokens". Ivory labels. No logos, no photorealism.
+```
 
 **Why here:** Most LLMs over 7B parameters cannot be trained on a single GPU. A practitioner
 needs to understand the three axes of parallelism (data, tensor, pipeline) to reason about
@@ -321,9 +407,33 @@ The closing decision names the exact strategy for the 70B job and how much code 
 > Open with the Riverside 70B scenario. CPU process group fallback prints the stated explanation.
 > Apply ALL authoring guide conventions.
 
----
+**images-plan.md for this chapter:**
 
-### Chapter 6 · Quantization in Depth
+| Asset | Teaching job |
+|---|---|
+| `ddp-gradient-allreduce.png` | 4-GPU ring; gradient tensors flowing around the ring to be averaged |
+| `fsdp-vs-ddp-memory.png` | DDP (full params on each GPU) vs. FSDP (sharded params + all-gather) |
+| `parallelism-strategy-matrix.png` | 2D grid: model size vs. GPU count; each cell shows recommended strategy |
+
+```text
+[ddp-gradient-allreduce.png]
+Flat vector systems diagram, wide 16:9, dark graphite background. Four GPU boxes
+in a ring connected by teal arrows. Each GPU box shows an amber gradient tensor.
+A circular all-reduce arrow flows clockwise. After all-reduce, each GPU's gradient
+is identical. Ivory labels. No logos, no photorealism, no gradients, no tiny text.
+
+[fsdp-vs-ddp-memory.png]
+Flat vector comparison diagram, wide 16:9, dark graphite background. Left "DDP":
+4 GPU boxes each with a full amber model copy. Right "FSDP": 4 GPU boxes each
+with a small teal shard; coral arrows show all-gather when a layer is needed.
+Memory labels: DDP=4×, FSDP=1×+comm. Ivory labels. No logos, no photorealism.
+
+[parallelism-strategy-matrix.png]
+Flat vector heatmap grid, wide 16:9, dark graphite background. Y-axis: model size
+(1B, 7B, 13B, 70B, 175B). X-axis: GPU count (1, 4, 8, 16, 64). Each cell: strategy
+label ("DDP", "FSDP", "Tensor+Data", "3D") in ivory. Light teal (simple) to amber
+(complex) coloring. No logos, no photorealism, no gradients, no tiny text.
+```
 
 **Why here:** Quantization is the primary lever for deploying large models on consumer hardware.
 The `04-llm` chapter introduced dynamic quantization as a deployment trick; this chapter explains
@@ -384,9 +494,32 @@ actually hurt quality?" (Parts 1–3), "int4 fits in 4 GB — is it still useful
 > Open with the Riverside MacBook scenario. Reload GPT-2 from `04-llm` checkpoint if available.
 > Apply ALL authoring guide conventions.
 
----
+**images-plan.md for this chapter:**
 
-### Chapter 7 · Inference Systems and Serving
+| Asset | Teaching job |
+|---|---|
+| `quantization-rounding-error.png` | fp32 value mapped to int8 bucket; scale, zero_point, and residual error annotated |
+| `gptq-vs-awq-perplexity.png` | Bar chart: fp32, dynamic int8, GPTQ int4, AWQ int4 perplexity |
+| `gguf-quantization-formats.png` | Table: Q4_K_M / Q5_K_M / Q8_0 / F16 with memory and quality bars |
+
+```text
+[quantization-rounding-error.png]
+Flat vector technical diagram, wide 16:9, dark graphite background. A number line:
+floating-point (continuous) above, int8 (discrete buckets) below. fp32 value 0.347
+maps via teal arrow to int8 bucket 44. Coral gap shows rounding error. Scale and
+zero_point in amber. Ivory labels. No logos, no photorealism, no gradients.
+
+[gptq-vs-awq-perplexity.png]
+Flat vector horizontal bar chart, wide 16:9, dark graphite background. Four bars:
+fp32 (teal baseline), dynamic int8 (teal, +0.1), GPTQ int4 (amber, longer), AWQ
+int4 (coral, between int8 and GPTQ). X-axis: perplexity. Delta labels vs. fp32.
+Vertical baseline reference line. Ivory labels. No logos, no photorealism.
+
+[gguf-quantization-formats.png]
+Flat vector comparison table, wide 16:9, dark graphite background. Four rows:
+Q4_K_M, Q5_K_M, Q8_0, F16. Columns: name, bits/weight (amber bar), GB for 7B
+model, relative quality (teal bar). Q4_K_M row highlighted in coral. Ivory labels.
+```
 
 **Why here:** Understanding continuous batching, the KV cache, and speculative decoding is
 essential for anyone deploying an LLM service — these topics explain performance characteristics
@@ -422,21 +555,40 @@ that are otherwise mysterious.
 
 **Subagent implementation task:**
 > Create `learning/ai-infrastructure/07-inference-systems/inference-systems.ipynb`.
-> **Primary source:** `notes/07-ai-infrastructure/ch05-inference-optimization/inference-optimization.md`
-> (KV cache, speculative decoding, continuous batching concepts) and
-> `notes/07-ai-infrastructure/ch06-model-serving-frameworks/notebook.ipynb` (production serving
-> frameworks, vLLM/TGI integration). Draw from
-> `notes/07-ai-infrastructure/ch05-inference-optimization/notebook-supplement.ipynb` and
-> `notes/07-ai-infrastructure/ch06-model-serving-frameworks/notebook-supplement.ipynb`
-> for GPU-specific serving code.
-> **Secondary source:** `notes/07-ai-infrastructure/ch12-local-llm-serving-lab/` may have a
-> practical local serving walkthrough to adapt.
-> **What to keep from notes:** The KV cache mechanism, the continuous batching vs. static batching
-> comparison, the speculative decoding acceptance rate analysis, vLLM metric definitions.
-> **What to replace/add:** Adapt to the Riverside 100× traffic scenario; add the predict-first
-> questions with candidate outcomes; the specific closing decision.
-> Open with the Riverside 100× traffic scenario. KV cache must be a real PyTorch forward pass.
-> Apply ALL authoring guide conventions.
+> **Primary source:** `notes/07-ai-infrastructure/ch05-inference-optimization/` and `ch06/` and
+> `ch12/`. Use Riverside 100× traffic scenario. KV cache must be real PyTorch forward pass.
+> Create `images-plan.md` using prompts below. Apply ALL authoring guide conventions.
+
+**images-plan.md for this chapter:**
+
+| Asset | Teaching job |
+|---|---|
+| `kv-cache-mechanism.png` | Step-by-step: prompt tokens run once (prefill); each new token appends one K/V pair (decode); cached K/Vs shown as a growing teal list |
+| `continuous-batching-vs-static.png` | Timeline: static batching idles while short requests wait for long ones; continuous batching slots in new requests as soon as a slot frees |
+| `speculative-decoding-accept-reject.png` | Draft model proposes 5 tokens; verifier accepts 3, rejects 2; one verifier call replaces 3 sequential decode calls |
+
+```text
+[kv-cache-mechanism.png]
+Flat vector sequence diagram, wide 16:9, dark graphite background. Left: "Prefill"
+phase showing all prompt tokens processed in parallel (teal arrows to K/V cache).
+Right: "Decode" phase showing one new token generated per step, appending one K/V
+pair (amber arrow) to the growing teal cache list. The cache grows step by step.
+Ivory labels. No logos, no photorealism, no gradients, no tiny text.
+
+[continuous-batching-vs-static.png]
+Flat vector timeline diagram, wide 16:9, dark graphite background. Top half "Static
+batching": a long request and a short request start together; the slot for the short
+request sits empty (coral hatching) after it finishes, waiting for the long one.
+Bottom half "Continuous batching": as soon as the short request finishes, a new
+request (amber) fills the slot immediately. Efficiency labels on right. Ivory text.
+
+[speculative-decoding-accept-reject.png]
+Flat vector pipeline diagram, wide 16:9, dark graphite background. Left: a small teal
+"Draft" model proposes 5 tokens in sequence. Right: a large amber "Verifier" model
+checks all 5 in one parallel forward pass. Tokens 1-3 are accepted (teal check), 4-5
+are rejected (coral cross). The accepted 3 tokens are output. Time comparison shows
+3x draft calls replaced 1 verifier call. Ivory labels.
+```
 
 ---
 
@@ -485,18 +637,39 @@ can reach {theoretical_peak:.0f}% of hardware peak bandwidth."
 
 **Subagent implementation task:**
 > Create `learning/ai-infrastructure/08-triton-kernels/triton-kernels.ipynb`.
-> **Primary source:** `notes/07-ai-infrastructure/ch01-gpu-architecture/gpu-architecture.md`
-> and `notes/07-ai-infrastructure/ch01-gpu-architecture/notebook.ipynb` for the CUDA execution
-> model (warps, blocks, threads, shared memory) that underpins Triton's programming model.
-> The actual Triton kernel implementations (vector addition, tiled matmul, fused GELU, tiled
-> softmax, autotuning) are **entirely fresh content** — no notes chapter covers Triton directly.
-> **What to keep from notes:** The warp/SM/memory-coalescing mental model from Ch.1 (used as
-> the prerequisite bridge); the FlashAttention IO complexity framing from Ch.5 (reframed as
-> "what the production Triton kernel achieves"). **What to build fresh:** All kernel code.
-> Open with the 87%-peak-bandwidth target.
-> All Triton cells require a CUDA GPU; `TRITON_AVAILABLE` flag gates them with pseudocode fallback.
-> Every kernel passes `torch.allclose` against the PyTorch reference.
+> **Primary source:** `notes/07-ai-infrastructure/ch01-gpu-architecture/` for CUDA model.
+> All kernel code is fresh. Create `images-plan.md` using prompts below.
 > Apply ALL authoring guide conventions.
+
+**images-plan.md for this chapter:**
+
+| Asset | Teaching job |
+|---|---|
+| `triton-grid-block-thread.png` | CUDA grid → thread blocks → individual threads hierarchy; same layout used by Triton `@triton.jit` |
+| `fused-vs-unfused-gelu.png` | Two-step unfused (read activations from HBM, write bias, read again, apply GELU, write) vs. one-step fused (single HBM read/write) |
+| `autotune-block-size-sweep.png` | Bar chart: throughput (TFLOP/s) vs. block size (16, 32, 64, 128, 256) for the tiled matmul; optimal block size highlighted |
+
+```text
+[triton-grid-block-thread.png]
+Flat vector hierarchy diagram, wide 16:9, dark graphite background. Three levels:
+Top: a large teal box labeled "CUDA Grid" containing a 4×4 grid of smaller amber
+boxes labeled "Thread Blocks". Each block contains a 4×4 grid of tiny ivory squares
+labeled "Threads". Bracket annotations show "gridDim", "blockDim". Ivory labels.
+No logos, no photorealism, no gradients, no tiny text.
+
+[fused-vs-unfused-gelu.png]
+Flat vector pipeline diagram, wide 16:9, dark graphite background. Top half "Unfused":
+HBM box → load activations (coral slow arrow) → add bias (amber) → write to HBM
+(coral) → load again (coral) → apply GELU (amber) → write to HBM (coral). 4 HBM
+accesses total. Bottom half "Fused Triton kernel": HBM box → load (teal) → add bias
++ GELU (amber, in SRAM) → write output (teal). 2 HBM accesses. Ivory labels.
+
+[autotune-block-size-sweep.png]
+Flat vector bar chart, wide 16:9, dark graphite background. X-axis: block size (16,
+32, 64, 128, 256). Y-axis: throughput in TFLOP/s. Bars in muted teal rising to a
+peak at 128, then falling at 256. The 128 bar is amber and labeled "autotune winner".
+A horizontal dashed line shows torch.matmul reference throughput. Ivory labels.
+```
 
 ---
 
