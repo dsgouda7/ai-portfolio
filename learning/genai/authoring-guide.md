@@ -90,6 +90,12 @@ summarise) should survive.
   - `#### What just happened` / `#### So they differ — but…` — a short reflective
     cell after a reveal that (a) names what was just shown and (b) plants the question
     the next part answers. This is the "complaint that forces the next step."
+  > **Plain-text equivalents are acceptable.** The mechanistic notebooks (`02-transformers/`,
+  > `04-llm/`) consistently use plain-text `#### Predict first` / `#### Your turn — ...`
+  > headers and `#### What just happened — and what's missing` cells rather than the emoji
+  > forms. Both implementations fulfil the same pedagogical role. The emoji form is
+  > preferred for new notebooks (easier to pattern-match when skimming), but the plain-text
+  > form is not a deficiency — it's an established, consistent practice within this track.
 - **"Predict, then verify" cadence**: a 🔮 cell is never immediately followed by the
   answer in the same cell — the reader must run code to find out. Don't spoil it in the
   markdown.
@@ -885,3 +891,282 @@ re-checked the claim against what was actually built.
       whether "mentioned" means "you'll learn this here" or "purely for your awareness."
 - [ ] Every technique that reads as tier 1 (implemented) in the notebook's prose actually has real,
       runnable code and a real verified result behind it — not just a formula or a bullet point.
+
+---
+
+## 13 · Multi-Notebook Continuity Patterns (from the `04-llm/` arc)
+
+Sections 1-12 describe how to author a single notebook. This section covers patterns that emerge
+when a topic spans **multiple notebooks** — specifically the save/reload arc and the cross-chapter
+bridge mechanics used consistently across the `04-llm/` series and adopted by `04-hybrid-search.ipynb`
+and `05-rag-evaluation.ipynb`. Apply these whenever a notebook depends on state (trained models,
+checkpoints) from a prior notebook, or assumes knowledge from a prior chapter.
+
+### 13.1 Prerequisite Bridge Cell — make the dependency visible, not assumed
+
+Any notebook that picks up directly from a prior chapter should have an explicit **Prerequisite
+Bridge** Markdown cell near the top (after the title/brief, before the first code cell). The bridge
+summarises, in a compact table, what the prior chapter built and exactly how this chapter uses it:
+
+```markdown
+| Foundation (prior chapter) | Role in this notebook | Why it matters here |
+|---|---|---|
+| Transformer decoder-only architecture | Our fine-tuning target; we treat it as a black box here | We don't re-derive attention; we tune what it has already learned |
+| Cross-attention (encoder-decoder) | Contrast case for the decoder-only framing | Clarifies *why* we use GPT-2 rather than T5 for this task |
+| Autoregressive generation | What fine-tuning must not break | Test prompts verify the generation pathway survives training |
+```
+
+**Rules:**
+- The table should be short (3-7 rows) — it is orientation, not a full recap.
+- If a prior notebook saved checkpoints to disk that this notebook reloads, name the checkpoint
+  paths in this cell, so a reader running notebooks non-sequentially knows what to run first.
+- Include a one-line statement of what happens if the dependency is missing: "If you haven't run
+  `01-llm-finetuning-data-techniques.ipynb`, the checkpoint paths in the next cell will not resolve."
+- For the first notebook in a chapter arc, the bridge maps from prior **chapters** (e.g.
+  `02-transformers/`) rather than prior notebooks in the same folder.
+
+### 13.2 Multi-Notebook Arc State Management — save and reload cleanly between notebooks
+
+When a training arc spans multiple notebooks, treat each notebook as independently resumable:
+
+**Saving (end of a training notebook):**
+- Save every checkpoint produced in the notebook to named, stable paths (e.g.
+  `./checkpoints/continued-pretrain/`, `./checkpoints/sft-lora/`).
+- Add a closing "Checkpoint Map" Markdown cell listing every artifact produced and which downstream
+  notebook uses each one. This prevents silent failures where a reader runs Notebook 2 before
+  Notebook 1 completes.
+
+**Reloading (start of a downstream notebook):**
+- Open with a **"Re-establishing Prior Foundations"** code section that reloads the tokenizer,
+  base model, and every prior-notebook checkpoint from disk — never assume kernel state is shared.
+- Add an inline comment: `# Kernels do not share memory between notebooks — reload everything fresh`.
+- Use **`torch.no_grad()` + `model.eval()`** when reloading inference-only models, and explicitly
+  re-apply any adapter/parameter settings (e.g. `requires_grad=False` on frozen blocks) that were
+  part of the saved model's configuration but are not stored in the checkpoint file itself — note
+  this bookkeeping in a comment so a reader doesn't assume the loaded model matches the saved
+  config automatically.
+
+**Why this matters:** without explicit reload sections, a reader who runs Notebook 2 after a kernel
+restart gets wrong results with no error, because `model` was None and PyTorch silently initialized
+fresh weights.
+
+### 13.3 Stand-in Corpus / Proxy Dataset Pattern — confidentiality-aware pedagogy
+
+When the real dataset cannot be used in the notebook (confidentiality, licensing, or API key
+requirements), use a **deliberate proxy dataset** chosen to mirror the structural properties that
+matter for the chapter's topic, and say so explicitly before the first code cell.
+
+**What "structural mirror" means:** for hybrid retrieval, the proxy needs rare exact-match terms
+(rare drugs like "tachycardia") and paraphrasable descriptions (symptom ↔ paraphrase), not random
+text. For RAG evaluation, the proxy should be a domain the authoring team "knows cold" — so they
+can manually verify whether the retriever is actually failing, not just trusting the metric. Match
+the *property that makes the chapter's technique difficult*, not just "it's a text corpus."
+
+**Disclosure placement and content:**
+- State before the first code cell that you're using a stand-in, name the stand-in, and explain
+  in one sentence why it was chosen (what property it mirrors).
+- Add a brief "Handoff" table connecting every structural feature of the proxy to the corresponding
+  feature of the real dataset.
+- At the chapter's closing decision section, add a one-liner: "Swap the document set and query list
+  — every function above works unchanged on the real corpus."
+
+This extends Section 11.2's "lead with a disclaimer" principle from contrast *subsections* to entire
+notebook setups.
+
+### 13.4 Checklist addendum — multi-notebook continuity
+
+- [ ] Any notebook that depends on a prior notebook's output has a Prerequisite Bridge cell listing
+      what was built, how it's used, and which checkpoint paths to have available.
+- [ ] Each notebook in a multi-notebook arc opens with a "Re-establishing Foundations" code section
+      that reloads all required state from disk and re-applies any config not stored in the checkpoint.
+- [ ] Any notebook using a proxy/stand-in dataset discloses this before the first code cell, names
+      the structural property the proxy mirrors, and closes with a "swap the corpus" note.
+
+---
+
+## 14 · Additional Pedagogical Patterns Found in the Gold-Standard Notebooks
+
+This section documents patterns observed consistently in `04-llm/04-hybrid-search.ipynb` through
+`06-llm-gateway.ipynb` and the `04-llm/01-03` series, which are not yet covered by Sections 1-13.
+
+### 14.1 Prediction-Check Print Block — close the predict-first loop explicitly
+
+The guide's "🔮 Predict first" pattern (Section 3) requires posing a question before the reveal.
+The gold-standard notebooks add a further step: the reveal cell **prints whether the prediction
+was correct**, names the actual outcome, and — when the actual outcome doesn't match the expected
+failure mode — explains why the corpus/data didn't produce the textbook case. Example:
+
+```python
+# Prediction check — did the outcome match what we predicted?
+if dense_rank_of_rare_term <= 3:
+    print("[HONEST RESULT] Dense retrieval found the rare term despite its name: "
+          f"Doc {dense_rank_of_rare_term} ranked first.")
+    print("  → This corpus excerpt doesn't exhibit the pure synonym-blind failure mode.")
+    print("  → The claim still holds in general; this specific query was too easy.")
+else:
+    print(f"[CONFIRMED] Dense retrieval missed the rare term (ranked {dense_rank_of_rare_term}).")
+    print("  → Exact-term queries are a genuine blind spot for dense-only retrieval.")
+```
+
+**Rules:**
+- The check cell must print a **verdict** on whether the prediction was right, not just the raw
+  number — a reader who only reads output should still get the lesson even when the outcome was
+  surprising.
+- When the corpus doesn't produce the expected failure mode, say so plainly and explain why: this
+  is the Section 8.4 "honest results" principle applied to *prediction exercises*, not just training
+  runs.
+- This pattern is especially valuable at the start of chapters where the reader hasn't yet seen the
+  dataset — their prediction is blind, making the correctness check a genuine test of intuition.
+
+### 14.2 Two-Sided Health Checks — test both failure directions
+
+Section 8.5 prescribes a runnable health check after every "Common Pitfalls" cell. The gold-standard
+notebooks implement a stronger version: test *both* directions a mechanism can fail.
+
+**One-sided (avoid):** "Here is a health check that verifies the mechanism works."
+
+**Two-sided (preferred):**
+- **Too restrictive / too tight:** verify the mechanism rejects what it should (a burst of requests
+  exceeds the rate limit; a block measured a near-zero weight delta because it was actually frozen).
+- **Too permissive / too loose:** verify it doesn't also reject or pass things it shouldn't (the
+  rate limiter still serves legitimate traffic after the burst; a supposedly frozen block didn't
+  silently train when the configuration was wrong).
+
+Implement both cases in the same health-check code cell. Print a distinct label for each case so a
+reader who gets unexpected output knows which direction failed:
+
+```python
+print("Health Check 1 (too-tight risk): rejected a burst?", burst_rejected)
+print("Health Check 2 (too-loose risk): legitimate request still served?", legitimate_served)
+```
+
+This is particularly important for mechanisms where the correct behavior is a balance point (rate
+limiters, partial-freezing configs, threshold-based release criteria).
+
+### 14.3 Closing Scorecard Cell — one cell, every metric measured in this notebook
+
+The last code cell in any notebook that measures more than two metrics should be a **Closing
+Scorecard** cell that:
+
+1. Collects every key metric already computed elsewhere in the notebook into one place (never
+   re-compute — reference the variables that already exist).
+2. Labels each row clearly (mechanism name, metric name, value, interpretation).
+3. Prints a comment stating: "Every number below comes from a cell already run in this notebook."
+4. Branches the closing recommendation on the actual recorded numbers, so the recommendation is
+   always true of the specific run rather than aspirational.
+
+```python
+# ── Closing Scorecard ─────────────────────────────────────────────────────────
+# Every number below comes from a cell already run in this notebook.
+
+print("=" * 55)
+print("  Technique            | Recall@5 | MRR   | Decision")
+print("=" * 55)
+for name, r5, mrr in [
+    ("BM25 only",    bm25_r5,    bm25_mrr),
+    ("Dense only",   dense_r5,   dense_mrr),
+    ("Hybrid α=0.3", hybrid_r5,  hybrid_mrr),
+]:
+    verdict = "✅ Ship" if r5 >= RECALL_THRESHOLD else "❌ Investigate"
+    print(f"  {name:<20} | {r5:.2f}     | {mrr:.2f}  | {verdict}")
+```
+
+The scorecard is distinct from the closing **Decision / Recommendation** section (Section 8.7): the
+scorecard is a code cell that assembles evidence; the decision is a Markdown cell that interprets it
+and gives a concrete recommendation. Always place the scorecard *before* the decision Markdown cell.
+
+### 14.4 "When to Use What" Practitioner Table — generalize beyond the chapter's scenario
+
+After the closing decision, add a compact Markdown table mapping common practitioner scenarios to
+the recommended configuration from this chapter. Unlike the Decision section (which is tailored to
+the chapter's specific brief), this table generalizes to scenarios a reader would encounter on their
+own project:
+
+```markdown
+| Use-case signal | Recommended approach |
+|---|---|
+| Technical docs with product codes / rare proper nouns | α = 0.2–0.4 (favor lexical) |
+| Conversational QA over prose documents | α = 0.5–0.7 (favor semantic) |
+| Mixed: structured catalog + natural descriptions | α ≈ 0.5, validate on held-out queries |
+| Recall is more important than latency | Two-stage: dense broad retrieval → cross-encoder reranking |
+```
+
+**Rules:**
+- Keep entries to one line each (this is a quick-reference, not a tutorial).
+- Ground the recommendations in actual measurements from the notebook where possible
+  ("α = 0.3 minimized held-out loss in the sweep above").
+- Put it between the Closing Scorecard cell and the three-tier topic ledger — after the evidence,
+  before the recap.
+
+### 14.5 Training-Process Dynamics Animations (extends Section 9.4)
+
+Section 9.4 documents `FuncAnimation` for **token-position** visualizations (one frame per token
+position in a forward pass). A second valid use case is **training-process dynamics**: one frame
+per training step or epoch, showing how model internals change *during* training rather than how a
+single forward pass works.
+
+Appropriate training-process animations:
+- **Gradient norm per transformer block over training steps** — frame = step; bars show which blocks
+  are updating most heavily; reveals that lower blocks "wake up" as training progresses.
+- **Per-position loss over training steps** — frame = step; bars show which token positions are
+  hardest; reveals the model's learning curriculum as early tokens become easy and later ones remain
+  hard.
+- **Weight update magnitude per block** — frame = step; shows where the model is changing fastest
+  and slowest; complements the gradient-norm view with the actual parameter change.
+
+Apply all of Section 9.4's rules: `plt.close(fig)` before `display(HTML(...))`, print what to look
+for before the animation, use `to_jshtml(fps=N)`. Decode meaningful labels from the training state
+(block names rather than integer indices) and show them in the frame title.
+
+**Labeling convention:** use `f"Step {step}/{n_steps}  block='{block_name}'"` in the frame title,
+not just a step counter, to make the animation readable as a reference artifact after the fact.
+
+### 14.6 Mermaid Flowcharts for Architecture and Data-Flow Diagrams
+
+For system-level flow diagrams (pipeline stages, request lifecycles, retrieval stacks) where a
+static PNG is too static and a matplotlib plot is the wrong tool, use a Markdown code block with
+`mermaid` syntax placed directly in a Markdown cell — Jupyter renders these natively in VS Code
+and modern JupyterLab:
+
+````markdown
+```mermaid
+graph LR
+    Q[Query] --> Dense[Dense Encoder]
+    Q         --> BM25[BM25 Index]
+    Dense     --> DResults[Dense Hits]
+    BM25      --> LResults[Lexical Hits]
+    DResults  --> RRF[RRF Fusion]
+    LResults  --> RRF
+    RRF       --> Final[Ranked Results]
+```
+````
+
+**When to use vs. when to use a PNG:**
+- **Mermaid:** sequential or branching pipelines (≤8 nodes), architecture overviews, request
+  lifecycles, when the diagram may be edited during the chapter's development.
+- **PNG:** richer diagrams with color coding, data annotations, or visual elements Mermaid can't
+  express cleanly; diagrams that are "finished" and authored once (the pre-authored images in
+  `images/` are examples).
+
+**Rules:**
+- Keep Mermaid diagrams simple — they are orientation aids, not definitive architecture references.
+  If a diagram needs annotations, colored regions, or detailed labels, use a PNG instead.
+- Follow any Mermaid diagram with a one-sentence caption explaining what the flow shows.
+- Do not use Mermaid for toy-model explanations (attention weight computation, the gradient graph)
+  — those need proper visualization with real numbers from the notebook's own outputs.
+
+### 14.7 Checklist addendum — additional patterns
+
+- [ ] Every "Predict first" exercise has a prediction-check code block that explicitly prints whether
+      the actual outcome matched the prediction, and — when it didn't — names the reason.
+- [ ] Health checks for balance-point mechanisms (rate limiters, freezing configs, thresholds) test
+      BOTH directions of failure: too tight (rejects legitimate) AND too loose (allows harmful).
+- [ ] Notebooks measuring multiple mechanisms end with a Closing Scorecard code cell that collects
+      every key metric into one place and branches the printed recommendation on actual values.
+- [ ] A "When to Use What" Markdown table generalizing the chapter's findings appears between the
+      scorecard and the three-tier ledger.
+- [ ] `FuncAnimation` for training-process dynamics (gradient norms, loss per position, weight
+      update magnitude per block) uses block names in the frame title, `plt.close(fig)` before
+      `display(HTML(...))`, and a print before the animation explaining what to look for.
+- [ ] System-level data-flow diagrams with ≤8 nodes use `mermaid` code blocks in Markdown cells
+      instead of unstyled prose or external images; more complex diagrams use a PNG in `images/`.
