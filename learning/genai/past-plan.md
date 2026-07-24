@@ -68,35 +68,50 @@ decision is a decision (parallel computation over time, attention over fixed win
 encoding instead of implicit recurrence). The folder is named `01-rnns` but contains only DL
 foundations — the RNN content is absent entirely.
 
+**Narrative framing (required — Section 8 of the authoring guide):**
+
+The notebook is anchored to one concrete scenario throughout: *a music research team wants to predict the next note in a melody — the same problem that launched sequence modeling in the 1980s.* The running corpus is the opening 40 characters of "Twinkle Twinkle Little Star" encoded as characters (`T`, `w`, `i`, `n`, `k`, `l`, `e`, ` `, ...). This corpus is:
+- Small enough to inspect character-by-character (no download required)
+- Rich enough to show repeat patterns (the word "twinkle" appears twice — a real test of memory)
+- Musical, connecting back to the pretrained music generation demo the learner already saw in `01-rnns/PT-Part1-Intro.ipynb`
+
+Every Part answers a named question for this team: "Does it even know the alphabet?" (Part 1), "Does it remember what it saw 5 steps ago?" (Part 2–3), "Why does it forget the second 'twinkle'?" (Part 3), "What if we give it a memory lane?" (Part 4–5).
+
 **What this notebook covers (one notebook, PyTorch-primary, brief Keras mirror):**
 
 | Part | Content | Key proof/demonstration |
 |---|---|---|
-| 1 | Character-level LM: vocabulary, `nn.Embedding`, `(batch, time, features)` shape contract | Print token-index-to-character mapping; visualize embedding matrix as a heatmap |
-| 2 | Vanilla RNN cell from scratch: $h_t = \tanh(W_h h_{t-1} + W_x x_t + b)$ | Trace a 5-step unrolled forward pass by hand; verify against `nn.RNN` output |
-| 3 | BPTT and vanishing gradients: measure gradient norm vs. timestep depth | Ablation: log-scale gradient-norm plot for depth 5, 20, 50 — show exponential decay |
-| 4 | LSTM gating: forget, input, output, cell update equations | Build from scratch as `nn.Module`; verify gate outputs are in [0,1]; train on same character LM |
-| 5 | Comparison: plain RNN vs. LSTM on a longer sequence | Side-by-side loss curves, final accuracy; print: "LSTM's cell highway removes the depth penalty" |
-| 6 | Toy → real bridge | Parameter table mapping toy dims to real `nn.LSTM`; show `nn.LSTM(hidden_size=256)` output shape |
+| 0 | Challenge: the music team's problem + scope of what changes from a CNN | Print: a CNN classifies one image as one label; an RNN must output one label *per timestep* — the output tensor has a time axis |
+| 1 | Character-level LM: vocabulary, `nn.Embedding`, `(batch, time, features)` shape contract | Print token-index-to-character mapping; visualize embedding matrix as a heatmap; **prove**: `model(one_hot_input)` and `model(index_input)` produce identical logits |
+| 2 | Vanilla RNN cell from scratch: $h_t = \tanh(W_h h_{t-1} + W_x x_t + b)$ | Unroll 5 steps of the melody by hand, printing $h_0, h_1, ..., h_4$; **verify** the manual computation matches `nn.RNN` output to 6 decimal places |
+| 3 | BPTT and vanishing gradients: gradient norm vs. timestep distance from loss | **Ablation**: log-scale gradient-norm plot for sequence length 5, 20, 50 on the melody; print: "at depth 50, the gradient at step 1 is {n:.2e} — effectively zero" |
+| 4 | LSTM gating: forget, input, output, cell update equations | Build from scratch as `nn.Module`; **prove** gate activations are in [0,1] with `assert ((gates >= 0) & (gates <= 1)).all()`; train on same melody |
+| 5 | Comparison: plain RNN vs. LSTM on the second 'twinkle' | Side-by-side loss curves for both; measure whether LSTM correctly predicts the `t` after the space more often than vanilla RNN; **print**: "LSTM got it right N/10 times vs. RNN's M/10" |
+| 6 | Toy → real bridge | Parameter table mapping toy dims (`hidden_size=8`) to real `nn.LSTM(hidden_size=256, num_layers=2)`; show GPT-2's actual embedding layer shape |
 
 **Pedagogy requirements (gold-standard parity):**
-- Single running example throughout (e.g. short stanza of poetry → character-level LM)
-- `🔮 Predict first` before the vanilla RNN forward pass ("what will happen to the gradient at step 50?")
-- `🧪 Your turn` exercise: change sequence length, measure vanishing gradient, confirm prediction
-- `FuncAnimation` for the vanishing gradient experiment (gradient norm vs. timestep, animated across depth)
-- `#### What just happened — and what's missing` after Part 3 to plant the LSTM question
+- **Named scenario and threaded running example throughout** (the music team; the "Twinkle" melody; same characters Part 1–6)
+- `🔮 Predict first` before the vanilla RNN forward pass: *"At timestep 50, the gradient signal will be: (a) roughly the same as at timestep 1, (b) about 10× smaller, (c) about 1000× smaller, or (d) actually larger due to accumulation?"* Answer: (c) for vanilla RNN, (a) for LSTM
+- `🔮 Predict first` before the RNN-vs-LSTM comparison: *"How many times (out of 10 sampled completions) will each model correctly predict 't' at the start of the second 'twinkle'? Options: RNN<5/LSTM>7, both~5, RNN>LSTM"*
+- `🧪 Your turn` exercise: change sequence length from 40 to 10; does vanishing gradient still occur? (Answer: much less — print confirms it)
+- `FuncAnimation` for the vanishing gradient experiment (gradient norm vs. timestep, animated adding one layer at a time)
+- `#### What just happened — and what's missing` after Part 3: "The RNN can't carry the 'twinkle' memory 15 steps. Next: give it a memory lane with explicit gates."
 - Toy/real parity table before `nn.LSTM`
-- Closing tier-1/2/3 ledger (GRU, bidirectional RNN, and stacked RNN are Tier 3)
-- Explicit forward pointer: "in the next chapter, we replace this sequential computation with parallel self-attention"
+- **Closing decision (Section 8.7):** "For the music team: the LSTM now correctly anticipates the repeat pattern. The cost: 4× more parameters than a vanilla RNN (measured). The benefit: the gradient norm at step 1 went from {rnn_grad:.2e} to {lstm_grad:.2e}. For sequences shorter than ~20 tokens, use RNN; above that, LSTM earns its parameter cost."
+- Closing tier-1/2/3 ledger: Tier 1 (vanilla RNN, LSTM), Tier 2 (GRU — same cell highway, fewer gates, explained but not trained), Tier 3 (bidirectional RNN, stacked RNN, attention-augmented RNNs — named with one-line reason)
+- Explicit forward pointer: "The music team can predict one note at a time. In the next chapter, we ask: what if the model could attend to *all* past notes simultaneously? That's the Transformer."
 
 **Subagent implementation task:**
 > Create `learning/pre-genai/01-rnn-sequence-modeling/` with a `rnn-sequence-modeling.ipynb`
-> notebook following the gold-standard conventions. Use the MNIST CNN architecture from
-> `00-pytorch-primer` as a known anchor, then show why a sequence task (character prediction)
-> requires something different. Apply all conventions from `learning/genai/authoring-guide.md`.
-> The running example should be a small English text corpus (can be generated). The gradient
-> vanishing experiment should produce a log-scale plot and a printed conclusion comparing RNN
-> and LSTM. Include images in `images/` matching the `images-plan.md` descriptions for RNN content.
+> notebook following ALL gold-standard conventions from `learning/genai/authoring-guide.md`.
+> The running corpus is the first 40 characters of "Twinkle Twinkle Little Star" (write it as a
+> string constant, no download needed). Every Part answers one named question for the music team.
+> The vanilla RNN manual unrolling must print each $h_t$ and verify against `nn.RNN` output.
+> The vanishing gradient ablation must produce a log-scale plot and a printed comparison.
+> The LSTM from scratch must use `assert` to prove gates are in [0,1].
+> The RNN vs. LSTM comparison must sample 10 completions from each and count correct predictions.
+> The closing decision must branch on the actual measured gradient norms, not aspirational text.
+> Include images in `images/` matching the `images-plan.md` RNN image descriptions.
 
 ---
 
@@ -110,30 +125,40 @@ sequences, but no chapter explains the text→token→integer→embedding pipeli
   `-100` masking) and gives a walkthrough in the Code Walkthrough cell — but a learner
   without tokenization foundations will not follow the walkthrough
 
+**Narrative framing (required — Section 8 of the authoring guide):**
+
+The notebook is anchored to one concrete task: *you're building a multilingual chatbot for a small law firm. Your two problems: (1) legalese has rare compound words that a word-level tokenizer will treat as unknown tokens; (2) the system must also handle French contract clauses. You need a tokenizer that handles rare words without blowing up the vocabulary.* Every technique is framed as answering one of the firm's questions: "Why can't we just split on spaces?" (Part 1), "How does GPT-2 handle 'non-disclosure' without seeing it in training?" (Part 2–3), "Why do 'non-disclosure' and 'nondisclosure' get the same embedding representation?" (Part 4).
+
 **What this notebook covers (one notebook, framework-agnostic):**
 
 | Part | Content | Key proof/demonstration |
 |---|---|---|
-| 1 | Why tokenization exists: string → integer pipeline; why characters are too granular, words have OOV problems | Print vocabulary explosion at character level vs. word level on a small corpus |
-| 2 | BPE from scratch: merge-pair algorithm on a toy corpus (5 sentences) | Step-by-step merge table; print the evolution of the vocabulary |
-| 3 | Real BPE: GPT-2 tokenizer via `tiktoken`; inspect `Ġ` prefix, multitoken words, "internationalization" example | Compare token count vs. character count for 10 example sentences |
-| 4 | `nn.Embedding` as a trainable lookup table: visualize embedding space for a small vocabulary using PCA 2D plot | Show that embeddings start random and become meaningful after training |
+| 1 | Why tokenization exists: string → integer pipeline; why characters are too granular, words have OOV problems | **Measure** vocabulary sizes on a 20-sentence legal corpus: character-level = 62 unique tokens, word-level = 340 unique tokens, 38 of which appear only once (OOV risk); print the comparison |
+| 2 | BPE from scratch: merge-pair algorithm on a toy corpus (5 legal sentences) | Step-by-step merge table printed at every iteration; **prove**: after 20 merges, "non-disclosure" is represented as 2 tokens ("non", "disclosure"), not 15 characters |
+| 3 | Real BPE: GPT-2 tokenizer via `tiktoken`; inspect `Ġ` prefix, multitoken words, "indemnification" example | **Measure**: token count vs. character count for 10 legal phrases; print compression ratios; show that French "dommages" is handled without OOV |
+| 4 | `nn.Embedding` as a trainable lookup table: visualize embedding space for a small vocabulary using PCA 2D plot | **Prove**: embeddings start random (PCA shows uniform scatter); after 100 training steps on the corpus, legal synonyms cluster; show the before/after PCA side by side |
 | 5 | Sequence padding: variable-length inputs, `pad_token_id`, the `-100` ignore index pattern | Side-by-side: padded batch without and with `attention_mask`; print what CrossEntropy sees |
 | 6 | Toy → real bridge: vocabulary sizes (toy=15, GPT-2=50257, LLaMA-3=128k), subword vs. byte-level | Parameter table; note that "the cat" is 2 tokens in GPT-2, 3 in character model |
 
 **Pedagogy requirements:**
-- Running example: a 10-sentence English corpus maintained throughout
-- `🔮 Predict first` before BPE merge step 10 ("which pair will merge next?")
-- `🧪 Your turn`: change the merge budget; measure how vocabulary size affects compression ratio
-- Animated BPE merge progression (`FuncAnimation` showing vocabulary evolution over merge steps)
-- Closing tier-1/2/3 ledger (SentencePiece, WordPiece, Unigram are Tier 3)
-- Forward pointer: "this is the exact pipeline that feeds into `02-transformers`' embedding vectors"
+- **Named scenario threaded throughout** (the law firm; the 20-sentence legal corpus used from Part 1 to Part 4)
+- `🔮 Predict first` before BPE merge step 10: *"After 10 merges, what will happen to the token 'non-disclosure': (a) still 15 characters, (b) two tokens 'non' and 'disclosure', (c) one merged token 'non-disclosure'?"* (Answer: b, by step 10 in a legal corpus)
+- `🔮 Predict first` before the embedding PCA: *"After 100 training steps on 20 sentences, will 'contract' and 'agreement' be: (a) near each other, (b) far from each other, (c) in random positions?"* (Answer: a — the training signal clusters legal synonyms)
+- `🧪 Your turn`: change the merge budget from 20 to 5; measure how vocabulary size and OOV token count change
+- `FuncAnimation` for the BPE merge progression (one frame per merge step; watch "non-disclosure" shrink from 15 tokens to 2)
+- **Closing decision (Section 8.7):** "For the law firm: BPE with 20k merges handles 'indemnification' in 2 tokens (not OOV), handles French without a separate vocabulary, and produces compression ratio {r:.1f}× vs. character-level. The recommended tokenizer: GPT-2's `tiktoken` encoder, which uses the same algorithm at 50k vocabulary size."
+- Closing tier-1/2/3 ledger: Tier 1 (character-level, word-level, BPE from scratch, GPT-2 tiktoken), Tier 2 (WordPiece — same merge algorithm, different scoring; explained but not built), Tier 3 (SentencePiece, Unigram LM, byte-level BPE — named with one-line reason)
+- Forward pointer: "This is the exact pipeline that feeds `02-transformers`' `VOCAB` dictionary — the hand-coded vocabulary there is a simplified BPE with exactly these properties."
 
 **Subagent implementation task:**
 > Create `learning/pre-genai/02-tokenization/` with `tokenization-and-embeddings.ipynb`.
-> Apply all gold-standard conventions. The BPE-from-scratch section should print a step-by-step
-> merge table. The `nn.Embedding` visualization should use PCA (not t-SNE for reproducibility).
-> End with the GPT-2 tokenizer demo using `tiktoken` (fallback: HuggingFace `AutoTokenizer`).
+> Apply ALL gold-standard conventions from `learning/genai/authoring-guide.md`.
+> The opening cell states the law firm scenario before the title, following the 04-llm pattern.
+> The 20-sentence legal corpus must be written inline as a Python string (no download).
+> The BPE-from-scratch section must print a merge table at every step.
+> The PCA visualization must show a before (random) and after (clustered) side-by-side panel.
+> The closing decision must branch on the actual measured compression ratio, not aspirational text.
+> End with GPT-2 tokenizer demo using `tiktoken` (fallback: HuggingFace `AutoTokenizer`).
 
 ---
 
