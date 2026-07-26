@@ -1,6 +1,6 @@
 # Images Plan — ML Basics Notebook
 
-> **Palette:** Dark graphite background `#1e1e2e`, accent steelblue `#4a9eca`, coral `#e06c75`, muted green `#98c379`, soft white `#abb2bf`.  
+> **Palette:** Dark graphite background `#1e1e2e`, accent steelblue `#4a9eca`, coral `#e06c75`, muted green `#98c379`, soft white `#abb2bf`.
 > Generator: [Perchance AI Image Generator](https://perchance.org/ai-text-to-image-generator)
 
 ---

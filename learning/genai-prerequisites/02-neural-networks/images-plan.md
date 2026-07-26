@@ -22,7 +22,7 @@ Generated offline with Stable Diffusion or DALL-E; committed to `images/` subfol
 
 ## Image 1 — `xor-not-linearly-separable.png`
 
-**Used in:** Cell 6 output replacement / Part 1 markdown header  
+**Used in:** Cell 6 output replacement / Part 1 markdown header
 **Size:** 600 × 500 px
 
 ### Concept
@@ -53,7 +53,7 @@ labels "x1 (income)" and "x2 (crime)". Minimalist, flat, scientific data visuali
 
 ## Image 2 — `neural-network-forward-pass.png`
 
-**Used in:** Cell 7 (Part 2 markdown) — architecture diagram  
+**Used in:** Cell 7 (Part 2 markdown) — architecture diagram
 **Size:** 700 × 420 px
 
 ### Concept
@@ -86,7 +86,7 @@ left circle to every middle circle (labeled "W₁"), and every middle circle to 
 
 ## Image 3 — `depth-vs-width-decision-boundary.png`
 
-**Used in:** Cell 14 output replacement / Part 4 comparison  
+**Used in:** Cell 14 output replacement / Part 4 comparison
 **Size:** 1100 × 480 px (side-by-side panels)
 
 ### Concept
