@@ -50,6 +50,11 @@ Every track is anchored to one production system with real constraints, a named 
 | **MultiAgentAI** | OrderFlow | B2B PO automation | 1,000 POs/day, <4hr SLA |
 | **MultimodalAI** | VisualForge Studio | Local diffusion pipeline | <30s/image, ≥4.0/5.0 quality |
 | **InterviewGuides** | Interview-Ready Engineer | Technical interview prep | Land senior AI/ML role |
+| **GenAI / 00-PyTorch** | (primer, no production system) | MNIST CNN, both frameworks | Keras/PyTorch parity on test accuracy |
+| **GenAI / 01-RNNs** | (foundation, no production system) | house price / circle classifier | autograd verified, model converges |
+| **GenAI / 02-Transformers** | (foundation, no production system) | "the cat sat on the mat" LM | every mechanism proved by measurement |
+| **GenAI / 03-Encoder-Decoder** | (foundation, no production system) | integer sequence reversal | cross-attention anti-diagonal verified |
+| **GenAI / 04-LLM** | Riverside House | GPT-2 medium (355M) fine-tuning | held-out perplexity lower than base; hybrid search Recall@1 > BM25 alone |
 
 **What the grand challenge does:** it converts "learn about pagination" into "the API is silently truncating your training data and your model doesn't know it." The failure the reader just witnessed is real, measured, and belongs to a system they have been following since chapter one.
 
@@ -90,6 +95,8 @@ The reader is a capable engineer. They don't need to be impressed. They need to 
 - `**Checkpoint:**` not ✅
 
 Emojis render inconsistently across platforms, add visual noise, and reduce the register to tutorial-blog. Technical documentation relies on clear text formatting.
+
+**This ban extends to Unicode symbols used as visual decorators:** `✓`, `✗`, `→` (as decorators), `•` (when a markdown list serves the same purpose). In print statements that state a takeaway, write the outcome in words: `print("PASS: gradient computed correctly")` not `print("✓ gradient computed correctly")`. The `→` arrow is permitted *only* inside `print("  → takeaway text")` lines where it functions as a visual leader matching the portfolio convention, not as a decoration.
 
 ---
 
@@ -415,7 +422,7 @@ W  ·  x         (3×2) · (2×1) → (3×1)
 - [ ] Honest about failures: ambiguous results stated plainly and interpreted on actual recorded numbers
 
 **Style**
-- [ ] No emojis anywhere
+- [ ] No emojis anywhere (including Unicode decorators `✓`, `✗` in print output — write outcomes in words)
 - [ ] No academic register anywhere
 - [ ] Math appears only when it genuinely earns its place; every formula has an immediate verbal gloss
 - [ ] Second person throughout
@@ -426,6 +433,12 @@ W  ·  x         (3×2) · (2×1) → (3×1)
 - [ ] Comments explain why, not what
 - [ ] Print statements state the takeaway in words
 - [ ] Naming mirrors the math
+
+**Diagrams**
+- [ ] Minimum Mermaid count met (§ 12 table): single-algorithm ≥ 2, multi-method ≥ 3, foundation/theory ≥ 3
+- [ ] All Mermaid nodes use the mandatory color palette (`#1e3a8a` / `#1d4ed8` / `#b45309` / `#b91c1c` / `#15803d`)
+- [ ] Every major (`##`-level) section has at least one Mermaid diagram
+- [ ] Matrix operations use aligned-bracket ASCII art with dimension annotations
 
 ---
 
@@ -453,3 +466,244 @@ When authoring or revising a chapter:
 2. Implement the changes in the order the checklist items would be felt by a first-time reader (opening → § 0 → running example → per-section changes → summary).
 
 3. After finishing: run the checklist again. Every item must be checked before the chapter is considered at standard.
+
+---
+
+## 16 · Best-Practice Patterns from Gold Standards
+
+These patterns were extracted from `learning/genai/02-transformers/transformers.ipynb` and `learning/genai/04-llm/01-llm-finetuning-data-techniques.ipynb`, the two gold-standard chapters. They are not optional decoration — they are the techniques that make those chapters work.
+
+### 16.1 The "Complaint Chain" Discovery Build
+
+*Source: RoPE animation in transformers.ipynb*
+
+When building a visualization or implementation iteratively, make each intermediate step a published, runnable cell, and add an explicit complaint that forces the next step. The pattern:
+
+```markdown
+**Attempt 1:** [crudest implementation]
+[run it — the reader sees the specific limitation]
+I want more: [exactly what the current version cannot show]
+
+**Attempt 2:** [improvement that addresses the complaint]
+[run it — the reader sees the residual limitation]
+What was missing? [the next specific gap]
+
+**Final form:** [the complete version]
+```
+
+This applies "failure first" to the pedagogical artifact itself — the diagram, the implementation, the experiment. It is not the same as failure-first for concept transitions; it is failure-first for the *teaching medium*.
+
+### 16.2 The "Inevitable Choice" Derivation
+
+*Source: softmax and √d_k sections in transformers.ipynb*
+
+For every design decision (softmax, √d_k, residuals, multi-head split), instead of asserting the formula, make the choice feel forced. Two steps:
+
+1. **State the constraint that rules out all simpler alternatives.** "Scores are negative and don't sum to 1 — what's the only differentiable operator that produces a probability distribution from arbitrary real-valued scores?"
+
+2. **Show the consequence that rules out the "close but wrong" answer.** Run the experiment with the naive version; measure the failure; name it. "Softmax alone → saturation at large d_k → vanishing gradients measured. The scale factor is not decoration; it is a gradient engineering decision."
+
+The formula should be the only remaining option after the reader has seen every simpler option fail. The `print("→ [formula] is the only ... that [satisfies all constraints].")` line is the payoff.
+
+### 16.3 Three-Tier Coverage Accounting
+
+*Source: closing sections in transformers.ipynb and 04-llm notebooks*
+
+Every chapter must close with a three-tier accounting of every technique named anywhere in the notebook:
+
+| Tier | Label | Meaning |
+|------|-------|---------|
+| 1 | Built and measured | Full implementation with a proof cell — the reader can reproduce it |
+| 2 | Explained and illustrated | Conceptual treatment with a visualization or table — no runnable code |
+| 3 | Named with a reason | One sentence naming the technique and why it is out of scope |
+
+**Rules:**
+- Every technique mentioned anywhere in the chapter must appear in exactly one tier. No technique is left stranded between tiers.
+- The closing statement: "If you find a technique named above that doesn't appear in the tier table, that's exactly the bug this section exists to catch."
+- Tier 3 entries must name a reason, not just scope them out: "KV-caching — a stateful rewrite of the attention layer; covered in § [next chapter]" is Tier 3. "KV-caching — out of scope" is not.
+
+This section goes at the end of the chapter, before the final summary.
+
+### 16.4 Code Walkthrough Post-Class Explanation
+
+*Source: transformers-keras.ipynb, 04-llm NB04–06*
+
+After implementing any non-trivial class (MHA, TransformerBlock, gateway router, RAG retriever), add a markdown cell titled **Code Walkthrough: [ClassName]** that explains every non-obvious implementation choice in prose:
+
+```markdown
+**Code Walkthrough: MultiHeadAttention**
+
+1. **`split_heads` reshape** — `(B, T, d_model) → (B, n_heads, T, d_k)`: the head dimension goes *before* the sequence dimension so each head operates on its own `(T, d_k)` slice.
+2. **`1/sqrt(d_k)` placement** — applied to `Q` before the dot product, not to the score matrix, to avoid a numerically large intermediate.
+3. **`W_O` projection** — concatenates all head outputs back to `d_model`; this is the only place the heads' information is combined.
+```
+
+This is not a docstring. It is a teaching narrative that explains the *why* of each shape transformation, mask broadcast, and scaling factor in the order they appear in the code. A reader who does not run the code should still understand every design decision.
+
+### 16.5 Pre-Announcement Topic-Space Table
+
+*Source: 04-llm NB04–06*
+
+Before writing a single line of code, every chapter that covers a topic area with well-defined sub-topics should open with a topic-space table categorising every relevant sub-topic as **Built / Explained / Named only**, with one-line reasons for each omission:
+
+```markdown
+| Sub-topic | Coverage | Why |
+|---|---|---|
+| Dense (semantic) retrieval | Built | Foundation of hybrid search |
+| BM25 (lexical) retrieval | Built | The failure that motivates hybrid |
+| Reciprocal Rank Fusion | Built | The actual hybrid combination step |
+| Query expansion | Explained | Requires LLM call; out of scope for this chapter |
+| HNSW approximate indexing | Named only | Requires a vector-DB backend; see 07-ai-infrastructure |
+```
+
+This prevents silent gaps: the reader always knows whether a technique was deliberately skipped or accidentally omitted. The table is placed in a `## 0 · Scope` or `## 0 · What We're Building` section, before § 0.
+
+### 16.6 Named Convention Equivalence Proof
+
+*Source: RoPE adjacent-pair vs. split-half in transformers.ipynb*
+
+When two conventions for the same operation exist in the literature and production code (e.g., adjacent-pair RoPE vs. split-half production convention), prove their equivalence numerically before stating they are identical:
+
+```python
+# ── Prove adjacent-pair ≡ split-half up to a permutation ────────────────
+adjacent = rope_adjacent_pair(x, thetas)
+split    = rope_split_half(x, thetas)
+print(f"  → identical after permutation: {np.allclose(adjacent, split, atol=1e-5)}")
+```
+
+Then state: "Both conventions are used in real codebases. The PyTorch reference implementation uses split-half. If you see code that looks different, check which convention it uses — not whether it is wrong."
+
+This prevents practitioners from treating a code difference as a bug and avoids the "the paper says X but the repo says Y" confusion that stalls production work.
+
+### 16.7 Closed-Loop Prediction Check
+
+*Source: 04-llm NB04–06, transformers.ipynb*
+
+When `**Predict:**` is used, the resolution must be a **closed-loop check**, not just a reveal. A closed loop:
+
+1. Pose the prediction with 2–3 named candidate outcomes and candidate numbers (not just "what do you think?").
+2. Run the code that produces the answer.
+3. In the print block, compare the actual outcome to the predicted outcome by name, and state why the result confirms or contradicts the prediction:
+   ```python
+   expected = "Doc 9 will rank first (exact term match)"
+   actual_top = results[0]["doc"]
+   if actual_top == "Doc 9":
+       print(f"  → Prediction confirmed: '{expected}'")
+   else:
+       print(f"  → Prediction wrong: BM25 ranked '{actual_top}' first — the IDF weight for the target term was lower than expected.")
+   ```
+
+The closed loop is the difference between a `**Predict:**` that teaches and one that just poses a question.
+
+### 16.8 Honest Result Branching
+
+*Source: DPO section, 04-llm NB01; zero_grad ablation, 00-pytorch-primer*
+
+Every experiment whose outcome could plausibly go either way must branch its print output on the actual recorded numbers, not on the assumed outcome:
+
+```python
+if margin_improved and loss_improved:
+    print("  → DPO converged: preference margin +{:.2f}".format(margin))
+else:
+    print("  → Signal too weak to converge — 30 pairs is below the practical minimum.")
+    print("  → This is a real, useful result: it shows what DPO needs to work.")
+```
+
+The else branch is not an apology for a failed demo. It is a specific, named lesson about the conditions under which the technique works. A notebook that only shows clean successes teaches the reader to expect clean successes. Name the threshold that was missed; state what a practitioner should do differently.
+
+---
+
+## 17 · Multi-Notebook Arc Conventions
+
+When a track is delivered as a sequence of notebooks (e.g., the 04-llm track: data techniques → parameter techniques → comparison → hybrid search → evaluation → gateway):
+
+### 17.1 Inter-Notebook Contract
+
+Every notebook in a multi-notebook arc must open with an explicit statement of what it receives from the previous notebook and what it delivers to the next. The pattern:
+
+```markdown
+> **What you finished last time:** [previous notebook name] — checkpoint saved to `./checkpoints/[name]/`
+> **What this notebook delivers:** [artifact saved to `./[path]/`]
+> **Prerequisite for the next notebook:** [what the next notebook will reload]
+```
+
+This is an explicit software contract. "Kernels don't share memory between notebooks" must be stated once, with a one-cell reload that verifies the checkpoint loads cleanly.
+
+### 17.2 Checkpoint-Reload Cell
+
+Every notebook that receives state from a previous notebook must include a dedicated setup cell that reloads from disk and verifies the reload succeeded:
+
+```python
+# ── Reload inter-notebook checkpoint ─────────────────────────────────────────
+model = AutoModelForCausalLM.from_pretrained("./checkpoints/instruction-lora")
+tokenizer = AutoTokenizer.from_pretrained("./checkpoints/instruction-lora")
+print(f"  → Reloaded: {model.config.model_type}, {sum(p.numel() for p in model.parameters()):,} params")
+```
+
+This cell is not optional and must run before any code that uses `model`.
+
+### 17.3 Track-Level Grand Challenge Visibility
+
+Every notebook in a multi-notebook arc must reference the track's grand challenge system in its § 0, even if the notebook's own contribution is narrow:
+
+```markdown
+## 0 · The Challenge
+
+> **The mission**: Riverside House — GPT-2 medium fine-tuned on 7 unpublished novels, running on a single CPU laptop, no external API.
+
+**What we know so far:**
+- Continued pretraining closed the domain-knowledge gap (NB 01).
+- SFT gave it instruction-following (NB 01).
+- DPO aligned it to editorial preference — but barely: 30 pairs hit the minimum threshold (NB 01).
+- **But fine-tuning the entire model on a laptop costs 4.3 GB and 45 min per epoch.**
+
+**What's blocking us:**
+Full fine-tuning is off the table for a 4 GB laptop RAM budget.
+
+**What this chapter unlocks:**
+Parameter-efficient techniques (partial freeze, LoRA, QLoRA) that hit the same accuracy at 1–4% of the compute cost.
+```
+
+---
+
+## 18 · Primer and Bridge Chapter Conventions
+
+A **primer chapter** teaches prerequisite tooling for a track without yet having a production system to attach it to (e.g., `00-pytorch-primer`, `01-rnns`). A **bridge chapter** connects one architecture to the next in a conceptual arc (e.g., `03-encoder-decoder` bridges RNNs/attention to full LLMs).
+
+These chapters are exempt from the Grand Challenge requirement but must satisfy a narrower version:
+
+### 18.1 The Curriculum Contract (replaces § 0)
+
+Instead of a § 0 Challenge block, primer/bridge chapters open with a **Curriculum Contract** block:
+
+```markdown
+> **What you already know:** [specific capabilities from previous chapters with named metrics or code artefacts]
+> **The gap this chapter closes:** [the specific, named thing the reader cannot yet do — not abstract, concrete]
+> **What you'll have by the end:** [runnable artefact or skill, stated concretely]
+> **What this chapter is not:** [explicit out-of-scope statement — one line]
+```
+
+### 18.2 "What This Chapter Covered (and What It Didn't)"
+
+All primer and bridge chapters must close with a three-tier coverage table (§ 16.3 above) plus an explicit **scope note** naming at least 3 things that were deliberately excluded and where to find them:
+
+```markdown
+**Out of scope in this chapter (and where to find them):**
+- Custom `Dataset` subclass — `01-rnns/` uses this pattern directly
+- `torch.onnx` export — `07-ai-infrastructure/` deployment section
+- Weight initialisation defaults — `notes/00-math-under-the-hood/ch09`
+```
+
+### 18.3 Forward Bridge Cell
+
+The final substantive section of any primer or bridge chapter must be a **forward bridge cell** that explicitly names the next chapter and states which specific tool from this chapter the reader will use first:
+
+```markdown
+**Forward: what you just built will be used immediately.**
+
+The manual training loop — `zero_grad → forward → backward → step` — is the loop you'll
+unroll into time steps in `01-rnns/`. The `nn.Module` subclass pattern is the class
+`LSTMCell` will use. The `state_dict` save pattern is the checkpoint the RNN trainer will write.
+
+> **Next:** `01-rnns/PT-Part1-Intro.ipynb`
+```
