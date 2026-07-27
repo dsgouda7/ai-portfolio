@@ -26,6 +26,7 @@ and how to add new content to this track.
 | 2 | `02-transformers/` | Transformer architecture | Scaled dot-product attention and full encoder stack from first principles | Read and modify transformer code; explain every component mathematically | `01-rnns/` |
 | 3 | `03-encoder-decoder/` | Encoder-Decoder architecture | Seq2seq model with cross-attention for translation | Build and train encoder-decoder models; tune beam search | `02-transformers/` |
 | 4 | `04-llm/` | Applied LLM patterns + fine-tuning | Hybrid search pipeline, LLM gateway, RAG evaluation harness, LoRA/PEFT/DPO fine-tuning | Wire together retrieval + generation; evaluate answer quality quantitatively; fine-tune a causal LM on domain data | `03-encoder-decoder/` |
+| 5 | `05-llm-evaluation/` | LLM evaluation in depth | Automated metrics (BLEU/ROUGE/BERTScore), LLM-as-judge (G-Eval, pairwise), human evaluation, safety eval, hallucination detection (SelfCheckGPT, NLI, entity-gap), and model calibration (ECE, temperature scaling, selective prediction) | Measure any LLM's quality rigorously; detect hallucination at inference time; publish calibrated confidence scores; build a regression-aware eval pipeline | `04-llm/` |
 
 ---
 
@@ -40,7 +41,7 @@ demonstrates the authoring conventions all other notebooks should follow.
 ## Learning path summary
 
 ```
-00-pytorch-primer -> 01-rnns -> 02-transformers -> 03-encoder-decoder -> 04-llm
+00-pytorch-primer -> 01-rnns -> 02-transformers -> 03-encoder-decoder -> 04-llm -> 05-llm-evaluation
 ```
 
 `00-pytorch-primer/` is optional -- skip it if you're already comfortable writing raw PyTorch
