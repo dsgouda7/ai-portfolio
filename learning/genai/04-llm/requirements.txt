@@ -33,3 +33,4 @@ tqdm
 
 # Notebook kernel
 ipykernel
+nbconvert

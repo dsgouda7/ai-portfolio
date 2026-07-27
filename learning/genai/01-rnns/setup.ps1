@@ -11,9 +11,14 @@ if (-not $?) {
     exit 1
 }
 
+Write-Host "Installing build tooling (setuptools/wheel, needed for legacy sdists like mitdeeplearning) ..."
+& "$ScriptDir\.venv\Scripts\pip.exe" install --upgrade pip setuptools wheel --quiet
+
 Write-Host "Installing dependencies from requirements.txt ..."
-& "$ScriptDir\.venv\Scripts\pip.exe" install --upgrade pip --quiet
 & "$ScriptDir\.venv\Scripts\pip.exe" install -r "$ScriptDir\requirements.txt"
+
+Write-Host "Installing Jupyter kernel support (ipykernel, nbconvert) ..."
+& "$ScriptDir\.venv\Scripts\pip.exe" install --quiet ipykernel nbconvert
 
 Write-Host "Registering Jupyter kernel as 'rnns-mit' ..."
 & "$ScriptDir\.venv\Scripts\python.exe" -m ipykernel install --user `

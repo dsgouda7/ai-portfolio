@@ -1,6 +1,7 @@
 # PT-Part1-Intro.ipynb (PyTorch)
 torch
-mitdeeplearning
+# mitdeeplearning removed: package's build fails in this environment (pkg_resources
+# missing in isolated build env) and it is unused in PT-Part1-Intro.ipynb.
 
 # TF-Part1-Intro-keras.ipynb (TensorFlow / Keras)
 tensorflow
