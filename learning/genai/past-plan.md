@@ -102,7 +102,7 @@ pedagogical wrapper.
 
 **Pedagogy requirements:**
 - **Named scenario:** the free kick throughout (direct from notes)
-- `🔮 Predict first` before gradient descent: *"After 50 steps from angle=80°, will we land: (a) near the optimal, (b) stuck at a local minimum, (c) past the optimal?"*
+- ` Predict first` before gradient descent: *"After 50 steps from angle=80°, will we land: (a) near the optimal, (b) stuck at a local minimum, (c) past the optimal?"*
 - Closing decision: *"The kick is scoreable when launch angle is between {lo:.1f}° and {hi:.1f}° — measured by the gradient descent run above."*
 - Closing tier-1/2/3 ledger: Tier 1 (vectors, derivatives, gradient descent, chain rule, Gaussian), Tier 3 (Hessians, Taylor series, convexity — named only)
 
@@ -327,9 +327,9 @@ Every Part answers a named question for this team: "Does it even know the alphab
 
 **Pedagogy requirements (gold-standard parity):**
 - **Named scenario and threaded running example throughout** (the music team; the "Twinkle" melody; same characters Part 1–6)
-- `🔮 Predict first` before the vanilla RNN forward pass: *"At timestep 50, the gradient signal will be: (a) roughly the same as at timestep 1, (b) about 10× smaller, (c) about 1000× smaller, or (d) actually larger due to accumulation?"* Answer: (c) for vanilla RNN, (a) for LSTM
-- `🔮 Predict first` before the RNN-vs-LSTM comparison: *"How many times (out of 10 sampled completions) will each model correctly predict 't' at the start of the second 'twinkle'? Options: RNN<5/LSTM>7, both~5, RNN>LSTM"*
-- `🧪 Your turn` exercise: change sequence length from 40 to 10; does vanishing gradient still occur? (Answer: much less — print confirms it)
+- ` Predict first` before the vanilla RNN forward pass: *"At timestep 50, the gradient signal will be: (a) roughly the same as at timestep 1, (b) about 10× smaller, (c) about 1000× smaller, or (d) actually larger due to accumulation?"* Answer: (c) for vanilla RNN, (a) for LSTM
+- ` Predict first` before the RNN-vs-LSTM comparison: *"How many times (out of 10 sampled completions) will each model correctly predict 't' at the start of the second 'twinkle'? Options: RNN<5/LSTM>7, both~5, RNN>LSTM"*
+- ` Your turn` exercise: change sequence length from 40 to 10; does vanishing gradient still occur? (Answer: much less — print confirms it)
 - `FuncAnimation` for the vanishing gradient experiment (gradient norm vs. timestep, animated adding one layer at a time)
 - `#### What just happened — and what's missing` after Part 3: "The RNN can't carry the 'twinkle' memory 15 steps. Next: give it a memory lane with explicit gates."
 - Toy/real parity table before `nn.LSTM`
@@ -404,9 +404,9 @@ The notebook is anchored to one concrete task: *you're building a multilingual c
 
 **Pedagogy requirements:**
 - **Named scenario threaded throughout** (the law firm; the 20-sentence legal corpus used from Part 1 to Part 4)
-- `🔮 Predict first` before BPE merge step 10: *"After 10 merges, what will happen to the token 'non-disclosure': (a) still 15 characters, (b) two tokens 'non' and 'disclosure', (c) one merged token 'non-disclosure'?"* (Answer: b, by step 10 in a legal corpus)
-- `🔮 Predict first` before the embedding PCA: *"After 100 training steps on 20 sentences, will 'contract' and 'agreement' be: (a) near each other, (b) far from each other, (c) in random positions?"* (Answer: a — the training signal clusters legal synonyms)
-- `🧪 Your turn`: change the merge budget from 20 to 5; measure how vocabulary size and OOV token count change
+- ` Predict first` before BPE merge step 10: *"After 10 merges, what will happen to the token 'non-disclosure': (a) still 15 characters, (b) two tokens 'non' and 'disclosure', (c) one merged token 'non-disclosure'?"* (Answer: b, by step 10 in a legal corpus)
+- ` Predict first` before the embedding PCA: *"After 100 training steps on 20 sentences, will 'contract' and 'agreement' be: (a) near each other, (b) far from each other, (c) in random positions?"* (Answer: a — the training signal clusters legal synonyms)
+- ` Your turn`: change the merge budget from 20 to 5; measure how vocabulary size and OOV token count change
 - `FuncAnimation` for the BPE merge progression (one frame per merge step; watch "non-disclosure" shrink from 15 tokens to 2)
 - **Closing decision (Section 8.7):** "For the law firm: BPE with 20k merges handles 'indemnification' in 2 tokens (not OOV), handles French without a separate vocabulary, and produces compression ratio {r:.1f}× vs. character-level. The recommended tokenizer: GPT-2's `tiktoken` encoder, which uses the same algorithm at 50k vocabulary size."
 - Closing tier-1/2/3 ledger: Tier 1 (character-level, word-level, BPE from scratch, GPT-2 tiktoken), Tier 2 (WordPiece — same merge algorithm, different scoring; explained but not built), Tier 3 (SentencePiece, Unigram LM, byte-level BPE — named with one-line reason)
@@ -442,7 +442,7 @@ effective visual — matching the animation-heavy pedagogy of `02-transformers`.
 stepping down the $y = x^2$ curve frame by frame. Follow all Section 9.4 conventions
 (plt.close before display, print before animation, fps=6).
 
-### C-2 · `🔮` / `🧪` Emoji Normalization in `03-encoder-decoder`
+### C-2 · `` / `` Emoji Normalization in `03-encoder-decoder`
 
 The encoder-decoder notebook uses plain-text "Predict before you run" / "Your turn" headers
 (consistent with the Section 3 amendment to the authoring guide). No change strictly needed,

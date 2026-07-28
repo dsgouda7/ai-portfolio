@@ -20,25 +20,25 @@
 
 ```
 content/
-├── the-weight-of-distant-light/
-│   ├── README.md
-│   ├── chapter-001.txt
-│   ├── chapter-002.txt
-│   └── ... (40 chapters total)
-├── the-tidebound-accord/
-│   ├── README.md
-│   ├── chapter-001.txt
-│   └── ... (33 chapters total)
-├── the-cartographers-cipher/
-│   └── ... (21 chapters)
-├── the-silk-merchants-daughter/
-│   └── ... (23 chapters)
-├── neural-drift/
-│   └── ... (24 chapters)
-├── the-hollow-beneath/
-│   └── ... (28 chapters)
-└── the-weight-of-tides/
-    └── ... (28 chapters)
+ the-weight-of-distant-light/
+    README.md
+    chapter-001.txt
+    chapter-002.txt
+    ... (40 chapters total)
+ the-tidebound-accord/
+    README.md
+    chapter-001.txt
+    ... (33 chapters total)
+ the-cartographers-cipher/
+    ... (21 chapters)
+ the-silk-merchants-daughter/
+    ... (23 chapters)
+ neural-drift/
+    ... (24 chapters)
+ the-hollow-beneath/
+    ... (28 chapters)
+ the-weight-of-tides/
+     ... (28 chapters)
 ```
 
 Each novel directory contains:

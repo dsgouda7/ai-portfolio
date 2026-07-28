@@ -71,8 +71,8 @@ But the real bottleneck is {actual_bottleneck} — measured below."
 
 **Gold-standard requirements:**
 - **Running example:** the `(B=8, S=128, D=256)` attention-shaped matmul is established in Part 1 and appears in every timing cell through Part 6
-- `🔮 Predict first` before every timing experiment, with 3 candidate speedup ranges: e.g. *"How much faster is the GPU matmul vs. 8-CPU-core: (a) 2×, (b) 10×, (c) 50×?"*
-- `🧪 Your turn`: double batch size; predict whether GPU:CPU speedup ratio grows (it does — larger work fits better in the warp scheduler)
+- ` Predict first` before every timing experiment, with 3 candidate speedup ranges: e.g. *"How much faster is the GPU matmul vs. 8-CPU-core: (a) 2×, (b) 10×, (c) 50×?"*
+- ` Your turn`: double batch size; predict whether GPU:CPU speedup ratio grows (it does — larger work fits better in the warp scheduler)
 - Every speed claim measured, never asserted; `torch.cuda.synchronize()` before all stop times
 - `#### What just happened — and what's missing` after Part 2 (bandwidth measured; missing: *when do we hit the bandwidth ceiling vs. compute ceiling?*) to plant Part 3
 - Code Walkthrough cell (Section 9.1) after the `torch.profiler` setup cell in Part 6
@@ -151,8 +151,8 @@ pretraining?" (Part 1–2), "Will fp16 save us?" (Part 2), "What if we add gradi
 
 **Gold-standard requirements:**
 - **Named scenario threaded throughout** (Riverside; A10G; the three candidate models)
-- `🔮 Predict first` before the overflow experiment: *"Will fp16 overflow during a forward pass on GPT-2-Medium with a large batch: (a) never, (b) sometimes depending on the batch, (c) always at batch_size ≥ 32?"* (Answer: b — depends on activation magnitudes)
-- `🔮 Predict first` before gradient checkpointing: *"Checkpointing halves peak memory. Does it also halve training time: (a) yes, (b) no, it adds ~30% compute overhead, (c) it actually speeds things up?"* (Answer: b)
+- ` Predict first` before the overflow experiment: *"Will fp16 overflow during a forward pass on GPT-2-Medium with a large batch: (a) never, (b) sometimes depending on the batch, (c) always at batch_size ≥ 32?"* (Answer: b — depends on activation magnitudes)
+- ` Predict first` before gradient checkpointing: *"Checkpointing halves peak memory. Does it also halve training time: (a) yes, (b) no, it adds ~30% compute overhead, (c) it actually speeds things up?"* (Answer: b)
 - Code Walkthrough cell (Section 9.1) after the `torch.autocast` + `GradScaler` training cell
 - `#### What just happened — and what's missing` after Part 3 (stable fp16 training achieved; missing: *activation memory grows with sequence length* — plants Part 4)
 - Cross-reference to LoRA section in `04-llm/02-llm-finetuning-parameter-techniques.ipynb`
@@ -229,8 +229,8 @@ greatest expected speedup.
 
 **Gold-standard requirements:**
 - **Running example:** a LoRA fine-tuning step using the same model and adapter from `04-llm/02`, reloaded from disk at the top of this notebook (Section 13.2 save/reload pattern)
-- `🔮 Predict first` before Part 1 profiling result: *"Rank the four phases by time: (a) data_load > forward > backward > optimizer, (b) backward > forward > data_load > optimizer, (c) optimizer > backward > data_load > forward"* (correct answer varies by actual hardware — that's the lesson)
-- `🧪 Your turn`: disable `torch.compile`; measure whether the backward pass changes proportion
+- ` Predict first` before Part 1 profiling result: *"Rank the four phases by time: (a) data_load > forward > backward > optimizer, (b) backward > forward > data_load > optimizer, (c) optimizer > backward > data_load > forward"* (correct answer varies by actual hardware — that's the lesson)
+- ` Your turn`: disable `torch.compile`; measure whether the backward pass changes proportion
 - `#### What just happened` cells after Parts 1, 3, and 6
 - Code Walkthrough cell (Section 9.1) after the `torch.profiler` setup block (30+ lines)
 - Two-sided health check (Section 14.2): full profiler overhead vs. no instrumentation
@@ -301,9 +301,9 @@ Every Part answers one question: "What exactly is slow about standard attention?
 | 6 | GQA (Grouped Query Attention) and MQA: reducing KV cache size without accuracy loss | Compare KV cache memory at S=2048 for MHA vs. GQA-8 vs. MQA |
 
 **Gold-standard requirements:**
-- `🔮 Predict first` before IO measurement: *"Standard attention reads the S×S matrix N times during the backward pass (for grad of Q, K, V separately). Tiled FlashAttention avoids materializing it. Which reads more HBM: (a) standard 5× more, (b) tiled 3× more, (c) tiled 10× less?"* (Answer: a)
-- `🔮 Predict first` before `scaled_dot_product_attention` dispatch: *"At causal mask + fp32 + S=512: does PyTorch 2.0 dispatch to FlashAttention?"* (Answer: no — only fp16/bf16 triggers it; fp32 uses the standard path)
-- `🧪 Your turn`: double S from 512 to 1024; predict the IO traffic ratio change (it doubles — print confirms it)
+- ` Predict first` before IO measurement: *"Standard attention reads the S×S matrix N times during the backward pass (for grad of Q, K, V separately). Tiled FlashAttention avoids materializing it. Which reads more HBM: (a) standard 5× more, (b) tiled 3× more, (c) tiled 10× less?"* (Answer: a)
+- ` Predict first` before `scaled_dot_product_attention` dispatch: *"At causal mask + fp32 + S=512: does PyTorch 2.0 dispatch to FlashAttention?"* (Answer: no — only fp16/bf16 triggers it; fp32 uses the standard path)
+- ` Your turn`: double S from 512 to 1024; predict the IO traffic ratio change (it doubles — print confirms it)
 - **Prove the tiling**: the online softmax implementation must produce output that passes `torch.allclose(..., atol=1e-5)` against `torch.nn.functional.scaled_dot_product_attention`
 - `#### What just happened` after Part 3 (numerically equivalent but O(S²/M) reads; missing: *we still haven't measured the actual speedup* — plants Part 4)
 - Code Walkthrough cell after the tiling algorithm implementation (Section 9.1)
@@ -381,9 +381,9 @@ The closing decision names the exact strategy for the 70B job and how much code 
 | 6 | Toy → real: what parallelism strategy does a 70B model training recipe use? | Walk through a public LLaMA-2 training config; map each setting to a parallelism axis |
 
 **Gold-standard requirements:**
-- `🔮 Predict first` before DDP gradient sync: *"After DDP backward, are the gradients on GPU 0 and GPU 1: (a) identical, (b) summed (twice the magnitude), (c) averaged?"* (Answer: a — averaged by default; print `grad_gpu0 - grad_gpu1` to prove zero difference)
-- `🔮 Predict first` before FSDP memory comparison: *"FSDP with 4 GPUs shards parameters 4×. Peak memory per GPU should be: (a) same as DDP, (b) ~4× less than DDP, (c) ~2× less (because optimizer states are also sharded)?"* (Answer: c in practice, due to all-gather overhead)
-- `🧪 Your turn`: change DDP gradient bucket size (`bucket_cap_mb`); measure whether it changes throughput
+- ` Predict first` before DDP gradient sync: *"After DDP backward, are the gradients on GPU 0 and GPU 1: (a) identical, (b) summed (twice the magnitude), (c) averaged?"* (Answer: a — averaged by default; print `grad_gpu0 - grad_gpu1` to prove zero difference)
+- ` Predict first` before FSDP memory comparison: *"FSDP with 4 GPUs shards parameters 4×. Peak memory per GPU should be: (a) same as DDP, (b) ~4× less than DDP, (c) ~2× less (because optimizer states are also sharded)?"* (Answer: c in practice, due to all-gather overhead)
+- ` Your turn`: change DDP gradient bucket size (`bucket_cap_mb`); measure whether it changes throughput
 - GPU gating: all multi-GPU cells skip gracefully with CPU process groups; print "Multi-GPU not available — simulating with CPU process groups (gradient math identical, timing not representative)"
 - `#### What just happened` after Part 1 (DDP works; missing: *it still requires all parameters to fit on one GPU*) and after Part 2 (FSDP solves that; missing: *but what if a single layer's parameters don't fit?* — plants tensor parallelism)
 - Prerequisite bridge cell (Section 13.1) from Chapter 2 (memory math is the foundation)
@@ -468,8 +468,8 @@ actually hurt quality?" (Parts 1–3), "int4 fits in 4 GB — is it still useful
 **Gold-standard requirements:**
 - **Named scenario threaded throughout** (Riverside MacBook; 16 GB; the 7B editing assistant)
 - **Running example:** GPT-2-Medium from `04-llm` fine-tuned checkpoint (or a fallback fresh GPT-2-Medium if checkpoint unavailable); Prerequisite Bridge cell (Section 13.1) noting this dependency
-- `🔮 Predict first` before dynamic int8 quality: *"Dynamic quantization halves the model size. Will held-out perplexity: (a) stay within 0.5 points of fp32, (b) increase by 2–3 points, (c) increase by 10+ points?"* (Answer: a for dynamic int8 on GPT-2)
-- `🔮 Predict first` before GPTQ vs. AWQ comparison: *"At int4, which method will show lower perplexity: (a) GPTQ, (b) AWQ, (c) within noise?"* (Answer: b in most benchmarks; print the actual measured difference)
+- ` Predict first` before dynamic int8 quality: *"Dynamic quantization halves the model size. Will held-out perplexity: (a) stay within 0.5 points of fp32, (b) increase by 2–3 points, (c) increase by 10+ points?"* (Answer: a for dynamic int8 on GPT-2)
+- ` Predict first` before GPTQ vs. AWQ comparison: *"At int4, which method will show lower perplexity: (a) GPTQ, (b) AWQ, (c) within noise?"* (Answer: b in most benchmarks; print the actual measured difference)
 - `#### What just happened` after Part 3 (PTQ static is good for int8; missing: *int4 static PTQ degrades much faster than int8 — the Hessian correction in GPTQ exists to fix this* — plants Part 4)
 - Code Walkthrough cell after the GPTQ calibration block (Section 9.1)
 - NF4 section explicitly connects to QLoRA in `04-llm/02-llm-finetuning-parameter-techniques.ipynb` with a forward reference
@@ -544,9 +544,9 @@ that are otherwise mysterious.
 **Gold-standard requirements:**
 - **Named scenario threaded throughout** (Riverside's 100× traffic spike; GPT-2 as the toy model; vLLM as the production target)
 - Prerequisite bridge cell (Section 13.1) from `04-llm/06-llm-gateway.ipynb` (the gateway is the starting point)
-- `🔮 Predict first` before KV cache speedup: *"Without caching, a 128-token prompt requires attention over 128 positions for every new token. With caching, each new token attends over how many new positions: (a) 128, (b) 1, (c) 1 + a cache lookup?"* (Answer: c — 1 new key/value pair computed, rest from cache)
-- `🔮 Predict first` before speculative decoding: *"A 7B verifier model and a 70M draft model: the draft proposes 5 tokens and the verifier accepts 3. Compared to 5 sequential verifier calls: (a) 2× faster, (b) 5× faster, (c) only marginally faster?"* (Answer: a–b depending on acceptance rate — print the actual measured speedup)
-- `🧪 Your turn`: change speculative decoding draft length from 4 to 8; predict whether mean acceptance rate goes up or down (it goes down — longer chains are harder to accept wholesale)
+- ` Predict first` before KV cache speedup: *"Without caching, a 128-token prompt requires attention over 128 positions for every new token. With caching, each new token attends over how many new positions: (a) 128, (b) 1, (c) 1 + a cache lookup?"* (Answer: c — 1 new key/value pair computed, rest from cache)
+- ` Predict first` before speculative decoding: *"A 7B verifier model and a 70M draft model: the draft proposes 5 tokens and the verifier accepts 3. Compared to 5 sequential verifier calls: (a) 2× faster, (b) 5× faster, (c) only marginally faster?"* (Answer: a–b depending on acceptance rate — print the actual measured speedup)
+- ` Your turn`: change speculative decoding draft length from 4 to 8; predict whether mean acceptance rate goes up or down (it goes down — longer chains are harder to accept wholesale)
 - KV cache section explicitly connects to `02-transformers` KV cache description (the "it was mentioned there as an optimization" payoff)
 - `#### What just happened` after Part 1 (KV cache solves per-token latency; missing: *at 100× traffic, we're still processing one request at a time* — plants continuous batching)
 - Code Walkthrough cell (Section 9.1) after the KV-caching forward pass implementation
@@ -626,8 +626,8 @@ can reach {theoretical_peak:.0f}% of hardware peak bandwidth."
 
 **Gold-standard requirements:**
 - Prerequisite bridge cell (Section 13.1) from Chapters 1 and 4 (CUDA model + FlashAttention tiling)
-- `🔮 Predict first` before tiled matmul benchmark: *"A tiled matmul in Triton vs. `torch.matmul`: (a) Triton is 2× faster, (b) `torch.matmul` is faster (it uses cuBLAS), (c) within 5%?"* (Answer: b for square matrices; Triton wins on irregular shapes — print confirms which)
-- `🔮 Predict first` before the autotune sweep: *"Which block size will win for the `(1024, 1024)` matmul: (a) 32, (b) 64, (c) 128?"* (Answer: hardware-dependent; the autotune result is the lesson)
+- ` Predict first` before tiled matmul benchmark: *"A tiled matmul in Triton vs. `torch.matmul`: (a) Triton is 2× faster, (b) `torch.matmul` is faster (it uses cuBLAS), (c) within 5%?"* (Answer: b for square matrices; Triton wins on irregular shapes — print confirms which)
+- ` Predict first` before the autotune sweep: *"Which block size will win for the `(1024, 1024)` matmul: (a) 32, (b) 64, (c) 128?"* (Answer: hardware-dependent; the autotune result is the lesson)
 - Every kernel output verified against the PyTorch reference with `torch.allclose(..., atol=1e-3)` (Triton uses fp16 internally — note this in the tolerance comment)
 - `#### What just happened` after Part 1 (kernel works; missing: *it's no faster than PyTorch yet — we need tiling and coalesced memory* — plants Part 2)
 - Code Walkthrough cell after the `@triton.jit` kernel definition in Part 1 (first time a learner sees this syntax)

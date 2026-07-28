@@ -63,7 +63,7 @@ summarise) should survive.
 | **Part 1 — establish the substrate** | Define the running example: vocabulary, embeddings, or dataset. Explain *why* the toy space has the dimensionality/shape it does (e.g. 3D axes each mean something human-readable). |
 | **Parts 2..N — one mechanism per part** | Each part = one Markdown "why do we need this" cell → one or more code cells that build/visualise/prove it → a short reflection cell ("What just happened — and what's missing") that creates the crack the *next* part will pry open. |
 | **Toy → real bridge** | A comparison table (toy dims vs. GPT-2/production dims) and then the same mechanism run against a real pretrained model. |
-| **Exercises** | 🧪 "Your turn" cells scattered after the concepts they exercise, not bunched at the end. |
+| **Exercises** |  "Your turn" cells scattered after the concepts they exercise, not bunched at the end. |
 | **Summary** | A final Markdown cell: the roadmap table again but completed, plus a bulleted "Key insights to keep" list — each bullet is a one-line, quotable takeaway, not a restatement of the section title. |
 
 ---
@@ -82,10 +82,10 @@ summarise) should survive.
   > "The √dₖ scaling prevents dot-products from growing so large that softmax saturates…"
 - **Recurring emoji callouts** — reuse these exact markers, they are load-bearing
   signposts a returning reader will pattern-match on:
-  - `🔮 Predict first` — pose a concrete, falsifiable question *before* the reveal cell.
+  - ` Predict first` — pose a concrete, falsifiable question *before* the reveal cell.
     Always phrased so the reader can be wrong (e.g. give 2–3 candidate outcomes).
-  - `🧪 Your turn — <topic>` — a change-one-variable-and-predict exercise, placed
-    immediately after the concept it drills, with an inline `# 👉 CHANGE ...` comment
+  - ` Your turn — <topic>` — a change-one-variable-and-predict exercise, placed
+    immediately after the concept it drills, with an inline `#  CHANGE ...` comment
     in the code cell telling the reader exactly what knob to turn.
   - `#### What just happened` / `#### So they differ — but…` — a short reflective
     cell after a reveal that (a) names what was just shown and (b) plants the question
@@ -96,7 +96,7 @@ summarise) should survive.
   > forms. Both implementations fulfil the same pedagogical role. The emoji form is
   > preferred for new notebooks (easier to pattern-match when skimming), but the plain-text
   > form is not a deficiency — it's an established, consistent practice within this track.
-- **"Predict, then verify" cadence**: a 🔮 cell is never immediately followed by the
+- **"Predict, then verify" cadence**: a  cell is never immediately followed by the
   answer in the same cell — the reader must run code to find out. Don't spoil it in the
   markdown.
 - **Numbered comparison callouts** ("Problem 1 — …", "Problem 2 — …") when motivating why
@@ -107,7 +107,7 @@ summarise) should survive.
 ## 4 · Code Cell Conventions
 
 - **Section-banner comments**: every code cell opens with
-  `# ── Short Description ─────────────────────────────────────────` to visually chunk
+  `#  Short Description ` to visually chunk
   the notebook when skimming source. Sub-comments below explain *why*, not just *what*
   (`# The √dₖ scaling prevents softmax saturation`, not `# divide by sqrt`).
 - **Print statements are part of the pedagogy, not debug noise.** Every demo cell ends
@@ -169,7 +169,7 @@ summarise) should survive.
 5. **Reflection cells that plant the next question.** Almost every part ends with a
    short Markdown cell naming what's missing or what a sharp reader would object to,
    which becomes the hook for the next part's opening paragraph.
-6. **Exercises are drills, not new content.** 🧪 cells never introduce a new concept —
+6. **Exercises are drills, not new content.**  cells never introduce a new concept —
    they let the reader turn a knob (`my_query`, `n_heads`, `DEPTH`, `USE_ENCODER_MASK`)
    on a mechanism already explained, with an explicit prediction prompt and a printed
    correctness check where feasible.
@@ -188,9 +188,9 @@ Use this when auditing or authoring a `plan.md` for a candidate notebook:
       dataset or sentence per part).
 - [ ] Every non-trivial claim is followed by code that measures/proves it, not just
       states it.
-- [ ] Uses 🔮 "Predict first" before any reveal that has a non-obvious answer.
-- [ ] Has 🧪 "Your turn" exercises placed near the concept they drill, with a
-      `# 👉 CHANGE ...` comment and (where possible) a printed correctness check.
+- [ ] Uses  "Predict first" before any reveal that has a non-obvious answer.
+- [ ] Has  "Your turn" exercises placed near the concept they drill, with a
+      `#  CHANGE ...` comment and (where possible) a printed correctness check.
 - [ ] Reflection cells ("What just happened", "So — but…") close each part and open a
       crack for the next.
 - [ ] If a mechanism has a toy and a real-world form, both are shown, bridged by an
@@ -214,7 +214,7 @@ a companion `plan.md` in its own folder, written against this checklist, that:
 1. Summarises the notebook's current state (topic, structure, what pedagogy already
    exists).
 2. Scores/flags it against Section 6's checklist.
-3. Lists concrete, ordered changes (add a 🔮 cell here, add a toy→real bridge there,
+3. Lists concrete, ordered changes (add a  cell here, add a toy→real bridge there,
    replace an assertion with a proof, restructure into numbered Parts, etc.) needed to
    reach parity with [02-transformers/transformers.ipynb](02-transformers/transformers.ipynb)
    and, where the notebook has a real-world use case to motivate, the [04-llm/01-llm-finetuning-data-techniques.ipynb](04-llm/01-llm-finetuning-data-techniques.ipynb) series.
@@ -452,13 +452,13 @@ evaluation section.
 
 **Structure:**
 
-1. A **Markdown table** listing all M×N combinations with ✅ (trained in this run) / ❌ (not trained):
+1. A **Markdown table** listing all M×N combinations with  (trained in this run) /  (not trained):
 
 ```markdown
 |                         | **Axis B — Option 1** | **Axis B — Option 2** | **Axis B — Option 3** |
 |-------------------------|----------------------|----------------------|----------------------|
-| **Axis A — Option 1**   | ✅ `checkpoint_a1b1` | ✅ `checkpoint_a1b2` | ❌ not trained       |
-| **Axis A — Option 2**   | ❌ not trained       | ❌ not trained       | ✅ `checkpoint_a2b3` |
+| **Axis A — Option 1**   |  `checkpoint_a1b1` |  `checkpoint_a1b2` |  not trained       |
+| **Axis A — Option 2**   |  not trained       |  not trained       |  `checkpoint_a2b3` |
 ```
 
 2. A **code cell** that renders two side-by-side heatmaps — one for a quality metric (lower = better)
@@ -497,13 +497,13 @@ anti-pattern while conveying the same information in a more legible, interactive
 **Pattern:**
 
 ```python
-# ── Static panel: snapshot at last (richest) position ────────────────────────
+#  Static panel: snapshot at last (richest) position 
 fig_static, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 4))
 # ... ax1: line plot comparing two series at last_pos ...
 # ... ax2: bar chart of delta at last_pos ...
 plt.tight_layout(); plt.show()
 
-# ── Animated panel: evolve position-by-position ──────────────────────────────
+#  Animated panel: evolve position-by-position 
 from matplotlib.animation import FuncAnimation
 from IPython.display import HTML
 
@@ -991,7 +991,7 @@ This section documents patterns observed consistently in `04-llm/04-hybrid-searc
 
 ### 14.1 Prediction-Check Print Block — close the predict-first loop explicitly
 
-The guide's "🔮 Predict first" pattern (Section 3) requires posing a question before the reveal.
+The guide's " Predict first" pattern (Section 3) requires posing a question before the reveal.
 The gold-standard notebooks add a further step: the reveal cell **prints whether the prediction
 was correct**, names the actual outcome, and — when the actual outcome doesn't match the expected
 failure mode — explains why the corpus/data didn't produce the textbook case. Example:
@@ -1056,7 +1056,7 @@ Scorecard** cell that:
    always true of the specific run rather than aspirational.
 
 ```python
-# ── Closing Scorecard ─────────────────────────────────────────────────────────
+#  Closing Scorecard 
 # Every number below comes from a cell already run in this notebook.
 
 print("=" * 55)
@@ -1067,7 +1067,7 @@ for name, r5, mrr in [
     ("Dense only",   dense_r5,   dense_mrr),
     ("Hybrid α=0.3", hybrid_r5,  hybrid_mrr),
 ]:
-    verdict = "✅ Ship" if r5 >= RECALL_THRESHOLD else "❌ Investigate"
+    verdict = " Ship" if r5 >= RECALL_THRESHOLD else " Investigate"
     print(f"  {name:<20} | {r5:.2f}     | {mrr:.2f}  | {verdict}")
 ```
 
