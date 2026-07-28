@@ -1,7 +1,7 @@
-# mnist-cnn-keras-vs-pytorch.ipynb -- Keras (TensorFlow) cells
+# keras-to-pytorch-primer.ipynb -- Keras (TensorFlow) cells
 tensorflow
 
-# mnist-cnn-keras-vs-pytorch.ipynb -- PyTorch cells
+# keras-to-pytorch-primer.ipynb -- PyTorch cells
 torch
 torchvision
 

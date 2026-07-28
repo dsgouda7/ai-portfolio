@@ -497,13 +497,13 @@ anti-pattern while conveying the same information in a more legible, interactive
 **Pattern:**
 
 ```python
-#  Static panel: snapshot at last (richest) position 
+#  Static panel: snapshot at last (richest) position
 fig_static, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 4))
 # ... ax1: line plot comparing two series at last_pos ...
 # ... ax2: bar chart of delta at last_pos ...
 plt.tight_layout(); plt.show()
 
-#  Animated panel: evolve position-by-position 
+#  Animated panel: evolve position-by-position
 from matplotlib.animation import FuncAnimation
 from IPython.display import HTML
 
@@ -1056,7 +1056,7 @@ Scorecard** cell that:
    always true of the specific run rather than aspirational.
 
 ```python
-#  Closing Scorecard 
+#  Closing Scorecard
 # Every number below comes from a cell already run in this notebook.
 
 print("=" * 55)
