@@ -1,0 +1,3 @@
+# Demo dependencies (beyond context-optimizer[hf] which must already be installed)
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0

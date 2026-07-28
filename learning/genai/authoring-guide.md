@@ -138,7 +138,7 @@ summarise) should survive.
   before any cell whose numbers are quoted in the surrounding markdown, so re-running
   the notebook reproduces the exact prose.
 - **Small, real classes, not black boxes.** `MultiHeadAttention`, `FeedForward`,
-  `TransformerBlock`, `CrossAttention` are hand-written Keras layers a reader can read
+  `TransformerBlock`, `CrossAttention` are hand-written PyTorch `nn.Module` subclasses a reader can read
   top-to-bottom in under a minute — never an opaque library call standing in for the
   concept being taught.
 - **Naming mirrors the math.** Variables are `W_Q`, `Q`, `K`, `V`, `d_k`, `attn_w` — not

@@ -1,0 +1,13 @@
+Context Windows and the Token Limit Problem
+
+Every large language model has a context window — the maximum number of tokens it can process in a single forward pass. GPT-4 supports up to 128,000 tokens. Claude 3.5 supports 200,000 tokens. Despite these large windows, the economics and accuracy of long-context inference create severe practical constraints.
+
+Token pricing at commercial API providers scales linearly with context length. At GPT-4 pricing of $0.01 per 1,000 input tokens, a 500,000-token (400 MB) corpus query costs $5.00 per question. At production query volumes of 10,000 queries per day, that equals $50,000 per day in API costs alone — before compute and engineering overhead.
+
+Performance also degrades with context length. Research by Liu et al. (2023) in "Lost in the Middle" demonstrated that language models systematically fail to recall information placed in the middle of long contexts, performing best when relevant facts appear at the very beginning or end of the context window. This "lost in the middle" phenomenon means that simply stuffing a large corpus into context does not guarantee accurate retrieval.
+
+The attention mechanism itself has quadratic complexity O(n²) in sequence length, meaning doubling the context length quadruples the compute required. While efficient attention variants like FlashAttention reduce memory overhead, the fundamental computational cost remains.
+
+Chunking and selective injection are the dominant mitigation strategies. Rather than injecting a full corpus, the system retrieves only the k most relevant chunks. However, optimal chunk size is non-trivial: small chunks preserve retrieval precision but lose discourse-level context; large chunks maintain coherence but dilute the signal-to-noise ratio for specific queries.
+
+Hierarchical approaches address the context problem architecturally rather than empirically. By indexing a corpus as a tree of summaries — progressively compressed at each level — queries can navigate from high-level overviews to specific raw passages without loading the full corpus. This reduces per-query token consumption by 80-95% while improving recall on specific-detail queries, since raw text is only fetched when summaries are insufficient.

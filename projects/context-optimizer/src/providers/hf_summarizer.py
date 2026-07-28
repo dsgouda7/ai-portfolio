@@ -146,10 +146,19 @@ class HFSummarizerLLM:
         """
         Summarize *prompt* and return a response with a ``.content`` attribute.
 
-        The prompt is truncated to :data:`_MAX_INPUT_CHARS` characters before
-        being sent to the pipeline.  For the compressor use case this is fine
-        because ``ingest_file_blocks`` already samples 5 evenly-spaced windows
-        totalling ~6,000 chars — we trim here as a safety net.
+        BART/T5 are seq2seq summarizers, not instruction-following models.
+        When given a prompt like "You are a semantic index builder … **Input
+        Text:** <actual content> …" they summarize the *instructions* rather
+        than the content.  We therefore strip the instruction preamble and
+        feed BART only the bare document text.
+
+        Two prompt shapes are handled:
+        - Block-level (compressor.py COMPRESSION_PROMPT_TEMPLATE):
+            contains ``**Input Text:**`` … ``**Output (JSON only):**``
+        - Cluster-level (tree_index.py _CLUSTER_PROMPT):
+            contains ``Block summaries:\\n`` … ``\\n\\nCompressed cluster core:``
+
+        The prompt is then truncated to :data:`_MAX_INPUT_CHARS` characters.
 
         Post-processing
         ---------------
@@ -162,7 +171,7 @@ class HFSummarizerLLM:
         """
         with self._lock:
             model, tokenizer = self._get_pipe()
-            text = prompt[:_MAX_INPUT_CHARS]
+            text = _extract_content_from_prompt(prompt)[:_MAX_INPUT_CHARS]
             import torch  # type: ignore[import]
 
             inputs = tokenizer(
@@ -184,6 +193,62 @@ class HFSummarizerLLM:
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"HFSummarizerLLM(model={self._model_name!r}, device={self._device})"
+
+
+# ── Prompt content extraction ─────────────────────────────────────────────────
+
+
+def _extract_content_from_prompt(prompt: str) -> str:
+    """
+    Strip instruction preamble from an LLM prompt and return the bare content.
+
+    context-optimizer uses two prompt shapes:
+
+    1. *Block-level* (compressor.py ``COMPRESSION_PROMPT_TEMPLATE``):
+       ``… **Input Text:**\\n<content>\\n\\n**Output (JSON only):** …``
+
+    2. *Cluster-level* (tree_index.py ``_CLUSTER_PROMPT``):
+       ``… Block summaries:\\n<summaries>\\n\\nCompressed cluster core:``
+
+    BART/T5 are pure seq2seq summarizers; they cannot follow instructions,
+    so handing them the full prompt causes them to "summarize" the instruction
+    text instead of the document.  This function extracts just the content
+    so that BART receives what it was designed to process.
+    """
+    # ── Cluster-level prompt ──────────────────────────────────────────────────
+    BLOCK_SUMMARIES_MARKER = "Block summaries:\n"
+    CLUSTER_CORE_MARKER = "\n\nCompressed cluster core:"
+    if BLOCK_SUMMARIES_MARKER in prompt and CLUSTER_CORE_MARKER in prompt:
+        start = prompt.index(BLOCK_SUMMARIES_MARKER) + len(BLOCK_SUMMARIES_MARKER)
+        end = prompt.rfind(CLUSTER_CORE_MARKER)
+        return prompt[start:end].strip()
+
+    # ── Block-level ingest prompt (compressor.py BLOCK_SUMMARY_PROMPT) ────────
+    # Format: "… Text block (extract facts…):\n<content>\n\nCompressed semantic core:"
+    TEXT_BLOCK_MARKER = "\nText block ("
+    SEMANTIC_CORE_MARKER = "\n\nCompressed semantic core:"
+    if TEXT_BLOCK_MARKER in prompt and SEMANTIC_CORE_MARKER in prompt:
+        # Skip past the "Text block (…):\n" header line
+        start = prompt.index(TEXT_BLOCK_MARKER)
+        # Advance to the newline after the closing ":\n"
+        newline_after = prompt.index(":\n", start) + 2
+        end = prompt.rfind(SEMANTIC_CORE_MARKER)
+        return prompt[newline_after:end].strip()
+
+    # ── Block-level prompt (compressor.py COMPRESSION_PROMPT_TEMPLATE) ────────
+    INPUT_TEXT_MARKER = "**Input Text:**"
+    if INPUT_TEXT_MARKER in prompt:
+        start = prompt.index(INPUT_TEXT_MARKER) + len(INPUT_TEXT_MARKER)
+        content = prompt[start:]
+        # Trim at the start of the output/instructions section
+        for end_marker in ("\n\n**Output", "\n**Output", "\n\nRespond with"):
+            if end_marker in content:
+                content = content[: content.index(end_marker)]
+                break
+        return content.strip()
+
+    # ── Unrecognised format — pass through unchanged ──────────────────────────
+    return prompt
 
 
 # ── Post-processing ───────────────────────────────────────────────────────────

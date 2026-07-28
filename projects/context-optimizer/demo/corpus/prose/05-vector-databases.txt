@@ -1,0 +1,13 @@
+Vector Databases and Embedding Search
+
+A vector database stores high-dimensional numerical vectors (embeddings) and supports efficient similarity search — finding the k nearest vectors to a query vector by cosine similarity or Euclidean distance. Vector databases are the storage layer that makes semantic search possible: rather than matching documents by exact keywords, they match by meaning.
+
+Text embeddings are produced by encoder models like sentence-transformers/all-MiniLM-L6-v2, OpenAI's text-embedding-3-small, or Cohere's embed-v3. These models map sentences or paragraphs to 384–1536 dimensional vectors in a learned semantic space, where phrases with similar meaning are close together regardless of surface wording. "Heart attack" and "myocardial infarction" land near each other; "bank" in the financial sense and "bank" as a river feature land far apart.
+
+Approximate Nearest Neighbor (ANN) algorithms make search tractable at large scale. HNSW (Hierarchical Navigable Small World) is the most widely deployed: it builds a multi-layer proximity graph where upper layers provide long-range shortcuts and lower layers provide fine-grained refinement. HNSW achieves ~1ms query latency on millions of vectors at 99% recall vs. brute-force. IVF (Inverted File Index) + PQ (Product Quantization) is an alternative that trades a small recall loss for much lower memory footprint.
+
+ChromaDB is an open-source embedding database designed for AI applications. It runs embedded in-process (no separate server for development) or as a persistent client-server. ChromaDB supports multiple embedding functions, metadata filtering, and multi-tenancy via named collections. It uses HNSW for ANN search and SQLite for metadata storage.
+
+Qdrant, Pinecone, Weaviate, and Milvus are alternative production-grade vector databases offering features like horizontal scaling, on-disk indexes for multi-billion vector corpora, and built-in hybrid search (combining BM25 keyword matching with dense vector similarity).
+
+Hybrid search — combining sparse keyword matching (TF-IDF or BM25) with dense vector search — consistently outperforms either approach alone. BM25 excels at exact-match queries (names, codes, part numbers) while dense search excels at semantic paraphrase queries. Reciprocal Rank Fusion (RRF) is a standard algorithm for merging the two ranked lists into a single ordering without tuning score normalization.

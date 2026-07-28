@@ -239,6 +239,10 @@ def ingest_directory(
             try:
                 with os.fdopen(fd, "w", encoding="utf-8") as f:
                     f.write(text)
+                # Derive document context from the original filename so the
+                # summarizer knows which source document each block comes from.
+                from context_optimizer.compressor import _derive_document_context
+                doc_ctx = _derive_document_context(path)
                 chunks = ingest_file_blocks(
                     source_path=tmp_path,
                     block_size_bytes=block_size_bytes,
@@ -247,7 +251,21 @@ def ingest_directory(
                     llm=llm,
                     strategy=strategy,
                     label=f"{label}/{path.name}" if label else path.name,
+                    document_context=doc_ctx,
                 )
+                # Fix: ingest_file_blocks registers the temp file path in
+                # BlockIndex and chunk metadata.  Update both to point at the
+                # original source file so raw text remains readable after the
+                # temp file is deleted.  For text-extracted formats (.txt, .py,
+                # .md, etc.) the byte offsets are identical because the temp
+                # file contains the same UTF-8 bytes as the original.
+                orig_path = str(path)
+                for chunk in chunks:
+                    chunk.metadata["source_file"] = orig_path
+                    if block_index is not None:
+                        bs = int(chunk.metadata.get("byte_start", 0))
+                        be = int(chunk.metadata.get("byte_end", len(text.encode("utf-8"))))
+                        block_index.add_block(chunk.chunk_id, orig_path, bs, be)
                 all_chunks.extend(chunks)
             finally:
                 os.unlink(tmp_path)

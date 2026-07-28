@@ -1,0 +1,11 @@
+Hierarchical Retrieval and Tree-of-Summaries Indexing
+
+Hierarchical retrieval addresses the scale limitations of flat vector search by organizing a corpus into a multi-level summary tree rather than a flat list of chunks. The key insight is that most queries only require reading a small fraction of a large corpus — a hierarchical index lets a reasoning agent navigate directly to the relevant fraction without scanning everything.
+
+The index is built in two offline passes. In the first pass, raw documents are split into fixed-size byte blocks (typically 50–500 KB) and each block is compressed by a small language model into a dense semantic summary. These block summaries form Level 1 (L1) of the tree. In the second pass, L1 summaries are clustered into groups of k (typically 4–8), and each group is further compressed into a super-summary stored at Level 2 (L2). For very large corpora, a third pass creates L3 super-clusters from L2 summaries.
+
+At query time, a reasoning agent starts at the top level of the tree — the coarsest, most compressed view of the corpus. It performs a cosine search against L2 (or L3) super-summaries to find which clusters are semantically relevant to the query. It then "drills down" by expanding relevant clusters to inspect their L1 block summaries. If a block summary contains enough information, the agent answers from the summary alone. If more detail is needed — exact quotes, specific numbers, names — the agent fetches the raw block from disk.
+
+This navigation strategy, analogous to a database query planner choosing between index scans and full table scans, dramatically reduces the tokens presented to the reasoning model. On a 400 MB test corpus, the Tree-of-Summaries approach produced answers using an average of 404 tokens of context, compared to 2,594 tokens for flat vector RAG — an 84% reduction. Retrieval recall improved by 4.9 percentage points simultaneously, because the hierarchical structure better handles multi-topic queries.
+
+The tree depth is computed automatically from corpus size using the formula: depth = ceil(log(n_blocks / top_k) / log(cluster_size)) + 1, ensuring the top-level always has approximately top_k entries regardless of corpus size.

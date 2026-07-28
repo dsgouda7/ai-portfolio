@@ -1,0 +1,15 @@
+The Transformer Architecture
+
+The Transformer is a neural network architecture introduced in the 2017 paper "Attention is All You Need" by Vaswani et al. at Google Brain. It replaced recurrent neural networks (RNNs) as the dominant sequence-to-sequence architecture and became the foundation of all modern large language models including BERT, GPT, T5, and their successors.
+
+The core mechanism of the Transformer is scaled dot-product attention. Given a sequence of tokens, each token produces three vectors: a query (Q), a key (K), and a value (V). Attention scores are computed by taking the dot product of each query with all keys, scaling by the square root of the key dimension to prevent gradient vanishing, and applying softmax to produce a probability distribution. The output is a weighted sum of the value vectors, where the weights come from the attention scores.
+
+Multi-head attention runs this process in parallel across several independent "heads," each learning to attend to different aspects of the input — syntax, semantics, co-reference, etc. The outputs of all heads are concatenated and projected back to the model dimension.
+
+The Transformer encoder-decoder architecture used in translation and summarization models (like T5 and BART) processes the input sequence through a stack of encoder layers, producing a rich hidden representation, then uses cross-attention in the decoder to condition each output token on the full encoded input.
+
+Decoder-only architectures (like GPT and LLaMA) use causal self-attention, where each position can only attend to previous positions, enabling autoregressive text generation. These models process a prompt as context and generate continuations one token at a time.
+
+Positional encodings are added to token embeddings to give the model information about sequence order, since attention is inherently permutation-invariant. Modern models use rotary position embeddings (RoPE) or ALiBi instead of the original fixed sinusoidal encodings.
+
+The Transformer's parallelism during training (unlike RNNs which process tokens sequentially) enabled scaling to billions of parameters on GPU clusters, leading to the emergent capabilities observed in large language models.

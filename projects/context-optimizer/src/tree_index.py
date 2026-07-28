@@ -120,6 +120,19 @@ class TreeIndex:
         )
         emb_fn = _dummy.chroma_embedding_fn
 
+        # Auto-detect the actual depth from existing collections so that a
+        # pre-built index with depth=3 is loaded correctly even when the
+        # caller passes depth=2 (the default).
+        existing_names = {c.name for c in self._client.list_collections()}
+        detected = 1
+        for probe in range(1, 10):
+            if f"{collection_name}_L{probe}" in existing_names:
+                detected = probe
+            else:
+                break
+        if detected > self._depth:
+            self._depth = detected
+
         self._levels: dict[int, Any] = {}
         for lvl in range(1, self._depth + 1):
             self._levels[lvl] = self._client.get_or_create_collection(
@@ -178,6 +191,14 @@ class TreeIndex:
                     }
                 )
             l1.add(ids=ids, documents=docs, metadatas=metas)
+            # Force a dummy query so ChromaDB flushes the HNSW segment files to
+            # disk immediately.  Without this, PersistentClient may defer the
+            # flush and the HNSW index files are absent on the next server start,
+            # causing "Error creating hnsw segment reader: Nothing found on disk".
+            try:
+                l1.query(query_texts=["warmup"], n_results=1)
+            except Exception:
+                pass
             print(f"{_pfx}[TreeIndex] L1 ready - {l1.count()} entries")
         else:
             print(
@@ -281,6 +302,13 @@ class TreeIndex:
                 rid = res["ids"][0][j]
                 if child_ids is None or rid in child_ids:
                     out.append((rid, res["documents"][0][j], res["distances"][0][j]))
+            # If child_ids were specified but the query returned none of them
+            # (all top-k slots taken by blocks belonging to other clusters),
+            # fall back to fetching those ids directly so block_hits is never
+            # silently empty when we know the children exist.
+            if child_ids and not out:
+                got = coll.get(ids=child_ids[:top_k], include=["documents"])
+                return [(i, d, 1.0) for i, d in zip(got["ids"], got["documents"])]
             return out
         except Exception:
             if child_ids:
@@ -293,6 +321,7 @@ class TreeIndex:
         query: str,
         top_clusters: int = 2,
         top_blocks_per_cluster: int = 3,
+        gap: float = 0.03,
     ) -> list[ClusterHit]:
         """
         Hierarchical search from L{depth} down to L{depth-1}.
@@ -300,11 +329,26 @@ class TreeIndex:
         depth=2: block_hits are L1 block summaries (identical to original).
         depth>=3: block_hits are L{depth-1} cluster summaries; use
                   expand_cluster() to drill one level deeper.
+
+        *gap* is an absolute cosine-distance gap.  After retrieving
+        ``top_clusters`` candidates the method prunes any cluster whose
+        distance exceeds ``best_distance + gap``, keeping at least one
+        result.  The same threshold (widened by 2×) is applied to blocks
+        within each selected cluster.  Fallback blocks (distance == 1.0,
+        returned when the filter yields nothing) are excluded unless they
+        are the only hits available.
         """
         top_lvl = self._depth
         top_hits = self._query_level(top_lvl, query, None, top_clusters)
         if not top_hits:
             return []
+
+        # ── Cluster-level gap pruning ─────────────────────────────────────────
+        if gap > 0 and len(top_hits) > 1:
+            best_dist = top_hits[0][2]
+            cutoff = best_dist + gap
+            pruned = [h for h in top_hits if h[2] <= cutoff]
+            top_hits = pruned if pruned else top_hits[:1]
 
         child_lvl = max(1, top_lvl - 1)
         cluster_hits: list[ClusterHit] = []
@@ -318,6 +362,19 @@ class TreeIndex:
             child_hits_raw = self._query_level(
                 child_lvl, query, child_ids, top_blocks_per_cluster
             )
+
+            # ── Block-level gap pruning ───────────────────────────────────────
+            # Separate real semantic hits from fallback hits (distance == 1.0).
+            real = [h for h in child_hits_raw if h[2] < 0.999]
+            if real and gap > 0:
+                best_block_dist = real[0][2]
+                block_cutoff = best_block_dist + gap * 2
+                filtered = [h for h in real if h[2] <= block_cutoff]
+                child_hits_raw = filtered if filtered else real[:1]
+            elif real:
+                child_hits_raw = real
+            # else: no real hits — keep the fallback entries as-is
+
             block_hits = [
                 BlockHit(block_id=bid, summary=doc, cluster_id=cluster_id, distance=d)
                 for bid, doc, d in child_hits_raw

@@ -31,6 +31,14 @@ import os
 import sys
 from pathlib import Path
 
+# Load .env from cwd / parent dirs before anything reads env vars.
+# python-dotenv is a mandatory core dep so this is always safe.
+try:
+    from dotenv import load_dotenv  # type: ignore[import]
+    load_dotenv()  # searches cwd upward for .env; no-op if not found
+except ImportError:
+    pass  # should not happen — python-dotenv is in core deps
+
 # ── App config loader ─────────────────────────────────────────────────────────
 
 _DEFAULT_CONFIG_NAMES = ("app_config.yaml", "app_config.yml")
@@ -247,17 +255,17 @@ def _cmd_ask(args: argparse.Namespace) -> None:
         block_index=block_index,
     )
 
-    # Build reasoning LLM
+    # Build reasoning LLM (provider-agnostic: Ollama / Groq / OpenAI / Azure)
     reasoning_model = getattr(args, "model", None) or reason_cfg.get("model", "")
     llm = None
     if reasoning_model:
         try:
-            from langchain_ollama import ChatOllama  # type: ignore[import]
+            from context_optimizer.providers.ollama import build as _ollama_build
 
             base_url = reason_cfg.get(
                 "base_url", os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
             )
-            llm = ChatOllama(model=reasoning_model, base_url=base_url, temperature=0.0)
+            llm = _ollama_build(model=reasoning_model, base_url=base_url, temperature=0.0)
         except Exception as exc:
             print(
                 f"[ask] Warning: could not load reasoning model ({exc}). Running retrieval-only."
@@ -288,6 +296,251 @@ def _cmd_ask(args: argparse.Namespace) -> None:
 
     print(f"\n({result.total_latency_ms:.0f} ms)")
 
+# ── init command ───────────────────────────────────────────────────────────────────────
+
+_APP_CONFIG_TEMPLATE = """\
+# Context Optimizer — app_config.yaml
+# ------------------------------------
+# Non-secret config committed to your repo.
+# Secrets (API keys) go in .env (never commit that file).
+# Run `context-optimizer build` after editing this file.
+
+compressor:
+  # hf = BART/CodeT5 (CPU, no daemon).  ollama = local SLM.  azure_foundry = cloud.
+  provider: hf
+
+  hf:
+    model: facebook/bart-large-cnn        # prose / docs
+    code_model: Salesforce/codet5-base-codexglue-sum-python  # .py/.ts/.go etc.
+    device: -1                            # -1 = CPU, 0 = first GPU
+
+  ollama:
+    model: qwen2.5:3b
+    base_url: http://localhost:11434
+
+  azure_foundry:
+    endpoint: https://your-project.eastus2.models.ai.azure.com
+    model: phi-4-mini
+    # Secret: set AZURE_AI_FOUNDRY_API_KEY in .env
+
+reasoning:
+  # LLM that navigates the tree and synthesises answers.
+  # Leave model empty for retrieval-only mode (no Ollama needed).
+  ollama:
+    model: ""
+    base_url: http://localhost:11434
+
+corpus:
+  path: ./docs          # <─ EDIT THIS: path to your documents folder
+  index_dir: ~/.co/index
+  formats:
+    - .txt
+    - .md
+    - .pdf
+    - .docx
+    - .xlsx
+    - .xml
+    - .rtf
+
+index:
+  block_mb: 0.5
+  cluster_size: 4
+"""
+
+_ENV_EXAMPLE_TEMPLATE = """\
+# context-optimizer secrets
+# --------------------------
+# Copy this file to .env, fill in values for the provider(s) you use.
+# NEVER commit .env to git.
+
+# ── Azure AI Foundry (provider: azure_foundry) ─────────────────────────────────
+# AZURE_AI_FOUNDRY_API_KEY=your-key-here
+
+# ── OpenAI (provider: openai) ──────────────────────────────────────────────────
+# OPENAI_API_KEY=sk-...
+
+# ── Groq (provider: groq) ─────────────────────────────────────────────────────
+# GROQ_API_KEY=gsk_...
+
+# ── Azure OpenAI (provider: azure, reasoning only) ──────────────────────────
+# AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com
+# AZURE_OPENAI_API_KEY=your-key-here
+# AZURE_REASONER_DEPLOYMENT=gpt-4o
+
+# ── Override model names at runtime (optional) ──────────────────────────────
+# CONTEXT_OPTIMIZER_COMPRESSOR_MODEL=facebook/bart-large-cnn
+# CONTEXT_OPTIMIZER_CODE_MODEL=Salesforce/codet5-base-codexglue-sum-python
+# OLLAMA_BASE_URL=http://localhost:11434
+"""
+
+
+def _cmd_init(args: argparse.Namespace) -> None:
+    """
+    Scaffold app_config.yaml and .env.example in the target directory.
+
+    This is the recommended first step after `pip install context-optimizer`.
+    """
+    target = Path(getattr(args, "dir", ".")).expanduser().resolve()
+    target.mkdir(parents=True, exist_ok=True)
+
+    config_path = target / "app_config.yaml"
+    env_example_path = target / ".env.example"
+
+    if config_path.exists() and not getattr(args, "force", False):
+        print(f"[init] {config_path} already exists (use --force to overwrite)")
+    else:
+        config_path.write_text(_APP_CONFIG_TEMPLATE, encoding="utf-8")
+        print(f"[init] Created {config_path}")
+
+    if env_example_path.exists() and not getattr(args, "force", False):
+        print(f"[init] {env_example_path} already exists (use --force to overwrite)")
+    else:
+        env_example_path.write_text(_ENV_EXAMPLE_TEMPLATE, encoding="utf-8")
+        print(f"[init] Created {env_example_path}")
+
+    print("""
+────────────────────────────────────────────────────────────
+Next steps:
+  1. Edit app_config.yaml  — set corpus.path to your documents folder
+  2. cp .env.example .env  — fill in any API keys you need
+     (only needed for cloud providers; hf provider needs no keys)
+  3. context-optimizer build
+  4. context-optimizer ask "your question here"
+
+To let VS Code / Claude Desktop / Cursor use this index as an MCP tool:
+  context-optimizer install-mcp
+────────────────────────────────────────────────────────────""")
+
+
+# ── install-mcp command ────────────────────────────────────────────────────────────
+
+
+def _mcp_server_entry() -> str:
+    """Return the absolute path to the context-optimizer-mcp entry on PATH."""
+    import shutil
+
+    exe = shutil.which("context-optimizer-mcp")
+    if exe:
+        return exe
+    # Fallback: run via python -m
+    return f"{sys.executable} -m context_optimizer.mcp_server"
+
+
+def _cmd_install_mcp(args: argparse.Namespace) -> None:
+    """
+    Register context-optimizer as an MCP server with local AI clients.
+
+    Auto-detects VS Code, Claude Desktop, and Cursor.  Use --client to
+    target a specific one.  Use --workspace to write .vscode/mcp.json
+    in the current directory instead of the user-level config.
+    """
+    import json as _json
+    import shutil
+
+    index_dir = (
+        Path(getattr(args, "index", None) or os.getenv("CONTEXT_OPTIMIZER_INDEX_DIR", "~/.co/index"))
+        .expanduser()
+        .resolve()
+    )
+    server_cmd = _mcp_server_entry()
+    server_args = ["--index", str(index_dir)]
+    client_filter = getattr(args, "client", None)  # None = auto-detect all
+    workspace_mode = getattr(args, "workspace", False)
+
+    registered: list[str] = []
+
+    # ── VS Code ────────────────────────────────────────────────────────────────────
+    if client_filter in (None, "vscode"):
+        if workspace_mode:
+            vsc_path = Path.cwd() / ".vscode" / "mcp.json"
+        elif sys.platform == "win32":
+            vsc_path = Path(os.environ.get("APPDATA", "~")) / "Code" / "User" / "mcp.json"
+        elif sys.platform == "darwin":
+            vsc_path = Path.home() / "Library" / "Application Support" / "Code" / "User" / "mcp.json"
+        else:
+            vsc_path = Path.home() / ".config" / "Code" / "User" / "mcp.json"
+
+        vsc_path.parent.mkdir(parents=True, exist_ok=True)
+        cfg: dict = {}
+        if vsc_path.exists():
+            try:
+                cfg = _json.loads(vsc_path.read_text(encoding="utf-8"))
+            except Exception:
+                cfg = {}
+        cfg.setdefault("servers", {})
+        cfg["servers"]["context-optimizer"] = {
+            "type": "stdio",
+            "command": server_cmd,
+            "args": server_args,
+        }
+        vsc_path.write_text(_json.dumps(cfg, indent=2), encoding="utf-8")
+        registered.append(f"VS Code  →  {vsc_path}")
+
+    # ── Claude Desktop ────────────────────────────────────────────────────────────
+    if client_filter in (None, "claude"):
+        if sys.platform == "win32":
+            claude_path = Path(os.environ.get("APPDATA", "~")) / "Claude" / "claude_desktop_config.json"
+        elif sys.platform == "darwin":
+            claude_path = Path.home() / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
+        else:
+            claude_path = Path.home() / ".config" / "claude" / "claude_desktop_config.json"
+
+        if claude_path.parent.exists():
+            cfg = {}
+            if claude_path.exists():
+                try:
+                    cfg = _json.loads(claude_path.read_text(encoding="utf-8"))
+                except Exception:
+                    cfg = {}
+            cfg.setdefault("mcpServers", {})
+            cfg["mcpServers"]["context-optimizer"] = {
+                "command": server_cmd,
+                "args": server_args,
+            }
+            claude_path.write_text(_json.dumps(cfg, indent=2), encoding="utf-8")
+            registered.append(f"Claude Desktop  →  {claude_path}")
+
+    # ── Cursor ────────────────────────────────────────────────────────────────────────
+    if client_filter in (None, "cursor"):
+        if sys.platform == "win32":
+            cursor_path = Path(os.environ.get("APPDATA", "~")) / "Cursor" / "User" / "mcp.json"
+        elif sys.platform == "darwin":
+            cursor_path = Path.home() / "Library" / "Application Support" / "Cursor" / "User" / "mcp.json"
+        else:
+            cursor_path = Path.home() / ".config" / "Cursor" / "User" / "mcp.json"
+
+        if cursor_path.parent.exists():
+            cfg = {}
+            if cursor_path.exists():
+                try:
+                    cfg = _json.loads(cursor_path.read_text(encoding="utf-8"))
+                except Exception:
+                    cfg = {}
+            cfg.setdefault("servers", {})
+            cfg["servers"]["context-optimizer"] = {
+                "type": "stdio",
+                "command": server_cmd,
+                "args": server_args,
+            }
+            cursor_path.write_text(_json.dumps(cfg, indent=2), encoding="utf-8")
+            registered.append(f"Cursor  →  {cursor_path}")
+
+    if registered:
+        print("[install-mcp] Registered with:")
+        for r in registered:
+            print(f"  {r}")
+        print(f"\n  Index dir : {index_dir}")
+        print("  Server    :", server_cmd, *server_args)
+        print("\nRestart your client to pick up the new MCP server.")
+        print("Then ask it anything — it will call context-optimizer for corpus queries.")
+    else:
+        print("[install-mcp] No supported MCP clients detected.")
+        print("Supported: VS Code, Claude Desktop, Cursor")
+        print("Use --client vscode|claude|cursor to force-register.")
+        print()
+        print("Manual registration (add to your client\'s MCP config):")
+        cmd_str = f'{server_cmd} ' + ' '.join(server_args)
+        print(f'  command: {cmd_str}')
 
 # ── Legacy sub-command handlers ───────────────────────────────────────────────
 
@@ -796,6 +1049,8 @@ def main() -> None:
     dispatch = {
         "build": _cmd_build,
         "ask": _cmd_ask,
+        "init": _cmd_init,
+        "install-mcp": _cmd_install_mcp,
         "ingest": _cmd_ingest,
         "query": _cmd_query,
         "watch": _cmd_watch,

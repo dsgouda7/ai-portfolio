@@ -1,139 +1,204 @@
-# Context Optimizer: Hierarchical RAG at Scale
+# Arbor: Hierarchical RAG Retrieval
 
-> **Independently designed and benchmarked.** A production-grade context engineering
-> pipeline that makes large-corpus retrieval economically viable by replacing naive
-> context injection with a two-tier compress-then-retrieve architecture.
+> A retrieval library that builds a multi-level summary tree over your corpus at
+> index time so every query navigates from a global overview down to the exact
+> raw passage — routing to the right document first, drilling to the right
+> granularity second.
 
 ---
 
-## The Engineering Problem
+## The Problem
 
-Standard RAG breaks down at scale. A 2 GB unstructured corpus (~500 M tokens) injected
-naively into an LLM context window would cost ~$185 per query at GPT-4 pricing — and
-exceeds every available context window. Even "smart" chunking still sends hundreds of
-raw text passages that overwhelm the reasoning model.
+Standard RAG retrieves the *k* nearest text chunks to a query vector. That sounds right,
+but it has three systematic failure modes:
 
-This project solves that with three interlocking mechanisms, each addressing a specific
-failure mode the naive approach cannot handle:
-
-| Failure mode | Mechanism | Measured result |
+| Failure mode | What happens | Example |
 |---|---|---|
-| Context exhaustion | Rolling-window compression at write-time | 91.3% token reduction |
-| Summary blurring | Parent-child multi-vector retrieval | 85% → 100% recall on specific queries |
-| Ingestion bottleneck | K-Means cluster-then-compress | 90–98% fewer LLM calls |
-| Cost at query time | Agentic raw-text fallback (lazy loading) | Raw text fetched only when summaries are insufficient |
+| **Domain collision** | Semantically similar words in unrelated domains confuse the retriever | Query "trust" hits both a Python auth module *and* a Jane Austen passage |
+| **Context window waste** | Top-k chunks may all come from the wrong document, spending the entire context budget on irrelevant content | A codebase query retrieves 5 novel excerpts |
+| **Granularity mismatch** | A broad question needs a document-level answer; a narrow question needs a single sentence — flat RAG has no concept of level | "What does this library do?" and "What does `HTTPAdapter.send()` return?" both query the same flat index |
 
-These are **not theoretical improvements** — each has a benchmark that measures it.
-
----
-
-## Architecture: Three-Stage Pipeline
-
-```
-[ Raw Corpus ] ──────────────────────────────────────────────────
-      │                  WRITE-TIME (once, offline)
-      ▼
-  K-Means clustering (TF-IDF, no LLM)
-  Groups related content → one LLM call per cluster, not per chunk
-      │
-      ▼
-  Rolling-window compression (cheap SLM, e.g. llama3.2:3b)
-  → CompressedChunk: ~50-token summary + entity list + keywords
-      │
-  ┌───┴───────────────────────────────────────────────────┐
-  │   ChromaDB (parent index)    SQLite FTS5 (raw vault)  │
-  │   compressed summaries       original text            │
-  │   embedded via MiniLM        BM25 keyword search      │
-  │   ──────────────────         ─────────────────────    │
-  │   ChromaDB (child index)                              │
-  │   raw 200-token sub-chunks                            │
-  │   maps each child → parent                           │
-  └───────────────────────────────────────────────────────┘
-      │
-      │                  QUERY-TIME (every request)
-      ▼
-  Parent-child retrieval (search_with_child_index)
-  1. Query hits child index → raw sub-chunks preserve exact vocabulary
-  2. Child result maps back to parent summary
-  3. Reasoning model gets coherent summary + raw text pointer on demand
-      │
-      ▼
-  Tree-of-Thought reasoner (multi-branch, scores by evidence density)
-      │
-      ▼
-  [ Answer ]  (91.3% fewer tokens vs raw-injection baseline)
-```
-
-### Why parent-child retrieval matters
-
-An LLM summariser compresses "The detective found a gold pocket watch in the drawer"
-into "detective found clue in drawer." The word *pocket watch* is gone. A query for
-"pocket watch" now misses the chunk entirely.
-
-The parent-child index keeps the raw sub-chunk (with *pocket watch* intact) in a
-separate ChromaDB collection. The query hits the child, which carries a `parent_chunk_id`
-pointer, and the parent summary is returned. Summary-only recall on specific-detail
-queries in the benchmark: **85% → 100%** after enabling the child index.
+Arbor addresses all three by building a **summary tree** over your corpus at index time:
+a hierarchy of progressively coarser abstractions (raw block → section → document →
+corpus). Every query descends the tree from coarse to fine, routing to the right domain
+at the top and arriving at the right passage at the bottom.
 
 ---
 
-## Benchmark Results
+## Architecture
 
-All benchmarks run locally — no cloud API keys, no GPU required.
+```
+ INDEX TIME (once, offline)
+ ─────────────────────────────────────────────────────────────────────
+ Raw files
+     │
+     ▼
+ Block extraction  ←── configurable block size (default ~800 tokens)
+     │
+     ▼
+ BART summarization (facebook/bart-large-cnn)
+ + [Document: filename (type)] prefix baked into each summary
+ so BART knows which document a block comes from
+     │
+     ├── L1 ChromaDB collection  (one entry per raw block)
+     │   summary embedded with all-MiniLM-L6-v2
+     │
+     ├── L2 ChromaDB collection  (cluster summaries of L1 groups)
+     ├── L3 ChromaDB collection  (cluster summaries of L2 groups)
+     └── L4 ChromaDB collection  (root — summary of summaries)
+         │
+         └── SQLite blocks.db  (block_id → file_path, byte_start, byte_end)
+             raw text read on demand via byte-range seek
 
-### Core metrics (11,574-line corpus, Pride & Prejudice)
+ QUERY TIME (every request)
+ ─────────────────────────────────────────────────────────────────────
+ Query
+     │
+     ▼
+ L1 top-k cosine search  (domain routing via BART summaries)
+     │
+     ├── score excerpts against query keywords
+     │   score ≥ 0.25 → return top-3 sentence-ranked excerpts
+     │   score  < 0.25 → expand to top-8, re-score, return best 3
+     │
+     └── [optional] TreeReasoningAgent (requires Ollama or OpenAI-compat)
+         LLM tool loop: search_cluster | fetch_raw_block | answer
+         iterates until context is sufficient or max_rounds reached
+```
 
-| Metric | Baseline (raw corpus) | Compressed architecture | Pass/fail |
-|---|---|---|---|
-| Avg prompt tokens | 180,734 | 15,798 | — |
-| **Token reduction** | — | **91.3%** | ≥ 90% ✅ |
-| Reasoning latency | 155.9 s | 79.5 s (−49%) | ≤ +10% ✅ |
-| Judge score (0–1) | 0.97 | 0.97 (+0%) | ≤ −20% ✅ |
-| KW-F1 | 0.068 | 0.160 (+136%) | ≤ −20% ✅ |
+**Key design choices:**
 
-### Retrieval quality (offline benchmark, no LLM needed)
+- **Document context prefix** — each block summary begins with `[Document: pride and
+  prejudice (text)]` or `[Document: auth (Python source)]`. BART sees this at
+  summarization time, so the L1 vectors encode domain identity alongside content.
+  This is what makes cosine similarity route correctly across mixed-domain corpora.
 
-| Mode | Recall@3 (granular queries) | Avg query latency |
+- **Byte-range raw text** — the SQLite index stores `(file_path, byte_start, byte_end)`
+  rather than copying raw text. Raw content is read on demand with a single seek.
+  The index stays small regardless of corpus size.
+
+- **Two retrieval modes** — without a local LLM the server returns sentence-ranked
+  excerpts (fast, offline, no API keys). With Ollama running, `TreeReasoningAgent`
+  takes over: it calls tools in a loop and synthesizes a coherent answer from
+  whatever blocks it fetches.
+
+---
+
+## Quick Start
+
+```powershell
+# 1. Install into a virtual environment
+python -m venv .venv && .venv\Scripts\Activate.ps1
+pip install -e "projects/context-optimizer[dev]"
+
+# 2. Build the index (downloads BART ~400 MB on first run)
+cd projects/context-optimizer/demo
+python setup_demo.py
+
+# 3. Start the demo server
+uvicorn app.server:app --reload
+# Open http://127.0.0.1:8000
+```
+
+**Optional — enable the LLM reasoning path:**
+```powershell
+ollama pull llama3.2:3b          # ~2 GB, runs on CPU
+$env:DEMO_REASONING_MODEL = "llama3.2:3b"
+uvicorn app.server:app --reload  # TreeReasoningAgent now active
+```
+
+---
+
+## Benchmark Scenarios
+
+Three scenarios correspond to the three failure modes Arbor is designed to fix.
+Run them against a live index:
+
+```powershell
+python demo/benchmarks/tree_retrieval_benchmark.py
+```
+
+### Scenario 1 — Domain routing accuracy
+
+Queries that have an unambiguous home domain. Measures whether the top-1 retrieved
+block comes from the correct source document.
+
+| Query | Expected domain | Pass condition |
 |---|---|---|
-| Summary-only | 85% | 11.5 ms |
-| **Parent-child index** | **100%** | 17.4 ms |
+| "Describe the character of Mr Darcy" | pride-and-prejudice.txt | source_file contains `pride` |
+| "How does session-level authentication work?" | auth.py | source_file contains `auth` |
+| "What is RAG and how does it work?" | prose corpus | source_file not in novel or requests |
+| "How does the cookie jar persist state?" | cookies.py | source_file contains `cookies` |
 
-Granular queries test specific low-salience details (`21012 connection limit`,
-`runbook #RT-1042`, `3 NADH`) that summarisers predictably drop. The child index
-recovers all of them.
+**Flat RAG failure mode**: without document-context prefixes in summaries, cosine
+similarity for "trust" or "session" cross-contaminates between the auth module and
+P&P passages about social trust.
 
-### K-Means ingestion savings (500-sentence corpus, offline)
+### Scenario 2 — Multi-granularity retrieval
 
-| Target cluster size | Sub-chunks (naive) | Clusters | LLM call savings |
-|---|---|---|---|
-| 10 | 55 | 5 | 90.9% |
-| 25 | 55 | 2 | 96.4% |
-| 50 | 55 | 1 | 98.2% |
+Measures whether the retrieval depth matches the question's scope. High-level questions
+should be answered from cluster summaries (fewer tokens); low-level questions need
+raw block text.
 
-**Reproduce all benchmarks** (no Ollama required):
-```powershell
-python benchmarks\retrieval_benchmark.py          # all three experiments
-python benchmarks\retrieval_benchmark.py --exp 2  # recall comparison only
-```
+| Query type | Example | Expected behaviour |
+|---|---|---|
+| High-level | "What HTTP features does requests provide?" | Cluster summary sufficient; low distance at L3/L4 |
+| Low-level | "How does `HTTPAdapter.send()` handle SSL?" | Drills to L1 raw block; specific function present |
 
-**Reproduce the full corpus benchmark** (requires Ollama):
-```powershell
-ollama pull llama3.2:3b
-python benchmarks\run_experiments.py --full
-```
+### Scenario 3 — Iterative expansion
+
+Queries where initial top-3 keyword overlap scores below 0.25, triggering second-pass
+expansion to top-8. Measures: (a) expansion triggered when expected, (b) the
+expanded result scores higher.
+
+| Query | Why initial pass is weak | Expected step in response |
+|---|---|---|
+| "Is Mr Darcy proud or humble?" | "proud" not in any L1 summary verbatim | `expand_retrieval` step logged |
+| "How does requests handle redirects end to end?" | Answer spans multiple blocks | `expand_retrieval` step logged |
 
 ---
 
-## Cost Model
+## Demo API Reference
 
+The demo server exposes these endpoints:
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/` | Single-page demo app |
+| `GET` | `/api/status` | Index stats: block count, depth, ready flag |
+| `GET` | `/api/tree` | Full tree as `{nodes, edges}` for D3 visualization |
+| `GET` | `/api/files` | Indexed file listing |
+| `GET` | `/api/file?path=…` | Raw content of a specific file |
+| `POST` | `/api/query` | Run a query; returns `answer`, `cluster_hits`, `steps` |
+| `GET` | `/api/block?block_id=…` | Raw text of a specific block |
+| `GET` | `/api/debug?query=…` | Diagnostic: L1 query with error exposure |
+| `POST` | `/api/repair` | Rebuild a broken L1 HNSW index from metadata |
+
+**`POST /api/query` request body:**
+```json
+{
+  "query": "How does session-level authentication work?",
+  "top_clusters": 4,
+  "top_blocks_per_cluster": 4,
+  "max_rounds": 3,
+  "gap": 2.0
+}
 ```
-Without compression:  $0.37 per query  (50 KB context, GPT-4 pricing)
-With compression:     $0.007 per query (97.8% reduction)
-Savings:              $0.363/query
 
-1,000 queries/day:    $370 → $7  ($363/day savings)
-Annual:               ~$132,000 saved
-Break-even point:     2.4 queries (compression amortised)
+**Response:**
+```json
+{
+  "query": "…",
+  "answer": "[Retrieved from: auth.py]\n\n…",
+  "cluster_hits": […],
+  "steps": [
+    {"action": "search_clusters", "detail": "top 4 clusters"},
+    {"action": "retrieval_sufficient", "detail": "initial retrieval: best_score=0.67"}
+  ],
+  "fetched_blocks": [],
+  "latency_ms": 89.4,
+  "reasoning_model": null
+}
 ```
 
 ---
@@ -142,189 +207,44 @@ Break-even point:     2.4 queries (compression amortised)
 
 ```
 context-optimizer/
-├── src/context_optimizer/       # Core library
-│   ├── compressor.py            # Rolling-window compression
-│   │                            # + split_into_sub_chunks()
-│   │                            # + cluster_and_compress_corpus() (K-Means)
-│   ├── cached_retriever.py      # Semantic cache + ChromaDB
-│   │                            # + add_raw_sub_chunks() (child index)
-│   │                            # + search_with_child_index() (parent-child retrieval)
-│   ├── raw_index.py             # SQLite+FTS5 raw content store
-│   ├── index.py                 # CorpusIndex — high-level public API
-│   ├── tot_reasoner.py          # Tree-of-Thought multi-branch reasoner
-│   ├── protocols.py             # Retriever protocol
-│   └── __init__.py
+├── src/context_optimizer/
+│   ├── tree_index.py        # TreeIndex — N-level ChromaDB hierarchy
+│   ├── raw_index.py         # BlockIndex — SQLite byte-range store
+│   ├── compressor.py        # BART summarization + document context prefix
+│   ├── ingest_corpus.py     # Multi-file ingestion pipeline
+│   ├── tree_reasoner.py     # TreeReasoningAgent — LLM tool-calling loop
+│   ├── providers/           # Ollama, OpenAI-compat, Azure, HuggingFace
+│   ├── extractors/          # Per-filetype text extraction
+│   └── adapters/            # Protocol adapters
 │
-├── benchmarks/
-│   ├── retrieval_benchmark.py   # Offline benchmark (no LLM/internet)
-│   │                            # Exp 1: compression ratio
-│   │                            # Exp 2: summary-blurring recall
-│   │                            # Exp 3: K-Means ingestion savings
-│   ├── book_benchmark.py        # 100-book Gutenberg parallel benchmark
-│   ├── run_experiments.py       # Full corpus benchmark (requires Ollama)
-│   └── incident_benchmark.py   # Incident-log domain benchmark
+├── demo/
+│   ├── setup_demo.py        # Build the Arbor index for the demo corpus
+│   ├── app/
+│   │   ├── server.py        # FastAPI backend
+│   │   └── static/          # Single-page app (D3 tree visualization)
+│   ├── benchmarks/
+│   │   └── tree_retrieval_benchmark.py   # Domain routing + granularity + expansion
+│   └── corpus/              # Demo corpus (prose, requests source, P&P)
 │
-├── tests/                       # 112 unit tests
-│   ├── test_compressor.py
-│   ├── test_cached_retriever.py
-│   ├── test_raw_index.py
-│   ├── test_corpus_index.py
-│   └── test_tot_reasoner.py
-│
-└── docs/
-    ├── design/ARCHITECTURE.md   # Full system design with diagrams
-    └── benchmarks/experiment_results.md
+└── checkpoints/             # Pre-built model adapters (LoRA, DPO, PEFT)
 ```
 
 ---
 
-## Quick Start
+## Known Limitations
 
-```powershell
-# Install
-pip install -e .
+**No generation step in the default path.** Without a local LLM configured, Arbor
+returns sentence-ranked excerpts — relevant passages from the right document, but
+not a synthesized prose answer. Wire in `TreeReasoningAgent` (Ollama) or any
+OpenAI-compatible endpoint for the full RAG experience.
 
-# Run offline benchmark (verifies the architecture, no Ollama needed)
-python benchmarks\retrieval_benchmark.py
+**BART at the root level.** `facebook/bart-large-cnn` was trained on CNN/DailyMail
+news. When the L4 root summarizes a mixed corpus (novel + Python code), it will
+favour the technical content (closer to news prose) and lose the literary content.
+The domain-context prefix mitigates this at L1; at L4 a proper instruction-following
+model would do better.
 
-# High-level API
-python - <<'EOF'
-from context_optimizer import CorpusIndex
+**Static index.** The summary tree is built once. Adding new documents requires a
+full or partial rebuild. Incremental update support is a planned extension.
 
-index = CorpusIndex(compression_model="llama3.2:3b")
-index.ingest(open("my_corpus.txt").readlines())
-result = index.query("what caused the CosmosDB timeout?")
-print(result.answer)
-EOF
-```
 
-**Use parent-child retrieval directly:**
-```python
-from context_optimizer.compressor import compress_corpus_rolling, split_into_sub_chunks
-from context_optimizer.cached_retriever import CachedChromaRetriever
-
-# Compress corpus
-chunks = compress_corpus_rolling(corpus_lines, strategy="extractive")
-
-# Build index with child sub-chunks for granular keyword recall
-retriever = CachedChromaRetriever(collection_name="my_corpus")
-retriever.add_chunks(chunks)                         # parent summaries
-retriever.add_raw_sub_chunks(chunks, sub_chunk_tokens=200)  # child index
-
-# Query — child hits route back to parent summaries automatically
-results = retriever.search_with_child_index("pocket watch gold", top_k=5)
-```
-
-**Use K-Means clustering to cut ingestion cost:**
-```python
-from context_optimizer.compressor import cluster_and_compress_corpus
-
-# 50 raw sub-chunks → 2 cluster summaries (96% fewer LLM calls)
-chunks = cluster_and_compress_corpus(
-    corpus_lines,
-    target_cluster_size=25,   # ~25 sub-chunks per cluster
-    strategy="extractive",    # or "llm" with Ollama running
-)
-```
-
----
-
-## Provider Support
-
-| Provider | Role | Config |
-|---|---|---|
-| Ollama (`llama3.2:3b`, `qwen2.5-coder:7b`) | Compression + reasoning (local) | Default; `OLLAMA_BASE_URL` |
-| Groq (`llama-3.3-70b-versatile`) | Cloud compression/reasoning | `GROQ_API_KEY` |
-| Azure OpenAI (`gpt-4o-mini`, `gpt-4o`) | Enterprise deployment | `AZURE_OPENAI_ENDPOINT` + `AZURE_OPENAI_API_KEY` |
-| sentence-transformers (`all-MiniLM-L6-v2`) | Embeddings (local CPU) | Default |
-| Ollama (`nomic-embed-text`) | Embeddings (local, higher quality) | `CONTEXT_OPTIMIZER_EMBEDDING_BACKEND=ollama` |
-
----
-
-## Tests
-
-112 tests across all modules:
-
-```powershell
-python -m pytest tests/ -q
-python -m pytest tests/ --cov=context_optimizer --cov-report=term-missing
-```
-
-| Module | Tests | What is covered |
-|---|---|---|
-| `test_compressor.py` | 28 | Rolling window, extractive, sub-chunk splitting, K-Means clustering |
-| `test_cached_retriever.py` | 31 | Semantic cache, ChromaDB, parent-child index |
-| `test_raw_index.py` | 17 | SQLite+FTS5 CRUD, BM25 search, WAL-mode thread safety |
-| `test_corpus_index.py` | 12 | CorpusIndex high-level API |
-| `test_tot_reasoner.py` | 14 | Branch generation, scoring, raw fallback |
-| `test_protocols.py` | 10 | Protocol conformance |
-
----
-
-## Design Documentation
-
-| Document | What it covers |
-|---|---|
-| [docs/design/ARCHITECTURE.md](docs/design/ARCHITECTURE.md) | Full system design: rolling compression, dual storage, parent-child retrieval, K-Means ingestion, Tree-of-Thought |
-| [docs/benchmarks/experiment_results.md](docs/benchmarks/experiment_results.md) | All benchmark runs with raw numbers |
-
----
-
-## Engineering Decisions
-
-**Why not just use a bigger context window?**
-Context windows are finite and expensive. Longer windows degrade reasoning quality
-("lost in the middle" effect). This architecture keeps the reasoning model's context
-tight and evidence-dense regardless of corpus size.
-
-**Why rolling-window compression instead of full-document summarisation?**
-Full-document summarisation hits context limits immediately on large corpora. Rolling
-window processes one chunk at a time — O(1) memory, parallelisable, and failures are
-isolated to one chunk.
-
-**Why two ChromaDB collections (parent + child)?**
-Semantic similarity over compressed summaries works well for broad thematic queries.
-But specific low-salience details (exact error codes, character-level facts, specific
-measurements) get dropped by LLM summarisers. The child collection embeds raw 200-token
-windows that preserve exact vocabulary. On retrieval, the child hit routes back to the
-parent summary so the reasoning model gets coherent context, not a fragment.
-
-**Why K-Means before summarising?**
-Summarising every chunk independently ignores semantic structure. Related content
-clustered together produces denser, more coherent summaries and drastically reduces
-LLM calls — from O(N chunks) to O(N/cluster_size), typically a 95%+ reduction.
-
-**Why SQLite + FTS5 as a second store?**
-ChromaDB is optimised for vector similarity. BM25 keyword search over raw text
-requires a different engine. SQLite's FTS5 provides sub-millisecond exact-match
-lookup and ranked keyword search without any additional infrastructure. The WAL
-journal mode allows parallel writes during ingestion at essentially zero cost
-(SQLite write ~1 ms vs LLM call ~500 ms — fully overlapped).
-
-- `benchmarks/run_experiments.py` updates the incident benchmark appendix section inside `docs/benchmarks/experiment_results.md`.
-
-## Project files
-
-- `context_optimizer_benchmark.py`: end-to-end benchmark runner with both pipelines
-- `context_optimizer/`: installable package namespace and CLI entry point
-- `pyproject.toml`: build metadata for packaging and deployment
-- `requirements.txt`: runtime dependencies
-- `README.md`: benchmark design and operating guide
-- `Dockerfile.raw`: baseline CPU image (full raw context mode)
-- `Dockerfile.optimized`: optimized CPU image (compression + retrieval mode)
-- `evaluation/run_dual_benchmark.py`: single orchestration script for container runs + report generation
-- `run_evaluation.ps1` and `run_evaluation.sh`: cross-platform launch scripts
-- `setup.ps1` and `setup.sh`: project setup with dependency install + optional model downloads
-- `tests/test_context_optimizer.py`: CPU-safe unit tests for cache/search/compression/pipelines
-
-## Limitations
-
-- The log backend is in-memory and single-process; this isolates behavior but is not a distributed cache.
-- Token counts are estimated via character counts in this baseline version.
-- Model quality and tool-calling reliability vary by provider/model choice.
-
-## Next extensions
-
-- Add real token accounting (provider tokenizer API or `tiktoken` where applicable).
-- Persist benchmark runs to CSV/SQLite for trend analysis.
-- Expand retrieval tooling (time-range filters, service filters, regex mode).

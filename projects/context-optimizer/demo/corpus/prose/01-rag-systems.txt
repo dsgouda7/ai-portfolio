@@ -1,0 +1,13 @@
+Retrieval-Augmented Generation (RAG) Systems
+
+Retrieval-Augmented Generation (RAG) is an AI architecture that combines a language model with an external knowledge retrieval system. Instead of relying solely on knowledge encoded in model weights during training, RAG dynamically fetches relevant documents at query time and injects them into the model's context window.
+
+The standard RAG pipeline has three stages. First, an ingestion stage converts a document corpus into embeddings — numerical vector representations of text — and stores them in a vector database. Second, at query time, the system embeds the user's question and performs a cosine similarity search to retrieve the top-k most relevant chunks. Third, a language model receives both the question and the retrieved chunks as context and generates an answer grounded in the retrieved material.
+
+RAG has several advantages over pure parametric models. It can be updated without retraining the model — simply re-ingesting new documents updates the knowledge base. It provides citations, since the retrieved chunks can be shown alongside the answer. It also reduces hallucinations, because the model is constrained to synthesize from retrieved text rather than fabricating facts.
+
+However, naive RAG breaks down at scale. As corpora grow into hundreds of megabytes or gigabytes, the number of chunks retrieved for each query grows proportionally. Injecting thousands of raw chunks into a context window is expensive, slow, and often counterproductive — the model's attention becomes diluted and recall on specific facts degrades.
+
+Advanced RAG techniques address this through re-ranking, query decomposition, hypothetical document embeddings (HyDE), and hierarchical indexing. Re-ranking adds a cross-encoder pass after initial retrieval to reorder chunks by relevance. Query decomposition breaks complex multi-part questions into sub-queries. Hierarchical indexing — the approach used by context-optimizer — builds a tree of progressively finer-grained summaries, allowing a reasoning agent to navigate from coarse overviews to specific raw blocks without scanning the entire corpus.
+
+Evaluation of RAG systems typically uses recall, precision, faithfulness (does the answer contradict the retrieved chunks?), and answer relevance metrics. Popular benchmarks include BEIR, MTEB, and custom domain-specific evaluations.

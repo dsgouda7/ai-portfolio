@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Arbor — Demo</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <!-- D3 v7 (force simulation + transitions) -->
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── Header ──────────────────────────────────────────────────────────── -->
+  <header>
+    <h1>Arbor</h1>
+    <span class="tag">Hierarchical RAG Retrieval</span>
+    <span id="status-dot" title="Index status"></span>
+    <span id="status-text">Loading…</span>
+  </header>
+
+  <!-- ── Left: File tree ──────────────────────────────────────────────────── -->
+  <aside class="panel collapsed" id="file-panel">
+    <!-- Toggle button — visible in both states -->
+    <button id="file-panel-toggle" title="Toggle file panel" aria-label="Toggle file panel">&#x276F;</button>
+    <!-- Rotated label shown only when collapsed -->
+    <div id="file-panel-collapsed-label">FILES</div>
+    <!-- Normal content -->
+    <div class="panel-header">Indexed Files</div>
+    <div id="file-tree">
+      <div style="padding:40px 16px;text-align:center;color:var(--text-dim);font-size:12px;">
+        Loading…
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Center: Query + Trie ─────────────────────────────────────────────── -->
+  <main id="main-panel">
+
+    <!-- Query bar -->
+    <div id="query-bar">
+      <input
+        id="query-input"
+        type="text"
+        placeholder="Ask a question — try domain routing, code deep-dives, or literary analysis…"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <button id="query-btn">Ask</button>
+    </div>
+
+    <!-- Suggestion chips -->
+    <div id="suggestions"></div>
+
+    <!-- D3 trie visualization -->
+    <div id="trie-container">
+      <svg id="trie-svg">
+        <defs>
+          <radialGradient id="glow-cluster">
+            <stop offset="0%"  stop-color="#6366f1" stop-opacity="0.4"/>
+            <stop offset="100%" stop-color="#6366f1" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+      </svg>
+
+      <!-- Overlay when index not ready -->
+      <div id="not-ready-overlay" style="
+          display:none;
+          position:absolute; inset:0;
+          background:rgba(15,17,23,.85);
+          flex-direction:column;
+          align-items:center; justify-content:center;
+          gap:12px; font-size:14px; color:var(--text-dim);">
+        <div style="font-size:32px;">🗂️</div>
+        <div>Index not built yet.</div>
+        <code style="background:var(--surface2);padding:6px 12px;border-radius:6px;font-size:13px;">
+          python setup_demo.py  # builds the Arbor index
+        </code>
+        <div style="font-size:12px;">Then reload this page.</div>
+      </div>
+    </div>
+
+    <!-- Answer panel -->
+    <div id="answer-panel">
+      <div id="answer-label">Answer</div>
+      <div id="answer-text"></div>
+      <div id="steps-list"></div>
+    </div>
+
+  </main>
+
+  <!-- ── Right: File viewer / Traversal log ────────────────────────────────── -->
+  <aside class="panel" id="viewer-panel">
+    <div class="panel-header" id="viewer-header">File Viewer</div>
+    <div id="viewer-placeholder">
+      Click a file in the tree<br>or a block node in the graph<br>to view its raw content.
+    </div>
+    <pre id="viewer-content"></pre>
+    <!-- populated during query traversal -->
+    <div id="traversal-log"></div>
+  </aside>
+
+</div>
+
+<!-- Tooltip -->
+<div id="tooltip"></div>
+
+<script src="/static/app.js"></script>
+<script>
+  // Show not-ready overlay if index isn't ready
+  window.addEventListener("load", async () => {
+    const r = await fetch("/api/status").then(r => r.json()).catch(() => ({}));
+    if (!r.ready) {
+      document.getElementById("not-ready-overlay").style.display = "flex";
+    }
+  });
+</script>
+</body>
+</html>

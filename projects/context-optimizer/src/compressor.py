@@ -26,17 +26,6 @@ from typing import TYPE_CHECKING, Protocol
 if TYPE_CHECKING:
     from context_optimizer.raw_index import RawIndex
 
-try:
-    from langchain_ollama import ChatOllama
-except ImportError:
-    ChatOllama = None
-
-try:
-    from langchain_groq import ChatGroq
-except ImportError:
-    ChatGroq = None
-
-
 @dataclass
 class CompressedChunk:
     """Result of LLM compression with dual storage."""
@@ -252,9 +241,10 @@ def _build_local_llm(
     ).lower()
 
     # ── Ollama ────────────────────────────────────────────────────────────────
-    if selected_provider == "ollama" and ChatOllama is not None:
+    if selected_provider == "ollama":
+        from context_optimizer.providers.ollama import build as _ollama_build
+
         if is_code:
-            # code_model: same size as default, purpose-trained on CodeSearchNet
             model_name = (
                 model
                 or os.getenv("CONTEXT_OPTIMIZER_CODE_MODEL")
@@ -264,14 +254,8 @@ def _build_local_llm(
             model_name = model or os.getenv(
                 "CONTEXT_OPTIMIZER_COMPRESSOR_MODEL", "qwen2.5:3b"
             )
-        # Discard Ollama-format names passed when provider switched to non-Ollama
         base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-        return ChatOllama(
-            model=model_name,
-            base_url=base_url,
-            temperature=0.1,
-            num_predict=300,
-        )
+        return _ollama_build(model=model_name, base_url=base_url, temperature=0.1, num_predict=300)
 
     # ── HF (BART / T5) ───────────────────────────────────────────────────────
     if selected_provider == "hf":
@@ -315,42 +299,46 @@ def _build_reasoner_llm(
     if not selected_provider:
         return None  # no reasoner configured — ToT returns raw snippets
 
-    if selected_provider == "ollama" and ChatOllama is not None:
-        model_name = model or os.getenv(
-            "CONTEXT_OPTIMIZER_REASONER_MODEL", "llama3.2:3b"
-        )
-        base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-        return ChatOllama(model=model_name, base_url=base_url, temperature=0.0)
+    if selected_provider == "ollama":
+        from context_optimizer.providers.ollama import build as _ollama_build
 
-    if selected_provider == "groq" and ChatGroq is not None:
+        model_name = model or os.getenv("CONTEXT_OPTIMIZER_REASONER_MODEL", "llama3.2:3b")
+        base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+        return _ollama_build(model=model_name, base_url=base_url, temperature=0.0)
+
+    if selected_provider == "groq":
+        from context_optimizer.providers.openai_compat import build as _oaicompat_build
+
         model_name = model or os.getenv(
             "CONTEXT_OPTIMIZER_REASONER_MODEL", "llama-3.3-70b-versatile"
         )
         api_key = os.getenv("GROQ_API_KEY") or ""
         if not api_key:
-            raise ValueError("GROQ_API_KEY required for Groq reasoner")
-        return ChatGroq(model=model_name, api_key=api_key, temperature=0.0)
-
-    if selected_provider == "azure":
-        try:
-            from langchain_openai import AzureChatOpenAI  # type: ignore[import]
-        except ImportError as exc:
-            raise ImportError("pip install langchain-openai for Azure OpenAI") from exc
-        endpoint = os.getenv("AZURE_OPENAI_ENDPOINT") or ""
-        api_key = os.getenv("AZURE_OPENAI_API_KEY") or ""
-        if not endpoint or not api_key:
-            raise ValueError(
-                "AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY must be set"
-            )
-        api_version = os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-01")
-        deployment = model or os.getenv("AZURE_REASONER_DEPLOYMENT", "gpt-4o")
-        return AzureChatOpenAI(
-            azure_deployment=deployment,
-            azure_endpoint=endpoint,
+            raise ValueError("GROQ_API_KEY env var required for Groq reasoner")
+        return _oaicompat_build(
+            base_url="https://api.groq.com/openai/v1",
             api_key=api_key,
-            api_version=api_version,
+            model=model_name,
             temperature=0.0,
         )
+
+    if selected_provider in {"openai", "azure"}:
+        from context_optimizer.providers.openai_compat import build as _oaicompat_build
+
+        if selected_provider == "openai":
+            base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+            api_key = os.getenv("OPENAI_API_KEY") or ""
+            if not api_key:
+                raise ValueError("OPENAI_API_KEY env var required")
+        else:  # azure
+            base_url = (os.getenv("AZURE_OPENAI_ENDPOINT") or "").rstrip("/") + "/openai"
+            api_key = os.getenv("AZURE_OPENAI_API_KEY") or ""
+            if not base_url.startswith("http") or not api_key:
+                raise ValueError(
+                    "AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY must be set"
+                )
+        deployment = model or os.getenv("AZURE_REASONER_DEPLOYMENT", "gpt-4o")
+        return _oaicompat_build(base_url=base_url, api_key=api_key, model=deployment, temperature=0.0)
 
     return None
 
@@ -537,6 +525,53 @@ Text block (extract facts throughout — beginning middle end):
 {text}
 
 Compressed semantic core:"""
+
+
+# ── Document context helpers ─────────────────────────────────────────────────
+
+
+def _derive_document_context(path: "str | Path") -> str:
+    """
+    Derive a short human-readable context string from a file path.
+
+    This is prepended to the text content that the summarizer sees so that
+    block summaries contain the source document's name/domain — preventing
+    context-free summaries where a P&P passage is summarized without any
+    mention of Austen, Bennet, or 'novel'.
+
+    Examples
+    --------
+    ``pride-and-prejudice.txt``  →  ``"[Document: Pride and Prejudice (text)]"``
+    ``sessions.py``              →  ``"[Document: sessions (Python source)]"``
+    """
+    from pathlib import Path as _Path
+
+    p = _Path(path)
+    suffix = p.suffix.lower()
+    stem = p.stem.replace("-", " ").replace("_", " ")
+
+    _domain_map: dict[str, str] = {
+        ".py": "Python source",
+        ".js": "JavaScript source",
+        ".ts": "TypeScript source",
+        ".java": "Java source",
+        ".cpp": "C++ source",
+        ".c": "C source",
+        ".rs": "Rust source",
+        ".go": "Go source",
+        ".txt": "text",
+        ".md": "Markdown",
+        ".pdf": "PDF document",
+        ".docx": "Word document",
+        ".html": "HTML",
+        ".json": "JSON",
+        ".yaml": "YAML",
+        ".yml": "YAML",
+        ".xml": "XML",
+        ".csv": "CSV data",
+    }
+    domain = _domain_map.get(suffix, "document")
+    return f"[Document: {stem} ({domain})]"
 
 
 # ── Extractive compression (no LLM required) ────────────────────────────────
@@ -1076,6 +1111,7 @@ def ingest_file_blocks(
     label: str = "",
     compressor_provider: str | None = None,
     compressor_model: str | None = None,
+    document_context: str = "",
 ) -> "list[CompressedChunk]":
     """
     Ingest a large file as fixed-size byte blocks with optional overlap.
@@ -1226,7 +1262,13 @@ def ingest_file_blocks(
                             windows.append(block_text[start : start + window_chars])
                         text_sample = "\n...\n".join(windows)
 
-                    prompt = BLOCK_SUMMARY_PROMPT.format(text=text_sample)
+                    prompt = BLOCK_SUMMARY_PROMPT.format(
+                        text=(
+                            f"{document_context}\n\n" + text_sample
+                            if document_context
+                            else text_sample
+                        )
+                    )
                     try:
                         resp = llm.invoke(prompt)
                         resp_text = (
