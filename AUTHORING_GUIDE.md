@@ -5,8 +5,8 @@
 > Those documents remain as historical reference; this document is the single source of truth going forward.
 >
 > **Gold standards:**
-> - Mechanistic depth — [`learning/genai/02-transformers/transformers.ipynb`](learning/genai/02-transformers/transformers.ipynb)
-> - Narrative/business framing — [`learning/genai/04-llm/01-llm-finetuning.ipynb`](learning/genai/04-llm/01-llm-finetuning.ipynb)
+> - Mechanistic depth — [`learning/genai/02-transformers/transformers-pytorch.ipynb`](learning/genai/02-transformers/transformers-pytorch.ipynb)
+> - Narrative/business framing — [`learning/genai/04-llm/01-llm-finetuning-data-techniques-pytorch.ipynb`](learning/genai/04-llm/01-llm-finetuning-data-techniques-pytorch.ipynb)
 > - Notes chapter — [`notes/03-ai/ch01-transformer-architecture/transformer-architecture.md`](notes/03-ai/ch01-transformer-architecture/transformer-architecture.md)
 
 ---
@@ -50,7 +50,6 @@ Every track is anchored to one production system with real constraints, a named 
 | **MultiAgentAI** | OrderFlow | B2B PO automation | 1,000 POs/day, <4hr SLA |
 | **MultimodalAI** | VisualForge Studio | Local diffusion pipeline | <30s/image, ≥4.0/5.0 quality |
 | **InterviewGuides** | Interview-Ready Engineer | Technical interview prep | Land senior AI/ML role |
-| **GenAI / 00-PyTorch** | (primer, no production system) | MNIST CNN, both frameworks | Keras/PyTorch parity on test accuracy |
 | **GenAI / 01-RNNs** | (foundation, no production system) | house price / circle classifier | autograd verified, model converges |
 | **GenAI / 02-Transformers** | (foundation, no production system) | "the cat sat on the mat" LM | every mechanism proved by measurement |
 | **GenAI / 03-Encoder-Decoder** | (foundation, no production system) | integer sequence reversal | cross-attention anti-diagonal verified |
@@ -471,11 +470,11 @@ When authoring or revising a chapter:
 
 ## 16 · Best-Practice Patterns from Gold Standards
 
-These patterns were extracted from `learning/genai/02-transformers/transformers.ipynb` and `learning/genai/04-llm/01-llm-finetuning-data-techniques.ipynb`, the two gold-standard chapters. They are not optional decoration — they are the techniques that make those chapters work.
+These patterns were extracted from `learning/genai/02-transformers/transformers-pytorch.ipynb` and `learning/genai/04-llm/01-llm-finetuning-data-techniques-pytorch.ipynb`, the two gold-standard chapters. They are not optional decoration — they are the techniques that make those chapters work.
 
 ### 16.1 The "Complaint Chain" Discovery Build
 
-*Source: RoPE animation in transformers.ipynb*
+*Source: RoPE animation in transformers-pytorch.ipynb*
 
 When building a visualization or implementation iteratively, make each intermediate step a published, runnable cell, and add an explicit complaint that forces the next step. The pattern:
 
@@ -495,7 +494,7 @@ This applies "failure first" to the pedagogical artifact itself — the diagram,
 
 ### 16.2 The "Inevitable Choice" Derivation
 
-*Source: softmax and √d_k sections in transformers.ipynb*
+*Source: softmax and √d_k sections in transformers-pytorch.ipynb*
 
 For every design decision (softmax, √d_k, residuals, multi-head split), instead of asserting the formula, make the choice feel forced. Two steps:
 
@@ -507,7 +506,7 @@ The formula should be the only remaining option after the reader has seen every 
 
 ### 16.3 Three-Tier Coverage Accounting
 
-*Source: closing sections in transformers.ipynb and 04-llm notebooks*
+*Source: closing sections in transformers-pytorch.ipynb and 04-llm notebooks*
 
 Every chapter must close with a three-tier accounting of every technique named anywhere in the notebook:
 
@@ -526,7 +525,7 @@ This section goes at the end of the chapter, before the final summary.
 
 ### 16.4 Code Walkthrough Post-Class Explanation
 
-*Source: transformers-keras.ipynb, 04-llm NB04–06*
+*Source: transformers-pytorch.ipynb, 04-llm NB04–06*
 
 After implementing any non-trivial class (MHA, TransformerBlock, gateway router, RAG retriever), add a markdown cell titled **Code Walkthrough: [ClassName]** that explains every non-obvious implementation choice in prose:
 
@@ -560,7 +559,7 @@ This prevents silent gaps: the reader always knows whether a technique was delib
 
 ### 16.6 Named Convention Equivalence Proof
 
-*Source: RoPE adjacent-pair vs. split-half in transformers.ipynb*
+*Source: RoPE adjacent-pair vs. split-half in transformers-pytorch.ipynb*
 
 When two conventions for the same operation exist in the literature and production code (e.g., adjacent-pair RoPE vs. split-half production convention), prove their equivalence numerically before stating they are identical:
 
@@ -577,7 +576,7 @@ This prevents practitioners from treating a code difference as a bug and avoids 
 
 ### 16.7 Closed-Loop Prediction Check
 
-*Source: 04-llm NB04–06, transformers.ipynb*
+*Source: 04-llm NB04–06, transformers-pytorch.ipynb*
 
 When `**Predict:**` is used, the resolution must be a **closed-loop check**, not just a reveal. A closed loop:
 
@@ -597,7 +596,7 @@ The closed loop is the difference between a `**Predict:**` that teaches and one 
 
 ### 16.8 Honest Result Branching
 
-*Source: DPO section, 04-llm NB01; zero_grad ablation, 00-pytorch-primer*
+*Source: DPO section, 04-llm NB01*
 
 Every experiment whose outcome could plausibly go either way must branch its print output on the actual recorded numbers, not on the assumed outcome:
 
@@ -668,7 +667,7 @@ Parameter-efficient techniques (partial freeze, LoRA, QLoRA) that hit the same a
 
 ## 18 · Primer and Bridge Chapter Conventions
 
-A **primer chapter** teaches prerequisite tooling for a track without yet having a production system to attach it to (e.g., `00-pytorch-primer`, `01-rnns`). A **bridge chapter** connects one architecture to the next in a conceptual arc (e.g., `03-encoder-decoder` bridges RNNs/attention to full LLMs).
+A **primer chapter** teaches prerequisite tooling for a track without yet having a production system to attach it to (e.g., `01-rnns`). A **bridge chapter** connects one architecture to the next in a conceptual arc (e.g., `03-encoder-decoder` bridges RNNs/attention to full LLMs).
 
 These chapters are exempt from the Grand Challenge requirement but must satisfy a narrower version:
 
@@ -705,5 +704,5 @@ The manual training loop — `zero_grad → forward → backward → step` — i
 unroll into time steps in `01-rnns/`. The `nn.Module` subclass pattern is the class
 `LSTMCell` will use. The `state_dict` save pattern is the checkpoint the RNN trainer will write.
 
-> **Next:** `01-rnns/PT-Part1-Intro.ipynb`
+> **Next:** `01-rnns/PT-Part1-Intro-pytorch.ipynb`
 ```

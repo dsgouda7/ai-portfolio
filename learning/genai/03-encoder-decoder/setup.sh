@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Creates a local virtual environment and installs everything needed to run
-# encoder-decoder.ipynb.
+# encoder-decoder-pytorch.ipynb.
 #
 # Creates a `.venv` next to this script (if it does not already exist),
 # installs the dependencies from requirements.txt into it, and registers a

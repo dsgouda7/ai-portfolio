@@ -1,8 +1,8 @@
 # Packages required to run the 05-llm-evaluation notebooks:
-#   01-llm-evaluation-metrics-and-benchmarks.ipynb
-#   02-llm-as-judge-safety-and-pipeline.ipynb
-#   03-hallucination-detection.ipynb
-#   04-calibration-and-confidence.ipynb
+#   01-llm-evaluation-metrics-and-benchmarks-pytorch.ipynb
+#   02-llm-as-judge-safety-and-pipeline-pytorch.ipynb
+#   03-hallucination-detection-pytorch.ipynb
+#   04-calibration-and-confidence-pytorch.ipynb
 
 # Core data / plotting
 numpy

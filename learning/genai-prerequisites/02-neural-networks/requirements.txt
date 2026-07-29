@@ -1,4 +1,7 @@
-torch>=2.0
+tensorflow>=2.15
 numpy>=1.24
 matplotlib>=3.6
 transformers>=4.35
+# tf-keras compat shim: TF>=2.16 ships Keras 3 by default, and HuggingFace
+# transformers' TF*  model classes (e.g. TFGPT2Model) are not yet Keras-3-native.
+tf-keras

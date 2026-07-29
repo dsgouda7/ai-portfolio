@@ -1,8 +1,8 @@
 # GenAI Notebooks — Authoring Guide
 
-> **Gold standard (mechanistic depth)**: [02-transformers/transformers.ipynb](02-transformers/transformers.ipynb)
-> **Gold standard (narrative framing)**: [04-llm/01-llm-finetuning-data-techniques.ipynb](04-llm/01-llm-finetuning-data-techniques.ipynb)
-> through [04-llm/03-llm-finetuning-comparison-and-decision.ipynb](04-llm/03-llm-finetuning-comparison-and-decision.ipynb)
+> **Gold standard (mechanistic depth)**: [02-transformers/transformers-pytorch.ipynb](02-transformers/transformers-pytorch.ipynb)
+> **Gold standard (narrative framing)**: [04-llm/01-llm-finetuning-data-techniques-pytorch.ipynb](04-llm/01-llm-finetuning-data-techniques-pytorch.ipynb)
+> through [04-llm/03-llm-finetuning-comparison-and-decision-pytorch.ipynb](04-llm/03-llm-finetuning-comparison-and-decision-pytorch.ipynb)
 > (a 3-part series -- data-based techniques, parameter-based techniques + QLoRA/quantization, and the
 > head-to-head comparison/decision)
 > Every notebook under `learning/genai/` should be brought to the same pedagogical flow,
@@ -216,8 +216,8 @@ a companion `plan.md` in its own folder, written against this checklist, that:
 2. Scores/flags it against Section 6's checklist.
 3. Lists concrete, ordered changes (add a  cell here, add a toy→real bridge there,
    replace an assertion with a proof, restructure into numbered Parts, etc.) needed to
-   reach parity with [02-transformers/transformers.ipynb](02-transformers/transformers.ipynb)
-   and, where the notebook has a real-world use case to motivate, the [04-llm/01-llm-finetuning-data-techniques.ipynb](04-llm/01-llm-finetuning-data-techniques.ipynb) series.
+   reach parity with [02-transformers/transformers-pytorch.ipynb](02-transformers/transformers-pytorch.ipynb)
+   and, where the notebook has a real-world use case to motivate, the [04-llm/01-llm-finetuning-data-techniques-pytorch.ipynb](04-llm/01-llm-finetuning-data-techniques-pytorch.ipynb) series.
 4. Is scoped to that notebook only — it should not require changes to other notebooks.
 
 ---
@@ -330,7 +330,7 @@ on a taxonomy recap after a narrative build-up undercuts the payoff.
 
 ---
 
-## 9 · Code Walkthrough Cells (from `04-llm/01-llm-finetuning-data-techniques.ipynb` iteration 2)
+## 9 · Code Walkthrough Cells (from `04-llm/01-llm-finetuning-data-techniques-pytorch.ipynb` iteration 2)
 
 Section 8 covers *why* the narrative framing works. This section documents four additional patterns
 extracted from the second major iteration of `01-llm-finetuning-data-techniques.ipynb`: code walkthrough markdown
@@ -737,15 +737,15 @@ catches it. Prefer **directional, distance-free language**:
 
 ---
 
-## 11 · Contrast Subsections — Introducing a Competing Technique Without Training It (from the DPO vs. PPO addition to `04-llm/01-llm-finetuning-data-techniques.ipynb`)
+## 11 · Contrast Subsections — Introducing a Competing Technique Without Training It (from the DPO vs. PPO addition to `04-llm/01-llm-finetuning-data-techniques-pytorch.ipynb`)
 
 Sometimes a notebook needs to explain **why technique A was chosen over competing technique B**,
 without actually building B to production quality (it would double the notebook's scope for a point
 that's fundamentally about mechanics, not about shipping a second checkpoint). The DPO vs. PPO
-subsection added to `04-llm/01-llm-finetuning-data-techniques.ipynb`'s preference-alignment section is the reference
+subsection added to `04-llm/01-llm-finetuning-data-techniques-pytorch.ipynb`'s preference-alignment section is the reference
 example: a from-scratch, illustrative PPO update sitting inside the DPO section purely to make the
 difference concrete. The same pattern was reused for the QLoRA vs. LoRA contrast added to
-`04-llm/02-llm-finetuning-parameter-techniques.ipynb`'s parameter-efficiency section -- illustrative
+`04-llm/02-llm-finetuning-parameter-techniques-pytorch.ipynb`'s parameter-efficiency section -- illustrative
 `BitsAndBytesConfig` code inside the LoRA-adjacent Concept 7, not a trained checkpoint.
 
 ### 11.1 Reuse the primary technique's helpers, state, and chart layout — don't re-derive from zero
@@ -898,8 +898,8 @@ re-checked the claim against what was actually built.
 
 Sections 1-12 describe how to author a single notebook. This section covers patterns that emerge
 when a topic spans **multiple notebooks** — specifically the save/reload arc and the cross-chapter
-bridge mechanics used consistently across the `04-llm/` series and adopted by `04-hybrid-search.ipynb`
-and `05-rag-evaluation.ipynb`. Apply these whenever a notebook depends on state (trained models,
+bridge mechanics used consistently across the `04-llm/` series and adopted by `04-hybrid-search-pytorch.ipynb`
+and `05-rag-evaluation-pytorch.ipynb`. Apply these whenever a notebook depends on state (trained models,
 checkpoints) from a prior notebook, or assumes knowledge from a prior chapter.
 
 ### 13.1 Prerequisite Bridge Cell — make the dependency visible, not assumed
@@ -986,8 +986,8 @@ notebook setups.
 
 ## 14 · Additional Pedagogical Patterns Found in the Gold-Standard Notebooks
 
-This section documents patterns observed consistently in `04-llm/04-hybrid-search.ipynb` through
-`06-llm-gateway.ipynb` and the `04-llm/01-03` series, which are not yet covered by Sections 1-13.
+This section documents patterns observed consistently in `04-llm/04-hybrid-search-pytorch.ipynb` through
+`06-llm-gateway-pytorch.ipynb` and the `04-llm/01-03` series, which are not yet covered by Sections 1-13.
 
 ### 14.1 Prediction-Check Print Block — close the predict-first loop explicitly
 

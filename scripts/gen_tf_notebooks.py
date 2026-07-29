@@ -89,18 +89,18 @@ def apply_code_substitutions(src: str, notebook_name: str) -> str:
         '', src)
     # Remove CrossEncoder import from sentence_transformers (keep the actual CrossEncoder usage)
     # We keep CrossEncoder as-is (uses PyTorch internally but is a utility)
-    
+
     # Replace torch imports (for eval notebooks)
     src = src.replace('import torch\n', 'import tensorflow as tf\n')
     src = src.replace("import torch", "import tensorflow as tf")
-    
+
     # Replace GPT2LMHeadModel with TFGPT2LMHeadModel (keep tokenizer)
     src = src.replace(
         'from transformers import GPT2LMHeadModel, GPT2TokenizerFast',
         'from transformers import TFGPT2LMHeadModel, GPT2TokenizerFast')
     # Replace bare GPT2LMHeadModel only where not already prefixed with TF
     src = re.sub(r'(?<!TF)GPT2LMHeadModel', 'TFGPT2LMHeadModel', src)
-    
+
     # ----------------------------------------------------------------
     # 3. Model loading and seeding
     # ----------------------------------------------------------------
@@ -114,10 +114,10 @@ def apply_code_substitutions(src: str, notebook_name: str) -> str:
         r'(?<!["\'])SentenceTransformer\(["\']all-MiniLM-L6-v2["\']\)',
         '_TFEmbedWrapper()',  # placeholder; handled by model-load cell rewrite
         src)
-    
+
     # semantic_model.encode(...) → _tf_encode(...)
     src = src.replace('semantic_model.encode(', '_tf_encode(')
-    
+
     # _embed_model = SentenceTransformer(...) for judge/attribution notebooks
     src = re.sub(
         r"_embed_model\s*=\s*SentenceTransformer\('[^']+'\)",
@@ -145,7 +145,7 @@ def apply_code_substitutions(src: str, notebook_name: str) -> str:
         r'from sentence_transformers import SentenceTransformer\n?',
         '',
         src)
-    
+
     # ----------------------------------------------------------------
     # 4. Torch-specific replacements in eval notebooks
     # ----------------------------------------------------------------
@@ -166,18 +166,18 @@ def apply_code_substitutions(src: str, notebook_name: str) -> str:
     src = re.sub(r'\bbase_model\.eval\(\)\n', '', src)
     # out = model(**enc, labels=...) → TF-style
     # The perplexity function gets rewritten at cell level
-    
+
     # torch.cuda.is_available → tf.config.list_physical_devices
     src = src.replace(
         'torch.cuda.is_available()',
         'len(tf.config.list_physical_devices("GPU")) > 0')
-    
+
     # np.random.seed first, then torch.manual_seed → tf.random.set_seed
     src = src.replace(
         'torch.manual_seed(42)',
         'tf.random.set_seed(42)')
     src = re.sub(r'torch\.manual_seed\((\d+)\)', r'tf.random.set_seed(\1)', src)
-    
+
     # ----------------------------------------------------------------
     # 5. Rewrite PyTorch perplexity / MCQ logic to TF
     # ----------------------------------------------------------------
@@ -217,12 +217,12 @@ def apply_code_substitutions(src: str, notebook_name: str) -> str:
         src)
     # Remove .loss.item() fallthrough
     src = re.sub(r'\.loss\.item\(\)', '.numpy()', src)
-    
+
     # ----------------------------------------------------------------
     # 7. sentence_transformers in HuggingFaceEmbeddings — keep as-is
     # ----------------------------------------------------------------
     # HuggingFaceEmbeddings is fine to keep (LangChain wraps ST)
-    
+
     return src
 
 
@@ -273,10 +273,10 @@ def transform_notebook(src_path: Path, dst_path: Path):
     notebook_name = src_path.stem
 
     new_cells = []
-    
+
     # Track whether we've inserted the TF embedding loader
     inserted_tf_loader = False
-    
+
     for cell in nb['cells']:
         new_cell = dict(cell)  # shallow copy
         new_cell['id'] = new_cell_id()  # fresh IDs

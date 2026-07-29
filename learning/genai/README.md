@@ -15,13 +15,20 @@ conversational AI, image captioning, translation, voice assistant) now live unde
 See [authoring-guide.md](authoring-guide.md) for notebook conventions, cell-tagging rules,
 and how to add new content to this track.
 
+> **Notebooks are PyTorch-only.** Every notebook in this track is built with PyTorch +
+> HuggingFace (LoRA/PEFT, DPO/TRL for fine-tuning) — the actual tools used in production.
+> Earlier revisions of this track also shipped parallel TF/Keras notebooks; those were
+> removed since testing and development here is PyTorch-based. Each notebook's code cells
+> that use a PyTorch API are annotated with a note on what the call does and its Keras
+> equivalent, so a Keras-background reader can still follow along without a separate
+> Keras notebook.
+
 ---
 
 ## Contents
 
 | # | Directory | Topic | What you build | What you can do when done | Prerequisites |
 |---|-----------|-------|----------------|--------------------------|---------------|
-| 0 | `00-pytorch-primer/` | Keras -> PyTorch primer | The same CNN MNIST classifier built cell-by-cell in both Keras and PyTorch | Translate Keras models/training loops to PyTorch; avoid the NHWC/NCHW, `zero_grad()`, and train/eval-mode gotchas | Basic Python, one prior Keras model (any) |
 | 1 | `01-rnns/` | Recurrent Neural Networks | Character-level RNN in PyTorch | Implement sequence models from scratch; explain vanishing gradients | Basic Python, NumPy |
 | 2 | `02-transformers/` | Transformer architecture | Scaled dot-product attention and full encoder stack from first principles | Read and modify transformer code; explain every component mathematically | `01-rnns/` |
 | 3 | `03-encoder-decoder/` | Encoder-Decoder architecture | Seq2seq model with cross-attention for translation | Build and train encoder-decoder models; tune beam search | `02-transformers/` |
@@ -32,7 +39,7 @@ and how to add new content to this track.
 
 ## Gold-standard notebook
 
-`02-transformers/transformers.ipynb` is the reference implementation for the entire track. It is the most heavily annotated notebook and
+`02-transformers/transformers-pytorch.ipynb` is the reference implementation for the entire track. It is the most heavily annotated notebook and
 demonstrates the authoring conventions all other notebooks should follow.
 
 ---
@@ -40,8 +47,5 @@ demonstrates the authoring conventions all other notebooks should follow.
 ## Learning path summary
 
 ```
-00-pytorch-primer -> 01-rnns -> 02-transformers -> 03-encoder-decoder -> 04-llm -> 05-llm-evaluation
+01-rnns -> 02-transformers -> 03-encoder-decoder -> 04-llm -> 05-llm-evaluation
 ```
-
-`00-pytorch-primer/` is optional -- skip it if you're already comfortable writing raw PyTorch
-training loops (as opposed to only having used Keras's `model.fit()`).

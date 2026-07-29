@@ -1,7 +1,7 @@
 # Packages required to run the 04-llm notebooks:
-#   01-llm-finetuning-data-techniques.ipynb, 02-llm-finetuning-parameter-techniques.ipynb,
-#   03-llm-finetuning-comparison-and-decision.ipynb, 04-hybrid-search.ipynb,
-#   05-rag-evaluation.ipynb, 06-llm-gateway.ipynb
+#   01-llm-finetuning-data-techniques-pytorch.ipynb, 02-llm-finetuning-parameter-techniques-pytorch.ipynb,
+#   03-llm-finetuning-comparison-and-decision-pytorch.ipynb, 04-hybrid-search-pytorch.ipynb,
+#   05-rag-evaluation-pytorch.ipynb, 06-llm-gateway-pytorch.ipynb
 
 # Core data / plotting
 numpy

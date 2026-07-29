@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
     Creates a local virtual environment and installs everything needed to run
-    transformers.ipynb.
+    transformers-pytorch.ipynb.
 
 .DESCRIPTION
     Creates a `.venv` next to this script (if it does not already exist),
