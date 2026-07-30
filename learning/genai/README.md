@@ -29,8 +29,9 @@ and how to add new content to this track.
 
 | # | Directory | Topic | What you build | What you can do when done | Prerequisites |
 |---|-----------|-------|----------------|--------------------------|---------------|
-| 1 | `01-rnns/` | Recurrent Neural Networks | Character-level RNN in PyTorch | Implement sequence models from scratch; explain vanishing gradients | Basic Python, NumPy |
-| 2 | `02-transformers/` | Transformer architecture | Scaled dot-product attention and full encoder stack from first principles | Read and modify transformer code; explain every component mathematically | `01-rnns/` |
+| 0 | `00-pytorch-fundamentals/` | Keras to PyTorch foundations | Antarctic Field Guide, a CC0 Palmer Penguins species classifier | Translate Keras training habits into explicit PyTorch tensor, model, autograd, and inference contracts | `genai-prerequisites/` |
+| 1 | `01-rnns/` | Recurrent Neural Networks | PyTorch next-token music model with LSTM state and autoregressive generation | Translate known RNN/LSTM concepts into PyTorch; explain the recurrent path that motivates attention | `00-pytorch-fundamentals/`, `genai-prerequisites/04-rnn-sequence-modeling/` |
+| 2 | `02-transformers/` | Transformer architecture | Scaled dot-product attention and full encoder stack from first principles | Read and modify transformer code; explain every component mathematically | `01-rnns/01-pytorch-rnn-bridge.ipynb` |
 | 3 | `03-encoder-decoder/` | Encoder-Decoder architecture | Seq2seq model with cross-attention for translation | Build and train encoder-decoder models; tune beam search | `02-transformers/` |
 | 4 | `04-llm/` | Applied LLM patterns + fine-tuning | Hybrid search pipeline, LLM gateway, RAG evaluation harness, LoRA/PEFT/DPO fine-tuning | Wire together retrieval + generation; evaluate answer quality quantitatively; fine-tune a causal LM on domain data | `03-encoder-decoder/` |
 | 5 | `05-llm-evaluation/` | LLM evaluation in depth | Automated metrics (BLEU/ROUGE/BERTScore), LLM-as-judge (G-Eval, pairwise), human evaluation, safety eval, hallucination detection (SelfCheckGPT, NLI, entity-gap), and model calibration (ECE, temperature scaling, selective prediction) | Measure any LLM's quality rigorously; detect hallucination at inference time; publish calibrated confidence scores; build a regression-aware eval pipeline | `04-llm/` |
@@ -39,7 +40,7 @@ and how to add new content to this track.
 
 ## Gold-standard notebook
 
-`02-transformers/transformers-pytorch.ipynb` is the reference implementation for the entire track. It is the most heavily annotated notebook and
+`02-transformers/transformers.ipynb` is the reference implementation for the entire track. It is the most heavily annotated notebook and
 demonstrates the authoring conventions all other notebooks should follow.
 
 ---
@@ -47,5 +48,5 @@ demonstrates the authoring conventions all other notebooks should follow.
 ## Learning path summary
 
 ```
-01-rnns -> 02-transformers -> 03-encoder-decoder -> 04-llm -> 05-llm-evaluation
+genai-prerequisites -> 00-pytorch-fundamentals -> 01-rnns -> 02-transformers -> 03-encoder-decoder -> 04-llm -> 05-llm-evaluation
 ```

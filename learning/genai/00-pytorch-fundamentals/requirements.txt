@@ -1,0 +1,8 @@
+# Keras-to-PyTorch Antarctic Field Guide lab
+torch
+numpy
+matplotlib
+seaborn
+palmerpenguins
+ipykernel
+nbconvert

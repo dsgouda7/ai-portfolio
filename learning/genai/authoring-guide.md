@@ -1,6 +1,6 @@
 # GenAI Notebooks — Authoring Guide
 
-> **Gold standard (mechanistic depth)**: [02-transformers/transformers-pytorch.ipynb](02-transformers/transformers-pytorch.ipynb)
+> **Gold standard (mechanistic depth)**: [02-transformers/transformers.ipynb](02-transformers/transformers.ipynb)
 > **Gold standard (narrative framing)**: [04-llm/01-llm-finetuning-data-techniques-pytorch.ipynb](04-llm/01-llm-finetuning-data-techniques-pytorch.ipynb)
 > through [04-llm/03-llm-finetuning-comparison-and-decision-pytorch.ipynb](04-llm/03-llm-finetuning-comparison-and-decision-pytorch.ipynb)
 > (a 3-part series -- data-based techniques, parameter-based techniques + QLoRA/quantization, and the
@@ -216,7 +216,7 @@ a companion `plan.md` in its own folder, written against this checklist, that:
 2. Scores/flags it against Section 6's checklist.
 3. Lists concrete, ordered changes (add a  cell here, add a toy→real bridge there,
    replace an assertion with a proof, restructure into numbered Parts, etc.) needed to
-   reach parity with [02-transformers/transformers-pytorch.ipynb](02-transformers/transformers-pytorch.ipynb)
+  reach parity with [02-transformers/transformers.ipynb](02-transformers/transformers.ipynb)
    and, where the notebook has a real-world use case to motivate, the [04-llm/01-llm-finetuning-data-techniques-pytorch.ipynb](04-llm/01-llm-finetuning-data-techniques-pytorch.ipynb) series.
 4. Is scoped to that notebook only — it should not require changes to other notebooks.
 

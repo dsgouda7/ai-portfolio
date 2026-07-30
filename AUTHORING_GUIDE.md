@@ -704,5 +704,5 @@ The manual training loop — `zero_grad → forward → backward → step` — i
 unroll into time steps in `01-rnns/`. The `nn.Module` subclass pattern is the class
 `LSTMCell` will use. The `state_dict` save pattern is the checkpoint the RNN trainer will write.
 
-> **Next:** `01-rnns/PT-Part1-Intro-pytorch.ipynb`
+> **Next:** `01-rnns/01-pytorch-rnn-bridge.ipynb`
 ```

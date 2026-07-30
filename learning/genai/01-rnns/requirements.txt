@@ -1,16 +1,5 @@
-# PT-Part1-Intro-pytorch.ipynb (PyTorch)
+# 01-pytorch-rnn-bridge.ipynb
 torch
-# mitdeeplearning removed: package's build fails in this environment (pkg_resources
-# missing in isolated build env) and it is unused in PT-Part1-Intro-pytorch.ipynb.
-
-# HuggingFace music generation extension (Part 2)
-transformers
-accelerate
-scipy
-soundfile
-music21
-
-# shared
 numpy
 matplotlib
 ipykernel

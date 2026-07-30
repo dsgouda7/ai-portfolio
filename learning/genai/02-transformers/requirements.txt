@@ -1,4 +1,4 @@
-# Packages required to run transformers-pytorch.ipynb
+# Packages required to run transformers.ipynb
 numpy
 matplotlib
 seaborn

@@ -116,5 +116,5 @@
   "files.readonlyExclude": {
     "**/*.ipynb": true
   },
-  "notebook.defaultKernel": "ai-ml-dev"
+  "notebook.defaultKernel": "genai-02-transformers"
 }
