@@ -134,6 +134,25 @@ summarise) should survive.
 - **Multi-panel figures** (`plt.subplots` or `plt.GridSpec`) for anything with a
   before/after or A/B/C comparison — never make the reader mentally diff two separate
   cells' output when they can be side by side.
+- **Hardware-capability graceful degradation.** The `HAS_PLOTLY` fallback above (degrade to
+  matplotlib when an optional *package* is missing) has a hardware-capability analogue seen
+  throughout `learning/ai-infrastructure/`: a benchmarking cell checks for a GPU and, when absent,
+  substitutes a different *measurement API* entirely (not just a different plot) — e.g.
+  `torch.cuda.max_memory_allocated()` vs. Python's `tracemalloc` for peak-memory profiling, or a
+  measured bandwidth number vs. a literature-reference number printed side by side. Apply the same
+  rule as the optional-dependency case: the notebook must still run and teach the same lesson
+  without the hardware, with the fallback path clearly labeled as reference/estimated data rather
+  than a real measurement.
+- **External trace-file export for profiler visualization.** When a cell produces an artifact meant
+  to be opened in an external tool rather than rendered inline (e.g. `torch.profiler`'s
+  `prof.export_chrome_trace(path)`), print the saved file's path and the external viewer to open it
+  in (`chrome://tracing`, `ui.perfetto.dev`) immediately after saving — this hands the reader off
+  cleanly to production-grade tooling the notebook can't replicate inline.
+- **Gantt-chart/timeline bars for scheduling or resource-utilization comparisons** (batch
+  scheduling, pipeline stages, GPU slot occupancy): one row per resource/lane, one colored segment
+  per unit of work, with idle/wasted time shown as a distinctly shaded (e.g. grey, hatched) segment
+  — rather than a line or bar chart of aggregate utilization percentages. This makes *where* idle
+  time occurs visible, not just how much exists.
 - **Deterministic seeding** (`tf.random.set_seed(N)` / `np.random.seed(N)`) immediately
   before any cell whose numbers are quoted in the surrounding markdown, so re-running
   the notebook reproduces the exact prose.
@@ -176,6 +195,14 @@ summarise) should survive.
 7. **A running "Summary" table that mirrors the intro table.** The notebook opens with a
    roadmap table and closes with the same table restated as a completed journey, plus a
    short list of quotable one-line insights (not restated headings).
+8. **Impossibility claims get a formal proof, paired with a brute-force empirical drill.** When a
+   notebook's claim is negative ("no linear classifier can solve XOR"), a numeric experiment alone
+   is unconvincing — a reader can always wonder if a different seed or a smarter search would have
+   found a working boundary. Pair a plain algebraic proof by contradiction (printed step-by-step,
+   not left to a footnote) with a companion "Your turn" cell that brute-force searches many random
+   parameterizations (e.g. 1000 random linear boundaries) and counts successes, letting the reader
+   empirically re-verify the impossibility claim and generalize it to related cases (e.g. swapping
+   in AND/OR/NAND labels, which ARE separable) without redoing the algebra by hand.
 
 ---
 
@@ -327,6 +354,21 @@ on a taxonomy recap after a narrative build-up undercuts the payoff.
       earlier with that number — no dangling forward references.
 - [ ] The notebook ends with a decision/recommendation scored against the opening scenario's stated
       needs, with any pure recap/summary content placed *before* that closing decision, not after it.
+
+### 8.9 Physical-System Framing — an alternative to business narrative framing for foundational math
+
+For chapters that build raw mathematical intuition before any ML content appears (vectors,
+derivatives, gradient descent, matrix multiplication, the chain rule, probability), an alternative
+to Section 8's business-scenario framing is to thread the whole notebook through a single
+**physical system with a true, independently-checkable ground truth** — not a fictional client, but
+real equations (e.g. projectile motion) where every printed number can be verified against physics
+itself, not just against the model's own computation. Each part still ends by naming the exact
+ML/DL operation the physical computation is identical to (e.g. "dot product = kick alignment... =
+the operation every `Dense` layer performs"), so the physical framing is a scaffold for the ML
+concept, not a distraction from it. This is a genuine choice, not a stopgap for a missing business
+scenario: physics gives the reader an intuition for *why* the operation exists in a way a synthetic
+business dataset cannot, and every number is falsifiable against real-world physics rather than only
+against the model's own output.
 
 ---
 
@@ -553,6 +595,19 @@ display(HTML(anim.to_jshtml(fps=6)))
       `to_jshtml(fps=N)`, with `plt.close(fig)` before `display(HTML(...))` and a print explaining
       the animation before it renders.
 
+### 9.6 Primitives-Primer Cell — teaching unfamiliar vocabulary *before* the code, not after
+
+Section 9.1 states a Code Walkthrough cell goes *after* the code cell (never before). One case
+deliberately breaks that rule: when a notebook introduces a new *language/API surface* (e.g. Triton's
+`tl.load`/`tl.program_id`/`tl.store`) rather than a new algorithm in a familiar language, the reader
+has no vocabulary to parse the code at all — a post-hoc walkthrough is too late. When a code cell
+uses primitives/API calls from an unfamiliar library or language (not just an unfamiliar algorithm),
+precede it with a short primer cell mapping each new primitive to a familiar equivalent (e.g. a
+CUDA/C++ analog), separated by `---` per primitive. This is the one case where explanation belongs
+*before* the code, because the reader cannot read the syntax at all without it — reserve Section
+9.1's after-the-fact walkthrough for cases where the syntax is already readable and only the
+*purpose* needs unpacking.
+
 ---
 
 ## 10 · Navigation, Progressive Disclosure, and Cross-Reference Hygiene (iteration 3)
@@ -734,6 +789,16 @@ catches it. Prefer **directional, distance-free language**:
 - [ ] No Markdown cell hardcodes a specific cell distance ("two cells below," "(next cell)") to
       something that isn't immediately adjacent; a repo-wide grep for that phrase pattern is run and
       every hit re-verified after any pass that inserts, splits, or reorders cells.
+
+### 10.9 Inline "skip-ahead" callouts for optional/tangential sections
+
+This is distinct from the static Table of Contents (10.1): it's a *contextual, in-the-moment* fork
+for a reader who has just realized a section doesn't match their goal. When a notebook contains a
+section that is tangential to its main scenario/goal (an appendix, a training-time technique inside
+a deployment-focused notebook, etc.), add a short Markdown callout immediately before it stating:
+what the section covers, why a reader pursuing the main goal can skip it, and exactly which section
+to jump to instead. Repeat the same disclaimer at the top of the tangential section itself, so a
+reader who scrolls past the callout still gets the context.
 
 ---
 
@@ -982,6 +1047,16 @@ notebook setups.
 - [ ] Any notebook using a proxy/stand-in dataset discloses this before the first code cell, names
       the structural property the proxy mirrors, and closes with a "swap the corpus" note.
 
+### 13.5 Forward-pointing bridge cells — the mirror image of the Prerequisite Bridge
+
+Section 13.1's Prerequisite Bridge is exclusively backward-looking (what a prior notebook built,
+and how this one uses it). A complementary pattern fits notebooks that feed *into* a later chapter
+rather than depending on one: a closing "Forward pointers" cell that explicitly maps this notebook's
+own toy mechanics onto specific structures a reader will meet in a *later* notebook (e.g. "this toy
+embedding lookup is the same operation as `layers.Embedding` in the transformers chapter"). Use this
+in prerequisite/foundational tracks where a notebook's job is to seed vocabulary and intuition that a
+specific downstream chapter will reuse by name.
+
 ---
 
 ## 14 · Additional Pedagogical Patterns Found in the Gold-Standard Notebooks
@@ -1170,3 +1245,61 @@ graph LR
       `display(HTML(...))`, and a print before the animation explaining what to look for.
 - [ ] System-level data-flow diagrams with ≤8 nodes use `mermaid` code blocks in Markdown cells
       instead of unstyled prose or external images; more complex diagrams use a PNG in `images/`.
+
+### 14.8 Tune-then-honestly-re-validate — a health check for hyperparameter sweeps
+
+When a notebook sweeps a hyperparameter to find a good value (e.g. a hybrid-search fusion weight
+`α`) on a small validation set, don't stop at reporting the winning value — immediately re-test that
+same chosen value against a *disjoint* set of held-out queries it was never tuned on, and honestly
+report whether it generalized. This is a health check for the sweep itself, distinct from Section
+8.4's "honest results" principle for training runs: it catches a value that only looked good because
+it was fit to the small validation set's quirks, and it models the exact workflow a practitioner
+should follow before shipping a swept hyperparameter.
+
+---
+
+## 15 · Framework-Migration and Cross-Framework API-Translation Notebooks
+
+Sections 1-14 assume a single implementation framework (mostly PyTorch). Several notebooks in
+`learning/genai-prerequisites/` and `learning/genai/00-pytorch-fundamentals/` instead exist
+specifically to translate a reader's existing knowledge of one framework (typically Keras/TensorFlow)
+into another (PyTorch), or vice versa. This section documents the patterns that recur across those
+notebooks, independently converged on by several of them.
+
+### 15.1 Keras-reference blocks — anchor every new PyTorch idiom to the Keras call it replaces
+
+Use a recurring block type: a `### Keras reference — <topic>` Markdown cell containing a short
+fenced Keras/TF snippet of an operation the reader already knows, immediately followed by 1-3
+sentences naming exactly what's identical vs. different, then a PyTorch code cell translating that
+same idea 1:1. Reinforce this at the notebook level with a roadmap table whose columns are
+"Keras idea you know | PyTorch translation | Project evidence" rather than a technique sequence.
+This is structurally distinct from Section 11 (contrasting two *competing techniques* for the same
+problem) and Section 13.1 (bridging *conceptual* knowledge from a prior chapter) — here the axis is
+*syntax/API migration between two frameworks for the identical operation*.
+
+### 15.2 State the framework choice and the divergence points up front
+
+When a notebook is itself written in a non-default framework relative to the rest of the track (e.g.
+a TensorFlow/Keras notebook inside a mostly-PyTorch series), its intro cell should include an explicit
+"Key API differences vs. PyTorch" mapping (`layers.SimpleRNN` ↔ `nn.RNN`, `tf.GradientTape` ↔
+`.backward()`, `embed.embeddings` vs. `embed.weight`, a `sample_weight` mask vs. `ignore_index=-100`,
+etc.), repeated at each point in the notebook where the two frameworks' idioms genuinely diverge, not
+just once in the intro.
+
+### 15.3 Dataset provenance/licensing disclosure for real (non-proxy) datasets
+
+Section 13.3 covers disclosing a *proxy/stand-in* dataset used in place of confidential real data.
+A lighter-weight, complementary case: when a notebook uses a real, public, non-confidential dataset,
+include an explicit "Source and rights" cell naming the dataset, its license (e.g. CC0), and where it
+came from — provenance/licensing disclosure, not confidentiality disclosure, but the same underlying
+principle of never letting a reader wonder where the data came from or whether it's safe to reuse.
+
+### 15.4 Checklist addendum — framework-migration notebooks
+
+- [ ] Every new PyTorch idiom introduced has an adjacent Keras-reference block showing the Keras
+      equivalent the reader already knows, not just a bare PyTorch code cell.
+- [ ] The notebook's roadmap table (if framework-migration is its primary purpose) is framed as
+      "Keras idea you know | PyTorch translation | Project evidence" rather than a technique list.
+- [ ] A notebook written in a non-default framework for its track states the key API divergences
+      from the track's default framework up front, and again at each point they matter.
+- [ ] Real (non-proxy) datasets used in a notebook have an explicit source/license disclosure cell.
