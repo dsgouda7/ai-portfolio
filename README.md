@@ -426,36 +426,6 @@ kill $(cat .jupyter.pid .mkdocs.pid 2>/dev/null)
 
 ---
 
-## Custom VS Code Agents (No Paid Subscription Required)
-
-This repository includes a suite of **8 local AI agents** designed for repository maintenance, validation, and documentation work. All agents run entirely locally in VS Code with GitHub Copilot — **no external APIs, no paid subscriptions, no authentication required**.
-
-### User-Invocable Agents
-
-| Agent | What it does | Invocation |
-|-------|------------|-----------|
-| **Content Auditor** | Audit `notes/` for broken links, orphaned notebooks, missing READMEs | `@Content Auditor audit all` |
-| **Explore** | Fast discovery of codebase structure and patterns | `@Explore find what I'm looking for (quick\|medium\|thorough)` |
-| **Notebook Supplement Guardian** | Validate GPU detection guards in MultimodalAI supplements | `@Notebook Supplement Guardian validate all` |
-| **ML Animation Auditor** | Audit ML chapters for animation opportunities and consistency | `@ML Animation Auditor audit 01-Regression` |
-
-### Internal Agents (Batch/Workflow)
-
-- **ML Animation Coordinator** — orchestrate animation rollout across chapters
-- **ML Animation Needle Builder** — build metric-movement animations
-- **ML Animation Doc Sync** — sync animation documentation
-- **Multimodal Animation Builder** — generate MultimodalAI flow animations
-
-### Quick Start
-
-1. Open **Copilot Chat** in VS Code (`Ctrl+Shift+I`)
-2. Type `@` to see available agents
-3. Type `@Content Auditor audit all` and press Enter
-
-→ **Full documentation**: [AGENTS.md](AGENTS.md)
-
----
-
 ## What This Repo Does NOT Cover
 
 This curriculum is intentionally scoped to **software engineers becoming AI/ML practitioners**. Topics below were consciously excluded — either because they belong in vendor-specific documentation, require a separate infrastructure specialisation, or are planned for a future version.
