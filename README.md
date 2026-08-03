@@ -30,7 +30,7 @@ See [projects/](projects/) for more details.
 
 ### Learning & Exploration
 - [playground/](playground/) - Exploratory notebooks (AI agents, feature engineering, Azure)
-- [learning/](learning/) - Deep-dive study tracks: GenAI architecture and Agentic AI system design
+- [learning/](learning/) - Deep-dive study tracks: GenAI architecture, hands-on Agentic AI, and Agentic AI system design
 - [exercises/](exercises/) - Practice problems matching notes/ structure
 
 ---
@@ -90,6 +90,10 @@ In-depth technical tracks: runnable notebooks and architecture reference docs.
 
 **GenAI — `learning/genai/`**
 Progressive study track covering sequence models (RNNs), the full Transformer architecture, encoder-decoder patterns, and applied LLMs — 5 chapters from PyTorch primer through production LLM patterns.
+
+**Agentic AI — `learning/agentic-ai/`**
+Ten executable, offline-first notebooks that build OrderFlow from typed tool contracts to bounded
+planning, durable workflows, governance, MCP, multi-agent coordination, and saga recovery.
 
 **Agentic AI System Design — `learning/agentic-ai-system-design/`**
 Staff/Principal-level interview reference track (Markdown, no notebooks): platform architecture end-to-end, agent lifecycle & runtime, tool/MCP/skill registry, model gateway, state & memory, loop detection & termination, evaluation frameworks, observability, multi-agent patterns, recoverability & Saga, governance & guardrails, production scale, and a Semantic Kernel vs LangGraph comparison.

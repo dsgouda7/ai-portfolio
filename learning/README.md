@@ -19,6 +19,18 @@ Authoring standard: [genai/authoring-guide.md](genai/authoring-guide.md)
 
 ---
 
+## Agentic AI — `agentic-ai/`
+
+A hands-on, ten-notebook track that builds **OrderFlow**, an AI-native purchase-order system, from
+typed tool calls through bounded planning, memory, durable LangGraph workflows, agentic RAG,
+evaluation, governance, MCP interoperability, multi-agent coordination, and saga recovery.
+
+The default path is deterministic, CPU-only, and offline. Start with
+[agentic-ai/README.md](agentic-ai/README.md) for setup, fixtures, chapter order, measured unlocks,
+and the rich visual-asset plan.
+
+---
+
 ## Agentic AI System Design — `agentic-ai-system-design/`
 
 A system-design reference track (plain Markdown, no notebooks) answering the Staff/Principal-level
