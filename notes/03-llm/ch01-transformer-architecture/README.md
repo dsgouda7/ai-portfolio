@@ -4,7 +4,7 @@
 
 The foundation for all modern LLMs — from RNNs to transformers, attention mechanics (Q/K/V), positional encoding, and the three architectural families (encoder-only, decoder-only, encoder-decoder).
 
-> **Code companion:** [`learning/genai/transformers/transformers.ipynb`](../../../learning/genai/transformers/transformers.ipynb) builds the complete transformer from scratch in TensorFlow/Keras using one running example ("the cat sat on the mat") from raw 3-D embeddings to distilgpt2 internals. The chapter prose explains *why*; the notebook demonstrates *how*.
+> **Code companion:** [`learning/genai/02-transformers/01-attention-and-transformer-blocks.ipynb`](../../../learning/genai/02-transformers/01-attention-and-transformer-blocks.ipynb) builds the complete transformer from scratch in TensorFlow/Keras using one running example ("the cat sat on the mat") from raw 3-D embeddings to distilgpt2 internals. The chapter prose explains *why*; the notebook demonstrates *how*.
 
 ## Contents
 
@@ -24,7 +24,7 @@ The foundation for all modern LLMs — from RNNs to transformers, attention mech
 
 ## From-Scratch Code Companion
 
-[`learning/genai/transformers/transformers.ipynb`](../../../learning/genai/transformers/transformers.ipynb) is the canonical from-scratch notebook for this chapter. It builds every component from first principles in TensorFlow/Keras using a single running example throughout.
+[`learning/genai/02-transformers/01-attention-and-transformer-blocks.ipynb`](../../../learning/genai/02-transformers/01-attention-and-transformer-blocks.ipynb) is the canonical from-scratch notebook for this chapter. It builds every component from first principles in TensorFlow/Keras using a single running example throughout.
 
 **The notebook's 12 parts map to this chapter's concepts:**
 
@@ -78,7 +78,7 @@ The foundation for all modern LLMs — from RNNs to transformers, attention mech
 
 ```bash
 # Option A: From-scratch intuition notebook (TF/Keras, "the cat sat on the mat" running example)
-code learning/genai/transformers/transformers.ipynb
+code learning/genai/02-transformers/01-attention-and-transformer-blocks.ipynb
 
 # Option B: Pretrained-model exercise notebook (PyTorch + HuggingFace)
 code notes/03-llm/ch01-transformer-architecture/notebook-exercise.ipynb

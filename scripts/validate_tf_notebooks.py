@@ -1,13 +1,10 @@
-"""Validate the 7 generated TF notebooks."""
+"""Validate the legacy generated TF evaluation notebooks."""
 import json, ast
 from pathlib import Path
 
 ROOT = Path(r"c:\r\ai-portfolio\learning\genai")
 
 paths = [
-    ROOT / "04-llm" / "04-hybrid-search.ipynb",
-    ROOT / "04-llm" / "05-rag-evaluation.ipynb",
-    ROOT / "04-llm" / "06-llm-gateway.ipynb",
     ROOT / "05-llm-evaluation" / "01-llm-evaluation-metrics-and-benchmarks.ipynb",
     ROOT / "05-llm-evaluation" / "02-llm-as-judge-safety-and-pipeline.ipynb",
     ROOT / "05-llm-evaluation" / "03-hallucination-detection.ipynb",

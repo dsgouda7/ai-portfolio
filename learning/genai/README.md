@@ -1,11 +1,10 @@
 # GenAI Learning Arc
 
 This track builds sequence-modeling and generative-AI fundamentals from first principles.
-Each chapter is a concept-building notebook (or set of notebooks) with its own
-`requirements.txt` and `setup.ps1` / `setup.sh` that creates a local `.venv` and
-registers a Jupyter kernel for that chapter's notebooks. Run the setup script once per
-chapter before opening its notebook(s); the kernelspec is already wired to the
-matching kernel name, so VS Code should pick it automatically.
+Each chapter is a concept-building notebook or notebook series. Foundation chapters keep
+their own `requirements.txt` and setup scripts. The applied LLM chapters share the
+`_llm-shared/` environment so fine-tuning, RAG, and gateway notebooks can live in clear
+topic directories without duplicating one broad dependency stack.
 
 Applied mini-projects that build on these foundations (conversation analysis,
 conversational AI, image captioning, translation, voice assistant) now live under
@@ -31,22 +30,28 @@ and how to add new content to this track.
 |---|-----------|-------|----------------|--------------------------|---------------|
 | 0 | `00-pytorch-fundamentals/` | Keras to PyTorch foundations | Antarctic Field Guide, a CC0 Palmer Penguins species classifier | Translate Keras training habits into explicit PyTorch tensor, model, autograd, and inference contracts | `genai-prerequisites/` |
 | 1 | `01-rnns/` | Recurrent Neural Networks | PyTorch next-token music model with LSTM state and autoregressive generation | Translate known RNN/LSTM concepts into PyTorch; explain the recurrent path that motivates attention | `00-pytorch-fundamentals/`, `genai-prerequisites/04-rnn-sequence-modeling/` |
-| 2 | `02-transformers/` | Transformer architecture | Scaled dot-product attention and full encoder stack from first principles | Read and modify transformer code; explain every component mathematically | `01-rnns/01-pytorch-rnn-bridge.ipynb` |
-| 3 | `03-encoder-decoder/` | Encoder-Decoder architecture | Seq2seq model with cross-attention for translation | Build and train encoder-decoder models; tune beam search | `02-transformers/` |
-| 4 | `04-llm/` | Applied LLM patterns + fine-tuning | Hybrid search pipeline, LLM gateway, RAG evaluation harness, LoRA/PEFT/DPO fine-tuning | Wire together retrieval + generation; evaluate answer quality quantitatively; fine-tune a causal LM on domain data | `03-encoder-decoder/` |
-| 5 | `05-llm-evaluation/` | LLM evaluation in depth | Automated metrics (BLEU/ROUGE/BERTScore), LLM-as-judge (G-Eval, pairwise), human evaluation, safety eval, hallucination detection (SelfCheckGPT, NLI, entity-gap), and model calibration (ECE, temperature scaling, selective prediction) | Measure any LLM's quality rigorously; detect hallucination at inference time; publish calibrated confidence scores; build a regression-aware eval pipeline | `04-llm/` |
+| 2 | `02-transformers/` | Transformer foundations in three parts | Attention and reusable blocks; decoder-only LM training; encoder-decoder cross-attention | Explain and modify each architecture without carrying one 150-cell notebook in working memory | `01-rnns/01-pytorch-rnn-bridge.ipynb` |
+| 4 | `04-llm-finetuning/` | LLM adaptation | CPT, SFT, DPO, full tuning, freezing, LoRA, QLoRA, and evidence-based model selection | Choose what behavior to teach, where to store the update, and what evidence supports release | `02-transformers/` |
+| 5 | `05-rag/` | Retrieval-augmented generation | Hybrid retrieval, reranking, boundary checks, and a RAG evaluation harness | Retrieve current authorized evidence and diagnose retriever versus generator failure | `04-llm-finetuning/` |
+| 5E | `05-llm-evaluation/` | LLM evaluation in depth | Automated metrics, LLM-as-judge, human evaluation, safety, hallucination detection, and calibration | Build a regression-aware evaluation pipeline and reason about evaluator uncertainty | `04-llm-finetuning/`, `05-rag/` |
+| 6 | `06-llm-gateway/` | LLM request control plane | Provider normalization, routing, rate limiting, fallback, caching, and cost controls | Operate multiple model providers behind one observable application contract | `04-llm-finetuning/`, `05-rag/` |
 
 ---
 
-## Gold-standard notebook
+## Transformer Foundations Route
 
-`02-transformers/transformers.ipynb` is the reference implementation for the entire track. It is the most heavily annotated notebook and
-demonstrates the authoring conventions all other notebooks should follow.
+1. [`01-attention-and-transformer-blocks.ipynb`](02-transformers/01-attention-and-transformer-blocks.ipynb)
+2. [`02-decoder-only-language-model.ipynb`](02-transformers/02-decoder-only-language-model.ipynb)
+3. [`03-encoder-decoder-and-cross-attention.ipynb`](02-transformers/03-encoder-decoder-and-cross-attention.ipynb)
+
+The first notebook remains the mechanistic gold standard. The three notebooks preserve the
+original running example and complete content while making each architectural decision easier to
+learn and revisit.
 
 ---
 
 ## Learning path summary
 
 ```
-genai-prerequisites -> 00-pytorch-fundamentals -> 01-rnns -> 02-transformers -> 03-encoder-decoder -> 04-llm -> 05-llm-evaluation
+genai-prerequisites -> 00-pytorch-fundamentals -> 01-rnns -> 02-transformers -> 04-llm-finetuning -> 05-rag -> 05-llm-evaluation -> 06-llm-gateway
 ```

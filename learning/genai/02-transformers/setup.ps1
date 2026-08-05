@@ -1,13 +1,13 @@
 <#
 .SYNOPSIS
     Creates a local virtual environment and installs everything needed to run
-    transformers.ipynb.
+    the three Transformer Foundations notebooks.
 
 .DESCRIPTION
     Creates a `.venv` next to this script (if it does not already exist),
     installs the dependencies from requirements.txt into it, and registers a
-    Jupyter kernel named "transformers" pointing at that venv. The notebook's
-    kernelspec is already set to this kernel, so it is picked up automatically.
+    Jupyter kernel named "transformers" pointing at that venv. The notebooks'
+    kernelspecs are already set to this kernel, so it is picked up automatically.
 
     Pass -SkipKernel to install into the venv without registering the kernel.
 
@@ -61,5 +61,5 @@ if (-not $SkipKernel) {
 }
 
 Write-Host "`nSetup complete." -ForegroundColor Green
-Write-Host "Open transformers.ipynb and pick the 'Python (transformers .venv)' kernel"
+Write-Host "Open any notebook in 02-transformers and pick the 'Python (transformers .venv)' kernel"
 Write-Host "(it should be selected automatically). The venv lives at: $VenvDir"

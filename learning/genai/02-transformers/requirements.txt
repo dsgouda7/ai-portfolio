@@ -1,10 +1,11 @@
-# Packages required to run transformers.ipynb
+# Packages required to run the three Transformer Foundations notebooks
 numpy
 matplotlib
 seaborn
 plotly
 torch
 transformers
+sentencepiece
 ipython
 ipykernel
 nbconvert

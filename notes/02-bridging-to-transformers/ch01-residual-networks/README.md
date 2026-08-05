@@ -629,7 +629,7 @@ The skip connection's value is clearest when you actually *run* the comparison. 
 
 **Exercise 2 — Break the highway intentionally.** In the `TransformerBlock` code in the transformers notebook, remove the `x + mha_out` residual and replace it with `mha_out` alone. Re-run the 24-layer gradient race cell. Does training still converge? Why does the same failure mode appear here that appeared in plain CNNs?
 
-**Exercise 3 — The transformer bridge.** Open `learning/genai/transformers/transformers.ipynb` cell that shows the 2-block forward pass (`block1(x0)`, `block2(x1)`). Remove one residual connection (change `x = x + mha_out` → `x = mha_out`). Re-run the representation-norm bar chart. What happens to the norm growth pattern, and why does that predict training instability?
+**Exercise 3 — The transformer bridge.** Open `learning/genai/02-transformers/01-attention-and-transformer-blocks.ipynb` cell that shows the 2-block forward pass (`block1(x0)`, `block2(x1)`). Remove one residual connection (change `x = x + mha_out` → `x = mha_out`). Re-run the representation-norm bar chart. What happens to the norm growth pattern, and why does that predict training instability?
 
 > **Predict before each run, then check.** The goal isn't to finish the exercises — it's to commit to a prediction first. Being wrong is more educational than being right.
 

@@ -1,0 +1,13 @@
+# Local virtual environment created by setup.ps1 / setup.sh
+.venv/
+
+# Generated training corpus (regenerate via content/README.md instructions)
+# and fine-tuned checkpoints produced while running the notebook.
+content/*.txt
+checkpoints/
+*.safetensors
+*.bin
+
+# Preserve the committed teaching checkpoints moved with this chapter.
+!checkpoints/
+!checkpoints/**

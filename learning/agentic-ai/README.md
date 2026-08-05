@@ -6,7 +6,7 @@ The default path is deterministic, CPU-only, and offline. It uses committed fixt
 
 ## Prerequisites
 
-1. [GenAI LLM chapters](../genai/04-llm/) for generation, fine-tuning, retrieval, and evaluation foundations.
+1. GenAI foundations: [Transformer architecture](../genai/02-transformers/), [LLM fine-tuning](../genai/04-llm-finetuning/), [RAG](../genai/05-rag/), and [LLM evaluation](../genai/05-llm-evaluation/).
 2. Python 3.12.
 3. Basic familiarity with typed Python functions and JSON.
 

@@ -5,8 +5,8 @@
 > Those documents remain as historical reference; this document is the single source of truth going forward.
 >
 > **Gold standards:**
-> - Mechanistic depth — [`learning/genai/02-transformers/transformers-pytorch.ipynb`](learning/genai/02-transformers/transformers-pytorch.ipynb)
-> - Narrative/business framing — [`learning/genai/04-llm/01-llm-finetuning-data-techniques-pytorch.ipynb`](learning/genai/04-llm/01-llm-finetuning-data-techniques-pytorch.ipynb)
+> - Mechanistic depth — [`learning/genai/02-transformers/01-attention-and-transformer-blocks.ipynb`](learning/genai/02-transformers/01-attention-and-transformer-blocks.ipynb)
+> - Narrative/business framing — [`learning/genai/04-llm-finetuning/01-llm-finetuning-data-techniques.ipynb`](learning/genai/04-llm-finetuning/01-llm-finetuning-data-techniques.ipynb)
 > - Notes chapter — [`notes/03-ai/ch01-transformer-architecture/transformer-architecture.md`](notes/03-ai/ch01-transformer-architecture/transformer-architecture.md)
 
 ---
@@ -52,8 +52,9 @@ Every track is anchored to one production system with real constraints, a named 
 | **InterviewGuides** | Interview-Ready Engineer | Technical interview prep | Land senior AI/ML role |
 | **GenAI / 01-RNNs** | (foundation, no production system) | house price / circle classifier | autograd verified, model converges |
 | **GenAI / 02-Transformers** | (foundation, no production system) | "the cat sat on the mat" LM | every mechanism proved by measurement |
-| **GenAI / 03-Encoder-Decoder** | (foundation, no production system) | integer sequence reversal | cross-attention anti-diagonal verified |
-| **GenAI / 04-LLM** | Riverside House | GPT-2 medium (355M) fine-tuning | held-out perplexity lower than base; hybrid search Recall@1 > BM25 alone |
+| **GenAI / 02-Transformers Part 3** | (foundation, no production system) | integer sequence reversal | cross-attention anti-diagonal verified |
+| **GenAI / 04-LLM-Fine-Tuning** | Riverside House | hardware-selected SmolLM2 adaptation | objective-aligned held-out evidence |
+| **GenAI / 05-RAG** | Riverside House | authorized hybrid retrieval + grounded answers | retrieval and answer failures diagnosed separately |
 
 **What the grand challenge does:** it converts "learn about pagination" into "the API is silently truncating your training data and your model doesn't know it." The failure the reader just witnessed is real, measured, and belongs to a system they have been following since chapter one.
 
@@ -470,11 +471,11 @@ When authoring or revising a chapter:
 
 ## 16 · Best-Practice Patterns from Gold Standards
 
-These patterns were extracted from `learning/genai/02-transformers/transformers-pytorch.ipynb` and `learning/genai/04-llm/01-llm-finetuning-data-techniques-pytorch.ipynb`, the two gold-standard chapters. They are not optional decoration — they are the techniques that make those chapters work.
+These patterns were extracted from `learning/genai/02-transformers/01-attention-and-transformer-blocks.ipynb` and `learning/genai/04-llm-finetuning/01-llm-finetuning-data-techniques.ipynb`, the two gold-standard chapters. They are not optional decoration — they are the techniques that make those chapters work.
 
 ### 16.1 The "Complaint Chain" Discovery Build
 
-*Source: RoPE animation in transformers-pytorch.ipynb*
+*Source: RoPE animation in 01-attention-and-transformer-blocks.ipynb*
 
 When building a visualization or implementation iteratively, make each intermediate step a published, runnable cell, and add an explicit complaint that forces the next step. The pattern:
 
@@ -494,7 +495,7 @@ This applies "failure first" to the pedagogical artifact itself — the diagram,
 
 ### 16.2 The "Inevitable Choice" Derivation
 
-*Source: softmax and √d_k sections in transformers-pytorch.ipynb*
+*Source: softmax and √d_k sections in 01-attention-and-transformer-blocks.ipynb*
 
 For every design decision (softmax, √d_k, residuals, multi-head split), instead of asserting the formula, make the choice feel forced. Two steps:
 
@@ -506,7 +507,7 @@ The formula should be the only remaining option after the reader has seen every 
 
 ### 16.3 Three-Tier Coverage Accounting
 
-*Source: closing sections in transformers-pytorch.ipynb and 04-llm notebooks*
+*Source: closing sections in the Transformer Foundations and applied GenAI notebooks*
 
 Every chapter must close with a three-tier accounting of every technique named anywhere in the notebook:
 
@@ -525,7 +526,7 @@ This section goes at the end of the chapter, before the final summary.
 
 ### 16.4 Code Walkthrough Post-Class Explanation
 
-*Source: transformers-pytorch.ipynb, 04-llm NB04–06*
+*Source: Transformer Foundations Part 1, 05-rag, and 06-llm-gateway*
 
 After implementing any non-trivial class (MHA, TransformerBlock, gateway router, RAG retriever), add a markdown cell titled **Code Walkthrough: [ClassName]** that explains every non-obvious implementation choice in prose:
 
@@ -541,7 +542,7 @@ This is not a docstring. It is a teaching narrative that explains the *why* of e
 
 ### 16.5 Pre-Announcement Topic-Space Table
 
-*Source: 04-llm NB04–06*
+*Source: 05-rag and 06-llm-gateway*
 
 Before writing a single line of code, every chapter that covers a topic area with well-defined sub-topics should open with a topic-space table categorising every relevant sub-topic as **Built / Explained / Named only**, with one-line reasons for each omission:
 
@@ -559,7 +560,7 @@ This prevents silent gaps: the reader always knows whether a technique was delib
 
 ### 16.6 Named Convention Equivalence Proof
 
-*Source: RoPE adjacent-pair vs. split-half in transformers-pytorch.ipynb*
+*Source: RoPE adjacent-pair vs. split-half in 01-attention-and-transformer-blocks.ipynb*
 
 When two conventions for the same operation exist in the literature and production code (e.g., adjacent-pair RoPE vs. split-half production convention), prove their equivalence numerically before stating they are identical:
 
@@ -576,7 +577,7 @@ This prevents practitioners from treating a code difference as a bug and avoids 
 
 ### 16.7 Closed-Loop Prediction Check
 
-*Source: 04-llm NB04–06, transformers-pytorch.ipynb*
+*Source: 05-rag, 06-llm-gateway, and Transformer Foundations Part 1*
 
 When `**Predict:**` is used, the resolution must be a **closed-loop check**, not just a reveal. A closed loop:
 
@@ -596,7 +597,7 @@ The closed loop is the difference between a `**Predict:**` that teaches and one 
 
 ### 16.8 Honest Result Branching
 
-*Source: DPO section, 04-llm NB01*
+*Source: DPO section, 04-llm-finetuning Part 1*
 
 Every experiment whose outcome could plausibly go either way must branch its print output on the actual recorded numbers, not on the assumed outcome:
 
@@ -614,7 +615,7 @@ The else branch is not an apology for a failed demo. It is a specific, named les
 
 ## 17 · Multi-Notebook Arc Conventions
 
-When a track is delivered as a sequence of notebooks (e.g., the 04-llm track: data techniques → parameter techniques → comparison → hybrid search → evaluation → gateway):
+When a learning arc is delivered as a sequence of notebook chapters (e.g., fine-tuning → RAG → evaluation → gateway):
 
 ### 17.1 Inter-Notebook Contract
 

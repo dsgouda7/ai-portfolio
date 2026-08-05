@@ -11,12 +11,6 @@ ROOT = Path(r"c:\r\ai-portfolio\learning\genai")
 # Source → destination mapping
 # ---------------------------------------------------------------------------
 NOTEBOOKS = [
-    (ROOT / "04-llm" / "04-hybrid-search-pytorch.ipynb",
-     ROOT / "04-llm" / "04-hybrid-search.ipynb"),
-    (ROOT / "04-llm" / "05-rag-evaluation-pytorch.ipynb",
-     ROOT / "04-llm" / "05-rag-evaluation.ipynb"),
-    (ROOT / "04-llm" / "06-llm-gateway-pytorch.ipynb",
-     ROOT / "04-llm" / "06-llm-gateway.ipynb"),
     (ROOT / "05-llm-evaluation" / "01-llm-evaluation-metrics-and-benchmarks-pytorch.ipynb",
      ROOT / "05-llm-evaluation" / "01-llm-evaluation-metrics-and-benchmarks.ipynb"),
     (ROOT / "05-llm-evaluation" / "02-llm-as-judge-safety-and-pipeline-pytorch.ipynb",
