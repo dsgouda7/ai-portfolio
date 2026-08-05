@@ -17,8 +17,8 @@ Her daughter Margot inherits her role, transforming Eleanor's desperate improvis
 - **Title**: The Hollow Beneath
 - **Genre**: Horror/Gothic, Cosmic Horror, Psychological Horror
 - **Chapters**: 28
-- **Approximate Word Count**: 90,000 words
-- **Approximate Size**: 439 KB (plain text)
+- **Measured Word Count**: approximately 70,000 words
+- **Measured Size**: approximately 440 KiB (plain text)
 - **File Pattern**: `chapter-001.txt` through `chapter-028.txt`
 
 ## Content Details
@@ -57,10 +57,7 @@ This novel was created as plain-text training corpus for machine learning applic
 
 ## File Organization
 
-All chapter files are located in:
-```
-c:\repos\ai-portfolio\learning\genai\04-llm-finetuning\content\the-hollow-beneath\
-```
+All chapter files are located beside this README.
 
 Files are named sequentially:
 - `chapter-001.txt`
@@ -79,7 +76,7 @@ This corpus is suitable for:
 - Long-form coherence training
 - Character development modeling
 
-The plain-text format and substantial length (90,000 words) provide meaningful training data without overwhelming context windows.
+The plain-text format and substantial length (approximately 70,000 words) provide meaningful training data without overwhelming context windows.
 
 ## Technical Notes
 

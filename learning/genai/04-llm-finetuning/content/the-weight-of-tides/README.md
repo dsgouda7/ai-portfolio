@@ -45,10 +45,9 @@ The novel spans 20+ years, following three generations of the Merritt family as 
 ## Corpus Statistics
 
 **Total Chapters:** 28
-**Approximate Word Count:** 95,000 words
-**Approximate Character Count:** 490,000 characters
-**Approximate File Size:** 465 KB (plain text)
-**Average Chapter Length:** 3,400 words
+**Measured Word Count:** approximately 74,900 words
+**Measured File Size:** approximately 467 KiB (plain text)
+**Average Chapter Length:** approximately 2,700 words
 
 **Chapter Range:** 2,500 - 4,500 words per chapter (as specified)
 
@@ -60,41 +59,24 @@ All chapters saved as individual plain text files:
 chapter-001.txt through chapter-028.txt
 ```
 
-**File Path Pattern:**
-```
-c:\repos\ai-portfolio\learning\genai\04-llm-finetuning\content\the-weight-of-tides\chapter-NNN.txt
-```
-
-Where `NNN` = zero-padded 3-digit chapter number (001, 002, ..., 020)
+The files sit beside this README. `NNN` is a zero-padded chapter number from 001 through 028.
 
 ---
 
-## Chapter Breakdown
+## Chapter Inventory
 
-| Chapter | Title | Word Count (approx) | Key Events |
-|---------|-------|--------------------|-----------|
-| 01 | Homecoming | 3,200 | Claire returns, discovers father's research |
-| 02 | The Blue Folder | 3,400 | First dive, historical documentation |
-| 03 | Town Meeting | 3,600 | Council confrontation, public commitment |
-| 04 | The Other Papers | 3,500 | Family secrets, developer threats revealed |
-| 05 | First Dive | 3,800 | Initial footage of underwater structures |
-| 06 | Community Response | 3,700 | Blog launch, growing attention |
-| 07 | Second Dive | 3,900 | Better documentation, Navy involvement |
-| 08 | Academic Firestorm | 4,000 | Publication, Dr. Sharma's revelations |
-| 09 | The Physicist's Story | 3,800 | Government coverup exposed |
-| 10 | Thirty Days Remaining | 3,600 | Countdown intensifies, stakes clarified |
-| 11 | Congressional Testimony | 3,500 | Washington hearings, political maneuvering |
-| 12 | First Contact | 4,200 | Claire meets Observer, enters deep city |
-| 13 | Seven Days | 3,900 | Final preparations for vote |
-| 14 | Vote Day | 4,000 | Town decides, negotiations begin |
-| 15 | Negotiations | 3,700 | Treaty framework established |
-| 16 | Six Months Later | 3,800 | Institute built, Chinese crisis |
-| 17 | One Year Anniversary | 4,100 | Statue unveiling, Deep Historians |
-| 18 | Maya's Choice | 3,900 | Biological transformation decision |
-| 19 | Maya Returns | 4,000 | Amphibious program, Merritt community |
-| 20 | Epilogue - Twenty Years After | 3,800 | Mature coexistence, generational continuity |
+Chapters 1-20 carry the original homecoming, evidence, first-contact, negotiation, and long-term coexistence arc. Eight later files extend the complete corpus:
 
-**Total:** ~72,000 words across 20 chapters
+| Chapter | Title |
+| ---: | --- |
+| 21 | Tidal Grammar |
+| 22 | The Institute's Work |
+| 23 | Observer's Question |
+| 24 | Legal Personhood |
+| 25 | What the Ocean Remembers |
+| 26 | Claire's Last Dive |
+| 27 | The Merritt Method |
+| 28 | Tidebound |
 
 ---
 
@@ -137,7 +119,7 @@ Where `NNN` = zero-padded 3-digit chapter number (001, 002, ..., 020)
 4. **Character Depth**: Psychologically complex characters with realistic motivations
 5. **Dialogue Variety**: Academic, political, familial, cross-species communication
 6. **Technical Accuracy**: Marine biology, oceanography, environmental science accurately portrayed
-7. **Long-Form Coherence**: 72,000 words maintaining consistent voice, continuity, character development
+7. **Long-Form Coherence**: approximately 74,900 words maintaining consistent voice, continuity, and character development
 8. **Emotional Range**: From grief to wonder, fear to determination, isolation to community
 9. **Structural Variety**: Uses flashbacks, multiple timelines, epistolary elements (letters, logs)
 10. **Contemporary Relevance**: Addresses climate change, economic anxiety, government transparency, first contact
@@ -214,8 +196,8 @@ The ferry cut through fog so thick Claire could taste salt on her tongue. She st
 
 ### Generation Process
 - Prompt-driven chapter-by-chapter generation
-- Consistent character tracking across 20 chapters
-- Maintaining narrative continuity over 72,000 words
+- Consistent character tracking across 28 chapters
+- Maintaining narrative continuity over approximately 74,900 words
 - Balancing plot advancement with character development
 - Iterative refinement of themes and arcs
 
@@ -250,11 +232,11 @@ For questions about this corpus or to report issues:
 
 **Title:** The Weight of Tides
 **Chapters:** 28
-**Words:** ~95,000
-**File Size:** ~465 KB
+**Words:** ~74,900
+**File Size:** ~467 KiB
 **Genre:** Literary/Contemporary/Speculative Fiction
 **File Pattern:** `chapter-NNN.txt` (NNN = 001-028)
-**Location:** `c:\repos\ai-portfolio\learning\genai\04-llm-finetuning\content\the-weight-of-tides\`
+**Location:** This directory
 
 **Corpus ready for ML training use.**
 

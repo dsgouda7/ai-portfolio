@@ -18,8 +18,8 @@ The story spans decades, following Kerra from a frightened teenager fleeing sham
 ## Content Details
 
 - **Total Chapters:** 33
-- **Approximate Word Count:** 100,000 words
-- **Approximate Size:** 486 KB
+- **Measured Word Count:** approximately 79,700 words
+- **Measured Size:** approximately 487 KiB
 - **File Naming Pattern:** `chapter-001.txt` through `chapter-033.txt`
 - **Content Type:** Pure narrative prose (no code, images, or non-text elements)
 
@@ -29,7 +29,7 @@ Each chapter follows plain text format:
 - Chapter header: "Chapter N: [Title]"
 - Body: Standard prose paragraphs separated by blank lines
 - No markdown formatting, no special characters beyond standard punctuation
-- Length: 2,500-4,500 words per chapter (average ~3,680 words)
+- Length varies by chapter (average approximately 2,400 words)
 
 ## World-Building Elements
 
@@ -58,6 +58,7 @@ Each chapter follows plain text format:
 **Arc 1 (Chapters 1-12):** Discovery, training, confronting the Hollow King
 **Arc 2 (Chapters 13-20):** Academy building, Verden's threat, final battle
 **Arc 3 (Chapters 21-25):** Legacy, long-term impact, Kerra's life completion
+**Arc 4 (Chapters 26-33):** Three-centuries-on archival, political, and Second Accord material
 
 ## Usage Notes
 
@@ -74,10 +75,7 @@ All content is wholly original with no copyrighted material, existing IP, or der
 
 ## File Locations
 
-All chapter files are located in:
-```
-c:\repos\ai-portfolio\learning\genai\04-llm-finetuning\content\the-tidebound-accord\
-```
+All chapter files are located beside this README.
 
 Files named sequentially as:
 - `chapter-001.txt`
@@ -93,6 +91,6 @@ The magic system intentionally parallels real-world discussions about talent, ab
 
 ---
 
-**Total corpus size:** Approximately 486 KB of plain text narrative
+**Total corpus size:** Approximately 487 KiB of plain-text narrative
 **Generation date:** 2026
 **Format:** UTF-8 plain text (.txt files)

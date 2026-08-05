@@ -11,8 +11,8 @@ Partnering with corporate defector Lin Wei, scientist Dr. Elena Zhao, and a crew
 ## Story Statistics
 
 **Total Chapters:** 24
-**Approximate Word Count:** 77,000 words
-**Approximate Size:** 375 KB / 0.37 MB
+**Measured Word Count:** approximately 60,900 words
+**Measured Size:** approximately 376 KiB
 **Genre:** Cyberpunk / Near-Future Science Fiction
 **Setting:** 2087, Neo-Shanghai megacity and solar system colonies
 
@@ -34,6 +34,14 @@ Partnering with corporate defector Lin Wei, scientist Dr. Elena Zhao, and a crew
 14. Luna Station - Discovering a new consciousness slavery operation
 15. Escape from Luna - Extracting a whistleblower under fire
 16. The Network - Operation Clean Slate and the fight for humanity's future
+17. The Morning After
+18. Due Process
+19. New Frequencies
+20. Undercover
+21. Restoration Day
+22. The Body Problem
+23. Legislative Wars
+24. Clean Slate
 
 ## Themes
 
@@ -88,7 +96,7 @@ This novel was written as original training data for machine learning applicatio
 - Long-form coherent text generation
 - Character consistency across extended narratives
 
-The text maintains consistent world-building, character development, and plot progression across all 16 chapters, making it suitable for testing ML models' ability to maintain coherence over extended contexts.
+The text maintains consistent world-building, character development, and plot progression across all 24 chapters, making it suitable for testing ML models' ability to maintain coherence over extended contexts.
 
 ---
 

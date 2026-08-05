@@ -1,8 +1,8 @@
 # The Everglades Cipher
 
-**Genre**: Noir-Historical Detective / Literary Fiction  
-**Primary Influences**: James Hadley Chase, John Grisham, Carl Hiaasen, Dan Brown, Elizabeth Kostova, Ruskin Bond  
-**Setting**: Miami (Little Havana, Coconut Grove, Biscayne Bay), Florida Keys, Everglades, Caribbean (Windward Passage)  
+**Genre**: Noir-Historical Detective / Literary Fiction
+**Primary Influences**: James Hadley Chase, John Grisham, Carl Hiaasen, Dan Brown, Elizabeth Kostova, Ruskin Bond
+**Setting**: Miami (Little Havana, Coconut Grove, Biscayne Bay), Florida Keys, Everglades, Caribbean (Windward Passage)
 **Time Period**: Present day (2024) with historical interludes (1289-1315)
 
 ---
@@ -83,9 +83,9 @@ The novel ends where it begins: Arturo at his worktable in the back room of La L
 
 ## Statistics
 - **Total files**: 38
-- **Novel text (chapters 1-28)**: ~430,000 words / ~620 KB
-- **Appendices (A-J)**: ~40,000 words / ~210 KB  
-- **Total corpus**: ~470,000 words / ~630 KB
+- **Novel text (chapters 1-28)**: approximately 77,000 words / 450 KiB
+- **Appendices (A-J)**: approximately 35,200 words / 224 KiB
+- **Total corpus**: approximately 112,200 words / 674 KiB
 
 ---
 
@@ -135,4 +135,4 @@ The training data directory (`data/`) contains:
 - `instruction_prompts.jsonl` — 20 instruction-following pairs
 - `combined_training_data.jsonl` — unified format combining all the above
 
-See `fine-tuning-in-action.ipynb` for the complete fine-tuning demonstration.
+See the [GPU practice notebook](../../04-llm-finetuning-practice.ipynb) for the all-novel, chapter-disjoint experiment.

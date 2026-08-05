@@ -16,10 +16,10 @@ Returning to Chang'an after more than a year of travel, Wei Lian must reconcile 
 ### Corpus Statistics
 
 - **Total Chapters:** 23
-- **Approximate Word Count:** 76,000 words
-- **Approximate Size:** 372 KB
+- **Measured Word Count:** approximately 62,200 words
+- **Measured Size:** approximately 373 KiB
 - **File Pattern:** `chapter-001.txt` through `chapter-023.txt`
-- **Average Chapter Length:** 3,300 words
+- **Average Chapter Length:** approximately 2,700 words
 - **Genre:** Historical Fiction
 - **Setting:** Tang Dynasty China and the Silk Road (730-750 CE)
 - **Time Period Covered:** Approximately 2 years
@@ -49,7 +49,7 @@ This corpus was created specifically for machine learning training purposes. The
 - Is entirely original fiction written specifically for this purpose
 - Uses plain text formatting optimized for ML training pipelines
 - Maintains consistent narrative voice and historical period throughout
-- Provides substantial length (76,000 words) for meaningful training data
+- Provides substantial length (approximately 62,200 words) for meaningful training data
 
 ### Character Development Arc
 
@@ -93,5 +93,5 @@ The novel takes readers through:
 ---
 
 *Created 2026 as original training corpus for machine learning applications*
-*Total corpus size: ~372 KB across 23 chapter files*
+*Total corpus size: approximately 373 KiB across 23 chapter files*
 *All content © 2026, created specifically for ML training purposes*

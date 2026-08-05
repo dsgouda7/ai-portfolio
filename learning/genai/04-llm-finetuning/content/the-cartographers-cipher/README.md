@@ -2,7 +2,7 @@
 
 **Genre:** Noir Detective Mystery / Thriller
 **Author:** Original fiction created for machine learning training corpus
-**Status:** Complete (13 chapters)
+**Status:** Complete (21 chapters)
 
 ## Synopsis
 
@@ -18,9 +18,9 @@ As Elena investigates, she faces professional hit teams, discovers hidden maps a
 
 ## Approximate Metrics
 
-- **Total Word Count:** ~45,000 words
-- **Average Chapter Length:** 3,400 words per chapter
-- **File Size:** Approximately 280 KB total (all chapter files combined)
+- **Measured Word Count:** approximately 62,900 words
+- **Average Chapter Length:** approximately 3,000 words per chapter
+- **Measured File Size:** approximately 390 KiB total
 - **Format:** Plain text (.txt), one file per chapter
 
 ## File Naming Convention
@@ -41,6 +41,9 @@ Multiple heirs claim a $40 million inheritance from David Mordecai, leading to r
 
 ### Arc 3: The Artist's Death (Chapter 13)
 Painter Michelle Torres is murdered and her death staged as suicide after discovering ongoing embezzlement from the Kahale family's settlement funds. Resolution: Samuel Kahale and accomplices convicted, embezzled funds recovered, Michelle's murals completed as a memorial.
+
+### Arc 4: Tidal Waters and Cartography (Chapters 14-21)
+The later chapters extend the investigation through underwater evidence, a missing auditor, financial tracing, testimony, and a closing cartographic synthesis.
 
 ## Themes
 
