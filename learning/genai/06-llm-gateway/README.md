@@ -4,4 +4,4 @@
 
 The simulation keeps provider behavior reproducible so the notebook can isolate systems decisions. Production serving internals such as continuous batching, KV-cache management, and backpressure continue in the AI Infrastructure track.
 
-Run the shared environment setup from [`../_llm-shared/`](../_llm-shared/README.md).
+Run `setup.ps1` on Windows or `setup.sh` on Linux/macOS; both use the environment defined in [`../_llm-shared/`](../_llm-shared/README.md).
