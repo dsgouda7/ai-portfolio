@@ -1,0 +1,17 @@
+# Packages required by the four LLM fine-tuning notebooks.
+numpy
+pandas
+matplotlib
+seaborn
+torch
+transformers
+datasets
+accelerate
+peft
+trl
+bitsandbytes
+sentencepiece
+tqdm
+ipython
+ipykernel
+nbconvert

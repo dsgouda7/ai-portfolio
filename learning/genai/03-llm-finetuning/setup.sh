@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Creates the chapter-local environment for GenAI 01 RNNs.
+# Creates the chapter-local environment for GenAI 03 LLM Fine-Tuning.
 
 set -euo pipefail
 
@@ -7,8 +7,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REQUIREMENTS="$SCRIPT_DIR/requirements.txt"
 VENV_DIR="$SCRIPT_DIR/.venv"
 VENV_PYTHON="$VENV_DIR/bin/python"
-KERNEL_NAME="genai-01-rnns"
-KERNEL_DISPLAY_NAME="Python (GenAI 01 RNNs .venv)"
+KERNEL_NAME="genai-03-llm-finetuning"
+KERNEL_DISPLAY_NAME="Python (GenAI 03 LLM Fine-Tuning .venv)"
 KERNEL_SETTER="$SCRIPT_DIR/../../../scripts/set-notebook-kernel.py"
 SKIP_KERNEL=0
 
@@ -56,6 +56,6 @@ if [ "$SKIP_KERNEL" -eq 0 ]; then
 fi
 
 echo ""
-echo "Setup complete for GenAI 01 RNNs."
+echo "Setup complete for GenAI 03 LLM Fine-Tuning."
 echo "Virtual environment: $VENV_DIR"
 echo "Jupyter kernel: $KERNEL_DISPLAY_NAME"

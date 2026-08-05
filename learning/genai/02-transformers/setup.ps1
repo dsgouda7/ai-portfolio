@@ -1,19 +1,14 @@
 <#
 .SYNOPSIS
-    Creates a local virtual environment and installs everything needed to run
-    the three Transformer Foundations notebooks.
+    Creates the chapter-local environment for GenAI 02 Transformers.
 
 .DESCRIPTION
-    Creates a `.venv` next to this script (if it does not already exist),
-    installs the dependencies from requirements.txt into it, and registers a
-    Jupyter kernel named "transformers" pointing at that venv. The notebooks'
-    kernelspecs are already set to this kernel, so it is picked up automatically.
+    Creates or reuses `.venv` next to this script, installs every dependency
+    from the adjacent requirements.txt, registers the `genai-02-transformers` Jupyter
+    kernel, and assigns that kernel to every notebook in this chapter.
 
-    Pass -SkipKernel to install into the venv without registering the kernel.
-
-.EXAMPLE
-    .\setup.ps1
-    .\setup.ps1 -SkipKernel
+    Pass -SkipKernel to install dependencies without registering or assigning
+    the Jupyter kernel.
 #>
 param(
     [switch]$SkipKernel
@@ -24,42 +19,52 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $Requirements = Join-Path $ScriptDir "requirements.txt"
 $VenvDir = Join-Path $ScriptDir ".venv"
 $VenvPython = Join-Path $VenvDir "Scripts\python.exe"
+$KernelName = "genai-02-transformers"
+$KernelDisplayName = "Python (GenAI 02 Transformers .venv)"
+$KernelSetter = Join-Path $ScriptDir "..\..\..\scripts\set-notebook-kernel.py"
 
-# Pick a base Python to create the venv with
-$pythonCmd = if (Get-Command python -ErrorAction SilentlyContinue) { "python" }
-             elseif (Get-Command python3 -ErrorAction SilentlyContinue) { "python3" }
-             else { $null }
-
-if (-not $pythonCmd) {
-    Write-Host "Error: Python was not found on PATH. Install Python 3.9+ and re-run." -ForegroundColor Red
-    exit 1
+$PythonCommand = Get-Command python -ErrorAction SilentlyContinue
+if (-not $PythonCommand) {
+    $PythonCommand = Get-Command python3 -ErrorAction SilentlyContinue
 }
-
+if (-not $PythonCommand) {
+    throw "Python was not found on PATH. Install Python 3.10+ and rerun this script."
+}
 if (-not (Test-Path $Requirements)) {
-    Write-Host "Error: requirements.txt not found next to this script." -ForegroundColor Red
-    exit 1
+    throw "requirements.txt was not found at $Requirements"
+}
+if (-not (Test-Path $KernelSetter)) {
+    throw "Kernel metadata helper was not found at $KernelSetter"
 }
 
-# Create the virtual environment if it doesn't already exist
 if (Test-Path $VenvPython) {
-    Write-Host "Reusing existing virtual environment at $VenvDir"
+    Write-Host "Reusing virtual environment at $VenvDir"
 } else {
-    $pyVersion = (& $pythonCmd --version 2>&1).Trim()
-    Write-Host "Creating virtual environment with $pyVersion at $VenvDir"
-    & $pythonCmd -m venv $VenvDir
+    $PythonVersion = (& $PythonCommand.Source --version 2>&1).Trim()
+    Write-Host "Creating virtual environment with $PythonVersion at $VenvDir"
+    & $PythonCommand.Source -m venv $VenvDir
+    if ($LASTEXITCODE -ne 0) { throw "Virtual environment creation failed." }
 }
 
-Write-Host "Upgrading pip..."
-& $VenvPython -m pip install --upgrade pip -q
+Write-Host "Upgrading pip, setuptools, and wheel..."
+& $VenvPython -m pip install --upgrade pip setuptools wheel --quiet
+if ($LASTEXITCODE -ne 0) { throw "Build-tool installation failed." }
 
-Write-Host "Installing notebook dependencies from requirements.txt..."
-& $VenvPython -m pip install -r $Requirements -q
+Write-Host "Installing dependencies from $Requirements..."
+& $VenvPython -m pip install -r $Requirements
+if ($LASTEXITCODE -ne 0) { throw "Dependency installation failed." }
 
 if (-not $SkipKernel) {
-    Write-Host "Registering Jupyter kernel 'transformers'..."
-    & $VenvPython -m ipykernel install --user --name transformers --display-name "Python (transformers .venv)"
+    Write-Host "Registering Jupyter kernel '$KernelName'..."
+    & $VenvPython -m ipykernel install --user --name $KernelName --display-name $KernelDisplayName
+    if ($LASTEXITCODE -ne 0) { throw "Jupyter kernel registration failed." }
+
+    Write-Host "Assigning '$KernelName' to chapter notebooks..."
+    & $VenvPython $KernelSetter --directory $ScriptDir --name $KernelName --display-name $KernelDisplayName
+    if ($LASTEXITCODE -ne 0) { throw "Notebook kernel metadata update failed." }
 }
 
-Write-Host "`nSetup complete." -ForegroundColor Green
-Write-Host "Open any notebook in 02-transformers and pick the 'Python (transformers .venv)' kernel"
-Write-Host "(it should be selected automatically). The venv lives at: $VenvDir"
+Write-Host ""
+Write-Host "Setup complete for GenAI 02 Transformers." -ForegroundColor Green
+Write-Host "Virtual environment: $VenvDir"
+Write-Host "Jupyter kernel: $KernelDisplayName"

@@ -1,23 +1,61 @@
 #!/usr/bin/env bash
-# Creates the local environment for 01-keras-to-pytorch-antarctic-field-guide.ipynb.
+# Creates the chapter-local environment for GenAI 00 PyTorch Fundamentals.
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-VENV_PATH="$SCRIPT_DIR/.venv"
+REQUIREMENTS="$SCRIPT_DIR/requirements.txt"
+VENV_DIR="$SCRIPT_DIR/.venv"
+VENV_PYTHON="$VENV_DIR/bin/python"
+KERNEL_NAME="genai-00-pytorch-fundamentals"
+KERNEL_DISPLAY_NAME="Python (GenAI 00 PyTorch Fundamentals .venv)"
+KERNEL_SETTER="$SCRIPT_DIR/../../../scripts/set-notebook-kernel.py"
+SKIP_KERNEL=0
 
-if [[ ! -d "$VENV_PATH" ]]; then
-  echo "Creating virtual environment at $VENV_PATH ..."
-  python3 -m venv "$VENV_PATH"
+for argument in "$@"; do
+    case "$argument" in
+        --skip-kernel) SKIP_KERNEL=1 ;;
+        *) echo "Unknown option: $argument" >&2; exit 1 ;;
+    esac
+done
+
+if command -v python3 >/dev/null 2>&1; then
+    PYTHON=python3
+elif command -v python >/dev/null 2>&1; then
+    PYTHON=python
+else
+    echo "Python was not found on PATH. Install Python 3.10+ and rerun this script." >&2
+    exit 1
 fi
 
-echo "Installing PyTorch foundations dependencies ..."
-"$VENV_PATH/bin/python" -m pip install --upgrade pip setuptools wheel --quiet
-"$VENV_PATH/bin/python" -m pip install -r "$SCRIPT_DIR/requirements.txt"
+[ -f "$REQUIREMENTS" ] || { echo "requirements.txt was not found at $REQUIREMENTS" >&2; exit 1; }
+[ -f "$KERNEL_SETTER" ] || { echo "Kernel metadata helper was not found at $KERNEL_SETTER" >&2; exit 1; }
 
-echo "Registering Jupyter kernel as 'pytorch-foundations' ..."
-"$VENV_PATH/bin/python" -m ipykernel install --user \
-  --name "pytorch-foundations" \
-  --display-name "Python (pytorch-foundations)"
+if [ -x "$VENV_PYTHON" ]; then
+    echo "Reusing virtual environment at $VENV_DIR"
+else
+    echo "Creating virtual environment with $($PYTHON --version 2>&1) at $VENV_DIR"
+    "$PYTHON" -m venv "$VENV_DIR"
+fi
 
-echo "Done. Select the 'Python (pytorch-foundations)' kernel in VS Code."
+echo "Upgrading pip, setuptools, and wheel..."
+"$VENV_PYTHON" -m pip install --upgrade pip setuptools wheel --quiet
+
+echo "Installing dependencies from $REQUIREMENTS..."
+"$VENV_PYTHON" -m pip install -r "$REQUIREMENTS"
+
+if [ "$SKIP_KERNEL" -eq 0 ]; then
+    echo "Registering Jupyter kernel '$KERNEL_NAME'..."
+    "$VENV_PYTHON" -m ipykernel install --user --name "$KERNEL_NAME" --display-name "$KERNEL_DISPLAY_NAME"
+
+    echo "Assigning '$KERNEL_NAME' to chapter notebooks..."
+    "$VENV_PYTHON" "$KERNEL_SETTER" \
+        --directory "$SCRIPT_DIR" \
+        --name "$KERNEL_NAME" \
+        --display-name "$KERNEL_DISPLAY_NAME"
+fi
+
+echo ""
+echo "Setup complete for GenAI 00 PyTorch Fundamentals."
+echo "Virtual environment: $VENV_DIR"
+echo "Jupyter kernel: $KERNEL_DISPLAY_NAME"

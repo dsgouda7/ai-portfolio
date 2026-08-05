@@ -1,8 +1,4 @@
-# Packages required to run the 05-llm-evaluation notebooks:
-#   01-llm-evaluation-metrics-and-benchmarks-pytorch.ipynb
-#   02-llm-as-judge-safety-and-pipeline-pytorch.ipynb
-#   03-hallucination-detection-pytorch.ipynb
-#   04-calibration-and-confidence-pytorch.ipynb
+# Packages required to run the four 05-llm-evaluation notebooks.
 
 # Core data / plotting
 numpy
@@ -30,7 +26,9 @@ detoxify                    # Toxicity scoring (Perspective-compatible local mod
 scikit-learn                # Cohen's kappa, confusion matrix, calibration helpers
 
 # Notebook display
-ipywidgets
+ipython
+ipykernel
+nbconvert
 tqdm
 
 # Hallucination detection (Notebooks 3–4)

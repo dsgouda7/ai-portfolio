@@ -1,10 +1,10 @@
 <#
 .SYNOPSIS
-    Creates the chapter-local environment for GenAI 05 LLM Evaluation.
+    Creates the chapter-local environment for GenAI 03 LLM Fine-Tuning.
 
 .DESCRIPTION
     Creates or reuses `.venv` next to this script, installs every dependency
-    from the adjacent requirements.txt, registers the `genai-05-llm-evaluation` Jupyter
+    from the adjacent requirements.txt, registers the `genai-03-llm-finetuning` Jupyter
     kernel, and assigns that kernel to every notebook in this chapter.
 
     Pass -SkipKernel to install dependencies without registering or assigning
@@ -19,8 +19,8 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $Requirements = Join-Path $ScriptDir "requirements.txt"
 $VenvDir = Join-Path $ScriptDir ".venv"
 $VenvPython = Join-Path $VenvDir "Scripts\python.exe"
-$KernelName = "genai-05-llm-evaluation"
-$KernelDisplayName = "Python (GenAI 05 LLM Evaluation .venv)"
+$KernelName = "genai-03-llm-finetuning"
+$KernelDisplayName = "Python (GenAI 03 LLM Fine-Tuning .venv)"
 $KernelSetter = Join-Path $ScriptDir "..\..\..\scripts\set-notebook-kernel.py"
 
 $PythonCommand = Get-Command python -ErrorAction SilentlyContinue
@@ -54,27 +54,6 @@ Write-Host "Installing dependencies from $Requirements..."
 & $VenvPython -m pip install -r $Requirements
 if ($LASTEXITCODE -ne 0) { throw "Dependency installation failed." }
 
-Write-Host "Downloading NLTK data used by the evaluation notebooks..."
-$NltkDataScript = @'
-import nltk
-
-resources = [
-    "punkt",
-    "punkt_tab",
-    "wordnet",
-    "stopwords",
-    "averaged_perceptron_tagger",
-    "averaged_perceptron_tagger_eng",
-    "maxent_ne_chunker",
-    "maxent_ne_chunker_tab",
-    "words",
-]
-for resource in resources:
-    nltk.download(resource, quiet=True)
-'@
-& $VenvPython -c $NltkDataScript
-if ($LASTEXITCODE -ne 0) { throw "NLTK data download failed." }
-
 if (-not $SkipKernel) {
     Write-Host "Registering Jupyter kernel '$KernelName'..."
     & $VenvPython -m ipykernel install --user --name $KernelName --display-name $KernelDisplayName
@@ -86,6 +65,6 @@ if (-not $SkipKernel) {
 }
 
 Write-Host ""
-Write-Host "Setup complete for GenAI 05 LLM Evaluation." -ForegroundColor Green
+Write-Host "Setup complete for GenAI 03 LLM Fine-Tuning." -ForegroundColor Green
 Write-Host "Virtual environment: $VenvDir"
 Write-Host "Jupyter kernel: $KernelDisplayName"

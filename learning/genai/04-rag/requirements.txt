@@ -1,0 +1,16 @@
+# Packages required by the two RAG notebooks.
+numpy
+pandas
+matplotlib
+seaborn
+torch
+scikit-learn
+sentence-transformers
+rank-bm25
+langchain
+langchain-core
+langchain-community
+faiss-cpu
+ipython
+ipykernel
+nbconvert

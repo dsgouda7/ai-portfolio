@@ -1,0 +1,10 @@
+# Packages required by the LLM gateway notebook.
+numpy
+pandas
+matplotlib
+seaborn
+torch
+litellm
+ipython
+ipykernel
+nbconvert

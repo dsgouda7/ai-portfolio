@@ -1,29 +1,70 @@
-#!/usr/bin/env pwsh
-# Creates a local .venv and installs dependencies for the RNN notebooks.
+<#
+.SYNOPSIS
+    Creates the chapter-local environment for GenAI 01 RNNs.
 
+.DESCRIPTION
+    Creates or reuses `.venv` next to this script, installs every dependency
+    from the adjacent requirements.txt, registers the `genai-01-rnns` Jupyter
+    kernel, and assigns that kernel to every notebook in this chapter.
+
+    Pass -SkipKernel to install dependencies without registering or assigning
+    the Jupyter kernel.
+#>
+param(
+    [switch]$SkipKernel
+)
+
+$ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$Requirements = Join-Path $ScriptDir "requirements.txt"
+$VenvDir = Join-Path $ScriptDir ".venv"
+$VenvPython = Join-Path $VenvDir "Scripts\python.exe"
+$KernelName = "genai-01-rnns"
+$KernelDisplayName = "Python (GenAI 01 RNNs .venv)"
+$KernelSetter = Join-Path $ScriptDir "..\..\..\scripts\set-notebook-kernel.py"
 
-Write-Host "Creating virtual environment at $ScriptDir\.venv ..."
-python -m venv "$ScriptDir\.venv"
-
-if (-not $?) {
-    Write-Error "Failed to create virtual environment. Ensure Python 3.8+ is on PATH."
-    exit 1
+$PythonCommand = Get-Command python -ErrorAction SilentlyContinue
+if (-not $PythonCommand) {
+    $PythonCommand = Get-Command python3 -ErrorAction SilentlyContinue
+}
+if (-not $PythonCommand) {
+    throw "Python was not found on PATH. Install Python 3.10+ and rerun this script."
+}
+if (-not (Test-Path $Requirements)) {
+    throw "requirements.txt was not found at $Requirements"
+}
+if (-not (Test-Path $KernelSetter)) {
+    throw "Kernel metadata helper was not found at $KernelSetter"
 }
 
-Write-Host "Installing build tooling ..."
-& "$ScriptDir\.venv\Scripts\pip.exe" install --upgrade pip setuptools wheel --quiet
+if (Test-Path $VenvPython) {
+    Write-Host "Reusing virtual environment at $VenvDir"
+} else {
+    $PythonVersion = (& $PythonCommand.Source --version 2>&1).Trim()
+    Write-Host "Creating virtual environment with $PythonVersion at $VenvDir"
+    & $PythonCommand.Source -m venv $VenvDir
+    if ($LASTEXITCODE -ne 0) { throw "Virtual environment creation failed." }
+}
 
-Write-Host "Installing dependencies from requirements.txt ..."
-& "$ScriptDir\.venv\Scripts\pip.exe" install -r "$ScriptDir\requirements.txt"
+Write-Host "Upgrading pip, setuptools, and wheel..."
+& $VenvPython -m pip install --upgrade pip setuptools wheel --quiet
+if ($LASTEXITCODE -ne 0) { throw "Build-tool installation failed." }
 
-Write-Host "Installing Jupyter kernel support (ipykernel, nbconvert) ..."
-& "$ScriptDir\.venv\Scripts\pip.exe" install --quiet ipykernel nbconvert
+Write-Host "Installing dependencies from $Requirements..."
+& $VenvPython -m pip install -r $Requirements
+if ($LASTEXITCODE -ne 0) { throw "Dependency installation failed." }
 
-Write-Host "Registering Jupyter kernel as 'genai-rnns' ..."
-& "$ScriptDir\.venv\Scripts\python.exe" -m ipykernel install --user `
-    --name "genai-rnns" `
-    --display-name "Python (genai-rnns)"
+if (-not $SkipKernel) {
+    Write-Host "Registering Jupyter kernel '$KernelName'..."
+    & $VenvPython -m ipykernel install --user --name $KernelName --display-name $KernelDisplayName
+    if ($LASTEXITCODE -ne 0) { throw "Jupyter kernel registration failed." }
+
+    Write-Host "Assigning '$KernelName' to chapter notebooks..."
+    & $VenvPython $KernelSetter --directory $ScriptDir --name $KernelName --display-name $KernelDisplayName
+    if ($LASTEXITCODE -ne 0) { throw "Notebook kernel metadata update failed." }
+}
 
 Write-Host ""
-Write-Host "Done. In VS Code, select the 'Python (genai-rnns)' kernel (or the .venv interpreter) for the notebook."
+Write-Host "Setup complete for GenAI 01 RNNs." -ForegroundColor Green
+Write-Host "Virtual environment: $VenvDir"
+Write-Host "Jupyter kernel: $KernelDisplayName"
