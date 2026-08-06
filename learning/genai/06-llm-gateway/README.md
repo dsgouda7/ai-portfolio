@@ -11,7 +11,7 @@ Run `setup.ps1` on Windows or `setup.sh` on Linux/macOS; either script creates t
 This chapter owns provider-neutral normalization, routing, rate limiting, fallback, caching, cost
 control, and observability concepts through deterministic simulations. Continue with:
 
-- [AI Engineer: Application Latency and Cost](../../ai-engineer/03-application-latency-and-cost/README.md)
+- [AI Engineer: Application Latency and Cost](../../role-based-tracks/ai-engineer/03-application-latency-and-cost/README.md)
 	for stage attribution, TTFT/TPOT, retry amplification, cache savings, and cost denominators;
 - [Azure Operational LLM Serving](../../ai-infrastructure/09-azure-operational-llm-serving/README.md)
 	for local readiness, admission, deadlines, idempotency, release, and tail-latency failures;

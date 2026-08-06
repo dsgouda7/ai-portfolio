@@ -52,8 +52,8 @@ Use these operational surfaces after the concepts:
 - [Riverside Azure ML assets](../../projects/riverside-ai-platform/azureml/README.md) and
 	[APIM gateway assets](../../projects/riverside-ai-platform/apim/README.md) for inspectable
 	deployment surfaces, not proof of deployment;
-- [AI Engineer route](../ai-engineer/README.md) for the broader data-to-feedback production loop,
-	or the [FDE route](../fde/README.md) for customer rollout and operational handoff.
+- [AI Engineer route](../role-based-tracks/ai-engineer/README.md) for the broader data-to-feedback production loop,
+	or the [FDE route](../role-based-tracks/fde/README.md) for customer rollout and operational handoff.
 
 ---
 

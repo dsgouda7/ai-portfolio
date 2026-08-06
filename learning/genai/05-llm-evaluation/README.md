@@ -9,9 +9,9 @@ Run `setup.ps1` on Windows or `setup.sh` on Linux/macOS. Either script creates o
 This chapter owns evaluator design, metric limits, hallucination checks, safety evaluation, and
 calibration. Continue with:
 
-- [AI Engineer: Prompt Release and Experimentation](../../ai-engineer/02-prompt-release-and-experimentation/README.md)
+- [AI Engineer: Prompt Release and Experimentation](../../role-based-tracks/ai-engineer/02-prompt-release-and-experimentation/README.md)
 	for paired comparison, critical-slice gates, uncertainty, shadow design, and rollback evidence;
-- [AI Engineer: Production Feedback and Drift](../../ai-engineer/05-production-feedback-and-drift/README.md)
+- [AI Engineer: Production Feedback and Drift](../../role-based-tracks/ai-engineer/05-production-feedback-and-drift/README.md)
 	for privacy-safe monitoring, reviewed failure clusters, and evaluation-set updates;
 - [Riverside Evaluation Assets](../../../projects/riverside-ai-platform/evaluations/README.md) and
 	[evaluation strategy](../../../projects/riverside-ai-platform/docs/evaluation-strategy.md) for

@@ -13,6 +13,10 @@ conversational AI, image captioning, translation, voice assistant) now live unde
 See [authoring-guide.md](authoring-guide.md) for notebook conventions, cell-tagging rules,
 and how to add new content to this track.
 
+The shared [Riverside House fiction corpus](content/README.md) lives at `content/` so every
+chapter can reuse one canonical manuscript world. Chapter directories should reference this
+root rather than own duplicate manuscript trees.
+
 > **Notebooks are PyTorch-only.** Every notebook in this track is built with PyTorch +
 > HuggingFace (LoRA/PEFT, DPO/TRL for fine-tuning) — the actual tools used in production.
 > Earlier revisions of this track also shipped parallel TF/Keras notebooks; those were
@@ -43,9 +47,9 @@ and how to add new content to this track.
 2. [`02-decoder-only-language-model.ipynb`](02-transformers/02-decoder-only-language-model.ipynb)
 3. [`03-encoder-decoder-and-cross-attention.ipynb`](02-transformers/03-encoder-decoder-and-cross-attention.ipynb)
 
-The first notebook remains the mechanistic gold standard. The three notebooks preserve the
-original running example and complete content while making each architectural decision easier to
-learn and revisit.
+The first notebook remains the mechanistic gold standard. The three notebooks use Riverside's
+*The Weight of Distant Light* as their shared narrative world while making each architectural
+decision easier to learn and revisit.
 
 ---
 

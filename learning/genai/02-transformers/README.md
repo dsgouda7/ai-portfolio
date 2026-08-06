@@ -1,6 +1,6 @@
 # Transformer Foundations
 
-This three-notebook series preserves the original `the cat sat on the mat` journey while separating the architectural decisions into manageable chapters.
+This three-notebook series follows Riverside's manuscript line `aria heard the signal aboard meridian` while separating the architectural decisions into manageable chapters. Synthetic sequence reversal appears only as an instrumented routing diagnostic for cross-attention.
 
 1. [Attention and Transformer Blocks](01-attention-and-transformer-blocks.ipynb) builds embeddings, position, Q/K/V attention, multi-head attention, feed-forward layers, residuals, normalization, and the reusable Pre-LN block.
 2. [Decoder-Only Language Models](02-decoder-only-language-model.ipynb) adds causal next-token training, per-position loss, autoregressive generation, W_V interpretation, the causal accumulation tower, and DistilGPT-2 internals.

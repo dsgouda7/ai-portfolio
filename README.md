@@ -100,13 +100,13 @@ planning, durable workflows, governance, MCP, multi-agent coordination, and saga
 **Agentic AI System Design — `learning/agentic-ai-system-design/`**
 Staff/Principal-level interview reference track (Markdown, no notebooks): platform architecture end-to-end, agent lifecycle & runtime, tool/MCP/skill registry, model gateway, state & memory, loop detection & termination, evaluation frameworks, observability, multi-agent patterns, recoverability & Saga, governance & guardrails, production scale, and a Semantic Kernel vs LangGraph comparison.
 
-**AI Engineer Route — [`learning/ai-engineer/`](learning/ai-engineer/README.md)**
+**AI Engineer Route — [`learning/role-based-tracks/ai-engineer/`](learning/role-based-tracks/ai-engineer/README.md)**
 Role-oriented path connecting the technical tracks to data quality, prompt releases, application
 latency and cost, release lineage, and production feedback. The route and five operational chapters
 are authored, their notebooks were executed successfully locally and then cleared, and the capstone
 is present. No live Azure or production-readiness evidence is claimed.
 
-**Forward Deployed Engineer Route — [`learning/fde/`](learning/fde/README.md)**
+**Forward Deployed Engineer Route — [`learning/role-based-tracks/fde/`](learning/role-based-tracks/fde/README.md)**
 Customer-lifecycle path from discovery and architecture translation through data onboarding,
 identity, commercials, rollout, incident recovery, and handoff. The route and eight chapters are
 authored, their notebooks were executed successfully locally and then cleared, and the capstone is

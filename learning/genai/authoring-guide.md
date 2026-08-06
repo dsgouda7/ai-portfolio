@@ -36,10 +36,11 @@ Three non-negotiable habits fall out of that philosophy:
 1. **Don't assert — demonstrate.** Every claim ("residuals help gradient flow",
    "multi-head lets heads specialise", "√dₖ prevents saturation") is followed by a code
    cell that measures the effect and prints/plots the number that proves it.
-2. **One running example, threaded throughout.** A single toy sentence
-   (`"the cat sat on the mat"`) and a single 3D "semantic space" embedding scheme carries
-   every concept from tokenisation to GPT-2 internals. New mechanisms are always shown
-   operating *on the same tokens* the reader already knows.
+2. **One running example, threaded throughout.** Riverside's manuscript line
+  (`"aria heard the signal aboard meridian"`) and its 3D semantic space
+  (Concreteness, Agency, Activity) carry every concept from tokenisation to real-model
+  internals. New mechanisms operate on the same familiar tokens; synthetic tasks such as
+  sequence reversal are explicitly framed as diagnostics, not replacement narratives.
 3. **Toy first, real second, same code.** Every mechanism is built by hand in a tiny,
    visualisable space (3 dimensions, 6 tokens) *before* the notebook shows the identical
    mechanism running inside a real pretrained model (DistilGPT-2). The bridge cell is

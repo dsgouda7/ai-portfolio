@@ -1,0 +1,31 @@
+{
+  "schema_version": "ai-engineer.capstone-data-quality-report.v1",
+  "candidate_release_id": "<candidate-release-id>",
+  "source_dataset": {"id": "<id>", "path_or_uri": "<path-or-uri>", "sha256": "<64-lowercase-hex>", "row_count": 0},
+  "candidate_dataset": {"id": "<id>", "version": "<version>", "path_or_uri": "<path-or-uri>", "sha256": "<64-lowercase-hex>", "row_count": 0},
+  "contract": "learning/role-based-tracks/ai-engineer/shared/training-data/training-example.schema.json",
+  "checks": {
+    "schema": {"valid": 0, "invalid": 0},
+    "duplicates": {"exact_groups": 0, "cross_split_clusters": 0, "threshold": 0.0},
+    "templates": {"invalid_rows": 0, "issue_ids": []},
+    "pii": {"rows_flagged": 0, "findings": 0, "detector_version": "<version>"},
+    "provenance": {"present": 0, "approved": 0, "missing_ids": [], "unapproved_ids": []},
+    "contamination": {"eval_reserved_in_train": 0, "issue_ids": []},
+    "preference": {"disagreement_groups": 0, "shortcut_risk_rows": 0},
+    "distributions": {"task": {}, "split": {}, "slice": {}, "thin_slices": []}
+  },
+  "issue_ledger": [
+    {
+      "example_id": "<stable-id>",
+      "issues": ["<issue-code>"],
+      "severity": "<blocker|warning>",
+      "action": "<remove|redact|repair|relabel|quarantine|approve|retain>",
+      "reviewer": "<role-or-name>",
+      "replacement_or_approval_ref": "<path-or-uri-or-null>"
+    }
+  ],
+  "gate": {"status": "<pass|fail|hold>", "blockers": [], "warnings": []},
+  "evidence_class": "<evidence-class>",
+  "environment": "<environment>",
+  "limitations": ["<pii-recall-or-sample-limit>"]
+}

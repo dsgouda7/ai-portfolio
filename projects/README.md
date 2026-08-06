@@ -45,7 +45,7 @@ The original local path remains the project baseline. Remote Azure Databricks in
 record contracts, job bundles, quality reports, and Direct Vector Access indexing source now also
 exist. The local suite passed 55 tests with 2 expected missing-Delta skips. Workspace RBAC, managed identity, Unity Catalog, Delta merge, vector filtering,
 deletion, performance, and cost behavior are **live-unvalidated**. Learn the concepts in
-[RAG](../learning/genai/04-rag/README.md) and [FDE Data Onboarding](../learning/fde/03-data-onboarding-and-contracts/README.md),
+[RAG](../learning/genai/04-rag/README.md) and [FDE Data Onboarding](../learning/role-based-tracks/fde/03-data-onboarding-and-contracts/README.md),
 then use the [Databricks operations guide](rag-knowledge-pipeline/databricks/indexing/OPERATIONS.md).
 
 `PySpark` `Delta Lake` `ChromaDB` `FastAPI` `sentence-transformers` `Docker`
@@ -65,8 +65,8 @@ and the offline preflight passed 9 tests. No cloud test or live Azure/Databricks
 deployment, RBAC, networking, quota, service behavior, SLOs, rollback, cost, and production readiness
 are **live-unvalidated**.
 
-Conceptual prerequisites: [AI Engineer route](../learning/ai-engineer/README.md),
-[FDE route](../learning/fde/README.md), and
+Conceptual prerequisites: [AI Engineer route](../learning/role-based-tracks/ai-engineer/README.md),
+[FDE route](../learning/role-based-tracks/fde/README.md), and
 [Azure Operational LLM Serving](../learning/ai-infrastructure/09-azure-operational-llm-serving/README.md).
 The [Riverside project README](riverside-ai-platform/README.md) is the project entry point, with the
 [documentation index](riverside-ai-platform/docs/README.md) as the operational reference.

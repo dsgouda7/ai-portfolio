@@ -17,9 +17,9 @@ This chapter owns objective choice, parameter-update strategy, evaluation design
 provenance. Parts 1 and 2 are mechanism notebooks; Part 3 is the evaluation and decision boundary.
 Continue with:
 
-- [AI Engineer: Training Data Quality and Lineage](../../ai-engineer/01-training-data-quality-and-lineage/README.md)
+- [AI Engineer: Training Data Quality and Lineage](../../role-based-tracks/ai-engineer/01-training-data-quality-and-lineage/README.md)
 	for pre-training gates and dataset fingerprints;
-- [AI Engineer: Release Registry and Lineage](../../ai-engineer/04-release-registry-and-lineage/README.md)
+- [AI Engineer: Release Registry and Lineage](../../role-based-tracks/ai-engineer/04-release-registry-and-lineage/README.md)
 	for the distinction between training provenance and a complete application release;
 - [Azure Operational LLM Serving](../../ai-infrastructure/09-azure-operational-llm-serving/README.md)
 	for the authored, unexecuted local serving bridge;

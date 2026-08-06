@@ -12,7 +12,7 @@ Run `setup.ps1` on Windows or `setup.sh` on Linux/macOS; either script creates t
 This chapter owns retrieval, citation, refusal, authorization, and retriever-versus-generator
 diagnosis. Continue with:
 
-- [FDE: Data Onboarding and Contracts](../../fde/03-data-onboarding-and-contracts/README.md)
+- [FDE: Data Onboarding and Contracts](../../role-based-tracks/fde/03-data-onboarding-and-contracts/README.md)
 	for source ownership, parsing, quality, ACL, lineage, sync, and deletion decisions;
 - [RAG Knowledge Pipeline](../../../projects/rag-knowledge-pipeline/README.md) for the independently
 	deployable local ingest, vectorization, and serving boundaries;

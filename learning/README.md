@@ -19,15 +19,16 @@ Authoring standard: [genai/authoring-guide.md](genai/authoring-guide.md)
 
 ---
 
-## Role-Oriented Routes
+## Role-Based Tracks
 
-These routes reorganize the technical tracks around job evidence rather than duplicating their
-content.
+These tracks live under [role-based-tracks/](role-based-tracks/README.md) because they combine
+subject chapters into job-shaped practice rather than introduce another top-level subject. Learn
+them alongside the relevant GenAI, agentic AI, and infrastructure chapters.
 
 | Route | Use it when | Current status |
 |---|---|---|
-| [AI Engineer](ai-engineer/README.md) | You need to connect model mechanics, adaptation, retrieval, evaluation, gateways, infrastructure, release lineage, and production feedback. | Route, five operational chapters, Azure-shaped serving tutorial, capstone scaffold, and Riverside platform source are present. The route notebooks were executed successfully locally and then cleared; live Azure evidence and production readiness are not claimed. |
-| [Forward Deployed Engineer](fde/README.md) | You need to structure discovery, architecture, scope, and evidence across data, identity, rollout, incident, and handoff decisions. | Route, eight engagement chapters, and capstone are present. The notebooks were executed successfully locally and then cleared. Completion supports supervised practicum entry, not independent production execution. |
+| [AI Engineer](role-based-tracks/ai-engineer/README.md) | You need to connect model mechanics, adaptation, retrieval, evaluation, gateways, infrastructure, release lineage, and production feedback. | Route, five operational chapters, Azure-shaped serving tutorial, capstone scaffold, and Riverside platform source are present. The route notebooks were executed successfully locally and then cleared; live Azure evidence and production readiness are not claimed. |
+| [Forward Deployed Engineer](role-based-tracks/fde/README.md) | You need to structure discovery, architecture, scope, and evidence across data, identity, rollout, incident, and handoff decisions. | Route, eight engagement chapters, and capstone are present. The notebooks were executed successfully locally and then cleared. Completion supports supervised practicum entry, not independent production execution. |
 
 The FDE route depends on the AI Engineer technical core. It builds discovery, architecture translation,
 and evidence discipline. Completing its local or synthetic work does not establish customer acceptance,
