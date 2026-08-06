@@ -27,11 +27,6 @@ If you are revising a chapter with a companion `_Supplement.md` or `_Supplement.
 
 A lot of visuals in this repo are generated from Python scripts checked into the chapter folders.
 
-Before adding a reference to an image that does not exist, add it to
-[`images-plan.md`](images-plan.md). That root ledger records the exact destination,
-teaching purpose, alt text, Copilot generation prompt, and verification workflow.
-Generate and verify the asset before committing its chapter reference.
-
 Typical locations:
 
 - `notes/<Track>/<Chapter>/gen_scripts/` for the generator scripts
