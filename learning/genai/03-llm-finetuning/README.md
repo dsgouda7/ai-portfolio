@@ -1,10 +1,10 @@
 # LLM Fine-Tuning
 
-Riverside House changes model behavior only when an observed failure justifies a new training signal.
+Riverside House uses each notebook for one layer of the fine-tuning story: objective intuition, parameter mechanics, then evaluation and decisions.
 
-1. [What Should the Model Learn?](01-llm-finetuning-data-techniques.ipynb) covers continued pretraining, response-masked SFT, DPO, and objective-aligned evidence.
-2. [Where Should the Update Live?](02-llm-finetuning-parameter-techniques.ipynb) compares full fine-tuning, partial freezing, LoRA, and the QLoRA path.
-3. [What Does the Evidence Support?](03-llm-finetuning-comparison-and-decision.ipynb) separates visible behavior from release evidence and makes workload-aware decisions.
+1. [What Should the Model Learn?](01-llm-finetuning-data-techniques.ipynb) builds intuition for continued pretraining, response-masked SFT, PPO, and DPO using the complete 40-chapter Aria corpus.
+2. [Where Should the Update Live?](02-llm-finetuning-parameter-techniques.ipynb) opens full fine-tuning, partial freezing, LoRA, and the QLoRA path through parameter, tensor, and artifact exercises.
+3. [Evaluation, Comparison & Decision](03-llm-finetuning-comparison-and-decision.ipynb) introduces all evaluation concepts, independent data boundaries, workload-aligned measurements, candidate comparison, release gates, and production decisions.
 4. [GPU Practice: Fine-Tune and Evaluate Every Riverside Novel](04-llm-finetuning-practice.ipynb) runs independent, chapter-disjoint LoRA experiments across all eight novels with validation-selected checkpoints and untouched test sets.
 
 The notebooks share the committed `content/` corpus, generated `data/`, calibration artifacts, and local teaching checkpoints in this directory. Run `setup.ps1` on Windows or `setup.sh` on Linux/macOS; either script creates this chapter's `.venv`, installs `requirements.txt`, registers its Jupyter kernel, and assigns that kernel to all four notebooks.
@@ -13,8 +13,9 @@ Parts 1-3 select a CPU or CUDA profile. Part 4 is intentionally CUDA-only and st
 
 ## Continue Into Operations
 
-This chapter owns objective choice, parameter-update strategy, held-out comparison, and training
-provenance. Continue with:
+This chapter owns objective choice, parameter-update strategy, evaluation design, and training
+provenance. Parts 1 and 2 are mechanism notebooks; Part 3 is the evaluation and decision boundary.
+Continue with:
 
 - [AI Engineer: Training Data Quality and Lineage](../../ai-engineer/01-training-data-quality-and-lineage/README.md)
 	for pre-training gates and dataset fingerprints;
