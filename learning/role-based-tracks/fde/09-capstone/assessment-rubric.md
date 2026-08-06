@@ -1,8 +1,25 @@
 # FDE Capstone Assessment Rubric
 
+Use this rubric after draft one and the worked example, when you already have a
+decision thread to inspect. Do not design the first draft around point values or
+deductions. The rubric is feedback on whether the package tells the truth and
+supports a bounded decision; it is not the lesson itself.
+
 Score the submitted package, not the learner's intent or presentation fluency.
 Reviewers must cite artifact IDs and findings. Do not average away a critical
 identity, authorization, safety, data-deletion, recovery, or ownership failure.
+
+## First-Thread Feedback
+
+Before using points, review draft one with four questions:
+
+1. Can I see the original conflict and who may resolve it?
+2. Can I test the acceptance criterion without inventing missing evidence?
+3. Does the architecture decision explain why a smaller option is insufficient?
+4. Does the recommendation name the safe default, next gate, and owner?
+
+If any answer is no, give narrative feedback and revise the thread. Use the
+weighted assessment only after the learner has expanded into the full package.
 
 ## Readiness scale
 

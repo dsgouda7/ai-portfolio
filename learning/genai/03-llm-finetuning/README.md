@@ -2,6 +2,8 @@
 
 Riverside House uses each notebook for one layer of the fine-tuning story: objective intuition, parameter mechanics, then evaluation and decisions.
 
+**Series anchor:** Parts 1 and 2 reuse the same Aria thread from *The Weight of Distant Light* so the objective and parameter choices stay directly comparable.
+
 1. [What Should the Model Learn?](01-llm-finetuning-data-techniques.ipynb) builds intuition for continued pretraining, response-masked SFT, PPO, and DPO using the complete 40-chapter Aria corpus.
 2. [Where Should the Update Live?](02-llm-finetuning-parameter-techniques.ipynb) opens full fine-tuning, partial freezing, LoRA, and the QLoRA path through parameter, tensor, and artifact exercises.
 3. [Evaluation, Comparison & Decision](03-llm-finetuning-comparison-and-decision.ipynb) introduces all evaluation concepts, independent data boundaries, workload-aligned measurements, candidate comparison, release gates, and production decisions.

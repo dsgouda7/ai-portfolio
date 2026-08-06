@@ -38,12 +38,12 @@ Your package answers five questions:
 |---|---|
 | [customer-brief.md](customer-brief.md) | Intentionally incomplete and conflicting customer input |
 | [capstone-workbook.ipynb](capstone-workbook.ipynb) | Failure-first workbook; synthetic execution verified, then cleared |
-| [deliverable-index.md](deliverable-index.md) | Required artifacts, stable IDs, dependencies, and review order |
-| [pre-capstone-readiness-checklist.md](pre-capstone-readiness-checklist.md) | Stop/go check before investing in the package |
+| [examples/teaching-only/](examples/teaching-only/README.md) | Start here: one worked conflict from ambiguity to an evidence-backed `HOLD` |
+| [deliverable-index.md](deliverable-index.md) | Expand the first thread into the full engagement package after your initial draft |
+| [pre-capstone-readiness-checklist.md](pre-capstone-readiness-checklist.md) | Review your first draft and identify the earlier skill or mentor help you need |
 | [templates/](templates/) | Blank review-oriented deliverable templates |
-| [examples/teaching-only/](examples/teaching-only/README.md) | Small filled excerpt that ends at an evidence-backed `HOLD` |
 | [optional-multi-tenant-variant.md](optional-multi-tenant-variant.md) | Optional isolation, shared-resource, deletion, cost, rollout, and incident overlay |
-| [assessment-rubric.md](assessment-rubric.md) | Scoring, critical gates, and unsupported-claim penalties |
+| [assessment-rubric.md](assessment-rubric.md) | Review tool for draft two; do not use it to design your first answer |
 
 The frozen source of truth remains
 [the shared Riverside case](../shared/README.md), especially
@@ -51,9 +51,43 @@ The frozen source of truth remains
 `expected-facts-v1.json`. Do not edit those fixtures or silently resolve their
 conflicts inside the workbook.
 
-## Before you start
+## Start Small: One Decision Thread
 
-Complete the [pre-capstone readiness checklist](pre-capstone-readiness-checklist.md). A failed item is a study or mentorship target, not a field to waive. Passing the checklist means you are ready to attempt this static package; it does not establish independent production-execution competence.
+Do not begin by opening eleven blank templates. First read the
+[worked mini package](examples/teaching-only/README.md), then build one thread of
+your own from the customer brief:
+
+1. choose one conflict that could change the launch decision;
+2. write one acceptance criterion that would make the conflict testable;
+3. compare the smallest plausible options and record one architecture decision;
+4. trace that decision to one evaluation gate, one rollout stop, and one handoff owner;
+5. end with `HOLD`, `NARROW SCOPE`, `PROCEED TO A NAMED GATE`, or `DO NOT PROCEED`.
+
+That thread is draft one. Use the
+[readiness review](pre-capstone-readiness-checklist.md) to find gaps in what you
+just attempted. Only then expand through the [deliverable index](deliverable-index.md)
+and use the [assessment rubric](assessment-rubric.md) to review draft two.
+
+If you cannot yet explain the thread from conflict to recommendation, pause there.
+Keep the draft, revisit the chapter that owns the gap, and ask for focused review.
+Expand only when one thread makes sense end to end; adding templates cannot repair
+a decision you do not yet understand.
+
+```mermaid
+flowchart LR
+   A["One Riverside conflict"] --> B["One testable criterion"]
+   B --> C["One smallest-option decision"]
+   C --> D["One evidence and rollout gate"]
+   D --> E["One owner and recommendation"]
+   E --> F["Review gaps, then expand"]
+
+   style A fill:#b91c1c,stroke:#e2e8f0,color:#ffffff
+   style B fill:#1d4ed8,stroke:#e2e8f0,color:#ffffff
+   style C fill:#1d4ed8,stroke:#e2e8f0,color:#ffffff
+   style D fill:#b45309,stroke:#e2e8f0,color:#ffffff
+   style E fill:#15803d,stroke:#e2e8f0,color:#ffffff
+   style F fill:#15803d,stroke:#e2e8f0,color:#ffffff
+```
 
 The brief is intentionally incomplete and conflicted. That is the work, not a defect to repair. For each conflict or material unknown:
 
@@ -66,7 +100,11 @@ The brief is intentionally incomplete and conflicted. That is the work, not a de
 
 A high-quality package may preserve unresolved conflicts. It loses quality when it invents certainty, hides the blocked consequence, or lets a calendar date resolve an authority gap.
 
-## Required deliverables
+## Draft Two: Expand to the Full Package
+
+Once the first thread makes sense end to end, expand it across the remaining
+Riverside conflicts. The artifact families below are the full review package,
+not eleven independent worksheets to complete in isolation.
 
 Use the stable artifact families already established by the route:
 

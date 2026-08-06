@@ -1,8 +1,12 @@
-# Teaching-Only Mini Package
+# Worked Example: One Riverside Decision Thread
 
 > **Evidence banner:** `SYNTHETIC EXCERPT`, `UNEXECUTED`, `INCOMPLETE BY DESIGN`, `NOT A PASSING CAPSTONE`, `NOT PRODUCTION EVIDENCE`.
 
-This small example shows the expected level of specificity for one conflict and one acceptance thread. It is not a filled answer key, does not resolve the Riverside brief, and cannot be submitted as the capstone.
+Read this before drafting the full capstone. It shows how one conflict becomes a
+testable criterion, an architecture decision, an external validation request,
+and an evidence-backed recommendation. Copy the reasoning pattern, not the
+answer. The example does not resolve the Riverside brief and cannot be submitted
+as the capstone.
 
 ## Example scope
 

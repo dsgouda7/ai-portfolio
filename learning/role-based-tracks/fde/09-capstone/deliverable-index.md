@@ -1,8 +1,34 @@
 # Capstone Deliverable Index
 
-Use this file as the package manifest and review queue. Do not mark an artifact
-complete because a file exists. `Complete` means its required evidence, owner,
-limitations, decision, and downstream links have been reviewed.
+Use this file after one minimal decision thread works end to end. It is the
+manifest for expanding that thread into a complete engagement review, not the
+starting point for learning the capstone.
+
+## Pass 1: Minimal Decision Thread
+
+Before tracking the full package, complete one row of this smaller path:
+
+| Riverside conflict | Acceptance criterion | Smallest-option decision | Evidence or validation gate | Rollout stop | Handoff owner | Recommendation |
+|---|---|---|---|---|---|---|
+| `[TODO: CON-RIV-*]` | `[TODO: AC-*]` | `[TODO: ADR-*]` | `[TODO]` | `[TODO]` | `[TODO]` | `[TODO: HOLD / NARROW / PROCEED TO NAMED GATE / DO NOT PROCEED]` |
+
+If you cannot explain that row in plain language, return to the workbook or the
+worked example. More templates will not repair a broken decision thread.
+
+## Pass 2: Full Package Manifest
+
+Do not mark an artifact complete because a file exists. `Complete` means its
+required evidence, owner, limitations, decision, and downstream links have been
+reviewed.
+
+Expand in three waves rather than opening every template at once:
+
+1. **Define the decision:** engagement control, discovery, and the smallest architecture.
+2. **Prove the bounded path:** data, identity, service envelope, evaluation, and rollout.
+3. **Make it operable:** incident response, handoff, project mapping, and the next iteration.
+
+Finish the current wave's decision links before opening the next one. A later
+finding may reopen an earlier wave; that is evidence doing its job, not failure.
 
 ## Package metadata
 

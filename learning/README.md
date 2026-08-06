@@ -25,27 +25,44 @@ These tracks live under [role-based-tracks/](role-based-tracks/README.md) becaus
 subject chapters into job-shaped practice rather than introduce another top-level subject. Learn
 them alongside the relevant GenAI, agentic AI, and infrastructure chapters.
 
-| Route | Use it when | Current status |
-|---|---|---|
-| [AI Engineer](role-based-tracks/ai-engineer/README.md) | You need to connect model mechanics, adaptation, retrieval, evaluation, gateways, infrastructure, release lineage, and production feedback. | Route, five operational chapters, Azure-shaped serving tutorial, capstone scaffold, and Riverside platform source are present. The route notebooks were executed successfully locally and then cleared; live Azure evidence and production readiness are not claimed. |
-| [Forward Deployed Engineer](role-based-tracks/fde/README.md) | You need to structure discovery, architecture, scope, and evidence across data, identity, rollout, incident, and handoff decisions. | Route, eight engagement chapters, and capstone are present. The notebooks were executed successfully locally and then cleared. Completion supports supervised practicum entry, not independent production execution. |
+| Route | What is this? | When should I use it? | Where do I start? |
+|---|---|---|---|
+| AI Engineer | A role-shaped path through model mechanics, adaptation, retrieval, evaluation, gateways, infrastructure, release lineage, and feedback. | You want to connect technical chapters into an observable AI application lifecycle. | [AI Engineer route and baseline](role-based-tracks/ai-engineer/README.md) |
+| Forward Deployed Engineer | A customer-engagement path through discovery, architecture, scope, data, identity, rollout, incidents, and handoff. | You want to practice making bounded technical and delivery decisions with customer constraints. | [FDE route and engagement baseline](role-based-tracks/fde/README.md) |
 
-The FDE route depends on the AI Engineer technical core. It builds discovery, architecture translation,
-and evidence discipline. Completing its local or synthetic work does not establish customer acceptance,
-production readiness, cloud behavior, commercial authority, or independent execution competence;
-production practice requires a supervised authorized engagement.
+The FDE route builds on the AI Engineer technical core, then adds discovery, architecture translation,
+and evidence discipline.
 
 ### Operational Bridges
 
-| Surface | Relationship | Evidence status |
-|---|---|---|
-| [Azure Operational LLM Serving](ai-infrastructure/09-azure-operational-llm-serving/README.md) | Connects fine-tuning, gateway, quantization, and inference concepts to a local Azure-shaped serving lab. | All 13 code cells executed successfully locally and were then cleared. The p95 gates returned `HOLD_LOCAL_RELEASE` and `HOLD_AZURE_PROMOTION`; Azure behavior is **live-unvalidated**. |
-| [Databricks-backed RAG data plane](../projects/rag-knowledge-pipeline/databricks/indexing/OPERATIONS.md) | Extends the local RAG pipeline with remote ingestion, governed records, and Direct Vector Access indexing assets. | Source and bundle assets exist; Databricks behavior is **live-unvalidated**. |
-| [Riverside AI Platform](../projects/riverside-ai-platform/docs/README.md) | Composes the shared contracts into an Azure production profile with Azure ML, APIM, evaluation, telemetry, load-test, and IaC assets. | Implemented source assets exist. The non-cloud suite passed 142 tests with 5 cloud tests deselected, and the offline preflight passed 9 tests; deployment and Azure behavior are **live-unvalidated**. |
+| Surface | What is this? | When should I use it? | Where do I start? |
+|---|---|---|---|
+| Azure Operational LLM Serving | An Azure-shaped local lab joining fine-tuning, gateways, quantization, and inference. | You want to practice bounded serving and release decisions after learning the component concepts. | [Serving tutorial](ai-infrastructure/09-azure-operational-llm-serving/README.md) |
+| Databricks-backed RAG data plane | Remote-ingestion, governed-record, and Direct Vector Access indexing extensions to the local RAG pipeline. | You want to study the data-plane boundary beyond the local RAG chapters. | [RAG data-plane operations](../projects/rag-knowledge-pipeline/databricks/indexing/OPERATIONS.md) |
+| Riverside AI Platform | A production-shaped source implementation joining contracts, Azure ML, APIM, evaluation, telemetry, load testing, and IaC. | You want a larger integration surface for route capstones or architecture review. | [Riverside documentation](../projects/riverside-ai-platform/docs/README.md) |
 
-`Planned` means the target artifact is not present. `Executed and cleared` means a notebook completed
-locally before its outputs and execution counts were removed. `Live-unvalidated` means source or design
-assets exist but no retained result from the target cloud or customer environment is claimed.
+### Validation and Status Transparency
+
+These details describe the evidence behind the routes and bridges; they do not change which route a
+learner should choose.
+
+- **Route notebooks:** The AI Engineer notebooks and all nine FDE notebooks were executed successfully
+  against local or synthetic fixtures, then outputs and execution counts were cleared so each learner
+  begins from a clean state. FDE completion supports entry into supervised practice, not independent
+  production execution.
+- **Serving safety gates:** All 13 cells in the Azure Operational LLM Serving tutorial executed locally.
+  Its p95 checks returned `HOLD_LOCAL_RELEASE` and `HOLD_AZURE_PROMOTION`. A `HOLD` is a deliberate
+  safety gate, not an error: release or cloud promotion stays blocked until the required threshold and
+  environment evidence pass.
+- **Cloud scope:** `Live-unvalidated` means source or design assets are present without a retained result
+  from the named cloud or customer environment. This currently applies to the serving tutorial's Azure
+  behavior and the Databricks RAG extensions.
+- **Riverside scope:** Implemented source assets are present. The non-cloud suite passed 142 tests with
+  5 cloud tests deselected, and the offline preflight passed 9 tests. Deployment, live Azure behavior,
+  customer acceptance, and production readiness are not claimed.
+
+`Planned` means the target artifact is not present. These labels preserve evidence boundaries; they
+are not learner-facing error states.
 
 ---
 

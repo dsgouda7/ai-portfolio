@@ -20,19 +20,13 @@ ai-portfolio/
 
 ## What's Here
 
-### Production Projects
-- [FPL Squad Optimizer](projects/fpl-squad-optimizer/) - XGBoost Fantasy Premier League team picker with walk-forward simulation
-- [Context Optimizer](projects/context-optimizer/) - LLM corpus compression and targeted retrieval library (91% token reduction)
-- [RAG Knowledge Pipeline](projects/rag-knowledge-pipeline/) - Three-phase local RAG plus authored Azure Databricks ingestion and indexing assets; Databricks behavior is live-unvalidated
-- [Riverside AI Platform](projects/riverside-ai-platform/docs/README.md) - Contract-driven Azure ML, APIM, Databricks, evaluation, telemetry, load-test, and IaC source assets; live Azure behavior is unvalidated
-- [Video Quality Enhancer](projects/video-quality-enhancer/) - 4K upscaling + audio denoising API, fully local
-
-See [projects/](projects/) for more details.
-
-### Learning & Exploration
-- [playground/](playground/) - Exploratory notebooks (AI agents, feature engineering, Azure)
-- [learning/](learning/) - Deep-dive study tracks plus role-oriented AI Engineer and FDE routes
-- [exercises/](exercises/) - Practice problems matching notes/ structure
+| Surface | What is this? | When should I use it? | Where do I start? |
+|---|---|---|---|
+| Study notes | A concept-first AI/ML curriculum with math, model, agent, and infrastructure chapters. | You want explanations, derivations, and a dependency-ordered syllabus. | [Notes index](notes/README.md) |
+| Exercises | Practice problems aligned with the study notes. | You want to check understanding by implementing the concepts yourself. | [Exercises index](exercises/README.md) |
+| Learning tracks | Guided notebooks, projects, and role-oriented routes. | You want a structured sequence that joins concepts to applied work. | [Learning index](learning/README.md) |
+| Playground | Exploratory notebooks and course implementations. | You want to experiment with a topic without following a production route. | [Playground index](playground/README.md) |
+| Projects | End-to-end applications and engineering reference implementations. | You want to inspect, run, or extend a complete system. | [Projects index](projects/README.md) |
 
 ---
 
@@ -42,7 +36,7 @@ All learning content lives here: a **19-chapter ML curriculum**, a math foundati
 
 → See [notes/README.md](notes/README.md) for the full index.
 
-**Quick on-ramp to transformers:** If you've completed basic ML training (gradient descent, neural networks, backprop) elsewhere and want to understand modern LLMs, start with [Ch.0 — Prerequisites: From Neural Networks to Transformers](notes/03-ai/ch00-from-networks-to-language/README.md). This 45-minute bridge chapter condenses RNNs, attention, skip connections, and encoder-decoder patterns—the 6 concepts Ch.1 (Transformers) assumes you know. Test yourself: Can you sketch 3-token attention? If yes, skip to Ch.1. If no, Ch.0 rebuilds the intuition with worked examples.
+**Quick on-ramp to transformers:** If you've completed basic ML training (gradient descent, neural networks, backprop) elsewhere and want to understand modern LLMs, start with [Ch.0 — Prerequisites: From Neural Networks to Transformers](notes/03-llm/ch00-from-networks-to-language/README.md). This 45-minute bridge chapter condenses RNNs, attention, skip connections, and encoder-decoder patterns—the 6 concepts Ch.1 (Transformers) assumes you know. Test yourself: Can you sketch 3-token attention? If yes, skip to Ch.1. If no, Ch.0 rebuilds the intuition with worked examples.
 
 ---
 
@@ -72,9 +66,9 @@ Exploratory implementations for hands-on learning and experimentation.
 Standalone, production-grade applications demonstrating end-to-end engineering skills.
 
 - **[fpl-squad-optimizer/](projects/fpl-squad-optimizer/)** — XGBoost Fantasy Premier League team picker; 4 position-specific regressors, walk-forward simulation, 51% oracle-capture rate
-- **[context-optimizer/](projects/context-optimizer/)** — LLM corpus compression + Tree-of-Thought retrieval library; 91% token reduction, constant cost regardless of corpus size, fully local with Ollama
-- **[rag-knowledge-pipeline/](projects/rag-knowledge-pipeline/)** — Three-phase local RAG: Wikipedia corpus → Delta Lake → ChromaDB → FastAPI; each phase independently deployable
-- **[riverside-ai-platform/](projects/riverside-ai-platform/docs/README.md)** — Azure production-profile source for contracts, Azure ML, APIM, Databricks integration, evaluation, telemetry, load testing, IaC, and operations; no live Azure validation is claimed
+- **[context-optimizer/](archived/projects/context-optimizer/)** — Archived LLM corpus compression + Tree-of-Thought retrieval library; 91% token reduction, constant cost regardless of corpus size, fully local with Ollama
+- **[rag-knowledge-pipeline/](projects/rag-knowledge-pipeline/)** — Three-phase RAG: Wikipedia corpus → Delta Lake → ChromaDB → FastAPI, with Databricks ingestion and indexing extensions
+- **[riverside-ai-platform/](projects/riverside-ai-platform/docs/README.md)** — Azure production-profile source for contracts, Azure ML, APIM, Databricks integration, evaluation, telemetry, load testing, IaC, and operations
 - **[video-quality-enhancer/](projects/video-quality-enhancer/)** — 4K video upscaling (Swin2SR) + audio denoising (MetricGAN+) REST API; GPU-accelerated with CPU fallback, fully local
 - **[voice-assistant/](projects/voice-assistant/)** — Dockerized voice AI: Whisper STT → DialoGPT → SpeechT5 TTS; responsive web UI, fully local
 - **[text-translation/](projects/text-translation/)** — Flask REST API: Whisper STT + Helsinki-NLP translation + Facebook MMS-TTS; fully local, no API keys
@@ -90,37 +84,36 @@ Standalone, production-grade applications demonstrating end-to-end engineering s
 
 In-depth technical tracks: runnable notebooks and architecture reference docs.
 
-**GenAI — `learning/genai/`**
-Progressive study track covering sequence models (RNNs), the full Transformer architecture, encoder-decoder patterns, and applied LLMs — 5 chapters from PyTorch primer through production LLM patterns.
-
-**Agentic AI — `learning/agentic-ai/`**
-Ten executable, offline-first notebooks that build OrderFlow from typed tool contracts to bounded
-planning, durable workflows, governance, MCP, multi-agent coordination, and saga recovery.
-
-**Agentic AI System Design — `learning/agentic-ai-system-design/`**
-Staff/Principal-level interview reference track (Markdown, no notebooks): platform architecture end-to-end, agent lifecycle & runtime, tool/MCP/skill registry, model gateway, state & memory, loop detection & termination, evaluation frameworks, observability, multi-agent patterns, recoverability & Saga, governance & guardrails, production scale, and a Semantic Kernel vs LangGraph comparison.
-
-**AI Engineer Route — [`learning/role-based-tracks/ai-engineer/`](learning/role-based-tracks/ai-engineer/README.md)**
-Role-oriented path connecting the technical tracks to data quality, prompt releases, application
-latency and cost, release lineage, and production feedback. The route and five operational chapters
-are authored, their notebooks were executed successfully locally and then cleared, and the capstone
-is present. No live Azure or production-readiness evidence is claimed.
-
-**Forward Deployed Engineer Route — [`learning/role-based-tracks/fde/`](learning/role-based-tracks/fde/README.md)**
-Customer-lifecycle path from discovery and architecture translation through data onboarding,
-identity, commercials, rollout, incident recovery, and handoff. The route and eight chapters are
-authored, their notebooks were executed successfully locally and then cleared, and the capstone is
-present. Customer validation and production readiness cannot be created by local exercises.
-
-**Azure Operational Serving — [`learning/ai-infrastructure/09-azure-operational-llm-serving/`](learning/ai-infrastructure/09-azure-operational-llm-serving/README.md)**
-Local, failure-first bridge from fine-tuned artifacts and gateway concepts to bounded serving
-mechanics. All 13 code cells executed successfully locally and were then cleared; the p95 gates
-returned `HOLD_LOCAL_RELEASE` and `HOLD_AZURE_PROMOTION`. Azure behavior remains live-unvalidated. Continue to the
-[RAG data plane](projects/rag-knowledge-pipeline/databricks/indexing/OPERATIONS.md) and
-[Riverside production profile](projects/riverside-ai-platform/docs/README.md) for operational source
-assets.
+| Track or route | What is this? | When should I use it? | Where do I start? |
+|---|---|---|---|
+| GenAI | A progressive path from PyTorch and sequence models through Transformers, fine-tuning, RAG, evaluation, and gateways. | You want to understand and build modern language-model systems. | [GenAI track](learning/genai/README.md) |
+| Agentic AI | Ten offline-first notebooks that build OrderFlow from tool contracts through planning, workflows, governance, interoperability, coordination, and recovery. | You want hands-on practice building bounded tool-using agents. | [Agentic AI track](learning/agentic-ai/README.md) |
+| Agentic AI System Design | A Staff/Principal-level architecture reference covering the complete agent platform. | You want design-review or interview depth rather than another notebook sequence. | [System-design track](learning/agentic-ai-system-design/system-design.md) |
+| AI Engineer | A role route joining model behavior, data, evaluation, serving, releases, and feedback. | You want to practice operating an AI application as one production loop. | [AI Engineer route](learning/role-based-tracks/ai-engineer/README.md) |
+| Forward Deployed Engineer | A customer-lifecycle route from discovery and architecture translation through rollout, incidents, and handoff. | You want to practice turning an ambiguous customer workflow into bounded delivery decisions. | [FDE route](learning/role-based-tracks/fde/README.md) |
+| Azure Operational LLM Serving | A failure-first bridge from fine-tuned artifacts and gateway concepts to serving mechanics. | You want to connect model and infrastructure concepts to an Azure-shaped local lab. | [Serving tutorial](learning/ai-infrastructure/09-azure-operational-llm-serving/README.md) |
 
 → See [learning/README.md](learning/README.md) for full chapter listings and prerequisites.
+
+---
+
+## Validation Transparency
+
+The navigation above describes what to learn and where to begin. The details below describe what has
+and has not been validated; they are scope boundaries, not extra prerequisites.
+
+- **Cleared notebook outputs:** The AI Engineer and FDE route notebooks were executed successfully
+  against their local or synthetic fixtures, then their outputs and execution counts were removed so
+  learners start with clean notebooks. The Azure serving tutorial's 13 code cells were handled the
+  same way. Cleared outputs do not mean the notebooks failed or were never run.
+- **Safety-gate holds:** The serving tutorial returned `HOLD_LOCAL_RELEASE` and
+  `HOLD_AZURE_PROMOTION` because its designed p95 thresholds were not met. These labels are expected
+  fail-closed decisions: they block release or Azure promotion until the required evidence passes;
+  they are not setup or runtime errors.
+- **Cloud and production scope:** `Live-unvalidated` means source or design assets exist, but no
+  retained result from the named cloud or customer environment is being claimed. The Databricks
+  extensions in the RAG pipeline and the Azure behavior of Riverside and the serving tutorial remain
+  in this category. Local exercises do not establish customer acceptance or production readiness.
 
 ---
 
@@ -132,14 +125,14 @@ This repo is **not accredited** — it's self-authored study material. It is, ho
 |---|---|---|---|
 | 1 | **DeepLearning.AI — *Deep Learning Specialization* (Coursera, Andrew Ng)** | [00-MathUnderTheHood](notes/00-math-under-the-hood), [01-ML](notes/01-ml) Ch.1–8 · Ch.15 · Ch.17–18 | Derives the math Coursera states as given; adds production depth Coursera skips. |
 | 2 | **DeepLearning.AI — *Machine Learning Specialization* (Coursera)** | [01-ML](notes/01-ml) Ch.1–6 · Ch.9–14 · Ch.19 | California Housing continuity forces real code understanding vs scaffolded notebooks. |
-| 3 | **HuggingFace — *NLP Course* + *LLM Course*** | [AI](notes/03-ai) (all), [01-ML](notes/01-ml) Ch.17–18, [MultiAgentAI](notes/06-multi-agent-ai) | Supplies the "why" behind every HF snippet — tokenisation, RAG, fine-tuning, evaluation. |
+| 3 | **HuggingFace — *NLP Course* + *LLM Course*** | [LLM](notes/03-llm) (all), [01-ML](notes/01-ml) Ch.17–18, [MultiAgentAI](notes/06-multi-agent-ai) | Supplies the "why" behind every HF snippet — tokenisation, RAG, fine-tuning, evaluation. |
 | 4 | **NVIDIA Deep Learning Institute — *LLMs* / *Inference Optimization* / *Fundamentals of Deep Learning*** | [AIInfrastructure](notes/07-ai-infrastructure) (all), [01-ML](notes/01-ml) Ch.4–8 | Vendor-neutral grounding for GPU architecture, quantisation, vLLM, serving. |
-| 5 | **Azure AI Engineer Associate (AI-102)** / **AWS Certified Machine Learning – Specialty (MLS-C01)** | [AI](notes/03-ai), [AIInfrastructure](notes/07-ai-infrastructure), [MultiAgentAI](notes/06-multi-agent-ai) | Cloud exams test services; this repo teaches what the services actually do underneath. |
+| 5 | **Azure AI Engineer Associate (AI-102)** / **AWS Certified Machine Learning – Specialty (MLS-C01)** | [LLM](notes/03-llm), [AIInfrastructure](notes/07-ai-infrastructure), [MultiAgentAI](notes/06-multi-agent-ai) | Cloud exams test services; this repo teaches what the services actually do underneath. |
 | 6 | **Stanford Online — *XCS229 / CS229 Machine Learning* (paid professional track)** | [00-MathUnderTheHood](notes/00-math-under-the-hood) Ch.5–7, [01-ML](notes/01-ml) Ch.5 · Ch.6 · Ch.9 · Ch.11 · Ch.15 | Practical production framing alongside CS229's academic rigor. |
-| 7 | **DeepLearning.AI — *Generative AI with LLMs* (Coursera)** | [AI](notes/03-ai), [01-ML](notes/01-ml) Ch.18, [MultimodalAI](notes/04-multimodal-ai) | Adds agent orchestration, multi-agent protocols, and local-inference economics. |
+| 7 | **DeepLearning.AI — *Generative AI with LLMs* (Coursera)** | [LLM](notes/03-llm), [01-ML](notes/01-ml) Ch.18, [MultimodalAI](notes/04-multimodal-ai) | Adds agent orchestration, multi-agent protocols, and local-inference economics. |
 | 8 | **MIT / edX — *MicroMasters in Statistics and Data Science*** | [00-MathUnderTheHood](notes/00-math-under-the-hood) Ch.7, [01-ML](notes/01-ml) Ch.9 · Ch.14 · Ch.15 | Use as warm-up, not substitute — MicroMasters is heavier on pure statistics. |
 
-**Recommended primary pairing:** *DeepLearning.AI Deep Learning Specialization + HuggingFace LLM Course*, using [notes/00-MathUnderTheHood/](notes/00-math-under-the-hood) to build mathematical intuition and [notes/03-ai/](notes/03-ai) + [notes/07-ai-infrastructure/](notes/07-ai-infrastructure) as the production layer those courses intentionally skip.
+**Recommended primary pairing:** *DeepLearning.AI Deep Learning Specialization + HuggingFace LLM Course*, using [notes/00-MathUnderTheHood/](notes/00-math-under-the-hood) to build mathematical intuition and [notes/03-llm/](notes/03-llm) + [notes/07-ai-infrastructure/](notes/07-ai-infrastructure) as the production layer those courses intentionally skip.
 
 ---
 
@@ -151,7 +144,7 @@ Every track in this repo is the response to a specific historical bottleneck. Re
 |---|---|---|
 | **Pre-1900s** — *math foundations* | Curves, gradients, and probability had to be invented before "fitting a model" was a coherent idea (Newton/Leibniz → Gauss → Pearson). | [notes/00-MathUnderTheHood/](notes/00-math-under-the-hood#historical-and-chronological-evolution) — Euclid through Rumelhart, mapped to chapters |
 | **1805 → 2017** — *classical & deep ML* | Least squares → MLE → perceptrons → AI winter → backprop → CNNs → LSTMs → attention → Transformer. Every chapter exists because an earlier model failed at a specific problem. | [notes/README.md (ML history)](notes/README.md#how-we-got-here--a-short-history-of-machine-learning) — full 30-row timeline aligned to ML Ch.1–19 |
-| **2017 → today** — *agentic AI* | Once Transformers existed, the next bottleneck moved up the stack: prompting → CoT reasoning → retrieval → tool use → ReAct → multi-agent orchestration. | [notes/03-ai/AIPrimer.md](notes/03-ai/ai-primer.md#how-we-got-here--a-short-history-of-agentic-ai) |
+| **2017 → today** — *agentic AI* | Once Transformers existed, the next bottleneck moved up the stack: prompting → CoT reasoning → retrieval → tool use → ReAct → multi-agent orchestration. | [notes/05-agentic-ai/README.md](notes/05-agentic-ai/README.md) |
 | **2020 → today** — *multi-agent protocols* | Single agents hit context-window and trust ceilings. The fix was protocol-level: MCP, A2A, event buses, sandboxing. | [notes/06-MultiAgentAI/README.md](notes/06-multi-agent-ai/README.md#how-we-got-here--a-short-history-of-multi-agent-ai) |
 | **2014 → today** — *multimodal & generative* | GANs → VAEs → CLIP → DDPM → Latent Diffusion → ControlNet → multimodal LLMs. Each step solved a stability or controllability gap in the previous one. | [notes/04-MultimodalAI/README.md](notes/04-multimodal-ai/README.md#how-we-got-here--a-short-history-of-multimodal--generative-ai) |
 | **1999 → today** — *AI infrastructure* | GPU as graphics card → CUDA → tensor cores → HBM → ZeRO → Flash Attention → PagedAttention → 4-bit quantisation. Every chapter exists because the previous bottleneck moved (compute → memory → throughput → cost). | [notes/07-ai-infrastructure/README.md](notes/07-ai-infrastructure/README.md#how-we-got-here--a-short-history-of-ai-infrastructure) |
@@ -210,7 +203,7 @@ flowchart TD
 **Goal**: Master real-world data cleaning, validation, and quality checks.
 
 **Path**:
-- [notes/01-ml/00_data_fundamentals/](notes/01-ml/00_data_fundamentals) — 3 chapters (planned in v1.1)
+- [notes/01-ml/00-data-acquisition/](notes/01-ml/00-data-acquisition) — data acquisition foundations
   - Ch.1: Pandas & EDA
   - Ch.2: Class Imbalance
   - Ch.3: Data Validation & Drift Detection
@@ -222,15 +215,15 @@ flowchart TD
 **Goal**: Train classical ML models, understand evaluation metrics, tune hyperparameters.
 
 **Path**:
-- [notes/01-ml/01_regression/](notes/01-ml/01_regression) — Ch.1-5 (Linear → Multiple → Polynomial → Regularization → Metrics)
-- [notes/01-ml/02_classification/](notes/01-ml/02_classification) — Ch.1-3 (Logistic Regression → Classifiers → Metrics)
+- [notes/01-ml/01-regression/](notes/01-ml/01-regression) — regression sequence (Linear → Multiple → Polynomial → Regularization → Metrics)
+- [notes/01-ml/02-classification/](notes/01-ml/02-classification) — classification sequence (Logistic Regression → Classifiers → Metrics)
 - **Outcome**: Can build end-to-end regression/classification pipelines, interpret precision/recall, tune learning rates
 
 #### Stage 4: ML Core — Neural Networks & Transformers
 **Goal**: Understand deep learning from perceptrons to attention mechanisms.
 
 **Path**:
-- [notes/01-ml/03_neural_networks/](notes/01-ml/03_neural_networks) — Ch.1-10 (XOR → Dense → Backprop → CNNs → RNNs → Attention → Transformers)
+- [notes/01-ml/03-neural-networks/](notes/01-ml/03-neural-networks) — neural-network sequence (XOR → Dense → Backprop → CNNs → RNNs → Attention → Transformers)
 - **Milestone**: After Ch.10 (Transformers), you're ready to start the AI track in parallel
 - **Outcome**: Can implement a Transformer from scratch, understand self-attention, know when CNNs vs RNNs apply
 
@@ -238,7 +231,7 @@ flowchart TD
 **Goal**: Choose one specialization path based on career target. You can revisit the others later.
 
 **Option A — Agentic AI** (for AI product engineers):
-- [notes/03-ai/](notes/03-ai) — LLM Fundamentals → Prompt Engineering → Chain-of-Thought → RAG → Vector DBs → ReAct → Evaluation → Fine-Tuning
+- [notes/03-llm/](notes/03-llm) — Transformer architecture → inference → training → model internals → prompting → reasoning → RAG → vector databases
 - **Outcome**: Can build RAG pipelines, orchestrate tool-using agents, evaluate hallucination rates
 
 **Option B — Multimodal AI** (for generative AI engineers):
@@ -253,7 +246,7 @@ flowchart TD
 **Goal**: Production computer vision and end-to-end deployment.
 
 **Path**:
-- [notes/02-advanced_deep_learning/](notes/02-advanced_deep_learning) — ResNets → Efficient Architectures → Object Detection → Segmentation → Pruning → Mixed Precision
+- [notes/02-bridging-to-transformers/](notes/02-bridging-to-transformers) — ResNets → contrastive learning → self-supervised vision → distillation → pruning and mixed precision
 - [notes/07-ai-infrastructure/](notes/07-ai-infrastructure) — (if not already completed) Serving, Production Deployment
 - [notes/08-devops-fundamentals/](notes/08-devops-fundamentals) — Docker → Kubernetes → CI/CD → Monitoring
 - **Outcome**: Can deploy a compressed YOLOv5 model to Kubernetes, monitor latency with Prometheus, achieve 99% uptime
