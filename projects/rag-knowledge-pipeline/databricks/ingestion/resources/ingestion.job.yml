@@ -1,0 +1,92 @@
+resources:
+  jobs:
+    governed_document_ingestion:
+      name: riverside-governed-document-ingestion-${bundle.target}
+      description: Ingests governed ADLS or Unity Catalog Volume documents into v1 raw and parsed Delta records.
+      max_concurrent_runs: 1
+      timeout_seconds: 10800
+      queue:
+        enabled: true
+      run_as:
+        service_principal_name: ${var.service_principal_name}
+      tags:
+        component: rag-ingestion
+        contract_version: 1.0.0
+        environment: ${bundle.target}
+      job_clusters:
+        - job_cluster_key: ingestion_cluster
+          new_cluster:
+            spark_version: 15.4.x-scala2.12
+            node_type_id: ${var.node_type_id}
+            data_security_mode: SINGLE_USER
+            runtime_engine: PHOTON
+            autoscale:
+              min_workers: 1
+              max_workers: 4
+            azure_attributes:
+              availability: ON_DEMAND_AZURE
+      tasks:
+        - task_key: setup_unity_catalog_tables
+          job_cluster_key: ingestion_cluster
+          timeout_seconds: 1800
+          max_retries: 1
+          min_retry_interval_millis: 60000
+          python_wheel_task:
+            package_name: riverside_rag_ingestion
+            entry_point: riverside-ingest-setup
+            parameters: &ingestion_parameters
+              - --source-uri
+              - ${var.source_uri}
+              - --source-adapter
+              - ${var.source_adapter}
+              - --file-glob
+              - ${var.file_glob}
+              - --catalog
+              - ${var.catalog}
+              - --schema
+              - ${var.schema}
+              - --volume
+              - ${var.volume}
+              - --tenant-id
+              - ${var.tenant_id}
+              - --region
+              - ${var.region}
+              - --classification
+              - ${var.classification}
+              - --acl-visibility
+              - ${var.acl_visibility}
+              - --acl-principals
+              - ${var.acl_principals}
+              - --acl-groups
+              - ${var.acl_groups}
+              - --deletion-status
+              - ${var.deletion_status}
+              - --deletion-requested-at
+              - ${var.deletion_requested_at}
+              - --deleted-at
+              - ${var.deleted_at}
+              - --max-quarantine-rate
+              - ${var.max_quarantine_rate}
+              - --min-parse-success-rate
+              - ${var.min_parse_success_rate}
+              - --run-id
+              - "{{job.run_id}}"
+          libraries:
+            - whl: ../../../phase1-ingest/dist/*.whl
+        - task_key: ingest_documents
+          depends_on:
+            - task_key: setup_unity_catalog_tables
+          job_cluster_key: ingestion_cluster
+          timeout_seconds: 7200
+          max_retries: 2
+          min_retry_interval_millis: 120000
+          retry_on_timeout: true
+          python_wheel_task:
+            package_name: riverside_rag_ingestion
+            entry_point: riverside-ingest
+            parameters: *ingestion_parameters
+          libraries:
+            - whl: ../../../phase1-ingest/dist/*.whl
+      permissions:
+        - service_principal_name: ${var.service_principal_name}
+          level: CAN_MANAGE_RUN

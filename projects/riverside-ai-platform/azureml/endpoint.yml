@@ -1,0 +1,13 @@
+$schema: https://azuremlschemas.azureedge.net/latest/managedOnlineEndpoint.schema.json
+name: RIVERSIDE-ENDPOINT-NAME-REQUIRED
+description: Riverside verified SmolLM2 base plus LoRA chat endpoint.
+auth_mode: aad_token
+identity:
+  type: system_assigned
+public_network_access: disabled
+tags:
+  workload: riverside-ai-platform
+  contract_version: 1.0.0
+  authentication: entra
+  environment: __RIVERSIDE_ENVIRONMENT__
+  region: __RIVERSIDE_REGION__

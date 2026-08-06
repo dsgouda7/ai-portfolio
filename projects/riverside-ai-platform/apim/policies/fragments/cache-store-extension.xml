@@ -1,0 +1,7 @@
+<fragment>
+  <choose>
+    <when condition="@(&quot;{{riverside-semantic-cache-enabled}}&quot;.Equals(&quot;true&quot;, StringComparison.OrdinalIgnoreCase) &amp;&amp; context.Response.StatusCode == 200)">
+      <llm-semantic-cache-store duration="{{riverside-semantic-cache-ttl-seconds}}" cache-response="true" />
+    </when>
+  </choose>
+</fragment>

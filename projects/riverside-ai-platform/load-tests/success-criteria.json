@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "engine_health": {
+    "maximum_average_cpu_percentage": 75.0,
+    "maximum_average_memory_percentage": 75.0,
+    "expected_engine_count": 2,
+    "require_all_engines": true
+  },
+  "stages": {
+    "warm": {"maximum_error_percentage": 5.0, "maximum_total_p95_ms": 10000.0, "maximum_ttft_p95_ms": 2000.0, "maximum_tpot_p95_ms": 160.0},
+    "steady": {"maximum_error_percentage": 1.0, "maximum_total_p95_ms": 8000.0, "maximum_ttft_p95_ms": 1500.0, "maximum_tpot_p95_ms": 120.0},
+    "target": {"maximum_error_percentage": 1.0, "maximum_total_p95_ms": 8000.0, "maximum_ttft_p95_ms": 1500.0, "maximum_tpot_p95_ms": 120.0},
+    "overload": {"maximum_error_percentage": 25.0, "maximum_total_p95_ms": 15000.0, "maximum_ttft_p95_ms": 3000.0, "maximum_tpot_p95_ms": 250.0},
+    "recovery": {"maximum_error_percentage": 1.0, "maximum_total_p95_ms": 8000.0, "maximum_ttft_p95_ms": 1500.0, "maximum_tpot_p95_ms": 120.0}
+  },
+  "recovery": {
+    "maximum_total_p95_multiplier_of_steady": 1.25,
+    "maximum_error_percentage_delta_from_steady": 0.5
+  }
+}

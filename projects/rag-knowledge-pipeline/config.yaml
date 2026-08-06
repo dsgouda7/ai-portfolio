@@ -13,20 +13,54 @@ local:
 
 # Remote execution (Databricks workspace integration)
 remote:
-  workspace_url: ""  # e.g., https://your-workspace.cloud.databricks.com
-  token_env_var: DATABRICKS_TOKEN
-  vector_search_endpoint: ""
+  workspace_url: ${DATABRICKS_HOST}
+  vector_search_endpoint: ${RIVERSIDE_VECTOR_SEARCH_ENDPOINT}
+  vector_search_endpoint_type: standard  # Options: standard | storage-optimized
   catalog: main
   schema: rag_demo
   volume: rag_data
   embedding_model: databricks-gte-large-en
+  embedding_model_revision: ""
+  embedding_dimensions: ""
+  embedding_endpoint: ""
+  index_name: ""
+  index_version: 1.0.0
+  pipeline_version: 1.0.0
+  chunk_strategy_version: 1.0.0
 
-# LLM Configuration
-llm:
-  provider: watsonx  # Options: watsonx | openai | anthropic
-  model_id: meta-llama/llama-4-maverick-17b-128e-instruct-fp8
-  max_tokens: 512
-  temperature: 0.1
+# Serving selects retrieval from the pipeline mode and generation independently.
+serving:
+  retrieval:
+    provider: auto  # local -> ChromaDB; remote -> Databricks AI Search
+  generation:
+    provider: openai_compatible  # Options: openai_compatible | azure_endpoint | watsonx_legacy
+    model_alias: riverside-editor
+    max_input_tokens: 8192
+    max_tokens: 512
+    temperature: 0.1
+    timeout_seconds: 30
+    max_retries: 2
+    endpoint:
+      provider: local  # Options for azure_endpoint: apim | azure_ml | foundry
+      url: http://host.docker.internal:8001
+      route: /v1/chat/completions
+      auth: none
+      token_scope: ""
+      azureml_deployment: ""
+      foundry_deployment: ""
+      foundry_api_version: 2024-10-21
+    # Legacy provider is disabled unless provider is explicitly set to watsonx_legacy.
+    watsonx_legacy:
+      url: https://us-south.ml.cloud.ibm.com
+      project_id: skills-network
+      model_id: meta-llama/llama-4-maverick-17b-128e-instruct-fp8
+  deployment:
+    environment: dev
+    release_id: local-development
+    deployment_slot: blue
+    runtime: rag-phase3-serve
+    runtime_version: 0.2.0
+    source_commit: "0000000"
 
 # Retrieval parameters
 retrieval:

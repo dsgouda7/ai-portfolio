@@ -13,7 +13,7 @@ import torch
 # Add parent directory to path for shared imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from shared.config_loader import load_config, get_local_config, get_mode
+from shared.config_loader import get_local_config, get_mode, get_remote_config, load_config
 from shared.logging_config import setup_logging, get_logger
 from shared.constants import DELTA_LAKE_PATH, CHROMA_DB_PATH
 
@@ -40,8 +40,9 @@ def run_vectorization():
     logger.info(f"Using device: {device}")
 
     if mode == "remote":
-        logger.error("Remote mode not yet implemented")
-        raise NotImplementedError("Databricks remote vectorization requires workspace configuration")
+        from remote.runner import run_remote_vectorization
+
+        return run_remote_vectorization(get_remote_config(config), logger=logger)
 
     # Local mode: Read from Delta Lake, generate embeddings, write to ChromaDB
     delta_path = local_config.get("delta_path", str(DELTA_LAKE_PATH))

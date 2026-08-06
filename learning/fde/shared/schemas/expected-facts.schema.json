@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/ai-portfolio/fde/expected-facts.schema.json",
+  "title": "Riverside FDE Expected Facts",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "fixture_version", "fixture_id", "description", "default_source_fixture", "default_comparison", "facts"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "fixture_version": {"const": "RIV-FDE-1.0.0"},
+    "fixture_id": {"const": "FACTSET-RIV-001"},
+    "description": {"type": "string", "minLength": 1},
+    "default_source_fixture": {"const": "riverside-engagement-v1.json"},
+    "default_comparison": {"const": "equals"},
+    "facts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/fact"}
+    }
+  },
+  "$defs": {
+    "stableId": {"type": "string", "pattern": "^[A-Z][A-Z0-9-]+$"},
+    "evidenceClass": {
+      "enum": [
+        "measured_baseline",
+        "modeled_assumption",
+        "customer_claim",
+        "policy_constraint",
+        "external_validation_required",
+        "intentional_conflict",
+        "unknown"
+      ]
+    },
+    "notebookId": {"type": "string", "pattern": "^FDE-0[1-8]$"},
+    "fact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fact_id", "category", "subject_id", "json_pointer", "expected_value", "evidence_class", "notebook_ids"],
+      "properties": {
+        "fact_id": {"type": "string", "pattern": "^FACT-RIV-[0-9]{3}$"},
+        "category": {"type": "string", "minLength": 1},
+        "subject_id": {"$ref": "#/$defs/stableId"},
+        "source_fixture": {"enum": ["riverside-engagement-v1.json", "riverside-source-samples-v1.json"]},
+        "json_pointer": {"type": "string", "pattern": "^/"},
+        "comparison": {"enum": ["equals", "summary"]},
+        "expected_value": {},
+        "evidence_class": {"$ref": "#/$defs/evidenceClass"},
+        "notebook_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/notebookId"}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "schema_version": "ai-engineer.capstone-drift-iteration-decision.v1",
+  "candidate_release_id": "<candidate-release-id>",
+  "baseline_window": {"release_id": "<release-id>", "start_utc": "<timestamp>", "end_utc": "<timestamp>", "count": 0},
+  "current_window": {"release_id": "<release-id>", "start_utc": "<timestamp>", "end_utc": "<timestamp>", "count": 0},
+  "sampling": {"policy_version": "<version>", "forbidden_content_absent": false, "must_keep_critical_rate": 1.0, "routine_sample_rate": 0.0},
+  "signals": [
+    {"lens": "<traffic|data|retrieval|quality|latency|cost|policy>", "metric": "<metric>", "baseline": {"numerator": 0, "denominator": 0, "value": 0.0}, "current": {"numerator": 0, "denominator": 0, "value": 0.0}, "change": 0.0, "unit": "<unit>", "uncertainty": "<method-and-interval>", "owner": "<owner>"}
+  ],
+  "critical_events": [
+    {"trace_id": "<privacy-safe-trace-id>", "type": "<policy-false-allow-or-other>", "containment": "<action>", "review_status": "<status>"}
+  ],
+  "failure_clusters": [
+    {"code": "<code>", "trace_ids": ["<id>"], "multi_label_preserved": true}
+  ],
+  "evaluation_candidate": {"id": "<dataset-id>", "version": "<version>", "sha256": "<64-lowercase-hex>", "reviewed_case_count": 0, "source_release_ids": ["<release-id>"]},
+  "actions": {
+    "prompt_change": {"selected": false, "evidence": "<why-or-why-not>", "next_test": "<test>"},
+    "retrieval_index_update": {"selected": false, "evidence": "<why-or-why-not>", "next_test": "<test>"},
+    "guardrail_change": {"selected": false, "evidence": "<why-or-why-not>", "next_test": "<test>"},
+    "fine_tuning": {"selected": false, "evidence": "<why-or-why-not>", "next_test": "<test>"},
+    "no_action": {"selected": false, "evidence": "<why-or-why-not>", "next_test": "<test>"}
+  },
+  "decision": "<hold-release-and-remediate|collect-more-evidence|no-action|advance>",
+  "owners": ["<owner>"],
+  "follow_up_window": "<definition>",
+  "rollback_target": "<release-and-index-policy-target>",
+  "evidence_class": "<evidence-class>",
+  "limitations": ["<representativeness-review-or-causality-limit>"]
+}

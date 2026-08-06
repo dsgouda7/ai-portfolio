@@ -1,0 +1,9 @@
+{
+  "name": "offline-evaluation-results",
+  "uri": "https://fixture-user:fixture-password@example.invalid/results.json?mutable=latest",
+  "digest": "NOT-A-SHA256-DIGEST",
+  "expected_errors": [
+    "credentials, query parameters, or fragments are forbidden",
+    "digest must be lowercase SHA-256"
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "chapter_profile": "local-sandbox",
+  "evidence": {
+    "environment": "LOCAL",
+    "backend": "SUBSTITUTED",
+    "azure_validation": "UNVALIDATED"
+  },
+  "endpoint_adapter": {
+    "kind": "local_sandbox",
+    "endpoint_url": "http://127.0.0.1:0",
+    "authentication": "none-loopback-only"
+  },
+  "service_policy": {
+    "max_concurrency": 2,
+    "max_queue_ms": 20,
+    "request_deadline_ms": 250,
+    "max_retries": 1,
+    "circuit_failure_threshold": 2,
+    "circuit_cooldown_ms": 250,
+    "enforce_readiness": true,
+    "cache_enabled": true,
+    "singleflight_enabled": true,
+    "account_tokens": true
+  }
+}

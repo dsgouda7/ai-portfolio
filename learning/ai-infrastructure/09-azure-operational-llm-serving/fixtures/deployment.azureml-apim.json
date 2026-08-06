@@ -1,0 +1,28 @@
+{
+  "chapter_profile": "azureml-apim-production-shape",
+  "evidence": {
+    "environment": "UNVALIDATED",
+    "backend": "UNVALIDATED",
+    "azure_validation": "UNVALIDATED"
+  },
+  "endpoint_adapter": {
+    "kind": "azureml_apim",
+    "endpoint_url": "https://riverside-api.example.invalid/v1/chat/completions",
+    "authentication": "workload_identity",
+    "gateway_service": "Azure API Management",
+    "backend_service": "Azure ML managed online endpoint",
+    "network_calls_enabled": false
+  },
+  "service_policy": {
+    "max_concurrency": 2,
+    "max_queue_ms": 20,
+    "request_deadline_ms": 250,
+    "max_retries": 1,
+    "circuit_failure_threshold": 2,
+    "circuit_cooldown_ms": 250,
+    "enforce_readiness": true,
+    "cache_enabled": true,
+    "singleflight_enabled": true,
+    "account_tokens": true
+  }
+}

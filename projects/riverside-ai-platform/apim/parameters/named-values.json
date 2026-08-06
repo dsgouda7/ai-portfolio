@@ -1,0 +1,150 @@
+{
+  "contract_version": "1.0.0",
+  "description": "Deployment contract for APIM named values. Values come from environment configuration or IaC parameters; this file contains no credentials or live endpoints.",
+  "named_values": [
+    {
+      "name": "riverside-environment",
+      "source": "environment",
+      "allowed_values": [
+        "dev",
+        "staging",
+        "production"
+      ],
+      "secret": false
+    },
+    {
+      "name": "riverside-entra-tenant-id",
+      "source": "ENTRA_TENANT_ID",
+      "secret": false
+    },
+    {
+      "name": "riverside-entra-client-application-id",
+      "source": "ENTRA_CLIENT_APPLICATION_ID",
+      "secret": false
+    },
+    {
+      "name": "riverside-entra-api-audience",
+      "source": "ENTRA_API_AUDIENCE",
+      "secret": false
+    },
+    {
+      "name": "riverside-entra-required-scope",
+      "source": "ENTRA_REQUIRED_SCOPE",
+      "secret": false
+    },
+    {
+      "name": "riverside-backend-pool-id",
+      "source": "APIM_BACKEND_POOL_ID",
+      "secret": false
+    },
+    {
+      "name": "riverside-backend-audience",
+      "source": "RIVERSIDE_BACKEND_AUDIENCE",
+      "secret": false
+    },
+    {
+      "name": "riverside-request-schema-id",
+      "source": "APIM_REQUEST_SCHEMA_ID",
+      "example": "ChatCompletionRequest",
+      "secret": false
+    },
+    {
+      "name": "riverside-max-request-bytes",
+      "source": "APIM_MAX_REQUEST_BYTES",
+      "example": "1048576",
+      "secret": false
+    },
+    {
+      "name": "riverside-max-input-tokens",
+      "source": "MODEL_MAX_INPUT_TOKENS",
+      "example": "8192",
+      "secret": false
+    },
+    {
+      "name": "riverside-max-output-tokens",
+      "source": "MODEL_MAX_OUTPUT_TOKENS",
+      "example": "2048",
+      "secret": false
+    },
+    {
+      "name": "riverside-standard-tpm",
+      "source": "APIM_STANDARD_TPM",
+      "example": "20000",
+      "secret": false
+    },
+    {
+      "name": "riverside-premium-tpm",
+      "source": "APIM_PREMIUM_TPM",
+      "example": "60000",
+      "secret": false
+    },
+    {
+      "name": "riverside-internal-tpm",
+      "source": "APIM_INTERNAL_TPM",
+      "example": "100000",
+      "secret": false
+    },
+    {
+      "name": "riverside-max-retries",
+      "source": "APIM_MAX_RETRIES",
+      "example": "2",
+      "secret": false
+    },
+    {
+      "name": "riverside-backend-timeout-seconds",
+      "source": "APIM_BACKEND_TIMEOUT_SECONDS",
+      "example": "30",
+      "secret": false
+    },
+    {
+      "name": "riverside-max-retry-after-seconds",
+      "source": "APIM_MAX_RETRY_AFTER_SECONDS",
+      "example": "30",
+      "secret": false
+    },
+    {
+      "name": "riverside-content-safety-enabled",
+      "source": "APIM_CONTENT_SAFETY_ENABLED",
+      "example": "false",
+      "secret": false
+    },
+    {
+      "name": "riverside-content-safety-backend-id",
+      "source": "APIM_CONTENT_SAFETY_BACKEND_ID",
+      "secret": false
+    },
+    {
+      "name": "riverside-semantic-cache-enabled",
+      "source": "APIM_SEMANTIC_CACHE_ENABLED",
+      "example": "false",
+      "secret": false
+    },
+    {
+      "name": "riverside-embeddings-backend-id",
+      "source": "APIM_EMBEDDINGS_BACKEND_ID",
+      "secret": false
+    },
+    {
+      "name": "riverside-semantic-cache-score-threshold",
+      "source": "APIM_SEMANTIC_CACHE_SCORE_THRESHOLD",
+      "example": "0.05",
+      "secret": false
+    },
+    {
+      "name": "riverside-semantic-cache-ttl-seconds",
+      "source": "APIM_SEMANTIC_CACHE_TTL_SECONDS",
+      "example": "300",
+      "secret": false
+    },
+    {
+      "name": "riverside-model-release-id",
+      "source": "RIVERSIDE_MODEL_RELEASE_ID",
+      "secret": false
+    },
+    {
+      "name": "riverside-deployment-name",
+      "source": "RIVERSIDE_DEPLOYMENT_NAME",
+      "secret": false
+    }
+  ]
+}

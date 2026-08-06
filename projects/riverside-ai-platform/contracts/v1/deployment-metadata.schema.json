@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.riverside.example/contracts/v1/deployment-metadata.schema.json",
+  "title": "Riverside Deployment Metadata v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "kind",
+    "environment",
+    "release_id",
+    "model_alias",
+    "deployment_name",
+    "deployment_slot",
+    "region",
+    "runtime",
+    "runtime_version",
+    "index_version",
+    "deployed_at",
+    "source_commit"
+  ],
+  "properties": {
+    "contract_version": {
+      "$ref": "common.schema.json#/$defs/contractVersion"
+    },
+    "kind": {
+      "const": "deployment_metadata"
+    },
+    "environment": {
+      "type": "string",
+      "enum": [
+        "dev",
+        "staging",
+        "production"
+      ]
+    },
+    "release_id": {
+      "$ref": "common.schema.json#/$defs/identifier"
+    },
+    "model_alias": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+    },
+    "deployment_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "deployment_slot": {
+      "type": "string",
+      "enum": [
+        "blue",
+        "green"
+      ]
+    },
+    "region": {
+      "$ref": "common.schema.json#/$defs/region"
+    },
+    "runtime": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "runtime_version": {
+      "$ref": "common.schema.json#/$defs/semanticVersion"
+    },
+    "index_version": {
+      "$ref": "common.schema.json#/$defs/semanticVersion"
+    },
+    "deployed_at": {
+      "$ref": "common.schema.json#/$defs/timestamp"
+    },
+    "source_commit": {
+      "$ref": "common.schema.json#/$defs/sourceCommit"
+    }
+  }
+}

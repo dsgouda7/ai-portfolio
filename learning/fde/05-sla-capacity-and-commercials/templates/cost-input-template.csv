@@ -1,0 +1,22 @@
+scenario,cost_id,cost_component,rate,billing_unit,quantity_basis,evidence_label,source_or_basis,source_date,currency,validation_owner,validation_status,exclusions
+low,COST-MODEL-IN,model_input,1.50,USD_per_million_tokens,billed_input_tokens,Modeled,illustrative chapter rate,2026-08-05,USD,Commercial Lead,external_validation_required,discounts taxes exchange rate
+expected,COST-MODEL-IN,model_input,3.00,USD_per_million_tokens,billed_input_tokens,Modeled,illustrative chapter rate,2026-08-05,USD,Commercial Lead,external_validation_required,discounts taxes exchange rate
+high,COST-MODEL-IN,model_input,6.00,USD_per_million_tokens,billed_input_tokens,Modeled,illustrative chapter rate,2026-08-05,USD,Commercial Lead,external_validation_required,discounts taxes exchange rate
+low,COST-MODEL-OUT,model_output,8.00,USD_per_million_tokens,billed_output_tokens,Modeled,illustrative chapter rate,2026-08-05,USD,Commercial Lead,external_validation_required,discounts taxes exchange rate
+expected,COST-MODEL-OUT,model_output,15.00,USD_per_million_tokens,billed_output_tokens,Modeled,illustrative chapter rate,2026-08-05,USD,Commercial Lead,external_validation_required,discounts taxes exchange rate
+high,COST-MODEL-OUT,model_output,30.00,USD_per_million_tokens,billed_output_tokens,Modeled,illustrative chapter rate,2026-08-05,USD,Commercial Lead,external_validation_required,discounts taxes exchange rate
+low,COST-INFRA,application_infrastructure,1800,USD_per_month,scenario,Modeled,illustrative chapter envelope,2026-08-05,USD,Platform Engineering,external_validation_required,regional premium failover data transfer
+expected,COST-INFRA,application_infrastructure,2500,USD_per_month,scenario,Modeled,illustrative chapter envelope,2026-08-05,USD,Platform Engineering,external_validation_required,regional premium failover data transfer
+high,COST-INFRA,application_infrastructure,5000,USD_per_month,scenario,Modeled,illustrative chapter envelope,2026-08-05,USD,Platform Engineering,external_validation_required,regional premium failover data transfer
+low,COST-RETRIEVAL,retrieval_and_storage,400,USD_per_month,scenario,Modeled,illustrative chapter envelope,2026-08-05,USD,Data Engineering,external_validation_required,index growth backup egress
+expected,COST-RETRIEVAL,retrieval_and_storage,800,USD_per_month,scenario,Modeled,illustrative chapter envelope,2026-08-05,USD,Data Engineering,external_validation_required,index growth backup egress
+high,COST-RETRIEVAL,retrieval_and_storage,1700,USD_per_month,scenario,Modeled,illustrative chapter envelope,2026-08-05,USD,Data Engineering,external_validation_required,index growth backup egress
+low,COST-OBS,observability_and_evaluation,350,USD_per_month,scenario,Modeled,illustrative chapter envelope,2026-08-05,USD,SRE,external_validation_required,long retention incident surge
+expected,COST-OBS,observability_and_evaluation,700,USD_per_month,scenario,Modeled,illustrative chapter envelope,2026-08-05,USD,SRE,external_validation_required,long retention incident surge
+high,COST-OBS,observability_and_evaluation,1600,USD_per_month,scenario,Modeled,illustrative chapter envelope,2026-08-05,USD,SRE,external_validation_required,long retention incident surge
+low,COST-SOFTWARE,other_software,200,USD_per_month,scenario,Modeled,illustrative chapter envelope,2026-08-05,USD,Commercial Lead,external_validation_required,enterprise license minimums
+expected,COST-SOFTWARE,other_software,500,USD_per_month,scenario,Modeled,illustrative chapter envelope,2026-08-05,USD,Commercial Lead,external_validation_required,enterprise license minimums
+high,COST-SOFTWARE,other_software,1200,USD_per_month,scenario,Modeled,illustrative chapter envelope,2026-08-05,USD,Commercial Lead,external_validation_required,enterprise license minimums
+low,COST-SUPPORT,support_engineering,100,USD_per_hour,support_engineering_hours,Modeled,illustrative loaded planning rate,2026-08-05,USD,Support Lead,external_validation_required,on-call premium service credits travel
+expected,COST-SUPPORT,support_engineering,125,USD_per_hour,support_engineering_hours,Modeled,illustrative loaded planning rate,2026-08-05,USD,Support Lead,external_validation_required,on-call premium service credits travel
+high,COST-SUPPORT,support_engineering,175,USD_per_hour,support_engineering_hours,Modeled,illustrative loaded planning rate,2026-08-05,USD,Support Lead,external_validation_required,on-call premium service credits travel

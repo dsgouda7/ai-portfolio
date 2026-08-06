@@ -1,0 +1,56 @@
+[
+  {
+    "contract_version": "1.0.0",
+    "kind": "parsed_document",
+    "tenant_id": "tenant-editorial-standard",
+    "document_id": "doc-active-001",
+    "source_uri": "https://content.example/manuscripts/chapter-001.txt",
+    "source_version": "2026-08-05T100000Z",
+    "content_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+    "raw_content_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+    "acl": {
+      "visibility": "restricted",
+      "principals": [],
+      "groups": ["editors"]
+    },
+    "region": "eastus2",
+    "classification": "confidential",
+    "ingested_at": "2026-08-05T10:05:00Z",
+    "parsed_at": "2026-08-05T10:06:00Z",
+    "pipeline_version": "1.0.0",
+    "deletion_state": {"status": "active"},
+    "parser": {"name": "plain-text-parser", "version": "1.0.0"},
+    "language": "en",
+    "title": "The Weight of Distant Light - Chapter 1",
+    "text": "Aria watched the harbor lights appear one by one beyond the rain. The signal repeated across the maintenance display. She asked Wren to preserve the readings before the next repair cycle."
+  },
+  {
+    "contract_version": "1.0.0",
+    "kind": "parsed_document",
+    "tenant_id": "tenant-editorial-standard",
+    "document_id": "doc-deleted-001",
+    "source_uri": "https://content.example/manuscripts/deleted-autosave.txt",
+    "source_version": "autosave-17",
+    "content_hash": "4444444444444444444444444444444444444444444444444444444444444444",
+    "raw_content_hash": "5555555555555555555555555555555555555555555555555555555555555555",
+    "acl": {
+      "visibility": "restricted",
+      "principals": [],
+      "groups": ["editors"]
+    },
+    "region": "eastus2",
+    "classification": "confidential",
+    "ingested_at": "2026-08-05T09:05:00Z",
+    "parsed_at": "2026-08-05T09:06:00Z",
+    "pipeline_version": "1.0.0",
+    "deletion_state": {
+      "status": "deleted",
+      "requested_at": "2026-08-05T10:07:00Z",
+      "deleted_at": "2026-08-05T10:08:00Z"
+    },
+    "parser": {"name": "plain-text-parser", "version": "1.0.0"},
+    "language": "en",
+    "title": "Deleted autosave",
+    "text": "This retained parsed text exists only to carry the deletion contract through the fixture."
+  }
+]

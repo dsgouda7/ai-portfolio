@@ -1,0 +1,7 @@
+[
+  {"name": "warm", "duration_seconds": 120, "users": 10, "spawn_rate": 2},
+  {"name": "steady", "duration_seconds": 300, "users": 40, "spawn_rate": 5},
+  {"name": "target", "duration_seconds": 600, "users": 100, "spawn_rate": 10},
+  {"name": "overload", "duration_seconds": 180, "users": 180, "spawn_rate": 25},
+  {"name": "recovery", "duration_seconds": 300, "users": 40, "spawn_rate": 20}
+]

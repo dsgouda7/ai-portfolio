@@ -1,0 +1,68 @@
+bundle:
+  name: riverside-rag-ingestion
+
+include:
+  - resources/*.yml
+
+artifacts:
+  ingestion_wheel:
+    type: whl
+    path: ../../phase1-ingest
+    build: python -m build --wheel
+
+variables:
+  service_principal_name:
+    description: Databricks service principal application ID used as the job run identity.
+  source_uri:
+    description: ABFSS URI registered through a Unity Catalog external location, or a UC Volume path.
+  source_adapter:
+    description: Source adapter selection.
+    default: auto
+  file_glob:
+    description: Optional binaryFile pathGlobFilter.
+    default: "*.{txt,md,json,html,htm,pdf,docx}"
+  catalog:
+    default: main
+  schema:
+    default: rag_demo
+  volume:
+    default: rag_data
+  tenant_id:
+    description: Contract tenant identifier for this governed ingestion run.
+  region:
+    description: Data residency region recorded on every contract record.
+  classification:
+    default: internal
+  acl_visibility:
+    default: tenant
+  acl_principals:
+    default: ""
+  acl_groups:
+    default: ""
+  deletion_status:
+    default: active
+  deletion_requested_at:
+    default: ""
+  deleted_at:
+    default: ""
+  max_quarantine_rate:
+    default: "0.02"
+  min_parse_success_rate:
+    default: "0.98"
+  node_type_id:
+    default: Standard_D4ds_v5
+
+targets:
+  dev:
+    default: true
+    mode: development
+    workspace:
+      root_path: /Workspace/Shared/.bundle/${bundle.name}/${bundle.target}
+  staging:
+    mode: production
+    workspace:
+      root_path: /Workspace/Shared/.bundle/${bundle.name}/${bundle.target}
+  production:
+    mode: production
+    workspace:
+      root_path: /Workspace/Shared/.bundle/${bundle.name}/${bundle.target}

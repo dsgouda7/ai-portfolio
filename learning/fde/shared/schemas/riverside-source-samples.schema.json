@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/ai-portfolio/fde/riverside-source-samples.schema.json",
+  "title": "Riverside FDE Source Samples",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "fixture_version", "fixture_id", "synthetic_data_notice", "records"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "fixture_version": {"const": "RIV-FDE-1.0.0"},
+    "fixture_id": {"const": "SRCSET-RIV-001"},
+    "synthetic_data_notice": {"type": "string", "minLength": 20},
+    "records": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/sourceRecord"}
+    }
+  },
+  "$defs": {
+    "stableId": {"type": "string", "pattern": "^[A-Z][A-Z0-9-]+$"},
+    "idArray": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "lifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "effective_from", "effective_to", "superseded_by"],
+      "properties": {
+        "status": {"enum": ["current", "superseded", "stale"]},
+        "effective_from": {"type": "string"},
+        "effective_to": {"type": ["string", "null"]},
+        "superseded_by": {"type": ["string", "null"]}
+      }
+    },
+    "expectedOnboarding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decision", "reason", "seeded_failure"],
+      "properties": {
+        "decision": {"type": "string", "minLength": 1},
+        "reason": {"type": "string", "minLength": 1},
+        "seeded_failure": {"type": "string", "minLength": 1}
+      }
+    },
+    "sourceRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_id",
+        "source_id",
+        "document_id",
+        "source_uri",
+        "source_version",
+        "content_hash",
+        "tenant_id",
+        "region",
+        "classification",
+        "acl",
+        "lifecycle",
+        "ingested_at",
+        "pipeline_version",
+        "deletion_state",
+        "payload_type",
+        "payload",
+        "expected_onboarding"
+      ],
+      "properties": {
+        "record_id": {"$ref": "#/$defs/stableId"},
+        "source_id": {"$ref": "#/$defs/stableId"},
+        "document_id": {"$ref": "#/$defs/stableId"},
+        "source_uri": {"type": "string", "pattern": "^synthetic://"},
+        "source_version": {"type": "string", "minLength": 1},
+        "content_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "tenant_id": {"$ref": "#/$defs/stableId"},
+        "region": {"$ref": "#/$defs/stableId"},
+        "classification": {"enum": ["synthetic", "internal", "confidential", "restricted"]},
+        "acl": {"$ref": "#/$defs/idArray"},
+        "lifecycle": {"$ref": "#/$defs/lifecycle"},
+        "ingested_at": {"type": "string", "format": "date-time"},
+        "pipeline_version": {"type": "string", "minLength": 1},
+        "deletion_state": {"type": "string", "minLength": 1},
+        "payload_type": {"enum": ["pdf_pages", "pdf_columns", "text", "erp_row", "api_page", "api_event_history", "identity_record"]},
+        "payload": {"type": "object"},
+        "expected_onboarding": {"$ref": "#/$defs/expectedOnboarding"}
+      }
+    }
+  }
+}

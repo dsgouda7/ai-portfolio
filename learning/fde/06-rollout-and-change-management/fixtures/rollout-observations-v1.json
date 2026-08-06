@@ -1,0 +1,167 @@
+{
+  "schema_version": "1.0.0",
+  "fixture_version": "RIV-FDE-ROLLOUT-1.0.0",
+  "shared_fixture_version": "RIV-FDE-1.0.0",
+  "fixture_id": "ROLLOUT-OBS-RIV-001",
+  "synthetic_data_notice": "Entirely fictional teaching data. Values are deterministic local observations, not customer production evidence.",
+  "release_pair": {
+    "baseline_release_id": "rel-riv-002",
+    "candidate_release_id": "rel-riv-rollout-001",
+    "rollback_target_release_id": "rel-riv-002"
+  },
+  "historical_baseline": {
+    "source": "riverside-engagement-v1.json",
+    "evidence_class": "measured_baseline",
+    "metrics": [
+      {"metric_id": "MET-RIV-001", "name": "policy_search_median_minutes", "value": 18.0, "unit": "minutes"},
+      {"metric_id": "MET-RIV-003", "name": "bounded_continuation_first_draft_median_minutes", "value": 42.0, "unit": "minutes"},
+      {"metric_id": "MET-RIV-004", "name": "editorial_rework_rate", "value": 0.22, "unit": "ratio"},
+      {"metric_id": "MET-RIV-005", "name": "current_guidance_first_result_rate", "value": 0.61, "unit": "ratio"},
+      {"metric_id": "MET-RIV-006", "name": "workflow_status_update_error_rate", "value": 0.037, "unit": "ratio"}
+    ]
+  },
+  "shadow_windows": [
+    {
+      "window_id": "SHADOW-RIV-001",
+      "cohort_id": "COH-RIV-001",
+      "candidate_release_id": "rel-riv-rollout-001",
+      "observation_window": "2026-08-10/2026-08-14",
+      "mode": "shadow_no_user_output",
+      "forbidden_access_count": 0,
+      "duplicate_workflow_commit_count": 0,
+      "slices": [
+        {"tenant_id": "TEN-RIV-EU", "task_type": "policy_lookup", "tasks": 60, "agreement": 45, "candidate_preferred": 6, "historical_preferred": 4, "policy_block": 2, "unresolved": 3, "reviewed_disagreements": 12},
+        {"tenant_id": "TEN-RIV-US", "task_type": "policy_lookup", "tasks": 50, "agreement": 37, "candidate_preferred": 5, "historical_preferred": 3, "policy_block": 2, "unresolved": 3, "reviewed_disagreements": 10},
+        {"tenant_id": "TEN-RIV-EU", "task_type": "editorial_continuation", "tasks": 45, "agreement": 35, "candidate_preferred": 4, "historical_preferred": 3, "policy_block": 0, "unresolved": 3, "reviewed_disagreements": 8},
+        {"tenant_id": "TEN-RIV-US", "task_type": "editorial_continuation", "tasks": 15, "agreement": 12, "candidate_preferred": 1, "historical_preferred": 1, "policy_block": 0, "unresolved": 1, "reviewed_disagreements": 3},
+        {"tenant_id": "TEN-RIV-EU", "task_type": "workflow_assistance", "tasks": 20, "agreement": 14, "candidate_preferred": 2, "historical_preferred": 2, "policy_block": 1, "unresolved": 1, "reviewed_disagreements": 5},
+        {"tenant_id": "TEN-RIV-US", "task_type": "workflow_assistance", "tasks": 10, "agreement": 7, "candidate_preferred": 1, "historical_preferred": 1, "policy_block": 0, "unresolved": 1, "reviewed_disagreements": 2}
+      ],
+      "required_gate": {
+        "minimum_tasks": 200,
+        "minimum_disagreement_review_coverage": 1.0,
+        "maximum_policy_blocks": 0,
+        "maximum_forbidden_accesses": 0,
+        "minimum_candidate_preference_delta_percentage_points": 0.0
+      }
+    },
+    {
+      "window_id": "SHADOW-RIV-002",
+      "cohort_id": "COH-RIV-001",
+      "candidate_release_id": "rel-riv-rollout-002",
+      "observation_window": "2026-08-17/2026-08-21",
+      "mode": "shadow_no_user_output",
+      "forbidden_access_count": 0,
+      "duplicate_workflow_commit_count": 0,
+      "slices": [
+        {"tenant_id": "TEN-RIV-EU", "task_type": "policy_lookup", "tasks": 60, "agreement": 48, "candidate_preferred": 8, "historical_preferred": 4, "policy_block": 0, "unresolved": 0, "reviewed_disagreements": 12},
+        {"tenant_id": "TEN-RIV-US", "task_type": "policy_lookup", "tasks": 50, "agreement": 40, "candidate_preferred": 6, "historical_preferred": 4, "policy_block": 0, "unresolved": 0, "reviewed_disagreements": 10},
+        {"tenant_id": "TEN-RIV-EU", "task_type": "editorial_continuation", "tasks": 45, "agreement": 35, "candidate_preferred": 6, "historical_preferred": 4, "policy_block": 0, "unresolved": 0, "reviewed_disagreements": 10},
+        {"tenant_id": "TEN-RIV-US", "task_type": "editorial_continuation", "tasks": 15, "agreement": 12, "candidate_preferred": 2, "historical_preferred": 1, "policy_block": 0, "unresolved": 0, "reviewed_disagreements": 3},
+        {"tenant_id": "TEN-RIV-EU", "task_type": "workflow_assistance", "tasks": 20, "agreement": 16, "candidate_preferred": 2, "historical_preferred": 2, "policy_block": 0, "unresolved": 0, "reviewed_disagreements": 4},
+        {"tenant_id": "TEN-RIV-US", "task_type": "workflow_assistance", "tasks": 10, "agreement": 9, "candidate_preferred": 1, "historical_preferred": 0, "policy_block": 0, "unresolved": 0, "reviewed_disagreements": 1}
+      ],
+      "required_gate": {
+        "minimum_tasks": 200,
+        "minimum_disagreement_review_coverage": 1.0,
+        "maximum_policy_blocks": 0,
+        "maximum_forbidden_accesses": 0,
+        "minimum_candidate_preference_delta_percentage_points": 0.0
+      }
+    }
+  ],
+  "canary_windows": [
+    {
+      "window_id": "CANARY-RIV-CHAMPION-001",
+      "cohort_id": "COH-RIV-002",
+      "candidate_release_id": "rel-riv-rollout-002",
+      "observation_window": "2026-08-24/2026-08-30",
+      "observation_days": 7,
+      "eligible_users": 12,
+      "weekly_active_users": 9,
+      "users_with_structured_feedback": 10,
+      "forbidden_access_count": 0,
+      "duplicate_workflow_commit_count": 0,
+      "required_gate": {
+        "minimum_weekly_active_rate": 0.70,
+        "minimum_structured_feedback_coverage": 0.80,
+        "maximum_forbidden_accesses": 0,
+        "minimum_observation_days": 7
+      }
+    },
+    {
+      "window_id": "CANARY-RIV-ALDER-001",
+      "cohort_id": "COH-RIV-003",
+      "candidate_release_id": "rel-riv-rollout-002",
+      "observation_window": "2026-08-31/2026-09-06",
+      "observation_days": 7,
+      "eligible_users": 28,
+      "weekly_active_users": 23,
+      "baseline_policy_cycle_minutes": 18.0,
+      "candidate_policy_cycle_minutes": 13.0,
+      "quality_regression_count": 0,
+      "forbidden_access_count": 0,
+      "duplicate_workflow_commit_count": 0,
+      "cost_per_successful_request_usd": 0.044,
+      "support_ticket_count": 3
+    },
+    {
+      "window_id": "CANARY-RIV-ALDER-002",
+      "cohort_id": "COH-RIV-003",
+      "candidate_release_id": "rel-riv-rollout-002",
+      "observation_window": "2026-09-07/2026-09-13",
+      "observation_days": 7,
+      "eligible_users": 28,
+      "weekly_active_users": 24,
+      "baseline_policy_cycle_minutes": 18.0,
+      "candidate_policy_cycle_minutes": 12.0,
+      "quality_regression_count": 0,
+      "forbidden_access_count": 0,
+      "duplicate_workflow_commit_count": 1,
+      "cost_per_successful_request_usd": 0.046,
+      "support_ticket_count": 4,
+      "triggered_incident_id": "INC-RIV-005"
+    }
+  ],
+  "alder_required_gate": {
+    "minimum_observation_days": 14,
+    "minimum_cycle_time_improvement_rate": 0.20,
+    "maximum_quality_regressions": 0,
+    "maximum_forbidden_accesses": 0,
+    "maximum_duplicate_workflow_commits": 0,
+    "maximum_cost_per_successful_request_usd": 0.05,
+    "maximum_support_tickets_per_week": 5
+  },
+  "committed_actions": [
+    {
+      "action_id": "ACTION-RIV-9003-STATUS",
+      "incident_id": "INC-RIV-005",
+      "source_record_id": "API-TASK-9003",
+      "business_idempotency_key": "riv:workflow:API-TASK-9003:editorial-review-to-copyedit",
+      "commit_status": "confirmed_committed",
+      "before_state": "editorial_review",
+      "after_state": "copyedit",
+      "deployment_response": "route new workflow traffic to rel-riv-002 and disable workflow writes",
+      "committed_action_response": "reconcile PageTurn history, obtain workflow-owner decision, and apply a corrective transition only if approved",
+      "compensation_owner_person_id": "PER-RIV-005",
+      "business_owner_person_id": "PER-RIV-002"
+    }
+  ],
+  "communication_clock": {
+    "incident_id": "INC-RIV-005",
+    "severity": "SEV-2",
+    "detected_at_utc": "2026-09-09T10:00:00Z",
+    "acknowledgement_target_minutes": 60,
+    "customer_update_target_minutes": 120,
+    "facts_known_at_detection": [
+      "one PageTurn transition is confirmed committed",
+      "the duplicate retry was blocked during reconciliation",
+      "workflow writes are paused",
+      "read-only assistance remains available"
+    ],
+    "facts_unknown_at_detection": [
+      "whether any editor acted on the committed status before containment",
+      "whether another task used a different retry key"
+    ]
+  }
+}

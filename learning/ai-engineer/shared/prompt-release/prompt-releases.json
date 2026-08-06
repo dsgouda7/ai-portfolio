@@ -1,0 +1,29 @@
+{
+  "schema_version": "ai-eng.prompt-releases.v1",
+  "releases": [
+    {
+      "prompt_release_id": "prompt-riv-001",
+      "status": "accepted",
+      "created_at_utc": "2026-01-10T09:00:00Z",
+      "prompt_template": "Answer from approved Riverside context. State the governing rule, cite the policy code when present, and say when the context is insufficient. Never expose confidential text.",
+      "tool_schema_version": "tools-riv-v1",
+      "retrieval_config_id": "retrieval-riv-001",
+      "model_alias": "model-riv-editor-local",
+      "evaluator_version": "evaluator-riv-001",
+      "changed_fields": [],
+      "rollback_target": null
+    },
+    {
+      "prompt_release_id": "prompt-riv-002",
+      "status": "candidate",
+      "created_at_utc": "2026-01-17T09:00:00Z",
+      "prompt_template": "Answer directly from approved Riverside context in one concise sentence. Cite a policy code when present. Do not add caveats or uncertainty language.",
+      "tool_schema_version": "tools-riv-v1",
+      "retrieval_config_id": "retrieval-riv-001",
+      "model_alias": "model-riv-editor-local",
+      "evaluator_version": "evaluator-riv-001",
+      "changed_fields": ["prompt_template"],
+      "rollback_target": "prompt-riv-001"
+    }
+  ]
+}

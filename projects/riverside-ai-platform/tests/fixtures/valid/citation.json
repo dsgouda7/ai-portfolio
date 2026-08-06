@@ -1,0 +1,18 @@
+{
+  "contract_version": "1.0.0",
+  "kind": "citation",
+  "citation_id": "cite-001",
+  "chunk_id": "chunk-weight-distant-light-001-0000",
+  "document_id": "doc-weight-distant-light-001",
+  "source_uri": "https://content.example/manuscripts/chapter-001.txt",
+  "source_version": "2026-08-05T100000Z",
+  "content_hash": "3333333333333333333333333333333333333333333333333333333333333333",
+  "title": "The Weight of Distant Light - Chapter 1",
+  "answer_spans": [
+    {
+      "start": 0,
+      "end": 42
+    }
+  ],
+  "retrieved_at": "2026-08-05T12:01:00Z"
+}

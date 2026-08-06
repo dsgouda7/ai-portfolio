@@ -1,0 +1,282 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.riverside.example/config/schema.json",
+  "title": "Riverside AI Platform Environment Configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "config_version",
+    "project_name",
+    "environment",
+    "region",
+    "identity",
+    "model",
+    "data",
+    "gateway",
+    "serving",
+    "retrieval",
+    "telemetry",
+    "evaluation"
+  ],
+  "properties": {
+    "config_version": {
+      "const": "1.0.0"
+    },
+    "project_name": {
+      "const": "riverside-ai-platform"
+    },
+    "environment": {
+      "type": "string",
+      "enum": [
+        "dev",
+        "staging",
+        "production"
+      ]
+    },
+    "region": {
+      "$ref": "../contracts/v1/common.schema.json#/$defs/region"
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authentication"
+      ],
+      "properties": {
+        "authentication": {
+          "type": "string",
+          "enum": [
+            "managed_identity",
+            "workload_identity"
+          ]
+        }
+      }
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "alias",
+        "release_manifest_uri",
+        "max_input_tokens",
+        "max_output_tokens",
+        "precision"
+      ],
+      "properties": {
+        "alias": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]*$",
+          "maxLength": 128
+        },
+        "release_manifest_uri": {
+          "$ref": "#/$defs/uriOrEnvironmentReference"
+        },
+        "max_input_tokens": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8192
+        },
+        "max_output_tokens": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2048
+        },
+        "precision": {
+          "type": "string",
+          "enum": [
+            "fp32",
+            "fp16",
+            "bf16",
+            "int8",
+            "int4"
+          ]
+        }
+      }
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract_version",
+        "index_name",
+        "index_version"
+      ],
+      "properties": {
+        "contract_version": {
+          "const": "1.0.0"
+        },
+        "index_name": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]*$",
+          "maxLength": 128
+        },
+        "index_version": {
+          "$ref": "../contracts/v1/common.schema.json#/$defs/semanticVersion"
+        }
+      }
+    },
+    "gateway": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "base_url",
+        "route",
+        "timeout_seconds",
+        "max_retries"
+      ],
+      "properties": {
+        "base_url": {
+          "$ref": "#/$defs/uriOrEnvironmentReference"
+        },
+        "route": {
+          "const": "/v1/chat/completions"
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 120
+        },
+        "max_retries": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        }
+      }
+    },
+    "serving": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "endpoint_name",
+        "blue_deployment",
+        "green_deployment",
+        "request_timeout_seconds"
+      ],
+      "properties": {
+        "endpoint_name": {
+          "$ref": "#/$defs/nameOrEnvironmentReference"
+        },
+        "blue_deployment": {
+          "$ref": "#/$defs/nameOrEnvironmentReference"
+        },
+        "green_deployment": {
+          "$ref": "#/$defs/nameOrEnvironmentReference"
+        },
+        "request_timeout_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 120
+        }
+      }
+    },
+    "retrieval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "top_k",
+        "search_type"
+      ],
+      "properties": {
+        "top_k": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        },
+        "search_type": {
+          "type": "string",
+          "enum": [
+            "similarity",
+            "mmr",
+            "hybrid"
+          ]
+        }
+      }
+    },
+    "telemetry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "service_name",
+        "exporter_endpoint"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "service_name": {
+          "type": "string",
+          "enum": [
+            "riverside-gateway",
+            "riverside-rag-orchestrator",
+            "riverside-model-endpoint"
+          ]
+        },
+        "exporter_endpoint": {
+          "$ref": "#/$defs/uriOrEnvironmentReference"
+        }
+      }
+    },
+    "evaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "release_report_uri",
+        "required_domains"
+      ],
+      "properties": {
+        "release_report_uri": {
+          "$ref": "#/$defs/uriOrEnvironmentReference"
+        },
+        "required_domains": {
+          "type": "array",
+          "minItems": 8,
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "data_quality",
+              "retrieval_quality",
+              "generation_citation_quality",
+              "adaptation_evidence",
+              "safety_authorization",
+              "operational_slos",
+              "cost",
+              "rollout_comparison"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "environmentReference": {
+      "type": "string",
+      "pattern": "^\\$\\{[A-Z][A-Z0-9_]*\\}$"
+    },
+    "uriOrEnvironmentReference": {
+      "oneOf": [
+        {
+          "$ref": "../contracts/v1/common.schema.json#/$defs/uri"
+        },
+        {
+          "$ref": "#/$defs/environmentReference"
+        }
+      ]
+    },
+    "nameOrEnvironmentReference": {
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        {
+          "$ref": "#/$defs/environmentReference"
+        }
+      ]
+    }
+  }
+}

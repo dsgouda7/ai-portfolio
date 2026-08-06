@@ -1,0 +1,37 @@
+{
+  "apim_service_name": "shared-riverside-apim",
+  "named_values": {
+    "riverside-environment": "staging",
+    "riverside-entra-tenant-id": "33333333-3333-3333-3333-333333333333",
+    "riverside-entra-client-application-id": "44444444-4444-4444-4444-444444444444",
+    "riverside-entra-api-audience": "api://riverside-staging",
+    "riverside-entra-required-scope": "Riverside.Chat",
+    "riverside-backend-pool-id": "riverside-chat-pool",
+    "riverside-backend-audience": "api://riverside-backend",
+    "riverside-request-schema-id": "ChatCompletionRequest",
+    "riverside-max-request-bytes": "1048576",
+    "riverside-max-input-tokens": "4096",
+    "riverside-max-output-tokens": "512",
+    "riverside-standard-tpm": "20000",
+    "riverside-premium-tpm": "60000",
+    "riverside-internal-tpm": "100000",
+    "riverside-max-retries": "2",
+    "riverside-backend-timeout-seconds": "90",
+    "riverside-max-retry-after-seconds": "30",
+    "riverside-content-safety-enabled": "false",
+    "riverside-content-safety-backend-id": "content-safety-disabled",
+    "riverside-semantic-cache-enabled": "false",
+    "riverside-embeddings-backend-id": "embeddings-cache-disabled",
+    "riverside-semantic-cache-score-threshold": "0.05",
+    "riverside-semantic-cache-ttl-seconds": "300",
+    "riverside-model-release-id": "release-2026-08-05",
+    "riverside-deployment-name": "riverside-staging-blue"
+  },
+  "backends": {
+    "blue_name": "riverside-chat-blue",
+    "green_name": "riverside-chat-green",
+    "pool_name": "riverside-chat-pool",
+    "blue_url": "https://blue.contoso.test",
+    "green_url": "https://green.contoso.test"
+  }
+}

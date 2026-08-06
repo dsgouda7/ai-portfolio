@@ -1,0 +1,16 @@
+{
+  "service.name": "riverside-rag-orchestrator",
+  "deployment.environment": "staging",
+  "model.release_id": "riverside-editor-2026-08-05",
+  "model.alias": "riverside-editor",
+  "deployment.name": "riverside-staging-green",
+  "cloud.region": "eastus2",
+  "http.route": "/v1/chat/completions",
+  "outcome.status": "success",
+  "cache.result": "miss",
+  "gen_ai.usage.prompt_tokens_bucket": "513-2048",
+  "gen_ai.usage.output_tokens_bucket": "129-512",
+  "tenant.tier": "standard",
+  "error.code": "none",
+  "retrieval.top_k_bucket": "6-10"
+}

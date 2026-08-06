@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:riverside:ai-engineer:release-manifests:v1",
+  "title": "Riverside application release manifests",
+  "description": "Schema for the complete release-manifests.json document. Equality between adapter.compatible_base_model_id and base_model.artifact_id is a semantic gate documented separately.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "manifests"],
+  "properties": {
+    "schema_version": { "const": "ai-eng.release-manifests.v1" },
+    "manifests": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "release_id",
+          "status",
+          "created_at_utc",
+          "base_model",
+          "adapter",
+          "dataset",
+          "prompt",
+          "index",
+          "evaluators",
+          "gate_results",
+          "rollback_target",
+          "blocked_reasons"
+        ],
+        "properties": {
+          "release_id": { "type": "string", "pattern": "^rel-riv-[0-9]{3}$" },
+          "status": { "enum": ["accepted", "blocked"] },
+          "created_at_utc": { "type": "string", "format": "date-time" },
+          "base_model": { "$ref": "#/$defs/artifact" },
+          "adapter": { "$ref": "#/$defs/adapterArtifact" },
+          "dataset": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["dataset_id", "sha256"],
+            "properties": {
+              "dataset_id": { "type": "string", "pattern": "^dataset-riv-[a-z0-9-]+$" },
+              "sha256": { "$ref": "#/$defs/sha256" }
+            }
+          },
+          "prompt": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["prompt_release_id"],
+            "properties": {
+              "prompt_release_id": { "type": "string", "pattern": "^prompt-riv-[0-9]{3}$" }
+            }
+          },
+          "index": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["index_id", "document_count", "sha256"],
+            "properties": {
+              "index_id": { "type": "string", "pattern": "^index-riv-[a-z0-9-]+$" },
+              "document_count": { "type": "integer", "minimum": 1 },
+              "sha256": { "$ref": "#/$defs/sha256" }
+            }
+          },
+          "evaluators": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["evaluator_version", "report_id", "passed"],
+              "properties": {
+                "evaluator_version": { "type": "string", "pattern": "^evaluator-riv-[0-9]{3}$" },
+                "report_id": { "type": "string", "pattern": "^eval-report-riv-[0-9]{3}$" },
+                "passed": { "type": "boolean" }
+              }
+            }
+          },
+          "gate_results": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["data_quality", "offline_evaluation", "base_adapter_compatibility"],
+            "properties": {
+              "data_quality": { "type": "boolean" },
+              "offline_evaluation": { "type": "boolean" },
+              "base_adapter_compatibility": { "type": "boolean" }
+            }
+          },
+          "rollback_target": { "type": ["string", "null"], "pattern": "^rel-riv-[0-9]{3}$" },
+          "blocked_reasons": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_id", "version", "sha256"],
+      "properties": {
+        "artifact_id": { "type": "string", "pattern": "^(model|adapter)-[a-z0-9-]+$" },
+        "version": { "type": "string", "pattern": "^v?[a-z0-9-]+$" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "adapterArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_id", "version", "sha256", "compatible_base_model_id"],
+      "properties": {
+        "artifact_id": { "type": "string", "pattern": "^adapter-[a-z0-9-]+$" },
+        "version": { "type": "string", "pattern": "^v?[a-z0-9-]+$" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "compatible_base_model_id": { "type": "string", "pattern": "^model-[a-z0-9-]+$" }
+      }
+    }
+  }
+}

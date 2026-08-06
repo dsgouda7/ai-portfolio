@@ -1,0 +1,38 @@
+{
+  "schema_version": "evaluation-dataset.v1",
+  "dataset_id": "riverside-adaptation-heldout",
+  "version": "2026-08-05",
+  "domain": "adaptation_evidence",
+  "evaluator_contract_version": "1.0.0",
+  "created_at": "2026-08-05T12:00:00Z",
+  "source_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "cases": [
+    {
+      "case_id": "adaptation-cpt-001",
+      "slice": { "name": "stage", "value": "cpt" },
+      "stage": "cpt",
+      "baseline_artifact_id": "smollm2-base-pinned",
+      "candidate_artifact_id": "non-instruction-full",
+      "heldout_dataset_id": "aria-heldout-chapters-37-40",
+      "required_metric_ids": ["cpt_heldout_perplexity_relative_delta", "general_language_retention_ratio"]
+    },
+    {
+      "case_id": "adaptation-sft-001",
+      "slice": { "name": "stage", "value": "sft" },
+      "stage": "sft",
+      "baseline_artifact_id": "smollm2-instruct-pinned",
+      "candidate_artifact_id": "instruction-lora",
+      "heldout_dataset_id": "aria-heldout-chapters-37-40",
+      "required_metric_ids": ["sft_contract_pass_rate_delta", "safety_retention_rate"]
+    },
+    {
+      "case_id": "adaptation-dpo-001",
+      "slice": { "name": "stage", "value": "dpo" },
+      "stage": "dpo",
+      "baseline_artifact_id": "instruction-lora",
+      "candidate_artifact_id": "preference-dpo",
+      "heldout_dataset_id": "dpo-heldout-pairs",
+      "required_metric_ids": ["dpo_heldout_positive_edge_rate", "safety_retention_rate"]
+    }
+  ]
+}

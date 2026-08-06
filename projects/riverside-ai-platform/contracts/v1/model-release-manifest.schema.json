@@ -1,0 +1,273 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.riverside.example/contracts/v1/model-release-manifest.schema.json",
+  "title": "Riverside Model Release Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "kind",
+    "release_id",
+    "version",
+    "base_model",
+    "adapter",
+    "tokenizer",
+    "model_profile",
+    "precision",
+    "training_provenance",
+    "evaluation",
+    "serving_runtime",
+    "created_at",
+    "source_commit"
+  ],
+  "properties": {
+    "contract_version": {
+      "$ref": "common.schema.json#/$defs/contractVersion"
+    },
+    "kind": {
+      "const": "model_release"
+    },
+    "release_id": {
+      "$ref": "common.schema.json#/$defs/identifier"
+    },
+    "version": {
+      "$ref": "common.schema.json#/$defs/semanticVersion"
+    },
+    "base_model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "revision"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "revision": {
+          "type": "string",
+          "minLength": 7,
+          "maxLength": 128
+        }
+      }
+    },
+    "adapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "stage",
+        "uri",
+        "digest"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "lora",
+            "qlora",
+            "ia3",
+            "prefix",
+            "full-model"
+          ]
+        },
+        "stage": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-z0-9-]+$"
+        },
+        "uri": {
+          "$ref": "common.schema.json#/$defs/uri"
+        },
+        "digest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        }
+      }
+    },
+    "tokenizer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "revision",
+        "uri",
+        "digest"
+      ],
+      "properties": {
+        "revision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "uri": {
+          "$ref": "common.schema.json#/$defs/uri"
+        },
+        "digest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        }
+      }
+    },
+    "model_profile": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "precision": {
+      "type": "string",
+      "enum": [
+        "fp32",
+        "fp16",
+        "bf16",
+        "int8",
+        "int4"
+      ]
+    },
+    "training_provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "manifest_uri",
+        "manifest_digest"
+      ],
+      "properties": {
+        "manifest_uri": {
+          "$ref": "common.schema.json#/$defs/uri"
+        },
+        "manifest_digest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        }
+      }
+    },
+    "evaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "report_uri",
+        "report_digest",
+        "decision",
+        "thresholds"
+      ],
+      "properties": {
+        "report_uri": {
+          "$ref": "common.schema.json#/$defs/uri"
+        },
+        "report_digest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        },
+        "decision": {
+          "type": "string",
+          "enum": [
+            "promote",
+            "hold",
+            "reject"
+          ]
+        },
+        "thresholds": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 128,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "domain",
+              "metric",
+              "operator",
+              "value"
+            ],
+            "properties": {
+              "domain": {
+                "type": "string",
+                "enum": [
+                  "data_quality",
+                  "retrieval_quality",
+                  "generation_citation_quality",
+                  "adaptation_evidence",
+                  "safety_authorization",
+                  "operational_slos",
+                  "cost",
+                  "rollout_comparison"
+                ]
+              },
+              "metric": {
+                "$ref": "common.schema.json#/$defs/identifier"
+              },
+              "operator": {
+                "type": "string",
+                "enum": [
+                  "lt",
+                  "lte",
+                  "gt",
+                  "gte",
+                  "eq"
+                ]
+              },
+              "value": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    },
+    "serving_runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "version",
+        "interface_version",
+        "compatible_model_profiles",
+        "supported_precisions"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "version": {
+          "$ref": "common.schema.json#/$defs/semanticVersion"
+        },
+        "interface_version": {
+          "$ref": "common.schema.json#/$defs/semanticVersion"
+        },
+        "compatible_model_profiles": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*$"
+          }
+        },
+        "supported_precisions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 5,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "fp32",
+              "fp16",
+              "bf16",
+              "int8",
+              "int4"
+            ]
+          }
+        }
+      }
+    },
+    "created_at": {
+      "$ref": "common.schema.json#/$defs/timestamp"
+    },
+    "source_commit": {
+      "$ref": "common.schema.json#/$defs/sourceCommit"
+    }
+  }
+}

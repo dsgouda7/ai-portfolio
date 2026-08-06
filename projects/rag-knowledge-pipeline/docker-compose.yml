@@ -42,9 +42,11 @@ services:
       - ./config.yaml:/app/config.yaml:ro
     environment:
       - PYTHONUNBUFFERED=1
-      - WATSONX_URL=${WATSONX_URL}
-      - WATSONX_PROJECT_ID=${WATSONX_PROJECT_ID}
-      - WATSONX_MODEL_ID=${WATSONX_MODEL_ID}
+      - RAG_CONFIG_PATH=/app/config.yaml
+      - DATABRICKS_HOST=${DATABRICKS_HOST:-}
+      - AZURE_CLIENT_ID=${AZURE_CLIENT_ID:-}
+      - LOCAL_LLM_BEARER_TOKEN=${LOCAL_LLM_BEARER_TOKEN:-}
+      - WATSONX_APIKEY=${WATSONX_APIKEY:-}
     depends_on:
       vectorize:
         condition: service_completed_successfully

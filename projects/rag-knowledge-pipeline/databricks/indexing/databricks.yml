@@ -1,0 +1,64 @@
+bundle:
+  name: riverside-rag-indexing
+
+include:
+  - resources/*.yml
+
+artifacts:
+  default:
+    type: whl
+    path: ../../phase2-vectorize
+    build: python -m pip wheel . --no-deps --wheel-dir dist
+
+variables:
+  catalog:
+    description: Unity Catalog catalog containing parsed and indexed contract tables.
+  schema:
+    description: Unity Catalog schema containing parsed and indexed contract tables.
+  vector_search_endpoint:
+    description: Existing Databricks AI Search endpoint.
+  vector_search_endpoint_type:
+    description: AI Search endpoint filter syntax.
+    default: standard
+  index_name:
+    description: Three-part Direct Vector Access index name.
+  index_version:
+    description: Immutable logical index version.
+  embedding_model:
+    description: Embedding model identifier recorded in v1 contracts.
+  embedding_model_revision:
+    description: Immutable embedding model revision.
+  embedding_endpoint:
+    description: Databricks model-serving endpoint used to create embeddings.
+  embedding_dimensions:
+    description: Exact output dimensions of the pinned embedding revision.
+  retrieval_evaluation_table:
+    description: Versioned authorized-retrieval evaluation case table.
+  retrieval_evaluation_dataset_id:
+    description: Stable evaluation dataset identifier.
+  retrieval_evaluation_dataset_version:
+    description: Immutable evaluation dataset version.
+  pipeline_version:
+    description: Vectorization pipeline semantic version.
+    default: 1.0.0
+  chunk_strategy_version:
+    description: Recursive-character strategy semantic version.
+    default: 1.0.0
+  run_as_service_principal_name:
+    description: Service principal application ID used by the production job.
+  spark_version:
+    description: Approved Databricks Runtime version.
+    default: 16.4.x-scala2.12
+  node_type_id:
+    description: Approved worker node type for the target region.
+  policy_id:
+    description: Cluster policy enforcing the environment security baseline.
+
+targets:
+  dev:
+    mode: development
+    default: true
+  staging:
+    mode: production
+  production:
+    mode: production

@@ -1,0 +1,28 @@
+{
+  "schema_version": "ai-engineer.capstone-prompt-comparison.v1",
+  "candidate_release_id": "<candidate-release-id>",
+  "baseline_prompt_release_id": "<baseline-prompt-id>",
+  "candidate_prompt_release_id": "<candidate-prompt-id>",
+  "bundle_pins": {
+    "tool_schema_version": "<version>",
+    "retrieval_config_id": "<id>",
+    "model_alias": "<alias>",
+    "evaluator_version": "<version>"
+  },
+  "bundle_digests": {"baseline": "<64-lowercase-hex>", "candidate": "<64-lowercase-hex>"},
+  "declared_changed_fields": ["prompt_template"],
+  "measured_changed_fields": ["prompt_template"],
+  "paired_dataset": {"id": "<id>", "version": "<version>", "case_count": 0},
+  "aggregate": {"baseline_pass_rate": 0.0, "candidate_pass_rate": 0.0, "delta": 0.0},
+  "paired_outcomes": {"candidate_wins": 0, "candidate_losses": 0, "ties": 0},
+  "slice_results": [
+    {"slice": "<slice>", "critical": true, "baseline_pass_rate": 0.0, "candidate_pass_rate": 0.0, "status": "<pass|fail|hold>"}
+  ],
+  "uncertainty": {"method": "<method>", "sample_size": 0, "effect": 0.0, "lower": 0.0, "upper": 0.0, "label": "<adequate|underpowered|unvalidated>"},
+  "exposure": {"shadow": "<not-run|local-simulation|live>", "ab_test": "<not-run|planned|live>", "canary": "<blocked|eligible|live>"},
+  "rollback": {"target": "<accepted-prompt-release-id>", "candidate_traffic_after": 0.0, "side_effect_compensation_separate": true},
+  "decision": "<promote|hold|reject>",
+  "decision_reasons": ["<reason>"],
+  "evidence_class": "<evidence-class>",
+  "limitations": ["<sample-or-live-exposure-limit>"]
+}

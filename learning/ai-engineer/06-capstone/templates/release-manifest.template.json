@@ -1,0 +1,47 @@
+{
+  "schema_version": "ai-engineer.capstone-release-manifest.v1",
+  "candidate_release_id": "<candidate-release-id>",
+  "release_version": "<semantic-version>",
+  "status": "<candidate|accepted|blocked>",
+  "source_commit": "<git-commit>",
+  "created_at_utc": "<rfc3339-timestamp>",
+  "requested_stage": "<offline|staging|shadow|canary|broad-rollout>",
+  "components": {
+    "base_model": {"id": "<id>", "version": "<version>", "uri": "<immutable-uri>", "sha256": "<64-lowercase-hex>"},
+    "adapter": {"id": "<id>", "version": "<version>", "uri": "<immutable-uri>", "sha256": "<64-lowercase-hex>", "compatible_base_model_id": "<base-model-id>"},
+    "tokenizer": {"id": "<id>", "revision": "<revision>", "uri": "<immutable-uri>", "sha256": "<64-lowercase-hex>"},
+    "dataset": {"id": "<id>", "version": "<version>", "sha256": "<64-lowercase-hex>", "quality_report": "data-quality-report.json"},
+    "prompt": {"release_id": "<prompt-release-id>", "bundle_sha256": "<64-lowercase-hex>", "comparison_report": "prompt-comparison.json"},
+    "index": {"id": "<index-id>", "version": "<version>", "sha256": "<64-lowercase-hex>", "embedding_model_revision": "<revision>", "chunking_version": "<version>"},
+    "evaluation": {"report": "retrieval-generation-evaluation.json", "report_sha256": "<64-lowercase-hex>"},
+    "runtime": {"name": "<runtime>", "version": "<semantic-version>", "model_profile": "<profile>", "precision": "<precision>"}
+  },
+  "evidence": {
+    "local_operational_slo_report": "local-operational-slo-report.json",
+    "azure_mapping": "azure-mapping.json",
+    "drift_iteration_decision": "drift-iteration-decision.json",
+    "unsupported_claims_ledger": "unsupported-claims-ledger.json"
+  },
+  "platform_contracts": [
+    "projects/riverside-ai-platform/contracts/v1/model-release-manifest.schema.json",
+    "projects/riverside-ai-platform/contracts/v1/evaluation-release-report.schema.json",
+    "projects/riverside-ai-platform/contracts/v1/deployment-metadata.schema.json"
+  ],
+  "gates": {
+    "data_quality": "<pass|fail|hold>",
+    "retrieval_quality": "<pass|fail|hold>",
+    "generation_citation_quality": "<pass|fail|hold>",
+    "safety_authorization": "<pass|fail|hold>",
+    "prompt_comparison": "<pass|fail|hold>",
+    "artifact_compatibility": "<pass|fail|hold>",
+    "local_operational_slos": "<pass|fail|hold>",
+    "cost": "<pass|fail|hold>",
+    "rollout_comparison": "<pass|fail|hold>",
+    "azure_validation_for_requested_stage": "<pass|fail|hold|not-required>"
+  },
+  "rollback_target": "<accepted-release-id>",
+  "decision": "<promote|hold|reject>",
+  "decision_reasons": ["<evidence-linked-reason>"],
+  "evidence_class": "<evidence-class>",
+  "limitations": ["<scope-limit>"]
+}

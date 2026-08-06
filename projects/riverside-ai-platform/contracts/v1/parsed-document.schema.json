@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.riverside.example/contracts/v1/parsed-document.schema.json",
+  "title": "Riverside Parsed Document v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "kind",
+    "tenant_id",
+    "document_id",
+    "source_uri",
+    "source_version",
+    "content_hash",
+    "raw_content_hash",
+    "acl",
+    "region",
+    "classification",
+    "ingested_at",
+    "parsed_at",
+    "pipeline_version",
+    "deletion_state",
+    "parser",
+    "language",
+    "title",
+    "text"
+  ],
+  "properties": {
+    "contract_version": {
+      "$ref": "common.schema.json#/$defs/contractVersion"
+    },
+    "kind": {
+      "const": "parsed_document"
+    },
+    "tenant_id": {
+      "$ref": "common.schema.json#/$defs/identifier"
+    },
+    "document_id": {
+      "$ref": "common.schema.json#/$defs/identifier"
+    },
+    "source_uri": {
+      "$ref": "common.schema.json#/$defs/uri"
+    },
+    "source_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "content_hash": {
+      "$ref": "common.schema.json#/$defs/sha256"
+    },
+    "raw_content_hash": {
+      "$ref": "common.schema.json#/$defs/sha256"
+    },
+    "acl": {
+      "$ref": "common.schema.json#/$defs/acl"
+    },
+    "region": {
+      "$ref": "common.schema.json#/$defs/region"
+    },
+    "classification": {
+      "$ref": "common.schema.json#/$defs/classification"
+    },
+    "ingested_at": {
+      "$ref": "common.schema.json#/$defs/timestamp"
+    },
+    "parsed_at": {
+      "$ref": "common.schema.json#/$defs/timestamp"
+    },
+    "pipeline_version": {
+      "$ref": "common.schema.json#/$defs/semanticVersion"
+    },
+    "deletion_state": {
+      "$ref": "common.schema.json#/$defs/deletionState"
+    },
+    "parser": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "version": {
+          "$ref": "common.schema.json#/$defs/semanticVersion"
+        }
+      }
+    },
+    "language": {
+      "type": "string",
+      "pattern": "^[a-z]{2,3}(?:-[A-Z]{2})?$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 10000000
+    },
+    "metadata": {
+      "$ref": "common.schema.json#/$defs/boundedMetadata"
+    }
+  }
+}

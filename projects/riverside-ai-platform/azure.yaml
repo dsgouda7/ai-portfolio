@@ -1,0 +1,17 @@
+name: riverside-ai-platform
+metadata:
+  template: riverside-ai-platform@0.1.0
+infra:
+  provider: bicep
+  path: infra
+  module: main
+services:
+  rag-orchestrator:
+    host: containerapp
+    language: docker
+    project: .
+    resourceName: ${RIVERSIDE_ORCHESTRATOR_NAME}
+    resourceGroup: ${AZURE_RESOURCE_GROUP}
+    docker:
+      path: ./infra/orchestrator.Dockerfile
+      context: .

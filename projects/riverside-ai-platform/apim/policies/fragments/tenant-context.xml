@@ -1,0 +1,49 @@
+<fragment>
+  <set-variable name="riversideTenantId" value="@{
+    var jwt = (Jwt)context.Variables[&quot;riversideClientJwt&quot;];
+    return jwt.Claims.GetValueOrDefault(&quot;riverside_tenant_id&quot;, string.Empty);
+  }" />
+  <set-variable name="riversideTenantTier" value="@{
+    var jwt = (Jwt)context.Variables[&quot;riversideClientJwt&quot;];
+    return jwt.Claims.GetValueOrDefault(&quot;riverside_tenant_tier&quot;, string.Empty).ToLowerInvariant();
+  }" />
+  <set-variable name="riversideActorId" value="@{
+    var jwt = (Jwt)context.Variables[&quot;riversideClientJwt&quot;];
+    return jwt.Claims.GetValueOrDefault(&quot;oid&quot;, jwt.Claims.GetValueOrDefault(&quot;sub&quot;, string.Empty));
+  }" />
+  <choose>
+    <when condition="@(string.IsNullOrWhiteSpace((string)context.Variables[&quot;riversideTenantId&quot;]) || string.IsNullOrWhiteSpace((string)context.Variables[&quot;riversideActorId&quot;]) || !new [] { &quot;standard&quot;, &quot;premium&quot;, &quot;internal&quot; }.Contains((string)context.Variables[&quot;riversideTenantTier&quot;]))">
+      <return-response>
+        <set-status code="403" reason="Forbidden" />
+        <set-header name="Content-Type" exists-action="override">
+          <value>application/json</value>
+        </set-header>
+        <set-header name="X-Correlation-ID" exists-action="override">
+          <value>@((string)context.Variables["riversideTraceId"])</value>
+        </set-header>
+        <set-body>@{
+          return new JObject(
+            new JProperty("error", new JObject(
+              new JProperty("code", "forbidden"),
+              new JProperty("message", "Required authorization context is unavailable."),
+              new JProperty("type", "authorization_error"),
+              new JProperty("param", null),
+              new JProperty("retryable", false))),
+            new JProperty("trace", new JObject(
+              new JProperty("trace_id", (string)context.Variables["riversideTraceId"]),
+              new JProperty("retry_count", 0)))
+          ).ToString(Newtonsoft.Json.Formatting.None);
+        }</set-body>
+      </return-response>
+    </when>
+  </choose>
+  <set-header name="X-Riverside-Tenant-ID" exists-action="override">
+    <value>@((string)context.Variables["riversideTenantId"])</value>
+  </set-header>
+  <set-header name="X-Riverside-Tenant-Tier" exists-action="override">
+    <value>@((string)context.Variables["riversideTenantTier"])</value>
+  </set-header>
+  <set-header name="X-Riverside-Actor-ID" exists-action="override">
+    <value>@((string)context.Variables["riversideActorId"])</value>
+  </set-header>
+</fragment>

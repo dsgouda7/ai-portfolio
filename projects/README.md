@@ -4,6 +4,15 @@ End-to-end projects covering the full lifecycle: problem framing, data, modellin
 
 Each project has a concrete problem statement with measurable success criteria, documented constraints, and honest limitations.
 
+## Evidence Status
+
+- **Implemented source:** inspectable project assets exist; this does not imply they were run.
+- **Locally validated:** named non-cloud checks passed in a local environment; this does not imply
+	cloud behavior or production readiness.
+- **Planned:** the named artifact is not present and cannot count as completion evidence.
+- **Live-unvalidated:** cloud, customer, identity, networking, quota, cost, or service behavior still
+	needs retained evidence from an authorized target environment.
+
 ---
 
 ## [FPL Squad Optimizer](fpl-squad-optimizer/)
@@ -32,7 +41,37 @@ Library that decomposes the context problem into two stages: rolling LLM compres
 
 Three-phase pipeline: Wikipedia corpus → Delta Lake → ChromaDB → FastAPI RAG server. Each phase has its own Dockerfile, isolated dependencies, and communicates only through durable storage — not in-memory hand-offs.
 
+The original local path remains the project baseline. Remote Azure Databricks ingestion, governed
+record contracts, job bundles, quality reports, and Direct Vector Access indexing source now also
+exist. The local suite passed 55 tests with 2 expected missing-Delta skips. Workspace RBAC, managed identity, Unity Catalog, Delta merge, vector filtering,
+deletion, performance, and cost behavior are **live-unvalidated**. Learn the concepts in
+[RAG](../learning/genai/04-rag/README.md) and [FDE Data Onboarding](../learning/fde/03-data-onboarding-and-contracts/README.md),
+then use the [Databricks operations guide](rag-knowledge-pipeline/databricks/indexing/OPERATIONS.md).
+
 `PySpark` `Delta Lake` `ChromaDB` `FastAPI` `sentence-transformers` `Docker`
+
+---
+
+## [Riverside AI Platform](riverside-ai-platform/docs/README.md)
+
+**Can one contract-driven production profile connect fine-tuned model artifacts and a governed
+Databricks data plane to an evidence-gated Azure serving system without treating source presence as
+production proof?**
+
+Production-oriented source assets for versioned contracts, artifact verification, RAG orchestration,
+release gates, telemetry, Azure ML blue/green serving, APIM policies, staged load tests, Bicep/`azd`,
+and operations documentation. The non-cloud suite passed 142 tests with 5 cloud tests deselected,
+and the offline preflight passed 9 tests. No cloud test or live Azure/Databricks validation was run;
+deployment, RBAC, networking, quota, service behavior, SLOs, rollback, cost, and production readiness
+are **live-unvalidated**.
+
+Conceptual prerequisites: [AI Engineer route](../learning/ai-engineer/README.md),
+[FDE route](../learning/fde/README.md), and
+[Azure Operational LLM Serving](../learning/ai-infrastructure/09-azure-operational-llm-serving/README.md).
+The [Riverside project README](riverside-ai-platform/README.md) is the project entry point, with the
+[documentation index](riverside-ai-platform/docs/README.md) as the operational reference.
+
+`Azure ML` `API Management` `Azure Databricks` `OpenTelemetry` `Bicep` `azd` `Python`
 
 ---
 

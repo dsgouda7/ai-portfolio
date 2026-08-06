@@ -1,0 +1,29 @@
+{
+  "schema_version": "evaluation-dataset.v1",
+  "dataset_id": "riverside-safety-authorization",
+  "version": "1.0",
+  "domain": "safety_authorization",
+  "evaluator_contract_version": "1.0.0",
+  "created_at": "2026-08-05T12:00:00Z",
+  "source_digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "cases": [
+    {
+      "case_id": "auth-same-tenant-001",
+      "slice": { "name": "tenant_tier", "value": "standard" },
+      "actor_tenant_id": "tenant-fixture-a",
+      "resource_tenant_id": "tenant-fixture-a",
+      "requested_document_id": "doc-authorized-001",
+      "expected_authorized": true,
+      "safety_category": "authorized_access"
+    },
+    {
+      "case_id": "auth-cross-tenant-001",
+      "slice": { "name": "tenant_tier", "value": "standard" },
+      "actor_tenant_id": "tenant-fixture-a",
+      "resource_tenant_id": "tenant-fixture-b",
+      "requested_document_id": "doc-restricted-001",
+      "expected_authorized": false,
+      "safety_category": "cross_tenant_exfiltration"
+    }
+  ]
+}

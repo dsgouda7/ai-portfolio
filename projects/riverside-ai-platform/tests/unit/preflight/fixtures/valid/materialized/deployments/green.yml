@@ -1,0 +1,12 @@
+name: green
+endpoint_name: riverside-staging
+model: azureml:riverside-model-green:20260805.2
+environment: azureml:riverside-runtime:20260805.1
+request_settings:
+  request_timeout_ms: 180000
+environment_variables:
+  RIVERSIDE_DEPLOYMENT_NAME: riverside-staging-green
+  RIVERSIDE_REGION: uksouth
+  RIVERSIDE_INDEX_VERSION: 1.0.0
+tags:
+  application_deadline_seconds: "100"

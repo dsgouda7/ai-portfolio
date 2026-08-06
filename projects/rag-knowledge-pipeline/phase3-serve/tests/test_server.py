@@ -1,76 +1,54 @@
-"""Unit tests for RAG server."""
+from __future__ import annotations
 
 import pytest
-from fastapi.testclient import TestClient
-from pathlib import Path
-import sys
+from fastapi import HTTPException
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
-
-@pytest.fixture
-def mock_config():
-    """Mock configuration for testing."""
-    return {
-        "mode": "local",
-        "local": {
-            "vector_store_path": "./data/chroma_db",
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2"
-        },
-        "llm": {
-            "model_id": "meta-llama/llama-4-maverick-17b-128e-instruct-fp8",
-            "max_tokens": 256,
-            "temperature": 0.1
-        },
-        "retrieval": {
-            "search_type": "mmr",
-            "top_k": 6,
-            "lambda_mult": 0.25
-        },
-        "logging": {
-            "level": "INFO"
-        }
-    }
+from src.models import ChatCompletionRequest, HealthResponse, QueryRequest
+from src.server import _authorization
 
 
-def test_query_request_validation():
-    """Test QueryRequest model validation."""
-    from phase3_serve.src.models import QueryRequest
+class Pipeline:
+    def __init__(self, mode: str):
+        self.mode = mode
 
-    # Valid request
-    valid_request = QueryRequest(question="What is machine learning?")
-    assert valid_request.question == "What is machine learning?"
-    assert valid_request.top_k == 6  # default
 
-    # Invalid: empty question
+def test_legacy_request_defaults_are_preserved() -> None:
+    request = QueryRequest(question="What is retrieval augmentation?")
+    assert request.top_k == 6
+    assert request.temperature == 0.1
+
+
+def test_v1_request_rejects_unknown_fields() -> None:
     with pytest.raises(Exception):
-        QueryRequest(question="")
+        ChatCompletionRequest.model_validate(
+            {
+                "model": "riverside-editor",
+                "messages": [{"role": "user", "content": "Hello"}],
+                "max_input_tokens": 1024,
+                "max_tokens": 128,
+                "stream": False,
+                "unknown": True,
+            }
+        )
 
 
-def test_health_response_model():
-    """Test HealthResponse model."""
-    from phase3_serve.src.models import HealthResponse
+def test_local_authorization_is_fixed_to_local_public_scope() -> None:
+    authorization = _authorization(Pipeline("local"), "ignored", "ignored", "restricted", None, None)
+    assert authorization.tenant_id == "local"
+    assert authorization.classifications == ("public",)
 
+
+def test_remote_authorization_requires_trusted_headers() -> None:
+    with pytest.raises(HTTPException) as error:
+        _authorization(Pipeline("remote"), None, None, None, None, None)
+    assert error.value.status_code == 401
+
+
+def test_health_response_names_selected_providers() -> None:
     response = HealthResponse(
         status="healthy",
-        vector_store="1000 vectors",
-        llm="initialized"
+        mode="remote",
+        retrieval="Databricks index main.rag.index",
+        generation="apim endpoint configured",
     )
-
-    assert response.status == "healthy"
-    assert "vectors" in response.vector_store
-
-
-@pytest.mark.skipif(
-    not Path("../../data/chroma_db").exists(),
-    reason="ChromaDB not available"
-)
-def test_server_health_endpoint():
-    """Test FastAPI health endpoint (requires data)."""
-    from phase3_serve.src.server import app
-
-    client = TestClient(app)
-    response = client.get("/health")
-
-    # May fail if pipeline not initialized, but endpoint should respond
-    assert response.status_code in [200, 503]
+    assert response.mode == "remote"

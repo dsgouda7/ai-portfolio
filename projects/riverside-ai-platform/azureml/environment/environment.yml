@@ -1,0 +1,12 @@
+$schema: https://azuremlschemas.azureedge.net/latest/environment.schema.json
+name: __RIVERSIDE_ENVIRONMENT_ASSET_NAME__
+version: __RIVERSIDE_ENVIRONMENT_ASSET_VERSION__
+description: Pinned inference environment for the Riverside SmolLM2 LoRA runtime.
+image: __RIVERSIDE_BASE_IMAGE_BY_DIGEST__
+conda_file: conda.yml
+tags:
+  runtime_version: 1.0.0
+  interface_version: 1.0.0
+  image_sha256: __RIVERSIDE_ENVIRONMENT_IMAGE_SHA256__
+  conda_sha256: __RIVERSIDE_CONDA_SHA256__
+  environment_template_sha256: __RIVERSIDE_ENVIRONMENT_TEMPLATE_SHA256__

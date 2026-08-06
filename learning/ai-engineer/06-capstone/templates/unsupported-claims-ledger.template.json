@@ -1,0 +1,22 @@
+{
+  "schema_version": "ai-engineer.capstone-unsupported-claims-ledger.v1",
+  "candidate_release_id": "<candidate-release-id>",
+  "claims": [
+    {
+      "claim_id": "<stable-claim-id>",
+      "requested_wording": "<unsupported-wording>",
+      "safe_wording": "<narrowest-supported-wording>",
+      "capability": "<production-readiness|azure-deployment|slo|capacity|cost|security|private-networking|residency|rollback|dr|telemetry|drift>",
+      "current_evidence": ["<path-or-uri>"],
+      "current_evidence_class": "<evidence-class>",
+      "missing_evidence": ["<specific-live-or-static-evidence>"] ,
+      "scope": {"environment": "<environment>", "region": "<region>", "release_id": "<release-id>", "workload": "<workload>"},
+      "owner": "<owner>",
+      "status": "<unsupported|modeled|expired|contradicted|validated>",
+      "revalidation_trigger": "<change-or-date>"
+    }
+  ],
+  "minimum_capabilities_reviewed": ["production-readiness", "azure-deployment", "slo", "capacity", "cost", "security", "private-networking", "residency", "rollback", "disaster-recovery", "telemetry-privacy", "drift-representativeness"],
+  "reviewer": "<independent-reviewer>",
+  "reviewed_at_utc": "<rfc3339-timestamp>"
+}

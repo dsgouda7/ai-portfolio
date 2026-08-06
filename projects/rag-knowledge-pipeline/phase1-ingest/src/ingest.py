@@ -12,7 +12,7 @@ from pathlib import Path
 # Add parent directory to path for shared imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from shared.config_loader import load_config, get_local_config, get_mode
+from shared.config_loader import get_local_config, get_mode, get_remote_config, load_config
 from shared.logging_config import setup_logging, get_logger
 from shared.constants import DELTA_LAKE_PATH, RAW_DATA_PATH
 
@@ -35,8 +35,15 @@ def run_ingestion():
     logger.info(f"Starting ingestion pipeline in {mode} mode")
 
     if mode == "remote":
-        logger.error("Remote mode not yet implemented")
-        raise NotImplementedError("Databricks remote ingestion requires workspace configuration")
+        from remote import run_remote_ingestion
+
+        report = run_remote_ingestion(get_remote_config(config))
+        logger.info(
+            "Remote ingestion completed: run_id=%s status=%s",
+            report["run_id"],
+            report["status"],
+        )
+        return report
 
     # Local mode: Load dataset and write to Delta Lake
     dataset_name = local_config.get("dataset", "wikipedia")

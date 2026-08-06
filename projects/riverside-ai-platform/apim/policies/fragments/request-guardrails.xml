@@ -1,0 +1,35 @@
+<fragment>
+  <validate-content unspecified-content-type-action="prevent" max-size="{{riverside-max-request-bytes}}" size-exceeded-action="prevent" errors-variable-name="riversideRequestValidationErrors">
+    <content type="application/json" validate-as="json" action="prevent" schema-id="{{riverside-request-schema-id}}" />
+  </validate-content>
+  <set-variable name="riversideRequestBody" value="@(context.Request.Body.As&lt;JObject&gt;(preserveContent: true))" />
+  <set-variable name="riversideStreamRequested" value="@(((JObject)context.Variables[&quot;riversideRequestBody&quot;]).Value&lt;bool&gt;(&quot;stream&quot;))" />
+  <set-variable name="riversideDeclaredInputTokens" value="@(((JObject)context.Variables[&quot;riversideRequestBody&quot;]).Value&lt;int&gt;(&quot;max_input_tokens&quot;))" />
+  <set-variable name="riversideDeclaredOutputTokens" value="@(((JObject)context.Variables[&quot;riversideRequestBody&quot;]).Value&lt;int&gt;(&quot;max_tokens&quot;))" />
+  <choose>
+    <when condition="@(((JObject)context.Variables[&quot;riversideRequestBody&quot;]).Value&lt;string&gt;(&quot;model&quot;) != &quot;riverside-editor&quot; || (int)context.Variables[&quot;riversideDeclaredInputTokens&quot;] &gt; int.Parse(&quot;{{riverside-max-input-tokens}}&quot;) || (int)context.Variables[&quot;riversideDeclaredOutputTokens&quot;] &gt; int.Parse(&quot;{{riverside-max-output-tokens}}&quot;))">
+      <return-response>
+        <set-status code="400" reason="Bad Request" />
+        <set-header name="Content-Type" exists-action="override">
+          <value>application/json</value>
+        </set-header>
+        <set-header name="X-Correlation-ID" exists-action="override">
+          <value>@((string)context.Variables["riversideTraceId"])</value>
+        </set-header>
+        <set-body>@{
+          return new JObject(
+            new JProperty("error", new JObject(
+              new JProperty("code", "invalid_request"),
+              new JProperty("message", "The model alias or token bounds are invalid."),
+              new JProperty("type", "request_error"),
+              new JProperty("param", "model|max_input_tokens|max_tokens"),
+              new JProperty("retryable", false))),
+            new JProperty("trace", new JObject(
+              new JProperty("trace_id", (string)context.Variables["riversideTraceId"]),
+              new JProperty("retry_count", 0)))
+          ).ToString(Newtonsoft.Json.Formatting.None);
+        }</set-body>
+      </return-response>
+    </when>
+  </choose>
+</fragment>

@@ -1,0 +1,65 @@
+$schema: https://azuremlschemas.azureedge.net/latest/managedOnlineDeployment.schema.json
+name: __RIVERSIDE_BLUE_SLOT_NAME__
+endpoint_name: __RIVERSIDE_ENDPOINT_NAME__
+description: Stable Riverside SmolLM2 LoRA release.
+model: azureml:__RIVERSIDE_BLUE_MODEL_NAME__:__RIVERSIDE_BLUE_MODEL_VERSION__
+environment: azureml:__RIVERSIDE_ENVIRONMENT_ASSET_NAME__:__RIVERSIDE_ENVIRONMENT_ASSET_VERSION__
+code_configuration:
+  code: __RIVERSIDE_CODE_PACKAGE_PATH__
+  scoring_script: score.py
+instance_type: Standard_DS3_v2
+instance_count: 3
+app_insights_enabled: true
+request_settings:
+  # Outer Azure ML container boundary; the application/APIM deadline must be lower.
+  request_timeout_ms: 180000
+  max_concurrent_requests_per_instance: 1
+liveness_probe:
+  initial_delay: 10
+  period: 10
+  timeout: 2
+  success_threshold: 1
+  failure_threshold: 30
+readiness_probe:
+  initial_delay: 180
+  period: 10
+  timeout: 5
+  success_threshold: 1
+  failure_threshold: 30
+environment_variables:
+  WORKER_COUNT: "1"
+  RIVERSIDE_RELEASE_MANIFEST: model-release-manifest.json
+  RIVERSIDE_BASE_MODEL_SUBDIR: base-model
+  RIVERSIDE_RUNTIME_NAME: azureml-riverside-runtime
+  RIVERSIDE_RUNTIME_VERSION: 1.0.0
+  RIVERSIDE_INTERFACE_VERSION: 1.0.0
+  RIVERSIDE_MODEL_PROFILE: cpu-small-360m
+  RIVERSIDE_PRECISION: fp32
+  RIVERSIDE_BASE_MODEL_ID: HuggingFaceTB/SmolLM2-360M-Instruct
+  RIVERSIDE_BASE_MODEL_REVISION: a10cc1512eabd3dde888204e902eca88bddb4951
+  RIVERSIDE_MODEL_ALIAS: riverside-editor
+  RIVERSIDE_MAX_INPUT_TOKENS: "4096"
+  RIVERSIDE_MAX_OUTPUT_TOKENS: "512"
+  RIVERSIDE_MAX_CONCURRENCY: "1"
+  RIVERSIDE_STREAMING_MODE: buffered-sse
+  RIVERSIDE_DEVICE: cpu
+  RIVERSIDE_ENVIRONMENT: __RIVERSIDE_ENVIRONMENT__
+  RIVERSIDE_DEPLOYMENT_NAME: __RIVERSIDE_BLUE_DEPLOYMENT_NAME__
+  RIVERSIDE_DEPLOYMENT_SLOT: __RIVERSIDE_BLUE_SLOT_NAME__
+  RIVERSIDE_REGION: __RIVERSIDE_REGION__
+  RIVERSIDE_INDEX_VERSION: __RIVERSIDE_INDEX_VERSION__
+  RIVERSIDE_DEPLOYED_AT: "__RIVERSIDE_DEPLOYED_AT__"
+tags:
+  slot: __RIVERSIDE_BLUE_SLOT_NAME__
+  model_asset_name: __RIVERSIDE_BLUE_MODEL_NAME__
+  release_asset_version: "__RIVERSIDE_BLUE_MODEL_VERSION__"
+  release_manifest_sha256: __RIVERSIDE_BLUE_RELEASE_MANIFEST_SHA256__
+  model_package_sha256: __RIVERSIDE_BLUE_MODEL_PACKAGE_SHA256__
+  code_package_sha256: __RIVERSIDE_CODE_PACKAGE_SHA256__
+  environment_asset_name: __RIVERSIDE_ENVIRONMENT_ASSET_NAME__
+  environment_asset_version: "__RIVERSIDE_ENVIRONMENT_ASSET_VERSION__"
+  environment_image_sha256: __RIVERSIDE_ENVIRONMENT_IMAGE_SHA256__
+  environment_conda_sha256: __RIVERSIDE_ENVIRONMENT_CONDA_SHA256__
+  environment_template_sha256: __RIVERSIDE_ENVIRONMENT_TEMPLATE_SHA256__
+  application_deadline_seconds: "__RIVERSIDE_APPLICATION_DEADLINE_SECONDS__"
+  diagnostics: application-insights

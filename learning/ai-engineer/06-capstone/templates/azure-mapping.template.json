@@ -1,0 +1,38 @@
+{
+  "schema_version": "ai-engineer.capstone-azure-mapping.v1",
+  "candidate_release_id": "<candidate-release-id>",
+  "target_environment": "<dev|staging|production>",
+  "target_region": "<unselected-or-approved-region>",
+  "source_commit": "<git-commit>",
+  "mappings": [
+    {
+      "capability": "custom_model_serving",
+      "local_contracts": ["projects/riverside-ai-platform/contracts/v1/model-release-manifest.schema.json"],
+      "local_evidence": ["<path-or-uri>"],
+      "azure_target": "Azure Machine Learning managed online endpoint with blue/green deployments",
+      "identity_boundary": "managed identity",
+      "network_data_boundary": "<private-path-and-data-classification-plan>",
+      "required_live_validation": ["artifact digest and runtime compatibility", "readiness and warm-up", "traffic routing", "negative network test", "cloud smoke and bounded load"],
+      "current_evidence_class": "<IMPLEMENTED_SOURCE|STATIC_VALIDATION|MODELED|LIVE_AZURE|UNVALIDATED>",
+      "owner": "<owner>",
+      "unsupported_claim": "<claim-that-cannot-yet-be-made>"
+    },
+    {
+      "capability": "application_gateway",
+      "local_contracts": ["projects/riverside-ai-platform/contracts/v1/app-chat-completion-request.schema.json", "projects/riverside-ai-platform/contracts/v1/app-chat-completion-response.schema.json"],
+      "local_evidence": ["<path-or-uri>"],
+      "azure_target": "Azure API Management with Microsoft Entra client authentication and managed-identity backend authentication",
+      "identity_boundary": "Entra ID plus least-privilege managed identity",
+      "network_data_boundary": "client authority cannot supply tenant or ACL filters",
+      "required_live_validation": ["token issuer and audience", "RBAC", "request bounds", "negative authorization", "managed-identity token acquisition"],
+      "current_evidence_class": "<evidence-class>",
+      "owner": "<owner>",
+      "unsupported_claim": "<claim>"
+    }
+  ],
+  "required_capabilities": ["custom_model_serving", "application_gateway", "identity", "governed_ingestion", "databricks_direct_vector_access", "bounded_telemetry", "key_and_artifact_management", "evaluation_assets"],
+  "cross_file_contradictions": ["<region-endpoint-timeout-or-interface-mismatch>"],
+  "residency_status": "<undecided|modeled|approved-and-live-validated>",
+  "overall_evidence_class": "<evidence-class>",
+  "limitations": ["<azure-live-validation-gap>"]
+}

@@ -1,0 +1,5 @@
+$schema: https://azuremlschemas.azureedge.net/latest/managedOnlineEndpoint.schema.json
+name: RIVERSIDE-ENDPOINT-NAME-REQUIRED
+traffic:
+  __RIVERSIDE_BLUE_SLOT_NAME__: 0
+  __RIVERSIDE_GREEN_SLOT_NAME__: 100

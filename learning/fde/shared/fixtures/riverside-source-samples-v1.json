@@ -1,0 +1,592 @@
+{
+  "schema_version": "1.0.0",
+  "fixture_version": "RIV-FDE-1.0.0",
+  "fixture_id": "SRCSET-RIV-001",
+  "synthetic_data_notice": "Entirely fictional source-shaped teaching data. URIs are non-resolving and no credentials are included.",
+  "records": [
+    {
+      "record_id": "REC-RIV-PDF-001",
+      "source_id": "SRC-PDF-POLICY-001",
+      "document_id": "DOC-POL-AI-2024",
+      "source_uri": "synthetic://riverside-eu/policies/ai-use-policy-v1.pdf",
+      "source_version": "1",
+      "content_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "tenant_id": "TEN-RIV-EU",
+      "region": "REG-UKS",
+      "classification": "internal",
+      "acl": ["ROLE-EDITOR", "ROLE-SENIOR-EDITOR", "ROLE-EDITORIAL-DIRECTOR", "ROLE-SECURITY"],
+      "lifecycle": {
+        "status": "superseded",
+        "effective_from": "2024-03-01",
+        "effective_to": "2026-05-31",
+        "superseded_by": "DOC-POL-AI-2026"
+      },
+      "ingested_at": "2026-07-01T02:00:00Z",
+      "pipeline_version": "fixture-parser-1.0.0",
+      "deletion_state": "active_in_source",
+      "payload_type": "pdf_pages",
+      "payload": {
+        "title": "AI Use and Editorial Automation Policy",
+        "pages": [
+          {
+            "page_number": 1,
+            "text_blocks": [
+              "AI Use and Editorial Automation Policy - Revision 1",
+              "Approved internal assistants may summarize policy and draft text.",
+              "Workflow updates below the local approval threshold may be applied automatically.",
+              "Riverside House - Internal - Page 1 of 2"
+            ]
+          },
+          {
+            "page_number": 2,
+            "text_blocks": [
+              "The local approval threshold is 50000 USD unless Finance states otherwise.",
+              "Unpublished manuscript text must not be uploaded to public generative AI services.",
+              "Riverside House - Internal - Page 2 of 2"
+            ]
+          }
+        ]
+      },
+      "expected_onboarding": {
+        "decision": "exclude_from_current_policy_index",
+        "reason": "Lifecycle metadata marks the document as superseded.",
+        "seeded_failure": "A naive filename or keyword index ranks this record as current."
+      }
+    },
+    {
+      "record_id": "REC-RIV-PDF-002",
+      "source_id": "SRC-PDF-POLICY-001",
+      "document_id": "DOC-POL-AI-2026",
+      "source_uri": "synthetic://riverside-eu/policies/ai-use-policy-v3.pdf",
+      "source_version": "3",
+      "content_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "tenant_id": "TEN-RIV-EU",
+      "region": "REG-UKS",
+      "classification": "internal",
+      "acl": ["ROLE-EDITOR", "ROLE-SENIOR-EDITOR", "ROLE-EDITORIAL-DIRECTOR", "ROLE-SECURITY"],
+      "lifecycle": {
+        "status": "current",
+        "effective_from": "2026-06-01",
+        "effective_to": null,
+        "superseded_by": null
+      },
+      "ingested_at": "2026-07-01T02:00:00Z",
+      "pipeline_version": "fixture-parser-1.0.0",
+      "deletion_state": "active",
+      "payload_type": "pdf_pages",
+      "payload": {
+        "title": "AI Use and Editorial Automation Policy",
+        "pages": [
+          {
+            "page_number": 1,
+            "text_blocks": [
+              "AI Use and Editorial Automation Policy - Revision 3",
+              "Unpublished manuscripts may be processed only by approved services in the title's permitted region.",
+              "Assistant output is a proposal. A human remains accountable for editorial acceptance.",
+              "Riverside House - Internal - Page 1 of 2"
+            ]
+          },
+          {
+            "page_number": 2,
+            "text_blocks": [
+              "Every workflow write requires confirmation bound to the exact title, prior state, next state, and actor.",
+              "Rights, payment, contract, publication, and distribution changes are prohibited assistant actions.",
+              "Riverside House - Internal - Page 2 of 2"
+            ]
+          }
+        ]
+      },
+      "expected_onboarding": {
+        "decision": "index_as_current",
+        "reason": "Current effective version with supported ACL and region metadata.",
+        "seeded_failure": "Repeated page footers become high-frequency retrieval noise unless removed."
+      }
+    },
+    {
+      "record_id": "REC-RIV-PDF-003",
+      "source_id": "SRC-PDF-POLICY-001",
+      "document_id": "DOC-POL-STYLE-2026",
+      "source_uri": "synthetic://riverside-corp/policies/editorial-style-2026.pdf",
+      "source_version": "4",
+      "content_hash": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+      "tenant_id": "TEN-RIV-CORP",
+      "region": "REG-UKS",
+      "classification": "internal",
+      "acl": ["ROLE-EDITOR", "ROLE-SENIOR-EDITOR", "ROLE-EDITORIAL-DIRECTOR"],
+      "lifecycle": {
+        "status": "current",
+        "effective_from": "2026-01-15",
+        "effective_to": null,
+        "superseded_by": null
+      },
+      "ingested_at": "2026-07-01T02:00:00Z",
+      "pipeline_version": "fixture-parser-1.0.0",
+      "deletion_state": "active",
+      "payload_type": "pdf_columns",
+      "payload": {
+        "title": "Riverside House Editorial Style Guide",
+        "pages": [
+          {
+            "page_number": 7,
+            "left_column": [
+              "Narrative tense",
+              "Past tense is the house default unless the assigned editor records an exception."
+            ],
+            "right_column": [
+              "Continuation length",
+              "A bounded continuation follows the requested sentence or word limit and must not invent rights or publication facts."
+            ],
+            "naive_extraction_order": [
+              "Narrative tense",
+              "Continuation length",
+              "Past tense is the house default unless the assigned editor records an exception.",
+              "A bounded continuation follows the requested sentence or word limit and must not invent rights or publication facts."
+            ]
+          }
+        ]
+      },
+      "expected_onboarding": {
+        "decision": "index_after_layout_aware_parse",
+        "reason": "Column order must preserve heading-to-paragraph association.",
+        "seeded_failure": "Naive block order attaches continuation rules to the narrative-tense heading."
+      }
+    },
+    {
+      "record_id": "REC-RIV-PDF-004",
+      "source_id": "SRC-PDF-RIGHTS-001",
+      "document_id": "DOC-RIGHTS-ARIA-001",
+      "source_uri": "synthetic://riverside-eu/rights/ERP-TITLE-1042/schedule-v2.pdf",
+      "source_version": "2",
+      "content_hash": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+      "tenant_id": "TEN-RIV-EU",
+      "region": "REG-UKS",
+      "classification": "restricted",
+      "acl": ["ROLE-RIGHTS-COUNSEL", "ROLE-EDITORIAL-DIRECTOR"],
+      "lifecycle": {
+        "status": "current",
+        "effective_from": "2026-02-10",
+        "effective_to": null,
+        "superseded_by": null
+      },
+      "ingested_at": "2026-07-02T02:00:00Z",
+      "pipeline_version": "fixture-parser-1.0.0",
+      "deletion_state": "retain_contract_evidence",
+      "payload_type": "pdf_pages",
+      "payload": {
+        "title": "Rights Schedule: The Weight of Distant Light",
+        "pages": [
+          {
+            "page_number": 1,
+            "text_blocks": [
+              "ERP title: ERP-TITLE-1042",
+              "Manuscript alias: The Weight of Distant Light",
+              "Territory: UK and Ireland",
+              "Language: English",
+              "Assistant use: internal editorial review only"
+            ],
+            "ocr_confidence": 0.99
+          },
+          {
+            "page_number": 2,
+            "text_blocks": [
+              "No external distribution of unpublished excerpts.",
+              "No automated grant or amendment of rights."
+            ],
+            "ocr_confidence": 0.98
+          },
+          {
+            "page_number": 2,
+            "text_blocks": [
+              "No external distribution of unpublished excerpts.",
+              "No automated grant or amendment of rights."
+            ],
+            "ocr_confidence": 0.98
+          },
+          {
+            "page_number": 3,
+            "text_blocks": ["[scanned signature page: no reliable text]"],
+            "ocr_confidence": 0.31
+          }
+        ]
+      },
+      "expected_onboarding": {
+        "decision": "quarantine_until_duplicate_and_ocr_review",
+        "reason": "Page 2 is duplicated and the signature page is below the OCR threshold.",
+        "seeded_failure": "Duplicate chunks crowd out other rights evidence."
+      }
+    },
+    {
+      "record_id": "REC-RIV-TEXT-001",
+      "source_id": "SRC-TEXT-MANUSCRIPT-001",
+      "document_id": "DOC-MANUSCRIPT-ARIA-037",
+      "source_uri": "synthetic://riverside-eu/manuscripts/TITLE-ARIA/chapter-037.txt",
+      "source_version": "17",
+      "content_hash": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+      "tenant_id": "TEN-RIV-EU",
+      "region": "REG-UKS",
+      "classification": "confidential",
+      "acl": ["ROLE-EDITOR:TITLE-ARIA", "ROLE-SENIOR-EDITOR:TITLE-ARIA"],
+      "lifecycle": {
+        "status": "current",
+        "effective_from": "2026-07-12T16:40:00Z",
+        "effective_to": null,
+        "superseded_by": null
+      },
+      "ingested_at": "2026-07-12T16:45:00Z",
+      "pipeline_version": "fixture-text-1.0.0",
+      "deletion_state": "active",
+      "payload_type": "text",
+      "payload": {
+        "title_id": "TITLE-ARIA",
+        "chapter_number": 37,
+        "text": "Aria checked the maintenance display twice. The prime-number signal had stopped repeating, but the silence now followed the ship's repair cycle exactly. She asked Wren to preserve the raw readings and called Petrus before drawing a conclusion."
+      },
+      "expected_onboarding": {
+        "decision": "index_for_assigned_title_only",
+        "reason": "Current text with explicit title, tenant, region, and title-scoped ACL.",
+        "seeded_failure": "A role-only filter exposes this chapter to editors assigned to other titles."
+      }
+    },
+    {
+      "record_id": "REC-RIV-TEXT-002",
+      "source_id": "SRC-TEXT-MANUSCRIPT-001",
+      "document_id": "DOC-MANUSCRIPT-ARIA-038-AUTOSAVE",
+      "source_uri": "synthetic://riverside-eu/manuscripts/legacy/aria-ch38-autosave.txt",
+      "source_version": "autosave-20260712-1641",
+      "content_hash": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
+      "tenant_id": "TEN-RIV-EU",
+      "region": "REG-UKS",
+      "classification": "confidential",
+      "acl": ["ROLE-EDITOR:TITLE-ARIA", "ROLE-SENIOR-EDITOR:TITLE-ARIA"],
+      "lifecycle": {
+        "status": "superseded",
+        "effective_from": "2026-07-12T16:41:00Z",
+        "effective_to": "2026-07-12T16:44:00Z",
+        "superseded_by": "DOC-MANUSCRIPT-ARIA-038"
+      },
+      "ingested_at": "2026-07-12T16:42:00Z",
+      "pipeline_version": "fixture-text-1.0.0",
+      "deletion_state": "deleted_in_source_pending_index",
+      "payload_type": "text",
+      "payload": {
+        "title_id": null,
+        "chapter_number": 38,
+        "text": "The Lantern team received the maintenance packet. Aria began a reply before the alarm interrupted her."
+      },
+      "expected_onboarding": {
+        "decision": "exclude_and_emit_tombstone",
+        "reason": "Superseded autosave lacks a reliable title ID and is deleted in the source.",
+        "seeded_failure": "An incremental index that ignores tombstones keeps the autosave retrievable."
+      }
+    },
+    {
+      "record_id": "REC-RIV-TEXT-003",
+      "source_id": "SRC-TEXT-MANUSCRIPT-001",
+      "document_id": "DOC-MANUSCRIPT-ARIA-038",
+      "source_uri": "synthetic://riverside-eu/manuscripts/TITLE-ARIA/chapter-038.txt",
+      "source_version": "18",
+      "content_hash": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+      "tenant_id": "TEN-RIV-EU",
+      "region": "REG-UKS",
+      "classification": "confidential",
+      "acl": ["ROLE-EDITOR:TITLE-ARIA", "ROLE-SENIOR-EDITOR:TITLE-ARIA"],
+      "lifecycle": {
+        "status": "current",
+        "effective_from": "2026-07-12T16:44:00Z",
+        "effective_to": null,
+        "superseded_by": null
+      },
+      "ingested_at": "2026-07-12T16:45:00Z",
+      "pipeline_version": "fixture-text-1.0.0",
+      "deletion_state": "active",
+      "payload_type": "text",
+      "payload": {
+        "title_id": "TITLE-ARIA",
+        "chapter_number": 38,
+        "text": "The Lantern team received the preserved readings instead of a conclusion. Aria marked the timing pattern as an observation, then wrote the question that the next repair cycle could answer."
+      },
+      "expected_onboarding": {
+        "decision": "index_for_assigned_title_only",
+        "reason": "Current title-scoped manuscript record.",
+        "seeded_failure": "Content similarity alone may deduplicate this current record against the deleted autosave."
+      }
+    },
+    {
+      "record_id": "REC-RIV-ERP-001",
+      "source_id": "SRC-ERP-CATALOG-001",
+      "document_id": "ERP-TITLE-1042",
+      "source_uri": "synthetic://bookledger/exports/2026-07-14/titles/1042",
+      "source_version": "2026-07-14",
+      "content_hash": "sha256:8888888888888888888888888888888888888888888888888888888888888888",
+      "tenant_id": "TEN-RIV-EU",
+      "region": "REG-UKS",
+      "classification": "restricted",
+      "acl": ["ROLE-EDITORIAL-DIRECTOR", "ROLE-RIGHTS-COUNSEL", "ROLE-FINANCE:MASKED"],
+      "lifecycle": {
+        "status": "current",
+        "effective_from": "2026-07-14T00:00:00Z",
+        "effective_to": null,
+        "superseded_by": null
+      },
+      "ingested_at": "2026-07-15T01:30:00Z",
+      "pipeline_version": "fixture-erp-1.0.0",
+      "deletion_state": "retained_financial_record",
+      "payload_type": "erp_row",
+      "payload": {
+        "erp_title_id": "ERP-TITLE-1042",
+        "manuscript_title_id": "TITLE-ARIA",
+        "display_title": "The Weight of Distant Light",
+        "imprint": "Alder",
+        "workflow_status": "copy_edit",
+        "assigned_editor_ids": ["API-USER-EDITOR-017"],
+        "royalty_rate": "MASKED",
+        "currency": "GBP"
+      },
+      "expected_onboarding": {
+        "decision": "map_ids_and_apply_field_masks",
+        "reason": "The ERP and manuscript identifiers are both required; Finance sees no manuscript content and editors see no royalty rate.",
+        "seeded_failure": "Joining on display title alone creates alias collisions."
+      }
+    },
+    {
+      "record_id": "REC-RIV-ERP-002",
+      "source_id": "SRC-ERP-CATALOG-001",
+      "document_id": "ERP-RIGHTS-1042",
+      "source_uri": "synthetic://bookledger/exports/2026-07-14/rights/1042",
+      "source_version": "2026-07-14",
+      "content_hash": "sha256:9999999999999999999999999999999999999999999999999999999999999999",
+      "tenant_id": "TEN-RIV-EU",
+      "region": "REG-UKS",
+      "classification": "restricted",
+      "acl": ["ROLE-RIGHTS-COUNSEL"],
+      "lifecycle": {
+        "status": "current",
+        "effective_from": "2026-07-14T00:00:00Z",
+        "effective_to": null,
+        "superseded_by": null
+      },
+      "ingested_at": "2026-07-15T01:30:00Z",
+      "pipeline_version": "fixture-erp-1.0.0",
+      "deletion_state": "retained_contract_record",
+      "payload_type": "erp_row",
+      "payload": {
+        "erp_title_id": "ERP-TITLE-1042",
+        "territory": null,
+        "language": "English",
+        "internal_assistant_use": true,
+        "external_excerpt_distribution": false,
+        "last_reviewed_by": "PER-RIV-003"
+      },
+      "expected_onboarding": {
+        "decision": "quarantine_for_owner_resolution",
+        "reason": "Null territory is unknown, not worldwide rights.",
+        "seeded_failure": "A permissive null default grants unsupported worldwide applicability."
+      }
+    },
+    {
+      "record_id": "REC-RIV-API-001",
+      "source_id": "SRC-API-WORKFLOW-001",
+      "document_id": "API-TASK-9001",
+      "source_uri": "synthetic://pageturn/v1/tasks?tenant=TEN-RIV-EU&page=1",
+      "source_version": "etag-workflow-page-1",
+      "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "tenant_id": "TEN-RIV-EU",
+      "region": "REG-UKS",
+      "classification": "internal",
+      "acl": ["ROLE-EDITOR", "ROLE-SENIOR-EDITOR", "ROLE-EDITORIAL-DIRECTOR"],
+      "lifecycle": {
+        "status": "current",
+        "effective_from": "2026-07-15T08:00:00Z",
+        "effective_to": null,
+        "superseded_by": null
+      },
+      "ingested_at": "2026-07-15T08:05:00Z",
+      "pipeline_version": "fixture-api-1.0.0",
+      "deletion_state": "active",
+      "payload_type": "api_page",
+      "payload": {
+        "page": 1,
+        "page_size": 100,
+        "records_returned": 100,
+        "next_cursor": "cursor-page-2",
+        "items": [
+          {
+            "task_id": "API-TASK-9001",
+            "title_id": "TITLE-ARIA",
+            "status": "copy_edit",
+            "assigned_user_id": "API-USER-EDITOR-017",
+            "updated_at": "2026-07-15T07:54:00Z"
+          }
+        ]
+      },
+      "expected_onboarding": {
+        "decision": "follow_next_cursor",
+        "reason": "The first page explicitly reports another cursor.",
+        "seeded_failure": "A one-call ingest silently truncates the source at 100 records."
+      }
+    },
+    {
+      "record_id": "REC-RIV-API-002",
+      "source_id": "SRC-API-WORKFLOW-001",
+      "document_id": "API-TASK-9002",
+      "source_uri": "synthetic://pageturn/v1/tasks?tenant=TEN-RIV-EU&cursor=cursor-page-2",
+      "source_version": "etag-workflow-page-2",
+      "content_hash": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "tenant_id": "TEN-RIV-EU",
+      "region": "REG-UKS",
+      "classification": "internal",
+      "acl": ["ROLE-EDITOR", "ROLE-SENIOR-EDITOR", "ROLE-EDITORIAL-DIRECTOR"],
+      "lifecycle": {
+        "status": "current",
+        "effective_from": "2026-07-15T08:00:00Z",
+        "effective_to": null,
+        "superseded_by": null
+      },
+      "ingested_at": "2026-07-15T08:05:01Z",
+      "pipeline_version": "fixture-api-1.0.0",
+      "deletion_state": "active",
+      "payload_type": "api_page",
+      "payload": {
+        "page": 2,
+        "page_size": 100,
+        "records_returned": 37,
+        "next_cursor": null,
+        "items": [
+          {
+            "task_id": "API-TASK-9002",
+            "title_id": "TITLE-ARIA",
+            "workflow_status": "senior_review",
+            "assigned_user_id": "API-USER-EDITOR-017",
+            "updated_at": "2026-07-15T07:58:00Z"
+          }
+        ]
+      },
+      "expected_onboarding": {
+        "decision": "quarantine_schema_drift",
+        "reason": "Page 2 renamed status to workflow_status without a contract version change.",
+        "seeded_failure": "Permissive parsing writes a null status for page-2 records."
+      }
+    },
+    {
+      "record_id": "REC-RIV-API-003",
+      "source_id": "SRC-API-WORKFLOW-001",
+      "document_id": "API-TASK-9003",
+      "source_uri": "synthetic://pageturn/v1/tasks/API-TASK-9003/transitions",
+      "source_version": "event-sequence-41",
+      "content_hash": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "tenant_id": "TEN-RIV-EU",
+      "region": "REG-UKS",
+      "classification": "internal",
+      "acl": ["ROLE-SENIOR-EDITOR:TITLE-ARIA", "ROLE-SERVICE-WORKFLOW"],
+      "lifecycle": {
+        "status": "current",
+        "effective_from": "2026-07-15T09:10:00Z",
+        "effective_to": null,
+        "superseded_by": null
+      },
+      "ingested_at": "2026-07-15T09:11:00Z",
+      "pipeline_version": "fixture-api-1.0.0",
+      "deletion_state": "active",
+      "payload_type": "api_event_history",
+      "payload": {
+        "task_id": "API-TASK-9003",
+        "title_id": "TITLE-ARIA",
+        "from_state": "copy_edit",
+        "to_state": "senior_review",
+        "approval_payload_hash": "fixture-hash-transition-9003",
+        "attempts": [
+          {
+            "attempt": 1,
+            "idempotency_key": null,
+            "service_result": "committed_response_lost"
+          },
+          {
+            "attempt": 2,
+            "idempotency_key": null,
+            "service_result": "duplicate_transition_rejected"
+          }
+        ]
+      },
+      "expected_onboarding": {
+        "decision": "preserve_for_incident_replay",
+        "reason": "The event history proves why attempt identity must be separate from business operation identity.",
+        "seeded_failure": "A naive retry repeats the transition without a stable business key."
+      }
+    },
+    {
+      "record_id": "REC-RIV-API-004",
+      "source_id": "SRC-API-IDENTITY-001",
+      "document_id": "API-USER-EDITOR-017",
+      "source_uri": "synthetic://riverside-idp/v1/users/API-USER-EDITOR-017",
+      "source_version": "identity-sequence-8801",
+      "content_hash": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "tenant_id": "TEN-RIV-EU",
+      "region": "REG-UKS",
+      "classification": "restricted",
+      "acl": ["ROLE-SECURITY"],
+      "lifecycle": {
+        "status": "current",
+        "effective_from": "2025-10-01",
+        "effective_to": null,
+        "superseded_by": null
+      },
+      "ingested_at": "2026-07-15T08:02:00Z",
+      "pipeline_version": "fixture-identity-1.0.0",
+      "deletion_state": "active",
+      "payload_type": "identity_record",
+      "payload": {
+        "actor_id": "API-USER-EDITOR-017",
+        "enabled": true,
+        "role_ids": ["ROLE-EDITOR"],
+        "tenant_ids": ["TEN-RIV-EU"],
+        "title_ids": ["TITLE-ARIA"],
+        "region_id": "REG-UKS",
+        "purpose_claim_present": false,
+        "last_reconciled_at": "2026-07-15T08:00:00Z"
+      },
+      "expected_onboarding": {
+        "decision": "allow_with_request_purpose",
+        "reason": "Identity is active and title-scoped, but the gateway must add and validate purpose.",
+        "seeded_failure": "Treating identity alone as purpose permits unrelated access."
+      }
+    },
+    {
+      "record_id": "REC-RIV-API-005",
+      "source_id": "SRC-API-IDENTITY-001",
+      "document_id": "API-USER-CONTRACTOR-044",
+      "source_uri": "synthetic://riverside-idp/v1/users/API-USER-CONTRACTOR-044",
+      "source_version": "identity-sequence-8802",
+      "content_hash": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "tenant_id": "TEN-RIV-EU",
+      "region": "REG-UKS",
+      "classification": "restricted",
+      "acl": ["ROLE-SECURITY"],
+      "lifecycle": {
+        "status": "stale",
+        "effective_from": "2026-01-10",
+        "effective_to": "2026-07-14T17:00:00Z",
+        "superseded_by": null
+      },
+      "ingested_at": "2026-07-15T08:02:00Z",
+      "pipeline_version": "fixture-identity-1.0.0",
+      "deletion_state": "identity_disabled_audit_retained",
+      "payload_type": "identity_record",
+      "payload": {
+        "actor_id": "API-USER-CONTRACTOR-044",
+        "enabled": false,
+        "direct_role_ids": [],
+        "stale_nested_group_role_ids": ["ROLE-EDITOR"],
+        "tenant_ids": ["TEN-RIV-EU"],
+        "title_ids": ["TITLE-ARIA"],
+        "region_id": "REG-UKS",
+        "contract_ended_at": "2026-07-14T17:00:00Z",
+        "group_snapshot_at": "2026-07-14T08:00:00Z"
+      },
+      "expected_onboarding": {
+        "decision": "deny_and_reconcile",
+        "reason": "Disabled identity and ended contract override stale nested-group membership.",
+        "seeded_failure": "A delta-only group cache retains access until the next full reconciliation."
+      }
+    }
+  ]
+}

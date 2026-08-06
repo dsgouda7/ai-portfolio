@@ -1,0 +1,42 @@
+{
+  "raw_document": [
+    "contract_version",
+    "kind",
+    "tenant_id",
+    "document_id",
+    "source_uri",
+    "source_version",
+    "content_hash",
+    "acl",
+    "region",
+    "classification",
+    "ingested_at",
+    "pipeline_version",
+    "deletion_state",
+    "media_type",
+    "byte_size",
+    "storage_uri",
+    "source_name"
+  ],
+  "parsed_document": [
+    "contract_version",
+    "kind",
+    "tenant_id",
+    "document_id",
+    "source_uri",
+    "source_version",
+    "content_hash",
+    "raw_content_hash",
+    "acl",
+    "region",
+    "classification",
+    "ingested_at",
+    "parsed_at",
+    "pipeline_version",
+    "deletion_state",
+    "parser",
+    "language",
+    "title",
+    "text"
+  ]
+}

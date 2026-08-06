@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.riverside.example/contracts/v1/telemetry-attributes.schema.json",
+  "title": "Riverside Bounded OpenTelemetry Metric Attributes v1",
+  "description": "Allowlisted, bounded-cardinality metric attributes. Request, user, tenant, prompt, completion, and document identifiers or content are intentionally absent.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "service.name",
+    "deployment.environment",
+    "model.release_id",
+    "model.alias",
+    "deployment.name",
+    "cloud.region",
+    "http.route",
+    "outcome.status",
+    "cache.result",
+    "gen_ai.usage.prompt_tokens_bucket",
+    "gen_ai.usage.output_tokens_bucket",
+    "tenant.tier"
+  ],
+  "properties": {
+    "service.name": {
+      "type": "string",
+      "enum": [
+        "riverside-gateway",
+        "riverside-rag-orchestrator",
+        "riverside-model-endpoint",
+        "riverside-indexer"
+      ]
+    },
+    "deployment.environment": {
+      "type": "string",
+      "enum": [
+        "dev",
+        "staging",
+        "production"
+      ]
+    },
+    "model.release_id": {
+      "$ref": "common.schema.json#/$defs/identifier"
+    },
+    "model.alias": {
+      "type": "string",
+      "enum": [
+        "riverside-editor"
+      ]
+    },
+    "deployment.name": {
+      "type": "string",
+      "pattern": "^riverside-(dev|staging|production)-(blue|green)$"
+    },
+    "cloud.region": {
+      "$ref": "common.schema.json#/$defs/region"
+    },
+    "http.route": {
+      "type": "string",
+      "enum": [
+        "/v1/chat/completions",
+        "/health",
+        "/ready"
+      ]
+    },
+    "outcome.status": {
+      "type": "string",
+      "enum": [
+        "success",
+        "error",
+        "rejected",
+        "timeout"
+      ]
+    },
+    "cache.result": {
+      "type": "string",
+      "enum": [
+        "hit",
+        "miss",
+        "bypass",
+        "error"
+      ]
+    },
+    "gen_ai.usage.prompt_tokens_bucket": {
+      "$ref": "#/$defs/tokenBucket"
+    },
+    "gen_ai.usage.output_tokens_bucket": {
+      "$ref": "#/$defs/tokenBucket"
+    },
+    "tenant.tier": {
+      "type": "string",
+      "enum": [
+        "standard",
+        "premium",
+        "internal"
+      ]
+    },
+    "error.code": {
+      "type": "string",
+      "enum": [
+        "none",
+        "invalid_request",
+        "unauthorized",
+        "forbidden",
+        "policy_violation",
+        "overloaded",
+        "timeout",
+        "backend_failure",
+        "release_unavailable",
+        "internal_error"
+      ]
+    },
+    "retrieval.top_k_bucket": {
+      "type": "string",
+      "enum": [
+        "none",
+        "1-5",
+        "6-10",
+        "11-20"
+      ]
+    }
+  },
+  "$defs": {
+    "tokenBucket": {
+      "type": "string",
+      "enum": [
+        "0",
+        "1-128",
+        "129-512",
+        "513-2048",
+        "2049-8192"
+      ]
+    }
+  }
+}

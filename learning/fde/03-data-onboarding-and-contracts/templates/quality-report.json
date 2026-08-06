@@ -1,0 +1,54 @@
+{
+  "artifact_id": "DATA-03",
+  "artifact_version": "0.1.0-example",
+  "run_id": "RUN-EXAMPLE-NOT-EXECUTED",
+  "status": "not_run",
+  "claim": {
+    "class": "Measured",
+    "scope": "synthetic fixture only",
+    "environment": "record when executed",
+    "fixture_version": "RIV-FDE-1.0.0",
+    "method": "record when executed",
+    "sample_size": 0,
+    "limitations": [
+      "Template values are not measurements.",
+      "Local fixture checks do not prove customer or Databricks behavior."
+    ]
+  },
+  "counts": {
+    "source_records": 0,
+    "accepted": 0,
+    "quarantined": 0,
+    "excluded": 0,
+    "tombstones": 0,
+    "schema_drift": 0,
+    "duplicate_pages": 0,
+    "stale_acl_denials": 0
+  },
+  "coverage": {
+    "required_contract_fields": null,
+    "acl": null,
+    "lineage": null,
+    "deletion_state": null
+  },
+  "gates": [
+    {
+      "gate_id": "DQ-EXAMPLE-001",
+      "source_id": "SRC-EXAMPLE-001",
+      "metric": "required_contract_field_coverage",
+      "operator": "==",
+      "threshold": 1.0,
+      "observed": null,
+      "passed": null,
+      "evidence_ref": "pending"
+    }
+  ],
+  "quarantine": [],
+  "unresolved": [
+    {
+      "item": "No run has populated this template.",
+      "owner": "FDE-LEARNER",
+      "blocks": "retrieval readiness"
+    }
+  ]
+}

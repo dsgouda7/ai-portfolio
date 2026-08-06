@@ -1,0 +1,14 @@
+{
+  "model": "riverside-editor",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Continue this scene in one sentence: Aria heard the station clock strike midnight."
+    }
+  ],
+  "max_input_tokens": 1024,
+  "max_tokens": 64,
+  "temperature": 0,
+  "top_p": 1,
+  "stream": true
+}

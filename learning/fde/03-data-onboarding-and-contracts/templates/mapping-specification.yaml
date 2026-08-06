@@ -1,0 +1,71 @@
+artifact_id: DATA-02
+artifact_version: 0.1.0-example
+contract_version: 1.0.0
+source_id: SRC-EXAMPLE-001
+target_kind: parsed_document
+status: draft
+identity:
+  document_id:
+    source: source-native immutable identifier
+    fallback: tenant_id plus canonical source_uri
+    forbidden_fallbacks:
+      - display_title
+      - filename_only
+  source_version:
+    source: source revision or immutable export version
+    missing_behavior: quarantine
+  content_hash:
+    source: normalized parsed content
+    algorithm: sha256
+required_mappings:
+  tenant_id:
+    source_path: governance.tenant_id
+    on_missing: quarantine
+  source_uri:
+    source_path: source.uri
+    on_missing: quarantine
+  acl:
+    source_path: governance.acl
+    on_missing: quarantine
+  region:
+    source_path: governance.region
+    on_missing: quarantine
+  classification:
+    source_path: governance.classification
+    on_missing: quarantine
+  deletion_state:
+    source_path: lifecycle.deletion_state
+    on_missing: quarantine
+payload_mapping:
+  parser: layout-aware-pdf
+  parser_version: 0.0.0-example
+  title_path: payload.title
+  text_strategy: preserve heading-to-paragraph association
+  footer_strategy: remove only repeated page furniture using a reviewed rule
+quality_rules:
+  - rule_id: MAP-EXAMPLE-001
+    condition: parsed text is empty
+    disposition: quarantine
+  - rule_id: MAP-EXAMPLE-002
+    condition: OCR confidence is below the approved threshold
+    disposition: quarantine
+schema_drift:
+  compatibility: exact-v1
+  unknown_field_behavior: retain in bounded metadata only after review
+  renamed_required_field_behavior: quarantine
+  owner: PER-OWNER-PENDING
+lineage:
+  required_fields:
+    - tenant_id
+    - document_id
+    - source_uri
+    - source_version
+    - content_hash
+    - acl
+    - region
+    - classification
+    - ingested_at
+    - pipeline_version
+    - deletion_state
+limitations:
+  - This example does not approve a parser or a customer mapping.

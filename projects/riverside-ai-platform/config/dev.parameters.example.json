@@ -1,0 +1,61 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environment": { "value": "dev" },
+    "location": { "value": "eastus2" },
+    "containerAppsInfrastructureSubnetResourceId": {
+      "value": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/replace-with-network-rg/providers/Microsoft.Network/virtualNetworks/replace-with-vnet/subnets/replace-with-container-apps-subnet"
+    },
+    "orchestratorBackendAudience": { "value": "api://replace-with-riverside-dev-backend-app-id" },
+    "orchestratorMinReplicas": { "value": 0 },
+    "orchestratorMaxReplicas": { "value": 2 },
+    "networkAccessMode": { "value": "public" },
+    "logRetentionInDays": { "value": 30 },
+    "allowAzureMonitorPublicAccess": { "value": true },
+    "storageSkuName": { "value": "Standard_LRS" },
+    "provisionMachineLearningWorkspace": { "value": true },
+    "provisionOnlineEndpoint": { "value": true },
+    "enableMachineLearningDiagnostics": { "value": true },
+    "assignGatewayInvokeRole": { "value": true },
+    "provisionApiManagement": { "value": false },
+    "apiManagementName": { "value": "replace-with-shared-dev-apim" },
+    "existingApiManagementGatewayPrincipalId": {
+      "value": "00000000-0000-0000-0000-000000000000"
+    },
+    "enableApiManagementDiagnostics": { "value": false },
+    "provisionLoadTesting": { "value": false },
+    "loadTestingName": { "value": "replace-with-shared-load-testing" },
+    "enableLoadTestingDiagnostics": { "value": false },
+    "databricksWorkspaceSubscriptionId": {
+      "value": "00000000-0000-0000-0000-000000000000"
+    },
+    "databricksWorkspaceResourceGroupName": { "value": "replace-with-databricks-rg" },
+    "databricksWorkspaceName": { "value": "replace-with-databricks-workspace" },
+    "databricksWorkspaceUrl": {
+      "value": "https://replace-with-workspace-url.azuredatabricks.net"
+    },
+    "databricksCatalogName": { "value": "riverside" },
+    "databricksSchemaName": { "value": "dev" },
+    "databricksVectorSearchEndpointName": { "value": "riverside-vector-search" },
+    "databricksVectorSearchIndexName": { "value": "riverside_manuscripts_dev" },
+    "databricksEmbeddingEndpointName": { "value": "replace-with-dev-embedding-endpoint" },
+    "embeddingDimensions": { "value": 768 },
+    "modelReleaseId": { "value": "replace-with-immutable-dev-release-id" },
+    "activeModelSlot": { "value": "blue" },
+    "releaseManifestUri": {
+      "value": "https://artifacts.example.invalid/riverside/dev/model-release.json"
+    },
+    "evaluationReportUri": {
+      "value": "https://artifacts.example.invalid/riverside/dev/evaluation-release-report.json"
+    },
+    "otelExporterEndpoint": { "value": "https://otel-dev.example.invalid" },
+    "tags": {
+      "value": {
+        "costCenter": "replace-with-cost-center",
+        "dataClassification": "synthetic-or-approved-dev-data",
+        "owner": "replace-with-owner"
+      }
+    }
+  }
+}

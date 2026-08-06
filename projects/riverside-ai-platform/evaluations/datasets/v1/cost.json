@@ -1,0 +1,19 @@
+{
+  "schema_version": "evaluation-dataset.v1",
+  "dataset_id": "riverside-cost-workloads",
+  "version": "2026-08-05",
+  "domain": "cost",
+  "evaluator_contract_version": "1.0.0",
+  "created_at": "2026-08-05T12:00:00Z",
+  "source_digest": "1111111111111111111111111111111111111111111111111111111111111111",
+  "cases": [
+    {
+      "case_id": "cost-standard-001",
+      "slice": { "name": "tenant_tier", "value": "standard" },
+      "workload_id": "bounded-load-standard",
+      "successful_requests": 1000,
+      "successful_output_tokens": 180000,
+      "currency": "USD"
+    }
+  ]
+}

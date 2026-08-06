@@ -1,0 +1,11 @@
+{
+  "decision": "pass",
+  "documents_seen": 2,
+  "active_documents": 1,
+  "deletion_documents": 1,
+  "required_field_failures": 0,
+  "embedding_dimension_failures": 0,
+  "authorization_metadata_failures": 0,
+  "lineage_failures": 0,
+  "duplicate_record_ids": 0
+}

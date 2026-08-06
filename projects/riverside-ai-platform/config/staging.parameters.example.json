@@ -1,0 +1,70 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environment": { "value": "staging" },
+    "location": { "value": "eastus2" },
+    "containerAppsInfrastructureSubnetResourceId": {
+      "value": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/replace-with-network-rg/providers/Microsoft.Network/virtualNetworks/replace-with-vnet/subnets/replace-with-container-apps-subnet"
+    },
+    "orchestratorBackendAudience": { "value": "api://replace-with-riverside-staging-backend-app-id" },
+    "orchestratorMinReplicas": { "value": 1 },
+    "orchestratorMaxReplicas": { "value": 4 },
+    "networkAccessMode": { "value": "restricted" },
+    "allowedIpCidrs": {
+      "value": [
+        "203.0.113.10/32"
+      ]
+    },
+    "allowedSubnetResourceIds": {
+      "value": [
+        "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/replace-with-network-rg/providers/Microsoft.Network/virtualNetworks/replace-with-vnet/subnets/replace-with-service-endpoint-subnet"
+      ]
+    },
+    "logRetentionInDays": { "value": 90 },
+    "allowAzureMonitorPublicAccess": { "value": true },
+    "storageSkuName": { "value": "Standard_ZRS" },
+    "provisionMachineLearningWorkspace": { "value": true },
+    "provisionOnlineEndpoint": { "value": true },
+    "enableMachineLearningDiagnostics": { "value": true },
+    "assignGatewayInvokeRole": { "value": true },
+    "provisionApiManagement": { "value": false },
+    "apiManagementName": { "value": "replace-with-shared-staging-apim" },
+    "existingApiManagementGatewayPrincipalId": {
+      "value": "00000000-0000-0000-0000-000000000000"
+    },
+    "enableApiManagementDiagnostics": { "value": true },
+    "provisionLoadTesting": { "value": true },
+    "enableLoadTestingDiagnostics": { "value": true },
+    "databricksWorkspaceSubscriptionId": {
+      "value": "00000000-0000-0000-0000-000000000000"
+    },
+    "databricksWorkspaceResourceGroupName": { "value": "replace-with-databricks-rg" },
+    "databricksWorkspaceName": { "value": "replace-with-databricks-workspace" },
+    "databricksWorkspaceUrl": {
+      "value": "https://replace-with-workspace-url.azuredatabricks.net"
+    },
+    "databricksCatalogName": { "value": "riverside" },
+    "databricksSchemaName": { "value": "staging" },
+    "databricksVectorSearchEndpointName": { "value": "riverside-vector-search" },
+    "databricksVectorSearchIndexName": { "value": "riverside_manuscripts_staging" },
+    "databricksEmbeddingEndpointName": { "value": "replace-with-staging-embedding-endpoint" },
+    "embeddingDimensions": { "value": 768 },
+    "modelReleaseId": { "value": "replace-with-immutable-staging-release-id" },
+    "activeModelSlot": { "value": "blue" },
+    "releaseManifestUri": {
+      "value": "https://artifacts.example.invalid/riverside/staging/model-release.json"
+    },
+    "evaluationReportUri": {
+      "value": "https://artifacts.example.invalid/riverside/staging/evaluation-release-report.json"
+    },
+    "otelExporterEndpoint": { "value": "https://otel-staging.example.invalid" },
+    "tags": {
+      "value": {
+        "costCenter": "replace-with-cost-center",
+        "dataClassification": "confidential",
+        "owner": "replace-with-owner"
+      }
+    }
+  }
+}

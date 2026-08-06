@@ -1,0 +1,3 @@
+# Local fixture analysis only. No model, provider SDK, or cloud package is required.
+ipykernel>=6.29,<7
+jsonschema[format]>=4.23,<5

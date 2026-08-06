@@ -1,0 +1,65 @@
+{
+  "contract_version": "1.0.0",
+  "kind": "model_release",
+  "release_id": "riverside-editor-2026-08-05",
+  "version": "1.0.0",
+  "base_model": {
+    "id": "HuggingFaceTB/SmolLM2-360M-Instruct",
+    "revision": "a10cc1512eabd3dde888204e902eca88bddb4951"
+  },
+  "adapter": {
+    "type": "lora",
+    "stage": "supervised-fine-tuning-lora",
+    "uri": "repo://checkpoints/instruction-lora/adapter_model.safetensors",
+    "digest": {
+      "algorithm": "sha256",
+      "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  },
+  "tokenizer": {
+    "revision": "a10cc1512eabd3dde888204e902eca88bddb4951",
+    "uri": "repo://checkpoints/instruction-lora/tokenizer.json",
+    "digest": {
+      "algorithm": "sha256",
+      "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    }
+  },
+  "model_profile": "cpu-small-360m",
+  "precision": "fp32",
+  "training_provenance": {
+    "manifest_uri": "repo://checkpoints/instruction-lora/experiment-manifest.json",
+    "manifest_digest": {
+      "algorithm": "sha256",
+      "value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    }
+  },
+  "evaluation": {
+    "report_uri": "repo://evaluations/riverside-editor-2026-08-05.json",
+    "report_digest": {
+      "algorithm": "sha256",
+      "value": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+    },
+    "decision": "promote",
+    "thresholds": [
+      {
+        "domain": "generation_citation_quality",
+        "metric": "citation_correctness",
+        "operator": "gte",
+        "value": 0.9
+      }
+    ]
+  },
+  "serving_runtime": {
+    "name": "azureml-riverside-runtime",
+    "version": "1.0.0",
+    "interface_version": "1.0.0",
+    "compatible_model_profiles": [
+      "cpu-small-360m"
+    ],
+    "supported_precisions": [
+      "fp32"
+    ]
+  },
+  "created_at": "2026-08-05T12:00:00Z",
+  "source_commit": "0123456789abcdef0123456789abcdef01234567"
+}

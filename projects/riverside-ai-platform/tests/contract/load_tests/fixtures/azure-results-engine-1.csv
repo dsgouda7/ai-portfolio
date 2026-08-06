@@ -1,0 +1,16 @@
+timeStamp,elapsed,label,responseCode,responseMessage,threadName,dataType,success,failureMessage,bytes,sentBytes,grpThreads,allThreads,URL,Latency,IdleTime,Connect
+1000,500,chat.completions.total.warm,200,OK,engine-1,text,true,,0,0,5,5,https://example.invalid/v1/chat/completions,100,0,10
+1100,100,chat.completions.ttft.warm,200,OK,engine-1,text,true,,0,0,5,5,,100,0,0
+1200,20,chat.completions.tpot.warm,200,OK,engine-1,text,true,,0,0,5,5,,20,0,0
+2000,600,chat.completions.total.steady,200,OK,engine-1,text,true,,0,0,20,20,https://example.invalid/v1/chat/completions,120,0,10
+2100,110,chat.completions.ttft.steady,200,OK,engine-1,text,true,,0,0,20,20,,110,0,0
+2200,22,chat.completions.tpot.steady,200,OK,engine-1,text,true,,0,0,20,20,,22,0,0
+3000,700,chat.completions.total.target,200,OK,engine-1,text,true,,0,0,50,50,https://example.invalid/v1/chat/completions,130,0,10
+3100,120,chat.completions.ttft.target,200,OK,engine-1,text,true,,0,0,50,50,,120,0,0
+3200,24,chat.completions.tpot.target,200,OK,engine-1,text,true,,0,0,50,50,,24,0,0
+4000,1200,chat.completions.total.overload,429,Too Many Requests,engine-1,text,false,overloaded,0,0,90,90,https://example.invalid/v1/chat/completions,200,0,10
+4100,300,chat.completions.ttft.overload,200,OK,engine-1,text,true,,0,0,90,90,,300,0,0
+4200,50,chat.completions.tpot.overload,200,OK,engine-1,text,true,,0,0,90,90,,50,0,0
+5000,650,chat.completions.total.recovery,200,OK,engine-1,text,true,,0,0,20,20,https://example.invalid/v1/chat/completions,125,0,10
+5100,115,chat.completions.ttft.recovery,200,OK,engine-1,text,true,,0,0,20,20,,115,0,0
+5200,23,chat.completions.tpot.recovery,200,OK,engine-1,text,true,,0,0,20,20,,23,0,0

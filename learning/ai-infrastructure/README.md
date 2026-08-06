@@ -20,6 +20,11 @@
 | 06 | Quantization in Depth | Riverside MacBook 16GB → compress the model without breaking it | int8 PTQ, GPTQ, AWQ, GGUF formats, NF4 |
 | 07 | Inference Systems | Riverside 100× traffic spike → make the gateway 10× faster | KV cache, continuous batching, speculative decoding |
 | 08 | Custom Kernels with Triton | 87% of peak HBM bandwidth → write it in Python | Triton programming model, tiled matmul, fused ops, autotuning |
+| 09 | [Azure Operational LLM Serving](09-azure-operational-llm-serving/README.md) | Riverside adapter → bounded service under concurrency and release changes | Contracts, readiness, admission, deadlines, retries, idempotency, telemetry, blue/green, Azure mapping |
+
+Chapter 09 is an authored, unexecuted local bridge. It uses substituted model work and does not
+emulate Azure control planes; Azure ML, APIM, Entra, Monitor, networking, quota, autoscaling,
+regional capacity, and cost remain **live-unvalidated**.
 
 ---
 
@@ -28,6 +33,27 @@
 - **Start at Ch1** if you want to understand GPU hardware from scratch
 - **Start at Ch2** if you already understand GPU architecture and want memory optimization
 - **Start at Ch6** if you just want to deploy a model on consumer hardware
+- **Start at Ch9** if you understand model and gateway mechanics and want the operational serving bridge
+
+---
+
+## Conceptual and Operational Links
+
+The conceptual owners remain in the learning tracks: [fine-tuning](../genai/03-llm-finetuning/README.md)
+owns adaptation evidence, [LLM gateways](../genai/06-llm-gateway/README.md) own application-facing
+request control, and Chapters 06-07 here own artifact and inference mechanics.
+
+Use these operational surfaces after the concepts:
+
+- [Azure Operational LLM Serving](09-azure-operational-llm-serving/README.md) for the local,
+	failure-first serving bridge;
+- [Riverside AI Platform documentation](../../projects/riverside-ai-platform/docs/README.md) for
+	the Azure production profile and explicit live-validation boundary;
+- [Riverside Azure ML assets](../../projects/riverside-ai-platform/azureml/README.md) and
+	[APIM gateway assets](../../projects/riverside-ai-platform/apim/README.md) for inspectable
+	deployment surfaces, not proof of deployment;
+- [AI Engineer route](../ai-engineer/README.md) for the broader data-to-feedback production loop,
+	or the [FDE route](../fde/README.md) for customer rollout and operational handoff.
 
 ---
 

@@ -23,14 +23,15 @@ ai-portfolio/
 ### Production Projects
 - [FPL Squad Optimizer](projects/fpl-squad-optimizer/) - XGBoost Fantasy Premier League team picker with walk-forward simulation
 - [Context Optimizer](projects/context-optimizer/) - LLM corpus compression and targeted retrieval library (91% token reduction)
-- [RAG Knowledge Pipeline](projects/rag-knowledge-pipeline/) - Three-phase local RAG: corpus → Delta Lake → ChromaDB → FastAPI
+- [RAG Knowledge Pipeline](projects/rag-knowledge-pipeline/) - Three-phase local RAG plus authored Azure Databricks ingestion and indexing assets; Databricks behavior is live-unvalidated
+- [Riverside AI Platform](projects/riverside-ai-platform/docs/README.md) - Contract-driven Azure ML, APIM, Databricks, evaluation, telemetry, load-test, and IaC source assets; live Azure behavior is unvalidated
 - [Video Quality Enhancer](projects/video-quality-enhancer/) - 4K upscaling + audio denoising API, fully local
 
 See [projects/](projects/) for more details.
 
 ### Learning & Exploration
 - [playground/](playground/) - Exploratory notebooks (AI agents, feature engineering, Azure)
-- [learning/](learning/) - Deep-dive study tracks: GenAI architecture, hands-on Agentic AI, and Agentic AI system design
+- [learning/](learning/) - Deep-dive study tracks plus role-oriented AI Engineer and FDE routes
 - [exercises/](exercises/) - Practice problems matching notes/ structure
 
 ---
@@ -73,6 +74,7 @@ Standalone, production-grade applications demonstrating end-to-end engineering s
 - **[fpl-squad-optimizer/](projects/fpl-squad-optimizer/)** — XGBoost Fantasy Premier League team picker; 4 position-specific regressors, walk-forward simulation, 51% oracle-capture rate
 - **[context-optimizer/](projects/context-optimizer/)** — LLM corpus compression + Tree-of-Thought retrieval library; 91% token reduction, constant cost regardless of corpus size, fully local with Ollama
 - **[rag-knowledge-pipeline/](projects/rag-knowledge-pipeline/)** — Three-phase local RAG: Wikipedia corpus → Delta Lake → ChromaDB → FastAPI; each phase independently deployable
+- **[riverside-ai-platform/](projects/riverside-ai-platform/docs/README.md)** — Azure production-profile source for contracts, Azure ML, APIM, Databricks integration, evaluation, telemetry, load testing, IaC, and operations; no live Azure validation is claimed
 - **[video-quality-enhancer/](projects/video-quality-enhancer/)** — 4K video upscaling (Swin2SR) + audio denoising (MetricGAN+) REST API; GPU-accelerated with CPU fallback, fully local
 - **[voice-assistant/](projects/voice-assistant/)** — Dockerized voice AI: Whisper STT → DialoGPT → SpeechT5 TTS; responsive web UI, fully local
 - **[text-translation/](projects/text-translation/)** — Flask REST API: Whisper STT + Helsinki-NLP translation + Facebook MMS-TTS; fully local, no API keys
@@ -97,6 +99,26 @@ planning, durable workflows, governance, MCP, multi-agent coordination, and saga
 
 **Agentic AI System Design — `learning/agentic-ai-system-design/`**
 Staff/Principal-level interview reference track (Markdown, no notebooks): platform architecture end-to-end, agent lifecycle & runtime, tool/MCP/skill registry, model gateway, state & memory, loop detection & termination, evaluation frameworks, observability, multi-agent patterns, recoverability & Saga, governance & guardrails, production scale, and a Semantic Kernel vs LangGraph comparison.
+
+**AI Engineer Route — [`learning/ai-engineer/`](learning/ai-engineer/README.md)**
+Role-oriented path connecting the technical tracks to data quality, prompt releases, application
+latency and cost, release lineage, and production feedback. The route and five operational chapters
+are authored, their notebooks were executed successfully locally and then cleared, and the capstone
+is present. No live Azure or production-readiness evidence is claimed.
+
+**Forward Deployed Engineer Route — [`learning/fde/`](learning/fde/README.md)**
+Customer-lifecycle path from discovery and architecture translation through data onboarding,
+identity, commercials, rollout, incident recovery, and handoff. The route and eight chapters are
+authored, their notebooks were executed successfully locally and then cleared, and the capstone is
+present. Customer validation and production readiness cannot be created by local exercises.
+
+**Azure Operational Serving — [`learning/ai-infrastructure/09-azure-operational-llm-serving/`](learning/ai-infrastructure/09-azure-operational-llm-serving/README.md)**
+Local, failure-first bridge from fine-tuned artifacts and gateway concepts to bounded serving
+mechanics. All 13 code cells executed successfully locally and were then cleared; the p95 gates
+returned `HOLD_LOCAL_RELEASE` and `HOLD_AZURE_PROMOTION`. Azure behavior remains live-unvalidated. Continue to the
+[RAG data plane](projects/rag-knowledge-pipeline/databricks/indexing/OPERATIONS.md) and
+[Riverside production profile](projects/riverside-ai-platform/docs/README.md) for operational source
+assets.
 
 → See [learning/README.md](learning/README.md) for full chapter listings and prerequisites.
 

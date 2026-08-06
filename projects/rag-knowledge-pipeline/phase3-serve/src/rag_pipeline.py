@@ -1,200 +1,267 @@
-"""
-RAG pipeline logic.
+"""Provider-neutral retrieval-augmented generation orchestration."""
 
-This module encapsulates the core RAG functionality including:
-- LLM initialization
-- Vector store loading
-- Query execution
-"""
+from __future__ import annotations
 
-import os
+import re
+import secrets
+import time
+from dataclasses import dataclass
+from typing import Any, Mapping, Sequence
+
 import torch
-from pathlib import Path
-from typing import Optional
 
-from langchain_core.prompts import PromptTemplate
-from langchain.chains import RetrievalQA
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma
-from langchain_ibm import WatsonxLLM
-
+from shared.contract_adapters import AuthorizationContext, RetrievedRecord, utc_now
 from shared.logging_config import get_logger
+
+from .providers import GenerationResult, build_generation_provider
+from .retrieval import build_retriever
 
 
 logger = get_logger(__name__)
+_CITATION_MARKER = re.compile(r"<cite:([A-Za-z0-9][A-Za-z0-9._:-]{0,127})>")
+
+
+@dataclass(frozen=True)
+class PipelineResult:
+    answer: str
+    citations: list[dict[str, Any]]
+    prompt_tokens: int
+    completion_tokens: int
+    finish_reason: str
+    retry_count: int
+    deployment: Mapping[str, Any]
+    sources_count: int
 
 
 class RAGPipeline:
-    """Retrieval-Augmented Generation pipeline."""
+    """Compose independently selectable retrieval and generation providers."""
 
-    def __init__(self, config: dict):
-        """
-        Initialize RAG pipeline.
-
-        Args:
-            config: Configuration dictionary
-        """
+    def __init__(self, config: Mapping[str, Any]) -> None:
         self.config = config
+        self.mode = str(config["mode"])
         self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
-        self.llm = None
-        self.embeddings = None
-        self.vectorstore = None
-        self.qa_chain = None
-        self.chat_history = []
+        self.retriever = build_retriever(config, self.device)
+        self.generator = build_generation_provider(config)
+        self.chat_history: list[tuple[str, str]] = []
+        self._started_at = utc_now()
+        logger.info("RAG pipeline initialized in %s mode on %s", self.mode, self.device)
 
-        logger.info(f"Initializing RAG pipeline on device: {self.device}")
-
-        # Initialize components
-        self._init_llm()
-        self._init_embeddings()
-        self._load_vectorstore()
-        self._build_qa_chain()
-
-    def _init_llm(self):
-        """Initialize the language model."""
-        llm_config = self.config.get("llm", {})
-
-        model_id = os.getenv(
-            "WATSONX_MODEL_ID",
-            llm_config.get("model_id", "meta-llama/llama-4-maverick-17b-128e-instruct-fp8")
+    def _context_message(self, records: Sequence[RetrievedRecord]) -> dict[str, str]:
+        blocks = "\n\n".join(
+            f'<source id="{record.chunk_id}">\n{record.content}\n</source>'
+            for record in records
         )
-        watsonx_url = os.getenv(
-            "WATSONX_URL",
-            "https://us-south.ml.cloud.ibm.com"
+        instructions = (
+            "Use only the source blocks below. After every supported sentence, append a marker "
+            "in the exact form <cite:chunk_id>. Do not invent identifiers. If the sources do not "
+            "support an answer, say that the authorized sources do not contain the answer."
         )
-        project_id = os.getenv(
-            "WATSONX_PROJECT_ID",
-            "skills-network"
-        )
+        return {"role": "system", "content": f"{instructions}\n\n{blocks}"}
 
-        logger.info(f"Initializing WatsonxLLM: {model_id}")
-
-        model_parameters = {
-            "max_new_tokens": llm_config.get("max_tokens", 512),
-            "temperature": llm_config.get("temperature", 0.1),
-        }
-
-        self.llm = WatsonxLLM(
-            model_id=model_id,
-            url=watsonx_url,
-            project_id=project_id,
-            params=model_parameters
-        )
-
-        logger.info("WatsonxLLM initialized")
-
-    def _init_embeddings(self):
-        """Initialize embedding model."""
-        local_config = self.config.get("local", {})
-        embedding_model = local_config.get(
-            "embedding_model",
-            "sentence-transformers/all-MiniLM-L6-v2"
-        )
-
-        logger.info(f"Initializing embeddings: {embedding_model}")
-
-        self.embeddings = HuggingFaceEmbeddings(
-            model_name=embedding_model,
-            model_kwargs={"device": self.device}
-        )
-
-        logger.info("Embeddings initialized")
-
-    def _load_vectorstore(self):
-        """Load ChromaDB vector store."""
-        local_config = self.config.get("local", {})
-        vector_store_path = local_config.get("vector_store_path", "./data/chroma_db")
-
-        vector_path = Path(vector_store_path)
-
-        if not vector_path.exists():
-            raise FileNotFoundError(
-                f"Vector store not found at {vector_store_path}. "
-                "Run Phase 2 (vectorization) first."
+    def _resolve_citations(
+        self,
+        raw_answer: str,
+        records: Sequence[RetrievedRecord],
+    ) -> tuple[str, list[dict[str, Any]]]:
+        by_id = {record.chunk_id: record for record in records}
+        output: list[str] = []
+        spans: dict[str, list[dict[str, int]]] = {}
+        cursor = 0
+        for match in _CITATION_MARKER.finditer(raw_answer):
+            output.append(raw_answer[cursor : match.start()])
+            current = "".join(output)
+            end = len(current.rstrip())
+            boundary = max(current.rfind(". ", 0, max(0, end - 1)), current.rfind("\n", 0, end))
+            start = boundary + (2 if boundary >= 0 and current[boundary : boundary + 2] == ". " else 1)
+            while start < end and current[start].isspace():
+                start += 1
+            chunk_id = match.group(1)
+            if chunk_id in by_id and end > start:
+                spans.setdefault(chunk_id, []).append({"start": start, "end": end})
+            cursor = match.end()
+        output.append(raw_answer[cursor:])
+        answer = "".join(output)
+        citations = []
+        for index, record in enumerate(records, start=1):
+            if record.chunk_id not in spans:
+                continue
+            citations.append(
+                {
+                    "contract_version": "1.0.0",
+                    "kind": "citation",
+                    "citation_id": f"cite-{index:03d}",
+                    "chunk_id": record.chunk_id,
+                    "document_id": record.document_id,
+                    "source_uri": record.source_uri,
+                    "source_version": record.source_version,
+                    "content_hash": record.content_hash,
+                    "title": record.title,
+                    "answer_spans": spans[record.chunk_id],
+                    "retrieved_at": utc_now(),
+                }
             )
+        citations.sort(key=lambda citation: citation["answer_spans"][0]["start"])
+        return answer, citations
 
-        logger.info(f"Loading ChromaDB from {vector_store_path}")
-
-        self.vectorstore = Chroma(
-            persist_directory=str(vector_path),
-            embedding_function=self.embeddings
+    def _deployment(
+        self,
+        generation: GenerationResult,
+        records: Sequence[RetrievedRecord],
+        authorization: AuthorizationContext,
+    ) -> Mapping[str, Any]:
+        if generation.deployment:
+            return generation.deployment
+        serving = self.config["serving"]
+        configured = serving.get("deployment", {})
+        generation_config = serving["generation"]
+        provider = str(generation_config["provider"])
+        index_version = records[0].index_version if records else str(
+            self.config["remote"].get("index_version", "0.1.0-legacy-local")
         )
-
-        collection_count = self.vectorstore._collection.count()
-        logger.info(f"ChromaDB loaded: {collection_count} vectors")
-
-    def _build_qa_chain(self):
-        """Build the QA retrieval chain."""
-        retrieval_config = self.config.get("retrieval", {})
-
-        search_type = retrieval_config.get("search_type", "mmr")
-        top_k = retrieval_config.get("top_k", 6)
-        lambda_mult = retrieval_config.get("lambda_mult", 0.25)
-
-        logger.info(f"Building QA chain: {search_type}, k={top_k}")
-
-        retriever = self.vectorstore.as_retriever(
-            search_type=search_type,
-            search_kwargs={'k': top_k, 'lambda_mult': lambda_mult}
-        )
-
-        self.qa_chain = RetrievalQA.from_chain_type(
-            llm=self.llm,
-            chain_type="stuff",
-            retriever=retriever,
-            return_source_documents=False,
-            input_key="question"
-        )
-
-        logger.info("QA chain built successfully")
-
-    def query(self, question: str, temperature: Optional[float] = None) -> dict:
-        """
-        Execute a RAG query.
-
-        Args:
-            question: The user's question
-            temperature: Optional temperature override
-
-        Returns:
-            Dictionary with answer and metadata
-        """
-        logger.info(f"Processing query: {question[:100]}...")
-
-        # Update temperature if specified
-        if temperature is not None and temperature != self.llm.params.get("temperature"):
-            logger.debug(f"Overriding temperature: {temperature}")
-            self.llm.params["temperature"] = temperature
-
-        # Execute query
-        result = self.qa_chain.invoke({
-            "question": question,
-            "chat_history": self.chat_history
-        })
-
-        answer = result["result"]
-
-        # Update chat history
-        self.chat_history.append((question, answer))
-
-        logger.info(f"Query complete. Answer length: {len(answer)} chars")
-
         return {
-            "answer": answer,
-            "question": question,
-            "sources_count": self.config.get("retrieval", {}).get("top_k", 6)
+            "contract_version": "1.0.0",
+            "kind": "deployment_metadata",
+            "environment": str(configured.get("environment", "dev")),
+            "release_id": str(configured.get("release_id", "local-development")),
+            "model_alias": str(generation_config["model_alias"]),
+            "deployment_name": str(configured.get("deployment_name", provider.replace("_", "-"))),
+            "deployment_slot": str(configured.get("deployment_slot", "blue")),
+            "region": str(configured.get("region", authorization.region)),
+            "runtime": str(configured.get("runtime", "rag-phase3-serve")),
+            "runtime_version": str(configured.get("runtime_version", "0.2.0")),
+            "index_version": index_version,
+            "deployed_at": str(configured.get("deployed_at", self._started_at)),
+            "source_commit": str(configured.get("source_commit", "0000000")),
         }
 
-    def reset_history(self):
-        """Clear chat history."""
-        logger.info("Clearing chat history")
+    def complete(
+        self,
+        messages: Sequence[Mapping[str, str]],
+        *,
+        authorization: AuthorizationContext,
+        retrieval_enabled: bool = True,
+        top_k: int | None = None,
+        search_type: str | None = None,
+        temperature: float | None = None,
+        max_tokens: int | None = None,
+        max_input_tokens: int | None = None,
+        retrieval_filters: Mapping[str, Any] | None = None,
+    ) -> PipelineResult:
+        generation_config = self.config["serving"]["generation"]
+        retrieval_config = self.config.get("retrieval", {})
+        question = next(
+            (str(message["content"]) for message in reversed(messages) if message["role"] == "user"),
+            None,
+        )
+        if question is None:
+            raise ValueError("A RAG request requires at least one user message")
+
+        records: Sequence[RetrievedRecord] = []
+        if retrieval_enabled:
+            scoped_authorization = authorization
+            if retrieval_filters:
+                requested_region = retrieval_filters.get("region")
+                if requested_region and requested_region != authorization.region:
+                    raise ValueError("Retrieval region cannot differ from the trusted region")
+                requested_classifications = retrieval_filters.get("classification")
+                if requested_classifications:
+                    allowed = tuple(
+                        value
+                        for value in authorization.classifications
+                        if value in requested_classifications
+                    )
+                    if not allowed:
+                        raise ValueError("Retrieval classifications are outside the trusted scope")
+                    scoped_authorization = AuthorizationContext(
+                        tenant_id=authorization.tenant_id,
+                        region=authorization.region,
+                        classifications=allowed,
+                        principal_ids=authorization.principal_ids,
+                        group_ids=authorization.group_ids,
+                    )
+            records = self.retriever.retrieve(
+                question,
+                top_k=top_k or int(retrieval_config.get("top_k", 6)),
+                search_type=search_type or str(retrieval_config.get("search_type", "mmr")),
+                authorization=scoped_authorization,
+                filters=retrieval_filters,
+            )
+        generation_messages = [self._context_message(records), *messages] if retrieval_enabled else list(messages)
+        generation = self.generator.complete(
+            generation_messages,
+            temperature=float(
+                generation_config.get("temperature", 0.1) if temperature is None else temperature
+            ),
+            max_tokens=int(generation_config["max_tokens"] if max_tokens is None else max_tokens),
+            max_input_tokens=int(
+                generation_config["max_input_tokens"]
+                if max_input_tokens is None
+                else max_input_tokens
+            ),
+        )
+        answer, citations = self._resolve_citations(generation.content, records)
+        return PipelineResult(
+            answer=answer,
+            citations=citations,
+            prompt_tokens=generation.prompt_tokens,
+            completion_tokens=generation.completion_tokens,
+            finish_reason=generation.finish_reason,
+            retry_count=generation.retry_count,
+            deployment=self._deployment(generation, records, authorization),
+            sources_count=len(records),
+        )
+
+    def query(
+        self,
+        question: str,
+        *,
+        authorization: AuthorizationContext,
+        top_k: int | None = None,
+        temperature: float | None = None,
+    ) -> dict[str, Any]:
+        result = self.complete(
+            [{"role": "user", "content": question}],
+            authorization=authorization,
+            top_k=top_k,
+            temperature=temperature,
+        )
+        self.chat_history.append((question, result.answer))
+        return {
+            "answer": result.answer,
+            "question": question,
+            "sources_count": result.sources_count,
+        }
+
+    def reset_history(self) -> None:
         self.chat_history = []
 
-    def get_status(self) -> dict:
-        """Get pipeline status."""
+    def get_status(self) -> dict[str, str]:
         return {
-            "llm": "initialized" if self.llm else "not initialized",
-            "embeddings": "initialized" if self.embeddings else "not initialized",
-            "vectorstore": f"{self.vectorstore._collection.count()} vectors" if self.vectorstore else "not loaded",
-            "device": self.device
+            "mode": self.mode,
+            "retrieval": self.retriever.status(),
+            "generation": self.generator.status(),
+            "device": self.device,
+        }
+
+    def contract_response(self, result: PipelineResult, model_alias: str) -> dict[str, Any]:
+        return {
+            "id": f"chatcmpl-{secrets.token_urlsafe(12)}",
+            "object": "chat.completion",
+            "created": int(time.time()),
+            "model": model_alias,
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {"role": "assistant", "content": result.answer},
+                    "finish_reason": result.finish_reason,
+                }
+            ],
+            "usage": {
+                "prompt_tokens": result.prompt_tokens,
+                "completion_tokens": result.completion_tokens,
+                "total_tokens": result.prompt_tokens + result.completion_tokens,
+            },
+            "citations": result.citations,
+            "trace": {"trace_id": secrets.token_hex(16), "retry_count": result.retry_count},
+            "deployment": result.deployment,
         }

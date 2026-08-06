@@ -1,0 +1,300 @@
+{
+  "fixture_version": "FDE-07-1.0.0",
+  "status": "synthetic_training_fixture_unexecuted",
+  "canonical_fixture": "../../shared/fixtures/riverside-engagement-v1.json",
+  "canonical_fixture_version": "RIV-FDE-1.0.0",
+  "scope_note": "Exercises IRX-RIV-001 through IRX-RIV-006 extend canonical incidents without changing their facts. IRX-RIV-007 is an exercise-only retrieval variation and is not a canonical customer fact.",
+  "incident_domains": [
+    "policy",
+    "data",
+    "retrieval",
+    "model",
+    "tool",
+    "identity",
+    "infrastructure"
+  ],
+  "scenarios": [
+    {
+      "exercise_id": "IRX-RIV-001",
+      "canonical_incident_id": "INC-RIV-001",
+      "source_kind": "canonical_extension",
+      "domain": "policy",
+      "title": "Superseded approval policy cited",
+      "initial_severity": "SEV-2",
+      "detection_time_utc": "2026-07-14T09:12:00Z",
+      "first_observations": [
+        "A disagreement review shows an answer citing a superseded policy.",
+        "The affected workflow-guidance path is still serving requests.",
+        "No evidence yet establishes whether other tenants or questions are affected."
+      ],
+      "first_containment": "Disable workflow-guidance answers while keeping bounded manuscript continuation available.",
+      "evidence_to_preserve": [
+        "index version",
+        "document versions",
+        "retrieval ranking",
+        "authorization context",
+        "release ID"
+      ],
+      "causal_questions": [
+        "Did lifecycle policy allow a superseded document into the current-policy index?",
+        "Did ranking override a valid-current filter?",
+        "Did answer policy permit guidance when current evidence was absent or conflicting?"
+      ],
+      "regression_gates": [
+        "Superseded policy is excluded from current-policy answers.",
+        "The current policy wins for the seeded approval question.",
+        "Conflicting or absent current evidence produces abstention and escalation.",
+        "Unrelated manuscript continuation remains available and authorized.",
+        "Telemetry records source lifecycle and policy decision without content."
+      ],
+      "reenablement_roles": [
+        "incident commander",
+        "editorial workflow owner",
+        "retrieval or data owner"
+      ]
+    },
+    {
+      "exercise_id": "IRX-RIV-002",
+      "canonical_incident_id": "INC-RIV-002",
+      "source_kind": "canonical_extension",
+      "domain": "data",
+      "title": "Duplicate PDF pages inflate retrieval",
+      "initial_severity": "SEV-3",
+      "detection_time_utc": "2026-07-15T11:40:00Z",
+      "first_observations": [
+        "A data-quality gate reports a duplicate page in one rights schedule version.",
+        "Repeated chunks dominate top-k results for the affected title.",
+        "The result was detected before broad exposure; downstream copies are still unknown."
+      ],
+      "first_containment": "Quarantine the affected document version and restore the previous index record set.",
+      "evidence_to_preserve": [
+        "raw content hash",
+        "parser version",
+        "page offsets",
+        "chunk strategy",
+        "index version"
+      ],
+      "causal_questions": [
+        "Did extraction duplicate source content or did chunking duplicate extracted pages?",
+        "Did deduplication compare page identity, content hash, or neither?",
+        "Which index versions received the duplicate chunks?"
+      ],
+      "regression_gates": [
+        "The duplicate page is quarantined before indexing.",
+        "The affected document produces the expected unique page and chunk counts.",
+        "Top-k results no longer contain repeated chunks from the same page.",
+        "Other source versions retain lineage and remain unchanged.",
+        "Deletion and supersession checks still pass."
+      ],
+      "reenablement_roles": [
+        "incident commander or delegated data incident owner",
+        "rights data owner",
+        "retrieval owner"
+      ]
+    },
+    {
+      "exercise_id": "IRX-RIV-003",
+      "canonical_incident_id": "INC-RIV-003",
+      "source_kind": "canonical_extension",
+      "domain": "identity",
+      "title": "Former contractor retrieves an EU manuscript chunk",
+      "initial_severity": "SEV-1",
+      "detection_time_utc": "2026-07-16T07:25:00Z",
+      "first_observations": [
+        "A negative isolation test succeeds for a disabled contractor identity.",
+        "The retrieved object is a restricted EU manuscript chunk.",
+        "The test proves a false allow; production blast radius is not yet known."
+      ],
+      "first_containment": "Disable the EU tenant route, revoke the identity, preserve access evidence, and engage Security and Legal.",
+      "evidence_to_preserve": [
+        "token claims hash",
+        "entitlement snapshot",
+        "retrieval filter decision",
+        "document ACL version",
+        "trace timestamps"
+      ],
+      "causal_questions": [
+        "Which boundary accepted stale nested-group membership?",
+        "Was revocation freshness violated at identity, cache, retrieval, or all three?",
+        "Did any other disabled identity receive an allow decision?"
+      ],
+      "regression_gates": [
+        "The disabled contractor is denied with stale nested-group data present.",
+        "Authorized editors retain only their approved tenant and title scope.",
+        "Revocation freshness meets the approved bound or the route fails closed.",
+        "Historical audit queries establish the reviewed blast radius.",
+        "Logs and evidence exports contain no manuscript text or raw token."
+      ],
+      "reenablement_roles": [
+        "incident commander",
+        "security or privacy lead",
+        "identity owner",
+        "customer decision owner"
+      ]
+    },
+    {
+      "exercise_id": "IRX-RIV-004",
+      "canonical_incident_id": "INC-RIV-004",
+      "source_kind": "canonical_extension",
+      "domain": "model",
+      "title": "Style adapter answers from memory without current evidence",
+      "initial_severity": "SEV-2",
+      "detection_time_utc": "2026-07-17T14:05:00Z",
+      "first_observations": [
+        "A citation gate catches a fluent rights answer with no authorized evidence.",
+        "The active style adapter and prompt release are known.",
+        "It is unknown whether the failure is confined to one rights slice."
+      ],
+      "first_containment": "Require abstention for rights questions with no authorized evidence and route them to Rights counsel.",
+      "evidence_to_preserve": [
+        "model release ID",
+        "prompt template version",
+        "retrieval result IDs",
+        "policy decision",
+        "redacted output"
+      ],
+      "causal_questions": [
+        "Did the model receive zero evidence, filtered evidence, or evidence lost during prompt assembly?",
+        "Did the answer policy require citations and abstention for the rights slice?",
+        "Did adaptation change style only, or did evaluation miss unsupported factual behavior?"
+      ],
+      "regression_gates": [
+        "No-evidence rights questions abstain and escalate.",
+        "Authorized current evidence produces citations tied to retrieved IDs.",
+        "Unauthorized evidence never appears in prompts or answers.",
+        "Non-rights style behavior remains within the accepted evaluation range.",
+        "The citation gate alerts on every seeded unsupported-answer case."
+      ],
+      "reenablement_roles": [
+        "incident commander",
+        "rights owner",
+        "model release owner",
+        "evaluation owner"
+      ]
+    },
+    {
+      "exercise_id": "IRX-RIV-005",
+      "canonical_incident_id": "INC-RIV-005",
+      "source_kind": "canonical_extension",
+      "domain": "tool",
+      "title": "Workflow timeout causes duplicate transition attempt",
+      "initial_severity": "SEV-2",
+      "detection_time_utc": "2026-07-18T16:22:00Z",
+      "first_observations": [
+        "PageTurn committed a transition but its response was not received.",
+        "A retry arrived without a stable business idempotency key.",
+        "The committed state must be reconciled before retry or compensation."
+      ],
+      "first_containment": "Pause workflow writes, reconcile committed state, and keep read-only assistance available.",
+      "evidence_to_preserve": [
+        "approval payload hash",
+        "idempotency key",
+        "request attempts",
+        "PageTurn event history",
+        "workflow checkpoint"
+      ],
+      "causal_questions": [
+        "Did the first attempt commit before the response was lost?",
+        "Why did the retry lack the original business idempotency key?",
+        "Does any compensation create a second externally visible effect?"
+      ],
+      "regression_gates": [
+        "Repeated attempts with one business key produce one committed transition.",
+        "Ambiguous outcomes query target state before retry or compensation.",
+        "Human approval remains bound to exact arguments and state version.",
+        "Read-only assistance remains available while writes are paused.",
+        "Reconciliation alerts include no workflow payload content."
+      ],
+      "reenablement_roles": [
+        "incident commander",
+        "workflow service owner",
+        "business process owner"
+      ]
+    },
+    {
+      "exercise_id": "IRX-RIV-006",
+      "canonical_incident_id": "INC-RIV-006",
+      "source_kind": "canonical_extension",
+      "domain": "infrastructure",
+      "title": "Regional inference dependency unavailable",
+      "initial_severity": "SEV-2",
+      "detection_time_utc": "2026-07-19T05:48:00Z",
+      "first_observations": [
+        "The UK/EU inference route is unavailable.",
+        "Metadata failover exists in planning artifacts.",
+        "Manuscript processing in another region has no recorded approval."
+      ],
+      "first_containment": "Fail closed for confidential manuscript requests and offer policy-only degraded mode only if authorized.",
+      "evidence_to_preserve": [
+        "dependency health",
+        "routing decision",
+        "regional capacity status",
+        "failed request counts",
+        "customer communications"
+      ],
+      "causal_questions": [
+        "Is the fault in the provider, private network, DNS, quota, deployment, or route policy?",
+        "Which degraded paths are authorized within the primary region?",
+        "Did retries amplify load or obscure the original dependency signal?"
+      ],
+      "regression_gates": [
+        "The primary-region route passes readiness and representative requests.",
+        "Confidential requests never cross an unapproved regional boundary.",
+        "Degraded mode exposes only approved policy content.",
+        "Retry and queue behavior remain within accepted limits.",
+        "Dependency and route alerts remain stable for the approved observation window."
+      ],
+      "reenablement_roles": [
+        "incident commander",
+        "infrastructure service owner",
+        "security or data residency owner",
+        "customer decision owner"
+      ]
+    },
+    {
+      "exercise_id": "IRX-RIV-007",
+      "canonical_incident_id": null,
+      "source_kind": "exercise_only_derived",
+      "derived_from_ids": [
+        "RISK-RIV-002",
+        "SRC-PDF-POLICY-001",
+        "DOC-POL-AI-2026",
+        "TEN-RIV-SBX"
+      ],
+      "domain": "retrieval",
+      "title": "Current policy disappears after index promotion",
+      "initial_severity": "SEV-2",
+      "detection_time_utc": "2026-07-20T10:10:00Z",
+      "first_observations": [
+        "A sandbox regression query returns no authorized current-policy result after index promotion.",
+        "The source inventory still marks the current policy as available.",
+        "No production impact is established; promotion is paused."
+      ],
+      "first_containment": "Stop index promotion, pin serving to the last known-good index, and require abstention on the affected question slice.",
+      "evidence_to_preserve": [
+        "candidate and last-known-good index IDs",
+        "query and filter fingerprints",
+        "retrieved record IDs and scores",
+        "embedding and chunk versions",
+        "promotion decision record"
+      ],
+      "causal_questions": [
+        "Was the current policy omitted during ingestion, embedding, filtering, or index promotion?",
+        "Does the candidate index preserve tenant, lifecycle, region, and classification fields?",
+        "Can the same query distinguish a retrieval miss from an answer-policy failure?"
+      ],
+      "regression_gates": [
+        "The current policy is retrieved for the seeded authorized query.",
+        "Superseded policy is excluded from current-policy answers.",
+        "Unauthorized tenant and role variants return no records.",
+        "No-result behavior abstains without model-memory substitution.",
+        "Candidate-versus-baseline retrieval slices pass before promotion resumes."
+      ],
+      "reenablement_roles": [
+        "incident commander or delegated retrieval incident owner",
+        "retrieval owner",
+        "editorial workflow owner"
+      ]
+    }
+  ]
+}

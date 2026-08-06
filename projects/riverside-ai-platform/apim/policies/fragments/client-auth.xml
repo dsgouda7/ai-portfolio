@@ -1,0 +1,15 @@
+<fragment>
+  <validate-azure-ad-token tenant-id="{{riverside-entra-tenant-id}}" failed-validation-httpcode="401" failed-validation-error-message="Access token is missing or invalid." output-token-variable-name="riversideClientJwt">
+    <client-application-ids>
+      <application-id>{{riverside-entra-client-application-id}}</application-id>
+    </client-application-ids>
+    <audiences>
+      <audience>{{riverside-entra-api-audience}}</audience>
+    </audiences>
+    <required-claims>
+      <claim name="scp" match="any" separator=" ">
+        <value>{{riverside-entra-required-scope}}</value>
+      </claim>
+    </required-claims>
+  </validate-azure-ad-token>
+</fragment>

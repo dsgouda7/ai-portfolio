@@ -1,0 +1,44 @@
+config_version: 1.0.0
+project_name: riverside-ai-platform
+environment: staging
+region: uksouth
+identity:
+  authentication: managed_identity
+model:
+  alias: riverside-editor
+  release_manifest_uri: https://artifacts.contoso.test/model-release.json
+  max_input_tokens: 4096
+  max_output_tokens: 512
+  precision: fp32
+data:
+  contract_version: 1.0.0
+  index_name: riverside.staging.manuscripts
+  index_version: 1.0.0
+gateway:
+  base_url: https://riverside-gateway.contoso.test
+  route: /v1/chat/completions
+  timeout_seconds: 110
+  max_retries: 2
+serving:
+  endpoint_name: riverside-staging
+  blue_deployment: riverside-staging-blue
+  green_deployment: riverside-staging-green
+  request_timeout_seconds: 100
+retrieval:
+  top_k: 6
+  search_type: hybrid
+telemetry:
+  enabled: true
+  service_name: riverside-rag-orchestrator
+  exporter_endpoint: https://otel.contoso.test
+evaluation:
+  release_report_uri: https://artifacts.contoso.test/evaluation.json
+  required_domains:
+    - data_quality
+    - retrieval_quality
+    - generation_citation_quality
+    - adaptation_evidence
+    - safety_authorization
+    - operational_slos
+    - cost
+    - rollout_comparison

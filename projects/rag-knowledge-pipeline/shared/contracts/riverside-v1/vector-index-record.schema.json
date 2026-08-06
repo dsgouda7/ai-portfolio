@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.riverside.example/contracts/v1/vector-index-record.schema.json",
+  "title": "Riverside Vector Index Record v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "kind",
+    "tenant_id",
+    "record_id",
+    "chunk_id",
+    "document_id",
+    "parent_document_id",
+    "source_uri",
+    "source_version",
+    "content_hash",
+    "acl",
+    "region",
+    "classification",
+    "ingested_at",
+    "indexed_at",
+    "pipeline_version",
+    "deletion_state",
+    "embedding",
+    "index_name",
+    "index_version",
+    "content",
+    "vector"
+  ],
+  "properties": {
+    "contract_version": {
+      "$ref": "common.schema.json#/$defs/contractVersion"
+    },
+    "kind": {
+      "const": "vector_index_record"
+    },
+    "tenant_id": {
+      "$ref": "common.schema.json#/$defs/identifier"
+    },
+    "record_id": {
+      "$ref": "common.schema.json#/$defs/identifier"
+    },
+    "chunk_id": {
+      "$ref": "common.schema.json#/$defs/identifier"
+    },
+    "document_id": {
+      "$ref": "common.schema.json#/$defs/identifier"
+    },
+    "parent_document_id": {
+      "$ref": "common.schema.json#/$defs/identifier"
+    },
+    "source_uri": {
+      "$ref": "common.schema.json#/$defs/uri"
+    },
+    "source_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "content_hash": {
+      "$ref": "common.schema.json#/$defs/sha256"
+    },
+    "acl": {
+      "$ref": "common.schema.json#/$defs/acl"
+    },
+    "region": {
+      "$ref": "common.schema.json#/$defs/region"
+    },
+    "classification": {
+      "$ref": "common.schema.json#/$defs/classification"
+    },
+    "ingested_at": {
+      "$ref": "common.schema.json#/$defs/timestamp"
+    },
+    "indexed_at": {
+      "$ref": "common.schema.json#/$defs/timestamp"
+    },
+    "pipeline_version": {
+      "$ref": "common.schema.json#/$defs/semanticVersion"
+    },
+    "deletion_state": {
+      "$ref": "common.schema.json#/$defs/deletionState"
+    },
+    "embedding": {
+      "$ref": "common.schema.json#/$defs/embeddingDescriptor"
+    },
+    "index_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+    },
+    "index_version": {
+      "$ref": "common.schema.json#/$defs/semanticVersion"
+    },
+    "content": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100000
+    },
+    "vector": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 65536,
+      "items": {
+        "type": "number"
+      }
+    }
+  }
+}

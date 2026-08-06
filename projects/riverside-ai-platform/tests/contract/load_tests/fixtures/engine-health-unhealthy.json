@@ -1,0 +1,6 @@
+{
+  "engines": [
+    {"engine_id": "engine-1", "average_cpu_percentage": 75.0, "average_memory_percentage": 60.0, "average_network_bytes_per_second": 125000.0, "maximum_virtual_users": 90},
+    {"engine_id": "engine-2", "average_cpu_percentage": 45.0, "average_memory_percentage": 55.0, "average_network_bytes_per_second": 130000.0, "maximum_virtual_users": 90}
+  ]
+}

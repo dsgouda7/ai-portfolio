@@ -1,0 +1,12 @@
+{
+  "model": "riverside-editor",
+  "messages": [
+    {
+      "role": "user",
+      "content": "What does Aria see beyond the rain?"
+    }
+  ],
+  "max_input_tokens": 2048,
+  "max_tokens": 4096,
+  "stream": false
+}

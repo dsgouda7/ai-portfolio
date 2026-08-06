@@ -1,0 +1,73 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environment": { "value": "production" },
+    "location": { "value": "uksouth" },
+    "containerAppsInfrastructureSubnetResourceId": {
+      "value": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/replace-with-network-rg/providers/Microsoft.Network/virtualNetworks/replace-with-vnet/subnets/replace-with-container-apps-subnet"
+    },
+    "orchestratorBackendAudience": { "value": "api://replace-with-riverside-production-backend-app-id" },
+    "orchestratorMinReplicas": { "value": 2 },
+    "orchestratorMaxReplicas": { "value": 10 },
+    "networkAccessMode": { "value": "private" },
+    "privateEndpointSubnetResourceId": {
+      "value": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/replace-with-network-rg/providers/Microsoft.Network/virtualNetworks/replace-with-vnet/subnets/replace-with-private-endpoint-subnet"
+    },
+    "privateDnsZoneResourceIds": {
+      "value": {
+        "azuremlApi": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/replace-with-dns-rg/providers/Microsoft.Network/privateDnsZones/privatelink.api.azureml.ms",
+        "azuremlNotebooks": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/replace-with-dns-rg/providers/Microsoft.Network/privateDnsZones/privatelink.notebooks.azure.net",
+        "blob": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/replace-with-dns-rg/providers/Microsoft.Network/privateDnsZones/privatelink.blob.core.windows.net",
+        "dfs": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/replace-with-dns-rg/providers/Microsoft.Network/privateDnsZones/privatelink.dfs.core.windows.net",
+        "vault": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/replace-with-dns-rg/providers/Microsoft.Network/privateDnsZones/privatelink.vaultcore.azure.net"
+      }
+    },
+    "logRetentionInDays": { "value": 180 },
+    "allowAzureMonitorPublicAccess": { "value": true },
+    "storageSkuName": { "value": "Standard_ZRS" },
+    "provisionMachineLearningWorkspace": { "value": true },
+    "provisionOnlineEndpoint": { "value": true },
+    "enableMachineLearningDiagnostics": { "value": true },
+    "assignGatewayInvokeRole": { "value": true },
+    "provisionApiManagement": { "value": false },
+    "apiManagementName": { "value": "replace-with-shared-production-apim" },
+    "existingApiManagementGatewayPrincipalId": {
+      "value": "00000000-0000-0000-0000-000000000000"
+    },
+    "enableApiManagementDiagnostics": { "value": true },
+    "provisionLoadTesting": { "value": false },
+    "loadTestingName": { "value": "replace-with-staging-load-testing" },
+    "enableLoadTestingDiagnostics": { "value": false },
+    "databricksWorkspaceSubscriptionId": {
+      "value": "00000000-0000-0000-0000-000000000000"
+    },
+    "databricksWorkspaceResourceGroupName": { "value": "replace-with-databricks-rg" },
+    "databricksWorkspaceName": { "value": "replace-with-databricks-workspace" },
+    "databricksWorkspaceUrl": {
+      "value": "https://replace-with-workspace-url.azuredatabricks.net"
+    },
+    "databricksCatalogName": { "value": "riverside" },
+    "databricksSchemaName": { "value": "production" },
+    "databricksVectorSearchEndpointName": { "value": "riverside-vector-search" },
+    "databricksVectorSearchIndexName": { "value": "riverside_manuscripts_production" },
+    "databricksEmbeddingEndpointName": { "value": "replace-with-production-embedding-endpoint" },
+    "embeddingDimensions": { "value": 768 },
+    "modelReleaseId": { "value": "replace-with-immutable-production-release-id" },
+    "activeModelSlot": { "value": "blue" },
+    "releaseManifestUri": {
+      "value": "https://artifacts.example.invalid/riverside/production/model-release.json"
+    },
+    "evaluationReportUri": {
+      "value": "https://artifacts.example.invalid/riverside/production/evaluation-release-report.json"
+    },
+    "otelExporterEndpoint": { "value": "https://otel-production.example.invalid" },
+    "tags": {
+      "value": {
+        "costCenter": "replace-with-cost-center",
+        "dataClassification": "confidential",
+        "owner": "replace-with-owner"
+      }
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "contract_version": "1.0.0",
+  "kind": "vector_index_record",
+  "tenant_id": "tenant-editorial-standard",
+  "record_id": "vector-weight-distant-light-001-0000",
+  "chunk_id": "chunk-weight-distant-light-001-0000",
+  "document_id": "doc-weight-distant-light-001",
+  "parent_document_id": "doc-weight-distant-light-001",
+  "source_uri": "https://content.example/manuscripts/chapter-001.txt",
+  "source_version": "2026-08-05T100000Z",
+  "content_hash": "3333333333333333333333333333333333333333333333333333333333333333",
+  "acl": {
+    "visibility": "restricted",
+    "principals": [],
+    "groups": [
+      "editors"
+    ]
+  },
+  "region": "eastus2",
+  "classification": "confidential",
+  "ingested_at": "2026-08-05T10:05:00Z",
+  "indexed_at": "2026-08-05T10:07:00Z",
+  "pipeline_version": "1.0.0",
+  "deletion_state": {
+    "status": "active"
+  },
+  "embedding": {
+    "model_id": "sentence-transformers/all-MiniLM-L6-v2",
+    "model_revision": "main-2026-08-05",
+    "dimensions": 3
+  },
+  "index_name": "riverside-manuscripts",
+  "index_version": "1.0.0",
+  "content": "Aria watched the harbor lights appear one by one beyond the rain.",
+  "vector": []
+}

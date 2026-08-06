@@ -36,12 +36,12 @@ class WikipediaLoader:
                 self.config_name,
                 split=f"train[:{sample_size}]"
             )
+            df = dataset.to_pandas()
         except Exception as e:
             logger.warning(f"Failed to load Wikipedia dataset: {e}")
             logger.info("Using synthetic test data instead...")
 
             # Generate synthetic data for testing
-            import random
             articles = []
             for i in range(sample_size):
                 articles.append({

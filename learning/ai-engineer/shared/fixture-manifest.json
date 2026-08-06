@@ -1,0 +1,25 @@
+{
+  "schema_version": "ai-engineer.fixture-manifest.v1",
+  "fixture_version": "ai-engineer-fixtures.v1",
+  "digest_algorithm": "sha256",
+  "generated_from": "repository fixture bytes",
+  "files": {
+    "feedback-drift/EXPECTED_OUTCOMES.md": "06a73f4af0683294372e34490b1c7918dbd64e488f8aa122a890bc8870366994",
+    "feedback-drift/production-feedback.jsonl": "70a6701805972b0cd19ea3496d63bb5aed35e2169537931f07a6e181d97a2735",
+    "feedback-drift/production-feedback.schema.json": "e45a84b7c6eb30dfb178dad90a8bdf63a7832f07dbbd9e37435cd4fbebe0e7bd",
+    "latency-cost/EXPECTED_OUTCOMES.md": "11761d1c05bc3b98c1d6bd0bcc6ab7d833eddc5043809c3052de295b3632bb49",
+    "latency-cost/request-trace.schema.json": "9bf6b66e79e74ff334e8a4a57a39085416187688e7db50ca9d162ebc57f38820",
+    "latency-cost/request-traces.jsonl": "ecb2c9d7853d289d3565a8f4b152dc3b8d5f4eca0a71e6f6289aee151db9aac4",
+    "prompt-release/EXPECTED_OUTCOMES.md": "ed9b4d2d92e8703dfa2a0f1d94e0b4cca263c60daf59e346448f67b48ced613f",
+    "prompt-release/paired-eval-case.schema.json": "709bb3873cc20861525472753ca56196d9e3fde7ce26feb00f7b4bb9c2170b25",
+    "prompt-release/paired-eval-cases.jsonl": "e70c9a59b0cb5fedf36fbbd75a04e0380e68b95df08c0ab5001e87f593aff611",
+    "prompt-release/prompt-releases.json": "88214dea5603b7b0a8862781f96c58b52f1d9ca9830dd517ba1bc90da2021384",
+    "prompt-release/prompt-releases.schema.json": "636173946241d4af64b71673eb976b82d5ea94f1fb0ce16a9647327ed71328c1",
+    "release-lineage/EXPECTED_OUTCOMES.md": "72c038b310da60dc1916329d90d3a4b442e6af604d88da81cb664c78ef43145e",
+    "release-lineage/release-manifests.json": "5a0b47c7fc0d65a016559f7b317668ad37dc891dc6d505d9a10efc31cb23571c",
+    "release-lineage/release-manifests.schema.json": "ff464d87bc033213f2916e49f42f0eb0d5517b50cafff2b47dab06baa6cd5c56",
+    "training-data/EXPECTED_OUTCOMES.md": "d1afb18b733c406e53328733aacbeda8ffe2645a82d74a65e893d2764d891d02",
+    "training-data/training-example.schema.json": "75c2bcc145f4890d614ecae3ed94febd1da8c14f1839dbf2efd31ee78bb610cb",
+    "training-data/training-examples.jsonl": "a576ea9e913a2d6f2428b882add43f7f1033325a5548afea3a1621346d936e36"
+  }
+}

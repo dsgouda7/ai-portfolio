@@ -1,0 +1,6 @@
+# Local analysis only. No model, provider SDK, or cloud dependency is required.
+ipykernel>=6.29,<7
+jsonschema[format]>=4.23,<5
+matplotlib>=3.9,<4
+numpy>=2.0,<3
+pandas>=2.2,<3

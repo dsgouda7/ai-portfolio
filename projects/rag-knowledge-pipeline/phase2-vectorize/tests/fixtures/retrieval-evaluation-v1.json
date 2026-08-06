@@ -1,0 +1,30 @@
+{
+  "dataset_id": "riverside-retrieval-static",
+  "dataset_version": "1.0.0",
+  "cases": [
+    {
+      "query_id": "query-editorial-001",
+      "query": "What did Aria ask Wren to preserve?",
+      "tenant_id": "tenant-editorial-standard",
+      "region": "eastus2",
+      "classifications": ["confidential"],
+      "principal_ids": [],
+      "group_ids": ["editors"],
+      "relevant_chunk_ids": ["chunk-relevant-001"],
+      "top_k": 2,
+      "slice": "editorial"
+    },
+    {
+      "query_id": "query-policy-001",
+      "query": "Which current rule governs approved storage?",
+      "tenant_id": "tenant-editorial-standard",
+      "region": "eastus2",
+      "classifications": ["internal"],
+      "principal_ids": [],
+      "group_ids": ["editors"],
+      "relevant_chunk_ids": ["chunk-relevant-002"],
+      "top_k": 2,
+      "slice": "policy"
+    }
+  ]
+}

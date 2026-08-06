@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "riverside-rag-ingestion"
+version = "1.0.0"
+description = "Governed Databricks ingestion for Riverside RAG documents"
+requires-python = ">=3.11"
+dependencies = [
+  "beautifulsoup4>=4.12.0",
+  "pypdf>=5.0.0",
+  "python-docx>=1.1.0",
+]
+
+[project.optional-dependencies]
+test = [
+  "jsonschema>=4.22.0",
+  "pytest>=8.0.0",
+  "referencing>=0.35.0",
+]
+
+[project.scripts]
+riverside-ingest = "remote_job:ingest_entrypoint"
+riverside-ingest-setup = "remote_job:setup_tables_entrypoint"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+py-modules = ["remote_job"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["remote*"]

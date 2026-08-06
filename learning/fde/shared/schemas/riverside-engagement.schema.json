@@ -1,0 +1,478 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/ai-portfolio/fde/riverside-engagement.schema.json",
+  "title": "Riverside FDE Engagement",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "fixture_version",
+    "fixture_id",
+    "frozen_at",
+    "synthetic_data_notice",
+    "organization",
+    "engagement",
+    "personas_and_stakeholders",
+    "ambiguous_brief",
+    "use_cases",
+    "non_goals",
+    "current_workflow",
+    "baseline_metrics",
+    "systems",
+    "source_inventory",
+    "identity_and_data_constraints",
+    "demand_cost_and_sla_assumptions",
+    "intentional_conflicts",
+    "seeded_risks",
+    "seeded_incidents",
+    "rollout",
+    "support_and_handoff",
+    "unknowns"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "fixture_version": {"const": "RIV-FDE-1.0.0"},
+    "fixture_id": {"const": "ENG-RIV-FDE-001"},
+    "frozen_at": {"type": "string", "format": "date-time"},
+    "synthetic_data_notice": {"type": "string", "minLength": 20},
+    "organization": {
+      "type": "object",
+      "required": ["organization_id", "name", "industry", "description", "evidence_class"],
+      "properties": {
+        "organization_id": {"$ref": "#/$defs/stableId"},
+        "name": {"type": "string", "minLength": 1},
+        "industry": {"type": "string", "minLength": 1},
+        "description": {"type": "string", "minLength": 1},
+        "employee_count_claim": {"type": "integer", "minimum": 1},
+        "active_editor_count_claim": {"type": "integer", "minimum": 1},
+        "contract_editor_count_claim": {"type": "integer", "minimum": 0},
+        "evidence_class": {"$ref": "#/$defs/evidenceClass"}
+      }
+    },
+    "engagement": {
+      "type": "object",
+      "required": ["engagement_id", "name", "stage", "sponsor_person_id", "delivery_lead_person_id", "primary_outcome", "evidence_class"],
+      "properties": {
+        "engagement_id": {"$ref": "#/$defs/stableId"},
+        "name": {"type": "string"},
+        "stage": {"type": "string"},
+        "sponsor_person_id": {"$ref": "#/$defs/stableId"},
+        "delivery_lead_person_id": {"$ref": "#/$defs/stableId"},
+        "primary_outcome": {"type": "string"},
+        "provisional_launch_window": {"type": "string"},
+        "evidence_class": {"$ref": "#/$defs/evidenceClass"}
+      }
+    },
+    "personas_and_stakeholders": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/stakeholder"}
+    },
+    "ambiguous_brief": {
+      "type": "object",
+      "required": ["brief_id", "received_from_person_id", "received_at", "verbatim", "explicit_outcomes", "implied_outcomes", "missing_items", "evidence_class"],
+      "properties": {
+        "brief_id": {"$ref": "#/$defs/stableId"},
+        "received_from_person_id": {"$ref": "#/$defs/stableId"},
+        "received_at": {"type": "string", "format": "date-time"},
+        "verbatim": {"type": "string", "minLength": 20},
+        "explicit_outcomes": {"$ref": "#/$defs/nonEmptyStrings"},
+        "implied_outcomes": {"$ref": "#/$defs/nonEmptyStrings"},
+        "missing_items": {"$ref": "#/$defs/nonEmptyStrings"},
+        "evidence_class": {"$ref": "#/$defs/evidenceClass"}
+      }
+    },
+    "use_cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["use_case_id", "name", "actor_role_ids", "decision_boundary", "human_action", "priority"],
+        "properties": {
+          "use_case_id": {"$ref": "#/$defs/stableId"},
+          "name": {"type": "string"},
+          "actor_role_ids": {"$ref": "#/$defs/idArray"},
+          "decision_boundary": {"type": "string"},
+          "human_action": {"type": "string"},
+          "priority": {"enum": ["must", "should", "could"]}
+        }
+      }
+    },
+    "non_goals": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["non_goal_id", "statement"],
+        "properties": {
+          "non_goal_id": {"$ref": "#/$defs/stableId"},
+          "statement": {"type": "string"}
+        }
+      }
+    },
+    "current_workflow": {
+      "type": "object",
+      "required": ["workflow_id", "name", "evidence_class", "steps"],
+      "properties": {
+        "workflow_id": {"$ref": "#/$defs/stableId"},
+        "name": {"type": "string"},
+        "evidence_class": {"$ref": "#/$defs/evidenceClass"},
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["step_id", "sequence", "owner_role_id", "action", "system_ids", "median_minutes", "failure_modes"],
+            "properties": {
+              "step_id": {"$ref": "#/$defs/stableId"},
+              "sequence": {"type": "integer", "minimum": 1},
+              "owner_role_id": {"$ref": "#/$defs/stableId"},
+              "action": {"type": "string"},
+              "system_ids": {"$ref": "#/$defs/idArray"},
+              "median_minutes": {"type": "number", "minimum": 0},
+              "failure_modes": {"$ref": "#/$defs/nonEmptyStrings"}
+            }
+          }
+        }
+      }
+    },
+    "baseline_metrics": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["metric_id", "name", "value", "unit", "population", "window", "source_id", "evidence_class", "limitations"],
+        "properties": {
+          "metric_id": {"$ref": "#/$defs/stableId"},
+          "name": {"type": "string"},
+          "value": {"type": "number"},
+          "unit": {"type": "string"},
+          "population": {"type": "string"},
+          "window": {"type": "string"},
+          "source_id": {"$ref": "#/$defs/stableId"},
+          "evidence_class": {"$ref": "#/$defs/evidenceClass"},
+          "limitations": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "systems": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["system_id", "name", "kind", "owner_person_id", "write_authority", "known_limitations"],
+        "properties": {
+          "system_id": {"$ref": "#/$defs/stableId"},
+          "name": {"type": "string"},
+          "kind": {"type": "string"},
+          "owner_person_id": {"$ref": "#/$defs/stableId"},
+          "write_authority": {"type": "string"},
+          "known_limitations": {"$ref": "#/$defs/nonEmptyStrings"}
+        }
+      }
+    },
+    "source_inventory": {
+      "type": "array",
+      "minItems": 4,
+      "items": {"$ref": "#/$defs/sourceInventoryItem"}
+    },
+    "identity_and_data_constraints": {
+      "type": "object",
+      "required": ["tenants", "regions", "roles", "required_request_context", "purposes", "global_constraints"],
+      "properties": {
+        "tenants": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/tenant"}},
+        "regions": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/region"}},
+        "roles": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/role"}},
+        "required_request_context": {"$ref": "#/$defs/nonEmptyStrings"},
+        "purposes": {"$ref": "#/$defs/nonEmptyStrings"},
+        "global_constraints": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["constraint_id", "statement", "evidence_class", "owner_person_id"],
+            "properties": {
+              "constraint_id": {"$ref": "#/$defs/stableId"},
+              "statement": {"type": "string"},
+              "evidence_class": {"$ref": "#/$defs/evidenceClass"},
+              "owner_person_id": {"$ref": "#/$defs/stableId"}
+            }
+          }
+        }
+      }
+    },
+    "demand_cost_and_sla_assumptions": {
+      "type": "object",
+      "required": ["assumptions", "service_targets", "commercial_notes"],
+      "properties": {
+        "assumptions": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/assumption"}},
+        "service_targets": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/serviceTarget"}},
+        "commercial_notes": {"$ref": "#/$defs/nonEmptyStrings"}
+      }
+    },
+    "intentional_conflicts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/conflict"}
+    },
+    "seeded_risks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/risk"}
+    },
+    "seeded_incidents": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/incident"}
+    },
+    "rollout": {
+      "type": "object",
+      "required": ["rollout_id", "strategy", "global_abort_conditions", "cohorts"],
+      "properties": {
+        "rollout_id": {"$ref": "#/$defs/stableId"},
+        "strategy": {"type": "string"},
+        "global_abort_conditions": {"$ref": "#/$defs/nonEmptyStrings"},
+        "cohorts": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/cohort"}}
+      }
+    },
+    "support_and_handoff": {
+      "type": "object",
+      "required": ["support_model_id", "covered_hours", "hypercare_duration_days", "severity_definitions", "ownership", "handoff_artifacts", "acceptance_owner_person_id", "business_signoff_person_id", "security_signoff_person_id"],
+      "properties": {
+        "support_model_id": {"$ref": "#/$defs/stableId"},
+        "covered_hours": {"type": "string"},
+        "hypercare_duration_days": {"type": "integer", "minimum": 0},
+        "severity_definitions": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/severity"}},
+        "ownership": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/ownership"}},
+        "handoff_artifacts": {"$ref": "#/$defs/nonEmptyStrings"},
+        "acceptance_owner_person_id": {"$ref": "#/$defs/stableId"},
+        "business_signoff_person_id": {"$ref": "#/$defs/stableId"},
+        "security_signoff_person_id": {"$ref": "#/$defs/stableId"}
+      }
+    },
+    "unknowns": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/unknown"}
+    }
+  },
+  "$defs": {
+    "stableId": {"type": "string", "pattern": "^[A-Z][A-Z0-9-]+$"},
+    "idArray": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/stableId"}},
+    "nonEmptyStrings": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "evidenceClass": {
+      "enum": [
+        "measured_baseline",
+        "modeled_assumption",
+        "customer_claim",
+        "policy_constraint",
+        "external_validation_required",
+        "intentional_conflict",
+        "unknown"
+      ]
+    },
+    "stakeholder": {
+      "type": "object",
+      "required": ["person_id", "name", "title", "persona", "role_ids", "tenant_ids", "region_id", "goals", "concerns", "decision_rights", "statement_ids"],
+      "properties": {
+        "person_id": {"$ref": "#/$defs/stableId"},
+        "name": {"type": "string"},
+        "title": {"type": "string"},
+        "persona": {"type": "string"},
+        "role_ids": {"$ref": "#/$defs/idArray"},
+        "tenant_ids": {"$ref": "#/$defs/idArray"},
+        "region_id": {"$ref": "#/$defs/stableId"},
+        "goals": {"$ref": "#/$defs/nonEmptyStrings"},
+        "concerns": {"$ref": "#/$defs/nonEmptyStrings"},
+        "decision_rights": {"$ref": "#/$defs/nonEmptyStrings"},
+        "statement_ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/stableId"}}
+      }
+    },
+    "sourceInventoryItem": {
+      "type": "object",
+      "required": ["source_id", "system_id", "name", "source_type", "format", "owner_person_id", "update_mode", "freshness_target_hours", "estimated_records", "classification", "tenant_ids", "region_ids", "acl_model", "sample_document_ids", "seeded_failures", "deletion_behavior", "evidence_class"],
+      "properties": {
+        "source_id": {"$ref": "#/$defs/stableId"},
+        "system_id": {"$ref": "#/$defs/stableId"},
+        "name": {"type": "string"},
+        "source_type": {"enum": ["PDF", "text", "ERP", "API"]},
+        "format": {"type": "string"},
+        "owner_person_id": {"$ref": "#/$defs/stableId"},
+        "update_mode": {"type": "string"},
+        "freshness_target_hours": {"type": "number", "minimum": 0},
+        "estimated_records": {"type": "integer", "minimum": 0},
+        "classification": {"enum": ["synthetic", "internal", "confidential", "restricted"]},
+        "tenant_ids": {"$ref": "#/$defs/idArray"},
+        "region_ids": {"$ref": "#/$defs/idArray"},
+        "acl_model": {"type": "string"},
+        "sample_document_ids": {"$ref": "#/$defs/idArray"},
+        "seeded_failures": {"$ref": "#/$defs/nonEmptyStrings"},
+        "deletion_behavior": {"type": "string"},
+        "evidence_class": {"$ref": "#/$defs/evidenceClass"}
+      }
+    },
+    "tenant": {
+      "type": "object",
+      "required": ["tenant_id", "name", "allowed_region_ids", "data_classes", "notes"],
+      "properties": {
+        "tenant_id": {"$ref": "#/$defs/stableId"},
+        "name": {"type": "string"},
+        "allowed_region_ids": {"$ref": "#/$defs/idArray"},
+        "data_classes": {"$ref": "#/$defs/nonEmptyStrings"},
+        "notes": {"type": "string"}
+      }
+    },
+    "region": {
+      "type": "object",
+      "required": ["region_id", "name", "purpose", "evidence_class"],
+      "properties": {
+        "region_id": {"$ref": "#/$defs/stableId"},
+        "name": {"type": "string"},
+        "purpose": {"type": "string"},
+        "evidence_class": {"$ref": "#/$defs/evidenceClass"}
+      }
+    },
+    "role": {
+      "type": "object",
+      "required": ["role_id", "name", "allowed_actions", "prohibited_actions"],
+      "properties": {
+        "role_id": {"$ref": "#/$defs/stableId"},
+        "name": {"type": "string"},
+        "allowed_actions": {"$ref": "#/$defs/nonEmptyStrings"},
+        "prohibited_actions": {"$ref": "#/$defs/nonEmptyStrings"}
+      }
+    },
+    "assumption": {
+      "type": "object",
+      "required": ["assumption_id", "name", "value", "unit", "evidence_class", "basis"],
+      "properties": {
+        "assumption_id": {"$ref": "#/$defs/stableId"},
+        "name": {"type": "string"},
+        "value": {},
+        "unit": {"type": "string"},
+        "range": {
+          "type": "object",
+          "required": ["low", "high"],
+          "properties": {"low": {"type": "number"}, "high": {"type": "number"}}
+        },
+        "evidence_class": {"$ref": "#/$defs/evidenceClass"},
+        "basis": {"type": "string"}
+      }
+    },
+    "serviceTarget": {
+      "type": "object",
+      "required": ["sla_id", "name", "target", "unit", "scope", "evidence_class", "owner_person_id"],
+      "properties": {
+        "sla_id": {"$ref": "#/$defs/stableId"},
+        "name": {"type": "string"},
+        "target": {"type": "number"},
+        "unit": {"type": "string"},
+        "scope": {"type": "string"},
+        "evidence_class": {"$ref": "#/$defs/evidenceClass"},
+        "owner_person_id": {"$ref": "#/$defs/stableId"}
+      }
+    },
+    "conflict": {
+      "type": "object",
+      "required": ["conflict_id", "topic", "statements", "resolution_owner_person_id", "required_artifact", "evidence_class"],
+      "properties": {
+        "conflict_id": {"$ref": "#/$defs/stableId"},
+        "topic": {"type": "string"},
+        "statements": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "required": ["person_id", "statement"],
+            "properties": {"person_id": {"$ref": "#/$defs/stableId"}, "statement": {"type": "string"}}
+          }
+        },
+        "resolution_owner_person_id": {"$ref": "#/$defs/stableId"},
+        "required_artifact": {"type": "string"},
+        "evidence_class": {"const": "intentional_conflict"}
+      }
+    },
+    "risk": {
+      "type": "object",
+      "required": ["risk_id", "category", "statement", "likelihood", "impact", "owner_person_id", "mitigation", "trigger"],
+      "properties": {
+        "risk_id": {"$ref": "#/$defs/stableId"},
+        "category": {"type": "string"},
+        "statement": {"type": "string"},
+        "likelihood": {"enum": ["low", "medium", "high"]},
+        "impact": {"enum": ["low", "medium", "high", "critical"]},
+        "owner_person_id": {"$ref": "#/$defs/stableId"},
+        "mitigation": {"type": "string"},
+        "trigger": {"type": "string"}
+      }
+    },
+    "incident": {
+      "type": "object",
+      "required": ["incident_id", "title", "domain", "initial_severity", "detected_by", "summary", "affected_ids", "containment", "evidence_to_preserve", "reenablement_owner_person_id", "linked_risk_ids"],
+      "properties": {
+        "incident_id": {"$ref": "#/$defs/stableId"},
+        "title": {"type": "string"},
+        "domain": {"type": "string"},
+        "initial_severity": {"enum": ["SEV-1", "SEV-2", "SEV-3"]},
+        "detected_by": {"type": "string"},
+        "summary": {"type": "string"},
+        "affected_ids": {"$ref": "#/$defs/idArray"},
+        "containment": {"type": "string"},
+        "evidence_to_preserve": {"$ref": "#/$defs/nonEmptyStrings"},
+        "reenablement_owner_person_id": {"$ref": "#/$defs/stableId"},
+        "linked_risk_ids": {"$ref": "#/$defs/idArray"}
+      }
+    },
+    "cohort": {
+      "type": "object",
+      "required": ["cohort_id", "name", "tenant_ids", "size", "unit", "mode", "entry_gate", "exit_gate", "rollback_target", "business_owner_person_id", "technical_owner_person_id"],
+      "properties": {
+        "cohort_id": {"$ref": "#/$defs/stableId"},
+        "name": {"type": "string"},
+        "tenant_ids": {"$ref": "#/$defs/idArray"},
+        "size": {"type": "integer", "minimum": 1},
+        "unit": {"type": "string"},
+        "mode": {"type": "string"},
+        "entry_gate": {"type": "string"},
+        "exit_gate": {"type": "string"},
+        "rollback_target": {"type": "string"},
+        "business_owner_person_id": {"$ref": "#/$defs/stableId"},
+        "technical_owner_person_id": {"$ref": "#/$defs/stableId"}
+      }
+    },
+    "severity": {
+      "type": "object",
+      "required": ["severity", "definition", "acknowledgement_target_minutes", "customer_update_minutes", "incident_commander_role_id"],
+      "properties": {
+        "severity": {"enum": ["SEV-1", "SEV-2", "SEV-3"]},
+        "definition": {"type": "string"},
+        "acknowledgement_target_minutes": {"type": "integer", "minimum": 1},
+        "customer_update_minutes": {"type": "integer", "minimum": 1},
+        "incident_commander_role_id": {"$ref": "#/$defs/stableId"}
+      }
+    },
+    "ownership": {
+      "type": "object",
+      "required": ["ownership_id", "capability", "accountable_person_id", "responsible_role_id", "consulted_person_ids", "evidence"],
+      "properties": {
+        "ownership_id": {"$ref": "#/$defs/stableId"},
+        "capability": {"type": "string"},
+        "accountable_person_id": {"$ref": "#/$defs/stableId"},
+        "responsible_role_id": {"$ref": "#/$defs/stableId"},
+        "consulted_person_ids": {"$ref": "#/$defs/idArray"},
+        "evidence": {"type": "string"}
+      }
+    },
+    "unknown": {
+      "type": "object",
+      "required": ["unknown_id", "question", "owner_person_id", "needed_by", "status"],
+      "properties": {
+        "unknown_id": {"$ref": "#/$defs/stableId"},
+        "question": {"type": "string"},
+        "owner_person_id": {"$ref": "#/$defs/stableId"},
+        "needed_by": {"type": "string"},
+        "status": {"enum": ["open", "external_validation_required", "resolved"]}
+      }
+    }
+  }
+}

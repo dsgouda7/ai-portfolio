@@ -1,0 +1,28 @@
+<policies>
+  <inbound>
+    <base />
+    <include-fragment fragment-id="riverside-correlation-v1" />
+    <include-fragment fragment-id="riverside-client-auth-v1" />
+    <include-fragment fragment-id="riverside-tenant-context-v1" />
+    <include-fragment fragment-id="riverside-request-guardrails-v1" />
+    <include-fragment fragment-id="riverside-content-safety-extension-v1" />
+    <include-fragment fragment-id="riverside-cache-lookup-extension-v1" />
+    <include-fragment fragment-id="riverside-token-governance-v1" />
+    <set-backend-service backend-id="{{riverside-backend-pool-id}}" />
+    <include-fragment fragment-id="riverside-backend-identity-v1" />
+  </inbound>
+  <backend>
+    <include-fragment fragment-id="riverside-bounded-retry-v1" />
+  </backend>
+  <outbound>
+    <base />
+    <include-fragment fragment-id="riverside-cache-store-extension-v1" />
+    <include-fragment fragment-id="riverside-safe-response-v1" />
+    <set-header name="X-Correlation-ID" exists-action="override">
+      <value>@((string)context.Variables["riversideTraceId"])</value>
+    </set-header>
+  </outbound>
+  <on-error>
+    <include-fragment fragment-id="riverside-safe-policy-error-v1" />
+  </on-error>
+</policies>

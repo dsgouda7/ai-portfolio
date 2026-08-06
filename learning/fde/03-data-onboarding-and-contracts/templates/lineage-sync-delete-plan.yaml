@@ -1,0 +1,63 @@
+artifact_id: DATA-04
+artifact_version: 0.1.0-example
+source_id: SRC-EXAMPLE-001
+status: draft
+lineage_chain:
+  - stage: source
+    key: tenant_id + source_uri + source_version
+    evidence: source snapshot or event ID
+  - stage: raw_document
+    key: tenant_id + document_id + source_version
+    evidence: raw content hash and storage URI
+  - stage: parsed_document
+    key: tenant_id + document_id + source_version + parser_version
+    evidence: raw and parsed content hashes
+  - stage: document_chunk
+    key: parent document ID + source version + chunk strategy version + offsets
+    evidence: chunk content hash
+  - stage: vector_index_record
+    key: chunk ID + embedding revision + index version
+    evidence: durable upsert or delete receipt
+incremental_sync:
+  mode: watermark_with_overlap_and_reconciliation
+  watermark_field: source_updated_at
+  overlap_seconds: 300
+  cursor_storage: durable-orchestrator-state
+  idempotency_key: tenant_id + document_id + source_version
+  late_arrival_behavior: replay_overlap_then_merge
+  full_reconciliation_cadence: daily
+  failure_checkpoint: advance only after durable writes and quality gates
+versioning:
+  identity_key: tenant_id + canonical_source_uri
+  immutable_version_key: source_version + content_hash
+  current_selection: lifecycle status plus effective interval
+  superseded_behavior: retain lineage; remove from current retrieval view
+  content_duplicate_behavior: flag for review; never collapse across lifecycle or ACL boundaries
+acl_sync:
+  authority: source owner and identity policy owner
+  fail_closed_on_missing: true
+  revocation_priority: before content upserts
+  reconciliation: full membership reconciliation in addition to deltas
+deletion:
+  source_event: explicit tombstone or reconciliation absence under approved semantics
+  propagation:
+    - mark raw and parsed records pending or deleted
+    - delete or deactivate derived chunks
+    - delete vector records by stable primary key
+    - preserve bounded audit and deletion receipts under the retention decision
+  completion_evidence:
+    - source event or approved request
+    - contract-table state
+    - derived-record count equals zero
+    - index delete receipt or negative query
+  target_sla: null
+  target_evidence_class: unknown
+recovery:
+  replay_safe: true
+  dead_letter_or_quarantine: required
+  cursor_rebuild: from durable source and last accepted watermark
+external_validation_required:
+  - Delta merge idempotency in the target workspace
+  - Vector index delete completion and filter semantics
+  - Identity and ACL propagation latency
+  - Retention and audit policy approval

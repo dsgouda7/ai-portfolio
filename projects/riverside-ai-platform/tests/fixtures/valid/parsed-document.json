@@ -1,0 +1,36 @@
+{
+  "contract_version": "1.0.0",
+  "kind": "parsed_document",
+  "tenant_id": "tenant-editorial-standard",
+  "document_id": "doc-weight-distant-light-001",
+  "source_uri": "https://content.example/manuscripts/chapter-001.txt",
+  "source_version": "2026-08-05T100000Z",
+  "content_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+  "raw_content_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+  "acl": {
+    "visibility": "restricted",
+    "principals": [],
+    "groups": [
+      "editors"
+    ]
+  },
+  "region": "eastus2",
+  "classification": "confidential",
+  "ingested_at": "2026-08-05T10:05:00Z",
+  "parsed_at": "2026-08-05T10:06:00Z",
+  "pipeline_version": "1.0.0",
+  "deletion_state": {
+    "status": "active"
+  },
+  "parser": {
+    "name": "plain-text-parser",
+    "version": "1.0.0"
+  },
+  "language": "en",
+  "title": "The Weight of Distant Light - Chapter 1",
+  "text": "Aria watched the harbor lights appear one by one beyond the rain.",
+  "metadata": {
+    "collection": "the_weight_of_distant_light",
+    "chapter_number": 1
+  }
+}

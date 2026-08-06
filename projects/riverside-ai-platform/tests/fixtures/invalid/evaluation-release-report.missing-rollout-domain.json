@@ -1,0 +1,214 @@
+{
+  "contract_version": "1.0.0",
+  "kind": "evaluation_release_report",
+  "report_id": "eval-riverside-editor-incomplete",
+  "release_id": "riverside-editor-2026-08-05",
+  "release_version": "1.0.0",
+  "generated_at": "2026-08-05T11:55:00Z",
+  "source_commit": "0123456789abcdef0123456789abcdef01234567",
+  "decision": "hold",
+  "decision_reasons": [
+    "Rollout comparison evidence is missing."
+  ],
+  "evidence": [
+    {
+      "name": "partial-evaluation-results",
+      "uri": "repo://evaluations/evidence/partial-results.json",
+      "digest": {
+        "algorithm": "sha256",
+        "value": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+      }
+    }
+  ],
+  "domains": {
+    "data_quality": [
+      {
+        "metric_id": "data_metric",
+        "dataset": {
+          "id": "dataset",
+          "version": "1"
+        },
+        "evaluator": {
+          "id": "evaluator",
+          "version": "1.0.0"
+        },
+        "slice": {
+          "name": "all_records",
+          "value": "all"
+        },
+        "threshold": {
+          "operator": "gte",
+          "value": 1,
+          "unit": "ratio"
+        },
+        "observed": {
+          "value": 1,
+          "unit": "ratio"
+        },
+        "status": "pass"
+      }
+    ],
+    "retrieval_quality": [
+      {
+        "metric_id": "retrieval_metric",
+        "dataset": {
+          "id": "dataset",
+          "version": "1"
+        },
+        "evaluator": {
+          "id": "evaluator",
+          "version": "1.0.0"
+        },
+        "slice": {
+          "name": "all_records",
+          "value": "all"
+        },
+        "threshold": {
+          "operator": "gte",
+          "value": 1,
+          "unit": "ratio"
+        },
+        "observed": {
+          "value": 1,
+          "unit": "ratio"
+        },
+        "status": "pass"
+      }
+    ],
+    "generation_citation_quality": [
+      {
+        "metric_id": "generation_metric",
+        "dataset": {
+          "id": "dataset",
+          "version": "1"
+        },
+        "evaluator": {
+          "id": "evaluator",
+          "version": "1.0.0"
+        },
+        "slice": {
+          "name": "all_records",
+          "value": "all"
+        },
+        "threshold": {
+          "operator": "gte",
+          "value": 1,
+          "unit": "ratio"
+        },
+        "observed": {
+          "value": 1,
+          "unit": "ratio"
+        },
+        "status": "pass"
+      }
+    ],
+    "adaptation_evidence": [
+      {
+        "metric_id": "adaptation_metric",
+        "dataset": {
+          "id": "dataset",
+          "version": "1"
+        },
+        "evaluator": {
+          "id": "evaluator",
+          "version": "1.0.0"
+        },
+        "slice": {
+          "name": "all_records",
+          "value": "all"
+        },
+        "threshold": {
+          "operator": "gte",
+          "value": 1,
+          "unit": "ratio"
+        },
+        "observed": {
+          "value": 1,
+          "unit": "ratio"
+        },
+        "status": "pass"
+      }
+    ],
+    "safety_authorization": [
+      {
+        "metric_id": "safety_metric",
+        "dataset": {
+          "id": "dataset",
+          "version": "1"
+        },
+        "evaluator": {
+          "id": "evaluator",
+          "version": "1.0.0"
+        },
+        "slice": {
+          "name": "all_records",
+          "value": "all"
+        },
+        "threshold": {
+          "operator": "gte",
+          "value": 1,
+          "unit": "ratio"
+        },
+        "observed": {
+          "value": 1,
+          "unit": "ratio"
+        },
+        "status": "pass"
+      }
+    ],
+    "operational_slos": [
+      {
+        "metric_id": "operations_metric",
+        "dataset": {
+          "id": "dataset",
+          "version": "1"
+        },
+        "evaluator": {
+          "id": "evaluator",
+          "version": "1.0.0"
+        },
+        "slice": {
+          "name": "all_records",
+          "value": "all"
+        },
+        "threshold": {
+          "operator": "gte",
+          "value": 1,
+          "unit": "ratio"
+        },
+        "observed": {
+          "value": 1,
+          "unit": "ratio"
+        },
+        "status": "pass"
+      }
+    ],
+    "cost": [
+      {
+        "metric_id": "cost_metric",
+        "dataset": {
+          "id": "dataset",
+          "version": "1"
+        },
+        "evaluator": {
+          "id": "evaluator",
+          "version": "1.0.0"
+        },
+        "slice": {
+          "name": "all_records",
+          "value": "all"
+        },
+        "threshold": {
+          "operator": "gte",
+          "value": 1,
+          "unit": "ratio"
+        },
+        "observed": {
+          "value": 1,
+          "unit": "ratio"
+        },
+        "status": "pass"
+      }
+    ]
+  }
+}

@@ -1,0 +1,136 @@
+resources:
+  jobs:
+    riverside_index_update:
+      name: riverside-index-update-${bundle.target}
+      max_concurrent_runs: 1
+      timeout_seconds: 7200
+      run_as:
+        service_principal_name: ${var.run_as_service_principal_name}
+      parameters:
+        - name: catalog
+          default: ${var.catalog}
+        - name: schema
+          default: ${var.schema}
+        - name: source_table
+          default: ${var.catalog}.${var.schema}.parsed_documents
+        - name: chunk_table
+          default: ${var.catalog}.${var.schema}.document_chunks
+        - name: vector_record_table
+          default: ${var.catalog}.${var.schema}.vector_index_records
+        - name: quality_table
+          default: ${var.catalog}.${var.schema}.vectorization_quality_reports
+        - name: evaluation_table
+          default: ${var.retrieval_evaluation_table}
+        - name: evaluation_output_table
+          default: ${var.catalog}.${var.schema}.retrieval_evaluation_reports
+        - name: evaluation_dataset_id
+          default: ${var.retrieval_evaluation_dataset_id}
+        - name: evaluation_dataset_version
+          default: ${var.retrieval_evaluation_dataset_version}
+        - name: vector_search_endpoint
+          default: ${var.vector_search_endpoint}
+        - name: vector_search_endpoint_type
+          default: ${var.vector_search_endpoint_type}
+        - name: index_name
+          default: ${var.index_name}
+        - name: index_version
+          default: ${var.index_version}
+        - name: pipeline_version
+          default: ${var.pipeline_version}
+        - name: chunk_strategy_version
+          default: ${var.chunk_strategy_version}
+        - name: embedding_model
+          default: ${var.embedding_model}
+        - name: embedding_model_revision
+          default: ${var.embedding_model_revision}
+        - name: embedding_endpoint
+          default: ${var.embedding_endpoint}
+        - name: embedding_dimensions
+          default: ${var.embedding_dimensions}
+        - name: since
+          default: ""
+        - name: run_id
+          default: ""
+      job_clusters:
+        - job_cluster_key: indexing_cluster
+          new_cluster:
+            spark_version: ${var.spark_version}
+            node_type_id: ${var.node_type_id}
+            policy_id: ${var.policy_id}
+            data_security_mode: SINGLE_USER
+            runtime_engine: STANDARD
+            autoscale:
+              min_workers: 1
+              max_workers: 4
+            spark_conf:
+              spark.databricks.delta.schema.autoMerge.enabled: "false"
+      tasks:
+        - task_key: bootstrap_contract_tables
+          job_cluster_key: indexing_cluster
+          python_wheel_task:
+            package_name: riverside_rag_vectorize
+            entry_point: bootstrap_index
+            named_parameters:
+              chunk_table: "{{job.parameters.chunk_table}}"
+              vector_record_table: "{{job.parameters.vector_record_table}}"
+              quality_table: "{{job.parameters.quality_table}}"
+              evaluation_output_table: "{{job.parameters.evaluation_output_table}}"
+          libraries:
+            - whl: ../../../phase2-vectorize/dist/*.whl
+        - task_key: update_direct_vector_index
+          depends_on:
+            - task_key: bootstrap_contract_tables
+          job_cluster_key: indexing_cluster
+          python_wheel_task:
+            package_name: riverside_rag_vectorize
+            entry_point: remote_index
+            named_parameters:
+              catalog: "{{job.parameters.catalog}}"
+              schema: "{{job.parameters.schema}}"
+              source_table: "{{job.parameters.source_table}}"
+              chunk_table: "{{job.parameters.chunk_table}}"
+              vector_record_table: "{{job.parameters.vector_record_table}}"
+              quality_table: "{{job.parameters.quality_table}}"
+              vector_search_endpoint: "{{job.parameters.vector_search_endpoint}}"
+              vector_search_endpoint_type: "{{job.parameters.vector_search_endpoint_type}}"
+              index_name: "{{job.parameters.index_name}}"
+              index_version: "{{job.parameters.index_version}}"
+              pipeline_version: "{{job.parameters.pipeline_version}}"
+              chunk_strategy_version: "{{job.parameters.chunk_strategy_version}}"
+              embedding_model: "{{job.parameters.embedding_model}}"
+              embedding_model_revision: "{{job.parameters.embedding_model_revision}}"
+              embedding_endpoint: "{{job.parameters.embedding_endpoint}}"
+              embedding_dimensions: "{{job.parameters.embedding_dimensions}}"
+              since: "{{job.parameters.since}}"
+              run_id: "{{job.parameters.run_id}}"
+          libraries:
+            - whl: ../../../phase2-vectorize/dist/*.whl
+        - task_key: evaluate_authorized_retrieval
+          depends_on:
+            - task_key: update_direct_vector_index
+          job_cluster_key: indexing_cluster
+          python_wheel_task:
+            package_name: riverside_rag_vectorize
+            entry_point: evaluate_index
+            named_parameters:
+              catalog: "{{job.parameters.catalog}}"
+              schema: "{{job.parameters.schema}}"
+              vector_search_endpoint: "{{job.parameters.vector_search_endpoint}}"
+              vector_search_endpoint_type: "{{job.parameters.vector_search_endpoint_type}}"
+              index_name: "{{job.parameters.index_name}}"
+              index_version: "{{job.parameters.index_version}}"
+              pipeline_version: "{{job.parameters.pipeline_version}}"
+              embedding_model: "{{job.parameters.embedding_model}}"
+              embedding_model_revision: "{{job.parameters.embedding_model_revision}}"
+              embedding_endpoint: "{{job.parameters.embedding_endpoint}}"
+              embedding_dimensions: "{{job.parameters.embedding_dimensions}}"
+              evaluation_table: "{{job.parameters.evaluation_table}}"
+              evaluation_output_table: "{{job.parameters.evaluation_output_table}}"
+              dataset_id: "{{job.parameters.evaluation_dataset_id}}"
+              dataset_version: "{{job.parameters.evaluation_dataset_version}}"
+              report_id: "{{job.parameters.run_id}}"
+          libraries:
+            - whl: ../../../phase2-vectorize/dist/*.whl
+      permissions:
+        - service_principal_name: ${var.run_as_service_principal_name}
+          level: CAN_MANAGE_RUN

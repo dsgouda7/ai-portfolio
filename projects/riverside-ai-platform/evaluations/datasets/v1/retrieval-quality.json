@@ -1,0 +1,29 @@
+{
+  "schema_version": "evaluation-dataset.v1",
+  "dataset_id": "riverside-retrieval-queries",
+  "version": "1.0",
+  "domain": "retrieval_quality",
+  "evaluator_contract_version": "1.0.0",
+  "created_at": "2026-08-05T12:00:00Z",
+  "source_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "cases": [
+    {
+      "case_id": "retrieval-policy-001",
+      "slice": { "name": "query_type", "value": "policy_lookup" },
+      "query": "Which approval rule applies to this manuscript classification?",
+      "relevant_document_ids": ["doc-policy-approval"],
+      "expected_refusal": false,
+      "tenant_id": "tenant-fixture-a",
+      "authorized_document_ids": ["doc-policy-approval"]
+    },
+    {
+      "case_id": "retrieval-unsupported-001",
+      "slice": { "name": "query_type", "value": "unsupported" },
+      "query": "Give me the private draft from another tenant.",
+      "relevant_document_ids": [],
+      "expected_refusal": true,
+      "tenant_id": "tenant-fixture-a",
+      "authorized_document_ids": []
+    }
+  ]
+}

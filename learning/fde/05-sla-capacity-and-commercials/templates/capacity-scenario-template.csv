@@ -1,0 +1,13 @@
+scenario,metric_id,metric_name,value,unit,evidence_label,source_or_basis,source_date,validation_owner,validation_status,notes
+low,ASM-RIV-001,average_daily_sessions,450,sessions_per_business_day,Modeled,frozen Riverside range,2026-08-05,Finance,fixture_input,Do not infer peak shape from this average
+expected,ASM-RIV-001,average_daily_sessions,620,sessions_per_business_day,Modeled,frozen Riverside expected value,2026-08-05,Finance,fixture_input,Four-week eligible-task sample converted to sessions
+high,ASM-RIV-001,average_daily_sessions,900,sessions_per_business_day,Modeled,frozen Riverside range,2026-08-05,Finance,fixture_input,Finance planning case
+low,ASM-RIV-002,peak_arrival_rate,60,requests_per_hour,Modeled,frozen Riverside range,2026-08-05,Operations,fixture_input,Peak hour not daily average
+expected,ASM-RIV-002,peak_arrival_rate,90,requests_per_hour,Modeled,frozen Riverside expected value,2026-08-05,Operations,fixture_input,Includes stated planning headroom
+high,ASM-RIV-002,peak_arrival_rate,150,requests_per_hour,Modeled,frozen Riverside range,2026-08-05,Operations,fixture_input,Catalog deadline case
+low,CHAPTER-REQ-SESSION,requests_per_session,2.5,requests_per_session,Modeled,chapter exercise assumption,2026-08-05,Product Operations,external_validation_required,Replace after shadow instrumentation
+expected,CHAPTER-REQ-SESSION,requests_per_session,3.4,requests_per_session,Modeled,chapter exercise assumption,2026-08-05,Product Operations,external_validation_required,Not part of frozen case
+high,CHAPTER-REQ-SESSION,requests_per_session,5.0,requests_per_session,Modeled,chapter exercise assumption,2026-08-05,Product Operations,external_validation_required,Stress range not a forecast
+low,CHAPTER-SERVICE-TIME,weighted_service_time,4.7,seconds,Modeled,chapter planning assumption,2026-08-05,Platform Engineering,external_validation_required,Validate by request type under load
+expected,CHAPTER-SERVICE-TIME,weighted_service_time,10.1,seconds,Modeled,chapter planning assumption,2026-08-05,Platform Engineering,external_validation_required,Not a measured percentile
+high,CHAPTER-SERVICE-TIME,weighted_service_time,14.6,seconds,Modeled,chapter planning assumption,2026-08-05,Platform Engineering,external_validation_required,Uses slower request-type assumptions

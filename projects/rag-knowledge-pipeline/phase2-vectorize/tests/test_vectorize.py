@@ -4,10 +4,19 @@ import pytest
 from pathlib import Path
 import sys
 
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from phase2_vectorize.src.embeddings.embedding_manager import EmbeddingManager
-from langchain.schema import Document
+from embeddings.embedding_manager import EmbeddingManager
+from langchain_core.documents import Document
+
+
+@pytest.fixture(autouse=True)
+def stub_huggingface_embeddings(monkeypatch):
+    monkeypatch.setattr(
+        "embeddings.embedding_manager.HuggingFaceEmbeddings",
+        lambda **kwargs: kwargs,
+    )
 
 
 def test_embedding_manager_initialization():

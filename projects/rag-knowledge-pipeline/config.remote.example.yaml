@@ -1,0 +1,69 @@
+# Static remote example. Credentials and governance values are environment inputs.
+mode: remote
+
+local:
+  dataset: wikipedia
+  sample_size: 10
+  delta_path: ./data/delta_lake
+  vector_store_path: ./data/chroma_db
+  embedding_model: sentence-transformers/all-MiniLM-L6-v2
+  chunk_size: 1024
+  chunk_overlap: 128
+
+remote:
+  workspace_url: ${DATABRICKS_HOST}
+  vector_search_endpoint: ${RIVERSIDE_VECTOR_SEARCH_ENDPOINT}
+  vector_search_endpoint_type: standard
+  catalog: main
+  schema: rag_demo
+  volume: rag_data
+  embedding_model: databricks-gte-large-en
+  embedding_model_revision: "1"
+  embedding_dimensions: 1024
+  embedding_endpoint: databricks-gte-large-en
+  index_name: main.rag_demo.riverside_manuscripts_v1
+  index_version: 1.0.0
+  pipeline_version: 1.0.0
+  chunk_strategy_version: 1.0.0
+
+serving:
+  retrieval:
+    provider: auto
+  generation:
+    provider: azure_endpoint
+    model_alias: riverside-editor
+    max_input_tokens: 8192
+    max_tokens: 512
+    temperature: 0.1
+    timeout_seconds: 30
+    max_retries: 2
+    endpoint:
+      provider: apim
+      url: https://riverside-gateway.azure-api.net
+      route: /v1/chat/completions
+      auth: managed_identity
+      token_scope: https://riverside-gateway.azure-api.net/.default
+      azureml_deployment: ""
+      foundry_deployment: ""
+      foundry_api_version: 2024-10-21
+    watsonx_legacy:
+      url: https://us-south.ml.cloud.ibm.com
+      project_id: skills-network
+      model_id: meta-llama/llama-4-maverick-17b-128e-instruct-fp8
+  deployment:
+    environment: dev
+    release_id: replace-with-release-id
+    deployment_slot: blue
+    region: eastus2
+    runtime: rag-phase3-serve
+    runtime_version: 0.2.0
+    source_commit: "0000000"
+
+retrieval:
+  search_type: similarity
+  top_k: 6
+  lambda_mult: 0.25
+
+logging:
+  level: INFO
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

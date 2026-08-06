@@ -1,0 +1,15 @@
+{
+  "contract_version": "1.0.0",
+  "kind": "deployment_metadata",
+  "environment": "local",
+  "release_id": "riverside-editor-2026-08-05",
+  "model_alias": "riverside-editor",
+  "deployment_name": "riverside-local-green",
+  "deployment_slot": "green",
+  "region": "eastus2",
+  "runtime": "azureml-riverside-runtime",
+  "runtime_version": "1.0.0",
+  "index_version": "1.0.0",
+  "deployed_at": "2026-08-05T12:00:00Z",
+  "source_commit": "0123456789abcdef0123456789abcdef01234567"
+}

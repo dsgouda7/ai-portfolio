@@ -1,17 +1,15 @@
 """Embedding generation and ChromaDB management."""
 
 from pathlib import Path
-from typing import List
-from deltalake import DeltaTable
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.schema import Document
+from typing import Any, List
+from langchain_core.documents import Document
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from shared.logging_config import get_logger
 
 
 logger = get_logger(__name__)
+HuggingFaceEmbeddings = None
 
 
 class EmbeddingManager:
@@ -40,7 +38,11 @@ class EmbeddingManager:
 
         # Initialize embeddings
         logger.info(f"Initializing embeddings: {embedding_model} on {device}")
-        self.embeddings = HuggingFaceEmbeddings(
+        embedding_provider = HuggingFaceEmbeddings
+        if embedding_provider is None:
+            from langchain_community.embeddings import HuggingFaceEmbeddings as embedding_provider
+
+        self.embeddings = embedding_provider(
             model_name=embedding_model,
             model_kwargs={"device": device}
         )
@@ -66,6 +68,8 @@ class EmbeddingManager:
 
         if not delta_table_path.exists():
             raise FileNotFoundError(f"Delta table not found: {delta_table_path}")
+
+        from deltalake import DeltaTable
 
         logger.info(f"Reading from Delta Lake: {delta_table_path}")
         dt = DeltaTable(str(delta_table_path))
@@ -105,7 +109,7 @@ class EmbeddingManager:
         self,
         documents: List[Document],
         persist_directory: str
-    ) -> Chroma:
+    ) -> Any:
         """
         Create ChromaDB vector store from documents.
 
@@ -118,6 +122,8 @@ class EmbeddingManager:
         """
         persist_path = Path(persist_directory)
         persist_path.mkdir(parents=True, exist_ok=True)
+
+        from langchain_community.vectorstores import Chroma
 
         logger.info(f"Creating ChromaDB at {persist_directory}")
         logger.info(f"Embedding {len(documents)} chunks (this may take a few minutes)...")

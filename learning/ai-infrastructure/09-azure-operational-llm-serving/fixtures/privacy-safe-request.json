@@ -1,0 +1,18 @@
+{
+  "model": "riverside-editor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "Follow the approved public style guide. Do not infer private manuscript content."
+    },
+    {
+      "role": "user",
+      "content": "Rewrite this public example in sentence case: OPERATIONAL READINESS CHECK"
+    }
+  ],
+  "max_input_tokens": 256,
+  "max_tokens": 32,
+  "temperature": 0,
+  "top_p": 1,
+  "stream": false
+}

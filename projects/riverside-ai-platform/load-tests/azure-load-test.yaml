@@ -1,0 +1,41 @@
+version: v0.1
+testId: RIVERSIDE-LOAD-TEST-ID-REQUIRED
+displayName: __RIVERSIDE_LOAD_TEST_DISPLAY_NAME__
+description: Warm, steady, target, overload, and recovery evidence for chat completions
+testPlan: locustfile.py
+testType: Locust
+engineInstances: __RIVERSIDE_ENGINE_INSTANCES__
+configurationFiles:
+  - stages.json
+  - synthetic-requests.jsonl
+  - requirements.txt
+properties:
+  userPropertyFile: locust.conf
+env:
+  - name: RIVERSIDE_TARGET_HOST
+    value: __RIVERSIDE_TARGET_HOST__
+  - name: RIVERSIDE_ENGINE_INSTANCES
+    value: __RIVERSIDE_ENGINE_INSTANCES__
+  - name: RIVERSIDE_STAGE_CONFIG
+    value: stages.json
+  - name: RIVERSIDE_REQUESTS_FILE
+    value: synthetic-requests.jsonl
+  - name: RIVERSIDE_TOKEN_SCOPE
+    value: __RIVERSIDE_TOKEN_SCOPE__
+  - name: RIVERSIDE_MANAGED_IDENTITY_CLIENT_ID
+    value: __RIVERSIDE_MANAGED_IDENTITY_CLIENT_ID__
+failureCriteria:
+  - chat.completions.total.warm: percentage(error) > 5
+  - chat.completions.total.steady: percentage(error) > 1
+  - chat.completions.total.target: percentage(error) > 1
+  - chat.completions.total.overload: percentage(error) > 25
+  - chat.completions.total.recovery: percentage(error) > 1
+  - chat.completions.total.target: p95(response_time_ms) > 8000
+  - chat.completions.ttft.target: p95(response_time_ms) > 1500
+  - chat.completions.tpot.target: p95(response_time_ms) > 120
+  - chat.completions.total.recovery: p95(response_time_ms) > 8000
+  - chat.completions.ttft.recovery: p95(response_time_ms) > 1500
+  - chat.completions.tpot.recovery: p95(response_time_ms) > 120
+autoStop:
+  errorPercentage: 20
+  timeWindow: 60

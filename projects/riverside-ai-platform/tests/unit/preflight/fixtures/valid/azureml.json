@@ -1,0 +1,16 @@
+{
+  "environment": "staging",
+  "region": "uksouth",
+  "endpoint_name": "riverside-staging",
+  "blue_slot_name": "blue",
+  "green_slot_name": "green",
+  "blue_deployment_name": "riverside-staging-blue",
+  "green_deployment_name": "riverside-staging-green",
+  "blue_model_name": "riverside-model-blue",
+  "blue_model_version": "20260805.1",
+  "green_model_name": "riverside-model-green",
+  "green_model_version": "20260805.2",
+  "environment_asset_name": "riverside-runtime",
+  "environment_asset_version": "20260805.1",
+  "application_deadline_seconds": 100
+}

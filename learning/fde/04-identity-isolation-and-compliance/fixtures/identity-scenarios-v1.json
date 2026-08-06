@@ -1,0 +1,225 @@
+{
+  "schema_version": "1.0.0",
+  "fixture_version": "RIV-FDE-04-LOCAL-1.0.0",
+  "source_fixture_version": "RIV-FDE-1.0.0",
+  "synthetic_data_notice": "Entirely fictional teaching data. Contains no credentials, tokens, connection strings, or customer data.",
+  "resources": [
+    {
+      "resource_id": "RES-RIV-EU-MANUSCRIPT-ARIA",
+      "tenant_id": "TEN-RIV-EU",
+      "region_id": "REG-UKS",
+      "classification": "confidential",
+      "title_id": "TITLE-ARIA",
+      "allowed_role_ids": ["ROLE-EDITOR", "ROLE-SENIOR-EDITOR"],
+      "allowed_purposes": ["editorial_continuation"],
+      "deletion_state": "active"
+    },
+    {
+      "resource_id": "RES-RIV-US-MANUSCRIPT-HARBOR",
+      "tenant_id": "TEN-RIV-US",
+      "region_id": "REG-EUS",
+      "classification": "confidential",
+      "title_id": "TITLE-HARBOR",
+      "allowed_role_ids": ["ROLE-EDITOR", "ROLE-SENIOR-EDITOR"],
+      "allowed_purposes": ["editorial_continuation"],
+      "deletion_state": "active"
+    },
+    {
+      "resource_id": "RES-RIV-EU-CURRENT-POLICY",
+      "tenant_id": "TEN-RIV-EU",
+      "region_id": "REG-UKS",
+      "classification": "internal",
+      "title_id": null,
+      "allowed_role_ids": ["ROLE-EDITOR", "ROLE-SENIOR-EDITOR", "ROLE-EDITORIAL-DIRECTOR"],
+      "allowed_purposes": ["policy_lookup"],
+      "deletion_state": "active"
+    }
+  ],
+  "tool_policies": [
+    {
+      "tool_name": "workflow.propose_transition",
+      "allowed_role_ids": ["ROLE-EDITOR", "ROLE-SENIOR-EDITOR"],
+      "allowed_purposes": ["workflow_assistance"],
+      "requires_human_confirmation": false,
+      "prohibited_actions": []
+    },
+    {
+      "tool_name": "workflow.commit_transition",
+      "allowed_role_ids": ["ROLE-SENIOR-EDITOR", "ROLE-SERVICE-WORKFLOW"],
+      "allowed_purposes": ["workflow_assistance"],
+      "requires_human_confirmation": true,
+      "prohibited_actions": ["rights_or_payment_write"]
+    },
+    {
+      "tool_name": "rights.change_contract",
+      "allowed_role_ids": [],
+      "allowed_purposes": [],
+      "requires_human_confirmation": true,
+      "prohibited_actions": ["change_rights", "change_payment"]
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "ISO-RIV-001",
+      "name": "Assigned EU editor retrieves current EU policy",
+      "request": {
+        "tenant_id": "TEN-RIV-EU",
+        "actor_id": "API-USER-EDITOR-017",
+        "role_ids": ["ROLE-EDITOR"],
+        "region_id": "REG-UKS",
+        "purpose": "policy_lookup",
+        "title_ids": ["TITLE-ARIA"],
+        "trace_id": "trace-synthetic-0001",
+        "resource_id": "RES-RIV-EU-CURRENT-POLICY",
+        "tool_name": null,
+        "human_confirmed": false
+      },
+      "expected_decision": "allow",
+      "expected_reason": "authorized"
+    },
+    {
+      "scenario_id": "ISO-RIV-002",
+      "name": "EU editor requests a US manuscript",
+      "request": {
+        "tenant_id": "TEN-RIV-EU",
+        "actor_id": "API-USER-EDITOR-017",
+        "role_ids": ["ROLE-EDITOR"],
+        "region_id": "REG-UKS",
+        "purpose": "editorial_continuation",
+        "title_ids": ["TITLE-ARIA"],
+        "trace_id": "trace-synthetic-0002",
+        "resource_id": "RES-RIV-US-MANUSCRIPT-HARBOR",
+        "tool_name": null,
+        "human_confirmed": false
+      },
+      "expected_decision": "deny",
+      "expected_reason": "tenant_mismatch"
+    },
+    {
+      "scenario_id": "ISO-RIV-003",
+      "name": "Disabled contractor retains a stale nested editor role",
+      "request": {
+        "tenant_id": "TEN-RIV-EU",
+        "actor_id": "API-USER-CONTRACTOR-044",
+        "role_ids": ["ROLE-EDITOR"],
+        "region_id": "REG-UKS",
+        "purpose": "editorial_continuation",
+        "title_ids": ["TITLE-ARIA"],
+        "trace_id": "trace-synthetic-0003",
+        "resource_id": "RES-RIV-EU-MANUSCRIPT-ARIA",
+        "tool_name": null,
+        "human_confirmed": false
+      },
+      "expected_decision": "deny",
+      "expected_reason": "identity_disabled"
+    },
+    {
+      "scenario_id": "ISO-RIV-004",
+      "name": "Editor attempts an over-privileged rights write",
+      "request": {
+        "tenant_id": "TEN-RIV-EU",
+        "actor_id": "API-USER-EDITOR-017",
+        "role_ids": ["ROLE-EDITOR", "ROLE-RIGHTS-COUNSEL"],
+        "region_id": "REG-UKS",
+        "purpose": "rights_lookup",
+        "title_ids": ["TITLE-ARIA"],
+        "trace_id": "trace-synthetic-0004",
+        "resource_id": null,
+        "tool_name": "rights.change_contract",
+        "human_confirmed": true
+      },
+      "expected_decision": "deny",
+      "expected_reason": "role_escalation"
+    },
+    {
+      "scenario_id": "ISO-RIV-005",
+      "name": "EU manuscript request is routed to the US region",
+      "request": {
+        "tenant_id": "TEN-RIV-EU",
+        "actor_id": "API-USER-EDITOR-017",
+        "role_ids": ["ROLE-EDITOR"],
+        "region_id": "REG-EUS",
+        "purpose": "editorial_continuation",
+        "title_ids": ["TITLE-ARIA"],
+        "trace_id": "trace-synthetic-0005",
+        "resource_id": "RES-RIV-EU-MANUSCRIPT-ARIA",
+        "tool_name": null,
+        "human_confirmed": false
+      },
+      "expected_decision": "deny",
+      "expected_reason": "region_not_allowed"
+    },
+    {
+      "scenario_id": "ISO-RIV-006",
+      "name": "Identity is valid but request purpose is absent",
+      "request": {
+        "tenant_id": "TEN-RIV-EU",
+        "actor_id": "API-USER-EDITOR-017",
+        "role_ids": ["ROLE-EDITOR"],
+        "region_id": "REG-UKS",
+        "purpose": "",
+        "title_ids": ["TITLE-ARIA"],
+        "trace_id": "trace-synthetic-0006",
+        "resource_id": "RES-RIV-EU-MANUSCRIPT-ARIA",
+        "tool_name": null,
+        "human_confirmed": false
+      },
+      "expected_decision": "deny",
+      "expected_reason": "missing_context"
+    },
+    {
+      "scenario_id": "ISO-RIV-007",
+      "name": "Editor requests an unassigned EU title",
+      "request": {
+        "tenant_id": "TEN-RIV-EU",
+        "actor_id": "API-USER-EDITOR-017",
+        "role_ids": ["ROLE-EDITOR"],
+        "region_id": "REG-UKS",
+        "purpose": "editorial_continuation",
+        "title_ids": ["TITLE-OTHER"],
+        "trace_id": "trace-synthetic-0007",
+        "resource_id": "RES-RIV-EU-MANUSCRIPT-ARIA",
+        "tool_name": null,
+        "human_confirmed": false
+      },
+      "expected_decision": "deny",
+      "expected_reason": "title_not_assigned"
+    },
+    {
+      "scenario_id": "ISO-RIV-008",
+      "name": "Valid editor role attempts a prohibited rights tool",
+      "request": {
+        "tenant_id": "TEN-RIV-EU",
+        "actor_id": "API-USER-EDITOR-017",
+        "role_ids": ["ROLE-EDITOR"],
+        "region_id": "REG-UKS",
+        "purpose": "rights_lookup",
+        "title_ids": ["TITLE-ARIA"],
+        "trace_id": "trace-synthetic-0008",
+        "resource_id": null,
+        "tool_name": "rights.change_contract",
+        "human_confirmed": true
+      },
+      "expected_decision": "deny",
+      "expected_reason": "tool_not_authorized"
+    },
+    {
+      "scenario_id": "ISO-RIV-009",
+      "name": "Valid editor proposes a workflow transition",
+      "request": {
+        "tenant_id": "TEN-RIV-EU",
+        "actor_id": "API-USER-EDITOR-017",
+        "role_ids": ["ROLE-EDITOR"],
+        "region_id": "REG-UKS",
+        "purpose": "workflow_assistance",
+        "title_ids": ["TITLE-ARIA"],
+        "trace_id": "trace-synthetic-0009",
+        "resource_id": null,
+        "tool_name": "workflow.propose_transition",
+        "human_confirmed": false
+      },
+      "expected_decision": "allow",
+      "expected_reason": "authorized"
+    }
+  ]
+}

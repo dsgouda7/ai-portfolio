@@ -1,0 +1,5 @@
+# The lab mechanism uses only the Python standard library.
+# These packages provide the optional notebook environment.
+ipykernel>=6.29,<7
+jupyterlab>=4.2,<5
+nbformat>=5.10,<6

@@ -1,0 +1,382 @@
+{
+  "schema_version": "1.0.0",
+  "fixture_version": "RIV-FDE-1.0.0",
+  "fixture_id": "FACTSET-RIV-001",
+  "description": "Stable facts and deliberate tensions shared by all Riverside FDE notebooks.",
+  "default_source_fixture": "riverside-engagement-v1.json",
+  "default_comparison": "equals",
+  "facts": [
+    {
+      "fact_id": "FACT-RIV-001",
+      "category": "identity",
+      "subject_id": "ORG-RIV-001",
+      "json_pointer": "/organization/name",
+      "expected_value": "Riverside House",
+      "evidence_class": "customer_claim",
+      "notebook_ids": ["FDE-01", "FDE-02", "FDE-08"]
+    },
+    {
+      "fact_id": "FACT-RIV-002",
+      "category": "scope",
+      "subject_id": "BRF-RIV-001",
+      "json_pointer": "/ambiguous_brief/explicit_outcomes",
+      "expected_value": ["faster answer finding", "faster bounded continuation drafting"],
+      "evidence_class": "customer_claim",
+      "notebook_ids": ["FDE-01", "FDE-02"]
+    },
+    {
+      "fact_id": "FACT-RIV-003",
+      "category": "scope",
+      "subject_id": "NG-RIV-001",
+      "json_pointer": "/non_goals/0/statement",
+      "expected_value": "Autonomous publication or external distribution of generated manuscript text",
+      "evidence_class": "policy_constraint",
+      "notebook_ids": ["FDE-01", "FDE-02", "FDE-04", "FDE-06", "FDE-07"]
+    },
+    {
+      "fact_id": "FACT-RIV-004",
+      "category": "workflow",
+      "subject_id": "WF-RIV-EDITORIAL-001",
+      "json_pointer": "/current_workflow/steps",
+      "comparison": "summary",
+      "expected_value": {"count": 7, "first_step_id": "WFSTEP-RIV-001", "last_step_id": "WFSTEP-RIV-007"},
+      "evidence_class": "measured_baseline",
+      "notebook_ids": ["FDE-01", "FDE-02", "FDE-06", "FDE-08"]
+    },
+    {
+      "fact_id": "FACT-RIV-005",
+      "category": "baseline",
+      "subject_id": "MET-RIV-001",
+      "json_pointer": "/baseline_metrics/0/value",
+      "expected_value": 18.0,
+      "evidence_class": "measured_baseline",
+      "notebook_ids": ["FDE-01", "FDE-05", "FDE-06", "FDE-08"]
+    },
+    {
+      "fact_id": "FACT-RIV-006",
+      "category": "baseline",
+      "subject_id": "MET-RIV-002",
+      "json_pointer": "/baseline_metrics/1/value",
+      "expected_value": 34.0,
+      "evidence_class": "measured_baseline",
+      "notebook_ids": ["FDE-01", "FDE-05"]
+    },
+    {
+      "fact_id": "FACT-RIV-007",
+      "category": "baseline",
+      "subject_id": "MET-RIV-003",
+      "json_pointer": "/baseline_metrics/2/value",
+      "expected_value": 42.0,
+      "evidence_class": "measured_baseline",
+      "notebook_ids": ["FDE-01", "FDE-05", "FDE-06"]
+    },
+    {
+      "fact_id": "FACT-RIV-008",
+      "category": "baseline",
+      "subject_id": "MET-RIV-004",
+      "json_pointer": "/baseline_metrics/3/value",
+      "expected_value": 0.22,
+      "evidence_class": "measured_baseline",
+      "notebook_ids": ["FDE-01", "FDE-06", "FDE-08"]
+    },
+    {
+      "fact_id": "FACT-RIV-009",
+      "category": "baseline",
+      "subject_id": "MET-RIV-005",
+      "json_pointer": "/baseline_metrics/4/value",
+      "expected_value": 0.61,
+      "evidence_class": "measured_baseline",
+      "notebook_ids": ["FDE-01", "FDE-03", "FDE-06"]
+    },
+    {
+      "fact_id": "FACT-RIV-010",
+      "category": "data",
+      "subject_id": "SRC-PDF-POLICY-001",
+      "json_pointer": "/source_inventory",
+      "comparison": "summary",
+      "expected_value": {"source_types": ["PDF", "text", "ERP", "API"], "source_count": 6},
+      "evidence_class": "customer_claim",
+      "notebook_ids": ["FDE-01", "FDE-02", "FDE-03"]
+    },
+    {
+      "fact_id": "FACT-RIV-011",
+      "category": "data",
+      "subject_id": "DOC-POL-AI-2024",
+      "source_fixture": "riverside-source-samples-v1.json",
+      "json_pointer": "/records/0/lifecycle/status",
+      "expected_value": "superseded",
+      "evidence_class": "policy_constraint",
+      "notebook_ids": ["FDE-03", "FDE-07"]
+    },
+    {
+      "fact_id": "FACT-RIV-012",
+      "category": "data",
+      "subject_id": "DOC-POL-AI-2026",
+      "source_fixture": "riverside-source-samples-v1.json",
+      "json_pointer": "/records/1/lifecycle/status",
+      "expected_value": "current",
+      "evidence_class": "policy_constraint",
+      "notebook_ids": ["FDE-03", "FDE-07"]
+    },
+    {
+      "fact_id": "FACT-RIV-013",
+      "category": "data",
+      "subject_id": "DOC-RIGHTS-ARIA-001",
+      "source_fixture": "riverside-source-samples-v1.json",
+      "json_pointer": "/records/3/expected_onboarding/decision",
+      "expected_value": "quarantine_until_duplicate_and_ocr_review",
+      "evidence_class": "policy_constraint",
+      "notebook_ids": ["FDE-03", "FDE-07"]
+    },
+    {
+      "fact_id": "FACT-RIV-014",
+      "category": "data",
+      "subject_id": "DOC-MANUSCRIPT-ARIA-038-AUTOSAVE",
+      "source_fixture": "riverside-source-samples-v1.json",
+      "json_pointer": "/records/5/expected_onboarding/decision",
+      "expected_value": "exclude_and_emit_tombstone",
+      "evidence_class": "policy_constraint",
+      "notebook_ids": ["FDE-03", "FDE-07"]
+    },
+    {
+      "fact_id": "FACT-RIV-015",
+      "category": "identity",
+      "subject_id": "TEN-RIV-EU",
+      "json_pointer": "/identity_and_data_constraints/tenants/1/allowed_region_ids",
+      "expected_value": ["REG-UKS"],
+      "evidence_class": "policy_constraint",
+      "notebook_ids": ["FDE-02", "FDE-03", "FDE-04", "FDE-05", "FDE-07"]
+    },
+    {
+      "fact_id": "FACT-RIV-016",
+      "category": "identity",
+      "subject_id": "TEN-RIV-US",
+      "json_pointer": "/identity_and_data_constraints/tenants/2/allowed_region_ids",
+      "expected_value": ["REG-EUS"],
+      "evidence_class": "policy_constraint",
+      "notebook_ids": ["FDE-02", "FDE-03", "FDE-04", "FDE-05", "FDE-06"]
+    },
+    {
+      "fact_id": "FACT-RIV-017",
+      "category": "identity",
+      "subject_id": "SEC-RIV-002",
+      "json_pointer": "/identity_and_data_constraints/required_request_context",
+      "expected_value": ["tenant_id", "actor_id", "role_ids", "region_id", "purpose", "title_ids", "trace_id"],
+      "evidence_class": "policy_constraint",
+      "notebook_ids": ["FDE-02", "FDE-04", "FDE-07"]
+    },
+    {
+      "fact_id": "FACT-RIV-018",
+      "category": "identity",
+      "subject_id": "ROLE-SERVICE-WORKFLOW",
+      "json_pointer": "/identity_and_data_constraints/roles/12/prohibited_actions",
+      "expected_value": ["unconfirmed_transition", "rights_or_payment_write"],
+      "evidence_class": "policy_constraint",
+      "notebook_ids": ["FDE-02", "FDE-04", "FDE-07"]
+    },
+    {
+      "fact_id": "FACT-RIV-019",
+      "category": "capacity",
+      "subject_id": "ASM-RIV-001",
+      "json_pointer": "/demand_cost_and_sla_assumptions/assumptions/0/value",
+      "expected_value": 620,
+      "evidence_class": "modeled_assumption",
+      "notebook_ids": ["FDE-01", "FDE-02", "FDE-05", "FDE-06"]
+    },
+    {
+      "fact_id": "FACT-RIV-020",
+      "category": "capacity",
+      "subject_id": "ASM-RIV-001",
+      "json_pointer": "/demand_cost_and_sla_assumptions/assumptions/0/range/high",
+      "expected_value": 900,
+      "evidence_class": "modeled_assumption",
+      "notebook_ids": ["FDE-01", "FDE-05"]
+    },
+    {
+      "fact_id": "FACT-RIV-021",
+      "category": "cost",
+      "subject_id": "ASM-RIV-008",
+      "json_pointer": "/demand_cost_and_sla_assumptions/assumptions/7/value",
+      "expected_value": 14000,
+      "evidence_class": "modeled_assumption",
+      "notebook_ids": ["FDE-01", "FDE-05", "FDE-06", "FDE-08"]
+    },
+    {
+      "fact_id": "FACT-RIV-022",
+      "category": "cost",
+      "subject_id": "ASM-RIV-008",
+      "json_pointer": "/demand_cost_and_sla_assumptions/assumptions/7/range/high",
+      "expected_value": 18000,
+      "evidence_class": "modeled_assumption",
+      "notebook_ids": ["FDE-05", "FDE-06"]
+    },
+    {
+      "fact_id": "FACT-RIV-023",
+      "category": "sla",
+      "subject_id": "SLA-RIV-001",
+      "json_pointer": "/demand_cost_and_sla_assumptions/service_targets/0/target",
+      "expected_value": 8.0,
+      "evidence_class": "modeled_assumption",
+      "notebook_ids": ["FDE-01", "FDE-02", "FDE-05", "FDE-06", "FDE-08"]
+    },
+    {
+      "fact_id": "FACT-RIV-024",
+      "category": "sla",
+      "subject_id": "SLA-RIV-004",
+      "json_pointer": "/demand_cost_and_sla_assumptions/service_targets/3/target",
+      "expected_value": 0.995,
+      "evidence_class": "modeled_assumption",
+      "notebook_ids": ["FDE-05", "FDE-06", "FDE-07", "FDE-08"]
+    },
+    {
+      "fact_id": "FACT-RIV-025",
+      "category": "sla",
+      "subject_id": "SLA-RIV-005",
+      "json_pointer": "/demand_cost_and_sla_assumptions/service_targets/4/target",
+      "expected_value": 0,
+      "evidence_class": "policy_constraint",
+      "notebook_ids": ["FDE-04", "FDE-06", "FDE-07", "FDE-08"]
+    },
+    {
+      "fact_id": "FACT-RIV-026",
+      "category": "risk",
+      "subject_id": "RISK-RIV-001",
+      "json_pointer": "/seeded_risks",
+      "comparison": "summary",
+      "expected_value": {"count": 8},
+      "evidence_class": "policy_constraint",
+      "notebook_ids": ["FDE-01", "FDE-02", "FDE-03", "FDE-04", "FDE-05", "FDE-06", "FDE-07", "FDE-08"]
+    },
+    {
+      "fact_id": "FACT-RIV-027",
+      "category": "incident",
+      "subject_id": "INC-RIV-003",
+      "json_pointer": "/seeded_incidents/2/initial_severity",
+      "expected_value": "SEV-1",
+      "evidence_class": "policy_constraint",
+      "notebook_ids": ["FDE-04", "FDE-06", "FDE-07", "FDE-08"]
+    },
+    {
+      "fact_id": "FACT-RIV-028",
+      "category": "incident",
+      "subject_id": "INC-RIV-005",
+      "json_pointer": "/seeded_incidents/4/containment",
+      "expected_value": "Pause workflow writes, reconcile committed state, and keep read-only assistance available.",
+      "evidence_class": "policy_constraint",
+      "notebook_ids": ["FDE-02", "FDE-06", "FDE-07", "FDE-08"]
+    },
+    {
+      "fact_id": "FACT-RIV-029",
+      "category": "rollout",
+      "subject_id": "ROL-RIV-001",
+      "json_pointer": "/rollout/cohorts",
+      "comparison": "summary",
+      "expected_value": {"count": 6, "first": "COH-RIV-000", "last": "COH-RIV-005"},
+      "evidence_class": "policy_constraint",
+      "notebook_ids": ["FDE-02", "FDE-05", "FDE-06", "FDE-07", "FDE-08"]
+    },
+    {
+      "fact_id": "FACT-RIV-030",
+      "category": "rollout",
+      "subject_id": "COH-RIV-002",
+      "json_pointer": "/rollout/cohorts/2/size",
+      "expected_value": 12,
+      "evidence_class": "modeled_assumption",
+      "notebook_ids": ["FDE-06", "FDE-08"]
+    },
+    {
+      "fact_id": "FACT-RIV-031",
+      "category": "support",
+      "subject_id": "SUP-RIV-001",
+      "json_pointer": "/support_and_handoff/covered_hours",
+      "expected_value": "08:00-18:00 Europe/London, Monday-Friday excluding agreed holidays",
+      "evidence_class": "policy_constraint",
+      "notebook_ids": ["FDE-01", "FDE-05", "FDE-06", "FDE-07", "FDE-08"]
+    },
+    {
+      "fact_id": "FACT-RIV-032",
+      "category": "support",
+      "subject_id": "SUP-RIV-OWN-004",
+      "json_pointer": "/support_and_handoff/ownership/3/accountable_person_id",
+      "expected_value": "PER-RIV-004",
+      "evidence_class": "policy_constraint",
+      "notebook_ids": ["FDE-04", "FDE-07", "FDE-08"]
+    },
+    {
+      "fact_id": "FACT-RIV-033",
+      "category": "discovery",
+      "subject_id": "CON-RIV-001",
+      "json_pointer": "/intentional_conflicts",
+      "comparison": "summary",
+      "expected_value": {"count": 11},
+      "evidence_class": "intentional_conflict",
+      "notebook_ids": ["FDE-01", "FDE-02", "FDE-05", "FDE-06", "FDE-08"]
+    },
+    {
+      "fact_id": "FACT-RIV-034",
+      "category": "discovery",
+      "subject_id": "UNK-RIV-001",
+      "json_pointer": "/unknowns",
+      "comparison": "summary",
+      "expected_value": {"count": 10},
+      "evidence_class": "unknown",
+      "notebook_ids": ["FDE-01", "FDE-02", "FDE-03", "FDE-04", "FDE-05", "FDE-06", "FDE-07", "FDE-08"]
+    },
+    {
+      "fact_id": "FACT-RIV-035",
+      "category": "external_validation",
+      "subject_id": "UNK-RIV-008",
+      "json_pointer": "/unknowns/7/status",
+      "expected_value": "external_validation_required",
+      "evidence_class": "external_validation_required",
+      "notebook_ids": ["FDE-02", "FDE-04", "FDE-05", "FDE-06", "FDE-08"]
+    },
+    {
+      "fact_id": "FACT-RIV-036",
+      "category": "safety",
+      "subject_id": "SEC-RIV-001",
+      "json_pointer": "/identity_and_data_constraints/global_constraints/0/statement",
+      "expected_value": "Unpublished manuscript content must not be sent to a public generative AI service.",
+      "evidence_class": "policy_constraint",
+      "notebook_ids": ["FDE-01", "FDE-02", "FDE-03", "FDE-04", "FDE-05", "FDE-06", "FDE-07", "FDE-08"]
+    },
+    {
+      "fact_id": "FACT-RIV-037",
+      "category": "source_failure",
+      "subject_id": "API-TASK-9002",
+      "source_fixture": "riverside-source-samples-v1.json",
+      "json_pointer": "/records/10/expected_onboarding/decision",
+      "expected_value": "quarantine_schema_drift",
+      "evidence_class": "policy_constraint",
+      "notebook_ids": ["FDE-03", "FDE-07"]
+    },
+    {
+      "fact_id": "FACT-RIV-038",
+      "category": "identity",
+      "subject_id": "API-USER-CONTRACTOR-044",
+      "source_fixture": "riverside-source-samples-v1.json",
+      "json_pointer": "/records/13/expected_onboarding/decision",
+      "expected_value": "deny_and_reconcile",
+      "evidence_class": "policy_constraint",
+      "notebook_ids": ["FDE-03", "FDE-04", "FDE-07"]
+    },
+    {
+      "fact_id": "FACT-RIV-039",
+      "category": "handoff",
+      "subject_id": "SUP-RIV-001",
+      "json_pointer": "/support_and_handoff/hypercare_duration_days",
+      "expected_value": 30,
+      "evidence_class": "modeled_assumption",
+      "notebook_ids": ["FDE-06", "FDE-08"]
+    },
+    {
+      "fact_id": "FACT-RIV-040",
+      "category": "engagement",
+      "subject_id": "ENG-RIV-FDE-001",
+      "json_pointer": "/fixture_version",
+      "expected_value": "RIV-FDE-1.0.0",
+      "evidence_class": "policy_constraint",
+      "notebook_ids": ["FDE-01", "FDE-02", "FDE-03", "FDE-04", "FDE-05", "FDE-06", "FDE-07", "FDE-08"]
+    }
+  ]
+}

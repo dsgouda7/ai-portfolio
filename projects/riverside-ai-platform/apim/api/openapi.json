@@ -1,0 +1,387 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Riverside AI Platform Chat API",
+    "version": "1.0.0",
+    "description": "OpenAI-compatible Riverside application boundary. Physical deployments, tenant identity, and backend credentials are controlled by the gateway."
+  },
+  "servers": [
+    {
+      "url": "https://gateway.example.invalid",
+      "description": "Non-resolving documentation placeholder; deployment supplies the APIM gateway hostname."
+    }
+  ],
+  "paths": {
+    "/v1/chat/completions": {
+      "post": {
+        "operationId": "createChatCompletion",
+        "summary": "Create a bounded Riverside chat completion",
+        "security": [
+          {
+            "entraBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "traceparent",
+            "in": "header",
+            "required": false,
+            "description": "W3C trace context. Invalid values are replaced by the gateway.",
+            "schema": {
+              "type": "string",
+              "pattern": "^00-[a-f0-9]{32}-[a-f0-9]{16}-0[01]$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatCompletionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Completion or server-sent completion stream.",
+            "headers": {
+              "X-Correlation-ID": {
+                "description": "Gateway trace identifier; never used as a metric dimension.",
+                "schema": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{32}$"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatCompletionResponse"
+                }
+              },
+              "text/event-stream": {
+                "schema": {
+                  "type": "string",
+                  "description": "SSE events conform to contracts/v1/app-chat-completion-stream-event.schema.json."
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/NormalizedError"
+          },
+          "401": {
+            "$ref": "#/components/responses/NormalizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/NormalizedError"
+          },
+          "429": {
+            "$ref": "#/components/responses/NormalizedError"
+          },
+          "500": {
+            "$ref": "#/components/responses/NormalizedError"
+          },
+          "502": {
+            "$ref": "#/components/responses/NormalizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/NormalizedError"
+          },
+          "504": {
+            "$ref": "#/components/responses/NormalizedError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "entraBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Microsoft Entra access token. Tenant context is derived only from validated claims."
+      }
+    },
+    "responses": {
+      "NormalizedError": {
+        "description": "Safe error envelope with bounded retry guidance.",
+        "headers": {
+          "Retry-After": {
+            "description": "Bounded retry delay in seconds when retryable.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 300
+            }
+          },
+          "X-Correlation-ID": {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{32}$"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/AppError"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "ChatCompletionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "model",
+          "messages",
+          "max_input_tokens",
+          "max_tokens",
+          "stream"
+        ],
+        "properties": {
+          "model": {
+            "type": "string",
+            "enum": [
+              "riverside-editor"
+            ]
+          },
+          "messages": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 128,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "role",
+                "content"
+              ],
+              "properties": {
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "system",
+                    "user",
+                    "assistant"
+                  ]
+                },
+                "content": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 32768
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64,
+                  "pattern": "^[A-Za-z0-9_-]+$"
+                }
+              }
+            }
+          },
+          "max_input_tokens": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 8192
+          },
+          "max_tokens": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2048
+          },
+          "temperature": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 2,
+            "default": 0.1
+          },
+          "top_p": {
+            "type": "number",
+            "exclusiveMinimum": true,
+            "minimum": 0,
+            "maximum": 1,
+            "default": 1
+          },
+          "stream": {
+            "type": "boolean"
+          },
+          "stop": {
+            "oneOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 4,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128
+                }
+              }
+            ]
+          },
+          "retrieval": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "enabled",
+              "top_k"
+            ],
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              },
+              "top_k": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 20
+              },
+              "search_type": {
+                "type": "string",
+                "enum": [
+                  "similarity",
+                  "mmr",
+                  "hybrid"
+                ]
+              },
+              "filters": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "classification": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 4,
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "public",
+                        "internal",
+                        "confidential",
+                        "restricted"
+                      ]
+                    }
+                  },
+                  "source_version": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "region": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 64,
+                    "pattern": "^[a-z0-9-]+$"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "ChatCompletionResponse": {
+        "type": "object",
+        "description": "Canonical response is defined by contracts/v1/app-chat-completion-response.schema.json."
+      },
+      "AppError": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "error",
+          "trace"
+        ],
+        "properties": {
+          "error": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "code",
+              "message",
+              "type",
+              "retryable"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "invalid_request",
+                  "unauthorized",
+                  "forbidden",
+                  "policy_violation",
+                  "overloaded",
+                  "timeout",
+                  "backend_failure",
+                  "release_unavailable",
+                  "internal_error"
+                ]
+              },
+              "message": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1024
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "request_error",
+                  "authentication_error",
+                  "authorization_error",
+                  "policy_error",
+                  "capacity_error",
+                  "deadline_error",
+                  "backend_error",
+                  "service_error"
+                ]
+              },
+              "param": {
+                "type": "string",
+                "nullable": true,
+                "maxLength": 128
+              },
+              "retryable": {
+                "type": "boolean"
+              },
+              "retry_after_seconds": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 300
+              }
+            }
+          },
+          "trace": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "trace_id",
+              "retry_count"
+            ],
+            "properties": {
+              "trace_id": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{32}$"
+              },
+              "retry_count": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 3
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

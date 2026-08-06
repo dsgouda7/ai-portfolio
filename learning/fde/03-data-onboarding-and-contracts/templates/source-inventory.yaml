@@ -1,0 +1,54 @@
+artifact_id: DATA-01
+artifact_version: 0.1.0-example
+engagement_id: ENG-RIV-FDE-001
+status: draft
+evidence_notice: Synthetic example only; source claims require owner validation.
+review:
+  prepared_by: FDE-LEARNER
+  data_owner_approval: pending
+  security_review: pending
+sources:
+  - source_id: SRC-EXAMPLE-001
+    name: Example policy library
+    system_id: SYS-EXAMPLE
+    business_purpose: Retrieve current policy evidence for authorized editorial questions.
+    prohibited_uses:
+      - Train a model without separate approval.
+      - Expose source text outside the approved tenant and region.
+    owner_person_id: PER-OWNER-PENDING
+    owner_authority_status: unvalidated
+    source_type: PDF
+    format: application/pdf
+    tenant_ids:
+      - TEN-EXAMPLE
+    region_ids:
+      - REG-EXAMPLE
+    classification: internal
+    acl_model: role_and_document
+    update_mode: manual_publish
+    expected_volume:
+      value: 0
+      unit: records
+      evidence_class: customer_claim
+      evidence_ref: pending-owner-sample
+    freshness:
+      target_hours: 24
+      evidence_class: customer_claim
+      observed_watermark: null
+    retention_and_deletion:
+      source_behavior: pending
+      downstream_sla: null
+      authority: pending
+    sample:
+      approved: false
+      record_ids: []
+      limitations:
+        - No representative parser sample has been approved.
+    onboarding_status: blocked
+    blockers:
+      - Owner authority, representative sample, and deletion behavior are unvalidated.
+    revalidate_on:
+      - owner_change
+      - schema_change
+      - acl_model_change
+      - retention_change

@@ -1,0 +1,18 @@
+{
+  "model": "riverside-editor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "Continue the supplied scene in exactly one sentence."
+    },
+    {
+      "role": "user",
+      "content": "Aria watched the harbor lights emerge beyond the rain."
+    }
+  ],
+  "max_input_tokens": 1024,
+  "max_tokens": 64,
+  "temperature": 0,
+  "top_p": 1,
+  "stream": false
+}

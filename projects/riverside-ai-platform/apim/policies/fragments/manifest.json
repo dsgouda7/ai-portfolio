@@ -1,0 +1,77 @@
+{
+  "contract_version": "1.0.0",
+  "fragments": [
+    {
+      "id": "riverside-correlation-v1",
+      "file": "correlation.xml",
+      "section": "inbound",
+      "order": 10
+    },
+    {
+      "id": "riverside-client-auth-v1",
+      "file": "client-auth.xml",
+      "section": "inbound",
+      "order": 20
+    },
+    {
+      "id": "riverside-tenant-context-v1",
+      "file": "tenant-context.xml",
+      "section": "inbound",
+      "order": 30
+    },
+    {
+      "id": "riverside-request-guardrails-v1",
+      "file": "request-guardrails.xml",
+      "section": "inbound",
+      "order": 40
+    },
+    {
+      "id": "riverside-content-safety-extension-v1",
+      "file": "content-safety-extension.xml",
+      "section": "inbound",
+      "order": 50
+    },
+    {
+      "id": "riverside-cache-lookup-extension-v1",
+      "file": "cache-lookup-extension.xml",
+      "section": "inbound",
+      "order": 60
+    },
+    {
+      "id": "riverside-token-governance-v1",
+      "file": "token-governance.xml",
+      "section": "inbound",
+      "order": 70
+    },
+    {
+      "id": "riverside-backend-identity-v1",
+      "file": "backend-identity.xml",
+      "section": "inbound",
+      "order": 80
+    },
+    {
+      "id": "riverside-bounded-retry-v1",
+      "file": "bounded-retry.xml",
+      "section": "backend",
+      "order": 10
+    },
+    {
+      "id": "riverside-cache-store-extension-v1",
+      "file": "cache-store-extension.xml",
+      "section": "outbound",
+      "order": 10
+    },
+    {
+      "id": "riverside-safe-response-v1",
+      "file": "safe-response.xml",
+      "section": "outbound",
+      "order": 20
+    },
+    {
+      "id": "riverside-safe-policy-error-v1",
+      "file": "safe-policy-error.xml",
+      "section": "on-error",
+      "order": 10
+    }
+  ]
+}

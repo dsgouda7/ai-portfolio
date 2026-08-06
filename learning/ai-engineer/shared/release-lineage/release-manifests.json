@@ -1,0 +1,113 @@
+{
+  "schema_version": "ai-eng.release-manifests.v1",
+  "manifests": [
+    {
+      "release_id": "rel-riv-001",
+      "status": "accepted",
+      "created_at_utc": "2026-01-10T12:00:00Z",
+      "base_model": {
+        "artifact_id": "model-smollm2-135m-instruct",
+        "version": "rev-001",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "adapter": {
+        "artifact_id": "adapter-riv-sft-001",
+        "version": "v1",
+        "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "compatible_base_model_id": "model-smollm2-135m-instruct"
+      },
+      "dataset": {
+        "dataset_id": "dataset-riv-curated-001",
+        "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      },
+      "prompt": { "prompt_release_id": "prompt-riv-001" },
+      "index": {
+        "index_id": "index-riv-policy-001",
+        "document_count": 10,
+        "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+      },
+      "evaluators": [
+        { "evaluator_version": "evaluator-riv-001", "report_id": "eval-report-riv-001", "passed": true }
+      ],
+      "gate_results": {
+        "data_quality": true,
+        "offline_evaluation": true,
+        "base_adapter_compatibility": true
+      },
+      "rollback_target": null,
+      "blocked_reasons": []
+    },
+    {
+      "release_id": "rel-riv-002",
+      "status": "accepted",
+      "created_at_utc": "2026-02-01T12:00:00Z",
+      "base_model": {
+        "artifact_id": "model-smollm2-135m-instruct",
+        "version": "rev-001",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "adapter": {
+        "artifact_id": "adapter-riv-sft-002",
+        "version": "v2",
+        "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "compatible_base_model_id": "model-smollm2-135m-instruct"
+      },
+      "dataset": {
+        "dataset_id": "dataset-riv-curated-002",
+        "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      "prompt": { "prompt_release_id": "prompt-riv-001" },
+      "index": {
+        "index_id": "index-riv-policy-002",
+        "document_count": 12,
+        "sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      "evaluators": [
+        { "evaluator_version": "evaluator-riv-001", "report_id": "eval-report-riv-002", "passed": true }
+      ],
+      "gate_results": {
+        "data_quality": true,
+        "offline_evaluation": true,
+        "base_adapter_compatibility": true
+      },
+      "rollback_target": "rel-riv-001",
+      "blocked_reasons": []
+    },
+    {
+      "release_id": "rel-riv-003",
+      "status": "blocked",
+      "created_at_utc": "2026-02-03T12:00:00Z",
+      "base_model": {
+        "artifact_id": "model-smollm2-135m-instruct",
+        "version": "rev-001",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "adapter": {
+        "artifact_id": "adapter-riv-sft-003",
+        "version": "v3",
+        "sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+        "compatible_base_model_id": "model-smollm2-360m-instruct"
+      },
+      "dataset": {
+        "dataset_id": "dataset-riv-curated-002",
+        "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      "prompt": { "prompt_release_id": "prompt-riv-001" },
+      "index": {
+        "index_id": "index-riv-policy-002",
+        "document_count": 12,
+        "sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      "evaluators": [
+        { "evaluator_version": "evaluator-riv-001", "report_id": "eval-report-riv-003", "passed": true }
+      ],
+      "gate_results": {
+        "data_quality": true,
+        "offline_evaluation": true,
+        "base_adapter_compatibility": false
+      },
+      "rollback_target": "rel-riv-002",
+      "blocked_reasons": ["adapter compatible base model does not match manifest base model"]
+    }
+  ]
+}

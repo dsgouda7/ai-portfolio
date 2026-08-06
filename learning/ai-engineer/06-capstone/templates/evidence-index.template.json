@@ -1,0 +1,43 @@
+{
+  "schema_version": "ai-engineer.capstone-evidence-index.v1",
+  "package_id": "<immutable-package-id>",
+  "candidate_release_id": "<candidate-release-id>",
+  "baseline_release_id": "<baseline-release-id>",
+  "rollback_target": "<accepted-rollback-release-id>",
+  "source_commit": "<git-commit>",
+  "created_at_utc": "<rfc3339-timestamp>",
+  "requested_stage": "<offline|staging|shadow|canary|broad-rollout>",
+  "authors": [
+    {
+      "role": "ai_engineer",
+      "name": "<name>"
+    }
+  ],
+  "reviewers": [
+    {
+      "role": "<data|security|operations|release>",
+      "name": "<name>",
+      "status": "<pending|approved|changes-requested>"
+    }
+  ],
+  "artifacts": [
+    {
+      "name": "release_manifest",
+      "path_or_uri": "release-manifest.json",
+      "sha256": "<64-lowercase-hex>",
+      "evidence_class": "<IMPLEMENTED_SOURCE|STATIC_VALIDATION|LOCAL_FIXTURE|LOCAL_MEASURED|MODELED|LIVE_AZURE|UNVALIDATED>",
+      "producer": "<artifact-or-workflow>",
+      "limitations": ["<scope-limit>"]
+    }
+  ],
+  "contradictions": [
+    {
+      "id": "<contradiction-id>",
+      "sources": ["<path-or-uri-a>", "<path-or-uri-b>"],
+      "impact": "<decision-impact>",
+      "resolution": "<resolved|hold|accepted-risk>",
+      "owner": "<owner>"
+    }
+  ],
+  "package_status": "<incomplete|ready-for-review|reviewed>"
+}

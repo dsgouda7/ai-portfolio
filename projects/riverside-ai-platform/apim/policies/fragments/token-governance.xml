@@ -1,0 +1,20 @@
+<fragment>
+  <choose>
+    <when condition="@((string)context.Variables[&quot;riversideTenantTier&quot;] == &quot;standard&quot;)">
+      <llm-token-limit counter-key="@(&quot;riverside-chat:&quot; + (string)context.Variables[&quot;riversideTenantId&quot;])" tokens-per-minute="{{riverside-standard-tpm}}" estimate-prompt-tokens="true" retry-after-variable-name="riversideTokenRetryAfter" remaining-tokens-variable-name="riversideRemainingTokens" tokens-consumed-variable-name="riversideTokensConsumed" />
+    </when>
+    <when condition="@((string)context.Variables[&quot;riversideTenantTier&quot;] == &quot;premium&quot;)">
+      <llm-token-limit counter-key="@(&quot;riverside-chat:&quot; + (string)context.Variables[&quot;riversideTenantId&quot;])" tokens-per-minute="{{riverside-premium-tpm}}" estimate-prompt-tokens="true" retry-after-variable-name="riversideTokenRetryAfter" remaining-tokens-variable-name="riversideRemainingTokens" tokens-consumed-variable-name="riversideTokensConsumed" />
+    </when>
+    <otherwise>
+      <llm-token-limit counter-key="@(&quot;riverside-chat:&quot; + (string)context.Variables[&quot;riversideTenantId&quot;])" tokens-per-minute="{{riverside-internal-tpm}}" estimate-prompt-tokens="true" retry-after-variable-name="riversideTokenRetryAfter" remaining-tokens-variable-name="riversideRemainingTokens" tokens-consumed-variable-name="riversideTokensConsumed" />
+    </otherwise>
+  </choose>
+  <llm-emit-token-metric namespace="Riverside.AI.Gateway">
+    <dimension name="deployment.environment" value="{{riverside-environment}}" />
+    <dimension name="model.release_id" value="{{riverside-model-release-id}}" />
+    <dimension name="model.alias" value="riverside-editor" />
+    <dimension name="deployment.name" value="{{riverside-deployment-name}}" />
+    <dimension name="tenant.tier" value="@((string)context.Variables[&quot;riversideTenantTier&quot;])" />
+  </llm-emit-token-metric>
+</fragment>

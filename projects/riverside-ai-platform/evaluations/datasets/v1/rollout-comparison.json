@@ -1,0 +1,77 @@
+{
+  "schema_version": "evaluation-dataset.v1",
+  "dataset_id": "riverside-rollout-stages",
+  "version": "2026-08-05",
+  "domain": "rollout_comparison",
+  "evaluator_contract_version": "1.0.0",
+  "created_at": "2026-08-05T12:00:00Z",
+  "source_digest": "2222222222222222222222222222222222222222222222222222222222222222",
+  "cases": [
+    {
+      "case_id": "rollout-offline-001",
+      "slice": { "name": "rollout_stage", "value": "offline" },
+      "stage": "offline",
+      "owner": "model-quality",
+      "observation_window_seconds": 1,
+      "baseline_release_id": "riverside-editor-baseline",
+      "candidate_release_id": "riverside-editor-candidate",
+      "rollback_target": "riverside-editor-baseline",
+      "abort_metric_ids": ["groundedness", "safety_retention_rate"]
+    },
+    {
+      "case_id": "rollout-cloud-smoke-001",
+      "slice": { "name": "rollout_stage", "value": "cloud_smoke" },
+      "stage": "cloud_smoke",
+      "owner": "serving-platform",
+      "observation_window_seconds": 900,
+      "baseline_release_id": "riverside-editor-baseline",
+      "candidate_release_id": "riverside-editor-candidate",
+      "rollback_target": "riverside-editor-baseline",
+      "abort_metric_ids": ["readiness_success_rate", "authorization_bypass_count"]
+    },
+    {
+      "case_id": "rollout-bounded-load-001",
+      "slice": { "name": "rollout_stage", "value": "bounded_load" },
+      "stage": "bounded_load",
+      "owner": "serving-platform",
+      "observation_window_seconds": 1800,
+      "baseline_release_id": "riverside-editor-baseline",
+      "candidate_release_id": "riverside-editor-candidate",
+      "rollback_target": "riverside-editor-baseline",
+      "abort_metric_ids": ["p95_total_latency", "deadline_success_rate", "cost_per_successful_request"]
+    },
+    {
+      "case_id": "rollout-shadow-001",
+      "slice": { "name": "rollout_stage", "value": "shadow" },
+      "stage": "shadow",
+      "owner": "release-manager",
+      "observation_window_seconds": 3600,
+      "baseline_release_id": "riverside-editor-baseline",
+      "candidate_release_id": "riverside-editor-candidate",
+      "rollback_target": "riverside-editor-baseline",
+      "abort_metric_ids": ["candidate_success_rate_delta", "candidate_p95_latency_delta"]
+    },
+    {
+      "case_id": "rollout-canary-001",
+      "slice": { "name": "rollout_stage", "value": "canary" },
+      "stage": "canary",
+      "owner": "release-manager",
+      "observation_window_seconds": 7200,
+      "baseline_release_id": "riverside-editor-baseline",
+      "candidate_release_id": "riverside-editor-candidate",
+      "rollback_target": "riverside-editor-baseline",
+      "abort_metric_ids": ["availability", "cross_tenant_leakage_count", "candidate_success_rate_delta"]
+    },
+    {
+      "case_id": "rollout-broad-001",
+      "slice": { "name": "rollout_stage", "value": "broad" },
+      "stage": "broad",
+      "owner": "release-manager",
+      "observation_window_seconds": 86400,
+      "baseline_release_id": "riverside-editor-baseline",
+      "candidate_release_id": "riverside-editor-candidate",
+      "rollback_target": "riverside-editor-baseline",
+      "abort_metric_ids": ["availability", "cost_per_successful_request", "rollback_success_rate"]
+    }
+  ]
+}

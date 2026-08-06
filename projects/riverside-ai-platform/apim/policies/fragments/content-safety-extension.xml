@@ -1,0 +1,14 @@
+<fragment>
+  <choose>
+    <when condition="@(&quot;{{riverside-content-safety-enabled}}&quot;.Equals(&quot;true&quot;, StringComparison.OrdinalIgnoreCase))">
+      <llm-content-safety backend-id="{{riverside-content-safety-backend-id}}" shield-prompt="true" enforce-on-completions="true" window-size="8000" window-overlap-size="500">
+        <categories output-type="EightSeverityLevels">
+          <category name="Hate" threshold="4" />
+          <category name="SelfHarm" threshold="4" />
+          <category name="Sexual" threshold="4" />
+          <category name="Violence" threshold="4" />
+        </categories>
+      </llm-content-safety>
+    </when>
+  </choose>
+</fragment>

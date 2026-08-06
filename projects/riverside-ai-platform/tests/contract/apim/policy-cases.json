@@ -1,0 +1,218 @@
+{
+  "contract_version": "1.0.0",
+  "description": "Static policy intent cases. These cases prove asset coverage only; they do not execute APIM policy expressions.",
+  "cases": [
+    {
+      "id": "entra-token-required",
+      "request_condition": "Authorization header is missing or invalid",
+      "expected_status": 401,
+      "expected_error_code": "unauthorized",
+      "static_evidence": [
+        {
+          "file": "projects/riverside-ai-platform/apim/policies/fragments/client-auth.xml",
+          "contains": "validate-azure-ad-token"
+        },
+        {
+          "file": "projects/riverside-ai-platform/apim/policies/fragments/safe-policy-error.xml",
+          "contains": "unauthorized"
+        }
+      ]
+    },
+    {
+      "id": "tenant-tier-from-trusted-claim",
+      "request_condition": "Validated token has a missing or unsupported tenant tier",
+      "expected_status": 403,
+      "expected_error_code": "forbidden",
+      "static_evidence": [
+        {
+          "file": "projects/riverside-ai-platform/apim/policies/fragments/tenant-context.xml",
+          "contains": "riverside_tenant_tier"
+        },
+        {
+          "file": "projects/riverside-ai-platform/apim/policies/fragments/tenant-context.xml",
+          "contains": "Required authorization context is unavailable."
+        }
+      ]
+    },
+    {
+      "id": "request-and-declared-token-bounds",
+      "request_condition": "Body, model alias, or declared token bounds violate v1",
+      "expected_status": 400,
+      "expected_error_code": "invalid_request",
+      "static_evidence": [
+        {
+          "file": "projects/riverside-ai-platform/apim/policies/fragments/request-guardrails.xml",
+          "contains": "validate-content"
+        },
+        {
+          "file": "projects/riverside-ai-platform/apim/policies/fragments/request-guardrails.xml",
+          "contains": "riverside-max-output-tokens"
+        }
+      ]
+    },
+    {
+      "id": "estimated-prompt-token-bound",
+      "request_condition": "APIM prompt estimate exceeds the configured input-token limit",
+      "expected_status": 400,
+      "expected_error_code": "invalid_request",
+      "static_evidence": [
+        {
+          "file": "projects/riverside-ai-platform/apim/policies/fragments/token-governance.xml",
+          "contains": "tokens-consumed-variable-name=\"riversideTokensConsumed\""
+        },
+        {
+          "file": "projects/riverside-ai-platform/apim/policies/fragments/bounded-retry.xml",
+          "contains": "estimated prompt token count exceeds the input limit"
+        }
+      ]
+    },
+    {
+      "id": "tier-token-rate-limit",
+      "request_condition": "Trusted tenant counter exhausts its tier TPM",
+      "expected_status": 429,
+      "expected_error_code": "overloaded",
+      "static_evidence": [
+        {
+          "file": "projects/riverside-ai-platform/apim/policies/fragments/token-governance.xml",
+          "contains": "riverside-standard-tpm"
+        },
+        {
+          "file": "projects/riverside-ai-platform/apim/policies/fragments/token-governance.xml",
+          "contains": "riverside-premium-tpm"
+        },
+        {
+          "file": "projects/riverside-ai-platform/apim/policies/fragments/safe-policy-error.xml",
+          "contains": "The tenant token rate limit has been reached."
+        }
+      ]
+    },
+    {
+      "id": "managed-identity-backend-auth",
+      "request_condition": "Gateway forwards an accepted request",
+      "expected_status": 200,
+      "expected_error_code": null,
+      "static_evidence": [
+        {
+          "file": "projects/riverside-ai-platform/apim/policies/fragments/backend-identity.xml",
+          "contains": "authentication-managed-identity"
+        }
+      ]
+    },
+    {
+      "id": "bounded-retry-after",
+      "request_condition": "Non-stream backend responds 429, 502, 503, or 504",
+      "expected_status": 200,
+      "expected_error_code": null,
+      "static_evidence": [
+        {
+          "file": "projects/riverside-ai-platform/apim/policies/fragments/bounded-retry.xml",
+          "contains": "Retry-After"
+        },
+        {
+          "file": "projects/riverside-ai-platform/apim/policies/fragments/bounded-retry.xml",
+          "contains": "riverside-max-retries"
+        }
+      ]
+    },
+    {
+      "id": "stream-is-not-replayed",
+      "request_condition": "Streaming backend returns an error after the request begins",
+      "expected_status": 503,
+      "expected_error_code": "overloaded",
+      "static_evidence": [
+        {
+          "file": "projects/riverside-ai-platform/apim/policies/fragments/bounded-retry.xml",
+          "contains": "riversideStreamRequested"
+        },
+        {
+          "file": "projects/riverside-ai-platform/apim/policies/fragments/bounded-retry.xml",
+          "contains": "buffer-response=\"false\""
+        }
+      ]
+    },
+    {
+      "id": "pool-priority-weight-and-breaker",
+      "request_condition": "Primary backend circuit is open",
+      "expected_status": 200,
+      "expected_error_code": null,
+      "static_evidence": [
+        {
+          "file": "projects/riverside-ai-platform/apim/backends/backends.bicep",
+          "contains": "type: 'Pool'"
+        },
+        {
+          "file": "projects/riverside-ai-platform/apim/backends/backends.bicep",
+          "contains": "acceptRetryAfter: true"
+        },
+        {
+          "file": "projects/riverside-ai-platform/apim/backends/backends.bicep",
+          "contains": "priority: greenPriority"
+        }
+      ]
+    },
+    {
+      "id": "safe-error-normalization",
+      "request_condition": "Backend returns internal body or resource identifier",
+      "expected_status": 502,
+      "expected_error_code": "backend_failure",
+      "static_evidence": [
+        {
+          "file": "projects/riverside-ai-platform/apim/policies/fragments/safe-response.xml",
+          "contains": "The backend could not complete the request."
+        },
+        {
+          "file": "projects/riverside-ai-platform/apim/policies/fragments/safe-response.xml",
+          "contains": "backend_failure"
+        }
+      ]
+    },
+    {
+      "id": "content-safety-extension-disabled-by-default",
+      "request_condition": "Content safety backend has not completed RBAC and policy validation",
+      "expected_status": 200,
+      "expected_error_code": null,
+      "static_evidence": [
+        {
+          "file": "projects/riverside-ai-platform/apim/parameters/named-values.json",
+          "contains": "\"riverside-content-safety-enabled\""
+        },
+        {
+          "file": "projects/riverside-ai-platform/apim/policies/fragments/content-safety-extension.xml",
+          "contains": "llm-content-safety"
+        }
+      ]
+    },
+    {
+      "id": "cache-partitioned-by-trusted-context",
+      "request_condition": "Semantic caching is explicitly enabled",
+      "expected_status": 200,
+      "expected_error_code": null,
+      "static_evidence": [
+        {
+          "file": "projects/riverside-ai-platform/apim/policies/fragments/cache-lookup-extension.xml",
+          "contains": "riversideTenantId"
+        },
+        {
+          "file": "projects/riverside-ai-platform/apim/policies/fragments/cache-lookup-extension.xml",
+          "contains": "riversideActorId"
+        }
+      ]
+    },
+    {
+      "id": "allowlisted-token-metric-dimensions",
+      "request_condition": "Token metrics are emitted",
+      "expected_status": 200,
+      "expected_error_code": null,
+      "static_evidence": [
+        {
+          "file": "projects/riverside-ai-platform/apim/policies/fragments/token-governance.xml",
+          "contains": "tenant.tier"
+        },
+        {
+          "file": "projects/riverside-ai-platform/apim/policies/fragments/token-governance.xml",
+          "contains": "llm-emit-token-metric"
+        }
+      ]
+    }
+  ]
+}

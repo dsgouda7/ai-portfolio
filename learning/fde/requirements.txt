@@ -1,0 +1,13 @@
+# Shared notebook environment for the complete FDE route and local Azure lab.
+# Riverside and RAG project/test dependencies are installed by setup.ps1/setup.sh.
+ipykernel==7.3.0
+ipython>=8.20,<10
+jupyterlab>=4.2,<5
+jsonschema[format]>=4.23,<5
+matplotlib>=3.8,<4
+nbconvert>=7.16,<8
+nbformat>=5.10,<6
+numpy>=1.26,<3
+pandas>=2.2,<3
+PyYAML>=6.0,<7
+referencing>=0.35,<1

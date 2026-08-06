@@ -1,0 +1,11 @@
+{
+  "tenant_id": "tenant-editorial-standard",
+  "region": "eastus2",
+  "classification": "confidential",
+  "acl_visibility": "restricted",
+  "acl_principals": [],
+  "acl_groups": [
+    "editors"
+  ],
+  "deletion_status": "active"
+}

@@ -1,0 +1,29 @@
+{
+  "schema_version": "ai-engineer.capstone-local-operational-slo-report.v1",
+  "candidate_release_id": "<candidate-release-id>",
+  "evidence_class": "<LOCAL_FIXTURE|LOCAL_MEASURED|UNVALIDATED>",
+  "environment": {"os": "<os>", "hardware": "<cpu-gpu-memory>", "software": "<versions>", "source_commit": "<commit>"},
+  "workload": {"id": "<workload-id>", "version": "<version>", "request_count": 0, "concurrency": 0, "warmup_policy": "<policy>", "percentile_method": "<method>"},
+  "reconciliation": {"schema_valid": false, "latency_error_ms": 0, "cost_error_microusd": 0, "status": "<pass|fail|hold>"},
+  "slos": [
+    {"metric": "total_latency_p95_ms", "population": "successful_requests", "threshold": {"operator": "lte", "value": 0}, "observed": 0, "sample_size": 0, "status": "<pass|fail|hold>"}
+  ],
+  "metrics": {
+    "success_rate": 0.0,
+    "total_latency_p50_ms": 0,
+    "total_latency_p95_ms": 0,
+    "ttft_p50_ms": 0,
+    "ttft_p95_ms": 0,
+    "tpot_p50_ms": 0,
+    "tpot_p95_ms": 0,
+    "successful_output_tokens_per_second": 0.0,
+    "retry_amplification": {"value": 0.0, "numerator": 0, "denominator": 0, "population": "<named-population>"},
+    "cache": {"observed_hits": 0, "paired_origin_savings_ms": 0, "paired_origin_savings_microusd": 0},
+    "tokens": {"billed_input": 0, "billed_output": 0, "served_output": 0},
+    "total_cost_microusd": 0,
+    "cost_per_success_microusd": 0
+  },
+  "bottleneck": {"stage": "<stage>", "evidence": "<p95-and-cost-evidence>", "next_test": "<test>", "configuration_change_approved": false},
+  "unsupported_operational_claims": ["production SLO", "p99", "concurrency capacity", "autoscaling", "provider billing", "Azure performance"],
+  "limitations": ["<scope-limit>"]
+}

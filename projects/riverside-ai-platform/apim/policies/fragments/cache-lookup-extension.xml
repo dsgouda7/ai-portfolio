@@ -1,0 +1,13 @@
+<fragment>
+  <set-variable name="riversideCacheResult" value="bypass" />
+  <choose>
+    <when condition="@(&quot;{{riverside-semantic-cache-enabled}}&quot;.Equals(&quot;true&quot;, StringComparison.OrdinalIgnoreCase))">
+      <llm-semantic-cache-lookup score-threshold="{{riverside-semantic-cache-score-threshold}}" embeddings-backend-id="{{riverside-embeddings-backend-id}}" embeddings-backend-auth="system-assigned" ignore-system-messages="false" max-message-count="32">
+        <vary-by>@((string)context.Variables["riversideTenantId"])</vary-by>
+        <vary-by>@((string)context.Variables["riversideActorId"])</vary-by>
+        <vary-by>{{riverside-model-release-id}}</vary-by>
+      </llm-semantic-cache-lookup>
+      <set-variable name="riversideCacheResult" value="miss" />
+    </when>
+  </choose>
+</fragment>

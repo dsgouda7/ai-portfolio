@@ -5,9 +5,11 @@ import pandas as pd
 from pathlib import Path
 import sys
 
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from phase1_ingest.src.loaders.wikipedia import WikipediaLoader
+import loaders.wikipedia as wikipedia
+from loaders.wikipedia import WikipediaLoader
 
 
 def test_wikipedia_loader_initialization():
@@ -17,8 +19,27 @@ def test_wikipedia_loader_initialization():
     assert loader.config_name == "20220301.simple"
 
 
-def test_wikipedia_loader_load_small_sample():
+def test_wikipedia_loader_load_small_sample(monkeypatch):
     """Test loading a tiny Wikipedia sample."""
+    expected = pd.DataFrame(
+        {
+            "id": [str(index) for index in range(10)],
+            "title": [f"Fixture Article {index}" for index in range(10)],
+            "text": [f"Fixture article text {index}" for index in range(10)],
+        }
+    )
+
+    class FixtureDataset:
+        def to_pandas(self):
+            return expected.copy()
+
+    def load_dataset_fixture(dataset_name, config_name, *, split):
+        assert dataset_name == "wikipedia"
+        assert config_name == "20220301.simple"
+        assert split == "train[:10]"
+        return FixtureDataset()
+
+    monkeypatch.setattr(wikipedia, "load_dataset", load_dataset_fixture)
     loader = WikipediaLoader()
     df = loader.load(sample_size=10)
 

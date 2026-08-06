@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.riverside.example/contracts/v1/app-error.schema.json",
+  "title": "Riverside Normalized Application Error v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "error",
+    "trace"
+  ],
+  "properties": {
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "message",
+        "type",
+        "retryable"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "invalid_request",
+            "unauthorized",
+            "forbidden",
+            "policy_violation",
+            "overloaded",
+            "timeout",
+            "backend_failure",
+            "release_unavailable",
+            "internal_error"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "request_error",
+            "authentication_error",
+            "authorization_error",
+            "policy_error",
+            "capacity_error",
+            "deadline_error",
+            "backend_error",
+            "service_error"
+          ]
+        },
+        "param": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128
+        },
+        "retryable": {
+          "type": "boolean"
+        },
+        "retry_after_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 300
+        }
+      }
+    },
+    "trace": {
+      "$ref": "common.schema.json#/$defs/traceMetadata"
+    },
+    "deployment": {
+      "$ref": "deployment-metadata.schema.json"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "error": {
+            "properties": {
+              "code": {
+                "const": "overloaded"
+              }
+            },
+            "required": [
+              "code"
+            ]
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "then": {
+        "properties": {
+          "error": {
+            "required": [
+              "retry_after_seconds"
+            ],
+            "properties": {
+              "retryable": {
+                "const": true
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

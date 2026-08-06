@@ -1,0 +1,18 @@
+{
+  "policy_version": "1.0.0",
+  "evidence_scope": "local-substituted-only",
+  "thresholds": {
+    "minimum_success_rate": 0.8,
+    "maximum_p95_total_ms": 200,
+    "maximum_p95_ttft_ms": 80,
+    "maximum_p95_tpot_ms": 10,
+    "maximum_rejection_rate": 0.2
+  },
+  "cloud_revalidation_required": [
+    "Azure RBAC and managed identity",
+    "Azure ML quota and regional capacity",
+    "APIM policy behavior and throttling",
+    "autoscaling and private networking",
+    "Azure Monitor export and cloud cost"
+  ]
+}

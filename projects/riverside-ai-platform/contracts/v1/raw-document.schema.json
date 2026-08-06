@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.riverside.example/contracts/v1/raw-document.schema.json",
+  "title": "Riverside Raw Document v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "kind",
+    "tenant_id",
+    "document_id",
+    "source_uri",
+    "source_version",
+    "content_hash",
+    "acl",
+    "region",
+    "classification",
+    "ingested_at",
+    "pipeline_version",
+    "deletion_state",
+    "media_type",
+    "byte_size",
+    "storage_uri",
+    "source_name"
+  ],
+  "properties": {
+    "contract_version": {
+      "$ref": "common.schema.json#/$defs/contractVersion"
+    },
+    "kind": {
+      "const": "raw_document"
+    },
+    "tenant_id": {
+      "$ref": "common.schema.json#/$defs/identifier"
+    },
+    "document_id": {
+      "$ref": "common.schema.json#/$defs/identifier"
+    },
+    "source_uri": {
+      "$ref": "common.schema.json#/$defs/uri"
+    },
+    "source_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "content_hash": {
+      "$ref": "common.schema.json#/$defs/sha256"
+    },
+    "acl": {
+      "$ref": "common.schema.json#/$defs/acl"
+    },
+    "region": {
+      "$ref": "common.schema.json#/$defs/region"
+    },
+    "classification": {
+      "$ref": "common.schema.json#/$defs/classification"
+    },
+    "ingested_at": {
+      "$ref": "common.schema.json#/$defs/timestamp"
+    },
+    "pipeline_version": {
+      "$ref": "common.schema.json#/$defs/semanticVersion"
+    },
+    "deletion_state": {
+      "$ref": "common.schema.json#/$defs/deletionState"
+    },
+    "media_type": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9!#$&^_.+-]+/[A-Za-z0-9!#$&^_.+-]+$"
+    },
+    "byte_size": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1073741824
+    },
+    "storage_uri": {
+      "$ref": "common.schema.json#/$defs/uri"
+    },
+    "source_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255
+    },
+    "metadata": {
+      "$ref": "common.schema.json#/$defs/boundedMetadata"
+    }
+  }
+}

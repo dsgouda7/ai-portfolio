@@ -1,0 +1,31 @@
+{
+  "contract_version": "1.0.0",
+  "kind": "raw_document",
+  "tenant_id": "tenant-editorial-standard",
+  "document_id": "doc-weight-distant-light-001",
+  "source_uri": "https://content.example/manuscripts/chapter-001.txt",
+  "source_version": "2026-08-05T100000Z",
+  "content_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+  "acl": {
+    "visibility": "restricted",
+    "principals": [],
+    "groups": [
+      "editors"
+    ]
+  },
+  "region": "eastus2",
+  "classification": "confidential",
+  "ingested_at": "2026-08-05T10:05:00Z",
+  "pipeline_version": "1.0.0",
+  "deletion_state": {
+    "status": "active"
+  },
+  "media_type": "text/plain",
+  "byte_size": 4096,
+  "storage_uri": "https://storage.example/raw/chapter-001.txt",
+  "source_name": "chapter-001.txt",
+  "metadata": {
+    "collection": "the_weight_of_distant_light",
+    "chapter_number": 1
+  }
+}

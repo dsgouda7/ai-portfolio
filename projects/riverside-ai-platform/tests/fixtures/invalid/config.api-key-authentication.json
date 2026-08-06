@@ -1,0 +1,55 @@
+{
+  "config_version": "1.0.0",
+  "project_name": "riverside-ai-platform",
+  "environment": "staging",
+  "region": "eastus2",
+  "identity": {
+    "authentication": "api_key"
+  },
+  "model": {
+    "alias": "riverside-editor",
+    "release_manifest_uri": "${RIVERSIDE_RELEASE_MANIFEST_URI}",
+    "max_input_tokens": 8192,
+    "max_output_tokens": 2048,
+    "precision": "fp32"
+  },
+  "data": {
+    "contract_version": "1.0.0",
+    "index_name": "riverside-manuscripts",
+    "index_version": "1.0.0"
+  },
+  "gateway": {
+    "base_url": "${RIVERSIDE_GATEWAY_BASE_URL}",
+    "route": "/v1/chat/completions",
+    "timeout_seconds": 30,
+    "max_retries": 2
+  },
+  "serving": {
+    "endpoint_name": "riverside-staging",
+    "blue_deployment": "riverside-staging-blue",
+    "green_deployment": "riverside-staging-green",
+    "request_timeout_seconds": 25
+  },
+  "retrieval": {
+    "top_k": 6,
+    "search_type": "hybrid"
+  },
+  "telemetry": {
+    "enabled": true,
+    "service_name": "riverside-rag-orchestrator",
+    "exporter_endpoint": "${OTEL_EXPORTER_OTLP_ENDPOINT}"
+  },
+  "evaluation": {
+    "release_report_uri": "${RIVERSIDE_EVALUATION_REPORT_URI}",
+    "required_domains": [
+      "data_quality",
+      "retrieval_quality",
+      "generation_citation_quality",
+      "adaptation_evidence",
+      "safety_authorization",
+      "operational_slos",
+      "cost",
+      "rollout_comparison"
+    ]
+  }
+}

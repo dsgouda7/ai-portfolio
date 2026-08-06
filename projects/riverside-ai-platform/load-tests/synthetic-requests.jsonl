@@ -1,0 +1,3 @@
+{"model":"riverside-editor","messages":[{"role":"user","content":"Summarize the synthetic passage and cite its source."}],"max_input_tokens":512,"max_tokens":128,"stream":true,"retrieval":{"enabled":true,"top_k":5,"search_type":"hybrid"}}
+{"model":"riverside-editor","messages":[{"role":"user","content":"Return one sentence describing a fictional riverside archive."}],"max_input_tokens":512,"max_tokens":96,"stream":true,"retrieval":{"enabled":false,"top_k":1,"search_type":"similarity"}}
+{"model":"riverside-editor","messages":[{"role":"user","content":"Explain why a synthetic editor might reject an unsupported claim."}],"max_input_tokens":512,"max_tokens":128,"stream":true,"retrieval":{"enabled":true,"top_k":8,"search_type":"mmr"}}

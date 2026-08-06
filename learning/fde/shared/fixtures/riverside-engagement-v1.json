@@ -1,0 +1,1372 @@
+{
+  "schema_version": "1.0.0",
+  "fixture_version": "RIV-FDE-1.0.0",
+  "fixture_id": "ENG-RIV-FDE-001",
+  "frozen_at": "2026-08-05T00:00:00Z",
+  "synthetic_data_notice": "Entirely fictional teaching data. No real customer data, credentials, or secrets.",
+  "organization": {
+    "organization_id": "ORG-RIV-001",
+    "name": "Riverside House",
+    "industry": "fiction publishing",
+    "description": "A fictional independent publisher with UK/EU and US imprints, confidential manuscripts, and mixed legacy systems.",
+    "employee_count_claim": 184,
+    "active_editor_count_claim": 72,
+    "contract_editor_count_claim": 24,
+    "evidence_class": "customer_claim"
+  },
+  "engagement": {
+    "engagement_id": "ENG-RIV-FDE-001",
+    "name": "Riverside Editorial Copilot Engagement",
+    "stage": "pre-discovery",
+    "sponsor_person_id": "PER-RIV-001",
+    "delivery_lead_person_id": "PER-FDE-001",
+    "primary_outcome": "Reduce time spent finding approved answers and preparing bounded manuscript continuations without weakening confidentiality, rights controls, or editorial accountability.",
+    "provisional_launch_window": "2026-Q4",
+    "evidence_class": "customer_claim"
+  },
+  "personas_and_stakeholders": [
+    {
+      "person_id": "PER-RIV-001",
+      "name": "Maya Chen",
+      "title": "Chief Operating Officer",
+      "persona": "executive sponsor",
+      "role_ids": ["ROLE-SPONSOR"],
+      "tenant_ids": ["TEN-RIV-CORP"],
+      "region_id": "REG-UKS",
+      "goals": ["shorten manuscript cycle time", "show measurable adoption before the next catalog planning cycle"],
+      "concerns": ["slow delivery", "unclear return on investment"],
+      "decision_rights": ["engagement funding", "launch go or no-go"],
+      "statement_ids": ["CON-RIV-001", "CON-RIV-004"]
+    },
+    {
+      "person_id": "PER-RIV-002",
+      "name": "Elena Marlow",
+      "title": "Editorial Director",
+      "persona": "business process owner",
+      "role_ids": ["ROLE-EDITORIAL-DIRECTOR", "ROLE-EDITOR"],
+      "tenant_ids": ["TEN-RIV-EU"],
+      "region_id": "REG-UKS",
+      "goals": ["find current house guidance quickly", "draft continuations that respect editor instructions"],
+      "concerns": ["generic prose", "citations that do not support the answer", "extra clicks"],
+      "decision_rights": ["editorial workflow acceptance", "editor cohort nomination"],
+      "statement_ids": ["CON-RIV-002", "CON-RIV-003"]
+    },
+    {
+      "person_id": "PER-RIV-003",
+      "name": "Jon Bell",
+      "title": "General Counsel",
+      "persona": "legal and rights owner",
+      "role_ids": ["ROLE-RIGHTS-COUNSEL"],
+      "tenant_ids": ["TEN-RIV-CORP", "TEN-RIV-EU", "TEN-RIV-US"],
+      "region_id": "REG-UKS",
+      "goals": ["preserve rights restrictions", "retain evidence for contested decisions"],
+      "concerns": ["cross-title leakage", "autonomous rights changes", "unclear deletion behavior"],
+      "decision_rights": ["rights policy interpretation", "legal incident notification", "rights workflow approval"],
+      "statement_ids": ["CON-RIV-003", "CON-RIV-006"]
+    },
+    {
+      "person_id": "PER-RIV-004",
+      "name": "Aisha Rahman",
+      "title": "Head of Information Security",
+      "persona": "security approver",
+      "role_ids": ["ROLE-SECURITY"],
+      "tenant_ids": ["TEN-RIV-CORP", "TEN-RIV-EU", "TEN-RIV-US"],
+      "region_id": "REG-UKS",
+      "goals": ["enforce least privilege", "prove tenant and regional isolation"],
+      "concerns": ["public AI upload", "stale group membership", "content in telemetry"],
+      "decision_rights": ["security gate", "isolation re-enablement", "exception approval"],
+      "statement_ids": ["CON-RIV-005", "CON-RIV-007"]
+    },
+    {
+      "person_id": "PER-RIV-005",
+      "name": "Theo Grant",
+      "title": "Enterprise Applications Manager",
+      "persona": "integration and operations owner",
+      "role_ids": ["ROLE-IT-OWNER", "ROLE-SUPPORT-L2"],
+      "tenant_ids": ["TEN-RIV-CORP"],
+      "region_id": "REG-UKS",
+      "goals": ["minimize bespoke integrations", "receive an operable service"],
+      "concerns": ["ERP API rate limits", "support burden", "unclear rollback ownership"],
+      "decision_rights": ["integration scheduling", "customer L2 ownership acceptance"],
+      "statement_ids": ["CON-RIV-008", "CON-RIV-010"]
+    },
+    {
+      "person_id": "PER-RIV-006",
+      "name": "Priya Nair",
+      "title": "Finance Business Partner",
+      "persona": "commercial approver",
+      "role_ids": ["ROLE-FINANCE"],
+      "tenant_ids": ["TEN-RIV-CORP"],
+      "region_id": "REG-UKS",
+      "goals": ["cap monthly spend", "attribute costs by imprint"],
+      "concerns": ["unbounded hosted-model usage", "optimistic volume estimates"],
+      "decision_rights": ["monthly budget", "commercial exception"],
+      "statement_ids": ["CON-RIV-004", "CON-RIV-009"]
+    },
+    {
+      "person_id": "PER-RIV-007",
+      "name": "Daniel Ortiz",
+      "title": "Senior Editor, Northbank US",
+      "persona": "editor champion",
+      "role_ids": ["ROLE-SENIOR-EDITOR", "ROLE-EDITOR"],
+      "tenant_ids": ["TEN-RIV-US"],
+      "region_id": "REG-EUS",
+      "goals": ["reduce policy search time", "keep final editorial control"],
+      "concerns": ["slow first token", "irrelevant UK guidance"],
+      "decision_rights": ["US cohort acceptance feedback"],
+      "statement_ids": ["CON-RIV-001", "CON-RIV-011"]
+    },
+    {
+      "person_id": "PER-FDE-001",
+      "name": "Alex Morgan",
+      "title": "Forward Deployed Engineer",
+      "persona": "delivery lead",
+      "role_ids": ["ROLE-FDE"],
+      "tenant_ids": ["TEN-RIV-SBX"],
+      "region_id": "REG-UKS",
+      "goals": ["turn unknowns into owned decisions", "deliver measurable and supportable scope"],
+      "concerns": ["solution-first discovery", "unsupported production claims"],
+      "decision_rights": ["delivery recommendation", "technical stop-ship recommendation"],
+      "statement_ids": []
+    }
+  ],
+  "ambiguous_brief": {
+    "brief_id": "BRF-RIV-001",
+    "received_from_person_id": "PER-RIV-001",
+    "received_at": "2026-07-15T09:00:00Z",
+    "verbatim": "Help editors find answers and continue manuscripts faster. It should feel instant, use everything we already have, and be ready for the autumn list. We cannot send unpublished work to a public AI service. Ideally it should update the workflow for them so nobody has another system to maintain.",
+    "explicit_outcomes": ["faster answer finding", "faster bounded continuation drafting"],
+    "implied_outcomes": ["workflow automation", "broad source access", "production launch in 2026-Q4"],
+    "missing_items": [
+      "accepted user and workflow scope",
+      "metric definitions and slices",
+      "authority boundaries for workflow updates",
+      "approved deployment and model-hosting boundary",
+      "regional failover behavior",
+      "support coverage outside UK business hours",
+      "data deletion and retention acceptance criteria"
+    ],
+    "evidence_class": "customer_claim"
+  },
+  "use_cases": [
+    {
+      "use_case_id": "UC-RIV-001",
+      "name": "Cited policy answer",
+      "actor_role_ids": ["ROLE-EDITOR", "ROLE-SENIOR-EDITOR"],
+      "decision_boundary": "Assistant may answer only from authorized current sources and must cite supporting passages.",
+      "human_action": "Editor decides whether to use the answer.",
+      "priority": "must"
+    },
+    {
+      "use_case_id": "UC-RIV-002",
+      "name": "Bounded manuscript continuation",
+      "actor_role_ids": ["ROLE-EDITOR", "ROLE-SENIOR-EDITOR"],
+      "decision_boundary": "Assistant may draft against an explicitly selected manuscript but cannot save, publish, or distribute the draft.",
+      "human_action": "Editor reviews and manually accepts or rejects text.",
+      "priority": "must"
+    },
+    {
+      "use_case_id": "UC-RIV-003",
+      "name": "Workflow status proposal",
+      "actor_role_ids": ["ROLE-EDITOR", "ROLE-EDITORIAL-DIRECTOR"],
+      "decision_boundary": "Assistant may propose a status transition; a human must confirm any write.",
+      "human_action": "Authorized editor confirms the exact transition payload.",
+      "priority": "should"
+    },
+    {
+      "use_case_id": "UC-RIV-004",
+      "name": "Rights restriction lookup",
+      "actor_role_ids": ["ROLE-RIGHTS-COUNSEL", "ROLE-EDITORIAL-DIRECTOR"],
+      "decision_boundary": "Assistant may retrieve restrictions but may not grant rights, change contracts, or infer missing rights.",
+      "human_action": "Rights counsel makes the legal decision.",
+      "priority": "should"
+    }
+  ],
+  "non_goals": [
+    {
+      "non_goal_id": "NG-RIV-001",
+      "statement": "Autonomous publication or external distribution of generated manuscript text"
+    },
+    {
+      "non_goal_id": "NG-RIV-002",
+      "statement": "Autonomous changes to rights, contracts, royalty, payment, or supplier records"
+    },
+    {
+      "non_goal_id": "NG-RIV-003",
+      "statement": "Training on all Riverside content without title-level approval and provenance"
+    },
+    {
+      "non_goal_id": "NG-RIV-004",
+      "statement": "Replacing editors or making final editorial judgments"
+    }
+  ],
+  "current_workflow": {
+    "workflow_id": "WF-RIV-EDITORIAL-001",
+    "name": "Find guidance and prepare a manuscript response",
+    "evidence_class": "measured_baseline",
+    "steps": [
+      {
+        "step_id": "WFSTEP-RIV-001",
+        "sequence": 1,
+        "owner_role_id": "ROLE-EDITOR",
+        "action": "Receive an author or production question in email or the workflow queue.",
+        "system_ids": ["SYS-EMAIL", "SYS-WORKFLOW"],
+        "median_minutes": 2.0,
+        "failure_modes": ["request lacks title ID", "priority is implicit"]
+      },
+      {
+        "step_id": "WFSTEP-RIV-002",
+        "sequence": 2,
+        "owner_role_id": "ROLE-EDITOR",
+        "action": "Search policy PDFs, shared folders, and prior email threads.",
+        "system_ids": ["SYS-SHARE", "SYS-EMAIL"],
+        "median_minutes": 18.0,
+        "failure_modes": ["superseded policy ranks first", "search cannot enforce title ACL consistently"]
+      },
+      {
+        "step_id": "WFSTEP-RIV-003",
+        "sequence": 3,
+        "owner_role_id": "ROLE-EDITOR",
+        "action": "Open manuscript and rights records to verify title-specific context.",
+        "system_ids": ["SYS-SHARE", "SYS-ERP"],
+        "median_minutes": 7.0,
+        "failure_modes": ["ERP identifier differs from folder identifier", "rights extract may be one day stale"]
+      },
+      {
+        "step_id": "WFSTEP-RIV-004",
+        "sequence": 4,
+        "owner_role_id": "ROLE-EDITOR",
+        "action": "Ask a senior editor or Rights when guidance conflicts.",
+        "system_ids": ["SYS-EMAIL", "SYS-CHAT"],
+        "median_minutes": 26.0,
+        "failure_modes": ["response depends on staff availability", "decision is not linked to source version"]
+      },
+      {
+        "step_id": "WFSTEP-RIV-005",
+        "sequence": 5,
+        "owner_role_id": "ROLE-EDITOR",
+        "action": "Draft an answer or one bounded continuation.",
+        "system_ids": ["SYS-DESKTOP-EDITOR"],
+        "median_minutes": 42.0,
+        "failure_modes": ["house style rework", "unsupported factual continuation"]
+      },
+      {
+        "step_id": "WFSTEP-RIV-006",
+        "sequence": 6,
+        "owner_role_id": "ROLE-SENIOR-EDITOR",
+        "action": "Review the proposed answer or continuation.",
+        "system_ids": ["SYS-WORKFLOW", "SYS-DESKTOP-EDITOR"],
+        "median_minutes": 15.0,
+        "failure_modes": ["review evidence is scattered", "rejection reason is unstructured"]
+      },
+      {
+        "step_id": "WFSTEP-RIV-007",
+        "sequence": 7,
+        "owner_role_id": "ROLE-EDITOR",
+        "action": "Update workflow status and send the response.",
+        "system_ids": ["SYS-WORKFLOW", "SYS-EMAIL"],
+        "median_minutes": 4.0,
+        "failure_modes": ["duplicate status update after timeout", "status chosen from memory"]
+      }
+    ]
+  },
+  "baseline_metrics": [
+    {
+      "metric_id": "MET-RIV-001",
+      "name": "policy_search_median_minutes",
+      "value": 18.0,
+      "unit": "minutes",
+      "population": "46 sampled policy lookup tasks",
+      "window": "2026-06-01/2026-06-30",
+      "source_id": "SRC-API-WORKFLOW-001",
+      "evidence_class": "measured_baseline",
+      "limitations": "Timer begins when the workflow task is opened; off-system preparation is not captured."
+    },
+    {
+      "metric_id": "MET-RIV-002",
+      "name": "policy_search_p90_minutes",
+      "value": 34.0,
+      "unit": "minutes",
+      "population": "46 sampled policy lookup tasks",
+      "window": "2026-06-01/2026-06-30",
+      "source_id": "SRC-API-WORKFLOW-001",
+      "evidence_class": "measured_baseline",
+      "limitations": "Sample excludes tasks abandoned without a status update."
+    },
+    {
+      "metric_id": "MET-RIV-003",
+      "name": "bounded_continuation_first_draft_median_minutes",
+      "value": 42.0,
+      "unit": "minutes",
+      "population": "31 sampled continuation tasks",
+      "window": "2026-06-01/2026-06-30",
+      "source_id": "SRC-API-WORKFLOW-001",
+      "evidence_class": "measured_baseline",
+      "limitations": "Task complexity is not normalized by requested length."
+    },
+    {
+      "metric_id": "MET-RIV-004",
+      "name": "editorial_rework_rate",
+      "value": 0.22,
+      "unit": "ratio",
+      "population": "124 sampled editorial responses",
+      "window": "2026-05-01/2026-06-30",
+      "source_id": "SRC-API-WORKFLOW-001",
+      "evidence_class": "measured_baseline",
+      "limitations": "Rework reasons are free text and cannot yet separate style from factual corrections."
+    },
+    {
+      "metric_id": "MET-RIV-005",
+      "name": "current_guidance_first_result_rate",
+      "value": 0.61,
+      "unit": "ratio",
+      "population": "36 replayed policy queries",
+      "window": "2026-07-08",
+      "source_id": "SRC-PDF-POLICY-001",
+      "evidence_class": "measured_baseline",
+      "limitations": "Small replay set; title and role slices are not labeled."
+    },
+    {
+      "metric_id": "MET-RIV-006",
+      "name": "workflow_status_update_error_rate",
+      "value": 0.037,
+      "unit": "ratio",
+      "population": "1,940 status updates",
+      "window": "2026-04-01/2026-06-30",
+      "source_id": "SRC-API-WORKFLOW-001",
+      "evidence_class": "measured_baseline",
+      "limitations": "Includes corrected duplicates and invalid transitions but not missed updates."
+    },
+    {
+      "metric_id": "MET-RIV-007",
+      "name": "weekly_assistant_eligible_tasks",
+      "value": 3100,
+      "unit": "tasks_per_week",
+      "population": "workflow tasks matching provisional use-case labels",
+      "window": "2026-06-01/2026-06-30",
+      "source_id": "SRC-API-WORKFLOW-001",
+      "evidence_class": "measured_baseline",
+      "limitations": "Eligibility labels are provisional and may overcount low-value workflow notifications."
+    }
+  ],
+  "systems": [
+    {
+      "system_id": "SYS-SHARE",
+      "name": "Riverside Shared Library",
+      "kind": "file share",
+      "owner_person_id": "PER-RIV-005",
+      "write_authority": "document owners",
+      "known_limitations": ["mixed PDF and text formats", "folder ACL inheritance", "duplicate and superseded files"]
+    },
+    {
+      "system_id": "SYS-ERP",
+      "name": "BookLedger ERP",
+      "kind": "ERP",
+      "owner_person_id": "PER-RIV-006",
+      "write_authority": "Finance and Rights operations",
+      "known_limitations": ["nightly rights extract", "title IDs differ from manuscript folder IDs"]
+    },
+    {
+      "system_id": "SYS-WORKFLOW",
+      "name": "PageTurn Workflow",
+      "kind": "SaaS API",
+      "owner_person_id": "PER-RIV-005",
+      "write_authority": "role-scoped users and service account",
+      "known_limitations": ["100-record page size", "non-idempotent legacy status endpoint", "schema change announced but not scheduled"]
+    },
+    {
+      "system_id": "SYS-IDP",
+      "name": "Riverside Workforce Identity",
+      "kind": "OIDC identity provider",
+      "owner_person_id": "PER-RIV-004",
+      "write_authority": "Identity operations",
+      "known_limitations": ["contractor group removal may lag by 24 hours", "purpose is not present in the identity token"]
+    },
+    {
+      "system_id": "SYS-EMAIL",
+      "name": "Riverside Email",
+      "kind": "email",
+      "owner_person_id": "PER-RIV-005",
+      "write_authority": "mailbox users",
+      "known_limitations": ["decisions are difficult to link to exact evidence versions"]
+    },
+    {
+      "system_id": "SYS-CHAT",
+      "name": "Riverside Team Chat",
+      "kind": "messaging",
+      "owner_person_id": "PER-RIV-005",
+      "write_authority": "workspace members",
+      "known_limitations": ["not an approved system of record"]
+    },
+    {
+      "system_id": "SYS-DESKTOP-EDITOR",
+      "name": "Riverside Desktop Editor",
+      "kind": "desktop application",
+      "owner_person_id": "PER-RIV-002",
+      "write_authority": "assigned editors",
+      "known_limitations": ["no assistant integration", "local drafts may be offline"]
+    }
+  ],
+  "source_inventory": [
+    {
+      "source_id": "SRC-PDF-POLICY-001",
+      "system_id": "SYS-SHARE",
+      "name": "Editorial and AI policy library",
+      "source_type": "PDF",
+      "format": "application/pdf",
+      "owner_person_id": "PER-RIV-004",
+      "update_mode": "manual_publish",
+      "freshness_target_hours": 24,
+      "estimated_records": 38,
+      "classification": "internal",
+      "tenant_ids": ["TEN-RIV-CORP", "TEN-RIV-EU", "TEN-RIV-US"],
+      "region_ids": ["REG-UKS", "REG-EUS"],
+      "acl_model": "role_and_document",
+      "sample_document_ids": ["DOC-POL-AI-2024", "DOC-POL-AI-2026", "DOC-POL-STYLE-2026"],
+      "seeded_failures": ["superseded document remains searchable", "two-column extraction order", "repeated footer text"],
+      "deletion_behavior": "manual removal from share; downstream propagation unknown",
+      "evidence_class": "customer_claim"
+    },
+    {
+      "source_id": "SRC-PDF-RIGHTS-001",
+      "system_id": "SYS-SHARE",
+      "name": "Title rights schedules",
+      "source_type": "PDF",
+      "format": "application/pdf",
+      "owner_person_id": "PER-RIV-003",
+      "update_mode": "event_driven_manual_export",
+      "freshness_target_hours": 24,
+      "estimated_records": 420,
+      "classification": "restricted",
+      "tenant_ids": ["TEN-RIV-EU", "TEN-RIV-US"],
+      "region_ids": ["REG-UKS", "REG-EUS"],
+      "acl_model": "title_assignment_and_rights_role",
+      "sample_document_ids": ["DOC-RIGHTS-ARIA-001"],
+      "seeded_failures": ["scanned signature page", "duplicate schedule page", "title alias differs from ERP ID"],
+      "deletion_behavior": "retained with contract record; access revocation required",
+      "evidence_class": "customer_claim"
+    },
+    {
+      "source_id": "SRC-TEXT-MANUSCRIPT-001",
+      "system_id": "SYS-SHARE",
+      "name": "Unpublished manuscript text",
+      "source_type": "text",
+      "format": "text/plain",
+      "owner_person_id": "PER-RIV-002",
+      "update_mode": "file_version_event",
+      "freshness_target_hours": 1,
+      "estimated_records": 12400,
+      "classification": "confidential",
+      "tenant_ids": ["TEN-RIV-EU", "TEN-RIV-US"],
+      "region_ids": ["REG-UKS", "REG-EUS"],
+      "acl_model": "tenant_title_assignment_role",
+      "sample_document_ids": ["DOC-MANUSCRIPT-ARIA-037", "DOC-MANUSCRIPT-ARIA-038"],
+      "seeded_failures": ["duplicate autosave", "missing title ID in legacy header", "deleted chapter remains in prior index version"],
+      "deletion_behavior": "hard delete requested by title owner; target propagation time unknown",
+      "evidence_class": "customer_claim"
+    },
+    {
+      "source_id": "SRC-ERP-CATALOG-001",
+      "system_id": "SYS-ERP",
+      "name": "Title, contract, and rights catalog",
+      "source_type": "ERP",
+      "format": "application/json",
+      "owner_person_id": "PER-RIV-006",
+      "update_mode": "nightly_export",
+      "freshness_target_hours": 24,
+      "estimated_records": 18500,
+      "classification": "restricted",
+      "tenant_ids": ["TEN-RIV-CORP", "TEN-RIV-EU", "TEN-RIV-US"],
+      "region_ids": ["REG-UKS"],
+      "acl_model": "role_field_masking",
+      "sample_document_ids": ["ERP-TITLE-1042", "ERP-RIGHTS-1042"],
+      "seeded_failures": ["null territory interpreted as worldwide", "one-day freshness lag", "title alias mismatch"],
+      "deletion_behavior": "financial records retained; fields may be access-restricted rather than deleted",
+      "evidence_class": "customer_claim"
+    },
+    {
+      "source_id": "SRC-API-WORKFLOW-001",
+      "system_id": "SYS-WORKFLOW",
+      "name": "Editorial workflow API",
+      "source_type": "API",
+      "format": "application/json",
+      "owner_person_id": "PER-RIV-005",
+      "update_mode": "incremental_cursor",
+      "freshness_target_hours": 0.25,
+      "estimated_records": 260000,
+      "classification": "internal",
+      "tenant_ids": ["TEN-RIV-EU", "TEN-RIV-US"],
+      "region_ids": ["REG-UKS", "REG-EUS"],
+      "acl_model": "tenant_role_project",
+      "sample_document_ids": ["API-TASK-9001", "API-TASK-9002", "API-TASK-9003"],
+      "seeded_failures": ["pagination truncation after 100 records", "status field renamed in second page", "timeout after committed status write"],
+      "deletion_behavior": "soft delete tombstone available for 30 days",
+      "evidence_class": "customer_claim"
+    },
+    {
+      "source_id": "SRC-API-IDENTITY-001",
+      "system_id": "SYS-IDP",
+      "name": "Identity and group API",
+      "source_type": "API",
+      "format": "application/json",
+      "owner_person_id": "PER-RIV-004",
+      "update_mode": "webhook_plus_daily_reconciliation",
+      "freshness_target_hours": 1,
+      "estimated_records": 260,
+      "classification": "restricted",
+      "tenant_ids": ["TEN-RIV-CORP", "TEN-RIV-EU", "TEN-RIV-US"],
+      "region_ids": ["REG-UKS"],
+      "acl_model": "security_admin_only",
+      "sample_document_ids": ["API-USER-EDITOR-017", "API-USER-CONTRACTOR-044"],
+      "seeded_failures": ["late contractor deprovisioning", "nested group omitted from delta response"],
+      "deletion_behavior": "identity disabled; immutable audit identifiers retained",
+      "evidence_class": "customer_claim"
+    }
+  ],
+  "identity_and_data_constraints": {
+    "tenants": [
+      {
+        "tenant_id": "TEN-RIV-CORP",
+        "name": "Riverside Corporate",
+        "allowed_region_ids": ["REG-UKS"],
+        "data_classes": ["internal", "restricted"],
+        "notes": "Corporate policy, finance, security, and shared operations."
+      },
+      {
+        "tenant_id": "TEN-RIV-EU",
+        "name": "Riverside and Alder UK/EU Imprints",
+        "allowed_region_ids": ["REG-UKS"],
+        "data_classes": ["internal", "confidential", "restricted"],
+        "notes": "Unpublished manuscript content must remain in the primary region unless Security and Legal approve an exception."
+      },
+      {
+        "tenant_id": "TEN-RIV-US",
+        "name": "Northbank US Imprint",
+        "allowed_region_ids": ["REG-EUS"],
+        "data_classes": ["internal", "confidential", "restricted"],
+        "notes": "Approved managed services are permitted, but cross-tenant access remains prohibited."
+      },
+      {
+        "tenant_id": "TEN-RIV-SBX",
+        "name": "Synthetic Delivery Sandbox",
+        "allowed_region_ids": ["REG-UKS"],
+        "data_classes": ["synthetic"],
+        "notes": "Contains only committed teaching fixtures and no production customer content."
+      }
+    ],
+    "regions": [
+      {
+        "region_id": "REG-UKS",
+        "name": "UK South",
+        "purpose": "Primary region for corporate and UK/EU workloads",
+        "evidence_class": "modeled_assumption"
+      },
+      {
+        "region_id": "REG-EUS",
+        "name": "East US",
+        "purpose": "Primary region for Northbank US workloads",
+        "evidence_class": "modeled_assumption"
+      }
+    ],
+    "roles": [
+      {
+        "role_id": "ROLE-SPONSOR",
+        "name": "Executive sponsor",
+        "allowed_actions": ["view_aggregate_metrics", "approve_launch"],
+        "prohibited_actions": ["read_manuscript_content_without_assignment"]
+      },
+      {
+        "role_id": "ROLE-EDITOR",
+        "name": "Editor",
+        "allowed_actions": ["retrieve_assigned_title", "retrieve_current_policy", "draft_continuation", "propose_workflow_transition"],
+        "prohibited_actions": ["publish_autonomously", "change_rights", "change_payment"]
+      },
+      {
+        "role_id": "ROLE-SENIOR-EDITOR",
+        "name": "Senior editor",
+        "allowed_actions": ["retrieve_assigned_title", "retrieve_current_policy", "draft_continuation", "review_editorial_output", "confirm_workflow_transition"],
+        "prohibited_actions": ["change_rights", "change_payment"]
+      },
+      {
+        "role_id": "ROLE-EDITORIAL-DIRECTOR",
+        "name": "Editorial director",
+        "allowed_actions": ["retrieve_imprint_titles", "retrieve_current_policy", "review_editorial_output", "approve_editorial_cohort"],
+        "prohibited_actions": ["change_rights", "change_payment"]
+      },
+      {
+        "role_id": "ROLE-RIGHTS-COUNSEL",
+        "name": "Rights counsel",
+        "allowed_actions": ["retrieve_rights_record", "interpret_rights", "approve_rights_workflow"],
+        "prohibited_actions": ["grant_rights_through_assistant"]
+      },
+      {
+        "role_id": "ROLE-SECURITY",
+        "name": "Security reviewer",
+        "allowed_actions": ["view_security_evidence", "approve_security_gate", "disable_tenant_route"],
+        "prohibited_actions": ["use_manuscript_content_for_unrelated_purpose"]
+      },
+      {
+        "role_id": "ROLE-FINANCE",
+        "name": "Finance approver",
+        "allowed_actions": ["view_cost_report", "approve_budget_exception"],
+        "prohibited_actions": ["read_manuscript_content"]
+      },
+      {
+        "role_id": "ROLE-IT-OWNER",
+        "name": "Customer application owner",
+        "allowed_actions": ["manage_integration", "view_operational_metadata", "initiate_rollback"],
+        "prohibited_actions": ["read_manuscript_content_by_default"]
+      },
+      {
+        "role_id": "ROLE-SUPPORT-L1",
+        "name": "Customer service desk",
+        "allowed_actions": ["view_ticket_metadata", "use_triage_runbook"],
+        "prohibited_actions": ["read_prompt_or_manuscript_content", "reenable_disabled_tenant"]
+      },
+      {
+        "role_id": "ROLE-SUPPORT-L2",
+        "name": "Customer application support",
+        "allowed_actions": ["view_redacted_trace", "restart_connector", "initiate_rollback"],
+        "prohibited_actions": ["read_manuscript_content_by_default", "change_security_policy"]
+      },
+      {
+        "role_id": "ROLE-FDE",
+        "name": "Forward deployed engineer",
+        "allowed_actions": ["use_synthetic_sandbox", "view_redacted_delivery_evidence", "recommend_technical_gate"],
+        "prohibited_actions": ["access_production_content_without_time_bound_approval", "approve_own_security_exception"]
+      },
+      {
+        "role_id": "ROLE-SERVICE-RETRIEVAL",
+        "name": "Retrieval service identity",
+        "allowed_actions": ["retrieve_with_tenant_role_region_purpose_filters"],
+        "prohibited_actions": ["write_source_system", "retrieve_without_context"]
+      },
+      {
+        "role_id": "ROLE-SERVICE-WORKFLOW",
+        "name": "Workflow service identity",
+        "allowed_actions": ["read_workflow", "submit_idempotent_transition_after_human_confirmation"],
+        "prohibited_actions": ["unconfirmed_transition", "rights_or_payment_write"]
+      }
+    ],
+    "required_request_context": ["tenant_id", "actor_id", "role_ids", "region_id", "purpose", "title_ids", "trace_id"],
+    "purposes": ["policy_lookup", "editorial_continuation", "workflow_assistance", "rights_lookup", "support_triage"],
+    "global_constraints": [
+      {
+        "constraint_id": "SEC-RIV-001",
+        "statement": "Unpublished manuscript content must not be sent to a public generative AI service.",
+        "evidence_class": "policy_constraint",
+        "owner_person_id": "PER-RIV-004"
+      },
+      {
+        "constraint_id": "SEC-RIV-002",
+        "statement": "Retrieval and tools must fail closed when tenant, role, region, purpose, or title assignment is absent.",
+        "evidence_class": "policy_constraint",
+        "owner_person_id": "PER-RIV-004"
+      },
+      {
+        "constraint_id": "SEC-RIV-003",
+        "statement": "Prompts, completions, manuscript text, user IDs, request IDs, and tenant IDs must not become metric labels.",
+        "evidence_class": "policy_constraint",
+        "owner_person_id": "PER-RIV-004"
+      },
+      {
+        "constraint_id": "SEC-RIV-004",
+        "statement": "Human approval must bind to the exact workflow transition payload; retries use one business idempotency key.",
+        "evidence_class": "policy_constraint",
+        "owner_person_id": "PER-RIV-005"
+      },
+      {
+        "constraint_id": "SEC-RIV-005",
+        "statement": "Cloud RBAC, managed identity, private networking, regional capacity, and deletion behavior require external validation.",
+        "evidence_class": "external_validation_required",
+        "owner_person_id": "PER-FDE-001"
+      }
+    ]
+  },
+  "demand_cost_and_sla_assumptions": {
+    "assumptions": [
+      {
+        "assumption_id": "ASM-RIV-001",
+        "name": "average_daily_sessions",
+        "value": 620,
+        "unit": "sessions_per_business_day",
+        "range": {"low": 450, "high": 900},
+        "evidence_class": "modeled_assumption",
+        "basis": "Four-week eligible-task sample converted to sessions; Finance supplies the high case."
+      },
+      {
+        "assumption_id": "ASM-RIV-002",
+        "name": "peak_arrival_rate",
+        "value": 90,
+        "unit": "requests_per_hour",
+        "range": {"low": 60, "high": 150},
+        "evidence_class": "modeled_assumption",
+        "basis": "Catalog deadline hour with 50 percent planning headroom."
+      },
+      {
+        "assumption_id": "ASM-RIV-003",
+        "name": "request_mix",
+        "value": {"policy_lookup": 0.55, "editorial_continuation": 0.3, "workflow_assistance": 0.15},
+        "unit": "ratio",
+        "evidence_class": "modeled_assumption",
+        "basis": "Provisional classification of sampled tasks."
+      },
+      {
+        "assumption_id": "ASM-RIV-004",
+        "name": "average_input_tokens",
+        "value": 1800,
+        "unit": "tokens_per_request",
+        "range": {"low": 900, "high": 4200},
+        "evidence_class": "modeled_assumption",
+        "basis": "Synthetic prompt and retrieved-context estimate."
+      },
+      {
+        "assumption_id": "ASM-RIV-005",
+        "name": "average_output_tokens",
+        "value": 220,
+        "unit": "tokens_per_request",
+        "range": {"low": 90, "high": 600},
+        "evidence_class": "modeled_assumption",
+        "basis": "Bounded answer and continuation contracts."
+      },
+      {
+        "assumption_id": "ASM-RIV-006",
+        "name": "cache_eligible_rate",
+        "value": 0.18,
+        "unit": "ratio",
+        "range": {"low": 0.08, "high": 0.28},
+        "evidence_class": "modeled_assumption",
+        "basis": "Only policy lookup with identical authorization scope is considered eligible."
+      },
+      {
+        "assumption_id": "ASM-RIV-007",
+        "name": "retry_rate",
+        "value": 0.025,
+        "unit": "ratio",
+        "range": {"low": 0.01, "high": 0.07},
+        "evidence_class": "modeled_assumption",
+        "basis": "Connector and inference timeout planning range."
+      },
+      {
+        "assumption_id": "ASM-RIV-008",
+        "name": "monthly_service_budget_target",
+        "value": 14000,
+        "unit": "USD_per_month",
+        "range": {"low": 11000, "high": 18000},
+        "evidence_class": "modeled_assumption",
+        "basis": "Finance target with an 18000 USD hard planning ceiling before exception review."
+      },
+      {
+        "assumption_id": "ASM-RIV-009",
+        "name": "support_engineering_hours",
+        "value": 80,
+        "unit": "hours_per_month",
+        "range": {"low": 48, "high": 140},
+        "evidence_class": "modeled_assumption",
+        "basis": "First-quarter hypercare estimate."
+      }
+    ],
+    "service_targets": [
+      {
+        "sla_id": "SLA-RIV-001",
+        "name": "policy_lookup_total_latency_p95",
+        "target": 8.0,
+        "unit": "seconds",
+        "scope": "successful non-streaming policy lookup during covered service hours",
+        "evidence_class": "modeled_assumption",
+        "owner_person_id": "PER-RIV-005"
+      },
+      {
+        "sla_id": "SLA-RIV-002",
+        "name": "continuation_time_to_first_token_p95",
+        "target": 5.0,
+        "unit": "seconds",
+        "scope": "successful streaming continuation request during covered service hours",
+        "evidence_class": "modeled_assumption",
+        "owner_person_id": "PER-RIV-005"
+      },
+      {
+        "sla_id": "SLA-RIV-003",
+        "name": "continuation_total_latency_p95",
+        "target": 18.0,
+        "unit": "seconds",
+        "scope": "continuations up to the 600-output-token hard limit",
+        "evidence_class": "modeled_assumption",
+        "owner_person_id": "PER-RIV-005"
+      },
+      {
+        "sla_id": "SLA-RIV-004",
+        "name": "monthly_availability",
+        "target": 0.995,
+        "unit": "ratio",
+        "scope": "covered service hours; planned maintenance excluded only with agreed notice",
+        "evidence_class": "modeled_assumption",
+        "owner_person_id": "PER-RIV-005"
+      },
+      {
+        "sla_id": "SLA-RIV-005",
+        "name": "authorization_leakage",
+        "target": 0,
+        "unit": "successful_forbidden_accesses",
+        "scope": "all tenant, role, region, purpose, and title isolation tests",
+        "evidence_class": "policy_constraint",
+        "owner_person_id": "PER-RIV-004"
+      },
+      {
+        "sla_id": "SLA-RIV-006",
+        "name": "duplicate_workflow_commits",
+        "target": 0,
+        "unit": "duplicate_commits",
+        "scope": "failure-injection and replay tests for status transitions",
+        "evidence_class": "policy_constraint",
+        "owner_person_id": "PER-RIV-005"
+      }
+    ],
+    "commercial_notes": [
+      "Attribute model, retrieval, storage, and support cost by tenant tier without using tenant IDs as metric labels.",
+      "Show low, expected, and high scenarios; do not present the expected case as a quote.",
+      "The budget does not prove regional service availability, quota, or actual cloud price."
+    ]
+  },
+  "intentional_conflicts": [
+    {
+      "conflict_id": "CON-RIV-001",
+      "topic": "latency language",
+      "statements": [
+        {"person_id": "PER-RIV-001", "statement": "The experience should feel instant."},
+        {"person_id": "PER-RIV-005", "statement": "Plan for 8-second retrieval p95 and 18-second continuation p95 until cloud tests exist."}
+      ],
+      "resolution_owner_person_id": "PER-RIV-001",
+      "required_artifact": "measurable acceptance criterion by request type",
+      "evidence_class": "intentional_conflict"
+    },
+    {
+      "conflict_id": "CON-RIV-002",
+      "topic": "workflow write authority",
+      "statements": [
+        {"person_id": "PER-RIV-002", "statement": "Confirmed editorial steps should update automatically."},
+        {"person_id": "PER-RIV-003", "statement": "No model may make a consequential system-of-record change without human confirmation."}
+      ],
+      "resolution_owner_person_id": "PER-RIV-002",
+      "required_artifact": "action inventory with proposal, approval, and commit boundaries",
+      "evidence_class": "intentional_conflict"
+    },
+    {
+      "conflict_id": "CON-RIV-003",
+      "topic": "quality acceptance",
+      "statements": [
+        {"person_id": "PER-RIV-002", "statement": "It should sound like Riverside and save editors time."},
+        {"person_id": "PER-RIV-003", "statement": "Any rights answer must be supported by current title-specific evidence."}
+      ],
+      "resolution_owner_person_id": "PER-RIV-002",
+      "required_artifact": "separate retrieval, generation, citation, and human-review criteria",
+      "evidence_class": "intentional_conflict"
+    },
+    {
+      "conflict_id": "CON-RIV-004",
+      "topic": "volume forecast",
+      "statements": [
+        {"person_id": "PER-RIV-001", "statement": "All editors should be able to use it during catalog deadlines."},
+        {"person_id": "PER-RIV-006", "statement": "Budget against 900 daily sessions, not the 620-session expected case."}
+      ],
+      "resolution_owner_person_id": "PER-RIV-006",
+      "required_artifact": "low, expected, and high demand scenarios",
+      "evidence_class": "intentional_conflict"
+    },
+    {
+      "conflict_id": "CON-RIV-005",
+      "topic": "regional processing",
+      "statements": [
+        {"person_id": "PER-RIV-004", "statement": "UK/EU unpublished manuscript content stays in its primary region."},
+        {"person_id": "PER-RIV-007", "statement": "Northbank US accepts approved managed services in its own region."}
+      ],
+      "resolution_owner_person_id": "PER-RIV-004",
+      "required_artifact": "tenant-aware data-flow and residency map",
+      "evidence_class": "intentional_conflict"
+    },
+    {
+      "conflict_id": "CON-RIV-006",
+      "topic": "deletion and retention",
+      "statements": [
+        {"person_id": "PER-RIV-003", "statement": "Signed contract evidence must be retained."},
+        {"person_id": "PER-RIV-002", "statement": "Withdrawn manuscript drafts should disappear from assistant results quickly."}
+      ],
+      "resolution_owner_person_id": "PER-RIV-003",
+      "required_artifact": "record-class deletion and access-revocation contract",
+      "evidence_class": "intentional_conflict"
+    },
+    {
+      "conflict_id": "CON-RIV-007",
+      "topic": "telemetry detail",
+      "statements": [
+        {"person_id": "PER-RIV-004", "statement": "Do not emit manuscript or user content in operational telemetry."},
+        {"person_id": "PER-RIV-005", "statement": "Support needs enough evidence to reproduce failed requests."}
+      ],
+      "resolution_owner_person_id": "PER-RIV-004",
+      "required_artifact": "bounded telemetry contract and redacted evidence workflow",
+      "evidence_class": "intentional_conflict"
+    },
+    {
+      "conflict_id": "CON-RIV-008",
+      "topic": "integration scope",
+      "statements": [
+        {"person_id": "PER-RIV-005", "statement": "The first release should avoid writes to PageTurn."},
+        {"person_id": "PER-RIV-002", "statement": "A launch without workflow updates creates another tool for editors."}
+      ],
+      "resolution_owner_person_id": "PER-RIV-001",
+      "required_artifact": "phased architecture decision record",
+      "evidence_class": "intentional_conflict"
+    },
+    {
+      "conflict_id": "CON-RIV-009",
+      "topic": "budget interpretation",
+      "statements": [
+        {"person_id": "PER-RIV-006", "statement": "14000 USD per month is the operating target."},
+        {"person_id": "PER-RIV-001", "statement": "Do not compromise launch quality to hit an untested estimate."}
+      ],
+      "resolution_owner_person_id": "PER-RIV-001",
+      "required_artifact": "cost sensitivity and explicit quality floor",
+      "evidence_class": "intentional_conflict"
+    },
+    {
+      "conflict_id": "CON-RIV-010",
+      "topic": "support coverage",
+      "statements": [
+        {"person_id": "PER-RIV-001", "statement": "The launch should support editors whenever deadlines hit."},
+        {"person_id": "PER-RIV-005", "statement": "Riverside support covers only 08:00-18:00 UK time on weekdays."}
+      ],
+      "resolution_owner_person_id": "PER-RIV-001",
+      "required_artifact": "service-hours and severity response agreement",
+      "evidence_class": "intentional_conflict"
+    },
+    {
+      "conflict_id": "CON-RIV-011",
+      "topic": "policy scope by imprint",
+      "statements": [
+        {"person_id": "PER-RIV-007", "statement": "US editors should not receive UK-only employment and style guidance."},
+        {"person_id": "PER-RIV-002", "statement": "The core house style should remain shared across imprints."}
+      ],
+      "resolution_owner_person_id": "PER-RIV-002",
+      "required_artifact": "policy applicability metadata and retrieval filters",
+      "evidence_class": "intentional_conflict"
+    }
+  ],
+  "seeded_risks": [
+    {
+      "risk_id": "RISK-RIV-001",
+      "category": "discovery",
+      "statement": "The ambiguous brief becomes an assumed RAG-plus-agent solution before workflow outcomes are agreed.",
+      "likelihood": "high",
+      "impact": "high",
+      "owner_person_id": "PER-FDE-001",
+      "mitigation": "Compare deterministic, search, RAG, prompt, fine-tuning, workflow, and no-AI options against acceptance evidence.",
+      "trigger": "Architecture selected before CON-RIV-001 through CON-RIV-011 have disposition owners."
+    },
+    {
+      "risk_id": "RISK-RIV-002",
+      "category": "data",
+      "statement": "Superseded or duplicated documents produce confident answers from stale evidence.",
+      "likelihood": "high",
+      "impact": "high",
+      "owner_person_id": "PER-RIV-002",
+      "mitigation": "Version records, quarantine parser failures, mark superseded content, and gate index promotion on lineage and freshness.",
+      "trigger": "Current-guidance first-result rate falls below the agreed threshold."
+    },
+    {
+      "risk_id": "RISK-RIV-003",
+      "category": "identity",
+      "statement": "Stale group or title assignment permits cross-tenant or former-contractor access.",
+      "likelihood": "medium",
+      "impact": "critical",
+      "owner_person_id": "PER-RIV-004",
+      "mitigation": "Fail closed, reconcile entitlements, test negative slices, and support immediate tenant-route disablement.",
+      "trigger": "Any forbidden access succeeds or entitlement freshness exceeds the accepted bound."
+    },
+    {
+      "risk_id": "RISK-RIV-004",
+      "category": "commercial",
+      "statement": "Volume, context length, retry, and support assumptions exceed the monthly budget ceiling.",
+      "likelihood": "medium",
+      "impact": "high",
+      "owner_person_id": "PER-RIV-006",
+      "mitigation": "Model scenario ranges, enforce token limits and quotas, attribute costs by tier, and require exception approval.",
+      "trigger": "Forecast high case exceeds 18000 USD per month or cost per successful request breaches the agreed gate."
+    },
+    {
+      "risk_id": "RISK-RIV-005",
+      "category": "workflow",
+      "statement": "A timeout after a PageTurn write creates a duplicate or conflicting status transition.",
+      "likelihood": "medium",
+      "impact": "high",
+      "owner_person_id": "PER-RIV-005",
+      "mitigation": "Bind human approval to exact arguments, use a business idempotency key, persist transition state, and compensate only committed actions.",
+      "trigger": "Duplicate commit observed in failure injection or replay."
+    },
+    {
+      "risk_id": "RISK-RIV-006",
+      "category": "model",
+      "statement": "Fine-tuned style is mistaken for current factual knowledge or authorization.",
+      "likelihood": "medium",
+      "impact": "high",
+      "owner_person_id": "PER-FDE-001",
+      "mitigation": "Use adaptation for stable behavior, retrieval for current evidence, and deterministic policy for authority.",
+      "trigger": "An answer cites no current source or model text changes an authorization decision."
+    },
+    {
+      "risk_id": "RISK-RIV-007",
+      "category": "operations",
+      "statement": "Launch commitments exceed agreed support hours and re-enablement authority.",
+      "likelihood": "high",
+      "impact": "medium",
+      "owner_person_id": "PER-RIV-001",
+      "mitigation": "Agree service hours, severity response, customer and provider owners, rollback window, and hypercare exit criteria.",
+      "trigger": "A cohort expands before its support rota and escalation contacts are accepted."
+    },
+    {
+      "risk_id": "RISK-RIV-008",
+      "category": "change_management",
+      "statement": "Low editor trust causes bypass, weak feedback, and no measurable cycle-time improvement.",
+      "likelihood": "medium",
+      "impact": "high",
+      "owner_person_id": "PER-RIV-002",
+      "mitigation": "Use shadow review, champion cohorts, visible citations, structured rejection reasons, and training before ramp.",
+      "trigger": "Weekly active use or accepted-output rate falls below the cohort gate."
+    }
+  ],
+  "seeded_incidents": [
+    {
+      "incident_id": "INC-RIV-001",
+      "title": "Superseded approval policy cited",
+      "domain": "policy",
+      "initial_severity": "SEV-2",
+      "detected_by": "editor disagreement review",
+      "summary": "The retriever ranks DOC-POL-AI-2024 above DOC-POL-AI-2026 for a workflow-approval question.",
+      "affected_ids": ["SRC-PDF-POLICY-001", "DOC-POL-AI-2024", "DOC-POL-AI-2026", "TEN-RIV-EU"],
+      "containment": "Disable workflow guidance answers while keeping manuscript continuation available.",
+      "evidence_to_preserve": ["index version", "document versions", "retrieval ranking", "authorization context", "release ID"],
+      "reenablement_owner_person_id": "PER-RIV-002",
+      "linked_risk_ids": ["RISK-RIV-002"]
+    },
+    {
+      "incident_id": "INC-RIV-002",
+      "title": "Duplicate PDF pages inflate retrieval",
+      "domain": "data",
+      "initial_severity": "SEV-3",
+      "detected_by": "data quality gate",
+      "summary": "A rights schedule parser emits one page twice and repeated chunks dominate top-k results.",
+      "affected_ids": ["SRC-PDF-RIGHTS-001", "DOC-RIGHTS-ARIA-001"],
+      "containment": "Quarantine the document version and restore the previous index record set.",
+      "evidence_to_preserve": ["raw content hash", "parser version", "page offsets", "chunk strategy", "index version"],
+      "reenablement_owner_person_id": "PER-RIV-003",
+      "linked_risk_ids": ["RISK-RIV-002"]
+    },
+    {
+      "incident_id": "INC-RIV-003",
+      "title": "Former contractor retrieves an EU manuscript chunk",
+      "domain": "identity",
+      "initial_severity": "SEV-1",
+      "detected_by": "negative isolation test",
+      "summary": "A stale nested-group membership allows API-USER-CONTRACTOR-044 to retrieve a restricted chunk after contract end.",
+      "affected_ids": ["SRC-API-IDENTITY-001", "API-USER-CONTRACTOR-044", "TEN-RIV-EU", "DOC-MANUSCRIPT-ARIA-037"],
+      "containment": "Disable the EU tenant route, revoke the identity, preserve access evidence, and notify Security and Legal.",
+      "evidence_to_preserve": ["token claims hash", "entitlement snapshot", "retrieval filter decision", "document ACL version", "trace timestamps"],
+      "reenablement_owner_person_id": "PER-RIV-004",
+      "linked_risk_ids": ["RISK-RIV-003"]
+    },
+    {
+      "incident_id": "INC-RIV-004",
+      "title": "Style adapter answers from memory without current evidence",
+      "domain": "model",
+      "initial_severity": "SEV-2",
+      "detected_by": "citation gate",
+      "summary": "The adapted model gives a fluent rights answer when retrieval returns no authorized evidence.",
+      "affected_ids": ["UC-RIV-004", "TEN-RIV-US"],
+      "containment": "Require abstention for rights questions with no authorized evidence and route to Rights counsel.",
+      "evidence_to_preserve": ["model release ID", "prompt template version", "retrieval result IDs", "policy decision", "redacted output"],
+      "reenablement_owner_person_id": "PER-RIV-003",
+      "linked_risk_ids": ["RISK-RIV-006"]
+    },
+    {
+      "incident_id": "INC-RIV-005",
+      "title": "Workflow timeout causes duplicate transition attempt",
+      "domain": "tool",
+      "initial_severity": "SEV-2",
+      "detected_by": "workflow reconciliation alert",
+      "summary": "PageTurn commits API-TASK-9003, loses the response, and receives a retry without a stable business key.",
+      "affected_ids": ["SRC-API-WORKFLOW-001", "API-TASK-9003", "SYS-WORKFLOW"],
+      "containment": "Pause workflow writes, reconcile committed state, and keep read-only assistance available.",
+      "evidence_to_preserve": ["approval payload hash", "idempotency key", "request attempts", "PageTurn event history", "workflow checkpoint"],
+      "reenablement_owner_person_id": "PER-RIV-005",
+      "linked_risk_ids": ["RISK-RIV-005"]
+    },
+    {
+      "incident_id": "INC-RIV-006",
+      "title": "Regional inference dependency unavailable",
+      "domain": "infrastructure",
+      "initial_severity": "SEV-2",
+      "detected_by": "availability alert",
+      "summary": "The UK/EU inference route is unavailable; metadata failover exists on paper but manuscript processing in another region is not approved.",
+      "affected_ids": ["TEN-RIV-EU", "REG-UKS", "SLA-RIV-004"],
+      "containment": "Fail closed for confidential manuscript requests, provide policy-only degraded mode if authorized, and communicate the limitation.",
+      "evidence_to_preserve": ["dependency health", "routing decision", "regional capacity status", "failed request counts", "customer communications"],
+      "reenablement_owner_person_id": "PER-RIV-004",
+      "linked_risk_ids": ["RISK-RIV-007"]
+    }
+  ],
+  "rollout": {
+    "rollout_id": "ROL-RIV-001",
+    "strategy": "offline evaluation, shadow, champion canary, imprint canary, regional ramp, broad availability",
+    "global_abort_conditions": [
+      "any successful forbidden access",
+      "any autonomous rights, payment, or publication action",
+      "any duplicate workflow commit",
+      "SEV-1 incident",
+      "quality or latency gate missed for two consecutive review windows"
+    ],
+    "cohorts": [
+      {
+        "cohort_id": "COH-RIV-000",
+        "name": "Offline golden workflows",
+        "tenant_ids": ["TEN-RIV-SBX"],
+        "size": 80,
+        "unit": "labeled_cases",
+        "mode": "offline",
+        "entry_gate": "Versioned fixture, evaluator, and release IDs recorded.",
+        "exit_gate": "All authorization tests pass; retrieval, citation, generation, and operational thresholds have explicit decisions.",
+        "rollback_target": "No deployment",
+        "business_owner_person_id": "PER-RIV-002",
+        "technical_owner_person_id": "PER-FDE-001"
+      },
+      {
+        "cohort_id": "COH-RIV-001",
+        "name": "Shadow historical decisions",
+        "tenant_ids": ["TEN-RIV-EU", "TEN-RIV-US"],
+        "size": 200,
+        "unit": "historical_tasks",
+        "mode": "shadow_no_user_output",
+        "entry_gate": "Offline gates pass and data owners approve the replay set.",
+        "exit_gate": "Disagreements are reviewed by category and no isolation failure occurs.",
+        "rollback_target": "Stop shadow processing and retain approved evidence only.",
+        "business_owner_person_id": "PER-RIV-002",
+        "technical_owner_person_id": "PER-FDE-001"
+      },
+      {
+        "cohort_id": "COH-RIV-002",
+        "name": "Editorial champions",
+        "tenant_ids": ["TEN-RIV-EU"],
+        "size": 12,
+        "unit": "users",
+        "mode": "read_and_draft_only",
+        "entry_gate": "Training completed, support rota active, and shadow disagreements dispositioned.",
+        "exit_gate": "At least 70 percent weekly active use, zero forbidden access, and structured feedback coverage above 80 percent.",
+        "rollback_target": "Previous release with workflow writes disabled.",
+        "business_owner_person_id": "PER-RIV-002",
+        "technical_owner_person_id": "PER-RIV-005"
+      },
+      {
+        "cohort_id": "COH-RIV-003",
+        "name": "Alder imprint canary",
+        "tenant_ids": ["TEN-RIV-EU"],
+        "size": 28,
+        "unit": "users",
+        "mode": "read_draft_and_confirmed_workflow_proposal",
+        "entry_gate": "Champion exit gate passes and workflow idempotency tests pass.",
+        "exit_gate": "Cycle-time target improves without quality, security, cost, or support regression for two weeks.",
+        "rollback_target": "Read-and-draft-only release; compensate committed workflow actions where required.",
+        "business_owner_person_id": "PER-RIV-002",
+        "technical_owner_person_id": "PER-RIV-005"
+      },
+      {
+        "cohort_id": "COH-RIV-004",
+        "name": "Northbank US regional canary",
+        "tenant_ids": ["TEN-RIV-US"],
+        "size": 18,
+        "unit": "users",
+        "mode": "read_and_draft_only",
+        "entry_gate": "US data-flow, policy applicability, quota, and support review approved.",
+        "exit_gate": "US quality and latency slices pass for two weeks with no UK-only policy leakage.",
+        "rollback_target": "Disable US route and return to manual workflow.",
+        "business_owner_person_id": "PER-RIV-007",
+        "technical_owner_person_id": "PER-RIV-005"
+      },
+      {
+        "cohort_id": "COH-RIV-005",
+        "name": "Broad editorial availability",
+        "tenant_ids": ["TEN-RIV-EU", "TEN-RIV-US"],
+        "size": 72,
+        "unit": "employees",
+        "mode": "approved_use_cases_only",
+        "entry_gate": "Both regional canaries pass and handoff acceptance is signed.",
+        "exit_gate": "Hypercare exit criteria met and customer operations accepts recurring ownership.",
+        "rollback_target": "Per-tenant previous release and manual workflow.",
+        "business_owner_person_id": "PER-RIV-001",
+        "technical_owner_person_id": "PER-RIV-005"
+      }
+    ]
+  },
+  "support_and_handoff": {
+    "support_model_id": "SUP-RIV-001",
+    "covered_hours": "08:00-18:00 Europe/London, Monday-Friday excluding agreed holidays",
+    "hypercare_duration_days": 30,
+    "severity_definitions": [
+      {
+        "severity": "SEV-1",
+        "definition": "Confirmed or credible cross-tenant disclosure, prohibited consequential action, or broad service outage with no safe workaround.",
+        "acknowledgement_target_minutes": 15,
+        "customer_update_minutes": 30,
+        "incident_commander_role_id": "ROLE-SECURITY"
+      },
+      {
+        "severity": "SEV-2",
+        "definition": "Material quality, data, tool, or availability failure affecting a cohort with a safe containment or workaround.",
+        "acknowledgement_target_minutes": 60,
+        "customer_update_minutes": 120,
+        "incident_commander_role_id": "ROLE-IT-OWNER"
+      },
+      {
+        "severity": "SEV-3",
+        "definition": "Limited defect with low immediate impact and no security boundary failure.",
+        "acknowledgement_target_minutes": 240,
+        "customer_update_minutes": 480,
+        "incident_commander_role_id": "ROLE-IT-OWNER"
+      }
+    ],
+    "ownership": [
+      {
+        "ownership_id": "SUP-RIV-OWN-001",
+        "capability": "user intake and known-issue triage",
+        "accountable_person_id": "PER-RIV-005",
+        "responsible_role_id": "ROLE-SUPPORT-L1",
+        "consulted_person_ids": ["PER-RIV-002"],
+        "evidence": "ticket, tenant tier, release ID, error code, and redacted timestamp"
+      },
+      {
+        "ownership_id": "SUP-RIV-OWN-002",
+        "capability": "connector restart and application rollback",
+        "accountable_person_id": "PER-RIV-005",
+        "responsible_role_id": "ROLE-SUPPORT-L2",
+        "consulted_person_ids": ["PER-FDE-001"],
+        "evidence": "runbook step, deployment ID, health check, and rollback record"
+      },
+      {
+        "ownership_id": "SUP-RIV-OWN-003",
+        "capability": "policy and content correction",
+        "accountable_person_id": "PER-RIV-002",
+        "responsible_role_id": "ROLE-EDITORIAL-DIRECTOR",
+        "consulted_person_ids": ["PER-RIV-003", "PER-RIV-004"],
+        "evidence": "source version, approval, reindex report, and evaluation result"
+      },
+      {
+        "ownership_id": "SUP-RIV-OWN-004",
+        "capability": "identity containment and isolation re-enablement",
+        "accountable_person_id": "PER-RIV-004",
+        "responsible_role_id": "ROLE-SECURITY",
+        "consulted_person_ids": ["PER-RIV-003", "PER-RIV-005"],
+        "evidence": "entitlement snapshot, affected-resource list, negative isolation tests, and approval"
+      },
+      {
+        "ownership_id": "SUP-RIV-OWN-005",
+        "capability": "budget exception and cost review",
+        "accountable_person_id": "PER-RIV-006",
+        "responsible_role_id": "ROLE-FINANCE",
+        "consulted_person_ids": ["PER-RIV-001", "PER-RIV-005"],
+        "evidence": "scenario forecast, observed usage, allocation report, and approved decision"
+      },
+      {
+        "ownership_id": "SUP-RIV-OWN-006",
+        "capability": "model, retrieval, and release defect during hypercare",
+        "accountable_person_id": "PER-FDE-001",
+        "responsible_role_id": "ROLE-FDE",
+        "consulted_person_ids": ["PER-RIV-002", "PER-RIV-004", "PER-RIV-005"],
+        "evidence": "release report, redacted trace, reproduction, fix evidence, and handback note"
+      }
+    ],
+    "handoff_artifacts": [
+      "operational readiness review",
+      "dashboard and alert guide",
+      "deployment and rollback runbook",
+      "data correction and reindex runbook",
+      "identity containment runbook",
+      "policy-change workflow",
+      "support and escalation matrix",
+      "training agenda and attendance evidence",
+      "acceptance sign-off",
+      "monthly service and model health review"
+    ],
+    "acceptance_owner_person_id": "PER-RIV-005",
+    "business_signoff_person_id": "PER-RIV-001",
+    "security_signoff_person_id": "PER-RIV-004"
+  },
+  "unknowns": [
+    {
+      "unknown_id": "UNK-RIV-001",
+      "question": "Which editor tasks and title slices define a representative golden workflow set?",
+      "owner_person_id": "PER-RIV-002",
+      "needed_by": "before offline evaluation design",
+      "status": "open"
+    },
+    {
+      "unknown_id": "UNK-RIV-002",
+      "question": "What deletion propagation time is required for withdrawn manuscript drafts and derived chunks?",
+      "owner_person_id": "PER-RIV-003",
+      "needed_by": "before data contract approval",
+      "status": "open"
+    },
+    {
+      "unknown_id": "UNK-RIV-003",
+      "question": "May encrypted operational metadata fail over across regions when content cannot?",
+      "owner_person_id": "PER-RIV-004",
+      "needed_by": "before resilience architecture approval",
+      "status": "open"
+    },
+    {
+      "unknown_id": "UNK-RIV-004",
+      "question": "What maximum entitlement staleness is acceptable for employees and contractors?",
+      "owner_person_id": "PER-RIV-004",
+      "needed_by": "before identity acceptance tests",
+      "status": "open"
+    },
+    {
+      "unknown_id": "UNK-RIV-005",
+      "question": "Will PageTurn support an idempotency key or must Riverside add an adapter and reconciliation store?",
+      "owner_person_id": "PER-RIV-005",
+      "needed_by": "before workflow write scope",
+      "status": "open"
+    },
+    {
+      "unknown_id": "UNK-RIV-006",
+      "question": "What out-of-hours coverage and customer contacts are funded for catalog deadlines?",
+      "owner_person_id": "PER-RIV-001",
+      "needed_by": "before first user cohort",
+      "status": "open"
+    },
+    {
+      "unknown_id": "UNK-RIV-007",
+      "question": "What minimum time saving, accepted-output rate, and quality floor justify broad rollout?",
+      "owner_person_id": "PER-RIV-001",
+      "needed_by": "before success criteria sign-off",
+      "status": "open"
+    },
+    {
+      "unknown_id": "UNK-RIV-008",
+      "question": "Which hosted model, embedding, and regional capacities are actually available at the required quota and price?",
+      "owner_person_id": "PER-FDE-001",
+      "needed_by": "before production capacity commitment",
+      "status": "external_validation_required"
+    },
+    {
+      "unknown_id": "UNK-RIV-009",
+      "question": "Which legacy documents lack reliable tenant, title, region, or lifecycle metadata?",
+      "owner_person_id": "PER-RIV-005",
+      "needed_by": "before source readiness verdict",
+      "status": "open"
+    },
+    {
+      "unknown_id": "UNK-RIV-010",
+      "question": "Who owns model and retrieval quality after the 30-day hypercare period?",
+      "owner_person_id": "PER-RIV-001",
+      "needed_by": "before handoff acceptance",
+      "status": "open"
+    }
+  ]
+}

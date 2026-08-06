@@ -1,0 +1,65 @@
+{
+  "contract_version": "1.0.0",
+  "kind": "model_release",
+  "release_id": "riverside-editor-tutorial-2026-08-05",
+  "version": "1.0.0",
+  "base_model": {
+    "id": "HuggingFaceTB/SmolLM2-360M-Instruct",
+    "revision": "a10cc1512eabd3dde888204e902eca88bddb4951"
+  },
+  "adapter": {
+    "type": "lora",
+    "stage": "supervised-fine-tuning-lora",
+    "uri": "repo://checkpoints/instruction-lora/adapter_model.safetensors",
+    "digest": {
+      "algorithm": "sha256",
+      "value": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+  },
+  "tokenizer": {
+    "revision": "a10cc1512eabd3dde888204e902eca88bddb4951",
+    "uri": "repo://checkpoints/instruction-lora/tokenizer.json",
+    "digest": {
+      "algorithm": "sha256",
+      "value": "2222222222222222222222222222222222222222222222222222222222222222"
+    }
+  },
+  "model_profile": "cpu-small-360m",
+  "precision": "fp32",
+  "training_provenance": {
+    "manifest_uri": "repo://checkpoints/instruction-lora/experiment-manifest.json",
+    "manifest_digest": {
+      "algorithm": "sha256",
+      "value": "3333333333333333333333333333333333333333333333333333333333333333"
+    }
+  },
+  "evaluation": {
+    "report_uri": "repo://learning/fixtures/tutorial-evaluation-report.json",
+    "report_digest": {
+      "algorithm": "sha256",
+      "value": "4444444444444444444444444444444444444444444444444444444444444444"
+    },
+    "decision": "hold",
+    "thresholds": [
+      {
+        "domain": "operational_slos",
+        "metric": "p95_total_latency_ms",
+        "operator": "lte",
+        "value": 200
+      }
+    ]
+  },
+  "serving_runtime": {
+    "name": "riverside-local-substitute",
+    "version": "1.0.0",
+    "interface_version": "1.0.0",
+    "compatible_model_profiles": [
+      "cpu-small-360m"
+    ],
+    "supported_precisions": [
+      "fp32"
+    ]
+  },
+  "created_at": "2026-08-05T12:00:00Z",
+  "source_commit": "0123456789abcdef0123456789abcdef01234567"
+}

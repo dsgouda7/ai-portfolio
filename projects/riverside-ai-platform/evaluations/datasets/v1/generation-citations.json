@@ -1,0 +1,19 @@
+{
+  "schema_version": "evaluation-dataset.v1",
+  "dataset_id": "riverside-grounded-generation",
+  "version": "1.0",
+  "domain": "generation_citation_quality",
+  "evaluator_contract_version": "1.0.0",
+  "created_at": "2026-08-05T12:00:00Z",
+  "source_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "cases": [
+    {
+      "case_id": "generation-one-sentence-001",
+      "slice": { "name": "task", "value": "scene_advancement" },
+      "prompt": "Advance the supplied scene by one sentence only.",
+      "context_document_ids": ["doc-aria-holdout-037"],
+      "expected_citation_document_ids": ["doc-aria-holdout-037"],
+      "one_sentence_required": true
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "schema_version": "ai-engineer.capstone-retrieval-generation-evaluation.v1",
+  "candidate_release_id": "<candidate-release-id>",
+  "baseline_release_id": "<baseline-release-id>",
+  "dataset": {"id": "<id>", "version": "<version>", "sha256": "<64-lowercase-hex>", "case_count": 0},
+  "evaluator": {"id": "<id>", "version": "<semantic-version>", "calibration_ref": "<path-or-uri>", "limitations": ["<limit>"]},
+  "thresholds_declared_at_utc": "<rfc3339-timestamp-before-scoring>",
+  "critical_slices": ["<security-or-authorization-slice>"],
+  "retrieval": {
+    "index_id": "<index-id>",
+    "index_version": "<version>",
+    "metrics": [
+      {"metric": "recall_at_k", "slice": "overall", "baseline": 0.0, "candidate": 0.0, "threshold": {"operator": "gte", "value": 0.0}, "sample_size": 0, "status": "<pass|fail|hold>"}
+    ],
+    "authorization_leakage_cases": 0,
+    "unsupported_query_refusal_rate": 0.0,
+    "decision": "<pass|fail|hold>"
+  },
+  "generation": {
+    "metrics": [
+      {"metric": "groundedness", "slice": "overall", "baseline": 0.0, "candidate": 0.0, "threshold": {"operator": "gte", "value": 0.0}, "sample_size": 0, "status": "<pass|fail|hold>"}
+    ],
+    "citation_correctness": 0.0,
+    "policy_false_allows": 0,
+    "decision": "<pass|fail|hold>"
+  },
+  "localization_ablations": [
+    {
+      "case_id": "<stable-case-id>",
+      "observed_failure": "<failure>",
+      "normal_retrieval_result": "<pass|fail>",
+      "gold_context_generation_result": "<pass|fail>",
+      "localized_owner": "<retrieval|generation|policy|unresolved>",
+      "next_test": "<discriminating-test>"
+    }
+  ],
+  "uncertainty": {"method": "<method>", "sample_size": 0, "lower": 0.0, "upper": 0.0, "confidence_level": 0.0},
+  "evidence_class": "<evidence-class>",
+  "limitations": ["<representativeness-or-evaluator-limit>"]
+}

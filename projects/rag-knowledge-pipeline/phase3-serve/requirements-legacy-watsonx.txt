@@ -1,0 +1,3 @@
+# Install only when serving.generation.provider is explicitly watsonx_legacy.
+-r requirements.txt
+langchain-ibm>=0.1.0

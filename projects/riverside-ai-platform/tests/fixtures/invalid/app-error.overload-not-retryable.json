@@ -1,0 +1,13 @@
+{
+  "error": {
+    "code": "overloaded",
+    "message": "The service is at its bounded concurrency limit.",
+    "type": "capacity_error",
+    "retryable": false,
+    "retry_after_seconds": 5
+  },
+  "trace": {
+    "trace_id": "fedcba9876543210fedcba9876543210",
+    "retry_count": 0
+  }
+}
