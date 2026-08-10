@@ -11,7 +11,7 @@ Idempotent: only rewrites the notebook if its kernelspec does not already
 match the target. Safe to run repeatedly from both setup.ps1 and setup.sh.
 
 Usage:
-    python scripts/set_default_kernel.py
+    python scripts/set-default-kernel.py
 """
 
 from __future__ import annotations

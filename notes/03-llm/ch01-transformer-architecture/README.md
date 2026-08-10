@@ -4,7 +4,7 @@
 
 The foundation for all modern LLMs — from RNNs to transformers, attention mechanics (Q/K/V), positional encoding, and the three architectural families (encoder-only, decoder-only, encoder-decoder).
 
-> **Code companion:** [`learning/genai/02-transformers/01-attention-and-transformer-blocks.ipynb`](../../../learning/genai/02-transformers/01-attention-and-transformer-blocks.ipynb) builds the complete transformer from scratch in TensorFlow/Keras using one running example ("the cat sat on the mat") from raw 3-D embeddings to distilgpt2 internals. The chapter prose explains *why*; the notebook demonstrates *how*.
+> **Code companion:** the [three-notebook Transformer Foundations series](../../../learning/genai/02-transformers/README.md) builds the architecture in PyTorch using Riverside's `aria heard the signal aboard meridian` thread. The chapter prose explains *why*; the notebooks demonstrate *how*.
 
 ## Contents
 
@@ -24,24 +24,13 @@ The foundation for all modern LLMs — from RNNs to transformers, attention mech
 
 ## From-Scratch Code Companion
 
-[`learning/genai/02-transformers/01-attention-and-transformer-blocks.ipynb`](../../../learning/genai/02-transformers/01-attention-and-transformer-blocks.ipynb) is the canonical from-scratch notebook for this chapter. It builds every component from first principles in TensorFlow/Keras using a single running example throughout.
-
-**The notebook's 12 parts map to this chapter's concepts:**
+The [Transformer Foundations series](../../../learning/genai/02-transformers/README.md) is the canonical executable companion. Its current structure is:
 
 | Part | What it builds | Key technique |
 |------|---------------|---------------|
-| 1 | Vocabulary + 3-D embeddings | Words as points in semantic space you can visualise |
-| 2 | The ordering problem | Bag-of-words = all permutations identical → position is load-bearing |
-| 3 | Sinusoidal PE | `PE(m, 2i) = sin(m / 10000^{2i/d})` — and the degradation-under-projection measurement |
-| 4 | RoPE | Rotation proof: `dot(R_m q, R_n k)` depends only on `m - n`; adjacent-pair vs split-half equivalence verified numerically |
-| 5 | Q/K/V + Attention | First-contact animation: 4 steps, freezing on each completed step |
-| 6 | Scaled dot-product | `√d_k` necessity shown by variance table + `GradientTape` gradient-death demo |
-| 7 | Multi-Head Attention | One-head-can't-do-two-jobs proof via reconstruction error |
-| 8 | FFN + LayerNorm | Correct `√(σ²+ε)` denominator; GradientTape LayerNorm centring demo |
-| 9 | Full TransformerBlock | Residual gradient race: 24-layer WITH vs WITHOUT (log-scale plot) |
-| 10 | MiniLM end-to-end | Training loop from scratch; cross-entropy over the toy corpus |
-| 11 | Autoregressive generation | Temperature + top-k; per-step probability bar charts |
-| 12 | distilgpt2 internals | `TFGPT2LMHeadModel`; all 6 layers × 12 heads visualised |
+| 1–7 | [Attention and Transformer Blocks](../../../learning/genai/02-transformers/01-attention-and-transformer-blocks.ipynb) | Embeddings, position, Q/K/V, scaled and multi-head attention, FFN, normalization, residuals, reusable block |
+| 8, 9, 11, 12, 14 | [Decoder-Only Language Model](../../../learning/genai/02-transformers/02-decoder-only-language-model.ipynb) | MiniLM training, autoregressive generation, value projections, causal accumulation, DistilGPT-2 internals |
+| 1–7 and 13 | [Encoder-Decoder and Cross-Attention](../../../learning/genai/02-transformers/03-encoder-decoder-and-cross-attention.ipynb) | Source encoding, cross-attention, teacher forcing, free-running generation, T5/BART, architecture comparison |
 
 **Pedagogical approach used throughout (the [Rigour Rubric](../../authoring-guidelines.md#20--rigour-rubric--the-nine-techniques-from-the-transformer-notebook)):**
 - One running example end-to-end: "the cat sat on the mat"
@@ -57,11 +46,11 @@ The foundation for all modern LLMs — from RNNs to transformers, attention mech
 ## Prerequisites
 
 - **Ch.00 (From Networks to Language)** — RNN failure (§6), attention origin (§7), skip connections (§8), encoder/decoder (§9). If you skipped ch00, at minimum read §6–§8.
-- **Python proficiency** — NumPy, TensorFlow/Keras basics
+- **Python proficiency** — NumPy and PyTorch basics
 - **Linear algebra** — matrix multiplication, dot products
 - **Hardware** — GPU recommended but not required (CPU works, just slower)
 
-> **TF/Keras note:** The from-scratch notebook uses TensorFlow/Keras. The existing `notebook-exercise.ipynb` uses PyTorch + HuggingFace. Both coexist — use the one you prefer for each purpose.
+> **Framework note:** the canonical learning notebooks use PyTorch. The prerequisite sequence contains explicit TensorFlow/Keras ↔ PyTorch comparison blocks for readers coming from Keras.
 
 ## Key Concepts
 
@@ -77,14 +66,16 @@ The foundation for all modern LLMs — from RNNs to transformers, attention mech
 ## Quick Start
 
 ```bash
-# Option A: From-scratch intuition notebook (TF/Keras, "the cat sat on the mat" running example)
+# Option A: From-scratch Transformer series (PyTorch)
 code learning/genai/02-transformers/01-attention-and-transformer-blocks.ipynb
 
 # Option B: Pretrained-model exercise notebook (PyTorch + HuggingFace)
 code notes/03-llm/ch01-transformer-architecture/notebook-exercise.ipynb
 
-# Install dependencies for Option A
-pip install tensorflow transformers matplotlib seaborn plotly
+# Install the isolated environment for Option A
+cd learning/genai/02-transformers
+# Windows: .\setup.ps1
+# Linux/macOS: bash ./setup.sh
 
 # Install dependencies for Option B
 pip install transformers torch matplotlib seaborn scikit-learn

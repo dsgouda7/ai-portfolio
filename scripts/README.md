@@ -67,13 +67,13 @@ Do not hand-edit generated watcher scripts unless you also update setup logic.
 Run notebook integrity scan:
 
 ```bash
-python scripts/check_notebooks.py
+python scripts/check-notebooks.py
 ```
 
 Re-apply default kernels after creating new notebooks:
 
 ```bash
-python scripts/set_default_kernel.py
+python scripts/set-default-kernel.py
 ```
 
 Install commit hooks:

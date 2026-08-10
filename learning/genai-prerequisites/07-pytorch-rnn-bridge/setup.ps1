@@ -65,6 +65,6 @@ if (-not $SkipKernel) {
 }
 
 Write-Host ""
-Write-Host "Setup complete for GenAI 01 RNNs." -ForegroundColor Green
+Write-Host "Setup complete for GenAI Prerequisite 07 PyTorch RNN Bridge." -ForegroundColor Green
 Write-Host "Virtual environment: $VenvDir"
 Write-Host "Jupyter kernel: $KernelDisplayName"

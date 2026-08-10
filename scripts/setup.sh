@@ -617,7 +617,7 @@ else
 fi
 
 step "Setting default kernel on every notebook under notes/"
-python "$SCRIPT_DIR/set_default_kernel.py" || warn "set_default_kernel.py exited non-zero"
+python "$SCRIPT_DIR/set-default-kernel.py" || warn "set-default-kernel.py exited non-zero"
 
 step "Setting notebook permissions (read-only for solutions, writable for exercises)"
 
@@ -1166,7 +1166,7 @@ except Exception:
     data = {}
 ro = data.setdefault("files.readonlyInclude", {})
 ro["**/*.ipynb"] = True
-data["notebook.defaultKernel"] = "ai-ml-dev"
+data.pop("notebook.defaultKernel", None)
 with open(p, "w") as f:
     json.dump(data, f, indent=4)
 print("  \u2713 Merged read-only rule into existing .vscode/settings.json")
@@ -1177,8 +1177,7 @@ else
 {
     "files.readonlyInclude": {
         "**/*.ipynb": true
-    },
-    "notebook.defaultKernel": "ai-ml-dev"
+    }
 }
 SETTINGSJSON
     ok "Written: .vscode/settings.json"

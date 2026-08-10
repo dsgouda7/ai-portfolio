@@ -17,6 +17,10 @@ This sequence builds the mathematical, machine-learning, framework, and sequence
 
 For the language-model route, chapter 04 is optional: follow `00 → 01 → 02 → 03 → 05 → 06 → 07`. Complete chapter 04 when vision, multimodal work, or convolution-heavy systems are relevant.
 
+## Chapter Setup
+
+Run setup from each chapter directory you plan to use. On Windows run `.\setup.ps1`; on Linux or macOS run `bash ./setup.sh`. Each script creates or reuses the chapter-local `.venv`, installs dependencies, registers the chapter kernel, and assigns that kernelspec to the chapter notebook.
+
 ## Comparison Policy
 
 Every notebook contains at least one compact TensorFlow/Keras ↔ PyTorch comparison block after the underlying concept is taught. These blocks emphasize invariant computation and the API or tensor-layout difference most likely to cause translation bugs. TensorFlow-first notebooks keep PyTorch snippets in Markdown so their executable dependency set remains unchanged; chapters 03 and 07 provide the runnable PyTorch practice.

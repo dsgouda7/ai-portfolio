@@ -24,6 +24,9 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $Requirements = Join-Path $ScriptDir "requirements.txt"
 $VenvDir = Join-Path $ScriptDir ".venv"
 $VenvPython = Join-Path $VenvDir "Scripts\python.exe"
+$KernelName = "math-foundations"
+$KernelDisplayName = "Python (math-foundations .venv)"
+$KernelSetter = Join-Path $ScriptDir "..\..\..\scripts\set-notebook-kernel.py"
 
 $pythonCmd = if (Get-Command python -ErrorAction SilentlyContinue) { "python" }
              elseif (Get-Command python3 -ErrorAction SilentlyContinue) { "python3" }
@@ -36,6 +39,10 @@ if (-not $pythonCmd) {
 
 if (-not (Test-Path $Requirements)) {
     Write-Host "Error: requirements.txt not found next to this script." -ForegroundColor Red
+    exit 1
+}
+if (-not (Test-Path $KernelSetter)) {
+    Write-Host "Error: kernel metadata helper not found at $KernelSetter" -ForegroundColor Red
     exit 1
 }
 
@@ -60,8 +67,9 @@ Write-Host "Installing nbconvert for headless execution..."
 & $VenvPython -m pip install nbconvert -q
 
 if (-not $SkipKernel) {
-    Write-Host "Registering Jupyter kernel 'math-foundations'..."
-    & $VenvPython -m ipykernel install --user --name math-foundations --display-name "Python (math-foundations .venv)"
+    Write-Host "Registering Jupyter kernel '$KernelName'..."
+    & $VenvPython -m ipykernel install --user --name $KernelName --display-name $KernelDisplayName
+    & $VenvPython $KernelSetter --directory $ScriptDir --name $KernelName --display-name $KernelDisplayName
 }
 
 Write-Host "`nSetup complete." -ForegroundColor Green

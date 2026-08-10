@@ -4,10 +4,10 @@ Riverside House uses each notebook for one layer of the fine-tuning story: objec
 
 **Series anchor:** Parts 1 and 2 reuse the same Aria thread from *The Weight of Distant Light* so the objective and parameter choices stay directly comparable.
 
-1. [What Should the Model Learn?](01-llm-finetuning-data-techniques.ipynb) builds intuition for continued pretraining, response-masked SFT, PPO, and DPO using the complete 40-chapter Aria corpus.
-2. [Where Should the Update Live?](02-llm-finetuning-parameter-techniques.ipynb) opens full fine-tuning, partial freezing, LoRA, and the QLoRA path through parameter, tensor, and artifact exercises.
-3. [Evaluation, Comparison & Decision](03-llm-finetuning-comparison-and-decision.ipynb) introduces all evaluation concepts, independent data boundaries, workload-aligned measurements, candidate comparison, release gates, and production decisions.
-4. [GPU Practice: Fine-Tune and Evaluate Every Riverside Novel](04-llm-finetuning-practice.ipynb) runs independent, chapter-disjoint LoRA experiments across all eight novels with validation-selected checkpoints and untouched test sets.
+1. [What Should the Model Learn?](01-llm-finetuning-data-techniques.ipynb) · [Theory notes](01-llm-finetuning-data-techniques-theory.md)
+2. [Where Should the Update Live?](02-llm-finetuning-parameter-techniques.ipynb) · [Theory notes](02-llm-finetuning-parameter-techniques-theory.md)
+3. [Evaluation, Comparison & Decision](03-llm-finetuning-comparison-and-decision.ipynb) · [Theory notes](03-llm-finetuning-comparison-and-decision-theory.md)
+4. [GPU Practice: Fine-Tune and Evaluate Every Riverside Novel](04-llm-finetuning-practice.ipynb) · [Theory notes](04-llm-finetuning-practice-theory.md)
 
 The notebooks share the committed `content/` corpus, generated `data/`, calibration artifacts, and local teaching checkpoints in this directory. Run `setup.ps1` on Windows or `setup.sh` on Linux/macOS; either script creates this chapter's `.venv`, installs `requirements.txt`, registers its Jupyter kernel, and assigns that kernel to all four notebooks.
 

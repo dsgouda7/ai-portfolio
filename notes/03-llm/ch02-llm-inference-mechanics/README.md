@@ -20,7 +20,7 @@ How LLMs generate text at inference time — sampling, the autoregressive loop, 
 
 - [notebook-solution.ipynb](notebook-solution.ipynb) — Complete implementations
 
-> **From-scratch companion (Parts 11–12):** [`learning/genai/02-transformers/02-decoder-only-language-model.ipynb`](../../../learning/genai/02-transformers/02-decoder-only-language-model.ipynb) — Part 11 builds the autoregressive generation loop from scratch with temperature + top-k, printing per-step probability bar charts; Part 12 runs the same loop on distilgpt2. Use it before the exercise notebook to build the underlying intuition.
+> **From-scratch companion (Parts 9 and 14):** [`learning/genai/02-transformers/02-decoder-only-language-model.ipynb`](../../../learning/genai/02-transformers/02-decoder-only-language-model.ipynb) — Part 9 builds autoregressive generation step by step; Part 14 inspects DistilGPT-2 internals. Use it before the exercise notebook to build the underlying intuition.
 3. **Make production tradeoffs**
  - Balance throughput vs latency requirements
  - Calculate KV cache memory requirements

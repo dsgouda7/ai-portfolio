@@ -115,6 +115,5 @@
   },
   "files.readonlyExclude": {
     "**/*.ipynb": true
-  },
-  "notebook.defaultKernel": "genai-02-transformers"
+  }
 }

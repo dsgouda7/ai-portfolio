@@ -587,8 +587,8 @@ if ($allKernelsPresent) {
 }
 
 Write-Step "Setting default kernel on every notebook under notes/"
-& python (Join-Path $PSScriptRoot "set_default_kernel.py")
-if ($LASTEXITCODE -ne 0) { Write-Warn "set_default_kernel.py exited with code $LASTEXITCODE" }
+& python (Join-Path $PSScriptRoot "set-default-kernel.py")
+if ($LASTEXITCODE -ne 0) { Write-Warn "set-default-kernel.py exited with code $LASTEXITCODE" }
 
 Write-Step "Setting notebook permissions (read-only for solutions, writable for exercises)"
 try {
@@ -1141,7 +1141,6 @@ Write-Step "Writing .vscode/settings.json (notebooks read-only in VS Code)"
 $SettingsJsonPath = Join-Path $VscodeDirPath "settings.json"
 $readOnlyPatch = [ordered]@{
     "files.readonlyInclude" = [ordered]@{ "**/*.ipynb" = $true }
-    "notebook.defaultKernel" = "ai-ml-dev"
 }
 
 if (Test-Path $SettingsJsonPath) {
@@ -1161,7 +1160,7 @@ if (Test-Path $SettingsJsonPath) {
         $existing["files.readonlyInclude"] = @{}
     }
     $existing["files.readonlyInclude"]["**/*.ipynb"] = $true
-    $existing["notebook.defaultKernel"] = "ai-ml-dev"
+    $existing.Remove("notebook.defaultKernel")
     $existing | ConvertTo-Json -Depth 10 | Set-Content $SettingsJsonPath -Encoding UTF8
     Write-Ok "Merged read-only rule into existing .vscode/settings.json"
 } else {

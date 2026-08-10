@@ -18,6 +18,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REQUIREMENTS="$SCRIPT_DIR/requirements.txt"
 VENV_DIR="$SCRIPT_DIR/.venv"
 VENV_PYTHON="$VENV_DIR/bin/python"
+KERNEL_NAME="math-foundations"
+KERNEL_DISPLAY_NAME="Python (math-foundations .venv)"
+KERNEL_SETTER="$SCRIPT_DIR/../../../scripts/set-notebook-kernel.py"
 SKIP_KERNEL=0
 
 for arg in "$@"; do
@@ -41,6 +44,7 @@ if [ ! -f "$REQUIREMENTS" ]; then
     echo "Error: requirements.txt not found next to this script." >&2
     exit 1
 fi
+[ -f "$KERNEL_SETTER" ] || { echo "Error: kernel metadata helper not found at $KERNEL_SETTER" >&2; exit 1; }
 
 # Create the virtual environment if it doesn't already exist
 if [ -x "$VENV_PYTHON" ]; then
@@ -63,8 +67,9 @@ echo "Installing nbconvert for headless execution..."
 "$VENV_PYTHON" -m pip install nbconvert -q
 
 if [ "$SKIP_KERNEL" -eq 0 ]; then
-    echo "Registering Jupyter kernel 'math-foundations'..."
-    "$VENV_PYTHON" -m ipykernel install --user --name math-foundations --display-name "Python (math-foundations .venv)"
+    echo "Registering Jupyter kernel '$KERNEL_NAME'..."
+    "$VENV_PYTHON" -m ipykernel install --user --name "$KERNEL_NAME" --display-name "$KERNEL_DISPLAY_NAME"
+    "$VENV_PYTHON" "$KERNEL_SETTER" --directory "$SCRIPT_DIR" --name "$KERNEL_NAME" --display-name "$KERNEL_DISPLAY_NAME"
 fi
 
 echo ""

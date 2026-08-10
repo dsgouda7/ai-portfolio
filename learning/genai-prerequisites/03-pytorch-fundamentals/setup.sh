@@ -56,6 +56,6 @@ if [ "$SKIP_KERNEL" -eq 0 ]; then
 fi
 
 echo ""
-echo "Setup complete for GenAI 00 PyTorch Fundamentals."
+echo "Setup complete for GenAI Prerequisite 03 PyTorch Fundamentals."
 echo "Virtual environment: $VENV_DIR"
 echo "Jupyter kernel: $KERNEL_DISPLAY_NAME"

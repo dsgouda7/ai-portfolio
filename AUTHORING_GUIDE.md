@@ -50,10 +50,10 @@ Every track is anchored to one production system with real constraints, a named 
 | **MultiAgentAI** | OrderFlow | B2B PO automation | 1,000 POs/day, <4hr SLA |
 | **MultimodalAI** | VisualForge Studio | Local diffusion pipeline | <30s/image, ≥4.0/5.0 quality |
 | **InterviewGuides** | Interview-Ready Engineer | Technical interview prep | Land senior AI/ML role |
-| **GenAI / 01-RNNs** | (foundation, no production system) | house price / circle classifier | autograd verified, model converges |
+| **GenAI Prerequisites / 02-Neural Networks and Backpropagation** | (foundation, no production system) | house price / circle classifier | autograd verified, model converges |
 | **GenAI / 02-Transformers** | (foundation, no production system) | "the cat sat on the mat" LM | every mechanism proved by measurement |
 | **GenAI / 02-Transformers Part 3** | (foundation, no production system) | integer sequence reversal | cross-attention anti-diagonal verified |
-| **GenAI / 04-LLM-Fine-Tuning** | Riverside House | hardware-selected SmolLM2 adaptation | objective-aligned held-out evidence |
+| **GenAI / 03-LLM-Fine-Tuning** | Riverside House | hardware-selected SmolLM2 adaptation | objective-aligned held-out evidence |
 | **GenAI / 04-RAG** | Riverside House | authorized hybrid retrieval + grounded answers | retrieval and answer failures diagnosed separately |
 
 **What the grand challenge does:** it converts "learn about pagination" into "the API is silently truncating your training data and your model doesn't know it." The failure the reader just witnessed is real, measured, and belongs to a system they have been following since chapter one.
