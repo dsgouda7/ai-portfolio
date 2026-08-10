@@ -5,10 +5,10 @@ from pathlib import Path
 ROOT = Path(r"c:\r\ai-portfolio\learning\genai")
 
 paths = [
-    ROOT / "05-llm-evaluation" / "01-llm-evaluation-metrics-and-benchmarks.ipynb",
-    ROOT / "05-llm-evaluation" / "02-llm-as-judge-safety-and-pipeline.ipynb",
-    ROOT / "05-llm-evaluation" / "03-hallucination-detection.ipynb",
-    ROOT / "05-llm-evaluation" / "04-calibration-and-confidence.ipynb",
+    ROOT / "11-llm-evaluation" / "01-llm-evaluation-metrics-and-benchmarks.ipynb",
+    ROOT / "11-llm-evaluation" / "02-llm-as-judge-safety-and-pipeline.ipynb",
+    ROOT / "11-llm-evaluation" / "03-hallucination-detection.ipynb",
+    ROOT / "11-llm-evaluation" / "04-calibration-and-confidence.ipynb",
 ]
 
 all_ok = True

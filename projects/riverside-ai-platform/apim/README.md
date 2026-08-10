@@ -43,7 +43,7 @@ publish each fragment, and finally apply the composed API policy.
 
 | Fragment | Gateway concept | Conceptual notebook section |
 |---|---|---|
-| `correlation.xml` | Trace continuity without metric-cardinality leakage | `learning/genai/06-llm-gateway/06-llm-gateway.ipynb`, Part 7: Assembling a Production-Style Gateway |
+| `correlation.xml` | Trace continuity without metric-cardinality leakage | `learning/genai/12-llm-gateway/01-llm-gateway.ipynb`, Part 7: Assembling a Production-Style Gateway |
 | `client-auth.xml` | Entra client authentication and audience/scope validation | Part 1: What Is an LLM Gateway, and Why Do We Need One? |
 | `tenant-context.xml` | Trusted routing and quota context; no client-derived tenant tier | Part 3: Request Routing Strategies |
 | `request-guardrails.xml` | Request-size, schema, stable alias, and per-request token bounds | Part 4: Rate Limiting and Throttling |

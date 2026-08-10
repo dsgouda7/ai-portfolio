@@ -75,11 +75,11 @@ If you cannot localize a model failure below the API level, complete this phase.
 ### Required or Skip with Evidence
 
 1. [PyTorch RNN Bridge](../../genai-prerequisites/07-pytorch-rnn-bridge/01-pytorch-rnn-bridge.ipynb)
-2. [Attention and Transformer Blocks](../../genai/02-transformers/01-attention-and-transformer-blocks.ipynb)
-3. [Decoder-Only Language Models](../../genai/02-transformers/02-decoder-only-language-model.ipynb)
-4. [Encoder-Decoder and Cross-Attention](../../genai/02-transformers/03-encoder-decoder-and-cross-attention.ipynb)
+2. [Attention and Transformer Blocks](../../genai/08-transformers/01-attention-and-transformer-blocks.ipynb)
+3. [Decoder-Only Language Models](../../genai/08-transformers/02-decoder-only-language-model.ipynb)
+4. [Encoder-Decoder and Cross-Attention](../../genai/08-transformers/03-encoder-decoder-and-cross-attention.ipynb)
 
-The [Transformer Foundations README](../../genai/02-transformers/README.md) defines the three-part contract and fresh-kernel behavior.
+The [Transformer Foundations README](../../genai/08-transformers/README.md) defines the three-part contract and fresh-kernel behavior.
 
 ### Exit Evidence
 
@@ -93,15 +93,15 @@ A falling training loss is not release evidence. You must show that the intended
 
 ### Required or Skip with Evidence
 
-1. [Fine-Tuning Data Techniques](../../genai/03-llm-finetuning/01-llm-finetuning-data-techniques.ipynb)
-2. [Fine-Tuning Parameter Techniques](../../genai/03-llm-finetuning/02-llm-finetuning-parameter-techniques.ipynb)
-3. [Fine-Tuning Comparison and Decision](../../genai/03-llm-finetuning/03-llm-finetuning-comparison-and-decision.ipynb)
+1. [Fine-Tuning Data Techniques](../../genai/09-llm-finetuning/01-llm-finetuning-data-techniques.ipynb)
+2. [Fine-Tuning Parameter Techniques](../../genai/09-llm-finetuning/02-llm-finetuning-parameter-techniques.ipynb)
+3. [Fine-Tuning Comparison and Decision](../../genai/09-llm-finetuning/03-llm-finetuning-comparison-and-decision.ipynb)
 
 ### Required for Full GPU Training Evidence, Otherwise Deferred
 
-4. [Fine-Tuning Practice](../../genai/03-llm-finetuning/04-llm-finetuning-practice.ipynb) is intentionally CUDA-only. Complete it when you claim end-to-end GPU fine-tuning evidence across the full Riverside corpus. If compatible CUDA hardware is unavailable, mark this artifact deferred; do not report its expected results as your measurements.
+4. [Fine-Tuning Practice](../../genai/09-llm-finetuning/04-llm-finetuning-practice.ipynb) is intentionally CUDA-only. Complete it when you claim end-to-end GPU fine-tuning evidence across the full Riverside corpus. If compatible CUDA hardware is unavailable, mark this artifact deferred; do not report its expected results as your measurements.
 
-Parts 1-3 select a CPU or CUDA profile. The [Fine-Tuning README](../../genai/03-llm-finetuning/README.md) records that boundary.
+Parts 1-3 select a CPU or CUDA profile. The [Fine-Tuning README](../../genai/09-llm-finetuning/README.md) records that boundary.
 
 ### Exit Evidence
 
@@ -117,14 +117,14 @@ An answer score cannot tell you whether the retriever missed the evidence or the
 
 ### Required or Skip with Evidence
 
-1. [Hybrid Search](../../genai/04-rag/04-hybrid-search.ipynb)
-2. [RAG Evaluation](../../genai/04-rag/05-rag-evaluation.ipynb)
-3. [Metrics and Benchmarks](../../genai/05-llm-evaluation/01-llm-evaluation-metrics-and-benchmarks.ipynb)
-4. [LLM-as-Judge, Safety, and Pipeline](../../genai/05-llm-evaluation/02-llm-as-judge-safety-and-pipeline.ipynb)
-5. [Hallucination Detection](../../genai/05-llm-evaluation/03-hallucination-detection.ipynb)
-6. [Calibration and Confidence](../../genai/05-llm-evaluation/04-calibration-and-confidence.ipynb)
+1. [Hybrid Search](../../genai/10-rag/01-hybrid-search.ipynb)
+2. [RAG Evaluation](../../genai/10-rag/02-rag-evaluation.ipynb)
+3. [Metrics and Benchmarks](../../genai/11-llm-evaluation/01-llm-evaluation-metrics-and-benchmarks.ipynb)
+4. [LLM-as-Judge, Safety, and Pipeline](../../genai/11-llm-evaluation/02-llm-as-judge-safety-and-pipeline.ipynb)
+5. [Hallucination Detection](../../genai/11-llm-evaluation/03-hallucination-detection.ipynb)
+6. [Calibration and Confidence](../../genai/11-llm-evaluation/04-calibration-and-confidence.ipynb)
 
-Use the [RAG README](../../genai/04-rag/README.md) and [LLM Evaluation README](../../genai/05-llm-evaluation/README.md) for the chapter contracts.
+Use the [RAG README](../../genai/10-rag/README.md) and [LLM Evaluation README](../../genai/11-llm-evaluation/README.md) for the chapter contracts.
 
 ### Exit Evidence
 
@@ -140,9 +140,9 @@ Without a gateway contract, every provider change becomes an application change 
 
 ### Required or Skip with Evidence
 
-1. [LLM Gateways: Routing, Resilience, and Cost Control](../../genai/06-llm-gateway/06-llm-gateway.ipynb)
+1. [LLM Gateways: Routing, Resilience, and Cost Control](../../genai/12-llm-gateway/01-llm-gateway.ipynb)
 
-The notebook uses deterministic provider simulations so you can isolate systems behavior. The [Gateway README](../../genai/06-llm-gateway/README.md) explicitly hands production serving internals to the infrastructure track.
+The notebook uses deterministic provider simulations so you can isolate systems behavior. The [Gateway README](../../genai/12-llm-gateway/README.md) explicitly hands production serving internals to the infrastructure track.
 
 ### Exit Evidence
 
@@ -241,11 +241,11 @@ All linked targets now exist in source. Chapters 01-05 completed a successful lo
 | ID | Competency | Existing evidence source | Minimum evidence | Current status |
 |---|---|---|---|---|
 | C1 | ML, neural-network, tokenization, and PyTorch foundations | [Prerequisites](../../genai-prerequisites/README.md) and [PyTorch Fundamentals](../../genai-prerequisites/03-pytorch-fundamentals/01-keras-to-pytorch-antarctic-field-guide.ipynb) | Deterministic train, evaluate, save, reload, and failure diagnosis | Available |
-| C2 | Transformer and language-model mechanics | [PyTorch RNN Bridge](../../genai-prerequisites/07-pytorch-rnn-bridge/README.md) and [Transformers](../../genai/02-transformers/README.md) | Shape and mask trace plus controlled mechanism comparison | Available |
-| C3 | Objective and parameter-efficient adaptation | [LLM Fine-Tuning](../../genai/03-llm-finetuning/README.md) | Held-out task/retention comparison, lineage, and release decision | Available; full-corpus practice requires CUDA |
-| C4 | Retrieval, grounding, and boundary checks | [RAG](../../genai/04-rag/README.md) | Retrieval report, generation report, gold-context ablation, authorization test | Available |
-| C5 | Evaluation, safety, hallucination, and confidence | [LLM Evaluation](../../genai/05-llm-evaluation/README.md) | Versioned slices, evaluator audit, thresholds, regression report | Available |
-| C6 | Provider-neutral application control | [LLM Gateway](../../genai/06-llm-gateway/README.md) | Contract, bounded failure traces, cache and cost evidence | Available through deterministic simulation |
+| C2 | Transformer and language-model mechanics | [PyTorch RNN Bridge](../../genai-prerequisites/07-pytorch-rnn-bridge/README.md) and [Transformers](../../genai/08-transformers/README.md) | Shape and mask trace plus controlled mechanism comparison | Available |
+| C3 | Objective and parameter-efficient adaptation | [LLM Fine-Tuning](../../genai/09-llm-finetuning/README.md) | Held-out task/retention comparison, lineage, and release decision | Available; full-corpus practice requires CUDA |
+| C4 | Retrieval, grounding, and boundary checks | [RAG](../../genai/10-rag/README.md) | Retrieval report, generation report, gold-context ablation, authorization test | Available |
+| C5 | Evaluation, safety, hallucination, and confidence | [LLM Evaluation](../../genai/11-llm-evaluation/README.md) | Versioned slices, evaluator audit, thresholds, regression report | Available |
+| C6 | Provider-neutral application control | [LLM Gateway](../../genai/12-llm-gateway/README.md) | Contract, bounded failure traces, cache and cost evidence | Available through deterministic simulation |
 | C7 | Hardware-aware training and inference decisions | [AI Infrastructure](../../ai-infrastructure/README.md) | Memory model, profile, quantization comparison, serving decision | Available; CPU fallbacks are not live GPU benchmarks |
 | C8 | Agent orchestration, evaluation, safety, and recovery | [Agentic AI](../../agentic-ai/README.md) | Injected-failure traces and measured fixture outcomes across the full sequence | Available as an optional branch; production targets are modeled |
 | C9 | Architecture and capacity reasoning | [Agentic System Design](../../agentic-ai-system-design/system-design.md) | Decision records, threat boundaries, recovery design, and capacity assumptions | Available as reference material |

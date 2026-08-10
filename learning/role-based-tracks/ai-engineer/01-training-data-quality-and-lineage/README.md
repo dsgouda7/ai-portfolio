@@ -48,9 +48,9 @@ You have finished this chapter when you have:
 
 ## Conceptual Owners
 
-- [Fine-Tuning: What Should the Model Learn?](../../../genai/03-llm-finetuning/01-llm-finetuning-data-techniques.ipynb) owns SFT, preference objectives, held-out evidence, and training manifests.
-- [Fine-Tuning README](../../../genai/03-llm-finetuning/README.md) owns the adaptation arc and hardware boundary.
-- [LLM Evaluation](../../../genai/05-llm-evaluation/README.md) owns evaluator validity, slice gates, and release thresholds.
+- [Fine-Tuning: What Should the Model Learn?](../../../genai/09-llm-finetuning/01-llm-finetuning-data-techniques.ipynb) owns SFT, preference objectives, held-out evidence, and training manifests.
+- [Fine-Tuning README](../../../genai/09-llm-finetuning/README.md) owns the adaptation arc and hardware boundary.
+- [LLM Evaluation](../../../genai/11-llm-evaluation/README.md) owns evaluator validity, slice gates, and release thresholds.
 - [Agent Safety, Human Control, and Governance](../../../agentic-ai/06-safety-human-control-and-governance/06-safety-human-control-and-governance.ipynb) owns broader governance and human approval boundaries.
 - [Production Feedback and Drift](../05-production-feedback-and-drift/production-feedback-and-drift.ipynb) owns the production-to-dataset feedback loop.
 - [Release Registry and Lineage](../04-release-registry-and-lineage/release-registry-and-lineage.ipynb) owns cross-artifact release manifests.

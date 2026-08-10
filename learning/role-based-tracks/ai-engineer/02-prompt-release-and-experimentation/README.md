@@ -15,9 +15,9 @@ assignment; and require canary and rollback evidence before promotion.
 
 ## Start Here
 
-1. Complete the [RAG evaluation](../../../genai/04-rag/05-rag-evaluation.ipynb),
-   [LLM evaluation](../../../genai/05-llm-evaluation/README.md), and
-   [LLM gateway](../../../genai/06-llm-gateway/06-llm-gateway.ipynb) prerequisites,
+1. Complete the [RAG evaluation](../../../genai/10-rag/02-rag-evaluation.ipynb),
+   [LLM evaluation](../../../genai/11-llm-evaluation/README.md), and
+   [LLM gateway](../../../genai/12-llm-gateway/01-llm-gateway.ipynb) prerequisites,
    or attach equivalent evidence.
 2. Run `setup.ps1` on Windows or `setup.sh` on macOS/Linux when execution is
    authorized.

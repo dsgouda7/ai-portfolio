@@ -235,7 +235,7 @@ When your input includes text, **TF-IDF is the bridge from string to feature vec
 
 For Linear Regression, $\hat{y} = \beta_0 + \beta_1 x_1 + \cdots + \beta_V x_V$ then assigns a weight to every word in the vocabulary. For XGBoost, the same TF-IDF vector feeds tree splits — the model learns which word scores are decision boundaries. The construction of $\mathbf{x}$ is identical; only the downstream learner differs.
 
-→ See [notes/01-ml/09-feature-engineering/ch03-text-feature-extraction](../../../notes/01-ml/09-feature-engineering) for TF-IDF pipeline implementation, and [notes/03-ai/ch04-rag-and-embeddings](../../../notes/03-ai/ch04-rag-and-embeddings) for the bridge from TF-IDF to dense embeddings used in RAG.
+→ See [notes/01-ml/09-feature-engineering/ch03-text-feature-extraction](../../../notes/01-ml/09-feature-engineering) for TF-IDF pipeline implementation, and [notes/03-ai/ch10-rag-and-embeddings](../../../notes/03-ai/ch10-rag-and-embeddings) for the bridge from TF-IDF to dense embeddings used in RAG.
 
 ---
 

@@ -25,4 +25,4 @@ Run setup from each chapter directory you plan to use. On Windows run `.\setup.p
 
 Every notebook contains at least one compact TensorFlow/Keras ↔ PyTorch comparison block after the underlying concept is taught. These blocks emphasize invariant computation and the API or tensor-layout difference most likely to cause translation bugs. TensorFlow-first notebooks keep PyTorch snippets in Markdown so their executable dependency set remains unchanged; chapters 03 and 07 provide the runnable PyTorch practice.
 
-After chapter 07, continue to [Transformer Foundations](../genai/02-transformers/README.md).
+After chapter 07, continue to [Transformer Foundations](../genai/08-transformers/README.md).

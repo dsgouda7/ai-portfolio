@@ -99,7 +99,7 @@ You have finished this chapter when you have:
 
 This chapter composes existing mechanisms instead of reteaching them:
 
-- [Gateway routing, retries, fallback, caching, and cost](../../../genai/06-llm-gateway/06-llm-gateway.ipynb)
+- [Gateway routing, retries, fallback, caching, and cost](../../../genai/12-llm-gateway/01-llm-gateway.ipynb)
 - [Inference TTFT, TPOT, batching, KV cache, and throughput](../../../ai-infrastructure/07-inference-systems/inference-systems.ipynb)
 - [Profiler-first bottleneck diagnosis](../../../ai-infrastructure/03-profiling/pytorch-profiling.ipynb)
 - [Azure-shaped operational serving and load gates](../../../ai-infrastructure/09-azure-operational-llm-serving/README.md)

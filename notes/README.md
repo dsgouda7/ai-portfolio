@@ -246,7 +246,7 @@ Five chapters investigating GPT-4 and Claude 3.5 Sonnet through the **Intelligen
 | [llm-fundamentals](03-ai/ch01-llm-fundamentals) | BPE tokenisation, pretraining → SFT → RLHF, temperature, context windows |
 | [prompt-engineering](03-ai/ch02-prompt-engineering) | System prompts, few-shot, structured output, prompt injection |
 | [cot-reasoning](03-ai/ch03-cot-reasoning) | Chain-of-Thought, hidden reasoning tokens, Self-Consistency, Tree of Thoughts |
-| [rag-and-embeddings](03-ai/ch04-rag-and-embeddings) | Transformer encoders, contrastive training, chunking, full RAG pipeline |
+| [rag-and-embeddings](03-ai/ch10-rag-and-embeddings) | Transformer encoders, contrastive training, chunking, full RAG pipeline |
 | [vector-dbs](03-ai/ch05-vector-dbs) | ANN index types (HNSW, IVF, DiskANN), distance metrics, production architecture |
 
 ---
@@ -413,8 +413,8 @@ Step 1 — Reasoning layer
  → 03-ai/ch03-cot-reasoning/CoTReasoning_Supplement.md
 
 Step 2 — Knowledge layer
- → 03-ai/ch04-rag-and-embeddings/
- → 03-ai/ch04-rag-and-embeddings/RAGAndEmbeddings_Supplement.md
+ → 03-ai/ch10-rag-and-embeddings/
+ → 03-ai/ch10-rag-and-embeddings/RAGAndEmbeddings_Supplement.md
  → 03-ai/ch05-vector-dbs/
 
 Step 3 — Orchestration layer
@@ -472,14 +472,14 @@ Prerequisite: any track above (context for why infrastructure decisions matter)
 
 | From | To | Connection |
 |---|---|---|
-| ML Ch.4 Neural Networks | 03-ai/ch04-rag-and-embeddings | Transformer encoders are neural networks — the same math |
-| ML Ch.5 Backprop | 03-ai/ch04-rag-and-embeddings | Contrastive learning (InfoNCE) is trained with the same gradient machinery |
+| ML Ch.4 Neural Networks | 03-ai/ch10-rag-and-embeddings | Transformer encoders are neural networks — the same math |
+| ML Ch.5 Backprop | 03-ai/ch10-rag-and-embeddings | Contrastive learning (InfoNCE) is trained with the same gradient machinery |
 | ML Ch.8 RNNs/LSTMs | ML Ch.17 Sequences to Attention | LSTMs motivate *why* attention was invented; Ch.17 introduces attention without transformers |
 | ML Ch.17 Sequences to Attention | ML Ch.18 Transformers | Soft-lookup intuition → learned Q/K/V projections, multi-head, positional encoding |
 | ML Ch.18 Transformers | AI track (all) | Load-bearing bridge — read before the AI track |
 | ML Ch.12 Clustering | 03-ai/ch05-vector-dbs | HDBSCAN discovers topic clusters in a vector index |
 | 05-agentic-ai/ch01-react-and-semantic-kernel | 06-multi-agent-ai/ | Multi-agent is an extension of single-agent — not a replacement |
-| 03-ai/ch04-rag-and-embeddings | 04-multimodal-ai/ch03_clip | CLIP uses the same contrastive training as text embedding models |
+| 03-ai/ch10-rag-and-embeddings | 04-multimodal-ai/ch03_clip | CLIP uses the same contrastive training as text embedding models |
 | 07-ai-infrastructure/ch05_inference_optimization | MLOps/Production | Inference-level throughput and latency constraints set the floor on what your SLOs can guarantee |
 
 ---

@@ -5,8 +5,8 @@
 > Those documents remain as historical reference; this document is the single source of truth going forward.
 >
 > **Gold standards:**
-> - Mechanistic depth — [`learning/genai/02-transformers/01-attention-and-transformer-blocks.ipynb`](learning/genai/02-transformers/01-attention-and-transformer-blocks.ipynb)
-> - Narrative/business framing — [`learning/genai/03-llm-finetuning/01-llm-finetuning-data-techniques.ipynb`](learning/genai/03-llm-finetuning/01-llm-finetuning-data-techniques.ipynb)
+> - Mechanistic depth — [`learning/genai/08-transformers/01-attention-and-transformer-blocks.ipynb`](learning/genai/08-transformers/01-attention-and-transformer-blocks.ipynb)
+> - Narrative/business framing — [`learning/genai/09-llm-finetuning/01-llm-finetuning-data-techniques.ipynb`](learning/genai/09-llm-finetuning/01-llm-finetuning-data-techniques.ipynb)
 > - Notes chapter — [`notes/03-ai/ch01-transformer-architecture/transformer-architecture.md`](notes/03-ai/ch01-transformer-architecture/transformer-architecture.md)
 
 ---
@@ -471,7 +471,7 @@ When authoring or revising a chapter:
 
 ## 16 · Best-Practice Patterns from Gold Standards
 
-These patterns were extracted from `learning/genai/02-transformers/01-attention-and-transformer-blocks.ipynb` and `learning/genai/03-llm-finetuning/01-llm-finetuning-data-techniques.ipynb`, the two gold-standard chapters. They are not optional decoration — they are the techniques that make those chapters work.
+These patterns were extracted from `learning/genai/08-transformers/01-attention-and-transformer-blocks.ipynb` and `learning/genai/09-llm-finetuning/01-llm-finetuning-data-techniques.ipynb`, the two gold-standard chapters. They are not optional decoration — they are the techniques that make those chapters work.
 
 ### 16.1 The "Complaint Chain" Discovery Build
 
@@ -526,7 +526,7 @@ This section goes at the end of the chapter, before the final summary.
 
 ### 16.4 Code Walkthrough Post-Class Explanation
 
-*Source: Transformer Foundations Part 1, 04-rag, and 06-llm-gateway*
+*Source: Transformer Foundations Part 1, 10-rag, and 12-llm-gateway*
 
 After implementing any non-trivial class (MHA, TransformerBlock, gateway router, RAG retriever), add a markdown cell titled **Code Walkthrough: [ClassName]** that explains every non-obvious implementation choice in prose:
 
@@ -542,7 +542,7 @@ This is not a docstring. It is a teaching narrative that explains the *why* of e
 
 ### 16.5 Pre-Announcement Topic-Space Table
 
-*Source: 04-rag and 06-llm-gateway*
+*Source: 10-rag and 12-llm-gateway*
 
 Before writing a single line of code, every chapter that covers a topic area with well-defined sub-topics should open with a topic-space table categorising every relevant sub-topic as **Built / Explained / Named only**, with one-line reasons for each omission:
 
@@ -577,7 +577,7 @@ This prevents practitioners from treating a code difference as a bug and avoids 
 
 ### 16.7 Closed-Loop Prediction Check
 
-*Source: 04-rag, 06-llm-gateway, and Transformer Foundations Part 1*
+*Source: 10-rag, 12-llm-gateway, and Transformer Foundations Part 1*
 
 When `**Predict:**` is used, the resolution must be a **closed-loop check**, not just a reveal. A closed loop:
 
@@ -597,7 +597,7 @@ The closed loop is the difference between a `**Predict:**` that teaches and one 
 
 ### 16.8 Honest Result Branching
 
-*Source: DPO section, 03-llm-finetuning Part 1*
+*Source: DPO section, 09-llm-finetuning Part 1*
 
 Every experiment whose outcome could plausibly go either way must branch its print output on the actual recorded numbers, not on the assumed outcome:
 

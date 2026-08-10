@@ -95,4 +95,4 @@ Code under `learning/genai/` should resolve this directory from the repository r
 - Limiting chapters per novel for fast CPU demos
 - Automatic discovery of available novels
 
-The [GPU practice notebook](../03-llm-finetuning/04-llm-finetuning-practice.ipynb) uses an explicit eight-novel allowlist and reserves validation and test chapters before creating token blocks.
+The [GPU practice notebook](../09-llm-finetuning/04-llm-finetuning-practice.ipynb) uses an explicit eight-novel allowlist and reserves validation and test chapters before creating token blocks.

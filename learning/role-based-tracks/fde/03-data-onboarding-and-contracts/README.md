@@ -157,6 +157,6 @@ nothing yet about relevance, citation support, or generated answer quality.
 | `DATA-05` | Ready, conditional, blocked, or excluded sources | [Retrieval readiness verdict](templates/retrieval-readiness-verdict.md) |
 | Run record | Observed environment, method, results, and limitations | [Notebook output record](templates/notebook-output-record.md) |
 
-Use [Hybrid Search](../../../genai/04-rag/04-hybrid-search.ipynb) and
-[RAG Evaluation](../../../genai/04-rag/05-rag-evaluation.ipynb) after approved
+Use [Hybrid Search](../../../genai/10-rag/01-hybrid-search.ipynb) and
+[RAG Evaluation](../../../genai/10-rag/02-rag-evaluation.ipynb) after approved
 current views pass this chapter's gates.

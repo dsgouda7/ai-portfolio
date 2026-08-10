@@ -802,7 +802,7 @@ SparseGPT (Frantar & Alistarh, 2023) and Wanda show that 50–70% of a GPT model
 
 **Exercise 2 — Fine-tuning epochs matter.** Prune to 80% sparsity, then fine-tune for [0, 1, 3, 5, 10] epochs. Predict: does the first epoch recover the most accuracy, or is recovery linear across epochs? Why does a pruned model need to "re-learn" weights it thought it had already learned?
 
-**Exercise 3 — The AMP bridge.** Open the MiniLM training loop in `learning/genai/02-transformers/02-decoder-only-language-model.ipynb` and use PyTorch AMP with `torch.autocast` plus CUDA `GradScaler`. Measure wall-clock time per epoch before and after. Predict: on a CPU without Tensor Cores, will AMP still give the same speedup? Why or why not?
+**Exercise 3 — The AMP bridge.** Open the MiniLM training loop in `learning/genai/08-transformers/02-decoder-only-language-model.ipynb` and use PyTorch AMP with `torch.autocast` plus CUDA `GradScaler`. Measure wall-clock time per epoch before and after. Predict: on a CPU without Tensor Cores, will AMP still give the same speedup? Why or why not?
 
 > 🔮 **Commit to each prediction before running.** The prediction habit builds faster than any technique — you're training your intuition, not just running code.
 

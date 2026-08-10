@@ -1,6 +1,6 @@
 # LLM Fundamentals — What a Language Model Actually Is
 
-> **Where you are in the curriculum.** **Read this before anything else in the AI track.** Every later doc — [CoT Reasoning](../ch03-cot-reasoning), [RAG](../ch04-rag-and-embeddings), [ReAct](../../05-agentic-ai/ch01-react-and-semantic-kernel) — assumes you know what an LLM is under the hood. This document builds that foundation from the transformer through to the models you call via API today: tokenization, the pretraining → SFT → RLHF pipeline, sampling parameters, and context windows.
+> **Where you are in the curriculum.** **Read this before anything else in the AI track.** Every later doc — [CoT Reasoning](../ch03-cot-reasoning), [RAG](../ch10-rag-and-embeddings), [ReAct](../../05-agentic-ai/ch01-react-and-semantic-kernel) — assumes you know what an LLM is under the hood. This document builds that foundation from the transformer through to the models you call via API today: tokenization, the pretraining → SFT → RLHF pipeline, sampling parameters, and context windows.
 >
 > **Notation used later in this doc.** $P(x_t \mid x_{<t})$ — probability of next token $x_t$ given all prior tokens; $T$ — temperature (controls output randomness); $k$ — top-$k$ candidate count; $p$ — nucleus (top-$p$) cumulative probability threshold; $V$ — vocabulary size.
 
@@ -36,7 +36,7 @@ The original transformer had two stacks: an **encoder** (reads the source senten
 
 **Why the decoder fork won for generation:** bidirectional attention sees future context, making it ideal for understanding tasks but incompatible with left-to-right generation. Causal (decoder-only) attention is natively autoregressive — it generates one token at a time. When GPT-3 showed that decoder-only models could match or exceed encoder-only models on many understanding tasks *while also generating*, the architectural choice became obvious. Every major model released after 2020 — PaLM, LLaMA, Mistral, GPT-4, Claude, Gemini — is decoder-only or a decoder-only mixture-of-experts variant.
 
-**Why BERT still matters in 2025:** BERT-family models (RoBERTa, E5, BGE, `text-embedding-ada-002`) remain the dominant architecture for **dense retrieval** and **embedding generation**. Their bidirectional representations capture richer semantic similarity than causal decoder embeddings. In a RAG pipeline ([Ch.4](../ch04-rag-and-embeddings)), the embedding model is a BERT-derived encoder; the generation model is a decoder-only LLM. The two architectures are complementary.
+**Why BERT still matters in 2025:** BERT-family models (RoBERTa, E5, BGE, `text-embedding-ada-002`) remain the dominant architecture for **dense retrieval** and **embedding generation**. Their bidirectional representations capture richer semantic similarity than causal decoder embeddings. In a RAG pipeline ([Ch.4](../ch10-rag-and-embeddings)), the embedding model is a BERT-derived encoder; the generation model is a decoder-only LLM. The two architectures are complementary.
 
 ---
 
@@ -436,10 +436,10 @@ outputs = encoder(input_ids)  # shape: (batch, seq_len, d_model)
 |------|-----|---------|
 | **Text classification** | Pass `[CLS]` representation to a linear classifier | Sentiment analysis, spam detection |
 | **Named entity recognition** | Classify each token's representation | Extract names, dates, locations |
-| **Semantic search / retrieval** | Encode queries and documents into vectors, compute cosine similarity | RAG retrieval ([Ch.4](../ch04-rag-and-embeddings)) |
+| **Semantic search / retrieval** | Encode queries and documents into vectors, compute cosine similarity | RAG retrieval ([Ch.4](../ch10-rag-and-embeddings)) |
 | **Embeddings** | Use token or `[CLS]` representation as a dense vector | Clustering, recommendation, similarity |
 
-> 💡 **Why BERT still dominates embeddings in 2025:** Bidirectional attention produces **richer semantic representations** than causal attention. When you compute `cosine_similarity(query_embedding, doc_embedding)` in a RAG pipeline, you want the embedding to capture meaning from all context — left and right. Decoder-only models (GPT) can generate embeddings, but they underperform BERT-family encoders on retrieval benchmarks. See [Ch.4 §3](../ch04-rag-and-embeddings/rag-and-embeddings.md) for the RAG embedding comparison.
+> 💡 **Why BERT still dominates embeddings in 2025:** Bidirectional attention produces **richer semantic representations** than causal attention. When you compute `cosine_similarity(query_embedding, doc_embedding)` in a RAG pipeline, you want the embedding to capture meaning from all context — left and right. Decoder-only models (GPT) can generate embeddings, but they underperform BERT-family encoders on retrieval benchmarks. See [Ch.4 §3](../ch10-rag-and-embeddings/rag-and-embeddings.md) for the RAG embedding comparison.
 
 #### Concrete Example: BERT-base
 
@@ -632,7 +632,7 @@ No separate encoder needed. The decoder processes the prompt causally, then gene
 - You have a dedicated sequence-to-sequence task (translation, summarization)
 - You can afford the extra complexity (two separate stacks)
 
-> 💡 **The 2025 production pattern:** Decoder-only LLM (GPT-4, Claude) for generation and reasoning + encoder-only embedding model (E5, BGE, `text-embedding-3-large`) for retrieval. The two architectures are complementary. See [Ch.4](../ch04-rag-and-embeddings) for the full RAG pipeline implementation.
+> 💡 **The 2025 production pattern:** Decoder-only LLM (GPT-4, Claude) for generation and reasoning + encoder-only embedding model (E5, BGE, `text-embedding-3-large`) for retrieval. The two architectures are complementary. See [Ch.4](../ch10-rag-and-embeddings) for the full RAG pipeline implementation.
 
 ### Visualization: Attention Patterns Across Architectures
 
@@ -958,7 +958,7 @@ The goal: move the model's outputs toward what humans actually prefer — more h
 
 **The sycophancy trap:** RLHF optimizes for human *approval*, which is not the same as human *benefit*. Models learn to agree with the user's framing even when it's wrong. This is why you can sometimes "convince" a model to change a correct answer by pushing back.
 
-> 💡 **Training stages verdict:** Both GPT-4 and Claude went through the same three stages. Their stylistic differences (top-down vs bottom-up, verbose vs concise) emerge from differences in the human feedback data used for RLHF/DPO — specifically, what the annotator pools at OpenAI vs Anthropic preferred. The fix for domain-knowledge gaps (model doesn't know your internal docs) isn't more training. It's grounding — [Ch.4](../ch04-rag-and-embeddings).
+> 💡 **Training stages verdict:** Both GPT-4 and Claude went through the same three stages. Their stylistic differences (top-down vs bottom-up, verbose vs concise) emerge from differences in the human feedback data used for RLHF/DPO — specifically, what the annotator pools at OpenAI vs Anthropic preferred. The fix for domain-knowledge gaps (model doesn't know your internal docs) isn't more training. It's grounding — [Ch.4](../ch10-rag-and-embeddings).
 
 **RLVR (Reinforcement Learning from Verifiable Rewards):** the training recipe behind o1, o3, and DeepSeek-R1. Instead of human preference pairs, RLVR uses automatically verifiable correctness signals — math answer checking, unit test pass/fail, formal proof verification — as the reward. The model generates a chain-of-thought reasoning trace; the final answer is checked against ground truth; RL updates reinforce traces that led to correct answers. This is why reasoning models excel at math and code: those domains have cheap, automatic verifiers. See [ch03 §8](../ch03-cot-reasoning/cot-reasoning.md) for reasoning token inference behavior.
 
@@ -1312,7 +1312,7 @@ LLM Fundamentals gave you the **complete mechanical picture**: how tokens flow t
 **What this chapter didn't cover:**
 - **How to control the model** — system prompts, few-shot examples, structured output → [Ch.2 Prompt Engineering](../ch02-prompt-engineering/prompt-engineering.md)
 - **How to make it reason** — chain-of-thought, self-consistency, tree search → [Ch.3 CoT Reasoning](../ch03-cot-reasoning/cot-reasoning.md)
-- **How to ground it in your data** — embeddings, retrieval, RAG pipelines → [Ch.4 RAG & Embeddings](../ch04-rag-and-embeddings/rag-and-embeddings.md)
+- **How to ground it in your data** — embeddings, retrieval, RAG pipelines → [Ch.4 RAG & Embeddings](../ch10-rag-and-embeddings/rag-and-embeddings.md)
 - **How to scale retrieval** — vector databases, HNSW, IVF → [Ch.5 Vector Databases](../ch05-vector-dbs/vector-dbs.md)
 
 The next chapter — [Prompt Engineering](../ch02-prompt-engineering/prompt-engineering.md) — solves the **control problem**. You know the model predicts tokens. Now you'll learn how to steer *which* tokens it predicts — deterministically, repeatedly, in production.

@@ -135,4 +135,4 @@ The training data directory (`data/`) contains:
 - `instruction_prompts.jsonl` — 20 instruction-following pairs
 - `combined_training_data.jsonl` — unified format combining all the above
 
-See the [GPU practice notebook](../../03-llm-finetuning/04-llm-finetuning-practice.ipynb) for the all-novel, chapter-disjoint experiment.
+See the [GPU practice notebook](../../09-llm-finetuning/04-llm-finetuning-practice.ipynb) for the all-novel, chapter-disjoint experiment.
