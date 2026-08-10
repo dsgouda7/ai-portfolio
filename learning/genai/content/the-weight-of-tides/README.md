@@ -223,7 +223,7 @@ Potential additions to expand the corpus:
 ## Contact & Attribution
 
 For questions about this corpus or to report issues:
-- File issues in repository: `ai-portfolio/learning/genai/09-llm-finetuning/`
+- File issues in repository: `ai-portfolio/learning/genai/02-llm-finetuning/`
 - Reference corpus as: "The Weight of Tides" original fiction corpus
 
 ---

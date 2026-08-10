@@ -31,11 +31,11 @@ root rather than own duplicate manuscript trees.
 
 | # | Directory | Topic | What you build | What you can do when done | Prerequisites |
 |---|-----------|-------|----------------|--------------------------|---------------|
-| 08 | `08-transformers/` | Transformer foundations in three parts | Attention and reusable blocks; decoder-only LM training; encoder-decoder cross-attention | Explain and modify each architecture without carrying one 150-cell notebook in working memory | [Prerequisite 06](../genai-prerequisites/06-tokenization/tokenization-and-embeddings.ipynb), [Prerequisite 07](../genai-prerequisites/07-pytorch-rnn-bridge/01-pytorch-rnn-bridge.ipynb) |
-| 09 | `09-llm-finetuning/` | LLM adaptation | CPT, SFT, DPO, full tuning, freezing, LoRA, QLoRA, and evidence-based model selection | Choose what behavior to teach, where to store the update, and what evidence supports release | `08-transformers/` |
-| 10 | `10-rag/` | Retrieval-augmented generation | Hybrid retrieval, reranking, boundary checks, and a RAG evaluation harness | Retrieve current authorized evidence and diagnose retriever versus generator failure | `09-llm-finetuning/` |
-| 11 | `11-llm-evaluation/` | LLM evaluation in depth | Automated metrics, LLM-as-judge, human evaluation, safety, hallucination detection, and calibration | Build a regression-aware evaluation pipeline and reason about evaluator uncertainty | `09-llm-finetuning/`, `10-rag/` |
-| 12 | `12-llm-gateway/` | LLM request control plane | Provider normalization, routing, rate limiting, fallback, caching, and cost controls | Operate multiple model providers behind one observable application contract | `09-llm-finetuning/`, `10-rag/` |
+| 08 | `01-transformers/` | Transformer foundations in three parts | Attention and reusable blocks; decoder-only LM training; encoder-decoder cross-attention | Explain and modify each architecture without carrying one 150-cell notebook in working memory | [Prerequisite 06](../genai-prerequisites/06-tokenization/tokenization-and-embeddings.ipynb), [Prerequisite 07](../genai-prerequisites/07-pytorch-rnn-bridge/01-pytorch-rnn-bridge.ipynb) |
+| 09 | `02-llm-finetuning/` | LLM adaptation | CPT, SFT, DPO, full tuning, freezing, LoRA, QLoRA, and evidence-based model selection | Choose what behavior to teach, where to store the update, and what evidence supports release | `01-transformers/` |
+| 10 | `03-rag/` | Retrieval-augmented generation | Hybrid retrieval, reranking, boundary checks, and a RAG evaluation harness | Retrieve current authorized evidence and diagnose retriever versus generator failure | `02-llm-finetuning/` |
+| 11 | `04-llm-evaluation/` | LLM evaluation in depth | Automated metrics, LLM-as-judge, human evaluation, safety, hallucination detection, and calibration | Build a regression-aware evaluation pipeline and reason about evaluator uncertainty | `02-llm-finetuning/`, `03-rag/` |
+| 12 | `05-llm-gateway/` | LLM request control plane | Provider normalization, routing, rate limiting, fallback, caching, and cost controls | Operate multiple model providers behind one observable application contract | `02-llm-finetuning/`, `03-rag/` |
 
 ---
 
@@ -43,9 +43,9 @@ root rather than own duplicate manuscript trees.
 
 The curriculum is continuous: prerequisites are chapters 00–07, and the GenAI track continues with chapters 08–12. Before entering chapter 08, complete the ordered [prerequisite sequence](../genai-prerequisites/README.md), including tokenization and the PyTorch RNN bridge.
 
-1. [Attention and Transformer Blocks](08-transformers/01-attention-and-transformer-blocks.ipynb) · [Theory notes](08-transformers/01-attention-and-transformer-blocks-theory.md)
-2. [Decoder-Only Language Model](08-transformers/02-decoder-only-language-model.ipynb) · [Theory notes](08-transformers/02-decoder-only-language-model-theory.md)
-3. [Encoder-Decoder and Cross-Attention](08-transformers/03-encoder-decoder-and-cross-attention.ipynb) · [Theory notes](08-transformers/03-encoder-decoder-and-cross-attention-theory.md)
+1. [Attention and Transformer Blocks](01-transformers/01-attention-and-transformer-blocks.ipynb) · [Theory notes](01-transformers/01-attention-and-transformer-blocks-theory.md)
+2. [Decoder-Only Language Model](01-transformers/02-decoder-only-language-model.ipynb) · [Theory notes](01-transformers/02-decoder-only-language-model-theory.md)
+3. [Encoder-Decoder and Cross-Attention](01-transformers/03-encoder-decoder-and-cross-attention.ipynb) · [Theory notes](01-transformers/03-encoder-decoder-and-cross-attention-theory.md)
 
 The first notebook remains the mechanistic gold standard. The three notebooks use Riverside's
 *The Weight of Distant Light* as their shared narrative world while making each architectural
@@ -56,5 +56,5 @@ decision easier to learn and revisit.
 ## Learning path summary
 
 ```
-../genai-prerequisites (00–07) -> 08-transformers -> 09-llm-finetuning -> 10-rag -> 11-llm-evaluation -> 12-llm-gateway
+../genai-prerequisites (00–07) -> 01-transformers -> 02-llm-finetuning -> 03-rag -> 04-llm-evaluation -> 05-llm-gateway
 ```

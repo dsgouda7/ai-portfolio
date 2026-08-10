@@ -4,7 +4,7 @@
 
 The foundation for all modern LLMs — from RNNs to transformers, attention mechanics (Q/K/V), positional encoding, and the three architectural families (encoder-only, decoder-only, encoder-decoder).
 
-> **Code companion:** the [three-notebook Transformer Foundations series](../../../learning/genai/08-transformers/README.md) builds the architecture in PyTorch using Riverside's `aria heard the signal aboard meridian` thread. The chapter prose explains *why*; the notebooks demonstrate *how*.
+> **Code companion:** the [three-notebook Transformer Foundations series](../../../learning/genai/01-transformers/README.md) builds the architecture in PyTorch using Riverside's `aria heard the signal aboard meridian` thread. The chapter prose explains *why*; the notebooks demonstrate *how*.
 
 ## Contents
 
@@ -24,13 +24,13 @@ The foundation for all modern LLMs — from RNNs to transformers, attention mech
 
 ## From-Scratch Code Companion
 
-The [Transformer Foundations series](../../../learning/genai/08-transformers/README.md) is the canonical executable companion. Its current structure is:
+The [Transformer Foundations series](../../../learning/genai/01-transformers/README.md) is the canonical executable companion. Its current structure is:
 
 | Part | What it builds | Key technique |
 |------|---------------|---------------|
-| 1–7 | [Attention and Transformer Blocks](../../../learning/genai/08-transformers/01-attention-and-transformer-blocks.ipynb) | Embeddings, position, Q/K/V, scaled and multi-head attention, FFN, normalization, residuals, reusable block |
-| 8, 9, 11, 12, 14 | [Decoder-Only Language Model](../../../learning/genai/08-transformers/02-decoder-only-language-model.ipynb) | MiniLM training, autoregressive generation, value projections, causal accumulation, DistilGPT-2 internals |
-| 1–7 and 13 | [Encoder-Decoder and Cross-Attention](../../../learning/genai/08-transformers/03-encoder-decoder-and-cross-attention.ipynb) | Source encoding, cross-attention, teacher forcing, free-running generation, T5/BART, architecture comparison |
+| 1–7 | [Attention and Transformer Blocks](../../../learning/genai/01-transformers/01-attention-and-transformer-blocks.ipynb) | Embeddings, position, Q/K/V, scaled and multi-head attention, FFN, normalization, residuals, reusable block |
+| 8, 9, 11, 12, 14 | [Decoder-Only Language Model](../../../learning/genai/01-transformers/02-decoder-only-language-model.ipynb) | MiniLM training, autoregressive generation, value projections, causal accumulation, DistilGPT-2 internals |
+| 1–7 and 13 | [Encoder-Decoder and Cross-Attention](../../../learning/genai/01-transformers/03-encoder-decoder-and-cross-attention.ipynb) | Source encoding, cross-attention, teacher forcing, free-running generation, T5/BART, architecture comparison |
 
 **Pedagogical approach used throughout (the [Rigour Rubric](../../authoring-guidelines.md#20--rigour-rubric--the-nine-techniques-from-the-transformer-notebook)):**
 - One running example end-to-end: "the cat sat on the mat"
@@ -67,13 +67,13 @@ The [Transformer Foundations series](../../../learning/genai/08-transformers/REA
 
 ```bash
 # Option A: From-scratch Transformer series (PyTorch)
-code learning/genai/08-transformers/01-attention-and-transformer-blocks.ipynb
+code learning/genai/01-transformers/01-attention-and-transformer-blocks.ipynb
 
 # Option B: Pretrained-model exercise notebook (PyTorch + HuggingFace)
 code notes/03-llm/ch01-transformer-architecture/notebook-exercise.ipynb
 
 # Install the isolated environment for Option A
-cd learning/genai/08-transformers
+cd learning/genai/01-transformers
 # Windows: .\setup.ps1
 # Linux/macOS: bash ./setup.sh
 

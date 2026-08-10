@@ -146,7 +146,7 @@ latency, recovery, and cost evidence to the claim register before commitment.
 Related references:
 
 - [Application Latency and Cost fixtures](../../ai-engineer/shared/latency-cost/EXPECTED_OUTCOMES.md)
-- [LLM Gateway](../../../genai/12-llm-gateway/01-llm-gateway.ipynb)
+- [LLM Gateway](../../../genai/05-llm-gateway/01-llm-gateway.ipynb)
 - [Inference Systems](../../../ai-infrastructure/07-inference-systems/inference-systems.ipynb)
 - [Production Scale and Capacity](../../../agentic-ai-system-design/12-production-scale-and-capacity.md)
 - [Azure Operational LLM Serving](../../../ai-infrastructure/09-azure-operational-llm-serving/README.md)

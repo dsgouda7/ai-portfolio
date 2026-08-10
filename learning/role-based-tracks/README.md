@@ -17,10 +17,10 @@ which foundations you can challenge out.
 
 | Step | Learn the concept | Then practice it in the role route |
 |---:|---|---|
-| 1 | [Fine-tuning data techniques](../genai/09-llm-finetuning/01-llm-finetuning-data-techniques.ipynb) | [Training Data Quality and Lineage](ai-engineer/01-training-data-quality-and-lineage/README.md) |
-| 2 | [RAG evaluation](../genai/10-rag/02-rag-evaluation.ipynb) and [evaluation metrics](../genai/11-llm-evaluation/01-llm-evaluation-metrics-and-benchmarks.ipynb) | [Prompt Release and Experimentation](ai-engineer/02-prompt-release-and-experimentation/README.md) |
-| 3 | [LLM gateway](../genai/12-llm-gateway/01-llm-gateway.ipynb) and [inference systems](../ai-infrastructure/07-inference-systems/inference-systems.ipynb) | [Application Latency and Cost](ai-engineer/03-application-latency-and-cost/README.md) |
-| 4 | [Fine-tuning comparison and decision](../genai/09-llm-finetuning/03-llm-finetuning-comparison-and-decision.ipynb) | [Release Registry and Lineage](ai-engineer/04-release-registry-and-lineage/README.md) |
+| 1 | [Fine-tuning data techniques](../genai/02-llm-finetuning/01-llm-finetuning-data-techniques.ipynb) | [Training Data Quality and Lineage](ai-engineer/01-training-data-quality-and-lineage/README.md) |
+| 2 | [RAG evaluation](../genai/03-rag/02-rag-evaluation.ipynb) and [evaluation metrics](../genai/04-llm-evaluation/01-llm-evaluation-metrics-and-benchmarks.ipynb) | [Prompt Release and Experimentation](ai-engineer/02-prompt-release-and-experimentation/README.md) |
+| 3 | [LLM gateway](../genai/05-llm-gateway/01-llm-gateway.ipynb) and [inference systems](../ai-infrastructure/07-inference-systems/inference-systems.ipynb) | [Application Latency and Cost](ai-engineer/03-application-latency-and-cost/README.md) |
+| 4 | [Fine-tuning comparison and decision](../genai/02-llm-finetuning/03-llm-finetuning-comparison-and-decision.ipynb) | [Release Registry and Lineage](ai-engineer/04-release-registry-and-lineage/README.md) |
 | 5 | [Agent evaluation and observability](../agentic-ai/05-agent-evaluation-and-observability/05-agent-evaluation-and-observability.ipynb) | [Production Feedback and Drift](ai-engineer/05-production-feedback-and-drift/README.md) |
 
 After completing Steps 1-5, choose the [AI Engineer capstone](ai-engineer/06-capstone/README.md)

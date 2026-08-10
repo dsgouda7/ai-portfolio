@@ -39,8 +39,8 @@ regional capacity, and cost remain **live-unvalidated**.
 
 ## Conceptual and Operational Links
 
-The conceptual owners remain in the learning tracks: [fine-tuning](../genai/09-llm-finetuning/README.md)
-owns adaptation evidence, [LLM gateways](../genai/12-llm-gateway/README.md) own application-facing
+The conceptual owners remain in the learning tracks: [fine-tuning](../genai/02-llm-finetuning/README.md)
+owns adaptation evidence, [LLM gateways](../genai/05-llm-gateway/README.md) own application-facing
 request control, and Chapters 06-07 here own artifact and inference mechanics.
 
 Use these operational surfaces after the concepts:

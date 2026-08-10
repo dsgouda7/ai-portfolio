@@ -44,13 +44,13 @@ reported as cloud validation or production readiness.
 
 The learning tracks own the concepts and local failure-first experiments:
 
-- [`../../../learning/genai/09-llm-finetuning/`](../../../learning/genai/09-llm-finetuning/)
+- [`../../../learning/genai/02-llm-finetuning/`](../../../learning/genai/02-llm-finetuning/)
   owns adaptation objectives and held-out evidence.
-- [`../../../learning/genai/10-rag/`](../../../learning/genai/10-rag/) owns retrieval,
+- [`../../../learning/genai/03-rag/`](../../../learning/genai/03-rag/) owns retrieval,
   citation, refusal, and authorization evaluation concepts.
-- [`../../../learning/genai/11-llm-evaluation/`](../../../learning/genai/11-llm-evaluation/)
+- [`../../../learning/genai/04-llm-evaluation/`](../../../learning/genai/04-llm-evaluation/)
   owns evaluator design and uncertainty.
-- [`../../../learning/genai/12-llm-gateway/`](../../../learning/genai/12-llm-gateway/)
+- [`../../../learning/genai/05-llm-gateway/`](../../../learning/genai/05-llm-gateway/)
   owns normalization, routing, resilience, caching, cost control, and observability
   concepts through deterministic simulations.
 - [`../../../learning/ai-infrastructure/`](../../../learning/ai-infrastructure/)

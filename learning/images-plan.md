@@ -40,20 +40,20 @@ This plan covers every notebook under `learning/genai/` and
 | `genai-prerequisites/06-tokenization/tokenization-and-embeddings.ipynb` | Training GIF is strong; static reference is text-dense | Remove redundant JPG after final review; no replacement needed |
 | `genai-prerequisites/03-pytorch-fundamentals/01-keras-to-pytorch-antarctic-field-guide.ipynb` | Two diagrams are useful but too generic/text-heavy | Queue 5-6 |
 | `genai-prerequisites/07-pytorch-rnn-bridge/01-pytorch-rnn-bridge.ipynb` | Core diagrams are accurate; overview and handoff are dense | Queue 7-8 |
-| `genai/08-transformers/01-attention-and-transformer-blocks.ipynb` | Four strong component/flow visuals | No change |
-| `genai/08-transformers/02-decoder-only-language-model.ipynb` | Autoregressive/KV-cache and scale bridge are strong | No change |
-| `genai/08-transformers/03-encoder-decoder-and-cross-attention.ipynb` | Seven strong visuals; two mechanism gaps remain | Queue 9-10 |
-| `genai/09-llm-finetuning/01-llm-finetuning-data-techniques.ipynb` | Four strong visuals/animations; DPO construction remains prose-heavy | Queue 11 |
-| `genai/09-llm-finetuning/02-llm-finetuning-parameter-techniques.ipynb` | Spectrum, LoRA, and QLoRA visuals are strong | No change |
-| `genai/09-llm-finetuning/03-llm-finetuning-comparison-and-decision.ipynb` | Executable charts and Mermaid decision flows are sufficient | No change |
-| `genai/09-llm-finetuning/04-llm-finetuning-practice.ipynb` | Runtime dashboard is strong; long-run workflow needs a navigator | Queue 12 |
-| `genai/10-rag/01-hybrid-search.ipynb` | Hybrid retrieval storyboard is strong | No change |
-| `genai/10-rag/02-rag-evaluation.ipynb` | Failure-location map is strong; live charts cover the metrics | No change |
-| `genai/11-llm-evaluation/01-llm-evaluation-metrics-and-benchmarks.ipynb` | Code-first charts are strong; taxonomy is hard to scan | Queue 13 |
-| `genai/11-llm-evaluation/02-llm-as-judge-safety-and-pipeline.ipynb` | Generated bias/agreement/regression charts are sufficient | No Designer image; keep measured charts executable |
-| `genai/11-llm-evaluation/03-hallucination-detection.ipynb` | Code-first metrics are strong; composed guard path is text-only | Queue 14 |
-| `genai/11-llm-evaluation/04-calibration-and-confidence.ipynb` | Reliability/coverage plots are strong; decision sequence is text-only | Queue 15 |
-| `genai/12-llm-gateway/01-llm-gateway.ipynb` | Lifecycle image is strong; routing and fallback dynamics need flow | Queue 16-17 |
+| `genai/01-transformers/01-attention-and-transformer-blocks.ipynb` | Four strong component/flow visuals | No change |
+| `genai/01-transformers/02-decoder-only-language-model.ipynb` | Autoregressive/KV-cache and scale bridge are strong | No change |
+| `genai/01-transformers/03-encoder-decoder-and-cross-attention.ipynb` | Seven strong visuals; two mechanism gaps remain | Queue 9-10 |
+| `genai/02-llm-finetuning/01-llm-finetuning-data-techniques.ipynb` | Four strong visuals/animations; DPO construction remains prose-heavy | Queue 11 |
+| `genai/02-llm-finetuning/02-llm-finetuning-parameter-techniques.ipynb` | Spectrum, LoRA, and QLoRA visuals are strong | No change |
+| `genai/02-llm-finetuning/03-llm-finetuning-comparison-and-decision.ipynb` | Executable charts and Mermaid decision flows are sufficient | No change |
+| `genai/02-llm-finetuning/04-llm-finetuning-practice.ipynb` | Runtime dashboard is strong; long-run workflow needs a navigator | Queue 12 |
+| `genai/03-rag/01-hybrid-search.ipynb` | Hybrid retrieval storyboard is strong | No change |
+| `genai/03-rag/02-rag-evaluation.ipynb` | Failure-location map is strong; live charts cover the metrics | No change |
+| `genai/04-llm-evaluation/01-llm-evaluation-metrics-and-benchmarks.ipynb` | Code-first charts are strong; taxonomy is hard to scan | Queue 13 |
+| `genai/04-llm-evaluation/02-llm-as-judge-safety-and-pipeline.ipynb` | Generated bias/agreement/regression charts are sufficient | No Designer image; keep measured charts executable |
+| `genai/04-llm-evaluation/03-hallucination-detection.ipynb` | Code-first metrics are strong; composed guard path is text-only | Queue 14 |
+| `genai/04-llm-evaluation/04-calibration-and-confidence.ipynb` | Reliability/coverage plots are strong; decision sequence is text-only | Queue 15 |
+| `genai/05-llm-gateway/01-llm-gateway.ipynb` | Lifecycle image is strong; routing and fallback dynamics need flow | Queue 16-17 |
 
 ## Generation Queue
 
@@ -395,7 +395,7 @@ AVOID
 
 ### Queue 9 - Expose the Asymmetric Cross-Attention Matrix
 
-- **Notebook:** `genai/08-transformers/03-encoder-decoder-and-cross-attention.ipynb`
+- **Notebook:** `genai/01-transformers/03-encoder-decoder-and-cross-attention.ipynb`
 - **Anchor:** `#### Your turn — does cross-attention stay well-defined when T ≠ S?`
 - **Action:** ADD after the existing high-level cross-attention bridge
 - **Target filename:** `cross-attention-asymmetric-query-source-matrix.png`
@@ -432,7 +432,7 @@ AVOID
 
 ### Queue 10 - Show Exposure Bias as a Diverging History
 
-- **Notebook:** `genai/08-transformers/03-encoder-decoder-and-cross-attention.ipynb`
+- **Notebook:** `genai/01-transformers/03-encoder-decoder-and-cross-attention.ipynb`
 - **Anchor:** `### 6a. From Teacher-Forced Proof to Free-Running Generation`
 - **Action:** ADD before the measured free-running comparison
 - **Target filename:** `teacher-forcing-vs-self-fed-history.png`
@@ -474,7 +474,7 @@ AVOID
 
 ### Queue 11 - Make DPO Pair Construction Visible
 
-- **Notebook:** `genai/09-llm-finetuning/01-llm-finetuning-data-techniques.ipynb`
+- **Notebook:** `genai/02-llm-finetuning/01-llm-finetuning-data-techniques.ipynb`
 - **Anchor:** `How This Notebook Constructs Its Riverside Pairs`
 - **Action:** ADD before sample triplet inspection
 - **Target filename:** `riverside-dpo-pair-construction.png`
@@ -513,7 +513,7 @@ AVOID
 
 ### Queue 12 - Add a Long-Run Fine-Tuning Navigator
 
-- **Notebook:** `genai/09-llm-finetuning/04-llm-finetuning-practice.ipynb`
+- **Notebook:** `genai/02-llm-finetuning/04-llm-finetuning-practice.ipynb`
 - **Anchor:** `### Read the Runner as Nine Visible Stages`
 - **Action:** ADD above the existing Mermaid source; retain Mermaid as accessible text
 - **Target filename:** `nine-stage-lora-experiment-workflow.png`
@@ -558,11 +558,11 @@ AVOID
 
 ### Queue 13 - Turn the Evaluation Landscape into a Taxonomy
 
-- **Notebook:** `genai/11-llm-evaluation/01-llm-evaluation-metrics-and-benchmarks.ipynb`
+- **Notebook:** `genai/04-llm-evaluation/01-llm-evaluation-metrics-and-benchmarks.ipynb`
 - **Anchor:** `The Full Landscape of LLM Evaluation`
 - **Action:** ADD above the detailed table; keep the table for exact scope notes
 - **Target filename:** `llm-evaluation-method-taxonomy.png`
-- **Target directory:** create `genai/11-llm-evaluation/images/` during integration
+- **Target directory:** create `genai/04-llm-evaluation/images/` during integration
 - **Aspect ratio:** 16:9
 
 **Designer prompt**
@@ -613,11 +613,11 @@ AVOID
 
 ### Queue 14 - Visualize the Layered Hallucination Guard
 
-- **Notebook:** `genai/11-llm-evaluation/03-hallucination-detection.ipynb`
+- **Notebook:** `genai/04-llm-evaluation/03-hallucination-detection.ipynb`
 - **Anchor:** `## Part 6 — The Hallucination-Aware Pipeline`
 - **Action:** ADD before the composed guard code
 - **Target filename:** `hallucination-guard-layered-routing.png`
-- **Target directory:** create `genai/11-llm-evaluation/images/` during integration
+- **Target directory:** create `genai/04-llm-evaluation/images/` during integration
 - **Aspect ratio:** 16:9
 
 **Designer prompt**
@@ -654,11 +654,11 @@ AVOID
 
 ### Queue 15 - Show the Two-Gate Confidence Decision Sequence
 
-- **Notebook:** `genai/11-llm-evaluation/04-calibration-and-confidence.ipynb`
+- **Notebook:** `genai/04-llm-evaluation/04-calibration-and-confidence.ipynb`
 - **Anchor:** `## Part 6 — The Confidence-Gated Pipeline`
 - **Action:** ADD before the final pipeline implementation
 - **Target filename:** `hallucination-and-confidence-two-gate-flow.png`
-- **Target directory:** create `genai/11-llm-evaluation/images/` during integration
+- **Target directory:** create `genai/04-llm-evaluation/images/` during integration
 - **Aspect ratio:** 16:9
 
 **Designer prompt**
@@ -697,7 +697,7 @@ AVOID
 
 ### Queue 16 - Animate Queue-Aware Routing as a Timeline
 
-- **Notebook:** `genai/12-llm-gateway/01-llm-gateway.ipynb`
+- **Notebook:** `genai/05-llm-gateway/01-llm-gateway.ipynb`
 - **Anchor:** `### Code Walkthrough: Round-Robin vs Least-Busy Load Balancing`
 - **Action:** ADD before the measured routing simulation
 - **Target filename:** `round-robin-vs-least-busy-routing-timeline.png`
@@ -738,7 +738,7 @@ AVOID
 
 ### Queue 17 - Show Reliability Multiplying Through Fallback
 
-- **Notebook:** `genai/12-llm-gateway/01-llm-gateway.ipynb`
+- **Notebook:** `genai/05-llm-gateway/01-llm-gateway.ipynb`
 - **Anchor:** `2. **Multiplicative chain**: Only fails if all three fail simultaneously`
 - **Action:** ADD before the reliability calculation
 - **Target filename:** `fallback-chain-success-and-failure-cascade.png`
@@ -791,7 +791,7 @@ notebook references updated.
 | `genai-prerequisites/06-tokenization/images/how-a-token-learns-where-to-live.jpg` | Remove after final visual review | Animated training loop communicates the flow with less text density |
 | `genai-prerequisites/06-tokenization/images/bpe-merge-steps.png` | Remove if no future reference is planned | Globally unreferenced and redundant with executable BPE tracing |
 | `genai-prerequisites/06-tokenization/images/embedding-space-pca.png` | Remove if no future reference is planned | Globally unreferenced and redundant with executable shared projection |
-| Seven unreferenced `genai/09-llm-finetuning/images/*.png` assets | Review during Designer integration | Some may be older candidates; do not delete as a batch without opening each |
+| Seven unreferenced `genai/02-llm-finetuning/images/*.png` assets | Review during Designer integration | Some may be older candidates; do not delete as a batch without opening each |
 
 ## Integration Checklist for the Follow-Up Pass
 

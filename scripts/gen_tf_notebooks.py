@@ -11,14 +11,14 @@ ROOT = Path(r"c:\r\ai-portfolio\learning\genai")
 # Source → destination mapping
 # ---------------------------------------------------------------------------
 NOTEBOOKS = [
-    (ROOT / "11-llm-evaluation" / "01-llm-evaluation-metrics-and-benchmarks-pytorch.ipynb",
-     ROOT / "11-llm-evaluation" / "01-llm-evaluation-metrics-and-benchmarks.ipynb"),
-    (ROOT / "11-llm-evaluation" / "02-llm-as-judge-safety-and-pipeline-pytorch.ipynb",
-     ROOT / "11-llm-evaluation" / "02-llm-as-judge-safety-and-pipeline.ipynb"),
-    (ROOT / "11-llm-evaluation" / "03-hallucination-detection-pytorch.ipynb",
-     ROOT / "11-llm-evaluation" / "03-hallucination-detection.ipynb"),
-    (ROOT / "11-llm-evaluation" / "04-calibration-and-confidence-pytorch.ipynb",
-     ROOT / "11-llm-evaluation" / "04-calibration-and-confidence.ipynb"),
+    (ROOT / "04-llm-evaluation" / "01-llm-evaluation-metrics-and-benchmarks-pytorch.ipynb",
+     ROOT / "04-llm-evaluation" / "01-llm-evaluation-metrics-and-benchmarks.ipynb"),
+    (ROOT / "04-llm-evaluation" / "02-llm-as-judge-safety-and-pipeline-pytorch.ipynb",
+     ROOT / "04-llm-evaluation" / "02-llm-as-judge-safety-and-pipeline.ipynb"),
+    (ROOT / "04-llm-evaluation" / "03-hallucination-detection-pytorch.ipynb",
+     ROOT / "04-llm-evaluation" / "03-hallucination-detection.ipynb"),
+    (ROOT / "04-llm-evaluation" / "04-calibration-and-confidence-pytorch.ipynb",
+     ROOT / "04-llm-evaluation" / "04-calibration-and-confidence.ipynb"),
 ]
 
 # ---------------------------------------------------------------------------

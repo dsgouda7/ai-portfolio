@@ -73,26 +73,26 @@ Use the following rule throughout: skipping study never skips evidence. Prior ex
 
 Required at decision depth:
 
-1. [Attention and Transformer Blocks](../../genai/08-transformers/01-attention-and-transformer-blocks.ipynb)
-2. [Decoder-only Language Model](../../genai/08-transformers/02-decoder-only-language-model.ipynb)
-3. [Encoder-decoder and Cross-attention](../../genai/08-transformers/03-encoder-decoder-and-cross-attention.ipynb)
-4. [Fine-tuning Data Techniques](../../genai/09-llm-finetuning/01-llm-finetuning-data-techniques.ipynb)
-5. [Fine-tuning Parameter Techniques](../../genai/09-llm-finetuning/02-llm-finetuning-parameter-techniques.ipynb)
-6. [Fine-tuning Comparison and Decision](../../genai/09-llm-finetuning/03-llm-finetuning-comparison-and-decision.ipynb)
+1. [Attention and Transformer Blocks](../../genai/01-transformers/01-attention-and-transformer-blocks.ipynb)
+2. [Decoder-only Language Model](../../genai/01-transformers/02-decoder-only-language-model.ipynb)
+3. [Encoder-decoder and Cross-attention](../../genai/01-transformers/03-encoder-decoder-and-cross-attention.ipynb)
+4. [Fine-tuning Data Techniques](../../genai/02-llm-finetuning/01-llm-finetuning-data-techniques.ipynb)
+5. [Fine-tuning Parameter Techniques](../../genai/02-llm-finetuning/02-llm-finetuning-parameter-techniques.ipynb)
+6. [Fine-tuning Comparison and Decision](../../genai/02-llm-finetuning/03-llm-finetuning-comparison-and-decision.ipynb)
 
-[GPU Fine-tuning Practice](../../genai/09-llm-finetuning/04-llm-finetuning-practice.ipynb) is optional unless the engagement includes training execution or checkpoint promotion.
+[GPU Fine-tuning Practice](../../genai/02-llm-finetuning/04-llm-finetuning-practice.ipynb) is optional unless the engagement includes training execution or checkpoint promotion.
 
 #### Retrieval, evaluation, and application control
 
 Required:
 
-1. [Hybrid Search](../../genai/10-rag/01-hybrid-search.ipynb)
-2. [RAG Evaluation](../../genai/10-rag/02-rag-evaluation.ipynb)
-3. [Evaluation Metrics and Benchmarks](../../genai/11-llm-evaluation/01-llm-evaluation-metrics-and-benchmarks.ipynb)
-4. [LLM-as-Judge, Safety, and Pipeline](../../genai/11-llm-evaluation/02-llm-as-judge-safety-and-pipeline.ipynb)
-5. [Hallucination Detection](../../genai/11-llm-evaluation/03-hallucination-detection.ipynb)
-6. [Calibration and Confidence](../../genai/11-llm-evaluation/04-calibration-and-confidence.ipynb)
-7. [LLM Gateway](../../genai/12-llm-gateway/01-llm-gateway.ipynb)
+1. [Hybrid Search](../../genai/03-rag/01-hybrid-search.ipynb)
+2. [RAG Evaluation](../../genai/03-rag/02-rag-evaluation.ipynb)
+3. [Evaluation Metrics and Benchmarks](../../genai/04-llm-evaluation/01-llm-evaluation-metrics-and-benchmarks.ipynb)
+4. [LLM-as-Judge, Safety, and Pipeline](../../genai/04-llm-evaluation/02-llm-as-judge-safety-and-pipeline.ipynb)
+5. [Hallucination Detection](../../genai/04-llm-evaluation/03-hallucination-detection.ipynb)
+6. [Calibration and Confidence](../../genai/04-llm-evaluation/04-calibration-and-confidence.ipynb)
+7. [LLM Gateway](../../genai/05-llm-gateway/01-llm-gateway.ipynb)
 
 Use the [RAG Knowledge Pipeline project](../../../projects/rag-knowledge-pipeline/README.md) as a reference for independently deployable ingest, vectorization, and serving boundaries. Its static Wikipedia snapshot, local model, lack of incremental updates, and absence of customer ACL integration are explicit limitations, not capabilities to inherit by assumption.
 
@@ -149,9 +149,9 @@ A challenge-out review records the evidence location, reviewer, date, limitation
 | 0. Baseline | Is the learner ready to enter a supervised engagement, and which technical study can be challenged out? | Baseline case response, evidence inventory, claim register, gap plan | [Role Baseline](00-role-baseline-and-engagement-lifecycle.md#baseline-challenge) |
 | 1. Discovery | What workflow, users, baseline, failure cost, constraints, non-goals, and unknowns define the problem? | Stakeholder map, current-state workflow, baseline, acceptance criteria, assumption/risk log, discovery backlog | [Engagement Lifecycle](00-role-baseline-and-engagement-lifecycle.md#engagement-lifecycle) |
 | 2. Architecture translation | What is the smallest valid intervention, and where are the model, retrieval, policy, human, data, and side-effect boundaries? | Option matrix, architecture, ADRs, threat assumptions, customer-readable explanation | [System Design](../../agentic-ai-system-design/system-design.md), [Agent Foundations](../../agentic-ai/00-agent-foundations-and-tool-contracts/00-agent-foundations-and-tool-contracts.ipynb) |
-| 3. Data onboarding | Can each source be ingested, mapped, authorized, refreshed, deleted, and traced at acceptable quality? | Source inventory, owners, schema mappings, quality gates, ACL tests, lineage, sync/delete plan, readiness verdict | [Hybrid Search](../../genai/10-rag/01-hybrid-search.ipynb), [RAG Evaluation](../../genai/10-rag/02-rag-evaluation.ipynb), [RAG Knowledge Pipeline](../../../projects/rag-knowledge-pipeline/README.md) |
+| 3. Data onboarding | Can each source be ingested, mapped, authorized, refreshed, deleted, and traced at acceptable quality? | Source inventory, owners, schema mappings, quality gates, ACL tests, lineage, sync/delete plan, readiness verdict | [Hybrid Search](../../genai/03-rag/01-hybrid-search.ipynb), [RAG Evaluation](../../genai/03-rag/02-rag-evaluation.ipynb), [RAG Knowledge Pipeline](../../../projects/rag-knowledge-pipeline/README.md) |
 | 4. Identity, isolation, and compliance | Does tenant, user, role, region, and purpose context survive every boundary and fail closed? | Identity flow, RBAC matrix, data-flow/residency map, threat model, controls matrix, isolation test report, external compliance owners | [Safety and Governance](../../agentic-ai/06-safety-human-control-and-governance/06-safety-human-control-and-governance.ipynb), [Governance and Security](../../agentic-ai-system-design/11-governance-guardrails-and-security.md) |
-| 5. Evaluation, SLA, capacity, and cost | Which quality slices and operational constraints gate a release, and which numbers are observed versus projected? | Versioned evaluation set, rubric, regression gates, workload assumptions, sensitivity model, quota/headroom plan, cost attribution, proposed SLO/SLA | [LLM Evaluation](../../genai/11-llm-evaluation/README.md), [LLM Gateway](../../genai/12-llm-gateway/01-llm-gateway.ipynb), [Production Scale](../../agentic-ai-system-design/12-production-scale-and-capacity.md) |
+| 5. Evaluation, SLA, capacity, and cost | Which quality slices and operational constraints gate a release, and which numbers are observed versus projected? | Versioned evaluation set, rubric, regression gates, workload assumptions, sensitivity model, quota/headroom plan, cost attribution, proposed SLO/SLA | [LLM Evaluation](../../genai/04-llm-evaluation/README.md), [LLM Gateway](../../genai/05-llm-gateway/01-llm-gateway.ipynb), [Production Scale](../../agentic-ai-system-design/12-production-scale-and-capacity.md) |
 | 6. Rollout and change | Who can approve exposure, what does shadow traffic prove, which cohort enters canary, and what triggers rollback? | Baseline comparison, disagreement review, rollout plan, go/no-go record, rollback/compensation plan, communications, change log | [Agent Lifecycle](../../agentic-ai-system-design/02-agent-lifecycle-and-runtime.md), [Agent Evaluation](../../agentic-ai/05-agent-evaluation-and-observability/05-agent-evaluation-and-observability.ipynb) |
 | 7. Operate and recover | How are faults contained, evidence preserved, customers informed, fixes revalidated, and service re-enabled? | Severity model, on-call ownership, incident timeline, containment record, redacted communication, revalidation evidence, postmortem actions | [Reliability and Recovery](../../agentic-ai/09-reliability-recovery-and-production-decisions/09-reliability-recovery-and-production-decisions.ipynb), [Saga Recovery](../../agentic-ai-system-design/10-recoverability-rollbacks-and-saga.md), [Observability](../../agentic-ai-system-design/08-observability-tracing-and-health.md) |
 | 8. Handoff | Can customer operations run, change, monitor, escalate, and retire the system without relying on undocumented FDE knowledge? | Operational readiness review, dashboards, runbooks, support matrix, training record, policy/change process, acceptance sign-off, known limitations, backlog | [Handoff Standard](00-role-baseline-and-engagement-lifecycle.md#handoff-standard) |

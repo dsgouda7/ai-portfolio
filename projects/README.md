@@ -45,7 +45,7 @@ The original local path remains the project baseline. Remote Azure Databricks in
 record contracts, job bundles, quality reports, and Direct Vector Access indexing source now also
 exist. The local suite passed 55 tests with 2 expected missing-Delta skips. Workspace RBAC, managed identity, Unity Catalog, Delta merge, vector filtering,
 deletion, performance, and cost behavior are **live-unvalidated**. Learn the concepts in
-[RAG](../learning/genai/10-rag/README.md) and [FDE Data Onboarding](../learning/role-based-tracks/fde/03-data-onboarding-and-contracts/README.md),
+[RAG](../learning/genai/03-rag/README.md) and [FDE Data Onboarding](../learning/role-based-tracks/fde/03-data-onboarding-and-contracts/README.md),
 then use the [Databricks operations guide](rag-knowledge-pipeline/databricks/indexing/OPERATIONS.md).
 
 `PySpark` `Delta Lake` `ChromaDB` `FastAPI` `sentence-transformers` `Docker`

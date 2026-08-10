@@ -6,7 +6,7 @@ The default path is deterministic, CPU-only, and offline. It uses committed fixt
 
 ## Prerequisites
 
-1. GenAI foundations: [Transformer architecture](../genai/08-transformers/), [LLM fine-tuning](../genai/09-llm-finetuning/), [RAG](../genai/10-rag/), and [LLM evaluation](../genai/11-llm-evaluation/).
+1. GenAI foundations: [Transformer architecture](../genai/01-transformers/), [LLM fine-tuning](../genai/02-llm-finetuning/), [RAG](../genai/03-rag/), and [LLM evaluation](../genai/04-llm-evaluation/).
 2. Python 3.12.
 3. Basic familiarity with typed Python functions and JSON.
 

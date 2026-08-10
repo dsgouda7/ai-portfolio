@@ -168,8 +168,8 @@ This chapter builds on the [FDE lifecycle and architecture gate](../00-role-base
 [workflow and agent guidance](../../../agentic-ai-system-design/01-foundations-of-agentic-systems.md),
 [governance and authority](../../../agentic-ai-system-design/11-governance-guardrails-and-security.md),
 [recovery and idempotency](../../../agentic-ai-system-design/10-recoverability-rollbacks-and-saga.md),
-[Hybrid Search](../../../genai/10-rag/01-hybrid-search.ipynb), and
-[RAG Evaluation](../../../genai/10-rag/02-rag-evaluation.ipynb).
+[Hybrid Search](../../../genai/03-rag/01-hybrid-search.ipynb), and
+[RAG Evaluation](../../../genai/03-rag/02-rag-evaluation.ipynb).
 application that composes the minimum useful capabilities:
 
 1. repair policy lifecycle metadata and retain a manual/search-only path;
@@ -270,9 +270,9 @@ This chapter composes existing mechanisms rather than reteaching them:
 - [Multi-agent tradeoffs](../../../agentic-ai-system-design/09-multi-agent-communication-patterns.md)
 - [Governance and authority](../../../agentic-ai-system-design/11-governance-guardrails-and-security.md)
 - [Recovery and idempotency](../../../agentic-ai-system-design/10-recoverability-rollbacks-and-saga.md)
-- [Hybrid search and the RAG/fine-tuning boundary](../../../genai/10-rag/01-hybrid-search.ipynb)
-- [RAG failure localization](../../../genai/10-rag/02-rag-evaluation.ipynb)
-- [Fine-tuning comparison and release decisions](../../../genai/09-llm-finetuning/03-llm-finetuning-comparison-and-decision.ipynb)
+- [Hybrid search and the RAG/fine-tuning boundary](../../../genai/03-rag/01-hybrid-search.ipynb)
+- [RAG failure localization](../../../genai/03-rag/02-rag-evaluation.ipynb)
+- [Fine-tuning comparison and release decisions](../../../genai/02-llm-finetuning/03-llm-finetuning-comparison-and-decision.ipynb)
 - [Repository authoring standard](../../../../AUTHORING_GUIDE.md)
 
 ## Validation Status

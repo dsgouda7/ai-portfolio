@@ -110,10 +110,10 @@ You have finished this chapter when you have:
 
 ## Conceptual Owners
 
-- [Hybrid retrieval and index decisions](../../../genai/10-rag/01-hybrid-search.ipynb)
-- [RAG evaluation and gold-context diagnosis](../../../genai/10-rag/02-rag-evaluation.ipynb)
-- [LLM evaluation, judges, hallucination, and calibration](../../../genai/11-llm-evaluation/README.md)
-- [Gateway routing, resilience, caching, cost, and trace control](../../../genai/12-llm-gateway/01-llm-gateway.ipynb)
+- [Hybrid retrieval and index decisions](../../../genai/03-rag/01-hybrid-search.ipynb)
+- [RAG evaluation and gold-context diagnosis](../../../genai/03-rag/02-rag-evaluation.ipynb)
+- [LLM evaluation, judges, hallucination, and calibration](../../../genai/04-llm-evaluation/README.md)
+- [Gateway routing, resilience, caching, cost, and trace control](../../../genai/05-llm-gateway/01-llm-gateway.ipynb)
 - [Agent evaluation framework](../../../agentic-ai-system-design/07-agent-evaluation-frameworks.md)
 - [Observability, sampling, and health](../../../agentic-ai-system-design/08-observability-tracing-and-health.md)
 - [Guardrails and fail-closed policy](../../../agentic-ai-system-design/11-governance-guardrails-and-security.md)
