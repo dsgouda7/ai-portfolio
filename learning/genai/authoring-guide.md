@@ -1262,7 +1262,7 @@ should follow before shipping a swept hyperparameter.
 ## 15 · Framework-Migration and Cross-Framework API-Translation Notebooks
 
 Sections 1-14 assume a single implementation framework (mostly PyTorch). Several notebooks in
-`learning/genai-prerequisites/` and `learning/genai/00-pytorch-fundamentals/` instead exist
+`learning/genai-prerequisites/` instead contains notebooks that exist
 specifically to translate a reader's existing knowledge of one framework (typically Keras/TensorFlow)
 into another (PyTorch), or vice versa. This section documents the patterns that recur across those
 notebooks, independently converged on by several of them.

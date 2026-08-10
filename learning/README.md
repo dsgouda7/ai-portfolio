@@ -12,6 +12,8 @@ For exploratory exercises and third-party course material see [playground/](../p
 The primary learning track.  Covers sequence models, the Transformer architecture,
 applied LLM patterns, fine-tuning, and applied mini-projects.
 
+Start with the ordered [GenAI prerequisites](genai-prerequisites/README.md), which now include the Keras-to-PyTorch fundamentals and PyTorch RNN bridge alongside the math, ML, neural-network, CNN, RNN, and tokenization foundations.
+
 See [genai/README.md](genai/README.md) for the full directory listing, learning arc,
 and prerequisites per chapter.
 
