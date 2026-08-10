@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 import gc
 import math
+import textwrap
 
 import numpy as np
 from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont, ImageOps
@@ -328,12 +329,22 @@ def forward_phase(x: float) -> tuple[str, str]:
 
 def render_forward(theta: float) -> None:
     frames: list[Image.Image] = []
-    total = 68
+    total = 84
     for frame_index in range(total):
         frame = BASE_PLATE.copy()
         draw_header(frame, "Forward pass", "THE KICK BECOMES CONSEQUENCES", "01 / SEE IT")
-        progress = smoothstep(min(1.0, frame_index / 57))
-        x = NET_X * progress
+        if frame_index <= 22:
+            x = WALL_X * smoothstep(frame_index / 22)
+        elif frame_index <= 30:
+            x = WALL_X
+        elif frame_index <= 52:
+            x = WALL_X + (GOAL_X - WALL_X) * smoothstep((frame_index - 30) / 22)
+        elif frame_index <= 60:
+            x = GOAL_X
+        elif frame_index <= 73:
+            x = GOAL_X + (NET_X - GOAL_X) * smoothstep((frame_index - 60) / 13)
+        else:
+            x = NET_X
         state = state_at(x, theta)
         phase, insight = forward_phase(x)
         trail_x = np.linspace(max(0.0, x - 4.2), x, 32)
@@ -348,6 +359,22 @@ def render_forward(theta: float) -> None:
         value_cell(panel_draw, 1094, 718, "speed", f"{state['speed']:05.2f} m/s")
         net_error = float(height(NET_X, theta)) - TARGET_H
         value_cell(panel_draw, 1323, 718, "final error", f"{net_error:+.3f} m", GREEN)
+
+        # Constraint checkpoints remain dim until the ball reaches them, then lock on in color.
+        checkpoints = ImageDraw.Draw(frame)
+        checkpoint_values = [
+            ("WALL", x >= WALL_X, float(height(WALL_X, theta)) - WALL_H - BALL_RADIUS),
+            ("GOAL", x >= GOAL_X, float(height(GOAL_X, theta))),
+            ("TARGET", x >= NET_X, net_error),
+        ]
+        for index, (label, reached, value) in enumerate(checkpoint_values):
+            top = 160 + index * 58
+            color = GREEN if reached else (111, 132, 138)
+            checkpoints.rounded_rectangle((1270, top, 1538, top + 43), radius=18,
+                                           fill=NAVY + (190,), outline=color + (180,), width=2)
+            checkpoints.text((1290, top + 11), label, font=FONT_SMALL, fill=color)
+            display = f"{value:+.3f}m" if label != "GOAL" else f"{value:.3f}m"
+            checkpoints.text((1518, top + 21), display, anchor="rm", font=FONT_MONO, fill=WHITE)
         frames.append(frame)
     save_frames(frames, IMAGE_DIR / "free-kick-forward-telemetry.gif", duration=70)
 
@@ -365,9 +392,9 @@ def attempt_message(state: LossState) -> tuple[str, str, tuple[int, int, int]]:
 
 
 def render_descent(history: list[LossState]) -> None:
-    selected = np.unique(np.round(np.linspace(0, len(history) - 1, 12)).astype(int))
+    selected = np.unique(np.round(np.linspace(0, len(history) - 1, 9)).astype(int))
     frames: list[Image.Image] = []
-    frames_per_attempt = 6
+    frames_per_attempt = 10
     main_frames = len(selected) * frames_per_attempt
     for frame_index in range(main_frames + 8):
         frame = BASE_PLATE.copy()
@@ -378,7 +405,7 @@ def render_descent(history: list[LossState]) -> None:
         if frame_index >= main_frames:
             local_progress = 1.0
         else:
-            local_progress = smoothstep((frame_index % frames_per_attempt) / max(1, frames_per_attempt - 1))
+            local_progress = smoothstep(min(1.0, (frame_index % frames_per_attempt) / 5.0))
         x = NET_X * local_progress
 
         # Earlier attempts remain as restrained light traces: the learner sees memory accumulating.
@@ -484,8 +511,97 @@ def render_backprop(theta: float) -> None:
         if active_nodes == len(nodes):
             draw.text((1040, 754), "0.5e × impact sensitivity", font=FONT_SMALL, fill=MUTED)
             draw.text((1040, 782), f"= {state.gradient:+.5f} loss / degree", font=FONT_MONO, fill=GREEN)
+        elif frame_index > forward_end:
+            draw.text((1040, 754), "ACTIVE BRANCH", font=FONT_SMALL, fill=MUTED)
+            draw.text((1040, 782), "TARGET  (wall + goal satisfied)", font=FONT_MONO, fill=CYAN)
         frames.append(frame)
     save_frames(frames, IMAGE_DIR / "backprop-free-kick.gif", duration=75)
+
+
+def render_activation_gates() -> None:
+    """Show three distinct ways a model can constrain or gate a signal."""
+    frames: list[Image.Image] = []
+    total = 84
+    cards = [
+        (54, "HARD CLIP", "A rigid boundary", AMBER),
+        (548, "RELU GATE", "Negative blocked; positive passes", CYAN),
+        (1042, "SIGMOID", "Everything compressed to 0–1", GREEN),
+    ]
+
+    for frame_index in range(total):
+        frame = ImageEnhance.Brightness(BASE_PLATE.filter(ImageFilter.GaussianBlur(5))).enhance(0.64)
+        draw_header(frame, "Constraint gates", "THREE WAYS TO CONTROL A SIGNAL", "04 / BOUND IT")
+
+        sweep = smoothstep(min(1.0, frame_index / 70))
+        raw_value = -3.0 + 6.0 * sweep
+        outputs = [
+            float(np.clip(raw_value, 0.0, 1.0)),
+            max(0.0, raw_value),
+            1.0 / (1.0 + math.exp(-raw_value)),
+        ]
+        gradients = [
+            1.0 if 0.0 < raw_value < 1.0 else 0.0,
+            1.0 if raw_value > 0.0 else 0.0,
+            outputs[2] * (1.0 - outputs[2]),
+        ]
+        explanations = [
+            "Outside the legal range, the value sticks to a wall.",
+            "The gate sleeps for negative evidence and wakes for positive evidence.",
+            "No hard wall: the output approaches the limits smoothly.",
+        ]
+
+        for card_index, (x, title, subtitle, accent) in enumerate(cards):
+            panel = Image.new("RGBA", frame.size, (0, 0, 0, 0))
+            panel_draw = ImageDraw.Draw(panel)
+            panel_draw.rounded_rectangle(
+                (x, 158, x + 454, 706),
+                radius=28,
+                fill=NAVY + (214,),
+                outline=accent + (185,),
+                width=3,
+            )
+            panel_draw.text((x + 30, 188), title, font=FONT_TITLE, fill=accent)
+            panel_draw.text((x + 30, 232), subtitle, font=FONT_SMALL, fill=MUTED)
+
+            panel_draw.text((x + 30, 296), "RAW SIGNAL", font=FONT_SMALL, fill=MUTED)
+            panel_draw.text((x + 30, 323), f"z = {raw_value:+.2f}", font=FONT_MONO_BIG, fill=WHITE)
+
+            # Signal enters from the left and meets the gate in the centre.
+            rail_y = 430
+            panel_draw.line((x + 38, rail_y, x + 414, rail_y), fill=(116, 139, 145, 170), width=5)
+            gate_x = x + 226
+            panel_draw.line((gate_x, rail_y - 62, gate_x, rail_y + 62), fill=accent + (220,), width=8)
+            input_x = int(x + 50 + sweep * 152)
+            output_scale = outputs[card_index]
+            if card_index == 1:
+                output_scale = min(1.0, output_scale / 3.0)
+            output_x = int(gate_x + 22 + output_scale * 160)
+            panel_draw.ellipse((input_x - 13, rail_y - 13, input_x + 13, rail_y + 13), fill=GOLD + (255,))
+            panel_draw.ellipse((output_x - 15, rail_y - 15, output_x + 15, rail_y + 15),
+                               fill=accent + (255,), outline=WHITE + (210,), width=2)
+            panel_draw.text((x + 30, 490), "OUTPUT", font=FONT_SMALL, fill=MUTED)
+            panel_draw.text((x + 30, 518), f"{outputs[card_index]:.3f}", font=FONT_MONO_BIG, fill=accent)
+            panel_draw.text((x + 252, 490), "LOCAL GRADIENT", font=FONT_SMALL, fill=MUTED)
+            panel_draw.text((x + 252, 523), f"{gradients[card_index]:.3f}", font=FONT_MONO, fill=WHITE)
+            wrapped = "\n".join(textwrap.wrap(explanations[card_index], width=41))
+            panel_draw.multiline_text((x + 30, 592), wrapped, font=FONT_SMALL, fill=WHITE, spacing=5)
+            frame.alpha_composite(panel)
+
+        footer = glass_panel(frame, (54, 738, 1496, 844), alpha=205)
+        if raw_value < 0:
+            footer_title = "NEGATIVE INPUT"
+            footer_text = "Clip and ReLU both stop it. Sigmoid still returns a small, non-zero signal."
+        elif raw_value <= 1:
+            footer_title = "INSIDE THE ACTIVE REGION"
+            footer_text = "Clip and ReLU pass the signal with full local sensitivity; sigmoid changes smoothly."
+        else:
+            footer_title = "LARGE POSITIVE INPUT"
+            footer_text = "Clip saturates at 1, ReLU keeps growing, and sigmoid approaches 1 gradually."
+        footer.text((82, 758), footer_title, font=FONT_LABEL, fill=GOLD)
+        footer.text((82, 792), footer_text, font=FONT_BODY, fill=WHITE)
+        frames.append(frame)
+
+    save_frames(frames, IMAGE_DIR / "activation-functions-gates.gif", duration=80)
 
 
 def main() -> None:
@@ -494,6 +610,7 @@ def main() -> None:
     render_forward(history[-1].theta)
     render_descent(history)
     render_backprop(history[-1].theta + 0.65)
+    render_activation_gates()
 
 
 if __name__ == "__main__":
