@@ -289,6 +289,59 @@ def draw_ball(frame: Image.Image, position: tuple[int, int], angle: float, trail
     frame.alpha_composite(sprite, (x - sprite.width // 2, y - sprite.height // 2))
 
 
+def draw_velocity_arrow(frame: Image.Image, state: dict[str, float], length: float = 112.0) -> None:
+    position = world_to_screen(state["x"], state["y"])
+    sample_time = 0.01
+    sample = world_to_screen(
+        state["x"] + state["vx"] * sample_time,
+        state["y"] + state["vy"] * sample_time,
+    )
+    screen_dx = sample[0] - position[0]
+    screen_dy = sample[1] - position[1]
+    magnitude = math.hypot(screen_dx, screen_dy)
+    if magnitude == 0:
+        return
+
+    unit_x = screen_dx / magnitude
+    unit_y = screen_dy / magnitude
+    start = (position[0] + unit_x * 23, position[1] + unit_y * 23)
+    edge_limits = [length]
+    if unit_x > 0:
+        edge_limits.append((WIDTH - 24 - start[0]) / unit_x)
+    elif unit_x < 0:
+        edge_limits.append((24 - start[0]) / unit_x)
+    if unit_y > 0:
+        edge_limits.append((HEIGHT - 24 - start[1]) / unit_y)
+    elif unit_y < 0:
+        edge_limits.append((24 - start[1]) / unit_y)
+    visible_length = max(48.0, min(edge_limits))
+    tip = (start[0] + unit_x * visible_length, start[1] + unit_y * visible_length)
+    normal_x, normal_y = -unit_y, unit_x
+    arrowhead = [
+        tip,
+        (tip[0] - unit_x * 20 + normal_x * 9, tip[1] - unit_y * 20 + normal_y * 9),
+        (tip[0] - unit_x * 20 - normal_x * 9, tip[1] - unit_y * 20 - normal_y * 9),
+    ]
+
+    overlay = Image.new("RGBA", frame.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(overlay)
+    draw.line((start, tip), fill=CYAN + (235,), width=6)
+    draw.polygon(arrowhead, fill=CYAN + (245,))
+    label_x = start[0] + unit_x * 34 + normal_x * 19
+    label_y = start[1] + unit_y * 34 + normal_y * 19
+    label_box = draw.textbbox((label_x, label_y), "VELOCITY · TANGENT", font=FONT_SMALL, anchor="lm")
+    label_x += min(0, WIDTH - 16 - label_box[2]) + max(0, 16 - label_box[0])
+    label_y += min(0, HEIGHT - 16 - label_box[3]) + max(0, 16 - label_box[1])
+    label_box = draw.textbbox((label_x, label_y), "VELOCITY · TANGENT", font=FONT_SMALL, anchor="lm")
+    draw.rounded_rectangle(
+        (label_box[0] - 8, label_box[1] - 5, label_box[2] + 8, label_box[3] + 5),
+        radius=8,
+        fill=NAVY + (205,),
+    )
+    draw.text((label_x, label_y), "VELOCITY · TANGENT", font=FONT_SMALL, fill=CYAN, anchor="lm")
+    frame.alpha_composite(overlay)
+
+
 def value_cell(draw: ImageDraw.ImageDraw, x: int, y: int, label: str, value: str, color=WHITE) -> None:
     draw.text((x, y), label.upper(), font=FONT_SMALL, fill=MUTED)
     draw.text((x, y + 24), value, font=FONT_MONO, fill=color)
@@ -313,17 +366,22 @@ def save_frames(frames: list[Image.Image], target: Path, duration: int = 65) -> 
     gc.collect()
 
 
-def forward_phase(x: float) -> tuple[str, str]:
+def forward_phase(x: float, state: dict[str, float]) -> tuple[str, str]:
     if x < 0.8:
         return "STRIKE", "One choice sets the whole flight in motion."
-    if x < WALL_X - 0.4:
-        return "RISING", "Watch position and velocity change together."
     if x < WALL_X + 0.8:
+        if x < WALL_X - 0.4:
+            return "RISING", "The tangent points upward while vertical velocity is positive."
         return "WALL CLEARED", "The first constraint is satisfied."
-    if x < GOAL_X - 0.7:
-        return "DESCENDING", "Gravity keeps changing the vertical velocity."
     if x < GOAL_X + 0.5:
-        return "INSIDE THE FRAME", "The ball crosses the goal plane legally."
+        if x >= GOAL_X - 0.7:
+            return "INSIDE THE FRAME", "The ball crosses the goal plane legally."
+        slope = state["vy"] / state["vx"]
+        if abs(slope) < 0.025:
+            return "APEX", "The tangent is nearly flat where rising becomes falling."
+        if state["vy"] > 0:
+            return "RISING", "The tangent points upward while vertical velocity is positive."
+        return "DESCENDING", "The tangent points downward after vertical velocity turns negative."
     return "TARGET HIT", "The final error is only +0.009 m."
 
 
@@ -346,17 +404,19 @@ def render_forward(theta: float) -> None:
         else:
             x = NET_X
         state = state_at(x, theta)
-        phase, insight = forward_phase(x)
+        phase, insight = forward_phase(x, state)
         trail_x = np.linspace(max(0.0, x - 4.2), x, 32)
         trail = [world_to_screen(float(value), max(-0.15, float(height(value, theta)))) for value in trail_x]
         draw_ball(frame, world_to_screen(x, max(-0.15, state["y"])), frame_index * 22, trail)
+        draw_velocity_arrow(frame, state)
 
         panel_draw = glass_panel(frame, (54, 698, 1546, 842))
         panel_draw.text((82, 720), phase, font=FONT_TITLE, fill=GREEN if phase == "TARGET HIT" else GOLD)
         panel_draw.text((82, 763), insight, font=FONT_BODY, fill=WHITE)
         value_cell(panel_draw, 612, 718, "time", f"{state['t']:.3f} s")
         value_cell(panel_draw, 803, 718, "position", f"{state['x']:05.2f} m / {state['y']:+05.2f} m", CYAN)
-        value_cell(panel_draw, 1094, 718, "speed", f"{state['speed']:05.2f} m/s")
+        slope = state["vy"] / state["vx"]
+        value_cell(panel_draw, 1094, 718, "speed / slope", f"{state['speed']:05.2f} m/s / {slope:+.2f}")
         net_error = float(height(NET_X, theta)) - TARGET_H
         value_cell(panel_draw, 1323, 718, "final error", f"{net_error:+.3f} m", GREEN)
 
