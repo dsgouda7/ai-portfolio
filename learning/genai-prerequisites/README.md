@@ -6,7 +6,7 @@ This sequence builds the mathematical, machine-learning, framework, and sequence
 
 | # | Chapter | Primary framework | Outcome |
 |---|---|---|---|
-| 00 | [Math Foundations](00-math-foundations/math-foundations-for-ml.ipynb) | NumPy + TensorFlow autograd | Read vectors, gradients, matrix transforms, probability, and the chain rule |
+| 00 | [Math Foundations](00-math-foundations/math-foundations-for-ml.ipynb) | NumPy + SciPy | Build motion from local change, read vectors and probability, then use local derivatives for constrained gradient descent |
 | 01 | [ML Basics](01-ml-basics/ml-basics.ipynb) | NumPy + scikit-learn | Build train/validation/test, optimization, classification, and generalization contracts |
 | 02 | [Neural Networks and Backpropagation](02-neural-networks/neural-networks-and-backprop.ipynb) | TensorFlow/Keras | Build dense networks, derive backpropagation, and distinguish train from inference behavior |
 | 03 | [Keras to PyTorch: Antarctic Field Guide](03-pytorch-fundamentals/01-keras-to-pytorch-antarctic-field-guide.ipynb) | TensorFlow/Keras ↔ PyTorch | Translate familiar model, loss, autograd, optimizer, dtype, and device contracts into PyTorch |

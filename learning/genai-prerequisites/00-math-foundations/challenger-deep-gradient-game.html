@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Challenger Deep Gradient Game</title>
+  <style>
+    :root {
+      --ink: #081720;
+      --ocean: #062c3b;
+      --ocean-deep: #03121e;
+      --paper: #eef4ee;
+      --muted: #a7bdbe;
+      --cyan: #47cfda;
+      --gold: #f3b83d;
+      --coral: #ee6a55;
+      --green: #4fd390;
+      --line: rgba(196, 222, 219, 0.24);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      color: var(--paper);
+      background: var(--ocean-deep);
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    button, output { font: inherit; }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 24px;
+      align-items: end;
+      padding: 20px clamp(18px, 4vw, 58px);
+      border-bottom: 1px solid var(--line);
+      background: #061d29;
+    }
+
+    .eyebrow {
+      margin: 0 0 4px;
+      color: var(--gold);
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(1.45rem, 3vw, 2.6rem);
+      font-weight: 700;
+    }
+
+    .mission-state {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(90px, 1fr));
+      gap: 20px;
+      min-width: min(100%, 420px);
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .metric output {
+      display: block;
+      margin-top: 3px;
+      color: var(--paper);
+      font-family: Consolas, monospace;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 370px;
+      min-height: calc(100vh - 100px);
+    }
+
+    .ocean-view {
+      position: relative;
+      min-width: 0;
+      background: #052532;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: 640px;
+      touch-action: none;
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      border-left: 1px solid var(--line);
+      background: #092431;
+    }
+
+    .control-section {
+      padding: 22px 24px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .control-section h2 {
+      margin: 0 0 10px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.15rem;
+    }
+
+    .control-section p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .derivative-readout {
+      margin-top: 14px;
+      padding: 14px 0;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .derivative-readout strong {
+      display: block;
+      color: var(--cyan);
+      font-family: Consolas, monospace;
+      font-size: 1.35rem;
+    }
+
+    .derivative-readout span {
+      display: block;
+      margin-top: 5px;
+      color: var(--paper);
+      font-size: 0.84rem;
+      line-height: 1.4;
+    }
+
+    .step-limit {
+      margin-top: 12px;
+      color: var(--gold) !important;
+      font-weight: 700;
+    }
+
+    .actions {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    button {
+      min-height: 46px;
+      padding: 10px 14px;
+      border: 1px solid rgba(230, 244, 238, 0.25);
+      border-radius: 6px;
+      color: var(--paper);
+      background: #103746;
+      cursor: pointer;
+      font-weight: 700;
+      text-align: left;
+    }
+
+    button:hover:not(:disabled) { background: #174958; }
+    button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+    button:disabled { cursor: not-allowed; opacity: 0.45; }
+
+    .recommended {
+      border-color: var(--green);
+      background: #15503d;
+    }
+
+    .recommended:hover:not(:disabled) { background: #1b654d; }
+
+    .reset {
+      margin-top: auto;
+      border-color: var(--gold);
+      background: transparent;
+      text-align: center;
+    }
+
+    .log {
+      min-height: 120px;
+      color: var(--paper) !important;
+      font-size: 0.82rem !important;
+    }
+
+    .status-line {
+      color: var(--green) !important;
+      font-weight: 700;
+    }
+
+    .legend {
+      display: grid;
+      grid-template-columns: 16px 1fr;
+      gap: 8px 10px;
+      align-items: center;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .swatch {
+      width: 16px;
+      height: 4px;
+      background: currentColor;
+    }
+
+    @media (max-width: 980px) {
+      .topbar { grid-template-columns: 1fr; }
+      main { grid-template-columns: 1fr; }
+      .controls { border-left: 0; border-top: 1px solid var(--line); }
+      canvas { min-height: 560px; }
+      .reset { margin-top: 0; }
+    }
+
+    @media (max-width: 560px) {
+      .mission-state { gap: 10px; }
+      .topbar { padding: 16px; }
+      .control-section { padding: 18px; }
+      canvas { min-height: 490px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">Tiny gradient game</p>
+      <h1>Guide the Probe to Challenger Deep</h1>
+    </div>
+    <div class="mission-state" aria-label="Mission status">
+      <div class="metric"><span>Depth</span><output id="depthOutput">0 m</output></div>
+      <div class="metric"><span>Time left</span><output id="timeOutput">190 min</output></div>
+      <div class="metric"><span>Step</span><output id="stepOutput">0</output></div>
+    </div>
+  </header>
+
+  <main>
+    <section class="ocean-view" aria-label="Probe descent and local mission-loss curve">
+      <canvas id="gameCanvas" width="1280" height="760"></canvas>
+    </section>
+
+    <aside class="controls">
+      <section class="control-section">
+        <h2>Read the local slope</h2>
+        <p>At the current depth, the computer tests a tiny control change. The derivative reports which direction makes the mission score rise.</p>
+        <div class="derivative-readout" aria-live="polite">
+          <strong id="derivativeOutput">Calculating...</strong>
+          <span id="derivativeMeaning"></span>
+        </div>
+        <p class="step-limit">Control changes are capped at 0.18 per turn.</p>
+      </section>
+
+      <section class="control-section">
+        <h2>Choose one small step</h2>
+        <p>Following the negative derivative is gradient descent. Try a different direction to see why the sign matters.</p>
+        <div class="actions">
+          <button id="lessButton" type="button">Decrease thrust by one small step</button>
+          <button id="followButton" class="recommended" type="button">Follow the negative derivative</button>
+          <button id="moreButton" type="button">Increase thrust by one small step</button>
+        </div>
+      </section>
+
+      <section class="control-section">
+        <h2>Last result</h2>
+        <p id="statusText" class="status-line">Mission ready. Read the slope before moving.</p>
+        <p id="logText" class="log">The left panel shows physical depth. The right panel shows mission score versus the adjustable control.</p>
+        <div class="legend" aria-label="Graph legend">
+          <span class="swatch" style="color: var(--coral)"></span><span>local mission-loss curve</span>
+          <span class="swatch" style="color: var(--gold)"></span><span>tangent: the derivative here</span>
+          <span class="swatch" style="color: var(--green)"></span><span>current control</span>
+        </div>
+      </section>
+
+      <button id="resetButton" class="reset" type="button">Reset mission</button>
+    </aside>
+  </main>
+
+  <script>
+    "use strict";
+
+    const TARGET_DEPTH = 10900;
+    const PRESSURE_PER_METRE = 0.01005;
+    const PRESSURE_RATING = 115;
+    const TIME_LIMIT = 190;
+    const WINDOW_MINUTES = 10;
+    const MAX_SPEED = 130;
+    const MAX_UPDATE = 0.18;
+    const LEARNING_SCALE = 3;
+    const TIME_WEIGHT = 0.14;
+    const RISK_WEIGHT = 0.10;
+
+    const canvas = document.getElementById("gameCanvas");
+    const context = canvas.getContext("2d");
+    const background = new Image();
+    background.src = "images/challenger-deep-cinematic-source.png";
+
+    const elements = {
+      depth: document.getElementById("depthOutput"),
+      time: document.getElementById("timeOutput"),
+      step: document.getElementById("stepOutput"),
+      derivative: document.getElementById("derivativeOutput"),
+      meaning: document.getElementById("derivativeMeaning"),
+      status: document.getElementById("statusText"),
+      log: document.getElementById("logText"),
+      less: document.getElementById("lessButton"),
+      follow: document.getElementById("followButton"),
+      more: document.getElementById("moreButton"),
+      reset: document.getElementById("resetButton")
+    };
+
+    let state;
+
+    function sigmoid(value) {
+      return 1 / (1 + Math.exp(-value));
+    }
+
+    function clamp(value, minimum, maximum) {
+      return Math.max(minimum, Math.min(maximum, value));
+    }
+
+    function environmentFactor(depth) {
+      const fraction = clamp(depth / TARGET_DEPTH, 0, 1);
+      return 1 - 0.32 * Math.pow(fraction, 1.7);
+    }
+
+    function predict(depth, rawControl) {
+      const thrust = sigmoid(rawControl);
+      const speed = MAX_SPEED * thrust * environmentFactor(depth);
+      const nextDepth = Math.min(TARGET_DEPTH, depth + speed * WINDOW_MINUTES);
+      const remaining = Math.max(0, TARGET_DEPTH - nextDepth);
+      const pressure = nextDepth * PRESSURE_PER_METRE;
+      const estimatedRemaining = remaining / Math.max(speed, 1e-9);
+      const depthError = remaining / TARGET_DEPTH;
+      const timeCost = estimatedRemaining / TIME_LIMIT;
+      const pressureRatio = pressure / PRESSURE_RATING;
+      const pressureRisk = Math.pow(pressureRatio, 4) * Math.pow(thrust, 2);
+      const loss = depthError * depthError
+        + TIME_WEIGHT * timeCost * timeCost
+        + RISK_WEIGHT * pressureRisk;
+      return { thrust, speed, nextDepth, pressure, estimatedRemaining, loss };
+    }
+
+    function derivativeAt(depth, rawControl) {
+      const epsilon = 0.0005;
+      return (
+        predict(depth, rawControl + epsilon).loss
+        - predict(depth, rawControl - epsilon).loss
+      ) / (2 * epsilon);
+    }
+
+    function resetGame() {
+      state = {
+        depth: 0,
+        elapsed: 0,
+        rawControl: 0.15,
+        step: 0,
+        path: [0],
+        last: null,
+        complete: false,
+        failed: false
+      };
+      elements.status.textContent = "Mission ready. Read the slope before moving.";
+      elements.log.textContent = "Each turn recomputes the derivative at the probe's current depth.";
+      update();
+    }
+
+    function takeTurn(choice) {
+      if (state.complete || state.failed) return;
+
+      const gradient = derivativeAt(state.depth, state.rawControl);
+      let requestedUpdate;
+      let choiceLabel;
+
+      if (choice === "follow") {
+        requestedUpdate = -LEARNING_SCALE * gradient;
+        choiceLabel = "followed the negative derivative";
+      } else if (choice === "less") {
+        requestedUpdate = -MAX_UPDATE;
+        choiceLabel = "reduced thrust";
+      } else {
+        requestedUpdate = MAX_UPDATE;
+        choiceLabel = "increased thrust";
+      }
+
+      const controlUpdate = clamp(requestedUpdate, -MAX_UPDATE, MAX_UPDATE);
+      const oldControl = state.rawControl;
+      const oldDepth = state.depth;
+      const before = predict(oldDepth, oldControl);
+      const newControl = clamp(oldControl + controlUpdate, -2.2, 2.2);
+      const after = predict(oldDepth, newControl);
+
+      state.rawControl = newControl;
+      state.depth = after.nextDepth;
+      state.elapsed += WINDOW_MINUTES;
+      state.step += 1;
+      state.path.push(state.depth);
+      state.last = {
+        gradient,
+        controlUpdate,
+        choiceLabel,
+        oldControl,
+        newControl,
+        oldDepth,
+        newDepth: state.depth,
+        oldLoss: before.loss,
+        newLoss: after.loss,
+        pressure: after.pressure
+      };
+
+      if (TARGET_DEPTH - state.depth < 0.5) {
+        state.complete = true;
+        elements.status.textContent = "Target reached. Photographic pass complete.";
+      } else if (state.elapsed >= TIME_LIMIT) {
+        state.failed = true;
+        elements.status.textContent = "Time window exhausted. Reset and follow the local slope more carefully.";
+      } else if (after.pressure >= PRESSURE_RATING) {
+        state.failed = true;
+        elements.status.textContent = "Pressure limit reached. Reset the mission.";
+      } else {
+        const improved = after.loss < before.loss;
+        elements.status.textContent = improved
+          ? "The local mission score fell. This was a useful parameter step."
+          : "The local mission score rose. The chosen direction fought the derivative.";
+      }
+
+      const lossDirection = after.loss < before.loss ? "fell" : "rose";
+      elements.log.textContent = `You ${choiceLabel}. Control changed by ${formatSigned(controlUpdate)}; local score ${lossDirection} from ${before.loss.toFixed(4)} to ${after.loss.toFixed(4)}. The probe then moved ${Math.round(state.depth - oldDepth).toLocaleString()} m.`;
+      update();
+    }
+
+    function formatSigned(value, digits = 3) {
+      return `${value >= 0 ? "+" : ""}${value.toFixed(digits)}`;
+    }
+
+    function update() {
+      const gradient = derivativeAt(state.depth, state.rawControl);
+      const pressure = state.depth * PRESSURE_PER_METRE;
+      elements.depth.textContent = `${Math.round(state.depth).toLocaleString()} m`;
+      elements.time.textContent = `${Math.max(0, TIME_LIMIT - state.elapsed)} min`;
+      elements.step.textContent = String(state.step);
+      elements.derivative.textContent = `local derivative ${formatSigned(gradient, 4)}`;
+
+      if (Math.abs(gradient) < 0.002) {
+        elements.meaning.textContent = "The local slope is nearly flat. Only a tiny correction is justified.";
+      } else if (gradient < 0) {
+        elements.meaning.textContent = "Increasing the control slightly should lower the mission score.";
+      } else {
+        elements.meaning.textContent = "Decreasing the control slightly should lower the mission score.";
+      }
+
+      const disabled = state.complete || state.failed;
+      elements.less.disabled = disabled;
+      elements.follow.disabled = disabled;
+      elements.more.disabled = disabled;
+      drawScene(gradient, pressure);
+    }
+
+    function drawScene(gradient, pressure) {
+      const width = canvas.width;
+      const height = canvas.height;
+      context.clearRect(0, 0, width, height);
+
+      if (background.complete && background.naturalWidth) {
+        const scale = Math.max(width / background.naturalWidth, height / background.naturalHeight);
+        const sourceWidth = width / scale;
+        const sourceHeight = height / scale;
+        const sourceX = (background.naturalWidth - sourceWidth) / 2;
+        const sourceY = (background.naturalHeight - sourceHeight) / 2;
+        context.drawImage(background, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, width, height);
+      } else {
+        const oceanGradient = context.createLinearGradient(0, 0, 0, height);
+        oceanGradient.addColorStop(0, "#0b5367");
+        oceanGradient.addColorStop(1, "#020b16");
+        context.fillStyle = oceanGradient;
+        context.fillRect(0, 0, width, height);
+      }
+
+      context.fillStyle = "rgba(2, 12, 23, 0.64)";
+      context.fillRect(0, 0, width, height);
+      drawTrenchPanel(pressure);
+      drawLossPanel(gradient);
+    }
+
+    function drawTrenchPanel(pressure) {
+      const left = 34;
+      const top = 42;
+      const panelWidth = 650;
+      const bottom = 700;
+      const trackX = 160;
+      const trackTop = 126;
+      const trackBottom = 650;
+
+      drawPanel(left, top, panelWidth, bottom - top);
+      drawLabel("PHYSICAL OCEAN", left + 24, top + 30, "#f3b83d", 16, true);
+      drawText("The probe moves only after the control step.", left + 24, top + 66, "#eef4ee", 22);
+
+      context.strokeStyle = "rgba(225, 241, 237, 0.72)";
+      context.lineWidth = 3;
+      context.beginPath();
+      context.moveTo(trackX, trackTop);
+      context.lineTo(trackX, trackBottom);
+      context.stroke();
+
+      [0, 2000, 4000, 6000, 8000, 10000].forEach((depth) => {
+        const y = trackTop + (trackBottom - trackTop) * depth / TARGET_DEPTH;
+        context.strokeStyle = "rgba(225, 241, 237, 0.72)";
+        context.lineWidth = 2;
+        context.beginPath();
+        context.moveTo(trackX - 10, y);
+        context.lineTo(trackX + 10, y);
+        context.stroke();
+        drawText(depth === 0 ? "surface" : `${depth / 1000} km`, trackX - 22, y + 5, "#a7bdbe", 15, "right");
+      });
+
+      if (state.path.length > 1) {
+        context.strokeStyle = "#47cfda";
+        context.lineWidth = 6;
+        context.beginPath();
+        state.path.forEach((depth, index) => {
+          const y = trackTop + (trackBottom - trackTop) * depth / TARGET_DEPTH;
+          const x = trackX + Math.sin(index * 0.8) * 12;
+          if (index === 0) context.moveTo(x, y);
+          else context.lineTo(x, y);
+        });
+        context.stroke();
+      }
+
+      const probeY = trackTop + (trackBottom - trackTop) * state.depth / TARGET_DEPTH;
+      drawProbe(trackX + 8, probeY);
+
+      const targetY = trackBottom;
+      context.strokeStyle = "#f3b83d";
+      context.lineWidth = 4;
+      context.beginPath();
+      context.moveTo(trackX - 30, targetY);
+      context.lineTo(left + panelWidth - 28, targetY);
+      context.stroke();
+      drawLabel("SONAR TARGET  10,900 m", trackX + 35, targetY - 15, "#f3b83d", 16, true);
+
+      const infoX = 315;
+      drawLabel("CURRENT STEP", infoX, 170, "#a7bdbe", 14, true);
+      drawText(`${state.step}`, infoX, 214, "#eef4ee", 38);
+      drawLabel("THRUST", infoX, 282, "#a7bdbe", 14, true);
+      drawText(`${(sigmoid(state.rawControl) * 100).toFixed(1)}%`, infoX, 326, "#47cfda", 34);
+      drawLabel("PRESSURE", infoX, 394, "#a7bdbe", 14, true);
+      drawText(`${pressure.toFixed(1)} MPa`, infoX, 438, pressure > 100 ? "#ee6a55" : "#eef4ee", 30);
+      drawLabel("RULE", infoX, 514, "#a7bdbe", 14, true);
+      drawWrapped("One derivative, one bounded control change, one physical move.", infoX, 548, 300, 25, "#eef4ee");
+    }
+
+    function drawLossPanel(gradient) {
+      const left = 720;
+      const top = 42;
+      const panelWidth = 526;
+      const panelHeight = 658;
+      drawPanel(left, top, panelWidth, panelHeight);
+      drawLabel("PARAMETER SPACE", left + 24, top + 30, "#f3b83d", 16, true);
+      drawText("Mission score near the current control", left + 24, top + 66, "#eef4ee", 22);
+
+      const graph = { x: left + 58, y: top + 150, w: panelWidth - 96, h: 350 };
+      const minControl = state.rawControl - 0.75;
+      const maxControl = state.rawControl + 0.75;
+      const samples = [];
+      let minLoss = Infinity;
+      let maxLoss = -Infinity;
+
+      for (let index = 0; index <= 90; index += 1) {
+        const control = minControl + (maxControl - minControl) * index / 90;
+        const loss = predict(state.depth, control).loss;
+        samples.push({ control, loss });
+        minLoss = Math.min(minLoss, loss);
+        maxLoss = Math.max(maxLoss, loss);
+      }
+      const padding = Math.max(0.008, (maxLoss - minLoss) * 0.18);
+      minLoss -= padding;
+      maxLoss += padding;
+
+      context.strokeStyle = "rgba(225, 241, 237, 0.25)";
+      context.lineWidth = 2;
+      context.strokeRect(graph.x, graph.y, graph.w, graph.h);
+
+      context.strokeStyle = "#ee6a55";
+      context.lineWidth = 5;
+      context.beginPath();
+      samples.forEach((sample, index) => {
+        const point = graphPoint(sample.control, sample.loss, minControl, maxControl, minLoss, maxLoss, graph);
+        if (index === 0) context.moveTo(point.x, point.y);
+        else context.lineTo(point.x, point.y);
+      });
+      context.stroke();
+
+      const currentLoss = predict(state.depth, state.rawControl).loss;
+      const currentPoint = graphPoint(state.rawControl, currentLoss, minControl, maxControl, minLoss, maxLoss, graph);
+      const tangentSpan = 0.42;
+      const tangentA = {
+        control: state.rawControl - tangentSpan,
+        loss: currentLoss - gradient * tangentSpan
+      };
+      const tangentB = {
+        control: state.rawControl + tangentSpan,
+        loss: currentLoss + gradient * tangentSpan
+      };
+      const pointA = graphPoint(tangentA.control, tangentA.loss, minControl, maxControl, minLoss, maxLoss, graph);
+      const pointB = graphPoint(tangentB.control, tangentB.loss, minControl, maxControl, minLoss, maxLoss, graph);
+
+      context.strokeStyle = "#f3b83d";
+      context.lineWidth = 4;
+      context.beginPath();
+      context.moveTo(pointA.x, pointA.y);
+      context.lineTo(pointB.x, pointB.y);
+      context.stroke();
+
+      context.fillStyle = "#4fd390";
+      context.beginPath();
+      context.arc(currentPoint.x, currentPoint.y, 10, 0, Math.PI * 2);
+      context.fill();
+      context.strokeStyle = "#eef4ee";
+      context.lineWidth = 3;
+      context.stroke();
+
+      drawText("less thrust", graph.x, graph.y + graph.h + 29, "#a7bdbe", 15);
+      drawText("more thrust", graph.x + graph.w, graph.y + graph.h + 29, "#a7bdbe", 15, "right");
+      drawText("lower score", graph.x - 8, graph.y + graph.h, "#a7bdbe", 14, "right");
+      drawText("higher score", graph.x - 8, graph.y + 12, "#a7bdbe", 14, "right");
+
+      const direction = Math.abs(gradient) < 0.002
+        ? "Nearly flat: use only a tiny correction."
+        : gradient < 0
+          ? "Slope falls to the right: increase control."
+          : "Slope rises to the right: decrease control.";
+      drawLabel("DERIVATIVE HERE", left + 32, top + 555, "#47cfda", 14, true);
+      drawText(formatSigned(gradient, 4), left + 32, top + 596, "#47cfda", 29);
+      drawWrapped(direction, left + 170, top + 570, 315, 21, "#eef4ee");
+    }
+
+    function graphPoint(control, loss, minControl, maxControl, minLoss, maxLoss, graph) {
+      return {
+        x: graph.x + (control - minControl) / (maxControl - minControl) * graph.w,
+        y: graph.y + graph.h - (loss - minLoss) / (maxLoss - minLoss) * graph.h
+      };
+    }
+
+    function drawPanel(x, y, width, height) {
+      context.fillStyle = "rgba(5, 25, 37, 0.87)";
+      context.strokeStyle = "rgba(196, 222, 219, 0.32)";
+      context.lineWidth = 2;
+      context.beginPath();
+      context.roundRect(x, y, width, height, 10);
+      context.fill();
+      context.stroke();
+    }
+
+    function drawProbe(x, y) {
+      context.save();
+      context.translate(x, y);
+      context.fillStyle = "#c8d3ca";
+      context.strokeStyle = "#eef4ee";
+      context.lineWidth = 2;
+      context.beginPath();
+      context.ellipse(0, 0, 34, 14, 0, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
+      context.fillStyle = "#47cfda";
+      context.beginPath();
+      context.arc(18, -1, 7, 0, Math.PI * 2);
+      context.fill();
+      context.fillStyle = "#66878a";
+      context.fillRect(-43, -10, 12, 20);
+      context.restore();
+    }
+
+    function drawText(text, x, y, color, size, align = "left") {
+      context.fillStyle = color;
+      context.font = `${size}px "Trebuchet MS", sans-serif`;
+      context.textAlign = align;
+      context.textBaseline = "alphabetic";
+      context.fillText(text, x, y);
+    }
+
+    function drawLabel(text, x, y, color, size, bold = false) {
+      context.fillStyle = color;
+      context.font = `${bold ? "700" : "400"} ${size}px "Trebuchet MS", sans-serif`;
+      context.textAlign = "left";
+      context.textBaseline = "alphabetic";
+      context.fillText(text, x, y);
+    }
+
+    function drawWrapped(text, x, y, width, lineHeight, color) {
+      const words = text.split(" ");
+      const lines = [];
+      let line = "";
+      context.font = `20px "Trebuchet MS", sans-serif`;
+      words.forEach((word) => {
+        const test = line ? `${line} ${word}` : word;
+        if (context.measureText(test).width > width && line) {
+          lines.push(line);
+          line = word;
+        } else {
+          line = test;
+        }
+      });
+      if (line) lines.push(line);
+      lines.forEach((content, index) => drawText(content, x, y + index * lineHeight, color, 20));
+    }
+
+    elements.less.addEventListener("click", () => takeTurn("less"));
+    elements.follow.addEventListener("click", () => takeTurn("follow"));
+    elements.more.addEventListener("click", () => takeTurn("more"));
+    elements.reset.addEventListener("click", resetGame);
+    background.addEventListener("load", update);
+
+    resetGame();
+  </script>
+</body>
+</html>
