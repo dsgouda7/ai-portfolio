@@ -53,7 +53,7 @@ The required competency is the ability to reason about the operations. The noteb
 
 1. [Math Foundations for ML](../../genai-prerequisites/00-math-foundations/math-foundations-for-ml.ipynb)
 2. [ML Basics](../../genai-prerequisites/01-ml-basics/ml-basics.ipynb)
-3. [Neural Networks and Backpropagation](../../genai-prerequisites/02-neural-networks/neural-networks-and-backprop.ipynb)
+3. [Neural Networks and Backpropagation](../../genai-prerequisites/02-neural-networks/README.md)
 4. [Keras to PyTorch Antarctic Field Guide](../../genai-prerequisites/03-pytorch-fundamentals/01-keras-to-pytorch-antarctic-field-guide.ipynb)
 5. [RNN Sequence Modeling](../../genai-prerequisites/05-rnn-sequence-modeling/rnn-sequence-modeling.ipynb)
 6. [Tokenization and Embeddings](../../genai-prerequisites/06-tokenization/tokenization-and-embeddings.ipynb)

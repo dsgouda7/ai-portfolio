@@ -8,7 +8,7 @@ This sequence builds the mathematical, machine-learning, framework, and sequence
 |---|---|---|---|
 | 00 | [Math Foundations](00-math-foundations/math-foundations-for-ml.ipynb) | NumPy + SciPy | Build motion from local change, read vectors and probability, then use local derivatives for constrained gradient descent |
 | 01 | [ML Basics](01-ml-basics/ml-basics.ipynb) | NumPy + scikit-learn | Build train/validation/test, optimization, classification, and generalization contracts |
-| 02 | [Neural Networks and Backpropagation](02-neural-networks/neural-networks-and-backprop.ipynb) | TensorFlow/Keras | Build dense networks, derive backpropagation, and distinguish train from inference behavior |
+| 02 | [Neural Networks and Backpropagation](02-neural-networks/README.md) | TensorFlow/Keras | Derive backpropagation with SmartVal, then apply it to an audible Melodyne synthesizer restoration |
 | 03 | [Keras to PyTorch: Antarctic Field Guide](03-pytorch-fundamentals/01-keras-to-pytorch-antarctic-field-guide.ipynb) | TensorFlow/Keras ↔ PyTorch | Translate familiar model, loss, autograd, optimizer, dtype, and device contracts into PyTorch |
 | 04 | [Convolutional Neural Networks](04-cnns/convolutional-neural-networks.ipynb) | TensorFlow/Keras ↔ PyTorch | Optional vision branch: convolution, receptive fields, residual paths, and transfer learning |
 | 05 | [RNN/LSTM Sequence Modeling](05-rnn-sequence-modeling/rnn-sequence-modeling.ipynb) | TensorFlow/Keras ↔ PyTorch | Derive recurrent state, BPTT, vanishing gradients, and LSTM gating |
@@ -19,7 +19,7 @@ For the language-model route, chapter 04 is optional: follow `00 → 01 → 02 �
 
 ## Chapter Setup
 
-Run setup from each chapter directory you plan to use. On Windows run `.\setup.ps1`; on Linux or macOS run `bash ./setup.sh`. Each script creates or reuses the chapter-local `.venv`, installs dependencies, registers the chapter kernel, and assigns that kernelspec to the chapter notebook.
+Run setup from each chapter directory you plan to use. On Windows run `.\setup.ps1`; on Linux or macOS run `bash ./setup.sh`. Each script creates or reuses the chapter-local `.venv`, installs dependencies, registers the chapter kernel, and assigns that kernelspec to the chapter notebooks.
 
 ## Comparison Policy
 

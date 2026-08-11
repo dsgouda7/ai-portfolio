@@ -34,7 +34,7 @@ This plan covers every notebook under `learning/genai/` and
 | --- | --- | --- |
 | `genai-prerequisites/00-math-foundations/math-foundations-for-ml.ipynb` | Three strong geometry/flow visuals | No change |
 | `genai-prerequisites/01-ml-basics/ml-basics.ipynb` | Three strong measured technical plots | No Designer image; keep charts executable |
-| `genai-prerequisites/02-neural-networks/neural-networks-and-backprop.ipynb` | One duplicated/mislabeled image; backprop flow gap | Queue 1-2 |
+| `genai-prerequisites/02-neural-networks/01-smartval-neural-networks-and-backprop.ipynb` | One duplicated/mislabeled image; backprop flow gap | Queue 1-2 |
 | `genai-prerequisites/04-cnns/convolutional-neural-networks.ipynb` | Convolution, feature-map, and residual visuals are strong | Queue 3 |
 | `genai-prerequisites/05-rnn-sequence-modeling/rnn-sequence-modeling.ipynb` | Gate-equation image is styled text, not mechanism | Queue 4 |
 | `genai-prerequisites/06-tokenization/tokenization-and-embeddings.ipynb` | Training GIF is strong; static reference is text-dense | Remove redundant JPG after final review; no replacement needed |
@@ -59,7 +59,7 @@ This plan covers every notebook under `learning/genai/` and
 
 ### Queue 1 - Replace the Incorrect Depth-vs-Width Asset
 
-- **Notebook:** `genai-prerequisites/02-neural-networks/neural-networks-and-backprop.ipynb`
+- **Notebook:** `genai-prerequisites/02-neural-networks/01-smartval-neural-networks-and-backprop.ipynb`
 - **Anchor:** `## Part 4 — Depth Beats Width: Universal Approximation`
 - **Action:** REPLACE
 - **Current problem:** `depth-vs-width-decision-boundary.png` is byte-for-byte
@@ -108,7 +108,7 @@ AVOID
 
 ### Queue 2 - Add the Backpropagation Route
 
-- **Notebook:** `genai-prerequisites/02-neural-networks/neural-networks-and-backprop.ipynb`
+- **Notebook:** `genai-prerequisites/02-neural-networks/01-smartval-neural-networks-and-backprop.ipynb`
 - **Anchor:** `## Part 3 — Backpropagation by Hand`
 - **Action:** ADD immediately after the forward-pass recap and before the manual
   derivative calculation.

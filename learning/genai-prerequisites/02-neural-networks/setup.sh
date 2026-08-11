@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Creates a local virtual environment and installs everything needed to run
-# neural-networks-and-backprop.ipynb.
+# the SmartVal and Melodyne chapter notebooks.
 #
 # Creates a `.venv` next to this script (if it does not already exist),
 # installs the dependencies from requirements.txt into it, and registers a
@@ -74,5 +74,8 @@ fi
 
 echo ""
 echo "Setup complete."
-echo "Open neural-networks-and-backprop.ipynb and pick the 'Python (neural-networks .venv)' kernel"
+echo "Chapter notebooks:"
+echo "  1. 01-smartval-neural-networks-and-backprop.ipynb"
+echo "  2. 02-melodyne-backprop-synthesizer.ipynb"
+echo "Pick the 'Python (neural-networks .venv)' kernel in either notebook"
 echo "(it should be selected automatically). The venv lives at: $VENV_DIR"
