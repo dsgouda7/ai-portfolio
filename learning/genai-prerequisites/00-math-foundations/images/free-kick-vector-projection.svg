@@ -1,73 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
-  <title id="title">Dot product as the shadow of the launch direction along the direct target line</title>
-  <desc id="desc">A 19.11 degree launch arrow projects a long forward shadow onto the 2.93 degree direct target line. Three smaller examples compare same direction, sideways, and opposite direction.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="400" viewBox="0 0 1000 400" role="img" aria-labelledby="title desc">
+  <title id="title">Useful projection of the launch onto the target direction</title>
+  <desc id="desc">A cyan launch arrow projects onto a dashed target guide. The green projected length is 0.960 of the unit launch arrow.</desc>
   <defs>
-    <marker id="arrow-cyan" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-      <path d="M0,0 L8,4 L0,8 z" fill="#43cbd8"/>
+    <marker id="arrow-cyan" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0 0L10 5L0 10Z" fill="#219ebc"/>
     </marker>
-    <marker id="arrow-gold" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-      <path d="M0,0 L8,4 L0,8 z" fill="#f2b83e"/>
+    <marker id="arrow-gold" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0 0L10 5L0 10Z" fill="#d99a16"/>
     </marker>
-    <marker id="arrow-coral" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-      <path d="M0,0 L8,4 L0,8 z" fill="#ed6955"/>
-    </marker>
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#061923" flood-opacity="0.28"/>
-    </filter>
   </defs>
 
-  <rect width="1600" height="900" fill="#eaf1eb"/>
-  <path d="M0 0H1600V128H0z" fill="#082d3c"/>
-  <text x="58" y="38" fill="#f2b83e" font-family="Trebuchet MS, sans-serif" font-size="18" font-weight="700">AT CONTACT</text>
-  <text x="58" y="91" fill="#f7faf5" font-family="Georgia, serif" font-size="48" font-weight="700">Launch direction vs. direct target line</text>
+  <rect width="1000" height="400" fill="#f4f8f5"/>
 
-  <g filter="url(#shadow)">
-    <rect x="56" y="174" width="1000" height="520" rx="12" fill="#ffffff" stroke="#9bb0ad" stroke-width="3"/>
-  </g>
-  <text x="92" y="220" fill="#5f7478" font-family="Trebuchet MS, sans-serif" font-size="18" font-weight="700">THE PROJECTION PICTURE</text>
-  <text x="92" y="265" fill="#0b202b" font-family="Georgia, serif" font-size="32" font-weight="700">Drop the kick arrow's shadow onto the target line</text>
+  <circle cx="105" cy="295" r="8" fill="#ffffff" stroke="#102a36" stroke-width="3"/>
 
-  <circle cx="230" cy="570" r="14" fill="#f7faf5" stroke="#0b202b" stroke-width="3"/>
-  <line x1="230" y1="570" x2="860" y2="538" stroke="#f2b83e" stroke-width="6" marker-end="url(#arrow-gold)"/>
-  <text x="650" y="520" fill="#8d6818" font-family="Trebuchet MS, sans-serif" font-size="24" font-weight="700">direct target line · 2.93°</text>
+  <line x1="105" y1="295" x2="900" y2="255" stroke="#d99a16" stroke-width="2.5" stroke-dasharray="9 8" marker-end="url(#arrow-gold)"/>
+  <text x="700" y="320" fill="#8a6413" font-family="Trebuchet MS, sans-serif" font-size="20" font-weight="700">target direction · 2.93°</text>
 
-  <line x1="230" y1="570" x2="797" y2="374" stroke="#43cbd8" stroke-width="6" marker-end="url(#arrow-cyan)"/>
-  <text x="610" y="405" fill="#147f8a" font-family="Trebuchet MS, sans-serif" font-size="24" font-weight="700">launch direction · 19.11°</text>
+  <line x1="105" y1="295" x2="780" y2="61" stroke="#219ebc" stroke-width="4" marker-end="url(#arrow-cyan)"/>
+  <text x="455" y="88" fill="#126f83" font-family="Trebuchet MS, sans-serif" font-size="21" font-weight="700">launch · 19.11°</text>
 
-  <line x1="797" y1="386" x2="806" y2="541" stroke="#60797b" stroke-width="4" stroke-dasharray="12 10"/>
-  <path d="M772 510L805 508L806 541" fill="none" stroke="#60797b" stroke-width="4"/>
+  <line x1="780" y1="61" x2="791" y2="261" stroke="#718487" stroke-width="2" stroke-dasharray="7 7"/>
+  <path d="M771 243L790 242L791 261" fill="none" stroke="#718487" stroke-width="2"/>
 
-  <line x1="230" y1="570" x2="806" y2="541" stroke="#4ecf8e" stroke-width="8" opacity="0.88"/>
-  <text x="518" y="625" text-anchor="middle" fill="#257b56" font-family="Trebuchet MS, sans-serif" font-size="25" font-weight="700">forward shadow = 0.960 of the unit launch arrow</text>
-  <text x="92" y="650" fill="#5f7478" font-family="Trebuchet MS, sans-serif" font-size="20">A long forward shadow means strong agreement.</text>
-  <text x="92" y="680" fill="#5f7478" font-family="Trebuchet MS, sans-serif" font-size="20">For unit arrows, the dot product is that signed shadow length.</text>
-
-  <g transform="translate(1110 174)" filter="url(#shadow)">
-    <rect width="434" height="520" rx="12" fill="#ffffff" stroke="#9bb0ad" stroke-width="3"/>
-    <text x="28" y="48" fill="#5f7478" font-family="Trebuchet MS, sans-serif" font-size="18" font-weight="700">THREE QUICK TESTS</text>
-
-    <g transform="translate(26 70)">
-      <line x1="30" y1="46" x2="310" y2="46" stroke="#f2b83e" stroke-width="4" marker-end="url(#arrow-gold)"/>
-      <line x1="30" y1="46" x2="275" y2="46" stroke="#43cbd8" stroke-width="4" marker-end="url(#arrow-cyan)"/>
-      <text x="30" y="98" fill="#257b56" font-family="Trebuchet MS, sans-serif" font-size="19" font-weight="700">Same way: large positive</text>
-    </g>
-
-    <g transform="translate(26 245)">
-      <line x1="30" y1="46" x2="310" y2="46" stroke="#f2b83e" stroke-width="4" marker-end="url(#arrow-gold)"/>
-      <line x1="30" y1="46" x2="30" y2="-42" stroke="#43cbd8" stroke-width="4" marker-end="url(#arrow-cyan)"/>
-      <circle cx="30" cy="46" r="7" fill="#0b202b"/>
-      <text x="30" y="98" fill="#60797b" font-family="Trebuchet MS, sans-serif" font-size="19" font-weight="700">Sideways: zero shadow</text>
-    </g>
-
-    <g transform="translate(26 410)">
-      <line x1="30" y1="46" x2="310" y2="46" stroke="#f2b83e" stroke-width="4" marker-end="url(#arrow-gold)"/>
-      <line x1="310" y1="46" x2="70" y2="46" stroke="#ed6955" stroke-width="4" marker-end="url(#arrow-coral)"/>
-      <text x="30" y="98" fill="#a94131" font-family="Trebuchet MS, sans-serif" font-size="19" font-weight="700">Opposite way: negative</text>
-    </g>
-  </g>
-
-  <rect x="0" y="760" width="1600" height="140" fill="#082d3c"/>
-  <text x="58" y="813" fill="#4ecf8e" font-family="Georgia, serif" font-size="34" font-weight="700">Picture first</text>
-  <text x="285" y="815" fill="#f7faf5" font-family="Trebuchet MS, sans-serif" font-size="25">The dot product answers: “How much of this arrow lies along that arrow?”</text>
-  <text x="58" y="862" fill="#a7bdbe" font-family="Trebuchet MS, sans-serif" font-size="20">Direction gives the sign. The shadow length gives the strength of agreement.</text>
+  <line x1="105" y1="295" x2="791" y2="261" stroke="#36b37e" stroke-width="6"/>
+  <circle cx="791" cy="261" r="6" fill="#36b37e"/>
+  <text x="360" y="360" fill="#207a57" font-family="Trebuchet MS, sans-serif" font-size="22" font-weight="700">useful projection · 0.960</text>
 </svg>
