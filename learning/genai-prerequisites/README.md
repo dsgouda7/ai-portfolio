@@ -13,7 +13,7 @@ This sequence builds the mathematical, machine-learning, framework, and sequence
 | 04 | [Convolutional Neural Networks](04-cnns/convolutional-neural-networks.ipynb) | TensorFlow/Keras ↔ PyTorch | Optional vision branch: convolution, receptive fields, residual paths, and transfer learning |
 | 05 | [RNN/LSTM Sequence Modeling](05-rnn-sequence-modeling/rnn-sequence-modeling.ipynb) | TensorFlow/Keras ↔ PyTorch | Derive recurrent state, BPTT, vanishing gradients, and LSTM gating |
 | 06 | [Tokenization and Embeddings](06-tokenization/tokenization-and-embeddings.ipynb) | TensorFlow/Keras ↔ PyTorch | Build BPE intuition, train embedding rows, and handle padding and masked loss |
-| 07 | [PyTorch RNN Bridge](07-pytorch-rnn-bridge/01-pytorch-rnn-bridge.ipynb) | TensorFlow/Keras ↔ PyTorch | Carry the sequence contract into PyTorch before attention replaces recurrence |
+| 07 | [PyTorch RNN Bridge and Memory Capstone](07-pytorch-rnn-bridge/README.md) | TensorFlow/Keras ↔ PyTorch | Carry the sequence contract into PyTorch, then hear RNN and LSTM memory diverge beyond the training horizon |
 
 For the language-model route, chapter 04 is optional: follow `00 → 01 → 02 → 03 → 05 → 06 → 07`. Complete chapter 04 when vision, multimodal work, or convolution-heavy systems are relevant.
 
@@ -25,4 +25,4 @@ Run setup from each chapter directory you plan to use. On Windows run `.\setup.p
 
 Every notebook contains at least one compact TensorFlow/Keras ↔ PyTorch comparison block after the underlying concept is taught. These blocks emphasize invariant computation and the API or tensor-layout difference most likely to cause translation bugs. TensorFlow-first notebooks keep PyTorch snippets in Markdown so their executable dependency set remains unchanged; chapters 03 and 07 provide the runnable PyTorch practice.
 
-After chapter 07, continue to [Transformer Foundations](../genai/01-transformers/README.md).
+After both chapter 07 notebooks, continue to [Transformer Foundations](../genai/01-transformers/README.md).
