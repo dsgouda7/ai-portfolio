@@ -1,0 +1,63 @@
+sources:
+  - id: replay-demo
+    name: Deterministic RoadID replay
+    type: replay
+    enabled: true
+    attribution: RoadID synthetic fixture
+    refresh_seconds: 0.1
+    location_precision: none
+    options:
+      frame_count: 30
+      width: 960
+      height: 540
+
+  - id: local-camera-0
+    name: Local webcam
+    type: local_camera
+    enabled: false
+    attribution: User-owned camera
+    refresh_seconds: 0.2
+    location_precision: none
+    options:
+      device_index: 0
+
+  - id: reviewed-snapshot
+    name: Administrator-reviewed HTTPS snapshot
+    type: snapshot_http
+    enabled: false
+    attribution: Replace with the camera provider attribution
+    terms_url: https://camera.example/terms
+    refresh_seconds: 5.0
+    location_precision: district
+    options:
+      url: https://camera.example/snapshot.jpg
+      allowed_hosts:
+        - camera.example
+      allowed_schemes:
+        - https
+      allowed_ports:
+        - 443
+      connect_timeout_seconds: 2.0
+      read_timeout_seconds: 4.0
+      max_retries: 2
+      retry_backoff_seconds: 0.1
+      max_redirects: 3
+      max_bytes: 5000000
+      max_width: 4096
+      max_height: 2160
+      max_pixels: 8847360
+      max_age_seconds: 30.0
+      require_freshness: true
+
+  - id: tfl-jamcam
+    name: Transport for London JamCam catalog
+    type: tfl_jamcam
+    enabled: false
+    attribution: Transport for London
+    terms_url: https://tfl.gov.uk/corporate/terms-and-conditions/transport-data-service
+    refresh_seconds: 10.0
+    location_precision: district
+    options:
+      terms_reviewed: false
+      official_api_base_url: https://api.tfl.gov.uk
+      app_key: ""

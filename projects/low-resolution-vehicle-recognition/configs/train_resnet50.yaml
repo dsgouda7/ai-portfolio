@@ -1,0 +1,38 @@
+seed: 2608
+base_model:
+  model_id: microsoft/resnet-50
+  revision: main
+  offline_only: true
+
+data:
+  dataset_root: data/vehicles
+  manifest_path: data/vehicles/manifest.json
+  dataset_version: roadid-v1
+  prepared_root: artifacts/datasets/roadid-v1
+  image_size: 224
+  smoke_image_size: 32
+  pseudo_track_length: 6
+  apparent_height_range: [12, 64]
+  validation_fraction: 0.20
+  test_fraction: 0.20
+
+training:
+  output_root: artifacts/training
+  batch_size: 16
+  head_epochs: 3
+  fine_tune_epochs: 3
+  head_learning_rate: 0.001
+  fine_tune_learning_rate: 0.00005
+  weight_decay: 0.01
+  partial_unfreeze_prefixes: [backbone.encoder.stages.3]
+  smoke_feature_dim: 16
+
+calibration:
+  method: temperature_scaling
+  target_precision:
+    body_type: 0.90
+    make: 0.85
+    model_family: 0.80
+
+packaging:
+  model_root: artifacts/models

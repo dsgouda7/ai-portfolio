@@ -75,6 +75,23 @@ The [Riverside project README](riverside-ai-platform/README.md) is the project e
 
 ---
 
+## [RoadID](low-resolution-vehicle-recognition/)
+
+**Can several weak, low-resolution views of a moving vehicle identify its body type, make, and
+model family more reliably than a single frame?**
+
+Locally validated deterministic profile with an offline hierarchical training pipeline,
+hash-verified bundles, allowlisted camera adapters, vehicle tracking, quality-weighted multi-frame
+fusion, calibrated abstention, privacy-safe rendering, bounded SSE telemetry, and a responsive Flask
+operations UI. The local suite passed 83 Python tests, Ruff, an end-to-end smoke training run, a
+30-frame live replay API check, and 8 active desktop/mobile Playwright checks with 2 expected
+viewport skips. Real ResNet-50 training, dataset accuracy, public-camera behavior, latency SLOs, and
+production readiness remain unvalidated.
+
+`PyTorch` `Hugging Face` `OpenCV` `Flask` `SSE` `Playwright` `Python`
+
+---
+
 ## [Video Quality Enhancer](video-quality-enhancer/)
 
 **Can open-source super-resolution and audio-denoising models running entirely locally upscale consumer video to 4K with improved audio — no paid API, no cloud GPU required?**
