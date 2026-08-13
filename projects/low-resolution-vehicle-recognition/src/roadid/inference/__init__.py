@@ -1,4 +1,4 @@
-"""TrackLens inference components with no import-time model loading."""
+"""CarFace inference components with no import-time model loading."""
 
 from roadid.inference.bundle import BundleError, ModelBundle, ModelBundleLoader, load_model_bundle
 from roadid.inference.calibration import HierarchicalDecisionEngine, TemperatureCalibrator

@@ -1,4 +1,4 @@
-"""TrackLens dataset preparation and training command line interface."""
+"""CarFace dataset preparation and training command line interface."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from roadid.training.trainer import prepare_dataset, train_pipeline
 
 
 def prepare_main(argv: list[str] | None = None) -> int:
-    parser = _parser("Prepare a leakage-safe TrackLens dataset.")
+    parser = _parser("Prepare a leakage-safe CarFace dataset.")
     arguments = parser.parse_args(argv)
     config = load_training_config(arguments.config)
     root = prepare_dataset(config, smoke=arguments.smoke, output_root=arguments.output_root)
@@ -19,7 +19,7 @@ def prepare_main(argv: list[str] | None = None) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = _parser("Train, calibrate, evaluate, and package TrackLens.")
+    parser = _parser("Train, calibrate, evaluate, and package CarFace.")
     parser.add_argument("--prepared-root", type=Path)
     arguments = parser.parse_args(argv)
     config = load_training_config(arguments.config)

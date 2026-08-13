@@ -89,7 +89,7 @@ class VehicleClassifier(Protocol):
 
 
 class HuggingFaceHierarchicalResNetClassifier:
-    """Lazy wrapper for a bundle's TrackLens hierarchical ResNet classifier."""
+    """Lazy wrapper for a bundle's CarFace hierarchical ResNet classifier."""
 
     def __init__(
         self,

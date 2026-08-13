@@ -1,4 +1,4 @@
-# TrackLens: Low-Resolution Multi-Frame Vehicle Recognition
+# CarFace: Low-Resolution Multi-Frame Vehicle Recognition
 
 ## Evidence status
 
@@ -34,7 +34,7 @@ Start the deterministic replay application:
 python -m roadid.web
 ```
 
-Open `http://127.0.0.1:5000`, select **Deterministic TrackLens replay**, and start a run. The replay
+Open `http://127.0.0.1:5000`, select **Deterministic CarFace replay**, and start a run. The replay
 uses the same source, tracking, fusion, decision, privacy-rendering, telemetry, and web boundaries as
 the configurable runtime without claiming real-model accuracy.
 
@@ -60,7 +60,7 @@ npm --prefix tests/browser test
 
 Traffic and city cameras often capture a vehicle as a small, blurred crop. One frame may preserve only a roofline, wheelbase, window profile, or tail-light shape. A sequence contains complementary views as the vehicle moves through the scene.
 
-TrackLens treats the **track**, not the frame, as the unit of evidence:
+CarFace treats the **track**, not the frame, as the unit of evidence:
 
 ```text
 public or local camera frames
@@ -77,7 +77,7 @@ The application is not license-plate recognition and does not attempt to identif
 
 ## Product goal
 
-TrackLens is a locally hosted Flask application where a user can:
+CarFace is a locally hosted Flask application where a user can:
 
 1. Select an approved public traffic camera, a local webcam, or a prerecorded replay.
 2. Start a near-real-time inference run.
@@ -134,7 +134,7 @@ Coverage is a controlled output:
 
 ## Transfer-learning strategy
 
-TrackLens deliberately starts from models trained for broader visual tasks, then adapts them to fine-grained vehicles.
+CarFace deliberately starts from models trained for broader visual tasks, then adapts them to fine-grained vehicles.
 
 ### Vehicle detector
 
@@ -156,7 +156,7 @@ Transfer backbone: [`microsoft/resnet-50`](https://huggingface.co/microsoft/resn
 - A generic ResNet-50 v1.5 image classifier pretrained on ImageNet-1k at 224 x 224.
 - It has learned reusable edges, textures, contours, parts, and object composition from general images, not car-model labels.
 - Apache-2.0 model license.
-- The ImageNet classifier head will be replaced with TrackLens's hierarchical body/make/model heads.
+- The ImageNet classifier head will be replaced with CarFace's hierarchical body/make/model heads.
 
 Training proceeds in two stages:
 
@@ -167,7 +167,7 @@ This makes the transfer-learning claim measurable: compare a random-init classif
 
 ## Dataset strategy
 
-No single dataset supplies realistic camera tracks, exact make/model labels, and unrestricted redistribution. TrackLens therefore uses explicit dataset adapters and records source terms in every manifest.
+No single dataset supplies realistic camera tracks, exact make/model labels, and unrestricted redistribution. CarFace therefore uses explicit dataset adapters and records source terms in every manifest.
 
 ### Supervised make/model sources
 
@@ -362,7 +362,7 @@ Implemented adapters:
 | `snapshot_http` | Administrator-configured still-image endpoint | Disabled; allowlist only |
 | `mjpeg` / `hls` | Administrator-configured stream | Optional after transport tests |
 
-Each provider record stores attribution, terms URL, camera ID, refresh expectation, location precision policy, and whether frame caching is permitted. TrackLens does not scrape Google Maps, arbitrary webcam directories, or web pages.
+Each provider record stores attribution, terms URL, camera ID, refresh expectation, location precision policy, and whether frame caching is permitted. CarFace does not scrape Google Maps, arbitrary webcam directories, or web pages.
 
 ## Flask web application
 
@@ -494,7 +494,7 @@ projects/low-resolution-vehicle-recognition/
 
 ## Evaluation
 
-TrackLens evaluates the full product, not only frame classification.
+CarFace evaluates the full product, not only frame classification.
 
 ### Perception and tracking
 
@@ -534,7 +534,7 @@ A second required metric is the improvement of quality-weighted track fusion ove
 
 ## Privacy, security, and responsible use
 
-TrackLens is designed for vehicle-category research, not person or owner identification.
+CarFace is designed for vehicle-category research, not person or owner identification.
 
 Required safeguards:
 

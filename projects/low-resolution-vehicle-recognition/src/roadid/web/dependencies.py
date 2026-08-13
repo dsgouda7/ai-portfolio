@@ -1,4 +1,4 @@
-"""Lazy integration wiring for standalone TrackLens web startup."""
+"""Lazy integration wiring for standalone CarFace web startup."""
 
 from __future__ import annotations
 

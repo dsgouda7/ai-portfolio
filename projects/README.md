@@ -75,7 +75,7 @@ The [Riverside project README](riverside-ai-platform/README.md) is the project e
 
 ---
 
-## [TrackLens](low-resolution-vehicle-recognition/)
+## [CarFace](low-resolution-vehicle-recognition/)
 
 **Can several weak, low-resolution views of a moving vehicle identify its body type, make, and
 model family more reliably than a single frame?**

@@ -1,4 +1,4 @@
-"""Run TrackLens's local Flask application."""
+"""Run CarFace's local Flask application."""
 
 from roadid.web import main
 

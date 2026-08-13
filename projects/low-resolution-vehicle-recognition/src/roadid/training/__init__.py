@@ -1,1 +1,1 @@
-"""Offline TrackLens dataset, model training, evaluation, and packaging."""
+"""Offline CarFace dataset, model training, evaluation, and packaging."""

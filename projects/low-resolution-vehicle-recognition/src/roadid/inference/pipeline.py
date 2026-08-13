@@ -1,4 +1,4 @@
-"""Synchronous TrackLens inference orchestration with external checkpoint callbacks."""
+"""Synchronous CarFace inference orchestration with external checkpoint callbacks."""
 
 from __future__ import annotations
 

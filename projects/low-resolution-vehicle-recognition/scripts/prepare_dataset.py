@@ -1,4 +1,4 @@
-"""Prepare a TrackLens training dataset."""
+"""Prepare a CarFace training dataset."""
 
 from roadid.training.cli import prepare_main
 

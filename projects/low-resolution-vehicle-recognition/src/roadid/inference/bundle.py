@@ -1,4 +1,4 @@
-"""Fail-closed loading for versioned TrackLens model bundles."""
+"""Fail-closed loading for versioned CarFace model bundles."""
 
 from __future__ import annotations
 

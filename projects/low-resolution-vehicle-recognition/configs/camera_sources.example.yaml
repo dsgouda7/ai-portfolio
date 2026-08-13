@@ -1,9 +1,9 @@
 sources:
   - id: replay-demo
-    name: Deterministic TrackLens replay
+    name: Deterministic CarFace replay
     type: replay
     enabled: true
-    attribution: TrackLens synthetic fixture
+    attribution: CarFace synthetic fixture
     refresh_seconds: 0.1
     location_precision: none
     options:

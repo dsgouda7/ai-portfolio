@@ -1,4 +1,4 @@
-"""Typed source adapter primitives shared by all TrackLens frame providers."""
+"""Typed source adapter primitives shared by all CarFace frame providers."""
 
 from __future__ import annotations
 

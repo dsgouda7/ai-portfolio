@@ -6,10 +6,11 @@ const longError = "Detector worker rejected a deliberately long diagnostic messa
 
 async function installMockApi(page, options = {}) {
   const observed = { eventHeaders: [], stopCalls: 0 };
+  const finalSequence = options.contiguousEvents ? 2 : 3;
   const events = [
     ": heartbeat\n\n",
     `id: 1\nevent: pipeline\ndata: ${JSON.stringify({ sequence_id: 1, run_id: "run-demo", frame_id: 7, stage: "source_acquisition", status: "running", started_at: "2026-08-13T12:00:00Z", input_summary: {}, output_summary: {} })}\n\n`,
-    `id: 3\nevent: pipeline\ndata: ${JSON.stringify({ sequence_id: 3, run_id: "run-demo", frame_id: 7, stage: options.longError ? "vehicle_detection" : "source_acquisition", status: options.longError ? "failed" : "completed", duration_ms: 8.4, input_summary: { source: "replay-demo" }, output_summary: { frame_id: 7 }, error_code: options.longError ? "MODEL_RUNTIME_MISMATCH" : null, error: options.longError ? longError : null })}\n\n`,
+    `id: ${finalSequence}\nevent: pipeline\ndata: ${JSON.stringify({ sequence_id: finalSequence, run_id: "run-demo", frame_id: 7, stage: options.longError ? "vehicle_detection" : "source_acquisition", status: options.longError ? "failed" : "completed", duration_ms: 8.4, input_summary: { source: "replay-demo" }, output_summary: { frame_id: 7 }, error_code: options.longError ? "MODEL_RUNTIME_MISMATCH" : null, error: options.longError ? longError : null })}\n\n`,
   ].join("");
 
   await page.route("**/api/status", (route) => route.fulfill({
@@ -20,7 +21,7 @@ async function installMockApi(page, options = {}) {
   await page.route("**/api/sources", (route) => route.fulfill({
     status: 200,
     contentType: "application/json",
-    body: JSON.stringify({ sources: [{ source_id: "replay-demo", name: "Licensed demo replay", adapter_type: "replay", enabled: true, attribution: "TrackLens deterministic replay fixture" }] }),
+    body: JSON.stringify({ sources: [{ source_id: "replay-demo", name: "Licensed demo replay", adapter_type: "replay", enabled: true, attribution: "CarFace deterministic replay fixture" }] }),
   }));
   await page.route("**/api/runs", (route) => route.fulfill({
     status: 201,
@@ -44,7 +45,7 @@ async function installMockApi(page, options = {}) {
   await page.route("**/api/runs/run-demo", (route) => route.fulfill({
     status: 200,
     contentType: "application/json",
-    body: JSON.stringify({ run_id: "run-demo", state: "running" }),
+    body: JSON.stringify({ run_id: "run-demo", state: options.terminalRun ? "completed" : "running" }),
   }));
   await page.route("**/api/tracks/track-47", (route) => route.fulfill({
     status: 200,
@@ -71,11 +72,11 @@ async function installMockApi(page, options = {}) {
   return observed;
 }
 
-async function startDemo(page) {
+async function startDemo(page, expectedState = "Running") {
   await page.goto("/");
   await page.getByTestId("source-select").selectOption("replay-demo");
   await page.getByTestId("start-button").click();
-  await expect(page.getByTestId("run-state")).toHaveText("Running");
+  await expect(page.getByTestId("run-state")).toHaveText(expectedState);
 }
 
 async function expectNoViewportOverflow(page) {
@@ -91,6 +92,7 @@ function overlaps(first, second) {
 test("loads approved sources and labels the demo profile", async ({ page }) => {
   await installMockApi(page);
   await page.goto("/");
+  await expect(page.locator(".brand-block h1")).toHaveText("CarFace");
   await expect(page.getByTestId("source-select")).toContainText("Licensed demo replay");
   await expect(page.getByTestId("readiness-badge")).toHaveText("Ready");
   await expect(page.locator("#profile-badge")).toContainText("Demo profile");
@@ -121,6 +123,28 @@ test("starts, transitions the graph, selects a track, reconnects, and stops", as
   expect(observed.stopCalls).toBe(1);
   await page.waitForTimeout(900);
   await expect(page.locator("#event-sequence")).toHaveText(sequenceBeforeStop);
+});
+
+test("a completed run closes its finite event stream without reconnecting", async ({ page }) => {
+  const observed = await installMockApi(page, { terminalRun: true, contiguousEvents: true });
+  await startDemo(page, "Completed");
+
+  await expect(page.getByTestId("run-state")).toHaveText("Completed");
+  await expect(page.locator("#trace-connection")).toHaveText("Complete");
+  await expect(page.locator("#connection-notice")).toBeHidden();
+  await page.waitForTimeout(1200);
+  expect(observed.eventHeaders).toHaveLength(1);
+});
+
+test("live replay completes without an event-stream reconnect warning", async ({ page }) => {
+  await page.goto("/");
+  await page.getByTestId("source-select").selectOption("replay-demo");
+  await page.getByTestId("start-button").click();
+
+  await expect(page.getByTestId("run-state")).toHaveText("Completed", { timeout: 15_000 });
+  await expect(page.locator("#trace-connection")).toHaveText("Complete");
+  await expect(page.locator("#connection-notice")).not.toContainText("reconnecting");
+  await expect(page.getByTestId("tracks-body").getByTestId("track-row")).toBeVisible();
 });
 
 test("long stage errors wrap without changing graph dimensions", async ({ page }) => {

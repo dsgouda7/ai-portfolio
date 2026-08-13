@@ -1,4 +1,4 @@
-"""Verify and print a TrackLens bundle evaluation report."""
+"""Verify and print a CarFace bundle evaluation report."""
 
 from roadid.training.evaluate_cli import main
 

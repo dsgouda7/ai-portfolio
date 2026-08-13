@@ -1,4 +1,4 @@
-# TrackLens Parallel Implementation Plan
+# CarFace Parallel Implementation Plan
 
 ## 1. Objective
 
@@ -17,7 +17,7 @@ These decisions prevent each agent from inventing incompatible architecture.
 
 - Directory: `projects/low-resolution-vehicle-recognition/`
 - Python package: `roadid`
-- Product name: `TrackLens`
+- Product name: `CarFace`
 - Flask port: `5000`, configurable by environment
 - Default operation: local-only binding to `127.0.0.1`
 
@@ -736,7 +736,7 @@ The required CI fixture is generated locally from deterministic synthetic frames
 With model cache available:
 
 - load pinned detector revision;
-- load TrackLens classifier bundle;
+- load CarFace classifier bundle;
 - process a short licensed clip;
 - verify at least one vehicle track;
 - report detector precision/recall by apparent-height bin and require at least 90% vehicle recall on the named release profile;
@@ -853,7 +853,7 @@ Do not claim real-time FPS before measurement on named hardware.
 
 ## 12. Definition of Done
 
-TrackLens version 1 is done only when:
+CarFace version 1 is done only when:
 
 - the training and inference packages import independently;
 - training produces a hash-verified reloadable bundle;

@@ -1,4 +1,4 @@
-"""TrackLens bundle evaluation report command line interface."""
+"""CarFace bundle evaluation report command line interface."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from roadid.training.trainer import evaluate_bundle
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Verify and print a TrackLens evaluation report.")
+    parser = argparse.ArgumentParser(description="Verify and print a CarFace evaluation report.")
     parser.add_argument("--bundle", type=Path, required=True)
     arguments = parser.parse_args(argv)
     print(json.dumps(evaluate_bundle(arguments.bundle), indent=2, sort_keys=True))

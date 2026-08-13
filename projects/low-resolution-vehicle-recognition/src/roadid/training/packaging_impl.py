@@ -1,4 +1,4 @@
-"""Atomic TrackLens bundle implementation used by the public packaging module."""
+"""Atomic CarFace bundle implementation used by the public packaging module."""
 
 from __future__ import annotations
 

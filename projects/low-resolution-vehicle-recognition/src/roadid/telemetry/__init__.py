@@ -1,4 +1,4 @@
-"""TrackLens pipeline telemetry and graph serialization."""
+"""CarFace pipeline telemetry and graph serialization."""
 
 from roadid.telemetry.events import (
     MAX_IDENTIFIER_LENGTH,

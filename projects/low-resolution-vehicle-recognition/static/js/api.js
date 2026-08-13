@@ -34,7 +34,7 @@ async function requestJson(path, options = {}) {
     return payload ?? {};
   } catch (error) {
     if (error.name === "AbortError") {
-      throw new ApiError("The TrackLens server did not respond in time.");
+      throw new ApiError("The CarFace server did not respond in time.");
     }
     throw error;
   } finally {
@@ -156,13 +156,33 @@ export class RunEventStream {
         }
         this.handlers.onStatus?.("live");
         await this.#readStream(response.body);
-        if (!this.stopped) throw new ApiError("Event stream closed.");
+        if (this.stopped) return;
+        const terminalRun = await this.#terminalRunAfterClose();
+        if (terminalRun) {
+          this.stopped = true;
+          this.handlers.onTerminal?.(terminalRun);
+          this.handlers.onStatus?.("complete");
+          return;
+        }
+        throw new ApiError("Event stream closed before the run reached a terminal state.");
       } catch (error) {
         if (this.stopped) return;
         this.handlers.onStatus?.("reconnecting", error);
         await new Promise((resolve) => window.setTimeout(resolve, this.reconnectDelay));
         this.reconnectDelay = Math.min(this.reconnectDelay * 2, 8000);
       }
+    }
+  }
+
+  async #terminalRunAfterClose() {
+    try {
+      const payload = await api.run(this.runId);
+      const run = payload.run || payload;
+      return ["completed", "failed", "stopped"].includes(String(run.state).toLowerCase())
+        ? run
+        : null;
+    } catch {
+      return null;
     }
   }
 

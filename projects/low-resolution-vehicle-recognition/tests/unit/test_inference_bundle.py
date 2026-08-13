@@ -20,7 +20,7 @@ def _bundle(root: Path) -> Path:
     dataset_hash = "1" * 64
     validation_hash = "2" * 64
     test_hash = "3" * 64
-    _write_json(root / "classifier/config.json", {"architectures": ["TrackLensResNet"]})
+    _write_json(root / "classifier/config.json", {"architectures": ["CarFaceResNet"]})
     (root / "classifier/model.safetensors").write_bytes(b"fixture-weights")
     _write_json(root / "classifier/preprocessor_config.json", {"size": 224})
     _write_json(
