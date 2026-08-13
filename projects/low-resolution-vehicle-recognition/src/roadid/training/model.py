@@ -204,5 +204,5 @@ def _torch_modules() -> tuple[Any, Any]:
         import torch
         import torch.nn as neural
     except ImportError as error:
-        raise RuntimeError("RoadID training requires PyTorch; install `.[ml]`.") from error
+        raise RuntimeError("TrackLens training requires PyTorch; install `.[ml]`.") from error
     return torch, neural

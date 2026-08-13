@@ -1,9 +1,9 @@
 sources:
   - id: replay-demo
-    name: Deterministic RoadID replay
+    name: Deterministic TrackLens replay
     type: replay
     enabled: true
-    attribution: RoadID synthetic fixture
+    attribution: TrackLens synthetic fixture
     refresh_seconds: 0.1
     location_precision: none
     options:

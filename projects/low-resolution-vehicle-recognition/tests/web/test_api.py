@@ -155,7 +155,7 @@ def test_status_sources_and_run_endpoint_schemas_are_private(app):
     client = app.test_client()
     assert client.get("/").status_code == 200
     status = client.get("/api/status").get_json()
-    assert status["service"] == "RoadID" and status["ready"] is True
+    assert status["service"] == "TrackLens" and status["ready"] is True
     assert status["worker"] == {"ready": True, "active_runs": 0, "total_runs": 0}
     assert set(status["model"]) == {"ready", "model_id", "version", "bundle_configured"}
 

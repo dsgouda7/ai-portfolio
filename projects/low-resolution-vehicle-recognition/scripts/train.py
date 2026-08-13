@@ -1,4 +1,4 @@
-"""Run the RoadID offline training pipeline."""
+"""Run the TrackLens offline training pipeline."""
 
 from roadid.training.cli import main
 

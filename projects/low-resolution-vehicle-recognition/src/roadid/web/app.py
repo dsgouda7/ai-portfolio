@@ -1,4 +1,4 @@
-"""RoadID Flask application factory and HTTP API."""
+"""TrackLens Flask application factory and HTTP API."""
 
 from __future__ import annotations
 
@@ -73,7 +73,7 @@ def create_app(
             return render_template("index.html")
         except TemplateNotFound:
             return Response(
-                "<!doctype html><title>RoadID</title><main><h1>RoadID</h1>"
+                "<!doctype html><title>TrackLens</title><main><h1>TrackLens</h1>"
                 "<p>The web interface is not installed. The API is available.</p></main>",
                 mimetype="text/html",
             )
@@ -97,7 +97,7 @@ def create_app(
         }
         return jsonify(
             {
-                "service": "RoadID",
+                "service": "TrackLens",
                 "ready": all(components.values()) and manager.status()["ready"],
                 "components": components,
                 "model": safe_json(model),

@@ -1,4 +1,4 @@
-"""RoadID Flask application and worker lifecycle."""
+"""TrackLens Flask application and worker lifecycle."""
 
 from roadid.web.app import create_app
 

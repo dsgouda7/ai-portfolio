@@ -1,4 +1,4 @@
-"""Typed source adapter primitives shared by all RoadID frame providers."""
+"""Typed source adapter primitives shared by all TrackLens frame providers."""
 
 from __future__ import annotations
 

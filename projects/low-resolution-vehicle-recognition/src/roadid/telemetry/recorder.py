@@ -1,4 +1,4 @@
-"""Thread-safe event recording for one RoadID inference run."""
+"""Thread-safe event recording for one TrackLens inference run."""
 
 from __future__ import annotations
 

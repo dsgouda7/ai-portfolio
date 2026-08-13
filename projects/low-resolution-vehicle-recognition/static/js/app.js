@@ -500,7 +500,7 @@ function renderHierarchy(prediction) {
   title.textContent = acceptedModel ? "Model family accepted" : abstained ? humanize(decision) : "Decision pending";
   detail.textContent = prediction.abstention_reason || prediction.reason || (acceptedModel
     ? "The calibrated hierarchy accepted the displayed body, make, and model-family labels for this track."
-    : abstained ? "RoadID reports only the deepest hierarchy level supported by current calibrated evidence."
+    : abstained ? "TrackLens reports only the deepest hierarchy level supported by current calibrated evidence."
       : "No confidence or accuracy claim is made before calibrated track evidence is available.");
 }
 

@@ -34,7 +34,7 @@ async function requestJson(path, options = {}) {
     return payload ?? {};
   } catch (error) {
     if (error.name === "AbortError") {
-      throw new ApiError("The RoadID server did not respond in time.");
+      throw new ApiError("The TrackLens server did not respond in time.");
     }
     throw error;
   } finally {

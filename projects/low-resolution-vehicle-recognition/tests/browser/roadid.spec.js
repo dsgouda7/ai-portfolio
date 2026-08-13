@@ -20,7 +20,7 @@ async function installMockApi(page, options = {}) {
   await page.route("**/api/sources", (route) => route.fulfill({
     status: 200,
     contentType: "application/json",
-    body: JSON.stringify({ sources: [{ source_id: "replay-demo", name: "Licensed demo replay", adapter_type: "replay", enabled: true, attribution: "RoadID deterministic replay fixture" }] }),
+    body: JSON.stringify({ sources: [{ source_id: "replay-demo", name: "Licensed demo replay", adapter_type: "replay", enabled: true, attribution: "TrackLens deterministic replay fixture" }] }),
   }));
   await page.route("**/api/runs", (route) => route.fulfill({
     status: 201,

@@ -1,4 +1,4 @@
-"""RoadID camera source adapters."""
+"""TrackLens camera source adapters."""
 
 from roadid.sources.base import (
     BaseSourceAdapter,
