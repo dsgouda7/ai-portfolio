@@ -1,2 +1,10 @@
 # Local virtual environment created by setup.ps1 / setup.sh
 .venv/
+
+# Runtime artifacts produced by the pretraining construction notebooks
+artifacts/base-lm/
+
+# Temporary execution and schema-validation notebooks
+*.validation.ipynb
+*.execution-temp.ipynb
+*.schema-backup

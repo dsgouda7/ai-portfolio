@@ -1,10 +1,11 @@
-# Packages required to run the three Transformer Foundations notebooks
+# Packages required to run the six Transformer and base-LLM notebooks
 numpy
 matplotlib
 seaborn
 plotly
 torch
 transformers
+tokenizers
 sentencepiece
 ipython
 ipykernel
