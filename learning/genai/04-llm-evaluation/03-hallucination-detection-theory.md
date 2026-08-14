@@ -53,6 +53,8 @@ Do not describe a proxy as a detector with a known catch rate unless a represent
 
 ## 4. Layered Guard and Triage
 
+The composite score does not choose its own threshold. Lowering the HIGH-risk gate catches more hallucinations and sends more answers to human review; raising it saves review capacity and misses more failures. Sweep the threshold on labeled cases and choose the operating point from recall, precision, and review budget. `0.50` is a starting hypothesis, not a law.
+
 ![Layered hallucination guard and triage flow](images/03-hallucination-detection-theory-02.png)
 
 Use complementary signals in a deliberate order:

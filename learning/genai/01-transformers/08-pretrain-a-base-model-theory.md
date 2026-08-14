@@ -44,9 +44,9 @@ A packed sequence is shifted into visible inputs and next-token targets. Every v
 
 ```text
 visible prefix          expected next token
-aria                    heard
-aria heard              the
-aria heard the          signal
+the                     cat
+the cat                 sat
+the cat sat             on
 ```
 
 All positions are scored in parallel during training because the correct sequence is already known. The causal mask prevents each position from seeing the answer to its own lesson.

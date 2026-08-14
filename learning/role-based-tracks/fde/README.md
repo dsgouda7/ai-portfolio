@@ -73,9 +73,11 @@ Use the following rule throughout: skipping study never skips evidence. Prior ex
 
 Required at decision depth:
 
-1. [Attention and Transformer Blocks](../../genai/01-transformers/01-attention-and-transformer-blocks.ipynb)
-2. [Decoder-only Language Model](../../genai/01-transformers/02-decoder-only-language-model.ipynb)
-3. [Encoder-decoder and Cross-attention](../../genai/01-transformers/03-encoder-decoder-and-cross-attention.ipynb)
+1. [Tokenization and Embeddings](../../genai/01-transformers/01-tokenization-and-embeddings.ipynb)
+2. [Attention, Position, and RoPE](../../genai/01-transformers/02-attention-and-position.ipynb)
+3. [The Complete Transformer Block](../../genai/01-transformers/03-transformer-block.ipynb)
+4. [Decoder-only Language Model](../../genai/01-transformers/04-decoder-only-language-model.ipynb)
+5. [Encoder-decoder and Cross-attention](../../genai/01-transformers/05-encoder-decoder-and-cross-attention.ipynb)
 4. [Fine-tuning Data Techniques](../../genai/02-llm-finetuning/01-llm-finetuning-data-techniques.ipynb)
 5. [Fine-tuning Parameter Techniques](../../genai/02-llm-finetuning/02-llm-finetuning-parameter-techniques.ipynb)
 6. [Fine-tuning Comparison and Decision](../../genai/02-llm-finetuning/03-llm-finetuning-comparison-and-decision.ipynb)

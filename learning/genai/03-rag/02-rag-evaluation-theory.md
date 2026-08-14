@@ -10,6 +10,8 @@ The fixture demonstrates evaluation mechanics, not production thresholds. Releas
 
 ## 1. Localize the Failure
 
+Start with one fluent wrong answer. It can fail because retrieval missed the evidence, because the generator ignored good evidence, because it invented an unsupported detail, or because it answered a different question. The prose alone does not reveal the failing stage. That complaint forces separate retrieval, grounding, relevance, and correctness signals.
+
 | Retriever | Generator | Observable result |
 | --- | --- | --- |
 | Correct | Faithful to context | Correct answer |

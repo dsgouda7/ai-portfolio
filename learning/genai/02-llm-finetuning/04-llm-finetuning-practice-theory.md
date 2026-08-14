@@ -6,6 +6,8 @@ The notebook is CUDA-only. Training and overwrite are separate opt-ins so an acc
 
 ## 1. Why the Split Is by Chapter
 
+One successful novel can be a favorable split. Eight separately initialized experiments make luck harder to mistake for a reusable recipe. The same gates must survive different prose, chapter boundaries, and held-out endings before Riverside treats the method as repeatable.
+
 Each novel is divided chronologically into training, validation, and test chapters. Validation and test each receive 15% of the chapters, rounded up and never fewer than three. A 40-chapter novel becomes 28 train, 6 validation, and 6 test chapters.
 
 ![Handwritten workflow showing chapter-level split, provenance, and leakage barriers](images/04-llm-finetuning-practice-theory-01.png)

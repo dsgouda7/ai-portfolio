@@ -48,6 +48,8 @@ Flow: `paragraph i -> request context`; `first sentence of paragraph i+1 -> appr
 
 ## 3. Preference data controls everything except the choice
 
+SFT can teach the output contract and still leave two acceptable drafts. That is the complaint preference learning answers: **both responses work, but editors consistently keep one.** If the rejected response is truncated or breaks the format, the pair teaches surface correctness instead of editorial preference. Hold the contract fixed; change only the choice.
+
 ```text
 prompt:   shared editor request and context
 chosen:   complete scene-advancing sentence + EOS

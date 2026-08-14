@@ -5,7 +5,7 @@
 > Those documents remain as historical reference; this document is the single source of truth going forward.
 >
 > **Gold standards:**
-> - Mechanistic depth — [`learning/genai/01-transformers/01-attention-and-transformer-blocks.ipynb`](learning/genai/01-transformers/01-attention-and-transformer-blocks.ipynb)
+> - Mechanistic depth — [`learning/genai/01-transformers/02-attention-and-position.ipynb`](learning/genai/01-transformers/02-attention-and-position.ipynb)
 > - Narrative/business framing — [`learning/genai/02-llm-finetuning/01-llm-finetuning-data-techniques.ipynb`](learning/genai/02-llm-finetuning/01-llm-finetuning-data-techniques.ipynb)
 > - Notes chapter — [`notes/03-ai/ch01-transformer-architecture/transformer-architecture.md`](notes/03-ai/ch01-transformer-architecture/transformer-architecture.md)
 
@@ -28,6 +28,32 @@ Three habits are non-negotiable:
    Tool → Specific Failure → Minimal Fix → That Fix's Failure → Next Tool
    ```
    If a section covers three methods, it must show what breaks with method 1 *before* introducing method 2.
+
+4. **Keep the complaint chain visible.** The strongest historical Transformer chapter did not jump from one finished component to another. It published the crude attempt, showed the failure, named the objection a careful reader would raise, and let that objection force the next refinement:
+    ```text
+    crude attempt
+    -> visible or measured failure
+    -> plain-language complaint
+    -> smallest fix
+    -> measured payoff
+    -> next complaint
+    ```
+    A roadmap lists topics. A complaint chain makes each topic feel necessary. Chapters need both.
+
+5. **Preserve continuity across notebook boundaries.** Splitting a long chapter must not reset the learner's mental state. Carry forward the same running example, tensor roles, visual language, and unresolved question. A fresh-kernel recap re-establishes state; it does not replay the lesson or switch narratives without explanation.
+
+### 1.1 · What the Transformer Gold Standard Actually Did
+
+The historical gold-standard notebook earned its status through a repeatable set of techniques:
+
+- **Useful attempts stayed visible.** RoPE began as one dial, exposed why one dial was insufficient, then grew into stacked pairs and a sequence view.
+- **The consequence survived.** Score scaling was followed through false confidence into gradient saturation; residuals were followed into early-layer gradient flow.
+- **Visuals accumulated understanding.** A static semantic map preceded animation; side-by-side plots changed one variable; a real pretrained model closed the toy-to-real loop.
+- **Exercises sat next to the mechanism.** The reader changed one known variable immediately after forming a prediction.
+- **Reflections opened the next question.** Sections ended with a complaint, not a detached recap.
+- **One example became familiar.** The learner stopped spending attention on new nouns and used it to track the mechanism.
+
+When content is condensed, keep these techniques before keeping extra derivation or framework commentary.
 
 ---
 
@@ -156,6 +182,17 @@ Each major concept follows this skeleton:
 → [Bridge to the next concept — crack opened by this section's residual failure]
 ```
 
+When the polished mechanism hides an important discovery step, publish one or two intermediate attempts. Each attempt must be short, runnable or visible, and followed by the exact complaint that motivates the next attempt.
+
+For multi-notebook series, the final reflection also becomes the handoff:
+
+```text
+measured unlock in chapter N
+-> unresolved question at the close
+-> same question resumed in chapter N+1
+-> familiar example or artifact reused
+```
+
 ### 4.5 Toy → Real Bridge
 
 When a mechanism is built in a toy/minimal form, bridge it to the real system before moving on:
@@ -163,6 +200,8 @@ When a mechanism is built in a toy/minimal form, bridge it to the real system be
 - Table mapping toy parameters to production parameters
 - Same mechanism run against real data
 - Bridge cell is always explicit: "Same logic — just operating on your actual training corpus."
+
+The bridge should verify at least one real contract: inspected weight shape, real tokenizer pieces, actual configuration fields, captured attention tensor, artifact hash, or measured production metric. A table of larger numbers alone is orientation, not evidence.
 
 ### 4.6 Closing Summary
 
@@ -216,6 +255,8 @@ Xᵀ  ·  e       (2×3) · (3×1) → (2×1)
 ```
 
 **Rule 7: Prioritise geometric intuition over algebraic manipulation.** Save the algebra for optional blocks.
+
+**Rule 8: Keep the experiment that made the formula necessary.** If space is limited, shorten the derivation before removing the failure or consequence experiment. Do not keep `sqrt(d)` while deleting the saturation evidence, or keep residual notation while deleting the gradient comparison.
 
 ---
 
@@ -471,11 +512,11 @@ When authoring or revising a chapter:
 
 ## 16 · Best-Practice Patterns from Gold Standards
 
-These patterns were extracted from `learning/genai/01-transformers/01-attention-and-transformer-blocks.ipynb` and `learning/genai/02-llm-finetuning/01-llm-finetuning-data-techniques.ipynb`, the two gold-standard chapters. They are not optional decoration — they are the techniques that make those chapters work.
+These patterns were extracted from `learning/genai/01-transformers/02-attention-and-position.ipynb` and `learning/genai/02-llm-finetuning/01-llm-finetuning-data-techniques.ipynb`, the two gold-standard chapters. They are not optional decoration — they are the techniques that make those chapters work.
 
 ### 16.1 The "Complaint Chain" Discovery Build
 
-*Source: RoPE animation in 01-attention-and-transformer-blocks.ipynb*
+*Source: RoPE animation in 02-attention-and-position.ipynb*
 
 When building a visualization or implementation iteratively, make each intermediate step a published, runnable cell, and add an explicit complaint that forces the next step. The pattern:
 
@@ -495,7 +536,7 @@ This applies "failure first" to the pedagogical artifact itself — the diagram,
 
 ### 16.2 The "Inevitable Choice" Derivation
 
-*Source: softmax and √d_k sections in 01-attention-and-transformer-blocks.ipynb*
+*Source: score-scaling section in 02-attention-and-position.ipynb*
 
 For every design decision (softmax, √d_k, residuals, multi-head split), instead of asserting the formula, make the choice feel forced. Two steps:
 
@@ -560,7 +601,7 @@ This prevents silent gaps: the reader always knows whether a technique was delib
 
 ### 16.6 Named Convention Equivalence Proof
 
-*Source: RoPE adjacent-pair vs. split-half in 01-attention-and-transformer-blocks.ipynb*
+*Source: paired-dial RoPE implementation in 02-attention-and-position.ipynb*
 
 When two conventions for the same operation exist in the literature and production code (e.g., adjacent-pair RoPE vs. split-half production convention), prove their equivalence numerically before stating they are identical:
 

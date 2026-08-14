@@ -18,6 +18,8 @@ Rollback means replacing the adapted checkpoint with the pinned original or anot
 
 ## 3. Freezing Most of the Model
 
+Freezing changes update permission, not forward participation. Activations still pass through every frozen block; backpropagation can traverse them to reach later trainable blocks, but no optimizer state or weight update is stored for the frozen parameters. The complaint remains: update state shrinks, yet every Riverside job still writes a full checkpoint.
+
 Freezing changes update permission, not computation. Frozen blocks still run in the forward pass and shape every later activation; they simply receive no optimizer update. The notebook freezes everything, then reopens roughly the last quarter of decoder blocks and the final normalization layer while keeping the tied embedding/output weight frozen.
 
 This reduces gradient and optimizer state and guarantees that the frozen tensors remain unchanged. However, the writable upper layers can still alter the final behavior, so freezing narrows rather than removes quality risk. It also still saves a complete checkpoint. Use it when a known layer slice is likely sufficient and full-checkpoint deployment and rollback are acceptable.
@@ -35,6 +37,8 @@ The constraint is also the tradeoff. A low rank offers fewer independent directi
 Rollback is simple: disable or replace the adapter. Because the base was never rewritten, its original behavior is immediately available without restoring a full checkpoint.
 
 ## 5. QLoRA: Make the Frozen Base Smaller
+
+The notebook builds the low-bit structure as an inspectable CPU analogy; it does not claim a production NF4 training run. In the GPU practice chapter, ordinary LoRA already fits the verified budget, so adding quantization would introduce a quality variable without solving an observed capacity failure.
 
 LoRA reduces trainable memory but still keeps the full base model resident. QLoRA addresses that remaining cost by storing the frozen base in a compact low-bit representation while keeping the LoRA correction trainable in a wider floating-point type.
 

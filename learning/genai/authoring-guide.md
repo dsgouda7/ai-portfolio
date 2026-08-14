@@ -1,6 +1,6 @@
 # GenAI Notebooks — Authoring Guide
 
-> **Gold standard (mechanistic depth)**: [01-transformers/01-attention-and-transformer-blocks.ipynb](01-transformers/01-attention-and-transformer-blocks.ipynb)
+> **Gold standard (mechanistic depth)**: [01-transformers/02-attention-and-position.ipynb](01-transformers/02-attention-and-position.ipynb)
 > **Gold standard (narrative framing)**: [02-llm-finetuning/01-llm-finetuning-data-techniques.ipynb](02-llm-finetuning/01-llm-finetuning-data-techniques.ipynb)
 > through [02-llm-finetuning/03-llm-finetuning-comparison-and-decision.ipynb](02-llm-finetuning/03-llm-finetuning-comparison-and-decision.ipynb)
 > (a 3-part series -- data-based techniques, parameter-based techniques + QLoRA/quantization, and the
@@ -244,7 +244,7 @@ a companion `plan.md` in its own folder, written against this checklist, that:
 2. Scores/flags it against Section 6's checklist.
 3. Lists concrete, ordered changes (add a  cell here, add a toy→real bridge there,
    replace an assertion with a proof, restructure into numbered Parts, etc.) needed to
-  reach parity with [01-transformers/01-attention-and-transformer-blocks.ipynb](01-transformers/01-attention-and-transformer-blocks.ipynb)
+  reach parity with [01-transformers/02-attention-and-position.ipynb](01-transformers/02-attention-and-position.ipynb)
   and, where the notebook has a real-world use case to motivate, the [02-llm-finetuning/01-llm-finetuning-data-techniques.ipynb](02-llm-finetuning/01-llm-finetuning-data-techniques.ipynb) series.
 4. Is scoped to that notebook only — it should not require changes to other notebooks.
 

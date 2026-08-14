@@ -42,6 +42,8 @@ Treat classifier thresholds as triage policy, not probabilities of real-world ha
 
 ## 6. Regression and evidence pipeline
 
+A regression table is not operational until it names the failed version, baseline delta, affected slice, severity, and release action. The useful output is an alert such as `judge 4.1 -> 3.8, MCQ 0.60 -> 0.50: HOLD`, not a dashboard someone must remember to inspect.
+
 Thresholds encode policy. Give each one an owner, rationale, calibration set, direction, unit, effective date, and review schedule. Do not reuse one delta across metrics with different scales and noise. State whether change is absolute or relative, estimate repeated-run variation, and examine critical slices.
 
 The release flow is `dataset -> run -> score -> compare -> decide -> archive`. Freeze and hash the comparison set; pin the baseline, candidate artifact, prompts, judge configuration, dependencies, and relevant seeds. Archive item-level outputs, disagreement cases, safety reviews, metric and slice summaries, threshold configuration, and the accountable human decision. A stable holdout preserves comparability; new failures should enter through controlled, versioned updates with overlap between old and new sets.

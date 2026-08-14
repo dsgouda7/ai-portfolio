@@ -36,6 +36,8 @@ Fit on a calibration split, freeze the temperature, and report results on a sepa
 
 ## 4. Selective prediction and risk-coverage
 
+Abstention buys precision by spending coverage. Moving the threshold right means fewer answers are served, and the remaining set should become more reliable. The risk-coverage curve makes that exchange visible; a confidence threshold without the coverage cost is only half a policy.
+
 Selective prediction abstains below a confidence threshold. Suppose a test set has 100 questions and the system serves all of them, making 20 errors. Coverage is 100%, and selective risk is 20 errors among 100 served answers.
 
 At a 0.70 threshold, it may serve 70 answers and get 63 correct: coverage is 70%, while risk is 7 errors among 70 served answers, or 10%. At 0.90, it may serve 30 and get 29 correct: coverage is 30%, and risk is 1 error among 30. A risk-coverage curve shows this trade-off across thresholds.

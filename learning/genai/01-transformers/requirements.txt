@@ -1,4 +1,4 @@
-# Packages required to run the six Transformer and base-LLM notebooks
+# Packages required to run the eight Transformer and base-LLM notebooks
 numpy
 matplotlib
 seaborn

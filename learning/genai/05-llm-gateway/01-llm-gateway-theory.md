@@ -22,6 +22,8 @@ Least-busy routing chooses the eligible deployment with the smallest in-flight c
 
 ## 3. Traffic, recovery, and cache controls
 
+Semantic similarity is not semantic equivalence. A word-overlap cache can score `How many chapters does it have?` and `How many chapters does it not have?` above the same threshold. The crude attempt is useful because it exposes the production requirement: stronger embeddings, explicit exclusions, authorization checks, versioned keys, and a threshold calibrated on real traffic.
+
 Routing distributes work; rate limiting bounds it. Production controls commonly combine requests per minute, tokens per minute, concurrent requests, tenant quotas, and provider limits. A token bucket allows a defined burst while limiting sustained traffic. Estimate tokens before dispatch, reject oversized work early, then reconcile with actual usage. Counters must be atomic and distributed; an in-memory limiter protects only one gateway process.
 
 Request limits are not hard spending limits. Reserve estimated cost atomically before dispatch, settle against actual cost afterward, alert near the ceiling, and reject predictably beyond it. Retries and failed attempts can still consume quota and money.

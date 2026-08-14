@@ -23,9 +23,7 @@ token IDs
 -> vocabulary scores through the shared embedding table
 ```
 
-The important continuity is easy to miss: **modern LLMs are refined Transformers, not a different species of model.**
-
-This family remains ideal for chat, completion, and code generation because prompt and output share one causal sequence. RMSNorm, SwiGLU, GQA, and RoPE improve the internal trade-offs; they do not change that use-case fit.
+The important continuity is easy to miss: **modern LLMs are refined Transformers, not a different species of model.** Every repeated block still preserves `(batch, tokens, model width)`; modern components change the internal route while keeping that outer contract intact.
 
 ## 2. RMSNorm Is a Volume Control
 
@@ -40,24 +38,29 @@ RMSNorm operates independently on every token. It does not mix tokens, add conte
 
 The durable idea is: **normalization controls the condition of the residual stream; it does not create the model's knowledge.**
 
-## 3. SwiGLU Is a Learned Feature Gate
+## 3. RoPE Puts Position Inside the Comparison
 
-The feed-forward network is each token's private workspace. Attention gathers information from other positions; the FFN decides how to transform the gathered features.
+Attention needs order. Without position, `the cat sat on the mat` and `the mat sat on the cat` contain the same token multiset.
 
-A basic GELU FFN has one expanded feature path. SwiGLU creates two:
+RoPE treats each adjacent query/key feature pair as a 2D dial. A token's position determines how far each dial turns, while different pairs turn at different speeds. When a rotated query meets a rotated key, their comparison exposes the relative gap between their positions.
 
-- **Candidate branch:** what transformed content could be useful?
-- **Gate branch:** how much of each candidate feature should pass?
+Three details matter:
 
-The branches meet feature by feature, then project back to model width. This gives the token a learned filter rather than sending every expanded feature through one activation path.
+- Apply RoPE after queries and keys have been split into heads.
+- Rotate queries and keys because they decide where to look.
+- Do not rotate values because values carry the content being retrieved.
 
-Memory aid: **attention chooses where to read; SwiGLU chooses what transformed features to keep.**
+Shifting two tokens together preserves their relative gap, so their selected positional relationship stays comparable. RoPE changes orientation, not vector length.
 
-SwiGLU is not attention and it is not a mixture-of-experts router. It acts inside one token position using the same weights at every position.
+During cached generation, each key is rotated for its position before it enters the KV cache. Later steps reuse that rotated key, while the new token's query and key are rotated once. This avoids re-rotating the old prefix, but RoPE is not literally free: it adds small elementwise work, the cache still consumes memory, and causal masking is still needed during training and batched attention.
+
+Different dial speeds make relative gaps distinguishable; they do not force attention to decay smoothly with distance. Learned content and projections still control the score.
+
+Memory aid: **embeddings say what a token is; RoPE helps attention notice where tokens sit relative to one another.**
 
 ## 4. GQA Shares Keys and Values, Not Questions
 
-Attention heads can ask different questions about the same sequence. The expensive part during generation is storing the past keys and values that those questions search.
+After Q, K, and V are projected and position is visible, attention can retrieve context. The expensive part during generation is storing the past keys and values that every new query searches.
 
 Three ownership patterns form a spectrum:
 
@@ -73,21 +76,20 @@ The trade-off is simple: **more sharing reduces K/V parameters and cache memory,
 
 The model width must divide cleanly into query heads, and query heads must divide cleanly into K/V groups. Invalid groupings are architecture errors, not tuning choices.
 
-## 5. RoPE Puts Position Inside the Comparison
+## 5. SwiGLU Is a Learned Feature Gate
 
-Attention needs order. Without position, the same words in a different arrangement look like the same set of token vectors.
+Attention has now gathered information from visible token positions. The feed-forward network is each token's private workspace: it decides how to transform those gathered features without reading another position directly.
 
-RoPE rotates query and key feature pairs according to token position. When a rotated query meets a rotated key, their comparison reveals the distance between their positions.
+A basic GELU FFN has one expanded feature path. SwiGLU creates two:
 
-Three details matter:
+- **Candidate branch:** what transformed content could be useful?
+- **Gate branch:** how much of each candidate feature should pass?
 
-- Apply RoPE after queries and keys have been split into heads.
-- Rotate queries and keys because they decide where to look.
-- Do not rotate values because values carry the content being retrieved.
+The branches meet feature by feature, then project back to model width. This gives the token a learned filter rather than sending every expanded feature through one activation path.
 
-Shifting two tokens together preserves their relative gap, so their positional relationship stays comparable. RoPE changes orientation, not vector length.
+Memory aid: **attention chooses where to read; SwiGLU chooses what transformed features to keep.**
 
-Memory aid: **embeddings say what a token is; RoPE helps attention notice where tokens sit relative to one another.**
+SwiGLU is not attention and it is not a mixture-of-experts router. It acts inside one token position using the same weights at every position.
 
 ## 6. The Complete Modern Block
 
@@ -105,7 +107,11 @@ The final model stacks these blocks, normalizes once more, and maps each positio
 
 Weight tying saves a second large vocabulary matrix and keeps input/output token geometry connected. Equal values are not enough to prove tying; both paths must share the same stored parameter.
 
-## 7. Practical Failure Modes
+## 7. Why this family still fits generation
+
+Modern decoder-only models remain ideal for chat, completion, and code generation because prompt and output share one causal sequence. RMSNorm, RoPE, GQA, and SwiGLU improve stability, position handling, cache cost, and feature selection. They do not change the next-token job that makes the family fit those use cases.
+
+## 8. Practical Failure Modes
 
 - **Treating modern components as a new objective:** the model still learns by next-token prediction.
 - **Claiming RMSNorm is always better:** it has a simpler scale-only contract, not a universal quality guarantee.

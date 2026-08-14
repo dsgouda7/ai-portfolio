@@ -4,13 +4,13 @@
 
 A decoder-only language model uses one sequence for both the prompt and its continuation. Think of it as a **reader and writer sharing one growing tape**. It reads the tokens already present, predicts one next token, appends that token, and repeats.
 
-`aria heard the signal aboard meridian`
+`the cat sat on the mat`
 
-The key rule is **future-blind, not context-free**. A token may use itself and every token to its left, but nothing to its right. During training, the complete sentence is available to the training system, so a causal mask enforces this rule. During generation, future tokens do not exist yet, so the same rule happens naturally.
+The key rule is **future-blind, not context-free**. A token may use itself and every token to its left, but nothing to its right. During training, the complete sentence is available for parallel processing. Without a causal mask, the state after `cat` could inspect `sat` before being graded on predicting `sat`. The mask removes that dishonest shortcut. During generation, future tokens do not exist yet, so the same rule happens naturally.
 
 The notebook uses one word per token to keep the example readable. Real tokenizers usually split text into subwords. That changes sequence length, but not the next-token task.
 
-This architecture is ideal when input and output naturally form one sequence: completion, chat, code generation, and open-ended generation. It is less naturally separated than an encoder-decoder model when a complete source and a distinct target have different roles.
+Parts 1-3 kept one cat sentence fixed so only the mechanism changed. This chapter needs several plausible continuations and repeated entities, so the notebook expands to a tiny Riverside corpus. The tensor path is unchanged; only the practice workload becomes rich enough to expose training and generation.
 
 ## 2. Shapes and the decoder block
 
@@ -48,12 +48,12 @@ Attention normally compares every query position with every key position. The ca
 Training labels are the same sequence shifted by one position:
 
 ```text
-tokens:   aria  heard  the     signal
-inputs:   aria  heard  the
-targets:  heard the    signal
+tokens:   the   cat   sat   on
+inputs:   the   cat   sat
+targets:  cat   sat   on
 ```
 
-So the logits after `aria` are judged against `heard`, the logits after `aria heard` against `the`, and so on. One sequence supplies several supervised lessons. The causal mask is essential because it stops the representation at each input position from seeing its target in advance.
+So the logits after `the` are judged against `cat`, the logits after `the cat` against `sat`, and so on. One sequence supplies several supervised lessons. The causal mask is essential because it stops the representation at each input position from seeing its target in advance.
 
 At each valid position, next-token loss takes the negative log probability assigned to the actual following token. It then averages those values across all valid target positions. Padding positions must be hidden from attention where appropriate and excluded from this average.
 
@@ -84,7 +84,13 @@ A KV cache stores each layer's earlier key and value vectors. For a new token, t
 
 ![Training, autoregressive inference, causal masking, and KV-cache flow](images/02-decoder-only-language-model-theory-02.png)
 
-## 7. Failure modes
+## 7. Why this family fits generation
+
+Decoder-only models are ideal when input and output naturally form one growing sequence. Completion, chat, code generation, and open-ended generation all fit the repeated question "what token comes next after this prefix?" One stack and one next-token objective can cover both prompt and continuation.
+
+The fit is less direct when a complete source and a distinct target have separate roles. Translation and tightly grounded summarization can still be prompted on one tape, but an encoder-decoder model makes the source memory and target writer explicit.
+
+## 8. Failure modes
 
 - **Future leakage:** masking the wrong triangle gives unrealistically good training results and poor generation. Confirm that position `i` cannot read any position after `i`.
 - **Shift errors:** logits at position `i` predict position `i + 1`, not the current token. Print a tiny input-target alignment before training.

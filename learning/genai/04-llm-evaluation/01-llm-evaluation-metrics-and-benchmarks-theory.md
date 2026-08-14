@@ -36,6 +36,8 @@ This does not mean the text is true. "Aria discovered the colony was destroyed" 
 
 ## 4. Riverside disagreement example
 
+The useful moment is disagreement, not the average. A lexical metric can punish a valid paraphrase; a semantic metric can reward a fluent factual error. When two metrics rank the same answer differently, ask which failure each instrument can actually observe before choosing one as a gate.
+
 Reference: "The pendant hides a letter proving Mei-Lin's noble birth, allowing her to reclaim the family trade route."
 
 A correct answer might say: "A document inside the pendant confirms Mei-Lin's lineage, letting her recover the trade permit." BLEU may be low because exact phrases changed; ROUGE-L finds limited ordered overlap; METEOR and BERTScore should reward the synonyms and preserved meaning.

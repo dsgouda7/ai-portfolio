@@ -126,7 +126,7 @@ A trustworthy dataset artifact records:
 
 After writing, reload everything from disk. Verify hashes, ID ranges, vocabulary size, dtype, and decoded sample windows. This proves that the stored artifacts, not just in-memory objects, satisfy the contract.
 
-The manifest is the dataset's **receipt and tamper seal**. Notebook 06 should refuse to train when the receipt no longer matches the bytes.
+The manifest is the dataset's **receipt and tamper seal**. Notebook 08 should refuse to train when the receipt no longer matches the bytes.
 
 ## 9. Practical Failure Modes
 

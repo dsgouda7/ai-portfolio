@@ -75,9 +75,11 @@ If you cannot localize a model failure below the API level, complete this phase.
 ### Required or Skip with Evidence
 
 1. [PyTorch RNN Bridge](../../genai-prerequisites/07-pytorch-rnn-bridge/01-pytorch-rnn-bridge.ipynb)
-2. [Attention and Transformer Blocks](../../genai/01-transformers/01-attention-and-transformer-blocks.ipynb)
-3. [Decoder-Only Language Models](../../genai/01-transformers/02-decoder-only-language-model.ipynb)
-4. [Encoder-Decoder and Cross-Attention](../../genai/01-transformers/03-encoder-decoder-and-cross-attention.ipynb)
+2. [Tokenization and Embeddings](../../genai/01-transformers/01-tokenization-and-embeddings.ipynb)
+3. [Attention, Position, and RoPE](../../genai/01-transformers/02-attention-and-position.ipynb)
+4. [The Complete Transformer Block](../../genai/01-transformers/03-transformer-block.ipynb)
+5. [Decoder-Only Language Models](../../genai/01-transformers/04-decoder-only-language-model.ipynb)
+6. [Encoder-Decoder and Cross-Attention](../../genai/01-transformers/05-encoder-decoder-and-cross-attention.ipynb)
 
 The [Transformer Foundations README](../../genai/01-transformers/README.md) defines the three-part contract and fresh-kernel behavior.
 

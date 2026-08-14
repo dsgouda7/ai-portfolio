@@ -30,6 +30,8 @@ Dense search handles paraphrases, but may treat `RIGHTS-17` as noise or retrieve
 
 ## 3. Fusion
 
+RRF fixes the scale problem by using ranks instead of incomparable BM25 and cosine scores. Its constant `k` controls how quickly rank credit decays: a small `k` strongly rewards the first few positions; a large `k` spreads credit more evenly. Tune it on labeled retrieval cases, not by folklore. The notebook compares `k = 10, 60, 200` so the choice has a visible consequence.
+
 Fusion reorders passages supplied by BM25 or dense retrieval. If both omit the correct passage, later stages cannot recover it, so candidate depth sets a recall ceiling.
 
 Do not add raw BM25 and dense scores because their scales differ. Use ranks or normalize each list first.

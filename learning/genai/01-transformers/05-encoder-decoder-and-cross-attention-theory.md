@@ -6,6 +6,16 @@ An encoder-decoder Transformer separates the source from the response. The **enc
 
 This fits translation, summarization, and structured transformation: read a complete source, then produce a separate target whose wording and length may differ. The notebook uses reversal as a routing microscope. For `[3, 1, 4, 1] -> [1, 4, 1, 3]`, the required source position for every digit output is known, so retrieval can be inspected directly.
 
+Keep the complete learning path visible:
+
+```text
+source token IDs -> source embeddings + position -> bidirectional encoder memory
+target prefix IDs -> target embeddings + position -> causal decoder states
+decoder queries + encoder keys/values -> cross-attention -> target FFN
+-> target vocabulary logits -> shifted target loss
+-> backpropagation through decoder, cross-attention, and encoder
+```
+
 ![Handwritten encoder-decoder tensor flow from source tokens through cross-attention to target logits](images/03-encoder-decoder-and-cross-attention-theory-01.png)
 
 The encoder embeds source IDs and positions, then applies bidirectional self-attention and feed-forward blocks. "Bidirectional" means no causal mask: every source token may use left and right context. The output has shape `(batch, source, hidden)`. It is an addressable memory containing one enriched vector per source token, not a pooled sentence summary and not vocabulary logits.

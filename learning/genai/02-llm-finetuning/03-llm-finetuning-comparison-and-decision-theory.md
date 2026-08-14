@@ -41,6 +41,8 @@ Parts 1 and 2 trained on all 40 Aria chapters, so Aria phrase and shared-corpus 
 
 ## 4. Cost, Capability, and Rollback Tradeoffs
 
+Carry three bill lines into every comparison: update state during training, per-job artifact operations, and the capability-regression/rollback surface. Full fine-tuning may win behavior and still lose operationally; LoRA may be cheap and still fail the response contract. Cost narrows the survivor set. It never excuses failed evidence.
+
 Parameter strategy is a constrained cost comparison. Hold base revision, ordered data, objective, split, template, optimizer policy, token budget, seeds, suite, and decoding fixed; change only where updates are stored.
 
 Apply identical capability, source-support, retention, and safety gates first. Among survivors, compare measured training memory and time, artifact bytes, serving latency, and request cost. Choose LoRA when it preserves behavior and removes a real burden. Choose full fine-tuning only when a repeatable capability gain justifies its larger cost and rollback surface. Teaching-run parameter counts alone prove neither efficiency nor a winner.

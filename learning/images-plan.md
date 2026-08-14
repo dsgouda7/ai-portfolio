@@ -40,9 +40,9 @@ This plan covers every notebook under `learning/genai/` and
 | `genai-prerequisites/06-tokenization/tokenization-and-embeddings.ipynb` | Training GIF is strong; static reference is text-dense | Remove redundant JPG after final review; no replacement needed |
 | `genai-prerequisites/03-pytorch-fundamentals/01-keras-to-pytorch-antarctic-field-guide.ipynb` | Two diagrams are useful but too generic/text-heavy | Queue 5-6 |
 | `genai-prerequisites/07-pytorch-rnn-bridge/01-pytorch-rnn-bridge.ipynb` | Core diagrams are accurate; overview and handoff are dense | Queue 7-8 |
-| `genai/01-transformers/01-attention-and-transformer-blocks.ipynb` | Four strong component/flow visuals | No change |
-| `genai/01-transformers/02-decoder-only-language-model.ipynb` | Autoregressive/KV-cache and scale bridge are strong | No change |
-| `genai/01-transformers/03-encoder-decoder-and-cross-attention.ipynb` | Seven strong visuals; two mechanism gaps remain | Queue 9-10 |
+| `genai/01-transformers/02-attention-and-position.ipynb` | Attention, position, and RoPE visuals are built into the chapter | No change |
+| `genai/01-transformers/04-decoder-only-language-model.ipynb` | Autoregressive/KV-cache and scale bridge are strong | No change |
+| `genai/01-transformers/05-encoder-decoder-and-cross-attention.ipynb` | Seven strong visuals; two mechanism gaps remain | Queue 9-10 |
 | `genai/02-llm-finetuning/01-llm-finetuning-data-techniques.ipynb` | Four strong visuals/animations; DPO construction remains prose-heavy | Queue 11 |
 | `genai/02-llm-finetuning/02-llm-finetuning-parameter-techniques.ipynb` | Spectrum, LoRA, and QLoRA visuals are strong | No change |
 | `genai/02-llm-finetuning/03-llm-finetuning-comparison-and-decision.ipynb` | Executable charts and Mermaid decision flows are sufficient | No change |
@@ -395,7 +395,7 @@ AVOID
 
 ### Queue 9 - Expose the Asymmetric Cross-Attention Matrix
 
-- **Notebook:** `genai/01-transformers/03-encoder-decoder-and-cross-attention.ipynb`
+- **Notebook:** `genai/01-transformers/05-encoder-decoder-and-cross-attention.ipynb`
 - **Anchor:** `#### Your turn — does cross-attention stay well-defined when T ≠ S?`
 - **Action:** ADD after the existing high-level cross-attention bridge
 - **Target filename:** `cross-attention-asymmetric-query-source-matrix.png`
@@ -432,7 +432,7 @@ AVOID
 
 ### Queue 10 - Show Exposure Bias as a Diverging History
 
-- **Notebook:** `genai/01-transformers/03-encoder-decoder-and-cross-attention.ipynb`
+- **Notebook:** `genai/01-transformers/05-encoder-decoder-and-cross-attention.ipynb`
 - **Anchor:** `### 6a. From Teacher-Forced Proof to Free-Running Generation`
 - **Action:** ADD before the measured free-running comparison
 - **Target filename:** `teacher-forcing-vs-self-fed-history.png`
