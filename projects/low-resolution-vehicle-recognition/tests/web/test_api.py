@@ -114,6 +114,9 @@ class Factory:
         self.creates = 0
         self.options = None
 
+    def status(self):
+        return {"ready": True, "profile": "demo"}
+
     def create(self, run_id, source, options):
         self.creates += 1
         self.options = options
@@ -156,6 +159,7 @@ def test_status_sources_and_run_endpoint_schemas_are_private(app):
     assert client.get("/").status_code == 200
     status = client.get("/api/status").get_json()
     assert status["service"] == "CarFace" and status["ready"] is True
+    assert status["profile_type"] == "demo"
     assert status["worker"] == {"ready": True, "active_runs": 0, "total_runs": 0}
     assert set(status["model"]) == {"ready", "model_id", "version", "bundle_configured"}
 

@@ -155,7 +155,7 @@ function updateSourceContext() {
   const source = selectedSource();
   elements["start-button"].disabled = !source || Boolean(state.runId && ["pending", "running", "paused"].includes(state.runState));
   elements["source-attribution"].textContent = source?.attribution || source?.name || "Source attribution appears here";
-  if (!state.status?.profile && !state.status?.profile_type && source) {
+  if (elements["profile-badge"].dataset.profile === "unknown" && source) {
     const demoSource = ["replay", "demo"].includes(String(source.adapter_type || source.type).toLowerCase());
     elements["profile-badge"].dataset.profile = demoSource ? "demo" : "unknown";
     elements["profile-badge"].textContent = demoSource ? "Demo source · model profile unreported" : "Model profile not reported";

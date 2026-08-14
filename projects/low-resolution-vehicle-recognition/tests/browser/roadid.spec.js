@@ -98,6 +98,7 @@ test("loads approved sources and labels the demo profile", async ({ page }) => {
   await expect(page.locator("#profile-badge")).toContainText("Demo profile");
   await expect(page.getByTestId("start-button")).toBeDisabled();
   await page.getByTestId("source-select").selectOption("replay-demo");
+  await expect(page.locator("#profile-badge")).toHaveText("Demo profile · non-production");
   await expect(page.getByTestId("start-button")).toBeEnabled();
 });
 
@@ -138,6 +139,7 @@ test("a completed run closes its finite event stream without reconnecting", asyn
 
 test("live replay completes without an event-stream reconnect warning", async ({ page }) => {
   await page.goto("/");
+  await expect(page.locator("#profile-badge")).toHaveText("Demo profile · non-production");
   await page.getByTestId("source-select").selectOption("replay-demo");
   await page.getByTestId("start-button").click();
 

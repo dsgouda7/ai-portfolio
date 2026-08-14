@@ -89,6 +89,7 @@ def create_app(
         detector = settings.inference.get("detector", {})
         device = factory_status.get("device") or detector.get("device") or "unavailable"
         model_version = factory_status.get("model_version")
+        profile_type = factory_status.get("profile_type") or factory_status.get("profile")
         model = {
             "ready": components["inference"],
             "model_id": detector.get("model_id"),
@@ -102,6 +103,7 @@ def create_app(
                 "components": components,
                 "model": safe_json(model),
                 "model_version": safe_json(model_version),
+                "profile_type": safe_json(profile_type),
                 "device": safe_json(device),
                 "worker": manager.status(),
                 "run_states": [state.value for state in RunState],
