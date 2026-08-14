@@ -22,7 +22,7 @@ const state = {
   eventStream: null,
   trackTimer: null,
   frameTimer: null,
-  frameBusy: false,
+  frameBusy: null,
   trackBusy: false,
   currentObjectUrl: null,
   framePollingSupported: true,
@@ -240,6 +240,9 @@ function connectEvents() {
       state.eventStream = null;
       elements["live-indicator"].hidden = true;
       await refreshRunAndTracks();
+      if (String(run.state).toLowerCase() === "completed") {
+        await pollFrame({ allowTerminal: true });
+      }
     },
     onHeartbeat: () => {
       setTraceConnection("live");
@@ -309,11 +312,14 @@ async function refreshRunAndTracks() {
   }
 }
 
-async function pollFrame() {
-  if (!state.runId || state.frameBusy || !state.framePollingSupported || state.runState !== "running") return;
+async function pollFrame({ allowTerminal = false } = {}) {
+  if (!state.runId || !state.framePollingSupported || (!allowTerminal && state.runState !== "running")) return;
+  if (state.frameBusy) {
+    await state.frameBusy;
+    if (!allowTerminal) return;
+  }
   const generation = state.pollGeneration;
-  state.frameBusy = true;
-  try {
+  const request = (async () => {
     const frame = await fetchCurrentFrame(state.runId);
     if (generation !== state.pollGeneration) {
       if (frame.objectUrl) URL.revokeObjectURL(frame.url);
@@ -329,15 +335,21 @@ async function pollFrame() {
     state.lastFrameAt = frame.capturedAt ? new Date(frame.capturedAt) : new Date();
     elements["frame-age"].textContent = "Updated now";
     renderOverlays(frame);
+  })();
+  state.frameBusy = request;
+  try {
+    await request;
   } catch (error) {
-    if (error.status === 404 || error.status === 405) {
+    if (error.status === 405) {
       state.framePollingSupported = false;
       elements["frame-age"].textContent = "Frame route unavailable";
+    } else if (error.status === 404) {
+      elements["frame-age"].textContent = allowTerminal ? "No display-safe frame produced" : "Waiting for first frame";
     } else {
       elements["frame-age"].textContent = "Frame update delayed";
     }
   } finally {
-    state.frameBusy = false;
+    if (state.frameBusy === request) state.frameBusy = null;
   }
 }
 

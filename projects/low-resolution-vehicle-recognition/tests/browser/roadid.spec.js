@@ -5,7 +5,7 @@ const JPEG_BASE64 = "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAP/////////////////////////
 const longError = "Detector worker rejected a deliberately long diagnostic message because the configured model bundle and runtime device metadata could not be reconciled. This text must wrap without obscuring controls, changing graph dimensions, or widening the application viewport.";
 
 async function installMockApi(page, options = {}) {
-  const observed = { eventHeaders: [], stopCalls: 0 };
+  const observed = { eventHeaders: [], frameRequests: 0, stopCalls: 0 };
   const finalSequence = options.contiguousEvents ? 2 : 3;
   const events = [
     ": heartbeat\n\n",
@@ -32,11 +32,22 @@ async function installMockApi(page, options = {}) {
     observed.eventHeaders.push(route.request().headers());
     route.fulfill({ status: 200, headers: { "content-type": "text/event-stream", "cache-control": "no-cache" }, body: observed.eventHeaders.length === 1 ? events : ": heartbeat\n\n" });
   });
-  await page.route("**/api/runs/run-demo/frame?*", (route) => route.fulfill({
-    status: 200,
-    headers: { "content-type": "image/jpeg", "x-frame-id": "7", "x-captured-at": "2026-08-13T12:00:00Z" },
-    body: Buffer.from(JPEG_BASE64, "base64"),
-  }));
+  await page.route("**/api/runs/run-demo/frame?*", (route) => {
+    observed.frameRequests += 1;
+    if (options.delayedFrame && observed.frameRequests === 1) {
+      route.fulfill({
+        status: 404,
+        contentType: "application/json",
+        body: JSON.stringify({ error: { code: "FRAME_NOT_AVAILABLE", message: "No display-safe frame is available." } }),
+      });
+      return;
+    }
+    route.fulfill({
+      status: 200,
+      headers: { "content-type": "image/jpeg", "x-frame-id": "7", "x-captured-at": "2026-08-13T12:00:00Z" },
+      body: Buffer.from(JPEG_BASE64, "base64"),
+    });
+  });
   await page.route("**/api/runs/run-demo/tracks", (route) => route.fulfill({
     status: 200,
     contentType: "application/json",
@@ -137,6 +148,14 @@ test("a completed run closes its finite event stream without reconnecting", asyn
   expect(observed.eventHeaders).toHaveLength(1);
 });
 
+test("a startup frame miss is retried after the run completes", async ({ page }) => {
+  const observed = await installMockApi(page, { terminalRun: true, contiguousEvents: true, delayedFrame: true });
+  await startDemo(page, "Completed");
+
+  await expect(page.getByTestId("frame-viewport").locator("img")).toBeVisible();
+  expect(observed.frameRequests).toBeGreaterThanOrEqual(2);
+});
+
 test("live replay completes without an event-stream reconnect warning", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator("#profile-badge")).toHaveText("Demo profile · non-production");
@@ -146,6 +165,9 @@ test("live replay completes without an event-stream reconnect warning", async ({
   await expect(page.getByTestId("run-state")).toHaveText("Completed", { timeout: 15_000 });
   await expect(page.locator("#trace-connection")).toHaveText("Complete");
   await expect(page.locator("#connection-notice")).not.toContainText("reconnecting");
+  const frame = page.getByTestId("frame-viewport").locator("img");
+  await expect(frame).toBeVisible();
+  expect(await frame.evaluate((image) => image.naturalWidth)).toBeGreaterThan(0);
   await expect(page.getByTestId("tracks-body").getByTestId("track-row")).toBeVisible();
 });
 
