@@ -4,6 +4,8 @@
 
 A modern decoder still does the same job as the earlier teaching model: read the visible token prefix and predict what comes next. The upgrade is inside each block, not in the learning objective.
 
+**Track position:** tokenization and embeddings still happen before this chapter's machinery; vocabulary logits, loss, and backpropagation still happen after it. This note zooms into the repeated block between those endpoints.
+
 Think of the residual stream as a **shared notebook passed through the model**. Every block reads it, writes a useful correction, and passes the updated notebook onward. Modern components make those reads and corrections cheaper, steadier, or more selective.
 
 The block now looks like this:
@@ -22,6 +24,8 @@ token IDs
 ```
 
 The important continuity is easy to miss: **modern LLMs are refined Transformers, not a different species of model.**
+
+This family remains ideal for chat, completion, and code generation because prompt and output share one causal sequence. RMSNorm, SwiGLU, GQA, and RoPE improve the internal trade-offs; they do not change that use-case fit.
 
 ## 2. RMSNorm Is a Volume Control
 

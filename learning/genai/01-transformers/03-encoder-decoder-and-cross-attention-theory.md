@@ -1,10 +1,10 @@
-# Encoder-Decoder Transformers and Cross-Attention
+# Encoder-Decoder Transformers and Cross-Attention: Handwritten Theory Notes
 
-## 1. A Reader and a Causal Writer
+## 1. Start with the job: read one sequence, write another
 
 An encoder-decoder Transformer separates the source from the response. The **encoder** reads the complete source and produces one contextual vector for every source position. The **decoder** writes left to right. At each step it can use earlier target tokens and retrieve information from any valid encoder position.
 
-This fits translation, summarization, and Riverside's editorial task: read a complete Aria passage plus a brief, then produce a separate revision whose wording and length may differ. The notebook uses reversal as a routing microscope. For `[3, 1, 4, 1] -> [1, 4, 1, 3]`, the required source position for every digit output is known, so retrieval can be inspected directly.
+This fits translation, summarization, and structured transformation: read a complete source, then produce a separate target whose wording and length may differ. The notebook uses reversal as a routing microscope. For `[3, 1, 4, 1] -> [1, 4, 1, 3]`, the required source position for every digit output is known, so retrieval can be inspected directly.
 
 ![Handwritten encoder-decoder tensor flow from source tokens through cross-attention to target logits](images/03-encoder-decoder-and-cross-attention-theory-01.png)
 
@@ -47,7 +47,13 @@ The notebook's short `greedy_decode` reuses encoder output but recomputes target
 
 ## 5. Architecture Choice and Failure Modes
 
-Choose **encoder-only** models for classification, tagging, extraction, or retrieval embeddings when the full input is available and no separate sequence must be generated. Choose **decoder-only** models when prompt and completion naturally share one causal tape, especially for open-ended continuation and general assistants. Choose **encoder-decoder** models when source and target are distinct objects and full source visibility, different lengths, or reusable source memory are valuable. Decoder-only systems dominate many general deployments because one stack and objective scale broadly; that does not make the encoder-decoder boundary obsolete.
+| Family | What it does | Internal information flow | Why it fits |
+|---|---|---|---|
+| Encoder-only | Understands a complete input | Bidirectional self-attention produces contextual input vectors | Classification, tagging, extraction, and retrieval embeddings |
+| Decoder-only | Continues one sequence | Causal self-attention produces next-token logits | Completion, chat, code generation, and open-ended generation |
+| Encoder-decoder | Reads a source and writes a distinct target | A bidirectional encoder builds memory; a causal decoder retrieves from it | Translation, summarization, and structured transformation |
+
+Decoder-only systems dominate many general deployments because one stack and objective scale broadly. That does not make the encoder-decoder boundary obsolete; separate source memory is useful whenever the input and output play genuinely different roles.
 
 Common implementation failures reveal the contract:
 

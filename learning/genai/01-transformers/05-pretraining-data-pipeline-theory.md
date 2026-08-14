@@ -14,6 +14,16 @@ A folder of text is not yet training data. Before a model can learn from it, you
 
 Mental model: **the model practices whatever the pipeline repeats.** Data preparation is therefore curriculum design, not file conversion.
 
+**Track position:** this pipeline builds the input to the Transformer learning spine.
+
+```text
+raw documents -> split and audit -> fit tokenizer -> token IDs
+-> mark boundaries -> pack blocks -> verified training shards
+-> embeddings -> Transformer -> logits -> loss -> backpropagation
+```
+
+The pipeline does not learn attention weights. It decides which examples, repetitions, boundaries, and held-out evidence will drive those later updates.
+
 ## 2. Split Complete Documents First
 
 Training data teaches the model. Validation data measures whether that learning transfers to unseen material. Validation stops being useful if pieces of the same chapter appear on both sides.

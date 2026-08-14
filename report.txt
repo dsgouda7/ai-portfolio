@@ -1,0 +1,129 @@
+============================================================
+FILE: 01-attention-and-transformer-blocks.ipynb
+Cell Count: 83
+
+HEADINGS:
+  Cell 1 (H1): Transformer Foundations, Part 1 of 3: Attention and Transformer Blocks
+  Cell 1 (H2): Why Riverside Needs Transformers
+  Cell 2 (H1): Transformer Foundations: Three-Part Series Map
+  Cell 2 (H2): Building Intuition One Riverside Question at a Time
+  Cell 4 (H2): Prerequisite Bridge — From Token IDs to Trainable Sequence Models
+  Cell 8 (H2): Part 1 - Riverside's Mini Manuscript Universe: Vocabulary and Embeddings
+  Cell 14 (H2): Attention: First Contact
+  Cell 17 (H2): Part 2 - The Ordering Problem
+  Cell 20 (H2): Part 3 - Positional Encoding
+  Cell 34 (H2): Part 4 - Queries, Keys & Values
+  Cell 59 (H2): Part 5 - Multi-Head Attention
+  Cell 71 (H2): Part 6 - Feed-Forward Network & Layer Normalisation
+  Cell 75 (H2): Part 7 - Full Transformer Block & RNN Comparison
+  Cell 83 (H2): Part 1 Checkpoint: The Reusable Block Is Ready
+
+FIRST MARKDOWN CELL SOURCE:
+----------------------------------------
+# Transformer Foundations, Part 1 of 3: Attention and Transformer Blocks
+
+> **Series route:** Part 1 builds attention and the reusable Transformer block. [Part 2](02-decoder-only-language-model.ipynb) turns that block into a causal language model. [Part 3](03-encoder-decoder-and-cross-attention.ipynb) adds bidirectional encoding and cross-attention.
+
+## Why Riverside Needs Transformers
+
+Riverside House is preparing an in-house assistant for its unpublished novel *The Weight of Distant Light*. An editor gives it one manuscript line:
+
+> **"Aria heard the signal aboard Meridian."**
+
+The line is short, but useful editorial work already demands several kinds of reasoning. The assistant must connect **Aria** to the act of hearing, treat **signal** as the thing she heard, preserve the fact that it happened aboard **Meridian**, and notice that moving the same words changes the sentence. Later it must continue the passage one token at a time or transform it under a separate brief without losing those relationships.
+
+An RNN can carry history forward through one recurrent state, but that creates a long sequential path between distant words and limits parallel training. Riverside needs a mechanism that lets each token inspect the other relevant tokens directly, keeps word order visible, and scales those interactions across a manuscript. That mechanism is **attention**; stacking attention with per-token computation, residual paths, and normalization gives us a **Transformer**.
+
+This series follows that one Riverside line from meaning to generation to controlled transformation:
+
+| Notebook | Riverside question | Mechanism we need |
+| --- | --- | --- |
+| Part 1 | How does each word gather the context that gives it meaning? | Self-attention and Transformer blocks |
+| Part 2 | Given the manuscript so far, what token should come next? | Causal decoder and next-token training |
+| Part 3 | Given a source passage and an editorial brief, how should the output change? | Bidirectional encoder, causal decoder, and cross-attention |
+
+We begin with a tiny, inspectable vocabulary. The dimensions are deliberately small; the relationships are the same ones Riverside's later language models must learn at production scale.
+
+----------------------------------------
+
+TERM COUNTS:
+  Riverside: 26
+  aria: 17
+  cat (word): 0 (substring 'cat': 22)
+  token: 159
+  embedding/embed: 50
+  positional/position: 85
+  QKV: 1 | Q/K/V: 5
+  FFN: 16 | feed-forward/feed forward: 6
+  logits: 3
+  softmax: 47
+  loss: 7
+  backprop: 1 | gradient: 42
+
+POTENTIAL MATH-HEAVY CELLS (by heuristic):
+  Cell 20: ---  ## Part 3 - Positional Encoding  ### 3a. Sinusoidal PE (original Transformer, "Attention Is All You Need")  $$PE_{(m,\, 2i)} = \sin\!\left(\frac{m}{10000^{2i/d}}\right)$$  $$PE_{(m,\, 2i+1)} = \cos\!\left(\frac{m}{10000^{2i/d}}\right)$$  Each di...
+  Cell 27: ### 3b. RoPE - Put position where attention compares tokens  The projection experiment did not show that sinusoidal PE "fails" universally; it showed that adding position at the input does not guarantee an explicit relative-position structure survive...
+  Cell 34: ---  ## Part 4 - Queries, Keys & Values  The transformer's attention mechanism is a **soft dictionary lookup**.  | Component | Intuition | Created by | | --------- | --------- | ---------- | | **Q** (Query) | "What am I looking for?" | $W_Q \cdot x$ ...
+  Cell 59: ---  ## Part 5 - Multi-Head Attention  **Multi-Head Attention** (MHA) runs $H$ parallel attention heads:  $$\text{MHA}(Q,K,V) = \text{Concat}(\text{head}_1, \ldots, \text{head}_H) \cdot W_O$$  **Why multiple heads?** Each head can specialise on a dif...
+  Cell 71: ---  ## Part 6 - Feed-Forward Network & Layer Normalisation  ### Feed-Forward Network (FFN)  $$\text{FFN}(x) = \text{GELU}(x W_1 + b_1)\, W_2 + b_2$$  Expands by 4x then projects back. Adds non-linear transformation capacity.  ### Layer Normalisation...
+
+============================================================
+
+============================================================
+FILE: 02-decoder-only-language-model.ipynb
+Cell Count: 53
+
+HEADINGS:
+  Cell 1 (H1): Transformer Foundations, Part 2 of 3: Decoder-Only Language Models
+  Cell 2 (H2): Executable Recap from Part 1
+  Cell 11 (H2): Part 8 - Mini Language Model: Training & Inference
+  Cell 25 (H2): Part 9 - Inference: Autoregressive Token Generation
+  Cell 32 (H2): Part 11 - Why W_V Is a Relevance Filter, Not a Passthrough
+  Cell 35 (H2): Part 12 - The Causal Triangle and the Accumulation Tower
+  Cell 40 (H2): Part 14 - Cracking Open distilgpt2
+  Cell 53 (H2): Part 2 Checkpoint: One Stack Can Read and Write
+
+FIRST MARKDOWN CELL SOURCE:
+----------------------------------------
+# Transformer Foundations, Part 2 of 3: Decoder-Only Language Models
+
+> **Where you are:** [Part 1](01-attention-and-transformer-blocks.ipynb) showed how every word in Riverside's line `Aria heard the signal aboard Meridian` gathers context inside a Transformer block. This notebook asks the next editorial question: given only the manuscript written so far, how can Riverside's assistant predict and append one token without reading the future?
+
+We keep the same tiny Riverside vocabulary and six-token line. The new ingredient is a **causal mask**: each position can read only itself and earlier positions. Training compares every visible prefix with the token that actually followed it; inference chooses one next token, appends it, and repeats.
+
+The setup cells below are an executable recap of definitions already derived in Part 1. They keep this notebook runnable in a fresh kernel without repeating the exploratory proofs and visualizations.
+
+----------------------------------------
+
+TERM COUNTS:
+  Riverside: 10
+  aria: 16
+  cat (word): 3 (substring 'cat': 18)
+  token: 195
+  embedding/embed: 25
+  positional/position: 75
+  QKV: 0 | Q/K/V: 1
+  FFN: 10 | feed-forward/feed forward: 4
+  logits: 36
+  softmax: 10
+  loss: 22
+  backprop: 0 | gradient: 20
+
+POTENTIAL MATH-HEAVY CELLS (by heuristic):
+
+============================================================
+
+============================================================
+FILE: 03-encoder-decoder-and-cross-attention.ipynb
+Cell Count: 136
+
+HEADINGS:
+  Cell 1 (H1): Transformer Foundations, Part 3 of 3: Encoder-Decoder and Cross-Attention
+  Cell 4 (H2): The Riverside Challenge
+  Cell 5 (H2): From Editorial Need to a Routing Test
+  Cell 6 (H2): The Encoder-Decoder Contract at a Glance
+  Cell 10 (H2): Part 1 - The Encoder-Decoder Contract
+  Cell 12 (H2): Part 2 — The Encoder: Enriching Source Representations
+  Cell 37 (H2): Part 3 — The Bottleneck Problem
+  Cell 42 (H2): Part 4 — Cross-Attention: The Bridge
+  Cell 49 (H1): Q: (B, n_heads, T, d_k)    K^T: (B, n_heads, d_k, S)

@@ -1,12 +1,23 @@
 # Attention and Transformer Blocks: Handwritten Theory Notes
 
-## 1. Core mental model
+## 1. See the whole path first
 
-Use the sentence **"Aria heard the signal aboard Meridian."** Every token starts as a vector. Attention lets each token ask which other tokens matter, then replace its local view with a weighted blend of their information. A Transformer block follows that communication with private computation for each token.
+Start with one ordinary sentence such as **"Aria heard the signal aboard Meridian."** The story is irrelevant; the useful part is that order and relationships already matter.
 
-Compared with an RNN, attention gives distant tokens a direct connection and processes training positions in parallel.
+```text
+text
+-> token IDs
+-> token embeddings + position
+-> attention gathers context between tokens
+-> the FFN refines each token privately
+-> an output head produces vocabulary logits
+-> loss measures the next-token error
+-> backpropagation improves every learned step
+```
 
-The notebook uses one word per token and a frozen three-dimensional embedding map. Its labelled axes are teaching aids, not learned properties. Real tokenizers often split words into subwords, and real embeddings are trained with the model.
+A Transformer block is the middle of this path. Attention lets each token ask which other tokens matter and retrieve a weighted blend of their information. The FFN then transforms the gathered features inside each token. Compared with an RNN, attention gives distant tokens a direct connection and processes training positions in parallel.
+
+The notebook uses one word per token and a frozen three-dimensional embedding map so the intermediate vectors can be inspected. Real tokenizers often split words into subwords, and real embeddings are trained with the rest of the model.
 
 ## 2. Embeddings need position
 
@@ -62,9 +73,23 @@ Start with input `x`: normalize it, run multi-head attention, and add that corre
 
 Sequence length and model width remain unchanged across a block. Stacking blocks changes what each token represents, not the outer shape.
 
-## 6. Masks, training, and practical failure modes
+## 6. From contextual vectors to prediction and learning
+
+After the final block, each token position holds a contextual vector, not a word or probability. A vocabulary head converts that vector into one score per possible next token. Softmax turns the scores into probabilities; the highest probability is the model's current best guess, not guaranteed truth.
+
+During training, the actual next token is known. Loss becomes large when the model assigns it little probability and small when the model assigns it much probability. Backpropagation then carries responsibility from that error through the vocabulary head, FFN, attention projections, positional mechanism, and token embeddings. The optimizer nudges all trainable weights in directions that should make future predictions less surprising.
+
+Backpropagation is used to learn the weights. It is not another layer in the generation-time forward path.
+
+## 7. Masks, model families, and practical failure modes
 
 Encoders can inspect the full sequence. Decoders use a causal mask so each position sees only itself and earlier positions, preventing leakage during parallel training. Generation predicts from the current prefix, appends one token, and repeats. A separate padding mask blocks empty batch positions.
+
+| Family | Information rule | Best fit |
+|---|---|---|
+| Encoder-only | Every input token can read the complete input | Classification, extraction, tagging, and retrieval |
+| Decoder-only | Every token can read only its visible prefix | Continuation, chat, and code generation |
+| Encoder-decoder | A full-input reader builds memory for a causal writer | Translation, summarization, and source-to-target transformation |
 
 Common mistakes:
 

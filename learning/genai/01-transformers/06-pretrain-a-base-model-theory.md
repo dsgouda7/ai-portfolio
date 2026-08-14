@@ -4,6 +4,8 @@
 
 A correctly assembled decoder with random weights does not know language. It has the pathways required to learn, but every prediction begins as an unpracticed distribution over tokens.
 
+**Track position:** this chapter closes the loop that began with raw text. The forward path produces a prediction; the backward path assigns responsibility for its error.
+
 Pretraining repeats one loop:
 
 ```text
@@ -16,6 +18,8 @@ read a packed token block
 ```
 
 The architecture stays the same from the first step to the final checkpoint. Training changes the numbers inside it.
+
+During one backward pass, gradients reach the vocabulary head, normalization scales, FFN projections and gates, attention projections, and token embeddings. The optimizer updates those parameters; it does not rewrite the token IDs or the training text.
 
 Mental model: **architecture builds the instrument; pretraining is the practice that teaches it to play.**
 

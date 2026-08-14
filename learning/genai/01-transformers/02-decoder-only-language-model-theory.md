@@ -1,6 +1,6 @@
 # Decoder-Only Language Models: Handwritten Theory Notes
 
-## 1. The one-tape mental model
+## 1. Start with the job: continue one growing tape
 
 A decoder-only language model uses one sequence for both the prompt and its continuation. Think of it as a **reader and writer sharing one growing tape**. It reads the tokens already present, predicts one next token, appends that token, and repeats.
 
@@ -9,6 +9,8 @@ A decoder-only language model uses one sequence for both the prompt and its cont
 The key rule is **future-blind, not context-free**. A token may use itself and every token to its left, but nothing to its right. During training, the complete sentence is available to the training system, so a causal mask enforces this rule. During generation, future tokens do not exist yet, so the same rule happens naturally.
 
 The notebook uses one word per token to keep the example readable. Real tokenizers usually split text into subwords. That changes sequence length, but not the next-token task.
+
+This architecture is ideal when input and output naturally form one sequence: completion, chat, code generation, and open-ended generation. It is less naturally separated than an encoder-decoder model when a complete source and a distinct target have different roles.
 
 ## 2. Shapes and the decoder block
 
@@ -27,6 +29,15 @@ Token embeddings carry token identity; positional information carries order. Eac
 2. **Feed-forward network** transforms each position's features after attention has mixed context.
 
 Layer normalization stabilizes feature scales. Residual connections add each stage's result back to the existing stream, preserving useful information and helping gradients move through deep stacks. Repeating the block makes representations increasingly contextual: the final position can summarize information accumulated through earlier positions and layers.
+
+The complete learning path is:
+
+```text
+token IDs -> embeddings + position -> causal attention -> FFN
+-> vocabulary logits -> shifted next-token loss -> backpropagation
+```
+
+The loss does not update only the output head. Its gradients flow through the stacked decoder blocks and into the token embeddings, so the whole path learns together.
 
 ![Decoder-only component and tensor flow](images/02-decoder-only-language-model-theory-01.png)
 
