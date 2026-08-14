@@ -35,6 +35,39 @@ class DeterministicNoPIIRedactor:
         )
 
 
+class FullFramePixelationRedactor:
+    """Conservatively remove fine identity detail from public-source display frames."""
+
+    version = "full-frame-pixelation-v1"
+
+    def __init__(self, *, block_size: int = 12) -> None:
+        if block_size < 4:
+            raise ValueError("pixelation block_size must be at least four")
+        self.block_size = block_size
+
+    def redact(self, frame_id: int, image_bgr: np.ndarray) -> PrivacyRedactionResult:
+        if image_bgr.ndim != 3 or image_bgr.shape[2] != 3:
+            raise ValueError("privacy input must be a BGR image")
+        return PrivacyRedactionResult(
+            frame_id=frame_id,
+            face_masks=(),
+            plate_masks=(),
+            redactor_version=f"{self.version}:block-{self.block_size}",
+            safe_for_display=True,
+        )
+
+    def apply(self, image_bgr: np.ndarray) -> np.ndarray:
+        import cv2
+
+        height, width = image_bgr.shape[:2]
+        reduced = cv2.resize(
+            image_bgr,
+            (max(1, width // self.block_size), max(1, height // self.block_size)),
+            interpolation=cv2.INTER_AREA,
+        )
+        return cv2.resize(reduced, (width, height), interpolation=cv2.INTER_NEAREST)
+
+
 @dataclass(frozen=True, slots=True)
 class RedactedFrame:
     image_bgr: np.ndarray
@@ -79,7 +112,8 @@ class PrivacyGuard:
             raise PrivacyRedactionError("privacy result frame identity mismatch")
         if not result.safe_for_display:
             raise PrivacyRedactionError("privacy redactor did not mark the frame safe")
-        redacted = image_bgr.copy()
+        apply_redaction = getattr(self.redactor, "apply", None)
+        redacted = apply_redaction(image_bgr) if callable(apply_redaction) else image_bgr.copy()
         for x1, y1, x2, y2 in (*result.face_masks, *result.plate_masks):
             redacted[y1:y2, x1:x2] = 0
         return RedactedFrame(redacted, result)

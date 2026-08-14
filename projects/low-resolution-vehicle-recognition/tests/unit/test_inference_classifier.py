@@ -4,7 +4,10 @@ import numpy as np
 from test_inference_bundle import _bundle
 
 from roadid.inference.bundle import load_model_bundle
-from roadid.inference.classifier import HuggingFaceHierarchicalResNetClassifier
+from roadid.inference.classifier import (
+    DetectionOnlyClassifier,
+    HuggingFaceHierarchicalResNetClassifier,
+)
 
 
 class _ProcessorDouble:
@@ -32,3 +35,12 @@ def test_hierarchical_resnet_is_lazy_and_supports_model_doubles(tmp_path) -> Non
     scores = classifier.classify(crop)
 
     assert scores.body_type == scores.make == scores.model_family == (1.0,)
+
+
+def test_detection_only_classifier_withholds_untrained_hierarchy() -> None:
+    classifier = DetectionOnlyClassifier()
+
+    scores = classifier.classify(np.zeros((24, 48, 3), dtype=np.uint8))
+
+    assert scores.body_type == scores.make == scores.model_family == (0.5, 0.5)
+    assert "detection-only" in classifier.profile_label

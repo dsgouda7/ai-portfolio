@@ -109,11 +109,13 @@ async function loadStatus() {
 
     const rawProfile = String(status.profile_type || status.profile || status.mode || "").toLowerCase();
     const demo = status.demo_mode === true || ["demo", "mock", "fixture"].includes(rawProfile);
+    const detectionOnly = rawProfile === "detection-only";
     const real = status.demo_mode === false || ["real", "real-model", "production"].includes(rawProfile);
-    elements["profile-badge"].dataset.profile = demo ? "demo" : (real ? "real" : "unknown");
+    elements["profile-badge"].dataset.profile = demo ? "demo" : (detectionOnly ? "detection" : (real ? "real" : "unknown"));
     elements["profile-badge"].textContent = demo
       ? "Demo profile · non-production"
-      : real ? "Real-model profile" : "Profile not reported";
+      : detectionOnly ? "Pretrained detection · make/model disabled"
+        : real ? "Real-model profile" : "Profile not reported";
   } catch (error) {
     elements["readiness-badge"].dataset.tone = "failed";
     elements["readiness-badge"].textContent = "Server unavailable";

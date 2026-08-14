@@ -11,6 +11,7 @@ from roadid.inference.classifier import HierarchicalScores, LabelSpace
 from roadid.inference.fusion import TrackFuser
 from roadid.inference.privacy import (
     DeterministicNoPIIRedactor,
+    FullFramePixelationRedactor,
     PrivacyGuard,
     PrivacyRedactionError,
 )
@@ -138,3 +139,19 @@ def test_public_privacy_fails_closed_and_replay_emits_no_text() -> None:
     assert protected.result.safe_for_display
     assert protected.result.face_masks == protected.result.plate_masks == ()
     assert not hasattr(protected.result, "text")
+
+
+def test_full_frame_pixelation_removes_fine_public_display_detail() -> None:
+    checkerboard = np.indices((48, 72)).sum(axis=0) % 2 * 255
+    image = np.repeat(checkerboard[:, :, None], 3, axis=2).astype(np.uint8)
+
+    protected = PrivacyGuard(FullFramePixelationRedactor(block_size=12)).protect(
+        image,
+        frame_id=7,
+        public_source=True,
+    )
+
+    assert protected.result.safe_for_display
+    assert protected.result.redactor_version == "full-frame-pixelation-v1:block-12"
+    assert not np.array_equal(protected.image_bgr, image)
+    assert protected.image_bgr.var() < image.var()

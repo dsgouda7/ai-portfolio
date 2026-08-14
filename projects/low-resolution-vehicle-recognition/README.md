@@ -38,6 +38,22 @@ Open `http://127.0.0.1:5000`, select **Deterministic CarFace replay**, and start
 uses the same source, tracking, fusion, decision, privacy-rendering, telemetry, and web boundaries as
 the configurable runtime without claiming real-model accuracy.
 
+Run the real TfL snapshot profile after reviewing the source terms:
+
+```powershell
+$env:ROADID_SOURCE_CONFIG = "configs/camera_sources.tfl.yaml"
+$env:ROADID_INFERENCE_CONFIG = "configs/inference.detr.yaml"
+python -m roadid.web
+```
+
+This profile polls an explicitly selected official TfL JamCam, runs the pinned pretrained DETR model,
+tracks generic vehicles, and pixelates the public display after inference. It reports only `vehicle`;
+make and model remain disabled until a calibrated classifier bundle is trained. The first run may
+download the DETR checkpoint unless it is already cached.
+
+MIO-TCD and CompCars intake is documented in [`data-manifests/README.md`](data-manifests/README.md).
+Both corpora are restricted to non-commercial research use and raw data must not be committed.
+
 Run the offline smoke training and verify the resulting bundle:
 
 ```powershell

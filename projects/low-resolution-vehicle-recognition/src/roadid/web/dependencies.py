@@ -113,6 +113,126 @@ class DefaultPipelineFactory:
         )
 
 
+class DetrDetectionPipelineFactory:
+    """Build a pretrained generic-vehicle profile without make/model claims."""
+
+    def __init__(
+        self,
+        settings: Settings,
+        recorder: Any,
+        *,
+        detector: Any | None = None,
+        tracker: Any | None = None,
+    ) -> None:
+        self._settings = settings
+        self._recorder = recorder
+        self._detector = detector
+        self._tracker = tracker
+
+    def status(self) -> dict[str, Any]:
+        detector = self._settings.inference.get("detector", {})
+        return {
+            "ready": _module_available("torch") and _module_available("transformers"),
+            "device": detector.get("device", "cpu"),
+            "model_version": detector.get("model_id", "facebook/detr-resnet-50"),
+            "profile": "detection-only",
+        }
+
+    def create(self, run_id, source, options, cancellation_requested=None):
+        if source.adapter_type not in {"local_camera", "snapshot_http", "tfl_jamcam"}:
+            raise DependencyUnavailable(
+                "The DETR profile supports local cameras and reviewed snapshot sources only."
+            )
+
+        from roadid.contracts import CalibrationContract
+        from roadid.inference.calibration import HierarchicalDecisionEngine
+        from roadid.inference.classifier import DetectionOnlyClassifier
+        from roadid.inference.detector import DetrConfig, HuggingFaceDetrDetector
+        from roadid.inference.fusion import TrackFuser
+        from roadid.inference.pipeline import SynchronousInferencePipeline
+        from roadid.inference.privacy import FullFramePixelationRedactor, PrivacyGuard
+        from roadid.inference.quality import CropQualityScorer, QualityConfig
+        from roadid.inference.tracker import ByteTrackTracker, DeterministicTracker
+
+        runtime = self._settings.inference.get("runtime", {})
+        detector_values = self._settings.inference.get("detector", {})
+        tracker_values = self._settings.inference.get("tracker", {})
+        quality_values = self._settings.inference.get("quality", {})
+        classifier = DetectionOnlyClassifier()
+        detector = self._detector or HuggingFaceDetrDetector(
+            DetrConfig(
+                model_id=str(detector_values.get("model_id", "facebook/detr-resnet-50")),
+                revision=detector_values.get("revision", "no_timm"),
+                score_threshold=float(detector_values.get("score_threshold", 0.7)),
+                vehicle_classes=tuple(
+                    str(value)
+                    for value in detector_values.get("vehicle_classes", ["car", "truck", "bus"])
+                ),
+                offline_only=bool(detector_values.get("offline_only", True)),
+                device=str(detector_values.get("device", "cpu")),
+            )
+        )
+        if self._tracker is not None:
+            tracker = self._tracker
+        elif tracker_values.get("implementation") == "bytetrack":
+            tracker = ByteTrackTracker(
+                activation_threshold=float(tracker_values.get("activation_threshold", 0.25)),
+                matching_threshold=float(tracker_values.get("matching_threshold", 0.8)),
+                lost_track_buffer=int(tracker_values.get("lost_track_buffer", 20)),
+                frame_rate=max(1, round(float(runtime.get("processing_fps", 5.0)))),
+            )
+        else:
+            tracker = DeterministicTracker(
+                lost_track_buffer=int(tracker_values.get("lost_track_buffer", 20)),
+                profile_label="deterministic-tracker-real-source-fallback",
+            )
+        calibration = CalibrationContract(
+            method="detection-only-abstention",
+            dataset_manifest_sha256="0" * 64,
+            validation_split_sha256="1" * 64,
+            test_split_sha256="2" * 64,
+            body_threshold=0.49,
+            make_threshold=1.0,
+            model_threshold=1.0,
+        )
+        public_source = source.adapter_type in {"snapshot_http", "tfl_jamcam"}
+        privacy_guard = (
+            PrivacyGuard(FullFramePixelationRedactor(block_size=12))
+            if public_source
+            else PrivacyGuard(None, allow_raw_local_display=True)
+        )
+        recorder = self._recorder.for_run(run_id)
+        return SynchronousInferencePipeline(
+            detector=detector,
+            tracker=tracker,
+            quality_scorer=CropQualityScorer(
+                QualityConfig(
+                    minimum_height_px=int(quality_values.get("minimum_height_px", 12)),
+                    maximum_blur=float(quality_values.get("maximum_blur", 0.8)),
+                    maximum_exposure=float(quality_values.get("maximum_exposure", 0.85)),
+                    maximum_occlusion=float(quality_values.get("maximum_occlusion", 0.75)),
+                )
+            ),
+            classifier=classifier,
+            fuser=TrackFuser(
+                classifier.label_space,
+                max_evidence_per_track=int(runtime.get("max_evidence_per_track", 16)),
+            ),
+            decision_engine=HierarchicalDecisionEngine(
+                label_space=classifier.label_space,
+                calibration=calibration,
+                model_version=str(
+                    detector_values.get("model_id", "facebook/detr-resnet-50")
+                ),
+                model_to_make={"model-not-trained": "make-not-trained"},
+            ),
+            privacy_guard=privacy_guard,
+            checkpoint_callback=_checkpoint_recorder(recorder),
+            cancellation_requested=cancellation_requested,
+            public_source_ids=(source.source_id,) if public_source else (),
+        )
+
+
 class UnavailableRecorder:
     def ensure_run(self, run_id, source=None):
         raise DependencyUnavailable("Telemetry integrations are unavailable.")
@@ -185,7 +305,12 @@ def build_default_dependencies(settings: Settings) -> DefaultDependencies:
         importlib.import_module("roadid.inference.pipeline")
         if isinstance(recorder, UnavailableRecorder):
             raise ImportError("telemetry is unavailable")
-        pipeline_factory = DefaultPipelineFactory(settings, recorder)
+        profile = str(settings.inference.get("runtime", {}).get("profile", "demo"))
+        pipeline_factory = (
+            DetrDetectionPipelineFactory(settings, recorder)
+            if profile == "detection-only"
+            else DefaultPipelineFactory(settings, recorder)
+        )
     except (ImportError, OSError, TypeError, ValueError):
         pipeline_factory = UnavailablePipelineFactory()
         unavailable.append("inference")
@@ -203,6 +328,10 @@ def component_ready(component: Any) -> bool:
         component,
         UnavailableSourceRegistry | UnavailablePipelineFactory | UnavailableRecorder,
     )
+
+
+def _module_available(name: str) -> bool:
+    return importlib.util.find_spec(name) is not None
 
 
 def _checkpoint_recorder(recorder: Any):

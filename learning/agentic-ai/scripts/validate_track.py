@@ -19,7 +19,7 @@ TRACK_DIR = Path(__file__).resolve().parents[1]
 
 
 def notebook_paths():
-    return sorted(TRACK_DIR.glob("[0-9][0-9]-*/*.ipynb"))
+    return sorted(TRACK_DIR.glob("[0-9][0-9]*-*/*.ipynb"))
 
 
 def validate_structure(path: Path):
@@ -72,8 +72,8 @@ def main():
     parser.add_argument("--static-only", action="store_true")
     args = parser.parse_args()
     paths = notebook_paths()
-    if len(paths) != 10:
-        raise SystemExit(f"Expected 10 notebooks, found {len(paths)}")
+    if len(paths) != 11:
+        raise SystemExit(f"Expected 11 notebooks, found {len(paths)}")
     for path in paths:
         notebook = validate_structure(path)
         if args.static_only:

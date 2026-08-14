@@ -109,7 +109,7 @@ class DatasetItem:
 
     @property
     def ownership_key(self) -> str:
-        boundary = self.identity_id or self.track_id or self.source_sha256
+        boundary = self.identity_id or self.track_id or self.camera_id or self.source_sha256
         return f"{self.source_id}:{boundary}"
 
     def to_dict(self) -> dict[str, object]:

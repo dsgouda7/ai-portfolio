@@ -184,6 +184,29 @@ class DeterministicDemoClassifier:
         )
 
 
+class DetectionOnlyClassifier:
+    """Keep detected tracks while withholding hierarchy levels that were not trained."""
+
+    profile_label = "pretrained-detr-detection-only"
+
+    def __init__(self) -> None:
+        self.label_space = LabelSpace(
+            body_types=("vehicle", "body-type-not-trained"),
+            makes=("make-not-trained", "make-unavailable"),
+            model_families=("model-not-trained", "model-unavailable"),
+        )
+
+    def classify(self, crop_bgr: np.ndarray) -> HierarchicalScores:
+        if crop_bgr.ndim != 3 or crop_bgr.shape[2] != 3 or crop_bgr.size == 0:
+            raise ValueError("classifier input must be a non-empty BGR image")
+        abstaining = (0.5, 0.5)
+        return HierarchicalScores(
+            body_type=abstaining,
+            make=abstaining,
+            model_family=abstaining,
+        )
+
+
 def _hierarchical_logits(
     outputs: Any, space: LabelSpace
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:

@@ -50,7 +50,7 @@ sources:
       require_freshness: true
 
   - id: tfl-jamcam
-    name: Transport for London JamCam catalog
+    name: TfL JamCam · A406 Billet Underpass
     type: tfl_jamcam
     enabled: false
     attribution: Transport for London
@@ -60,4 +60,6 @@ sources:
     options:
       terms_reviewed: false
       official_api_base_url: https://api.tfl.gov.uk
+      camera_id: JamCams_00002.00865
+      allowed_image_hosts: [s3-eu-west-1.amazonaws.com]
       app_key: ""
