@@ -145,7 +145,7 @@ def app(tmp_path):
 
 
 def wait_terminal(client, run_id):
-    deadline = time.monotonic() + 1
+    deadline = time.monotonic() + 5
     while time.monotonic() < deadline:
         payload = client.get(f"/api/runs/{run_id}").get_json()["run"]
         if payload["state"] in {"completed", "failed", "stopped"}:
@@ -377,5 +377,5 @@ def test_default_builder_runs_offline_replay_profile():
     restarted = client.post("/api/runs", json={"source_id": "replay-demo"})
     restarted_id = restarted.get_json()["run"]["run_id"]
     assert restarted.status_code == 201
-    assert wait_terminal(client, restarted_id)["processed_frames"] == 30
+    assert wait_terminal(client, restarted_id)["processed_frames"] == 25
     app.extensions["roadid"]["shutdown"]()

@@ -252,6 +252,8 @@ class RunManager:
                 raw_result = pipeline.process_frame(frame)
                 result = _web_result(pipeline, raw_result)
                 self._apply_result(run, frame, result)
+                if run.stop_event.wait(_frame_interval(run)):
+                    break
 
             with run.condition:
                 if run.state is RunState.RUNNING:
@@ -326,6 +328,13 @@ def _close_quietly(value: Any) -> None:
             close()
         except Exception:
             pass
+
+
+def _frame_interval(run: RunRecord) -> float:
+    processing_fps = run.options.get("processing_fps")
+    if isinstance(processing_fps, (int, float)) and not isinstance(processing_fps, bool):
+        return 1.0 / float(processing_fps)
+    return run.source.refresh_seconds
 
 
 def _timestamp(value: datetime | None) -> str | None:

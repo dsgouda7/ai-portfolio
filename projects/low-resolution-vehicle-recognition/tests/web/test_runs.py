@@ -112,6 +112,19 @@ def test_run_completes_with_one_worker_and_track_snapshot():
     assert manager.tracks(run.run_id) == [{"track_id": "track-1", "usable_frames": 2}]
 
 
+def test_processing_fps_limits_replay_consumption_rate():
+    manager = RunManager(
+        Registry(Adapter([frame(1), frame(2)])),
+        Factory(Pipeline()),
+    )
+
+    started_at = time.monotonic()
+    run = manager.create_run("replay", {"processing_fps": 20.0})
+    wait_state(run, RunState.COMPLETED)
+
+    assert time.monotonic() - started_at >= 0.08
+
+
 def test_pause_resume_and_idempotent_stop_are_contract_valid():
     gate = threading.Event()
     pipeline = Pipeline()

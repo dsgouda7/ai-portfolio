@@ -7,7 +7,7 @@ sources:
     refresh_seconds: 0.1
     location_precision: none
     options:
-      frame_count: 30
+      frame_count: 25
       width: 960
       height: 540
 

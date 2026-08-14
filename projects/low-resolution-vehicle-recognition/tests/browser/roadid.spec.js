@@ -168,6 +168,20 @@ test("live replay completes without an event-stream reconnect warning", async ({
   const frame = page.getByTestId("frame-viewport").locator("img");
   await expect(frame).toBeVisible();
   expect(await frame.evaluate((image) => image.naturalWidth)).toBeGreaterThan(0);
+  const vehiclePixels = await frame.evaluate((image) => {
+    const canvas = document.createElement("canvas");
+    canvas.width = image.naturalWidth;
+    canvas.height = image.naturalHeight;
+    const context = canvas.getContext("2d");
+    context.drawImage(image, 0, 0);
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    let count = 0;
+    for (let index = 0; index < pixels.length; index += 4) {
+      if (pixels[index] > 140 && pixels[index] > pixels[index + 1] + 40 && pixels[index + 1] > pixels[index + 2]) count += 1;
+    }
+    return count;
+  });
+  expect(vehiclePixels).toBeGreaterThan(100);
   await expect(page.getByTestId("tracks-body").getByTestId("track-row")).toBeVisible();
 });
 
