@@ -89,3 +89,51 @@ def test_recent_feed_paginates_and_deduplicates_photo_ids() -> None:
     assert (photos[0].original_width, photos[0].original_height) == (4096, 2731)
     assert len(session.calls) == 2
     assert session.calls[0][1]["created_d1"].startswith("2026-08-17T12:00:00")
+
+
+def test_taxon_common_name_falls_back_to_taxon_endpoint() -> None:
+    session = Session(
+        [
+            {
+                "results": [
+                    {
+                        "id": 72848,
+                        "name": "Eumyias thalassinus",
+                        "preferred_common_name": "Verditer Flycatcher",
+                    }
+                ]
+            }
+        ]
+    )
+
+    result = InaturalistClient(session=session).resolve_taxon(72848)
+
+    assert result == {
+        "taxon_id": 72848,
+        "scientific_name": "Eumyias thalassinus",
+        "common_name": "Verditer Flycatcher",
+    }
+
+
+def test_taxon_common_name_can_be_resolved_by_scientific_name() -> None:
+    session = Session(
+        [
+            {
+                "results": [
+                    {
+                        "id": 5536,
+                        "name": "Buceros bicornis",
+                        "preferred_common_name": "Great Hornbill",
+                    }
+                ]
+            }
+        ]
+    )
+
+    result = InaturalistClient(session=session).resolve_taxon_name(
+        "Buceros bicornis"
+    )
+
+    assert result["taxon_id"] == 5536
+    assert result["common_name"] == "Great Hornbill"
+    assert session.calls[0][1] == {"q": "Buceros bicornis", "per_page": 10}

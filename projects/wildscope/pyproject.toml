@@ -11,6 +11,7 @@ dependencies = [
   "Flask>=3.1,<4",
   "numpy>=1.26,<3",
   "opencv-python-headless>=4.10,<5",
+  "open_clip_torch>=2.32,<3",
   "Pillow>=10,<12",
   "PyYAML>=6,<7",
   "requests>=2.32,<3",

@@ -6,6 +6,7 @@ import hashlib
 import threading
 import time
 import uuid
+from collections import Counter
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
@@ -18,10 +19,14 @@ from wildscope.contracts import ModelPrediction, WildlifeFeed
 from wildscope.feeds import InaturalistClient
 from wildscope.inference import (
     SUPERVISED_PROTOCOL_VERSION,
+    BioClipSpeciesClassifier,
     SpeciesNetRunner,
     StaticWildlifeModel,
+    VisualSpeciesModel,
     apply_adaptive_corrector,
-    evaluate_adaptive_corrector,
+    canonical_model_label,
+    describe_adaptive_prediction,
+    describe_visual_prediction,
     evaluate_identification_rows,
     model_timestamp,
     train_adaptive_corrector,
@@ -33,6 +38,16 @@ ALLOWED_IMAGE_HOSTS = {
     "static.inaturalist.org",
     "inaturalist-open-data.s3.amazonaws.com",
 }
+
+TRAINING_PIPELINE = (
+    ("fetch", "Fetch provider metadata"),
+    ("download", "Download uncached images"),
+    ("preprocess", "Normalize and enhance images"),
+    ("baseline-inference", "Run SpeciesNet baseline"),
+    ("evaluate", "Score deployed model"),
+    ("train", "Build next selective species model"),
+    ("persist", "Persist and deploy version"),
+)
 
 
 @dataclass(slots=True)
@@ -72,18 +87,22 @@ class WildlifeService:
         *,
         client: InaturalistClient | None = None,
         static_model: StaticWildlifeModel | None = None,
+        visual_model: VisualSpeciesModel | None = None,
     ) -> None:
         self.feeds = {feed.feed_id: feed for feed in feeds}
         self.store = store
         self.cache_root = cache_root
         self.client = client or InaturalistClient()
         self.static_model = static_model or SpeciesNetRunner(cache_root / "jobs")
+        self.visual_model = visual_model or BioClipSpeciesClassifier()
         self._jobs: dict[str, FeedJob] = {}
         self._active_by_feed: dict[str, str] = {}
         self._lock = threading.RLock()
         self._http = requests.Session()
         self._http.trust_env = False
         self._http.headers.update({"User-Agent": "WildScope/0.1 personal research portfolio"})
+        self._taxon_cache: dict[int, dict[str, Any]] = {}
+        self._taxon_name_cache: dict[str, dict[str, Any]] = {}
 
     def list_feeds(self) -> list[dict[str, object]]:
         result = []
@@ -134,6 +153,20 @@ class WildlifeService:
             if feed_id in self._active_by_feed:
                 raise RuntimeError("a feed job is already active")
             job = FeedJob(f"train-{uuid.uuid4().hex}", feed_id, "training")
+            job.details = {
+                "pipeline": [
+                    {
+                        "id": stage_id,
+                        "label": label,
+                        "state": "pending",
+                        "processed": 0,
+                        "total": None,
+                        "detail": None,
+                    }
+                    for stage_id, label in TRAINING_PIPELINE
+                ],
+                "current_stage": None,
+            }
             self._jobs[job.job_id] = job
             self._active_by_feed[feed_id] = job.job_id
         threading.Thread(
@@ -153,7 +186,9 @@ class WildlifeService:
 
     def frames(self, feed_id: str, page: int) -> dict[str, Any]:
         self._feed(feed_id)
-        return self.store.frames(feed_id, page=page)
+        result = self.store.frames(feed_id, page=page)
+        result["items"] = [self._enrich_frame(row) for row in result["items"]]
+        return result
 
     def locations(self, feed_id: str) -> list[dict[str, Any]]:
         self._feed(feed_id)
@@ -161,13 +196,16 @@ class WildlifeService:
 
     def location_frames(self, feed_id: str, anchor_photo_id: int) -> list[dict[str, Any]]:
         self._feed(feed_id)
-        return self.store.location_frames(feed_id, anchor_photo_id)
+        return [
+            self._enrich_frame(row)
+            for row in self.store.location_frames(feed_id, anchor_photo_id)
+        ]
 
     def frame_detail(self, photo_id: int) -> dict[str, Any]:
         detail = self.store.frame_detail(photo_id)
         if detail is None:
             raise LookupError("unknown frame")
-        return detail
+        return self._enrich_frame(detail)
 
     def training_dashboard(self, feed_id: str) -> dict[str, Any]:
         self._feed(feed_id)
@@ -181,7 +219,19 @@ class WildlifeService:
             None if bootstrap_migration else model,
             bootstrap_migration=bootstrap_migration,
         )
+        all_training_rows = self.store.training_rows(feed_id, None)
+        dataset = self.store.dataset_summary(feed_id)
+        dataset["target_distribution"] = dict(
+            sorted(Counter(str(row["scientific_name"]) for row in all_training_rows).items())
+        )
         return {
+            "baseline_model": {
+                "name": "SpeciesNet",
+                "engine_version": str(
+                    getattr(self.static_model, "model_version", "speciesnet-5.0.5")
+                ),
+                "prediction_versions": dataset["baseline_prediction_versions"],
+            },
             "model": (
                 {
                     "model_id": model["model_id"],
@@ -198,6 +248,7 @@ class WildlifeService:
                 else None
             ),
             "live_batch": live_batch,
+            "dataset": dataset,
             "confidence": self.store.confidence_summary(feed_id),
             "runs": history,
         }
@@ -242,12 +293,26 @@ class WildlifeService:
         try:
             existing = self.store.adaptive_model(job.feed_id)
             watermark = str(existing["watermark"]) if existing else None
+            self._set_stage(
+                job,
+                "fetch",
+                "running",
+                detail="Querying labels after the deployed watermark.",
+            )
             photos = (
                 self.client.fetch_since(feed, since=watermark)
                 if watermark
                 else self.client.fetch_recent(feed, hours=24)
             )
             job.total = len(photos)
+            self._set_stage(
+                job,
+                "fetch",
+                "completed",
+                processed=len(photos),
+                total=len(photos),
+                detail=f"{len(photos)} provider photos returned.",
+            )
             ingest = self._ingest_photos(job, feed, photos)
             if existing:
                 self._apply_adaptive(job.feed_id)
@@ -257,19 +322,59 @@ class WildlifeService:
             )
             if not new_rows:
                 raise ValueError("no new labeled, licensed predictions are available")
-            baseline_evaluation = evaluate_identification_rows(
-                new_rows, label_field="static_label"
+            self._set_stage(
+                job,
+                "evaluate",
+                "running",
+                total=len(new_rows),
+                detail="Comparing generated labels with obtained identifications.",
+            )
+            baseline_evaluation = self._evaluation_metrics(
+                new_rows,
+                label_field="static_label",
+                confidence_field="static_confidence",
             )
             deployed_evaluation = (
-                evaluate_identification_rows(new_rows, label_field="deployed_label")
+                self._evaluation_metrics(
+                    new_rows,
+                    label_field="deployed_label",
+                    confidence_field="deployed_confidence",
+                )
                 if existing and not bootstrap_migration
-                else {"samples": len(new_rows), "correct": None, "accuracy": None}
+                else self._unavailable_evaluation(len(new_rows))
             )
-            payload = train_adaptive_corrector(new_rows)
+            self._set_stage(
+                job,
+                "evaluate",
+                "completed",
+                processed=len(new_rows),
+                total=len(new_rows),
+                detail=f"Scored {len(new_rows)} eligible labels before training.",
+            )
+            self._set_stage(
+                job,
+                "train",
+                "running",
+                total=len(new_rows),
+                detail="Building the feed candidate catalog for selective BioCLIP inference.",
+            )
+            existing_payload = (
+                existing["payload"]
+                if existing
+                and existing["payload"].get("protocol_version")
+                == SUPERVISED_PROTOCOL_VERSION
+                else None
+            )
+            payload = train_adaptive_corrector(new_rows, existing_payload)
             trained_at = model_timestamp()
             newest = max(str(row["created_at"]) for row in new_rows)
-            training_evaluation = evaluate_adaptive_corrector(
-                new_rows, payload, trained_at=trained_at
+            self._set_stage(
+                job,
+                "train",
+                "completed",
+                processed=len(new_rows),
+                total=len(new_rows),
+                detail=f"Consumed all {len(new_rows)} displayed training labels.",
             )
             payload.update(
                 {
@@ -281,12 +386,38 @@ class WildlifeService:
                 }
             )
             model_id = f"adaptive-{job.feed_id}-{trained_at.replace(':', '').replace('+', '')}"
+            self._set_stage(
+                job,
+                "persist",
+                "running",
+                detail="Writing model payload, watermark, predictions, and lineage.",
+            )
             self.store.save_adaptive_model(
                 job.feed_id, model_id, trained_at, newest, payload
             )
             self._apply_adaptive(job.feed_id)
+            consumed_photo_ids = {int(row["photo_id"]) for row in new_rows}
+            deployed_rows = [
+                row
+                for row in self.store.training_rows(job.feed_id, None)
+                if int(row["photo_id"]) in consumed_photo_ids
+            ]
+            training_evaluation = self._evaluation_metrics(
+                deployed_rows,
+                label_field="deployed_label",
+                confidence_field="deployed_confidence",
+            )
+            self._set_stage(
+                job,
+                "persist",
+                "completed",
+                processed=1,
+                total=1,
+                detail=f"Deployed {model_id}.",
+            )
             job.processed = job.total = len(new_rows)
             job.details = {
+                **job.details,
                 "model_id": model_id,
                 "evaluated_model_id": (
                     str(existing["model_id"])
@@ -308,9 +439,16 @@ class WildlifeService:
                 "training_strategy": payload["training_strategy"],
                 "baseline_correct": baseline_evaluation["correct"],
                 "baseline_accuracy": baseline_evaluation["accuracy"],
+                "baseline_errors": baseline_evaluation["errors"],
+                "baseline_coverage": baseline_evaluation["coverage"],
+                "baseline_mean_confidence": baseline_evaluation["mean_confidence"],
                 "deployed_correct": deployed_evaluation["correct"],
                 "deployed_accuracy": deployed_evaluation["accuracy"],
-                "training_agreement": training_evaluation["adaptive_accuracy"],
+                "deployed_errors": deployed_evaluation["errors"],
+                "deployed_coverage": deployed_evaluation["coverage"],
+                "deployed_mean_confidence": deployed_evaluation["mean_confidence"],
+                "target_count": baseline_evaluation["target_count"],
+                "training_agreement": training_evaluation["accuracy"],
                 "samples": self._batch_samples(new_rows),
                 **ingest,
             }
@@ -324,6 +462,7 @@ class WildlifeService:
             )
         except Exception as error:
             job.error = f"{type(error).__name__}: {str(error)[:500]}"
+            self._fail_active_stage(job, job.error)
             self._finish(job, "failed")
 
     def _batch_snapshot(
@@ -333,11 +472,19 @@ class WildlifeService:
         *,
         bootstrap_migration: bool = False,
     ) -> dict[str, Any]:
-        baseline = evaluate_identification_rows(rows, label_field="static_label")
+        baseline = self._evaluation_metrics(
+            rows,
+            label_field="static_label",
+            confidence_field="static_confidence",
+        )
         deployed = (
-            evaluate_identification_rows(rows, label_field="deployed_label")
+            self._evaluation_metrics(
+                rows,
+                label_field="deployed_label",
+                confidence_field="deployed_confidence",
+            )
             if model
-            else {"samples": len(rows), "correct": None, "accuracy": None}
+            else self._unavailable_evaluation(len(rows))
         )
         return {
             "status": (
@@ -367,14 +514,19 @@ class WildlifeService:
         bootstrap_migration = bool(model) and (
             model["payload"].get("protocol_version") != SUPERVISED_PROTOCOL_VERSION
         )
-        if not rows and bootstrap_migration:
+        if bootstrap_migration:
             return self.store.training_rows(feed_id, None), True
         return rows, False
 
     @staticmethod
     def _batch_samples(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        return [
-            {
+        samples = []
+        for row in rows:
+            deployed_version = str(row.get("deployed_model_version") or "")
+            deployed_value = row.get("deployed_confidence")
+            is_visual = deployed_version.startswith("bioclip-")
+            samples.append(
+                {
                 "photo_id": int(row["photo_id"]),
                 "observation_id": int(row["observation_id"]),
                 "created_at": str(row["created_at"]),
@@ -384,10 +536,12 @@ class WildlifeService:
                 "baseline_label": str(row["static_label"]),
                 "baseline_confidence": float(row["static_confidence"]),
                 "deployed_label": row.get("deployed_label"),
-                "deployed_confidence": row.get("deployed_confidence"),
+                "deployed_confidence": None if is_visual else deployed_value,
+                "deployed_margin": deployed_value if is_visual else None,
+                "deployed_model_version": deployed_version or None,
             }
-            for row in rows
-        ]
+            )
+        return samples
 
     def _ingest_photos(
         self,
@@ -399,6 +553,14 @@ class WildlifeService:
     ) -> dict[str, int]:
         downloaded = 0
         duplicates = 0
+        downloaded_items: list[tuple[Any, Path, str]] = []
+        self._set_stage(
+            job,
+            "download",
+            "running",
+            total=len(photos),
+            detail="Downloading original images with large-image fallback.",
+        )
         for photo in photos:
             self.store.upsert_observation(feed.feed_id, photo)
             existing = self.store.frame_detail(photo.photo_id)
@@ -414,12 +576,41 @@ class WildlifeService:
                 path, digest = self._download_photo(
                     feed.feed_id, photo.photo_id, photo.photo_url
                 )
+            except Exception:
+                job.processed += 1
+                continue
+            downloaded_items.append((photo, path, digest))
+            job.processed += 1
+            self._set_stage(
+                job,
+                "download",
+                "running",
+                processed=job.processed,
+                total=len(photos),
+            )
+        self._set_stage(
+            job,
+            "download",
+            "completed",
+            processed=len(downloaded_items),
+            total=len(photos),
+            detail=f"Downloaded {len(downloaded_items)} uncached images.",
+        )
+        self._set_stage(
+            job,
+            "preprocess",
+            "running",
+            total=len(downloaded_items),
+            detail="Applying EXIF/RGB normalization and low-resolution enhancement.",
+        )
+        for index, (photo, path, digest) in enumerate(downloaded_items, start=1):
+            try:
                 stages = prepare_image(
                     path,
                     self.cache_root / "images" / feed.feed_id / str(photo.photo_id) / "stages",
                 )
             except Exception:
-                job.processed += 1
+                path.unlink(missing_ok=True)
                 continue
             if self.store.cache_photo(
                 photo.photo_id,
@@ -439,12 +630,33 @@ class WildlifeService:
                 stages.normalized_path.unlink(missing_ok=True)
                 stages.enhanced_path.unlink(missing_ok=True)
                 duplicates += 1
-            job.processed += 1
+            self._set_stage(
+                job,
+                "preprocess",
+                "running",
+                processed=index,
+                total=len(downloaded_items),
+            )
+        self._set_stage(
+            job,
+            "preprocess",
+            "completed",
+            processed=len(downloaded_items),
+            total=len(downloaded_items),
+            detail=f"Prepared {downloaded + duplicates} images; {duplicates} duplicates removed.",
+        )
 
         images = self.store.cached_images_without_static(feed.feed_id)
         predictions_count = 0
         batch_count = 0
         image_items = list(images.items())
+        self._set_stage(
+            job,
+            "baseline-inference",
+            "running",
+            total=len(image_items),
+            detail="Running SpeciesNet in bounded image batches.",
+        )
         for offset in range(0, len(image_items), batch_size):
             batch = dict(image_items[offset : offset + batch_size])
             predictions = self.static_model.predict(batch, country=feed.country)
@@ -452,6 +664,21 @@ class WildlifeService:
                 self.store.save_prediction(photo_id, "static", prediction)
             predictions_count += len(predictions)
             batch_count += 1
+            self._set_stage(
+                job,
+                "baseline-inference",
+                "running",
+                processed=predictions_count,
+                total=len(image_items),
+            )
+        self._set_stage(
+            job,
+            "baseline-inference",
+            "completed",
+            processed=predictions_count,
+            total=len(image_items),
+            detail=f"Stored {predictions_count} new baseline predictions.",
+        )
         return {
             "downloaded": downloaded,
             "duplicates_skipped": duplicates,
@@ -459,20 +686,191 @@ class WildlifeService:
             "batch_count": batch_count,
         }
 
+    @staticmethod
+    def _evaluation_metrics(
+        rows: list[dict[str, Any]], *, label_field: str, confidence_field: str
+    ) -> dict[str, int | float | None]:
+        result = evaluate_identification_rows(rows, label_field=label_field)
+        predicted_rows = [row for row in rows if row.get(label_field)]
+        confidences = [
+            float(row[confidence_field])
+            for row in predicted_rows
+            if row.get(confidence_field) is not None
+        ]
+        samples = int(result["samples"] or 0)
+        correct = int(result["correct"] or 0)
+        return {
+            **result,
+            "errors": samples - correct,
+            "coverage": len(predicted_rows) / samples if samples else None,
+            "mean_confidence": (
+                sum(confidences) / len(confidences) if confidences else None
+            ),
+            "target_count": len({str(row["scientific_name"]) for row in rows}),
+        }
+
+    @staticmethod
+    def _unavailable_evaluation(samples: int) -> dict[str, int | float | None]:
+        return {
+            "samples": samples,
+            "correct": None,
+            "accuracy": None,
+            "errors": None,
+            "coverage": None,
+            "mean_confidence": None,
+            "target_count": 0,
+        }
+
+    @staticmethod
+    def _set_stage(
+        job: FeedJob,
+        stage_id: str,
+        state: str,
+        *,
+        processed: int | None = None,
+        total: int | None = None,
+        detail: str | None = None,
+    ) -> None:
+        pipeline = job.details.get("pipeline", [])
+        for stage in pipeline:
+            if stage["id"] != stage_id:
+                continue
+            stage["state"] = state
+            if processed is not None:
+                stage["processed"] = processed
+            if total is not None:
+                stage["total"] = total
+            if detail is not None:
+                stage["detail"] = detail
+            break
+        job.details["current_stage"] = stage_id if state == "running" else None
+
+    @staticmethod
+    def _fail_active_stage(job: FeedJob, detail: str) -> None:
+        current = job.details.get("current_stage")
+        if current:
+            WildlifeService._set_stage(job, str(current), "failed", detail=detail)
+
     def _apply_adaptive(self, feed_id: str) -> None:
         model = self.store.adaptive_model(feed_id)
         if model is None:
             return
+        payload = model["payload"]
+        candidates = tuple(sorted(payload.get("target_catalog", {})))
+        use_visual_model = bool(payload.get("visual_model")) and len(candidates) >= 2
         for row in self.store.static_rows(feed_id):
             static = ModelPrediction(
                 str(row["static_label"]),
                 float(row["static_confidence"]),
                 str(row["static_model_version"]),
             )
-            prediction = apply_adaptive_corrector(
-                static, model["payload"], trained_at=str(model["trained_at"])
-            )
+            image_path = Path(str(row.get("cached_path") or ""))
+            if use_visual_model and image_path.is_file():
+                try:
+                    prediction = self.visual_model.predict(
+                        image_path, candidates, trained_at=str(model["trained_at"])
+                    )
+                except (ImportError, OSError, RuntimeError, ValueError):
+                    prediction = apply_adaptive_corrector(
+                        static, payload, trained_at=str(model["trained_at"])
+                    )
+            else:
+                prediction = apply_adaptive_corrector(
+                    static, payload, trained_at=str(model["trained_at"])
+                )
             self.store.save_prediction(int(row["photo_id"]), "adaptive", prediction)
+
+    def _static_identification(self, row: dict[str, Any]) -> dict[str, Any]:
+        label = str(row.get("static_label") or "unknown")
+        leaf = canonical_model_label(label).split(";")[-1]
+        return {
+            "scientific_name": None,
+            "common_name": leaf,
+            "source_label": canonical_model_label(label),
+            "taxon_id": None,
+            "candidate_count": None,
+            "ambiguous": False,
+            "rank": "model taxon label",
+        }
+
+    def _adaptive_identification(self, row: dict[str, Any]) -> dict[str, Any] | None:
+        label = row.get("adaptive_label")
+        if not label:
+            return None
+        model = self.store.adaptive_model(str(row["feed_id"]))
+        payload = model["payload"] if model else {}
+        prediction = ModelPrediction(
+            str(label),
+            float(row.get("adaptive_confidence") or 0.0),
+            str(row.get("adaptive_model_version") or "adaptive-corrector"),
+            row.get("adaptive_trained_at"),
+        )
+        if prediction.model_version.startswith("bioclip-"):
+            description = describe_visual_prediction(prediction, payload)
+        else:
+            description = describe_adaptive_prediction(
+                prediction,
+                payload,
+                source_label=str(row.get("static_label") or "unknown"),
+            )
+        if not description.get("common_name"):
+            description = self._enrich_taxon_description(description, row)
+        return description | {
+            "rank": (
+                "selective visual species prediction"
+                if prediction.model_version.startswith("bioclip-")
+                else "species correction"
+            )
+        }
+
+    def _enrich_frame(self, row: dict[str, Any]) -> dict[str, Any]:
+        enriched = dict(row)
+        enriched["static_identification"] = self._static_identification(row)
+        enriched["adaptive_identification"] = self._adaptive_identification(row)
+        adaptive_identification = enriched["adaptive_identification"]
+        if row.get("adaptive_model_version", "").startswith("bioclip-"):
+            enriched["adaptive_margin"] = row.get("adaptive_confidence")
+            enriched["adaptive_confidence"] = None
+        if adaptive_identification and adaptive_identification.get("abstained"):
+            enriched["adaptive_raw_label"] = row.get("adaptive_label")
+            enriched["adaptive_raw_confidence"] = row.get("adaptive_confidence")
+            enriched["adaptive_label"] = "unidentified"
+            enriched["adaptive_confidence"] = None
+        return enriched
+
+    def _enrich_taxon_description(
+        self, description: dict[str, Any], row: dict[str, Any]
+    ) -> dict[str, Any]:
+        if description.get("scientific_name") == row.get("scientific_name"):
+            return description | {
+                "taxon_id": row.get("taxon_id"),
+                "common_name": row.get("common_name"),
+            }
+        taxon_id = description.get("taxon_id")
+        if taxon_id is None:
+            scientific_name = str(description.get("scientific_name") or "")
+            if not scientific_name:
+                return description
+            if scientific_name not in self._taxon_name_cache:
+                try:
+                    resolver = self.client.resolve_taxon_name
+                    self._taxon_name_cache[scientific_name] = resolver(scientific_name)
+                except (
+                    AttributeError,
+                    LookupError,
+                    requests.RequestException,
+                    ValueError,
+                ):
+                    return description
+            return description | self._taxon_name_cache[scientific_name]
+        taxon_key = int(taxon_id)
+        if taxon_key not in self._taxon_cache:
+            try:
+                resolver = self.client.resolve_taxon
+                self._taxon_cache[taxon_key] = resolver(taxon_key)
+            except (AttributeError, LookupError, requests.RequestException, ValueError):
+                return description
+        return description | self._taxon_cache[taxon_key]
 
     def _download_photo(self, feed_id: str, photo_id: int, url: str) -> tuple[Path, str]:
         candidates = [url]

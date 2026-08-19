@@ -16,7 +16,7 @@
     <div class="status-strip" aria-live="polite">
       <span id="service-state" data-tone="pending">Connecting</span>
       <span id="static-model">Static model unavailable</span>
-      <span id="adaptive-model">Deployed corrector not trained</span>
+      <span id="adaptive-model">Deployed species model not trained</span>
       <a href="/training">Training portal</a>
     </div>
   </header>
@@ -38,8 +38,8 @@
         </div>
         <div class="toolbar-actions">
           <div class="segmented" role="group" aria-label="Model display">
-            <button type="button" data-model="static" aria-pressed="true">Static</button>
-            <button type="button" data-model="adaptive" aria-pressed="false">Latest trained</button>
+            <button type="button" data-model="static" aria-pressed="true">SpeciesNet baseline</button>
+            <button type="button" data-model="adaptive" aria-pressed="false">Selective BioCLIP model</button>
           </div>
           <a class="command" href="/training">Inspect training batch</a>
           <button class="command primary" id="refresh-button" type="button" disabled>Refresh 24h</button>
@@ -77,10 +77,10 @@
 
           <section class="confidence-panel" aria-labelledby="confidence-title">
             <header>
-              <div><p class="eyebrow">Model comparison</p><h2 id="confidence-title">Confidence by frame</h2></div>
-              <span>SpeciesNet baseline vs latest feed-adapted correction</span>
+              <div><p class="eyebrow">Baseline diagnostics</p><h2 id="confidence-title">SpeciesNet confidence by frame</h2></div>
+              <span>BioCLIP uses a separately displayed cosine-margin gate</span>
             </header>
-            <canvas id="confidence-chart" width="1200" height="300" aria-label="Per-frame confidence comparison chart"></canvas>
+            <canvas id="confidence-chart" width="1200" height="300" aria-label="Per-frame SpeciesNet confidence chart"></canvas>
           </section>
         </div>
 

@@ -359,14 +359,16 @@ class WildlifeStore:
 
     def training_rows(self, feed_id: str, watermark: str | None) -> list[dict[str, Any]]:
         query = """
-                 SELECT o.photo_id, o.observation_id, o.scientific_name,
+                 SELECT o.photo_id, o.observation_id, o.taxon_id,
+                     o.scientific_name,
                      o.common_name, o.created_at,
                  o.quality_grade, p.label AS static_label,
                  p.confidence AS static_confidence,
                   p.model_version AS static_model_version,
                   ap.label AS deployed_label,
                   ap.confidence AS deployed_confidence,
-                  ap.model_version AS deployed_model_version
+                  ap.model_version AS deployed_model_version,
+                  ap.trained_at AS deployed_trained_at
             FROM observations o
             JOIN predictions p ON p.photo_id=o.photo_id AND p.model_kind='static'
               LEFT JOIN predictions ap
@@ -442,6 +444,61 @@ class WildlifeStore:
                 adaptive - baseline if adaptive is not None and baseline is not None else None
             ),
         }
+
+    def dataset_summary(self, feed_id: str) -> dict[str, Any]:
+        with self._lock:
+            row = self._connection.execute(
+                """
+                SELECT COUNT(*) AS total_observations,
+                       SUM(CASE WHEN o.cached_path IS NOT NULL THEN 1 ELSE 0 END)
+                           AS cached_images,
+                       SUM(CASE WHEN o.license_code IS NOT NULL THEN 1 ELSE 0 END)
+                           AS licensed_images,
+                       SUM(CASE WHEN o.license_code IS NULL THEN 1 ELSE 0 END)
+                           AS excluded_unlicensed,
+                       SUM(CASE WHEN o.quality_grade='research' THEN 1 ELSE 0 END)
+                           AS research_grade,
+                       SUM(CASE WHEN o.quality_grade<>'research' THEN 1 ELSE 0 END)
+                           AS excluded_not_research,
+                       SUM(CASE WHEN o.license_code IS NOT NULL
+                                      AND o.quality_grade='research'
+                                      AND p.photo_id IS NOT NULL
+                                THEN 1 ELSE 0 END) AS eligible_labels,
+                       SUM(CASE WHEN p.photo_id IS NOT NULL THEN 1 ELSE 0 END)
+                           AS baseline_predictions
+                FROM observations o
+                LEFT JOIN predictions p
+                  ON p.photo_id=o.photo_id AND p.model_kind='static'
+                WHERE o.feed_id=?
+                """,
+                (feed_id,),
+            ).fetchone()
+            versions = [
+                str(version[0])
+                for version in self._connection.execute(
+                    """
+                    SELECT DISTINCT p.model_version
+                    FROM observations o
+                    JOIN predictions p
+                      ON p.photo_id=o.photo_id AND p.model_kind='static'
+                    WHERE o.feed_id=? ORDER BY p.model_version
+                    """,
+                    (feed_id,),
+                ).fetchall()
+            ]
+        return {
+            key: int(row[key] or 0)
+            for key in (
+                "total_observations",
+                "cached_images",
+                "licensed_images",
+                "excluded_unlicensed",
+                "research_grade",
+                "excluded_not_research",
+                "eligible_labels",
+                "baseline_predictions",
+            )
+        } | {"baseline_prediction_versions": versions}
 
     def cached_path(self, photo_id: int) -> Path | None:
         with self._lock:

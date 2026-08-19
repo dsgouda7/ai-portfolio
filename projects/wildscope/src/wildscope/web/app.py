@@ -164,13 +164,16 @@ def create_app(
                     "label": item.get("static_label"),
                     "confidence": item.get("static_confidence"),
                     "matches_obtained": public["static_match"],
+                    "identification": item.get("static_identification"),
                 },
                 "adaptive": {
                     "label": item.get("adaptive_label"),
                     "confidence": item.get("adaptive_confidence"),
+                    "margin": item.get("adaptive_margin"),
                     "model_version": item.get("adaptive_model_version"),
                     "trained_at": item.get("adaptive_trained_at"),
                     "matches_obtained": public["adaptive_match"],
+                    "identification": item.get("adaptive_identification"),
                 },
             },
         ]

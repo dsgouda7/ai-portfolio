@@ -40,6 +40,21 @@ class Service:
                     "scientific_name": "Panthera onca",
                     "static_label": "Panthera onca",
                     "static_confidence": 0.9,
+                    "static_identification": {
+                        "scientific_name": "Panthera onca",
+                        "common_name": "Jaguar",
+                        "source_label": "Panthera onca",
+                        "ambiguous": False,
+                    },
+                    "adaptive_label": "Panthera onca",
+                    "adaptive_confidence": 0.95,
+                    "adaptive_identification": {
+                        "scientific_name": "Panthera onca",
+                        "common_name": "Jaguar",
+                        "source_label": "felidae",
+                        "candidate_count": 2,
+                        "ambiguous": True,
+                    },
                     "cached_path": "private",
                     "sha256": "private",
                     "latitude": -0.7,
@@ -123,6 +138,8 @@ def test_wildscope_routes_are_operational_and_private(tmp_path) -> None:
         "research_grade": False,
     }
     assert frames["items"][0]["static_match"] is True
+    assert frames["items"][0]["adaptive_identification"]["common_name"] == "Jaguar"
+    assert frames["items"][0]["adaptive_identification"]["ambiguous"] is True
     assert "cached_path" not in str(frames)
     assert "sha256" not in str(frames)
     assert client.get("/api/images/1").status_code == 200
@@ -139,6 +156,9 @@ def test_wildscope_routes_are_operational_and_private(tmp_path) -> None:
     ]
     assert detail["stages"][-1]["obtained"]["scientific_name"] == "Panthera onca"
     assert detail["stages"][-1]["static"]["matches_obtained"] is True
+    assert detail["stages"][-1]["adaptive"]["identification"]["scientific_name"] == (
+        "Panthera onca"
+    )
     assert "cached_path" not in str(detail)
     dashboard = client.get("/api/feeds/yasuni/training").get_json()
     assert dashboard["confidence"]["sample_count"] == 1

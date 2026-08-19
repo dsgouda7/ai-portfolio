@@ -85,12 +85,13 @@ async function selectFeed(feedId, { refresh = true } = {}) {
   state.feedId = feedId;
   state.page = 1;
   const feed = state.feeds.find((item) => item.feed_id === feedId);
+  setModelMode(feed.adaptive_model ? "adaptive" : "static");
   renderFeeds();
   elements["workspace-title"].textContent = `${feed.name} · last 24 hours`;
   elements["feed-habitat"].textContent = `${feed.country} · ${feed.habitat} · insects, spiders and reptiles hidden`;
   elements["adaptive-model"].textContent = feed.adaptive_model
-    ? `Corrector deployed ${formatTime(feed.adaptive_model.trained_at)}`
-    : "Deployed corrector not trained";
+    ? `Selective model deployed ${formatTime(feed.adaptive_model.trained_at)}`
+    : "Deployed species model not trained";
   elements["refresh-button"].disabled = false;
   elements["location-results"].replaceChildren(document.createTextNode("Loading public observation coordinates."));
   if (refresh) {
@@ -156,7 +157,7 @@ async function reloadFeeds() {
   state.feeds = payload.feeds || [];
   const feed = state.feeds.find((item) => item.feed_id === state.feedId);
   if (feed?.adaptive_model) {
-    elements["adaptive-model"].textContent = `Corrector deployed ${formatTime(feed.adaptive_model.trained_at)}`;
+    elements["adaptive-model"].textContent = `Selective model deployed ${formatTime(feed.adaptive_model.trained_at)}`;
   }
   renderFeeds();
 }
@@ -206,16 +207,36 @@ function renderFrames() {
     const result = document.createElement("div");
     result.className = "prediction";
     const model = document.createElement("span");
-    model.textContent = state.model === "adaptive" ? "Latest trained" : "Static";
+    model.textContent = state.model === "adaptive" ? "Selective BioCLIP" : "Static";
     const label = document.createElement("strong");
-    label.textContent = displayPredictionLabel(prediction.label) || "Pending model analysis";
+    label.textContent = prediction.identification?.common_name
+      || prediction.identification?.scientific_name
+      || displayPredictionLabel(prediction.label)
+      || "Pending model analysis";
+    const scientific = document.createElement("small");
+    scientific.className = "generated-scientific";
+    scientific.textContent = prediction.identification?.scientific_name
+      || `Raw model label · ${displayPredictionLabel(prediction.label) || "unavailable"}`;
+    scientific.hidden = Boolean(prediction.identification?.abstained);
     const confidence = document.createElement("b");
-    confidence.textContent = prediction.confidence == null ? "--" : `${Math.round(prediction.confidence * 100)}%`;
+    confidence.textContent = prediction.margin == null
+      ? prediction.confidence == null ? "--" : `${Math.round(prediction.confidence * 100)}%`
+      : `Margin ${Number(prediction.margin).toFixed(3)}`;
     const match = document.createElement("small");
     match.className = "match-state";
     match.dataset.match = String(Boolean(prediction.matchesObtained));
     match.textContent = prediction.matchesObtained ? "Matches obtained ID" : "Differs from obtained ID";
-    result.append(model, label, confidence, match);
+    const raw = document.createElement("small");
+    raw.className = "raw-model-label";
+    raw.textContent = `Source · ${displayPredictionLabel(prediction.identification?.source_label || prediction.label) || "unavailable"}`;
+    raw.hidden = Boolean(prediction.identification?.abstained);
+    const ambiguity = document.createElement("small");
+    ambiguity.className = "ambiguity-state";
+    ambiguity.hidden = !prediction.identification?.ambiguous;
+    ambiguity.textContent = prediction.identification?.ambiguous
+      ? "No species label emitted"
+      : "";
+    result.append(model, label, scientific, confidence, raw, match, ambiguity);
     const comparison = document.createElement("div");
     comparison.className = "identification-comparison";
     comparison.append(obtainedIdentificationBlock(item), result);
@@ -385,11 +406,30 @@ function obtainedPredictionRow(obtained) {
 function predictionRow(name, prediction) {
   const row = document.createElement("div");
   row.className = "stage-prediction";
-  const label = displayPredictionLabel(prediction?.label) || "Unavailable";
-  const confidence = prediction?.confidence == null ? "--" : formatPercent(prediction.confidence);
+  const identification = prediction?.identification || {};
+  const label = identification.common_name
+    || identification.scientific_name
+    || displayPredictionLabel(prediction?.label)
+    || "Unavailable";
+  const confidence = prediction?.margin == null
+    ? prediction?.confidence == null ? "--" : formatPercent(prediction.confidence)
+    : `Margin ${Number(prediction.margin).toFixed(3)}`;
   row.innerHTML = `<span>${name}</span><strong></strong><b>${confidence}</b>`;
   row.querySelector("strong").textContent = label;
   row.dataset.match = String(Boolean(prediction?.matches_obtained));
+  const detail = document.createElement("small");
+  detail.textContent = identification.scientific_name
+    || `Raw model label · ${displayPredictionLabel(prediction?.label) || "unavailable"}`;
+  row.append(detail);
+  if (identification.ambiguous) {
+    const warning = document.createElement("small");
+    warning.className = "ambiguity-state";
+    warning.textContent = `Abstained on ${identification.source_label} · ${identification.candidate_count} possible species`;
+    row.append(warning);
+    const candidates = document.createElement("small");
+    candidates.textContent = `Candidates · ${(identification.candidate_scientific_names || []).join(", ")}`;
+    row.append(candidates);
+  }
   return row;
 }
 
@@ -429,9 +469,9 @@ function renderTrainingMetrics(dashboard) {
 
 function predictionFor(item) {
   if (state.model === "adaptive" && item.adaptive_label) {
-    return { label: item.adaptive_label, confidence: item.adaptive_confidence, matchesObtained: item.adaptive_match };
+    return { label: item.adaptive_label, confidence: item.adaptive_confidence, margin: item.adaptive_identification?.abstained ? null : item.adaptive_margin, matchesObtained: item.adaptive_match, identification: item.adaptive_identification };
   }
-  return { label: item.static_label, confidence: item.static_confidence, matchesObtained: item.static_match };
+  return { label: item.static_label, confidence: item.static_confidence, matchesObtained: item.static_match, identification: item.static_identification };
 }
 
 function displayPredictionLabel(value) {
@@ -464,14 +504,11 @@ function drawChart() {
   state.items.forEach((item, index) => {
     const x = margin.left + index * slot + slot * .18;
     drawBar(context, x, item.static_confidence, plotHeight, margin.top, "#185b3b", slot * .25);
-    drawBar(context, x + slot * .3, item.adaptive_confidence, plotHeight, margin.top, "#d49a2a", slot * .25);
     context.fillStyle = "#5f6b63";
     context.fillText(String(index + 1), x + slot * .18, height - 16);
   });
   context.fillStyle = "#185b3b"; context.fillRect(width - 220, 12, 12, 12);
   context.fillStyle = "#16201a"; context.fillText("Static", width - 202, 22);
-  context.fillStyle = "#d49a2a"; context.fillRect(width - 130, 12, 12, 12);
-  context.fillStyle = "#16201a"; context.fillText("Latest trained", width - 112, 22);
 }
 
 function drawBar(context, x, value, plotHeight, top, color, width) {
@@ -530,12 +567,16 @@ function formatDimensions(dimensions) {
 
 for (const button of document.querySelectorAll("[data-model]")) {
   button.addEventListener("click", () => {
-    state.model = button.dataset.model;
-    for (const peer of document.querySelectorAll("[data-model]")) {
-      peer.setAttribute("aria-pressed", String(peer === button));
-    }
-    renderFrames();
+    setModelMode(button.dataset.model);
   });
+}
+
+function setModelMode(model) {
+  state.model = model;
+  for (const peer of document.querySelectorAll("[data-model]")) {
+    peer.setAttribute("aria-pressed", String(peer.dataset.model === model));
+  }
+  renderFrames();
 }
 elements["refresh-button"].addEventListener("click", startSync);
 elements["previous-page"].addEventListener("click", () => { state.page -= 1; loadFrames(); });

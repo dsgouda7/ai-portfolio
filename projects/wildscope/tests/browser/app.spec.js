@@ -5,6 +5,15 @@ const JPEG_BASE64 = "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAP/////////////////////////
 async function mockApi(page) {
   let jobPoll = 0;
   let trainingPoll = 0;
+  const completedPipeline = [
+    ["fetch", "Fetch provider metadata"],
+    ["download", "Download uncached images"],
+    ["preprocess", "Normalize and enhance images"],
+    ["baseline-inference", "Run SpeciesNet baseline"],
+    ["evaluate", "Score deployed model"],
+    ["train", "Build next candidate catalog"],
+    ["persist", "Persist and deploy version"],
+  ].map(([id, label]) => ({ id, label, state: "completed", processed: 12, total: 12, detail: `${label} complete.` }));
   await page.route("https://unpkg.com/**", (route) => {
     if (route.request().url().endsWith("leaflet.js")) {
       return route.fulfill({ status: 200, contentType: "application/javascript", body: `
@@ -57,8 +66,8 @@ async function mockApi(page) {
     route.fulfill({
       status: 200, contentType: "application/json",
       body: JSON.stringify({ job: trainingPoll === 1
-        ? { job_id: "train-1", kind: "training", state: "running", processed: 5, total: 12, details: {} }
-        : { job_id: "train-1", kind: "training", state: "completed", processed: 12, total: 12, details: { evaluated_model_id: "adaptive-yasuni-v3", trained_model_id: "adaptive-yasuni-v4", new_samples: 12, training_samples: 12, downloaded: 12, duration_seconds: 8.4, baseline_accuracy: 0.7, deployed_accuracy: 0.79, training_agreement: 0.92, trained_at: "2026-08-18T13:00:00Z" } } }),
+        ? { job_id: "train-1", feed_id: "yasuni", kind: "training", state: "running", processed: 5, total: 12, details: { pipeline: completedPipeline.map((stage, index) => index < 3 ? stage : { ...stage, state: index === 3 ? "running" : "pending" }), current_stage: "baseline-inference" } }
+        : { job_id: "train-1", feed_id: "yasuni", kind: "training", state: "completed", processed: 12, total: 12, details: { pipeline: completedPipeline, evaluated_model_id: "adaptive-yasuni-v3", trained_model_id: "adaptive-yasuni-v4", new_samples: 12, training_samples: 12, downloaded: 12, duration_seconds: 8.4, baseline_accuracy: 0.7, baseline_mean_confidence: 0.765, baseline_coverage: 1, deployed_accuracy: 0.79, deployed_mean_confidence: 0.855, deployed_coverage: 1, target_count: 2, training_agreement: 0.92, trained_at: "2026-08-18T13:00:00Z" } } }),
     });
   });
   const items = Array.from({ length: 10 }, (_, index) => ({
@@ -75,8 +84,28 @@ async function mockApi(page) {
     coordinates_obscured: false,
     static_label: index % 2 ? "Leopardus pardalis" : "Panthera onca",
     static_confidence: 0.72 + index / 100,
-    adaptive_label: index % 2 ? "Leopardus pardalis" : "Panthera onca",
-    adaptive_confidence: 0.81 + index / 100,
+    static_identification: {
+      scientific_name: null,
+      common_name: index % 2 ? "ocelot" : "jaguar",
+      source_label: index % 2 ? "mammalia;ocelot" : "mammalia;jaguar",
+      ambiguous: false,
+    },
+    adaptive_label: index === 1 ? "Leopardus pardalis" : "unidentified",
+    adaptive_raw_label: index % 2 ? "Leopardus pardalis" : "Panthera onca",
+    adaptive_confidence: null,
+    adaptive_margin: index === 1 ? 0.08 : 0.02,
+    adaptive_identification: {
+      scientific_name: index === 1 ? "Leopardus pardalis" : null,
+      common_name: index === 1 ? "Ocelot" : "Unidentified",
+      source_label: "hf-hub:imageomics/bioclip",
+      candidate_count: 2,
+      candidate_scientific_names: ["Leopardus pardalis", "Panthera onca"],
+      ambiguous: index !== 1,
+      abstained: index !== 1,
+      decision_metric: "top-1 minus top-2 cosine similarity",
+      decision_margin: index === 1 ? 0.08 : 0.02,
+      margin_threshold: 0.075,
+    },
     obtained_identification: {
       source: "iNaturalist community identification",
       common_name: index % 2 ? "Ocelot" : "Jaguar",
@@ -85,7 +114,7 @@ async function mockApi(page) {
       research_grade: true,
     },
     static_match: true,
-    adaptive_match: true,
+    adaptive_match: index === 1,
   }));
   await page.route("**/api/feeds/yasuni/frames?page=1", (route) => route.fulfill({
     status: 200, contentType: "application/json",
@@ -104,19 +133,19 @@ async function mockApi(page) {
       { id: "source", name: "Original capture", processor: "iNaturalist original asset", image_url: `data:image/jpeg;base64,${JPEG_BASE64}`, dimensions: [1600, 1000] },
       { id: "normalized", name: "Clean and normalize", processor: "Pillow EXIF transpose + RGB normalization", image_url: `data:image/jpeg;base64,${JPEG_BASE64}`, dimensions: [1600, 1000] },
       { id: "enhanced", name: "Model input", processor: "original-resolution-passthrough", image_url: `data:image/jpeg;base64,${JPEG_BASE64}`, dimensions: [1600, 1000] },
-      { id: "classification", name: "Identify wildlife", processor: "SpeciesNet 5.0.5", obtained: items[0].obtained_identification, static: { label: "Panthera onca", confidence: 0.72, matches_obtained: true }, adaptive: { label: "Panthera onca", confidence: 0.81, matches_obtained: true } },
+      { id: "classification", name: "Identify wildlife", processor: "SpeciesNet 5.0.5", obtained: items[0].obtained_identification, static: { label: "Panthera onca", confidence: 0.72, matches_obtained: true, identification: items[0].static_identification }, adaptive: { label: "unidentified", confidence: null, margin: 0.02, matches_obtained: false, identification: items[0].adaptive_identification } },
     ] }),
   }));
   await page.route("**/api/feeds/yasuni/training", (route) => route.fulfill({
     status: 200, contentType: "application/json",
     body: JSON.stringify({
-      model: { model_id: "adaptive-yasuni-v3", trained_at: "2026-08-18T10:00:00Z", watermark: "2026-08-18T10:00:00Z", sample_count: 30, training_samples: 30, protocol_version: "test-then-train-v1" },
+      model: { model_id: "adaptive-yasuni-v3", trained_at: "2026-08-18T10:00:00Z", watermark: "2026-08-18T10:00:00Z", sample_count: 30, training_samples: 30, protocol_version: "test-then-train-v3-bioclip-selective" },
       live_batch: {
         status: "ready", evaluated_model_id: "adaptive-yasuni-v3",
         window_from: "2026-08-18T10:00:00Z", window_to: "2026-08-18T12:00:00Z",
         eligible_samples: 12,
-        baseline: { samples: 12, correct: 8, accuracy: 0.7 },
-        deployed: { samples: 12, correct: 9, accuracy: 0.79 },
+        baseline: { samples: 12, correct: 8, errors: 4, accuracy: 0.7, coverage: 1, mean_confidence: 0.765, target_count: 2 },
+        deployed: { samples: 12, correct: 9, errors: 3, accuracy: 0.79, coverage: 1, mean_confidence: 0.855, target_count: 2 },
         samples: items.map((item) => ({
           photo_id: item.photo_id, observation_id: item.photo_id,
           created_at: item.created_at,
@@ -124,10 +153,24 @@ async function mockApi(page) {
           obtained_common_name: item.common_name, quality_grade: "research",
           baseline_label: item.static_label, baseline_confidence: item.static_confidence,
           deployed_label: item.adaptive_label, deployed_confidence: item.adaptive_confidence,
+          deployed_margin: item.adaptive_margin,
+          deployed_model_version: "bioclip-vit-b16-selective-margin-0.075",
         })),
       },
+      baseline_model: { name: "SpeciesNet", engine_version: "speciesnet-5.0.5", prediction_versions: ["4.0.3a"] },
+      dataset: { total_observations: 16, cached_images: 14, licensed_images: 14, excluded_unlicensed: 2, research_grade: 12, excluded_not_research: 4, eligible_labels: 12, baseline_predictions: 14, baseline_prediction_versions: ["4.0.3a"], target_distribution: { "Panthera onca": 6, "Leopardus pardalis": 6 } },
       confidence: { sample_count: 10, baseline_mean_confidence: 0.765, adaptive_mean_confidence: 0.855, confidence_delta: 0.09 },
       runs: [{ run_id: "train-0", started_at: "2026-08-17T11:59:51Z", finished_at: "2026-08-17T12:00:00Z", details: { evaluated_model_id: "adaptive-yasuni-v2", trained_model_id: "adaptive-yasuni-v3", training_samples: 10, duration_seconds: 9, baseline_accuracy: 0.68, deployed_accuracy: 0.75, training_agreement: 0.9, watermark: "2026-08-18T10:00:00Z" } }],
+    }),
+  }));
+  await page.route("**/api/feeds/feed-0/training", (route) => route.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({
+      model: null,
+      baseline_model: { name: "SpeciesNet", engine_version: "speciesnet-5.0.5", prediction_versions: ["4.0.3a"] },
+      live_batch: { status: "awaiting-data", evaluated_model_id: "SpeciesNet baseline", window_from: null, window_to: null, eligible_samples: 0, baseline: { samples: 0, correct: 0, errors: 0, accuracy: null, coverage: null, mean_confidence: null, target_count: 0 }, deployed: { samples: 0, correct: null, errors: null, accuracy: null, coverage: null, mean_confidence: null, target_count: 0 }, samples: [] },
+      dataset: { total_observations: 4, cached_images: 4, licensed_images: 3, excluded_unlicensed: 1, research_grade: 2, excluded_not_research: 2, eligible_labels: 2, baseline_predictions: 4, baseline_prediction_versions: ["4.0.3a"], target_distribution: { "Puma concolor": 2 } },
+      confidence: {}, runs: [],
     }),
   }));
 }
@@ -158,8 +201,8 @@ test("shows ten tropical feeds and pages ten animal frames", async ({ page }) =>
   await expect(page.locator("#live-accuracy-delta")).toHaveText("+9.0 pts");
   const first = page.getByTestId("frame-grid").locator(".observation-card").first();
   await expect(first.locator(".obtained-identification")).toContainText("Jaguar");
-  await expect(first.locator(".prediction")).toContainText("Panthera onca");
-  await expect(first.locator(".match-state")).toHaveText("Matches obtained ID");
+  await expect(first.locator(".prediction")).toContainText("Unidentified");
+  await expect(first.locator(".match-state")).toHaveText("Differs from obtained ID");
   expect(await firstImageFit(page)).toBe("contain");
   await page.locator(".mock-map-marker").click();
   await expect(page.locator(".location-strip button")).toHaveCount(3);
@@ -169,17 +212,26 @@ async function firstImageFit(page) {
   return page.getByTestId("frame-grid").locator(".observation-card img").first().evaluate((element) => getComputedStyle(element).objectFit);
 }
 
-test("switches between static and latest-trained confidence", async ({ page }) => {
+test("switches between baseline confidence and selective BioCLIP margin", async ({ page }) => {
   await mockApi(page);
   await page.goto("/");
   await page.getByTestId("feed-list").locator('[data-feed-id="yasuni"]').click();
   const first = page.getByTestId("frame-grid").locator(".observation-card").first();
+  await expect(page.locator('[data-model="adaptive"]')).toHaveAttribute("aria-pressed", "true");
+  await expect(first.locator(".prediction b")).toHaveText("--");
+
+  await page.locator('[data-model="static"]').click();
+
   await expect(first.locator(".prediction b")).toHaveText("72%");
+  await expect(page.locator('[data-model="static"]')).toHaveAttribute("aria-pressed", "true");
 
   await page.locator('[data-model="adaptive"]').click();
 
-  await expect(first.locator(".prediction b")).toHaveText("81%");
-  await expect(page.locator("#adaptive-model")).toContainText("Corrector deployed");
+  await expect(first.locator(".prediction b")).toHaveText("--");
+  await expect(first.locator(".prediction strong")).toHaveText("Unidentified");
+  await expect(first.locator(".ambiguity-state")).toHaveText("No species label emitted");
+  await expect(page.locator("#adaptive-model")).toContainText("Selective model deployed");
+  await expect(page.getByTestId("frame-grid").locator(".observation-card").nth(1).locator(".prediction b")).toHaveText("Margin 0.080");
 });
 
 test("mobile layout has no horizontal overflow", async ({ page }, testInfo) => {
@@ -200,24 +252,38 @@ test("opens side-by-side frame pipeline detail", async ({ page }) => {
   await expect(page.locator(".pipeline-stage")).toHaveCount(4);
   await expect(page.locator("#frame-dialog")).toContainText("SpeciesNet 5.0.5");
   await expect(page.locator("#frame-dialog")).toContainText("Obtained · iNaturalist");
-  await expect(page.locator("#frame-dialog")).toContainText("81.0%");
+  await expect(page.locator("#frame-dialog")).toContainText("Abstained on hf-hub:imageomics/bioclip");
+  await expect(page.locator("#frame-dialog")).toContainText("Margin 0.020");
 });
 
 test("training portal runs watermark-based training on demand", async ({ page }) => {
   await mockApi(page);
   await page.goto("/training");
-  await expect(page.locator("#training-feed")).toHaveValue("yasuni");
+  await expect(page.locator("#training-feeds input[type=checkbox]")).toHaveCount(10);
+  await expect(page.locator('#training-feeds input[value="yasuni"]')).toBeChecked();
   await expect(page.locator("#pending-samples")).toHaveText("12");
-  await page.locator("#training-feed").selectOption("yasuni");
+  await expect(page.locator("#selected-feed-count")).toHaveText("1");
+  await expect(page.locator("#baseline-model-name")).toContainText("SpeciesNet");
+  await expect(page.locator("#baseline-model-versions")).toHaveText("4.0.3a");
+  await expect(page.locator("#dataset-total")).toHaveText("16");
+  await expect(page.locator("#dataset-eligible")).toHaveText("12");
+  await expect(page.locator("#baseline-counts")).toHaveText("8 / 4");
+  await expect(page.locator("#baseline-coverage")).toHaveText("100.0%");
+  await expect(page.locator("#training-pipeline li")).toHaveCount(7);
 
-  await expect(page.locator("#current-model-id")).toHaveText("adaptive-yasuni-v3");
+  await page.locator('#training-feeds input[value="feed-0"]').check();
+  await expect(page.locator("#selected-feed-count")).toHaveText("2");
+  await expect(page.locator("#dataset-total")).toHaveText("20");
+  await expect(page.locator("#pending-targets")).toHaveText("3");
+
   await expect(page.locator("#pending-samples")).toHaveText("12");
-  await expect(page.locator("#pending-baseline")).toHaveText("70.0%");
-  await expect(page.locator("#pending-deployed")).toHaveText("79.0%");
+  await expect(page.locator("#pending-baseline")).toHaveText("66.7%");
+  await expect(page.locator("#pending-deployed")).toHaveText("75.0%");
   await expect(page.locator("#batch-ledger tr")).toHaveCount(10);
-  await expect(page.locator("#run-training")).toHaveText("Train next version on 12 labels");
+  await expect(page.locator("#batch-ledger tr").first()).toContainText("Margin 0.020");
+  await expect(page.locator("#run-training")).toHaveText("Train 2 selected feeds on 12 labels");
   await page.locator("#run-training").click();
-  await expect(page.locator("#training-status-title")).toHaveText("Training complete");
-  await expect(page.locator("#training-status-detail")).toContainText("awaits the next batch");
+  await expect(page.locator("#training-status-title")).toHaveText("Selected training jobs complete");
+  await expect(page.locator("#training-pipeline li[data-state=completed]")).toHaveCount(7);
   await expect(page.locator("#training-ledger tr")).toHaveCount(1);
 });
