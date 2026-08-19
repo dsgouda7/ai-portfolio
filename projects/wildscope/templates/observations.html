@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WildScope Observation Review</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">W</span>
+      <div><h1>WildScope</h1><p>Recent wildlife observation analysis</p></div>
+    </div>
+    <div class="status-strip" aria-live="polite">
+      <span id="service-state" data-tone="pending">Connecting</span>
+      <span id="static-model">Static model unavailable</span>
+      <span id="adaptive-model">Deployed corrector not trained</span>
+      <a href="/training">Training portal</a>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <aside class="feed-sidebar" aria-labelledby="feeds-title">
+      <div class="sidebar-heading">
+        <p class="eyebrow">Protected areas</p>
+        <h2 id="feeds-title">Observation feeds</h2>
+      </div>
+      <nav id="feed-list" data-testid="feed-list" aria-label="Wildlife observation feeds"></nav>
+    </aside>
+
+    <section class="workspace" aria-labelledby="workspace-title">
+      <header class="workspace-toolbar">
+        <div>
+          <p class="eyebrow" id="feed-habitat">Select a feed</p>
+          <h2 id="workspace-title">Last 24 hours</h2>
+        </div>
+        <div class="toolbar-actions">
+          <div class="segmented" role="group" aria-label="Model display">
+            <button type="button" data-model="static" aria-pressed="true">Static</button>
+            <button type="button" data-model="adaptive" aria-pressed="false">Latest trained</button>
+          </div>
+          <a class="command" href="/training">Inspect training batch</a>
+          <button class="command primary" id="refresh-button" type="button" disabled>Refresh 24h</button>
+        </div>
+      </header>
+
+      <section class="sync-status" id="sync-status" aria-live="polite">
+        <strong id="sync-title">Choose one of the ten feeds</strong>
+        <span id="sync-detail">WildScope will fetch recent observations and run SpeciesNet.</span>
+        <progress id="sync-progress" max="100" value="0"></progress>
+      </section>
+
+      <div class="review-layout">
+        <div class="review-main">
+          <section class="map-panel" aria-labelledby="map-title">
+            <header>
+              <div><p class="eyebrow">Public observation coordinates</p><h2 id="map-title">Observation geography</h2></div>
+              <span id="map-summary">No geotagged observations loaded</span>
+            </header>
+            <div id="observation-map" aria-label="Map of public wildlife observation locations"></div>
+            <div class="location-results" id="location-results" aria-live="polite">
+              <span>Select a map point to review its captures.</span>
+            </div>
+          </section>
+
+          <section class="frame-grid" id="frame-grid" data-testid="frame-grid">
+            <div class="empty-state">No feed selected.</div>
+          </section>
+
+          <nav class="pagination" aria-label="Observation pages">
+            <button id="previous-page" type="button" disabled>Previous</button>
+            <span id="page-label">Page 1 of 1</span>
+            <button id="next-page" type="button" disabled>Next</button>
+          </nav>
+
+          <section class="confidence-panel" aria-labelledby="confidence-title">
+            <header>
+              <div><p class="eyebrow">Model comparison</p><h2 id="confidence-title">Confidence by frame</h2></div>
+              <span>SpeciesNet baseline vs latest feed-adapted correction</span>
+            </header>
+            <canvas id="confidence-chart" width="1200" height="300" aria-label="Per-frame confidence comparison chart"></canvas>
+          </section>
+        </div>
+
+        <aside class="metrics-rail" aria-labelledby="metrics-title">
+          <header><p class="eyebrow">Test before train</p><h2 id="metrics-title">Live evaluation</h2></header>
+          <dl class="metric-grid">
+            <div><dt>Pending labels</dt><dd id="live-batch-samples">--</dd></div>
+            <div><dt>Baseline accuracy</dt><dd id="live-baseline-accuracy">--</dd></div>
+            <div><dt>Deployed accuracy</dt><dd id="live-deployed-accuracy">--</dd></div>
+            <div class="metric-delta"><dt>Live delta</dt><dd id="live-accuracy-delta">--</dd></div>
+          </dl>
+          <div class="watermark-block"><span>Evaluated model</span><strong id="live-model-version">SpeciesNet baseline</strong></div>
+          <div class="watermark-block"><span>Unseen data window</span><strong id="live-batch-window">Awaiting observations</strong></div>
+          <p class="metric-note" id="live-batch-status">Predictions are scored before this batch is used for training.</p>
+          <a class="command portal-link" href="/training">Inspect batch and train</a>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <dialog class="frame-dialog" id="frame-dialog">
+    <header>
+      <div><p class="eyebrow">Frame pipeline</p><h2 id="frame-dialog-title">Observation detail</h2></div>
+      <button class="dialog-close" id="frame-dialog-close" type="button" aria-label="Close frame detail">×</button>
+    </header>
+    <div class="frame-dialog-meta" id="frame-dialog-meta"></div>
+    <div class="pipeline-stages" id="pipeline-stages"></div>
+  </dialog>
+
+  <div id="toast-region" class="toast-region" aria-live="assertive"></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script type="module" src="{{ url_for('static', filename='js/observations.js') }}"></script>
+</body>
+</html>

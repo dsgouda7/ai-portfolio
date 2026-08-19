@@ -75,20 +75,17 @@ The [Riverside project README](riverside-ai-platform/README.md) is the project e
 
 ---
 
-## [CarFace](low-resolution-vehicle-recognition/)
+## [WildScope](wildscope/)
 
-**Can several weak, low-resolution views of a moving vehicle identify its body type, make, and
-model family more reliably than a single frame?**
+**What animals were recently observed across tropical protected areas, and how does a static
+wildlife model compare with one adapted to each feed's newest labeled data?**
 
-Locally validated deterministic profile with an offline hierarchical training pipeline,
-hash-verified bundles, allowlisted camera adapters, vehicle tracking, quality-weighted multi-frame
-fusion, calibrated abstention, privacy-safe rendering, bounded SSE telemetry, and a responsive Flask
-operations UI. The local suite passed 83 Python tests, Ruff, an end-to-end smoke training run, a
-30-frame live replay API check, and 8 active desktop/mobile Playwright checks with 2 expected
-viewport skips. Real ResNet-50 training, dataset accuracy, public-camera behavior, latency SLOs, and
-production readiness remain unvalidated.
+Two connected learning portals over ten official iNaturalist tropical protected-area feeds. The
+observation portal scores SpeciesNet and the deployed label corrector on newly arrived community
+identifications. The training portal exposes the exact post-watermark batch, evaluates the deployed
+version before training, then trains the next version on all eligible data and records model lineage.
 
-`PyTorch` `Hugging Face` `OpenCV` `Flask` `SSE` `Playwright` `Python`
+`SpeciesNet` `MegaDetector` `PyTorch` `iNaturalist API` `SQLite` `Flask` `Python`
 
 ---
 

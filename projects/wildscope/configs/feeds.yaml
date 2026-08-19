@@ -1,0 +1,51 @@
+feeds:
+  - id: monteverde
+    name: Monteverde Cloud Forest
+    place_id: 192020
+    country: CRI
+    habitat: tropical cloud forest
+  - id: tambopata
+    name: Tambopata
+    place_id: 62029
+    country: PER
+    habitat: Amazon rainforest
+  - id: yasuni
+    name: Yasuni National Park
+    place_id: 68650
+    country: ECU
+    habitat: Amazon rainforest
+  - id: tortuguero
+    name: Tortuguero National Park
+    place_id: 10110
+    country: CRI
+    habitat: Caribbean tropical forest
+  - id: daintree
+    name: Daintree
+    place_id: 68745
+    country: AUS
+    habitat: wet tropical rainforest
+  - id: tijuca
+    name: Tijuca National Park
+    place_id: 126436
+    country: BRA
+    habitat: Atlantic rainforest
+  - id: kinabalu
+    name: Kinabalu Park
+    place_id: 131079
+    country: MYS
+    habitat: montane tropical forest
+  - id: taman-negara
+    name: Taman Negara
+    place_id: 68946
+    country: MYS
+    habitat: lowland tropical rainforest
+  - id: khao-yai
+    name: Khao Yai National Park
+    place_id: 69064
+    country: THA
+    habitat: tropical seasonal forest
+  - id: bwindi
+    name: Bwindi Impenetrable Forest
+    place_id: 69891
+    country: UGA
+    habitat: tropical montane forest

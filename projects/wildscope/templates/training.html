@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WildScope Training Portal</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">W</span><div><h1>Training portal</h1><p>Incremental feed adaptation</p></div></div>
+    <a class="command" href="/">Observation review</a>
+  </header>
+  <main class="training-page" id="training-page">
+    <header class="training-toolbar">
+      <div><p class="eyebrow">Test then train</p><h2>Evaluate the deployed model, then train the next version</h2></div>
+      <label>Protected area<select id="training-feed"><option value="">Choose a feed</option></select></label>
+      <button class="command primary" id="run-training" type="button" disabled>Awaiting a feed</button>
+    </header>
+
+    <section class="training-run-status" aria-live="polite">
+      <div><strong id="training-status-title">Waiting for a protected area</strong><span id="training-status-detail">No training job is running.</span></div>
+      <progress id="training-progress" max="100" value="0"></progress>
+    </section>
+
+    <section class="lifecycle-strip" aria-label="Model lifecycle">
+      <div><span>1</span><strong>Test deployed model</strong><small>Score predictions on labels newer than its watermark.</small></div>
+      <div><span>2</span><strong>Train next version</strong><small>Use every eligible image in that scored batch.</small></div>
+      <div><span>3</span><strong>Wait for new data</strong><small>The new version earns accuracy on the next unseen batch.</small></div>
+    </section>
+
+    <section class="training-kpis" aria-label="Pending batch summary">
+      <div><span>Deployed version</span><strong id="current-model-id">--</strong></div>
+      <div><span>Pending labels</span><strong id="pending-samples">--</strong></div>
+      <div><span>Baseline accuracy</span><strong id="pending-baseline">--</strong></div>
+      <div><span>Deployed accuracy</span><strong id="pending-deployed">--</strong></div>
+      <div><span>Live delta</span><strong id="pending-delta">--</strong></div>
+    </section>
+
+    <section class="watermark-flow" aria-labelledby="watermark-title">
+      <header><p class="eyebrow">Incremental data boundary</p><h2 id="watermark-title">Pending batch window</h2></header>
+      <div class="watermark-track">
+        <div><span>Deployed watermark</span><strong id="watermark-from">No prior model</strong></div>
+        <div class="watermark-arrow" aria-hidden="true">→</div>
+        <div><span>Newest eligible label</span><strong id="watermark-to">Awaiting data</strong></div>
+        <div class="watermark-arrow" aria-hidden="true">→</div>
+        <div><span>Next version state</span><strong id="next-version-state">Not trained</strong></div>
+      </div>
+    </section>
+
+    <section class="run-ledger" aria-labelledby="batch-ledger-title">
+      <header><p class="eyebrow">Exact training inputs</p><h2 id="batch-ledger-title">Pending labeled images</h2></header>
+      <div class="table-scroll"><table>
+        <thead><tr><th>Image</th><th>Created</th><th>Obtained target</th><th>Baseline prediction</th><th>Deployed prediction</th></tr></thead>
+        <tbody id="batch-ledger"><tr><td colspan="5">Choose a protected area.</td></tr></tbody>
+      </table></div>
+    </section>
+
+    <section class="training-chart-panel" aria-labelledby="training-chart-title">
+      <header><p class="eyebrow">Version evaluation history</p><h2 id="training-chart-title">Accuracy when each version met its next batch</h2></header>
+      <canvas id="training-history-chart" width="1200" height="330" aria-label="Historical baseline and deployed-model accuracy chart"></canvas>
+    </section>
+
+    <section class="run-ledger" aria-labelledby="run-ledger-title">
+      <header><p class="eyebrow">Auditable runs</p><h2 id="run-ledger-title">Training ledger</h2></header>
+      <div class="table-scroll"><table>
+        <thead><tr><th>Completed</th><th>Evaluated version</th><th>Batch labels</th><th>Baseline accuracy</th><th>Deployed accuracy</th><th>Trained version</th><th>Training agreement</th><th>Duration</th><th>New watermark</th></tr></thead>
+        <tbody id="training-ledger"><tr><td colspan="9">No test-then-train runs yet.</td></tr></tbody>
+      </table></div>
+    </section>
+  </main>
+  <div id="toast-region" class="toast-region" aria-live="assertive"></div>
+  <script type="module" src="{{ url_for('static', filename='js/training.js') }}"></script>
+</body>
+</html>
