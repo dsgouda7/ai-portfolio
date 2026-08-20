@@ -78,6 +78,29 @@ llama-pharma-domain/
 logs/
 runs/
 
+# ── Reports / test output / local caches ─────────────────────────────────────
+# Root notebook-audit scratch reports; authored reports elsewhere stay trackable.
+/report*.txt
+/report*.md
+project.lock.json
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+playwright-report/
+test-results/
+
+# ── Editor / merge / manual backup residue ───────────────────────────────────
+*.tmp
+*.temp
+*.bak
+*.backup
+*.orig
+*.rej
+*~
+
 # ── Local server runtime (Ollama / Jupyter / MkDocs) ────────────────────────
 .ollama.pid
 .jupyter.pid
