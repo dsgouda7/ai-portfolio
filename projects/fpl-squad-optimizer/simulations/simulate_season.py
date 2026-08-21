@@ -45,6 +45,7 @@ from utils import (
     DB_FILE,
     MODELS_FILE,
     POS_FEATURES,
+    apply_market_value_weighting,
     build_features,
     normalize_pool_scores,
     pick_starting_xi,
@@ -77,7 +78,7 @@ def _build_pool(all_data: pd.DataFrame, models: dict, gw: int) -> pd.DataFrame:
         parts.append(sub)
     if not parts:
         return pd.DataFrame()
-    pool = pd.concat(parts, ignore_index=True)
+    pool = apply_market_value_weighting(pd.concat(parts, ignore_index=True))
     return normalize_pool_scores(pool)
 
 

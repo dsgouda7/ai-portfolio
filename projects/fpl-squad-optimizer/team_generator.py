@@ -6,7 +6,10 @@ import numpy as np
 import pandas as pd
 from tabulate import tabulate
 
-from utils import DB_FILE, MODELS_FILE, GAME_WEEK, POS_FEATURES, build_features, normalize_pool_scores
+from utils import (
+    DB_FILE, MODELS_FILE, GAME_WEEK, POS_FEATURES,
+    apply_market_value_weighting, build_features, normalize_pool_scores,
+)
 from eligibility import get_eligibility, _DEFAULT as ELIG_DEFAULT, _ABSENT as ELIG_ABSENT, player_name_key
 
 MAX_PLAYERS_PER_TEAM = 4
@@ -30,7 +33,7 @@ def build_pool(df, models, game_week):
         pos_players['predicted_points'] = model.predict(X)
         parts.append(pos_players)
 
-    pool = pd.concat(parts, ignore_index=True)
+    pool = apply_market_value_weighting(pd.concat(parts, ignore_index=True))
     return normalize_pool_scores(pool)
 
 

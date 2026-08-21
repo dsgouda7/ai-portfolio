@@ -1,3 +1,4 @@
+import json
 import os
 import pathlib
 import re
@@ -44,16 +45,22 @@ def _autodetect_season(
                 './Fantasy-Premier-League/data/2023-24/players_raw.csv',
                 38)
 
-    season     = seasons[-1]
-    season_dir = os.path.join(base, season)
-    gws_dir    = os.path.join(season_dir, 'gws')
-
+    season = seasons[-1]
     gw_nums = []
-    if os.path.isdir(gws_dir):
-        for f in os.listdir(gws_dir):
-            m = re.match(r'gw(\d+)\.csv', f)
-            if m:
-                gw_nums.append(int(m.group(1)))
+    for candidate in reversed(seasons):
+        gws_dir = os.path.join(base, candidate, 'gws')
+        candidate_gws = []
+        if os.path.isdir(gws_dir):
+            for f in os.listdir(gws_dir):
+                m = re.match(r'gw(\d+)\.csv', f)
+                if m:
+                    candidate_gws.append(int(m.group(1)))
+        if candidate_gws:
+            season = candidate
+            gw_nums = candidate_gws
+            break
+
+    season_dir = os.path.join(base, season)
 
     game_week = max(gw_nums) if gw_nums else 38
     return (
@@ -92,6 +99,8 @@ MODELS_FILE = os.environ.get('FPL_MODELS_FILE',
 MAX_PLAYERS_PER_TEAM = 4
 MAX_SPEND        = 1000
 FORM_WINDOW      = 5
+MARKET_VALUE_WEIGHT_PL_HISTORY = 0.10
+MARKET_VALUE_WEIGHT_NO_HISTORY = 0.30
 
 ROLL_COLS = [
     'total_points', 'minutes', 'goals_scored', 'assists',
@@ -122,8 +131,6 @@ POS_FEATURES = {
         'roll5_bonus', 'roll5_influence',
         'roll5_starts', 'roll5_yellow_cards', 'roll5_red_cards',
         'was_home', 'value', 'opponent_team', 'team',
-        'tm_market_value',             # player quality proxy (log-scaled EUR)
-        'tm_market_value_x_sparsity',  # TM value * (1 - density): high when elite + sparse data
         'form_data_density',           # fraction of last 5 GWs played (0=none, 1=all)
         'player_age_years',            # fractional age at kickoff date
         # Season-over-season trajectory
@@ -139,8 +146,6 @@ POS_FEATURES = {
         'roll5_bonus', 'roll5_starts',
         'roll5_yellow_cards', 'roll5_red_cards',
         'was_home', 'value', 'opponent_team', 'team',
-        'tm_market_value',             # player quality proxy (log-scaled EUR)
-        'tm_market_value_x_sparsity',  # TM value * (1 - density): high when elite + sparse data
         'form_data_density',           # fraction of last 5 GWs played (0=none, 1=all)
         'player_age_years',            # fractional age at kickoff date
         # Season-over-season trajectory
@@ -156,8 +161,6 @@ POS_FEATURES = {
         'roll5_bonus', 'roll5_starts',
         'roll5_yellow_cards', 'roll5_red_cards',
         'was_home', 'value', 'opponent_team', 'team',
-        'tm_market_value',             # player quality proxy (log-scaled EUR)
-        'tm_market_value_x_sparsity',  # TM value * (1 - density): high when elite + sparse data
         'form_data_density',           # fraction of last 5 GWs played (0=none, 1=all)
         'player_age_years',            # fractional age at kickoff date
         # Season-over-season trajectory
@@ -173,8 +176,6 @@ POS_FEATURES = {
         'roll5_bonus', 'roll5_starts',
         'roll5_yellow_cards', 'roll5_red_cards',
         'was_home', 'value', 'opponent_team', 'team',
-        'tm_market_value',             # player quality proxy (log-scaled EUR)
-        'tm_market_value_x_sparsity',  # TM value * (1 - density): high when elite + sparse data
         'form_data_density',           # fraction of last 5 GWs played (0=none, 1=all)
         'player_age_years',            # fractional age at kickoff date
         # Season-over-season trajectory
@@ -310,6 +311,164 @@ def ingest(players_dir, raw_data_path, db_file, epl_members=None):
     conn.close()
 
 
+def refresh_current_roster(db_file: str, bootstrap: dict = None, fixtures: list = None) -> dict:
+    """Create a preseason inference snapshot from the current official FPL roster."""
+    if bootstrap is None:
+        response = requests.get(f'{FPL_API_BASE}/bootstrap-static/', timeout=30)
+        response.raise_for_status()
+        bootstrap = response.json()
+
+    events = bootstrap.get('events', [])
+    finished = [event['id'] for event in events if event.get('finished')]
+    target_event = next((event for event in events if not event.get('finished')), None)
+    if finished or target_event is None:
+        return {'rolled_over': False, 'reason': 'current season is not in preseason'}
+
+    current = pd.DataFrame(bootstrap.get('elements', []))
+    if current.empty:
+        raise ValueError('FPL bootstrap response contained no players')
+    current = current[
+        current['code'].notna()
+        & current.get('status', pd.Series('a', index=current.index)).ne('u')
+        & ~current.get('removed', pd.Series(False, index=current.index)).fillna(False)
+    ].copy()
+    current['code'] = current['code'].astype(int)
+    current['id'] = current['id'].astype(int)
+    for column in current.select_dtypes(include='object').columns:
+        current[column] = current[column].map(
+            lambda value: json.dumps(value)
+            if isinstance(value, (dict, list)) else value
+        )
+
+    if fixtures is None:
+        response = requests.get(
+            f"{FPL_API_BASE}/fixtures/?event={int(target_event['id'])}", timeout=30
+        )
+        response.raise_for_status()
+        fixtures = response.json()
+
+    fixture_by_team = {}
+    for fixture in fixtures:
+        home = int(fixture['team_h'])
+        away = int(fixture['team_a'])
+        fixture_by_team[home] = (away, True, fixture.get('kickoff_time'))
+        fixture_by_team[away] = (home, False, fixture.get('kickoff_time'))
+
+    with sqlite3.connect(db_file) as conn:
+        old_raw = pd.read_sql('SELECT * FROM players_raw', conn)
+        old_gw = pd.read_sql('SELECT * FROM player_gw', conn)
+        if _table_exists(conn, 'app_metadata'):
+            existing_metadata = dict(
+                conn.execute('SELECT key, value FROM app_metadata').fetchall()
+            )
+            existing_snapshot = existing_metadata.get('snapshot_game_week')
+            if existing_snapshot is not None:
+                old_gw = old_gw[
+                    old_gw['Game_Week'] != int(existing_snapshot)
+                ].copy()
+        old_history = (
+            pd.read_sql('SELECT * FROM player_history', conn)
+            if _table_exists(conn, 'player_history') else pd.DataFrame()
+        )
+
+        old_id_to_code = dict(zip(old_raw['id'].astype(int), old_raw['code'].astype(int)))
+        code_to_current_id = dict(zip(current['code'], current['id']))
+        old_to_current_id = {
+            old_id: code_to_current_id[code]
+            for old_id, code in old_id_to_code.items()
+            if code in code_to_current_id
+        }
+
+        historical_gw = old_gw[old_gw['player_id'].isin(old_to_current_id)].copy()
+        historical_gw['player_id'] = historical_gw['player_id'].map(old_to_current_id)
+        snapshot_index = int(historical_gw['Game_Week'].max()) + 1
+
+        snapshot_rows = []
+        for player in current.to_dict('records'):
+            row = {column: 0 for column in old_gw.columns}
+            opponent, was_home, kickoff = fixture_by_team.get(
+                int(player['team']), (0, False, target_event.get('deadline_time'))
+            )
+            row.update({
+                'element': int(player['id']),
+                'player_id': int(player['id']),
+                'Game_Week': snapshot_index,
+                'round': int(target_event['id']),
+                'fixture': 0,
+                'kickoff_time': kickoff,
+                'opponent_team': opponent,
+                'was_home': was_home,
+                'value': int(player.get('now_cost') or 0),
+                'modified': False,
+            })
+            snapshot_rows.append(row)
+
+        current_gw = pd.DataFrame(snapshot_rows, columns=old_gw.columns)
+        pd.concat([historical_gw, current_gw], ignore_index=True).to_sql(
+            'player_gw', conn, if_exists='replace', index=False
+        )
+        current.to_sql('players_raw', conn, if_exists='replace', index=False)
+
+        if not old_history.empty:
+            current_history = old_history[
+                old_history['player_id'].isin(old_to_current_id)
+            ].copy()
+            current_history['player_id'] = current_history['player_id'].map(old_to_current_id)
+            current_history.to_sql('player_history', conn, if_exists='replace', index=False)
+
+        for table in (
+            'player_attributes', 'player_id_registry', 'player_transfer_values',
+            'saved_squad',
+        ):
+            conn.execute(f'DROP TABLE IF EXISTS {table}')
+
+        seasons = sorted(
+            path.name for path in (_ROOT / 'Fantasy-Premier-League' / 'data').glob('*-*')
+            if re.fullmatch(r'\d{4}-\d{2}', path.name)
+        )
+        current_season = seasons[-1] if seasons else SEASON
+        pd.DataFrame([
+            {'key': 'season', 'value': current_season},
+            {'key': 'target_game_week', 'value': str(int(target_event['id']))},
+            {'key': 'snapshot_game_week', 'value': str(snapshot_index)},
+        ]).to_sql('app_metadata', conn, if_exists='replace', index=False)
+
+    return {
+        'rolled_over': True,
+        'season': current_season,
+        'target_game_week': int(target_event['id']),
+        'snapshot_game_week': snapshot_index,
+        'players': len(current),
+        'retained': len(old_to_current_id),
+        'arrivals': len(current) - len(old_to_current_id),
+        'departed': len(old_raw) - len(old_to_current_id),
+    }
+
+
+def get_runtime_context(db_file: str) -> dict:
+    """Return the season, displayed GW, and internal inference snapshot index."""
+    context = {
+        'season': SEASON,
+        'target_game_week': GAME_WEEK,
+        'snapshot_game_week': GAME_WEEK - 1,
+    }
+    try:
+        with sqlite3.connect(db_file) as conn:
+            metadata = dict(conn.execute('SELECT key, value FROM app_metadata').fetchall())
+        context.update({
+            'season': metadata.get('season', context['season']),
+            'target_game_week': int(metadata.get(
+                'target_game_week', context['target_game_week']
+            )),
+            'snapshot_game_week': int(metadata.get(
+                'snapshot_game_week', context['snapshot_game_week']
+            )),
+        })
+    except (sqlite3.Error, TypeError, ValueError):
+        pass
+    return context
+
+
 def build_features(db_file):
     """
     Merge player metadata with GW history and compute rolling features.
@@ -372,6 +531,7 @@ def build_features(db_file):
 
     df = raw.merge(all_gw, left_on='id', right_on='player_id', how='inner')
     df = df.sort_values(['id', 'Game_Week']).reset_index(drop=True)
+    df['_prior_pl_rows'] = df.groupby('id').cumcount()
 
     for col in ROLL_COLS:
         df[f'roll5_{col}'] = (
@@ -417,6 +577,11 @@ def build_features(db_file):
             df[_col] = 0.0
         else:
             df[_col] = df[_col].fillna(0.0)
+
+    df['has_pl_history'] = (
+        (df['_prior_pl_rows'] > 0) | (df['hist_career_seasons'] > 0)
+    ).astype(int)
+    df.drop(columns=['_prior_pl_rows'], inplace=True)
 
     # Compute form_data_density: fraction of last 5 GWs a player was on the
     # pitch.  roll5_minutes is already the 5-GW rolling mean of minutes played;
@@ -483,6 +648,59 @@ def build_features(db_file):
     ).round(4)
 
     return df
+
+
+def apply_market_value_weighting(scored: pd.DataFrame) -> pd.DataFrame:
+    """Blend a calibrated market-value prior into model predictions.
+
+    Market value contributes 10% for players with Premier League history and
+    30% for history-free arrivals. Imputed values contribute nothing. Within
+    each position, value percentile is mapped onto the model-score distribution
+    before blending so both signals share the same points scale.
+    """
+    weighted = scored.copy()
+    weighted['model_predicted_points'] = weighted['predicted_points'].astype(float)
+    weighted['market_value_prior'] = weighted['model_predicted_points']
+    weighted['market_value_weight'] = 0.0
+
+    for position in weighted['element_type'].dropna().unique():
+        mask = weighted['element_type'] == position
+        group = weighted.loc[mask]
+        real_value = (
+            group['tm_market_value'].fillna(0).gt(0)
+            & group.get(
+                'tm_value_imputed', pd.Series(0, index=group.index)
+            ).fillna(0).eq(0)
+        )
+        if not real_value.any():
+            continue
+
+        value_percentile = group.loc[real_value, 'tm_market_value'].rank(
+            method='average', pct=True
+        )
+        sorted_scores = group['model_predicted_points'].sort_values().to_numpy()
+        prior_indexes = (
+            value_percentile.mul(len(sorted_scores) - 1).round().astype(int)
+        )
+        market_prior = pd.Series(
+            sorted_scores[prior_indexes.to_numpy()], index=value_percentile.index
+        )
+        history_weight = group.loc[real_value].get(
+            'has_pl_history', pd.Series(0, index=value_percentile.index)
+        ).fillna(0).astype(bool).map({
+            True: MARKET_VALUE_WEIGHT_PL_HISTORY,
+            False: MARKET_VALUE_WEIGHT_NO_HISTORY,
+        })
+
+        weighted.loc[value_percentile.index, 'market_value_prior'] = market_prior
+        weighted.loc[value_percentile.index, 'market_value_weight'] = history_weight
+
+    weight = weighted['market_value_weight']
+    weighted['predicted_points'] = (
+        (1.0 - weight) * weighted['model_predicted_points']
+        + weight * weighted['market_value_prior']
+    ).round(4)
+    return weighted
 
 
 def _compute_history_features(hist_df: pd.DataFrame) -> pd.DataFrame:

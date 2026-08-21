@@ -21,9 +21,9 @@ from flask import Flask, render_template, request
 
 from utils import (
     DB_FILE, MODELS_FILE, GAME_WEEK, SEASON, POS_FEATURES,
-    build_features, normalize_pool_scores,
+    build_features, normalize_pool_scores, apply_market_value_weighting,
     save_squad, load_squad, score_squad_from_pool, pick_starting_xi,
-    suggest_transfer, find_ineligible_replacements,
+    suggest_transfer, find_ineligible_replacements, get_runtime_context,
 )
 from eligibility import get_eligibility, _DEFAULT as ELIG_DEFAULT, _ABSENT as ELIG_ABSENT, player_name_key
 
@@ -80,7 +80,7 @@ def build_pool(df, models, game_week):
         X = pos_players[POS_FEATURES[pos]].fillna(0)
         pos_players['predicted_points'] = model.predict(X)
         parts.append(pos_players)
-    pool = pd.concat(parts, ignore_index=True)
+    pool = apply_market_value_weighting(pd.concat(parts, ignore_index=True))
     return normalize_pool_scores(pool)
 
 
@@ -260,8 +260,11 @@ def index():
     metrics     = checkpoint['metrics']
     epl_members: frozenset | None = checkpoint.get('epl_members')
 
+    runtime = get_runtime_context(DB_FILE)
     all_data  = build_features(DB_FILE)
-    full_pool = build_pool(all_data, models_map, GAME_WEEK)
+    full_pool = build_pool(
+        all_data, models_map, runtime['snapshot_game_week'] + 1
+    )
 
     # --- tier 1: EPL membership filter ---
     pool = full_pool.copy()
@@ -375,9 +378,11 @@ def index():
     if not squad_mode:
         squad = select_squad(eligible_pool, {'GK': 2, 'DEF': 5, 'MID': 5, 'FWD': 3},
                              max_per_team=4, max_spend=1000)
-        save_squad(DB_FILE, squad, GAME_WEEK, SEASON)
+        save_squad(
+            DB_FILE, squad, runtime['target_game_week'], runtime['season']
+        )
         starters, bench, formation = pick_starting_xi(squad)
-        gw_saved = GAME_WEEK
+        gw_saved = runtime['target_game_week']
 
     # ── Pitch layout ─────────────────────────────────────────────────────────
     positioned = assign_positions(starters)
@@ -401,7 +406,7 @@ def index():
         bench_list.append(b)
 
     payload = {
-        'game_week':        GAME_WEEK,
+        'game_week':        runtime['target_game_week'],
         'gw_saved':         gw_saved,
         'squad_mode':       squad_mode,
         'formation':        formation,

@@ -35,8 +35,10 @@ import io
 import math
 import os
 import pathlib
+import re
 import sqlite3
 import time
+import unicodedata
 from datetime import date, datetime, timedelta
 
 import pandas as pd
@@ -56,6 +58,9 @@ _REEP_CSV_URL = (
 _REEP_CACHE_PATH = str(_ROOT / ".reep_people_cache.csv")
 _REEP_CACHE_TTL_DAYS = 7     # refresh local CSV cache every 7 days
 _TM_SLEEP_SECONDS = 1.0      # polite crawl rate between player fetches
+_BULK_PLAYERS_URL = (
+    "https://pub-e682421888d945d684bcae8890b0ec20.r2.dev/data/players.csv.gz"
+)
 
 _HEADERS = {
     "User-Agent": (
@@ -403,7 +408,132 @@ def ensure_transfer_values(conn: sqlite3.Connection) -> None:
     """
     ensure_table(conn)
     ensure_tm_ids(conn)
-    refresh_transfer_values(conn, force=False)
+    if not refresh_transfer_values_from_bulk(conn):
+        refresh_transfer_values(conn, force=False)
+
+
+def refresh_transfer_values_from_bulk(conn: sqlite3.Connection) -> bool:
+    """Refresh values from the weekly CC0 Transfermarkt bulk dataset."""
+    try:
+        response = requests.get(_BULK_PLAYERS_URL, headers=_HEADERS, timeout=120)
+        response.raise_for_status()
+        players = pd.read_csv(
+            io.BytesIO(response.content),
+            compression="gzip",
+            usecols=[
+                "player_id", "name", "first_name", "last_name",
+                "date_of_birth", "market_value_in_eur",
+            ],
+        ).dropna(subset=["player_id", "date_of_birth", "market_value_in_eur"])
+    except Exception as exc:
+        print(f"[transfer_values] Bulk refresh failed ({exc}); using profile fetches.")
+        return False
+
+    players["tm_id"] = players["player_id"].astype(int).astype(str)
+    values = dict(zip(players["tm_id"], players["market_value_in_eur"].astype(float)))
+    rows = conn.execute(
+        "SELECT fpl_id, tm_id FROM player_transfer_values WHERE tm_id IS NOT NULL"
+    ).fetchall()
+    now = datetime.utcnow().isoformat(timespec="seconds") + "Z"
+    updated = 0
+    for fpl_id, tm_id in rows:
+        value = values.get(str(tm_id))
+        if value is None:
+            continue
+        conn.execute(
+            """
+            UPDATE player_transfer_values SET
+                tm_value_eur = ?, tm_fetched_at = ?,
+                tm_value_imputed = 0, tm_retry = 0
+            WHERE fpl_id = ?
+            """,
+            (value, now, int(fpl_id)),
+        )
+        updated += 1
+
+    players["birth_date"] = pd.to_datetime(
+        players["date_of_birth"], errors="coerce"
+    ).dt.strftime("%Y-%m-%d")
+    players["normalized_names"] = players.apply(
+        lambda player: {
+            _normalize_name(player["name"]),
+            _normalize_name(f"{player['first_name']} {player['last_name']}"),
+        },
+        axis=1,
+    )
+    missing = pd.read_sql(
+        """
+        SELECT p.id AS fpl_id, p.first_name, p.second_name, p.web_name,
+               p.known_name, p.birth_date
+        FROM players_raw p
+        JOIN player_transfer_values v ON v.fpl_id = p.id
+        WHERE v.tm_value_eur IS NULL
+        """,
+        conn,
+    )
+    fallback_matches = 0
+    for player in missing.itertuples():
+        fpl_names = {
+            _normalize_name(f"{player.first_name} {player.second_name}"),
+            _normalize_name(player.web_name),
+            _normalize_name(player.known_name),
+        } - {""}
+        candidates = players[players["birth_date"] == str(player.birth_date)]
+        exact = candidates[
+            candidates["normalized_names"].map(
+                lambda names: not fpl_names.isdisjoint(names)
+            )
+        ]
+        if len(exact) != 1:
+            continue
+        match = exact.iloc[0]
+        conn.execute(
+            """
+            UPDATE player_transfer_values SET
+                tm_id = ?, tm_value_eur = ?, tm_fetched_at = ?,
+                tm_value_imputed = 0, tm_retry = 0
+            WHERE fpl_id = ?
+            """,
+            (
+                str(int(match["player_id"])),
+                float(match["market_value_in_eur"]),
+                now,
+                int(player.fpl_id),
+            ),
+        )
+        fallback_matches += 1
+
+    mean_value = conn.execute(
+        """
+        SELECT AVG(tm_value_eur) FROM player_transfer_values
+        WHERE tm_value_eur IS NOT NULL AND tm_value_imputed = 0
+        """
+    ).fetchone()[0]
+    if mean_value:
+        conn.execute(
+            """
+            UPDATE player_transfer_values SET
+                tm_value_eur = ?, tm_fetched_at = ?,
+                tm_value_imputed = 1, tm_retry = 1
+            WHERE tm_value_eur IS NULL
+            """,
+            (float(mean_value), now),
+        )
+    conn.commit()
+    imputed = conn.execute(
+        "SELECT COUNT(*) FROM player_transfer_values WHERE tm_value_imputed = 1"
+    ).fetchone()[0]
+    print(
+        f"[transfer_values] Bulk dataset updated {updated} mapped players, "
+        f"matched {fallback_matches} by DOB/name, imputed {imputed}."
+    )
+    return updated + fallback_matches > 0
+
+
+def _normalize_name(value) -> str:
+    text = unicodedata.normalize("NFKD", str(value or ""))
+    ascii_text = text.encode("ascii", "ignore").decode("ascii").lower()
+    return re.sub(r"[^a-z0-9]", "", ascii_text)
 
 
 # ---------------------------------------------------------------------------
@@ -422,20 +552,24 @@ def load_transfer_values(conn: sqlite3.Connection) -> pd.DataFrame:
     """
     try:
         df = pd.read_sql(
-            "SELECT fpl_id, tm_value_eur FROM player_transfer_values "
+            "SELECT fpl_id, tm_value_eur, tm_value_imputed FROM player_transfer_values "
             "WHERE tm_value_eur IS NOT NULL",
             conn,
         )
     except Exception:
-        return pd.DataFrame(columns=["fpl_id", "tm_market_value"])
+        return pd.DataFrame(columns=[
+            "fpl_id", "tm_market_value", "tm_value_imputed"
+        ])
 
     if df.empty:
-        return pd.DataFrame(columns=["fpl_id", "tm_market_value"])
+        return pd.DataFrame(columns=[
+            "fpl_id", "tm_market_value", "tm_value_imputed"
+        ])
 
     df["tm_market_value"] = df["tm_value_eur"].apply(
         lambda v: round(math.log10(max(v, 1.0)), 4) if v and v > 0 else 0.0
     )
-    return df[["fpl_id", "tm_market_value"]]
+    return df[["fpl_id", "tm_market_value", "tm_value_imputed"]]
 
 
 # ---------------------------------------------------------------------------

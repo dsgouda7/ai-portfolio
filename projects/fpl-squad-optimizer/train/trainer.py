@@ -46,6 +46,7 @@ def train_models(df: pd.DataFrame, game_week: int) -> tuple[dict, dict]:
             learning_rate=0.1,
             subsample=0.8,
             colsample_bytree=0.8,
+            n_jobs=1,
             random_state=42,
             verbosity=0,
         )

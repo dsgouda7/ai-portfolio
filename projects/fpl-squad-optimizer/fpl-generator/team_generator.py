@@ -14,7 +14,7 @@ from tabulate import tabulate
 
 from utils import (
     DB_FILE, MODELS_FILE, GAME_WEEK, SEASON, POS_FEATURES,
-    build_features, normalize_pool_scores,
+    build_features, normalize_pool_scores, apply_market_value_weighting,
     save_squad, load_squad, score_squad_from_pool, pick_starting_xi,
     suggest_transfer, find_ineligible_replacements,
 )
@@ -48,7 +48,7 @@ def build_pool(df, models, game_week):
         pos_players['predicted_points'] = model.predict(X)
         parts.append(pos_players)
 
-    pool = pd.concat(parts, ignore_index=True)
+    pool = apply_market_value_weighting(pd.concat(parts, ignore_index=True))
     return normalize_pool_scores(pool)
 
 

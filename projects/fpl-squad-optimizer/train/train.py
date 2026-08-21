@@ -29,8 +29,9 @@ import requests
 from utils import (
     DB_FILE, MODELS_FILE, PLAYERS_DIR, RAW_DATA_PATH, GAME_WEEK, SEASON,
     FPL_API_BASE, POS_FEATURES, MODEL_NAMES,
+    MARKET_VALUE_WEIGHT_PL_HISTORY, MARKET_VALUE_WEIGHT_NO_HISTORY,
     ingest, ingest_from_fpl_api, supplement_gw_from_api,
-    build_features, register_trained_players,
+    build_features, register_trained_players, refresh_current_roster,
 )
 from eligibility import get_eligibility, get_epl_members
 from player_attributes import ensure_new_players
@@ -127,6 +128,11 @@ checkpoint = joblib.load(MODELS_FILE)
 checkpoint['epl_members'] = epl_members
 checkpoint['model_names'] = MODEL_NAMES
 checkpoint['pos_features'] = {pos: list(feats) for pos, feats in POS_FEATURES.items()}
+checkpoint['market_value_weights'] = {
+    'pl_history': MARKET_VALUE_WEIGHT_PL_HISTORY,
+    'no_pl_history': MARKET_VALUE_WEIGHT_NO_HISTORY,
+    'imputed': 0.0,
+}
 joblib.dump(checkpoint, MODELS_FILE)
 if epl_members is not None:
     print(f"EPL member snapshot ({len(epl_members)} players) saved to {MODELS_FILE}")
@@ -134,3 +140,9 @@ print(f"Model names and per-position feature sets saved to {MODELS_FILE}")
 
 print("Registering trained players in DB...")
 register_trained_players(DB_FILE, all_data)
+
+rollover = refresh_current_roster(DB_FILE)
+if rollover.get('rolled_over'):
+    print(f"Current roster snapshot created: {rollover}")
+    with sqlite3.connect(DB_FILE) as _tm_conn:
+        ensure_transfer_values(_tm_conn)

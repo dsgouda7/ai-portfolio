@@ -27,6 +27,7 @@ Container run:
     fpl-train
 """
 import pathlib
+import sqlite3
 import sys
 
 import joblib
@@ -37,9 +38,11 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent.parent.parent))
 from utils import (
     DB_FILE, MODELS_FILE, GAME_WEEK,
     POS_FEATURES, MODEL_NAMES,
-    build_features, register_trained_players,
+    MARKET_VALUE_WEIGHT_PL_HISTORY, MARKET_VALUE_WEIGHT_NO_HISTORY,
+    build_features, register_trained_players, refresh_current_roster,
 )
 from eligibility import get_epl_members
+from transfer_values import ensure_transfer_values
 from train.trainer import train_models
 
 
@@ -88,6 +91,11 @@ def main() -> None:
         'epl_members':      epl_members,
         'model_names':      MODEL_NAMES,
         'pos_features':     {pos: list(feats) for pos, feats in POS_FEATURES.items()},
+        'market_value_weights': {
+            'pl_history': MARKET_VALUE_WEIGHT_PL_HISTORY,
+            'no_pl_history': MARKET_VALUE_WEIGHT_NO_HISTORY,
+            'imputed': 0.0,
+        },
         'feature_metadata': feature_metadata,
     }, MODELS_FILE)
     print(f"[train] Saved to {MODELS_FILE}")
@@ -95,6 +103,12 @@ def main() -> None:
     # Step 2f — record which players were in this training run (used by ingest
     #           to identify new arrivals that need GW history backfilled)
     register_trained_players(DB_FILE, all_data)
+
+    rollover = refresh_current_roster(DB_FILE)
+    if rollover.get('rolled_over'):
+        print(f"[train] Current roster snapshot: {rollover}")
+        with sqlite3.connect(DB_FILE) as conn:
+            ensure_transfer_values(conn)
     print("[train] Done.")
 
 
