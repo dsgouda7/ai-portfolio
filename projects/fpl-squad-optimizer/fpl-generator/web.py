@@ -10,22 +10,37 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
 import json
 import math
 import os
-import sqlite3
 from collections import Counter
 from pathlib import Path
 
 import joblib
 import numpy as np
 import pandas as pd
-from flask import Flask, render_template, request
+from flask import Flask, jsonify, render_template, request
+from scipy.optimize import Bounds, LinearConstraint, milp
 
 from utils import (
     DB_FILE, MODELS_FILE, GAME_WEEK, SEASON, POS_FEATURES,
+    MAX_PLAYERS_PER_TEAM, MAX_SPEND,
     build_features, normalize_pool_scores, apply_market_value_weighting,
-    save_squad, load_squad, score_squad_from_pool, pick_starting_xi,
+    load_squad, score_squad_from_pool, pick_starting_xi,
     suggest_transfer, find_ineligible_replacements, get_runtime_context,
 )
 from eligibility import get_eligibility, _DEFAULT as ELIG_DEFAULT, _ABSENT as ELIG_ABSENT, player_name_key
+from squad_state import (
+    SquadValidationError,
+    commit_draft,
+    create_state,
+    list_versions,
+    load_current,
+    load_draft,
+    load_working_state,
+    refresh_player_data,
+    roll_to_game_week,
+    save_draft,
+    validate_state,
+)
+from performance_reviewer import build_performance_review
 
 
 def _elig_key(player_row) -> tuple[str, str]:
@@ -85,28 +100,41 @@ def build_pool(df, models, game_week):
 
 
 def select_squad(pool, structure, max_per_team, max_spend):
-    squad, spend, team_counts = [], 0, Counter()
-    for pos, count in structure.items():
-        eligible = pool[pool['element_type'] == pos].sort_values(
-            'predicted_points', ascending=False
-        )
-        selected = 0
-        current_ids = {p['id'] for p in squad}
-        for _, player in eligible.iterrows():
-            if selected == count:
-                break
-            if (
-                player['id'] not in current_ids
-                and team_counts.get(player['team'], 0) < max_per_team
-                and spend + player['value'] <= max_spend
-            ):
-                squad.append(player)
-                spend += player['value']
-                team_counts[player['team']] += 1
-                current_ids.add(player['id'])
-                selected += 1
+    candidates = pool.drop_duplicates(subset='id').reset_index(drop=True)
+    constraint_rows = []
+    lower_bounds = []
+    upper_bounds = []
 
-    df_squad = pd.DataFrame(squad)
+    for position, count in structure.items():
+        constraint_rows.append(
+            (candidates['element_type'] == position).astype(float).to_numpy()
+        )
+        lower_bounds.append(count)
+        upper_bounds.append(count)
+
+    constraint_rows.append(candidates['value'].astype(float).to_numpy())
+    lower_bounds.append(0)
+    upper_bounds.append(max_spend)
+
+    for team in candidates['team'].dropna().unique():
+        constraint_rows.append((candidates['team'] == team).astype(float).to_numpy())
+        lower_bounds.append(0)
+        upper_bounds.append(max_per_team)
+
+    result = milp(
+        c=-candidates['predicted_points'].astype(float).to_numpy(),
+        integrality=np.ones(len(candidates)),
+        bounds=Bounds(0, 1),
+        constraints=LinearConstraint(
+            np.vstack(constraint_rows), lower_bounds, upper_bounds
+        ),
+        options={'time_limit': 10},
+    )
+    if not result.success:
+        raise RuntimeError(
+            'No legal 15-player squad could be generated from the eligible player pool.'
+        )
+    df_squad = candidates.loc[result.x > 0.5].copy().reset_index(drop=True)
 
     # selection margin: predicted_pts - next best available alternative not picked
     selected_ids = set(df_squad['id'])
@@ -176,6 +204,35 @@ def player_stats(player_dict, pool):
             'pct':   pct,
         })
     return stats
+
+
+def _state_frame(state: dict) -> pd.DataFrame:
+    """Convert readable JSON players into the legacy scoring join shape."""
+    return pd.DataFrame([
+        {
+            'player_id': player['id'],
+            'first_name': player['first_name'],
+            'second_name': player['second_name'],
+            'element_type': player['position'],
+            'team': player['team'],
+            'value': player['current_price'],
+        }
+        for player in state['players']
+    ])
+
+
+def _lineup_frames(state: dict, squad: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, str]:
+    """Apply the user's persisted XI and ordered bench to a freshly scored squad."""
+    by_id = {int(row['id']): row for row in squad.to_dict(orient='records')}
+
+    def ordered(player_ids):
+        return pd.DataFrame([by_id[int(player_id)] for player_id in player_ids])
+
+    starters = ordered(state['lineup']['starters'])
+    bench = ordered(state['lineup']['bench'])
+    counts = Counter(starters['element_type'])
+    formation = f"{counts['DEF']}-{counts['MID']}-{counts['FWD']}"
+    return starters, bench, formation
 
 
 # ---------------------------------------------------------------------------
@@ -304,84 +361,98 @@ def index():
 
     eligible_pool = pool[pool.apply(_elig, axis=1)].copy() if eligibility else pool.copy()
 
-    # ── Squad mode vs fresh mode ─────────────────────────────────────────────
+    # Squad mode vs draft generation. Regeneration never deletes current state.
     force_new   = request.args.get('new_team') == '1'
-    saved_squad = None if force_new else load_squad(DB_FILE)
-    squad_mode  = False
+    current_state = None if force_new else load_working_state()
+    if current_state is None and not force_new:
+        legacy_squad = load_squad(DB_FILE)
+        if legacy_squad is not None:
+            legacy_scored = score_squad_from_pool(legacy_squad, full_pool)
+            current_state = create_state(
+                legacy_scored,
+                runtime['target_game_week'],
+                runtime['season'],
+                source='legacy_sqlite_import',
+            )
+            current_state = commit_draft(current_state)
+    state = None
+    squad_mode = current_state is not None
     transfer_payload   = None
     ineligible_payload = []
 
-    if force_new:
-        conn = sqlite3.connect(DB_FILE)
-        conn.execute("DROP TABLE IF EXISTS saved_squad")
-        conn.commit()
-        conn.close()
-
-    if saved_squad is not None:
-        squad_mode   = True
-        scored_squad = score_squad_from_pool(saved_squad, full_pool)
+    if current_state is not None:
+        rolled_state = roll_to_game_week(
+            current_state, runtime['target_game_week'], runtime['season']
+        )
+        state = refresh_player_data(rolled_state, full_pool, eligibility)
+        if int(current_state['game_week']) != int(state['game_week']):
+            state = save_draft(state)
+        scored_squad = score_squad_from_pool(_state_frame(state), full_pool)
         eligible_ids = set(eligible_pool['id'].astype(int))
 
         ineligible_df = scored_squad[~scored_squad['id'].astype(int).isin(eligible_ids)]
-        eligible_df   = scored_squad[scored_squad['id'].astype(int).isin(eligible_ids)]
+        starters, bench, formation = _lineup_frames(state, scored_squad)
 
-        if not eligible_df.empty and not eligible_df[eligible_df['element_type'] == 'GK'].empty:
-            starters, bench, formation = pick_starting_xi(eligible_df)
-        else:
-            # Fall back to a fresh selection if squad is unworkable
-            squad_mode = False
-            saved_squad = None
-
-        if squad_mode:
-            # Transfer suggestion
-            t = suggest_transfer(scored_squad, eligible_pool, 4, 1000)
-            if t:
-                transfer_payload = {
-                    'out_name': f"{t['out']['first_name']} {t['out']['second_name']}",
-                    'out_pos':  t['out']['element_type'],
-                    'out_val':  t['out']['value'],
-                    'out_pts':  t['out']['predicted_points'],
-                    'in_name':  f"{t['in_']['first_name']} {t['in_']['second_name']}",
-                    'in_pos':   t['in_']['element_type'],
-                    'in_val':   t['in_']['value'],
-                    'in_pts':   t['in_']['predicted_points'],
-                    'gain':     t['gain'],
-                    'new_spend': t['new_spend'],
-                }
-
-            # Ineligible replacements
-            if not ineligible_df.empty:
-                for item in find_ineligible_replacements(
-                    ineligible_df, eligible_pool, scored_squad
-                ):
-                    out_p = item['out']
-                    elig_info = eligibility.get(
-                        (str(out_p.get('first_name', '') or '').lower(),
-                         str(out_p.get('second_name', '') or '').lower()),
-                        ELIG_ABSENT,
-                    )
-                    ineligible_payload.append({
-                        'name':      f"{out_p['first_name']} {out_p['second_name']}",
-                        'pos':       out_p['element_type'],
-                        'color':     POS_COLORS.get(str(out_p['element_type']), '#aaa'),
-                        'news':      getattr(elig_info, 'news', ''),
-                        'repl_name': f"{item['replacement']['first_name']} {item['replacement']['second_name']}"
-                                     if item['replacement'] else None,
-                        'repl_val':  item['replacement']['value'] if item['replacement'] else None,
-                        'repl_pts':  item['replacement']['predicted_points'] if item['replacement'] else None,
-                        'gain':      item['gain'],
-                    })
-
-            squad = scored_squad
-            gw_saved = int(saved_squad['gw_saved'].iloc[0])
-
-    if not squad_mode:
-        squad = select_squad(eligible_pool, {'GK': 2, 'DEF': 5, 'MID': 5, 'FWD': 3},
-                             max_per_team=4, max_spend=1000)
-        save_squad(
-            DB_FILE, squad, runtime['target_game_week'], runtime['season']
+        transfer_squad = scored_squad.copy()
+        selling_prices = {
+            int(player['id']): int(player['selling_price'])
+            for player in state['players']
+        }
+        transfer_squad['value'] = transfer_squad['id'].astype(int).map(selling_prices)
+        transfer_budget = int(transfer_squad['value'].sum()) + int(state['bank'])
+        t = suggest_transfer(
+            transfer_squad, eligible_pool,
+            MAX_PLAYERS_PER_TEAM, transfer_budget,
         )
-        starters, bench, formation = pick_starting_xi(squad)
+        if t:
+            transfer_payload = {
+                'out_id': int(t['out']['id']),
+                'out_name': f"{t['out']['first_name']} {t['out']['second_name']}",
+                'out_pos':  t['out']['element_type'],
+                'out_val':  t['out']['value'],
+                'out_pts':  t['out']['predicted_points'],
+                'in_id': int(t['in_']['id']),
+                'in_name':  f"{t['in_']['first_name']} {t['in_']['second_name']}",
+                'in_pos':   t['in_']['element_type'],
+                'in_val':   t['in_']['value'],
+                'in_pts':   t['in_']['predicted_points'],
+                'gain':     t['gain'],
+                'new_spend': t['new_spend'],
+                'bank_after': transfer_budget - t['new_spend'],
+            }
+
+        if not ineligible_df.empty:
+            for item in find_ineligible_replacements(
+                ineligible_df, eligible_pool, scored_squad,
+                MAX_PLAYERS_PER_TEAM, MAX_SPEND,
+            ):
+                out_p = item['out']
+                elig_info = eligibility.get(_elig_key(out_p), ELIG_ABSENT)
+                ineligible_payload.append({
+                    'id': int(out_p['id']),
+                    'name': f"{out_p['first_name']} {out_p['second_name']}",
+                    'pos': out_p['element_type'],
+                    'color': POS_COLORS.get(str(out_p['element_type']), '#aaa'),
+                    'news': getattr(elig_info, 'news', ''),
+                    'repl_id': int(item['replacement']['id']) if item['replacement'] else None,
+                    'repl_name': f"{item['replacement']['first_name']} {item['replacement']['second_name']}"
+                                 if item['replacement'] else None,
+                    'repl_val': item['replacement']['value'] if item['replacement'] else None,
+                    'repl_pts': item['replacement']['predicted_points'] if item['replacement'] else None,
+                    'gain': item['gain'],
+                })
+
+        squad = scored_squad
+        gw_saved = int(state['game_week'])
+    else:
+        squad = select_squad(eligible_pool, {'GK': 2, 'DEF': 5, 'MID': 5, 'FWD': 3},
+                             max_per_team=MAX_PLAYERS_PER_TEAM, max_spend=MAX_SPEND)
+        state = create_state(
+            squad, runtime['target_game_week'], runtime['season'],
+            previous=load_current(), source='regenerated' if force_new else 'generated',
+        )
+        save_draft(state)
+        starters, bench, formation = _lineup_frames(state, squad)
         gw_saved = runtime['target_game_week']
 
     # ── Pitch layout ─────────────────────────────────────────────────────────
@@ -418,9 +489,54 @@ def index():
         'model_quality':    [{'pos': pos, **m} for pos, m in metrics.items()],
         'transfer':         transfer_payload,
         'ineligible_squad': ineligible_payload,
+        'state':             state,
+        'candidates': [
+            {
+                'id': int(player['id']),
+                'first_name': str(player.get('first_name', '')),
+                'second_name': str(player.get('second_name', '')),
+                'position': str(player.get('element_type', '')),
+                'team': int(player.get('team', 0)),
+                'current_price': int(player.get('value', 0)),
+                'predicted_points': round(float(player.get('predicted_points', 0)), 4),
+            }
+            for player in eligible_pool.to_dict(orient='records')
+        ],
     }
 
     return render_template('index.html', data=json.dumps(_safe(payload)))
+
+
+@app.get('/api/squad')
+def get_squad_state():
+    return jsonify({'current': load_current(), 'draft': load_draft()})
+
+
+@app.get('/api/squad/history')
+def get_squad_history():
+    return jsonify({'versions': list_versions(season=request.args.get('season'))})
+
+
+@app.post('/api/squad/draft')
+def persist_draft():
+    try:
+        state = request.get_json(force=True)
+        validate_state(state)
+        stored = save_draft(state)
+        return jsonify({'ok': True, 'state': stored})
+    except (SquadValidationError, TypeError, KeyError, ValueError) as exc:
+        return jsonify({'ok': False, 'error': str(exc)}), 400
+
+
+@app.post('/api/squad/commit')
+def persist_current_squad():
+    try:
+        state = request.get_json(force=True)
+        validate_state(state)
+        stored = commit_draft(state)
+        return jsonify({'ok': True, 'state': stored})
+    except (SquadValidationError, TypeError, KeyError, ValueError) as exc:
+        return jsonify({'ok': False, 'error': str(exc)}), 400
 
 
 # ---------------------------------------------------------------------------
@@ -431,6 +547,16 @@ def index():
 def root():
     from flask import redirect
     return redirect('/generate-team')
+
+
+@app.get('/performance-review')
+def performance_review():
+    """Review persisted squads against actual FPL Gameweek outcomes."""
+    season = request.args.get('season')
+    payload = build_performance_review(DB_FILE, season)
+    return render_template(
+        'performance_review.html', data=json.dumps(_safe(payload))
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -594,4 +720,7 @@ def validation_report():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(
+        debug=os.environ.get('FLASK_DEBUG', '1') == '1',
+        port=int(os.environ.get('FPL_PORT', '5000')),
+    )

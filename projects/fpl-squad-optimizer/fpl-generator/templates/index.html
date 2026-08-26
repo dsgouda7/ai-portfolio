@@ -407,6 +407,38 @@
                   border: 1px solid rgba(56,189,248,0.35); }
     .mode-new   { background: rgba(112,232,90,0.15); color: #70e85a;
                   border: 1px solid rgba(112,232,90,0.35); }
+
+    /* ── SQUAD MANAGEMENT ──────────────────────────────────────── */
+    .manager-card { border-color: rgba(112,232,90,0.3); }
+    .manager-group { margin-bottom: 0.75rem; }
+    .manager-group:last-child { margin-bottom: 0; }
+    .manager-label {
+      display: block; color: var(--muted); font-size: 0.62rem;
+      text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.25rem;
+    }
+    .manager-row { display: flex; gap: 0.35rem; margin-bottom: 0.35rem; }
+    .manager-row select { min-width: 0; flex: 1; }
+    select, .manager-button {
+      background: #101827; color: var(--text); border: 1px solid var(--border);
+      border-radius: 6px; min-height: 30px; padding: 0.25rem 0.4rem;
+      font-size: 0.68rem;
+    }
+    .manager-button { cursor: pointer; font-weight: 700; }
+    .manager-button:hover { border-color: rgba(56,189,248,0.65); }
+    .manager-button.primary { background: #70e85a; color: #08120a; border-color: #70e85a; }
+    .manager-button.full { width: 100%; }
+    .manager-button:disabled { cursor: not-allowed; opacity: 0.45; }
+    .manager-meta {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.3rem;
+      border-bottom: 1px solid var(--border); padding-bottom: 0.65rem;
+      margin-bottom: 0.7rem;
+    }
+    .manager-stat { font-size: 0.6rem; color: var(--muted); }
+    .manager-stat strong { display: block; color: var(--text); font-size: 0.77rem; }
+    .manager-status { min-height: 1.2rem; color: var(--muted); font-size: 0.64rem; line-height: 1.4; }
+    .manager-status.error { color: #ff7777; }
+    .manager-status.success { color: #70e85a; }
+    .dirty-dot { color: #ffd700; }
   </style>
 </head>
 <body>
@@ -418,7 +450,11 @@
     <span id="mode-badge" class="mode-badge"></span>
   </div>
   <div class="pills" id="pills"></div>
-  <a href="/?new_team=1"
+  <a href="/performance-review"
+     style="font-size:0.7rem;color:var(--muted);text-decoration:none;
+            border:1px solid var(--border);padding:0.18rem 0.65rem;
+            border-radius:999px;white-space:nowrap">Performance</a>
+  <a href="/generate-team?new_team=1"
      style="font-size:0.7rem;color:var(--muted);text-decoration:none;
             border:1px solid var(--border);padding:0.18rem 0.65rem;
             border-radius:999px;white-space:nowrap">↺ New Team</a>
@@ -498,6 +534,59 @@
 
   <!-- right side panel -->
   <div class="side-panel">
+    <div class="panel-card manager-card">
+      <h3>Squad Management <span class="dirty-dot" id="dirty-dot" style="display:none">●</span></h3>
+      <div class="manager-meta">
+        <div class="manager-stat">Bank<strong id="bank-value"></strong></div>
+        <div class="manager-stat">Free moves<strong id="free-transfer-value"></strong></div>
+        <div class="manager-stat">Hit<strong id="hit-value"></strong></div>
+        <div class="manager-stat">Revision<strong id="revision-value"></strong></div>
+      </div>
+
+      <div class="manager-group">
+        <label class="manager-label" for="transfer-out">Transfer</label>
+        <div class="manager-row">
+          <select id="transfer-out" title="Player to sell"></select>
+          <select id="transfer-in" title="Player to buy"></select>
+        </div>
+        <button class="manager-button full" id="apply-transfer" type="button">Apply transfer</button>
+      </div>
+
+      <div class="manager-group">
+        <label class="manager-label" for="starter-swap">Starting XI and bench</label>
+        <div class="manager-row">
+          <select id="starter-swap" title="Starter to bench"></select>
+          <select id="bench-swap" title="Substitute to start"></select>
+        </div>
+        <button class="manager-button full" id="apply-swap" type="button">Swap</button>
+      </div>
+
+      <div class="manager-group">
+        <label class="manager-label" for="bench-priority">Bench priority</label>
+        <div class="manager-row">
+          <select id="bench-priority"></select>
+          <button class="manager-button" id="bench-up" type="button" title="Move substitute up">↑</button>
+          <button class="manager-button" id="bench-down" type="button" title="Move substitute down">↓</button>
+        </div>
+      </div>
+
+      <div class="manager-group">
+        <label class="manager-label" for="captain-select">Captaincy</label>
+        <div class="manager-row">
+          <select id="captain-select" title="Captain"></select>
+          <select id="vice-select" title="Vice-captain"></select>
+        </div>
+      </div>
+
+      <div class="manager-group">
+        <label class="manager-label" for="chip-select">Chip</label>
+        <select id="chip-select" style="width:100%"></select>
+      </div>
+
+      <div id="manager-status" class="manager-status"></div>
+      <button class="manager-button primary full" id="save-squad" type="button">Save squad</button>
+    </div>
+
     <div class="panel-card">
       <h3>Model Quality <span style="font-size:0.6rem;opacity:.5">(in-sample)</span></h3>
       <div id="quality-rows"></div>
@@ -535,6 +624,8 @@
 
 <script>
 const D = {{ data|safe }};
+let squadState = structuredClone(D.state);
+let dirty = false;
 
 // ── helpers ────────────────────────────────────────────────────────────────
 
@@ -558,6 +649,215 @@ function marginClass(m) {
 function marginLabel(m) {
   return m >= 1.5 ? '↑ Confident' : m >= 0.4 ? '~ Moderate' : '↓ Coin-flip';
 }
+
+function playerName(player) {
+  return `${player.first_name || ''} ${player.second_name || ''}`.trim();
+}
+function statePlayer(playerId) {
+  return squadState.players.find(player => +player.id === +playerId);
+}
+function money(tenths) {
+  return `£${(+tenths / 10).toFixed(1)}M`;
+}
+function salePrice(player) {
+  if (+player.current_price <= +player.purchase_price) return +player.current_price;
+  return +player.purchase_price + Math.floor((+player.current_price - +player.purchase_price) / 2);
+}
+function setDirty(message) {
+  dirty = true;
+  document.getElementById('dirty-dot').style.display = '';
+  setManagerStatus(message || 'Unsaved changes');
+  renderManager();
+  renderSquad();
+}
+function setManagerStatus(message, kind='') {
+  const status = document.getElementById('manager-status');
+  status.textContent = message;
+  status.className = `manager-status ${kind}`;
+}
+function fillSelect(element, rows, selected, label) {
+  element.innerHTML = rows.map(row =>
+    `<option value="${row.id}" ${+row.id === +selected ? 'selected' : ''}>${label(row)}</option>`
+  ).join('');
+}
+
+function renderManager() {
+  const lineup = squadState.lineup;
+  const starters = lineup.starters.map(statePlayer);
+  const bench = lineup.bench.map(statePlayer);
+  const outSelect = document.getElementById('transfer-out');
+  const priorOut = +outSelect.value || squadState.players[0].id;
+
+  fillSelect(outSelect, squadState.players, priorOut,
+    player => `${player.position} ${playerName(player)} ${money(player.selling_price)}`);
+  renderTransferCandidates();
+  fillSelect(document.getElementById('starter-swap'), starters, starters[0]?.id,
+    player => `${player.position} ${playerName(player)}`);
+  fillSelect(document.getElementById('bench-swap'), bench, bench[0]?.id,
+    player => `${player.position} ${playerName(player)}`);
+  const outfieldBench = bench.filter(player => player.position !== 'GK');
+  fillSelect(document.getElementById('bench-priority'), outfieldBench, outfieldBench[0]?.id,
+    (player, index) => `${player.position} ${playerName(player)}`);
+  fillSelect(document.getElementById('captain-select'), starters, lineup.captain,
+    player => `C ${playerName(player)}`);
+  fillSelect(document.getElementById('vice-select'), starters, lineup.vice_captain,
+    player => `V ${playerName(player)}`);
+
+  const chips = [
+    [null, 'No chip'],
+    ['wildcard', 'Wildcard'],
+    ['free_hit', 'Free Hit'],
+    ['bench_boost', 'Bench Boost'],
+    ['triple_captain', 'Triple Captain'],
+  ];
+  document.getElementById('chip-select').innerHTML = chips.map(([value, label]) => {
+    const remaining = value ? squadState.chips[value].remaining : '';
+    const disabled = value && remaining < 1 ? 'disabled' : '';
+    const selected = (squadState.active_chip || '') === (value || '') ? 'selected' : '';
+    return `<option value="${value || ''}" ${disabled} ${selected}>${label}${value ? ` (${remaining})` : ''}</option>`;
+  }).join('');
+
+  document.getElementById('bank-value').textContent = money(squadState.bank);
+  document.getElementById('free-transfer-value').textContent = squadState.free_transfers;
+  document.getElementById('hit-value').textContent = `-${squadState.transfer_points_cost} pts`;
+  document.getElementById('revision-value').textContent = squadState.revision || 'Draft';
+}
+
+function renderTransferCandidates() {
+  const outgoing = statePlayer(+document.getElementById('transfer-out').value);
+  if (!outgoing) return;
+  const squadIds = new Set(squadState.players.map(player => +player.id));
+  const available = +squadState.bank + salePrice(outgoing);
+  const clubCounts = squadState.players.reduce((counts, player) => {
+    if (+player.id !== +outgoing.id) counts[player.team] = (counts[player.team] || 0) + 1;
+    return counts;
+  }, {});
+  const candidates = D.candidates
+    .filter(player => player.position === outgoing.position)
+    .filter(player => !squadIds.has(+player.id) && +player.current_price <= available)
+    .filter(player => (clubCounts[player.team] || 0) < 3)
+    .sort((left, right) => right.predicted_points - left.predicted_points);
+  fillSelect(document.getElementById('transfer-in'), candidates, candidates[0]?.id,
+    player => `${playerName(player)} ${money(player.current_price)} · ${(+player.predicted_points).toFixed(1)}`);
+}
+
+function formationIsValid(starterIds) {
+  const counts = {GK: 0, DEF: 0, MID: 0, FWD: 0};
+  starterIds.map(statePlayer).forEach(player => counts[player.position]++);
+  return counts.GK === 1 && counts.DEF >= 3 && counts.MID >= 2 && counts.FWD >= 1;
+}
+
+document.getElementById('transfer-out').addEventListener('change', renderTransferCandidates);
+document.getElementById('apply-transfer').addEventListener('click', () => {
+  const outgoingId = +document.getElementById('transfer-out').value;
+  const incomingId = +document.getElementById('transfer-in').value;
+  const outgoing = statePlayer(outgoingId);
+  const candidate = D.candidates.find(player => +player.id === incomingId);
+  if (!outgoing || !candidate) return setManagerStatus('Choose a valid transfer.', 'error');
+
+  const sale = salePrice(outgoing);
+  const next = {
+    ...candidate,
+    purchase_price: candidate.current_price,
+    selling_price: candidate.current_price,
+    status: 'a',
+    news: '',
+  };
+  squadState.players = squadState.players.map(player => +player.id === outgoingId ? next : player);
+  squadState.bank = +squadState.bank + sale - +candidate.current_price;
+  ['starters', 'bench'].forEach(key => {
+    squadState.lineup[key] = squadState.lineup[key].map(id => +id === outgoingId ? incomingId : id);
+  });
+  if (+squadState.lineup.captain === outgoingId) squadState.lineup.captain = incomingId;
+  if (+squadState.lineup.vice_captain === outgoingId) squadState.lineup.vice_captain = incomingId;
+  squadState.transfers.push({
+    out: {id: outgoingId, name: playerName(outgoing)},
+    in: {id: incomingId, name: playerName(candidate)},
+    made_at: new Date().toISOString(),
+  });
+  squadState.transfer_points_cost = ['wildcard', 'free_hit'].includes(squadState.active_chip)
+    ? 0 : Math.max(0, squadState.transfers.length - squadState.free_transfers) * 4;
+  setDirty(`${playerName(outgoing)} → ${playerName(candidate)}`);
+});
+
+document.getElementById('apply-swap').addEventListener('click', () => {
+  const starterId = +document.getElementById('starter-swap').value;
+  const benchId = +document.getElementById('bench-swap').value;
+  const nextStarters = squadState.lineup.starters.map(id => +id === starterId ? benchId : id);
+  if (!formationIsValid(nextStarters)) {
+    return setManagerStatus('That swap would create an illegal FPL formation.', 'error');
+  }
+  squadState.lineup.starters = nextStarters;
+  squadState.lineup.bench = squadState.lineup.bench.map(id => +id === benchId ? starterId : id);
+  if (+squadState.lineup.captain === starterId) squadState.lineup.captain = benchId;
+  if (+squadState.lineup.vice_captain === starterId) squadState.lineup.vice_captain = benchId;
+  setDirty('Starting XI updated.');
+});
+
+function moveBench(delta) {
+  const playerId = +document.getElementById('bench-priority').value;
+  const outfield = squadState.lineup.bench.filter(id => statePlayer(id).position !== 'GK');
+  const current = outfield.indexOf(playerId);
+  const target = current + delta;
+  if (current < 0 || target < 0 || target >= outfield.length) return;
+  [outfield[current], outfield[target]] = [outfield[target], outfield[current]];
+  const goalkeeper = squadState.lineup.bench.find(id => statePlayer(id).position === 'GK');
+  squadState.lineup.bench = [goalkeeper, ...outfield];
+  setDirty('Bench priority updated.');
+  document.getElementById('bench-priority').value = playerId;
+}
+document.getElementById('bench-up').addEventListener('click', () => moveBench(-1));
+document.getElementById('bench-down').addEventListener('click', () => moveBench(1));
+document.getElementById('captain-select').addEventListener('change', event => {
+  if (+event.target.value === +squadState.lineup.vice_captain) {
+    renderManager();
+    return setManagerStatus('Captain and vice-captain must be different.', 'error');
+  }
+  squadState.lineup.captain = +event.target.value;
+  setDirty('Captain updated.');
+});
+document.getElementById('vice-select').addEventListener('change', event => {
+  if (+event.target.value === +squadState.lineup.captain) {
+    renderManager();
+    return setManagerStatus('Captain and vice-captain must be different.', 'error');
+  }
+  squadState.lineup.vice_captain = +event.target.value;
+  setDirty('Vice-captain updated.');
+});
+document.getElementById('chip-select').addEventListener('change', event => {
+  squadState.active_chip = event.target.value || null;
+  squadState.transfer_points_cost = ['wildcard', 'free_hit'].includes(squadState.active_chip)
+    ? 0 : Math.max(0, squadState.transfers.length - squadState.free_transfers) * 4;
+  setDirty(squadState.active_chip ? 'Chip selected.' : 'Chip cleared.');
+});
+
+document.getElementById('save-squad').addEventListener('click', async () => {
+  const button = document.getElementById('save-squad');
+  button.disabled = true;
+  setManagerStatus('Saving…');
+  squadState.lineup.captain = +document.getElementById('captain-select').value;
+  squadState.lineup.vice_captain = +document.getElementById('vice-select').value;
+  try {
+    const response = await fetch('/api/squad/commit', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(squadState),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Unable to save squad.');
+    squadState = result.state;
+    dirty = false;
+    document.getElementById('dirty-dot').style.display = 'none';
+    setManagerStatus(`Saved GW${squadState.game_week} revision ${squadState.revision}.`, 'success');
+    renderManager();
+  } catch (error) {
+    setManagerStatus(error.message, 'error');
+  } finally {
+    button.disabled = false;
+  }
+});
+
+renderManager();
 
 // ── squad mode badge ───────────────────────────────────────────────────────
 
@@ -649,38 +949,71 @@ function attachTip(el, p) {
 // ── pitch players ──────────────────────────────────────────────────────────
 
 const layer = document.getElementById('players-layer');
-
-D.players.forEach(p => {
-  const el = document.createElement('div');
-  el.className = 'player';
-  el.style.left = p.pitch_x + '%';
-  el.style.top  = p.pitch_y + '%';
-  el.innerHTML = `
-    <div class="player-shirt" style="background:${p.color}">${initials(p)}</div>
-    <div class="player-name">${shortName(p)}</div>
-    <div class="player-pred">${(p.predicted_points||0).toFixed(1)}</div>
-  `;
-  attachTip(el, p);
-  layer.appendChild(el);
-});
-
-// ── bench ──────────────────────────────────────────────────────────────────
-
 const benchEl = document.getElementById('bench-strip');
+const displayPlayers = new Map([...D.players, ...D.bench].map(player => [+player.id, player]));
 
-D.bench.forEach(p => {
-  const el = document.createElement('div');
-  el.className = 'bench-player';
-  el.innerHTML = `
-    <div class="bench-shirt" style="background:${p.color}">${initials(p)}</div>
-    <div class="bench-info">
-      <div class="bench-name">${p.first_name} ${p.second_name}</div>
-      <div class="bench-sub">${p.element_type} · ${(p.predicted_points||0).toFixed(1)} pts</div>
-    </div>
-  `;
-  attachTip(el, p);
-  benchEl.appendChild(el);
-});
+function displayPlayer(playerId) {
+  const state = statePlayer(playerId);
+  const enriched = displayPlayers.get(+playerId) || {};
+  return {
+    ...enriched,
+    ...state,
+    element_type: state.position,
+    value: state.current_price,
+    color: POS_COLOR[state.position] || '#aaa',
+  };
+}
+
+function rowPositions(count) {
+  if (count === 1) return [50];
+  const margins = {2: 28, 3: 18, 4: 12, 5: 10};
+  const margin = margins[count] || 10;
+  const step = (100 - 2 * margin) / (count - 1);
+  return Array.from({length: count}, (_, index) => margin + index * step);
+}
+
+function renderSquad() {
+  layer.innerHTML = '';
+  benchEl.innerHTML = '';
+  const rowY = {GK: 84, DEF: 65, MID: 45, FWD: 15};
+  const starters = squadState.lineup.starters.map(displayPlayer);
+
+  ['GK', 'DEF', 'MID', 'FWD'].forEach(position => {
+    const row = starters
+      .filter(player => player.position === position)
+      .sort((left, right) => right.predicted_points - left.predicted_points);
+    const xs = rowPositions(row.length);
+    row.forEach((player, index) => {
+      const el = document.createElement('div');
+      el.className = 'player';
+      el.style.left = xs[index] + '%';
+      el.style.top = rowY[position] + '%';
+      el.innerHTML = `
+        <div class="player-shirt" style="background:${player.color}">${initials(player)}</div>
+        <div class="player-name">${shortName(player)}</div>
+        <div class="player-pred">${(+player.predicted_points || 0).toFixed(1)}</div>
+      `;
+      attachTip(el, player);
+      layer.appendChild(el);
+    });
+  });
+
+  squadState.lineup.bench.map(displayPlayer).forEach((player, index) => {
+    const el = document.createElement('div');
+    el.className = 'bench-player';
+    el.innerHTML = `
+      <div class="bench-shirt" style="background:${player.color}">${initials(player)}</div>
+      <div class="bench-info">
+        <div class="bench-name">${index ? index + '. ' : 'GK '}${playerName(player)}</div>
+        <div class="bench-sub">${player.position} · ${(+player.predicted_points || 0).toFixed(1)} pts</div>
+      </div>
+    `;
+    attachTip(el, player);
+    benchEl.appendChild(el);
+  });
+}
+
+renderSquad();
 
 // ── excluded players panel ────────────────────────────────────────────────
 
@@ -736,7 +1069,7 @@ if (D.transfer) {
                 border-top:1px solid var(--border);padding-top:0.5rem">
       <span class="transfer-gain">${gainStr} pts</span>
       <span style="font-size:0.65rem;color:var(--muted)">
-        Squad: £${(t.new_spend/10).toFixed(1)}M / £100M
+        Bank after: £${(t.bank_after/10).toFixed(1)}M
       </span>
     </div>
   `;

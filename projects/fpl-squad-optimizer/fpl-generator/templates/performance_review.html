@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FPL Squad Performance Review</title>
+  <style>
+    :root {
+      --bg: #090d15;
+      --surface: #111722;
+      --surface-raised: #171f2c;
+      --border: #273245;
+      --text: #f2f5f8;
+      --muted: #8e9aae;
+      --green: #51d88a;
+      --red: #ff6b72;
+      --amber: #f4c95d;
+      --blue: #55b8e8;
+      --gk: #e8fa45;
+      --def: #4fd6e8;
+      --mid: #70e85a;
+      --fwd: #ff6b72;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px),
+        var(--bg);
+      background-size: 32px 32px;
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+    header {
+      min-height: 64px;
+      padding: 0.8rem max(1rem, calc((100vw - 1180px) / 2));
+      border-bottom: 1px solid var(--border);
+      background: rgba(9,13,21,0.94);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .brand { font-size: 0.92rem; font-weight: 800; }
+    .brand span { color: var(--green); }
+    nav { margin-left: auto; display: flex; gap: 0.4rem; }
+    nav a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.72rem;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 0.38rem 0.65rem;
+    }
+    nav a:hover, nav a.active { color: var(--text); border-color: var(--green); }
+    main { max-width: 1180px; margin: 0 auto; padding: 1.2rem 1rem 2.5rem; }
+    .page-title { display: flex; align-items: end; justify-content: space-between; gap: 1rem; }
+    h1 { font-size: 1.45rem; margin: 0; letter-spacing: 0; }
+    .subtitle { margin: 0.25rem 0 0; color: var(--muted); font-size: 0.76rem; }
+    .season { color: var(--green); font-size: 0.75rem; font-weight: 700; }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 0.6rem;
+      margin: 1.1rem 0;
+    }
+    .metric {
+      min-height: 84px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.72rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .metric .label { color: var(--muted); font-size: 0.64rem; }
+    .metric .value { font-size: 1.32rem; font-weight: 800; }
+    .good { color: var(--green); }
+    .bad { color: var(--red); }
+    .neutral { color: var(--blue); }
+    .latest-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 0.75rem; }
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 0.68rem 0.85rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-raised);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .panel-header h2 { margin: 0; font-size: 0.8rem; }
+    .gw-tag { color: var(--green); font-size: 0.68rem; font-weight: 700; }
+    .score-comparison { display: grid; grid-template-columns: repeat(3, 1fr); }
+    .score-box { padding: 1rem 0.8rem; text-align: center; border-right: 1px solid var(--border); }
+    .score-box:last-child { border-right: none; }
+    .score-box strong { display: block; font-size: 1.75rem; }
+    .score-box span { color: var(--muted); font-size: 0.62rem; }
+    .verdict {
+      margin: 0;
+      border-top: 1px solid var(--border);
+      padding: 0.75rem 0.85rem;
+      color: var(--muted);
+      font-size: 0.72rem;
+      line-height: 1.55;
+    }
+    .player-list { padding: 0.45rem 0.75rem; max-height: 340px; overflow-y: auto; }
+    .player-row {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr) 54px 42px;
+      gap: 0.55rem;
+      align-items: center;
+      min-height: 33px;
+      border-bottom: 1px solid rgba(255,255,255,0.045);
+      font-size: 0.7rem;
+    }
+    .player-row:last-child { border-bottom: 0; }
+    .position { font-size: 0.6rem; font-weight: 800; }
+    .player-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .player-status { color: var(--muted); text-align: right; font-size: 0.6rem; }
+    .points { text-align: right; font-weight: 800; }
+    .not-counted { opacity: 0.42; }
+    .section-title { margin: 1.15rem 0 0.45rem; color: var(--muted); font-size: 0.68rem; text-transform: uppercase; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 690px; font-size: 0.7rem; }
+    th, td { padding: 0.58rem 0.72rem; border-bottom: 1px solid var(--border); text-align: right; }
+    th { color: var(--muted); font-weight: 600; background: var(--surface-raised); }
+    th:first-child, td:first-child { text-align: left; }
+    tr:last-child td { border-bottom: 0; }
+    .bar-track { height: 5px; border-radius: 5px; background: #273245; overflow: hidden; min-width: 100px; }
+    .bar-fill { height: 100%; background: var(--green); }
+    .empty {
+      margin-top: 1rem;
+      padding: 3rem 1rem;
+      border: 1px dashed var(--border);
+      color: var(--muted);
+      text-align: center;
+      font-size: 0.78rem;
+    }
+    @media (max-width: 900px) {
+      .summary-grid { grid-template-columns: repeat(3, 1fr); }
+      .latest-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      header { align-items: flex-start; flex-wrap: wrap; }
+      nav { margin-left: 0; width: 100%; overflow-x: auto; }
+      .summary-grid { grid-template-columns: repeat(2, 1fr); }
+      .page-title { align-items: flex-start; flex-direction: column; }
+      .score-box strong { font-size: 1.35rem; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand"><span>FPL</span> Squad Performance</div>
+    <nav>
+      <a href="/generate-team">Squad</a>
+      <a class="active" href="/performance-review">Performance</a>
+      <a href="/validation-report">Model validation</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="page-title">
+      <div>
+        <h1>Gameweek review</h1>
+        <p class="subtitle">Actual points from the final committed squad revision, compared with official FPL outcomes.</p>
+      </div>
+      <div class="season" id="season"></div>
+    </div>
+
+    <div id="content"></div>
+  </main>
+
+  <script>
+    const D = {{ data|safe }};
+    const completed = (D.gameweeks || []).filter(gameweek => gameweek.finished);
+    const latest = completed.at(-1);
+    const S = D.summary || {};
+    document.getElementById('season').textContent = D.season || '';
+
+    function signed(value) {
+      return `${value > 0 ? '+' : ''}${value}`;
+    }
+    function tone(value) {
+      return value > 0 ? 'good' : value < 0 ? 'bad' : 'neutral';
+    }
+    function positionColor(position) {
+      return {GK: 'var(--gk)', DEF: 'var(--def)', MID: 'var(--mid)', FWD: 'var(--fwd)'}[position] || 'var(--muted)';
+    }
+    function metric(label, value, className='') {
+      return `<div class="metric"><span class="label">${label}</span><strong class="value ${className}">${value}</strong></div>`;
+    }
+
+    if (!latest) {
+      document.getElementById('content').innerHTML = `
+        <div class="empty">
+          No completed persisted Gameweek is available yet. Save a squad before a deadline, then return after FPL marks the Gameweek data as checked.
+        </div>`;
+    } else {
+      const capture = latest.dream_team_points
+        ? Math.round(latest.total_points / latest.dream_team_points * 100)
+        : 0;
+      const verdict = latest.vs_average > 0
+        ? `The saved squad beat the Gameweek average by ${latest.vs_average} points.`
+        : latest.vs_average < 0
+          ? `The saved squad finished ${Math.abs(latest.vs_average)} points below the Gameweek average.`
+          : 'The saved squad matched the Gameweek average exactly.';
+      const captainPlayer = latest.players.find(player => player.captain);
+      const captainNote = captainPlayer
+        ? `${captainPlayer.name} supplied ${latest.captain_bonus} bonus captain points.`
+        : 'Neither captain nor vice-captain recorded playing minutes.';
+      const substitutionNote = latest.substitutions.length
+        ? ` ${latest.substitutions.length} automatic ${latest.substitutions.length === 1 ? 'substitution was' : 'substitutions were'} applied.`
+        : '';
+
+      document.getElementById('content').innerHTML = `
+        <section class="summary-grid">
+          ${metric('Completed GWs', S.completed_gameweeks || 0)}
+          ${metric('Season points', S.total_points || 0, 'neutral')}
+          ${metric('Average / GW', S.average_points || 0)}
+          ${metric('Official avg / GW', S.average_benchmark || 0)}
+          ${metric('Points vs average', signed(S.points_vs_average || 0), tone(S.points_vs_average || 0))}
+          ${metric('Dream Team capture', `${S.dream_team_capture || 0}%`)}
+        </section>
+
+        <section class="latest-grid">
+          <div class="panel">
+            <div class="panel-header"><h2>Latest result</h2><span class="gw-tag">GW${latest.game_week} · rev ${latest.revision}</span></div>
+            <div class="score-comparison">
+              <div class="score-box"><strong>${latest.total_points}</strong><span>Saved squad</span></div>
+              <div class="score-box"><strong>${latest.average_points}</strong><span>FPL average</span></div>
+              <div class="score-box"><strong>${latest.dream_team_points}</strong><span>Dream Team</span></div>
+            </div>
+            <p class="verdict">
+              <strong class="${tone(latest.vs_average)}">${verdict}</strong><br>
+              It captured ${capture}% of the official Dream Team points. ${captainNote}
+              ${latest.transfer_cost ? ` Transfer deductions cost ${latest.transfer_cost} points.` : ''}
+              ${substitutionNote}
+            </p>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header"><h2>Saved squad outcome</h2><span class="gw-tag">Counted players highlighted</span></div>
+            <div class="player-list">
+              ${latest.players
+                .sort((left, right) => Number(right.counted) - Number(left.counted) || right.points - left.points)
+                .map(player => `
+                  <div class="player-row ${player.counted ? '' : 'not-counted'}">
+                    <span class="position" style="color:${positionColor(player.position)}">${player.position}</span>
+                    <span class="player-name">${player.name}${player.captain ? ' (C)' : ''}</span>
+                    <span class="player-status">${player.counted ? 'counted' : 'bench'}</span>
+                    <span class="points">${player.points}</span>
+                  </div>`).join('')}
+            </div>
+          </div>
+        </section>
+
+        <h2 class="section-title">Season ledger</h2>
+        <div class="panel table-wrap">
+          <table>
+            <thead><tr><th>Gameweek</th><th>Squad</th><th>Average</th><th>vs avg</th><th>Dream Team</th><th>Capture</th><th>Chip</th></tr></thead>
+            <tbody>
+              ${completed.map(gameweek => {
+                const pct = gameweek.dream_team_points
+                  ? Math.round(gameweek.total_points / gameweek.dream_team_points * 100)
+                  : 0;
+                return `<tr>
+                  <td>GW${gameweek.game_week}</td>
+                  <td><strong>${gameweek.total_points}</strong></td>
+                  <td>${gameweek.average_points}</td>
+                  <td class="${tone(gameweek.vs_average)}">${signed(gameweek.vs_average)}</td>
+                  <td>${gameweek.dream_team_points}</td>
+                  <td><div style="display:flex;align-items:center;gap:.5rem;justify-content:flex-end"><div class="bar-track"><div class="bar-fill" style="width:${Math.min(100,pct)}%"></div></div>${pct}%</div></td>
+                  <td>${gameweek.active_chip ? gameweek.active_chip.replace('_', ' ') : '—'}</td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>`;
+    }
+  </script>
+</body>
+</html>

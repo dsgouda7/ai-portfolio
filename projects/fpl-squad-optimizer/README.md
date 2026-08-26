@@ -50,6 +50,55 @@ python simulations/simulate_season.py --test-from 15 --test-to 37
 > during the season. `setup.ps1` runs `git pull` on it; then `python train/train.py`
 > re-prunes the DB and rebuilds the models in one step.
 
+### Weekly workflow
+
+1. Run `python train/train.py` after the previous Gameweek finishes. The job
+  supplements stale community data from the live FPL API, refreshes the current
+  roster and prices, and retrains all four position models.
+2. Open `/generate-team`. The app loads the latest committed squad from SQLite,
+  rolls it into the target Gameweek, and refreshes predictions, prices, injuries,
+  suspensions, and availability.
+3. Review the suggested transfer, make transfers, change the starting XI, order
+  the outfield bench, choose captain/vice-captain, and optionally select one chip.
+4. Press **Save squad**. The app appends a committed revision; it never overwrites
+  an earlier Gameweek or revision.
+
+**Regenerate** creates a new draft under the official £100m, 2/5/5/3 position,
+and three-players-per-club constraints. It does not replace the committed squad
+until **Save squad** is pressed.
+
+### Squad persistence and season history
+
+SQLite is the source of truth. The existing FPL database contains two append-only
+tables:
+
+| Table | Purpose |
+|---|---|
+| `squad_versions` | One row per draft or committed save, including season, Gameweek, revision, bank, free transfers, point hit, active chip, and full state JSON |
+| `squad_version_players` | The 15 player rows for each version, including lineup/bench order, captaincy, purchase/current/selling prices, prediction, status, and news |
+
+Revisions increase within each season/Gameweek. Loading the page uses the latest
+committed version; when none exists yet, it resumes the latest draft. A legacy
+`saved_squad` table is imported once as the first committed ledger revision.
+
+Readable JSON mirrors are exported to `squads/current_squad.json`,
+`squads/draft_squad.json`, and `squads/history/`, but the app always loads from
+SQLite. These exports are ignored by Git because they contain local season state.
+
+The history can also be inspected through:
+
+```text
+GET /api/squad
+GET /api/squad/history
+GET /api/squad/history?season=2026-27
+```
+
+The state validator enforces current FPL rules: 15 unique players, 2 GK/5 DEF/
+5 MID/3 FWD, no more than three from one club, legal starting formations, captain
+and vice-captain in the XI, ordered substitutes, up to five saved free transfers,
+four-point extra-transfer costs, the 20-transfer weekly limit, current selling
+price rules, and one active chip.
+
 ## Dataset
 
 | Source | What it provides | How it's used |
@@ -391,8 +440,29 @@ The per-GW breakdown and interactive per-position RMSE are in the `/validation-r
 | Route | Description |
 |---|---|
 | `GET /generate-team` | Recommended FPL squad for the current GW on an interactive pitch with predicted scores, confidence margins, and player health cards |
+| `GET /api/squad` | Latest committed and draft squad states loaded from SQLite |
+| `GET /api/squad/history` | Append-only season/Gameweek revision ledger; accepts an optional `season` query parameter |
+| `POST /api/squad/draft` | Validate and append a draft revision |
+| `POST /api/squad/commit` | Validate and append a committed revision plus readable JSON export |
+| `GET /performance-review` | Scores each final committed Gameweek squad with actual results, captaincy, chips, transfer hits, and automatic substitutions; compares it with the official average and Dream Team |
 | `GET /validation-report` | Side-by-side pitch: model team vs oracle optimal per simulated GW, with full metrics dashboard. Requires simulation results. |
 | `GET /` | Redirects to `/generate-team` |
+
+### Syncing to an official FPL account
+
+This project intentionally does **not** collect Premier League credentials or
+submit changes to the official FPL website. There is no documented public FPL
+write API. Community tools reverse-engineer private web endpoints and reuse login
+session cookies, but those contracts can change without notice and require access
+to sensitive account sessions.
+
+More importantly, the 2026/27 FPL Terms state that players must keep account
+credentials confidential and must not use automated systems to access the Game;
+a breach can result in suspension, deletion, or disqualification. The supported
+workflow is therefore human-in-the-loop: review and persist the recommendation
+locally, then reproduce the confirmed transfers, lineup, captaincy, and chip in
+the official FPL app or website. Do not store passwords, MFA secrets, or Premier
+League session cookies in this project.
 
 The validation report page shows:
 - Interactive GW selector (prev/next buttons or click any GW badge)

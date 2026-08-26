@@ -12,7 +12,7 @@ from utils import (
 )
 from eligibility import get_eligibility, _DEFAULT as ELIG_DEFAULT, _ABSENT as ELIG_ABSENT, player_name_key
 
-MAX_PLAYERS_PER_TEAM = 4
+MAX_PLAYERS_PER_TEAM = 3
 MAX_SPEND        = 1000
 
 

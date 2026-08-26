@@ -1,5 +1,8 @@
 # generated artefacts -- do not commit
 fantasy_football*.db
+*.db-journal
+*.db-shm
+*.db-wal
 models*.joblib
 backtest_results.csv
 
@@ -10,7 +13,12 @@ Fantasy-Premier-League/
 __pycache__/
 *.pyc
 .venv/
+.pytest_cache/
+.coverage
+htmlcov/
 
 # ephemeral local output
 inference_out.txt
 *.log
+squads/
+*.tmp

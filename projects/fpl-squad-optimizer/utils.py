@@ -91,12 +91,24 @@ SEASON, PLAYERS_DIR, RAW_DATA_PATH, GAME_WEEK = _autodetect_season(
 #
 # To run a step in a container:
 #   docker run --env FPL_DATA_DIR=/mnt/data --env FPL_MODELS_DIR=/mnt/models …
-DB_FILE     = os.environ.get('FPL_DB_FILE',
-              str(_ROOT / 'fantasy_football.db'))
-MODELS_FILE = os.environ.get('FPL_MODELS_FILE',
-              str(_ROOT / 'models.joblib'))
+def _artifact_path(env_name: str, primary: str, fallback: str) -> str:
+    configured = os.environ.get(env_name)
+    if configured:
+        return configured
+    primary_path = _ROOT / primary
+    if primary_path.exists() and primary_path.stat().st_size > 0:
+        return str(primary_path)
+    return str(_ROOT / fallback)
 
-MAX_PLAYERS_PER_TEAM = 4
+
+DB_FILE = _artifact_path(
+    'FPL_DB_FILE', 'fantasy_football.db', 'fantasy_football_current.db'
+)
+MODELS_FILE = _artifact_path(
+    'FPL_MODELS_FILE', 'models.joblib', 'models_current.joblib'
+)
+
+MAX_PLAYERS_PER_TEAM = 3
 MAX_SPEND        = 1000
 FORM_WINDOW      = 5
 MARKET_VALUE_WEIGHT_PL_HISTORY = 0.10
@@ -903,7 +915,7 @@ def pick_starting_xi(squad: pd.DataFrame) -> tuple:
 def suggest_transfer(
     scored_squad: pd.DataFrame,
     eligible_pool: pd.DataFrame,
-    max_per_team: int = 4,
+    max_per_team: int = MAX_PLAYERS_PER_TEAM,
     max_spend: int = 1000,
 ):
     """
@@ -954,7 +966,7 @@ def find_ineligible_replacements(
     ineligible_squad: pd.DataFrame,
     eligible_pool: pd.DataFrame,
     full_squad: pd.DataFrame,
-    max_per_team: int = 4,
+    max_per_team: int = MAX_PLAYERS_PER_TEAM,
     max_spend: int = 1000,
 ) -> list:
     """
