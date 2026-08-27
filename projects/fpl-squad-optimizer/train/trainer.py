@@ -17,27 +17,32 @@ N_ESTIMATORS = 44   # walk-forward CV (tune_n_estimators.py, 5-fold) showed
                     # p90 across all positions = 44. 200 was overfitting.
 
 
-def train_models(df: pd.DataFrame, game_week: int) -> tuple[dict, dict]:
+def train_models(
+    df: pd.DataFrame,
+    completed_internal_index: int,
+) -> tuple[dict, dict]:
     """
-    Train one XGBRegressor per position on all GWs before game_week-1.
+    Train one XGBRegressor per position through the completed-data cutoff.
 
     Each model uses only the features relevant to its position (POS_FEATURES),
     removing cross-position noise (e.g. saves for outfielders, threat for GKs).
     Returns (models, metrics) dicts keyed by position; metrics includes r2,
     rmse, n, top_feature, model_name, and n_features.
     """
-    train = df[(df['Game_Week'] < game_week - 1) & df['target'].notna()].copy()
+    train = df[
+        (df['Game_Week'] <= completed_internal_index) & df['target'].notna()
+    ].copy()
     models: dict = {}
     metrics: dict = {}
 
     for pos in ['GK', 'DEF', 'MID', 'FWD']:
         pos_features = POS_FEATURES[pos]
         pos_train = train[train['element_type'] == pos]
-        X = pos_train[pos_features].fillna(0)
+        X = pos_train[pos_features].copy()
         # FPL API and vaastav can return team/opponent_team as object dtype.
         # Cast any remaining object columns to int so XGBoost accepts them.
         for _c in X.select_dtypes(include='object').columns:
-            X[_c] = pd.to_numeric(X[_c], errors='coerce').fillna(0).astype(int)
+            X[_c] = pd.to_numeric(X[_c], errors='coerce')
         y = pos_train['target']
 
         model = XGBRegressor(

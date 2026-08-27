@@ -10,7 +10,7 @@ __pycache__/
 
 # Generated pipeline artifacts — provided via mounted volumes at runtime
 fantasy_football.db
-models.joblib
+models*.joblib
 simulations/results/
 pipeline_data/
 

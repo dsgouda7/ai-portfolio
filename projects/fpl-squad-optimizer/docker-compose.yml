@@ -58,6 +58,8 @@ services:
     environment:
       FPL_DB_FILE: /data/fantasy_football.db
       FPL_MODELS_FILE: /data/models/models.joblib
+      FPL_RNN_MODELS_FILE: /data/models/models_rnn.joblib
+      FPL_MODEL_TYPE: all
     depends_on:
       ingest:
         condition: service_completed_successfully
@@ -72,6 +74,7 @@ services:
     environment:
       FPL_DB_FILE: /data/fantasy_football.db
       FPL_MODELS_FILE: /data/models/models.joblib
+      FPL_RNN_MODELS_FILE: /data/models/models_rnn.joblib
       FPL_RESULTS_DIR: /data/results
       FPL_SIM_FROM: "15"
       FPL_SIM_TO: "37"

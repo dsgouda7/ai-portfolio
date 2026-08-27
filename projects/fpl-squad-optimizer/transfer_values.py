@@ -13,9 +13,12 @@ Key design decisions
   Transfermarkt ``tm_value_date`` is strictly newer than what is already stored.
   This avoids accidentally replacing good data with a stale snapshot.
 
-* **Imputed fallback**: if Transfermarkt returns no value for a player, the
-  mean of all fetched values is stored and ``tm_retry = 1`` is set.  Every
-  subsequent training run will retry that player until real data is obtained.
+* **No imputation**: players without a real Transfermarkt valuation remain
+    missing and are retried. Synthetic mean values are never stored or scored.
+
+* **Historical values**: dated valuation changes come from the weekly CC0
+    ``transfermarkt-datasets`` publication. Values are joined to FPL rows as-of
+    the valuation date, never broadcast backward from the current value.
 
 * **Force flag**: ``--force`` on the CLI (or ``force=True`` in
   ``refresh_transfer_values``) re-fetches every player regardless of cache age.
@@ -61,6 +64,10 @@ _TM_SLEEP_SECONDS = 1.0      # polite crawl rate between player fetches
 _BULK_PLAYERS_URL = (
     "https://pub-e682421888d945d684bcae8890b0ec20.r2.dev/data/players.csv.gz"
 )
+_BULK_VALUATIONS_URL = (
+    "https://pub-e682421888d945d684bcae8890b0ec20.r2.dev/"
+    "data/player_valuations.csv.gz"
+)
 
 _HEADERS = {
     "User-Agent": (
@@ -84,6 +91,17 @@ CREATE TABLE IF NOT EXISTS player_transfer_values (
     tm_fetched_at     TEXT,
     tm_value_imputed  INTEGER DEFAULT 0,
     tm_retry          INTEGER DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS player_transfer_value_history (
+    fpl_code          INTEGER NOT NULL,
+    tm_id             TEXT,
+    observed_at       TEXT NOT NULL,
+    tm_value_eur      REAL NOT NULL,
+    tm_value_date     TEXT,
+    tm_value_imputed  INTEGER DEFAULT 0,
+    source            TEXT NOT NULL,
+    PRIMARY KEY (fpl_code, observed_at, source)
 );
 """
 
@@ -156,7 +174,70 @@ def _build_code_to_tm_id(reep_df: pd.DataFrame) -> dict[int, str]:
 
 def ensure_table(conn: sqlite3.Connection) -> None:
     conn.executescript(_DDL)
+    conn.execute(
+        """
+        INSERT OR IGNORE INTO player_transfer_value_history (
+            fpl_code, tm_id, observed_at, tm_value_eur,
+            tm_value_date, tm_value_imputed, source
+        )
+        SELECT fpl_code, tm_id, tm_fetched_at, tm_value_eur,
+               tm_value_date, tm_value_imputed, 'legacy_cache'
+        FROM player_transfer_values
+        WHERE fpl_code IS NOT NULL
+          AND tm_fetched_at IS NOT NULL
+          AND tm_value_eur IS NOT NULL
+          AND tm_value_imputed = 0
+        """
+    )
+    purge_imputed_transfer_values(conn)
     conn.commit()
+
+
+def purge_imputed_transfer_values(conn: sqlite3.Connection) -> int:
+    """Delete legacy synthetic values while retaining IDs for future retries."""
+    history_deleted = conn.execute(
+        'DELETE FROM player_transfer_value_history WHERE tm_value_imputed != 0'
+    ).rowcount
+    current_cleared = conn.execute(
+        """
+        UPDATE player_transfer_values SET
+            tm_value_eur = NULL,
+            tm_value_date = NULL,
+            tm_fetched_at = NULL,
+            tm_value_imputed = 0,
+            tm_retry = 1
+        WHERE tm_value_imputed != 0
+        """
+    ).rowcount
+    return int(history_deleted or 0) + int(current_cleared or 0)
+
+
+def record_transfer_value_snapshot(
+    conn: sqlite3.Connection,
+    source: str,
+    observed_at: str | None = None,
+) -> int:
+    """Append the current Transfermarkt values as a dated observation."""
+    ensure_table(conn)
+    observed_at = observed_at or datetime.utcnow().isoformat(timespec="seconds") + "Z"
+    before = conn.total_changes
+    conn.execute(
+        """
+        INSERT OR REPLACE INTO player_transfer_value_history (
+            fpl_code, tm_id, observed_at, tm_value_eur,
+            tm_value_date, tm_value_imputed, source
+        )
+        SELECT fpl_code, tm_id, ?, tm_value_eur,
+               tm_value_date, tm_value_imputed, ?
+        FROM player_transfer_values
+                WHERE fpl_code IS NOT NULL
+                    AND tm_value_eur IS NOT NULL
+                    AND tm_value_imputed = 0
+        """,
+        (observed_at, source),
+    )
+    conn.commit()
+    return conn.total_changes - before
 
 
 # ---------------------------------------------------------------------------
@@ -254,10 +335,8 @@ def refresh_transfer_values(
     - Stored value is only replaced if the new ``tm_value_date`` is strictly
       newer than what is already stored (or if no value was stored yet).
 
-    Fallback:
-    - Players whose Transfermarkt page returns no value receive the mean of
-      all successfully fetched values, and ``tm_retry = 1`` is set so every
-      subsequent training run retries them.
+        Players whose Transfermarkt page returns no value remain NULL and retain
+        ``tm_retry = 1`` so a subsequent training run can retry them.
     """
     ensure_table(conn)
 
@@ -287,7 +366,6 @@ def refresh_transfer_values(
         f"{len(to_fetch)} player(s)..."
     )
 
-    fetched_values: list[float] = []
     results: list[dict] = []
 
     for _, row in to_fetch.iterrows():
@@ -329,7 +407,6 @@ def refresh_transfer_values(
                     """,
                     (new_value, new_date, now, fpl_id),
                 )
-                fetched_values.append(new_value)
                 results.append(
                     {"fpl_id": fpl_id, "status": "updated", "value": new_value}
                 )
@@ -353,44 +430,33 @@ def refresh_transfer_values(
         conn.commit()
         time.sleep(_TM_SLEEP_SECONDS)
 
-    # Apply mean fallback to players with no value
     missing_ids = [r["fpl_id"] for r in results if r["status"] == "missing"]
     if missing_ids:
-        if fetched_values:
-            mean_val = sum(fetched_values) / len(fetched_values)
-        else:
-            # Fall back to mean of all stored non-imputed values in the table
-            cur = conn.execute(
-                "SELECT AVG(tm_value_eur) FROM player_transfer_values "
-                "WHERE tm_value_eur IS NOT NULL AND tm_value_imputed = 0"
-            )
-            mean_val = cur.fetchone()[0] or 0.0
-
         now = datetime.utcnow().isoformat(timespec="seconds") + "Z"
         for fpl_id in missing_ids:
             conn.execute(
                 """
                 UPDATE player_transfer_values SET
-                    tm_value_eur     = ?,
+                    tm_value_eur     = NULL,
                     tm_value_date    = NULL,
                     tm_fetched_at    = ?,
-                    tm_value_imputed = 1,
+                    tm_value_imputed = 0,
                     tm_retry         = 1
                 WHERE fpl_id = ?
                 """,
-                (mean_val, now, fpl_id),
+                (now, fpl_id),
             )
         conn.commit()
         print(
-            f"[transfer_values]   {len(missing_ids)} players had no TM data — "
-            f"assigned mean value (€{mean_val:,.0f}), tm_retry=1 set."
+            f"[transfer_values]   {len(missing_ids)} players had no real TM data; "
+            "left NULL with tm_retry=1."
         )
 
     updated = sum(1 for r in results if r["status"] == "updated")
     skipped = sum(1 for r in results if r["status"] == "skipped_stale")
     print(
         f"[transfer_values] Done: {updated} updated, "
-        f"{skipped} skipped (data not newer), {len(missing_ids)} imputed."
+        f"{skipped} skipped (data not newer), {len(missing_ids)} unavailable."
     )
 
 
@@ -408,8 +474,13 @@ def ensure_transfer_values(conn: sqlite3.Connection) -> None:
     """
     ensure_table(conn)
     ensure_tm_ids(conn)
-    if not refresh_transfer_values_from_bulk(conn):
+    historical_rows = refresh_transfer_value_history_from_bulk(conn)
+    print(f"[transfer_values] Historical valuations loaded: {historical_rows:,}")
+    if refresh_transfer_values_from_bulk(conn):
+        record_transfer_value_snapshot(conn, 'transfermarkt_bulk')
+    else:
         refresh_transfer_values(conn, force=False)
+        record_transfer_value_snapshot(conn, 'transfermarkt_profile')
 
 
 def refresh_transfer_values_from_bulk(conn: sqlite3.Connection) -> bool:
@@ -503,31 +574,73 @@ def refresh_transfer_values_from_bulk(conn: sqlite3.Connection) -> bool:
         )
         fallback_matches += 1
 
-    mean_value = conn.execute(
-        """
-        SELECT AVG(tm_value_eur) FROM player_transfer_values
-        WHERE tm_value_eur IS NOT NULL AND tm_value_imputed = 0
-        """
-    ).fetchone()[0]
-    if mean_value:
-        conn.execute(
-            """
-            UPDATE player_transfer_values SET
-                tm_value_eur = ?, tm_fetched_at = ?,
-                tm_value_imputed = 1, tm_retry = 1
-            WHERE tm_value_eur IS NULL
-            """,
-            (float(mean_value), now),
-        )
     conn.commit()
-    imputed = conn.execute(
-        "SELECT COUNT(*) FROM player_transfer_values WHERE tm_value_imputed = 1"
+    unavailable = conn.execute(
+        "SELECT COUNT(*) FROM player_transfer_values WHERE tm_value_eur IS NULL"
     ).fetchone()[0]
     print(
         f"[transfer_values] Bulk dataset updated {updated} mapped players, "
-        f"matched {fallback_matches} by DOB/name, imputed {imputed}."
+        f"matched {fallback_matches} by DOB/name, {unavailable} unavailable."
     )
     return updated + fallback_matches > 0
+
+
+def refresh_transfer_value_history_from_bulk(conn: sqlite3.Connection) -> int:
+    """Load real dated Transfermarkt valuation changes for mapped FPL players."""
+    ensure_table(conn)
+    response = requests.get(_BULK_VALUATIONS_URL, headers=_HEADERS, timeout=120)
+    response.raise_for_status()
+    valuations = pd.read_csv(
+        io.BytesIO(response.content),
+        compression='gzip',
+        usecols=['player_id', 'date', 'market_value_in_eur'],
+    )
+    mappings = pd.read_sql(
+        """
+        SELECT fpl_code, tm_id
+        FROM player_transfer_values
+        WHERE fpl_code IS NOT NULL AND tm_id IS NOT NULL
+        """,
+        conn,
+    )
+    mappings['player_id'] = pd.to_numeric(mappings['tm_id'], errors='coerce')
+    mappings = mappings.dropna(subset=['player_id']).copy()
+    mappings['player_id'] = mappings['player_id'].astype(int)
+    history = valuations.merge(mappings, on='player_id', how='inner')
+    history['date'] = pd.to_datetime(history['date'], errors='coerce')
+    history['market_value_in_eur'] = pd.to_numeric(
+        history['market_value_in_eur'], errors='coerce'
+    )
+    history = history.dropna(subset=['date', 'market_value_in_eur'])
+    history = history[history['market_value_in_eur'] > 0].drop_duplicates(
+        ['fpl_code', 'date'], keep='last'
+    )
+
+    # The dataset provides a date, not a publication timestamp. End-of-day is
+    # conservative: a same-day fixture cannot see a value published later.
+    records = [
+        (
+            int(row.fpl_code),
+            str(row.tm_id),
+            row.date.strftime('%Y-%m-%dT23:59:59Z'),
+            float(row.market_value_in_eur),
+            row.date.strftime('%Y-%m-%d'),
+            0,
+            'transfermarkt_historical_cc0',
+        )
+        for row in history.itertuples(index=False)
+    ]
+    conn.executemany(
+        """
+        INSERT OR REPLACE INTO player_transfer_value_history (
+            fpl_code, tm_id, observed_at, tm_value_eur,
+            tm_value_date, tm_value_imputed, source
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        """,
+        records,
+    )
+    conn.commit()
+    return len(records)
 
 
 def _normalize_name(value) -> str:
@@ -570,6 +683,82 @@ def load_transfer_values(conn: sqlite3.Connection) -> pd.DataFrame:
         lambda v: round(math.log10(max(v, 1.0)), 4) if v and v > 0 else 0.0
     )
     return df[["fpl_id", "tm_market_value", "tm_value_imputed"]]
+
+
+def load_transfer_value_history(conn: sqlite3.Connection) -> pd.DataFrame:
+    """Return dated, log-scaled Transfermarkt observations keyed by FPL code."""
+    ensure_table(conn)
+    df = pd.read_sql(
+        """
+        SELECT fpl_code, observed_at, tm_value_eur, tm_value_imputed, source
+        FROM player_transfer_value_history
+        WHERE tm_value_eur IS NOT NULL AND tm_value_imputed = 0
+        ORDER BY observed_at
+        """,
+        conn,
+    )
+    if df.empty:
+        return pd.DataFrame(columns=[
+            'fpl_code', 'observed_at', 'tm_market_value',
+            'tm_value_imputed', 'tm_value_source',
+        ])
+    df['tm_market_value'] = df['tm_value_eur'].apply(
+        lambda value: round(math.log10(max(value, 1.0)), 4)
+    )
+    return df.rename(columns={'source': 'tm_value_source'})[[
+        'fpl_code', 'observed_at', 'tm_market_value',
+        'tm_value_imputed', 'tm_value_source',
+    ]]
+
+
+def attach_transfer_values_asof(
+    rows: pd.DataFrame,
+    history: pd.DataFrame,
+) -> pd.DataFrame:
+    """Attach only Transfermarkt observations known by each row's kickoff."""
+    enriched = rows.copy()
+    enriched['tm_market_value'] = float('nan')
+    enriched['tm_value_imputed'] = 0
+    enriched['tm_value_source'] = 'unavailable_at_cutoff'
+    if history.empty or 'code' not in enriched.columns:
+        return enriched
+
+    left = enriched.reset_index(names='_original_index')
+    left['_asof_time'] = pd.to_datetime(left['kickoff_time'], errors='coerce', utc=True)
+    right = history.copy()
+    right['_observed_time'] = pd.to_datetime(
+        right['observed_at'], errors='coerce', utc=True
+    )
+    left['fpl_code'] = pd.to_numeric(left['code'], errors='coerce')
+    right['fpl_code'] = pd.to_numeric(right['fpl_code'], errors='coerce')
+    valid_left = left[left['_asof_time'].notna() & left['fpl_code'].notna()].copy()
+    valid_right = right[
+        right['_observed_time'].notna() & right['fpl_code'].notna()
+    ].copy()
+    if valid_left.empty or valid_right.empty:
+        return enriched
+
+    valid_left['fpl_code'] = valid_left['fpl_code'].astype(int)
+    valid_right['fpl_code'] = valid_right['fpl_code'].astype(int)
+    joined = pd.merge_asof(
+        valid_left.sort_values('_asof_time'),
+        valid_right.sort_values('_observed_time'),
+        left_on='_asof_time',
+        right_on='_observed_time',
+        by='fpl_code',
+        direction='backward',
+        suffixes=('', '_history'),
+    )
+    available = joined['tm_market_value_history'].notna()
+    for column in ('tm_market_value', 'tm_value_imputed', 'tm_value_source'):
+        history_column = f'{column}_history'
+        if history_column in joined.columns:
+            joined.loc[available, column] = joined.loc[available, history_column]
+    update = joined.set_index('_original_index')[[
+        'tm_market_value', 'tm_value_imputed', 'tm_value_source'
+    ]]
+    enriched.loc[update.index, update.columns] = update
+    return enriched
 
 
 # ---------------------------------------------------------------------------

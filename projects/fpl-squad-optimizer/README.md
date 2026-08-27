@@ -35,9 +35,9 @@ The average FPL manager scores roughly 50–55 points per game week. The best ma
 # 1. clone the FPL dataset and set up the venv
 ./setup.ps1
 
-# 2. train — fetches live EPL members, prunes non-EPL players from the DB,
-#    trains 4 XGBRegressors, saves models + EPL snapshot to models.joblib
-python train/train.py
+# 2. train — downloads every available live player-GW history and trains
+#    both model families from the same completed-Gameweek cutoff
+python train/train.py --model all
 
 # 3. run the web app
 python fpl-generator/web.py    # → http://localhost:5000
@@ -52,7 +52,7 @@ python simulations/simulate_season.py --test-from 15 --test-to 37
 
 ### Weekly workflow
 
-1. Run `python train/train.py` after the previous Gameweek finishes. The job
+1. Run `python train/train.py --model all` after the previous Gameweek finishes. The job
   supplements stale community data from the live FPL API, refreshes the current
   roster and prices, and retrains all four position models.
 2. Open `/generate-team`. The app loads the latest committed squad from SQLite,
@@ -105,7 +105,7 @@ price rules, and one active chip.
 |---|---|---|
 | [vaastav/Fantasy-Premier-League](https://github.com/vaastav/Fantasy-Premier-League) | Community-maintained archive of FPL player stats. The current season's per-player GW CSV files are the primary training rows; prior seasons contribute rolled-up history features (season-over-season trajectory via `history.csv`) | Primary training data — ingested into SQLite on first run; the FPL API supplements any GWs the submodule hasn't published yet |
 | [FPL Bootstrap API](https://fantasy.premierleague.com/api/bootstrap-static/) | Live player list with current status, injury news, price, and FPL's own expected-points estimate | Eligibility filtering at prediction time; prunes non-EPL players from training pool |
-| [Transfermarkt via Reep](https://github.com/withqwerty/reep) | Market value in EUR for each player, cross-referenced via FPL player code | Quality prior signal for the model — especially useful for injury returnees with sparse rolling stats |
+| [Transfermarkt historical dataset](https://github.com/dcaribou/transfermarkt-datasets) via [Reep](https://github.com/withqwerty/reep) | CC0 dated valuation changes in EUR, cross-referenced via stable FPL player code | Historical as-of quality prior; missing players remain unavailable and are never imputed |
 
 All three sources are free and require no authentication. The vaastav archive updates daily during the season; re-running `setup.ps1` + `train.py` picks up new data automatically.
 
@@ -113,11 +113,30 @@ All three sources are free and require no authentication. The vaastav archive up
 
 **Selection target:** predict each player's points in the *next* game week, rank the full pool by predicted points, then apply FPL squad constraints (£100M budget, 2GK+5DEF+5MID+3FWD squad, max 3 players per club) to pick the best 15. Starting XI is chosen by FPL formation rules (1GK, 3+ DEF, 2+ MID, 1+ FWD); the unconstrained flex slot is filled by the highest-scoring player regardless of position.
 
-**Models** — four XGBRegressors, one per position. Using separate models rather than a single model with a position feature eliminates cross-position noise (`saves` is always zero for outfield players; xGC is irrelevant for a striker). Target: `total_points` for the next game week.
+**Models** — choose XGBoost or a GRU RNN in the team-page dropdown. Each family has four position models. XGBoost scores the current pre-fixture feature row; the GRU consumes every chronologically ordered player-Gameweek row available from that player's earliest persisted observation through the current pre-fixture row. Both target that fixture row's `total_points`, whose rolling form fields were shifted before construction, and both checkpoints enforce the same latest-completed-Gameweek cutoff.
+
+Training writes `models.joblib` (XGBoost) and `models_rnn.joblib` (GRU), with environment-aware `models_current*` fallbacks. Each artifact persists its season, completed FPL Gameweek, internal cutoff, maximum training row, UTC FPL data timestamp, feature lists, FPL price coverage, Transfermarkt observation range/source, and recurrent sequence length.
+
+The model-ready temporal frame is persisted in SQLite as `model_feature_cache`, with source fingerprint and row/column audit data in `model_feature_cache_metadata`. Training and web inference reuse it while the underlying player-GW, roster, attribute, Transfermarkt, and refresh metadata remain unchanged; any source change invalidates and rebuilds the cache automatically. `rnn_sequence_index` records every training sample's player, first and last internal Gameweek, sequence length, cutoff, and `all_available` policy. GRU tensors are padded in memory so SQLite stays canonical and independent of a particular scaler or model checkpoint.
+
+Official FPL `value` exists on every historical player-Gameweek row. Transfermarkt valuation changes are loaded from the weekly CC0 `player_valuations` dataset and joined only when the valuation date is no later than the fixture kickoff. The upstream file provides dates rather than publication times, so values become available at end-of-day to prevent same-day lookahead. Players without a real dated valuation remain missing; no mean or synthetic value is used.
+
+`tm_market_value` and `tm_value_available` are direct inputs to every position model. The first is `log10(EUR)` only for a real dated valuation; the second is `1` when that value exists and `0` otherwise. Dense GRU tensors use a neutral standardized placeholder where the value is missing, but the availability mask tells the model that no Transfermarkt observation exists; the placeholder is never treated or persisted as a valuation.
 
 **Selection** — greedy by predicted points. Flex spots (positions not constrained by formation minimums) are filled by z-score within position (`predicted_points_norm`), so an exceptional defender is correctly preferred over an average forward for the last outfield slot.
 
 **Confidence margin** — each selected player shows their predicted points minus the next available player at the same position. Margin < 0.5 means the model was essentially guessing between two players.
+
+### Determinism
+
+For a frozen feature cache, checkpoint, eligibility response, and solver version,
+model scoring and squad generation are repeatable. XGBoost uses `random_state=42`,
+the GRU seeds NumPy and PyTorch with `42`, canonical player/Gameweek ordering is
+stable, and the MILP receives the same candidate order and objective. Live FPL or
+Transfermarkt changes intentionally invalidate the cache and may produce a new
+team after retraining. Exact score ties or a MILP run that reaches its 10-second
+time limit can also admit a different equally valid squad, so determinism is an
+input-and-environment contract rather than a promise that the team never changes.
 
 ## Features and why we chose them
 
@@ -348,30 +367,34 @@ refreshed every 7 days. ~95% of EPL players have a Transfermarkt ID in Reep.
 | `tm_value_eur` | REAL | Market value in EUR |
 | `tm_value_date` | TEXT | ISO date of Transfermarkt's own "last updated" stamp |
 | `tm_fetched_at` | TEXT | ISO datetime when we last fetched from Transfermarkt |
-| `tm_value_imputed` | INTEGER | 1 if value was imputed (mean fallback, no TM data found) |
+| `tm_value_imputed` | INTEGER | Legacy compatibility flag; production rows must always be `0` |
 | `tm_retry` | INTEGER | 1 = re-attempt fetch on every subsequent training run |
 
 ### Refresh logic (`transfer_values.py`)
 
 `ensure_transfer_values(conn)` is called automatically by `train.py` after
-`ensure_new_players()`. It performs two steps:
+`ensure_new_players()`. It performs three steps:
 
 **Step 1 — ID population (`ensure_tm_ids`):**
 Loads Reep `data/people.csv`, builds a `fpl_code → tm_id` lookup, and upserts
 Transfermarkt IDs for all players in `players_raw`. No network calls for players
 whose `tm_id` is already set and non-null.
 
-**Step 2 — Value refresh (`refresh_transfer_values`):**
+**Step 2 — Historical valuation refresh (`refresh_transfer_value_history_from_bulk`):**
+- Downloads the weekly CC0 `player_valuations.csv.gz` publication.
+- Keeps only mapped Transfermarkt player IDs and real positive EUR values.
+- Persists every dated valuation change in `player_transfer_value_history`.
+- Converts dates to conservative end-of-day timestamps for leakage-safe joins.
+
+**Step 3 — Current value refresh (`refresh_transfer_values`):**
 - Default mode (no flag): fetches only players where `tm_fetched_at IS NULL`
   or `tm_retry = 1`. Skips players with fresh data.
 - `--force` CLI flag: re-fetches **all** players regardless of cached date.
 - Per-player cadence: 1 second sleep between requests (polite crawl rate).
 - **Only updates stored value if the new `tm_value_date` is strictly newer
   than what is already stored** — avoids regressing to stale data.
-- **Fallback for missing data**: if Transfermarkt returns no value (player not
-  found or blocked), assigns the mean `tm_value_eur` of all players who do have
-  a value, sets `tm_value_imputed = 1` and `tm_retry = 1` so every subsequent
-  training run retries the live fetch until real data is found.
+- **No fallback for missing data**: unavailable values remain `NULL` with
+  `tm_retry = 1`; no mean, zero, or other synthetic market value is stored.
 
 ### CLI
 

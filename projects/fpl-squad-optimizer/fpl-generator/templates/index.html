@@ -439,6 +439,12 @@
     .manager-status.error { color: #ff7777; }
     .manager-status.success { color: #70e85a; }
     .dirty-dot { color: #ffd700; }
+    .model-control {
+      display: flex; align-items: center; gap: 0.35rem; color: var(--muted);
+      font-size: 0.65rem; white-space: nowrap;
+    }
+    .model-control select { min-height: 26px; font-weight: 700; }
+    .model-cutoff { color: rgba(255,255,255,0.48); font-size: 0.6rem; }
   </style>
 </head>
 <body>
@@ -450,6 +456,11 @@
     <span id="mode-badge" class="mode-badge"></span>
   </div>
   <div class="pills" id="pills"></div>
+  <label class="model-control" for="model-select">
+    Model
+    <select id="model-select" title="Prediction model"></select>
+    <span class="model-cutoff" id="model-cutoff"></span>
+  </label>
   <a href="/performance-review"
      style="font-size:0.7rem;color:var(--muted);text-decoration:none;
             border:1px solid var(--border);padding:0.18rem 0.65rem;
@@ -626,6 +637,20 @@
 const D = {{ data|safe }};
 let squadState = structuredClone(D.state);
 let dirty = false;
+
+const modelLabels = { xgboost: 'XGBoost', rnn: 'GRU RNN' };
+const modelSelect = document.getElementById('model-select');
+modelSelect.innerHTML = D.available_models.map(model =>
+  `<option value="${model}" ${model === D.model_type ? 'selected' : ''}>${modelLabels[model] || model}</option>`
+).join('');
+modelSelect.addEventListener('change', event => {
+  const params = new URLSearchParams(window.location.search);
+  params.set('model', event.target.value);
+  window.location.assign(`/generate-team?${params.toString()}`);
+});
+const manifest = D.training_manifest || {};
+document.getElementById('model-cutoff').textContent =
+  `through GW${manifest.latest_completed_game_week ?? '?'} · ${manifest.fpl_data_cutoff || 'date unavailable'}`;
 
 // ── helpers ────────────────────────────────────────────────────────────────
 

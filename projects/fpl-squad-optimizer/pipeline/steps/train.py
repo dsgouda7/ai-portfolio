@@ -2,8 +2,8 @@
 Pipeline Step 2 — Train
 =======================
 Reads the SQLite database produced by the ingest step, builds rolling
-features, trains four XGBRegressors (one per position), and writes
-models + metrics to a joblib checkpoint.
+features, trains selectable XGBoost and/or GRU position models, and writes
+separate joblib checkpoints with temporal cutoff manifests.
 
 I/O contract (env vars)
 -----------------------
@@ -26,42 +26,35 @@ Container run:
     -v pipeline_data:/data \\
     fpl-train
 """
+import argparse
+import os
 import pathlib
-import sqlite3
 import sys
-
-import joblib
 
 # Make project root importable regardless of cwd
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent.parent))
 
-from utils import (
-    DB_FILE, MODELS_FILE, GAME_WEEK,
-    POS_FEATURES, MODEL_NAMES,
-    MARKET_VALUE_WEIGHT_PL_HISTORY, MARKET_VALUE_WEIGHT_NO_HISTORY,
-    build_features, register_trained_players, refresh_current_roster,
-)
+from utils import DB_FILE, build_features, get_runtime_context, register_trained_players
 from eligibility import get_epl_members
-from transfer_values import ensure_transfer_values
-from train.trainer import train_models
+from feature_cache import load_or_build_feature_cache
+from train.model_training import train_and_save_models
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--model', choices=('xgboost', 'rnn', 'all'),
+        default=os.environ.get('FPL_MODEL_TYPE', 'all'),
+    )
+    args = parser.parse_args()
     print(f"[train] DB          : {DB_FILE}")
-    print(f"[train] Models out  : {MODELS_FILE}")
-
-    # Ensure the output directory exists
-    pathlib.Path(MODELS_FILE).parent.mkdir(parents=True, exist_ok=True)
 
     # Step 2a — build rolling features from the DB
     print("[train] Building features …")
-    all_data = build_features(DB_FILE)
+    all_data, cache_hit = load_or_build_feature_cache(DB_FILE, build_features)
+    print(f"[train] Feature cache: {'hit' if cache_hit else 'rebuilt in SQLite'}")
 
-    # Step 2b — train one XGBRegressor per position
-    print("[train] Training XGBoost models (one per position) …")
-    models, metrics = train_models(all_data, GAME_WEEK)
-
-    # Step 2c — snapshot the current EPL member set for inference-time filtering
+    # Step 2b — snapshot the current EPL member set for inference-time filtering
     try:
         epl_members = get_epl_members()
         print(f"[train] EPL snapshot: {len(epl_members)} players")
@@ -69,46 +62,19 @@ def main() -> None:
         print(f"[train] Warning: EPL snapshot failed ({exc}) — saving without")
         epl_members = None
 
-    # Step 2d — build per-position feature metadata for the validation report
-    feature_metadata = {
-        pos: {
-            'features':     POS_FEATURES[pos],
-            'importances':  dict(zip(
-                POS_FEATURES[pos],
-                models[pos].feature_importances_.tolist(),
-            )),
-            'top_feature':  POS_FEATURES[pos][
-                models[pos].feature_importances_.argmax()
-            ],
-        }
-        for pos in models
-    }
-
-    # Step 2e — persist everything in a single joblib checkpoint
-    joblib.dump({
-        'models':           models,
-        'metrics':          metrics,
-        'epl_members':      epl_members,
-        'model_names':      MODEL_NAMES,
-        'pos_features':     {pos: list(feats) for pos, feats in POS_FEATURES.items()},
-        'market_value_weights': {
-            'pl_history': MARKET_VALUE_WEIGHT_PL_HISTORY,
-            'no_pl_history': MARKET_VALUE_WEIGHT_NO_HISTORY,
-            'imputed': 0.0,
-        },
-        'feature_metadata': feature_metadata,
-    }, MODELS_FILE)
-    print(f"[train] Saved to {MODELS_FILE}")
+    runtime = get_runtime_context(DB_FILE)
+    train_and_save_models(
+        all_data,
+        runtime['completed_internal_index'],
+        args.model,
+        epl_members,
+        DB_FILE,
+    )
 
     # Step 2f — record which players were in this training run (used by ingest
     #           to identify new arrivals that need GW history backfilled)
     register_trained_players(DB_FILE, all_data)
 
-    rollover = refresh_current_roster(DB_FILE)
-    if rollover.get('rolled_over'):
-        print(f"[train] Current roster snapshot: {rollover}")
-        with sqlite3.connect(DB_FILE) as conn:
-            ensure_transfer_values(conn)
     print("[train] Done.")
 
 

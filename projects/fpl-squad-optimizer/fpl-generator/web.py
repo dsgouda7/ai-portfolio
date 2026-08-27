@@ -20,12 +20,18 @@ from flask import Flask, jsonify, render_template, request
 from scipy.optimize import Bounds, LinearConstraint, milp
 
 from utils import (
-    DB_FILE, MODELS_FILE, GAME_WEEK, SEASON, POS_FEATURES,
+    DB_FILE,
     MAX_PLAYERS_PER_TEAM, MAX_SPEND,
     build_features, normalize_pool_scores, apply_market_value_weighting,
     load_squad, score_squad_from_pool, pick_starting_xi,
     suggest_transfer, find_ineligible_replacements, get_runtime_context,
 )
+from model_registry import (
+    available_model_artifacts,
+    score_checkpoint_snapshot,
+    validate_checkpoint_cutoff,
+)
+from feature_cache import load_or_build_feature_cache
 from eligibility import get_eligibility, _DEFAULT as ELIG_DEFAULT, _ABSENT as ELIG_ABSENT, player_name_key
 from squad_state import (
     SquadValidationError,
@@ -78,25 +84,6 @@ POS_STATS = {
             'roll5_expected_goals', 'roll5_expected_assists',
             'roll5_threat', 'roll5_bonus', 'roll5_total_points'],
 }
-
-
-def build_pool(df, models, game_week):
-    """
-    Score every player using their position-specific model and feature set.
-    Adds ``predicted_points_norm``: z-score within each position group,
-    enabling cross-position (uber-model) comparison for flex formation slots.
-    """
-    snapshot = df[df['Game_Week'] == game_week - 1].copy()
-    parts = []
-    for pos, model in models.items():
-        pos_players = snapshot[snapshot['element_type'] == pos].copy()
-        if pos_players.empty:
-            continue
-        X = pos_players[POS_FEATURES[pos]].fillna(0)
-        pos_players['predicted_points'] = model.predict(X)
-        parts.append(pos_players)
-    pool = apply_market_value_weighting(pd.concat(parts, ignore_index=True))
-    return normalize_pool_scores(pool)
 
 
 def select_squad(pool, structure, max_per_team, max_spend):
@@ -304,7 +291,8 @@ def index():
             'then run train.py which ingests the data automatically.',
             '.\\setup.ps1\n.venv\\Scripts\\python.exe train\\train.py',
         )
-    if not os.path.exists(MODELS_FILE):
+    artifacts = available_model_artifacts()
+    if not artifacts:
         return _setup_error(
             'Models not trained',
             'No trained models found. models.joblib is created by the training script. '
@@ -312,15 +300,18 @@ def index():
             '.venv\\Scripts\\python.exe train\\train.py',
         )
 
-    checkpoint  = joblib.load(MODELS_FILE)
-    models_map  = checkpoint['models']
+    requested_model = request.args.get('model', 'xgboost').lower()
+    if requested_model not in artifacts:
+        requested_model = next(iter(artifacts))
+    checkpoint = joblib.load(artifacts[requested_model])
+    validate_checkpoint_cutoff(checkpoint)
     metrics     = checkpoint['metrics']
     epl_members: frozenset | None = checkpoint.get('epl_members')
 
     runtime = get_runtime_context(DB_FILE)
-    all_data  = build_features(DB_FILE)
-    full_pool = build_pool(
-        all_data, models_map, runtime['snapshot_game_week'] + 1
+    all_data, _ = load_or_build_feature_cache(DB_FILE, build_features)
+    full_pool = score_checkpoint_snapshot(
+        all_data, checkpoint, runtime['snapshot_game_week']
     )
 
     # --- tier 1: EPL membership filter ---
@@ -478,6 +469,9 @@ def index():
 
     payload = {
         'game_week':        runtime['target_game_week'],
+        'model_type':       requested_model,
+        'available_models': list(artifacts),
+        'training_manifest': checkpoint['training_manifest'],
         'gw_saved':         gw_saved,
         'squad_mode':       squad_mode,
         'formation':        formation,
@@ -679,8 +673,8 @@ def validation_report():
         })
 
     model_info = {
-        'algorithm':  'XGBoost — 4 separate XGBRegressors (one per position)',
-        'target':     'next-GW total_points per player',
+        'algorithm':  'Selectable XGBoost or GRU RNN — 4 position models',
+        'target':     'fixture-row total_points from pre-fixture features',
         'training':   '14 GWs of 2025-26 season data (GW 1–14); ~8,400 player-GW rows',
         'eval_metric': 'Spearman ρ (ranking accuracy) + RMSE',
         'features': {
@@ -701,6 +695,7 @@ def validation_report():
         },
         'notes': [
             '5-GW rolling windows — always shifted 1 GW before windowing (no leakage)',
+            'GRU sequences are ordered by player and capped at the same completed-GW cutoff as XGBoost',
             'ict_index excluded (linear combination of sub-features already present)',
             'form_data_density = roll5_minutes / 450 — quantifies data sparsity for injury returnees',
             'tm_market_value_x_sparsity = market_value × (1 − density) — quality prior for sparse players',

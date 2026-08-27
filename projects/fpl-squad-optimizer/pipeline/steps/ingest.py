@@ -33,7 +33,6 @@ import pathlib
 import sqlite3
 import sys
 
-import pandas as pd
 import requests
 
 # Make project root importable regardless of cwd
@@ -42,7 +41,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent.parent.parent))
 from utils import (
     DB_FILE, PLAYERS_DIR, RAW_DATA_PATH, GAME_WEEK, SEASON,
     FPL_API_BASE,
-    ingest, supplement_gw_from_api,
+    ingest, refresh_live_season_data,
 )
 from eligibility import get_epl_members
 from player_attributes import ensure_new_players
@@ -69,22 +68,22 @@ def main() -> None:
     # Step 1b — ingest vaastav CSVs into SQLite
     ingest(PLAYERS_DIR, RAW_DATA_PATH, DB_FILE, epl_members=epl_members)
 
-    # Step 1c — supplement any GWs vaastav hasn't published yet via FPL API
+    # Step 1c — replace the current-season slice with every player-GW row
+    # available from the live FPL API and append a separate future snapshot.
     try:
-        events = requests.get(
-            f'{FPL_API_BASE}/bootstrap-static/', timeout=20
-        ).json().get('events', [])
-        finished = [e['id'] for e in events if e.get('finished')]
-        live_gw = max(finished) if finished else GAME_WEEK
-        if live_gw > GAME_WEEK:
-            print(f"  Vaastav is {live_gw - GAME_WEEK} GW(s) stale — supplementing from FPL API …")
-            with sqlite3.connect(DB_FILE) as conn:
-                pids = pd.read_sql("SELECT id FROM players_raw", conn)['id'].tolist()
-            supplement_gw_from_api(DB_FILE, pids)
-        else:
-            print(f"  Vaastav is current (GW {GAME_WEEK}).")
+        response = requests.get(f'{FPL_API_BASE}/bootstrap-static/', timeout=20)
+        response.raise_for_status()
+        refresh = refresh_live_season_data(DB_FILE, response.json())
+        print(
+            f"  Live FPL history: {refresh.get('live_rows', 0):,} rows; "
+            f"completed cutoff={refresh.get('completed_internal_index')}; "
+            f"snapshot={refresh.get('snapshot_game_week')}"
+        )
     except Exception as exc:
-        print(f"  Warning: API supplement failed ({exc}) — continuing with vaastav data only")
+        raise RuntimeError(
+            'Full live FPL history refresh failed; refusing to train from a '
+            'partial or ambiguously dated dataset.'
+        ) from exc
 
     # Step 1d — enrich with SOFIFA player attributes (no-ops for cached players)
     with sqlite3.connect(DB_FILE) as conn:

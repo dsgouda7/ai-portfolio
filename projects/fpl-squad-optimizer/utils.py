@@ -4,6 +4,7 @@ import pathlib
 import re
 import sqlite3
 from collections import Counter
+from contextlib import closing
 
 import pandas as pd
 import requests
@@ -143,6 +144,7 @@ POS_FEATURES = {
         'roll5_bonus', 'roll5_influence',
         'roll5_starts', 'roll5_yellow_cards', 'roll5_red_cards',
         'was_home', 'value', 'opponent_team', 'team',
+        'tm_market_value', 'tm_value_available',
         'form_data_density',           # fraction of last 5 GWs played (0=none, 1=all)
         'player_age_years',            # fractional age at kickoff date
         # Season-over-season trajectory
@@ -158,6 +160,7 @@ POS_FEATURES = {
         'roll5_bonus', 'roll5_starts',
         'roll5_yellow_cards', 'roll5_red_cards',
         'was_home', 'value', 'opponent_team', 'team',
+        'tm_market_value', 'tm_value_available',
         'form_data_density',           # fraction of last 5 GWs played (0=none, 1=all)
         'player_age_years',            # fractional age at kickoff date
         # Season-over-season trajectory
@@ -173,6 +176,7 @@ POS_FEATURES = {
         'roll5_bonus', 'roll5_starts',
         'roll5_yellow_cards', 'roll5_red_cards',
         'was_home', 'value', 'opponent_team', 'team',
+        'tm_market_value', 'tm_value_available',
         'form_data_density',           # fraction of last 5 GWs played (0=none, 1=all)
         'player_age_years',            # fractional age at kickoff date
         # Season-over-season trajectory
@@ -188,6 +192,7 @@ POS_FEATURES = {
         'roll5_bonus', 'roll5_starts',
         'roll5_yellow_cards', 'roll5_red_cards',
         'was_home', 'value', 'opponent_team', 'team',
+        'tm_market_value', 'tm_value_available',
         'form_data_density',           # fraction of last 5 GWs played (0=none, 1=all)
         'player_age_years',            # fractional age at kickoff date
         # Season-over-season trajectory
@@ -201,6 +206,7 @@ POS_FEATURES = {
 # ea_* columns are a placeholder (SOFIFA blocked); tm_* columns are active.
 ATTR_COLS: list[str] = [
     'tm_market_value',          # log10(EUR) from Transfermarkt via Reep ID bridge
+    'tm_value_available',       # 1 only when a real dated valuation exists
     'tm_market_value_x_sparsity',  # tm_market_value * (1 - form_data_density)
                                     # Amplifies TM signal when rolling stats are thin
     'form_data_density',        # roll5_minutes / (FORM_WINDOW*90); 0=no recent
@@ -234,6 +240,21 @@ FPL_API_BASE = 'https://fantasy.premierleague.com/api'
 def _table_exists(conn, name):
     cur = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (name,))
     return cur.fetchone() is not None
+
+
+def _season_from_events(events: list[dict]) -> str:
+    """Derive an FPL season label from the first available event deadline."""
+    deadlines = pd.to_datetime(
+        [event.get('deadline_time') for event in events if event.get('deadline_time')],
+        errors='coerce',
+        utc=True,
+    )
+    deadlines = deadlines[~pd.isna(deadlines)]
+    if len(deadlines) == 0:
+        return SEASON
+    first = min(deadlines)
+    start_year = first.year if first.month >= 7 else first.year - 1
+    return f'{start_year}-{str(start_year + 1)[-2:]}'
 
 
 def ingest(players_dir, raw_data_path, db_file, epl_members=None):
@@ -346,7 +367,7 @@ def refresh_current_roster(db_file: str, bootstrap: dict = None, fixtures: list 
     ].copy()
     current['code'] = current['code'].astype(int)
     current['id'] = current['id'].astype(int)
-    for column in current.select_dtypes(include='object').columns:
+    for column in current.select_dtypes(include=['object', 'str']).columns:
         current[column] = current[column].map(
             lambda value: json.dumps(value)
             if isinstance(value, (dict, list)) else value
@@ -366,7 +387,7 @@ def refresh_current_roster(db_file: str, bootstrap: dict = None, fixtures: list 
         fixture_by_team[home] = (away, True, fixture.get('kickoff_time'))
         fixture_by_team[away] = (home, False, fixture.get('kickoff_time'))
 
-    with sqlite3.connect(db_file) as conn:
+    with closing(sqlite3.connect(db_file)) as conn:
         old_raw = pd.read_sql('SELECT * FROM players_raw', conn)
         old_gw = pd.read_sql('SELECT * FROM player_gw', conn)
         if _table_exists(conn, 'app_metadata'):
@@ -442,7 +463,11 @@ def refresh_current_roster(db_file: str, bootstrap: dict = None, fixtures: list 
         pd.DataFrame([
             {'key': 'season', 'value': current_season},
             {'key': 'target_game_week', 'value': str(int(target_event['id']))},
+            {'key': 'latest_completed_game_week', 'value': '0'},
+            {'key': 'live_start_index', 'value': str(snapshot_index)},
+            {'key': 'completed_internal_index', 'value': str(snapshot_index - 1)},
             {'key': 'snapshot_game_week', 'value': str(snapshot_index)},
+            {'key': 'fpl_refreshed_at', 'value': pd.Timestamp.now(tz='UTC').isoformat()},
         ]).to_sql('app_metadata', conn, if_exists='replace', index=False)
 
     return {
@@ -457,23 +482,243 @@ def refresh_current_roster(db_file: str, bootstrap: dict = None, fixtures: list 
     }
 
 
+def refresh_live_season_data(
+    db_file: str,
+    bootstrap: dict = None,
+) -> dict:
+    """Download all current-season player-GW rows and create the next snapshot.
+
+    Prior-season rows are retained as sequence context and remapped through the
+    stable FPL ``code``. Current-season rows replace only the previous live
+    snapshot/current-season slice. The returned internal indexes deliberately
+    separate the latest completed row from the future inference snapshot.
+    """
+    if bootstrap is None:
+        response = requests.get(f'{FPL_API_BASE}/bootstrap-static/', timeout=30)
+        response.raise_for_status()
+        bootstrap = response.json()
+
+    events = bootstrap.get('events', [])
+    current_season = _season_from_events(events)
+    completed_events = [
+        int(event['id']) for event in events
+        if event.get('finished') and event.get('data_checked')
+    ]
+    latest_completed = max(completed_events) if completed_events else 0
+    target_event = next(
+        (event for event in events if int(event['id']) == latest_completed + 1),
+        None,
+    )
+    if target_event is None:
+        target_event = next((event for event in events if not event.get('finished')), None)
+    if target_event is None:
+        return {'refreshed': False, 'reason': 'no future FPL event is available'}
+
+    current = pd.DataFrame(bootstrap.get('elements', []))
+    if current.empty:
+        raise ValueError('FPL bootstrap response contained no players')
+    current = current[current['code'].notna()].copy()
+    current['id'] = current['id'].astype(int)
+    current['code'] = current['code'].astype(int)
+    for column in current.select_dtypes(include=['object', 'str']).columns:
+        current[column] = current[column].map(
+            lambda value: json.dumps(value) if isinstance(value, (dict, list)) else value
+        )
+
+    with closing(sqlite3.connect(db_file)) as conn:
+        old_raw = pd.read_sql('SELECT * FROM players_raw', conn)
+        old_gw = pd.read_sql('SELECT * FROM player_gw', conn)
+        metadata = (
+            dict(conn.execute('SELECT key, value FROM app_metadata').fetchall())
+            if _table_exists(conn, 'app_metadata') else {}
+        )
+
+    if 'live_start_index' in metadata:
+        historical_boundary = int(metadata['live_start_index'])
+    elif 'snapshot_game_week' in metadata:
+        # A preseason rollover snapshot follows retained prior-season rows.
+        historical_boundary = int(metadata['snapshot_game_week'])
+    elif SEASON == current_season:
+        # Fresh in-season ingest: archive rows and API rows describe the same
+        # season, so the live API must replace rather than duplicate them.
+        historical_boundary = 0
+    else:
+        historical_boundary = (
+            int(old_gw['Game_Week'].max()) + 1 if not old_gw.empty else 0
+        )
+    historical = old_gw[old_gw['Game_Week'] < historical_boundary].copy()
+
+    old_id_to_code = dict(zip(old_raw['id'].astype(int), old_raw['code'].astype(int)))
+    code_to_current_id = dict(zip(current['code'], current['id']))
+    historical['player_id'] = historical['player_id'].map(
+        lambda old_id: code_to_current_id.get(old_id_to_code.get(int(old_id)))
+    )
+    historical = historical[historical['player_id'].notna()].copy()
+    historical['player_id'] = historical['player_id'].astype(int)
+    if 'element' in historical.columns:
+        historical['element'] = historical['player_id']
+
+    live_start_index = (
+        int(historical['Game_Week'].max()) + 1 if not historical.empty else 0
+    )
+    frames = []
+    failed_player_ids = []
+    for player_id in current['id'].tolist():
+        for attempt in range(3):
+            try:
+                response = requests.get(
+                    f'{FPL_API_BASE}/element-summary/{player_id}/', timeout=20
+                )
+                response.raise_for_status()
+                rows = response.json().get('history', [])
+                if not rows:
+                    break
+                player_history = pd.DataFrame(rows)
+                player_history = player_history[
+                    player_history['round'].astype(int) <= latest_completed
+                ].copy()
+                if player_history.empty:
+                    break
+                player_history['player_id'] = int(player_id)
+                player_history['Game_Week'] = (
+                    live_start_index + player_history['round'].astype(int) - 1
+                )
+                for column in ('ict_index', 'creativity', 'threat', 'influence'):
+                    if column in player_history.columns:
+                        player_history[column] = pd.to_numeric(
+                            player_history[column], errors='coerce'
+                        )
+                frames.append(player_history)
+                break
+            except (requests.RequestException, ValueError, KeyError, TypeError):
+                if attempt == 2:
+                    failed_player_ids.append(int(player_id))
+
+    if failed_player_ids:
+        raise RuntimeError(
+            'Incomplete FPL history download after three attempts for player IDs: '
+            + ', '.join(map(str, failed_player_ids[:20]))
+        )
+
+    live_history = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
+    downloaded_rounds = (
+        set(live_history['round'].astype(int)) if not live_history.empty else set()
+    )
+    missing_rounds = set(completed_events) - downloaded_rounds
+    if missing_rounds:
+        raise RuntimeError(
+            'FPL history download is missing completed Gameweeks: '
+            + ', '.join(map(str, sorted(missing_rounds)))
+        )
+    completed_internal_index = (
+        live_start_index + latest_completed - 1 if latest_completed else live_start_index - 1
+    )
+    snapshot_index = completed_internal_index + 1
+
+    fixture_response = requests.get(
+        f"{FPL_API_BASE}/fixtures/?event={int(target_event['id'])}", timeout=30
+    )
+    fixture_response.raise_for_status()
+    fixture_by_team = {}
+    for fixture in fixture_response.json():
+        home, away = int(fixture['team_h']), int(fixture['team_a'])
+        fixture_by_team[home] = (away, True, fixture.get('kickoff_time'))
+        fixture_by_team[away] = (home, False, fixture.get('kickoff_time'))
+
+    columns = list(old_gw.columns)
+    for column in live_history.columns:
+        if column not in columns:
+            columns.append(column)
+    active = current[
+        current.get('status', pd.Series('a', index=current.index)).ne('u')
+        & ~current.get('removed', pd.Series(False, index=current.index)).fillna(False)
+    ]
+    snapshot_rows = []
+    for player in active.to_dict('records'):
+        row = {column: 0 for column in columns}
+        opponent, was_home, kickoff = fixture_by_team.get(
+            int(player['team']), (0, False, target_event.get('deadline_time'))
+        )
+        row.update({
+            'element': int(player['id']),
+            'player_id': int(player['id']),
+            'Game_Week': snapshot_index,
+            'round': int(target_event['id']),
+            'fixture': 0,
+            'kickoff_time': kickoff or target_event.get('deadline_time'),
+            'opponent_team': opponent,
+            'was_home': was_home,
+            'value': int(player.get('now_cost') or 0),
+            'modified': False,
+        })
+        snapshot_rows.append(row)
+    snapshot = pd.DataFrame(snapshot_rows, columns=columns)
+
+    combined = pd.concat(
+        [historical, live_history, snapshot], ignore_index=True, sort=False
+    ).reindex(columns=columns)
+    for column in current.columns:
+        if column not in old_raw.columns:
+            old_raw[column] = None
+
+    metadata_rows = [
+        {'key': 'season', 'value': current_season},
+        {'key': 'latest_completed_game_week', 'value': str(latest_completed)},
+        {'key': 'target_game_week', 'value': str(int(target_event['id']))},
+        {'key': 'live_start_index', 'value': str(live_start_index)},
+        {'key': 'completed_internal_index', 'value': str(completed_internal_index)},
+        {'key': 'snapshot_game_week', 'value': str(snapshot_index)},
+        {'key': 'fpl_refreshed_at', 'value': pd.Timestamp.now(tz='UTC').isoformat()},
+    ]
+    with closing(sqlite3.connect(db_file)) as conn:
+        current.to_sql('players_raw', conn, if_exists='replace', index=False)
+        combined.to_sql('player_gw', conn, if_exists='replace', index=False)
+        pd.DataFrame(metadata_rows).to_sql(
+            'app_metadata', conn, if_exists='replace', index=False
+        )
+        conn.commit()
+
+    return {
+        'refreshed': True,
+        'season': current_season,
+        'latest_completed_game_week': latest_completed,
+        'target_game_week': int(target_event['id']),
+        'live_start_index': live_start_index,
+        'completed_internal_index': completed_internal_index,
+        'snapshot_game_week': snapshot_index,
+        'players': len(current),
+        'snapshot_players': len(active),
+        'live_rows': len(live_history),
+    }
+
+
 def get_runtime_context(db_file: str) -> dict:
     """Return the season, displayed GW, and internal inference snapshot index."""
     context = {
         'season': SEASON,
         'target_game_week': GAME_WEEK,
         'snapshot_game_week': GAME_WEEK - 1,
+        'completed_internal_index': GAME_WEEK - 1,
+        'latest_completed_game_week': GAME_WEEK,
     }
     try:
-        with sqlite3.connect(db_file) as conn:
+        with closing(sqlite3.connect(db_file)) as conn:
             metadata = dict(conn.execute('SELECT key, value FROM app_metadata').fetchall())
+        target_game_week = int(metadata.get(
+            'target_game_week', context['target_game_week']
+        ))
+        snapshot_game_week = int(metadata.get(
+            'snapshot_game_week', context['snapshot_game_week']
+        ))
         context.update({
             'season': metadata.get('season', context['season']),
-            'target_game_week': int(metadata.get(
-                'target_game_week', context['target_game_week']
+            'target_game_week': target_game_week,
+            'snapshot_game_week': snapshot_game_week,
+            'completed_internal_index': int(metadata.get(
+                'completed_internal_index', snapshot_game_week - 1
             )),
-            'snapshot_game_week': int(metadata.get(
-                'snapshot_game_week', context['snapshot_game_week']
+            'latest_completed_game_week': int(metadata.get(
+                'latest_completed_game_week', max(0, target_game_week - 1)
             )),
         })
     except (sqlite3.Error, TypeError, ValueError):
@@ -487,11 +732,12 @@ def build_features(db_file):
 
     Roll stats are shifted by 1 before windowing so target-GW data never
     leaks into the features. Returns one row per (player, GW) with a
-    'target' column containing next-GW total_points.
+    'target' column containing that row's total_points. The rolling inputs are
+    shifted, so they contain only information available before that fixture.
     """
     conn = sqlite3.connect(db_file)
     raw = pd.read_sql(
-        "SELECT element_type, team, second_name, first_name, id, birth_date FROM players_raw",
+        "SELECT element_type, team, second_name, first_name, id, code, birth_date FROM players_raw",
         conn,
     )
     all_gw = pd.read_sql("SELECT * FROM player_gw", conn)
@@ -521,10 +767,10 @@ def build_features(db_file):
     except Exception:
         attr_df = pd.DataFrame()  # table not yet created -- graceful degradation
 
-    # Join Transfermarkt market values (log-scaled EUR).
+    # Load dated Transfermarkt values for a leakage-safe as-of join below.
     try:
-        from transfer_values import load_transfer_values
-        tm_df = load_transfer_values(conn)
+        from transfer_values import load_transfer_value_history
+        tm_df = load_transfer_value_history(conn)
     except Exception:
         tm_df = pd.DataFrame()  # module or table not yet available
 
@@ -551,7 +797,10 @@ def build_features(db_file):
             .transform(lambda x: x.shift(1).rolling(FORM_WINDOW, min_periods=1).mean())
         )
 
-    df['target'] = df.groupby('id')['total_points'].shift(-1)
+    # Rolling form is already shifted one row, while fixture, opponent and
+    # price belong to this row. The prediction target is therefore this GW's
+    # points. An additional shift would pair GW t context with GW t+1 results.
+    df['target'] = df['total_points']
 
     # Compute player_age_years: fractional age at each GW's kickoff date.
     # birth_date is 'YYYY-MM-DD'; kickoff_time is 'YYYY-MM-DDThh:mm:ssZ'.
@@ -571,24 +820,25 @@ def build_features(db_file):
         df = df.merge(attr_df, left_on='id', right_on='fpl_id', how='left')
         df.drop(columns=['fpl_id'], errors='ignore', inplace=True)
 
-    # Attach Transfermarkt market value (one row per player)
-    if not tm_df.empty:
-        df = df.merge(tm_df, left_on='id', right_on='fpl_id', how='left')
-        df.drop(columns=['fpl_id'], errors='ignore', inplace=True)
+    # Attach only values observed on or before each fixture's kickoff time.
+    from transfer_values import attach_transfer_values_asof
+    df = attach_transfer_values_asof(df, tm_df)
+    df['tm_value_available'] = df['tm_market_value'].notna().astype(float)
 
     # Attach season history trajectory features (one row per player)
     if not hist_features.empty:
         df = df.merge(hist_features, left_on='id', right_on='player_id', how='left')
         df.drop(columns=['player_id'], errors='ignore', inplace=True)
 
-    # Ensure every attr_ column referenced in POS_FEATURES exists — fills with
-    # 0.0 if the player_attributes table has never been populated or a player
-    # had no fuzzy match.  XGBoost treats 0 as "unknown ability" for these cols.
+    # Keep unavailable market values missing. The model input builder combines
+    # the explicit availability mask with a neutral standardized placeholder;
+    # the placeholder is not interpreted as a Transfermarkt valuation.
     for _col in ATTR_COLS + HIST_COLS:
         if _col not in df.columns:
-            df[_col] = 0.0
+            df[_col] = float('nan') if _col.startswith('tm_') else 0.0
         else:
-            df[_col] = df[_col].fillna(0.0)
+            if not _col.startswith('tm_'):
+                df[_col] = df[_col].fillna(0.0)
 
     df['has_pl_history'] = (
         (df['_prior_pl_rows'] > 0) | (df['hist_career_seasons'] > 0)
