@@ -43,7 +43,7 @@ from train.model_training import train_and_save_models
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--model', choices=('xgboost', 'rnn', 'all'),
+        '--model', choices=('xgboost', 'catboost', 'lambdarank', 'rnn', 'ensemble', 'all'),
         default=os.environ.get('FPL_MODEL_TYPE', 'all'),
     )
     args = parser.parse_args()

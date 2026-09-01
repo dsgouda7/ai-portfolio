@@ -19,7 +19,7 @@ from utils import (
     normalize_pool_scores,
 )
 
-MODEL_TYPES = ('xgboost', 'rnn')
+MODEL_TYPES = ('xgboost', 'catboost', 'lambdarank', 'rnn', 'ensemble')
 
 
 def model_artifact_path(
@@ -30,12 +30,13 @@ def model_artifact_path(
         raise ValueError(f'Unsupported model type: {model_type}')
     if configured_path:
         return Path(configured_path)
-    if model_type == 'rnn' and os.environ.get('FPL_RNN_MODELS_FILE'):
-        return Path(os.environ['FPL_RNN_MODELS_FILE'])
+    env_name = f'FPL_{model_type.upper()}_MODELS_FILE'
+    if os.environ.get(env_name):
+        return Path(os.environ[env_name])
     base = Path(MODELS_FILE)
     if model_type == 'xgboost':
         return base
-    return base.with_name(f'{base.stem}_rnn{base.suffix}')
+    return base.with_name(f'{base.stem}_{model_type}{base.suffix}')
 
 
 def available_model_artifacts() -> dict[str, Path]:
@@ -183,10 +184,55 @@ def score_checkpoint_snapshot(
 ) -> pd.DataFrame:
     validate_checkpoint_cutoff(checkpoint)
     model_type = checkpoint.get('model_type')
+    if model_type == 'ensemble':
+        import joblib
+        component_names = sorted(
+            checkpoint['component_artifacts'], key=lambda name: name != 'rnn'
+        )
+        component_pools = []
+        for name in component_names:
+            component_path = Path(checkpoint['component_artifacts'][name])
+            if not component_path.is_absolute():
+                component_path = model_artifact_path('ensemble').parent / component_path
+            component = joblib.load(component_path)
+            component_manifest = component.get('training_manifest') or {}
+            if (
+                component_manifest.get('completed_internal_index')
+                != checkpoint['training_manifest'].get('completed_internal_index')
+            ):
+                raise ValueError(f'Ensemble component cutoff mismatch: {name}')
+            component_pools.append(
+                score_checkpoint_snapshot(all_data, component, snapshot_game_week)
+            )
+        scored = component_pools[0].copy()
+        predictions = pd.concat(
+            [pool.set_index('id')['predicted_points'] for pool in component_pools],
+            axis=1,
+            join='inner',
+        )
+        expected_players = len(component_pools[0])
+        if len(predictions) != expected_players or any(
+            len(pool) != expected_players for pool in component_pools
+        ):
+            raise ValueError('Ensemble components do not cover the same player pool.')
+        scored = scored[scored['id'].isin(predictions.index)].copy()
+        # Component scores are already calibrated to points and receive the
+        # market-value adjustment exactly once inside their own scorer.
+        predictions.columns = component_names
+        positions = scored.set_index('id')['element_type']
+        blended = pd.Series(index=predictions.index, dtype=float)
+        for position in positions.unique():
+            player_ids = positions[positions == position].index.intersection(predictions.index)
+            raw_weights = checkpoint['ensemble_weights'][position]
+            weights = pd.Series(raw_weights, dtype=float).reindex(component_names)
+            weights = weights / weights.sum()
+            blended.loc[player_ids] = predictions.loc[player_ids].mul(weights, axis=1).sum(axis=1)
+        scored['predicted_points'] = scored['id'].map(blended)
+        return normalize_pool_scores(scored)
     if model_type == 'rnn':
         from train.rnn_trainer import score_rnn_snapshot
         scored = score_rnn_snapshot(all_data, checkpoint, snapshot_game_week)
-    elif model_type == 'xgboost':
+    elif model_type in ('xgboost', 'catboost', 'lambdarank'):
         snapshot = all_data[all_data['Game_Week'] == snapshot_game_week].copy()
         parts = []
         for position, model in checkpoint['models'].items():

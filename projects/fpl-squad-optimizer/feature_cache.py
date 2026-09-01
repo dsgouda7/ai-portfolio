@@ -14,7 +14,7 @@ import pandas as pd
 FEATURE_CACHE_TABLE = 'model_feature_cache'
 FEATURE_CACHE_METADATA_TABLE = 'model_feature_cache_metadata'
 RNN_SEQUENCE_INDEX_TABLE = 'rnn_sequence_index'
-FEATURE_CACHE_SCHEMA_VERSION = 1
+FEATURE_CACHE_SCHEMA_VERSION = 2
 
 
 def canonical_player_gameweeks(rows: pd.DataFrame) -> pd.DataFrame:
@@ -64,9 +64,11 @@ def source_fingerprint(connection: sqlite3.Connection) -> str:
             'players_raw',
             'player_history',
             'player_transfer_value_history',
+            'player_external_appearances',
             'player_attributes',
         )
     }
+    source_state['feature_pipeline_version'] = FEATURE_CACHE_SCHEMA_VERSION
     encoded = json.dumps(source_state, sort_keys=True, default=str).encode('utf-8')
     return hashlib.sha256(encoded).hexdigest()
 

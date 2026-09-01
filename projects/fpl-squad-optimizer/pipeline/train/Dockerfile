@@ -27,7 +27,10 @@ COPY . .
 # ── Default I/O paths ──────────────────────────────────────────────────────
 ENV FPL_DB_FILE=/data/fantasy_football.db \
     FPL_MODELS_FILE=/data/models/models.joblib \
+    FPL_CATBOOST_MODELS_FILE=/data/models/models_catboost.joblib \
+    FPL_LAMBDARANK_MODELS_FILE=/data/models/models_lambdarank.joblib \
     FPL_RNN_MODELS_FILE=/data/models/models_rnn.joblib \
+    FPL_ENSEMBLE_MODELS_FILE=/data/models/models_ensemble.joblib \
     FPL_MODEL_TYPE=all
 
 ENTRYPOINT ["python", "pipeline/steps/train.py"]

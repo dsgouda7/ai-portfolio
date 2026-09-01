@@ -58,7 +58,10 @@ services:
     environment:
       FPL_DB_FILE: /data/fantasy_football.db
       FPL_MODELS_FILE: /data/models/models.joblib
+      FPL_CATBOOST_MODELS_FILE: /data/models/models_catboost.joblib
+      FPL_LAMBDARANK_MODELS_FILE: /data/models/models_lambdarank.joblib
       FPL_RNN_MODELS_FILE: /data/models/models_rnn.joblib
+      FPL_ENSEMBLE_MODELS_FILE: /data/models/models_ensemble.joblib
       FPL_MODEL_TYPE: all
     depends_on:
       ingest:
@@ -74,7 +77,10 @@ services:
     environment:
       FPL_DB_FILE: /data/fantasy_football.db
       FPL_MODELS_FILE: /data/models/models.joblib
+      FPL_CATBOOST_MODELS_FILE: /data/models/models_catboost.joblib
+      FPL_LAMBDARANK_MODELS_FILE: /data/models/models_lambdarank.joblib
       FPL_RNN_MODELS_FILE: /data/models/models_rnn.joblib
+      FPL_ENSEMBLE_MODELS_FILE: /data/models/models_ensemble.joblib
       FPL_RESULTS_DIR: /data/results
       FPL_SIM_FROM: "15"
       FPL_SIM_TO: "37"
@@ -94,6 +100,10 @@ services:
     environment:
       FPL_DB_FILE: /data/fantasy_football.db
       FPL_MODELS_FILE: /data/models/models.joblib
+      FPL_CATBOOST_MODELS_FILE: /data/models/models_catboost.joblib
+      FPL_LAMBDARANK_MODELS_FILE: /data/models/models_lambdarank.joblib
+      FPL_RNN_MODELS_FILE: /data/models/models_rnn.joblib
+      FPL_ENSEMBLE_MODELS_FILE: /data/models/models_ensemble.joblib
       FPL_RESULTS_DIR: /data/results
     depends_on:
       simulate:

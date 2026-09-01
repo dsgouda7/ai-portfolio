@@ -2,6 +2,7 @@ numpy
 pandas
 tabulate
 xgboost
+catboost
 joblib
 scikit-learn
 scipy

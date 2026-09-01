@@ -144,6 +144,18 @@ class SquadStateTests(unittest.TestCase):
         with self.assertRaisesRegex(SquadValidationError, 'at most 3'):
             create_state(squad, 4, '2026-27')
 
+    def test_exhausted_chip_is_rejected(self):
+        state = create_state(make_squad(), 4, '2026-27')
+        state['chips']['wildcard']['remaining'] = 0
+        state['active_chip'] = 'wildcard'
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaisesRegex(SquadValidationError, 'No wildcard chips remain'):
+                save_draft(
+                    state,
+                    Path(directory) / 'test.db',
+                    Path(directory) / 'exports',
+                )
+
 
 if __name__ == '__main__':
     unittest.main()

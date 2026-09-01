@@ -5,6 +5,7 @@ from contextlib import closing
 from pathlib import Path
 
 import pandas as pd
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -12,10 +13,47 @@ from model_registry import (
     build_checkpoint,
     build_training_manifest,
     validate_checkpoint_cutoff,
+    model_artifact_path,
+    score_checkpoint_snapshot,
 )
 
 
 class ModelRegistryTests(unittest.TestCase):
+    def test_every_model_type_has_a_distinct_artifact(self):
+        paths = {
+            model_artifact_path(model_type)
+            for model_type in ('xgboost', 'catboost', 'lambdarank', 'rnn', 'ensemble')
+        }
+        self.assertEqual(len(paths), 5)
+
+    def test_ensemble_averages_component_point_predictions(self):
+        base = pd.DataFrame({
+            'id': [1, 2], 'element_type': ['MID', 'MID'],
+            'predicted_points': [0.0, 0.0],
+        })
+        component_pools = [
+            base.assign(predicted_points=[2.0, 4.0]),
+            base.assign(predicted_points=[4.0, 6.0]),
+        ]
+        checkpoint = {
+            'model_type': 'ensemble',
+            'component_artifacts': {'a': 'a.joblib', 'b': 'b.joblib'},
+            'ensemble_weights': {'MID': {'a': 0.25, 'b': 0.75}},
+            'training_manifest': {
+                'completed_internal_index': 1,
+                'max_training_internal_index': 1,
+            },
+        }
+        component_checkpoint = {
+            'training_manifest': {'completed_internal_index': 1}
+        }
+        with (
+            patch('joblib.load', side_effect=[component_checkpoint, component_checkpoint]),
+            patch('model_registry.score_checkpoint_snapshot', side_effect=component_pools),
+        ):
+            result = score_checkpoint_snapshot(pd.DataFrame(), checkpoint, 2)
+        self.assertEqual(result['predicted_points'].tolist(), [3.5, 5.5])
+
     def test_manifest_stops_at_completed_cutoff(self):
         rows = pd.DataFrame({
             'Game_Week': [0, 1, 2],

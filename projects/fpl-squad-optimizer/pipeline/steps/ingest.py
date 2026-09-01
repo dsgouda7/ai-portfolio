@@ -46,6 +46,7 @@ from utils import (
 from eligibility import get_epl_members
 from player_attributes import ensure_new_players
 from transfer_values import ensure_transfer_values
+from external_appearances import refresh_external_appearances
 
 
 def main() -> None:
@@ -92,6 +93,8 @@ def main() -> None:
     # Step 1e — enrich with Transfermarkt market values (no-ops for fresh cache)
     with sqlite3.connect(DB_FILE) as conn:
         ensure_transfer_values(conn)
+        external_rows = refresh_external_appearances(conn)
+        print(f"  External non-PL appearances: {external_rows:,}")
 
     print("[ingest] Done.")
 

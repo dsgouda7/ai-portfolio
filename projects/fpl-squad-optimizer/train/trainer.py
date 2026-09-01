@@ -59,6 +59,7 @@ def train_models(
         models[pos] = model
 
         y_pred = model.predict(X)
+        absolute_errors = np.abs(y.to_numpy(dtype=float) - y_pred)
         top_feat = pos_features[model.feature_importances_.argmax()]
         metrics[pos] = {
             'r2':          round(float(r2_score(y, y_pred)), 4),
@@ -67,6 +68,8 @@ def train_models(
             'top_feature': top_feat,
             'model_name':  MODEL_NAMES[pos],
             'n_features':  len(pos_features),
+            'error_p80':   round(float(np.quantile(absolute_errors, 0.80)), 4),
+            'error_p95':   round(float(np.quantile(absolute_errors, 0.95)), 4),
         }
         m = metrics[pos]
         print(f"  [{MODEL_NAMES[pos]}]")

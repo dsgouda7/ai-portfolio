@@ -287,6 +287,7 @@ def create_state(
     season: str,
     previous: dict[str, Any] | None = None,
     source: str = 'generated',
+    generation: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     now = _now()
     prior_chips = (previous or {}).get('chips') or {
@@ -309,6 +310,8 @@ def create_state(
         'players': [_player_record(row) for row in squad.to_dict(orient='records')],
         'lineup': _default_lineup(squad),
     }
+    if generation is not None:
+        state['generation'] = deepcopy(generation)
     validate_state(state)
     return state
 
@@ -374,6 +377,12 @@ def validate_state(state: dict[str, Any]) -> None:
     active_chip = state.get('active_chip')
     if active_chip is not None and active_chip not in CHIPS:
         raise SquadValidationError(f'Unknown chip: {active_chip}.')
+    if active_chip is not None:
+        chip_state = (state.get('chips') or {}).get(active_chip, {})
+        if int(chip_state.get('remaining', 0)) < 1:
+            raise SquadValidationError(
+                f'No {active_chip.replace("_", " ")} chips remain.'
+            )
 
 
 def save_draft(

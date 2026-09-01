@@ -10,6 +10,8 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
 import json
 import math
 import os
+import secrets
+import time
 from collections import Counter
 from pathlib import Path
 
@@ -47,6 +49,7 @@ from squad_state import (
     validate_state,
 )
 from performance_reviewer import build_performance_review
+from fpl_account import FplEntrySyncError, sync_public_entry
 
 
 def _elig_key(player_row) -> tuple[str, str]:
@@ -57,6 +60,8 @@ def _elig_key(player_row) -> tuple[str, str]:
     )
 
 app = Flask(__name__)
+_SYNC_LAST_REQUEST: dict[str, float] = {}
+_SYNC_COOLDOWN_SECONDS = 3.0
 
 # FPL colour scheme (matches official app)
 POS_COLORS = {
@@ -86,7 +91,14 @@ POS_STATS = {
 }
 
 
-def select_squad(pool, structure, max_per_team, max_spend):
+def select_squad(
+    pool,
+    structure,
+    max_per_team,
+    max_spend,
+    score_column='predicted_points',
+    time_limit=10,
+):
     candidates = pool.drop_duplicates(subset='id').reset_index(drop=True)
     constraint_rows = []
     lower_bounds = []
@@ -109,13 +121,13 @@ def select_squad(pool, structure, max_per_team, max_spend):
         upper_bounds.append(max_per_team)
 
     result = milp(
-        c=-candidates['predicted_points'].astype(float).to_numpy(),
+        c=-candidates[score_column].astype(float).to_numpy(),
         integrality=np.ones(len(candidates)),
         bounds=Bounds(0, 1),
         constraints=LinearConstraint(
             np.vstack(constraint_rows), lower_bounds, upper_bounds
         ),
-        options={'time_limit': 10},
+        options={'time_limit': time_limit},
     )
     if not result.success:
         raise RuntimeError(
@@ -123,7 +135,8 @@ def select_squad(pool, structure, max_per_team, max_spend):
         )
     df_squad = candidates.loc[result.x > 0.5].copy().reset_index(drop=True)
 
-    # selection margin: predicted_pts - next best available alternative not picked
+    # Baseline quality margin: unperturbed model score versus the best unselected
+    # same-position alternative. In stochastic mode it can be negative by design.
     selected_ids = set(df_squad['id'])
     margins = []
     for _, player in df_squad.iterrows():
@@ -135,6 +148,101 @@ def select_squad(pool, structure, max_per_team, max_spend):
         margins.append(round(float(player['predicted_points']) - nb, 4))
     df_squad['selection_margin'] = margins
     return df_squad
+
+
+def _squad_quality(squad: pd.DataFrame) -> tuple[float, float]:
+    starters, _, _ = pick_starting_xi(squad)
+    return (
+        float(squad['predicted_points'].sum()),
+        float(starters['predicted_points'].sum()),
+    )
+
+
+def select_squad_variation(
+    pool: pd.DataFrame,
+    structure: dict[str, int],
+    max_per_team: int,
+    max_spend: int,
+    uncertainty_by_position: dict[str, float],
+    seed: int,
+    quality_floor: float = 0.95,
+    noise_scale: float = 0.10,
+    attempts: int = 24,
+) -> tuple[pd.DataFrame, dict]:
+    """Sample a legal near-optimal squad and retain an auditable quality floor."""
+    if not 0 < quality_floor <= 1:
+        raise ValueError('quality_floor must be in (0, 1].')
+    if attempts < 1:
+        raise ValueError('attempts must be positive.')
+
+    deterministic = select_squad(
+        pool, structure, max_per_team, max_spend
+    )
+    optimal_squad_points, optimal_xi_points = _squad_quality(deterministic)
+    random = np.random.default_rng(seed)
+    accepted: dict[tuple[int, ...], tuple[pd.DataFrame, float, float]] = {}
+    failed_attempts = 0
+
+    for _ in range(attempts):
+        varied_pool = pool.copy()
+        standard_deviation = varied_pool['element_type'].map(
+            uncertainty_by_position
+        ).fillna(0.0).astype(float)
+        varied_pool['_selection_score'] = (
+            varied_pool['predicted_points'].astype(float)
+            + random.normal(0.0, standard_deviation * noise_scale)
+        )
+        try:
+            candidate = select_squad(
+                varied_pool,
+                structure,
+                max_per_team,
+                max_spend,
+                score_column='_selection_score',
+                time_limit=2,
+            ).drop(columns='_selection_score', errors='ignore')
+        except RuntimeError:
+            failed_attempts += 1
+            continue
+        squad_points, xi_points = _squad_quality(candidate)
+        if (
+            squad_points >= optimal_squad_points * quality_floor
+            and xi_points >= optimal_xi_points * quality_floor
+        ):
+            key = tuple(sorted(candidate['id'].astype(int)))
+            accepted[key] = (candidate, squad_points, xi_points)
+
+    deterministic_key = tuple(sorted(deterministic['id'].astype(int)))
+    alternatives = [key for key in sorted(accepted) if key != deterministic_key]
+    if alternatives:
+        selected_key = alternatives[int(random.integers(len(alternatives)))]
+        selected, selected_squad_points, selected_xi_points = accepted[selected_key]
+    else:
+        selected = deterministic
+        selected_squad_points, selected_xi_points = (
+            optimal_squad_points, optimal_xi_points
+        )
+    fallback_reason = None if alternatives else 'no_qualified_variations'
+
+    metadata = {
+        'mode': 'stochastic_near_optimal',
+        'seed': int(seed),
+        'quality_floor': float(quality_floor),
+        'noise_scale': float(noise_scale),
+        'attempts': int(attempts),
+        'failed_attempts': failed_attempts,
+        'accepted_unique_squads': len(accepted),
+        'qualified_alternatives': len(alternatives),
+        'varied_from_optimum': tuple(sorted(selected['id'].astype(int))) != deterministic_key,
+        'fallback_reason': fallback_reason,
+        'optimal_squad_predicted': round(optimal_squad_points, 4),
+        'selected_squad_predicted': round(selected_squad_points, 4),
+        'squad_quality_ratio': round(selected_squad_points / optimal_squad_points, 4),
+        'optimal_xi_predicted': round(optimal_xi_points, 4),
+        'selected_xi_predicted': round(selected_xi_points, 4),
+        'xi_quality_ratio': round(selected_xi_points / optimal_xi_points, 4),
+    }
+    return selected.reset_index(drop=True), metadata
 
 
 _ROW_MARGINS = {1: 50, 2: 28, 3: 18, 4: 12, 5: 10}
@@ -206,6 +314,126 @@ def _state_frame(state: dict) -> pd.DataFrame:
         }
         for player in state['players']
     ])
+
+
+def _state_from_synced_entry(
+    synced: dict,
+    scored_pool: pd.DataFrame,
+    runtime: dict,
+    free_transfers: int | None = None,
+    database: str | Path = DB_FILE,
+) -> dict:
+    picks = synced.get('picks') or []
+    if len(picks) != 15:
+        raise FplEntrySyncError(
+            'No complete public 15-player squad is available yet. Picks become '
+            'public after the Gameweek deadline.'
+        )
+    pool_by_id = scored_pool.drop_duplicates('id').set_index('id')
+    missing = [
+        int(pick['player_id']) for pick in picks
+        if int(pick['player_id']) not in pool_by_id.index
+    ]
+    missing_players = {}
+    if missing:
+        import sqlite3
+        from contextlib import closing
+        placeholders = ','.join('?' for _ in missing)
+        with closing(sqlite3.connect(str(database))) as connection:
+            rows = connection.execute(
+                f"""
+                SELECT id, first_name, second_name, element_type, team, now_cost
+                FROM players_raw WHERE id IN ({placeholders})
+                """,
+                missing,
+            ).fetchall()
+        missing_players = {
+            int(player_id): {
+                'id': int(player_id),
+                'first_name': str(first_name or ''),
+                'second_name': str(second_name or ''),
+                'element_type': {1: 'GK', 2: 'DEF', 3: 'MID', 4: 'FWD'}.get(
+                    int(element_type), ''
+                ),
+                'team': int(team or 0),
+                'value': int(now_cost or 0),
+                'predicted_points': 0.0,
+                'predicted_points_norm': 0.0,
+                'elig_status': 'u',
+                'news': 'Not present in the current model snapshot.',
+            }
+            for player_id, first_name, second_name, element_type, team, now_cost in rows
+        }
+        unresolved = sorted(set(missing) - set(missing_players))
+        if unresolved:
+            raise FplEntrySyncError(
+                'Official picks cannot be resolved from current FPL data: '
+                + ', '.join(map(str, unresolved))
+            )
+
+    acquisition_costs = {
+        int(player_id): int(cost)
+        for player_id, cost in synced.get('acquisition_costs', {}).items()
+    }
+    squad_rows = []
+    for pick in sorted(picks, key=lambda row: int(row['pick_position'])):
+        player_id = int(pick['player_id'])
+        row = (
+            pool_by_id.loc[player_id].to_dict()
+            if player_id in pool_by_id.index
+            else missing_players[player_id]
+        )
+        row['id'] = player_id
+        purchase_price = acquisition_costs.get(player_id) or int(row['value'])
+        row['purchase_price'] = purchase_price
+        squad_rows.append(row)
+    squad = pd.DataFrame(squad_rows)
+    state = create_state(
+        squad,
+        runtime['target_game_week'],
+        runtime['season'],
+        previous=load_current(),
+        source='official_fpl_public_sync',
+    )
+    # create_state selects the next XI, bench order and captaincy from current
+    # model scores. The prior official lineup remains in fpl_entry_picks.
+    state['bank'] = int(synced.get('bank', 0))
+    estimated_free_transfers = int(synced.get('next_free_transfers', 1))
+    state['free_transfers'] = (
+        int(free_transfers)
+        if free_transfers is not None
+        else estimated_free_transfers
+    )
+    state['official_entry'] = {
+        'entry_id': int(synced['entry_id']),
+        'synced_at': synced['synced_at'],
+        'latest_public_event': synced.get('latest_event'),
+        'squad_source_event': synced.get('squad_event'),
+        'free_transfers_estimated': free_transfers is None,
+        'bank_source_event': synced.get('squad_event'),
+    }
+    chip_names = {
+        'wildcard': 'wildcard',
+        'freehit': 'free_hit',
+        'free_hit': 'free_hit',
+        'bboost': 'bench_boost',
+        'bench_boost': 'bench_boost',
+        '3xc': 'triple_captain',
+        'triple_captain': 'triple_captain',
+    }
+    for gameweek in synced.get('gameweeks', []):
+        chip = chip_names.get(str(gameweek.get('active_chip') or '').lower())
+        if chip is None:
+            continue
+        event = int(gameweek['event'])
+        used = state['chips'][chip]['used_gameweeks']
+        if event not in used:
+            used.append(event)
+            state['chips'][chip]['remaining'] = max(
+                0, int(state['chips'][chip]['remaining']) - 1
+            )
+    validate_state(state)
+    return state
 
 
 def _lineup_frames(state: dict, squad: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, str]:
@@ -436,11 +664,43 @@ def index():
         squad = scored_squad
         gw_saved = int(state['game_week'])
     else:
-        squad = select_squad(eligible_pool, {'GK': 2, 'DEF': 5, 'MID': 5, 'FWD': 3},
-                             max_per_team=MAX_PLAYERS_PER_TEAM, max_spend=MAX_SPEND)
+        quality_floor = float(os.environ.get('FPL_VARIATION_QUALITY_FLOOR', '0.95'))
+        noise_scale = float(os.environ.get('FPL_VARIATION_NOISE_SCALE', '0.10'))
+        attempts = int(os.environ.get('FPL_VARIATION_ATTEMPTS', '24'))
+        uncertainty = {
+            position: float(metric.get('error_p80', metric.get('rmse', 0.0)))
+            for position, metric in metrics.items()
+        }
+        requested_seed = request.args.get('seed')
+        try:
+            generation_seed = (
+                int(requested_seed) if requested_seed is not None
+                else secrets.randbits(63)
+            )
+            if generation_seed < 0 or generation_seed >= 2 ** 63:
+                raise ValueError
+        except ValueError:
+            return _setup_error(
+                'Invalid variation seed',
+                'The replay seed must be an integer between 0 and 2^63-1.',
+                '/generate-team?new_team=1',
+                400,
+            )
+        squad, generation = select_squad_variation(
+            eligible_pool,
+            {'GK': 2, 'DEF': 5, 'MID': 5, 'FWD': 3},
+            max_per_team=MAX_PLAYERS_PER_TEAM,
+            max_spend=MAX_SPEND,
+            uncertainty_by_position=uncertainty,
+            seed=generation_seed,
+            quality_floor=quality_floor,
+            noise_scale=noise_scale,
+            attempts=attempts,
+        )
         state = create_state(
             squad, runtime['target_game_week'], runtime['season'],
             previous=load_current(), source='regenerated' if force_new else 'generated',
+            generation=generation,
         )
         save_draft(state)
         starters, bench, formation = _lineup_frames(state, squad)
@@ -472,6 +732,7 @@ def index():
         'model_type':       requested_model,
         'available_models': list(artifacts),
         'training_manifest': checkpoint['training_manifest'],
+        'generation':       state.get('generation'),
         'gw_saved':         gw_saved,
         'squad_mode':       squad_mode,
         'formation':        formation,
@@ -509,6 +770,75 @@ def get_squad_state():
 @app.get('/api/squad/history')
 def get_squad_history():
     return jsonify({'versions': list_versions(season=request.args.get('season'))})
+
+
+@app.post('/api/fpl-entry/sync')
+def sync_fpl_entry():
+    """Import completed public FPL history and latest permanent picks by entry ID."""
+    origin = request.headers.get('Origin')
+    if origin and origin.rstrip('/') != request.host_url.rstrip('/'):
+        return jsonify({'ok': False, 'error': 'Cross-origin sync requests are rejected.'}), 403
+    if not request.is_json:
+        return jsonify({'ok': False, 'error': 'FPL sync accepts JSON only.'}), 415
+    try:
+        payload = request.get_json() or {}
+        allowed_fields = {'entry_id', 'model', 'free_transfers'}
+        unexpected_fields = set(payload) - allowed_fields
+        if unexpected_fields:
+            raise FplEntrySyncError(
+                'Credentials and unknown fields are not accepted. Provide only '
+                'entry_id, model, and optional free_transfers.'
+            )
+        free_transfers = payload.get('free_transfers')
+        if free_transfers not in (None, ''):
+            free_transfers = int(free_transfers)
+            if not 1 <= free_transfers <= 5:
+                raise FplEntrySyncError('Free transfers must be between 1 and 5.')
+        else:
+            free_transfers = None
+        requester = request.remote_addr or 'local'
+        now = time.monotonic()
+        last_request = _SYNC_LAST_REQUEST.get(requester, 0.0)
+        if now - last_request < _SYNC_COOLDOWN_SECONDS:
+            return jsonify({
+                'ok': False,
+                'error': 'Please wait a few seconds before synchronizing again.',
+            }), 429
+        _SYNC_LAST_REQUEST[requester] = now
+        model_type = str(payload.get('model') or 'xgboost').lower()
+        artifacts = available_model_artifacts()
+        if model_type not in artifacts:
+            raise FplEntrySyncError(f'Model artifact is unavailable: {model_type}')
+        checkpoint = joblib.load(artifacts[model_type])
+        validate_checkpoint_cutoff(checkpoint)
+        runtime = get_runtime_context(DB_FILE)
+        all_data, _ = load_or_build_feature_cache(DB_FILE, build_features)
+        scored_pool = score_checkpoint_snapshot(
+            all_data, checkpoint, runtime['snapshot_game_week']
+        )
+        synced = sync_public_entry(payload.get('entry_id'), DB_FILE)
+        state = _state_from_synced_entry(
+            synced,
+            scored_pool,
+            runtime,
+            free_transfers=free_transfers,
+            database=DB_FILE,
+        )
+        stored = save_draft(state)
+        return jsonify({
+            'ok': True,
+            'state': stored,
+            'entry_id': synced['entry_id'],
+            'gameweeks_imported': len(synced['gameweeks']),
+            'message': (
+                f"Imported public picks through GW{synced['latest_event']}. "
+                'Bank is from the latest permanent public squad; free transfers '
+                f"are {'user-supplied' if free_transfers is not None else 'estimated'}. "
+                'The next XI and captaincy were selected from current model scores.'
+            ),
+        })
+    except (FplEntrySyncError, TypeError, KeyError, ValueError) as exc:
+        return jsonify({'ok': False, 'error': str(exc)}), 400
 
 
 @app.post('/api/squad/draft')
@@ -673,9 +1003,9 @@ def validation_report():
         })
 
     model_info = {
-        'algorithm':  'Selectable XGBoost or GRU RNN — 4 position models',
+        'algorithm':  'Five selectable predictors, including a two-layer Deep GRU',
         'target':     'fixture-row total_points from pre-fixture features',
-        'training':   '14 GWs of 2025-26 season data (GW 1–14); ~8,400 player-GW rows',
+        'training':   'All completed Gameweeks through each checkpoint cutoff',
         'eval_metric': 'Spearman ρ (ranking accuracy) + RMSE',
         'features': {
             'GK':  ['saves', 'expected_goals_conceded (roll5)', 'penalties_saved', 'clean_sheets (roll5)',
@@ -695,7 +1025,7 @@ def validation_report():
         },
         'notes': [
             '5-GW rolling windows — always shifted 1 GW before windowing (no leakage)',
-            'GRU sequences are ordered by player and capped at the same completed-GW cutoff as XGBoost',
+            'Deep GRU sequences use every available prior player-Gameweek through the completed-data cutoff',
             'ict_index excluded (linear combination of sub-features already present)',
             'form_data_density = roll5_minutes / 450 — quantifies data sparsity for injury returnees',
             'tm_market_value_x_sparsity = market_value × (1 − density) — quality prior for sparse players',

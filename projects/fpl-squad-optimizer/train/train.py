@@ -34,12 +34,13 @@ from utils import (
 from eligibility import get_epl_members
 from player_attributes import ensure_new_players
 from transfer_values import ensure_transfer_values
+from external_appearances import refresh_external_appearances
 from train.model_training import train_and_save_models
 from feature_cache import load_or_build_feature_cache
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    '--model', choices=('xgboost', 'rnn', 'all'), default='all',
+    '--model', choices=('xgboost', 'catboost', 'lambdarank', 'rnn', 'ensemble', 'all'), default='all',
     help='Model artifact(s) to train (default: all).',
 )
 args = parser.parse_args()
@@ -105,6 +106,8 @@ with sqlite3.connect(DB_FILE) as _attr_conn:
 # are retried; synthetic market values are never stored.
 with sqlite3.connect(DB_FILE) as _tm_conn:
     ensure_transfer_values(_tm_conn)
+    external_rows = refresh_external_appearances(_tm_conn)
+    print(f"External non-PL appearances loaded: {external_rows:,}")
 
 print("Building features...")
 all_data, cache_hit = load_or_build_feature_cache(DB_FILE, build_features)

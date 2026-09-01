@@ -417,8 +417,8 @@
       text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.25rem;
     }
     .manager-row { display: flex; gap: 0.35rem; margin-bottom: 0.35rem; }
-    .manager-row select { min-width: 0; flex: 1; }
-    select, .manager-button {
+    .manager-row select, .manager-row input { min-width: 0; flex: 1; }
+    select, input, .manager-button {
       background: #101827; color: var(--text); border: 1px solid var(--border);
       border-radius: 6px; min-height: 30px; padding: 0.25rem 0.4rem;
       font-size: 0.68rem;
@@ -465,10 +465,13 @@
      style="font-size:0.7rem;color:var(--muted);text-decoration:none;
             border:1px solid var(--border);padding:0.18rem 0.65rem;
             border-radius:999px;white-space:nowrap">Performance</a>
-  <a href="/generate-team?new_team=1"
+  <a id="new-team-link" href="/generate-team?new_team=1"
      style="font-size:0.7rem;color:var(--muted);text-decoration:none;
             border:1px solid var(--border);padding:0.18rem 0.65rem;
             border-radius:999px;white-space:nowrap">↺ New Team</a>
+  <a id="replay-team-link" href="#" style="display:none;font-size:0.7rem;color:var(--muted);
+            text-decoration:none;border:1px solid var(--border);padding:0.18rem 0.65rem;
+            border-radius:999px;white-space:nowrap">Replay</a>
 </header>
 
 <main>
@@ -555,6 +558,24 @@
       </div>
 
       <div class="manager-group">
+        <label class="manager-label" for="fpl-entry-id">Public FPL entry</label>
+        <div class="manager-row">
+          <input id="fpl-entry-id" inputmode="numeric" pattern="[0-9]*"
+                 placeholder="Entry ID" title="Public FPL entry ID">
+          <button class="manager-button" id="sync-fpl-entry" type="button">Sync</button>
+        </div>
+         <select id="fpl-free-transfers" style="width:100%"
+            title="Optional current free-transfer count">
+           <option value="">Estimate free transfers</option>
+           <option value="1">1 free transfer</option>
+           <option value="2">2 free transfers</option>
+           <option value="3">3 free transfers</option>
+           <option value="4">4 free transfers</option>
+           <option value="5">5 free transfers</option>
+         </select>
+      </div>
+
+      <div class="manager-group">
         <label class="manager-label" for="transfer-out">Transfer</label>
         <div class="manager-row">
           <select id="transfer-out" title="Player to sell"></select>
@@ -638,7 +659,13 @@ const D = {{ data|safe }};
 let squadState = structuredClone(D.state);
 let dirty = false;
 
-const modelLabels = { xgboost: 'XGBoost', rnn: 'GRU RNN' };
+const modelLabels = {
+  xgboost: 'XGBoost',
+  catboost: 'CatBoost',
+  lambdarank: 'LambdaRank',
+  rnn: 'Deep GRU',
+  ensemble: 'Ensemble',
+};
 const modelSelect = document.getElementById('model-select');
 modelSelect.innerHTML = D.available_models.map(model =>
   `<option value="${model}" ${model === D.model_type ? 'selected' : ''}>${modelLabels[model] || model}</option>`
@@ -651,6 +678,14 @@ modelSelect.addEventListener('change', event => {
 const manifest = D.training_manifest || {};
 document.getElementById('model-cutoff').textContent =
   `through GW${manifest.latest_completed_game_week ?? '?'} · ${manifest.fpl_data_cutoff || 'date unavailable'}`;
+document.getElementById('new-team-link').href =
+  `/generate-team?new_team=1&model=${encodeURIComponent(D.model_type)}`;
+if (D.generation) {
+  const replayLink = document.getElementById('replay-team-link');
+  replayLink.style.display = '';
+  replayLink.href = `/generate-team?new_team=1&model=${encodeURIComponent(D.model_type)}&seed=${D.generation.seed}`;
+  replayLink.title = `Replay variation seed ${D.generation.seed}`;
+}
 
 // ── helpers ────────────────────────────────────────────────────────────────
 
@@ -672,7 +707,7 @@ function marginClass(m) {
   return m >= 1.5 ? 'm-high' : m >= 0.4 ? 'm-mid' : 'm-low';
 }
 function marginLabel(m) {
-  return m >= 1.5 ? '↑ Confident' : m >= 0.4 ? '~ Moderate' : '↓ Coin-flip';
+  return m >= 1.5 ? '↑ Strong edge' : m >= 0.4 ? '~ Model edge' : '↓ Variation pick';
 }
 
 function playerName(player) {
@@ -884,6 +919,34 @@ document.getElementById('save-squad').addEventListener('click', async () => {
 
 renderManager();
 
+document.getElementById('sync-fpl-entry').addEventListener('click', async event => {
+  const button = event.currentTarget;
+  const entryId = document.getElementById('fpl-entry-id').value.trim();
+  const freeTransfers = document.getElementById('fpl-free-transfers').value;
+  if (!/^\d+$/.test(entryId)) {
+    return setManagerStatus('Enter the numeric public FPL entry ID.', 'error');
+  }
+  button.disabled = true;
+  setManagerStatus('Synchronizing completed public Gameweeks…');
+  try {
+    const response = await fetch('/api/fpl-entry/sync', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        entry_id: Number(entryId),
+        model: D.model_type,
+        free_transfers: freeTransfers ? Number(freeTransfers) : null,
+      }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Unable to synchronize entry.');
+    window.location.assign(`/generate-team?model=${encodeURIComponent(D.model_type)}`);
+  } catch (error) {
+    setManagerStatus(error.message, 'error');
+    button.disabled = false;
+  }
+});
+
 // ── squad mode badge ───────────────────────────────────────────────────────
 
 const modeBadge = document.getElementById('mode-badge');
@@ -903,6 +966,12 @@ const pillsEl = document.getElementById('pills');
   ['Formation', D.formation],
   ['Predicted', D.total_predicted + ' pts'],
   ['Spend', '£' + D.total_spend + 'M / £100M'],
+  ...(D.generation ? [[
+    'Variation',
+    D.generation.fallback_reason
+      ? 'Optimal fallback'
+      : `${Math.round(D.generation.xi_quality_ratio * 100)}% · ${D.generation.qualified_alternatives} alternatives`,
+  ]] : []),
 ].forEach(([lbl, val]) => {
   const d = document.createElement('div');
   d.className = 'pill';

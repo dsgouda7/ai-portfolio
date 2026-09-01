@@ -52,20 +52,66 @@ python simulations/simulate_season.py --test-from 15 --test-to 37
 
 ### Weekly workflow
 
-1. Run `python train/train.py --model all` after the previous Gameweek finishes. The job
-  supplements stale community data from the live FPL API, refreshes the current
-  roster and prices, and retrains all four position models.
-2. Open `/generate-team`. The app loads the latest committed squad from SQLite,
-  rolls it into the target Gameweek, and refreshes predictions, prices, injuries,
-  suspensions, and availability.
-3. Review the suggested transfer, make transfers, change the starting XI, order
-  the outfield bench, choose captain/vice-captain, and optionally select one chip.
-4. Press **Save squad**. The app appends a committed revision; it never overwrites
-  an earlier Gameweek or revision.
+1. After FPL marks the previous Gameweek data as checked, run
+  `python train/train.py --model all`. Training downloads all current-season
+  player histories, refreshes official weekly prices and real historical
+  Transfermarkt valuations, rebuilds the SQLite feature cache when needed, and
+  writes separate XGBoost and GRU checkpoints with the same temporal cutoff.
+2. Start `python fpl-generator/web.py` and open `/generate-team`. The app loads
+  the selected checkpoint (XGBoost by default), validates its cutoff, loads the
+  model-ready SQLite cache, scores the next fixture snapshot, and applies live
+  availability rules from the public FPL API.
+3. If a local draft or committed squad already exists, the app opens the newest
+  revision and rolls it into the target Gameweek. It refreshes prices,
+  predictions, injuries, suspensions, bank calculations, and transfer advice
+  without changing the committed historical revision.
+4. Enter the public FPL **entry ID** in Squad Management and optionally enter the
+  exact current free-transfer count shown in the official app. Press **Sync**.
+  Completed public Gameweeks, picks, transfers, chip use, points, ranks, bank,
+  and squad value are refreshed in SQLite. The latest permanent 15-player squad
+  becomes a local draft and is re-scored for the next Gameweek. Free Hit picks
+  are retained for history but do not replace permanent ownership.
+5. Review the suggested transfer, edit the owned squad, choose the next XI and
+  bench order, set captain/vice-captain, and optionally select a remaining chip.
+6. Press **Save squad**. This appends a committed local revision. Reproduce that
+  confirmed plan manually in the official FPL app or website; this project does
+  not submit private account changes.
+7. After the next deadline, sync the same public entry ID again. The official
+  public picks become the new ownership baseline, and `/performance-review`
+  compares committed recommendations with actual points, the official average,
+  and the Dream Team.
 
-**Regenerate** creates a new draft under the official £100m, 2/5/5/3 position,
-and three-players-per-club constraints. It does not replace the committed squad
-until **Save squad** is pressed.
+### What happens when the web app opens
+
+`GET /` redirects to `GET /generate-team`. That request follows this order:
+
+1. Verify the SQLite database and at least one model artifact exist.
+2. Resolve `?model=xgboost|rnn`, load the checkpoint, and reject a checkpoint
+  whose training rows exceed its completed-Gameweek cutoff.
+3. Load `model_feature_cache` if its complete source fingerprint still matches;
+  otherwise rebuild and persist the feature frame from the source tables.
+4. Score every player in the next-Gameweek snapshot and remove players who are
+  no longer in the league or currently unavailable.
+5. Load the newest local draft/commit. If it belongs to an earlier Gameweek, roll
+  it forward without mutating the earlier revision. If no state exists, create
+  and persist an initial controlled-random draft.
+6. Re-score the owned squad, choose a legal model-ranked XI, calculate transfer
+  suggestions, flag unavailable squad members, and render the pitch and manager
+  controls.
+
+The model selector changes how players are scored; it does not silently replace
+an existing owned squad. **New Team** is different: it deliberately creates a
+fresh controlled-random 15-player draft under the £100m, 2/5/5/3, and maximum-
+three-per-club constraints. Only alternatives retaining at least 95% of the
+deterministic optimum's squad and XI predicted totals are eligible. **Replay**
+recreates a generated draft from its persisted seed.
+
+For an ongoing official FPL entry, prefer **Sync** and transfer editing over
+**New Team**: synchronization preserves actual ownership, acquisition-price
+history, bank, public chip use, and the latest official permanent squad.
+
+**New Team** and **Sync** both create drafts. Neither replaces the latest
+committed local revision until **Save squad** is pressed.
 
 ### Squad persistence and season history
 
@@ -76,6 +122,10 @@ tables:
 |---|---|
 | `squad_versions` | One row per draft or committed save, including season, Gameweek, revision, bank, free transfers, point hit, active chip, and full state JSON |
 | `squad_version_players` | The 15 player rows for each version, including lineup/bench order, captaincy, purchase/current/selling prices, prediction, status, and news |
+| `fpl_entry_sync` | Public entry ID plus non-personal synchronization metadata |
+| `fpl_entry_gameweeks` | Public points, ranks, bank, value, transfers, bench points, and chip by completed Gameweek |
+| `fpl_entry_picks` | All 15 public picks per completed Gameweek, including order, multipliers, and captaincy |
+| `fpl_entry_transfers` | Public transfer ledger with player IDs, prices, event, and timestamp |
 
 Revisions increase within each season/Gameweek. Loading the page uses the latest
 committed version; when none exists yet, it resumes the latest draft. A legacy
@@ -113,7 +163,17 @@ All three sources are free and require no authentication. The vaastav archive up
 
 **Selection target:** predict each player's points in the *next* game week, rank the full pool by predicted points, then apply FPL squad constraints (£100M budget, 2GK+5DEF+5MID+3FWD squad, max 3 players per club) to pick the best 15. Starting XI is chosen by FPL formation rules (1GK, 3+ DEF, 2+ MID, 1+ FWD); the unconstrained flex slot is filled by the highest-scoring player regardless of position.
 
-**Models** — choose XGBoost or a GRU RNN in the team-page dropdown. Each family has four position models. XGBoost scores the current pre-fixture feature row; the GRU consumes every chronologically ordered player-Gameweek row available from that player's earliest persisted observation through the current pre-fixture row. Both target that fixture row's `total_points`, whose rolling form fields were shifted before construction, and both checkpoints enforce the same latest-completed-Gameweek cutoff.
+**Models** — choose XGBoost, CatBoost, calibrated pairwise LambdaRank, a deep GRU,
+or their inverse-RMSE ensemble in the team-page dropdown. XGBoost and CatBoost
+predict point totals from the current pre-fixture row. LambdaRank optimizes
+within-Gameweek player ordering and uses later held-out Gameweeks to calibrate
+rank scores back onto the points scale. The ranking implementation uses
+XGBoost's stable `rank:pairwise` objective. The position-specific two-layer GRUs
+consume every available distinct player-Gameweek row and use recurrent dropout
+plus gradient clipping. Every
+checkpoint enforces the same completed-data
+distinct player-Gameweek row. Every checkpoint enforces the same completed-data
+cutoff and frozen feature order.
 
 Training writes `models.joblib` (XGBoost) and `models_rnn.joblib` (GRU), with environment-aware `models_current*` fallbacks. Each artifact persists its season, completed FPL Gameweek, internal cutoff, maximum training row, UTC FPL data timestamp, feature lists, FPL price coverage, Transfermarkt observation range/source, and recurrent sequence length.
 
@@ -123,20 +183,46 @@ Official FPL `value` exists on every historical player-Gameweek row. Transfermar
 
 `tm_market_value` and `tm_value_available` are direct inputs to every position model. The first is `log10(EUR)` only for a real dated valuation; the second is `1` when that value exists and `0` otherwise. Dense GRU tensors use a neutral standardized placeholder where the value is missing, but the availability mask tells the model that no Transfermarkt observation exists; the placeholder is never treated or persisted as a valuation.
 
+### Deduplicated enrichment
+
+The enriched frame adds each signal once at its closest authoritative source:
+
+- The FPL player-Gameweek feed supplies ownership, transfers in/out/balance,
+  price, BPS, recoveries, tackles, defensive contributions, and expected stats.
+- The same FPL fixture rows generate pre-match Elo, rolling team attack/defence,
+  rest days, and 14-day congestion, avoiding a duplicate fixture provider.
+- The Transfermarkt CC0 appearance dataset contributes only mapped **non-Premier-
+  League** appearances. Premier League rows are excluded because FPL already
+  contains them. Strict pre-kickoff 90/365-day aggregates help new signings.
+- Transfermarkt historical valuations remain a separate dated as-of quality
+  signal; no valuation or appearance is imputed.
+
+The feature cache is schema-versioned as well as source-fingerprinted, so changes
+to formulas invalidate SQLite even when the downloaded source tables are stable.
+
 **Selection** — greedy by predicted points. Flex spots (positions not constrained by formation minimums) are filled by z-score within position (`predicted_points_norm`), so an exceptional defender is correctly preferred over an average forward for the last outfield slot.
 
 **Confidence margin** — each selected player shows their predicted points minus the next available player at the same position. Margin < 0.5 means the model was essentially guessing between two players.
 
 ### Determinism
 
-For a frozen feature cache, checkpoint, eligibility response, and solver version,
-model scoring and squad generation are repeatable. XGBoost uses `random_state=42`,
-the GRU seeds NumPy and PyTorch with `42`, canonical player/Gameweek ordering is
-stable, and the MILP receives the same candidate order and objective. Live FPL or
-Transfermarkt changes intentionally invalidate the cache and may produce a new
-team after retraining. Exact score ties or a MILP run that reaches its 10-second
-time limit can also admit a different equally valid squad, so determinism is an
-input-and-environment contract rather than a promise that the team never changes.
+Model scoring is repeatable for a frozen feature cache and checkpoint, but every
+explicit **New Team** request performs controlled stochastic selection. Player
+scores are perturbed using the position model's 80th-percentile absolute error
+(falling back to RMSE for older checkpoints), multiple legal squads are
+solved, and only variants retaining at least 95% of both the deterministic squad
+and starting-XI predicted totals are accepted. The selected seed, quality ratios,
+attempt count, and number of accepted alternatives are persisted with the draft,
+so a recommendation is varied at generation time but auditable afterward. The
+floor is relative because XGBoost and GRU prediction scales differ; human-level
+actual performance remains an out-of-sample evaluation target, not a per-GW
+guarantee. Configure with `FPL_VARIATION_QUALITY_FLOOR`,
+`FPL_VARIATION_NOISE_SCALE`, and `FPL_VARIATION_ATTEMPTS`. The default noise is
+10% of positional uncertainty; exploratory MILP failures are skipped, and generation
+falls back explicitly to the deterministic optimum if no alternative clears the
+floor. Each draft exposes a replay link for its persisted seed.
+The same recommendation can also be replayed directly with
+`/generate-team?new_team=1&model=<model>&seed=<seed>`.
 
 ## Features and why we chose them
 
@@ -415,8 +501,9 @@ python transfer_values.py --rebuild-ids
 ### Feature integration
 
 `tm_market_value` (log₁₀ EUR, added to all 4 position feature sets) gives the
-model a position-independent quality signal. It is zero-filled if the table is
-not yet populated, so training still completes without errors.
+models a position-independent quality signal. Values are joined strictly as of
+each fixture date. Missing observations remain missing and are paired with an
+explicit availability flag; no current value is imputed into historical rows.
 
 #### Edge case: players with sparse rolling stats
 
@@ -444,15 +531,19 @@ that rolling averages are computed from very little data and should be
 treated cautiously, regardless of TM value.
 
 
-## Model selection — why XGBoost
+## Model selection
 
-We evaluated three model families before settling on XGBoost:
+The original evaluation established XGBoost as the point-regression baseline:
 
 | Approach | Outcome |
 |---|---|
 | **Linear regression** | Fast and interpretable, but the FPL scoring surface is highly non-linear — a clean sheet is a step function, bonus points follow a committee decision, and the interaction between minutes played and all other stats is multiplicative. Underfit systematically on high-variance scorers and produced negative point predictions for rare events. |
 | **Neural network (MLP)** | Marginally better calibration in controlled tests, but required 10–15× the wall-clock training time for negligible accuracy gain on the same features. The training set (~8,000–9,000 rows per position) is too small to avoid overfitting without heavy regularisation that erased the gain. Compute cost vs ROI was unfavourable on a CPU-only dev machine. |
-| **XGBoost** | Best accuracy across all four positions. Handles missing values natively — critical for sparse rolling windows on injury returnees. Trains in seconds. Feature importances are directly interpretable (`form_data_density` is the top feature in all four models). The position-split design keeps each ensemble small and avoids cross-position noise. Chose this. |
+| **XGBoost** | Strong baseline accuracy across all four positions. Handles missing values natively, trains quickly, and exposes feature importances. |
+
+The production selector now also includes CatBoost, calibrated pairwise ranking,
+position-specific two-layer GRUs, and an inverse-RMSE weighted ensemble. These
+models share the same cutoff manifest and leakage-safe feature cache.
 
 The two-tier flex-spot normalisation (z-score within position for the unconstrained slots) was a post-model design choice to prevent the selection algorithm from always filling flex spots with midfielders simply because they score the most absolute points in the dataset.
 
@@ -465,6 +556,7 @@ The per-GW breakdown and interactive per-position RMSE are in the `/validation-r
 | `GET /generate-team` | Recommended FPL squad for the current GW on an interactive pitch with predicted scores, confidence margins, and player health cards |
 | `GET /api/squad` | Latest committed and draft squad states loaded from SQLite |
 | `GET /api/squad/history` | Append-only season/Gameweek revision ledger; accepts an optional `season` query parameter |
+| `POST /api/fpl-entry/sync` | Synchronize completed public history and import the latest permanent squad using `entry_id`, `model`, and optional `free_transfers` |
 | `POST /api/squad/draft` | Validate and append a draft revision |
 | `POST /api/squad/commit` | Validate and append a committed revision plus readable JSON export |
 | `GET /performance-review` | Scores each final committed Gameweek squad with actual results, captaincy, chips, transfer hits, and automatic substitutions; compares it with the official average and Dream Team |
@@ -485,7 +577,25 @@ a breach can result in suspension, deletion, or disqualification. The supported
 workflow is therefore human-in-the-loop: review and persist the recommendation
 locally, then reproduce the confirmed transfers, lineup, captaincy, and chip in
 the official FPL app or website. Do not store passwords, MFA secrets, or Premier
-League session cookies in this project.
+League session cookies.
+
+The Squad Management panel accepts a public numeric FPL entry ID. After each
+deadline it downloads the public entry history, transfers, and all published
+Gameweek picks; stores normalized records in `fpl_entry_gameweeks`,
+`fpl_entry_picks`, and `fpl_entry_transfers`; imports the latest permanent squad
+as a model-rescored local draft; and preserves official XI, bench order,
+captaincy, bank, and public chip history in the sync tables. The next local XI,
+bench order, captain, and vice-captain are selected from current model scores. If
+the latest event used Free Hit, ownership comes from the preceding non-Free-Hit
+event.
+
+FPL does not publicly expose pre-deadline picks or the exact private live free-
+transfer balance. The app therefore cannot synchronize a brand-new account's
+initial squad before its first deadline, and labels its free-transfer count as an
+estimate. No credential, personal profile name, email, cookie, or MFA data is
+requested or persisted.
+The sync endpoint rejects credential-like fields, cross-origin requests, and
+requests repeated within a short cooldown.
 
 The validation report page shows:
 - Interactive GW selector (prev/next buttons or click any GW badge)

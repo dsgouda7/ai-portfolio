@@ -4,6 +4,9 @@ from __future__ import annotations
 import os
 from typing import Any
 
+os.environ.setdefault('OMP_NUM_THREADS', os.environ.get('FPL_RNN_THREADS', '1'))
+os.environ.setdefault('MKL_NUM_THREADS', os.environ.get('FPL_RNN_THREADS', '1'))
+
 import numpy as np
 import pandas as pd
 import torch
@@ -15,13 +18,27 @@ from torch.nn.utils.rnn import pack_padded_sequence
 from feature_cache import canonical_player_gameweeks
 from utils import MODEL_NAMES, POS_FEATURES
 
-DEFAULT_EPOCHS = int(os.environ.get('FPL_RNN_EPOCHS', '35'))
+DEFAULT_EPOCHS = int(os.environ.get('FPL_RNN_EPOCHS', '20'))
+BATCH_SIZE = int(os.environ.get('FPL_RNN_BATCH_SIZE', '32'))
+RNN_THREADS = int(os.environ.get('FPL_RNN_THREADS', '1'))
 
 
 class PositionGRU(nn.Module):
-    def __init__(self, input_size: int, hidden_size: int = 32) -> None:
+    def __init__(
+        self,
+        input_size: int,
+        hidden_size: int = 32,
+        num_layers: int = 2,
+        dropout: float = 0.15,
+    ) -> None:
         super().__init__()
-        self.gru = nn.GRU(input_size, hidden_size, batch_first=True)
+        self.gru = nn.GRU(
+            input_size,
+            hidden_size,
+            num_layers=num_layers,
+            dropout=dropout if num_layers > 1 else 0.0,
+            batch_first=True,
+        )
         self.head = nn.Sequential(
             nn.Linear(hidden_size, 16),
             nn.ReLU(),
@@ -56,49 +73,37 @@ def build_position_sequences(
     target_game_week: int | None = None,
     features: list[str] | None = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, pd.Index, StandardScaler]:
-    """Build sequences from every available player row through ``cutoff``.
-
-    ``sequence_length`` remains an optional compatibility cap. The production
-    trainer passes ``None``, so each sample starts at that player's earliest
-    persisted Gameweek and ends at the sample Gameweek.
-    """
+    """Build one canonical sequence from all available Gameweeks per player."""
     features = list(features or POS_FEATURES[position])
     position_rows = canonical_player_gameweeks(rows[
         (rows['element_type'] == position) & (rows['Game_Week'] <= cutoff)
     ])
-    # One canonical pre-fixture feature row per player/Gameweek. This prevents
-    # duplicate source rows or multiple fixtures in one FPL round from leaking
-    # same-Gameweek information into a recurrent history.
-    candidates = position_rows
-    if target_game_week is not None:
-        candidates = candidates[candidates['Game_Week'] == target_game_week]
-    else:
-        candidates = candidates[candidates['target'].notna()]
+    candidates = (
+        position_rows[position_rows['Game_Week'] == target_game_week]
+        if target_game_week is not None
+        else position_rows[position_rows['target'].notna()]
+    )
     if candidates.empty:
         raise ValueError(f'No {position} rows are available through cutoff {cutoff}.')
-
     if scaler is None:
-        scaler = StandardScaler().fit(
-            _numeric_features(position_rows, features, fill_missing=False)
-        )
+        scaler_inputs = _numeric_features(
+            position_rows, features, fill_missing=False
+        ).copy()
+        scaler_inputs[:, np.isnan(scaler_inputs).all(axis=0)] = 0.0
+        scaler = StandardScaler().fit(scaler_inputs)
 
-    histories: list[np.ndarray] = []
-    lengths: list[int] = []
-    targets: list[float] = []
-    indexes: list[Any] = []
+    histories, lengths, targets, indexes = [], [], [], []
     by_player = {player_id: group for player_id, group in position_rows.groupby('id')}
     for index, row in candidates.iterrows():
-        player_rows = by_player[row['id']]
-        history = player_rows[player_rows['Game_Week'] < row['Game_Week']]
+        history = by_player[row['id']]
+        history = history[history['Game_Week'] < row['Game_Week']]
         history = pd.concat([history, row.to_frame().T], ignore_index=True)
         if sequence_length is not None:
             history = history.tail(sequence_length)
         raw_values = _numeric_features(history, features, fill_missing=False)
-        values = scaler.transform(raw_values).astype(np.float32)
-        # Missing Transfermarkt values remain explicitly unavailable via
-        # tm_value_available=0; zero here is only the neutral standardized
-        # placeholder required by dense PyTorch tensors.
-        values = np.nan_to_num(values, nan=0.0)
+        values = np.nan_to_num(
+            scaler.transform(raw_values).astype(np.float32), nan=0.0
+        )
         histories.append(values)
         lengths.append(len(values))
         targets.append(float(row.get('target', 0.0)))
@@ -110,7 +115,6 @@ def build_position_sequences(
     )
     for sample_index, values in enumerate(histories):
         sequences[sample_index, :len(values)] = values
-
     return (
         sequences,
         np.asarray(lengths, dtype=np.int64),
@@ -121,16 +125,39 @@ def build_position_sequences(
 
 
 def _state_to_numpy(model: nn.Module) -> dict[str, np.ndarray]:
-    return {name: tensor.detach().cpu().numpy() for name, tensor in model.state_dict().items()}
+    return {
+        name: tensor.detach().cpu().numpy()
+        for name, tensor in model.state_dict().items()
+    }
 
 
 def _load_model(spec: dict[str, Any]) -> PositionGRU:
-    model = PositionGRU(spec['input_size'], spec['hidden_size'])
+    model = PositionGRU(
+        spec['input_size'],
+        spec['hidden_size'],
+        spec.get('num_layers', 2),
+        spec.get('dropout', 0.15),
+    )
     model.load_state_dict({
         name: torch.as_tensor(value) for name, value in spec['state_dict'].items()
     })
     model.eval()
     return model
+
+
+def _batched_predictions(
+    model: PositionGRU,
+    sequences: torch.Tensor,
+    lengths: torch.Tensor,
+) -> np.ndarray:
+    torch.set_num_threads(max(1, RNN_THREADS))
+    predictions = []
+    model.eval()
+    with torch.no_grad():
+        for start in range(0, len(sequences), BATCH_SIZE):
+            stop = start + BATCH_SIZE
+            predictions.append(model(sequences[start:stop], lengths[start:stop]).numpy())
+    return np.concatenate(predictions)
 
 
 def train_rnn_models(
@@ -141,10 +168,8 @@ def train_rnn_models(
 ) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
     torch.manual_seed(42)
     np.random.seed(42)
-    torch.set_num_threads(max(1, min(4, os.cpu_count() or 1)))
-    model_specs: dict[str, dict[str, Any]] = {}
-    metrics: dict[str, dict[str, Any]] = {}
-
+    torch.set_num_threads(max(1, RNN_THREADS))
+    models, metrics = {}, {}
     for position in ('GK', 'DEF', 'MID', 'FWD'):
         features = list(POS_FEATURES[position])
         sequences, lengths, targets, _, scaler = build_position_sequences(
@@ -153,33 +178,36 @@ def train_rnn_models(
         sequence_tensor = torch.from_numpy(sequences)
         length_tensor = torch.from_numpy(lengths)
         target_tensor = torch.from_numpy(targets)
-        hidden_size = 32
-        model = PositionGRU(len(features), hidden_size)
+        model = PositionGRU(len(features), 32, num_layers=2, dropout=0.15)
         optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=1e-4)
         loss_function = nn.SmoothL1Loss()
-
         model.train()
         for _ in range(epochs):
-            optimizer.zero_grad()
-            loss = loss_function(model(sequence_tensor, length_tensor), target_tensor)
-            loss.backward()
-            optimizer.step()
-
-        model.eval()
-        with torch.no_grad():
-            predictions = model(sequence_tensor, length_tensor).numpy()
-        model_specs[position] = {
-            'architecture': 'gru',
+            order = torch.randperm(len(sequence_tensor))
+            for start in range(0, len(order), BATCH_SIZE):
+                indexes = order[start:start + BATCH_SIZE]
+                optimizer.zero_grad()
+                loss = loss_function(
+                    model(sequence_tensor[indexes], length_tensor[indexes]),
+                    target_tensor[indexes],
+                )
+                loss.backward()
+                nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+                optimizer.step()
+        predictions = _batched_predictions(model, sequence_tensor, length_tensor)
+        absolute_errors = np.abs(targets - predictions)
+        models[position] = {
+            'architecture': 'deep_gru_v2',
             'input_size': len(features),
-            'hidden_size': hidden_size,
+            'hidden_size': 32,
+            'num_layers': 2,
+            'dropout': 0.15,
             'state_dict': _state_to_numpy(model),
             'scaler_mean': scaler.mean_.astype(float).tolist(),
             'scaler_scale': scaler.scale_.astype(float).tolist(),
             'features': features,
             'sequence_length': sequence_length,
-            'sequence_policy': (
-                'all_available' if sequence_length is None else 'fixed_window'
-            ),
+            'sequence_policy': 'all_available' if sequence_length is None else 'fixed_window',
             'max_training_sequence_length': int(lengths.max()),
         }
         metrics[position] = {
@@ -187,16 +215,12 @@ def train_rnn_models(
             'rmse': round(float(root_mean_squared_error(targets, predictions)), 4),
             'n': len(targets),
             'top_feature': 'ordered player history',
-            'model_name': f'{MODEL_NAMES[position]} (GRU)',
+            'model_name': f'{MODEL_NAMES[position]} (Deep GRU)',
             'n_features': len(features),
+            'error_p80': round(float(np.quantile(absolute_errors, 0.80)), 4),
+            'error_p95': round(float(np.quantile(absolute_errors, 0.95)), 4),
         }
-        metric = metrics[position]
-        print(
-            f"  [{metric['model_name']}] n={metric['n']:,} "
-            f"features={metric['n_features']} RMSE={metric['rmse']:.4f}"
-        )
-
-    return model_specs, metrics
+    return models, metrics
 
 
 def score_rnn_snapshot(
@@ -211,16 +235,9 @@ def score_rnn_snapshot(
     for position, spec in checkpoint['models'].items():
         features = spec.get('features') or []
         if spec.get('sequence_policy') != 'all_available' or spec.get('sequence_length') is not None:
-            raise ValueError(
-                f'RNN checkpoint has an inconsistent sequence policy for {position}.'
-            )
+            raise ValueError(f'RNN checkpoint policy is invalid for {position}.')
         if int(spec.get('input_size', -1)) != len(features):
-            raise ValueError(f'RNN checkpoint feature count is invalid for {position}.')
-        if not (
-            len(spec.get('scaler_mean', [])) == len(features)
-            and len(spec.get('scaler_scale', [])) == len(features)
-        ):
-            raise ValueError(f'RNN checkpoint scaler state is invalid for {position}.')
+            raise ValueError(f'RNN feature count is invalid for {position}.')
         scaler = StandardScaler()
         scaler.mean_ = np.asarray(spec['scaler_mean'], dtype=float)
         scaler.scale_ = np.asarray(spec['scaler_scale'], dtype=float)
@@ -230,18 +247,14 @@ def score_rnn_snapshot(
             df,
             position,
             snapshot_game_week,
-            spec.get('sequence_length'),
             scaler=scaler,
             target_game_week=snapshot_game_week,
             features=features,
         )
-        if sequences.shape[2] != len(features):
-            raise ValueError(f'RNN inference feature width is invalid for {position}.')
         model = _load_model(spec)
-        with torch.no_grad():
-            predictions = model(
-                torch.from_numpy(sequences), torch.from_numpy(lengths)
-            ).numpy()
+        predictions = _batched_predictions(
+            model, torch.from_numpy(sequences), torch.from_numpy(lengths)
+        )
         position_rows = df.loc[indexes].copy()
         position_rows['predicted_points'] = predictions
         parts.append(position_rows)

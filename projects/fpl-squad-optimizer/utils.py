@@ -6,6 +6,7 @@ import sqlite3
 from collections import Counter
 from contextlib import closing
 
+import numpy as np
 import pandas as pd
 import requests
 
@@ -117,11 +118,33 @@ MARKET_VALUE_WEIGHT_NO_HISTORY = 0.30
 
 ROLL_COLS = [
     'total_points', 'minutes', 'goals_scored', 'assists',
-    'clean_sheets', 'bonus', 'ict_index', 'creativity', 'threat',
+    'clean_sheets', 'bonus', 'bps', 'ict_index', 'creativity', 'threat',
     'influence', 'goals_conceded', 'saves',
     # StatsBomb expected stats + discipline (v2 feature expansion)
     'expected_goals', 'expected_assists', 'expected_goals_conceded',
     'starts', 'yellow_cards', 'red_cards', 'penalties_saved',
+    'defensive_contribution', 'recoveries', 'tackles',
+    'clearances_blocks_interceptions',
+]
+
+MARKET_FEATURES = [
+    'ownership_log', 'ownership_change_log',
+    'transfers_in_log', 'transfers_out_log',
+    'transfer_balance_log', 'transfer_momentum_per_owner',
+    'price_change_1', 'price_change_3',
+]
+
+FIXTURE_CONTEXT_FEATURES = [
+    'rest_days', 'rest_days_available', 'matches_previous_14d',
+    'team_elo_pre', 'opponent_elo_pre', 'elo_difference',
+    'team_goals_for_roll5', 'team_goals_against_roll5',
+    'opponent_goals_for_roll5', 'opponent_goals_against_roll5',
+]
+
+EXTERNAL_APPEARANCE_FEATURES = [
+    'external_minutes_90d', 'external_appearances_90d',
+    'external_goal_involvements_365d', 'external_minutes_365d',
+    'external_data_available',
 ]
 
 # Human-readable description for each position model (stored in checkpoint)
@@ -141,10 +164,11 @@ POS_FEATURES = {
         'roll5_total_points', 'roll5_minutes', 'roll5_clean_sheets',
         'roll5_goals_conceded', 'roll5_expected_goals_conceded',
         'roll5_saves', 'roll5_penalties_saved',
-        'roll5_bonus', 'roll5_influence',
+        'roll5_bonus', 'roll5_bps', 'roll5_influence',
         'roll5_starts', 'roll5_yellow_cards', 'roll5_red_cards',
         'was_home', 'value', 'opponent_team', 'team',
         'tm_market_value', 'tm_value_available',
+        *MARKET_FEATURES, *FIXTURE_CONTEXT_FEATURES, *EXTERNAL_APPEARANCE_FEATURES,
         'form_data_density',           # fraction of last 5 GWs played (0=none, 1=all)
         'player_age_years',            # fractional age at kickoff date
         # Season-over-season trajectory
@@ -157,10 +181,13 @@ POS_FEATURES = {
         'roll5_goals_scored', 'roll5_assists',
         'roll5_expected_goals', 'roll5_expected_assists',
         'roll5_creativity', 'roll5_influence',
-        'roll5_bonus', 'roll5_starts',
+        'roll5_bonus', 'roll5_bps', 'roll5_starts',
+        'roll5_defensive_contribution', 'roll5_recoveries',
+        'roll5_tackles', 'roll5_clearances_blocks_interceptions',
         'roll5_yellow_cards', 'roll5_red_cards',
         'was_home', 'value', 'opponent_team', 'team',
         'tm_market_value', 'tm_value_available',
+        *MARKET_FEATURES, *FIXTURE_CONTEXT_FEATURES, *EXTERNAL_APPEARANCE_FEATURES,
         'form_data_density',           # fraction of last 5 GWs played (0=none, 1=all)
         'player_age_years',            # fractional age at kickoff date
         # Season-over-season trajectory
@@ -173,10 +200,12 @@ POS_FEATURES = {
         'roll5_goals_scored', 'roll5_assists', 'roll5_clean_sheets',
         'roll5_expected_goals', 'roll5_expected_assists',
         'roll5_creativity', 'roll5_influence',
-        'roll5_bonus', 'roll5_starts',
+        'roll5_bonus', 'roll5_bps', 'roll5_starts',
+        'roll5_defensive_contribution', 'roll5_recoveries', 'roll5_tackles',
         'roll5_yellow_cards', 'roll5_red_cards',
         'was_home', 'value', 'opponent_team', 'team',
         'tm_market_value', 'tm_value_available',
+        *MARKET_FEATURES, *FIXTURE_CONTEXT_FEATURES, *EXTERNAL_APPEARANCE_FEATURES,
         'form_data_density',           # fraction of last 5 GWs played (0=none, 1=all)
         'player_age_years',            # fractional age at kickoff date
         # Season-over-season trajectory
@@ -189,10 +218,11 @@ POS_FEATURES = {
         'roll5_goals_scored', 'roll5_assists',
         'roll5_expected_goals', 'roll5_expected_assists',
         'roll5_threat', 'roll5_influence',
-        'roll5_bonus', 'roll5_starts',
+        'roll5_bonus', 'roll5_bps', 'roll5_starts',
         'roll5_yellow_cards', 'roll5_red_cards',
         'was_home', 'value', 'opponent_team', 'team',
         'tm_market_value', 'tm_value_available',
+        *MARKET_FEATURES, *FIXTURE_CONTEXT_FEATURES, *EXTERNAL_APPEARANCE_FEATURES,
         'form_data_density',           # fraction of last 5 GWs played (0=none, 1=all)
         'player_age_years',            # fractional age at kickoff date
         # Season-over-season trajectory
@@ -634,6 +664,7 @@ def refresh_live_season_data(
         & ~current.get('removed', pd.Series(False, index=current.index)).fillna(False)
     ]
     snapshot_rows = []
+    total_players = int(bootstrap.get('total_players') or 0)
     for player in active.to_dict('records'):
         row = {column: 0 for column in columns}
         opponent, was_home, kickoff = fixture_by_team.get(
@@ -649,6 +680,15 @@ def refresh_live_season_data(
             'opponent_team': opponent,
             'was_home': was_home,
             'value': int(player.get('now_cost') or 0),
+            'selected': round(
+                float(player.get('selected_by_percent') or 0) * total_players / 100
+            ),
+            'transfers_in': int(player.get('transfers_in_event') or 0),
+            'transfers_out': int(player.get('transfers_out_event') or 0),
+            'transfers_balance': (
+                int(player.get('transfers_in_event') or 0)
+                - int(player.get('transfers_out_event') or 0)
+            ),
             'modified': False,
         })
         snapshot_rows.append(row)
@@ -740,7 +780,7 @@ def build_features(db_file):
         "SELECT element_type, team, second_name, first_name, id, code, birth_date FROM players_raw",
         conn,
     )
-    all_gw = pd.read_sql("SELECT * FROM player_gw", conn)
+    all_gw = pd.read_sql("SELECT * FROM player_gw", conn).drop_duplicates()
     # Ensure all ROLL_COLS exist — DBs created before the v2 feature expansion
     # will be missing expected_*/starts/discipline columns.  Fill with 0 so
     # training degrades gracefully rather than crashing.
@@ -774,6 +814,12 @@ def build_features(db_file):
     except Exception:
         tm_df = pd.DataFrame()  # module or table not yet available
 
+    try:
+        from external_appearances import load_external_appearances
+        external_appearances = load_external_appearances(conn)
+    except Exception:
+        external_appearances = pd.DataFrame()
+
     # Load season-over-season history and compute trajectory features.
     try:
         hist_raw = pd.read_sql("SELECT * FROM player_history", conn)
@@ -790,6 +836,9 @@ def build_features(db_file):
     df = raw.merge(all_gw, left_on='id', right_on='player_id', how='inner')
     df = df.sort_values(['id', 'Game_Week']).reset_index(drop=True)
     df['_prior_pl_rows'] = df.groupby('id').cumcount()
+
+    df = _add_temporal_context_features(df)
+    df = _add_fixture_strength_features(df)
 
     for col in ROLL_COLS:
         df[f'roll5_{col}'] = (
@@ -824,6 +873,8 @@ def build_features(db_file):
     from transfer_values import attach_transfer_values_asof
     df = attach_transfer_values_asof(df, tm_df)
     df['tm_value_available'] = df['tm_market_value'].notna().astype(float)
+    from external_appearances import attach_external_appearance_features
+    df = attach_external_appearance_features(df, external_appearances)
 
     # Attach season history trajectory features (one row per player)
     if not hist_features.empty:
@@ -910,6 +961,186 @@ def build_features(db_file):
     ).round(4)
 
     return df
+
+
+def _signed_log1p(values: pd.Series) -> pd.Series:
+    numeric = pd.to_numeric(values, errors='coerce').fillna(0.0)
+    return np.sign(numeric) * np.log1p(numeric.abs())
+
+
+def _add_temporal_context_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Add pre-fixture market momentum, price trend, rest and congestion."""
+    enriched = df.copy()
+    for column in ('selected', 'transfers_in', 'transfers_out', 'transfers_balance', 'value'):
+        if column not in enriched:
+            enriched[column] = 0.0
+        enriched[column] = pd.to_numeric(enriched[column], errors='coerce').fillna(0.0)
+
+    enriched['ownership_log'] = np.log1p(enriched['selected'].clip(lower=0))
+    previous_selected = enriched.groupby('id')['selected'].shift(1)
+    enriched['ownership_change_log'] = _signed_log1p(
+        enriched['selected'] - previous_selected
+    )
+    enriched['transfers_in_log'] = np.log1p(enriched['transfers_in'].clip(lower=0))
+    enriched['transfers_out_log'] = np.log1p(enriched['transfers_out'].clip(lower=0))
+    enriched['transfer_balance_log'] = _signed_log1p(enriched['transfers_balance'])
+    enriched['transfer_momentum_per_owner'] = (
+        enriched['transfers_balance'] / enriched['selected'].clip(lower=1)
+    ).clip(-5.0, 5.0)
+    enriched['price_change_1'] = (
+        enriched['value'] - enriched.groupby('id')['value'].shift(1)
+    ).fillna(0.0)
+    enriched['price_change_3'] = (
+        enriched['value'] - enriched.groupby('id')['value'].shift(3)
+    ).fillna(0.0)
+
+    kickoff = pd.to_datetime(enriched.get('kickoff_time'), errors='coerce', utc=True)
+    previous_kickoff = kickoff.groupby(enriched['id']).shift(1)
+    raw_rest = (kickoff - previous_kickoff).dt.total_seconds() / 86400
+    enriched['rest_days_available'] = raw_rest.notna().astype(float)
+    enriched['rest_days'] = raw_rest.clip(lower=0, upper=30).fillna(14.0)
+    enriched['matches_previous_14d'] = 0.0
+    for _, indexes in enriched.groupby('id', sort=False).groups.items():
+        index_array = np.asarray(list(indexes), dtype=int)
+        player_kickoff = kickoff.iloc[index_array]
+        valid_indexes = np.flatnonzero(player_kickoff.notna().to_numpy())
+        if not len(valid_indexes):
+            continue
+        valid_times = player_kickoff.iloc[valid_indexes].astype('int64').to_numpy()
+        horizon = 14 * 24 * 60 * 60 * 1_000_000_000
+        left = np.searchsorted(valid_times, valid_times - horizon, side='left')
+        enriched.loc[
+            index_array[valid_indexes], 'matches_previous_14d'
+        ] = np.arange(len(valid_times)) - left
+    return enriched
+
+
+def _fixture_rows_from_player_history(df: pd.DataFrame) -> pd.DataFrame:
+    required = {
+        'fixture', 'opponent_team', 'was_home', 'team_h_score',
+        'team_a_score', 'kickoff_time', 'Game_Week',
+    }
+    if not required.issubset(df.columns):
+        return pd.DataFrame()
+    source = df[
+        pd.to_numeric(df['fixture'], errors='coerce').fillna(0).gt(0)
+        & pd.to_numeric(df['opponent_team'], errors='coerce').fillna(0).gt(0)
+    ].copy()
+    kickoff = pd.to_datetime(source['kickoff_time'], errors='coerce', utc=True)
+    source['_season_key'] = np.where(
+        kickoff.dt.month >= 7, kickoff.dt.year, kickoff.dt.year - 1
+    )
+    records = []
+    for (season_key, fixture_id), group in source.groupby(['_season_key', 'fixture']):
+        home_rows = group[group['was_home'].astype(bool)]
+        away_rows = group[~group['was_home'].astype(bool)]
+        if home_rows.empty or away_rows.empty:
+            continue
+        first = group.iloc[0]
+        records.append({
+            'season_key': int(season_key),
+            'fixture': int(fixture_id),
+            'Game_Week': int(first['Game_Week']),
+            'kickoff_time': first['kickoff_time'],
+            'home_team': int(pd.to_numeric(away_rows['opponent_team']).mode().iloc[0]),
+            'away_team': int(pd.to_numeric(home_rows['opponent_team']).mode().iloc[0]),
+            'home_goals': float(first.get('team_h_score') or 0),
+            'away_goals': float(first.get('team_a_score') or 0),
+        })
+    return pd.DataFrame(records).drop_duplicates(['season_key', 'fixture'])
+
+
+def _add_fixture_strength_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Attach team strength known before each row's fixture kickoff."""
+    enriched = df.copy()
+    defaults = {
+        'team_elo_pre': 1500.0, 'opponent_elo_pre': 1500.0,
+        'elo_difference': 0.0,
+        'team_goals_for_roll5': 1.25, 'team_goals_against_roll5': 1.25,
+        'opponent_goals_for_roll5': 1.25, 'opponent_goals_against_roll5': 1.25,
+    }
+    for column, value in defaults.items():
+        enriched[column] = value
+    fixtures = _fixture_rows_from_player_history(enriched)
+    if fixtures.empty:
+        return enriched
+    fixtures['_kickoff'] = pd.to_datetime(fixtures['kickoff_time'], errors='coerce', utc=True)
+    fixtures = fixtures.sort_values(['_kickoff', 'fixture'])
+    ratings: dict[tuple[int, int], float] = {}
+    goals_for: dict[tuple[int, int], list[float]] = {}
+    goals_against: dict[tuple[int, int], list[float]] = {}
+    contexts: dict[tuple[int, int], dict[str, float]] = {}
+    latest: dict[tuple[int, int], dict[str, float]] = {}
+    for fixture in fixtures.itertuples(index=False):
+        season = int(fixture.season_key)
+        home = (season, int(fixture.home_team))
+        away = (season, int(fixture.away_team))
+        home_elo, away_elo = ratings.get(home, 1500.0), ratings.get(away, 1500.0)
+        home_for = float(np.mean(goals_for.get(home, [1.25])[-5:]))
+        home_against = float(np.mean(goals_against.get(home, [1.25])[-5:]))
+        away_for = float(np.mean(goals_for.get(away, [1.25])[-5:]))
+        away_against = float(np.mean(goals_against.get(away, [1.25])[-5:]))
+        contexts[(season, int(fixture.fixture))] = {
+            'home_team_elo': home_elo, 'away_team_elo': away_elo,
+            'home_goals_for': home_for, 'home_goals_against': home_against,
+            'away_goals_for': away_for, 'away_goals_against': away_against,
+        }
+        expected_home = 1 / (1 + 10 ** ((away_elo - (home_elo + 65)) / 400))
+        actual_home = 1.0 if fixture.home_goals > fixture.away_goals else (
+            0.0 if fixture.home_goals < fixture.away_goals else 0.5
+        )
+        delta = 20 * (actual_home - expected_home)
+        ratings[home], ratings[away] = home_elo + delta, away_elo - delta
+        goals_for.setdefault(home, []).append(fixture.home_goals)
+        goals_against.setdefault(home, []).append(fixture.away_goals)
+        goals_for.setdefault(away, []).append(fixture.away_goals)
+        goals_against.setdefault(away, []).append(fixture.home_goals)
+        latest[home] = {
+            'elo': ratings[home],
+            'goals_for': float(np.mean(goals_for[home][-5:])),
+            'goals_against': float(np.mean(goals_against[home][-5:])),
+        }
+        latest[away] = {
+            'elo': ratings[away],
+            'goals_for': float(np.mean(goals_for[away][-5:])),
+            'goals_against': float(np.mean(goals_against[away][-5:])),
+        }
+
+    for index, row in enriched.iterrows():
+        kickoff_value = pd.to_datetime(row.get('kickoff_time'), errors='coerce', utc=True)
+        season = (
+            kickoff_value.year if pd.notna(kickoff_value) and kickoff_value.month >= 7
+            else kickoff_value.year - 1 if pd.notna(kickoff_value) else 0
+        )
+        fixture_value = pd.to_numeric(pd.Series([row.get('fixture')]), errors='coerce').iloc[0]
+        fixture_id = int(fixture_value) if pd.notna(fixture_value) else 0
+        context = contexts.get((season, fixture_id))
+        was_home = bool(row.get('was_home'))
+        if context:
+            team_prefix, opponent_prefix = ('home', 'away') if was_home else ('away', 'home')
+            enriched.at[index, 'team_elo_pre'] = context[f'{team_prefix}_team_elo']
+            enriched.at[index, 'opponent_elo_pre'] = context[f'{opponent_prefix}_team_elo']
+            enriched.at[index, 'team_goals_for_roll5'] = context[f'{team_prefix}_goals_for']
+            enriched.at[index, 'team_goals_against_roll5'] = context[f'{team_prefix}_goals_against']
+            enriched.at[index, 'opponent_goals_for_roll5'] = context[f'{opponent_prefix}_goals_for']
+            enriched.at[index, 'opponent_goals_against_roll5'] = context[f'{opponent_prefix}_goals_against']
+        else:
+            team_value = pd.to_numeric(pd.Series([row.get('team')]), errors='coerce').iloc[0]
+            opponent_value = pd.to_numeric(pd.Series([row.get('opponent_team')]), errors='coerce').iloc[0]
+            team = int(team_value) if pd.notna(team_value) else 0
+            opponent = int(opponent_value) if pd.notna(opponent_value) else 0
+            team_latest = latest.get((season, team), {})
+            opponent_latest = latest.get((season, opponent), {})
+            enriched.at[index, 'team_elo_pre'] = team_latest.get('elo', 1500.0)
+            enriched.at[index, 'opponent_elo_pre'] = opponent_latest.get('elo', 1500.0)
+            enriched.at[index, 'team_goals_for_roll5'] = team_latest.get('goals_for', 1.25)
+            enriched.at[index, 'team_goals_against_roll5'] = team_latest.get('goals_against', 1.25)
+            enriched.at[index, 'opponent_goals_for_roll5'] = opponent_latest.get('goals_for', 1.25)
+            enriched.at[index, 'opponent_goals_against_roll5'] = opponent_latest.get('goals_against', 1.25)
+        enriched.at[index, 'elo_difference'] = (
+            enriched.at[index, 'team_elo_pre'] - enriched.at[index, 'opponent_elo_pre']
+        )
+    return enriched
 
 
 def apply_market_value_weighting(scored: pd.DataFrame) -> pd.DataFrame:
