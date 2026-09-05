@@ -10,9 +10,17 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
 import json
 import math
 import os
+import re
 import secrets
+import shutil
+import sqlite3
+import subprocess
+import tempfile
+import threading
 import time
 from collections import Counter
+from contextlib import closing
+from datetime import datetime, timezone
 from pathlib import Path
 
 import joblib
@@ -29,7 +37,9 @@ from utils import (
     suggest_transfer, find_ineligible_replacements, get_runtime_context,
 )
 from model_registry import (
+    MODEL_TYPES,
     available_model_artifacts,
+    model_artifact_path,
     score_checkpoint_snapshot,
     validate_checkpoint_cutoff,
 )
@@ -62,6 +72,19 @@ def _elig_key(player_row) -> tuple[str, str]:
 app = Flask(__name__)
 _SYNC_LAST_REQUEST: dict[str, float] = {}
 _SYNC_COOLDOWN_SECONDS = 3.0
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+_TRAINING_GUARD = threading.Lock()
+_TRAINING_STATE_LOCK = threading.Lock()
+_ARTIFACT_LOCK = threading.RLock()
+_TRAINING_STATE = {
+    'status': 'idle',
+    'phase': 'Idle',
+    'progress': 0,
+    'started_at': None,
+    'completed_at': None,
+    'message': 'No refresh is running.',
+    'log': [],
+}
 
 # FPL colour scheme (matches official app)
 POS_COLORS = {
@@ -148,6 +171,86 @@ def select_squad(
         margins.append(round(float(player['predicted_points']) - nb, 4))
     df_squad['selection_margin'] = margins
     return df_squad
+
+
+def select_best_advisor_side(
+    pool: pd.DataFrame,
+    max_per_team: int,
+    max_spend: int,
+    time_limit: int = 20,
+) -> tuple[pd.DataFrame, dict]:
+    """Jointly optimize a legal 15-player squad and its strongest legal XI."""
+    candidates = pool.drop_duplicates(subset='id').reset_index(drop=True)
+    player_count = len(candidates)
+    constraint_rows = []
+    lower_bounds = []
+    upper_bounds = []
+
+    def add_constraint(squad_values, starter_values, lower, upper):
+        constraint_rows.append(np.concatenate([squad_values, starter_values]))
+        lower_bounds.append(lower)
+        upper_bounds.append(upper)
+
+    zeroes = np.zeros(player_count)
+    for position, count in {'GK': 2, 'DEF': 5, 'MID': 5, 'FWD': 3}.items():
+        mask = (candidates['element_type'] == position).astype(float).to_numpy()
+        add_constraint(mask, zeroes, count, count)
+
+    add_constraint(
+        candidates['value'].astype(float).to_numpy(), zeroes, 0, max_spend
+    )
+    for team in candidates['team'].dropna().unique():
+        mask = (candidates['team'] == team).astype(float).to_numpy()
+        add_constraint(mask, zeroes, 0, max_per_team)
+
+    add_constraint(zeroes, np.ones(player_count), 11, 11)
+    starter_limits = {
+        'GK': (1, 1), 'DEF': (3, 5), 'MID': (2, 5), 'FWD': (1, 3),
+    }
+    for position, (minimum, maximum) in starter_limits.items():
+        mask = (candidates['element_type'] == position).astype(float).to_numpy()
+        add_constraint(zeroes, mask, minimum, maximum)
+
+    for index in range(player_count):
+        squad_values = np.zeros(player_count)
+        starter_values = np.zeros(player_count)
+        squad_values[index] = -1
+        starter_values[index] = 1
+        add_constraint(squad_values, starter_values, -np.inf, 0)
+
+    predictions = candidates['predicted_points'].astype(float).to_numpy()
+    objective = -np.concatenate([predictions * 0.001, predictions])
+    result = milp(
+        c=objective,
+        integrality=np.ones(player_count * 2),
+        bounds=Bounds(0, 1),
+        constraints=LinearConstraint(
+            np.vstack(constraint_rows), lower_bounds, upper_bounds
+        ),
+        options={'time_limit': time_limit},
+    )
+    if not result.success:
+        raise RuntimeError('No legal all-advisor squad and XI could be generated.')
+
+    squad = candidates.loc[result.x[:player_count] > 0.5].copy().reset_index(drop=True)
+    starter_ids = candidates.loc[
+        result.x[player_count:] > 0.5, 'id'
+    ].astype(int).tolist()
+    bench = squad[~squad['id'].astype(int).isin(starter_ids)].copy()
+    bench['bench_rank'] = bench['element_type'].ne('GK').astype(int)
+    bench = bench.sort_values(
+        ['bench_rank', 'predicted_points'], ascending=[True, False]
+    )
+    ranked_starters = squad[
+        squad['id'].astype(int).isin(starter_ids)
+    ].sort_values('predicted_points', ascending=False)
+    lineup = {
+        'starters': starter_ids,
+        'bench': bench['id'].astype(int).tolist(),
+        'captain': int(ranked_starters.iloc[0]['id']),
+        'vice_captain': int(ranked_starters.iloc[1]['id']),
+    }
+    return squad, lineup
 
 
 def _squad_quality(squad: pd.DataFrame) -> tuple[float, float]:
@@ -325,6 +428,15 @@ def _state_from_synced_entry(
 ) -> dict:
     picks = synced.get('picks') or []
     if len(picks) != 15:
+        started_event = synced.get('started_event')
+        current_event = synced.get('current_event')
+        if started_event and not synced.get('gameweeks'):
+            raise FplEntrySyncError(
+                f'Entry {synced.get("entry_id")} starts in GW{started_event}. '
+                f'Its current squad is private before the GW{started_event} deadline; '
+                'FPL will expose the 15 picks publicly after that deadline. '
+                f'Public data currently ends at GW{current_event or 0}.'
+            )
         raise FplEntrySyncError(
             'No complete public 15-player squad is available yet. Picks become '
             'public after the Gameweek deadline.'
@@ -472,6 +584,200 @@ def _safe(obj):
     return obj
 
 
+def _training_snapshot() -> dict:
+    with _TRAINING_STATE_LOCK:
+        return {
+            **_TRAINING_STATE,
+            'log': list(_TRAINING_STATE['log']),
+        }
+
+
+def _training_write_block():
+    if _training_snapshot()['status'] == 'running':
+        return jsonify({
+            'ok': False,
+            'error': 'Data refresh is running. Save or synchronize after it completes.',
+        }), 409
+    return None
+
+
+def _update_training_state(**changes) -> None:
+    with _TRAINING_STATE_LOCK:
+        _TRAINING_STATE.update(changes)
+
+
+def _append_training_log(line: str) -> None:
+    progress_markers = (
+        ('syncing fantasy-premier-league', 5, 'Updating FPL archive'),
+        ('fetching epl member list', 10, 'Fetching current player list'),
+        ('live fpl history:', 30, 'Refreshing completed Gameweeks'),
+        ('external non-pl appearances loaded:', 42, 'Refreshing enrichments'),
+        ('building features...', 48, 'Building temporal features'),
+        ('feature cache:', 55, 'Preparing training data'),
+        ('training xgboost', 58, 'Training XGBoost'),
+        ('saved xgboost checkpoint', 66, 'XGBoost complete'),
+        ('training catboost', 68, 'Training CatBoost'),
+        ('saved catboost checkpoint', 75, 'CatBoost complete'),
+        ('training lambdarank', 77, 'Training LambdaRank'),
+        ('saved lambdarank checkpoint', 83, 'LambdaRank complete'),
+        ('training rnn', 85, 'Training Deep GRU'),
+        ('saved rnn checkpoint', 94, 'Deep GRU complete'),
+        ('saved ensemble checkpoint', 97, 'Building ensemble'),
+        ('registering trained players', 98, 'Finalizing training registry'),
+    )
+    clean_line = line.rstrip()
+    normalized = clean_line.lower()
+    with _TRAINING_STATE_LOCK:
+        lines = [*_TRAINING_STATE['log'], clean_line]
+        _TRAINING_STATE['log'] = lines[-30:]
+        _TRAINING_STATE['message'] = clean_line or _TRAINING_STATE['message']
+        history_progress = re.search(
+            r'fpl history download:\s*(\d+)/(\d+) players', normalized
+        )
+        if history_progress:
+            completed, total = map(int, history_progress.groups())
+            progress = 10 + round(19 * completed / max(total, 1))
+            if progress >= int(_TRAINING_STATE['progress']):
+                _TRAINING_STATE['progress'] = progress
+                _TRAINING_STATE['phase'] = (
+                    f'Downloading player histories ({completed}/{total})'
+                )
+            return
+        for marker, progress, phase in progress_markers:
+            if marker in normalized:
+                if progress >= int(_TRAINING_STATE['progress']):
+                    _TRAINING_STATE['progress'] = progress
+                    _TRAINING_STATE['phase'] = phase
+                break
+
+
+def _publish_staged_training(stage_dir: Path, staged_database: Path) -> None:
+    database_target = Path(DB_FILE)
+    targets = {
+        model_type: model_artifact_path(model_type)
+        for model_type in MODEL_TYPES
+    }
+    staged = {
+        name: stage_dir / target.name
+        for name, target in targets.items()
+    }
+    missing = [
+        str(path)
+        for path in (staged_database, *staged.values())
+        if not path.exists()
+    ]
+    if missing:
+        raise RuntimeError(
+            'Training completed without every expected artifact: ' + ', '.join(missing)
+        )
+
+    backup_dir = stage_dir / 'previous'
+    backup_dir.mkdir()
+    database_backup = backup_dir / database_target.name
+    replaced = []
+    with _ARTIFACT_LOCK:
+        try:
+            database_target.parent.mkdir(parents=True, exist_ok=True)
+            had_database = database_target.exists()
+            if had_database:
+                with (
+                    closing(sqlite3.connect(database_target)) as source,
+                    closing(sqlite3.connect(database_backup)) as destination,
+                ):
+                    source.backup(destination)
+            with (
+                closing(sqlite3.connect(staged_database)) as source,
+                closing(sqlite3.connect(database_target)) as destination,
+            ):
+                source.backup(destination)
+            for name, target in targets.items():
+                target.parent.mkdir(parents=True, exist_ok=True)
+                backup = backup_dir / target.name
+                had_previous = target.exists()
+                if had_previous:
+                    os.replace(target, backup)
+                replaced.append((target, backup, had_previous))
+                os.replace(staged[name], target)
+        except Exception:
+            for target, backup, had_previous in reversed(replaced):
+                if target.exists():
+                    target.unlink()
+                if had_previous and backup.exists():
+                    os.replace(backup, target)
+            if had_database and database_backup.exists():
+                with (
+                    closing(sqlite3.connect(database_backup)) as source,
+                    closing(sqlite3.connect(database_target)) as destination,
+                ):
+                    source.backup(destination)
+            raise
+
+
+def _run_refresh_and_training() -> None:
+    stage_dir = Path(tempfile.mkdtemp(prefix='fpl-model-refresh-'))
+    try:
+        _update_training_state(progress=2, phase='Preparing staged workspace')
+        env = os.environ.copy()
+        staged_database = stage_dir / Path(DB_FILE).name
+        if Path(DB_FILE).exists():
+            with (
+                closing(sqlite3.connect(DB_FILE)) as source,
+                closing(sqlite3.connect(staged_database)) as destination,
+            ):
+                source.backup(destination)
+        env['FPL_DB_FILE'] = str(staged_database)
+        for model_type in MODEL_TYPES:
+            target = model_artifact_path(model_type)
+            env[f'FPL_{model_type.upper()}_MODELS_FILE'] = str(stage_dir / target.name)
+        command = [sys.executable, '-u', 'train/train.py', '--model', 'all']
+        process = subprocess.Popen(
+            command,
+            cwd=_PROJECT_ROOT,
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            encoding='utf-8',
+            errors='replace',
+            bufsize=1,
+        )
+        assert process.stdout is not None
+        for line in process.stdout:
+            _append_training_log(line)
+        return_code = process.wait()
+        if return_code != 0:
+            raise RuntimeError(f'Refresh and training exited with code {return_code}.')
+        _update_training_state(progress=99, phase='Publishing data and models')
+        _publish_staged_training(stage_dir, staged_database)
+        _update_training_state(
+            status='succeeded',
+            phase='Complete',
+            progress=100,
+            completed_at=datetime.now(timezone.utc).isoformat(timespec='seconds'),
+            message='Latest data fetched and all model artifacts retrained.',
+        )
+    except Exception as exc:
+        _append_training_log(f'ERROR: {exc}')
+        _update_training_state(
+            status='failed',
+            phase='Failed',
+            completed_at=datetime.now(timezone.utc).isoformat(timespec='seconds'),
+            message=str(exc),
+        )
+    finally:
+        shutil.rmtree(stage_dir, ignore_errors=True)
+        _TRAINING_GUARD.release()
+
+
+def _reject_nonlocal_or_cross_origin():
+    if request.remote_addr not in ('127.0.0.1', '::1', None):
+        return jsonify({'ok': False, 'error': 'Training can only be started locally.'}), 403
+    origin = request.headers.get('Origin')
+    if origin and origin.rstrip('/') != request.host_url.rstrip('/'):
+        return jsonify({'ok': False, 'error': 'Cross-origin training requests are rejected.'}), 403
+    return None
+
+
 def _setup_error(title: str, message: str, fix_cmd: str, status: int = 500) -> tuple:
     """Return a styled setup-error page with the exact command needed to fix the issue."""
     html = f"""<!DOCTYPE html>
@@ -528,19 +834,23 @@ def index():
             '.venv\\Scripts\\python.exe train\\train.py',
         )
 
-    requested_model = request.args.get('model', 'xgboost').lower()
+    advisor_run = request.args.get('advisor_run') == '1'
+    requested_model = (
+        'ensemble' if advisor_run else request.args.get('model', 'xgboost').lower()
+    )
     if requested_model not in artifacts:
         requested_model = next(iter(artifacts))
-    checkpoint = joblib.load(artifacts[requested_model])
-    validate_checkpoint_cutoff(checkpoint)
-    metrics     = checkpoint['metrics']
-    epl_members: frozenset | None = checkpoint.get('epl_members')
+    with _ARTIFACT_LOCK:
+        checkpoint = joblib.load(artifacts[requested_model])
+        validate_checkpoint_cutoff(checkpoint)
+        metrics = checkpoint['metrics']
+        epl_members: frozenset | None = checkpoint.get('epl_members')
 
-    runtime = get_runtime_context(DB_FILE)
-    all_data, _ = load_or_build_feature_cache(DB_FILE, build_features)
-    full_pool = score_checkpoint_snapshot(
-        all_data, checkpoint, runtime['snapshot_game_week']
-    )
+        runtime = get_runtime_context(DB_FILE)
+        all_data, _ = load_or_build_feature_cache(DB_FILE, build_features)
+        full_pool = score_checkpoint_snapshot(
+            all_data, checkpoint, runtime['snapshot_game_week']
+        )
 
     # --- tier 1: EPL membership filter ---
     pool = full_pool.copy()
@@ -581,7 +891,7 @@ def index():
     eligible_pool = pool[pool.apply(_elig, axis=1)].copy() if eligibility else pool.copy()
 
     # Squad mode vs draft generation. Regeneration never deletes current state.
-    force_new   = request.args.get('new_team') == '1'
+    force_new = request.args.get('new_team') == '1' or advisor_run
     current_state = None if force_new else load_working_state()
     if current_state is None and not force_new:
         legacy_squad = load_squad(DB_FILE)
@@ -664,44 +974,62 @@ def index():
         squad = scored_squad
         gw_saved = int(state['game_week'])
     else:
-        quality_floor = float(os.environ.get('FPL_VARIATION_QUALITY_FLOOR', '0.95'))
-        noise_scale = float(os.environ.get('FPL_VARIATION_NOISE_SCALE', '0.10'))
-        attempts = int(os.environ.get('FPL_VARIATION_ATTEMPTS', '24'))
-        uncertainty = {
-            position: float(metric.get('error_p80', metric.get('rmse', 0.0)))
-            for position, metric in metrics.items()
-        }
-        requested_seed = request.args.get('seed')
-        try:
-            generation_seed = (
-                int(requested_seed) if requested_seed is not None
-                else secrets.randbits(63)
+        if advisor_run:
+            squad, advisor_lineup = select_best_advisor_side(
+                eligible_pool,
+                max_per_team=MAX_PLAYERS_PER_TEAM,
+                max_spend=MAX_SPEND,
             )
-            if generation_seed < 0 or generation_seed >= 2 ** 63:
-                raise ValueError
-        except ValueError:
-            return _setup_error(
-                'Invalid variation seed',
-                'The replay seed must be an integer between 0 and 2^63-1.',
-                '/generate-team?new_team=1',
-                400,
+            generation = {
+                'strategy': 'all_model_advisors',
+                'model': 'ensemble',
+                'deterministic': True,
+                'advisor_models': ['xgboost', 'catboost', 'lambdarank', 'rnn'],
+                'objective': 'maximum legal starting-XI predicted points',
+            }
+        else:
+            quality_floor = float(os.environ.get('FPL_VARIATION_QUALITY_FLOOR', '0.95'))
+            noise_scale = float(os.environ.get('FPL_VARIATION_NOISE_SCALE', '0.10'))
+            attempts = int(os.environ.get('FPL_VARIATION_ATTEMPTS', '24'))
+            uncertainty = {
+                position: float(metric.get('error_p80', metric.get('rmse', 0.0)))
+                for position, metric in metrics.items()
+            }
+            requested_seed = request.args.get('seed')
+            try:
+                generation_seed = (
+                    int(requested_seed) if requested_seed is not None
+                    else secrets.randbits(63)
+                )
+                if generation_seed < 0 or generation_seed >= 2 ** 63:
+                    raise ValueError
+            except ValueError:
+                return _setup_error(
+                    'Invalid variation seed',
+                    'The replay seed must be an integer between 0 and 2^63-1.',
+                    '/generate-team?new_team=1',
+                    400,
+                )
+            squad, generation = select_squad_variation(
+                eligible_pool,
+                {'GK': 2, 'DEF': 5, 'MID': 5, 'FWD': 3},
+                max_per_team=MAX_PLAYERS_PER_TEAM,
+                max_spend=MAX_SPEND,
+                uncertainty_by_position=uncertainty,
+                seed=generation_seed,
+                quality_floor=quality_floor,
+                noise_scale=noise_scale,
+                attempts=attempts,
             )
-        squad, generation = select_squad_variation(
-            eligible_pool,
-            {'GK': 2, 'DEF': 5, 'MID': 5, 'FWD': 3},
-            max_per_team=MAX_PLAYERS_PER_TEAM,
-            max_spend=MAX_SPEND,
-            uncertainty_by_position=uncertainty,
-            seed=generation_seed,
-            quality_floor=quality_floor,
-            noise_scale=noise_scale,
-            attempts=attempts,
-        )
         state = create_state(
             squad, runtime['target_game_week'], runtime['season'],
-            previous=load_current(), source='regenerated' if force_new else 'generated',
+            previous=load_current(),
+            source='all_model_advisors' if advisor_run else 'regenerated' if force_new else 'generated',
             generation=generation,
         )
+        if advisor_run:
+            state['lineup'] = advisor_lineup
+            validate_state(state)
         save_draft(state)
         starters, bench, formation = _lineup_frames(state, squad)
         gw_saved = runtime['target_game_week']
@@ -772,9 +1100,50 @@ def get_squad_history():
     return jsonify({'versions': list_versions(season=request.args.get('season'))})
 
 
+@app.get('/api/training/status')
+def training_status():
+    return jsonify({'ok': True, **_training_snapshot()})
+
+
+@app.post('/api/training/start')
+def start_training():
+    rejection = _reject_nonlocal_or_cross_origin()
+    if rejection:
+        return rejection
+    if not request.is_json:
+        return jsonify({'ok': False, 'error': 'Training requests must use JSON.'}), 415
+    payload = request.get_json() or {}
+    if payload:
+        return jsonify({'ok': False, 'error': 'Training start accepts no fields.'}), 400
+    if not _TRAINING_GUARD.acquire(blocking=False):
+        return jsonify({
+            'ok': False,
+            'error': 'A refresh and training job is already running.',
+            **_training_snapshot(),
+        }), 409
+    _update_training_state(
+        status='running',
+        phase='Queued',
+        progress=1,
+        started_at=datetime.now(timezone.utc).isoformat(timespec='seconds'),
+        completed_at=None,
+        message='Starting data refresh and model training...',
+        log=[],
+    )
+    try:
+        threading.Thread(target=_run_refresh_and_training, daemon=True).start()
+    except Exception:
+        _TRAINING_GUARD.release()
+        raise
+    return jsonify({'ok': True, **_training_snapshot()}), 202
+
+
 @app.post('/api/fpl-entry/sync')
 def sync_fpl_entry():
     """Import completed public FPL history and latest permanent picks by entry ID."""
+    training_block = _training_write_block()
+    if training_block:
+        return training_block
     origin = request.headers.get('Origin')
     if origin and origin.rstrip('/') != request.host_url.rstrip('/'):
         return jsonify({'ok': False, 'error': 'Cross-origin sync requests are rejected.'}), 403
@@ -843,6 +1212,9 @@ def sync_fpl_entry():
 
 @app.post('/api/squad/draft')
 def persist_draft():
+    training_block = _training_write_block()
+    if training_block:
+        return training_block
     try:
         state = request.get_json(force=True)
         validate_state(state)
@@ -854,6 +1226,9 @@ def persist_draft():
 
 @app.post('/api/squad/commit')
 def persist_current_squad():
+    training_block = _training_write_block()
+    if training_block:
+        return training_block
     try:
         state = request.get_json(force=True)
         validate_state(state)
@@ -1046,6 +1421,6 @@ def validation_report():
 
 if __name__ == '__main__':
     app.run(
-        debug=os.environ.get('FLASK_DEBUG', '1') == '1',
+        debug=os.environ.get('FLASK_DEBUG', '0') == '1',
         port=int(os.environ.get('FPL_PORT', '5000')),
     )

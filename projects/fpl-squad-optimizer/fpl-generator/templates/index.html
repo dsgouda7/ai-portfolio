@@ -428,6 +428,11 @@
     .manager-button.primary { background: #70e85a; color: #08120a; border-color: #70e85a; }
     .manager-button.full { width: 100%; }
     .manager-button:disabled { cursor: not-allowed; opacity: 0.45; }
+    .official-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem; }
+    .official-link {
+      display: inline-flex; align-items: center; justify-content: center;
+      text-decoration: none;
+    }
     .manager-meta {
       display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.3rem;
       border-bottom: 1px solid var(--border); padding-bottom: 0.65rem;
@@ -445,6 +450,39 @@
     }
     .model-control select { min-height: 26px; font-weight: 700; }
     .model-cutoff { color: rgba(255,255,255,0.48); font-size: 0.6rem; }
+    .training-control { display: flex; align-items: center; gap: 0.45rem; }
+    .training-button {
+      min-height: 28px; padding: 0.2rem 0.55rem; white-space: nowrap;
+      display: inline-flex; align-items: center; gap: 0.3rem;
+    }
+    .training-button.running .training-icon { animation: spin 1s linear infinite; }
+    .training-progress-group {
+      display: none; width: clamp(120px, 14vw, 190px); gap: 0.22rem;
+    }
+    .training-progress-group.visible { display: grid; }
+    .training-progress-meta {
+      display: flex; justify-content: space-between; gap: 0.4rem;
+      color: var(--muted); font-size: 0.56rem;
+    }
+    .training-status {
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .training-progress-track {
+      width: 100%; height: 5px; overflow: hidden; border-radius: 3px;
+      background: rgba(255,255,255,0.11);
+    }
+    .training-progress-bar {
+      width: 0; height: 100%; border-radius: inherit; background: #38bdf8;
+      transition: width 350ms ease;
+    }
+    .training-progress-group.success .training-progress-bar { background: #70e85a; }
+    .training-progress-group.error .training-progress-bar { background: #ff7777; }
+    .training-progress-group.error .training-status { color: #ff7777; }
+    .training-progress-group.success .training-status { color: #70e85a; }
+    @media (max-width: 980px) {
+      .training-progress-group { width: 120px; }
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
@@ -461,6 +499,29 @@
     <select id="model-select" title="Prediction model"></select>
     <span class="model-cutoff" id="model-cutoff"></span>
   </label>
+  <div class="training-control">
+    <button class="manager-button training-button primary" id="advisor-run" type="button"
+            title="Refresh all data, retrain every model, and generate the strongest combined-model XI">
+      <span aria-hidden="true">◎</span>
+      <span>Full advisor run</span>
+    </button>
+    <button class="manager-button training-button" id="refresh-models" type="button"
+            title="Fetch the latest completed FPL data and retrain all models">
+      <span class="training-icon" aria-hidden="true">↻</span>
+      <span>Update &amp; retrain</span>
+    </button>
+    <div class="training-progress-group" id="training-progress-group">
+      <div class="training-progress-meta">
+        <span class="training-status" id="training-status" role="status" aria-live="polite"></span>
+        <span id="training-percent">0%</span>
+      </div>
+      <div class="training-progress-track" id="training-progress"
+           role="progressbar" aria-label="Data update and model training progress"
+           aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div class="training-progress-bar" id="training-progress-bar"></div>
+      </div>
+    </div>
+  </div>
   <a href="/performance-review"
      style="font-size:0.7rem;color:var(--muted);text-decoration:none;
             border:1px solid var(--border);padding:0.18rem 0.65rem;
@@ -558,11 +619,11 @@
       </div>
 
       <div class="manager-group">
-        <label class="manager-label" for="fpl-entry-id">Public FPL entry</label>
+        <label class="manager-label" for="fpl-entry-id">Public FPL entry (read-only)</label>
         <div class="manager-row">
           <input id="fpl-entry-id" inputmode="numeric" pattern="[0-9]*"
                  placeholder="Entry ID" title="Public FPL entry ID">
-          <button class="manager-button" id="sync-fpl-entry" type="button">Sync</button>
+          <button class="manager-button" id="sync-fpl-entry" type="button">Import public picks</button>
         </div>
          <select id="fpl-free-transfers" style="width:100%"
             title="Optional current free-transfer count">
@@ -616,7 +677,12 @@
       </div>
 
       <div id="manager-status" class="manager-status"></div>
-      <button class="manager-button primary full" id="save-squad" type="button">Save squad</button>
+      <button class="manager-button primary full" id="save-squad" type="button">Save locally</button>
+      <div class="official-actions">
+        <button class="manager-button" id="copy-fpl-plan" type="button">Copy FPL plan</button>
+        <a class="manager-button official-link" href="https://fantasy.premierleague.com/en/my-team"
+           target="_blank" rel="noopener">Open FPL My Team</a>
+      </div>
     </div>
 
     <div class="panel-card">
@@ -680,12 +746,100 @@ document.getElementById('model-cutoff').textContent =
   `through GW${manifest.latest_completed_game_week ?? '?'} · ${manifest.fpl_data_cutoff || 'date unavailable'}`;
 document.getElementById('new-team-link').href =
   `/generate-team?new_team=1&model=${encodeURIComponent(D.model_type)}`;
-if (D.generation) {
+if (D.generation?.seed !== undefined) {
   const replayLink = document.getElementById('replay-team-link');
   replayLink.style.display = '';
   replayLink.href = `/generate-team?new_team=1&model=${encodeURIComponent(D.model_type)}&seed=${D.generation.seed}`;
   replayLink.title = `Replay variation seed ${D.generation.seed}`;
 }
+
+const refreshModelsButton = document.getElementById('refresh-models');
+const advisorRunButton = document.getElementById('advisor-run');
+const trainingStatus = document.getElementById('training-status');
+const trainingProgressGroup = document.getElementById('training-progress-group');
+const trainingProgress = document.getElementById('training-progress');
+const trainingProgressBar = document.getElementById('training-progress-bar');
+const trainingPercent = document.getElementById('training-percent');
+let trainingPoll = null;
+
+function renderTrainingStatus(job) {
+  const running = job.status === 'running';
+  const progress = Math.max(0, Math.min(100, Number(job.progress) || 0));
+  refreshModelsButton.disabled = running;
+  advisorRunButton.disabled = running;
+  refreshModelsButton.classList.toggle('running', running);
+  trainingProgressGroup.className = `training-progress-group ${job.status !== 'idle' ? 'visible' : ''} ${job.status === 'failed' ? 'error' : job.status === 'succeeded' ? 'success' : ''}`;
+  trainingStatus.textContent = job.phase || (running ? 'Training' : job.status);
+  trainingStatus.title = [...(job.log || []), job.message || ''].filter(Boolean).join('\n');
+  trainingProgressBar.style.width = `${progress}%`;
+  trainingPercent.textContent = `${Math.round(progress)}%`;
+  trainingProgress.setAttribute('aria-valuenow', String(Math.round(progress)));
+  trainingProgress.setAttribute('aria-valuetext', `${job.phase || 'Training'}: ${Math.round(progress)}%`);
+}
+
+async function checkTrainingStatus() {
+  try {
+    const response = await fetch('/api/training/status', {cache: 'no-store'});
+    const job = await response.json();
+    renderTrainingStatus(job);
+    if (job.status === 'running') return;
+    if (trainingPoll) {
+      clearInterval(trainingPoll);
+      trainingPoll = null;
+    }
+    if (job.status === 'succeeded' && sessionStorage.getItem('fpl-advisor-run') === '1') {
+      sessionStorage.removeItem('fpl-advisor-run');
+      sessionStorage.removeItem('fpl-training-started');
+      window.location.assign('/generate-team?advisor_run=1');
+    } else if (job.status === 'succeeded' && sessionStorage.getItem('fpl-training-started') === '1') {
+      sessionStorage.removeItem('fpl-training-started');
+      window.location.reload();
+    }
+  } catch (error) {
+    trainingProgressGroup.className = 'training-progress-group visible error';
+    trainingStatus.textContent = 'Training status unavailable';
+  }
+}
+
+function beginTrainingPoll() {
+  if (!trainingPoll) trainingPoll = setInterval(checkTrainingStatus, 2000);
+  checkTrainingStatus();
+}
+
+async function startTraining(advisorRun = false) {
+  if (dirty && !window.confirm('Discard unsaved squad changes and run all model advisors?')) return;
+  refreshModelsButton.disabled = true;
+  advisorRunButton.disabled = true;
+  renderTrainingStatus({status: 'running', phase: 'Starting', progress: 1, log: []});
+  try {
+    const response = await fetch('/api/training/start', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: '{}',
+    });
+    const job = await response.json();
+    if (!response.ok && response.status !== 409) {
+      throw new Error(job.error || 'Unable to start training.');
+    }
+    sessionStorage.setItem('fpl-training-started', '1');
+    if (advisorRun) sessionStorage.setItem('fpl-advisor-run', '1');
+    renderTrainingStatus(job);
+    beginTrainingPoll();
+  } catch (error) {
+    refreshModelsButton.disabled = false;
+    advisorRunButton.disabled = false;
+    trainingProgressGroup.className = 'training-progress-group visible error';
+    trainingStatus.textContent = error.message;
+  }
+}
+
+advisorRunButton.addEventListener('click', () => startTraining(true));
+
+refreshModelsButton.addEventListener('click', async () => {
+  await startTraining(false);
+});
+
+beginTrainingPoll();
 
 // ── helpers ────────────────────────────────────────────────────────────────
 
@@ -908,7 +1062,10 @@ document.getElementById('save-squad').addEventListener('click', async () => {
     squadState = result.state;
     dirty = false;
     document.getElementById('dirty-dot').style.display = 'none';
-    setManagerStatus(`Saved GW${squadState.game_week} revision ${squadState.revision}.`, 'success');
+    setManagerStatus(
+      `Saved locally as GW${squadState.game_week} revision ${squadState.revision}. Official FPL is unchanged.`,
+      'success'
+    );
     renderManager();
   } catch (error) {
     setManagerStatus(error.message, 'error');
@@ -919,6 +1076,37 @@ document.getElementById('save-squad').addEventListener('click', async () => {
 
 renderManager();
 
+document.getElementById('copy-fpl-plan').addEventListener('click', async () => {
+  const byId = new Map(squadState.players.map(player => [+player.id, player]));
+  const formatPlayer = playerId => {
+    const player = byId.get(+playerId);
+    return `${player.position}: ${playerName(player)}`;
+  };
+  const starters = squadState.lineup.starters.map(formatPlayer);
+  const bench = squadState.lineup.bench.map(formatPlayer);
+  const captain = playerName(byId.get(+squadState.lineup.captain));
+  const viceCaptain = playerName(byId.get(+squadState.lineup.vice_captain));
+  const plan = [
+    `FPL GW${squadState.game_week} plan`,
+    '',
+    'Starting XI',
+    ...starters,
+    '',
+    'Bench order',
+    ...bench,
+    '',
+    `Captain: ${captain}`,
+    `Vice-captain: ${viceCaptain}`,
+    `Chip: ${squadState.active_chip || 'None'}`,
+  ].join('\n');
+  try {
+    await navigator.clipboard.writeText(plan);
+    setManagerStatus('FPL plan copied. Official FPL is unchanged.', 'success');
+  } catch (error) {
+    setManagerStatus('Unable to copy the plan from this browser.', 'error');
+  }
+});
+
 document.getElementById('sync-fpl-entry').addEventListener('click', async event => {
   const button = event.currentTarget;
   const entryId = document.getElementById('fpl-entry-id').value.trim();
@@ -926,6 +1114,7 @@ document.getElementById('sync-fpl-entry').addEventListener('click', async event 
   if (!/^\d+$/.test(entryId)) {
     return setManagerStatus('Enter the numeric public FPL entry ID.', 'error');
   }
+  localStorage.setItem('fpl-public-entry-id', entryId);
   button.disabled = true;
   setManagerStatus('Synchronizing completed public Gameweeks…');
   try {
@@ -946,6 +1135,11 @@ document.getElementById('sync-fpl-entry').addEventListener('click', async event 
     button.disabled = false;
   }
 });
+
+const savedEntryId = localStorage.getItem('fpl-public-entry-id');
+if (savedEntryId && /^\d+$/.test(savedEntryId)) {
+  document.getElementById('fpl-entry-id').value = savedEntryId;
+}
 
 // ── squad mode badge ───────────────────────────────────────────────────────
 
@@ -968,7 +1162,9 @@ const pillsEl = document.getElementById('pills');
   ['Spend', '£' + D.total_spend + 'M / £100M'],
   ...(D.generation ? [[
     'Variation',
-    D.generation.fallback_reason
+    D.generation.strategy === 'all_model_advisors'
+      ? 'All-model optimum'
+      : D.generation.fallback_reason
       ? 'Optimal fallback'
       : `${Math.round(D.generation.xi_quality_ratio * 100)}% · ${D.generation.qualified_alternatives} alternatives`,
   ]] : []),

@@ -46,17 +46,31 @@ python fpl-generator/web.py    # → http://localhost:5000
 python simulations/simulate_season.py --test-from 15 --test-to 37
 ```
 
-> **Re-train whenever the FPL dataset updates.** The vaastav repo updates daily
-> during the season. `setup.ps1` runs `git pull` on it; then `python train/train.py`
-> re-prunes the DB and rebuilds the models in one step.
+> **Update cadence:** data and checkpoints are not refreshed on a timer. Live
+> eligibility is fetched whenever a team is generated, while persisted player
+> histories, prices, enrichments, and models stay at their last successful
+> training cutoff. The vaastav archive generally updates daily during the
+> season, and the official FPL API publishes completed data after each
+> Gameweek. Refresh after FPL has marked the latest Gameweek as checked.
 
 ### Weekly workflow
 
-1. After FPL marks the previous Gameweek data as checked, run
-  `python train/train.py --model all`. Training downloads all current-season
+1. After FPL marks the previous Gameweek data as checked, press **Update &
+  retrain** in the web header or run `python train/train.py --model all`.
+  Training downloads all current-season
   player histories, refreshes official weekly prices and real historical
   Transfermarkt valuations, rebuilds the SQLite feature cache when needed, and
-  writes separate XGBoost and GRU checkpoints with the same temporal cutoff.
+  writes all five model artifacts with the same temporal cutoff. The web button
+  runs one background job at a time against staged copies, keeps the current
+  data/models available while it runs, and publishes the database and complete
+  artifact set only after every model trains successfully. Progress appears
+  beside the button as a phase-labelled percentage bar, and the page reloads
+  after publication.
+  **Full advisor run** performs the same complete update and training batch,
+  then forces the calibrated ensemble and jointly optimizes the legal 15-player
+  squad plus starting XI. It maximizes combined-model XI points, uses bench
+  quality as a deterministic tiebreaker, and assigns captain and vice-captain
+  to the two highest ensemble projections in that XI.
 2. Start `python fpl-generator/web.py` and open `/generate-team`. The app loads
   the selected checkpoint (XGBoost by default), validates its cutoff, loads the
   model-ready SQLite cache, scores the next fixture snapshot, and applies live
@@ -66,16 +80,18 @@ python simulations/simulate_season.py --test-from 15 --test-to 37
   predictions, injuries, suspensions, bank calculations, and transfer advice
   without changing the committed historical revision.
 4. Enter the public FPL **entry ID** in Squad Management and optionally enter the
-  exact current free-transfer count shown in the official app. Press **Sync**.
+  exact current free-transfer count shown in the official app. Press **Import
+  public picks**. This is a read-only import from FPL.
   Completed public Gameweeks, picks, transfers, chip use, points, ranks, bank,
   and squad value are refreshed in SQLite. The latest permanent 15-player squad
   becomes a local draft and is re-scored for the next Gameweek. Free Hit picks
   are retained for history but do not replace permanent ownership.
 5. Review the suggested transfer, edit the owned squad, choose the next XI and
   bench order, set captain/vice-captain, and optionally select a remaining chip.
-6. Press **Save squad**. This appends a committed local revision. Reproduce that
-  confirmed plan manually in the official FPL app or website; this project does
-  not submit private account changes.
+6. Press **Save locally**. This appends a committed local revision but does not
+  change the official account. Use **Copy FPL plan**, open **FPL My Team**, and
+  confirm the lineup manually on the official site; this project does not submit
+  private account changes.
 7. After the next deadline, sync the same public entry ID again. The official
   public picks become the new ownership baseline, and `/performance-review`
   compares committed recommendations with actual points, the official average,
@@ -557,6 +573,8 @@ The per-GW breakdown and interactive per-position RMSE are in the `/validation-r
 | `GET /api/squad` | Latest committed and draft squad states loaded from SQLite |
 | `GET /api/squad/history` | Append-only season/Gameweek revision ledger; accepts an optional `season` query parameter |
 | `POST /api/fpl-entry/sync` | Synchronize completed public history and import the latest permanent squad using `entry_id`, `model`, and optional `free_transfers` |
+| `POST /api/training/start` | Locally start one background latest-data refresh and all-model training job; accepts an empty JSON object |
+| `GET /api/training/status` | Poll current refresh/training state and the latest bounded progress log |
 | `POST /api/squad/draft` | Validate and append a draft revision |
 | `POST /api/squad/commit` | Validate and append a committed revision plus readable JSON export |
 | `GET /performance-review` | Scores each final committed Gameweek squad with actual results, captaincy, chips, transfer hits, and automatic substitutions; compares it with the official average and Dream Team |

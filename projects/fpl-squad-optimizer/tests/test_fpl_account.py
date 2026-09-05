@@ -202,6 +202,25 @@ class FplAccountSyncTests(unittest.TestCase):
         self.assertEqual(state['lineup']['vice_captain'], 2)
         self.assertFalse(state['official_entry']['free_transfers_estimated'])
 
+    def test_new_entry_explains_pre_deadline_public_sync_limit(self):
+        synced = {
+            'entry_id': 10378874,
+            'started_event': 3,
+            'current_event': 2,
+            'gameweeks': [],
+            'picks': [],
+        }
+
+        with self.assertRaisesRegex(
+            web.FplEntrySyncError,
+            'starts in GW3.*private before the GW3 deadline.*ends at GW2',
+        ):
+            web._state_from_synced_entry(
+                synced,
+                pd.DataFrame(),
+                {'target_game_week': 3, 'season': '2026-27'},
+            )
+
 
 
 if __name__ == '__main__':

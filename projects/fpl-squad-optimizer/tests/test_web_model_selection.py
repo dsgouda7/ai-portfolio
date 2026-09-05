@@ -1,9 +1,12 @@
 import importlib.util
 import json
+import sqlite3
 import sys
+import tempfile
 import unittest
+from contextlib import closing
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
@@ -18,6 +21,30 @@ spec.loader.exec_module(web)
 
 
 class WebModelSelectionTests(unittest.TestCase):
+    def test_template_labels_official_fpl_actions_as_read_only_or_local(self):
+        template = (ROOT / 'fpl-generator' / 'templates' / 'index.html').read_text(
+            encoding='utf-8'
+        )
+
+        self.assertIn('Public FPL entry (read-only)', template)
+        self.assertIn('Import public picks', template)
+        self.assertIn('Save locally', template)
+        self.assertIn('Copy FPL plan', template)
+        self.assertIn('Official FPL is unchanged.', template)
+
+    def tearDown(self):
+        if web._TRAINING_GUARD.locked():
+            web._TRAINING_GUARD.release()
+        web._update_training_state(
+            status='idle',
+            phase='Idle',
+            progress=0,
+            started_at=None,
+            completed_at=None,
+            message='No refresh is running.',
+            log=[],
+        )
+
     @staticmethod
     def _variation_pool():
         positions = [('GK', 6), ('DEF', 12), ('MID', 12), ('FWD', 8)]
@@ -79,6 +106,38 @@ class WebModelSelectionTests(unittest.TestCase):
             squads.add(tuple(sorted(squad['id'])))
 
         self.assertGreater(len(squads), 1)
+
+    def test_all_advisor_optimizer_returns_deterministic_legal_best_xi(self):
+        pool = self._variation_pool()
+
+        first_squad, first_lineup = web.select_best_advisor_side(pool, 3, 1000)
+        second_squad, second_lineup = web.select_best_advisor_side(pool, 3, 1000)
+
+        self.assertEqual(
+            sorted(first_squad['id'].astype(int)),
+            sorted(second_squad['id'].astype(int)),
+        )
+        self.assertEqual(first_lineup, second_lineup)
+        self.assertEqual(len(first_squad), 15)
+        self.assertEqual(len(first_lineup['starters']), 11)
+        self.assertEqual(len(first_lineup['bench']), 4)
+        self.assertLessEqual(int(first_squad['value'].sum()), 1000)
+        self.assertLessEqual(int(first_squad.groupby('team').size().max()), 3)
+        self.assertEqual(
+            first_squad['element_type'].value_counts().to_dict(),
+            {'DEF': 5, 'MID': 5, 'FWD': 3, 'GK': 2},
+        )
+        by_id = first_squad.set_index('id')
+        starter_positions = by_id.loc[first_lineup['starters'], 'element_type'].value_counts()
+        self.assertEqual(int(starter_positions['GK']), 1)
+        self.assertGreaterEqual(int(starter_positions['DEF']), 3)
+        self.assertGreaterEqual(int(starter_positions['MID']), 2)
+        self.assertGreaterEqual(int(starter_positions['FWD']), 1)
+        ranked = by_id.loc[first_lineup['starters']].sort_values(
+            'predicted_points', ascending=False
+        )
+        self.assertEqual(first_lineup['captain'], int(ranked.iloc[0].name))
+        self.assertEqual(first_lineup['vice_captain'], int(ranked.iloc[1].name))
 
     def test_variation_falls_back_explicitly_when_floor_allows_no_alternative(self):
         pool = self._variation_pool()
@@ -186,6 +245,153 @@ class WebModelSelectionTests(unittest.TestCase):
         load.assert_called_once_with(Path('models_rnn.joblib'))
         self.assertEqual(payload['model_type'], 'rnn')
         self.assertEqual(payload['available_models'], ['xgboost', 'rnn'])
+
+    def test_advisor_run_forces_ensemble_checkpoint(self):
+        checkpoint = {
+            'model_type': 'ensemble',
+            'models': {},
+            'metrics': {},
+            'epl_members': None,
+            'training_manifest': {
+                'completed_internal_index': 4,
+                'max_training_internal_index': 4,
+                'latest_completed_game_week': 5,
+                'fpl_data_cutoff': '2026-09-01T12:00:00+00:00',
+            },
+        }
+        pool = self._variation_pool()
+        with (
+            web.app.test_request_context('/generate-team?advisor_run=1&model=xgboost'),
+            patch.object(web.os.path, 'exists', return_value=True),
+            patch.object(web, 'available_model_artifacts', return_value={
+                'xgboost': Path('models.joblib'),
+                'ensemble': Path('models_ensemble.joblib'),
+            }),
+            patch.object(web.joblib, 'load', return_value=checkpoint) as load,
+            patch.object(web, 'build_features', return_value=pd.DataFrame()),
+            patch.object(web, 'score_checkpoint_snapshot', return_value=pool),
+            patch.object(web, 'get_runtime_context', return_value={
+                'target_game_week': 6,
+                'snapshot_game_week': 5,
+                'season': '2026-27',
+            }),
+            patch.object(web, 'get_eligibility', return_value={}),
+            patch.object(web, 'load_current', return_value=None),
+            patch.object(web, 'save_draft', side_effect=lambda state: state),
+            patch.object(web, 'render_template', side_effect=lambda _, data: data),
+        ):
+            payload = json.loads(web.index())
+
+        load.assert_called_once_with(Path('models_ensemble.joblib'))
+        self.assertEqual(payload['model_type'], 'ensemble')
+        self.assertEqual(payload['generation']['strategy'], 'all_model_advisors')
+        self.assertTrue(payload['generation']['deterministic'])
+
+    def test_training_start_is_local_only(self):
+        response = web.app.test_client().post(
+            '/api/training/start',
+            json={},
+            environ_base={'REMOTE_ADDR': '203.0.113.7'},
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(response.get_json()['ok'])
+
+    def test_training_start_rejects_duplicate_job(self):
+        web._TRAINING_GUARD.acquire()
+
+        response = web.app.test_client().post('/api/training/start', json={})
+
+        self.assertEqual(response.status_code, 409)
+        self.assertIn('already running', response.get_json()['error'])
+
+    def test_training_start_launches_daemon_and_exposes_status(self):
+        worker = MagicMock()
+        with patch.object(web.threading, 'Thread', return_value=worker) as thread:
+            response = web.app.test_client().post('/api/training/start', json={})
+
+        self.assertEqual(response.status_code, 202)
+        self.assertEqual(response.get_json()['status'], 'running')
+        thread.assert_called_once_with(target=web._run_refresh_and_training, daemon=True)
+        worker.start.assert_called_once_with()
+        status = web.app.test_client().get('/api/training/status').get_json()
+        self.assertEqual(status['status'], 'running')
+        self.assertEqual(status['phase'], 'Queued')
+        self.assertEqual(status['progress'], 1)
+        self.assertIsNotNone(status['started_at'])
+
+    def test_training_log_advances_progress_monotonically(self):
+        web._update_training_state(status='running', phase='Queued', progress=1, log=[])
+
+        web._append_training_log('Training catboost position models...')
+        web._append_training_log('Feature cache: hit')
+
+        status = web._training_snapshot()
+        self.assertEqual(status['progress'], 68)
+        self.assertEqual(status['phase'], 'Training CatBoost')
+        self.assertEqual(status['log'][-1], 'Feature cache: hit')
+
+    def test_player_history_log_reports_intra_phase_progress(self):
+        web._update_training_state(status='running', phase='Queued', progress=10, log=[])
+
+        web._append_training_log('FPL history download: 300/600 players')
+
+        status = web._training_snapshot()
+        self.assertEqual(status['progress'], 20)
+        self.assertEqual(status['phase'], 'Downloading player histories (300/600)')
+
+    def test_training_blocks_squad_writes(self):
+        web._update_training_state(status='running')
+
+        response = web.app.test_client().post('/api/squad/commit', json={})
+
+        self.assertEqual(response.status_code, 409)
+        self.assertIn('after it completes', response.get_json()['error'])
+
+    def test_staged_training_publishes_database_and_all_models(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            live = root / 'live'
+            stage = root / 'stage'
+            live.mkdir()
+            stage.mkdir()
+            database = live / 'fpl.db'
+            staged_database = stage / 'fpl.db'
+            with closing(sqlite3.connect(database)) as connection:
+                connection.execute('CREATE TABLE marker (value TEXT)')
+                connection.execute("INSERT INTO marker VALUES ('old-db')")
+                connection.commit()
+            with closing(sqlite3.connect(staged_database)) as connection:
+                connection.execute('CREATE TABLE marker (value TEXT)')
+                connection.execute("INSERT INTO marker VALUES ('new-db')")
+                connection.commit()
+            targets = {}
+            for model_type in web.MODEL_TYPES:
+                target = live / f'{model_type}.joblib'
+                target.write_text(f'old-{model_type}', encoding='utf-8')
+                (stage / target.name).write_text(f'new-{model_type}', encoding='utf-8')
+                targets[model_type] = target
+
+            with closing(sqlite3.connect(database)) as active_reader:
+                self.assertEqual(
+                    active_reader.execute('SELECT value FROM marker').fetchone()[0],
+                    'old-db',
+                )
+                with (
+                    patch.object(web, 'DB_FILE', str(database)),
+                    patch.object(web, 'model_artifact_path', side_effect=targets.get),
+                ):
+                    web._publish_staged_training(stage, staged_database)
+
+            with closing(sqlite3.connect(database)) as connection:
+                self.assertEqual(
+                    connection.execute('SELECT value FROM marker').fetchone()[0],
+                    'new-db',
+                )
+            for model_type, target in targets.items():
+                self.assertEqual(
+                    target.read_text(encoding='utf-8'), f'new-{model_type}'
+                )
 
 
 if __name__ == '__main__':

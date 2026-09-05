@@ -593,7 +593,9 @@ def refresh_live_season_data(
     )
     frames = []
     failed_player_ids = []
-    for player_id in current['id'].tolist():
+    player_ids = current['id'].tolist()
+    total_history_players = len(player_ids)
+    for player_number, player_id in enumerate(player_ids, start=1):
         for attempt in range(3):
             try:
                 response = requests.get(
@@ -623,6 +625,11 @@ def refresh_live_season_data(
             except (requests.RequestException, ValueError, KeyError, TypeError):
                 if attempt == 2:
                     failed_player_ids.append(int(player_id))
+        if player_number % 50 == 0 or player_number == total_history_players:
+            print(
+                f'FPL history download: {player_number}/{total_history_players} players',
+                flush=True,
+            )
 
     if failed_player_ids:
         raise RuntimeError(
