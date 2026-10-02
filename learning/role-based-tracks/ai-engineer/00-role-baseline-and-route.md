@@ -33,7 +33,7 @@ Do not use "I have used this before" as a skip condition. A skip needs an inspec
 | Gate | You may skip the study material only if you can show all of this | If the gate fails |
 |---|---|---|
 | Math and ML foundations | Derive and numerically check a gradient; explain train/validation/test separation; choose a metric that matches a stated failure; identify leakage in a proposed split | Start with the required [GenAI prerequisite route](#phase-1-foundations) |
-| PyTorch | Build a small `nn.Module`; explain batch, sequence, and feature dimensions; run `zero_grad`, forward, backward, and `step`; save and reload a `state_dict`; verify inference parity | Complete [PyTorch Fundamentals](../../genai-prerequisites/03-pytorch-fundamentals/01-keras-to-pytorch-antarctic-field-guide.ipynb) |
+| PyTorch | Build a small `nn.Module`; explain batch, sequence, and feature dimensions; run `zero_grad`, forward, backward, and `step`; save and reload a `state_dict`; verify inference parity | Complete [Arrays and PyTorch Fundamentals](../../genai-prerequisites/03-pytorch-fundamentals/README.md) |
 | Language-model mechanics | Trace one token through embedding, position, attention, residual, normalization, and output projection; explain causal masking; distinguish decoder-only from encoder-decoder behavior; isolate a decoding failure from a training-objective failure | Complete the [RNN and Transformer route](#phase-2-language-model-mechanics) |
 | Adaptation | Given a behavior failure, choose among continued pretraining, SFT, preference alignment, full tuning, freezing, LoRA, and QLoRA; produce held-out evidence and artifact lineage; reject a run when the evidence is weak | Complete [LLM Fine-Tuning](#phase-3-adaptation) |
 | Retrieval | Construct separate lexical and semantic failure cases; fuse or rerank results; measure retrieval independently of generation; test authorization and unsupported-query boundaries | Complete [RAG](#phase-4-retrieval-and-evaluation) |
@@ -54,7 +54,7 @@ The required competency is the ability to reason about the operations. The noteb
 1. [Math Foundations for ML](../../genai-prerequisites/00-math-foundations/math-foundations-for-ml.ipynb)
 2. [ML Basics](../../genai-prerequisites/01-ml-basics/ml-basics.ipynb)
 3. [Neural Networks and Backpropagation](../../genai-prerequisites/02-neural-networks/README.md)
-4. [Keras to PyTorch Antarctic Field Guide](../../genai-prerequisites/03-pytorch-fundamentals/01-keras-to-pytorch-antarctic-field-guide.ipynb)
+4. [Arrays and PyTorch Fundamentals](../../genai-prerequisites/03-pytorch-fundamentals/README.md)
 5. [RNN Sequence Modeling](../../genai-prerequisites/05-rnn-sequence-modeling/rnn-sequence-modeling.ipynb)
 6. [Tokenization and Embeddings](../../genai-prerequisites/06-tokenization/tokenization-and-embeddings.ipynb)
 
@@ -242,7 +242,7 @@ All linked targets now exist in source. Chapters 01-05 completed a successful lo
 
 | ID | Competency | Existing evidence source | Minimum evidence | Current status |
 |---|---|---|---|---|
-| C1 | ML, neural-network, tokenization, and PyTorch foundations | [Prerequisites](../../genai-prerequisites/README.md) and [PyTorch Fundamentals](../../genai-prerequisites/03-pytorch-fundamentals/01-keras-to-pytorch-antarctic-field-guide.ipynb) | Deterministic train, evaluate, save, reload, and failure diagnosis | Available |
+| C1 | ML, neural-network, tokenization, and PyTorch foundations | [Prerequisites](../../genai-prerequisites/README.md) and [Arrays and PyTorch Fundamentals](../../genai-prerequisites/03-pytorch-fundamentals/README.md) | Deterministic train, evaluate, save, reload, and failure diagnosis | Available |
 | C2 | Transformer and language-model mechanics | [PyTorch RNN Bridge](../../genai-prerequisites/07-pytorch-rnn-bridge/README.md) and [Transformers](../../genai/01-transformers/README.md) | Shape and mask trace plus controlled mechanism comparison | Available |
 | C3 | Objective and parameter-efficient adaptation | [LLM Fine-Tuning](../../genai/02-llm-finetuning/README.md) | Held-out task/retention comparison, lineage, and release decision | Available; full-corpus practice requires CUDA |
 | C4 | Retrieval, grounding, and boundary checks | [RAG](../../genai/03-rag/README.md) | Retrieval report, generation report, gold-context ablation, authorization test | Available |

@@ -61,11 +61,12 @@
 
     /* ── LAYOUT ─────────────────────────────────────────────────── */
     main {
-      max-width: 1160px;
+      width: 100%;
+      max-width: 1500px;
       margin: 0 auto;
       padding: 0.6rem 1rem;
       display: grid;
-      grid-template-columns: calc((100vh - 175px) * 0.6373) 230px;
+      grid-template-columns: minmax(0, 1fr) 260px;
       gap: 1rem;
       flex: 1 1 0;
       min-height: 0;
@@ -82,11 +83,58 @@
       flex-direction: column;
       gap: 0.5rem;
     }
+    .pitch-comparison-scroll {
+      min-width: 0;
+      min-height: 0;
+      height: 100%;
+      overflow: auto;
+      padding: 0 0 0.45rem;
+      scroll-snap-type: x proximity;
+      overscroll-behavior: contain;
+      scrollbar-color: rgba(56,189,248,0.55) rgba(255,255,255,0.06);
+      scrollbar-width: thin;
+    }
+    .pitch-comparison {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      width: max-content;
+      min-width: 100%;
+    }
+    .pitch-board {
+      flex: 0 0 clamp(380px, calc((100vw - 330px) / 2), 460px);
+      min-width: 0;
+      scroll-snap-align: start;
+    }
+    .official-pitch-board { display: none; }
+    .official-pitch-board.visible { display: flex; }
+    .pitch-heading {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 0.75rem;
+      min-height: 24px;
+    }
+    .pitch-heading .section-label { margin-bottom: 0; }
+    .pitch-heading-copy { min-width: 0; }
+    .public-data-status {
+      margin-top: 0.12rem;
+      color: #ffd27a;
+      font-size: 0.54rem;
+      white-space: nowrap;
+    }
+    .score-legend {
+      display: flex;
+      gap: 0.6rem;
+      color: var(--muted);
+      font-size: 0.56rem;
+      white-space: nowrap;
+    }
     /* ── PITCH ──────────────────────────────────────────────────── */
     .pitch-wrap {
       position: relative;
       width: 100%;
-      height: calc(100vh - 175px);
+      height: auto;
       aspect-ratio: 65 / 102;
       background: repeating-linear-gradient(
         to bottom,
@@ -138,6 +186,21 @@
       transition: transform 0.15s ease, box-shadow 0.15s ease;
       letter-spacing: 0.02em;
     }
+    .captain-badge {
+      position: absolute;
+      top: -6px;
+      right: -7px;
+      display: grid;
+      place-items: center;
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      background: #101827;
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.65);
+      font-size: 0.48rem;
+      font-weight: 900;
+    }
     .player:hover .player-shirt {
       transform: scale(1.2);
       box-shadow: 0 6px 20px rgba(0,0,0,0.7), 0 0 0 3px rgba(255,255,255,0.3);
@@ -154,11 +217,16 @@
       text-overflow: ellipsis;
       text-align: center;
     }
-    .player-pred {
-      font-size: 0.52rem;
-      color: rgba(255,255,255,0.75);
+    .player-score-pair {
+      display: flex;
+      gap: 0.35rem;
+      min-height: 12px;
+      font-size: 0.5rem;
+      color: rgba(255,255,255,0.82);
       text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+      white-space: nowrap;
     }
+    .player-score-pair .last-score { color: rgba(255,255,255,0.58); }
 
     /* ── BENCH ──────────────────────────────────────────────────── */
     .bench-section { margin-top: 0; }
@@ -434,12 +502,26 @@
       text-decoration: none;
     }
     .manager-meta {
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.3rem;
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.3rem;
       border-bottom: 1px solid var(--border); padding-bottom: 0.65rem;
       margin-bottom: 0.7rem;
     }
     .manager-stat { font-size: 0.6rem; color: var(--muted); }
     .manager-stat strong { display: block; color: var(--text); font-size: 0.77rem; }
+    .free-transfer-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 34px;
+      margin-bottom: 0.75rem;
+      padding: 0.35rem 0.5rem;
+      background: rgba(56,189,248,0.08);
+      border: 1px solid rgba(56,189,248,0.24);
+      border-radius: 6px;
+      color: var(--muted);
+      font-size: 0.62rem;
+    }
+    .free-transfer-summary strong { color: var(--accent); font-size: 0.9rem; }
     .manager-status { min-height: 1.2rem; color: var(--muted); font-size: 0.64rem; line-height: 1.4; }
     .manager-status.error { color: #ff7777; }
     .manager-status.success { color: #70e85a; }
@@ -481,6 +563,26 @@
     .training-progress-group.success .training-status { color: #70e85a; }
     @media (max-width: 980px) {
       .training-progress-group { width: 120px; }
+    }
+    @media (max-width: 560px) {
+      body { height: auto; min-height: 100vh; overflow: auto; }
+      main {
+        width: 100%;
+        grid-template-columns: minmax(0, 1fr);
+        overflow: visible;
+        justify-content: stretch;
+      }
+      .pitch-col, .side-panel { width: 100%; min-width: 0; }
+      .pitch-comparison-scroll { width: 100%; height: auto; overflow-y: visible; }
+      .pitch-comparison { min-width: 0; }
+      .pitch-board { flex-basis: min(82vw, 360px); }
+      .player-score-pair {
+        flex-direction: column;
+        align-items: center;
+        gap: 0;
+        line-height: 1.15;
+      }
+      .side-panel { max-height: none; overflow: visible; }
     }
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
@@ -536,7 +638,39 @@
 </header>
 
 <main>
-  <div class="pitch-col">
+  <div class="pitch-comparison-scroll" id="pitch-comparison-scroll">
+    <div class="pitch-comparison">
+      <section class="pitch-col pitch-board official-pitch-board" id="official-pitch-board">
+        <div class="pitch-heading">
+          <div class="pitch-heading-copy">
+            <div class="section-label" id="official-pitch-title">Last public GW squad</div>
+            <div class="public-data-status" id="official-data-status"></div>
+          </div>
+          <div class="score-legend">
+            <span>Predicted</span>
+            <span>Last GW actual</span>
+          </div>
+        </div>
+        <div class="pitch-wrap" id="official-pitch">
+          <div class="players-layer" id="official-players-layer"></div>
+        </div>
+        <div class="bench-section">
+          <div class="section-label">Imported bench</div>
+          <div class="bench-strip" id="official-bench-strip"></div>
+        </div>
+        <div class="free-transfer-summary">
+          <span>Free transfers</span><strong id="free-transfer-value"></strong>
+        </div>
+      </section>
+
+      <section class="pitch-col pitch-board">
+    <div class="pitch-heading">
+      <div class="section-label">Recommended next-GW XI</div>
+      <div class="score-legend">
+        <span>Predicted</span>
+        <span>Last GW actual</span>
+      </div>
+    </div>
     <!-- pitch -->
     <div class="pitch-wrap" id="pitch">
       <!-- Standard football pitch markings (proportional, 65×102 viewBox) -->
@@ -602,8 +736,10 @@
 
     <!-- bench -->
     <div class="bench-section">
-      <div class="section-label">Bench</div>
+      <div class="section-label">Recommended bench</div>
       <div class="bench-strip" id="bench-strip"></div>
+    </div>
+      </section>
     </div>
   </div>
 
@@ -613,7 +749,6 @@
       <h3>Squad Management <span class="dirty-dot" id="dirty-dot" style="display:none">●</span></h3>
       <div class="manager-meta">
         <div class="manager-stat">Bank<strong id="bank-value"></strong></div>
-        <div class="manager-stat">Free moves<strong id="free-transfer-value"></strong></div>
         <div class="manager-stat">Hit<strong id="hit-value"></strong></div>
         <div class="manager-stat">Revision<strong id="revision-value"></strong></div>
       </div>
@@ -623,17 +758,21 @@
         <div class="manager-row">
           <input id="fpl-entry-id" inputmode="numeric" pattern="[0-9]*"
                  placeholder="Entry ID" title="Public FPL entry ID">
-          <button class="manager-button" id="sync-fpl-entry" type="button">Import public picks</button>
+          <select id="fpl-free-transfers" title="Optional current free-transfer count">
+            <option value="">Estimate free transfers</option>
+            <option value="1">1 free transfer</option>
+            <option value="2">2 free transfers</option>
+            <option value="3">3 free transfers</option>
+            <option value="4">4 free transfers</option>
+            <option value="5">5 free transfers</option>
+          </select>
         </div>
-         <select id="fpl-free-transfers" style="width:100%"
-            title="Optional current free-transfer count">
-           <option value="">Estimate free transfers</option>
-           <option value="1">1 free transfer</option>
-           <option value="2">2 free transfers</option>
-           <option value="3">3 free transfers</option>
-           <option value="4">4 free transfers</option>
-           <option value="5">5 free transfers</option>
-         </select>
+        <input id="fpl-access-token" type="password" autocomplete="new-password"
+               spellcheck="false" style="width:100%;margin-bottom:0.35rem"
+               placeholder="Temporary FPL access token"
+               title="Used once to import current private picks; never saved">
+        <button class="manager-button full" id="sync-fpl-entry" type="button">Import FPL squad</button>
+        <div id="manager-status" class="manager-status"></div>
       </div>
 
       <div class="manager-group">
@@ -676,7 +815,6 @@
         <select id="chip-select" style="width:100%"></select>
       </div>
 
-      <div id="manager-status" class="manager-status"></div>
       <button class="manager-button primary full" id="save-squad" type="button">Save locally</button>
       <div class="official-actions">
         <button class="manager-button" id="copy-fpl-plan" type="button">Copy FPL plan</button>
@@ -867,6 +1005,20 @@ function marginLabel(m) {
 function playerName(player) {
   return `${player.first_name || ''} ${player.second_name || ''}`.trim();
 }
+function lastGameweekLabel() {
+  const gameweek = squadState.official_entry?.latest_public_event;
+  return gameweek ? `GW${gameweek}` : 'Last GW';
+}
+function scorePair(player) {
+  const previous = player.last_gameweek_points;
+  const previousValue = previous === null || previous === undefined ? '—' : Number(previous).toFixed(0);
+  return `
+    <div class="player-score-pair">
+      <span>Pred ${(+player.predicted_points || 0).toFixed(1)}</span>
+      <span class="last-score">${lastGameweekLabel()} ${previousValue}</span>
+    </div>
+  `;
+}
 function statePlayer(playerId) {
   return squadState.players.find(player => +player.id === +playerId);
 }
@@ -893,6 +1045,42 @@ function fillSelect(element, rows, selected, label) {
   element.innerHTML = rows.map(row =>
     `<option value="${row.id}" ${+row.id === +selected ? 'selected' : ''}>${label(row)}</option>`
   ).join('');
+}
+
+function renderOfficialSquad() {
+  const board = document.getElementById('official-pitch-board');
+  const officialSquad = squadState.official_squad || [];
+  board.classList.toggle('visible', officialSquad.length > 0);
+  if (!officialSquad.length) return;
+
+  const sourceGameweek = squadState.official_entry?.squad_source_event;
+  const isPrivate = squadState.official_entry?.private;
+  document.getElementById('official-pitch-title').textContent = isPrivate
+    ? `Current private GW${sourceGameweek ?? '?'} squad`
+    : `Last public GW${sourceGameweek ?? '?'} squad`;
+  document.getElementById('official-data-status').textContent = isPrivate
+    ? squadState.official_entry?.private_matches_public
+      ? `Authenticated: matches public GW${squadState.official_entry?.latest_public_event ?? '?'}`
+      : 'Authenticated one-time import'
+    : sourceGameweek && +squadState.game_week > +sourceGameweek
+    ? `GW${squadState.game_week} picks private until deadline`
+    : 'Latest public picks';
+
+  const officialPitch = document.getElementById('official-pitch');
+  if (!officialPitch.querySelector('svg.lines')) {
+    officialPitch.prepend(document.querySelector('#pitch svg.lines').cloneNode(true));
+  }
+  const players = officialSquad.map(displayOfficialPlayer);
+  renderPitchPlayers(
+    document.getElementById('official-players-layer'),
+    players.filter(player => player.lineup_role === 'starter'),
+    (left, right) => left.pick_position - right.pick_position,
+  );
+  renderBenchPlayers(
+    document.getElementById('official-bench-strip'),
+    players.filter(player => player.lineup_role === 'bench'),
+    player => `B${player.pick_position - 11}`,
+  );
 }
 
 function renderManager() {
@@ -935,6 +1123,7 @@ function renderManager() {
   document.getElementById('free-transfer-value').textContent = squadState.free_transfers;
   document.getElementById('hit-value').textContent = `-${squadState.transfer_points_cost} pts`;
   document.getElementById('revision-value').textContent = squadState.revision || 'Draft';
+  renderOfficialSquad();
 }
 
 function renderTransferCandidates() {
@@ -1074,8 +1263,6 @@ document.getElementById('save-squad').addEventListener('click', async () => {
   }
 });
 
-renderManager();
-
 document.getElementById('copy-fpl-plan').addEventListener('click', async () => {
   const byId = new Map(squadState.players.map(player => [+player.id, player]));
   const formatPlayer = playerId => {
@@ -1107,16 +1294,33 @@ document.getElementById('copy-fpl-plan').addEventListener('click', async () => {
   }
 });
 
+const freeTransfersSelect = document.getElementById('fpl-free-transfers');
+freeTransfersSelect.addEventListener('change', event => {
+  const selected = event.target.value;
+  setManagerStatus(
+    selected
+      ? `${selected} free transfer${selected === '1' ? '' : 's'} selected for the next public-picks import.`
+      : 'Free transfers will be estimated on the next public-picks import.'
+  );
+});
+
 document.getElementById('sync-fpl-entry').addEventListener('click', async event => {
   const button = event.currentTarget;
   const entryId = document.getElementById('fpl-entry-id').value.trim();
-  const freeTransfers = document.getElementById('fpl-free-transfers').value;
+  const freeTransfers = freeTransfersSelect.value;
+  const accessTokenInput = document.getElementById('fpl-access-token');
+  const accessToken = accessTokenInput.value.trim();
   if (!/^\d+$/.test(entryId)) {
     return setManagerStatus('Enter the numeric public FPL entry ID.', 'error');
   }
   localStorage.setItem('fpl-public-entry-id', entryId);
+  accessTokenInput.value = '';
   button.disabled = true;
-  setManagerStatus('Synchronizing completed public Gameweeks…');
+  setManagerStatus(
+    accessToken
+      ? 'Importing current private squad…'
+      : 'Synchronizing completed public Gameweeks…'
+  );
   try {
     const response = await fetch('/api/fpl-entry/sync', {
       method: 'POST',
@@ -1125,20 +1329,36 @@ document.getElementById('sync-fpl-entry').addEventListener('click', async event 
         entry_id: Number(entryId),
         model: D.model_type,
         free_transfers: freeTransfers ? Number(freeTransfers) : null,
+        access_token: accessToken || null,
       }),
     });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || 'Unable to synchronize entry.');
-    window.location.assign(`/generate-team?model=${encodeURIComponent(D.model_type)}`);
+    squadState = result.state;
+    dirty = false;
+    document.getElementById('dirty-dot').style.display = 'none';
+    freeTransfersSelect.value =
+      squadState.official_entry?.free_transfers_estimated
+        ? ''
+        : String(squadState.free_transfers);
+    renderManager();
+    renderSquad();
+    setManagerStatus(result.message, 'success');
   } catch (error) {
     setManagerStatus(error.message, 'error');
+  } finally {
     button.disabled = false;
   }
 });
 
 const savedEntryId = localStorage.getItem('fpl-public-entry-id');
-if (savedEntryId && /^\d+$/.test(savedEntryId)) {
-  document.getElementById('fpl-entry-id').value = savedEntryId;
+const syncedEntryId = squadState.official_entry?.entry_id;
+const initialEntryId = syncedEntryId || savedEntryId;
+if (initialEntryId && /^\d+$/.test(String(initialEntryId))) {
+  document.getElementById('fpl-entry-id').value = String(initialEntryId);
+}
+if (squadState.official_entry && !squadState.official_entry?.free_transfers_estimated) {
+  freeTransfersSelect.value = String(squadState.free_transfers);
 }
 
 // ── squad mode badge ───────────────────────────────────────────────────────
@@ -1203,8 +1423,10 @@ function buildTip(p) {
     </div>
     ${p.news ? `<div class="tt-news">${p.news}</div>` : ''}
     <div class="tt-pred">
-      <span class="val">${(p.predicted_points||0).toFixed(2)}</span>
-      <span class="lbl"> model pts</span>
+      <div><span class="val">${(p.predicted_points||0).toFixed(2)}</span>
+        <span class="lbl"> next-GW predicted</span></div>
+      <div><span class="val">${p.last_gameweek_points ?? '—'}</span>
+        <span class="lbl"> ${lastGameweekLabel()} actual</span></div>
     </div>
     ${p.ep_next ? `<div class="tt-ep">FPL prediction: <span>${(+p.ep_next).toFixed(1)} pts</span></div>` : ''}
     <hr class="tt-divider">
@@ -1254,6 +1476,17 @@ function displayPlayer(playerId) {
   };
 }
 
+function displayOfficialPlayer(player) {
+  const enriched = displayPlayers.get(+player.id) || {};
+  return {
+    ...enriched,
+    ...player,
+    element_type: player.position,
+    value: player.current_price,
+    color: POS_COLOR[player.position] || '#aaa',
+  };
+}
+
 function rowPositions(count) {
   if (count === 1) return [50];
   const margins = {2: 28, 3: 18, 4: 12, 5: 10};
@@ -1262,47 +1495,76 @@ function rowPositions(count) {
   return Array.from({length: count}, (_, index) => margin + index * step);
 }
 
-function renderSquad() {
-  layer.innerHTML = '';
-  benchEl.innerHTML = '';
-  const rowY = {GK: 84, DEF: 65, MID: 45, FWD: 15};
-  const starters = squadState.lineup.starters.map(displayPlayer);
+function playerToken(player) {
+  const captaincy = player.is_captain ? 'C' : player.is_vice_captain ? 'V' : '';
+  return `
+    <div class="player-shirt" style="background:${player.color}">
+      ${initials(player)}
+      ${captaincy ? `<span class="captain-badge">${captaincy}</span>` : ''}
+    </div>
+    <div class="player-name">${shortName(player)}</div>
+    ${scorePair(player)}
+  `;
+}
 
+function renderPitchPlayers(layerElement, players, sortPlayers) {
+  layerElement.innerHTML = '';
+  const rowY = {GK: 84, DEF: 65, MID: 45, FWD: 15};
   ['GK', 'DEF', 'MID', 'FWD'].forEach(position => {
-    const row = starters
+    const row = players
       .filter(player => player.position === position)
-      .sort((left, right) => right.predicted_points - left.predicted_points);
+      .sort(sortPlayers);
     const xs = rowPositions(row.length);
     row.forEach((player, index) => {
-      const el = document.createElement('div');
-      el.className = 'player';
-      el.style.left = xs[index] + '%';
-      el.style.top = rowY[position] + '%';
-      el.innerHTML = `
-        <div class="player-shirt" style="background:${player.color}">${initials(player)}</div>
-        <div class="player-name">${shortName(player)}</div>
-        <div class="player-pred">${(+player.predicted_points || 0).toFixed(1)}</div>
-      `;
-      attachTip(el, player);
-      layer.appendChild(el);
+      const element = document.createElement('div');
+      element.className = 'player';
+      element.style.left = xs[index] + '%';
+      element.style.top = rowY[position] + '%';
+      element.innerHTML = playerToken(player);
+      attachTip(element, player);
+      layerElement.appendChild(element);
     });
-  });
-
-  squadState.lineup.bench.map(displayPlayer).forEach((player, index) => {
-    const el = document.createElement('div');
-    el.className = 'bench-player';
-    el.innerHTML = `
-      <div class="bench-shirt" style="background:${player.color}">${initials(player)}</div>
-      <div class="bench-info">
-        <div class="bench-name">${index ? index + '. ' : 'GK '}${playerName(player)}</div>
-        <div class="bench-sub">${player.position} · ${(+player.predicted_points || 0).toFixed(1)} pts</div>
-      </div>
-    `;
-    attachTip(el, player);
-    benchEl.appendChild(el);
   });
 }
 
+function renderBenchPlayers(benchElement, players, roleLabel) {
+  benchElement.innerHTML = '';
+  players.forEach((player, index) => {
+    const element = document.createElement('div');
+    element.className = 'bench-player';
+    element.innerHTML = `
+      <div class="bench-shirt" style="background:${player.color}">${initials(player)}</div>
+      <div class="bench-info">
+        <div class="bench-name">${roleLabel(player, index)} ${playerName(player)}</div>
+        <div class="bench-sub">${player.position}</div>
+        ${scorePair(player)}
+      </div>
+    `;
+    attachTip(element, player);
+    benchElement.appendChild(element);
+  });
+}
+
+function renderSquad() {
+  const lineup = squadState.lineup;
+  const starters = lineup.starters.map(playerId => ({
+    ...displayPlayer(playerId),
+    is_captain: +playerId === +lineup.captain,
+    is_vice_captain: +playerId === +lineup.vice_captain,
+  }));
+  renderPitchPlayers(
+    layer,
+    starters,
+    (left, right) => right.predicted_points - left.predicted_points,
+  );
+  renderBenchPlayers(
+    benchEl,
+    lineup.bench.map(displayPlayer),
+    (player, index) => index ? `${index}.` : 'GK',
+  );
+}
+
+renderManager();
 renderSquad();
 
 // ── excluded players panel ────────────────────────────────────────────────

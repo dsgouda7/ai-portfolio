@@ -79,9 +79,11 @@ python simulations/simulate_season.py --test-from 15 --test-to 37
   revision and rolls it into the target Gameweek. It refreshes prices,
   predictions, injuries, suspensions, bank calculations, and transfer advice
   without changing the committed historical revision.
-4. Enter the public FPL **entry ID** in Squad Management and optionally enter the
+4. Enter the FPL **entry ID** in Squad Management and optionally enter the
   exact current free-transfer count shown in the official app. Press **Import
-  public picks**. This is a read-only import from FPL.
+  FPL squad** for the latest public picks. To import private pre-deadline picks,
+  optionally provide a temporary FPL OAuth access token; it is used for one
+  read-only request and is not persisted.
   Completed public Gameweeks, picks, transfers, chip use, points, ranks, bank,
   and squad value are refreshed in SQLite. The latest permanent 15-player squad
   becomes a local draft and is re-scored for the next Gameweek. Free Hit picks
@@ -572,7 +574,7 @@ The per-GW breakdown and interactive per-position RMSE are in the `/validation-r
 | `GET /generate-team` | Recommended FPL squad for the current GW on an interactive pitch with predicted scores, confidence margins, and player health cards |
 | `GET /api/squad` | Latest committed and draft squad states loaded from SQLite |
 | `GET /api/squad/history` | Append-only season/Gameweek revision ledger; accepts an optional `season` query parameter |
-| `POST /api/fpl-entry/sync` | Synchronize completed public history and import the latest permanent squad using `entry_id`, `model`, and optional `free_transfers` |
+| `POST /api/fpl-entry/sync` | Localhost-only synchronization of public history and the latest squad using `entry_id`, `model`, optional `free_transfers`, and an optional one-use `access_token` for private pre-deadline picks |
 | `POST /api/training/start` | Locally start one background latest-data refresh and all-model training job; accepts an empty JSON object |
 | `GET /api/training/status` | Poll current refresh/training state and the latest bounded progress log |
 | `POST /api/squad/draft` | Validate and append a draft revision |
@@ -583,19 +585,23 @@ The per-GW breakdown and interactive per-position RMSE are in the `/validation-r
 
 ### Syncing to an official FPL account
 
-This project intentionally does **not** collect Premier League credentials or
-submit changes to the official FPL website. There is no documented public FPL
-write API. Community tools reverse-engineer private web endpoints and reuse login
-session cookies, but those contracts can change without notice and require access
-to sensitive account sessions.
+This project does **not** collect an email, password, MFA secret, refresh token,
+or session cookie, and it does not submit changes to the official FPL website.
+There is no documented public FPL write API. The optional private-squad import
+accepts a temporary OAuth access token and uses it once with FPL's read-only
+`my-team` endpoint. The browser clears the field immediately; the endpoint is
+localhost-only; and the token is never returned, logged by the app, written to
+SQLite, exported to JSON, or retained in application state.
 
 More importantly, the 2026/27 FPL Terms state that players must keep account
 credentials confidential and must not use automated systems to access the Game;
 a breach can result in suspension, deletion, or disqualification. The supported
 workflow is therefore human-in-the-loop: review and persist the recommendation
 locally, then reproduce the confirmed transfers, lineup, captaincy, and chip in
-the official FPL app or website. Do not store passwords, MFA secrets, or Premier
-League session cookies.
+the official FPL app or website. Authenticated endpoints are unofficial contracts
+that can change without notice, and automated access may be restricted by FPL's
+current terms. Use the private import only if you accept that risk. Do not store
+passwords, MFA secrets, access tokens, refresh tokens, or Premier League cookies.
 
 The Squad Management panel accepts a public numeric FPL entry ID. After each
 deadline it downloads the public entry history, transfers, and all published
@@ -608,11 +614,12 @@ the latest event used Free Hit, ownership comes from the preceding non-Free-Hit
 event.
 
 FPL does not publicly expose pre-deadline picks or the exact private live free-
-transfer balance. The app therefore cannot synchronize a brand-new account's
-initial squad before its first deadline, and labels its free-transfer count as an
-estimate. No credential, personal profile name, email, cookie, or MFA data is
-requested or persisted.
-The sync endpoint rejects credential-like fields, cross-origin requests, and
+transfer balance. Without a token, the app labels the imported pitch as the last
+public squad and its free-transfer count as an estimate. With a temporary token,
+the current private picks, current purchase prices, bank, and transfer allowance
+are loaded without persisting the credential. Personal profile names, email,
+password, cookies, and MFA data are never requested or persisted. The sync
+endpoint rejects email/password fields, non-local and cross-origin requests, and
 requests repeated within a short cooldown.
 
 The validation report page shows:

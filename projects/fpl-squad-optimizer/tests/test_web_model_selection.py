@@ -27,10 +27,49 @@ class WebModelSelectionTests(unittest.TestCase):
         )
 
         self.assertIn('Public FPL entry (read-only)', template)
-        self.assertIn('Import public picks', template)
+        self.assertIn('Import FPL squad', template)
         self.assertIn('Save locally', template)
         self.assertIn('Copy FPL plan', template)
         self.assertIn('Official FPL is unchanged.', template)
+
+    def test_public_sync_applies_returned_state_without_hiding_confirmation(self):
+        template = (ROOT / 'fpl-generator' / 'templates' / 'index.html').read_text(
+            encoding='utf-8'
+        )
+
+        self.assertIn('squadState = result.state;', template)
+        self.assertIn("setManagerStatus(result.message, 'success');", template)
+        self.assertIn('renderManager();', template)
+        self.assertIn('renderSquad();', template)
+        self.assertIn('squadState.official_entry?.entry_id', template)
+        self.assertIn('squadState.official_entry?.free_transfers_estimated', template)
+        self.assertIn('selected for the next public-picks import.', template)
+        self.assertIn('id="fpl-access-token"', template)
+        self.assertIn('type="password"', template)
+        self.assertIn('access_token: accessToken || null', template)
+        self.assertIn("accessTokenInput.value = '';", template)
+        self.assertNotIn(
+            'window.location.assign(`/generate-team?model=${encodeURIComponent(D.model_type)}`);',
+            template,
+        )
+
+    def test_template_separates_imported_squad_from_recommended_xi(self):
+        template = (ROOT / 'fpl-generator' / 'templates' / 'index.html').read_text(
+            encoding='utf-8'
+        )
+
+        self.assertIn('Last public GW', template)
+        self.assertIn('Current private GW', template)
+        self.assertIn('Authenticated: matches public GW', template)
+        self.assertIn('picks private until deadline', template)
+        self.assertIn('Recommended next-GW XI', template)
+        self.assertIn('official_squad', template)
+        self.assertIn('last_gameweek_points', template)
+        self.assertIn('Last GW actual', template)
+        self.assertIn('pitch-comparison-scroll', template)
+        self.assertIn('official-players-layer', template)
+        self.assertIn('official-bench-strip', template)
+        self.assertNotIn('imported-squad-players', template)
 
     def tearDown(self):
         if web._TRAINING_GUARD.locked():

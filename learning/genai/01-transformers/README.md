@@ -21,7 +21,7 @@ text
 
 Every chapter zooms in on part of this path, then reconnects it to the whole. Equations appear only after the corresponding information movement is visible in words, shapes, or a measured example.
 
-**Prerequisite:** complete the [PyTorch fundamentals](../../genai-prerequisites/03-pytorch-fundamentals/01-keras-to-pytorch-antarctic-field-guide.ipynb). The broader [tokenization prerequisite](../../genai-prerequisites/06-tokenization/tokenization-and-embeddings.ipynb) remains useful, but Part 1 now rebuilds the Transformer-specific tokenizer, embedding, and gradient contracts directly.
+**Prerequisite:** complete both notebooks in [Arrays and PyTorch Fundamentals](../../genai-prerequisites/03-pytorch-fundamentals/README.md). The shape-first bridge establishes indexing, broadcasting, and `(batch, time, feature)` reasoning before the Antarctic Field Guide adds explicit PyTorch training. The broader [tokenization prerequisite](../../genai-prerequisites/06-tokenization/tokenization-and-embeddings.ipynb) remains useful, but Part 1 now rebuilds the Transformer-specific tokenizer, embedding, and gradient contracts directly.
 
 | Part | Start with the job | Open the mechanism | End with the reason it fits |
 |---|---|---|---|

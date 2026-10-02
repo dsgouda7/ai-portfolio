@@ -59,7 +59,12 @@ from squad_state import (
     validate_state,
 )
 from performance_reviewer import build_performance_review
-from fpl_account import FplEntrySyncError, sync_public_entry
+from fpl_account import (
+    FplEntrySyncError,
+    load_event_player_points,
+    load_private_team,
+    sync_public_entry,
+)
 
 
 def _elig_key(player_row) -> tuple[str, str]:
@@ -505,10 +510,31 @@ def _state_from_synced_entry(
         runtime['target_game_week'],
         runtime['season'],
         previous=load_current(),
-        source='official_fpl_public_sync',
+        source=(
+            'official_fpl_private_sync'
+            if synced.get('private')
+            else 'official_fpl_public_sync'
+        ),
     )
     # create_state selects the next XI, bench order and captaincy from current
-    # model scores. The prior official lineup remains in fpl_entry_picks.
+    # model scores. Keep the prior official lineup alongside that recommendation.
+    last_event_points = synced.get('last_event_points') or {}
+    state_players = {int(player['id']): player for player in state['players']}
+    for player_id, player in state_players.items():
+        points = last_event_points.get(player_id, last_event_points.get(str(player_id)))
+        player['last_gameweek_points'] = int(points) if points is not None else None
+    state['official_squad'] = []
+    for pick in sorted(picks, key=lambda row: int(row['pick_position'])):
+        player_id = int(pick['player_id'])
+        official_player = dict(state_players[player_id])
+        pick_position = int(pick['pick_position'])
+        official_player.update({
+            'pick_position': pick_position,
+            'lineup_role': 'starter' if pick_position <= 11 else 'bench',
+            'is_captain': bool(pick.get('is_captain')),
+            'is_vice_captain': bool(pick.get('is_vice_captain')),
+        })
+        state['official_squad'].append(official_player)
     state['bank'] = int(synced.get('bank', 0))
     estimated_free_transfers = int(synced.get('next_free_transfers', 1))
     state['free_transfers'] = (
@@ -523,6 +549,8 @@ def _state_from_synced_entry(
         'squad_source_event': synced.get('squad_event'),
         'free_transfers_estimated': free_transfers is None,
         'bank_source_event': synced.get('squad_event'),
+        'private': bool(synced.get('private')),
+        'private_matches_public': bool(synced.get('private_matches_public')),
     }
     chip_names = {
         'wildcard': 'wildcard',
@@ -1140,7 +1168,12 @@ def start_training():
 
 @app.post('/api/fpl-entry/sync')
 def sync_fpl_entry():
-    """Import completed public FPL history and latest permanent picks by entry ID."""
+    """Import public history and optionally current private picks with a temporary token."""
+    if request.remote_addr not in ('127.0.0.1', '::1'):
+        return jsonify({
+            'ok': False,
+            'error': 'FPL squad synchronization is available only from localhost.',
+        }), 403
     training_block = _training_write_block()
     if training_block:
         return training_block
@@ -1151,13 +1184,14 @@ def sync_fpl_entry():
         return jsonify({'ok': False, 'error': 'FPL sync accepts JSON only.'}), 415
     try:
         payload = request.get_json() or {}
-        allowed_fields = {'entry_id', 'model', 'free_transfers'}
+        allowed_fields = {'entry_id', 'model', 'free_transfers', 'access_token'}
         unexpected_fields = set(payload) - allowed_fields
         if unexpected_fields:
             raise FplEntrySyncError(
-                'Credentials and unknown fields are not accepted. Provide only '
-                'entry_id, model, and optional free_transfers.'
+                'Email/password and unknown fields are not accepted. Provide only '
+                'entry_id, model, optional free_transfers, and a temporary access token.'
             )
+        access_token = str(payload.get('access_token') or '').strip()
         free_transfers = payload.get('free_transfers')
         if free_transfers not in (None, ''):
             free_transfers = int(free_transfers)
@@ -1186,6 +1220,38 @@ def sync_fpl_entry():
             all_data, checkpoint, runtime['snapshot_game_week']
         )
         synced = sync_public_entry(payload.get('entry_id'), DB_FILE)
+        if access_token:
+            public_pick_signature = {
+                (
+                    int(pick['player_id']),
+                    int(pick['pick_position']),
+                    bool(pick.get('is_captain')),
+                    bool(pick.get('is_vice_captain')),
+                )
+                for pick in synced.get('picks', [])
+            }
+            private_team = load_private_team(payload.get('entry_id'), access_token)
+            private_ids = [int(pick['player_id']) for pick in private_team['picks']]
+            private_pick_signature = {
+                (
+                    int(pick['player_id']),
+                    int(pick['pick_position']),
+                    bool(pick.get('is_captain')),
+                    bool(pick.get('is_vice_captain')),
+                )
+                for pick in private_team['picks']
+            }
+            synced.update(private_team)
+            synced['squad_event'] = int(runtime['target_game_week'])
+            synced['private'] = True
+            synced['private_matches_public'] = (
+                private_pick_signature == public_pick_signature
+            )
+            synced['last_event_points'] = load_event_player_points(
+                DB_FILE,
+                private_ids,
+                synced.get('latest_event'),
+            )
         state = _state_from_synced_entry(
             synced,
             scored_pool,
@@ -1200,10 +1266,23 @@ def sync_fpl_entry():
             'entry_id': synced['entry_id'],
             'gameweeks_imported': len(synced['gameweeks']),
             'message': (
-                f"Imported public picks through GW{synced['latest_event']}. "
-                'Bank is from the latest permanent public squad; free transfers '
-                f"are {'user-supplied' if free_transfers is not None else 'estimated'}. "
-                'The next XI and captaincy were selected from current model scores.'
+                (
+                    f"Imported current private GW{runtime['target_game_week']} picks. "
+                    if synced.get('private')
+                    else f"Imported public picks through GW{synced['latest_event']}. "
+                )
+                + 'Free transfers '
+                + f"are {'user-supplied' if free_transfers is not None else 'estimated'}. "
+                + (
+                    '' if synced.get('private')
+                    else f"Current GW{runtime['target_game_week']} picks remain private until the deadline. "
+                )
+                + (
+                    f"FPL returned the same ownership and lineup as public GW{synced['latest_event']}. "
+                    if synced.get('private_matches_public')
+                    else ''
+                )
+                + 'The next XI and captaincy were selected from current model scores.'
             ),
         })
     except (FplEntrySyncError, TypeError, KeyError, ValueError) as exc:

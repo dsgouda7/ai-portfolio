@@ -9,7 +9,7 @@ This sequence builds the mathematical, machine-learning, framework, and sequence
 | 00 | [Math Foundations](00-math-foundations/math-foundations-for-ml.ipynb) | NumPy + SciPy | Build motion from local change, read vectors and probability, then use local derivatives for constrained gradient descent |
 | 01 | [ML Basics](01-ml-basics/ml-basics.ipynb) | NumPy + scikit-learn | Build train/validation/test, optimization, classification, and generalization contracts |
 | 02 | [Neural Networks and Backpropagation](02-neural-networks/README.md) | TensorFlow/Keras | Derive backpropagation with SmartVal, then apply it to an audible Melodyne synthesizer restoration |
-| 03 | [Keras to PyTorch: Antarctic Field Guide](03-pytorch-fundamentals/01-keras-to-pytorch-antarctic-field-guide.ipynb) | TensorFlow/Keras ↔ PyTorch | Translate familiar model, loss, autograd, optimizer, dtype, and device contracts into PyTorch |
+| 03 | [Arrays and PyTorch Fundamentals](03-pytorch-fundamentals/README.md) | NumPy ↔ TensorFlow/Keras ↔ PyTorch | Name and transform real model axes, then translate familiar model, loss, autograd, optimizer, dtype, and device contracts into PyTorch |
 | 04 | [Convolutional Neural Networks](04-cnns/convolutional-neural-networks.ipynb) | TensorFlow/Keras ↔ PyTorch | Optional vision branch: convolution, receptive fields, residual paths, and transfer learning |
 | 05 | [RNN/LSTM Sequence Modeling](05-rnn-sequence-modeling/rnn-sequence-modeling.ipynb) | TensorFlow/Keras ↔ PyTorch | Derive recurrent state, BPTT, vanishing gradients, and LSTM gating |
 | 06 | [Tokenization and Embeddings](06-tokenization/tokenization-and-embeddings.ipynb) | TensorFlow/Keras ↔ PyTorch | Build BPE intuition, train embedding rows, and handle padding and masked loss |

@@ -549,7 +549,8 @@ def refresh_player_data(
     updated = deepcopy(state)
     pool_by_id = {int(row['id']): row for row in pool.to_dict(orient='records')}
     eligibility = eligibility or {}
-    for player in updated['players']:
+
+    def refresh_player(player: dict[str, Any]) -> None:
         current = pool_by_id.get(int(player['id']))
         if current:
             player['current_price'] = int(current.get('value', player['current_price']))
@@ -565,6 +566,11 @@ def refresh_player_data(
             if info:
                 player['status'] = info.status
                 player['news'] = info.news
+
+    for player in updated['players']:
+        refresh_player(player)
+    for player in updated.get('official_squad', []):
+        refresh_player(player)
     updated['updated_at'] = _now()
     validate_state(updated)
     return updated

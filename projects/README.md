@@ -15,6 +15,20 @@ Each project has a concrete problem statement with measurable success criteria, 
 
 ---
 
+## [Linked Page Retrieval Lab](linked-page-retrieval/)
+
+**Can logical pages, typed links, and an authority score reduce the indexing and query cost of
+vector-only RAG without losing retrieval quality?**
+
+Planned local POC comparing PageRank-only, SQLite FTS5, vector, linked-page, selective-hybrid, and
+full-hybrid retrieval over one deterministic corpus and locked evaluation suite. The design measures
+retrieval quality, stale-page behavior, latency, index size, memory, and incremental-update cost
+without requiring a cloud API. No implementation or benchmark result is claimed yet.
+
+`SQLite FTS5` `PageRank` `NetworkX` `Sentence Transformers` `Python` `Evaluation`
+
+---
+
 ## [FPL Squad Optimizer](fpl-squad-optimizer/)
 
 **Can a CPU-only ML model trained on community data assemble an FPL squad that performs in the range of an experienced human manager?**
@@ -146,5 +160,4 @@ Flask service chaining Whisper (speech-to-text), Helsinki-NLP MarianMT (translat
 Dockerised Flask app chaining Whisper (STT), DialoGPT (response generation), and SpeechT5 (TTS) behind a web interface.
 
 `Flask` `Whisper` `DialoGPT` `SpeechT5` `Docker`
-
 

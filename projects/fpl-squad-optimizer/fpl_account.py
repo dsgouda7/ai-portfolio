@@ -84,6 +84,86 @@ def _validate_entry_id(entry_id: int | str) -> int:
     return value
 
 
+def load_private_team(
+    entry_id: int | str,
+    access_token: str,
+    timeout: int = 20,
+) -> dict[str, Any]:
+    """Load current private picks using a temporary FPL OAuth access token."""
+    entry = _validate_entry_id(entry_id)
+    token = str(access_token or '').strip()
+    if not token:
+        raise FplEntrySyncError('FPL access token is required for private picks.')
+    headers = {
+        'X-API-Authorization': f'Bearer {token}',
+        'X-API-Language': 'en',
+    }
+
+    def fetch_authenticated(path: str) -> dict[str, Any]:
+        response = requests.get(
+            f'{FPL_API_BASE}{path}',
+            timeout=timeout,
+            headers=headers,
+        )
+        if response.status_code == 401:
+            raise FplEntrySyncError('FPL access token is invalid or expired.')
+        if response.status_code == 403:
+            raise FplEntrySyncError(
+                'FPL refused the authenticated request. Refresh your FPL login '
+                'and copy a new access token.'
+            )
+        response.raise_for_status()
+        payload = response.json()
+        if not isinstance(payload, dict):
+            raise FplEntrySyncError('FPL authenticated response was invalid.')
+        return payload
+
+    try:
+        identity = fetch_authenticated('/me/')
+        authenticated_entry = int(identity['player']['entry'])
+        if authenticated_entry != entry:
+            raise FplEntrySyncError(
+                f'FPL access token belongs to FPL entry {authenticated_entry}, not {entry}.'
+            )
+        payload = fetch_authenticated(f'/my-team/{entry}/')
+    except FplEntrySyncError:
+        raise
+    except (requests.RequestException, KeyError, TypeError, ValueError) as exc:
+        raise FplEntrySyncError(
+            f'Unable to verify or load private FPL picks for entry {entry}.'
+        ) from exc
+
+    picks = payload.get('picks') if isinstance(payload, dict) else None
+    if not isinstance(picks, list) or len(picks) != 15:
+        raise FplEntrySyncError('FPL private team response did not contain 15 picks.')
+    normalized_picks = []
+    acquisition_costs = {}
+    for pick in picks:
+        player_id = int(pick['element'])
+        position = int(pick['position'])
+        purchase_price = int(pick.get('purchase_price', 0) or 0)
+        normalized_picks.append({
+            'player_id': player_id,
+            'pick_position': position,
+            'multiplier': int(pick.get('multiplier', 0) or 0),
+            'is_captain': int(bool(pick.get('is_captain'))),
+            'is_vice_captain': int(bool(pick.get('is_vice_captain'))),
+        })
+        if purchase_price > 0:
+            acquisition_costs[player_id] = purchase_price
+
+    transfers = payload.get('transfers') or {}
+    transfer_limit = int(transfers.get('limit', 1) or 1)
+    transfers_made = int(transfers.get('made', 0) or 0)
+    return {
+        'picks': normalized_picks,
+        'acquisition_costs': acquisition_costs,
+        'bank': int(transfers.get('bank', 0) or 0),
+        'squad_value': int(transfers.get('value', 0) or 0),
+        'next_free_transfers': max(0, transfer_limit - transfers_made),
+    }
+
+
 def _estimate_next_free_transfers(gameweeks: list[dict[str, Any]]) -> int:
     available = 1
     for row in sorted(gameweeks, key=lambda item: int(item['event'])):
@@ -262,6 +342,11 @@ def load_synced_entry(
             acquisition_costs[int(transfer['player_in'])] = int(transfer['player_in_cost'])
 
     latest_gameweek = permanent[-1] if permanent else (gameweeks[-1] if gameweeks else {})
+    last_event_points = load_event_player_points(
+        database,
+        [int(pick['player_id']) for pick in picks],
+        latest_event,
+    )
     return {
         'entry_id': entry,
         'started_event': sync_row['started_event'],
@@ -276,6 +361,7 @@ def load_synced_entry(
         'bank': int(latest_gameweek.get('bank', 0) or 0),
         'squad_value': int(latest_gameweek.get('squad_value', 0) or 0),
         'next_free_transfers': _estimate_next_free_transfers(gameweeks),
+        'last_event_points': last_event_points,
     }
 
 
@@ -324,4 +410,42 @@ def load_initial_purchase_prices(
         int(player_id): int(value)
         for player_id, value in rows
         if value is not None
+    }
+
+
+def load_event_player_points(
+    database: str | Path,
+    player_ids: list[int],
+    event: int | None,
+) -> dict[int, int]:
+    if not player_ids or event is None:
+        return {}
+    with closing(sqlite3.connect(str(database))) as connection:
+        table_exists = connection.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='player_gw'"
+        ).fetchone()
+        if not table_exists:
+            return {}
+        metadata_exists = connection.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='app_metadata'"
+        ).fetchone()
+        metadata = dict(connection.execute(
+            'SELECT key, value FROM app_metadata'
+        ).fetchall()) if metadata_exists else {}
+        live_start = int(metadata.get('live_start_index', 0))
+        internal_gameweek = live_start + int(event) - 1
+        placeholders = ','.join('?' for _ in player_ids)
+        rows = connection.execute(
+            f"""
+            SELECT player_id, MAX(total_points)
+            FROM player_gw
+            WHERE Game_Week = ? AND player_id IN ({placeholders})
+            GROUP BY player_id
+            """,
+            (internal_gameweek, *player_ids),
+        ).fetchall()
+    return {
+        int(player_id): int(points)
+        for player_id, points in rows
+        if points is not None
     }

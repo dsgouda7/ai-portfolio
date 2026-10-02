@@ -27,4 +27,4 @@ The script installs the shared dependencies and assigns the `neural-networks` ke
 
 ## Chapter Handoff
 
-After both notebooks, continue to [Keras to PyTorch: Antarctic Field Guide](../03-pytorch-fundamentals/01-keras-to-pytorch-antarctic-field-guide.ipynb). The framework vocabulary changes, but forward pass, loss, backpropagation, and optimizer responsibilities remain the same.
+After both notebooks, continue to [Arrays to Model Tensors](../03-pytorch-fundamentals/00-arrays-to-model-tensors.ipynb), then [Keras to PyTorch: Antarctic Field Guide](../03-pytorch-fundamentals/01-keras-to-pytorch-antarctic-field-guide.ipynb). The first bridge makes indexing, reshaping, broadcasting, and model axes explicit; the second changes the framework vocabulary while preserving forward pass, loss, backpropagation, and optimizer responsibilities.

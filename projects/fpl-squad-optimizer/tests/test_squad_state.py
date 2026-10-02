@@ -16,6 +16,7 @@ from squad_state import (
     list_versions,
     load_current,
     load_working_state,
+    refresh_player_data,
     roll_to_game_week,
     save_draft,
     selling_price,
@@ -118,6 +119,27 @@ class SquadStateTests(unittest.TestCase):
         rolled = roll_to_game_week(state, 5, '2026-27')
 
         self.assertEqual(rolled['free_transfers'], 4)
+
+    def test_refresh_updates_imported_prediction_but_preserves_last_actual(self):
+        state = create_state(make_squad(), 4, '2026-27')
+        official_player = dict(state['players'][0])
+        official_player.update({
+            'pick_position': 1,
+            'lineup_role': 'starter',
+            'is_captain': False,
+            'is_vice_captain': False,
+            'last_gameweek_points': 7,
+        })
+        state['official_squad'] = [official_player]
+        refreshed_pool = make_squad()
+        refreshed_pool['predicted_points'] = refreshed_pool['predicted_points'].astype(float)
+        refreshed_pool.loc[refreshed_pool['id'] == 1, 'predicted_points'] = 9.5
+
+        updated = refresh_player_data(state, refreshed_pool)
+
+        self.assertEqual(updated['players'][0]['predicted_points'], 9.5)
+        self.assertEqual(updated['official_squad'][0]['predicted_points'], 9.5)
+        self.assertEqual(updated['official_squad'][0]['last_gameweek_points'], 7)
 
     def test_invalid_formation_is_rejected(self):
         state = create_state(make_squad(), 4, '2026-27')
