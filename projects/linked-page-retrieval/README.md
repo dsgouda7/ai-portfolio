@@ -1,7 +1,7 @@
 # Linked Page Retrieval Lab
 
-> Can logical pages, typed links, and an authority score reduce the indexing and query cost of
-> vector-only RAG without losing retrieval quality?
+> Can query-seeded graph retrieval improve authoritative, multi-page evidence selection while
+> matching plain vector RAG quality with fewer embeddings and cheaper updates?
 
 **Evidence status:** Planned. This directory currently contains the experiment design and
 implementation plan. No benchmark result is claimed yet.
@@ -26,19 +26,51 @@ PageRank can identify an important page
 This POC will therefore test PageRank as an **authority signal**, not as a standalone replacement
 for query-aware retrieval.
 
-## Hypotheses
+## Value proposition, worked backwards
 
-The experiment will try to falsify three claims:
+PageRank does not make text semantically searchable, detect freshness, or remove the need for a
+query-relevance stage. Its realistic job is narrower: among already relevant and valid candidates,
+prefer pages that the rest of the trusted corpus treats as canonical.
 
-1. **Linked-page retrieval:** BM25 seeds plus one-hop typed-link expansion can match the vector
-   baseline on exact, freshness, and multi-page questions while using no document embeddings.
-2. **Hybrid retrieval:** lexical, semantic, and graph signals together can achieve the best overall
-   retrieval quality without embedding every logical page.
-3. **Incremental maintenance:** updating changed pages and their local graph neighborhood is faster
-   and writes fewer index bytes than re-embedding all affected overlapping chunks.
+The complete project has three mechanisms. The evaluation must not credit one mechanism for another
+mechanism's result.
 
-The POC is useful even if all three claims fail. Its deliverable is a reproducible measurement, not
-a predetermined win for graph retrieval.
+| Desired outcome | Plain-RAG limitation being tested | Mechanism that could help | Metric that proves it |
+|---|---|---|---|
+| Put the canonical source before an ancillary mention | Similar chunks can receive similar vector scores | Bounded PageRank prior over trusted, endorsement-like links | Canonical@1 and authority-weighted nDCG@10 |
+| Retrieve all evidence for a compound question | Independent top-k retrieval can find only one part | Query-seeded, typed one-hop expansion | Complete Evidence Rate@10 |
+| Preserve general retrieval quality | Graph signals can displace a relevant result | Lexical/semantic relevance remains the dominant score | Recall@10, MRR@10, and context precision@10 |
+| Embed and rewrite less data | Overlapping chunks multiply derived records | Logical pages plus selective semantic indexing | Embedded-unit ratio and update amplification |
+| Keep interactive latency | Query embedding and broad vector search add work | Precomputed authority plus bounded candidates | Warm p50/p95 latency at matched quality |
+
+The query path is therefore:
+
+```text
+validity and metadata filters
+-> BM25 and/or vector seeds
+-> bounded typed-link expansion
+-> query-relevance scoring
+-> small PageRank authority adjustment
+-> final evidence set
+```
+
+PageRank never creates relevance. It can only reorder candidates that have already crossed a
+query-relevance threshold. Expired, deleted, or otherwise ineligible pages are filtered before
+PageRank is applied; freshness gains must not be attributed to PageRank.
+
+## Falsifiable hypotheses
+
+1. **PageRank earns a ranking role:** adding PageRank to an otherwise identical candidate set
+   improves canonical-source ranking without a meaningful loss in relevance recall or precision.
+2. **Graph expansion earns a retrieval role:** typed expansion improves complete evidence coverage
+   on multi-page questions without flooding the context with merely adjacent pages.
+3. **Selective semantic indexing earns a cost role:** the selective hybrid remains non-inferior to
+   plain vector RAG while embedding and rewriting materially fewer units.
+4. **The combined design earns a system role:** the graph-plus-selective-vector path lies on the
+   quality/cost Pareto frontier rather than being dominated by a simpler baseline.
+
+The POC is useful even if every hypothesis fails. Its deliverable is a reproducible decision about
+which mechanisms to keep, not a predetermined win for PageRank.
 
 ## What is a logical page?
 
@@ -84,11 +116,13 @@ flowchart LR
     P --> G[Typed graph]
     P --> V[Optional local embeddings]
     G --> R[Offline PageRank]
-    F --> Q[Query candidates]
+    F --> Q[Query-relevant seeds]
     V --> Q
-    R --> Q
-    Q --> X[One-hop graph expansion]
-    X --> E[Retrieval evaluator]
+    Q --> X[Bounded graph expansion]
+    G --> X
+    X --> A[Validity and relevance checks]
+    R --> A
+    A --> E[Retrieval evaluator]
     E --> O[JSON and Markdown reports]
 ```
 
@@ -98,33 +132,49 @@ The first implementation will remain deliberately small:
 - SQLite FTS5 for lexical search and persisted page metadata;
 - NetworkX for inspectable graph construction and PageRank;
 - a pinned Sentence Transformers model for the vector baseline;
-- exact NumPy cosine search, avoiding a vector database so the experiment measures retrieval
-  behavior before infrastructure behavior;
+- exact NumPy cosine search as a correctness oracle;
+- a CPU HNSW index as the operational dense-retrieval baseline;
+- a pinned CPU cross-encoder shared by graph and non-graph reranking finalists;
 - pytest for contracts and regression tests;
 - local JSONL and Markdown benchmark reports.
 
 The embedding model may require a one-time download. After it is cached, evaluation will run without
 an API key or cloud service.
 
-## One corpus, six retrieval strategies
+## Fair baselines and ablations
 
-Every strategy will receive the same pages, queries, filters, and relevance judgments.
+Every strategy receives the same sources, queries, eligibility filters, evidence budget, and
+relevance judgments. The generator, if enabled, also receives the same prompt and evidence-token
+budget. This prevents a larger context window or better freshness filter from masquerading as a
+PageRank win.
 
-| Strategy | Query relevance | Authority | Semantic matching | Purpose |
-|---|---:|---:|---:|---|
-| PageRank only | No | Yes | No | Negative control proving that authority alone is insufficient |
-| SQLite FTS5 | Yes | No | No | Cheap lexical baseline |
-| Vector | Yes | No | Yes | Conventional semantic-retrieval baseline |
-| Linked page | BM25 seeds | Yes | No | Proposed embedding-free path |
-| Selective hybrid | BM25 plus selected vectors | Yes | Yes | Proposed cost/quality compromise |
-| Full hybrid | BM25 plus all vectors | Yes | Yes | Quality ceiling for this POC |
+| Strategy | Unit | Semantic index | Expansion | PageRank | Question answered |
+|---|---|---:|---:|---:|---|
+| PageRank only | Page | No | No | Yes | Negative control: authority without relevance |
+| SQLite FTS5 | Page | No | No | No | Cheapest lexical floor |
+| Plain vector RAG | Fixed overlapping chunk | All chunks | No | No | Existing conventional baseline |
+| Page vector RAG | Logical page | All pages | No | No | Was any gain caused only by better segmentation? |
+| Page hybrid + reranker | Logical page | All pages | No | No | Strong non-graph baseline |
+| Page hybrid + PageRank | Logical page | All pages | No | Yes | Isolate PageRank's ranking contribution |
+| Page hybrid + expansion | Logical page | All pages | Yes | No | Isolate graph traversal's coverage contribution |
+| Full graph hybrid | Logical page | All pages | Yes | Yes | Measure the combined quality ceiling |
+| Selective graph hybrid | Logical page | Selected pages | Yes | Yes | Measure the proposed quality/cost compromise |
 
-Linked-page retrieval will first select lexical seed pages, expand allowed typed edges by one hop,
-and then rerank the candidates using query relevance, authority, freshness, and link type. PageRank
-will never be allowed to introduce an otherwise query-unrelated page by itself.
+Two PageRank variants will be retained:
+
+- **raw global PageRank**, a deliberately naive control over all links;
+- **eligible typed PageRank**, computed over current eligible pages and only endorsement-like links
+  such as `references`, `defines`, and `supported_by`.
+
+Validity labels and canonical-source judgments are authored independently of graph link counts. A
+benchmark where “most links wins” defines both the feature and the answer would prove nothing.
 
 The selective hybrid will embed only pages that are difficult to retrieve lexically, based on a
-rule fixed on the development set. It must not use test-set labels to decide which pages to embed.
+rule fixed on the development set. It must not use locked-test labels to choose pages.
+
+Final graph and non-graph contenders use the same cross-encoder candidate budget. Graph robustness
+is also tested after dropping, adding, reversing, and concentrating links so a clean synthetic graph
+cannot hide PageRank's sensitivity.
 
 ## Evaluation corpus
 
@@ -132,26 +182,31 @@ The project will generate a deterministic, fictional support-policy corpus. A sy
 keeps the POC redistributable, makes every relevant page knowable, and lets the benchmark include
 deliberate traps such as a highly linked obsolete policy.
 
-The initial target is approximately 60 source records, 150 logical pages, and 150 hand-reviewed
-queries:
+The quality corpus will contain approximately 80 source records, 200 logical pages, and 240
+hand-reviewed queries:
 
 | Query class | Count | Failure being exposed |
 |---|---:|---|
-| Exact terminology and identifiers | 30 | Semantic search is unnecessary overhead |
-| Paraphrases | 30 | Lexical search misses different wording |
-| Multi-page evidence | 30 | One retrieved page is insufficient |
-| Freshness and supersession | 25 | Authority can favor obsolete content |
-| Authority traps | 20 | PageRank is not query relevance |
-| Unanswerable questions | 15 | Retrieval should abstain rather than force a match |
+| Exact terminology and identifiers | 40 | Semantic search is unnecessary overhead |
+| Paraphrases | 40 | Lexical search misses different wording |
+| Multi-page evidence | 50 | One retrieved page is insufficient |
+| Freshness and supersession | 40 | Eligibility must beat obsolete authority |
+| Canonical-source and authority ties | 50 | PageRank must distinguish equally relevant pages |
+| Unanswerable questions | 20 | Retrieval should abstain rather than force a match |
 
-Fifty queries will form a visible development set for choosing fixed weights and thresholds. The
-remaining 100 will be a locked test set. Each query record will declare:
+Eighty stratified queries will form a visible development set for choosing fixed weights and
+thresholds. The remaining 160 will be a locked test set. Each query record will declare:
 
 - relevant page IDs;
 - the complete required evidence set for multi-page questions;
+- a canonical page and independent authority grade where one exists;
 - expected facts or an explicit `unanswerable` label;
 - query-class tags;
 - metadata filters, when applicable.
+
+The same judged core will be surrounded by deterministic non-relevant pages at approximately 200,
+2,000, and 20,000 total pages. These scale tiers test latency, storage, update amplification, and
+retrieval robustness without pretending that 200 pages predict web-scale behavior.
 
 No LLM will grade the primary retrieval benchmark. Ground-truth page IDs and deterministic metrics
 avoid evaluator-model cost and circularity.
@@ -160,33 +215,60 @@ avoid evaluator-model cost and circularity.
 
 ### Retrieval quality
 
-- Recall@5 and Recall@10;
-- mean reciprocal rank at 10;
-- nDCG@10;
-- complete evidence-set coverage at 10;
-- stale-page hit rate;
-- unanswerable false-positive rate.
+- **Recall@5/10:** fraction of judged relevant evidence retrieved;
+- **MRR@10:** how early the first relevant page appears;
+- **nDCG@10:** graded relevance quality across the ranking;
+- **Context precision@10:** fraction of retrieved pages that are relevant;
+- **Complete Evidence Rate@10:** fraction of answerable queries for which every required evidence
+  page is retrieved;
+- **Canonical@1:** fraction of canonical-source queries with the canonical page ranked first;
+- **authority-weighted nDCG@10:** ranking quality using independently authored authority grades;
+- **current-over-stale win rate:** fraction of freshness traps where the current page outranks its
+  obsolete counterpart;
+- **stale exposure@10:** obsolete pages returned for non-historical queries;
+- **unanswerable false-positive rate:** unsupported questions that cross the answer threshold.
 
 Metrics will be reported overall and by query class. An aggregate score is not allowed to hide a
 failure on paraphrases, freshness, or multi-page evidence.
 
+Every PageRank result must include the paired delta against the identical strategy with PageRank
+disabled. Every expansion result must include the paired delta against the identical strategy
+without expansion. Quality deltas will use query-level paired bootstrap 95% confidence intervals.
+
 ### Efficiency
 
 - cold index-build time;
+- PageRank build and recomputation time as a separate line item;
 - incremental update time for a fixed change manifest;
 - p50 and p95 warm-query latency;
-- bytes written per index;
+- source-to-index byte ratio;
 - peak resident memory;
-- number and percentage of pages embedded.
+- number and percentage of units embedded;
+- vectors recomputed per changed source page;
+- **update amplification:** derived records or bytes rewritten per changed source page;
+- candidates scored and graph edges traversed per query;
+- HNSW construction/search work and exact-versus-approximate recall;
+- link acquisition, validation effort, and edge churn;
+- evidence tokens passed to the generator.
 
 The report will record the CPU, operating system, Python version, embedding model revision, corpus
 hash, and run seed. Model download time and cached model size will be reported separately from
 index-build time and index size.
 
-### Optional answer generation
+The primary efficiency comparison is **cost at matched quality**, not raw speed. The report will
+show the minimum embedding coverage, update work, storage, and p95 latency among strategies whose
+Recall@10 and Complete Evidence Rate@10 are non-inferior to the plain vector baseline. It will also
+plot the quality/cost Pareto frontier so a cheap but inaccurate strategy cannot be called better.
 
-Retrieval will be evaluated first. A later optional adapter may send the same evidence packet to a
-local Ollama-compatible model and measure:
+### Answer generation
+
+Retrieval will be evaluated and frozen first. The same evidence packet will then run through two
+generator profiles:
+
+- an official Phi-4 Mini ONNX INT4 deployment on local CPU;
+- a metadata-first Microsoft Foundry deployment.
+
+Both profiles measure:
 
 - required-fact coverage;
 - citation precision;
@@ -194,24 +276,58 @@ local Ollama-compatible model and measure:
 - abstention accuracy;
 - generation latency and tokens.
 
-Generation results will not be used to conceal retrieval failures.
+Each model is compared with closed-book, oracle-context, plain-vector, page-hybrid, and graph-hybrid
+conditions. Model identity, version, artifact or deployment metadata, prompt, evidence budget, and
+judge identity are recorded before scoring. Generation results will not be used to conceal retrieval
+failures. See [plan.md](plan.md) for the benchmark map and provider contracts.
 
 ## Decision gates
 
-The linked-page idea will be considered promising only if the locked test run shows all of the
-following:
+### PageRank earns its place only if
 
-1. linked-page Recall@10 is within 2 percentage points of the full-vector baseline overall;
-2. linked-page complete-evidence coverage is not worse than the vector baseline on multi-page
-   queries;
-3. stale-page hit rate is lower than the PageRank-only and vector-only strategies;
-4. the selective hybrid embeds at least 50% fewer pages than the full-vector baseline while staying
-   within 2 percentage points of its Recall@10;
-5. incremental updates write fewer bytes and finish faster than the full-vector baseline on the
-   fixed update manifest.
+Compared with the same candidate generation and expansion configuration with PageRank disabled:
+
+1. eligible typed PageRank improves authority-weighted nDCG@10 with a paired 95% confidence interval
+   above zero and a target point improvement of at least 0.05;
+2. Canonical@1 improves by at least 10 percentage points on the authority-tie slice;
+3. the lower confidence bound for Recall@10 change is no worse than -0.02;
+4. context precision@10 falls by no more than 0.02;
+5. warm p95 query latency increases by no more than 5%.
+
+If graph expansion passes but PageRank fails these gates, the project keeps the graph and drops
+PageRank. That is a successful, evidence-based result.
+
+### Graph expansion earns its place only if
+
+Compared with the same retriever without expansion:
+
+1. Complete Evidence Rate@10 improves by at least 10 percentage points on multi-page queries;
+2. Recall@10 remains non-inferior within a -0.02 margin;
+3. context precision@10 falls by no more than 0.05;
+4. the configured candidate and edge-traversal bounds are never exceeded.
+
+### The selective architecture earns its place only if
+
+1. Recall@10 and Complete Evidence Rate@10 are non-inferior to plain vector RAG using a -0.02
+   margin and paired 95% confidence intervals;
+2. at least 50% fewer units are embedded than in full page-vector indexing;
+3. update amplification and vectors recomputed fall by at least 50%;
+4. warm p95 query latency is no more than 10% worse than plain vector RAG;
+5. no deleted or ineligible page is returned.
 
 These are POC decision thresholds, not production SLOs. If the result varies by hardware, the report
-will emphasize relative ratios and include the raw measurements.
+will emphasize paired deltas and relative ratios while retaining every raw measurement.
+
+## How the evidence selects the solution
+
+| Result | Decision |
+|---|---|
+| PageRank and expansion both pass | Keep the full graph reranker and test it on a real corpus |
+| Expansion passes, PageRank fails | Keep query-seeded graph traversal; remove PageRank |
+| PageRank passes only authority-tie queries | Gate it to corpora with strong editorial link structure |
+| Selective indexing passes quality gates | Keep semantic fallback for hard pages instead of embedding everything |
+| Only full vector or page hybrid passes | Use the simpler RAG baseline; the graph has not earned its complexity |
+| Results change materially across scale tiers | Do not claim a general win; investigate the crossover point |
 
 ## Expected repository shape
 
