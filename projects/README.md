@@ -15,22 +15,6 @@ Each project has a concrete problem statement with measurable success criteria, 
 
 ---
 
-## [Linked Page Retrieval Lab](linked-page-retrieval/)
-
-**Can logical pages, typed links, and an authority score reduce the indexing and query cost of
-vector-only RAG without losing retrieval quality?**
-
-Planned local POC comparing plain fixed-chunk vector RAG with logical-page, hybrid, graph-expansion,
-PageRank, and selective-indexing ablations over one deterministic corpus and locked evaluation
-suite. The design measures relevance, canonical-source ranking, complete evidence coverage,
-latency, index size, memory, and update amplification. End-to-end answer evaluation is planned for
-both local Phi-4 Mini CPU inference and a metadata-first Microsoft Foundry deployment. No
-implementation or benchmark result is claimed yet.
-
-`SQLite FTS5` `PageRank` `NetworkX` `Sentence Transformers` `Python` `Evaluation`
-
----
-
 ## [FPL Squad Optimizer](fpl-squad-optimizer/)
 
 **Can a CPU-only ML model trained on community data assemble an FPL squad that performs in the range of an experienced human manager?**
